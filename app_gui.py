@@ -1901,6 +1901,32 @@ class SearchView(View):
 #  HAUPTANWENDUNG
 # ============================================================================
 
+def _apply_dark_titlebar(root):
+    """Faerbt unter Windows 10/11 die native Fensterleiste dunkel ein, damit
+    sie farblich zur dunklen Programmoberflaeche passt, statt hell/weiss
+    hervorzustechen. Nutzt eine Windows-Bordfunktion (dwmapi) per ctypes aus
+    der Python-Standardbibliothek - keine zusaetzliche Abhaengigkeit noetig.
+    Unter Linux/macOS oder bei sehr alten Windows-Versionen passiert einfach
+    nichts (kein Fehler, die Fensterleiste bleibt dann in der Systemfarbe)."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        root.update_idletasks()
+        hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
+        dark_mode = ctypes.c_int(1)
+        # Attribut-ID 20 gilt ab Windows 10 20H1 (Mai 2020), 19 fuer aeltere
+        # Versionen davor - beide werden der Reihe nach versucht.
+        for attribute in (20, 19):
+            result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, attribute, ctypes.byref(dark_mode),
+                ctypes.sizeof(dark_mode))
+            if result == 0:
+                break
+    except Exception:
+        pass
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -1908,6 +1934,7 @@ class FISIApp:
         root.geometry("1360x880")
         root.minsize(1120, 720)
         root.configure(bg=C["bg"])
+        _apply_dark_titlebar(root)
 
         setup_fonts(root)
         self._setup_ttk_style()
