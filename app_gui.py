@@ -88,7 +88,8 @@ class EntryBox(tk.Frame):
                               insertbackground=C["cyan"], relief="flat",
                               font=font or F["body"], width=width,
                               highlightthickness=0, bd=0,
-                              selectbackground=C["purple"])
+                              selectbackground=C["purple"],
+                              insertofftime=0)
         self.entry.pack(fill="x", padx=10, pady=8)
         if value:
             self.entry.insert(0, value)
@@ -402,7 +403,8 @@ class Header(tk.Frame):
         self.search_entry = tk.Entry(search_box, bg=C["card"], fg=C["text"],
                                      insertbackground=C["cyan"], relief="flat",
                                      font=F["small"], width=26,
-                                     highlightthickness=0, bd=0)
+                                     highlightthickness=0, bd=0,
+                                     insertofftime=0)
         self.search_entry.pack(side="left", padx=10, pady=9)
         self.search_entry.insert(0, "Suchen ...")
         self.search_entry.bind("<FocusIn>", self._clear_placeholder)
