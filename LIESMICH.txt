@@ -157,6 +157,14 @@ SOFORT STARTEN (fuer erfahrene Nutzer, ohne weitere Installation)
 
 Das genuegt fuer den taeglichen Gebrauch vollkommen.
 
+Windows-Komfortstart per Doppelklick:
+  Die Datei "FISI-Lernplattform starten.vbs" startet das Programm direkt
+  aus dem Quellcode, ohne Konsolenfenster - wie eine normale Anwendung.
+  Per Rechtsklick -> "Senden an" -> "Desktop (Verknuepfung erstellen)"
+  laesst sich daraus ein Desktop-Symbol anlegen. Wichtig: Diese Verknuepfung
+  zeigt immer automatisch den neuesten Stand der Programmdateien in diesem
+  Ordner - nach einem Update von Claude ist kein erneutes Bauen noetig.
+
 
 INSTALLATION UNTER LINUX (optional, mit Eintrag im Startmenue)
 ---------------------------------------------------------------------------
@@ -182,6 +190,15 @@ Wieder entfernen:
 
 EIGENSTAENDIGE ANWENDUNG BAUEN (ohne Python beim Anwender)
 ---------------------------------------------------------------------------
+Hinweis: Dieser Schritt ist NICHT noetig, nur um ein Update zu sehen! Die
+erzeugte .exe/-Datei ist ein Schnappschuss des Codes zum Bauzeitpunkt -
+spaetere Aenderungen an den .py-Dateien wirken sich darauf nicht mehr aus,
+bis erneut gebaut wird. Fuer den eigenen taeglichen Gebrauch genuegt
+"SOFORT STARTEN" bzw. die .vbs-Verknuepfung oben, die immer automatisch
+den aktuellsten Stand zeigt. Dieser Abschnitt ist nur relevant, wenn eine
+einzelne, frei kopierbare Datei gebraucht wird, z.B. um sie ohne Python
+an jemand anderen weiterzugeben oder auf einen USB-Stick zu packen.
+
 Erzeugt eine einzelne ausfuehrbare Datei, die auch auf Rechnern ohne
 installiertes Python laeuft. Beim ersten Aufruf wird PyInstaller
 nachgeladen, dafuer wird einmalig eine Internetverbindung benoetigt.
