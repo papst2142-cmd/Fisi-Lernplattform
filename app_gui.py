@@ -535,12 +535,11 @@ class DashboardView(View):
             detail.pack()
             self.fach_rings[category] = (ring, detail)
 
-        # --- Reihe 4: Aktivitaeten, Kalender, Timeline --------------------
+        # --- Reihe 4: Aktivitaeten, Kalender -------------------------------
         row4 = tk.Frame(self.content, bg=C["bg"])
         row4.pack(fill="x", pady=(14, 0))
-        row4.columnconfigure(0, weight=2, uniform="row4")
-        row4.columnconfigure(1, weight=2, uniform="row4")
-        row4.columnconfigure(2, weight=3, uniform="row4")
+        row4.columnconfigure(0, weight=1, uniform="row4")
+        row4.columnconfigure(1, weight=1, uniform="row4")
 
         act_card = Card(row4, title="Aktivitäten", subtitle="zuletzt")
         act_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
@@ -549,26 +548,31 @@ class DashboardView(View):
 
         cal_card = Card(row4, title="Lerntage", subtitle="Monatsübersicht",
                         accent=C["purple"])
-        cal_card.grid(row=0, column=1, sticky="nsew", padx=6)
+        cal_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         self.calendar = CalendarPanel(cal_card.body, bg=C["card"])
         self.calendar.pack(fill="both", expand=True)
         self.calendar.set_provider(self.db.month_activity)
 
-        theme_card = Card(row4, title="AP2 Prüfungsthemen",
+        # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
+        row5 = tk.Frame(self.content, bg=C["bg"])
+        row5.pack(fill="x", pady=(14, 0))
+        row5.columnconfigure(0, weight=1, uniform="row5")
+        row5.columnconfigure(1, weight=1, uniform="row5")
+
+        ap1_theme_card = Card(row5, title="AP1 Prüfungsthemen",
+                              subtitle="bearbeitete Grundlagenaufgaben",
+                              accent=C["blue"])
+        ap1_theme_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        self.timeline_ap1 = ThemeTimeline(ap1_theme_card.body, height=200,
+                                          parent_bg=C["card"])
+        self.timeline_ap1.pack(fill="both", expand=True)
+
+        theme_card = Card(row5, title="AP2 Prüfungsthemen",
                           subtitle="bearbeitete Szenarien", accent=C["pink"])
-        theme_card.grid(row=0, column=2, sticky="nsew", padx=(6, 0))
+        theme_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         self.timeline = ThemeTimeline(theme_card.body, height=200,
                                       parent_bg=C["card"])
         self.timeline.pack(fill="both", expand=True)
-
-        # --- Reihe 5: AP1-Themenfortschritt --------------------------------
-        ap1_theme_card = Card(self.content, title="AP1 Prüfungsthemen",
-                              subtitle="bearbeitete Grundlagenaufgaben",
-                              accent=C["blue"])
-        ap1_theme_card.pack(fill="x", pady=(14, 0))
-        self.timeline_ap1 = ThemeTimeline(ap1_theme_card.body, height=150,
-                                          parent_bg=C["card"])
-        self.timeline_ap1.pack(fill="both", expand=True)
 
     def _ring_card(self, parent, title, subtitle):
         card = Card(parent, title=title, subtitle=subtitle)

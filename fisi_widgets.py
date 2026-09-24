@@ -1047,7 +1047,11 @@ class OptionList(tk.Frame):
 # ============================================================================
 
 class ScrollArea(tk.Frame):
-    """Senkrecht scrollbarer Container fuer lange Ansichten."""
+    """Senkrecht UND waagerecht scrollbarer Container fuer lange/breite
+    Ansichten. Bei einem zu schmalen Fenster wird der Inhalt nicht mehr
+    zusammengequetscht, sondern behaelt seine natuerliche Mindestbreite und
+    laesst sich stattdessen ueber den unteren Schieberegler seitlich
+    verschieben (bzw. mit gedrueckter Umschalttaste + Mausrad)."""
 
     def __init__(self, parent, bg=None):
         self.bg = bg or C["bg"]
@@ -1059,7 +1063,15 @@ class ScrollArea(tk.Frame):
                                       activebackground=C["purple"],
                                       highlightthickness=0, bd=0,
                                       relief="flat", width=10)
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.hscrollbar = tk.Scrollbar(self, orient="horizontal",
+                                       command=self.canvas.xview,
+                                       bg=C["card"], troughcolor=self.bg,
+                                       activebackground=C["purple"],
+                                       highlightthickness=0, bd=0,
+                                       relief="flat", width=10)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set,
+                              xscrollcommand=self.hscrollbar.set)
+        self.hscrollbar.pack(side="bottom", fill="x")
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
@@ -1075,15 +1087,23 @@ class ScrollArea(tk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _on_canvas_configure(self, event):
-        self.canvas.itemconfigure(self._window, width=event.width)
+        # Der Inhalt wird nur bis zur Fensterbreite gestreckt, wenn er von
+        # Natur aus schmaler ist als das Fenster. Braucht er mehr Platz
+        # (z.B. mehrspaltige Kacheln bei schmalem Fenster), behaelt er seine
+        # benoetigte Breite und wird ueber den horizontalen Balken erreichbar,
+        # statt zusammengequetscht zu werden.
+        needed = self.inner.winfo_reqwidth()
+        self.canvas.itemconfigure(self._window, width=max(event.width, needed))
 
     def _bind_wheel(self, flag):
         if flag:
             self.canvas.bind_all("<MouseWheel>", self._on_wheel)
+            self.canvas.bind_all("<Shift-MouseWheel>", self._on_wheel_shift)
             self.canvas.bind_all("<Button-4>", self._on_wheel)
             self.canvas.bind_all("<Button-5>", self._on_wheel)
         else:
             self.canvas.unbind_all("<MouseWheel>")
+            self.canvas.unbind_all("<Shift-MouseWheel>")
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
 
@@ -1099,8 +1119,17 @@ class ScrollArea(tk.Frame):
             delta = -1 if event.delta > 0 else 1
         self.canvas.yview_scroll(delta, "units")
 
+    def _on_wheel_shift(self, event):
+        """Umschalttaste + Mausrad scrollt waagerecht statt senkrecht."""
+        first, last = self.canvas.xview()
+        if first <= 0.0 and last >= 1.0:
+            return
+        delta = -1 if event.delta > 0 else 1
+        self.canvas.xview_scroll(delta, "units")
+
     def to_top(self):
         self.canvas.yview_moveto(0.0)
+        self.canvas.xview_moveto(0.0)
 
 
 # ============================================================================
