@@ -1661,12 +1661,9 @@ class ProgressView(View):
         for key, text, width in headings:
             self.tree.heading(key, text=text)
             self.tree.column(key, width=width, anchor="center")
-        # Bewusst eine klassische tk-Scrollbar: die ttk-Variante laesst sich
-        # nicht auf allen Systemen zuverlaessig dunkel einfaerben.
-        scroll = tk.Scrollbar(table_card.body, orient="vertical",
-                              command=self.tree.yview, bg=C["card_hi"],
-                              troughcolor=C["card"], activebackground=C["purple"],
-                              highlightthickness=0, bd=0, relief="flat", width=10)
+        scroll = ttk.Scrollbar(table_card.body, orient="vertical",
+                               command=self.tree.yview,
+                               style="Dash.Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=scroll.set)
         self.tree.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
@@ -2010,9 +2007,17 @@ class FISIApp:
                   background=[("selected", C["purple"])],
                   foreground=[("selected", "#FFFFFF")])
         style.configure("Dash.Vertical.TScrollbar",
-                        background=C["card_hi"], troughcolor=C["card"],
-                        bordercolor=C["card"], arrowcolor=C["text_dim"],
+                        background=C["card_hi"], troughcolor=C["bg"],
+                        bordercolor=C["bg"], arrowcolor=C["text_dim"],
                         darkcolor=C["card_hi"], lightcolor=C["card_hi"])
+        style.map("Dash.Vertical.TScrollbar",
+                  background=[("active", C["purple"])])
+        style.configure("Dash.Horizontal.TScrollbar",
+                        background=C["card_hi"], troughcolor=C["bg"],
+                        bordercolor=C["bg"], arrowcolor=C["text_dim"],
+                        darkcolor=C["card_hi"], lightcolor=C["card_hi"])
+        style.map("Dash.Horizontal.TScrollbar",
+                  background=[("active", C["purple"])])
 
     # -- Navigation ---------------------------------------------------------
 

@@ -13,6 +13,7 @@ import calendar as calmod
 import datetime
 import tkinter as tk
 import tkinter.font as tkfont
+from tkinter import ttk
 
 from fisi_core import C, mix, lighten
 
@@ -1057,18 +1058,19 @@ class ScrollArea(tk.Frame):
         self.bg = bg or C["bg"]
         super().__init__(parent, bg=self.bg)
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0)
-        self.scrollbar = tk.Scrollbar(self, orient="vertical",
-                                      command=self.canvas.yview,
-                                      bg=C["card"], troughcolor=self.bg,
-                                      activebackground=C["purple"],
-                                      highlightthickness=0, bd=0,
-                                      relief="flat", width=10)
-        self.hscrollbar = tk.Scrollbar(self, orient="horizontal",
-                                       command=self.canvas.xview,
-                                       bg=C["card"], troughcolor=self.bg,
-                                       activebackground=C["purple"],
-                                       highlightthickness=0, bd=0,
-                                       relief="flat", width=10)
+        # ttk- statt klassische tk-Scrollbar: klassische tk.Scrollbar-Widgets
+        # werden unter Windows nativ ("xpnative") gezeichnet und ignorieren
+        # dabei bg/troughcolor - sie blieben deshalb hell/weiss, egal welche
+        # Farben hier gesetzt wurden. Die ttk-Variante nutzt das app-weit
+        # erzwungene "clam"-Theme (siehe FISIApp._setup_ttk_style) und wird
+        # damit auf jedem System tatsaechlich in den gewuenschten Farben
+        # gezeichnet.
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical",
+                                       command=self.canvas.yview,
+                                       style="Dash.Vertical.TScrollbar")
+        self.hscrollbar = ttk.Scrollbar(self, orient="horizontal",
+                                        command=self.canvas.xview,
+                                        style="Dash.Horizontal.TScrollbar")
         self.canvas.configure(yscrollcommand=self.scrollbar.set,
                               xscrollcommand=self.hscrollbar.set)
         self.hscrollbar.pack(side="bottom", fill="x")
