@@ -67,6 +67,8 @@ python3 -m PyInstaller \
     --add-data "fisi_core.py:." \
     --add-data "fisi_widgets.py:." \
     --add-data "app_gui.py:." \
+    --add-data "icon.png:." \
+    --add-data "icon.ico:." \
     start.py
 
 [ -f dist/FISI-Lernplattform ] || fehler "Der Build ist fehlgeschlagen."

@@ -173,10 +173,13 @@ Das genuegt fuer den taeglichen Gebrauch vollkommen.
 Windows-Komfortstart per Doppelklick:
   Die Datei "FISI-Lernplattform starten.vbs" startet das Programm direkt
   aus dem Quellcode, ohne Konsolenfenster - wie eine normale Anwendung.
-  Per Rechtsklick -> "Senden an" -> "Desktop (Verknuepfung erstellen)"
-  laesst sich daraus ein Desktop-Symbol anlegen. Wichtig: Diese Verknuepfung
-  zeigt immer automatisch den neuesten Stand der Programmdateien in diesem
-  Ordner - nach einem Update von Claude ist kein erneutes Bauen noetig.
+
+  Desktop-Verknuepfung mit eigenem Icon anlegen (einmalig):
+    Doppelklick auf "Desktop-Verknuepfung anlegen.vbs".
+  Das legt automatisch ein Desktop-Symbol "FISI Lernplattform" mit dem
+  eigenen Programm-Icon (icon.ico) an. Wichtig: Diese Verknuepfung zeigt
+  immer automatisch den neuesten Stand der Programmdateien in diesem
+  Ordner - nach einem Update von Claude ist kein erneutes Anlegen noetig.
 
 
 INSTALLATION UNTER LINUX (optional, mit Eintrag im Startmenue)

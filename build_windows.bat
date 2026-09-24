@@ -63,15 +63,21 @@ REM --- 5. Anwendung bauen ----------------------------------------------------
 echo.
 echo [..] Anwendung wird gebaut, das dauert ein bis zwei Minuten ...
 echo.
+set ICON_OPTION=
+if exist icon.ico set ICON_OPTION=--icon icon.ico
+
 python -m PyInstaller ^
     --name "FISI-Lernplattform" ^
     --onefile ^
     --windowed ^
     --noconfirm ^
     --clean ^
+    %ICON_OPTION% ^
     --add-data "fisi_core.py;." ^
     --add-data "fisi_widgets.py;." ^
     --add-data "app_gui.py;." ^
+    --add-data "icon.ico;." ^
+    --add-data "icon.png;." ^
     start.py
 
 if errorlevel 1 (

@@ -42,6 +42,15 @@ APP_TITLE = "FISI Lernplattform"
 # Punkt bei jedem Update erhoeht (0.4 -> 0.5 -> 0.6 -> ...).
 APP_VERSION = "0.4"
 
+
+def _resource_path(filename):
+    """Pfad zu einer mitgelieferten Ressourcendatei (z.B. icon.ico). Findet
+    sie sowohl beim Start aus dem Quellcode als auch in der mit PyInstaller
+    gebauten .exe, wo Ressourcen in einem temporaeren Ordner (sys._MEIPASS)
+    liegen."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, filename)
+
 NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
     ("cards", "cards", "Karteikarten", CATEGORIES),
@@ -1924,6 +1933,28 @@ def _apply_dark_titlebar(root):
         pass
 
 
+def _apply_window_icon(root):
+    """Setzt das Programm-Icon (icon.ico bzw. icon.png) fuer Titelleiste
+    und Taskleiste, falls die Datei vorhanden ist. Schlaegt nie fehl, auch
+    wenn die Datei fehlt oder das Format auf der jeweiligen Plattform nicht
+    unterstuetzt wird - dann bleibt einfach das Standard-Icon."""
+    try:
+        ico_path = _resource_path("icon.ico")
+        if sys.platform == "win32" and os.path.exists(ico_path):
+            root.iconbitmap(ico_path)
+            return
+    except tk.TclError:
+        pass
+    try:
+        png_path = _resource_path("icon.png")
+        if os.path.exists(png_path):
+            icon_image = tk.PhotoImage(file=png_path)
+            root.iconphoto(True, icon_image)
+            root._icon_image_ref = icon_image  # Referenz halten, sonst Garbage Collection
+    except tk.TclError:
+        pass
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -1932,6 +1963,7 @@ class FISIApp:
         root.minsize(1120, 720)
         root.configure(bg=C["bg"])
         _apply_dark_titlebar(root)
+        _apply_window_icon(root)
 
         setup_fonts(root)
         self._setup_ttk_style()
