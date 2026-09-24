@@ -556,14 +556,16 @@ class DBManager:
             (limit,), fetch="all", default=[]) or []
         return rows
 
-    def theme_progress(self, theme_totals):
-        """Fortschritt je AP2-Themenblock in Prozent."""
+    def theme_progress(self, theme_totals, themes=AP2_THEMES, table="scenario_events"):
+        """Fortschritt je Themenblock in Prozent (AP2 per Default, AP1 ueber
+        themes=AP1_THEMES, table='ap1_events' aufrufbar)."""
+        table = table if table in ("scenario_events", "ap1_events") else "scenario_events"
         rows = self._execute(
-            "SELECT theme, COUNT(DISTINCT scenario_index) FROM scenario_events GROUP BY theme",
+            "SELECT theme, COUNT(DISTINCT scenario_index) FROM %s GROUP BY theme" % table,
             fetch="all", default=[]) or []
         done = {row[0]: row[1] for row in rows}
         progress = {}
-        for theme, _color in AP2_THEMES:
+        for theme, _color in themes:
             total = max(1, theme_totals.get(theme, 1))
             progress[theme] = min(100.0, (done.get(theme, 0) / total) * 100.0)
         return progress
@@ -2190,6 +2192,14 @@ def theme_totals():
     """Anzahl Szenarien je AP2-Themenblock."""
     totals = {}
     for scenario in SZENARIEN:
+        totals[scenario["theme"]] = totals.get(scenario["theme"], 0) + 1
+    return totals
+
+
+def ap1_theme_totals():
+    """Anzahl Szenarien je AP1-Themenblock."""
+    totals = {}
+    for scenario in AP1_SZENARIEN:
         totals[scenario["theme"]] = totals.get(scenario["theme"], 0) + 1
     return totals
 

@@ -26,9 +26,10 @@ from tkinter import ttk, messagebox
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fisi_core import (  # noqa: E402
-    AP1_SZENARIEN, AP2_THEMES, CATEGORIES, CATEGORY_COLOR, CATEGORY_SHORT,
-    C, DBManager, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS, SZENARIEN,
-    content_totals, ihk_note, mix, theme_totals,
+    AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CATEGORIES, CATEGORY_COLOR,
+    CATEGORY_SHORT, C, DBManager, KARTEIKARTEN, PROJEKTARBEITEN,
+    QUIZ_QUESTIONS, SZENARIEN,
+    ap1_theme_totals, content_totals, ihk_note, mix, theme_totals,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, Heatmap, IconButton, LineChart, MiniRing,
@@ -468,6 +469,7 @@ class DashboardView(View):
 
         self.ring_cards = self._ring_card(row1, "Karteikarten", "gelernt")
         self.ring_quiz = self._ring_card(row1, "Quizfragen", "beantwortet")
+        self.ring_ap1 = self._ring_card(row1, "AP1 Szenarien", "bearbeitet")
         self.ring_scen = self._ring_card(row1, "AP2 Szenarien", "bearbeitet")
 
         quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
@@ -490,7 +492,10 @@ class DashboardView(View):
         self.bar_quiz = GradientBar(cover.body, "Quizfragen", C["purple"],
                                     C["pink"], parent_bg=C["card"])
         self.bar_quiz.pack(fill="x")
-        self.bar_scen = GradientBar(cover.body, "Szenarien", C["pink"],
+        self.bar_ap1 = GradientBar(cover.body, "AP1-Szenarien", C["blue"],
+                                   C["cyan"], parent_bg=C["card"])
+        self.bar_ap1.pack(fill="x")
+        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["pink"],
                                     C["orange"], parent_bg=C["card"])
         self.bar_scen.pack(fill="x")
 
@@ -556,6 +561,15 @@ class DashboardView(View):
                                       parent_bg=C["card"])
         self.timeline.pack(fill="both", expand=True)
 
+        # --- Reihe 5: AP1-Themenfortschritt --------------------------------
+        ap1_theme_card = Card(self.content, title="AP1 Prüfungsthemen",
+                              subtitle="bearbeitete Grundlagenaufgaben",
+                              accent=C["blue"])
+        ap1_theme_card.pack(fill="x", pady=(14, 0))
+        self.timeline_ap1 = ThemeTimeline(ap1_theme_card.body, height=150,
+                                          parent_bg=C["card"])
+        self.timeline_ap1.pack(fill="both", expand=True)
+
     def _ring_card(self, parent, title, subtitle):
         card = Card(parent, title=title, subtitle=subtitle)
         card.pack(side="left", fill="both", expand=True, padx=(0, 6))
@@ -572,11 +586,13 @@ class DashboardView(View):
     def refresh(self):
         total_cards = len(KARTEIKARTEN)
         total_quiz = len(QUIZ_QUESTIONS)
+        total_ap1 = len(AP1_SZENARIEN)
         total_scen = len(SZENARIEN)
 
         learned_cards = self.db.distinct_cards_learned()
         quiz_answered = self.db.count_quiz_answers()
         quiz_distinct = self.db.distinct_quiz_questions()
+        ap1_done = self.db.distinct_ap1()
         scen_done = self.db.distinct_scenarios()
 
         self.ring_cards.set(learned_cards / max(1, total_cards), C["cyan"],
@@ -585,6 +601,9 @@ class DashboardView(View):
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"],
                            C["pink"], str(quiz_answered),
                            "%d von %d Fragen" % (quiz_distinct, total_quiz))
+        self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"],
+                          C["cyan"], str(ap1_done),
+                          "von %d Szenarien" % total_ap1)
         self.ring_scen.set(scen_done / max(1, total_scen), C["pink"],
                            C["orange"], str(scen_done),
                            "von %d Szenarien" % total_scen)
@@ -601,6 +620,8 @@ class DashboardView(View):
                            "%d / %d" % (learned_cards, total_cards))
         self.bar_quiz.set(quiz_distinct / max(1, total_quiz) * 100,
                           "%d / %d" % (quiz_distinct, total_quiz))
+        self.bar_ap1.set(ap1_done / max(1, total_ap1) * 100,
+                         "%d / %d" % (ap1_done, total_ap1))
         self.bar_scen.set(scen_done / max(1, total_scen) * 100,
                           "%d / %d" % (scen_done, total_scen))
 
@@ -651,11 +672,17 @@ class DashboardView(View):
         self.timeline.set_data([(name, progress.get(name, 0.0), color)
                                 for name, color in AP2_THEMES])
 
+        progress_ap1 = self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
+                                              table="ap1_events")
+        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0), color)
+                                    for name, color in AP1_THEMES])
+
     def _activity_row(self, timestamp, kind, detail, extra):
         row = tk.Frame(self.activity_box, bg=C["card"])
         row.pack(fill="x", pady=3)
         color = {"Karteikarte": C["cyan"], "Quizfrage": C["purple"],
-                 "AP2-Szenario": C["pink"], "Test-Session": C["green"]}.get(kind, C["muted"])
+                 "AP1-Szenario": C["blue"], "AP2-Szenario": C["pink"],
+                 "Test-Session": C["green"]}.get(kind, C["muted"])
         dot = tk.Canvas(row, width=8, height=8, bg=C["card"],
                         highlightthickness=0, bd=0)
         dot.pack(side="left", padx=(0, 8), pady=6)
