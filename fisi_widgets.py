@@ -1108,7 +1108,7 @@ def make_text(parent, height=6, readonly=False):
                      selectbackground=C["purple"], selectforeground="#FFFFFF",
                      relief="flat", padx=12, pady=10, font=F["body"],
                      highlightthickness=1, highlightbackground=C["border"],
-                     highlightcolor=C["border_hi"])
+                     highlightcolor=C["border_hi"], insertofftime=0)
     if readonly:
         widget.configure(state="disabled")
     return widget
