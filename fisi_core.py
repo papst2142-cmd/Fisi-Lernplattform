@@ -96,6 +96,10 @@ C = {
     "card_alt":  "#251543",
     "card_hi":   "#311C58",
     "border":    "#33205A",
+    # Neutrales Grau (kein Lila-Stich) fuer die Scrollbalken, damit sie zum
+    # dunkelgrauen Ton der nativen Windows-Fensterleiste passen.
+    "scrollbar":    "#3A3A40",
+    "scrollbar_hi": "#55555E",
     "border_hi": "#553289",
     "text":      "#ECE6F8",
     "text_dim":  "#A794C6",
