@@ -1,0 +1,316 @@
+===========================================================================
+  FISI LERNPLATTFORM  -  Version 2.0
+  Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+===========================================================================
+
+
+WAS IST DAS?
+---------------------------------------------------------------------------
+Ein Lernprogramm mit dunkler Dashboard-Oberflaeche:
+
+  Dashboard          Alle Kennzahlen auf einen Blick: gelernte Karteikarten,
+                     beantwortete Quizfragen, bearbeitete AP2-Szenarien,
+                     Erfolgsquote, Lernverlauf der letzten 14 Tage,
+                     Aktivitaet je Fachbereich, Lernkalender und der
+                     Fortschritt je AP2-Pruefungsthema.
+
+  Karteikarten       67 Karten in drei Lernmodi: Freitext, Multiple Choice
+                     und Aufdecken. Filterbar nach Fachbereich.
+
+  Pruefungstrainer   150 Fragen, Test-Sessions mit frei waehlbarer Laenge,
+                     Zeitmessung, Erklaerung zu jeder Antwort und
+                     Bewertung nach IHK-Notenschluessel.
+
+  AP2 Szenarien      16 praxisnahe Pruefungsaufgaben mit Musterloesung.
+
+  Praxis-Rechner     Subnetting (IPv4 und IPv6) sowie RAID-Kapazitaet
+                     mit Nutzkapazitaet, Paritaet, Effizienz und
+                     Ausfalltoleranz.
+
+  Lernfortschritt    Historie aller Test-Sessions mit Diagramm.
+
+Die vier Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
+Datenschutz, Systeme/RAID & Hardware sowie Wirtschaft & Prozesse.
+
+
+VORAUSSETZUNGEN
+---------------------------------------------------------------------------
+  * Python 3.8 oder neuer
+  * Tkinter (unter Windows und macOS bei Python bereits dabei)
+
+Es werden keine weiteren Bibliotheken benoetigt. Das Programm laeuft unter
+Windows, Linux und macOS mit identischem Erscheinungsbild. Es ist keine
+Internetverbindung noetig (ausser einmalig, falls Punkt "EIGENSTAENDIGE
+ANWENDUNG BAUEN" genutzt wird).
+
+Tkinter unter Linux nachinstallieren, falls es fehlt:
+  Debian/Ubuntu : sudo apt install python3-tk
+  Fedora        : sudo dnf install python3-tkinter
+  Arch          : sudo pacman -S tk
+
+
+INSTALLATION FUER EINSTEIGER - SCHRITT FUER SCHRITT
+---------------------------------------------------------------------------
+Dieser Abschnitt richtet sich an alle, die noch nie ein Python-Programm
+gestartet haben. Wer sich mit der Kommandozeile auskennt, kann direkt zu
+"SOFORT STARTEN" springen.
+
+SCHRITT 1: Pruefen, ob Python bereits installiert ist
+  Windows:
+    1. Die Tastenkombination [Windows-Taste] + [R] druecken.
+    2. "cmd" eingeben und mit Enter bestaetigen - es oeffnet sich ein
+       schwarzes Fenster (die Eingabeaufforderung).
+    3. Den Befehl  python --version  eingeben und Enter druecken.
+    4. Erscheint eine Versionsnummer wie "Python 3.12.4", ist Python
+       bereits installiert und Schritt 2 kann uebersprungen werden.
+       Erscheint stattdessen eine Fehlermeldung oder oeffnet sich der
+       Microsoft Store, ist Python noch nicht installiert.
+
+  Linux:
+    Auf fast allen Linux-Systemen ist Python 3 bereits vorinstalliert.
+    Ein Terminal oeffnen und  python3 --version  eingeben, um dies zu
+    pruefen.
+
+  macOS:
+    Das Programm "Terminal" oeffnen (ueber Spotlight-Suche, [CMD]+[Leer-
+    taste], dann "Terminal" eintippen) und  python3 --version  eingeben.
+
+SCHRITT 2: Python installieren (falls in Schritt 1 nicht vorhanden)
+  Windows:
+    1. Die Internetseite https://www.python.org/downloads/ oeffnen.
+    2. Auf den gelben Button "Download Python 3.x.x" klicken.
+    3. Die heruntergeladene Datei (z.B. python-3.12.4-amd64.exe) starten.
+    4. WICHTIG: Auf der ersten Installationsseite unten das Kaestchen
+       "Add python.exe to PATH" bzw. "Add Python to PATH" ankreuzen,
+       bevor auf "Install Now" geklickt wird. Ohne dieses Haekchen
+       funktioniert der Befehl "python" im schwarzen Fenster spaeter
+       nicht.
+    5. Nach Abschluss der Installation den Computer neu starten oder
+       zumindest ein neues Eingabeaufforderungs-Fenster oeffnen und
+       Schritt 1 zur Kontrolle wiederholen.
+    Alternativ (Windows 10/11): im Startmenue "Microsoft Store" oeffnen,
+    nach "Python" suchen und die offizielle App von "Python Software
+    Foundation" installieren - dort ist "Add to PATH" bereits erledigt.
+
+  Linux (Debian/Ubuntu, z.B. Ubuntu, Linux Mint):
+    sudo apt update
+    sudo apt install python3 python3-tk
+
+  Linux (Fedora):
+    sudo dnf install python3 python3-tkinter
+
+  Linux (Arch, Manjaro):
+    sudo pacman -S python tk
+
+  macOS:
+    Die Internetseite https://www.python.org/downloads/macos/ oeffnen,
+    die aktuelle Version herunterladen, das .pkg-Installationsprogramm
+    starten und den Anweisungen folgen. Tkinter ist bei der Standard-
+    installation von python.org bereits enthalten.
+
+SCHRITT 3: Die Programmdateien an einen Ort auf dem Computer legen
+  Alle Dateien aus diesem Paket (LIESMICH.txt, start.py, app_gui.py,
+  fisi_core.py, fisi_widgets.py, build_windows.bat, build_linux.sh,
+  install_linux.sh) muessen gemeinsam in einem Ordner liegen, zum
+  Beispiel:
+    Windows :  C:\Users\<Benutzername>\Dokumente\FISI-Lernplattform
+    Linux   :  /home/<Benutzername>/FISI-Lernplattform
+
+  Wurde das Paket als ZIP-Datei heruntergeladen:
+    Windows :  Mit der rechten Maustaste auf die ZIP-Datei klicken und
+               "Alle extrahieren..." waehlen, dann Zielordner bestaetigen.
+    Linux   :  Im Terminal in den Download-Ordner wechseln und
+               unzip fisi-lernplattform*.zip -d ~/FISI-Lernplattform
+               ausfuehren (bei Bedarf vorher unzip mit
+               "sudo apt install unzip" nachinstallieren).
+
+SCHRITT 4: Ein Terminal-Fenster im Programmordner oeffnen
+  Windows :  Den Ordner mit der Lernplattform im Explorer oeffnen, in die
+             Adresszeile oben klicken, "cmd" eintippen und Enter druecken -
+             es oeffnet sich eine Eingabeaufforderung direkt in diesem
+             Ordner.
+  Linux   :  Im Dateimanager meist per Rechtsklick "Im Terminal oeffnen"
+             waehlbar. Alternativ im Terminal mit "cd" in den Ordner
+             wechseln, z.B.  cd ~/FISI-Lernplattform
+  macOS   :  Im Finder den Ordner suchen, bei gedrueckter [CTRL]-Taste
+             (bzw. rechte Maustaste) auf den Ordner klicken und "Neues
+             Terminal am Ordner" waehlen, falls verfuegbar - sonst im
+             Terminal mit "cd" in den Ordner wechseln.
+
+SCHRITT 5: Das Programm starten
+  Im geoeffneten Terminal-Fenster (siehe Schritt 4) eingeben:
+    Windows :  python start.py
+    Linux   :  python3 start.py
+    macOS   :  python3 start.py
+  und mit Enter bestaetigen. Nach wenigen Sekunden oeffnet sich das
+  Programmfenster der FISI Lernplattform.
+
+Falls dabei eine Fehlermeldung erscheint, hilft der Abschnitt
+"PROBLEMBEHEBUNG" weiter unten in dieser Datei.
+
+
+SOFORT STARTEN (fuer erfahrene Nutzer, ohne weitere Installation)
+---------------------------------------------------------------------------
+  Windows :  python start.py
+  Linux   :  python3 start.py
+  macOS   :  python3 start.py
+
+Das genuegt fuer den taeglichen Gebrauch vollkommen.
+
+
+INSTALLATION UNTER LINUX (optional, mit Eintrag im Startmenue)
+---------------------------------------------------------------------------
+Wer die Lernplattform wie eine normal installierte Anwendung ueber das
+Startmenue oeffnen moechte, statt sie jedes Mal per Befehl zu starten,
+kann das Installationsskript nutzen:
+
+  chmod +x install_linux.sh
+  ./install_linux.sh
+
+Das Skript kopiert die Programmdateien nach ~/.local/share/fisi-lernplatt-
+form, legt einen Menueeintrag "FISI Lernplattform" an und richtet den
+Befehl fisi-lernplattform ein. Es wird kein root bzw. sudo benoetigt, da
+alles im Benutzerverzeichnis installiert wird.
+
+Danach steht "FISI Lernplattform" im Startmenue und der Befehl
+  fisi-lernplattform
+im Terminal zur Verfuegung.
+
+Wieder entfernen:
+  ./install_linux.sh --entfernen
+
+
+EIGENSTAENDIGE ANWENDUNG BAUEN (ohne Python beim Anwender)
+---------------------------------------------------------------------------
+Erzeugt eine einzelne ausfuehrbare Datei, die auch auf Rechnern ohne
+installiertes Python laeuft. Beim ersten Aufruf wird PyInstaller
+nachgeladen, dafuer wird einmalig eine Internetverbindung benoetigt.
+
+  Windows :  build_windows.bat        (Doppelklick genuegt)
+             Ergebnis: dist\FISI-Lernplattform.exe
+
+  Linux   :  chmod +x build_linux.sh
+             ./build_linux.sh
+             Ergebnis: dist/FISI-Lernplattform
+
+Die erzeugte Datei laesst sich frei kopieren, zum Beispiel auf einen
+USB-Stick.
+
+
+WO WERDEN DIE LERNFORTSCHRITTE GESPEICHERT?
+---------------------------------------------------------------------------
+In einer SQLite-Datenbank im Benutzerverzeichnis:
+
+  Windows :  %APPDATA%\FISI-Lernplattform\fisi_lernplattform.db
+  Linux   :  ~/.local/share/fisi-lernplattform/fisi_lernplattform.db
+  macOS   :  ~/Library/Application Support/FISI-Lernplattform/
+             fisi_lernplattform.db
+
+Liegt bereits eine Datei fisi_lernplattform.db neben dem Programm, wird
+diese weiterverwendet. Bestehende Lernfortschritte aus einer aelteren
+Version gehen also nicht verloren.
+
+Ein anderer Speicherort laesst sich ueber die Umgebungsvariable
+FISI_DB_PATH festlegen, etwa fuer ein Netzlaufwerk:
+
+  Linux   :  export FISI_DB_PATH=/mnt/nas/fisi.db
+  Windows :  set FISI_DB_PATH=N:\fisi.db
+
+Zum Sichern genuegt es, diese eine Datei zu kopieren.
+
+
+DATEIEN IM PAKET
+---------------------------------------------------------------------------
+  start.py            Startprogramm, prueft die Voraussetzungen
+  app_gui.py          Oberflaeche: Navigation und alle Ansichten
+  fisi_widgets.py     Bausteine des Designs (Diagramme, Kacheln, Buttons)
+  fisi_core.py        Datenbank, Farben und saemtliche Lerninhalte
+  build_windows.bat   Baut die eigenstaendige Windows-Anwendung
+  build_linux.sh      Baut die eigenstaendige Linux-Anwendung
+  install_linux.sh    Traegt das Programm ins Linux-Startmenue ein
+  LIESMICH.txt        Diese Datei
+
+Alle vier .py-Dateien (start.py, app_gui.py, fisi_widgets.py, fisi_core.py)
+muessen im selben Ordner liegen, die uebrigen Dateien sind optional und
+nur fuer die in dieser Datei beschriebenen Zusatzfunktionen noetig.
+
+
+EIGENE LERNINHALTE ERGAENZEN
+---------------------------------------------------------------------------
+Saemtliche Inhalte stehen in fisi_core.py und lassen sich mit einem
+Texteditor erweitern.
+
+Neue Karteikarte (Liste KARTEIKARTEN):
+
+  {"cat": CAT_NET,
+   "q": "Deine Frage?",
+   "a": "Kurzantwort",
+   "a_full": "Ausfuehrliche Musterloesung.",
+   "options": ["Kurzantwort", "Falsch 1", "Falsch 2", "Falsch 3"]},
+
+Neue Quizfrage (Funktion build_quiz_database):
+
+  {"cat": CAT_SEC,
+   "q": "Deine Frage?",
+   "options": ["Richtig", "Falsch 1", "Falsch 2", "Falsch 3"],
+   "a": "Richtig",
+   "exp": "Erklaerung, warum das richtig ist."},
+
+Als Fachbereich stehen CAT_NET, CAT_SEC, CAT_SYS und CAT_BIZ zur Wahl.
+Die Kennzahlen im Dashboard passen sich automatisch an.
+
+
+TASTENKUERZEL
+---------------------------------------------------------------------------
+  Strg + F      Springt in das Suchfeld
+  Enter         Startet die Suche beziehungsweise die Berechnung
+
+
+PROBLEMBEHEBUNG
+---------------------------------------------------------------------------
+"'python' wird nicht als Befehl erkannt" (Windows)
+    Python ist entweder nicht installiert oder wurde ohne das Haekchen
+    "Add python.exe to PATH" installiert. Siehe Abschnitt "INSTALLATION
+    FUER EINSTEIGER", Schritt 2 - Python neu installieren und dabei das
+    Haekchen setzen, danach ein neues Eingabeaufforderungs-Fenster
+    oeffnen. Alternativ kann statt "python" der Befehl "py" versucht
+    werden (py start.py).
+
+"python3: command not found" bzw. "python: command not found" (Linux/
+macOS)
+    Python 3 ist nicht installiert. Siehe Abschnitt "INSTALLATION FUER
+    EINSTEIGER", Schritt 2, fuer die passende Installationsanleitung.
+
+"ModuleNotFoundError: No module named 'tkinter'"
+    Tkinter fehlt und muss separat nachinstalliert werden, siehe
+    Abschnitt "VORAUSSETZUNGEN". Unter Windows und macOS ist Tkinter bei
+    einer Installation ueber python.org normalerweise automatisch dabei.
+
+Beim Doppelklick auf start.py passiert nichts oder ein Fenster
+oeffnet und schliesst sofort wieder
+    Das Programm ueber die Eingabeaufforderung bzw. das Terminal starten
+    (siehe Schritt 4 und 5 unter "INSTALLATION FUER EINSTEIGER"), dann
+    bleibt eine eventuelle Fehlermeldung lesbar, statt dass sich das
+    Fenster sofort wieder schliesst.
+
+"Permission denied" bei ./install_linux.sh oder ./build_linux.sh
+    Die Datei muss zuerst ausfuehrbar gemacht werden:
+      chmod +x install_linux.sh
+    (bzw. chmod +x build_linux.sh) und danach erneut starten.
+
+"Datenbankfehler" beim Start
+    Das Programmverzeichnis ist schreibgeschuetzt. Ueber FISI_DB_PATH
+    einen beschreibbaren Ort festlegen (siehe Abschnitt "WO WERDEN DIE
+    LERNFORTSCHRITTE GESPEICHERT?").
+
+Die Oberflaeche wirkt gedraengt
+    Das Fenster vergroessern. Empfohlen sind mindestens 1120 x 720 Punkte.
+
+Der Build bricht ab
+    Internetverbindung pruefen, PyInstaller wird beim ersten Mal geladen.
+
+Es bleiben Fragen offen oder ein Fehler laesst sich mit dieser Anleitung
+nicht loesen: Die vollstaendige Fehlermeldung aus dem Terminal-Fenster
+kopieren, das erleichtert die weitere Fehlersuche erheblich.
+
+===========================================================================
