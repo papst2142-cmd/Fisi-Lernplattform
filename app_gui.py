@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fisi_core import (  # noqa: E402
     AP2_THEMES, CATEGORIES, CATEGORY_COLOR, CATEGORY_SHORT,
-    C, DBManager, KARTEIKARTEN, QUIZ_QUESTIONS, SZENARIEN,
+    C, DBManager, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS, SZENARIEN,
     content_totals, ihk_note, mix, theme_totals,
 )
 from fisi_widgets import (  # noqa: E402
@@ -44,6 +44,7 @@ NAV_ITEMS = [
     ("cards", "cards", "Karteikarten", CATEGORIES),
     ("quiz", "target", "Prüfungstrainer", None),
     ("scenarios", "diamond", "AP2 Szenarien", None),
+    ("testproject", "flag", "Test Projekt", None),
     ("calc", "calc", "Praxis-Rechner", None),
     ("progress", "chart", "Lernfortschritt", None),
     ("settings", "gear", "Einstellungen", None),
@@ -62,6 +63,7 @@ VIEW_TITLES = {
     "cards": ("LERNEN", "KARTEIKARTEN"),
     "quiz": ("LERNEN", "PRÜFUNGSTRAINER"),
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
+    "testproject": ("LERNEN", "TEST PROJEKT"),
     "calc": ("WERKZEUGE", "PRAXIS-RECHNER"),
     "progress": ("AUSWERTUNG", "LERNFORTSCHRITT"),
     "settings": ("SYSTEM", "EINSTELLUNGEN"),
@@ -1248,6 +1250,161 @@ class ScenarioView(View):
 
 
 # ============================================================================
+#  TEST PROJEKT
+# ============================================================================
+
+class ProjectView(View):
+    """Uebt die komplette Projektarbeit an einem realistischen Kundenauftrag:
+    Ausgangssituation, Auftrag, Rahmenbedingungen und Arbeitsauftraege zum
+    selbststaendigen Bearbeiten, dazu Loesungsansaetze zum Vergleich."""
+
+    def build(self):
+        self.index = 0
+        self.hints_visible = False
+
+        layout = tk.Frame(self.content, bg=C["bg"])
+        layout.pack(fill="both", expand=True)
+        layout.columnconfigure(0, weight=2, uniform="proj")
+        layout.columnconfigure(1, weight=5, uniform="proj")
+
+        list_card = Card(layout, title="Testprojekte",
+                         subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))
+        list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        self.list_box = tk.Frame(list_card.body, bg=C["card"])
+        self.list_box.pack(fill="both", expand=True)
+        self.list_rows = []
+        for position, project in enumerate(PROJEKTARBEITEN):
+            self.list_rows.append(self._list_row(position, project))
+
+        detail = tk.Frame(layout, bg=C["bg"])
+        detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+
+        self.header_label = make_label(detail, "", font=F["h2"], fg=C["text"],
+                                       wraplength=760, justify="left")
+        self.header_label.pack(anchor="w")
+        self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
+        self.meta_label.pack(anchor="w", pady=(2, 12))
+
+        self.task_card = Card(detail, title="Kundenauftrag", accent=C["cyan"])
+        self.task_card.pack(fill="both", expand=True)
+        self.txt_task = make_text(self.task_card.body, height=14, readonly=True)
+        self.txt_task.pack(fill="both", expand=True)
+
+        self.hint_card = Card(detail, title="Lösungsansätze", accent=C["green"])
+        self.hint_card.pack(fill="both", expand=True, pady=(14, 0))
+        self.txt_hints = make_text(self.hint_card.body, height=14, readonly=True)
+        self.txt_hints.pack(fill="both", expand=True)
+
+        controls = tk.Frame(detail, bg=C["bg"])
+        controls.pack(fill="x", pady=(14, 0))
+        self.btn_toggle = NeoButton(controls, "Lösungsansätze anzeigen",
+                                    self.toggle_hints, kind="primary",
+                                    parent_bg=C["bg"])
+        self.btn_toggle.pack(side="left")
+        NeoButton(controls, "Nächstes Projekt", self.next_project,
+                  kind="ghost", parent_bg=C["bg"]).pack(side="left", padx=10)
+
+        self.load_project(0)
+
+    def _list_row(self, position, project):
+        row = tk.Frame(self.list_box, bg=C["card_alt"], cursor="hand2",
+                       highlightthickness=1, highlightbackground=C["border"])
+        row.pack(fill="x", pady=4)
+        marker = tk.Frame(row, bg=CATEGORY_COLOR[project["cat"]], width=3)
+        marker.pack(side="left", fill="y")
+        inner = tk.Frame(row, bg=C["card_alt"])
+        inner.pack(side="left", fill="x", expand=True, padx=10, pady=9)
+        title = tk.Label(inner, text="%d. %s" % (position + 1, project["title"]),
+                         bg=C["card_alt"], fg=C["text"], font=F["small_bold"],
+                         anchor="w", justify="left", wraplength=190)
+        title.pack(anchor="w")
+        sub = tk.Label(inner, text="%s · %s" % (project["schwierigkeit"],
+                                                 CATEGORY_SHORT[project["cat"]]),
+                       bg=C["card_alt"], fg=C["muted"], font=F["tiny"], anchor="w")
+        sub.pack(anchor="w")
+        for widget in (row, inner, title, sub, marker):
+            widget.bind("<Button-1>", lambda _e, p=position: self.load_project(p))
+        return {"frame": row, "inner": inner, "title": title, "sub": sub}
+
+    def _highlight(self):
+        done = self.db.completed_projects()
+        for position, row in enumerate(self.list_rows):
+            active = position == self.index
+            bg = C["card_hi"] if active else C["card_alt"]
+            row["frame"].configure(bg=bg,
+                                   highlightbackground=C["purple"] if active else C["border"])
+            row["inner"].configure(bg=bg)
+            mark = " ✓" if position in done else ""
+            project = PROJEKTARBEITEN[position]
+            row["title"].configure(
+                bg=bg, fg=C["text"] if active else C["text_dim"],
+                text="%d. %s%s" % (position + 1, project["title"], mark))
+            row["sub"].configure(bg=bg)
+
+    @staticmethod
+    def _task_text(project):
+        lines = [
+            "AUSGANGSSITUATION", project["ausgangssituation"], "",
+            "AUFTRAG", project["auftrag"], "",
+            "RAHMENBEDINGUNGEN",
+        ]
+        lines += ["  - " + item for item in project["rahmenbedingungen"]]
+        lines += ["", "IHRE AUFGABEN (Projektantrag)"]
+        for position, aufgabe in enumerate(project["aufgaben"], start=1):
+            lines.append("  %d. %s" % (position, aufgabe))
+        return "\n".join(lines)
+
+    @staticmethod
+    def _hint_text(project):
+        lines = [
+            "Diese Hinweise ersetzen keine eigene Bearbeitung - nutze sie zum "
+            "Vergleich, nachdem du deinen eigenen Projektantrag geschrieben hast.",
+            "",
+        ]
+        for position, (aufgabe, hinweis) in enumerate(
+                zip(project["aufgaben"], project["hinweise"]), start=1):
+            lines.append("%d. %s" % (position, aufgabe))
+            lines.append("   Lösungsansatz: %s" % hinweis)
+            lines.append("")
+        return "\n".join(lines).rstrip()
+
+    def load_project(self, position):
+        self.index = position
+        project = PROJEKTARBEITEN[position]
+        self.header_label.config(text=project["title"])
+        self.meta_label.config(
+            text="%s  ·  Schwierigkeit: %s  ·  Fachbereich: %s"
+                 % (project["branche"], project["schwierigkeit"],
+                    CATEGORY_SHORT[project["cat"]]))
+        set_text(self.txt_task, self._task_text(project))
+        self.hints_visible = False
+        set_text(self.txt_hints,
+                 "Die Lösungsansätze sind noch ausgeblendet.\n\n"
+                 "Bearbeite den Projektantrag zuerst selbst - Ist-Analyse, "
+                 "Konzept, Zeit- und Kostenplanung, Risiken - und decke die "
+                 "Lösungsansätze anschließend zum Vergleich auf.")
+        self.btn_toggle.set_text("Lösungsansätze anzeigen")
+        self._highlight()
+
+    def toggle_hints(self):
+        project = PROJEKTARBEITEN[self.index]
+        if self.hints_visible:
+            set_text(self.txt_hints, "Die Lösungsansätze sind ausgeblendet.")
+            self.btn_toggle.set_text("Lösungsansätze anzeigen")
+            self.hints_visible = False
+        else:
+            set_text(self.txt_hints, self._hint_text(project))
+            self.btn_toggle.set_text("Lösungsansätze ausblenden")
+            self.hints_visible = True
+            self.db.log_project(self.index, project["title"], project["cat"])
+            self.app.notify_progress()
+            self._highlight()
+
+    def next_project(self):
+        self.load_project((self.index + 1) % len(PROJEKTARBEITEN))
+
+
+# ============================================================================
 #  PRAXIS-RECHNER
 # ============================================================================
 
@@ -1689,6 +1846,7 @@ class FISIApp:
         self.views = {}
         for key, cls in (("dashboard", DashboardView), ("cards", CardsView),
                          ("quiz", QuizView), ("scenarios", ScenarioView),
+                         ("testproject", ProjectView),
                          ("calc", CalcView), ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)

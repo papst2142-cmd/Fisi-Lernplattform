@@ -254,6 +254,15 @@ class DBManager:
                 theme TEXT NOT NULL
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS project_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                project_index INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL
+            )
+            """,
         ]
         conn = None
         try:
@@ -303,6 +312,13 @@ class DBManager:
             (self._now(), index, title, theme),
             commit=True, default=False)
 
+    def log_project(self, index, title, category):
+        self._execute(
+            "INSERT INTO project_events (timestamp, project_index, title, category)"
+            " VALUES (?, ?, ?, ?)",
+            (self._now(), index, title, category),
+            commit=True, default=False)
+
     # -- Loeschen -----------------------------------------------------------
 
     def clear_history(self):
@@ -313,7 +329,8 @@ class DBManager:
         try:
             conn = self.get_connection()
             cur = conn.cursor()
-            for table in ("test_results", "card_events", "quiz_answers", "scenario_events"):
+            for table in ("test_results", "card_events", "quiz_answers",
+                          "scenario_events", "project_events"):
                 cur.execute("DELETE FROM " + table)
             conn.commit()
             return True
@@ -365,6 +382,17 @@ class DBManager:
             "SELECT COUNT(DISTINCT scenario_index) FROM scenario_events", fetch="one", default=(0,))
         return (row[0] if row else 0) or 0
 
+    def distinct_projects(self):
+        row = self._execute(
+            "SELECT COUNT(DISTINCT project_index) FROM project_events", fetch="one", default=(0,))
+        return (row[0] if row else 0) or 0
+
+    def completed_projects(self):
+        """Menge der Indizes bereits bearbeiteter Testprojekte."""
+        rows = self._execute(
+            "SELECT DISTINCT project_index FROM project_events", fetch="all", default=[]) or []
+        return {row[0] for row in rows}
+
     def quiz_success_rate(self):
         """Erfolgsquote ueber alle je beantworteten Quizfragen in Prozent."""
         row = self._execute(
@@ -414,6 +442,7 @@ class DBManager:
             "  SELECT timestamp FROM card_events"
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
+            "  UNION ALL SELECT timestamp FROM project_events"
             ") WHERE substr(timestamp, 1, 10) >= ? GROUP BY tag",
             (start.isoformat(),), fetch="all", default=[]) or []
         lookup = {row[0]: row[1] for row in rows}
@@ -454,6 +483,7 @@ class DBManager:
             "  SELECT timestamp FROM card_events"
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
+            "  UNION ALL SELECT timestamp FROM project_events"
             "  UNION ALL SELECT timestamp FROM test_results"
             ") WHERE substr(timestamp, 1, 7) = ?",
             (prefix,), fetch="all", default=[]) or []
@@ -481,6 +511,9 @@ class DBManager:
             "  SELECT timestamp, 'AP2-Szenario', theme, 'bearbeitet'"
             "  FROM scenario_events"
             "  UNION ALL"
+            "  SELECT timestamp, 'Testprojekt', category, 'bearbeitet'"
+            "  FROM project_events"
+            "  UNION ALL"
             "  SELECT timestamp, 'Test-Session', note,"
             "         CAST(score AS TEXT) || ' / ' || CAST(total AS TEXT)"
             "  FROM test_results"
@@ -507,6 +540,7 @@ class DBManager:
             "  SELECT timestamp FROM card_events"
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
+            "  UNION ALL SELECT timestamp FROM project_events"
             ") ORDER BY 1 DESC", fetch="all", default=[]) or []
         days = []
         for (value,) in rows:
@@ -1575,6 +1609,331 @@ SZENARIEN = [
                     "Wasserfallmodell.\n"
                     "3. Im Sprint Review wird das fertiggestellte Increment den Stakeholdern präsentiert, um "
                     "frühzeitig Feedback zu erhalten und die weitere Priorisierung anzupassen.",
+    },
+]
+
+
+# ============================================================================
+#  LERNINHALTE: TESTPROJEKTE (PROJEKTARBEIT UEBEN)
+# ============================================================================
+#
+# Anders als die kurzen AP2-Szenarien oben simulieren die Testprojekte einen
+# kompletten Kundenauftrag, wie er als Grundlage fuer einen Projektantrag
+# (z.B. zur AP2-Projektdokumentation) dienen koennte: Ausgangssituation,
+# Auftrag, Rahmenbedingungen und eine Reihe von Arbeitsauftraegen, die die
+# ueblichen Bestandteile einer Projektarbeit abdecken (Ist-Analyse,
+# Konzeption, Zeit- und Kostenplanung, Risiken, Qualitaetssicherung).
+# Die "hinweise" sind bewusst keine fertigen Musterloesungen, sondern
+# Loesungsansaetze zum Vergleich nach der eigenen Bearbeitung.
+
+PROJEKTARBEITEN = [
+    {
+        "title": "Netzwerk-Rollout für eine neue Filiale",
+        "cat": CAT_NET,
+        "branche": "Einzelhandelskette (ModeWelt GmbH), 13. Filiale",
+        "schwierigkeit": "Mittel",
+        "ausgangssituation": (
+            "Die Modekette \"ModeWelt GmbH\" betreibt zwölf Filialen mit "
+            "zentralem Rechenzentrum am Hauptsitz. Für die neue 13. Filiale "
+            "(ca. 180 m², 8 Kassenarbeitsplätze, Lager mit 2 PCs, Büro mit "
+            "3 PCs, WLAN für Kunden) muss die komplette Netzwerkinfrastruktur "
+            "neu geplant und aufgebaut werden. Die Filiale soll an das "
+            "zentrale Warenwirtschaftssystem am Hauptsitz angebunden werden."
+        ),
+        "auftrag": (
+            "Planen und dokumentieren Sie den Netzwerk-Rollout inklusive "
+            "Verkabelung, aktiver Komponenten, WLAN-Konzept und Anbindung "
+            "an den Hauptsitz."
+        ),
+        "rahmenbedingungen": [
+            "Zeitrahmen: 6 Wochen bis zur Ladeneröffnung",
+            "Budget: 8.500 Euro für Hardware und Verkabelung",
+            "Anbindung Hauptsitz: vorhandene Internetleitung 100 Mbit/s Down / 40 Mbit/s Up",
+            "Kassensystem und Warenwirtschaft benötigen eine priorisierte, stabile Verbindung",
+            "Das Kunden-WLAN muss vom internen Netz vollständig getrennt sein",
+        ],
+        "aufgaben": [
+            "Ist-Analyse: Welche Informationen benötigen Sie vor Planungsbeginn vom Kunden und vor Ort?",
+            "Entwerfen Sie ein Netzwerk-/VLAN-Konzept (Anzahl Netze, Zweck, grobe IP-Adressierung).",
+            "Erstellen Sie einen groben Projektstrukturplan mit den wichtigsten Arbeitspaketen.",
+            "Kalkulieren Sie überschlägig die Kosten für aktive Komponenten und ordnen Sie diese dem Budget zu.",
+            "Welche Maßnahme sichert die Anbindung an den Hauptsitz gegen den Ausfall der Standleitung ab?",
+            "Wie stellen Sie die Abnahme/Qualitätssicherung des Projekts sicher?",
+        ],
+        "hinweise": [
+            "Grundriss und Anzahl der Arbeitsplätze, vorhandene Verkabelung, Position von Serverraum/Technikschrank, "
+            "Stromversorgung, bauliche Gegebenheiten (Kabelwege), bestehende Provider-Verträge sowie die genauen "
+            "Anforderungen des Warenwirtschaftssystems.",
+            "Mindestens drei VLANs sind sinnvoll: Kassen/Warenwirtschaft (hohe Priorität, QoS), Büro/Verwaltung und "
+            "Kunden-WLAN (isoliert, eigenes Gastnetz ohne Zugriff auf interne Ressourcen) - je eigener privater "
+            "IP-Bereich, z.B. 10.13.10.0/24, 10.13.20.0/24, 10.13.30.0/24.",
+            "Arbeitspakete z.B.: Materialbeschaffung, Verkabelung, Installation aktiver Komponenten, Konfiguration "
+            "VLANs/Firewall, Einrichtung VPN zum Hauptsitz, Funktionstest, Schulung des Personals, Pufferzeit vor "
+            "der Eröffnung.",
+            "Grobkalkulation: verwaltbarer PoE-Switch ca. 400-600 Euro, Firewall/Router ca. 500-800 Euro, "
+            "2 Access Points ca. 300-400 Euro, Verkabelung/Patchpanel/Material ca. 1.000-1.500 Euro - Arbeitszeit "
+            "separat kalkulieren und eine Reserve für Unvorhergesehenes einplanen.",
+            "Eine zweite, unabhängige Anbindung (z.B. LTE/5G-Backup-Router mit automatischem Failover) sichert die "
+            "Verbindung zum Hauptsitz gegen den Ausfall der Hauptleitung ab.",
+            "Funktionstest aller Arbeitsplätze und der Anbindung vor Eröffnung, ein Abnahmeprotokoll mit dem Kunden "
+            "sowie eine vollständige Dokumentation (Netzplan, IP-Konzept, Zugangsdaten), die dem Kunden übergeben wird.",
+        ],
+    },
+    {
+        "title": "Einführung einer Mehrfaktor-Authentifizierung",
+        "cat": CAT_SEC,
+        "branche": "Steuerberatungskanzlei, 25 Mitarbeiter",
+        "schwierigkeit": "Mittel",
+        "ausgangssituation": (
+            "Die Kanzlei arbeitet mit sensiblen Mandantendaten (DATEV, "
+            "E-Mail, Cloud-Speicher) und sichert die Anmeldung bislang "
+            "ausschließlich über Benutzername und Passwort ab. Ein "
+            "Phishing-Vorfall bei einem vergleichbaren Betrieb hat den "
+            "Kanzleiinhaber alarmiert."
+        ),
+        "auftrag": (
+            "Konzipieren und führen Sie eine Zwei- bzw. Mehrfaktor-"
+            "Authentifizierung für alle kritischen Systeme ein und "
+            "sensibilisieren Sie die Mitarbeiter für das Thema."
+        ),
+        "rahmenbedingungen": [
+            "25 Mitarbeiter mit unterschiedlichem IT-Kenntnisstand (teils gering)",
+            "Zeitrahmen: 4 Wochen inklusive Schulung",
+            "Bestehende Systeme: Microsoft 365, DATEV-Arbeitsplatz, VPN-Zugang für Homeoffice",
+            "Budget: 2.000 Euro für Lizenzen/Hardware-Token",
+            "Der Kanzleibetrieb darf während der Einführung nicht unterbrochen werden",
+        ],
+        "aufgaben": [
+            "Welche Systeme priorisieren Sie zuerst für MFA, und warum?",
+            "Welche MFA-Verfahren kommen infrage, und welches empfehlen Sie für diese Zielgruppe?",
+            "Planen Sie den Rollout in Phasen (Pilotgruppe, Vollausrollung).",
+            "Welche Risiken und Stolpersteine erwarten Sie bei der Einführung, und wie begegnen Sie ihnen?",
+            "Wie dokumentieren und schulen Sie die Mitarbeiter?",
+            "Wie stellen Sie sicher, dass niemand bei Verlust des zweiten Faktors ausgesperrt wird?",
+        ],
+        "hinweise": [
+            "Zuerst Microsoft 365 (E-Mail, Cloud-Daten) und der VPN-Zugang (Einfallstor fürs Homeoffice), da hier "
+            "das größte Schadenspotenzial und die höchste Angriffswahrscheinlichkeit durch Phishing besteht.",
+            "Eine Authenticator-App (TOTP) ist für die meisten Mitarbeiter praktikabel und kostengünstig; "
+            "Hardware-Token als Alternative für Mitarbeiter ohne Diensthandy. SMS-basierte Verfahren möglichst "
+            "vermeiden (anfällig für SIM-Swapping).",
+            "Phase 1: Pilotgruppe (z.B. Geschäftsleitung/IT-affine Mitarbeiter, ca. 1 Woche Testbetrieb), "
+            "Phase 2: schrittweiser Rollout nach Abteilungen, Phase 3: verpflichtende Aktivierung mit Stichtag, "
+            "begleitet von Support-Sprechstunden.",
+            "Stolpersteine: fehlende Diensthandys, Akzeptanzprobleme, Geräteverlust, erhöhtes Support-Aufkommen in "
+            "der ersten Woche - gegensteuern mit Hardware-Token als Alternative, klarer Anleitung und einem "
+            "benannten Ansprechpartner.",
+            "Kurzanleitung mit Schritt-für-Schritt-Bildern, eine kurze Präsenzschulung oder ein Kurzvideo, ein "
+            "FAQ-Dokument sowie ein begleiteter Test-Login pro Mitarbeiter.",
+            "Bei der Einrichtung Backup-Codes generieren und sicher hinterlegen (z.B. verschlüsselt beim "
+            "IT-Verantwortlichen) sowie einen definierten Prozess zur Identitätsprüfung festlegen, bevor bei "
+            "Verlust ein Reset durchgeführt wird.",
+        ],
+    },
+    {
+        "title": "Serverkonsolidierung durch Virtualisierung",
+        "cat": CAT_SYS,
+        "branche": "Mittelständischer Maschinenbaubetrieb, 60 Mitarbeiter",
+        "schwierigkeit": "Anspruchsvoll",
+        "ausgangssituation": (
+            "Der Betrieb nutzt fünf in die Jahre gekommene physische Server "
+            "(Fileserver, Druckserver, ERP-Server, Domänencontroller, "
+            "Backup-Server), die einzeln nur schwach ausgelastet sind und "
+            "regelmäßig Wartungsaufwand verursachen. Die Hardware ist teils "
+            "über sechs Jahre alt."
+        ),
+        "auftrag": (
+            "Konsolidieren Sie die bestehende Serverlandschaft durch "
+            "Virtualisierung auf neuer Hardware, inklusive Migrationskonzept "
+            "ohne längere Betriebsunterbrechung."
+        ),
+        "rahmenbedingungen": [
+            "Zeitrahmen: 3 Monate inklusive Testphase",
+            "Budget: 18.000 Euro für neue Serverhardware und Lizenzen",
+            "Die Migration darf nur an einem Wochenende die Produktion unterbrechen",
+            "Bestehende Daten und Benutzerkonten müssen vollständig erhalten bleiben",
+            "Die Ausfallsicherheit soll sich gegenüber dem Ist-Zustand verbessern",
+        ],
+        "aufgaben": [
+            "Ist-Analyse: Welche Kennzahlen der bestehenden Server erheben Sie vor der Planung?",
+            "Welchen Hypervisor-Typ empfehlen Sie, und warum?",
+            "Wie dimensionieren Sie die neue Hardware (CPU, RAM, Storage) grob?",
+            "Planen Sie das RAID- und Backup-Konzept für die neue Umgebung.",
+            "Entwerfen Sie den Migrationsablauf für das Umstellungswochenende inklusive Rückfallplan (Rollback).",
+            "Wie weisen Sie den erfolgreichen Projektabschluss gegenüber dem Kunden nach?",
+        ],
+        "hinweise": [
+            "CPU-/RAM-Auslastung, Speicherbedarf und dessen Wachstum, Anzahl gleichzeitiger Nutzer, kritische "
+            "Dienste und ihre Abhängigkeiten sowie bisherige Ausfallzeiten und Wartungsaufwand je Server.",
+            "Ein Typ-1-Hypervisor (z.B. Proxmox VE oder VMware ESXi), da er direkt auf der Hardware läuft und "
+            "dadurch ressourcenschonender und für den Produktivbetrieb geeigneter ist als ein Typ-2-Hypervisor.",
+            "Die summierte Spitzenlast der fünf bisherigen Server plus Reserve (ca. 30-40 %) für Wachstum und "
+            "gleichzeitige Lastspitzen; ausreichend RAM für alle VMs plus Hypervisor-Overhead; Storage nach "
+            "heutigem Bedarf plus Wachstumsprognose für die kommenden drei bis fünf Jahre.",
+            "RAID 10 oder RAID 6 für eine gute Balance aus Performance und Ausfallschutz, dazu ein Backup-Konzept "
+            "nach der 3-2-1-Regel mit mindestens einer extern bzw. per Air Gap getrennt gelagerten Kopie gegen "
+            "Ransomware.",
+            "Vorbereitung und Tests unter der Woche, die eigentliche Migration am Wochenende mit klar definierten "
+            "Zeitfenstern je Dienst, ein vollständiges Backup vor Beginn als Rollback-Basis, Funktionstests nach "
+            "jedem Schritt sowie ein festgelegter Zeitpunkt, bis zu dem notfalls auf die alte Umgebung "
+            "zurückgeschaltet wird.",
+            "Ein Abnahmeprotokoll mit dem Kunden, gemeinsame Funktionstests aller migrierten Dienste mit den "
+            "Fachabteilungen, eine Dokumentation der neuen Umgebung (Netzplan, VM-Übersicht, Backup-Konzept) sowie "
+            "eine vereinbarte kurze Nachbetreuungsphase.",
+        ],
+    },
+    {
+        "title": "Wirtschaftlichkeitsvergleich: Kauf vs. Leasing von Arbeitsplatzrechnern",
+        "cat": CAT_BIZ,
+        "branche": "Ingenieurbüro, 15 Mitarbeiter",
+        "schwierigkeit": "Mittel",
+        "ausgangssituation": (
+            "Die vorhandenen 15 Arbeitsplatzrechner sind fünf Jahre alt und "
+            "für aktuelle CAD-Software nicht mehr ausreichend "
+            "leistungsfähig. Die Geschäftsführung möchte vor der "
+            "Neubeschaffung eine fundierte Entscheidungsgrundlage: Kauf "
+            "oder Leasing der neuen Rechner."
+        ),
+        "auftrag": (
+            "Erstellen Sie einen Wirtschaftlichkeitsvergleich und eine "
+            "Beschaffungsempfehlung inklusive Argumentation für die "
+            "Geschäftsführung."
+        ),
+        "rahmenbedingungen": [
+            "Geplante Nutzungsdauer: 4 Jahre",
+            "Geschätzter Kaufpreis je Arbeitsplatz: 2.200 Euro (CAD-taugliche Ausstattung)",
+            "Geschätzte Leasingrate: 55 Euro/Monat je Gerät bei 4 Jahren Laufzeit",
+            "Wartung/Support beim Kauf: geschätzt 150 Euro/Jahr und Gerät nach Garantieablauf (ab Jahr 3)",
+            "Beim Leasing im Vertrag enthalten: Austauschservice bei Defekt",
+        ],
+        "aufgaben": [
+            "Stellen Sie die relevanten Kostenfaktoren für Kauf und Leasing gegenüber.",
+            "Berechnen Sie überschlägig die Gesamtkosten (TCO) beider Varianten über die Nutzungsdauer für alle 15 Arbeitsplätze.",
+            "Welche nicht-monetären Faktoren sollten zusätzlich in die Entscheidung einfließen?",
+            "Welche Rolle spielt die Liquidität des Unternehmens bei der Entscheidung?",
+            "Formulieren Sie eine begründete Empfehlung an die Geschäftsführung.",
+        ],
+        "hinweise": [
+            "Kauf: Anschaffungspreis, ggf. Finanzierungskosten, Wartung/Reparatur nach Garantieablauf, Restwert am "
+            "Ende der Nutzungsdauer. Leasing: monatliche Raten, ggf. Anzahlung, im Vertrag enthaltene Leistungen "
+            "(Austauschservice), kein Restwert, da Rückgabe.",
+            "Kauf: 15 x 2.200 Euro = 33.000 Euro Anschaffung, plus Wartung ab Jahr 3 (2 Jahre x 150 Euro x "
+            "15 Geräte = 4.500 Euro) = ca. 37.500 Euro, abzüglich eines möglichen Restwerts. Leasing: "
+            "15 x 55 Euro x 48 Monate = 39.600 Euro, dafür planbare Kosten ohne separates Wartungsrisiko - bei "
+            "diesen Annahmen ist der Kauf rechnerisch etwas günstiger.",
+            "Bilanzielle Behandlung (Kauf als Anlagevermögen mit Abschreibung, Leasing meist als laufender "
+            "Aufwand), Flexibilität bei technologischem Wandel, Verwaltungsaufwand sowie Ausfallrisiko und "
+            "Reaktionszeit bei Defekten.",
+            "Kauf bindet sofort Kapital (Liquiditätsabfluss), Leasing verteilt die Belastung gleichmäßig über die "
+            "Laufzeit und schont die Liquidität - relevant, wenn das Kapital anderweitig, z.B. für Investitionen, "
+            "benötigt wird.",
+            "Beispiel: Bei ausreichender Liquidität und Fokus auf die geringsten Gesamtkosten spricht die "
+            "Berechnung für den Kauf; ist Planungssicherheit und Schonung der Liquidität wichtiger, ist Leasing "
+            "trotz höherer Gesamtkosten die passendere Wahl - die Entscheidung hängt von der individuellen "
+            "Unternehmenssituation ab, nicht allein vom reinen Zahlenvergleich.",
+        ],
+    },
+    {
+        "title": "WLAN- und Gästenetz für ein Autohaus",
+        "cat": CAT_NET,
+        "branche": "Autohaus mit Werkstatt und Kundenbereich",
+        "schwierigkeit": "Mittel",
+        "ausgangssituation": (
+            "Ein neues Autohausgebäude (Verkaufsraum, Werkstatt, "
+            "Kundenlounge, Büros) verfügt noch über keine WLAN-"
+            "Infrastruktur. Kunden sollen in der Lounge kostenlos surfen "
+            "können, die Werkstatt benötigt WLAN für mobile "
+            "Diagnosegeräte, der Verkauf für Tablets bei der "
+            "Fahrzeugpräsentation."
+        ),
+        "auftrag": (
+            "Planen Sie ein WLAN-Konzept, das interne Nutzung und "
+            "Gästezugang sauber trennt und alle Bereiche zuverlässig "
+            "abdeckt."
+        ),
+        "rahmenbedingungen": [
+            "Gebäudegröße: ca. 1.200 m² auf zwei Ebenen",
+            "Zeitrahmen: 3 Wochen",
+            "Budget: 4.500 Euro",
+            "Die Werkstatt enthält viel Metall (Hebebühnen), das die Funkausbreitung beeinträchtigt",
+            "Das Gästenetz darf keinen Zugriff auf interne Systeme haben, die Bandbreite soll begrenzbar sein",
+        ],
+        "aufgaben": [
+            "Wie ermitteln Sie die benötigte Anzahl und Platzierung der Access Points?",
+            "Entwerfen Sie das Netzwerk-/VLAN-Konzept für Gäste-, Werkstatt- und Verkaufs-WLAN.",
+            "Welche Sicherheitsmaßnahmen setzen Sie für das Gästenetz um?",
+            "Wie begegnen Sie der besonderen Funkumgebung in der Werkstatt?",
+            "Wie kalkulieren Sie die Hardwarekosten grob im Rahmen des Budgets?",
+        ],
+        "hinweise": [
+            "Eine WLAN-Ausleuchtungsplanung (Site Survey) mit Grundriss, Berücksichtigung von Wänden/Materialien "
+            "und der erwarteten Nutzerzahl je Bereich; bei 1.200 m² auf zwei Ebenen sind grob 6-8 Access Points "
+            "zu erwarten, die genaue Zahl ergibt sich erst nach einer Vor-Ort-Messung.",
+            "Mindestens drei WLANs/VLANs: Gäste-WLAN (isoliert, eigenes Subnetz, nur Internetzugang), "
+            "Werkstatt-WLAN (Zugriff auf Diagnosesysteme/Herstellerportale) und Verkaufs-WLAN (Zugriff auf "
+            "CRM/Warenwirtschaft) - jeweils eigene SSID und VLAN mit Firewall-Regeln zwischen den Netzen.",
+            "Eine eigene, vom internen Netz isolierte SSID mit Client-Isolation (Gäste sehen sich nicht "
+            "gegenseitig), Bandbreitenbegrenzung pro Nutzer sowie ggf. eine Splash-Page mit Nutzungsbedingungen "
+            "und regelmäßigem Passwortwechsel.",
+            "Zusätzliche Access Points bzw. Modelle mit höherer Sendeleistung/besserer Antenne gezielt außerhalb "
+            "direkter Metallabschattung in der Werkstatt platzieren und nach der Installation eine Nachmessung "
+            "der Feldstärke durchführen.",
+            "Beispielkalkulation: 6-8 Access Points (je ca. 150-250 Euro) = ca. 1.200-2.000 Euro, ein "
+            "verwaltbarer PoE-Switch ca. 400-600 Euro, Verkabelung/Montage ca. 800-1.200 Euro, Rest als Puffer "
+            "für Lizenzen/Controller-Software.",
+        ],
+    },
+    {
+        "title": "Backup- und Notfallkonzept für eine Zahnarztpraxis",
+        "cat": CAT_SYS,
+        "branche": "Zahnarztpraxis mit Praxisverwaltungssoftware und digitalem Röntgen",
+        "schwierigkeit": "Anspruchsvoll",
+        "ausgangssituation": (
+            "Die Praxis speichert Patientendaten, Röntgenbilder und "
+            "Abrechnungsdaten ausschließlich auf einem lokalen Server. "
+            "Bisher existiert keine strukturierte Datensicherung - "
+            "gelegentlich wird von Hand auf eine externe Festplatte "
+            "kopiert. Der Praxisinhaber möchte ein zuverlässiges Backup- "
+            "und Notfallkonzept, da ein Datenverlust den Praxisbetrieb "
+            "gefährden würde."
+        ),
+        "auftrag": (
+            "Entwickeln Sie ein Backup- und Notfallwiederherstellungs-"
+            "konzept inklusive Umgang mit den besonders sensiblen "
+            "(personenbezogenen) Gesundheitsdaten."
+        ),
+        "rahmenbedingungen": [
+            "Zeitrahmen: 3 Wochen",
+            "Budget: 3.000 Euro",
+            "Datenvolumen: aktuell ca. 800 GB, wächst um ca. 150 GB/Jahr",
+            "Maximal tolerierbarer Datenverlust: 1 Arbeitstag",
+            "Maximal tolerierbare Ausfallzeit bis zur Wiederherstellung: 4 Stunden während der Sprechzeiten",
+            "Datenschutzrechtliche Vorgaben für Gesundheitsdaten sind zwingend zu beachten",
+        ],
+        "aufgaben": [
+            "Leiten Sie aus den Vorgaben RPO und RTO für dieses Projekt ab.",
+            "Entwerfen Sie ein passendes Backup-Konzept (Rhythmus, Medien, Aufbewahrungsorte).",
+            "Welche besonderen Anforderungen ergeben sich durch die Verarbeitung von Gesundheitsdaten?",
+            "Wie testen Sie regelmäßig, dass die Datensicherung im Ernstfall tatsächlich funktioniert?",
+            "Kalkulieren Sie überschlägig die notwendige Hardware/Software im Rahmen des Budgets.",
+        ],
+        "hinweise": [
+            "RPO = maximal 1 Arbeitstag (mindestens tägliche Sicherung notwendig), RTO = maximal 4 Stunden (der "
+            "Wiederherstellungsprozess muss entsprechend vorbereitet und geübt sein, z.B. durch ein "
+            "Standby-System oder eine schnell einspielbare Vollsicherung).",
+            "Tägliche automatisierte Sicherung (z.B. inkrementell unter der Woche, wöchentliche Vollsicherung) "
+            "nach der 3-2-1-Regel: mindestens 3 Kopien, 2 unterschiedliche Medien (z.B. NAS und externe "
+            "Festplatte/Cloud), mindestens 1 Kopie extern bzw. per Air Gap getrennt gelagert.",
+            "Gesundheitsdaten zählen nach Art. 9 DSGVO zu besonders sensiblen Daten und erfordern erhöhte "
+            "Schutzmaßnahmen: Verschlüsselung der Backups, Zugriffsbeschränkung, ggf. ein "
+            "Auftragsverarbeitungsvertrag bei Nutzung eines Cloud-Anbieters sowie dokumentierte Löschkonzepte "
+            "nach den gesetzlichen Aufbewahrungsfristen.",
+            "Regelmäßige Testwiederherstellungen (z.B. quartalsweise) auf einem Testsystem durchführen und "
+            "protokollieren - ein ungetestetes Backup ist kein verlässliches Backup.",
+            "Beispielkalkulation: NAS-System mit ausreichender Kapazität und RAID (ca. 800-1.200 Euro), externe "
+            "Wechselfestplatten für die extern gelagerte Kopie (ca. 200-300 Euro), Backup-Software-Lizenz "
+            "(ca. 200-400 Euro/Jahr), Rest als Puffer für Einrichtung/Dienstleistung.",
+        ],
     },
 ]
 

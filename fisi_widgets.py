@@ -186,6 +186,15 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
             canvas.create_rectangle(left, ty, right, ty + height,
                                     fill="", **line_opts)
 
+    elif name == "flag":           # Test Projekt
+        canvas.create_line(left + size * 0.14, top, left + size * 0.14, bottom,
+                           **opts)
+        canvas.create_polygon(left + size * 0.14, top,
+                              right, top + size * 0.22,
+                              left + size * 0.14, top + size * 0.44,
+                              fill=color, outline="",
+                              **({"tags": tags} if tags else {}))
+
     elif name == "case":          # Wirtschaft
         canvas.create_rectangle(left, top + size * 0.26, right, bottom,
                                 fill="", **line_opts)
