@@ -37,7 +37,9 @@ from fisi_widgets import (  # noqa: E402
 )
 
 APP_TITLE = "FISI Lernplattform"
-APP_VERSION = "2.0"
+# Solange es keine Vollversion (1.0) gibt, wird hier nur die Zahl hinter dem
+# Punkt bei jedem Update erhoeht (0.4 -> 0.5 -> 0.6 -> ...).
+APP_VERSION = "0.4"
 
 NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
@@ -406,17 +408,6 @@ class Header(tk.Frame):
         self.search_entry.bind("<FocusIn>", self._clear_placeholder)
         self.search_entry.bind("<FocusOut>", self._restore_placeholder)
         self.search_entry.bind("<Return>", lambda _e: self._search())
-
-        IconButton(right, "search", self._search, size=32,
-                   parent_bg=C["bg"]).pack(side="left", padx=2)
-        IconButton(right, "gear", lambda: self.app.show_view("settings"),
-                   size=32, parent_bg=C["bg"]).pack(side="left", padx=2)
-
-        avatar = tk.Canvas(right, width=34, height=34, bg=C["bg"],
-                           highlightthickness=0, bd=0)
-        avatar.pack(side="left", padx=(10, 0))
-        avatar.create_oval(1, 1, 33, 33, fill=C["card_hi"], outline=C["purple"])
-        avatar.create_text(17, 17, text="FI", fill=C["cyan"], font=F["small_bold"])
 
     def _clear_placeholder(self, _event=None):
         if self.search_entry.get() == "Suchen ...":
