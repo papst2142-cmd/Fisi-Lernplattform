@@ -2008,16 +2008,18 @@ class FISIApp:
                   foreground=[("selected", "#FFFFFF")])
         style.configure("Dash.Vertical.TScrollbar",
                         background=C["scrollbar"], troughcolor=C["bg"],
-                        bordercolor=C["bg"], arrowcolor=C["text_dim"],
+                        bordercolor=C["bg"], arrowcolor=C["cyan"],
                         darkcolor=C["scrollbar"], lightcolor=C["scrollbar"])
         style.map("Dash.Vertical.TScrollbar",
-                  background=[("active", C["scrollbar_hi"])])
+                  background=[("active", C["scrollbar_hi"])],
+                  arrowcolor=[("active", C["cyan"])])
         style.configure("Dash.Horizontal.TScrollbar",
                         background=C["scrollbar"], troughcolor=C["bg"],
-                        bordercolor=C["bg"], arrowcolor=C["text_dim"],
+                        bordercolor=C["bg"], arrowcolor=C["cyan"],
                         darkcolor=C["scrollbar"], lightcolor=C["scrollbar"])
         style.map("Dash.Horizontal.TScrollbar",
-                  background=[("active", C["scrollbar_hi"])])
+                  background=[("active", C["scrollbar_hi"])],
+                  arrowcolor=[("active", C["cyan"])])
 
     # -- Navigation ---------------------------------------------------------
 
