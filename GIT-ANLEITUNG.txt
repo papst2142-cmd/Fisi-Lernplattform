@@ -1,0 +1,126 @@
+===========================================================================
+  GIT-ANLEITUNG FUER DIE FISI LERNPLATTFORM
+  Schutz vor versehentlichem Ueberschreiben durch Versionsverwaltung
+===========================================================================
+
+
+WARUM GIT?
+---------------------------------------------------------------------------
+Dieser Ordner ist jetzt ein Git-Repository (zu erkennen am versteckten
+Unterordner ".git"). Git merkt sich bei jeder Sicherung ("Commit") den
+kompletten Zustand aller Dateien. Das bedeutet konkret fuer dich:
+
+  * Nichts geht mehr verloren. Auch wenn eine neue Version von Claude
+    eine Datei ueberschreibt, bleibt der alte Stand in der Git-Historie
+    erhalten und kann jederzeit wiederhergestellt werden.
+  * Du siehst vor jeder Sicherung genau, was sich geaendert hat (Zeile
+    fuer Zeile), bevor du die Aenderung dauerhaft uebernimmst.
+  * Du kannst jederzeit zu einer frueheren Version zurueckspringen.
+
+Als angehender Fachinformatiker Systemintegration lohnt sich Git ohnehin -
+es ist eines der meistgenutzten Werkzeuge in der IT-Branche.
+
+
+GIT INSTALLIEREN (falls noch nicht vorhanden)
+---------------------------------------------------------------------------
+  Windows :  https://git-scm.com/download/win herunterladen und
+             installieren. Bei allen Installationsfragen koennen die
+             Vorgabe-Einstellungen uebernommen werden ("Next" klicken).
+
+             Alternativ mit grafischer Oberflaeche statt Kommandozeile:
+             https://desktop.github.com/ (GitHub Desktop) - empfehlenswert
+             fuer den Einstieg, da man Aenderungen dort per Mausklick statt
+             per Befehl ansehen und sichern kann.
+
+  Linux   :  sudo apt install git        (Debian/Ubuntu)
+             sudo dnf install git        (Fedora)
+             sudo pacman -S git          (Arch)
+
+  Pruefen, ob Git bereits installiert ist:
+    Eingabeaufforderung/Terminal oeffnen (siehe LIESMICH.txt, Abschnitt
+    "INSTALLATION FUER EINSTEIGER", Schritt 4) und eingeben:
+      git --version
+    Erscheint eine Versionsnummer, ist Git bereits vorhanden.
+
+
+DIE WICHTIGSTEN BEFEHLE
+---------------------------------------------------------------------------
+Alle Befehle werden im Terminal-Fenster eingegeben, das im Programmordner
+(FISI-Lernplattform, mit dem Unterordner ".git") geoeffnet wurde.
+
+  git status
+      Zeigt, welche Dateien seit der letzten Sicherung geaendert wurden.
+      Das ist der wichtigste Befehl - vor jeder Sicherung ausfuehren.
+
+  git diff
+      Zeigt Zeile fuer Zeile, was sich in den geaenderten Dateien genau
+      veraendert hat. Neue Zeilen erscheinen gruen (mit +), entfernte
+      Zeilen rot (mit -). Mit der Taste [Q] wird die Ansicht wieder
+      verlassen.
+
+  git add -A
+      Merkt alle geaenderten Dateien fuer die naechste Sicherung vor.
+
+  git commit -m "Kurze Beschreibung der Aenderung"
+      Sichert den aktuellen Stand dauerhaft in der Historie, zusammen
+      mit der angegebenen Beschreibung.
+
+  git log --oneline
+      Zeigt die Liste aller bisherigen Sicherungen (neueste zuerst).
+
+  git checkout -- <Dateiname>
+      Verwirft alle noch nicht gesicherten Aenderungen an genau dieser
+      einen Datei und stellt den letzten gesicherten Stand wieder her.
+
+  git reset --hard HEAD
+      Verwirft ALLE noch nicht gesicherten Aenderungen im gesamten Ordner
+      und stellt den letzten gesicherten Stand wieder her. Vorsicht: Das
+      ist nicht rueckgaengig zu machen, betrifft aber nur ungesicherte
+      Aenderungen - bereits gemachte Commits bleiben unberuehrt.
+
+
+SO LAEUFT EIN UPDATE VON CLAUDE KUENFTIG AB
+---------------------------------------------------------------------------
+  1. Claude liefert neue oder geaenderte Dateien (z.B. eine aktualisierte
+     fisi_core.py oder LIESMICH.txt), entweder direkt in diesen Ordner
+     geschrieben (wenn die Sitzung mit deinem Rechner verbunden ist) oder
+     als ZIP zum manuellen Entpacken in genau diesen Ordner.
+
+  2. Direkt danach im Terminal-Fenster in diesem Ordner ausfuehren:
+       git status
+     So siehst du sofort, welche Dateien sich geaendert haben.
+
+  3. Bei Bedarf die genauen Aenderungen ansehen:
+       git diff
+     Wirkt alles plausibel, weiter zu Schritt 4. Wirkt etwas falsch,
+     Claude ansprechen, bevor gesichert wird.
+
+  4. Die Aenderung dauerhaft sichern:
+       git add -A
+       git commit -m "z.B. Fachbereiche ausgebaut und LIESMICH ergaenzt"
+
+  Ab jetzt ist diese Version sicher in der Historie gespeichert. Sollte
+  ein spaeteres Update versehentlich etwas Falsches ueberschreiben, laesst
+  sich mit "git log" und "git checkout" jederzeit zu diesem Punkt
+  zurueckkehren.
+
+
+EINEN FRUEHEREN STAND WIEDERHERSTELLEN
+---------------------------------------------------------------------------
+  1. git log --oneline
+     zeigt eine Liste wie:
+       a1b2c3d Fachbereiche ausgebaut und LIESMICH ergaenzt
+       389e74a Basisstand: FISI Lernplattform mit ausgebauten Fachbereichen
+
+  2. Den gewuenschten Stand (z.B. den aeltesten Commit) wiederherstellen:
+       git checkout 389e74a -- .
+     Danach zeigt "git status", dass sich Dateien geaendert haben - das
+     ist der Unterschied zum aktuellen Stand. Mit einem neuen Commit
+     (Schritt 4 oben) wird dieser aeltere Stand zum neuen aktuellen Stand.
+
+  Bei Unsicherheit gilt: Nichts geht kaputt, solange mit "git commit"
+  gesicherte Staende existieren. Im Zweifel lieber Claude fragen, bevor
+  ein Befehl ausgefuehrt wird, dessen Wirkung unklar ist.
+
+
+===========================================================================
