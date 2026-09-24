@@ -127,6 +127,15 @@ AP2_THEMES = [
     ("Wirtschaft & Beratung", C["green"]),
 ]
 
+# Die fuenf Themenbloecke der AP1 (Grundlagenpruefung im 1./2. Lehrjahr)
+AP1_THEMES = [
+    ("Rechnernetze Grundlagen", C["cyan"]),
+    ("Datenschutz & Sicherheit", C["pink"]),
+    ("Rechnertechnik & Zahlensysteme", C["purple"]),
+    ("Projektplanung", C["blue"]),
+    ("Wirtschafts- und Sozialkunde", C["green"]),
+]
+
 
 # ============================================================================
 #  FARBHILFSFUNKTIONEN
@@ -263,6 +272,15 @@ class DBManager:
                 category TEXT NOT NULL
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS ap1_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                scenario_index INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                theme TEXT NOT NULL
+            )
+            """,
         ]
         conn = None
         try:
@@ -319,6 +337,13 @@ class DBManager:
             (self._now(), index, title, category),
             commit=True, default=False)
 
+    def log_ap1(self, index, title, theme):
+        self._execute(
+            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme)"
+            " VALUES (?, ?, ?, ?)",
+            (self._now(), index, title, theme),
+            commit=True, default=False)
+
     # -- Loeschen -----------------------------------------------------------
 
     def clear_history(self):
@@ -330,7 +355,7 @@ class DBManager:
             conn = self.get_connection()
             cur = conn.cursor()
             for table in ("test_results", "card_events", "quiz_answers",
-                          "scenario_events", "project_events"):
+                          "scenario_events", "project_events", "ap1_events"):
                 cur.execute("DELETE FROM " + table)
             conn.commit()
             return True
@@ -380,6 +405,11 @@ class DBManager:
     def distinct_scenarios(self):
         row = self._execute(
             "SELECT COUNT(DISTINCT scenario_index) FROM scenario_events", fetch="one", default=(0,))
+        return (row[0] if row else 0) or 0
+
+    def distinct_ap1(self):
+        row = self._execute(
+            "SELECT COUNT(DISTINCT scenario_index) FROM ap1_events", fetch="one", default=(0,))
         return (row[0] if row else 0) or 0
 
     def distinct_projects(self):
@@ -443,6 +473,7 @@ class DBManager:
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
             "  UNION ALL SELECT timestamp FROM project_events"
+            "  UNION ALL SELECT timestamp FROM ap1_events"
             ") WHERE substr(timestamp, 1, 10) >= ? GROUP BY tag",
             (start.isoformat(),), fetch="all", default=[]) or []
         lookup = {row[0]: row[1] for row in rows}
@@ -484,6 +515,7 @@ class DBManager:
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
             "  UNION ALL SELECT timestamp FROM project_events"
+            "  UNION ALL SELECT timestamp FROM ap1_events"
             "  UNION ALL SELECT timestamp FROM test_results"
             ") WHERE substr(timestamp, 1, 7) = ?",
             (prefix,), fetch="all", default=[]) or []
@@ -514,6 +546,9 @@ class DBManager:
             "  SELECT timestamp, 'Testprojekt', category, 'bearbeitet'"
             "  FROM project_events"
             "  UNION ALL"
+            "  SELECT timestamp, 'AP1-Szenario', theme, 'bearbeitet'"
+            "  FROM ap1_events"
+            "  UNION ALL"
             "  SELECT timestamp, 'Test-Session', note,"
             "         CAST(score AS TEXT) || ' / ' || CAST(total AS TEXT)"
             "  FROM test_results"
@@ -541,6 +576,7 @@ class DBManager:
             "  UNION ALL SELECT timestamp FROM quiz_answers"
             "  UNION ALL SELECT timestamp FROM scenario_events"
             "  UNION ALL SELECT timestamp FROM project_events"
+            "  UNION ALL SELECT timestamp FROM ap1_events"
             ") ORDER BY 1 DESC", fetch="all", default=[]) or []
         days = []
         for (value,) in rows:
@@ -1609,6 +1645,204 @@ SZENARIEN = [
                     "Wasserfallmodell.\n"
                     "3. Im Sprint Review wird das fertiggestellte Increment den Stakeholdern präsentiert, um "
                     "frühzeitig Feedback zu erhalten und die weitere Priorisierung anzupassen.",
+    },
+]
+
+
+# ============================================================================
+#  LERNINHALTE: AP1 SZENARIEN (GRUNDLAGENPRUEFUNG)
+# ============================================================================
+#
+# Die AP1 (gestreckte Abschlusspruefung, Teil 1) prueft die Grundlagen aus
+# dem 1. und 2. Lehrjahr - im Gegensatz zur AP2 noch ohne Schwerpunkt auf
+# komplexe Netzwerk-/Sicherheitskonzeption. Die Aufgaben hier sind bewusst
+# einfacher und grundlagenorientierter gehalten als die AP2-Szenarien oben.
+
+AP1_SZENARIEN = [
+    {
+        "title": "Zahlensysteme umrechnen",
+        "cat": CAT_SYS,
+        "theme": "Rechnertechnik & Zahlensysteme",
+        "text": "Ein Auszubildender soll die Adresse eines Netzwerkgeräts in verschiedenen "
+                "Zahlensystemen angeben.\n\n"
+                "1. Rechnen Sie die Dezimalzahl 172 in ein 8-Bit-Binärwort um.\n"
+                "2. Rechnen Sie dasselbe Binärwort in eine Hexadezimalzahl um.\n"
+                "3. Nennen Sie einen praktischen Grund, warum in der IT häufig hexadezimal "
+                "statt binär notiert wird.",
+        "solution": "1. 172 (dezimal) = 10101100 (binär).\n"
+                    "2. 10101100 lässt sich in zwei Nibbles aufteilen: 1010 = A, 1100 = C, "
+                    "also AC (hexadezimal).\n"
+                    "3. Hexadezimalzahlen sind deutlich kürzer und für Menschen leichter lesbar "
+                    "als lange Binärfolgen, lassen sich aber verlustfrei und einfach ineinander "
+                    "umrechnen (4 Bit = 1 Hex-Ziffer), z.B. bei MAC-Adressen oder Farbwerten.",
+    },
+    {
+        "title": "Aufbau eines Mainboards",
+        "cat": CAT_SYS,
+        "theme": "Rechnertechnik & Zahlensysteme",
+        "text": "Ein Kunde bringt einen PC, der nicht mehr startet, in die Werkstatt.\n\n"
+                "1. Nennen Sie vier zentrale Komponenten auf einem Mainboard und ihre Aufgabe.\n"
+                "2. Was bewirkt das BIOS/UEFI beim Einschalten des Rechners (POST)?\n"
+                "3. Welche einfache Fehlersuche würden Sie zuerst durchführen?",
+        "solution": "1. CPU-Sockel (nimmt den Prozessor auf), RAM-Steckplätze (Arbeitsspeicher), "
+                    "Chipsatz (steuert Datenfluss zwischen Komponenten), Erweiterungssteckplätze "
+                    "z.B. PCIe (für Grafikkarte, Netzwerkkarte usw.).\n"
+                    "2. Der Power-On-Self-Test prüft beim Start die grundlegende Funktion von "
+                    "CPU, RAM und angeschlossener Hardware, bevor das Betriebssystem geladen wird.\n"
+                    "3. Sichtprüfung auf lose Stecker/Kabel, Arbeitsspeicher neu setzen bzw. "
+                    "einzeln testen, sowie Kontrolle der Signaltöne/LEDs zur Fehlereingrenzung.",
+    },
+    {
+        "title": "OSI-Schichtenmodell in der Praxis",
+        "cat": CAT_NET,
+        "theme": "Rechnernetze Grundlagen",
+        "text": "Ein Azubi soll einem Kollegen erklären, warum ein neuer Netzwerkdrucker im "
+                "Büro nicht erreichbar ist.\n\n"
+                "1. Nennen Sie die Schichten 1 bis 4 des OSI-Modells mit deutschem Namen.\n"
+                "2. Auf welcher Schicht arbeitet ein einfacher Switch, auf welcher ein Router?\n"
+                "3. Der Drucker hat Strom und ein blinkendes Netzwerkkabel-Lämpchen, ist aber "
+                "per Ping nicht erreichbar. Auf welcher Schicht suchen Sie zuerst den Fehler?",
+        "solution": "1. Schicht 1 Bitübertragungsschicht, Schicht 2 Sicherungsschicht, "
+                    "Schicht 3 Vermittlungsschicht, Schicht 4 Transportschicht.\n"
+                    "2. Ein Switch arbeitet auf Schicht 2 (MAC-Adressen), ein Router auf "
+                    "Schicht 3 (IP-Adressen).\n"
+                    "3. Da die physische Verbindung besteht (Lämpchen blinkt), aber Ping "
+                    "(Schicht 3) fehlschlägt, wird zuerst die IP-Konfiguration (Adresse, "
+                    "Subnetzmaske, ggf. VLAN) auf Schicht 3 geprüft.",
+    },
+    {
+        "title": "IP-Adressen und Subnetzmaske einfach erklärt",
+        "cat": CAT_NET,
+        "theme": "Rechnernetze Grundlagen",
+        "text": "Ein neuer Mitarbeiter soll die Grundlagen der IP-Adressierung verstehen.\n\n"
+                "1. Aus welchen zwei Bestandteilen setzt sich eine IPv4-Adresse zusammen?\n"
+                "2. Wozu dient die Subnetzmaske?\n"
+                "3. Liegen die Adressen 192.168.1.10 und 192.168.1.50 bei der Subnetzmaske "
+                "255.255.255.0 im selben Netz? Begründen Sie kurz.",
+        "solution": "1. Aus dem Netzanteil (identifiziert das Netzwerk) und dem Hostanteil "
+                    "(identifiziert das einzelne Gerät im Netz).\n"
+                    "2. Sie legt fest, welcher Teil der IP-Adresse zum Netzanteil und welcher "
+                    "zum Hostanteil gehört, und damit, welche Adressen im selben Netz liegen.\n"
+                    "3. Ja, beide Adressen liegen im selben Netz 192.168.1.0/24, da bei der "
+                    "Maske 255.255.255.0 nur die letzten 8 Bit (der vierte Block) als "
+                    "Hostanteil variieren dürfen und beide denselben Netzanteil 192.168.1 haben.",
+    },
+    {
+        "title": "Datensicherung nach der 3-2-1-Regel",
+        "cat": CAT_SEC,
+        "theme": "Datenschutz & Sicherheit",
+        "text": "Ein kleines Ausbildungsunternehmen möchte erstmals eine geordnete "
+                "Datensicherung einführen.\n\n"
+                "1. Erklären Sie die 3-2-1-Regel der Datensicherung.\n"
+                "2. Nennen Sie den Unterschied zwischen einer Vollsicherung und einer "
+                "inkrementellen Sicherung.\n"
+                "3. Warum sollte mindestens eine Kopie der Daten räumlich getrennt "
+                "aufbewahrt werden?",
+        "solution": "1. Mindestens 3 Kopien der Daten, auf 2 unterschiedlichen "
+                    "Speichermedien, davon 1 Kopie an einem externen/räumlich getrennten Ort.\n"
+                    "2. Die Vollsicherung sichert jedes Mal den kompletten Datenbestand, die "
+                    "inkrementelle Sicherung nur die Änderungen seit der letzten Sicherung - "
+                    "das spart Zeit und Speicherplatz, macht die Wiederherstellung aber von "
+                    "mehreren aufeinander aufbauenden Sicherungen abhängig.\n"
+                    "3. Damit ein lokales Ereignis wie Brand, Diebstahl oder ein Wasserschaden "
+                    "nicht gleichzeitig Originaldaten und alle Sicherungskopien vernichtet "
+                    "(Prinzip des Air Gap).",
+    },
+    {
+        "title": "Passwortsicherheit und Datenschutz-Grundbegriffe",
+        "cat": CAT_SEC,
+        "theme": "Datenschutz & Sicherheit",
+        "text": "Ein Azubi soll neuen Kollegen die Grundlagen sicherer Passwörter und des "
+                "Datenschutzes erklären.\n\n"
+                "1. Nennen Sie drei Merkmale eines sicheren Passworts.\n"
+                "2. Was versteht man unter personenbezogenen Daten im Sinne der DSGVO? "
+                "Nennen Sie ein Beispiel.\n"
+                "3. Was ist der Unterschied zwischen Datenschutz und Datensicherheit?",
+        "solution": "1. Ausreichende Länge (mindestens 12 Zeichen empfohlen), Mischung aus "
+                    "Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen, sowie Einzigartigkeit "
+                    "(kein wiederverwendetes Passwort aus einem anderen Dienst).\n"
+                    "2. Alle Informationen, die sich auf eine identifizierte oder "
+                    "identifizierbare natürliche Person beziehen, z.B. Name, Anschrift oder "
+                    "E-Mail-Adresse.\n"
+                    "3. Datenschutz regelt den rechtlich zulässigen Umgang mit "
+                    "personenbezogenen Daten (das \"Ob\" und \"Wie\"), Datensicherheit umfasst "
+                    "die technischen Maßnahmen zum Schutz aller Daten vor Verlust und "
+                    "unbefugtem Zugriff (das technische \"Wie\").",
+    },
+    {
+        "title": "Netzplan und kritischer Pfad",
+        "cat": CAT_BIZ,
+        "theme": "Projektplanung",
+        "text": "Für die Installation eines kleinen Büronetzwerks liegen folgende Vorgänge "
+                "mit Dauer in Tagen vor: A Kabel verlegen (2), B Switch konfigurieren (1, "
+                "startet nach A), C Server aufsetzen (3, kann parallel zu A/B laufen), "
+                "D Endgeräte anschließen (1, startet nach B und C).\n\n"
+                "1. Was versteht man unter dem kritischen Pfad in der Netzplantechnik?\n"
+                "2. Berechnen Sie die Gesamtdauer beider möglichen Pfade (A-B-D und C-D).\n"
+                "3. Welcher Pfad ist hier der kritische Pfad und wie lange dauert das "
+                "Projekt insgesamt?",
+        "solution": "1. Der kritische Pfad ist die längste Kette aufeinanderfolgender "
+                    "Vorgänge im Projekt - verzögert sich einer dieser Vorgänge, verzögert "
+                    "sich zwangsläufig das gesamte Projekt (keine zeitlichen Puffer).\n"
+                    "2. Pfad A-B-D: 2 + 1 + 1 = 4 Tage. Pfad C-D: 3 + 1 = 4 Tage.\n"
+                    "3. Beide Pfade sind hier gleich lang (4 Tage) und damit beide kritisch; "
+                    "die Gesamtprojektdauer beträgt 4 Tage, da D erst starten kann, wenn "
+                    "sowohl B als auch C abgeschlossen sind.",
+    },
+    {
+        "title": "GANTT-Diagramm als Planungswerkzeug",
+        "cat": CAT_BIZ,
+        "theme": "Projektplanung",
+        "text": "Ein Ausbildungsbetrieb plant ein kleines internes IT-Projekt und möchte den "
+                "Fortschritt visualisieren.\n\n"
+                "1. Wozu dient ein GANTT-Diagramm?\n"
+                "2. Welche Informationen lassen sich daraus auf einen Blick ablesen?\n"
+                "3. Welchen Vorteil bietet ein GANTT-Diagramm gegenüber einer reinen "
+                "Aufgabenliste ohne Zeitbezug?",
+        "solution": "1. Es stellt den zeitlichen Ablauf eines Projekts grafisch als "
+                    "Balkendiagramm dar, bei dem jeder Balken einen Vorgang mit Start- und "
+                    "Endzeitpunkt repräsentiert.\n"
+                    "2. Dauer und zeitliche Lage einzelner Vorgänge, Abhängigkeiten und "
+                    "Überschneidungen zwischen Vorgängen, sowie der aktuelle Projektfortschritt.\n"
+                    "3. Es macht zeitliche Abhängigkeiten und Engpässe sofort sichtbar, "
+                    "während eine reine Liste keine Aussage über Parallelität, Dauer oder "
+                    "Reihenfolge der Aufgaben zulässt.",
+    },
+    {
+        "title": "Grundlagen des Ausbildungsvertrags",
+        "cat": CAT_BIZ,
+        "theme": "Wirtschafts- und Sozialkunde",
+        "text": "Ein neuer Auszubildender hat Fragen zu seinem Ausbildungsvertrag.\n\n"
+                "1. Nennen Sie drei Pflichtangaben, die in einem Ausbildungsvertrag "
+                "enthalten sein müssen.\n"
+                "2. Wie lang ist die Probezeit in der Berufsausbildung in der Regel "
+                "gesetzlich vorgeschrieben (Rahmen laut Berufsbildungsgesetz)?\n"
+                "3. Darf der Ausbildungsbetrieb während der Probezeit fristlos kündigen?",
+        "solution": "1. Beginn und Dauer der Ausbildung, Ausbildungsberuf inklusive "
+                    "Ausbildungsziel, Dauer der täglichen Ausbildungszeit sowie Höhe der "
+                    "Ausbildungsvergütung (weitere: Urlaubsanspruch, Kündigungsregelungen).\n"
+                    "2. Die Probezeit muss laut Berufsbildungsgesetz mindestens einen Monat "
+                    "und darf höchstens vier Monate betragen.\n"
+                    "3. Ja, während der Probezeit können sowohl Ausbildungsbetrieb als auch "
+                    "Auszubildender jederzeit ohne Angabe von Gründen und ohne Einhaltung "
+                    "einer Kündigungsfrist kündigen.",
+    },
+    {
+        "title": "Einfache Wirtschaftlichkeitsbetrachtung",
+        "cat": CAT_BIZ,
+        "theme": "Wirtschafts- und Sozialkunde",
+        "text": "Ein Ausbildungsbetrieb vergleicht zwei Wartungsverträge für seine Server: "
+                "Vertrag A kostet einmalig 200 EUR Einrichtung plus 40 EUR pro Monat, "
+                "Vertrag B kostet einmalig 500 EUR Einrichtung plus 15 EUR pro Monat.\n\n"
+                "1. Stellen Sie eine Formel auf, um die Gesamtkosten je Vertrag nach n "
+                "Monaten zu berechnen.\n"
+                "2. Nach wie vielen Monaten sind beide Verträge insgesamt gleich teuer?\n"
+                "3. Ab wann lohnt sich Vertrag B gegenüber Vertrag A?",
+        "solution": "1. Gesamtkosten A(n) = 200 + 40 × n. Gesamtkosten B(n) = 500 + 15 × n.\n"
+                    "2. Gleichsetzen: 200 + 40n = 500 + 15n -> 25n = 300 -> n = 12 Monate.\n"
+                    "3. Ab dem 13. Monat ist Vertrag B günstiger, da die niedrigeren "
+                    "laufenden Kosten die höhere Einrichtungsgebühr ab diesem Zeitpunkt "
+                    "ausgleichen und danach übersteigen.",
     },
 ]
 

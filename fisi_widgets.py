@@ -195,6 +195,17 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
                               fill=color, outline="",
                               **({"tags": tags} if tags else {}))
 
+    elif name == "layers":         # AP1 Szenarien (Grundlagen)
+        step = size * 0.22
+        for i in range(3):
+            oy = top + size * 0.18 + i * step
+            canvas.create_polygon(x, oy,
+                                  right, oy + size * 0.12,
+                                  x, oy + size * 0.24,
+                                  left, oy + size * 0.12,
+                                  fill=color, outline="",
+                                  **({"tags": tags} if tags else {}))
+
     elif name == "case":          # Wirtschaft
         canvas.create_rectangle(left, top + size * 0.26, right, bottom,
                                 fill="", **line_opts)
@@ -1122,6 +1133,49 @@ def set_text(widget, content):
     widget.insert("1.0", content)
     if state == "disabled":
         widget.configure(state="disabled")
+    resize = getattr(widget, "autogrow_resize", None)
+    if resize is not None:
+        resize()
+
+
+def _display_line_count(widget):
+    """Anzahl der (umgebrochenen) Anzeigezeilen im Textfeld, robust gegenueber
+    unterschiedlichen Rueckgabeformen von Text.count() je nach Tk-Version."""
+    try:
+        result = widget.count("1.0", "end", "displaylines")
+    except tk.TclError:
+        return 1
+    if isinstance(result, tuple):
+        result = result[0] if result else None
+    try:
+        return max(1, int(result))
+    except (TypeError, ValueError):
+        return 1
+
+
+def make_autogrow_text(parent, min_height=4, max_height=18, font=None):
+    """Mehrzeiliges Eingabefeld, das mit seinem Inhalt automatisch mitwaechst
+    (bis zu max_height Zeilen), statt eine feste Groesse mit Scrollbalken zu
+    haben. Fuer laengere Freitext-Loesungen bei AP1-/AP2-Szenarien gedacht."""
+    widget = tk.Text(parent, height=min_height, wrap="word", bd=0,
+                     bg=C["card_alt"], fg=C["text"], insertbackground=C["cyan"],
+                     selectbackground=C["purple"], selectforeground="#FFFFFF",
+                     relief="flat", padx=12, pady=10, font=font or F["body"],
+                     highlightthickness=1, highlightbackground=C["border"],
+                     highlightcolor=C["border_hi"], insertofftime=0)
+
+    def _resize(_event=None):
+        lines = _display_line_count(widget) + 1
+        new_height = max(min_height, min(max_height, lines))
+        if int(widget.cget("height")) != new_height:
+            widget.configure(height=new_height)
+
+    widget.bind("<KeyRelease>", _resize)
+    widget.bind("<<Paste>>", lambda _e: widget.after(1, _resize))
+    widget.bind("<Configure>", _resize, add="+")
+    # Aufrufbar von aussen, z.B. nach set_text() beim Laden eines Szenarios.
+    widget.autogrow_resize = _resize
+    return widget
 
 
 class Divider(tk.Frame):

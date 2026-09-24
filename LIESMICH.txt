@@ -1,7 +1,10 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 2.0
+  FISI LERNPLATTFORM  -  Version 0.4
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
+
+Hinweis: Solange keine Vollversion (1.0) erreicht ist, steht hinter dem
+Punkt bei jedem Update eine hoehere Zahl (0.4 -> 0.5 -> 0.6 -> ...).
 
 
 WAS IST DAS?
@@ -9,10 +12,10 @@ WAS IST DAS?
 Ein Lernprogramm mit dunkler Dashboard-Oberflaeche:
 
   Dashboard          Alle Kennzahlen auf einen Blick: gelernte Karteikarten,
-                     beantwortete Quizfragen, bearbeitete AP2-Szenarien,
-                     Erfolgsquote, Lernverlauf der letzten 14 Tage,
-                     Aktivitaet je Fachbereich, Lernkalender und der
-                     Fortschritt je AP2-Pruefungsthema.
+                     beantwortete Quizfragen, bearbeitete AP1-/AP2-
+                     Szenarien, Erfolgsquote, Lernverlauf der letzten
+                     14 Tage, Aktivitaet je Fachbereich, Lernkalender und
+                     der Fortschritt je AP2-Pruefungsthema.
 
   Karteikarten       67 Karten in drei Lernmodi: Freitext, Multiple Choice
                      und Aufdecken. Filterbar nach Fachbereich.
@@ -21,7 +24,17 @@ Ein Lernprogramm mit dunkler Dashboard-Oberflaeche:
                      Zeitmessung, Erklaerung zu jeder Antwort und
                      Bewertung nach IHK-Notenschluessel.
 
-  AP2 Szenarien      16 praxisnahe Pruefungsaufgaben mit Musterloesung.
+  AP1 Szenarien      10 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
+                     automatisch mitwachsendem Loesungsfeld zum
+                     schriftlichen Bearbeiten und anschliessender
+                     Musterloesung.
+
+  AP2 Szenarien      16 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
+                     Loesungsfeld und Musterloesung.
+
+  Test Projekt       6 vollstaendige Projekt-Szenarien zum Ueben der
+                     IHK-Projektarbeit (Ausgangssituation, Auftrag,
+                     Rahmenbedingungen, Aufgaben und Loesungshinweise).
 
   Praxis-Rechner     Subnetting (IPv4 und IPv6) sowie RAID-Kapazitaet
                      mit Nutzkapazitaet, Paritaet, Effizienz und

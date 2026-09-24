@@ -26,14 +26,14 @@ from tkinter import ttk, messagebox
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fisi_core import (  # noqa: E402
-    AP2_THEMES, CATEGORIES, CATEGORY_COLOR, CATEGORY_SHORT,
+    AP1_SZENARIEN, AP2_THEMES, CATEGORIES, CATEGORY_COLOR, CATEGORY_SHORT,
     C, DBManager, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS, SZENARIEN,
     content_totals, ihk_note, mix, theme_totals,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, Heatmap, IconButton, LineChart, MiniRing,
     NeoButton, OptionList, RingStat, ScrollArea, ThemeTimeline, F,
-    draw_icon, make_label, make_text, set_text, setup_fonts,
+    draw_icon, make_autogrow_text, make_label, make_text, set_text, setup_fonts,
 )
 
 APP_TITLE = "FISI Lernplattform"
@@ -45,6 +45,7 @@ NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
     ("cards", "cards", "Karteikarten", CATEGORIES),
     ("quiz", "target", "Prüfungstrainer", None),
+    ("ap1scenarios", "layers", "AP1 Szenarien", None),
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
     ("calc", "calc", "Praxis-Rechner", None),
@@ -64,6 +65,7 @@ VIEW_TITLES = {
     "dashboard": ("DASHBOARD", "HOME"),
     "cards": ("LERNEN", "KARTEIKARTEN"),
     "quiz": ("LERNEN", "PRÜFUNGSTRAINER"),
+    "ap1scenarios": ("LERNEN", "AP1 SZENARIEN"),
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
     "testproject": ("LERNEN", "TEST PROJEKT"),
     "calc": ("WERKZEUGE", "PRAXIS-RECHNER"),
@@ -1137,23 +1139,39 @@ class QuizView(View):
 #  AP2 SZENARIEN
 # ============================================================================
 
-class ScenarioView(View):
+class ScenarioViewBase(View):
+    """Gemeinsame Basis fuer AP1- und AP2-Szenarien: Liste links, rechts die
+    Aufgabenstellung, ein frei wachsendes Feld fuer die eigene schriftliche
+    Loesung und darunter die Musterloesung zum Aufdecken.
+
+    Unterklassen ueberschreiben DATA (Liste der Szenarien), LIST_TITLE
+    (Ueberschrift der linken Liste) und _log() (welche DB-Tabelle protokolliert
+    wird), der restliche Ablauf ist identisch.
+    """
+
+    DATA = SZENARIEN
+    LIST_TITLE = "Szenarien"
+
     def build(self):
         self.index = 0
         self.solution_visible = False
+        # Eigene Loesungstexte bleiben nur waehrend der laufenden Sitzung
+        # erhalten (kein Datenbank-Feld), damit man beim Szenario-Wechsel
+        # nicht jedes Mal von vorn anfangen muss.
+        self.own_answers = {}
 
         layout = tk.Frame(self.content, bg=C["bg"])
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=2, uniform="scen")
         layout.columnconfigure(1, weight=5, uniform="scen")
 
-        list_card = Card(layout, title="Szenarien",
-                         subtitle="%d Aufgaben" % len(SZENARIEN))
+        list_card = Card(layout, title=self.LIST_TITLE,
+                         subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         self.list_box = tk.Frame(list_card.body, bg=C["card"])
         self.list_box.pack(fill="both", expand=True)
         self.list_rows = []
-        for position, scenario in enumerate(SZENARIEN):
+        for position, scenario in enumerate(self.DATA):
             self.list_rows.append(self._list_row(position, scenario))
 
         detail = tk.Frame(layout, bg=C["bg"])
@@ -1166,6 +1184,18 @@ class ScenarioView(View):
         self.lbl_title.pack(anchor="w", pady=(0, 10))
         self.txt_task = make_text(self.task_card.body, height=11, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
+
+        self.own_card = Card(detail, title="Deine Lösung", accent=C["purple"],
+                             subtitle="wächst automatisch mit dem Text")
+        self.own_card.pack(fill="x", pady=(14, 0))
+        make_label(self.own_card.body,
+                   "Löse die Aufgabe hier schriftlich, bevor du die "
+                   "Musterlösung aufdeckst.",
+                   font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=(0, 6))
+        self.txt_own = make_autogrow_text(self.own_card.body, min_height=4,
+                                          max_height=18)
+        self.txt_own.pack(fill="x")
+        self.txt_own.bind("<KeyRelease>", self._on_own_change, add="+")
 
         self.sol_card = Card(detail, title="Musterlösung", accent=C["green"])
         self.sol_card.pack(fill="both", expand=True, pady=(14, 0))
@@ -1182,6 +1212,9 @@ class ScenarioView(View):
                   kind="ghost", parent_bg=C["bg"]).pack(side="left", padx=10)
 
         self.load_scenario(0)
+
+    def _on_own_change(self, _event=None):
+        self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
 
     def _list_row(self, position, scenario):
         row = tk.Frame(self.list_box, bg=C["card_alt"], cursor="hand2",
@@ -1214,7 +1247,7 @@ class ScenarioView(View):
 
     def load_scenario(self, position):
         self.index = position
-        scenario = SZENARIEN[position]
+        scenario = self.DATA[position]
         self.lbl_title.config(text=scenario["title"])
         set_text(self.txt_task, scenario["text"])
         self.solution_visible = False
@@ -1223,10 +1256,11 @@ class ScenarioView(View):
                  "Bearbeite die Aufgabe zuerst selbst und decke die Lösung "
                  "anschließend auf.")
         self.btn_toggle.set_text("Musterlösung anzeigen")
+        set_text(self.txt_own, self.own_answers.get(position, ""))
         self._highlight()
 
     def toggle_solution(self):
-        scenario = SZENARIEN[self.index]
+        scenario = self.DATA[self.index]
         if self.solution_visible:
             set_text(self.txt_solution, "Die Musterlösung ist ausgeblendet.")
             self.btn_toggle.set_text("Musterlösung anzeigen")
@@ -1235,11 +1269,35 @@ class ScenarioView(View):
             set_text(self.txt_solution, scenario["solution"])
             self.btn_toggle.set_text("Musterlösung ausblenden")
             self.solution_visible = True
-            self.db.log_scenario(self.index, scenario["title"], scenario["theme"])
+            self._log(scenario)
             self.app.notify_progress()
 
+    def _log(self, scenario):
+        """In Unterklassen ueberschrieben - schreibt in die passende DB-Tabelle."""
+        raise NotImplementedError
+
     def next_scenario(self):
-        self.load_scenario((self.index + 1) % len(SZENARIEN))
+        self.load_scenario((self.index + 1) % len(self.DATA))
+
+
+class ScenarioView(ScenarioViewBase):
+    """AP2-Szenarien (Schwerpunktpruefung: Netzwerk, Sicherheit, Systeme, Wirtschaft)."""
+
+    DATA = SZENARIEN
+    LIST_TITLE = "AP2-Szenarien"
+
+    def _log(self, scenario):
+        self.db.log_scenario(self.index, scenario["title"], scenario["theme"])
+
+
+class Ap1ScenarioView(ScenarioViewBase):
+    """AP1-Szenarien (Grundlagenpruefung aus dem 1./2. Lehrjahr)."""
+
+    DATA = AP1_SZENARIEN
+    LIST_TITLE = "AP1-Szenarien"
+
+    def _log(self, scenario):
+        self.db.log_ap1(self.index, scenario["title"], scenario["theme"])
 
 
 # ============================================================================
@@ -1679,6 +1737,7 @@ class SettingsView(View):
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
                  "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
+                 "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
                  "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
                  ""]
         for category in CATEGORIES:
@@ -1756,6 +1815,11 @@ class SearchView(View):
             haystack = scenario["title"] + scenario["text"] + scenario["solution"]
             if needle in haystack.lower():
                 hits.append(("AP2-Szenario", scenario["cat"], scenario["title"],
+                             scenario["text"].split("\n")[0]))
+        for position, scenario in enumerate(AP1_SZENARIEN):
+            haystack = scenario["title"] + scenario["text"] + scenario["solution"]
+            if needle in haystack.lower():
+                hits.append(("AP1-Szenario", scenario["cat"], scenario["title"],
                              scenario["text"].split("\n")[0]))
 
         self.lbl_info.config(text='%d Treffer für "%s"' % (len(hits), query))
@@ -1838,7 +1902,8 @@ class FISIApp:
 
         self.views = {}
         for key, cls in (("dashboard", DashboardView), ("cards", CardsView),
-                         ("quiz", QuizView), ("scenarios", ScenarioView),
+                         ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
+                         ("scenarios", ScenarioView),
                          ("testproject", ProjectView),
                          ("calc", CalcView), ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
@@ -1922,6 +1987,12 @@ class FISIApp:
         elif kind == "Quizfrage":
             self.show_view("quiz")
             self.views["quiz"].jump_to_question(title)
+        elif kind == "AP1-Szenario":
+            self.show_view("ap1scenarios")
+            for position, scenario in enumerate(AP1_SZENARIEN):
+                if scenario["title"] == title:
+                    self.views["ap1scenarios"].load_scenario(position)
+                    break
         else:
             self.show_view("scenarios")
             for position, scenario in enumerate(SZENARIEN):
