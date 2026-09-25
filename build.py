@@ -101,6 +101,9 @@ def build_app():
         "--onedir", "--windowed", "--noconfirm", "--clean",
         "--paths", ROOT,
         "--hidden-import", "app_gui",
+        # Von Pillow nur indirekt geladen - ohne diese Angabe fehlt das Modul
+        # im Linux-Build und die Anwendung stuerzt beim Start ab.
+        "--hidden-import", "PIL._tkinter_finder",
         "--collect-data", "customtkinter",
         "--add-data", "icon.ico%s." % separator,
         "--add-data", "icon.png%s." % separator,
