@@ -16,6 +16,10 @@ laeuft. Die fertigen Dateien landen in installer_output/.
 Aufruf:
   python build.py              Anwendung bauen und Installer erzeugen
   python build.py --nur-app    nur die Anwendung bauen (dist/)
+  python build.py --ohne-test  ohne automatischen Starttest bauen
+
+Nach dem Bauen startet build.py die fertige Anwendung einmal im Testmodus
+(jede Ansicht wird geoeffnet) und bricht bei einem Fehler ab.
 
 Voraussetzungen:
   pip install -r requirements-build.txt
@@ -114,6 +118,43 @@ def build_app():
     if not os.path.exists(target):
         fail("PyInstaller hat kein Ergebnis erzeugt: %s" % target)
     return target
+
+
+def smoke_test(app_path):
+    """Startet die gebaute Anwendung einmal im Testmodus: Sie oeffnet jede
+    Ansicht, fuehrt eine Suche aus und beendet sich wieder. So faellt ein
+    unvollstaendiges Paket (z.B. fehlende Bibliothek) schon beim Bauen auf.
+    Die Lern-Datenbank des Benutzers bleibt dabei unberuehrt."""
+    if sys.platform == "win32":
+        command = [os.path.join(app_path, APP_NAME + ".exe")]
+    elif sys.platform == "darwin":
+        command = [os.path.join(app_path, "Contents", "MacOS", APP_NAME)]
+    else:
+        command = [os.path.join(app_path, APP_NAME)]
+        # Ohne Bildschirm (z.B. auf GitHub) einen virtuellen X-Server nutzen
+        if not os.environ.get("DISPLAY") and shutil.which("xvfb-run"):
+            command = ["xvfb-run", "-a"] + command
+
+    work = os.path.join(ROOT, "build", "selftest")
+    shutil.rmtree(work, ignore_errors=True)
+    os.makedirs(work)
+    log_path = os.path.join(work, "selftest.log")
+    env = dict(os.environ, FISI_SELFTEST=log_path,
+               FISI_DB_PATH=os.path.join(work, "selftest.db"))
+
+    info("Starttest der gebauten Anwendung ...")
+    try:
+        result = subprocess.run(command, env=env, timeout=120)
+    except subprocess.TimeoutExpired:
+        fail("Starttest: Die Anwendung hat sich nicht innerhalb von 2 Minuten beendet.")
+    report = ""
+    if os.path.exists(log_path):
+        with open(log_path, encoding="utf-8") as handle:
+            report = handle.read()
+    if result.returncode != 0 or report != "OK":
+        fail("Starttest fehlgeschlagen (Exit-Code %d):\n%s"
+             % (result.returncode, report or "keine Rueckmeldung der Anwendung"))
+    info("Starttest bestanden: alle Ansichten wurden fehlerfrei geoeffnet.")
 
 
 # ============================================================================
@@ -245,6 +286,8 @@ def main():
     version = app_version()
     info("%s Version %s auf %s" % (DISPLAY_NAME, version, platform.platform()))
     app_path = build_app()
+    if "--ohne-test" not in sys.argv:
+        smoke_test(app_path)
     if "--nur-app" in sys.argv:
         info("Fertig: %s" % app_path)
         return

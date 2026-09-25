@@ -20,6 +20,7 @@ import os
 import random
 import sys
 import time
+import traceback
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -2074,11 +2075,45 @@ class FISIApp:
         self.root.destroy()
 
 
+def _run_selftest(root, app, log_path):
+    """Automatischer Starttest nach dem Build (siehe build.py): oeffnet jede
+    Ansicht einmal, fuehrt eine Suche aus und beendet das Programm wieder.
+    Fehler landen in log_path; main() meldet sie ueber den Exit-Code."""
+    failures = []
+
+    def record(*exc_info):
+        failures.append("".join(traceback.format_exception(*exc_info)))
+
+    root.report_callback_exception = record
+
+    def step(keys):
+        if not keys:
+            with open(log_path, "w", encoding="utf-8") as handle:
+                handle.write("\n".join(failures) if failures else "OK")
+            root.destroy()
+            return
+        try:
+            if keys[0] == "search":
+                app.do_search("raid")
+            else:
+                app.show_view(keys[0])
+        except Exception:
+            failures.append(traceback.format_exc())
+        root.after(250, step, keys[1:])
+
+    root.after(1000, step, list(app.views))
+    return failures
+
+
 def main():
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
-    FISIApp(root)
+    app = FISIApp(root)
+    selftest_log = os.environ.get("FISI_SELFTEST")
+    failures = _run_selftest(root, app, selftest_log) if selftest_log else None
     root.mainloop()
+    if failures:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
