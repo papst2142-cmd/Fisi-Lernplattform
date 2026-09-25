@@ -8,7 +8,8 @@
 ;
 ;  Normalerweise wird dieses Skript automatisch von build.py aufgerufen
 ;  (lokal oder per GitHub Actions). build.py uebergibt dabei die Version aus
-;  APP_VERSION in app_gui.py - sie muss hier also nicht mehr angepasst werden.
+;  APP_VERSION in app_gui.py. Der Ersatzwert unten wird mit
+;  "python build.py --setze-version <Version>" automatisch mitgepflegt.
 ;
 ;  Manuell: zuerst "python build.py --nur-app" ausfuehren, dann diese Datei in
 ;  Inno Setup oeffnen und auf "Compile" klicken. Das fertige Setup liegt
@@ -25,6 +26,8 @@
 AppId={{6B2E7B7B-6C1E-4E59-9C55-FISI-LERNPLATTFORM}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
+VersionInfoProductVersion={#MyAppVersion}
 AppPublisher=FISI Lernplattform Projekt
 DefaultDirName={localappdata}\Programs\FISI-Lernplattform
 DefaultGroupName={#MyAppName}

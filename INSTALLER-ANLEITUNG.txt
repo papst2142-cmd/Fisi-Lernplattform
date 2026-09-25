@@ -63,16 +63,19 @@ Die Lernfortschritte bleiben bei Updates und Deinstallation erhalten
 TEIL B: INSTALLER BAUEN
 ============================================================================
 
-Die Versionsnummer wird nur noch an EINER Stelle gepflegt:
-APP_VERSION in app_gui.py. build.py uebernimmt sie automatisch in alle
-Installer.
+Die Versionsnummer wird immer mit EINEM Befehl gesetzt, zum Beispiel:
+  python build.py --setze-version 0.22
+Das traegt sie gleichzeitig in app_gui.py, LIESMICH.txt und das Inno-Setup-
+Skript ein. Von dort landet sie automatisch in Programmfenster, Installern,
+Dateinamen, Windows-Dateieigenschaften und macOS-App. Vor jedem Build prueft
+build.py, dass die Version ueberall gleich ist, und bricht sonst ab.
 
 AUTOMATISCH PER GITHUB ACTIONS (alle drei Betriebssysteme)
 ----------------------------------------------------------------------------
 Voraussetzung: Das Projekt liegt in einem GitHub-Repository.
 
 Variante 1 - Release mit Versions-Tag (empfohlen):
-  1. APP_VERSION in app_gui.py erhoehen, committen und pushen.
+  1. python build.py --setze-version <neue Version>, committen und pushen.
   2. Einen passenden Tag setzen und pushen, z.B. fuer Version 0.22 bzw.
      die Fehlerbehebung 0.22.1:
        git tag v0.22            (bzw. git tag v0.22.1)

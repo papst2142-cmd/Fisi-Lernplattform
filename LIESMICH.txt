@@ -7,6 +7,8 @@ Versionsschema bis zur Vollversion 1.0:
   Update (neue Funktionen, Aenderungen) :  0.x    z.B. 0.21 -> 0.22 -> 0.23
   Fehlerbehebung (Fix)                  :  0.x.y  z.B. 0.22 -> 0.22.1 -> 0.22.2
 Mit jedem neuen Update beginnt die Fixnummer wieder bei 0 (0.22.2 -> 0.23).
+Neue Version setzen (traegt sie an allen Stellen gleich ein):
+  python build.py --setze-version 0.22
 
 
 WAS IST DAS?

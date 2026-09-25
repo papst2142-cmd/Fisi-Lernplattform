@@ -7,8 +7,8 @@
 #
 #  Start:
 #    - automatisch beim Push eines Versions-Tags, z.B.:
-#          git tag v0.20
-#          git push origin v0.20
+#          git tag v0.22
+#          git push origin v0.22
 #      Dann entsteht zusaetzlich ein GitHub-Release mit allen Installern.
 #    - von Hand im Reiter "Actions" -> "Installer bauen" -> "Run workflow".
 #      Die Installer liegen dann unten auf der Seite des Laufs unter

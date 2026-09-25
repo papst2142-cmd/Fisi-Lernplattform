@@ -51,7 +51,8 @@ APP_TITLE = "FISI Lernplattform"
 #   Update (neue Funktionen/Aenderungen): 0.x   -> 0.21 -> 0.22 -> 0.23
 #   Fehlerbehebung (Fix):                 0.x.y -> 0.22.1 -> 0.22.2
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
-# Nur hier pflegen - build.py uebernimmt die Version in alle Installer.
+# Neue Version immer mit "python build.py --setze-version <Version>" setzen,
+# damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
 APP_VERSION = "0.21"
 
 

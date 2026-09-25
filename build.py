@@ -17,6 +17,11 @@ Aufruf:
   python build.py              Anwendung bauen und Installer erzeugen
   python build.py --nur-app    nur die Anwendung bauen (dist/)
   python build.py --ohne-test  ohne automatischen Starttest bauen
+  python build.py --setze-version 0.22
+                               neue Version an allen Stellen eintragen
+                               (app_gui.py, LIESMICH.txt, Inno-Setup-Skript)
+
+Vor jedem Build prueft build.py, dass die Version ueberall gleich ist.
 
 Nach dem Bauen startet build.py die fertige Anwendung einmal im Testmodus
 (jede Ansicht wird geoeffnet) und bricht bei einem Fehler ab.
@@ -75,6 +80,100 @@ def app_version():
     return match.group(1)
 
 
+# Stellen, an denen die Versionsnummer zusaetzlich von Hand steht. Die Quelle
+# ist APP_VERSION in app_gui.py; build.py sorgt dafuer, dass alle gleich sind.
+VERSION_SPOTS = [
+    ("app_gui.py", r'^(APP_VERSION = ")([^"]+)(")'),
+    ("LIESMICH.txt", r'^(  FISI LERNPLATTFORM  -  Version )(\S+)()'),
+    ("FISI-Lernplattform.iss", r'^(  #define MyAppVersion ")([^"]+)(")'),
+]
+VERSION_FORMAT = r"^\d+\.\d+(\.\d+)?$"
+
+
+def _read(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
+def check_versions(version):
+    """Bricht ab, wenn die Version nicht ueberall gleich eingetragen ist."""
+    if not re.match(VERSION_FORMAT, version):
+        fail("Ungueltige Version %s - erlaubt sind z.B. 0.22 (Update) und 0.22.1 (Fix)."
+             % version)
+    wrong = []
+    for name, pattern in VERSION_SPOTS:
+        match = re.search(pattern, _read(name), re.MULTILINE)
+        if not match or match.group(2) != version:
+            wrong.append("  %s: %s" % (name, match.group(2) if match else "nicht gefunden"))
+    if wrong:
+        fail("Die Version ist nicht ueberall gleich (erwartet %s):\n%s\n"
+             "Beheben mit:  python build.py --setze-version %s"
+             % (version, "\n".join(wrong), version))
+
+
+def set_version(version):
+    """Traegt eine neue Version an allen Stellen gleichzeitig ein."""
+    if not re.match(VERSION_FORMAT, version):
+        fail("Ungueltige Version %s - erlaubt sind z.B. 0.22 (Update) und 0.22.1 (Fix)."
+             % version)
+    for name, pattern in VERSION_SPOTS:
+        text, count = re.subn(pattern, lambda m: m.group(1) + version + m.group(3),
+                              _read(name), count=1, flags=re.MULTILINE)
+        if not count:
+            fail("Versionsangabe in %s nicht gefunden." % name)
+        with open(os.path.join(ROOT, name), "w", encoding="utf-8", newline="") as handle:
+            handle.write(text)
+        info("%s -> %s" % (name, version))
+
+
+def _version_numbers(version):
+    """0.22.1 -> (0, 22, 1, 0) fuer die Windows-Dateieigenschaften."""
+    parts = [int(part) for part in version.split(".")]
+    return tuple((parts + [0, 0, 0, 0])[:4])
+
+
+def _windows_version_file(version):
+    """Versionsangaben fuer die Dateieigenschaften der Windows-.exe."""
+    numbers = _version_numbers(version)
+    path = os.path.join(ROOT, "build", "version_info.txt")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    strings = [("CompanyName", "FISI Lernplattform Projekt"),
+               ("FileDescription", DISPLAY_NAME),
+               ("FileVersion", version),
+               ("InternalName", APP_NAME),
+               ("OriginalFilename", APP_NAME + ".exe"),
+               ("ProductName", DISPLAY_NAME),
+               ("ProductVersion", version)]
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(
+            "VSVersionInfo(\n"
+            "  ffi=FixedFileInfo(filevers=%r, prodvers=%r, mask=0x3f, flags=0x0,\n"
+            "                    OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),\n"
+            "  kids=[\n"
+            "    StringFileInfo([StringTable('040704B0', [%s])]),\n"
+            "    VarFileInfo([VarStruct('Translation', [1031, 1200])])\n"
+            "  ]\n"
+            ")\n" % (numbers, numbers,
+                     ", ".join("StringStruct(%r, %r)" % item for item in strings)))
+    return path
+
+
+def _set_macos_version(app_path, version):
+    """Traegt die Version in die macOS-App ein (PyInstaller setzt 0.0.0) und
+    signiert die App danach neu, weil die Aenderung die Signatur ungueltig
+    macht."""
+    import plistlib
+    plist_path = os.path.join(app_path, "Contents", "Info.plist")
+    with open(plist_path, "rb") as handle:
+        plist = plistlib.load(handle)
+    plist["CFBundleShortVersionString"] = version
+    plist["CFBundleVersion"] = version
+    plist["CFBundleDisplayName"] = DISPLAY_NAME
+    with open(plist_path, "wb") as handle:
+        plistlib.dump(plist, handle)
+    run(["codesign", "--force", "--deep", "--sign", "-", app_path])
+
+
 def run(command, **kwargs):
     print("     " + " ".join(command), flush=True)
     subprocess.run(command, check=True, **kwargs)
@@ -84,7 +183,7 @@ def run(command, **kwargs):
 #  ANWENDUNG (PYINSTALLER)
 # ============================================================================
 
-def build_app():
+def build_app(version):
     """Baut dist/FISI-Lernplattform/ (unter macOS zusaetzlich die .app).
 
     Bewusst als Ordner statt als einzelne Datei: Das Programm startet so
@@ -109,7 +208,8 @@ def build_app():
         "--add-data", "icon.png%s." % separator,
     ]
     if sys.platform == "win32":
-        command += ["--icon", "icon.ico"]
+        command += ["--icon", "icon.ico",
+                    "--version-file", _windows_version_file(version)]
     elif sys.platform == "darwin":
         command += ["--icon", "icon.png",
                     "--osx-bundle-identifier", "de.fisi.lernplattform"]
@@ -120,6 +220,8 @@ def build_app():
     target = os.path.join(DIST, APP_NAME + (".app" if sys.platform == "darwin" else ""))
     if not os.path.exists(target):
         fail("PyInstaller hat kein Ergebnis erzeugt: %s" % target)
+    if sys.platform == "darwin":
+        _set_macos_version(target, version)
     return target
 
 
@@ -286,9 +388,17 @@ def package_dmg(version, app_path):
 # ============================================================================
 
 def main():
+    if "--setze-version" in sys.argv:
+        position = sys.argv.index("--setze-version")
+        if position + 1 >= len(sys.argv):
+            fail("Bitte die neue Version angeben, z.B.: python build.py --setze-version 0.22")
+        set_version(sys.argv[position + 1])
+        return
+
     version = app_version()
+    check_versions(version)
     info("%s Version %s auf %s" % (DISPLAY_NAME, version, platform.platform()))
-    app_path = build_app()
+    app_path = build_app(version)
     if "--ohne-test" not in sys.argv:
         smoke_test(app_path)
     if "--nur-app" in sys.argv:
