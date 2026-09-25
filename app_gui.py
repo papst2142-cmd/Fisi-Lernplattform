@@ -47,8 +47,11 @@ from fisi_widgets import (  # noqa: E402
 )
 
 APP_TITLE = "FISI Lernplattform"
-# Solange es keine Vollversion (1.0) gibt, wird hier nur die Zahl hinter dem
-# Punkt bei jedem Update erhoeht (0.17 -> 0.18 -> 0.19 -> ...).
+# Versionsschema bis zur Vollversion 1.0:
+#   Update (neue Funktionen/Aenderungen): 0.x   -> 0.21 -> 0.22 -> 0.23
+#   Fehlerbehebung (Fix):                 0.x.y -> 0.22.1 -> 0.22.2
+# Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
+# Nur hier pflegen - build.py uebernimmt die Version in alle Installer.
 APP_VERSION = "0.21"
 
 

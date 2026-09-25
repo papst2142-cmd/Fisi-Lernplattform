@@ -73,9 +73,10 @@ Voraussetzung: Das Projekt liegt in einem GitHub-Repository.
 
 Variante 1 - Release mit Versions-Tag (empfohlen):
   1. APP_VERSION in app_gui.py erhoehen, committen und pushen.
-  2. Einen passenden Tag setzen und pushen, z.B. fuer Version 0.20:
-       git tag v0.20
-       git push origin v0.20
+  2. Einen passenden Tag setzen und pushen, z.B. fuer Version 0.22 bzw.
+     die Fehlerbehebung 0.22.1:
+       git tag v0.22            (bzw. git tag v0.22.1)
+       git push origin v0.22    (bzw. git push origin v0.22.1)
   3. GitHub baut jetzt (ca. 5-10 Minuten) auf Windows, Linux und macOS
      und legt unter "Releases" ein neues Release mit allen Installern an.
      Den Fortschritt zeigt der Reiter "Actions".

@@ -3,8 +3,10 @@
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
-Hinweis: Solange keine Vollversion (1.0) erreicht ist, steht hinter dem
-Punkt bei jedem Update eine hoehere Zahl (0.20 -> 0.21 -> 0.22 -> ...).
+Versionsschema bis zur Vollversion 1.0:
+  Update (neue Funktionen, Aenderungen) :  0.x    z.B. 0.21 -> 0.22 -> 0.23
+  Fehlerbehebung (Fix)                  :  0.x.y  z.B. 0.22 -> 0.22.1 -> 0.22.2
+Mit jedem neuen Update beginnt die Fixnummer wieder bei 0 (0.22.2 -> 0.23).
 
 
 WAS IST DAS?
