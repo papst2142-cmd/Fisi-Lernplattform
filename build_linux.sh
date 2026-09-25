@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 # ===========================================================================
-#  FISI Lernplattform - Erstellt eine eigenstaendige Linux-Anwendung
+#  FISI Lernplattform - Linux-Pakete lokal erstellen
 # ===========================================================================
-#  Ergebnis: dist/FISI-Lernplattform
-#  Diese Datei laeuft ohne installiertes Python auf vergleichbaren Systemen.
+#  Ergebnis in installer_output/:
+#    fisi-lernplattform_<Version>_amd64.deb        (Debian, Ubuntu, Mint ...)
+#    FISI-Lernplattform-<Version>-x86_64.AppImage  (nur wenn appimagetool
+#                                                   vorhanden ist)
+#  Beide bringen alles mit und laufen ohne installiertes Python.
+#
+#  Die eigentliche Arbeit erledigt build.py. Normalerweise entstehen die
+#  Pakete automatisch per GitHub Actions (siehe INSTALLER-ANLEITUNG.txt).
 # ===========================================================================
 
 set -euo pipefail
@@ -16,7 +22,7 @@ fehler() { echo -e "${ROT}[FEHLER]${AUS} $1" >&2; exit 1; }
 
 echo
 echo "==========================================================="
-echo "  FISI Lernplattform - Linux-Paket wird erstellt"
+echo "  FISI Lernplattform - Linux-Pakete werden erstellt"
 echo "==========================================================="
 echo
 
@@ -40,53 +46,28 @@ Bitte nachinstallieren:
 fi
 ok "Tkinter vorhanden"
 
-# --- 3. PyInstaller bereitstellen ------------------------------------------
-if ! python3 -c "import PyInstaller" >/dev/null 2>&1; then
-    info "PyInstaller wird installiert ..."
-    python3 -m pip install --user --upgrade pyinstaller \
-        || python3 -m pip install --user --break-system-packages --upgrade pyinstaller \
-        || fehler "PyInstaller konnte nicht installiert werden.
-Alternativ ueber die Paketverwaltung: sudo apt install pyinstaller"
-fi
-ok "PyInstaller bereit"
+command -v dpkg-deb >/dev/null 2>&1 || fehler "dpkg-deb fehlt (nur auf Debian-basierten Systemen vorhanden)."
 
-# --- 4. Alte Ergebnisse entfernen ------------------------------------------
-rm -rf build dist FISI-Lernplattform.spec
+# --- 3. Bibliotheken und PyInstaller bereitstellen -------------------------
+info "CustomTkinter, Pillow und PyInstaller werden bereitgestellt ..."
+python3 -m pip install --user --quiet -r requirements-build.txt \
+    || python3 -m pip install --user --quiet --break-system-packages -r requirements-build.txt \
+    || fehler "Die Bibliotheken konnten nicht installiert werden."
+ok "Bibliotheken bereit"
 
-# --- 5. Anwendung bauen ----------------------------------------------------
+# --- 4. Anwendung und Pakete bauen -----------------------------------------
 echo
-info "Anwendung wird gebaut, das dauert ein bis zwei Minuten ..."
+info "Das dauert ein bis zwei Minuten ..."
 echo
-
-python3 -m PyInstaller \
-    --name "FISI-Lernplattform" \
-    --onefile \
-    --windowed \
-    --noconfirm \
-    --clean \
-    --add-data "fisi_core.py:." \
-    --add-data "fisi_widgets.py:." \
-    --add-data "app_gui.py:." \
-    --add-data "icon.png:." \
-    --add-data "icon.ico:." \
-    start.py
-
-[ -f dist/FISI-Lernplattform ] || fehler "Der Build ist fehlgeschlagen."
-chmod +x dist/FISI-Lernplattform
+python3 build.py
 
 echo
 echo "==========================================================="
-echo "  Fertig"
+echo "  Fertig - die Pakete liegen im Ordner installer_output"
 echo "==========================================================="
 echo
-echo "  Die Anwendung liegt hier:"
-echo "  $(pwd)/dist/FISI-Lernplattform"
-echo
-echo "  Start per Doppelklick oder im Terminal mit:"
-echo "  ./dist/FISI-Lernplattform"
-echo
-echo "  Ins Startmenue eintragen (optional):"
-echo "  ./install_linux.sh"
+echo "  Installieren mit:"
+echo "    sudo apt install ./installer_output/fisi-lernplattform_*.deb"
 echo
 echo "  Die Lernfortschritte werden gespeichert unter:"
 echo "  ~/.local/share/fisi-lernplattform/fisi_lernplattform.db"

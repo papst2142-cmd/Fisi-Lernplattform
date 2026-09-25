@@ -7,13 +7,15 @@ FISI Lernplattform - Kernmodul
 Enthaelt:
   * Pfadaufloesung fuer die Datenbank (plattformunabhaengig)
   * DBManager: SQLite-Anbindung inkl. Lern-Events fuer das Dashboard
-  * Farbpalette und Schriftaufloesung (Design-System)
-  * Saemtliche Lerninhalte: Karteikarten, Quizfragen, AP2-Szenarien
+  * Saemtliche Lerninhalte: Karteikarten, Quizfragen, AP1/AP2-Szenarien,
+    Testprojekte
+  * Berechnungen der Praxis-Rechner und die Volltextsuche
 
-Bewusst ohne externe Abhaengigkeiten, damit das Programm unter Windows,
-Linux und macOS mit einer reinen Python-Installation laeuft.
+Bewusst ohne Oberflaeche und ohne externe Abhaengigkeiten: Das Modul laesst
+sich unabhaengig vom GUI-Framework nutzen (z.B. in Tests oder Skripten).
 """
 
+import ipaddress
 import os
 import sys
 import random
@@ -88,86 +90,39 @@ CATEGORY_ICON = {
     CAT_BIZ: "\u25b2",
 }
 
-# Farbpalette der Oberflaeche
-C = {
-    "bg":        "#160C2A",
-    "sidebar":   "#0F0720",
-    "card":      "#1C1033",
-    "card_alt":  "#251543",
-    "card_hi":   "#311C58",
-    "border":    "#33205A",
-    # Neutrales Grau (kein Lila-Stich) fuer die Scrollbalken, damit sie zum
-    # dunkelgrauen Ton der nativen Windows-Fensterleiste passen.
-    "scrollbar":    "#2A2A2F",
-    "scrollbar_hi": "#40404A",
-    "border_hi": "#553289",
-    "text":      "#ECE6F8",
-    "text_dim":  "#A794C6",
-    "muted":     "#7D6B9C",
-    "cyan":      "#22D3EE",
-    "pink":      "#F472B6",
-    "purple":    "#A78BFA",
-    "green":     "#34D399",
-    "yellow":    "#FBBF24",
-    "orange":    "#FB923C",
-    "blue":      "#60A5FA",
-    "red":       "#F87171",
-    "ring_bg":   "#2C1A4D",
-}
-
-CATEGORY_COLOR = {
-    CAT_NET: C["cyan"],
-    CAT_SEC: C["pink"],
-    CAT_SYS: C["purple"],
-    CAT_BIZ: C["green"],
-}
+# Die Farben der Oberflaeche (Palette, Kategorie- und Themenfarben) liegen in
+# fisi_theme.py, damit dieses Modul ohne Oberflaeche nutzbar bleibt.
 
 # Die fuenf Themenbloecke der AP2 fuer die Timeline im Dashboard
 AP2_THEMES = [
-    ("Subnetting & Routing", C["cyan"]),
-    ("IT-Sicherheit", C["pink"]),
-    ("Storage & RAID", C["purple"]),
-    ("Netzwerkdesign", C["blue"]),
-    ("Wirtschaft & Beratung", C["green"]),
+    "Subnetting & Routing",
+    "IT-Sicherheit",
+    "Storage & RAID",
+    "Netzwerkdesign",
+    "Wirtschaft & Beratung",
 ]
 
 # Die fuenf Themenbloecke der AP1 (Grundlagenpruefung im 1./2. Lehrjahr)
 AP1_THEMES = [
-    ("Rechnernetze Grundlagen", C["cyan"]),
-    ("Datenschutz & Sicherheit", C["pink"]),
-    ("Rechnertechnik & Zahlensysteme", C["purple"]),
-    ("Projektplanung", C["blue"]),
-    ("Wirtschafts- und Sozialkunde", C["green"]),
+    "Rechnernetze Grundlagen",
+    "Datenschutz & Sicherheit",
+    "Rechnertechnik & Zahlensysteme",
+    "Projektplanung",
+    "Wirtschafts- und Sozialkunde",
 ]
 
-
-# ============================================================================
-#  FARBHILFSFUNKTIONEN
-# ============================================================================
-
-def hex_to_rgb(value):
-    value = value.lstrip("#")
-    return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
-
-
-def rgb_to_hex(rgb):
-    return "#%02X%02X%02X" % tuple(max(0, min(255, int(round(v)))) for v in rgb)
+# Szenarien, deren Thema keinen eigenen Block in der Timeline hat, zaehlen
+# fuer den Fortschritt zum fachlich passenden Themenblock. Das Thema selbst
+# bleibt am Szenario unveraendert sichtbar.
+THEME_BLOCK = {
+    "Virtualisierung": "Storage & RAID",
+    "Projektmanagement": "Wirtschaft & Beratung",
+}
 
 
-def mix(color_a, color_b, t):
-    """Mischt zwei Farben. t=0 liefert color_a, t=1 liefert color_b."""
-    t = max(0.0, min(1.0, t))
-    ra, ga, ba = hex_to_rgb(color_a)
-    rb, gb, bb = hex_to_rgb(color_b)
-    return rgb_to_hex((ra + (rb - ra) * t, ga + (gb - ga) * t, ba + (bb - ba) * t))
-
-
-def lighten(color, amount=0.15):
-    return mix(color, "#FFFFFF", amount)
-
-
-def darken(color, amount=0.15):
-    return mix(color, "#000000", amount)
+def theme_block(theme):
+    """Themenblock, zu dem ein Szenario-Thema im Dashboard zaehlt."""
+    return THEME_BLOCK.get(theme, theme)
 
 
 # ============================================================================
@@ -567,9 +522,12 @@ class DBManager:
         rows = self._execute(
             "SELECT theme, COUNT(DISTINCT scenario_index) FROM %s GROUP BY theme" % table,
             fetch="all", default=[]) or []
-        done = {row[0]: row[1] for row in rows}
+        done = {}
+        for theme, count in rows:
+            block = theme_block(theme)
+            done[block] = done.get(block, 0) + count
         progress = {}
-        for theme, _color in themes:
+        for theme in themes:
             total = max(1, theme_totals.get(theme, 1))
             progress[theme] = min(100.0, (done.get(theme, 0) / total) * 100.0)
         return progress
@@ -2196,7 +2154,8 @@ def theme_totals():
     """Anzahl Szenarien je AP2-Themenblock."""
     totals = {}
     for scenario in SZENARIEN:
-        totals[scenario["theme"]] = totals.get(scenario["theme"], 0) + 1
+        block = theme_block(scenario["theme"])
+        totals[block] = totals.get(block, 0) + 1
     return totals
 
 
@@ -2204,7 +2163,8 @@ def ap1_theme_totals():
     """Anzahl Szenarien je AP1-Themenblock."""
     totals = {}
     for scenario in AP1_SZENARIEN:
-        totals[scenario["theme"]] = totals.get(scenario["theme"], 0) + 1
+        block = theme_block(scenario["theme"])
+        totals[block] = totals.get(block, 0) + 1
     return totals
 
 
@@ -2221,3 +2181,285 @@ def ihk_note(percentage):
     if percentage >= 30:
         return "5 (Mangelhaft)"
     return "6 (Ungenügend)"
+
+
+# ============================================================================
+#  PRAXIS-RECHNER
+# ============================================================================
+
+class InputError(ValueError):
+    """Ungueltige Benutzereingabe - der Text ist fuer die Anzeige gedacht."""
+
+
+RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10"]
+
+# Mindestanzahl Platten und Formel -> (Nettokapazitaet, Ausfalltoleranz)
+RAID_RULES = {
+    "RAID 0": (1, lambda n, s: (n * s, 0)),
+    "RAID 1": (2, lambda n, s: (s, n - 1)),
+    "RAID 5": (3, lambda n, s: ((n - 1) * s, 1)),
+    "RAID 6": (4, lambda n, s: ((n - 2) * s, 2)),
+    "RAID 10": (4, lambda n, s: ((n / 2) * s, 1)),
+}
+
+COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
+                ("24", "24 Bit (True Color)"),
+                ("32", "32 Bit (True Color + Alpha)")]
+
+
+def subnet_report(value):
+    """Berechnet die Netzwerkdaten zu einer Adresse mit Praefix (IPv4 oder
+    IPv6) und liefert sie als mehrzeiligen Text."""
+    try:
+        network = ipaddress.ip_network(value.strip(), strict=False)
+    except ValueError:
+        raise InputError(
+            "Bitte eine gültige Adresse angeben.\n\n"
+            "Beispiele:\n  192.168.1.50/24\n  10.0.0.0/255.255.255.0\n"
+            "  2001:db8::1/64")
+
+    if network.version == 4:
+        hosts = network.num_addresses - 2 if network.prefixlen < 31 else \
+            (2 if network.prefixlen == 31 else 1)
+        host_list = list(network.hosts())
+        first = host_list[0] if host_list else network.network_address
+        last = host_list[-1] if host_list else network.broadcast_address
+        lines = [
+            "Netzwerk-Adresse      : %s" % network.network_address,
+            "Subnetzmaske          : %s" % network.netmask,
+            "Wildcard-Maske        : %s" % network.hostmask,
+            "Broadcast-Adresse     : %s" % network.broadcast_address,
+            "Erste Host-Adresse    : %s" % first,
+            "Letzte Host-Adresse   : %s" % last,
+            "Nutzbare Hosts        : %d" % hosts,
+            "Adressen gesamt       : %d" % network.num_addresses,
+            "CIDR-Präfix           : /%d" % network.prefixlen,
+        ]
+    else:
+        lines = [
+            "Netzwerk-Adresse      : %s" % network.network_address,
+            "Präfixlänge           : /%d" % network.prefixlen,
+            "Erste Adresse         : %s" % network.network_address,
+            "Letzte Adresse        : %s" % network[-1],
+            "Adressen gesamt       : %d" % network.num_addresses,
+        ]
+    return "\n".join(lines)
+
+
+def raid_report(level, disks_text, size_text):
+    """Berechnet Nettokapazitaet, Paritaetsverlust und Effizienz eines RAID."""
+    try:
+        disks = int(disks_text)
+        size = float(size_text.replace(",", "."))
+    except ValueError:
+        raise InputError("Bitte gültige Zahlen für Anzahl und "
+                         "Kapazität eingeben.")
+    if disks <= 0 or size <= 0:
+        raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
+
+    minimum, formula = RAID_RULES[level]
+    if disks < minimum or (level == "RAID 10" and disks % 2 != 0):
+        extra = " und eine gerade Anzahl" if level == "RAID 10" else ""
+        return ("Ungültige Konfiguration für %s.\n\n"
+                "Benötigt werden mindestens %d Festplatten%s."
+                % (level, minimum, extra))
+
+    netto, tolerance = formula(disks, size)
+    brutto = disks * size
+    loss = brutto - netto
+    efficiency = (netto / brutto * 100) if brutto else 0
+    return "\n".join([
+        "RAID-Level            : %s" % level,
+        "Festplatten           : %d x %.0f GB" % (disks, size),
+        "Bruttokapazität       : %.2f GB" % brutto,
+        "Nutzkapazität         : %.2f GB" % netto,
+        "Parität / Verlust     : %.2f GB" % loss,
+        "Speichereffizienz     : %.1f %%" % efficiency,
+        "Ausfalltoleranz       : %d Festplatte(n)" % tolerance,
+    ])
+
+
+def screen_report(width_text, height_text, depth, fps_text):
+    """Berechnet das Datenvolumen eines Bildes und optional die Datenrate."""
+    try:
+        width = int(width_text)
+        height = int(height_text)
+        depth = int(depth)
+        fps_raw = fps_text.strip().replace(",", ".")
+        fps = float(fps_raw) if fps_raw else 0.0
+    except ValueError:
+        raise InputError("Bitte gültige Zahlen für Breite, Höhe und "
+                         "Bildwiederholrate eingeben.")
+    if width <= 0 or height <= 0:
+        raise InputError("Breite und Höhe müssen größer als 0 sein.")
+    if fps < 0:
+        raise InputError("Die Bildwiederholrate darf nicht negativ sein.")
+
+    pixels = width * height
+    bits = pixels * depth
+    data_bytes = bits / 8
+    data_kb = data_bytes / 1024
+    data_mb = data_kb / 1024
+
+    lines = [
+        "Auflösung             : %d x %d Pixel" % (width, height),
+        "Pixel gesamt          : %s" % format(pixels, ","),
+        "Farbtiefe             : %d Bit/Pixel" % depth,
+        "Datenmenge pro Bild   : %d Bit" % bits,
+        "                       : %s Byte" % format(int(data_bytes), ","),
+        "                       : %.2f KB" % data_kb,
+        "                       : %.2f MB" % data_mb,
+    ]
+    if fps > 0:
+        bytes_per_sec = data_bytes * fps
+        mbit_per_sec = bytes_per_sec * 8 / 1_000_000
+        mb_per_sec = bytes_per_sec / (1024 * 1024)
+        gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
+        lines += [
+            "",
+            "Bildwiederholrate     : %.0f Bilder/Sekunde" % fps,
+            "Datenrate             : %.2f MB/s" % mb_per_sec,
+            "                       : %.2f Mbit/s" % mbit_per_sec,
+            "                       : %.2f GB/Minute" % gb_per_min,
+        ]
+    return "\n".join(lines)
+
+
+# Rechenwege zum Aufklappen unter den Praxis-Rechnern
+CALC_EXPLAIN_SUBNET = (
+    "RECHENWEG SUBNETTING\n"
+    "Am Beispiel 192.168.1.50/24\n\n"
+    "SCHRITT 1: Praefix in Subnetzmaske umwandeln\n"
+    "   Das Praefix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
+    "   links auf 1 gesetzt sind. /24 bedeutet: die ersten 24 Bits der\n"
+    "   32-Bit-Adresse sind 1, der Rest ist 0.\n"
+    "   /24 = 11111111.11111111.11111111.00000000\n"
+    "       =    255   .   255   .   255   .    0\n"
+    "   -> Subnetzmaske: 255.255.255.0\n\n"
+    "SCHRITT 2: Netzwerk-Adresse berechnen\n"
+    "   Netzwerk-Adresse = IP-Adresse AND Subnetzmaske\n"
+    "   (bitweise UND-Verknuepfung: nur wenn IP UND Maske an der\n"
+    "   selben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
+    "     192.168.1.50   = 11000000.10101000.00000001.00110010\n"
+    "   AND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
+    "   -------------------------------------------------------\n"
+    "     Ergebnis         = 11000000.10101000.00000001.00000000\n"
+    "   -> Netzwerk-Adresse: 192.168.1.0\n\n"
+    "SCHRITT 3: Broadcast-Adresse berechnen\n"
+    "   Wildcard-Maske = invertierte Subnetzmaske (alle Bits\n"
+    "   umgedreht): 255.255.255.0 -> 0.0.0.255\n"
+    "   Broadcast-Adresse = Netzwerk-Adresse OR Wildcard-Maske\n"
+    "   (alle Host-Bits werden auf 1 gesetzt)\n"
+    "   -> Broadcast-Adresse: 192.168.1.255\n\n"
+    "SCHRITT 4: Nutzbare Host-Adressen zaehlen\n"
+    "   Anzahl aller Adressen im Netz = 2^(32 - Praefixlaenge)\n"
+    "   Bei /24: 2^(32-24) = 2^8 = 256 Adressen\n"
+    "   Davon sind die Netzwerk-Adresse (192.168.1.0) und die\n"
+    "   Broadcast-Adresse (192.168.1.255) nicht als Host vergebbar,\n"
+    "   deshalb -2:\n"
+    "   Nutzbare Hosts = 2^(32 - Praefixlaenge) - 2 = 256 - 2 = 254\n"
+    "   -> erste nutzbare Adresse: 192.168.1.1\n"
+    "   -> letzte nutzbare Adresse: 192.168.1.254\n\n"
+    "HINWEIS ZU IPv6\n"
+    "   IPv6 kennt keine Broadcast-Adresse, daher entfaellt dort der\n"
+    "   Abzug der -2 und alle Adressen im Netz gelten als nutzbar."
+)
+CALC_EXPLAIN_RAID = (
+    "RECHENWEG RAID\n"
+    "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazitaet 4000 GB)\n\n"
+    "RAID 0 - Striping (min. 1 Platte)\n"
+    "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
+    "   Formel:  Netto = Anzahl x Kapazitaet\n"
+    "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
+    "   Ausfalltoleranz: 0 Platten (faellt eine aus, sind alle Daten weg)\n\n"
+    "RAID 1 - Mirroring (min. 2 Platten)\n"
+    "   Die Daten werden 1:1 auf eine zweite Platte gespiegelt.\n"
+    "   Formel:  Netto = 1 x Kapazitaet\n"
+    "   Beispiel: 1000 GB nutzbar (bei 4 Platten stehen nur 1000 GB\n"
+    "   Nutzkapazitaet zur Verfuegung, der Rest ist Spiegelung)\n"
+    "   Ausfalltoleranz: n-1 Platten\n\n"
+    "RAID 5 - Parity, verteilte Paritaet (min. 3 Platten)\n"
+    "   Eine Platte Kapazitaet wird rechnerisch fuer Paritaetsdaten\n"
+    "   verwendet (die Paritaet selbst liegt verteilt auf allen Platten).\n"
+    "   Formel:  Netto = (Anzahl - 1) x Kapazitaet\n"
+    "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
+    "   Ausfalltoleranz: 1 Platte\n\n"
+    "RAID 6 - Double Parity (min. 4 Platten)\n"
+    "   Wie RAID 5, aber mit doppelter Paritaet fuer mehr Sicherheit.\n"
+    "   Formel:  Netto = (Anzahl - 2) x Kapazitaet\n"
+    "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Ausfalltoleranz: 2 Platten\n\n"
+    "RAID 10 - Spiegelung + Striping (min. 4 Platten, gerade Anzahl)\n"
+    "   Je zwei Platten werden gespiegelt (RAID 1), diese Spiegel-\n"
+    "   Paare werden anschliessend im Striping-Verfahren (RAID 0)\n"
+    "   zusammengefasst.\n"
+    "   Formel:  Netto = (Anzahl / 2) x Kapazitaet\n"
+    "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
+    "   Ausfalltoleranz: 1 Platte je Spiegel-Paar\n\n"
+    "SPEICHEREFFIZIENZ\n"
+    "   Effizienz = Nettokapazitaet / Bruttokapazitaet x 100\n"
+    "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
+)
+CALC_EXPLAIN_SCREEN = (
+    "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
+    "Am Beispiel 1920 x 1080 Pixel, 24 Bit Farbtiefe\n\n"
+    "SCHRITT 1: Pixel gesamt ermitteln\n"
+    "   Pixel gesamt = Breite x Hoehe\n"
+    "   Beispiel: 1920 x 1080 = 2.073.600 Pixel\n\n"
+    "SCHRITT 2: Datenmenge pro Bild in Bit berechnen\n"
+    "   Jedes Pixel benoetigt fuer seine Farbe eine feste Anzahl Bit,\n"
+    "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
+    "   True Color mit rund 16,7 Mio. Farben: je 8 Bit fuer Rot,\n"
+    "   Gruen und Blau).\n"
+    "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
+    "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
+    "SCHRITT 3: In Byte, KB und MB umrechnen\n"
+    "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
+    "   jeweils durch 1024 geteilt, um die naechstgroessere Einheit\n"
+    "   zu erhalten (Byte -> KB -> MB).\n"
+    "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
+    "   KB   = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KB\n"
+    "   MB   = KB / 1024          -> 6.075,00 / 1024 = 5,93 MB\n"
+    "   -> Ein einzelnes Bild in dieser Aufloesung und Farbtiefe\n"
+    "      benoetigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
+    "SCHRITT 4: Datenrate bei bewegten Bildern (Video)\n"
+    "   Bei Videos wird nicht nur ein Bild, sondern mehrere Bilder\n"
+    "   pro Sekunde angezeigt (Bildwiederholrate, engl. frames per\n"
+    "   second, fps). Die Datenrate gibt an, wie viele Daten dafuer\n"
+    "   pro Sekunde anfallen.\n"
+    "   Datenrate = Datenmenge pro Bild x Bildwiederholrate (fps)\n"
+    "   Beispiel bei 30 fps: 6.220.800 Byte x 30 = 186.624.000 Byte/s\n"
+    "   -> das sind rund 177,98 MB/s bzw. 1.492,99 Mbit/s bzw.\n"
+    "      rund 10,43 GB/Minute.\n"
+    "   Dieser enorme Wert zeigt, warum Videos in der Praxis fast\n"
+    "   immer komprimiert (z.B. per H.264/H.265) uebertragen werden."
+)
+
+
+# ============================================================================
+#  SUCHE
+# ============================================================================
+
+def search_content(query):
+    """Durchsucht alle Lerninhalte. Liefert eine Liste von Treffern der Form
+    (Art, Fachbereich, Titel, Detailtext)."""
+    needle = query.lower()
+    hits = []
+    for card in KARTEIKARTEN:
+        if needle in card["q"].lower() or needle in card["a_full"].lower():
+            hits.append(("Karteikarte", card["cat"], card["q"], card["a_full"]))
+    for question in QUIZ_QUESTIONS:
+        if needle in question["q"].lower() or needle in question["exp"].lower():
+            hits.append(("Quizfrage", question["cat"], question["q"],
+                         question["exp"]))
+    for scenario in SZENARIEN:
+        haystack = scenario["title"] + scenario["text"] + scenario["solution"]
+        if needle in haystack.lower():
+            hits.append(("AP2-Szenario", scenario["cat"], scenario["title"],
+                         scenario["text"].split("\n")[0]))
+    for scenario in AP1_SZENARIEN:
+        haystack = scenario["title"] + scenario["text"] + scenario["solution"]
+        if needle in haystack.lower():
+            hits.append(("AP1-Szenario", scenario["cat"], scenario["title"],
+                         scenario["text"].split("\n")[0]))
+    return hits

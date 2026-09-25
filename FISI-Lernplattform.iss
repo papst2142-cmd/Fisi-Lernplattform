@@ -1,25 +1,24 @@
 ; ============================================================================
 ;  FISI Lernplattform - Inno Setup Installer-Skript
 ; ============================================================================
-;  Baut aus der fertigen dist\FISI-Lernplattform.exe (siehe build_windows.bat)
-;  einen richtigen Windows-Installer mit Start-Menue-Eintrag, optionaler
+;  Baut aus dem fertigen Programmordner dist\FISI-Lernplattform\ einen
+;  richtigen Windows-Installer mit Start-Menue-Eintrag, optionaler
 ;  Desktop-Verknuepfung und sauberer Deinstallation ueber die
 ;  Windows-Einstellungen ("Apps & Features").
 ;
-;  Bedienung:
-;    1. Zuerst build_windows.bat ausfuehren, damit dist\FISI-Lernplattform.exe
-;       aktuell ist.
-;    2. Diese Datei (FISI-Lernplattform.iss) in Inno Setup oeffnen.
-;    3. Oben auf "Compile" klicken (oder Strg+F9).
-;    4. Das fertige Setup liegt danach in installer_output\.
+;  Normalerweise wird dieses Skript automatisch von build.py aufgerufen
+;  (lokal oder per GitHub Actions). build.py uebergibt dabei die Version aus
+;  APP_VERSION in app_gui.py - sie muss hier also nicht mehr angepasst werden.
 ;
-;  WICHTIG: AppVersion unten muss zu APP_VERSION in app_gui.py passen und bei
-;  jedem Update mit hochgezaehlt werden (siehe Projektvorgabe: Version bei
-;  jedem Update um 1 erhoehen).
+;  Manuell: zuerst "python build.py --nur-app" ausfuehren, dann diese Datei in
+;  Inno Setup oeffnen und auf "Compile" klicken. Das fertige Setup liegt
+;  danach in installer_output\.
 ; ============================================================================
 
 #define MyAppName "FISI Lernplattform"
-#define MyAppVersion "0.19"
+#ifndef MyAppVersion
+  #define MyAppVersion "0.20"
+#endif
 #define MyAppExeName "FISI-Lernplattform.exe"
 
 [Setup]
@@ -47,7 +46,7 @@ Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "desktopicon"; Description: "Desktop-Verknuepfung erstellen"; GroupDescription: "Zusaetzliche Symbole:"
 
 [Files]
-Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\FISI-Lernplattform\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

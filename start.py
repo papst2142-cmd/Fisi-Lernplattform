@@ -53,6 +53,22 @@ def main():
         fail("Tkinter fehlt",
              "Die grafische Oberflaeche benoetigt Tkinter.\n\n" + hint)
 
+    # CustomTkinter und Pillow sind in den Installern enthalten. Nur beim
+    # Start aus dem Quellcode muessen sie einmalig per pip installiert werden.
+    missing = []
+    for module, package in (("customtkinter", "customtkinter"), ("PIL", "pillow")):
+        try:
+            __import__(module)
+        except ImportError:
+            missing.append(package)
+    if missing:
+        fail("Bibliotheken fehlen",
+             "Fuer den Start aus dem Quellcode werden benoetigt: %s\n\n"
+             "Installation im Programmordner mit:\n\n"
+             "    python -m pip install -r requirements.txt\n\n"
+             "Die fertigen Installer bringen alles bereits mit."
+             % ", ".join(missing))
+
     # Das Programmverzeichnis in den Suchpfad legen, damit die Module auch
     # gefunden werden, wenn das Programm aus einem anderen Ordner gestartet
     # wird (z.B. ueber eine Verknuepfung).
@@ -65,8 +81,8 @@ def main():
     except ImportError as exc:
         fail("Programmdateien unvollstaendig",
              "Ein Modul konnte nicht geladen werden:\n\n%s\n\n"
-             "Bitte sicherstellen, dass app_gui.py, fisi_core.py und "
-             "fisi_widgets.py im selben Ordner liegen." % exc)
+             "Bitte sicherstellen, dass app_gui.py, fisi_core.py, "
+             "fisi_theme.py und fisi_widgets.py im selben Ordner liegen." % exc)
         return
 
     app_gui.main()

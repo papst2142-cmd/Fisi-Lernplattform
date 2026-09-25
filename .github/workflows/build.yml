@@ -1,0 +1,106 @@
+# ============================================================================
+#  FISI Lernplattform - Installer fuer Windows, Linux und macOS bauen
+# ============================================================================
+#  PyInstaller kann nur fuer das System bauen, auf dem es laeuft. Deshalb
+#  fuehrt GitHub hier build.py auf je einem Windows-, Linux- und macOS-Rechner
+#  aus und sammelt die fertigen Installer ein.
+#
+#  Start:
+#    - automatisch beim Push eines Versions-Tags, z.B.:
+#          git tag v0.20
+#          git push origin v0.20
+#      Dann entsteht zusaetzlich ein GitHub-Release mit allen Installern.
+#    - von Hand im Reiter "Actions" -> "Installer bauen" -> "Run workflow".
+#      Die Installer liegen dann unten auf der Seite des Laufs unter
+#      "Artifacts" zum Herunterladen bereit.
+# ============================================================================
+
+name: Installer bauen
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: windows
+          # Aelteres Ubuntu = aeltere glibc = laeuft auf mehr Linux-Systemen
+          - os: ubuntu-22.04
+            label: linux
+          - os: macos-14
+            label: macos-arm64
+          - os: macos-15-intel
+            label: macos-intel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Version pruefen (Tag muss zu APP_VERSION passen)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION=$(python -c "import build; print(build.app_version())")
+          if [ "v$VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} passt nicht zu APP_VERSION $VERSION in app_gui.py"
+            exit 1
+          fi
+
+      - name: Linux-Werkzeuge installieren
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tk-dev
+          curl -fsSL -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          echo "APPIMAGETOOL=$PWD/appimagetool" >> "$GITHUB_ENV"
+
+      - name: Inno Setup bereitstellen
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Abhaengigkeiten installieren
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Anwendung und Installer bauen
+        run: python build.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.label }}
+          path: installer_output/*
+          if-no-files-found: error
+
+  release:
+    name: GitHub-Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installer
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: FISI Lernplattform ${{ github.ref_name }}
+          files: installer/*

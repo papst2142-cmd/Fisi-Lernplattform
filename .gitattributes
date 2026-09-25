@@ -1,0 +1,10 @@
+# Zeilenenden festlegen, damit Skripte auf jedem System laufen
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.py   text eol=lf
+*.bat  text eol=crlf
+*.vbs  text eol=crlf
+*.iss  text eol=crlf
+*.txt  text
+*.ico  binary
+*.png  binary

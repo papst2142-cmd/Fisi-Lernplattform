@@ -2,8 +2,11 @@
 # ===========================================================================
 #  FISI Lernplattform - Installation ins Benutzerverzeichnis
 # ===========================================================================
-#  Traegt das Programm ins Startmenue ein. Es wird kein root benoetigt,
-#  alles landet unterhalb von ~/.local.
+#  Traegt das Programm aus dem Quellcode ins Startmenue ein. Es wird kein
+#  root benoetigt, alles landet unterhalb von ~/.local.
+#
+#  Einfacher ist das fertige DEB-Paket bzw. AppImage aus den GitHub-Releases:
+#  Beide bringen Python und alle Bibliotheken bereits mit.
 #
 #  Aufruf:   ./install_linux.sh            (installieren)
 #            ./install_linux.sh --entfernen  (wieder entfernen)
@@ -47,9 +50,16 @@ Bitte nachinstallieren:
   Arch          : sudo pacman -S tk"
 ok "Python und Tkinter vorhanden"
 
+python3 -c "import customtkinter, PIL" >/dev/null 2>&1 || fehler "CustomTkinter oder Pillow fehlen.
+Bitte im Programmordner installieren:
+  python3 -m pip install --user -r requirements.txt
+Einfacher: das fertige DEB-Paket oder AppImage verwenden - beide bringen
+alles mit (siehe INSTALLER-ANLEITUNG.txt)."
+ok "CustomTkinter und Pillow vorhanden"
+
 # --- Dateien kopieren -------------------------------------------------------
 mkdir -p "$ZIEL" "$BIN" "$ICON_DIR" "$(dirname "$DESKTOP")"
-for datei in start.py app_gui.py fisi_core.py fisi_widgets.py; do
+for datei in start.py app_gui.py fisi_core.py fisi_theme.py fisi_widgets.py; do
     [ -f "$QUELLE/$datei" ] || fehler "Datei fehlt: $datei"
     cp "$QUELLE/$datei" "$ZIEL/"
 done

@@ -1,57 +1,111 @@
 ============================================================================
- FISI Lernplattform - Anleitung: Richtigen Windows-Installer erstellen
+ FISI Lernplattform - Installer: installieren und selbst bauen
 ============================================================================
 
-Ziel: Aus dem Projekt einen "richtigen" Windows-Installer bauen (Setup.exe),
-der das Programm sauber installiert, einen Eintrag im Start-Menue anlegt,
-optional eine Desktop-Verknuepfung erstellt und sich ueber die Windows-
-Einstellungen ("Apps & Features") wieder deinstallieren laesst.
-
-Dafuer wird das kostenlose Werkzeug "Inno Setup" verwendet.
+Ab Version 0.20 gibt es fertige Installer fuer Windows, Linux und macOS.
+Alle bringen Python, CustomTkinter und Pillow bereits mit - auf dem
+Zielrechner muss nichts zusaetzlich installiert werden.
 
 
-SCHRITT 1: Inno Setup installieren (nur einmalig noetig)
+TEIL A: INSTALLIEREN
+============================================================================
+
+Die Installer liegen auf der GitHub-Seite des Projekts unter "Releases"
+(rechte Seitenleiste). Jeweils die Datei mit der hoechsten Versionsnummer
+herunterladen.
+
+WINDOWS  -  FISI-Lernplattform-Setup-<Version>.exe
 ----------------------------------------------------------------------------
-1. Im Browser oeffnen:  https://jrsoftware.org/isdl.php
-2. Den Download-Link fuer "innosetup-x.x.x.exe" (stable release) anklicken.
-3. Die heruntergeladene Datei ausfuehren und der Installation mit den
-   Standard-Einstellungen folgen (einfach ueberall "Weiter" klicken).
-4. Nach der Installation ist "Inno Setup Compiler" im Start-Menue zu finden.
+1. Die Setup-Datei per Doppelklick starten.
+2. Erscheint "Der Computer wurde durch Windows geschuetzt": auf "Weitere
+   Informationen" und dann "Trotzdem ausfuehren" klicken. (Der Installer
+   ist nicht kostenpflichtig signiert.)
+3. Dem Assistenten folgen. Es werden keine Admin-Rechte benoetigt, das
+   Programm wird nur fuer den aktuellen Benutzer installiert.
+4. Das Programm steht danach im Start-Menue unter "FISI Lernplattform".
+   Deinstallieren ueber Einstellungen -> Apps.
+Ein Update wird einfach ueber die alte Version installiert.
 
-
-SCHRITT 2: Aktuelles Programm bauen
+LINUX (Debian, Ubuntu, Linux Mint)  -  fisi-lernplattform_<Version>_amd64.deb
 ----------------------------------------------------------------------------
-1. Im Projektordner "fisi-lernplattform" die Datei build_windows.bat per
-   Doppelklick ausfuehren.
-2. Warten, bis "Fertig" erscheint. Ergebnis liegt danach unter:
-   dist\FISI-Lernplattform.exe
+1. Im Download-Ordner ein Terminal oeffnen.
+2. Installieren mit:
+     sudo apt install ./fisi-lernplattform_<Version>_amd64.deb
+3. Start ueber das Startmenue ("FISI Lernplattform") oder im Terminal mit
+     fisi-lernplattform
+Entfernen:  sudo apt remove fisi-lernplattform
 
-
-SCHRITT 3: Installer bauen
+LINUX (alle anderen Distributionen)  -  FISI-Lernplattform-<Version>-x86_64.AppImage
 ----------------------------------------------------------------------------
-1. Die Datei FISI-Lernplattform.iss (im Projektordner) doppelklicken.
-   Sie oeffnet sich automatisch im Inno Setup Compiler.
-2. Oben in der Werkzeugleiste auf "Compile" klicken (oder die Taste F9 /
-   Strg+F9 druecken).
-3. Nach kurzer Zeit liegt der fertige Installer hier:
-   installer_output\FISI-Lernplattform-Setup-<Version>.exe
+1. Die Datei ausfuehrbar machen:
+     chmod +x FISI-Lernplattform-*.AppImage
+   (oder im Dateimanager: Rechtsklick -> Eigenschaften -> "Als Programm
+   ausfuehren" erlauben)
+2. Per Doppelklick starten. Eine Installation ist nicht noetig.
 
-
-SCHRITT 4: Installieren
+MACOS  -  FISI-Lernplattform-<Version>-macOS-arm64.dmg / -intel.dmg
 ----------------------------------------------------------------------------
-1. Die eben erzeugte Setup-Datei ausfuehren.
-2. Der Installations-Assistent fuehrt durch die Installation (keine Admin-
-   Rechte noetig, wird nur fuer den aktuellen Benutzer installiert).
-3. Das Programm erscheint danach im Start-Menue unter "FISI Lernplattform"
-   und kann ueber die Windows-Einstellungen -> Apps wieder deinstalliert
-   werden.
+Welche Datei? Apfel-Menue -> "Ueber diesen Mac": Steht dort "Chip Apple
+M1/M2/M3/..." die arm64-Datei nehmen, steht dort "Prozessor Intel" die
+intel-Datei.
+1. Die .dmg-Datei per Doppelklick oeffnen.
+2. "FISI-Lernplattform" auf die Verknuepfung "Programme" ziehen.
+3. Beim ersten Start meldet macOS, dass die App nicht geoeffnet werden
+   kann (sie ist nicht bei Apple beglaubigt). Dann im Ordner "Programme"
+   mit Rechtsklick auf FISI-Lernplattform -> "Oeffnen" -> "Oeffnen".
+   Das ist nur einmal noetig. Unter neueren macOS-Versionen alternativ:
+   Systemeinstellungen -> Datenschutz & Sicherheit -> "Dennoch oeffnen".
+
+Die Lernfortschritte bleiben bei Updates und Deinstallation erhalten
+(Speicherorte siehe LIESMICH.txt).
 
 
-WICHTIG bei jedem zukuenftigen Update
+TEIL B: INSTALLER BAUEN
+============================================================================
+
+Die Versionsnummer wird nur noch an EINER Stelle gepflegt:
+APP_VERSION in app_gui.py. build.py uebernimmt sie automatisch in alle
+Installer.
+
+AUTOMATISCH PER GITHUB ACTIONS (alle drei Betriebssysteme)
 ----------------------------------------------------------------------------
-Die Versionsnummer wird bei jedem Update um 1 hochgezaehlt (siehe
-Projektvorgabe). Dabei muessen ZWEI Stellen angepasst werden:
-  1. APP_VERSION in app_gui.py
-  2. MyAppVersion in FISI-Lernplattform.iss
-Danach einfach Schritt 2 und 3 wiederholen, um eine neue Setup-Datei mit der
-aktuellen Version zu erzeugen.
+Voraussetzung: Das Projekt liegt in einem GitHub-Repository.
+
+Variante 1 - Release mit Versions-Tag (empfohlen):
+  1. APP_VERSION in app_gui.py erhoehen, committen und pushen.
+  2. Einen passenden Tag setzen und pushen, z.B. fuer Version 0.20:
+       git tag v0.20
+       git push origin v0.20
+  3. GitHub baut jetzt (ca. 5-10 Minuten) auf Windows, Linux und macOS
+     und legt unter "Releases" ein neues Release mit allen Installern an.
+     Den Fortschritt zeigt der Reiter "Actions".
+  Passt der Tag nicht zu APP_VERSION, bricht der Lauf mit einer Meldung ab.
+
+Variante 2 - Testlauf von Hand:
+  Auf GitHub im Reiter "Actions" links "Installer bauen" waehlen und auf
+  "Run workflow" klicken. Die Installer liegen danach auf der Seite des
+  Laufs ganz unten unter "Artifacts" (ohne Release).
+
+LOKAL (nur fuer das eigene Betriebssystem)
+----------------------------------------------------------------------------
+Windows:
+  1. Einmalig Inno Setup 6 installieren: https://jrsoftware.org/isdl.php
+  2. build_windows.bat per Doppelklick ausfuehren.
+  3. Ergebnis: installer_output\FISI-Lernplattform-Setup-<Version>.exe
+
+Linux (Debian-basiert):
+  1. ./build_linux.sh ausfuehren.
+  2. Ergebnis: installer_output/fisi-lernplattform_<Version>_amd64.deb
+     (die AppImage nur, wenn appimagetool installiert ist)
+
+macOS:
+  1. python3 -m pip install -r requirements-build.txt
+  2. python3 build.py
+  3. Ergebnis: installer_output/FISI-Lernplattform-<Version>-macOS-<Arch>.dmg
+
+Nur die Anwendung ohne Installer (Ordner dist/FISI-Lernplattform):
+  python build.py --nur-app
+
+Hinweis: Der Ordner installer_output ist per .gitignore vom Repository
+ausgeschlossen - fertige Installer gehoeren in GitHub-Releases, nicht in
+die Versionsverwaltung.

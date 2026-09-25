@@ -7,7 +7,8 @@ FISI Lernplattform - Dashboard Edition
 Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration.
 
 Start:      python3 app_gui.py
-Benoetigt:  Python 3.8 oder neuer mit Tkinter (Standardbibliothek)
+Benoetigt:  Python 3.8 oder neuer mit Tkinter, dazu CustomTkinter und Pillow
+            (pip install -r requirements.txt)
 
 Die Oberflaeche besteht aus einer festen Seitenleiste, einer Kopfzeile mit
 Suche und einem Inhaltsbereich, in dem die einzelnen Ansichten umgeschaltet
@@ -15,7 +16,6 @@ werden. Alle Lernaktivitaeten werden in einer lokalen SQLite-Datenbank
 protokolliert und im Dashboard ausgewertet.
 """
 
-import ipaddress
 import os
 import random
 import sys
@@ -23,24 +23,32 @@ import time
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+import customtkinter as ctk
+from PIL import Image
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fisi_core import (  # noqa: E402
-    AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CATEGORIES, CATEGORY_COLOR,
-    CATEGORY_SHORT, C, DBManager, KARTEIKARTEN, PROJEKTARBEITEN,
-    QUIZ_QUESTIONS, SZENARIEN,
-    ap1_theme_totals, content_totals, ihk_note, mix, theme_totals,
+    AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID,
+    CALC_EXPLAIN_SCREEN, CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT,
+    COLOR_DEPTHS, DBManager, InputError, KARTEIKARTEN, PROJEKTARBEITEN,
+    QUIZ_QUESTIONS, RAID_LEVELS, SZENARIEN,
+    ap1_theme_totals, content_totals, ihk_note, raid_report, screen_report,
+    search_content, subnet_report, theme_totals,
 )
+from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_widgets import (  # noqa: E402
-    Card, CalendarPanel, GradientBar, Heatmap, IconButton, LineChart, MiniRing,
-    NeoButton, OptionList, RingStat, ScrollArea, ThemeTimeline, F,
-    draw_icon, make_autogrow_text, make_label, make_text, set_text, setup_fonts,
+    Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
+    IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
+    ScrollArea, ThemeTimeline, F,
+    circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
+    ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
 )
 
 APP_TITLE = "FISI Lernplattform"
 # Solange es keine Vollversion (1.0) gibt, wird hier nur die Zahl hinter dem
 # Punkt bei jedem Update erhoeht (0.17 -> 0.18 -> 0.19 -> ...).
-APP_VERSION = "0.19"
+APP_VERSION = "0.20"
 
 
 def _resource_path(filename):
@@ -85,58 +93,59 @@ VIEW_TITLES = {
 }
 
 
+def transparent_frame(parent, **kwargs):
+    """Layout-Container ohne eigene Flaeche (uebernimmt die Farbe darunter)."""
+    return ctk.CTkFrame(parent, fg_color="transparent", corner_radius=0, **kwargs)
+
+
 # ============================================================================
 #  KLEINE EINGABEFELDER
 # ============================================================================
 
-class EntryBox(tk.Frame):
-    """Dunkles Eingabefeld mit Rahmen und Innenabstand."""
+class EntryBox(ctk.CTkEntry):
+    """Dunkles, abgerundetes Eingabefeld. Hebt beim Fokus den Rahmen hervor."""
 
     def __init__(self, parent, width=18, value="", font=None):
-        super().__init__(parent, bg=C["card_alt"], highlightthickness=1,
-                         highlightbackground=C["border"],
-                         highlightcolor=C["purple"], bd=0)
-        self.entry = tk.Entry(self, bg=C["card_alt"], fg=C["text"],
-                              insertbackground=C["cyan"], relief="flat",
-                              font=font or F["body"], width=width,
-                              highlightthickness=0, bd=0,
-                              selectbackground=C["purple"],
-                              insertofftime=0)
-        self.entry.pack(fill="x", padx=10, pady=8)
+        super().__init__(parent, width=width * 9 + 28, height=38,
+                         corner_radius=10, border_width=1,
+                         fg_color=C["card_alt"], border_color=C["border"],
+                         text_color=C["text"], font=font or F["body"])
+        # Aeltere Aufrufer greifen ueber .entry auf das Eingabefeld zu
+        self.entry = self
+        self._entry.configure(insertbackground=C["cyan"],
+                              selectbackground=C["purple"], insertofftime=0)
+        self.bind("<FocusIn>", lambda _e: self.configure(border_color=C["purple"]))
+        self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["border"]))
         if value:
-            self.entry.insert(0, value)
-
-    def get(self):
-        return self.entry.get()
+            self.insert(0, value)
 
     def set(self, value):
-        self.entry.delete(0, tk.END)
-        self.entry.insert(0, str(value))
+        self.delete(0, "end")
+        self.insert(0, str(value))
 
 
-class NumberStepper(tk.Frame):
+class NumberStepper(ctk.CTkFrame):
     """Zahlenfeld mit Plus- und Minus-Knopf."""
 
     def __init__(self, parent, value=10, minimum=1, maximum=100, step=5, bg=None):
-        self.bg = bg or C["card"]
-        super().__init__(parent, bg=self.bg)
+        super().__init__(parent, fg_color="transparent")
         self.value = value
         self.minimum = minimum
         self.maximum = maximum
         self.step = step
 
         IconButton(self, "minus", lambda: self._change(-self.step),
-                   parent_bg=self.bg).pack(side="left")
-        self.label = tk.Label(self, text=str(value), bg=C["card_alt"],
-                              fg=C["text"], font=F["body_bold"], width=5,
-                              pady=6)
+                   parent_bg=bg or C["card"]).pack(side="left")
+        self.label = ctk.CTkLabel(self, text=str(value), fg_color=C["card_alt"],
+                                  corner_radius=10, text_color=C["text"],
+                                  font=F["body_bold"], width=58, height=34)
         self.label.pack(side="left", padx=6)
         IconButton(self, "plus", lambda: self._change(self.step),
-                   parent_bg=self.bg).pack(side="left")
+                   parent_bg=bg or C["card"]).pack(side="left")
 
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
-        self.label.config(text=str(self.value))
+        self.label.configure(text=str(self.value))
 
     def get(self):
         return self.value
@@ -146,20 +155,19 @@ class NumberStepper(tk.Frame):
         self._change(0)
 
 
-class PillGroup(tk.Frame):
+class PillGroup(ctk.CTkFrame):
     """Gruppe sich gegenseitig ausschliessender Auswahlknoepfe."""
 
-    def __init__(self, parent, options, on_change=None, bg=None, initial=0):
-        self.bg = bg or C["card"]
-        super().__init__(parent, bg=self.bg)
+    def __init__(self, parent, options, on_change=None, initial=0):
+        super().__init__(parent, fg_color="transparent")
         self.on_change = on_change
         self.buttons = []
         self.values = []
         for index, (value, label) in enumerate(options):
-            button = NeoButton(self, label, kind="pill", height=32, radius=16,
-                               font=F["small_bold"], parent_bg=self.bg,
+            button = NeoButton(self, label, kind="pill", height=34,
+                               font=F["small_bold"],
                                command=lambda i=index: self.select(i))
-            button.pack(side="left", padx=(0, 6))
+            button.pack(side="left", padx=(0, 8))
             self.buttons.append(button)
             self.values.append(value)
         self.current = initial
@@ -183,81 +191,79 @@ class PillGroup(tk.Frame):
         return self.values[self.current]
 
 
+def clickable_row(parent, accent, bg=None):
+    """Abgerundete Listenzeile mit farbiger Markierung links. Liefert
+    (Zeile, Textbereich)."""
+    row = ctk.CTkFrame(parent, fg_color=bg or C["card_alt"], corner_radius=12,
+                       border_width=1, border_color=C["border"], cursor="hand2")
+    marker = ctk.CTkFrame(row, fg_color=accent, width=4, height=12,
+                          corner_radius=2, cursor="hand2")
+    marker.pack(side="left", fill="y", padx=(10, 0), pady=11)
+    inner = transparent_frame(row, cursor="hand2")
+    inner.pack(side="left", fill="x", expand=True, padx=(10, 12), pady=10)
+    return row, marker, inner
+
+
+def bind_click(widgets, callback):
+    for widget in widgets:
+        widget.bind("<Button-1>", callback)
+
+
 # ============================================================================
 #  SEITENLEISTE
 # ============================================================================
 
-class NavRow(tk.Frame):
-    """Eine Zeile in der Seitenleiste."""
+# Unsichtbarer Platzhalter fuer den Farbstreifen inaktiver Menuezeilen
+BLANK_INDICATOR = Image.new("RGBA", (16, 80), (0, 0, 0, 0))
+
+
+class NavRow(ctk.CTkFrame):
+    """Eine abgerundete Zeile in der Seitenleiste."""
 
     def __init__(self, parent, icon, text, command, sub=False, expandable=False):
-        bg = C["sidebar"]
-        super().__init__(parent, bg=bg, cursor="hand2")
+        super().__init__(parent, fg_color=C["sidebar"], corner_radius=10,
+                         cursor="hand2")
         self.command = command
         self.active = False
         self.sub = sub
 
-        self.accent = tk.Frame(self, bg=bg, width=3)
-        self.accent.pack(side="left", fill="y")
+        # Senkrechter Farbverlauf links, sichtbar nur bei der aktiven Zeile
+        self.indicator = ctk.CTkLabel(self, text="", width=4, height=20)
+        self.indicator.pack(side="left", padx=(6, 0))
 
-        inner = tk.Frame(self, bg=bg)
-        inner.pack(side="left", fill="both", expand=True)
-        self.inner = inner
+        pad_left = 20 if sub else 8
+        self.icon_canvas = IconCanvas(self, icon, size=20 if sub else 22,
+                                      icon_scale=0.62 if sub else 0.72,
+                                      parent_bg=C["sidebar"], cursor="hand2")
+        self.icon_canvas.pack(side="left", padx=(pad_left, 10), pady=8 if sub else 9)
 
-        pad_left = 26 if sub else 14
-        self.icon = icon
-        self.icon_canvas = None
-        if icon:
-            box = 20 if sub else 22
-            self.icon_canvas = tk.Canvas(inner, width=box, height=box, bg=bg,
-                                         highlightthickness=0, bd=0,
-                                         cursor="hand2")
-            self.icon_canvas.pack(side="left", padx=(pad_left, 8), pady=9)
-            self._paint_icon(C["muted"])
-            text_pad = 0
-        else:
-            text_pad = pad_left
-
-        self.text_label = tk.Label(inner, text=text, bg=bg,
-                                   fg=C["muted"] if sub else C["text_dim"],
-                                   font=F["small"] if sub else F["nav"],
-                                   anchor="w")
-        self.text_label.pack(side="left", fill="x", expand=True,
-                             padx=(text_pad, 8), pady=9)
+        self.text_label = ctk.CTkLabel(self, text=text, anchor="w", height=0,
+                                       text_color=C["muted"] if sub else C["text_dim"],
+                                       font=F["small"] if sub else F["nav"],
+                                       cursor="hand2")
+        self.text_label.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
         self.chevron = None
         self._expanded = False
         if expandable:
-            self.chevron = tk.Canvas(inner, width=16, height=16, bg=bg,
-                                     highlightthickness=0, bd=0, cursor="hand2")
-            self.chevron.pack(side="right", padx=(0, 14))
-            self._paint_chevron()
+            self.chevron = IconCanvas(self, "chevron_down", size=16,
+                                      icon_scale=0.62, parent_bg=C["sidebar"],
+                                      cursor="hand2")
+            self.chevron.pack(side="right", padx=(0, 12))
 
         for widget in self._widgets():
             widget.bind("<Button-1>", self._on_click)
             widget.bind("<Enter>", lambda _e: self._hover(True))
             widget.bind("<Leave>", lambda _e: self._hover(False))
 
-    def _paint_icon(self, color):
-        if not self.icon_canvas:
-            return
-        self.icon_canvas.delete("all")
-        box = int(self.icon_canvas["width"])
-        draw_icon(self.icon_canvas, self.icon, box / 2, box / 2,
-                  box * (0.62 if self.sub else 0.72), color, width=2)
-
     def _paint_chevron(self):
         if not self.chevron:
             return
-        self.chevron.delete("all")
         color = C["cyan"] if self.active else C["muted"]
-        draw_icon(self.chevron, "chevron_up" if self._expanded else "chevron_down",
-                  8, 8, 10, color, width=2)
+        self.chevron.paint(color, "chevron_up" if self._expanded else "chevron_down")
 
     def _widgets(self):
-        items = [self, self.inner, self.text_label]
-        if self.icon_canvas:
-            items.append(self.icon_canvas)
+        items = [self, self.text_label, self.icon_canvas, self.indicator]
         if self.chevron:
             items.append(self.chevron)
         return items
@@ -269,32 +275,30 @@ class NavRow(tk.Frame):
     def _hover(self, flag):
         if self.active:
             return
-        bg = C["card"] if flag else C["sidebar"]
-        self._apply_bg(bg)
-        self.text_label.configure(fg=C["text"] if flag else
+        self._apply_bg(C["card"] if flag else C["sidebar"])
+        self.text_label.configure(text_color=C["text"] if flag else
                                   (C["muted"] if self.sub else C["text_dim"]))
 
     def _apply_bg(self, bg):
-        self.configure(bg=bg)
-        self.inner.configure(bg=bg)
-        self.text_label.configure(bg=bg)
-        if self.icon_canvas:
-            self.icon_canvas.configure(bg=bg)
+        self.configure(fg_color=bg)
+        self.icon_canvas.configure(bg=bg)
         if self.chevron:
             self.chevron.configure(bg=bg)
 
     def set_active(self, flag):
         self.active = flag
         if flag:
-            self._apply_bg(C["card"])
-            self.accent.configure(bg=C["cyan"])
-            self.text_label.configure(fg=C["text"])
-            self._paint_icon(C["cyan"])
+            self._apply_bg(C["card_hi"])
+            bar = rounded_gradient(4, 20, 2, C["cyan"], GRADIENTS["accent"][1],
+                                   direction="v")
+            self.indicator.configure(image=ctk_image(bar, 4, 20))
+            self.text_label.configure(text_color=C["text"])
+            self.icon_canvas.paint(C["cyan"])
         else:
             self._apply_bg(C["sidebar"])
-            self.accent.configure(bg=C["sidebar"])
-            self.text_label.configure(fg=C["muted"] if self.sub else C["text_dim"])
-            self._paint_icon(C["muted"])
+            self.indicator.configure(image=ctk_image(BLANK_INDICATOR, 4, 20))
+            self.text_label.configure(text_color=C["muted"] if self.sub else C["text_dim"])
+            self.icon_canvas.paint(C["muted"])
         self._paint_chevron()
 
     def set_expanded(self, flag):
@@ -302,57 +306,68 @@ class NavRow(tk.Frame):
         self._paint_chevron()
 
 
-class Sidebar(tk.Frame):
+class Sidebar(ctk.CTkFrame):
     def __init__(self, parent, app):
-        super().__init__(parent, bg=C["sidebar"], width=232)
+        super().__init__(parent, fg_color=C["sidebar"], corner_radius=0, width=244)
         self.app = app
         self.pack_propagate(False)
         self.rows = {}
         self.sub_frames = {}
         self.expanded = set()
 
-        logo = tk.Frame(self, bg=C["sidebar"])
-        logo.pack(fill="x", pady=(20, 18), padx=16)
-        mark = tk.Canvas(logo, width=30, height=30, bg=C["sidebar"],
+        logo = transparent_frame(self)
+        logo.pack(fill="x", pady=(22, 20), padx=20)
+        mark = tk.Canvas(logo, width=px(34), height=px(34), bg=C["sidebar"],
                          highlightthickness=0, bd=0)
         mark.pack(side="left")
-        mark.create_oval(2, 2, 28, 28, outline=C["cyan"], width=2)
-        mark.create_oval(9, 9, 21, 21, fill=C["pink"], outline="")
-        tk.Label(logo, text="FISI", bg=C["sidebar"], fg=C["text"],
-                 font=(F["family"], 16, "bold")).pack(side="left", padx=(10, 0))
-        tk.Label(logo, text="Lernplattform", bg=C["sidebar"], fg=C["muted"],
-                 font=F["tiny"]).pack(side="left", padx=(6, 0), pady=(6, 0))
+        ring = ring_image(34, 5, 1.0, C["cyan"], C["pink"], C["ring_bg"])
+        dot = circle_image(12, fill=C["pink"])
+        self._logo_images = (tk_photo(ring, px(34), px(34)),
+                             tk_photo(dot, px(12), px(12)))
+        mark.create_image(px(17), px(17), image=self._logo_images[0])
+        mark.create_image(px(17), px(17), image=self._logo_images[1])
+        ctk.CTkLabel(logo, text="FISI", text_color=C["text"], font=F["logo"],
+                     height=0).pack(side="left", padx=(12, 0))
+        ctk.CTkLabel(logo, text="Lernplattform", text_color=C["muted"],
+                     font=F["tiny"], height=0).pack(side="left", padx=(7, 0),
+                                                    pady=(7, 0))
+
+        make_label(self, "MENÜ", font=F["label"], fg=C["muted"],
+                   anchor="w").pack(fill="x", padx=24, pady=(0, 6))
 
         for key, icon, text, sub_items in NAV_ITEMS:
             expandable = bool(sub_items)
             row = NavRow(self, icon, text,
                          command=lambda k=key: self._on_nav(k),
                          expandable=expandable)
-            row.pack(fill="x")
+            row.pack(fill="x", padx=12, pady=1)
             self.rows[key] = row
 
             if sub_items:
-                container = tk.Frame(self, bg=C["sidebar"])
+                container = transparent_frame(self)
                 self.sub_frames[key] = container
                 for item in sub_items:
                     sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
                                      CATEGORY_SHORT.get(item, item),
                                      command=lambda c=item: self.app.open_cards(c),
                                      sub=True)
-                    sub_row.pack(fill="x")
+                    sub_row.pack(fill="x", pady=1)
 
-        tk.Frame(self, bg=C["border"], height=1).pack(fill="x", pady=18, padx=16)
-        tk.Label(self, text="LERNSTATUS", bg=C["sidebar"], fg=C["muted"],
-                 font=F["label"], anchor="w").pack(fill="x", padx=18)
+        self.footer = make_label(self, "Version %s" % APP_VERSION,
+                                 font=F["tiny"], fg=C["muted"])
+        self.footer.pack(side="bottom", pady=(8, 14))
 
-        self.streak_label = tk.Label(self, text="", bg=C["sidebar"],
-                                     fg=C["text_dim"], font=F["small"],
-                                     anchor="w", justify="left")
-        self.streak_label.pack(fill="x", padx=18, pady=(10, 0))
-
-        self.footer = tk.Label(self, text="Version %s" % APP_VERSION,
-                               bg=C["sidebar"], fg=C["muted"], font=F["tiny"])
-        self.footer.pack(side="bottom", pady=14)
+        status = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=14,
+                              border_width=1, border_color=C["border"])
+        status.pack(side="bottom", fill="x", padx=14)
+        make_label(status, "LERNSTATUS", font=F["label"], fg=C["muted"],
+                   anchor="w").pack(fill="x", padx=14, pady=(12, 0))
+        self.streak_label = make_label(status, "", font=F["small_bold"],
+                                       fg=C["text"], anchor="w")
+        self.streak_label.pack(fill="x", padx=14, pady=(6, 0))
+        self.status_bar = GradientBar(status, "Inhalte bearbeitet", C["cyan"],
+                                      C["pink"], parent_bg=C["card"])
+        self.status_bar.pack(fill="x", padx=14, pady=(6, 10))
 
     def _on_nav(self, key):
         if key in self.sub_frames:
@@ -366,7 +381,7 @@ class Sidebar(tk.Frame):
             self.expanded.discard(key)
             self.rows[key].set_expanded(False)
         else:
-            container.pack(fill="x", after=self.rows[key])
+            container.pack(fill="x", padx=12, after=self.rows[key])
             self.expanded.add(key)
             self.rows[key].set_expanded(True)
 
@@ -375,70 +390,58 @@ class Sidebar(tk.Frame):
             row.set_active(name == key)
 
     def update_status(self, streak, learned, total):
-        self.streak_label.config(
-            text="Lernserie: %d Tag(e)\nInhalte bearbeitet: %d / %d"
-                 % (streak, learned, total))
+        self.streak_label.configure(text="Lernserie: %d Tag(e)" % streak)
+        self.status_bar.set(learned / max(1, total) * 100,
+                            "%d / %d" % (learned, total))
 
 
 # ============================================================================
 #  KOPFZEILE
 # ============================================================================
 
-class Header(tk.Frame):
+class Header(ctk.CTkFrame):
     def __init__(self, parent, app):
-        super().__init__(parent, bg=C["bg"])
+        super().__init__(parent, fg_color=C["bg"], corner_radius=0)
         self.app = app
 
-        left = tk.Frame(self, bg=C["bg"])
-        left.pack(side="left", padx=(26, 0), pady=18)
-        self.crumb_main = tk.Label(left, text="DASHBOARD", bg=C["bg"],
-                                   fg=C["text"], font=F["label"])
+        left = transparent_frame(self)
+        left.pack(side="left", padx=(28, 0), pady=20)
+        self.crumb_main = make_label(left, "DASHBOARD", font=F["label"],
+                                     fg=C["text"])
         self.crumb_main.pack(side="left")
-        self.crumb_sep = tk.Label(left, text="/", bg=C["bg"], fg=C["muted"],
-                                  font=F["label"])
-        self.crumb_sep.pack(side="left", padx=6)
-        self.crumb_sub = tk.Label(left, text="HOME", bg=C["bg"], fg=C["muted"],
-                                  font=F["label"])
+        make_label(left, "/", font=F["label"], fg=C["muted"]).pack(side="left", padx=7)
+        self.crumb_sub = make_label(left, "HOME", font=F["label"], fg=C["cyan"])
         self.crumb_sub.pack(side="left")
 
-        right = tk.Frame(self, bg=C["bg"])
-        right.pack(side="right", padx=(0, 26), pady=14)
-
-        search_box = tk.Frame(right, bg=C["card"], highlightthickness=1,
-                              highlightbackground=C["border"],
-                              highlightcolor=C["purple"], bd=0)
-        search_box.pack(side="left", padx=(0, 14))
-        search_icon = tk.Canvas(search_box, width=16, height=16, bg=C["card"],
-                                highlightthickness=0, bd=0)
-        search_icon.pack(side="left", padx=(12, 0))
-        draw_icon(search_icon, "search", 8, 8, 12, C["muted"], width=2)
-        self.search_entry = tk.Entry(search_box, bg=C["card"], fg=C["text"],
-                                     insertbackground=C["cyan"], relief="flat",
-                                     font=F["small"], width=26,
-                                     highlightthickness=0, bd=0,
-                                     insertofftime=0)
-        self.search_entry.pack(side="left", padx=10, pady=9)
-        self.search_entry.insert(0, "Suchen ...")
-        self.search_entry.bind("<FocusIn>", self._clear_placeholder)
-        self.search_entry.bind("<FocusOut>", self._restore_placeholder)
+        self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
+                                       border_width=1, border_color=C["border"])
+        self.search_box.pack(side="right", padx=(0, 28), pady=14)
+        IconCanvas(self.search_box, "search", size=16, icon_scale=0.75,
+                   color=C["muted"], parent_bg=C["card"]).pack(side="left",
+                                                               padx=(14, 0))
+        self.search_entry = ctk.CTkEntry(self.search_box, width=250, height=36,
+                                         border_width=0, fg_color=C["card"],
+                                         text_color=C["text"],
+                                         placeholder_text="Suchen ...  (Strg+F)",
+                                         placeholder_text_color=C["muted"],
+                                         font=F["small"])
+        self.search_entry.pack(side="left", padx=(6, 12), pady=2)
+        self.search_entry._entry.configure(insertbackground=C["cyan"],
+                                           insertofftime=0)
         self.search_entry.bind("<Return>", lambda _e: self._search())
-
-    def _clear_placeholder(self, _event=None):
-        if self.search_entry.get() == "Suchen ...":
-            self.search_entry.delete(0, tk.END)
-
-    def _restore_placeholder(self, _event=None):
-        if not self.search_entry.get().strip():
-            self.search_entry.insert(0, "Suchen ...")
+        self.search_entry.bind(
+            "<FocusIn>", lambda _e: self.search_box.configure(border_color=C["purple"]))
+        self.search_entry.bind(
+            "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["border"]))
 
     def _search(self):
         query = self.search_entry.get().strip()
-        if query and query != "Suchen ...":
+        if query:
             self.app.do_search(query)
 
     def set_crumbs(self, main, sub):
-        self.crumb_main.config(text=main)
-        self.crumb_sub.config(text=sub)
+        self.crumb_main.configure(text=main)
+        self.crumb_sub.configure(text=sub)
 
 
 # ============================================================================
@@ -450,8 +453,8 @@ class View(ScrollArea):
         super().__init__(parent, bg=C["bg"])
         self.app = app
         self.db = app.db
-        self.content = tk.Frame(self.inner, bg=C["bg"])
-        self.content.pack(fill="both", expand=True, padx=26, pady=(4, 26))
+        self.content = transparent_frame(self.inner)
+        self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
         self.build()
 
     def build(self):
@@ -472,98 +475,111 @@ class DashboardView(View):
         self.totals = content_totals()
         self.total_content = sum(self.totals.values())
 
-        # --- Reihe 1: Kennzahlen -----------------------------------------
-        row1 = tk.Frame(self.content, bg=C["bg"])
-        row1.pack(fill="x")
+        # --- Banner --------------------------------------------------------
+        self.hero = GradientPanel(self.content, height=118)
+        self.hero.pack(fill="x")
 
-        self.ring_cards = self._ring_card(row1, "Karteikarten", "gelernt")
-        self.ring_quiz = self._ring_card(row1, "Quizfragen", "beantwortet")
-        self.ring_ap1 = self._ring_card(row1, "AP1 Szenarien", "bearbeitet")
-        self.ring_scen = self._ring_card(row1, "AP2 Szenarien", "bearbeitet")
+        # --- Reihe 1: Kennzahlen (fuenf gleich breite Kacheln) -----------
+        row1 = transparent_frame(self.content)
+        row1.pack(fill="x", pady=(16, 0))
+        for column in range(5):
+            row1.columnconfigure(column, weight=1, uniform="row1")
+
+        self.ring_cards = self._ring_card(row1, 0, "Karteikarten")
+        self.ring_quiz = self._ring_card(row1, 1, "Quizfragen")
+        self.ring_ap1 = self._ring_card(row1, 2, "AP1 Szenarien")
+        self.ring_scen = self._ring_card(row1, 3, "AP2 Szenarien")
 
         quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
                      accent=C["pink"])
-        quote.pack(side="left", fill="both", expand=True, padx=6)
+        quote.grid(row=0, column=4, sticky="nsew")
         self.lbl_quote = make_label(quote.body, "0 %", font=F["display"],
                                     fg=C["cyan"])
-        self.lbl_quote.pack(anchor="w", pady=(6, 0))
+        self.lbl_quote.pack(anchor="w", pady=(10, 0))
         self.lbl_quote_sub = make_label(quote.body, "noch keine Antworten",
                                         font=F["small"], fg=C["muted"],
-                                        justify="left", wraplength=180)
+                                        justify="left", wraplength=150,
+                                        anchor="w")
         self.lbl_quote_sub.pack(anchor="w", pady=(6, 0))
 
-        cover = Card(row1, title="Abdeckung", subtitle="Material",
-                     accent=C["purple"])
-        cover.pack(side="left", fill="both", expand=True, padx=(6, 0))
-        self.bar_cards = GradientBar(cover.body, "Karteikarten", C["cyan"],
-                                     C["purple"], parent_bg=C["card"])
-        self.bar_cards.pack(fill="x")
-        self.bar_quiz = GradientBar(cover.body, "Quizfragen", C["purple"],
-                                    C["pink"], parent_bg=C["card"])
-        self.bar_quiz.pack(fill="x")
-        self.bar_ap1 = GradientBar(cover.body, "AP1-Szenarien", C["blue"],
-                                   C["cyan"], parent_bg=C["card"])
-        self.bar_ap1.pack(fill="x")
-        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["pink"],
-                                    C["orange"], parent_bg=C["card"])
-        self.bar_scen.pack(fill="x")
-
-        # --- Reihe 2: Verlauf und Heatmap --------------------------------
-        row2 = tk.Frame(self.content, bg=C["bg"])
+        # --- Reihe 2: Verlauf und Abdeckung ------------------------------
+        row2 = transparent_frame(self.content)
         row2.pack(fill="x", pady=(14, 0))
         row2.columnconfigure(0, weight=3, uniform="row2")
         row2.columnconfigure(1, weight=2, uniform="row2")
 
         chart_card = Card(row2, title="Lernverlauf",
                           subtitle="letzte %d Tage" % self.DAYS)
-        chart_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        chart_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         self.chart = LineChart(chart_card.body, height=230, parent_bg=C["card"])
         self.chart.pack(fill="both", expand=True)
 
-        heat_card = Card(row2, title="Aktivität je Fachbereich",
+        cover = Card(row2, title="Abdeckung", subtitle="Material",
+                     accent=C["purple"])
+        cover.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        self.bar_cards = GradientBar(cover.body, "Karteikarten", C["cyan"],
+                                     C["purple"], parent_bg=C["card"])
+        self.bar_cards.pack(fill="x", pady=(4, 8))
+        self.bar_quiz = GradientBar(cover.body, "Quizfragen", C["purple"],
+                                    C["pink"], parent_bg=C["card"])
+        self.bar_quiz.pack(fill="x", pady=8)
+        self.bar_ap1 = GradientBar(cover.body, "AP1-Szenarien", C["blue"],
+                                   C["cyan"], parent_bg=C["card"])
+        self.bar_ap1.pack(fill="x", pady=8)
+        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["pink"],
+                                    C["orange"], parent_bg=C["card"])
+        self.bar_scen.pack(fill="x", pady=8)
+
+        # --- Reihe 3: Heatmap und Fachbereiche ---------------------------
+        row3 = transparent_frame(self.content)
+        row3.pack(fill="x", pady=(14, 0))
+        row3.columnconfigure(0, weight=2, uniform="row3")
+        row3.columnconfigure(1, weight=3, uniform="row3")
+
+        heat_card = Card(row3, title="Aktivität je Fachbereich",
                          subtitle="Intensität pro Tag", accent=C["pink"])
-        heat_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
-        self.heatmap = Heatmap(heat_card.body, height=230, parent_bg=C["card"])
+        heat_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"])
         self.heatmap.pack(fill="both", expand=True)
 
-        # --- Reihe 3: Fachbereiche ---------------------------------------
-        fach_card = Card(self.content, title="Fortschritt je Fachbereich",
+        fach_card = Card(row3, title="Fortschritt je Fachbereich",
                          subtitle="Abdeckung und Erfolgsquote", accent=C["green"])
-        fach_card.pack(fill="x", pady=(14, 0))
-        holder = tk.Frame(fach_card.body, bg=C["card"])
+        fach_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        holder = transparent_frame(fach_card.body)
         holder.pack(fill="x")
         self.fach_rings = {}
         for category in CATEGORIES:
-            column = tk.Frame(holder, bg=C["card"])
+            column = transparent_frame(holder)
             column.pack(side="left", fill="both", expand=True)
-            ring = MiniRing(column, size=86, thickness=8, parent_bg=C["card"])
+            ring = MiniRing(column, size=88, thickness=8, parent_bg=C["card"])
             ring.pack()
             make_label(column, CATEGORY_SHORT[category], font=F["small_bold"],
                        fg=C["text"]).pack(pady=(8, 0))
-            detail = make_label(column, "", font=F["tiny"], fg=C["muted"])
+            detail = make_label(column, "", font=F["tiny"], fg=C["muted"],
+                                justify="center")
             detail.pack()
             self.fach_rings[category] = (ring, detail)
 
         # --- Reihe 4: Aktivitaeten, Kalender -------------------------------
-        row4 = tk.Frame(self.content, bg=C["bg"])
+        row4 = transparent_frame(self.content)
         row4.pack(fill="x", pady=(14, 0))
         row4.columnconfigure(0, weight=1, uniform="row4")
         row4.columnconfigure(1, weight=1, uniform="row4")
 
         act_card = Card(row4, title="Aktivitäten", subtitle="zuletzt")
-        act_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
-        self.activity_box = tk.Frame(act_card.body, bg=C["card"])
+        act_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        self.activity_box = transparent_frame(act_card.body)
         self.activity_box.pack(fill="both", expand=True)
 
         cal_card = Card(row4, title="Lerntage", subtitle="Monatsübersicht",
                         accent=C["purple"])
-        cal_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        cal_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         self.calendar = CalendarPanel(cal_card.body, bg=C["card"])
         self.calendar.pack(fill="both", expand=True)
         self.calendar.set_provider(self.db.month_activity)
 
         # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
-        row5 = tk.Frame(self.content, bg=C["bg"])
+        row5 = transparent_frame(self.content)
         row5.pack(fill="x", pady=(14, 0))
         row5.columnconfigure(0, weight=1, uniform="row5")
         row5.columnconfigure(1, weight=1, uniform="row5")
@@ -571,22 +587,22 @@ class DashboardView(View):
         ap1_theme_card = Card(row5, title="AP1 Prüfungsthemen",
                               subtitle="bearbeitete Grundlagenaufgaben",
                               accent=C["blue"])
-        ap1_theme_card.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        ap1_theme_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         self.timeline_ap1 = ThemeTimeline(ap1_theme_card.body, height=200,
                                           parent_bg=C["card"])
         self.timeline_ap1.pack(fill="both", expand=True)
 
         theme_card = Card(row5, title="AP2 Prüfungsthemen",
                           subtitle="bearbeitete Szenarien", accent=C["pink"])
-        theme_card.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        theme_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         self.timeline = ThemeTimeline(theme_card.body, height=200,
                                       parent_bg=C["card"])
         self.timeline.pack(fill="both", expand=True)
 
-    def _ring_card(self, parent, title, subtitle):
-        card = Card(parent, title=title, subtitle=subtitle)
-        card.pack(side="left", fill="both", expand=True, padx=(0, 6))
-        ring = RingStat(card.body, size=124, parent_bg=C["card"])
+    def _ring_card(self, parent, column, title):
+        card = Card(parent, title=title)
+        card.grid(row=0, column=column, sticky="nsew", padx=(0, 14))
+        ring = RingStat(card.body, size=126, parent_bg=C["card"])
         ring.pack()
         return ring
 
@@ -608,6 +624,16 @@ class DashboardView(View):
         ap1_done = self.db.distinct_ap1()
         scen_done = self.db.distinct_scenarios()
 
+        rate, correct, answered = self.db.quiz_success_rate()
+        learned = learned_cards + quiz_distinct
+        self.hero.set_data(
+            "Dein Lernstand",
+            "Lernserie: %d Tag(e)   ·   %d von %d Inhalten bearbeitet   ·   "
+            "Quiz-Erfolgsquote %d %%"
+            % (self.db.streak(), learned, self.total_content, round(rate)),
+            "%d %%" % round(learned / max(1, self.total_content) * 100),
+            "Gesamtfortschritt")
+
         self.ring_cards.set(learned_cards / max(1, total_cards), C["cyan"],
                             C["purple"], str(learned_cards),
                             "von %d Karten" % total_cards)
@@ -621,13 +647,12 @@ class DashboardView(View):
                            C["orange"], str(scen_done),
                            "von %d Szenarien" % total_scen)
 
-        rate, correct, answered = self.db.quiz_success_rate()
-        self.lbl_quote.config(text="%d %%" % round(rate))
+        self.lbl_quote.configure(text="%d %%" % round(rate))
         if answered:
-            self.lbl_quote_sub.config(
+            self.lbl_quote_sub.configure(
                 text="%d von %d Fragen richtig beantwortet" % (correct, answered))
         else:
-            self.lbl_quote_sub.config(text="noch keine Antworten erfasst")
+            self.lbl_quote_sub.configure(text="noch keine Antworten erfasst")
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
                            "%d / %d" % (learned_cards, total_cards))
@@ -661,10 +686,10 @@ class DashboardView(View):
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
                 quota = data["correct"] / data["answered"] * 100
-                detail.config(text="%d Antworten · %d%% richtig"
-                                   % (data["answered"], round(quota)))
+                detail.configure(text="%d Antworten\n%d%% richtig"
+                                      % (data["answered"], round(quota)))
             else:
-                detail.config(text="noch nicht bearbeitet")
+                detail.configure(text="noch nicht\nbearbeitet")
 
         # Aktivitaeten
         for child in self.activity_box.winfo_children():
@@ -682,28 +707,28 @@ class DashboardView(View):
         self.calendar.refresh()
 
         progress = self.db.theme_progress(theme_totals())
-        self.timeline.set_data([(name, progress.get(name, 0.0), color)
-                                for name, color in AP2_THEMES])
+        self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
+                                for name in AP2_THEMES])
 
         progress_ap1 = self.db.theme_progress(ap1_theme_totals(), themes=AP1_THEMES,
                                               table="ap1_events")
-        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0), color)
-                                    for name, color in AP1_THEMES])
+        self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
+                                     THEME_COLOR[name]) for name in AP1_THEMES])
 
     def _activity_row(self, timestamp, kind, detail, extra):
-        row = tk.Frame(self.activity_box, bg=C["card"])
+        row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
+                           corner_radius=10)
         row.pack(fill="x", pady=3)
         color = {"Karteikarte": C["cyan"], "Quizfrage": C["purple"],
                  "AP1-Szenario": C["blue"], "AP2-Szenario": C["pink"],
                  "Test-Session": C["green"]}.get(kind, C["muted"])
-        dot = tk.Canvas(row, width=8, height=8, bg=C["card"],
-                        highlightthickness=0, bd=0)
-        dot.pack(side="left", padx=(0, 8), pady=6)
-        dot.create_oval(1, 1, 7, 7, fill=color, outline="")
+        ctk.CTkLabel(row, text="", width=9, height=9,
+                     image=ctk_image(circle_image(9, fill=color), 9, 9)).pack(
+                         side="left", padx=(12, 10))
 
-        text_box = tk.Frame(row, bg=C["card"])
-        text_box.pack(side="left", fill="x", expand=True)
-        short_detail = detail if len(str(detail)) <= 28 else str(detail)[:26] + "…"
+        text_box = transparent_frame(row)
+        text_box.pack(side="left", fill="x", expand=True, pady=7)
+        short_detail = detail if len(str(detail)) <= 34 else str(detail)[:32] + "…"
         make_label(text_box, "%s · %s" % (kind, short_detail),
                    font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w")
         make_label(text_box, "%s  ·  %s" % (timestamp[:16].replace("-", "."), extra),
@@ -727,18 +752,16 @@ class CardsView(View):
 
         top = Card(self.content)
         top.pack(fill="x")
-        bar = tk.Frame(top.body, bg=C["card"])
+        bar = transparent_frame(top.body)
         bar.pack(fill="x")
 
         make_label(bar, "FACHBEREICH", font=F["label"], fg=C["muted"]).pack(anchor="w")
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
-        self.cat_pills = PillGroup(bar, options, on_change=self._on_category,
-                                   bg=C["card"])
+        self.cat_pills = PillGroup(bar, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
 
         make_label(bar, "LERNMODUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        self.mode_pills = PillGroup(bar, self.MODES, on_change=self._on_mode,
-                                    bg=C["card"])
+        self.mode_pills = PillGroup(bar, self.MODES, on_change=self._on_mode)
         self.mode_pills.pack(anchor="w", pady=(8, 0))
 
         # Frage
@@ -747,7 +770,7 @@ class CardsView(View):
         self.question_card.pack(fill="x", pady=(14, 0))
         self.lbl_question = make_label(self.question_card.body, "",
                                        font=F["h2"], fg=C["text"],
-                                       wraplength=900, justify="left")
+                                       wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=6)
 
         # Antwortbereich
@@ -758,10 +781,10 @@ class CardsView(View):
         # Fester Platzhalter fuer den Eingabebereich. Ohne diesen Container
         # wuerden spaeter eingeblendete Elemente unterhalb der Rueckmeldung
         # landen, weil Tk die Reihenfolge der pack-Aufrufe beibehaelt.
-        self.input_area = tk.Frame(self.answer_card.body, bg=C["card"])
+        self.input_area = transparent_frame(self.answer_card.body)
         self.input_area.pack(fill="x")
 
-        self.frame_free = tk.Frame(self.input_area, bg=C["card"])
+        self.frame_free = transparent_frame(self.input_area)
         make_label(self.frame_free,
                    "Formuliere deine Antwort in eigenen Worten:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
@@ -770,35 +793,34 @@ class CardsView(View):
 
         self.options = OptionList(self.input_area, bg=C["card"])
 
-        self.frame_reveal = tk.Frame(self.input_area, bg=C["card"])
+        self.frame_reveal = transparent_frame(self.input_area)
         make_label(self.frame_reveal,
                    "Überlege dir die Antwort und decke sie anschließend auf.",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=4)
 
         self.lbl_feedback = make_label(self.answer_card.body, "",
                                        font=F["body_bold"], fg=C["text"],
-                                       wraplength=900, justify="left")
+                                       wraplength=900, justify="left", anchor="w")
         self.lbl_feedback.pack(anchor="w", pady=(14, 0))
         self.lbl_solution = make_label(self.answer_card.body, "",
                                        font=F["body"], fg=C["text_dim"],
-                                       wraplength=900, justify="left")
+                                       wraplength=900, justify="left", anchor="w")
         self.lbl_solution.pack(anchor="w", pady=(6, 0))
 
         # Steuerung
-        controls = tk.Frame(self.content, bg=C["bg"])
+        controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
         self.btn_prev = NeoButton(controls, "Zurück", self.prev_card,
-                                  kind="ghost", parent_bg=C["bg"],
-                                  icon="arrow_left")
+                                  kind="ghost", icon="arrow_left")
         self.btn_prev.pack(side="left")
         self.btn_check = NeoButton(controls, "Antwort prüfen", self.check_answer,
-                                   kind="primary", parent_bg=C["bg"])
+                                   kind="primary")
         self.btn_check.pack(side="left", padx=10)
         self.btn_next = NeoButton(controls, "Nächste Karte", self.next_card,
-                                  kind="accent", parent_bg=C["bg"])
+                                  kind="accent", icon="arrow_right")
         self.btn_next.pack(side="left")
         self.lbl_counter = make_label(controls, "", font=F["body_bold"],
-                                      fg=C["text_dim"], bg=C["bg"])
+                                      fg=C["text_dim"])
         self.lbl_counter.pack(side="right", pady=8)
 
         self.update_ui()
@@ -842,31 +864,31 @@ class CardsView(View):
         self.update_ui()
 
     def update_ui(self):
-        self.lbl_feedback.config(text="")
-        self.lbl_solution.config(text="")
+        self.lbl_feedback.configure(text="")
+        self.lbl_solution.configure(text="")
         self.frame_free.pack_forget()
         self.options.pack_forget()
         self.frame_reveal.pack_forget()
         self.options.clear()
 
         if not self.filtered:
-            self.lbl_question.config(text="Für diesen Fachbereich sind keine "
-                                          "Karteikarten hinterlegt.")
-            self.lbl_counter.config(text="0 / 0")
+            self.lbl_question.configure(text="Für diesen Fachbereich sind keine "
+                                             "Karteikarten hinterlegt.")
+            self.lbl_counter.configure(text="0 / 0")
             self.btn_check.set_enabled(False)
             return
 
         self.btn_check.set_enabled(True)
         card = self.filtered[self.index]
-        self.lbl_question.config(text=card["q"])
-        self.lbl_counter.config(text="Karte %d / %d"
-                                     % (self.index + 1, len(self.filtered)))
+        self.lbl_question.configure(text=card["q"])
+        self.lbl_counter.configure(text="Karte %d / %d"
+                                        % (self.index + 1, len(self.filtered)))
         self.question_card.set_subtitle(CATEGORY_SHORT[card["cat"]],
                                         CATEGORY_COLOR[card["cat"]])
 
         if self.mode == "freitext":
             self.frame_free.pack(fill="x")
-            self.txt_answer.delete("1.0", tk.END)
+            self.txt_answer.delete("1.0", "end")
             self.btn_check.set_text("Antwort prüfen")
         elif self.mode == "mc":
             self.options.pack(fill="x")
@@ -885,18 +907,20 @@ class CardsView(View):
         correct = None
 
         if self.mode == "freitext":
-            user_input = self.txt_answer.get("1.0", tk.END).strip()
+            user_input = self.txt_answer.get("1.0", "end").strip()
             if not user_input:
                 messagebox.showwarning("Hinweis", "Bitte gib zuerst deine Antwort ein.")
                 return
             correct = card["a"].lower() in user_input.lower()
             if correct:
-                self.lbl_feedback.config(text="Sehr gut - deine Antwort enthält "
-                                              "die Kernlösung.", fg=C["green"])
+                self.lbl_feedback.configure(text="Sehr gut - deine Antwort enthält "
+                                                 "die Kernlösung.",
+                                            text_color=C["green"])
             else:
-                self.lbl_feedback.config(text="Vergleiche deine Eingabe mit der "
-                                              "Musterlösung:", fg=C["yellow"])
-            self.lbl_solution.config(text="Musterlösung: " + card["a_full"])
+                self.lbl_feedback.configure(text="Vergleiche deine Eingabe mit der "
+                                                 "Musterlösung:",
+                                            text_color=C["yellow"])
+            self.lbl_solution.configure(text="Musterlösung: " + card["a_full"])
 
         elif self.mode == "mc":
             choice = self.options.get()
@@ -906,15 +930,16 @@ class CardsView(View):
             correct = choice == card["a"]
             self.options.reveal(card["a"])
             if correct:
-                self.lbl_feedback.config(text="Richtig beantwortet.", fg=C["green"])
+                self.lbl_feedback.configure(text="Richtig beantwortet.",
+                                            text_color=C["green"])
             else:
-                self.lbl_feedback.config(text="Leider falsch. Richtig wäre: "
-                                              + card["a"], fg=C["red"])
-            self.lbl_solution.config(text=card["a_full"])
+                self.lbl_feedback.configure(text="Leider falsch. Richtig wäre: "
+                                                 + card["a"], text_color=C["red"])
+            self.lbl_solution.configure(text=card["a_full"])
 
         else:
-            self.lbl_feedback.config(text="Musterlösung", fg=C["cyan"])
-            self.lbl_solution.config(text=card["a_full"])
+            self.lbl_feedback.configure(text="Musterlösung", text_color=C["cyan"])
+            self.lbl_solution.configure(text=card["a_full"])
 
         key = (card["q"], self.mode)
         if key not in self.logged:
@@ -957,11 +982,10 @@ class QuizView(View):
 
         make_label(body, "FACHBEREICH", font=F["label"], fg=C["muted"]).pack(anchor="w")
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
-        self.cat_pills = PillGroup(body, options, on_change=self._on_category,
-                                   bg=C["card"])
+        self.cat_pills = PillGroup(body, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
 
-        row = tk.Frame(body, bg=C["card"])
+        row = transparent_frame(body)
         row.pack(anchor="w", fill="x")
         make_label(row, "Fragenanzahl", font=F["small"],
                    fg=C["text_dim"]).pack(side="left", padx=(0, 10))
@@ -969,13 +993,13 @@ class QuizView(View):
                                      step=5, bg=C["card"])
         self.stepper.pack(side="left")
         self.btn_start = NeoButton(row, "Session starten", self.start_quiz,
-                                   kind="primary", parent_bg=C["card"])
+                                   kind="primary")
         self.btn_start.pack(side="left", padx=16)
         self.lbl_pool = make_label(row, "", font=F["small"], fg=C["muted"])
         self.lbl_pool.pack(side="left")
 
         # Statusleiste
-        self.status_card = Card(self.content)
+        self.status_card = Card(self.content, pad=14)
         self.status_card.pack(fill="x", pady=(14, 0))
         status = self.status_card.body
         self.lbl_progress = make_label(status, "Frage 0 / 0", font=F["body_bold"],
@@ -994,7 +1018,7 @@ class QuizView(View):
         self.lbl_question = make_label(
             self.question_card.body,
             "Wähle Fachbereich und Fragenanzahl und starte die Session.",
-            font=F["h2"], fg=C["text"], wraplength=900, justify="left")
+            font=F["h2"], fg=C["text"], wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=(4, 12))
 
         self.options = OptionList(self.question_card.body, bg=C["card"])
@@ -1002,19 +1026,17 @@ class QuizView(View):
 
         self.lbl_explain = make_label(self.question_card.body, "", font=F["body"],
                                       fg=C["text_dim"], wraplength=900,
-                                      justify="left")
+                                      justify="left", anchor="w")
         self.lbl_explain.pack(anchor="w", pady=(12, 0))
 
-        controls = tk.Frame(self.content, bg=C["bg"])
+        controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
         self.btn_submit = NeoButton(controls, "Antwort einreichen",
-                                    self.submit_answer, kind="primary",
-                                    parent_bg=C["bg"])
+                                    self.submit_answer, kind="primary")
         self.btn_submit.pack(side="left")
         self.btn_submit.set_enabled(False)
         self.btn_cancel = NeoButton(controls, "Session abbrechen",
-                                    self.cancel_quiz, kind="ghost",
-                                    parent_bg=C["bg"])
+                                    self.cancel_quiz, kind="ghost")
         self.btn_cancel.pack(side="left", padx=10)
         self.btn_cancel.set_enabled(False)
 
@@ -1028,7 +1050,7 @@ class QuizView(View):
         else:
             self.pool = [q for q in self.questions if q["cat"] == category]
         self.stepper.set_maximum(max(5, len(self.pool)))
-        self.lbl_pool.config(text="%d Fragen verfügbar" % len(self.pool))
+        self.lbl_pool.configure(text="%d Fragen verfügbar" % len(self.pool))
 
     # -- Ablauf -------------------------------------------------------------
 
@@ -1055,7 +1077,7 @@ class QuizView(View):
         if not self.running:
             return
         elapsed = int(time.time() - self.start_time)
-        self.lbl_timer.config(text="%02d:%02d" % (elapsed // 60, elapsed % 60))
+        self.lbl_timer.configure(text="%02d:%02d" % (elapsed // 60, elapsed % 60))
         self.timer_job = self.app.root.after(1000, self._tick)
 
     def stop_timer(self):
@@ -1070,14 +1092,14 @@ class QuizView(View):
     def load_question(self):
         self.answered = False
         question = self.session[self.index]
-        self.lbl_question.config(text="%d. %s" % (self.index + 1, question["q"]))
-        self.lbl_explain.config(text="")
+        self.lbl_question.configure(text="%d. %s" % (self.index + 1, question["q"]))
+        self.lbl_explain.configure(text="")
         shuffled = list(question["options"])
         random.shuffle(shuffled)
         self.options.set_options(shuffled)
-        self.lbl_progress.config(text="Frage %d / %d"
-                                      % (self.index + 1, len(self.session)))
-        self.lbl_score.config(text="%d richtig" % self.score)
+        self.lbl_progress.configure(text="Frage %d / %d"
+                                         % (self.index + 1, len(self.session)))
+        self.lbl_score.configure(text="%d richtig" % self.score)
         self.btn_submit.set_text("Antwort einreichen")
         self.btn_submit.set_enabled(True)
 
@@ -1100,9 +1122,9 @@ class QuizView(View):
         self.options.reveal(question["a"])
         self.answered = True
         prefix = "Richtig. " if correct else "Falsch. Richtig wäre: %s. " % question["a"]
-        self.lbl_explain.config(text=prefix + question["exp"],
-                                fg=C["green"] if correct else C["text_dim"])
-        self.lbl_score.config(text="%d richtig" % self.score)
+        self.lbl_explain.configure(text=prefix + question["exp"],
+                                   text_color=C["green"] if correct else C["text_dim"])
+        self.lbl_score.configure(text="%d richtig" % self.score)
         self.db.log_quiz_answer(question["cat"], question["q"], correct)
         self.app.notify_progress()
 
@@ -1126,10 +1148,10 @@ class QuizView(View):
             return
         self.stop_timer()
         self._reset_controls()
-        self.lbl_question.config(text="Session abgebrochen. Du kannst jederzeit "
-                                      "eine neue starten.")
+        self.lbl_question.configure(text="Session abgebrochen. Du kannst jederzeit "
+                                         "eine neue starten.")
         self.options.clear()
-        self.lbl_explain.config(text="")
+        self.lbl_explain.configure(text="")
 
     def finish_quiz(self):
         self.stop_timer()
@@ -1140,12 +1162,12 @@ class QuizView(View):
         saved = self.db.save_test_result(self.score, total, percentage, note, elapsed)
 
         self.options.clear()
-        self.lbl_explain.config(text="")
+        self.lbl_explain.configure(text="")
         self._reset_controls()
 
         hint = ("Das Ergebnis wurde gespeichert."
                 if saved else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
-        self.lbl_question.config(
+        self.lbl_question.configure(
             text="Session beendet\n\n"
                  "Ergebnis: %d von %d richtig (%.1f %%)\n"
                  "IHK-Note: %s\n"
@@ -1160,18 +1182,19 @@ class QuizView(View):
         self.btn_cancel.set_enabled(False)
         self.btn_submit.set_enabled(False)
         self.btn_submit.set_text("Antwort einreichen")
-        self.lbl_progress.config(text="Frage 0 / 0")
-        self.lbl_timer.config(text="00:00")
+        self.lbl_progress.configure(text="Frage 0 / 0")
+        self.lbl_timer.configure(text="00:00")
 
     def jump_to_question(self, question_text):
         for question in self.questions:
             if question["q"] == question_text:
                 self.stop_timer()
                 self._reset_controls()
-                self.lbl_question.config(text=question["q"])
+                self.lbl_question.configure(text=question["q"])
                 self.options.set_options(list(question["options"]))
                 self.options.reveal(question["a"])
-                self.lbl_explain.config(text=question["exp"], fg=C["text_dim"])
+                self.lbl_explain.configure(text=question["exp"],
+                                           text_color=C["text_dim"])
                 return
 
 
@@ -1200,7 +1223,7 @@ class ScenarioViewBase(View):
         # nicht jedes Mal von vorn anfangen muss.
         self.own_answers = {}
 
-        layout = tk.Frame(self.content, bg=C["bg"])
+        layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=2, uniform="scen")
         layout.columnconfigure(1, weight=5, uniform="scen")
@@ -1208,19 +1231,20 @@ class ScenarioViewBase(View):
         list_card = Card(layout, title=self.LIST_TITLE,
                          subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        self.list_box = tk.Frame(list_card.body, bg=C["card"])
+        self.list_box = transparent_frame(list_card.body)
         self.list_box.pack(fill="both", expand=True)
         self.list_rows = []
         for position, scenario in enumerate(self.DATA):
             self.list_rows.append(self._list_row(position, scenario))
 
-        detail = tk.Frame(layout, bg=C["bg"])
+        detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
 
         self.task_card = Card(detail, title="Aufgabenstellung", accent=C["cyan"])
         self.task_card.pack(fill="both", expand=True)
         self.lbl_title = make_label(self.task_card.body, "", font=F["h2"],
-                                    fg=C["text"], wraplength=760, justify="left")
+                                    fg=C["text"], wraplength=760, justify="left",
+                                    anchor="w")
         self.lbl_title.pack(anchor="w", pady=(0, 10))
         self.txt_task = make_text(self.task_card.body, height=11, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
@@ -1242,14 +1266,13 @@ class ScenarioViewBase(View):
         self.txt_solution = make_text(self.sol_card.body, height=11, readonly=True)
         self.txt_solution.pack(fill="both", expand=True)
 
-        controls = tk.Frame(detail, bg=C["bg"])
+        controls = transparent_frame(detail)
         controls.pack(fill="x", pady=(14, 0))
         self.btn_toggle = NeoButton(controls, "Musterlösung anzeigen",
-                                    self.toggle_solution, kind="primary",
-                                    parent_bg=C["bg"])
+                                    self.toggle_solution, kind="primary")
         self.btn_toggle.pack(side="left")
         NeoButton(controls, "Nächstes Szenario", self.next_scenario,
-                  kind="ghost", parent_bg=C["bg"]).pack(side="left", padx=10)
+                  kind="ghost", icon="arrow_right").pack(side="left", padx=10)
 
         self.load_scenario(0)
 
@@ -1257,38 +1280,32 @@ class ScenarioViewBase(View):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
 
     def _list_row(self, position, scenario):
-        row = tk.Frame(self.list_box, bg=C["card_alt"], cursor="hand2",
-                       highlightthickness=1, highlightbackground=C["border"])
+        row, marker, inner = clickable_row(self.list_box,
+                                           CATEGORY_COLOR[scenario["cat"]])
         row.pack(fill="x", pady=4)
-        marker = tk.Frame(row, bg=CATEGORY_COLOR[scenario["cat"]], width=3)
-        marker.pack(side="left", fill="y")
-        inner = tk.Frame(row, bg=C["card_alt"])
-        inner.pack(side="left", fill="x", expand=True, padx=10, pady=9)
-        title = tk.Label(inner, text="%d. %s" % (position + 1, scenario["title"]),
-                         bg=C["card_alt"], fg=C["text"], font=F["small_bold"],
-                         anchor="w", justify="left", wraplength=190)
+        title = ctk.CTkLabel(inner, text="%d. %s" % (position + 1, scenario["title"]),
+                             text_color=C["text"], font=F["small_bold"], height=0,
+                             anchor="w", justify="left", wraplength=190,
+                             cursor="hand2")
         title.pack(anchor="w")
-        theme = tk.Label(inner, text=scenario["theme"], bg=C["card_alt"],
-                         fg=C["muted"], font=F["tiny"], anchor="w")
+        theme = ctk.CTkLabel(inner, text=scenario["theme"], text_color=C["muted"],
+                             font=F["tiny"], anchor="w", height=0, cursor="hand2")
         theme.pack(anchor="w")
-        for widget in (row, inner, title, theme, marker):
-            widget.bind("<Button-1>", lambda _e, p=position: self.load_scenario(p))
-        return {"frame": row, "inner": inner, "title": title, "theme": theme}
+        bind_click((row, inner, title, theme, marker),
+                   lambda _e, p=position: self.load_scenario(p))
+        return {"frame": row, "title": title}
 
     def _highlight(self):
         for position, row in enumerate(self.list_rows):
             active = position == self.index
-            bg = C["card_hi"] if active else C["card_alt"]
-            row["frame"].configure(bg=bg,
-                                   highlightbackground=C["purple"] if active else C["border"])
-            row["inner"].configure(bg=bg)
-            row["title"].configure(bg=bg, fg=C["text"] if active else C["text_dim"])
-            row["theme"].configure(bg=bg)
+            row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
+                                   border_color=C["purple"] if active else C["border"])
+            row["title"].configure(text_color=C["text"] if active else C["text_dim"])
 
     def load_scenario(self, position):
         self.index = position
         scenario = self.DATA[position]
-        self.lbl_title.config(text=scenario["title"])
+        self.lbl_title.configure(text=scenario["title"])
         set_text(self.txt_task, scenario["text"])
         self.solution_visible = False
         set_text(self.txt_solution,
@@ -1353,7 +1370,7 @@ class ProjectView(View):
         self.index = 0
         self.hints_visible = False
 
-        layout = tk.Frame(self.content, bg=C["bg"])
+        layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=2, uniform="proj")
         layout.columnconfigure(1, weight=5, uniform="proj")
@@ -1361,17 +1378,17 @@ class ProjectView(View):
         list_card = Card(layout, title="Testprojekte",
                          subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        self.list_box = tk.Frame(list_card.body, bg=C["card"])
+        self.list_box = transparent_frame(list_card.body)
         self.list_box.pack(fill="both", expand=True)
         self.list_rows = []
         for position, project in enumerate(PROJEKTARBEITEN):
             self.list_rows.append(self._list_row(position, project))
 
-        detail = tk.Frame(layout, bg=C["bg"])
+        detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
 
         self.header_label = make_label(detail, "", font=F["h2"], fg=C["text"],
-                                       wraplength=760, justify="left")
+                                       wraplength=760, justify="left", anchor="w")
         self.header_label.pack(anchor="w")
         self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
         self.meta_label.pack(anchor="w", pady=(2, 12))
@@ -1386,51 +1403,45 @@ class ProjectView(View):
         self.txt_hints = make_text(self.hint_card.body, height=14, readonly=True)
         self.txt_hints.pack(fill="both", expand=True)
 
-        controls = tk.Frame(detail, bg=C["bg"])
+        controls = transparent_frame(detail)
         controls.pack(fill="x", pady=(14, 0))
         self.btn_toggle = NeoButton(controls, "Lösungsansätze anzeigen",
-                                    self.toggle_hints, kind="primary",
-                                    parent_bg=C["bg"])
+                                    self.toggle_hints, kind="primary")
         self.btn_toggle.pack(side="left")
         NeoButton(controls, "Nächstes Projekt", self.next_project,
-                  kind="ghost", parent_bg=C["bg"]).pack(side="left", padx=10)
+                  kind="ghost", icon="arrow_right").pack(side="left", padx=10)
 
         self.load_project(0)
 
     def _list_row(self, position, project):
-        row = tk.Frame(self.list_box, bg=C["card_alt"], cursor="hand2",
-                       highlightthickness=1, highlightbackground=C["border"])
+        row, marker, inner = clickable_row(self.list_box,
+                                           CATEGORY_COLOR[project["cat"]])
         row.pack(fill="x", pady=4)
-        marker = tk.Frame(row, bg=CATEGORY_COLOR[project["cat"]], width=3)
-        marker.pack(side="left", fill="y")
-        inner = tk.Frame(row, bg=C["card_alt"])
-        inner.pack(side="left", fill="x", expand=True, padx=10, pady=9)
-        title = tk.Label(inner, text="%d. %s" % (position + 1, project["title"]),
-                         bg=C["card_alt"], fg=C["text"], font=F["small_bold"],
-                         anchor="w", justify="left", wraplength=190)
+        title = ctk.CTkLabel(inner, text="%d. %s" % (position + 1, project["title"]),
+                             text_color=C["text"], font=F["small_bold"], height=0,
+                             anchor="w", justify="left", wraplength=190,
+                             cursor="hand2")
         title.pack(anchor="w")
-        sub = tk.Label(inner, text="%s · %s" % (project["schwierigkeit"],
-                                                 CATEGORY_SHORT[project["cat"]]),
-                       bg=C["card_alt"], fg=C["muted"], font=F["tiny"], anchor="w")
+        sub = ctk.CTkLabel(inner, text="%s · %s" % (project["schwierigkeit"],
+                                                     CATEGORY_SHORT[project["cat"]]),
+                           text_color=C["muted"], font=F["tiny"], anchor="w",
+                           height=0, cursor="hand2")
         sub.pack(anchor="w")
-        for widget in (row, inner, title, sub, marker):
-            widget.bind("<Button-1>", lambda _e, p=position: self.load_project(p))
-        return {"frame": row, "inner": inner, "title": title, "sub": sub}
+        bind_click((row, inner, title, sub, marker),
+                   lambda _e, p=position: self.load_project(p))
+        return {"frame": row, "title": title}
 
     def _highlight(self):
         done = self.db.completed_projects()
         for position, row in enumerate(self.list_rows):
             active = position == self.index
-            bg = C["card_hi"] if active else C["card_alt"]
-            row["frame"].configure(bg=bg,
-                                   highlightbackground=C["purple"] if active else C["border"])
-            row["inner"].configure(bg=bg)
+            row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
+                                   border_color=C["purple"] if active else C["border"])
             mark = " ✓" if position in done else ""
             project = PROJEKTARBEITEN[position]
             row["title"].configure(
-                bg=bg, fg=C["text"] if active else C["text_dim"],
+                text_color=C["text"] if active else C["text_dim"],
                 text="%d. %s%s" % (position + 1, project["title"], mark))
-            row["sub"].configure(bg=bg)
 
     @staticmethod
     def _task_text(project):
@@ -1462,8 +1473,8 @@ class ProjectView(View):
     def load_project(self, position):
         self.index = position
         project = PROJEKTARBEITEN[position]
-        self.header_label.config(text=project["title"])
-        self.meta_label.config(
+        self.header_label.configure(text=project["title"])
+        self.meta_label.configure(
             text="%s  ·  Schwierigkeit: %s  ·  Fachbereich: %s"
                  % (project["branche"], project["schwierigkeit"],
                     CATEGORY_SHORT[project["cat"]]))
@@ -1500,127 +1511,12 @@ class ProjectView(View):
 # ============================================================================
 
 class CalcView(View):
-    RAID_LEVELS = [("RAID 0", "RAID 0"), ("RAID 1", "RAID 1"), ("RAID 5", "RAID 5"),
-                   ("RAID 6", "RAID 6"), ("RAID 10", "RAID 10")]
-    COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
-                    ("24", "24 Bit (True Color)"),
-                    ("32", "32 Bit (True Color + Alpha)")]
-
-    EXPLAIN_SUBNET = (
-        "RECHENWEG SUBNETTING\n"
-        "Am Beispiel 192.168.1.50/24\n\n"
-        "SCHRITT 1: Praefix in Subnetzmaske umwandeln\n"
-        "   Das Praefix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
-        "   links auf 1 gesetzt sind. /24 bedeutet: die ersten 24 Bits der\n"
-        "   32-Bit-Adresse sind 1, der Rest ist 0.\n"
-        "   /24 = 11111111.11111111.11111111.00000000\n"
-        "       =    255   .   255   .   255   .    0\n"
-        "   -> Subnetzmaske: 255.255.255.0\n\n"
-        "SCHRITT 2: Netzwerk-Adresse berechnen\n"
-        "   Netzwerk-Adresse = IP-Adresse AND Subnetzmaske\n"
-        "   (bitweise UND-Verknuepfung: nur wenn IP UND Maske an der\n"
-        "   selben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
-        "     192.168.1.50   = 11000000.10101000.00000001.00110010\n"
-        "   AND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
-        "   -------------------------------------------------------\n"
-        "     Ergebnis         = 11000000.10101000.00000001.00000000\n"
-        "   -> Netzwerk-Adresse: 192.168.1.0\n\n"
-        "SCHRITT 3: Broadcast-Adresse berechnen\n"
-        "   Wildcard-Maske = invertierte Subnetzmaske (alle Bits\n"
-        "   umgedreht): 255.255.255.0 -> 0.0.0.255\n"
-        "   Broadcast-Adresse = Netzwerk-Adresse OR Wildcard-Maske\n"
-        "   (alle Host-Bits werden auf 1 gesetzt)\n"
-        "   -> Broadcast-Adresse: 192.168.1.255\n\n"
-        "SCHRITT 4: Nutzbare Host-Adressen zaehlen\n"
-        "   Anzahl aller Adressen im Netz = 2^(32 - Praefixlaenge)\n"
-        "   Bei /24: 2^(32-24) = 2^8 = 256 Adressen\n"
-        "   Davon sind die Netzwerk-Adresse (192.168.1.0) und die\n"
-        "   Broadcast-Adresse (192.168.1.255) nicht als Host vergebbar,\n"
-        "   deshalb -2:\n"
-        "   Nutzbare Hosts = 2^(32 - Praefixlaenge) - 2 = 256 - 2 = 254\n"
-        "   -> erste nutzbare Adresse: 192.168.1.1\n"
-        "   -> letzte nutzbare Adresse: 192.168.1.254\n\n"
-        "HINWEIS ZU IPv6\n"
-        "   IPv6 kennt keine Broadcast-Adresse, daher entfaellt dort der\n"
-        "   Abzug der -2 und alle Adressen im Netz gelten als nutzbar."
-    )
-    EXPLAIN_RAID = (
-        "RECHENWEG RAID\n"
-        "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazitaet 4000 GB)\n\n"
-        "RAID 0 - Striping (min. 1 Platte)\n"
-        "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
-        "   Formel:  Netto = Anzahl x Kapazitaet\n"
-        "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
-        "   Ausfalltoleranz: 0 Platten (faellt eine aus, sind alle Daten weg)\n\n"
-        "RAID 1 - Mirroring (min. 2 Platten)\n"
-        "   Die Daten werden 1:1 auf eine zweite Platte gespiegelt.\n"
-        "   Formel:  Netto = 1 x Kapazitaet\n"
-        "   Beispiel: 1000 GB nutzbar (bei 4 Platten stehen nur 1000 GB\n"
-        "   Nutzkapazitaet zur Verfuegung, der Rest ist Spiegelung)\n"
-        "   Ausfalltoleranz: n-1 Platten\n\n"
-        "RAID 5 - Parity, verteilte Paritaet (min. 3 Platten)\n"
-        "   Eine Platte Kapazitaet wird rechnerisch fuer Paritaetsdaten\n"
-        "   verwendet (die Paritaet selbst liegt verteilt auf allen Platten).\n"
-        "   Formel:  Netto = (Anzahl - 1) x Kapazitaet\n"
-        "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
-        "   Ausfalltoleranz: 1 Platte\n\n"
-        "RAID 6 - Double Parity (min. 4 Platten)\n"
-        "   Wie RAID 5, aber mit doppelter Paritaet fuer mehr Sicherheit.\n"
-        "   Formel:  Netto = (Anzahl - 2) x Kapazitaet\n"
-        "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
-        "   Ausfalltoleranz: 2 Platten\n\n"
-        "RAID 10 - Spiegelung + Striping (min. 4 Platten, gerade Anzahl)\n"
-        "   Je zwei Platten werden gespiegelt (RAID 1), diese Spiegel-\n"
-        "   Paare werden anschliessend im Striping-Verfahren (RAID 0)\n"
-        "   zusammengefasst.\n"
-        "   Formel:  Netto = (Anzahl / 2) x Kapazitaet\n"
-        "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
-        "   Ausfalltoleranz: 1 Platte je Spiegel-Paar\n\n"
-        "SPEICHEREFFIZIENZ\n"
-        "   Effizienz = Nettokapazitaet / Bruttokapazitaet x 100\n"
-        "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
-    )
-    EXPLAIN_SCREEN = (
-        "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
-        "Am Beispiel 1920 x 1080 Pixel, 24 Bit Farbtiefe\n\n"
-        "SCHRITT 1: Pixel gesamt ermitteln\n"
-        "   Pixel gesamt = Breite x Hoehe\n"
-        "   Beispiel: 1920 x 1080 = 2.073.600 Pixel\n\n"
-        "SCHRITT 2: Datenmenge pro Bild in Bit berechnen\n"
-        "   Jedes Pixel benoetigt fuer seine Farbe eine feste Anzahl Bit,\n"
-        "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
-        "   True Color mit rund 16,7 Mio. Farben: je 8 Bit fuer Rot,\n"
-        "   Gruen und Blau).\n"
-        "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
-        "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
-        "SCHRITT 3: In Byte, KB und MB umrechnen\n"
-        "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
-        "   jeweils durch 1024 geteilt, um die naechstgroessere Einheit\n"
-        "   zu erhalten (Byte -> KB -> MB).\n"
-        "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
-        "   KB   = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KB\n"
-        "   MB   = KB / 1024          -> 6.075,00 / 1024 = 5,93 MB\n"
-        "   -> Ein einzelnes Bild in dieser Aufloesung und Farbtiefe\n"
-        "      benoetigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
-        "SCHRITT 4: Datenrate bei bewegten Bildern (Video)\n"
-        "   Bei Videos wird nicht nur ein Bild, sondern mehrere Bilder\n"
-        "   pro Sekunde angezeigt (Bildwiederholrate, engl. frames per\n"
-        "   second, fps). Die Datenrate gibt an, wie viele Daten dafuer\n"
-        "   pro Sekunde anfallen.\n"
-        "   Datenrate = Datenmenge pro Bild x Bildwiederholrate (fps)\n"
-        "   Beispiel bei 30 fps: 6.220.800 Byte x 30 = 186.624.000 Byte/s\n"
-        "   -> das sind rund 177,98 MB/s bzw. 1.492,99 Mbit/s bzw.\n"
-        "      rund 10,43 GB/Minute.\n"
-        "   Dieser enorme Wert zeigt, warum Videos in der Praxis fast\n"
-        "   immer komprimiert (z.B. per H.264/H.265) uebertragen werden."
-    )
-
     def build(self):
         self.info_visible = {"subnet": False, "raid": False, "screen": False}
         self.info_frames = {}
         self.info_buttons = {}
 
-        layout = tk.Frame(self.content, bg=C["bg"])
+        layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
@@ -1634,12 +1530,12 @@ class CalcView(View):
         self.entry_ip = EntryBox(subnet.body, width=28, value="192.168.1.50/24")
         self.entry_ip.pack(anchor="w", pady=(8, 12), fill="x")
         self.entry_ip.entry.bind("<Return>", lambda _e: self.calc_subnet())
-        NeoButton(subnet.body, "Berechnen", self.calc_subnet, kind="accent",
-                  parent_bg=C["card"]).pack(anchor="w")
-        self.txt_subnet = make_text(subnet.body, height=9, readonly=True)
-        self.txt_subnet.configure(font=F["mono_small"])
+        NeoButton(subnet.body, "Berechnen", self.calc_subnet,
+                  kind="accent").pack(anchor="w")
+        self.txt_subnet = make_text(subnet.body, height=9, readonly=True,
+                                    font=F["mono_small"])
         self.txt_subnet.pack(fill="both", expand=True, pady=(14, 0))
-        self._build_info_toggle(subnet.body, "subnet", self.EXPLAIN_SUBNET)
+        self._build_info_toggle(subnet.body, "subnet", CALC_EXPLAIN_SUBNET)
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
@@ -1647,11 +1543,11 @@ class CalcView(View):
         raid.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         make_label(raid.body, "RAID-Level", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w")
-        self.raid_pills = PillGroup(raid.body, self.RAID_LEVELS, initial=2,
-                                    bg=C["card"])
+        self.raid_pills = PillGroup(raid.body, [(level, level) for level in RAID_LEVELS],
+                                    initial=2)
         self.raid_pills.pack(anchor="w", pady=(8, 12))
 
-        grid = tk.Frame(raid.body, bg=C["card"])
+        grid = transparent_frame(raid.body)
         grid.pack(anchor="w", fill="x")
         make_label(grid, "Anzahl Festplatten", font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
@@ -1662,19 +1558,19 @@ class CalcView(View):
         self.entry_size = EntryBox(grid, width=8, value="1000")
         self.entry_size.grid(row=1, column=1, sticky="w", padx=12, pady=4)
 
-        NeoButton(raid.body, "Berechnen", self.calc_raid, kind="primary",
-                  parent_bg=C["card"]).pack(anchor="w", pady=(12, 0))
-        self.txt_raid = make_text(raid.body, height=9, readonly=True)
-        self.txt_raid.configure(font=F["mono_small"])
+        NeoButton(raid.body, "Berechnen", self.calc_raid,
+                  kind="primary").pack(anchor="w", pady=(12, 0))
+        self.txt_raid = make_text(raid.body, height=9, readonly=True,
+                                  font=F["mono_small"])
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
-        self._build_info_toggle(raid.body, "raid", self.EXPLAIN_RAID)
+        self._build_info_toggle(raid.body, "raid", CALC_EXPLAIN_RAID)
 
         # --- Bildschirm-Datenvolumen ---------------------------------------
         screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
                       subtitle="Pixel, Farbtiefe, Datenrate")
         screen.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
 
-        screen_grid = tk.Frame(screen.body, bg=C["card"])
+        screen_grid = transparent_frame(screen.body)
         screen_grid.pack(anchor="w", fill="x")
         make_label(screen_grid, "Breite (Pixel)", font=F["small"],
                    fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
@@ -1693,16 +1589,15 @@ class CalcView(View):
 
         make_label(screen.body, "Farbtiefe", font=F["small"],
                    fg=C["text_dim"]).pack(anchor="w", pady=(14, 0))
-        self.depth_pills = PillGroup(screen.body, self.COLOR_DEPTHS, initial=2,
-                                     bg=C["card"])
+        self.depth_pills = PillGroup(screen.body, COLOR_DEPTHS, initial=2)
         self.depth_pills.pack(anchor="w", pady=(8, 12))
 
-        NeoButton(screen.body, "Berechnen", self.calc_screen, kind="accent",
-                  parent_bg=C["card"]).pack(anchor="w")
-        self.txt_screen = make_text(screen.body, height=8, readonly=True)
-        self.txt_screen.configure(font=F["mono_small"])
+        NeoButton(screen.body, "Berechnen", self.calc_screen,
+                  kind="accent").pack(anchor="w")
+        self.txt_screen = make_text(screen.body, height=8, readonly=True,
+                                    font=F["mono_small"])
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
-        self._build_info_toggle(screen.body, "screen", self.EXPLAIN_SCREEN)
+        self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)
 
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
@@ -1711,21 +1606,20 @@ class CalcView(View):
     def _build_info_toggle(self, parent, key, explanation):
         """Baut den 'Rechenweg anzeigen'-Knopf samt (zunaechst
         ausgeblendeter) Erklaerungsbox fuer einen Praxis-Rechner."""
-        controls = tk.Frame(parent, bg=C["card"])
+        controls = transparent_frame(parent)
         controls.pack(fill="x", pady=(10, 0))
         button = NeoButton(controls, "Rechenweg anzeigen",
-                           lambda: self.toggle_info(key), kind="ghost",
-                           parent_bg=C["card"])
+                           lambda: self.toggle_info(key), kind="ghost")
         button.pack(anchor="w")
         self.info_buttons[key] = button
 
-        frame = Card(parent, bg=C["card_alt"])
-        info_text = make_text(frame.body, height=explanation.count("\n") + 1,
-                              readonly=True)
-        info_text.configure(font=F["mono_small"])
-        info_text.pack(fill="both", expand=True)
+        # Waechst mit, falls Zeilen bei schmalem Fenster umbrechen
+        lines = explanation.count("\n") + 1
+        info_text = make_autogrow_text(parent, min_height=lines,
+                                       max_height=lines * 2, font=F["mono_small"])
         set_text(info_text, explanation)
-        self.info_frames[key] = frame
+        info_text.configure(state="disabled")
+        self.info_frames[key] = info_text
 
     def toggle_info(self, key):
         visible = not self.info_visible[key]
@@ -1740,138 +1634,27 @@ class CalcView(View):
             button.set_text("Rechenweg anzeigen")
 
     def calc_subnet(self):
-        value = self.entry_ip.get().strip()
         try:
-            network = ipaddress.ip_network(value, strict=False)
-        except ValueError:
-            messagebox.showerror(
-                "Ungültige Eingabe",
-                "Bitte eine gültige Adresse angeben.\n\n"
-                "Beispiele:\n  192.168.1.50/24\n  10.0.0.0/255.255.255.0\n"
-                "  2001:db8::1/64")
-            return
-
-        if network.version == 4:
-            hosts = network.num_addresses - 2 if network.prefixlen < 31 else \
-                (2 if network.prefixlen == 31 else 1)
-            host_list = list(network.hosts())
-            first = host_list[0] if host_list else network.network_address
-            last = host_list[-1] if host_list else network.broadcast_address
-            lines = [
-                "Netzwerk-Adresse      : %s" % network.network_address,
-                "Subnetzmaske          : %s" % network.netmask,
-                "Wildcard-Maske        : %s" % network.hostmask,
-                "Broadcast-Adresse     : %s" % network.broadcast_address,
-                "Erste Host-Adresse    : %s" % first,
-                "Letzte Host-Adresse   : %s" % last,
-                "Nutzbare Hosts        : %d" % hosts,
-                "Adressen gesamt       : %d" % network.num_addresses,
-                "CIDR-Präfix           : /%d" % network.prefixlen,
-            ]
-        else:
-            lines = [
-                "Netzwerk-Adresse      : %s" % network.network_address,
-                "Präfixlänge           : /%d" % network.prefixlen,
-                "Erste Adresse         : %s" % network.network_address,
-                "Letzte Adresse        : %s" % network[-1],
-                "Adressen gesamt       : %d" % network.num_addresses,
-            ]
-        set_text(self.txt_subnet, "\n".join(lines))
+            set_text(self.txt_subnet, subnet_report(self.entry_ip.get()))
+        except InputError as error:
+            messagebox.showerror("Ungültige Eingabe", str(error))
 
     def calc_raid(self):
-        level = self.raid_pills.get()
         try:
-            disks = int(self.entry_disks.get())
-            size = float(self.entry_size.get().replace(",", "."))
-        except ValueError:
-            messagebox.showerror("Ungültige Eingabe",
-                                 "Bitte gültige Zahlen für Anzahl und "
-                                 "Kapazität eingeben.")
-            return
-        if disks <= 0 or size <= 0:
-            messagebox.showerror("Ungültige Eingabe",
-                                 "Anzahl und Kapazität müssen größer als 0 sein.")
-            return
-
-        rules = {
-            "RAID 0": (1, lambda n, s: (n * s, 0)),
-            "RAID 1": (2, lambda n, s: (s, n - 1)),
-            "RAID 5": (3, lambda n, s: ((n - 1) * s, 1)),
-            "RAID 6": (4, lambda n, s: ((n - 2) * s, 2)),
-            "RAID 10": (4, lambda n, s: ((n / 2) * s, 1)),
-        }
-        minimum, formula = rules[level]
-        if disks < minimum or (level == "RAID 10" and disks % 2 != 0):
-            extra = " und eine gerade Anzahl" if level == "RAID 10" else ""
-            set_text(self.txt_raid,
-                     "Ungültige Konfiguration für %s.\n\n"
-                     "Benötigt werden mindestens %d Festplatten%s."
-                     % (level, minimum, extra))
-            return
-
-        netto, tolerance = formula(disks, size)
-        brutto = disks * size
-        loss = brutto - netto
-        efficiency = (netto / brutto * 100) if brutto else 0
-        set_text(self.txt_raid, "\n".join([
-            "RAID-Level            : %s" % level,
-            "Festplatten           : %d x %.0f GB" % (disks, size),
-            "Bruttokapazität       : %.2f GB" % brutto,
-            "Nutzkapazität         : %.2f GB" % netto,
-            "Parität / Verlust     : %.2f GB" % loss,
-            "Speichereffizienz     : %.1f %%" % efficiency,
-            "Ausfalltoleranz       : %d Festplatte(n)" % tolerance,
-        ]))
+            set_text(self.txt_raid, raid_report(self.raid_pills.get(),
+                                                self.entry_disks.get(),
+                                                self.entry_size.get()))
+        except InputError as error:
+            messagebox.showerror("Ungültige Eingabe", str(error))
 
     def calc_screen(self):
         try:
-            width = int(self.entry_width.get())
-            height = int(self.entry_height.get())
-            depth = int(self.depth_pills.get())
-            fps_raw = self.entry_fps.get().strip().replace(",", ".")
-            fps = float(fps_raw) if fps_raw else 0.0
-        except ValueError:
-            messagebox.showerror("Ungültige Eingabe",
-                                 "Bitte gültige Zahlen für Breite, Höhe und "
-                                 "Bildwiederholrate eingeben.")
-            return
-        if width <= 0 or height <= 0:
-            messagebox.showerror("Ungültige Eingabe",
-                                 "Breite und Höhe müssen größer als 0 sein.")
-            return
-        if fps < 0:
-            messagebox.showerror("Ungültige Eingabe",
-                                 "Die Bildwiederholrate darf nicht negativ sein.")
-            return
-
-        pixels = width * height
-        bits = pixels * depth
-        data_bytes = bits / 8
-        data_kb = data_bytes / 1024
-        data_mb = data_kb / 1024
-
-        lines = [
-            "Auflösung             : %d x %d Pixel" % (width, height),
-            "Pixel gesamt          : %s" % format(pixels, ","),
-            "Farbtiefe             : %d Bit/Pixel" % depth,
-            "Datenmenge pro Bild   : %d Bit" % bits,
-            "                       : %s Byte" % format(int(data_bytes), ","),
-            "                       : %.2f KB" % data_kb,
-            "                       : %.2f MB" % data_mb,
-        ]
-        if fps > 0:
-            bytes_per_sec = data_bytes * fps
-            mbit_per_sec = bytes_per_sec * 8 / 1_000_000
-            mb_per_sec = bytes_per_sec / (1024 * 1024)
-            gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
-            lines += [
-                "",
-                "Bildwiederholrate     : %.0f Bilder/Sekunde" % fps,
-                "Datenrate             : %.2f MB/s" % mb_per_sec,
-                "                       : %.2f Mbit/s" % mbit_per_sec,
-                "                       : %.2f GB/Minute" % gb_per_min,
-            ]
-        set_text(self.txt_screen, "\n".join(lines))
+            set_text(self.txt_screen, screen_report(self.entry_width.get(),
+                                                    self.entry_height.get(),
+                                                    self.depth_pills.get(),
+                                                    self.entry_fps.get()))
+        except InputError as error:
+            messagebox.showerror("Ungültige Eingabe", str(error))
 
 
 # ============================================================================
@@ -1880,7 +1663,7 @@ class CalcView(View):
 
 class ProgressView(View):
     def build(self):
-        row = tk.Frame(self.content, bg=C["bg"])
+        row = transparent_frame(self.content)
         row.pack(fill="x")
         self.stat_tests = self._stat_card(row, "Test-Sessions", C["cyan"])
         self.stat_avg = self._stat_card(row, "Durchschnitt", C["purple"])
@@ -1904,20 +1687,21 @@ class ProgressView(View):
                     ("dauer", "Dauer", 90)]
         for key, text, width in headings:
             self.tree.heading(key, text=text)
-            self.tree.column(key, width=width, anchor="center")
-        scroll = ttk.Scrollbar(table_card.body, orient="vertical",
-                               command=self.tree.yview,
-                               style="Dash.Vertical.TScrollbar")
+            self.tree.column(key, width=px(width), anchor="center")
+        scroll = ctk.CTkScrollbar(table_card.body, orientation="vertical",
+                                  command=self.tree.yview,
+                                  button_color=C["scrollbar"],
+                                  button_hover_color=C["scrollbar_hi"])
         self.tree.configure(yscrollcommand=scroll.set)
         self.tree.pack(side="left", fill="both", expand=True)
-        scroll.pack(side="right", fill="y")
+        scroll.pack(side="right", fill="y", padx=(6, 0))
 
-        controls = tk.Frame(self.content, bg=C["bg"])
+        controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
-        NeoButton(controls, "Aktualisieren", self.refresh, kind="ghost",
-                  parent_bg=C["bg"]).pack(side="left")
-        NeoButton(controls, "Historie löschen", self.clear_history, kind="danger",
-                  parent_bg=C["bg"]).pack(side="right")
+        NeoButton(controls, "Aktualisieren", self.refresh,
+                  kind="ghost").pack(side="left")
+        NeoButton(controls, "Historie löschen", self.clear_history,
+                  kind="danger").pack(side="right")
 
     def _stat_card(self, parent, title, color, last=False):
         card = Card(parent, title=title, accent=color)
@@ -1936,22 +1720,22 @@ class ProgressView(View):
         results = self.db.get_all_results()
         count, average = self.db.get_stats()
 
-        self.stat_tests[0].config(text=str(count))
-        self.stat_tests[1].config(text="abgeschlossene Sessions")
-        self.stat_avg[0].config(text="%.1f %%" % average)
-        self.stat_avg[1].config(text="über alle Sessions")
+        self.stat_tests[0].configure(text=str(count))
+        self.stat_tests[1].configure(text="abgeschlossene Sessions")
+        self.stat_avg[0].configure(text="%.1f %%" % average)
+        self.stat_avg[1].configure(text="über alle Sessions")
 
         if results:
             best = max(row[3] for row in results)
-            self.stat_best[0].config(text="%.1f %%" % best)
-            self.stat_best[1].config(text=ihk_note(best))
+            self.stat_best[0].configure(text="%.1f %%" % best)
+            self.stat_best[1].configure(text=ihk_note(best))
         else:
-            self.stat_best[0].config(text="-")
-            self.stat_best[1].config(text="noch keine Session")
+            self.stat_best[0].configure(text="-")
+            self.stat_best[1].configure(text="noch keine Session")
 
         streak = self.db.streak()
-        self.stat_streak[0].config(text="%d" % streak)
-        self.stat_streak[1].config(text="Tage in Folge")
+        self.stat_streak[0].configure(text="%d" % streak)
+        self.stat_streak[1].configure(text="Tage in Folge")
 
         ordered = list(reversed(results))[-20:]
         labels = [row[0][5:10].replace("-", ".") for row in ordered]
@@ -1993,16 +1777,16 @@ class SettingsView(View):
         info.pack(fill="x")
         make_label(info.body, "Speicherort der Lernfortschritte:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
-        path_box = make_text(info.body, height=2)
+        path_box = make_text(info.body, height=2, font=F["mono_small"])
         path_box.pack(fill="x", pady=(8, 0))
         set_text(path_box, self.db.db_path)
-        path_box.configure(state="disabled", font=F["mono_small"])
+        path_box.configure(state="disabled")
         make_label(info.body,
                    "Der Pfad lässt sich über die Umgebungsvariable "
                    "FISI_DB_PATH überschreiben, zum Beispiel um die Datenbank "
                    "auf einem Netzlaufwerk abzulegen.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
-                   justify="left").pack(anchor="w", pady=(8, 0))
+                   justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
         content = Card(self.content, title="Lerninhalte", accent=C["purple"])
         content.pack(fill="x", pady=(14, 0))
@@ -2016,7 +1800,7 @@ class SettingsView(View):
             lines.append("%s: %d Inhalte" % (CATEGORY_SHORT[category],
                                              totals.get(category, 0)))
         make_label(content.body, "\n".join(lines), font=F["body"],
-                   fg=C["text_dim"], justify="left").pack(anchor="w")
+                   fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
         danger = Card(self.content, title="Daten zurücksetzen", accent=C["red"])
         danger.pack(fill="x", pady=(14, 0))
@@ -2025,9 +1809,9 @@ class SettingsView(View):
                    "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
                    "Szenarien. Dieser Schritt lässt sich nicht rückgängig machen.",
                    font=F["small"], fg=C["text_dim"], wraplength=800,
-                   justify="left").pack(anchor="w")
+                   justify="left", anchor="w").pack(anchor="w")
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
-                  kind="danger", parent_bg=C["card"]).pack(anchor="w", pady=(12, 0))
+                  kind="danger").pack(anchor="w", pady=(12, 0))
 
         about = Card(self.content, title="Über das Programm", accent=C["green"])
         about.pack(fill="x", pady=(14, 0))
@@ -2035,13 +1819,13 @@ class SettingsView(View):
                    "%s Version %s\n\n"
                    "Lernprogramm für die Umschulung zum Fachinformatiker "
                    "Systemintegration mit Karteikarten, Prüfungstrainer, "
-                   "AP2-Szenarien und Praxis-Rechnern.\n\n"
-                   "Umgesetzt mit Python und Tkinter ohne externe "
-                   "Abhängigkeiten - dadurch läuft das Programm unter Windows, "
-                   "Linux und macOS gleichermaßen."
+                   "AP1-/AP2-Szenarien, Testprojekten und Praxis-Rechnern.\n\n"
+                   "Umgesetzt mit Python und CustomTkinter. Die Installer für "
+                   "Windows, Linux und macOS bringen alles Nötige mit - es muss "
+                   "nichts zusätzlich installiert werden."
                    % (APP_TITLE, APP_VERSION),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
-                   justify="left").pack(anchor="w")
+                   justify="left", anchor="w").pack(anchor="w")
 
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
@@ -2067,38 +1851,19 @@ class SearchView(View):
                                    fg=C["text_dim"])
         self.lbl_info.pack(anchor="w")
 
-        self.results_box = tk.Frame(self.content, bg=C["bg"])
+        self.results_box = transparent_frame(self.content)
         self.results_box.pack(fill="both", expand=True, pady=(14, 0))
 
     def search(self, query):
         for child in self.results_box.winfo_children():
             child.destroy()
 
-        needle = query.lower()
-        hits = []
-        for card in KARTEIKARTEN:
-            if needle in card["q"].lower() or needle in card["a_full"].lower():
-                hits.append(("Karteikarte", card["cat"], card["q"], card["a_full"]))
-        for question in QUIZ_QUESTIONS:
-            if needle in question["q"].lower() or needle in question["exp"].lower():
-                hits.append(("Quizfrage", question["cat"], question["q"],
-                             question["exp"]))
-        for position, scenario in enumerate(SZENARIEN):
-            haystack = scenario["title"] + scenario["text"] + scenario["solution"]
-            if needle in haystack.lower():
-                hits.append(("AP2-Szenario", scenario["cat"], scenario["title"],
-                             scenario["text"].split("\n")[0]))
-        for position, scenario in enumerate(AP1_SZENARIEN):
-            haystack = scenario["title"] + scenario["text"] + scenario["solution"]
-            if needle in haystack.lower():
-                hits.append(("AP1-Szenario", scenario["cat"], scenario["title"],
-                             scenario["text"].split("\n")[0]))
-
-        self.lbl_info.config(text='%d Treffer für "%s"' % (len(hits), query))
+        hits = search_content(query)
+        self.lbl_info.configure(text='%d Treffer für "%s"' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
                        "Keine Treffer. Versuche einen anderen Suchbegriff.",
-                       font=F["body"], fg=C["muted"], bg=C["bg"]).pack(anchor="w")
+                       font=F["body"], fg=C["muted"]).pack(anchor="w")
             return
 
         for kind, category, title, detail in hits[:60]:
@@ -2106,67 +1871,40 @@ class SearchView(View):
         if len(hits) > 60:
             make_label(self.results_box,
                        "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60),
-                       font=F["small"], fg=C["muted"], bg=C["bg"]).pack(anchor="w",
-                                                                       pady=8)
+                       font=F["small"], fg=C["muted"]).pack(anchor="w", pady=8)
 
     def _result_row(self, kind, category, title, detail):
-        row = tk.Frame(self.results_box, bg=C["card"], cursor="hand2",
-                       highlightthickness=1, highlightbackground=C["border"])
+        row, marker, inner = clickable_row(
+            self.results_box, CATEGORY_COLOR.get(category, C["purple"]),
+            bg=C["card"])
         row.pack(fill="x", pady=4)
-        marker = tk.Frame(row, bg=CATEGORY_COLOR.get(category, C["purple"]), width=3)
-        marker.pack(side="left", fill="y")
-        inner = tk.Frame(row, bg=C["card"])
-        inner.pack(side="left", fill="x", expand=True, padx=14, pady=11)
 
-        head = tk.Label(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
-                        bg=C["card"], fg=C["muted"], font=F["tiny"], anchor="w")
+        head = ctk.CTkLabel(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
+                            text_color=C["muted"], font=F["tiny"], anchor="w",
+                            height=0, cursor="hand2")
         head.pack(anchor="w")
-        title_label = tk.Label(inner, text=title, bg=C["card"], fg=C["text"],
-                               font=F["body_bold"], anchor="w", justify="left",
-                               wraplength=800)
+        title_label = ctk.CTkLabel(inner, text=title, text_color=C["text"],
+                                   font=F["body_bold"], anchor="w", justify="left",
+                                   wraplength=800, height=0, cursor="hand2")
         title_label.pack(anchor="w", pady=(2, 0))
         snippet = detail if len(detail) <= 140 else detail[:138] + "…"
-        detail_label = tk.Label(inner, text=snippet, bg=C["card"], fg=C["text_dim"],
-                                font=F["small"], anchor="w", justify="left",
-                                wraplength=800)
+        detail_label = ctk.CTkLabel(inner, text=snippet, text_color=C["text_dim"],
+                                    font=F["small"], anchor="w", justify="left",
+                                    wraplength=800, height=0, cursor="hand2")
         detail_label.pack(anchor="w", pady=(4, 0))
 
         def open_hit(_event=None):
             self.app.open_search_hit(kind, title)
 
+        bind_click((row, inner, head, title_label, detail_label, marker), open_hit)
         for widget in (row, inner, head, title_label, detail_label, marker):
-            widget.bind("<Button-1>", open_hit)
+            widget.bind("<Enter>", lambda _e: row.configure(border_color=C["border_hi"]))
+            widget.bind("<Leave>", lambda _e: row.configure(border_color=C["border"]))
 
 
 # ============================================================================
 #  HAUPTANWENDUNG
 # ============================================================================
-
-def _apply_dark_titlebar(root):
-    """Faerbt unter Windows 10/11 die native Fensterleiste dunkel ein, damit
-    sie farblich zur dunklen Programmoberflaeche passt, statt hell/weiss
-    hervorzustechen. Nutzt eine Windows-Bordfunktion (dwmapi) per ctypes aus
-    der Python-Standardbibliothek - keine zusaetzliche Abhaengigkeit noetig.
-    Unter Linux/macOS oder bei sehr alten Windows-Versionen passiert einfach
-    nichts (kein Fehler, die Fensterleiste bleibt dann in der Systemfarbe)."""
-    if sys.platform != "win32":
-        return
-    try:
-        import ctypes
-        root.update_idletasks()
-        hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
-        dark_mode = ctypes.c_int(1)
-        # Attribut-ID 20 gilt ab Windows 10 20H1 (Mai 2020), 19 fuer aeltere
-        # Versionen davor - beide werden der Reihe nach versucht.
-        for attribute in (20, 19):
-            result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                hwnd, attribute, ctypes.byref(dark_mode),
-                ctypes.sizeof(dark_mode))
-            if result == 0:
-                break
-    except Exception:
-        pass
-
 
 def _apply_window_icon(root):
     """Setzt das Programm-Icon (icon.ico bzw. icon.png) fuer Titelleiste
@@ -2196,8 +1934,7 @@ class FISIApp:
         root.title("%s %s" % (APP_TITLE, APP_VERSION))
         root.geometry("1360x880")
         root.minsize(1120, 720)
-        root.configure(bg=C["bg"])
-        _apply_dark_titlebar(root)
+        root.configure(fg_color=C["bg"])
         _apply_window_icon(root)
 
         setup_fonts(root)
@@ -2205,13 +1942,13 @@ class FISIApp:
 
         self.db = DBManager(error_handler=self._db_error)
 
-        container = tk.Frame(root, bg=C["bg"])
+        container = ctk.CTkFrame(root, fg_color=C["bg"], corner_radius=0)
         container.pack(fill="both", expand=True)
 
         self.sidebar = Sidebar(container, self)
         self.sidebar.pack(side="left", fill="y")
 
-        main = tk.Frame(container, bg=C["bg"])
+        main = transparent_frame(container)
         main.pack(side="left", fill="both", expand=True)
 
         self.header = Header(main, self)
@@ -2244,6 +1981,8 @@ class FISIApp:
         messagebox.showerror("Datenbankfehler", message)
 
     def _setup_ttk_style(self):
+        """Nur noch fuer die Tabelle im Lernfortschritt - CustomTkinter hat
+        kein eigenes Tabellen-Widget."""
         style = ttk.Style(self.root)
         try:
             style.theme_use("clam")
@@ -2251,8 +1990,8 @@ class FISIApp:
             pass
         style.configure("Dash.Treeview",
                         background=C["card_alt"], fieldbackground=C["card_alt"],
-                        foreground=C["text"], rowheight=30, borderwidth=0,
-                        relief="flat", font=F["small"],
+                        foreground=C["text"], rowheight=px(32), borderwidth=0,
+                        relief="flat", font=tk_font(F["small"]),
                         bordercolor=C["border"], lightcolor=C["card_alt"],
                         darkcolor=C["card_alt"])
         # Der Rahmen, den das Theme clam um die Tabelle zeichnet, wuerde hell
@@ -2266,27 +2005,14 @@ class FISIApp:
             pass
         style.configure("Dash.Treeview.Heading",
                         background=C["card_hi"], foreground=C["text_dim"],
-                        font=F["small_bold"], relief="flat", borderwidth=0)
+                        font=tk_font(F["small_bold"]), relief="flat",
+                        borderwidth=0, padding=(0, px(6)))
         style.map("Dash.Treeview.Heading",
-                  background=[("active", C["purple"])],
+                  background=[("active", C["violet"])],
                   foreground=[("active", "#FFFFFF")])
         style.map("Dash.Treeview",
-                  background=[("selected", C["purple"])],
+                  background=[("selected", mix(C["card_alt"], C["purple"], 0.45))],
                   foreground=[("selected", "#FFFFFF")])
-        style.configure("Dash.Vertical.TScrollbar",
-                        background=C["scrollbar"], troughcolor=C["bg"],
-                        bordercolor=C["bg"], arrowcolor=C["cyan"],
-                        darkcolor=C["scrollbar"], lightcolor=C["scrollbar"])
-        style.map("Dash.Vertical.TScrollbar",
-                  background=[("active", C["scrollbar_hi"])],
-                  arrowcolor=[("active", C["cyan"])])
-        style.configure("Dash.Horizontal.TScrollbar",
-                        background=C["scrollbar"], troughcolor=C["bg"],
-                        bordercolor=C["bg"], arrowcolor=C["cyan"],
-                        darkcolor=C["scrollbar"], lightcolor=C["scrollbar"])
-        style.map("Dash.Horizontal.TScrollbar",
-                  background=[("active", C["scrollbar_hi"])],
-                  arrowcolor=[("active", C["cyan"])])
 
     # -- Navigation ---------------------------------------------------------
 
@@ -2349,7 +2075,8 @@ class FISIApp:
 
 
 def main():
-    root = tk.Tk()
+    ctk.set_appearance_mode("dark")
+    root = ctk.CTk()
     FISIApp(root)
     root.mainloop()
 

@@ -7,6 +7,10 @@ build/
 dist/
 *.spec
 
+# Fertige Installer und Git-Bundles (werden per GitHub Actions gebaut)
+installer_output/
+*.bundle
+
 # Lokale Lernfortschritts-Datenbank (persoenliche Daten, nicht versionieren)
 *.db
 *.sqlite
