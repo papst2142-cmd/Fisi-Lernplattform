@@ -39,8 +39,8 @@ from fisi_widgets import (  # noqa: E402
 
 APP_TITLE = "FISI Lernplattform"
 # Solange es keine Vollversion (1.0) gibt, wird hier nur die Zahl hinter dem
-# Punkt bei jedem Update erhoeht (0.4 -> 0.5 -> 0.6 -> ...).
-APP_VERSION = "0.4"
+# Punkt bei jedem Update erhoeht (0.17 -> 0.18 -> 0.19 -> ...).
+APP_VERSION = "0.19"
 
 
 def _resource_path(filename):
@@ -1502,8 +1502,124 @@ class ProjectView(View):
 class CalcView(View):
     RAID_LEVELS = [("RAID 0", "RAID 0"), ("RAID 1", "RAID 1"), ("RAID 5", "RAID 5"),
                    ("RAID 6", "RAID 6"), ("RAID 10", "RAID 10")]
+    COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
+                    ("24", "24 Bit (True Color)"),
+                    ("32", "32 Bit (True Color + Alpha)")]
+
+    EXPLAIN_SUBNET = (
+        "RECHENWEG SUBNETTING\n"
+        "Am Beispiel 192.168.1.50/24\n\n"
+        "SCHRITT 1: Praefix in Subnetzmaske umwandeln\n"
+        "   Das Praefix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
+        "   links auf 1 gesetzt sind. /24 bedeutet: die ersten 24 Bits der\n"
+        "   32-Bit-Adresse sind 1, der Rest ist 0.\n"
+        "   /24 = 11111111.11111111.11111111.00000000\n"
+        "       =    255   .   255   .   255   .    0\n"
+        "   -> Subnetzmaske: 255.255.255.0\n\n"
+        "SCHRITT 2: Netzwerk-Adresse berechnen\n"
+        "   Netzwerk-Adresse = IP-Adresse AND Subnetzmaske\n"
+        "   (bitweise UND-Verknuepfung: nur wenn IP UND Maske an der\n"
+        "   selben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
+        "     192.168.1.50   = 11000000.10101000.00000001.00110010\n"
+        "   AND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
+        "   -------------------------------------------------------\n"
+        "     Ergebnis         = 11000000.10101000.00000001.00000000\n"
+        "   -> Netzwerk-Adresse: 192.168.1.0\n\n"
+        "SCHRITT 3: Broadcast-Adresse berechnen\n"
+        "   Wildcard-Maske = invertierte Subnetzmaske (alle Bits\n"
+        "   umgedreht): 255.255.255.0 -> 0.0.0.255\n"
+        "   Broadcast-Adresse = Netzwerk-Adresse OR Wildcard-Maske\n"
+        "   (alle Host-Bits werden auf 1 gesetzt)\n"
+        "   -> Broadcast-Adresse: 192.168.1.255\n\n"
+        "SCHRITT 4: Nutzbare Host-Adressen zaehlen\n"
+        "   Anzahl aller Adressen im Netz = 2^(32 - Praefixlaenge)\n"
+        "   Bei /24: 2^(32-24) = 2^8 = 256 Adressen\n"
+        "   Davon sind die Netzwerk-Adresse (192.168.1.0) und die\n"
+        "   Broadcast-Adresse (192.168.1.255) nicht als Host vergebbar,\n"
+        "   deshalb -2:\n"
+        "   Nutzbare Hosts = 2^(32 - Praefixlaenge) - 2 = 256 - 2 = 254\n"
+        "   -> erste nutzbare Adresse: 192.168.1.1\n"
+        "   -> letzte nutzbare Adresse: 192.168.1.254\n\n"
+        "HINWEIS ZU IPv6\n"
+        "   IPv6 kennt keine Broadcast-Adresse, daher entfaellt dort der\n"
+        "   Abzug der -2 und alle Adressen im Netz gelten als nutzbar."
+    )
+    EXPLAIN_RAID = (
+        "RECHENWEG RAID\n"
+        "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazitaet 4000 GB)\n\n"
+        "RAID 0 - Striping (min. 1 Platte)\n"
+        "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
+        "   Formel:  Netto = Anzahl x Kapazitaet\n"
+        "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
+        "   Ausfalltoleranz: 0 Platten (faellt eine aus, sind alle Daten weg)\n\n"
+        "RAID 1 - Mirroring (min. 2 Platten)\n"
+        "   Die Daten werden 1:1 auf eine zweite Platte gespiegelt.\n"
+        "   Formel:  Netto = 1 x Kapazitaet\n"
+        "   Beispiel: 1000 GB nutzbar (bei 4 Platten stehen nur 1000 GB\n"
+        "   Nutzkapazitaet zur Verfuegung, der Rest ist Spiegelung)\n"
+        "   Ausfalltoleranz: n-1 Platten\n\n"
+        "RAID 5 - Parity, verteilte Paritaet (min. 3 Platten)\n"
+        "   Eine Platte Kapazitaet wird rechnerisch fuer Paritaetsdaten\n"
+        "   verwendet (die Paritaet selbst liegt verteilt auf allen Platten).\n"
+        "   Formel:  Netto = (Anzahl - 1) x Kapazitaet\n"
+        "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
+        "   Ausfalltoleranz: 1 Platte\n\n"
+        "RAID 6 - Double Parity (min. 4 Platten)\n"
+        "   Wie RAID 5, aber mit doppelter Paritaet fuer mehr Sicherheit.\n"
+        "   Formel:  Netto = (Anzahl - 2) x Kapazitaet\n"
+        "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
+        "   Ausfalltoleranz: 2 Platten\n\n"
+        "RAID 10 - Spiegelung + Striping (min. 4 Platten, gerade Anzahl)\n"
+        "   Je zwei Platten werden gespiegelt (RAID 1), diese Spiegel-\n"
+        "   Paare werden anschliessend im Striping-Verfahren (RAID 0)\n"
+        "   zusammengefasst.\n"
+        "   Formel:  Netto = (Anzahl / 2) x Kapazitaet\n"
+        "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
+        "   Ausfalltoleranz: 1 Platte je Spiegel-Paar\n\n"
+        "SPEICHEREFFIZIENZ\n"
+        "   Effizienz = Nettokapazitaet / Bruttokapazitaet x 100\n"
+        "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
+    )
+    EXPLAIN_SCREEN = (
+        "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
+        "Am Beispiel 1920 x 1080 Pixel, 24 Bit Farbtiefe\n\n"
+        "SCHRITT 1: Pixel gesamt ermitteln\n"
+        "   Pixel gesamt = Breite x Hoehe\n"
+        "   Beispiel: 1920 x 1080 = 2.073.600 Pixel\n\n"
+        "SCHRITT 2: Datenmenge pro Bild in Bit berechnen\n"
+        "   Jedes Pixel benoetigt fuer seine Farbe eine feste Anzahl Bit,\n"
+        "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
+        "   True Color mit rund 16,7 Mio. Farben: je 8 Bit fuer Rot,\n"
+        "   Gruen und Blau).\n"
+        "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
+        "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
+        "SCHRITT 3: In Byte, KB und MB umrechnen\n"
+        "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
+        "   jeweils durch 1024 geteilt, um die naechstgroessere Einheit\n"
+        "   zu erhalten (Byte -> KB -> MB).\n"
+        "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
+        "   KB   = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KB\n"
+        "   MB   = KB / 1024          -> 6.075,00 / 1024 = 5,93 MB\n"
+        "   -> Ein einzelnes Bild in dieser Aufloesung und Farbtiefe\n"
+        "      benoetigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
+        "SCHRITT 4: Datenrate bei bewegten Bildern (Video)\n"
+        "   Bei Videos wird nicht nur ein Bild, sondern mehrere Bilder\n"
+        "   pro Sekunde angezeigt (Bildwiederholrate, engl. frames per\n"
+        "   second, fps). Die Datenrate gibt an, wie viele Daten dafuer\n"
+        "   pro Sekunde anfallen.\n"
+        "   Datenrate = Datenmenge pro Bild x Bildwiederholrate (fps)\n"
+        "   Beispiel bei 30 fps: 6.220.800 Byte x 30 = 186.624.000 Byte/s\n"
+        "   -> das sind rund 177,98 MB/s bzw. 1.492,99 Mbit/s bzw.\n"
+        "      rund 10,43 GB/Minute.\n"
+        "   Dieser enorme Wert zeigt, warum Videos in der Praxis fast\n"
+        "   immer komprimiert (z.B. per H.264/H.265) uebertragen werden."
+    )
 
     def build(self):
+        self.info_visible = {"subnet": False, "raid": False, "screen": False}
+        self.info_frames = {}
+        self.info_buttons = {}
+
         layout = tk.Frame(self.content, bg=C["bg"])
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
@@ -1520,9 +1636,10 @@ class CalcView(View):
         self.entry_ip.entry.bind("<Return>", lambda _e: self.calc_subnet())
         NeoButton(subnet.body, "Berechnen", self.calc_subnet, kind="accent",
                   parent_bg=C["card"]).pack(anchor="w")
-        self.txt_subnet = make_text(subnet.body, height=11, readonly=True)
+        self.txt_subnet = make_text(subnet.body, height=9, readonly=True)
         self.txt_subnet.configure(font=F["mono_small"])
         self.txt_subnet.pack(fill="both", expand=True, pady=(14, 0))
+        self._build_info_toggle(subnet.body, "subnet", self.EXPLAIN_SUBNET)
 
         # --- RAID ---------------------------------------------------------
         raid = Card(layout, title="RAID-Kapazität", accent=C["purple"],
@@ -1547,12 +1664,80 @@ class CalcView(View):
 
         NeoButton(raid.body, "Berechnen", self.calc_raid, kind="primary",
                   parent_bg=C["card"]).pack(anchor="w", pady=(12, 0))
-        self.txt_raid = make_text(raid.body, height=11, readonly=True)
+        self.txt_raid = make_text(raid.body, height=9, readonly=True)
         self.txt_raid.configure(font=F["mono_small"])
         self.txt_raid.pack(fill="both", expand=True, pady=(14, 0))
+        self._build_info_toggle(raid.body, "raid", self.EXPLAIN_RAID)
+
+        # --- Bildschirm-Datenvolumen ---------------------------------------
+        screen = Card(layout, title="Bildschirm-Datenvolumen", accent=C["green"],
+                      subtitle="Pixel, Farbtiefe, Datenrate")
+        screen.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+
+        screen_grid = tk.Frame(screen.body, bg=C["card"])
+        screen_grid.pack(anchor="w", fill="x")
+        make_label(screen_grid, "Breite (Pixel)", font=F["small"],
+                   fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
+        self.entry_width = EntryBox(screen_grid, width=8, value="1920")
+        self.entry_width.grid(row=0, column=1, sticky="w", padx=12, pady=4)
+        make_label(screen_grid, "Höhe (Pixel)", font=F["small"],
+                   fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
+        self.entry_height = EntryBox(screen_grid, width=8, value="1080")
+        self.entry_height.grid(row=1, column=1, sticky="w", padx=12, pady=4)
+        make_label(screen_grid, "Bildwiederholrate (fps, optional)",
+                   font=F["small"], fg=C["text_dim"]).grid(
+                       row=0, column=2, sticky="w", padx=(24, 0), pady=4)
+        self.entry_fps = EntryBox(screen_grid, width=8, value="0")
+        self.entry_fps.grid(row=0, column=3, sticky="w", padx=12, pady=4)
+        self.entry_fps.entry.bind("<Return>", lambda _e: self.calc_screen())
+
+        make_label(screen.body, "Farbtiefe", font=F["small"],
+                   fg=C["text_dim"]).pack(anchor="w", pady=(14, 0))
+        self.depth_pills = PillGroup(screen.body, self.COLOR_DEPTHS, initial=2,
+                                     bg=C["card"])
+        self.depth_pills.pack(anchor="w", pady=(8, 12))
+
+        NeoButton(screen.body, "Berechnen", self.calc_screen, kind="accent",
+                  parent_bg=C["card"]).pack(anchor="w")
+        self.txt_screen = make_text(screen.body, height=8, readonly=True)
+        self.txt_screen.configure(font=F["mono_small"])
+        self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
+        self._build_info_toggle(screen.body, "screen", self.EXPLAIN_SCREEN)
 
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
+        set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+    def _build_info_toggle(self, parent, key, explanation):
+        """Baut den 'Rechenweg anzeigen'-Knopf samt (zunaechst
+        ausgeblendeter) Erklaerungsbox fuer einen Praxis-Rechner."""
+        controls = tk.Frame(parent, bg=C["card"])
+        controls.pack(fill="x", pady=(10, 0))
+        button = NeoButton(controls, "Rechenweg anzeigen",
+                           lambda: self.toggle_info(key), kind="ghost",
+                           parent_bg=C["card"])
+        button.pack(anchor="w")
+        self.info_buttons[key] = button
+
+        frame = Card(parent, bg=C["card_alt"])
+        info_text = make_text(frame.body, height=explanation.count("\n") + 1,
+                              readonly=True)
+        info_text.configure(font=F["mono_small"])
+        info_text.pack(fill="both", expand=True)
+        set_text(info_text, explanation)
+        self.info_frames[key] = frame
+
+    def toggle_info(self, key):
+        visible = not self.info_visible[key]
+        self.info_visible[key] = visible
+        button = self.info_buttons[key]
+        frame = self.info_frames[key]
+        if visible:
+            frame.pack(fill="x", pady=(10, 0))
+            button.set_text("Rechenweg ausblenden")
+        else:
+            frame.pack_forget()
+            button.set_text("Rechenweg anzeigen")
 
     def calc_subnet(self):
         value = self.entry_ip.get().strip()
@@ -1637,6 +1822,56 @@ class CalcView(View):
             "Speichereffizienz     : %.1f %%" % efficiency,
             "Ausfalltoleranz       : %d Festplatte(n)" % tolerance,
         ]))
+
+    def calc_screen(self):
+        try:
+            width = int(self.entry_width.get())
+            height = int(self.entry_height.get())
+            depth = int(self.depth_pills.get())
+            fps_raw = self.entry_fps.get().strip().replace(",", ".")
+            fps = float(fps_raw) if fps_raw else 0.0
+        except ValueError:
+            messagebox.showerror("Ungültige Eingabe",
+                                 "Bitte gültige Zahlen für Breite, Höhe und "
+                                 "Bildwiederholrate eingeben.")
+            return
+        if width <= 0 or height <= 0:
+            messagebox.showerror("Ungültige Eingabe",
+                                 "Breite und Höhe müssen größer als 0 sein.")
+            return
+        if fps < 0:
+            messagebox.showerror("Ungültige Eingabe",
+                                 "Die Bildwiederholrate darf nicht negativ sein.")
+            return
+
+        pixels = width * height
+        bits = pixels * depth
+        data_bytes = bits / 8
+        data_kb = data_bytes / 1024
+        data_mb = data_kb / 1024
+
+        lines = [
+            "Auflösung             : %d x %d Pixel" % (width, height),
+            "Pixel gesamt          : %s" % format(pixels, ","),
+            "Farbtiefe             : %d Bit/Pixel" % depth,
+            "Datenmenge pro Bild   : %d Bit" % bits,
+            "                       : %s Byte" % format(int(data_bytes), ","),
+            "                       : %.2f KB" % data_kb,
+            "                       : %.2f MB" % data_mb,
+        ]
+        if fps > 0:
+            bytes_per_sec = data_bytes * fps
+            mbit_per_sec = bytes_per_sec * 8 / 1_000_000
+            mb_per_sec = bytes_per_sec / (1024 * 1024)
+            gb_per_min = bytes_per_sec * 60 / (1024 ** 3)
+            lines += [
+                "",
+                "Bildwiederholrate     : %.0f Bilder/Sekunde" % fps,
+                "Datenrate             : %.2f MB/s" % mb_per_sec,
+                "                       : %.2f Mbit/s" % mbit_per_sec,
+                "                       : %.2f GB/Minute" % gb_per_min,
+            ]
+        set_text(self.txt_screen, "\n".join(lines))
 
 
 # ============================================================================

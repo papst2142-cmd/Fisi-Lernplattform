@@ -1,0 +1,57 @@
+============================================================================
+ FISI Lernplattform - Anleitung: Richtigen Windows-Installer erstellen
+============================================================================
+
+Ziel: Aus dem Projekt einen "richtigen" Windows-Installer bauen (Setup.exe),
+der das Programm sauber installiert, einen Eintrag im Start-Menue anlegt,
+optional eine Desktop-Verknuepfung erstellt und sich ueber die Windows-
+Einstellungen ("Apps & Features") wieder deinstallieren laesst.
+
+Dafuer wird das kostenlose Werkzeug "Inno Setup" verwendet.
+
+
+SCHRITT 1: Inno Setup installieren (nur einmalig noetig)
+----------------------------------------------------------------------------
+1. Im Browser oeffnen:  https://jrsoftware.org/isdl.php
+2. Den Download-Link fuer "innosetup-x.x.x.exe" (stable release) anklicken.
+3. Die heruntergeladene Datei ausfuehren und der Installation mit den
+   Standard-Einstellungen folgen (einfach ueberall "Weiter" klicken).
+4. Nach der Installation ist "Inno Setup Compiler" im Start-Menue zu finden.
+
+
+SCHRITT 2: Aktuelles Programm bauen
+----------------------------------------------------------------------------
+1. Im Projektordner "fisi-lernplattform" die Datei build_windows.bat per
+   Doppelklick ausfuehren.
+2. Warten, bis "Fertig" erscheint. Ergebnis liegt danach unter:
+   dist\FISI-Lernplattform.exe
+
+
+SCHRITT 3: Installer bauen
+----------------------------------------------------------------------------
+1. Die Datei FISI-Lernplattform.iss (im Projektordner) doppelklicken.
+   Sie oeffnet sich automatisch im Inno Setup Compiler.
+2. Oben in der Werkzeugleiste auf "Compile" klicken (oder die Taste F9 /
+   Strg+F9 druecken).
+3. Nach kurzer Zeit liegt der fertige Installer hier:
+   installer_output\FISI-Lernplattform-Setup-<Version>.exe
+
+
+SCHRITT 4: Installieren
+----------------------------------------------------------------------------
+1. Die eben erzeugte Setup-Datei ausfuehren.
+2. Der Installations-Assistent fuehrt durch die Installation (keine Admin-
+   Rechte noetig, wird nur fuer den aktuellen Benutzer installiert).
+3. Das Programm erscheint danach im Start-Menue unter "FISI Lernplattform"
+   und kann ueber die Windows-Einstellungen -> Apps wieder deinstalliert
+   werden.
+
+
+WICHTIG bei jedem zukuenftigen Update
+----------------------------------------------------------------------------
+Die Versionsnummer wird bei jedem Update um 1 hochgezaehlt (siehe
+Projektvorgabe). Dabei muessen ZWEI Stellen angepasst werden:
+  1. APP_VERSION in app_gui.py
+  2. MyAppVersion in FISI-Lernplattform.iss
+Danach einfach Schritt 2 und 3 wiederholen, um eine neue Setup-Datei mit der
+aktuellen Version zu erzeugen.
