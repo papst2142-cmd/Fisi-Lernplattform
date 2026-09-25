@@ -1,10 +1,10 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.20
+  FISI LERNPLATTFORM  -  Version 0.21
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
 Hinweis: Solange keine Vollversion (1.0) erreicht ist, steht hinter dem
-Punkt bei jedem Update eine hoehere Zahl (0.19 -> 0.20 -> 0.21 -> ...).
+Punkt bei jedem Update eine hoehere Zahl (0.20 -> 0.21 -> 0.22 -> ...).
 
 
 WAS IST DAS?

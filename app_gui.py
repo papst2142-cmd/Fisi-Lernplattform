@@ -49,7 +49,7 @@ from fisi_widgets import (  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Solange es keine Vollversion (1.0) gibt, wird hier nur die Zahl hinter dem
 # Punkt bei jedem Update erhoeht (0.17 -> 0.18 -> 0.19 -> ...).
-APP_VERSION = "0.20"
+APP_VERSION = "0.21"
 
 
 def _resource_path(filename):
