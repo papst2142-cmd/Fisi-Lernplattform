@@ -105,18 +105,8 @@ Tkinter unter Linux nachinstallieren, falls es fehlt:
 Python selbst gibt es unter https://www.python.org/downloads/ (unter
 Windows bei der Installation "Add python.exe to PATH" ankreuzen).
 
-Windows-Komfortstart per Doppelklick:
-  Die Datei "FISI-Lernplattform starten.vbs" startet das Programm direkt
-  aus dem Quellcode, ohne Konsolenfenster.
-
-  Desktop-Verknuepfung mit eigenem Icon anlegen (einmalig):
-    Doppelklick auf "Desktop-Verknuepfung anlegen.vbs".
-  Diese Verknuepfung zeigt immer den aktuellen Stand der Programmdateien
-  in diesem Ordner.
-
-Linux-Startmenue-Eintrag fuer den Quellcode-Start (optional):
-  chmod +x install_linux.sh
-  ./install_linux.sh             (entfernen: ./install_linux.sh --entfernen)
+Fuer den taeglichen Gebrauch ist der Installer gedacht: Er legt die
+Verknuepfungen im Startmenue bzw. auf dem Desktop an.
 
 
 INSTALLER SELBST BAUEN
@@ -172,7 +162,6 @@ DATEIEN IM PAKET
   build_linux.sh        Linux-Komfortaufruf fuer build.py
   FISI-Lernplattform.iss  Inno-Setup-Skript fuer den Windows-Installer
   .github/workflows/build.yml  Baut alle Installer per GitHub Actions
-  install_linux.sh      Linux-Startmenue-Eintrag fuer den Quellcode-Start
   LIESMICH.txt          Diese Datei
 
 Die fuenf .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
@@ -241,7 +230,7 @@ macOS meldet, die App koenne nicht geoeffnet werden
     Neu installieren und das Haekchen setzen, oder statt "python" den
     Befehl "py" verwenden (py start.py).
 
-"Permission denied" bei ./install_linux.sh, ./build_linux.sh oder der
+"Permission denied" bei ./build_linux.sh oder der
 AppImage-Datei
     Die Datei zuerst ausfuehrbar machen, z.B.:
       chmod +x FISI-Lernplattform-*.AppImage

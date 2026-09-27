@@ -3,7 +3,6 @@
 *.yml  text eol=lf
 *.py   text eol=lf
 *.bat  text eol=crlf
-*.vbs  text eol=crlf
 *.iss  text eol=crlf
 *.txt  text
 *.ico  binary
