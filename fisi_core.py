@@ -22,6 +22,7 @@ import sys
 import random
 import sqlite3
 import datetime
+import uuid
 
 # ============================================================================
 #  PFADE
@@ -129,6 +130,19 @@ def theme_block(theme):
 # ============================================================================
 #  DATENBANK
 # ============================================================================
+
+# Alle Tabellen mit Lern-Eintraegen und ihre Datenspalten (ohne id und uid).
+# Der Abgleich zwischen Geraeten (fisi_sync.py) arbeitet mit dieser Liste.
+EVENT_TABLES = {
+    "test_results": ("timestamp", "score", "total", "percentage", "note",
+                     "duration_seconds"),
+    "card_events": ("timestamp", "category", "question", "mode", "correct"),
+    "quiz_answers": ("timestamp", "category", "question", "correct"),
+    "scenario_events": ("timestamp", "scenario_index", "title", "theme"),
+    "project_events": ("timestamp", "project_index", "title", "category"),
+    "ap1_events": ("timestamp", "scenario_index", "title", "theme"),
+}
+
 
 class DBManager:
     """SQLite-Anbindung fuer Testergebnisse und einzelne Lern-Ereignisse.
@@ -248,6 +262,7 @@ class DBManager:
             cur = conn.cursor()
             for statement in statements:
                 cur.execute(statement)
+            self._migrate(cur)
             conn.commit()
         except sqlite3.Error as exc:
             self._report("Datenbank konnte nicht initialisiert werden: %s" % exc)
@@ -256,67 +271,116 @@ class DBManager:
                 conn.close()
 
     @staticmethod
+    def _migrate(cur):
+        """Ergaenzt aeltere Datenbanken um das, was der Abgleich zwischen
+        mehreren Geraeten braucht: eine eindeutige Kennung (uid) je Eintrag,
+        damit zusammengefuehrte Eintraege nie doppelt zaehlen, und die
+        Tabelle sync_meta fuer Zeitpunkte wie "alles zurueckgesetzt"."""
+        for table in EVENT_TABLES:
+            columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
+            if "uid" not in columns:
+                cur.execute("ALTER TABLE %s ADD COLUMN uid TEXT" % table)
+            cur.execute("UPDATE %s SET uid = lower(hex(randomblob(16))) "
+                        "WHERE uid IS NULL" % table)
+            cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s_uid ON %s (uid)"
+                        % (table, table))
+        cur.execute("CREATE TABLE IF NOT EXISTS sync_meta ("
+                    " key TEXT PRIMARY KEY, value TEXT)")
+
+    @staticmethod
     def _now():
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    @staticmethod
+    def _uid():
+        return uuid.uuid4().hex
+
+    def get_meta(self, key):
+        row = self._execute("SELECT value FROM sync_meta WHERE key = ?", (key,),
+                            fetch="one", default=None)
+        return row[0] if row else None
+
+    def set_meta(self, key, value):
+        return bool(self._execute(
+            "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+            (key, value), commit=True, default=False))
 
     # -- Schreiben ----------------------------------------------------------
 
     def save_test_result(self, score, total, percentage, note, duration_seconds):
         return bool(self._execute(
-            "INSERT INTO test_results (timestamp, score, total, percentage, note, duration_seconds)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
-            (self._now(), score, total, percentage, note, duration_seconds),
+            "INSERT INTO test_results (timestamp, score, total, percentage, note,"
+            " duration_seconds, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (self._now(), score, total, percentage, note, duration_seconds, self._uid()),
             commit=True, default=False))
 
     def log_card(self, category, question, mode, correct):
         correct_value = None if correct is None else (1 if correct else 0)
         self._execute(
-            "INSERT INTO card_events (timestamp, category, question, mode, correct)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), category, question, mode, correct_value),
+            "INSERT INTO card_events (timestamp, category, question, mode, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (self._now(), category, question, mode, correct_value, self._uid()),
             commit=True, default=False)
 
     def log_quiz_answer(self, category, question, correct):
         self._execute(
-            "INSERT INTO quiz_answers (timestamp, category, question, correct)"
-            " VALUES (?, ?, ?, ?)",
-            (self._now(), category, question, 1 if correct else 0),
+            "INSERT INTO quiz_answers (timestamp, category, question, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), category, question, 1 if correct else 0, self._uid()),
             commit=True, default=False)
 
     def log_scenario(self, index, title, theme):
         self._execute(
-            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme)"
-            " VALUES (?, ?, ?, ?)",
-            (self._now(), index, title, theme),
+            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), index, title, theme, self._uid()),
             commit=True, default=False)
 
     def log_project(self, index, title, category):
         self._execute(
-            "INSERT INTO project_events (timestamp, project_index, title, category)"
-            " VALUES (?, ?, ?, ?)",
-            (self._now(), index, title, category),
+            "INSERT INTO project_events (timestamp, project_index, title, category, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), index, title, category, self._uid()),
             commit=True, default=False)
 
     def log_ap1(self, index, title, theme):
         self._execute(
-            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme)"
-            " VALUES (?, ?, ?, ?)",
-            (self._now(), index, title, theme),
+            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), index, title, theme, self._uid()),
             commit=True, default=False)
 
     # -- Loeschen -----------------------------------------------------------
 
+    # Der Zeitpunkt des Loeschens wird in sync_meta vermerkt: Der Abgleich
+    # loescht damit auch auf den anderen Geraeten alles, was davor lag.
+
     def clear_history(self):
-        return bool(self._execute("DELETE FROM test_results", commit=True, default=False))
+        conn = None
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM test_results")
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        ("history_cleared_at", self._now()))
+            conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self._report(str(exc))
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
 
     def reset_all(self):
         conn = None
         try:
             conn = self.get_connection()
             cur = conn.cursor()
-            for table in ("test_results", "card_events", "quiz_answers",
-                          "scenario_events", "project_events", "ap1_events"):
+            for table in EVENT_TABLES:
                 cur.execute("DELETE FROM " + table)
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        ("reset_at", self._now()))
             conn.commit()
             return True
         except sqlite3.Error as exc:

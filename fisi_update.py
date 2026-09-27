@@ -110,6 +110,7 @@ def pick_asset(assets, kind=None, machine=None):
         "deb": lambda name: name.endswith(".deb"),
         "macos": lambda name: name.endswith(
             "-macOS-arm64.dmg" if machine in ("arm64", "aarch64") else "-macOS-intel.dmg"),
+        "android": lambda name: name.endswith(".apk"),
     }.get(kind)
     if wanted is None:
         return None
@@ -146,9 +147,11 @@ def _open(url, timeout):
     return urllib.request.urlopen(request, timeout=timeout, context=_ssl_context())
 
 
-def check_for_update(current_version, timeout=10):
+def check_for_update(current_version, timeout=10, kind=None):
     """Fragt das neueste Release ab. Liefert UpdateInfo, wenn es neuer ist
-    als current_version, sonst None. Wirft UpdateError bei Netzproblemen."""
+    als current_version, sonst None. Wirft UpdateError bei Netzproblemen.
+    kind waehlt die Installer-Art (Vorgabe: die laufende Installation, die
+    Handy-App uebergibt 'android')."""
     try:
         with _open(LATEST_URL, timeout) as response:
             release = json.loads(response.read().decode("utf-8"))
@@ -162,7 +165,7 @@ def check_for_update(current_version, timeout=10):
     tag = release.get("tag_name", "")
     if not is_newer(tag, current_version):
         return None
-    asset = pick_asset(release.get("assets", []))
+    asset = pick_asset(release.get("assets", []), kind)
     return UpdateInfo(
         version=tag.lstrip("v"),
         notes=(release.get("body") or "").strip(),

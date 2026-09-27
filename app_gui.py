@@ -17,6 +17,7 @@ protokolliert und im Dashboard ausgewertet.
 """
 
 import os
+import platform
 import queue
 import random
 import sys
@@ -40,6 +41,7 @@ from fisi_core import (  # noqa: E402
     ap1_theme_totals, content_totals, ihk_note, raid_report, screen_report,
     search_content, subnet_report, theme_totals, validate_content,
 )
+import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_widgets import (  # noqa: E402
@@ -1801,6 +1803,47 @@ class SettingsView(View):
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
 
+        sync = Card(self.content, title="Abgleich PC und Handy", accent=C["cyan"],
+                    subtitle="über ein privates GitHub-Repository")
+        sync.pack(fill="x", pady=(14, 0))
+        settings = fisi_sync.sync_settings()
+        grid = transparent_frame(sync.body)
+        grid.pack(fill="x")
+        grid.columnconfigure(1, weight=1)
+        make_label(grid, "Repository (Benutzer/Name)", font=F["small"],
+                   fg=C["text_dim"]).grid(row=0, column=0, sticky="w", pady=4)
+        self.entry_repo = EntryBox(grid, width=34, value=settings["sync_repo"])
+        self.entry_repo.grid(row=0, column=1, sticky="w", padx=12, pady=4)
+        make_label(grid, "Zugangsschlüssel (Token)", font=F["small"],
+                   fg=C["text_dim"]).grid(row=1, column=0, sticky="w", pady=4)
+        self.entry_token = EntryBox(grid, width=34, value=settings["sync_token"])
+        self.entry_token.configure(show="•")
+        self.entry_token.grid(row=1, column=1, sticky="w", padx=12, pady=4)
+
+        row = transparent_frame(sync.body)
+        row.pack(fill="x", pady=(12, 0))
+        self.btn_sync = NeoButton(row, "Speichern und abgleichen", self.sync_now,
+                                  kind="accent")
+        self.btn_sync.pack(side="left")
+        self.lbl_sync = make_label(row, "", font=F["small"], fg=C["text_dim"],
+                                   justify="left", anchor="w", wraplength=520)
+        self.lbl_sync.pack(side="left", padx=(16, 0))
+        self.var_sync_auto = tk.BooleanVar(value=settings["sync_auto"])
+        ctk.CTkSwitch(sync.body, text="Automatisch abgleichen (beim Start, nach dem "
+                                      "Lernen und beim Beenden)",
+                      variable=self.var_sync_auto, command=self._toggle_sync_auto,
+                      font=F["small"], text_color=C["text_dim"],
+                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      button_color=C["text"], button_hover_color="#FFFFFF"
+                      ).pack(anchor="w", pady=(14, 0))
+        make_label(sync.body,
+                   "Auf PC und Handy dasselbe Repository und denselben "
+                   "Zugangsschlüssel eintragen. Wie beides angelegt wird, steht "
+                   "in LIESMICH.txt unter „Abgleich PC und Handy“.",
+                   font=F["tiny"], fg=C["muted"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
+        self.show_sync_status(None, None)
+
         info = Card(self.content, title="Datenbank", accent=C["cyan"])
         info.pack(fill="x", pady=(14, 0))
         make_label(info.body, "Speicherort der Lernfortschritte:",
@@ -1859,6 +1902,37 @@ class SettingsView(View):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(self.var_auto.get())
         fisi_update.save_settings(settings)
+
+    def _toggle_sync_auto(self):
+        fisi_sync.save_sync_settings(sync_auto=bool(self.var_sync_auto.get()))
+
+    def sync_now(self):
+        fisi_sync.save_sync_settings(sync_repo=self.entry_repo.get().strip(),
+                                     sync_token=self.entry_token.get().strip())
+        if not fisi_sync.is_configured():
+            self.lbl_sync.configure(text="Bitte Repository und Zugangsschlüssel "
+                                         "eintragen.", text_color=C["yellow"])
+            return
+        self.btn_sync.set_enabled(False)
+        self.lbl_sync.configure(text="Gleiche ab ...", text_color=C["text_dim"])
+        self.app.sync.run()
+
+    def show_sync_status(self, result, error):
+        """Wird nach jedem Abgleich aufgerufen (auch automatischen)."""
+        self.btn_sync.set_enabled(True)
+        if error:
+            self.lbl_sync.configure(text=error, text_color=C["red"])
+            return
+        last = fisi_sync.sync_settings()["sync_last"]
+        if not fisi_sync.is_configured():
+            text, color = "Noch nicht eingerichtet.", C["muted"]
+        elif result is not None:
+            text, color = result.message, C["green"]
+        elif last:
+            text, color = "Zuletzt abgeglichen: %s" % _german_time(last), C["text_dim"]
+        else:
+            text, color = "Noch nicht abgeglichen.", C["muted"]
+        self.lbl_sync.configure(text=text, text_color=color)
 
     def check_updates(self):
         self.btn_update.set_enabled(False)
@@ -1980,7 +2054,7 @@ class UpdateController:
         def worker():
             try:
                 self._queue.put((on_done, work(), None))
-            except fisi_update.UpdateError as error:
+            except (fisi_update.UpdateError, fisi_sync.SyncError) as error:
                 self._queue.put((on_done, None, str(error)))
             except Exception as error:  # unerwartet - nie den Thread sterben lassen
                 self._queue.put((on_done, None, "Unerwarteter Fehler: %s" % error))
@@ -2019,6 +2093,92 @@ class UpdateController:
     def auto_check(self):
         if fisi_update.load_settings().get("auto_check", True):
             self.check(manual=False)
+
+
+def _german_time(timestamp):
+    """'2026-09-27 21:40:05' -> '27.09.2026 21:40'"""
+    try:
+        return "%s.%s.%s %s" % (timestamp[8:10], timestamp[5:7], timestamp[:4],
+                                timestamp[11:16])
+    except (TypeError, IndexError):
+        return str(timestamp)
+
+
+class SyncController:
+    """Gleicht den Lernfortschritt im Hintergrund mit dem Repository ab
+    (siehe fisi_sync.py): beim Start, eine Minute nach dem Lernen und beim
+    Beenden - sofern eingerichtet und nicht abgeschaltet."""
+
+    DELAY_MS = 60000
+
+    def __init__(self, app):
+        self.app = app
+        self._busy = False
+        self._again = False
+        self._job = None
+        self.dirty = False
+
+    @staticmethod
+    def device():
+        return "PC %s" % (platform.node() or "").strip()
+
+    @staticmethod
+    def auto_enabled():
+        settings = fisi_sync.sync_settings()
+        return fisi_sync.is_configured(settings) and settings["sync_auto"]
+
+    def run(self):
+        if self._busy:
+            self._again = True
+            return
+        self._busy = True
+        self.dirty = False
+
+        def done(result, error):
+            self._busy = False
+            if result is not None and result.received:
+                self.app.refresh_after_sync()
+            self.app.views["settings"].show_sync_status(result, error)
+            if self._again:
+                self._again = False
+                self.run()
+
+        self.app.updater.run_in_background(
+            lambda: fisi_sync.sync(self.app.db, device=self.device()), done)
+
+    def auto_start(self):
+        if self.auto_enabled():
+            self.run()
+
+    def schedule(self):
+        """Nach einer Lernaktivitaet: in einer Minute abgleichen. Weitere
+        Aktivitaeten in dieser Zeit verschieben den Abgleich nicht."""
+        self.dirty = True
+        if self._job is None and self.auto_enabled():
+            self._job = self.app.root.after(self.DELAY_MS, self._scheduled)
+
+    def _scheduled(self):
+        self._job = None
+        self.run()
+
+    def run_before_exit(self, timeout=12):
+        """Letzter Abgleich beim Beenden, falls seitdem gelernt wurde. Das
+        Fenster ist dann schon versteckt; nach timeout Sekunden wird nicht
+        laenger gewartet."""
+        if not (self.dirty and self.auto_enabled()):
+            return
+        worker = threading.Thread(
+            target=lambda: _quietly(fisi_sync.sync, self.app.db, device=self.device()),
+            daemon=True)
+        worker.start()
+        worker.join(timeout)
+
+
+def _quietly(function, *args, **kwargs):
+    try:
+        function(*args, **kwargs)
+    except Exception:
+        pass
 
 
 class UpdateDialog(ctk.CTkToplevel):
@@ -2126,7 +2286,7 @@ class UpdateDialog(ctk.CTkToplevel):
         self.lbl_status.configure(text=message, text_color=C["green"])
         if must_quit:
             # Programm schliessen, damit der Installer die Dateien ersetzen kann
-            self.after(1500, self.app.on_close)
+            self.after(1500, lambda: self.app.on_close(final_sync=False))
         else:
             self.btn_later.set_text("Schließen")
             self.btn_later.set_enabled(True)
@@ -2208,8 +2368,10 @@ class FISIApp:
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
 
         self.updater = UpdateController(self)
+        self.sync = SyncController(self)
         # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
         if not os.environ.get("FISI_SELFTEST"):
+            root.after(1500, self.sync.auto_start)
             root.after(3000, self.updater.auto_check)
 
     # -- Infrastruktur ------------------------------------------------------
@@ -2301,13 +2463,30 @@ class FISIApp:
         total = sum(totals.values())
         learned = self.db.distinct_cards_learned() + self.db.distinct_quiz_questions()
         self.sidebar.update_status(self.db.streak(), learned, total)
-        if refresh_view and self.current == "dashboard":
-            self.views["dashboard"].refresh()
+        if refresh_view:
+            # Etwas wurde gelernt oder geloescht - bald abgleichen
+            if hasattr(self, "sync"):
+                self.sync.schedule()
+            if self.current == "dashboard":
+                self.views["dashboard"].refresh()
 
-    def on_close(self):
+    def refresh_after_sync(self):
+        """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""
+        self.notify_progress(refresh_view=False)
+        if self.current in ("dashboard", "progress"):
+            self.views[self.current].refresh()
+        elif self.current == "testproject":
+            self.views["testproject"]._highlight()
+
+    def on_close(self, final_sync=True):
         quiz = self.views.get("quiz")
         if quiz is not None:
             quiz.stop_timer()
+        self.root.withdraw()
+        # Nicht vor einem Update: Der Installer soll nicht warten muessen, der
+        # Abgleich folgt dann beim naechsten Start.
+        if final_sync:
+            self.sync.run_before_exit()
         self.root.destroy()
 
 

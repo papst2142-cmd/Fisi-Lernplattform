@@ -1,0 +1,39 @@
+# FISI Lernplattform - Handy-App (Android), gebaut mit Flet
+#
+# Bauen (macht GitHub Actions bei jedem Versions-Tag automatisch):
+#   python mobile/vorbereiten.py      gemeinsame Dateien nach mobile/src kopieren
+#   cd mobile && flet build apk
+#
+# Version und build_number setzt "python build.py --setze-version <Version>"
+# im Hauptordner - nicht von Hand aendern.
+
+[project]
+name = "fisi-lernplattform"
+version = "0.24"
+description = "Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration"
+requires-python = ">=3.10"
+dependencies = [
+    "flet==1.0.1",
+    "certifi",
+]
+
+[tool.flet]
+product = "FISI Lernplattform"
+org = "io.github.papst2142cmd"
+company = "FISI Lernplattform Projekt"
+build_number = 2400
+icon_background = "#120A24"
+
+[tool.flet.app]
+path = "src"
+module = "main"
+
+[tool.flet.splash]
+color = "#120A24"
+dark_color = "#120A24"
+
+[tool.flet.android]
+split_per_abi = false
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true

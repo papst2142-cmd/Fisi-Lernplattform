@@ -19,7 +19,8 @@ Aufruf:
   python build.py --ohne-test  ohne automatischen Starttest bauen
   python build.py --setze-version 0.22
                                neue Version an allen Stellen eintragen
-                               (app_gui.py, LIESMICH.txt, Inno-Setup-Skript)
+                               (app_gui.py, LIESMICH.txt, Inno-Setup-Skript,
+                               mobile/src/main.py, mobile/pyproject.toml)
   python build.py --versionshinweise
                                Abschnitt der aktuellen Version aus
                                AENDERUNGEN.md ausgeben (Release-Text)
@@ -90,7 +91,17 @@ VERSION_SPOTS = [
     ("app_gui.py", r'^(APP_VERSION = ")([^"]+)(")'),
     ("LIESMICH.txt", r'^(  FISI LERNPLATTFORM  -  Version )(\S+)()'),
     ("FISI-Lernplattform.iss", r'^(  #define MyAppVersion ")([^"]+)(")'),
+    ("mobile/src/main.py", r'^(APP_VERSION = ")([^"]+)(")'),
+    ("mobile/pyproject.toml", r'^(version = ")([^"]+)(")'),
 ]
+# Interne Versionsnummer der Android-App (muss bei jedem Update steigen):
+# 0.24 -> 2400, 0.24.1 -> 2401, 1.0 -> 10000
+ANDROID_BUILD_SPOT = ("mobile/pyproject.toml", r'^(build_number = )(\d+)()')
+
+
+def android_build_number(version):
+    major, minor, fix = _version_numbers(version)[:3]
+    return str(major * 10000 + minor * 100 + fix)
 VERSION_FORMAT = r"^\d+\.\d+(\.\d+)?$"
 
 
@@ -109,6 +120,12 @@ def check_versions(version):
         match = re.search(pattern, _read(name), re.MULTILINE)
         if not match or match.group(2) != version:
             wrong.append("  %s: %s" % (name, match.group(2) if match else "nicht gefunden"))
+    name, pattern = ANDROID_BUILD_SPOT
+    match = re.search(pattern, _read(name), re.MULTILINE)
+    if not match or match.group(2) != android_build_number(version):
+        wrong.append("  %s: build_number %s (erwartet %s)"
+                     % (name, match.group(2) if match else "nicht gefunden",
+                        android_build_number(version)))
     if wrong:
         fail("Die Version ist nicht ueberall gleich (erwartet %s):\n%s\n"
              "Beheben mit:  python build.py --setze-version %s"
@@ -120,14 +137,16 @@ def set_version(version):
     if not re.match(VERSION_FORMAT, version):
         fail("Ungueltige Version %s - erlaubt sind z.B. 0.22 (Update) und 0.22.1 (Fix)."
              % version)
-    for name, pattern in VERSION_SPOTS:
-        text, count = re.subn(pattern, lambda m: m.group(1) + version + m.group(3),
+    spots = [(name, pattern, version) for name, pattern in VERSION_SPOTS]
+    spots.append(ANDROID_BUILD_SPOT + (android_build_number(version),))
+    for name, pattern, value in spots:
+        text, count = re.subn(pattern, lambda m: m.group(1) + value + m.group(3),
                               _read(name), count=1, flags=re.MULTILINE)
         if not count:
             fail("Versionsangabe in %s nicht gefunden." % name)
         with open(os.path.join(ROOT, name), "w", encoding="utf-8", newline="") as handle:
             handle.write(text)
-        info("%s -> %s" % (name, version))
+        info("%s -> %s" % (name, value))
 
 
 def release_notes(version):

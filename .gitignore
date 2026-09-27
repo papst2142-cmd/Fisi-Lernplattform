@@ -19,3 +19,11 @@ installer_output/
 # Editor-/OS-Dateien
 .DS_Store
 Thumbs.db
+
+# Handy-App: Kopien der gemeinsamen Dateien (mobile/vorbereiten.py) und Build
+mobile/src/fisi_core.py
+mobile/src/fisi_theme.py
+mobile/src/fisi_update.py
+mobile/src/fisi_sync.py
+mobile/src/inhalte/
+mobile/build/
