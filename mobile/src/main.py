@@ -1021,6 +1021,7 @@ class SettingsScreen(Screen):
     def build(self):
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
         self.lbl_update = ui.text("", size=13, color=C["text_dim"])
+        self.lbl_update.visible = False
         auto = fisi_update.load_settings()["auto_check"]
         updates = ui.Card("Updates", [
             ft.Row([self.btn_update]), self.lbl_update,
@@ -1126,6 +1127,7 @@ class SettingsScreen(Screen):
     def check_updates(self, _event=None):
         self.btn_update.set_enabled(False)
         self.lbl_update.value = "Suche nach Updates ..."
+        self.lbl_update.visible = True
         self.lbl_update.color = C["text_dim"]
         self.app.check_updates(manual=True)
 

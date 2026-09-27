@@ -45,6 +45,17 @@ LINUX (alle anderen Distributionen)  -  FISI-Lernplattform-<Version>-x86_64.AppI
    ausfuehren" erlauben)
 2. Per Doppelklick starten. Eine Installation ist nicht noetig.
 
+ANDROID  -  FISI-Lernplattform-<Version>-Android.apk
+----------------------------------------------------------------------------
+1. Auf dem Handy im Browser die Releases-Seite oeffnen und die .apk-Datei
+   herunterladen.
+2. Die Datei oeffnen und Android erlauben, Apps aus dieser Quelle zu
+   installieren (fragt nur beim ersten Mal).
+3. "Installieren" tippen. Warnt Google Play Protect: "Weitere Details" ->
+   "Trotzdem installieren".
+Updates bietet die App selbst an (Einstellungen -> Updates). Einrichtung
+des Abgleichs mit dem PC: LIESMICH.txt, Abschnitt ABGLEICH PC UND HANDY.
+
 MACOS  -  FISI-Lernplattform-<Version>-macOS-arm64.dmg / -intel.dmg
 ----------------------------------------------------------------------------
 Welche Datei? Apfel-Menue -> "Ueber diesen Mac": Steht dort "Chip Apple
@@ -67,8 +78,9 @@ TEIL B: INSTALLER BAUEN
 
 Die Versionsnummer wird immer mit EINEM Befehl gesetzt, zum Beispiel:
   python build.py --setze-version 0.22
-Das traegt sie gleichzeitig in app_gui.py, LIESMICH.txt und das Inno-Setup-
-Skript ein. Von dort landet sie automatisch in Programmfenster, Installern,
+Das traegt sie gleichzeitig in app_gui.py, LIESMICH.txt, das Inno-Setup-
+Skript und die Handy-App (mobile/src/main.py, mobile/pyproject.toml samt
+interner Android-Versionsnummer build_number) ein. Von dort landet sie automatisch in Programmfenster, Installern,
 Dateinamen, Windows-Dateieigenschaften und macOS-App. Vor jedem Build prueft
 build.py, dass die Version ueberall gleich ist, und bricht sonst ab.
 
@@ -85,8 +97,9 @@ Variante 1 - Release mit Versions-Tag (empfohlen):
      die Fehlerbehebung 0.22.1:
        git tag v0.22            (bzw. git tag v0.22.1)
        git push origin v0.22    (bzw. git push origin v0.22.1)
-  3. GitHub baut jetzt (ca. 5-10 Minuten) auf Windows, Linux und macOS
-     und legt unter "Releases" ein neues Release mit allen Installern an.
+  3. GitHub baut jetzt (ca. 10-20 Minuten) auf Windows, Linux und macOS
+     sowie die Android-App und legt unter "Releases" ein neues Release mit
+     allen Installern und der .apk an.
      Den Fortschritt zeigt der Reiter "Actions".
   Passt der Tag nicht zu APP_VERSION, bricht der Lauf mit einer Meldung ab.
 
@@ -114,6 +127,27 @@ macOS:
 
 Nur die Anwendung ohne Installer (Ordner dist/FISI-Lernplattform):
   python build.py --nur-app
+
+ANDROID-APP (Ordner mobile/)
+----------------------------------------------------------------------------
+Die .apk baut GitHub Actions (Job "android") mit Flet. Signiert wird sie
+mit einem festen Schluessel aus den Repository-Secrets
+ANDROID_KEYSTORE_BASE64 und ANDROID_KEYSTORE_PASSWORD - nur so installiert
+Android neue Versionen als Update. Eine Kopie des Schluessels liegt ausserhalb
+des Repositorys (Ordner FISI-Android-Schluessel); nicht verlieren.
+
+Die Handy-App am PC ausprobieren (ohne Handy):
+  python -m pip install "flet[all]==1.0.1"
+  python mobile/src/main.py          (eigenes Fenster)
+  python mobile/src/main.py --web    (im Browser, http://localhost:8550)
+Selbsttest aller Seiten ohne Bildschirm:
+  python mobile/src/main.py --selbsttest
+
+Lokal bauen (laedt beim ersten Mal Flutter, JDK und Android-SDK, mehrere
+GB):
+  python mobile/vorbereiten.py
+  cd mobile
+  flet build apk
 
 Hinweis: Der Ordner installer_output ist per .gitignore vom Repository
 ausgeschlossen - fertige Installer gehoeren in GitHub-Releases, nicht in

@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.23
+  FISI LERNPLATTFORM  -  Version 0.24
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
@@ -52,6 +52,11 @@ Kacheln, Farbverlaeufe):
 Die vier Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
 Datenschutz, Systeme/RAID & Hardware sowie Wirtschaft & Prozesse.
 
+Ab Version 0.24 gibt es alles davon auch als Handy-App fuer Android - mit
+denselben Inhalten und auf Wunsch mit automatischem Abgleich des
+Lernstands zwischen PC und Handy (siehe HANDY-APP und ABGLEICH PC UND
+HANDY).
+
 
 INSTALLATION (EMPFOHLEN) - FERTIGE INSTALLER
 ---------------------------------------------------------------------------
@@ -97,6 +102,78 @@ Unter Einstellungen -> Updates gibt es den Knopf "Nach Updates suchen" und
 den Schalter, mit dem die automatische Suche beim Start abgeschaltet wird.
 Die Lernfortschritte bleiben bei jedem Update erhalten. Welche Neuerungen
 jede Version bringt, steht in AENDERUNGEN.md.
+
+
+HANDY-APP (ANDROID)
+---------------------------------------------------------------------------
+Die Handy-App steht im selben Release wie die PC-Installer:
+  FISI-Lernplattform-<Version>-Android.apk
+
+Installieren:
+  1. Auf dem Handy die GitHub-Seite des Projekts oeffnen, unter "Releases"
+     die .apk-Datei antippen und herunterladen.
+  2. Die heruntergeladene Datei oeffnen. Beim ersten Mal fragt Android, ob
+     der Browser (bzw. die Dateien-App) Apps installieren darf - fuer diese
+     Quelle erlauben.
+  3. "Installieren" tippen. Meldet Google Play Protect eine unbekannte App:
+     "Weitere Details" -> "Trotzdem installieren" (die App stammt nicht
+     aus dem Play Store und ist dort deshalb nicht bekannt).
+
+Die App hat dieselben Bereiche wie am PC: Dashboard ("Start"), Lernen
+(Karteikarten, Pruefungstrainer, AP1/AP2-Szenarien, Test Projekt),
+Rechner, Fortschritt und Einstellungen - unten ueber die Leiste
+erreichbar, die Suche oben rechts. Zurueck geht es mit dem Pfeil oben links
+oder der Zurueck-Geste.
+
+Updates: Die App sucht beim Start nach einer neuen Version. Gibt es eine,
+laedt "Herunterladen" die neue .apk im Browser - oeffnen und
+"Installieren" tippen. Der Lernstand bleibt erhalten.
+
+
+ABGLEICH PC UND HANDY
+---------------------------------------------------------------------------
+PC und Handy koennen ihren Lernstand automatisch abgleichen: beim Start,
+etwa eine Minute nach dem Lernen und beim Beenden bzw. Verlassen der App.
+Der Lernstand liegt dafuer als eine Datei (lernstand.json.gz) in einem
+PRIVATEN GitHub-Repository - nur du hast Zugriff darauf. Es werden nur
+Lern-Eintraege uebertragen (was wann gelernt wurde), keine anderen Daten.
+
+Einmalig einrichten:
+
+  1. Privates Repository (ist bereits angelegt):
+       papst2142-cmd/fisi-lernstand
+
+  2. Zugangsschluessel (Token) erzeugen - am besten je Geraet einen, dann
+     laesst sich ein verlorenes Handy einzeln sperren:
+       github.com -> Profilbild oben rechts -> Settings -> Developer
+       settings -> Personal access tokens -> Fine-grained tokens ->
+       "Generate new token"
+       - Token name:        z.B. "FISI Abgleich PC" bzw. "FISI Abgleich Handy"
+       - Expiration:        Ablaufdatum waehlen (z.B. 1 Jahr). Danach
+                            einfach einen neuen Token erzeugen und eintragen.
+       - Repository access: "Only select repositories" -> fisi-lernstand
+       - Permissions:       Repository permissions -> "Contents" ->
+                            "Read and write"
+       - "Generate token" und den angezeigten Schluessel (beginnt mit
+         github_pat_) kopieren. GitHub zeigt ihn nur dieses eine Mal an.
+     Fuer das Handy den Token am besten direkt im Handy-Browser auf
+     github.com erzeugen - dann muss der lange Schluessel nicht vom PC
+     uebertragen werden.
+
+  3. In der App: Einstellungen -> "Abgleich PC und Handy"
+       Repository:        papst2142-cmd/fisi-lernstand
+       Zugangsschluessel: den kopierten Token einfuegen
+     Dann "Speichern und abgleichen". Auf dem anderen Geraet genauso.
+
+Der Schalter "Automatisch abgleichen" schaltet den automatischen Abgleich
+ab; der Knopf gleicht dann nur noch auf Wunsch ab. Auch "Historie loeschen"
+und "Alle Lerndaten loeschen" werden abgeglichen - geloescht wird dann auf
+allen Geraeten.
+
+Der Token wird auf dem Geraet in der Datei einstellungen.json (neben der
+Datenbank, siehe unten) gespeichert. Er darf nur auf das eine Repository
+zugreifen. Ein verlorener oder ungueltiger Token laesst sich auf github.com
+unter "Fine-grained tokens" jederzeit loeschen.
 
 
 START AUS DEM QUELLCODE (fuer Entwickler)
@@ -153,7 +230,12 @@ In einer SQLite-Datenbank im Benutzerverzeichnis:
   macOS   :  ~/Library/Application Support/FISI-Lernplattform/
              fisi_lernplattform.db
 
-Beim Deinstallieren oder Aktualisieren bleibt diese Datei erhalten.
+  Android :  im privaten Datenordner der App (nur die App selbst hat
+             Zugriff darauf)
+
+Beim Deinstallieren oder Aktualisieren bleibt diese Datei erhalten (auf
+dem Handy nur beim Aktualisieren - beim Deinstallieren loescht Android die
+App-Daten; mit eingerichtetem Abgleich kommt der Lernstand zurueck).
 Liegt bereits eine Datei fisi_lernplattform.db neben dem Programm, wird
 diese weiterverwendet. Bestehende Lernfortschritte aus einer aelteren
 Version gehen also nicht verloren.
@@ -176,6 +258,9 @@ DATEIEN IM PAKET
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
   fisi_update.py        Updater: sucht, laedt und installiert neue Versionen
+  fisi_sync.py          Abgleich des Lernstands zwischen PC und Handy
+  mobile/               Handy-App (Android): Oberflaeche mit Flet, nutzt
+                        fisi_core.py, fisi_sync.py und inhalte/ mit
   inhalte/              Lerninhalte als JSON-Dateien (siehe unten)
   requirements.txt      Bibliotheken fuer den Start aus dem Quellcode
   requirements-build.txt  zusaetzlich PyInstaller zum Bauen
@@ -187,9 +272,9 @@ DATEIEN IM PAKET
   AENDERUNGEN.md        Neuerungen jeder Version (Text der Releases)
   LIESMICH.txt          Diese Datei
 
-Die sechs .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
-fisi_theme.py, fisi_core.py, fisi_update.py) muessen im selben Ordner
-liegen.
+Die sieben .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
+fisi_theme.py, fisi_core.py, fisi_update.py, fisi_sync.py) muessen im
+selben Ordner liegen.
 
 
 EIGENE LERNINHALTE ERGAENZEN
@@ -280,6 +365,19 @@ Die Oberflaeche wirkt gedraengt
     Das Fenster vergroessern. Empfohlen sind mindestens 1120 x 720 Punkte.
     Bei kleineren Fenstern laesst sich der Inhalt seitlich scrollen
     (Umschalttaste + Mausrad).
+
+Abgleich meldet "Zugangsschluessel ist ungueltig oder abgelaufen"
+    Auf github.com einen neuen Token erzeugen (siehe ABGLEICH PC UND HANDY)
+    und in den Einstellungen eintragen.
+
+Abgleich meldet "Repository nicht gefunden"
+    Schreibweise pruefen (Benutzer/Name, z.B. papst2142-cmd/fisi-lernstand)
+    und ob der Token Zugriff auf genau dieses Repository hat.
+
+Android meldet beim Update "App nicht installiert"
+    Die neue .apk passt nicht zur installierten App (z.B. anderer
+    Signaturschluessel). Mit eingerichtetem Abgleich: App deinstallieren,
+    neu installieren, Abgleich einrichten - der Lernstand kommt zurueck.
 
 Es bleiben Fragen offen oder ein Fehler laesst sich mit dieser Anleitung
 nicht loesen: Die vollstaendige Fehlermeldung kopieren, das erleichtert

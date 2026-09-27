@@ -59,7 +59,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.23"
+APP_VERSION = "0.24"
 
 
 def _resource_path(filename):
@@ -1893,7 +1893,8 @@ class SettingsView(View):
                    "AP1-/AP2-Szenarien, Testprojekten und Praxis-Rechnern.\n\n"
                    "Umgesetzt mit Python und CustomTkinter. Die Installer für "
                    "Windows, Linux und macOS bringen alles Nötige mit - es muss "
-                   "nichts zusätzlich installiert werden."
+                   "nichts zusätzlich installiert werden. Die Handy-App für "
+                   "Android nutzt dieselben Lerninhalte."
                    % (APP_TITLE, APP_VERSION),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")

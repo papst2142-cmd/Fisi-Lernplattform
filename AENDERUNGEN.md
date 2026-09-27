@@ -4,6 +4,20 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.24
+
+- **Neu: Handy-App für Android** mit allen Bereichen der PC-Version –
+  Dashboard, Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien,
+  Testprojekte, Praxis-Rechner, Lernfortschritt, Suche und Einstellungen.
+  Gleiche Inhalte, gleiches Design, für Touch-Bedienung gebaut. Die Datei
+  `FISI-Lernplattform-0.24-Android.apk` liegt im Release.
+- **Abgleich PC und Handy:** Der Lernstand kann automatisch über ein
+  privates GitHub-Repository abgeglichen werden – beim Start, kurz nach dem
+  Lernen und beim Beenden. Einrichtung unter Einstellungen → „Abgleich PC
+  und Handy“ (Anleitung in LIESMICH.txt).
+- Die Handy-App sucht selbst nach Updates und lädt die neue Version über
+  den Browser.
+
 ## 0.23
 
 - **Deutlich mehr Lernstoff:** 115 Karteikarten (vorher 67), 208 Quizfragen
