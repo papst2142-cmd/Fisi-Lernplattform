@@ -42,6 +42,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 APP_NAME = "FISI-Lernplattform"
@@ -379,8 +380,19 @@ def package_dmg(version, app_path):
     arch = "arm64" if platform.machine() == "arm64" else "intel"
     target = os.path.join(OUTPUT, "%s-%s-macOS-%s.dmg" % (APP_NAME, version, arch))
     info("DMG wird erzeugt ...")
-    run(["hdiutil", "create", "-volname", DISPLAY_NAME, "-srcfolder", stage,
-         "-ov", "-format", "UDZO", target])
+    command = ["hdiutil", "create", "-volname", DISPLAY_NAME, "-srcfolder", stage,
+               "-ov", "-format", "UDZO", target]
+    # hdiutil scheitert gelegentlich mit "Resource busy", solange macOS die
+    # frisch gebaute App noch untersucht - dann kurz warten und erneut versuchen.
+    for attempt in range(1, 6):
+        try:
+            run(command)
+            return
+        except subprocess.CalledProcessError:
+            if attempt == 5:
+                raise
+            info("hdiutil war beschaeftigt - neuer Versuch %d von 5 ..." % (attempt + 1))
+            time.sleep(10 * attempt)
 
 
 # ============================================================================
