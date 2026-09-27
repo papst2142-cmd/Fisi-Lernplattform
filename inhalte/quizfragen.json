@@ -1126,5 +1126,725 @@
     ],
     "a": "Alle Personen oder Gruppen mit einem Interesse am oder Einfluss auf das Projekt",
     "exp": "Stakeholder umfassen z.B. Auftraggeber, Nutzer, Management, Betriebsrat oder externe Partner - ihre Interessen sollten im Projektverlauf berücksichtigt werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche IPv6-Adresse ist die Loopback-Adresse?",
+    "options": [
+      "::1",
+      "fe80::1",
+      "::",
+      "ff02::1"
+    ],
+    "a": "::1",
+    "exp": "::1 (0:0:0:0:0:0:0:1) ist die IPv6-Loopback-Adresse, vergleichbar mit 127.0.0.1 bei IPv4."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem Präfix beginnen link-lokale IPv6-Adressen?",
+    "options": [
+      "fe80::/10",
+      "2000::/3",
+      "fc00::/7",
+      "ff00::/8"
+    ],
+    "a": "fe80::/10",
+    "exp": "Link-lokale Adressen (fe80::/10) erzeugt jede Schnittstelle automatisch; sie gelten nur im lokalen Segment und werden nicht geroutet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher IPv6-Bereich ist für Unique Local Addresses (vergleichbar mit privaten IPv4-Adressen) vorgesehen?",
+    "options": [
+      "fc00::/7",
+      "fe80::/10",
+      "2000::/3",
+      "ff00::/8"
+    ],
+    "a": "fc00::/7",
+    "exp": "Unique Local Addresses liegen in fc00::/7 (praktisch fd00::/8) und werden nur intern verwendet. 2000::/3 sind globale Unicast-Adressen, ff00::/8 Multicast."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll übernimmt bei IPv6 die Aufgabe von ARP?",
+    "options": [
+      "NDP (Neighbor Discovery Protocol)",
+      "RARP",
+      "DHCPv4",
+      "IGMP"
+    ],
+    "a": "NDP (Neighbor Discovery Protocol)",
+    "exp": "IPv6 nutzt das Neighbor Discovery Protocol (über ICMPv6), um MAC-Adressen von Nachbarn zu ermitteln - ARP gibt es bei IPv6 nicht mehr."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Dienst verwendet standardmäßig den UDP-Port 514?",
+    "options": [
+      "Syslog",
+      "SNMP",
+      "NTP",
+      "TFTP"
+    ],
+    "a": "Syslog",
+    "exp": "Syslog sendet Protokollmeldungen standardmäßig über UDP 514 an einen zentralen Log-Server."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port verwendet TFTP, z.B. beim Booten über das Netzwerk?",
+    "options": [
+      "UDP 69",
+      "TCP 21",
+      "TCP 20",
+      "UDP 161"
+    ],
+    "a": "UDP 69",
+    "exp": "TFTP (Trivial File Transfer Protocol) nutzt UDP-Port 69 - z.B. für PXE-Boot oder Firmware-Updates von Netzwerkgeräten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DNS-Eintrag ordnet einem Namen eine IPv6-Adresse zu?",
+    "options": [
+      "AAAA",
+      "A",
+      "MX",
+      "PTR"
+    ],
+    "a": "AAAA",
+    "exp": "AAAA-Einträge enthalten IPv6-Adressen, A-Einträge IPv4-Adressen. PTR-Einträge dienen der Rückwärtsauflösung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DNS-Eintrag legt fest, welcher Server die E-Mails einer Domain annimmt?",
+    "options": [
+      "MX",
+      "CNAME",
+      "NS",
+      "TXT"
+    ],
+    "a": "MX",
+    "exp": "Der MX-Eintrag (Mail Exchanger) nennt den zuständigen Mailserver. NS benennt die Nameserver, CNAME ist ein Alias."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse des Netzes 192.168.10.64/26?",
+    "options": [
+      "192.168.10.127",
+      "192.168.10.128",
+      "192.168.10.255",
+      "192.168.10.63"
+    ],
+    "a": "192.168.10.127",
+    "exp": "/26 bildet Blöcke zu 64 Adressen. Das Netz 192.168.10.64 reicht bis 192.168.10.127 - die letzte Adresse ist die Broadcast-Adresse."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele /26-Subnetze lassen sich aus einem /24-Netz bilden?",
+    "options": [
+      "4",
+      "2",
+      "8",
+      "64"
+    ],
+    "a": "4",
+    "exp": "Von /24 auf /26 werden 2 Bit für Subnetze entliehen: 2^2 = 4 Subnetze mit je 64 Adressen (62 nutzbare Hosts)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zu welchem Netz gehört die Adresse 10.20.30.200/27?",
+    "options": [
+      "10.20.30.192",
+      "10.20.30.160",
+      "10.20.30.224",
+      "10.20.30.200"
+    ],
+    "a": "10.20.30.192",
+    "exp": "/27 bildet Blöcke zu 32 Adressen (…, 160, 192, 224). 200 liegt im Block 192-223, die Netzadresse ist also 10.20.30.192."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Trunk-Port an einem Switch?",
+    "options": [
+      "Ein Port, der mehrere VLANs getaggt überträgt",
+      "Ein Port nur für den Uplink ins Internet",
+      "Ein deaktivierter Reserve-Port",
+      "Ein Port mit Stromversorgung per PoE"
+    ],
+    "a": "Ein Port, der mehrere VLANs getaggt überträgt",
+    "exp": "Ein Trunk überträgt Frames mehrerer VLANs mit 802.1Q-Tag, z.B. zwischen Switches. Ein Access-Port gehört dagegen genau einem VLAN an."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Schicht des TCP/IP-Modells ist HTTP zugeordnet?",
+    "options": [
+      "Anwendungsschicht",
+      "Transportschicht",
+      "Internetschicht",
+      "Netzzugangsschicht"
+    ],
+    "a": "Anwendungsschicht",
+    "exp": "HTTP ist ein Anwendungsprotokoll. Es nutzt TCP (Transportschicht), das wiederum über IP (Internetschicht) übertragen wird."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum wird für Büro-WLAN meist das 5-GHz-Band dem 2,4-GHz-Band vorgezogen?",
+    "options": [
+      "Mehr überlappungsfreie Kanäle und weniger Störungen",
+      "Größere Reichweite durch Wände",
+      "Kompatibel mit allen alten Geräten",
+      "Keine Verschlüsselung erforderlich"
+    ],
+    "a": "Mehr überlappungsfreie Kanäle und weniger Störungen",
+    "exp": "Im 2,4-GHz-Band gibt es nur drei überlappungsfreie Kanäle (1, 6, 11) und viele Störquellen. 5 GHz bietet deutlich mehr Kanäle, hat aber eine geringere Reichweite."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll synchronisiert die Systemzeit von Servern und Clients?",
+    "options": [
+      "NTP",
+      "SNMP",
+      "SMTP",
+      "LDAP"
+    ],
+    "a": "NTP",
+    "exp": "NTP (Network Time Protocol, UDP 123) sorgt für eine einheitliche Uhrzeit - wichtig z.B. für Kerberos-Anmeldungen und nachvollziehbare Logdateien."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie funktioniert ein hybrides Verschlüsselungsverfahren wie bei TLS?",
+    "options": [
+      "Ein symmetrischer Sitzungsschlüssel wird asymmetrisch ausgetauscht",
+      "Jede Nachricht wird zweimal symmetrisch verschlüsselt",
+      "Es wird nur asymmetrisch verschlüsselt",
+      "Es werden nur Hashwerte übertragen"
+    ],
+    "a": "Ein symmetrischer Sitzungsschlüssel wird asymmetrisch ausgetauscht",
+    "exp": "Asymmetrische Verfahren lösen das Schlüsselaustauschproblem, symmetrische sind schnell. Beim Hybridverfahren wird deshalb ein symmetrischer Sitzungsschlüssel sicher asymmetrisch ausgetauscht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Mit welchem Schlüssel verschlüsselt Alice eine Nachricht, die nur Bob lesen soll?",
+    "options": [
+      "Bobs öffentlicher Schlüssel",
+      "Bobs privater Schlüssel",
+      "Alices privater Schlüssel",
+      "Alices öffentlicher Schlüssel"
+    ],
+    "a": "Bobs öffentlicher Schlüssel",
+    "exp": "Verschlüsselt wird mit dem öffentlichen Schlüssel des Empfängers - entschlüsseln kann nur Bob mit seinem privaten Schlüssel."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Mit welchem Schlüssel erstellt Alice eine digitale Signatur?",
+    "options": [
+      "Alices privater Schlüssel",
+      "Alices öffentlicher Schlüssel",
+      "Bobs öffentlicher Schlüssel",
+      "Einem gemeinsamen symmetrischen Schlüssel"
+    ],
+    "a": "Alices privater Schlüssel",
+    "exp": "Signiert wird mit dem eigenen privaten Schlüssel, jeder kann die Signatur mit Alices öffentlichem Schlüssel prüfen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet der Grundsatz \"Default Deny\" bei einer Firewall?",
+    "options": [
+      "Alles, was nicht ausdrücklich erlaubt ist, wird blockiert",
+      "Alles ist erlaubt, nur Bekanntes wird blockiert",
+      "Die Firewall ist standardmäßig ausgeschaltet",
+      "Nur ausgehender Verkehr wird geprüft"
+    ],
+    "a": "Alles, was nicht ausdrücklich erlaubt ist, wird blockiert",
+    "exp": "Bei Default Deny (Whitelist-Ansatz) werden nur benötigte Verbindungen freigegeben, alles andere blockiert die Firewall."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Maßnahme ist eine organisatorische Maßnahme im Sinne der TOM?",
+    "options": [
+      "Verbindliche Passwort-Richtlinie mit Mitarbeiterschulung",
+      "Festplattenverschlüsselung mit BitLocker",
+      "Einsatz einer Hardware-Firewall",
+      "Automatische Bildschirmsperre per Gruppenrichtlinie"
+    ],
+    "a": "Verbindliche Passwort-Richtlinie mit Mitarbeiterschulung",
+    "exp": "Organisatorische Maßnahmen regeln Abläufe und Verhalten (Richtlinien, Schulungen, Verantwortlichkeiten). Verschlüsselung, Firewall und automatische Sperren sind technische Maßnahmen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Betroffenenrecht nach DSGVO erlaubt es, eine Kopie der über die eigene Person gespeicherten Daten zu verlangen?",
+    "options": [
+      "Auskunftsrecht (Art. 15)",
+      "Recht auf Löschung (Art. 17)",
+      "Recht auf Datenübertragbarkeit (Art. 20)",
+      "Widerspruchsrecht (Art. 21)"
+    ],
+    "a": "Auskunftsrecht (Art. 15)",
+    "exp": "Nach Art. 15 DSGVO muss das Unternehmen Auskunft geben, welche Daten es zu welchem Zweck verarbeitet, und eine Kopie bereitstellen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet Pseudonymisierung von Anonymisierung?",
+    "options": [
+      "Bei Pseudonymisierung ist eine Zuordnung mit Zusatzwissen noch möglich",
+      "Bei Anonymisierung bleibt der Name sichtbar",
+      "Beide sind identisch",
+      "Pseudonymisierte Daten fallen nie unter die DSGVO"
+    ],
+    "a": "Bei Pseudonymisierung ist eine Zuordnung mit Zusatzwissen noch möglich",
+    "exp": "Pseudonymisierte Daten lassen sich mit getrennt aufbewahrten Zusatzinformationen wieder einer Person zuordnen und bleiben personenbezogen. Anonymisierte Daten nicht mehr."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Botnetz?",
+    "options": [
+      "Ein Verbund kompromittierter Rechner, die ferngesteuert werden",
+      "Ein Netzwerk aus Chatbots im Kundenservice",
+      "Ein Testnetz für Penetrationstests",
+      "Ein verschlüsseltes Firmennetz"
+    ],
+    "a": "Ein Verbund kompromittierter Rechner, die ferngesteuert werden",
+    "exp": "Infizierte Rechner (Bots) werden über einen Command-and-Control-Server gesteuert, z.B. für DDoS-Angriffe oder Spam-Versand."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Spear-Phishing?",
+    "options": [
+      "Gezieltes Phishing auf bestimmte Personen mit persönlich zugeschnittenen Nachrichten",
+      "Phishing ausschließlich per Telefon",
+      "Massenhafter Spam ohne konkretes Ziel",
+      "Ein Angriff auf WLAN-Router"
+    ],
+    "a": "Gezieltes Phishing auf bestimmte Personen mit persönlich zugeschnittenen Nachrichten",
+    "exp": "Beim Spear-Phishing recherchiert der Angreifer vorher (z.B. in sozialen Netzwerken) und formuliert glaubwürdige, persönliche Nachrichten an ausgewählte Personen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche WLAN-Absicherung eignet sich für Unternehmen, in denen jeder Mitarbeiter eigene Zugangsdaten nutzen soll?",
+    "options": [
+      "WPA2/WPA3-Enterprise mit 802.1X und RADIUS",
+      "WPA2-Personal mit gemeinsamem Schlüssel",
+      "WEP",
+      "Offenes WLAN mit versteckter SSID"
+    ],
+    "a": "WPA2/WPA3-Enterprise mit 802.1X und RADIUS",
+    "exp": "Beim Enterprise-Modus meldet sich jeder Benutzer individuell an (802.1X), ein RADIUS-Server prüft die Zugangsdaten. Ausgeschiedene Mitarbeiter lassen sich einzeln sperren."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür wird ein RADIUS-Server eingesetzt?",
+    "options": [
+      "Zentrale Authentifizierung, Autorisierung und Protokollierung (AAA)",
+      "Verteilung von IP-Adressen",
+      "Auflösung von Domainnamen",
+      "Zwischenspeichern von Webseiten"
+    ],
+    "a": "Zentrale Authentifizierung, Autorisierung und Protokollierung (AAA)",
+    "exp": "RADIUS prüft zentral die Anmeldung an WLAN, VPN oder Switch-Ports (802.1X), vergibt Rechte und protokolliert die Nutzung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was schützt IPsec im Tunnelmodus?",
+    "options": [
+      "Das gesamte ursprüngliche IP-Paket einschließlich Header",
+      "Nur die Nutzdaten, der IP-Header bleibt sichtbar",
+      "Nur die MAC-Adressen",
+      "Nur die DNS-Anfragen"
+    ],
+    "a": "Das gesamte ursprüngliche IP-Paket einschließlich Header",
+    "exp": "Im Tunnelmodus wird das komplette Originalpaket verschlüsselt und in ein neues IP-Paket verpackt - typisch für Site-to-Site-VPNs. Der Transportmodus schützt nur die Nutzdaten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Credential Stuffing?",
+    "options": [
+      "Das massenhafte Ausprobieren geleakter Zugangsdaten bei anderen Diensten",
+      "Das Speichern von Passwörtern im Browser",
+      "Das Verschlüsseln von Zugangsdaten",
+      "Das Zurücksetzen vergessener Passwörter"
+    ],
+    "a": "Das massenhafte Ausprobieren geleakter Zugangsdaten bei anderen Diensten",
+    "exp": "Angreifer nutzen erbeutete Benutzername-Passwort-Kombinationen bei anderen Diensten, weil viele Menschen Passwörter mehrfach verwenden. Schutz: einzigartige Passwörter und MFA."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum werden Passwörter vor dem Hashen mit einem Salt versehen?",
+    "options": [
+      "Damit gleiche Passwörter unterschiedliche Hashwerte ergeben",
+      "Damit sich das Passwort wieder entschlüsseln lässt",
+      "Damit das Passwort kürzer gespeichert wird",
+      "Damit der Benutzer sein Passwort nicht ändern muss"
+    ],
+    "a": "Damit gleiche Passwörter unterschiedliche Hashwerte ergeben",
+    "exp": "Ein zufälliger Salt je Benutzer macht vorberechnete Tabellen (Rainbow Tables) nutzlos, und gleiche Passwörter sind in der Datenbank nicht erkennbar."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher BSI-Standard behandelt das Notfallmanagement (Business Continuity Management)?",
+    "options": [
+      "BSI-Standard 200-4",
+      "BSI-Standard 200-1",
+      "BSI-Standard 200-2",
+      "BSI-Standard 200-3"
+    ],
+    "a": "BSI-Standard 200-4",
+    "exp": "200-1: Managementsysteme für Informationssicherheit (ISMS), 200-2: IT-Grundschutz-Methodik, 200-3: Risikoanalyse, 200-4: Business Continuity Management."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 5 aus 5 Festplatten mit je 2 TB?",
+    "options": [
+      "8 TB",
+      "10 TB",
+      "6 TB",
+      "4 TB"
+    ],
+    "a": "8 TB",
+    "exp": "RAID 5: Netto = (Anzahl - 1) * Kapazität = (5 - 1) * 2 TB = 8 TB. Eine Plattenkapazität geht für die Parität verloren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 6 aus 6 Festplatten mit je 4 TB?",
+    "options": [
+      "16 TB",
+      "20 TB",
+      "24 TB",
+      "12 TB"
+    ],
+    "a": "16 TB",
+    "exp": "RAID 6: Netto = (Anzahl - 2) * Kapazität = (6 - 2) * 4 TB = 16 TB. Zwei Plattenkapazitäten gehen für die doppelte Parität verloren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 10 aus 8 Festplatten mit je 1 TB?",
+    "options": [
+      "4 TB",
+      "8 TB",
+      "6 TB",
+      "2 TB"
+    ],
+    "a": "4 TB",
+    "exp": "RAID 10 spiegelt jeweils zwei Platten: Netto = Anzahl / 2 * Kapazität = 8 / 2 * 1 TB = 4 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Produkt ist ein Typ-2-Hypervisor?",
+    "options": [
+      "Oracle VirtualBox",
+      "VMware ESXi",
+      "Microsoft Hyper-V Server",
+      "Proxmox VE"
+    ],
+    "a": "Oracle VirtualBox",
+    "exp": "VirtualBox läuft als Anwendung auf einem Host-Betriebssystem (Typ 2). ESXi, Hyper-V und Proxmox VE (KVM) laufen direkt auf der Hardware (Typ 1)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt Deduplizierung bei Speicher- und Backupsystemen?",
+    "options": [
+      "Mehrfach vorhandene Datenblöcke werden nur einmal gespeichert",
+      "Daten werden doppelt gespeichert",
+      "Daten werden automatisch gelöscht",
+      "Daten werden verschlüsselt"
+    ],
+    "a": "Mehrfach vorhandene Datenblöcke werden nur einmal gespeichert",
+    "exp": "Deduplizierung erkennt identische Blöcke und speichert sie nur einmal - das spart viel Platz, besonders bei Backups vieler ähnlicher Systeme."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche USV-Bauart versorgt die Last dauerhaft über den Wechselrichter und bietet damit den höchsten Schutz?",
+    "options": [
+      "Online-USV (Doppelwandler, VFI)",
+      "Offline-USV (VFD)",
+      "Line-Interactive-USV (VI)",
+      "Netzersatzanlage mit Dieselgenerator"
+    ],
+    "a": "Online-USV (Doppelwandler, VFI)",
+    "exp": "Die Online-USV (VFI) wandelt den Strom ständig doppelt um und liefert unterbrechungsfrei saubere Spannung - üblich für Server. Offline- und Line-Interactive-USVs schalten erst bei Störungen um."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ermöglicht PXE (Preboot Execution Environment)?",
+    "options": [
+      "Das Starten eines Rechners über das Netzwerk",
+      "Das Verschlüsseln der Festplatte vor dem Start",
+      "Das Übertakten des Prozessors",
+      "Die Fernwartung per Bildschirmübertragung"
+    ],
+    "a": "Das Starten eines Rechners über das Netzwerk",
+    "exp": "Per PXE lädt ein Rechner beim Start ein Boot-Image über das Netzwerk (DHCP + TFTP) - z.B. für die automatische Installation vieler Clients."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl lässt sich unter Windows die IP-Konfiguration anzeigen?",
+    "options": [
+      "ipconfig",
+      "netstat",
+      "nslookup",
+      "tracert"
+    ],
+    "a": "ipconfig",
+    "exp": "ipconfig (bzw. ipconfig /all) zeigt IP-Adresse, Subnetzmaske, Gateway und DNS-Server. netstat zeigt Verbindungen, nslookup fragt DNS ab, tracert verfolgt die Route."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl zeigt man unter Linux die IP-Adressen der Netzwerkschnittstellen an?",
+    "options": [
+      "ip addr",
+      "ls -l",
+      "chmod",
+      "df -h"
+    ],
+    "a": "ip addr",
+    "exp": "ip addr (kurz ip a) zeigt die Schnittstellen mit ihren Adressen. ls listet Dateien, chmod ändert Rechte, df zeigt den Speicherplatz."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rechte setzt unter Linux der Befehl chmod 750 datei?",
+    "options": [
+      "Besitzer: rwx, Gruppe: r-x, Andere: keine",
+      "Besitzer: rw-, Gruppe: r--, Andere: r--",
+      "Besitzer: rwx, Gruppe: rwx, Andere: r-x",
+      "Besitzer: r-x, Gruppe: rw-, Andere: keine"
+    ],
+    "a": "Besitzer: rwx, Gruppe: r-x, Andere: keine",
+    "exp": "Jede Ziffer ist die Summe aus r=4, w=2, x=1: 7 = rwx, 5 = r-x, 0 = keine Rechte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht S.M.A.R.T. bei Festplatten und SSDs?",
+    "options": [
+      "Self-Monitoring, Analysis and Reporting Technology",
+      "Secure Memory Access and Recovery Tool",
+      "Storage Management and RAID Technology",
+      "System Maintenance and Repair Tool"
+    ],
+    "a": "Self-Monitoring, Analysis and Reporting Technology",
+    "exp": "S.M.A.R.T. überwacht Zustandswerte des Datenträgers (z.B. defekte Sektoren, Temperatur) und warnt frühzeitig vor einem drohenden Ausfall."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Container-Image (z.B. bei Docker)?",
+    "options": [
+      "Eine unveränderliche Vorlage mit Anwendung und Abhängigkeiten",
+      "Eine Sicherung der gesamten Festplatte",
+      "Ein Foto des Serverraums",
+      "Eine virtuelle Festplatte mit eigenem Betriebssystemkern"
+    ],
+    "a": "Eine unveränderliche Vorlage mit Anwendung und Abhängigkeiten",
+    "exp": "Aus einem Image werden Container gestartet. Es enthält die Anwendung samt Bibliotheken, nutzt aber den Kernel des Host-Systems."
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei welchem Cloud-Servicemodell stellt der Anbieter Betriebssystem und Laufzeitumgebung bereit, während der Kunde seine eigene Anwendung betreibt?",
+    "options": [
+      "PaaS",
+      "IaaS",
+      "SaaS",
+      "On-Premises"
+    ],
+    "a": "PaaS",
+    "exp": "IaaS: nur Infrastruktur (VMs, Speicher). PaaS: zusätzlich Betriebssystem und Laufzeitumgebung. SaaS: fertige Anwendung (z.B. Microsoft 365)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist die Aufgabe eines Monitoring-Systems wie Zabbix, Nagios oder PRTG?",
+    "options": [
+      "Systeme und Dienste laufend überwachen und bei Problemen alarmieren",
+      "Benutzer anlegen und Passwörter vergeben",
+      "Software automatisch programmieren",
+      "Backups auf Band schreiben"
+    ],
+    "a": "Systeme und Dienste laufend überwachen und bei Problemen alarmieren",
+    "exp": "Monitoring prüft z.B. Erreichbarkeit, Auslastung, Speicherplatz und Dienste und benachrichtigt die Administratoren, bevor Benutzer den Fehler bemerken."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Wear Leveling bei SSDs?",
+    "options": [
+      "Schreibzugriffe werden gleichmäßig auf alle Speicherzellen verteilt",
+      "Die SSD wird regelmäßig defragmentiert",
+      "Die SSD wird bei Hitze gedrosselt",
+      "Daten werden doppelt geschrieben"
+    ],
+    "a": "Schreibzugriffe werden gleichmäßig auf alle Speicherzellen verteilt",
+    "exp": "Flash-Zellen vertragen nur eine begrenzte Zahl von Schreibvorgängen. Wear Leveling verteilt die Schreiblast und verlängert so die Lebensdauer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Gerät kostet netto 1.200 Euro. Wie hoch ist der Bruttopreis bei 19 % Umsatzsteuer?",
+    "options": [
+      "1.428,00 Euro",
+      "1.200,00 Euro",
+      "1.419,00 Euro",
+      "1.228,00 Euro"
+    ],
+    "a": "1.428,00 Euro",
+    "exp": "Brutto = Netto * 1,19 = 1.200 Euro * 1,19 = 1.428,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Monitor kostet brutto 595 Euro (inkl. 19 % USt.). Wie hoch ist der Nettopreis?",
+    "options": [
+      "500,00 Euro",
+      "481,95 Euro",
+      "476,00 Euro",
+      "576,00 Euro"
+    ],
+    "a": "500,00 Euro",
+    "exp": "Netto = Brutto / 1,19 = 595 Euro / 1,19 = 500,00 Euro. Vorsicht: 595 * 0,81 = 481,95 Euro wäre falsch gerechnet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listenpreis 1.000 Euro, 10 % Rabatt, danach 2 % Skonto. Welcher Betrag wird überwiesen?",
+    "options": [
+      "882,00 Euro",
+      "880,00 Euro",
+      "900,00 Euro",
+      "980,00 Euro"
+    ],
+    "a": "882,00 Euro",
+    "exp": "Erst Rabatt: 1.000 * 0,90 = 900 Euro, dann Skonto: 900 * 0,98 = 882,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Fixkosten 20.000 Euro, Verkaufspreis 50 Euro, variable Kosten 30 Euro je Stück. Ab welcher Menge wird die Gewinnschwelle erreicht?",
+    "options": [
+      "1.000 Stück",
+      "400 Stück",
+      "667 Stück",
+      "2.000 Stück"
+    ],
+    "a": "1.000 Stück",
+    "exp": "Break-Even-Menge = Fixkosten / Deckungsbeitrag je Stück = 20.000 / (50 - 30) = 1.000 Stück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Anschaffung kostet 12.000 Euro und spart jährlich 4.000 Euro. Wie lang ist die Amortisationszeit?",
+    "options": [
+      "3 Jahre",
+      "4 Jahre",
+      "2 Jahre",
+      "12 Jahre"
+    ],
+    "a": "3 Jahre",
+    "exp": "Amortisationszeit = Anschaffungskosten / jährliche Einsparung = 12.000 / 4.000 = 3 Jahre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Server kostet 3.600 Euro und wird über 3 Jahre linear abgeschrieben. Wie hoch ist die jährliche Abschreibung?",
+    "options": [
+      "1.200 Euro",
+      "3.600 Euro",
+      "1.800 Euro",
+      "900 Euro"
+    ],
+    "a": "1.200 Euro",
+    "exp": "Lineare Abschreibung = Anschaffungskosten / Nutzungsdauer = 3.600 / 3 = 1.200 Euro pro Jahr."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gibt der Gesamtpuffer eines Vorgangs im Netzplan an?",
+    "options": [
+      "Um wie viel sich der Vorgang verschieben darf, ohne das Projektende zu gefährden",
+      "Wie lange der Vorgang dauert",
+      "Wie viele Mitarbeiter am Vorgang arbeiten",
+      "Wie hoch das Budget des Vorgangs ist"
+    ],
+    "a": "Um wie viel sich der Vorgang verschieben darf, ohne das Projektende zu gefährden",
+    "exp": "Gesamtpuffer = spätester Anfang - frühester Anfang. Vorgänge mit Gesamtpuffer 0 liegen auf dem kritischen Pfad."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Aufgabe hat das Change-Management nach ITIL?",
+    "options": [
+      "Änderungen an der IT kontrolliert bewerten, genehmigen und umsetzen",
+      "Mitarbeiter bei Bedarf schnell austauschen",
+      "Das Wechselgeld in der Kasse verwalten",
+      "Störungen möglichst schnell beheben"
+    ],
+    "a": "Änderungen an der IT kontrolliert bewerten, genehmigen und umsetzen",
+    "exp": "Change-Management sorgt dafür, dass Änderungen mit bewerteten Risiken, Freigabe und Rückfallplan umgesetzt werden, um ungeplante Ausfälle zu vermeiden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet nach ITIL einen Incident von einem Problem?",
+    "options": [
+      "Ein Incident ist eine Störung, ein Problem ist deren (unbekannte) Ursache",
+      "Ein Problem ist kleiner als ein Incident",
+      "Incidents betreffen nur Hardware, Probleme nur Software",
+      "Es gibt keinen Unterschied"
+    ],
+    "a": "Ein Incident ist eine Störung, ein Problem ist deren (unbekannte) Ursache",
+    "exp": "Incident-Management stellt den Betrieb schnell wieder her. Problem-Management sucht die eigentliche Ursache eines oder mehrerer Incidents, damit sie nicht erneut auftreten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie kann ein Ausbildungsverhältnis während der Probezeit gekündigt werden?",
+    "options": [
+      "Jederzeit ohne Einhaltung einer Kündigungsfrist",
+      "Mit einer Frist von vier Wochen",
+      "Nur mit Zustimmung der IHK",
+      "Gar nicht, erst nach der Probezeit"
+    ],
+    "a": "Jederzeit ohne Einhaltung einer Kündigungsfrist",
+    "exp": "Nach § 22 BBiG kann das Ausbildungsverhältnis während der Probezeit von beiden Seiten jederzeit ohne Frist gekündigt werden - schriftlich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lang darf die Probezeit in einem Ausbildungsverhältnis sein?",
+    "options": [
+      "Mindestens 1 und höchstens 4 Monate",
+      "Genau 6 Monate",
+      "Höchstens 2 Wochen",
+      "Mindestens 6 und höchstens 12 Monate"
+    ],
+    "a": "Mindestens 1 und höchstens 4 Monate",
+    "exp": "Nach § 20 BBiG beträgt die Probezeit mindestens einen Monat und höchstens vier Monate."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was schuldet ein IT-Dienstleister bei einem Werkvertrag?",
+    "options": [
+      "Einen konkreten Erfolg, z.B. ein funktionierendes Netzwerk",
+      "Nur das Tätigwerden, unabhängig vom Ergebnis",
+      "Die Überlassung eines Mitarbeiters",
+      "Ausschließlich eine Beratung"
+    ],
+    "a": "Einen konkreten Erfolg, z.B. ein funktionierendes Netzwerk",
+    "exp": "Beim Werkvertrag (§ 631 BGB) wird ein Erfolg geschuldet, der abgenommen wird. Beim Dienstvertrag (§ 611 BGB) wird nur die Tätigkeit geschuldet, z.B. Beratung nach Stunden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet aktives Zuhören im Kundengespräch?",
+    "options": [
+      "Aussagen des Kunden mit eigenen Worten wiedergeben und nachfragen",
+      "Den Kunden unterbrechen, sobald die Lösung klar ist",
+      "Möglichst viele Fachbegriffe verwenden",
+      "Sofort ein teureres Produkt anbieten"
+    ],
+    "a": "Aussagen des Kunden mit eigenen Worten wiedergeben und nachfragen",
+    "exp": "Durch Paraphrasieren und gezielte Rückfragen stellt man sicher, dass man das Anliegen richtig verstanden hat, und zeigt dem Kunden Interesse."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche vier Seiten einer Nachricht beschreibt das Kommunikationsmodell von Schulz von Thun?",
+    "options": [
+      "Sachinhalt, Selbstkundgabe, Beziehung, Appell",
+      "Sender, Empfänger, Kanal, Rauschen",
+      "Frage, Antwort, Nachfrage, Abschluss",
+      "Anfang, Mitte, Schluss, Fazit"
+    ],
+    "a": "Sachinhalt, Selbstkundgabe, Beziehung, Appell",
+    "exp": "Jede Nachricht hat nach Schulz von Thun vier Seiten (\"Vier-Ohren-Modell\"). Missverständnisse entstehen, wenn Sender und Empfänger unterschiedliche Seiten betonen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Phase folgt im klassischen Projektablauf auf die Planung?",
+    "options": [
+      "Durchführung",
+      "Initialisierung",
+      "Abschluss",
+      "Definition"
+    ],
+    "a": "Durchführung",
+    "exp": "Typischer Ablauf: Initialisierung, Definition, Planung, Durchführung (mit Steuerung), Abschluss."
   }
 ]

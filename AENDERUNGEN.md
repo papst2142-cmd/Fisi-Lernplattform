@@ -4,6 +4,21 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.23
+
+- **Deutlich mehr Lernstoff:** 115 Karteikarten (vorher 67), 208 Quizfragen
+  (vorher 148), 22 AP2-Szenarien (vorher 16), 15 AP1-Szenarien (vorher 10)
+  und 8 Testprojekte (vorher 6) - verteilt auf alle vier Fachbereiche.
+- Neu u.a.: IPv6, VLSM, WLAN mit 802.1X, strukturierte Verkabelung,
+  Kryptografie-Grundlagen, DSGVO-Betroffenenrechte, ITIL, Linux- und
+  Windows-Befehle, Cloud-Modelle sowie Rechenaufgaben zu Subnetting, RAID,
+  Rabatt/Skonto, Break-Even, Amortisation und Abschreibung.
+- Neue Szenarien: VLSM-Adressplan, IPv6-Adressplan, Unternehmens-WLAN,
+  strukturierte Verkabelung, Nutzwertanalyse, Backupkonzept mit
+  Berechnung; AP1: Speichergrößen, Netzwerkkomponenten, Schutzbedarf,
+  Projektziele (SMART), Angebotsvergleich.
+- Zwei doppelt vorhandene RAID-Fragen im Prüfungstrainer entfernt.
+
 ## 0.22
 
 - **Automatische Updates:** Das Programm sucht beim Start nach einer neuen

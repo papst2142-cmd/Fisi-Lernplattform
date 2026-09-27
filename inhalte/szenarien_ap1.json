@@ -168,5 +168,103 @@
       "2. Gleichsetzen: 200 + 40n = 500 + 15n -> 25n = 300 -> n = 12 Monate.",
       "3. Ab dem 13. Monat ist Vertrag B günstiger, da die niedrigeren laufenden Kosten die höhere Einrichtungsgebühr ab diesem Zeitpunkt ausgleichen und danach übersteigen."
     ]
+  },
+  {
+    "title": "Speichergrößen und Übertragungsdauer",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Kundin wundert sich über Größenangaben an ihrem Computer.",
+      "",
+      "1. Wie lange dauert die Übertragung einer 750-MB-Datei über eine 100-Mbit/s-Leitung mindestens? (Rechnen Sie mit 1 MB = 1.000.000 Byte.)",
+      "2. Warum zeigt Windows ihre neue 1-TB-Festplatte nur mit etwa 931 GB an?",
+      "3. Wie viele Byte sind 4 GiB?"
+    ],
+    "solution": [
+      "1. 750 MB * 8 = 6.000 Mbit. 6.000 Mbit / 100 Mbit/s = 60 Sekunden (theoretisch, ohne Overhead).",
+      "",
+      "2. Der Hersteller rechnet dezimal: 1 TB = 10^12 Byte. Windows rechnet binär und teilt durch 2^30 (1 GiB = 1.073.741.824 Byte): 10^12 / 2^30 = ca. 931,3 - angezeigt als \"GB\", gemeint sind GiB. Es fehlt also kein Speicher.",
+      "",
+      "3. 4 GiB = 4 * 2^30 Byte = 4 * 1.073.741.824 Byte = 4.294.967.296 Byte."
+    ]
+  },
+  {
+    "title": "Netzwerkkomponenten im Büro",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein kleines Büro mit acht Arbeitsplätzen, einem Drucker und Laptops soll vernetzt und ans Internet angebunden werden.",
+      "",
+      "1. Welche Aufgabe haben Switch, Router und Access Point?",
+      "2. Warum setzt man heute einen Switch und keinen Hub mehr ein?",
+      "3. Welches Gerät sorgt dafür, dass alle Rechner mit nur einer öffentlichen IP-Adresse ins Internet kommen?"
+    ],
+    "solution": [
+      "1. Switch: verbindet die Geräte im lokalen Netz und leitet Frames gezielt anhand der MAC-Adresse weiter (Schicht 2). Router: verbindet verschiedene Netze, z.B. das Büronetz mit dem Internet, anhand von IP-Adressen (Schicht 3). Access Point: bindet WLAN-Geräte wie Laptops ins kabelgebundene Netz ein.",
+      "",
+      "2. Ein Hub sendet jedes Signal an alle Ports - das erzeugt Kollisionen, bremst das Netz und jeder kann alles mitlesen. Ein Switch sendet nur an den Port des Empfängers.",
+      "",
+      "3. Der Router mit NAT (Network Address Translation): Er übersetzt die privaten Adressen der Büro-Geräte auf seine öffentliche IP-Adresse."
+    ]
+  },
+  {
+    "title": "Schutzbedarf eines Arbeitsplatzes feststellen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "In einer Arztpraxis wird ein neuer Arbeitsplatz am Empfang eingerichtet. Dort werden Termine vergeben und Patientendaten eingesehen.",
+      "",
+      "1. Bewerten Sie den Schutzbedarf (normal, hoch, sehr hoch) für Vertraulichkeit, Integrität und Verfügbarkeit und begründen Sie kurz.",
+      "2. Nennen Sie je zwei technische und zwei organisatorische Maßnahmen für diesen Arbeitsplatz."
+    ],
+    "solution": [
+      "1. Vertraulichkeit: sehr hoch - Gesundheitsdaten sind besondere Kategorien personenbezogener Daten (Art. 9 DSGVO), ein Bekanntwerden schadet den Patienten erheblich.",
+      "   Integrität: hoch - falsche Daten (z.B. vertauschte Befunde, Allergien) können Patienten gefährden.",
+      "   Verfügbarkeit: hoch - ohne Terminplan und Patientendaten ist der Praxisbetrieb stark eingeschränkt.",
+      "",
+      "2. Technisch: automatische Bildschirmsperre, Festplattenverschlüsselung, persönliche Anmeldung mit starkem Passwort, Blickschutzfolie für den Monitor, regelmäßige Datensicherung.",
+      "   Organisatorisch: Belehrung/Verpflichtung auf Vertraulichkeit, Richtlinie \"Bildschirm sperren beim Verlassen\", Monitor so aufstellen, dass Patienten am Tresen nicht mitlesen können, Zugriffsrechte nur nach Bedarf vergeben."
+    ]
+  },
+  {
+    "title": "Projektziele und Projektphasen planen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "In einem Betrieb sollen 20 veraltete Arbeitsplatzrechner durch neue Geräte ersetzt werden. Sie sollen das Projekt planen.",
+      "",
+      "1. Formulieren Sie ein Projektziel nach der SMART-Regel.",
+      "2. Nennen Sie sinnvolle Projektphasen mit je einem Meilenstein.",
+      "3. Nennen Sie zwei Risiken und je eine Gegenmaßnahme."
+    ],
+    "solution": [
+      "1. Beispiel: \"Bis zum 30.11. sind alle 20 Arbeitsplätze der Buchhaltung und des Vertriebs durch neue Rechner mit Windows 11 ersetzt, alle Benutzerdaten sind übernommen und die Kosten liegen unter 25.000 Euro.\" - spezifisch, messbar, akzeptiert, realistisch, terminiert.",
+      "",
+      "2. Initialisierung/Analyse (Meilenstein: Ist-Analyse und Anforderungen abgenommen), Planung (Meilenstein: Hardware bestellt, Zeitplan steht), Durchführung (Meilenstein: alle Geräte eingerichtet und ausgetauscht), Abschluss (Meilenstein: Übergabe mit Abnahmeprotokoll und Dokumentation).",
+      "",
+      "3. Lieferverzögerung der Hardware - frühzeitig bestellen, Puffer einplanen. Datenverlust beim Umzug der Benutzerdaten - vorher sichern und die Übernahme testen. Störung des Betriebs - Austausch außerhalb der Arbeitszeit oder abteilungsweise."
+    ]
+  },
+  {
+    "title": "Angebotsvergleich mit Rabatt und Skonto",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Für 12 neue Monitore liegen zwei Angebote vor (alle Preise netto):",
+      "  - Anbieter A: 250 Euro je Monitor, 10 % Rabatt, 2 % Skonto, Versandkosten 30 Euro",
+      "  - Anbieter B: 240 Euro je Monitor, kein Rabatt, 3 % Skonto, versandkostenfrei",
+      "",
+      "1. Berechnen Sie für beide Angebote den Bezugspreis (Versand wird nicht rabattiert oder skontiert).",
+      "2. Welches Angebot ist günstiger und um wie viel?",
+      "3. Welche Kriterien außer dem Preis sollten in die Entscheidung einfließen?"
+    ],
+    "solution": [
+      "1. Anbieter A: Listenpreis 12 * 250 = 3.000 Euro, minus 10 % Rabatt = 2.700 Euro, minus 2 % Skonto = 2.646 Euro, plus 30 Euro Versand = 2.676,00 Euro.",
+      "   Anbieter B: Listenpreis 12 * 240 = 2.880 Euro, minus 3 % Skonto = 2.793,60 Euro, Versand 0 Euro = 2.793,60 Euro.",
+      "",
+      "2. Anbieter A ist um 117,60 Euro günstiger, obwohl sein Stückpreis höher ist.",
+      "",
+      "3. Lieferzeit, Garantie und Service (z.B. Vor-Ort-Austausch), Qualität und technische Eigenschaften der Monitore, Zuverlässigkeit des Lieferanten, Zahlungsbedingungen und Energieverbrauch."
+    ]
   }
 ]

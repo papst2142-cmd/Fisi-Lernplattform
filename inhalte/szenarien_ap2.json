@@ -275,5 +275,157 @@
       "2. Da Anforderungen zu Sprintbeginn neu priorisiert werden können, lassen sich Änderungen deutlich schneller einarbeiten als beim starren, sequenziellen Wasserfallmodell.",
       "3. Im Sprint Review wird das fertiggestellte Increment den Stakeholdern präsentiert, um frühzeitig Feedback zu erhalten und die weitere Priorisierung anzupassen."
     ]
+  },
+  {
+    "title": "VLSM-Adressplan für einen Firmencampus",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen erhält für seinen Campus den Adressbereich 10.10.0.0/22. Benötigt werden:",
+      "  - Verwaltung: 400 Hosts",
+      "  - Produktion: 200 Hosts",
+      "  - Labor: 50 Hosts",
+      "  - Server: 20 Hosts",
+      "  - zwei Transfernetze zwischen Routern (je 2 Hosts)",
+      "",
+      "1. Teilen Sie den Bereich mit VLSM auf (größtes Netz zuerst). Geben Sie je Subnetz Netzadresse, Präfix, Subnetzmaske, nutzbaren Hostbereich und Broadcast-Adresse an.",
+      "2. Wie viele Adressen bleiben als Reserve frei?",
+      "3. Warum ist VLSM hier sinnvoller als gleich große Subnetze?"
+    ],
+    "solution": [
+      "1. Aufteilung (größtes Netz zuerst):",
+      "  - Verwaltung (400): /23 (510 Hosts) - 10.10.0.0/23, Maske 255.255.254.0, Hosts 10.10.0.1 - 10.10.1.254, Broadcast 10.10.1.255",
+      "  - Produktion (200): /24 (254 Hosts) - 10.10.2.0/24, Maske 255.255.255.0, Hosts 10.10.2.1 - 10.10.2.254, Broadcast 10.10.2.255",
+      "  - Labor (50): /26 (62 Hosts) - 10.10.3.0/26, Maske 255.255.255.192, Hosts 10.10.3.1 - 10.10.3.62, Broadcast 10.10.3.63",
+      "  - Server (20): /27 (30 Hosts) - 10.10.3.64/27, Maske 255.255.255.224, Hosts 10.10.3.65 - 10.10.3.94, Broadcast 10.10.3.95",
+      "  - Transfer 1: /30 - 10.10.3.96/30, Maske 255.255.255.252, Hosts 10.10.3.97 - 10.10.3.98, Broadcast 10.10.3.99",
+      "  - Transfer 2: /30 - 10.10.3.100/30, Maske 255.255.255.252, Hosts 10.10.3.101 - 10.10.3.102, Broadcast 10.10.3.103",
+      "",
+      "2. Frei bleibt 10.10.3.104 - 10.10.3.255, also 152 Adressen - z.B. für ein späteres Gäste- oder Management-Netz.",
+      "",
+      "3. Mit gleich großen Subnetzen müsste jedes Netz so groß wie das größte sein (/23). In einem /22 hätten dann nur zwei solcher Netze Platz - für sechs Netze reicht das nicht. VLSM passt jede Netzgröße an den tatsächlichen Bedarf an und spart Adressen."
+    ]
+  },
+  {
+    "title": "IPv6-Adressplan für einen Standort",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen stellt seinen Standort auf IPv6 um. Der Provider hat das Präfix 2001:db8:acad::/48 zugewiesen. Geplant sind die VLANs 10 (Verwaltung), 20 (Produktion) und 30 (Server).",
+      "",
+      "1. Wie viele /64-Subnetze lassen sich aus dem /48-Präfix bilden?",
+      "2. Schlagen Sie für die drei VLANs je ein /64-Präfix vor, das sich leicht der VLAN-Nummer zuordnen lässt.",
+      "3. Welche Adresse bekommt das Gateway üblicherweise, und wie beziehen die Clients ihre Adressen?",
+      "4. Warum wird bei IPv6 in der Regel kein NAT mehr benötigt?"
+    ],
+    "solution": [
+      "1. Zwischen /48 und /64 liegen 16 Bit für die Subnetz-ID: 2^16 = 65.536 Subnetze.",
+      "",
+      "2. Die VLAN-Nummer steht in der Subnetz-ID (4. Block):",
+      "  - VLAN 10: 2001:db8:acad:10::/64",
+      "  - VLAN 20: 2001:db8:acad:20::/64",
+      "  - VLAN 30: 2001:db8:acad:30::/64",
+      "",
+      "3. Das Gateway erhält meist die erste Adresse, z.B. 2001:db8:acad:10::1. Clients konfigurieren sich per SLAAC selbst anhand der Router Advertisements des Routers; zusätzlich kann DHCPv6 z.B. die DNS-Server verteilen. Server erhalten feste Adressen.",
+      "",
+      "4. Der Adressraum ist so groß, dass jedes Gerät eine global eindeutige Adresse erhält. Der Schutz, den NAT nebenbei bot, wird durch eine Firewall mit klaren Regeln (eingehend standardmäßig blockieren) ersetzt."
+    ]
+  },
+  {
+    "title": "Unternehmens-WLAN mit 802.1X",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Bürogebäude mit drei Etagen und 120 Mitarbeitern soll flächendeckendes WLAN bekommen. Mitarbeiter sollen sich mit ihren persönlichen Zugangsdaten anmelden, Besucher ein getrenntes Gäste-WLAN nutzen.",
+      "",
+      "1. Welchen WLAN-Standard und welche Frequenzbänder empfehlen Sie?",
+      "2. Wie planen Sie die Kanäle, damit sich benachbarte Access Points nicht stören?",
+      "3. Wie realisieren Sie die Anmeldung der Mitarbeiter mit persönlichen Zugangsdaten?",
+      "4. Wie trennen Sie das Gäste-WLAN vom Firmennetz?",
+      "5. Was ist bei der Stromversorgung und Platzierung der Access Points zu beachten?"
+    ],
+    "solution": [
+      "1. Wi-Fi 6 (IEEE 802.11ax), bevorzugt im 5-GHz-Band (mehr Kanäle, weniger Störungen), 2,4 GHz nur für ältere Geräte; ggf. Wi-Fi 6E mit 6 GHz.",
+      "",
+      "2. Im 2,4-GHz-Band nur die überlappungsfreien Kanäle 1, 6 und 11 im Wechsel nutzen, im 5-GHz-Band benachbarten APs unterschiedliche Kanäle geben. Vorab eine Ausleuchtungsmessung (Site Survey) durchführen, um Anzahl und Position der APs festzulegen.",
+      "",
+      "3. WPA2- oder WPA3-Enterprise mit IEEE 802.1X: Die APs leiten die Anmeldung an einen RADIUS-Server weiter, der die Zugangsdaten z.B. gegen das Active Directory prüft. Ausscheidende Mitarbeiter werden einfach im AD gesperrt.",
+      "",
+      "4. Eigene SSID für Gäste in einem eigenen VLAN, das per Firewall nur ins Internet darf (kein Zugriff aufs Firmennetz), dazu Client-Isolation, Bandbreitenbegrenzung und ein Captive Portal mit Nutzungsbedingungen.",
+      "",
+      "5. Stromversorgung per PoE (802.3at/bt) über die Switches - PoE-Budget der Switches prüfen. APs zentral und erhöht (z.B. an der Decke) montieren, Wände, Stahlbeton und Glas als Dämpfung berücksichtigen, Controller oder Cloud-Management für einheitliche Konfiguration."
+    ]
+  },
+  {
+    "title": "Strukturierte Verkabelung für einen Neubau",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Unternehmen bezieht einen Neubau mit Erdgeschoss und zwei Obergeschossen. Im Erdgeschoss befindet sich der Serverraum, jede Etage erhält einen eigenen Etagenverteiler. Pro Arbeitsplatz sind zwei Netzwerkanschlüsse geplant.",
+      "",
+      "1. Beschreiben Sie die drei Bereiche der strukturierten Verkabelung.",
+      "2. Welche Kabeltypen empfehlen Sie für die einzelnen Bereiche?",
+      "3. Welche maximalen Längen sind bei Kupferverkabelung einzuhalten?",
+      "4. Warum plant man zwei Anschlüsse je Arbeitsplatz und Reserven im Verteiler?"
+    ],
+    "solution": [
+      "1. Primärbereich (Campus): Verbindung zwischen Gebäuden. Sekundärbereich (Steigbereich): Verbindung vom Gebäudeverteiler im Serverraum zu den Etagenverteilern. Tertiärbereich (Horizontalbereich): Verbindung vom Etagenverteiler zu den Anschlussdosen der Arbeitsplätze.",
+      "",
+      "2. Sekundärbereich: Glasfaser (Multimode OM4 innerhalb des Gebäudes; Singlemode für große Distanzen), unempfindlich gegen Störungen und für hohe Bandbreiten. Tertiärbereich: Kupfer-Twisted-Pair mindestens Cat 6A (10 Gbit/s über 100 m, PoE-tauglich).",
+      "",
+      "3. Die Übertragungsstrecke darf maximal 100 m lang sein: höchstens 90 m fest verlegtes Kabel vom Patchfeld zur Dose plus insgesamt höchstens 10 m Patchkabel.",
+      "",
+      "4. Zwei Anschlüsse erlauben PC und Telefon/Drucker ohne zusätzliche Switches am Platz. Reserven (Ports, Leerrohre, Platz im Rack) sparen spätere teure Nachverlegungen - die Verkabelung hält meist deutlich länger als die aktiven Komponenten."
+    ]
+  },
+  {
+    "title": "Nutzwertanalyse zur Auswahl einer Firewall",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde soll eine neue Firewall-Lösung erhalten. Drei Angebote liegen vor. Bewertet wird mit Punkten von 1 (schlecht) bis 10 (sehr gut):",
+      "",
+      "  Kriterium (Gewichtung)  | Anbieter A | Anbieter B | Anbieter C",
+      "  Preis (30 %)            |     6      |     9      |     7",
+      "  Funktionsumfang (40 %)  |     9      |     6      |     8",
+      "  Support (20 %)          |     7      |     6      |     9",
+      "  Bedienbarkeit (10 %)    |     8      |     7      |     6",
+      "",
+      "1. Berechnen Sie den gewichteten Nutzwert jedes Anbieters.",
+      "2. Welchen Anbieter empfehlen Sie dem Kunden?",
+      "3. Welche Schwäche hat die Nutzwertanalyse, und wie gehen Sie damit um?"
+    ],
+    "solution": [
+      "1. Nutzwert = Summe aus Gewichtung * Punkte:",
+      "  - Anbieter A: 0,3 * 6 + 0,4 * 9 + 0,2 * 7 + 0,1 * 8 = 1,8 + 3,6 + 1,4 + 0,8 = 7,6",
+      "  - Anbieter B: 0,3 * 9 + 0,4 * 6 + 0,2 * 6 + 0,1 * 7 = 2,7 + 2,4 + 1,2 + 0,7 = 7,0",
+      "  - Anbieter C: 0,3 * 7 + 0,4 * 8 + 0,2 * 9 + 0,1 * 6 = 2,1 + 3,2 + 1,8 + 0,6 = 7,7",
+      "",
+      "2. Anbieter C erreicht mit 7,7 den höchsten Nutzwert, knapp vor A (7,6). Empfehlung: Anbieter C - vor allem wegen des sehr guten Supports bei solidem Funktionsumfang. B ist zwar am günstigsten, bietet aber den geringsten Funktionsumfang.",
+      "",
+      "3. Gewichtungen und Punkte sind subjektiv; bei knappen Ergebnissen (7,7 zu 7,6) kann eine kleine Änderung die Reihenfolge umkehren. Deshalb die Gewichtung vorab mit dem Kunden abstimmen, die Bewertung begründen und eine Sensitivitätsbetrachtung durchführen (Wie ändert sich das Ergebnis bei anderer Gewichtung?)."
+    ]
+  },
+  {
+    "title": "Backupkonzept mit Speicher- und Zeitberechnung",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Fileserver enthält 2 TB Daten, täglich ändern sich etwa 5 % davon. Geplant sind eine Vollsicherung am Sonntag und inkrementelle Sicherungen von Montag bis Samstag. Die Sicherungen sollen 4 Wochen aufbewahrt werden. Gesichert wird über ein 1-Gbit/s-Netzwerk.",
+      "",
+      "1. Wie viel Speicherplatz benötigt das Backupziel (ohne Kompression und Deduplizierung)?",
+      "2. Wie lange dauern eine Voll- und eine inkrementelle Sicherung theoretisch mindestens?",
+      "3. Welche Sicherungen werden benötigt, um am Donnerstag den Stand vom Mittwochabend wiederherzustellen?",
+      "4. Wie viele Daten können im schlimmsten Fall verloren gehen (RPO)?"
+    ],
+    "solution": [
+      "1. Pro Woche: 1 Vollsicherung (2 TB) + 6 inkrementelle Sicherungen (je 5 % von 2 TB = 100 GB) = 2 TB + 600 GB = 2,6 TB. Für 4 Wochen: 4 * 2,6 TB = 10,4 TB, zuzüglich Reserve für Wachstum.",
+      "",
+      "2. 1 Gbit/s = 125 MB/s (theoretisch). Vollsicherung: 2.000.000 MB / 125 MB/s = 16.000 s, also ca. 4,4 Stunden. Inkrementelle Sicherung: 100.000 MB / 125 MB/s = 800 s, also ca. 13 Minuten. In der Praxis dauert es wegen Protokoll-Overhead und Plattengeschwindigkeit länger.",
+      "",
+      "3. Die Vollsicherung vom Sonntag plus alle inkrementellen Sicherungen von Montag, Dienstag und Mittwoch - in genau dieser Reihenfolge.",
+      "",
+      "4. Da einmal täglich gesichert wird, gehen im schlimmsten Fall die Änderungen eines Arbeitstages verloren (RPO = 24 Stunden). Soll das RPO kleiner werden, sind häufigere Sicherungen oder Snapshots nötig."
+    ]
   }
 ]

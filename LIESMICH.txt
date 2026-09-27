@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.22
+  FISI LERNPLATTFORM  -  Version 0.23
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
@@ -23,22 +23,22 @@ Kacheln, Farbverlaeufe):
                      Aktivitaet je Fachbereich, Lernkalender und der
                      Fortschritt je AP1- und AP2-Pruefungsthema.
 
-  Karteikarten       67 Karten in drei Lernmodi: Freitext, Multiple Choice
+  Karteikarten       115 Karten in drei Lernmodi: Freitext, Multiple Choice
                      und Aufdecken. Filterbar nach Fachbereich.
 
-  Pruefungstrainer   150 Fragen, Test-Sessions mit frei waehlbarer Laenge,
+  Pruefungstrainer   208 Fragen, Test-Sessions mit frei waehlbarer Laenge,
                      Zeitmessung, Erklaerung zu jeder Antwort und
                      Bewertung nach IHK-Notenschluessel.
 
-  AP1 Szenarien      10 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
+  AP1 Szenarien      15 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
                      automatisch mitwachsendem Loesungsfeld zum
                      schriftlichen Bearbeiten und anschliessender
                      Musterloesung.
 
-  AP2 Szenarien      16 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
+  AP2 Szenarien      22 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
                      Loesungsfeld und Musterloesung.
 
-  Test Projekt       6 vollstaendige Projekt-Szenarien zum Ueben der
+  Test Projekt       8 vollstaendige Projekt-Szenarien zum Ueben der
                      IHK-Projektarbeit (Ausgangssituation, Auftrag,
                      Rahmenbedingungen, Aufgaben und Loesungshinweise).
 
@@ -176,6 +176,7 @@ DATEIEN IM PAKET
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
   fisi_update.py        Updater: sucht, laedt und installiert neue Versionen
+  inhalte/              Lerninhalte als JSON-Dateien (siehe unten)
   requirements.txt      Bibliotheken fuer den Start aus dem Quellcode
   requirements-build.txt  zusaetzlich PyInstaller zum Bauen
   build.py              Baut Anwendung und Installer fuers eigene System
@@ -193,33 +194,45 @@ liegen.
 
 EIGENE LERNINHALTE ERGAENZEN
 ---------------------------------------------------------------------------
-Saemtliche Inhalte stehen in fisi_core.py und lassen sich mit einem
-Texteditor erweitern. Danach aus dem Quellcode starten bzw. neue Installer
-bauen.
+Saemtliche Inhalte stehen im Ordner "inhalte" als JSON-Dateien und lassen
+sich mit jedem Texteditor erweitern (Datei als UTF-8 speichern):
 
-Neue Karteikarte (Liste KARTEIKARTEN):
+  karteikarten.json      Karteikarten
+  quizfragen.json        Quizfragen des Pruefungstrainers
+  szenarien_ap1.json     AP1-Szenarien
+  szenarien_ap2.json     AP2-Szenarien
+  projektarbeiten.json   Testprojekte
 
-  {"cat": CAT_NET,
+Neue Karteikarte (in karteikarten.json in die Liste einfuegen):
+
+  {"cat": "netzwerk",
    "q": "Deine Frage?",
    "a": "Kurzantwort",
    "a_full": "Ausfuehrliche Musterloesung.",
    "options": ["Kurzantwort", "Falsch 1", "Falsch 2", "Falsch 3"]},
 
-Neue Quizfrage (Funktion build_quiz_database):
+Neue Quizfrage (in quizfragen.json):
 
-  {"cat": CAT_SEC,
+  {"cat": "sicherheit",
    "q": "Deine Frage?",
    "options": ["Richtig", "Falsch 1", "Falsch 2", "Falsch 3"],
    "a": "Richtig",
    "exp": "Erklaerung, warum das richtig ist."},
 
-Als Fachbereich stehen CAT_NET, CAT_SEC, CAT_SYS und CAT_BIZ zur Wahl.
-Die Kennzahlen im Dashboard passen sich automatisch an.
+Als Fachbereich ("cat") stehen netzwerk, sicherheit, systeme und wirtschaft
+zur Wahl. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
+als Liste von Zeilen geschrieben werden. Die Kennzahlen im Dashboard passen
+sich automatisch an.
 
 Neue AP2-Szenarien sollten als "theme" einen der Themenbloecke aus
-AP2_THEMES verwenden. Ein eigenes Thema geht auch - dann in THEME_BLOCK
-(ebenfalls fisi_core.py) eintragen, zu welchem Block es im Dashboard
-zaehlen soll.
+AP2_THEMES (fisi_core.py) verwenden. Ein eigenes Thema geht auch - dann in
+THEME_BLOCK eintragen, zu welchem Block es im Dashboard zaehlen soll.
+
+Pruefung nach dem Ergaenzen:
+  python -c "import fisi_core; print(fisi_core.validate_content() or 'OK')"
+Sie meldet z.B. fehlende Felder, weniger als 4 Antworten, eine richtige
+Antwort, die nicht unter den Optionen steht, doppelte Fragen oder
+unbekannte Themen. build.py baut bei Fehlern keine Installer.
 
 
 TASTENKUERZEL

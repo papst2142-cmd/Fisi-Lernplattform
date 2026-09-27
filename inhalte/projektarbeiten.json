@@ -179,5 +179,65 @@
       "Regelmäßige Testwiederherstellungen (z.B. quartalsweise) auf einem Testsystem durchführen und protokollieren - ein ungetestetes Backup ist kein verlässliches Backup.",
       "Beispielkalkulation: NAS-System mit ausreichender Kapazität und RAID (ca. 800-1.200 Euro), externe Wechselfestplatten für die extern gelagerte Kopie (ca. 200-300 Euro), Backup-Software-Lizenz (ca. 200-400 Euro/Jahr), Rest als Puffer für Einrichtung/Dienstleistung."
     ]
+  },
+  {
+    "title": "Einführung eines zentralen Patch-Managements",
+    "cat": "sicherheit",
+    "branche": "Metallbaubetrieb, 40 Mitarbeiter",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Der Betrieb nutzt 45 Windows-Clients und 4 Windows-Server. Updates werden bisher von den Mitarbeitern selbst oder gar nicht installiert; einige Rechner haben seit Monaten keine Sicherheitsupdates erhalten. Bei einem Sicherheitsaudit des Versicherers wurde das als erhebliches Risiko bewertet.",
+    "auftrag": "Konzipieren und führen Sie ein zentrales Patch-Management für Betriebssysteme und die wichtigsten Anwendungen ein, sodass Sicherheitsupdates zeitnah, kontrolliert und nachweisbar installiert werden.",
+    "rahmenbedingungen": [
+      "45 Clients (Windows 11) und 4 Server (Windows Server) in einer Active-Directory-Domäne",
+      "Zeitrahmen: 5 Wochen",
+      "Budget: 3.500 Euro für Software und Dienstleistung",
+      "Produktionsrechner in der Werkhalle dürfen während der Schichten nicht neu starten",
+      "Der Versicherer verlangt einen Nachweis über den Patchstand"
+    ],
+    "aufgaben": [
+      "Führen Sie eine Ist-Analyse durch: Welche Informationen erheben Sie, und wie?",
+      "Vergleichen Sie mögliche Lösungen (z.B. WSUS/Gruppenrichtlinien, Windows Update for Business, kommerzielle Patch-Management-Software).",
+      "Entwerfen Sie ein Patch-Konzept mit Testgruppe, Freigabe und Zeitfenstern.",
+      "Wie berücksichtigen Sie die Produktionsrechner, die nicht jederzeit neu starten dürfen?",
+      "Wie weisen Sie dem Versicherer den Patchstand nach?",
+      "Erstellen Sie eine grobe Zeit- und Kostenplanung."
+    ],
+    "hinweise": [
+      "Inventarisierung aller Geräte mit Betriebssystem, Build-Version, installierter Software und letztem Update-Datum (z.B. per Inventarisierungstool oder Skript), dazu Befragung der Abteilungen zu kritischen Anwendungen und Betriebszeiten.",
+      "WSUS mit Gruppenrichtlinien ist lizenzkostenfrei, deckt aber nur Microsoft-Produkte ab. Kommerzielle Lösungen patchen auch Drittanbieter-Software (z.B. Browser, PDF-Reader) und bieten Berichte. Entscheidung per Nutzwertanalyse (Kosten, Abdeckung, Aufwand, Berichtswesen).",
+      "Ringe: Testgruppe (IT und einige ausgewählte Rechner) erhält Updates sofort, nach 3-5 Tagen ohne Probleme folgt die breite Verteilung. Kritische Sicherheitsupdates beschleunigt freigeben. Feste Wartungsfenster für Server (z.B. nach dem Patchday nachts) mit vorherigem Snapshot/Backup.",
+      "Eigene Gruppe/OU für Produktionsrechner mit Installation nur in Schichtpausen oder am Wochenende, Neustarts erst nach Rücksprache bzw. im Wartungsfenster. Bis dahin ggf. zusätzliche Absicherung (Netzsegmentierung).",
+      "Regelmäßige, automatisch erzeugte Berichte über den Patchstand je Gerät (Compliance-Report) sowie ein dokumentierter Prozess mit Verantwortlichkeiten und Fristen für kritische Updates.",
+      "Phasen: Analyse (1 Woche), Auswahl und Konzept (1 Woche), Aufbau und Test mit Pilotgruppe (2 Wochen), Rollout und Dokumentation (1 Woche). Kosten: Lizenzen je nach Lösung, interne und externe Arbeitsstunden mit Stundensatz, ggf. Serverressourcen - Summe mit dem Budget von 3.500 Euro abgleichen."
+    ]
+  },
+  {
+    "title": "Einführung eines Ticketsystems für den IT-Support",
+    "cat": "wirtschaft",
+    "branche": "Hausverwaltung, 60 Mitarbeiter an zwei Standorten",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "IT-Probleme werden bisher per Telefon, E-Mail oder auf Zuruf an die zwei IT-Mitarbeiter gemeldet. Anfragen gehen verloren, niemand weiß, wer woran arbeitet, und die Geschäftsführung kann den Aufwand der IT nicht nachvollziehen.",
+    "auftrag": "Wählen Sie ein Ticketsystem aus, führen Sie es ein und gestalten Sie einen einfachen Support-Prozess nach ITIL-Grundsätzen.",
+    "rahmenbedingungen": [
+      "60 Anwender an zwei Standorten, 2 IT-Mitarbeiter",
+      "Zeitrahmen: 4 Wochen",
+      "Budget: 4.000 Euro für das erste Jahr",
+      "Anmeldung der Anwender sollte mit den vorhandenen Windows-Zugangsdaten möglich sein",
+      "Personenbezogene Daten in Tickets müssen datenschutzkonform behandelt werden"
+    ],
+    "aufgaben": [
+      "Welche Anforderungen stellen Sie an das Ticketsystem (Lastenheft in Stichpunkten)?",
+      "Vergleichen Sie eine Cloud-Lösung mit einer selbst betriebenen Lösung (On-Premises).",
+      "Beschreiben Sie den Ablauf eines Tickets von der Meldung bis zum Abschluss, inklusive Priorisierung.",
+      "Wie sorgen Sie dafür, dass die Mitarbeiter das neue System auch nutzen?",
+      "Welche Kennzahlen kann die Geschäftsführung künftig auswerten?"
+    ],
+    "hinweise": [
+      "Z.B. Ticket-Erfassung per E-Mail und Webportal, Anmeldung per Active Directory (SSO), Kategorien und Prioritäten, Zuweisung an Bearbeiter, Statusverfolgung für den Anwender, Wissensdatenbank, Berichte, deutschsprachige Oberfläche, DSGVO-konformer Betrieb (Serverstandort EU, Auftragsverarbeitungsvertrag).",
+      "Cloud: schnell verfügbar, keine eigene Wartung, laufende Lizenzkosten, Datenschutz über Auftragsverarbeitungsvertrag klären. On-Premises: volle Datenhoheit, aber Aufwand für Server, Updates und Backup. Entscheidung per Nutzwertanalyse mit Blick auf nur zwei IT-Mitarbeiter.",
+      "Meldung (Portal/E-Mail) - Erfassung und Kategorisierung - Priorisierung nach Auswirkung und Dringlichkeit (z.B. Prio 1: Standort arbeitsunfähig) - Zuweisung - Bearbeitung mit Statusinformationen an den Anwender - Lösung und Dokumentation - Rückmeldung/Abschluss durch den Anwender. Wiederkehrende Störungen an das Problem-Management übergeben.",
+      "Kurze Einführung für alle Mitarbeiter, einfache Anleitung, eindeutige Regel \"Nur Tickets werden bearbeitet\" mit Unterstützung der Geschäftsführung, Übergangsphase, in der Anrufe von der IT selbst als Ticket erfasst werden, und schnelle, sichtbare Bearbeitung als Motivation.",
+      "Anzahl Tickets je Zeitraum und Kategorie, durchschnittliche Reaktions- und Lösungszeit, Anteil der beim ersten Kontakt gelösten Tickets, Einhaltung vereinbarter Service-Level, häufigste Störungsursachen und Aufwand je Standort."
+    ]
   }
 ]

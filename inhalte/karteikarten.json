@@ -802,5 +802,581 @@
       "Teilkostenrechnung berücksichtigt nur Personalkosten",
       "Vollkostenrechnung wird nur bei Verlust angewendet"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht die Abkürzung VLAN?",
+    "a": "Virtual Local Area Network",
+    "a_full": "Virtual Local Area Network: ein logisches Netz innerhalb einer physischen Switch-Infrastruktur. VLANs trennen Broadcast-Domänen, z.B. Verwaltung, Produktion und Gäste.",
+    "options": [
+      "Virtual Local Area Network",
+      "Very Large Access Network",
+      "Variable Link Aggregation Node",
+      "Virtual Line Access Node"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche IPv4-Adresse ist die Loopback-Adresse eines Rechners?",
+    "a": "127.0.0.1",
+    "a_full": "127.0.0.1 (aus dem Bereich 127.0.0.0/8) verweist immer auf den eigenen Rechner (localhost).",
+    "options": [
+      "127.0.0.1",
+      "0.0.0.0",
+      "255.255.255.255",
+      "169.254.0.1"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Aus welchem Bereich vergibt sich ein Windows-Rechner per APIPA selbst eine Adresse, wenn kein DHCP-Server erreichbar ist?",
+    "a": "169.254.0.0/16",
+    "a_full": "APIPA (Automatic Private IP Addressing) nutzt den link-lokalen Bereich 169.254.0.0/16. Eine solche Adresse ist ein typisches Zeichen dafür, dass der DHCP-Server nicht erreichbar war.",
+    "options": [
+      "169.254.0.0/16",
+      "10.0.0.0/8",
+      "192.168.0.0/16",
+      "172.16.0.0/12"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Bit umfasst eine MAC-Adresse?",
+    "a": "48 Bit",
+    "a_full": "Eine MAC-Adresse ist 48 Bit (6 Byte) lang, z.B. 00:1A:2B:3C:4D:5E. Die ersten 24 Bit kennzeichnen den Hersteller (OUI).",
+    "options": [
+      "32 Bit",
+      "48 Bit",
+      "64 Bit",
+      "128 Bit"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet PoE?",
+    "a": "Power over Ethernet",
+    "a_full": "Power over Ethernet: Stromversorgung von Endgeräten über das Netzwerkkabel (IEEE 802.3af/at/bt), z.B. für Access Points, IP-Telefone und Kameras.",
+    "options": [
+      "Power over Ethernet",
+      "Port of Entry",
+      "Point of Exchange",
+      "Protocol over Ethernet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Transportprotokoll ist verbindungsorientiert und sichert die Zustellung der Daten?",
+    "a": "TCP",
+    "a_full": "TCP (Transmission Control Protocol) baut eine Verbindung auf, nummeriert Segmente, bestätigt den Empfang und wiederholt verlorene Daten. UDP arbeitet dagegen verbindungslos ohne Zustellgarantie.",
+    "options": [
+      "TCP",
+      "UDP",
+      "IP",
+      "ICMP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der Drei-Wege-Handshake?",
+    "a": "Verbindungsaufbau bei TCP (SYN, SYN-ACK, ACK)",
+    "a_full": "Beim TCP-Verbindungsaufbau sendet der Client SYN, der Server antwortet mit SYN-ACK und der Client bestätigt mit ACK. Danach ist die Verbindung aufgebaut.",
+    "options": [
+      "Verbindungsaufbau bei TCP (SYN, SYN-ACK, ACK)",
+      "Schlüsselaustausch bei WPA2",
+      "Adressvergabe bei DHCP",
+      "Namensauflösung bei DNS"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie heißen die vier Schritte der Adressvergabe bei DHCP?",
+    "a": "Discover, Offer, Request, Acknowledge",
+    "a_full": "DORA: Der Client sucht per Broadcast (Discover), der Server bietet eine Adresse an (Offer), der Client fordert sie an (Request) und der Server bestätigt (Acknowledge).",
+    "options": [
+      "Discover, Offer, Request, Acknowledge",
+      "Request, Offer, Accept, Confirm",
+      "Discover, Reply, Assign, Confirm",
+      "Hello, Offer, Assign, Done"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet der Doppelpunkt \"::\" in einer IPv6-Adresse?",
+    "a": "Einen oder mehrere aufeinanderfolgende Blöcke aus Nullen",
+    "a_full": "\"::\" kürzt einen oder mehrere aufeinanderfolgende Null-Blöcke ab und darf pro Adresse nur einmal vorkommen, z.B. 2001:db8:0:0:0:0:0:1 = 2001:db8::1.",
+    "options": [
+      "Einen oder mehrere aufeinanderfolgende Blöcke aus Nullen",
+      "Das Ende der Adresse",
+      "Einen Port hinter der Adresse",
+      "Die Trennung von Netz- und Hostanteil"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Kabelkategorie wird mindestens für 10 Gbit/s über die volle Länge von 100 m benötigt?",
+    "a": "Cat 6A",
+    "a_full": "Cat 6A ist für 10GBASE-T über 100 m spezifiziert. Cat 6 schafft 10 Gbit/s nur auf kürzeren Strecken (ca. 55 m), Cat 5e ist für 1 Gbit/s ausgelegt.",
+    "options": [
+      "Cat 5e",
+      "Cat 6",
+      "Cat 6A",
+      "Cat 3"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lang darf eine Twisted-Pair-Übertragungsstrecke bei Ethernet maximal sein?",
+    "a": "100 Meter",
+    "a_full": "Die Übertragungsstrecke darf höchstens 100 m lang sein - üblich sind 90 m fest verlegtes Kabel plus insgesamt 10 m Patchkabel.",
+    "options": [
+      "50 Meter",
+      "100 Meter",
+      "185 Meter",
+      "500 Meter"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet Singlemode- von Multimode-Glasfaser?",
+    "a": "Singlemode hat einen dünneren Kern und überbrückt größere Entfernungen",
+    "a_full": "Singlemode (Kern ca. 9 µm) führt nur einen Lichtmodus und überbrückt viele Kilometer. Multimode (Kern 50/62,5 µm) ist günstiger, aber auf kürzere Strecken innerhalb von Gebäuden begrenzt.",
+    "options": [
+      "Singlemode hat einen dünneren Kern und überbrückt größere Entfernungen",
+      "Multimode überträgt nur einen einzigen Lichtmodus",
+      "Singlemode wird nur für Kupferleitungen verwendet",
+      "Beide unterscheiden sich nur in der Farbe des Mantels"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht SNMP und wozu dient es?",
+    "a": "Simple Network Management Protocol - Überwachung von Netzwerkgeräten",
+    "a_full": "SNMP (Simple Network Management Protocol, UDP 161/162) dient zur Überwachung und Verwaltung von Netzwerkgeräten, z.B. für Auslastung, Fehler und Traps an ein Monitoring-System.",
+    "options": [
+      "Simple Network Management Protocol - Überwachung von Netzwerkgeräten",
+      "Secure Network Mail Protocol - verschlüsselter E-Mail-Versand",
+      "System Node Mapping Protocol - Adresszuordnung",
+      "Simple Network Monitoring Port - fester Port für Firewalls"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht ein Proxy-Server?",
+    "a": "Er leitet Anfragen stellvertretend für Clients weiter",
+    "a_full": "Ein Proxy nimmt Anfragen von Clients entgegen und stellt sie stellvertretend an den Zielserver. Dabei kann er Inhalte filtern, zwischenspeichern (Cache) und Zugriffe protokollieren.",
+    "options": [
+      "Er leitet Anfragen stellvertretend für Clients weiter",
+      "Er vergibt IP-Adressen an Clients",
+      "Er verbindet Netze auf OSI-Schicht 1",
+      "Er verschlüsselt Festplatten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher WLAN-Standard wird als Wi-Fi 6 bezeichnet?",
+    "a": "IEEE 802.11ax",
+    "a_full": "Wi-Fi 6 ist IEEE 802.11ax (2,4 und 5 GHz, Wi-Fi 6E zusätzlich 6 GHz). Wi-Fi 5 ist 802.11ac, Wi-Fi 4 ist 802.11n.",
+    "options": [
+      "IEEE 802.11n",
+      "IEEE 802.11ac",
+      "IEEE 802.11ax",
+      "IEEE 802.11g"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was beschreibt QoS (Quality of Service) im Netzwerk?",
+    "a": "Die Priorisierung bestimmter Datenströme",
+    "a_full": "QoS priorisiert zeitkritischen Verkehr (z.B. VoIP, Videokonferenzen) gegenüber weniger kritischem Verkehr (z.B. Downloads), damit Sprache und Video auch bei hoher Auslastung stabil bleiben.",
+    "options": [
+      "Die Priorisierung bestimmter Datenströme",
+      "Die Verschlüsselung aller Verbindungen",
+      "Die automatische Vergabe von IP-Adressen",
+      "Die Messung der Kabellänge"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche drei Schutzziele bilden die klassische CIA-Triade?",
+    "a": "Vertraulichkeit, Integrität, Verfügbarkeit",
+    "a_full": "Confidentiality (Vertraulichkeit), Integrity (Integrität) und Availability (Verfügbarkeit). Ergänzend werden oft Authentizität und Verbindlichkeit genannt.",
+    "options": [
+      "Vertraulichkeit, Integrität, Verfügbarkeit",
+      "Vertraulichkeit, Authentizität, Aktualität",
+      "Integrität, Anonymität, Archivierung",
+      "Verfügbarkeit, Verschlüsselung, Verbindlichkeit"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Schutzbedarfskategorien unterscheidet der IT-Grundschutz des BSI?",
+    "a": "normal, hoch, sehr hoch",
+    "a_full": "Der BSI-IT-Grundschutz bewertet den Schutzbedarf je Schutzziel mit normal, hoch oder sehr hoch - abhängig von den möglichen Schäden.",
+    "options": [
+      "normal, hoch, sehr hoch",
+      "gering, mittel, hoch",
+      "A, B, C",
+      "öffentlich, intern, geheim"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Trojaner?",
+    "a": "Schadsoftware, die sich als nützliches Programm tarnt",
+    "a_full": "Ein Trojaner gibt sich als nützliche Software aus, führt aber im Hintergrund Schadfunktionen aus, z.B. das Öffnen einer Hintertür oder das Ausspähen von Daten. Anders als ein Wurm verbreitet er sich nicht selbstständig.",
+    "options": [
+      "Schadsoftware, die sich als nützliches Programm tarnt",
+      "Ein Programm zur Abwehr von Viren",
+      "Ein Verfahren zur Verschlüsselung von E-Mails",
+      "Ein Hardware-Token zur Anmeldung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Ransomware?",
+    "a": "Schadsoftware, die Daten verschlüsselt und Lösegeld fordert",
+    "a_full": "Ransomware verschlüsselt Daten oder sperrt Systeme und verlangt ein Lösegeld. Wirksamster Schutz: aktuelle, vom Netz getrennte (offline/unveränderliche) Backups, Patches und geschulte Mitarbeiter.",
+    "options": [
+      "Schadsoftware, die Daten verschlüsselt und Lösegeld fordert",
+      "Software zur Fernwartung",
+      "Ein Werkzeug zur Datenrettung",
+      "Eine Methode zur Datensicherung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt Art. 32 DSGVO?",
+    "a": "Technische und organisatorische Maßnahmen zur Sicherheit der Verarbeitung",
+    "a_full": "Art. 32 DSGVO verlangt geeignete technische und organisatorische Maßnahmen (TOM), z.B. Verschlüsselung, Zugriffskontrolle, Wiederherstellbarkeit und regelmäßige Überprüfung.",
+    "options": [
+      "Technische und organisatorische Maßnahmen zur Sicherheit der Verarbeitung",
+      "Das Recht auf Löschung",
+      "Die Meldepflicht bei Datenpannen",
+      "Die Höhe von Bußgeldern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet \"Privacy by Design\" nach Art. 25 DSGVO?",
+    "a": "Datenschutz wird schon bei der Entwicklung von Systemen berücksichtigt",
+    "a_full": "Datenschutz durch Technikgestaltung und datenschutzfreundliche Voreinstellungen (Privacy by Default): Systeme sollen von Anfang an nur so viele Daten verarbeiten wie nötig.",
+    "options": [
+      "Datenschutz wird schon bei der Entwicklung von Systemen berücksichtigt",
+      "Datenschutz gilt nur für Designabteilungen",
+      "Personenbezogene Daten dürfen nur grafisch dargestellt werden",
+      "Der Datenschutzbeauftragte gestaltet die Benutzeroberfläche"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Man-in-the-Middle-Angriff?",
+    "a": "Ein Angreifer schaltet sich unbemerkt zwischen zwei Kommunikationspartner",
+    "a_full": "Der Angreifer fängt die Kommunikation zwischen zwei Partnern ab und kann sie mitlesen oder verändern, z.B. über ein gefälschtes WLAN. Schutz: Ende-zu-Ende-Verschlüsselung und Zertifikatsprüfung.",
+    "options": [
+      "Ein Angreifer schaltet sich unbemerkt zwischen zwei Kommunikationspartner",
+      "Ein Mitarbeiter gibt sein Passwort weiter",
+      "Ein Server wird mit Anfragen überlastet",
+      "Ein Virus verbreitet sich über USB-Sticks"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht die Abkürzung TOM im Datenschutz?",
+    "a": "Technische und organisatorische Maßnahmen",
+    "a_full": "TOM sind technische (z.B. Verschlüsselung, Firewall) und organisatorische (z.B. Richtlinien, Schulungen) Maßnahmen zum Schutz personenbezogener Daten.",
+    "options": [
+      "Technische und organisatorische Maßnahmen",
+      "Totale Online-Mitarbeiterüberwachung",
+      "Technisches Operations-Management",
+      "Transport- und Onlinemedien"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bestätigt ein von einer Zertifizierungsstelle (CA) ausgestelltes Zertifikat?",
+    "a": "Dass ein öffentlicher Schlüssel zu einer bestimmten Identität gehört",
+    "a_full": "Ein X.509-Zertifikat verknüpft einen öffentlichen Schlüssel mit einer Identität (z.B. einer Domain). Die CA bestätigt diese Zuordnung mit ihrer digitalen Signatur.",
+    "options": [
+      "Dass ein öffentlicher Schlüssel zu einer bestimmten Identität gehört",
+      "Dass eine Webseite frei von Schadsoftware ist",
+      "Dass ein Passwort sicher ist",
+      "Dass ein Server unbegrenzt verfügbar ist"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet das Need-to-know-Prinzip?",
+    "a": "Zugriff nur auf Informationen, die für die eigene Aufgabe nötig sind",
+    "a_full": "Jede Person erhält nur Zugriff auf die Informationen, die sie für ihre konkrete Aufgabe benötigt - auch wenn sie aufgrund ihrer Stellung mehr sehen dürfte.",
+    "options": [
+      "Zugriff nur auf Informationen, die für die eigene Aufgabe nötig sind",
+      "Alle Mitarbeiter müssen alle Passwörter kennen",
+      "Informationen werden nur auf Nachfrage gelöscht",
+      "Nur die Geschäftsführung darf Daten sehen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Byte sind ein Kibibyte (KiB)?",
+    "a": "1.024 Byte",
+    "a_full": "Binärpräfixe (IEC): 1 KiB = 2^10 = 1.024 Byte. Dezimalpräfixe (SI): 1 kB = 1.000 Byte. Deshalb zeigt Windows eine 1-TB-Platte mit ca. 931 GB (eigentlich GiB) an.",
+    "options": [
+      "1.000 Byte",
+      "1.024 Byte",
+      "1.000.000 Byte",
+      "8.192 Byte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet RAM von ROM?",
+    "a": "RAM ist flüchtiger Arbeitsspeicher, ROM ist nicht flüchtiger Festwertspeicher",
+    "a_full": "RAM (Random Access Memory) verliert seinen Inhalt ohne Strom und dient als Arbeitsspeicher. ROM (Read Only Memory) behält den Inhalt dauerhaft, z.B. für Firmware.",
+    "options": [
+      "RAM ist flüchtiger Arbeitsspeicher, ROM ist nicht flüchtiger Festwertspeicher",
+      "ROM ist schneller und ersetzt den Arbeitsspeicher",
+      "RAM speichert Daten auch ohne Strom dauerhaft",
+      "Beide sind identisch, nur anders beschriftet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Hexadezimalzahl entspricht der Dezimalzahl 255?",
+    "a": "FF",
+    "a_full": "255 = 15 * 16 + 15 = FF (hex) = 1111 1111 (binär). FF ist der höchste Wert eines Bytes.",
+    "options": [
+      "FF",
+      "EF",
+      "F0",
+      "100"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Dezimalzahl entspricht der Binärzahl 1010 1010?",
+    "a": "170",
+    "a_full": "1010 1010 = 128 + 32 + 8 + 2 = 170 (hexadezimal AA).",
+    "options": [
+      "170",
+      "85",
+      "160",
+      "202"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein NAS?",
+    "a": "Network Attached Storage - ein dateibasierter Speicher im Netzwerk",
+    "a_full": "Ein NAS stellt Speicher über das Netzwerk auf Dateiebene bereit (z.B. per SMB oder NFS). Ein SAN liefert dagegen Speicher auf Blockebene über ein eigenes Speichernetz.",
+    "options": [
+      "Network Attached Storage - ein dateibasierter Speicher im Netzwerk",
+      "Network Access Server - ein Einwahlserver",
+      "Node Administration System - eine Verwaltungssoftware",
+      "Storage Area Network - ein blockbasiertes Speichernetz"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Active Directory?",
+    "a": "Ein Verzeichnisdienst zur zentralen Verwaltung von Benutzern und Computern",
+    "a_full": "Active Directory (AD) ist der Verzeichnisdienst von Microsoft. Er verwaltet Benutzer, Gruppen, Computer und Richtlinien einer Domäne zentral und authentifiziert Anmeldungen (u.a. per Kerberos).",
+    "options": [
+      "Ein Verzeichnisdienst zur zentralen Verwaltung von Benutzern und Computern",
+      "Ein Ordner mit aktiven Programmen auf dem Desktop",
+      "Ein Backup-Programm von Microsoft",
+      "Eine Firewall für Windows-Server"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Gruppenrichtlinienobjekt (GPO)?",
+    "a": "Eine zentral verteilte Sammlung von Einstellungen für Benutzer und Computer",
+    "a_full": "Über Gruppenrichtlinien werden in einer AD-Domäne Einstellungen zentral verteilt, z.B. Passwortregeln, Bildschirmsperre, Laufwerkszuordnungen oder Softwareverteilung.",
+    "options": [
+      "Eine zentral verteilte Sammlung von Einstellungen für Benutzer und Computer",
+      "Eine Benutzergruppe mit Administratorrechten",
+      "Ein Protokoll zur Zeitsynchronisation",
+      "Eine Sicherungskopie des Domänencontrollers"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Dateisystem verwenden aktuelle Windows-Systeme standardmäßig für die Systempartition?",
+    "a": "NTFS",
+    "a_full": "NTFS unterstützt u.a. Zugriffsrechte (ACLs), Verschlüsselung und große Dateien. ext4 ist unter Linux, APFS unter macOS üblich.",
+    "options": [
+      "NTFS",
+      "FAT16",
+      "ext4",
+      "APFS"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Jahr erlaubt eine Verfügbarkeit von 99,9 %?",
+    "a": "Etwa 8,76 Stunden",
+    "a_full": "0,1 % von 8.760 Stunden (ein Jahr) = 8,76 Stunden. Zum Vergleich: 99,99 % erlauben ca. 52,6 Minuten, 99 % ca. 3,65 Tage.",
+    "options": [
+      "Etwa 8,76 Stunden",
+      "Etwa 52,6 Minuten",
+      "Etwa 3,65 Tage",
+      "Etwa 5,26 Minuten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was beschreibt die Taktfrequenz einer CPU?",
+    "a": "Die Anzahl der Arbeitstakte pro Sekunde",
+    "a_full": "Die Taktfrequenz (z.B. 3,5 GHz = 3,5 Milliarden Takte pro Sekunde) gibt an, wie viele Arbeitstakte der Prozessor ausführt. Die tatsächliche Leistung hängt zusätzlich von Kernen, Cache und Architektur ab.",
+    "options": [
+      "Die Anzahl der Arbeitstakte pro Sekunde",
+      "Die Anzahl der Prozessorkerne",
+      "Die Größe des Arbeitsspeichers",
+      "Die Temperatur des Prozessors"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wodurch kommt ein Kaufvertrag zustande?",
+    "a": "Durch zwei übereinstimmende Willenserklärungen (Antrag und Annahme)",
+    "a_full": "Ein Vertrag entsteht durch Antrag und Annahme - zwei übereinstimmende Willenserklärungen. Werbung und Kataloge sind dagegen nur eine Aufforderung, ein Angebot abzugeben.",
+    "options": [
+      "Durch zwei übereinstimmende Willenserklärungen (Antrag und Annahme)",
+      "Erst durch die Bezahlung der Ware",
+      "Nur durch einen notariell beglaubigten Vertrag",
+      "Durch die Veröffentlichung eines Katalogs"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange beträgt die gesetzliche Gewährleistungsfrist beim Kauf neuer Sachen?",
+    "a": "2 Jahre",
+    "a_full": "Nach § 438 BGB verjähren Mängelansprüche bei neuen Sachen in der Regel nach zwei Jahren ab Übergabe.",
+    "options": [
+      "6 Monate",
+      "1 Jahr",
+      "2 Jahre",
+      "3 Jahre"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Skonto?",
+    "a": "Ein Preisnachlass bei Zahlung innerhalb einer kurzen Frist",
+    "a_full": "Skonto ist ein Nachlass (z.B. 2 %) für die Zahlung innerhalb einer kurzen Frist, z.B. \"2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage netto\".",
+    "options": [
+      "Ein Preisnachlass bei Zahlung innerhalb einer kurzen Frist",
+      "Ein Mengenrabatt für Großabnehmer",
+      "Ein Aufschlag für Expresslieferung",
+      "Die Umsatzsteuer auf Dienstleistungen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Recht hat der Käufer bei einer mangelhaften Lieferung zuerst?",
+    "a": "Nacherfüllung (Nachbesserung oder Ersatzlieferung)",
+    "a_full": "Vorrangig ist die Nacherfüllung: Nachbesserung oder Lieferung einer mangelfreien Sache. Erst wenn sie scheitert, kommen Rücktritt, Minderung oder Schadensersatz infrage.",
+    "options": [
+      "Nacherfüllung (Nachbesserung oder Ersatzlieferung)",
+      "Sofortiger Rücktritt vom Vertrag",
+      "Sofortige Minderung des Kaufpreises",
+      "Schadensersatz ohne weitere Frist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Nutzwertanalyse?",
+    "a": "Ein Vergleich von Alternativen anhand gewichteter Kriterien",
+    "a_full": "Kriterien werden gewichtet, jede Alternative wird je Kriterium bewertet, und die gewichteten Punkte werden addiert. So lassen sich auch qualitative Kriterien wie Support oder Bedienbarkeit vergleichen.",
+    "options": [
+      "Ein Vergleich von Alternativen anhand gewichteter Kriterien",
+      "Eine reine Gegenüberstellung der Preise",
+      "Eine Berechnung der Abschreibung",
+      "Eine Analyse der Kundenzufriedenheit"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Meilenstein in einem Projekt?",
+    "a": "Ein Ereignis ohne Dauer, das einen wichtigen Zwischenstand markiert",
+    "a_full": "Ein Meilenstein hat die Dauer null und markiert z.B. den Abschluss einer Projektphase. An Meilensteinen wird geprüft, ob das Projekt im Plan liegt.",
+    "options": [
+      "Ein Ereignis ohne Dauer, das einen wichtigen Zwischenstand markiert",
+      "Die längste Aufgabe im Projekt",
+      "Das Budget eines Arbeitspakets",
+      "Ein Mitarbeiter mit Leitungsfunktion"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bezeichnet der kritische Pfad im Netzplan?",
+    "a": "Die Vorgänge ohne Puffer, deren Verzögerung das Projektende verschiebt",
+    "a_full": "Auf dem kritischen Pfad haben alle Vorgänge einen Gesamtpuffer von null. Verzögert sich einer davon, verschiebt sich das gesamte Projektende.",
+    "options": [
+      "Die Vorgänge ohne Puffer, deren Verzögerung das Projektende verschiebt",
+      "Die teuersten Vorgänge des Projekts",
+      "Alle Vorgänge mit einem hohen Risiko",
+      "Der kürzeste Weg durch den Netzplan"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet Fixkosten von variablen Kosten?",
+    "a": "Fixkosten sind unabhängig von der Menge, variable Kosten steigen mit der Menge",
+    "a_full": "Fixkosten (z.B. Miete, Gehälter) fallen unabhängig von der produzierten Menge an. Variable Kosten (z.B. Material) steigen mit jeder zusätzlichen Einheit.",
+    "options": [
+      "Fixkosten sind unabhängig von der Menge, variable Kosten steigen mit der Menge",
+      "Fixkosten entstehen nur einmalig bei der Gründung",
+      "Variable Kosten sind immer höher als Fixkosten",
+      "Fixkosten schwanken jeden Monat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lang darf die werktägliche Arbeitszeit nach dem Arbeitszeitgesetz höchstens sein?",
+    "a": "8 Stunden, verlängerbar auf 10 Stunden bei Ausgleich",
+    "a_full": "Nach § 3 ArbZG darf die werktägliche Arbeitszeit 8 Stunden nicht überschreiten. Sie kann auf 10 Stunden verlängert werden, wenn innerhalb von 6 Monaten bzw. 24 Wochen im Durchschnitt 8 Stunden nicht überschritten werden.",
+    "options": [
+      "8 Stunden, verlängerbar auf 10 Stunden bei Ausgleich",
+      "6 Stunden ohne Ausnahme",
+      "12 Stunden",
+      "Es gibt keine gesetzliche Grenze"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei welcher Rechtsform haften die Gesellschafter grundsätzlich nur mit dem Gesellschaftsvermögen?",
+    "a": "GmbH",
+    "a_full": "Bei der GmbH (Gesellschaft mit beschränkter Haftung) haftet gegenüber Gläubigern nur das Gesellschaftsvermögen. Einzelunternehmer, OHG- und GbR-Gesellschafter haften auch mit ihrem Privatvermögen.",
+    "options": [
+      "GmbH",
+      "Einzelunternehmen",
+      "OHG",
+      "GbR"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was versteht man unter Tarifautonomie?",
+    "a": "Das Recht der Tarifparteien, Tarifverträge ohne staatliche Einmischung abzuschließen",
+    "a_full": "Gewerkschaften und Arbeitgeber(verbände) handeln Löhne und Arbeitsbedingungen eigenständig aus (Art. 9 Abs. 3 GG). Der Staat mischt sich nicht ein.",
+    "options": [
+      "Das Recht der Tarifparteien, Tarifverträge ohne staatliche Einmischung abzuschließen",
+      "Das Recht jedes Arbeitnehmers, sein Gehalt selbst festzulegen",
+      "Die Pflicht des Staates, alle Löhne festzusetzen",
+      "Das Recht des Betriebsrats, Kündigungen zu verbieten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gibt die Umsatzrendite an?",
+    "a": "Den Gewinn im Verhältnis zum Umsatz in Prozent",
+    "a_full": "Umsatzrendite = Gewinn / Umsatz * 100. Sie zeigt, wie viel Gewinn von jedem umgesetzten Euro übrig bleibt.",
+    "options": [
+      "Den Gewinn im Verhältnis zum Umsatz in Prozent",
+      "Den Umsatz im Verhältnis zum Eigenkapital",
+      "Die Steigerung des Umsatzes zum Vorjahr",
+      "Die Zinsen auf das eingesetzte Kapital"
+    ]
   }
 ]
