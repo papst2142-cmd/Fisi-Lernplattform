@@ -221,6 +221,7 @@ def build_app(version):
         "--collect-data", "customtkinter",
         "--add-data", "icon.ico%s." % separator,
         "--add-data", "icon.png%s." % separator,
+        "--add-data", "inhalte%sinhalte" % separator,
     ]
     if sys.platform == "win32":
         command += ["--icon", "icon.ico",
@@ -238,6 +239,21 @@ def build_app(version):
     if sys.platform == "darwin":
         _set_macos_version(target, version)
     return target
+
+
+def check_content():
+    """Prueft die Lerninhalte in inhalte/ (Pflichtfelder, 4 Antworten, keine
+    Doppelten, gueltige Themen) - bei Fehlern wird nicht gebaut."""
+    sys.path.insert(0, ROOT)
+    import fisi_core
+    problems = fisi_core.validate_content()
+    if problems:
+        fail("Die Lerninhalte enthalten Fehler:\n  " + "\n  ".join(problems))
+    info("Lerninhalte geprueft: %d Karteikarten, %d Quizfragen, %d AP1- und %d "
+         "AP2-Szenarien, %d Testprojekte" % (
+             len(fisi_core.KARTEIKARTEN), len(fisi_core.QUIZ_QUESTIONS),
+             len(fisi_core.AP1_SZENARIEN), len(fisi_core.SZENARIEN),
+             len(fisi_core.PROJEKTARBEITEN)))
 
 
 def smoke_test(app_path):
@@ -427,6 +443,7 @@ def main():
 
     version = app_version()
     check_versions(version)
+    check_content()
     info("%s Version %s auf %s" % (DISPLAY_NAME, version, platform.platform()))
     app_path = build_app(version)
     if "--ohne-test" not in sys.argv:

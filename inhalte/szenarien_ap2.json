@@ -1,0 +1,279 @@
+[
+  {
+    "title": "Subnetting & redundantes Routing",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein neuer Standort erhält den Netzbereich 172.16.0.0/21.",
+      "",
+      "1. Bilden Sie passende Subnetze für Verwaltung, Produktion, DMZ und Punkt-zu-Punkt.",
+      "2. Konfigurieren Sie redundantes Routing über eine Floating Static Route."
+    ],
+    "solution": [
+      "Subnetze:",
+      "  - A (Verwaltung): 172.16.0.0/23",
+      "  - B (Produktion): 172.16.2.0/24",
+      "  - C (DMZ): 172.16.3.0/26",
+      "  - D (P2P): 172.16.3.64/30",
+      "",
+      "Routing:",
+      "  - Primäre Route mit Administrative Distance 1",
+      "  - Backup-Route mit Administrative Distance 10 (Floating Static Route)"
+    ]
+  },
+  {
+    "title": "Ransomware-Vorfall & Incident Response",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein System wurde mit Ransomware infiziert (Dateiendung .crypto).",
+      "",
+      "1. Nennen Sie drei Sofortmaßnahmen nach BSI-Empfehlung.",
+      "2. Begründen Sie den Einsatz hybrider Verschlüsselung durch die Angreifer.",
+      "3. Welche Meldefrist gilt nach DSGVO?"
+    ],
+    "solution": [
+      "1. Netzwerk isolieren, Backups sichern und vom Netz trennen, Incident-Response-Team aktivieren.",
+      "2. AES verschlüsselt die Dateien schnell (symmetrisch), RSA schützt den AES-Schlüssel (asymmetrisch) - so bleibt die Entschlüsselung ohne privaten Schlüssel unmöglich.",
+      "3. Meldung innerhalb von 72 Stunden an die zuständige Aufsichtsbehörde (Art. 33 DSGVO)."
+    ]
+  },
+  {
+    "title": "RAID-Ausfall & Wiederherstellung",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Fileserver mit RAID 5 (6 Platten à 2 TB) meldet den Ausfall einer Festplatte.",
+      "",
+      "1. Ist der Datenbestand aktuell gefährdet? Begründen Sie.",
+      "2. Welche Kapazität steht nach dem Rebuild mit einer neuen Platte zur Verfügung?",
+      "3. Welches Risiko besteht während des Rebuilds und wie lässt es sich reduzieren?"
+    ],
+    "solution": [
+      "1. Noch kein Datenverlust, da RAID 5 einen Ausfall toleriert - das System läuft im degraded mode ohne Redundanz.",
+      "2. Die Nutzkapazität bleibt bei (6 - 1) x 2 TB = 10 TB nach erfolgreichem Rebuild.",
+      "3. Während des Rebuilds besteht durch die hohe Last eine erhöhte Ausfallwahrscheinlichkeit einer weiteren Platte - reduzierbar durch RAID 6 oder Hot-Spare-Platten."
+    ]
+  },
+  {
+    "title": "VLAN-Konzept für ein Bürogebäude",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Unternehmen mit den Abteilungen Verwaltung, Entwicklung und Gäste-WLAN soll strukturiert vernetzt werden.",
+      "",
+      "1. Warum sollten die Bereiche in separate VLANs aufgeteilt werden?",
+      "2. Was wird für die Kommunikation zwischen den VLANs benötigt?",
+      "3. Welche Sicherheitsmaßnahme ist für das Gäste-WLAN besonders wichtig?"
+    ],
+    "solution": [
+      "1. VLANs trennen Broadcast-Domänen, erhöhen die Sicherheit durch Segmentierung und erleichtern die Verwaltung unabhängig von der physischen Verkabelung.",
+      "2. Ein Layer-3-fähiges Gerät (Router oder Layer-3-Switch) mit Inter-VLAN-Routing.",
+      "3. Strikte Isolation des Gäste-VLANs vom internen Netz über eigene Firewall-Regeln, damit Gäste keinen Zugriff auf interne Ressourcen erhalten."
+    ]
+  },
+  {
+    "title": "Phishing-Angriff auf Mitarbeiter",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Mehrere Mitarbeiter haben eine gefälschte E-Mail erhalten, die zur Eingabe ihrer Zugangsdaten auf einer nachgebauten Login-Seite auffordert.",
+      "",
+      "1. Um welche Angriffsart handelt es sich?",
+      "2. Welche drei Sofortmaßnahmen sollten ergriffen werden?",
+      "3. Welche präventiven, organisatorischen Maßnahmen helfen langfristig?"
+    ],
+    "solution": [
+      "1. Phishing als Form des Social Engineering zum Diebstahl von Zugangsdaten.",
+      "2. Betroffene Passwörter sofort zurücksetzen, betroffene Konten auf Missbrauch prüfen, IT-Sicherheitsteam informieren und alle Mitarbeiter warnen.",
+      "3. Regelmäßige Security-Awareness-Schulungen, simulierte Phishing-Tests, Spam- und Phishing-Filter sowie 2FA für wichtige Konten."
+    ]
+  },
+  {
+    "title": "Angebotsvergleich & TCO-Betrachtung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde möchte zwischen zwei Serverangeboten wählen: Angebot A (günstiger Kaufpreis, hoher Stromverbrauch, kurze Garantie) und Angebot B (höherer Kaufpreis, energieeffizient, längere Garantie).",
+      "",
+      "1. Warum reicht der reine Anschaffungspreis für die Entscheidung nicht aus?",
+      "2. Welche Kostenfaktoren gehören in eine TCO-Betrachtung?",
+      "3. Welche Rolle spielt das Lastenheft des Kunden bei der Entscheidung?"
+    ],
+    "solution": [
+      "1. Der Anschaffungspreis bildet nur einen Teil der Gesamtkosten ab; Betrieb, Wartung und Ausfallrisiken können langfristig stärker ins Gewicht fallen.",
+      "2. Anschaffung, Energie- und Kühlkosten, Wartung, Support, Ausfallzeiten, Entsorgung beziehungsweise Restwert.",
+      "3. Das Lastenheft definiert die tatsächlichen Anforderungen des Kunden (Leistung, Verfügbarkeit, Budget) und dient als objektive Entscheidungsgrundlage statt eines reinen Preisvergleichs."
+    ]
+  },
+  {
+    "title": "WAN-Anbindung mit Redundanz",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Unternehmen betreibt zwei Standorte und möchte diese redundant über zwei unterschiedliche Internetprovider koppeln.",
+      "",
+      "1. Welches Konzept ermöglicht automatisches Umschalten bei Ausfall einer Leitung?",
+      "2. Welche Rolle spielt dabei die Administrative Distance (AD)?",
+      "3. Welche kostengünstige Alternative zu einer MPLS-Standortkopplung gibt es?"
+    ],
+    "solution": [
+      "1. Floating Static Routes beziehungsweise dynamisches Routing mit Tracking ermöglichen automatisches Failover zwischen den Leitungen.",
+      "2. Die Route mit der niedrigeren AD wird bevorzugt genutzt (Primärroute); die Backup-Route mit höherer AD wird erst bei Ausfall der Primärroute aktiv.",
+      "3. Ein Site-to-Site-VPN über das öffentliche Internet als kostengünstige Alternative zu dedizierten MPLS-Leitungen."
+    ]
+  },
+  {
+    "title": "Backup-Konzept nach Ransomware-Vorfall",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Nach einem Ransomware-Vorfall soll ein neues, widerstandsfähigeres Backup-Konzept für einen Fileserver mit 2 TB Nutzdaten entworfen werden.",
+      "",
+      "1. Welches Sicherungsverfahren (voll/differentiell/inkrementell) empfehlen Sie für die tägliche Sicherung und warum?",
+      "2. Welche Rolle spielt ein 'Air Gap' in diesem Konzept?",
+      "3. Wie lässt sich die 3-2-1-Regel konkret auf dieses Szenario anwenden?"
+    ],
+    "solution": [
+      "1. Inkrementelle tägliche Sicherungen nach einer wöchentlichen Vollsicherung sparen Zeit und Speicherplatz, da nur geänderte Daten gesichert werden.",
+      "2. Eine per Air Gap getrennte Kopie (offline oder isoliertes Netz) kann von Ransomware im Produktivnetz nicht verschlüsselt werden und ermöglicht so eine garantierte Wiederherstellung.",
+      "3. 3 Kopien der Daten (Original + 2 Backups), auf 2 unterschiedlichen Medientypen (z.B. NAS und Band/Cloud), davon 1 Kopie extern bzw. per Air Gap getrennt gelagert."
+    ]
+  },
+  {
+    "title": "Härtung eines öffentlich erreichbaren Webservers",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Webserver soll aus dem Internet erreichbar sein und in die DMZ eines Unternehmens gestellt werden.",
+      "",
+      "1. Welche Firewall-Regeln sind für die DMZ grundsätzlich sinnvoll?",
+      "2. Welche zwei technischen Maßnahmen schützen die Datenübertragung und die Anmeldung am Server?",
+      "3. Warum sollte der Webserver nicht direkt im internen LAN stehen?"
+    ],
+    "solution": [
+      "1. Nach dem Prinzip 'Deny All, Allow by Exception' werden nur die für den Webserver notwendigen Ports (z.B. 443) gezielt freigegeben, alle anderen Verbindungen blockiert.",
+      "2. TLS-Verschlüsselung (HTTPS) für die Datenübertragung und Zwei-Faktor-Authentifizierung für den administrativen Zugang.",
+      "3. Bei einer Kompromittierung im internen LAN hätte ein Angreifer direkten Zugriff auf schützenswerte interne Systeme - die DMZ isoliert öffentlich erreichbare Dienste vom internen Netz."
+    ]
+  },
+  {
+    "title": "Social Engineering am Telefon",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein vermeintlicher IT-Dienstleister ruft den Support an und bittet unter Zeitdruck um die Herausgabe eines Administrator-Passworts, um angeblich einen 'kritischen Fehler' zu beheben.",
+      "",
+      "1. Um welche Angriffsart handelt es sich hier?",
+      "2. Wie sollte der Mitarbeiter korrekt reagieren?",
+      "3. Welche organisatorische Regel verhindert solche Vorfälle langfristig?"
+    ],
+    "solution": [
+      "1. Ein klassischer Social-Engineering-Angriff (Pretexting), der Autorität und Zeitdruck ausnutzt, um Sicherheitsregeln zu umgehen.",
+      "2. Passwörter niemals telefonisch herausgeben, die Identität des Anrufers über einen bekannten, offiziellen Rückrufweg verifizieren und den Vorfall dem Sicherheitsteam melden.",
+      "3. Klare Richtlinie, dass Passwörter grundsätzlich nie telefonisch oder per E-Mail weitergegeben werden, kombiniert mit regelmäßigen Awareness-Schulungen."
+    ]
+  },
+  {
+    "title": "Speicherkonzept für eine wachsende Datenbank",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Datenbank mit hoher Schreiblast soll auf einem neuen Server mit 8 Festplatten gleicher Größe betrieben werden. Höchste Ausfallsicherheit und gute Performance sind gefordert, das Budget erlaubt den Verlust von 50% Kapazität für Redundanz.",
+      "",
+      "1. Welches RAID-Level empfehlen Sie und warum?",
+      "2. Welche Nutzkapazität ergibt sich bei 8 Platten à 4 TB?",
+      "3. Welche zusätzliche Maßnahme reduziert die Ausfallzeit bei einem Plattendefekt?"
+    ],
+    "solution": [
+      "1. RAID 10 (Spiegelung + Striping), da es hohe Schreib-/Leseperformance mit sehr guter Ausfallsicherheit und schnellem Rebuild verbindet - passend zum vorgegebenen 50%-Kapazitätsbudget.",
+      "2. Bei RAID 10 steht die Hälfte der Rohkapazität zur Verfügung: 8 x 4 TB / 2 = 16 TB nutzbare Kapazität.",
+      "3. Ein Hot-Spare-Laufwerk, das bei Ausfall automatisch in den Verbund einspringt und den Rebuild sofort startet, ohne auf einen manuellen Plattentausch zu warten."
+    ]
+  },
+  {
+    "title": "Virtualisierung eines physischen Servers",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Unternehmen betreibt fünf separate, wenig ausgelastete physische Server und möchte diese konsolidieren.",
+      "",
+      "1. Welche Technologie eignet sich zur Konsolidierung und warum?",
+      "2. Welchen Vorteil bietet ein Snapshot vor einer geplanten Änderung an einer virtuellen Maschine?",
+      "3. Welches Risiko entsteht durch die Konsolidierung auf einen einzigen Host und wie lässt es sich reduzieren?"
+    ],
+    "solution": [
+      "1. Virtualisierung mit einem Typ-1-Hypervisor (z.B. Proxmox VE, VMware ESXi) fasst die gering ausgelasteten Server als VMs auf gemeinsam genutzter Hardware zusammen und spart so Anschaffungs-, Energie- und Wartungskosten.",
+      "2. Ein Snapshot ermöglicht ein schnelles Zurücksetzen auf den vorherigen Zustand, falls die Änderung fehlschlägt - ohne aufwendige Neuinstallation.",
+      "3. Ein Ausfall des einzigen Hosts würde alle VMs gleichzeitig lahmlegen (Single Point of Failure) - reduzierbar durch einen Cluster mit mindestens zwei Hosts und Failover."
+    ]
+  },
+  {
+    "title": "Notfallwiederherstellung nach Serverausfall",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein physischer Server mit kritischer Anwendung fällt komplett aus (Mainboard-Defekt). Es existiert ein tägliches Backup sowie ein zweiter, baugleicher Server als Kaltreserve.",
+      "",
+      "1. Was bedeuten RTO und RPO in diesem Zusammenhang konkret?",
+      "2. Welche Schritte sind zur Wiederherstellung des Dienstes notwendig?",
+      "3. Wie könnte die Ausfallzeit künftig weiter reduziert werden?"
+    ],
+    "solution": [
+      "1. Die RPO gibt vor, wie viele Daten seit dem letzten Backup maximal verloren gehen dürfen (hier: bis zu 24 Stunden), die RTO die maximal tolerierbare Zeit bis zur Wiederherstellung des Dienstes.",
+      "2. Das letzte Backup auf den Ersatzserver einspielen, Netzwerk- und Dienstkonfiguration prüfen, Funktionstest durchführen und den Dienst wieder freigeben.",
+      "3. Aufbau eines Clusters mit automatischem Failover oder eines Hot-Standby-Systems, sodass bei einem Hardwaredefekt kein manueller Eingriff mehr nötig ist."
+    ]
+  },
+  {
+    "title": "Investitionsentscheidung: Kauf vs. Leasing",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde überlegt, neue Arbeitsplatzrechner zu kaufen oder zu leasen.",
+      "",
+      "1. Nennen Sie je einen wirtschaftlichen Vorteil von Kauf und von Leasing.",
+      "2. Welche Kennzahl hilft dabei, die tatsächlichen Gesamtkosten beider Varianten vergleichbar zu machen?",
+      "3. Welche Rolle spielt die Nutzungsdauer der Geräte bei der Entscheidung?"
+    ],
+    "solution": [
+      "1. Kauf: Die Geräte gehören dem Unternehmen und können frei genutzt/verkauft werden. Leasing: Geringere einmalige Kapitalbindung und planbare, konstante monatliche Raten.",
+      "2. Die TCO-Betrachtung (Total Cost of Ownership) erfasst neben dem reinen Anschaffungs- bzw. Leasingpreis auch Wartung, Support, Versicherung und Restwert.",
+      "3. Bei kurzer geplanter Nutzungsdauer und schnellem technischem Wandel ist Leasing oft vorteilhafter, bei langer Nutzung kann sich ein Kauf finanziell eher lohnen."
+    ]
+  },
+  {
+    "title": "Angebotsabgabe mit Lasten- und Pflichtenheft",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde möchte eine neue Serverinfrastruktur ausschreiben und beauftragt Ihr Unternehmen mit einem Angebot.",
+      "",
+      "1. Welches Dokument erstellt der Kunde, welches Ihr Unternehmen als Auftragnehmer?",
+      "2. Warum ist eine gründliche Ist-Analyse vor der Angebotserstellung wichtig?",
+      "3. Welche Konsequenz kann ein unklares Lastenheft für das spätere Projekt haben?"
+    ],
+    "solution": [
+      "1. Der Kunde erstellt das Lastenheft (WAS wird benötigt), Ihr Unternehmen als Auftragnehmer erstellt darauf aufbauend das Pflichtenheft (WIE wird es technisch umgesetzt).",
+      "2. Die Ist-Analyse deckt die vorhandene Infrastruktur und tatsächlichen Anforderungen auf, wodurch Fehlplanungen und spätere teure Nachbesserungen vermieden werden.",
+      "3. Ein unklares Lastenheft führt häufig zu Missverständnissen, Nachträgen (Change Requests), Budget- und Terminüberschreitungen im weiteren Projektverlauf."
+    ]
+  },
+  {
+    "title": "Projektorganisation mit Scrum",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein internes Entwicklungsteam soll künftig nach Scrum arbeiten statt nach dem bisherigen Wasserfallmodell.",
+      "",
+      "1. Welche drei Rollen müssen im Team besetzt werden?",
+      "2. Welchen Vorteil bietet die iterative Arbeitsweise in Sprints gegenüber dem Wasserfallmodell bei sich ändernden Anforderungen?",
+      "3. Wofür dient das Sprint Review am Ende eines Sprints?"
+    ],
+    "solution": [
+      "1. Product Owner (verantwortet das Product Backlog und Anforderungen), Scrum Master (moderiert den Prozess und beseitigt Hindernisse) und das Entwicklungsteam (setzt die Arbeit um).",
+      "2. Da Anforderungen zu Sprintbeginn neu priorisiert werden können, lassen sich Änderungen deutlich schneller einarbeiten als beim starren, sequenziellen Wasserfallmodell.",
+      "3. Im Sprint Review wird das fertiggestellte Increment den Stakeholdern präsentiert, um frühzeitig Feedback zu erhalten und die weitere Priorisierung anzupassen."
+    ]
+  }
+]

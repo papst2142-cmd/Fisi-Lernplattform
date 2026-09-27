@@ -1,0 +1,806 @@
+[
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der Standard-Port für HTTPS?",
+    "a": "443",
+    "a_full": "TCP Port 443 (verschlüsselte Webübertragung per TLS/SSL).",
+    "options": [
+      "80",
+      "443",
+      "22",
+      "8080"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht die Abkürzung DNS?",
+    "a": "Domain Name System",
+    "a_full": "Domain Name System: Übersetzt menschlich lesbare Domainnamen in IP-Adressen.",
+    "options": [
+      "Domain Name System",
+      "Data Network Service",
+      "Dynamic Node Server",
+      "Digital Network Storage"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Schicht des OSI-Modells ist für das Routing von IP-Paketen zuständig?",
+    "a": "Schicht 3 (Netzwerkschicht)",
+    "a_full": "Schicht 3 - Vermittlungsschicht / Network Layer (Routing, IP-Adressierung).",
+    "options": [
+      "Schicht 1 (Bitübertragung)",
+      "Schicht 2 (Sicherung)",
+      "Schicht 3 (Netzwerkschicht)",
+      "Schicht 4 (Transport)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Bits umfasst eine IPv6-Adresse?",
+    "a": "128 Bits",
+    "a_full": "Eine IPv6-Adresse ist 128 Bits lang.",
+    "options": [
+      "32 Bits",
+      "64 Bits",
+      "128 Bits",
+      "256 Bits"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll weist Netzwerkgeräten automatisch IP-Adressen zu?",
+    "a": "DHCP",
+    "a_full": "DHCP (Dynamic Host Configuration Protocol) vergibt dynamisch IP-Adressen.",
+    "options": [
+      "DNS",
+      "DHCP",
+      "ARP",
+      "ICMP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Adressklasse hat den Bereich 192.0.0.0 - 223.255.255.255?",
+    "a": "Klasse C",
+    "a_full": "Klasse-C-Netze reichen von 192.0.0.0 bis 223.255.255.255, Standardmaske /24.",
+    "options": [
+      "Klasse A",
+      "Klasse B",
+      "Klasse C",
+      "Klasse D"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie nennt man ein Verfahren, bei dem mehrere physische Verbindungen zu einer logischen zusammengefasst werden?",
+    "a": "Link Aggregation",
+    "a_full": "Link Aggregation (z.B. LACP nach IEEE 802.3ad) bündelt mehrere physische Leitungen zu einer logischen mit höherer Bandbreite und Redundanz.",
+    "options": [
+      "Link Aggregation",
+      "VLAN-Trunking",
+      "Spanning Tree",
+      "Port Mirroring"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll verhindert Schleifen (Loops) in geswitchten Netzwerken?",
+    "a": "Spanning Tree Protocol (STP)",
+    "a_full": "STP (IEEE 802.1D) erkennt redundante Pfade und blockiert sie logisch, um Broadcast-Stürme zu verhindern.",
+    "options": [
+      "Spanning Tree Protocol (STP)",
+      "ARP",
+      "NAT",
+      "VRRP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was übersetzt NAT (Network Address Translation)?",
+    "a": "Private IP-Adressen in öffentliche IP-Adressen (und umgekehrt)",
+    "a_full": "NAT übersetzt private, nicht routbare IP-Adressen in öffentliche Adressen für die Kommunikation im Internet.",
+    "options": [
+      "Private IP-Adressen in öffentliche IP-Adressen (und umgekehrt)",
+      "MAC-Adressen in IP-Adressen",
+      "Domainnamen in IP-Adressen",
+      "VLAN-IDs in Ports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Netzwerktyp verbindet Standorte über das öffentliche Internet mit verschlüsseltem Tunnel?",
+    "a": "VPN (Virtual Private Network)",
+    "a_full": "Ein VPN baut einen verschlüsselten Tunnel über ein unsicheres Netz (meist Internet) auf, um Standorte oder Clients sicher zu verbinden.",
+    "options": [
+      "VPN (Virtual Private Network)",
+      "WAN",
+      "DMZ",
+      "VLAN"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele nutzbare Hosts bietet ein /30-Subnetz?",
+    "a": "2",
+    "a_full": "/30 hat 4 Gesamtadressen, minus Network- und Broadcast-Adresse bleiben 2 nutzbare Hosts (typisch für Punkt-zu-Punkt-Verbindungen).",
+    "options": [
+      "2",
+      "4",
+      "6",
+      "14"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll ermittelt zu einer bekannten IP-Adresse die MAC-Adresse im lokalen Netz?",
+    "a": "ARP",
+    "a_full": "ARP (Address Resolution Protocol) ermittelt zu einer bekannten IP-Adresse die zugehörige MAC-Adresse im LAN.",
+    "options": [
+      "ARP",
+      "DNS",
+      "DHCP",
+      "RARP"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel der IT-Sicherheit schützt vor unbefugter Datenveränderung?",
+    "a": "Integrität",
+    "a_full": "Integrität stellt sicher, dass Daten korrekt und unmanipuliert bleiben.",
+    "options": [
+      "Vertraulichkeit",
+      "Integrität",
+      "Verfügbarkeit",
+      "Authentizität"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet die '1' in der bekannten 3-2-1-Backup-Regel?",
+    "a": "1 Kopie an einem externen Ort",
+    "a_full": "1 Kopie muss an einem physikalisch getrennten Ort aufbewahrt werden.",
+    "options": [
+      "1 Backup pro Tag",
+      "1 Kopie an einem externen Ort",
+      "1 verschlüsselte Datei",
+      "1 zentraler Server"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel stellt sicher, dass Daten nur befugten Personen zugänglich sind?",
+    "a": "Vertraulichkeit",
+    "a_full": "Vertraulichkeit (Confidentiality) schützt Daten vor unbefugtem Zugriff, z.B. durch Verschlüsselung und Zugriffsrechte.",
+    "options": [
+      "Vertraulichkeit",
+      "Integrität",
+      "Verfügbarkeit",
+      "Nichtabstreitbarkeit"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Zwei-Faktor-Authentifizierung (2FA)?",
+    "a": "Anmeldung mit zwei unabhängigen Nachweisen (z.B. Passwort + Code)",
+    "a_full": "2FA kombiniert zwei unterschiedliche Faktoren (Wissen, Besitz, Biometrie), um die Sicherheit gegenüber reiner Passwortauthentifizierung zu erhöhen.",
+    "options": [
+      "Anmeldung mit zwei unabhängigen Nachweisen (z.B. Passwort + Code)",
+      "Zwei separate Passwörter hintereinander",
+      "Anmeldung von zwei Geräten gleichzeitig",
+      "Doppelte Verschlüsselung derselben Datei"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht die Abkürzung DSGVO?",
+    "a": "Datenschutz-Grundverordnung",
+    "a_full": "Die DSGVO ist die EU-weite Datenschutz-Grundverordnung zum Schutz personenbezogener Daten.",
+    "options": [
+      "Datenschutz-Grundverordnung",
+      "Datensicherungs- und Gefahrenverordnung",
+      "Digitale Schutz- und Gewährleistungsordnung",
+      "Datenschutz-Gesetzesverordnung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt eine DDoS-Attacke?",
+    "a": "Überlastung eines Systems durch massenhafte Anfragen aus vielen Quellen",
+    "a_full": "Distributed Denial of Service: Viele verteilte Systeme (z.B. Botnetz) überlasten gleichzeitig ein Ziel, um es lahmzulegen.",
+    "options": [
+      "Überlastung eines Systems durch massenhafte Anfragen aus vielen Quellen",
+      "Diebstahl von Zugangsdaten per E-Mail",
+      "Verschlüsselung von Dateien gegen Lösegeld",
+      "Abhören von Netzwerkverkehr"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Rolle nach DSGVO überwacht die Einhaltung des Datenschutzes im Unternehmen?",
+    "a": "Datenschutzbeauftragter",
+    "a_full": "Der Datenschutzbeauftragte (DSB) berät und überwacht die Einhaltung der DSGVO im Unternehmen.",
+    "options": [
+      "Datenschutzbeauftragter",
+      "IT-Administrator",
+      "Compliance Officer",
+      "Systemarchitekt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Firewall im Kern?",
+    "a": "Ein System, das Netzwerkverkehr nach definierten Regeln filtert",
+    "a_full": "Eine Firewall überwacht und filtert ein- und ausgehenden Datenverkehr anhand von Regeln, um unerwünschte Zugriffe zu verhindern.",
+    "options": [
+      "Ein System, das Netzwerkverkehr nach definierten Regeln filtert",
+      "Ein Programm zur Virenentfernung",
+      "Ein Backup-Server",
+      "Ein Verschlüsselungsalgorithmus"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet eine Vollsicherung von einer inkrementellen Sicherung?",
+    "a": "Vollsicherung sichert alle Daten, inkrementell nur Änderungen seit der letzten Sicherung",
+    "a_full": "Eine Vollsicherung kopiert den kompletten Datenbestand, eine inkrementelle Sicherung nur die seit dem letzten Backup (egal welcher Art) geänderten Daten - spart Zeit und Speicherplatz, verlängert aber die Wiederherstellung.",
+    "options": [
+      "Vollsicherung sichert alle Daten, inkrementell nur Änderungen seit der letzten Sicherung",
+      "Beide sichern immer den kompletten Datenbestand",
+      "Inkrementell sichert nur einmal im Jahr",
+      "Vollsicherung ist immer verschlüsselt, inkrementell nie"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt eine Passwort-Richtlinie nach aktuellen BSI-Empfehlungen primär?",
+    "a": "Mindestlänge, Komplexität und Umgang mit Passwörtern (z.B. kein Wechselzwang ohne Anlass)",
+    "a_full": "Das BSI empfiehlt heute lange, individuelle Passwörter (z.B. Passphrasen) statt starrem, regelmäßigem Passwortwechsel, sowie 2FA wo möglich.",
+    "options": [
+      "Mindestlänge, Komplexität und Umgang mit Passwörtern (z.B. kein Wechselzwang ohne Anlass)",
+      "Passwörter müssen monatlich gewechselt werden",
+      "Passwörter dürfen maximal 6 Zeichen lang sein",
+      "Ein Passwort für alle Systeme genügt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür wird IPsec typischerweise eingesetzt?",
+    "a": "Absicherung von VPN-Verbindungen auf Netzwerkebene (Schicht 3)",
+    "a_full": "IPsec verschlüsselt und authentifiziert IP-Pakete auf Schicht 3 und wird häufig für Site-to-Site-VPNs eingesetzt.",
+    "options": [
+      "Absicherung von VPN-Verbindungen auf Netzwerkebene (Schicht 3)",
+      "Verschlüsselung von E-Mail-Anhängen",
+      "Absicherung von WLAN-Passwörtern",
+      "Ein Protokoll zur Portfreigabe"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür sorgt TLS (Transport Layer Security) bei einer HTTPS-Verbindung?",
+    "a": "Verschlüsselung, Authentizität und Integrität der Datenübertragung",
+    "a_full": "TLS baut über einen Handshake eine verschlüsselte, authentifizierte Verbindung zwischen Client und Server auf und schützt die Daten während der Übertragung.",
+    "options": [
+      "Verschlüsselung, Authentizität und Integrität der Datenübertragung",
+      "Nur die Kompression der Webseite",
+      "Automatisches Backup des Servers",
+      "Die Zuweisung von IP-Adressen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Hauptunterschied zwischen einem Computervirus und einem Computerwurm?",
+    "a": "Ein Virus benötigt ein Wirtsprogramm, ein Wurm verbreitet sich eigenständig über Netzwerke",
+    "a_full": "Viren hängen sich an bestehende Dateien/Programme an und brauchen deren Ausführung, während sich Würmer selbstständig ohne Wirtsdatei über Netzwerke verbreiten.",
+    "options": [
+      "Ein Virus benötigt ein Wirtsprogramm, ein Wurm verbreitet sich eigenständig über Netzwerke",
+      "Ein Wurm befällt nur Smartphones",
+      "Ein Virus kann sich nicht verbreiten",
+      "Beide Begriffe meinen dasselbe"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist regelmäßiges Patchmanagement sicherheitsrelevant?",
+    "a": "Es schließt bekannte Schwachstellen zeitnah, bevor sie ausgenutzt werden können",
+    "a_full": "Patchmanagement sorgt für die geplante, zeitnahe Einspielung von Sicherheitsupdates, um bekannte Sicherheitslücken zu schließen, bevor Angreifer sie ausnutzen.",
+    "options": [
+      "Es schließt bekannte Schwachstellen zeitnah, bevor sie ausgenutzt werden können",
+      "Es beschleunigt nur die Systemleistung",
+      "Es ist nur bei Neuinstallationen relevant",
+      "Es ersetzt die Notwendigkeit von Backups"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt das Konzept einer Public-Key-Infrastruktur (PKI)?",
+    "a": "Ein System zur Verwaltung digitaler Zertifikate und öffentlicher Schlüssel",
+    "a_full": "Eine PKI stellt Prozesse und Komponenten (Zertifizierungsstelle, Registrierungsstelle, Zertifikate) bereit, um öffentliche Schlüssel vertrauenswürdig Personen oder Systemen zuzuordnen.",
+    "options": [
+      "Ein System zur Verwaltung digitaler Zertifikate und öffentlicher Schlüssel",
+      "Ein Verfahren zur Passwortvergabe",
+      "Ein Netzwerkprotokoll für DNS",
+      "Ein RAID-Verfahren für Schlüsseldateien"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine kryptografische Hashfunktion wie SHA-256 im Kern?",
+    "a": "Eine Einwegfunktion, die aus beliebigen Daten einen Prüfwert fester Länge erzeugt",
+    "a_full": "SHA-256 erzeugt aus beliebig großen Eingabedaten einen 256-Bit-Hashwert; die Berechnung ist nicht umkehrbar und dient z.B. der Integritätsprüfung.",
+    "options": [
+      "Eine Einwegfunktion, die aus beliebigen Daten einen Prüfwert fester Länge erzeugt",
+      "Ein symmetrisches Verschlüsselungsverfahren",
+      "Ein Kompressionsalgorithmus für Videos",
+      "Ein Protokoll zur Schlüsselverteilung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet Datenschutz von Datensicherheit?",
+    "a": "Datenschutz schützt personenbezogene Daten vor Missbrauch, Datensicherheit schützt Daten allgemein vor Verlust/Zugriff",
+    "a_full": "Datenschutz (z.B. DSGVO) regelt den Umgang mit personenbezogenen Daten, während Datensicherheit technische und organisatorische Maßnahmen zum Schutz aller Daten vor Verlust, Manipulation oder unbefugtem Zugriff umfasst.",
+    "options": [
+      "Datenschutz schützt personenbezogene Daten vor Missbrauch, Datensicherheit schützt Daten allgemein vor Verlust/Zugriff",
+      "Beide Begriffe sind rechtlich identisch",
+      "Datensicherheit gilt nur für Backups",
+      "Datenschutz betrifft nur Passwörter"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine DMZ-Firewall-Regel typischerweise?",
+    "a": "Nur bestimmte, notwendige Ports zu definierten Servern werden freigegeben, alles andere wird blockiert",
+    "a_full": "Nach dem Prinzip 'Deny All, Allow by Exception' werden in einer DMZ nur die für den jeweiligen Dienst notwendigen Ports gezielt freigegeben.",
+    "options": [
+      "Nur bestimmte, notwendige Ports zu definierten Servern werden freigegeben, alles andere wird blockiert",
+      "Es werden grundsätzlich alle Ports geöffnet",
+      "DMZ-Server benötigen keine Firewall",
+      "Firewall-Regeln gelten nur für ausgehenden Verkehr"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet Verbindlichkeit (Nichtabstreitbarkeit) als Schutzziel der IT-Sicherheit?",
+    "a": "Ein Urheber einer Handlung/Nachricht kann diese im Nachhinein nicht abstreiten",
+    "a_full": "Verbindlichkeit (Non-Repudiation) stellt sicher, dass z.B. eine digital signierte Nachricht eindeutig einem Absender zugeordnet und von diesem nicht bestritten werden kann.",
+    "options": [
+      "Ein Urheber einer Handlung/Nachricht kann diese im Nachhinein nicht abstreiten",
+      "Daten sind jederzeit verfügbar",
+      "Nur befugte Personen haben Zugriff",
+      "Daten können nicht verändert werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht die Abkürzung SIEM?",
+    "a": "Security Information and Event Management",
+    "a_full": "Ein SIEM-System sammelt, korreliert und analysiert sicherheitsrelevante Log- und Ereignisdaten aus verschiedenen Quellen in Echtzeit.",
+    "options": [
+      "Security Information and Event Management",
+      "System Integrity and Encryption Module",
+      "Secure Internal Email Monitoring",
+      "Server Infrastructure and Endpoint Maintenance"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Festplatten können bei einem RAID 5 maximal gleichzeitig ohne Datenverlust ausfallen?",
+    "a": "1 Festplatte",
+    "a_full": "RAID 5 verkraftet genau 1 Festplattenausfall.",
+    "options": [
+      "0 Festplatten",
+      "1 Festplatte",
+      "2 Festplatten",
+      "Unbegrenzt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Unterschied zwischen RAID 5 und RAID 6?",
+    "a": "RAID 6 nutzt doppelte Parität, RAID 5 einfache",
+    "a_full": "RAID 6 schreibt Parität auf zwei Platten und verkraftet 2 Ausfälle, RAID 5 nur eine Paritätsplatte und verkraftet 1 Ausfall.",
+    "options": [
+      "RAID 6 nutzt doppelte Parität, RAID 5 einfache",
+      "RAID 5 ist schneller als RAID 6 bei Schreibzugriffen",
+      "RAID 6 benötigt weniger Platten als RAID 5",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was versteht man unter Virtualisierung?",
+    "a": "Abstraktion physischer Hardware zur parallelen Nutzung durch mehrere virtuelle Systeme",
+    "a_full": "Virtualisierung erlaubt es, mehrere voneinander unabhängige virtuelle Maschinen auf gemeinsam genutzter physischer Hardware zu betreiben.",
+    "options": [
+      "Abstraktion physischer Hardware zur parallelen Nutzung durch mehrere virtuelle Systeme",
+      "Verschlüsselung von Festplatteninhalten",
+      "Automatische Datensicherung in die Cloud",
+      "Physisches Klonen von Festplatten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Snapshot bei virtuellen Maschinen?",
+    "a": "Ein Zustandsabbild der VM zu einem bestimmten Zeitpunkt",
+    "a_full": "Ein Snapshot speichert den Zustand (Disk, RAM, Konfiguration) einer VM, um später darauf zurückzusetzen.",
+    "options": [
+      "Ein Zustandsabbild der VM zu einem bestimmten Zeitpunkt",
+      "Ein vollständiges Backup auf Band",
+      "Ein Netzwerk-Diagnosewerkzeug",
+      "Ein RAID-Level"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür wird eine USV (Unterbrechungsfreie Stromversorgung) primär eingesetzt?",
+    "a": "Überbrückung kurzzeitiger Stromausfälle für Server/Systeme",
+    "a_full": "Eine USV puffert Stromausfälle kurzfristig und ermöglicht ein geordnetes Herunterfahren kritischer Systeme.",
+    "options": [
+      "Überbrückung kurzzeitiger Stromausfälle für Server/Systeme",
+      "Erhöhung der Netzwerkgeschwindigkeit",
+      "Kühlung von Serverräumen",
+      "Verschlüsselung von Datenträgern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet SSD grundsätzlich von HDD?",
+    "a": "SSD speichert Daten elektronisch (Flash), HDD magnetisch auf rotierenden Scheiben",
+    "a_full": "SSDs nutzen Flash-Speicherchips ohne bewegliche Teile, HDDs speichern Daten magnetisch auf rotierenden Scheiben mit Lese-/Schreibkopf.",
+    "options": [
+      "SSD speichert Daten elektronisch (Flash), HDD magnetisch auf rotierenden Scheiben",
+      "SSD ist immer größer als HDD",
+      "HDD ist grundsätzlich schneller als SSD",
+      "Es gibt keinen technischen Unterschied"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was zeichnet RAID 0 aus?",
+    "a": "Striping ohne Redundanz - hohe Performance, aber kein Ausfallschutz",
+    "a_full": "RAID 0 verteilt Daten blockweise auf mehrere Platten (Striping) und erhöht so die Geschwindigkeit, bietet aber keinerlei Redundanz - fällt eine Platte aus, sind alle Daten verloren.",
+    "options": [
+      "Striping ohne Redundanz - hohe Performance, aber kein Ausfallschutz",
+      "Spiegelung mit vollem Ausfallschutz",
+      "Parität auf zwei Platten verteilt",
+      "Ein Backup-Verfahren ohne Festplatten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein JBOD (Just a Bunch Of Disks)?",
+    "a": "Mehrere Festplatten werden ohne RAID-Verbund zu einem großen Volumen zusammengefasst",
+    "a_full": "Bei JBOD werden einzelne Platten aneinandergereiht (Spanning) statt gestriped oder gespiegelt - ohne Performance- oder Redundanzvorteil eines echten RAID-Levels.",
+    "options": [
+      "Mehrere Festplatten werden ohne RAID-Verbund zu einem großen Volumen zusammengefasst",
+      "Ein RAID-Level mit doppelter Parität",
+      "Eine Cloud-Backup-Lösung",
+      "Ein Verschlüsselungsstandard für SSDs"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Thin Provisioning bei Speichersystemen?",
+    "a": "Es wird nur der tatsächlich genutzte Speicherplatz physisch belegt, nicht der zugewiesene",
+    "a_full": "Thin Provisioning weist einer VM oder einem Volume virtuell mehr Speicher zu, als physisch reserviert wird - Speicher wird erst bei tatsächlicher Nutzung belegt.",
+    "options": [
+      "Es wird nur der tatsächlich genutzte Speicherplatz physisch belegt, nicht der zugewiesene",
+      "Jeder VM wird sofort die volle Kapazität physisch reserviert",
+      "Ein Verfahren zur Datenkompression auf SSDs",
+      "Ein RAID-Level speziell für Thin Clients"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Unterschied zwischen Load Balancing und einem Failover-Cluster?",
+    "a": "Load Balancing verteilt Last aktiv auf mehrere Systeme, Failover-Cluster übernimmt erst bei Ausfall",
+    "a_full": "Load Balancing arbeitet mit mehreren gleichzeitig aktiven Systemen zur Lastverteilung, während ein Failover-Cluster im Normalfall meist nur ein aktives System hat und bei dessen Ausfall automatisch umschaltet.",
+    "options": [
+      "Load Balancing verteilt Last aktiv auf mehrere Systeme, Failover-Cluster übernimmt erst bei Ausfall",
+      "Beide Begriffe beschreiben identische Verfahren",
+      "Failover-Cluster benötigt keine Netzwerkverbindung",
+      "Load Balancing funktioniert nur mit einer einzigen Platte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der zentrale Unterschied zwischen einer VM und einem Container?",
+    "a": "Eine VM virtualisiert komplette Hardware inkl. eigenem Betriebssystem, ein Container teilt sich den Kernel des Host-OS",
+    "a_full": "Container (z.B. Docker) nutzen den Kernel des Hosts gemeinsam und sind dadurch deutlich leichtgewichtiger und schneller startbar als vollständige virtuelle Maschinen mit eigenem Gast-Betriebssystem.",
+    "options": [
+      "Eine VM virtualisiert komplette Hardware inkl. eigenem Betriebssystem, ein Container teilt sich den Kernel des Host-OS",
+      "Container benötigen immer mehr Ressourcen als VMs",
+      "Es gibt technisch keinen Unterschied",
+      "VMs können nicht auf Servern betrieben werden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist die Hauptaufgabe von UEFI gegenüber dem klassischen BIOS?",
+    "a": "Moderneres Firmware-Interface mit grafischer Oberfläche, Secure Boot und größeren Festplatten-Grenzen",
+    "a_full": "UEFI (Unified Extensible Firmware Interface) löst das ältere BIOS ab, unterstützt GPT-Partitionen über 2 TB, Secure Boot und bietet meist eine grafische Bedienoberfläche.",
+    "options": [
+      "Moderneres Firmware-Interface mit grafischer Oberfläche, Secure Boot und größeren Festplatten-Grenzen",
+      "Ein reines Backup-Programm für Server",
+      "Ein RAID-Controller-Treiber",
+      "Ein Netzwerkprotokoll für Fernwartung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür dient ein geplantes Wartungsfenster (Patchday) im Serverbetrieb?",
+    "a": "Definierter Zeitraum für Updates/Wartung mit minimaler Störung des laufenden Betriebs",
+    "a_full": "In einem Wartungsfenster werden Patches, Updates und Wartungsarbeiten gebündelt zu einem angekündigten, planbaren Zeitpunkt durchgeführt, um den Produktivbetrieb möglichst wenig zu stören.",
+    "options": [
+      "Definierter Zeitraum für Updates/Wartung mit minimaler Störung des laufenden Betriebs",
+      "Ein täglicher automatischer Neustart aller Server",
+      "Ein RAID-Level für Hochverfügbarkeit",
+      "Ein Protokoll zur Fehlerdiagnose"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet horizontale von vertikaler Skalierung?",
+    "a": "Horizontal: mehr Server hinzufügen, Vertikal: Ressourcen eines Servers erhöhen",
+    "a_full": "Horizontale Skalierung (Scale-out) fügt weitere Systeme hinzu, vertikale Skalierung (Scale-up) rüstet ein bestehendes System mit mehr CPU/RAM/Storage auf.",
+    "options": [
+      "Horizontal: mehr Server hinzufügen, Vertikal: Ressourcen eines Servers erhöhen",
+      "Beide Begriffe bedeuten dasselbe",
+      "Vertikale Skalierung betrifft nur Netzwerkkabel",
+      "Horizontale Skalierung ist immer günstiger als vertikale"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was beschreibt das Großvater-Vater-Sohn-Prinzip bei Backups?",
+    "a": "Ein rotierendes Generationenkonzept mit täglichen, wöchentlichen und monatlichen Sicherungen",
+    "a_full": "Das Großvater-Vater-Sohn-Verfahren (GFS) organisiert Backup-Medien in täglichen (Sohn), wöchentlichen (Vater) und monatlichen (Großvater) Sicherungsgenerationen zur effizienten Aufbewahrung.",
+    "options": [
+      "Ein rotierendes Generationenkonzept mit täglichen, wöchentlichen und monatlichen Sicherungen",
+      "Ein RAID-Level mit drei Paritätsplatten",
+      "Ein Cluster mit drei Serverknoten",
+      "Ein Verfahren zur Benutzerverwaltung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht die Abkürzung SAN im Storage-Kontext?",
+    "a": "Storage Area Network",
+    "a_full": "Ein SAN ist ein eigenständiges, meist über Fibre Channel oder iSCSI angebundenes Speichernetzwerk, das Servern blockbasierten Speicher zentral bereitstellt.",
+    "options": [
+      "Storage Area Network",
+      "System Area Node",
+      "Secure Access Network",
+      "Server Allocation Node"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Vorteil eines Hot-Spare-Laufwerks in einem RAID-Verbund?",
+    "a": "Es springt automatisch als Ersatz ein, sobald eine aktive Platte ausfällt",
+    "a_full": "Ein Hot-Spare läuft mit, aber ungenutzt im System und wird bei Ausfall einer aktiven Platte automatisch in den RAID-Verbund eingebunden, um den Rebuild sofort zu starten.",
+    "options": [
+      "Es springt automatisch als Ersatz ein, sobald eine aktive Platte ausfällt",
+      "Es erhöht dauerhaft die Lesegeschwindigkeit",
+      "Es ersetzt die Notwendigkeit von Backups vollständig",
+      "Es wird nur für RAID 0 benötigt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was misst die Kenngröße MTBF (Mean Time Between Failures)?",
+    "a": "Die durchschnittliche Zeit zwischen zwei Ausfällen eines Geräts",
+    "a_full": "MTBF ist eine statistische Kenngröße der Zuverlässigkeit, die angibt, wie lange ein System im Mittel störungsfrei läuft, bevor ein Ausfall auftritt.",
+    "options": [
+      "Die durchschnittliche Zeit zwischen zwei Ausfällen eines Geräts",
+      "Die maximale Betriebstemperatur eines Servers",
+      "Die Zeit bis zum vollständigen Datenverlust",
+      "Die Anzahl der RAID-Level eines Systems"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür steht die Abkürzung TCO?",
+    "a": "Total Cost of Ownership",
+    "a_full": "Total Cost of Ownership betrachtet die Gesamtkosten über die Lebensdauer.",
+    "options": [
+      "Total Cost of Ownership",
+      "Technical Control Office",
+      "Time Critical Operation",
+      "Target Cost Optimization"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt die ITIL-Methodik primär?",
+    "a": "Best Practices für IT-Service-Management",
+    "a_full": "ITIL (IT Infrastructure Library) liefert einen Best-Practice-Rahmen für die Planung, Erbringung und Verbesserung von IT-Services.",
+    "options": [
+      "Best Practices für IT-Service-Management",
+      "Ein Programmierparadigma",
+      "Eine Netzwerktopologie",
+      "Ein Verschlüsselungsstandard"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Lasten- und Pflichtenheft?",
+    "a": "Lastenheft = Anforderungen des Auftraggebers, Pflichtenheft = Umsetzungskonzept des Auftragnehmers",
+    "a_full": "Das Lastenheft beschreibt das WAS und WOFÜR aus Kundensicht, das Pflichtenheft das WIE der Umsetzung aus Sicht des Auftragnehmers.",
+    "options": [
+      "Lastenheft = Anforderungen des Auftraggebers, Pflichtenheft = Umsetzungskonzept des Auftragnehmers",
+      "Beide Begriffe meinen dasselbe Dokument",
+      "Lastenheft ist für Hardware, Pflichtenheft für Software",
+      "Pflichtenheft wird nur bei Reklamationen erstellt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was misst der Return on Investment (ROI)?",
+    "a": "Das Verhältnis von Gewinn zu eingesetztem Kapital",
+    "a_full": "Der ROI zeigt, wie rentabel eine Investition war, indem der erzielte Gewinn ins Verhältnis zum eingesetzten Kapital gesetzt wird.",
+    "options": [
+      "Das Verhältnis von Gewinn zu eingesetztem Kapital",
+      "Die Ausfallzeit eines Systems pro Jahr",
+      "Die Anzahl der Support-Tickets pro Monat",
+      "Die Lizenzkosten pro Nutzer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Prinzip beschreibt Kaizen im Prozessmanagement?",
+    "a": "Kontinuierlicher Verbesserungsprozess",
+    "a_full": "Kaizen steht für die Philosophie der kontinuierlichen, schrittweisen Verbesserung von Prozessen.",
+    "options": [
+      "Kontinuierlicher Verbesserungsprozess",
+      "Einmalige Großreform von Prozessen",
+      "Ein Projektmanagement-Framework wie Scrum",
+      "Eine Qualitätsnorm für Rechenzentren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was zeigt der Deckungsbeitrag in der Kostenrechnung?",
+    "a": "Den Betrag, der nach Abzug der variablen Kosten vom Umsatz zur Deckung der Fixkosten übrig bleibt",
+    "a_full": "Deckungsbeitrag = Umsatz - variable Kosten. Er zeigt, wie viel vom Verkaufspreis zur Deckung der Fixkosten und zur Gewinnerzielung beiträgt.",
+    "options": [
+      "Den Betrag, der nach Abzug der variablen Kosten vom Umsatz zur Deckung der Fixkosten übrig bleibt",
+      "Den kompletten Umsatz eines Produkts",
+      "Nur die Fixkosten eines Unternehmens",
+      "Den Gewinn nach Steuern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt der Break-Even-Point?",
+    "a": "Den Punkt, an dem Erlöse und Kosten gleich hoch sind (Gewinnschwelle)",
+    "a_full": "Am Break-Even-Point deckt der Umsatz genau die Gesamtkosten - ab diesem Punkt erwirtschaftet ein Produkt/Projekt Gewinn.",
+    "options": [
+      "Den Punkt, an dem Erlöse und Kosten gleich hoch sind (Gewinnschwelle)",
+      "Den Zeitpunkt der höchsten Fixkosten",
+      "Den Zeitpunkt, an dem alle Mitarbeiter Urlaub nehmen",
+      "Den Beginn eines Geschäftsjahres"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welcher Reihenfolge werden Rabatt und Skonto im klassischen Kalkulationsschema abgezogen?",
+    "a": "Zuerst Rabatt vom Listenpreis, danach Skonto vom Zielverkaufspreis",
+    "a_full": "Listenpreis minus Rabatt ergibt den Zielverkaufspreis; davon wird anschließend der Skonto (Sofortzahlungsabzug) berechnet.",
+    "options": [
+      "Zuerst Rabatt vom Listenpreis, danach Skonto vom Zielverkaufspreis",
+      "Zuerst Skonto, danach Rabatt",
+      "Rabatt und Skonto werden addiert",
+      "Beide werden gleichzeitig vom Bruttopreis abgezogen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche drei zentralen Rollen definiert das Scrum-Framework?",
+    "a": "Product Owner, Scrum Master und Entwicklungsteam",
+    "a_full": "Der Product Owner verantwortet das Product Backlog, der Scrum Master moderiert den Prozess, das Entwicklungsteam setzt die Arbeit in Sprints um.",
+    "options": [
+      "Product Owner, Scrum Master und Entwicklungsteam",
+      "Projektleiter, Tester und Kunde",
+      "CEO, CTO und Product Manager",
+      "Auftraggeber, Auftragnehmer und Berater"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein zentraler Unterschied zwischen dem Wasserfallmodell und agilen Vorgehensweisen?",
+    "a": "Wasserfall arbeitet in starren, aufeinanderfolgenden Phasen, agile Methoden iterativ mit flexiblen Anpassungen",
+    "a_full": "Das Wasserfallmodell durchläuft feste Phasen (Anforderung, Design, Umsetzung, Test) nacheinander, während agile Methoden wie Scrum in kurzen Iterationen arbeiten und Anforderungen laufend anpassen.",
+    "options": [
+      "Wasserfall arbeitet in starren, aufeinanderfolgenden Phasen, agile Methoden iterativ mit flexiblen Anpassungen",
+      "Beide Modelle sind inhaltlich identisch",
+      "Agile Methoden erlauben keine Kundenrückmeldung",
+      "Wasserfall wird nur bei Hardwareprojekten eingesetzt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Gewährleistung und Garantie?",
+    "a": "Gewährleistung ist gesetzlich vorgeschrieben, Garantie ist eine freiwillige Zusatzleistung des Verkäufers/Herstellers",
+    "a_full": "Die gesetzliche Gewährleistung (Sachmängelhaftung) gilt automatisch für jeden Kaufvertrag, eine Garantie ist ein freiwilliges, zusätzliches Versprechen des Verkäufers oder Herstellers.",
+    "options": [
+      "Gewährleistung ist gesetzlich vorgeschrieben, Garantie ist eine freiwillige Zusatzleistung des Verkäufers/Herstellers",
+      "Beide Begriffe sind rechtlich identisch",
+      "Garantie gilt immer länger als die Gewährleistung",
+      "Gewährleistung gilt nur für digitale Produkte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet eine Ersatzinvestition von einer Erweiterungsinvestition?",
+    "a": "Ersatzinvestition ersetzt vorhandene Anlagen, Erweiterungsinvestition schafft zusätzliche Kapazitäten",
+    "a_full": "Eine Ersatzinvestition tauscht abgenutzte oder veraltete Anlagen aus, eine Erweiterungsinvestition baut die Kapazität eines Unternehmens zusätzlich aus.",
+    "options": [
+      "Ersatzinvestition ersetzt vorhandene Anlagen, Erweiterungsinvestition schafft zusätzliche Kapazitäten",
+      "Beide Begriffe meinen denselben Vorgang",
+      "Erweiterungsinvestitionen betreffen nur Software",
+      "Ersatzinvestitionen sind immer teurer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was berechnet die statische Amortisationsrechnung?",
+    "a": "Den Zeitraum, bis eine Investition durch die erzielten Rückflüsse wieder ausgeglichen ist",
+    "a_full": "Die Amortisationsdauer zeigt, wie lange es dauert, bis die Summe der Rückflüsse einer Investition deren Anschaffungskosten deckt.",
+    "options": [
+      "Den Zeitraum, bis eine Investition durch die erzielten Rückflüsse wieder ausgeglichen ist",
+      "Den Gesamtgewinn eines Unternehmens pro Jahr",
+      "Die Höhe der jährlichen Abschreibung",
+      "Den Marktwert einer gebrauchten Anlage"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt die betriebswirtschaftliche Kennzahl Liquidität?",
+    "a": "Die Fähigkeit eines Unternehmens, seinen Zahlungsverpflichtungen fristgerecht nachzukommen",
+    "a_full": "Liquidität misst, ob und wie schnell ein Unternehmen fällige Zahlungen (z.B. an Lieferanten oder Mitarbeiter) begleichen kann.",
+    "options": [
+      "Die Fähigkeit eines Unternehmens, seinen Zahlungsverpflichtungen fristgerecht nachzukommen",
+      "Die Anzahl der Mitarbeiter eines Unternehmens",
+      "Den Marktanteil eines Unternehmens",
+      "Die technische Verfügbarkeit eines Servers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer legt die wesentlichen Inhalte eines Ausbildungsvertrags nach dem Berufsbildungsgesetz (BBiG) fest?",
+    "a": "Ausbildender (Betrieb) und Auszubildender einigen sich schriftlich, u.a. auf Ausbildungsziel, -dauer, Vergütung und Probezeit",
+    "a_full": "Nach § 11 BBiG müssen im Ausbildungsvertrag u.a. Art, Ziel und Dauer der Ausbildung, Ausbildungsvergütung, Arbeitszeit, Probezeit und Kündigungsregeln schriftlich festgehalten werden.",
+    "options": [
+      "Ausbildender (Betrieb) und Auszubildender einigen sich schriftlich, u.a. auf Ausbildungsziel, -dauer, Vergütung und Probezeit",
+      "Nur die IHK legt die Vertragsinhalte einseitig fest",
+      "Der Vertrag muss nicht schriftlich abgeschlossen werden",
+      "Die Ausbildungsvergütung ist gesetzlich nicht geregelt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wodurch übt der Betriebsrat Mitbestimmung im Unternehmen aus?",
+    "a": "Er vertritt die Interessen der Belegschaft u.a. bei sozialen, personellen und wirtschaftlichen Angelegenheiten",
+    "a_full": "Der Betriebsrat wird von den Arbeitnehmern gewählt und hat nach dem Betriebsverfassungsgesetz Mitspracherechte, etwa bei Arbeitszeiten, Einstellungen oder Kündigungen.",
+    "options": [
+      "Er vertritt die Interessen der Belegschaft u.a. bei sozialen, personellen und wirtschaftlichen Angelegenheiten",
+      "Er legt allein die Gehälter aller Mitarbeiter fest",
+      "Er ersetzt die Geschäftsführung des Unternehmens",
+      "Er ist nur für die IT-Sicherheit zuständig"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Vollkosten- und Teilkostenrechnung?",
+    "a": "Vollkostenrechnung verrechnet alle Kosten auf Produkte, Teilkostenrechnung nur die variablen (relevanten) Kosten",
+    "a_full": "Die Vollkostenrechnung schlüsselt sämtliche fixen und variablen Kosten auf Kostenträger um, während die Teilkostenrechnung (z.B. Deckungsbeitragsrechnung) nur variable Kosten den Produkten direkt zuordnet.",
+    "options": [
+      "Vollkostenrechnung verrechnet alle Kosten auf Produkte, Teilkostenrechnung nur die variablen (relevanten) Kosten",
+      "Beide Verfahren liefern immer identische Ergebnisse",
+      "Teilkostenrechnung berücksichtigt nur Personalkosten",
+      "Vollkostenrechnung wird nur bei Verlust angewendet"
+    ]
+  }
+]

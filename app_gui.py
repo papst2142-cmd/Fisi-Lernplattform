@@ -38,7 +38,7 @@ from fisi_core import (  # noqa: E402
     COLOR_DEPTHS, DBManager, InputError, KARTEIKARTEN, PROJEKTARBEITEN,
     QUIZ_QUESTIONS, RAID_LEVELS, SZENARIEN,
     ap1_theme_totals, content_totals, ihk_note, raid_report, screen_report,
-    search_content, subnet_report, theme_totals,
+    search_content, subnet_report, theme_totals, validate_content,
 )
 import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
@@ -2321,6 +2321,9 @@ def _run_selftest(root, app, log_path):
         failures.append("".join(traceback.format_exception(*exc_info)))
 
     root.report_callback_exception = record
+
+    # Kommen die Lerninhalte vollstaendig im fertigen Programm an?
+    failures.extend(validate_content())
 
     def step(keys):
         if not keys:

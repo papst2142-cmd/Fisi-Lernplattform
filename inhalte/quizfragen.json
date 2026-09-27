@@ -1,0 +1,1130 @@
+[
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll überträgt Dateien verschlüsselt über TCP-Port 22?",
+    "options": [
+      "SFTP / SSH",
+      "FTP",
+      "TFTP",
+      "HTTP"
+    ],
+    "a": "SFTP / SSH",
+    "exp": "SFTP nutzt SSH zur Verschlüsselung über TCP-Port 22."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll dient zur dynamischen Zuweisung von IP-Adressen?",
+    "options": [
+      "DHCP",
+      "DNS",
+      "ARP",
+      "ICMP"
+    ],
+    "a": "DHCP",
+    "exp": "DHCP (Dynamic Host Configuration Protocol) verteilt automatisch IP-Konfigurationen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf welcher OSI-Schicht arbeitet ein Layer-2-Switch?",
+    "options": [
+      "Schicht 2 (Sicherungsschicht)",
+      "Schicht 1 (Bitübertragung)",
+      "Schicht 3 (Vermittlungsschicht)",
+      "Schicht 4 (Transport)"
+    ],
+    "a": "Schicht 2 (Sicherungsschicht)",
+    "exp": "Layer-2-Switches verarbeiten MAC-Adressen auf Schicht 2 (Data Link Layer)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll wird von ping verwendet, um Erreichbarkeit zu prüfen?",
+    "options": [
+      "ICMP",
+      "IGMP",
+      "UDP",
+      "ARP"
+    ],
+    "a": "ICMP",
+    "exp": "Ping nutzt ICMP (Internet Control Message Protocol) Echo-Request und Echo-Reply."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist die Hauptaufgabe des IEEE-Standards 802.1Q?",
+    "options": [
+      "VLAN-Tagging im Ethernet-Frame",
+      "WLAN-Verschlüsselung",
+      "Spanning Tree Protocol",
+      "Power over Ethernet (PoE)"
+    ],
+    "a": "VLAN-Tagging im Ethernet-Frame",
+    "exp": "802.1Q definiert das Tagging von VLANs in Ethernet-Frames."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Standard-Subnetzmaske entspricht der CIDR-Notation /28?",
+    "options": [
+      "255.255.255.240",
+      "255.255.255.0",
+      "255.255.255.224",
+      "255.255.255.248"
+    ],
+    "a": "255.255.255.240",
+    "exp": "/28 entspricht 255.255.255.240 (16 Gesamt-IPs, 14 nutzbare Hosts)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Routing-Protokoll ist ein internes Link-State-Protokoll?",
+    "options": [
+      "OSPF",
+      "BGP",
+      "RIP",
+      "EGP"
+    ],
+    "a": "OSPF",
+    "exp": "OSPF (Open Shortest Path First) ist ein internes Link-State-Routing-Protokoll."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Port wird standardmäßig für unverschlüsseltes HTTP genutzt?",
+    "options": [
+      "80",
+      "443",
+      "8080",
+      "21"
+    ],
+    "a": "80",
+    "exp": "Port 80 TCP ist der Standard-Port für HTTP."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll wird für den Versand von E-Mails genutzt?",
+    "options": [
+      "SMTP",
+      "IMAP",
+      "POP3",
+      "FTP"
+    ],
+    "a": "SMTP",
+    "exp": "SMTP (Simple Mail Transfer Protocol) wird zum Versenden von E-Mails zwischen Servern verwendet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der Unterschied zwischen IMAP und POP3?",
+    "options": [
+      "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist lokal ab",
+      "POP3 ist verschlüsselt, IMAP nicht",
+      "IMAP funktioniert nur mit Exchange-Servern",
+      "Es gibt funktional keinen Unterschied"
+    ],
+    "a": "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist lokal ab",
+    "exp": "IMAP hält den Postfach-Zustand auf dem Server synchron (mehrere Geräte), POP3 lädt Mails in der Regel lokal herunter."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Gerät verbindet unterschiedliche Netzwerksegmente auf OSI-Schicht 3?",
+    "options": [
+      "Router",
+      "Switch",
+      "Hub",
+      "Repeater"
+    ],
+    "a": "Router",
+    "exp": "Router arbeiten auf Schicht 3 und leiten Pakete anhand von IP-Adressen zwischen unterschiedlichen Netzen weiter."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was beschreibt Broadcast in einem Netzwerk?",
+    "options": [
+      "Eine Nachricht wird an alle Teilnehmer im Netzsegment gesendet",
+      "Eine Nachricht wird nur an einen einzigen Empfänger gesendet",
+      "Eine Nachricht wird an eine definierte Gruppe gesendet",
+      "Eine Nachricht wird verschlüsselt übertragen"
+    ],
+    "a": "Eine Nachricht wird an alle Teilnehmer im Netzsegment gesendet",
+    "exp": "Ein Broadcast wird an alle Geräte im gleichen Broadcast-Domain-Segment gesendet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür wird Traceroute / tracert verwendet?",
+    "options": [
+      "Anzeigen der Route (Hops) eines Pakets zum Ziel",
+      "Messen der WLAN-Signalstärke",
+      "Scannen offener Ports",
+      "Anzeigen der MAC-Adresstabelle"
+    ],
+    "a": "Anzeigen der Route (Hops) eines Pakets zum Ziel",
+    "exp": "Traceroute zeigt alle Zwischenstationen (Hops) auf dem Weg zu einem Zielhost inklusive Laufzeiten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist eine DMZ (Demilitarized Zone) im Netzwerkkontext?",
+    "options": [
+      "Ein abgeschirmtes Zwischennetz für öffentlich erreichbare Server",
+      "Ein Backup-Rechenzentrum",
+      "Ein VLAN für Gäste-WLAN",
+      "Ein Verschlüsselungsprotokoll"
+    ],
+    "a": "Ein abgeschirmtes Zwischennetz für öffentlich erreichbare Server",
+    "exp": "Die DMZ trennt öffentlich erreichbare Dienste (z.B. Webserver) vom internen, schützenswerten Netz."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Adressbereich ist laut RFC 1918 für private Netze reserviert?",
+    "options": [
+      "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16",
+      "127.0.0.0/8",
+      "169.254.0.0/16",
+      "224.0.0.0/4"
+    ],
+    "a": "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16",
+    "exp": "RFC 1918 definiert diese drei Bereiche als privaten, nicht öffentlich routbaren Adressraum."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht MTU bei Netzwerkverbindungen?",
+    "options": [
+      "Maximum Transmission Unit - maximale Paketgröße",
+      "Maximum Transfer Uplink",
+      "Media Traffic Unit",
+      "Multi Terminal Unit"
+    ],
+    "a": "Maximum Transmission Unit - maximale Paketgröße",
+    "exp": "Die MTU gibt die maximale Größe eines Datenpakets an, das ohne Fragmentierung übertragen werden kann (Ethernet-Standard: 1500 Byte)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel der IT-Sicherheit stellt sicher, dass Daten nicht unbefugt verändert werden?",
+    "options": [
+      "Integrität",
+      "Vertraulichkeit",
+      "Verfügbarkeit",
+      "Authentizität"
+    ],
+    "a": "Integrität",
+    "exp": "Integrität schützt vor unautorisierter Manipulation von Daten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches symmetrische Verschlüsselungsverfahren gilt heute als weltweiter Standard?",
+    "options": [
+      "AES",
+      "DES",
+      "RSA",
+      "3DES"
+    ],
+    "a": "AES",
+    "exp": "AES (Advanced Encryption Standard) ist der aktuelle Industriestandard für symmetrische Verschlüsselung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist das Hauptmerkmal einer asymmetrischen Verschlüsselung?",
+    "options": [
+      "Ein öffentlicher Schlüssel (Public Key) und ein privater Schlüssel (Private Key)",
+      "Ein gemeinsamer geheimer Schlüssel für Sender und Empfänger",
+      "Nur Einweg-Hashes ohne Entschlüsselung",
+      "Automatische Zertifikatsgenerierung"
+    ],
+    "a": "Ein öffentlicher Schlüssel (Public Key) und ein privater Schlüssel (Private Key)",
+    "exp": "Asymmetrische Verfahren nutzen ein Schlüsselpaar aus Public Key (Verschlüsseln) und Private Key (Entschlüsseln)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt der Begriff Phishing?",
+    "options": [
+      "Täuschung von Benutzern über gefälschte Mails/Websites zur Erlangung von Zugangsdaten",
+      "Überlastung von Servern durch Massenanfragen",
+      "Einschleusen von Schadcode über Formulareingaben",
+      "Abfangen von Daten im lokalen WLAN"
+    ],
+    "a": "Täuschung von Benutzern über gefälschte Mails/Websites zur Erlangung von Zugangsdaten",
+    "exp": "Phishing ist Social Engineering zur Entwendung vertraulicher Daten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Gemäß DSGVO müssen Datenschutzverstöße an die Aufsichtsbehörde gemeldet werden. Wie lang ist die Frist?",
+    "options": [
+      "72 Stunden",
+      "24 Stunden",
+      "7 Tage",
+      "14 Tage"
+    ],
+    "a": "72 Stunden",
+    "exp": "Die Meldung von Datenpannen nach Art. 33 DSGVO muss binnen 72 Stunden erfolgen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt die 3-2-1-Backup-Regel?",
+    "options": [
+      "3 Kopien, 2 verschiedene Medien, 1 Kopie außer Haus",
+      "3 Backups pro Tag, 2 Wochen Aufbewahrung, 1 Jahresarchiv",
+      "3 Cloud-Anbieter, 2 lokale Server, 1 Bandlaufwerk",
+      "3 Vollbackups, 2 inkrementelle, 1 differentielles"
+    ],
+    "a": "3 Kopien, 2 verschiedene Medien, 1 Kopie außer Haus",
+    "exp": "3-2-1-Regel: Mindestens 3 Datenkopien, 2 unterschiedliche Medientypen, 1 extern gelagert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Zero-Day-Exploit?",
+    "options": [
+      "Ausnutzung einer Sicherheitslücke, für die noch kein Patch existiert",
+      "Ein Angriff, der genau um Mitternacht stattfindet",
+      "Ein Backup ohne Aufbewahrungsfrist",
+      "Ein Verschlüsselungsverfahren ohne Schlüssel"
+    ],
+    "a": "Ausnutzung einer Sicherheitslücke, für die noch kein Patch existiert",
+    "exp": "Ein Zero-Day-Exploit nutzt eine Schwachstelle aus, bevor der Hersteller einen Patch bereitstellen konnte."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt das Prinzip Least Privilege?",
+    "options": [
+      "Nutzer erhalten nur die minimal notwendigen Rechte für ihre Aufgabe",
+      "Administratoren erhalten automatisch alle Rechte",
+      "Passwörter müssen mindestens 8 Zeichen haben",
+      "Jeder Nutzer bekommt Gastrechte"
+    ],
+    "a": "Nutzer erhalten nur die minimal notwendigen Rechte für ihre Aufgabe",
+    "exp": "Least Privilege minimiert Schaden im Missbrauchsfall, indem nur notwendige Berechtigungen vergeben werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Zweck eines Penetrationstests?",
+    "options": [
+      "Gezieltes, autorisiertes Aufspüren von Sicherheitslücken durch simulierte Angriffe",
+      "Automatisches Patchen von Systemen",
+      "Löschen alter Log-Dateien",
+      "Messen der Netzwerkgeschwindigkeit"
+    ],
+    "a": "Gezieltes, autorisiertes Aufspüren von Sicherheitslücken durch simulierte Angriffe",
+    "exp": "Ein Penetrationstest simuliert reale Angriffe, um Schwachstellen aufzudecken, bevor es echte Angreifer tun."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Social Engineering?",
+    "options": [
+      "Manipulation von Personen, um an vertrauliche Informationen zu gelangen",
+      "Automatisiertes Scannen von Netzwerken",
+      "Ein Verschlüsselungsverfahren",
+      "Ein Framework für agile Teams"
+    ],
+    "a": "Manipulation von Personen, um an vertrauliche Informationen zu gelangen",
+    "exp": "Social Engineering nutzt psychologische Manipulation statt technischer Lücken, um an Informationen oder Zugriff zu gelangen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht IDS im Sicherheitskontext?",
+    "options": [
+      "Intrusion Detection System",
+      "Internal Data Storage",
+      "Integrated Device Security",
+      "Instant Data Sync"
+    ],
+    "a": "Intrusion Detection System",
+    "exp": "Ein IDS überwacht Netzwerk- oder Systemaktivitäten und meldet verdächtige Ereignisse."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Unterschied zwischen einem IDS und einem IPS?",
+    "options": [
+      "IDS erkennt und meldet nur, IPS kann Angriffe zusätzlich aktiv blockieren",
+      "IDS ist nur Hardware, IPS nur Software",
+      "IPS überwacht E-Mails, IDS überwacht Netzwerke",
+      "Es gibt keinen Unterschied"
+    ],
+    "a": "IDS erkennt und meldet nur, IPS kann Angriffe zusätzlich aktiv blockieren",
+    "exp": "Ein Intrusion Prevention System (IPS) kann im Gegensatz zum reinen Intrusion Detection System (IDS) aktiv eingreifen und Verkehr blockieren."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Hashing im Sicherheitskontext?",
+    "options": [
+      "Umwandlung von Daten in einen Prüfwert fester Länge, der nicht umkehrbar ist",
+      "Ein symmetrisches Verschlüsselungsverfahren",
+      "Ein Backup-Verfahren",
+      "Ein Netzwerkprotokoll"
+    ],
+    "a": "Umwandlung von Daten in einen Prüfwert fester Länge, der nicht umkehrbar ist",
+    "exp": "Hashfunktionen erzeugen aus beliebigen Daten einen eindeutigen Prüfwert, z.B. zur Integritätsprüfung oder Passwortspeicherung - Hashing ist nicht umkehrbar."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie hoch kann ein DSGVO-Bußgeld maximal ausfallen?",
+    "options": [
+      "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
+      "Maximal 1.000 Euro pro Verstoß",
+      "Maximal 500.000 Euro pauschal",
+      "Es drohen keine Bußgelder, nur Verwarnungen"
+    ],
+    "a": "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
+    "exp": "Art. 83 DSGVO sieht Bußgelder bis 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes vor, je nachdem, was höher ist."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt Kerckhoffs' Prinzip in der Kryptografie?",
+    "options": [
+      "Die Sicherheit eines Verschlüsselungsverfahrens darf nur vom geheimen Schlüssel abhängen, nicht von der Geheimhaltung des Algorithmus",
+      "Verschlüsselung ist nur bei geheimem Algorithmus sicher",
+      "Jeder Schlüssel darf nur einmal verwendet werden",
+      "Passwörter müssen mindestens 20 Zeichen lang sein"
+    ],
+    "a": "Die Sicherheit eines Verschlüsselungsverfahrens darf nur vom geheimen Schlüssel abhängen, nicht von der Geheimhaltung des Algorithmus",
+    "exp": "Kerckhoffs' Prinzip fordert offen dokumentierte, öffentlich prüfbare Algorithmen - Sicherheit entsteht allein durch den geheimen Schlüssel."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der wesentliche Sicherheitsvorteil von WPA3 gegenüber WPA2 bei WLAN?",
+    "options": [
+      "Individuelle Verschlüsselung pro Verbindung (Forward Secrecy) und besserer Schutz gegen Offline-Wörterbuchangriffe",
+      "WPA3 benötigt kein Passwort mehr",
+      "WPA3 funktioniert nur mit 5-GHz-WLAN",
+      "WPA3 verzichtet komplett auf Verschlüsselung"
+    ],
+    "a": "Individuelle Verschlüsselung pro Verbindung (Forward Secrecy) und besserer Schutz gegen Offline-Wörterbuchangriffe",
+    "exp": "WPA3 nutzt SAE (Simultaneous Authentication of Equals) und schützt so besser gegen Brute-Force- und Wörterbuchangriffe auf das Passwort."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Honeypot in der IT-Sicherheit?",
+    "options": [
+      "Ein absichtlich verwundbar aufgestelltes System, um Angreifer anzulocken und zu beobachten",
+      "Ein Passwort-Tresor für Administratoren",
+      "Ein besonders stark abgesichertes Produktivsystem",
+      "Ein Verschlüsselungsverfahren für Datenbanken"
+    ],
+    "a": "Ein absichtlich verwundbar aufgestelltes System, um Angreifer anzulocken und zu beobachten",
+    "exp": "Ein Honeypot dient als Köder, um Angriffsmuster zu analysieren und Angreifer vom eigentlichen Produktivsystem abzulenken."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wodurch lässt sich ein Brute-Force-Angriff auf Login-Formulare wirksam erschweren?",
+    "options": [
+      "Kontosperrung/Verzögerung nach mehreren Fehlversuchen und 2FA",
+      "Kürzere Passwörter erlauben",
+      "Login-Versuche unbegrenzt und ohne Verzögerung zulassen",
+      "Auf Verschlüsselung der Übertragung verzichten"
+    ],
+    "a": "Kontosperrung/Verzögerung nach mehreren Fehlversuchen und 2FA",
+    "exp": "Rate-Limiting, temporäre Sperren und Zwei-Faktor-Authentifizierung erschweren automatisiertes Durchprobieren von Passwörtern erheblich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was passiert bei einer SQL-Injection?",
+    "options": [
+      "Ein Angreifer schleust über ungeprüfte Eingabefelder eigenen SQL-Code in eine Datenbankabfrage ein",
+      "Ein Angreifer überflutet die Datenbank mit Anfragen (DoS)",
+      "Ein Angreifer verschlüsselt die komplette Datenbank",
+      "Ein Angreifer fälscht die IP-Adresse des Datenbankservers"
+    ],
+    "a": "Ein Angreifer schleust über ungeprüfte Eingabefelder eigenen SQL-Code in eine Datenbankabfrage ein",
+    "exp": "SQL-Injection nutzt fehlende Eingabevalidierung aus, um eigene SQL-Befehle auszuführen - Prepared Statements schützen wirksam davor."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt Cross-Site-Scripting (XSS)?",
+    "options": [
+      "Einschleusen von schädlichem Skript-Code in Webseiten, der im Browser anderer Nutzer ausgeführt wird",
+      "Ein Verfahren zum Testen der Ladezeit einer Webseite",
+      "Ein Protokoll zur Übertragung von Cookies",
+      "Eine Methode zur Verschlüsselung von Formulardaten"
+    ],
+    "a": "Einschleusen von schädlichem Skript-Code in Webseiten, der im Browser anderer Nutzer ausgeführt wird",
+    "exp": "XSS nutzt unzureichend gefilterte Nutzereingaben, um Skriptcode im Kontext einer vertrauenswürdigen Webseite bei anderen Besuchern auszuführen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür wird Sandboxing in der IT-Sicherheit eingesetzt?",
+    "options": [
+      "Ausführung potenziell unsicherer Programme in einer isolierten Umgebung ohne Zugriff auf das restliche System",
+      "Verschlüsselung von Datenbankinhalten",
+      "Automatisches Erstellen von Backups",
+      "Physische Absicherung von Serverräumen"
+    ],
+    "a": "Ausführung potenziell unsicherer Programme in einer isolierten Umgebung ohne Zugriff auf das restliche System",
+    "exp": "Eine Sandbox kapselt Programme ab, sodass mögliche Schadwirkungen das Host-System nicht beeinträchtigen können."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Zweck des TLS-Handshakes zu Beginn einer HTTPS-Verbindung?",
+    "options": [
+      "Aushandeln der Verschlüsselungsparameter und Authentifizierung des Servers per Zertifikat",
+      "Übertragung der eigentlichen Nutzdaten unverschlüsselt",
+      "Löschen alter Sitzungsdaten auf dem Server",
+      "Feststellen der physischen Entfernung zum Server"
+    ],
+    "a": "Aushandeln der Verschlüsselungsparameter und Authentifizierung des Servers per Zertifikat",
+    "exp": "Im TLS-Handshake einigen sich Client und Server auf Verschlüsselungsverfahren und Sitzungsschlüssel, der Server weist sich mit seinem Zertifikat aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient eine digitale Signatur?",
+    "options": [
+      "Nachweis der Authentizität und Integrität eines Dokuments durch den privaten Schlüssel des Absenders",
+      "Verschlüsselung des gesamten Dokumentinhalts",
+      "Komprimierung großer Dateianhänge",
+      "Automatische Übersetzung von Dokumenten"
+    ],
+    "a": "Nachweis der Authentizität und Integrität eines Dokuments durch den privaten Schlüssel des Absenders",
+    "exp": "Eine digitale Signatur wird mit dem privaten Schlüssel des Absenders erstellt und mit dessen öffentlichem Schlüssel überprüft - sie bestätigt Herkunft und Unverändertheit."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist das Ziel des IT-Grundschutzes nach BSI?",
+    "options": [
+      "Ein methodisches Vorgehen zur Etablierung eines angemessenen Sicherheitsniveaus in Organisationen",
+      "Eine Vorschrift ausschließlich für Bundesbehörden ohne Praxisrelevanz für Unternehmen",
+      "Ein reines Antivirenprogramm",
+      "Ein Verschlüsselungsstandard für E-Mails"
+    ],
+    "a": "Ein methodisches Vorgehen zur Etablierung eines angemessenen Sicherheitsniveaus in Organisationen",
+    "exp": "Der BSI-IT-Grundschutz liefert standardisierte Methoden und Bausteine, um Informationssicherheit systematisch zu planen, umzusetzen und zu prüfen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Zweck erfüllen regelmäßige Security-Awareness-Schulungen?",
+    "options": [
+      "Mitarbeiter für Gefahren wie Phishing und Social Engineering sensibilisieren",
+      "Ausschließlich technische Firewalls konfigurieren",
+      "Passwörter der Mitarbeiter zentral verwalten",
+      "Hardware-Inventuren durchführen"
+    ],
+    "a": "Mitarbeiter für Gefahren wie Phishing und Social Engineering sensibilisieren",
+    "exp": "Da viele Angriffe auf den 'Faktor Mensch' zielen, reduzieren Awareness-Schulungen das Risiko erfolgreicher Social-Engineering-Angriffe deutlich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet ein 'Air Gap' im Backup-Konzept?",
+    "options": [
+      "Mindestens eine Sicherungskopie ist physisch/logisch komplett vom Netzwerk getrennt",
+      "Backups werden ausschließlich in der Cloud gespeichert",
+      "Backups laufen ohne jede Verschlüsselung",
+      "Es wird auf Backups vollständig verzichtet"
+    ],
+    "a": "Mindestens eine Sicherungskopie ist physisch/logisch komplett vom Netzwerk getrennt",
+    "exp": "Ein Air Gap schützt Backups z.B. vor Ransomware, da eine getrennte Kopie von einem Netzwerkangriff nicht erreicht werden kann."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Rootkit?",
+    "options": [
+      "Schadsoftware, die sich tief im System versteckt und ihre Präsenz sowie Aktivitäten verschleiert",
+      "Ein Werkzeug zur Systemadministration mit Root-Rechten",
+      "Ein Verfahren zur Verschlüsselung von Root-Verzeichnissen",
+      "Ein Backup-Tool für Linux-Systeme"
+    ],
+    "a": "Schadsoftware, die sich tief im System versteckt und ihre Präsenz sowie Aktivitäten verschleiert",
+    "exp": "Rootkits manipulieren oft das Betriebssystem selbst, um Erkennung durch Antivirenprogramme oder Administratoren zu vermeiden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Keylogger?",
+    "options": [
+      "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z.B. Passwörter abzugreifen",
+      "Ein Programm zur Protokollierung von Serverauslastung",
+      "Ein Tool zur Verwaltung von Verschlüsselungsschlüsseln",
+      "Ein Protokoll zur Fernwartung von Systemen"
+    ],
+    "a": "Schadsoftware oder Hardware, die Tastatureingaben protokolliert, um z.B. Passwörter abzugreifen",
+    "exp": "Keylogger zeichnen Tastatureingaben mit, um vertrauliche Informationen wie Zugangsdaten unbemerkt auszuspähen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet eine Paketfilter-Firewall von einer Application-Layer-Firewall (Proxy-Firewall)?",
+    "options": [
+      "Paketfilter prüft nur Header-Informationen, Application-Layer-Firewall analysiert den Inhalt auf Anwendungsebene",
+      "Beide arbeiten identisch auf Schicht 7",
+      "Paketfilter kann keine IP-Adressen filtern",
+      "Application-Layer-Firewalls filtern nur E-Mails"
+    ],
+    "a": "Paketfilter prüft nur Header-Informationen, Application-Layer-Firewall analysiert den Inhalt auf Anwendungsebene",
+    "exp": "Application-Layer-Firewalls (Proxies) können den Inhalt von Anwendungsprotokollen (z.B. HTTP) tiefergehend prüfen als einfache Paketfilter."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches RAID-Level bietet Spiegelung ohne Parität auf mindestens 2 Platten?",
+    "options": [
+      "RAID 1",
+      "RAID 0",
+      "RAID 5",
+      "RAID 6"
+    ],
+    "a": "RAID 1",
+    "exp": "RAID 1 spiegelt alle Daten 1:1 auf mindestens zwei Festplatten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Festplatten können bei einem RAID 6 gleichzeitig ohne Datenverlust ausfallen?",
+    "options": [
+      "2 Festplatten",
+      "1 Festplatte",
+      "3 Festplatten",
+      "Keine"
+    ],
+    "a": "2 Festplatten",
+    "exp": "RAID 6 nutzt duale Parität und verkraftet den Ausfall von bis zu 2 Platten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was versteht man unter einem Hypervisor Typ 1 (Bare-Metal)?",
+    "options": [
+      "Läuft direkt auf der Hardware ohne zugrunde liegendes Host-Betriebssystem",
+      "Benötigt ein installiertes Windows/Linux als Host",
+      "Ist eine reine Softwarelösung für Docker-Container",
+      "Wird ausschließlich in Webbrowsern ausgeführt"
+    ],
+    "a": "Läuft direkt auf der Hardware ohne zugrunde liegendes Host-Betriebssystem",
+    "exp": "Typ-1-Hypervisoren (z.B. VMware ESXi, Proxmox VE) installieren direkt auf der nackten Hardware."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Protokoll verbindet Speichernetzwerke (SAN) über IP-Netzwerke?",
+    "options": [
+      "iSCSI",
+      "Fibre Channel",
+      "NFS",
+      "SMB"
+    ],
+    "a": "iSCSI",
+    "exp": "iSCSI kapselt SCSI-Befehle in TCP/IP-Paketen für kostengünstige SAN-Anbindungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht die Abkürzung NVMe?",
+    "options": [
+      "Non-Volatile Memory Express",
+      "New Virtual Memory Engine",
+      "Network Video Management Extension",
+      "Non-Virtual Module Environment"
+    ],
+    "a": "Non-Volatile Memory Express",
+    "exp": "NVMe ist ein Protokoll für den schnellen Zugriff auf SSDs über den PCIe-Bus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Vorteil von RAID 10 gegenüber RAID 5?",
+    "options": [
+      "Deutlich bessere Schreibperformance und schnellerer Rebuild bei Ausfall",
+      "Geringerer Speicherbedarf pro Festplatte",
+      "Weniger benötigte Festplatten",
+      "Höhere Kapazitätseffizienz"
+    ],
+    "a": "Deutlich bessere Schreibperformance und schnellerer Rebuild bei Ausfall",
+    "exp": "RAID 10 (Striping + Mirroring) bietet sehr gute Schreib-/Leseperformance und einen schnellen, unkomplizierten Rebuild, kostet aber 50% Kapazität."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Cluster im Serverkontext?",
+    "options": [
+      "Ein Verbund mehrerer Server, die gemeinsam einen Dienst hochverfügbar bereitstellen",
+      "Eine RAID-Konfiguration",
+      "Ein einzelner Hochleistungsserver",
+      "Ein Backup-Medium"
+    ],
+    "a": "Ein Verbund mehrerer Server, die gemeinsam einen Dienst hochverfügbar bereitstellen",
+    "exp": "Ein Cluster bündelt mehrere Server, um Ausfallsicherheit (Failover) und/oder Lastverteilung zu erreichen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Hot-Swap bei Festplatten?",
+    "options": [
+      "Austausch defekter Laufwerke im laufenden Betrieb ohne Herunterfahren",
+      "Automatisches Klonen von Laufwerken",
+      "Verschlüsselung im laufenden Betrieb",
+      "Beschleunigtes Booten des Systems"
+    ],
+    "a": "Austausch defekter Laufwerke im laufenden Betrieb ohne Herunterfahren",
+    "exp": "Hot-Swap-fähige Laufwerke können bei laufendem System getauscht werden, ohne den Betrieb zu unterbrechen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet Cold Site, Warm Site und Hot Site im Notfallmanagement?",
+    "options": [
+      "Sie unterscheiden sich im Grad der Betriebsbereitschaft eines Ausweich-Rechenzentrums",
+      "Sie beschreiben unterschiedliche RAID-Level",
+      "Sie beschreiben die Temperatur im Serverraum",
+      "Sie sind Synonyme für dasselbe Konzept"
+    ],
+    "a": "Sie unterscheiden sich im Grad der Betriebsbereitschaft eines Ausweich-Rechenzentrums",
+    "exp": "Cold Site (nur Infrastruktur), Warm Site (teilweise vorbereitet) und Hot Site (sofort einsatzbereit) unterscheiden sich in Wiederanlaufzeit und Kosten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht IOPS bei Speichermedien?",
+    "options": [
+      "Input/Output Operations Per Second",
+      "Internal Operating Power Supply",
+      "Input Output Protocol Standard",
+      "Integrated Object Processing System"
+    ],
+    "a": "Input/Output Operations Per Second",
+    "exp": "IOPS misst, wie viele Lese-/Schreiboperationen ein Speichermedium pro Sekunde verarbeiten kann - eine wichtige Kenngröße besonders bei SSDs und Datenbanken."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Festplatten werden für RAID 5 mindestens benötigt?",
+    "options": [
+      "3",
+      "2",
+      "4",
+      "6"
+    ],
+    "a": "3",
+    "exp": "RAID 5 (Striping mit verteilter Parität) benötigt mindestens 3 Festplatten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Festplatten werden für RAID 6 mindestens benötigt?",
+    "options": [
+      "4",
+      "2",
+      "3",
+      "5"
+    ],
+    "a": "4",
+    "exp": "RAID 6 mit doppelter, verteilter Parität benötigt mindestens 4 Festplatten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist beim Aufbau von RAID 10 charakteristisch?",
+    "options": [
+      "Kombination aus Spiegelung (RAID 1) und Striping (RAID 0) über mindestens 4 Platten",
+      "Nur eine einzige Parity-Platte für alle Daten",
+      "Reine Spiegelung ohne Striping auf 2 Platten",
+      "Striping ohne jede Redundanz"
+    ],
+    "a": "Kombination aus Spiegelung (RAID 1) und Striping (RAID 0) über mindestens 4 Platten",
+    "exp": "RAID 10 spiegelt zunächst Plattenpaare (RAID 1) und verteilt die Daten dann per Striping (RAID 0) darüber - hohe Performance und Ausfallsicherheit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht die Abkürzung SATA bei Festplattenschnittstellen?",
+    "options": [
+      "Serial Advanced Technology Attachment",
+      "System Area Transfer Adapter",
+      "Storage Access Transmission Architecture",
+      "Serial Array Technology Access"
+    ],
+    "a": "Serial Advanced Technology Attachment",
+    "exp": "SATA ist eine serielle Schnittstelle zum Anschluss von Festplatten und SSDs an das Mainboard."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Kaltstart (Cold Boot) gegenüber einem Warmstart (Reboot)?",
+    "options": [
+      "Vollständiges Aus- und Wiedereinschalten der Stromversorgung, statt nur eines Neustarts der Software",
+      "Beide Begriffe beschreiben denselben Vorgang",
+      "Ein Kaltstart betrifft nur die Netzwerkkarte",
+      "Ein Warmstart löscht immer alle Daten"
+    ],
+    "a": "Vollständiges Aus- und Wiedereinschalten der Stromversorgung, statt nur eines Neustarts der Software",
+    "exp": "Ein Kaltstart trennt das System vollständig von der Stromversorgung, während ein Warmstart nur das Betriebssystem neu startet, ohne die Hardware auszuschalten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Hauptvorteil von NVMe-SSDs gegenüber klassischen SATA-SSDs?",
+    "options": [
+      "Deutlich höhere Geschwindigkeit durch direkte Anbindung über PCIe",
+      "NVMe-SSDs sind grundsätzlich günstiger",
+      "NVMe-SSDs benötigen keine Stromversorgung",
+      "SATA-SSDs bieten mehr parallele Warteschlangen als NVMe"
+    ],
+    "a": "Deutlich höhere Geschwindigkeit durch direkte Anbindung über PCIe",
+    "exp": "NVMe nutzt den schnelleren PCIe-Bus direkt und viele parallele Warteschlangen, wodurch deutlich höhere Datenraten als über SATA möglich sind."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür wird ein KVM-Switch typischerweise verwendet?",
+    "options": [
+      "Steuerung mehrerer Rechner mit nur einer Tastatur, Maus und einem Monitor",
+      "Virtualisierung mehrerer Betriebssysteme auf einem Host",
+      "Verwaltung von RAID-Arrays über das Netzwerk",
+      "Verschlüsselung von Tastatureingaben"
+    ],
+    "a": "Steuerung mehrerer Rechner mit nur einer Tastatur, Maus und einem Monitor",
+    "exp": "Ein KVM-Switch (Keyboard, Video, Mouse) erlaubt das Umschalten zwischen mehreren angeschlossenen Rechnern mit nur einem Satz Eingabegeräte und Monitor."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was beschreibt Redundanz allgemein im IT-Systembetrieb?",
+    "options": [
+      "Das Vorhandensein zusätzlicher, funktional gleicher Komponenten, um Ausfälle abzufedern",
+      "Die vollständige Auslastung eines Systems",
+      "Das Löschen doppelt vorhandener Dateien",
+      "Ein Backup-Verfahren ohne Wiederherstellungsmöglichkeit"
+    ],
+    "a": "Das Vorhandensein zusätzlicher, funktional gleicher Komponenten, um Ausfälle abzufedern",
+    "exp": "Redundante Komponenten (z.B. Netzteile, RAID, Cluster-Knoten) übernehmen die Funktion, wenn eine andere Komponente ausfällt, und erhöhen so die Verfügbarkeit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine typische Aufgabe von Puppet, Ansible oder ähnlichen Tools im Systembetrieb?",
+    "options": [
+      "Automatisierte, reproduzierbare Konfiguration von Servern (Configuration Management)",
+      "Erstellung von RAID-Arrays auf Hardwareebene",
+      "Physische Verkabelung von Netzwerkports",
+      "Verschlüsselung von Backup-Medien"
+    ],
+    "a": "Automatisierte, reproduzierbare Konfiguration von Servern (Configuration Management)",
+    "exp": "Configuration-Management-Tools automatisieren das Aufsetzen und Konfigurieren vieler Server konsistent nach definierten Vorgaben (Infrastructure as Code)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet eine differentielle Sicherung von einer inkrementellen Sicherung?",
+    "options": [
+      "Differentiell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
+      "Beide Verfahren sind identisch",
+      "Differentiell sichert nur einmal im Monat",
+      "Inkrementell sichert immer den kompletten Datenbestand"
+    ],
+    "a": "Differentiell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
+    "exp": "Differentielle Backups wachsen mit der Zeit an (bis zur nächsten Vollsicherung), inkrementelle Backups bleiben klein, benötigen bei der Wiederherstellung aber alle Zwischenschritte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht die Abkürzung RAID?",
+    "options": [
+      "Redundant Array of Independent Disks",
+      "Rapid Access Internal Drive",
+      "Remote Attached Internal Disk",
+      "Redundant Access to Internal Data"
+    ],
+    "a": "Redundant Array of Independent Disks",
+    "exp": "RAID beschreibt den Verbund mehrerer physischer Festplatten zu einem logischen Laufwerk zur Erhöhung von Performance und/oder Ausfallsicherheit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Zweck eines Betriebssystem-Images (z.B. per Clonezilla) in der Systemadministration?",
+    "options": [
+      "Schnelle, identische Wiederherstellung oder Verteilung eines vorkonfigurierten Systemzustands",
+      "Verschlüsselung des gesamten Netzwerkverkehrs",
+      "Automatische RAID-Konfiguration ohne Controller",
+      "Überwachung der CPU-Temperatur in Echtzeit"
+    ],
+    "a": "Schnelle, identische Wiederherstellung oder Verteilung eines vorkonfigurierten Systemzustands",
+    "exp": "Ein Image speichert den kompletten Zustand eines Systems und ermöglicht so schnelles Rollout gleichartiger Arbeitsplätze oder Server."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht die Abkürzung DAS bei Speichersystemen?",
+    "options": [
+      "Direct Attached Storage",
+      "Data Access Server",
+      "Dynamic Allocation Storage",
+      "Distributed Application Storage"
+    ],
+    "a": "Direct Attached Storage",
+    "exp": "DAS bezeichnet Speicher, der direkt (ohne Netzwerk) an einen einzelnen Server angeschlossen ist, im Gegensatz zu NAS oder SAN."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Vorteil eines Blade-Servers gegenüber klassischen Rack-Servern?",
+    "options": [
+      "Höhere Packungsdichte durch gemeinsame Nutzung von Stromversorgung, Kühlung und Verkabelung im Chassis",
+      "Blade-Server benötigen keinerlei Stromversorgung",
+      "Blade-Server sind ausschließlich für Heimanwender gedacht",
+      "Blade-Server können kein RAID nutzen"
+    ],
+    "a": "Höhere Packungsdichte durch gemeinsame Nutzung von Stromversorgung, Kühlung und Verkabelung im Chassis",
+    "exp": "Blade-Server teilen sich im Blade-Chassis gemeinsame Infrastruktur, was Platz, Verkabelung und Energieeffizienz im Rechenzentrum verbessert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür steht die Abkürzung TCO?",
+    "options": [
+      "Total Cost of Ownership",
+      "Technical Control Operations",
+      "Total Capacity Optimization",
+      "Time Critical Output"
+    ],
+    "a": "Total Cost of Ownership",
+    "exp": "TCO erfasst alle Anschaffungs-, Betriebs- und Entsorgungskosten einer IT-Investition."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein SLA (Service Level Agreement)?",
+    "options": [
+      "Ein Vertrag zur Festlegung vereinbarter IT-Dienstleistungsqualitäten und Zeiten",
+      "Ein Lizenzvertrag für Microsoft-Produkte",
+      "Eine Sicherheitsvorschrift des BSI",
+      "Ein Protokoll zur Serverüberwachung"
+    ],
+    "a": "Ein Vertrag zur Festlegung vereinbarter IT-Dienstleistungsqualitäten und Zeiten",
+    "exp": "Ein SLA regelt Qualitätskriterien, Verfügbarkeiten und Reaktionszeiten zwischen Dienstleister und Kunde."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Phase gehört zum ITIL-Service-Lebenszyklus?",
+    "options": [
+      "Service Operation",
+      "Code Deployment",
+      "Hardware Assembly",
+      "Database Indexing"
+    ],
+    "a": "Service Operation",
+    "exp": "Service Operation sichert den laufenden Betrieb von IT-Services nach ITIL."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet RPO (Recovery Point Objective)?",
+    "options": [
+      "Maximal tolerierbarer Datenverlust ausgedrückt in Zeit",
+      "Zeitraum bis zur vollständigen Wiederherstellung des Dienstes",
+      "Maximale Ausfallzeit im Jahr",
+      "Prozentuale Verfügbarkeit des Servers"
+    ],
+    "a": "Maximal tolerierbarer Datenverlust ausgedrückt in Zeit",
+    "exp": "RPO bestimmt, wie alt der letzte gesicherte Datenstand im Katastrophenfall maximal sein darf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet RTO (Recovery Time Objective)?",
+    "options": [
+      "Maximal tolerierbare Ausfallzeit bis zur Wiederherstellung",
+      "Maximal tolerierbarer Datenverlust",
+      "Zeitpunkt der letzten Sicherung",
+      "Durchschnittliche Reparaturzeit eines Servers"
+    ],
+    "a": "Maximal tolerierbare Ausfallzeit bis zur Wiederherstellung",
+    "exp": "RTO gibt vor, wie lange ein Systemausfall maximal dauern darf, bevor der Dienst wiederhergestellt sein muss."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt das Vier-Augen-Prinzip?",
+    "options": [
+      "Wichtige Entscheidungen/Vorgänge werden von mindestens zwei Personen geprüft und freigegeben",
+      "Zwei Bildschirme pro Arbeitsplatz",
+      "Doppelte Datensicherung",
+      "Zwei Administratoren pro Server"
+    ],
+    "a": "Wichtige Entscheidungen/Vorgänge werden von mindestens zwei Personen geprüft und freigegeben",
+    "exp": "Das Vier-Augen-Prinzip reduziert Fehler und Missbrauch, indem kritische Vorgänge von einer zweiten Person kontrolliert werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen OPEX und CAPEX?",
+    "options": [
+      "OPEX sind laufende Betriebskosten, CAPEX sind Investitionsausgaben",
+      "OPEX ist für Hardware, CAPEX für Software",
+      "Beide Begriffe sind identisch",
+      "CAPEX bezeichnet nur Personalkosten"
+    ],
+    "a": "OPEX sind laufende Betriebskosten, CAPEX sind Investitionsausgaben",
+    "exp": "CAPEX (Capital Expenditure) sind einmalige Investitionen, OPEX (Operational Expenditure) laufende Betriebskosten - relevant z.B. bei Cloud gegenüber eigener Hardware."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Kanban-Board im Projektmanagement?",
+    "options": [
+      "Eine visuelle Tafel zur Darstellung von Arbeitsschritten und Aufgabenstatus",
+      "Ein Netzwerkdiagramm",
+      "Ein Backup-Zeitplan",
+      "Ein Sicherheitskonzept"
+    ],
+    "a": "Eine visuelle Tafel zur Darstellung von Arbeitsschritten und Aufgabenstatus",
+    "exp": "Kanban visualisiert den Arbeitsfluss in Spalten (z.B. To-Do, In Arbeit, Fertig) zur Steuerung von Arbeitslast und Durchlaufzeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt ein NDA (Non-Disclosure Agreement)?",
+    "options": [
+      "Vertrauliche Behandlung von Informationen zwischen Vertragsparteien",
+      "Die Nutzung von Netzwerkressourcen",
+      "Die Haftung bei Datenverlust",
+      "Die Vergabe von Softwarelizenzen"
+    ],
+    "a": "Vertrauliche Behandlung von Informationen zwischen Vertragsparteien",
+    "exp": "Ein NDA (Geheimhaltungsvereinbarung) verpflichtet Vertragsparteien zur Vertraulichkeit über ausgetauschte Informationen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Zweck einer Risikoanalyse im IT-Projekt?",
+    "options": [
+      "Systematisches Identifizieren, Bewerten und Priorisieren potenzieller Risiken",
+      "Messen der Serverauslastung",
+      "Erstellen des Netzwerkplans",
+      "Dokumentation der Codequalität"
+    ],
+    "a": "Systematisches Identifizieren, Bewerten und Priorisieren potenzieller Risiken",
+    "exp": "Die Risikoanalyse identifiziert mögliche Gefahren für ein Projekt oder System und bewertet Eintrittswahrscheinlichkeit und Auswirkung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt das Allgemeine Gleichbehandlungsgesetz (AGG) im Betrieb?",
+    "options": [
+      "Schutz vor Diskriminierung u.a. wegen Geschlecht, Herkunft, Religion oder Behinderung",
+      "Die Höhe des Mindestlohns",
+      "Die Kündigungsfristen von Arbeitsverträgen",
+      "Die Aufbewahrungsfristen von Geschäftsunterlagen"
+    ],
+    "a": "Schutz vor Diskriminierung u.a. wegen Geschlecht, Herkunft, Religion oder Behinderung",
+    "exp": "Das AGG soll Benachteiligungen aus den im Gesetz genannten Gründen im Arbeitsleben verhindern oder beseitigen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Brutto- und Nettopreis?",
+    "options": [
+      "Der Bruttopreis enthält die Umsatzsteuer, der Nettopreis nicht",
+      "Beide Preise sind identisch",
+      "Der Nettopreis enthält immer Versandkosten",
+      "Der Bruttopreis gilt nur für Geschäftskunden"
+    ],
+    "a": "Der Bruttopreis enthält die Umsatzsteuer, der Nettopreis nicht",
+    "exp": "Nettopreis + Umsatzsteuer (i.d.R. 19% oder 7%) ergibt den Bruttopreis, den Endkunden zahlen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Pflichtenheft im Projektkontext?",
+    "options": [
+      "Die Beschreibung, WIE der Auftragnehmer die Anforderungen des Kunden konkret umsetzt",
+      "Eine reine Aufgabenliste für Auszubildende",
+      "Ein Vertrag zur Geheimhaltung",
+      "Ein Dokument zur Gehaltsabrechnung"
+    ],
+    "a": "Die Beschreibung, WIE der Auftragnehmer die Anforderungen des Kunden konkret umsetzt",
+    "exp": "Während das Lastenheft die Kundenanforderungen (WAS) beschreibt, legt das Pflichtenheft die technische Umsetzung (WIE) durch den Auftragnehmer fest."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was versteht man unter dem Kontinuierlichen Verbesserungsprozess (KVP)?",
+    "options": [
+      "Schrittweise, fortlaufende Optimierung von Arbeitsabläufen durch alle Mitarbeiter",
+      "Eine einmalige, radikale Prozessumstellung",
+      "Ein IT-Sicherheitszertifikat",
+      "Ein Verfahren zur RAID-Konfiguration"
+    ],
+    "a": "Schrittweise, fortlaufende Optimierung von Arbeitsabläufen durch alle Mitarbeiter",
+    "exp": "KVP (auch Kaizen) zielt auf viele kleine, dauerhafte Verbesserungen statt einmaliger großer Umbrüche."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Lastenheft im Projektkontext?",
+    "options": [
+      "Beschreibung der Anforderungen und Ziele aus Sicht des Auftraggebers",
+      "Eine Rechnung über erbrachte Leistungen",
+      "Ein technisches Konzept des Auftragnehmers",
+      "Ein Arbeitszeitnachweis"
+    ],
+    "a": "Beschreibung der Anforderungen und Ziele aus Sicht des Auftraggebers",
+    "exp": "Das Lastenheft beschreibt aus Kundensicht, WAS erreicht werden soll, bevor der Auftragnehmer im Pflichtenheft das WIE festlegt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was misst der Return on Investment (ROI) genau?",
+    "options": [
+      "Das Verhältnis von erzieltem Gewinn zum eingesetzten Kapital, meist in Prozent",
+      "Die absolute Höhe des Umsatzes",
+      "Die Anzahl verkaufter Einheiten pro Monat",
+      "Die Höhe der jährlichen Lohnkosten"
+    ],
+    "a": "Das Verhältnis von erzieltem Gewinn zum eingesetzten Kapital, meist in Prozent",
+    "exp": "ROI = Gewinn / eingesetztes Kapital x 100 - eine zentrale Kennzahl zur Bewertung der Rentabilität einer Investition."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt ein Rahmenvertrag zwischen Unternehmen und Lieferant?",
+    "options": [
+      "Allgemeine, langfristige Konditionen (Preise, Lieferzeiten) für wiederkehrende Einzelbestellungen",
+      "Nur eine einmalige Bestellung ohne Folgeverpflichtung",
+      "Ausschließlich die Kündigung von Mitarbeitern",
+      "Die technische Konfiguration von Servern"
+    ],
+    "a": "Allgemeine, langfristige Konditionen (Preise, Lieferzeiten) für wiederkehrende Einzelbestellungen",
+    "exp": "Ein Rahmenvertrag legt wiederkehrend genutzte Konditionen fest, einzelne Bestellungen (Abrufe) erfolgen dann jeweils darunter."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Win-Win-Situation in einer Verhandlung?",
+    "options": [
+      "Beide Vertragsparteien erzielen ein für sich vorteilhaftes Ergebnis",
+      "Nur eine Partei profitiert vollständig",
+      "Der Vertrag wird ohne Einigung abgebrochen",
+      "Ein Rechtsstreit vor Gericht wird gewonnen"
+    ],
+    "a": "Beide Vertragsparteien erzielen ein für sich vorteilhaftes Ergebnis",
+    "exp": "In einer Win-Win-Verhandlung profitieren idealerweise beide Seiten, was die Basis für eine langfristige Geschäftsbeziehung stärkt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt der Begriff Outsourcing?",
+    "options": [
+      "Auslagerung von Unternehmensfunktionen oder IT-Dienstleistungen an externe Dienstleister",
+      "Einstellung neuer interner Mitarbeiter",
+      "Interne Umstrukturierung ohne externe Beteiligung",
+      "Verkauf von Firmenanteilen an der Börse"
+    ],
+    "a": "Auslagerung von Unternehmensfunktionen oder IT-Dienstleistungen an externe Dienstleister",
+    "exp": "Beim Outsourcing werden bestimmte Aufgaben (z.B. IT-Support, Hosting) bewusst an spezialisierte externe Anbieter vergeben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Cross-Selling und Up-Selling?",
+    "options": [
+      "Cross-Selling bietet ergänzende Produkte an, Up-Selling ein höherwertiges Produkt derselben Kategorie",
+      "Beide Begriffe bezeichnen denselben Vorgang",
+      "Cross-Selling gilt nur für digitale Produkte",
+      "Up-Selling senkt immer den Verkaufspreis"
+    ],
+    "a": "Cross-Selling bietet ergänzende Produkte an, Up-Selling ein höherwertiges Produkt derselben Kategorie",
+    "exp": "Cross-Selling ('dazu passt auch...') und Up-Selling ('das bessere Modell...') sind gängige Verkaufsstrategien zur Umsatzsteigerung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Stärken-Schwächen-Analyse (SWOT) im Kern?",
+    "options": [
+      "Bewertung interner Stärken/Schwächen sowie externer Chancen/Risiken eines Unternehmens oder Projekts",
+      "Eine reine Finanzkennzahl zur Liquidität",
+      "Ein Verfahren zur Netzwerksicherheit",
+      "Eine Methode zur RAID-Konfiguration"
+    ],
+    "a": "Bewertung interner Stärken/Schwächen sowie externer Chancen/Risiken eines Unternehmens oder Projekts",
+    "exp": "SWOT steht für Strengths, Weaknesses, Opportunities, Threats und dient als strukturiertes Werkzeug der strategischen Planung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür steht die Abkürzung KPI?",
+    "options": [
+      "Key Performance Indicator",
+      "Key Process Interface",
+      "Kritischer Prozess-Indikator (nur deutsch gebräuchlich)",
+      "Keyboard Performance Input"
+    ],
+    "a": "Key Performance Indicator",
+    "exp": "KPIs sind zentrale Kennzahlen zur Messung des Erfolgs oder Fortschritts gegenüber definierten Zielen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Zweck einer Ist-Analyse zu Beginn eines IT-Projekts?",
+    "options": [
+      "Erfassung des aktuellen Zustands (Systeme, Prozesse) als Grundlage für die weitere Planung",
+      "Direktes Erstellen der Rechnung an den Kunden",
+      "Festlegung des Projektendtermins ohne weitere Prüfung",
+      "Abschluss des Projekts und Übergabe an den Kunden"
+    ],
+    "a": "Erfassung des aktuellen Zustands (Systeme, Prozesse) als Grundlage für die weitere Planung",
+    "exp": "Die Ist-Analyse dokumentiert den Ausgangszustand, bevor im Soll-Konzept die gewünschte Zielsituation geplant wird."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt eine Wartungsvereinbarung (Maintenance-Vertrag) typischerweise?",
+    "options": [
+      "Regelmäßige Pflege, Updates und Support für IT-Systeme gegen Entgelt",
+      "Nur die einmalige Erstinstallation eines Systems",
+      "Die Vergütung von Auszubildenden",
+      "Die physische Sicherheit eines Rechenzentrums"
+    ],
+    "a": "Regelmäßige Pflege, Updates und Support für IT-Systeme gegen Entgelt",
+    "exp": "Wartungsverträge sichern dem Kunden laufende Betreuung, Updates und definierte Reaktionszeiten bei Problemen zu."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was versteht man unter Stakeholdern eines Projekts?",
+    "options": [
+      "Alle Personen oder Gruppen mit einem Interesse am oder Einfluss auf das Projekt",
+      "Ausschließlich die Geschäftsführung",
+      "Nur externe Kunden",
+      "Nur das Entwicklungsteam"
+    ],
+    "a": "Alle Personen oder Gruppen mit einem Interesse am oder Einfluss auf das Projekt",
+    "exp": "Stakeholder umfassen z.B. Auftraggeber, Nutzer, Management, Betriebsrat oder externe Partner - ihre Interessen sollten im Projektverlauf berücksichtigt werden."
+  }
+]
