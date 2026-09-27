@@ -17,10 +17,13 @@ protokolliert und im Dashboard ausgewertet.
 """
 
 import os
+import queue
 import random
 import sys
+import threading
 import time
 import traceback
+import webbrowser
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -37,6 +40,7 @@ from fisi_core import (  # noqa: E402
     ap1_theme_totals, content_totals, ihk_note, raid_report, screen_report,
     search_content, subnet_report, theme_totals,
 )
+import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -53,7 +57,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.21"
+APP_VERSION = "0.22"
 
 
 def _resource_path(filename):
@@ -1778,8 +1782,27 @@ class ProgressView(View):
 
 class SettingsView(View):
     def build(self):
+        updates = Card(self.content, title="Updates", accent=C["pink"],
+                       subtitle="installierte Version %s" % APP_VERSION)
+        updates.pack(fill="x")
+        row = transparent_frame(updates.body)
+        row.pack(fill="x")
+        self.btn_update = NeoButton(row, "Nach Updates suchen",
+                                    self.check_updates, kind="primary")
+        self.btn_update.pack(side="left")
+        self.lbl_update = make_label(row, "", font=F["small"], fg=C["text_dim"],
+                                     justify="left", anchor="w", wraplength=560)
+        self.lbl_update.pack(side="left", padx=(16, 0))
+        self.var_auto = tk.BooleanVar(value=fisi_update.load_settings()["auto_check"])
+        ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
+                      variable=self.var_auto, command=self._toggle_auto,
+                      font=F["small"], text_color=C["text_dim"],
+                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      button_color=C["text"], button_hover_color="#FFFFFF"
+                      ).pack(anchor="w", pady=(14, 0))
+
         info = Card(self.content, title="Datenbank", accent=C["cyan"])
-        info.pack(fill="x")
+        info.pack(fill="x", pady=(14, 0))
         make_label(info.body, "Speicherort der Lernfortschritte:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
         path_box = make_text(info.body, height=2, font=F["mono_small"])
@@ -1831,6 +1854,28 @@ class SettingsView(View):
                    % (APP_TITLE, APP_VERSION),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
+
+    def _toggle_auto(self):
+        settings = fisi_update.load_settings()
+        settings["auto_check"] = bool(self.var_auto.get())
+        fisi_update.save_settings(settings)
+
+    def check_updates(self):
+        self.btn_update.set_enabled(False)
+        self.lbl_update.configure(text="Suche nach Updates ...", text_color=C["text_dim"])
+        self.app.updater.check(manual=True, on_done=self._update_checked)
+
+    def _update_checked(self, info, error):
+        self.btn_update.set_enabled(True)
+        if error:
+            self.lbl_update.configure(text=error, text_color=C["red"])
+        elif info is None:
+            self.lbl_update.configure(
+                text="Du hast die neueste Version (%s)." % APP_VERSION,
+                text_color=C["green"])
+        else:
+            self.lbl_update.configure(text="Version %s ist verfügbar." % info.version,
+                                      text_color=C["cyan"])
 
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
@@ -1911,6 +1956,188 @@ class SearchView(View):
 #  HAUPTANWENDUNG
 # ============================================================================
 
+class UpdateController:
+    """Sucht im Hintergrund nach Updates, ohne die Oberflaeche zu blockieren.
+
+    Netzwerk und Download laufen in einem eigenen Thread. Tk darf nur aus dem
+    Hauptthread angesprochen werden - deshalb landen die Ergebnisse in einer
+    Warteschlange, die per after() im Hauptthread abgeholt wird.
+    """
+
+    def __init__(self, app):
+        self.app = app
+        self.root = app.root
+        self.dialog = None
+        self._queue = queue.Queue()
+        self._pending = 0
+        self._busy = False
+
+    def run_in_background(self, work, on_done):
+        """work() laeuft im Thread; on_done(ergebnis, fehlertext) danach im
+        Hauptthread."""
+        self._pending += 1
+
+        def worker():
+            try:
+                self._queue.put((on_done, work(), None))
+            except fisi_update.UpdateError as error:
+                self._queue.put((on_done, None, str(error)))
+            except Exception as error:  # unerwartet - nie den Thread sterben lassen
+                self._queue.put((on_done, None, "Unerwarteter Fehler: %s" % error))
+        threading.Thread(target=worker, daemon=True).start()
+        if self._pending == 1:
+            self.root.after(150, self._poll)
+
+    def _poll(self):
+        try:
+            while True:
+                on_done, result, error = self._queue.get_nowait()
+                self._pending -= 1
+                on_done(result, error)
+        except queue.Empty:
+            pass
+        if self._pending > 0:
+            self.root.after(150, self._poll)
+
+    def check(self, manual=False, on_done=None):
+        """Sucht nach einer neuen Version. Automatische Pruefungen melden sich
+        nur, wenn es wirklich ein Update gibt - ohne Fehlermeldungen."""
+        if self._busy:
+            return
+        self._busy = True
+
+        def done(info, error):
+            self._busy = False
+            if on_done:
+                on_done(info, error)
+            if info is not None and (self.dialog is None
+                                     or not self.dialog.winfo_exists()):
+                self.dialog = UpdateDialog(self.app, info)
+
+        self.run_in_background(lambda: fisi_update.check_for_update(APP_VERSION), done)
+
+    def auto_check(self):
+        if fisi_update.load_settings().get("auto_check", True):
+            self.check(manual=False)
+
+
+class UpdateDialog(ctk.CTkToplevel):
+    """Zeigt ein verfuegbares Update und fuehrt durch Download und Installation."""
+
+    def __init__(self, app, info):
+        super().__init__(app.root, fg_color=C["bg"])
+        self.app = app
+        self.info = info
+        self._downloading = False
+        self.title("Update verfügbar")
+        self.geometry("560x470")
+        self.resizable(False, False)
+        self.transient(app.root)
+        # CTkToplevel setzt unter Windows kurz nach dem Oeffnen sein eigenes
+        # Symbol - deshalb das Programm-Icon etwas verzoegert setzen.
+        self.after(250, lambda: _apply_window_icon(self))
+
+        card = Card(self, title="Neue Version", accent=C["pink"],
+                    subtitle="installiert: %s" % APP_VERSION)
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        make_label(card.body, "FISI Lernplattform %s ist verfügbar" % info.version,
+                   font=F["h2"], anchor="w").pack(anchor="w")
+
+        make_label(card.body, "Neuerungen", font=F["label"], fg=C["muted"]
+                   ).pack(anchor="w", pady=(12, 4))
+        notes = make_text(card.body, height=6, font=F["small"])
+        notes.pack(fill="both", expand=True)
+        set_text(notes, fisi_update.plain_notes(info.notes)
+                 or "Keine Beschreibung vorhanden.")
+        notes.configure(state="disabled")
+
+        self.progress = ctk.CTkProgressBar(card.body, height=10, corner_radius=5,
+                                           fg_color=C["ring_bg"],
+                                           progress_color=C["violet"])
+        self.progress.set(0)
+        self.lbl_status = make_label(card.body, "", font=F["small"],
+                                     fg=C["text_dim"], anchor="w",
+                                     justify="left", wraplength=480)
+        self.lbl_status.pack(anchor="w", pady=(10, 0))
+
+        buttons = transparent_frame(card.body)
+        buttons.pack(fill="x", pady=(12, 0))
+        if info.installable:
+            self.btn_main = NeoButton(buttons, "Jetzt aktualisieren",
+                                      self.start_update, kind="primary")
+        else:
+            self.lbl_status.configure(
+                text="Automatisches Aktualisieren ist nur in der installierten "
+                     "Anwendung möglich. Die neue Version gibt es auf der "
+                     "Download-Seite.")
+            self.btn_main = NeoButton(buttons, "Zur Download-Seite",
+                                      lambda: webbrowser.open(info.page_url),
+                                      kind="primary")
+        self.btn_main.pack(side="left")
+        self.btn_later = NeoButton(buttons, "Später", self.destroy, kind="ghost")
+        self.btn_later.pack(side="left", padx=10)
+
+        self.after(100, self._focus)
+
+    def _focus(self):
+        self.lift()
+        self.focus_force()
+
+    def start_update(self):
+        self.btn_main.set_enabled(False)
+        self.btn_later.set_enabled(False)
+        self.progress.pack(fill="x", pady=(12, 0), before=self.lbl_status)
+        self.lbl_status.configure(text="Update wird heruntergeladen ...",
+                                  text_color=C["text_dim"])
+        state = {"loaded": 0, "total": self.info.asset_size or 1}
+        self._downloading = True
+
+        def progress(loaded, total):
+            # Wird im Download-Thread aufgerufen - nur Zahlen merken
+            state["loaded"], state["total"] = loaded, max(1, total)
+
+        def refresh():
+            if self._downloading and self.winfo_exists():
+                self.progress.set(state["loaded"] / state["total"])
+                self.lbl_status.configure(
+                    text="Update wird heruntergeladen ... %.1f von %.1f MB"
+                         % (state["loaded"] / 1048576, state["total"] / 1048576))
+                self.after(200, refresh)
+
+        self.app.updater.run_in_background(
+            lambda: fisi_update.download(self.info, progress), self._downloaded)
+        refresh()
+
+    def _downloaded(self, path, error):
+        self._downloading = False
+        if error:
+            self._failed(error)
+            return
+        self.progress.set(1)
+        self.lbl_status.configure(text="Update wird installiert ...")
+        self.app.updater.run_in_background(lambda: fisi_update.install(path),
+                                           self._installed)
+
+    def _installed(self, result, error):
+        if error:
+            self._failed(error)
+            return
+        must_quit, message = result
+        self.lbl_status.configure(text=message, text_color=C["green"])
+        if must_quit:
+            # Programm schliessen, damit der Installer die Dateien ersetzen kann
+            self.after(1500, self.app.on_close)
+        else:
+            self.btn_later.set_text("Schließen")
+            self.btn_later.set_enabled(True)
+
+    def _failed(self, error):
+        self.lbl_status.configure(text=error, text_color=C["red"])
+        self.btn_main.set_text("Erneut versuchen")
+        self.btn_main.set_enabled(True)
+        self.btn_later.set_enabled(True)
+
+
 def _apply_window_icon(root):
     """Setzt das Programm-Icon (icon.ico bzw. icon.png) fuer Titelleiste
     und Taskleiste, falls die Datei vorhanden ist. Schlaegt nie fehl, auch
@@ -1979,6 +2206,11 @@ class FISIApp:
         self.show_view("dashboard")
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
+
+        self.updater = UpdateController(self)
+        # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
+        if not os.environ.get("FISI_SELFTEST"):
+            root.after(3000, self.updater.auto_check)
 
     # -- Infrastruktur ------------------------------------------------------
 
@@ -2092,6 +2324,13 @@ def _run_selftest(root, app, log_path):
 
     def step(keys):
         if not keys:
+            try:
+                dialog = UpdateDialog(app, fisi_update.UpdateInfo(
+                    "9.9", "Starttest", fisi_update.RELEASES_PAGE))
+                root.update()
+                dialog.destroy()
+            except Exception:
+                failures.append(traceback.format_exc())
             with open(log_path, "w", encoding="utf-8") as handle:
                 handle.write("\n".join(failures) if failures else "OK")
             root.destroy()

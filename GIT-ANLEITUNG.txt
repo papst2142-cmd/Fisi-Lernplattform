@@ -82,6 +82,7 @@ Normalerweise erledigt Claude Code alle Schritte selbst:
   2. Neue Version setzen - bei einem Update z.B. 0.22, bei einer
      Fehlerbehebung z.B. 0.22.1 (Schema siehe LIESMICH.txt):
        python build.py --setze-version 0.22
+     und in AENDERUNGEN.md die Neuerungen unter "## 0.22" eintragen.
   3. Sichern und zu GitHub hochladen:
        git add -A
        git commit -m "Beschreibung der Aenderung"

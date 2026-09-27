@@ -56,6 +56,8 @@ jobs:
             echo "Tag ${GITHUB_REF_NAME} passt nicht zu APP_VERSION $VERSION in app_gui.py"
             exit 1
           fi
+          # Ohne Abschnitt in AENDERUNGEN.md gibt es keinen Release-Text
+          python build.py --versionshinweise > /dev/null
 
       - name: Linux-Werkzeuge installieren
         if: runner.os == 'Linux'
@@ -95,6 +97,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+
+      - name: Versionshinweise aus AENDERUNGEN.md
+        run: python3 build.py --versionshinweise > versionshinweise.md
+
       - uses: actions/download-artifact@v8
         with:
           path: installer
@@ -103,4 +110,5 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           name: FISI Lernplattform ${{ github.ref_name }}
+          body_path: versionshinweise.md
           files: installer/*

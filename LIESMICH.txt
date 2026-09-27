@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.21
+  FISI LERNPLATTFORM  -  Version 0.22
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
@@ -79,6 +79,26 @@ INSTALLER-ANLEITUNG.txt. Kurzfassung:
              waehlen (siehe INSTALLER-ANLEITUNG.txt).
 
 
+UPDATES
+---------------------------------------------------------------------------
+Ab Version 0.22 sucht das Programm beim Start selbst nach einer neuen
+Version (Internetverbindung noetig). Gibt es eine, erscheint ein Fenster
+mit den Neuerungen und dem Knopf "Jetzt aktualisieren":
+
+  Windows :  Das Update wird heruntergeladen, installiert und das
+             Programm startet danach von selbst neu.
+  Linux   :  AppImage ersetzt sich selbst und startet neu. Beim DEB-Paket
+             fragt das System nach dem Passwort.
+  macOS   :  Das Update wird heruntergeladen und geoeffnet - dann
+             "FISI-Lernplattform" wie bei der Installation in "Programme"
+             ziehen und die alte Version ersetzen.
+
+Unter Einstellungen -> Updates gibt es den Knopf "Nach Updates suchen" und
+den Schalter, mit dem die automatische Suche beim Start abgeschaltet wird.
+Die Lernfortschritte bleiben bei jedem Update erhalten. Welche Neuerungen
+jede Version bringt, steht in AENDERUNGEN.md.
+
+
 START AUS DEM QUELLCODE (fuer Entwickler)
 ---------------------------------------------------------------------------
 Wer am Programm selbst arbeiten moechte, startet es direkt aus den
@@ -155,6 +175,7 @@ DATEIEN IM PAKET
   fisi_theme.py         Farbwelt: Palette, Farbverlaeufe, Kategoriefarben
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
+  fisi_update.py        Updater: sucht, laedt und installiert neue Versionen
   requirements.txt      Bibliotheken fuer den Start aus dem Quellcode
   requirements-build.txt  zusaetzlich PyInstaller zum Bauen
   build.py              Baut Anwendung und Installer fuers eigene System
@@ -162,10 +183,12 @@ DATEIEN IM PAKET
   build_linux.sh        Linux-Komfortaufruf fuer build.py
   FISI-Lernplattform.iss  Inno-Setup-Skript fuer den Windows-Installer
   .github/workflows/build.yml  Baut alle Installer per GitHub Actions
+  AENDERUNGEN.md        Neuerungen jeder Version (Text der Releases)
   LIESMICH.txt          Diese Datei
 
-Die fuenf .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
-fisi_theme.py, fisi_core.py) muessen im selben Ordner liegen.
+Die sechs .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
+fisi_theme.py, fisi_core.py, fisi_update.py) muessen im selben Ordner
+liegen.
 
 
 EIGENE LERNINHALTE ERGAENZEN

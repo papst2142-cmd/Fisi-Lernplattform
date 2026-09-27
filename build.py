@@ -20,6 +20,9 @@ Aufruf:
   python build.py --setze-version 0.22
                                neue Version an allen Stellen eintragen
                                (app_gui.py, LIESMICH.txt, Inno-Setup-Skript)
+  python build.py --versionshinweise
+                               Abschnitt der aktuellen Version aus
+                               AENDERUNGEN.md ausgeben (Release-Text)
 
 Vor jedem Build prueft build.py, dass die Version ueberall gleich ist.
 
@@ -125,6 +128,17 @@ def set_version(version):
         with open(os.path.join(ROOT, name), "w", encoding="utf-8", newline="") as handle:
             handle.write(text)
         info("%s -> %s" % (name, version))
+
+
+def release_notes(version):
+    """Abschnitt '## <version>' aus AENDERUNGEN.md - wird Text des
+    GitHub-Releases und im Update-Fenster des Programms angezeigt."""
+    text = _read("AENDERUNGEN.md").replace("\r\n", "\n")
+    match = re.search(r"^## %s\s*\n(.*?)(?=^## |\Z)" % re.escape(version), text,
+                      re.MULTILINE | re.DOTALL)
+    if not match or not match.group(1).strip():
+        fail("In AENDERUNGEN.md fehlt der Abschnitt '## %s'." % version)
+    return match.group(1).strip()
 
 
 def _version_numbers(version):
@@ -405,6 +419,10 @@ def main():
         if position + 1 >= len(sys.argv):
             fail("Bitte die neue Version angeben, z.B.: python build.py --setze-version 0.22")
         set_version(sys.argv[position + 1])
+        return
+    if "--versionshinweise" in sys.argv:
+        sys.stdout.reconfigure(encoding="utf-8")
+        print(release_notes(app_version()))
         return
 
     version = app_version()

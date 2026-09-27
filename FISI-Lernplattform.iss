@@ -18,7 +18,7 @@
 
 #define MyAppName "FISI Lernplattform"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.21"
+  #define MyAppVersion "0.22"
 #endif
 #define MyAppExeName "FISI-Lernplattform.exe"
 
@@ -58,3 +58,5 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{#MyAppName} jetzt starten"; Flags: nowait postinstall skipifsilent
+; Nach einem Update aus dem Programm heraus (stille Installation) automatisch neu starten
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: WizardSilent
