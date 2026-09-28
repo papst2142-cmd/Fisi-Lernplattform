@@ -506,5 +506,179 @@
       "Automatische Registrierung über die Programme der Hersteller (z.B. Apple Business Manager, Android Zero-Touch) mit dem Händler: Beim ersten Einschalten meldet sich das Gerät beim MDM und lädt Profile und Apps.",
       "Verlust sofort melden, Gerät im MDM sperren und bei Bedarf komplett löschen, Zugangsdaten bzw. Sitzungen zurücksetzen, Vorfall dokumentieren und prüfen, ob eine Datenschutzmeldung nötig ist (bei verschlüsseltem, gesperrtem Gerät meist nicht)."
     ]
+  },
+  {
+    "title": "Ablösung der Domänencontroller auf Windows Server 2025",
+    "cat": "systeme",
+    "branche": "Spedition (Brandt Logistik GmbH, 140 Mitarbeiter)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Die Domäne brandt.local wird von zwei Domänencontrollern mit Windows Server 2016 betrieben, deren erweiterter Support im Januar 2027 endet. Beide DCs sind auch DNS-Server, DC1 ist zusätzlich DHCP-Server und hält alle FSMO-Rollen. Die Domänen- und Gesamtstrukturfunktionsebene steht noch auf Windows Server 2012 R2. Einige ältere Geräte (Scanner, NAS) nutzen die DCs als DNS-Server und authentifizieren sich per LDAP.",
+    "auftrag": "Planen und dokumentieren Sie die Ablösung beider Domänencontroller durch zwei neue virtuelle DCs mit Windows Server 2025, ohne dass der Tagesbetrieb unterbrochen wird.",
+    "rahmenbedingungen": [
+      "Die neuen DCs laufen als VMs auf zwei verschiedenen Virtualisierungshosts",
+      "Die IP-Adressen der alten DCs werden von vielen Geräten fest als DNS-Server genutzt",
+      "Umstellungen am Produktivsystem nur freitags ab 18 Uhr",
+      "Vor jeder Änderung muss eine funktionierende Sicherung des Systemzustands vorliegen",
+      "Die Migration muss bis Ende November abgeschlossen sein"
+    ],
+    "aufgaben": [
+      "Welche Prüfungen führen Sie vor der Migration durch, um den Zustand des Active Directory festzustellen?",
+      "Welche Voraussetzung muss die Funktionsebene erfüllen, und in welcher Reihenfolge nehmen Sie die neuen DCs in Betrieb?",
+      "Wie verschieben Sie FSMO-Rollen, DNS und DHCP auf die neuen Server?",
+      "Wie gehen Sie mit den fest eingetragenen IP-Adressen der alten DCs um?",
+      "Wie stufen Sie die alten DCs sauber herab, und was prüfen Sie danach?"
+    ],
+    "hinweise": [
+      "dcdiag und repadmin /replsummary auf Fehler prüfen, Replikation von SYSVOL über DFSR sicherstellen (FRS wird nicht mehr unterstützt), DNS-Zonen und Zeitsynchronisation prüfen. Systemzustand beider DCs sichern und die Wiederherstellung dokumentieren.",
+      "Windows Server 2025 kann erst ab Funktionsebene Windows Server 2016 als DC hinzugefügt werden. Daher zuerst Domänen- und Gesamtstrukturfunktionsebene auf 2016 anheben (alle DCs laufen bereits mit 2016). Danach den ersten neuen DC hinzufügen, Replikation abwarten und prüfen, dann den zweiten. Beide als DNS-Server und globale Kataloge einrichten.",
+      "FSMO-Rollen per PowerShell (Move-ADDirectoryServerOperationMasterRole) oder über die Verwaltungskonsolen auf den neuen DC1 übertragen und mit netdom query fsmo prüfen. DNS ist AD-integriert und repliziert automatisch. DHCP mit Export und Import (Export-DhcpServer, Import-DhcpServer) umziehen, Server im AD autorisieren, alten DHCP-Dienst deaktivieren, DHCP-Option für DNS-Server anpassen.",
+      "Entweder nach dem Herabstufen die alten IP-Adressen auf die neuen DCs übertragen oder die Geräte vorher umstellen. Vorher per DNS-Debug-Log oder Firewall ermitteln, welche Geräte die alten Adressen nutzen. LDAP-Geräte auf LDAPS bzw. signiertes LDAP prüfen, weil neuere DCs unsichere Bindungen strenger behandeln.",
+      "Alte DCs mit dem Assistenten bzw. Uninstall-ADDSDomainController herabstufen, nicht einfach ausschalten. Danach Metadaten, DNS-Einträge (NS, SRV) und Standorte prüfen, dcdiag erneut ausführen, Anmeldung und Gruppenrichtlinien testen, Dokumentation und Notfallhandbuch aktualisieren."
+    ]
+  },
+  {
+    "title": "Zwei-Knoten-Virtualisierungscluster für einen Mittelständler",
+    "cat": "systeme",
+    "branche": "Möbelhersteller (Hofmann Wohnmöbel GmbH, 90 Mitarbeiter)",
+    "schwierigkeit": "Anspruchsvoll",
+    "ausgangssituation": "Ein einzelner Virtualisierungshost betreibt 18 VMs mit zusammen 64 vCPU, 320 GB RAM und 6 TB Daten. Fällt der Host aus, steht die gesamte Produktion. Die Geschäftsführung wünscht einen hochverfügbaren Betrieb mit zwei Hosts und gemeinsamem Speicher und plant mit 30 % Wachstum in den nächsten drei Jahren.",
+    "auftrag": "Planen Sie einen Zwei-Knoten-Cluster mit Hyper-V und gemeinsamem Speicher, dimensionieren Sie Hosts und Speicher und stellen Sie den Betrieb bei Ausfall eines Knotens sicher.",
+    "rahmenbedingungen": [
+      "Jeder Knoten muss im Notfall alle VMs allein tragen können",
+      "Höchstens 4 vCPU je physischem Kern, RAM wird nicht überbucht",
+      "Der Hypervisor benötigt je Knoten 16 GB RAM",
+      "Speicher: SSDs mit 3,84 TB im RAID 10, höchstens 80 % Füllstand",
+      "Alle VMs sind Windows-Server-VMs"
+    ],
+    "aufgaben": [
+      "Berechnen Sie RAM und Kernzahl je Knoten inklusive Wachstum.",
+      "Berechnen Sie die benötigte Nutzkapazität und die Anzahl der SSDs.",
+      "Warum braucht ein Zwei-Knoten-Cluster einen Zeugen (Witness), und welche Varianten gibt es?",
+      "Wie lizenzieren Sie Windows Server für die VMs?",
+      "Welche Netzwerke planen Sie für den Cluster, und wie testen Sie die Hochverfügbarkeit vor dem Go-Live?"
+    ],
+    "hinweise": [
+      "RAM: 320 GB * 1,3 = 416 GB, plus 16 GB Hypervisor = 432 GB, also 512 GB je Knoten. vCPU: 64 * 1,3 = 83,2, also 84 vCPU. Bei 4 : 1 sind 84 / 4 = 21 Kerne nötig, z.B. 2 CPUs mit je 12 Kernen (24 Kerne). Im Normalbetrieb ist jeder Knoten nur zur Hälfte ausgelastet.",
+      "Daten: 6 TB * 1,3 = 7,8 TB. Bei 80 % Füllstand: 7,8 / 0,8 = 9,75 TB Nutzkapazität. RAID 10 liefert je Spiegelpaar 3,84 TB: 9,75 / 3,84 = 2,54, also 3 Paare mit 6 SSDs und 11,52 TB Nutzkapazität.",
+      "Bei zwei Knoten kann keiner allein die Mehrheit bilden. Ohne Zeugen würden bei einer Netztrennung beide Knoten die VMs starten wollen (Split-Brain) oder beide stoppen. Der Zeuge liefert die dritte Stimme: Datenträgerzeuge auf dem gemeinsamen Speicher, Dateifreigabezeuge auf einem dritten System oder Cloud-Zeuge.",
+      "Die VMs wandern zwischen den Knoten, jeder Knoten muss für alle 18 VMs lizenziert sein. Mit Standard wären 9 Lizenzierungen je Knoten nötig, daher Datacenter: 24 Kernlizenzen je Knoten, zusammen 48. Dazu die Zugriffslizenzen (CALs) für Benutzer oder Geräte.",
+      "Getrennte Netze bzw. VLANs für Management, VM-Verkehr, Live-Migration, Cluster-Kommunikation und Speicher (z.B. iSCSI mit MPIO über zwei Switches). Tests: Clustervalidierung ausführen, Live-Migration jeder VM, harten Ausfall eines Knotens simulieren (Strom trennen) und Neustart der VMs messen, Ausfall eines Speicherpfades und eines Switches testen, Ergebnisse dokumentieren."
+    ]
+  },
+  {
+    "title": "Linux-Webserver mit Backup und Monitoring",
+    "cat": "systeme",
+    "branche": "Reiseveranstalter (Nordlicht Reisen GmbH, 35 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Die Buchungswebseite läuft bei einem Hoster auf einem veralteten Shared-Hosting-Tarif. Sie soll auf eine eigene Linux-VM in der DMZ umziehen. Die Anwendung besteht aus PHP-Dateien (40 GB inklusive Bilder) und einer MariaDB-Datenbank mit 5 GB. Bisher gibt es weder eine geprüfte Sicherung noch eine Überwachung.",
+    "auftrag": "Richten Sie einen gehärteten Linux-Webserver ein und planen Sie Datensicherung und Monitoring so, dass Ausfälle früh erkannt und Daten sicher wiederhergestellt werden können.",
+    "rahmenbedingungen": [
+      "Betriebssystem: Debian oder Ubuntu LTS ohne grafische Oberfläche",
+      "Die Seite muss ausschließlich per HTTPS erreichbar sein",
+      "Zugesagte Verfügbarkeit: 99,5 % pro Monat (730 Stunden)",
+      "Aufbewahrung der Sicherungen: 7 tägliche, 4 wöchentliche und 6 monatliche Stände",
+      "Das Backup-Ziel steht an einem anderen Standort"
+    ],
+    "aufgaben": [
+      "Welche Dienste installieren Sie, und wie härten Sie den Server?",
+      "Wie richten Sie das TLS-Zertifikat ein und halten es aktuell?",
+      "Wie sichern Sie Dateien und Datenbank konsistent? Wie viele Sicherungsstände liegen vor?",
+      "Welche Werte überwachen Sie, und ab wann alarmieren Sie?",
+      "Wie viel Ausfallzeit pro Monat ist mit 99,5 % zulässig, und wie weisen Sie die Verfügbarkeit nach?"
+    ],
+    "hinweise": [
+      "Webserver (nginx oder Apache), PHP-FPM und MariaDB. Härtung: nur benötigte Pakete, automatische Sicherheitsupdates, SSH nur mit Schlüsseln und ohne Root-Anmeldung, Paketfilter (nftables bzw. ufw) nur für 443, 80 (Umleitung) und SSH aus dem Management-Netz, fail2ban, Datenbank nur lokal erreichbar, eigener Benutzer mit minimalen Rechten für die Anwendung.",
+      "Zertifikat von Let's Encrypt per certbot oder acme.sh mit automatischer Verlängerung (Timer), HTTP auf HTTPS umleiten, HSTS setzen, nur TLS 1.2 und 1.3 zulassen. Das Monitoring prüft zusätzlich die Restlaufzeit des Zertifikats.",
+      "Datenbank per mysqldump mit --single-transaction bzw. mariadb-backup sichern, danach Dateien und Dump mit einem Werkzeug wie restic oder BorgBackup verschlüsselt und dedupliziert zum anderen Standort übertragen. 7 + 4 + 6 = 17 Sicherungsstände. Rücksicherung regelmäßig auf einer Test-VM prüfen.",
+      "CPU, RAM, Plattenfüllstand (Warnung ab 80 %, kritisch ab 90 %), Antwortzeit und Statuscode der Webseite von außen, Dienste nginx, PHP-FPM und MariaDB, Zertifikatslaufzeit (Warnung unter 14 Tagen), Erfolg der nächtlichen Sicherung und ausstehende Updates. Werkzeuge z.B. Zabbix, Checkmk oder Prometheus mit Alarmierung per Mail oder Chat.",
+      "730 * 0,005 = 3,65 Stunden pro Monat, also knapp 3 Stunden 39 Minuten. Nachweis über eine externe Verfügbarkeitsprüfung (z.B. jede Minute), monatlicher Bericht aus dem Monitoring. Geplante Wartungsfenster vorher vereinbaren und festlegen, ob sie mitzählen."
+    ]
+  },
+  {
+    "title": "Anbindung eines Außenlagers per Site-to-Site-VPN",
+    "cat": "netzwerk",
+    "branche": "Getränkegroßhandel (Kramer Getränke GmbH, 70 Mitarbeiter)",
+    "schwierigkeit": "Leicht",
+    "ausgangssituation": "Ein neu angemietetes Außenlager 8 km von der Zentrale entfernt soll an das Firmennetz angebunden werden. Im Lager arbeiten 15 Mitarbeiter an PCs, 25 Handscanner nutzen das WLAN, dazu kommen Drucker und eine Zugangskontrolle. Die Zentrale nutzt 10.10.0.0/16. Für das Lager ist der Bereich 10.20.0.0/22 vorgesehen. Beide Standorte haben einen Internetanschluss und eine Firewall.",
+    "auftrag": "Erstellen Sie einen Adressplan für das Lager, planen Sie die VPN-Verbindung zur Zentrale und legen Sie fest, wie die Verbindung getestet wird.",
+    "rahmenbedingungen": [
+      "Vier VLANs: Clients, WLAN-Scanner, Drucker und Geräte, Management",
+      "Der Bereich 10.20.0.0/22 soll in gleich große Subnetze aufgeteilt werden",
+      "Die Warenwirtschaft läuft auf einem Server in der Zentrale",
+      "Internetanschluss im Lager: 100 Mbit/s Download und 40 Mbit/s Upload",
+      "Die Firewalls unterstützen IPsec mit IKEv2"
+    ],
+    "aufgaben": [
+      "Teilen Sie 10.20.0.0/22 in vier gleich große Subnetze auf und ordnen Sie sie den VLANs zu. Wie viele Hosts passen jeweils hinein?",
+      "Welche Parameter legen Sie für den IPsec-Tunnel fest?",
+      "Welche Routen und Firewall-Regeln sind in Zentrale und Lager nötig?",
+      "Wie stellen Sie die Namensauflösung und die Zeitsynchronisation im Lager sicher?",
+      "Wie testen Sie die Verbindung vor der Inbetriebnahme?"
+    ],
+    "hinweise": [
+      "Vier /24-Netze mit je 254 nutzbaren Adressen: 10.20.0.0/24 Clients (VLAN 10), 10.20.1.0/24 WLAN-Scanner (VLAN 20), 10.20.2.0/24 Drucker und Geräte (VLAN 30), 10.20.3.0/24 Management (VLAN 99). Gateway jeweils .1 auf der Firewall bzw. dem Layer-3-Switch.",
+      "IKEv2, Authentifizierung per Zertifikat oder langem, zufälligem Pre-Shared Key, Verschlüsselung AES-256-GCM, Diffie-Hellman-Gruppe 19 oder höher, Perfect Forward Secrecy. Als Netze auf beiden Seiten 10.10.0.0/16 und 10.20.0.0/22 eintragen, Dead Peer Detection aktivieren.",
+      "Zentrale: Route 10.20.0.0/22 in den Tunnel, Lager: Route 10.10.0.0/16 in den Tunnel, Internet im Lager direkt. Regeln nach dem Minimalprinzip: Scanner nur zum Warenwirtschaftsserver auf den benötigten Ports, Clients zu Warenwirtschaft, Fileserver, DNS und Druckdiensten, Drucker und Geräte nur aus den nötigen Netzen erreichbar, Management nur aus dem Admin-Netz.",
+      "Die Clients im Lager nutzen die DNS-Server der Zentrale über den Tunnel, damit interne Namen aufgelöst werden. DHCP im Lager auf der Firewall oder per DHCP-Relay zum zentralen Server. Zeitquelle ist der Domänencontroller bzw. NTP-Server der Zentrale.",
+      "Tunnelaufbau und Status auf beiden Firewalls prüfen, ping und traceroute in beide Richtungen, Anmeldung an der Warenwirtschaft von einem Client und einem Scanner, Druck aus der Warenwirtschaft, Bandbreite mit iperf messen, Neuaufbau des Tunnels nach Trennung testen. Adressplan und Regeln dokumentieren."
+    ]
+  },
+  {
+    "title": "Portbasierte Zugangskontrolle mit 802.1X im kabelgebundenen LAN",
+    "cat": "sicherheit",
+    "branche": "Klinikum (Kreisklinik Waldberg, 900 Beschäftigte)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "In den Fluren und Patientenzimmern der Klinik gibt es frei zugängliche Netzwerkdosen. Ein fremdes Notebook erhält dort sofort eine Adresse im internen Netz. Angeschlossen sind 450 Windows-PCs, 60 Netzwerkdrucker und 40 medizinische Geräte, die kein 802.1X beherrschen. Eine interne PKI und ein Active Directory sind vorhanden. Das Netz besteht aus 22 Access-Switches.",
+    "auftrag": "Führen Sie eine portbasierte Zugangskontrolle nach IEEE 802.1X ein, sodass nur bekannte Geräte Zugang zum internen Netz erhalten, ohne den Klinikbetrieb zu gefährden.",
+    "rahmenbedingungen": [
+      "Medizinische Geräte dürfen nicht ausfallen, sie laufen im eigenen VLAN",
+      "Die Access-Switches unterstützen 802.1X, MAC Authentication Bypass (MAB) und dynamische VLAN-Zuweisung",
+      "Nach einem Pilotbereich werden je Nacht höchstens 2 Switches umgestellt",
+      "Zwei RADIUS-Server sollen ausfallsicher betrieben werden",
+      "Nicht erkannte Geräte erhalten nur Zugang zu einem Gäste- bzw. Quarantäne-VLAN"
+    ],
+    "aufgaben": [
+      "Beschreiben Sie den Ablauf einer 802.1X-Anmeldung mit den beteiligten Rollen.",
+      "Welche EAP-Methode wählen Sie für die Windows-PCs, und warum?",
+      "Wie binden Sie Drucker und medizinische Geräte ohne 802.1X ein, und welche Schwäche hat dieses Verfahren?",
+      "Wie gehen Sie bei der Einführung vor, damit keine Geräte ausgesperrt werden? Wie viele Nächte dauert die Umstellung der Switches nach dem Pilot?",
+      "Was passiert, wenn beide RADIUS-Server nicht erreichbar sind, und wie planen Sie dafür?"
+    ],
+    "hinweise": [
+      "Supplicant (Client) meldet sich am Authenticator (Switch) per EAPoL. Der Switch leitet die Anfrage per RADIUS an den Authentication Server (z.B. NPS oder FreeRADIUS) weiter. Dieser prüft gegen AD bzw. Zertifikat und antwortet mit Accept oder Reject, optional mit VLAN-Zuweisung. Erst dann gibt der Switch den Port frei.",
+      "EAP-TLS mit Computerzertifikaten aus der internen PKI, automatisch per Gruppenrichtlinie verteilt. Es gibt keine Passwörter, die abgefangen oder erraten werden können, und die Anmeldung erfolgt schon vor der Benutzeranmeldung. Der Client prüft das Zertifikat des RADIUS-Servers.",
+      "MAB: Der Switch nutzt die MAC-Adresse als Kennung, der RADIUS-Server gleicht sie mit einer Liste ab (60 + 40 = 100 Einträge) und weist das passende VLAN zu. Schwäche: MAC-Adressen lassen sich fälschen. Daher Geräte-VLANs mit strengen Firewall-Regeln, Profiling und Alarm, wenn eine bekannte MAC an einem anderen Port auftaucht.",
+      "Zuerst Überwachungsmodus (Ports bleiben offen, Anmeldungen werden nur protokolliert), Fehler auswerten und beheben, dann Pilot auf einem Stockwerk. Danach 22 / 2 = 11 Nächte für alle Switches. Ports für medizinische Geräte zuletzt und nur mit Medizintechnik abgestimmt umstellen, Rückfallplan je Switch bereithalten.",
+      "Ohne RADIUS können sich neue Geräte nicht anmelden. Daher zwei RADIUS-Server an verschiedenen Standorten bzw. Hosts, beide auf allen Switches eingetragen. Zusätzlich eine Regel für kritische Ports (z.B. Medizingeräte bleiben im bisherigen VLAN, wenn kein Server antwortet). Überwachung der RADIUS-Dienste und Zertifikatslaufzeiten."
+    ]
+  },
+  {
+    "title": "Auswahl eines neuen Speichersystems per Nutzwertanalyse",
+    "cat": "wirtschaft",
+    "branche": "Architekturbüro (Lindner und Partner Architekten, 45 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Das bisherige Speichersystem ist voll und fällt aus der Wartung. Für die Nachfolge liegen drei Angebote vor. Die Geschäftsführung möchte eine nachvollziehbare Entscheidung, die nicht allein auf dem Anschaffungspreis beruht.",
+    "auftrag": "Vergleichen Sie die drei Angebote über die Kosten von 5 Jahren und mit einer Nutzwertanalyse und geben Sie eine begründete Empfehlung ab.",
+    "rahmenbedingungen": [
+      "Angebot A: 34.000 Euro Anschaffung, 3.000 Euro Wartung und 900 Euro Strom pro Jahr",
+      "Angebot B: 28.000 Euro Anschaffung, 4.500 Euro Wartung und 1.100 Euro Strom pro Jahr",
+      "Angebot C: 41.000 Euro Anschaffung, 2.000 Euro Wartung und 700 Euro Strom pro Jahr",
+      "Gewichtung: Kosten 30 %, Leistung 25 %, Support 20 %, Erweiterbarkeit 15 %, Bedienung 10 %",
+      "Punkte von 1 bis 10: A 9/7/6/7/8, B 7/6/8/5/7, C 8/9/8/9/6 (Reihenfolge wie die Gewichtung)"
+    ],
+    "aufgaben": [
+      "Berechnen Sie die Gesamtkosten jedes Angebots über 5 Jahre.",
+      "Führen Sie die Nutzwertanalyse durch und ermitteln Sie die Rangfolge.",
+      "Welches Angebot empfehlen Sie? Begründen Sie auch gegenüber dem günstigsten Anschaffungspreis.",
+      "Wie prüfen Sie, ob das Ergebnis von der Gewichtung abhängt?",
+      "Welche Punkte müssen im Kaufvertrag bzw. Wartungsvertrag geregelt sein?"
+    ],
+    "hinweise": [
+      "A: 34.000 + 5 * (3.000 + 900) = 53.500 Euro. B: 28.000 + 5 * (4.500 + 1.100) = 56.000 Euro. C: 41.000 + 5 * (2.000 + 700) = 54.500 Euro. Trotz des niedrigsten Preises ist B über 5 Jahre am teuersten.",
+      "A: 0,3 * 9 + 0,25 * 7 + 0,2 * 6 + 0,15 * 7 + 0,1 * 8 = 7,50. B: 0,3 * 7 + 0,25 * 6 + 0,2 * 8 + 0,15 * 5 + 0,1 * 7 = 6,65. C: 0,3 * 8 + 0,25 * 9 + 0,2 * 8 + 0,15 * 9 + 0,1 * 6 = 8,20. Rangfolge: C, A, B.",
+      "Empfehlung C: höchster Nutzwert, bei den Kosten über 5 Jahren nur 1.000 Euro teurer als A und 1.500 Euro günstiger als B. Leistung und Erweiterbarkeit sind für große CAD- und Bilddateien und das Datenwachstum besonders wichtig. Der niedrige Anschaffungspreis von B wird durch hohe laufende Kosten aufgezehrt.",
+      "Sensitivitätsanalyse: Gewichtung verändern (z.B. Kosten auf 50 % erhöhen) und neu rechnen. Bleibt C vorn, ist die Entscheidung stabil. Die Gewichtung sollte vor dem Öffnen der Angebote mit der Geschäftsführung festgelegt werden, damit sie nicht nachträglich angepasst wird.",
+      "Liefertermin und Leistungsumfang (Installation, Datenmigration), Gewährleistung und Garantie, Wartungslaufzeit mit Reaktionszeiten (z.B. Vor-Ort-Service am nächsten Arbeitstag), Preis für Verlängerung nach 5 Jahren, Umgang mit defekten Platten (Datenträger bleiben beim Kunden), Zahlungsbedingungen und Abnahme."
+    ]
   }
 ]

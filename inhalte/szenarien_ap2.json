@@ -1472,5 +1472,760 @@
       "",
       "3. D liegt auf dem kritischen Pfad, das Projekt verlängert sich um 4 auf 30 Tage. Möglich: Übergangslösung (z.B. LTE- oder 5G-Router) für die Inbetriebnahme, beim Provider eskalieren, Leitung frühzeitiger beauftragen (parallel zum Konzept), Auftraggeber informieren und Termine anpassen."
     ]
+  },
+  {
+    "title": "RAID 6, RAID 50 oder RAID 60 für ein Videoarchiv",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Für ein Videoarchiv stehen 12 Festplatten mit je 16 TB zur Verfügung. Zur Wahl stehen:",
+      "  RAID 6 über alle 12 Platten",
+      "  RAID 50 aus zwei RAID-5-Gruppen mit je 6 Platten",
+      "  RAID 60 aus zwei RAID-6-Gruppen mit je 6 Platten",
+      "",
+      "1. Berechnen Sie für jede Variante die Nutzkapazität und den Nutzungsgrad (Anteil der Bruttokapazität).",
+      "2. Wie viele Plattenausfälle verkraftet jede Variante im ungünstigsten und im günstigsten Fall?",
+      "3. Welche Variante empfehlen Sie für das Archiv? Begründen Sie mit Blick auf die großen Platten."
+    ],
+    "solution": [
+      "1. Brutto: 12 * 16 = 192 TB.",
+      "RAID 6: (12 - 2) * 16 = 160 TB, Nutzungsgrad 160 / 192 = 83,3 %.",
+      "RAID 50: 2 * (6 - 1) * 16 = 160 TB, ebenfalls 83,3 %.",
+      "RAID 60: 2 * (6 - 2) * 16 = 128 TB, Nutzungsgrad 128 / 192 = 66,7 %.",
+      "",
+      "2. RAID 6: genau 2 beliebige Platten. RAID 50: ungünstig nur 1 (zwei Ausfälle in derselben Gruppe zerstören das Array), günstig 2 (je eine pro Gruppe). RAID 60: ungünstig 2 beliebige, günstig 4 (je zwei pro Gruppe).",
+      "",
+      "3. RAID 50 scheidet aus: Es hat dieselbe Kapazität wie RAID 6, verkraftet aber im ungünstigen Fall nur einen Ausfall. Ein Rebuild einer 16-TB-Platte dauert viele Stunden bis Tage, in dieser Zeit wäre ein zweiter Fehler in derselben Gruppe fatal. Für ein Archiv mit überwiegend Lesezugriffen ist RAID 6 sinnvoll: höchste Kapazität und doppelte Parität. RAID 60 lohnt sich, wenn Schreibleistung und kürzere Rebuilds (nur eine Gruppe mit 6 Platten ist betroffen) wichtiger sind als 32 TB Kapazität. Zusätzlich eine Ersatzplatte vorhalten."
+    ]
+  },
+  {
+    "title": "Rebuild-Zeit großer Festplatten abschätzen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein NAS arbeitet mit RAID 5 aus 5 Festplatten zu je 18 TB und hat zusätzlich eine Hot-Spare-Platte. Der Controller schafft beim Rebuild ohne Last 150 MB/s, im laufenden Betrieb nur 60 MB/s. Rechnen Sie mit 1 TB = 1.000.000 MB.",
+      "",
+      "1. Welche Nutzkapazität hat das RAID, und welche Aufgabe hat die Hot-Spare-Platte?",
+      "2. Wie lange dauert der Rebuild einer ausgefallenen Platte ohne Last und im laufenden Betrieb?",
+      "3. Ein Kollege schlägt vor, die Hot-Spare-Platte stattdessen in ein RAID 6 aus 6 Platten einzubinden. Bewerten Sie den Vorschlag."
+    ],
+    "solution": [
+      "1. (5 - 1) * 18 = 72 TB. Die Hot-Spare-Platte ist eingebaut, aber unbenutzt. Fällt eine Platte aus, bindet der Controller sie automatisch ein und startet sofort den Rebuild, ohne dass jemand vor Ort eine Platte tauschen muss.",
+      "",
+      "2. Beim Rebuild wird die gesamte Ersatzplatte beschrieben: 18.000.000 MB / 150 MB/s = 120.000 s = 33,3 Stunden. Im laufenden Betrieb: 18.000.000 MB / 60 MB/s = 300.000 s = 83,3 Stunden, also etwa 3,5 Tage.",
+      "",
+      "3. RAID 6 aus 6 Platten: (6 - 2) * 18 = 72 TB, also die gleiche Nutzkapazität. RAID 6 verkraftet zwei Ausfälle. Während eines Rebuilds von bis zu 3,5 Tagen darf also eine weitere Platte ausfallen oder ein Lesefehler auftreten, ohne dass Daten verloren gehen. Bei RAID 5 mit Hot Spare wäre das fatal. Nachteile: Es gibt keinen automatischen Ersatz mehr, und die Schreibleistung sinkt (Write Penalty 6 statt 4). Der Vorschlag ist sinnvoll, wenn eine Ersatzplatte im Lager liegt und das Monitoring Ausfälle sofort meldet."
+    ]
+  },
+  {
+    "title": "IOPS-Bedarf eines Datenbankspeichers berechnen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Datenbank erzeugt in der Spitze 6.000 IOPS, davon 70 % Lese- und 30 % Schreibzugriffe. Eine SAS-Festplatte mit 15.000 U/min liefert etwa 200 IOPS. Write Penalty: RAID 10 = 2, RAID 5 = 4, RAID 6 = 6.",
+      "",
+      "1. Berechnen Sie die IOPS, die die Platten (Backend) bei RAID 10, RAID 5 und RAID 6 leisten müssen.",
+      "2. Wie viele Festplatten sind jeweils mindestens nötig?",
+      "3. Eine Enterprise-SSD liefert über 50.000 IOPS. Was bedeutet das für die Planung?"
+    ],
+    "solution": [
+      "1. Lesen: 6.000 * 0,7 = 4.200 IOPS, Schreiben: 6.000 * 0,3 = 1.800 IOPS.",
+      "RAID 10: 4.200 + 1.800 * 2 = 7.800 IOPS.",
+      "RAID 5: 4.200 + 1.800 * 4 = 11.400 IOPS.",
+      "RAID 6: 4.200 + 1.800 * 6 = 15.000 IOPS.",
+      "",
+      "2. RAID 10: 7.800 / 200 = 39, wegen der Spiegelpaare 40 Platten. RAID 5: 11.400 / 200 = 57 Platten. RAID 6: 15.000 / 200 = 75 Platten.",
+      "",
+      "3. Mit Festplatten bestimmt die Leistung die Plattenzahl, nicht die Kapazität. Das wäre teuer, laut und stromhungrig. Schon wenige SSDs decken den IOPS-Bedarf mehrfach, zusätzlich sinkt die Latenz deutlich. Die Anzahl der SSDs ergibt sich dann aus Kapazität und Ausfallsicherheit, z.B. RAID 10 aus 4 bis 6 SSDs."
+    ]
+  },
+  {
+    "title": "Speicher-Tiering für einen Fileserver planen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein neues Speichersystem soll 40 TB Daten aufnehmen. Auswertungen zeigen: 12 % der Daten werden häufig genutzt (heiße Daten), der Rest selten. Preise je TB Nutzkapazität: SSD 180 Euro, HDD 30 Euro. Die SSD-Stufe soll 25 % Reserve über den heißen Daten haben.",
+      "",
+      "1. Wie groß müssen SSD-Stufe und HDD-Stufe mindestens sein?",
+      "2. Vergleichen Sie die Kosten des Tiering-Systems mit einem reinen SSD-System (All-Flash) für 40 TB.",
+      "3. Wie funktioniert automatisches Tiering, und welches Risiko entsteht bei plötzlich geänderten Zugriffsmustern?"
+    ],
+    "solution": [
+      "1. Heiße Daten: 40 * 0,12 = 4,8 TB. SSD-Stufe: 4,8 * 1,25 = 6 TB. HDD-Stufe für die kalten Daten: 40 - 4,8 = 35,2 TB.",
+      "",
+      "2. Tiering: 6 * 180 = 1.080 Euro plus 35,2 * 30 = 1.056 Euro, zusammen 2.136 Euro. All-Flash: 40 * 180 = 7.200 Euro. Das Tiering spart 5.064 Euro, also rund 70 %.",
+      "",
+      "3. Das System zählt die Zugriffe je Datenblock und verschiebt regelmäßig (z.B. nachts) häufig genutzte Blöcke auf die SSD-Stufe und selten genutzte auf die HDD-Stufe. Werden plötzlich andere Daten wichtig (z.B. Jahresabschluss, reaktiviertes Projektarchiv), liegen sie zunächst auf den HDDs und sind bis zur nächsten Verschiebung langsam. Abhilfe: zusätzlicher SSD-Cache, kritische Volumes fest auf der SSD-Stufe halten (Pinning), Verschiebung häufiger ausführen."
+    ]
+  },
+  {
+    "title": "NAS oder SAN für eine Werbeagentur",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Werbeagentur mit 35 Mitarbeitern speichert ihre Projektdaten bisher auf den lokalen Platten eines Servers. Geplant sind zwei Virtualisierungshosts und ein zentraler Speicher. Die Mitarbeiter arbeiten mit Windows und macOS.",
+      "",
+      "1. Erklären Sie den Unterschied zwischen NAS und SAN (Zugriffsart und Protokolle).",
+      "2. Welche Lösung passt für die Dateifreigaben, welche für die Datenspeicher der VMs? Begründen Sie.",
+      "3. Viele Hersteller bieten \"Unified Storage\" an. Was bedeutet das, und welchen Vorteil hat die Agentur davon?"
+    ],
+    "solution": [
+      "1. NAS arbeitet dateibasiert: Das Gerät verwaltet das Dateisystem selbst, Clients greifen per SMB oder NFS über das LAN auf Freigaben zu. SAN arbeitet blockbasiert: Server sehen LUNs wie lokale Platten und formatieren sie selbst (z.B. NTFS, VMFS). Protokolle sind iSCSI oder Fibre Channel, meist in einem eigenen Speichernetz.",
+      "",
+      "2. Dateifreigaben: NAS mit SMB, weil Windows und macOS SMB beherrschen, Rechte über das Active Directory vergeben werden und Snapshots als Vorgängerversionen dienen. VM-Datenspeicher: Blockspeicher per iSCSI oder Fibre Channel, auf den beide Hosts gleichzeitig zugreifen. Das ist Voraussetzung für Live-Migration und Hochverfügbarkeit. Einige Hypervisoren können VMs auch auf NFS ablegen.",
+      "",
+      "3. Ein Unified-Storage-System bietet Datei- (SMB, NFS) und Blockzugriff (iSCSI, FC) in einem Gerät. Vorteile: nur ein System zu kaufen und zu verwalten, gemeinsame Snapshot- und Replikationsfunktionen, geringere Kosten. Weil dann alles an einem Gerät hängt, sollte es zwei Controller und redundante Netzteile haben."
+    ]
+  },
+  {
+    "title": "Fibre Channel oder iSCSI für ein neues SAN",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Datenbankserver braucht in der Spitze 1.200 MB/s Durchsatz zum Speichersystem. Die volle Leistung soll auch beim Ausfall eines Pfades erhalten bleiben. Zur Auswahl stehen iSCSI über 10-GbE- oder 25-GbE-Ports und Fibre Channel mit 16 Gbit/s (16GFC, etwa 1.600 MB/s je Port). Für iSCSI rechnen Sie mit 10 % Protokoll-Overhead.",
+      "",
+      "1. Berechnen Sie den nutzbaren Durchsatz je Port für iSCSI über 10 GbE und 25 GbE.",
+      "2. Wie viele Ports brauchen Sie je Technik, damit auch bei Ausfall eines Pfades 1.200 MB/s erreicht werden?",
+      "3. Nennen Sie je zwei Vor- und Nachteile von Fibre Channel gegenüber iSCSI."
+    ],
+    "solution": [
+      "1. 10 GbE: 10.000 Mbit/s / 8 = 1.250 MB/s, abzüglich 10 %: 1.250 * 0,9 = 1.125 MB/s. 25 GbE: 25.000 Mbit/s / 8 = 3.125 MB/s, abzüglich 10 %: 2.812,5 MB/s.",
+      "",
+      "2. 10 GbE: Ein Port reicht nicht (1.125 < 1.200 MB/s). Für die Leistung sind 2 Ports nötig, für die Redundanz ein dritter. Bei Ausfall eines Ports bleiben 2 * 1.125 = 2.250 MB/s. In der Praxis nimmt man 4 Ports, verteilt auf zwei Switches. 25 GbE: 2 Ports, einer reicht für die Leistung, der zweite dient als Reserve. 16GFC: 2 Ports (1.600 MB/s je Port), je einer pro Fabric.",
+      "",
+      "3. Vorteile FC: eigenes, verlustfreies Speichernetz mit sehr niedriger Latenz, vollständig vom LAN getrennt (keine Störungen durch anderen Verkehr, kleinere Angriffsfläche). Nachteile FC: teure HBAs und FC-Switches, eigenes Fachwissen (Zoning, WWN) und eigene Verkabelung. iSCSI nutzt dagegen vorhandene Ethernet-Technik und Kenntnisse."
+    ]
+  },
+  {
+    "title": "Deduplizierung im Backupspeicher bewerten",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Unternehmen sichert 20 TB Daten. Aufbewahrt werden 4 wöchentliche Vollsicherungen und 24 inkrementelle Sicherungen mit je 0,5 TB. Der Hersteller einer Backup-Appliance verspricht für diese Daten einen Reduktionsfaktor von 8:1 durch Deduplizierung und Kompression.",
+      "",
+      "1. Wie groß ist die logische Datenmenge, und wie viel physischer Speicher wird beim Faktor 8:1 benötigt?",
+      "2. Wie viel Prozent Speicher werden eingespart? Erklären Sie, warum gerade Vollsicherungen gut dedupliziert werden.",
+      "3. Bei welchen Daten wirkt die Deduplizierung kaum, und was bedeutet das für die Planung?"
+    ],
+    "solution": [
+      "1. Logisch: 4 * 20 TB + 24 * 0,5 TB = 80 + 12 = 92 TB. Physisch: 92 / 8 = 11,5 TB.",
+      "",
+      "2. Einsparung: 1 - 1/8 = 87,5 %. Eine Vollsicherung enthält größtenteils dieselben Datenblöcke wie die der Vorwoche. Die Deduplizierung speichert jeden Block nur einmal und ersetzt Wiederholungen durch Verweise.",
+      "",
+      "3. Bei bereits komprimierten oder verschlüsselten Daten (Videos, Bilder, ZIP-Archive, verschlüsselte Datenbanken) gibt es kaum gleiche Blöcke. Auch von Ransomware verschlüsselte Daten lassen sich nicht deduplizieren. Für die Planung heißt das: den Faktor nicht ungeprüft übernehmen, mit eigenen Daten testen, Reserve einplanen und die Verschlüsselung erst im Backupziel nach der Deduplizierung einsetzen. Außerdem dauert eine Rücksicherung länger, weil die Daten wieder zusammengesetzt werden müssen."
+    ]
+  },
+  {
+    "title": "Snapshot-Reserve im Speichersystem planen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Volume mit 10 TB Daten soll mit Snapshots geschützt werden: stündlich (24 Stück aufbewahrt) und täglich (14 Stück aufbewahrt). Pro Tag ändern sich etwa 2 % der Daten. Auf die berechnete Snapshot-Größe sollen 20 % Reserve kommen.",
+      "",
+      "1. Schätzen Sie den Platzbedarf für die Snapshots ab.",
+      "2. Wie funktioniert ein Snapshot technisch, und warum ist er in Sekunden erstellt?",
+      "3. Warum ersetzen Snapshots auf demselben Speichersystem kein Backup?"
+    ],
+    "solution": [
+      "1. Änderungen pro Tag: 10 TB * 0,02 = 0,2 TB. Die täglichen Snapshots halten 14 Tage: 14 * 0,2 = 2,8 TB. Die stündlichen Snapshots liegen innerhalb des letzten Tages und brauchen kaum zusätzlichen Platz. Mit Reserve: 2,8 * 1,2 = 3,36 TB, also etwa ein Drittel des Volumes.",
+      "",
+      "2. Ein Snapshot kopiert keine Daten, sondern friert den aktuellen Stand der Blockverweise ein. Änderungen landen danach an einer neuen Stelle (Redirect-on-Write) oder der alte Block wird vorher gesichert (Copy-on-Write). Nur geänderte Blöcke belegen zusätzlichen Platz.",
+      "",
+      "3. Snapshots liegen auf denselben Platten und demselben System. Fällt das RAID oder der Controller aus, brennt der Serverraum oder löscht ein Angreifer mit Admin-Zugang die Snapshots, sind auch sie verloren. Ein Backup gehört auf ein getrenntes System, möglichst unveränderbar und an einem anderen Ort. Snapshots ergänzen das Backup für schnelle Wiederherstellungen."
+    ]
+  },
+  {
+    "title": "Backupstrategie nach der 3-2-1-1-0-Regel prüfen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Steuerbüro mit 25 Arbeitsplätzen speichert alle Daten auf einem Server. Jede Nacht sichert eine Software die Daten auf ein NAS im selben Serverschrank. Freitags nimmt der Inhaber eine USB-Festplatte mit einer Kopie der Sicherung mit nach Hause. Dort bleibt sie bis zum nächsten Freitag an seinem Notebook angeschlossen. Eine Rücksicherung wurde noch nie getestet.",
+      "",
+      "1. Erklären Sie die Bedeutung jeder Ziffer der 3-2-1-1-0-Regel.",
+      "2. Prüfen Sie das bestehende Konzept gegen jede Ziffer.",
+      "3. Schlagen Sie konkrete Verbesserungen vor."
+    ],
+    "solution": [
+      "1. 3: drei Kopien der Daten (Original und zwei Sicherungen). 2: auf zwei verschiedenen Speichermedien bzw. Systemen. 1: eine Kopie außer Haus. 1: eine Kopie offline oder unveränderbar (Air Gap bzw. Immutable). 0: null Fehler bei der regelmäßigen Prüfung der Wiederherstellung.",
+      "",
+      "2. 3 Kopien: erfüllt (Server, NAS, USB-Platte). 2 Medien: formal erfüllt, aber NAS und USB-Platte sind beide Festplatten. 1 außer Haus: erfüllt, allerdings nur wöchentlich. 1 offline: nicht erfüllt, die USB-Platte hängt dauerhaft am Notebook und kann von Ransomware mit verschlüsselt werden. 0 Fehler: nicht erfüllt, es gab nie einen Test.",
+      "",
+      "3. USB-Platte nach der Kopie sofort trennen, zwei Platten im Wechsel nutzen und verschlüsseln (Mandantendaten unterliegen der Schweigepflicht). Alternativ oder zusätzlich ein Cloud-Backup mit Unveränderbarkeit (Object Lock). NAS in einen anderen Raum bzw. Brandabschnitt stellen und mit eigenen Zugangsdaten schützen. Regelmäßige, dokumentierte Rücksicherungstests und automatische Prüfung der Sicherungen durch die Backup-Software."
+    ]
+  },
+  {
+    "title": "LTO-Bandsicherung im Backupfenster",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Jeden Samstag sollen 45 TB als Vollsicherung auf LTO-9-Bänder geschrieben werden. Ein LTO-9-Band fasst 18 TB (nativ), ein Laufwerk schreibt 400 MB/s (nativ). Das Backupfenster reicht von Samstag 18 Uhr bis Sonntag 6 Uhr. Rechnen Sie ohne Kompression mit 1 TB = 1.000.000 MB.",
+      "",
+      "1. Wie viele Bänder werden je Vollsicherung benötigt?",
+      "2. Wie lange dauert die Sicherung mit einem Laufwerk, und wie viele Laufwerke brauchen Sie für das Backupfenster?",
+      "3. Welche Voraussetzungen müssen Quelle und Netzwerk erfüllen, und welche Vorteile bietet Band als Medium?"
+    ],
+    "solution": [
+      "1. 45 TB / 18 TB = 2,5, also 3 Bänder.",
+      "",
+      "2. 45.000.000 MB / 400 MB/s = 112.500 s = 31,25 Stunden. Das Backupfenster hat 12 Stunden: 31,25 / 12 = 2,6, also 3 Laufwerke. Jedes schreibt dann 15 TB in 15.000.000 / 400 = 37.500 s, etwa 10,4 Stunden.",
+      "",
+      "3. Drei Laufwerke brauchen zusammen 3 * 400 = 1.200 MB/s, das sind 9,6 Gbit/s. Ein 10-GbE-Link wäre schon ohne Overhead fast voll, besser 25 GbE oder mehrere Links. Die Laufwerke brauchen einen gleichmäßigen Datenstrom, sonst stoppt und spult das Band ständig (Shoe-Shining). Üblich ist daher erst eine Sicherung auf Festplatten und danach die Kopie auf Band (Disk-to-Disk-to-Tape). Vorteile von Band: offline gelagert und damit vor Ransomware geschützt, lange haltbar, günstig je TB, als WORM-Band unveränderbar und leicht außer Haus zu bringen."
+    ]
+  },
+  {
+    "title": "Cluster-Erweiterung um zwölf VMs prüfen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Cluster besteht aus 3 Hosts mit je 2 CPUs zu 16 Kernen und 384 GB RAM. Der Hypervisor belegt je Host 16 GB RAM. Heute laufen 40 VMs mit zusammen 180 vCPU und 720 GB RAM. Neu hinzukommen sollen 12 VMs mit je 4 vCPU und 16 GB RAM.",
+      "Vorgaben: höchstens 3 vCPU je physischem Kern, RAM wird nicht überbucht, der Cluster muss den Ausfall eines Hosts verkraften (N+1).",
+      "",
+      "1. Berechnen Sie den vCPU- und RAM-Bedarf nach der Erweiterung und das vCPU-Verhältnis bei 3 laufenden Hosts.",
+      "2. Prüfen Sie, ob die Vorgaben beim Ausfall eines Hosts eingehalten werden.",
+      "3. Wie viele Hosts sind nötig? Warum ist RAM-Überbuchung (Ballooning, Swapping) keine Lösung?"
+    ],
+    "solution": [
+      "1. vCPU: 180 + 12 * 4 = 228. RAM: 720 + 12 * 16 = 912 GB. Kerne: 3 * 32 = 96, Verhältnis 228 / 96 = 2,375 : 1, also unter 3 : 1. Nutzbarer RAM: 3 * (384 - 16) = 1.104 GB, das reicht.",
+      "",
+      "2. Bei 2 Hosts: 64 Kerne, 228 / 64 = 3,56 : 1, das liegt über 3 : 1. RAM: 2 * 368 = 736 GB, weniger als 912 GB. N+1 ist nicht erfüllt, nach einem Hostausfall könnten nicht alle VMs neu starten.",
+      "",
+      "3. Ein vierter Host: Fällt einer aus, laufen noch 3 Hosts mit 96 Kernen und 1.104 GB RAM, wie in Aufgabe 1. Mehr RAM allein reicht nicht, weil auch das CPU-Verhältnis überschritten wird. RAM-Überbuchung holt Speicher per Ballooning aus den Gästen oder lagert ihn auf Datenträger aus. Das führt zu massiven Leistungseinbrüchen, und zwar genau im Störfall, wenn ohnehin alle VMs auf weniger Hosts laufen."
+    ]
+  },
+  {
+    "title": "HA-Cluster mit Admission Control einrichten",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Cluster mit 4 gleichen Hosts (je 512 GB RAM) soll bei Ausfall eines Hosts alle VMs automatisch neu starten. Die Admission Control wird prozentual eingestellt. Die VMs belegen zusammen 1.400 GB RAM.",
+      "",
+      "1. Welchen Prozentsatz reservieren Sie für N+1, und wie viel RAM bleibt für VMs nutzbar?",
+      "2. Wie ändern sich Reserve und nutzbarer RAM, wenn ein fünfter gleicher Host hinzukommt?",
+      "3. Wie arbeitet ein HA-Cluster bei einem Hostausfall, und warum legen Sie Startprioritäten fest?"
+    ],
+    "solution": [
+      "1. Ein Host von vier: 1/4 = 25 %. Gesamt 4 * 512 = 2.048 GB, Reserve 512 GB, nutzbar 1.536 GB. Die 1.400 GB passen, es bleiben 136 GB frei.",
+      "",
+      "2. Ein Host von fünf: 1/5 = 20 %. Gesamt 5 * 512 = 2.560 GB, Reserve weiterhin 512 GB, nutzbar 2.048 GB. Frei sind dann 2.048 - 1.400 = 648 GB.",
+      "",
+      "3. Die Hosts überwachen sich gegenseitig über Heartbeats (Netzwerk und gemeinsamer Speicher). Fällt ein Host aus, starten seine VMs auf den übrigen Hosts neu. Das ist kein unterbrechungsfreier Betrieb: Die VMs sind für die Dauer des Neustarts weg, ungespeicherte Daten im Arbeitsspeicher gehen verloren. Admission Control verhindert, dass mehr VMs gestartet werden, als nach einem Ausfall Platz hätten. Startprioritäten sorgen dafür, dass zuerst Domänencontroller und DNS, dann Datenbanken und zuletzt Anwendungsserver starten, damit Abhängigkeiten erfüllt sind."
+    ]
+  },
+  {
+    "title": "Live-Migration für Wartungsarbeiten planen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Host soll während der Arbeitszeit ein Firmware-Update erhalten. Vorher werden seine VMs per Live-Migration verschoben. Die größte VM hat 64 GB Arbeitsspeicher. Das Migrationsnetz hat heute 10 Gbit/s, geplant sind 25 Gbit/s.",
+      "",
+      "1. Wie lange dauert die erste Übertragung des Arbeitsspeichers mindestens bei 10 und 25 Gbit/s (1 GB = 8 Gbit, ohne Overhead)?",
+      "2. Warum dauert die Migration in der Praxis länger, und warum merken die Benutzer trotzdem kaum etwas?",
+      "3. Nennen Sie Voraussetzungen für eine Live-Migration zwischen zwei Hosts."
+    ],
+    "solution": [
+      "1. 64 GB * 8 = 512 Gbit. Bei 10 Gbit/s: 512 / 10 = 51,2 s. Bei 25 Gbit/s: 512 / 25 = 20,48 s.",
+      "",
+      "2. Während der Übertragung läuft die VM weiter und ändert Speicherseiten. Diese werden in weiteren Runden nachkopiert. Zum Schluss wird die VM für Millisekunden bis wenige Sekunden angehalten, der Rest und der CPU-Zustand werden übertragen und die VM läuft auf dem Zielhost weiter. Netzwerkverbindungen bleiben bestehen, die Switches lernen den neuen Port über ein ARP-Paket des Zielhosts.",
+      "",
+      "3. Gemeinsamer Speicher oder zusätzlich eine Speichermigration, kompatible CPUs (gleicher Hersteller, Kompatibilitätsmodus), gleiche Netzwerke und VLANs auf beiden Hosts, genügend freie Ressourcen auf dem Zielhost, ein eigenes schnelles Migrationsnetz und keine lokal eingebundenen Geräte wie USB-Dongles oder lokale ISO-Dateien."
+    ]
+  },
+  {
+    "title": "Container oder VMs für interne Webdienste",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Unternehmen betreibt 20 kleine interne Webdienste, bisher jeden in einer eigenen Linux-VM. Jede VM braucht 2 GB RAM für das Betriebssystem und 0,5 GB für den Dienst. Geplant ist, alle Dienste als Container in einer Linux-VM mit Container-Laufzeit zu betreiben (Grundbedarf 4 GB RAM, je Container 0,5 GB).",
+      "",
+      "1. Vergleichen Sie den RAM-Bedarf beider Varianten.",
+      "2. Erklären Sie den technischen Unterschied zwischen Container und VM.",
+      "3. Für welche Dienste würden Sie weiterhin VMs einsetzen? Nennen Sie zwei Gründe."
+    ],
+    "solution": [
+      "1. VMs: 20 * (2 + 0,5) = 50 GB. Container: 4 + 20 * 0,5 = 14 GB. Ersparnis: 36 GB, also 72 %.",
+      "",
+      "2. Eine VM enthält ein vollständiges Betriebssystem mit eigenem Kernel auf virtueller Hardware, die der Hypervisor bereitstellt. Container teilen sich den Kernel des Hosts und sind nur über Namespaces und cgroups voneinander getrennt. Ein Container-Image enthält nur Anwendung und Bibliotheken, startet in Sekunden und braucht wenig Ressourcen. Die Isolation ist dafür schwächer als bei einer VM.",
+      "",
+      "3. Dienste, die ein anderes Betriebssystem brauchen (z.B. Windows-Anwendungen), Dienste mit hohen Anforderungen an die Trennung (z.B. in der DMZ oder für verschiedene Mandanten), ältere Anwendungen mit eigenen Kernelmodulen sowie Software, die der Hersteller nur als VM oder Appliance unterstützt."
+    ]
+  },
+  {
+    "title": "Windows Server im Virtualisierungscluster lizenzieren",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Zwei Hosts mit je 2 CPUs zu 12 Kernen bilden einen Cluster. Es laufen 10 Windows-Server-VMs, die per Live-Migration zwischen den Hosts wandern. Windows Server wird pro physischem Kern lizenziert, mindestens 8 Kerne je CPU und 16 Kerne je Server. Die Standard Edition erlaubt je vollständiger Lizenzierung aller Kerne 2 VMs, die Datacenter Edition unbegrenzt viele.",
+      "",
+      "1. Wie viele Kernlizenzen braucht ein Host für eine vollständige Lizenzierung?",
+      "2. Jeder Host muss alle 10 VMs ausführen dürfen. Wie viele Kernlizenzen wären mit der Standard Edition nötig? Vergleichen Sie mit Datacenter.",
+      "3. Welche weiteren Punkte müssen Sie bei der Lizenzierung beachten?"
+    ],
+    "solution": [
+      "1. 2 * 12 = 24 Kerne. Das liegt über den Mindestwerten (8 je CPU, 16 je Server), also 24 Kernlizenzen je Host.",
+      "",
+      "2. Standard: 10 VMs / 2 = 5 vollständige Lizenzierungen je Host, also 5 * 24 = 120 Kernlizenzen je Host und 240 für den Cluster. Datacenter: 24 je Host, 48 für den Cluster. Bei vielen VMs und wandernden VMs im Cluster ist Datacenter trotz höherem Einzelpreis meist günstiger und deutlich flexibler.",
+      "",
+      "3. Die Lizenzen sind an die Hardware gebunden und dürfen ohne Zusatzrechte (z.B. Software Assurance) nur alle 90 Tage auf einen anderen Host übertragen werden. Für die Zugriffe der Benutzer oder Geräte sind Zugriffslizenzen (CALs) nötig, für Remotedesktop zusätzlich RDS-CALs. Hyper-V ist in Windows Server enthalten. Bei einem anderen Hypervisor fallen dessen eigene Lizenzen an, die Windows-Lizenzen für die Gäste bleiben trotzdem nötig."
+    ]
+  },
+  {
+    "title": "Virtuelle Desktops für ein Schulungszentrum",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Schulungszentrum will 120 virtuelle Desktops (VDI) mit je 2 vCPU und 6 GB RAM bereitstellen. Ein Host hat 32 Kerne und 512 GB RAM, davon belegt der Hypervisor 32 GB. Für VDI sind bis zu 5 vCPU je Kern vertretbar, RAM wird nicht überbucht. Der Betrieb soll den Ausfall eines Hosts verkraften.",
+      "",
+      "1. Wie viele Hosts sind für RAM und CPU jeweils nötig?",
+      "2. Wie viele Hosts planen Sie mit N+1? Welche Besonderheit hat VDI beim Speicher morgens um 8 Uhr?",
+      "3. Nennen Sie Vor- und Nachteile von VDI gegenüber einem Terminalserver (Remotedesktopdienste)."
+    ],
+    "solution": [
+      "1. RAM: 120 * 6 = 720 GB, nutzbar je Host 512 - 32 = 480 GB. 720 / 480 = 1,5, also 2 Hosts. CPU: 120 * 2 = 240 vCPU, bei 5 : 1 sind 240 / 5 = 48 Kerne nötig. 48 / 32 = 1,5, also ebenfalls 2 Hosts.",
+      "",
+      "2. Mit N+1 sind 3 Hosts nötig. Wenn alle Teilnehmer gleichzeitig ihre Desktops starten (Boot Storm), entsteht eine sehr hohe Last auf dem Speicher. Daher schnelle SSDs einplanen und Desktops vor Kursbeginn automatisch starten. Für Schulungen eignen sich nicht persistente Desktops, die nach jedem Kurs in den Ausgangszustand zurückgesetzt werden.",
+      "",
+      "3. Vorteile VDI: Jeder Benutzer hat ein eigenes Betriebssystem, individuelle Software und bei Bedarf Adminrechte, Fehler betreffen nur einen Desktop. Nachteile: deutlich mehr Ressourcen und Speicher, eigene Lizenzen für Desktop-Betriebssysteme in VDI. Beim Terminalserver teilen sich viele Benutzer ein Server-Betriebssystem, das spart Ressourcen, aber die Anwendungen müssen mehrbenutzerfähig sein und ein Benutzer kann die anderen ausbremsen."
+    ]
+  },
+  {
+    "title": "Drei Systeme in die Cloud verlagern",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Handelsunternehmen will drei Systeme in die Cloud verlagern:",
+      "  a) den eigenen Exchange-Mailserver",
+      "  b) eine selbst entwickelte Webanwendung mit MySQL-Datenbank",
+      "  c) ein älteres Warenwirtschaftssystem, das nur unter Windows Server 2019 mit speziell angepassten Einstellungen läuft",
+      "",
+      "1. Ordnen Sie jedem System ein Servicemodell (IaaS, PaaS, SaaS) zu und begründen Sie.",
+      "2. Wer ist bei IaaS, PaaS und SaaS jeweils für Updates des Betriebssystems und für die Datensicherung verantwortlich?",
+      "3. Welche rechtlichen und organisatorischen Punkte prüfen Sie vor der Migration?"
+    ],
+    "solution": [
+      "1. a) SaaS: Ein gehosteter Maildienst ersetzt den eigenen Server, Betrieb und Updates übernimmt der Anbieter. b) PaaS: Die Anwendung läuft auf einer verwalteten Laufzeitumgebung mit verwalteter Datenbank, das Team kümmert sich nur um Code und Daten. c) IaaS: Die Anwendung braucht ein bestimmtes Betriebssystem mit eigener Konfiguration, daher eine Cloud-VM (Lift and Shift).",
+      "",
+      "2. IaaS: Der Anbieter betreibt Hardware und Virtualisierung, der Kunde patcht Betriebssystem und Anwendung und sichert seine VMs. PaaS: Der Anbieter patcht Betriebssystem und Laufzeit, der Kunde verantwortet Code, Konfiguration und Daten, Datenbanksicherungen muss er passend einstellen. SaaS: Der Anbieter betreibt alles bis zur Anwendung, der Kunde bleibt für Benutzer, Rechte und seine Daten verantwortlich. Eine Sicherung der Postfächer über längere Zeiträume ist oft nur mit einer Zusatzlösung möglich (Modell der geteilten Verantwortung).",
+      "",
+      "3. Auftragsverarbeitungsvertrag nach Art. 28 DSGVO, Standort der Rechenzentren und mögliche Übermittlung in Drittländer, technische und organisatorische Maßnahmen des Anbieters, SLA und Verfügbarkeit, ausreichende und redundante Internetanbindung, Kosten, Ausstiegsstrategie gegen Abhängigkeit vom Anbieter sowie Anmeldung mit MFA."
+    ]
+  },
+  {
+    "title": "Cloud-VMs nach Nutzungsdauer abrechnen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Cloud-VM kostet nutzungsabhängig 0,20 Euro pro Stunde. Eine Reservierung für ein Jahr bringt 40 % Rabatt, wird aber für alle Stunden bezahlt, auch wenn die VM aus ist. Ein Monat wird mit 730 Stunden gerechnet.",
+      "  Webserver: läuft rund um die Uhr",
+      "  Testserver: läuft an 22 Arbeitstagen je 10 Stunden",
+      "  Build-Server: läuft etwa 60 Stunden im Monat",
+      "",
+      "1. Berechnen Sie die monatlichen Kosten ohne Reservierung für jede VM.",
+      "2. Für welche VM lohnt sich die Reservierung? Berechnen Sie die Ersparnis pro Jahr.",
+      "3. Welche weiteren Kostenfaktoren müssen Sie bei Cloud-VMs beachten?"
+    ],
+    "solution": [
+      "1. Webserver: 730 * 0,20 = 146 Euro. Testserver: 22 * 10 = 220 Stunden, 220 * 0,20 = 44 Euro. Build-Server: 60 * 0,20 = 12 Euro.",
+      "",
+      "2. Reserviert kostet eine VM 146 * 0,6 = 87,60 Euro im Monat, unabhängig von der Nutzung. Das lohnt sich erst ab 0,6 * 730 = 438 Stunden im Monat. Nur der Webserver liegt darüber: 146 - 87,60 = 58,40 Euro pro Monat, also 700,80 Euro pro Jahr (1.051,20 statt 1.752 Euro). Test- und Build-Server bleiben nutzungsabhängig und werden automatisch abgeschaltet.",
+      "",
+      "3. Speicher (Datenträger kosten auch bei gestoppter VM weiter), ausgehender Datenverkehr, öffentliche IP-Adressen, Backup und Snapshots, Betriebssystemlizenzen und Supportverträge. Wichtig: Eine VM muss im Portal freigegeben werden. Nur im Gast herunterfahren stoppt bei vielen Anbietern die Abrechnung nicht."
+    ]
+  },
+  {
+    "title": "Vergessener Snapshot legt eine VM lahm",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Die VM der Warenwirtschaft ist plötzlich angehalten, der Datenspeicher (4 TB) ist voll. Vor 270 Tagen wurde vor einem Update ein Snapshot erstellt und nie gelöscht. Die Delta-Datei des Snapshots ist inzwischen 600 GB groß.",
+      "",
+      "1. Wie hängen der alte Snapshot und der volle Datenspeicher zusammen? Um wie viel ist die Delta-Datei im Schnitt pro Tag gewachsen?",
+      "2. Wie beheben Sie das Problem?",
+      "3. Welche Regeln für Snapshots schlagen Sie vor?"
+    ],
+    "solution": [
+      "1. Ab dem Snapshot ist die Basisdisk schreibgeschützt, alle Änderungen landen in der Delta-Datei. Sie wächst ständig, im Schnitt um 600 GB / 270 Tage = 2,22 GB pro Tag. Ist der Datenspeicher voll, kann die VM nicht mehr schreiben und der Hypervisor hält sie an. Lange Snapshot-Ketten verlangsamen zusätzlich die Zugriffe.",
+      "",
+      "2. Zuerst Platz schaffen, z.B. eine andere VM verschieben, nicht benötigte Dateien löschen oder den Datenspeicher vergrößern. Dann den Snapshot über den Hypervisor löschen, dabei wird die Delta-Datei in die Basisdisk zurückgeschrieben (Konsolidierung). Das kann Stunden dauern. Niemals Delta-Dateien von Hand löschen, sonst sind alle Änderungen seit dem Snapshot verloren. Danach die VM starten und prüfen.",
+      "",
+      "3. Snapshots nur kurzfristig nutzen (höchstens 24 bis 72 Stunden), höchstens zwei bis drei in einer Kette, mit Name, Datum und Zweck beschriften. Monitoring mit Alarm für alte Snapshots und für den Füllstand der Datenspeicher (Warnung ab 80 %). Snapshots sind kein Backup."
+    ]
+  },
+  {
+    "title": "Server-VMs mit Vorlagen und Sysprep bereitstellen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Für eine Filialumgebung werden 25 gleich aufgebaute Windows-Server-VMs benötigt. Eine manuelle Installation dauert je VM 90 Minuten. Alternativ wird einmalig in 4 Stunden eine Vorlage erstellt, danach dauert jede VM nur noch 15 Minuten. Ein Kollege möchte einfach eine fertige VM 25-mal kopieren.",
+      "",
+      "1. Vergleichen Sie den Zeitaufwand beider Wege.",
+      "2. Warum sollte man eine fertige Windows-VM nicht einfach kopieren? Was bewirkt Sysprep?",
+      "3. Wie bereiten Sie eine Linux-Vorlage vor, und wie halten Sie Vorlagen aktuell?"
+    ],
+    "solution": [
+      "1. Manuell: 25 * 90 = 2.250 Minuten = 37,5 Stunden. Mit Vorlage: 4 Stunden + 25 * 15 Minuten = 4 + 6,25 = 10,25 Stunden. Ersparnis: 27,25 Stunden.",
+      "",
+      "2. Alle Kopien hätten denselben Computernamen, dieselbe Maschinen-SID und gegebenenfalls dasselbe Computerkonto in der Domäne. Das führt zu Konflikten im Netz und im Active Directory und wird vom Hersteller nicht unterstützt. Sysprep mit /generalize entfernt die rechnerspezifischen Daten (SID, Aktivierung, Gerätetreiber). Beim nächsten Start läuft die Ersteinrichtung, die sich mit einer Antwortdatei (unattend.xml) automatisieren lässt, z.B. Name und Domänenbeitritt.",
+      "",
+      "3. Linux: /etc/machine-id leeren, SSH-Hostschlüssel löschen, feste Netzwerk- und MAC-Zuordnungen entfernen, Logs und Befehlshistorie bereinigen. Beim ersten Start setzt cloud-init Hostname, IP-Adresse, Benutzer und SSH-Schlüssel. Vorlagen regelmäßig (z.B. monatlich) starten, patchen, erneut generalisieren und mit Versionsnummer dokumentieren."
+    ]
+  },
+  {
+    "title": "Gateway außerhalb des eigenen Subnetzes",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Server ist mit 10.14.37.200/21 und dem Standardgateway 10.14.40.1 konfiguriert. Er erreicht Rechner im eigenen Netz, aber keine anderen Netze. Ein zweiter Server hat die Adresse 10.14.39.10/21.",
+      "",
+      "1. Bestimmen Sie Netzadresse, Broadcastadresse, erste und letzte nutzbare Adresse sowie die Anzahl nutzbarer Adressen.",
+      "2. Warum funktioniert das Gateway nicht? Welche Adressen kommen als Gateway infrage?",
+      "3. Liegt der zweite Server im selben Netz? Wie läuft die Kommunikation zwischen beiden ab?"
+    ],
+    "solution": [
+      "1. /21 entspricht 255.255.248.0, die Blockgröße im dritten Oktett ist 8. 37 liegt im Block 32 bis 39. Netz: 10.14.32.0, Broadcast: 10.14.39.255, erste Adresse 10.14.32.1, letzte 10.14.39.254. Nutzbar: 2^11 - 2 = 2.046 Adressen.",
+      "",
+      "2. 10.14.40.1 liegt im Netz 10.14.40.0/21, also außerhalb des eigenen Netzes. Der Server kann die MAC-Adresse des Gateways nicht per ARP ermitteln und Pakete in fremde Netze nicht zustellen. Das Gateway muss im Bereich 10.14.32.1 bis 10.14.39.254 liegen, z.B. die tatsächliche Adresse der Router-Schnittstelle in diesem Netz (häufig 10.14.32.1).",
+      "",
+      "3. Ja, 10.14.39.10 liegt im Bereich 10.14.32.0 bis 10.14.39.255. Die Server stellen Pakete direkt zu: Sie ermitteln die MAC-Adresse der Gegenstelle per ARP und senden ohne Router."
+    ]
+  },
+  {
+    "title": "Transfernetze mit /31 im Rechenzentrum",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Im Rechenzentrumsnetz gibt es 24 Punkt-zu-Punkt-Verbindungen zwischen Routern. Für Transfernetze ist der Block 10.255.0.0/25 reserviert. Bisher wurden /30-Netze verwendet. Außerdem braucht jeder der 12 Router eine Loopback-Adresse.",
+      "",
+      "1. Wie viele Adressen belegen 24 Transfernetze mit /30 und mit /31? Wie viele /31-Netze passen in den Block?",
+      "2. Nennen Sie die ersten drei /31-Netze mit den Adressen beider Router. Warum funktionieren /31-Netze ohne Netz- und Broadcastadresse?",
+      "3. Welches Präfix verwenden Sie für die Loopback-Adressen, und aus welchem Teil des Blocks vergeben Sie sie?"
+    ],
+    "solution": [
+      "1. /30: 24 * 4 = 96 Adressen. /31: 24 * 2 = 48 Adressen. Der /25-Block hat 128 Adressen, also passen 128 / 2 = 64 /31-Netze hinein. Mit /31 bleibt deutlich mehr Platz für Erweiterungen.",
+      "",
+      "2. 10.255.0.0/31 mit den Routern 10.255.0.0 und 10.255.0.1, 10.255.0.2/31 mit 10.255.0.2 und 10.255.0.3, 10.255.0.4/31 mit 10.255.0.4 und 10.255.0.5. Auf einer Punkt-zu-Punkt-Verbindung gibt es nur zwei Teilnehmer, ein Broadcast ist nicht nötig. Nach RFC 3021 sind beide Adressen als Hostadressen nutzbar, die Geräte müssen das unterstützen.",
+      "",
+      "3. Loopbacks erhalten /32, weil sie nur eine Adresse brauchen. Die 24 Transfernetze belegen 10.255.0.0 bis 10.255.0.47. Für die Loopbacks eignet sich das letzte /28 des Blocks: 10.255.0.112/28 mit 16 Adressen, z.B. 10.255.0.113/32 bis 10.255.0.124/32. Eine Loopback-Adresse bleibt erreichbar, solange irgendein Weg zum Router besteht, und dient als Router-ID und Management-Adresse."
+    ]
+  },
+  {
+    "title": "Zu grobe Sammelroute korrigieren",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Standort Nord nutzt die Netze 192.168.16.0/24 bis 192.168.21.0/24 (6 Netze). Ein Kollege hat in der Zentrale die Sammelroute 192.168.16.0/21 Richtung Nord eingetragen. Standort Süd nutzt 192.168.22.0/24 und 192.168.23.0/24, dafür gibt es in der Zentrale zwei /24-Routen Richtung Süd.",
+      "",
+      "1. Welchen Adressbereich umfasst 192.168.16.0/21? Warum ist die Sammelroute problematisch?",
+      "2. Fassen Sie die Netze von Nord so knapp wie möglich zusammen, ohne fremde Netze einzuschließen.",
+      "3. Werden Pakete an 192.168.22.5 heute trotzdem richtig zugestellt? Welches Risiko bleibt?"
+    ],
+    "solution": [
+      "1. 192.168.16.0 bis 192.168.23.255, also auch die beiden Netze von Süd. Die Route behauptet, Nord sei für Netze zuständig, die dort gar nicht existieren.",
+      "",
+      "2. 192.168.16.0/22 (16 bis 19) und 192.168.20.0/23 (20 und 21). Zwei Routen statt sechs, ohne fremde Netze.",
+      "",
+      "3. Ja. Nach Longest Prefix Match gewinnt die spezifischere /24-Route Richtung Süd gegen die /21-Route. Fällt die Süd-Route aber weg (z.B. VPN-Tunnel down, dynamische Route entfernt), greift die /21-Route: Pakete für Süd laufen dann nach Nord und werden dort verworfen oder kreisen, falls Nord sie per Standardroute zurückschickt. Die Fehlersuche wird dadurch schwer."
+    ]
+  },
+  {
+    "title": "Wildcard-Masken für Access-Listen bestimmen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Auf einem Router sollen erweiterte Access-Listen (ACL) mit Wildcard-Masken eingerichtet werden:",
+      "  Nur das Netz 10.20.32.0/20 darf per HTTPS auf den Server 10.50.1.10 zugreifen.",
+      "  Das Netz 172.16.8.0/22 darf das Managementnetz 10.99.0.0/24 nicht erreichen.",
+      "  Aller übrige Verkehr ist erlaubt.",
+      "",
+      "1. Bestimmen Sie die Wildcard-Masken für 10.20.32.0/20, 172.16.8.0/22, 10.99.0.0/24 und den einzelnen Host 10.50.1.10.",
+      "2. Welcher Adressbereich wird mit 10.20.32.0 0.0.15.255 erfasst? Was passiert, wenn stattdessen versehentlich 255.255.240.0 als Wildcard eingetragen wird?",
+      "3. Formulieren Sie die ACL-Einträge in der richtigen Reihenfolge und begründen Sie die Reihenfolge."
+    ],
+    "solution": [
+      "1. Wildcard = 255.255.255.255 minus Subnetzmaske. /20 (255.255.240.0): 0.0.15.255. /22 (255.255.252.0): 0.0.3.255. /24: 0.0.0.255. Einzelner Host: 0.0.0.0 bzw. das Schlüsselwort host.",
+      "",
+      "2. 10.20.32.0 bis 10.20.47.255 (4.096 Adressen). Mit 255.255.240.0 als Wildcard werden die ersten 20 Bit ignoriert und die letzten 12 Bit müssen passen. Dann treffen alle Adressen zu, deren letzte 12 Bit 0 sind, z.B. 8.8.16.0 in beliebigen Netzen. Das gewünschte Netz wird dagegen fast nicht erfasst.",
+      "",
+      "3. permit tcp 10.20.32.0 0.0.15.255 host 10.50.1.10 eq 443",
+      "deny ip any host 10.50.1.10",
+      "deny ip 172.16.8.0 0.0.3.255 10.99.0.0 0.0.0.255",
+      "permit ip any any",
+      "Die Einträge werden von oben nach unten geprüft, der erste Treffer entscheidet. Die spezielle Erlaubnis muss vor dem Verbot für den Server stehen. Am Ende steht ein implizites deny any, daher ist das abschließende permit nötig. Erweiterte ACLs setzt man möglichst nah an der Quelle ein."
+    ]
+  },
+  {
+    "title": "Überschneidende Adressbereiche nach einer Firmenübernahme",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Firma A hat Firma B übernommen. A nutzt 192.168.0.0/22 (aufgeteilt in vier /24-VLANs). B nutzt 192.168.2.0/24 für Clients und 10.30.0.0/24 für Server. Beide Standorte sollen per Site-to-Site-VPN verbunden werden.",
+      "",
+      "1. Prüfen Sie, welche Netze sich überschneiden, und erklären Sie, warum das VPN so nicht funktioniert.",
+      "2. Übergangsweise soll das Client-Netz von B aus Sicht von A als 10.130.2.0/24 erscheinen (1:1-NAT für das ganze Netz). Welche Adresse sieht A für den Client 192.168.2.57? Nennen Sie Nachteile dieser Lösung.",
+      "3. Langfristig wird B neu adressiert. Was ist bei der Umstellung zu beachten?"
+    ],
+    "solution": [
+      "1. 192.168.2.0/24 liegt vollständig in 192.168.0.0/22 (192.168.0.0 bis 192.168.3.255). 10.30.0.0/24 überschneidet sich nicht. Ein Router in A hält 192.168.2.x für ein eigenes, direkt angeschlossenes Netz und schickt Pakete nie in den Tunnel. Umgekehrt halten Clients in B Ziele in 192.168.2.x für lokal und fragen per ARP im eigenen Netz.",
+      "",
+      "2. 10.130.2.57, der Hostanteil bleibt gleich. Nachteile: DNS muss für A die übersetzten Adressen liefern, Protokolle mit eingebetteten IP-Adressen (z.B. SIP, aktives FTP) machen Probleme, Logs und Fehlersuche werden unübersichtlich, und die Übersetzung muss sauber dokumentiert werden.",
+      "",
+      "3. Neuen Bereich außerhalb aller Netze von A festlegen (z.B. 10.30.0.0/16, Clients in 10.30.10.0/24). DHCP-Lease-Zeit vorher verkürzen, neuen DHCP-Bereich anlegen. Statische Adressen erfassen (Drucker, Server, Lizenzserver, Konfigurationsdateien). DNS-Einträge, Firewall-Regeln und VPN-Netzdefinitionen anpassen. Schrittweise umstellen, testen und die IP-Adressverwaltung aktualisieren."
+    ]
+  },
+  {
+    "title": "Gleiches lokales Adminpasswort auf allen Clients",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Bei einem Penetrationstest wurde auf einem Client der Passwort-Hash des lokalen Administratorkontos ausgelesen. Weil alle 300 Clients per Image mit demselben Passwort installiert wurden, konnte sich der Tester damit auf allen Clients und zwei Servern anmelden. Domänen-Admins melden sich außerdem regelmäßig an Clients an, um Software zu installieren.",
+      "",
+      "1. Erklären Sie die verwendete Angriffstechnik und warum sie hier so erfolgreich war.",
+      "2. Wie verhindert Windows LAPS diesen Angriff?",
+      "3. Welche Rolle spielt das Tier-Modell für Administratorkonten?"
+    ],
+    "solution": [
+      "1. Pass-the-Hash: Bei NTLM-Anmeldungen genügt der Hash, das Klartextpasswort ist nicht nötig. Gleiches Passwort bedeutet gleicher Hash auf allen Geräten, ein erbeuteter Hash öffnet also alle Systeme (laterale Bewegung). Auf Clients, an denen Domänen-Admins angemeldet waren, können deren Anmeldedaten im Speicher liegen. So kann ein Angreifer die ganze Domäne übernehmen.",
+      "",
+      "2. LAPS setzt für jeden Rechner ein eigenes, zufälliges Passwort für das lokale Administratorkonto und ändert es regelmäßig. Das Passwort wird im Active Directory bzw. in Entra ID gespeichert, nur berechtigte Gruppen können es lesen, nach der Nutzung wird es erneut geändert. Ein erbeuteter Hash gilt dann nur für einen Rechner.",
+      "",
+      "3. Das Tier-Modell trennt Stufen: Tier 0 (Domänencontroller, AD, PKI), Tier 1 (Server), Tier 2 (Clients). Jede Stufe hat eigene Admin-Konten, die sich nur an Systemen ihrer Stufe anmelden dürfen (per Gruppenrichtlinie durchgesetzt). Domänen-Admins melden sich nie an Clients an. Dazu kommen eigene Admin-Arbeitsplätze und Schutzfunktionen wie Credential Guard."
+    ]
+  },
+  {
+    "title": "Verfügbarkeit einer Anwendungskette berechnen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Webshop hängt von folgender Kette ab: Internetanschluss 99,5 %, Firewall 99,9 %, Switch 99,95 %, Server 99,5 %. Geplant sind ein zweiter, unabhängiger Internetanschluss (ebenfalls 99,5 %) und ein zweiter Server im Cluster (ebenfalls 99,5 %). Ein Jahr hat 8.760 Stunden.",
+      "",
+      "1. Berechnen Sie die Gesamtverfügbarkeit heute und die erwartete Ausfallzeit pro Jahr.",
+      "2. Berechnen Sie die Verfügbarkeit mit doppeltem Internetanschluss und zwei Servern.",
+      "3. Welche Komponente ist danach der Schwachpunkt, und warum ist die Rechnung nur eine Näherung?"
+    ],
+    "solution": [
+      "1. In Reihe werden die Verfügbarkeiten multipliziert: 0,995 * 0,999 * 0,9995 * 0,995 = 0,9885, also 98,85 %. Ausfallzeit: (1 - 0,9885) * 8.760 = etwa 100,4 Stunden pro Jahr.",
+      "",
+      "2. Parallel: 1 - (1 - 0,995)^2 = 1 - 0,000025 = 0,999975 je doppelter Komponente. Gesamt: 0,999975 * 0,999 * 0,9995 * 0,999975 = 0,9985, also 99,85 %. Ausfallzeit: etwa 13,6 Stunden pro Jahr.",
+      "",
+      "3. Jetzt ist die einzelne Firewall mit 99,9 % der Schwachpunkt (allein etwa 8,8 Stunden pro Jahr), gefolgt vom Switch. Abhilfe: Firewall-Cluster und redundante Switches. Die Rechnung setzt voraus, dass Ausfälle unabhängig voneinander sind. Gemeinsame Ursachen wie Stromausfall, Brand, derselbe Softwarefehler in beiden Servern oder beide Leitungen im selben Kabelschacht sowie die Umschaltzeit sind nicht berücksichtigt."
+    ]
+  },
+  {
+    "title": "Schutzbedarf für einen Virtualisierungshost ableiten",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Auf einem einzelnen Virtualisierungshost laufen vier VMs. Ihr Schutzbedarf (Vertraulichkeit / Integrität / Verfügbarkeit) wurde festgestellt:",
+      "  Fileserver: hoch / normal / normal",
+      "  Lohnbuchhaltung: hoch / hoch / normal",
+      "  Intranet: normal / normal / normal",
+      "  Warenwirtschaft: normal / hoch / hoch",
+      "",
+      "1. Bestimmen Sie den Schutzbedarf des Hosts für jedes Schutzziel nach dem Maximumprinzip.",
+      "2. Erklären Sie Kumulationseffekt und Verteilungseffekt an diesem Beispiel.",
+      "3. Welche Maßnahmen leiten Sie für den Host ab?"
+    ],
+    "solution": [
+      "1. Der Host erbt je Schutzziel den höchsten Wert seiner VMs: Vertraulichkeit hoch (Fileserver, Lohn), Integrität hoch (Lohn, Warenwirtschaft), Verfügbarkeit hoch (Warenwirtschaft).",
+      "",
+      "2. Kumulationseffekt: Fällt der Host aus, fallen alle vier VMs gleichzeitig aus. Der Gesamtschaden kann größer sein als bei jeder einzelnen Anwendung, der Schutzbedarf kann dadurch steigen, z.B. auf sehr hoch. Verteilungseffekt: Läuft eine Anwendung verteilt auf mehreren Hosts (z.B. im Cluster), kann der Schutzbedarf des einzelnen Hosts für die Verfügbarkeit niedriger ausfallen.",
+      "",
+      "3. Zweiten Host als Cluster für Hochverfügbarkeit, regelmäßig getestete VM-Sicherungen, Zugriff auf die Verwaltung des Hypervisors nur aus einem eigenen Management-Netz mit MFA, Verschlüsselung von Sicherungen, Protokollierung der Admin-Zugriffe und zeitnahes Patchen des Hypervisors."
+    ]
+  },
+  {
+    "title": "TLS-Inspection am Web-Proxy einführen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "In einem Unternehmen wurde mehrfach Schadsoftware über HTTPS-Webseiten geladen. Die Firewall sieht nur verschlüsselten Verkehr. Geplant ist, am Web-Proxy den TLS-Verkehr aufzubrechen und zu prüfen (TLS-Inspection).",
+      "",
+      "1. Wie funktioniert TLS-Inspection technisch, und welche Voraussetzung muss auf den Clients erfüllt sein?",
+      "2. Welche Verbindungen nehmen Sie von der Inspection aus? Begründen Sie.",
+      "3. Welche rechtlichen und organisatorischen Punkte müssen vor der Einführung geklärt werden?"
+    ],
+    "solution": [
+      "1. Der Proxy arbeitet als Mittelsmann: Zum Webserver baut er eine eigene TLS-Verbindung auf und prüft dessen Zertifikat. Zum Client baut er eine zweite Verbindung mit einem Zertifikat auf, das er für die Zielseite erzeugt und mit einer internen CA signiert. Dazwischen kann er den Inhalt auf Schadsoftware prüfen. Die Clients müssen der internen CA vertrauen, das Zertifikat wird per Gruppenrichtlinie oder MDM verteilt. Der private Schlüssel der CA muss besonders geschützt werden.",
+      "",
+      "2. Online-Banking, Gesundheits- und andere sensible private Seiten aus Datenschutzgründen, Anwendungen mit Certificate Pinning (z.B. manche Update-Dienste und Apps), die sonst nicht mehr funktionieren, und Verbindungen mit Client-Zertifikaten.",
+      "",
+      "3. Der Betriebsrat muss zustimmen, weil die Technik zur Überwachung geeignet ist (§ 87 Abs. 1 Nr. 6 BetrVG), am besten mit einer Betriebsvereinbarung. Datenschutzbeauftragten einbeziehen und eine Datenschutz-Folgenabschätzung prüfen. Mitarbeiter informieren, private Nutzung klar regeln, Zugriff auf Protokolle beschränken und Löschfristen festlegen."
+    ]
+  },
+  {
+    "title": "Manipuliertes Update eines Softwarelieferanten",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Der Hersteller einer Monitoring-Software meldet, dass ein Update der letzten Woche von Angreifern manipuliert wurde. Bei Ihnen wurde es automatisch auf dem Monitoring-Server installiert. Der Monitoring-Dienst fragt mit einem Domänen-Admin-Konto alle Server ab.",
+      "",
+      "1. Welche Sofortmaßnahmen ergreifen Sie?",
+      "2. Wie prüfen Sie künftig Updates mit Hashwert und digitaler Signatur? Erklären Sie den Unterschied und die Grenze beider Verfahren.",
+      "3. Welche Fehler in der Architektur haben den möglichen Schaden vergrößert, und wie beheben Sie sie?"
+    ],
+    "solution": [
+      "1. Monitoring-Server vom Netz isolieren, für die Forensik aber nicht einfach löschen (Abbild sichern). Vorfall nach Notfallplan melden. Die vom Hersteller genannten Hinweise (IOCs) in Logs, EDR und Firewall-Protokollen suchen. Passwort des Dienstkontos ändern und das Konto sperren. Weil es Domänen-Admin war, alle Server und Domänencontroller prüfen und im Zweifel die Domäne bereinigen. Meldepflichten prüfen (72 Stunden nach DSGVO, falls personenbezogene Daten betroffen sind). Server aus sauberer Quelle neu aufsetzen.",
+      "",
+      "2. Ein Hashwert (z.B. SHA-256) zeigt, ob die Datei unverändert ist, sofern der Vergleichswert aus einer vertrauenswürdigen Quelle stammt. Eine digitale Signatur belegt zusätzlich die Herkunft, weil nur der Hersteller den privaten Schlüssel hat. Grenze: Wird das Update schon beim Hersteller manipuliert, sind Hash und Signatur trotzdem gültig. Daher Updates zuerst in einer Testumgebung und zeitversetzt ausrollen.",
+      "",
+      "3. Das Dienstkonto hatte viel zu hohe Rechte: nur die nötigen Leserechte vergeben, z.B. über ein gruppenverwaltetes Dienstkonto ohne Admin-Rechte. Der Server sollte in einem eigenen Netzsegment stehen und nur die nötigen Verbindungen aufbauen dürfen, auch ins Internet. Automatische Updates ohne Test und ohne Überwachung durch ein EDR sind zu vermeiden."
+    ]
+  },
+  {
+    "title": "Verdächtige Anmeldung nach einer MFA-Anfragenflut",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Eine Mitarbeiterin der Buchhaltung meldet, dass sie gestern Abend über 20 MFA-Anfragen auf ihrem Smartphone erhalten und irgendwann eine davon bestätigt hat. Heute fallen in ihrem Postfach eine neue Weiterleitungsregel an eine externe Adresse und mehrere gelöschte Mails von Lieferanten auf.",
+      "",
+      "1. Beschreiben Sie den Angriff, seine Voraussetzung und das wahrscheinliche Ziel.",
+      "2. Welche Maßnahmen ergreifen Sie sofort?",
+      "3. Wie verhindern Sie solche Angriffe künftig technisch und organisatorisch?"
+    ],
+    "solution": [
+      "1. MFA-Fatigue (Prompt Bombing): Der Angreifer kennt bereits das Passwort, z.B. aus Phishing oder einem Datenleck. Er löst so lange Anmeldeanfragen aus, bis die Nutzerin genervt oder versehentlich bestätigt. Ziel ist meist Rechnungsbetrug (Business E-Mail Compromise): Mit Mails im Namen von Lieferanten wird eine geänderte Bankverbindung untergeschoben.",
+      "",
+      "2. Aktive Sitzungen und Tokens widerrufen, Passwort zurücksetzen, neu registrierte MFA-Methoden entfernen, Weiterleitungs- und Posteingangsregeln löschen. Anmelde- und Überwachungsprotokolle auswerten (IP-Adressen, gelesene und gesendete Mails). Buchhaltung und betroffene Lieferanten warnen, Zahlungen mit geänderter Bankverbindung stoppen. Datenschutzverletzung prüfen und alles dokumentieren.",
+      "",
+      "3. MFA mit Nummernabgleich und Anzeige von Ort und Anwendung, besser phishingresistente Verfahren (FIDO2). Bedingter Zugriff (nur verwaltete Geräte, ungewöhnliche Orte blockieren), externe automatische Weiterleitung grundsätzlich sperren, Alarm bei neuen Postfachregeln. Schulung: Unerwartete MFA-Anfragen nie bestätigen, sondern sofort melden. Änderungen von Bankverbindungen nur nach telefonischem Rückruf."
+    ]
+  },
+  {
+    "title": "Spine-Leaf-Architektur für ein Rechenzentrum",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein neues Rechenzentrumsnetz wird als Spine-Leaf aufgebaut. Es gibt 4 Spine-Switches mit je 32 Ports zu 100 Gbit/s. Jeder Leaf-Switch hat 48 Server-Ports zu 25 Gbit/s und ist mit je einem 100-Gbit/s-Uplink an jeden Spine angeschlossen.",
+      "",
+      "1. Berechnen Sie das Überbuchungsverhältnis (Oversubscription) eines Leaf-Switches.",
+      "2. Wie viele Leaf-Switches lassen sich maximal anschließen, und wie viele Server-Ports ergeben sich?",
+      "3. Warum eignet sich Spine-Leaf besser für Verkehr zwischen Servern (Ost-West) als ein klassisches dreistufiges Design?"
+    ],
+    "solution": [
+      "1. Server-Seite: 48 * 25 = 1.200 Gbit/s. Uplinks: 4 * 100 = 400 Gbit/s. Verhältnis 1.200 : 400 = 3 : 1.",
+      "",
+      "2. Jeder Leaf belegt an jedem Spine einen Port, also maximal 32 Leafs. 32 * 48 = 1.536 Server-Ports.",
+      "",
+      "3. Jeder Server erreicht jeden anderen über genau denselben Weg Leaf, Spine, Leaf. Die Latenz ist gleichmäßig und vorhersehbar. Die Uplinks werden per Layer-3-Routing mit ECMP alle gleichzeitig genutzt, Spanning Tree blockiert keine Leitungen. Fällt ein Spine aus, sinkt die Bandbreite nur um ein Viertel. Mehr Bandbreite gibt es durch zusätzliche Spines, mehr Ports durch zusätzliche Leafs."
+    ]
+  },
+  {
+    "title": "Internetbandbreite einer Filiale nach dem Cloud-Umstieg",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Filiale mit 40 Mitarbeitern nutzt künftig nur noch Cloud-Dienste. In der Spitze werden erwartet:",
+      "  Office, Mail und Dateiablage: je Mitarbeiter 0,5 Mbit/s Download und 0,2 Mbit/s Upload",
+      "  12 gleichzeitige Videokonferenzen mit je 2,5 Mbit/s in beide Richtungen",
+      "  20 gleichzeitige VoIP-Gespräche mit je 0,1 Mbit/s in beide Richtungen",
+      "Auf die Summe kommen 30 % Reserve. Angebote: A mit 100/40 Mbit/s, B mit 150/75 Mbit/s (Download/Upload).",
+      "",
+      "1. Berechnen Sie den Bedarf im Download und im Upload.",
+      "2. Welches Angebot wählen Sie? Begründen Sie.",
+      "3. Soll der Cloud-Verkehr über die Zentrale oder direkt von der Filiale ins Internet gehen? Wie sichern Sie die Anbindung ab?"
+    ],
+    "solution": [
+      "1. Download: 40 * 0,5 + 12 * 2,5 + 20 * 0,1 = 20 + 30 + 2 = 52 Mbit/s, mit Reserve 52 * 1,3 = 67,6 Mbit/s. Upload: 40 * 0,2 + 30 + 2 = 40 Mbit/s, mit Reserve 40 * 1,3 = 52 Mbit/s.",
+      "",
+      "2. Angebot A reicht im Download, aber der Upload von 40 Mbit/s liegt unter 52 Mbit/s. Videokonferenzen würden ruckeln. Angebot B erfüllt beide Richtungen.",
+      "",
+      "3. Direkter Internetzugang in der Filiale (Local Breakout) entlastet die Leitung der Zentrale und senkt die Latenz für Videokonferenzen. Die Sicherheit muss dann in der Filiale oder über einen Cloud-Sicherheitsdienst gewährleistet werden. Weil ohne Internet niemand arbeiten kann, braucht die Filiale eine Zweitleitung, z.B. über Mobilfunk (LTE oder 5G) mit automatischer Umschaltung und QoS für Sprache und Video."
+    ]
+  },
+  {
+    "title": "Core-Switches per Stacking oder MLAG koppeln",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Zwei neue Core-Switches sollen redundant zusammenarbeiten. Jeder Access-Switch wird mit zwei Uplinks angebunden, einer zu jedem Core-Switch, und beide Uplinks sollen als LACP-Bündel aktiv sein.",
+      "",
+      "1. Erklären Sie den Unterschied zwischen Stacking und MLAG (Multi-Chassis Link Aggregation).",
+      "2. Welche Variante ist besser geeignet, wenn Firmware-Updates ohne Ausfall möglich sein sollen? Begründen Sie.",
+      "3. Was versteht man bei MLAG unter Split-Brain, und wie wird es verhindert?"
+    ],
+    "solution": [
+      "1. Beim Stacking werden die Switches über Stack-Kabel zu einem logischen Switch mit einer gemeinsamen Steuerung (Control Plane) und einer Konfiguration. Bei MLAG bleiben es zwei eigenständige Switches mit eigener Steuerung und Konfiguration. Sie tauschen über einen Peer-Link ihre Zustände aus und treten gegenüber den Access-Switches wie ein gemeinsamer LACP-Partner auf.",
+      "",
+      "2. MLAG: Die Switches lassen sich nacheinander aktualisieren und neu starten, der andere übernimmt in der Zeit den Verkehr. Bei einem Stack läuft auf allen Mitgliedern dieselbe Firmware, ein Update erfordert oft einen Neustart des ganzen Stacks. Dafür ist ein Stack einfacher zu verwalten. Beide Varianten vermeiden blockierte Leitungen durch Spanning Tree.",
+      "",
+      "3. Fällt der Peer-Link aus, halten sich beide Switches für allein zuständig und leiten Verkehr widersprüchlich weiter (Split-Brain). Schleifen und Paketverluste sind die Folge. Abhilfe: Peer-Link aus mindestens zwei Leitungen, zusätzlicher Keepalive-Link über einen anderen Weg (z.B. das Managementnetz). Bei Ausfall des Peer-Links schaltet dann ein Switch seine MLAG-Ports gezielt ab."
+    ]
+  },
+  {
+    "title": "Langsame Dateiübertragung über eine WAN-Strecke",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Außenstelle ist über eine 100-Mbit/s-Leitung angebunden, die Round-Trip-Time (RTT) beträgt 40 ms. Große Dateien werden mit einem älteren Übertragungsprogramm kopiert, das ein festes TCP-Empfangsfenster von 65.535 Byte nutzt. Die Übertragung erreicht nur etwa 13 Mbit/s, obwohl die Leitung frei ist.",
+      "",
+      "1. Berechnen Sie den maximal möglichen Durchsatz mit diesem TCP-Fenster.",
+      "2. Berechnen Sie das Bandbreite-Verzögerungs-Produkt. Wie groß muss das Fenster für 100 Mbit/s sein?",
+      "3. Nennen Sie Maßnahmen, die die Übertragung beschleunigen."
+    ],
+    "solution": [
+      "1. TCP darf höchstens ein Fenster unbestätigter Daten pro RTT senden: 65.535 Byte * 8 = 524.280 bit, geteilt durch 0,04 s ergibt 13.107.000 bit/s, also etwa 13,1 Mbit/s. Das erklärt den Messwert.",
+      "",
+      "2. 100.000.000 bit/s * 0,04 s = 4.000.000 bit = 500.000 Byte. Das Fenster muss also etwa 500 KB groß sein, um die Leitung auszulasten.",
+      "",
+      "3. TCP Window Scaling nutzen, also ein aktuelles Programm bzw. Betriebssystem verwenden, das große Fenster aushandelt. Mehrere parallele Übertragungen (z.B. robocopy mit /MT). Paketverluste prüfen, da sie TCP zusätzlich bremsen. Häufig genutzte Dateien in der Außenstelle zwischenspeichern oder replizieren. Den Weg prüfen, ob die RTT durch ungünstiges Routing unnötig hoch ist."
+    ]
+  },
+  {
+    "title": "Amortisation einer Serverkonsolidierung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde betreibt 12 physische Server mit zusammen 6 kW Leistungsaufnahme im Dauerbetrieb. Nach einer Konsolidierung laufen 3 Virtualisierungshosts mit zusammen 2,4 kW. Der Serverraum hat eine PUE von 1,8 (für jedes kW IT-Leistung werden insgesamt 1,8 kW inklusive Kühlung verbraucht). Strompreis: 0,28 Euro/kWh. Die Wartungsverträge sinken von 9.600 auf 3.000 Euro pro Jahr. Die Investition beträgt 42.000 Euro.",
+      "",
+      "1. Berechnen Sie die jährlichen Energiekosten vor und nach der Konsolidierung (8.760 Stunden).",
+      "2. Berechnen Sie die jährliche Gesamteinsparung und die Amortisationszeit.",
+      "3. Welche weiteren Punkte sprechen Sie im Beratungsgespräch an?"
+    ],
+    "solution": [
+      "1. Vorher: 6 kW * 1,8 = 10,8 kW, 10,8 * 8.760 = 94.608 kWh, 94.608 * 0,28 = 26.490,24 Euro. Nachher: 2,4 kW * 1,8 = 4,32 kW, 4,32 * 8.760 = 37.843,2 kWh, 37.843,2 * 0,28 = 10.596,10 Euro.",
+      "",
+      "2. Energie: 26.490,24 - 10.596,10 = 15.894,14 Euro. Wartung: 9.600 - 3.000 = 6.600 Euro. Gesamt: 22.494,14 Euro pro Jahr. Amortisation: 42.000 / 22.494,14 = 1,87 Jahre, also etwa 22 bis 23 Monate.",
+      "",
+      "3. Zusätzliche Lizenzkosten (z.B. Windows Server Datacenter, Hypervisor), Schulung der Administratoren, höheres Klumpenrisiko durch weniger Hosts (Cluster und Backup einplanen), Restwert oder Entsorgung der Altgeräte, mögliche weitere Einsparung bei der Kühlung und weniger Platzbedarf im Serverraum."
+    ]
+  },
+  {
+    "title": "Backup selbst betreiben oder als Managed Service",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Kunde mit 60 Mitarbeitern fragt, ob er sein Backup selbst betreiben oder als Managed Service einkaufen soll.",
+      "  Eigenbetrieb: Backup-Appliance 18.000 Euro (Nutzungsdauer 5 Jahre, lineare Abschreibung), Softwarewartung 2.400 Euro pro Jahr, eigener Aufwand 4 Stunden pro Woche an 46 Arbeitswochen zu 65 Euro pro Stunde",
+      "  Managed Service: 1.350 Euro pro Monat, einmalige Einrichtung 3.000 Euro (auf 5 Jahre verteilt)",
+      "",
+      "1. Berechnen Sie die jährlichen Kosten beider Varianten.",
+      "2. Bei wie vielen Stunden eigenem Aufwand pro Woche wären beide Varianten gleich teuer?",
+      "3. Welche nicht finanziellen Kriterien sollte der Kunde berücksichtigen?"
+    ],
+    "solution": [
+      "1. Eigenbetrieb: Abschreibung 18.000 / 5 = 3.600 Euro, Wartung 2.400 Euro, Personal 4 * 46 * 65 = 11.960 Euro, zusammen 17.960 Euro. Managed Service: 1.350 * 12 = 16.200 Euro plus 3.000 / 5 = 600 Euro, zusammen 16.800 Euro. Der Managed Service ist um 1.160 Euro pro Jahr günstiger.",
+      "",
+      "2. Für das Personal bleiben beim Gleichstand 16.800 - 3.600 - 2.400 = 10.800 Euro. Eine Stunde pro Woche kostet im Jahr 46 * 65 = 2.990 Euro. 10.800 / 2.990 = 3,61 Stunden pro Woche.",
+      "",
+      "3. Fachwissen und Vertretung im Urlaub oder Krankheitsfall, garantierte Wiederherstellungszeiten im SLA, Datenschutz (Auftragsverarbeitungsvertrag, Speicherort), Abhängigkeit vom Dienstleister und Ausstiegsmöglichkeiten, Kontrolle über die Daten und Geschwindigkeit der Rücksicherung. Die Kriterien lassen sich mit einer Nutzwertanalyse gewichten."
+    ]
+  },
+  {
+    "title": "Projektstatus mit dem Fertigstellungswert bewerten",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Virtualisierungsprojekt hat ein Budget von 60.000 Euro und ist auf 10 Wochen mit gleichmäßigem Fortschritt geplant. Nach 5 Wochen liegen folgende Werte vor: geplante Kosten bis heute 30.000 Euro, tatsächliche Kosten 34.000 Euro, Fertigstellungsgrad 45 %.",
+      "",
+      "1. Berechnen Sie den Fertigstellungswert (Earned Value), die Kostenabweichung und die Terminabweichung.",
+      "2. Berechnen Sie Kosten- und Terminindex sowie die voraussichtlichen Gesamtkosten und die Projektdauer, wenn die Entwicklung so weitergeht.",
+      "3. Welche Steuerungsmaßnahmen schlagen Sie vor, und wie informieren Sie den Auftraggeber?"
+    ],
+    "solution": [
+      "1. Fertigstellungswert: 60.000 * 0,45 = 27.000 Euro. Kostenabweichung: 27.000 - 34.000 = -7.000 Euro (teurer als geplant). Terminabweichung: 27.000 - 30.000 = -3.000 Euro (hinter dem Plan).",
+      "",
+      "2. Kostenindex: 27.000 / 34.000 = 0,79. Terminindex: 27.000 / 30.000 = 0,9. Prognose Gesamtkosten: 60.000 / (27.000 / 34.000) = 75.555,56 Euro. Prognose Dauer: 10 / 0,9 = etwa 11,1 Wochen.",
+      "",
+      "3. Ursachen klären (z.B. unterschätzter Aufwand, Nachforderungen, Lieferverzug). Mögliche Maßnahmen: Umfang priorisieren und Nebensächliches verschieben, zusätzliche oder erfahrenere Ressourcen einsetzen, Änderungen nur noch über ein formales Änderungsverfahren zulassen, zusätzliches Budget beantragen. Den Auftraggeber bzw. Lenkungsausschuss frühzeitig mit einem Statusbericht (Ampel, Kennzahlen, Maßnahmen, Entscheidungsbedarf) informieren."
+    ]
   }
 ]

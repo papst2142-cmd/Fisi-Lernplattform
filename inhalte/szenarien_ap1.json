@@ -1167,5 +1167,646 @@
       "",
       "3. Nach erfolglosem Fristablauf bzw. Fehlschlagen: Rücktritt vom Vertrag oder Minderung des Kaufpreises, bei Verschulden zusätzlich Schadenersatz, ggf. Ersatz vergeblicher Aufwendungen."
     ]
+  },
+  {
+    "title": "Arbeitsspeicher eines Büro-PCs aufrüsten",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Büro-PC hat vier DIMM-Steckplätze (A1, A2, B1, B2). Eingebaut ist ein einzelnes Modul mit 8 GB DDR4-3200 in A2. Die Anwenderin klagt über lange Wartezeiten, wenn Browser, Teams und die Warenwirtschaft gleichzeitig laufen.",
+      "Zur Wahl stehen: Variante A: ein zusätzliches 16-GB-Modul einsetzen. Variante B: zwei neue 16-GB-Module (Kit), das alte Modul wird ausgebaut.",
+      "",
+      "1. Berechnen Sie die theoretische Speicherbandbreite im Single-Channel- und im Dual-Channel-Betrieb (DDR4-3200, 64 Bit Busbreite je Kanal).",
+      "2. Wie viel Arbeitsspeicher ergibt jede Variante, und wie viel davon läuft im Dual-Channel? Welche Variante empfehlen Sie?",
+      "3. Welche Eigenschaften müssen neue Module erfüllen, damit sie im PC funktionieren?"
+    ],
+    "solution": [
+      "1. DDR4-3200 überträgt 3.200 Millionen Transfers pro Sekunde mit je 64 Bit = 8 Byte. Single-Channel: 3.200 MT/s x 8 Byte = 25.600 MB/s = 25,6 GB/s. Dual-Channel nutzt zwei Kanäle gleichzeitig: 2 x 25,6 GB/s = 51,2 GB/s.",
+      "",
+      "2. Variante A: 8 GB + 16 GB = 24 GB. Die Module sind ungleich groß. Nur 2 x 8 GB = 16 GB laufen im Dual-Channel (Flex-Modus), die restlichen 8 GB nur im Single-Channel. Variante B: 2 x 16 GB = 32 GB, vollständig im Dual-Channel. Empfehlung: Variante B. Die Module kommen laut Handbuch meist in A2 und B2.",
+      "",
+      "3. Gleiche Speichergeneration (DDR4, nicht DDR5) und Bauform (DIMM beim Desktop, SO-DIMM beim Notebook). Passende Taktrate (bei gemischten Modulen läuft alles mit dem langsamsten Takt). Maximale Kapazität pro Steckplatz laut Mainboard-Handbuch bzw. Kompatibilitätsliste (QVL). Am besten ein Kit aus identischen Modulen kaufen."
+    ]
+  },
+  {
+    "title": "Lebensdauer einer SSD im Videoschnitt abschätzen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Werbeagentur kauft für den Videoschnitt eine NVMe-SSD mit 2 TB. Laut Datenblatt: 1.200 TBW (Terabytes Written), 5 Jahre Garantie. Die Workstation schreibt pro Arbeitstag etwa 350 GB auf die SSD, gearbeitet wird an 220 Tagen im Jahr (1 TB = 1.000 GB).",
+      "",
+      "1. Wie viele TB werden pro Jahr auf die SSD geschrieben?",
+      "2. Nach wie vielen Jahren wäre die TBW-Grenze erreicht? Was endet zuerst, die Garantie oder die TBW-Reserve?",
+      "3. Nach zwei Jahren zeigt S.M.A.R.T. 160 TB geschriebene Daten an. Wie viel Prozent der TBW sind verbraucht, und passt das zu Ihrer Schätzung?"
+    ],
+    "solution": [
+      "1. 350 GB x 220 Tage = 77.000 GB = 77 TB pro Jahr.",
+      "",
+      "2. 1.200 TB / 77 TB pro Jahr = ca. 15,6 Jahre. Die Garantie endet schon nach 5 Jahren, sie ist hier also die engere Grenze. Die TBW-Angabe ist eine Garantiegrenze des Herstellers: Die Garantie endet, wenn eine der beiden Grenzen erreicht ist.",
+      "",
+      "3. 160 TB / 1.200 TB x 100 = ca. 13,3 % verbraucht. Geschätzt waren 2 x 77 TB = 154 TB. Der gemessene Wert liegt nur leicht darüber, die Schätzung passt. Den Wert sollte man regelmäßig überwachen (z.B. mit dem Herstellertool oder smartctl) und die Daten unabhängig davon sichern."
+    ]
+  },
+  {
+    "title": "Projektdaten von HDD, SATA-SSD oder NVMe kopieren",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "In einem Architekturbüro wird täglich ein Projektordner mit 90 GB lokal kopiert. Zur Auswahl stehen drei Laufwerke mit folgenden sequenziellen Übertragungsraten (1 GB = 1.000 MB):",
+      "  - HDD: 200 MB/s",
+      "  - SATA-SSD: 540 MB/s",
+      "  - NVMe-SSD (PCIe 4.0 x4): 7.000 MB/s",
+      "",
+      "1. Wie lange dauert das Kopieren von 90 GB jeweils mindestens?",
+      "2. Warum kann eine SATA-SSD nie deutlich mehr als 550 MB/s erreichen? Rechnen Sie mit SATA III (6 Gbit/s, 8b/10b-Kodierung).",
+      "3. Worauf achten Sie, bevor Sie eine M.2-NVMe-SSD in einen vorhandenen PC einbauen?"
+    ],
+    "solution": [
+      "1. HDD: 90.000 MB / 200 MB/s = 450 s = 7,5 Minuten. SATA-SSD: 90.000 MB / 540 MB/s = ca. 167 s (knapp 2,8 Minuten). NVMe-SSD: 90.000 MB / 7.000 MB/s = ca. 12,9 s.",
+      "",
+      "2. SATA III überträgt 6 Gbit/s. Bei 8b/10b-Kodierung sind nur 8 von 10 Bit Nutzdaten: 6.000 Mbit/s x 0,8 = 4.800 Mbit/s = 600 MB/s. Nach Abzug des Protokoll-Overheads bleiben ca. 550 MB/s. Eine NVMe-SSD hängt direkt an PCIe-Lanes: PCIe 4.0 x4 liefert ca. 7,9 GB/s.",
+      "",
+      "3. Der M.2-Steckplatz muss PCIe/NVMe unterstützen (manche Slots können nur SATA) und die passende Baulänge haben (z.B. 2280). Die PCIe-Generation des Slots begrenzt die Geschwindigkeit. Bei manchen Mainboards werden SATA-Ports abgeschaltet, wenn der M.2-Slot belegt ist. Außerdem an Kühlung (Heatsink) denken. Kommen die Daten vom NAS über 1 Gbit/s, bremst das Netzwerk (ca. 118 MB/s), nicht die SSD."
+    ]
+  },
+  {
+    "title": "Netzteil für eine CAD-Workstation dimensionieren",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Für eine CAD-Workstation sind folgende maximale Leistungsaufnahmen bekannt: CPU 125 W, Grafikkarte 285 W, Mainboard 50 W, 4 RAM-Module je 4 W, 2 NVMe-SSDs je 8 W, 5 Lüfter je 3 W, USB-Geräte 20 W.",
+      "Es sollen 30 % Reserve eingeplant werden. Lieferbar sind Netzteile mit 550 W, 650 W, 750 W und 850 W.",
+      "",
+      "1. Berechnen Sie die maximale Leistung und wählen Sie ein Netzteil aus.",
+      "2. Im Alltag zieht der PC 350 W (Gleichstromseite). Netzteil A hat dabei 85 % Wirkungsgrad, Netzteil B (80 PLUS Gold) 90 %. Wie viel Leistung nimmt jedes aus der Steckdose auf? Wie hoch ist die Ersparnis bei 1.760 Betriebsstunden im Jahr und 0,30 Euro/kWh?",
+      "3. Nennen Sie drei weitere Punkte, die Sie bei der Auswahl des Netzteils prüfen."
+    ],
+    "solution": [
+      "1. 125 + 285 + 50 + 4 x 4 + 2 x 8 + 5 x 3 + 20 = 527 W. Mit 30 % Reserve: 527 W x 1,3 = 685,1 W. Gewählt wird das 750-W-Netzteil, 650 W wären zu knapp.",
+      "",
+      "2. Netzteil A: 350 W / 0,85 = ca. 411,8 W. Netzteil B: 350 W / 0,90 = ca. 388,9 W. Differenz ca. 22,9 W. Pro Jahr: 22,9 W x 1.760 h = ca. 40,3 kWh, also ca. 12,08 Euro Ersparnis mit Netzteil B. Weniger Verlust bedeutet auch weniger Wärme und leisere Lüfter.",
+      "",
+      "3. Passende Anschlüsse, z.B. PCIe- bzw. 12V-2x6-Stecker für die Grafikkarte und genug SATA-Stecker. Schutzschaltungen (Überspannung, Überstrom, Kurzschluss). Formfaktor (ATX, SFX) passend zum Gehäuse. Optional modulare Kabel und ein leiser Lüfter."
+    ]
+  },
+  {
+    "title": "Stromkosten der Büroarbeitsplätze berechnen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Versicherungsbüro hat 30 Arbeitsplätze. Im Betrieb braucht ein PC durchschnittlich 45 W, ein Monitor 20 W. Gearbeitet wird 9 Stunden an 220 Tagen im Jahr. Bisher bleiben alle PCs außerhalb der Arbeitszeit eingeschaltet: PC im Leerlauf 30 W, Monitor im Standby 0,5 W. Strompreis: 0,30 Euro/kWh. Ein Jahr hat 8.760 Stunden.",
+      "",
+      "1. Berechnen Sie Verbrauch und Kosten aller Arbeitsplätze während der Arbeitszeit pro Jahr.",
+      "2. Berechnen Sie Verbrauch und Kosten außerhalb der Arbeitszeit pro Jahr.",
+      "3. Künftig gehen die PCs außerhalb der Arbeitszeit in den Energiesparmodus (2 W, Monitor weiter 0,5 W). Wie viel Euro spart das Büro pro Jahr? Wie setzen Sie das technisch um?"
+    ],
+    "solution": [
+      "1. Betriebsstunden: 9 h x 220 = 1.980 h. Leistung: 30 x (45 W + 20 W) = 1.950 W. Verbrauch: 1.950 W x 1.980 h = 3.861 kWh. Kosten: 3.861 kWh x 0,30 Euro = 1.158,30 Euro.",
+      "",
+      "2. Stunden außerhalb der Arbeitszeit: 8.760 h - 1.980 h = 6.780 h. Leistung: 30 x (30 W + 0,5 W) = 915 W. Verbrauch: 915 W x 6.780 h = 6.203,7 kWh. Kosten: ca. 1.861,11 Euro. Das ist mehr als während der Arbeitszeit.",
+      "",
+      "3. Neu: 30 x (2 W + 0,5 W) = 75 W x 6.780 h = 508,5 kWh. Ersparnis: 6.203,7 - 508,5 = 5.695,2 kWh, also ca. 1.708,56 Euro pro Jahr. Umsetzung: Energieoptionen zentral per Gruppenrichtlinie setzen (Energiesparmodus nach z.B. 30 Minuten), für nächtliche Updates Wake-on-LAN nutzen und die Mitarbeiter informieren."
+    ]
+  },
+  {
+    "title": "Seitenpreis zweier Arbeitsgruppendrucker vergleichen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Hausverwaltung druckt 2.500 Schwarzweiß-Seiten pro Monat (30.000 Seiten pro Jahr). Zwei Geräte stehen zur Wahl (Papier ist bei beiden gleich und wird nicht betrachtet):",
+      "  - Drucker A (Laser): Kaufpreis 420 Euro, Toner 110 Euro für 7.500 Seiten, Trommel 85 Euro für 50.000 Seiten",
+      "  - Drucker B (Business-Tinte): Kaufpreis 190 Euro, Tintenpatrone 38 Euro für 2.000 Seiten, Wartungsbox 15 Euro für 30.000 Seiten",
+      "",
+      "1. Berechnen Sie die Verbrauchskosten pro Seite für beide Drucker (in Cent, 2 Nachkommastellen).",
+      "2. Wie hoch sind die Gesamtkosten nach einem Jahr und nach drei Jahren?",
+      "3. Ab wie vielen Seiten ist Drucker A günstiger? Nennen Sie zwei weitere Auswahlkriterien."
+    ],
+    "solution": [
+      "1. Drucker A: 110 / 7.500 = 1,47 ct plus 85 / 50.000 = 0,17 ct, zusammen ca. 1,64 ct pro Seite. Drucker B: 38 / 2.000 = 1,90 ct plus 15 / 30.000 = 0,05 ct, zusammen 1,95 ct pro Seite.",
+      "",
+      "2. Ein Jahr: A = 420 + 30.000 x 0,016367 = 420 + 491 = 911 Euro. B = 190 + 30.000 x 0,0195 = 190 + 585 = 775 Euro. Drei Jahre: A = 420 + 1.473 = 1.893 Euro. B = 190 + 1.755 = 1.945 Euro.",
+      "",
+      "3. Mehrpreis von A: 420 - 190 = 230 Euro. Ersparnis pro Seite: 1,95 - 1,6367 = ca. 0,313 ct. 230 Euro / 0,0031333 Euro = ca. 73.404 Seiten, also ab etwa 73.405 Seiten (nach knapp 30 Monaten) ist A günstiger. Weitere Kriterien: Druckgeschwindigkeit, Duplex und Netzwerkanschluss, Papierfächer, Energieverbrauch, Garantie und Service."
+    ]
+  },
+  {
+    "title": "Farbwerte für das Firmenlayout umrechnen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Die Marketingabteilung liefert die Firmenfarbe als Hexcode #2A7F62. Für eine Software, die nur RGB-Dezimalwerte annimmt, und für die Webseite sollen die Werte umgerechnet werden.",
+      "",
+      "1. Rechnen Sie #2A7F62 in RGB-Dezimalwerte um. Zeigen Sie den Rechenweg für eine Komponente.",
+      "2. Geben Sie den Rotanteil als 8-Bit-Binärzahl an. Wie viele Farben lassen sich mit 24 Bit darstellen?",
+      "3. Eine hellere Variante hat die Werte R = 200, G = 230, B = 215. Wie lautet der Hexcode?"
+    ],
+    "solution": [
+      "1. Jede Komponente besteht aus zwei Hex-Ziffern. 2A = 2 x 16 + 10 = 42. 7F = 7 x 16 + 15 = 127. 62 = 6 x 16 + 2 = 98. Ergebnis: RGB(42, 127, 98).",
+      "",
+      "2. 42 = 32 + 8 + 2 = 00101010 (binär). Alternativ je Hex-Ziffer 4 Bit: 2 = 0010, A = 1010. Mit 24 Bit (je 8 Bit für Rot, Grün, Blau) gibt es 2^24 = 16.777.216 Farben.",
+      "",
+      "3. 200 = 12 x 16 + 8 = C8. 230 = 14 x 16 + 6 = E6. 215 = 13 x 16 + 7 = D7. Der Hexcode lautet #C8E6D7."
+    ]
+  },
+  {
+    "title": "Dateirechte unter Linux oktal vergeben",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Auf einem Linux-Fileserver sollen Rechte für die Projektablage gesetzt werden:",
+      "  - Verzeichnis /srv/projekte: Besitzer und Gruppe \"projekt\" dürfen alles, andere nichts",
+      "  - Skript backup.sh: Besitzer darf alles, Gruppe und andere dürfen lesen und ausführen",
+      "  - Datei db.conf mit einem Passwort: nur der Besitzer darf lesen und schreiben",
+      "",
+      "1. Geben Sie die chmod-Befehle in Oktalschreibweise an.",
+      "2. Was bedeuten die Rechte -rw-r----- bei einer Datei und drwxr-x--x bei einem Verzeichnis (oktal und in Worten)?",
+      "3. Die umask ist auf 027 gesetzt. Welche Rechte erhalten neu angelegte Dateien und Verzeichnisse?"
+    ],
+    "solution": [
+      "1. r = 4, w = 2, x = 1, je Stelle für Besitzer, Gruppe, andere addiert. chmod 770 /srv/projekte (7 = rwx, 0 = keine Rechte). chmod 755 backup.sh (7 = rwx, 5 = r-x). chmod 600 db.conf (6 = rw-).",
+      "",
+      "2. -rw-r----- = 640: Besitzer liest und schreibt, Gruppe liest, andere nichts. drwxr-x--x = 751: Besitzer alles, Gruppe darf den Inhalt lesen und hineinwechseln, andere dürfen nur hineinwechseln (x), aber den Inhalt nicht auflisten.",
+      "",
+      "3. Die umask entfernt Rechte. Dateien starten bei 666: 666 ohne 027 ergibt 640 (rw-r-----). Verzeichnisse starten bei 777: 777 ohne 027 ergibt 750 (rwxr-x---)."
+    ]
+  },
+  {
+    "title": "Messwerte eines Temperatursensors im Zweierkomplement",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Sensor im Kühlraum eines Lebensmittelhändlers meldet die Temperatur als 8-Bit-Wert im Zweierkomplement in Schritten von 1 °C. Die Überwachungssoftware zeigt die Rohwerte hexadezimal an.",
+      "",
+      "1. Der Sensor liefert 0xF6. Welche Temperatur ist das? Zeigen Sie den Rechenweg.",
+      "2. Welcher 8-Bit-Wert (binär und hexadezimal) steht für -25 °C?",
+      "3. Welcher Wertebereich lässt sich mit 8 Bit im Zweierkomplement darstellen? Welche Temperatur bedeutet 0x1E?"
+    ],
+    "solution": [
+      "1. 0xF6 = 11110110. Das höchste Bit ist 1, die Zahl ist also negativ. Betrag bilden: invertieren ergibt 00001001, plus 1 ergibt 00001010 = 10. Der Wert ist -10 °C. Kontrolle: 246 - 256 = -10.",
+      "",
+      "2. +25 = 00011001. Invertieren: 11100110. Plus 1: 11100111. Hexadezimal: 1110 = E, 0111 = 7, also 0xE7.",
+      "",
+      "3. Von -128 bis +127 (256 Werte). 0x1E = 00011110, das höchste Bit ist 0, also positiv: 16 + 8 + 4 + 2 = +30 °C."
+    ]
+  },
+  {
+    "title": "Benutzerdaten per USB auf den neuen Rechner übertragen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Beim PC-Tausch sollen 240 GB Benutzerdaten übertragen werden (1 GB = 1.000 MB). Der alte PC hat nur USB 2.0, real werden dort 35 MB/s erreicht. Am neuen PC schafft die externe SSD über USB 3.2 Gen 1 real 400 MB/s. Beide PCs hängen außerdem mit 1 Gbit/s am Netzwerk, dort sind real 100 MB/s möglich.",
+      "",
+      "1. Wie lange dauert der Weg über die externe SSD (alt auf SSD, dann SSD auf neu)?",
+      "2. USB 2.0 hat brutto 480 Mbit/s. Wie viel MB/s wären das theoretisch, und warum werden real nur ca. 35 MB/s erreicht?",
+      "3. Wie lange dauert die direkte Übertragung über das Netzwerk? Welchen Weg empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Alt auf SSD: 240.000 MB / 35 MB/s = ca. 6.857 s = ca. 114 Minuten (1,9 h). SSD auf neu: 240.000 MB / 400 MB/s = 600 s = 10 Minuten. Zusammen ca. 124 Minuten.",
+      "",
+      "2. 480 Mbit/s / 8 = 60 MB/s. Real bleibt weniger übrig, weil USB 2.0 halbduplex arbeitet und Protokoll-Overhead (Paketköpfe, Bestätigungen, Polling durch den Host) Bandbreite kostet.",
+      "",
+      "3. 240.000 MB / 100 MB/s = 2.400 s = 40 Minuten. Der Netzwerkweg ist rund dreimal schneller und die Daten werden nur einmal kopiert. Empfehlung: Kopie über das Netzwerk (z.B. per robocopy), danach Stichproben prüfen."
+    ]
+  },
+  {
+    "title": "Pixeldichte und Bildspeicher am Mehrschirm-Arbeitsplatz",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Controller arbeitet an zwei 24-Zoll-Monitoren mit Full HD (1920 x 1080). Geplant sind zwei 27-Zoll-Monitore mit WQHD (2560 x 1440). Er befürchtet, dass die Schrift dann zu klein wird.",
+      "",
+      "1. Berechnen Sie die Pixeldichte (ppi) beider Monitortypen (2 Nachkommastellen).",
+      "2. Wie groß ist ein Einzelbild eines WQHD-Monitors bei 32 Bit pro Pixel in Byte und MiB? Wie viel Speicher belegen beide Bildschirme zusammen?",
+      "3. Das Notebook hat nur einen USB-C-Anschluss mit DisplayPort-Alt-Mode. Wie schließen Sie beide Monitore an?"
+    ],
+    "solution": [
+      "1. Diagonale in Pixeln mit Pythagoras. Full HD: Wurzel(1920² + 1080²) = ca. 2.202,91 Pixel / 24 Zoll = ca. 91,79 ppi. WQHD: Wurzel(2560² + 1440²) = ca. 2.937,21 Pixel / 27 Zoll = ca. 108,79 ppi. Die Schrift wird etwas kleiner, ohne Skalierung ist das bei 27 Zoll aber gut lesbar. Sonst hilft 125 % Skalierung.",
+      "",
+      "2. 2560 x 1440 x 4 Byte = 14.745.600 Byte. 14.745.600 / 1.048.576 = ca. 14,06 MiB. Beide Monitore: 29.491.200 Byte = ca. 28,13 MiB pro Bild.",
+      "",
+      "3. Über eine USB-C-Dockingstation mit zwei Bildausgängen (DisplayPort MST oder DisplayLink) oder per Daisy-Chain, wenn die Monitore einen DisplayPort-Ausgang haben. Das Notebook muss MST unterstützen. Die Dockingstation kann das Notebook zusätzlich per USB Power Delivery laden."
+    ]
+  },
+  {
+    "title": "Akkulaufzeit eines Außendienst-Notebooks",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Außendienstmitarbeiter beschwert sich, dass sein zwei Jahre altes Notebook keinen Arbeitstag mehr durchhält. Der Akku hat 60 Wh Nennkapazität, die Akkudiagnose zeigt 85 % Restkapazität. Im Mittel nimmt das Notebook 9 W auf. Ein Arbeitstag dauert 8 Stunden.",
+      "",
+      "1. Berechnen Sie die Laufzeit mit neuem Akku und mit dem heutigen Akku.",
+      "2. Wie viele Wh fehlen für einen Arbeitstag? Reicht eine Powerbank mit 10.000 mAh bei 3,7 V und 80 % Wirkungsgrad?",
+      "3. Der Mitarbeiter fliegt oft. Was ist bei Powerbanks im Flugzeug zu beachten, und was muss die Powerbank können, um ein Notebook zu laden?"
+    ],
+    "solution": [
+      "1. Neu: 60 Wh / 9 W = ca. 6,67 h (6 h 40 min). Heute: 60 Wh x 0,85 = 51 Wh. 51 Wh / 9 W = ca. 5,67 h (5 h 40 min).",
+      "",
+      "2. Bedarf: 8 h x 9 W = 72 Wh. Es fehlen 72 - 51 = 21 Wh. Powerbank: 10 Ah x 3,7 V = 37 Wh, davon nutzbar 37 x 0,8 = 29,6 Wh. Das reicht für die fehlenden 21 Wh.",
+      "",
+      "3. Powerbanks gehören ins Handgepäck, nicht in den aufgegebenen Koffer. Bis 100 Wh sind sie ohne Genehmigung erlaubt, 37 Wh liegen deutlich darunter. Zum Laden braucht die Powerbank USB-C Power Delivery mit ausreichender Leistung (z.B. 45 W oder mehr). Langfristig ist ein Akkutausch sinnvoll."
+    ]
+  },
+  {
+    "title": "Adressbereiche für DHCP und feste Geräte aufteilen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Kanzlei nutzt das Netz 192.168.50.0/24, der Router hat 192.168.50.1. Es gibt 60 Clients, in den nächsten Jahren wird mit 30 % Wachstum gerechnet. Server, Drucker, Access Points und Switches (zusammen 12 Geräte) sollen feste Adressen erhalten.",
+      "Geplant: feste Adressen 192.168.50.2 bis .49, DHCP-Bereich 192.168.50.100 bis .199.",
+      "",
+      "1. Wie viele Hosts sind im Netz nutzbar, und wie lautet die Broadcast-Adresse?",
+      "2. Prüfen Sie, ob beide Bereiche ausreichen.",
+      "3. Unterscheiden Sie eine DHCP-Reservierung von einer statisch eingetragenen Adresse. Was empfehlen Sie für den Netzwerkdrucker?"
+    ],
+    "solution": [
+      "1. /24 bedeutet 8 Hostbits: 2^8 - 2 = 254 nutzbare Adressen (192.168.50.1 bis .254). Broadcast: 192.168.50.255.",
+      "",
+      "2. Feste Adressen: .2 bis .49 = 48 Adressen für 12 Geräte, genug Reserve. DHCP-Bereich: .100 bis .199 = 100 Adressen. Bedarf: 60 x 1,3 = 78 Clients. Das passt, 22 Adressen bleiben frei. Die Bereiche überschneiden sich nicht.",
+      "",
+      "3. Bei einer Reservierung vergibt der DHCP-Server immer dieselbe Adresse an eine bestimmte MAC-Adresse. Die Verwaltung bleibt zentral. Bei einer statischen Adresse wird sie direkt am Gerät eingetragen, der DHCP-Server weiß davon nichts. Für den Drucker ist beides möglich. Eine statische Adresse außerhalb des DHCP-Bereichs funktioniert auch, wenn der DHCP-Server ausfällt. Wichtig ist, jede Adresse zu dokumentieren."
+    ]
+  },
+  {
+    "title": "Netzwerkkarte verbindet nur mit 100 Mbit/s",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Mitarbeiterin kopiert eine 4-GB-Datei vom NAS. Bei ihr dauert das viel länger als bei den Kollegen. In den Adaptereinstellungen steht: Verbindungsgeschwindigkeit 100 Mbit/s Vollduplex. Switch und Netzwerkkarte unterstützen 1 Gbit/s.",
+      "",
+      "1. Berechnen Sie die theoretische Mindestdauer bei 100 Mbit/s und bei 1 Gbit/s (1 GB = 10^9 Byte).",
+      "2. Nennen Sie drei mögliche Ursachen, warum nur 100 Mbit/s ausgehandelt werden.",
+      "3. Beschreiben Sie Ihr Vorgehen bei der Fehlersuche."
+    ],
+    "solution": [
+      "1. 4 GB = 32.000 Mbit. Bei 100 Mbit/s: 32.000 / 100 = 320 s (über 5 Minuten). Bei 1 Gbit/s: 32.000 / 1.000 = 32 s.",
+      "",
+      "2. Gigabit-Ethernet (1000BASE-T) braucht alle vier Adernpaare, 100BASE-TX nur zwei. Ist ein Paar im Patchkabel, in der Dose oder im Patchfeld unterbrochen, fällt die Karte auf 100 Mbit/s zurück. Weitere Ursachen: altes Patchkabel mit nur vier Adern bzw. Cat 5, in der Netzwerkkarte fest eingestellte 100 Mbit/s statt automatischer Aushandlung, oder der Switchport ist auf 100 Mbit/s begrenzt.",
+      "",
+      "3. Erst das Patchkabel gegen ein geprüftes Cat-6-Kabel tauschen. Dann am Switch den Port-Status prüfen bzw. einen anderen Port testen. In den Treibereinstellungen \"Geschwindigkeit und Duplex\" auf Automatisch stellen. Zum Schluss die fest verlegte Strecke mit einem Kabeltester prüfen und das Ergebnis dokumentieren."
+    ]
+  },
+  {
+    "title": "IP-Telefon und PC an einer Netzwerkdose",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Unternehmen führt IP-Telefone ein. An jedem Arbeitsplatz gibt es nur eine Netzwerkdose. Die Telefone haben einen eingebauten Switch mit PC-Anschluss. Die PCs sollen im VLAN 10, die Telefone im VLAN 20 arbeiten.",
+      "",
+      "1. Wie werden Telefon und PC angeschlossen, und wie wird der Switchport konfiguriert (tagged/untagged)?",
+      "2. Ein VLAN-Tag nach IEEE 802.1Q hat ein 12-Bit-Feld für die VLAN-ID und ein 3-Bit-Feld für die Priorität. Wie viele VLAN-IDs sind nutzbar, wie viele Prioritätsstufen gibt es?",
+      "3. Nennen Sie drei Vorteile eines eigenen Sprach-VLANs."
+    ],
+    "solution": [
+      "1. Die Dose geht an den Netzwerkanschluss des Telefons, der PC an den PC-Port des Telefons. Am Switchport ist VLAN 10 untagged (für den PC) und VLAN 20 tagged (für das Telefon). Das Telefon markiert seine Frames mit VLAN 20 und reicht die ungetaggten Frames des PCs durch.",
+      "",
+      "2. 12 Bit ergeben 2^12 = 4.096 Werte. 0 und 4095 sind reserviert, nutzbar sind 4.094 VLAN-IDs. 3 Bit ergeben 2^3 = 8 Prioritätsstufen (0 bis 7). Sprache erhält üblicherweise eine hohe Priorität (z.B. 5).",
+      "",
+      "3. Sprachdaten können per QoS bevorzugt werden. Gespräche sind von PC-Verkehr getrennt, was die Sicherheit erhöht. Broadcasts der PCs stören die Telefone nicht. Zusätzlich können die Telefone per PoE über denselben Switchport mit Strom versorgt werden."
+    ]
+  },
+  {
+    "title": "Private Adressen und NAT im Homeoffice erklären",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Mitarbeiter im Homeoffice wundert sich: ipconfig zeigt 192.168.178.23, eine Webseite \"Wie ist meine IP?\" zeigt 203.0.113.45. Außerdem erreicht er über VPN manche Server in der Firma nicht. Das Firmennetz nutzt ebenfalls 192.168.178.0/24.",
+      "",
+      "1. Erklären Sie, warum der Laptop zwei verschiedene Adressen hat.",
+      "2. Welche der folgenden Adressen sind private Adressen nach RFC 1918: 10.4.2.1, 172.15.0.1, 172.31.200.9, 192.168.0.5, 169.254.1.1?",
+      "3. Warum verursacht das gleiche Netz zu Hause und in der Firma Probleme mit dem VPN, und wie beugt die Firma dem vor?"
+    ],
+    "solution": [
+      "1. 192.168.178.23 ist eine private Adresse im Heimnetz, die im Internet nicht geroutet wird. Der Router übersetzt per NAT (genauer PAT) alle privaten Adressen auf seine eine öffentliche Adresse 203.0.113.45. Anhand der Portnummern ordnet er Antworten wieder dem richtigen Gerät zu.",
+      "",
+      "2. Privat sind 10.0.0.0/8, 172.16.0.0/12 (172.16.0.0 bis 172.31.255.255) und 192.168.0.0/16. Also: 10.4.2.1 ja, 172.15.0.1 nein (liegt vor 172.16), 172.31.200.9 ja, 192.168.0.5 ja. 169.254.1.1 ist eine Link-Local-Adresse (APIPA), keine private Adresse nach RFC 1918.",
+      "",
+      "3. Der Laptop hält 192.168.178.0/24 für sein lokales Netz. Pakete an Firmenserver in diesem Netz schickt er ins Heimnetz statt in den VPN-Tunnel. Firmen wählen deshalb seltene Bereiche, z.B. aus 10.0.0.0/8 oder 172.16.0.0/12, und nicht die typischen Standardnetze von Heimroutern."
+    ]
+  },
+  {
+    "title": "Switch für ein neues Großraumbüro auswählen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In einem Großraumbüro entstehen 22 Arbeitsplätze mit PC und IP-Telefon (der PC hängt am Telefon, pro Platz ein Port). Dazu kommen 2 Multifunktionsdrucker, 3 WLAN-Access-Points und 1 Uplink zum Serverraum. Es sollen 20 % freie Ports als Reserve bleiben.",
+      "Telefone brauchen je 6 W, Access Points je 25 W per PoE. Angebote:",
+      "  - Switch A: 24 Ports, unmanaged, kein PoE",
+      "  - Switch B: 48 Ports, managed, PoE+ mit 370 W Budget",
+      "  - Switch C: 48 Ports, managed, PoE mit 190 W Budget",
+      "",
+      "1. Wie viele Ports werden inklusive Reserve benötigt?",
+      "2. Welche PoE-Leistung wird benötigt? Welchen Switch wählen Sie?",
+      "3. Warum sollte der Switch managed sein?"
+    ],
+    "solution": [
+      "1. 22 + 2 + 3 + 1 = 28 Ports. Mit Reserve: 28 x 1,2 = 33,6, also 34 Ports. Ein 24-Port-Switch reicht nicht, es wird ein 48-Port-Switch gebraucht.",
+      "",
+      "2. 22 x 6 W + 3 x 25 W = 132 W + 75 W = 207 W. Switch C (190 W) reicht nicht, Switch A hat kein PoE. Gewählt wird Switch B: 48 Ports und 370 W PoE-Budget. Die Access Points brauchen mit 25 W ohnehin PoE+ (802.3at).",
+      "",
+      "3. Nur ein managed Switch kann VLANs für PCs und Telefone trennen und Sprachdaten per QoS bevorzugen. Er erlaubt Überwachung (z.B. per SNMP), zeigt Portfehler und PoE-Verbrauch an und lässt sich aus der Ferne konfigurieren."
+    ]
+  },
+  {
+    "title": "Falsche Subnetzmaske am Laborrechner",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Im Netz 192.168.1.0/24 hat ein Laborrechner die Adresse 192.168.1.77 mit der Maske 255.255.255.128 und dem Gateway 192.168.1.254. Alle anderen Geräte nutzen /24. Der Drucker 192.168.1.20 funktioniert, das NAS 192.168.1.150 und das Internet sind nicht erreichbar.",
+      "",
+      "1. Welche Netzadresse, welche Broadcast-Adresse und welchen Hostbereich ergibt die Maske des Laborrechners?",
+      "2. Erklären Sie mit Ihrem Ergebnis die beobachteten Fehler.",
+      "3. Wie beheben und prüfen Sie den Fehler?"
+    ],
+    "solution": [
+      "1. 255.255.255.128 entspricht /25. Der Rechner liegt im Netz 192.168.1.0/25. Broadcast: 192.168.1.127. Hostbereich: 192.168.1.1 bis 192.168.1.126.",
+      "",
+      "2. Der Drucker (.20) liegt aus Sicht des Rechners im eigenen Netz, er wird direkt angesprochen. Das NAS (.150) und alle Internetadressen liegen außerhalb, also müsste der Rechner das Gateway nutzen. Das Gateway .254 liegt aber selbst nicht im Netz 192.168.1.0/25 und ist für den Rechner nicht direkt erreichbar. Deshalb scheitern NAS und Internet.",
+      "",
+      "3. Maske auf 255.255.255.0 korrigieren oder den Rechner auf DHCP umstellen. Prüfen mit ipconfig /all, danach ping 192.168.1.254, ping auf das NAS und einen Namen im Internet. Die Konfiguration anschließend dokumentieren."
+    ]
+  },
+  {
+    "title": "Videoüberwachung im Warenlager datenschutzkonform planen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Getränkegroßhandel hatte mehrere Diebstähle im Lager. Er möchte 4 Kameras installieren, die rund um die Uhr aufzeichnen. Jede Kamera erzeugt 4 Mbit/s. Die Aufnahmen sollen 72 Stunden gespeichert werden.",
+      "",
+      "1. Auf welcher Rechtsgrundlage ist die Überwachung möglich, und welche Grenzen gelten?",
+      "2. Wie müssen Beschäftigte und Besucher informiert werden?",
+      "3. Berechnen Sie den Speicherbedarf für 72 Stunden in GB (1 GB = 1.000 MB, 1 Byte = 8 Bit)."
+    ],
+    "solution": [
+      "1. Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse: Schutz vor Diebstahl). Die Interessen der Betroffenen müssen abgewogen werden. Keine Kameras in Pausenräumen, Toiletten oder Umkleiden. Nur so viel filmen wie nötig (Datenminimierung). Weil auch Beschäftigte gefilmt werden, hat ein Betriebsrat ein Mitbestimmungsrecht (§ 87 Abs. 1 Nr. 6 BetrVG).",
+      "",
+      "2. Deutlich sichtbare Hinweisschilder vor dem überwachten Bereich mit Kamerasymbol, Verantwortlichem, Zweck, Rechtsgrundlage, Speicherdauer und Kontakt des Datenschutzbeauftragten. Die vollständigen Informationen nach Art. 13 DSGVO müssen leicht zugänglich sein, z.B. als Aushang.",
+      "",
+      "3. 4 Kameras x 4 Mbit/s = 16 Mbit/s. 72 h = 259.200 s. 16 Mbit/s x 259.200 s = 4.147.200 Mbit. / 8 = 518.400 MB = 518,4 GB. Eine Festplatte mit 1 TB reicht. Ältere Aufnahmen werden automatisch überschrieben."
+    ]
+  },
+  {
+    "title": "Cloud-Speicher mit Kundendaten einführen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Ingenieurbüro will seine Projektdaten künftig bei einem Cloud-Anbieter speichern. In den Projektordnern liegen auch Namen, Adressen und Telefonnummern von Bauherren.",
+      "",
+      "1. Welcher Vertrag muss mit dem Anbieter geschlossen werden, und was muss darin geregelt sein?",
+      "2. Worauf achten Sie beim Serverstandort?",
+      "3. Nennen Sie drei technische Maßnahmen, die das Büro selbst umsetzen sollte."
+    ],
+    "solution": [
+      "1. Der Anbieter verarbeitet personenbezogene Daten im Auftrag. Nötig ist ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO. Inhalt u.a.: Gegenstand, Dauer, Art und Zweck der Verarbeitung, Datenkategorien, Weisungsbindung, Vertraulichkeit, technische und organisatorische Maßnahmen, Regeln für Unterauftragnehmer, Unterstützung bei Betroffenenrechten, Löschung oder Rückgabe nach Vertragsende, Kontrollrechte.",
+      "",
+      "2. Am einfachsten sind Rechenzentren in der EU bzw. im EWR. Bei einem Drittland (z.B. USA) braucht es eine zusätzliche Grundlage: einen Angemessenheitsbeschluss (z.B. Zertifizierung nach dem EU-US Data Privacy Framework) oder Standardvertragsklauseln. Auch Unterauftragnehmer und Support-Zugriffe aus Drittländern prüfen.",
+      "",
+      "3. Anmeldung mit Mehr-Faktor-Authentifizierung. Rollen und Freigaben nach dem Need-to-know-Prinzip. Sensible Ordner vor dem Hochladen verschlüsseln. Eine eigene Datensicherung außerhalb der Cloud, denn Synchronisation ist kein Backup."
+    ]
+  },
+  {
+    "title": "Löschanfrage eines ehemaligen Kunden",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Computerfachhandel erhält am 06.10.2026 eine E-Mail eines ehemaligen Kunden: \"Löschen Sie sofort alle meine Daten.\" Gespeichert sind: Kundenkonto im Webshop, Newsletter-Anmeldung, Support-E-Mails und Rechnungen über Reparaturen. Die letzte Rechnung stammt vom 15.03.2025.",
+      "",
+      "1. Auf welches Recht beruft sich der Kunde, und bis wann muss der Händler antworten?",
+      "2. Welche Daten löschen Sie sofort, welche nicht? Begründen Sie.",
+      "3. Ab wann darf die Rechnung vom 15.03.2025 gelöscht werden, wenn für Buchungsbelege eine Aufbewahrungsfrist von 8 Jahren gilt?"
+    ],
+    "solution": [
+      "1. Recht auf Löschung nach Art. 17 DSGVO. Nach Art. 12 Abs. 3 DSGVO muss der Händler ohne unnötige Verzögerung, spätestens innerhalb eines Monats antworten, also bis 06.11.2026. In begründeten Fällen ist eine Verlängerung um zwei Monate möglich.",
+      "",
+      "2. Sofort löschen: Kundenkonto, Newsletter-Anmeldung und Support-E-Mails, die nicht mehr gebraucht werden. Nicht löschen: Rechnungen, denn für sie gelten gesetzliche Aufbewahrungspflichten (HGB, AO). Sie werden gesperrt, also nur noch für die Aufbewahrung gespeichert und nicht mehr anderweitig genutzt. Dem Kunden wird mitgeteilt, was gelöscht wurde und was warum noch aufbewahrt wird.",
+      "",
+      "3. Die Frist beginnt mit dem Ende des Kalenderjahres, in dem die Rechnung entstanden ist: 31.12.2025. Plus 8 Jahre ergibt 31.12.2033. Die Rechnung darf ab dem 01.01.2034 gelöscht werden. Ein Löschkonzept sollte solche Fristen automatisch berücksichtigen."
+    ]
+  },
+  {
+    "title": "Private Smartphones für dienstliche E-Mails",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Die Monteure eines Handwerksbetriebs möchten ihre dienstlichen E-Mails und Kundentermine auf ihren privaten Smartphones abrufen (BYOD, Bring Your Own Device).",
+      "",
+      "1. Nennen Sie drei Risiken für den Betrieb.",
+      "2. Welche technischen Maßnahmen machen BYOD sicherer?",
+      "3. Was sollte schriftlich mit den Mitarbeitern vereinbart werden?"
+    ],
+    "solution": [
+      "1. Verlust oder Diebstahl des Geräts mit Kundendaten. Vermischung privater und dienstlicher Daten, z.B. wenn Messenger-Apps das Adressbuch mit Kundenkontakten hochladen. Fehlende Updates und unsichere Apps auf dem privaten Gerät. Der Betrieb kann Daten beim Ausscheiden eines Mitarbeiters kaum zuverlässig löschen.",
+      "",
+      "2. Eine Mobile-Device-Management-Lösung mit getrenntem Arbeitsbereich (z.B. Android-Arbeitsprofil). Pflicht zu Bildschirmsperre mit PIN und Geräteverschlüsselung. Mindestversion des Betriebssystems. Löschen aus der Ferne nur für den dienstlichen Bereich. Dienstliche Apps nur aus dem verwalteten Bereich.",
+      "",
+      "3. Eine BYOD-Vereinbarung: Welche Daten und Apps sind erlaubt, was darf die IT auf dem Gerät sehen und löschen, Meldepflicht bei Verlust, Regeln beim Ausscheiden, Kostenübernahme. Die Teilnahme sollte freiwillig sein, gibt es einen Betriebsrat, ist er zu beteiligen. Alternative: dienstliche Smartphones."
+    ]
+  },
+  {
+    "title": "Schadsoftware-Meldung am Empfangsrechner",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Am Montag, 05.10.2026, um 09:30 Uhr meldet der Virenschutz am Empfangsrechner einer Hausverwaltung einen Trojaner, der gespeicherte Passwörter ausliest (Infostealer). Die Mitarbeiterin hatte kurz zuvor eine ZIP-Datei aus einer E-Mail geöffnet.",
+      "",
+      "1. Welche Sofortmaßnahmen ergreifen Sie?",
+      "2. Welche Folgen kann der Vorfall haben, und was ist wegen der gestohlenen Zugangsdaten zu tun? Bis wann müsste eine Meldung an die Datenschutzaufsicht spätestens erfolgen?",
+      "3. Wie wird der Rechner wieder sicher in Betrieb genommen, und wie beugen Sie künftig vor?"
+    ],
+    "solution": [
+      "1. Rechner sofort vom Netz trennen (Kabel ziehen, WLAN aus), aber nicht einfach neu installieren, damit Spuren erhalten bleiben. IT-Leitung bzw. IT-Sicherheitsbeauftragten informieren. Uhrzeit, Meldungstext und Ablauf dokumentieren. Die Mitarbeiterin meldet sich an keinem anderen Dienst mehr von diesem Rechner an.",
+      "",
+      "2. Angreifer können sich mit den erbeuteten Passwörtern z.B. am Postfach oder Mieterportal anmelden. Deshalb alle betroffenen Passwörter von einem sauberen Gerät aus ändern, aktive Sitzungen beenden, Postfach auf fremde Weiterleitungsregeln prüfen und MFA aktivieren. Sind Mieterdaten betroffen und besteht ein Risiko, ist der Vorfall innerhalb von 72 Stunden nach Bekanntwerden zu melden (Art. 33 DSGVO): spätestens Donnerstag, 08.10.2026, 09:30 Uhr.",
+      "",
+      "3. Den Rechner aus einem sauberen Image neu aufsetzen statt nur zu bereinigen. Daten aus einer geprüften Sicherung zurückspielen. Vorbeugung: ZIP- und ausführbare Anhänge am Mailgateway filtern, Mitarbeiter schulen, keine lokalen Adminrechte, Passwörter nicht im Browser, sondern in einem Passwortmanager speichern."
+    ]
+  },
+  {
+    "title": "Balkenplan für einen neuen Schulungsraum",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Bildungsträger richtet einen Schulungsraum mit 12 PCs ein. Start ist Montag, 02.11.2026. Gearbeitet wird montags bis freitags. Vorgänge (Dauer in Arbeitstagen, AT):",
+      "  A Hardware bestellen und Lieferung abwarten: 5 AT",
+      "  B Tische und Kabelkanäle montieren: 2 AT (parallel zu A)",
+      "  C PCs aufstellen und anschließen: 2 AT (nach A und B)",
+      "  D Software-Image verteilen: 1 AT (nach C)",
+      "  E Funktionstest und Abnahme: 1 AT (nach D)",
+      "",
+      "1. Beschreiben Sie das Gantt-Diagramm: Wann liegt welcher Balken? Wie lange dauert das Projekt?",
+      "2. An welchem Datum ist die Abnahme abgeschlossen? Welchen Puffer hat Vorgang B?",
+      "3. Die Lieferung verzögert sich um 2 AT. Wann endet das Projekt jetzt? Hilft der Puffer von B?"
+    ],
+    "solution": [
+      "1. A: AT 1 bis 5. B: AT 1 bis 2. C: AT 6 bis 7. D: AT 8. E: AT 9. Das Projekt dauert 5 + 2 + 1 + 1 = 9 AT. Die Abnahme wird als Meilenstein (Raute) am Ende eingezeichnet.",
+      "",
+      "2. AT 1 bis 5 sind Mo 02.11. bis Fr 06.11. AT 6 bis 9 sind Mo 09.11. bis Do 12.11. Die Abnahme ist am Donnerstag, 12.11.2026 abgeschlossen. B muss erst vor C fertig sein: 5 - 2 = 3 AT Puffer.",
+      "",
+      "3. A dauert 7 AT, das Projekt 11 AT. AT 10 ist Fr 13.11., AT 11 ist Mo 16.11.2026. Der Puffer von B hilft nicht, weil A auf dem kritischen Pfad liegt. Gegenmaßnahmen: Teillieferung vereinbaren oder C mit zwei Technikern in 1 AT erledigen."
+    ]
+  },
+  {
+    "title": "Netzplan für den IT-Umzug in neue Büroräume",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Steuerbüro zieht in neue Räume. Für die IT gibt es folgende Vorgänge (Dauer in Tagen):",
+      "  A Umzug planen, Inventar erfassen: 2 (kein Vorgänger)",
+      "  B Verkabelung in den neuen Räumen prüfen: 3 (nach A)",
+      "  C Firewall und Switches vorkonfigurieren: 4 (nach A)",
+      "  D Server umziehen und in Betrieb nehmen: 2 (nach B und C)",
+      "  E Arbeitsplätze abbauen und transportieren: 1 (nach A)",
+      "  F Arbeitsplätze aufbauen und testen: 2 (nach D und E)",
+      "",
+      "1. Berechnen Sie FAZ, FEZ, SAZ und SEZ aller Vorgänge und die Projektdauer.",
+      "2. Berechnen Sie Gesamtpuffer und freien Puffer. Nennen Sie den kritischen Pfad. Wann sollte E sinnvollerweise stattfinden?",
+      "3. C dauert 2 Tage länger, B 1 Tag länger. Wie wirkt sich das jeweils aus?"
+    ],
+    "solution": [
+      "1. Vorwärtsrechnung: A 0 bis 2. B 2 bis 5. C 2 bis 6. E 2 bis 3. D beginnt nach dem späteren Vorgänger: 6 bis 8. F: 8 bis 10. Projektdauer 10 Tage. Rückwärtsrechnung: F SAZ 8, SEZ 10. D SAZ 6, SEZ 8. E SAZ 7, SEZ 8. B SAZ 3, SEZ 6. C SAZ 2, SEZ 6. A SAZ 0, SEZ 2.",
+      "",
+      "2. Gesamtpuffer (SAZ - FAZ): A 0, B 1, C 0, D 0, E 5, F 0. Freier Puffer: B 6 - 5 = 1, E 8 - 3 = 5, alle anderen 0. Kritischer Pfad: A - C - D - F. E sollte möglichst spät liegen (Tag 7 bis 8), damit die Mitarbeiter nicht tagelang ohne PC sind.",
+      "",
+      "3. C liegt auf dem kritischen Pfad: Das Projekt verlängert sich um 2 Tage auf 12 Tage. B hat 1 Tag Gesamtpuffer: Die Verzögerung wird aufgefangen, B wird aber selbst kritisch."
+    ]
+  },
+  {
+    "title": "Nutzwertanalyse für Außendienst-Notebooks",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Für den Außendienst sollen neue Notebooks beschafft werden. Bewertet wird mit Punkten von 1 bis 10:",
+      "  Kriterium (Gewicht): Modell A / Modell B / Modell C",
+      "  Preis (30 %): 8 / 5 / 9",
+      "  Akkulaufzeit (25 %): 5 / 9 / 6",
+      "  Gewicht (20 %): 6 / 8 / 5",
+      "  Service und Garantie (25 %): 7 / 8 / 4",
+      "",
+      "1. Beschreiben Sie die Schritte einer Nutzwertanalyse.",
+      "2. Berechnen Sie die Nutzwerte. Welches Modell wird empfohlen?",
+      "3. Die Geschäftsführung will den Preis mit 50 % und die Akkulaufzeit nur mit 5 % gewichten. Ändert sich das Ergebnis? Was folgt daraus?"
+    ],
+    "solution": [
+      "1. Kriterien festlegen, Kriterien gewichten (Summe 100 %), jede Alternative je Kriterium bewerten, Punkte mit dem Gewicht multiplizieren, Teilnutzen addieren, Alternative mit dem höchsten Nutzwert wählen.",
+      "",
+      "2. A: 8 x 0,30 + 5 x 0,25 + 6 x 0,20 + 7 x 0,25 = 2,40 + 1,25 + 1,20 + 1,75 = 6,60. B: 1,50 + 2,25 + 1,60 + 2,00 = 7,35. C: 2,70 + 1,50 + 1,00 + 1,00 = 6,20. Empfohlen wird Modell B.",
+      "",
+      "3. A: 8 x 0,50 + 5 x 0,05 + 1,20 + 1,75 = 7,20. B: 2,50 + 0,45 + 1,60 + 2,00 = 6,55. C: 4,50 + 0,30 + 1,00 + 1,00 = 6,80. Jetzt gewinnt A. Die Gewichtung ist subjektiv und entscheidet über das Ergebnis. Sie muss vor der Bewertung abgestimmt und begründet werden. Für Außendienstler ist eine Akkulaufzeit mit 5 % kaum sinnvoll."
+    ]
+  },
+  {
+    "title": "Angebote für Dockingstationen unter Termindruck",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Für ein Desksharing-Projekt werden 30 Dockingstationen benötigt. Der Rollout beginnt in 14 Tagen. Zwei Angebote liegen vor (netto):",
+      "  - Anbieter A: 189 Euro je Stück, 15 % Rabatt, 2 % Skonto, frei Haus, Lieferzeit 3 Wochen, 3 Jahre Garantie",
+      "  - Anbieter B: 172 Euro je Stück, 5 % Rabatt, kein Skonto, Versandpauschale 49 Euro, Lieferzeit 3 Tage, 1 Jahr Garantie",
+      "",
+      "1. Berechnen Sie für beide Angebote den Bezugspreis (Skonto wird genutzt).",
+      "2. Wie hoch ist der Preis pro Stück, und wie groß ist der Unterschied insgesamt?",
+      "3. Für welches Angebot entscheiden Sie sich? Beziehen Sie den Termin in die Entscheidung ein."
+    ],
+    "solution": [
+      "1. A: 30 x 189 = 5.670,00 Euro. Rabatt 15 %: - 850,50 = 4.819,50 Euro. Skonto 2 %: - 96,39 = 4.723,11 Euro (frei Haus). B: 30 x 172 = 5.160,00 Euro. Rabatt 5 %: - 258,00 = 4.902,00 Euro. Versand + 49,00 = 4.951,00 Euro.",
+      "",
+      "2. A: 4.723,11 / 30 = ca. 157,44 Euro pro Stück. B: 4.951,00 / 30 = ca. 165,03 Euro pro Stück. A ist insgesamt 227,89 Euro günstiger.",
+      "",
+      "3. A ist billiger und hat die längere Garantie, kommt aber erst nach 3 Wochen. Der Rollout in 14 Tagen wäre gefährdet. Möglichkeiten: bei A eine schnellere Teillieferung verhandeln, den Rollout verschieben oder B wählen und den Mehrpreis als Preis für die Termintreue akzeptieren. Die Entscheidung trifft der Auftraggeber, das Projektteam legt die Folgen offen."
+    ]
+  },
+  {
+    "title": "Rollout neuer Notebooks in Wellen planen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "In einem Unternehmen erhalten 126 Mitarbeiter neue Notebooks: Vertrieb 40, Buchhaltung 18, Technik 52, Verwaltung 16. Zuerst werden 6 Pilotgeräte an einem Tag ausgegeben, danach sammelt man 3 Arbeitstage lang Rückmeldungen. Anschließend schaffen 3 Techniker je 6 Geräte pro Tag.",
+      "",
+      "1. Wie viele Arbeitstage dauert der Rollout insgesamt (Pilot, Rückmeldung, Hauptrollout)?",
+      "2. Nach welchen Gesichtspunkten legen Sie die Reihenfolge der Abteilungen fest?",
+      "3. Wie informieren Sie die Anwender, und welche Rückfallmöglichkeit planen Sie ein?"
+    ],
+    "solution": [
+      "1. Summe: 40 + 18 + 52 + 16 = 126 Geräte. Nach dem Pilot bleiben 126 - 6 = 120 Geräte. Kapazität: 3 x 6 = 18 Geräte pro Tag. 120 / 18 = 6,67, also 7 Tage. Gesamt: 1 + 3 + 7 = 11 Arbeitstage.",
+      "",
+      "2. Pilotgeräte an Mitarbeiter aus allen Abteilungen, damit alle Fachanwendungen getestet werden. Abteilungen möglichst geschlossen umstellen. Keine Umstellung der Buchhaltung am Monatsende oder beim Jahresabschluss, keine Umstellung im Vertrieb während wichtiger Kundentermine. Große Abteilungen (Technik) auf mehrere Tage verteilen und mit der Abteilungsleitung abstimmen.",
+      "",
+      "3. Eine Woche vorher Termin und Ablauf per E-Mail mitteilen, dazu eine Checkliste: lokale Daten auf das Netzlaufwerk verschieben, Passwörter bereithalten. Am Tag selbst eine Ansprechperson bzw. Hotline. Rückfall: Alte Geräte werden zwei Wochen lang nicht gelöscht, damit man bei Problemen zurückwechseln kann."
+    ]
+  },
+  {
+    "title": "Ausbildung abbrechen oder verkürzen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Lena hat ihre Ausbildung zur Fachinformatikerin am 01.08.2025 begonnen, die Probezeit beträgt 4 Monate. Im März 2026 entscheidet sie sich für ein Studium und gibt die Ausbildung auf. Ihr Kollege Jonas hat Abitur und möchte seine Ausbildung verkürzen.",
+      "",
+      "1. Wann endete Lenas Probezeit, und welche Kündigungsregeln gelten in der Probezeit?",
+      "2. Lena übergibt ihre schriftliche Kündigung am Dienstag, 10.03.2026. Welche Frist gilt nach der Probezeit, und wann endet das Ausbildungsverhältnis?",
+      "3. Wie kann Jonas seine Ausbildungszeit verkürzen?"
+    ],
+    "solution": [
+      "1. Die Probezeit lief vom 01.08.2025 bis zum 30.11.2025. In der Probezeit können beide Seiten jederzeit ohne Einhaltung einer Frist und ohne Angabe von Gründen kündigen, aber immer schriftlich (§ 22 Abs. 1 BBiG).",
+      "",
+      "2. Nach der Probezeit kann die Auszubildende mit einer Frist von vier Wochen kündigen, wenn sie die Ausbildung aufgibt oder einen anderen Beruf lernen will (§ 22 Abs. 2 Nr. 2 BBiG). Die Kündigung muss schriftlich sein und den Grund nennen. 10.03.2026 plus vier Wochen: Das Ausbildungsverhältnis endet am Dienstag, 07.04.2026. Der Betrieb selbst kann nach der Probezeit nur noch aus wichtigem Grund fristlos kündigen.",
+      "",
+      "3. Nach § 8 BBiG stellen Auszubildender und Betrieb gemeinsam einen Antrag bei der zuständigen Stelle (IHK). Mit Abitur ist meist eine Verkürzung um bis zu 12 Monate möglich. Bei guten Leistungen kann er zusätzlich vorzeitig zur Abschlussprüfung zugelassen werden (§ 45 BBiG)."
+    ]
+  },
+  {
+    "title": "Rufbereitschaft und nächtlicher Störungseinsatz",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Systemadministrator (28 Jahre) hat eine Woche Rufbereitschaft. Am Montag arbeitet er von 8:00 bis 16:15 Uhr mit 45 Minuten Pause. Von 22:30 bis 0:30 Uhr behebt er per Fernzugriff eine Serverstörung. Normalerweise beginnt er um 8:00 Uhr.",
+      "",
+      "1. Zählt die Rufbereitschaft zur Arbeitszeit? Berechnen Sie seine Arbeitszeit am Montag und prüfen Sie, ob sie zulässig ist.",
+      "2. Wann darf er am Dienstag frühestens wieder arbeiten?",
+      "3. Am Sonntag hat er ebenfalls einen Einsatz. Was gilt nach dem Arbeitszeitgesetz?"
+    ],
+    "solution": [
+      "1. Die Rufbereitschaft selbst ist keine Arbeitszeit, weil er seinen Aufenthalt frei wählen kann. Der Einsatz ist Arbeitszeit. Tagdienst: 8:00 bis 16:15 = 8,25 h - 0,75 h Pause = 7,5 h. Einsatz: 2 h. Gesamt: 9,5 h. Das ist zulässig: Werktäglich sind bis zu 10 Stunden erlaubt, wenn im Durchschnitt von 6 Monaten bzw. 24 Wochen 8 Stunden nicht überschritten werden.",
+      "",
+      "2. Nach Arbeitsende steht ihm eine ununterbrochene Ruhezeit von 11 Stunden zu (§ 5 ArbZG). Der Einsatz unterbricht die Ruhezeit, sie beginnt um 0:30 Uhr neu. Frühester Arbeitsbeginn: 0:30 + 11 h = 11:30 Uhr.",
+      "",
+      "3. Sonntagsarbeit ist grundsätzlich verboten, für Notfälle und unaufschiebbare Arbeiten (z.B. Störungen in IT-Systemen) gibt es Ausnahmen (§ 10 ArbZG). Er muss dann innerhalb von zwei Wochen einen Ersatzruhetag erhalten (§ 11 Abs. 3 ArbZG). Mindestens 15 Sonntage im Jahr müssen beschäftigungsfrei bleiben."
+    ]
+  },
+  {
+    "title": "Bestellte Notebooks werden nicht geliefert",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Systemhaus erhält am 25.08.2026 ein verbindliches Angebot eines Distributors über 15 Notebooks mit dem Liefertermin 21.09.2026. Es bestellt am 01.09.2026 zu den angebotenen Bedingungen. Am 28.09.2026 sind die Notebooks immer noch nicht da. Ein anderer Distributor könnte sofort liefern, allerdings für 60 Euro mehr pro Gerät.",
+      "",
+      "1. Wann und wodurch ist der Kaufvertrag zustande gekommen?",
+      "2. Befindet sich der Distributor im Lieferverzug? Prüfen Sie die Voraussetzungen.",
+      "3. Welche Rechte hat das Systemhaus? Wie hoch wäre der Schaden bei einem Deckungskauf?"
+    ],
+    "solution": [
+      "1. Das verbindliche Angebot ist der Antrag, die Bestellung vom 01.09.2026 ohne Änderungen ist die Annahme. Damit ist der Kaufvertrag am 01.09.2026 zustande gekommen. Wäre das Angebot freibleibend gewesen, wäre erst die Auftragsbestätigung des Distributors die Annahme.",
+      "",
+      "2. Voraussetzungen: Die Lieferung ist fällig (21.09.2026), sie ist nicht erfolgt, und der Lieferer hat die Verspätung zu vertreten. Eine Mahnung ist nicht nötig, weil der Liefertermin nach dem Kalender bestimmt ist (§ 286 Abs. 2 Nr. 1 BGB). Der Distributor ist seit dem 22.09.2026 im Verzug.",
+      "",
+      "3. Ohne Nachfrist: Lieferung verlangen und zusätzlich Ersatz des Verzögerungsschadens. Nach Ablauf einer angemessenen Nachfrist: Rücktritt vom Vertrag und/oder Schadensersatz statt der Leistung. Beim Deckungskauf beträgt der Schaden 15 x 60 Euro = 900 Euro Mehrkosten, die vom Distributor verlangt werden können."
+    ]
+  },
+  {
+    "title": "Sozialversicherung in der Ausbildungsvergütung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Auszubildender (19 Jahre) erhält 1.050 Euro Ausbildungsvergütung im Monat. Vereinfacht gelten folgende Arbeitnehmeranteile: Krankenversicherung 8,75 %, Rentenversicherung 9,3 %, Arbeitslosenversicherung 1,3 %, Pflegeversicherung 1,8 %. Lohnsteuer wird in diesem Beispiel nicht berücksichtigt.",
+      "",
+      "1. Berechnen Sie die einzelnen Beiträge, die Summe und den Auszahlungsbetrag.",
+      "2. Auf dem Weg zur Berufsschule hat er einen Fahrradunfall. Welche Versicherung ist zuständig, und wer zahlt deren Beiträge?",
+      "3. Er ist nach dem Unfall 8 Wochen krankgeschrieben. Wer zahlt in dieser Zeit seine Vergütung?"
+    ],
+    "solution": [
+      "1. KV: 1.050 x 8,75 % = 91,88 Euro. RV: 1.050 x 9,3 % = 97,65 Euro. AV: 1.050 x 1,3 % = 13,65 Euro. PV: 1.050 x 1,8 % = 18,90 Euro. Summe: 222,08 Euro (21,15 %). Auszahlung: 1.050,00 - 222,08 = 827,92 Euro. Der Betrieb zahlt zusätzlich seinen Arbeitgeberanteil.",
+      "",
+      "2. Der Weg zur Berufsschule ist versichert, es handelt sich um einen Wegeunfall. Zuständig ist die gesetzliche Unfallversicherung, meist die Berufsgenossenschaft. Ihre Beiträge zahlt allein der Arbeitgeber.",
+      "",
+      "3. Die ersten 6 Wochen zahlt der Betrieb die Vergütung weiter (Entgeltfortzahlung, bei Azubis auch § 19 BBiG). Danach, also für die restlichen 2 Wochen, zahlt bei einem Wegeunfall die Berufsgenossenschaft Verletztengeld. Bei einer normalen Krankheit wäre es das Krankengeld der Krankenkasse."
+    ]
   }
 ]

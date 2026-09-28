@@ -8410,5 +8410,2729 @@
     ],
     "a": "105,00 Euro",
     "exp": "Named-User: 40 * 12,00 Euro = 480,00 Euro. Concurrent-User: 15 * 25,00 Euro = 375,00 Euro. Differenz: 105,00 Euro zugunsten von Concurrent-User."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Gigabit-Ethernet-Standard nutzt Multimode-Glasfaser mit kurzer Wellenlänge?",
+    "options": [
+      "1000BASE-SX",
+      "1000BASE-LX",
+      "1000BASE-T",
+      "1000BASE-CX"
+    ],
+    "a": "1000BASE-SX",
+    "exp": "SX steht für short wavelength (850 nm) über Multimode. LX nutzt lange Wellenlänge (1310 nm) vor allem über Singlemode, T Twisted Pair, CX kurze Kupfer-Twinax-Kabel."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist das Besondere an einem BiDi-Transceiver für Glasfaser?",
+    "options": [
+      "Er sendet und empfängt über eine einzige Faser mit zwei Wellenlängen",
+      "Er kann wahlweise über Kupfer oder über Glasfaser senden",
+      "Er verschlüsselt die Daten in beide Richtungen automatisch",
+      "Er verbindet Singlemode- direkt mit Multimode-Fasern"
+    ],
+    "a": "Er sendet und empfängt über eine einzige Faser mit zwei Wellenlängen",
+    "exp": "Ein BiDi-Modul sendet z.B. auf 1310 nm und empfängt auf 1550 nm, die Gegenseite genau umgekehrt. Man setzt sie daher paarweise ein und spart pro Link eine Faser."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine neu gepatchte Glasfaserstrecke zeigt zu hohe Dämpfung. Was ist eine sehr häufige Ursache?",
+    "options": [
+      "Verschmutzte Stirnflächen der Stecker",
+      "Eine falsch eingestellte VLAN-ID am Port",
+      "Zu viele Adernpaare im Glasfaserkabel",
+      "Eine zu kurze DHCP-Lease-Dauer"
+    ],
+    "a": "Verschmutzte Stirnflächen der Stecker",
+    "exp": "Schon Staub oder Fingerabdrücke auf der Ferrule dämpfen das Licht stark und können die Stirnfläche beschädigen. Stecker vor dem Stecken prüfen und mit geeignetem Reiniger säubern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Pins nutzen 10BASE-T und 100BASE-TX zum Senden und Empfangen?",
+    "options": [
+      "1, 2, 3 und 6",
+      "1, 2, 4 und 5",
+      "4, 5, 7 und 8",
+      "3, 4, 5 und 6"
+    ],
+    "a": "1, 2, 3 und 6",
+    "exp": "Diese Standards brauchen nur zwei Adernpaare: 1/2 und 3/6. Erst 1000BASE-T nutzt alle vier Paare."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Kabel verbindet klassisch einen seriellen PC-Anschluss mit dem RJ45-Konsolenport eines Cisco-Switches?",
+    "options": [
+      "Ein Rollover-Kabel (Konsolenkabel)",
+      "Ein Crossover-Kabel (T568A auf T568B)",
+      "Ein 1:1-Patchkabel (T568B beidseitig)",
+      "Ein Twinax-Kabel (Direct Attach Copper)"
+    ],
+    "a": "Ein Rollover-Kabel (Konsolenkabel)",
+    "exp": "Beim Rollover-Kabel ist die Belegung komplett gespiegelt (Pin 1 auf 8, 2 auf 7 usw.), meist mit RJ45 auf DB9. Heute gibt es dafür oft USB-Konsolenkabel."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem Befehl speichert man auf einem Cisco-Switch die aktive Konfiguration so, dass sie nach einem Neustart wieder geladen wird?",
+    "options": [
+      "copy running-config startup-config",
+      "copy startup-config running-config",
+      "copy running-config tftp:",
+      "show running-config"
+    ],
+    "a": "copy running-config startup-config",
+    "exp": "Der Befehl schreibt die Konfiguration aus dem RAM in den NVRAM. Die Umkehrung würde die gespeicherte in die laufende Konfiguration übernehmen, tftp: sichert nur eine Kopie auf einen Server."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Befehl zeigt auf einem Cisco-Switch, an welchem Port eine MAC-Adresse gelernt wurde?",
+    "options": [
+      "show mac address-table",
+      "show ip route",
+      "show vlan brief",
+      "show ip interface brief"
+    ],
+    "a": "show mac address-table",
+    "exp": "Die MAC-Adresstabelle listet je Eintrag VLAN, MAC-Adresse und Port. So findet man z.B. heraus, an welcher Dose ein bestimmtes Gerät hängt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu richtet man auf Routern ein Loopback-Interface mit eigener IP-Adresse ein?",
+    "options": [
+      "Als stets erreichbare Adresse für Management und Router-ID",
+      "Um Pakete direkt an den Absender zurückzuspiegeln",
+      "Um den Router kurzzeitig vom Netz zu trennen",
+      "Um den Router gegen Switching-Schleifen zu schützen"
+    ],
+    "a": "Als stets erreichbare Adresse für Management und Router-ID",
+    "exp": "Ein Loopback-Interface geht nicht down, solange der Router läuft, und ist über jeden funktionierenden Weg erreichbar. OSPF und BGP nutzen es gern als Router-ID bzw. Quelladresse."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Switches durchläuft ein Paket zwischen zwei Servern an verschiedenen Leaf-Switches eines Spine-Leaf-Netzes?",
+    "options": [
+      "3 (Leaf, Spine, Leaf)",
+      "2 (Leaf, Leaf)",
+      "4 (Leaf, Spine, Spine, Leaf)",
+      "5 (Access, Distribution, Core, Distribution, Access)"
+    ],
+    "a": "3 (Leaf, Spine, Leaf)",
+    "exp": "Da jeder Leaf direkt mit jedem Spine verbunden ist, führt jeder Weg über genau einen Spine. Deshalb ist die Latenz zwischen beliebigen Servern gleich."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet Top-of-Rack (ToR) bei der Verkabelung im Rechenzentrum?",
+    "options": [
+      "Jedes Rack hat einen eigenen Switch für die Server in diesem Rack",
+      "Alle Server einer Reihe hängen an einem Switch am Reihenende",
+      "Der Switch mit der höchsten Priorität wird zur Root Bridge",
+      "Die Patchfelder sitzen grundsätzlich unter dem Doppelboden"
+    ],
+    "a": "Jedes Rack hat einen eigenen Switch für die Server in diesem Rack",
+    "exp": "Bei ToR bleiben die Kabel zu den Servern kurz (oft DAC), nur die Uplinks verlassen das Rack. Im Spine-Leaf-Netz ist der ToR-Switch meist der Leaf. Die Alternative heißt End-of-Row."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum hat der IPv6-Header keine eigene Prüfsumme mehr?",
+    "options": [
+      "Andere Schichten prüfen bereits, Router sparen so Rechenzeit",
+      "IPv6-Pakete werden grundsätzlich verschlüsselt",
+      "Die Prüfsumme steht jetzt im Flow-Label-Feld",
+      "IPv6-Pakete können unterwegs nicht verfälscht werden"
+    ],
+    "a": "Andere Schichten prüfen bereits, Router sparen so Rechenzeit",
+    "exp": "Ethernet prüft per FCS, TCP und UDP haben eigene Prüfsummen (bei IPv6 ist sie auch für UDP Pflicht). Router müssen so nach dem Senken des Hop Limit keine Prüfsumme neu berechnen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum ist die MTU bei DSL-Anschlüssen mit PPPoE meist 1492 Byte?",
+    "options": [
+      "Der PPPoE-Header belegt 8 Byte der 1500 Byte Ethernet-Nutzlast",
+      "Der VLAN-Tag belegt 8 Byte der 1500 Byte Ethernet-Nutzlast",
+      "DSL überträgt technisch höchstens 1492 Byte je Frame",
+      "Die Verschlüsselung der Leitung benötigt 8 Byte Platz"
+    ],
+    "a": "Der PPPoE-Header belegt 8 Byte der 1500 Byte Ethernet-Nutzlast",
+    "exp": "PPPoE verpackt PPP in Ethernet und braucht dafür 8 Byte zusätzlich. Stimmt die MTU nicht, laden manche Seiten nicht, weshalb Router oft die TCP-MSS anpassen (MSS-Clamping)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher IPv4-Adressbereich ist für Multicast reserviert?",
+    "options": [
+      "224.0.0.0/4 (224.0.0.0 bis 239.255.255.255)",
+      "240.0.0.0/4 (240.0.0.0 bis 255.255.255.254)",
+      "169.254.0.0/16 (169.254.0.1 bis 169.254.255.254)",
+      "127.0.0.0/8 (127.0.0.1 bis 127.255.255.254)"
+    ],
+    "a": "224.0.0.0/4 (224.0.0.0 bis 239.255.255.255)",
+    "exp": "Der Bereich entspricht der früheren Klasse D. 240.0.0.0/4 ist reserviert (Klasse E), 169.254.0.0/16 dient APIPA und 127.0.0.0/8 dem Loopback."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Standardport nutzt der Datenbankserver MySQL bzw. MariaDB?",
+    "options": [
+      "TCP 3306",
+      "TCP 5432",
+      "TCP 1433",
+      "TCP 1521"
+    ],
+    "a": "TCP 3306",
+    "exp": "MySQL und MariaDB lauschen auf 3306. PostgreSQL nutzt 5432, Microsoft SQL Server 1433 und Oracle 1521. Datenbankports sollten nie direkt aus dem Internet erreichbar sein."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Standardport nutzt PostgreSQL?",
+    "options": [
+      "TCP 5432",
+      "TCP 3306",
+      "TCP 5060",
+      "TCP 6379"
+    ],
+    "a": "TCP 5432",
+    "exp": "PostgreSQL lauscht auf 5432. 3306 gehört zu MySQL, 5060 zu SIP und 6379 zur Datenbank Redis."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Standardport nutzt Microsoft SQL Server?",
+    "options": [
+      "TCP 1433",
+      "TCP 1434",
+      "TCP 3389",
+      "TCP 445"
+    ],
+    "a": "TCP 1433",
+    "exp": "Die Standardinstanz des SQL Servers lauscht auf TCP 1433. UDP 1434 nutzt der SQL Server Browser für benannte Instanzen, 3389 ist RDP und 445 SMB."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Browser versucht HTTP/3, die Firewall sperrt aber UDP 443. Was passiert typischerweise?",
+    "options": [
+      "Der Browser fällt auf HTTP/2 oder HTTP/1.1 über TCP zurück",
+      "Die Webseite ist dann gar nicht mehr erreichbar",
+      "Der Browser wechselt automatisch auf Port 80",
+      "Die Verbindung läuft unverschlüsselt über UDP 80"
+    ],
+    "a": "Der Browser fällt auf HTTP/2 oder HTTP/1.1 über TCP zurück",
+    "exp": "Server kündigen HTTP/3 nur an, der erste Kontakt läuft meist über TCP. Klappt QUIC nicht, nutzt der Browser weiter TCP 443. Die Seite funktioniert, nur ohne die Vorteile von QUIC."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Problem von HTTP/2 über TCP löst QUIC?",
+    "options": [
+      "Ein verlorenes Paket blockiert nicht mehr alle Streams der Verbindung",
+      "Webseiten brauchen für den Abruf keinen DNS-Namen mehr",
+      "Server benötigen für HTTPS kein TLS-Zertifikat mehr",
+      "Jeder Stream erhält eine eigene öffentliche IP-Adresse"
+    ],
+    "a": "Ein verlorenes Paket blockiert nicht mehr alle Streams der Verbindung",
+    "exp": "Bei TCP muss ein verlorenes Segment erst neu gesendet werden, bevor alle folgenden Daten weitergereicht werden (Head-of-Line-Blocking). QUIC verwaltet die Streams getrennt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Webseite zieht dauerhaft auf eine neue Domain um. Welchen Statuscode sollte die alte Adresse liefern?",
+    "options": [
+      "301 Moved Permanently",
+      "307 Temporary Redirect",
+      "304 Not Modified",
+      "302 Found"
+    ],
+    "a": "301 Moved Permanently",
+    "exp": "301 sagt Browsern und Suchmaschinen, dass die neue Adresse dauerhaft gilt, Lesezeichen und Suchindex werden übernommen. 302 und 307 leiten nur vorübergehend um."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Webdienst ist wegen Wartung oder Überlast vorübergehend nicht erreichbar. Welcher Statuscode passt?",
+    "options": [
+      "503 Service Unavailable",
+      "500 Internal Server Error",
+      "404 Not Found",
+      "408 Request Timeout"
+    ],
+    "a": "503 Service Unavailable",
+    "exp": "503 meldet einen vorübergehenden Zustand, oft mit dem Header Retry-After. 500 steht für einen unerwarteten Fehler in der Anwendung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Statuscode liefert eine REST-API typischerweise, wenn per POST eine neue Ressource angelegt wurde?",
+    "options": [
+      "201 Created",
+      "204 No Content",
+      "304 Not Modified",
+      "302 Found"
+    ],
+    "a": "201 Created",
+    "exp": "201 bestätigt das Anlegen, oft mit dem Header Location, der die Adresse der neuen Ressource nennt. 204 heißt erfolgreich, aber ohne Inhalt in der Antwort."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher HTTP-Statuscode meldet, dass ein Client in kurzer Zeit zu viele Anfragen gesendet hat?",
+    "options": [
+      "429 Too Many Requests",
+      "413 Payload Too Large",
+      "408 Request Timeout",
+      "400 Bad Request"
+    ],
+    "a": "429 Too Many Requests",
+    "exp": "APIs begrenzen die Anfragen je Client (Rate Limiting). Wird die Grenze überschritten, antworten sie mit 429 und nennen oft per Retry-After, wann es wieder geht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche HTTP-Methode ändert nur einzelne Felder einer bestehenden Ressource?",
+    "options": [
+      "PATCH",
+      "PUT",
+      "POST",
+      "HEAD"
+    ],
+    "a": "PATCH",
+    "exp": "PATCH überträgt nur die Änderungen. PUT ersetzt die Ressource vollständig, POST legt meist eine neue an, HEAD liefert nur die Header ohne Inhalt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist JSON?",
+    "options": [
+      "Ein textbasiertes Datenformat aus Schlüssel-Wert-Paaren und Listen",
+      "Ein binäres Format zur Kompression von Webseiten und Bildern",
+      "Eine Skriptsprache zur Steuerung von Switches und Routern",
+      "Ein Protokoll zum Abruf von Verzeichnisdaten im Netzwerk"
+    ],
+    "a": "Ein textbasiertes Datenformat aus Schlüssel-Wert-Paaren und Listen",
+    "exp": "JSON (JavaScript Object Notation) sieht z.B. so aus: {\"name\": \"sw01\", \"ports\": 48}. Es ist gut lesbar und das Standardformat vieler REST-APIs."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt Session Persistence (Sticky Sessions) bei einem Loadbalancer?",
+    "options": [
+      "Ein Client landet während seiner Sitzung immer beim selben Server",
+      "Jede Anfrage geht an einen zufällig gewählten Server",
+      "Sitzungen werden nach jeder Anfrage sofort beendet",
+      "Alle Clients teilen sich eine gemeinsame Sitzung"
+    ],
+    "a": "Ein Client landet während seiner Sitzung immer beim selben Server",
+    "exp": "Das ist nötig, wenn Server Sitzungsdaten wie einen Warenkorb nur lokal speichern. Umgesetzt wird es per Cookie oder Quell-IP, die Last verteilt sich dadurch aber ungleichmäßiger."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dienen Health Checks bei einem Loadbalancer?",
+    "options": [
+      "Ausgefallene Server werden erkannt und bekommen keine Anfragen mehr",
+      "Die Server werden regelmäßig auf Schadsoftware geprüft",
+      "Die Clients müssen sich vor jeder Anfrage neu anmelden",
+      "Die Temperatur im Serverraum wird laufend gemessen"
+    ],
+    "a": "Ausgefallene Server werden erkannt und bekommen keine Anfragen mehr",
+    "exp": "Der Loadbalancer prüft die Backends regelmäßig, z.B. per TCP-Verbindung oder HTTP-Abfrage auf /health. Antwortet ein Server nicht korrekt, nimmt er ihn aus dem Pool, bis er wieder gesund ist."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Voraussetzung müssen alle Ports eines LACP-Bündels erfüllen?",
+    "options": [
+      "Gleiche Geschwindigkeit, gleicher Duplexmodus und gleiche VLAN-Konfiguration",
+      "Sie müssen auf verschiedenen Switches ohne Stacking oder MLAG liegen",
+      "Sie müssen bewusst unterschiedliche Geschwindigkeiten nutzen",
+      "Sie müssen jeweils einem eigenen, getrennten VLAN angehören"
+    ],
+    "a": "Gleiche Geschwindigkeit, gleicher Duplexmodus und gleiche VLAN-Konfiguration",
+    "exp": "Nur gleich konfigurierte Ports lassen sich bündeln. Weicht ein Port ab, nimmt LACP ihn nicht in das Bündel auf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt die Option sticky bei Port-Security?",
+    "options": [
+      "Der Switch lernt erlaubte MACs selbst und trägt sie in die Konfiguration ein",
+      "Der Port bleibt auch nach einem Verstoß dauerhaft aktiv und meldet nichts",
+      "Alle gelernten MAC-Adressen werden nach 300 Sekunden gelöscht",
+      "Der Port akzeptiert nur noch Geräte mit einer festen IP-Adresse"
+    ],
+    "a": "Der Switch lernt erlaubte MACs selbst und trägt sie in die Konfiguration ein",
+    "exp": "Mit sticky muss man die MACs nicht von Hand eintragen. Die gelernten Adressen stehen in der running-config und bleiben nach dem Sichern auch nach einem Neustart erhalten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Woran erkennt ein DHCP-Server, aus welchem Bereich er einer weitergeleiteten Anfrage eine Adresse geben soll?",
+    "options": [
+      "An der Relay-Adresse (giaddr), die der Relay-Agent einträgt",
+      "An der MAC-Adresse des anfragenden Clients im Frame",
+      "An der Absenderadresse 0.0.0.0 des anfragenden Clients",
+      "Am Hostnamen, den der Client in der Anfrage mitsendet"
+    ],
+    "a": "An der Relay-Adresse (giaddr), die der Relay-Agent einträgt",
+    "exp": "Der Relay-Agent trägt seine Schnittstellenadresse im Client-Netz ins Feld giaddr ein. Der Server wählt den passenden Bereich und schickt die Antwort an den Relay zurück."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Adresse trägt ein IPv6-Client typischerweise als Standardgateway ein?",
+    "options": [
+      "Die link-lokale Adresse des Routers",
+      "Die globale Adresse des DNS-Servers",
+      "Die Multicast-Adresse ff02::1",
+      "Die Loopback-Adresse ::1"
+    ],
+    "a": "Die link-lokale Adresse des Routers",
+    "exp": "Router senden ihre Router Advertisements von ihrer fe80-Adresse. Diese Adresse bleibt auch bei einem Präfixwechsel gleich und wird deshalb als Gateway genutzt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Verschlüsselung ist im 6-GHz-WLAN-Band vorgeschrieben?",
+    "options": [
+      "WPA3 oder OWE, WPA2 und offene Netze sind nicht erlaubt",
+      "WPA2-Personal mit AES, WPA3 ist dort nur optional",
+      "Nur WEP, weil es mit allen Geräten kompatibel ist",
+      "Keine, das Band ist nur für offene Gastnetze gedacht"
+    ],
+    "a": "WPA3 oder OWE, WPA2 und offene Netze sind nicht erlaubt",
+    "exp": "Wi-Fi 6E und Wi-Fi 7 verlangen im 6-GHz-Band WPA3 oder OWE. Reine WPA2-Geräte bleiben daher in 2,4 oder 5 GHz."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was leistet OWE (Wi-Fi Enhanced Open) in einem Gast-WLAN?",
+    "options": [
+      "Verschlüsselung für jeden Client, ohne dass ein Passwort nötig ist",
+      "Anmeldung jedes Nutzers per Benutzername und RADIUS-Server",
+      "Schnelle Schlüsselübergabe beim Roaming zwischen Access Points",
+      "Automatische Sperre für Clients ohne aktuelle Updates"
+    ],
+    "a": "Verschlüsselung für jeden Client, ohne dass ein Passwort nötig ist",
+    "exp": "In offenen Netzen läuft der Funkverkehr sonst im Klartext. OWE handelt beim Verbinden per Diffie-Hellman einen eigenen Schlüssel aus. Wer sich verbindet, wird aber nicht geprüft."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wovor schützen Protected Management Frames (IEEE 802.11w) im WLAN?",
+    "options": [
+      "Vor gefälschten Abmelde-Frames, die Clients vom Netz trennen",
+      "Vor Störungen durch Radarsignale im 5-GHz-Band",
+      "Vor zu vielen gleichzeitigen Clients an einem Access Point",
+      "Vor Überhitzung des Access Points bei hoher Last"
+    ],
+    "a": "Vor gefälschten Abmelde-Frames, die Clients vom Netz trennen",
+    "exp": "Ohne PMF kann ein Angreifer gefälschte Deauthentication-Frames senden und Clients rauswerfen, z.B. um den Handshake mitzuschneiden. WPA3 schreibt PMF vor."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Switch ist auf Syslog-Level 4 (Warning) eingestellt. Welche Meldungen sendet er?",
+    "options": [
+      "Alle Meldungen der Stufen 0 bis 4",
+      "Nur Meldungen der Stufe 4",
+      "Alle Meldungen der Stufen 4 bis 7",
+      "Nur Meldungen der Stufen 5 bis 7"
+    ],
+    "a": "Alle Meldungen der Stufen 0 bis 4",
+    "exp": "Je kleiner die Zahl, desto schwerer der Fehler (0 Emergency bis 7 Debug). Ein eingestellter Level schließt alle schwereren Stufen mit ein."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was beschreibt eine MIB bei SNMP?",
+    "options": [
+      "Die abfragbaren Werte eines Geräts, jeder mit einer eindeutigen OID",
+      "Die Liste aller Benutzer, die per SNMP zugreifen dürfen",
+      "Den geheimen Schlüssel für die Verschlüsselung bei SNMPv3",
+      "Den Port, auf dem der Management-Server Traps empfängt"
+    ],
+    "a": "Die abfragbaren Werte eines Geräts, jeder mit einer eindeutigen OID",
+    "exp": "Die Management Information Base ordnet Werte wie Schnittstellenzähler oder CPU-Last in einem Baum. Jeder Wert hat eine OID, z.B. 1.3.6.1.2.1.1.5 für den Gerätenamen (sysName)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche AppLocker-Regel bleibt nach einem Programmupdate gültig, ohne angepasst zu werden?",
+    "options": [
+      "Eine Herausgeberregel auf Basis der digitalen Signatur",
+      "Eine Dateihashregel für die aktuelle Programmdatei",
+      "Eine Regel für genau eine feste Versionsnummer",
+      "Eine Regel auf die Dateigröße der Programmdatei"
+    ],
+    "a": "Eine Herausgeberregel auf Basis der digitalen Signatur",
+    "exp": "Herausgeberregeln prüfen die digitale Signatur des Herstellers und können die Version offen lassen. Ein Dateihash ändert sich bei jedem Update, die Regel müsste neu erstellt werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie führt man neue AppLocker-Regeln sicher ein?",
+    "options": [
+      "Zuerst im Modus \"Nur überwachen\" testen, dann erzwingen",
+      "Sofort erzwingen und Beschwerden der Benutzer abwarten",
+      "Die Regeln nur auf Domänencontrollern aktivieren",
+      "Zuerst alle vorhandenen Programme per Hash sperren"
+    ],
+    "a": "Zuerst im Modus \"Nur überwachen\" testen, dann erzwingen",
+    "exp": "Im Überwachungsmodus werden Verstöße nur im Ereignisprotokoll vermerkt. So sieht man, welche benötigten Programme noch keine Regel haben, bevor Benutzer blockiert werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches System gehört im AD-Tiering-Modell zu Tier 0?",
+    "options": [
+      "Ein Domänencontroller",
+      "Ein Dateiserver der Buchhaltung",
+      "Ein Arbeitsplatz-PC im Vertrieb",
+      "Ein Netzwerkdrucker im Flur"
+    ],
+    "a": "Ein Domänencontroller",
+    "exp": "Tier 0 umfasst alles, was die Identitäten der Domäne steuert, z.B. Domänencontroller, die PKI und die Konten der Domänen-Admins. Dateiserver gehören zu Tier 1, Clients und Drucker zu Tier 2."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Domänen-Admin meldet sich zur Fehlersuche an einem normalen Client an. Was ist daran problematisch?",
+    "options": [
+      "Seine Anmeldedaten können auf dem Client abgegriffen werden",
+      "Der Client verliert dabei seine Domänenmitgliedschaft",
+      "Die Anmeldung überschreibt das Profil des Benutzers",
+      "Der Client erhält dadurch dauerhaft Admin-Rechte"
+    ],
+    "a": "Seine Anmeldedaten können auf dem Client abgegriffen werden",
+    "exp": "Auf einem kompromittierten Client kann ein Angreifer Hashes oder Tickets aus dem Speicher lesen. Im Tiering-Modell melden sich Tier-0-Konten deshalb nie an Clients an. Für Clients gibt es eigene Tier-2-Admin-Konten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum nimmt man Dienstkonten nicht in die Gruppe \"Protected Users\" auf?",
+    "options": [
+      "Weil gesperrte Verfahren wie NTLM und Delegierung den Dienst stören können",
+      "Weil Dienstkonten dann kein Kennwort mehr benötigen",
+      "Weil die Gruppe nur für Computerkonten gedacht ist",
+      "Weil Dienstkonten dann Rechte eines Domänen-Admins erhalten"
+    ],
+    "a": "Weil gesperrte Verfahren wie NTLM und Delegierung den Dienst stören können",
+    "exp": "Protected Users sperrt u.a. NTLM, die Kerberos-Delegierung und begrenzt die Ticket-Laufzeit. Viele Dienste brauchen genau diese Funktionen. Microsoft empfiehlt die Gruppe daher nur für Benutzerkonten mit hohen Rechten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet ein Silver Ticket von einem Golden Ticket?",
+    "options": [
+      "Es fälscht nur ein Ticket für einen Dienst mit dessen Kontohash",
+      "Es gilt für die ganze Gesamtstruktur statt für eine Domäne",
+      "Es ist ein echtes Ticket, das nur länger gültig ist",
+      "Es wird mit dem Hash des krbtgt-Kontos erstellt"
+    ],
+    "a": "Es fälscht nur ein Ticket für einen Dienst mit dessen Kontohash",
+    "exp": "Für ein Silver Ticket braucht der Angreifer den Hash eines Dienstkontos und erhält Zugriff nur auf diesen Dienst. Ein Golden Ticket wird mit dem krbtgt-Hash erstellt und öffnet die ganze Domäne."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wo stellt man an einem Windows-Rechner ohne Domäne ein, nach wie vielen Fehlversuchen ein Konto gesperrt wird?",
+    "options": [
+      "In der lokalen Sicherheitsrichtlinie unter Kontorichtlinien",
+      "In der Datenträgerverwaltung unter Richtlinien",
+      "Im Task-Manager auf der Registerkarte Benutzer",
+      "In der Windows-Firewall unter Eingangsregeln"
+    ],
+    "a": "In der lokalen Sicherheitsrichtlinie unter Kontorichtlinien",
+    "exp": "Die Kontosperrungsrichtlinie liegt in secpol.msc unter Kontorichtlinien. Dort legt man Schwellenwert, Sperrdauer und die Zeit bis zum Zurücksetzen des Zählers fest."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum protokolliert man bei der Überwachung auch erfolgreiche Anmeldungen und nicht nur Fehlschläge?",
+    "options": [
+      "Weil ein Angreifer mit gestohlenen Zugangsdaten sich erfolgreich anmeldet",
+      "Weil fehlgeschlagene Anmeldungen nicht protokolliert werden können",
+      "Weil erfolgreiche Anmeldungen weniger Speicherplatz brauchen",
+      "Weil Windows ohne diese Einstellung keine Anmeldung zulässt"
+    ],
+    "a": "Weil ein Angreifer mit gestohlenen Zugangsdaten sich erfolgreich anmeldet",
+    "exp": "Fehlschläge zeigen nur Rateversuche. Die eigentliche Übernahme eines Kontos ist eine erfolgreiche Anmeldung, z.B. nachts oder von einem ungewöhnlichen Rechner. Erst beide Ereignisarten zusammen ergeben ein vollständiges Bild."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wo sollte die Referenzdatenbank einer Dateiintegritätsprüfung wie AIDE liegen?",
+    "options": [
+      "Schreibgeschützt oder auf einem separaten System",
+      "Im gleichen Verzeichnis wie die geprüften Dateien",
+      "Im temporären Ordner /tmp des geprüften Servers",
+      "Für alle Benutzer beschreibbar auf dem Server"
+    ],
+    "a": "Schreibgeschützt oder auf einem separaten System",
+    "exp": "Ein Angreifer mit Root-Rechten könnte sonst Dateien ändern und danach die Datenbank anpassen. Die Prüfung würde dann keine Abweichung mehr melden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum sollte man Container nicht mit der Option --privileged starten?",
+    "options": [
+      "Der Container erhält nahezu vollen Zugriff auf den Host und seine Geräte",
+      "Der Container kann dann keine Netzwerkverbindungen aufbauen",
+      "Der Container verliert bei jedem Neustart alle Daten",
+      "Der Container läuft dann nur noch auf einem CPU-Kern"
+    ],
+    "a": "Der Container erhält nahezu vollen Zugriff auf den Host und seine Geräte",
+    "exp": "--privileged hebt die meisten Schutzmechanismen auf. Ein Angreifer im Container kann dann leicht auf den Host ausbrechen. Besser vergibt man nur einzelne Fähigkeiten (Capabilities), die wirklich nötig sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie verhindert man, dass die Anwendung in einem Docker-Container als root läuft?",
+    "options": [
+      "Mit der Anweisung USER im Dockerfile einen normalen Benutzer festlegen",
+      "Mit der Anweisung EXPOSE im Dockerfile einen anderen Port wählen",
+      "Mit der Anweisung FROM im Dockerfile ein kleineres Image wählen",
+      "Mit der Anweisung ENV im Dockerfile das Root-Passwort löschen"
+    ],
+    "a": "Mit der Anweisung USER im Dockerfile einen normalen Benutzer festlegen",
+    "exp": "Ohne USER laufen Prozesse im Container standardmäßig als root. Mit z.B. USER app läuft die Anwendung mit eingeschränkten Rechten, was einen Ausbruch deutlich erschwert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Woher sollte ein Unternehmen Basis-Images für seine Container beziehen?",
+    "options": [
+      "Aus offiziellen, signierten Quellen oder eigener Registry",
+      "Immer das Image mit den meisten Downloads nehmen",
+      "Aus einem beliebigen Forum mit guter Anleitung",
+      "Von der Webseite mit der neuesten Versionsnummer"
+    ],
+    "a": "Aus offiziellen, signierten Quellen oder eigener Registry",
+    "exp": "Fremde Images können Schadsoftware oder veraltete Pakete enthalten. Eine eigene Registry mit geprüften, signierten Images schützt vor manipulierten Vorlagen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Vorteil haben kurzlebige, automatisch erzeugte Zugangsdaten (dynamische Secrets)?",
+    "options": [
+      "Gestohlene Zugangsdaten sind nach kurzer Zeit wertlos",
+      "Sie müssen nirgends protokolliert werden",
+      "Sie funktionieren ohne jede Berechtigungsprüfung",
+      "Sie lassen sich grundsätzlich nicht stehlen"
+    ],
+    "a": "Gestohlene Zugangsdaten sind nach kurzer Zeit wertlos",
+    "exp": "Ein Secrets-Manager erzeugt z.B. für jede Anwendung ein eigenes Datenbankkonto mit Ablaufzeit. Selbst wenn es abgegriffen wird, bleibt nur ein kleines Zeitfenster für Missbrauch."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Skript soll nur Dateien in einen bestimmten Cloud-Bucket hochladen. Welche Berechtigung ist richtig?",
+    "options": [
+      "Nur Schreibrecht auf genau diesen Bucket",
+      "Volle Admin-Rechte auf das Cloud-Konto",
+      "Lese- und Schreibrecht auf alle Buckets",
+      "Die Zugangsschlüssel des Root-Kontos"
+    ],
+    "a": "Nur Schreibrecht auf genau diesen Bucket",
+    "exp": "Nach Least Privilege erhält eine Identität nur, was sie für ihre Aufgabe braucht. Wird der Schlüssel des Skripts gestohlen, kann der Angreifer nur in diesen einen Bucket schreiben."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Rezertifizierung von Berechtigungen?",
+    "options": [
+      "Die regelmäßige Prüfung durch Verantwortliche, ob vergebene Rechte noch nötig sind",
+      "Das erneute Ausstellen abgelaufener TLS-Zertifikate für Webserver",
+      "Die jährliche Prüfung eines Rechenzentrums nach ISO 27001",
+      "Das Zurücksetzen aller Kennwörter der Benutzer zum Jahreswechsel"
+    ],
+    "a": "Die regelmäßige Prüfung durch Verantwortliche, ob vergebene Rechte noch nötig sind",
+    "exp": "Bei Abteilungswechseln sammeln Mitarbeitende oft Rechte an, die sie nicht mehr brauchen. Führungskräfte bestätigen deshalb z.B. halbjährlich die Rechte ihres Teams, überflüssige werden entzogen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher Dienst eines Cloud-Anbieters erzeugt, speichert und verwaltet kryptografische Schlüssel?",
+    "options": [
+      "Der Key Management Service (KMS)",
+      "Das Content Delivery Network (CDN)",
+      "Der Identity Provider (IdP)",
+      "Der Application Load Balancer (ALB)"
+    ],
+    "a": "Der Key Management Service (KMS)",
+    "exp": "Ein KMS speichert Schlüssel meist in HSMs, regelt per Richtlinie, wer sie nutzen darf, und protokolliert jede Nutzung. Viele Cloud-Dienste verschlüsseln ihre Daten automatisch mit Schlüsseln aus dem KMS."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie macht man verschlüsselte Cloud-Daten am Vertragsende schnell und sicher unbrauchbar?",
+    "options": [
+      "Den zugehörigen Schlüssel im KMS vernichten (Crypto Shredding)",
+      "Die Dateien in den Papierkorb des Buckets verschieben",
+      "Den Bucket in eine andere Region verschieben",
+      "Das Kennwort des Cloud-Kontos ändern"
+    ],
+    "a": "Den zugehörigen Schlüssel im KMS vernichten (Crypto Shredding)",
+    "exp": "Ohne Schlüssel lässt sich der Geheimtext nicht mehr entschlüsseln, auch nicht in Kopien und Backups beim Anbieter. Das ist schneller und verlässlicher als das Löschen jeder einzelnen Datei."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet Level 1 und Level 2 in einem CIS Benchmark?",
+    "options": [
+      "Level 2 härtet strenger, kann aber Funktionen einschränken",
+      "Level 1 gilt für Clients, Level 2 nur für Server",
+      "Level 1 ist kostenlos, Level 2 nur für Mitglieder",
+      "Level 1 ist für Linux, Level 2 für Windows gedacht"
+    ],
+    "a": "Level 2 härtet strenger, kann aber Funktionen einschränken",
+    "exp": "Level 1 enthält grundlegende Einstellungen, die den Betrieb kaum stören. Level 2 ist für Umgebungen mit hohem Schutzbedarf gedacht und kann Funktionen oder Bedienkomfort einschränken."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine kritische Lücke in einer verbreiteten Java-Bibliothek wird bekannt. Wie hilft eine aktuelle SBOM?",
+    "options": [
+      "Man sieht sofort, welche eigenen Anwendungen die Bibliothek enthalten",
+      "Sie schließt die Lücke automatisch in allen Anwendungen",
+      "Sie blockiert alle Zugriffe auf die betroffenen Server",
+      "Sie ersetzt die Bibliothek durch eine ältere Version"
+    ],
+    "a": "Man sieht sofort, welche eigenen Anwendungen die Bibliothek enthalten",
+    "exp": "Bei Log4Shell 2021 suchten viele Firmen tagelang, wo Log4j überall steckte. Mit aktuellen SBOMs genügt eine Abfrage nach Name und Version der Komponente."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie heißt ein Angriff, bei dem ein öffentliches Paket den Namen eines internen Pakets erhält, damit der Paketmanager es bevorzugt?",
+    "options": [
+      "Dependency Confusion",
+      "Typosquatting",
+      "DNS-Spoofing",
+      "Session Hijacking"
+    ],
+    "a": "Dependency Confusion",
+    "exp": "Findet der Paketmanager ein öffentliches Paket mit höherer Versionsnummer, lädt er unter Umständen dieses statt des internen. Schutz bieten feste Paketquellen, reservierte Namensräume und fixierte Versionen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum hält man die Versionen von Abhängigkeiten in einer Lockdatei (z.B. package-lock.json) fest?",
+    "options": [
+      "Damit nicht unbemerkt eine neue, womöglich manipulierte Version installiert wird",
+      "Damit die Anwendung auch ohne Internetzugang kompiliert werden kann",
+      "Damit für die verwendeten Bibliotheken keine Lizenzkosten anfallen",
+      "Damit der Quellcode der Anwendung verschlüsselt gespeichert bleibt"
+    ],
+    "a": "Damit nicht unbemerkt eine neue, womöglich manipulierte Version installiert wird",
+    "exp": "Lockdateien halten genaue Versionen und Prüfsummen fest. Updates erfolgen dann bewusst und geprüft, nicht automatisch beim nächsten Build."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Brandmeldetechnik erkennt Rauch im Serverraum besonders früh?",
+    "options": [
+      "Ein Rauchansaugsystem, das laufend Luftproben prüft",
+      "Ein Sprinklerkopf mit Glasampulle an der Decke",
+      "Ein Wärmemelder mit festem Schwellenwert",
+      "Ein Handfeuermelder neben der Eingangstür"
+    ],
+    "a": "Ein Rauchansaugsystem, das laufend Luftproben prüft",
+    "exp": "Rauchansaugsysteme saugen Luft über Rohre an und erkennen kleinste Rauchmengen, oft schon bei schmorenden Kabeln. Wärmemelder und Sprinkler reagieren erst bei offenem Feuer, Handfeuermelder nur bei Betätigung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum braucht ein Serverraum mit Gaslöschanlage Druckentlastungsklappen?",
+    "options": [
+      "Damit Wände und Decken beim Einströmen des Gases nicht beschädigt werden",
+      "Damit die Server während des Löschens zusätzlich gekühlt werden",
+      "Damit Personen den Raum im Alarmfall schneller verlassen können",
+      "Damit im Normalbetrieb warme Luft aus dem Raum abziehen kann"
+    ],
+    "a": "Damit Wände und Decken beim Einströmen des Gases nicht beschädigt werden",
+    "exp": "Beim Fluten strömt in wenigen Sekunden sehr viel Gas ein, der Druck im Raum steigt stark. Die Klappen lassen den Überdruck kontrolliert entweichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In welchem Bereich sollte die Zulufttemperatur für Server laut gängiger Empfehlung (ASHRAE) liegen?",
+    "options": [
+      "18 bis 27 °C",
+      "10 bis 14 °C",
+      "28 bis 35 °C",
+      "35 bis 45 °C"
+    ],
+    "a": "18 bis 27 °C",
+    "exp": "ASHRAE empfiehlt für die Zuluft 18 bis 27 °C. Deutlich kälter kostet unnötig Energie, deutlich wärmer gefährdet die Hardware."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wessen Rat muss der Verantwortliche bei einer Datenschutz-Folgenabschätzung einholen, sofern benannt?",
+    "options": [
+      "Den des Datenschutzbeauftragten",
+      "Den des Betriebsarztes",
+      "Den des größten Kunden",
+      "Den des Hosting-Anbieters"
+    ],
+    "a": "Den des Datenschutzbeauftragten",
+    "exp": "Nach Art. 35 Abs. 2 DSGVO holt der Verantwortliche den Rat des Datenschutzbeauftragten ein. Die DSFA selbst bleibt aber Aufgabe des Verantwortlichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Auftragsverarbeiter will einen weiteren Dienstleister (Unterauftragsverarbeiter) einsetzen. Was ist nötig?",
+    "options": [
+      "Die vorherige Genehmigung des Verantwortlichen",
+      "Nur eine Mitteilung an die Aufsichtsbehörde",
+      "Nichts, er entscheidet darüber allein",
+      "Die Einwilligung jedes einzelnen Betroffenen"
+    ],
+    "a": "Die vorherige Genehmigung des Verantwortlichen",
+    "exp": "Art. 28 Abs. 2 DSGVO verlangt eine gesonderte oder allgemeine schriftliche Genehmigung. Bei einer allgemeinen Genehmigung muss der Auftragsverarbeiter Änderungen vorher mitteilen, damit der Verantwortliche widersprechen kann."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was legt ein Löschkonzept fest?",
+    "options": [
+      "Für welche Datenarten wann und wie gelöscht wird",
+      "Wie gelöschte Dateien wiederhergestellt werden",
+      "Welche Festplatten zuerst ersetzt werden",
+      "Wer den Papierkorb am Server leeren darf"
+    ],
+    "a": "Für welche Datenarten wann und wie gelöscht wird",
+    "exp": "Ein Löschkonzept ordnet jeder Datenart eine Löschfrist und einen Auslöser zu, z.B. Vertragsende plus gesetzliche Aufbewahrungsfrist. Es nennt auch Zuständige und die Art der Löschung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter bekommt nachts viele MFA-Anfragen per Push, die er nicht ausgelöst hat. Was bedeutet das?",
+    "options": [
+      "Jemand kennt sein Passwort und will ihn zur Bestätigung drängen",
+      "Die MFA-App ist veraltet und muss neu installiert werden",
+      "Der Server gleicht gerade die Uhrzeit mit dem Handy ab",
+      "Das Smartphone hat zu wenig freien Speicher für die App"
+    ],
+    "a": "Jemand kennt sein Passwort und will ihn zur Bestätigung drängen",
+    "exp": "Bei MFA-Fatigue hofft der Angreifer, dass das Opfer genervt auf Bestätigen tippt. Richtig ist: ablehnen, Passwort ändern und die IT informieren. Ein Zahlenabgleich (Number Matching) erschwert diesen Angriff."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was speichert ein Webdienst bei der Anmeldung mit Passkeys vom Benutzer?",
+    "options": [
+      "Nur den öffentlichen Schlüssel",
+      "Den privaten Schlüssel",
+      "Einen Hash des Passworts",
+      "Den Fingerabdruck des Benutzers"
+    ],
+    "a": "Nur den öffentlichen Schlüssel",
+    "exp": "Der private Schlüssel bleibt auf dem Gerät oder im Passwortmanager. Ein Datenleck beim Dienst liefert also nichts, womit sich ein Angreifer anmelden könnte. Der Fingerabdruck entsperrt nur lokal den Schlüssel."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Einstellung in der sshd_config erlaubt die Anmeldung nur noch per Schlüssel?",
+    "options": [
+      "PasswordAuthentication no",
+      "PermitRootLogin yes",
+      "X11Forwarding no",
+      "Port 2222"
+    ],
+    "a": "PasswordAuthentication no",
+    "exp": "Ohne Passwort-Anmeldung laufen Rateangriffe ins Leere. Vorher muss der eigene öffentliche Schlüssel in authorized_keys hinterlegt und getestet sein, sonst sperrt man sich aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Phishing-Mail wird gemeldet. Automatisch werden der Absender geprüft, die Mail aus allen Postfächern entfernt und ein Ticket erstellt. Welches System leistet das?",
+    "options": [
+      "SOAR",
+      "IDS",
+      "VPN",
+      "NAC"
+    ],
+    "a": "SOAR",
+    "exp": "SOAR führt vordefinierte Playbooks automatisch aus. Ein IDS erkennt Angriffe nur, VPN verbindet Netze verschlüsselt und NAC kontrolliert den Netzzugang von Geräten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Honeytoken?",
+    "options": [
+      "Ein Köder-Datensatz, dessen Nutzung sofort einen Alarm auslöst",
+      "Ein Hardware-Token für die Zwei-Faktor-Anmeldung",
+      "Ein Zugangsschlüssel mit unbegrenzter Gültigkeit",
+      "Ein verschlüsseltes Cookie für Web-Sitzungen"
+    ],
+    "a": "Ein Köder-Datensatz, dessen Nutzung sofort einen Alarm auslöst",
+    "exp": "Beispiele sind ein Schein-Admin-Konto, ein gefälschter Cloud-Schlüssel oder eine Köder-Datei. Kein legitimer Nutzer verwendet sie, jede Nutzung weist also auf einen Angreifer hin."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wo können Sicherheitsforscher nachlesen, wie man einer Webseite Schwachstellen meldet?",
+    "options": [
+      "In der Datei /.well-known/security.txt",
+      "In der Datei /robots.txt der Webseite",
+      "In der Datei /sitemap.xml der Webseite",
+      "In der Datei /.well-known/admin.txt"
+    ],
+    "a": "In der Datei /.well-known/security.txt",
+    "exp": "security.txt (RFC 9116) nennt Kontaktadresse, Meldeverfahren und ggf. einen Schlüssel für verschlüsselte Hinweise. So landen Meldungen schnell beim richtigen Team."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche qualitative Einstufung hat eine Schwachstelle mit dem CVSS-Wert 9.8?",
+    "options": [
+      "Critical (kritisch)",
+      "High (hoch)",
+      "Medium (mittel)",
+      "Low (niedrig)"
+    ],
+    "a": "Critical (kritisch)",
+    "exp": "CVSS v3 stuft so ein: 0.1 bis 3.9 Low, 4.0 bis 6.9 Medium, 7.0 bis 8.9 High und 9.0 bis 10.0 Critical."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann veröffentlicht Microsoft regulär seine monatlichen Sicherheitsupdates (Patch Tuesday)?",
+    "options": [
+      "Am zweiten Dienstag im Monat",
+      "Am ersten Montag im Monat",
+      "Am letzten Freitag im Monat",
+      "Am ersten Tag jedes Quartals"
+    ],
+    "a": "Am zweiten Dienstag im Monat",
+    "exp": "Der feste Termin erlaubt Admins, Tests und Verteilung zu planen. Besonders kritische Lücken werden aber auch außerhalb des Termins geschlossen (Out-of-Band-Update)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Verzeichnis ist unter Linux für das vorübergehende Einhängen von Wechselmedien üblich?",
+    "options": [
+      "/media",
+      "/etc",
+      "/proc",
+      "/boot"
+    ],
+    "a": "/media",
+    "exp": "Wechselmedien wie USB-Sticks werden meist automatisch unter /media/<benutzer>/ eingehängt. /mnt ist für manuell und vorübergehend eingehängte Dateisysteme gedacht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl findet man unter Linux alle .log-Dateien unter /var, die älter als 30 Tage sind?",
+    "options": [
+      "find /var -name \"*.log\" -mtime +30",
+      "grep -r .log /var 30",
+      "ls /var/*.log -30",
+      "locate --older 30 .log"
+    ],
+    "a": "find /var -name \"*.log\" -mtime +30",
+    "exp": "find durchsucht Verzeichnisse rekursiv. -name filtert nach Namen, -mtime +30 nach Änderungszeit älter als 30 Tage. Mit -delete ließen sich die Treffer löschen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt fortlaufend neue Zeilen einer Logdatei an?",
+    "options": [
+      "tail -f /var/log/syslog",
+      "head -f /var/log/syslog",
+      "cat -n /var/log/syslog",
+      "less -r /var/log/syslog"
+    ],
+    "a": "tail -f /var/log/syslog",
+    "exp": "tail zeigt das Ende einer Datei, -f (follow) wartet auf neue Zeilen. Beenden mit Strg+C."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt die Größe des Ordners /home in lesbarer Form?",
+    "options": [
+      "du -sh /home",
+      "df -h /home",
+      "ls -size /home",
+      "free -h /home"
+    ],
+    "a": "du -sh /home",
+    "exp": "du (disk usage) summiert mit -s den Ordner, -h zeigt KB/MB/GB. df zeigt dagegen die Belegung ganzer Dateisysteme."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt der Befehl ps aux | grep nginx?",
+    "options": [
+      "Er zeigt alle Prozesse, deren Zeile nginx enthält",
+      "Er beendet alle nginx-Prozesse",
+      "Er installiert nginx",
+      "Er startet nginx neu"
+    ],
+    "a": "Er zeigt alle Prozesse, deren Zeile nginx enthält",
+    "exp": "ps aux listet alle Prozesse, die Pipe | gibt die Ausgabe an grep weiter, das nur passende Zeilen anzeigt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl startet einen Dienst sofort und aktiviert zugleich den automatischen Start beim Booten?",
+    "options": [
+      "systemctl enable --now dienst",
+      "systemctl start --boot dienst",
+      "service dienst always",
+      "systemctl restart --enable dienst"
+    ],
+    "a": "systemctl enable --now dienst",
+    "exp": "enable --now kombiniert systemctl enable und systemctl start in einem Befehl."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rechte erhalten neue Dateien bei einer umask von 027?",
+    "options": [
+      "640 (rw-r-----)",
+      "750 (rwxr-x---)",
+      "644 (rw-r--r--)",
+      "027 (----w-rwx)"
+    ],
+    "a": "640 (rw-r-----)",
+    "exp": "Dateien starten mit 666. Die umask 027 entzieht der Gruppe Schreibrecht und anderen alle Rechte: 666 - 027 ergibt bitweise 640. Ordner (777) erhalten 750."
+  },
+  {
+    "cat": "systeme",
+    "q": "Woran erkennt man in der Ausgabe von ls -l, dass bei einer Datei das SUID-Bit gesetzt ist?",
+    "options": [
+      "An einem s statt x beim Besitzer (z.B. -rwsr-xr-x)",
+      "An einem t am Ende (z.B. -rwxr-xr-t)",
+      "An einem d am Anfang",
+      "An einem l am Anfang"
+    ],
+    "a": "An einem s statt x beim Besitzer (z.B. -rwsr-xr-x)",
+    "exp": "s an der Stelle des Ausführungsrechts des Besitzers bedeutet SUID. Ein t am Ende steht für das Sticky Bit, d am Anfang für ein Verzeichnis, l für einen symbolischen Link."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wann läuft der Cronjob 0 22 * * 1-5 /skript.sh?",
+    "options": [
+      "Montag bis Freitag um 22:00 Uhr",
+      "Täglich um 0:22 Uhr",
+      "Am 1. bis 5. jedes Monats um 22 Uhr",
+      "Jede Minute zwischen 22 und 23 Uhr"
+    ],
+    "a": "Montag bis Freitag um 22:00 Uhr",
+    "exp": "Minute 0, Stunde 22, jeder Tag, jeder Monat, Wochentag 1 bis 5 (Montag bis Freitag)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl erzeugt auf der Partition /dev/sdb1 ein ext4-Dateisystem?",
+    "options": [
+      "mkfs.ext4 /dev/sdb1",
+      "mount -t ext4 /dev/sdb1",
+      "fdisk ext4 /dev/sdb1",
+      "format /dev/sdb1 ext4"
+    ],
+    "a": "mkfs.ext4 /dev/sdb1",
+    "exp": "mkfs.ext4 formatiert die Partition (alle Daten gehen verloren). Danach wird sie mit mount eingehängt und für den dauerhaften Einsatz in /etc/fstab eingetragen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Vorteil ergibt sich, wenn ein Server LVM nutzt?",
+    "options": [
+      "Volumes lassen sich im laufenden Betrieb vergrößern und über mehrere Platten verteilen",
+      "LVM ersetzt das Backup",
+      "LVM verdoppelt die Lesegeschwindigkeit automatisch",
+      "LVM verschlüsselt alle Daten"
+    ],
+    "a": "Volumes lassen sich im laufenden Betrieb vergrößern und über mehrere Platten verteilen",
+    "exp": "Mit lvextend und anschließendem Vergrößern des Dateisystems (z.B. resize2fs, xfs_growfs) wächst ein Volume ohne Neuinstallation. LVM-Snapshots erleichtern zudem Sicherungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt die Meldungen des Kernels an, z.B. beim Einstecken eines USB-Sticks?",
+    "options": [
+      "dmesg",
+      "lsof",
+      "whoami",
+      "uptime"
+    ],
+    "a": "dmesg",
+    "exp": "dmesg zeigt den Kernel-Ringpuffer mit Hardware- und Treibermeldungen. Mit dmesg -w lassen sich neue Meldungen live verfolgen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt die Version des laufenden Linux-Kernels?",
+    "options": [
+      "uname -r",
+      "kernel --version",
+      "lsb_release -k",
+      "cat /boot/version"
+    ],
+    "a": "uname -r",
+    "exp": "uname -r gibt z.B. 6.8.0-45-generic aus. uname -a zeigt zusätzlich Rechnername und Architektur."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl lädt man unter Linux ein Kernelmodul (Treiber) nach?",
+    "options": [
+      "modprobe",
+      "lsmod",
+      "insmod --all",
+      "apt load"
+    ],
+    "a": "modprobe",
+    "exp": "modprobe modulname lädt das Modul samt Abhängigkeiten, lsmod zeigt die geladenen Module an."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt der Befehl echo $? direkt nach einem erfolgreichen Befehl aus?",
+    "options": [
+      "0",
+      "1",
+      "-1",
+      "true"
+    ],
+    "a": "0",
+    "exp": "Der Rückgabewert 0 steht für Erfolg, Werte ungleich 0 für Fehler. In Skripten prüft man so, ob ein Schritt geklappt hat."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie übergibt man in einem Bash-Skript das erste Argument an eine Variable?",
+    "options": [
+      "ziel=$1",
+      "ziel=$0",
+      "ziel=@1",
+      "ziel=%1"
+    ],
+    "a": "ziel=$1",
+    "exp": "$1 ist das erste Argument, $2 das zweite, $0 der Name des Skripts, $# die Anzahl der Argumente."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt der Operator && zwischen zwei Befehlen in der Shell?",
+    "options": [
+      "Der zweite Befehl läuft nur, wenn der erste erfolgreich war",
+      "Beide Befehle laufen gleichzeitig im Hintergrund",
+      "Der zweite Befehl läuft nur bei einem Fehler",
+      "Die Ausgaben werden zusammengeführt"
+    ],
+    "a": "Der zweite Befehl läuft nur, wenn der erste erfolgreich war",
+    "exp": "Beispiel: apt update && apt upgrade -y. Mit || läuft der zweite Befehl dagegen nur, wenn der erste fehlschlägt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zählt die Zeilen einer Datei?",
+    "options": [
+      "wc -l datei",
+      "count datei",
+      "cut -l datei",
+      "sort -n datei"
+    ],
+    "a": "wc -l datei",
+    "exp": "wc (word count) zählt mit -l Zeilen, mit -w Wörter und mit -c Bytes."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt, welcher Prozess auf Port 80 lauscht?",
+    "options": [
+      "lsof -i :80",
+      "ping 80",
+      "chmod 80",
+      "df -i 80"
+    ],
+    "a": "lsof -i :80",
+    "exp": "lsof -i :80 listet Prozesse mit Verbindungen auf Port 80. Alternativ zeigt ss -tlnp alle lauschenden TCP-Ports mit Prozess."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Werkzeug öffnet unter Windows die Datenträgerverwaltung?",
+    "options": [
+      "diskmgmt.msc",
+      "devmgmt.msc",
+      "services.msc",
+      "eventvwr.msc"
+    ],
+    "a": "diskmgmt.msc",
+    "exp": "In der Datenträgerverwaltung legt man Partitionen an, vergrößert Volumes und vergibt Laufwerksbuchstaben. devmgmt.msc ist der Geräte-Manager."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Werkzeug zeigt unter Windows eine ausführliche Übersicht über Hardware und Systemkonfiguration?",
+    "options": [
+      "msinfo32",
+      "taskmgr",
+      "calc",
+      "notepad"
+    ],
+    "a": "msinfo32",
+    "exp": "msinfo32 (Systeminformationen) zeigt BIOS-Version, Prozessor, RAM, Treiber und mehr. Die Übersicht lässt sich exportieren und dem Support schicken."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl prüft und repariert man unter Windows das Dateisystem eines Laufwerks?",
+    "options": [
+      "chkdsk /f",
+      "sfc /scannow",
+      "defrag /c",
+      "diskpart /repair"
+    ],
+    "a": "chkdsk /f",
+    "exp": "chkdsk /f repariert Fehler im Dateisystem (bei der Systempartition beim nächsten Neustart). sfc prüft dagegen Systemdateien."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Reihenfolge nutzt man die Reparaturwerkzeuge, wenn sfc /scannow Fehler nicht beheben kann?",
+    "options": [
+      "Erst DISM /RestoreHealth, danach erneut sfc /scannow",
+      "Erst chkdsk, dann Neuinstallation",
+      "Erst defrag, dann sfc",
+      "Erst Registry löschen, dann DISM"
+    ],
+    "a": "Erst DISM /RestoreHealth, danach erneut sfc /scannow",
+    "exp": "DISM repariert den Komponentenspeicher, aus dem sfc die intakten Dateien holt. Danach kann sfc die Systemdateien reparieren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt die Gruppenmitgliedschaften des angemeldeten Benutzers?",
+    "options": [
+      "whoami /groups",
+      "net view /groups",
+      "ipconfig /groups",
+      "gpresult /users"
+    ],
+    "a": "whoami /groups",
+    "exp": "whoami /groups listet alle Gruppen im Zugriffstoken. Neue Gruppenmitgliedschaften wirken erst nach neuer Anmeldung, weil das Token beim Anmelden erstellt wird."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür braucht man beim Erstellen eines Windows-Masterimages Sysprep?",
+    "options": [
+      "Um SID und rechnerspezifische Daten vor dem Verteilen zu entfernen",
+      "Um das Image zu verschlüsseln",
+      "Um Treiber zu löschen, die nicht gebraucht werden",
+      "Um das Image zu komprimieren"
+    ],
+    "a": "Um SID und rechnerspezifische Daten vor dem Verteilen zu entfernen",
+    "exp": "sysprep /generalize /oobe /shutdown bereitet das System vor. Beim ersten Start jedes Klons werden neue Kennungen erzeugt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche robocopy-Option testet einen Kopiervorgang, ohne Dateien zu verändern?",
+    "options": [
+      "/L",
+      "/MIR",
+      "/MOV",
+      "/PURGE"
+    ],
+    "a": "/L",
+    "exp": "/L listet nur auf, was kopiert oder gelöscht würde. Gerade bei /MIR oder /PURGE sollte man so vorher prüfen, dass Quelle und Ziel stimmen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele FSMO-Rollen gibt es pro Domäne (ohne die gesamtstrukturweiten Rollen)?",
+    "options": [
+      "3",
+      "5",
+      "2",
+      "1"
+    ],
+    "a": "3",
+    "exp": "RID-Master, PDC-Emulator und Infrastrukturmaster gibt es in jeder Domäne. Schemamaster und Domänennamenmaster gibt es nur einmal in der Gesamtstruktur, zusammen also 5."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche FSMO-Rolle vergibt Blöcke von Kennungen, aus denen DCs die SIDs neuer Objekte bilden?",
+    "options": [
+      "RID-Master",
+      "Schemamaster",
+      "Infrastrukturmaster",
+      "Domänennamenmaster"
+    ],
+    "a": "RID-Master",
+    "exp": "Der RID-Master teilt jedem DC Pakete von Relative IDs zu. Fällt er lange aus, können DCs irgendwann keine neuen Benutzer oder Gruppen mehr anlegen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Über welchen Port werden Anfragen an den globalen Katalog gestellt?",
+    "options": [
+      "3268",
+      "389",
+      "88",
+      "53"
+    ],
+    "a": "3268",
+    "exp": "LDAP nutzt 389, der globale Katalog 3268 (verschlüsselt 3269), Kerberos 88 und DNS 53."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Gruppenbereich im AD kann Mitglieder aus allen Domänen der Gesamtstruktur enthalten und überall genutzt werden?",
+    "options": [
+      "Universell",
+      "Domänenlokal",
+      "Global",
+      "Lokal auf dem Rechner"
+    ],
+    "a": "Universell",
+    "exp": "Globale Gruppen enthalten Mitglieder der eigenen Domäne, domänenlokale Gruppen erhalten Berechtigungen in der eigenen Domäne. Universelle Gruppen gelten gesamtstrukturweit und stehen im globalen Katalog."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dienen Standorte (Sites) im Active Directory?",
+    "options": [
+      "Sie steuern Replikation und die Wahl des nächstgelegenen DCs anhand von Subnetzen",
+      "Sie legen die Adressen der Filialen für die Post fest",
+      "Sie ersetzen die Organisationseinheiten",
+      "Sie vergeben IP-Adressen an Clients"
+    ],
+    "a": "Sie steuern Replikation und die Wahl des nächstgelegenen DCs anhand von Subnetzen",
+    "exp": "Clients melden sich bevorzugt an einem DC im eigenen Standort an. Zwischen Standorten wird die Replikation gebündelt und zeitlich gesteuert, um WAN-Leitungen zu schonen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches PowerShell-Cmdlet zeigt alle Eigenschaften und Methoden eines Objekts?",
+    "options": [
+      "Get-Member",
+      "Get-Help",
+      "Get-Command",
+      "Get-Content"
+    ],
+    "a": "Get-Member",
+    "exp": "Beispiel: Get-Service | Get-Member zeigt, welche Eigenschaften ein Dienst-Objekt hat. Get-Help erklärt Befehle, Get-Command sucht sie."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher PowerShell-Befehl zeigt nur die laufenden Dienste?",
+    "options": [
+      "Get-Service | Where-Object Status -eq Running",
+      "Get-Service -Running only",
+      "Show-Service Running",
+      "Get-Process | Select Running"
+    ],
+    "a": "Get-Service | Where-Object Status -eq Running",
+    "exp": "Where-Object filtert Objekte in der Pipeline nach Eigenschaften. PowerShell übergibt Objekte, nicht nur Text."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Cmdlet exportiert man eine Liste von Objekten in eine CSV-Datei?",
+    "options": [
+      "Export-Csv",
+      "Out-Csv",
+      "Save-Csv",
+      "Write-Csv"
+    ],
+    "a": "Export-Csv",
+    "exp": "Beispiel: Get-ADUser -Filter * | Select-Object Name, Enabled | Export-Csv benutzer.csv -NoTypeInformation. Die Datei lässt sich in Excel öffnen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Cmdlet führt einen Befehl auf mehreren entfernten Rechnern gleichzeitig aus?",
+    "options": [
+      "Invoke-Command",
+      "Enter-PSSession",
+      "Start-Process",
+      "Test-Connection"
+    ],
+    "a": "Invoke-Command",
+    "exp": "Invoke-Command -ComputerName pc1, pc2 -ScriptBlock { ... } nutzt PowerShell-Remoting. Enter-PSSession öffnet dagegen eine interaktive Sitzung auf einem einzelnen Rechner."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Windows-Edition ist mindestens nötig, um einen PC in eine AD-Domäne aufzunehmen?",
+    "options": [
+      "Windows Pro",
+      "Windows Home",
+      "Windows S Mode",
+      "Jede Edition"
+    ],
+    "a": "Windows Pro",
+    "exp": "Home kann keiner Domäne beitreten. Pro, Enterprise und Education können es."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welchen Dienst nutzt man, damit Benutzer versehentlich gelöschte Dateien auf dem Fileserver selbst wiederherstellen können?",
+    "options": [
+      "Schattenkopien (Vorgängerversionen)",
+      "Windows Update",
+      "BitLocker",
+      "DHCP-Server"
+    ],
+    "a": "Schattenkopien (Vorgängerversionen)",
+    "exp": "Mit aktivierten Schattenkopien auf dem Datenlaufwerk können Benutzer über Eigenschaften und Vorgängerversionen ältere Stände selbst zurückholen. Das entlastet den Support."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rolle ermöglicht auf einem Windows-Server Speicherkontingente und das Sperren bestimmter Dateitypen?",
+    "options": [
+      "Ressourcen-Manager für Dateiserver (FSRM)",
+      "DNS-Server",
+      "Hyper-V",
+      "IIS"
+    ],
+    "a": "Ressourcen-Manager für Dateiserver (FSRM)",
+    "exp": "FSRM bietet Kontingente, Dateiprüfungen und Speicherberichte für Freigaben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was muss oft im BIOS/UEFI aktiviert werden, bevor ein Hypervisor VMs starten kann?",
+    "options": [
+      "Intel VT-x bzw. AMD-V",
+      "Secure Boot",
+      "Wake-on-LAN",
+      "Legacy-USB"
+    ],
+    "a": "Intel VT-x bzw. AMD-V",
+    "exp": "Die Hardware-Virtualisierung ist bei manchen Geräten ab Werk ausgeschaltet. Ohne sie verweigern Hyper-V, VMware oder KVM den Start von VMs."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum ersetzt ein VM-Snapshot kein Backup?",
+    "options": [
+      "Er liegt auf demselben Speicher und hängt von der Originalfestplatte ab",
+      "Snapshots lassen sich nie zurückspielen",
+      "Snapshots sind immer verschlüsselt",
+      "Snapshots speichern nur den Arbeitsspeicher"
+    ],
+    "a": "Er liegt auf demselben Speicher und hängt von der Originalfestplatte ab",
+    "exp": "Fällt das Speichersystem aus, sind VM und Snapshot weg. Snapshots wachsen zudem mit jeder Änderung und bremsen die VM. Sie eignen sich für kurze Zeit, z.B. vor einem Update."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was passiert bei einer HA-Funktion, wenn ein Virtualisierungshost ausfällt?",
+    "options": [
+      "Die VMs werden auf anderen Hosts neu gestartet, mit kurzer Unterbrechung",
+      "Die VMs laufen ohne jede Unterbrechung weiter",
+      "Die VMs werden gelöscht",
+      "Der Administrator muss alle VMs neu installieren"
+    ],
+    "a": "Die VMs werden auf anderen Hosts neu gestartet, mit kurzer Unterbrechung",
+    "exp": "HA startet die VMs neu, sie fahren also wie nach einem Stromausfall hoch. Ohne jede Unterbrechung geht es nur mit Fault Tolerance, bei der eine Schattenkopie der VM parallel mitläuft."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Funktion verteilt VMs in einem Cluster automatisch per Live-Migration, um die Last der Hosts auszugleichen?",
+    "options": [
+      "Lastverteilung wie VMware DRS",
+      "Memory Ballooning",
+      "Thin Provisioning",
+      "Snapshotting"
+    ],
+    "a": "Lastverteilung wie VMware DRS",
+    "exp": "Der Cluster beobachtet CPU- und RAM-Auslastung und verschiebt VMs im laufenden Betrieb auf weniger belastete Hosts."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Werkzeug wandelt eine VMDK-Festplatte in das KVM-Format qcow2 um?",
+    "options": [
+      "qemu-img convert",
+      "docker build",
+      "dd --vm",
+      "mkfs.qcow2"
+    ],
+    "a": "qemu-img convert",
+    "exp": "qemu-img convert -f vmdk -O qcow2 alt.vmdk neu.qcow2. Danach müssen im Gast ggf. Treiber (z.B. virtio) angepasst werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet ein vCPU-zu-pCPU-Verhältnis von 4 : 1?",
+    "options": [
+      "Pro physischem Kern sind vier virtuelle CPUs vergeben",
+      "Jede VM hat vier Prozessoren",
+      "Der Host hat vier Sockel",
+      "Jede vCPU ist viermal schneller"
+    ],
+    "a": "Pro physischem Kern sind vier virtuelle CPUs vergeben",
+    "exp": "Da VMs ihre CPUs selten voll auslasten, kann man überbuchen. Je höher das Verhältnis, desto eher müssen VMs auf Rechenzeit warten. Für Datenbanken wählt man niedrige Verhältnisse."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Docker-Befehl zeigt die laufenden Container an?",
+    "options": [
+      "docker ps",
+      "docker images",
+      "docker run",
+      "docker build"
+    ],
+    "a": "docker ps",
+    "exp": "docker ps zeigt laufende Container, docker ps -a auch gestoppte. docker images listet die lokal vorhandenen Images."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl öffnet man eine Shell in einem laufenden Container?",
+    "options": [
+      "docker exec -it container sh",
+      "docker run -it container",
+      "docker attach --shell",
+      "docker start -sh container"
+    ],
+    "a": "docker exec -it container sh",
+    "exp": "docker exec führt einen zusätzlichen Befehl im laufenden Container aus. docker run würde dagegen einen neuen Container starten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum sollten Container-Images möglichst schlank sein?",
+    "options": [
+      "Weniger Software bedeutet weniger Angriffsfläche und schnellere Verteilung",
+      "Große Images laufen nicht auf Linux",
+      "Container dürfen maximal 10 MB groß sein",
+      "Schlanke Images brauchen keine Updates"
+    ],
+    "a": "Weniger Software bedeutet weniger Angriffsfläche und schnellere Verteilung",
+    "exp": "Minimal-Images (z.B. Alpine oder distroless) enthalten nur das Nötigste. Sie laden schneller und haben weniger Pakete mit möglichen Schwachstellen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Kubernetes-Objekt macht mehrere Pods unter einer festen Adresse erreichbar?",
+    "options": [
+      "Service",
+      "Namespace",
+      "ConfigMap",
+      "Volume"
+    ],
+    "a": "Service",
+    "exp": "Pods kommen und gehen und ändern dabei ihre IP-Adressen. Ein Service verteilt Anfragen auf alle passenden Pods unter einem festen Namen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum verteilt man eine Cloud-Anwendung über mehrere Verfügbarkeitszonen?",
+    "options": [
+      "Damit sie den Ausfall eines Rechenzentrums übersteht",
+      "Weil es billiger ist als eine Zone",
+      "Weil die DSGVO es verlangt",
+      "Damit die Anwendung schneller entwickelt wird"
+    ],
+    "a": "Damit sie den Ausfall eines Rechenzentrums übersteht",
+    "exp": "Zonen einer Region haben getrennte Strom- und Netzanbindung. Fällt eine aus, übernehmen die Instanzen in den anderen Zonen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wer ist bei IaaS für das Einspielen von Betriebssystem-Updates in den VMs verantwortlich?",
+    "options": [
+      "Der Kunde",
+      "Der Cloud-Anbieter",
+      "Der Hersteller der Hardware",
+      "Niemand, Cloud-VMs brauchen keine Updates"
+    ],
+    "a": "Der Kunde",
+    "exp": "Bei IaaS stellt der Anbieter Hardware, Netz und Virtualisierung bereit. Alles ab dem Gastbetriebssystem ist Aufgabe des Kunden. Bei PaaS übernimmt der Anbieter auch das Betriebssystem."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Speicherart eignet sich in der Cloud besonders für große Mengen Backups und Archive?",
+    "options": [
+      "Objektspeicher",
+      "Arbeitsspeicher der VM",
+      "Lokaler temporärer Speicher der Instanz",
+      "Ein zweites Betriebssystem"
+    ],
+    "a": "Objektspeicher",
+    "exp": "Objektspeicher ist günstig, sehr langlebig und skalierbar. Viele Anbieter bieten zusätzlich Archivklassen und Objektsperren gegen Löschung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Kostenfaktor wird bei Cloud-Diensten oft übersehen?",
+    "options": [
+      "Gebühren für ausgehenden Datenverkehr (Egress)",
+      "Gebühren für eingehende E-Mails",
+      "Kosten für Tastaturen",
+      "Kosten für den Stromanschluss im Büro"
+    ],
+    "a": "Gebühren für ausgehenden Datenverkehr (Egress)",
+    "exp": "Daten in die Cloud zu laden ist meist kostenlos, Daten herauszuholen kostet dagegen pro GB. Bei großen Wiederherstellungen oder einem Anbieterwechsel kann das teuer werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Vorteil von reservierten Instanzen bei Cloud-Anbietern?",
+    "options": [
+      "Deutlicher Preisnachlass gegen eine feste Laufzeitbindung",
+      "Sie laufen ohne Strom",
+      "Sie können nicht ausfallen",
+      "Sie sind kostenlos"
+    ],
+    "a": "Deutlicher Preisnachlass gegen eine feste Laufzeitbindung",
+    "exp": "Wer z.B. für 1 oder 3 Jahre bucht, zahlt deutlich weniger als bei der Abrechnung nach Stunden. Das lohnt sich für dauerhaft laufende Systeme."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum wählen viele deutsche Unternehmen bei Cloud-Diensten eine Region in der EU?",
+    "options": [
+      "Wegen Datenschutzanforderungen und kürzerer Wege",
+      "Weil außerhalb der EU keine Cloud existiert",
+      "Weil EU-Regionen immer kostenlos sind",
+      "Weil Server in der EU schneller rechnen"
+    ],
+    "a": "Wegen Datenschutzanforderungen und kürzerer Wege",
+    "exp": "Daten innerhalb der EU vereinfachen die Einhaltung der DSGVO. Außerdem ist die Latenz zu nahen Rechenzentren geringer."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Drehzahl ist typisch für schnelle SAS-Festplatten in Servern?",
+    "options": [
+      "15.000 U/min",
+      "5.400 U/min",
+      "3.000 U/min",
+      "1.000 U/min"
+    ],
+    "a": "15.000 U/min",
+    "exp": "Übliche Drehzahlen: 5.400 und 7.200 U/min (Desktop, Archiv), 10.000 und 15.000 U/min (Server). Heute werden schnelle HDDs weitgehend durch SSDs ersetzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Festplatten braucht RAID 60 mindestens?",
+    "options": [
+      "8",
+      "4",
+      "6",
+      "10"
+    ],
+    "a": "8",
+    "exp": "RAID 60 besteht aus mindestens zwei RAID-6-Gruppen mit je mindestens 4 Platten, zusammen also 8."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was schützt ZFS vor unbemerkten Datenfehlern (Bit Rot)?",
+    "options": [
+      "Prüfsummen für alle Blöcke mit automatischer Reparatur",
+      "Ein doppelter Stromanschluss",
+      "Ein größerer Cache",
+      "Eine längere Garantie"
+    ],
+    "a": "Prüfsummen für alle Blöcke mit automatischer Reparatur",
+    "exp": "ZFS vergleicht beim Lesen jede Prüfsumme. Stimmt sie nicht, liest es eine redundante Kopie und repariert den Fehler. Ein regelmäßiger Scrub prüft alle Daten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Protokoll nutzt NFS standardmäßig?",
+    "options": [
+      "TCP- bzw. UDP-Port 2049",
+      "Port 445",
+      "Port 139",
+      "Port 3260"
+    ],
+    "a": "TCP- bzw. UDP-Port 2049",
+    "exp": "NFS (vor allem unter Linux) nutzt 2049. SMB nutzt 445, iSCSI 3260."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie heißt die eindeutige Adresse eines Fibre-Channel-Adapters?",
+    "options": [
+      "WWN (World Wide Name)",
+      "MAC-Adresse",
+      "IQN",
+      "UUID"
+    ],
+    "a": "WWN (World Wide Name)",
+    "exp": "Jeder FC-Port hat eine WWN. Beim Zoning im FC-Switch legt man fest, welche WWNs miteinander kommunizieren dürfen. Bei iSCSI heißt die Kennung IQN."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Lanes nutzt eine Grafikkarte typischerweise im PCIe-Steckplatz?",
+    "options": [
+      "16 (x16)",
+      "1 (x1)",
+      "4 (x4)",
+      "2 (x2)"
+    ],
+    "a": "16 (x16)",
+    "exp": "Grafikkarten nutzen x16-Steckplätze, NVMe-SSDs meist x4, einfache Erweiterungskarten x1. Jede Lane überträgt in beide Richtungen gleichzeitig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche maximale Datenrate bietet Thunderbolt 4?",
+    "options": [
+      "40 Gbit/s",
+      "5 Gbit/s",
+      "10 Gbit/s",
+      "480 Mbit/s"
+    ],
+    "a": "40 Gbit/s",
+    "exp": "Thunderbolt 4 (USB-C-Stecker) überträgt bis 40 Gbit/s und kann Bildschirme, Netzwerk und Laden über ein Kabel bereitstellen, z.B. an einer Docking-Station."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was sollte man bei einem PC tun, der nach dem Einschalten Datum und BIOS-Einstellungen vergisst?",
+    "options": [
+      "Die CMOS-Batterie (Knopfzelle) auf dem Mainboard tauschen",
+      "Das Netzteil tauschen",
+      "Den Arbeitsspeicher verdoppeln",
+      "Windows neu installieren"
+    ],
+    "a": "Die CMOS-Batterie (Knopfzelle) auf dem Mainboard tauschen",
+    "exp": "Die Knopfzelle (meist CR2032) versorgt die Echtzeituhr und den Einstellungsspeicher, wenn der PC stromlos ist. Nach einigen Jahren ist sie leer."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Prozessorarchitektur steckt in den meisten Smartphones und zunehmend auch in Notebooks und Servern?",
+    "options": [
+      "ARM",
+      "x86",
+      "PowerPC",
+      "SPARC"
+    ],
+    "a": "ARM",
+    "exp": "ARM-Prozessoren sind besonders energieeffizient. Programme müssen für ARM übersetzt oder emuliert werden, wenn sie nur für x86 vorliegen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Vorteil von DDR5- gegenüber DDR4-Arbeitsspeicher?",
+    "options": [
+      "Höhere Datenrate und Bandbreite",
+      "DDR5 passt in jeden DDR4-Steckplatz",
+      "DDR5 speichert Daten dauerhaft",
+      "DDR5 braucht keine Kühlung und kein Mainboard"
+    ],
+    "a": "Höhere Datenrate und Bandbreite",
+    "exp": "DDR5 bietet höhere Taktraten und Bandbreite. Die Module sind mechanisch nicht mit DDR4 kompatibel, Mainboard und CPU müssen DDR5 unterstützen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Worum kümmert sich das Availability-Management?",
+    "options": [
+      "Sicherstellen, dass Services die vereinbarte Verfügbarkeit erreichen",
+      "Neue Services im Service-Katalog beschreiben und veröffentlichen",
+      "Die Kosten der IT verursachergerecht auf Abteilungen verteilen",
+      "Anwenderanfragen nach neuer Software annehmen und bearbeiten"
+    ],
+    "a": "Sicherstellen, dass Services die vereinbarte Verfügbarkeit erreichen",
+    "exp": "Das Availability-Management plant und überwacht die Verfügbarkeit, z.B. durch Redundanz und Auswertung von Ausfällen. Es nutzt Kennzahlen wie MTBF und die Wiederherstellungszeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Arbeitsspeicher von Büro-PCs wird nach einem erprobten, vorab genehmigten Verfahren erweitert. Welche Change-Art liegt vor?",
+    "options": [
+      "Standard Change",
+      "Emergency Change",
+      "Normal Change",
+      "Major Change"
+    ],
+    "a": "Standard Change",
+    "exp": "Ein Standard Change ist risikoarm, häufig und vorab freigegeben. Er muss nicht jedes Mal einzeln vom CAB bewertet werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine kritische Sicherheitslücke wird bereits aktiv ausgenutzt und muss sofort gepatcht werden. Welche Change-Art ist passend?",
+    "options": [
+      "Emergency Change",
+      "Standard Change",
+      "Normal Change",
+      "Minor Change"
+    ],
+    "a": "Emergency Change",
+    "exp": "Ein Emergency Change muss so schnell wie möglich umgesetzt werden. Er wird verkürzt, z.B. durch ein Emergency CAB, bewertet und genehmigt und danach dokumentiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Change-Art durchläuft die vollständige Bewertung und Freigabe, z.B. durch das CAB?",
+    "options": [
+      "Normal Change",
+      "Standard Change",
+      "Emergency Change",
+      "Service Request"
+    ],
+    "a": "Normal Change",
+    "exp": "Normal Changes sind weder vorab genehmigt noch akut dringend. Sie werden geplant, auf Risiko und Nutzen bewertet und dann von der zuständigen Stelle freigegeben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bezeichnet man bei einer Störung als Workaround?",
+    "options": [
+      "Eine vorläufige Lösung, die die Auswirkung mildert, ohne die Ursache zu beheben",
+      "Die endgültige Beseitigung der Fehlerursache durch einen geplanten Change",
+      "Eine Änderung, die das CAB wegen zu hohem Risiko abgelehnt hat",
+      "Ein vereinbartes Wartungsfenster für geplante Arbeiten am System"
+    ],
+    "a": "Eine vorläufige Lösung, die die Auswirkung mildert, ohne die Ursache zu beheben",
+    "exp": "Beispiel: Ein Drucker druckt über den Druckserver nicht, Anwender drucken vorübergehend direkt per IP. Die eigentliche Ursache klärt das Problem-Management."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wozu dient die Known Error Database (KEDB)?",
+    "options": [
+      "Bekannte Fehler mit Ursache und Workaround für den Support abrufbar zu machen",
+      "Alle Hardwarekomponenten mit Seriennummer und Standort zu speichern",
+      "Die Zugangsdaten der Administratoren verschlüsselt zu sichern",
+      "Die Arbeitszeiten und Einsätze der Techniker zu erfassen"
+    ],
+    "a": "Bekannte Fehler mit Ursache und Workaround für den Support abrufbar zu machen",
+    "exp": "Findet der Service Desk einen passenden Eintrag in der KEDB, kann er den Workaround sofort anwenden. Das verkürzt die Lösungszeit wiederkehrender Incidents."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Mailserver ist für das gesamte Unternehmen ausgefallen, ein wichtiger Kundentermin hängt davon ab. Wie ist der Incident einzustufen?",
+    "options": [
+      "Hohe Auswirkung, hohe Dringlichkeit, also höchste Priorität",
+      "Hohe Auswirkung, niedrige Dringlichkeit, also mittlere Priorität",
+      "Niedrige Auswirkung, hohe Dringlichkeit, also mittlere Priorität",
+      "Niedrige Auswirkung, niedrige Dringlichkeit, also niedrige Priorität"
+    ],
+    "a": "Hohe Auswirkung, hohe Dringlichkeit, also höchste Priorität",
+    "exp": "Viele Betroffene bedeuten hohe Auswirkung, der drohende Schaden ohne schnelle Lösung hohe Dringlichkeit. Beides zusammen ergibt die höchste Stufe der Prioritätsmatrix."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Anwender kann nicht an seinem gewohnten Drucker drucken. Ein anderer Drucker im selben Raum funktioniert. Welche Einstufung passt?",
+    "options": [
+      "Niedrige Priorität, da wenig Auswirkung und ein Ausweg besteht",
+      "Höchste Priorität, da jeder Druckerausfall den Betrieb stoppt",
+      "Hohe Priorität, da der Anwender sofort drucken möchte",
+      "Kritische Priorität, da Drucker immer Major Incidents sind"
+    ],
+    "a": "Niedrige Priorität, da wenig Auswirkung und ein Ausweg besteht",
+    "exp": "Nur eine Person ist betroffen und sie kann ausweichen. Auswirkung und Dringlichkeit sind gering. Der Wunsch des Anwenders allein erhöht die Priorität nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet den Service-Katalog vom Service-Portfolio?",
+    "options": [
+      "Der Katalog enthält nur aktive Services, das Portfolio auch geplante und abgelöste",
+      "Der Katalog enthält die Preise, das Portfolio nur die Namen der Services",
+      "Der Katalog ist nur intern, das Portfolio öffentlich im Internet einsehbar",
+      "Beide Begriffe bedeuten nach ITIL genau dasselbe und sind austauschbar"
+    ],
+    "a": "Der Katalog enthält nur aktive Services, das Portfolio auch geplante und abgelöste",
+    "exp": "Das Service-Portfolio umfasst die Pipeline mit geplanten Services, den Service-Katalog mit den aktiven Services und die abgelösten Services. Kunden sehen in der Regel nur den Katalog."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Configuration Item (CI)?",
+    "options": [
+      "Eine verwaltete Komponente eines Services, die in der CMDB erfasst ist",
+      "Eine einzelne Einstellung in der Registry eines Windows-Clients",
+      "Ein Menüpunkt in der Systemsteuerung zur Konfiguration",
+      "Eine Textdatei mit den Zugangsdaten eines Serverdienstes"
+    ],
+    "a": "Eine verwaltete Komponente eines Services, die in der CMDB erfasst ist",
+    "exp": "CIs können Server, Switches, Software, Lizenzen oder auch Dokumente wie ein SLA sein. In der CMDB werden ihre Eigenschaften und Beziehungen zueinander gepflegt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet eine funktionale von einer hierarchischen Eskalation?",
+    "options": [
+      "Funktional geht an mehr Fachwissen, hierarchisch an eine höhere Führungsebene",
+      "Funktional geht an die Geschäftsführung, hierarchisch an den 2nd Level",
+      "Funktional gilt nur für Hardware, hierarchisch nur für Software",
+      "Funktional erfolgt per Telefon, hierarchisch nur per E-Mail"
+    ],
+    "a": "Funktional geht an mehr Fachwissen, hierarchisch an eine höhere Führungsebene",
+    "exp": "Kann der 1st Level nicht lösen, gibt er funktional an den 2nd oder 3rd Level ab. Hierarchisch wird eskaliert, wenn Entscheidungen, Budget oder Prioritäten des Managements nötig sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wozu dient ein Post-Implementation Review (PIR) nach einem Change?",
+    "options": [
+      "Prüfen, ob der Change sein Ziel erreicht hat und ohne Nebenwirkungen lief",
+      "Den Change nachträglich vom Kunden abnehmen und bezahlen lassen",
+      "Den Change automatisch auf alle übrigen Systeme verteilen",
+      "Die betroffenen Mitarbeiter nachträglich im neuen System schulen"
+    ],
+    "a": "Prüfen, ob der Change sein Ziel erreicht hat und ohne Nebenwirkungen lief",
+    "exp": "Im PIR wird geprüft, ob die Änderung wie geplant funktioniert, ob Störungen auftraten und was man beim nächsten Mal besser macht. Danach wird der Change geschlossen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Auf einem Host sollen sehr viele virtuelle Maschinen mit Windows Server laufen. Welche Edition ist dafür vorgesehen?",
+    "options": [
+      "Datacenter, sie erlaubt unbegrenzt viele Windows-Server-VMs",
+      "Standard, sie erlaubt unbegrenzt viele Windows-Server-VMs",
+      "Essentials, sie ist für große Virtualisierungshosts gedacht",
+      "Jede Edition, virtuelle Maschinen brauchen keine Lizenz"
+    ],
+    "a": "Datacenter, sie erlaubt unbegrenzt viele Windows-Server-VMs",
+    "exp": "Die Standard Edition deckt bei vollständig lizenzierten Kernen nur zwei VMs ab. Die Datacenter Edition ist teurer, erlaubt aber beliebig viele VMs auf dem lizenzierten Host."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Schichtbetrieb teilen sich viele Mitarbeiter wenige PCs, die auf einen Windows Server zugreifen. Welche CAL-Art ist meist günstiger?",
+    "options": [
+      "Device-CAL, weil die Zahl der Geräte entscheidet",
+      "User-CAL, weil jede Person nur ein Gerät nutzt",
+      "Gar keine CAL, weil PCs mitlizenziert sind",
+      "RDS-CAL, weil sie jede andere CAL ersetzt"
+    ],
+    "a": "Device-CAL, weil die Zahl der Geräte entscheidet",
+    "exp": "Eine Device-CAL gilt für ein Gerät, egal wie viele Personen es nutzen. Gibt es deutlich mehr Nutzer als Geräte, sind Device-CALs die günstigere Wahl."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Außendienstmitarbeiter greift mit Notebook, Tablet und Smartphone auf den Server zu. Welche Lizenzierung ist sinnvoll?",
+    "options": [
+      "Eine User-CAL, die alle seine Geräte abdeckt",
+      "Eine Device-CAL für jedes seiner Geräte",
+      "Eine OEM-Lizenz für das Notebook genügt",
+      "Keine CAL, weil der Zugriff von außen erfolgt"
+    ],
+    "a": "Eine User-CAL, die alle seine Geräte abdeckt",
+    "exp": "Eine User-CAL ist an die Person gebunden und gilt für beliebig viele Geräte. Wer viele Geräte nutzt, braucht so nur eine CAL statt mehrerer Device-CALs."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt die Definition of Ready (DoR)?",
+    "options": [
+      "Wann ein Backlog-Eintrag genug geklärt ist, um in einen Sprint zu kommen",
+      "Wann das fertige Produkt an den Kunden ausgeliefert wird",
+      "Wann das Team morgens mit dem Daily Scrum beginnen muss",
+      "Wann ein laufender Sprint vorzeitig abgebrochen werden darf"
+    ],
+    "a": "Wann ein Backlog-Eintrag genug geklärt ist, um in einen Sprint zu kommen",
+    "exp": "Ein Eintrag gilt z.B. als bereit, wenn er verständlich beschrieben, geschätzt und mit Akzeptanzkriterien versehen ist. Die DoR ist kein Pflichtteil von Scrum, wird aber oft genutzt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was zeigt ein Burndown-Chart?",
+    "options": [
+      "Die verbleibende Arbeit im Verlauf der Zeit",
+      "Die Auslastung der Server im Tagesverlauf",
+      "Die Kosten des Projekts je Abteilung",
+      "Die Zufriedenheit der Stakeholder je Phase"
+    ],
+    "a": "Die verbleibende Arbeit im Verlauf der Zeit",
+    "exp": "Die Linie fällt, wenn Aufgaben erledigt werden. Der Vergleich mit einer Ideallinie zeigt, ob das Team das Sprint- oder Projektziel rechtzeitig erreicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Worin unterscheidet sich Kanban von Scrum?",
+    "options": [
+      "Kanban hat keine festen Sprints und keine vorgeschriebenen Rollen",
+      "Kanban hat feste Sprints, Scrum arbeitet ohne Zeitrahmen",
+      "Kanban verlangt einen Product Owner und einen Scrum Master",
+      "Kanban ist nur für Hardwareprojekte zugelassen"
+    ],
+    "a": "Kanban hat keine festen Sprints und keine vorgeschriebenen Rollen",
+    "exp": "Kanban steuert einen kontinuierlichen Arbeitsfluss mit WIP-Limits. Scrum arbeitet in festen Sprints mit den Rollen Product Owner, Scrum Master und Developers."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was passiert im Sprint Review?",
+    "options": [
+      "Das Team zeigt das Ergebnis den Stakeholdern und sammelt Rückmeldungen",
+      "Das Team bespricht nur intern seine Zusammenarbeit",
+      "Der Scrum Master bewertet die Leistung jedes Mitglieds",
+      "Der Kunde unterschreibt die Schlussrechnung"
+    ],
+    "a": "Das Team zeigt das Ergebnis den Stakeholdern und sammelt Rückmeldungen",
+    "exp": "Im Sprint Review wird das Inkrement vorgestellt und das Product Backlog bei Bedarf angepasst. Die Verbesserung der Zusammenarbeit ist Thema der Retrospektive."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Stakeholder hat großen Einfluss auf das Projekt, aber wenig Interesse daran. Wie sollte man mit ihm umgehen?",
+    "options": [
+      "Zufriedenstellen und bei wichtigen Punkten gezielt einbinden",
+      "Eng einbinden und täglich ausführlich informieren",
+      "Nur beobachten und nicht weiter beachten",
+      "Aus der Projektkommunikation ausschließen"
+    ],
+    "a": "Zufriedenstellen und bei wichtigen Punkten gezielt einbinden",
+    "exp": "In der Einfluss-Interesse-Matrix gehören solche Stakeholder in das Feld zufriedenstellen. Sie sollen nicht mit Details überlastet werden, ihr Einfluss darf aber nicht gegen das Projekt wirken."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie viele Personen sollten in einer RACI-Matrix je Aufgabe Accountable sein?",
+    "options": [
+      "Genau eine",
+      "Mindestens zwei",
+      "Alle Projektmitglieder",
+      "Keine, wenn es ein R gibt"
+    ],
+    "a": "Genau eine",
+    "exp": "Pro Aufgabe gibt es genau ein A, damit die Gesamtverantwortung eindeutig ist. Responsible, Consulted und Informed können dagegen mehrere Personen sein."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Anforderung wird nach MoSCoW mit Won't eingestuft. Was bedeutet das?",
+    "options": [
+      "Sie wird in diesem Release bewusst nicht umgesetzt",
+      "Sie ist technisch überhaupt nicht umsetzbar",
+      "Sie wird als Erstes umgesetzt",
+      "Sie wird nur bei Budgetüberschuss umgesetzt"
+    ],
+    "a": "Sie wird in diesem Release bewusst nicht umgesetzt",
+    "exp": "Won't heißt, dass die Anforderung für diesen Zeitraum ausgeschlossen ist. Sie kann in einem späteren Release wieder aufgegriffen werden. Could-Anforderungen werden umgesetzt, wenn Zeit bleibt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Rechtsfolge hat die Abnahme bei einem Werkvertrag?",
+    "options": [
+      "Die Vergütung wird fällig und die Verjährung der Mängelansprüche beginnt",
+      "Der Vertrag wird rückwirkend zu einem Dienstvertrag ohne Erfolgspflicht",
+      "Der Auftraggeber verliert jedes Recht auf Nachbesserung von Mängeln",
+      "Der Auftragnehmer darf den vereinbarten Preis nachträglich neu festlegen"
+    ],
+    "a": "Die Vergütung wird fällig und die Verjährung der Mängelansprüche beginnt",
+    "exp": "Mit der Abnahme erkennt der Auftraggeber das Werk als im Wesentlichen vertragsgemäß an. Danach trägt er die Beweislast für Mängel, und die Gewährleistungsfrist läuft."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus erhält als Kaufmann Switches von einem Großhändler. Was muss es nach HGB beim Wareneingang tun?",
+    "options": [
+      "Die Ware unverzüglich prüfen und Mängel sofort rügen",
+      "Mängel innerhalb von zwei Jahren beliebig melden",
+      "Die Ware frühestens nach 30 Tagen auspacken",
+      "Mängel nur per Einschreiben nach 14 Tagen melden"
+    ],
+    "a": "Die Ware unverzüglich prüfen und Mängel sofort rügen",
+    "exp": "Beim beiderseitigen Handelskauf gilt die Rügepflicht nach § 377 HGB. Wer offene Mängel nicht unverzüglich rügt, verliert seine Gewährleistungsrechte für diese Mängel."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer darf ortsveränderliche elektrische Geräte nach DGUV Vorschrift 3 prüfen?",
+    "options": [
+      "Eine Elektrofachkraft oder eine unterwiesene Person unter ihrer Aufsicht",
+      "Jeder Mitarbeiter nach einer kurzen Sichtprüfung am Gerät",
+      "Ausschließlich der Hersteller oder dessen Kundendienst",
+      "Nur ein Prüfer der zuständigen Berufsgenossenschaft"
+    ],
+    "a": "Eine Elektrofachkraft oder eine unterwiesene Person unter ihrer Aufsicht",
+    "exp": "Die Prüfung erfordert Fachkunde und geeignete Messgeräte. Elektrotechnisch unterwiesene Personen dürfen nur unter Leitung und Aufsicht einer Elektrofachkraft prüfen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie sollte ein Bildschirmarbeitsplatz zum Fenster ausgerichtet sein?",
+    "options": [
+      "Mit Blickrichtung parallel zur Fensterfront",
+      "Mit dem Bildschirm frontal vor dem Fenster",
+      "Mit dem Rücken des Nutzers zum Fenster",
+      "Beliebig, das Tageslicht spielt keine Rolle"
+    ],
+    "a": "Mit Blickrichtung parallel zur Fensterfront",
+    "exp": "Blickt man ins Fenster, blendet das Tageslicht. Sitzt man mit dem Rücken zum Fenster, spiegelt es sich im Bildschirm. Parallel zur Fensterfront treten beide Probleme kaum auf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen gibt alte Notebooks über ein Rücknahmesystem nach ElektroG ab. Wer muss vorher die personenbezogenen Daten löschen?",
+    "options": [
+      "Das Unternehmen als bisheriger Besitzer",
+      "Der Hersteller der Notebooks",
+      "Der Betreiber der Sammelstelle",
+      "Die zuständige Datenschutzbehörde"
+    ],
+    "a": "Das Unternehmen als bisheriger Besitzer",
+    "exp": "Nach ElektroG sind die Endnutzer selbst für das Löschen personenbezogener Daten auf Altgeräten verantwortlich. Datenträger sollten sicher gelöscht oder vernichtet werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange darf ein 17-jähriger Auszubildender nach dem Jugendarbeitsschutzgesetz täglich höchstens arbeiten?",
+    "options": [
+      "8 Stunden, bei Ausgleich an anderen Tagen 8,5 Stunden",
+      "10 Stunden, wie Erwachsene mit späterem Ausgleich",
+      "6 Stunden an allen Werktagen ohne Ausnahme",
+      "9 Stunden einschließlich aller Ruhepausen"
+    ],
+    "a": "8 Stunden, bei Ausgleich an anderen Tagen 8,5 Stunden",
+    "exp": "Für Jugendliche gelten höchstens 8 Stunden täglich und 40 Stunden pro Woche. Nur wenn an anderen Werktagen kürzer gearbeitet wird, sind 8,5 Stunden erlaubt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Kündigungsfrist gilt nach BGB während einer vereinbarten Probezeit in einem Arbeitsverhältnis?",
+    "options": [
+      "2 Wochen",
+      "4 Wochen zum Monatsende",
+      "Keine Frist, Kündigung jederzeit fristlos",
+      "3 Monate zum Quartalsende"
+    ],
+    "a": "2 Wochen",
+    "exp": "In einer Probezeit von höchstens 6 Monaten können beide Seiten mit 2 Wochen Frist kündigen. Anders ist es im Ausbildungsverhältnis: dort ist in der Probezeit keine Frist nötig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein tarifgebundener Mitarbeiter hat laut Tarifvertrag 30 Urlaubstage, sein Arbeitsvertrag nennt 28. Was gilt?",
+    "options": [
+      "30 Tage, weil nur Abweichungen zugunsten des Arbeitnehmers erlaubt sind",
+      "28 Tage, weil der Arbeitsvertrag immer Vorrang vor dem Tarif hat",
+      "29 Tage als Kompromiss zwischen den beiden Regelungen",
+      "24 Tage, weil nur der gesetzliche Mindesturlaub verbindlich zählt"
+    ],
+    "a": "30 Tage, weil nur Abweichungen zugunsten des Arbeitnehmers erlaubt sind",
+    "exp": "Das ist das Günstigkeitsprinzip. Ein Arbeitsvertrag darf vom Tarifvertrag nur abweichen, wenn es für den Arbeitnehmer günstiger ist."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein RAID 50 besteht aus 8 Festplatten mit je 4 TB, aufgeteilt in zwei RAID-5-Gruppen. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "24 TB",
+      "28 TB",
+      "16 TB",
+      "32 TB"
+    ],
+    "a": "24 TB",
+    "exp": "Jede der zwei RAID-5-Gruppen verliert eine Platte an Parität: (8 - 2) * 4 TB = 24 TB. Die Gruppen werden dann per RAID 0 verbunden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein RAID 50 besteht aus 12 Festplatten mit je 6 TB, aufgeteilt in zwei RAID-5-Gruppen. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "60 TB",
+      "66 TB",
+      "36 TB",
+      "48 TB"
+    ],
+    "a": "60 TB",
+    "exp": "Jede der zwei RAID-5-Gruppen verliert eine Platte an Parität: (12 - 2) * 6 TB = 60 TB. Die Gruppen werden dann per RAID 0 verbunden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein RAID 60 besteht aus 10 Festplatten mit je 8 TB, aufgeteilt in zwei RAID-6-Gruppen. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "48 TB",
+      "64 TB",
+      "40 TB",
+      "72 TB"
+    ],
+    "a": "48 TB",
+    "exp": "Jede RAID-6-Gruppe verliert zwei Platten an Parität, bei zwei Gruppen also vier: (10 - 4) * 8 TB = 48 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein RAID 60 besteht aus 16 Festplatten mit je 4 TB, aufgeteilt in zwei RAID-6-Gruppen. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "48 TB",
+      "56 TB",
+      "32 TB",
+      "60 TB"
+    ],
+    "a": "48 TB",
+    "exp": "Jede RAID-6-Gruppe verliert zwei Platten an Parität, bei zwei Gruppen also vier: (16 - 4) * 4 TB = 48 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Storage hat 6 Festplatten mit je 8 TB. Eine Platte wird als Hot Spare reserviert, die übrigen bilden ein RAID 5. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "32 TB",
+      "40 TB",
+      "24 TB",
+      "48 TB"
+    ],
+    "a": "32 TB",
+    "exp": "Hot Spare: 6 - 1 = 5 Platten im RAID 5, davon eine für Parität: (5 - 1) * 8 TB = 32 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Storage hat 9 Festplatten mit je 12 TB. Eine Platte wird als Hot Spare reserviert, die übrigen bilden ein RAID 5. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "84 TB",
+      "96 TB",
+      "72 TB",
+      "108 TB"
+    ],
+    "a": "84 TB",
+    "exp": "Hot Spare: 9 - 1 = 8 Platten im RAID 5, davon eine für Parität: (8 - 1) * 12 TB = 84 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Festplatte hat laut Hersteller 2 TB (10^12 Byte). Wie viele TiB zeigt das Betriebssystem ungefähr an?",
+    "options": [
+      "ca. 1,82 TiB",
+      "ca. 2,00 TiB",
+      "ca. 2,20 TiB",
+      "ca. 1,60 TiB"
+    ],
+    "a": "ca. 1,82 TiB",
+    "exp": "2 * 10^12 Byte / 2^40 Byte = 1,82 TiB. Hersteller rechnen dezimal, Betriebssysteme oft binär."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Festplatte hat laut Hersteller 8 TB (10^12 Byte). Wie viele TiB zeigt das Betriebssystem ungefähr an?",
+    "options": [
+      "ca. 7,28 TiB",
+      "ca. 8,00 TiB",
+      "ca. 8,80 TiB",
+      "ca. 6,40 TiB"
+    ],
+    "a": "ca. 7,28 TiB",
+    "exp": "8 * 10^12 Byte / 2^40 Byte = 7,28 TiB. Hersteller rechnen dezimal, Betriebssysteme oft binär."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher oktalen chmod-Angabe entsprechen die Rechte rwxr-xr-x?",
+    "options": [
+      "755",
+      "744",
+      "655",
+      "777"
+    ],
+    "a": "755",
+    "exp": "Je Dreiergruppe r = 4, w = 2, x = 1 addieren: rwxr-xr-x wird zu 755 (Besitzer, Gruppe, Andere)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher oktalen chmod-Angabe entsprechen die Rechte rw-r-----?",
+    "options": [
+      "640",
+      "651",
+      "644",
+      "662"
+    ],
+    "a": "640",
+    "exp": "Je Dreiergruppe r = 4, w = 2, x = 1 addieren: rw-r----- wird zu 640 (Besitzer, Gruppe, Andere)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher oktalen chmod-Angabe entsprechen die Rechte rwx------?",
+    "options": [
+      "700",
+      "770",
+      "704",
+      "600"
+    ],
+    "a": "700",
+    "exp": "Je Dreiergruppe r = 4, w = 2, x = 1 addieren: rwx------ wird zu 700 (Besitzer, Gruppe, Andere)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die umask ist 027. Welche Rechte erhält eine neu angelegte Datei?",
+    "options": [
+      "640 (rw-r-----)",
+      "750 (rwxr-x---)",
+      "027 (----w-rwx)",
+      "604 (rw----r--)"
+    ],
+    "a": "640 (rw-r-----)",
+    "exp": "Ausgangsrechte für eine Datei sind 666. Die umask nimmt Bits weg: 666 ohne 027 = 640."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die umask ist 077. Welche Rechte erhält ein neu angelegtes Verzeichnis?",
+    "options": [
+      "700 (rwx------)",
+      "600 (rw-------)",
+      "077 (---rwxrwx)",
+      "755 (rwxr-xr-x)"
+    ],
+    "a": "700 (rwx------)",
+    "exp": "Ausgangsrechte für eine Verzeichnis sind 777. Die umask nimmt Bits weg: 777 ohne 077 = 700."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die umask ist 002. Welche Rechte erhält eine neu angelegte Datei?",
+    "options": [
+      "664 (rw-rw-r--)",
+      "775 (rwxrwxr-x)",
+      "002 (-------w-)",
+      "620 (rw--w----)"
+    ],
+    "a": "664 (rw-rw-r--)",
+    "exp": "Ausgangsrechte für eine Datei sind 666. Die umask nimmt Bits weg: 666 ohne 002 = 664."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Host sollen 14 VMs mit je 8 GB RAM laufen, der Hypervisor braucht selbst 16 GB. Wie viel RAM braucht der Host mindestens (ohne Overcommitment)?",
+    "options": [
+      "128 GB",
+      "112 GB",
+      "120 GB",
+      "336 GB"
+    ],
+    "a": "128 GB",
+    "exp": "14 * 8 GB = 112 GB für die VMs, plus 16 GB für den Hypervisor = 128 GB. Für N+1 im Cluster muss zusätzlich Reserve eingeplant werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Host sollen 22 VMs mit je 12 GB RAM laufen, der Hypervisor braucht selbst 32 GB. Wie viel RAM braucht der Host mindestens (ohne Overcommitment)?",
+    "options": [
+      "296 GB",
+      "264 GB",
+      "276 GB",
+      "968 GB"
+    ],
+    "a": "296 GB",
+    "exp": "22 * 12 GB = 264 GB für die VMs, plus 32 GB für den Hypervisor = 296 GB. Für N+1 im Cluster muss zusätzlich Reserve eingeplant werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Host hat 2 CPUs mit je 16 Kernen. Erlaubt ist ein Overcommitment von 4:1 (vCPU zu physischem Kern). Wie viele VMs mit je 4 vCPUs passen darauf?",
+    "options": [
+      "32",
+      "8",
+      "128",
+      "16"
+    ],
+    "a": "32",
+    "exp": "2 * 16 = 32 Kerne; * 4 = 128 vCPUs; / 4 vCPUs je VM = 32 VMs. Hyperthreads zählt man dabei nicht als volle Kerne."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Host hat 2 CPUs mit je 12 Kernen. Erlaubt ist ein Overcommitment von 3:1 (vCPU zu physischem Kern). Wie viele VMs mit je 2 vCPUs passen darauf?",
+    "options": [
+      "36",
+      "12",
+      "72",
+      "18"
+    ],
+    "a": "36",
+    "exp": "2 * 12 = 24 Kerne; * 3 = 72 vCPUs; / 2 vCPUs je VM = 36 VMs. Hyperthreads zählt man dabei nicht als volle Kerne."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine SSD ist für 600 TBW spezifiziert. Täglich werden etwa 150 GB geschrieben. Nach wie vielen Jahren ist die TBW-Grenze erreicht (gerundet)?",
+    "options": [
+      "ca. 11,0 Jahre",
+      "ca. 21,9 Jahre",
+      "ca. 1,4 Jahre",
+      "ca. 4,0 Jahre"
+    ],
+    "a": "ca. 11,0 Jahre",
+    "exp": "600 TB = 600.000 GB; / 150 GB pro Tag = 4.000 Tage; / 365 = 11,0 Jahre."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine SSD ist für 1.200 TBW spezifiziert. Täglich werden etwa 400 GB geschrieben. Nach wie vielen Jahren ist die TBW-Grenze erreicht (gerundet)?",
+    "options": [
+      "ca. 8,2 Jahre",
+      "ca. 16,4 Jahre",
+      "ca. 1,0 Jahre",
+      "ca. 3,0 Jahre"
+    ],
+    "a": "ca. 8,2 Jahre",
+    "exp": "1.200 TB = 1.200.000 GB; / 400 GB pro Tag = 3.000 Tage; / 365 = 8,2 Jahre."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Storage liefert 20.000 IOPS bei einer Blockgröße von 4 KiB. Welcher Durchsatz ergibt sich?",
+    "options": [
+      "ca. 78,1 MiB/s",
+      "ca. 640,0 MiB/s",
+      "ca. 5.000,0 MiB/s",
+      "ca. 625,0 MiB/s"
+    ],
+    "a": "ca. 78,1 MiB/s",
+    "exp": "20.000 IOPS * 4 KiB = 80.000 KiB/s; / 1024 = 78,1 MiB/s."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Storage liefert 5.000 IOPS bei einer Blockgröße von 64 KiB. Welcher Durchsatz ergibt sich?",
+    "options": [
+      "ca. 312,5 MiB/s",
+      "ca. 2.560,0 MiB/s",
+      "ca. 78,1 MiB/s",
+      "ca. 2.500,0 MiB/s"
+    ],
+    "a": "ca. 312,5 MiB/s",
+    "exp": "5.000 IOPS * 64 KiB = 320.000 KiB/s; / 1024 = 312,5 MiB/s."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Vollsicherung umfasst 2,0 TB. Täglich ändern sich 3 % der Daten, danach folgen 6 inkrementelle Sicherungen. Wie viel Speicher belegt dieser Sicherungssatz?",
+    "options": [
+      "2,36 TB",
+      "14,00 TB",
+      "0,36 TB",
+      "2,06 TB"
+    ],
+    "a": "2,36 TB",
+    "exp": "Jede inkrementelle Sicherung enthält nur die Änderungen eines Tages: 2,0 TB * 3 % = 0,06 TB. 2,0 TB + 6 * 0,06 TB = 2,36 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Vollsicherung umfasst 5,0 TB. Täglich ändern sich 2 % der Daten, danach folgen 4 inkrementelle Sicherungen. Wie viel Speicher belegt dieser Sicherungssatz?",
+    "options": [
+      "5,40 TB",
+      "25,00 TB",
+      "0,40 TB",
+      "5,10 TB"
+    ],
+    "a": "5,40 TB",
+    "exp": "Jede inkrementelle Sicherung enthält nur die Änderungen eines Tages: 5,0 TB * 2 % = 0,10 TB. 5,0 TB + 4 * 0,10 TB = 5,40 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Generationenprinzip (GFS) werden 7 tägliche, 4 wöchentliche und 12 monatliche Sicherungen aufbewahrt. Wie viele Sicherungsstände liegen gleichzeitig vor?",
+    "options": [
+      "23",
+      "336",
+      "11",
+      "24"
+    ],
+    "a": "23",
+    "exp": "Die Generationen werden addiert: 7 + 4 + 12 = 23 Sicherungsstände. So reicht man mit wenigen Medien weit in die Vergangenheit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Generationenprinzip (GFS) werden 5 tägliche, 4 wöchentliche und 6 monatliche Sicherungen aufbewahrt. Wie viele Sicherungsstände liegen gleichzeitig vor?",
+    "options": [
+      "15",
+      "120",
+      "9",
+      "16"
+    ],
+    "a": "15",
+    "exp": "Die Generationen werden addiert: 5 + 4 + 6 = 15 Sicherungsstände. So reicht man mit wenigen Medien weit in die Vergangenheit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Server erzeugt täglich 250 MB Logdaten, die 90 Tage aufbewahrt werden müssen. Wie viel Speicher belegen die Logs (1 GB = 1.000 MB)?",
+    "options": [
+      "22,5 GB",
+      "225,0 GB",
+      "91,2 GB",
+      "11,2 GB"
+    ],
+    "a": "22,5 GB",
+    "exp": "250 MB * 90 Tage = 22.500 MB = 22,5 GB. Komprimierte Rotation (logrotate mit compress) spart meist viel davon."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Server erzeugt täglich 800 MB Logdaten, die 30 Tage aufbewahrt werden müssen. Wie viel Speicher belegen die Logs (1 GB = 1.000 MB)?",
+    "options": [
+      "24,0 GB",
+      "240,0 GB",
+      "292,0 GB",
+      "12,0 GB"
+    ],
+    "a": "24,0 GB",
+    "exp": "800 MB * 30 Tage = 24.000 MB = 24,0 GB. Komprimierte Rotation (logrotate mit compress) spart meist viel davon."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet -45 im 8-Bit-Zweierkomplement?",
+    "options": [
+      "1101 0011",
+      "1101 0010",
+      "0010 1101",
+      "1010 1101"
+    ],
+    "a": "1101 0011",
+    "exp": "Betrag 45 binär: 00101101. Alle Bits invertieren: 11010010. Plus 1: 11010011."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet -100 im 8-Bit-Zweierkomplement?",
+    "options": [
+      "1001 1100",
+      "1001 1011",
+      "0110 0100",
+      "1110 0100"
+    ],
+    "a": "1001 1100",
+    "exp": "Betrag 100 binär: 01100100. Alle Bits invertieren: 10011011. Plus 1: 10011100."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet -1 im 8-Bit-Zweierkomplement?",
+    "options": [
+      "1111 1111",
+      "1111 1110",
+      "0000 0001",
+      "1000 0001"
+    ],
+    "a": "1111 1111",
+    "exp": "Betrag 1 binär: 00000001. Alle Bits invertieren: 11111110. Plus 1: 11111111."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Summe der Binärzahlen 01101011 und 00110110?",
+    "options": [
+      "10100001",
+      "01111111",
+      "01011101",
+      "10100011"
+    ],
+    "a": "10100001",
+    "exp": "Dezimal: 107 + 54 = 161, binär 10100001. Bei 1 + 1 entsteht 0 mit Übertrag 1 in die nächste Stelle."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Summe der Binärzahlen 10011001 und 01011110?",
+    "options": [
+      "11110111",
+      "11011111",
+      "11000111",
+      "11110101"
+    ],
+    "a": "11110111",
+    "exp": "Dezimal: 153 + 94 = 247, binär 11110111. Bei 1 + 1 entsteht 0 mit Übertrag 1 in die nächste Stelle."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 493 im Oktalsystem?",
+    "options": [
+      "755",
+      "1ED",
+      "75",
+      "557"
+    ],
+    "a": "755",
+    "exp": "493 / 8 schrittweise teilen und die Reste von unten lesen: 755 (oktal). Das entspricht chmod 755."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 420 im Oktalsystem?",
+    "options": [
+      "644",
+      "1A4",
+      "64",
+      "446"
+    ],
+    "a": "644",
+    "exp": "420 / 8 schrittweise teilen und die Reste von unten lesen: 644 (oktal). Das entspricht chmod 644."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Hexadezimalzahl 3F8 als Dezimalzahl?",
+    "options": [
+      "1016",
+      "1032",
+      "2291",
+      "458"
+    ],
+    "a": "1016",
+    "exp": "3F8 = 3 * 16^2 + 15 * 16^1 + 8 * 16^0 = 1016."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Hexadezimalzahl 1BB als Dezimalzahl?",
+    "options": [
+      "443",
+      "459",
+      "2993",
+      "221"
+    ],
+    "a": "443",
+    "exp": "1BB = 1 * 16^2 + 11 * 16^1 + 11 * 16^0 = 443."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie hoch ist die theoretische Speicherbandbreite von DDR-3200 im Single-Channel-Betrieb (64 Bit je Kanal)?",
+    "options": [
+      "25,6 GB/s",
+      "204,8 GB/s",
+      "51,2 GB/s",
+      "3,2 GB/s"
+    ],
+    "a": "25,6 GB/s",
+    "exp": "3200 MT/s * 8 Byte (64 Bit) = 25,6 GB/s je Kanal, * 1 Kanal/Kanäle = 25,6 GB/s."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie hoch ist die theoretische Speicherbandbreite von DDR-4800 im Dual-Channel-Betrieb (64 Bit je Kanal)?",
+    "options": [
+      "76,8 GB/s",
+      "614,4 GB/s",
+      "38,4 GB/s",
+      "9,6 GB/s"
+    ],
+    "a": "76,8 GB/s",
+    "exp": "4800 MT/s * 8 Byte (64 Bit) = 38,4 GB/s je Kanal, * 2 Kanal/Kanäle = 76,8 GB/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein voller Ethernet-Frame belegt mit Präambel und Interframe Gap 1.538 Byte auf der Leitung. Wie hoch ist die Effizienz, wenn nur die 1.500 Byte des IP-Pakets als Nutzlast zählen?",
+    "options": [
+      "ca. 97,5 %",
+      "ca. 98,8 %",
+      "ca. 87,5 %",
+      "ca. 96,2 %"
+    ],
+    "a": "ca. 97,5 %",
+    "exp": "1500 Byte Nutzlast / 1.538 Byte auf der Leitung = 97,5 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein voller Ethernet-Frame belegt mit Präambel und Interframe Gap 1.538 Byte auf der Leitung. Wie hoch ist die Effizienz, wenn nur die 1.460 Byte TCP-Nutzdaten als Nutzlast zählen?",
+    "options": [
+      "ca. 94,9 %",
+      "ca. 96,2 %",
+      "ca. 84,9 %",
+      "ca. 92,2 %"
+    ],
+    "a": "ca. 94,9 %",
+    "exp": "1460 Byte Nutzlast / 1.538 Byte auf der Leitung = 94,9 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine LWL-Strecke ist 2,5 km lang (Faserdämpfung 0,4 dB/km), hat 2 Steckverbindungen (je 0,5 dB) und 2 Spleiße (je 0,1 dB). Wie hoch ist die Gesamtdämpfung?",
+    "options": [
+      "2,20 dB",
+      "1,00 dB",
+      "3,20 dB",
+      "1,60 dB"
+    ],
+    "a": "2,20 dB",
+    "exp": "Faser: 2,5 km * 0,4 dB/km = 1,00 dB; Stecker: 2 * 0,5 dB = 1,00 dB; Spleiße: 2 * 0,1 dB = 0,20 dB; Summe 2,20 dB. Sie muss unter dem Budget der Transceiver liegen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine LWL-Strecke ist 0,3 km lang (Faserdämpfung 3,0 dB/km), hat 4 Steckverbindungen (je 0,5 dB) und 0 Spleiße (je 0,1 dB). Wie hoch ist die Gesamtdämpfung?",
+    "options": [
+      "2,90 dB",
+      "0,90 dB",
+      "3,80 dB",
+      "5,00 dB"
+    ],
+    "a": "2,90 dB",
+    "exp": "Faser: 0,3 km * 3,0 dB/km = 0,90 dB; Stecker: 4 * 0,5 dB = 2,00 dB; Spleiße: 0 * 0,1 dB = 0,00 dB; Summe 2,90 dB. Sie muss unter dem Budget der Transceiver liegen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access-Switch hat 48 Ports mit 1 Gbit/s und 2 Uplinks mit je 10 Gbit/s. Wie hoch ist die Überbuchung (Oversubscription)?",
+    "options": [
+      "2,4:1",
+      "4,8:1",
+      "1:2,4",
+      "1,2:1"
+    ],
+    "a": "2,4:1",
+    "exp": "Summe Access: 48 * 1 = 48 Gbit/s; Summe Uplinks: 2 * 10 = 20 Gbit/s; 48 / 20 = 2,4:1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access-Switch hat 24 Ports mit 10 Gbit/s und 2 Uplinks mit je 40 Gbit/s. Wie hoch ist die Überbuchung (Oversubscription)?",
+    "options": [
+      "3:1",
+      "6:1",
+      "1:3",
+      "1,5:1"
+    ],
+    "a": "3:1",
+    "exp": "Summe Access: 24 * 10 = 240 Gbit/s; Summe Uplinks: 2 * 40 = 80 Gbit/s; 240 / 80 = 3,0:1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein G.711-Gespräch belegt mit allen Headern 87,2 kbit/s je Richtung. Welche Bandbreite je Richtung brauchen 30 gleichzeitige Gespräche?",
+    "options": [
+      "ca. 2,62 Mbit/s",
+      "ca. 1,92 Mbit/s",
+      "ca. 5,23 Mbit/s",
+      "ca. 26,16 Mbit/s"
+    ],
+    "a": "ca. 2,62 Mbit/s",
+    "exp": "30 * 87,2 kbit/s = 2.616,0 kbit/s = 2,62 Mbit/s. Die reinen 64 kbit/s des Codecs reichen nicht, weil RTP, UDP, IP und Ethernet dazukommen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein G.711-Gespräch belegt mit allen Headern 87,2 kbit/s je Richtung. Welche Bandbreite je Richtung brauchen 12 gleichzeitige Gespräche?",
+    "options": [
+      "ca. 1,05 Mbit/s",
+      "ca. 0,77 Mbit/s",
+      "ca. 2,09 Mbit/s",
+      "ca. 10,46 Mbit/s"
+    ],
+    "a": "ca. 1,05 Mbit/s",
+    "exp": "12 * 87,2 kbit/s = 1.046,4 kbit/s = 1,05 Mbit/s. Die reinen 64 kbit/s des Codecs reichen nicht, weil RTP, UDP, IP und Ethernet dazukommen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine PIN hat 4 Ziffern, nach 3 Fehlversuchen wird gesperrt. Wie hoch ist die Chance, sie vorher zufällig zu erraten?",
+    "options": [
+      "0,03 %",
+      "0,3 %",
+      "0,01 %",
+      "0,75 %"
+    ],
+    "a": "0,03 %",
+    "exp": "10^4 = 10.000 Möglichkeiten; 3 Versuche / 10.000 = 0,03 %. Die Sperre macht auch kurze PINs recht sicher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine PIN hat 6 Ziffern, nach 5 Fehlversuchen wird gesperrt. Wie hoch ist die Chance, sie vorher zufällig zu erraten?",
+    "options": [
+      "0,0005 %",
+      "0,005 %",
+      "0,0001 %",
+      "0,83 %"
+    ],
+    "a": "0,0005 %",
+    "exp": "10^6 = 1.000.000 Möglichkeiten; 5 Versuche / 1.000.000 = 0,0005 %. Die Sperre macht auch kurze PINs recht sicher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Konto wird nach 5 Fehlversuchen für 30 Minuten gesperrt. Wie viele Passwörter kann ein Angreifer online höchstens pro Tag testen?",
+    "options": [
+      "240",
+      "120",
+      "48",
+      "14.400"
+    ],
+    "a": "240",
+    "exp": "Ein Tag hat 1.440 Minuten, also 48 Sperrfenster; 48 * 5 = 240 Versuche. Offline-Angriffe auf gestohlene Hashes umgehen diese Bremse."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Konto wird nach 10 Fehlversuchen für 15 Minuten gesperrt. Wie viele Passwörter kann ein Angreifer online höchstens pro Tag testen?",
+    "options": [
+      "960",
+      "240",
+      "96",
+      "57.600"
+    ],
+    "a": "960",
+    "exp": "Ein Tag hat 1.440 Minuten, also 96 Sperrfenster; 96 * 10 = 960 Versuche. Offline-Angriffe auf gestohlene Hashes umgehen diese Bremse."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Cloud-VM kostet 0,19 Euro pro Stunde und läuft dauerhaft. Wie hoch sind die Kosten pro Monat (730 Stunden)?",
+    "options": [
+      "138,70 Euro",
+      "5,70 Euro",
+      "1.664,40 Euro",
+      "30,40 Euro"
+    ],
+    "a": "138,70 Euro",
+    "exp": "0,19 Euro * 730 h = 138,70 Euro. 730 h ist der übliche Monatsdurchschnitt (8.760 h / 12)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Datenbank-Instanz kostet 1,42 Euro pro Stunde und läuft dauerhaft. Wie hoch sind die Kosten pro Monat (730 Stunden)?",
+    "options": [
+      "1.036,60 Euro",
+      "42,60 Euro",
+      "12.439,20 Euro",
+      "227,20 Euro"
+    ],
+    "a": "1.036,60 Euro",
+    "exp": "1,42 Euro * 730 h = 1.036,60 Euro. 730 h ist der übliche Monatsdurchschnitt (8.760 h / 12)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Windows Server wird pro Kern lizenziert: mindestens 8 Kerne je CPU, mindestens 16 Kerne je Server, verkauft in 2-Kern-Paketen. Wie viele Pakete braucht ein Server mit 2 CPUs zu je 12 Kernen?",
+    "options": [
+      "12",
+      "24",
+      "6",
+      "8"
+    ],
+    "a": "12",
+    "exp": "Je CPU zählen max(8, 12) = 12 Kerne, zusammen 24, mindestens aber 16: 24 Kerne; / 2 = 12 Pakete."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Windows Server wird pro Kern lizenziert: mindestens 8 Kerne je CPU, mindestens 16 Kerne je Server, verkauft in 2-Kern-Paketen. Wie viele Pakete braucht ein Server mit 1 CPU zu je 6 Kernen?",
+    "options": [
+      "8",
+      "16",
+      "3",
+      "4"
+    ],
+    "a": "8",
+    "exp": "Je CPU zählen max(8, 6) = 8 Kerne, zusammen 8, mindestens aber 16: 16 Kerne; / 2 = 8 Pakete."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Windows Server wird pro Kern lizenziert: mindestens 8 Kerne je CPU, mindestens 16 Kerne je Server, verkauft in 2-Kern-Paketen. Wie viele Pakete braucht ein Server mit 2 CPUs zu je 20 Kernen?",
+    "options": [
+      "20",
+      "40",
+      "10",
+      "8"
+    ],
+    "a": "20",
+    "exp": "Je CPU zählen max(8, 20) = 20 Kerne, zusammen 40, mindestens aber 16: 40 Kerne; / 2 = 20 Pakete."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das Backlog umfasst 180 Story Points, das Team schafft im Schnitt 24 Punkte pro Sprint. Wie viele Sprints sind mindestens nötig?",
+    "options": [
+      "8",
+      "7",
+      "10",
+      "6"
+    ],
+    "a": "8",
+    "exp": "180 / 24 = 7,50, aufgerundet 8 Sprints. Ein angefangener Sprint zählt voll."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das Backlog umfasst 95 Story Points, das Team schafft im Schnitt 30 Punkte pro Sprint. Wie viele Sprints sind mindestens nötig?",
+    "options": [
+      "4",
+      "3",
+      "6",
+      "7"
+    ],
+    "a": "4",
+    "exp": "95 / 30 = 3,17, aufgerundet 4 Sprints. Ein angefangener Sprint zählt voll."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Service Desk hat 340 von 400 Tickets beim ersten Kontakt gelöst. Wie hoch ist die First-Contact-Resolution-Rate?",
+    "options": [
+      "85 %",
+      "15 %",
+      "34 %",
+      "18 %"
+    ],
+    "a": "85 %",
+    "exp": "340 / 400 * 100 = 85 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Service Desk hat 612 von 900 Tickets beim ersten Kontakt gelöst. Wie hoch ist die First-Contact-Resolution-Rate?",
+    "options": [
+      "68 %",
+      "32 %",
+      "61 %",
+      "47 %"
+    ],
+    "a": "68 %",
+    "exp": "612 / 900 * 100 = 68 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Techniker verursacht 78.000,00 Euro Kosten pro Jahr und hat 1.300 abrechenbare Stunden. Wie hoch ist der Stundenverrechnungssatz mit 20 % Gewinnzuschlag?",
+    "options": [
+      "72,00 Euro",
+      "60,00 Euro",
+      "54,42 Euro",
+      "80,00 Euro"
+    ],
+    "a": "72,00 Euro",
+    "exp": "78.000,00 Euro / 1.300 h = 60,00 Euro pro Stunde; * 1,20 (Gewinnzuschlag) = 72,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Techniker verursacht 91.000,00 Euro Kosten pro Jahr und hat 1.400 abrechenbare Stunden. Wie hoch ist der Stundenverrechnungssatz mit 15 % Gewinnzuschlag?",
+    "options": [
+      "74,75 Euro",
+      "65,00 Euro",
+      "60,84 Euro",
+      "80,00 Euro"
+    ],
+    "a": "74,75 Euro",
+    "exp": "91.000,00 Euro / 1.400 h = 65,00 Euro pro Stunde; * 1,15 (Gewinnzuschlag) = 74,75 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein eigener Server kostet 6.000,00 Euro einmalig und 50,00 Euro Betrieb pro Monat, der Cloud-Dienst 300,00 Euro pro Monat. Nach wie vielen Monaten ist der eigene Server günstiger?",
+    "options": [
+      "nach 24 Monaten",
+      "nach 20 Monaten",
+      "nach 120 Monaten",
+      "nach 12 Monaten"
+    ],
+    "a": "nach 24 Monaten",
+    "exp": "Pro Monat spart der eigene Server 300,00 Euro - 50,00 Euro = 250,00 Euro. 6.000,00 Euro / 250,00 Euro = 24 Monate, danach ist er günstiger."
   }
 ]

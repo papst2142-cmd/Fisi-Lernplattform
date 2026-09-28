@@ -5866,5 +5866,1865 @@
       "Die Verfügbarkeit in Prozent",
       "Die Kosten pro Terabyte Speicher"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür stehen die Bestandteile BASE und T in der Bezeichnung 1000BASE-T?",
+    "a": "Basisbandübertragung über Twisted-Pair-Kabel",
+    "a_full": "Die Zahl vorne nennt die Datenrate in Mbit/s. BASE steht für Basisband: Das Signal belegt das Medium allein, ohne Trägerfrequenz. Der Buchstabe am Ende nennt das Medium, T steht für Twisted Pair, SX und LX bei Glasfaser für kurze und lange Wellenlänge.",
+    "options": [
+      "Basisbandübertragung über Twisted-Pair-Kabel",
+      "Breitbandübertragung über Twisted-Pair-Kabel",
+      "Basisbandübertragung über Koaxialkabel",
+      "Bündelung mehrerer Leitungen über Glasfaser"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ermöglicht NBASE-T (2.5GBASE-T und 5GBASE-T)?",
+    "a": "2,5 bzw. 5 Gbit/s über vorhandene Cat-5e- oder Cat-6-Kabel",
+    "a_full": "Viele Gebäude sind mit Cat 5e oder Cat 6 verkabelt, was für 10GBASE-T auf 100 m nicht sicher reicht. NBASE-T bietet Zwischenstufen über diese Kabel. Typischer Einsatz sind Wi-Fi-6- und Wi-Fi-7-Access-Points, deren Durchsatz über 1 Gbit/s liegt.",
+    "options": [
+      "2,5 bzw. 5 Gbit/s über vorhandene Cat-5e- oder Cat-6-Kabel",
+      "2,5 bzw. 5 Gbit/s ausschließlich über neue Cat-8-Kabel",
+      "Bündelung von zwei oder fünf Gigabit-Ports zu einem Link",
+      "10 Gbit/s über Singlemode-Glasfaser bis 2,5 km"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Mantelfarbe haben Singlemode-Patchkabel üblicherweise?",
+    "a": "Gelb",
+    "a_full": "Singlemode-Kabel sind nach gängiger Kennzeichnung gelb. Multimode OM1 und OM2 sind orange, OM3 und OM4 aqua (OM4 teils violett), OM5 limettengrün. So erkennt man im Schrank schnell, ob Kabel und Transceiver zusammenpassen.",
+    "options": [
+      "Gelb",
+      "Aqua",
+      "Orange",
+      "Violett"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet einen APC-Stecker von einem UPC-Stecker bei Glasfaser?",
+    "a": "APC hat einen 8-Grad-Schrägschliff und ist grün",
+    "a_full": "Der schräge Schliff lenkt Rückreflexionen aus der Faser heraus, wichtig z.B. bei FTTH und Videoübertragung. UPC-Stecker sind gerade geschliffen und bei Singlemode meist blau. APC und UPC dürfen nicht zusammengesteckt werden, sonst steigt die Dämpfung stark und die Stirnflächen können beschädigt werden.",
+    "options": [
+      "APC hat einen 8-Grad-Schrägschliff und ist grün",
+      "APC ist nur für Multimode, UPC nur für Singlemode",
+      "APC führt zwei Fasern, UPC nur eine einzige",
+      "APC wird verschraubt, UPC nur eingerastet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein MPO-Stecker?",
+    "a": "Ein Mehrfaserstecker mit 12 oder mehr Fasern in einem Stecker",
+    "a_full": "MPO (bzw. die Marke MTP) bündelt viele Fasern, meist 12 oder 24, in einer rechteckigen Ferrule. Genutzt wird er für 40G und 100G mit parallelen Fasern (40GBASE-SR4 nutzt 8 von 12 Fasern) und für vorkonfektionierte Trunk-Kabel im Rechenzentrum.",
+    "options": [
+      "Ein Mehrfaserstecker mit 12 oder mehr Fasern in einem Stecker",
+      "Ein Kupferstecker für 10GBASE-T mit acht Kontakten",
+      "Ein Einzelfaserstecker mit Bajonettverschluss",
+      "Ein Adapter von Glasfaser auf Twisted Pair"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie unterscheiden sich LC- und SC-Stecker bei Glasfaser?",
+    "a": "LC ist kleiner (1,25-mm-Ferrule), SC größer (2,5-mm-Ferrule)",
+    "a_full": "Beide sind Steckverbinder mit Rastung zum einfachen Stecken und Ziehen. LC braucht nur etwa halb so viel Platz und ist Standard an SFP-Modulen und dichten Patchfeldern. SC findet man häufig an älteren Geräten und an Glasfaser-Hausanschlüssen.",
+    "options": [
+      "LC ist kleiner (1,25-mm-Ferrule), SC größer (2,5-mm-Ferrule)",
+      "LC ist nur für Singlemode, SC nur für Multimode geeignet",
+      "LC wird verschraubt, SC wird nur eingesteckt",
+      "LC führt zwölf Fasern, SC dagegen nur eine"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was prüft man mit dem Dämpfungsbudget einer Glasfaserstrecke?",
+    "a": "Ob die Streckendämpfung für die Transceiver noch zulässig ist",
+    "a_full": "Faserdämpfung, Steckverbindungen und Spleiße ergeben zusammen die Streckendämpfung. Sie muss kleiner sein als der Abstand zwischen Sendeleistung und Empfängerempfindlichkeit, mit Reserve für Alterung und Reparaturen. Ist sie zu hoch, treten Bitfehler oder Linkabbrüche auf.",
+    "options": [
+      "Ob die Streckendämpfung für die Transceiver noch zulässig ist",
+      "Wie viel Strom die Transceiver im Betrieb aufnehmen",
+      "Wie viele Fasern ein Kabel höchstens enthalten darf",
+      "Ob die Mantelfarbe zum verwendeten Fasertyp passt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Worin unterscheiden sich die Belegungen T568A und T568B?",
+    "a": "Das orange und das grüne Adernpaar sind vertauscht",
+    "a_full": "Bei T568B liegt das orange Paar auf Pin 1 und 2 und das grüne auf Pin 3 und 6, bei T568A ist es umgekehrt. Elektrisch sind beide gleichwertig. Wichtig ist, dass innerhalb einer Installation einheitlich aufgelegt wird.",
+    "options": [
+      "Das orange und das grüne Adernpaar sind vertauscht",
+      "Das blaue und das braune Adernpaar sind vertauscht",
+      "T568B hat zusätzlich einen Schirm um jedes Paar",
+      "T568A nutzt nur zwei der vier Adernpaare"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Crossover-Kabel?",
+    "a": "Ein Kabel mit T568A am einen und T568B am anderen Ende",
+    "a_full": "Dabei werden Sende- und Empfangsadern gekreuzt. Früher brauchte man es, um gleichartige Geräte wie zwei Switches oder zwei PCs direkt zu verbinden. Heute erkennen Ports das per Auto-MDI-X selbst, daher reicht meist ein normales 1:1-Patchkabel.",
+    "options": [
+      "Ein Kabel mit T568A am einen und T568B am anderen Ende",
+      "Ein Kabel mit T568B an beiden Enden",
+      "Ein Kabel mit Schirmauflage nur an einem Ende",
+      "Ein Kabel von RJ45 auf einen Glasfaserstecker"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie sind die Switches in einer Spine-Leaf-Architektur verbunden?",
+    "a": "Jeder Leaf-Switch ist mit jedem Spine-Switch verbunden",
+    "a_full": "Server und Speicher hängen an den Leaf-Switches. Leafs sind untereinander nicht direkt verbunden, Spines auch nicht. So liegt zwischen zwei Leafs immer genau ein Spine, und die Latenz ist für alle Wege gleich.",
+    "options": [
+      "Jeder Leaf-Switch ist mit jedem Spine-Switch verbunden",
+      "Jeder Leaf-Switch ist mit jedem anderen Leaf verbunden",
+      "Die Spine-Switches bilden gemeinsam einen Ring",
+      "Alle Leaf-Switches hängen an einem einzigen Spine"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein DAC-Kabel (Direct Attach Copper) im Rechenzentrum?",
+    "a": "Ein Twinax-Kupferkabel mit fest angebrachten SFP-Steckern an beiden Enden",
+    "a_full": "DAC-Kabel verbinden auf kurzen Strecken von wenigen Metern z.B. Server und Top-of-Rack-Switch. Sie sind günstiger und brauchen weniger Strom als zwei optische Transceiver mit Glasfaser. Für etwas längere Wege gibt es AOC (Active Optical Cable).",
+    "options": [
+      "Ein Twinax-Kupferkabel mit fest angebrachten SFP-Steckern an beiden Enden",
+      "Ein Glasfaserkabel mit MPO-Steckern für 100 Gbit/s über 10 km",
+      "Ein Konsolenkabel von RJ45 auf USB für die Ersteinrichtung",
+      "Ein Twisted-Pair-Kabel der Kategorie 8 mit RJ45-Steckern"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum setzt man im Rechenzentrum Spine-Leaf statt des klassischen Drei-Schichten-Modells ein?",
+    "a": "Es ist für viel Ost-West-Verkehr zwischen Servern ausgelegt",
+    "a_full": "In modernen Rechenzentren sprechen Server, VMs und Speicher vor allem untereinander. Im klassischen Modell aus Core, Distribution und Access blockiert STP redundante Wege. Spine-Leaf nutzt per ECMP alle Wege gleichzeitig und wächst einfach durch zusätzliche Spines oder Leafs.",
+    "options": [
+      "Es ist für viel Ost-West-Verkehr zwischen Servern ausgelegt",
+      "Es braucht weniger Kabel als jede andere Topologie",
+      "Es kommt ganz ohne Routing und IP-Adressen aus",
+      "Es ist vor allem für WLAN-Netze im Büro gedacht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchen Einstellungen verbindet man sich klassisch über den Konsolenport mit einem Switch?",
+    "a": "9600 Baud, 8 Datenbits, keine Parität, 1 Stoppbit (8N1)",
+    "a_full": "Viele Switches und Router, etwa von Cisco, erwarten diese Werte ohne Flusssteuerung. Man verbindet sich per Konsolenkabel oder USB-Konsole und einem Terminalprogramm wie PuTTY. Der Konsolenzugang funktioniert auch ohne IP-Konfiguration, z.B. bei der Ersteinrichtung.",
+    "options": [
+      "9600 Baud, 8 Datenbits, keine Parität, 1 Stoppbit (8N1)",
+      "115200 Baud, 7 Datenbits, gerade Parität, 2 Stoppbits",
+      "9600 Baud, 7 Datenbits, ungerade Parität, 1 Stoppbit",
+      "1200 Baud, 8 Datenbits, gerade Parität, 2 Stoppbits"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet running-config und startup-config bei Cisco-Geräten?",
+    "a": "Die running-config ist aktiv im RAM, die startup-config wird beim Start aus dem NVRAM geladen",
+    "a_full": "Befehle wirken sofort in der running-config. Nach einem Neustart sind sie verloren, wenn man sie nicht mit copy running-config startup-config (oder write memory) sichert. Umgekehrt kann man so eine fehlerhafte Änderung durch einen Neustart rückgängig machen.",
+    "options": [
+      "Die running-config ist aktiv im RAM, die startup-config wird beim Start aus dem NVRAM geladen",
+      "Die running-config liegt im NVRAM, die startup-config wird nur im RAM gehalten",
+      "Die running-config gilt für Router, die startup-config nur für Switches im Stack",
+      "Die running-config enthält die Passwörter, die startup-config nur die VLAN-Namen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Protokollnummer steht im IPv4-Protokollfeld für TCP?",
+    "a": "6",
+    "a_full": "Das Feld Protocol (bei IPv6 Next Header) sagt dem Empfänger, an welches Protokoll die Nutzdaten gehen. Wichtige Werte sind ICMP 1, TCP 6, UDP 17 und OSPF 89. Firewalls können auch nach diesem Wert filtern.",
+    "options": [
+      "6",
+      "1",
+      "17",
+      "8"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie groß ist der Header eines UDP-Datagramms?",
+    "a": "8 Byte",
+    "a_full": "Der UDP-Header besteht aus vier Feldern zu je 2 Byte: Quellport, Zielport, Länge und Prüfsumme. Sequenznummern und Bestätigungen fehlen, deshalb ist der Overhead viel kleiner als beim TCP-Header mit mindestens 20 Byte.",
+    "options": [
+      "8 Byte",
+      "20 Byte",
+      "16 Byte",
+      "4 Byte"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist die wichtigste Neuerung von HTTP/2 gegenüber HTTP/1.1?",
+    "a": "Mehrere Anfragen laufen gleichzeitig über eine TCP-Verbindung",
+    "a_full": "HTTP/1.1 arbeitet Anfragen je Verbindung nacheinander ab, Browser öffnen deshalb mehrere Verbindungen parallel. HTTP/2 teilt die Daten in binäre Frames, verschachtelt mehrere Streams (Multiplexing) und komprimiert die Header (HPACK).",
+    "options": [
+      "Mehrere Anfragen laufen gleichzeitig über eine TCP-Verbindung",
+      "Die Daten werden über UDP statt über TCP übertragen",
+      "Jede Anfrage bekommt ihre eigene neue TCP-Verbindung",
+      "Webseiten werden grundsätzlich unverschlüsselt übertragen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf welchem Transportprotokoll baut HTTP/3 auf?",
+    "a": "QUIC über UDP",
+    "a_full": "QUIC bringt Zuverlässigkeit, Staukontrolle und TLS 1.3 selbst mit und läuft über UDP, meist auf Port 443. Der Verbindungsaufbau ist schneller als TCP plus TLS, und ein verlorenes Paket bremst nur den betroffenen Stream.",
+    "options": [
+      "QUIC über UDP",
+      "TCP mit TLS 1.2",
+      "SCTP direkt über IP",
+      "UDP ohne Verschlüsselung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was sagt die erste Ziffer eines HTTP-Statuscodes aus?",
+    "a": "Die Klasse: 2xx Erfolg, 3xx Umleitung, 4xx Clientfehler, 5xx Serverfehler",
+    "a_full": "An der ersten Ziffer erkennt man sofort, wer das Problem hat. Bei 4xx liegt der Fehler in der Anfrage des Clients (z.B. 404), bei 5xx auf dem Server (z.B. 500). 1xx sind reine Zwischenmeldungen.",
+    "options": [
+      "Die Klasse: 2xx Erfolg, 3xx Umleitung, 4xx Clientfehler, 5xx Serverfehler",
+      "Die Klasse: 2xx Umleitung, 3xx Erfolg, 4xx Serverfehler, 5xx Clientfehler",
+      "Die HTTP-Version, mit der der Server die Antwort sendet",
+      "Die Anzahl der Weiterleitungen bis zum eigentlichen Ziel"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet die HTTP-Statuscodes 401 und 403?",
+    "a": "401 fordert eine Anmeldung, 403 verweigert den Zugriff trotz Anmeldung",
+    "a_full": "401 Unauthorized heißt: Es fehlt eine gültige Authentifizierung, der Client soll sich anmelden. 403 Forbidden heißt: Der Server kennt den Nutzer bzw. die Anfrage, erlaubt den Zugriff aber nicht. Eine erneute Anmeldung hilft dann nicht.",
+    "options": [
+      "401 fordert eine Anmeldung, 403 verweigert den Zugriff trotz Anmeldung",
+      "401 meldet einen Serverfehler, 403 eine abgelaufene Sitzung",
+      "401 bedeutet Umleitung, 403 bedeutet Seite nicht gefunden",
+      "401 gilt nur für HTTP, 403 nur für HTTPS-Verbindungen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet der HTTP-Statuscode 502 Bad Gateway?",
+    "a": "Ein Proxy oder Gateway bekam vom Backend-Server keine gültige Antwort",
+    "a_full": "Der Fehler tritt typisch hinter einem Reverse Proxy oder Loadbalancer auf, wenn der Anwendungsserver abgestürzt ist oder Unsinn liefert. Davon zu unterscheiden sind 503 (Dienst vorübergehend nicht verfügbar) und 504 (Backend antwortet zu langsam).",
+    "options": [
+      "Ein Proxy oder Gateway bekam vom Backend-Server keine gültige Antwort",
+      "Der Client hat eine formal ungültige Anfrage gesendet",
+      "Die angeforderte Seite wurde dauerhaft verschoben",
+      "Der Nutzer hat keine Berechtigung für die Seite"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet PUT von POST bei einer REST-API?",
+    "a": "PUT ersetzt eine Ressource unter fester URL, mehrfach gesendet ändert sich nichts",
+    "a_full": "PUT ist idempotent: Zehnmal gesendet ergibt denselben Zustand wie einmal. POST legt meist eine neue Ressource an, deren Adresse der Server vergibt. Doppelt gesendet entstehen zwei Einträge. PATCH ändert nur einzelne Felder.",
+    "options": [
+      "PUT ersetzt eine Ressource unter fester URL, mehrfach gesendet ändert sich nichts",
+      "PUT liest eine Ressource nur, POST löscht sie endgültig vom Server",
+      "PUT überträgt verschlüsselt, POST dagegen immer unverschlüsselt",
+      "PUT ist nur für Dateien, POST nur für JSON-Daten erlaubt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was kennzeichnet eine REST-API?",
+    "a": "Ressourcen haben URLs, Zugriff per HTTP-Methoden, jede Anfrage ist zustandslos",
+    "a_full": "Jede Ressource, z.B. /api/tickets/42, hat eine eigene Adresse. GET liest, POST legt an, PUT oder PATCH ändert, DELETE löscht. Der Server speichert keinen Sitzungszustand, jede Anfrage bringt alles Nötige mit, etwa ein Token. Daten werden meist als JSON übertragen.",
+    "options": [
+      "Ressourcen haben URLs, Zugriff per HTTP-Methoden, jede Anfrage ist zustandslos",
+      "Ein fester XML-Nachrichtenaufbau, der per WSDL beschrieben wird",
+      "Eine dauerhafte Sitzung, die der Server für jeden Client speichert",
+      "Ein eigenes Transportprotokoll neben TCP und UDP im Netz"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet einen Layer-4- von einem Layer-7-Loadbalancer?",
+    "a": "L4 verteilt nach IP und Port, L7 wertet Inhalte wie URL oder Header aus",
+    "a_full": "Ein Layer-4-Loadbalancer schaut nur auf Adressen und Ports. Er ist schnell, sieht aber nicht in die Daten hinein. Ein Layer-7-Loadbalancer versteht HTTP und kann z.B. /api an andere Server schicken als /bilder. Bei HTTPS muss er dafür TLS entschlüsseln.",
+    "options": [
+      "L4 verteilt nach IP und Port, L7 wertet Inhalte wie URL oder Header aus",
+      "L4 verteilt nach URL und Cookies, L7 nur nach der MAC-Adresse",
+      "L4 arbeitet nur im WLAN, L7 nur bei kabelgebundenen Netzen",
+      "L4 und L7 geben nur an, wie viele Server dahinter stehen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Content Delivery Network (CDN)?",
+    "a": "Verteilte Server, die Inhalte nah beim Nutzer zwischenspeichern",
+    "a_full": "Bilder, Videos und Skripte liegen als Kopie auf Edge-Servern in vielen Regionen. Nutzer werden per DNS oder Anycast zum nächsten Standort geleitet. Das senkt Ladezeiten, entlastet den Ursprungsserver und hilft gegen DDoS-Angriffe.",
+    "options": [
+      "Verteilte Server, die Inhalte nah beim Nutzer zwischenspeichern",
+      "Ein privates Netz nur für die Übertragung von E-Mails",
+      "Ein Verfahren zur verlustfreien Kompression von Videos",
+      "Ein zentrales Rechenzentrum, das alle Webseiten hostet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie unterscheiden sich die Verteilverfahren Round Robin und Least Connections beim Loadbalancing?",
+    "a": "Round Robin verteilt reihum, Least Connections an den am wenigsten belegten Server",
+    "a_full": "Round Robin ist einfach, berücksichtigt aber nicht, wie lange einzelne Anfragen dauern. Least Connections schickt neue Anfragen an den Server mit den wenigsten aktiven Verbindungen. Mit einer Gewichtung bekommen stärkere Server bei beiden Verfahren mehr Last.",
+    "options": [
+      "Round Robin verteilt reihum, Least Connections an den am wenigsten belegten Server",
+      "Round Robin nach Standort des Clients, Least Connections nach Uhrzeit",
+      "Round Robin verschlüsselt die Anfragen, Least Connections dagegen nicht",
+      "Round Robin gilt nur für UDP, Least Connections nur für DNS-Anfragen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Woran erkennt ein Webserver mit nur einer IP-Adresse, welche von mehreren Webseiten angefragt wird?",
+    "a": "Am Host-Header der HTTP-Anfrage",
+    "a_full": "Seit HTTP/1.1 sendet der Browser den Hostnamen im Header Host mit, der Server wählt danach die passende Seite (namensbasierte virtuelle Hosts). Bei HTTPS nennt der Client den Namen schon im TLS-Handshake per SNI, damit der Server das passende Zertifikat ausliefert.",
+    "options": [
+      "Am Host-Header der HTTP-Anfrage",
+      "An der MAC-Adresse des Clients",
+      "Am Quellport der TCP-Verbindung",
+      "An der TTL des ankommenden Pakets"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeuten die LACP-Modi active und passive?",
+    "a": "Active sendet selbst LACP-Pakete, passive antwortet nur darauf",
+    "a_full": "Mindestens eine Seite muss auf active stehen, sonst kommt das Bündel nicht zustande. LACP prüft außerdem laufend, ob die Gegenseite richtig verkabelt ist, und nimmt fehlerhafte Links aus dem Bündel.",
+    "options": [
+      "Active sendet selbst LACP-Pakete, passive antwortet nur darauf",
+      "Active leitet Daten weiter, passive dient nur als Reserve",
+      "Active nutzt Glasfaser, passive nur Kupferkabel",
+      "Active verschlüsselt das Bündel, passive dagegen nicht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was passiert bei Port-Security im Modus shutdown, wenn eine fremde MAC-Adresse auftaucht?",
+    "a": "Der Port geht in den Zustand err-disabled und leitet nichts mehr weiter",
+    "a_full": "shutdown ist bei Cisco der Standardmodus. Der Port bleibt gesperrt, bis ein Admin ihn neu aktiviert oder ein Recovery-Timer greift. Im Modus restrict werden nur die fremden Frames verworfen und protokolliert, im Modus protect werden sie still verworfen.",
+    "options": [
+      "Der Port geht in den Zustand err-disabled und leitet nichts mehr weiter",
+      "Nur die fremden Frames werden still verworfen, sonst nichts",
+      "Der Switch startet komplett neu und lernt alle Adressen neu",
+      "Der Port wechselt automatisch in ein eigenes Gast-VLAN"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was fügt ein DHCP-Relay-Agent mit Option 82 in eine Anfrage ein?",
+    "a": "Angaben zu Switch und Port, an dem der Client angeschlossen ist",
+    "a_full": "Option 82 heißt Relay Agent Information. Sie enthält z.B. eine Circuit-ID (Port bzw. VLAN) und eine Remote-ID (Switch). Der DHCP-Server kann danach gezielt Adressen vergeben und protokollieren, wo ein Gerät hängt.",
+    "options": [
+      "Angaben zu Switch und Port, an dem der Client angeschlossen ist",
+      "Die MAC-Adresse des zuständigen DNS-Servers",
+      "Ein Kennwort für die Anmeldung am DHCP-Server",
+      "Die Lease-Dauer der zuletzt vergebenen Adresse"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist AppLocker unter Windows?",
+    "a": "Eine Funktion, die festlegt, welche Programme und Skripte starten dürfen",
+    "a_full": "AppLocker wird meist per Gruppenrichtlinie verteilt. Regeln erlauben oder verbieten Programme, Skripte, Installer und DLLs nach Herausgeber, Pfad oder Dateihash. Die Regeln können für bestimmte Benutzer oder Gruppen gelten.",
+    "options": [
+      "Eine Funktion, die festlegt, welche Programme und Skripte starten dürfen",
+      "Ein Dienst, der die Installation von Windows-Updates zentral sperrt",
+      "Eine Funktion, die Laufwerke mit einem Kennwort verschlüsselt",
+      "Ein Werkzeug, das gesperrte Benutzerkonten automatisch freischaltet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet WDAC (App Control for Business) von AppLocker?",
+    "a": "WDAC wirkt systemweit bis in den Kernel und gilt auch für Administratoren",
+    "a_full": "Windows Defender Application Control prüft Code schon beim Laden, auch Treiber. Die Richtlinie gilt für das ganze Gerät und lässt sich von lokalen Admins nicht einfach umgehen. AppLocker ist einfacher, kann aber nach Benutzer oder Gruppe unterscheiden.",
+    "options": [
+      "WDAC wirkt systemweit bis in den Kernel und gilt auch für Administratoren",
+      "WDAC gilt nur für Skripte, AppLocker nur für Programme",
+      "WDAC ist die ältere Variante und wird nicht mehr unterstützt",
+      "WDAC nutzt nur Pfadregeln, AppLocker nur Dateihashes"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was schützt Windows Defender Credential Guard?",
+    "a": "Anmeldegeheimnisse wie NTLM-Hashes und Kerberos-Tickets",
+    "a_full": "Credential Guard nutzt virtualisierungsbasierte Sicherheit (VBS). Die Geheimnisse liegen in einem vom Hypervisor isolierten Bereich statt direkt im Prozess LSASS. Werkzeuge wie Mimikatz kommen selbst mit Admin-Rechten nicht mehr heran. Das erschwert Pass-the-Hash.",
+    "options": [
+      "Anmeldegeheimnisse wie NTLM-Hashes und Kerberos-Tickets",
+      "Die Festplatte bei Diebstahl durch Verschlüsselung",
+      "Den Browser vor gefälschten Serverzertifikaten",
+      "Das BIOS vor unerlaubten Änderungen der Einstellungen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt das Tiering-Modell im Active Directory?",
+    "a": "Die Trennung der Admin-Konten nach Ebenen: Tier 0, Tier 1 und Tier 2",
+    "a_full": "Tier 0 umfasst Domänencontroller und alles, was das AD steuert. Tier 1 sind Server und Anwendungen, Tier 2 Arbeitsplätze. Ein Admin-Konto meldet sich nur in seiner eigenen Ebene an. So landen keine Anmeldedaten von Domänen-Admins auf einem kompromittierten Client.",
+    "options": [
+      "Die Trennung der Admin-Konten nach Ebenen: Tier 0, Tier 1 und Tier 2",
+      "Die Aufteilung der Daten auf schnelle und langsame Speicher",
+      "Die Staffelung der Kennwortlänge nach Abteilung",
+      "Die Reihenfolge, in der Domänencontroller replizieren"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bewirkt die Gruppe \"Protected Users\" im Active Directory?",
+    "a": "Strengere Anmelderegeln, z.B. kein NTLM und kein Zwischenspeichern von Anmeldedaten",
+    "a_full": "Für Mitglieder sind NTLM, schwache Verfahren wie RC4 und DES sowie die Kerberos-Delegierung gesperrt. Anmeldedaten werden nicht zwischengespeichert, Kerberos-Tickets gelten nur 4 Stunden. Die Gruppe eignet sich für Admin-Konten, nicht für Dienst- oder Computerkonten.",
+    "options": [
+      "Strengere Anmelderegeln, z.B. kein NTLM und kein Zwischenspeichern von Anmeldedaten",
+      "Mitglieder werden vom Kennwortablauf und der Kontosperre ausgenommen",
+      "Mitglieder dürfen sich ausschließlich ohne MFA am Client anmelden",
+      "Mitglieder erhalten lokale Admin-Rechte auf allen Servern der Domäne"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Golden-Ticket-Angriff?",
+    "a": "Ein gefälschtes Kerberos-TGT, erstellt mit dem Hash des krbtgt-Kontos",
+    "a_full": "Das Konto krbtgt signiert alle Ticket Granting Tickets der Domäne. Wer seinen Hash erbeutet hat, kann Tickets für beliebige Benutzer und Gruppen selbst ausstellen. Damit behält der Angreifer Vollzugriff, auch wenn die Kennwörter der Admins geändert werden.",
+    "options": [
+      "Ein gefälschtes Kerberos-TGT, erstellt mit dem Hash des krbtgt-Kontos",
+      "Ein gestohlenes Zertifikat einer öffentlichen Root-CA",
+      "Ein erratenes Kennwort eines normalen Benutzerkontos",
+      "Ein manipulierter DNS-Eintrag für den Domänencontroller"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum setzt man das Kennwort des krbtgt-Kontos nach einem Angriff zweimal zurück?",
+    "a": "Weil das AD auch das vorherige Kennwort noch akzeptiert",
+    "a_full": "Das krbtgt-Konto kennt das aktuelle und das vorherige Kennwort, damit laufende Tickets gültig bleiben. Erst nach dem zweiten Wechsel ist der erbeutete Hash wertlos. Zwischen beiden Wechseln wartet man die Replikation und die Ticket-Lebensdauer ab (standardmäßig 10 Stunden).",
+    "options": [
+      "Weil das AD auch das vorherige Kennwort noch akzeptiert",
+      "Weil der erste Wechsel nur auf einem einzigen DC gilt",
+      "Weil das Kennwort sonst nach einem Tag zurückspringt",
+      "Weil Windows beim ersten Mal nur die Länge prüft"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür nutzt man secpol.msc unter Windows?",
+    "a": "Zum Bearbeiten der lokalen Sicherheitsrichtlinie eines Rechners",
+    "a_full": "In der lokalen Sicherheitsrichtlinie stellt man z.B. Kennwort- und Kontosperrungsrichtlinien, Benutzerrechte und die Überwachung ein. Das ist bei Rechnern ohne Domäne nützlich. In einer Domäne haben Gruppenrichtlinien Vorrang vor diesen lokalen Einstellungen.",
+    "options": [
+      "Zum Bearbeiten der lokalen Sicherheitsrichtlinie eines Rechners",
+      "Zum Verwalten der Zertifikate des lokalen Computers",
+      "Zum Einrichten der Windows-Firewall per Assistent",
+      "Zum Anzeigen aller installierten Sicherheitsupdates"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was legt die Überwachungsrichtlinie (Audit Policy) unter Windows fest?",
+    "a": "Welche sicherheitsrelevanten Ereignisse im Sicherheitsprotokoll landen",
+    "a_full": "Man bestimmt z.B., ob erfolgreiche und fehlgeschlagene Anmeldungen, Änderungen an Gruppen oder Dateizugriffe protokolliert werden. Ohne passende Überwachung fehlen nach einem Vorfall die Spuren. Zu viel Protokollierung erzeugt aber unnötige Datenmengen.",
+    "options": [
+      "Welche sicherheitsrelevanten Ereignisse im Sicherheitsprotokoll landen",
+      "Wie oft Benutzer ihr Kennwort im Jahr ändern müssen",
+      "Welche Programme Benutzer auf dem Rechner starten dürfen",
+      "Wann der Virenscanner eine vollständige Prüfung startet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie arbeitet eine Dateiintegritätsprüfung wie AIDE oder Tripwire?",
+    "a": "Sie vergleicht Hashwerte und Attribute von Dateien mit einer Referenzdatenbank",
+    "a_full": "Im sauberen Zustand wird eine Datenbank mit Hashwerten, Rechten und Besitzern wichtiger Dateien angelegt. Regelmäßige Prüfungen melden jede Abweichung, z.B. eine veränderte Systemdatei. Die Datenbank selbst sollte schreibgeschützt oder extern liegen.",
+    "options": [
+      "Sie vergleicht Hashwerte und Attribute von Dateien mit einer Referenzdatenbank",
+      "Sie verschlüsselt alle Systemdateien mit einem geheimen Schlüssel",
+      "Sie sucht im Netzwerk nach offenen Ports und laufenden Diensten",
+      "Sie stellt gelöschte Dateien aus dem Papierkorb wieder her"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet \"rootless\" bei Containern?",
+    "a": "Engine und Container laufen ohne Root-Rechte auf dem Host",
+    "a_full": "Bei rootless Podman oder Docker gehört alles einem normalen Benutzer. Bricht ein Angreifer aus dem Container aus, hat er auf dem Host nur dessen eingeschränkte Rechte. Manche Funktionen, z.B. Ports unter 1024, brauchen dann zusätzliche Einstellungen.",
+    "options": [
+      "Engine und Container laufen ohne Root-Rechte auf dem Host",
+      "Der Container enthält kein eigenes Dateisystem mehr",
+      "Der Container startet ganz ohne ein Basis-Image",
+      "Der Container hat keinerlei Zugriff auf das Netzwerk"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was leistet das Scannen von Container-Images, z.B. mit Trivy?",
+    "a": "Es findet bekannte Schwachstellen in Paketen und Bibliotheken des Images",
+    "a_full": "Der Scanner gleicht die Pakete im Image mit CVE-Datenbanken ab. Oft läuft der Scan in der CI/CD-Pipeline, und Images mit kritischen Lücken werden nicht ausgerollt. Da ständig neue CVEs erscheinen, scannt man vorhandene Images regelmäßig neu.",
+    "options": [
+      "Es findet bekannte Schwachstellen in Paketen und Bibliotheken des Images",
+      "Es verkleinert das Image durch Entfernen ungenutzter Dateien",
+      "Es misst, ob das Image schneller startet als andere Images",
+      "Es wandelt das Image in eine virtuelle Maschine um"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient ein Secrets-Management-System wie HashiCorp Vault?",
+    "a": "Zum zentralen, geschützten Verwalten von Passwörtern und Schlüsseln",
+    "a_full": "Anwendungen holen ihre Zugangsdaten zur Laufzeit aus dem Tresor, statt sie im Code oder in Konfigurationsdateien abzulegen. Jeder Zugriff ist per Richtlinie geregelt und wird protokolliert. Vault kann auch kurzlebige, automatisch erzeugte Zugangsdaten ausgeben.",
+    "options": [
+      "Zum zentralen, geschützten Verwalten von Passwörtern und Schlüsseln",
+      "Zum Sichern ganzer virtueller Maschinen auf Band",
+      "Zum Verteilen von Softwareupdates an alle Clients im Netz",
+      "Zum Überwachen der CPU- und RAM-Auslastung von Servern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist zu tun, wenn ein Passwort versehentlich in ein Git-Repository eingecheckt wurde?",
+    "a": "Das Passwort sofort ändern, denn es bleibt in der Historie erhalten",
+    "a_full": "Ein neuer Commit, der die Zeile löscht, entfernt das Passwort nicht aus älteren Versionen. Jeder mit Zugriff auf das Repository kann es weiter finden. Deshalb wird das Geheimnis zuerst ungültig gemacht und ersetzt, danach bereinigt man die Historie.",
+    "options": [
+      "Das Passwort sofort ändern, denn es bleibt in der Historie erhalten",
+      "Die Zeile löschen und einen neuen Commit erstellen",
+      "Das Repository umbenennen, damit es niemand findet",
+      "Nichts, weil Git Passwörter automatisch verschlüsselt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum nutzt man das Root-Konto (Hauptkonto) beim Cloud-Anbieter nicht für die tägliche Arbeit?",
+    "a": "Es hat uneingeschränkte Rechte, die sich kaum begrenzen lassen",
+    "a_full": "Mit dem Root-Konto kann man alles tun, bis hin zum Löschen aller Ressourcen oder des ganzen Kontos. Man schützt es mit starker MFA und nutzt es nur für wenige Sonderaufgaben. Für die Arbeit legt man Benutzer oder Rollen mit genau den nötigen Rechten an.",
+    "options": [
+      "Es hat uneingeschränkte Rechte, die sich kaum begrenzen lassen",
+      "Es ist deutlich langsamer als normale Benutzerkonten",
+      "Es verursacht zusätzliche Kosten bei jeder Anmeldung",
+      "Es darf grundsätzlich keine virtuellen Maschinen starten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum sind öffentlich zugängliche Buckets im Cloud-Objektspeicher ein häufiges Risiko?",
+    "a": "Durch eine Fehlkonfiguration kann jeder im Internet die Dateien abrufen",
+    "a_full": "Viele Datenlecks entstanden, weil ein Bucket mit Backups oder Kundendaten versehentlich öffentlich lesbar war. Anbieter bieten dafür Sperren wie \"Block Public Access\" auf Kontoebene. Regelmäßige Prüfungen der Konfiguration decken solche Fehler auf.",
+    "options": [
+      "Durch eine Fehlkonfiguration kann jeder im Internet die Dateien abrufen",
+      "Öffentliche Buckets löschen ihre Daten nach 24 Stunden",
+      "Öffentliche Buckets werden immer unverschlüsselt gespeichert",
+      "Öffentliche Buckets verdoppeln automatisch die Speicherkosten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet BYOK (Bring Your Own Key) in der Cloud?",
+    "a": "Der Kunde erzeugt den Schlüssel selbst und importiert ihn in den Schlüsseldienst",
+    "a_full": "Normalerweise erzeugt der Key Management Service (KMS) des Anbieters die Schlüssel. Bei BYOK stammt der Schlüssel z.B. aus dem eigenen HSM des Kunden. So behält der Kunde mehr Kontrolle über Herkunft, Sicherung und Widerruf des Schlüssels.",
+    "options": [
+      "Der Kunde erzeugt den Schlüssel selbst und importiert ihn in den Schlüsseldienst",
+      "Der Kunde stellt eigene Server in das Rechenzentrum des Anbieters",
+      "Der Kunde nutzt sein privates Gerät für den Zugriff auf Firmendaten",
+      "Der Kunde verzichtet auf die Verschlüsselung seiner Cloud-Daten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Envelope Encryption in einem KMS?",
+    "a": "Daten werden mit einem Datenschlüssel verschlüsselt, den ein Hauptschlüssel schützt",
+    "a_full": "Der Hauptschlüssel verlässt das KMS nie. Die Anwendung verschlüsselt die Daten mit einem Datenschlüssel und speichert diesen nur verschlüsselt daneben. Beim Wechsel des Hauptschlüssels muss man nur die Datenschlüssel neu verschlüsseln, nicht alle Daten.",
+    "options": [
+      "Daten werden mit einem Datenschlüssel verschlüsselt, den ein Hauptschlüssel schützt",
+      "Daten werden vor dem E-Mail-Versand in ein verschlüsseltes ZIP-Archiv gepackt",
+      "Daten werden zweimal nacheinander mit demselben geheimen Schlüssel verschlüsselt",
+      "Daten werden nur bei der Übertragung verschlüsselt, aber nicht beim Speichern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind CIS Benchmarks?",
+    "a": "Frei verfügbare Härtungsempfehlungen für Betriebssysteme, Dienste und Cloud",
+    "a_full": "Das Center for Internet Security veröffentlicht konkrete Einstellungen, z.B. für Windows Server, Linux oder Kubernetes. Jede Empfehlung ist begründet und prüfbar. Mit Werkzeugen lässt sich automatisch messen, wie weit ein System davon abweicht.",
+    "options": [
+      "Frei verfügbare Härtungsempfehlungen für Betriebssysteme, Dienste und Cloud",
+      "Leistungstests, die die Geschwindigkeit von Servern vergleichen",
+      "Zertifikate, die ein Unternehmen nach einem Audit erhält",
+      "Preislisten für Sicherheitssoftware verschiedener Hersteller"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine SBOM (Software Bill of Materials)?",
+    "a": "Eine maschinenlesbare Liste aller Komponenten einer Software",
+    "a_full": "Die SBOM nennt Komponenten mit Name, Version und Lizenz, z.B. im Format SPDX oder CycloneDX. Wird eine Schwachstelle in einer Bibliothek bekannt, sieht man sofort, welche Produkte betroffen sind. Der Cyber Resilience Act der EU verlangt SBOMs für viele Produkte.",
+    "options": [
+      "Eine maschinenlesbare Liste aller Komponenten einer Software",
+      "Eine Rechnung über alle gekauften Softwarelizenzen",
+      "Eine Schritt-für-Schritt-Anleitung zur Installation",
+      "Eine Liste aller registrierten Benutzer einer Anwendung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum setzt man im Serverraum oft eine Gaslöschanlage statt Sprinkler ein?",
+    "a": "Gas löscht ohne Wasser und hinterlässt keine Rückstände an der Technik",
+    "a_full": "Inertgase wie Stickstoff oder Argon senken den Sauerstoffanteil so weit, dass das Feuer erstickt. Chemische Löschgase entziehen dem Feuer Wärme. Vor dem Fluten ertönt ein Alarm mit Vorwarnzeit, damit Personen den Raum verlassen können.",
+    "options": [
+      "Gas löscht ohne Wasser und hinterlässt keine Rückstände an der Technik",
+      "Gas kühlt die Server dauerhaft und ersetzt die Klimaanlage",
+      "Gas ist billiger als Wasser und muss nie gewartet werden",
+      "Gas macht eine Brandmeldeanlage im Raum überflüssig"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Umgebungswerte sollte man im Serverraum dauerhaft überwachen?",
+    "a": "Temperatur, Luftfeuchtigkeit und Wassereintritt",
+    "a_full": "Zu hohe Temperatur verkürzt die Lebensdauer der Hardware und führt zu Notabschaltungen. Zu trockene Luft begünstigt statische Entladungen, zu feuchte Luft Kondenswasser. Sensoren melden Grenzwertüberschreitungen z.B. per E-Mail, SNMP oder SMS.",
+    "options": [
+      "Temperatur, Luftfeuchtigkeit und Wassereintritt",
+      "Helligkeit, Geräuschpegel und Luftdruck",
+      "Luftdruck, Staubgehalt und Lichtfarbe",
+      "Geräuschpegel, Helligkeit und Magnetfeld"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was geschieht mit personenbezogenen Daten, deren Zweck entfallen ist, die aber einer Aufbewahrungspflicht unterliegen?",
+    "a": "Sie werden gesperrt und nach Ablauf der Frist gelöscht",
+    "a_full": "Steuer- und handelsrechtliche Pflichten verlangen z.B. die Aufbewahrung von Rechnungen. Bis zum Fristende dürfen die Daten nur noch für diesen Zweck genutzt werden, nicht für Werbung oder Auswertungen. Das Löschkonzept legt fest, wann welche Daten gesperrt und gelöscht werden.",
+    "options": [
+      "Sie werden gesperrt und nach Ablauf der Frist gelöscht",
+      "Sie werden sofort gelöscht, die Pflicht entfällt",
+      "Sie dürfen weiter für alle Zwecke genutzt werden",
+      "Sie werden der Aufsichtsbehörde übergeben"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was muss ein Unternehmen tun, wenn eine DSFA ein hohes Restrisiko zeigt, das sich nicht senken lässt?",
+    "a": "Vor Beginn der Verarbeitung die Aufsichtsbehörde konsultieren",
+    "a_full": "Nach Art. 36 DSGVO ist die Aufsichtsbehörde vorab einzubeziehen, wenn trotz geplanter Maßnahmen ein hohes Risiko bleibt. Die Behörde kann Empfehlungen geben oder die Verarbeitung untersagen. Erst danach darf die Verarbeitung starten.",
+    "options": [
+      "Vor Beginn der Verarbeitung die Aufsichtsbehörde konsultieren",
+      "Die Betroffenen nachträglich per Newsletter informieren",
+      "Die Verarbeitung starten und nach einem Jahr neu bewerten",
+      "Den Datenschutzbeauftragten abberufen und neu bestellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Conditional Access (bedingter Zugriff), z.B. in Microsoft Entra ID?",
+    "a": "Regeln, die je nach Benutzer, Gerät, Ort und Risiko Zugriff gewähren",
+    "a_full": "Jede Anmeldung wird anhand von Signalen bewertet, etwa ob das Gerät verwaltet ist oder aus welchem Land der Zugriff kommt. Danach wird der Zugriff gewährt, nur mit MFA erlaubt oder blockiert. Das ist ein zentraler Baustein von Zero Trust.",
+    "options": [
+      "Regeln, die je nach Benutzer, Gerät, Ort und Risiko Zugriff gewähren",
+      "Ein VPN, das alle Verbindungen über die Firmenzentrale leitet",
+      "Eine Dateiberechtigung, die Benutzern nur Lesezugriff erlaubt",
+      "Ein Backup, das nur unter bestimmten Bedingungen startet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient ein Notfallkonto (Break-Glass-Konto) in einer Cloud-Umgebung?",
+    "a": "Um bei ausgesperrten Admins wieder Zugriff zu bekommen",
+    "a_full": "Das Konto ist von Conditional-Access-Regeln ausgenommen und hat ein sehr langes, sicher verwahrtes Kennwort oder einen eigenen FIDO2-Schlüssel. Es wird nur im Notfall genutzt, jede Anmeldung löst einen Alarm aus. So sperrt eine fehlerhafte Richtlinie nicht alle Admins aus.",
+    "options": [
+      "Um bei ausgesperrten Admins wieder Zugriff zu bekommen",
+      "Um Gästen ohne Anmeldung einen WLAN-Zugang zu geben",
+      "Um tägliche Routineaufgaben ohne MFA zu erledigen",
+      "Um Backups ohne Verschlüsselung schneller zu erstellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet XDR von EDR?",
+    "a": "XDR verknüpft Daten von Endgeräten, Netzwerk, E-Mail und Cloud",
+    "a_full": "EDR überwacht einzelne Endpunkte. XDR (Extended Detection and Response) führt Signale aus mehreren Quellen zu einem Angriffsbild zusammen. So erkennt man z.B., dass eine Phishing-Mail, eine Anmeldung und ein Prozess auf dem Client zum selben Angriff gehören.",
+    "options": [
+      "XDR verknüpft Daten von Endgeräten, Netzwerk, E-Mail und Cloud",
+      "XDR überwacht nur Smartphones und Tablets statt PCs",
+      "XDR ersetzt die Firewall durch eine reine Cloud-Lösung",
+      "XDR erkennt Angriffe ausschließlich über Signaturen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist SOAR?",
+    "a": "Eine Plattform, die Sicherheitsabläufe per Playbook automatisiert",
+    "a_full": "SOAR steht für Security Orchestration, Automation and Response. Bei einem Alarm führt ein Playbook Schritte automatisch aus, z.B. Anreichern mit Threat Intelligence, Isolieren eines Rechners oder Sperren eines Kontos. Das entlastet die Analysten im SOC.",
+    "options": [
+      "Eine Plattform, die Sicherheitsabläufe per Playbook automatisiert",
+      "Ein Protokoll zur verschlüsselten Übertragung von Logs",
+      "Ein Standard zur Bewertung von Schwachstellen",
+      "Ein Verfahren zur Wiederherstellung gelöschter Dateien"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Sicherheitsvorteil bietet ein gruppenverwaltetes Dienstkonto (gMSA) im Active Directory?",
+    "a": "Das Kennwort ist lang, zufällig und wird automatisch gewechselt",
+    "a_full": "Bei einem gMSA erzeugt und wechselt das AD das Kennwort selbst, standardmäßig alle 30 Tage. Kein Admin kennt es, und es steht in keinem Skript. Angriffe wie Kerberoasting, bei denen schwache Dienstkennwörter offline geknackt werden, laufen damit ins Leere.",
+    "options": [
+      "Das Kennwort ist lang, zufällig und wird automatisch gewechselt",
+      "Das Konto braucht gar kein Kennwort und keine Anmeldung",
+      "Das Konto erhält automatisch Rechte eines Domänen-Admins",
+      "Das Kennwort wird im Klartext im AD gespeichert und gesichert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet Responsible Disclosure (koordinierte Offenlegung)?",
+    "a": "Die Lücke erst dem Hersteller melden, später veröffentlichen",
+    "a_full": "Der Finder gibt dem Hersteller Zeit für einen Patch, üblich sind etwa 90 Tage. Danach werden die Details veröffentlicht, meist zusammen mit dem Update. So werden Nutzer geschützt und Hersteller trotzdem zum Handeln gebracht.",
+    "options": [
+      "Die Lücke erst dem Hersteller melden, später veröffentlichen",
+      "Eine Lücke sofort öffentlich machen, damit alle gewarnt sind",
+      "Eine Lücke gegen Bezahlung an den Meistbietenden verkaufen",
+      "Eine Lücke dauerhaft geheim halten und selbst ausnutzen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was enthält das Verzeichnis /proc unter Linux?",
+    "a": "Ein virtuelles Dateisystem mit Informationen über Prozesse und Kernel",
+    "a_full": "/proc liegt nicht auf der Festplatte, der Kernel erzeugt die Inhalte beim Lesen. /proc/cpuinfo zeigt z.B. die CPU, /proc/meminfo den Speicher, /proc/<PID> die Daten eines Prozesses.",
+    "options": [
+      "Ein virtuelles Dateisystem mit Informationen über Prozesse und Kernel",
+      "Die installierten Programme",
+      "Die Protokolldateien des Systems",
+      "Die Heimatverzeichnisse der Benutzer"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht das Verzeichnis /dev unter Linux?",
+    "a": "Gerätedateien für Hardware wie Festplatten und Terminals",
+    "a_full": "Unter Linux wird Hardware über Dateien angesprochen, z.B. /dev/sda (erste Festplatte), /dev/nvme0n1 (NVMe-SSD) oder /dev/null (verwirft alle Daten).",
+    "options": [
+      "Gerätedateien für Hardware wie Festplatten und Terminals",
+      "Entwicklerwerkzeuge und Compiler",
+      "Temporäre Dateien",
+      "Konfigurationsdateien der Dienste"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was liegt unter Linux im Verzeichnis /boot?",
+    "a": "Kernel, Initramfs und Bootloader-Dateien",
+    "a_full": "In /boot liegen der Linux-Kernel (vmlinuz), das Initramfs und die Konfiguration des Bootloaders GRUB. Ist /boot voll, schlagen Kernel-Updates fehl.",
+    "options": [
+      "Kernel, Initramfs und Bootloader-Dateien",
+      "Die Startskripte der Benutzer",
+      "Die Sicherungen des Systems",
+      "Die Protokolle des letzten Starts"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür ist das Verzeichnis /opt unter Linux gedacht?",
+    "a": "Für zusätzliche Software von Drittanbietern",
+    "a_full": "Programme, die nicht über den Paketmanager der Distribution kommen, werden oft vollständig unter /opt/<name> installiert. So bleiben sie vom übrigen System getrennt.",
+    "options": [
+      "Für zusätzliche Software von Drittanbietern",
+      "Für optionale Kernel-Module",
+      "Für Benutzerdaten",
+      "Für temporäre Dateien"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet einen symbolischen Link von einem Hardlink?",
+    "a": "Der Symlink verweist auf einen Pfad, der Hardlink auf dieselben Daten (Inode)",
+    "a_full": "ln -s ziel link erzeugt einen Verweis auf einen Pfad, er wird ungültig, wenn das Ziel gelöscht wird, und darf auf Ordner und andere Dateisysteme zeigen. Ein Hardlink (ln ziel link) ist ein zweiter Name für dieselbe Inode im selben Dateisystem.",
+    "options": [
+      "Der Symlink verweist auf einen Pfad, der Hardlink auf dieselben Daten (Inode)",
+      "Ein Hardlink ist eine Kopie der Datei",
+      "Ein Symlink funktioniert nur unter Windows",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet kill -15 von kill -9?",
+    "a": "-15 bittet den Prozess, sich sauber zu beenden, -9 beendet ihn sofort",
+    "a_full": "SIGTERM (15) ist das Standardsignal. Der Prozess kann aufräumen und Daten speichern. SIGKILL (9) beendet ihn sofort durch den Kernel, ohne dass er reagieren kann. -9 ist nur der letzte Ausweg.",
+    "options": [
+      "-15 bittet den Prozess, sich sauber zu beenden, -9 beendet ihn sofort",
+      "-9 startet den Prozess neu, -15 beendet ihn",
+      "-15 ist stärker als -9",
+      "Beide pausieren den Prozess nur"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt der Befehl nice unter Linux?",
+    "a": "Er startet einen Prozess mit geänderter CPU-Priorität",
+    "a_full": "Der nice-Wert reicht von -20 (höchste Priorität) bis 19 (niedrigste). Normale Benutzer dürfen die Priorität nur senken. Mit renice ändert man laufende Prozesse.",
+    "options": [
+      "Er startet einen Prozess mit geänderter CPU-Priorität",
+      "Er beendet hängende Prozesse freundlich",
+      "Er räumt temporäre Dateien auf",
+      "Er zeigt die Systemauslastung an"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet systemctl start von systemctl enable?",
+    "a": "start startet den Dienst jetzt, enable startet ihn künftig beim Booten",
+    "a_full": "systemctl start dienst startet sofort, überlebt aber keinen Neustart. systemctl enable dienst aktiviert den automatischen Start beim Booten. systemctl enable --now erledigt beides.",
+    "options": [
+      "start startet den Dienst jetzt, enable startet ihn künftig beim Booten",
+      "enable startet sofort, start erst beim Booten",
+      "Beide bewirken dasselbe",
+      "start installiert den Dienst, enable startet ihn"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl fügt man einen Linux-Benutzer einer weiteren Gruppe hinzu, ohne andere Gruppen zu verlieren?",
+    "a": "usermod -aG gruppe benutzer",
+    "a_full": "-G setzt die Liste der Zusatzgruppen, -a (append) hängt die neue Gruppe an. Ohne -a würden alle bisherigen Zusatzgruppen ersetzt. Die Änderung wirkt nach der nächsten Anmeldung.",
+    "options": [
+      "usermod -aG gruppe benutzer",
+      "usermod -G gruppe benutzer",
+      "groupadd benutzer gruppe",
+      "chgrp benutzer gruppe"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was legt die umask unter Linux fest?",
+    "a": "Welche Rechte bei neu angelegten Dateien und Ordnern entzogen werden",
+    "a_full": "Die umask wird von den Standardrechten (666 für Dateien, 777 für Ordner) abgezogen. Bei umask 022 erhalten neue Dateien 644 und Ordner 755.",
+    "options": [
+      "Welche Rechte bei neu angelegten Dateien und Ordnern entzogen werden",
+      "Die maximale Dateigröße",
+      "Die Netzwerkmaske des Rechners",
+      "Die Anzahl gleichzeitiger Benutzer"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt das SUID-Bit an einer ausführbaren Datei?",
+    "a": "Das Programm läuft mit den Rechten des Dateibesitzers",
+    "a_full": "Beispiel: /usr/bin/passwd gehört root und hat das SUID-Bit, damit normale Benutzer ihr Passwort in /etc/shadow ändern können. SUID-Programme sind sicherheitskritisch und sollten regelmäßig geprüft werden.",
+    "options": [
+      "Das Programm läuft mit den Rechten des Dateibesitzers",
+      "Die Datei kann nicht gelöscht werden",
+      "Die Datei wird verschlüsselt",
+      "Die Datei läuft nur als Gast"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient das Sticky Bit am Verzeichnis /tmp?",
+    "a": "Jeder darf dort Dateien anlegen, aber nur eigene löschen",
+    "a_full": "Ohne Sticky Bit könnte in einem für alle beschreibbaren Ordner jeder die Dateien anderer löschen. Man erkennt es am t in drwxrwxrwt.",
+    "options": [
+      "Jeder darf dort Dateien anlegen, aber nur eigene löschen",
+      "Dateien in /tmp werden nie gelöscht",
+      "Nur root darf /tmp lesen",
+      "Dateien in /tmp werden komprimiert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeuten die fünf Zeitfelder einer crontab-Zeile?",
+    "a": "Minute, Stunde, Tag des Monats, Monat, Wochentag",
+    "a_full": "Beispiel: 30 2 * * 1 /usr/local/bin/backup.sh startet das Skript jeden Montag um 2:30 Uhr. Ein Stern bedeutet \"jeder Wert\".",
+    "options": [
+      "Minute, Stunde, Tag des Monats, Monat, Wochentag",
+      "Sekunde, Minute, Stunde, Tag, Jahr",
+      "Stunde, Minute, Monat, Tag, Jahr",
+      "Jahr, Monat, Tag, Stunde, Minute"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet apt update von apt upgrade?",
+    "a": "update lädt die Paketlisten neu, upgrade installiert die Aktualisierungen",
+    "a_full": "apt update fragt die Paketquellen nach neuen Versionen ab, installiert aber nichts. apt upgrade spielt danach die verfügbaren Updates ein. Man führt deshalb meist beides nacheinander aus.",
+    "options": [
+      "update lädt die Paketlisten neu, upgrade installiert die Aktualisierungen",
+      "update installiert Updates, upgrade lädt Listen",
+      "Beide machen dasselbe",
+      "upgrade wechselt immer auf eine neue Distributionsversion"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welchen Paketmanager nutzt man unter Red Hat, Rocky Linux und Fedora?",
+    "a": "dnf (früher yum)",
+    "a_full": "dnf installiert und aktualisiert RPM-Pakete samt Abhängigkeiten, z.B. dnf install nginx. Unter Debian und Ubuntu übernimmt apt diese Aufgabe mit DEB-Paketen.",
+    "options": [
+      "dnf (früher yum)",
+      "apt",
+      "pacman",
+      "brew"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie ist ein Logical Volume Manager (LVM) aufgebaut?",
+    "a": "Physical Volumes bilden eine Volume Group, darin liegen Logical Volumes",
+    "a_full": "Festplatten oder Partitionen werden zu Physical Volumes, diese zu einer Volume Group zusammengefasst. Daraus werden flexible Logical Volumes geschnitten, die sich später vergrößern lassen, auch über mehrere Platten.",
+    "options": [
+      "Physical Volumes bilden eine Volume Group, darin liegen Logical Volumes",
+      "RAID-Controller, Laufwerk, Partition",
+      "Ordner, Datei, Block",
+      "Kernel, Treiber, Gerät"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was zeigt der Befehl lsblk?",
+    "a": "Alle Blockgeräte wie Festplatten und Partitionen als Baum",
+    "a_full": "lsblk listet Laufwerke, Partitionen, LVM-Volumes und ihre Einhängepunkte mit Größe. Damit findet man z.B. eine neu eingebaute Festplatte.",
+    "options": [
+      "Alle Blockgeräte wie Festplatten und Partitionen als Baum",
+      "Alle gesperrten Benutzer",
+      "Alle blockierten Netzwerkports",
+      "Alle laufenden Prozesse"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was macht der Befehl tar -czf archiv.tar.gz ordner/?",
+    "a": "Er packt den Ordner in ein gzip-komprimiertes Archiv",
+    "a_full": "c = create, z = gzip-Komprimierung, f = Dateiname des Archivs. Entpackt wird mit tar -xzf archiv.tar.gz.",
+    "options": [
+      "Er packt den Ordner in ein gzip-komprimiertes Archiv",
+      "Er entpackt ein Archiv in den Ordner",
+      "Er löscht den Ordner nach dem Kopieren",
+      "Er verschlüsselt den Ordner"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt 2> in der Linux-Shell?",
+    "a": "Es leitet die Fehlerausgabe in eine Datei um",
+    "a_full": "Kanal 1 ist die normale Ausgabe (stdout), Kanal 2 die Fehlerausgabe (stderr). > überschreibt eine Datei, >> hängt an, 2> fehler.log schreibt nur die Fehler in die Datei.",
+    "options": [
+      "Es leitet die Fehlerausgabe in eine Datei um",
+      "Es startet zwei Befehle gleichzeitig",
+      "Es vergleicht zwei Dateien",
+      "Es verdoppelt die Ausgabe"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet die Zeile #!/bin/bash am Anfang eines Skripts?",
+    "a": "Sie legt den Interpreter fest, der das Skript ausführt",
+    "a_full": "Die sogenannte Shebang-Zeile sagt dem System, womit das Skript ausgeführt wird. Zusammen mit chmod +x lässt sich das Skript dann direkt mit ./skript.sh starten.",
+    "options": [
+      "Sie legt den Interpreter fest, der das Skript ausführt",
+      "Sie ist ein Kommentar ohne Wirkung",
+      "Sie startet das Skript als root",
+      "Sie verschlüsselt das Skript"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was enthält die Variable $? in der Bash?",
+    "a": "Den Rückgabewert des zuletzt ausgeführten Befehls",
+    "a_full": "0 bedeutet Erfolg, jeder andere Wert einen Fehler. In Skripten prüft man damit, ob ein Befehl geklappt hat, z.B. vor dem Löschen der Quelldaten nach einem Backup.",
+    "options": [
+      "Den Rückgabewert des zuletzt ausgeführten Befehls",
+      "Die Prozess-ID der Shell",
+      "Die Anzahl der Parameter",
+      "Den Namen des Skripts"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient die Umgebungsvariable PATH?",
+    "a": "Sie legt fest, in welchen Ordnern die Shell nach Programmen sucht",
+    "a_full": "Gibt man einen Befehl ohne Pfad ein, durchsucht die Shell die Ordner in PATH der Reihe nach. Programme außerhalb davon startet man mit vollem Pfad oder ./programm.",
+    "options": [
+      "Sie legt fest, in welchen Ordnern die Shell nach Programmen sucht",
+      "Sie speichert das Passwort des Benutzers",
+      "Sie legt das Heimatverzeichnis fest",
+      "Sie enthält die IP-Adresse"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches systemd-Ziel entspricht einem Serverbetrieb ohne grafische Oberfläche?",
+    "a": "multi-user.target",
+    "a_full": "multi-user.target startet alle Dienste mit Netzwerk, aber ohne Desktop. graphical.target startet zusätzlich die grafische Oberfläche. Mit systemctl set-default legt man das Standardziel fest.",
+    "options": [
+      "multi-user.target",
+      "graphical.target",
+      "rescue.target",
+      "shutdown.target"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was zeigt der Befehl lsof?",
+    "a": "Welche Dateien und Netzwerkverbindungen von welchen Prozessen geöffnet sind",
+    "a_full": "lsof (list open files) hilft z.B. herauszufinden, welcher Prozess eine Datei sperrt oder welcher Prozess auf einem Port lauscht (lsof -i :80).",
+    "options": [
+      "Welche Dateien und Netzwerkverbindungen von welchen Prozessen geöffnet sind",
+      "Die Größe aller Ordner",
+      "Die Liste der Benutzerkonten",
+      "Die installierten Pakete"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Hauptschlüssel der Windows-Registrierung enthalten Einstellungen für den Rechner bzw. den angemeldeten Benutzer?",
+    "a": "HKEY_LOCAL_MACHINE und HKEY_CURRENT_USER",
+    "a_full": "HKLM enthält rechnerweite Einstellungen (Hardware, Dienste, Software für alle), HKCU die Einstellungen des aktuell angemeldeten Benutzers. Änderungen sollte man vorher sichern.",
+    "options": [
+      "HKEY_LOCAL_MACHINE und HKEY_CURRENT_USER",
+      "HKEY_CLASSES_ROOT und HKEY_USERS_ONLY",
+      "HKEY_SYSTEM und HKEY_ADMIN",
+      "HKEY_NETWORK und HKEY_LOCAL_USER"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient DISM /Online /Cleanup-Image /RestoreHealth?",
+    "a": "Es repariert den Komponentenspeicher von Windows",
+    "a_full": "Findet sfc /scannow beschädigte Dateien, kann sie aber nicht reparieren, ist oft der Komponentenspeicher defekt. DISM lädt die intakten Dateien (z.B. über Windows Update) nach, danach läuft sfc erneut.",
+    "options": [
+      "Es repariert den Komponentenspeicher von Windows",
+      "Es löscht alle Wiederherstellungspunkte",
+      "Es formatiert die Systempartition",
+      "Es installiert Windows neu"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient Sysprep mit der Option /generalize?",
+    "a": "Es entfernt rechnerspezifische Daten, damit ein Image auf viele PCs verteilt werden kann",
+    "a_full": "Sysprep setzt u.a. die Sicherheitskennung (SID), den Rechnernamen und Treiberzuordnungen zurück. Ohne diesen Schritt hätten geklonte Rechner identische Kennungen, was z.B. in der Domäne Probleme macht.",
+    "options": [
+      "Es entfernt rechnerspezifische Daten, damit ein Image auf viele PCs verteilt werden kann",
+      "Es erstellt ein Backup des Systems",
+      "Es aktiviert die Windows-Lizenz",
+      "Es installiert alle Updates"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt robocopy quelle ziel /MIR?",
+    "a": "Das Ziel wird zum exakten Spiegel der Quelle, überzählige Dateien im Ziel werden gelöscht",
+    "a_full": "/MIR kopiert neue und geänderte Dateien und löscht im Ziel alles, was es in der Quelle nicht mehr gibt. Vertauscht man Quelle und Ziel, gehen Daten verloren. Vorher mit /L testen.",
+    "options": [
+      "Das Ziel wird zum exakten Spiegel der Quelle, überzählige Dateien im Ziel werden gelöscht",
+      "Es verschiebt die Dateien und löscht die Quelle",
+      "Es kopiert nur Dateien, die im Ziel fehlen, ohne zu löschen",
+      "Es spiegelt den Bildschirm auf einen anderen PC"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was sind die Vorgängerversionen (Schattenkopien) unter Windows?",
+    "a": "Automatische Momentaufnahmen, aus denen Benutzer ältere Dateistände zurückholen",
+    "a_full": "Der Volumeschattenkopie-Dienst (VSS) erstellt regelmäßig Snapshots eines Laufwerks. Benutzer können über Eigenschaften und Vorgängerversionen selbst Dateien wiederherstellen. Ein Backup ersetzt das nicht.",
+    "options": [
+      "Automatische Momentaufnahmen, aus denen Benutzer ältere Dateistände zurückholen",
+      "Alte Windows-Versionen vor dem Upgrade",
+      "Kopien der Registrierung",
+      "Sicherungen im E-Mail-Postfach"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt die Ordnerumleitung per Gruppenrichtlinie?",
+    "a": "Ordner wie Dokumente oder Desktop liegen auf dem Server statt lokal",
+    "a_full": "Die Benutzer arbeiten wie gewohnt, die Daten liegen aber zentral auf dem Fileserver. Sie werden mitgesichert und stehen an jedem PC zur Verfügung.",
+    "options": [
+      "Ordner wie Dokumente oder Desktop liegen auf dem Server statt lokal",
+      "Ordner werden in die Cloud verschlüsselt",
+      "Ordner werden bei jeder Anmeldung gelöscht",
+      "Druckaufträge werden umgeleitet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was leistet ein DFS-Namespace?",
+    "a": "Einheitliche Pfade zu Freigaben, unabhängig vom tatsächlichen Server",
+    "a_full": "Benutzer greifen auf \\\\firma.local\\daten\\projekte zu. Auf welchem Server die Freigabe liegt, legt der Admin im Namespace fest und kann es später ändern, ohne dass Verknüpfungen angepasst werden müssen. DFS-Replikation hält Kopien auf mehreren Servern gleich.",
+    "options": [
+      "Einheitliche Pfade zu Freigaben, unabhängig vom tatsächlichen Server",
+      "Automatische Verschlüsselung aller Freigaben",
+      "Anzeige des freien Speicherplatzes",
+      "Vergabe von IP-Adressen an Server"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient der Ressourcen-Manager für Dateiserver (FSRM)?",
+    "a": "Für Kontingente, Dateiprüfungen und Speicherberichte auf Fileservern",
+    "a_full": "Mit FSRM begrenzt man z.B. Ordner auf 20 GB (Kontingent), sperrt bestimmte Dateitypen wie Videos (Dateiprüfung) und erstellt Berichte über große oder alte Dateien.",
+    "options": [
+      "Für Kontingente, Dateiprüfungen und Speicherberichte auf Fileservern",
+      "Für die Defragmentierung",
+      "Für die Vergabe von NTFS-Rechten",
+      "Für die Freigabe von Druckern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche fünf FSMO-Rollen gibt es im Active Directory?",
+    "a": "Schemamaster, Domänennamenmaster, RID-Master, PDC-Emulator, Infrastrukturmaster",
+    "a_full": "Schemamaster und Domänennamenmaster gibt es einmal pro Gesamtstruktur, RID-Master, PDC-Emulator und Infrastrukturmaster einmal pro Domäne. Sie übernehmen Aufgaben, die nur ein DC gleichzeitig erledigen darf.",
+    "options": [
+      "Schemamaster, Domänennamenmaster, RID-Master, PDC-Emulator, Infrastrukturmaster",
+      "DNS, DHCP, WINS, NTP, LDAP",
+      "Leser, Schreiber, Admin, Gast, Dienst",
+      "Standort, Domäne, OU, Gruppe, Benutzer"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der globale Katalog im Active Directory?",
+    "a": "Ein Verzeichnis mit einer Teilkopie aller Objekte der Gesamtstruktur",
+    "a_full": "Globale Katalogserver beantworten Suchanfragen über alle Domänen hinweg (Port 3268) und werden bei der Anmeldung für universelle Gruppen gebraucht. Jeder Standort sollte einen haben.",
+    "options": [
+      "Ein Verzeichnis mit einer Teilkopie aller Objekte der Gesamtstruktur",
+      "Eine Liste aller installierten Programme",
+      "Das Verzeichnis der Gruppenrichtlinien",
+      "Ein Katalog der Drucker im Netz"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient ein schreibgeschützter Domänencontroller (RODC)?",
+    "a": "Für Außenstellen mit geringer physischer Sicherheit",
+    "a_full": "Ein RODC hält eine nur lesbare Kopie des Verzeichnisses und speichert standardmäßig keine Passwörter. Wird er gestohlen, ist der Schaden begrenzt. Anmeldungen am Standort funktionieren trotzdem schnell.",
+    "options": [
+      "Für Außenstellen mit geringer physischer Sicherheit",
+      "Für Testumgebungen ohne Benutzer",
+      "Für Rechner ohne Netzwerk",
+      "Für die Sicherung des Active Directory"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet Sicherheitsgruppen von Verteilergruppen im AD?",
+    "a": "Sicherheitsgruppen können Berechtigungen erhalten, Verteilergruppen nur E-Mails verteilen",
+    "a_full": "Verteilergruppen dienen als E-Mail-Verteiler. Nur Sicherheitsgruppen können in Zugriffslisten (z.B. NTFS-Rechte) eingetragen werden. Sicherheitsgruppen können zusätzlich auch als Verteiler genutzt werden.",
+    "options": [
+      "Sicherheitsgruppen können Berechtigungen erhalten, Verteilergruppen nur E-Mails verteilen",
+      "Verteilergruppen sind sicherer",
+      "Sicherheitsgruppen gelten nur lokal",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient der AD-Papierkorb?",
+    "a": "Gelöschte AD-Objekte mit allen Eigenschaften wiederherstellen",
+    "a_full": "Ist der AD-Papierkorb aktiviert, lassen sich versehentlich gelöschte Benutzer, Gruppen oder OUs mit Gruppenmitgliedschaften wiederherstellen, ohne das ganze Verzeichnis aus der Sicherung zurückzuspielen.",
+    "options": [
+      "Gelöschte AD-Objekte mit allen Eigenschaften wiederherstellen",
+      "Alte Gruppenrichtlinien automatisch löschen",
+      "Gelöschte Dateien auf Freigaben zurückholen",
+      "Den Papierkorb der Benutzer zentral leeren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt Set-ExecutionPolicy RemoteSigned in PowerShell?",
+    "a": "Lokale Skripte laufen, heruntergeladene nur mit gültiger Signatur",
+    "a_full": "Die Ausführungsrichtlinie schützt vor dem versehentlichen Start fremder Skripte. Sie ist aber keine Sicherheitsgrenze, denn ein Angreifer kann sie umgehen.",
+    "options": [
+      "Lokale Skripte laufen, heruntergeladene nur mit gültiger Signatur",
+      "Alle Skripte werden verboten",
+      "Nur Skripte aus dem Internet dürfen laufen",
+      "Skripte laufen automatisch als Administrator"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Ports nutzt PowerShell-Remoting (WinRM)?",
+    "a": "5985 (HTTP) und 5986 (HTTPS)",
+    "a_full": "Mit Enter-PSSession oder Invoke-Command verwaltet man entfernte Rechner über WinRM. Auch bei HTTP ist der Inhalt in der Domäne per Kerberos verschlüsselt, HTTPS braucht ein Zertifikat.",
+    "options": [
+      "5985 (HTTP) und 5986 (HTTPS)",
+      "3389 und 3390",
+      "22 und 443",
+      "445 und 139"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Funktionen hat Windows Pro, die in Windows Home fehlen?",
+    "a": "Domänenbeitritt, Gruppenrichtlinien, BitLocker und Remotedesktop-Host",
+    "a_full": "Für Firmenrechner ist mindestens Pro nötig. Home kann weder einer Domäne beitreten noch per Gruppenrichtlinie verwaltet werden. Für große Umgebungen gibt es zusätzlich Enterprise.",
+    "options": [
+      "Domänenbeitritt, Gruppenrichtlinien, BitLocker und Remotedesktop-Host",
+      "Nur ein anderes Hintergrundbild",
+      "Mehr Spiele und Apps",
+      "Höhere Taktfrequenz des Prozessors"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Windows Autopilot?",
+    "a": "Die automatische Einrichtung neuer PCs aus der Cloud beim ersten Einschalten",
+    "a_full": "Der Hersteller registriert die Geräte für das Unternehmen. Meldet sich der Mitarbeiter an, werden Richtlinien, Apps und Einstellungen über Intune eingespielt. Die IT muss den PC nicht vorher anfassen.",
+    "options": [
+      "Die automatische Einrichtung neuer PCs aus der Cloud beim ersten Einschalten",
+      "Ein Programm für automatische Updates des BIOS",
+      "Ein Sprachassistent für Windows",
+      "Ein automatisches Backup-Programm"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist winget?",
+    "a": "Der Paketmanager von Windows für die Kommandozeile",
+    "a_full": "Mit winget install, winget upgrade --all oder winget list lassen sich Programme installieren und aktualisieren, ähnlich wie mit apt unter Linux.",
+    "options": [
+      "Der Paketmanager von Windows für die Kommandozeile",
+      "Ein Werkzeug zum Messen der WLAN-Stärke",
+      "Ein Dienst für Windows-Updates",
+      "Ein Virenscanner"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür braucht man RDS-CALs?",
+    "a": "Als Lizenzen für den Zugriff von Benutzern oder Geräten auf Remotedesktopdienste",
+    "a_full": "Neben der Serverlizenz und den normalen Windows-Server-CALs braucht jeder Benutzer bzw. jedes Gerät, das per Remotedesktopdienste auf einem Terminalserver arbeitet, eine RDS-CAL.",
+    "options": [
+      "Als Lizenzen für den Zugriff von Benutzern oder Geräten auf Remotedesktopdienste",
+      "Für die Verschlüsselung von RDP",
+      "Für den Zugriff auf Drucker",
+      "Für die Anmeldung per Fingerabdruck"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet einen verknüpften Klon (Linked Clone) von einem vollständigen Klon?",
+    "a": "Der verknüpfte Klon teilt sich die Basisfestplatte mit dem Original",
+    "a_full": "Ein Linked Clone speichert nur Änderungen und spart viel Platz, ist aber vom Original-Snapshot abhängig. Ein vollständiger Klon ist eine unabhängige Kopie.",
+    "options": [
+      "Der verknüpfte Klon teilt sich die Basisfestplatte mit dem Original",
+      "Der verknüpfte Klon ist immer schneller",
+      "Der vollständige Klon braucht keinen Speicher",
+      "Nur verknüpfte Klone können gestartet werden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu installiert man Gasterweiterungen (z.B. VMware Tools, Integrationsdienste) in einer VM?",
+    "a": "Für optimierte Treiber, Zeitabgleich und sauberes Herunterfahren",
+    "a_full": "Die Gasterweiterungen liefern schnelle virtuelle Treiber für Netzwerk und Grafik, ermöglichen das Herunterfahren vom Host aus, Zeitabgleich und Informationen über den Zustand der VM.",
+    "options": [
+      "Für optimierte Treiber, Zeitabgleich und sauberes Herunterfahren",
+      "Für die Lizenzierung des Hypervisors",
+      "Für den Virenschutz des Hosts",
+      "Für die Verbindung mit dem Internet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche CPU-Funktion ist Voraussetzung für moderne Hypervisoren?",
+    "a": "Hardware-Virtualisierung (Intel VT-x bzw. AMD-V)",
+    "a_full": "Diese Erweiterungen lassen Gastsysteme weitgehend direkt auf der CPU laufen. Sie müssen oft im BIOS/UEFI eingeschaltet werden.",
+    "options": [
+      "Hardware-Virtualisierung (Intel VT-x bzw. AMD-V)",
+      "Hyper-Threading",
+      "Turbo Boost",
+      "Ein integrierter Grafikchip"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Memory Ballooning bei VMs?",
+    "a": "Der Hypervisor holt ungenutzten Arbeitsspeicher aus VMs zurück",
+    "a_full": "Ein Treiber in der VM belegt auf Anweisung des Hypervisors Speicher, den dieser dann anderen VMs geben kann. So lässt sich RAM überbuchen, bei zu viel Druck leidet aber die Leistung.",
+    "options": [
+      "Der Hypervisor holt ungenutzten Arbeitsspeicher aus VMs zurück",
+      "Der Arbeitsspeicher wird automatisch aufgerüstet",
+      "Die VM wird in den Ruhezustand versetzt",
+      "Speicher wird auf die Festplatte komprimiert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Festplattenformat nutzen Hyper-V, VMware und KVM typischerweise?",
+    "a": "VHDX, VMDK und qcow2",
+    "a_full": "Jeder Hypervisor hat ein eigenes Format für virtuelle Festplatten. Bei einer Migration zwischen Hypervisoren müssen die Festplatten umgewandelt werden (z.B. mit qemu-img).",
+    "options": [
+      "VHDX, VMDK und qcow2",
+      "ISO, IMG und ZIP",
+      "NTFS, ext4 und APFS",
+      "RAW, JPG und PNG"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was macht eine Hochverfügbarkeitsfunktion (HA) in einem Virtualisierungscluster?",
+    "a": "Sie startet VMs eines ausgefallenen Hosts automatisch auf anderen Hosts neu",
+    "a_full": "Fällt ein Host aus, erkennt der Cluster das und startet die betroffenen VMs auf den übrigen Hosts. Es gibt eine kurze Unterbrechung (Neustart). Voraussetzung ist gemeinsamer oder replizierter Speicher.",
+    "options": [
+      "Sie startet VMs eines ausgefallenen Hosts automatisch auf anderen Hosts neu",
+      "Sie verhindert jeden Ausfall ohne Unterbrechung",
+      "Sie sichert die VMs täglich",
+      "Sie verteilt IP-Adressen an VMs"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Hyper-V-Replikat?",
+    "a": "Eine laufende Kopie einer VM auf einem zweiten Host, die regelmäßig abgeglichen wird",
+    "a_full": "Änderungen werden alle 30 Sekunden bis 15 Minuten an den Replikat-Host übertragen, auch an einen anderen Standort. Fällt der Primärhost aus, startet man das Replikat mit geringem Datenverlust.",
+    "options": [
+      "Eine laufende Kopie einer VM auf einem zweiten Host, die regelmäßig abgeglichen wird",
+      "Ein Snapshot auf demselben Host",
+      "Eine Vorlage für neue VMs",
+      "Eine Lizenz für zusätzliche VMs"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Produktionsprüfpunkt in Hyper-V?",
+    "a": "Ein Prüfpunkt, der im Gast per VSS anwendungskonsistent erstellt wird",
+    "a_full": "Standardprüfpunkte speichern auch den Arbeitsspeicherzustand, was bei Datenbanken zu Problemen führen kann. Produktionsprüfpunkte nutzen im Gast VSS, der Zustand entspricht einem sauber gesicherten System.",
+    "options": [
+      "Ein Prüfpunkt, der im Gast per VSS anwendungskonsistent erstellt wird",
+      "Ein Prüfpunkt, der nie gelöscht werden darf",
+      "Ein Prüfpunkt nur für Testsysteme",
+      "Eine Lizenzprüfung von Microsoft"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine virtuelle Desktop-Infrastruktur (VDI)?",
+    "a": "Desktops laufen als VMs im Rechenzentrum und werden auf Endgeräte übertragen",
+    "a_full": "Jeder Benutzer arbeitet in einer eigenen virtuellen Windows-Umgebung auf dem Server. Das Endgerät zeigt nur das Bild an. Vorteile: zentrale Verwaltung, Daten bleiben im Rechenzentrum.",
+    "options": [
+      "Desktops laufen als VMs im Rechenzentrum und werden auf Endgeräte übertragen",
+      "Ein Desktop mit mehreren Monitoren",
+      "Ein PC ohne Betriebssystem",
+      "Ein Programm zur Fernwartung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Kernel-Funktionen trennen Container unter Linux voneinander?",
+    "a": "Namespaces und cgroups",
+    "a_full": "Namespaces geben jedem Container eine eigene Sicht auf Prozesse, Netzwerk und Dateisystem. cgroups begrenzen CPU, RAM und Ein-/Ausgabe. Alle Container teilen sich aber den Kernel des Hosts.",
+    "options": [
+      "Namespaces und cgroups",
+      "Hypervisor und BIOS",
+      "Firewall und Proxy",
+      "RAID und LVM"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie speichert man Daten eines Containers dauerhaft?",
+    "a": "In einem Volume oder Bind Mount außerhalb des Containers",
+    "a_full": "Container sollten zustandslos sein. Wird ein Container gelöscht und neu erstellt, sind Daten in seinem Dateisystem weg. Datenbanken speichern ihre Daten deshalb in Volumes.",
+    "options": [
+      "In einem Volume oder Bind Mount außerhalb des Containers",
+      "Im Container-Image",
+      "Im Arbeitsspeicher des Containers",
+      "In einer Umgebungsvariable"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient Docker Compose?",
+    "a": "Mehrere zusammengehörige Container in einer YAML-Datei beschreiben und starten",
+    "a_full": "In der compose.yaml stehen z.B. Webserver, Datenbank und Cache mit Netzwerk, Volumes und Umgebungsvariablen. docker compose up -d startet alles gemeinsam.",
+    "options": [
+      "Mehrere zusammengehörige Container in einer YAML-Datei beschreiben und starten",
+      "Container in Images umwandeln",
+      "Container verschlüsseln",
+      "Container auf Viren prüfen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Pod in Kubernetes?",
+    "a": "Die kleinste Einheit mit einem oder mehreren Containern, die sich Netzwerk und Speicher teilen",
+    "a_full": "Kubernetes verwaltet nicht einzelne Container, sondern Pods. Ein Deployment sorgt dafür, dass immer die gewünschte Anzahl Pods läuft, ein Service macht sie unter einer festen Adresse erreichbar.",
+    "options": [
+      "Die kleinste Einheit mit einem oder mehreren Containern, die sich Netzwerk und Speicher teilen",
+      "Ein physischer Server im Cluster",
+      "Ein Speichersystem für Images",
+      "Eine Firewall-Regel"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was sind Regionen und Verfügbarkeitszonen bei Cloud-Anbietern?",
+    "a": "Regionen sind geografische Standorte, Zonen getrennte Rechenzentren darin",
+    "a_full": "Eine Region (z.B. Frankfurt) besteht aus mehreren Verfügbarkeitszonen mit eigener Stromversorgung und Kühlung. Wer Dienste über mehrere Zonen verteilt, übersteht den Ausfall eines Rechenzentrums.",
+    "options": [
+      "Regionen sind geografische Standorte, Zonen getrennte Rechenzentren darin",
+      "Preisstufen und Rabattklassen",
+      "Benutzergruppen und Rollen",
+      "Zeitzonen der Abrechnung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was beschreibt das Modell der geteilten Verantwortung (Shared Responsibility) in der Cloud?",
+    "a": "Der Anbieter sichert die Infrastruktur, der Kunde seine Daten, Zugänge und Konfiguration",
+    "a_full": "Bei IaaS ist der Kunde z.B. für Betriebssystem-Updates, Firewall-Regeln und Benutzerrechte zuständig. Je mehr der Anbieter übernimmt (PaaS, SaaS), desto kleiner der Kundenteil. Daten und Zugänge bleiben immer Kundensache.",
+    "options": [
+      "Der Anbieter sichert die Infrastruktur, der Kunde seine Daten, Zugänge und Konfiguration",
+      "Der Anbieter ist für alles verantwortlich",
+      "Der Kunde ist für die Rechenzentren verantwortlich",
+      "Die Verantwortung wird per Los verteilt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Objektspeicher (z.B. S3) in der Cloud?",
+    "a": "Speicher für Dateien als Objekte mit Metadaten, erreichbar per HTTP-API",
+    "a_full": "Objektspeicher ist fast unbegrenzt skalierbar und günstig, eignet sich für Backups, Medien und Archive. Er ist kein Laufwerk mit Dateisystem, sondern wird über eine Schnittstelle angesprochen.",
+    "options": [
+      "Speicher für Dateien als Objekte mit Metadaten, erreichbar per HTTP-API",
+      "Ein besonders schneller RAM",
+      "Eine Festplatte im Rechner",
+      "Eine Datenbank für Tabellen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Elastizität in der Cloud?",
+    "a": "Ressourcen passen sich automatisch dem aktuellen Bedarf an",
+    "a_full": "Bei steigender Last werden automatisch weitere Instanzen gestartet (Autoscaling), bei sinkender Last wieder abgebaut. Man zahlt nur, was man gerade nutzt.",
+    "options": [
+      "Ressourcen passen sich automatisch dem aktuellen Bedarf an",
+      "Verträge lassen sich jederzeit ändern",
+      "Kabel im Rechenzentrum sind flexibel",
+      "Daten werden automatisch komprimiert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Serverless bzw. Function as a Service (FaaS)?",
+    "a": "Code läuft als Funktion nur bei Bedarf, ohne dass man Server verwaltet",
+    "a_full": "Der Anbieter startet die Funktion bei einem Ereignis (z.B. Upload einer Datei) und rechnet nach Aufrufen und Laufzeit ab. Server gibt es trotzdem, man sieht sie nur nicht.",
+    "options": [
+      "Code läuft als Funktion nur bei Bedarf, ohne dass man Server verwaltet",
+      "Ein Rechenzentrum ganz ohne Server",
+      "Ein Netzwerk ohne Router",
+      "Ein Betriebssystem ohne Kernel"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was versteht man unter Multi-Cloud?",
+    "a": "Die gleichzeitige Nutzung mehrerer Cloud-Anbieter",
+    "a_full": "Unternehmen verteilen Dienste auf verschiedene Anbieter, um Abhängigkeiten zu verringern oder jeweils die besten Dienste zu nutzen. Dafür steigt der Verwaltungsaufwand.",
+    "options": [
+      "Die gleichzeitige Nutzung mehrerer Cloud-Anbieter",
+      "Mehrere Server in einem Rack",
+      "Eine Cloud mit mehreren Benutzern",
+      "Mehrere Konten beim selben Anbieter"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Vorteile hat SAS gegenüber SATA bei Serverlaufwerken?",
+    "a": "Höhere Zuverlässigkeit, Vollduplex und zwei Anschlüsse für Ausfallsicherheit",
+    "a_full": "SAS-Laufwerke (Serial Attached SCSI) sind für den Dauerbetrieb gebaut, unterstützen Dual-Port (zwei Controller) und längere Kabel. SATA-Laufwerke sind günstiger und für geringere Last gedacht.",
+    "options": [
+      "Höhere Zuverlässigkeit, Vollduplex und zwei Anschlüsse für Ausfallsicherheit",
+      "SAS ist immer günstiger",
+      "SAS funktioniert ohne Controller",
+      "SAS-Laufwerke brauchen keinen Strom"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt der TBW-Wert einer SSD an?",
+    "a": "Die Datenmenge, die laut Hersteller insgesamt geschrieben werden kann",
+    "a_full": "Terabytes Written: Eine SSD mit 600 TBW darf über die Garantiezeit 600 TB schreiben. Alternativ wird DWPD (Drive Writes Per Day) angegeben. Für schreiblastige Server wählt man höhere Werte.",
+    "options": [
+      "Die Datenmenge, die laut Hersteller insgesamt geschrieben werden kann",
+      "Die maximale Lesegeschwindigkeit",
+      "Die Temperaturgrenze",
+      "Die Anzahl der Speicherchips"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist RAID 50?",
+    "a": "Mehrere RAID-5-Gruppen, die per Striping (RAID 0) verbunden sind",
+    "a_full": "RAID 50 braucht mindestens 6 Platten. In jeder RAID-5-Gruppe darf eine Platte ausfallen. Es ist schneller als ein großes RAID 5 und der Rebuild betrifft nur eine Gruppe.",
+    "options": [
+      "Mehrere RAID-5-Gruppen, die per Striping (RAID 0) verbunden sind",
+      "RAID 5 mit 50 Festplatten",
+      "Spiegelung von zwei RAID-5-Verbünden",
+      "RAID 5 mit halbierter Kapazität"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Besonderheiten hat das Dateisystem ZFS?",
+    "a": "Prüfsummen für alle Daten, Copy-on-Write, Snapshots und integriertes RAID",
+    "a_full": "ZFS erkennt stille Datenfehler über Prüfsummen und repariert sie aus redundanten Kopien. Snapshots entstehen dank Copy-on-Write sofort. Es wird z.B. in TrueNAS und Proxmox genutzt.",
+    "options": [
+      "Prüfsummen für alle Daten, Copy-on-Write, Snapshots und integriertes RAID",
+      "Es ist nur für USB-Sticks gedacht",
+      "Es funktioniert nur unter Windows",
+      "Es verzichtet auf jede Redundanz"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine hyperkonvergente Infrastruktur (HCI)?",
+    "a": "Server, die Rechenleistung und gemeinsamen Speicher in einem Cluster vereinen",
+    "a_full": "Statt separater Server und SAN bringt jeder Knoten eigene Laufwerke mit. Eine Software fasst sie zu einem gemeinsamen, redundanten Speicher zusammen. Erweiterung erfolgt durch weitere Knoten.",
+    "options": [
+      "Server, die Rechenleistung und gemeinsamen Speicher in einem Cluster vereinen",
+      "Ein Server mit besonders vielen Lüftern",
+      "Ein Netzwerk nur aus WLAN",
+      "Ein Rechenzentrum ohne Strom"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet Fibre Channel von iSCSI?",
+    "a": "Fibre Channel nutzt ein eigenes Speichernetz, iSCSI überträgt über normales Ethernet/IP",
+    "a_full": "Fibre Channel braucht eigene Switches und Adapter (HBAs), gilt als sehr stabil und latenzarm. iSCSI nutzt vorhandene Ethernet-Technik und ist günstiger. Beide liefern blockbasierten Speicher.",
+    "options": [
+      "Fibre Channel nutzt ein eigenes Speichernetz, iSCSI überträgt über normales Ethernet/IP",
+      "iSCSI ist dateibasiert, FC blockbasiert",
+      "FC funktioniert nur über WLAN",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt die TDP eines Prozessors an?",
+    "a": "Die Wärmeleistung, die die Kühlung abführen können muss",
+    "a_full": "Thermal Design Power in Watt: Danach richten sich Kühler, Netzteil und Gehäuse. Ein Server-Prozessor mit 250 W TDP braucht eine deutlich stärkere Kühlung als ein Büro-Prozessor mit 65 W.",
+    "options": [
+      "Die Wärmeleistung, die die Kühlung abführen können muss",
+      "Die Taktfrequenz im Turbo",
+      "Die Anzahl der Kerne",
+      "Die Größe des Caches"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was prüft der POST beim Einschalten eines PCs?",
+    "a": "Die grundlegende Hardware wie CPU, RAM und Grafik",
+    "a_full": "Der Power-On Self-Test läuft vor dem Start des Betriebssystems. Findet er Fehler, meldet er sie durch Pieptöne, LED-Codes oder Meldungen. Erst danach startet der Bootloader.",
+    "options": [
+      "Die grundlegende Hardware wie CPU, RAM und Grafik",
+      "Die Internetverbindung",
+      "Die Benutzerkonten",
+      "Die Aktualität des Virenscanners"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet SO-DIMM von DIMM?",
+    "a": "SO-DIMM ist die kleinere Bauform für Notebooks und Kompakt-PCs",
+    "a_full": "DIMM-Module stecken in Desktop-PCs und Servern, SO-DIMM (Small Outline) in Notebooks und Mini-PCs. Zusätzlich muss der Speichertyp (z.B. DDR4 oder DDR5) zum Mainboard passen.",
+    "options": [
+      "SO-DIMM ist die kleinere Bauform für Notebooks und Kompakt-PCs",
+      "SO-DIMM ist immer schneller",
+      "DIMM ist nur für Grafikkarten",
+      "SO-DIMM speichert Daten dauerhaft"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient ein Batterie- oder Flash-Cache-Schutz am RAID-Controller?",
+    "a": "Er sichert den Schreibcache bei einem Stromausfall",
+    "a_full": "Mit geschütztem Cache kann der Controller im schnellen Write-Back-Modus arbeiten. Fällt der Strom aus, gehen die noch nicht geschriebenen Daten nicht verloren.",
+    "options": [
+      "Er sichert den Schreibcache bei einem Stromausfall",
+      "Er versorgt die Festplatten dauerhaft mit Strom",
+      "Er kühlt den Controller",
+      "Er verschlüsselt den Cache"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum haben Server oft zwei Netzteile?",
+    "a": "Damit der Server bei Ausfall eines Netzteils oder Stromkreises weiterläuft",
+    "a_full": "Redundante Netzteile lassen sich im laufenden Betrieb tauschen (Hot-Plug). Sie sollten an zwei getrennte Stromkreise bzw. USVs angeschlossen werden, sonst schützt die Redundanz nur vor einem Netzteildefekt.",
+    "options": [
+      "Damit der Server bei Ausfall eines Netzteils oder Stromkreises weiterläuft",
+      "Damit der Server doppelt so schnell ist",
+      "Weil jedes Netzteil nur eine Festplatte versorgt",
+      "Um Strom zu sparen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür ist das Release-Management im IT-Service-Management zuständig?",
+    "a": "Neue und geänderte Versionen planen, testen und kontrolliert bereitstellen",
+    "a_full": "Das Release-Management bündelt freigegebene Änderungen zu Releases und plant deren Einführung. Es sorgt für Tests, Zeitplan, Kommunikation und einen Rückfallplan. Das eigentliche Verteilen auf die Systeme heißt Deployment.",
+    "options": [
+      "Neue und geänderte Versionen planen, testen und kontrolliert bereitstellen",
+      "Lizenzen für neue Software planen und beim Händler einkaufen",
+      "Störungsmeldungen der Anwender annehmen und erfassen",
+      "Die Ursachen wiederkehrender Störungen dauerhaft finden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Ziel des Capacity-Managements nach ITIL?",
+    "a": "Genug Leistung für den heutigen und künftigen Bedarf zu vertretbaren Kosten",
+    "a_full": "Das Capacity-Management überwacht Auslastung von CPU, Speicher, Netz und Personal und plant rechtzeitig Erweiterungen. So werden Engpässe vermieden, ohne teure Überkapazitäten aufzubauen. In ITIL 4 heißt die Praxis Capacity and Performance Management.",
+    "options": [
+      "Genug Leistung für den heutigen und künftigen Bedarf zu vertretbaren Kosten",
+      "Möglichst viele Server auf Vorrat kaufen, um sicher zu sein",
+      "Die Zahl der Mitarbeiter im Service Desk dauerhaft senken",
+      "Die Datensicherung auf Band planen und die Bänder verwalten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist IT Service Continuity Management (ITSCM)?",
+    "a": "Die Vorsorge, damit IT-Services nach einem Katastrophenfall wieder anlaufen",
+    "a_full": "ITSCM unterstützt das Business Continuity Management des Unternehmens. Es erstellt Notfallpläne, legt Ausweichstandorte und Wiederanlaufzeiten fest und testet diese regelmäßig. Grundlage sind die Ergebnisse der Business Impact Analyse.",
+    "options": [
+      "Die Vorsorge, damit IT-Services nach einem Katastrophenfall wieder anlaufen",
+      "Die tägliche Überwachung der Serverlast im Normalbetrieb",
+      "Die laufende Pflege der Benutzerkonten im Verzeichnisdienst",
+      "Die Planung von Software-Updates im monatlichen Wartungsfenster"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Change Advisory Board (CAB)?",
+    "a": "Ein Gremium, das geplante Änderungen bewertet und die Freigabe berät",
+    "a_full": "Im CAB sitzen Vertreter von IT, Fachbereichen und bei Bedarf Lieferanten. Sie prüfen Nutzen, Risiko, Ressourcen und Zeitpunkt eines Changes und empfehlen Freigabe oder Ablehnung. Für dringende Fälle gibt es ein kleineres Emergency CAB.",
+    "options": [
+      "Ein Gremium, das geplante Änderungen bewertet und die Freigabe berät",
+      "Die zentrale Hotline für Störungsmeldungen der Anwender",
+      "Ein Werkzeug zur automatischen Verteilung von Software",
+      "Ein Gremium der Geschäftsführung für reine Budgetfragen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Known Error nach ITIL?",
+    "a": "Ein Problem mit bekannter Ursache und dokumentiertem Workaround",
+    "a_full": "Ist die Ursache eines Problems gefunden, aber noch nicht endgültig behoben, spricht man von einem Known Error. Er wird mit Ursache und Workaround in der Known Error Database erfasst. So kann der Service Desk ähnliche Incidents schneller lösen.",
+    "options": [
+      "Ein Problem mit bekannter Ursache und dokumentiertem Workaround",
+      "Eine Störung, deren Ursache noch niemand ermittelt hat",
+      "Ein Fehler, der bereits endgültig und dauerhaft behoben ist",
+      "Eine Anfrage nach einem neuen Benutzerkonto oder Zugang"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie ergibt sich die Priorität eines Incidents im IT-Service-Management?",
+    "a": "Aus der Kombination von Auswirkung und Dringlichkeit",
+    "a_full": "Die Auswirkung beschreibt, wie viele Nutzer oder wie wichtige Prozesse betroffen sind. Die Dringlichkeit beschreibt, wie schnell eine Lösung nötig ist. Eine Prioritätsmatrix ordnet jeder Kombination eine Stufe zu, z.B. von 1 (kritisch) bis 5 (planbar).",
+    "options": [
+      "Aus der Kombination von Auswirkung und Dringlichkeit",
+      "Aus der Reihenfolge, in der die Tickets eingehen",
+      "Aus der Position des Anrufers im Unternehmen",
+      "Aus der geschätzten Bearbeitungszeit des Technikers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was enthält ein Service-Katalog?",
+    "a": "Alle aktuell angebotenen IT-Services mit Beschreibung und Bestellweg",
+    "a_full": "Der Service-Katalog zeigt Anwendern und Kunden, welche Services es gibt, was sie leisten, welche Service-Level gelten und wie man sie anfordert. Beispiele sind E-Mail-Postfach, VPN-Zugang oder ein neuer Arbeitsplatz-PC.",
+    "options": [
+      "Alle aktuell angebotenen IT-Services mit Beschreibung und Bestellweg",
+      "Alle Lieferanten des Unternehmens mit ihren Preislisten",
+      "Alle Hardwarekomponenten mit Seriennummer und Standort",
+      "Alle gemeldeten Störungen des letzten Quartals mit Lösung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Major Incident?",
+    "a": "Eine Störung mit sehr großer Auswirkung, die ein eigenes Verfahren auslöst",
+    "a_full": "Fällt z.B. das ERP-System für das ganze Unternehmen aus, wird ein Major Incident ausgerufen. Ein Major Incident Manager koordiniert die Lösung, Management und Anwender werden laufend informiert. Danach folgt eine Nachbetrachtung.",
+    "options": [
+      "Eine Störung mit sehr großer Auswirkung, die ein eigenes Verfahren auslöst",
+      "Eine Störung, die nur ein einzelner Anwender gemeldet hat",
+      "Ein angekündigter Ausfall während eines Wartungsfensters",
+      "Eine geplante Änderung mit besonders hohem Budget"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie wird Windows Server grundsätzlich lizenziert?",
+    "a": "Nach physischen Prozessorkernen, zusätzlich braucht man Zugriffslizenzen",
+    "a_full": "Alle physischen Kerne des Servers müssen lizenziert werden, mindestens 8 je Prozessor und 16 je Server. Zusätzlich braucht jeder Benutzer oder jedes Gerät, das auf den Server zugreift, eine Client Access License (CAL).",
+    "options": [
+      "Nach physischen Prozessorkernen, zusätzlich braucht man Zugriffslizenzen",
+      "Nach der Größe des eingebauten Arbeitsspeichers in Gigabyte",
+      "Pauschal pro Standort, unabhängig von Hardware und Nutzern",
+      "Nach der Anzahl der Festplatten, zusätzlich pro Netzwerkkarte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet eine User-CAL von einer Device-CAL?",
+    "a": "User-CAL gilt für eine Person, Device-CAL für ein Gerät",
+    "a_full": "Mit einer User-CAL darf eine Person von beliebig vielen Geräten auf den Server zugreifen. Eine Device-CAL erlaubt beliebig vielen Personen den Zugriff von einem bestimmten Gerät. Die günstigere Variante hängt davon ab, ob es mehr Nutzer oder mehr Geräte gibt.",
+    "options": [
+      "User-CAL gilt für eine Person, Device-CAL für ein Gerät",
+      "User-CAL gilt nur intern, Device-CAL nur extern",
+      "User-CAL ist zeitlich begrenzt, Device-CAL unbegrenzt",
+      "User-CAL gilt für Server, Device-CAL für Drucker"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Software Assurance bei Microsoft-Volumenlizenzen?",
+    "a": "Ein Wartungsvertrag mit Recht auf neue Versionen während der Laufzeit",
+    "a_full": "Mit Software Assurance darf man während der Laufzeit auf jede neue Version upgraden. Dazu kommen Zusatzrechte, z.B. erweiterte Nutzungsrechte bei Virtualisierung oder Schulungsangebote. Ohne Software Assurance gilt nur die gekaufte Version.",
+    "options": [
+      "Ein Wartungsvertrag mit Recht auf neue Versionen während der Laufzeit",
+      "Eine Versicherung gegen Hardwaredefekte am Server",
+      "Ein Virenschutz, der lizenzierte Software absichert",
+      "Eine Garantie des Herstellers auf fehlerfreie Programme"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind die EVB-IT?",
+    "a": "Standardisierte Vertragsbedingungen für IT-Beschaffungen der öffentlichen Hand",
+    "a_full": "EVB-IT steht für Ergänzende Vertragsbedingungen für die Beschaffung von IT-Leistungen. Bund, Länder und Kommunen nutzen diese Muster, z.B. EVB-IT Kauf, Dienstvertrag oder System. Wer an Behörden liefert, muss sie kennen.",
+    "options": [
+      "Standardisierte Vertragsbedingungen für IT-Beschaffungen der öffentlichen Hand",
+      "Ein Gesetz zur umweltgerechten Entsorgung von IT-Geräten in Behörden",
+      "Eine technische Norm für die strukturierte Verkabelung von Gebäuden",
+      "Eine freiwillige Zertifizierung für die Qualität von IT-Dienstleistern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet die MoSCoW-Methode?",
+    "a": "Anforderungen werden in Must, Should, Could und Won't eingeteilt",
+    "a_full": "Must-Anforderungen sind zwingend, Should wichtig, Could wünschenswert. Won't heißt, dass die Anforderung in diesem Projekt oder Release bewusst nicht umgesetzt wird. So wird klar priorisiert, was bei knapper Zeit wegfallen kann.",
+    "options": [
+      "Anforderungen werden in Must, Should, Could und Won't eingeteilt",
+      "Ein Verfahren zur Schätzung der Kosten einzelner Arbeitspakete",
+      "Eine Methode zur Darstellung des kritischen Pfads im Netzplan",
+      "Ein Modell zur Bewertung von Lieferanten nach vier Kriterien"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Definition of Done (DoD) in Scrum?",
+    "a": "Gemeinsame Kriterien, wann eine Arbeit wirklich fertig ist",
+    "a_full": "Die DoD legt fest, was erfüllt sein muss, bevor ein Eintrag als erledigt gilt, z.B. getestet, dokumentiert und abgenommen. Sie gilt für alle Einträge gleich. So verstehen alle unter fertig dasselbe.",
+    "options": [
+      "Gemeinsame Kriterien, wann eine Arbeit wirklich fertig ist",
+      "Das geplante Enddatum des Projekts",
+      "Die Liste aller offenen Anforderungen",
+      "Die Unterschrift des Kunden unter den Vertrag"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was misst die Velocity eines Scrum-Teams?",
+    "a": "Wie viel Arbeit das Team im Durchschnitt pro Sprint schafft",
+    "a_full": "Die Velocity wird meist in Story Points gemessen, die in einem Sprint fertig wurden. Sie hilft bei der Planung künftiger Sprints. Zum Vergleich verschiedener Teams taugt sie nicht, weil jedes Team anders schätzt.",
+    "options": [
+      "Wie viel Arbeit das Team im Durchschnitt pro Sprint schafft",
+      "Wie schnell der Server Anfragen der Nutzer beantwortet",
+      "Wie viele Stunden jedes Teammitglied pro Woche arbeitet",
+      "Wie viele Fehler pro Release beim Kunden gefunden werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein WIP-Limit auf einem Kanban-Board?",
+    "a": "Eine Obergrenze für gleichzeitig laufende Aufgaben in einer Spalte",
+    "a_full": "WIP steht für Work in Progress. Ist das Limit erreicht, wird erst eine Aufgabe abgeschlossen, bevor eine neue beginnt. So werden Engpässe sichtbar und Aufgaben schneller fertig.",
+    "options": [
+      "Eine Obergrenze für gleichzeitig laufende Aufgaben in einer Spalte",
+      "Ein festes Budget für Überstunden im laufenden Projekt",
+      "Die maximale Dauer eines Meetings im Team",
+      "Die Mindestzahl an Aufgaben, die jede Person bearbeitet"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was verlangt die DGUV Vorschrift 3 für elektrische Geräte im Betrieb?",
+    "a": "Regelmäßige Prüfung auf sicheren Zustand mit Dokumentation",
+    "a_full": "Elektrische Anlagen und Geräte müssen vor der ersten Nutzung und danach regelmäßig geprüft werden. Die Prüfung umfasst Sichtprüfung, Messung und Funktionsprüfung. Die Fristen legt der Arbeitgeber per Gefährdungsbeurteilung fest, im Büro sind bis zu 2 Jahre üblich.",
+    "options": [
+      "Regelmäßige Prüfung auf sicheren Zustand mit Dokumentation",
+      "Eine jährliche Datensicherung aller Rechner",
+      "Den Austausch aller Geräte nach 3 Jahren",
+      "Eine Genehmigung der Geräte durch den Betriebsrat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was fordert die Arbeitsstättenverordnung für Bildschirmarbeitsplätze?",
+    "a": "Ergonomische Geräte, blendfreies Licht und regelmäßige Unterbrechungen",
+    "a_full": "Bildschirme müssen gut lesbar, reflexionsarm sowie dreh- und neigbar sein. Die Arbeit am Bildschirm soll durch Pausen oder andere Tätigkeiten unterbrochen werden. Zusätzlich muss der Arbeitgeber eine Augenuntersuchung anbieten.",
+    "options": [
+      "Ergonomische Geräte, blendfreies Licht und regelmäßige Unterbrechungen",
+      "Mindestens zwei Monitore und eine Dockingstation pro Platz",
+      "Einen eigenen, abschließbaren Raum für jeden Mitarbeiter",
+      "Eine gesetzliche Höchstzeit von 4 Stunden täglich am PC"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt das Elektro- und Elektronikgerätegesetz (ElektroG)?",
+    "a": "Rücknahme und umweltgerechte Entsorgung von Elektroaltgeräten",
+    "a_full": "Das ElektroG setzt die EU-Richtlinie WEEE um. Altgeräte gehören nicht in den Restmüll, darauf weist die durchgestrichene Mülltonne hin. Hersteller müssen sich registrieren, große Händler nehmen Altgeräte kostenlos zurück.",
+    "options": [
+      "Rücknahme und umweltgerechte Entsorgung von Elektroaltgeräten",
+      "Die Garantiezeit und Kennzeichnung neuer Elektrogeräte",
+      "Den maximalen Stromverbrauch von Rechenzentren",
+      "Die Prüffristen für elektrische Geräte im Betrieb"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet der Begriff Green IT?",
+    "a": "Umwelt- und ressourcenschonender Einsatz von IT über den ganzen Lebenszyklus",
+    "a_full": "Dazu gehören energieeffiziente Geräte, Virtualisierung statt vieler kleiner Server und Energiesparmodi. Auch eine lange Nutzungsdauer, Reparatur und fachgerechtes Recycling zählen dazu. Umweltzeichen wie der Blaue Engel helfen beim Einkauf.",
+    "options": [
+      "Umwelt- und ressourcenschonender Einsatz von IT über den ganzen Lebenszyklus",
+      "Der Einsatz von IT-Geräten mit grün gefärbtem Gehäuse im ganzen Büro",
+      "Software, die ausschließlich aus Open-Source-Code freier Projekte besteht",
+      "Ein drahtloses Firmennetz ganz ohne Kabelverbindungen zwischen Geräten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Betriebsvereinbarung?",
+    "a": "Ein Vertrag zwischen Arbeitgeber und Betriebsrat, der für alle im Betrieb gilt",
+    "a_full": "Betriebsvereinbarungen regeln betriebliche Fragen verbindlich, z.B. Arbeitszeiten oder die Auswertung von Protokolldaten eines neuen IT-Systems. Sie gelten unmittelbar für alle Beschäftigten des Betriebs. Sie werden schriftlich geschlossen.",
+    "options": [
+      "Ein Vertrag zwischen Arbeitgeber und Betriebsrat, der für alle im Betrieb gilt",
+      "Ein Vertrag zwischen Gewerkschaft und Arbeitgeberverband für eine Branche",
+      "Ein Einzelvertrag zwischen Arbeitgeber und einem neuen Mitarbeiter",
+      "Eine Anweisung der Geschäftsführung ohne Beteiligung der Belegschaft"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Abmahnung im Arbeitsrecht?",
+    "a": "Eine Rüge eines konkreten Fehlverhaltens mit Warnung vor der Kündigung",
+    "a_full": "Die Abmahnung benennt ein bestimmtes Fehlverhalten, z.B. wiederholtes Zuspätkommen. Sie fordert zur Änderung auf und droht für den Wiederholungsfall arbeitsrechtliche Folgen an. Vor einer verhaltensbedingten Kündigung ist sie meist Pflicht.",
+    "options": [
+      "Eine Rüge eines konkreten Fehlverhaltens mit Warnung vor der Kündigung",
+      "Eine Kündigung ohne Einhaltung einer Frist aus wichtigem Grund",
+      "Eine schlechte Leistungsbeurteilung im Arbeitszeugnis",
+      "Eine Kürzung des Jahresurlaubs als Strafe für Fehlverhalten"
+    ]
   }
 ]
