@@ -11,7 +11,7 @@ Update-Fenster des Programms.
   Arbeitstag kommen Tickets von Kolleginnen, Kollegen und dem Kunden:
   Phishing-Verdacht, Arbeitsspeicher für neue Kassen-PCs, Subnetz fürs
   Service-Center, USV für die Leitstelle, RAID, Passwörter, Angebot, SQL und
-  Backup-Beratung. Am PC über „Lernspiel“ in der Seitenleiste, auf dem Handy
+  Backup-Beratung. Am PC über „Spiel“ in der Seitenleiste, auf dem Handy
   über „Spiel“ in der unteren Leiste.
 - **Gekoppelt an deinen Lernfortschritt:** Aus deinen Antworten in
   Karteikarten und Prüfungstrainer wird je Fachbereich ein Wissensstand
@@ -41,7 +41,7 @@ Update-Fenster des Programms.
 - **Gleiche Namen auf PC und Handy:** Die Menüpunkte heißen jetzt überall
   „Rechner“, „Spiel“, „Fortschritt“ und „Optionen“ (nur „Dashboard“ am PC
   und „Start“ auf dem Handy bleiben verschieden).
-- **Eigener Knopf „Spielstand zurücksetzen“** in den Einstellungen. „Alle
+- **Eigener Knopf „Spielstand zurücksetzen“** unter „Optionen“. „Alle
   Lerndaten löschen“ und „Historie löschen“ lassen den Spielstand stehen.
 
 ## 0.25
