@@ -30,6 +30,10 @@ C = {
     "scrollbar":    "#2A2A2F",
     "scrollbar_hi": "#40404A",
     "text":      "#ECE6F8",
+    # Leicht gedaempftes Weiss fuer laengere Fliesstexte (Fragen, Antworten,
+    # Textfelder). Reines Hellweiss wirkt dort grell und leicht verschwommen;
+    # Ueberschriften behalten "text".
+    "text_soft": "#CFC6E0",
     "text_dim":  "#A794C6",
     "muted":     "#7D6B9C",
     "on_accent": "#FFFFFF",

@@ -59,7 +59,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.24"
+APP_VERSION = "0.25"
 
 
 def _resource_path(filename):
@@ -120,7 +120,7 @@ class EntryBox(ctk.CTkEntry):
         super().__init__(parent, width=width * 9 + 28, height=38,
                          corner_radius=10, border_width=1,
                          fg_color=C["card_alt"], border_color=C["border"],
-                         text_color=C["text"], font=font or F["body"])
+                         text_color=C["text_soft"], font=font or F["body"])
         # Aeltere Aufrufer greifen ueber .entry auf das Eingabefeld zu
         self.entry = self
         self._entry.configure(insertbackground=C["cyan"],
@@ -780,7 +780,7 @@ class CardsView(View):
                                   subtitle="")
         self.question_card.pack(fill="x", pady=(14, 0))
         self.lbl_question = make_label(self.question_card.body, "",
-                                       font=F["h2"], fg=C["text"],
+                                       font=F["h2"], fg=C["text_soft"],
                                        wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=6)
 
@@ -810,7 +810,7 @@ class CardsView(View):
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=4)
 
         self.lbl_feedback = make_label(self.answer_card.body, "",
-                                       font=F["body_bold"], fg=C["text"],
+                                       font=F["body_bold"], fg=C["text_soft"],
                                        wraplength=900, justify="left", anchor="w")
         self.lbl_feedback.pack(anchor="w", pady=(14, 0))
         self.lbl_solution = make_label(self.answer_card.body, "",
@@ -1029,7 +1029,7 @@ class QuizView(View):
         self.lbl_question = make_label(
             self.question_card.body,
             "Wähle Fachbereich und Fragenanzahl und starte die Session.",
-            font=F["h2"], fg=C["text"], wraplength=900, justify="left", anchor="w")
+            font=F["h2"], fg=C["text_soft"], wraplength=900, justify="left", anchor="w")
         self.lbl_question.pack(anchor="w", pady=(4, 12))
 
         self.options = OptionList(self.question_card.body, bg=C["card"])

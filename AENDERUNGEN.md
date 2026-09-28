@@ -4,6 +4,16 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.25
+
+- **Angenehmere Schrift am PC:** Längere Texte (Fragen, Antwortmöglichkeiten,
+  Rückmeldungen, Aufgabenstellungen und Eingabefelder) erscheinen jetzt in
+  einem leicht gedämpften Weiß statt in grellem Hellweiß. Dadurch wirken sie
+  ruhiger und schärfer. Überschriften bleiben unverändert hell.
+- **Kalender:** Die Pfeile zum Blättern zwischen den Monaten sind jetzt
+  Cyan und leuchten beim Drücken im Grün der Kachel „Fortschritt je
+  Fachbereich“ auf.
+
 ## 0.24
 
 - **Neu: Handy-App für Android** mit allen Bereichen der PC-Version –
