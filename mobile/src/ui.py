@@ -579,10 +579,17 @@ class CalendarPanel(ft.Column):
         self.refresh()
 
     def _arrow(self, icon, delta):
-        return ft.Container(content=ft.Icon(icon, size=18, color=C["yellow"]),
-                            width=34, height=34, border_radius=17, ink=True,
-                            bgcolor=C["card_alt"], alignment=ft.Alignment.CENTER,
-                            on_click=lambda _e: self._shift(delta))
+        # Standard Cyan, beim Druecken gruen wie die Kachel
+        # "Fortschritt je Fachbereich" (wie am PC)
+        return ft.IconButton(
+            icon=icon, icon_size=18, width=34, height=34,
+            style=ft.ButtonStyle(
+                icon_color={ft.ControlState.PRESSED: C["green"],
+                            ft.ControlState.DEFAULT: C["cyan"]},
+                bgcolor=C["card_alt"],
+                overlay_color=mix(C["card_alt"], C["green"], 0.18),
+                padding=0, shape=ft.CircleBorder()),
+            on_click=lambda _e: self._shift(delta))
 
     def refresh(self):
         active = self.provider(self.year, self.month)

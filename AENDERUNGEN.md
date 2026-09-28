@@ -10,9 +10,12 @@ Update-Fenster des Programms.
   Rückmeldungen, Aufgabenstellungen und Eingabefelder) erscheinen jetzt in
   einem leicht gedämpften Weiß statt in grellem Hellweiß. Dadurch wirken sie
   ruhiger und schärfer. Überschriften bleiben unverändert hell.
-- **Kalender:** Die Pfeile zum Blättern zwischen den Monaten sind jetzt
-  Cyan und leuchten beim Drücken im Grün der Kachel „Fortschritt je
-  Fachbereich“ auf.
+- **Kalender:** Die Pfeile zum Blättern zwischen den Monaten sind jetzt am
+  PC und in der Handy-App Cyan und leuchten beim Drücken im Grün der Kachel
+  „Fortschritt je Fachbereich“ auf.
+- **Neues Programm-Icon:** Desktop-Verknüpfung, Fensterleiste und das Icon
+  der Handy-App zeigen jetzt das Logo aus der Seitenleiste – den Ring mit
+  Farbverlauf von Cyan nach Pink und dem leuchtenden Punkt in der Mitte.
 
 ## 0.24
 
