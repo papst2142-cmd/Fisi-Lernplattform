@@ -3127,5 +3127,869 @@
       "",
       "3. Der Betrieb muss eine Gefährdungsbeurteilung erstellen (§ 5 ArbSchG) und geeignete Arbeitsmittel bereitstellen, z.B. eine Stehleiter oder ein Podest in jedem Firmenwagen. Er muss die Beschäftigten vor Beginn und dann regelmäßig, mindestens einmal im Jahr, unterweisen (§ 12 ArbSchG, DGUV Vorschrift 1), auch zum sicheren Arbeiten auf Leitern. Auszubildende müssen angeleitet und beaufsichtigt werden. Emre selbst ist verpflichtet, die Arbeitsmittel bestimmungsgemäß zu benutzen (§ 15 ArbSchG). Eine Leiter aus dem Auto und eine klare Regel \"keine Stühle als Aufstieg\" hätten den Unfall verhindert."
     ]
+  },
+  {
+    "title": "Arbeitsplatz für die Grafikerin einer Werbetechnikfirma",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Werbetechnikfirma druckt Banner, Planen und Fahrzeugbeschriftungen. Die neue Grafikerin braucht einen Arbeitsplatz für Bildbearbeitung und Layout. Ein typisches Bannermotiv ist 254 cm x 127 cm groß (1 Zoll = 2,54 cm) und wird mit 150 dpi im Farbmodus CMYK mit 8 Bit je Farbkanal angelegt. Vereinfacht wird unkomprimiert gerechnet (1 MB = 10^6 Byte).",
+      "Die Grafikerin hat oft 3 solche Dateien gleichzeitig geöffnet. Nach einer Faustregel des Softwareherstellers braucht jede geöffnete Datei etwa das 5-Fache ihrer Dateigröße an Arbeitsspeicher. Für Windows, Browser, E-Mail und das Layoutprogramm werden zusätzlich 8 GB angesetzt. Die Dateien liegen auf dem NAS der Firma, das über Gigabit-Ethernet real 110 MB/s liefert.",
+      "",
+      "1. Berechnen Sie Pixelzahl und Dateigröße eines Bannermotivs in MB und MiB. Wie viel Arbeitsspeicher wird gebraucht? Reichen 16 GB? Wie lange dauert das Öffnen einer Datei vom NAS mindestens?",
+      "2. Welche Anforderungen stellen Sie an CPU, Arbeitsspeicher, Massenspeicher, Grafikkarte und Monitor? Begründen Sie jeweils kurz.",
+      "3. Die Grafikerin möchte ihre private Softwarelizenz und Schriften aus ihrem alten Job mitbringen. Was sagen Sie dazu?"
+    ],
+    "solution": [
+      "1. 254 cm / 2,54 = 100 Zoll, 127 cm / 2,54 = 50 Zoll. Pixel: 100 x 150 = 15.000 und 50 x 150 = 7.500, zusammen 15.000 x 7.500 = 112.500.000 Pixel. CMYK mit 8 Bit je Kanal sind 4 Byte je Pixel: 112.500.000 x 4 = 450.000.000 Byte = 450 MB = 450.000.000 / 1.048.576 = ca. 429,15 MiB. Arbeitsspeicher: 3 Dateien x 5 x 450 MB = 6.750 MB = 6,75 GB, plus 8 GB = 14,75 GB. Mit 16 GB blieben nur 1,25 GB Luft. Sobald eine Datei mehr offen ist oder mehr Ebenen hat, lagert Windows aus und alles wird langsam. Empfehlung: 32 GB. Öffnen vom NAS: 450 MB / 110 MB/s = ca. 4,1 Sekunden.",
+      "",
+      "2. CPU: aktuelle Mittel- bis Oberklasse mit hohem Takt, weil viele Filter nur wenige Kerne nutzen. Arbeitsspeicher: 32 GB als 2 x 16 GB, damit Dual-Channel genutzt wird, mit freien Steckplätzen für später 64 GB. Massenspeicher: NVMe-SSD für System, Programme und Auslagerungsdatei (Arbeitsvolume), weil große Dateien sonst lange laden. Grafikkarte: eigene Grafikkarte mit ausreichend Grafikspeicher, weil Bildbearbeitung viele Funktionen über die GPU beschleunigt. Monitor: 27 Zoll mit mindestens WQHD, großer Farbraum (hohe Abdeckung von Adobe RGB) und Hardware-Kalibrierung, damit die Farben am Bildschirm zum Druck passen. Matt und blendfrei, höhenverstellbar.",
+      "",
+      "3. Die private Lizenz ist für die private Nutzung gekauft. Eine gewerbliche Nutzung ist meist nicht erlaubt, außerdem gehört sie nicht der Firma. Die Firma muss eigene Lizenzen kaufen oder mieten, z.B. ein Team-Abo, das an die Firma gebunden ist und beim Ausscheiden neu zugewiesen werden kann. Schriften sind ebenfalls lizenzpflichtige Software. Lizenzen des alten Arbeitgebers gehören diesem, die Schriften dürfen nicht mitgenommen werden. Für Schriften, die in Kundendaten oder Druckdateien eingebettet werden, muss die Lizenz das erlauben. Alle Lizenzen im Lizenzverzeichnis der Firma dokumentieren. Unlizenzierte Software kann Abmahnungen, Schadensersatz und Nachzahlungen auslösen."
+    ]
+  },
+  {
+    "title": "USV für einen Messplatz im Baustofflabor",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "In einem Prüflabor für Baustoffe laufen Belastungsversuche bis zu 6 Stunden. Die Messdaten erfasst ein PC. Wegen einer Baustelle nebenan gibt es häufig kurze Stromausfälle und Spannungseinbrüche. Dann bricht der Versuch ab und muss mit einem neuen Prüfkörper wiederholt werden.",
+      "Angaben: Die Bauteile des Mess-PCs brauchen zusammen 144 W, das Netzteil hat einen Wirkungsgrad von 90 %. Dazu kommen ein Monitor (24 W), ein Messverstärker (56 W) und ein kleiner Switch (10 W). Es sollen 20 % Reserve eingeplant werden, der Leistungsfaktor beträgt 0,9. Bei einem Ausfall muss die USV mindestens 30 Minuten überbrücken. Vom Akku sind vereinfacht 70 % nutzbar, der Wechselrichter hat einen Wirkungsgrad von 85 %.",
+      "Angebote:",
+      "  A) 600 VA / 360 W, Offline (VFD), Akku 2 x 12 V 7 Ah",
+      "  B) 1.000 VA / 600 W, Line-Interactive (VI), Akku 2 x 12 V 9 Ah",
+      "  C) 1.000 VA / 900 W, Online-Doppelwandler (VFI), Akku 3 x 12 V 9 Ah",
+      "",
+      "1. Wie viel Leistung nimmt der Mess-PC aus der Steckdose auf? Berechnen Sie die Gesamtlast, die Last mit Reserve in W und die nötige Scheinleistung in VA. Welche USV ist leistungsmäßig groß genug?",
+      "2. Berechnen Sie für jede USV die Überbrückungszeit bei der Gesamtlast ohne Reserve. Welche USV empfehlen Sie für den Messplatz? Beziehen Sie die Bauart ein.",
+      "3. Ein Kollege möchte auch den Laserdrucker des Labors an die USV hängen. Wie reagieren Sie? Welche weiteren Punkte gehören zur Einrichtung und zum Betrieb der USV?"
+    ],
+    "solution": [
+      "1. Mess-PC: 144 W / 0,9 = 160 W aus der Steckdose. Gesamtlast: 160 + 24 + 56 + 10 = 250 W. Mit 20 % Reserve: 250 x 1,2 = 300 W. Scheinleistung: 300 W / 0,9 = ca. 333,3 VA. Alle drei USV liefern mindestens 360 W und 600 VA, leistungsmäßig passen also alle.",
+      "",
+      "2. Nutzbare Energie = Spannung x Kapazität x 0,7 x 0,85. A: 24 V x 7 Ah = 168 Wh, nutzbar 168 x 0,7 x 0,85 = 99,96 Wh. 99,96 / 250 = ca. 0,40 h = ca. 24 Minuten, zu wenig. B: 24 V x 9 Ah = 216 Wh, nutzbar 128,52 Wh, 128,52 / 250 x 60 = ca. 30,8 Minuten, reicht knapp. C: 36 V x 9 Ah = 324 Wh, nutzbar 192,78 Wh, 192,78 / 250 x 60 = ca. 46,3 Minuten. Empfehlung: C. Eine Online-USV (VFI) versorgt die Geräte dauerhaft über den Wechselrichter. Es gibt keine Umschaltzeit, Spannungseinbrüche und Störungen der Baustelle kommen nicht beim Messverstärker an. Bei A und B wird erst bei einem Fehler umgeschaltet, einige Millisekunden Unterbrechung können eine empfindliche Messung stören. Außerdem hat C die meiste Zeitreserve für gealterte Akkus.",
+      "",
+      "3. Ablehnen. Ein Laserdrucker zieht beim Aufheizen der Fixiereinheit kurz sehr viel Leistung (oft über 1.000 W). Das kann die USV überlasten und die Laufzeit stark verkürzen. Er ist für den Versuch auch nicht nötig. Weitere Punkte: USV per USB oder Netzwerk mit dem Mess-PC verbinden, damit er bei niedriger Restlaufzeit die Messdaten speichert und herunterfährt. Nur die nötigen Geräte an die gepufferten Steckdosen. Regelmäßigen Selbsttest einstellen und Ereignisse protokollieren. Akkus nach Herstellerangabe tauschen, meist nach 3 bis 5 Jahren. Die USV bei der regelmäßigen Prüfung ortsveränderlicher elektrischer Geräte (DGUV Vorschrift 3) mit aufnehmen."
+    ]
+  },
+  {
+    "title": "Tower-PCs im Callcenter durch Mini-PCs ersetzen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Das Callcenter eines Energieversorgers hat 40 Arbeitsplätze, die im Zwei-Schicht-Betrieb 10 Stunden an 250 Tagen im Jahr laufen. Die 7 Jahre alten Tower-PCs brauchen im Betrieb durchschnittlich 68 W. Sie können das aktuelle Windows nicht mehr bekommen und müssen ersetzt werden.",
+      "Angebote: Mini-PC (wird mit VESA-Halter hinter den Monitor geschraubt) 560 Euro, durchschnittlich 16 W. Kompakter Büro-Tower 540 Euro, durchschnittlich 45 W. Beide Geräte reichen für die Callcenter-Software. Rechnen Sie vereinfacht mit einem angenommenen Strompreis von 0,30 Euro je kWh.",
+      "",
+      "1. Wie viel Strom und Geld sparen 40 Mini-PCs im Jahr gegenüber den alten Towern? Nach wie vielen Jahren hätte sich der Kauf allein durch die Stromersparnis bezahlt gemacht? Ist das ein sinnvolles Argument?",
+      "2. Vergleichen Sie Mini-PC und neuen Tower. Nach wie vielen Monaten ist der Mehrpreis der Mini-PCs durch die Stromersparnis ausgeglichen? Wie hoch ist der Vorteil nach 5 Jahren?",
+      "3. Nennen Sie vier weitere Maßnahmen oder Kriterien der Green IT, die Sie bei diesem Austausch berücksichtigen."
+    ],
+    "solution": [
+      "1. Ersparnis je Platz: 68 - 16 = 52 W. 40 x 52 W = 2.080 W = 2,08 kW. 2,08 kW x 10 h x 250 Tage = 2,08 x 2.500 h = 5.200 kWh im Jahr. 5.200 kWh x 0,30 Euro = 1.560 Euro im Jahr. Kaufpreis: 40 x 560 = 22.400 Euro. 22.400 / 1.560 = ca. 14,4 Jahre. Das ist länger als die Nutzungsdauer von etwa 5 Jahren. Allein wegen des Stroms lohnt sich der Tausch nicht. Das Argument ist hier aber falsch gestellt: Die alten PCs müssen ohnehin ersetzt werden. Vergleichen muss man die neuen Geräte untereinander.",
+      "",
+      "2. Mehrpreis: 560 - 540 = 20 Euro je Gerät, 40 x 20 = 800 Euro. Ersparnis: 45 - 16 = 29 W. 40 x 29 W x 2.500 h = 2.900 kWh im Jahr, 2.900 x 0,30 = 870 Euro im Jahr. 800 / 870 = ca. 0,92 Jahre = ca. 11 Monate. Nach 5 Jahren: 5 x 870 - 800 = 3.550 Euro Vorteil für die Mini-PCs. Dazu kommen weniger Abwärme im Raum und mehr Platz am Tisch.",
+      "",
+      "3. Energiesparplan einstellen: Monitor nach 10 Minuten aus, Energiesparmodus nach Schichtende, Updates nachts per Wake-on-LAN statt Dauerbetrieb. Auf Umweltzeichen achten, z.B. Blauer Engel, TCO Certified oder Energy Star. Monitore und Zubehör weiter nutzen, wenn sie noch in Ordnung sind. Auf Reparierbarkeit, lange Ersatzteil- und Updateversorgung achten. Die alten PCs nach sicherer Datenlöschung an einen Wiederaufbereiter geben oder spenden, sonst über einen zertifizierten Entsorger nach dem ElektroG entsorgen. Verpackungsarme Lieferung vereinbaren."
+    ]
+  },
+  {
+    "title": "Schadenfotos eines Kfz-Sachverständigen speichern",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Kfz-Sachverständiger fotografiert Unfallschäden mit einem Tablet. Die Kamera liefert 12 Megapixel (4.000 x 3.000 Pixel) mit 24 Bit Farbtiefe. Gespeichert wird als JPEG, im Mittel 4,5 MB je Foto (1 MB = 10^6 Byte, 1 GB = 1.000 MB). Pro Gutachten entstehen 40 Fotos, er erstellt 6 Gutachten am Tag an 230 Arbeitstagen im Jahr.",
+      "Das Tablet hat 128 GB Speicher, davon sind 40 GB durch System und Apps belegt. Die Fotos sollen täglich über Mobilfunk (Upload real 10 Mbit/s) in das Büro übertragen und dort 5 Jahre aufbewahrt werden. Auf vielen Fotos sind Kennzeichen, Fahrzeug-Identnummern und manchmal Personen zu sehen.",
+      "",
+      "1. Wie groß wäre ein Foto unkomprimiert in MB und MiB? Welchen Kompressionsfaktor erreicht JPEG hier? Wie viele Arbeitstage reicht der freie Speicher des Tablets, wenn nie gelöscht wird?",
+      "2. Wie viel Speicher entsteht pro Jahr und in 5 Jahren? Wie lange dauert der tägliche Upload? Welche Speicherlösung schlagen Sie im Büro vor?",
+      "3. Welche Maßnahmen zu Datenschutz und IT-Sicherheit sind für das Tablet und die Fotos nötig? Nennen Sie vier."
+    ],
+    "solution": [
+      "1. 4.000 x 3.000 = 12.000.000 Pixel x 3 Byte = 36.000.000 Byte = 36 MB. 36.000.000 / 1.048.576 = ca. 34,33 MiB. Kompressionsfaktor: 36 / 4,5 = 8, JPEG spart also etwa 87,5 %. Pro Tag: 6 x 40 = 240 Fotos x 4,5 MB = 1.080 MB. Frei: 128 - 40 = 88 GB = 88.000 MB. 88.000 / 1.080 = ca. 81,5. Der Speicher reicht für 81 volle Arbeitstage, also knapp 4 Monate.",
+      "",
+      "2. Pro Gutachten 40 x 4,5 = 180 MB. Pro Jahr: 6 x 230 = 1.380 Gutachten x 180 MB = 248.400 MB = 248,4 GB. In 5 Jahren: 5 x 248,4 = 1.242 GB = ca. 1,24 TB. Upload: 1.080 MB x 8 = 8.640 Mbit / 10 Mbit/s = 864 s = 14,4 Minuten am Tag. Vorschlag: NAS im Büro mit gespiegelten Festplatten (RAID 1) und z.B. 2 x 4 TB, damit Reserve für Wachstum bleibt. RAID ersetzt keine Sicherung: zusätzlich eine Sicherung auf wechselnde externe Festplatten oder in einen Cloud-Speicher in der EU. Die Fotos werden nach dem erfolgreichen Upload vom Tablet gelöscht.",
+      "",
+      "3. Kennzeichen und Fahrzeug-Identnummern lassen sich einem Halter zuordnen, das sind personenbezogene Daten. Maßnahmen: Tablet mit Geräteverschlüsselung und PIN oder Biometrie sperren, automatische Bildschirmsperre. Tablet über ein MDM verwalten, damit es bei Verlust gesperrt und gelöscht werden kann. Übertragung nur verschlüsselt (VPN oder HTTPS), keine privaten Cloud-Dienste und Messenger. Personen im Bild möglichst vermeiden oder unkenntlich machen, nur das Nötige fotografieren. Löschfrist nach 5 Jahren festlegen und umsetzen. Zugriff auf den Fotoordner im Büro nur für berechtigte Mitarbeiter."
+    ]
+  },
+  {
+    "title": "Hilfsprogramm rechnet Präfixlängen in Subnetzmasken um",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Der Ausbilder eines Systemhauses möchte, dass die Azubis ein kleines Hilfsprogramm für den Support schreiben. Es soll eine Präfixlänge (z.B. 27) in eine Subnetzmaske in Punktschreibweise umrechnen. Ein Azubi hat diesen Pseudocode begonnen:",
+      "  FUNKTION PraefixZuMaske(praefix)",
+      "    WENN praefix < 0 ODER praefix > 32 DANN RÜCKGABE \"ungültig\"",
+      "    rest <- praefix",
+      "    maske <- Feld mit 4 Elementen",
+      "    FÜR i VON 0 BIS 3",
+      "      WENN rest >= 8 DANN",
+      "        maske[i] <- 255",
+      "        rest <- rest - 8",
+      "      SONST",
+      "        maske[i] <- ...(Lücke A)...",
+      "        rest <- ...(Lücke B)...",
+      "      ENDE WENN",
+      "    ENDE FÜR",
+      "    RÜCKGABE maske",
+      "",
+      "1. Füllen Sie die Lücken A und B. Erklären Sie, warum Ihre Formel auch für rest = 0 das richtige Ergebnis liefert.",
+      "2. Führen Sie einen Schreibtischtest für die Präfixe 27 und 20 durch: Geben Sie für jeden Schleifendurchlauf i, rest vor dem Durchlauf und maske[i] an.",
+      "3. Das Programm soll zusätzlich die Anzahl der nutzbaren Hostadressen ausgeben. Geben Sie die Formel an und berechnen Sie sie für /27 und /20. Welche Testfälle wählen Sie, um das Programm zu prüfen?"
+    ],
+    "solution": [
+      "1. Lücke A: 256 - 2^(8 - rest). Lücke B: 0. Begründung: Bei rest Einsen von links bleiben 8 - rest Nullen rechts. Ein Oktett mit n Nullen rechts hat den Wert 256 - 2^n. Beispiel rest = 3: 256 - 2^5 = 256 - 32 = 224 = 1110 0000. Bei rest = 0 ergibt sich 256 - 2^8 = 256 - 256 = 0. Das ist richtig, denn nach den Einsen sind alle weiteren Oktette 0. Da rest nach dem ersten SONST-Zweig 0 ist, liefern auch alle folgenden Durchläufe 0.",
+      "",
+      "2. Präfix 27: i = 0, rest 27, maske 255. i = 1, rest 19, maske 255. i = 2, rest 11, maske 255. i = 3, rest 3, maske 256 - 2^5 = 224. Ergebnis 255.255.255.224.",
+      "Präfix 20: i = 0, rest 20, maske 255. i = 1, rest 12, maske 255. i = 2, rest 4, maske 256 - 2^4 = 240, danach rest 0. i = 3, rest 0, maske 256 - 2^8 = 0. Ergebnis 255.255.240.0.",
+      "",
+      "3. Nutzbare Hosts = 2^(32 - praefix) - 2, weil Netzadresse und Broadcastadresse wegfallen. /27: 2^5 - 2 = 30. /20: 2^12 - 2 = 4.096 - 2 = 4.094. Testfälle: typische Werte (24, 27, 20), Grenzen innerhalb des gültigen Bereichs (0 ergibt 0.0.0.0, 8 ergibt 255.0.0.0, 32 ergibt 255.255.255.255), ungültige Werte (-1, 33) und falsche Eingaben wie Buchstaben. Die Sonderfälle /31 und /32 brauchen eine eigene Regel, denn die Formel ergäbe 0 und -1 nutzbare Hosts. /31 wird für Punkt-zu-Punkt-Verbindungen mit 2 Adressen genutzt, /32 steht für einen einzelnen Host. Für jeden Testfall das erwartete Ergebnis vorher aufschreiben und mit der Ausgabe vergleichen."
+    ]
+  },
+  {
+    "title": "Struktogramm für die Temperaturüberwachung im Serverraum",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Im kleinen Serverraum einer Spedition fällt im Sommer manchmal die Klimaanlage aus. Ein Sensor liefert jede Minute einen Temperaturwert t in °C. Ein Überwachungsprogramm soll so arbeiten:",
+      "  - Bei jedem Wert über 30 °C wird eine Warnmail an die IT geschickt.",
+      "  - Liegen 3 Messwerte hintereinander über 35 °C, wird der Server geordnet heruntergefahren und das Programm beendet.",
+      "  - Ein Wert von 35 °C oder weniger setzt die Zählung der Werte über 35 °C wieder auf 0.",
+      "",
+      "1. Erstellen Sie ein Struktogramm (Nassi-Shneiderman) für das Programm. Verwenden Sie eine Zählvariable. Stellen Sie die Blöcke in Textform dar.",
+      "2. Führen Sie einen Schreibtischtest mit diesen Werten ab Minute 1 durch: 29, 31, 34, 36, 35, 37, 36, 38, 39. Wie viele Warnmails werden verschickt, und in welcher Minute wird der Server heruntergefahren?",
+      "3. Warum wird der Server nicht schon beim ersten Wert über 35 °C heruntergefahren? Was stört am Ergebnis aus Aufgabe 2, und wie verbessern Sie das Programm? Welche Maßnahmen außerhalb der Software empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Struktogramm (Blöcke von oben nach unten, eingerückt = innerhalb des Blocks):",
+      "  zaehler <- 0",
+      "  Wiederhole solange wahr (kopfgesteuerte Endlosschleife)",
+      "    Lies Messwert t",
+      "    Verzweigung: t > 30 ?  ja: Sende Warnmail | nein: (leer)",
+      "    Verzweigung: t > 35 ?  ja: zaehler <- zaehler + 1 | nein: zaehler <- 0",
+      "    Verzweigung: zaehler = 3 ?  ja: Server herunterfahren, Programm beenden | nein: (leer)",
+      "    Warte 1 Minute",
+      "Im Struktogramm ist jede Verzweigung ein Block mit Bedingung oben und den Spalten ja und nein darunter. Die Schleife umschließt alle Blöcke von Lies Messwert bis Warte.",
+      "",
+      "2. Minute 1: 29, keine Mail, zaehler 0. Minute 2: 31, Mail, zaehler 0. Minute 3: 34, Mail, zaehler 0. Minute 4: 36, Mail, zaehler 1. Minute 5: 35, Mail, 35 ist nicht über 35, zaehler 0. Minute 6: 37, Mail, zaehler 1. Minute 7: 36, Mail, zaehler 2. Minute 8: 38, Mail, zaehler 3, Server wird heruntergefahren. Der Wert 39 wird nicht mehr gelesen. Ergebnis: 7 Warnmails in den Minuten 2 bis 8, Abschaltung in Minute 8.",
+      "",
+      "3. Ein einzelner hoher Wert kann ein Messfehler oder eine kurze Spitze sein. Ein unnötiges Herunterfahren unterbricht die Arbeit aller Nutzer. Erst mehrere Werte hintereinander zeigen ein echtes Problem. Störend: 7 Mails in 7 Minuten. Die IT wird mit Mails überflutet und übersieht wichtige Meldungen. Verbesserung: eine Merkervariable warnungGesendet. Eine Mail geht nur, wenn t über 30 steigt und noch keine Warnung gesendet wurde. Fällt t wieder unter 30, wird der Merker zurückgesetzt. Die Abschaltung kündigt eine eigene Mail an. Außerhalb der Software: Klimaanlage warten oder ein zweites Klimagerät als Redundanz, Sensor an einer sinnvollen Stelle im Rack, Alarm zusätzlich per SMS oder an das Monitoring-System, Server-Hardware mit eigener Temperaturüberwachung nutzen, Tür geschlossen halten."
+    ]
+  },
+  {
+    "title": "Inventarliste der Notebooks in der Tabellenkalkulation",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Steuerungsbaufirma führt ihre Notebooks in einer Tabellenkalkulation. Im Blatt \"Inventar\" stehen oben die Parameter: I1 = Nutzungsdauer 3 (Jahre), I2 = Austauschalter 5 (Jahre). Ab Zeile 5 folgen die Geräte, Spalte D enthält den Kaufpreis netto, Spalte E das Alter in ganzen Jahren zum Stichtag 31.12.2026. Vereinfacht wird linear in ganzen Jahren abgeschrieben.",
+      "  Zeile 5: NB-01, D5 = 1.140 Euro, E5 = 4",
+      "  Zeile 6: NB-02, D6 = 1.260 Euro, E6 = 2",
+      "  Zeile 7: NB-03, D7 = 1.380 Euro, E7 = 1",
+      "  Zeile 8: NB-04, D8 = 990 Euro, E8 = 5",
+      "  Zeile 9: NB-05, D9 = 1.410 Euro, E9 = 0",
+      "In F5 steht: =WENN(E5>=$I$1;0;D5-D5/$I$1*E5). In G5 steht: =WENN(E5>=$I$2;\"austauschen\";\"in Nutzung\"). Beide Formeln werden bis Zeile 9 nach unten kopiert.",
+      "",
+      "1. Was berechnet die Formel in F5? Wie lautet sie nach dem Kopieren in F6? Was ginge schief, wenn statt $I$1 nur I1 geschrieben worden wäre?",
+      "2. Berechnen Sie die Werte in F5 bis F9 und G5 bis G9. Geben Sie Formel und Ergebnis für die Summe der Restwerte in F10 und für die Anzahl der auszutauschenden Geräte in G10 an.",
+      "3. In Spalte H soll zur Personalnummer in Spalte C der Name des Nutzers erscheinen. Die Namen stehen im Blatt \"Personal\" in A2:C60 (Personalnummer, Name, Abteilung). Geben Sie die Formel für H5 an und erklären Sie die Teile. Was ist bei dieser Liste aus Sicht des Datenschutzes zu beachten?"
+    ],
+    "solution": [
+      "1. F5 berechnet den Restwert nach linearer Abschreibung: Kaufpreis minus jährliche Abschreibung (Kaufpreis / Nutzungsdauer) mal Alter. Ist das Gerät so alt wie die Nutzungsdauer oder älter, ist der Restwert 0. Nach dem Kopieren in F6: =WENN(E6>=$I$1;0;D6-D6/$I$1*E6). Die relativen Bezüge D und E wandern mit, der absolute Bezug $I$1 bleibt fest. Ohne $ würde in F6 I2 stehen, in F7 I3 usw. F6 rechnet dann mit dem Austauschalter 5 statt mit 3 Jahren: 1.260 - 1.260 / 5 x 2 = 756 statt 420 Euro. Ab F7 zeigt der Bezug auf leere Zellen, die als 0 zählen. Die Bedingung Alter >= 0 ist immer erfüllt, die Formel liefert überall 0. Solche Fehler fallen leicht nicht auf.",
+      "",
+      "2. F5: 4 >= 3, also 0. F6: 1.260 - 1.260 / 3 x 2 = 1.260 - 840 = 420. F7: 1.380 - 460 x 1 = 920. F8: 5 >= 3, also 0. F9: 1.410 - 0 = 1.410. G5: in Nutzung (4 < 5), G6: in Nutzung, G7: in Nutzung, G8: austauschen (5 >= 5), G9: in Nutzung. F10: =SUMME(F5:F9) = 0 + 420 + 920 + 0 + 1.410 = 2.750 Euro. G10: =ZÄHLENWENN(G5:G9;\"austauschen\") = 1.",
+      "",
+      "3. H5: =SVERWEIS(C5;Personal!$A$2:$C$60;2;FALSCH). C5 ist das Suchkriterium, die Personalnummer. Personal!$A$2:$C$60 ist die Matrix, gesucht wird immer in ihrer ersten Spalte. Absolut, damit sie beim Kopieren nicht verrutscht. 2 ist der Spaltenindex, also der Name. FALSCH verlangt eine genaue Übereinstimmung, sonst liefert SVERWEIS bei unsortierten Daten falsche Namen. Fehlt die Nummer, erscheint #NV. Datenschutz: Die Liste verknüpft Personen mit Geräten und ist damit personenbezogen. Nur Mitarbeiter mit dienstlichem Bedarf (IT, Buchhaltung) erhalten Zugriff. Die Datei liegt nicht auf einem allgemein lesbaren Laufwerk und wird nicht per Mail verteilt. Nur nötige Daten aufnehmen, ausgeschiedene Mitarbeiter nach Rückgabe des Geräts aus der Liste entfernen."
+    ]
+  },
+  {
+    "title": "Monitore mit USB-C für Desksharing-Plätze",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Der Kundenservice eines Stadtwerks führt Desksharing ein. 45 Mitarbeiter arbeiten mit 14-Zoll-Notebooks, im Mittel sind 60 % gleichzeitig im Büro. Es sollen 10 % Reserveplätze dazukommen. Jeder Platz bekommt einen 27-Zoll-Monitor mit WQHD. Die Notebooks laden per USB-C mit 65 W.",
+      "Angebote je Platz:",
+      "  A) Monitor mit USB-C-Anschluss (Bild, Daten und Laden bis 90 W), eingebautem USB-Hub und Netzwerkanschluss: 379 Euro",
+      "  B) Monitor ohne USB-C für 219 Euro plus USB-C-Dockingstation mit 100 W für 179 Euro",
+      "",
+      "1. Wie viele Desksharing-Plätze werden gebraucht? Was kostet die Ausstattung aller Plätze bei A und bei B? Welche Variante empfehlen Sie?",
+      "2. Beim Test mit Variante A bekommt das Notebook über den Netzwerkanschluss des Monitors an jedem Platz eine andere IP-Adresse. Im Netz werden Geräte aber über ihre MAC-Adresse zugelassen. Erklären Sie das Problem und nennen Sie zwei Lösungen.",
+      "3. Welche Anforderungen an Ergonomie und Hygiene gelten für Desksharing-Plätze? Nennen Sie vier."
+    ],
+    "solution": [
+      "1. 45 x 0,6 = 27 Plätze. Mit 10 % Reserve: 27 x 1,1 = 29,7, also 30 Plätze. A: 30 x 379 = 11.370 Euro. B: 219 + 179 = 398 Euro je Platz, 30 x 398 = 11.940 Euro. A ist 570 Euro günstiger (19 Euro je Platz). Empfehlung A: Ein Kabel für Bild, Laden, USB und Netzwerk, weniger Geräte und Kabel auf dem Tisch, 90 W reichen für 65-W-Notebooks. Vorher ein Muster mit dem eingesetzten Notebookmodell testen.",
+      "",
+      "2. Der Netzwerkanschluss im Monitor ist eine eigene Netzwerkkarte mit eigener MAC-Adresse. Das Netz sieht an jedem Platz ein anderes Gerät. Der DHCP-Server vergibt deshalb andere Adressen, und eine Zulassung nach MAC-Adresse schlägt fehl, weil nur die MAC des Notebooks bekannt ist. Lösung 1: MAC-Adress-Durchreichung (MAC Pass-Through) im BIOS/UEFI des Notebooks einschalten, wenn Notebook und Monitor das unterstützen. Dann nutzt der Monitor die MAC des Notebooks. Lösung 2: Zulassung nicht mehr über MAC-Adressen, sondern über 802.1X mit Zertifikat oder Benutzeranmeldung. Notlösung: Die 30 MAC-Adressen der Monitore zusätzlich eintragen. Das ist aufwendig und unsicher, weil dann jedes Gerät an einem Monitor ins Netz kommt.",
+      "",
+      "3. Monitor höhen- und neigungsverstellbar, weil jeder Nutzer anders groß ist. Höhenverstellbarer Tisch und gut einstellbarer Stuhl, kurze Anleitung zum Einstellen am Platz. Externe Tastatur und Maus, damit nicht am kleinen Notebook gearbeitet wird. Blendfreie Aufstellung, Fenster seitlich. Hygiene: Clean-Desk-Regel, Oberflächen, Tastaturen und Mäuse regelmäßig reinigen, Reinigungsmittel bereitstellen. Abschließbare Schränke für persönliche Sachen. Die Gefährdungsbeurteilung nach Arbeitsstättenverordnung gilt auch für Desksharing-Plätze."
+    ]
+  },
+  {
+    "title": "Büro und Werkstatt einer Tischlerei vernetzen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Tischlerei baut über der Werkstatt ein neues Büro aus. Im Büro kommen 5 PCs, 1 Multifunktionsdrucker, 1 NAS und 2 WLAN-Access-Points an einen neuen Switch. Dazu kommen je ein Port für den Internetrouter und für die Verbindung in die Werkstatt. Es sollen 30 % freie Ports als Reserve bleiben. Die Access Points (je höchstens 13 W) werden per PoE versorgt, später sollen zwei weitere dazukommen.",
+      "In der Werkstatt stehen der PC der Zuschnittsäge und ein Zeiterfassungsterminal. Der Kabelweg vom Switch im Büro zum Säge-PC ist 96 m lang. Auf dem Weg liegt der Eingang der Werkstatt nach 58 m. Der Meister sagt: \"Wir ziehen einfach ein Kabel durch, Netzwerkkabel gehen bis 100 m.\"",
+      "",
+      "1. Wie viele Ports braucht der Switch im Büro mindestens, und welche Portzahl kaufen Sie? Welches PoE-Budget muss er haben?",
+      "2. Prüfen Sie die Aussage des Meisters. Wie lösen Sie die Anbindung der Werkstatt, und wie lang werden die Teilstrecken?",
+      "3. Worauf achten Sie bei Kabeln und Geräten in der Werkstatt? Nennen Sie drei Punkte."
+    ],
+    "solution": [
+      "1. Geräte: 5 + 1 + 1 + 2 = 9, dazu Router und Werkstatt-Verbindung = 11 Ports. Mit 30 % Reserve: 11 x 1,3 = 14,3, also mindestens 15 Ports. Gekauft wird ein Switch mit 16 Ports (besser 24, wenn der Preisunterschied klein ist). PoE: heute 2 x 13 W = 26 W, später 4 x 13 W = 52 W. Der Switch braucht ein PoE-Budget von mindestens 52 W, z.B. 65 W, und PoE-Ports nach 802.3af oder 802.3at.",
+      "",
+      "2. Die 100 m gelten für den ganzen Übertragungskanal. Davon darf das fest verlegte Kabel (Installationsstrecke) höchstens 90 m lang sein, der Rest ist für Patchkabel an beiden Enden. 96 m fest verlegt sind zu lang, mit Patchkabeln wären es über 100 m. Folge: Paketfehler, nur 100 Mbit/s oder gar keine Verbindung. Lösung: ein kleiner Switch in einem Wandverteiler am Werkstatteingang. Büro bis Werkstatteingang 58 m, von dort bis zum Säge-PC 96 - 58 = 38 m. Beide Strecken liegen unter 90 m. Das Zeiterfassungsterminal hängt ebenfalls an diesem Switch. Alternative bei größeren Entfernungen: Glasfaser.",
+      "",
+      "3. Kabel mechanisch schützen, z.B. in Metallkanal oder Schutzrohr, nicht über den Boden an Maschinen vorbei. Abstand zu Starkstromleitungen und Motoren halten oder geschirmtes Kabel verwenden, weil große Maschinen Störungen erzeugen. Switch und Geräte vor Holzstaub schützen: geschlossener Wandverteiler, lüfterloser Switch oder Industrie-Switch mit passender IP-Schutzart. Säge-PC möglichst als staubgeschütztes Gerät oder in einem Gehäuse. Anschlüsse beschriften und die Strecken nach der Installation messen und dokumentieren."
+    ]
+  },
+  {
+    "title": "IP-Adresskonflikt mit dem Ultraschallgerät einer Arztpraxis",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine internistische Praxis nutzt das Netz 192.168.1.0/24, der Router hat 192.168.1.1. Der DHCP-Bereich reicht von 192.168.1.50 bis 192.168.1.150. Der Techniker des Geräteherstellers hat ein neues Ultraschallgerät fest auf 192.168.1.60 eingestellt. Seitdem meldet ein Empfangs-PC ab und zu einen IP-Adresskonflikt, und das Ultraschallgerät kann seine Bilder zeitweise nicht an den Praxisserver senden.",
+      "Im Netz sind: 1 Switch und 2 Access Points; Praxisserver, NAS und TI-Konnektor; 3 Drucker und 4 Kartenterminals; 4 Medizingeräte (Ultraschall, EKG, Lungenfunktion, Langzeit-Blutdruck); 18 PCs und Notebooks, die ihre Adresse per DHCP bekommen. Geplant ist folgender Adressplan:",
+      "  .1 Router, .2 bis .9 Netzwerkgeräte, .10 bis .19 Server und Konnektor, .20 bis .39 Drucker und Kartenterminals, .40 bis .59 Medizingeräte, .60 bis .99 frei, .100 bis .199 DHCP, .200 bis .254 Reserve",
+      "",
+      "1. Erklären Sie den Konflikt. Mit welchen Befehlen finden Sie am Empfangs-PC heraus, welches Gerät die doppelte Adresse nutzt?",
+      "2. Wie viele Adressen haben die alten DHCP-Bereiche und die Bereiche des neuen Plans? Wie viel Reserve bleibt in jedem Bereich? Prüfen Sie, ob der Plan alle 254 Hostadressen genau einmal verteilt. In welcher Reihenfolge stellen Sie um?",
+      "3. Warum sollten die Medizingeräte langfristig in einem eigenen Netzsegment stehen? Was gehört in die Dokumentation der Umstellung?"
+    ],
+    "solution": [
+      "1. 192.168.1.60 liegt im DHCP-Bereich .50 bis .150. Der DHCP-Server weiß nichts von der festen Einstellung und vergibt .60 an einen Client, hier den Empfangs-PC. Zwei Geräte mit derselben IP-Adresse stören sich gegenseitig: Pakete landen mal beim einen, mal beim anderen Gerät. Befehle: ipconfig /all zeigt die eigene Adresse und MAC. ping 192.168.1.60, dann arp -a zeigt die MAC-Adresse, die zur Adresse gemeldet wird. Ist es nicht die eigene, gehört sie zum anderen Gerät. Die ersten 3 Byte der MAC (Herstellerkennung) verraten den Hersteller des Ultraschallgeräts. Auch die DHCP-Leaseliste im Router hilft.",
+      "",
+      "2. Alter DHCP-Bereich: 150 - 50 + 1 = 101 Adressen. Neuer Plan: Router 1. Netzwerkgeräte 9 - 2 + 1 = 8 Adressen für 3 Geräte, Reserve 5. Server 10 Adressen für 3 Geräte, Reserve 7. Drucker und Kartenterminals 20 Adressen für 7 Geräte, Reserve 13. Medizingeräte 20 Adressen für 4 Geräte, Reserve 16. Frei 40, DHCP 100 für 18 Clients, Reserve 82. Reserve .200 bis .254 = 55. Summe: 1 + 8 + 10 + 20 + 20 + 40 + 100 + 55 = 254. Alle Hostadressen .1 bis .254 sind genau einmal verteilt. Reihenfolge: zuerst den DHCP-Bereich im Router auf .100 bis .199 ändern und die Lease-Zeit vorher verkürzen. Dann die festen Geräte nacheinander auf ihre neuen Adressen umstellen, auch das Ultraschallgerät (mit dem Hersteller abstimmen). Danach Clients neu verbinden lassen (ipconfig /renew) und alle Verbindungen testen.",
+      "",
+      "3. Medizingeräte laufen oft mit alten Betriebssystemen und dürfen nur mit Freigabe des Herstellers aktualisiert werden. In einem eigenen VLAN mit Firewall-Regeln dürfen sie nur mit dem Praxisserver sprechen. Schadsoftware von einem PC erreicht sie dann nicht so leicht. Außerdem verarbeiten sie Gesundheitsdaten, die besonders schutzbedürftig sind (Art. 9 DSGVO). Dokumentation: Adressplan mit Gerät, Standort, MAC-Adresse, IP-Adresse und Ansprechpartner. Änderungen mit Datum, wer sie gemacht hat und warum. Router- und Switchkonfiguration sichern. Hinweis an Hersteller-Techniker, welche Adressen sie verwenden dürfen."
+    ]
+  },
+  {
+    "title": "Videokonferenzen ruckeln im Besprechungsraum",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In einem Verlag treffen sich jeden Morgen 10 Redakteure im Besprechungsraum. Jeder wählt sich mit seinem Notebook per WLAN in die Videokonferenz ein, damit die Kollegen im Homeoffice alle sehen. Seitdem ruckeln Bild und Ton, und es gibt Rückkopplungspfeifen.",
+      "Angaben: Jedes Notebook sendet 2,5 Mbit/s und empfängt 4 Mbit/s. Der Internetanschluss hat 100 Mbit/s im Download und 20 Mbit/s im Upload. Der Access Point im Raum (Wi-Fi 5) nennt 867 Mbit/s, real sind vereinfacht 40 % davon für alle Geräte zusammen nutzbar.",
+      "",
+      "1. Berechnen Sie die Datenraten der 10 Notebooks im Upload und im Download und vergleichen Sie mit dem Internetanschluss. Ist das WLAN der Engpass?",
+      "2. Die IT schlägt ein Raumsystem vor: eine Kamera mit Mikrofon und Lautsprecher, die als ein Teilnehmer an einem fest angeschlossenen PC läuft. Die Notebooks nehmen nur noch ohne Kamera und Ton teil. Wie ändern sich die Werte? Warum verschwindet auch das Pfeifen?",
+      "3. Wie schließen Sie das Raumsystem an, und wie prüfen Sie nach der Umstellung, ob das Problem gelöst ist? Was gilt, wenn die Geschäftsführung die Besprechungen aufzeichnen möchte?"
+    ],
+    "solution": [
+      "1. Upload: 10 x 2,5 = 25 Mbit/s. Das sind 25 / 20 = 125 % des Uploads, die Leitung ist überlastet. Pakete stauen sich, es entstehen Verzögerungen und Paketverluste, das Bild ruckelt. Download: 10 x 4 = 40 Mbit/s = 40 % von 100 Mbit/s, das passt. WLAN: 867 x 0,4 = 346,8 Mbit/s nutzbar. Im WLAN laufen Up- und Download zusammen: 10 x (2,5 + 4) = 65 Mbit/s, das sind ca. 18,7 %. Das WLAN ist nicht der Engpass, der Upload des Internetanschlusses ist es.",
+      "",
+      "2. Mit dem Raumsystem gibt es aus dem Raum nur noch einen Videostrom: 2,5 Mbit/s = 12,5 % des Uploads, im Download 4 Mbit/s. Die Notebooks ohne Kamera und Ton brauchen nur noch wenig. Das Pfeifen entsteht, wenn viele Mikrofone und Lautsprecher im selben Raum den Ton der anderen wieder aufnehmen und verstärken (Rückkopplung, Echo). Mit einem Raumsystem gibt es nur ein Mikrofon und einen Lautsprecher mit Echounterdrückung.",
+      "",
+      "3. Den Konferenz-PC per Netzwerkkabel anschließen, nicht per WLAN, das ist stabiler und hat weniger Schwankungen. Im Router Quality of Service einrichten und Videokonferenzen bevorzugen, z.B. vor Cloud-Uploads. Prüfen: Probe-Konferenz mit allen Beteiligten, Auslastung des Uploads im Router beobachten, Qualitätsstatistik der Konferenzsoftware ansehen (Paketverlust, Jitter), Rückmeldung der Homeoffice-Kollegen einholen und das Ergebnis dokumentieren. Aufzeichnung: Bild und Stimme sind personenbezogene Daten. Alle Teilnehmer müssen vorher informiert werden, es braucht einen klaren Zweck und eine Rechtsgrundlage, meist eine Einwilligung. Speicherdauer und Zugriff festlegen. Heimliche Tonaufnahmen des nicht öffentlich gesprochenen Wortes sind strafbar (§ 201 StGB). Gibt es einen Betriebsrat, muss er beteiligt werden."
+    ]
+  },
+  {
+    "title": "Nach dem Routertausch findet ein PC keine Webseiten mehr",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Reisebüro hat am Wochenende einen neuen Internetrouter bekommen. Das alte Netz war 192.168.2.0/24 mit dem Router 192.168.2.1, der neue Router nutzt 192.168.178.0/24 mit 192.168.178.1. Am Montag funktionieren alle PCs, nur die Inhaberin meldet: \"Bei mir geht kein Internet, aber der Drucker druckt.\"",
+      "Ihr PC zeigt: IPv4 192.168.178.34, Maske 255.255.255.0, Gateway 192.168.178.1, DNS-Server 192.168.2.1. Weitere Tests: ping 192.168.178.1 erfolgreich. ping 1.1.1.1 erfolgreich. ping www.beispiel.de: \"Ping-Anforderung konnte Host nicht finden\". nslookup www.beispiel.de: \"Zeitüberschreitung, Server: Unknown, Address: 192.168.2.1\".",
+      "",
+      "1. Beschreiben Sie ein systematisches Vorgehen bei \"kein Internet\" von unten nach oben. Ordnen Sie die Tests der Inhaberin den Schritten zu und sagen Sie, was jeder Test beweist.",
+      "2. Was ist die Ursache? Warum sind nur bei ihr die Webseiten betroffen? Wie beheben Sie den Fehler und wie prüfen Sie das Ergebnis?",
+      "3. Was schreiben Sie in das Ticket, und wie hätte man den Fehler beim Routertausch vermeiden können?"
+    ],
+    "solution": [
+      "1. Vorgehen: 1) Physik prüfen: Kabel, Link-LED, WLAN verbunden. 2) IP-Konfiguration mit ipconfig /all: Adresse, Maske, Gateway und DNS passend zum Netz? 3) ping auf das Gateway: lokales Netz und Router erreichbar. 4) ping auf eine IP-Adresse im Internet: Routing und Internetzugang funktionieren. 5) Namensauflösung mit nslookup oder ping auf einen Namen: DNS funktioniert. 6) Anwendung prüfen, z.B. Browser oder Proxy. Bei der Inhaberin: ping 192.168.178.1 klappt, also sind Kabel, Adresse und LAN in Ordnung. ping 1.1.1.1 klappt, also funktionieren Gateway und Internet. Der Name wird nicht aufgelöst und nslookup fragt 192.168.2.1 ohne Antwort. Der Fehler liegt bei DNS.",
+      "",
+      "2. Als DNS-Server ist die Adresse des alten Routers fest eingetragen. Diese Adresse gibt es im neuen Netz nicht mehr. Die IP-Adresse kommt per DHCP, der DNS-Server war aber irgendwann von Hand gesetzt worden. Die anderen PCs bekommen auch den DNS-Server per DHCP, also 192.168.178.1. Der Drucker ist im lokalen Netz per IP-Adresse eingebunden und braucht kein Internet-DNS. Behebung: In den Adaptereinstellungen (IPv4) \"DNS-Serveradresse automatisch beziehen\" wählen, dann ipconfig /flushdns. Prüfen: ipconfig /all zeigt 192.168.178.1 als DNS-Server, nslookup www.beispiel.de liefert eine Adresse, Webseiten öffnen sich. Die Inhaberin bestätigt, dass alles geht.",
+      "",
+      "3. Ticket: Meldung und Zeitpunkt, betroffenes Gerät, durchgeführte Tests mit Ergebnis, Ursache (DNS manuell auf alten Router), Lösung, Test nach der Lösung, Bestätigung durch die Anwenderin, Zeitaufwand. Vermeidung: Vor dem Tausch eine Bestandsaufnahme machen, welche Geräte feste Einstellungen haben (IP, Gateway, DNS). Nach Möglichkeit alle Clients per DHCP konfigurieren und feste Adressen als DHCP-Reservierung verwalten. Nach dem Tausch eine Checkliste abarbeiten und jeden Arbeitsplatz kurz testen. Alternativ die alte Router-Adresse im neuen Router beibehalten. Manuelle Änderungen an Clients immer dokumentieren."
+    ]
+  },
+  {
+    "title": "Scanner im Autohaus legt nach dem Serverupdate nichts mehr ab",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In der Serviceannahme eines Autohauses scannt ein Multifunktionsgerät Fahrzeugscheine, Aufträge und Rechnungen direkt in einen freigegebenen Ordner auf dem Server (Scan-to-Folder). Nach einem Update des Servers erscheint am Gerät nur noch \"Verbindung zum Ziel fehlgeschlagen\". Ein Kollege findet im Internet den Tipp, am Server SMB Version 1 wieder einzuschalten.",
+      "Das Gerät scannt mit 300 dpi in Farbe (24 Bit) im Format DIN A4 (8,27 x 11,69 Zoll). Die PDF-Dateien sind im Mittel 15-fach komprimiert. Pro Tag werden 250 Seiten an 240 Tagen im Jahr gescannt (1 MB = 10^6 Byte, 1 GB = 1.000 MB).",
+      "",
+      "1. Erklären Sie die wahrscheinliche Ursache. Warum lehnen Sie den Tipp des Kollegen ab, und wie lösen Sie das Problem?",
+      "2. Berechnen Sie Pixelzahl und unkomprimierte Größe einer Seite (Pixel je Seite auf ganze Pixel abrunden), die Größe als PDF sowie den Speicherbedarf pro Tag und pro Jahr. Welche Auflösung und welchen Farbmodus empfehlen Sie für Textdokumente?",
+      "3. Welche Sicherheitsmaßnahmen treffen Sie für den Scan-Ordner und für das Multifunktionsgerät selbst? Nennen Sie vier."
+    ],
+    "solution": [
+      "1. Das Multifunktionsgerät hat eine alte Firmware, die Dateien nur per SMB Version 1 ablegen kann. Das Serverupdate hat SMBv1 abgeschaltet, weil das Protokoll veraltet und unsicher ist. Über Lücken in SMBv1 hat sich z.B. die Schadsoftware WannaCry verbreitet. SMBv1 wieder einzuschalten, öffnet diese Lücke für den ganzen Server. Lösung: Firmware des Geräts aktualisieren, danach SMB 2 oder 3 im Gerät einstellen und testen. Geht das nicht, auf ein anderes Verfahren ausweichen, z.B. Scan-to-E-Mail über einen gesicherten Mailserver, Scan per SFTP oder eine Scan-Anwendung des Herstellers. Ist das Gerät zu alt für sichere Protokolle, muss es ersetzt werden.",
+      "",
+      "2. Pixel: 8,27 x 300 = 2.481 und 11,69 x 300 = 3.507, abgerundet ergibt das 2.481 x 3.507 = 8.700.867 Pixel. Unkomprimiert: 8.700.867 x 3 Byte = 26.102.601 Byte = ca. 26,1 MB. Als PDF: 26,1 / 15 = ca. 1,74 MB je Seite. Pro Tag: 250 x 1,74 = ca. 435 MB. Pro Jahr: 435 MB x 240 = ca. 104.400 MB = ca. 104,4 GB. Empfehlung für Text: 200 bis 300 dpi in Graustufen oder Schwarzweiß mit Texterkennung (OCR). Farbe nur, wenn sie wichtig ist, z.B. bei Stempeln oder Schäden auf Fotos. Das spart viel Speicher.",
+      "",
+      "3. Ein eigenes Dienstkonto für das Gerät, das nur in den Scan-Ordner schreiben darf und kein Administrator ist. Starkes Passwort, das nicht im öffentlich sichtbaren Adressbuch steht. Scan-Ordner nur für die Serviceannahme lesbar, weil Fahrzeugscheine und Rechnungen personenbezogene Daten enthalten. Alte Scans nach der Verarbeitung verschieben oder löschen. Am Gerät: Standard-Administratorpasswort ändern, Weboberfläche nur aus dem Verwaltungsnetz erreichbar machen, Firmware aktuell halten, unnötige Dienste wie Telnet oder FTP abschalten. Interne Festplatte verschlüsseln oder nach Aufträgen überschreiben lassen, beim Austausch des Geräts sicher löschen."
+    ]
+  },
+  {
+    "title": "Bauzeichnerin wartet im Homeoffice auf ihre Pläne",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Bauzeichnerin eines Ingenieurbüros arbeitet zwei Tage pro Woche von zu Hause. Sie öffnet die Planungsdateien über VPN direkt vom Fileserver im Büro. Eine typische Datei hat 1,2 GB (1 GB = 1.000 MB). Sie öffnet und speichert an einem Homeoffice-Tag im Schnitt 4 solche Dateien. Sie beschwert sich über lange Wartezeiten.",
+      "Anschlüsse: Zu Hause 50 Mbit/s Download und 10 Mbit/s Upload. Im Büro 250 Mbit/s Download und 50 Mbit/s Upload. VPN und Protokolle kosten vereinfacht 10 % der Bandbreite. Zu Hause arbeitet sie mit dem Firmen-Notebook im WLAN am Küchentisch.",
+      "",
+      "1. Wie lange dauert das Öffnen (Download) und das Speichern (Upload) einer Datei? Welcher Anschluss begrenzt jeweils? Wie viel Wartezeit entsteht an einem Tag? Wie lange dauert das Öffnen, wenn 3 Kollegen gleichzeitig eine solche Datei aus dem Büro laden?",
+      "2. Das Büro überlegt, den Homeoffice-Kräften stattdessen einen Fernzugriff auf ihren Büro-PC per Remote Desktop zu geben (Bildübertragung ca. 2 Mbit/s). Bewerten Sie den Vorschlag technisch.",
+      "3. Welche Anforderungen stellen Sie an den Homeoffice-Arbeitsplatz aus Sicht von IT-Sicherheit und Arbeitsschutz? Nennen Sie vier."
+    ],
+    "solution": [
+      "1. Öffnen: Die Daten kommen aus dem Büro. Der Upload des Büros (50 Mbit/s) und der Download zu Hause (50 Mbit/s) sind gleich, nutzbar 50 x 0,9 = 45 Mbit/s. 1.200 MB x 8 = 9.600 Mbit / 45 = ca. 213,3 s = ca. 3,6 Minuten. Speichern: Der Upload zu Hause begrenzt, nutzbar 10 x 0,9 = 9 Mbit/s. 9.600 / 9 = ca. 1.066,7 s = ca. 17,8 Minuten. Pro Tag: 4 x (213,3 + 1.066,7) s = 5.120 s = ca. 85,3 Minuten Wartezeit. Laden 3 Kollegen gleichzeitig, teilen sie sich den Büro-Upload: 45 / 3 = 15 Mbit/s, 9.600 / 15 = 640 s = ca. 10,7 Minuten je Datei.",
+      "",
+      "2. Mit Remote Desktop bleiben die Dateien im Büro. Der Büro-PC öffnet sie über das schnelle LAN vom Fileserver. Übertragen werden nur Bildschirminhalt, Tastatur und Maus, ca. 2 Mbit/s. Das passt sowohl in den Upload zu Hause als auch in den Büro-Upload, auch für mehrere Kolleginnen gleichzeitig. Vorteile: keine Wartezeiten, keine Planungsdaten auf dem Notebook, keine Konflikte durch doppelt bearbeitete Dateien. Voraussetzungen: Der Büro-PC muss laufen oder per Wake-on-LAN geweckt werden, der Zugang nur über VPN mit Mehrfaktor-Anmeldung, niemals als offener Port ins Internet. Bei CAD-Arbeit auf ausreichende Bildqualität achten.",
+      "",
+      "3. IT-Sicherheit: Nur das Firmen-Notebook nutzen, kein Familien-PC. VPN mit Mehrfaktor-Anmeldung. Heimrouter mit aktueller Firmware, WPA2 oder WPA3 mit starkem Passwort und geändertem Admin-Passwort. Bildschirmsperre, wenn sie den Platz verlässt, und kein Einblick durch Familienmitglieder. Ausdrucke vertraulicher Pläne vermeiden oder sicher vernichten. Besser per Netzwerkkabel am Router als im WLAN. Arbeitsschutz: Auch im Homeoffice gilt das Arbeitsschutzgesetz. Ergonomischer Platz mit externem Monitor, Tastatur und Maus statt Küchentisch mit Notebook allein. Ist ein fest eingerichteter Telearbeitsplatz vereinbart, gelten die Regeln der Arbeitsstättenverordnung und der Arbeitgeber stellt die Ausstattung. Arbeitszeitgesetz und Pausen gelten auch zu Hause."
+    ]
+  },
+  {
+    "title": "Stallkamera ist nach dem Glasfaserwechsel nicht mehr erreichbar",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Die Inhaberin eines Reitstalls schaut abends per Smartphone auf die Netzwerkkamera im Abfohlstall. Bisher lief das über eine Portweiterleitung im DSL-Router auf die öffentliche IPv4-Adresse. Nach dem Wechsel auf einen Glasfaseranschluss geht das nicht mehr. Im neuen Router steht: Internetzugang über DS-Lite, IPv4 über Tunnel, IPv6-Präfix 2001:db8:4a2c:3f00::/56. Die Kamera hat die Adresse 2001:0db8:4a2c:3f00:02c0:a8ff:fe10:0a15.",
+      "",
+      "1. Was bedeutet DS-Lite? Warum funktioniert die Portweiterleitung auf IPv4 nicht mehr?",
+      "2. Kürzen Sie die Adresse der Kamera so weit wie möglich. Wie viele /64-Netze kann die Inhaberin aus dem /56-Präfix bilden? Die Kamera bildet den hinteren Teil ihrer Adresse aus der MAC-Adresse (EUI-64). Ermitteln Sie die MAC-Adresse.",
+      "3. Wie richten Sie einen sicheren Fernzugriff auf die Kamera ein? Was ist beim Betrieb der Kamera außerdem zu beachten?"
+    ],
+    "solution": [
+      "1. DS-Lite (Dual-Stack Lite): Der Anschluss bekommt eine echte öffentliche IPv6-Adresse, aber keine eigene öffentliche IPv4-Adresse. IPv4-Verkehr wird durch einen Tunnel zum Anbieter geleitet und dort per Carrier-Grade-NAT mit vielen Kunden gemeinsam über eine öffentliche IPv4-Adresse ins Internet gebracht. Verbindungen, die von außen über IPv4 kommen, erreichen den Router der Kundin gar nicht. Eine Portweiterleitung in ihrem Router hat deshalb keine Wirkung.",
+      "",
+      "2. Kürzen: führende Nullen je Block weglassen: 2001:db8:4a2c:3f00:2c0:a8ff:fe10:a15. Es gibt keinen Block mit 0000, also kein ::. Anzahl /64-Netze: 64 - 56 = 8 Bit, 2^8 = 256 Netze, von 2001:db8:4a2c:3f00::/64 bis 2001:db8:4a2c:3fff::/64. Die Kamera liegt im ersten /64-Netz. MAC-Adresse: Die Interface-ID ist 02c0:a8ff:fe10:0a15. Das eingeschobene ff:fe in der Mitte entfernen: 02-c0-a8-10-0a-15. Im ersten Byte wurde bei EUI-64 das siebte Bit (U/L-Bit) umgedreht: 02 = 0000 0010, zurück gedreht 0000 0000 = 00. MAC-Adresse: 00-C0-A8-10-0A-15.",
+      "",
+      "3. Die Kamera nicht direkt ins Internet freigeben, auch nicht über IPv6. Viele Kameras haben Sicherheitslücken und schwache Standardpasswörter. Besser: ein VPN im Router einrichten (z.B. WireGuard über IPv6). Das Smartphone verbindet sich per VPN und sieht die Kamera wie im Heimnetz. Das Mobilfunknetz des Smartphones muss dafür IPv6 unterstützen, sonst hilft ein Dienst des Routerherstellers oder ein Portmapper beim Anbieter. Alternative: Cloud-Dienst des Kameraherstellers, dann aber auf Serverstandort und Sicherheit achten. Außerdem: Standardpasswort ändern, Firmware aktuell halten, Kamera in ein Gäste- oder eigenes Netz. Datenschutz: Die Kamera darf nur den Stall zeigen, nicht Personal dauerhaft überwachen oder öffentliche Wege filmen. Beschäftigte und Einsteller müssen informiert werden, ein Hinweisschild hängt am Stall."
+    ]
+  },
+  {
+    "title": "Mobilfunk-Backup für die Kassen einer Bäckereifiliale",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Bäckereifiliale hat zwei Cloud-Kassen und ein Kartenterminal. Letzten Monat fiel der DSL-Anschluss zwei Tage aus. Die Kassen konnten nur eingeschränkt arbeiten, Kartenzahlung ging gar nicht. Jetzt soll ein LTE-Router als Ausweichverbindung dazukommen, mit einem Tarif von 1 GB im Monat (1 GB = 1.000 MB, 1 MB = 1.000 KB).",
+      "Datenmengen pro Tag: 700 Kassenbons mit je 8 KB. 60 % der Bons werden mit Karte bezahlt, jede Kartenzahlung braucht zusätzlich 4 KB. Abgleich von Artikeln, Preisen und Kassenberichten: 40 MB. Im Verkaufsraum läuft außerdem 12 Stunden Musik über einen Streamingdienst mit 128 kbit/s.",
+      "",
+      "1. Berechnen Sie die Datenmenge der Kassen und des Kartenterminals pro Tag und für einen Ausfall von 3 Tagen. Welchen Anteil des Tarifs ist das? Was passiert, wenn auch die Musik über LTE läuft?",
+      "2. Wie richten Sie das automatische Umschalten ein, und welche Geräte dürfen die Ausweichverbindung nutzen?",
+      "3. Beschreiben Sie einen Test der Ausweichverbindung vor der Übergabe an die Filialleitung."
+    ],
+    "solution": [
+      "1. Bons: 700 x 8 KB = 5.600 KB = 5,6 MB. Kartenzahlungen: 700 x 0,6 = 420 x 4 KB = 1.680 KB = 1,68 MB. Mit Abgleich: 5,6 + 1,68 + 40 = 47,28 MB pro Tag. 3 Tage: 3 x 47,28 = 141,84 MB = ca. 14,2 % von 1.000 MB. Musik: 128 kbit/s x 12 x 3.600 s = 5.529.600 kbit / 8 = 691.200 KB = 691,2 MB pro Tag. In 3 Tagen 2.073,6 MB, zusammen mit den Kassen 2.215,44 MB. Der Tarif wäre schon am zweiten Tag verbraucht, danach wird gedrosselt oder gesperrt, und die Kassen hängen wieder.",
+      "",
+      "2. Router mit Mobilfunk-Ausweichverbindung (Failover) einsetzen oder den LTE-Router als zweiten Internetzugang am vorhandenen Router einrichten. Der Router prüft regelmäßig, ob das Internet über DSL erreichbar ist, z.B. per ping auf eine Adresse im Internet. Fällt DSL aus, schaltet er auf LTE um und später automatisch zurück. Über LTE dürfen nur die beiden Kassen und das Kartenterminal ins Internet. Musikstreaming, Mitarbeiter-Handys und Gäste-WLAN werden für die Ausweichverbindung gesperrt. Dafür bekommen Kassen und Terminal feste Adressen oder ein eigenes Netz, und es gibt Regeln im Router. Eine Benachrichtigung bei Umschaltung und bei fast verbrauchtem Datenvolumen einrichten.",
+      "",
+      "3. Test außerhalb der Öffnungszeiten oder mit Absprache: 1) Ausgangszustand prüfen, alles läuft über DSL. 2) DSL-Kabel ziehen. 3) Zeit bis zur Umschaltung messen. 4) An jeder Kasse einen Testbon buchen und stornieren, eine Kartenzahlung mit kleinem Betrag durchführen und zurückbuchen. 5) Prüfen, dass Musik und Gäste-WLAN über LTE gesperrt sind. 6) DSL wieder anstecken und die Rückschaltung prüfen. 7) Ergebnisse in einem Testprotokoll festhalten und von der Filialleitung abnehmen lassen. Kurze Anleitung für das Personal übergeben: woran man die Umschaltung erkennt und wen man anruft."
+    ]
+  },
+  {
+    "title": "Empfangsrechner eines Fitnessstudios absichern",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Am Empfang eines Fitnessstudios steht ein PC mit der Mitgliederverwaltung: Name, Anschrift, Bankverbindung, Vertragsdaten und Hinweise zu Verletzungen. Der Bildschirm ist zur Theke gedreht, damit Mitglieder ihre Daten mitlesen können. Alle 9 Trainer melden sich mit dem Sammelkonto \"theke\" an, die 4-stellige PIN steht auf einem Zettel unter der Tastatur. Das Konto hat Administratorrechte, damit jeder Updates installieren kann.",
+      "Die Studioleitung meint: \"Eine 4-stellige PIN ist sicher genug, nach 5 Fehlversuchen ist das Konto doch 15 Minuten gesperrt.\"",
+      "",
+      "1. Nennen Sie vier Schwachstellen am Empfangsarbeitsplatz und je eine Maßnahme dagegen.",
+      "2. Wie viele PIN-Versuche schafft ein Angreifer mit der Sperrregel pro Stunde und pro Tag? Wie lange braucht er bei einer 4-stelligen PIN höchstens und im Mittel? Wie ist es bei einer 6-stelligen PIN? Bewerten Sie die Aussage der Studioleitung.",
+      "3. Warum sollen die Trainer persönliche Konten statt des Sammelkontos nutzen? Welche Rechte bekommen sie?"
+    ],
+    "solution": [
+      "1. Bildschirm zur Theke: Mitglieder sehen Daten anderer. Maßnahme: Bildschirm zum Personal drehen, Blickschutzfilter, eigene Anzeige nur mit den Daten des jeweiligen Mitglieds. PIN auf dem Zettel: Zettel entfernen, persönliche Anmeldung. Kein Sperren beim Verlassen: automatische Bildschirmsperre nach wenigen Minuten und Windows+L als Regel. Administratorrechte: Standardkonto, Updates zentral oder durch die IT. Offene USB-Anschlüsse: fremde USB-Sticks per Richtlinie sperren. Kein Diebstahlschutz: Festplatte mit BitLocker verschlüsseln, PC mit Kensington-Schloss sichern.",
+      "",
+      "2. 5 Versuche je 15 Minuten = 20 Versuche pro Stunde = 20 x 24 = 480 Versuche pro Tag. 4 Stellen: 10^4 = 10.000 PINs. Höchstens 10.000 / 480 = ca. 20,8 Tage, im Mittel die Hälfte, ca. 10,4 Tage. 6 Stellen: 10^6 = 1.000.000 PINs. Höchstens 1.000.000 / 480 = ca. 2.083 Tage, das sind ca. 5,7 Jahre. Bewertung: Gegen Durchprobieren schützt die Sperre einigermaßen. Die eigentlichen Risiken sind aber andere: Die PIN liegt offen unter der Tastatur und alle 9 Trainer und Aushilfen kennen sie. Wer zuschaut, sieht sie beim Eintippen. Ein Dieb baut die unverschlüsselte Festplatte einfach aus. Die Aussage ist also falsch.",
+      "",
+      "3. Mit persönlichen Konten ist nachvollziehbar, wer wann welche Daten geändert oder angesehen hat (Zurechenbarkeit). Scheidet ein Trainer aus, wird nur sein Konto gesperrt, statt die PIN für alle zu ändern. Jeder ist für sein Passwort selbst verantwortlich. Rechte nach dem Prinzip der geringsten Rechte (Need-to-know): Standardbenutzer ohne Administratorrechte. In der Mitgliederverwaltung sehen Trainer nur, was sie für Check-in und Beratung brauchen, z.B. keine Bankverbindung. Die Hinweise zu Verletzungen sind Gesundheitsdaten (Art. 9 DSGVO) und nur für Trainer sichtbar, die das Mitglied betreuen. Bankdaten und Verträge nur für Büro und Studioleitung."
+    ]
+  },
+  {
+    "title": "Leasingrückgabe von Notebooks, Druckern und Diensthandys",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Ingenieurbüro gibt nach 4 Jahren Leasing alle Geräte zurück: 35 Notebooks mit SSD, 6 Multifunktionsdrucker mit eingebauter Festplatte und 20 Diensthandys. Der Leasinggeber holt die Geräte in drei Wochen ab und verkauft sie weiter. Die Geräte müssen vollständig und funktionsfähig zurückgegeben werden.",
+      "Zwei Wege sind möglich:",
+      "  A) Selbst löschen: Notebook 20 Minuten, Drucker 30 Minuten, Handy 10 Minuten je Gerät, interner Stundensatz 48 Euro",
+      "  B) Zertifizierter Dienstleister: 9,50 Euro je Gerät mit Löschprotokoll, dazu 120 Euro Anfahrt",
+      "",
+      "1. Warum reicht es nicht, Dateien zu löschen und Geräte auf Werkseinstellungen zurückzusetzen? Welche Löschverfahren sind für SSDs, Druckerfestplatten und Smartphones geeignet? Warum scheidet das Zerstören der Datenträger hier aus?",
+      "2. Berechnen Sie die Kosten von A und B. Welche Variante empfehlen Sie?",
+      "3. Was muss vor der Übergabe außerdem erledigt und dokumentiert werden? Nennen Sie vier Punkte."
+    ],
+    "solution": [
+      "1. Beim Löschen einer Datei wird nur der Verweis entfernt, die Daten bleiben lesbar, bis sie überschrieben werden. Bei SSDs verteilt der Controller die Daten auf Reserveblöcke, die das Betriebssystem gar nicht sieht. Ein Werksreset löscht je nach Gerät nicht alle Bereiche. Geeignet: SSD: Secure Erase bzw. Sanitize-Befehl über das Firmware-Menü oder ein Herstellertool. War die SSD mit BitLocker verschlüsselt, zusätzlich den Schlüssel vernichten (Crypto Erase). Druckerfestplatte: die Funktion zum sicheren Überschreiben im Gerätemenü nutzen. Dort liegen zwischengespeicherte Scans, Druckaufträge und das Adressbuch. Smartphones: Geräteverschlüsselung ist ab Werk aktiv, der Reset auf Werkseinstellungen vernichtet den Schlüssel. Zerstören (z.B. nach DIN 66399) scheidet aus, weil die Geräte dem Leasinggeber gehören und funktionsfähig zurück müssen. Wer das nicht will, kann mit dem Leasinggeber einen Einbehalt der Datenträger gegen Gebühr vereinbaren.",
+      "",
+      "2. A: 35 x 20 = 700 Minuten, 6 x 30 = 180 Minuten, 20 x 10 = 200 Minuten. Zusammen 1.080 Minuten = 18 Stunden x 48 Euro = 864 Euro. B: 35 + 6 + 20 = 61 Geräte x 9,50 Euro = 579,50 Euro + 120 Euro = 699,50 Euro. B ist 164,50 Euro günstiger und liefert ein Löschprotokoll je Gerät. Außerdem ist die IT drei Tage lang nicht gebunden. Empfehlung B, mit Auftragsverarbeitungsvertrag (Art. 28 DSGVO), weil der Dienstleister Zugriff auf personenbezogene Daten haben könnte.",
+      "",
+      "3. Vorher benötigte Daten sichern und an die Nutzer übergeben. Diensthandys aus dem MDM entfernen und die Aktivierungssperre bzw. den Schutz nach dem Zurücksetzen lösen (Konto abmelden), sonst sind die Geräte für den Leasinggeber gesperrt. SIM-Karten entnehmen und Rufnummern umziehen oder kündigen. Geräte aus Inventarliste, Domäne und Lizenzverwaltung austragen, Softwarelizenzen freigeben. Am Drucker Adressbuch, Scan-Ziele und gespeicherte Passwörter löschen. Löschprotokolle mit Seriennummer, Verfahren, Datum und Unterschrift zu jedem Gerät ablegen. Übergabeprotokoll mit dem Leasinggeber: Anzahl, Seriennummern, Zustand, Zubehör."
+    ]
+  },
+  {
+    "title": "Ungetestete Datensicherung einer Ergotherapiepraxis",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Ergotherapiepraxis mit 6 Therapeutinnen hat 180 GB Daten auf ihrem Praxis-PC: Therapiesoftware mit Datenbank, Befunde, Verordnungen und Abrechnung (1 GB = 1.000 MB). Jede Nacht um 20 Uhr läuft eine Vollsicherung auf eine USB-Festplatte, die dauerhaft am PC steckt. Eine Wiederherstellung wurde nie ausprobiert.",
+      "Neu geplant: ein NAS im Büro mit 2 TB nutzbarem Speicher. Freitags läuft eine Vollsicherung, montags bis donnerstags eine differenzielle Sicherung. Pro Tag kommen im Mittel 3 GB neue oder geänderte Daten dazu, jeden Tag andere. Die Sicherungen der letzten 4 Wochen werden aufbewahrt. Zusätzlich wird freitags auf eine von zwei USB-Festplatten gesichert, die im Wechsel außer Haus gelagert werden. Das Netz liefert real 90 MB/s.",
+      "",
+      "1. Nennen Sie vier Schwachstellen der bisherigen Lösung.",
+      "2. Wie groß sind die differenziellen Sicherungen von Montag bis Donnerstag? Wie viel Speicher braucht eine Woche und wie viel brauchen 4 Wochen? Welchen Anteil des NAS ist das? Wie lange dauert die Wiederherstellung, wenn der PC am Freitagmorgen ausfällt? Welchen Vorteil hat die differenzielle Sicherung dabei gegenüber der inkrementellen?",
+      "3. Beschreiben Sie in Schritten einen Wiederherstellungstest, den die Praxis einmal im Quartal durchführen soll."
+    ],
+    "solution": [
+      "1. Die USB-Festplatte steckt dauerhaft: Ransomware verschlüsselt sie mit, ein Überspannungsschaden oder ein Diebstahl trifft PC und Sicherung zugleich. Nur ein Medium an einem Ort, keine Kopie außer Haus (Verstoß gegen die 3-2-1-Regel). Keine Aufbewahrung älterer Stände: Ein unbemerkter Fehler wird jede Nacht mitgesichert. Nie getestet: Ob die Sicherung vollständig und lesbar ist, weiß niemand. Wahrscheinlich keine Verschlüsselung, obwohl Gesundheitsdaten gesichert werden. Außerdem kann ein Tag Arbeit verloren gehen, wenn der PC kurz vor 20 Uhr ausfällt.",
+      "",
+      "2. Differenziell bedeutet: alle Änderungen seit der letzten Vollsicherung. Montag 3 GB, Dienstag 6 GB, Mittwoch 9 GB, Donnerstag 12 GB. Woche: 180 + 3 + 6 + 9 + 12 = 210 GB. 4 Wochen: 4 x 210 = 840 GB = 42 % von 2.000 GB. Ausfall am Freitagmorgen: Vollsicherung vom letzten Freitag plus differenzielle Sicherung vom Donnerstag: 180 + 12 = 192 GB = 192.000 MB / 90 MB/s = ca. 2.133 s = ca. 35,6 Minuten reine Übertragung. Vorteil: Es werden nur 2 Sicherungen gebraucht. Bei inkrementeller Sicherung wären es die Vollsicherung und 4 Tagessicherungen, und alle 5 müssen fehlerfrei sein. Die Datenmenge ist hier gleich, weil sich jeden Tag andere Daten ändern.",
+      "",
+      "3. 1) Termin und Verantwortliche festlegen, z.B. die IT-Betreuung mit der Praxisleitung. 2) Einen Testrechner oder eine virtuelle Maschine verwenden, nie über die laufenden Daten zurücksichern. 3) Eine zufällige Sicherung auswählen, abwechselnd vom NAS und von der externen Platte. 4) Wiederherstellung durchführen, Dauer messen. 5) Prüfen: Startet die Therapiesoftware, sind die letzten Einträge des Sicherungstags vorhanden, lassen sich Befunde öffnen? 6) Ergebnis protokollieren: Datum, Sicherung, Dauer, Fehler, Unterschrift. 7) Fehler sofort beheben und den Test wiederholen. 8) Testdaten danach sicher löschen, weil es Gesundheitsdaten sind."
+    ]
+  },
+  {
+    "title": "Zugangsdaten auf einer gefälschten Anmeldeseite eingegeben",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Vertriebsmitarbeiter einer Eventagentur erhält am Freitag, 16.10.2026, um 11:20 Uhr eine E-Mail \"Ein Dokument wurde für Sie freigegeben\". Er klickt auf den Link und gibt auf einer täuschend echten Anmeldeseite Benutzername und Passwort seines Cloud-Postfachs ein. Danach erscheint eine Fehlermeldung. MFA ist in der Agentur nicht eingerichtet.",
+      "Um 14:05 Uhr rufen zwei Kunden an: Sie haben von seiner Adresse eine ähnliche Mail bekommen. Die IT sperrt das Konto um 14:30 Uhr. Im Postfach findet sich eine neue Regel, die alle eingehenden Mails an eine fremde Adresse weiterleitet und dann löscht. Aus dem Postfach wurden 380 Mails an Kontakte verschickt. Im Adressbuch stehen 1.240 Kontakte. Im Postfach liegen Angebote mit Namen, Adressen und Telefonnummern von Kunden.",
+      "",
+      "1. Wie lange hatte der Angreifer Zugriff? Welchen Anteil der Kontakte hat er angeschrieben? Nennen Sie in sinnvoller Reihenfolge fünf Sofortmaßnahmen.",
+      "2. Liegt eine meldepflichtige Datenschutzverletzung vor? Bis wann muss die Meldung bei der Aufsichtsbehörde spätestens eingehen? Müssen auch die betroffenen Personen informiert werden?",
+      "3. Welche technischen und organisatorischen Maßnahmen verhindern einen solchen Vorfall künftig oder begrenzen den Schaden? Nennen Sie vier."
+    ],
+    "solution": [
+      "1. Zugriff von 11:20 bis 14:30 Uhr = 3 Stunden 10 Minuten. Anteil: 380 / 1.240 = ca. 30,6 %. Sofortmaßnahmen: 1) Passwort zurücksetzen und alle aktiven Sitzungen beenden (bereits gesperrt). 2) Die Weiterleitungsregel und andere unbekannte Regeln, Apps und Geräte am Konto entfernen, die Einstellungen vorher mit Bildschirmfotos sichern. 3) Anmeldeprotokolle auswerten: Wann, von wo, was wurde gelesen, gesendet oder weitergeleitet? 4) Alle 380 Empfänger warnen, den Link nicht zu öffnen, und die Phishing-Mail in allen Postfächern der Agentur suchen und löschen. 5) Den Link im Webfilter sperren, andere Mitarbeiter warnen. 6) Datenschutzbeauftragten und Geschäftsleitung informieren, alles mit Uhrzeiten dokumentieren. 7) MFA für das Konto einrichten, bevor es wieder freigegeben wird. Wurde das Passwort auch anderswo benutzt, dort ebenfalls ändern.",
+      "",
+      "2. Ja. Ein Unbefugter hatte Zugriff auf personenbezogene Daten von Kunden, und Mails wurden an eine fremde Adresse weitergeleitet. Ein Risiko für die Betroffenen ist nicht auszuschließen (Art. 33 DSGVO). Die Frist beträgt 72 Stunden ab Kenntnis. Die Agentur weiß es seit Freitag, 16.10.2026, 14:05 Uhr. Die Frist endet am Montag, 19.10.2026, um 14:05 Uhr, das Wochenende zählt mit. Informationen, die noch fehlen, dürfen nachgereicht werden. Betroffene müssen nach Art. 34 DSGVO benachrichtigt werden, wenn ein hohes Risiko besteht. Das ist hier wahrscheinlich, weil die Angreifer die Daten für gezielte Betrugsmails nutzen können. Die angeschriebenen Kontakte sollten ohnehin gewarnt werden.",
+      "",
+      "3. Mehrfaktor-Authentifizierung für alle Konten, am besten phishingresistent (FIDO2-Sicherheitsschlüssel oder Passkeys), dann nützt ein gestohlenes Passwort allein nichts. Automatische Weiterleitung an externe Adressen im Mailsystem sperren. Warnungen bei verdächtigen Anmeldungen (neues Land, neues Gerät). Mailfilter mit Linkprüfung und Kennzeichnung externer Mails. Regelmäßige Schulungen zu Phishing, eine einfache Meldemöglichkeit für verdächtige Mails und klare Regel: Nach einem Fehler sofort melden, ohne Angst vor Strafe. Ein Notfallplan mit Ansprechpartnern und Meldewegen für solche Vorfälle."
+    ]
+  },
+  {
+    "title": "Check-in-Terminal im Wartebereich einer Kfz-Werkstatt",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Kfz-Werkstatt stellt im Kundenwartebereich ein Check-in-Terminal auf. Kunden geben dort Name, Telefonnummer und Kennzeichen ein, beschreiben den Schaden und unterschreiben den Reparaturauftrag auf dem Touchscreen. Das Terminal ist mit der Werkstattsoftware verbunden. Dort stehen auch Adressen, Fahrzeugdaten und Rechnungen aller Kunden.",
+      "Öffnungszeiten: Montag bis Freitag 7 bis 18 Uhr, Samstag 8 bis 13 Uhr, 52 Wochen im Jahr. Der Hersteller sichert im Standardvertrag 98 % Verfügbarkeit in den Öffnungszeiten zu, ein Wartungsvertrag mit Vor-Ort-Austausch 99,5 %. Der Wartungsvertrag kostet 480 Euro im Jahr mehr. Fällt das Terminal aus, nimmt der Service die Aufträge von Hand auf. Das dauert je Kunde 4 Minuten zusätzlich. Im Schnitt kommen 5 Kunden pro Stunde. Eine Stunde im Service kostet vereinfacht angenommen 42 Euro.",
+      "",
+      "1. Bestimmen Sie den Schutzbedarf (normal, hoch, sehr hoch) für Vertraulichkeit, Integrität und Verfügbarkeit des Terminals und begründen Sie ihn. Welcher Schutzbedarf ergibt sich insgesamt?",
+      "2. Berechnen Sie die höchste Ausfallzeit pro Jahr bei 98 % und bei 99,5 % und den Mehraufwand im Service. Lohnt sich der Wartungsvertrag?",
+      "3. Das Terminal steht frei zugänglich. Nennen Sie fünf Maßnahmen, damit Kunden weder fremde Daten sehen noch das System missbrauchen können."
+    ],
+    "solution": [
+      "1. Vertraulichkeit: hoch. Über das Terminal wäre die Werkstattsoftware mit Adressen und Rechnungen aller Kunden erreichbar. Ein Missbrauch würde viele Kunden betreffen und dem Ruf schaden. Integrität: hoch. Ein manipulierter Auftrag (falsche Arbeiten, falsches Kennzeichen) führt zu Streit über Kosten und Haftung, die Unterschrift muss unverändert bleiben. Verfügbarkeit: normal. Fällt das Terminal aus, gibt es mit dem Papierformular einen einfachen Ersatz. Nach dem Maximumprinzip richtet sich der Gesamtschutzbedarf nach dem höchsten Einzelwert: hoch.",
+      "",
+      "2. Öffnungszeit pro Woche: 5 x 11 h + 5 h = 60 h. Pro Jahr: 60 x 52 = 3.120 h. Bei 98 %: 2 % von 3.120 = 62,4 h Ausfall. In dieser Zeit kommen 62,4 x 5 = 312 Kunden, Mehraufwand 312 x 4 = 1.248 min = 20,8 h, Kosten 20,8 x 42 = 873,60 Euro. Bei 99,5 %: 0,5 % von 3.120 = 15,6 h Ausfall, 78 Kunden, 312 min = 5,2 h, Kosten 218,40 Euro. Der Wartungsvertrag spart 873,60 - 218,40 = 655,20 Euro und kostet 480 Euro mehr. Vorteil: 175,20 Euro im Jahr. Er lohnt sich knapp, dazu kommen weniger Wartezeit und zufriedenere Kunden. Achtung: Die Zusage ist ein Höchstwert, in vielen Jahren fällt weniger aus.",
+      "",
+      "3. Kiosk-Modus: Es läuft nur die Check-in-Anwendung, Desktop, Browser und Tastenkombinationen sind gesperrt. Die Anwendung läuft unter einem eingeschränkten Konto ohne Administratorrechte. Nach 60 Sekunden ohne Eingabe wird die Sitzung gelöscht und die Startseite angezeigt, damit der nächste Kunde keine fremden Daten sieht. Das Terminal zeigt nie Daten anderer Kunden an, auch keine Vorschläge beim Tippen. USB-Anschlüsse und Netzwerkkabel sind im Gehäuse verschlossen. Das Terminal hängt in einem eigenen Netzsegment (VLAN) und darf nur die Schnittstelle der Werkstattsoftware erreichen. Updates werden zentral eingespielt. Am Terminal stehen die Datenschutzhinweise nach Art. 13 DSGVO. Aufstellung so, dass Wartende nicht auf den Bildschirm schauen können."
+    ]
+  },
+  {
+    "title": "Rezeption eines Stadthotels datenschutzgerecht einrichten",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Stadthotel mit 60 Zimmern richtet seine Rezeption neu ein. An zwei PCs läuft die Hotelsoftware mit Namen, Anschriften, Zimmernummern, Kreditkartenhinweisen und Sonderwünschen der Gäste. Bisher sind beide Bildschirme zur Lobby hin sichtbar. Alle 11 Beschäftigten nutzen das Konto \"rezeption\". Ausgefüllte Meldescheine ausländischer Gäste liegen in einem offenen Ablagekorb. Nachts arbeitet ein Nachtportier allein und verlässt die Rezeption für Rundgänge.",
+      "Vorfall: Ein Anrufer sagt: \"Ich bin ein Kollege von Herrn Berger und soll ihm dringend Unterlagen bringen. Welche Zimmernummer hat er?\" Die Aushilfe nennt die Nummer.",
+      "Budget: 1.200 Euro. Angebote: 2 Blickschutzfilter zu je 49 Euro, ein abschließbarer Schrank für 240 Euro, ein Aktenvernichter der Sicherheitsstufe P-4 für 180 Euro. Schulung von 1,5 Stunden für alle 11 Beschäftigten, Arbeitszeit vereinfacht angenommen 20 Euro je Stunde, externer Trainer 2 Stunden zu je 90 Euro. Meldescheine sind nach dem Bundesmeldegesetz ab dem Tag der Abreise ein Jahr aufzubewahren und danach innerhalb von drei Monaten zu vernichten.",
+      "",
+      "1. Nennen Sie vier Schwachstellen an der Rezeption und ordnen Sie jeder eine technische oder organisatorische Maßnahme zu.",
+      "2. Berechnen Sie die Kosten der Maßnahmen. Wird das Budget eingehalten? Ein Gast reist am 14.08.2026 ab. Bis wann ist sein Meldeschein aufzubewahren, und bis wann muss er spätestens vernichtet sein?",
+      "3. Bewerten Sie den Anruf. Welche Regeln sollen künftig für Auskünfte am Telefon und für die Ausgabe von Zimmerkarten gelten?"
+    ],
+    "solution": [
+      "1. Sammelkonto: Niemand ist nachvollziehbar verantwortlich. Maßnahme: persönliche Konten mit eigenem Passwort, Rechte nach Aufgabe. Bildschirme zur Lobby: Gäste sehen Namen und Zimmernummern. Maßnahme: Bildschirme drehen und Blickschutzfilter anbringen. Offener Ablagekorb mit Meldescheinen: Ausweisdaten liegen frei zugänglich. Maßnahme: abschließbarer Schrank, nach Fristablauf Vernichtung im Aktenvernichter. Rundgang des Nachtportiers: PC bleibt offen. Maßnahme technisch: automatische Bildschirmsperre nach kurzer Zeit. Organisatorisch: Regel \"Vor dem Verlassen sperren\" (Windows-Taste + L). Außerdem alle Beschäftigten, auch Aushilfen, schriftlich auf Vertraulichkeit verpflichten.",
+      "",
+      "2. Filter: 2 x 49 = 98 Euro. Schrank 240 Euro, Aktenvernichter 180 Euro. Sachkosten: 518 Euro. Schulung: 11 x 1,5 h x 20 Euro = 330 Euro, Trainer 2 x 90 = 180 Euro, zusammen 510 Euro. Gesamt: 1.028 Euro. Das Budget wird eingehalten, es bleiben 172 Euro. Meldeschein: aufbewahren bis 14.08.2027, vernichten spätestens bis 14.11.2027. Eine monatliche Vernichtungsroutine mit dem P-4-Aktenvernichter erfüllt beides.",
+      "",
+      "3. Das war ein möglicher Social-Engineering-Angriff. Der Anrufer baut Zeitdruck auf und gibt sich als Vertrauensperson aus. Die Aushilfe hat eine personenbezogene Information ohne Rechtsgrundlage herausgegeben. Das kann den Gast gefährden (z.B. Stalking) und ist eine Datenschutzverletzung, die intern dokumentiert und bewertet werden muss. Regeln: Zimmernummern werden nie genannt, weder am Telefon noch laut an der Rezeption. Anrufe werden nur zum Zimmer durchgestellt, oder der Gast erhält eine Nachricht. Ob ein Gast im Haus ist, wird nicht bestätigt, wenn er das nicht wünscht. Zimmerkarten gibt es nur gegen Namen und Ausweis oder die Buchungsbestätigung, Ersatzkarten nur nach Abgleich mit den Buchungsdaten. Unterlagen für Gäste werden an der Rezeption abgegeben. Die Regeln kommen in die Schulung und in eine kurze Arbeitsanweisung."
+    ]
+  },
+  {
+    "title": "Zweiter Faktor für die Cloud-Konten einer Spedition",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Spedition mit 45 Beschäftigten nutzt E-Mail, Dateiablage und Tourenplanung in der Cloud. Nach einem Phishing-Angriff auf ein Nachbarunternehmen soll für alle Konten eine Mehr-Faktor-Authentifizierung (MFA) eingeführt werden. 18 Beschäftigte haben ein Diensthandy, die anderen 27 nicht. Der Geschäftsführer schlägt vor: \"Die Leute sollen einfach ihr privates Handy nehmen, SMS-Codes reichen doch.\"",
+      "Ein FIDO2-Sicherheitsschlüssel (USB und NFC) kostet 29 Euro. Die Einrichtung dauert je Person 10 Minuten, eine IT-Stunde kostet 65 Euro. Variante A: Authenticator-App auf dem Diensthandy und ein Ersatzschlüssel für diese 18 Personen, für die übrigen 27 je zwei Schlüssel (Hauptschlüssel und Ersatz). Variante B: Alle 45 erhalten zwei Schlüssel.",
+      "",
+      "1. Welche drei Faktorarten gibt es? Prüfen Sie, ob \"Passwort und Sicherheitsfrage\" und \"Passwort und Sicherheitsschlüssel\" eine echte MFA sind. Was spricht gegen SMS-Codes und gegen die Pflicht zum privaten Handy?",
+      "2. Berechnen Sie die Kosten beider Varianten einschließlich Einrichtung. Welche empfehlen Sie?",
+      "3. Beschreiben Sie in fünf Schritten die Einführung. Was passiert, wenn eine Mitarbeiterin ihren Schlüssel verliert?"
+    ],
+    "solution": [
+      "1. Wissen (Passwort, PIN), Besitz (Handy, Sicherheitsschlüssel), Inhärenz (Fingerabdruck, Gesicht). Passwort und Sicherheitsfrage sind zweimal Wissen, also keine MFA. Passwort und Sicherheitsschlüssel kombinieren Wissen und Besitz, das ist MFA. SMS: Codes können über gefälschte Anmeldeseiten abgefischt oder per SIM-Tausch umgeleitet werden. FIDO2-Schlüssel sind an die echte Webadresse gebunden und damit gegen Phishing geschützt. Privates Handy: Der Arbeitgeber kann die Nutzung privater Geräte nicht einfach anordnen. Die Beschäftigten müssten zustimmen, und bei Verlust oder Handywechsel entstehen Probleme. Gibt es einen Betriebsrat, ist er zu beteiligen.",
+      "",
+      "2. Einrichtung: 45 x 10 min = 450 min = 7,5 h x 65 = 487,50 Euro (beide Varianten). Variante A: Schlüssel 18 x 1 + 27 x 2 = 72 x 29 = 2.088 Euro, gesamt 2.575,50 Euro. Variante B: 90 x 29 = 2.610 Euro, gesamt 3.097,50 Euro. B kostet 522 Euro mehr, das sind ca. 11,60 Euro je Person. Empfehlung: B. Alle nutzen dasselbe phishingresistente Verfahren, der Support ist einfacher, und die Anmeldung hängt nicht vom Akku des Handys ab. Die App bleibt als Rückfall erlaubt.",
+      "",
+      "3. 1) Alle informieren, warum MFA kommt und wie sie funktioniert (Kurzanleitung). 2) Zuerst die Administratorkonten umstellen, dann eine Pilotgruppe. 3) Jede Person registriert zwei Faktoren (Haupt- und Ersatzschlüssel) im Beisein der IT. 4) Notfallcodes erzeugen und sicher verwahren. 5) Ab einem Stichtag ist MFA Pflicht, Anmeldungen nur mit Passwort werden gesperrt. Verlust: sofort der IT melden. Die IT sperrt den verlorenen Schlüssel im Konto, die Mitarbeiterin meldet sich mit dem Ersatzschlüssel an. Danach wird ein neuer Ersatzschlüssel ausgegeben. Neue Faktoren werden nur nach Prüfung der Identität registriert (persönlich oder Rückruf), damit ein Angreifer sich nicht als Mitarbeiterin ausgeben kann."
+    ]
+  },
+  {
+    "title": "Fernsupport für die Filialen einer Getränkemarktkette",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Getränkemarktkette hat 14 Filialen mit Kassen-PCs und einem Büro-PC je Filiale. In der Zentrale arbeiten Buchhaltung und Lohnbüro. Bisher fährt der einzige IT-Techniker bei jedem Problem hin. Es gibt ca. 100 Einsätze im Jahr. Ein Einsatz vor Ort dauert im Schnitt 1,2 h Fahrt (hin und zurück) und 0,5 h Arbeit, gefahren werden im Schnitt 50 km. Die Stunde kostet 55 Euro, der Kilometer 0,40 Euro.",
+      "Jetzt soll eine Fernwartungssoftware eingeführt werden (Lizenz 600 Euro im Jahr). Die Verbindung läuft über Server des Softwareanbieters. Etwa 70 % der Fälle wären per Fernzugriff lösbar, dann in 0,6 h. Die Filialleitungen fragen, ob der Techniker jetzt jederzeit auf ihren Bildschirm schauen kann. Das Unternehmen hat einen Betriebsrat.",
+      "",
+      "1. Berechnen Sie die Kosten eines Einsatzes vor Ort und per Fernzugriff und die jährliche Einsparung nach Abzug der Lizenz.",
+      "2. Welche datenschutzrechtlichen Punkte sind zu klären? Gehen Sie auf den Softwareanbieter, den Betriebsrat und den Zugriff auf PCs im Lohnbüro ein.",
+      "3. Beschreiben Sie den Ablauf einer Fernwartungssitzung am Büro-PC einer Filiale vom Anruf bis zum Abschluss."
+    ],
+    "solution": [
+      "1. Vor Ort: (1,2 + 0,5) h x 55 = 93,50 Euro Arbeitszeit, dazu 50 x 0,40 = 20 Euro Fahrtkosten, zusammen 113,50 Euro. Fernzugriff: 0,6 x 55 = 33 Euro. Einsparung je Fall: 80,50 Euro. 70 % von 100 = 70 Fälle x 80,50 = 5.635 Euro. Abzüglich Lizenz: 5.635 - 600 = 5.035 Euro im Jahr. Zusätzlich sind die Filialen schneller wieder arbeitsfähig.",
+      "",
+      "2. Softwareanbieter: Seine Server vermitteln die Verbindung und können Verbindungsdaten und unter Umständen Bildschirminhalte sehen. Er verarbeitet personenbezogene Daten im Auftrag, also ist ein Vertrag zur Auftragsverarbeitung nötig (Art. 28 DSGVO). Prüfen: Ende-zu-Ende-Verschlüsselung, Serverstandort in der EU. Der eigene Techniker ist kein Auftragsverarbeiter, er gehört zum Unternehmen. Betriebsrat: Die Software kann Arbeit und Verhalten der Beschäftigten sichtbar machen. Deshalb hat der Betriebsrat ein Mitbestimmungsrecht (§ 87 Abs. 1 Nr. 6 BetrVG). Regeln dazu kommen in eine Betriebsvereinbarung. Lohnbüro: Dort sind Lohn- und Gesundheitsdaten (Krankmeldungen) sichtbar. Zugriff nur mit Zustimmung im Einzelfall, nur für die nötige Aufgabe, und vertrauliche Fenster werden vorher geschlossen. Kein unbeaufsichtigter Dauerzugang zu Arbeitsplatz-PCs.",
+      "",
+      "3. 1) Die Filiale meldet das Problem, der Techniker legt ein Ticket an. 2) Er prüft, wer anruft (bekannte Rufnummer oder Rückruf). 3) Die Mitarbeiterin startet das Fernwartungsprogramm und nennt den einmaligen Sitzungscode. 4) Sie bestätigt den Zugriff am Bildschirm und schließt vorher private oder vertrauliche Fenster. 5) Der Techniker arbeitet sichtbar, die Mitarbeiterin kann zusehen und die Sitzung jederzeit beenden. Dateien werden nur mit Zustimmung übertragen. 6) Ergebnis gemeinsam prüfen, Sitzung beenden, der Code verfällt. 7) Im Ticket dokumentieren: wer, wann, welcher PC, was geändert wurde. Das Sitzungsprotokoll wird nach der vereinbarten Frist gelöscht."
+    ]
+  },
+  {
+    "title": "Zwölf Arbeitsplätze für die neue Filiale eines Sanitätshauses",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Sanitätshaus eröffnet eine neue Filiale mit 12 Arbeitsplätzen für Beratung, Werkstatt und Verwaltung. Ihr Ausbilder gibt Ihnen die Vorgangsliste (Dauer in Arbeitstagen):",
+      "  A Bedarf aufnehmen und bestellen: 2, ohne Vorgänger",
+      "  B Lieferzeit der Hardware: 5, nach A",
+      "  C Netzwerkdosen prüfen und Patchfeld beschalten: 3, nach A",
+      "  D Image vorbereiten und testen: 4, nach A",
+      "  E PCs aufbauen und Image verteilen: 2, nach B und D",
+      "  F Drucker und Netzwerkgeräte einrichten: 2, nach C",
+      "  G Funktionstest und Abnahme: 1, nach E und F",
+      "  H Einweisung der Mitarbeitenden: 1, nach G",
+      "Start ist Montag, 02.11.2026. Gearbeitet wird montags bis freitags.",
+      "",
+      "1. Berechnen Sie für alle Vorgänge FAZ, FEZ, SAZ, SEZ und den Gesamtpuffer. Nennen Sie den kritischen Pfad und die Projektdauer. An welchem Tag endet das Projekt?",
+      "2. Für Vorgang E braucht ein Techniker je PC 75 Minuten und hat 8 Stunden am Tag. Reichen die 2 Tage? Der Lieferant meldet 2 Tage Verspätung, gleichzeitig dauert C 2 Tage länger. Wann endet das Projekt jetzt?",
+      "3. Die Kundin möchte \"auf einen Blick\" sehen, wann was passiert. Zeigen Sie ihr den Netzplan oder ein Gantt-Diagramm? Nennen Sie je einen Vorteil beider Darstellungen und zwei sinnvolle Meilensteine."
+    ],
+    "solution": [
+      "1. Vorwärtsrechnung: A 0-2, B 2-7, C 2-5, D 2-6, E 7-9 (wartet auf B), F 5-7, G 9-10 (wartet auf E), H 10-11. Rückwärtsrechnung: H 10-11, G 9-10, E 7-9, F 7-9, B 2-7, D 3-7, C 4-7, A 0-2. Gesamtpuffer (SAZ - FAZ): A 0, B 0, C 2, D 1, E 0, F 2, G 0, H 0. Kritischer Pfad: A-B-E-G-H mit 2 + 5 + 2 + 1 + 1 = 11 Arbeitstagen. Tag 1 ist Montag, 02.11.2026, Tag 11 ist Montag, 16.11.2026.",
+      "",
+      "2. 12 x 75 min = 900 min = 15 h. In 2 Tagen stehen 16 h zur Verfügung, es reicht knapp. Verspätung: B liegt auf dem kritischen Pfad, 2 Tage Verzug verschieben das Ende um 2 Tage. C hat 2 Tage Puffer, die Verzögerung wird aufgefangen (C endet an Tag 7, F an Tag 9, E ist erst an Tag 11 fertig). Neue Dauer: 13 Arbeitstage, Ende Mittwoch, 18.11.2026. Wäre B pünktlich, hätten C und F nach der Verzögerung keinen Puffer mehr. Deshalb sollte der Techniker sie trotzdem eng verfolgen.",
+      "",
+      "3. Für die Kundin eignet sich das Gantt-Diagramm: Die Balken auf der Zeitachse zeigen sofort, wann welcher Vorgang läuft und was parallel passiert. Der Netzplan zeigt dagegen genau die Abhängigkeiten, Puffer und den kritischen Pfad. Er ist das Werkzeug für die Planung im Team. Meilensteine: \"Hardware geliefert\" (Ende B) und \"Abnahme erteilt\" (Ende G). Meilensteine haben die Dauer 0 und markieren prüfbare Zwischenergebnisse."
+    ]
+  },
+  {
+    "title": "Headsets für ein Kundenservice-Team per Nutzwertanalyse auswählen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Der Kundenservice eines Energieversorgers erhält 24 neue Headsets für Telefonie am PC. Das Budget beträgt 3.000 Euro. Drei Angebote je Stück (netto):",
+      "  A: 129 Euro, 10 % Rabatt, versandkostenfrei, 2 % Skonto",
+      "  B: 109 Euro, kein Rabatt, Versand 29 Euro pauschal, kein Skonto",
+      "  C: 149 Euro, 15 % Rabatt, versandkostenfrei, 3 % Skonto",
+      "Gewichtung: Tragekomfort 30 %, Sprachqualität und Geräuschunterdrückung 25 %, Preis 20 %, Anschlüsse (USB-C und Bluetooth) 15 %, Garantie und Service 10 %. Bewertung (1 bis 10 Punkte): Komfort A 7, B 6, C 9. Sprache A 8, B 5, C 9. Anschlüsse A 9, B 7, C 8. Garantie A 6, B 5, C 9. Preis: Das günstigste Angebot erhält 10 Punkte, je angefangene 100 Euro Mehrpreis gibt es 1 Punkt weniger.",
+      "",
+      "1. Berechnen Sie die Gesamtpreise für 24 Headsets (Skonto wird genutzt) und vergeben Sie die Preispunkte. Wird das Budget eingehalten?",
+      "2. Führen Sie die Nutzwertanalyse durch. Welches Angebot gewinnt?",
+      "3. Der Einkauf möchte den Preis mit 40 % und den Komfort nur mit 10 % gewichten. Rechnen Sie neu. Was zeigt das über die Methode, und welche Empfehlung geben Sie?"
+    ],
+    "solution": [
+      "1. A: 24 x 129 = 3.096 Euro, minus 10 % (309,60) = 2.786,40 Euro, minus 2 % Skonto (55,73) = 2.730,67 Euro. B: 24 x 109 = 2.616 + 29 = 2.645,00 Euro. C: 24 x 149 = 3.576 Euro, minus 15 % (536,40) = 3.039,60 Euro, minus 3 % Skonto (91,19) = 2.948,41 Euro. Preispunkte: B 10. A ist 85,67 Euro teurer, das ist 1 angefangener Hunderter: 9 Punkte. C ist 303,41 Euro teurer, 4 angefangene Hunderter: 6 Punkte. Alle drei bleiben unter 3.000 Euro.",
+      "",
+      "2. A: 0,30 x 7 + 0,25 x 8 + 0,20 x 9 + 0,15 x 9 + 0,10 x 6 = 2,1 + 2,0 + 1,8 + 1,35 + 0,6 = 7,85. B: 1,8 + 1,25 + 2,0 + 1,05 + 0,5 = 6,60. C: 2,7 + 2,25 + 1,2 + 1,2 + 0,9 = 8,25. C gewinnt vor A und B.",
+      "",
+      "3. Neue Gewichtung (Komfort 10, Sprache 25, Preis 40, Anschlüsse 15, Garantie 10): A: 0,7 + 2,0 + 3,6 + 1,35 + 0,6 = 8,25. B: 0,6 + 1,25 + 4,0 + 1,05 + 0,5 = 7,40. C: 0,9 + 2,25 + 2,4 + 1,2 + 0,9 = 7,65. Jetzt gewinnt A. Das Ergebnis hängt stark von der Gewichtung ab, die subjektiv festgelegt wird. Deshalb müssen Kriterien und Gewichte vor dem Öffnen der Angebote gemeinsam festgelegt und begründet werden. Empfehlung: Beim Kundenservice tragen die Beschäftigten das Headset den ganzen Tag, Komfort und Sprachqualität sind wichtig für Gesundheit und Gesprächsqualität. C ist im Budget, deshalb C. Vorher zwei Testgeräte von A und C im Team ausprobieren lassen."
+    ]
+  },
+  {
+    "title": "Testprotokoll für zehn Packplätze eines Versandhändlers",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Systemhaus hat bei einem Versandhändler 10 Packplätze eingerichtet: PC, Handscanner, Etikettendrucker und Paketwaage, angebunden an die Schnittstelle des Paketdienstes (Werkvertrag, 18.400 Euro netto zuzüglich 19 % Umsatzsteuer). 30 % des Bruttobetrags wurden angezahlt, der Rest ist bei Abnahme fällig. Vereinbart ist: Abnahme, wenn mindestens 95 % der Testfälle bestanden sind und kein wesentlicher Mangel vorliegt.",
+      "Sie testen an jedem Packplatz 8 Testfälle. Ergebnis: 74 bestanden. Nicht bestanden: An 4 Plätzen druckt der Etikettendrucker das Firmenlogo nicht. An Platz 7 kommt kein Versandlabel vom Paketdienst an. An Platz 3 überträgt die Waage ein falsches Gewicht, die Portokosten stimmen nicht. Nach zwei Tagen sind Platz 3 und 7 repariert, das Logo fehlt noch. Die Beseitigung dauert 2 Stunden zu 85 Euro netto.",
+      "",
+      "1. Welche Spalten gehören in ein Testprotokoll? Formulieren Sie einen Testfall für die Waage vollständig. Berechnen Sie die Erfolgsquote beim ersten Test. Darf der Versandhändler die Abnahme verweigern?",
+      "2. Welche Tests wiederholen Sie nach der Reparatur, und warum? Berechnen Sie die neue Erfolgsquote. Was muss beim Logo-Fehler im Abnahmeprotokoll stehen?",
+      "3. Berechnen Sie Bruttopreis, Anzahlung und Restbetrag. Wie viel darf der Versandhändler wegen des Logo-Fehlers zurückhalten, und wie viel zahlt er jetzt?"
+    ],
+    "solution": [
+      "1. Spalten: Testfall-Nr., Packplatz bzw. Gerät, Beschreibung und Vorbedingung, Testschritte, erwartetes Ergebnis, tatsächliches Ergebnis, bestanden ja/nein, Fehlerbeschreibung, Prüfer, Datum. Beispiel: \"T-05, Platz 3, Waage: Prüfgewicht 2,000 kg auflegen, Paket im Programm scannen. Erwartet: Programm zeigt 2,00 kg, Label weist die Gewichtsklasse bis 5 kg aus.\" Erfolgsquote: 10 x 8 = 80 Testfälle, 74 / 80 = 92,5 %. Die vereinbarten 95 % sind nicht erreicht. Außerdem sind die Fehler an Platz 7 (kein Versand möglich) und Platz 3 (falsches Porto) wesentliche Mängel. Der Versandhändler darf die Abnahme verweigern. Wegen unwesentlicher Mängel allein dürfte er das nicht (§ 640 Abs. 1 BGB).",
+      "",
+      "2. Nicht nur die zwei fehlgeschlagenen Testfälle werden wiederholt, sondern alle 8 Testfälle an Platz 3 und 7 (Regressionstest). Eine Reparatur, z.B. ein neuer Treiber oder eine geänderte Schnittstelle, kann andere Funktionen stören. Betrifft die Änderung zentrale Einstellungen, werden die Kernfälle an allen Plätzen stichprobenartig wiederholt. Neue Quote: 78 / 80 = 97,5 %, kein wesentlicher Mangel mehr. Der Versandhändler muss abnehmen. Mit der Abnahme wird die Vergütung fällig, und die Verjährung der Mängelansprüche beginnt. Protokoll: \"Abnahme unter Vorbehalt: Etikettendrucker an 4 Plätzen drucken kein Logo, Beseitigung bis ...\" Ohne diesen Vorbehalt verliert der Kunde für den bekannten Mangel die Rechte auf Nacherfüllung, Rücktritt und Minderung (§ 640 Abs. 3 BGB).",
+      "",
+      "3. Brutto: 18.400 x 1,19 = 21.896,00 Euro. Anzahlung 30 %: 6.568,80 Euro. Rest: 15.327,20 Euro. Mängelbeseitigung: 2 x 85 = 170 Euro netto, brutto 202,30 Euro. Zurückhalten darf der Kunde in der Regel das Doppelte (§ 641 Abs. 3 BGB): 404,60 Euro. Zahlung jetzt: 15.327,20 - 404,60 = 14.922,60 Euro. Der Einbehalt wird gezahlt, sobald das Logo gedruckt wird."
+    ]
+  },
+  {
+    "title": "Kostenplan für 25 Arbeitsplätze einer Versicherungsagentur",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Versicherungsagentur erneuert 25 Arbeitsplätze. Das Budget beträgt 38.000 Euro netto. Ihre Planung:",
+      "  25 PCs zu je 749 Euro, 50 Monitore (2 je Platz) zu je 179 Euro",
+      "  Office-Abonnement 12,50 Euro je Nutzer und Monat, für das erste Jahr",
+      "  Arbeitszeit je Platz: 1,5 h Vorbereitung, 1 h Aufbau, 0,5 h Datenübernahme, Stundensatz 70 Euro",
+      "  Zertifizierte Vernichtung der alten Festplatten: 8 Euro je Gerät",
+      "  Risikoreserve: 5 % auf alle Kosten",
+      "Bei der Begehung stellen Sie fest: 30 der vorhandenen Monitore sind erst zwei Jahre alt, höhenverstellbar und haben passende Anschlüsse.",
+      "",
+      "1. Erstellen Sie den Kostenplan. Wie hoch sind die Gesamtkosten und die Kosten je Arbeitsplatz? Wird das Budget eingehalten?",
+      "2. Berechnen Sie den Plan neu, wenn die 30 guten Monitore weiter genutzt werden. Wie viel Budget bleibt übrig?",
+      "3. Was geschieht mit den 25 alten PCs und 20 alten Monitoren? Beachten Sie Datenschutz und das Elektro- und Elektronikgerätegesetz (ElektroG)."
+    ],
+    "solution": [
+      "1. PCs: 25 x 749 = 18.725 Euro. Monitore: 50 x 179 = 8.950 Euro. Office: 25 x 12,50 x 12 = 3.750 Euro. Arbeitszeit: 25 x 3 h = 75 h x 70 = 5.250 Euro. Festplattenvernichtung: 25 x 8 = 200 Euro. Zwischensumme: 36.875 Euro. Reserve 5 %: 1.843,75 Euro. Gesamt: 38.718,75 Euro, je Arbeitsplatz 1.548,75 Euro. Das Budget wird um 718,75 Euro überschritten.",
+      "",
+      "2. Nur 20 neue Monitore: Ersparnis 30 x 179 = 5.370 Euro. Zwischensumme: 36.875 - 5.370 = 31.505 Euro. Mit 5 % Reserve: 33.080,25 Euro, je Arbeitsplatz ca. 1.323,21 Euro. Übrig bleiben 38.000 - 33.080,25 = 4.919,75 Euro. Die Weiternutzung spart außerdem Ressourcen. Wichtig: Die alten Monitore vorher auf Pixelfehler und passende Anschlüsse prüfen und eine gleiche Anordnung am Platz sicherstellen.",
+      "",
+      "3. Datenschutz: Auf den Festplatten liegen Kundendaten der Versicherung. Die Agentur ist für die Löschung selbst verantwortlich. Die Platten werden ausgebaut und von einem zertifizierten Dienstleister vernichtet (z.B. nach DIN 66399), mit Vernichtungsprotokoll je Seriennummer. Sollen PCs weiterverkauft oder gespendet werden, ist eine zertifizierte Löschung mit Protokoll nötig. ElektroG: Elektroaltgeräte dürfen nicht in den Restmüll. Sie gehen an einen zugelassenen Entsorger oder an Hersteller bzw. Händler, die sie zurücknehmen. Batterien und Akkus werden vorher entnommen, wenn das ohne Zerstörung möglich ist. Die Entsorgung wird mit Nachweis dokumentiert. Gut erhaltene Monitore können an eine Schule oder einen Verein gespendet werden."
+    ]
+  },
+  {
+    "title": "Einweisungsplan für 42 Beschäftigte eines Möbelhauses",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Möbelhaus hat neue Beratungsarbeitsplätze mit 3D-Küchenplaner und Tablets für die Verkaufsfläche erhalten. Die Technik ist abgenommen. Jetzt sollen alle 42 Beschäftigten im Verkauf eingewiesen werden. Vorgaben: höchstens 8 Personen je Gruppe, damit die Verkaufsfläche besetzt bleibt. Eine Einweisung dauert 90 Minuten. Der Schulungsraum ist montags bis freitags von 8 bis 12 und von 13 bis 17 Uhr frei. Zwischen zwei Terminen braucht die Trainerin 15 Minuten. Samstags wird nicht geschult.",
+      "Kosten: Trainerin 75 Euro je Stunde, dazu 4 Stunden Vorbereitung. Die Arbeitszeit der Beschäftigten wird vereinfacht mit 24 Euro je Stunde angesetzt.",
+      "",
+      "1. Wie viele Termine sind nötig, und wie groß werden die Gruppen? Wie viele Termine passen in einen halben Tag? Wie viele Tage braucht die Einweisung?",
+      "2. Berechnen Sie die Kosten der Einweisung insgesamt und je Person.",
+      "3. Welche Unterlagen gehören zur Übergabe an das Möbelhaus? Wie prüfen Sie nach vier Wochen, ob die Einweisung erfolgreich war?"
+    ],
+    "solution": [
+      "1. 42 / 8 = 5,25, also 6 Termine. Gleichmäßig verteilt: 6 Gruppen zu je 7 Personen. Ein halber Tag hat 240 Minuten. Zwei Termine brauchen 90 + 15 + 90 = 195 Minuten, ein dritter passt nicht mehr. Also 2 Termine je halben Tag, 4 je Tag. 6 Termine brauchen 1,5 Tage, z.B. Montag ganztags und Dienstagvormittag.",
+      "",
+      "2. Trainerin: 6 x 1,5 h = 9 h + 4 h Vorbereitung = 13 h x 75 = 975 Euro. Beschäftigte: 42 x 1,5 h x 24 = 1.512 Euro. Gesamt: 2.487 Euro. Je Person: 2.487 / 42 = ca. 59,21 Euro.",
+      "",
+      "3. Übergabeprotokoll mit Liste der Geräte und Seriennummern, unterschrieben von beiden Seiten. Kurzanleitung für die Beschäftigten (z.B. zwei Seiten mit den häufigsten Abläufen). Technische Dokumentation: Konfiguration, Netzwerkeinstellungen, Softwareversionen, Lizenzen und Wartungsverträge. Zugangsdaten für Administratoren getrennt und sicher (versiegelt oder im Passwortmanager). Supportweg mit Ansprechpartner, Rufnummer und Servicezeiten. Liste der Teilnehmenden der Einweisung. Erfolgskontrolle: Feedbackbogen direkt nach dem Termin. Nach vier Wochen die Tickets zu den Tablets und zum Küchenplaner auswerten: Welche Fragen kommen oft? Stichproben im Verkauf beobachten und zwei Keyusern Rückmeldung geben lassen. Bei häufigen Fragen eine kurze Nachschulung anbieten."
+    ]
+  },
+  {
+    "title": "Homeoffice-Pakete für ein Ingenieurbüro vor Ostern ausliefern",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Ingenieurbüro stellt 20 Beschäftigte ab Montag, 12.04.2027, auf Homeoffice um. Jede Person erhält ein Paket mit Notebook, Monitor, Dockingstation und Headset. Die Einweisung per Video muss vorher abgeschlossen sein. Ihr Plan in Arbeitstagen (AT), Start Montag, 15.03.2027:",
+      "  1 Bestellung: 1 AT",
+      "  2 Lieferung: 8 AT, nach 1",
+      "  3 VPN-Zugänge und MFA einrichten: 3 AT, nach 1, parallel zu 2",
+      "  4 Notebooks vorbereiten: 1,5 h je Gerät, ein Techniker mit 7,5 h pro Tag, nach 2",
+      "  5 Pakete packen und versenden: 1 AT, nach 4",
+      "  6 Versand: 2 AT, nach 5",
+      "  7 Einweisung per Video: 2 AT, nach 6",
+      "Karfreitag (26.03.2027) und Ostermontag (29.03.2027) sind Feiertage.",
+      "",
+      "1. Wie viele Arbeitstage dauert Vorgang 4? Erstellen Sie den Zeitplan mit Anfangs- und Enddatum jedes Vorgangs, wie er in einem Gantt-Diagramm stünde. Wird der Termin gehalten?",
+      "2. Der Techniker hat am 01. und 02.04.2027 Urlaub. Was bedeutet das für den Termin? Schlagen Sie eine Lösung vor und rechnen Sie nach.",
+      "3. Setzen Sie zwei Meilensteine. Welche Angaben gehören in den Übergabeschein, den jede Person mit dem Paket unterschreibt?"
+    ],
+    "solution": [
+      "1. 20 x 1,5 h = 30 h / 7,5 h = 4 AT. Zeitplan: 1 Bestellung Mo 15.03. 2 Lieferung Di 16.03. bis Do 25.03. 3 VPN und MFA Di 16.03. bis Do 18.03. 4 Vorbereitung Di 30.03. bis Fr 02.04. (26.03. und 29.03. sind Feiertage). 5 Packen Mo 05.04. 6 Versand Di 06.04. bis Mi 07.04. 7 Einweisung Do 08.04. bis Fr 09.04. Der Termin 12.04. wird gehalten, allerdings ohne Puffer. Kritisch sind alle Vorgänge außer 3.",
+      "",
+      "2. Der Techniker schafft vor dem Urlaub nur 2 AT (30. und 31.03.), die restlichen 15 h folgen am 05. und 06.04. Alles verschiebt sich um 2 AT: Packen Mi 07.04., Versand Do 08.04. bis Fr 09.04., Einweisung Mo 12.04. bis Di 13.04. Der Termin wird verfehlt. Lösung: Eine zweite Person (Kollegin oder Azubi mit Anleitung) bereitet am 30. und 31.03. mit vor. 2 Personen x 2 AT x 7,5 h = 30 h, Vorgang 4 ist vor dem Urlaub fertig. Der ursprüngliche Plan bleibt. Alternativ Expressversand (1 AT) und Vorbereitung am 05.04. nachholen, dann bleibt aber wieder kein Puffer.",
+      "",
+      "3. Meilensteine: \"Alle Geräte geliefert\" am 25.03.2027 und \"Alle Pakete versendet\" am 05.04.2027. Übergabeschein: Name der Person, Datum, Liste der Geräte mit Inventar- und Seriennummern, Zubehör (Netzteil, Kabel), Zustand bei Übergabe, Hinweis auf die Nutzungsrichtlinie (nur dienstliche Nutzung, Sperre bei Verlassen, Verlust sofort melden), Regelung zur Rückgabe, Unterschrift. So ist später klar, wer welches Gerät hat."
+    ]
+  },
+  {
+    "title": "Monitortausch zwischen Technikerin und Azubi aufteilen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "In einem Großraumbüro einer Krankenkasse werden an 60 Arbeitsplätzen alte Monitore gegen höhenverstellbare Modelle getauscht und ergonomisch eingestellt. Die Arbeiten laufen am Abend nach Dienstschluss mit 8 Stunden je Einsatztag. Technikerin Frau Sommer braucht je Platz 20 Minuten, der Auszubildende Leon im 2. Jahr 30 Minuten. Interne Kosten: Frau Sommer 68 Euro je Stunde, Leon 25 Euro je Stunde.",
+      "",
+      "1. Wie lange dauert der Tausch, wenn beide gleichzeitig arbeiten? Wie viele Plätze übernimmt jede Person, damit beide gleichzeitig fertig sind? Wie viele Einsatztage sind nötig?",
+      "2. Vergleichen Sie Dauer und Kosten mit der Variante, dass Frau Sommer allein arbeitet. Darf der Betrieb Leon vor allem wegen der niedrigen Kosten einsetzen?",
+      "3. Leon soll die Monitore ergonomisch einstellen. Nennen Sie vier Regeln für Bildschirmarbeitsplätze. Was geschieht mit den 60 alten Monitoren?"
+    ],
+    "solution": [
+      "1. Frau Sommer schafft 60 / 20 = 3 Plätze pro Stunde, Leon 60 / 30 = 2. Zusammen 5 Plätze pro Stunde: 60 / 5 = 12 Stunden. Aufteilung: Frau Sommer 12 x 3 = 36 Plätze (36 x 20 min = 720 min = 12 h), Leon 12 x 2 = 24 Plätze (24 x 30 min = 720 min = 12 h). Einsatztage: 12 / 8 = 1,5, also 2 Abende, am zweiten nur 4 Stunden.",
+      "",
+      "2. Allein: 60 x 20 min = 1.200 min = 20 h, das sind 2,5 Einsatztage, also 3 Abende. Kosten allein: 20 x 68 = 1.360 Euro. Zu zweit: 12 x 68 + 12 x 25 = 816 + 300 = 1.116 Euro. Zu zweit ist es 244 Euro günstiger und ein Abend kürzer. Aber: Auszubildende dürfen nur Aufgaben erhalten, die dem Ausbildungszweck dienen (§ 14 BBiG). Das ist hier der Fall, denn Arbeitsplätze einrichten ist Teil der AP1. Leon muss vorher eingewiesen und von Frau Sommer angeleitet werden. Die Kosten dürfen nicht der Hauptgrund sein.",
+      "",
+      "3. Oberkante des Bildschirms auf oder leicht unter Augenhöhe, Blick leicht nach unten. Sehabstand etwa 50 bis 75 cm, je nach Bildschirmgröße. Bildschirm im rechten Winkel zum Fenster aufstellen, Blickrichtung parallel zur Fensterfront, damit es keine Spiegelungen und Blendung gibt. Bildschirm frontal vor der Person, Neigung und Höhe einstellbar, Helligkeit an die Umgebung angepasst. Alte Monitore: Elektroaltgeräte nach ElektroG, nicht in den Restmüll. Funktionierende Geräte können aufbereitet und weiterverwendet oder gespendet werden, sonst Abgabe an einen zertifizierten Entsorger oder Rücknahme durch den Hersteller, mit Nachweis."
+    ]
+  },
+  {
+    "title": "Pilotphase mit Dokumentenscannern im Rechnungseingang auswerten",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Handelsunternehmen will den Rechnungseingang digitalisieren. Vier Wochen lang wurden an 3 Arbeitsplätzen Dokumentenscanner mit Texterkennung getestet. Ergebnis der Pilotphase: 600 Belege gescannt, davon mussten 30 von Hand nachbearbeitet werden (je 3 Minuten). Ohne Nachbearbeitung spart ein gescannter Beleg 1 Minute gegenüber dem bisherigen Kopieren und Ablegen.",
+      "Im ganzen Unternehmen fallen 1.800 Belege pro Monat an. Die Arbeitszeit kostet vereinfacht angenommen 32 Euro je Stunde. Für den Rollout sind 6 Scanner zu je 420 Euro und 12 Stunden Einrichtung zu je 75 Euro nötig. Die Scan-Software kostet 45 Euro im Monat.",
+      "",
+      "1. Wozu dient eine Pilotphase? Nennen Sie drei Kriterien, nach denen über den Rollout entschieden wird.",
+      "2. Berechnen Sie die Fehlerquote, die monatliche Einsparung und die Amortisationszeit.",
+      "3. Die Buchhaltung möchte die Papierbelege nach dem Scannen wegwerfen. Unter welchen Voraussetzungen ist das erlaubt?"
+    ],
+    "solution": [
+      "1. In der Pilotphase wird die Lösung unter echten Bedingungen mit wenigen Nutzern getestet, bevor viel Geld ausgegeben wird. Fehler, Schulungsbedarf und der echte Nutzen zeigen sich früh. Kriterien (vorher festgelegt): Fehlerquote der Texterkennung höchstens 5 %. Zeitersparnis je Beleg mindestens 0,5 Minuten. Amortisation in weniger als einem Jahr. Zufriedenheit der Pilotnutzer, keine ungelösten technischen Probleme.",
+      "",
+      "2. Fehlerquote: 30 / 600 = 5 %. Mittlere Ersparnis je Beleg: 1 min - 0,05 x 3 min = 0,85 min. Pro Monat: 1.800 x 0,85 = 1.530 min = 25,5 h x 32 = 816 Euro. Abzüglich Software: 816 - 45 = 771 Euro. Einmalige Kosten: 6 x 420 = 2.520 Euro + 12 x 75 = 900 Euro = 3.420 Euro. Amortisation: 3.420 / 771 = ca. 4,4 Monate. Die Investition hat sich im 5. Monat bezahlt gemacht. Die Kriterien sind erfüllt, der Rollout kann starten.",
+      "",
+      "3. Das ersetzende Scannen ist erlaubt, wenn die Grundsätze ordnungsmäßiger Buchführung in elektronischer Form (GoBD) eingehalten werden. Es braucht eine Verfahrensdokumentation, die beschreibt, wer wann wie scannt und prüft. Der Scan muss bildlich mit dem Original übereinstimmen und vollständig lesbar sein. Die Dateien werden unveränderbar archiviert und während der gesetzlichen Aufbewahrungsfrist (für Buchungsbelege derzeit 8 Jahre) lesbar gehalten und gesichert. Erst nach Prüfung des Scans darf das Papier vernichtet werden. Ausnahmen, bei denen das Original aufbewahrt werden muss, vorher mit dem Steuerberater klären."
+    ]
+  },
+  {
+    "title": "Lange Krankheit in der Probezeit einer Auszubildenden",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Sophie beginnt am 01.09.2026 ihre Ausbildung zur Fachinformatikerin. Die Probezeit beträgt 4 Monate. Im Vertrag steht: \"Wird die Ausbildung während der Probezeit um mehr als ein Drittel unterbrochen, verlängert sich die Probezeit um die Dauer der Unterbrechung.\"",
+      "Sophie ist nach einem Sportunfall vom 12.10.2026 bis einschließlich 06.12.2026 arbeitsunfähig. Ihre Ausbildungsvergütung beträgt vereinfacht angenommen 1.100 Euro brutto, netto 880 Euro. Krankengeld wird vereinfacht mit 70 % des Bruttos berechnet, höchstens 90 % des Nettos, je Kalendertag mit 1/30 des Monatswerts.",
+      "",
+      "1. Wie lange dauert die Unterbrechung? Ist die Verlängerungsklausel wirksam? Wann endet die Probezeit ohne und mit Verlängerung?",
+      "2. Wer zahlt während der Krankheit, und wie lange? Berechnen Sie das Krankengeld je Tag und für die Zeit nach der Entgeltfortzahlung.",
+      "3. Der Betrieb überlegt, Sophie am 10.02.2027 zu kündigen. Ist das möglich, und was ist zu beachten? Wie wäre es ohne die Verlängerungsklausel?"
+    ],
+    "solution": [
+      "1. Unterbrechung: 12.10. bis 06.12.2026 = 56 Kalendertage. Die Probezeit dauert vom 01.09. bis 31.12.2026, das sind 122 Tage. Ein Drittel sind ca. 40,7 Tage, die Unterbrechung ist länger. Nach der Rechtsprechung des Bundesarbeitsgerichts darf eine Verlängerung um die Unterbrechungszeit für diesen Fall vereinbart werden, die Klausel ist wirksam. Ohne Verlängerung endet die Probezeit am 31.12.2026. Mit Verlängerung um 56 Tage endet sie am 25.02.2027.",
+      "",
+      "2. Der Betrieb zahlt die Vergütung bis zu 6 Wochen weiter (§ 19 BBiG, Entgeltfortzahlungsgesetz). Die Wartezeit von 4 Wochen seit Beginn des Ausbildungsverhältnisses ist am 12.10. erfüllt. 6 Wochen: 12.10. bis 22.11.2026. Danach zahlt die Krankenkasse Krankengeld, vom 23.11. bis 06.12.2026, also 14 Tage. Je Tag: 70 % von 1.100 / 30 = ca. 25,67 Euro. Höchstgrenze: 90 % von 880 / 30 = 26,40 Euro. Es gilt der niedrigere Wert: 25,67 Euro. 14 Tage: ca. 359,33 Euro. Sophie muss die Arbeitsunfähigkeit sofort melden. Die Bescheinigung ruft der Betrieb bei gesetzlich Versicherten elektronisch bei der Krankenkasse ab.",
+      "",
+      "3. Am 10.02.2027 läuft noch die verlängerte Probezeit. Der Betrieb kann jederzeit ohne Kündigungsfrist und ohne Angabe von Gründen kündigen (§ 22 Abs. 1 BBiG). Die Kündigung muss schriftlich erfolgen, E-Mail reicht nicht (§ 22 Abs. 3 BBiG). Gibt es einen Betriebsrat, muss er vorher angehört werden. Ohne Klausel wäre die Probezeit am 31.12.2026 vorbei. Dann könnte der Betrieb nur noch aus wichtigem Grund fristlos kündigen. Eine Krankheit ist in der Regel kein wichtiger Grund."
+    ]
+  },
+  {
+    "title": "Blockunterricht und Nachuntersuchung eines 16-jährigen Azubis",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Can ist 16 Jahre alt (geboren am 14.03.2010) und hat am Dienstag, 01.09.2026, seine Ausbildung in einem IT-Systemhaus begonnen. Die ärztliche Erstuntersuchung fand am 12.05.2026 statt. Im Betrieb gilt die 5-Tage-Woche, Montag bis Freitag, 8 Stunden am Tag.",
+      "Normale Woche: montags Berufsschule mit 6 Unterrichtsstunden zu 45 Minuten, dienstags bis freitags im Betrieb. Im Februar 2027 hat Can zwei Wochen Blockunterricht: Montag bis Freitag je 8 Unterrichtsstunden zu 45 Minuten.",
+      "Der Teamleiter plant für den Rollout: Can soll in der Blockwoche am Mittwoch nach der Schule von 15:30 bis 18:30 Uhr mithelfen und an einem Samstag von 9 bis 14 Uhr arbeiten, dafür am Freitag frei haben.",
+      "",
+      "1. War die Erstuntersuchung rechtzeitig? Bis wann muss Can die Bescheinigung über die erste Nachuntersuchung vorlegen, wann soll der Betrieb ihn daran erinnern, und was passiert, wenn er sie nicht vorlegt?",
+      "2. Wie viele Stunden werden in einer normalen Woche und in einer Blockwoche angerechnet? Darf Can am Mittwoch der Blockwoche noch im Betrieb helfen?",
+      "3. Ist der Samstagseinsatz erlaubt, wenn Can dafür am Freitag frei hat? Machen Sie einen Gegenvorschlag."
+    ],
+    "solution": [
+      "1. Die Erstuntersuchung darf höchstens 14 Monate vor Beginn zurückliegen (§ 32 JArbSchG). 12.05.2026 liegt im Zeitraum ab 01.07.2025, sie war rechtzeitig. Nachuntersuchung (§ 33 JArbSchG): Ein Jahr nach Beginn, also am 01.09.2027, muss die Bescheinigung vorliegen. Die Untersuchung darf dann höchstens 3 Monate alt sein, also frühestens am 01.06.2027 stattfinden. Nach 9 Monaten, am 01.06.2027, soll der Betrieb Can deutlich auf die Frist hinweisen. Legt er die Bescheinigung nicht vor, darf der Betrieb ihn nach Ablauf von 14 Monaten, also ab 01.11.2027, nicht mehr beschäftigen, bis sie vorliegt. Can ist dann noch 17, die Regel gilt also.",
+      "",
+      "2. Normale Woche: Der Berufsschultag mit mehr als 5 Unterrichtsstunden wird einmal pro Woche mit der durchschnittlichen täglichen Arbeitszeit angerechnet, hier 8 Stunden. An diesem Tag darf Can nicht mehr im Betrieb arbeiten (§ 9 JArbSchG). Dazu 4 x 8 = 32 Stunden im Betrieb, zusammen 40 Stunden, die Höchstgrenze für Jugendliche. Blockwoche: 5 x 8 = 40 Unterrichtsstunden, das sind 40 x 45 min = 30 Zeitstunden an 5 Tagen, also mindestens 25 Stunden. Die Woche wird mit der durchschnittlichen wöchentlichen Arbeitszeit angerechnet, hier 40 Stunden. Eine Beschäftigung im Betrieb ist verboten. Erlaubt sind nur betriebliche Ausbildungsveranstaltungen bis zu 2 Stunden pro Woche. Mithilfe beim Rollout für 3 Stunden ist keine Ausbildungsveranstaltung und überschreitet diese Grenze. Also nicht erlaubt.",
+      "",
+      "3. Nein. Jugendliche dürfen samstags nicht beschäftigt werden (§ 16 JArbSchG). Die Ausnahmen gelten z.B. für Verkaufsstellen, Krankenhäuser, Gaststätten oder Kfz-Werkstätten, nicht für ein IT-Systemhaus. Ein freier Freitag ändert daran nichts. Gegenvorschlag: Can hilft in einer normalen Betriebswoche während der regulären Arbeitszeit bei der Vorbereitung (z.B. Geräte vorbereiten oder Images testen). Den Samstagseinsatz übernehmen volljährige Beschäftigte. Wenn Can lernen soll, wie ein Rollout abläuft, kann er ihn zusammen mit dem Team in der Nachbesprechung am Montag auswerten."
+    ]
+  },
+  {
+    "title": "Servicetechniker beantragt eine Viertagewoche",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Kai arbeitet seit 2021 als Servicetechniker in einem IT-Unternehmen mit 55 Beschäftigten. Er arbeitet 40 Stunden an 5 Tagen und verdient 3.900 Euro brutto. Am 15.10.2026 beantragt er per E-Mail, ab 01.01.2027 nur noch 32 Stunden an 4 Tagen zu arbeiten. Er hat 30 Urlaubstage bei der 5-Tage-Woche.",
+      "Für die Abrechnung gelten vereinfacht angenommene Werte (Steuerklasse I, keine Kirchensteuer): Sozialversicherung Arbeitnehmeranteil insgesamt 21 %. Lohnsteuer bei 3.900 Euro: 480 Euro, bei 3.120 Euro: 300 Euro. Solidaritätszuschlag fällt nicht an.",
+      "",
+      "1. Hat Kai einen Anspruch auf Teilzeit? Hat er die Frist eingehalten? Bis wann muss der Arbeitgeber antworten, und was passiert, wenn er nicht antwortet?",
+      "2. Berechnen Sie Brutto und Netto vorher und nachher. Um wie viel Prozent sinken Brutto und Netto, und warum unterscheiden sich die Werte? Bleibt der Stundenlohn gleich (4,33 Wochen je Monat)?",
+      "3. Wie viele Urlaubstage hat Kai bei der 4-Tage-Woche? Kai möchte in drei Jahren wieder Vollzeit arbeiten. Was raten Sie ihm?"
+    ],
+    "solution": [
+      "1. Anspruch nach § 8 TzBfG: Das Arbeitsverhältnis besteht länger als 6 Monate, der Arbeitgeber hat mehr als 15 Beschäftigte. Der Antrag muss spätestens 3 Monate vor Beginn in Textform gestellt werden, E-Mail reicht. Für den 01.01.2027 hätte er bis 01.10.2026 kommen müssen. Der Antrag ist zu spät, gilt aber in der Regel für den frühestmöglichen Termin: 15.10.2026 + 3 Monate = 15.01.2027. Der Arbeitgeber muss spätestens einen Monat vorher in Textform antworten, also bis 15.12.2026. Ablehnen darf er nur aus betrieblichen Gründen. Antwortet er nicht rechtzeitig, gilt die Verringerung wie beantragt als vereinbart.",
+      "",
+      "2. Vorher: SV 3.900 x 0,21 = 819 Euro, Lohnsteuer 480 Euro, Netto 3.900 - 819 - 480 = 2.601 Euro. Nachher: Brutto 3.900 x 32 / 40 = 3.120 Euro, SV 655,20 Euro, Lohnsteuer 300 Euro, Netto 2.164,80 Euro. Brutto sinkt um 780 Euro = 20 %. Netto sinkt um 436,20 Euro = ca. 16,8 %. Grund: Die Lohnsteuer ist progressiv, bei niedrigerem Einkommen sinkt der Steuersatz. Stundenlohn: 3.900 / (40 x 4,33) = 3.900 / 173,2 = ca. 22,52 Euro. Nachher 3.120 / 138,56 = ca. 22,52 Euro. Er bleibt gleich. Teilzeitkräfte dürfen nicht schlechter gestellt werden (§ 4 TzBfG).",
+      "",
+      "3. Urlaub: 30 x 4 / 5 = 24 Tage. Das sind wie vorher 6 Wochen Erholung. Rat: Statt unbefristeter Teilzeit eine Brückenteilzeit nach § 9a TzBfG beantragen. Sie ist für 1 bis 5 Jahre möglich, weil der Betrieb mehr als 45 Beschäftigte hat. Danach kehrt Kai automatisch zu 40 Stunden zurück. Bei unbefristeter Teilzeit hat er nur einen Anspruch darauf, bei freien Vollzeitstellen bevorzugt berücksichtigt zu werden (§ 9 TzBfG). Die Änderung wird im Arbeitsvertrag festgehalten."
+    ]
+  },
+  {
+    "title": "Drei Fachinformatiker gründen eine UG",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Lea, Ben und Omar wollen einen IT-Service für Arztpraxen gründen. Sie haben wenig Geld, wollen aber nicht mit ihrem Privatvermögen haften. Sie planen eine Unternehmergesellschaft (haftungsbeschränkt). Stammkapital: Lea 1.500 Euro, Ben 900 Euro, Omar 600 Euro. Ben möchte statt Geld sein Notebook im Wert von 900 Euro einbringen.",
+      "Für das erste Jahr erwarten sie nach Abzug ihrer Geschäftsführergehälter einen Jahresüberschuss von 48.000 Euro. Steuern werden vereinfacht nicht berücksichtigt. Später wollen sie eine GmbH mit 25.000 Euro Stammkapital werden.",
+      "",
+      "1. Welche Schritte sind für die Gründung nötig? Darf Ben das Notebook einbringen? Wie müsste die Firma heißen?",
+      "2. Wie viel muss im ersten Jahr in die gesetzliche Rücklage? Wie viel kann ausgeschüttet werden, und wie viel erhält jeder, wenn nach Geschäftsanteilen verteilt wird?",
+      "3. Wie viel Jahresüberschuss brauchen sie im zweiten Jahr mindestens, um das Stammkapital aus der Rücklage auf 25.000 Euro zu erhöhen? Was wäre bei einer GbR anders?"
+    ],
+    "solution": [
+      "1. Gesellschaftsvertrag notariell beurkunden. Bei höchstens drei Gesellschaftern und einem Geschäftsführer geht das mit dem günstigeren Musterprotokoll. Stammkapital einzahlen, bei der UG vollständig und in bar. Anmeldung zum Handelsregister über den Notar. Gewerbe anmelden, steuerliche Erfassung beim Finanzamt. Ben darf das Notebook nicht einbringen: Sacheinlagen sind bei der UG verboten (§ 5a Abs. 2 GmbHG). Er muss 900 Euro einzahlen. Die Firma muss den Zusatz \"Unternehmergesellschaft (haftungsbeschränkt)\" oder \"UG (haftungsbeschränkt)\" tragen, z.B. \"PraxisIT UG (haftungsbeschränkt)\".",
+      "",
+      "2. Ein Viertel des Jahresüberschusses muss in die gesetzliche Rücklage: 48.000 x 0,25 = 12.000 Euro. Ausschüttbar: 36.000 Euro. Anteile: Lea 1.500 / 3.000 = 50 %, Ben 30 %, Omar 20 %. Lea 18.000 Euro, Ben 10.800 Euro, Omar 7.200 Euro.",
+      "",
+      "3. Für 25.000 Euro fehlen 25.000 - 3.000 = 22.000 Euro. Nach dem ersten Jahr sind 12.000 Euro in der Rücklage, es fehlen 10.000 Euro. Diese müssen ein Viertel des Überschusses sein: 10.000 / 0,25 = 40.000 Euro Jahresüberschuss. Dann kann das Stammkapital aus der Rücklage erhöht werden, danach gelten die Regeln der GmbH. GbR: Sie entsteht ohne Notar und ohne Mindestkapital. Dafür haften alle Gesellschafter unbeschränkt mit ihrem Privatvermögen, und zwar jeder für alle Schulden der Gesellschaft. Das wollen die drei vermeiden."
+    ]
+  },
+  {
+    "title": "Beamer für die Hausmesse kommt nach dem Fixtermin",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Systemhaus (GmbH) plant für Donnerstag, 15.10.2026, eine Hausmesse. Am 01.09.2026 erhält es von einem Großhändler ein Angebot \"freibleibend\": Laser-Beamer zu 1.290 Euro netto je Stück. Am 08.09. bestellt das Systemhaus 2 Beamer zu 1.290 Euro je Stück mit dem Vermerk \"Lieferung fix am 13.10.2026\". Am 10.09. antwortet der Großhändler: \"Wir liefern gern fix zum 13.10.2026, allerdings zu 1.340 Euro je Stück.\" Am 11.09. schreibt das Systemhaus: \"Einverstanden.\"",
+      "Am 13.10. kommt nichts. Das Systemhaus mietet für die Messe 2 Beamer für je 180 Euro und zahlt 40 Euro Kurier (netto). Am 16.10. liefert der Großhändler die Beamer mit Rechnung. Das Systemhaus könnte die Geräte später für den Schulungsraum gebrauchen.",
+      "",
+      "1. Wann und zu welchem Preis ist der Kaufvertrag zustande gekommen? Begründen Sie mit Antrag und Annahme.",
+      "2. Was ist ein Fixgeschäft? Welche Rechte hat das Systemhaus nach dem 13.10.? Was ist anders als bei einem normalen Liefertermin?",
+      "3. Berechnen Sie den Rechnungsbetrag brutto und den Schaden durch die Miete. Wie viel zahlt das Systemhaus, wenn es die Beamer behält und den Schaden verrechnet?"
+    ],
+    "solution": [
+      "1. Das freibleibende Angebot ist nicht bindend, es ist nur eine Aufforderung, ein Angebot abzugeben. Die Bestellung vom 08.09. ist der Antrag (zu 1.290 Euro). Die Antwort vom 10.09. ändert den Preis. Eine Annahme mit Änderungen gilt als Ablehnung verbunden mit einem neuen Antrag (§ 150 Abs. 2 BGB). Das Systemhaus nimmt diesen neuen Antrag am 11.09. an. Der Vertrag kommt am 11.09.2026 zu 1.340 Euro je Stück zustande, mit Fixtermin 13.10.2026. Der Preis ist 2 x 50 = 100 Euro höher als im Angebot. Das durfte der Großhändler, weil sein Angebot freibleibend war.",
+      "",
+      "2. Beim Fixgeschäft ist die Leistung zu einem genau bestimmten Zeitpunkt so wichtig, dass das Geschäft mit dem Termin stehen oder fallen soll. Hier ist das durch \"fix\" und den Messetermin klar. Weil beide Kaufleute sind, gilt ein Fixhandelskauf (§ 376 HGB). Das Systemhaus kann ohne Nachfrist vom Vertrag zurücktreten. Hat der Großhändler die Verspätung zu vertreten, kann es stattdessen Schadensersatz wegen Nichterfüllung verlangen. Die Beamer noch zu verlangen (Erfüllung), geht nur, wenn es das dem Großhändler sofort nach dem 13.10. mitteilt. Normaler Liefertermin: Bei einem Kalenderdatum tritt der Verzug zwar auch ohne Mahnung ein. Für Rücktritt oder Schadensersatz statt der Leistung muss aber in der Regel erst eine angemessene Nachfrist gesetzt werden.",
+      "",
+      "3. Rechnung: 2 x 1.340 = 2.680 Euro netto x 1,19 = 3.189,20 Euro brutto. Schaden: 2 x 180 + 40 = 400 Euro netto (das Systemhaus kann die Vorsteuer abziehen). Behält das Systemhaus die Beamer, muss es das dem Großhändler sofort nach dem 13.10. anzeigen. Den Mietschaden verlangt es als Verzögerungsschaden und verrechnet ihn: 3.189,20 - 400 = 2.789,20 Euro. Braucht es die Beamer nicht mehr, tritt es zurück, schickt die Lieferung zurück und verlangt die 400 Euro Mehrkosten als Schadensersatz."
+    ]
+  },
+  {
+    "title": "Warnstreik beim IT-Dienstleister einer Versicherung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Bei einem tarifgebundenen IT-Dienstleister ist der Entgelttarifvertrag zum 31.12.2026 ausgelaufen. Die Gewerkschaft fordert 7 %, mindestens 250 Euro im Monat. Nach der zweiten Verhandlungsrunde ruft sie im Januar 2027 zu zwei ganztägigen Warnstreiks auf. Der Administrator Jan (Gewerkschaftsmitglied, 3.600 Euro brutto) und die Auszubildende Mara (kein Mitglied) wollen mitstreiken. Verhandelt wird auch über die Ausbildungsvergütungen. Die Geschäftsführung fragt, wer dann die Server betreut.",
+      "Vereinfacht angenommen: Je Streiktag wird 1/21,75 des Monatsgehalts abgezogen. Die Gewerkschaft zahlt Mitgliedern 75 Euro Streikgeld je Tag.",
+      "Tarifergebnis im März 2027: Laufzeit 01.01.2027 bis 31.12.2028. Einmalzahlung 600 Euro im Januar 2027. Plus 3 % ab 01.04.2027, weitere 2,5 % ab 01.03.2028.",
+      "",
+      "1. Beschreiben Sie den Ablauf von Tarifverhandlungen bis zum Streik und zum neuen Tarifvertrag. Warum ist ein Warnstreik jetzt erlaubt? Dürfen Mara als Nichtmitglied und Auszubildende mitstreiken? Wie wird der Serverbetrieb gesichert?",
+      "2. Was hätte Jan nach der Forderung mehr bekommen? Berechnen Sie für Jan den Gehaltsabzug für die zwei Streiktage und das Streikgeld.",
+      "3. Berechnen Sie Jans Gehalt nach beiden Stufen und seine gesamte Mehreinnahme über die Laufzeit gegenüber 3.600 Euro. Wie viel Prozent sind das durchschnittlich pro Monat?"
+    ],
+    "solution": [
+      "1. Ablauf: Der alte Tarifvertrag läuft aus oder wird gekündigt, die Friedenspflicht endet. Die Tarifparteien verhandeln, begleitet von Warnstreiks. Scheitern die Verhandlungen, folgt eventuell eine Schlichtung. Dann Urabstimmung der Mitglieder (nach den Satzungen meist mindestens 75 % Zustimmung), unbefristeter Streik, der Arbeitgeber kann aussperren. Nach einer Einigung stimmen die Mitglieder erneut ab (meist genügen 25 %), dann gilt der neue Tarifvertrag mit neuer Friedenspflicht. Der Warnstreik ist erlaubt, weil der alte Vertrag ausgelaufen ist und die Friedenspflicht nicht mehr besteht. Mara darf mitstreiken: Auch Nichtmitglieder dürfen sich beteiligen, und Auszubildende dürfen an Warnstreiks teilnehmen, wenn über ihre Vergütung verhandelt wird. Sie erhält aber kein Streikgeld. Wegen der Teilnahme darf niemand benachteiligt werden. Serverbetrieb: Arbeitgeber und Gewerkschaft vereinbaren einen Notdienst, der den Betrieb kritischer Systeme sichert.",
+      "",
+      "2. Forderung: 3.600 x 7 % = 252 Euro, das ist mehr als 250 Euro. Jan hätte 252 Euro mehr bekommen, der Mindestbetrag greift erst bei niedrigeren Gehältern. Streik: je Tag 3.600 / 21,75 = ca. 165,52 Euro, für 2 Tage ca. 331,03 Euro weniger Bruttogehalt. Streikgeld: 2 x 75 = 150 Euro.",
+      "",
+      "3. Ab 01.04.2027: 3.600 x 1,03 = 3.708 Euro (plus 108 Euro). Ab 01.03.2028: 3.708 x 1,025 = 3.800,70 Euro (plus 200,70 Euro gegenüber 3.600). Mehreinnahme: 2027 Einmalzahlung 600 Euro + 9 Monate x 108 = 972 Euro, zusammen 1.572 Euro. 2028: 2 Monate x 108 = 216 Euro + 10 Monate x 200,70 = 2.007 Euro, zusammen 2.223 Euro. Gesamt: 3.795 Euro in 24 Monaten, im Schnitt 158,13 Euro pro Monat. 158,13 / 3.600 = ca. 4,39 %. Das ist deutlich weniger als die geforderten 7 %, so sieht ein typischer Kompromiss aus."
+    ]
+  },
+  {
+    "title": "Neue oder aufbereitete Notebooks für einen Bio-Großhandel",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Bio-Großhandel will nachhaltiger wirtschaften und braucht 30 Notebooks für Vertrieb und Verwaltung. Zwei Angebote (netto, vereinfacht angenommene CO2-Werte):",
+      "  Neu: 890 Euro je Gerät, Nutzungsdauer 4 Jahre, Herstellung ca. 300 kg CO2-Äquivalent je Gerät",
+      "  Aufbereitet (refurbished): 540 Euro je Gerät zuzüglich 45 Euro für eine Garantieverlängerung, Nutzungsdauer noch 3 Jahre, Aufbereitung ca. 35 kg CO2-Äquivalent je Gerät",
+      "Der Stromverbrauch im Betrieb ist bei beiden etwa gleich. Die 30 alten Notebooks sollen aus dem Haus.",
+      "",
+      "1. Erklären Sie die drei Dimensionen der Nachhaltigkeit mit je einem Beispiel aus dem IT-Betrieb. Nennen Sie zwei Umweltzeichen, auf die man bei IT-Geräten achten kann.",
+      "2. Berechnen Sie für beide Angebote die Anschaffungskosten, die Kosten je Gerät und Jahr und das CO2 je Gerät und Jahr. Wie viel CO2 spart der Betrieb pro Jahr mit den aufbereiteten Geräten?",
+      "3. Was ist mit den alten Notebooks zu tun? Beachten Sie ElektroG und Datenschutz."
+    ],
+    "solution": [
+      "1. Ökologisch: Umwelt und Ressourcen schonen, z.B. Geräte länger nutzen, aufbereitete Geräte kaufen, stromsparende Einstellungen. Ökonomisch: wirtschaftlich dauerhaft erfolgreich bleiben, z.B. Gesamtkosten über die Nutzungsdauer (TCO) statt nur den Kaufpreis betrachten. Sozial: faire Bedingungen für Menschen, z.B. Hersteller mit guten Arbeitsbedingungen in der Lieferkette, ergonomische Arbeitsplätze. Umweltzeichen: Blauer Engel, TCO Certified, EPEAT, Energy Star.",
+      "",
+      "2. Neu: 30 x 890 = 26.700 Euro. Je Gerät und Jahr: 890 / 4 = 222,50 Euro. CO2: 300 / 4 = 75 kg je Gerät und Jahr. Aufbereitet: 30 x (540 + 45) = 30 x 585 = 17.550 Euro. Je Gerät und Jahr: 585 / 3 = 195 Euro. CO2: 35 / 3 = ca. 11,67 kg je Gerät und Jahr. Aufbereitete Geräte sind pro Jahr 27,50 Euro je Gerät günstiger, für 30 Geräte 825 Euro im Jahr. CO2 für 30 Geräte: 2.250 kg gegenüber 350 kg pro Jahr, Einsparung 1.900 kg pro Jahr. Vorher prüfen: Leistung, Akkuzustand und Sicherheitsupdates müssen für die 3 Jahre reichen.",
+      "",
+      "3. Zuerst die Daten sicher löschen: Für die Löschung personenbezogener Daten auf Altgeräten ist der Besitzer selbst verantwortlich. Zertifizierte Löschsoftware oder Dienstleister nutzen und je Seriennummer protokollieren. Dann weiterverwenden lassen: Funktionierende Geräte an einen Aufbereiter verkaufen oder an Schulen und Vereine spenden. Defekte Geräte nach ElektroG entsorgen: nicht in den Restmüll, sondern an einen zertifizierten Entsorger oder zur Rücknahme durch Hersteller oder Händler. Akkus vorher entnehmen, wenn das ohne Zerstörung geht, und getrennt entsorgen. Alles mit Nachweis dokumentieren."
+    ]
+  },
+  {
+    "title": "Nach bestandener Prüfung einfach weitergearbeitet",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Nils macht eine Ausbildung zum Fachinformatiker für Systemintegration. Im Vertrag steht als Ende der 31.07.2027. Am Donnerstag, 17.06.2027, besteht er das Fachgespräch, und der Prüfungsausschuss teilt ihm das Gesamtergebnis mit. Über eine Übernahme wurde nicht gesprochen. Nils kommt ab Freitag, 18.06.2027, ganz normal zur Arbeit, sein Ausbilder weiß davon.",
+      "Ausbildungsvergütung im 3. Jahr: 1.250 Euro. Übliches Einstiegsgehalt im Betrieb: 3.200 Euro brutto. Anteilige Beträge werden vereinfacht nach Kalendertagen mit 1/30 des Monatsbetrags berechnet.",
+      "",
+      "1. Wann endet das Ausbildungsverhältnis? Was gilt rechtlich ab dem 18.06.2027?",
+      "2. Berechnen Sie die Bruttobezüge für Juni 2027.",
+      "3. Der Personalchef will Nils jetzt nur einen auf ein Jahr befristeten Vertrag geben und ihm eine Probezeit auferlegen. Geht das? Welche Kündigungsfrist gilt? Welche Unterlagen muss der Betrieb Nils aushändigen?"
+    ],
+    "solution": [
+      "1. Die Ausbildung endet vor dem vertraglichen Ende mit der Bekanntgabe des Prüfungsergebnisses durch den Prüfungsausschuss (§ 21 Abs. 2 BBiG), also am 17.06.2027. Weil Nils danach weiterbeschäftigt wird, ohne dass etwas anderes vereinbart ist, entsteht ein Arbeitsverhältnis auf unbestimmte Zeit (§ 24 BBiG). Er ist ab 18.06.2027 unbefristeter Arbeitnehmer und hat Anspruch auf die übliche Vergütung.",
+      "",
+      "2. Ausbildung 01. bis 17.06.: 1.250 x 17 / 30 = ca. 708,33 Euro. Arbeitsverhältnis 18. bis 30.06.: 13 Tage, 3.200 x 13 / 30 = ca. 1.386,67 Euro. Zusammen: 2.095,00 Euro brutto.",
+      "",
+      "3. Das Arbeitsverhältnis besteht bereits unbefristet. Eine nachträgliche Befristung geht nur, wenn Nils zustimmt, und ohne Sachgrund gar nicht mehr, weil schon ein Arbeitsverhältnis mit demselben Arbeitgeber besteht (§ 14 Abs. 2 TzBfG). Eine neue Probezeit braucht er nicht zu akzeptieren, der Betrieb kennt ihn aus drei Jahren Ausbildung. Kündigungsfrist: 4 Wochen zum 15. oder zum Monatsende (§ 622 Abs. 1 BGB). Die Ausbildungszeit zählt bei der Wartezeit von 6 Monaten nach dem Kündigungsschutzgesetz mit. Hat der Betrieb mehr als 10 Beschäftigte, gilt der Kündigungsschutz also sofort. Unterlagen: Nachweis der wesentlichen Arbeitsbedingungen nach dem Nachweisgesetz (u.a. Beginn, Tätigkeit, Arbeitsort, Arbeitszeit, Gehalt, Urlaub, Kündigungsfristen). Außerdem ein Ausbildungszeugnis nach § 16 BBiG (auf Wunsch qualifiziert, mit Angaben zu Verhalten und Leistung)."
+    ]
   }
 ]

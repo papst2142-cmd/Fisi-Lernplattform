@@ -16102,5 +16102,2429 @@
     ],
     "a": "3",
     "exp": "Grenze: 3.000 VA * 0,9 * 80 % = 2.160 W. Frei: 2.160 W - 1.350 W = 810 W. 810 W / 230 W = 3,52, also 3 Server (immer abrunden)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege findet im Lager ein Kabel mit kleinem, schmalem Stecker, der lose in die Netzwerkbuchse des PCs passt. Was ist das Problem?",
+    "options": [
+      "Es ist ein RJ11-Telefonkabel, Ethernet braucht RJ45",
+      "Es ist ein Crossover-Kabel, das nur zwischen zwei Switches passt",
+      "Es ist ein Glasfaserkabel, das einen Medienkonverter braucht",
+      "Es ist ein Cat-8-Kabel, das nur im Rechenzentrum zulässig ist"
+    ],
+    "a": "Es ist ein RJ11-Telefonkabel, Ethernet braucht RJ45",
+    "exp": "RJ11-Stecker sind schmaler und haben weniger Kontakte als RJ45. Sie passen mechanisch halb in eine RJ45-Buchse, stellen aber keine Ethernet-Verbindung her."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nachdem ein Schreibtisch an die Wand geschoben wurde, bricht die Netzwerkverbindung am PC immer wieder kurz ab. Was prüfen Sie zuerst?",
+    "options": [
+      "Ob das Patchkabel eingeklemmt oder stark geknickt ist",
+      "Ob der DHCP-Server die Leasedauer verkürzt hat",
+      "Ob der DNS-Server den PC-Namen noch kennt",
+      "Ob das Standardgateway eine neue Adresse hat"
+    ],
+    "a": "Ob das Patchkabel eingeklemmt oder stark geknickt ist",
+    "exp": "Die Verbindungsabbrüche traten nach einer mechanischen Veränderung auf. Ein gequetschtes Kabel verursacht Übertragungsfehler und muss ersetzt werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein IP-Telefon bleibt an einer Dose dunkel, ein PC funktioniert an derselben Dose einwandfrei. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Der zugehörige Switchport liefert kein PoE",
+      "Die Dose ist nicht auf einen Switchport gepatcht",
+      "Das Telefon hat noch keine DNS-Adresse erhalten",
+      "Die Dose ist nur für Glasfaser zugelassen"
+    ],
+    "a": "Der zugehörige Switchport liefert kein PoE",
+    "exp": "Der PC beweist, dass Dose, Verkabelung und Switchport funktionieren. Das Telefon bezieht seinen Strom aber über das Netzwerkkabel, der Port muss also PoE bereitstellen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neuer Access Point braucht PoE, der vorhandene Switch im Kleinbüro kann das nicht. Welche Lösung ist am günstigsten?",
+    "options": [
+      "Einen PoE-Injektor zwischen Switch und Access Point setzen",
+      "Den Access Point über ein Crossover-Kabel versorgen",
+      "Den Access Point per USB am Router anschließen",
+      "Ein Cat-7-Kabel verwenden, das Strom selbst erzeugt"
+    ],
+    "a": "Einen PoE-Injektor zwischen Switch und Access Point setzen",
+    "exp": "Ein PoE-Injektor speist Strom in das Netzwerkkabel ein und reicht die Daten durch. So muss der ganze Switch nicht getauscht werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender will seinem PC eine feste IP-Adresse geben, weil das Netz dann angeblich schneller ist. Wie reagieren Sie?",
+    "options": [
+      "Ablehnen: Clients bleiben auf DHCP, feste Adressen plant nur der Admin",
+      "Zustimmen, weil feste Adressen die Leitung beschleunigen",
+      "Zustimmen, wenn er die Adresse selbst aus dem DHCP-Bereich wählt",
+      "Zustimmen, wenn er zusätzlich das Gateway weglässt"
+    ],
+    "a": "Ablehnen: Clients bleiben auf DHCP, feste Adressen plant nur der Admin",
+    "exp": "Eine feste Adresse macht das Netz nicht schneller. Selbst gewählte Adressen führen zu Konflikten mit DHCP-Clients und sind nicht dokumentiert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ipconfig zeigt eine \"IPv6-Adresse\" mit 2a02:... und eine \"Verbindungslokale IPv6-Adresse\" mit fe80::... Welche ist im Internet gültig?",
+    "options": [
+      "Die Adresse mit 2a02:... aus dem Präfix des Providers",
+      "Die Adresse mit fe80::..., weil sie vom Router vergeben wird",
+      "Beide, weil IPv6 keine Unterscheidung kennt",
+      "Keine, IPv6-Adressen sind im Internet nicht nutzbar"
+    ],
+    "a": "Die Adresse mit 2a02:... aus dem Präfix des Providers",
+    "exp": "Adressen mit fe80:: gelten nur im eigenen Netzsegment und werden nicht geroutet. Die globale Adresse bildet der PC aus dem Präfix, das der Router vom Provider erhält."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei PCs hängen am selben Switch: PC A hat 192.168.1.10/24, PC B hat 192.168.2.10/24. Ein ping von A nach B scheitert. Warum?",
+    "options": [
+      "Die PCs liegen in verschiedenen Netzen ohne Router",
+      "Der Switch lässt pro Port nur eine Netzadresse zu",
+      "Die beiden PCs brauchen ein Crossover-Kabel",
+      "Die Subnetzmaske /24 verbietet ping-Anfragen"
+    ],
+    "a": "Die PCs liegen in verschiedenen Netzen ohne Router",
+    "exp": "Bei /24 unterscheiden sich die Netzanteile 192.168.1 und 192.168.2. PC A schickt das Paket deshalb an sein Gateway statt direkt an B. Fehlt ein Router, kommt es nie an, obwohl beide am selben Switch hängen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie wollen prüfen, ob der IPv6-Protokollstack eines PCs grundsätzlich arbeitet. Welchen Befehl nutzen Sie?",
+    "options": [
+      "ping ::1",
+      "ping fe80::",
+      "ping 0.0.0.0",
+      "ping ff02::"
+    ],
+    "a": "ping ::1",
+    "exp": "::1 ist die IPv6-Loopback-Adresse und entspricht 127.0.0.1 bei IPv4. Die Antwort kommt vom eigenen Rechner, ohne dass ein Paket das Gerät verlässt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping server01 antwortet mit \"Antwort von fe80::...\". Sie möchten das Ergebnis für IPv4 sehen. Was tun Sie?",
+    "options": [
+      "ping -4 server01 eingeben",
+      "ping -6 server01 eingeben",
+      "ipconfig /flushdns eingeben",
+      "ping -t server01 eingeben"
+    ],
+    "a": "ping -4 server01 eingeben",
+    "exp": "Windows bevorzugt IPv6, wenn der Name auch eine IPv6-Adresse liefert. Die Option -4 zwingt ping, die IPv4-Adresse zu verwenden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Der Admin braucht für eine Reservierung die MAC-Adresse des Notebooks, vor dem Sie gerade sitzen. Wo lesen Sie sie ab?",
+    "options": [
+      "In ipconfig /all unter \"Physische Adresse\"",
+      "In nslookup unter \"Adresse\"",
+      "In tracert in der ersten Zeile",
+      "In ipconfig unter \"Standardgateway\""
+    ],
+    "a": "In ipconfig /all unter \"Physische Adresse\"",
+    "exp": "ipconfig /all zeigt für jeden Adapter die physische Adresse, also die MAC-Adresse. Bei mehreren Adaptern muss man den richtigen wählen, etwa WLAN oder Ethernet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "nslookup zeigt in den ersten Zeilen \"Server: UnKnown\" und dahinter die Adresse des Firmen-DNS. Die Abfrage selbst liefert ein korrektes Ergebnis. Was bedeutet das?",
+    "options": [
+      "Für den DNS-Server fehlt nur der Eintrag zur Rückwärtsauflösung",
+      "Der DNS-Server ist ausgefallen und ein fremder Server antwortet",
+      "Der PC hat keinen DNS-Server eingetragen",
+      "Das Ergebnis ist ungültig und muss wiederholt werden"
+    ],
+    "a": "Für den DNS-Server fehlt nur der Eintrag zur Rückwärtsauflösung",
+    "exp": "nslookup versucht, den Namen des DNS-Servers über dessen Adresse zu ermitteln. Fehlt dieser PTR-Eintrag, steht dort UnKnown, die Namensauflösung funktioniert trotzdem."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Notebook ist gleichzeitig per LAN-Kabel und per WLAN mit dem Firmennetz verbunden. Welche Verbindung nutzt Windows normalerweise?",
+    "options": [
+      "Die LAN-Verbindung wegen ihrer niedrigeren Metrik",
+      "Die WLAN-Verbindung, weil sie zuerst verbunden war",
+      "Beide abwechselnd, jedes zweite Paket über WLAN",
+      "Keine, bei zwei Verbindungen schaltet Windows ab"
+    ],
+    "a": "Die LAN-Verbindung wegen ihrer niedrigeren Metrik",
+    "exp": "Windows vergibt jeder Verbindung automatisch eine Metrik, schnellere Verbindungen erhalten niedrigere Werte. Die Route mit der niedrigeren Metrik wird bevorzugt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie wollen beim Wackeln am Patchkabel sehen, ob die Verbindung kurz abreißt. Welcher Befehl ist dafür praktisch?",
+    "options": [
+      "ping -t mit der Adresse des Gateways",
+      "ipconfig /renew mit der Adresse des Gateways",
+      "tracert -d mit der Adresse des Gateways",
+      "nslookup mit der Adresse des Gateways"
+    ],
+    "a": "ping -t mit der Adresse des Gateways",
+    "exp": "ping -t sendet so lange Anfragen, bis man mit Strg+C abbricht. Aussetzer erscheinen sofort als Zeitüberschreitung in der laufenden Ausgabe."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "tracert zu einem Drucker im selben Subnetz zeigt nur eine einzige Zeile mit der Druckeradresse. Wie bewerten Sie das?",
+    "options": [
+      "Normal, zwischen PC und Drucker liegt kein Router",
+      "Fehler, das Standardgateway antwortet nicht",
+      "Fehler, der Drucker blockiert alle anderen Hops",
+      "Normal, weil tracert Drucker nie vollständig anzeigt"
+    ],
+    "a": "Normal, zwischen PC und Drucker liegt kein Router",
+    "exp": "tracert listet nur Router als Zwischenstationen auf. Im selben Subnetz wird das Ziel direkt erreicht, deshalb gibt es nur einen Hop."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Homeoffice zeigt tracert: Hop 1 (Heimrouter) antwortet mit 1 ms, ab Hop 2 (Provider) schwanken alle Werte zwischen 80 und 250 ms. Wo liegt das Problem?",
+    "options": [
+      "An der Internetleitung ab dem Heimrouter, nicht im Heimnetz",
+      "Im WLAN des Heimnetzes, weil Hop 1 zu schnell ist",
+      "Am Firmenserver, weil Hop 1 zu Hause liegt",
+      "An der Netzwerkkarte, weil tracert Zeiten misst"
+    ],
+    "a": "An der Internetleitung ab dem Heimrouter, nicht im Heimnetz",
+    "exp": "Der Heimrouter antwortet schnell, das Heimnetz ist also in Ordnung. Die Verzögerung beginnt auf der Strecke zum Provider, etwa durch eine ausgelastete oder gestörte Anschlussleitung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einer Abteilung meldet nur ein Mitarbeiter Netzprobleme, alle Kollegen am selben Etagenswitch arbeiten normal. Wo suchen Sie zuerst?",
+    "options": [
+      "Am Arbeitsplatz: PC, Patchkabel, Dose und Switchport",
+      "Am Internetrouter, weil er alle Verbindungen steuert",
+      "Am zentralen DNS-Server der Firma",
+      "Am Uplink des Etagenswitches zum Core"
+    ],
+    "a": "Am Arbeitsplatz: PC, Patchkabel, Dose und Switchport",
+    "exp": "Funktionieren alle anderen am gleichen Switch, sind Switch, Uplink und zentrale Dienste in Ordnung. Der Fehler liegt dann sehr wahrscheinlich im Bereich dieses einen Arbeitsplatzes."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Link-LED am PC leuchtet und flackert, ipconfig zeigt aber eine Adresse aus 169.254.0.0/16. Welche Aussage passt?",
+    "options": [
+      "Die physische Verbindung steht, nur DHCP klappt nicht",
+      "Das Kabel ist defekt, deshalb fehlt die Adresse",
+      "Der DNS-Server hat dem PC diese Adresse zugeteilt",
+      "Der PC hat die Adresse vom Standardgateway erhalten"
+    ],
+    "a": "Die physische Verbindung steht, nur DHCP klappt nicht",
+    "exp": "Eine leuchtende Link-LED zeigt, dass Schicht 1 funktioniert. Die 169.254-Adresse vergibt sich Windows selbst, wenn kein DHCP-Server antwortet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kleinbüro hat einen Internetrouter mit vier LAN-Ports, es sollen aber sieben Geräte per Kabel angeschlossen werden. Was ergänzen Sie?",
+    "options": [
+      "Einen Switch, der an einen LAN-Port des Routers angeschlossen wird",
+      "Einen zweiten Router, der an den WAN-Port angeschlossen wird",
+      "Einen Repeater, der die LAN-Ports verdoppelt",
+      "Einen Access Point, der als Kabelverteiler dient"
+    ],
+    "a": "Einen Switch, der an einen LAN-Port des Routers angeschlossen wird",
+    "exp": "Ein Switch vervielfacht die Anschlüsse im selben Netz. Die Geräte bleiben im Adressbereich des Routers und erhalten weiter ihre Adressen per DHCP."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mesh-System soll im Haus die WLAN-Abdeckung verbessern. Wo stellen Sie den zusätzlichen Mesh-Knoten auf?",
+    "options": [
+      "Auf halber Strecke, wo das Routersignal noch gut ist",
+      "Direkt in dem Raum, in dem gar kein Signal mehr ankommt",
+      "Direkt neben dem Router, damit die Verbindung sicher ist",
+      "Im Keller, weil sich das Funksignal nach oben ausbreitet"
+    ],
+    "a": "Auf halber Strecke, wo das Routersignal noch gut ist",
+    "exp": "Der Knoten muss selbst eine gute Verbindung zum Router haben, sonst gibt er ein schwaches Signal weiter. Deshalb platziert man ihn zwischen Router und Funkloch."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem Mehrfamilienhaus zeigt ein WLAN-Scan über 20 fremde Netze im 2,4-GHz-Band, das Homeoffice-WLAN ist instabil. Was hilft am ehesten?",
+    "options": [
+      "Das Notebook mit dem 5-GHz-Band des Routers verbinden",
+      "Die SSID verstecken, damit Nachbarn sie nicht sehen",
+      "Die WLAN-Verschlüsselung abschalten, das spart Funkzeit",
+      "Das 2,4-GHz-Band auf 40 MHz Kanalbreite erweitern"
+    ],
+    "a": "Das Notebook mit dem 5-GHz-Band des Routers verbinden",
+    "exp": "Im 2,4-GHz-Band gibt es nur wenige überlappungsfreie Kanäle, die Nachbarnetze stören sich gegenseitig. Das 5-GHz-Band bietet deutlich mehr Kanäle und dringt weniger weit in fremde Wohnungen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde hat seinen WLAN-Router im Keller in einem Metallschrank eingebaut. Das WLAN in den Wohnräumen ist schwach. Was raten Sie?",
+    "options": [
+      "Den Router frei und zentral aufstellen, nicht im Schrank",
+      "Den Metallschrank erden, dann verstärkt er das Signal",
+      "Den Router an eine Steckdosenleiste mit Filter hängen",
+      "Die Verschlüsselung von WPA2 auf WPA3 umstellen"
+    ],
+    "a": "Den Router frei und zentral aufstellen, nicht im Schrank",
+    "exp": "Metall schirmt Funkwellen stark ab, Decken und Wände dämpfen zusätzlich. Ein zentraler, offener Standort in Wohnhöhe verbessert die Abdeckung meist deutlich."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde fragt, welches Gerät an seinem DSL-Anschluss das Signal der Telefonleitung in Netzwerkdaten umsetzt.",
+    "options": [
+      "Das DSL-Modem, heute meist im Router eingebaut",
+      "Der Switch, der hinter dem Router hängt",
+      "Der Access Point, der das WLAN aussendet",
+      "Der DHCP-Server, der die Adressen vergibt"
+    ],
+    "a": "Das DSL-Modem, heute meist im Router eingebaut",
+    "exp": "Das Modem moduliert und demoduliert das Signal auf der Kupferleitung. In typischen Heim- und Büroroutern ist es mit Router, Switch und WLAN in einem Gerät vereint."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Drucker hat per DHCP eine neue Adresse erhalten. ping auf die neue Adresse klappt, Druckaufträge bleiben aber hängen. Was ist zu tun?",
+    "options": [
+      "Den Druckeranschluss auf die neue Adresse ändern",
+      "Den Druckertreiber gegen eine ältere Version tauschen",
+      "Den DNS-Cache mit ipconfig /flushdns leeren",
+      "Die Druckwarteschlange auf einen USB-Port umstellen"
+    ],
+    "a": "Den Druckeranschluss auf die neue Adresse ändern",
+    "exp": "Der Windows-Druckeranschluss zeigt noch auf die alte IP-Adresse. Dauerhaft verhindert eine DHCP-Reservierung, dass sich die Adresse erneut ändert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Multifunktionsgerät soll Scans direkt in die Freigabe \\\\fs01\\Scans ablegen. Was muss am Gerät eingerichtet werden?",
+    "options": [
+      "Der UNC-Pfad und ein Konto mit Schreibrecht",
+      "Nur die MAC-Adresse des Fileservers",
+      "Nur das Standardgateway des Fileservers",
+      "Eine eigene SSID nur für den Scanner"
+    ],
+    "a": "Der UNC-Pfad und ein Konto mit Schreibrecht",
+    "exp": "Das Gerät greift wie ein PC per SMB auf die Freigabe zu. Dafür braucht es den Pfad und Zugangsdaten eines Kontos, das in der Freigabe schreiben darf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Abteilung will Dateien in einem freigegebenen Ordner auf dem PC eines Kollegen ablegen. Was empfehlen Sie stattdessen?",
+    "options": [
+      "Eine Freigabe auf dem Fileserver mit Sicherung und Rechten",
+      "Eine Freigabe für Jeder mit Vollzugriff auf dem PC",
+      "Den PC des Kollegen dauerhaft als Server laufen lassen",
+      "Die Dateien per USB-Stick reihum weitergeben"
+    ],
+    "a": "Eine Freigabe auf dem Fileserver mit Sicherung und Rechten",
+    "exp": "Ein Arbeitsplatz-PC ist nicht immer eingeschaltet und wird meist nicht gesichert. Ein Fileserver bietet zentrale Datensicherung, Berechtigungen und Erreichbarkeit."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwischen Client-Netz und Fileserver steht eine Firewall. Welcher Port muss für Windows-Dateifreigaben (SMB) offen sein?",
+    "options": [
+      "TCP 445",
+      "TCP 3389",
+      "UDP 53",
+      "TCP 25"
+    ],
+    "a": "TCP 445",
+    "exp": "SMB läuft heute direkt über TCP-Port 445. Port 3389 gehört zu RDP, 53 zu DNS und 25 zu SMTP."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Hotel baut das VPN nicht auf. Der Browser zeigt beim Aufruf einer Webseite eine Anmeldeseite des Hotels. Was ist zu tun?",
+    "options": [
+      "Erst auf der Anmeldeseite anmelden, danach das VPN starten",
+      "Das VPN mehrfach neu starten, bis es durchkommt",
+      "Den DNS-Server im Notebook auf 8.8.8.8 setzen",
+      "Die Netzwerkkarte auf eine feste IP-Adresse stellen"
+    ],
+    "a": "Erst auf der Anmeldeseite anmelden, danach das VPN starten",
+    "exp": "Solange die Anmeldung im Captive Portal fehlt, lässt das Hotelnetz keinen Verkehr ins Internet durch. Erst danach kann der VPN-Client seinen Tunnel aufbauen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Seit das Firmen-VPN verbunden ist, kann ein Mitarbeiter im Homeoffice nicht mehr auf seinem privaten Netzwerkdrucker drucken. Warum?",
+    "options": [
+      "Das VPN leitet allen Verkehr in die Firma und sperrt das LAN",
+      "Das VPN hat dem Drucker eine neue IP-Adresse gegeben",
+      "Das VPN löscht beim Aufbau alle lokalen Druckertreiber",
+      "Das VPN schaltet das WLAN-Modul des Druckers ab"
+    ],
+    "a": "Das VPN leitet allen Verkehr in die Firma und sperrt das LAN",
+    "exp": "Viele Firmen-VPNs schicken alle Pakete durch den Tunnel und erlauben keinen Zugriff auf das Heimnetz. Das ist oft gewollt, damit keine Verbindung am Tunnel vorbei entsteht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege meint, dienstliche Mail-Adressen wie \"anna.berg@firma.de\" seien keine personenbezogenen Daten. Stimmt das?",
+    "options": [
+      "Nein, die Adresse lässt sich einer bestimmten Person zuordnen",
+      "Ja, weil die Adresse dem Unternehmen und nicht Anna gehört",
+      "Ja, weil dienstliche Daten nie unter die DSGVO fallen",
+      "Nein, aber nur, wenn die Adresse auch privat genutzt wird"
+    ],
+    "a": "Nein, die Adresse lässt sich einer bestimmten Person zuordnen",
+    "exp": "Personenbezogen ist jede Information, die sich auf eine bestimmte oder bestimmbare Person bezieht. Eine Adresse mit Vor- und Nachname identifiziert Anna Berg direkt. Eine Funktionsadresse wie info@firma.de ist dagegen meist nicht personenbezogen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche der folgenden Auswertungen fällt NICHT unter die DSGVO?",
+    "options": [
+      "Die Zahl der Reparaturaufträge je Monat ohne jeden Bezug zu Kunden",
+      "Eine Liste der Kunden mit offenen Rechnungen",
+      "Die Kundennummern mit den jeweils gekauften Geräten",
+      "Die Anruferliste der Hotline mit Telefonnummern"
+    ],
+    "a": "Die Zahl der Reparaturaufträge je Monat ohne jeden Bezug zu Kunden",
+    "exp": "Die DSGVO gilt nur für personenbezogene Daten. Eine reine Anzahl ohne Bezug zu einzelnen Personen ist anonym. Kundennummern und Telefonnummern lassen sich dagegen einer Person zuordnen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Notebook mit Angebotsdaten wird gestohlen. Die Festplatte war verschlüsselt, eine Sicherung der Daten gibt es nicht. Welches Schutzziel ist verletzt?",
+    "options": [
+      "Die Verfügbarkeit",
+      "Die Vertraulichkeit",
+      "Die Integrität",
+      "Keines, weil die Daten verschlüsselt waren"
+    ],
+    "a": "Die Verfügbarkeit",
+    "exp": "Dank der Verschlüsselung kann der Dieb die Daten nicht lesen, die Vertraulichkeit bleibt gewahrt. Da es keine Sicherung gibt, stehen die Angebote dem Unternehmen aber nicht mehr zur Verfügung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie ermitteln mit einem Kunden den Schutzbedarf seiner Kundendatenbank. Welche Frage stellen Sie dabei?",
+    "options": [
+      "Welcher Schaden entsteht, wenn ein Schutzziel verletzt wird?",
+      "Wie viele Angriffe auf die Datenbank gab es im letzten Jahr?",
+      "Welches Betriebssystem läuft auf dem Datenbankserver?",
+      "Wie viel hat die Datenbanksoftware beim Kauf gekostet?"
+    ],
+    "a": "Welcher Schaden entsteht, wenn ein Schutzziel verletzt wird?",
+    "exp": "Der Schutzbedarf richtet sich nach den möglichen Folgen eines Schadens, z.B. Verstöße gegen Gesetze, finanzielle Verluste oder Ansehensverlust. Daraus ergibt sich je Schutzziel die Kategorie normal, hoch oder sehr hoch."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Tür zum Serverraum lässt sich nur noch mit einer persönlichen Chipkarte öffnen. Welche Kontrolle nach der klassischen TOM-Einteilung ist das?",
+    "options": [
+      "Zutrittskontrolle",
+      "Zugangskontrolle",
+      "Zugriffskontrolle",
+      "Eingabekontrolle"
+    ],
+    "a": "Zutrittskontrolle",
+    "exp": "Die Zutrittskontrolle verhindert, dass Unbefugte Räume mit Datenverarbeitungsanlagen betreten. Sie betrifft den physischen Zugang zum Raum, nicht die Anmeldung am System."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am Empfang teilen sich drei Mitarbeiter das Windows-Konto \"empfang\" mit einem gemeinsamen Kennwort. Warum sollte jeder ein eigenes Konto bekommen?",
+    "options": [
+      "Nur so ist nachvollziehbar, wer welche Aktion ausgeführt hat",
+      "Weil Windows nur ein Konto pro Arbeitsplatz erlaubt",
+      "Weil gemeinsame Konten keine Drucker nutzen können",
+      "Weil ein gemeinsames Konto mehr Lizenzkosten verursacht"
+    ],
+    "a": "Nur so ist nachvollziehbar, wer welche Aktion ausgeführt hat",
+    "exp": "Bei einem Sammelkonto lässt sich keine Aktion einer Person zuordnen, z.B. eine gelöschte Kundenakte. Außerdem muss das Kennwort bei jedem Personalwechsel geändert werden. Persönliche Konten mit passenden Rechten lösen beide Probleme."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Monitor am Empfang zeigt Kundenadressen und Termine. Wartende Kunden können direkt darauf schauen. Welche Maßnahme ist passend?",
+    "options": [
+      "Den Monitor wegdrehen oder einen Blickschutzfilter anbringen",
+      "Die Bildschirmhelligkeit am Empfang deutlich reduzieren",
+      "Kunden bitten, beim Warten nicht auf den Monitor zu schauen",
+      "Die Schrift im Programm deutlich kleiner einstellen"
+    ],
+    "a": "Den Monitor wegdrehen oder einen Blickschutzfilter anbringen",
+    "exp": "Vertrauliche Daten dürfen Unbefugten nicht angezeigt werden. Eine geänderte Aufstellung oder ein Blickschutzfilter löst das dauerhaft. Hinweise an Kunden oder eine kleine Schrift schützen nicht zuverlässig."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Mail meldet ein gesperrtes Konto und stammt von \"service@paypa1-sicherheit.de\". Was ist das deutlichste Warnzeichen?",
+    "options": [
+      "Die Domain ahmt einen bekannten Namen mit einer Ziffer nach",
+      "Die Mail wurde an einem Montagvormittag verschickt",
+      "Die Mail enthält das echte Logo des Zahlungsdienstes",
+      "Die Mail ist höflich formuliert und hat eine Grußformel"
+    ],
+    "a": "Die Domain ahmt einen bekannten Namen mit einer Ziffer nach",
+    "exp": "Angreifer registrieren Domains, die bekannten Namen zum Verwechseln ähnlich sehen, z.B. mit einer 1 statt einem l. Logos lassen sich beliebig kopieren und sagen nichts über die Echtheit aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Mail vom \"IT-Support\" warnt: \"Ihr Postfach ist voll und wird in 24 Stunden gesperrt. Melden Sie sich hier an.\" Wie reagieren Sie?",
+    "options": [
+      "Nicht anmelden und die Mail über den festgelegten Weg der IT melden",
+      "Über den Link anmelden, damit das Postfach nicht gesperrt wird",
+      "Auf die Mail antworten und um mehr Speicherplatz bitten",
+      "Schnell alte Mails löschen und dann den Link nutzen"
+    ],
+    "a": "Nicht anmelden und die Mail über den festgelegten Weg der IT melden",
+    "exp": "Zeitdruck und ein Link zur Anmeldeseite sind typische Merkmale von Phishing, das Zugangsdaten abgreifen will. Die eigene IT schickt keine Anmeldelinks mit Sperrdrohung. Wer unsicher ist, fragt über die bekannte Helpdesk-Nummer nach."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Anrufer stellt sich als neuer Kollege aus der Filiale vor. Sein VPN gehe nicht, er brauche \"nur kurz\" Ihre Zugangsdaten. Was ist richtig?",
+    "options": [
+      "Keine Daten herausgeben und ihn an den Helpdesk verweisen",
+      "Die Daten nennen, wenn er den Namen des Filialleiters kennt",
+      "Die Daten per Mail schicken, damit es dokumentiert ist",
+      "Nur den Benutzernamen, aber nicht das Kennwort nennen"
+    ],
+    "a": "Keine Daten herausgeben und ihn an den Helpdesk verweisen",
+    "exp": "Social Engineers nutzen Hilfsbereitschaft und Zeitdruck aus. Interne Namen findet man oft im Internet, sie beweisen nichts. Zugangsdaten sind persönlich, ein neuer Kollege bekommt eigene Daten vom Helpdesk."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Beim Surfen erscheint ein Fenster mit Sirenenton: \"Ihr PC ist infiziert! Rufen Sie sofort den Support unter dieser Nummer an.\" Was tun Sie?",
+    "options": [
+      "Nicht anrufen, den Browser schließen und die Meldung der IT mitteilen",
+      "Die Nummer anrufen, weil es ein offizieller Windows-Hinweis ist",
+      "Auf den Button im Fenster klicken, um den Virus zu entfernen",
+      "Die angebotene Reinigungssoftware aus dem Fenster installieren"
+    ],
+    "a": "Nicht anrufen, den Browser schließen und die Meldung der IT mitteilen",
+    "exp": "Solche Fenster sind Scareware. Sie sollen Angst machen, damit man Betrüger anruft, bezahlt oder ihnen Fernzugriff gibt. Echte Virenmeldungen kommen vom installierten Virenschutz und nennen keine Hotline zum Anrufen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Besprechungsraum steckt ein kleines unbekanntes Gerät mit Netzwerkkabel in der Wanddose. Niemand weiß, wem es gehört. Was ist richtig?",
+    "options": [
+      "Das Gerät nicht anfassen und sofort die IT informieren",
+      "Das Gerät ausstecken und in den Müll werfen",
+      "Das Gerät mitnehmen und an den eigenen PC anschließen",
+      "Das Gerät stecken lassen und es niemandem erzählen"
+    ],
+    "a": "Das Gerät nicht anfassen und sofort die IT informieren",
+    "exp": "Ein fremdes Gerät im Netz kann ein Angriffswerkzeug sein, das Daten mitschneidet oder einen Fernzugang öffnet. Die IT kann prüfen, seit wann es verbunden ist, und Spuren sichern. Deshalb verändert man zunächst nichts."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kollegin bekommt ein neues Diensthandy und will das alte zurücksetzen. Darauf ist ihre Authenticator-App für MFA. Was muss sie vorher tun?",
+    "options": [
+      "Die MFA-Anmeldung auf das neue Handy übertragen oder neu registrieren",
+      "Nichts, die Codes werden beim Zurücksetzen automatisch übertragen",
+      "Die SIM-Karte ins neue Handy stecken, das genügt",
+      "MFA für ihr Konto dauerhaft abschalten lassen"
+    ],
+    "a": "Die MFA-Anmeldung auf das neue Handy übertragen oder neu registrieren",
+    "exp": "Die Schlüssel für die Einmalcodes liegen nur auf dem alten Gerät. Wird es zurückgesetzt, kann sie sich nicht mehr anmelden. Deshalb richtet man den neuen Faktor vorher ein oder nutzt einen hinterlegten Wiederherstellungsweg."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde führt einen Passwort-Manager ein. Was gilt für dessen Hauptkennwort?",
+    "options": [
+      "Es muss lang und einzigartig sein und wird nirgends sonst verwendet",
+      "Es sollte kurz sein, weil man es sehr oft eintippt",
+      "Es sollte dasselbe wie das Windows-Kennwort sein",
+      "Es sollte im Passwort-Manager selbst gespeichert werden"
+    ],
+    "a": "Es muss lang und einzigartig sein und wird nirgends sonst verwendet",
+    "exp": "Das Hauptkennwort schützt alle anderen Kennwörter. Wird es erraten oder bei einem anderen Dienst gestohlen, sind alle Zugänge offen. Zusätzlich sollte der Passwort-Manager mit MFA gesichert werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am gemeinsam genutzten PC am Empfang bietet der Browser an, Ihr Kennwort für das Lieferantenportal zu speichern. Was tun Sie?",
+    "options": [
+      "Ablehnen, weil sonst jeder am PC Ihr Konto nutzen kann",
+      "Annehmen, weil der Browser das Kennwort verschlüsselt",
+      "Annehmen, weil der PC im Firmennetz steht",
+      "Annehmen und das Kennwort danach jede Woche ändern"
+    ],
+    "a": "Ablehnen, weil sonst jeder am PC Ihr Konto nutzen kann",
+    "exp": "Auf einem gemeinsam genutzten Rechner kann jeder mit dem gespeicherten Kennwort unter Ihrem Namen handeln. Am persönlichen Arbeitsplatz ist ein freigegebener Passwort-Manager die bessere Lösung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf dem PC eines Kunden laufen zwei verschiedene Virenschutzprogramme gleichzeitig mit Echtzeitschutz. Was ist die Folge?",
+    "options": [
+      "Die Programme können sich gegenseitig stören und das System ausbremsen",
+      "Der Schutz ist doppelt so hoch wie mit einem Programm",
+      "Die Programme teilen sich die Arbeit und sparen Leistung",
+      "Windows wählt automatisch das bessere Programm aus"
+    ],
+    "a": "Die Programme können sich gegenseitig stören und das System ausbremsen",
+    "exp": "Zwei Echtzeit-Scanner greifen gleichzeitig auf jede Datei zu und blockieren sich gegenseitig. Das führt zu Abstürzen und Leistungsproblemen. Deshalb nutzt man genau einen Echtzeitschutz, Windows deaktiviert den Defender dafür meist automatisch."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einem neuen Kunden-Router ist noch das Werkspasswort \"admin\" für die Weboberfläche gesetzt. Was tun Sie bei der Einrichtung?",
+    "options": [
+      "Ein eigenes starkes Kennwort setzen und die Firmware aktualisieren",
+      "Das Kennwort lassen, weil der Router nur im LAN erreichbar ist",
+      "Das Kennwort auf einen Aufkleber am Router schreiben",
+      "Nur den Benutzernamen ändern und das Kennwort lassen"
+    ],
+    "a": "Ein eigenes starkes Kennwort setzen und die Firmware aktualisieren",
+    "exp": "Werkspasswörter stehen in Handbüchern und im Internet. Jeder im Netz, auch Schadsoftware auf einem Client, könnte sonst die Einstellungen ändern. Eine aktuelle Firmware schließt bekannte Lücken."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Aufteilung erfüllt die 3-2-1-Regel für die Daten eines kleinen Büros?",
+    "options": [
+      "Daten am Server, Kopie auf dem NAS, eine Kopie in der Cloud",
+      "Daten am Server, zwei Kopien auf zwei Ordnern desselben NAS",
+      "Daten am Server, eine Kopie auf einem Stick in der Schublade",
+      "Daten am Server, gespiegelt per RAID 1 auf eine zweite Platte"
+    ],
+    "a": "Daten am Server, Kopie auf dem NAS, eine Kopie in der Cloud",
+    "exp": "Die Regel verlangt drei Kopien auf zwei verschiedenen Medien, davon eine außer Haus. NAS und Cloud sind verschiedene Medien, die Cloud liegt an einem anderen Ort. Ein RAID ist keine Sicherung, weil Löschungen sofort gespiegelt werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Sicherungssatz Montag (voll), Dienstag, Mittwoch und Donnerstag (jeweils inkrementell) ist die Sicherung vom Mittwoch beschädigt. Welcher Stand lässt sich noch sicher vollständig wiederherstellen?",
+    "options": [
+      "Der Stand von Dienstag",
+      "Der Stand von Donnerstag",
+      "Der Stand von Mittwoch",
+      "Nur der Stand vom Montag"
+    ],
+    "a": "Der Stand von Dienstag",
+    "exp": "Inkrementelle Sicherungen bauen aufeinander auf. Fehlt Mittwoch, fehlen dessen Änderungen, und der Donnerstag setzt auf einem unvollständigen Stand auf. Vollständig sicher ist nur die Kette bis Dienstag."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nur das Netzlaufwerk wird nachts gesichert. Eine Kollegin speichert ihre Angebote aber auf dem Desktop ihres Notebooks. Was raten Sie ihr?",
+    "options": [
+      "Die Angebote im gesicherten Netzlaufwerk ablegen",
+      "Die Angebote zusätzlich in den Papierkorb kopieren",
+      "Das Notebook jeden Abend herunterfahren",
+      "Die Dateien auf dem Desktop schreibgeschützt setzen"
+    ],
+    "a": "Die Angebote im gesicherten Netzlaufwerk ablegen",
+    "exp": "Was nicht in der Sicherung liegt, ist bei einem Defekt oder Diebstahl des Notebooks verloren. Anwender sollten wissen, welche Speicherorte gesichert werden, und ihre Arbeit dort ablegen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum reicht einfaches Überschreiben mit Nullen bei einer SSD nicht immer, um alle Daten sicher zu löschen?",
+    "options": [
+      "Der Controller erreicht beim Überschreiben nicht alle Speicherzellen",
+      "SSDs lassen sich vom Betriebssystem grundsätzlich nicht überschreiben",
+      "Überschreiben beschädigt die Speicherzellen der SSD sofort dauerhaft",
+      "SSDs speichern jede Datei zusätzlich doppelt auf dem Mainboard"
+    ],
+    "a": "Der Controller erreicht beim Überschreiben nicht alle Speicherzellen",
+    "exp": "Wegen Wear Leveling und Reservebereichen landen neue Daten nicht zwingend auf den alten Zellen. Sicherer ist die Secure-Erase-Funktion der SSD oder eine durchgehende Verschlüsselung, deren Schlüssel man löscht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein geleaster Multifunktionsdrucker geht nach fünf Jahren an den Leasinggeber zurück. Was muss vorher geschehen?",
+    "options": [
+      "Den internen Speicher mit Scans und Druckaufträgen sicher löschen",
+      "Nur die Tonerkartuschen entnehmen und getrennt entsorgen",
+      "Nur die Netzwerkeinstellungen auf Werkseinstellung setzen",
+      "Nichts, weil Drucker keine Daten dauerhaft speichern"
+    ],
+    "a": "Den internen Speicher mit Scans und Druckaufträgen sicher löschen",
+    "exp": "Viele Multifunktionsgeräte haben eine Festplatte oder SSD, auf der Scans, Faxe und Druckaufträge liegen. Vor der Rückgabe wird sie über die Löschfunktion des Herstellers sicher gelöscht oder ausgebaut und vernichtet."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege wirft Fehldrucke mit Kundenadressen und Rechnungsbeträgen in den normalen Papierkorb. Was ist richtig?",
+    "options": [
+      "In den Aktenvernichter oder die verschlossene Datenschutztonne",
+      "In die offene Altpapiertonne im Hof des Gebäudes",
+      "In den normalen Papierkorb, wenn sie zerknüllt sind",
+      "Als Schmierpapier in die Ablage neben dem Drucker"
+    ],
+    "a": "In den Aktenvernichter oder die verschlossene Datenschutztonne",
+    "exp": "Aus normalem Altpapier lassen sich Kundendaten leicht herausholen. Unterlagen mit personenbezogenen Daten werden deshalb nach DIN 66399 vernichtet, im Büro per Aktenvernichter oder über eine verschlossene Tonne eines Entsorgers."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einer Datenrettung hat der Kunde seine Daten auf einem neuen Laufwerk erhalten. Ein Kollege will die Kopie \"für alle Fälle\" auf dem Firmen-NAS behalten. Was gilt?",
+    "options": [
+      "Die Kopie wird nach Abschluss des Auftrags gelöscht",
+      "Die Kopie darf zwei Jahre ohne Rückfrage aufbewahrt werden",
+      "Die Kopie darf bleiben, wenn der NAS verschlüsselt ist",
+      "Die Kopie darf bleiben, solange der Kunde nicht widerspricht"
+    ],
+    "a": "Die Kopie wird nach Abschluss des Auftrags gelöscht",
+    "exp": "Die Daten wurden nur für den Rettungsauftrag verarbeitet. Nach Erledigung entfällt der Zweck, deshalb werden sie gelöscht. Eine längere Speicherung wäre nur mit ausdrücklicher Absprache mit dem Kunden zulässig."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie sollen per Fernwartung am PC eines Kunden einen Fehler beheben. Was ist datenschutzgerecht?",
+    "options": [
+      "Der Kunde startet die Sitzung selbst und kann jederzeit zusehen und abbrechen",
+      "Sie verbinden sich jederzeit unangemeldet, um den Kunden nicht zu stören",
+      "Sie lassen sich die Kundendateien zur Analyse zuschicken",
+      "Sie arbeiten mit dem Konto und Kennwort des Kunden allein weiter"
+    ],
+    "a": "Der Kunde startet die Sitzung selbst und kann jederzeit zusehen und abbrechen",
+    "exp": "Bei der Fernwartung sieht der Techniker möglicherweise personenbezogene Daten. Der Kunde sollte den Zugriff freigeben, den Vorgang verfolgen und ihn beenden können. Vertrauliche Fenster schließt er vorher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Techniker schickt Fotos vom Typenschild und vom Bildschirm eines Kundengeräts über seinen privaten Messenger an einen Kollegen. Warum ist das problematisch?",
+    "options": [
+      "Kundendaten landen auf einem privaten Konto außerhalb der Firma",
+      "Messenger-Bilder haben eine zu geringe Auflösung",
+      "Private Messenger dürfen tagsüber nicht genutzt werden",
+      "Die Fotos verbrauchen zu viel mobiles Datenvolumen"
+    ],
+    "a": "Kundendaten landen auf einem privaten Konto außerhalb der Firma",
+    "exp": "Auf dem Bildschirmfoto können Namen oder Mails des Kunden zu sehen sein. Private Messenger speichern Daten oft beim Anbieter oder gleichen Kontakte ab. Für dienstliche Kommunikation nutzt man die freigegebenen Firmenwerkzeuge."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie melden der IT einen möglichen Sicherheitsvorfall an Ihrem Rechner. Welche Angaben helfen in der ersten Meldung am meisten?",
+    "options": [
+      "Was, wann und an welchem Gerät passiert ist und was Sie getan haben",
+      "Nur Ihren Namen und die Bitte um einen baldigen Rückruf",
+      "Eine Vermutung, welcher Kollege den Fehler verursacht hat",
+      "Eine eigene Einschätzung, wie teuer der Schaden werden könnte"
+    ],
+    "a": "Was, wann und an welchem Gerät passiert ist und was Sie getan haben",
+    "exp": "Mit diesen Angaben kann die IT den Vorfall schnell einordnen und das richtige Gerät isolieren. Auch Hinweise wie eine geöffnete Mail oder eine Fehlermeldung sind wichtig. Schuldfragen und Schadensschätzungen gehören nicht in die erste Meldung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Kundendaten sind durch einen Fehler öffentlich einsehbar gewesen. Wer entscheidet, ob die Datenschutz-Aufsichtsbehörde informiert wird?",
+    "options": [
+      "Die Unternehmensleitung, beraten vom Datenschutzbeauftragten",
+      "Der Mitarbeiter, der den Fehler zuerst entdeckt hat",
+      "Der externe Hersteller der eingesetzten Kundensoftware",
+      "Die Polizei nach einer Anzeige durch den Mitarbeiter"
+    ],
+    "a": "Die Unternehmensleitung, beraten vom Datenschutzbeauftragten",
+    "exp": "Die Meldepflicht nach Art. 33 DSGVO trifft den Verantwortlichen, also das Unternehmen, vertreten durch seine Leitung. Mitarbeiter melden Vorfälle intern über den festgelegten Weg. Der Datenschutzbeauftragte bewertet das Risiko mit und berät die Leitung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde sagt: Mein Notebook hat USB-C, also kann ich auch einen Monitor anschließen. Was antworten Sie?",
+    "options": [
+      "Das hängt vom Anschluss ab, USB-C ist nur die Steckerform",
+      "Ja, jeder USB-C-Anschluss überträgt immer auch ein Bildsignal",
+      "Nein, über USB-C lassen sich grundsätzlich keine Monitore anschließen",
+      "Ja, aber nur mit einem Adapter auf das analoge VGA-Signal"
+    ],
+    "a": "Das hängt vom Anschluss ab, USB-C ist nur die Steckerform",
+    "exp": "USB-C beschreibt den Stecker, nicht die Funktion. Ob ein Bild ausgegeben wird, hängt davon ab, ob der Anschluss DisplayPort Alt Mode oder Thunderbolt unterstützt. Das zeigt das Datenblatt oder ein Symbol am Gehäuse."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde möchte vorhandenen DDR4-Arbeitsspeicher in seinen neuen PC mit DDR5-Mainboard übernehmen. Was sagen Sie?",
+    "options": [
+      "Das geht nicht, DDR4 und DDR5 passen weder mechanisch noch elektrisch",
+      "Das geht, der Speicher läuft dann nur mit halbem Takt",
+      "Das geht, wenn man im UEFI den DDR4-Modus einschaltet",
+      "Das geht, wenn DDR4 und DDR5 gemischt eingesetzt werden"
+    ],
+    "a": "Das geht nicht, DDR4 und DDR5 passen weder mechanisch noch elektrisch",
+    "exp": "Die Kerbe in der Kontaktleiste sitzt bei jeder DDR-Generation an einer anderen Stelle, die Module lassen sich nicht einstecken. Auch Spannung und Signale unterscheiden sich. Beim Mainboard-Wechsel muss meist neuer Speicher gekauft werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine neue NVMe-SSD im M.2-Format wird im UEFI nicht erkannt. Das Mainboard hat nur einen M.2-Steckplatz. Was prüfen Sie im Handbuch?",
+    "options": [
+      "Ob der Steckplatz NVMe unterstützt oder nur M.2-SATA",
+      "Ob der Steckplatz mit USB 3.0 oder USB 2.0 angebunden ist",
+      "Ob die SSD vorher unter Linux formatiert werden muss",
+      "Ob der Steckplatz nur für WLAN-Karten freigegeben ist"
+    ],
+    "a": "Ob der Steckplatz NVMe unterstützt oder nur M.2-SATA",
+    "exp": "M.2 ist nur ein Formfaktor. Ein Steckplatz kann SATA, NVMe über PCIe oder beides unterstützen. Passt die Schnittstelle nicht, wird die SSD nicht erkannt, auch wenn sie mechanisch passt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen einzelnen Büro-PC soll eine günstige USV kurze Stromausfälle überbrücken, damit keine Daten verloren gehen. Welche Bauart reicht aus?",
+    "options": [
+      "Eine Offline-USV (Standby, VFD)",
+      "Eine Online-USV mit Doppelwandler (VFI)",
+      "Ein Notstromaggregat mit Dieselmotor",
+      "Eine redundante USV-Anlage mit Bypass"
+    ],
+    "a": "Eine Offline-USV (Standby, VFD)",
+    "exp": "Die Offline-USV schaltet erst bei einem Ausfall in wenigen Millisekunden auf Batterie um. Für normale PC-Netzteile reicht das, und sie ist günstig. Online-USVs lohnen sich für Server und empfindliche Geräte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege will für einen sparsamen Büro-PC mit 60 W Verbrauch ein 1000-W-Netzteil einbauen, damit Reserven da sind. Was spricht dagegen?",
+    "options": [
+      "Bei sehr geringer Auslastung arbeitet ein Netzteil mit schlechtem Wirkungsgrad",
+      "Ein großes Netzteil liefert immer die volle Leistung und überlastet das Mainboard",
+      "Ein großes Netzteil passt grundsätzlich nicht in einen Büro-PC",
+      "Ein großes Netzteil ist nicht mit SSDs kompatibel"
+    ],
+    "a": "Bei sehr geringer Auslastung arbeitet ein Netzteil mit schlechtem Wirkungsgrad",
+    "exp": "Den besten Wirkungsgrad erreichen Netzteile meist bei mittlerer Last. Bei wenigen Prozent Auslastung geht ein größerer Anteil als Wärme verloren. Das Netzteil sollte zum Bedarf passen und eine angemessene Reserve haben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine neue Mitarbeiterin klagt nach einigen Wochen Bildschirmarbeit über Augenbeschwerden. Was muss der Arbeitgeber anbieten?",
+    "options": [
+      "Eine Untersuchung der Augen und des Sehvermögens als Angebotsvorsorge",
+      "Einen Bildschirm mit höherer Bildwiederholrate für alle Beschäftigten",
+      "Eine Versetzung auf einen Arbeitsplatz ohne Computer",
+      "Eine kostenlose Brille für den privaten Gebrauch"
+    ],
+    "a": "Eine Untersuchung der Augen und des Sehvermögens als Angebotsvorsorge",
+    "exp": "Nach der Verordnung zur arbeitsmedizinischen Vorsorge muss der Arbeitgeber bei Bildschirmarbeit eine Vorsorge für Augen und Sehvermögen anbieten. Reicht die normale Brille nicht, stellt er eine spezielle Bildschirmarbeitsplatzbrille. Die Teilnahme ist für die Beschäftigten freiwillig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie stellen einen Bürostuhl und einen höhenverstellbaren Tisch für einen Kollegen ein. Welche Haltung ist ergonomisch richtig?",
+    "options": [
+      "Unterarme liegen waagerecht auf, Ober- und Unterarm bilden etwa einen rechten Winkel",
+      "Die Arme sind beim Tippen ganz gestreckt nach vorne gerichtet",
+      "Die Tischplatte liegt deutlich über der Höhe der Ellenbogen",
+      "Die Füße hängen frei, damit die Beine entlastet werden"
+    ],
+    "a": "Unterarme liegen waagerecht auf, Ober- und Unterarm bilden etwa einen rechten Winkel",
+    "exp": "Die Tischhöhe richtet sich nach der Ellenbogenhöhe, die Schultern bleiben locker. Die Füße stehen ganz auf dem Boden oder auf einer Fußstütze. So werden Nacken, Schultern und Handgelenke entlastet."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem ausgedienten Monitor ist eine durchgestrichene Mülltonne abgebildet. Was bedeutet das Symbol?",
+    "options": [
+      "Das Gerät darf nicht in den Restmüll, es muss getrennt gesammelt werden",
+      "Das Gerät enthält keine Schadstoffe und ist voll recycelbar",
+      "Das Gerät darf nur vom Hersteller selbst repariert werden",
+      "Das Gerät ist nicht für den Einsatz in Büros zugelassen"
+    ],
+    "a": "Das Gerät darf nicht in den Restmüll, es muss getrennt gesammelt werden",
+    "exp": "Das Symbol ist nach dem ElektroG vorgeschrieben. Elektroaltgeräte enthalten Wertstoffe und Schadstoffe und gehören zu Sammelstellen, Wertstoffhöfen oder in die Rücknahme des Handels. So werden Rohstoffe zurückgewonnen und die Umwelt geschützt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine neue 4-TB-Datenplatte zeigt in der Datenträgerverwaltung nur etwa 2 TB nutzbar, der Rest ist nicht zuordenbar. Was ist die Ursache?",
+    "options": [
+      "Der Datenträger wurde mit MBR initialisiert, nötig ist GPT",
+      "Die Platte ist defekt und hat die Hälfte ihrer Sektoren verloren",
+      "Das Dateisystem NTFS ist auf 2 TB je Laufwerk begrenzt",
+      "Die Platte muss zuerst im UEFI freigeschaltet werden"
+    ],
+    "a": "Der Datenträger wurde mit MBR initialisiert, nötig ist GPT",
+    "exp": "Der Partitionsstil MBR kann nur etwa 2 TiB adressieren. Eine leere Datenplatte lässt sich in der Datenträgerverwaltung in GPT umwandeln. Danach steht die volle Kapazität zur Verfügung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Linux-Live-Stick startet an einem neuen Notebook nicht, das UEFI meldet eine Secure-Boot-Verletzung. Wie lösen Sie das sinnvoll?",
+    "options": [
+      "Signierte Distribution nutzen oder Secure Boot kurz abschalten",
+      "Den Stick mit FAT16 statt FAT32 formatieren und neu schreiben",
+      "Das TPM löschen und den Stick anschließend erneut einstecken",
+      "Im UEFI die Uhrzeit korrigieren, damit die Signatur gültig ist"
+    ],
+    "a": "Signierte Distribution nutzen oder Secure Boot kurz abschalten",
+    "exp": "Secure Boot startet nur Bootloader mit gültiger Signatur. Viele bekannte Distributionen bringen einen signierten Bootloader mit und starten ohne Änderung. Schaltet man Secure Boot für einen Test ab, aktiviert man es danach wieder."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einer Windows-Installation im UEFI-Modus zeigt die Datenträgerverwaltung mehrere kleine Partitionen neben C:. Welche davon enthält den Bootloader?",
+    "options": [
+      "Die EFI-Systempartition mit dem Dateisystem FAT32",
+      "Die Auslagerungspartition mit dem Dateisystem exFAT",
+      "Die aktive primäre Partition im Master Boot Record",
+      "Die Wiederherstellungspartition mit dem Dateisystem ext4"
+    ],
+    "a": "Die EFI-Systempartition mit dem Dateisystem FAT32",
+    "exp": "Bei UEFI mit GPT liegt der Bootloader auf der EFI-Systempartition, die FAT32-formatiert ist. Daneben gibt es die reservierte MSR-Partition und eine Wiederherstellungspartition. Diese Partitionen dürfen nicht gelöscht werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Wechsel des CPU-Kühlers wird der Prozessor schon im Leerlauf sehr heiß und taktet herunter. Was wurde vermutlich falsch gemacht?",
+    "options": [
+      "Wärmeleitpaste fehlt oder die Schutzfolie klebt noch am Kühler",
+      "Der Kühler wurde mit zu wenig Schrauben am Gehäuse befestigt",
+      "Der Arbeitsspeicher steckt nach dem Umbau im falschen Slot",
+      "Das Betriebssystem erkennt den neuen Kühler noch nicht"
+    ],
+    "a": "Wärmeleitpaste fehlt oder die Schutzfolie klebt noch am Kühler",
+    "exp": "Zwischen CPU und Kühlerboden bleiben sonst winzige Luftspalte, die Wärme schlecht leiten. Neue Kühler haben oft eine Schutzfolie am Boden, die man abziehen muss. Man reinigt beide Flächen, trägt eine dünne Schicht Wärmeleitpaste auf und montiert den Kühler gleichmäßig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Betrieb rollt ein Windows-Image auf 25 neue PCs aus. Welche Aussage zu den Lizenzen stimmt?",
+    "options": [
+      "Jeder PC braucht eine eigene gültige Lizenz, das Image ersetzt keine Lizenz",
+      "Ein Image darf beliebig oft genutzt werden, weil es nur eine Kopie ist",
+      "Eine einzige Lizenz reicht für alle PCs im selben Netzwerk",
+      "Lizenzen sind nur für PCs nötig, die ins Internet gehen"
+    ],
+    "a": "Jeder PC braucht eine eigene gültige Lizenz, das Image ersetzt keine Lizenz",
+    "exp": "Das Image ist nur ein technisches Mittel zur schnellen Installation. Jede Installation muss lizenziert sein, z.B. durch vorinstallierte OEM-Lizenzen oder einen Volumenlizenzvertrag. Die Zuordnung wird im Lizenzmanagement dokumentiert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi sucht für einen Firmen-PC einen Chipsatztreiber und findet ihn auf einer unbekannten Treiber-Downloadseite. Was ist richtig?",
+    "options": [
+      "Treiber nur von der Herstellerseite oder über Windows Update beziehen",
+      "Die Datei nehmen, wenn sie von einem Virenscanner nicht erkannt wird",
+      "Ein Treiber-Update-Tool installieren, das alle Treiber automatisch lädt",
+      "Den Treiber nehmen, der auf der Seite die meisten Downloads hat"
+    ],
+    "a": "Treiber nur von der Herstellerseite oder über Windows Update beziehen",
+    "exp": "Fremde Downloadportale verteilen oft veraltete oder manipulierte Dateien und bündeln unerwünschte Software. Vertrauenswürdig sind die Seite des Geräte- oder Mainboardherstellers und Windows Update. Die Treiberversion wird in der Dokumentation festgehalten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihr Ausbilder sagt: Im Struktogramm gibt es kein Sinnbild dafür. Was meint er?",
+    "options": [
+      "Einen Sprung an eine beliebige Stelle (GOTO)",
+      "Eine Verzweigung mit Ja- und Nein-Fall",
+      "Eine Schleife mit Prüfung am Anfang",
+      "Eine einfache Anweisung wie eine Zuweisung"
+    ],
+    "a": "Einen Sprung an eine beliebige Stelle (GOTO)",
+    "exp": "Struktogramme bauen nur aus Folge, Verzweigung und Schleife auf. Unkontrollierte Sprünge sind bewusst nicht vorgesehen. So bleibt der Ablauf lesbar und lässt sich direkt in strukturierten Code übersetzen."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Programmablaufplan sehen Sie eine Raute mit den Ausgängen ja und nein. Wofür steht dieses Symbol?",
+    "options": [
+      "Für eine Verzweigung, die eine Bedingung prüft",
+      "Für eine Eingabe von Daten durch den Benutzer",
+      "Für den Start oder das Ende des Programms",
+      "Für den Aufruf eines eigenen Unterprogramms"
+    ],
+    "a": "Für eine Verzweigung, die eine Bedingung prüft",
+    "exp": "Die Raute enthält eine Bedingung, je nach Ergebnis geht es über den Ja- oder Nein-Ausgang weiter. Schleifen entstehen im PAP, indem ein Pfeil zu einem früheren Schritt zurückführt. Unterprogramme zeichnet man als Rechteck mit doppelten Seitenlinien."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Pseudocode soll prüfen, ob ein Kunde volljährig ist: wenn alter > 18 dann ausgabe volljährig. Was ist daran falsch?",
+    "options": [
+      "Ein 18-Jähriger wird nicht erkannt, richtig ist alter >= 18",
+      "Das Alter muss als Text und nicht als Zahl gespeichert werden",
+      "Die Bedingung muss alter < 18 lauten, sonst ist sie umgedreht",
+      "Nach dann darf keine Ausgabe stehen, nur eine Zuweisung"
+    ],
+    "a": "Ein 18-Jähriger wird nicht erkannt, richtig ist alter >= 18",
+    "exp": "Mit 18 Jahren ist man volljährig, die Bedingung > 18 schließt diesen Fall aber aus. Solche Grenzfehler findet man, indem man genau die Grenzwerte testet, hier 17, 18 und 19. Beim Testen gehören Grenzwerte immer in die Testfälle."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde erhält Rabatt, wenn er Stammkunde ist oder mehr als 500 Euro bestellt. Welche Bedingung ist im Pseudocode richtig?",
+    "options": [
+      "wenn stammkunde = wahr ODER bestellwert > 500",
+      "wenn stammkunde = wahr UND bestellwert > 500",
+      "wenn stammkunde = falsch ODER bestellwert < 500",
+      "wenn NICHT stammkunde UND bestellwert > 500"
+    ],
+    "a": "wenn stammkunde = wahr ODER bestellwert > 500",
+    "exp": "Der Rabatt gilt, sobald eine der beiden Bedingungen erfüllt ist, das ist ein logisches ODER. Mit UND bekämen nur Stammkunden mit großer Bestellung Rabatt. Die Sprachregel oder aus der Anforderung wird so direkt in die Logik übersetzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Programmiersprache wie C oder Java schreibt ein Azubi: if (anzahl = 0). Was ist der typische Fehler?",
+    "options": [
+      "Ein einfaches = ist eine Zuweisung, für den Vergleich braucht man ==",
+      "Die Bedingung muss in eckigen statt runden Klammern stehen",
+      "Der Vergleich mit 0 ist in Bedingungen grundsätzlich verboten",
+      "Nach if muss immer das Wort then folgen"
+    ],
+    "a": "Ein einfaches = ist eine Zuweisung, für den Vergleich braucht man ==",
+    "exp": "In vielen Sprachen weist = einen Wert zu, == vergleicht zwei Werte. Mit = wird anzahl auf 0 gesetzt, statt geprüft zu werden. Manche Compiler lehnen das ab oder warnen, andere führen es still aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll zwölf Monatsumsätze speichern und später durchlaufen. Welche Datenstruktur ist dafür am besten geeignet?",
+    "options": [
+      "Ein Array mit zwölf Elementen",
+      "Zwölf einzelne Variablen mit eigenen Namen",
+      "Eine einzige Variable vom Typ Boolean",
+      "Eine Konstante mit dem Wert zwölf"
+    ],
+    "a": "Ein Array mit zwölf Elementen",
+    "exp": "Ein Array fasst gleichartige Werte unter einem Namen zusammen, der Zugriff erfolgt über den Index. So lässt sich mit einer Schleife über alle Monate rechnen. Zwölf einzelne Variablen müsste man jeweils einzeln ansprechen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Kollegin möchte in einer unsortierten Liste mit der binären Suche arbeiten. Was entgegnen Sie?",
+    "options": [
+      "Die binäre Suche funktioniert nur, wenn die Liste sortiert ist",
+      "Die binäre Suche funktioniert nur mit Zahlen, nie mit Text",
+      "Die binäre Suche ist langsamer als die lineare Suche",
+      "Die binäre Suche braucht eine Liste mit genau 2er-Potenz Elementen"
+    ],
+    "a": "Die binäre Suche funktioniert nur, wenn die Liste sortiert ist",
+    "exp": "Die binäre Suche vergleicht mit dem mittleren Element und entscheidet, in welcher Hälfte weitergesucht wird. Das setzt eine Sortierung voraus. Bei unsortierten Daten bleibt die lineare Suche oder man sortiert zuerst."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Liste soll mit Bubblesort aufsteigend sortiert werden. Was gilt nach dem ersten vollständigen Durchlauf sicher?",
+    "options": [
+      "Das größte Element steht am Ende der Liste",
+      "Das kleinste Element steht am Ende der Liste",
+      "Die gesamte Liste ist bereits vollständig sortiert",
+      "Das mittlere Element steht genau in der Mitte"
+    ],
+    "a": "Das größte Element steht am Ende der Liste",
+    "exp": "Bei jedem Vergleich wandert der größere Wert eine Position nach hinten. Das größte Element wird so bis ans Ende durchgereicht. Im nächsten Durchlauf muss man das letzte Element nicht mehr vergleichen."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Tabelle stehen in Zeile 1 Stundensätze und in Spalte A Stunden. Die Formel in B2 soll nach rechts und nach unten kopiert werden. Welcher Bezug auf den Stundensatz ist richtig?",
+    "options": [
+      "B$1, weil nur die Zeile fest bleiben muss",
+      "$B$1, weil alles fest bleiben muss",
+      "$B1, weil nur die Spalte fest bleiben muss",
+      "B1, weil sich alles anpassen soll"
+    ],
+    "a": "B$1, weil nur die Zeile fest bleiben muss",
+    "exp": "Beim Kopieren nach rechts soll der Bezug zur jeweiligen Spalte wandern, beim Kopieren nach unten aber in Zeile 1 bleiben. Das erreicht der gemischte Bezug B$1. Für die Stunden in Spalte A nutzt man entsprechend $A2."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein SVERWEIS soll zu einem Artikelnamen die Artikelnummer liefern. Die Nummer steht aber links vom Namen. Warum klappt das nicht?",
+    "options": [
+      "SVERWEIS sucht nur in der ersten Spalte der Matrix und liefert Werte rechts davon",
+      "SVERWEIS kann grundsätzlich nur Zahlen und keinen Text finden",
+      "SVERWEIS funktioniert nur, wenn die Tabelle auf einem eigenen Blatt steht",
+      "SVERWEIS braucht für Text immer den Parameter WAHR"
+    ],
+    "a": "SVERWEIS sucht nur in der ersten Spalte der Matrix und liefert Werte rechts davon",
+    "exp": "Die Suchspalte muss bei SVERWEIS ganz links in der Matrix stehen. Werte links davon sind nicht erreichbar. Abhilfe schaffen XVERWEIS oder die Kombination aus INDEX und VERGLEICH."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Ticketliste steht in Spalte D der Status. Sie möchten wissen, wie viele Tickets den Status offen haben. Welche Formel passt?",
+    "options": [
+      "=ZÄHLENWENN(D:D;\"offen\")",
+      "=SUMMEWENN(D:D;\"offen\")",
+      "=ANZAHL(D:D;\"offen\")",
+      "=WENN(D:D;\"offen\";1)"
+    ],
+    "a": "=ZÄHLENWENN(D:D;\"offen\")",
+    "exp": "ZÄHLENWENN zählt die Zellen eines Bereichs, die ein Kriterium erfüllen. ANZAHL zählt nur Zellen mit Zahlen und kennt kein Kriterium. SUMMEWENN addiert Werte und passt nicht, wenn nur gezählt werden soll."
+  },
+  {
+    "cat": "systeme",
+    "q": "In Spalte B stehen Prüfungspunkte. In Spalte C soll bestanden erscheinen, wenn mindestens 50 Punkte erreicht sind, sonst nicht bestanden. Welche Formel ist richtig?",
+    "options": [
+      "=WENN(B2>=50;\"bestanden\";\"nicht bestanden\")",
+      "=WENN(B2>50;\"bestanden\";\"nicht bestanden\")",
+      "=WENN(\"bestanden\";B2>=50;\"nicht bestanden\")",
+      "=WENN(B2>=50;\"nicht bestanden\";\"bestanden\")"
+    ],
+    "a": "=WENN(B2>=50;\"bestanden\";\"nicht bestanden\")",
+    "exp": "WENN erwartet zuerst die Bedingung, dann den Dann-Wert und zuletzt den Sonst-Wert. Mindestens 50 bedeutet >= 50, sonst würde genau 50 als nicht bestanden gelten. Texte stehen in Anführungszeichen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein SVERWEIS zeigt #NV an, obwohl die Artikelnummer in der Liste zu stehen scheint. Was ist eine typische Ursache?",
+    "options": [
+      "Die Werte unterscheiden sich, z.B. durch Leerzeichen oder Zahl gegen Text",
+      "Die Tabelle hat zu viele Zeilen für einen SVERWEIS",
+      "Die Zelle mit der Formel ist zu schmal für das Ergebnis",
+      "Der Spaltenindex ist größer als eins und damit unzulässig"
+    ],
+    "a": "Die Werte unterscheiden sich, z.B. durch Leerzeichen oder Zahl gegen Text",
+    "exp": "#NV bedeutet, dass kein passender Wert gefunden wurde. Oft steht die Nummer einmal als Zahl und einmal als Text oder mit einem Leerzeichen am Ende. Mit GLÄTTEN oder einer einheitlichen Formatierung lässt sich das beheben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Geschäftsleitung möchte sehen, welchen Anteil fünf Kostenarten an den gesamten IT-Kosten eines Jahres haben. Welcher Diagrammtyp passt?",
+    "options": [
+      "Ein Kreisdiagramm",
+      "Ein Liniendiagramm",
+      "Ein Punktdiagramm",
+      "Ein Netzdiagramm"
+    ],
+    "a": "Ein Kreisdiagramm",
+    "exp": "Ein Kreisdiagramm zeigt die Aufteilung eines Ganzen in Anteile. Für Verläufe über die Zeit eignet sich das Liniendiagramm, für den Vergleich einzelner Werte das Säulen- oder Balkendiagramm. Bei vielen kleinen Anteilen wird ein Kreisdiagramm unübersichtlich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Lastenheft eines Kunden steht: „Der PC soll schnell sein.“ Was tun Sie mit dieser Anforderung?",
+    "options": [
+      "Mit dem Kunden messbar festlegen, was schnell bedeutet",
+      "Das schnellste verfügbare Modell ohne Rückfrage anbieten",
+      "Die Anforderung streichen, weil sie nicht prüfbar ist",
+      "Die Anforderung wörtlich ins Pflichtenheft übernehmen"
+    ],
+    "a": "Mit dem Kunden messbar festlegen, was schnell bedeutet",
+    "exp": "Unklare Anforderungen lassen sich bei der Abnahme nicht prüfen. Man klärt mit dem Kunden, was er meint, z.B. welche Programme flüssig laufen sollen, und legt messbare Kriterien fest."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Angebot A ist 40 Euro günstiger als Angebot B, hat aber fünf Wochen Lieferzeit. Der Kunde braucht die Geräte in zwei Wochen. Wie entscheiden Sie?",
+    "options": [
+      "Für Angebot B, weil nur es den Termin des Kunden einhält",
+      "Für Angebot A, weil der Preis immer das wichtigste Kriterium ist",
+      "Für Angebot A und den Kunden um drei Wochen Geduld bitten",
+      "Für beide Angebote, um die Geräte zu je 50 Prozent zu teilen"
+    ],
+    "a": "Für Angebot B, weil nur es den Termin des Kunden einhält",
+    "exp": "Ein Angebot, das eine Muss-Anforderung wie den Termin nicht erfüllt, scheidet aus. Der niedrigere Preis hilft nichts, wenn der Kunde die Geräte nicht rechtzeitig nutzen kann."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Lieferant A nennt Bruttopreise mit kostenlosem Versand, Lieferant B Nettopreise zuzüglich Versandkosten. Was tun Sie vor dem Vergleich?",
+    "options": [
+      "Beide Angebote auf dieselbe Basis bringen, z.B. netto inklusive Versand",
+      "Die Endbeträge direkt vergleichen, wie sie im Angebot stehen",
+      "Angebot B verwerfen, weil Nettopreise nicht zulässig sind",
+      "Nur die Stückpreise vergleichen und den Versand ignorieren"
+    ],
+    "a": "Beide Angebote auf dieselbe Basis bringen, z.B. netto inklusive Versand",
+    "exp": "Angebote sind nur auf gleicher Basis vergleichbar. Man rechnet alle Preise auf netto oder brutto um und berücksichtigt Versand, Rabatt und Skonto einheitlich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Laut Lieferschein wurden fünf Monitore geliefert, im Karton sind aber nur vier. Was ist richtig?",
+    "options": [
+      "Die Fehlmenge dokumentieren und den Lieferanten unverzüglich informieren",
+      "Den Lieferschein korrigieren und die Differenz einfach selbst tragen",
+      "Die komplette Lieferung einlagern und erst bei der Rechnung prüfen",
+      "Den fehlenden Monitor beim nächsten Händler nachkaufen"
+    ],
+    "a": "Die Fehlmenge dokumentieren und den Lieferanten unverzüglich informieren",
+    "exp": "Beim Wareneingang wird die Lieferung mit Lieferschein und Bestellung verglichen. Eine Mengenabweichung wird festgehalten und dem Lieferanten sofort mitgeteilt, damit er nachliefert oder die Rechnung korrigiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei der Einweisung in den neuen Arbeitsplatz nickt die Anwenderin nur und stellt keine Fragen. Wie prüfen Sie, ob sie alles verstanden hat?",
+    "options": [
+      "Sie die wichtigsten Abläufe selbst ausführen lassen",
+      "Sie fragen, ob alles klar ist, und dann gehen",
+      "Die Einweisung einfach noch einmal schneller wiederholen",
+      "Ihr eine lange Anleitung mit allen Menüs mailen"
+    ],
+    "a": "Sie die wichtigsten Abläufe selbst ausführen lassen",
+    "exp": "Wer eine Aufgabe selbst ausführt, merkt schnell, wo Unklarheiten sind. Eine kurze schriftliche Anleitung für die wichtigsten Schritte ergänzt die Einweisung sinnvoll."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Testfall schlägt fehl, weil das Netzlaufwerk fehlt. Sie beheben den Fehler. Was ist danach richtig?",
+    "options": [
+      "Den Test wiederholen und beide Ergebnisse im Protokoll festhalten",
+      "Den Testfall im Protokoll nachträglich auf „bestanden“ ändern",
+      "Den Testfall streichen, weil der Fehler ja behoben wurde",
+      "Nichts mehr tun, der Fehler war nur eine Kleinigkeit"
+    ],
+    "a": "Den Test wiederholen und beide Ergebnisse im Protokoll festhalten",
+    "exp": "Nach einer Korrektur muss der Test erneut laufen, um die Behebung nachzuweisen. Das ursprüngliche Ergebnis bleibt stehen, damit das Protokoll ehrlich zeigt, was passiert ist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Kollegin bemerkt, dass die Einrichtungs-Checkliste noch einen Schritt für eine nicht mehr genutzte Software enthält. Was ist richtig?",
+    "options": [
+      "Die Checkliste korrigieren lassen und die neue Version allen bereitstellen",
+      "Den Schritt stillschweigend überspringen und nichts ändern",
+      "Die Checkliste ab sofort gar nicht mehr verwenden",
+      "Die alte Software weiter installieren, weil sie in der Liste steht"
+    ],
+    "a": "Die Checkliste korrigieren lassen und die neue Version allen bereitstellen",
+    "exp": "Checklisten sind nur nützlich, wenn sie aktuell sind. Veraltete Schritte werden über den Verantwortlichen korrigiert, die Version wird erhöht und alle arbeiten mit der neuen Fassung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus führt eine neue Übergabecheckliste ein und zählt nach vier Wochen die Kundenreklamationen. Welcher PDCA-Phase entspricht das Zählen?",
+    "options": [
+      "Check",
+      "Plan",
+      "Do",
+      "Act"
+    ],
+    "a": "Check",
+    "exp": "In der Check-Phase wird geprüft, ob die umgesetzte Maßnahme die gewünschte Wirkung hat. Erst danach entscheidet man in der Act-Phase, ob sie zum Standard wird."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welcher Eintrag eignet sich im Plan für die Einrichtung von zwölf Arbeitsplätzen als Meilenstein?",
+    "options": [
+      "Alle Geräte vollständig geliefert und geprüft",
+      "Betriebssystem auf allen PCs installieren",
+      "Benutzer zwei Tage lang schulen",
+      "Netzwerkkabel in allen Räumen verlegen"
+    ],
+    "a": "Alle Geräte vollständig geliefert und geprüft",
+    "exp": "Ein Meilenstein ist ein prüfbares Ereignis ohne eigene Dauer, das einen wichtigen Zwischenstand markiert. Die anderen Einträge sind Vorgänge, die Zeit beanspruchen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche beiden Tätigkeiten können Sie bei einem Arbeitsplatzprojekt parallel planen?",
+    "options": [
+      "Netzwerkdose verlegen lassen und Software-Image vorbereiten",
+      "Betriebssystem installieren und danach Anwendungen einrichten",
+      "PC auspacken und anschließend die Seriennummer erfassen",
+      "Arbeitsplatz testen und das Testprotokoll unterschreiben"
+    ],
+    "a": "Netzwerkdose verlegen lassen und Software-Image vorbereiten",
+    "exp": "Parallel laufen können nur Vorgänge, die nicht voneinander abhängen. Das Image entsteht in der Werkstatt, die Dose wird vor Ort verlegt. Bei den anderen Paaren setzt der zweite Schritt den ersten voraus."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Lieferung der PCs verzögert sich um drei Tage. Welche Vorgänge müssen Sie im Plan verschieben?",
+    "options": [
+      "Alle Vorgänge, die von der Lieferung abhängen, und deren Nachfolger",
+      "Alle Vorgänge des Projekts, auch die unabhängigen",
+      "Nur den Vorgang, der direkt nach der Lieferung kommt",
+      "Keine, weil Lieferzeiten im Plan nicht berücksichtigt werden"
+    ],
+    "a": "Alle Vorgänge, die von der Lieferung abhängen, und deren Nachfolger",
+    "exp": "Eine Verzögerung wirkt über die Abhängigkeiten auf alle Nachfolger. Unabhängige Vorgänge wie die Schulungsplanung können weiterlaufen, sofern sie nicht an die Lieferung gebunden sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kollege sagt im Vorbeigehen: „Der Drucker ist schon wieder leer.“ Sie verstehen: „Füll ihn bitte auf!“ Welche Seite der Nachricht haben Sie gehört?",
+    "options": [
+      "Die Appellseite",
+      "Die Sachseite",
+      "Die Beziehungsseite",
+      "Die Selbstoffenbarungsseite"
+    ],
+    "a": "Die Appellseite",
+    "exp": "Nach Schulz von Thun enthält jede Nachricht einen Appell, also eine Aufforderung an den Empfänger. Die Sachseite wäre hier nur die Information, dass kein Papier mehr da ist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Azubis streiten, wer die Dokumentation des gemeinsamen Projekts schreiben muss. Wie lässt sich der Konflikt am besten lösen?",
+    "options": [
+      "In einem sachlichen Gespräch die Aufgaben gemeinsam aufteilen und festhalten",
+      "Abwarten, bis einer von beiden die Arbeit freiwillig macht",
+      "Den Ausbilder sofort ohne eigenes Gespräch entscheiden lassen",
+      "Die Dokumentation einfach weglassen, bis der Streit vorbei ist"
+    ],
+    "a": "In einem sachlichen Gespräch die Aufgaben gemeinsam aufteilen und festhalten",
+    "exp": "Konflikte löst man zuerst im direkten Gespräch, sachlich und mit Blick auf eine gemeinsame Lösung. Eine schriftliche Aufteilung verhindert neuen Streit. Erst wenn das scheitert, holt man den Ausbilder dazu."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In Ihrer Präsentation stellt jemand eine Frage, die Sie nicht sicher beantworten können. Wie reagieren Sie?",
+    "options": [
+      "Offen sagen, dass Sie es prüfen, und die Antwort später nachliefern",
+      "Eine Antwort schätzen und sie als sichere Tatsache darstellen",
+      "Die Frage übergehen und schnell zur nächsten Folie wechseln",
+      "Sagen, dass die Frage nicht zum Thema der Präsentation gehört"
+    ],
+    "a": "Offen sagen, dass Sie es prüfen, und die Antwort später nachliefern",
+    "exp": "Ehrlichkeit wirkt professioneller als eine geratene Antwort, die sich später als falsch herausstellt. Wichtig ist, die Nachlieferung zuzusagen und einzuhalten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie wollen dem Kunden den Stromverbrauch seines Serverraums über die letzten zwölf Monate zeigen. Welches Diagramm passt am besten?",
+    "options": [
+      "Ein Liniendiagramm",
+      "Ein Kreisdiagramm",
+      "Ein Organigramm",
+      "Ein Netzplan"
+    ],
+    "a": "Ein Liniendiagramm",
+    "exp": "Ein Liniendiagramm zeigt Entwicklungen über die Zeit gut. Kreisdiagramme zeigen Anteile an einem Ganzen, Organigramme und Netzpläne haben andere Zwecke."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine 16-Jährige will ihren Ausbildungsvertrag als Fachinformatikerin allein unterschreiben. Was gilt?",
+    "options": [
+      "Ihre gesetzlichen Vertreter, meist die Eltern, müssen zustimmen und mitunterschreiben",
+      "Sie darf allein unterschreiben, weil sie schon 16 Jahre alt ist",
+      "Der Vertrag braucht nur die Unterschrift der Berufsschule",
+      "Minderjährige dürfen erst mit 18 Jahren eine Ausbildung beginnen"
+    ],
+    "a": "Ihre gesetzlichen Vertreter, meist die Eltern, müssen zustimmen und mitunterschreiben",
+    "exp": "Minderjährige sind beschränkt geschäftsfähig. Für den Ausbildungsvertrag brauchen sie die Zustimmung ihrer gesetzlichen Vertreter, die den Vertrag auch mitunterschreiben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi postet ein Foto vom Netzwerkplan eines Kunden in sozialen Medien, um seine Arbeit zu zeigen. Gegen welche Pflicht verstößt er vor allem?",
+    "options": [
+      "Gegen die Pflicht, Betriebs- und Geschäftsgeheimnisse zu wahren",
+      "Gegen die Pflicht, am Berufsschulunterricht teilzunehmen",
+      "Gegen die Pflicht, einen Ausbildungsnachweis zu führen",
+      "Gegen die Pflicht, sich ärztlich untersuchen zu lassen"
+    ],
+    "a": "Gegen die Pflicht, Betriebs- und Geschäftsgeheimnisse zu wahren",
+    "exp": "Nach § 13 BBiG müssen Auszubildende über Betriebs- und Geschäftsgeheimnisse Stillschweigen bewahren. Ein Netzwerkplan eines Kunden ist zudem sicherheitskritisch und kann eine Abmahnung nach sich ziehen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein 16-jähriger Azubi arbeitet an einem Tag sieben Stunden. Welche Ruhepausen stehen ihm nach dem JArbSchG mindestens zu?",
+    "options": [
+      "60 Minuten",
+      "30 Minuten",
+      "45 Minuten",
+      "15 Minuten"
+    ],
+    "a": "60 Minuten",
+    "exp": "Nach § 11 JArbSchG erhalten Jugendliche bei mehr als sechs Stunden Arbeitszeit mindestens 60 Minuten Pause, bei mehr als 4,5 bis 6 Stunden 30 Minuten. Als Pause zählt nur eine Unterbrechung von mindestens 15 Minuten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi ist am 1. Januar 16 Jahre alt und wird im Februar 17. Wie viel Urlaub steht ihm in diesem Jahr nach dem JArbSchG mindestens zu?",
+    "options": [
+      "27 Werktage",
+      "25 Werktage",
+      "30 Werktage",
+      "24 Werktage"
+    ],
+    "a": "27 Werktage",
+    "exp": "Maßgeblich ist das Alter zu Beginn des Kalenderjahres. Wer dann noch nicht 17 ist, erhält nach § 19 JArbSchG mindestens 27 Werktage Urlaub."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus stellt einen Administrator ein und vereinbart alles nur mündlich. Was gilt?",
+    "options": [
+      "Der Vertrag ist wirksam, der Arbeitgeber muss die wesentlichen Bedingungen aber dokumentiert aushändigen",
+      "Der Arbeitsvertrag ist unwirksam, weil er schriftlich sein muss",
+      "Der Vertrag gilt nur für die ersten sechs Monate als befristet",
+      "Der Administrator muss die Bedingungen selbst aufschreiben"
+    ],
+    "a": "Der Vertrag ist wirksam, der Arbeitgeber muss die wesentlichen Bedingungen aber dokumentiert aushändigen",
+    "exp": "Ein Arbeitsvertrag kann formfrei geschlossen werden. Das Nachweisgesetz verpflichtet den Arbeitgeber aber, die wesentlichen Bedingungen wie Entgelt, Arbeitszeit und Tätigkeit festzuhalten und dem Arbeitnehmer auszuhändigen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Während der Laufzeit eines Entgelttarifvertrags ruft eine Gewerkschaft zum Streik für höhere Gehälter auf. Ist das zulässig?",
+    "options": [
+      "Nein, es gilt die Friedenspflicht",
+      "Ja, Streiks sind jederzeit ohne Einschränkung erlaubt",
+      "Ja, wenn der Betriebsrat dem Streik zugestimmt hat",
+      "Nein, Streiks sind in Deutschland grundsätzlich verboten"
+    ],
+    "a": "Nein, es gilt die Friedenspflicht",
+    "exp": "Während ein Tarifvertrag läuft, dürfen die Tarifparteien über die darin geregelten Inhalte keinen Arbeitskampf führen. Erst nach Ablauf oder Kündigung des Vertrags sind Streiks um höhere Gehälter zulässig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi erfährt im April, dass er nach der Prüfung im Juli nicht übernommen wird. Was muss er gegenüber der Agentur für Arbeit tun?",
+    "options": [
+      "Sich spätestens drei Monate vor Ausbildungsende arbeitsuchend melden",
+      "Sich erst am ersten Tag ohne Beschäftigung arbeitslos melden",
+      "Nichts, der Betrieb meldet ihn automatisch bei der Agentur",
+      "Sich erst nach dem Zeugnis der Berufsschule melden"
+    ],
+    "a": "Sich spätestens drei Monate vor Ausbildungsende arbeitsuchend melden",
+    "exp": "Nach § 38 SGB III muss man sich spätestens drei Monate vor Ende eines Arbeits- oder Ausbildungsverhältnisses arbeitsuchend melden. Erfährt man es später, gilt eine Frist von drei Tagen. Eine verspätete Meldung kann eine Sperrzeit beim Arbeitslosengeld auslösen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein 30-jähriger kinderloser Kollege zahlt einen höheren Pflegeversicherungsbeitrag als seine Kollegin mit zwei Kindern. Warum?",
+    "options": [
+      "Der Beitrag ist nach Kinderzahl gestaffelt, Kinderlose zahlen einen Zuschlag",
+      "Männer zahlen in der Pflegeversicherung grundsätzlich mehr",
+      "Der Beitrag richtet sich nach dem Alter des Versicherten",
+      "Die Kollegin ist wegen ihrer Kinder von Beiträgen befreit"
+    ],
+    "a": "Der Beitrag ist nach Kinderzahl gestaffelt, Kinderlose zahlen einen Zuschlag",
+    "exp": "In der Pflegeversicherung zahlen Kinderlose ab 23 Jahren einen Zuschlag. Eltern mit mehreren Kindern unter 25 Jahren zahlen einen geringeren Beitrag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie prüfen mit einem neuen Kollegen seine erste Gehaltsabrechnung. Welcher Abzug ist KEIN Beitrag zur Sozialversicherung?",
+    "options": [
+      "Der Solidaritätszuschlag",
+      "Der Beitrag zur Rentenversicherung",
+      "Der Beitrag zur Arbeitslosenversicherung",
+      "Der Beitrag zur Pflegeversicherung"
+    ],
+    "a": "Der Solidaritätszuschlag",
+    "exp": "Der Solidaritätszuschlag ist wie Lohnsteuer und Kirchensteuer eine Steuer und geht an das Finanzamt. Die Sozialversicherungsbeiträge zu Kranken-, Pflege-, Renten- und Arbeitslosenversicherung gehen über die Krankenkasse an die Versicherungsträger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Fachinformatiker wollen einen IT-Service gründen. Sie haben wenig Startkapital, wollen aber nicht mit ihrem Privatvermögen haften. Welche Rechtsform passt?",
+    "options": [
+      "Eine UG (haftungsbeschränkt)",
+      "Eine offene Handelsgesellschaft",
+      "Eine Gesellschaft bürgerlichen Rechts",
+      "Eine Aktiengesellschaft"
+    ],
+    "a": "Eine UG (haftungsbeschränkt)",
+    "exp": "Die UG ist eine Form der GmbH, die schon mit sehr geringem Stammkapital gegründet werden kann. Gehaftet wird nur mit dem Gesellschaftsvermögen. Bei OHG und GbR haften die Gesellschafter privat, die AG braucht viel Grundkapital."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Auf einem Angebot steht „Computer Schmidt e.K.“. Was sagt der Zusatz e.K. aus?",
+    "options": [
+      "Ein Einzelunternehmen im Handelsregister, der Inhaber haftet unbeschränkt",
+      "Eine Kapitalgesellschaft mit auf die Einlage begrenzter Haftung",
+      "Ein eingetragener Verein ohne eigene Gewinnerzielungsabsicht",
+      "Eine Kommanditgesellschaft mit mehreren beschränkt haftenden Partnern"
+    ],
+    "a": "Ein Einzelunternehmen im Handelsregister, der Inhaber haftet unbeschränkt",
+    "exp": "e.K. steht für eingetragener Kaufmann bzw. eingetragene Kauffrau. Es handelt sich um ein Einzelunternehmen, das im Handelsregister eingetragen ist. Der Inhaber haftet auch mit seinem Privatvermögen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus tauscht alte Server gegen sparsamere Modelle. Dadurch sinken Stromkosten und CO2-Ausstoß. Wie stehen ökonomisches und ökologisches Ziel hier zueinander?",
+    "options": [
+      "Sie ergänzen sich, es liegt Zielharmonie vor",
+      "Sie widersprechen sich, es liegt ein Zielkonflikt vor",
+      "Sie haben nichts miteinander zu tun, sie sind neutral",
+      "Das ökologische Ziel ersetzt das ökonomische vollständig"
+    ],
+    "a": "Sie ergänzen sich, es liegt Zielharmonie vor",
+    "exp": "Wenn die Verfolgung eines Ziels ein anderes fördert, spricht man von Zielharmonie oder komplementären Zielen. Ein Zielkonflikt läge vor, wenn z.B. der Umweltschutz nur mit deutlich höheren Kosten erreichbar wäre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde hält das CE-Zeichen auf einem Monitor für ein Umwelt- und Qualitätssiegel. Was stimmt?",
+    "options": [
+      "Der Hersteller erklärt damit, dass das Gerät die EU-Vorschriften erfüllt",
+      "Eine unabhängige Stelle hat die Umweltfreundlichkeit geprüft",
+      "Das Gerät wurde besonders energiesparend in der EU hergestellt",
+      "Das Gerät hat eine verlängerte Garantie von drei Jahren"
+    ],
+    "a": "Der Hersteller erklärt damit, dass das Gerät die EU-Vorschriften erfüllt",
+    "exp": "Mit dem CE-Zeichen bestätigt der Hersteller die Einhaltung der geltenden EU-Anforderungen, z.B. zur Sicherheit und elektromagnetischen Verträglichkeit. Es ist kein Umweltzeichen. Dafür gibt es Siegel wie Blauer Engel oder TCO Certified."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Kollegin scannt ein Messeplakat mit 4000 x 3000 Pixeln in 24 Bit Farbtiefe und speichert es unkomprimiert. Wie groß wird die Datei ohne Header (1 MB = 10^6 Byte)?",
+    "options": [
+      "ca. 36,0 MB",
+      "ca. 288,0 MB",
+      "ca. 34,3 MB",
+      "ca. 12,0 MB"
+    ],
+    "a": "ca. 36,0 MB",
+    "exp": "4000 * 3000 = 12.000.000 Pixel. Je Pixel 24 Bit = 3 Byte: 36.000.000 Byte = 36,0 MB. Ohne die Division durch 8 erhielte man Bit statt Byte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für eine Präsentation sollen Screenshots mit 2560 x 1440 Pixeln und 32 Bit Farbtiefe unkomprimiert auf einen USB-Stick mit 32 GiB nutzbarem Platz. Wie viele Bilder passen höchstens darauf?",
+    "options": [
+      "2.330",
+      "2.170",
+      "3.106",
+      "291"
+    ],
+    "a": "2.330",
+    "exp": "Ein Bild: 2560 * 1440 * 4 Byte = 14.745.600 Byte. Der Stick hat 32 * 1.073.741.824 = 34.359.738.368 Byte. 34.359.738.368 / 14.745.600 = 2.330,17, also 2.330 volle Bilder."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi zeichnet für eine Anleitung 20 Sekunden Bildschirm mit 1280 x 720 Pixeln, 24 Bit Farbtiefe und 30 Bildern pro Sekunde unkomprimiert auf. Wie groß wird die Datei (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 1,66 GB",
+      "ca. 13,27 GB",
+      "ca. 0,06 GB",
+      "ca. 1,54 GB"
+    ],
+    "a": "ca. 1,66 GB",
+    "exp": "Ein Bild: 1280 * 720 * 3 Byte = 2.764.800 Byte. Mal 30 Bilder/s mal 20 s = 1.658.880.000 Byte = 1,66 GB. Deshalb wird Video praktisch immer komprimiert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Dokumentenkamera liefert unkomprimiertes Video mit 1600 x 900 Pixeln, 24 Bit Farbtiefe und 25 Bildern pro Sekunde. Welche Datenrate entsteht?",
+    "options": [
+      "ca. 864,0 Mbit/s",
+      "ca. 108,0 Mbit/s",
+      "ca. 34,6 Mbit/s",
+      "ca. 824,0 Mbit/s"
+    ],
+    "a": "ca. 864,0 Mbit/s",
+    "exp": "Je Bild 1600 * 900 * 24 Bit = 34.560.000 Bit. Mal 25 Bilder/s = 864.000.000 Bit/s = 864,0 Mbit/s. Das lastet eine Gigabit-Leitung schon fast aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Interview für ein Schulungsvideo wird 12 Minuten lang als WAV aufgenommen: 44,1 kHz, 16 Bit, Stereo, unkomprimiert. Wie groß wird die Datei (1 MB = 10^6 Byte)?",
+    "options": [
+      "ca. 127,0 MB",
+      "ca. 63,5 MB",
+      "ca. 1.016,1 MB",
+      "ca. 2,1 MB"
+    ],
+    "a": "ca. 127,0 MB",
+    "exp": "44.100 Abtastwerte/s * 2 Byte * 2 Kanäle = 176.400 Byte/s. 12 Minuten = 720 s: 176.400 Byte/s * 720 s = 127.008.000 Byte = 127,0 MB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Hotline zeichnet Gespräche mit Einwilligung unkomprimiert auf (8 kHz, 8 Bit, Mono). Pro Tag sind es 40 Gespräche mit je 5 Minuten. Wie viel Speicher ist für 20 Arbeitstage nötig (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 1,92 GB",
+      "ca. 15,36 GB",
+      "ca. 0,10 GB",
+      "ca. 3,84 GB"
+    ],
+    "a": "ca. 1,92 GB",
+    "exp": "8.000 Byte/s * 300 s = 2.400.000 Byte je Gespräch. Mal 40 Gespräche mal 20 Tage = 1.920.000.000 Byte = 1,92 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde reklamiert: Seine neue SSD ist mit 512 GB beschriftet, Windows zeigt aber weniger an (in Wahrheit GiB). Welchen Wert zeigt Windows ungefähr an?",
+    "options": [
+      "ca. 476,8 GiB",
+      "ca. 549,8 GiB",
+      "ca. 488,3 GiB",
+      "ca. 500,0 GiB"
+    ],
+    "a": "ca. 476,8 GiB",
+    "exp": "Der Hersteller rechnet dezimal: 512 * 10^9 Byte. Windows teilt durch 1.073.741.824 (2^30): 476,8 GiB. Es fehlt also nichts."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Mailserver erlaubt Anhänge bis 20 MiB. Eine PDF-Datei ist laut Eigenschaften 20.500.000 Byte groß. Wie groß ist sie in MiB, und passt sie?",
+    "options": [
+      "ca. 19,55 MiB, passt",
+      "ca. 20,50 MiB, passt nicht",
+      "ca. 21,50 MiB, passt nicht",
+      "ca. 20,02 MiB, passt nicht"
+    ],
+    "a": "ca. 19,55 MiB, passt",
+    "exp": "1 MiB = 1.048.576 Byte. 20.500.000 / 1.048.576 = 19,55 MiB. Das liegt unter 20 MiB, die Datei passt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde bestellt einen CAD-PC: CPU 125 W, Grafikkarte 220 W, Mainboard 50 W, RAM, SSD und Lüfter zusammen 35 W. Geplant sind 30 % Reserve. Welches Netzteil wählen Sie (lieferbar: 450, 550, 650, 750 W)?",
+    "options": [
+      "650 W",
+      "450 W",
+      "550 W",
+      "750 W"
+    ],
+    "a": "650 W",
+    "exp": "Summe: 125 + 220 + 50 + 35 = 430 W. Mit 30 % Reserve: 430 W * 1,3 = 559 W. Das kleinste passende Modell hat 650 W."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PC braucht unter Last 300 W an Gleichstrom. Das Netzteil hat bei dieser Last einen Wirkungsgrad von 88 %. Wie viel Leistung nimmt der PC aus der Steckdose auf?",
+    "options": [
+      "ca. 340,9 W",
+      "ca. 264,0 W",
+      "ca. 336,0 W",
+      "ca. 300,0 W"
+    ],
+    "a": "ca. 340,9 W",
+    "exp": "Aufgenommene Leistung = abgegebene Leistung / Wirkungsgrad: 300 W / 0,88 = 340,9 W. Die Differenz von 40,9 W wird im Netzteil zu Wärme."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen Kassenarbeitsplatz soll eine USV beschafft werden: PC 180 W, Monitor 25 W, kleiner Switch 15 W. Die USV-Modelle haben einen Leistungsfaktor von 0,6. Welche Scheinleistung muss die USV mindestens haben?",
+    "options": [
+      "ca. 366,7 VA",
+      "ca. 132,0 VA",
+      "ca. 220,0 VA",
+      "ca. 352,0 VA"
+    ],
+    "a": "ca. 366,7 VA",
+    "exp": "Wirkleistung: 180 + 25 + 15 = 220 W. Scheinleistung = Wirkleistung / Leistungsfaktor: 220 W / 0,6 = 366,7 VA. Die USV braucht also mehr VA als W."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 2 Akkus mit je 12 V und 9 Ah, der Wechselrichter arbeitet mit 85 % Wirkungsgrad. Ein Arbeitsplatz zieht 150 W. Wie lange überbrückt die USV rechnerisch?",
+    "options": [
+      "ca. 73 Minuten",
+      "ca. 86 Minuten",
+      "ca. 37 Minuten",
+      "ca. 102 Minuten"
+    ],
+    "a": "ca. 73 Minuten",
+    "exp": "Energie: 2 * 12 V * 9 Ah = 216 Wh. Nutzbar: 216 Wh * 0,85 = 183,6 Wh. 183,6 Wh / 150 W = 1,22 h = ca. 73 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Büroarbeitsplatz hat einen PC mit 65 W und 2 Monitore mit je 22 W. Er läuft 8 Stunden an 220 Arbeitstagen. Wie hoch sind die Stromkosten pro Jahr bei einem angenommenen Strompreis von 0,32 Euro je kWh?",
+    "options": [
+      "61,39 Euro",
+      "101,85 Euro",
+      "49,00 Euro",
+      "184,17 Euro"
+    ],
+    "a": "61,39 Euro",
+    "exp": "Leistung: 65 W + 2 * 22 W = 109 W. Energie: 109 W * 8 h * 220 Tage = 191.840 Wh = 191,84 kWh. Kosten: 191,84 kWh * 0,32 Euro = 61,39 Euro."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Schulungsraum bleiben 20 PCs außerhalb der Arbeitszeit im Standby (je 4,5 W). Genutzt werden sie 8 Stunden an 220 Tagen, das Jahr hat 8.760 Stunden. Was kostet der Standby pro Jahr (angenommener Strompreis 0,31 Euro je kWh)?",
+    "options": [
+      "195,30 Euro",
+      "244,40 Euro",
+      "9,77 Euro",
+      "98,21 Euro"
+    ],
+    "a": "195,30 Euro",
+    "exp": "Standby-Stunden: 8.760 - 8 * 220 = 7.000 h. Energie: 20 * 4,5 W * 7.000 h = 630,0 kWh. Kosten: 630,0 kWh * 0,31 Euro = 195,30 Euro."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Buchhaltung tauscht 15 alte Monitore (je 38 W) gegen sparsame Modelle (je 17 W). Sie laufen 9 Stunden an 230 Tagen. Wie viel Stromkosten spart das pro Jahr (angenommener Strompreis 0,34 Euro je kWh)?",
+    "options": [
+      "221,70 Euro",
+      "14,78 Euro",
+      "179,47 Euro",
+      "351,82 Euro"
+    ],
+    "a": "221,70 Euro",
+    "exp": "Einsparung je Monitor: 38 W - 17 W = 21 W. 15 * 21 W * 9 h * 230 Tage = 652,05 kWh. 652,05 kWh * 0,34 Euro = 221,70 Euro."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen Abteilungsdrucker gilt: Toner 72,00 Euro für 3.000 Seiten, Trommel 95,00 Euro für 12.000 Seiten, Papier 4,50 Euro je 500 Blatt. Was kostet eine Seite an Verbrauchsmaterial?",
+    "options": [
+      "4,09 Cent",
+      "3,30 Cent",
+      "3,19 Cent",
+      "6,47 Cent"
+    ],
+    "a": "4,09 Cent",
+    "exp": "Toner: 72,00 Euro / 3.000 = 2,40 Cent. Trommel: 95,00 Euro / 12.000 = 0,79 Cent. Papier: 4,50 Euro / 500 = 0,90 Cent. Summe: 4,09 Cent je Seite."
+  },
+  {
+    "cat": "systeme",
+    "q": "Zwei Drucker stehen zur Wahl: A kostet 2,10 Cent je Seite, B 3,40 Cent je Seite. Das Team druckt 2.500 Seiten im Monat. Wie viel spart Drucker A pro Jahr an Seitenkosten?",
+    "options": [
+      "390,00 Euro",
+      "32,50 Euro",
+      "3.900,00 Euro",
+      "1.020,00 Euro"
+    ],
+    "a": "390,00 Euro",
+    "exp": "Differenz je Seite: 3,40 Cent - 2,10 Cent = 1,30 Cent. Pro Jahr 2.500 * 12 = 30.000 Seiten. 30.000 Seiten * 1,30 Cent = 390,00 Euro."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Grafikerin vergleicht Monitore. Welche Pixeldichte hat ein 27-Zoll-Monitor mit 2560 x 1440 Pixeln?",
+    "options": [
+      "ca. 108,8 ppi",
+      "ca. 94,8 ppi",
+      "ca. 148,1 ppi",
+      "ca. 42,8 ppi"
+    ],
+    "a": "ca. 108,8 ppi",
+    "exp": "Diagonale in Pixeln nach Pythagoras: Wurzel(2560² + 1440²) = 2.937,2 Pixel. Geteilt durch 27 Zoll: 108,8 ppi."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein 24-Zoll-Monitor im Format 16:9 soll in eine 55 cm breite Nische am Empfang. Wie breit ist die Bildfläche (Rahmen vernachlässigt), und passt er?",
+    "options": [
+      "ca. 53,1 cm, passt",
+      "ca. 61,0 cm, passt nicht",
+      "ca. 39,0 cm, passt",
+      "ca. 48,8 cm, passt"
+    ],
+    "a": "ca. 53,1 cm, passt",
+    "exp": "Diagonale: 24 * 2,54 cm = 60,96 cm. Das Verhältnis 16:9 hat die Diagonale Wurzel(16² + 9²) = 18,36. Breite: 60,96 cm * 16 / 18,36 = 53,1 cm."
+  },
+  {
+    "cat": "systeme",
+    "q": "Im Hexdump eines Mitschnitts steht der Zielport als 0x1F90. Welche Portnummer ist das dezimal?",
+    "options": [
+      "8080",
+      "2590",
+      "7824",
+      "36895"
+    ],
+    "a": "8080",
+    "exp": "Stellenwerte 16^3, 16^2, 16^1, 16^0: 1 * 4096 + 15 * 256 + 9 * 16 + 0 * 1 = 8080. Der Port ist also 8080."
+  },
+  {
+    "cat": "systeme",
+    "q": "An einem Funkempfänger wird die Geräte-ID 173 über 8 DIP-Schalter binär eingestellt (1 = ein, höchstwertiges Bit links). Welche Schalterstellung ist richtig?",
+    "options": [
+      "10101101",
+      "10110101",
+      "10101011",
+      "10111101"
+    ],
+    "a": "10101101",
+    "exp": "173 = 128 + 32 + 8 + 4 + 1. Also 10101101."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Statusregister zeigt den Wert 1011 0110 1110 0101. Im Handbuch stehen die Codes hexadezimal. Welcher Hex-Wert gehört dazu?",
+    "options": [
+      "0xB6E5",
+      "0xD67A",
+      "0xE5B6",
+      "0xB6D5"
+    ],
+    "a": "0xB6E5",
+    "exp": "Je 4 Bit ergeben eine Hex-Ziffer: 1011 = B, 0110 = 6, 1110 = E, 0101 = 5. Zusammen: 0xB6E5."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für das Intranet soll die Firmenfarbe RGB(46, 139, 87) als Hex-Farbcode eingetragen werden. Welcher Code ist richtig?",
+    "options": [
+      "#2E8B57",
+      "#E2B875",
+      "#578B2E",
+      "#468B87"
+    ],
+    "a": "#2E8B57",
+    "exp": "Jeder Kanal wird einzeln in zwei Hex-Stellen umgerechnet: 46 = 2E, 139 = 8B, 87 = 57. Reihenfolge Rot, Grün, Blau: #2E8B57."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Außendienstmitarbeiter lädt im Hotel-WLAN mit 16 Mbit/s ein Treiberpaket von 850 MB herunter (ohne Overhead, 1 MB = 10^6 Byte). Wie lange dauert das?",
+    "options": [
+      "ca. 7 Minuten 5 Sekunden",
+      "ca. 53 Sekunden",
+      "ca. 7 Minuten 26 Sekunden",
+      "ca. 6 Minuten 45 Sekunden"
+    ],
+    "a": "ca. 7 Minuten 5 Sekunden",
+    "exp": "850 MB * 8 = 6.800 Mbit. 6.800 Mbit / 16 Mbit/s = 425 s. Bit und Byte zu verwechseln ergibt einen Faktor 8."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Arztpraxis hat einen Anschluss mit 500 Mbit/s Download und 50 Mbit/s Upload. Das erste Cloud-Backup umfasst 45 GB (1 GB = 10^9 Byte). Wie lange dauert der Upload ohne Overhead?",
+    "options": [
+      "ca. 2,00 Stunden",
+      "ca. 0,20 Stunden",
+      "ca. 0,25 Stunden",
+      "ca. 2,15 Stunden"
+    ],
+    "a": "ca. 2,00 Stunden",
+    "exp": "Maßgeblich ist der Upload: 45 GB * 8 = 360.000 Mbit. 360.000 Mbit / 50 Mbit/s = 7.200 s = 2,00 Stunden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Schulungsraum werden 12 PCs gleichzeitig mit einem Image von je 18 GB betankt. Der Deployment-Server hängt mit 1 Gbit/s am Switch. Wie lange dauert das mindestens (ohne Overhead)?",
+    "options": [
+      "ca. 28 Minuten 48 Sekunden",
+      "ca. 2 Minuten 24 Sekunden",
+      "ca. 3 Minuten 36 Sekunden",
+      "ca. 30 Minuten 55 Sekunden"
+    ],
+    "a": "ca. 28 Minuten 48 Sekunden",
+    "exp": "Alle Images laufen über den Uplink des Servers: 12 * 18 GB = 216 GB = 1.728.000 Mbit. 1.728.000 Mbit / 1.000 Mbit/s = 1.728 s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Einrichten misst eine Kollegin mit iperf 20 Minuten lang durchgehend 94 Mbit/s. Wie viele Daten wurden dabei übertragen (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 14,10 GB",
+      "ca. 112,80 GB",
+      "ca. 0,23 GB",
+      "ca. 13,13 GB"
+    ],
+    "a": "ca. 14,10 GB",
+    "exp": "94 Mbit/s / 8 = 11,75 MB/s. 20 Minuten = 1200 s. 11,75 MB/s * 1200 s = 14.100 MB = 14,10 GB."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege meint: Gigabit-LAN schafft 1 GB pro Sekunde, also dauert die Sicherung von 300 GB auf das NAS nur 5 Minuten. Wie lange dauert sie ohne Overhead wirklich (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 40 Minuten 0 Sekunden",
+      "ca. 5 Minuten 0 Sekunden",
+      "ca. 42 Minuten 57 Sekunden",
+      "ca. 37 Minuten 15 Sekunden"
+    ],
+    "a": "ca. 40 Minuten 0 Sekunden",
+    "exp": "1 Gbit/s sind 1.000 Mbit/s = 125 MB/s. 300 GB * 8 = 2.400 Gbit. 2.400 Gbit / 1 Gbit/s = 2.400 s = 40 Minuten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Steuerbüro erhält das Netz 192.168.44.0/26. Der Router nutzt eine Adresse davon als Gateway. Wie viele Geräte können darüber hinaus eine Adresse bekommen?",
+    "options": [
+      "61",
+      "62",
+      "64",
+      "63"
+    ],
+    "a": "61",
+    "exp": "/26: 2^6 = 64 Adressen. Minus Netz- und Broadcastadresse = 62 Hosts. Minus Gateway = 61 Geräte."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für 15 IP-Kameras und das Gateway ist das VLAN 10.8.3.16/28 vorgesehen. Reicht der Adressbereich?",
+    "options": [
+      "Nein, es gibt 14 nutzbare Adressen",
+      "Ja, es gibt 16 nutzbare Adressen",
+      "Ja, es gibt 30 nutzbare Adressen",
+      "Nein, es gibt 13 nutzbare Adressen"
+    ],
+    "a": "Nein, es gibt 14 nutzbare Adressen",
+    "exp": "/28 = 16 Adressen, davon 14 nutzbar (10.8.3.17 bis 10.8.3.30). Gebraucht werden 15 + 1 = 16. Es fehlen 2 Adressen, ein /27 wäre nötig."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 192.168.90.0/24 wird für vier Abteilungen in 4 gleich große /26-Netze geteilt. Wie viele Host-Adressen stehen danach insgesamt zur Verfügung?",
+    "options": [
+      "248",
+      "254",
+      "256",
+      "252"
+    ],
+    "a": "248",
+    "exp": "Jedes /26 hat 64 Adressen, davon 62 nutzbar. 4 * 62 = 248. Jedes Teilnetz kostet eigene Netz- und Broadcastadressen, gegenüber dem /24 gehen 6 Adressen verloren."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Onlinehändler bekommt vom Provider den festen Block 203.0.113.40/29 (Maske 255.255.255.248). Der Router des Providers belegt eine Adresse. Wie vielen eigenen Servern kann er eine öffentliche Adresse geben?",
+    "options": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "a": "5",
+    "exp": "/29 = 8 Adressen. Netzadresse 203.0.113.40 und Broadcast 203.0.113.47 entfallen, bleiben 6. Minus Router: 5."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie dokumentieren das Netz eines Kunden. Ein Laptop hat die Adresse 172.16.9.155/27. Welche Netz- und Broadcastadresse tragen Sie ein?",
+    "options": [
+      "Netz 172.16.9.128, Broadcast 172.16.9.159",
+      "Netz 172.16.9.144, Broadcast 172.16.9.159",
+      "Netz 172.16.9.128, Broadcast 172.16.9.191",
+      "Netz 172.16.9.128, Broadcast 172.16.9.160"
+    ],
+    "a": "Netz 172.16.9.128, Broadcast 172.16.9.159",
+    "exp": "/27: Blockgröße 32. Die Blöcke beginnen bei 0, 32, 64, 96, 128, 160. 155 liegt im Block ab 128. Netz 172.16.9.128, Broadcast 172.16.9.159."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC mit 10.44.7.201/26 soll per Wake-on-LAN geweckt werden. Das Tool verlangt die Broadcastadresse seines Subnetzes. Welche tragen Sie ein?",
+    "options": [
+      "10.44.7.255",
+      "10.44.7.192",
+      "10.44.7.254",
+      "10.44.255.255"
+    ],
+    "a": "10.44.7.255",
+    "exp": "/26: Blockgröße 64, Blöcke bei 0, 64, 128, 192. 201 liegt im Block 192 bis 255. Broadcast ist die letzte Adresse: 10.44.7.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Der Router eines Ladengeschäfts hat die Adresse 192.168.61.200/25. Welcher Bereich enthält alle nutzbaren Host-Adressen dieses Netzes?",
+    "options": [
+      "192.168.61.129 bis 192.168.61.254",
+      "192.168.61.128 bis 192.168.61.255",
+      "192.168.61.1 bis 192.168.61.126",
+      "192.168.61.129 bis 192.168.61.255"
+    ],
+    "a": "192.168.61.129 bis 192.168.61.254",
+    "exp": "/25 teilt das letzte Oktett in 0 bis 127 und 128 bis 255. 200 liegt in der oberen Hälfte: Netz 192.168.61.128, Broadcast 192.168.61.255, nutzbar 192.168.61.129 bis 192.168.61.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ipconfig zeigt bei einem Kunden-PC: IPv4-Adresse 192.168.8.45, Subnetzmaske 255.255.255.240. Welche Netzadresse gehört in das Netzwerkprotokoll?",
+    "options": [
+      "192.168.8.32",
+      "192.168.8.48",
+      "192.168.8.0",
+      "192.168.8.40"
+    ],
+    "a": "192.168.8.32",
+    "exp": "255.255.255.240 = /28, Blockgröße 16. Blöcke bei 0, 16, 32, 48. 45 liegt im Block 32 bis 47, Netzadresse 192.168.8.32."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC (192.168.20.66/26) erreicht den Etagendrucker (192.168.20.130/26) nicht, ein Router ist nicht eingetragen. Liegen beide im selben Netz?",
+    "options": [
+      "Nein, der PC liegt in 192.168.20.64/26, der Drucker in 192.168.20.128/26",
+      "Ja, beide liegen in 192.168.20.0/24",
+      "Ja, beide liegen in 192.168.20.64/26",
+      "Nein, der PC liegt in 192.168.20.0/26, der Drucker in 192.168.20.128/26"
+    ],
+    "a": "Nein, der PC liegt in 192.168.20.64/26, der Drucker in 192.168.20.128/26",
+    "exp": "/26: Blöcke bei 0, 64, 128, 192. 66 liegt in 192.168.20.64/26, 130 in 192.168.20.128/26. Ohne Gateway ist keine Verbindung möglich."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Messgeräte im Labor haben die Adressen 10.1.1.14/28 und 10.1.1.17/28. Die Kollegin meint, sie liegen fast nebeneinander und können sich direkt erreichen. Stimmt das?",
+    "options": [
+      "Nein, die Grenze liegt bei 10.1.1.16",
+      "Ja, beide liegen in 10.1.1.0/28",
+      "Ja, beide liegen in 10.1.1.0/27",
+      "Nein, die Grenze liegt bei 10.1.1.7"
+    ],
+    "a": "Nein, die Grenze liegt bei 10.1.1.16",
+    "exp": "/28: Blockgröße 16. 10.1.1.0/28 reicht bis 10.1.1.15, 10.1.1.16/28 beginnt bei 10.1.1.16. Die Geräte liegen in verschiedenen Netzen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Beamer im Besprechungsraum soll eine feste Adresse bekommen und vom Laptop (192.168.150.77/27) ohne Router erreichbar sein. Welche Adresse ist geeignet?",
+    "options": [
+      "192.168.150.94",
+      "192.168.150.95",
+      "192.168.150.64",
+      "192.168.150.97"
+    ],
+    "a": "192.168.150.94",
+    "exp": "/27: Blockgröße 32. 77 liegt im Netz 192.168.150.64 bis 192.168.150.95. Netz- und Broadcastadresse sind tabu, nutzbar ist 192.168.150.65 bis 192.168.150.94."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Drei Büros mit 6, 5 und 4 Arbeitsplätzen werden verkabelt. Jeder Platz hat einen PC und ein IP-Telefon an eigener Dose. Dazu kommen 2 Netzwerkdrucker, 1 Access Point und 1 Uplink. Wie viele Switchports sind mit 20 % Reserve nötig?",
+    "options": [
+      "41",
+      "34",
+      "40",
+      "23"
+    ],
+    "a": "41",
+    "exp": "Arbeitsplätze: 15 * 2 = 30 Ports. Plus 2 + 1 + 1 = 34 Ports. Mit Reserve: 34 * 1,2 = 40,8, aufgerundet 41."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem neuen Büro gibt es 9 Arbeitsplätze. Der PC wird jeweils am PC-Port des IP-Telefons angeschlossen, das Telefon an der Datendose. Im Schrank wird jede Dose vom Patchfeld zum Switch gepatcht. Wie viele Patchkabel brauchen Sie?",
+    "options": [
+      "27",
+      "18",
+      "36",
+      "9"
+    ],
+    "a": "27",
+    "exp": "Je Arbeitsplatz 3 Kabel: Patchfeld zu Switch, Dose zu Telefon, Telefon zu PC. 9 * 3 = 27 Patchkabel, aber nur 9 Switchports."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access Point zeigt 867 Mbit/s Datenrate, netto kommen etwa 45 % an. Jeder Laptop im Seminarraum soll 1,5 MB/s bekommen. Wie viele Laptops kann der AP damit höchstens gleichzeitig versorgen?",
+    "options": [
+      "32",
+      "33",
+      "72",
+      "260"
+    ],
+    "a": "32",
+    "exp": "Netto: 867 * 45 % = 390,15 Mbit/s. Bedarf je Laptop: 1,5 MB/s * 8 = 12 Mbit/s. 390,15 / 12 = 32,51, also 32 Laptops (abrunden)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "25 Tablets laden gleichzeitig ein Update von je 200 MB über denselben Access Point. Er meldet 600 Mbit/s, netto kommen etwa 50 % an. Wie lange dauert es, bis alle fertig sind?",
+    "options": [
+      "ca. 2 Minuten 13 Sekunden",
+      "ca. 5 Sekunden",
+      "ca. 17 Sekunden",
+      "ca. 1 Minute 7 Sekunden"
+    ],
+    "a": "ca. 2 Minuten 13 Sekunden",
+    "exp": "Netto: 600 * 50 % = 300 Mbit/s, die sich alle Tablets teilen. Gesamt: 25 * 200 MB * 8 = 40.000 Mbit. 40.000 / 300 = 133,3 s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für das IP-Konzept eines Kunden soll die Adresse 2001:0db8:0a00:0000:0000:00c1:0000:0010 in der kürzesten korrekten Schreibweise notiert werden. Welche ist richtig?",
+    "options": [
+      "2001:db8:a00::c1:0:10",
+      "2001:db8:a::c1:0:10",
+      "2001:db8:a00::c1::10",
+      "2001:db8:a00:0:0:c1::10"
+    ],
+    "a": "2001:db8:a00::c1:0:10",
+    "exp": "Nur führende Nullen je Block dürfen weg (0a00 wird a00, nicht a). Die längere Nullfolge (zwei Blöcke) wird zu ::, ein einzelner Nullblock bleibt als 0 stehen: 2001:db8:a00::c1:0:10."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Azubi soll die ULA-Adresse fd00:0abc:0000:0000:1000:0000:0000:0000 für die Firewall-Regel verkürzen. Welche Schreibweise entspricht der Regel für die kürzeste Form?",
+    "options": [
+      "fd00:abc:0:0:1000::",
+      "fd00:abc::1000::",
+      "fd00:abc::1000:0:0:0",
+      "fd00:abc:0:0:1::"
+    ],
+    "a": "fd00:abc:0:0:1000::",
+    "exp": "Es gibt zwei Nullfolgen: zwei Blöcke und drei Blöcke am Ende. :: ersetzt die längste Folge und darf nur einmal vorkommen. Nullen am Ende eines Blocks bleiben (1000): fd00:abc:0:0:1000::."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihre Ausbilderin legt Ihnen diesen Pseudocode vor: summe := 4; FÜR i VON 2 BIS 14 SCHRITT 3; summe := summe + i; ENDE FÜR; AUSGABE summe. Welchen Wert gibt das Programm aus?",
+    "options": [
+      "44",
+      "40",
+      "30",
+      "61"
+    ],
+    "a": "44",
+    "exp": "i nimmt die Werte 2, 5, 8, 11, 14 an (5 Durchläufe). summe = 4 + 2 + 5 + 8 + 11 + 14 = 44. Der Startwert 4 wird mitgezählt, BIS 14 schließt den letzten Wert ein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege testet ein Skript mit folgendem Ablauf: x := 5; n := 0; SOLANGE x < 150; x := x * 2; n := n + 1; ENDE SOLANGE; AUSGABE x, n. Welche Werte werden ausgegeben?",
+    "options": [
+      "x = 160, n = 5",
+      "x = 80, n = 4",
+      "x = 160, n = 6",
+      "x = 80, n = 5"
+    ],
+    "a": "x = 160, n = 5",
+    "exp": "x durchläuft 5, 10, 20, 40, 80, 160. Erst bei 160 ist die Bedingung x < 150 falsch. Die Schleife lief 5-mal, also n = 5."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Auswerteskript sucht den Tag mit den meisten Störungsmeldungen. Die Indizes beginnen bei 0: werte := [18, 42, 11, 42, 29, 6]; max := werte[0]; pos := 0; FÜR i VON 1 BIS 5; WENN werte[i] > max DANN max := werte[i]; pos := i; ENDE WENN; ENDE FÜR; AUSGABE pos. Welcher Wert wird ausgegeben?",
+    "options": [
+      "1",
+      "3",
+      "2",
+      "5"
+    ],
+    "a": "1",
+    "exp": "Das Maximum 42 steht an Index 1 und nochmals an Index 3. Bei \"größer als\" löst der zweite gleiche Wert keinen Tausch aus, pos bleibt 1. Mit >= wäre es 3."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript wertet die stündlichen Temperaturen im Serverraum aus: t := [27, 22, 25, 31, 24, 25, 29, 23, 26]; anzahl := 0; FÜR i VON 0 BIS 8; WENN t[i] > 25 DANN anzahl := anzahl + 1; ENDE WENN; ENDE FÜR; AUSGABE anzahl. Welchen Wert gibt es aus?",
+    "options": [
+      "4",
+      "6",
+      "5",
+      "3"
+    ],
+    "a": "4",
+    "exp": "Gezählt werden nur Werte echt größer als 25: 27, 31, 29, 26, also 4. Die Werte 25 zählen nicht, weil > und nicht >= verlangt ist."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Bestellskript für Patchkabel berechnet den Betrag so: menge := 35; WENN menge >= 50 DANN rabatt := 10 SONST WENN menge >= 20 DANN rabatt := 5 SONST rabatt := 0; betrag := menge * 12 * (100 - rabatt) / 100; AUSGABE betrag. Welcher Betrag wird ausgegeben?",
+    "options": [
+      "399,00",
+      "420,00",
+      "378,00",
+      "21,00"
+    ],
+    "a": "399,00",
+    "exp": "35 ist nicht >= 50, aber >= 20, also rabatt = 5. betrag = 35 * 12 * 95 / 100 = 399,00."
+  },
+  {
+    "cat": "systeme",
+    "q": "Im Unterricht verfolgen Sie diesen Algorithmus (+ hängt Zeichen aneinander, DIV ist ganzzahlige Division): z := 38; s := \"\"; SOLANGE z > 0; s := (z MOD 2) + s; z := z DIV 2; ENDE SOLANGE; AUSGABE s. Was wird ausgegeben?",
+    "options": [
+      "100110",
+      "011001",
+      "00110",
+      "100111"
+    ],
+    "a": "100110",
+    "exp": "Reste: 38 MOD 2 = 0; 19 MOD 2 = 1; 9 MOD 2 = 1; 4 MOD 2 = 0; 2 MOD 2 = 0; 1 MOD 2 = 1. Da jeder neue Rest vorne angefügt wird, entsteht 100110 (= 38 dezimal)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein NAS hat 10 TB Kapazität, belegt sind 4 TB, der Bestand wächst jährlich um 20 %. Eine Kollegin schätzt die Restlaufzeit so: belegt := 4,0; jahre := 0; SOLANGE belegt < 10,0; belegt := belegt * 1,2; jahre := jahre + 1; ENDE SOLANGE; AUSGABE jahre. Was wird ausgegeben?",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "8"
+    ],
+    "a": "6",
+    "exp": "belegt entwickelt sich: 4,00, 4,80, 5,76, 6,91, 8,29, 9,95, 11,94 TB. Erst nach 6 Durchläufen ist belegt nicht mehr kleiner als 10. Linear gerechnet (immer + 0,8 TB) käme man fälschlich auf 8."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Service Desk ermittelt die durchschnittliche Ticketzahl einer Woche (Indizes ab 0): tickets := [120, 95, 140, 110, 85]; summe := 0; FÜR i VON 0 BIS 4; summe := summe + tickets[i]; ENDE FÜR; AUSGABE summe / 5. Welcher Wert wird ausgegeben?",
+    "options": [
+      "110,0",
+      "93,0",
+      "86,0",
+      "137,5"
+    ],
+    "a": "110,0",
+    "exp": "Die Schleife läuft über alle 5 Elemente: 120 + 95 + 140 + 110 + 85 = 550. 550 / 5 = 110,0."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihr Ausbilder möchte wissen, wie oft die innere Anweisung dieses Pseudocodes ausgeführt wird: zaehler := 0; FÜR i VON 1 BIS 5; FÜR j VON i BIS 5; zaehler := zaehler + 1; ENDE FÜR; ENDE FÜR; AUSGABE zaehler. Welchen Wert hat zaehler am Ende?",
+    "options": [
+      "15",
+      "25",
+      "10",
+      "21"
+    ],
+    "a": "15",
+    "exp": "Die innere Schleife startet bei i und wird daher immer kürzer: 5 + 4 + 3 + 2 + 1 = 15 Durchläufe."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi verfolgt einen einzigen Durchlauf eines Sortierverfahrens: a := [9, 4, 7, 2, 5]; FÜR i VON 0 BIS 3; WENN a[i] > a[i + 1] DANN tausche a[i] und a[i + 1]; ENDE WENN; ENDE FÜR; AUSGABE a. Wie sieht a danach aus?",
+    "options": [
+      "[4, 7, 2, 5, 9]",
+      "[2, 4, 5, 7, 9]",
+      "[9, 7, 4, 5, 2]",
+      "[4, 7, 2, 9, 5]"
+    ],
+    "a": "[4, 7, 2, 5, 9]",
+    "exp": "Nach einem Durchlauf ist nur das größte Element (9) ganz nach hinten gewandert: [4, 7, 2, 5, 9]. Für eine vollständige Sortierung sind weitere Durchläufe nötig."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Angebotsliste steht in B2 der Wert 750. C2 enthält =WENN(B2>=1000;B2*0,9;WENN(B2>=500;B2*0,95;B2)). Welches Ergebnis zeigt C2?",
+    "options": [
+      "712,50",
+      "675,00",
+      "750,00",
+      "37,50"
+    ],
+    "a": "712,50",
+    "exp": "Die erste Bedingung 750 >= 1000 ist falsch, also wird das innere WENN geprüft. 750 >= 500 ist wahr: 750 * 0,95 = 712,50."
+  },
+  {
+    "cat": "systeme",
+    "q": "In A2:A7 stehen die Gerätearten Drucker, Monitor, Drucker, Notebook, Drucker, Monitor, in C2:C7 die Reparaturkosten 180, 240, 95, 1.100, 130, 210. Welches Ergebnis liefert =SUMMEWENN(A2:A7;\"Drucker\";C2:C7)?",
+    "options": [
+      "405",
+      "1.955",
+      "3",
+      "450"
+    ],
+    "a": "405",
+    "exp": "SUMMEWENN addiert nur die Werte aus C, deren Zeile in A das Kriterium erfüllt: 180 + 95 + 130 = 405."
+  },
+  {
+    "cat": "systeme",
+    "q": "B2:B9 enthält die Bearbeitungsdauer offener Tickets in Tagen: 2, 5, 3, 1, 4, 3, 2, 6. Welches Ergebnis liefert =ZÄHLENWENN(B2:B9;\">=3\")?",
+    "options": [
+      "5",
+      "3",
+      "8",
+      "21"
+    ],
+    "a": "5",
+    "exp": "ZÄHLENWENN zählt die Zellen, die das Kriterium erfüllen, und addiert nicht: 5, 3, 4, 3, 6 sind >= 3, also 5 Zellen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kostenvoranschlag soll gerundet ausgewiesen werden. A1 enthält 2.849,50, B1 die Formel =RUNDEN(A1;-2). Was zeigt B1?",
+    "options": [
+      "2.800,00",
+      "2.900,00",
+      "2.850,00",
+      "2.849,50"
+    ],
+    "a": "2.800,00",
+    "exp": "Eine negative Stellenzahl rundet links vom Komma: -2 bedeutet auf volle Hunderter. 2.849,50 liegt näher an 2.800 als an 2.900, also 2.800,00."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für eine Preistabelle steht in B3 die Formel =$A3*B$2. Ein Azubi kopiert sie nach E7. Welche Formel steht dort?",
+    "options": [
+      "=$A7*E$2",
+      "=D7*E6",
+      "=$A3*E$2",
+      "=$A7*B$2"
+    ],
+    "a": "=$A7*E$2",
+    "exp": "Von B3 nach E7 sind es 3 Spalten nach rechts und 4 Zeilen nach unten. Das $ fixiert nur den Teil direkt dahinter: $A bleibt, die Zeile 3 wird 7; bei B$2 wandert B nach E, die Zeile 2 bleibt. Ergebnis: =$A7*E$2."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie sollen 12 Dockingstationen beschaffen. Händler A: 189,00 Euro je Stück, ab 10 Stück 8 % Rabatt, 2 % Skonto, Versand pauschal 14,90 Euro. Händler B: 179,00 Euro je Stück, 3 % Skonto, versandkostenfrei. Wer ist günstiger und um wie viel?",
+    "options": [
+      "Händler A, um 23,83 Euro",
+      "Händler B, um 120,00 Euro",
+      "Händler B, um 17,90 Euro",
+      "Händler B, um 23,83 Euro"
+    ],
+    "a": "Händler A, um 23,83 Euro",
+    "exp": "A: 12 * 189,00 Euro = 2.268,00 Euro, - 8 % = 2.086,56 Euro, - 2 % Skonto = 2.044,83 Euro, + Versand = 2.059,73 Euro. B: 12 * 179,00 Euro = 2.148,00 Euro, - 3 % Skonto = 2.083,56 Euro. Differenz: 23,83 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für 25 Headsets liegen zwei Angebote vor. Händler C: 58,00 Euro je Stück, 12 % Rabatt, Versand 19,50 Euro. Händler D: 54,90 Euro je Stück, 5 % Rabatt, 2 % Skonto, keine Versandkosten. Welcher Bezugspreis je Headset ergibt sich beim günstigeren Händler?",
+    "options": [
+      "Händler D, 51,11 Euro je Stück",
+      "Händler C, 51,82 Euro je Stück",
+      "Händler D, 52,16 Euro je Stück",
+      "Händler C, 51,04 Euro je Stück"
+    ],
+    "a": "Händler D, 51,11 Euro je Stück",
+    "exp": "C: 25 * 58,00 Euro - 12 % + 19,50 Euro = 1.295,50 Euro, je Stück 51,82 Euro. D: 25 * 54,90 Euro - 5 % - 2 % = 1.277,80 Euro, je Stück 51,11 Euro. Die Versandkosten gehören in den Bezugspreis."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für neue Außendienst-Notebooks gelten die Gewichte Preis 30 %, Akkulaufzeit 25 %, Gewicht 15 %, Service 30 %. Die Punkte (1 bis 10) lauten: A 8/6/7/5, B 6/8/6/10, C 9/6/10/6. Welches Notebook gewinnt die Nutzwertanalyse?",
+    "options": [
+      "Notebook B mit 7,70 Punkten",
+      "Notebook C mit 7,50 Punkten",
+      "Notebook C mit 31,00 Punkten",
+      "Notebook B mit 30,00 Punkten"
+    ],
+    "a": "Notebook B mit 7,70 Punkten",
+    "exp": "Nutzwerte: A = 6,45; B = 7,70; C = 7,50. Ohne Gewichtung hätte C mit 31 Punkten vorn gelegen, entscheidend ist aber die gewichtete Summe."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Multifunktionsdrucker wird nach Druckkosten 40 %, Geschwindigkeit 20 %, Lautstärke 25 %, Bedienung 15 % bewertet und erhält 7/9/4/8 Punkte (1 bis 10). Welchen Nutzwert erreicht er?",
+    "options": [
+      "6,80 Punkte",
+      "7,00 Punkte",
+      "7,30 Punkte",
+      "680 Punkte"
+    ],
+    "a": "6,80 Punkte",
+    "exp": "0,40 * 7 + 0,20 * 9 + 0,25 * 4 + 0,15 * 8 = 6,80. Der einfache Durchschnitt (7,00) berücksichtigt die Gewichte nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Kundin hat für einen neuen Arbeitsplatz ein Budget von 1.850,00 Euro brutto. Welcher Nettopreis darf in Ihrem Angebot höchstens stehen (19 % USt)?",
+    "options": [
+      "1.554,62 Euro",
+      "1.498,50 Euro",
+      "2.201,50 Euro",
+      "295,38 Euro"
+    ],
+    "a": "1.554,62 Euro",
+    "exp": "Brutto = Netto * 1,19, also Netto = 1.850,00 Euro / 1,19 = 1.554,62 Euro. 19 % vom Brutto abzuziehen wäre falsch, weil die Steuer auf den Nettobetrag gerechnet wird."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie erstellen eine Rechnung: 3 Monitore zu je 219,00 Euro, 2 Headsets zu je 64,90 Euro und 1,5 Stunden Einrichtung zu je 78,00 Euro (alle netto). Wie hoch ist der Rechnungsbetrag brutto (19 % USt)?",
+    "options": [
+      "1.075,52 Euro",
+      "903,80 Euro",
+      "1.053,29 Euro",
+      "998,29 Euro"
+    ],
+    "a": "1.075,52 Euro",
+    "exp": "Netto: 657,00 Euro + 129,80 Euro + 117,00 Euro = 903,80 Euro. Die Umsatzsteuer gilt auch für die Dienstleistung: 903,80 Euro * 1,19 = 1.075,52 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Notebook wird am 12.09. für 1.440,00 Euro netto angeschafft und linear über 3 Jahre abgeschrieben (angenommene Nutzungsdauer). Wie hoch ist die Abschreibung im Anschaffungsjahr?",
+    "options": [
+      "160,00 Euro",
+      "480,00 Euro",
+      "120,00 Euro",
+      "240,00 Euro"
+    ],
+    "a": "160,00 Euro",
+    "exp": "Jahresbetrag: 1.440,00 Euro / 3 = 480,00 Euro. Im Anschaffungsjahr zählt jeder angefangene Monat, der Anschaffungsmonat also mit: 4 Monate. 480,00 Euro * 4 / 12 = 160,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine CAD-Workstation für 2.370,00 Euro netto wird im April angeschafft und linear über 3 Jahre abgeschrieben (angenommen). Wie hoch ist der Buchwert am Ende des zweiten Jahres?",
+    "options": [
+      "987,50 Euro",
+      "790,00 Euro",
+      "1.777,50 Euro",
+      "1.382,50 Euro"
+    ],
+    "a": "987,50 Euro",
+    "exp": "Jahresbetrag 790,00 Euro. Jahr 1 (April bis Dezember, 9 Monate): 592,50 Euro. Jahr 2: 790,00 Euro. Buchwert: 2.370,00 Euro - 592,50 Euro - 790,00 Euro = 987,50 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Standard-PC kostet 649,00 Euro und nimmt 120 W auf, ein sparsameres Modell kostet 719,00 Euro bei 65 W. Betrieb: 8 Stunden an 230 Tagen, Strompreis angenommen 0,30 Euro je kWh. Nach wie vielen Jahren hat sich der Mehrpreis amortisiert?",
+    "options": [
+      "ca. 2,3 Jahre",
+      "ca. 23,7 Jahre",
+      "ca. 0,5 Jahre",
+      "ca. 2,0 Jahre"
+    ],
+    "a": "ca. 2,3 Jahre",
+    "exp": "Ersparnis: (120 - 65) W * 1.840 h = 101,2 kWh; * 0,30 Euro = 30,36 Euro pro Jahr. Mehrpreis 70,00 Euro / 30,36 Euro = 2,3 Jahre. Maßgeblich ist nur der Mehrpreis, nicht der Gesamtpreis."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "3 alte Server mit je 280 W (Dauerbetrieb) sollen durch einen virtualisierten Server mit 350 W ersetzt werden. Er kostet 6.800,00 Euro und spart zusätzlich 600,00 Euro Wartung im Jahr. Strompreis angenommen 0,28 Euro je kWh. Wie lang ist die Amortisationszeit?",
+    "options": [
+      "ca. 3,8 Jahre",
+      "ca. 5,7 Jahre",
+      "ca. 2,6 Jahre",
+      "ca. 8,0 Jahre"
+    ],
+    "a": "ca. 3,8 Jahre",
+    "exp": "Leistungsdifferenz: 3 * 280 W - 350 W = 490 W. 490 W * 8.760 h = 4.292,4 kWh; * 0,28 Euro = 1.201,87 Euro. Plus Wartung: 1.801,87 Euro pro Jahr. 6.800,00 Euro / 1.801,87 Euro = 3,8 Jahre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie richten beim Kunden 6 Arbeitsplätze ein, je Platz 1,75 Stunden zu 72,00 Euro netto. Dazu kommt eine Anfahrtspauschale von 45,00 Euro netto. Wie hoch ist der Rechnungsbetrag brutto (19 % USt)?",
+    "options": [
+      "953,19 Euro",
+      "801,00 Euro",
+      "899,64 Euro",
+      "1.220,94 Euro"
+    ],
+    "a": "953,19 Euro",
+    "exp": "6 * 1,75 h = 10,5 h; * 72,00 Euro = 756,00 Euro. Plus Anfahrt: 801,00 Euro netto. * 1,19 = 953,19 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Vor-Ort-Einsatz dauert von 10:05 bis 11:40 Uhr. Abgerechnet wird je angefangene 15 Minuten, der Stundensatz beträgt 84,00 Euro netto. Welcher Nettobetrag wird berechnet?",
+    "options": [
+      "147,00 Euro",
+      "133,00 Euro",
+      "168,00 Euro",
+      "126,00 Euro"
+    ],
+    "a": "147,00 Euro",
+    "exp": "Dauer: 95 Minuten. 95 / 15 = 6,33, angefangene Takte werden aufgerundet: 7 Takte = 105 Minuten. 105 / 60 * 84,00 Euro = 147,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für einen Rollout plant Ihre Ausbilderin: A Hardware bestellen 3 Tage ab Start; B Lieferzeit 5 Tage nach A; C Geräte aufbauen 2 Tage nach B; D Softwarepaket vorbereiten 4 Tage ab Start; E Rollout 2 Tage nach C und D. Wie viele Arbeitstage dauert das Projekt mindestens?",
+    "options": [
+      "12 Tage",
+      "16 Tage",
+      "10 Tage",
+      "6 Tage"
+    ],
+    "a": "12 Tage",
+    "exp": "D läuft parallel zu A bis C. E kann erst beginnen, wenn C (Tag 10) und D (Tag 4) fertig sind, also ab Tag 10. 10 + 2 = 12 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Umstellung aller Clients auf ein neues Betriebssystem ist auf 13 Arbeitstage geplant (Montag bis Freitag, keine Feiertage). Start ist Montag, 02.11.2026, der Starttag zählt mit. An welchem Tag ist der letzte Arbeitstag?",
+    "options": [
+      "Mittwoch, 18.11.2026",
+      "Dienstag, 17.11.2026",
+      "Donnerstag, 19.11.2026",
+      "Montag, 16.11.2026"
+    ],
+    "a": "Mittwoch, 18.11.2026",
+    "exp": "13 Arbeitstage sind zwei volle Wochen (10 Tage) plus 3 Tage. Ab Montag, 02.11.2026 gezählt ist der 13. Arbeitstag der Mittwoch, 18.11.2026. Wochenenden zählen nicht mit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi hat seine Ausbildung am 1. August 2025 begonnen. Laut Vertrag erhält er angenommen 1.050,00 Euro im 1. und 1.120,00 Euro im 2. Ausbildungsjahr. Wie viel Vergütung erhält er im Kalenderjahr 2026 insgesamt?",
+    "options": [
+      "12.950,00 Euro",
+      "13.440,00 Euro",
+      "12.600,00 Euro",
+      "13.090,00 Euro"
+    ],
+    "a": "12.950,00 Euro",
+    "exp": "Das 2. Ausbildungsjahr beginnt am 1. August 2026. Januar bis Juli: 7 * 1.050,00 Euro = 7.350,00 Euro. August bis Dezember: 5 * 1.120,00 Euro = 5.600,00 Euro. Summe: 12.950,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine volljährige Auszubildende beginnt am 1. August. Vertraglich stehen ihr angenommen 30 Urlaubstage im Jahr zu. Wie viele Tage erhält sie im Eintrittsjahr (Teilurlaub nach BUrlG, gilt vereinfacht für den ganzen Anspruch)?",
+    "options": [
+      "13 Tage",
+      "12,5 Tage",
+      "12 Tage",
+      "15 Tage"
+    ],
+    "a": "13 Tage",
+    "exp": "Die Wartezeit von 6 Monaten ist im Eintrittsjahr nicht erfüllt, also 1/12 je vollem Monat: 5 * 30 / 12 = 12,5. Bruchteile ab einem halben Tag werden aufgerundet: 13 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für eine Abteilung stehen zwei Drucker zur Wahl: A kostet 229,00 Euro bei 4,1 Cent je Seite, B kostet 389,00 Euro bei 2,3 Cent je Seite. Es werden 800 Seiten im Monat gedruckt. Welcher ist über 36 Monate günstiger und um wie viel?",
+    "options": [
+      "Drucker B, um 358,40 Euro",
+      "Drucker A, um 160,00 Euro",
+      "Drucker B, um 518,40 Euro",
+      "Drucker B, um 12,80 Euro"
+    ],
+    "a": "Drucker B, um 358,40 Euro",
+    "exp": "800 * 36 = 28.800 Seiten. A: 229,00 Euro + 1.180,80 Euro = 1.409,80 Euro. B: 389,00 Euro + 662,40 Euro = 1.051,40 Euro. Differenz: 358,40 Euro. Der höhere Kaufpreis von B wird durch die Seitenkosten mehr als ausgeglichen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Notebook kann für 36 Monate zu 42,00 Euro monatlich inklusive Service geleast werden. Alternativ kostet es 1.090,00 Euro, dazu ein Wartungsvertrag zu 9,50 Euro im Monat. Welche Variante ist über die Laufzeit günstiger und um wie viel?",
+    "options": [
+      "Kauf, um 80,00 Euro",
+      "Kauf, um 422,00 Euro",
+      "Leasing, um 80,00 Euro",
+      "Leasing, um 262,00 Euro"
+    ],
+    "a": "Kauf, um 80,00 Euro",
+    "exp": "Leasing: 36 * 42,00 Euro = 1.512,00 Euro. Kauf: 1.090,00 Euro + 36 * 9,50 Euro = 1.432,00 Euro. Differenz: 80,00 Euro zugunsten des Kaufs."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Büroarbeitsplatz besteht aus einem PC (58 W) und 2 Monitoren (je 21 W). Er läuft 8 Stunden an 220 Tagen, sonst bleibt alles im Standby (zusammen 3 W). Wie hoch sind die jährlichen Stromkosten bei angenommen 0,34 Euro je kWh?",
+    "options": [
+      "66,98 Euro",
+      "59,84 Euro",
+      "54,41 Euro",
+      "297,84 Euro"
+    ],
+    "a": "66,98 Euro",
+    "exp": "Betrieb: 100 W * 1.760 h = 176,0 kWh. Standby: 3 W * 7.000 h = 21,0 kWh. Summe 197,0 kWh * 0,34 Euro = 66,98 Euro. Der Standby macht hier 11 % des Verbrauchs aus."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Servicetechniker verursacht 52.000,00 Euro Personalkosten im Jahr, anteilig kommen 18.000,00 Euro Gemeinkosten hinzu. Er kann 1.400 Stunden beim Kunden abrechnen. Welcher Stundensatz ist mindestens kostendeckend?",
+    "options": [
+      "50,00 Euro",
+      "37,14 Euro",
+      "39,77 Euro",
+      "59,50 Euro"
+    ],
+    "a": "50,00 Euro",
+    "exp": "Alle Kosten werden auf die abrechenbaren Stunden verteilt: (52.000,00 Euro + 18.000,00 Euro) / 1.400 h = 50,00 Euro. Mit allen Anwesenheitsstunden zu rechnen, ergäbe einen zu niedrigen Satz."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sonntags läuft eine Vollsicherung mit 1.200 GB. Montag bis Samstag folgen inkrementelle Sicherungen. Täglich ändern sich (vereinfacht jeweils andere Dateien): Mo 38 GB, Di 44 GB, Mi 29 GB, Do 53 GB, Fr 41 GB, Sa 16 GB. Wie viel Speicher belegt die Sicherungswoche?",
+    "options": [
+      "1.421 GB",
+      "8.400 GB",
+      "2.021 GB",
+      "221 GB"
+    ],
+    "a": "1.421 GB",
+    "exp": "Jede inkrementelle Sicherung enthält nur die Änderungen seit der letzten Sicherung: 1.200 GB + 38 + 44 + 29 + 53 + 41 + 16 = 1.421 GB."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Gleiche Woche wie zuvor: Vollsicherung 1.200 GB am Sonntag, danach täglich Mo 38 GB, Di 44 GB, Mi 29 GB, Do 53 GB, Fr 41 GB, Sa 16 GB. Diesmal wird Montag bis Samstag differenziell gesichert. Wie viel Speicher belegt die Woche?",
+    "options": [
+      "2.021 GB",
+      "1.421 GB",
+      "2.526 GB",
+      "821 GB"
+    ],
+    "a": "2.021 GB",
+    "exp": "Jede differenzielle Sicherung enthält alle Änderungen seit der Vollsicherung: 38, 82, 111, 164, 205, 221 GB. Summe mit Vollsicherung: 1.200 GB + 821 GB = 2.021 GB."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Malware-Vorfall mit Wiederherstellung kostet Ihren Betrieb geschätzt 3.200,00 Euro. Bisher rechnet man mit 0,5 Vorfällen pro Jahr. Ein zusätzlicher Mailfilter kostet 900,00 Euro im Jahr und senkt die Häufigkeit auf 0,1 pro Jahr. Um wie viel sinken die erwarteten jährlichen Gesamtkosten?",
+    "options": [
+      "380,00 Euro",
+      "1.280,00 Euro",
+      "700,00 Euro",
+      "2.300,00 Euro"
+    ],
+    "a": "380,00 Euro",
+    "exp": "Ohne Filter: 3.200,00 Euro * 0,5 = 1.600,00 Euro pro Jahr. Mit Filter: 3.200,00 Euro * 0,1 + 900,00 Euro = 1.220,00 Euro. Ersparnis: 1.600,00 Euro - 1.220,00 Euro = 380,00 Euro. Die Kosten der Maßnahme gehören in den Vergleich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Vollsicherung umfasst 30 TB und wird ohne Kompression auf LTO-Bänder mit 12 TB nativer Kapazität geschrieben. 4 wöchentliche Generationen werden aufbewahrt. Wie viele Bänder brauchen Sie?",
+    "options": [
+      "12 Bänder",
+      "10 Bänder",
+      "8 Bänder",
+      "3 Bänder"
+    ],
+    "a": "12 Bänder",
+    "exp": "Je Sicherung: 30 / 12 = 2,5, also 3 Bänder (angebrochene Bänder zählen voll, Generationen teilen sich keine Bänder). 3 * 4 = 12 Bänder."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein gestohlener Passwort-Hash gehört zu einem Passwort mit 8 Zeichen aus Groß-, Kleinbuchstaben und Ziffern. Ein Angreifer schafft angenommen 10 Mrd. Versuche pro Sekunde. Wie lange dauert es höchstens, alle Kombinationen zu testen?",
+    "options": [
+      "ca. 6,1 Stunden",
+      "ca. 3,0 Stunden",
+      "ca. 1,5 Stunden",
+      "ca. 363,9 Stunden"
+    ],
+    "a": "ca. 6,1 Stunden",
+    "exp": "62^8 = ca. 2,18 * 10^14 Kombinationen. / 10^10 pro Sekunde = 21.834 s = 6,1 Stunden. Im Mittel ist das Passwort nach der Hälfte der Zeit gefunden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Passwortrichtlinie wird von 8 auf 10 Zeichen (weiterhin 62 mögliche Zeichen) verlängert. Um welchen Faktor steigt die Zahl der möglichen Passwörter?",
+    "options": [
+      "um den Faktor 3.844",
+      "um den Faktor 124",
+      "um den Faktor 1,25",
+      "um den Faktor 4"
+    ],
+    "a": "um den Faktor 3.844",
+    "exp": "62^10 / 62^8 = 62^2 = 3.844. Jede zusätzliche Stelle vervielfacht die Kombinationen mit dem Zeichenvorrat."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Passwortmanager erzeugt Passphrasen aus 5 zufälligen Wörtern einer Liste mit 7.776 Wörtern. Wie viele Passphrasen sind möglich?",
+    "options": [
+      "ca. 2,8 * 10^19",
+      "38.880",
+      "ca. 3,7 * 10^15",
+      "ca. 2,4 * 10^17"
+    ],
+    "a": "ca. 2,8 * 10^19",
+    "exp": "Jedes Wort hat 7.776 Möglichkeiten: 7.776^5 = ca. 2,8 * 10^19. Zum Vergleich: 10 zufällige Zeichen aus 62 ergeben ca. 8,4 * 10^17."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Geräte-PIN hat 4 Ziffern. Nach 5 Fehlversuchen sperrt das Gerät für 15 Minuten, die Eingabezeit selbst wird vernachlässigt. Wie lange braucht ein Angreifer höchstens, um alle PINs durchzuprobieren?",
+    "options": [
+      "ca. 20,8 Tage",
+      "ca. 104,2 Tage",
+      "ca. 10,4 Tage",
+      "ca. 6,9 Tage"
+    ],
+    "a": "ca. 20,8 Tage",
+    "exp": "10.000 PINs / 5 Versuche = 2.000 Sperrphasen. * 15 Minuten = 30.000 Minuten = 20,8 Tage. Eine längere Sperre oder mehr Ziffern verlängern das deutlich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mailserver (Betrieb rund um die Uhr, 8.760 Stunden im Jahr) fiel im letzten Jahr dreimal für je 2,5 Stunden und einmal für 6,0 Stunden aus. Welche Verfügbarkeit wurde erreicht?",
+    "options": [
+      "99,85 %",
+      "99,90 %",
+      "99,95 %",
+      "98,65 %"
+    ],
+    "a": "99,85 %",
+    "exp": "Ausfall gesamt: 3 * 2,5 + 6,0 = 13,5 Stunden. (8.760 - 13,5) / 8.760 * 100 = 99,85 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Hosting-Vertrag garantiert 99,7 % Verfügbarkeit im Jahr (24/7, 8.760 Stunden). Bis Oktober gab es bereits 19 Stunden Ausfall. Wie viele Stunden Ausfall sind bis Jahresende noch erlaubt?",
+    "options": [
+      "ca. 7,28 Stunden",
+      "ca. 26,28 Stunden",
+      "ca. 45,28 Stunden",
+      "ca. 3,64 Stunden"
+    ],
+    "a": "ca. 7,28 Stunden",
+    "exp": "Erlaubter Ausfall: 8.760 h * 0,3 % = 26,28 Stunden. Davon sind 19 verbraucht: 26,28 - 19 = 7,28 Stunden."
   }
 ]

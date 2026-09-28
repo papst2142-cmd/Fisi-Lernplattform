@@ -3797,5 +3797,636 @@
       "",
       "3. Ursachen der Tickets auswerten und häufige Probleme dauerhaft beheben (Problem Management), Anleitungen und Self-Service für Standardfälle wie das Zurücksetzen von Passwörtern, Textbausteine und Automatisierung, Ausbau des First-Level-Supports oder befristete Verstärkung. Erfolg messen: Durchlaufzeit und Durchsatz wöchentlich, Anzahl offener Tickets, Einhaltung der SLA, Kundenzufriedenheit. Die Werte regelmäßig in einer Retrospektive mit dem Team besprechen."
     ]
+  },
+  {
+    "title": "DHCP-Pool im Besucher-WLAN einer Messehalle läuft voll",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Messegesellschaft betreibt in Halle 3 ein offenes Besucher-WLAN. Es nutzt das Netz 172.30.0.0/22. Das Gateway hat 172.30.0.1, alle übrigen Hostadressen stehen im DHCP-Pool. Die Lease-Zeit beträgt 8 Stunden.",
+      "Im Netz 172.30.4.0/24 liegt das Ausstellernetz. Der Bereich 172.30.8.0 bis 172.30.15.255 ist frei.",
+      "An einem Messetag (9 bis 18 Uhr) kommen 6.000 Besucher. 40 % nutzen das WLAN mit durchschnittlich 1,2 Geräten. Die Ankünfte verteilen sich gleichmäßig über die 9 Stunden, ein Besucher bleibt im Mittel 3 Stunden.",
+      "Rechnen Sie vereinfacht: Eine Adresse ist ab der Ankunft belegt und bleibt nach dem Verlassen der Halle noch eine volle Lease-Zeit reserviert.",
+      "",
+      "1. Wie viele Geräte kommen pro Stunde an? Wann ist der Pool erschöpft, und warum passiert das, obwohl nie alle Besucher gleichzeitig in der Halle sind?",
+      "2. Die Lease-Zeit soll auf 1 Stunde sinken. Wie viele Adressen sind dann gleichzeitig belegt? Reicht das bisherige Netz mit 30 % Reserve? Schlagen Sie ein passendes Netz vor (Netzadresse, Maske, Hostbereich, Broadcast).",
+      "3. Ein Client verlängert seine Lease nach der Hälfte der Lease-Zeit. Wie viele Verlängerungen pro Stunde muss der DHCP-Server bei 1 Stunde Lease verarbeiten? Welche weiteren Einstellungen gehören in ein Besucher-WLAN?"
+    ],
+    "solution": [
+      "1. 6.000 * 0,4 = 2.400 Nutzer, 2.400 * 1,2 = 2.880 Geräte am Tag. 2.880 / 9 = 320 Geräte pro Stunde. Der Pool hat 1.024 - 2 - 1 (Gateway) = 1.021 Adressen. Jede Belegung dauert 3 + 8 = 11 Stunden und damit länger als der Messetag. Bis zum Abend wird also keine Adresse frei. Der Pool ist nach 1.021 / 320 = ca. 3,2 Stunden voll, also gegen 12:10 Uhr. Die Ursache ist die lange Lease-Zeit: Adressen von Besuchern, die längst gegangen sind, bleiben reserviert.",
+      "",
+      "2. Belegungsdauer 3 + 1 = 4 Stunden, gleichzeitig belegt: 320 * 4 = 1.280 Adressen. Das ist schon ohne Reserve mehr als 1.021. Mit 30 % Reserve: 1.280 * 1,3 = 1.664 Adressen. Ein /21 bietet 2.046 Hostadressen, abzüglich Gateway 2.045, das reicht. 172.30.0.0/21 scheidet aus, weil es das Ausstellernetz 172.30.4.0/24 enthält. Vorschlag: 172.30.8.0/21, Maske 255.255.248.0, Hosts 172.30.8.1 bis 172.30.15.254, Broadcast 172.30.15.255, Gateway 172.30.8.1.",
+      "",
+      "3. Gleichzeitig anwesend sind 320 * 3 = 960 Geräte. Jedes verlängert alle 30 Minuten, also 2 Mal pro Stunde: 960 * 2 = 1.920 Verlängerungen pro Stunde, etwa 0,5 pro Sekunde. Das schafft jeder DHCP-Server problemlos. Weitere Einstellungen: Client-Isolation im WLAN, eigenes VLAN ohne Zugriff auf Aussteller- und Verwaltungsnetz, Bandbreitenbegrenzung pro Gerät, Captive Portal mit Nutzungsbedingungen, DHCP-Snooping gegen fremde DHCP-Server und eine Überwachung der Pool-Auslastung mit Warnschwelle."
+    ]
+  },
+  {
+    "title": "Netze für die Anlagen eines Windparks",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Windparkbetreiber vernetzt den Windpark Nord mit heute 38 Windenergieanlagen (WEA). Durch Nachverdichtung sollen es bis zu 60 werden. In jeder Anlage hängen Steuerung, Sensoren und zwei Kameras, zusammen mit Reserve bis zu 22 Geräte und das Gateway der Anlage.",
+      "Für den Park ist 10.160.0.0/20 reserviert. Die Anlagen erhalten gleich große Netze in fortlaufender Reihenfolge, WEA 01 das erste Netz. Das Gateway ist immer die erste Hostadresse.",
+      "Die Leitwarte erreicht den Park über einen Router im Umspannwerk. Der Windpark Süd mit 10.160.16.0/20 hängt an einem anderen Router.",
+      "Jede Anlage sendet dauerhaft 0,2 Mbit/s Betriebsdaten. Kamerabilder werden nur bei Bedarf abgerufen, höchstens 3 Ströme gleichzeitig zu je 4 Mbit/s. Die Hauptleitung ist eine Glasfaser, die Ersatzleitung ein LTE-Router mit 25 Mbit/s im Upload.",
+      "",
+      "1. Welches Präfix erhalten die Anlagennetze? Wie viele solche Netze passen in den /20? Geben Sie für WEA 23 Netzadresse, Gateway, Hostbereich und Broadcast an.",
+      "2. Welchen Adressbereich belegen WEA 01 bis WEA 60? Welche Routen trägt die Leitwarte ein, und lassen sich Nord und Süd zu einer Route zusammenfassen?",
+      "3. Reicht die LTE-Ersatzleitung heute und bei 60 Anlagen? Was stellen Sie für den Ersatzbetrieb ein?"
+    ],
+    "solution": [
+      "1. 22 Geräte + 1 Gateway = 23 Adressen. Ein /28 hat nur 14 Hostadressen, ein /27 hat 30. Also /27. In einen /20 passen 2^(27 - 20) = 128 Netze. WEA 23 hat das 23. Netz, also den Index 22: 22 * 32 = 704 = 2 * 256 + 192. Netz 10.160.2.192/27, Gateway 10.160.2.193, Hosts 10.160.2.193 bis 10.160.2.222, Broadcast 10.160.2.223.",
+      "",
+      "2. 60 * 32 = 1.920 Adressen, von 10.160.0.0 bis 10.160.7.127 (WEA 60: 10.160.7.96/27). Das ist kein einzelnes Präfix. Das kleinste Präfix, das alle abdeckt, ist 10.160.0.0/21 mit 64 Netzen. Sinnvoll ist eine Route für den ganzen Park: 10.160.0.0/20 über den Router im Umspannwerk. Dann muss die Leitwarte bei neuen Anlagen nichts ändern. Nord und Süd ergeben rechnerisch 10.160.0.0/19. Eine Zusammenfassung ist aber nicht möglich, weil beide Parks über verschiedene Router erreicht werden. Die Leitwarte braucht zwei /20-Routen mit unterschiedlichem Next Hop.",
+      "",
+      "3. Heute: 38 * 0,2 = 7,6 Mbit/s Betriebsdaten plus 3 * 4 = 12 Mbit/s Video, zusammen 19,6 Mbit/s. Bei 60 Anlagen: 60 * 0,2 = 12 Mbit/s plus 12 Mbit/s = 24 Mbit/s. Das liegt knapp unter 25 Mbit/s, LTE schwankt aber stark. Für den Ersatzbetrieb: QoS mit Vorrang für die Betriebsdaten, Kameras auf einen Strom mit geringer Auflösung begrenzen, Umschaltung und Rückschaltung überwachen und melden. Der LTE-Router bekommt keine eingehenden Freigaben aus dem Internet, der Zugang läuft nur über ein VPN zur Leitwarte."
+    ]
+  },
+  {
+    "title": "Webseiten laden im Standort-VPN eines Reiseveranstalters nicht",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Reiseveranstalter hat ein Außenbüro über einen DSL-Anschluss mit PPPoE angebunden. Ein IPsec-Tunnel verbindet das Büro mit der Zentrale. Seit der Umstellung melden die Mitarbeiter: Ping auf den Buchungsserver klappt, die Weboberfläche lädt aber nur halb, große Dateien brechen ab.",
+      "Die Firewall der Zentrale verwirft alle ICMP-Pakete außer Echo Request und Echo Reply.",
+      "Ethernet-MTU: 1.500 Byte. PPPoE benötigt 8 Byte. Der Hersteller gibt für den IPsec-Tunnel einen Overhead von höchstens 73 Byte an. IP- und TCP-Header haben je 20 Byte, der ICMP-Header 8 Byte.",
+      "",
+      "1. Erklären Sie die Ursache. Welche Rolle spielt die ICMP-Sperre?",
+      "2. Berechnen Sie die MTU im Tunnel und die passende TCP-MSS für MSS-Clamping.",
+      "3. Mit welchem Ping-Befehl unter Windows prüfen Sie die größte Paketgröße? Welcher Wert klappt gerade noch, welcher nicht mehr?"
+    ],
+    "solution": [
+      "1. Durch PPPoE und IPsec passen weniger Nutzdaten in ein Paket. Kleine Pakete wie ein Ping gehen durch, volle Pakete mit 1.500 Byte sind zu groß. Sie haben meist das Don't-Fragment-Bit gesetzt und werden verworfen. Normalerweise meldet der Router mit ICMP Typ 3 Code 4 (Fragmentation Needed) die passende Größe zurück (Path MTU Discovery). Diese Meldung verwirft die Firewall. Der Sender erfährt nichts und schickt immer wieder zu große Pakete. Deshalb hängen Seiten und Downloads.",
+      "",
+      "2. MTU nach PPPoE: 1.500 - 8 = 1.492 Byte. MTU im Tunnel: 1.492 - 73 = 1.419 Byte. MSS: 1.419 - 20 (IP) - 20 (TCP) = 1.379 Byte. Auf den Tunnel-Endpunkten wird MSS-Clamping auf 1.379 Byte oder etwas darunter eingestellt. Zusätzlich wird ICMP Typ 3 (Destination Unreachable) in der Firewall wieder erlaubt.",
+      "",
+      "3. ping -f -l <Größe> <Ziel>. -f setzt das Don't-Fragment-Bit, -l gibt die Nutzdatengröße an. Größte Nutzdaten: 1.419 - 20 - 8 = 1.391 Byte. ping -f -l 1391 funktioniert, ping -f -l 1392 meldet \"Paket müsste fragmentiert werden\" oder läuft ins Leere. Den Test von beiden Seiten des Tunnels durchführen und das Ergebnis dokumentieren."
+    ]
+  },
+  {
+    "title": "Praxis-VPN zum Dentallabor trotz gleicher Adressbereiche",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Zahnarztpraxis will ihre Intraoralscans direkt an ein Dentallabor schicken. Dafür soll ein Site-to-Site-VPN eingerichtet werden. Beide nutzen die Werkseinstellung ihres Routers: 192.168.178.0/24.",
+      "In der Praxis ist der Scan-PC 192.168.178.34. Im Labor nimmt der Server 192.168.178.20 die Scans an. Das Labor betreut 40 Praxen und will seine Adressen nicht ändern.",
+      "Geplant ist 1:1-NAT für ganze Netze (Netmap): Die Praxis erscheint im Tunnel als 10.10.178.0/24, das Labor als 10.20.178.0/24.",
+      "",
+      "1. Warum funktioniert ein VPN zwischen zwei gleichen Netzen ohne NAT nicht?",
+      "2. Welche Zieladresse verwendet der Scan-PC? Welche Quell- und Zieladressen hat das Paket vor dem Tunnel, im Tunnel und beim Server im Labor?",
+      "3. Die Praxis hat 23 Geräte mit fester Adresse. Warum ist eine Umnummerierung der Praxis trotzdem die bessere Dauerlösung? Welche Adressen wählen Sie und was ist zu beachten?"
+    ],
+    "solution": [
+      "1. Der Scan-PC sieht 192.168.178.20 als Adresse im eigenen Netz. Er fragt per ARP im lokalen LAN und schickt das Paket nie an den Router. Selbst wenn es den Router erreicht, hat dieser eine direkte Route für 192.168.178.0/24 ins LAN. Eine Route in den Tunnel für dasselbe Netz ist nicht eindeutig.",
+      "",
+      "2. Der Scan-PC verwendet 10.20.178.20. Vor dem Tunnel: Quelle 192.168.178.34, Ziel 10.20.178.20. Der Praxisrouter übersetzt die Quelle, der Hostanteil bleibt gleich. Im Tunnel: Quelle 10.10.178.34, Ziel 10.20.178.20. Der Laborrouter übersetzt das Ziel. Beim Server: Quelle 10.10.178.34, Ziel 192.168.178.20. Der Server antwortet an 10.10.178.34 über sein Gateway in den Tunnel, der Rückweg wird entsprechend übersetzt. Für den Namen des Servers wird in der Praxis ein DNS-Eintrag auf 10.20.178.20 angelegt.",
+      "",
+      "3. NAT macht Fehlersuche und Protokolle schwerer, jede neue Verbindung braucht wieder Netmap. Das Labor wird mit weiteren Praxen verbunden, die ebenfalls 192.168.178.0/24 nutzen. Besser ist ein eindeutiges, unübliches Netz für die Praxis, z.B. 10.61.34.0/24. Beachten: DHCP-Bereich anpassen, die 23 festen Adressen (Röntgengerät, Drucker, Scanner, Telefone) vorher erfassen, Freigaben und Firewallregeln mit Adressen anpassen, Umstellung außerhalb der Sprechzeiten mit Rückfallplan und Funktionstest. Das Labor ändert nichts, es braucht nur eine Route für das neue Praxisnetz in den Tunnel."
+    ]
+  },
+  {
+    "title": "Routingschleife nach dem Abbau einer Außenstelle",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Autovermietung hat ihre Außenstelle mit dem Netz 10.5.40.0/24 geschlossen. Der Tunnel und die spezifische Route dorthin wurden auf dem VPN-Router R2 gelöscht. Seitdem ist die Transferstrecke zwischen den Routern in der Zentrale zeitweise überlastet.",
+      "R1 (Kernrouter, 10.0.0.1): 10.5.0.0/16 über 10.0.0.2 (R2), 0.0.0.0/0 zur Internet-Firewall.",
+      "R2 (VPN-Router, 10.0.0.2): 10.5.0.0/24 bis 10.5.39.0/24 jeweils in einen Tunnel, 0.0.0.0/0 über 10.0.0.1 (R1).",
+      "Ein Sicherungsjob auf einem Server versucht weiterhin, 200 Pakete pro Sekunde zu je 1.000 Byte an 10.5.40.10 zu senden. Der Server sendet mit TTL 128. Die Transferstrecke hat 100 Mbit/s.",
+      "",
+      "1. Was passiert mit einem Paket an 10.5.40.10? Wie sieht die Ausgabe von tracert 10.5.40.10 aus?",
+      "2. Wie oft durchläuft ein Paket die Transferstrecke, bevor es verworfen wird? Welche Last erzeugt der Sicherungsjob dort?",
+      "3. Beseitigen Sie den Fehler dauerhaft, auch für künftige Schließungen."
+    ],
+    "solution": [
+      "1. R1 findet 10.5.0.0/16 und schickt das Paket an R2. R2 hat keine Route für 10.5.40.0/24 mehr und nutzt die Standardroute zurück zu R1. R1 schickt es wieder an R2. Das Paket kreist, bis die TTL abgelaufen ist. tracert zeigt abwechselnd 10.0.0.1 und 10.0.0.2 bis zum Abbruch nach 30 Hops.",
+      "",
+      "2. Jeder Router verringert die TTL um 1. Bei TTL 128 bearbeiten die Router das Paket 128 Mal: R1 64 Mal, R2 64 Mal. Beim 128. Mal wird die TTL 0, das Paket wird verworfen. Dazwischen wird es 128 - 1 = 127 Mal über die Transferstrecke geschickt. Last: 200 Pakete/s * 1.000 Byte * 8 * 127 = 203.200.000 Bit/s = 203,2 Mbit/s. Das ist mehr als die 100 Mbit/s der Strecke, also Überlast und Paketverluste für alle anderen Verbindungen.",
+      "",
+      "3. Auf R2 eine Verwerfen-Route (Null-Route, Blackhole) für das ganze Außenstellennetz einrichten: 10.5.0.0/16 nach Null. Die Tunnelrouten mit /24 sind spezifischer und gewinnen nach Longest Prefix Match. Ein Paket an ein nicht vorhandenes 10.5.x.0/24 wird sofort verworfen statt zurückgeschickt. Zusätzlich den Sicherungsjob auf dem Server abschalten, Adressbereiche im IP-Adressmanagement freigeben und eine Checkliste für Standortschließungen anlegen (Routen, Jobs, Monitoring, DNS, Firewallregeln)."
+    ]
+  },
+  {
+    "title": "Hausfernsehen per IPTV in einer Seniorenresidenz",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Seniorenresidenz mit 4 Etagen und je 30 Wohnungen ersetzt die alte Antennenanlage durch IPTV. Eine Kopfstation empfängt 40 Sender und speist sie ins Hausnetz. Jeder Sender belegt 8 Mbit/s.",
+      "Jede Etage hat einen Access-Switch mit 1-Gbit/s-Uplink zum Core. An jedem Access-Switch hängen auch die Access Points der Etage und die Notrufsysteme. Am Abend laufen in 70 % der Wohnungen Fernseher.",
+      "Die Kopfstation kann Unicast oder Multicast senden.",
+      "",
+      "1. Wie viel Bandbreite braucht die Kopfstation am Abend bei Unicast, wie viel bei Multicast im ungünstigsten Fall?",
+      "2. Nach der Inbetriebnahme mit Multicast brechen WLAN und Notruf ein. Die Switches haben IGMP-Snooping ausgeschaltet. Erklären Sie das Problem und berechnen Sie die Last an einem Port.",
+      "3. Welche Einstellungen im Netz empfehlen Sie für den Dauerbetrieb?"
+    ],
+    "solution": [
+      "1. Unicast: 4 * 30 * 0,7 = 84 Fernseher, 84 * 8 = 672 Mbit/s ab der Kopfstation. Je Etage 30 * 0,7 = 21 Ströme = 168 Mbit/s. Multicast: jeder Sender nur einmal, im ungünstigsten Fall alle 40 Sender: 40 * 8 = 320 Mbit/s. Multicast wächst also nicht mit der Zahl der Zuschauer.",
+      "",
+      "2. Ohne IGMP-Snooping behandelt ein Switch Multicast wie Broadcast und flutet ihn an alle Ports im VLAN. Jeder Port erhält dann alle angeforderten Sender, im ungünstigsten Fall 320 Mbit/s, auch wenn dort nur ein Access Point oder ein Notrufgerät hängt. Access Points senden Multicast mit niedriger Basisrate an alle WLAN-Clients, dadurch ist die Funkzelle voll. Notrufgeräte mit schwacher Hardware verarbeiten die Pakete nicht mehr.",
+      "",
+      "3. IPTV in ein eigenes VLAN legen, das nur an den Wohnungsports anliegt. IGMP-Snooping auf allen Switches einschalten und einen IGMP-Querier im VLAN festlegen (z.B. am Core). Fast Leave an den Wohnungsports für schnelles Umschalten. Kein IPTV-VLAN an den Access Points. QoS mit Vorrang für das Notruf-VLAN. Das Notrufsystem zusätzlich regelmäßig testen und überwachen."
+    ]
+  },
+  {
+    "title": "Ringnetz für die Steuerungstechnik einer Kläranlage",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Die Kläranlage einer Gemeinde vernetzt ihre Leitwarte mit 8 Außenstationen (Pumpwerke, Becken, Gebläse). Die Steuerungen melden einen Fehler, wenn die Verbindung länger als 500 ms unterbrochen ist.",
+      "Variante Stern: je eine Glasfaser von der Leitwarte zu jeder Station. Entfernungen: 180, 240, 310, 150, 420, 380, 260 und 200 m. Für Redundanz müsste jede Station zwei Fasern auf getrennten Wegen erhalten, jeweils gleich lang gerechnet.",
+      "Variante Ring (Abschnittslängen): Leitwarte bis S1 180 m, S1 bis S2 120 m, S2 bis S3 150 m, S3 bis S4 200 m, S4 bis S5 170 m, S5 bis S6 90 m, S6 bis S7 140 m, S7 bis S8 110 m, S8 zurück zur Leitwarte 200 m.",
+      "Verlegung inklusive Tiefbau: 45 Euro pro Meter. Umschaltzeit im Ring: RSTP laut Hersteller bis 2 s, MRP (Media Redundancy Protocol) höchstens 200 ms.",
+      "",
+      "1. Berechnen Sie Kabellänge und Kosten für den redundanten Stern und für den Ring.",
+      "2. Welches Redundanzprotokoll wählen Sie für den Ring? Begründen Sie.",
+      "3. Was passiert bei zwei gleichzeitigen Unterbrechungen im Ring? Welche weiteren Anforderungen hat das Netz einer Kläranlage?"
+    ],
+    "solution": [
+      "1. Stern einfach: 180 + 240 + 310 + 150 + 420 + 380 + 260 + 200 = 2.140 m, redundant doppelt: 4.280 m. Kosten: 4.280 * 45 = 192.600 Euro. Ring: 180 + 120 + 150 + 200 + 170 + 90 + 140 + 110 + 200 = 1.360 m. Kosten: 1.360 * 45 = 61.200 Euro. Der Ring spart 192.600 - 61.200 = 131.400 Euro und schützt trotzdem gegen eine Unterbrechung an jeder Stelle.",
+      "",
+      "2. MRP. Die Steuerungen tolerieren 500 ms. RSTP braucht bis zu 2 s, dann melden die Steuerungen Fehler oder schalten Pumpen ab. MRP schaltet in höchstens 200 ms um und ist für Ringe in der Industrie gemacht. Ein Switch ist Ring-Manager und blockiert im Normalbetrieb einen Ringport. Bei einer Unterbrechung gibt er ihn frei.",
+      "",
+      "3. Bei zwei Unterbrechungen zerfällt der Ring in zwei Teile. Die Stationen zwischen den Schadstellen sind von der Leitwarte getrennt. Sie müssen im Inselbetrieb sicher weiterlaufen (lokale Automatik, Handbetrieb). Weitere Anforderungen: Industrie-Switches für Temperatur und Feuchte, Stromversorgung über USV, Trennung vom Büronetz per Firewall (Kläranlagen gehören zur kritischen Infrastruktur, wenn sie groß genug sind), Fernwartung nur über gesicherten Zugang und eine Dokumentation der Trassen."
+    ]
+  },
+  {
+    "title": "Lastverteilung für den Vorverkauf eines Konzertveranstalters",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Konzertveranstalter verkauft Tickets über einen eigenen Webshop. Beim letzten Vorverkaufsstart kamen in der Spitze 60.000 Anfragen pro Minute, der einzelne Webserver brach zusammen.",
+      "Neu geplant: ein Load Balancer vor mehreren gleichen Webservern. Ein Webserver schafft 250 Anfragen pro Sekunde. Er soll höchstens zu 70 % ausgelastet sein. Fällt ein Server aus, muss die Leistung trotzdem reichen (N+1).",
+      "Der Load Balancer prüft die Server alle 5 Sekunden per Health Check. Nach 3 Fehlschlägen nimmt er einen Server aus der Verteilung.",
+      "",
+      "1. Wie viele Webserver werden benötigt?",
+      "2. Ein Server hängt. Wie lange dauert es höchstens, bis er aus der Verteilung genommen wird? Wie viele Anfragen landen in dieser Zeit bei ihm? Wie lässt sich das verbessern?",
+      "3. Kunden legen Tickets in einen Warenkorb. Welches Problem entsteht durch die Verteilung, und wie lösen Sie es? Wo wird TLS beendet?"
+    ],
+    "solution": [
+      "1. 60.000 / 60 = 1.000 Anfragen pro Sekunde. Pro Server nutzbar: 250 * 0,7 = 175. 1.000 / 175 = 5,71, also 6 Server. Mit N+1: 7 Server.",
+      "",
+      "2. 3 Prüfungen * 5 s = 15 s. Bei 7 Servern erhält jeder 1.000 / 7 = ca. 143 Anfragen pro Sekunde. In 15 s: ca. 2.143 Anfragen, die fehlschlagen. Verbesserung: kürzeres Prüfintervall (z.B. 2 s), Health Check auf eine Seite, die auch Datenbank und Anwendung prüft statt nur den Port, passive Prüfung (Server nach mehreren Fehlerantworten sofort herausnehmen) und automatische Wiederholung auf einem anderen Server.",
+      "",
+      "3. Der Warenkorb liegt in der Sitzung. Landet die nächste Anfrage auf einem anderen Server, ist er leer. Lösung: Sitzungsdaten zentral speichern (z.B. In-Memory-Datenbank oder Datenbank), dann ist jeder Server gleichwertig. Alternativ Session Persistence (Sticky Sessions per Cookie), dann geht bei einem Serverausfall aber der Warenkorb verloren. TLS wird am Load Balancer beendet (TLS-Termination). So kann er Cookies lesen, und die Server werden entlastet. Der Load Balancer selbst läuft als Paar im Hochverfügbarkeitsverbund. Zusätzlich ist ein virtueller Warteraum sinnvoll, der Käufer bei Überlast in eine Warteschlange stellt."
+    ]
+  },
+  {
+    "title": "Netz für die Bürocontainer einer Großbaustelle",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Bauunternehmen richtet für 18 Monate ein Baubüro aus Containern ein. Es gibt keinen Festnetzanschluss, geplant ist ein 5G-Router mit Außenantenne. Die Container stehen in zwei Blöcken, 80 m voneinander entfernt. Block A: Bauleitung, Server-Schrank. Block B: Besprechung, Poliere.",
+      "Bedarf: 25 Arbeitsplätze mit je 2 Mbit/s in der Spitze, bis zu 4 Videokonferenzen gleichzeitig mit je 3 Mbit/s. Je Arbeitsplatz und Arbeitstag werden etwa 3 GB übertragen (Pläne, Mail, Cloud), 21 Arbeitstage pro Monat.",
+      "Zwei Baustellenkameras sollen dauerhaft je 2 Mbit/s in die Cloud hochladen. Rechnen Sie mit 30 Tagen und 1 GB = 1.000 MB.",
+      "",
+      "1. Welche Bandbreite und welches monatliche Datenvolumen braucht das Büro ohne Kameras?",
+      "2. Welches Volumen erzeugen die Kameras pro Monat? Was schlagen Sie vor?",
+      "3. Wie verbinden Sie die beiden Containerblöcke? Welche Besonderheiten der Baustelle beachten Sie?"
+    ],
+    "solution": [
+      "1. Bandbreite: 25 * 2 = 50 Mbit/s plus 4 * 3 = 12 Mbit/s, zusammen 62 Mbit/s in der Spitze. Volumen: 25 * 3 * 21 = 1.575 GB pro Monat. Nötig ist ein Tarif ohne Volumengrenze oder mit mindestens 2 TB. Die Mobilfunkversorgung vorher vor Ort messen und einen Anbieter mit gutem Empfang wählen.",
+      "",
+      "2. 2 * 2 = 4 Mbit/s = 0,5 MB/s. 0,5 * 3.600 * 24 * 30 = 1.296.000 MB = 1.296 GB pro Monat. Die Kameras würden fast so viel verbrauchen wie das ganze Büro. Vorschlag: Aufzeichnung lokal auf einem Rekorder oder auf der Speicherkarte der Kamera, in die Cloud nur Bilder in Abständen (z.B. alle 10 Minuten für die Baudokumentation) oder Videos bei Bewegung.",
+      "",
+      "3. Kein Kupferkabel zwischen den Blöcken: 80 m liegen an der Grenze, und zwischen Containern mit eigener Einspeisung drohen Potenzialunterschiede und Blitzschäden. Besser: Glasfaser im Schutzrohr oder eine WLAN-Richtfunkbrücke. Besonderheiten: Diebstahl (abschließbarer Schrank, Geräte inventarisieren), Staub und Temperatur (Switch und Router für erweiterte Temperaturbereiche), USV für Router und Server, Gäste-WLAN für Nachunternehmer getrennt vom Firmennetz, Daten nicht nur lokal speichern, weil ein Container aufgebrochen werden kann."
+    ]
+  },
+  {
+    "title": "WLAN-Schlüssel eines Weinguts offline geknackt",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Weingut mit Probierstube betreibt seit 8 Jahren ein Mitarbeiter-WLAN mit WPA2-Personal. Der Schlüssel besteht aus 8 Ziffern. Über dieses WLAN laufen auch Kasse, Warenwirtschaft und die Steuerung der Kühltanks. Jedes Jahr erhalten 35 Erntehelfer den Schlüssel, dazu kennen ihn 12 feste Mitarbeiter. Geändert wurde er nie.",
+      "Ein Sicherheitsdienstleister zeichnet vom Parkplatz aus die Anmeldung eines Geräts (4-Wege-Handshake) auf und errät den Schlüssel danach offline auf einem Rechner mit Grafikkarte. Angenommene Rate: 400.000 Schlüssel pro Sekunde.",
+      "",
+      "1. Wie lange dauert es höchstens, alle 8-stelligen Zifferncodes durchzuprobieren? Wie lange wäre es bei einem zufälligen Schlüssel aus 12 Zeichen (Groß- und Kleinbuchstaben, Ziffern)? Rechnen Sie mit 365 Tagen pro Jahr.",
+      "2. Warum ist der Angriff offline möglich, und warum hilft WPA3-Personal (SAE) dagegen? Wie viele Personen kennen den bisherigen Schlüssel im ungünstigsten Fall?",
+      "3. Entwerfen Sie ein neues WLAN-Konzept für Mitarbeiter, Erntehelfer, Gäste und Technik."
+    ],
+    "solution": [
+      "1. 8 Ziffern: 10^8 = 100.000.000 Möglichkeiten. 100.000.000 / 400.000 = 250 s, also gut 4 Minuten, im Mittel die Hälfte. 12 Zeichen aus 62: 62^12 = ca. 3,23 * 10^21 Möglichkeiten. 3,23 * 10^21 / 400.000 = ca. 8,07 * 10^15 s. Pro Jahr 365 * 24 * 3.600 = 31.536.000 s, also ca. 2,56 * 10^8 = 256 Millionen Jahre.",
+      "",
+      "2. Bei WPA2-Personal lässt sich aus dem aufgezeichneten Handshake jeder geratene Schlüssel prüfen, ohne weiter mit dem Access Point zu sprechen. Der Angreifer kann daher beliebig schnell und unbemerkt raten. WPA3-Personal nutzt SAE: Jeder Rateversuch braucht einen neuen Austausch mit dem Access Point. Offline-Raten ist nicht möglich, und viele Fehlversuche fallen auf. Kenntnis des Schlüssels: 8 * 35 = 280 Erntehelfer plus 12 Mitarbeiter, also bis zu 292 Personen, ehemalige eingeschlossen.",
+      "",
+      "3. Mitarbeiter: WPA2/WPA3-Enterprise mit persönlicher Anmeldung (802.1X), Konto wird beim Austritt gesperrt. Erntehelfer: eigene SSID mit WPA3-Personal oder Captive Portal, Schlüssel je Saison neu, nur Internetzugang. Gäste der Probierstube: eigenes Gäste-WLAN mit Client-Isolation. Kasse und Tanksteuerung: möglichst per Kabel, in eigenen VLANs, getrennt durch eine Firewall und ohne Zugriff aus den WLANs. Den alten Schlüssel sofort abschalten und Firmware der Access Points aktualisieren."
+    ]
+  },
+  {
+    "title": "Laborbefunde in einem Praxisverbund verschlüsselt austauschen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "In einem Verbund aus 30 Arztpraxen und Laboren tauschen alle Teilnehmer Befunde untereinander aus. Bisher werden die PDFs per E-Mail mit einem Passwort geschützt, das telefonisch durchgegeben wird.",
+      "Ein Befund mit Bildern ist bis zu 40 MB groß. Vereinfachte Messwerte: Ein asymmetrisches Verfahren verschlüsselt 0,5 MB/s, ein symmetrisches 800 MB/s.",
+      "",
+      "1. Wie viele Schlüssel braucht der Verbund, wenn jedes Paar einen eigenen symmetrischen Schlüssel nutzt? Wie viele Schlüssel sind es mit asymmetrischer Verschlüsselung? Was ändert sich, wenn eine Praxis hinzukommt?",
+      "2. Wie lange dauert die Verschlüsselung eines Befunds rein asymmetrisch und rein symmetrisch? Erklären Sie, wie ein hybrides Verfahren beide Vorteile verbindet.",
+      "3. Wie stellt der Empfänger fest, dass der Befund wirklich vom Labor stammt und unverändert ist?"
+    ],
+    "solution": [
+      "1. Symmetrisch: n * (n - 1) / 2 = 30 * 29 / 2 = 435 Schlüssel, die alle sicher ausgetauscht werden müssen. Asymmetrisch: jeder Teilnehmer ein Schlüsselpaar, also 30 Paare bzw. 60 Schlüssel. Nur die öffentlichen Schlüssel werden verteilt. Kommt eine Praxis hinzu: symmetrisch 31 * 30 / 2 = 465, also 30 neue Schlüssel. Asymmetrisch nur ein neues Schlüsselpaar.",
+      "",
+      "2. Asymmetrisch: 40 / 0,5 = 80 Sekunden. Symmetrisch: 40 / 800 = 0,05 Sekunden. Hybrid: Der Sender erzeugt einen zufälligen Sitzungsschlüssel, verschlüsselt den Befund damit symmetrisch (schnell) und verschlüsselt nur den kurzen Sitzungsschlüssel mit dem öffentlichen Schlüssel des Empfängers (sicherer Austausch). Der Empfänger entschlüsselt mit seinem privaten Schlüssel den Sitzungsschlüssel und damit den Befund.",
+      "",
+      "3. Das Labor bildet einen Hashwert des Befunds und verschlüsselt ihn mit seinem privaten Schlüssel (digitale Signatur). Der Empfänger bildet selbst den Hashwert und prüft die Signatur mit dem öffentlichen Schlüssel des Labors. Stimmen beide überein, ist der Befund unverändert und stammt vom Inhaber des privaten Schlüssels. Dass der öffentliche Schlüssel wirklich zum Labor gehört, bestätigt ein Zertifikat einer vertrauenswürdigen Stelle. Im Gesundheitswesen gibt es dafür den Dienst KIM über die Telematikinfrastruktur, den der Verbund statt eigener Lösungen nutzen sollte."
+    ]
+  },
+  {
+    "title": "Liegengebliebene Ausdrucke in einer Anwaltskanzlei",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Eine Anwaltskanzlei mit 60 Beschäftigten druckt auf 4 Multifunktionsgeräten im Flur. Mandanten warten im selben Flur. Bei einer Prüfung lagen Schriftsätze stundenlang im Ausgabefach. Laut Auswertung werden 12 % der Druckaufträge nie abgeholt. Pro Monat werden 9.000 Seiten gedruckt, eine Seite kostet 2,7 Cent (Toner, Papier, Wartung).",
+      "Geplant ist Follow-Me-Printing: Aufträge landen auf einem Druckserver und werden erst gedruckt, wenn sich die Person mit ihrem Mitarbeiterausweis am Gerät anmeldet. Nicht abgeholte Aufträge werden nach 24 Stunden gelöscht.",
+      "Kosten: Lizenz 6 Euro pro Benutzer und Jahr, Kartenleser 180 Euro pro Gerät (einmalig).",
+      "",
+      "1. Welche Schutzziele sind beim bisherigen Verfahren gefährdet? Wie verbessert Follow-Me-Printing die Lage?",
+      "2. Wie viele Seiten und welche Kosten spart die Kanzlei pro Jahr? Stellen Sie die Kosten im ersten Jahr gegenüber.",
+      "3. Welche weiteren Maßnahmen empfehlen Sie für die Multifunktionsgeräte?"
+    ],
+    "solution": [
+      "1. Gefährdet ist vor allem die Vertraulichkeit: Mandanten und Besucher können fremde Schriftsätze lesen oder mitnehmen. Die anwaltliche Schweigepflicht und die DSGVO verlangen Schutz. Follow-Me-Printing druckt nur, wenn die berechtigte Person vor dem Gerät steht. Nebenbei kann jeder an jedem Gerät drucken, und die Druckkosten lassen sich zuordnen.",
+      "",
+      "2. 9.000 * 0,12 = 1.080 Seiten pro Monat, 1.080 * 12 = 12.960 Seiten pro Jahr. 12.960 * 0,027 = 349,92 Euro Ersparnis pro Jahr. Kosten im ersten Jahr: 60 * 6 = 360 Euro Lizenz + 4 * 180 = 720 Euro Kartenleser = 1.080 Euro. Die Maßnahme rechnet sich über die Druckkosten nicht sofort. Entscheidend ist der Schutz der Mandantendaten.",
+      "",
+      "3. Festplatten der Geräte verschlüsseln und bei Rückgabe löschen lassen. Standardpasswort der Verwaltungsoberfläche ändern, Firmware aktuell halten, nicht benötigte Dienste (z.B. FTP, Telnet) abschalten. Scan-to-Mail nur an die eigene Adresse erlauben. Geräte in ein eigenes VLAN legen, Zugriff nur vom Druckserver. Protokollierung, wer wann was gedruckt oder gescannt hat, datenschutzkonform und mit dem Betriebsrat abgestimmt."
+    ]
+  },
+  {
+    "title": "DDoS-Angriff auf einen Blumenversand vor dem Valentinstag",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Blumenversand macht in den 5 Tagen vor dem Valentinstag 1,2 Mio. Euro Umsatz, rund um die Uhr gleich verteilt. Der Deckungsbeitrag beträgt 35 % des Umsatzes. Der Webshop läuft bei einem Hoster mit 1 Gbit/s Anbindung.",
+      "Am 12. Februar war der Shop 6 Stunden nicht erreichbar. Die Analyse zeigt: 40 Gbit/s DNS-Antworten aus dem Internet trafen den Shop. Kurz vorher kam eine E-Mail mit einer Lösegeldforderung.",
+      "Eine DNS-Anfrage ist 64 Byte groß, die Antwort 3.200 Byte. Ein DDoS-Schutzdienst des Hosters kostet 490 Euro pro Monat.",
+      "",
+      "1. Wie funktioniert dieser Angriff? Berechnen Sie den Verstärkungsfaktor und die Bandbreite, die der Angreifer selbst aufbringen musste.",
+      "2. Wie hoch war der Verlust an Deckungsbeitrag? Stellen Sie ihn den Jahreskosten des Schutzdienstes gegenüber.",
+      "3. Warum hilft die eigene Firewall hier nicht? Welche Maßnahmen empfehlen Sie, auch zur Lösegeldforderung?"
+    ],
+    "solution": [
+      "1. Reflexionsangriff mit Verstärkung: Der Angreifer schickt kleine DNS-Anfragen mit gefälschter Absenderadresse (der Adresse des Shops) an offene DNS-Server. Diese schicken große Antworten an den Shop. Verstärkung: 3.200 / 64 = 50. Der Angreifer brauchte nur 40 / 50 = 0,8 Gbit/s, meist verteilt über ein Botnetz.",
+      "",
+      "2. Umsatz pro Stunde: 1.200.000 / (5 * 24) = 10.000 Euro. Deckungsbeitrag pro Stunde: 10.000 * 0,35 = 3.500 Euro. Verlust: 3.500 * 6 = 21.000 Euro. Dazu kommen Imageschaden und verärgerte Kunden. Schutzdienst: 490 * 12 = 5.880 Euro pro Jahr. Schon ein einziger Angriff in der Saison kostet deutlich mehr.",
+      "",
+      "3. Die Leitung mit 1 Gbit/s ist schon vor der Firewall mit 40 Gbit/s überlastet, die Firewall sieht die gültigen Anfragen gar nicht mehr. Abwehren muss man vorgelagert: DDoS-Schutz beim Hoster oder Provider, der den Verkehr in einem Scrubbing-Center filtert, oder ein Content Delivery Network mit großer Bandbreite. Dazu Notfallkontakte beim Hoster, ein Ablaufplan für Angriffe und Tests vor der Saison. Kein Lösegeld zahlen: Es gibt keine Garantie, und es macht das Unternehmen zum lohnenden Ziel. Die Erpressung bei der Polizei (Zentrale Ansprechstelle Cybercrime) anzeigen und Beweise sichern."
+    ]
+  },
+  {
+    "title": "Cloud-Zugangsschlüssel eines App-Start-ups veröffentlicht",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Start-up entwickelt eine Fitness-App. Ein Entwickler hat versehentlich eine Konfigurationsdatei mit einem Zugangsschlüssel zum Cloud-Konto in ein öffentliches Git-Repository hochgeladen. Der Schlüssel hat Administratorrechte.",
+      "20 Minuten später starteten Unbekannte 40 GPU-Instanzen zum Schürfen von Kryptowährung, jede kostet 3,10 Euro pro Stunde. Eine Budgetwarnung fiel am Freitag, 13.02.2026, um 16:40 Uhr auf, 14 Stunden nach dem Start der Instanzen. Im selben Konto liegt ein Speicher mit Profildaten der App-Nutzer.",
+      "",
+      "1. Welche Kosten sind bis zur Entdeckung entstanden? Welche Kosten wären es gewesen, wenn die Warnung erst am Montag um 8:40 Uhr bemerkt worden wäre?",
+      "2. Beschreiben Sie die Sofortmaßnahmen in sinnvoller Reihenfolge. Warum reicht es nicht, die Datei aus dem Repository zu löschen?",
+      "3. Die Protokolle zeigen Zugriffe auf den Speicher mit Nutzerdaten. Bis wann muss spätestens die Meldung an die Datenschutzaufsicht erfolgen? Wie verhindern Sie solche Fehler künftig?"
+    ],
+    "solution": [
+      "1. 40 * 3,10 * 14 = 1.736 Euro. Die Instanzen liefen seit Freitag 2:40 Uhr. Bis Montag 8:40 Uhr wären es 3 Tage und 6 Stunden, also 78 Stunden: 40 * 3,10 * 78 = 9.672 Euro.",
+      "",
+      "2. Zuerst den Schlüssel sofort sperren und einen neuen erzeugen, erst dann wird er für die Angreifer wertlos. Danach alle fremden Instanzen und Ressourcen beenden, auch in anderen Regionen. Die Protokolle des Kontos auswerten: Welche Aktionen hat der Schlüssel ausgelöst, wurden weitere Zugänge oder Schlüssel angelegt? Diese entfernen. Beweise sichern und den Cloud-Anbieter informieren, oft erlässt er einen Teil der Kosten. Das Löschen der Datei reicht nicht, weil sie in der Versionsgeschichte bleibt und öffentliche Repositorys automatisch nach Schlüsseln durchsucht und kopiert werden.",
+      "",
+      "3. Die Frist beträgt 72 Stunden ab Kenntnis (Art. 33 DSGVO), auch über das Wochenende: Freitag, 13.02.2026, 16:40 Uhr plus 72 Stunden ergibt Montag, 16.02.2026, 16:40 Uhr. Bei hohem Risiko für die Nutzer müssen sie selbst benachrichtigt werden. Vorbeugung: Schlüssel nie im Code, sondern in einem Secret-Speicher. Automatische Suche nach Geheimnissen vor jedem Commit und im Repository. Schlüssel mit geringsten Rechten und kurzer Laufzeit, MFA für das Konto, Budgetwarnungen mit Benachrichtigung auf das Bereitschaftshandy und Schulung der Entwickler."
+    ]
+  },
+  {
+    "title": "Bildarchiv einer Radiologiepraxis für zehn Jahre planen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Radiologiepraxis speichert alle Aufnahmen in einem Bildarchiv (PACS). Pro Arbeitstag entstehen: 60 MRT-Untersuchungen zu je 300 MB, 40 CT-Untersuchungen zu je 500 MB und 120 Röntgenbilder zu je 30 MB. Die Praxis arbeitet an 250 Tagen im Jahr.",
+      "Für alle Bilder gilt vereinfacht eine Aufbewahrungspflicht von 10 Jahren. Eine verlustfreie Kompression spart 40 %. Rechnen Sie mit 1 TB = 1.000.000 MB.",
+      "Für das Archiv sind Festplatten mit 20 TB im RAID 6 vorgesehen. Die Nutzkapazität soll 20 % Reserve enthalten.",
+      "",
+      "1. Wie viel Speicher fällt pro Tag und pro Jahr an? Wie viel ist nach 10 Jahren komprimiert zu speichern?",
+      "2. Wie viele Festplatten braucht das RAID 6? Warum wählen Sie RAID 6 und nicht RAID 5?",
+      "3. Die Praxis meint, mit RAID 6 seien die Bilder sicher. Nehmen Sie Stellung und nennen Sie weitere Anforderungen an ein Archiv mit Gesundheitsdaten."
+    ],
+    "solution": [
+      "1. Pro Tag: 60 * 300 + 40 * 500 + 120 * 30 = 18.000 + 20.000 + 3.600 = 41.600 MB = 41,6 GB. Pro Jahr: 41.600 * 250 = 10.400.000 MB = 10,4 TB. Nach 10 Jahren: 104 TB, komprimiert 104 * 0,6 = 62,4 TB.",
+      "",
+      "2. Mit Reserve: 62,4 * 1,2 = 74,88 TB. Nötig sind 74,88 / 20 = 3,74, also 4 Datenplatten (80 TB). RAID 6 braucht 2 Platten für Paritäten: 6 Festplatten. RAID 6 verkraftet zwei Ausfälle. Beim Rebuild großer Platten dauert es viele Stunden, in denen bei RAID 5 ein zweiter Fehler oder ein Lesefehler alle Daten zerstören würde.",
+      "",
+      "3. RAID schützt nur gegen Plattenausfälle. Es schützt nicht gegen Löschen, Schadsoftware, Brand oder einen Controllerdefekt. Nötig ist eine zweite Kopie an einem anderen Ort, z.B. ein zweites Archivsystem in einem anderen Brandabschnitt oder bei einem Dienstleister mit Vertrag zur Auftragsverarbeitung. Mindestens eine Kopie unveränderbar (WORM oder Immutable Storage), damit Bilder nicht manipuliert oder verschlüsselt werden können. Verschlüsselung, Zugriffsprotokollierung, regelmäßige Wiederherstellungstests und ein Plan für die Migration auf neue Hardware innerhalb der 10 Jahre."
+    ]
+  },
+  {
+    "title": "Ersatzplatten für ein Klimadatenarchiv vorhalten",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Forschungsinstitut speichert Klimadaten auf 480 Festplatten, aufgeteilt in 40 RAID-6-Gruppen zu je 12 Platten. Der Hersteller gibt eine jährliche Ausfallrate (AFR) von 1,4 % an. Nach 5 Jahren Betrieb rechnet das Institut mit 4 %.",
+      "Ersatzplatten haben 3 Wochen Lieferzeit. Ein Rebuild dauert 30 Stunden. Rechnen Sie mit 52 Wochen und 8.760 Stunden pro Jahr.",
+      "Das Monitoring zeigt bei 5 Platten seit Wochen steigende Werte für umgelagerte Sektoren (S.M.A.R.T.).",
+      "",
+      "1. Wie viele Plattenausfälle sind pro Jahr zu erwarten, heute und nach 5 Jahren? Wie viele Ausfälle erwarten Sie heute während einer Lieferzeit?",
+      "2. Wie groß ist die Wahrscheinlichkeit, dass während eines Rebuilds eine weitere Platte derselben Gruppe ausfällt? Warum ist das Risiko in der Praxis höher?",
+      "3. Wie viele Ersatzplatten legen Sie auf Lager? Wie gehen Sie mit den 5 auffälligen Platten um?"
+    ],
+    "solution": [
+      "1. Heute: 480 * 0,014 = 6,72, also etwa 7 Ausfälle pro Jahr. Nach 5 Jahren: 480 * 0,04 = 19,2, also etwa 19 pro Jahr. In 3 Wochen Lieferzeit: 6,72 * 3 / 52 = ca. 0,39 Ausfälle.",
+      "",
+      "2. In der Gruppe bleiben 11 Platten. Wahrscheinlichkeit: 11 * 0,014 * 30 / 8.760 = ca. 0,00053, also etwa 0,053 %. Das ist gering, und RAID 6 verkraftet einen weiteren Ausfall. In der Praxis ist das Risiko höher, weil Platten einer Gruppe oft aus derselben Charge stammen, gleich alt sind und beim Rebuild stark belastet werden. Dazu kommen Lesefehler auf den verbleibenden Platten.",
+      "",
+      "3. Rein rechnerisch reicht 1 Platte für die Lieferzeit. Weil Ausfälle zufällig gehäuft auftreten und die 5 auffälligen Platten dazukommen, ist ein Vorrat von etwa 3 plus je eine Hot-Spare in größeren Bereichen sinnvoll. Die 5 auffälligen Platten vorbeugend tauschen, und zwar nacheinander, damit nie zwei Rebuilds in einer Gruppe laufen. Ab dem 5. Jahr den Vorrat an die höhere Ausfallrate anpassen und den Austausch der Platten planen."
+    ]
+  },
+  {
+    "title": "Kontingente für die Home-Laufwerke einer Hochschule",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Hochschule stellt Home-Laufwerke auf einem Speichersystem mit 40 TB Nutzkapazität bereit. 6.000 Studierende erhalten ein Kontingent (Quota) von je 10 GB, 800 Beschäftigte je 50 GB. Rechnen Sie mit 1 TB = 1.000 GB.",
+      "Die Auswertung zeigt: Studierende belegen im Mittel 2,3 GB, Beschäftigte 35 % ihres Kontingents. Snapshots benötigen zusätzlich 20 % der belegten Daten. Die Datenmenge wächst jährlich um 15 %. Ab 85 % Belegung soll erweitert werden.",
+      "",
+      "1. Wie viel Speicher ist zugesagt, wie viel tatsächlich belegt? Berechnen Sie den Überbuchungsfaktor.",
+      "2. Wie hoch ist die Belegung des Speichersystems heute und in einem Jahr? Wann muss erweitert werden?",
+      "3. Wie richten Sie die Kontingente ein (Soft- und Hard-Limit)? Welche organisatorischen Maßnahmen entlasten den Speicher?"
+    ],
+    "solution": [
+      "1. Zugesagt: 6.000 * 10 = 60 TB plus 800 * 50 = 40 TB, zusammen 100 TB. Belegt: 6.000 * 2,3 = 13,8 TB plus 800 * 50 * 0,35 = 14 TB, zusammen 27,8 TB. Überbuchungsfaktor: 100 / 40 = 2,5. Das geht nur gut, solange nicht alle ihr Kontingent ausschöpfen.",
+      "",
+      "2. Heute mit Snapshots: 27,8 * 1,2 = 33,36 TB, das sind 33,36 / 40 = 83,4 %. In einem Jahr: 33,36 * 1,15 = ca. 38,36 TB, also ca. 95,9 %. Die Warnschwelle von 85 % wird im Laufe des Jahres überschritten. Die Erweiterung muss jetzt geplant und beschafft werden.",
+      "",
+      "3. Soft-Limit z.B. bei 90 % des Kontingents mit Warnmail, Hard-Limit bei 100 %, dann kann nichts mehr gespeichert werden. Die Summe der Kontingente und die tatsächliche Belegung überwachen. Organisatorisch: Konten Exmatrikulierter nach einer angekündigten Frist löschen, Nutzer auf Löschung alter Daten hinweisen, große Forschungsdaten auf ein eigenes System verlagern, Snapshot-Aufbewahrung prüfen. Zusätzlich Deduplizierung und Kompression einschalten, wenn das System sie unterstützt."
+    ]
+  },
+  {
+    "title": "Fileserver eines Landschaftsarchitekturbüros am Wochenende auf ein neues NAS umziehen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Landschaftsarchitekturbüro ersetzt seinen alten Fileserver durch ein NAS. Zu übertragen sind 2,4 TB in 1,8 Millionen Dateien (viele kleine Plan- und Bilddateien). Die Verbindung liefert 110 MB/s. Jede Datei kostet zusätzlich etwa 4 ms Verwaltungsaufwand. Rechnen Sie mit 1 TB = 1.000.000 MB.",
+      "Das Büro arbeitet Montag bis Freitag. Ein Kollege will am Freitag um 18 Uhr einfach alles kopieren.",
+      "Alternative: Eine Vorab-Kopie läuft unter der Woche. Am Freitag werden nur die Änderungen abgeglichen. Pro Woche ändern sich 1,5 % der Datenmenge. Beim Abgleich wird jede Datei geprüft, das kostet 1 ms pro Datei.",
+      "",
+      "1. Wie lange dauert die vollständige Kopie?",
+      "2. Wie lange dauert der Abgleich am Freitag? Welche Vorteile hat dieses Vorgehen?",
+      "3. Worauf achten Sie beim Kopieren und bei der Umstellung, damit am Montag alle normal arbeiten können?"
+    ],
+    "solution": [
+      "1. Datenmenge: 2.400.000 MB / 110 MB/s = ca. 21.818 s = ca. 6,06 Stunden. Verwaltungsaufwand: 1.800.000 * 0,004 s = 7.200 s = 2 Stunden. Zusammen ca. 8,06 Stunden. Es passt ins Wochenende, lässt aber bei Fehlern wenig Spielraum.",
+      "",
+      "2. Änderungen: 2.400.000 * 0,015 = 36.000 MB, 36.000 / 110 = ca. 327 s = ca. 5,5 Minuten. Prüfung: 1.800.000 * 0,001 = 1.800 s = 30 Minuten. Zusammen etwa 35 Minuten. Vorteile: kurze Umstellung, Fehler bei der Vorab-Kopie (Pfade zu lang, Zugriff verweigert) fallen schon unter der Woche auf, und die Umstellung kann bei Problemen verschoben werden.",
+      "",
+      "3. Berechtigungen, Besitzer und Zeitstempel mitkopieren (z.B. robocopy /MIR /COPYALL oder /SEC) und das Protokoll auf Fehler prüfen. Vor dem letzten Abgleich den alten Server schreibgeschützt schalten, damit keine Änderungen verloren gehen. Laufwerkszuordnungen per Gruppenrichtlinie oder über einen DFS-Namespace umstellen, dann ändern sich die Pfade für die Nutzer nicht. Stichproben und Test mit einem Fachanwender. Den alten Server nicht sofort löschen, sondern als Rückfall einige Wochen aufheben. Die Datensicherung auf das neue NAS umstellen und testen."
+    ]
+  },
+  {
+    "title": "Datenbank-VM einer Versandapotheke über NUMA-Grenzen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Versandapotheke betreibt ihre Bestelldatenbank in einer VM mit 24 vCPU und 320 GB RAM. Der Host hat 2 CPUs mit je 16 Kernen und 512 GB RAM, je CPU 256 GB (zwei NUMA-Knoten). Der Hypervisor belegt je Knoten 16 GB.",
+      "Messungen: 40 % der Speicherzugriffe gehen auf den entfernten NUMA-Knoten. Ein lokaler Zugriff dauert 90 ns, ein entfernter 150 ns. Die CPU-Auslastung der VM liegt in der Spitze bei 45 %. Die Datenbank nutzt höchstens 210 GB RAM.",
+      "Die Datenbank wird je 2 Kerne der VM lizenziert, ein Paket kostet 1.450 Euro pro Jahr.",
+      "",
+      "1. Warum passt die VM nicht in einen NUMA-Knoten? Berechnen Sie die mittlere Zugriffszeit und den Zuwachs gegenüber rein lokalem Zugriff.",
+      "2. Schlagen Sie eine neue Größe vor, die in einen NUMA-Knoten passt, und begründen Sie sie mit den Messwerten.",
+      "3. Wie ändern sich die Lizenzkosten? Was ist bei der Umstellung zu beachten?"
+    ],
+    "solution": [
+      "1. Ein Knoten hat 16 Kerne und 256 - 16 = 240 GB für VMs. Die VM braucht 24 vCPU und 320 GB, beides mehr als ein Knoten. Mittlere Zugriffszeit: 0,6 * 90 + 0,4 * 150 = 54 + 60 = 114 ns. Das sind 114 / 90 = ca. 1,27, also etwa 27 % mehr als bei lokalem Zugriff.",
+      "",
+      "2. In der Spitze genutzt: 24 * 0,45 = 10,8 vCPU. Vorschlag: 12 vCPU mit etwas Reserve, das passt in 16 Kerne. RAM: 210 GB plus Reserve für Betriebssystem, z.B. 224 GB. Das passt in 240 GB. Die VM läuft dann vollständig auf einem Knoten, alle Speicherzugriffe sind lokal.",
+      "",
+      "3. Vorher 24 / 2 = 12 Pakete * 1.450 = 17.400 Euro pro Jahr. Nachher 12 / 2 = 6 Pakete * 1.450 = 8.700 Euro. Ersparnis 8.700 Euro pro Jahr. Beachten: Änderung im Wartungsfenster mit Neustart, vorher Sicherung bzw. Snapshot. Die Datenbankeinstellungen (Arbeitsspeicher, Parallelität) an die neue Größe anpassen. Danach Antwortzeiten und Auslastung mit den alten Messwerten vergleichen. Lizenzbedingungen prüfen, ob die Reduzierung zum Vertragsjahr gemeldet werden muss."
+    ]
+  },
+  {
+    "title": "Hypervisor einer Kreisverwaltung nach Lizenzänderung wechseln",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Kreisverwaltung betreibt 3 Virtualisierungshosts mit je 2 CPUs zu 16 Kernen und 85 VMs. Der Hersteller des Hypervisors stellt auf Abonnements um. Angenommener Preis: 190 Euro pro Kern und Jahr. Bisher zahlte die Verwaltung 6.500 Euro Wartung pro Jahr.",
+      "Alternative: eine Open-Source-Plattform mit Hersteller-Support. Angenommener Preis: 1.020 Euro pro CPU-Sockel und Jahr.",
+      "Migrationsaufwand: 1,5 Stunden pro VM, dazu 80 Stunden für Aufbau, Tests und Schulung. Ein externer Dienstleister berechnet 85 Euro pro Stunde.",
+      "",
+      "1. Berechnen Sie die jährlichen Kosten beider Varianten.",
+      "2. Was kostet die Migration? Nach wie vielen Jahren hat sie sich amortisiert?",
+      "3. Welche Punkte prüfen Sie vor der Entscheidung, und wie gehen Sie bei der Migration vor?"
+    ],
+    "solution": [
+      "1. Kerne: 3 * 2 * 16 = 96. Abonnement: 96 * 190 = 18.240 Euro pro Jahr, fast dreimal so viel wie bisher. Alternative: 3 * 2 = 6 Sockel, 6 * 1.020 = 6.120 Euro pro Jahr. Unterschied: 18.240 - 6.120 = 12.120 Euro pro Jahr.",
+      "",
+      "2. Aufwand: 85 * 1,5 = 127,5 Stunden plus 80 Stunden = 207,5 Stunden. 207,5 * 85 = 17.637,50 Euro. Amortisation: 17.637,50 / 12.120 = ca. 1,46 Jahre, also nach etwa anderthalb Jahren.",
+      "",
+      "3. Prüfen: Unterstützt die Datensicherung die neue Plattform? Geben die Hersteller der Fachverfahren sie frei? Gibt es Treiber für Gastsysteme (z.B. VirtIO für Windows)? Können die eigenen Administratoren sie betreiben, und gibt es Support mit Reaktionszeiten? Wie lange läuft der alte Vertrag noch? Vorgehen: Testumgebung aufbauen, Pilotmigration unkritischer VMs, dann Hosts nacheinander frei räumen und neu installieren. Jede VM mit Sicherung, Wartungsfenster und Funktionstest durch den Fachbereich umziehen. Die Rückfallmöglichkeit bleibt, bis alle VMs laufen."
+    ]
+  },
+  {
+    "title": "Virtualisierungshosts einer Bausparkasse nachts abschalten",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Bausparkasse betreibt einen Cluster aus 8 Hosts mit je 512 GB RAM. Tagsüber sind alle Hosts nötig. Nachts von 20 bis 6 Uhr laufen nur noch VMs mit zusammen 900 GB RAM, die CPU-Last ist gering.",
+      "Ein Host nimmt im Leerlauf 180 W auf, im Standby 8 W. Das Rechenzentrum hat eine PUE von 1,6. Angenommener Strompreis: 0,30 Euro pro kWh.",
+      "Geplant ist eine automatische Energieverwaltung: Nachts werden VMs per Live-Migration zusammengelegt und nicht benötigte Hosts in Standby versetzt. Ein Host braucht 8 Minuten, bis er wieder bereit ist. Auch nachts muss der Ausfall eines Hosts verkraftet werden.",
+      "",
+      "1. Wie viele Hosts müssen nachts laufen? Prüfen Sie die Anforderung für den Ausfall eines Hosts.",
+      "2. Wie viel Energie und wie viel Geld spart die Bausparkasse pro Jahr? Rechnen Sie vereinfacht nur mit dem Leerlaufverbrauch der abgeschalteten Hosts.",
+      "3. Welche Risiken hat das Verfahren, und wie begegnen Sie ihnen?"
+    ],
+    "solution": [
+      "1. 900 / 512 = 1,76, also 2 Hosts für den RAM. Mit Reserve für einen Ausfall (N+1): 3 Hosts. Prüfung: 3 * 512 = 1.536 GB. Fällt einer aus, bleiben 2 * 512 = 1.024 GB, das ist mehr als 900 GB. Nachts können 8 - 3 = 5 Hosts in Standby.",
+      "",
+      "2. Einsparung pro Host: 180 - 8 = 172 W. 5 Hosts: 860 W. Pro Nacht 10 Stunden: 8,6 kWh, pro Jahr 860 W * 10 h * 365 = 3.139 kWh. Mit PUE: 3.139 * 1,6 = 5.022,4 kWh. 5.022,4 * 0,30 = ca. 1.506,72 Euro pro Jahr.",
+      "",
+      "3. Risiken: Ein Host startet morgens nicht, eine Last-Spitze in der Nacht (z.B. Batchläufe, Datensicherung) trifft auf zu wenige Hosts, häufiges Ein- und Ausschalten belastet die Hardware. Gegenmaßnahmen: Hosts nach Zeitplan schon um 5:30 Uhr wecken, nicht erst bei Bedarf. Nächtliche Jobs in die Planung einbeziehen. Aufwecken per Managementkarte (IPMI, iLO, iDRAC) regelmäßig testen und überwachen. Einen Mindestwert von 3 aktiven Hosts fest einstellen. Firmware-Updates weiter planbar halten."
+    ]
+  },
+  {
+    "title": "Hohe CPU-Ready-Werte bei der Lohnabrechnungs-VM",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Lohnabrechnungsdienstleister betreibt alle Server auf einem Host mit 2 CPUs zu je 10 Kernen. Die VMs haben zusammen 64 vCPU. Zum Monatsende ist die Abrechnungs-VM mit 8 vCPU sehr langsam, obwohl ihre CPU-Auslastung im Mittel nur 15 % beträgt.",
+      "Das Monitoring zeigt für die Abrechnungs-VM einen CPU-Ready-Wert von 8.000 ms pro Messintervall von 20 Sekunden (Summe aller vCPUs). Als problematisch gelten mehr als 5 % pro vCPU.",
+      "Drei Test-VMs mit je 8 vCPU laufen dauerhaft, werden aber nur selten gebraucht.",
+      "",
+      "1. Was bedeutet CPU Ready? Berechnen Sie den Wert in Prozent pro vCPU und das Verhältnis von vCPU zu physischen Kernen.",
+      "2. Warum kann es helfen, der Abrechnungs-VM weniger vCPU zu geben? Schlagen Sie eine Größe vor.",
+      "3. Wie ändert sich das Verhältnis mit Ihrem Vorschlag und wenn die Test-VMs nur bei Bedarf laufen? Welche weiteren Maßnahmen empfehlen Sie?"
+    ],
+    "solution": [
+      "1. CPU Ready ist die Zeit, in der eine vCPU arbeiten will, aber auf einen freien physischen Kern wartet. Pro vCPU: 8.000 / 8 = 1.000 ms. 1.000 / 20.000 = 5 %, also genau an der Grenze, zum Monatsende eher darüber. Verhältnis: 64 vCPU / 20 Kerne = 3,2 zu 1.",
+      "",
+      "2. Der Hypervisor muss für eine VM mit vielen vCPUs gleichzeitig mehrere freie Kerne finden. Je mehr vCPUs, desto länger wartet sie. Bei 15 % mittlerer Auslastung nutzt die VM rechnerisch nur 8 * 0,15 = 1,2 vCPU. Vorschlag: 4 vCPU, das deckt auch Spitzen am Monatsende ab. Danach Ready und Auslastung erneut messen.",
+      "",
+      "3. Mit 4 vCPU: 64 - 4 = 60 vCPU, 60 / 20 = 3,0 zu 1. Test-VMs aus: 60 - 3 * 8 = 36 vCPU, 36 / 20 = 1,8 zu 1. Weitere Maßnahmen: Test-VMs nur bei Bedarf starten oder auf einen anderen Host verlagern. Der Abrechnungs-VM höhere Shares oder eine CPU-Reservierung geben. Weitere Überdimensionierungen mit Messwerten suchen. Einen zweiten Host einplanen, der ohnehin für den Ausfall des einzigen Hosts fehlt."
+    ]
+  },
+  {
+    "title": "Anschaffungen einer Fahrschule richtig abschreiben",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Fahrschule kauft am 1. Juli: 6 Tablets für den Theorieunterricht zu je 690 Euro netto, einen Server für 4.200 Euro netto und einen Fahrsimulator für 9.600 Euro netto. Für den Fahrsimulator wird eine Nutzungsdauer von 8 Jahren angenommen. Der Inhaber fragt Sie, wie sich die Käufe auf den Gewinn auswirken.",
+      "Rechnen Sie vereinfacht mit folgenden Annahmen: Geringwertige Wirtschaftsgüter (GWG) bis 800 Euro netto dürfen sofort voll abgeschrieben werden. Für Computerhardware darf nach einem BMF-Schreiben eine Nutzungsdauer von einem Jahr angesetzt werden, sonst gelten 3 Jahre. Im Anschaffungsjahr wird zeitanteilig nach Monaten abgeschrieben, außer bei Sofortabschreibung und bei einem Jahr Nutzungsdauer. Steuersatz 30 %.",
+      "",
+      "1. Wie werden Tablets und Fahrsimulator abgeschrieben? Berechnen Sie die Abschreibung im ersten Jahr.",
+      "2. Der Simulator wird Ende des dritten Jahres für 5.000 Euro verkauft. Wie hoch ist der Restbuchwert, und welcher Gewinn oder Verlust entsteht?",
+      "3. Vergleichen Sie beim Server ein Jahr und drei Jahre Nutzungsdauer. Wie wirkt sich die Wahl im ersten Jahr auf Gewinn, Steuer und Zahlungsmittel aus?"
+    ],
+    "solution": [
+      "1. Tablets: 690 Euro liegt unter 800 Euro, also GWG mit Sofortabschreibung: 6 * 690 = 4.140 Euro im ersten Jahr. Simulator: linear 9.600 / 8 = 1.200 Euro pro Jahr. Kauf am 1. Juli, also 6 von 12 Monaten: 600 Euro im ersten Jahr.",
+      "",
+      "2. Abschreibung bis Ende Jahr 3: 600 + 1.200 + 1.200 = 3.000 Euro. Restbuchwert: 9.600 - 3.000 = 6.600 Euro. Verkauf für 5.000 Euro: Buchverlust 6.600 - 5.000 = 1.600 Euro, der den Gewinn im dritten Jahr mindert.",
+      "",
+      "3. Ein Jahr: 4.200 Euro Abschreibung im ersten Jahr. Drei Jahre: 4.200 / 3 = 1.400 Euro pro Jahr, im ersten Jahr zeitanteilig 1.400 * 6 / 12 = 700 Euro. Abschreibung im ersten Jahr insgesamt: 4.140 + 4.200 + 600 = 8.940 Euro gegenüber 4.140 + 700 + 600 = 5.440 Euro. Unterschied 3.500 Euro, bei 30 % sind das 1.050 Euro weniger Steuern im ersten Jahr. Die Steuer wird dadurch nur verschoben, in den Folgejahren fehlt die Abschreibung. Die Abschreibung selbst ändert die Zahlungsmittel nicht, das Geld ist beim Kauf abgeflossen. Nur die geringere Steuerzahlung verbessert die Liquidität. Die endgültige Entscheidung trifft der Inhaber mit seinem Steuerberater."
+    ]
+  },
+  {
+    "title": "Server einer Ingenieurgesellschaft in ein Colocation-Rechenzentrum auslagern",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Ingenieurgesellschaft betreibt einen eigenen Serverraum. Die IT-Leistung beträgt dauerhaft 4,5 kW, die PUE 2,0. Angenommener Strompreis: 0,28 Euro pro kWh. Die Klimawartung kostet 2.400 Euro pro Jahr, der Batterietausch der USV 3.600 Euro alle 4 Jahre. Der Raum (20 m²) könnte sonst als Büro genutzt werden, die Miete beträgt 14 Euro pro m² und Monat.",
+      "Angebot Colocation: halbes Rack für 800 Euro pro Monat, Strom nach Verbrauch der IT für 0,38 Euro pro kWh inklusive Kühlung, Anbindung an das Büro 300 Euro pro Monat. Das Rechenzentrum ist zertifiziert, hat Notstrom und Zutrittskontrolle.",
+      "",
+      "1. Berechnen Sie die jährlichen Kosten des eigenen Serverraums.",
+      "2. Berechnen Sie die jährlichen Kosten der Colocation und den Unterschied.",
+      "3. Welche weiteren Punkte gehören in die Empfehlung an die Geschäftsführung?"
+    ],
+    "solution": [
+      "1. Gesamtleistung: 4,5 * 2,0 = 9 kW. Energie: 9 * 8.760 = 78.840 kWh. Strom: 78.840 * 0,28 = 22.075,20 Euro. Klima: 2.400 Euro. USV: 3.600 / 4 = 900 Euro. Raum: 20 * 14 * 12 = 3.360 Euro. Summe: 28.735,20 Euro pro Jahr.",
+      "",
+      "2. Rack: 800 * 12 = 9.600 Euro. Strom: 4,5 * 8.760 = 39.420 kWh * 0,38 = 14.979,60 Euro. Anbindung: 300 * 12 = 3.600 Euro. Summe: 28.179,60 Euro pro Jahr. Unterschied: 28.735,20 - 28.179,60 = 555,60 Euro pro Jahr zugunsten der Colocation. Finanziell ist das fast gleich.",
+      "",
+      "3. Die Entscheidung hängt an der Qualität: Notstrom, redundante Kühlung, Brandschutz und Zutrittskontrolle sind im eigenen Raum kaum bezahlbar. Einmalige Kosten für Umzug und Anbindung einplanen. Die Anbindung wird zum kritischen Punkt: Bandbreite für große CAD-Dateien, Latenz und eine zweite Leitung. Anfahrt bei Hardwaredefekten oder ein Remote-Hands-Service. Vertragslaufzeit, Kündigungsfristen und Preisanpassungen für Strom prüfen. Vertrag zur Auftragsverarbeitung, falls der Anbieter Zugriff auf Systeme erhält. Empfehlung: Colocation, wenn die Anbindung redundant ausgelegt wird."
+    ]
+  },
+  {
+    "title": "Lizenzprüfung durch einen Softwarehersteller bei einer Druckerei",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Druckerei nutzt eine Layoutsoftware im Abonnement, lizenziert sind 40 Plätze zu je 62 Euro pro Monat. Der Hersteller kündigt ein Lizenzaudit an. Ihre Inventur ergibt: Die Software ist auf 52 Rechnern installiert. In den letzten 90 Tagen wurde sie auf 47 Rechnern genutzt.",
+      "Laut Vertrag zählt jede Installation. Für fehlende Lizenzen verlangt der Hersteller eine Nachzahlung für 24 Monate plus 15 % Bearbeitungszuschlag.",
+      "Ihr Vorschlag: vor dem Audit alle nicht genutzten Installationen entfernen und für die fehlenden Plätze sofort Abonnements für 12 Monate abschließen.",
+      "",
+      "1. Wie viele Lizenzen fehlen laut Vertrag? Wie hoch wäre die Nachforderung des Herstellers?",
+      "2. Was kosten die Abonnements nach Ihrem Vorschlag für 12 Monate? Warum ist das Entfernen der Installationen zulässig, das Verschweigen der Nutzung aber nicht?",
+      "3. Welche Maßnahmen im Lizenzmanagement verhindern eine Unterlizenzierung künftig?"
+    ],
+    "solution": [
+      "1. 52 - 40 = 12 fehlende Lizenzen. Nachforderung: 12 * 62 * 24 = 17.856 Euro, mit 15 % Zuschlag: 17.856 * 1,15 = 20.534,40 Euro.",
+      "",
+      "2. Genutzt wird auf 47 Rechnern, also fehlen 47 - 40 = 7 Lizenzen. 7 * 62 * 12 = 5.208 Euro. Nicht benötigte Software zu deinstallieren ist erlaubt und ohnehin gutes Lizenzmanagement. Die tatsächliche Nutzung der Vergangenheit muss aber korrekt angegeben werden. Falsche Angaben können als Verletzung des Urheberrechts und des Vertrags verfolgt werden, dafür haftet auch die Geschäftsführung. Im Gespräch mit dem Hersteller lässt sich eine faire Lösung für die Vergangenheit oft aushandeln, wenn die Druckerei offen mitarbeitet.",
+      "",
+      "3. Software Asset Management: Inventarisierung aller Installationen mit einem Werkzeug, Abgleich mit den gekauften Lizenzen, Software nur über die IT und eine Softwareverteilung installieren, keine lokalen Adminrechte für Anwender. Prozess für Austritte und Rechnerwechsel, damit Lizenzen zurückkommen. Zuständige Person und regelmäßige Prüfung (z.B. vierteljährlich), Verträge und Nachweise zentral ablegen."
+    ]
+  },
+  {
+    "title": "Rahmenvertrag mit Staffelpreisen für eine Hotelgruppe",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Hotelgruppe mit 14 Hotels erneuert Rezeptions-PCs (3 pro Hotel) und kauft 20 Notebooks für die Verwaltung. Die Hotels werden in 3 Wellen im Abstand von 4 Monaten umgestellt, pro Welle etwa ein Drittel der Geräte.",
+      "Angebot Ihres Systemhauses: PC 780 Euro, Notebook 1.050 Euro (netto). Staffelrabatt je Bestellung: ab 25 Geräten 6 %, ab 50 Geräten 9 %.",
+      "Alternativ: Rahmenvertrag über 12 Monate mit Mindestabnahme von 60 Geräten. Alle Abrufe erhalten 9 %. Wird die Mindestmenge verfehlt, gilt nachträglich der Rabatt der tatsächlich abgerufenen Menge.",
+      "Die Hotelgruppe rechnet mit 5 % Zinsen pro Jahr für gebundenes Kapital.",
+      "",
+      "1. Wie viel kosten die Geräte bei Einzelbestellungen je Welle und mit dem Rahmenvertrag?",
+      "2. Die Einkäuferin schlägt vor, alles sofort zu bestellen, um 9 % zu erhalten. Berechnen Sie die Zinskosten der Vorab-Zahlung gegenüber dem Rahmenvertrag. Welche weiteren Nachteile hat eine Sofortbestellung?",
+      "3. Welche Regelungen sollten im Rahmenvertrag stehen?"
+    ],
+    "solution": [
+      "1. Gesamt: 42 * 780 = 32.760 Euro plus 20 * 1.050 = 21.000 Euro, zusammen 53.760 Euro. Pro Welle etwa 62 / 3 = ca. 21 Geräte, das ist unter 25, also kein Rabatt: 53.760 Euro. Rahmenvertrag: 62 Geräte, das ist über 60, also 9 %: 53.760 * 0,91 = 48.921,60 Euro. Ersparnis: 4.838,40 Euro.",
+      "",
+      "2. Pro Welle 48.921,60 / 3 = 16.307,20 Euro. Bei Sofortbestellung wird die zweite Welle 4 Monate und die dritte 8 Monate früher bezahlt: 16.307,20 * 0,05 * 4 / 12 + 16.307,20 * 0,05 * 8 / 12 = ca. 271,79 + 543,57 = 815,36 Euro Zinsen. Der Preis ist gleich, der Rahmenvertrag ist also besser. Weitere Nachteile: Gewährleistung und Garantie laufen schon im Lager ab, Lagerplatz und Diebstahlrisiko, Geräte sind bei der dritten Welle schon veraltet, Änderungen am Bedarf sind nicht mehr möglich.",
+      "",
+      "3. Laufzeit und Mindestmenge, feste Preise für die Laufzeit, Lieferzeit je Abruf, Regelung bei Modellwechsel (gleichwertiges Nachfolgemodell zum selben Preis), vorinstallierte Images und Beschriftung, Lieferung an die einzelnen Hotels, Garantiebeginn ab Lieferung, Folgen bei Verfehlen der Mindestmenge, Zahlungsbedingungen und Kündigung."
+    ]
+  },
+  {
+    "title": "Meilensteintrendanalyse bei der ERP-Einführung einer Brauerei",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Eine Brauerei führt ein neues ERP-System ein. Der Go-Live muss spätestens in Kalenderwoche (KW) 30 liegen, ab KW 31 beginnt die Hochsaison. Die Projektleitung meldet alle 4 Wochen die erwarteten Termine der Meilensteine:",
+      "  Berichtstermin KW 2: Pflichtenheft KW 8, Testmigration KW 16, Go-Live KW 26",
+      "  Berichtstermin KW 6: Pflichtenheft KW 8, Testmigration KW 17, Go-Live KW 26",
+      "  Berichtstermin KW 10: Pflichtenheft erreicht in KW 8, Testmigration KW 18, Go-Live KW 27",
+      "  Berichtstermin KW 14: Testmigration KW 19, Go-Live KW 29",
+      "Solange das alte System parallel weiterläuft, kostet es 2.300 Euro pro Woche.",
+      "",
+      "1. Zeichnen bzw. beschreiben Sie die Meilensteintrendanalyse und deuten Sie die Verläufe.",
+      "2. Setzen Sie den Trend der Testmigration fort. Wann ist der Go-Live zu erwarten, wenn der Abstand zwischen Testmigration und Go-Live gleich bleibt? Was kostet die bisherige Verschiebung des Go-Live?",
+      "3. Welche Maßnahmen schlagen Sie dem Lenkungsausschuss vor?"
+    ],
+    "solution": [
+      "1. In einem Diagramm stehen die Berichtstermine auf der x-Achse und die erwarteten Termine auf der y-Achse, eine Linie je Meilenstein. Waagerecht heißt: Termin hält. Steigend heißt: Verzug. Das Pflichtenheft blieb waagerecht und wurde pünktlich erreicht. Die Testmigration steigt gleichmäßig um 1 Woche pro Bericht (16, 17, 18, 19). Der Go-Live stieg zuerst kaum, dann um 2 Wochen (26, 26, 27, 29). Der Puffer vor dem Go-Live ist aufgebraucht.",
+      "",
+      "2. Nächster Bericht (KW 18): Testmigration KW 20. Abstand Testmigration bis Go-Live laut letztem Bericht: 29 - 19 = 10 Wochen. Go-Live dann KW 20 + 10 = KW 30, also genau an der Grenze. Beim übernächsten Bericht wäre es KW 31 und damit in der Hochsaison. Verschiebung bisher: 29 - 26 = 3 Wochen, 3 * 2.300 = 6.900 Euro Mehrkosten für den Parallelbetrieb.",
+      "",
+      "3. Ursache der Verzögerung bei der Testmigration klären (z.B. Datenqualität, fehlende Mitarbeiter der Fachabteilung). Zusätzliche Kapazität für die Datenbereinigung, Aufgaben parallelisieren (z.B. Schulungen schon während der Tests), Umfang für den Go-Live auf das Nötige begrenzen und weitere Funktionen später einführen. Vorab festlegen, wann entschieden wird: Wird die Testmigration in KW 20 nicht erreicht, wird der Go-Live auf die Zeit nach der Hochsaison verschoben. Ein Go-Live mitten in der Hochsaison ist zu riskant."
+    ]
+  },
+  {
+    "title": "Zahlungsplan und Abnahme bei der Ausstattung eines Kinos",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus stattet ein Kino mit Kassensystem, Netzwerk und digitalen Werbedisplays aus (Werkvertrag). Auftragswert: 84.000 Euro netto. Zahlungsplan: 30 % bei Auftrag, 40 % nach der Installation, der Rest nach der Abnahme. Der Kunde behält 5 % der Schlusssumme als Sicherheit für 2 Jahre Gewährleistung ein. Er kann den Einbehalt gegen eine Bankbürgschaft freigeben (Kosten 1,5 % der Summe pro Jahr).",
+      "Während des Projekts bestellt der Kunde 4 weitere Displays für 6.000 Euro netto nach.",
+      "Beim Abnahmetermin zeigen sich: Die Kasse in Saal 2 druckt keine Tickets. An einem Display sitzt die Halterung schief.",
+      "",
+      "1. Berechnen Sie die Abschlagszahlungen, den Einbehalt und die Schlusszahlung netto sowie brutto mit 19 % Umsatzsteuer.",
+      "2. Lohnt sich die Bürgschaft für Ihr Systemhaus? Berechnen Sie die Kosten für 2 Jahre.",
+      "3. Darf der Kunde die Abnahme verweigern? Welche Folgen hat die Abnahme für beide Seiten?"
+    ],
+    "solution": [
+      "1. Bei Auftrag: 84.000 * 0,3 = 25.200 Euro. Nach Installation: 84.000 * 0,4 = 33.600 Euro. Schlusssumme mit Nachtrag: 84.000 + 6.000 = 90.000 Euro. Einbehalt: 90.000 * 0,05 = 4.500 Euro. Schlusszahlung: 90.000 - 25.200 - 33.600 - 4.500 = 26.700 Euro netto, 26.700 * 1,19 = 31.773 Euro brutto.",
+      "",
+      "2. 4.500 * 0,015 * 2 = 135 Euro. Dafür erhält das Systemhaus 4.500 Euro zwei Jahre früher. Das lohnt sich, wenn die Liquidität wichtig ist oder die Zinsen für das Geld höher sind als 1,5 % pro Jahr.",
+      "",
+      "3. Die defekte Kasse ist ein wesentlicher Mangel, weil ein Saal keine Tickets verkaufen kann. Hier darf der Kunde die Abnahme verweigern. Die schiefe Halterung ist unwesentlich und berechtigt nicht zur Verweigerung, sie kommt als Mangel ins Protokoll. Sinnvoll: Kasse sofort reparieren und dann abnehmen, mit Mängelliste und Frist für die Halterung. Folgen der Abnahme: Die Schlusszahlung wird fällig, die Gewährleistungsfrist beginnt, die Gefahr geht auf den Kunden über, und für spätere Mängel muss der Kunde beweisen, dass sie schon bei der Abnahme vorlagen."
+    ]
+  },
+  {
+    "title": "Verkabelung von Feuerwachen parametrisch schätzen",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Eine Stadt lässt in 6 Feuerwachen die Netzwerkverkabelung erneuern. Anzahl Anschlüsse: 42, 38, 55, 30, 47 und 36. Die Wachen mit 55 und 30 Anschlüssen sind Altbauten mit schwierigen Wanddurchbrüchen.",
+      "Im letzten vergleichbaren Projekt brauchte Ihr Team 540 Stunden für 180 Anschlüsse. Für Altbauten rechnen Sie mit 20 % Mehraufwand. Die Projektleitung kommt mit 10 % der Technikerstunden dazu.",
+      "Es stehen 3 Techniker mit je 7,5 produktiven Stunden pro Tag bereit. Technikerstunde: 62 Euro, Projektleitung: 85 Euro pro Stunde.",
+      "",
+      "1. Ermitteln Sie mit einer parametrischen Schätzung die Technikerstunden und die Stunden der Projektleitung.",
+      "2. Wie viele Arbeitstage braucht das Team? Wie hoch sind die Personalkosten?",
+      "3. Nennen Sie Stärken und Grenzen dieser Schätzung. Welche Besonderheiten einer Feuerwache beachten Sie bei der Planung?"
+    ],
+    "solution": [
+      "1. Kennzahl: 540 / 180 = 3 Stunden pro Anschluss. Anschlüsse gesamt: 42 + 38 + 55 + 30 + 47 + 36 = 248, davon Altbau 55 + 30 = 85, Neubau 248 - 85 = 163. Stunden: 163 * 3 = 489 plus 85 * 3 * 1,2 = 306, zusammen 795 Technikerstunden. Projektleitung: 795 * 0,1 = 79,5 Stunden.",
+      "",
+      "2. Team pro Tag: 3 * 7,5 = 22,5 Stunden. 795 / 22,5 = 35,33, also 36 Arbeitstage. Kosten: 795 * 62 = 49.290 Euro plus 79,5 * 85 = 6.757,50 Euro, zusammen 56.047,50 Euro.",
+      "",
+      "3. Stärken: schnell, nachvollziehbar, beruht auf echten Erfahrungswerten. Grenzen: gilt nur, wenn die Projekte wirklich vergleichbar sind (Gebäude, Kabelwege, Team). Besonderheiten wie Asbest, Brandschotts oder lange Wege werden nicht erfasst. Deshalb die Wachen vorher begehen und die Schätzung mit einer Reserve versehen. Feuerwache: Die Wache muss rund um die Uhr einsatzbereit bleiben. Alarmierung, Funk und Toröffnung dürfen nie ausfallen, deshalb abschnittsweise arbeiten und Umschaltungen mit der Wachleitung abstimmen. Fahrzeughalle und Ausfahrt freihalten. Zutritt nur mit Begleitung und Sicherheitsunterweisung."
+    ]
+  },
+  {
+    "title": "Zusätzliche Mitarbeiter im verspäteten Museumsprojekt",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Museum lässt Medienstationen, WLAN und ein Besucherleitsystem installieren. Das Projektteam hat 5 Personen und liegt 3 Wochen hinter dem Plan. Bis zur Eröffnung bleiben 6 Wochen, es fehlen noch 42 Personenwochen Arbeit. Die Geschäftsführung will 4 zusätzliche Mitarbeiter einsetzen.",
+      "Annahmen: Neue Mitarbeiter arbeiten in den ersten 2 Wochen mit 50 % Leistung, danach voll. Während der 2 Wochen bindet jeder Neue ein erfahrenes Teammitglied zu 25 %. Jeder Kommunikationsweg zwischen zwei Personen kostet 0,5 Stunden pro Woche. Eine Personenwoche hat 40 Stunden.",
+      "",
+      "1. Wie viele Kommunikationswege gibt es heute und mit 9 Personen?",
+      "2. Berechnen Sie die zusätzliche Kapazität der 4 Neuen nach Abzug von Einarbeitung und Mehraufwand für Kommunikation. Reicht die Kapazität für die 42 Personenwochen?",
+      "3. Reichen 2 zusätzliche Mitarbeiter? Welche Voraussetzungen müssen erfüllt sein, damit zusätzliche Personen ein verspätetes Projekt beschleunigen und nicht weiter verzögern?"
+    ],
+    "solution": [
+      "1. Kommunikationswege n * (n - 1) / 2. Heute: 5 * 4 / 2 = 10. Mit 9 Personen: 9 * 8 / 2 = 36.",
+      "",
+      "2. Bestehendes Team: 5 * 6 = 30 Personenwochen. Ein Neuer: 2 Wochen * 0,5 + 4 Wochen * 1 = 5 Personenwochen, vier Neue: 20. Einarbeitung: 4 * 0,25 * 2 = 2 Personenwochen. Kommunikation: (36 - 10) * 0,5 = 13 Stunden pro Woche, in 6 Wochen 78 Stunden = 1,95 Personenwochen. Zusätzlich: 20 - 2 - 1,95 = 16,05 Personenwochen. Gesamt: 30 + 16,05 = 46,05 Personenwochen, das reicht knapp für 42.",
+      "",
+      "3. Mit 2 Neuen: 7 * 6 / 2 = 21 Wege, (21 - 10) * 0,5 * 6 = 33 Stunden = 0,825 Personenwochen. Zusätzlich: 2 * 5 - 2 * 0,25 * 2 - 0,825 = 8,175. Gesamt 38,175 Personenwochen, das reicht nicht. Voraussetzungen: Die Arbeit lässt sich in unabhängige Pakete teilen (z.B. Montage der Medienstationen je Saal), die Neuen haben passende Vorkenntnisse, die Aufgaben sind klar beschrieben, und es gibt feste Ansprechpartner. Sonst gilt die Erfahrung, dass zusätzliche Personen ein verspätetes Projekt noch weiter verzögern (Brooks'sches Gesetz). Alternativ Umfang zur Eröffnung reduzieren."
+    ]
   }
 ]

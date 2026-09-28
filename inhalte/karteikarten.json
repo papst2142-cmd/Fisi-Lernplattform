@@ -11362,5 +11362,1829 @@
       "Nein, Software ist grundsätzlich mitbestimmungsfrei",
       "Nur, wenn mehr als 100 Mitarbeiter betroffen sind"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie schließen einen neuen PC an. Über welche Stationen läuft die Verbindung bis zum Switch im Etagenverteiler?",
+    "a": "Patchkabel, Datendose, Verlegekabel, Patchfeld, Patchkabel, Switchport",
+    "a_full": "Am Arbeitsplatz verbindet ein Patchkabel den PC mit der Datendose. Von der Dose läuft das fest verlegte Kabel in der Wand zum Patchfeld im Verteiler. Dort stellt ein kurzes Patchkabel die Verbindung zum Switchport her.",
+    "options": [
+      "Patchkabel, Datendose, Verlegekabel, Patchfeld, Patchkabel, Switchport",
+      "Patchkabel, Datendose, Verlegekabel direkt in den Switchport",
+      "Patchkabel, Router, Patchfeld, Access Point, Switchport",
+      "Datendose, Crossover-Kabel, Medienkonverter, Switchport"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege will das Verlegekabel aus der Wand im Verteiler direkt mit einem RJ45-Stecker in den Switch stecken. Warum ist das unüblich?",
+    "a": "Verlegekabel hat starre Adern und gehört fest aufs Patchfeld",
+    "a_full": "Verlegekabel hat massive Kupferadern und ist nicht für häufiges Biegen gedacht. Es wird fest auf das Patchfeld und die Dose aufgelegt. Umstecken erledigt man mit flexiblen Patchkabeln aus Litze, so bleibt die feste Strecke unbelastet.",
+    "options": [
+      "Verlegekabel hat starre Adern und gehört fest aufs Patchfeld",
+      "Verlegekabel hat nur vier Adern und passt nicht in RJ45",
+      "Verlegekabel ist ungeschirmt und stört den Switch",
+      "Verlegekabel überträgt nur Strom für PoE, keine Daten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "An einem neuen Arbeitsplatz fehlt eine Datendose. Ein Kollege will ein 15-m-Patchkabel quer über den Boden zur nächsten Dose legen. Was sagen Sie?",
+    "a": "Stolpergefahr und Kabelschäden, besser Kabelkanal oder neue Dose",
+    "a_full": "Lose Kabel auf Laufwegen sind eine Unfallgefahr und verstoßen gegen den Arbeitsschutz. Das Kabel wird zudem getreten, geknickt oder vom Bürostuhl überrollt. Übergangsweise hilft ein Kabelkanal, dauerhaft eine zusätzliche Dose.",
+    "options": [
+      "Stolpergefahr und Kabelschäden, besser Kabelkanal oder neue Dose",
+      "Das ist in Ordnung, solange das Kabel kürzer als 100 m ist",
+      "Das ist nur ein Problem, wenn das Kabel ungeschirmt ist",
+      "Das ist erlaubt, wenn das Kabel mit Klebeband fixiert ist"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde hat vor Jahren sein Büro mit Cat 5e verkabeln lassen. Er fragt, ob er damit auf Gigabit-Ethernet umstellen kann. Was antworten Sie?",
+    "a": "Ja, Cat 5e ist für 1 Gbit/s bis 100 m ausgelegt",
+    "a_full": "1000BASE-T wurde für Cat 5e spezifiziert und nutzt alle vier Adernpaare. Bei fachgerecht installierter Strecke bis 100 m reicht das Kabel also aus. Erst für 10 Gbit/s über volle Länge braucht man Cat 6A.",
+    "options": [
+      "Ja, Cat 5e ist für 1 Gbit/s bis 100 m ausgelegt",
+      "Nein, für Gigabit ist mindestens Cat 7 vorgeschrieben",
+      "Nur wenn die Strecke kürzer als 30 m ist",
+      "Nur mit geschirmten Steckern der Kategorie 8"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwischen Serverraum-NAS und Arbeitsplatz ist Cat 7 verlegt. Für 10 Gbit/s steckt der Techniker Cat-5e-Patchkabel aus dem Lager an beide Enden. Was ist die Folge?",
+    "a": "Die Strecke leistet nur Cat 5e, 10 Gbit/s sind nicht sicher",
+    "a_full": "Eine Übertragungsstrecke ist nur so gut wie ihr schwächstes Glied. Patchkabel gehören zum Übertragungskanal und müssen dieselbe Klasse erfüllen. Für 10GBASE-T sind daher mindestens Cat-6A-Patchkabel nötig.",
+    "options": [
+      "Die Strecke leistet nur Cat 5e, 10 Gbit/s sind nicht sicher",
+      "Kein Problem, das Verlegekabel bestimmt allein die Leistung",
+      "Die Verbindung läuft mit 10 Gbit/s, nur ohne PoE",
+      "Der Switch erkennt das und schaltet auf Glasfaser um"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neues Ultrabook hat keine RJ45-Buchse mehr. Es soll am Arbeitsplatz trotzdem per Kabel ins Netz. Welche Lösung bieten Sie an?",
+    "a": "USB-C-Dockingstation oder USB-Netzwerkadapter mit RJ45-Buchse",
+    "a_full": "Viele flache Notebooks haben nur noch USB-C bzw. Thunderbolt. Ein USB-Netzwerkadapter oder eine Dockingstation stellt die RJ45-Buchse bereit. Das Dock versorgt zusätzlich Monitor, Tastatur und Stromversorgung über ein Kabel.",
+    "options": [
+      "USB-C-Dockingstation oder USB-Netzwerkadapter mit RJ45-Buchse",
+      "Ein HDMI-auf-RJ45-Adapter am Monitoranschluss",
+      "Ein Crossover-Kabel direkt vom Notebook zur Dose",
+      "Nur WLAN, kabelgebunden ist das Gerät nicht nutzbar"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender meldet keine Verbindung. ipconfig zeigt beim Ethernet-Adapter \"Medienstatus: Medium getrennt\". Was bedeutet das?",
+    "a": "Der Adapter hat keine physische Verbindung zur Gegenstelle",
+    "a_full": "Die Netzwerkkarte erkennt kein Signal am Anschluss. Ursachen sind ein gezogenes oder defektes Kabel, eine nicht gepatchte Dose oder ein ausgeschalteter Switchport. Die Fehlersuche beginnt also auf Schicht 1, nicht bei IP-Adresse oder DNS.",
+    "options": [
+      "Der Adapter hat keine physische Verbindung zur Gegenstelle",
+      "Der DHCP-Server hat die Adresse wieder zurückgenommen",
+      "Der DNS-Server ist im Moment nicht erreichbar",
+      "Der Adapter ist deaktiviert und muss neu installiert werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "An einer neuen Datendose leuchtet am PC keine Link-LED. Kabel und PC funktionieren an einer anderen Dose. Was ist die wahrscheinlichste Ursache?",
+    "a": "Die Dose ist im Verteiler nicht auf einen Switchport gepatcht",
+    "a_full": "Eine Datendose ist nur bis zum Patchfeld verkabelt. Erst ein Patchkabel vom Patchfeldport zum Switch macht sie aktiv. Anhand der Dosenbeschriftung und der Patchliste findet man den passenden Port.",
+    "options": [
+      "Die Dose ist im Verteiler nicht auf einen Switchport gepatcht",
+      "Der PC hat von der Dose noch keine IP-Adresse erhalten",
+      "Der DNS-Server kennt die neue Dose noch nicht",
+      "Die Dose muss erst im Router freigeschaltet werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Netzwerkkabel sollen im selben Kabelkanal wie die 230-V-Stromleitungen verlegt werden. Worauf achten Sie?",
+    "a": "Mindestabstand oder Trennsteg einhalten, um Störungen zu vermeiden",
+    "a_full": "Stromleitungen erzeugen elektromagnetische Felder, die in Datenleitungen einkoppeln können. Die Folge sind Übertragungsfehler und Verbindungsabbrüche. Deshalb trennt man Daten- und Stromleitungen im Kanal durch einen Steg oder hält Abstand.",
+    "options": [
+      "Mindestabstand oder Trennsteg einhalten, um Störungen zu vermeiden",
+      "Die Datenkabel müssen oben liegen, weil Strom nach unten wirkt",
+      "Es gibt nichts zu beachten, Twisted Pair ist störfest",
+      "Die Stromleitungen müssen auf 110 V umgestellt werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege will fehlende Patchkabel im Lager selbst aus Verlegekabel crimpen. Was empfehlen Sie?",
+    "a": "Fertig konfektionierte, geprüfte Patchkabel verwenden",
+    "a_full": "Beim Crimpen passieren leicht Fehler bei Paarung, Aufdrehlänge oder Schirmung. Solche Kabel funktionieren oft nur mit reduzierter Geschwindigkeit oder mit Fehlern. Fertige Patchkabel mit flexibler Litze sind geprüft und in der passenden Kategorie erhältlich.",
+    "options": [
+      "Fertig konfektionierte, geprüfte Patchkabel verwenden",
+      "Selbst crimpen, weil Verlegekabel die bessere Kategorie hat",
+      "Selbst crimpen, aber nur mit der Belegung T568A",
+      "Telefonkabel verwenden, weil sie flexibler sind"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC soll eine feste IPv4-Konfiguration erhalten und danach auch Webseiten öffnen können. Welche vier Angaben tragen Sie ein?",
+    "a": "IP-Adresse, Subnetzmaske, Standardgateway und DNS-Server",
+    "a_full": "Adresse und Maske legen fest, in welchem Netz der PC liegt. Das Gateway braucht er für alle Ziele außerhalb des eigenen Netzes. Ohne DNS-Server kann er Namen wie www.beispiel.de nicht in Adressen übersetzen.",
+    "options": [
+      "IP-Adresse, Subnetzmaske, Standardgateway und DNS-Server",
+      "IP-Adresse, MAC-Adresse, SSID und DHCP-Server",
+      "IP-Adresse, Subnetzmaske, Proxy und Arbeitsgruppe",
+      "MAC-Adresse, Standardgateway, VLAN-ID und Portnummer"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Anwenderin wundert sich, dass ihr Notebook im Büro an manchen Tagen eine andere IP-Adresse hat. Ist das ein Fehler?",
+    "a": "Nein, der DHCP-Server vergibt Adressen dynamisch aus einem Bereich",
+    "a_full": "Bei DHCP erhält ein Gerät die Adresse nur für eine Leasedauer. Ist sie abgelaufen oder vergeben, bekommt es eine andere freie Adresse. Für Anwender spielt das keine Rolle, weil Dienste über Namen per DNS angesprochen werden.",
+    "options": [
+      "Nein, der DHCP-Server vergibt Adressen dynamisch aus einem Bereich",
+      "Ja, das deutet auf einen zweiten DHCP-Server im Netz hin",
+      "Ja, die Netzwerkkarte verliert ihre MAC-Adresse",
+      "Nein, das Notebook wechselt täglich das VLAN"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Notebook war über Nacht im Homeoffice. Im Büro zeigt ipconfig nach dem Aufwachen noch 192.168.178.34 und nichts funktioniert. Was hilft zuerst?",
+    "a": "Mit ipconfig /release und /renew eine neue Adresse anfordern",
+    "a_full": "Das Notebook nutzt noch die Konfiguration aus dem Heimnetz. Mit ipconfig /release gibt es die Adresse zurück, mit /renew fordert es beim DHCP-Server des Büros eine neue an. Alternativ genügt oft das Aus- und Einstecken des Kabels oder das Neuverbinden mit dem WLAN.",
+    "options": [
+      "Mit ipconfig /release und /renew eine neue Adresse anfordern",
+      "ipconfig /flushdns ausführen, um die alte Adresse zu löschen",
+      "Die Adresse 192.168.178.34 im Büro fest reservieren lassen",
+      "Das Standardgateway von Hand auf 192.168.178.1 setzen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Kollegin hat an ihrem Büro-PC den DNS-Server auf 8.8.8.8 geändert. Internetseiten laufen, der Fileserver fs01.firma.local nicht mehr. Warum?",
+    "a": "Ein öffentlicher DNS-Server kennt die internen Namen der Firma nicht",
+    "a_full": "Interne Namen stehen nur auf dem firmeneigenen DNS-Server. Ein Resolver im Internet kann sie nicht auflösen und antwortet mit einem Fehler. Die Einstellung wird zurück auf automatischen Bezug gesetzt, damit DHCP den Firmen-DNS vorgibt.",
+    "options": [
+      "Ein öffentlicher DNS-Server kennt die internen Namen der Firma nicht",
+      "8.8.8.8 blockiert grundsätzlich Zugriffe auf Dateiserver",
+      "Der Fileserver lässt nur PCs mit Gateway 8.8.8.8 zu",
+      "Der PC hat durch die Änderung seine IP-Adresse verloren"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "nslookup www.beispiel.de liefert die Adresse und den Hinweis \"Nicht autorisierende Antwort\". Ein Azubi hält das für einen Fehler. Was sagen Sie?",
+    "a": "Kein Fehler, die Antwort kam aus dem Cache eines Resolvers",
+    "a_full": "Autorisierend antwortet nur der DNS-Server, der die Zone selbst verwaltet. Der Firmen-DNS hat die Antwort weitergeleitet oder zwischengespeichert. Sie stammt also nicht vom zuständigen Server, ist aber trotzdem gültig.",
+    "options": [
+      "Kein Fehler, die Antwort kam aus dem Cache eines Resolvers",
+      "Die Webseite hat kein gültiges TLS-Zertifikat",
+      "Der Anwender hat keine Berechtigung für DNS-Abfragen",
+      "Der Name existiert nicht und die Adresse ist geraten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Schon ping 127.0.0.1 schlägt auf einem PC fehl. Was schließen Sie daraus?",
+    "a": "Der TCP/IP-Stack des Rechners selbst ist gestört",
+    "a_full": "Die Loopback-Adresse verlässt den Rechner nie, Kabel und Switch spielen keine Rolle. Scheitert dieser ping, liegt das Problem im Betriebssystem, etwa an einem beschädigten Netzwerkstack oder Sicherheitssoftware. Weitere Tests im Netz sind erst danach sinnvoll.",
+    "options": [
+      "Der TCP/IP-Stack des Rechners selbst ist gestört",
+      "Das Netzwerkkabel ist nicht richtig eingesteckt",
+      "Der DHCP-Server hat keine Adressen mehr frei",
+      "Das Standardgateway ist ausgefallen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping auf einen Drucker im selben Subnetz meldet Zeitüberschreitung. Danach zeigt arp -a zu dessen IP eine MAC-Adresse. Was folgt daraus?",
+    "a": "Der Drucker ist im Netz, blockiert aber vermutlich ICMP",
+    "a_full": "Für den ping hat der PC per ARP die MAC-Adresse erfragt, und der Drucker hat geantwortet. Er ist also eingeschaltet und auf Schicht 2 erreichbar. Dass die Echo-Anfrage unbeantwortet bleibt, spricht für eine Firewall-Einstellung am Gerät.",
+    "options": [
+      "Der Drucker ist im Netz, blockiert aber vermutlich ICMP",
+      "Der Drucker ist ausgeschaltet, arp -a zeigt nur alte Daten",
+      "Der Drucker steht in einem anderen Subnetz hinter dem Router",
+      "Der DNS-Server liefert für den Drucker eine falsche Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Der Admin braucht für eine DHCP-Reservierung die MAC-Adresse eines neuen Netzwerkdruckers. Der Drucker ist noch nicht im Netz. Wo finden Sie sie?",
+    "a": "Auf dem Typenschild oder der Konfigurationsseite des Druckers",
+    "a_full": "Hersteller drucken die MAC-Adresse meist auf das Typenschild. Außerdem kann man am Bedienfeld eine Konfigurationsseite drucken lassen. Mit der MAC-Adresse legt der Admin die Reservierung an, bevor das Gerät ans Netz geht.",
+    "options": [
+      "Auf dem Typenschild oder der Konfigurationsseite des Druckers",
+      "In der ARP-Tabelle des zentralen DNS-Servers der Firma",
+      "In der Antwort auf nslookup mit dem Druckernamen",
+      "Im Standardgateway unter der Liste der Leases"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender will IPv6 an seinem Windows-PC abschalten, weil die Firma intern nur IPv4 nutzt. Was raten Sie?",
+    "a": "Nicht abschalten, Windows-Komponenten rechnen mit IPv6",
+    "a_full": "Windows ist auf Dual Stack ausgelegt und nutzt IPv6 auch intern. Microsoft rät vom Deaktivieren ab, weil sonst Funktionen unerwartet ausfallen können. Im reinen IPv4-Netz stört IPv6 nicht, weil es dort nur link-lokale Adressen gibt.",
+    "options": [
+      "Nicht abschalten, Windows-Komponenten rechnen mit IPv6",
+      "Abschalten, weil IPv6 die Bandbreite halbiert",
+      "Abschalten, weil sonst doppelte IP-Adressen entstehen",
+      "Abschalten, weil IPv6 den Firmen-DNS-Server blockiert"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde fragt, warum sein Router im IPv6-Heimnetz kein NAT braucht und wodurch seine Geräte trotzdem geschützt sind.",
+    "a": "Genug öffentliche Adressen, die Router-Firewall blockiert Zugriffe von außen",
+    "a_full": "Mit IPv6 erhält jedes Gerät eine weltweit eindeutige Adresse aus dem Präfix des Providers. Eine Adressübersetzung ist deshalb nicht nötig. Den Schutz übernimmt die Firewall im Router, die unaufgeforderte Verbindungen von außen verwirft.",
+    "options": [
+      "Genug öffentliche Adressen, die Router-Firewall blockiert Zugriffe von außen",
+      "IPv6-Adressen sind grundsätzlich nicht aus dem Internet erreichbar",
+      "Der Provider verschlüsselt alle IPv6-Pakete automatisch",
+      "Jedes Gerät baut für IPv6 einen eigenen VPN-Tunnel auf"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Neben dem Netzwerksymbol steht \"Kein Internetzugriff\", trotzdem öffnet der Anwender das Intranet. Wie ist das zu verstehen?",
+    "a": "Nur der Internettest von Windows schlug fehl, das LAN funktioniert",
+    "a_full": "Windows prüft die Internetverbindung, indem es eine Testseite von Microsoft abruft. Scheitert das, z.B. wegen Proxy oder Firewall, erscheint die Meldung. Adresse, Gateway und interne Dienste können trotzdem in Ordnung sein.",
+    "options": [
+      "Nur der Internettest von Windows schlug fehl, das LAN funktioniert",
+      "Der PC hat keine IP-Adresse und nutzt einen alten Cache",
+      "Das Intranet wird in dieser Situation nur aus dem Browserverlauf gezeigt",
+      "Die Netzwerkkarte arbeitet im Notbetrieb mit 10 Mbit/s"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Funktionen vereint ein typischer Internetrouter für Homeoffice und Kleinbüro in einem Gerät?",
+    "a": "Modem, Router mit NAT, Firewall, Switch, WLAN und DHCP",
+    "a_full": "Das Modem stellt die Verbindung über DSL, Kabel oder Glasfaser her. Der Router verbindet Heimnetz und Internet und übersetzt die Adressen. Eingebaute Switchports, WLAN und DHCP versorgen die Geräte im Haus.",
+    "options": [
+      "Modem, Router mit NAT, Firewall, Switch, WLAN und DHCP",
+      "Nur Modem und Switch, das Routing übernimmt der Provider",
+      "Nur WLAN und Firewall, DHCP läuft immer beim Provider",
+      "Nur Router und DNS-Server, Switchports sind extern nötig"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein alter WLAN-Router soll im Büro nur noch als zusätzlicher Access Point dienen. Was stellen Sie ein?",
+    "a": "DHCP aus, feste Adresse im Büronetz, Anschluss per LAN-Port",
+    "a_full": "Im Netz darf nur ein DHCP-Server Adressen verteilen, sonst erhalten Clients falsche Gateways. Das Gerät bekommt eine freie feste Adresse zur Verwaltung. Verbunden wird es über einen LAN-Port, der WAN-Port bleibt frei, damit kein zweites NAT entsteht.",
+    "options": [
+      "DHCP aus, feste Adresse im Büronetz, Anschluss per LAN-Port",
+      "DHCP aktiv lassen und das Kabel in den WAN-Port stecken",
+      "Eine eigene SSID mit eigenem DHCP-Bereich einrichten",
+      "Den Router hinter den ersten Router im NAT-Modus betreiben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein WLAN-Repeater im Flur verdoppelt die Reichweite, der Durchsatz am Notebook ist aber etwa halb so hoch wie direkt am Router. Warum?",
+    "a": "Er empfängt und sendet jedes Paket nacheinander auf demselben Kanal",
+    "a_full": "Ein einfacher Repeater hat nur ein Funkmodul. Er empfängt Daten vom Router und sendet sie danach auf demselben Kanal an den Client weiter. Die Sendezeit wird dadurch geteilt, ein per Kabel angebundener Access Point hat diesen Nachteil nicht.",
+    "options": [
+      "Er empfängt und sendet jedes Paket nacheinander auf demselben Kanal",
+      "Der Repeater verschlüsselt jedes Paket doppelt",
+      "Der Repeater nutzt grundsätzlich nur 2,4 GHz mit 11 Mbit/s",
+      "Der Repeater teilt die IP-Adresse des Notebooks mit dem Router"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitarbeiter will das Arbeitszimmer im Homeoffice per Powerline anbinden. Welche Einschränkung erklären Sie?",
+    "a": "Der Durchsatz hängt stark von der Stromleitung im Haus ab",
+    "a_full": "Powerline überträgt Daten über das Stromnetz im Haus. Lange Leitungen, verschiedene Stromkreise und Störquellen senken den Durchsatz deutlich. Die Adapter gehören direkt in die Wandsteckdose, nicht in Leisten mit Überspannungsschutz.",
+    "options": [
+      "Der Durchsatz hängt stark von der Stromleitung im Haus ab",
+      "Powerline funktioniert nur, wenn der Router ausgeschaltet ist",
+      "Powerline braucht ein Cat-7-Kabel parallel zur Stromleitung",
+      "Powerline überträgt nur Daten, aber keine IP-Adressen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Homeoffice steht der Router im Erdgeschoss, im Arbeitszimmer im 2. OG ist das WLAN sehr schwach. Im Haus liegt ein LAN-Kabel bis ins 1. OG. Was ist sinnvoll?",
+    "a": "Einen Access Point im 1. OG per LAN-Kabel anbinden",
+    "a_full": "Ein per Kabel angebundener Access Point bringt die volle Bandbreite in die Nähe des Arbeitsplatzes. Mesh-Systeme können das Kabel ebenfalls als Verbindung zwischen den Knoten nutzen. Ein reiner Funk-Repeater wäre nur die zweitbeste Lösung.",
+    "options": [
+      "Einen Access Point im 1. OG per LAN-Kabel anbinden",
+      "Die Sendeleistung des Routers auf das Maximum erhöhen",
+      "Das WLAN auf 2,4 GHz mit 160 MHz Kanalbreite stellen",
+      "Einen zweiten Router mit eigenem Internetanschluss kaufen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Laptop zeigt volle WLAN-Balken, trotzdem ist das Netz im Besprechungsraum sehr langsam. Wie erklären Sie das?",
+    "a": "Die Balken zeigen nur die Signalstärke, nicht die Auslastung",
+    "a_full": "Ein starkes Signal sagt nichts darüber, wie viele Geräte sich den Kanal teilen. Viele aktive Clients, alte langsame Geräte oder Nachbarnetze auf demselben Kanal bremsen alle. Aussagekräftiger sind Durchsatzmessungen und ein Blick auf die Kanalbelegung.",
+    "options": [
+      "Die Balken zeigen nur die Signalstärke, nicht die Auslastung",
+      "Volle Balken bedeuten, dass der Laptop zu nah am Access Point ist",
+      "Die Balken zeigen die Internetgeschwindigkeit des Providers",
+      "Volle Balken bedeuten, dass der Akku das WLAN drosselt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitarbeiter hat sein Firmennotebook im Büro mit dem Gäste-WLAN verbunden. Internet geht, Fileserver und Drucker nicht. Warum?",
+    "a": "Das Gäste-WLAN ist vom Firmennetz getrennt und erlaubt nur Internet",
+    "a_full": "Gästenetze liegen in einem eigenen Netzsegment ohne Zugriff auf interne Systeme. Das ist gewollt, damit fremde Geräte keine Firmendaten erreichen. Das Notebook muss sich mit dem Firmen-WLAN verbinden.",
+    "options": [
+      "Das Gäste-WLAN ist vom Firmennetz getrennt und erlaubt nur Internet",
+      "Das Gäste-WLAN nutzt kein DHCP, deshalb fehlt die Adresse",
+      "Das Notebook braucht im Gäste-WLAN einen anderen Druckertreiber",
+      "Im Gäste-WLAN funktionieren Namen nur mit großen Buchstaben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum empfiehlt man für häufige Videokonferenzen im Homeoffice ein LAN-Kabel statt WLAN?",
+    "a": "Kabel liefert gleichmäßige Laufzeiten ohne Funkstörungen",
+    "a_full": "Im WLAN teilen sich alle Geräte die Funkzeit, Nachbarnetze und Wände stören zusätzlich. Das führt zu schwankenden Laufzeiten und Aussetzern, was Bild und Ton sofort merken. Per Kabel bleiben Verzögerung und Jitter niedrig und stabil.",
+    "options": [
+      "Kabel liefert gleichmäßige Laufzeiten ohne Funkstörungen",
+      "Videokonferenzen funktionieren technisch nur über Kabel",
+      "Über Kabel ist die Konferenz automatisch Ende-zu-Ende verschlüsselt",
+      "WLAN überträgt grundsätzlich keine UDP-Pakete"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Außendienstler muss im Zug arbeiten. Er kann das offene Zug-WLAN oder den Hotspot seines Diensthandys nutzen. Wozu raten Sie?",
+    "a": "Zum Hotspot des Diensthandys, zusätzlich mit VPN",
+    "a_full": "Im offenen WLAN können andere Fahrgäste und der Betreiber den Verkehr mitlesen oder manipulieren. Der eigene Hotspot ist verschlüsselt und nur für ihn zugänglich. Für Firmenzugriffe baut er trotzdem das VPN auf.",
+    "options": [
+      "Zum Hotspot des Diensthandys, zusätzlich mit VPN",
+      "Zum Zug-WLAN, weil es schneller als Mobilfunk ist",
+      "Zum Zug-WLAN, weil offene Netze keine Viren übertragen",
+      "Zum Hotspot, dann kann er aber kein VPN mehr nutzen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf dem Fileserver fs01 gibt es die Freigabe Projekte. Wie öffnen Sie sie im Explorer ohne Laufwerksbuchstaben?",
+    "a": "Über den UNC-Pfad \\\\fs01\\Projekte",
+    "a_full": "Ein UNC-Pfad beginnt mit zwei umgekehrten Schrägstrichen, dann folgen Servername und Freigabename. Er funktioniert im Explorer, im Ausführen-Dialog und in Skripten. Statt des Namens kann auch die IP-Adresse des Servers stehen.",
+    "options": [
+      "Über den UNC-Pfad \\\\fs01\\Projekte",
+      "Über den Pfad http://fs01/Projekte im Browser",
+      "Über den Pfad C:\\fs01\\Projekte auf dem eigenen PC",
+      "Über den Pfad //Projekte/fs01 mit normalen Schrägstrichen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender braucht die Freigabe \\\\fs01\\Projekte dauerhaft als Laufwerk P:. Welcher Befehl erledigt das?",
+    "a": "net use P: \\\\fs01\\Projekte /persistent:yes",
+    "a_full": "net use verbindet einen Laufwerksbuchstaben mit einer Netzwerkfreigabe. Mit /persistent:yes stellt Windows die Verbindung bei jeder Anmeldung wieder her. In Firmen verteilt man solche Laufwerke meist zentral per Gruppenrichtlinie.",
+    "options": [
+      "net use P: \\\\fs01\\Projekte /persistent:yes",
+      "ipconfig /map P: \\\\fs01\\Projekte",
+      "mount P: fs01 Projekte /always",
+      "net share P: /connect fs01"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neuer PC ist im Firmennetz, Kollegen können aber nicht auf seine Ordnerfreigabe zugreifen. Das Netzwerkprofil steht auf Öffentlich. Was ist zu tun?",
+    "a": "Das Netzwerkprofil auf Privat bzw. Domäne umstellen",
+    "a_full": "Im Profil Öffentlich sperrt die Windows-Firewall eingehende Datei- und Druckerfreigabe. Das schützt Notebooks in fremden Netzen wie Hotels. Im vertrauenswürdigen Firmennetz passt das Profil Privat oder, bei Domänenmitgliedern, Domäne.",
+    "options": [
+      "Das Netzwerkprofil auf Privat bzw. Domäne umstellen",
+      "Das Profil bleibt, stattdessen den DNS-Server ändern",
+      "Die Freigabe per ping -t dauerhaft freischalten",
+      "Die Netzwerkkarte gegen ein Modell mit SMB-Chip tauschen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein einzelner PC im Kleinbüro soll einen Netzwerkdrucker mit fester IP-Adresse nutzen, es gibt keinen Druckserver. Wie richten Sie ihn ein?",
+    "a": "Drucker per IP-Adresse mit Standard-TCP/IP-Port hinzufügen",
+    "a_full": "Beim Hinzufügen wählt man die Option mit TCP/IP-Adresse oder Hostname. Windows legt einen Anschluss an, der Druckaufträge direkt an die Druckeradresse sendet. Dazu wird der passende Treiber des Herstellers installiert.",
+    "options": [
+      "Drucker per IP-Adresse mit Standard-TCP/IP-Port hinzufügen",
+      "Drucker per USB an den Router stecken und am PC ein Laufwerk verbinden",
+      "Drucker per net use LPT1: an den PC binden",
+      "Drucker im DNS eintragen, ein Treiber ist dann nicht nötig"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Netz taucht ein unbekanntes Gerät mit der Adresse 192.168.10.57 auf. Wie finden Sie mit einfachen Mitteln heraus, was es ist?",
+    "a": "Per ping und arp -a die MAC und daraus den Hersteller ermitteln",
+    "a_full": "Nach dem ping steht die MAC-Adresse des Geräts in der ARP-Tabelle. Die ersten drei Byte verraten den Hersteller, z.B. einen Druckerhersteller. Über die MAC-Tabelle des Switches findet man zusätzlich den Port und damit die Dose.",
+    "options": [
+      "Per ping und arp -a die MAC und daraus den Hersteller ermitteln",
+      "tracert, weil jeder Hop den Gerätetyp anzeigt",
+      "ipconfig /all, weil dort alle Geräte im Netz stehen",
+      "nslookup, weil jedes Gerät automatisch im DNS steht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Kollegin meldet nur: \"Das Internet ist langsam.\" Welche Fragen stellen Sie zuerst, um den Fehler einzugrenzen?",
+    "a": "Seit wann, wer noch betroffen ist, welche Seiten, Kabel oder WLAN",
+    "a_full": "Die Antworten grenzen den Fehler schnell ein. Sind alle betroffen, liegt es eher am Internetanschluss, bei einer Person eher am Gerät oder Arbeitsplatz. Eine einzelne langsame Webseite deutet auf deren Server, WLAN-Probleme auf Funkstörungen.",
+    "options": [
+      "Seit wann, wer noch betroffen ist, welche Seiten, Kabel oder WLAN",
+      "Welches Betriebssystem der Router hat und wer ihn gekauft hat",
+      "Welche Farbe das Netzwerkkabel hat und wie lang es ist",
+      "Welcher Mitarbeiter zuletzt etwas heruntergeladen hat"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitarbeiter im Homeoffice meldet: \"Das VPN geht nicht.\" Was prüfen Sie als Erstes?",
+    "a": "Ob die Internetverbindung ohne VPN funktioniert",
+    "a_full": "Das VPN baut seinen Tunnel über die normale Internetverbindung auf. Ist schon das Heimnetz oder der Anschluss gestört, kann kein Tunnel entstehen. Erst wenn Webseiten ohne VPN laden, lohnt die Suche bei Zugangsdaten oder VPN-Client.",
+    "options": [
+      "Ob die Internetverbindung ohne VPN funktioniert",
+      "Ob der Fileserver in der Firma genug freien Speicher hat",
+      "Ob die Firewall der Firma Port 80 gesperrt hat",
+      "Ob der Mitarbeiter das VPN im Gäste-WLAN der Firma testet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das VPN im Homeoffice ist verbunden. ping 10.0.0.20 auf den Fileserver klappt, \\\\fs01 und ping fs01 scheitern. Wo liegt der Fehler?",
+    "a": "Der Client fragt für interne Namen nicht den Firmen-DNS",
+    "a_full": "Der Tunnel selbst funktioniert, weil die IP-Adresse erreichbar ist. Interne Namen kann nur der Firmen-DNS auflösen. Das VPN-Profil muss den internen DNS-Server und das DNS-Suffix an den Client übergeben.",
+    "options": [
+      "Der Client fragt für interne Namen nicht den Firmen-DNS",
+      "Der VPN-Tunnel ist nicht verschlüsselt",
+      "Der Fileserver hat keine Freigaben mehr",
+      "Der Heimrouter hat das falsche WLAN-Passwort"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie holen sich kurz einen Kaffee aus der Küche am Ende des Flurs. Ihr Rechner bleibt angemeldet. Was tun Sie vorher?",
+    "a": "Den Bildschirm sperren, z.B. mit Windows-Taste + L",
+    "a_full": "Ein entsperrter Rechner lässt jeden Vorbeigehenden unter Ihrem Namen arbeiten, Mails lesen oder Daten kopieren. Die Sperre dauert nur eine Sekunde, die Programme laufen weiter. Das gilt auch für kurze Pausen und auch im eigenen Büro.",
+    "options": [
+      "Den Bildschirm sperren, z.B. mit Windows-Taste + L",
+      "Den Monitor ausschalten, damit niemand etwas sieht",
+      "Den Rechner angemeldet lassen, weil die Pause kurz ist",
+      "Alle offenen Programme minimieren und den Desktop zeigen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Kundenbüro vergessen die Mitarbeiter immer wieder, ihren Rechner beim Verlassen zu sperren. Welche technische Maßnahme hilft zusätzlich?",
+    "a": "Eine automatische Sperre nach wenigen Minuten Inaktivität per Richtlinie",
+    "a_full": "Über eine Gruppenrichtlinie oder die lokale Richtlinie wird der Rechner nach z.B. fünf Minuten ohne Eingabe gesperrt. Das fängt die Fälle ab, in denen jemand das Sperren vergisst. Die Schulung zum manuellen Sperren bleibt trotzdem nötig, weil fünf Minuten für Missbrauch reichen.",
+    "options": [
+      "Eine automatische Sperre nach wenigen Minuten Inaktivität per Richtlinie",
+      "Ein Bildschirmschoner mit Firmenlogo ohne Kennwortabfrage",
+      "Ein Energiesparplan, der nach zwei Stunden den Monitor abschaltet",
+      "Ein Hinweisschild am Monitor mit der Bitte ums Sperren"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Sachbearbeiterin möchte für ihren neuen PC ein Konto mit Administratorrechten, damit sie Programme selbst installieren kann. Wie richten Sie den PC ein?",
+    "a": "Mit einem Standardbenutzerkonto, Software kommt über die IT",
+    "a_full": "Mit Adminrechten kann Schadsoftware, die sie versehentlich startet, tief ins System eingreifen und Schutzprogramme abschalten. Ein Standardkonto begrenzt den Schaden. Benötigte Programme stellt die IT geprüft und lizenziert bereit, z.B. über ein Softwarecenter.",
+    "options": [
+      "Mit einem Standardbenutzerkonto, Software kommt über die IT",
+      "Mit einem Adminkonto, aber mit besonders langem Kennwort",
+      "Mit einem Adminkonto, das nur werktags aktiv ist",
+      "Mit dem Gastkonto, weil es am wenigsten Rechte hat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege lädt sich ein kostenloses PDF-Werkzeug von einem Downloadportal, weil er schnell Dateien zusammenfügen will. Warum ist das problematisch?",
+    "a": "Die Quelle ist ungeprüft, das Programm kann Schadcode enthalten",
+    "a_full": "Downloadportale bündeln Programme oft mit Werbe- oder Spähsoftware. Außerdem ist unklar, ob die Lizenz eine gewerbliche Nutzung erlaubt. Im Unternehmen wird nur freigegebene Software aus bekannten Quellen installiert. Braucht man ein Werkzeug, fragt man die IT.",
+    "options": [
+      "Die Quelle ist ungeprüft, das Programm kann Schadcode enthalten",
+      "Kostenlose Programme dürfen nie auf Windows installiert werden",
+      "PDF-Dateien dürfen nur mit dem Browser geöffnet werden",
+      "Das Programm verbraucht zu viel Speicher auf der SSD"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege klickt seit Wochen bei jeder Update-Meldung auf \"Später erinnern\", weil ihn der Neustart stört. Welches Risiko entsteht?",
+    "a": "Bekannte Sicherheitslücken bleiben auf seinem Rechner offen",
+    "a_full": "Sicherheitsupdates schließen Lücken, die oft schon öffentlich beschrieben sind. Angreifer nutzen genau diese Lücken, weil viele Rechner nicht aktualisiert werden. Der Neustart lässt sich planen, z.B. in die Mittagspause oder auf den Feierabend.",
+    "options": [
+      "Bekannte Sicherheitslücken bleiben auf seinem Rechner offen",
+      "Der Rechner verliert nach einiger Zeit seine Windows-Lizenz",
+      "Die Updates werden nach 30 Tagen vom Hersteller gelöscht",
+      "Der Virenscanner schaltet sich wegen der Updates ab"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Virenschutz meldet: \"Bedrohung gefunden, Datei in Quarantäne verschoben\". Die Datei war ein Anhang eines Lieferanten. Was tun Sie?",
+    "a": "Die Datei in der Quarantäne lassen und die Meldung an die IT geben",
+    "a_full": "In der Quarantäne ist die Datei isoliert und kann keinen Schaden anrichten. Ob es ein Fehlalarm ist, prüft die IT. Der Lieferant wird über einen bekannten Weg informiert, denn sein Postfach könnte übernommen worden sein.",
+    "options": [
+      "Die Datei in der Quarantäne lassen und die Meldung an die IT geben",
+      "Die Datei aus der Quarantäne holen, weil der Lieferant bekannt ist",
+      "Den Virenschutz kurz abschalten und den Anhang erneut öffnen",
+      "Den Anhang an eine private Adresse senden und dort öffnen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kollegin schaltet den Virenschutz ab, weil ihr Rechner beim Öffnen großer Dateien langsam ist. Wie reagieren Sie richtig?",
+    "a": "Sie bitten sie, ihn einzuschalten, und melden das Leistungsproblem der IT",
+    "a_full": "Ohne Virenschutz fehlt eine wichtige Schutzschicht, z.B. gegen Schadcode in Anhängen. Ein Leistungsproblem löst die IT gezielt, etwa durch Prüfen der Hardware oder geprüfte Ausnahmen. Nutzer dürfen Sicherheitsfunktionen nicht eigenmächtig abschalten.",
+    "options": [
+      "Sie bitten sie, ihn einzuschalten, und melden das Leistungsproblem der IT",
+      "Sie lassen es so, weil ihr Rechner hinter der Firewall steht",
+      "Sie schalten ihn nur tagsüber ab und nachts wieder ein",
+      "Sie installieren ihr einen zweiten, schnelleren Virenscanner"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie richten ein Notebook für den Außendienst ein. BitLocker ist mit TPM aktiv, das Gerät startet aber ohne jede Eingabe bis zur Windows-Anmeldung. Was erhöht den Schutz bei Diebstahl?",
+    "a": "Eine zusätzliche PIN, die schon vor dem Start von Windows abgefragt wird",
+    "a_full": "Nur mit TPM gibt der Chip den Schlüssel beim Start automatisch frei. Ein Dieb hat dann ein laufendes System vor sich und kann Angriffe auf die Anmeldung versuchen. Mit einer Pre-Boot-PIN bleibt die Festplatte verschlüsselt, bis die richtige PIN eingegeben ist.",
+    "options": [
+      "Eine zusätzliche PIN, die schon vor dem Start von Windows abgefragt wird",
+      "Ein längeres Windows-Kennwort ohne weitere Änderung am Start",
+      "Das Abschalten des TPM, damit BitLocker schneller startet",
+      "Ein Aufkleber mit der Firmenadresse auf dem Gehäuse"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie sollen eine Excel-Liste mit Kundendaten auf einem USB-Stick zum Steuerberater bringen. Wie machen Sie das sicher?",
+    "a": "Mit einem verschlüsselten Stick, das Kennwort geht auf anderem Weg",
+    "a_full": "Ein USB-Stick geht leicht verloren. Mit BitLocker To Go oder einem hardwareverschlüsselten Stick sind die Daten dann nicht lesbar. Das Kennwort teilt man getrennt mit, z.B. telefonisch, und schreibt es nicht auf den Stick.",
+    "options": [
+      "Mit einem verschlüsselten Stick, das Kennwort geht auf anderem Weg",
+      "Mit einem Stick, auf dem die Datei schreibgeschützt gespeichert ist",
+      "Mit einem neuen Stick, weil gebrauchte Sticks Viren haben",
+      "Mit einem Stick, dessen Datei einen harmlosen Namen trägt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am Feierabend liegen auf Ihrem Schreibtisch noch Ausdrucke mit Kundenadressen und ein Notizzettel mit Kundennummern. Was verlangt eine Clean-Desk-Regel?",
+    "a": "Die Unterlagen verschlossen aufbewahren oder sicher vernichten",
+    "a_full": "Nach Feierabend kommen Reinigungskräfte, Handwerker oder Besucher in die Büros. Vertrauliche Unterlagen und Datenträger gehören dann in einen abschließbaren Schrank. Was nicht mehr gebraucht wird, kommt in den Aktenvernichter oder die Datenschutztonne.",
+    "options": [
+      "Die Unterlagen verschlossen aufbewahren oder sicher vernichten",
+      "Die Unterlagen umdrehen, sodass die Schrift unten liegt",
+      "Die Unterlagen unter die Tastatur legen, bis zum nächsten Tag",
+      "Die Unterlagen im normalen Papierkorb entsorgen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie drucken eine Gehaltsübersicht auf dem Etagendrucker und werden auf dem Weg dorthin aufgehalten. Welche Lösung verhindert, dass andere den Ausdruck mitnehmen?",
+    "a": "Sicheres Drucken, der Auftrag startet erst nach PIN oder Karte am Gerät",
+    "a_full": "Beim sicheren Drucken (Follow-Me-Printing) bleibt der Auftrag gespeichert, bis man sich am Drucker ausweist. Dann liegt kein vertrauliches Blatt ungeschützt im Ausgabefach. Die Lösung hilft auch, weil vergessene Ausdrucke gar nicht erst entstehen.",
+    "options": [
+      "Sicheres Drucken, der Auftrag startet erst nach PIN oder Karte am Gerät",
+      "Den Ausdruck in besonders kleiner Schrift erstellen lassen",
+      "Den Auftrag mehrfach senden, damit sicher einer ankommt",
+      "Den Drucker so einstellen, dass er nur schwarzweiß druckt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie bearbeiten im voll besetzten Zug ein Angebot mit Preisen und Kundennamen. Welche Maßnahme schützt vor neugierigen Blicken?",
+    "a": "Ein Blickschutzfilter und ein Platz ohne Leute hinter sich",
+    "a_full": "Ein Blickschutzfilter macht den Bildschirm von der Seite nahezu unlesbar. Zusätzlich hilft ein Platz, bei dem niemand hinter einem sitzt. Vertrauliche Telefonate führt man in der Öffentlichkeit gar nicht, weil Umstehende mithören.",
+    "options": [
+      "Ein Blickschutzfilter und ein Platz ohne Leute hinter sich",
+      "Die Bildschirmhelligkeit auf den höchsten Wert stellen",
+      "Das Notebook während der Fahrt nur im Flugmodus nutzen",
+      "Die Schriftgröße im Programm deutlich vergrößern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie vermissen Ihr Diensthandy seit der Firmenfeier am Vorabend. Sie hoffen, dass es noch auftaucht. Wann melden Sie den Verlust?",
+    "a": "Sofort, auch wenn es vielleicht nur verlegt ist",
+    "a_full": "Je früher die IT Bescheid weiß, desto schneller kann sie das Gerät sperren, orten oder aus der Ferne löschen und Zugänge zurücksetzen. Taucht das Handy wieder auf, lässt sich das leicht rückgängig machen. Wer wartet, gibt einem Finder viel Zeit.",
+    "options": [
+      "Sofort, auch wenn es vielleicht nur verlegt ist",
+      "Erst nach einer Woche, wenn es sicher nicht mehr auftaucht",
+      "Nur, wenn auf dem Handy Kundendaten gespeichert waren",
+      "Erst beim nächsten Gespräch mit dem Vorgesetzten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Homeoffice möchten Ihre Kinder auf dem Firmennotebook ein Spiel installieren, weil der Familienrechner belegt ist. Was ist richtig?",
+    "a": "Ablehnen, das Firmennotebook ist nur für dienstliche Zwecke da",
+    "a_full": "Auf dem Gerät liegen Firmendaten und Zugänge ins Firmennetz. Spiele und fremde Nutzer bringen Schadsoftware und Datenabfluss ins Spiel. Auch im Homeoffice gilt: Firmengeräte nutzt nur der Mitarbeiter, und der Bildschirm wird beim Verlassen gesperrt.",
+    "options": [
+      "Ablehnen, das Firmennotebook ist nur für dienstliche Zwecke da",
+      "Erlauben, wenn die Kinder ein eigenes Windows-Konto bekommen",
+      "Erlauben, solange das Spiel aus einem bekannten Shop stammt",
+      "Erlauben, wenn das VPN während des Spielens getrennt ist"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Beim Kunden klebt unter jeder Tastatur ein Zettel mit dem Windows-Kennwort. Die Mitarbeiter sagen, sie könnten sich die vielen Kennwörter nicht merken. Was empfehlen Sie?",
+    "a": "Einen Passwort-Manager, sodass man sich nur ein starkes Kennwort merkt",
+    "a_full": "Ein Passwort-Manager speichert alle Kennwörter verschlüsselt und kann sichere Kennwörter erzeugen. Der Benutzer merkt sich nur noch das Hauptkennwort. Zettel am Arbeitsplatz sind für jeden Besucher und jede Reinigungskraft lesbar.",
+    "options": [
+      "Einen Passwort-Manager, sodass man sich nur ein starkes Kennwort merkt",
+      "Die Zettel in die oberste Schreibtischschublade legen",
+      "Überall dasselbe kurze Kennwort verwenden",
+      "Die Kennwörter in einer Textdatei auf dem Desktop speichern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege ist ausgesperrt und bittet Sie, ihm kurz Ihr Kennwort zu geben, damit er eine dringende Mail verschicken kann. Wie reagieren Sie?",
+    "a": "Ablehnen und ihn an den Helpdesk verweisen",
+    "a_full": "Mit Ihrem Kennwort handelt der Kollege unter Ihrem Namen, alle Aktionen werden Ihnen zugeordnet. Kennwörter sind persönlich und werden nie weitergegeben, auch nicht an Vorgesetzte. Der Helpdesk kann das Konto des Kollegen nach Prüfung wieder freischalten.",
+    "options": [
+      "Ablehnen und ihn an den Helpdesk verweisen",
+      "Ihm das Kennwort geben und es danach sofort ändern",
+      "Sich selbst anmelden und ihn dann allein arbeiten lassen",
+      "Ihm das Kennwort nur mündlich und nicht schriftlich geben"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kundin fragt, wie sie sich ein sicheres Kennwort bilden kann, das sie trotzdem gut behält. Was raten Sie?",
+    "a": "Eine lange Passphrase aus mehreren zufällig gewählten Wörtern",
+    "a_full": "Die Länge macht ein Kennwort am stärksten gegen Ausprobieren. Vier oder fünf zufällige Wörter ergeben ein langes Kennwort, das man sich als Bild merken kann. Bekannte Zitate, Namen oder Geburtsdaten eignen sich nicht, weil Angreifer sie in Wortlisten haben.",
+    "options": [
+      "Eine lange Passphrase aus mehreren zufällig gewählten Wörtern",
+      "Ihren Vornamen mit dem aktuellen Jahr und einem Ausrufezeichen",
+      "Ein kurzes Wort, bei dem Buchstaben durch Ziffern ersetzt sind",
+      "Den Namen ihres Haustiers, den nur die Familie kennt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde will für sein Firmenpostfach MFA einrichten und fragt, ob ein Code per SMS oder eine Authenticator-App besser ist. Was empfehlen Sie?",
+    "a": "Die Authenticator-App, weil SMS leichter abgefangen werden kann",
+    "a_full": "SMS-Codes lassen sich über SIM-Tausch beim Mobilfunkanbieter oder Schadsoftware auf dem Handy umleiten. Die App erzeugt die Codes direkt auf dem Gerät oder bestätigt per Push mit Zahlenabgleich. Noch sicherer sind FIDO2-Schlüssel oder Passkeys. SMS ist aber immer noch besser als gar kein zweiter Faktor.",
+    "options": [
+      "Die Authenticator-App, weil SMS leichter abgefangen werden kann",
+      "Die SMS, weil sie auch ohne Internet am Handy ankommt",
+      "Beide sind gleich sicher, es kommt nur auf den Komfort an",
+      "Keins von beiden, ein längeres Kennwort reicht völlig aus"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Anrufer stellt sich als IT-Mitarbeiter vor. Er sagt, er teste gerade Ihr Konto, und bittet Sie, den Code vorzulesen, der gleich auf Ihrem Handy erscheint. Was tun Sie?",
+    "a": "Den Code nicht nennen, auflegen und den Anruf der IT melden",
+    "a_full": "Der Anrufer hat vermutlich Ihr Kennwort und braucht nur noch den zweiten Faktor. Echte IT-Mitarbeiter fragen nie nach Einmalcodes. Da jemand Ihr Kennwort kennt, ändern Sie es sofort über den normalen Weg.",
+    "options": [
+      "Den Code nicht nennen, auflegen und den Anruf der IT melden",
+      "Den Code nennen, weil er ohnehin nach kurzer Zeit verfällt",
+      "Nur die ersten drei Ziffern des Codes zur Prüfung nennen",
+      "Den Code nennen, wenn der Anrufer seinen Namen buchstabiert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde meint, MFA für sein Mailpostfach brauche er nicht, sein Kennwort sei lang und nur ihm bekannt. Was entgegnen Sie?",
+    "a": "Ein Kennwort kann trotzdem gestohlen werden, dann schützt der zweite Faktor",
+    "a_full": "Kennwörter gehen durch Phishing, Datenlecks bei Anbietern oder Schadsoftware verloren, ohne dass der Besitzer es merkt. Mit MFA reicht das gestohlene Kennwort allein nicht zur Anmeldung. Deshalb gilt MFA heute für E-Mail und Fernzugänge als Mindeststandard.",
+    "options": [
+      "Ein Kennwort kann trotzdem gestohlen werden, dann schützt der zweite Faktor",
+      "Er hat recht, bei langen Kennwörtern bringt MFA keinen Vorteil",
+      "MFA ist nur für Administratorkonten gedacht",
+      "MFA ersetzt das Kennwort, deshalb kann es kürzer sein"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Mail vom \"Paketdienst\" meldet offene Zollgebühren von 1,99 Euro und enthält einen Link \"Jetzt bezahlen\". Wie prüfen Sie am schnellsten, wohin der Link führt?",
+    "a": "Mit der Maus über den Link fahren und die Zieladresse lesen",
+    "a_full": "Der sichtbare Linktext kann alles behaupten, entscheidend ist die echte Zieladresse. Sie erscheint beim Überfahren mit der Maus, ohne zu klicken, unten im Fenster oder als Hinweis. Passt die Domain nicht zum Absender, ist es Phishing. Im Zweifel öffnet man die bekannte Seite selbst im Browser.",
+    "options": [
+      "Mit der Maus über den Link fahren und die Zieladresse lesen",
+      "Auf den Link klicken und prüfen, ob die Seite ein Schloss zeigt",
+      "Auf die Mail antworten und den Absender nach dem Link fragen",
+      "Den Link kopieren und in einem privaten Browserfenster öffnen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie erhalten eine Mail mit dem Anhang \"Rechnung_0815.pdf.exe\". Woran erkennen Sie die Gefahr?",
+    "a": "An der doppelten Endung, die Datei ist ein Programm und kein PDF",
+    "a_full": "Entscheidend ist die letzte Endung, hier .exe. Windows blendet bekannte Endungen oft aus, dann sieht man nur \"Rechnung_0815.pdf\". Deshalb sollten Dateiendungen im Explorer immer angezeigt werden. Ausführbare Anhänge öffnet man nie.",
+    "options": [
+      "An der doppelten Endung, die Datei ist ein Programm und kein PDF",
+      "An der Nummer im Dateinamen, echte Rechnungen haben keine",
+      "Am Unterstrich im Namen, der in PDFs nicht erlaubt ist",
+      "Am Wort Rechnung, das nur in Phishing-Mails vorkommt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie öffnen ein Word-Dokument aus einer Bewerbung. Eine gelbe Leiste fordert: \"Klicken Sie auf Inhalt aktivieren, um das Dokument anzuzeigen\". Was tun Sie?",
+    "a": "Nicht aktivieren, das Dokument schließen und der IT melden",
+    "a_full": "Mit \"Inhalt aktivieren\" werden Makros ausgeführt, die Schadsoftware nachladen können. Eine echte Bewerbung braucht keine Makros. Die Aufforderung ist ein typischer Trick, um den Schutz von Office auszuhebeln.",
+    "options": [
+      "Nicht aktivieren, das Dokument schließen und der IT melden",
+      "Aktivieren, weil Word sonst die Formatierung nicht zeigt",
+      "Aktivieren, aber vorher die Netzwerkverbindung trennen",
+      "Das Dokument speichern und am nächsten Tag erneut öffnen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie haben einen Anhang geöffnet und merken erst danach, dass die Mail gefälscht war. Am Rechner passiert nichts Auffälliges. Was tun Sie?",
+    "a": "Trotzdem sofort die IT informieren und nicht weiterarbeiten",
+    "a_full": "Viele Schadprogramme arbeiten zuerst unbemerkt im Hintergrund. Nur wenn die IT früh Bescheid weiß, kann sie den Rechner prüfen und eine Ausbreitung verhindern. Eine schnelle Meldung ist kein Eingeständnis von Schuld, sondern genau das richtige Verhalten.",
+    "options": [
+      "Trotzdem sofort die IT informieren und nicht weiterarbeiten",
+      "Nichts melden, weil kein Schaden sichtbar ist",
+      "Die Mail löschen und den Papierkorb leeren",
+      "Den Rechner herunterfahren und am nächsten Tag weiterarbeiten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie erhalten eine verdächtige Mail, die angeblich von Ihrer Bank stammt. Wie gehen Sie im Unternehmen richtig damit um?",
+    "a": "Über die Melde-Funktion oder den festgelegten Weg an die IT geben",
+    "a_full": "Die IT kann dieselbe Mail dann aus allen Postfächern entfernen und Absender oder Links sperren. Leitet man sie an Kollegen weiter, um zu warnen, klickt vielleicht jemand darauf. Links und Anhänge fasst man nicht an, auch nicht zum Testen.",
+    "options": [
+      "Über die Melde-Funktion oder den festgelegten Weg an die IT geben",
+      "An alle Kollegen weiterleiten, damit sie gewarnt sind",
+      "Dem Absender antworten, dass man den Betrug erkannt hat",
+      "Den Link öffnen, um zu prüfen, ob die Seite echt aussieht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Lieferant teilt per Mail mit, dass sich seine Bankverbindung geändert hat, und bittet, die offene Rechnung auf das neue Konto zu zahlen. Was ist richtig?",
+    "a": "Beim Lieferanten unter einer bereits bekannten Nummer nachfragen",
+    "a_full": "Betrüger übernehmen Postfächer von Lieferanten oder fälschen deren Adressen, um Zahlungen umzuleiten. Die Telefonnummer aus der Mail kann ebenfalls gefälscht sein. Deshalb ruft man eine Nummer an, die schon vorher bekannt war, z.B. aus dem Lieferantenstamm.",
+    "options": [
+      "Beim Lieferanten unter einer bereits bekannten Nummer nachfragen",
+      "Die Nummer aus der Mail-Signatur anrufen und nachfragen",
+      "Die Rechnung sofort zahlen, weil der Absender bekannt ist",
+      "Auf die Mail antworten und um Bestätigung bitten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Kassenbuch eines Kunden liegt als Excel-Datei auf einem Netzlaufwerk, auf dem alle Mitarbeiter schreiben dürfen. Welches Schutzziel ist vor allem gefährdet?",
+    "a": "Die Integrität",
+    "a_full": "Jeder kann die Zahlen versehentlich oder absichtlich ändern, ohne dass es auffällt. Damit ist nicht mehr sicher, dass die Daten richtig und vollständig sind. Abhilfe schaffen Schreibrechte nur für Zuständige und eine Buchhaltungssoftware mit Protokoll.",
+    "options": [
+      "Die Integrität",
+      "Die Verfügbarkeit",
+      "Die Vertraulichkeit",
+      "Die Authentizität"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie beraten ein kleines Steuerbüro. Welchen Schutzbedarf hat die Vertraulichkeit der Mandantendaten?",
+    "a": "Hoch, weil ein Bekanntwerden das Büro stark schädigen würde",
+    "a_full": "Steuerberater unterliegen einer gesetzlichen Schweigepflicht. Werden Einkommen oder Vermögen von Mandanten bekannt, drohen rechtliche Folgen, Vertrauensverlust und Abwanderung der Mandanten. Das rechtfertigt mindestens die Kategorie hoch, mit Maßnahmen wie Verschlüsselung und strengen Rechten.",
+    "options": [
+      "Hoch, weil ein Bekanntwerden das Büro stark schädigen würde",
+      "Normal, weil Steuerdaten ohnehin an das Finanzamt gehen",
+      "Normal, weil ein kleines Büro für Angreifer uninteressant ist",
+      "Kein Schutzbedarf, weil die Daten auf Papier vorliegen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf dem Dateiserver darf nur die Personalabteilung den Ordner \"Personal\" öffnen. Wie heißt diese Maßnahme nach der klassischen TOM-Einteilung?",
+    "a": "Zugriffskontrolle",
+    "a_full": "Die Zugriffskontrolle regelt, welche angemeldeten Benutzer auf welche Daten zugreifen dürfen, z.B. über NTFS- und Freigaberechte. Die Zugangskontrolle verhindert dagegen schon die Nutzung des Systems durch Unbefugte, die Zutrittskontrolle den Zutritt zu Räumen.",
+    "options": [
+      "Zugriffskontrolle",
+      "Zutrittskontrolle",
+      "Weitergabekontrolle",
+      "Eingabekontrolle"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Lohndaten gehen jeden Monat an das Steuerbüro. Sie werden dafür nur noch verschlüsselt über ein Portal übertragen. Wie heißt diese Maßnahme nach der klassischen TOM-Einteilung?",
+    "a": "Weitergabekontrolle",
+    "a_full": "Die Weitergabekontrolle soll verhindern, dass Daten beim Transport oder bei der Übertragung unbefugt gelesen oder verändert werden. Typische Maßnahmen sind verschlüsselte Übertragung, verschlüsselte Datenträger und protokollierte Übergaben.",
+    "options": [
+      "Weitergabekontrolle",
+      "Zugangskontrolle",
+      "Verfügbarkeitskontrolle",
+      "Auftragskontrolle"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde sagt: \"Ein Backup brauche ich nicht, meine Dateien liegen alle im OneDrive-Ordner.\" Was entgegnen Sie?",
+    "a": "Eine Synchronisation überträgt auch Löschungen und ersetzt kein Backup",
+    "a_full": "Löscht der Kunde eine Datei oder verschlüsselt Ransomware sie, wird der Zustand sofort in die Cloud übernommen. Papierkorb und Versionsverlauf helfen nur begrenzt und nur für eine gewisse Zeit. Ein Backup ist eine unabhängige Kopie mit älteren Ständen, die man gezielt zurückholen kann.",
+    "options": [
+      "Eine Synchronisation überträgt auch Löschungen und ersetzt kein Backup",
+      "Er hat recht, weil die Cloud beim Anbieter mehrfach gesichert ist",
+      "Er hat recht, solange der Ordner auf allen Geräten synchron ist",
+      "Er braucht ein Backup nur, wenn er keine schnelle Leitung hat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Montags läuft eine Vollsicherung, dienstags bis freitags jeweils eine inkrementelle. Am Donnerstagmorgen fällt der Server vor der Sicherung aus. Welche Sicherungen braucht man für den Stand von Mittwochabend?",
+    "a": "Die Vollsicherung vom Montag und die Sicherungen von Dienstag und Mittwoch",
+    "a_full": "Eine inkrementelle Sicherung enthält nur die Änderungen seit der letzten Sicherung. Deshalb braucht man die Vollsicherung als Grundlage und danach jede inkrementelle Sicherung in der richtigen Reihenfolge. Fehlt eine davon, fehlen auch deren Änderungen.",
+    "options": [
+      "Die Vollsicherung vom Montag und die Sicherungen von Dienstag und Mittwoch",
+      "Nur die inkrementelle Sicherung vom Mittwoch",
+      "Die Vollsicherung vom Montag und nur die Sicherung vom Mittwoch",
+      "Nur die Vollsicherung vom Montag, weil sie alles enthält"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Einzelunternehmer sichert auf eine USB-Festplatte, die ständig am PC angeschlossen neben dem Rechner steht. Wie verbessern Sie das mit wenig Aufwand?",
+    "a": "Zwei Platten im Wechsel nutzen und eine davon außer Haus lagern",
+    "a_full": "Eine dauerhaft angeschlossene Platte wird bei Ransomware mitverschlüsselt und bei Brand oder Diebstahl mit dem PC zerstört. Mit zwei Platten im Wechsel liegt immer eine Kopie getrennt vom Rechner an einem anderen Ort. Das kommt der 3-2-1-Regel schon sehr nahe.",
+    "options": [
+      "Zwei Platten im Wechsel nutzen und eine davon außer Haus lagern",
+      "Die Platte an einen anderen USB-Anschluss am selben PC stecken",
+      "Eine größere Platte kaufen, damit mehr Stände hineinpassen",
+      "Die Sicherung auf eine zweite Partition der internen SSD legen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde möchte sein altes Firmennotebook verkaufen. Er hat die Festplatte formatiert und Windows neu installiert. Sind die Daten damit sicher gelöscht?",
+    "a": "Nein, formatierte Daten lassen sich oft mit Werkzeugen wiederherstellen",
+    "a_full": "Beim Formatieren wird meist nur das Inhaltsverzeichnis neu angelegt, die Daten bleiben auf dem Datenträger. Sicher löscht man eine SSD mit der Secure-Erase-Funktion des Herstellers, eine Festplatte durch vollständiges Überschreiben. War das Laufwerk verschlüsselt, macht das Löschen des Schlüssels die Daten unlesbar.",
+    "options": [
+      "Nein, formatierte Daten lassen sich oft mit Werkzeugen wiederherstellen",
+      "Ja, weil Windows beim Neuinstallieren alle Sektoren löscht",
+      "Ja, wenn vorher auch der Papierkorb geleert wurde",
+      "Nein, weil man dafür zusätzlich das BIOS zurücksetzen muss"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine defekte Festplatte aus einem Kunden-PC enthält Kundendaten, lässt sich aber nicht mehr ansprechen und überschreiben. Was ist der richtige Weg?",
+    "a": "Physisch vernichten lassen, z.B. durch einen Dienstleister nach DIN 66399 mit Nachweis",
+    "a_full": "Auch eine defekte Platte kann ein Datenretter oft noch auslesen. Wenn Überschreiben nicht möglich ist, bleibt nur die Zerstörung der Scheiben. Ein zertifizierter Dienstleister vernichtet nach einer passenden Sicherheitsstufe und bestätigt das schriftlich. Das Protokoll dient als Nachweis.",
+    "options": [
+      "Physisch vernichten lassen, z.B. durch einen Dienstleister nach DIN 66399 mit Nachweis",
+      "In den Elektroschrott geben, weil sie ohnehin defekt ist",
+      "Mit einem Magneten über das Gehäuse fahren und entsorgen",
+      "Im Lager aufbewahren, bis ein neuer Kunde eine Ersatzplatte braucht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Anrufer sagt, er sei Kunde, und möchte wissen, welche Adresse und Telefonnummer zu seinem Reparaturauftrag gespeichert sind. Was tun Sie?",
+    "a": "Die Identität prüfen, z.B. per Rückruf an die hinterlegte Nummer",
+    "a_full": "Am Telefon kann sich jeder als Kunde ausgeben. Gibt man die Daten ungeprüft heraus, erfährt ein Unbefugter personenbezogene Daten. Geeignet sind Rückfragen zu Daten, die nur der Kunde kennt, oder ein Rückruf an die bereits bekannte Nummer.",
+    "options": [
+      "Die Identität prüfen, z.B. per Rückruf an die hinterlegte Nummer",
+      "Die Daten nennen, weil der Anrufer seinen Namen kennt",
+      "Die Daten nur nennen, wenn der Anrufer freundlich ist",
+      "Die Daten sofort per SMS an die Nummer des Anrufers senden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "An der Reparaturannahme fragt eine Kollegin jeden Kunden nach Geburtsdatum und Beruf, obwohl beides für den Auftrag nicht gebraucht wird. Gegen welchen Grundsatz verstößt das?",
+    "a": "Datenminimierung",
+    "a_full": "Nach der DSGVO dürfen nur die Daten erhoben werden, die für den Zweck nötig sind. Für eine Reparatur reichen Name, Kontaktweg und Gerätedaten. Zusätzliche Angaben erhöhen nur das Risiko bei einem Datenleck und den Aufwand bei Auskünften.",
+    "options": [
+      "Datenminimierung",
+      "Richtigkeit",
+      "Verfügbarkeit",
+      "Rechenschaftspflicht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am Freitagabend bemerken Sie, dass ein Kundenordner für alle im Internet freigegeben war. Ein Kollege meint, das reiche bis Montag. Was ist richtig?",
+    "a": "Sofort über den festgelegten Meldeweg melden, auch am Wochenende",
+    "a_full": "Bei einer Datenpanne muss das Unternehmen die Aufsichtsbehörde in der Regel innerhalb von 72 Stunden informieren. Die Frist läuft ab Kenntnis, auch über das Wochenende. Außerdem muss die Freigabe schnell geschlossen werden, damit nicht noch mehr Daten abfließen.",
+    "options": [
+      "Sofort über den festgelegten Meldeweg melden, auch am Wochenende",
+      "Bis Montag warten, weil die 72 Stunden nur Werktage zählen",
+      "Die Freigabe still entfernen und nichts melden",
+      "Den betroffenen Kunden selbst eine Mail schreiben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Sachbearbeiter-PC wird mit Office und vielen Browsertabs sehr zäh. Der Task-Manager zeigt 95 % Arbeitsspeicher und 20 % CPU. Welche Aufrüstung bringt am meisten?",
+    "a": "Den Arbeitsspeicher erweitern, z.B. von 8 auf 16 GB",
+    "a_full": "Ist der Arbeitsspeicher fast voll, lagert Windows Daten auf den Datenträger aus, und das bremst stark. Die CPU ist mit 20 % kaum ausgelastet, ein schnellerer Prozessor bringt hier wenig. Vor dem Kauf prüft man freie Steckplätze, Speichertyp und die größte unterstützte Menge.",
+    "options": [
+      "Den Arbeitsspeicher erweitern, z.B. von 8 auf 16 GB",
+      "Einen Prozessor mit mehr Kernen und höherem Takt einbauen",
+      "Eine dedizierte Grafikkarte mit eigenem Speicher nachrüsten",
+      "Ein Netzteil mit höherer Leistung und 80 PLUS Gold einbauen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde möchte sein zwei Jahre altes Ultrabook von 8 auf 16 GB Arbeitsspeicher aufrüsten. Was klären Sie vor der Bestellung?",
+    "a": "Ob der Arbeitsspeicher verlötet ist oder ein freier SO-DIMM-Steckplatz existiert",
+    "a_full": "Bei vielen flachen Notebooks ist der Arbeitsspeicher fest auf das Mainboard gelötet und lässt sich nicht erweitern. Das steht im Datenblatt oder Wartungshandbuch des Herstellers. Gibt es Steckplätze, müssen Speichertyp (z.B. DDR5 SO-DIMM) und Höchstausbau passen.",
+    "options": [
+      "Ob der Arbeitsspeicher verlötet ist oder ein freier SO-DIMM-Steckplatz existiert",
+      "Ob das Notebook noch Garantie hat und eine Rechnung vorliegt",
+      "Ob Windows nach der Aufrüstung neu aktiviert werden muss",
+      "Ob das Netzteil für den größeren Speicher genug Leistung hat"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Mediengestalterin schneidet und rendert täglich Videos. Welche CPU-Eigenschaft ist bei der Auswahl besonders wichtig?",
+    "a": "Viele Kerne und Threads, weil Rendern gut parallelisierbar ist",
+    "a_full": "Beim Rendern wird die Arbeit auf viele Kerne gleichzeitig verteilt, deshalb verkürzt eine höhere Kernzahl die Wartezeit deutlich. Für Büroarbeit reichen dagegen wenige schnelle Kerne. Zusätzlich helfen viel Arbeitsspeicher, eine schnelle NVMe-SSD und eine Grafikkarte mit Hardware-Encoder.",
+    "options": [
+      "Viele Kerne und Threads, weil Rendern gut parallelisierbar ist",
+      "Ein möglichst großer Grafikspeicher auf dem Prozessor selbst",
+      "Eine möglichst niedrige TDP für einen leisen Betrieb",
+      "Ein Sockel, der auch ältere DDR3-Module aufnehmen kann"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Fotograf braucht für sein Archiv 8 TB Speicher, auf das er selten zugreift. Das System soll schnell starten. Welche Laufwerkskombination empfehlen Sie?",
+    "a": "SSD für System und Programme, HDD für das große Archiv",
+    "a_full": "Eine SSD sorgt für schnelle Starts und kurze Ladezeiten. Für große, selten genutzte Datenmengen ist eine HDD pro Terabyte deutlich günstiger. Das Archiv wird zusätzlich auf einem externen Medium gesichert, denn eine zweite Platte im PC ersetzt kein Backup.",
+    "options": [
+      "SSD für System und Programme, HDD für das große Archiv",
+      "HDD für das System und SSD für das Archiv, um die SSD zu schonen",
+      "Nur eine große HDD für alles, weil sie am schnellsten startet",
+      "Zwei SSDs im RAID 0, damit das Archiv doppelt gespeichert ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde möchte an seinem Büro-PC einen 27-Zoll-Monitor für Tabellen und Dokumente. Welche Auflösung ist sinnvoll?",
+    "a": "WQHD (2560 x 1440) oder eine höhere Auflösung",
+    "a_full": "Bei 27 Zoll wirkt Full HD grob, weil die Pixel groß sind und Schrift unscharf erscheint. WQHD bietet auf dieser Größe eine angenehme Pixeldichte und mehr Platz für Tabellen. Für 4K auf 27 Zoll muss man meist die Skalierung in Windows erhöhen.",
+    "options": [
+      "WQHD (2560 x 1440) oder eine höhere Auflösung",
+      "Full HD (1920 x 1080) als Obergrenze",
+      "HD ready (1280 x 720) für weniger Strom",
+      "VGA (640 x 480) für besonders große Schrift"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einen PC soll eine deutlich stärkere Grafikkarte eingebaut werden. Was prüfen Sie am vorhandenen Netzteil?",
+    "a": "Ausreichende Leistung mit Reserve und passende PCIe-Stromanschlüsse",
+    "a_full": "Die Hersteller geben für die Grafikkarte eine empfohlene Netzteilleistung an. Das Netzteil muss außerdem die nötigen PCIe-Stromstecker (z.B. 8-Pin oder 12V-2x6) liefern. Adapter aus Laufwerkssteckern sind bei starken Karten keine gute Lösung.",
+    "options": [
+      "Ausreichende Leistung mit Reserve und passende PCIe-Stromanschlüsse",
+      "Ob das Netzteil dieselbe Farbe wie das Gehäuse hat",
+      "Ob das Netzteil einen eigenen USB-Anschluss besitzt",
+      "Ob das Netzteil vom gleichen Hersteller wie die Karte stammt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde hat in seiner Werkstatt häufig Spannungsschwankungen, aber nur selten echte Stromausfälle. Welche USV-Bauart passt für seinen kleinen NAS?",
+    "a": "Eine Line-Interactive-USV (VI) mit Spannungsregelung",
+    "a_full": "Eine Line-Interactive-USV gleicht Unter- und Überspannung über einen Regeltransformator aus, ohne gleich auf Batterie umzuschalten. Das schont den Akku. Eine Offline-USV würde bei jeder Schwankung auf Batterie wechseln, eine Online-USV wäre für einen kleinen NAS meist unnötig teuer.",
+    "options": [
+      "Eine Line-Interactive-USV (VI) mit Spannungsregelung",
+      "Eine Offline-USV (VFD) mit besonders großem Akku",
+      "Ein Überspannungsschutz-Zwischenstecker ohne Akku",
+      "Eine Steckdosenleiste mit Netzfilter und Schalter"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Das Notebook eines Mitarbeiters soll mit einem einzigen USB-C-Kabel zwei Monitore, LAN, Tastatur und Maus nutzen. Was prüfen Sie vor dem Kauf einer Dockingstation am Notebook?",
+    "a": "Ob der USB-C-Port Bildausgabe und Laden unterstützt",
+    "a_full": "USB-C ist nur die Steckerform, die Funktionen hängen vom Anschluss ab. Manche Ports übertragen nur Daten, andere auch Bild und Strom. Symbole am Gehäuse oder das Datenblatt zeigen, ob Thunderbolt, DisplayPort über USB-C und Power Delivery möglich sind.",
+    "options": [
+      "Ob der USB-C-Port Bildausgabe und Laden unterstützt",
+      "Ob das Notebook eine eingebaute Webcam mit Full HD hat",
+      "Ob auf dem Notebook die neueste Office-Version läuft",
+      "Ob das Notebook einen Kartenleser für SD-Karten besitzt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein 4K-Monitor läuft am HDMI-Anschluss eines älteren PCs nur mit 30 Hz, der Mauszeiger ruckelt. Was ist die wahrscheinliche Ursache?",
+    "a": "Der HDMI-Anschluss oder das Kabel unterstützt nur HDMI 1.4",
+    "a_full": "HDMI 1.4 überträgt 4K nur mit 30 Hz. Für 60 Hz braucht man mindestens HDMI 2.0 mit passendem Kabel an beiden Enden. Oft ist DisplayPort die einfachere Lösung, wenn Grafikkarte und Monitor ihn haben.",
+    "options": [
+      "Der HDMI-Anschluss oder das Kabel unterstützt nur HDMI 1.4",
+      "Der Monitor ist falsch herum auf den Standfuß montiert",
+      "Die Grafikkarte hat zu viel eigenen Grafikspeicher",
+      "Windows ist nicht aktiviert und begrenzt die Bildrate"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Mitarbeiter hat das Netzteil seines Notebooks verloren und nutzt ein USB-C-Netzteil mit 30 W. Das Notebook braucht laut Datenblatt 65 W. Was passiert typischerweise?",
+    "a": "Es lädt nur langsam oder gar nicht und entlädt sich unter Last trotzdem",
+    "a_full": "Über USB Power Delivery handeln Netzteil und Notebook die Leistung aus. Reicht sie nicht, lädt das Gerät sehr langsam, meldet ein zu schwaches Netzteil oder drosselt die Leistung. Als Ersatz wählt man ein Netzteil mit mindestens der angegebenen Leistung.",
+    "options": [
+      "Es lädt nur langsam oder gar nicht und entlädt sich unter Last trotzdem",
+      "Das Notebook wird durch Überspannung sofort beschädigt",
+      "Das Netzteil liefert automatisch die fehlenden 35 W nach",
+      "Das Notebook startet nur noch im abgesicherten Modus"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie richten einen Bildschirmarbeitsplatz ein. Wie positionieren Sie den Monitor in Höhe und Abstand?",
+    "a": "Oberkante höchstens auf Augenhöhe, Abstand etwa 50 bis 80 cm",
+    "a_full": "Der Blick soll leicht nach unten gehen, das entlastet Nacken und Augen. Der Abstand entspricht etwa einer Armlänge, bei großen Monitoren eher mehr. Der Monitor steht gerade vor dem Nutzer, damit er den Kopf nicht dauerhaft drehen muss.",
+    "options": [
+      "Oberkante höchstens auf Augenhöhe, Abstand etwa 50 bis 80 cm",
+      "Unterkante auf Augenhöhe, Abstand etwa 20 bis 30 cm",
+      "Mitte des Bildes deutlich über Augenhöhe, Abstand 1,5 m",
+      "Seitlich neben der Tastatur, Abstand beliebig je nach Platz"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Mitarbeiterin arbeitet täglich acht Stunden nur am Notebook-Bildschirm. Was schlagen Sie aus Sicht der Ergonomie vor?",
+    "a": "Dockingstation mit externem Monitor, Tastatur und Maus",
+    "a_full": "Beim Notebook sind Bildschirm und Tastatur fest verbunden und lassen sich nicht getrennt einstellen. Entweder ist der Bildschirm zu tief oder die Tastatur zu hoch. Mit externem Monitor, separater Tastatur und Maus lässt sich der Arbeitsplatz ergonomisch einrichten.",
+    "options": [
+      "Dockingstation mit externem Monitor, Tastatur und Maus",
+      "Das Notebook auf einen Stapel Bücher stellen und so weiterarbeiten",
+      "Die Bildschirmhelligkeit auf das Maximum stellen",
+      "Ein kleineres Notebook mit 13-Zoll-Bildschirm beschaffen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach Feierabend bleiben in einem Büro Monitore, Drucker und Lautsprecher im Standby. Welche einfache Maßnahme senkt diesen Verbrauch?",
+    "a": "Schaltbare oder Master-Slave-Steckdosenleisten verwenden",
+    "a_full": "Viele Geräte ziehen im Standby weiter Strom, über das Jahr summiert sich das. Eine Master-Slave-Leiste schaltet Monitor und Peripherie automatisch ab, wenn der PC als Master ausgeht. Für nächtliche Updates muss der PC selbst aber am Dauerstrom bleiben.",
+    "options": [
+      "Schaltbare oder Master-Slave-Steckdosenleisten verwenden",
+      "Einen dunklen Bildschirmschoner für die Nacht einrichten",
+      "Alle Geräte über einen USB-Hub mit Strom versorgen",
+      "Die Bildschirmauflösung vor Feierabend herabsetzen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Alte Büro-PCs und Notebooks werden über eine Sammelstelle nach ElektroG entsorgt. Was muss vor der Abgabe außer der Datenlöschung noch geschehen?",
+    "a": "Entnehmbare Batterien, Akkus und Lampen herausnehmen und getrennt abgeben",
+    "a_full": "Das ElektroG verlangt, dass Altbatterien und Altakkus, die nicht fest im Gerät verbaut sind, vor der Abgabe entnommen werden. Das gilt auch für Lampen, die sich zerstörungsfrei ausbauen lassen. Sie gehen in eigene Sammelsysteme, weil sie Brände verursachen oder Schadstoffe enthalten können.",
+    "options": [
+      "Entnehmbare Batterien, Akkus und Lampen herausnehmen und getrennt abgeben",
+      "Alle Gehäuse aufschrauben und die Platinen einzeln verpacken",
+      "Die Geräte mit Seriennummer beim Finanzamt abmelden",
+      "Alle Kabel abschneiden und in den Restmüll geben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Beim Installieren von Windows erscheint: Der ausgewählte Datenträger hat den GPT-Partitionsstil. Der PC unterstützt UEFI. Was ist die Ursache?",
+    "a": "Der Installationsstick wurde im Legacy- bzw. CSM-Modus gestartet",
+    "a_full": "Im Legacy-Modus kann Windows nur auf MBR-Datenträger installiert werden. Startet man den Stick im Bootmenü über den Eintrag mit dem Zusatz UEFI, läuft die Installation auf GPT durch. Am besten schaltet man CSM im UEFI ganz ab.",
+    "options": [
+      "Der Installationsstick wurde im Legacy- bzw. CSM-Modus gestartet",
+      "Die SSD ist defekt und muss vor der Installation getauscht werden",
+      "Der Arbeitsspeicher ist für GPT-Datenträger zu klein",
+      "Die Windows-Lizenz gilt nur für MBR-Datenträger"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einer Neuinstallation hat ein PC keine Netzwerkverbindung, im Geräte-Manager steht ein Ethernet-Controller mit gelbem Warnzeichen. Wie gehen Sie vor?",
+    "a": "Den passenden Treiber an einem anderen PC laden und per USB-Stick installieren",
+    "a_full": "Ohne Netzwerktreiber kann der PC den Treiber nicht selbst herunterladen. Das Modell des Mainboards oder die Hardware-ID in den Geräteeigenschaften zeigt, welcher Treiber passt. Man lädt ihn von der Herstellerseite und installiert ihn vom USB-Stick.",
+    "options": [
+      "Den passenden Treiber an einem anderen PC laden und per USB-Stick installieren",
+      "Den PC so lange neu starten, bis Windows den Treiber findet",
+      "Das Netzwerkkabel gegen ein längeres Kabel austauschen",
+      "Windows erneut installieren, diesmal ohne Updates"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege will ein Programm im Betrieb installieren, das laut Website kostenlos für private Nutzung ist. Wie bewerten Sie das?",
+    "a": "Unzulässig, für den Einsatz im Unternehmen ist eine gewerbliche Lizenz nötig",
+    "a_full": "Kostenlos heißt nicht lizenzfrei. Maßgeblich sind die Lizenzbedingungen des Herstellers, und viele Freeware-Programme schließen die gewerbliche Nutzung aus. Ein Verstoß kann Nachforderungen und Schadensersatz auslösen, deshalb wird die Lizenz vorher geprüft und dokumentiert.",
+    "options": [
+      "Unzulässig, für den Einsatz im Unternehmen ist eine gewerbliche Lizenz nötig",
+      "Erlaubt, weil Freeware immer für jeden Zweck frei nutzbar ist",
+      "Erlaubt, solange nur ein einziger PC das Programm nutzt",
+      "Erlaubt, wenn der Kollege es privat herunterlädt und mitbringt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PC zeigt beim Drücken des Einschaltknopfs keinerlei Reaktion: keine LED, kein Lüfter. Womit beginnen Sie die Fehlersuche?",
+    "a": "Mit der Stromzufuhr: Steckdose, Kabel und Schalter am Netzteil",
+    "a_full": "Man prüft zuerst die einfachen Ursachen von außen nach innen. Oft ist eine Steckdosenleiste aus oder der Schalter am Netzteil steht auf 0. Erst danach prüft man Netzteil, Frontpanel-Kabel und Mainboard.",
+    "options": [
+      "Mit der Stromzufuhr: Steckdose, Kabel und Schalter am Netzteil",
+      "Mit dem Neuaufspielen des Betriebssystems von einem Stick",
+      "Mit dem Austausch der Grafikkarte gegen ein neueres Modell",
+      "Mit einem Update des BIOS über den Hersteller-Support"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei einem älteren PC sind nach jedem Trennen vom Strom Uhrzeit und BIOS-Einstellungen zurückgesetzt. Was ist die wahrscheinliche Ursache?",
+    "a": "Die Knopfzelle (CMOS-Batterie) auf dem Mainboard ist leer",
+    "a_full": "Die Knopfzelle, meist vom Typ CR2032, versorgt die Echtzeituhr und die Einstellungen, solange der PC keinen Strom hat. Ist sie leer, gehen Uhrzeit und Einstellungen verloren. Nach dem Tausch stellt man Uhrzeit und Bootreihenfolge neu ein.",
+    "options": [
+      "Die Knopfzelle (CMOS-Batterie) auf dem Mainboard ist leer",
+      "Die SSD ist fast voll und überschreibt die Einstellungen",
+      "Das Netzteil liefert zu viel Spannung an das Mainboard",
+      "Die Windows-Lizenz ist abgelaufen und setzt das BIOS zurück"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihr Ausbilder bittet Sie, einen Ablauf zuerst in Pseudocode zu beschreiben. Was ist Pseudocode?",
+    "a": "Eine strukturierte, sprachunabhängige Beschreibung eines Algorithmus in Textform",
+    "a_full": "Pseudocode nutzt Elemente wie wenn, solange oder für, ohne sich an die Regeln einer bestimmten Programmiersprache zu halten. So kann man die Logik planen und besprechen, bevor man programmiert. Er lässt sich nicht direkt ausführen.",
+    "options": [
+      "Eine strukturierte, sprachunabhängige Beschreibung eines Algorithmus in Textform",
+      "Ein fertiges Programm, das der Computer direkt ausführen kann",
+      "Eine grafische Darstellung mit genormten Symbolen nach DIN",
+      "Ein verschlüsselter Programmcode zum Schutz vor Kopien"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie zeichnen ein Struktogramm nach Nassi-Shneiderman. Wie stellen Sie eine Verzweigung (wenn, dann, sonst) dar?",
+    "a": "Als Block mit Bedingung im oberen Dreieck und zwei Spalten für ja und nein",
+    "a_full": "Im oberen Teil steht die Bedingung zwischen zwei schrägen Linien. Darunter teilt sich der Block in eine Spalte für den Ja-Fall und eine für den Nein-Fall. Danach laufen beide Zweige wieder im nächsten Block zusammen.",
+    "options": [
+      "Als Block mit Bedingung im oberen Dreieck und zwei Spalten für ja und nein",
+      "Als Raute, von der zwei Pfeile zu beliebigen Stellen führen",
+      "Als Parallelogramm mit der Bedingung als Beschriftung",
+      "Als Kreis mit einer Sprungmarke zu einem anderen Blatt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Im Programmablaufplan (PAP) soll der Benutzer einen Wert eingeben. Welches Symbol verwenden Sie dafür?",
+    "a": "Ein Parallelogramm für Ein- und Ausgabe",
+    "a_full": "Nach DIN 66001 steht das Parallelogramm für Ein- und Ausgaben. Das Rechteck steht für eine Operation wie eine Berechnung, die Raute für eine Verzweigung. Start und Ende werden als abgerundetes Rechteck bzw. Oval gezeichnet.",
+    "options": [
+      "Ein Parallelogramm für Ein- und Ausgabe",
+      "Eine Raute für Eingaben und Entscheidungen",
+      "Ein Rechteck mit doppeltem Rand für Eingaben",
+      "Ein Oval, weil jede Eingabe ein Startpunkt ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll Datensätze aus einer Datei lesen, die auch leer sein kann. Welche Schleifenart passt?",
+    "a": "Eine kopfgesteuerte Schleife, die die Bedingung vor jedem Durchlauf prüft",
+    "a_full": "Bei der kopfgesteuerten Schleife wird die Bedingung zuerst geprüft. Ist die Datei leer, läuft die Schleife kein einziges Mal. Eine fußgesteuerte Schleife würde mindestens einmal lesen und bei einer leeren Datei einen Fehler auslösen.",
+    "options": [
+      "Eine kopfgesteuerte Schleife, die die Bedingung vor jedem Durchlauf prüft",
+      "Eine fußgesteuerte Schleife, die immer mindestens einmal läuft",
+      "Eine Endlosschleife, die erst beim Absturz beendet wird",
+      "Eine einfache Verzweigung ohne jede Wiederholung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll so lange nach einer Menüauswahl fragen, bis der Benutzer eine gültige Zahl von 1 bis 4 eingibt. Welche Schleifenart passt?",
+    "a": "Eine fußgesteuerte Schleife, weil mindestens einmal gefragt wird",
+    "a_full": "Die Eingabe muss mindestens einmal erfolgen, bevor man sie prüfen kann. Die fußgesteuerte Schleife führt den Rumpf zuerst aus und prüft danach die Bedingung. In Pseudocode heißt das etwa wiederhole ... bis eingabe gültig.",
+    "options": [
+      "Eine fußgesteuerte Schleife, weil mindestens einmal gefragt wird",
+      "Eine Zählschleife, die genau viermal fragt",
+      "Eine kopfgesteuerte Schleife, die eventuell nie fragt",
+      "Eine Verzweigung, die nur einmal prüft und endet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript soll für jeden der zwölf Monate eine Auswertung erzeugen. Welche Schleifenart ist am passendsten?",
+    "a": "Eine Zählschleife (für monat von 1 bis 12)",
+    "a_full": "Die Anzahl der Durchläufe steht vorher fest. Die Zählschleife verwaltet die Zählvariable selbst, setzt Anfangswert und Schrittweite und beendet sich am Endwert. Das ist übersichtlicher als eine solange-Schleife mit eigener Zählvariable.",
+    "options": [
+      "Eine Zählschleife (für monat von 1 bis 12)",
+      "Eine fußgesteuerte Schleife mit Abfrage nach jedem Monat",
+      "Eine Endlosschleife, die man nach dem Dezember abbricht",
+      "Zwölf verschachtelte Verzweigungen für jeden Monat"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Kollegin zeigt Ihnen diesen Pseudocode: i = 1 / solange i <= 10 / ausgabe i / ende solange. Das Programm hört nicht mehr auf. Was fehlt?",
+    "a": "Die Zählvariable i wird in der Schleife nie erhöht",
+    "a_full": "Die Bedingung i <= 10 bleibt immer wahr, weil i den Wert 1 behält. Es entsteht eine Endlosschleife. In den Schleifenrumpf gehört die Anweisung i = i + 1, damit die Bedingung irgendwann falsch wird.",
+    "options": [
+      "Die Zählvariable i wird in der Schleife nie erhöht",
+      "Die Ausgabe muss vor der Schleife stehen und nicht darin",
+      "Die Bedingung muss i >= 10 lauten, sonst startet sie nicht",
+      "Die Variable i darf nicht mit dem Wert 1 beginnen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Kundenverwaltung soll die Postleitzahl gespeichert werden. Warum wählen Sie den Datentyp String statt Integer?",
+    "a": "Weil führende Nullen wie in 01067 sonst verloren gehen",
+    "a_full": "Als Ganzzahl würde aus 01067 die Zahl 1067. Mit Postleitzahlen rechnet man außerdem nicht, sie sind Kennzeichen. Das gilt genauso für Telefonnummern oder Artikelnummern mit führender Null.",
+    "options": [
+      "Weil führende Nullen wie in 01067 sonst verloren gehen",
+      "Weil Integer in Datenbanken grundsätzlich mehr Platz braucht",
+      "Weil ein String schneller sortiert wird als jede Zahl",
+      "Weil Integer keine fünfstelligen Werte speichern kann"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll Rechnungsbeträge in Euro exakt addieren. Warum ist ein einfacher Gleitkommatyp (float) dafür ungünstig?",
+    "a": "Gleitkommazahlen können Werte wie 0,10 nicht exakt darstellen, es entstehen Rundungsfehler",
+    "a_full": "Float speichert Zahlen im Binärsystem, dabei werden viele Dezimalbrüche nur angenähert. Über viele Rechnungen summieren sich kleine Abweichungen. Für Geldbeträge nutzt man einen Dezimaltyp (z.B. decimal) oder rechnet intern in ganzen Cent.",
+    "options": [
+      "Gleitkommazahlen können Werte wie 0,10 nicht exakt darstellen, es entstehen Rundungsfehler",
+      "Gleitkommazahlen können grundsätzlich keine negativen Werte speichern",
+      "Gleitkommazahlen sind auf höchstens zwei Stellen begrenzt",
+      "Gleitkommazahlen lassen sich nicht in Text umwandeln"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Array messwerte hat 10 Elemente, der Index beginnt bei 0. Ein Programm greift auf messwerte[10] zu und bricht ab. Warum?",
+    "a": "Der letzte gültige Index ist 9, messwerte[10] liegt außerhalb des Arrays",
+    "a_full": "Bei einem nullbasierten Array mit n Elementen reichen die Indizes von 0 bis n - 1. Ein Zugriff dahinter führt je nach Sprache zu einem Laufzeitfehler oder liest fremden Speicher. Schleifen über ein Array laufen deshalb meist mit i < Länge statt i <= Länge.",
+    "options": [
+      "Der letzte gültige Index ist 9, messwerte[10] liegt außerhalb des Arrays",
+      "Der Index 10 ist für das erste Element reserviert",
+      "Arrays dürfen grundsätzlich nur 9 Elemente enthalten",
+      "messwerte[10] ist gültig, nur der Datentyp ist falsch"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll die niedrigste und höchste Tagestemperatur im Winter finden. Der Entwurf setzt max = 0 vor der Schleife. Was ist daran problematisch?",
+    "a": "Sind alle Werte negativ, bleibt max fälschlich bei 0",
+    "a_full": "Der Startwert 0 kommt in den Daten eventuell gar nicht vor. Liegen alle Temperaturen unter null, ist kein Wert größer als 0, und das Ergebnis ist falsch. Richtig ist, max mit dem ersten Element des Arrays zu belegen und dann die übrigen zu vergleichen.",
+    "options": [
+      "Sind alle Werte negativ, bleibt max fälschlich bei 0",
+      "Die Variable max darf nur Ganzzahlen und keine Kommazahlen speichern",
+      "Der Startwert 0 macht die Schleife zur Endlosschleife",
+      "Das Maximum lässt sich nur mit einer fußgesteuerten Schleife finden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll eine Liste von Summen bilden. Im Entwurf steht: für jeden wert in liste / summe = 0 / summe = summe + wert. Was ist falsch?",
+    "a": "summe = 0 gehört vor die Schleife, nicht hinein",
+    "a_full": "Die Summenvariable wird einmal vor der Schleife initialisiert. Steht die Zuweisung im Schleifenrumpf, beginnt jeder Durchlauf wieder bei 0. Am Ende enthält summe dann nur den letzten Wert der Liste.",
+    "options": [
+      "summe = 0 gehört vor die Schleife, nicht hinein",
+      "summe = summe + wert muss vor der Schleife stehen",
+      "Die Schleife muss rückwärts durch die Liste laufen",
+      "Die Variable summe muss den Datentyp Boolean haben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Anwendung soll einen Kundennamen in einer unsortierten Liste finden. Wie arbeitet die lineare Suche?",
+    "a": "Sie vergleicht die Elemente der Reihe nach, bis der Wert gefunden oder das Ende erreicht ist",
+    "a_full": "Die lineare Suche braucht keine sortierten Daten. Im schlechtesten Fall muss sie jedes Element einmal prüfen, bei großen Listen dauert das entsprechend lange. Wird der Wert gefunden, kann die Suche sofort abbrechen.",
+    "options": [
+      "Sie vergleicht die Elemente der Reihe nach, bis der Wert gefunden oder das Ende erreicht ist",
+      "Sie halbiert die Liste bei jedem Schritt und sucht in einer Hälfte weiter",
+      "Sie sortiert die Liste zuerst und nimmt dann das mittlere Element",
+      "Sie prüft nur das erste und das letzte Element der Liste"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihr Ausbilder erklärt Bubblesort. Was ist die Grundidee dieses Verfahrens?",
+    "a": "Benachbarte Elemente vergleichen und vertauschen, bis kein Tausch mehr nötig ist",
+    "a_full": "Bubblesort läuft mehrmals durch die Liste und vertauscht zwei benachbarte Elemente, wenn sie in falscher Reihenfolge stehen. Dabei wandern große Werte wie Blasen nach hinten. Das Verfahren ist leicht zu verstehen, aber bei großen Datenmengen langsam.",
+    "options": [
+      "Benachbarte Elemente vergleichen und vertauschen, bis kein Tausch mehr nötig ist",
+      "Die Liste halbieren, beide Hälften sortieren und wieder zusammenführen",
+      "Jedes Element per Zufall an eine neue Position setzen",
+      "Das kleinste Element löschen und die Liste neu einlesen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm soll je nach Wochentag (1 bis 7) einen anderen Text ausgeben. Welche Kontrollstruktur ist dafür am übersichtlichsten?",
+    "a": "Eine Mehrfachauswahl (Fallunterscheidung, z.B. switch/case)",
+    "a_full": "Die Fallunterscheidung prüft eine Variable auf mehrere feste Werte und führt den passenden Zweig aus. Das ist übersichtlicher als sieben verschachtelte wenn-sonst-Anweisungen. Im Struktogramm gibt es dafür ein eigenes Sinnbild mit mehreren Spalten.",
+    "options": [
+      "Eine Mehrfachauswahl (Fallunterscheidung, z.B. switch/case)",
+      "Eine Zählschleife, die sieben Mal den gleichen Text ausgibt",
+      "Eine fußgesteuerte Schleife ohne Abbruchbedingung",
+      "Eine einzelne Zuweisung ohne jede Bedingung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Preisliste steht der Mehrwertsteuersatz in Zelle B1. Die Formel =A4*B1 in C4 soll nach unten kopiert werden. Wie muss sie lauten?",
+    "a": "=A4*$B$1, damit der Bezug auf den Steuersatz fest bleibt",
+    "a_full": "Beim Kopieren passt die Tabellenkalkulation relative Bezüge an, aus B1 würde B2, B3 usw. Mit den Dollarzeichen wird der Bezug absolut und zeigt immer auf B1. Die Taste F4 setzt die Dollarzeichen beim Bearbeiten der Formel.",
+    "options": [
+      "=A4*$B$1, damit der Bezug auf den Steuersatz fest bleibt",
+      "=$A$4*B1, damit die Preise gleich bleiben",
+      "=A4*B1, weil die Tabelle den Bezug selbst erkennt",
+      "=A$4*B$1, damit nur die Spalten fest bleiben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein SVERWEIS in der Artikelliste liefert manchmal den Preis eines falschen Artikels, obwohl die Nummer nicht existiert. Was fehlt in der Formel?",
+    "a": "Der vierte Parameter FALSCH für eine genaue Übereinstimmung",
+    "a_full": "Ohne vierten Parameter oder mit WAHR sucht SVERWEIS ungefähr und erwartet eine sortierte erste Spalte. Dann liefert er den nächstkleineren Treffer statt einer Fehlermeldung. Mit FALSCH gibt es nur exakte Treffer, sonst erscheint #NV.",
+    "options": [
+      "Der vierte Parameter FALSCH für eine genaue Übereinstimmung",
+      "Ein Dollarzeichen vor der gesuchten Artikelnummer",
+      "Die Angabe der Spalte als Buchstabe statt als Zahl",
+      "Eine zweite Suchmatrix in einem anderen Tabellenblatt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ihre Abteilung nutzt eine aktuelle Excel-Version. Welche Vorteile bietet XVERWEIS gegenüber SVERWEIS?",
+    "a": "Er sucht standardmäßig exakt und kann auch Werte links der Suchspalte liefern",
+    "a_full": "Bei XVERWEIS gibt man Suchbereich und Rückgabebereich getrennt an, deshalb muss die Suchspalte nicht die erste Spalte sein. Neue Spalten in der Tabelle verschieben das Ergebnis nicht. Ein eigener Parameter legt fest, was bei keinem Treffer angezeigt wird.",
+    "options": [
+      "Er sucht standardmäßig exakt und kann auch Werte links der Suchspalte liefern",
+      "Er rechnet schneller, weil er nur sortierte Listen durchsucht",
+      "Er ersetzt auch alle Funktionen wie SUMME und MITTELWERT",
+      "Er funktioniert ohne Suchkriterium und findet Werte selbst"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Stundenliste stehen in Spalte A Kundennamen und in Spalte C die geleisteten Stunden. Wie berechnen Sie die Stunden für den Kunden Meier?",
+    "a": "=SUMMEWENN(A:A;\"Meier\";C:C)",
+    "a_full": "SUMMEWENN addiert nur die Werte aus dem Summenbereich, deren Zeile im Suchbereich das Kriterium erfüllt. Der erste Parameter ist der Bereich mit den Namen, der zweite das Kriterium, der dritte die zu addierenden Stunden. ZÄHLENWENN würde nur die Anzahl der Einträge liefern.",
+    "options": [
+      "=SUMMEWENN(A:A;\"Meier\";C:C)",
+      "=ZÄHLENWENN(C:C;\"Meier\";A:A)",
+      "=SUMME(A:A;\"Meier\";C:C)",
+      "=WENN(A:A=\"Meier\";C:C;0)"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach dem Erstgespräch haben Sie notiert: Buchhaltungssoftware, zwei Monitore, Budget 1.500 Euro. Was fehlt noch für eine vollständige Bedarfsanalyse?",
+    "a": "Termin und vorhandene Umgebung, z.B. Netzwerk, Altgerät und Datenübernahme",
+    "a_full": "Zur Bedarfsanalyse gehören neben Aufgaben und Budget auch die Rahmenbedingungen. Dazu zählen der gewünschte Fertigstellungstermin und die vorhandene Umgebung wie Netzwerkanschluss, Peripherie und Altdaten. Fehlen diese Angaben, passt das Angebot später oft nicht zur Situation vor Ort.",
+    "options": [
+      "Termin und vorhandene Umgebung, z.B. Netzwerk, Altgerät und Datenübernahme",
+      "Die genaue Seriennummer des Geräts, das später geliefert werden soll",
+      "Die Zustimmung des Betriebsrats des Kunden zur geplanten Anschaffung",
+      "Die Lieblingsmarke der Kundin, damit das Gerät ihr optisch gefällt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Ausbilder gibt Ihnen das Lastenheft einer Arztpraxis und bittet Sie, das Pflichtenheft vorzubereiten. Was schreiben Sie hinein?",
+    "a": "Wie und womit das Systemhaus jede Anforderung umsetzen wird",
+    "a_full": "Das Lastenheft beschreibt, was der Kunde will. Im Pflichtenheft legt der Auftragnehmer fest, wie er diese Anforderungen umsetzt, z.B. mit welcher Hardware, Software und welchem Vorgehen. Jede Anforderung aus dem Lastenheft sollte dort eine konkrete Lösung erhalten.",
+    "options": [
+      "Wie und womit das Systemhaus jede Anforderung umsetzen wird",
+      "Eine Kopie der Kundenanforderungen ohne eigene Ergänzungen",
+      "Nur den Gesamtpreis und die Zahlungsbedingungen des Auftrags",
+      "Die Wünsche der Praxismitarbeiter, die nicht im Lastenheft stehen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Kunde hat das Pflichtenheft unterschrieben und freigegeben. Welche Bedeutung hat das für den weiteren Auftrag?",
+    "a": "Es ist die verbindliche Grundlage für Umsetzung und Abnahme",
+    "a_full": "Mit der Freigabe sind sich beide Seiten einig, was geliefert wird. Bei der Abnahme wird gegen genau diese Vereinbarung geprüft. Spätere Änderungswünsche laufen über einen Änderungsantrag, weil sie Kosten und Termin beeinflussen können.",
+    "options": [
+      "Es ist die verbindliche Grundlage für Umsetzung und Abnahme",
+      "Der Kunde darf ab jetzt keinerlei Änderungswünsche mehr äußern",
+      "Die Abnahme entfällt, weil der Kunde schon zugestimmt hat",
+      "Das Lastenheft wird dadurch ungültig und kann vernichtet werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie sollen für einen neuen Arbeitsplatz bei drei Lieferanten Angebote einholen. Warum senden Sie allen dieselbe Anfrage mit identischer Beschreibung?",
+    "a": "Damit die Angebote später direkt vergleichbar sind",
+    "a_full": "Nur wenn alle Lieferanten dieselbe Menge, Ausstattung und denselben Liefertermin anbieten, lassen sich Preise und Konditionen fair vergleichen. Unterschiedliche Anfragen führen zu Angeboten, die man erst mühsam angleichen muss. Die Anfrage selbst ist dabei rechtlich unverbindlich.",
+    "options": [
+      "Damit die Angebote später direkt vergleichbar sind",
+      "Weil eine Anfrage sonst rechtlich als Bestellung gewertet wird",
+      "Weil Lieferanten nur auf standardisierte Formulare antworten",
+      "Damit jeder Lieferant weiß, welche Konkurrenten angefragt wurden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für einen speziellen Etikettendrucker kennt Ihr Betrieb noch keinen Lieferanten. Wo suchen Sie nach geeigneten Bezugsquellen?",
+    "a": "In Onlineplattformen, Herstellerseiten, Fachmessen und Branchenverzeichnissen",
+    "a_full": "Bei neuen Artikeln sucht man externe Bezugsquellen, z.B. über Suchmaschinen, B2B-Plattformen, Herstellerseiten mit Händlerlisten und Messen. Bekannte Lieferanten findet man in der internen Lieferantendatei. Danach holt man bei mehreren Anbietern Angebote ein.",
+    "options": [
+      "In Onlineplattformen, Herstellerseiten, Fachmessen und Branchenverzeichnissen",
+      "Ausschließlich beim bisherigen Hauptlieferanten für Notebooks",
+      "Nur im Handelsregister unter dem Stichwort Etikettendrucker",
+      "Beim Kunden, der den passenden Lieferanten selbst benennen muss"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie haben das günstigste Angebot ausgewählt und sollen nun die Bestellung schreiben. Was prüfen Sie vor dem Absenden?",
+    "a": "Übereinstimmung mit dem Angebot und die interne Freigabe",
+    "a_full": "Artikelbezeichnung, Artikelnummer, Menge, Preis, Konditionen, Lieferadresse und Liefertermin müssen zum Angebot passen. Außerdem braucht die Bestellung die nötige interne Freigabe, z.B. durch den Ausbilder oder Einkauf. Fehler in der Bestellung werden nach Vertragsschluss schnell teuer.",
+    "options": [
+      "Übereinstimmung mit dem Angebot und die interne Freigabe",
+      "Nur ob die Bestellung höflich formuliert und gut lesbar ist",
+      "Ob der Lieferant bereits eine Rechnung vorab geschickt hat",
+      "Ob der Kunde die Bestellung beim Lieferanten selbst unterschreibt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei der Anlieferung der PCs ist ein Karton sichtbar eingedrückt. Der Fahrer drängt, Sie sollen schnell unterschreiben. Was tun Sie?",
+    "a": "Den Schaden auf dem Lieferschein vermerken und vom Fahrer bestätigen lassen",
+    "a_full": "Äußerlich erkennbare Schäden müssen sofort bei der Übergabe festgehalten werden, am besten mit Unterschrift des Fahrers und Fotos. Alternativ kann man die Annahme des beschädigten Pakets verweigern. Ohne Vermerk ist später schwer zu beweisen, dass der Schaden beim Transport entstand.",
+    "options": [
+      "Den Schaden auf dem Lieferschein vermerken und vom Fahrer bestätigen lassen",
+      "Ohne Vermerk unterschreiben und den Karton erst später öffnen",
+      "Die Unterschrift verweigern und alle Kartons zurückschicken",
+      "Den Karton öffnen und das Gerät sofort selbst reparieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Rechnung des Lieferanten für die Arbeitsplatzhardware ist eingetroffen. Womit gleichen Sie sie vor der Zahlungsfreigabe ab?",
+    "a": "Mit der Bestellung und dem geprüften Lieferschein",
+    "a_full": "Die Bestellung zeigt, welche Preise und Konditionen vereinbart waren. Der geprüfte Lieferschein zeigt, welche Menge tatsächlich angekommen ist. Nur wenn alle drei Belege zusammenpassen, wird die Rechnung zur Zahlung freigegeben.",
+    "options": [
+      "Mit der Bestellung und dem geprüften Lieferschein",
+      "Nur mit dem Kontoauszug des letzten Monats",
+      "Mit dem Angebot des günstigsten Mitbewerbers",
+      "Mit der Preisliste auf der Webseite des Herstellers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Beim Wareneingang notieren Sie die Seriennummern aller Monitore, bevor sie zum Kunden gehen. Warum ist das sinnvoll?",
+    "a": "Für Inventar, Garantiefälle und die eindeutige Zuordnung zum Arbeitsplatz",
+    "a_full": "Mit der Seriennummer lässt sich jedes Gerät eindeutig einem Kunden und Arbeitsplatz zuordnen. Bei Garantie- oder Gewährleistungsfällen fragt der Hersteller danach. Außerdem braucht die Inventarliste diese Angabe.",
+    "options": [
+      "Für Inventar, Garantiefälle und die eindeutige Zuordnung zum Arbeitsplatz",
+      "Weil der Lieferschein ohne Seriennummern ungültig ist",
+      "Weil der Monitor sonst keine Treiber installieren kann",
+      "Weil die Umsatzsteuer je Seriennummer berechnet wird"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Beim Abnahmetermin fragt der Kunde, woran Sie eigentlich festmachen, dass alles fertig ist. Was antworten Sie?",
+    "a": "An den Abnahmekriterien, die im Pflichtenheft vereinbart wurden",
+    "a_full": "Bei der Abnahme prüft man gemeinsam, ob die vereinbarten Leistungen erbracht sind. Grundlage sind messbare Kriterien aus dem Pflichtenheft, z.B. „Buchhaltungssoftware startet, Scan landet im Netzwerkordner“. So wird die Abnahme nicht zur Geschmacksfrage.",
+    "options": [
+      "An den Abnahmekriterien, die im Pflichtenheft vereinbart wurden",
+      "Am persönlichen Eindruck des Technikers nach der Installation",
+      "Daran, dass seit der Installation noch keine Störung auftrat",
+      "An der Anzahl der Stunden, die für den Auftrag gebucht wurden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Testprotokoll eines Kollegen steht zum Drucker nur „ok“. Was fehlt, damit das Protokoll aussagekräftig ist?",
+    "a": "Testfall, erwartetes und tatsächliches Ergebnis, Datum und Prüfer",
+    "a_full": "Ein Testprotokoll beschreibt je Testfall, was genau geprüft wurde und welches Ergebnis erwartet wurde. Daneben steht das tatsächliche Ergebnis mit Status, Datum und Name des Prüfers. Nur so kann jemand anderes den Test nachvollziehen oder wiederholen.",
+    "options": [
+      "Testfall, erwartetes und tatsächliches Ergebnis, Datum und Prüfer",
+      "Nur die Unterschrift des Kunden unter dem Wort „ok“",
+      "Eine Liste aller installierten Programme auf dem PC",
+      "Die Rechnungsnummer und der Preis des Druckers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Ausbilder fragt, warum Sie die Arbeitsplätze vor dem Abnahmetermin noch selbst testen. Wie begründen Sie das?",
+    "a": "Eigene Tests finden Fehler, bevor der Kunde sie bei der Abnahme entdeckt",
+    "a_full": "Interne Tests nach Testprotokoll sind Sache des Auftragnehmers. Sie stellen sicher, dass bei der Abnahme mit dem Kunden keine vermeidbaren Mängel auffallen. Die Abnahme ist dagegen die formale Bestätigung durch den Kunden mit rechtlicher Wirkung.",
+    "options": [
+      "Eigene Tests finden Fehler, bevor der Kunde sie bei der Abnahme entdeckt",
+      "Weil die Abnahme ohne internes Testprotokoll gesetzlich verboten ist",
+      "Weil der Kunde bei der Abnahme selbst nichts mehr prüfen darf",
+      "Weil interne Tests die spätere Abnahme vollständig ersetzen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie sollen zehn gleiche PCs für eine Schulungsfirma einrichten. Warum arbeiten Sie mit einer Checkliste?",
+    "a": "Damit jeder PC gleich eingerichtet und kein Schritt vergessen wird",
+    "a_full": "Eine Checkliste sorgt für gleichbleibende Qualität, auch wenn mehrere Personen arbeiten oder man unterbrochen wird. Abgehakte Punkte dienen zugleich als Nachweis der erledigten Arbeit. Fehler lassen sich so leichter einem Schritt zuordnen.",
+    "options": [
+      "Damit jeder PC gleich eingerichtet und kein Schritt vergessen wird",
+      "Weil die Einrichtung dadurch automatisch ohne Personal abläuft",
+      "Weil der Kunde ohne Checkliste keine Rechnung bezahlen muss",
+      "Damit man auf ein Testprotokoll danach verzichten kann"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde sagt bei der Übergabe: „Passt schon, das müssen wir nicht aufschreiben.“ Warum bestehen Sie trotzdem auf einem unterschriebenen Abnahmeprotokoll?",
+    "a": "Es beweist, wann und in welchem Zustand die Leistung abgenommen wurde",
+    "a_full": "Das Protokoll dokumentiert Datum, Umfang, Zustand und offene Punkte der Abnahme. Bei Werkleistungen hängen daran Fälligkeit der Vergütung und Beginn der Verjährung für Mängelansprüche. Bei einem späteren Streit ist eine mündliche Zusage kaum zu beweisen.",
+    "options": [
+      "Es beweist, wann und in welchem Zustand die Leistung abgenommen wurde",
+      "Weil der Kunde sonst das Recht auf Gewährleistung komplett verliert",
+      "Weil ein Auftrag ohne Protokoll automatisch als Dienstvertrag gilt",
+      "Weil die Umsatzsteuer erst mit dem Protokoll berechnet werden darf"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine neue Einrichtungs-Checkliste hat im Test die Nacharbeiten deutlich gesenkt. Was geschieht jetzt im PDCA-Zyklus?",
+    "a": "Act: Die Checkliste wird als Standard für alle Einrichtungen festgelegt",
+    "a_full": "Im PDCA-Zyklus folgt nach Plan, Do und Check der Schritt Act. Hat sich eine Maßnahme bewährt, wird sie zum verbindlichen Standard. Danach beginnt der Zyklus mit dem nächsten Verbesserungsthema von vorn.",
+    "options": [
+      "Act: Die Checkliste wird als Standard für alle Einrichtungen festgelegt",
+      "Plan: Man plant eine ganz neue Checkliste für denselben Zweck",
+      "Do: Man testet die Checkliste noch einmal an einem einzigen PC",
+      "Check: Man misst die Nacharbeiten erneut, ohne etwas zu ändern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie haben die Branchensoftware auf dem neuen PC mit Ihrem Administratorkonto getestet. Warum reicht das nicht?",
+    "a": "Die Anwenderin arbeitet mit normalen Rechten, dort kann sich das Programm anders verhalten",
+    "a_full": "Viele Fehler zeigen sich erst mit eingeschränkten Rechten, z.B. fehlende Schreibrechte auf Ordner oder Netzlaufwerke. Deshalb testet man mit einem Konto, das die gleichen Rechte hat wie der spätere Benutzer. So entspricht der Test dem echten Betrieb.",
+    "options": [
+      "Die Anwenderin arbeitet mit normalen Rechten, dort kann sich das Programm anders verhalten",
+      "Weil Administratorkonten grundsätzlich keine Programme starten dürfen",
+      "Weil Tests nur vom Kunden selbst durchgeführt werden dürfen",
+      "Weil die Lizenz nur für das Administratorkonto gültig ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach dem Projektstart rufen drei verschiedene Mitarbeiter des Kunden mit widersprüchlichen Wünschen an. Was hätte im Kick-off geklärt werden müssen?",
+    "a": "Ein fester Ansprechpartner beim Kunden, der entscheiden darf",
+    "a_full": "Im Kick-off werden Ziele, Rollen, Termine und Kommunikationswege festgelegt. Dazu gehört ein Ansprechpartner auf Kundenseite, der Anforderungen bündelt und verbindlich entscheidet. Sonst entstehen widersprüchliche Aufträge und Mehrarbeit.",
+    "options": [
+      "Ein fester Ansprechpartner beim Kunden, der entscheiden darf",
+      "Die genaue Anzahl der Netzwerkdosen in jedem einzelnen Raum",
+      "Die privaten Telefonnummern aller Mitarbeiter des Kunden",
+      "Die Farbe und Marke der Monitore, die geliefert werden sollen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Ausbilder möchte jeden Freitag einen kurzen Statusbericht zu Ihrem Arbeitsplatzprojekt. Was gehört hinein?",
+    "a": "Erledigtes, nächste Schritte, Probleme und ein Gesamtstatus, z.B. als Ampel",
+    "a_full": "Ein Statusbericht zeigt knapp, wo das Projekt steht. Er nennt erledigte Aufgaben, geplante nächste Schritte, Probleme oder Risiken und den Gesamtstatus. Eine Ampel (grün, gelb, rot) macht auf einen Blick klar, ob Handlungsbedarf besteht.",
+    "options": [
+      "Erledigtes, nächste Schritte, Probleme und ein Gesamtstatus, z.B. als Ampel",
+      "Eine vollständige Liste aller Befehle, die Sie eingegeben haben",
+      "Nur die Stunden, die Sie in der Woche gearbeitet haben",
+      "Eine ausführliche Beschreibung aller eingesetzten Geräte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das Projekt ist abgenommen. Ihr Ausbilder bittet Sie noch um eine Nachkalkulation. Wozu dient sie?",
+    "a": "Zum Vergleich geplanter und tatsächlicher Kosten und Zeiten für künftige Angebote",
+    "a_full": "Bei der Nachkalkulation stellt man Plan- und Istwerte gegenüber, z.B. Arbeitsstunden und Material. Abweichungen zeigen, wo man falsch geschätzt hat. Diese Erfahrungen machen künftige Angebote genauer.",
+    "options": [
+      "Zum Vergleich geplanter und tatsächlicher Kosten und Zeiten für künftige Angebote",
+      "Zur nachträglichen Erhöhung des Preises beim Kunden",
+      "Zur Berechnung der Umsatzsteuer für das Finanzamt",
+      "Zur Ermittlung der Gewährleistungsfrist des Auftrags"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Projektplan steht nur der Punkt „Arbeitsplatz einrichten, 3 Tage“. Ihr Ausbilder hält das für zu grob. Wie verbessern Sie den Plan?",
+    "a": "In Arbeitspakete mit eigener Dauer und Verantwortlichem zerlegen",
+    "a_full": "Eine grobe Aufgabe wird in überschaubare Arbeitspakete zerlegt, z.B. Hardware aufbauen, Betriebssystem installieren, Software einrichten, testen. Jedes Paket erhält Dauer und Verantwortlichen. So lassen sich Fortschritt und Abhängigkeiten besser planen und prüfen.",
+    "options": [
+      "In Arbeitspakete mit eigener Dauer und Verantwortlichem zerlegen",
+      "Die Dauer pauschal auf fünf Tage erhöhen",
+      "Den Punkt streichen und nur den Endtermin notieren",
+      "Alle Tätigkeiten in einem langen Text beschreiben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Gantt-Diagramm liegen zwei ganztägige Vorgänge im selben Zeitraum, beide sind Ihnen zugeordnet. Was bedeutet das?",
+    "a": "Eine Überlastung, einer der Vorgänge muss verschoben oder anders besetzt werden",
+    "a_full": "Das Gantt-Diagramm zeigt nicht nur die Zeit, sondern mit Zuordnung auch die Auslastung der Personen. Zwei volle Vorgänge gleichzeitig kann eine Person nicht schaffen. Man verschiebt einen Vorgang oder gibt ihn an eine andere Person.",
+    "options": [
+      "Eine Überlastung, einer der Vorgänge muss verschoben oder anders besetzt werden",
+      "Nichts, parallele Balken zeigen immer eine gute Planung",
+      "Beide Vorgänge liegen damit sicher auf dem kritischen Pfad",
+      "Einer der beiden Vorgänge ist ein Meilenstein ohne Dauer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie gehen zwei Wochen in den Urlaub, ein Kollege übernimmt Ihr laufendes Kundenprojekt. Was übergeben Sie ihm?",
+    "a": "Aktuellen Stand, offene Punkte, Termine, Ansprechpartner und Ablageort der Unterlagen",
+    "a_full": "Eine gute Übergabe erlaubt dem Kollegen, ohne Rückfragen weiterzuarbeiten. Dazu gehören Stand der Arbeiten, offene Aufgaben mit Terminen, Absprachen mit dem Kunden und wo Dokumentation und Zugangsdaten sicher abgelegt sind. Der Kunde sollte wissen, wer ihn vertritt.",
+    "options": [
+      "Aktuellen Stand, offene Punkte, Termine, Ansprechpartner und Ablageort der Unterlagen",
+      "Nur Ihr persönliches Passwort, damit er Ihre E-Mails lesen kann",
+      "Nichts, er soll sich beim Kunden selbst über den Stand informieren",
+      "Eine Liste aller Projekte, an denen Sie je gearbeitet haben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mitazubi bittet Sie um Feedback zu seiner Installationsanleitung. Wie geben Sie es richtig?",
+    "a": "Konkret, beschreibend und als Ich-Botschaft, mit Gelungenem und Verbesserungsvorschlägen",
+    "a_full": "Gutes Feedback bezieht sich auf beobachtbare Punkte, z.B. „Ich finde Schritt 4 ohne Screenshot schwer nachvollziehbar.“ Es bewertet nicht die Person. Gelungenes wird ebenso benannt wie konkrete Verbesserungsvorschläge.",
+    "options": [
+      "Konkret, beschreibend und als Ich-Botschaft, mit Gelungenem und Verbesserungsvorschlägen",
+      "Möglichst allgemein, damit er sich nicht angegriffen fühlt",
+      "Nur die Fehler aufzählen, weil Lob ihn nicht weiterbringt",
+      "Vor dem ganzen Team, damit alle daraus lernen können"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie nehmen einen Anruf für Ihre Kollegin an, die gerade beim Kunden ist. Was gehört in die Telefonnotiz?",
+    "a": "Anrufer, Datum und Uhrzeit, Rückrufnummer, Anliegen und Dringlichkeit",
+    "a_full": "Die Telefonnotiz muss so vollständig sein, dass die Kollegin ohne Rückfrage handeln kann. Dazu gehören Name und Firma des Anrufers, Zeitpunkt, Rückrufnummer, das Anliegen und ob es eilt. Auch Ihr Name gehört dazu, falls es Rückfragen gibt.",
+    "options": [
+      "Anrufer, Datum und Uhrzeit, Rückrufnummer, Anliegen und Dringlichkeit",
+      "Nur der Name des Anrufers, den Rest klärt die Kollegin",
+      "Eine wörtliche Mitschrift des gesamten Gesprächs",
+      "Nur die Rückrufnummer ohne Angabe des Anliegens"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie sollen der Geschäftsführung eines Kunden in zehn Minuten Ihre Empfehlung für neue Arbeitsplätze vorstellen. Worauf legen Sie den Schwerpunkt?",
+    "a": "Auf Empfehlung, Kosten, Nutzen und nächste Schritte",
+    "a_full": "Die Geschäftsführung braucht Informationen für eine Entscheidung. Deshalb stehen Empfehlung, Kosten, Nutzen und Risiken im Mittelpunkt. Technische Details gehören in den Anhang und werden nur auf Nachfrage erläutert.",
+    "options": [
+      "Auf Empfehlung, Kosten, Nutzen und nächste Schritte",
+      "Auf alle technischen Datenblätter der angebotenen Geräte",
+      "Auf die Geschichte der beteiligten Hersteller und Marken",
+      "Auf eine vollständige Liste aller geprüften Alternativen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Beim Probedurchlauf braucht Ihre Präsentation 18 statt der erlaubten 10 Minuten. Was ist die beste Lösung?",
+    "a": "Inhalte auf die Kernaussagen kürzen und Details in den Anhang verschieben",
+    "a_full": "Die Zeitvorgabe ist einzuhalten, gerade in Prüfungen. Schneller zu sprechen macht den Vortrag unverständlich. Besser konzentriert man sich auf die wichtigsten Aussagen und hält Details für Rückfragen bereit.",
+    "options": [
+      "Inhalte auf die Kernaussagen kürzen und Details in den Anhang verschieben",
+      "Deutlich schneller sprechen, damit alle Folien gezeigt werden",
+      "Die Folien unverändert lassen und die Zeit einfach überziehen",
+      "Mehr Text auf weniger Folien packen und diesen vorlesen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die bestellten Notebooks kommen eine Woche später als geplant. Wie informieren Sie den Kunden?",
+    "a": "Sofort und von sich aus, mit Grund, neuem Termin und möglicher Überbrückung",
+    "a_full": "Schlechte Nachrichten sollte der Kunde früh vom Dienstleister erfahren, nicht erst am geplanten Termin. Man nennt den Grund, den neuen Termin und bietet, wenn möglich, eine Überbrückung wie Leihgeräte an. Das erhält das Vertrauen trotz der Verzögerung.",
+    "options": [
+      "Sofort und von sich aus, mit Grund, neuem Termin und möglicher Überbrückung",
+      "Erst am ursprünglichen Liefertermin, falls er nachfragt",
+      "Gar nicht, solange die Verzögerung kürzer als zwei Wochen ist",
+      "Nur mit dem Hinweis, dass der Lieferant allein schuld ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Ausbildungsbetrieb hat den Ausbildungsvertrag mit einem neuen Azubi unterschrieben. Was muss der Betrieb danach noch tun?",
+    "a": "Die Eintragung ins Verzeichnis der Berufsausbildungsverhältnisse bei der IHK beantragen",
+    "a_full": "Nach § 36 BBiG muss der Ausbildende den Vertrag unverzüglich bei der zuständigen Stelle, hier der IHK, zur Eintragung anmelden. Die Eintragung ist Voraussetzung für die Zulassung zur Abschlussprüfung. Die IHK prüft dabei auch, ob der Vertrag den Vorschriften entspricht.",
+    "options": [
+      "Die Eintragung ins Verzeichnis der Berufsausbildungsverhältnisse bei der IHK beantragen",
+      "Den Vertrag beim Arbeitsgericht hinterlegen lassen",
+      "Den Vertrag von der Berufsschule genehmigen lassen",
+      "Den Vertrag beim Finanzamt als Arbeitsvertrag melden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Auszubildende fragt, bis wann ihre Ausbildungsvergütung für den laufenden Monat spätestens gezahlt werden muss. Was gilt nach dem BBiG?",
+    "a": "Spätestens am letzten Arbeitstag des Monats",
+    "a_full": "Nach § 18 BBiG ist die Vergütung für den laufenden Kalendermonat spätestens am letzten Arbeitstag des Monats zu zahlen. Ein Betrieb darf sie also nicht erst in der Mitte des Folgemonats überweisen. Günstigere Regelungen, z.B. aus einem Tarifvertrag, bleiben möglich.",
+    "options": [
+      "Spätestens am letzten Arbeitstag des Monats",
+      "Spätestens am 15. des folgenden Monats",
+      "Erst nach Ablauf der Probezeit rückwirkend",
+      "Einmal im Quartal als Gesamtbetrag"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi besteht im Juni die Abschlussprüfung und arbeitet am nächsten Tag einfach weiter. Über eine Übernahme wurde nichts vereinbart. Was gilt?",
+    "a": "Es entsteht ein unbefristetes Arbeitsverhältnis",
+    "a_full": "Nach § 24 BBiG gilt ein Arbeitsverhältnis auf unbestimmte Zeit als begründet, wenn der Azubi im Anschluss an die Ausbildung weiterbeschäftigt wird und nichts anderes vereinbart ist. Wer das nicht will, muss vorher eine klare Absprache treffen. Der Betrieb sollte die Übernahme deshalb rechtzeitig regeln.",
+    "options": [
+      "Es entsteht ein unbefristetes Arbeitsverhältnis",
+      "Das Ausbildungsverhältnis verlängert sich um ein weiteres Jahr",
+      "Es entsteht ein auf sechs Monate befristetes Arbeitsverhältnis",
+      "Er arbeitet ohne Vertrag und hat keinen Anspruch auf Gehalt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein 16-Jähriger soll am 1. August seine Ausbildung beginnen. Welche Bescheinigung muss er dem Betrieb vorher vorlegen?",
+    "a": "Eine ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
+    "a_full": "Jugendliche dürfen nach § 32 JArbSchG nur beschäftigt werden, wenn sie in den letzten 14 Monaten vor Beginn ärztlich untersucht wurden und eine Bescheinigung vorliegt. Nach einem Jahr ist eine Nachuntersuchung vorzulegen. Die Untersuchung ist für den Jugendlichen kostenlos.",
+    "options": [
+      "Eine ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
+      "Ein polizeiliches Führungszeugnis für Beschäftigte im IT-Bereich",
+      "Eine Bescheinigung über einen bestandenen IT-Einstellungstest",
+      "Eine schriftliche Erlaubnis der Berufsschule zur Beschäftigung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Kollegin sucht im Tarifvertrag nach ihrer Urlaubsdauer, findet im Entgelttarifvertrag aber nur Gehaltstabellen. Wo steht die Regelung?",
+    "a": "Im Manteltarifvertrag",
+    "a_full": "Der Manteltarifvertrag regelt allgemeine Arbeitsbedingungen wie Arbeitszeit, Urlaub, Zuschläge und Kündigungsfristen. Er läuft meist mehrere Jahre. Der Entgelttarifvertrag regelt dagegen die Höhe der Löhne und Gehälter und wird häufiger neu verhandelt.",
+    "options": [
+      "Im Manteltarifvertrag",
+      "In der Betriebsvereinbarung zur Gehaltsabrechnung",
+      "Im Handelsregistereintrag des Arbeitgebers",
+      "Im Bundesurlaubsgesetz, Tarifverträge regeln Urlaub nie"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi wundert sich, dass der Arbeitgeberanteil zur Sozialversicherung auf seiner Abrechnung nicht vom Bruttobetrag abgezogen wird. Warum?",
+    "a": "Der Arbeitgeber zahlt ihn zusätzlich zum Bruttogehalt",
+    "a_full": "Von der Bruttovergütung wird nur der Arbeitnehmeranteil abgezogen. Den Arbeitgeberanteil zahlt der Betrieb zusätzlich, er erhöht also die Personalkosten, nicht die Abzüge. Viele Abrechnungen weisen ihn nur informativ aus.",
+    "options": [
+      "Der Arbeitgeber zahlt ihn zusätzlich zum Bruttogehalt",
+      "Weil Auszubildende grundsätzlich keine Sozialversicherung zahlen",
+      "Weil der Arbeitgeberanteil erst am Jahresende abgezogen wird",
+      "Weil er bereits in der Lohnsteuer vollständig enthalten ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Auf der Abrechnung einer Auszubildenden in Steuerklasse I steht keine Lohnsteuer, aber Beiträge zur Sozialversicherung. Ist das ein Fehler?",
+    "a": "Nein, ihre Vergütung liegt unter der Grenze für Lohnsteuer, Sozialbeiträge fallen trotzdem an",
+    "a_full": "Lohnsteuer fällt erst an, wenn das Einkommen über dem steuerfreien Grundfreibetrag und weiteren Pauschalen liegt. Viele Ausbildungsvergütungen bleiben darunter. Die Sozialversicherungspflicht gilt dagegen grundsätzlich ab dem ersten Euro der Vergütung.",
+    "options": [
+      "Nein, ihre Vergütung liegt unter der Grenze für Lohnsteuer, Sozialbeiträge fallen trotzdem an",
+      "Ja, Lohnsteuer muss bei jeder Vergütung abgezogen werden",
+      "Ja, Auszubildende sind von der Sozialversicherung befreit",
+      "Nein, Auszubildende zahlen Lohnsteuer erst nach der Prüfung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie beginnen nach der Ausbildung bei einem neuen Arbeitgeber. Welche Angaben braucht die Personalabteilung für die Lohnabrechnung?",
+    "a": "Steuer-Identifikationsnummer, Sozialversicherungsnummer, Krankenkasse und Bankverbindung",
+    "a_full": "Mit der Steuer-ID ruft der Arbeitgeber die elektronischen Lohnsteuerabzugsmerkmale wie die Steuerklasse ab. Die Sozialversicherungsnummer und die gewählte Krankenkasse braucht er für die Anmeldung zur Sozialversicherung. Die Bankverbindung ist für die Überweisung nötig.",
+    "options": [
+      "Steuer-Identifikationsnummer, Sozialversicherungsnummer, Krankenkasse und Bankverbindung",
+      "Abschlusszeugnis, Personalausweiskopie und Führerschein",
+      "Steuerbescheid des Vorjahres und Mietvertrag der Wohnung",
+      "Kontoauszüge der letzten drei Monate und Schufa-Auskunft"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Lieferant firmiert als „IT-Handel Weber GmbH & Co. KG“. Wer haftet dort unbeschränkt?",
+    "a": "Die GmbH als Komplementärin, also nur mit ihrem Gesellschaftsvermögen",
+    "a_full": "Bei der GmbH & Co. KG ist die unbeschränkt haftende Komplementärin keine natürliche Person, sondern eine GmbH. Diese haftet mit ihrem gesamten Vermögen, das aber auf das GmbH-Vermögen begrenzt ist. Die Kommanditisten haften nur bis zur Höhe ihrer Einlage.",
+    "options": [
+      "Die GmbH als Komplementärin, also nur mit ihrem Gesellschaftsvermögen",
+      "Herr Weber persönlich mit seinem gesamten Privatvermögen",
+      "Alle Kommanditisten unbeschränkt mit ihrem Privatvermögen",
+      "Niemand, weil eine KG grundsätzlich keine Haftung kennt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus schreibt in sein Leitbild: „Wir richten IT-Arbeitsplätze für Arztpraxen ein“ und „Wir steigern den Gewinn um 5 Prozent“. Wie unterscheiden sich die Ziele?",
+    "a": "Das erste ist ein Sachziel, das zweite ein Formalziel",
+    "a_full": "Sachziele beschreiben, welche Leistungen ein Unternehmen am Markt anbietet. Formalziele, auch Erfolgsziele genannt, beschreiben den wirtschaftlichen Erfolg, z.B. Gewinn, Umsatz oder Rentabilität. Beide hängen zusammen, weil der Erfolg aus den Leistungen entsteht.",
+    "options": [
+      "Das erste ist ein Sachziel, das zweite ein Formalziel",
+      "Das erste ist ein soziales Ziel, das zweite ein ökologisches Ziel",
+      "Das erste ist ein Formalziel, das zweite ein Sachziel",
+      "Beide sind Sachziele, weil sie das Kerngeschäft betreffen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde möchte nachhaltiger werden und fragt, ob er seine vier Jahre alten Büro-PCs sofort durch neue ersetzen soll. Was raten Sie?",
+    "a": "Wenn möglich länger nutzen und gezielt aufrüsten, z.B. mit SSD oder mehr RAM",
+    "a_full": "Ein großer Teil der Umweltbelastung eines PCs entsteht bei Herstellung und Transport. Eine längere Nutzung durch Aufrüsten spart daher Rohstoffe und Energie. Neu kaufen lohnt sich eher, wenn Leistung, Sicherheitsupdates oder Ersatzteile nicht mehr ausreichen.",
+    "options": [
+      "Wenn möglich länger nutzen und gezielt aufrüsten, z.B. mit SSD oder mehr RAM",
+      "Immer sofort neu kaufen, weil neue Geräte weniger Strom brauchen",
+      "Die alten PCs ungenutzt im Lager behalten und neue dazukaufen",
+      "Die PCs rund um die Uhr laufen lassen, damit sie länger halten"
+    ]
   }
 ]

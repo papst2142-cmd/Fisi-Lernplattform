@@ -6,21 +6,28 @@ Update-Fenster des Programms.
 
 ## 0.25
 
-- **Viel mehr Lernstoff:** 2.721 statt 368 Aufgaben – 947 Karteikarten,
-  1.396 Quizfragen, 156 AP1-Szenarien, 188 AP2-Szenarien und 34 Testprojekte,
-  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 323 neue
+- **Viel mehr Lernstoff:** 3.151 statt 368 Aufgaben – 1.099 Karteikarten,
+  1.598 Quizfragen, 196 AP1-Szenarien, 218 AP2-Szenarien und 40 Testprojekte,
+  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 413 neue
   Rechenaufgaben (Zahlensysteme, Zweierkomplement, Subnetting, VLSM,
   IPv6-Präfixe, RAID 5/6/50/60, chmod und umask, VM-Dimensionierung,
   SSD-Lebensdauer, Verfügbarkeit, Übertragungsdauer, Passwortstärke,
   Umsatzsteuer, Bezugs- und Handelskalkulation, Zuschlagskalkulation,
   Skonto-Zinssatz, Deckungsbeitrag, Kennzahlen, Earned Value, Abschreibung,
   TCO, Lizenzierung, Kostenvergleich, Barwert, Kreditzinsen, MTBF und MTTR,
-  Netzplan und Puffer) mit Rechenweg.
+  Netzplan und Puffer, Speicherbedarf von Bildern und Audio, Netzteil und
+  USV, Stromkosten) mit Rechenweg.
 - **Prüfungsnahe Situationsaufgaben:** Viele Karten und Quizfragen schildern
   jetzt einen Fall aus dem Betriebsalltag (Kundengespräch, Ticket, Störung,
   Vertragsproblem) statt nur eine Definition abzufragen. Die neuen AP1- und
   AP2-Szenarien verbinden in jeder Aufgabe eine Rechnung mit Technik,
   Sicherheit, Recht oder Projektablauf – so wie in der echten Prüfung.
+- **Mehr für die AP1:** Viele neue Aufgaben zum Einrichten eines
+  IT-Arbeitsplatzes (Hardware, Ergonomie, Installation, Netzanbindung,
+  Fehlersuche, Arbeitsplatzsicherheit, Kundenauftrag bis zur Abnahme) und
+  erstmals Pseudocode, Struktogramm, Programmablaufplan und
+  Tabellenkalkulation, auch mit Aufgaben zum Nachverfolgen von Programmen
+  und Formeln.
 - **Vertiefung Netzwerk und Sicherheit:** u.a. IPv6, OSPF und BGP, WLAN-Planung,
   DNS und DHCP im Detail, NAT und QoS, Kryptografie und Zertifikate,
   DSGVO-Praxisfälle, Angriffe und Abwehr im Netz und im Web.
