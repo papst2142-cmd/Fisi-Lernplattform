@@ -36,10 +36,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID,
     CALC_EXPLAIN_SCREEN, CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT,
-    COLOR_DEPTHS, DBManager, InputError, KARTEIKARTEN, PROJEKTARBEITEN,
-    QUIZ_QUESTIONS, RAID_LEVELS, SZENARIEN,
-    ap1_theme_totals, content_totals, ihk_note, raid_report, screen_report,
-    search_content, subnet_report, theme_totals, validate_content,
+    COLOR_DEPTHS, DBManager, FILTER_ALL, InputError, KARTEIKARTEN,
+    LIST_PAGE_SIZE, PROJEKTARBEITEN, QUIZ_QUESTIONS, RAID_LEVELS,
+    STATUS_FILTERS, SZENARIEN,
+    ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
+    page_slice, raid_report, screen_report, search_content, subnet_report,
+    theme_totals, validate_content,
 )
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -88,6 +90,7 @@ CATEGORY_NAV_ICON = {
     CATEGORIES[1]: "shield",
     CATEGORIES[2]: "server",
     CATEGORIES[3]: "case",
+    CATEGORIES[4]: "database",
 }
 
 VIEW_TITLES = {
@@ -218,6 +221,165 @@ def clickable_row(parent, accent, bg=None):
 def bind_click(widgets, callback):
     for widget in widgets:
         widget.bind("<Button-1>", callback)
+
+
+class PagedList:
+    """Liste mit Suchfeld, Filtern und Seiten fuer Szenarien und Testprojekte.
+
+    Es werden einmalig LIST_PAGE_SIZE Zeilen angelegt und beim Blaettern oder
+    Filtern nur neu beschriftet. Die Zahl der Widgets bleibt dadurch gleich,
+    egal wie viele Eintraege es gibt (lange Listen liessen das Programm frueher
+    beim Aufbau abstuerzen). on_select erhaelt die Position in der
+    Gesamtliste, done_source liefert die Menge der bearbeiteten Positionen.
+    """
+
+    def __init__(self, parent, items, on_select, subtitle, done_source,
+                 category_filter=False, group_field=None, group_label="Thema"):
+        self.items = items
+        self.on_select = on_select
+        self.subtitle = subtitle
+        self.done_source = done_source
+        self.group_field = group_field
+        self.done = set()
+        self.filtered = list(range(len(items)))
+        self.page = 0
+        self.active = None
+        self.menus = {}
+
+        self.search = EntryBox(parent, width=18, font=F["small"])
+        self.search.configure(placeholder_text="Titel oder Nummer suchen",
+                              placeholder_text_color=C["muted"], height=34)
+        self.search.pack(fill="x")
+        self.search.bind("<KeyRelease>", lambda _e: self.refresh(), add="+")
+
+        filters = []
+        if category_filter:
+            self.short_to_cat = {CATEGORY_SHORT[c]: c for c in CATEGORIES}
+            filters.append(("category", "FACHBEREICH",
+                            [FILTER_ALL] + [CATEGORY_SHORT[c] for c in CATEGORIES]))
+        if group_field:
+            filters.append(("group", group_label.upper(),
+                            [FILTER_ALL] + group_values(items, group_field)))
+        filters.append(("status", "STATUS", STATUS_FILTERS))
+        for key, label, values in filters:
+            make_label(parent, label, font=F["label"], fg=C["muted"]).pack(
+                anchor="w", pady=(10, 4))
+            menu = ctk.CTkOptionMenu(
+                parent, values=values, command=lambda _v: self.refresh(),
+                height=32, corner_radius=10, dynamic_resizing=False,
+                fg_color=C["card_alt"], button_color=C["card_alt"],
+                button_hover_color=C["card_hi"], text_color=C["text"],
+                dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
+                dropdown_text_color=C["text"], font=F["small"],
+                dropdown_font=F["small"])
+            menu.set(FILTER_ALL)
+            menu.pack(fill="x")
+            self.menus[key] = menu
+
+        self.lbl_count = make_label(parent, "", font=F["tiny"], fg=C["muted"])
+        self.lbl_count.pack(anchor="w", pady=(12, 2))
+
+        self.rows_box = transparent_frame(parent)
+        self.rows_box.pack(fill="x")
+        self.lbl_empty = make_label(self.rows_box, "Keine Treffer für diese Auswahl.",
+                                    font=F["small"], fg=C["muted"])
+        self.rows = [self._make_row(slot) for slot in range(LIST_PAGE_SIZE)]
+
+        pager = transparent_frame(parent)
+        pager.pack(fill="x", pady=(10, 0))
+        IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                   parent_bg=C["card"]).pack(side="left")
+        self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
+        self.lbl_page.pack(side="left", expand=True)
+        IconButton(pager, "arrow_right", lambda: self.turn(1),
+                   parent_bg=C["card"]).pack(side="right")
+
+    def _make_row(self, slot):
+        row, marker, inner = clickable_row(self.rows_box, C["purple"])
+        title = ctk.CTkLabel(inner, text="", text_color=C["text_dim"],
+                             font=F["small_bold"], height=0, anchor="w",
+                             justify="left", wraplength=190, cursor="hand2")
+        title.pack(anchor="w")
+        sub = ctk.CTkLabel(inner, text="", text_color=C["muted"], font=F["tiny"],
+                           anchor="w", height=0, cursor="hand2")
+        sub.pack(anchor="w")
+        bind_click((row, inner, title, sub, marker), lambda _e, s=slot: self._clicked(s))
+        return {"frame": row, "marker": marker, "title": title, "sub": sub,
+                "position": None}
+
+    def _clicked(self, slot):
+        position = self.rows[slot]["position"]
+        if position is not None:
+            self.on_select(position)
+
+    def _criteria(self):
+        category = FILTER_ALL
+        if "category" in self.menus:
+            category = self.short_to_cat.get(self.menus["category"].get(), FILTER_ALL)
+        group = self.menus["group"].get() if "group" in self.menus else FILTER_ALL
+        return {"query": self.search.get(), "category": category,
+                "group_field": self.group_field, "group": group,
+                "status": self.menus["status"].get(), "done": self.done}
+
+    def refresh(self, keep_page=False):
+        """Filter neu anwenden. Ohne keep_page springt die Liste auf Seite 1."""
+        self.done = self.done_source()
+        self.filtered = filter_positions(self.items, **self._criteria())
+        if not keep_page:
+            self.page = 0
+        self._paint()
+
+    def _paint(self):
+        visible, self.page, pages = page_slice(self.filtered, self.page)
+        for row in self.rows:
+            row["frame"].pack_forget()
+        self.lbl_empty.pack_forget()
+        if not visible:
+            self.lbl_empty.pack(anchor="w", pady=6)
+        for row, position in zip(self.rows, visible):
+            item = self.items[position]
+            active = position == self.active
+            mark = " ✓" if position in self.done else ""
+            row["position"] = position
+            row["title"].configure(text="%d. %s%s" % (position + 1, item["title"], mark),
+                                   text_color=C["text"] if active else C["text_dim"])
+            row["sub"].configure(text=self.subtitle(item))
+            row["marker"].configure(fg_color=CATEGORY_COLOR[item["cat"]])
+            row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
+                                   border_color=C["purple"] if active else C["border"])
+            row["frame"].pack(fill="x", pady=4)
+        for row in self.rows[len(visible):]:
+            row["position"] = None
+        self.lbl_count.configure(text="%d von %d Aufgaben" % (len(self.filtered),
+                                                               len(self.items)))
+        self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+
+    def turn(self, delta):
+        self.page += delta
+        self._paint()
+
+    def show(self, position):
+        """Markiert position und blaettert zu ihrer Seite. Passt sie nicht zu
+        den Filtern (z.B. nach einem Suchtreffer), werden diese zurueckgesetzt."""
+        self.active = position
+        if position not in self.filtered:
+            self.search.delete(0, "end")
+            for menu in self.menus.values():
+                menu.set(FILTER_ALL)
+            self.done = self.done_source()
+            self.filtered = filter_positions(self.items, **self._criteria())
+        self.page = self.filtered.index(position) // LIST_PAGE_SIZE
+        self._paint()
+
+    def next_after(self, position):
+        """Naechste Position innerhalb der aktuellen Auswahl (am Ende wieder
+        die erste). Ohne Treffer einfach der naechste Eintrag der Gesamtliste."""
+        if not self.filtered:
+            return (position + 1) % len(self.items)
+        for candidate in self.filtered:
+            if candidate > position:
+                return candidate
+        return self.filtered[0]
 
 
 # ============================================================================
@@ -1225,6 +1387,7 @@ class ScenarioViewBase(View):
 
     DATA = SZENARIEN
     LIST_TITLE = "Szenarien"
+    TABLE = "scenario_events"
 
     def build(self):
         self.index = 0
@@ -1242,11 +1405,12 @@ class ScenarioViewBase(View):
         list_card = Card(layout, title=self.LIST_TITLE,
                          subtitle="%d Aufgaben" % len(self.DATA))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        self.list_box = transparent_frame(list_card.body)
-        self.list_box.pack(fill="both", expand=True)
-        self.list_rows = []
-        for position, scenario in enumerate(self.DATA):
-            self.list_rows.append(self._list_row(position, scenario))
+        self.paged = PagedList(
+            list_card.body, self.DATA, self.load_scenario,
+            subtitle=lambda item: item["theme"],
+            done_source=lambda: self.db.completed_indices(self.TABLE),
+            group_field="theme", group_label="Thema")
+        self.paged.refresh()
 
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
@@ -1290,28 +1454,9 @@ class ScenarioViewBase(View):
     def _on_own_change(self, _event=None):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
 
-    def _list_row(self, position, scenario):
-        row, marker, inner = clickable_row(self.list_box,
-                                           CATEGORY_COLOR[scenario["cat"]])
-        row.pack(fill="x", pady=4)
-        title = ctk.CTkLabel(inner, text="%d. %s" % (position + 1, scenario["title"]),
-                             text_color=C["text"], font=F["small_bold"], height=0,
-                             anchor="w", justify="left", wraplength=190,
-                             cursor="hand2")
-        title.pack(anchor="w")
-        theme = ctk.CTkLabel(inner, text=scenario["theme"], text_color=C["muted"],
-                             font=F["tiny"], anchor="w", height=0, cursor="hand2")
-        theme.pack(anchor="w")
-        bind_click((row, inner, title, theme, marker),
-                   lambda _e, p=position: self.load_scenario(p))
-        return {"frame": row, "title": title}
-
-    def _highlight(self):
-        for position, row in enumerate(self.list_rows):
-            active = position == self.index
-            row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
-                                   border_color=C["purple"] if active else C["border"])
-            row["title"].configure(text_color=C["text"] if active else C["text_dim"])
+    def on_show(self):
+        # Bearbeitet-Haken koennen sich durch einen Abgleich geaendert haben
+        self.paged.refresh(keep_page=True)
 
     def load_scenario(self, position):
         self.index = position
@@ -1325,7 +1470,7 @@ class ScenarioViewBase(View):
                  "anschließend auf.")
         self.btn_toggle.set_text("Musterlösung anzeigen")
         set_text(self.txt_own, self.own_answers.get(position, ""))
-        self._highlight()
+        self.paged.show(position)
 
     def toggle_solution(self):
         scenario = self.DATA[self.index]
@@ -1339,13 +1484,14 @@ class ScenarioViewBase(View):
             self.solution_visible = True
             self._log(scenario)
             self.app.notify_progress()
+            self.paged.refresh(keep_page=True)
 
     def _log(self, scenario):
         """In Unterklassen ueberschrieben - schreibt in die passende DB-Tabelle."""
         raise NotImplementedError
 
     def next_scenario(self):
-        self.load_scenario((self.index + 1) % len(self.DATA))
+        self.load_scenario(self.paged.next_after(self.index))
 
 
 class ScenarioView(ScenarioViewBase):
@@ -1363,6 +1509,7 @@ class Ap1ScenarioView(ScenarioViewBase):
 
     DATA = AP1_SZENARIEN
     LIST_TITLE = "AP1-Szenarien"
+    TABLE = "ap1_events"
 
     def _log(self, scenario):
         self.db.log_ap1(self.index, scenario["title"], scenario["theme"])
@@ -1389,11 +1536,13 @@ class ProjectView(View):
         list_card = Card(layout, title="Testprojekte",
                          subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))
         list_card.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
-        self.list_box = transparent_frame(list_card.body)
-        self.list_box.pack(fill="both", expand=True)
-        self.list_rows = []
-        for position, project in enumerate(PROJEKTARBEITEN):
-            self.list_rows.append(self._list_row(position, project))
+        self.paged = PagedList(
+            list_card.body, PROJEKTARBEITEN, self.load_project,
+            subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
+                                               CATEGORY_SHORT[item["cat"]]),
+            done_source=self.db.completed_projects, category_filter=True,
+            group_field="schwierigkeit", group_label="Schwierigkeit")
+        self.paged.refresh()
 
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
@@ -1424,35 +1573,12 @@ class ProjectView(View):
 
         self.load_project(0)
 
-    def _list_row(self, position, project):
-        row, marker, inner = clickable_row(self.list_box,
-                                           CATEGORY_COLOR[project["cat"]])
-        row.pack(fill="x", pady=4)
-        title = ctk.CTkLabel(inner, text="%d. %s" % (position + 1, project["title"]),
-                             text_color=C["text"], font=F["small_bold"], height=0,
-                             anchor="w", justify="left", wraplength=190,
-                             cursor="hand2")
-        title.pack(anchor="w")
-        sub = ctk.CTkLabel(inner, text="%s · %s" % (project["schwierigkeit"],
-                                                     CATEGORY_SHORT[project["cat"]]),
-                           text_color=C["muted"], font=F["tiny"], anchor="w",
-                           height=0, cursor="hand2")
-        sub.pack(anchor="w")
-        bind_click((row, inner, title, sub, marker),
-                   lambda _e, p=position: self.load_project(p))
-        return {"frame": row, "title": title}
+    def on_show(self):
+        self._highlight()
 
     def _highlight(self):
-        done = self.db.completed_projects()
-        for position, row in enumerate(self.list_rows):
-            active = position == self.index
-            row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
-                                   border_color=C["purple"] if active else C["border"])
-            mark = " ✓" if position in done else ""
-            project = PROJEKTARBEITEN[position]
-            row["title"].configure(
-                text_color=C["text"] if active else C["text_dim"],
-                text="%d. %s%s" % (position + 1, project["title"], mark))
+        """Haken fuer bearbeitete Projekte auffrischen (auch nach einem Abgleich)."""
+        self.paged.refresh(keep_page=True)
 
     @staticmethod
     def _task_text(project):
@@ -1497,7 +1623,7 @@ class ProjectView(View):
                  "Konzept, Zeit- und Kostenplanung, Risiken - und decke die "
                  "Lösungsansätze anschließend zum Vergleich auf.")
         self.btn_toggle.set_text("Lösungsansätze anzeigen")
-        self._highlight()
+        self.paged.show(position)
 
     def toggle_hints(self):
         project = PROJEKTARBEITEN[self.index]
@@ -1514,7 +1640,7 @@ class ProjectView(View):
             self._highlight()
 
     def next_project(self):
-        self.load_project((self.index + 1) % len(PROJEKTARBEITEN))
+        self.load_project(self.paged.next_after(self.index))
 
 
 # ============================================================================

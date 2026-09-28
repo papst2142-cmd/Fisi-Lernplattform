@@ -36,8 +36,9 @@ import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
-    InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS, RAID_LEVELS,
-    SZENARIEN, ap1_theme_totals, content_totals, ihk_note, raid_report,
+    FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
+    RAID_LEVELS, STATUS_FILTERS, SZENARIEN, ap1_theme_totals, content_totals,
+    filter_positions, group_values, ihk_note, page_slice, raid_report,
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR  # noqa: E402
@@ -156,7 +157,7 @@ class DashboardScreen(Screen):
             ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["pink"],
                     subtitle="Intensität pro Tag"),
             ui.Card("Fortschritt je Fachbereich",
-                    [ft.Row(fach_cells[:2]), ft.Row(fach_cells[2:])],
+                    [ft.Row(fach_cells[:3]), ft.Row(fach_cells[3:])],
                     accent=C["green"], subtitle="Abdeckung und Erfolgsquote", spacing=16),
             ui.Card("Aktivitäten", [self.activity_box], subtitle="zuletzt"),
             ui.Card("Lerntage", [self.calendar], accent=C["purple"],
@@ -659,6 +660,95 @@ class QuizScreen(Screen):
 #  SZENARIEN UND TESTPROJEKTE (Liste -> Detailseite)
 # ============================================================================
 
+class PagedListBox:
+    """Liste mit Suchfeld, Filter-Pillen und Seiten (gleiche Logik wie am PC,
+    siehe fisi_core.filter_positions). Es werden nie mehr als LIST_PAGE_SIZE
+    Zeilen gleichzeitig angezeigt, egal wie viele Eintraege es gibt.
+    on_select erhaelt die Position in der Gesamtliste."""
+
+    def __init__(self, items, on_select, subtitle, done_source,
+                 category_filter=False, group_field=None):
+        self.items = items
+        self.on_select = on_select
+        self.subtitle = subtitle
+        self.done_source = done_source
+        self.group_field = group_field
+        self.done = set()
+        self.filtered = list(range(len(items)))
+        self.page = 0
+        self.query = ""
+        self.pills = {}
+
+        search = ui.entry(hint="Titel oder Nummer suchen", on_change=self._search)
+        controls = [search]
+        if category_filter:
+            self.pills["category"] = ui.PillGroup(
+                [(FILTER_ALL, FILTER_ALL)] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES],
+                on_change=lambda _v: self.refresh())
+        if group_field:
+            self.pills["group"] = ui.PillGroup(
+                [(v, v) for v in [FILTER_ALL] + group_values(items, group_field)],
+                on_change=lambda _v: self.refresh())
+        self.pills["status"] = ui.PillGroup([(v, v) for v in STATUS_FILTERS],
+                                            on_change=lambda _v: self.refresh())
+        controls += list(self.pills.values())
+        self.lbl_count = ui.text("", size=12, color=C["muted"])
+        self.rows = ft.Column(spacing=8, tight=True)
+        self.lbl_page = ui.text("", size=13, color=C["text_dim"])
+        pager = ft.Row([
+            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["cyan"],
+                          on_click=lambda _e: self.turn(-1)),
+            self.lbl_page,
+            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["cyan"],
+                          on_click=lambda _e: self.turn(1)),
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
+                              spacing=10, tight=True)
+
+    def _search(self, event):
+        self.query = event.control.value or ""
+        self.refresh()
+
+    def refresh(self, keep_page=False):
+        self.done = self.done_source()
+        pills = self.pills
+        self.filtered = filter_positions(
+            self.items, query=self.query,
+            category=pills["category"].get() if "category" in pills else FILTER_ALL,
+            group_field=self.group_field,
+            group=pills["group"].get() if "group" in pills else FILTER_ALL,
+            status=pills["status"].get(), done=self.done)
+        if not keep_page:
+            self.page = 0
+        self._paint()
+
+    def _paint(self):
+        visible, self.page, pages = page_slice(self.filtered, self.page)
+        self.rows.controls = [
+            ui.list_row("%d. %s%s" % (pos + 1, self.items[pos]["title"],
+                                      " ✓" if pos in self.done else ""),
+                        self.subtitle(self.items[pos]),
+                        CATEGORY_COLOR[self.items[pos]["cat"]],
+                        lambda _e, p=pos: self.on_select(p))
+            for pos in visible] or [ui.text("Keine Treffer für diese Auswahl.",
+                                            size=13, color=C["muted"])]
+        self.lbl_count.value = "%d von %d Aufgaben" % (len(self.filtered), len(self.items))
+        self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
+
+    def turn(self, delta):
+        self.page += delta
+        self._paint()
+
+    def next_after(self, position):
+        """Naechste Position innerhalb der aktuellen Auswahl."""
+        if not self.filtered:
+            return (position + 1) % len(self.items)
+        for candidate in self.filtered:
+            if candidate > position:
+                return candidate
+        return self.filtered[0]
+
+
 class ScenarioScreen(Screen):
     """AP2-Szenarien: Liste, ein Tipp oeffnet die Aufgabe als eigene Seite."""
 
@@ -666,19 +756,21 @@ class ScenarioScreen(Screen):
     DATA = SZENARIEN
     LIST_TITLE = "AP2-Szenarien"
 
+    TABLE = "scenario_events"
+
     def build(self):
         self.index = 0
         self.own_answers = {}
-        self.list_box = ft.Column(spacing=8, tight=True)
-        self._fill_list()
-        return screen_list([ui.Card(self.LIST_TITLE, [self.list_box],
+        self.paged = PagedListBox(self.DATA, self.open_detail,
+                                  subtitle=lambda item: item["theme"],
+                                  done_source=lambda: self.db.completed_indices(self.TABLE),
+                                  group_field="theme")
+        self.paged.refresh()
+        return screen_list([ui.Card(self.LIST_TITLE, [self.paged.root],
                                     subtitle="%d Aufgaben" % len(self.DATA))])
 
-    def _fill_list(self):
-        self.list_box.controls = [
-            ui.list_row("%d. %s" % (pos + 1, item["title"]), item["theme"],
-                        CATEGORY_COLOR[item["cat"]], lambda _e, p=pos: self.open_detail(p))
-            for pos, item in enumerate(self.DATA)]
+    def on_show(self):
+        self.paged.refresh(keep_page=True)
 
     def open_detail(self, position):
         self.index = position
@@ -733,12 +825,13 @@ class ScenarioScreen(Screen):
             self.solution_visible = True
             self._log(item)
             self.app.notify_progress()
+            self.paged.refresh(keep_page=True)
 
     def _log(self, item):
         self.db.log_scenario(self.index, item["title"], item["theme"])
 
     def next_item(self, _event=None):
-        self.index = (self.index + 1) % len(self.DATA)
+        self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
 
@@ -747,6 +840,7 @@ class Ap1ScenarioScreen(ScenarioScreen):
     crumbs = ("LERNEN", "AP1 SZENARIEN")
     DATA = AP1_SZENARIEN
     LIST_TITLE = "AP1-Szenarien"
+    TABLE = "ap1_events"
 
     def _log(self, item):
         self.db.log_ap1(self.index, item["title"], item["theme"])
@@ -757,17 +851,18 @@ class ProjectScreen(Screen):
 
     def build(self):
         self.index = 0
-        self.list_box = ft.Column(spacing=8, tight=True)
-        return screen_list([ui.Card("Testprojekte", [self.list_box],
+        self.paged = PagedListBox(
+            PROJEKTARBEITEN, self.open_detail,
+            subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
+                                               CATEGORY_SHORT[item["cat"]]),
+            done_source=self.db.completed_projects, category_filter=True,
+            group_field="schwierigkeit")
+        self.paged.refresh()
+        return screen_list([ui.Card("Testprojekte", [self.paged.root],
                                     subtitle="%d Kundenaufträge" % len(PROJEKTARBEITEN))])
 
     def on_show(self):
-        done = self.db.completed_projects()
-        self.list_box.controls = [
-            ui.list_row("%d. %s%s" % (pos + 1, item["title"], " ✓" if pos in done else ""),
-                        "%s · %s" % (item["schwierigkeit"], CATEGORY_SHORT[item["cat"]]),
-                        CATEGORY_COLOR[item["cat"]], lambda _e, p=pos: self.open_detail(p))
-            for pos, item in enumerate(PROJEKTARBEITEN)]
+        self.paged.refresh(keep_page=True)
 
     @staticmethod
     def task_text(project):
@@ -835,7 +930,7 @@ class ProjectScreen(Screen):
             self.on_show()
 
     def next_item(self, _event=None):
-        self.index = (self.index + 1) % len(PROJEKTARBEITEN)
+        self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
 

@@ -75,14 +75,16 @@ CAT_NET = "Netzwerk & Protokolle"
 CAT_SEC = "IT-Sicherheit & Datenschutz"
 CAT_SYS = "Systeme, RAID & Hardware"
 CAT_BIZ = "Wirtschaft & Prozesse"
+CAT_DB = "Datenbanken & SQL"
 
-CATEGORIES = [CAT_NET, CAT_SEC, CAT_SYS, CAT_BIZ]
+CATEGORIES = [CAT_NET, CAT_SEC, CAT_SYS, CAT_BIZ, CAT_DB]
 
 CATEGORY_SHORT = {
     CAT_NET: "Netzwerk",
     CAT_SEC: "Sicherheit",
     CAT_SYS: "Systeme",
     CAT_BIZ: "Wirtschaft",
+    CAT_DB: "Datenbanken",
 }
 
 CATEGORY_ICON = {
@@ -90,6 +92,7 @@ CATEGORY_ICON = {
     CAT_SEC: "\u25c9",
     CAT_SYS: "\u25a3",
     CAT_BIZ: "\u25b2",
+    CAT_DB: "\u25c6",
 }
 
 # Die Farben der Oberflaeche (Palette, Kategorie- und Themenfarben) liegen in
@@ -125,6 +128,69 @@ THEME_BLOCK = {
 def theme_block(theme):
     """Themenblock, zu dem ein Szenario-Thema im Dashboard zaehlt."""
     return THEME_BLOCK.get(theme, theme)
+
+
+# ============================================================================
+#  LISTEN MIT FILTER UND SEITEN
+# ============================================================================
+#
+# AP1-/AP2-Szenarien und Testprojekte werden gefiltert und seitenweise
+# angezeigt. So zeichnen PC und Handy nie mehr als LIST_PAGE_SIZE Zeilen auf
+# einmal, egal wie gross der Fragenpool wird (mit ca. 200 gleichzeitig
+# gezeichneten Zeilen stuerzte die PC-Version beim Aufbau ab).
+# Die Positionen bleiben die Indizes in der Gesamtliste - der Lernfortschritt
+# wird ueber diese Indizes gespeichert. Neue Inhalte deshalb immer am Ende
+# der JSON-Dateien anhaengen, nie einfuegen oder umsortieren.
+
+LIST_PAGE_SIZE = 15
+FILTER_ALL = "Alle"
+STATUS_OPEN = "Offen"
+STATUS_DONE = "Bearbeitet"
+STATUS_FILTERS = [FILTER_ALL, STATUS_OPEN, STATUS_DONE]
+
+
+def group_values(items, field):
+    """Vorkommende Werte eines Feldes (z.B. Thema) in fester Reihenfolge."""
+    values = []
+    for item in items:
+        value = item.get(field)
+        if value and value not in values:
+            values.append(value)
+    return values
+
+
+def filter_positions(items, query="", category=FILTER_ALL, group_field=None,
+                     group=FILTER_ALL, status=FILTER_ALL, done=()):
+    """Positionen der Eintraege, die zu Suchtext und Filtern passen.
+
+    query durchsucht Titel und das Gruppenfeld, category ist ein Fachbereich
+    (CAT_...), group ein Wert von group_field (z.B. ein Thema), status einer
+    aus STATUS_FILTERS und done die Menge der bearbeiteten Positionen."""
+    needle = (query or "").strip().lower()
+    positions = []
+    for position, item in enumerate(items):
+        if category != FILTER_ALL and item.get("cat") != category:
+            continue
+        if group_field and group != FILTER_ALL and item.get(group_field) != group:
+            continue
+        if status == STATUS_OPEN and position in done:
+            continue
+        if status == STATUS_DONE and position not in done:
+            continue
+        if needle:
+            haystack = " ".join(str(item.get(key, "")) for key in
+                                ("title", group_field or "title")).lower()
+            if needle not in haystack and needle != str(position + 1):
+                continue
+        positions.append(position)
+    return positions
+
+
+def page_slice(positions, page, size=LIST_PAGE_SIZE):
+    """Liefert (Positionen der Seite, gueltige Seitennummer ab 0, Seitenanzahl)."""
+    pages = max(1, -(-len(positions) // size))
+    page = max(0, min(page, pages - 1))
+    return positions[page * size:(page + 1) * size], page, pages
 
 
 # ============================================================================
@@ -443,8 +509,15 @@ class DBManager:
 
     def completed_projects(self):
         """Menge der Indizes bereits bearbeiteter Testprojekte."""
+        return self.completed_indices("project_events")
+
+    def completed_indices(self, table):
+        """Menge der Indizes bereits bearbeiteter Szenarien bzw. Testprojekte
+        (table: scenario_events, ap1_events oder project_events)."""
+        column = {"scenario_events": "scenario_index", "ap1_events": "scenario_index",
+                  "project_events": "project_index"}[table]
         rows = self._execute(
-            "SELECT DISTINCT project_index FROM project_events", fetch="all", default=[]) or []
+            "SELECT DISTINCT %s FROM %s" % (column, table), fetch="all", default=[]) or []
         return {row[0] for row in rows}
 
     def quiz_success_rate(self):
@@ -643,6 +716,7 @@ CATEGORY_KEYS = {
     "sicherheit": CAT_SEC,
     "systeme": CAT_SYS,
     "wirtschaft": CAT_BIZ,
+    "datenbanken": CAT_DB,
 }
 
 # Felder, die in den JSON-Dateien auch als Liste von Zeilen stehen duerfen
