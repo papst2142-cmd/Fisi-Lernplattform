@@ -9538,5 +9538,1829 @@
       "Eine Gliederung, in der jede Stelle mehrere Vorgesetzte hat",
       "Eine Gliederung, die nur für die Dauer eines Projekts besteht"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nur die Clients in VLAN 30 erhalten Adressen aus 169.254.0.0/16, alle anderen VLANs funktionieren. Der DHCP-Server steht in VLAN 10. Wo suchen Sie zuerst?",
+    "a": "Am DHCP-Relay (IP-Helper) der Gateway-Schnittstelle von VLAN 30",
+    "a_full": "Der DHCP-Discover ist ein Broadcast und wird von Routern nicht weitergeleitet. Für jedes VLAN ohne eigenen DHCP-Server muss auf dem Router oder Layer-3-Switch ein Relay eingetragen sein. Fehlt es nur für VLAN 30, sind genau diese Clients betroffen.",
+    "options": [
+      "Am DHCP-Relay (IP-Helper) der Gateway-Schnittstelle von VLAN 30",
+      "Am DNS-Server, weil er die Namen aus VLAN 30 nicht kennt",
+      "An der Netzwerkkarte jedes einzelnen Clients in VLAN 30",
+      "Am Internetrouter, weil die NAT-Regel für VLAN 30 fehlt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ipconfig zeigt bei der IPv4-Adresse den Zusatz (Duplikat), der Rechner hat keine Verbindung. Was ist die Ursache?",
+    "a": "Ein anderes Gerät nutzt bereits dieselbe IP-Adresse",
+    "a_full": "Windows prüft beim Start per ARP, ob die Adresse im Netz schon belegt ist. Bei einem Konflikt verwendet es die Adresse nicht. Häufige Ursache ist ein Gerät mit statischer Adresse innerhalb des DHCP-Bereichs. Das zweite Gerät findet man über arp -a und die MAC-Tabelle des Switches.",
+    "options": [
+      "Ein anderes Gerät nutzt bereits dieselbe IP-Adresse",
+      "Die Netzwerkkarte ist doppelt im Gerätemanager eingetragen",
+      "Der Rechner hat zwei Adressen aus zwei VLANs erhalten",
+      "Der DNS-Server führt den Rechnernamen doppelt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Angaben liefert ipconfig /all zusätzlich zu ipconfig, die bei DHCP-Problemen helfen?",
+    "a": "DHCP-Server, Lease-Zeiten, MAC-Adresse und DNS-Server",
+    "a_full": "Das einfache ipconfig zeigt nur Adresse, Maske und Gateway. ipconfig /all nennt zusätzlich die physische Adresse, ob DHCP aktiv ist, welcher Server die Adresse vergeben hat und wann die Lease abläuft. So erkennt man z.B. einen fremden DHCP-Server im Netz.",
+    "options": [
+      "DHCP-Server, Lease-Zeiten, MAC-Adresse und DNS-Server",
+      "Die ARP-Tabelle und die Routingtabelle des Rechners",
+      "Die offenen Ports mit den zugehörigen Prozessen",
+      "Die Liste der Router bis zum Standardgateway"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ipconfig zeigt IP-Adresse und Subnetzmaske, das Feld Standardgateway ist leer. Was kann der Rechner noch erreichen?",
+    "a": "Nur Geräte im eigenen Subnetz, keine anderen Netze",
+    "a_full": "Für Ziele im eigenen Subnetz ermittelt der Rechner die MAC-Adresse direkt per ARP. Für alle anderen Ziele braucht er das Gateway als nächsten Hop. Ohne Gateway sind daher Server in anderen VLANs und das Internet nicht erreichbar.",
+    "options": [
+      "Nur Geräte im eigenen Subnetz, keine anderen Netze",
+      "Gar nichts, weil ohne Gateway kein ARP möglich ist",
+      "Das Internet, aber keine Geräte im eigenen Subnetz",
+      "Alles, weil der Switch die Aufgabe des Gateways übernimmt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Client hat 10.1.1.20 mit Maske /16 statt /24. Der Server 10.1.2.5 in einem anderen /24-Subnetz ist nicht erreichbar. Warum?",
+    "a": "Der Client hält den Server für lokal und sucht ihn per ARP",
+    "a_full": "Mit /16 liegt 10.1.2.5 aus Sicht des Clients im eigenen Netz. Er sendet deshalb eine ARP-Anfrage statt das Paket an das Gateway zu schicken. Da der Server in einem anderen VLAN steht, antwortet niemand und die Verbindung scheitert.",
+    "options": [
+      "Der Client hält den Server für lokal und sucht ihn per ARP",
+      "Der Client sendet alle Pakete doppelt an das Gateway",
+      "Der Server lehnt Clients mit abweichender Maske ab",
+      "Der Switch verwirft Frames mit falscher Subnetzmaske"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Server hat zwei Netzwerkkarten in zwei Subnetzen und auf beiden ein Standardgateway eingetragen. Antworten gehen teils über die falsche Karte. Was ist richtig?",
+    "a": "Nur eine Karte erhält ein Gateway, für das andere Netz setzt man statische Routen",
+    "a_full": "Ein Rechner sollte genau ein Standardgateway haben. Bei zwei Einträgen entscheidet die Metrik, und Antworten können über die andere Karte gehen als die Anfrage kam. Firewalls verwerfen solche asymmetrischen Pakete oft. Netze hinter der zweiten Karte erreicht man über gezielte statische Routen.",
+    "options": [
+      "Nur eine Karte erhält ein Gateway, für das andere Netz setzt man statische Routen",
+      "Beide Karten brauchen dasselbe Gateway aus einem der beiden Netze",
+      "Die zweite Karte braucht ein Gateway aus dem Bereich 169.254.0.0/16",
+      "Beide Gateways müssen zusätzlich per NAT miteinander verbunden werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Client hat auf seiner Schnittstelle nur eine IPv6-Adresse mit fe80::, obwohl im Netz IPv6 eingeführt wurde. Was fehlt wahrscheinlich?",
+    "a": "Router Advertisements mit Präfix oder ein DHCPv6-Server",
+    "a_full": "Die link-lokale Adresse bildet jeder Host selbst, sie reicht nur im eigenen Segment. Eine global nutzbare Adresse erhält er erst, wenn ein Router per Router Advertisement ein Präfix verkündet oder DHCPv6 eine Adresse vergibt. Man prüft also die Router-Konfiguration des Segments.",
+    "options": [
+      "Router Advertisements mit Präfix oder ein DHCPv6-Server",
+      "Ein AAAA-Eintrag für den Client im DNS-Server",
+      "Ein ARP-Eintrag für den IPv6-Router im Client",
+      "Eine IPv4-Adresse als Grundlage für die IPv6-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitarbeiter zieht an einen neuen Platz. Sein PC erhält dort eine Adresse aus dem Gäste-Netz und erreicht keine Server. Was ist die wahrscheinlichste Ursache?",
+    "a": "Der Switchport der neuen Dose ist dem Gäste-VLAN zugeordnet",
+    "a_full": "Ein PC bekommt per DHCP eine Adresse aus dem VLAN, dem sein Access-Port angehört. Über die Patchliste findet man den Switchport der Dose und ändert dort das Access-VLAN. Anschließend wird die Patchliste aktualisiert.",
+    "options": [
+      "Der Switchport der neuen Dose ist dem Gäste-VLAN zugeordnet",
+      "Die Netzwerkkarte des PCs hat eine ungültige MAC-Adresse",
+      "Der DHCP-Server hat den Adressbereich des PCs gelöscht",
+      "Das Patchkabel am neuen Platz ist ein Crossover-Kabel"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neues VLAN 40 wurde auf beiden Etagenswitches angelegt und Ports wurden zugeordnet. Geräte in VLAN 40 erreichen sich nur innerhalb derselben Etage. Was wurde vergessen?",
+    "a": "VLAN 40 auf dem Trunk zwischen den Switches zu erlauben",
+    "a_full": "Frames verschiedener VLANs laufen zwischen Switches über einen Trunk mit 802.1Q-Tag. Ist VLAN 40 dort nicht in der Liste der erlaubten VLANs, bleibt es auf jeden Switch beschränkt. Nach dem Anlegen eines VLANs prüft man daher immer alle Trunks auf dem Weg.",
+    "options": [
+      "VLAN 40 auf dem Trunk zwischen den Switches zu erlauben",
+      "Einen DNS-Eintrag für jedes Gerät in VLAN 40 anzulegen",
+      "Das Native VLAN auf allen Access-Ports zu ändern",
+      "Auf beiden Switches ein eigenes Gateway einzutragen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "PCs an einem Switch erhalten beim Hochfahren manchmal eine 169.254-Adresse, nach ipconfig /renew aber die richtige. Spanning Tree ist aktiv. Was hilft?",
+    "a": "PortFast (Edge Port) an den Endgeräte-Ports aktivieren",
+    "a_full": "Beim klassischen STP durchläuft ein Port nach dem Einstecken etwa 30 Sekunden Listening und Learning. In dieser Zeit verpuffen die DHCP-Anfragen des startenden PCs. Mit PortFast geht der Port sofort in Forwarding. BPDU Guard schützt diese Ports zusätzlich vor Loops.",
+    "options": [
+      "PortFast (Edge Port) an den Endgeräte-Ports aktivieren",
+      "Die Lease-Zeit im DHCP-Server deutlich verlängern",
+      "Spanning Tree auf dem gesamten Switch abschalten",
+      "Die Ports fest auf 10 Mbit/s Halbduplex stellen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Port geht in err-disabled, nachdem ein Mitarbeiter einen mitgebrachten Switch angeschlossen hat. Wie gehen Sie vor?",
+    "a": "Ursache entfernen, dann den Port mit shutdown und no shutdown aktivieren",
+    "a_full": "err-disabled wird z.B. von BPDU Guard oder Port-Security ausgelöst. Solange der fremde Switch angeschlossen ist, fällt der Port sofort wieder aus. Nach dem Entfernen setzt man den Port zurück und dokumentiert den Vorfall.",
+    "options": [
+      "Ursache entfernen, dann den Port mit shutdown und no shutdown aktivieren",
+      "Den ganzen Switch neu starten, damit der Port zurückgesetzt wird",
+      "BPDU Guard am Port dauerhaft deaktivieren und weiterarbeiten",
+      "Den Port einem anderen VLAN zuordnen und aktiv lassen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In der MAC-Tabelle eines Access-Switches stehen an Port 48 über 200 MAC-Adressen, an allen anderen Ports je eine. Wie bewerten Sie das?",
+    "a": "Normal, wenn an Port 48 der Uplink zu anderen Switches hängt",
+    "a_full": "Ein Switch lernt an jedem Port die Absenderadressen der eingehenden Frames. Am Uplink kommen die Frames aller Geräte hinter den anderen Switches an, deshalb stehen dort viele Einträge. Verdächtig wäre das nur an einem Port, an dem ein einzelnes Endgerät hängen sollte.",
+    "options": [
+      "Normal, wenn an Port 48 der Uplink zu anderen Switches hängt",
+      "Sicher ein MAC-Flooding-Angriff über ein Gerät an Port 48",
+      "Port 48 ist defekt und lernt fremde Adressen mehrfach",
+      "Die MAC-Tabelle ist voll und muss sofort geleert werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Server ist nach einem Netzwerkkartentausch sehr langsam. Der Switchport zeigt viele Late Collisions und CRC-Fehler. Was ist die wahrscheinlichste Ursache?",
+    "a": "Duplex-Mismatch zwischen Server und Switchport",
+    "a_full": "Ist eine Seite fest auf Vollduplex gestellt, handelt die andere per Autonegotiation oft nur Halbduplex aus. Die halbduplexe Seite erkennt dann Kollisionen, die es im Vollduplex nicht geben dürfte. Abhilfe: beide Seiten auf Auto oder beide fest auf dieselben Werte stellen.",
+    "options": [
+      "Duplex-Mismatch zwischen Server und Switchport",
+      "Falsch eingetragenes Gateway auf dem Server",
+      "Abgelaufenes DHCP-Lease des Servers",
+      "Falsche VLAN-Zuordnung des Switchports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC verbindet sich an einer Dose nur mit 100 Mbit/s statt 1 Gbit/s, an anderen Dosen mit 1 Gbit/s. Was ist eine typische Ursache?",
+    "a": "Ein Adernpaar der Strecke ist unterbrochen oder falsch aufgelegt",
+    "a_full": "100BASE-TX nutzt nur zwei Adernpaare, 1000BASE-T dagegen alle vier. Fällt ein Paar aus, handeln die Geräte oft auf 100 Mbit/s herunter, statt ganz abzubrechen. Die Strecke prüft man mit einem Kabeltester.",
+    "options": [
+      "Ein Adernpaar der Strecke ist unterbrochen oder falsch aufgelegt",
+      "Der Switchport ist dem falschen VLAN zugeordnet worden",
+      "Der DHCP-Server vergibt an dieser Dose eine langsamere Adresse",
+      "Der PC erhält an dieser Dose kein Standardgateway per DHCP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Switchport zeigt stetig steigende CRC-Fehler, Geschwindigkeit und Duplex stimmen auf beiden Seiten. Was prüfen Sie?",
+    "a": "Die physische Strecke, also Patchkabel, Dose und Stecker",
+    "a_full": "CRC-Fehler bedeuten, dass Frames beschädigt ankommen. Ist ein Duplex-Mismatch ausgeschlossen, liegt die Ursache meist auf Schicht 1, z.B. ein geknicktes Patchkabel, ein schlechter Kontakt oder Störeinflüsse. Man tauscht zuerst das Patchkabel und misst dann die Strecke.",
+    "options": [
+      "Die physische Strecke, also Patchkabel, Dose und Stecker",
+      "Die DHCP-Reservierung des angeschlossenen Geräts",
+      "Die DNS-Einträge des angeschlossenen Geräts",
+      "Die Routingtabelle des Core-Switches im Serverraum"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Kurz nachdem ein Mitarbeiter ein loses Patchkabel in eine zweite Dose gesteckt hat, bricht im Stockwerk das Netz zusammen, alle Port-LEDs blinken dauerhaft. Was ist passiert?",
+    "a": "Eine Schleife hat einen Broadcast-Sturm ausgelöst",
+    "a_full": "Beide Dosen führen zum selben Switch, das Kabel schließt so einen Kreis. Broadcasts kreisen endlos, weil Ethernet-Frames keine TTL haben. Sofortmaßnahme ist das Ziehen des Kabels. Dauerhaft helfen Spanning Tree, BPDU Guard und Storm Control.",
+    "options": [
+      "Eine Schleife hat einen Broadcast-Sturm ausgelöst",
+      "Ein IP-Adresskonflikt zwischen zwei Rechnern",
+      "Ein Duplex-Mismatch am Uplink des Switches",
+      "Der DHCP-Server hat keine freien Adressen mehr"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping 192.168.10.77 liefert: \"Antwort von 192.168.10.23: Zielhost nicht erreichbar.\" 192.168.10.23 ist der eigene Rechner. Was sagt das aus?",
+    "a": "Das Ziel liegt im eigenen Netz, antwortet aber nicht auf ARP",
+    "a_full": "Windows meldet dies, wenn es für ein lokales Ziel keine MAC-Adresse per ARP ermitteln konnte. Typische Gründe: Ziel ausgeschaltet, in einem anderen VLAN oder Adresse gar nicht vergeben. Anders als bei einer Zeitüberschreitung wurde gar kein ICMP-Paket an das Ziel gesendet.",
+    "options": [
+      "Das Ziel liegt im eigenen Netz, antwortet aber nicht auf ARP",
+      "Das Ziel antwortet, aber seine Firewall verwirft ICMP-Pakete",
+      "Der eigene Rechner hat kein Standardgateway eingetragen",
+      "Der DNS-Server kennt den Namen des Zielrechners nicht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping 10.50.1.10 liefert: \"Antwort von 192.168.1.1: Zielnetz nicht erreichbar.\" 192.168.1.1 ist das Gateway. Was bedeutet das?",
+    "a": "Das Gateway kennt keine Route zum Zielnetz",
+    "a_full": "Ein Router ohne passende Route und ohne Default Route meldet dies per ICMP an den Absender zurück. Der eigene Rechner und der Weg bis zum Gateway funktionieren also. Als Nächstes prüft man die Routingtabelle des Gateways.",
+    "options": [
+      "Das Gateway kennt keine Route zum Zielnetz",
+      "Der eigene Rechner hat eine falsche Maske",
+      "Das Zielgerät hat seine Firewall aktiviert",
+      "Das Gateway ist ausgeschaltet oder getrennt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "tracert zeigt bei Hop 4 nur \"* * * Zeitüberschreitung\", danach geht es ab Hop 5 normal bis zum Ziel weiter. Wie bewerten Sie das?",
+    "a": "Kein Fehler, Hop 4 beantwortet nur keine ICMP-Meldungen",
+    "a_full": "Viele Router drosseln oder unterdrücken ICMP-Meldungen vom Typ Time Exceeded. Da spätere Hops und das Ziel antworten, leitet Hop 4 die Pakete offensichtlich weiter. Ein echtes Problem liegt erst vor, wenn ab einem Hop alle weiteren Zeilen mit Sternchen enden.",
+    "options": [
+      "Kein Fehler, Hop 4 beantwortet nur keine ICMP-Meldungen",
+      "Hop 4 ist ausgefallen, die Pakete nehmen einen Umweg",
+      "Das Paket wurde bei Hop 4 verworfen und neu gesendet",
+      "Hop 4 ist überlastet und verursacht den Paketverlust"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "tracert zeigt ab Hop 3 abwechselnd dieselben zwei Router-Adressen, bis 30 Hops erreicht sind. Was liegt vor?",
+    "a": "Eine Routingschleife zwischen diesen beiden Routern",
+    "a_full": "Router A schickt das Paket zu Router B, dieser schickt es zurück zu A. Bei jedem Durchlauf sinkt die TTL, bis das Paket verworfen wird. Ursache sind oft widersprüchliche statische Routen, z.B. zwei Default Routes, die aufeinander zeigen.",
+    "options": [
+      "Eine Routingschleife zwischen diesen beiden Routern",
+      "Eine Lastverteilung per ECMP über zwei Leitungen",
+      "Ein Duplex-Mismatch zwischen den beiden Routern",
+      "Ein Spanning-Tree-Loop zwischen zwei Switches"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "nslookup server01 liefert die neue IP-Adresse des Servers, ping server01 geht aber an die alte Adresse. Was ist die wahrscheinlichste Ursache?",
+    "a": "Ein Eintrag in der hosts-Datei oder im lokalen DNS-Cache",
+    "a_full": "nslookup fragt den DNS-Server direkt und umgeht hosts-Datei und lokalen Cache. ping nutzt den normalen Resolver des Systems, der zuerst hosts-Datei und Cache auswertet. Abhilfe: veralteten hosts-Eintrag entfernen und ipconfig /flushdns ausführen.",
+    "options": [
+      "Ein Eintrag in der hosts-Datei oder im lokalen DNS-Cache",
+      "Der DNS-Server liefert an ping andere Antworten als an nslookup",
+      "Die ARP-Tabelle speichert Namen zu alten IP-Adressen",
+      "Das Gateway leitet ping-Pakete an alte Adressen um"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping fileserver.firma.local funktioniert, ping fileserver meldet aber, der Host sei nicht gefunden worden. Was fehlt auf dem Client?",
+    "a": "Das DNS-Suffix bzw. die Suffix-Suchliste firma.local",
+    "a_full": "Bei kurzen Namen hängt der Resolver das primäre DNS-Suffix oder die Einträge der Suchliste an. Fehlt das Suffix, fragt er nur den kurzen Namen ab, den der DNS-Server nicht kennt. Das Suffix wird z.B. per DHCP-Option 15 oder Gruppenrichtlinie verteilt.",
+    "options": [
+      "Das DNS-Suffix bzw. die Suffix-Suchliste firma.local",
+      "Ein A-Eintrag für fileserver.firma.local",
+      "Ein PTR-Eintrag für die Adresse des Fileservers",
+      "Eine statische Route zum Netz des Fileservers"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping auf externe Adressen und nslookup funktionieren, trotzdem lädt der Browser keine Webseite. Webzugriff ist in der Firma nur über einen Proxy freigegeben. Was prüfen Sie zuerst?",
+    "a": "Die Proxy-Einstellungen des Browsers bzw. des Systems",
+    "a_full": "Da ping und Namensauflösung klappen, sind Verkabelung, IP-Konfiguration, Gateway und DNS in Ordnung. Wenn die Firewall Webverkehr nur vom Proxy zulässt, scheitert jeder direkte Aufruf. Fehlt oder stimmt die Proxy-Adresse nicht, bleibt der Browser ohne Verbindung.",
+    "options": [
+      "Die Proxy-Einstellungen des Browsers bzw. des Systems",
+      "Das eingetragene Standardgateway des Rechners",
+      "Die DNS-Server-Einträge in der IP-Konfiguration",
+      "Die Verkabelung vom Rechner zur Netzwerkdose"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Außendienstler mit Heimnetz 192.168.1.0/24 erreicht über das Client-VPN keine Firmenserver. Das Firmennetz ist ebenfalls 192.168.1.0/24. Warum?",
+    "a": "Der Laptop hält die Firmenadressen für lokal und nutzt den Tunnel nicht",
+    "a_full": "Die Adressbereiche überschneiden sich, die Route ins eigene Heimnetz gewinnt. Pakete an die Firmenserver bleiben daher im Heimnetz. Firmennetze sollten deshalb weniger verbreitete private Bereiche nutzen, z.B. aus 10.0.0.0/8 oder 172.16.0.0/12.",
+    "options": [
+      "Der Laptop hält die Firmenadressen für lokal und nutzt den Tunnel nicht",
+      "Das VPN verschlüsselt nur Adressen aus dem Bereich 10.0.0.0/8",
+      "Der Heimrouter blockiert grundsätzlich alle VPN-Verbindungen",
+      "Die Firmenserver lehnen Anfragen von privaten Adressen ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Seit Einführung eines Site-to-Site-VPN klappen ping und kleine Webseiten, große Dateiübertragungen hängen aber. Welche Ursache liegt nahe?",
+    "a": "Die Pakete sind durch den Tunnel-Overhead zu groß für die MTU",
+    "a_full": "Der VPN-Header verringert den Platz für Nutzdaten. Ist das DF-Bit gesetzt und kommt die ICMP-Meldung zur nötigen Fragmentierung nicht an, gehen große Pakete verloren. Abhilfe: MTU am Tunnel senken oder die TCP-MSS am VPN-Gateway anpassen (MSS-Clamping).",
+    "options": [
+      "Die Pakete sind durch den Tunnel-Overhead zu groß für die MTU",
+      "Die Verschlüsselung erlaubt nur Dateien bis zu einer festen Größe",
+      "Der DNS-Server kann lange Dateinamen nicht auflösen",
+      "Das VPN nutzt UDP und verwirft daher alle TCP-Pakete"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einer Kantine bricht das 2,4-GHz-WLAN jeden Mittag ein, das 5-GHz-WLAN läuft normal. Was ist eine wahrscheinliche Ursache?",
+    "a": "Mikrowellengeräte, die ebenfalls im 2,4-GHz-Band strahlen",
+    "a_full": "Mikrowellengeräte arbeiten bei etwa 2,45 GHz und stören bei nicht ganz dichter Abschirmung das WLAN. Das Muster zur Mittagszeit und die Beschränkung auf 2,4 GHz sprechen dafür. Abhilfe: Clients auf 5 GHz lenken oder den AP weiter entfernt montieren.",
+    "options": [
+      "Mikrowellengeräte, die ebenfalls im 2,4-GHz-Band strahlen",
+      "Zu viele gleichzeitige DHCP-Anfragen im Gäste-Netz",
+      "Eine abgelaufene WPA-Schlüsselrotation um 12 Uhr",
+      "Der Access Point schaltet mittags in den Energiesparmodus"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum gilt Nachbarkanalstörung (z.B. APs auf 2,4-GHz-Kanal 1 und 3) als schlimmer als Gleichkanalstörung (beide auf Kanal 1)?",
+    "a": "Das überlappende Signal wirkt als Rauschen, CSMA/CA kann nicht koordinieren",
+    "a_full": "Auf demselben Kanal erkennen sich die Geräte und teilen sich das Medium geordnet. Überlappende Nachbarkanäle werden dagegen nicht als WLAN-Sendung erkannt und stören als Rauschen, was zu Fehlern und Wiederholungen führt. Im 2,4-GHz-Band nutzt man daher nur die Kanäle 1, 6 und 11.",
+    "options": [
+      "Das überlappende Signal wirkt als Rauschen, CSMA/CA kann nicht koordinieren",
+      "Weil auf Kanal 3 eine höhere Sendeleistung erlaubt ist als auf Kanal 1",
+      "Weil Nachbarkanäle doppelt so viele Clients an den AP binden",
+      "Weil auf Nachbarkanälen keine WPA3-Verschlüsselung möglich ist"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Gebäude auf einem Werksgelände sollen verkabelt verbunden werden. Welches Medium passt und warum?",
+    "a": "Glasfaser, wegen Reichweite und galvanischer Trennung",
+    "a_full": "Zwischen Gebäuden können Potentialunterschiede auftreten, die über Kupferleitungen Ausgleichsströme und Schäden verursachen. Glasfaser überträgt Licht und trennt die Gebäude elektrisch. Außerdem sind Strecken weit über 100 m möglich.",
+    "options": [
+      "Glasfaser, wegen Reichweite und galvanischer Trennung",
+      "Cat-7-Kupferkabel, weil es am besten geschirmt ist",
+      "Koaxialkabel, weil es gegen Blitzschlag isoliert",
+      "Cat-6A-Kabel, weil es 10 Gbit/s über 500 m schafft"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PoE+-Switch soll viele Access Points mit hohem Leistungsbedarf versorgen. Was prüfen Sie neben dem PoE-Standard?",
+    "a": "Das gesamte PoE-Budget des Switches",
+    "a_full": "Jeder PoE+-Port kann bis zu 30 W liefern, das Netzteil begrenzt aber die Summe aller Ports. Reicht das Budget nicht, bleiben einzelne Geräte ohne Strom oder laufen eingeschränkt. Deshalb vergleicht man die Summe der Verbraucher mit dem Budget im Datenblatt.",
+    "options": [
+      "Das gesamte PoE-Budget des Switches",
+      "Die Größe der MAC-Tabelle des Switches",
+      "Ob der Switch Spanning Tree unterstützt",
+      "Ob die Ports Auto-MDI-X beherrschen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine PoE-Kamera soll 130 m vom nächsten Switch entfernt montiert werden. Welche Lösung ist normgerecht?",
+    "a": "Zwischenswitch, PoE-Extender oder Glasfaser mit Medienkonverter",
+    "a_full": "Twisted-Pair-Strecken sind unabhängig von der Kategorie auf 100 m begrenzt. Ein Zwischenswitch oder PoE-Extender frischt das Signal auf. Bei größeren Entfernungen führt man Glasfaser bis in die Nähe der Kamera und setzt dort einen PoE-fähigen Medienkonverter.",
+    "options": [
+      "Zwischenswitch, PoE-Extender oder Glasfaser mit Medienkonverter",
+      "Ein durchgehendes Cat-7-Kabel, weil es für 150 m zugelassen ist",
+      "Ein Crossover-Kabel, das die zulässige Reichweite verdoppelt",
+      "Ein S/FTP-Verlegekabel mit höherer PoE-Klasse am Switchport"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde will Gäste-WLAN und Firmennetz über dieselben Switches getrennt betreiben. Warum reicht ein Unmanaged Switch nicht?",
+    "a": "Er kann keine VLANs anlegen und keine 802.1Q-Tags verarbeiten",
+    "a_full": "Die Trennung erfolgt über VLANs, die an den Ports und auf den Trunks konfiguriert werden. Ein Unmanaged Switch hat keine Konfigurationsoberfläche und behandelt alle Ports als ein Netz. Man braucht einen Managed Switch mit VLAN-Unterstützung.",
+    "options": [
+      "Er kann keine VLANs anlegen und keine 802.1Q-Tags verarbeiten",
+      "Er hat grundsätzlich keine Ports mit Gigabit-Geschwindigkeit",
+      "Er kann keine MAC-Adressen lernen und arbeitet wie ein Hub",
+      "Er unterstützt keine Glasfaser-Uplinks zu anderen Switches"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Firmengebäude sollen zwölf VLANs mit hohem Durchsatz untereinander geroutet werden, der Internetzugang läuft über eine Firewall. Welches Gerät passt für das Inter-VLAN-Routing?",
+    "a": "Ein Layer-3-Switch im Core",
+    "a_full": "Ein Layer-3-Switch routet zwischen VLANs in Hardware mit voller Portgeschwindigkeit und bietet viele Ports. WAN-Funktionen wie PPPoE oder umfangreiches NAT braucht er dafür nicht, die übernimmt die Firewall. Router on a Stick wäre hier ein Engpass.",
+    "options": [
+      "Ein Layer-3-Switch im Core",
+      "Ein unmanaged Switch mit Uplink",
+      "Ein WLAN-Controller mit VLANs",
+      "Ein DSL-Router mit NAT-Funktion"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In welcher Reihenfolge richten Sie ein neues VLAN für eine Abteilung ein?",
+    "a": "VLAN anlegen, Ports zuweisen, auf Trunks erlauben, Gateway und DHCP einrichten, testen, dokumentieren",
+    "a_full": "Zuerst muss das VLAN auf allen beteiligten Switches existieren, dann werden die Access-Ports zugeordnet. Damit es switchübergreifend funktioniert, wird es auf den Trunks erlaubt. Danach folgen Gateway-Schnittstelle, DHCP-Bereich oder Relay, ein Test mit einem Client und die Dokumentation.",
+    "options": [
+      "VLAN anlegen, Ports zuweisen, auf Trunks erlauben, Gateway und DHCP einrichten, testen, dokumentieren",
+      "Ports zuweisen, testen, VLAN anlegen, dokumentieren, auf Trunks erlauben, Gateway und DHCP einrichten",
+      "Gateway und DHCP einrichten, dokumentieren, Ports zuweisen, testen, VLAN anlegen, auf Trunks erlauben",
+      "Dokumentieren, auf Trunks erlauben, testen, Ports zuweisen, Gateway und DHCP einrichten, VLAN anlegen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum sendet der Client im DORA-Ablauf den DHCP Request als Broadcast, obwohl er den Server aus dem Offer schon kennt?",
+    "a": "Damit alle DHCP-Server erfahren, welches Angebot angenommen wurde",
+    "a_full": "Antworten mehrere DHCP-Server, erhält der Client mehrere Offers. Der Request enthält die Kennung des gewählten Servers und geht an alle. Die anderen Server geben ihre angebotenen Adressen daraufhin wieder frei.",
+    "options": [
+      "Damit alle DHCP-Server erfahren, welches Angebot angenommen wurde",
+      "Weil der Server im Offer keine eigene IP-Adresse mitsendet",
+      "Damit der Switch die MAC-Adresse des Clients sicher lernt",
+      "Weil DHCP ausschließlich Broadcasts verwenden darf"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Rechner A (192.168.1.10/24) will 10.0.0.5 erreichen. Nach welcher MAC-Adresse fragt er per ARP?",
+    "a": "Nach der MAC-Adresse seines Standardgateways",
+    "a_full": "A erkennt anhand seiner Maske, dass 10.0.0.5 in einem fremden Netz liegt. Er schickt den Frame deshalb an das Gateway und fragt per ARP nur dessen MAC-Adresse ab. Die Ziel-IP im Paket bleibt 10.0.0.5, nur die Ziel-MAC im Frame ist die des Gateways.",
+    "options": [
+      "Nach der MAC-Adresse seines Standardgateways",
+      "Nach der MAC-Adresse von 10.0.0.5",
+      "Nach der MAC-Adresse des DNS-Servers",
+      "Nach gar keiner, fremde Ziele brauchen kein ARP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In welcher Reihenfolge läuft die Adressauflösung ab, wenn ein PC ein Ziel im eigenen Subnetz erstmals anspricht?",
+    "a": "ARP-Cache prüfen, Request als Broadcast, Reply als Unicast, Eintrag speichern",
+    "a_full": "Zuerst schaut der PC, ob die MAC-Adresse schon im ARP-Cache steht. Wenn nicht, fragt er per Broadcast alle Geräte im Segment, nur das Ziel antwortet per Unicast. Die Antwort wird für einige Zeit im Cache gespeichert.",
+    "options": [
+      "ARP-Cache prüfen, Request als Broadcast, Reply als Unicast, Eintrag speichern",
+      "Request als Unicast, Reply als Broadcast, ARP-Cache prüfen, Eintrag speichern",
+      "ARP-Cache prüfen, DNS-Anfrage senden, Reply als Broadcast, Eintrag speichern",
+      "Reply als Broadcast, ARP-Cache prüfen, Request als Unicast, Eintrag löschen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf welcher OSI-Schicht arbeitet ein Access Point, der WLAN-Clients in das kabelgebundene LAN einbindet?",
+    "a": "Schicht 2, er leitet Frames anhand von MAC-Adressen weiter",
+    "a_full": "Ein Access Point arbeitet wie eine Bridge zwischen WLAN und Ethernet. Er setzt 802.11-Frames in Ethernet-Frames um und entscheidet anhand der MAC-Adressen. Router- oder NAT-Funktionen haben erst WLAN-Router, die mehrere Geräte in einem vereinen.",
+    "options": [
+      "Schicht 2, er leitet Frames anhand von MAC-Adressen weiter",
+      "Schicht 1, er verstärkt nur das Funksignal der Clients",
+      "Schicht 3, er routet Pakete anhand von IP-Adressen weiter",
+      "Schicht 4, er verteilt TCP-Verbindungen auf die Clients"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ihr Ausbilder bittet Sie, einen logischen Netzplan zu erstellen. Was gehört hinein, was nicht?",
+    "a": "VLANs, Subnetze, Gateways und Gerätenamen, aber keine Passwörter",
+    "a_full": "Der logische Netzplan zeigt, wie Netze, VLANs, Router, Firewalls und wichtige Server zusammenhängen, mit IP-Bereichen und Gateways. Zugangsdaten gehören in einen geschützten Passwortsafe, weil der Plan an viele Personen geht. Kaufdaten und Seriennummern stehen in der Inventarliste.",
+    "options": [
+      "VLANs, Subnetze, Gateways und Gerätenamen, aber keine Passwörter",
+      "Alle Zugangsdaten, damit Kollegen im Notfall handeln können",
+      "Nur Raumnummern und Kabelwege der einzelnen Etagen",
+      "Nur die Seriennummern und Kaufdaten der Geräte"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kollegin sieht eine Lösegeldforderung auf dem Bildschirm und hat den Rechner aus Schreck sofort ausgeschaltet. Was ist jetzt richtig?",
+    "a": "Den Rechner ausgeschaltet lassen und sofort die IT informieren",
+    "a_full": "Beim erneuten Hochfahren kann die Schadsoftware weiter verschlüsseln und sich im Netz ausbreiten. Die IT oder das Sicherheitsteam entscheidet, wie es weitergeht, z.B. ob die Festplatte zuerst für die Forensik gesichert wird. Die Kollegin notiert, was sie gesehen hat und wann.",
+    "options": [
+      "Den Rechner ausgeschaltet lassen und sofort die IT informieren",
+      "Den Rechner neu starten, um zu prüfen, ob die Meldung bleibt",
+      "Den Rechner im abgesicherten Modus starten und die Dateien retten",
+      "Den Rechner einschalten und einen vollständigen Virenscan starten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ransomware-Angriff fragt die Geschäftsführung, ob sie das Lösegeld zahlen soll. Was empfiehlt das BSI?",
+    "a": "Nicht zahlen, sondern aus Sicherungen wiederherstellen und Anzeige erstatten",
+    "a_full": "Eine Zahlung garantiert nicht, dass man einen funktionierenden Schlüssel bekommt oder dass gestohlene Daten gelöscht werden. Sie finanziert weitere Angriffe und macht das Unternehmen zum lohnenden Ziel. Das BSI rät daher grundsätzlich von einer Zahlung ab.",
+    "options": [
+      "Nicht zahlen, sondern aus Sicherungen wiederherstellen und Anzeige erstatten",
+      "Sofort zahlen, weil die Angreifer nach der Zahlung zuverlässig entschlüsseln",
+      "Nur zahlen, wenn die Forderung unter 10.000 Euro liegt",
+      "Zahlen, aber vorher die Cyberversicherung kündigen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ransomware-Befall sind die Systeme neu aufgesetzt. Aus welcher Sicherung spielen Sie die Daten zurück?",
+    "a": "Aus einem geprüften Stand vor dem Zeitpunkt der Infektion",
+    "a_full": "Angreifer sind oft schon Tage oder Wochen vor der Verschlüsselung im Netz. Die neueste Sicherung kann deshalb bereits Schadcode oder Hintertüren enthalten. Man ermittelt den Infektionszeitpunkt und prüft die Sicherung vor dem Zurückspielen.",
+    "options": [
+      "Aus einem geprüften Stand vor dem Zeitpunkt der Infektion",
+      "Immer aus der neuesten Sicherung, weil sie die wenigsten Datenverluste hat",
+      "Aus der ältesten vorhandenen Sicherung, egal wie alt sie ist",
+      "Aus einer Sicherung, die direkt nach der Verschlüsselung erstellt wurde"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Azubi findet auf dem Firmenparkplatz einen USB-Stick mit der Aufschrift \"Gehälter 2026\". Wie verhält er sich richtig?",
+    "a": "Den Stick nicht anschließen und bei der IT-Sicherheit abgeben",
+    "a_full": "Präparierte Sticks werden gezielt ausgelegt, weil Neugier ein starker Köder ist. Schon das Einstecken kann Schadcode ausführen. Die IT-Sicherheit untersucht den Stick auf einem isolierten System oder vernichtet ihn.",
+    "options": [
+      "Den Stick nicht anschließen und bei der IT-Sicherheit abgeben",
+      "Den Stick am eigenen Rechner prüfen, um den Besitzer zu finden",
+      "Den Stick zuerst mit dem Virenscanner prüfen und dann öffnen",
+      "Den Stick an einem privaten Laptop öffnen, um die Firma zu schützen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum schützt ein Virenscanner nicht vor einem präparierten USB-Stick der Art \"BadUSB\"?",
+    "a": "Der Stick meldet sich als Tastatur an und tippt Befehle selbst ein",
+    "a_full": "Ein BadUSB-Gerät gibt sich gegenüber dem Rechner als Eingabegerät aus. Es sendet in Sekunden vorbereitete Tastenfolgen, die z.B. Schadcode herunterladen. Da keine verdächtige Datei auf dem Stick liegt, findet der Virenscanner nichts. Dagegen helfen Regeln, die nur freigegebene USB-Geräte zulassen.",
+    "options": [
+      "Der Stick meldet sich als Tastatur an und tippt Befehle selbst ein",
+      "Der Stick verschlüsselt seine Dateien, sodass der Scanner sie nicht lesen kann",
+      "Der Stick ist zu groß, als dass der Scanner ihn vollständig prüfen könnte",
+      "Der Stick schaltet den Virenscanner über das Stromsignal der Buchse ab"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche organisatorische Regel verhindert, dass ein einzelner Mitarbeiter auf eine CEO-Fraud-Mail hin Geld überweist?",
+    "a": "Ein Vier-Augen-Prinzip für Zahlungen, das auch bei Anweisungen der Chefs gilt",
+    "a_full": "Beim CEO-Fraud setzen die Täter auf Zeitdruck und Autorität. Muss jede größere oder ungewöhnliche Zahlung von einer zweiten Person freigegeben werden, fällt der Betrug meist auf. Wichtig ist, dass für die Geschäftsführung keine Ausnahme gilt.",
+    "options": [
+      "Ein Vier-Augen-Prinzip für Zahlungen, das auch bei Anweisungen der Chefs gilt",
+      "Eine Regel, dass Zahlungen nur am Vormittag ausgeführt werden dürfen",
+      "Eine Regel, dass Überweisungen nur per Fax angewiesen werden dürfen",
+      "Ein Verbot, E-Mails der Geschäftsführung an Kollegen weiterzuleiten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter hat auf einen Link in einer Phishing-Mail geklickt und dort sein Firmenpasswort eingegeben. Was muss er sofort tun?",
+    "a": "Das Passwort ändern und den Vorfall der IT melden",
+    "a_full": "Der Angreifer kann die Zugangsdaten sofort nutzen, deshalb zählt jede Minute. Die IT beendet zusätzlich aktive Sitzungen und prüft, ob z.B. Weiterleitungsregeln im Postfach angelegt wurden. Wurde das Passwort auch woanders genutzt, muss es dort ebenfalls geändert werden.",
+    "options": [
+      "Das Passwort ändern und den Vorfall der IT melden",
+      "Die Mail löschen und abwarten, ob etwas Auffälliges passiert",
+      "Den Browserverlauf löschen, damit der Link nicht mehr aufrufbar ist",
+      "Die Mail an alle Kollegen weiterleiten, damit sie gewarnt sind"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Außendienstmitarbeiter meldet, dass er sein unverschlüsseltes Notebook mit Kundendaten im Zug liegen gelassen hat. Was ist der erste Schritt der IT?",
+    "a": "Zugänge des Geräts sperren und den Datenschutzbeauftragten informieren",
+    "a_full": "VPN-Zugang, Zertifikate und Kennwörter werden gesperrt oder geändert, falls möglich wird eine Fernlöschung ausgelöst. Parallel bewertet das Unternehmen mit dem DSB das Risiko, denn ohne Verschlüsselung ist meist eine Meldung an die Aufsichtsbehörde binnen 72 Stunden nötig. Alles wird dokumentiert.",
+    "options": [
+      "Zugänge des Geräts sperren und den Datenschutzbeauftragten informieren",
+      "Eine Woche abwarten, ob das Notebook beim Fundbüro abgegeben wird",
+      "Sofort ein Ersatzgerät bestellen und den Vorfall nicht weiter melden",
+      "Nur die Versicherung informieren, da es sich um einen Sachschaden handelt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Vertriebsmitarbeiter leitet vor seinem Urlaub eine Kundenliste an seine private Mailadresse weiter, um zu Hause zu arbeiten. Wie ist das einzuordnen?",
+    "a": "Als Datenschutzverletzung, die gemeldet und bewertet werden muss",
+    "a_full": "Die Daten liegen nun bei einem privaten Mailanbieter außerhalb der Kontrolle des Unternehmens. Das ist eine unbefugte Offenlegung, auch ohne böse Absicht. Der DSB bewertet das Risiko und entscheidet über eine Meldung, der Mitarbeiter muss die Daten nachweisbar löschen.",
+    "options": [
+      "Als Datenschutzverletzung, die gemeldet und bewertet werden muss",
+      "Als erlaubte Nutzung, weil der Mitarbeiter die Daten ohnehin kennt",
+      "Als reines Arbeitsrechtsthema ohne Bezug zum Datenschutz",
+      "Als unkritisch, solange der Mailanbieter seinen Sitz in der EU hat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Unternehmen will technisch verhindern, dass Kundenlisten per Mail an private Adressen gehen. Welche Lösung passt?",
+    "a": "Ein Data-Loss-Prevention-System (DLP)",
+    "a_full": "Ein DLP-System prüft ausgehende Mails, Uploads und Kopien auf USB-Sticks nach Regeln. Erkennt es z.B. viele Kundennummern oder IBANs, blockiert es den Versand oder fordert eine Begründung. Es ergänzt, ersetzt aber nicht die Schulung der Mitarbeiter.",
+    "options": [
+      "Ein Data-Loss-Prevention-System (DLP)",
+      "Ein Intrusion-Detection-System an der Grenze zur DMZ",
+      "Ein Spamfilter für alle eingehenden Nachrichten",
+      "Ein Reverse Proxy vor dem internen Mailserver"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Daten eines verschlüsselten Archivs sind unversehrt, aber der einzige Schlüssel ist verloren gegangen. Welches Schutzziel ist verletzt?",
+    "a": "Die Verfügbarkeit",
+    "a_full": "Die Daten sind weiterhin geheim und unverändert, also sind Vertraulichkeit und Integrität gewahrt. Sie lassen sich aber nicht mehr nutzen. Deshalb gehört zu jeder Verschlüsselung ein Konzept für die sichere Hinterlegung der Schlüssel.",
+    "options": [
+      "Die Verfügbarkeit",
+      "Die Vertraulichkeit",
+      "Die Integrität",
+      "Die Authentizität"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Angreifer verschlüsseln die Dateiserver und drohen zusätzlich, vorher kopierte Kundendaten zu veröffentlichen. Welche Schutzziele sind verletzt?",
+    "a": "Verfügbarkeit und Vertraulichkeit",
+    "a_full": "Die Verschlüsselung macht die Daten unbrauchbar, das betrifft die Verfügbarkeit. Durch das Kopieren haben Unbefugte die Daten erhalten, das betrifft die Vertraulichkeit. Diese doppelte Erpressung (Double Extortion) ist heute üblich, daher schützt ein gutes Backup allein nicht vor allen Folgen.",
+    "options": [
+      "Verfügbarkeit und Vertraulichkeit",
+      "Nur die Verfügbarkeit, weil nur verschlüsselt wurde",
+      "Integrität und Authentizität der Dateiserver",
+      "Nur die Vertraulichkeit, weil Daten kopiert wurden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde bestreitet, eine teure Bestellung über das Kundenportal ausgelöst zu haben. Welches Schutzziel soll so ein Streit verhindern?",
+    "a": "Die Verbindlichkeit (Nichtabstreitbarkeit)",
+    "a_full": "Verbindlichkeit bedeutet, dass eine Handlung ihrem Urheber sicher zugeordnet werden kann. Dazu dienen z.B. eine starke Anmeldung, manipulationssichere Protokolle und elektronische Signaturen. Dann kann der Kunde die Bestellung später nicht glaubhaft abstreiten.",
+    "options": [
+      "Die Verbindlichkeit (Nichtabstreitbarkeit)",
+      "Die Verfügbarkeit des Portals",
+      "Die Vertraulichkeit der Bestellung",
+      "Die Belastbarkeit der Systeme"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im ERP-System soll später nachvollziehbar sein, wer wann Kundendaten geändert hat. Welche Maßnahme erfüllt diese Anforderung?",
+    "a": "Eine Protokollierung aller Änderungen mit Benutzerkennung und Zeitstempel",
+    "a_full": "Diese Anforderung hieß früher im BDSG Eingabekontrolle. Das System speichert, welcher Benutzer welchen Datensatz wann eingegeben, geändert oder gelöscht hat. Voraussetzung sind persönliche Konten, denn Sammelkonten machen die Protokolle wertlos.",
+    "options": [
+      "Eine Protokollierung aller Änderungen mit Benutzerkennung und Zeitstempel",
+      "Eine tägliche Vollsicherung der ERP-Datenbank auf ein Band",
+      "Eine Verschlüsselung der ERP-Datenbank mit AES-256",
+      "Eine unterbrechungsfreie Stromversorgung für den ERP-Server"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Entwickler wollen eine Kopie der echten Kundendatenbank auf dem Testsystem nutzen. Welche Lösung ist datenschutzgerecht?",
+    "a": "Anonymisierte oder künstlich erzeugte Testdaten verwenden",
+    "a_full": "Echte personenbezogene Daten sind für den Zweck Test meist nicht erforderlich. Testsysteme sind außerdem oft schwächer geschützt und für mehr Personen zugänglich. Die Trennung von Produktiv- und Testdaten ist deshalb eine typische organisatorische und technische Maßnahme.",
+    "options": [
+      "Anonymisierte oder künstlich erzeugte Testdaten verwenden",
+      "Die Kopie verwenden, wenn das Testsystem im selben Netz steht",
+      "Die Kopie verwenden, wenn die Entwickler eine Schulung haben",
+      "Die Kopie verwenden, wenn sie nach dem Test ins Archiv geht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Art. 32 DSGVO verlangt ein Verfahren zur regelmäßigen Überprüfung der TOM. Welche Maßnahme erfüllt das zum Beispiel?",
+    "a": "Jährliche Wiederherstellungstests und interne Audits mit Bericht",
+    "a_full": "Maßnahmen müssen nicht nur eingeführt, sondern auch auf Wirksamkeit geprüft werden. Dazu gehören z.B. Rücksicherungstests, Berechtigungsprüfungen, Schwachstellenscans und Audits. Die Ergebnisse werden dokumentiert und fließen in Verbesserungen ein.",
+    "options": [
+      "Jährliche Wiederherstellungstests und interne Audits mit Bericht",
+      "Die einmalige Beschreibung aller Maßnahmen bei der Einführung",
+      "Die Anschaffung einer neuen Firewall alle fünf Jahre",
+      "Die Weitergabe der TOM-Liste an alle neuen Kunden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine öffentlich abrufbare Preisliste liegt auf der Firmenwebseite. Wie bewerten Sie ihren Schutzbedarf je Schutzziel?",
+    "a": "Vertraulichkeit normal, Integrität höher, weil falsche Preise schaden",
+    "a_full": "Der Schutzbedarf wird für jedes Schutzziel getrennt festgestellt. Öffentliche Daten brauchen keine Geheimhaltung. Werden die Preise aber manipuliert, drohen Streit mit Kunden, Umsatzverlust und Ansehensschaden, daher ist die Integrität wichtiger.",
+    "options": [
+      "Vertraulichkeit normal, Integrität höher, weil falsche Preise schaden",
+      "Alle drei Schutzziele sehr hoch, weil die Webseite öffentlich ist",
+      "Vertraulichkeit sehr hoch, Integrität und Verfügbarkeit normal",
+      "Kein Schutzbedarf, weil die Daten ohnehin jeder lesen kann"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In der Personalakte liegen auch Krankmeldungen und Angaben zu Schwerbehinderungen. Welchen Schutzbedarf hat die Vertraulichkeit?",
+    "a": "Mindestens hoch, weil Gesundheitsdaten besonders sensibel sind",
+    "a_full": "Gesundheitsdaten gehören zu den besonderen Kategorien nach Art. 9 DSGVO. Werden sie bekannt, können Betroffene erheblich in ihrer Stellung und ihrem Ansehen beeinträchtigt werden. Das rechtfertigt mindestens hohen, je nach Umfang auch sehr hohen Schutzbedarf.",
+    "options": [
+      "Mindestens hoch, weil Gesundheitsdaten besonders sensibel sind",
+      "Normal, weil nur die Personalabteilung die Akte nutzt",
+      "Normal, weil die Daten auf Papier und elektronisch vorliegen",
+      "Kein eigener Schutzbedarf, weil die Akte archiviert wird"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Über einen zentralen Core-Switch laufen zwölf Abteilungsanwendungen, jede einzeln mit normalem Verfügbarkeitsbedarf. Welchen Schutzbedarf hat der Switch?",
+    "a": "Hoch, wegen des Kumulationseffekts",
+    "a_full": "Fällt der Switch aus, stehen alle zwölf Anwendungen gleichzeitig still. Die Summe vieler kleiner Schäden kann einen beträchtlichen Gesamtschaden ergeben. Deshalb kann der Switch einen höheren Schutzbedarf haben als jede einzelne Anwendung.",
+    "options": [
+      "Hoch, wegen des Kumulationseffekts",
+      "Normal, wegen des Maximumprinzips",
+      "Normal, wegen des Verteilungseffekts",
+      "Sehr hoch, weil Switches immer kritisch sind"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Webshop mit hohem Verfügbarkeitsbedarf läuft auf zwei Servern in getrennten Rechenzentren, jeder kann allein den Betrieb tragen. Wie bewerten Sie einen einzelnen Server?",
+    "a": "Der einzelne Server kann normalen Verfügbarkeitsbedarf haben (Verteilungseffekt)",
+    "a_full": "Fällt ein Server aus, übernimmt der andere, der Shop bleibt erreichbar. Der Ausfall eines einzelnen Servers verursacht daher nur einen geringen Schaden. Der Verteilungseffekt gilt vor allem für die Verfügbarkeit, nicht für die Vertraulichkeit der Daten.",
+    "options": [
+      "Der einzelne Server kann normalen Verfügbarkeitsbedarf haben (Verteilungseffekt)",
+      "Jeder Server erhält sehr hohen Bedarf, weil es zwei sind (Kumulationseffekt)",
+      "Jeder Server erhält den Bedarf des gesamten Rechenzentrums (Maximumprinzip)",
+      "Der Bedarf der Server entfällt, weil die Daten redundant gespeichert sind"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Webserver speichert IP-Adressen der Besucher sieben Tage lang, um Angriffe zu erkennen. Auf welche Rechtsgrundlage stützt sich das?",
+    "a": "Auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)",
+    "a_full": "Die DSGVO nennt die Netz- und Informationssicherheit ausdrücklich als berechtigtes Interesse (Erwägungsgrund 49). Die Interessen der Besucher überwiegen nicht, wenn die Speicherdauer kurz ist und die Daten nur für die Sicherheit genutzt werden. Eine Einwilligung ist dafür nicht nötig.",
+    "options": [
+      "Auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)",
+      "Auf eine Einwilligung jedes Besuchers per Cookie-Banner",
+      "Auf die Erfüllung eines Vertrags mit dem Besucher",
+      "Auf den Schutz lebenswichtiger Interessen des Besuchers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Interessent fordert über das Kontaktformular ein Angebot an. Auf welcher Rechtsgrundlage verarbeiten Sie seine Daten?",
+    "a": "Vorvertragliche Maßnahmen auf seine Anfrage (Art. 6 Abs. 1 lit. b DSGVO)",
+    "a_full": "Lit. b gilt nicht nur für geschlossene Verträge, sondern auch für Schritte davor, die die betroffene Person selbst anstößt. Name, Adresse und Anforderungen dürfen also für das Angebot genutzt werden. Für Werbung über das Angebot hinaus reicht das nicht.",
+    "options": [
+      "Vorvertragliche Maßnahmen auf seine Anfrage (Art. 6 Abs. 1 lit. b DSGVO)",
+      "Einwilligung, die er vorher schriftlich erteilt (Art. 6 Abs. 1 lit. a)",
+      "Rechtliche Verpflichtung nach dem HGB (Art. 6 Abs. 1 lit. c)",
+      "Öffentliches Interesse am Angebot (Art. 6 Abs. 1 lit. e DSGVO)"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Geschäftsführung möchte eine Geburtstagsliste aller Mitarbeiter mit Foto im Intranet veröffentlichen. Welche Rechtsgrundlage kommt in Frage?",
+    "a": "Eine freiwillige Einwilligung jedes einzelnen Mitarbeiters",
+    "a_full": "Für das Arbeitsverhältnis ist die Veröffentlichung nicht erforderlich, daher greift der Arbeitsvertrag nicht. Wer nicht zustimmt, darf keine Nachteile haben. Die Einwilligung kann jederzeit widerrufen werden, dann wird der Eintrag entfernt.",
+    "options": [
+      "Eine freiwillige Einwilligung jedes einzelnen Mitarbeiters",
+      "Die Erfüllung des Arbeitsvertrags mit jedem Mitarbeiter",
+      "Ein berechtigtes Interesse an einem guten Betriebsklima",
+      "Eine rechtliche Fürsorgepflicht des Arbeitgebers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Handwerksbetrieb speichert Kundendaten in einem CRM, das ein Cloud-Anbieter betreibt. Wer hat welche Rolle nach DSGVO?",
+    "a": "Betrieb Verantwortlicher, Cloud-Anbieter Auftragsverarbeiter, Kunden Betroffene",
+    "a_full": "Der Betrieb entscheidet, welche Daten wofür verarbeitet werden, er ist Verantwortlicher. Der Cloud-Anbieter verarbeitet nur nach Weisung und braucht einen Vertrag nach Art. 28 DSGVO. Die Kunden sind die betroffenen Personen.",
+    "options": [
+      "Betrieb Verantwortlicher, Cloud-Anbieter Auftragsverarbeiter, Kunden Betroffene",
+      "Cloud-Anbieter Verantwortlicher, Betrieb Auftragsverarbeiter, Kunden Betroffene",
+      "Betrieb und Cloud-Anbieter gemeinsam Verantwortliche, Kunden Dritte",
+      "Betrieb Betroffener, Cloud-Anbieter Verantwortlicher, Kunden Empfänger"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Hosting-Dienstleister nutzt die Kundendaten seines Auftraggebers heimlich für eigene Werbemails. Welche Folge hat das nach Art. 28 Abs. 10 DSGVO?",
+    "a": "Er gilt für diese Verarbeitung selbst als Verantwortlicher",
+    "a_full": "Ein Auftragsverarbeiter darf Daten nur nach Weisung nutzen. Bestimmt er selbst Zwecke und Mittel, wird er insoweit wie ein Verantwortlicher behandelt. Er haftet dann selbst und muss mit Bußgeldern rechnen, außerdem verletzt er den Vertrag.",
+    "options": [
+      "Er gilt für diese Verarbeitung selbst als Verantwortlicher",
+      "Er bleibt Auftragsverarbeiter, nur der Auftraggeber haftet",
+      "Er wird zum gemeinsam Verantwortlichen mit dem Auftraggeber",
+      "Die Kunden werden zu Auftragsverarbeitern des Dienstleisters"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kundin schickt ihr Auskunftsersuchen nach Art. 15 DSGVO direkt an den Rechenzentrumsdienstleister Ihres Unternehmens. Wie reagiert der Dienstleister richtig?",
+    "a": "Er leitet das Ersuchen unverzüglich an den Verantwortlichen weiter",
+    "a_full": "Die Auskunft schuldet der Verantwortliche, nicht der Auftragsverarbeiter. Der Dienstleister unterstützt ihn nach Art. 28 Abs. 3 DSGVO, z.B. indem er Anfragen weiterleitet und Daten bereitstellt. Die Monatsfrist läuft ab Eingang beim Verantwortlichen, deshalb muss die Weiterleitung schnell gehen.",
+    "options": [
+      "Er leitet das Ersuchen unverzüglich an den Verantwortlichen weiter",
+      "Er beantwortet das Ersuchen selbst mit allen gespeicherten Daten",
+      "Er lehnt das Ersuchen ab, weil er dafür nicht zuständig ist",
+      "Er löscht vorsorglich alle Daten der Kundin auf seinen Servern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Personalabteilung verschickt eine interne Rundmail zur neuen Urlaubsregelung. Der Inhalt ist nicht geheim, aber jeder soll prüfen können, dass sie echt ist. Was ist passend?",
+    "a": "Die Mail signieren, aber nicht verschlüsseln",
+    "a_full": "Eine Signatur belegt Herkunft und Unverändertheit, geheim muss der Inhalt hier nicht sein. Die Absenderin signiert mit ihrem privaten Schlüssel, die Empfänger prüfen mit ihrem öffentlichen Schlüssel. Eine Verschlüsselung wäre für alle Empfänger unnötiger Aufwand.",
+    "options": [
+      "Die Mail signieren, aber nicht verschlüsseln",
+      "Die Mail verschlüsseln, aber nicht signieren",
+      "Die Mail als passwortgeschütztes PDF versenden",
+      "Die Mail nur über TLS zum Mailserver schicken"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege möchte Ihnen eine S/MIME-verschlüsselte Mail schicken, hat aber Ihr Zertifikat noch nicht. Was ist der einfachste Weg?",
+    "a": "Sie schicken ihm zuerst eine signierte Mail, die Ihr Zertifikat enthält",
+    "a_full": "Zum Verschlüsseln braucht der Absender den öffentlichen Schlüssel des Empfängers. Eine signierte S/MIME-Mail enthält das Zertifikat mit diesem Schlüssel, der Mailclient speichert es. Alternativ stellt das Unternehmen die Zertifikate über ein zentrales Verzeichnis bereit.",
+    "options": [
+      "Sie schicken ihm zuerst eine signierte Mail, die Ihr Zertifikat enthält",
+      "Sie schicken ihm Ihren privaten Schlüssel als Anhang per Mail",
+      "Sie verschlüsseln eine leere Mail mit seinem öffentlichen Schlüssel",
+      "Sie diktieren ihm am Telefon Ihr Passwort für das Mailpostfach"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter verlässt das Unternehmen. In seinem Postfach liegen viele S/MIME-verschlüsselte Mails. Was muss vorher geregelt sein, damit sie lesbar bleiben?",
+    "a": "Eine sichere Hinterlegung seines privaten Entschlüsselungsschlüssels",
+    "a_full": "Ohne den privaten Schlüssel lassen sich die Mails nie wieder entschlüsseln. Unternehmen archivieren deshalb Schlüssel zur Verschlüsselung zentral und geschützt (Key Recovery). Schlüssel für Signaturen werden dagegen nicht hinterlegt, damit niemand im Namen des Mitarbeiters unterschreiben kann.",
+    "options": [
+      "Eine sichere Hinterlegung seines privaten Entschlüsselungsschlüssels",
+      "Eine Kopie seines öffentlichen Schlüssels auf dem Dateiserver",
+      "Eine Verlängerung seines Zertifikats um weitere drei Jahre",
+      "Eine Sperrung seines Zertifikats vor der Archivierung der Mails"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine 2 GB große Konstruktionsdatei soll vertraulich an 20 Projektpartner gehen. Wie arbeitet eine geeignete Verschlüsselung?",
+    "a": "Hybrid: Die Datei wird einmal symmetrisch verschlüsselt, der Schlüssel je Partner asymmetrisch",
+    "a_full": "Asymmetrische Verfahren sind für große Datenmengen zu langsam. Deshalb verschlüsselt man die Datei mit einem zufälligen AES-Schlüssel. Nur dieser kurze Schlüssel wird für jeden Partner mit dessen öffentlichem Schlüssel verschlüsselt und mitgeschickt.",
+    "options": [
+      "Hybrid: Die Datei wird einmal symmetrisch verschlüsselt, der Schlüssel je Partner asymmetrisch",
+      "Die Datei wird 20-mal vollständig mit RSA verschlüsselt, einmal je Partner",
+      "Die Datei wird mit dem privaten Schlüssel des Absenders verschlüsselt",
+      "Die Datei wird mit SHA-256 gehasht und der Hashwert wird verschickt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege verschickt ein passwortgeschütztes ZIP mit Kundendaten und schreibt das Passwort in dieselbe Mail. Was ist daran falsch?",
+    "a": "Wer die Mail abfängt, hat Datei und Passwort zugleich",
+    "a_full": "Der Schutz beruht darauf, dass Datei und Passwort getrennt sind. Das Passwort gehört auf einen anderen Kanal, z.B. per Telefon oder SMS. Außerdem sollte das Archiv mit AES verschlüsselt sein, nicht mit dem alten, schwachen ZIP-Verfahren.",
+    "options": [
+      "Wer die Mail abfängt, hat Datei und Passwort zugleich",
+      "Nichts, weil ZIP-Dateien grundsätzlich sicher verschlüsselt sind",
+      "Das Passwort hätte in den Betreff statt in den Text gehört",
+      "ZIP-Archive dürfen nach DSGVO keine Kundendaten enthalten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der private Schlüssel zum TLS-Zertifikat des Webservers wurde versehentlich in ein öffentliches Repository hochgeladen. Was ist zu tun?",
+    "a": "Das Zertifikat sperren lassen und mit neuem Schlüsselpaar ein neues beantragen",
+    "a_full": "Mit dem privaten Schlüssel könnte ein Angreifer sich als der echte Server ausgeben. Die CA widerruft das Zertifikat, Browser erkennen das über OCSP oder die Sperrliste. Ein neues Zertifikat mit dem alten Schlüssel wäre wertlos, deshalb wird ein neues Schlüsselpaar erzeugt.",
+    "options": [
+      "Das Zertifikat sperren lassen und mit neuem Schlüsselpaar ein neues beantragen",
+      "Den Schlüssel im Repository löschen, dann ist das Problem behoben",
+      "Das Zertifikat bis zum Ablaufdatum weiter nutzen und dann tauschen",
+      "Nur das Passwort des Webserver-Administrators ändern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Passwortrichtlinie verlangt 8 Zeichen mit Sonderzeichen und einen Wechsel alle 30 Tage. Warum ist das nach heutiger BSI-Sicht keine gute Richtlinie?",
+    "a": "Häufige Wechsel führen zu Mustern, besser sind lange Passwörter ohne Wechselzwang",
+    "a_full": "Wer monatlich wechseln muss, wählt oft Muster wie \"Sommer2026!\" und danach \"Herbst2026!\". Das BSI empfiehlt lange Passwörter oder Passphrasen, einen Abgleich mit bekannten schwachen Passwörtern und MFA. Gewechselt wird nur bei Anlass, z.B. bei Verdacht auf Kompromittierung.",
+    "options": [
+      "Häufige Wechsel führen zu Mustern, besser sind lange Passwörter ohne Wechselzwang",
+      "Weil 8 Zeichen zu lang sind und die Benutzer überfordern",
+      "Weil Sonderzeichen in Passwörtern Software-Fehler verursachen",
+      "Weil Passwörter mindestens jede Woche gewechselt werden sollten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die IT vergibt allen neuen Mitarbeitern das Startpasswort \"Start123\". Was sollte stattdessen gelten?",
+    "a": "Ein zufälliges Startpasswort je Person mit Pflicht zur Änderung bei der ersten Anmeldung",
+    "a_full": "Ein einheitliches Startpasswort spricht sich schnell herum. Wer es kennt, kann sich an noch nicht genutzten Konten anmelden. Individuelle Startpasswörter, eine kurze Gültigkeit und der Änderungszwang schließen diese Lücke.",
+    "options": [
+      "Ein zufälliges Startpasswort je Person mit Pflicht zur Änderung bei der ersten Anmeldung",
+      "Ein einheitliches Startpasswort, das aber jeden Monat geändert wird",
+      "Ein Startpasswort aus dem Vornamen und dem Geburtsdatum der Person",
+      "Gar kein Startpasswort, damit sich der Mitarbeiter frei anmelden kann"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Datensicherung läuft nachts auf ein NAS im selben Serverraum, das auf allen Servern als Laufwerk eingebunden ist. Was ist die größte Schwäche?",
+    "a": "Ransomware und Brand treffen Original und Sicherung gleichzeitig",
+    "a_full": "Eine dauerhaft eingebundene Freigabe kann Schadsoftware genauso verschlüsseln wie die Originaldaten. Ein Brand oder Wasserschaden im Raum zerstört beides. Besser sind eine Kopie außer Haus sowie offline oder unveränderbar gespeicherte Sicherungen.",
+    "options": [
+      "Ransomware und Brand treffen Original und Sicherung gleichzeitig",
+      "Das NAS ist für nächtliche Sicherungen zu langsam",
+      "Die Sicherung sollte tagsüber statt nachts laufen",
+      "Ein NAS darf nur für Dateien, nicht für Server genutzt werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Sicherungen werden nur 7 Tage aufbewahrt. Eine Ransomware hat Dateien schleichend verschlüsselt, bemerkt wurde es nach 10 Tagen. Was ist das Problem?",
+    "a": "Alle vorhandenen Sicherungen enthalten bereits verschlüsselte Dateien",
+    "a_full": "Die Aufbewahrungsdauer muss länger sein als die Zeit, in der ein Schaden unbemerkt bleiben kann. Ein Generationenprinzip mit wöchentlichen und monatlichen Ständen hält auch ältere Stände vor. Zusätzlich helfen Warnungen bei ungewöhnlich vielen geänderten Dateien.",
+    "options": [
+      "Alle vorhandenen Sicherungen enthalten bereits verschlüsselte Dateien",
+      "Die Sicherungen sind zu alt und daher nicht mehr lesbar",
+      "Die Wiederherstellung dauert bei 7 Tagen zu lange",
+      "Die Ransomware kann nur Sicherungen über 7 Tage angreifen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde lässt seine Daten nach Art. 17 DSGVO löschen. Seine Daten stecken aber noch in älteren Sicherungen. Was ist die übliche Lösung?",
+    "a": "Sicherungen laufen regulär aus, nach einer Rücksicherung wird erneut gelöscht",
+    "a_full": "Einzelne Datensätze in Sicherungen zu löschen ist meist technisch nicht zumutbar. Die Daten bleiben bis zum regulären Ende der Aufbewahrung gesperrt und ungenutzt. Das Löschkonzept legt fest, dass nach jeder Rücksicherung die Löschung erneut ausgeführt wird.",
+    "options": [
+      "Sicherungen laufen regulär aus, nach einer Rücksicherung wird erneut gelöscht",
+      "Alle Sicherungen, die den Kunden enthalten, werden sofort vernichtet",
+      "Die Löschung wird abgelehnt, bis alle Sicherungen abgelaufen sind",
+      "Der Kunde muss einer Speicherung in den Sicherungen zustimmen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für eine Fernwartung wurde vor zwei Jahren eine \"vorübergehende\" Firewall-Regel angelegt, die noch aktiv ist. Wie verhindert man solche Altlasten?",
+    "a": "Regeln mit Zweck und Ablaufdatum dokumentieren und regelmäßig prüfen",
+    "a_full": "Vergessene Regeln öffnen Wege, die niemand mehr überwacht. Eine Dokumentation je Regel zeigt, wer sie braucht und bis wann. Bei der regelmäßigen Prüfung des Regelwerks werden nicht mehr benötigte Regeln entfernt.",
+    "options": [
+      "Regeln mit Zweck und Ablaufdatum dokumentieren und regelmäßig prüfen",
+      "Neue Regeln grundsätzlich nur ganz oben im Regelwerk einfügen",
+      "Die Firewall jeden Monat auf die Werkseinstellungen zurücksetzen",
+      "Alle Regeln nur noch mit der Aktion \"Log\" statt \"Allow\" anlegen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PC gibt beim Einschalten mehrere Pieptöne aus und zeigt kein Bild. Wie gehen Sie vor?",
+    "a": "Tonfolge notieren und im Handbuch des Mainboards bzw. BIOS nachschlagen",
+    "a_full": "Die Pieptöne stammen vom POST und melden einen Hardwarefehler, bevor eine Grafikausgabe möglich ist. Die Bedeutung hängt vom Hersteller ab, z.B. RAM oder Grafik nicht gefunden. Man notiert Anzahl und Länge der Töne und prüft dann gezielt die genannte Komponente.",
+    "options": [
+      "Tonfolge notieren und im Handbuch des Mainboards bzw. BIOS nachschlagen",
+      "Windows im abgesicherten Modus starten und Treiber prüfen",
+      "Sofort das Netzteil tauschen, weil es fast immer die Ursache ist",
+      "Die Festplatte ausbauen und in einem anderen PC testen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Einbau zusätzlicher RAM-Module drehen die Lüfter, aber der Monitor bleibt schwarz. Was prüfen Sie zuerst?",
+    "a": "Sitz und Steckplätze der Module, dann ihre Kompatibilität",
+    "a_full": "Häufig ist ein Modul nicht ganz eingerastet oder steckt im falschen Steckplatz für Dual Channel. Startet der PC mit den alten Modulen allein wieder, passt das neue Modul nicht, z.B. falscher Typ, andere Spannung oder nicht in der Kompatibilitätsliste (QVL) des Mainboards. Manche Boards brauchen nach einer RAM-Änderung auch einen längeren ersten Start zum Speichertraining.",
+    "options": [
+      "Sitz und Steckplätze der Module, dann ihre Kompatibilität",
+      "Den Grafiktreiber im abgesicherten Modus neu installieren",
+      "Die CMOS-Batterie tauschen und die Uhrzeit neu stellen",
+      "Windows neu installieren, weil sich die Hardware geändert hat"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Update des Grafiktreibers startet Windows nur noch bis zu einem Bluescreen. Wie beheben Sie das?",
+    "a": "Im abgesicherten Modus starten und den vorherigen Treiber wiederherstellen",
+    "a_full": "Im abgesicherten Modus lädt Windows nur Basistreiber, der fehlerhafte Grafiktreiber bleibt außen vor. Im Geräte-Manager setzt man den Treiber über Vorheriger Treiber zurück oder deinstalliert ihn. Den abgesicherten Modus erreicht man über die Windows-Wiederherstellungsumgebung, die nach mehreren fehlgeschlagenen Starts automatisch erscheint.",
+    "options": [
+      "Im abgesicherten Modus starten und den vorherigen Treiber wiederherstellen",
+      "Den Arbeitsspeicher tauschen und danach das Update wiederholen",
+      "Die Grafikkarte ausbauen und ein neues Mainboard bestellen",
+      "Das BIOS auf Werkseinstellungen setzen und Windows neu aktivieren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Monitor bleibt nach dem Umstecken an einem neuen Arbeitsplatz schwarz, seine Betriebs-LED leuchtet orange. Was deutet das an?",
+    "a": "Der Monitor erhält kein Signal und steht im Standby",
+    "a_full": "Der Monitor hat Strom, bekommt aber kein Bildsignal. Man prüft die gewählte Eingangsquelle am Monitor, das Kabel und den Anschluss am PC. Ist eine Grafikkarte verbaut, muss der Monitor an deren Ausgang und nicht an den Mainboard-Ausgang.",
+    "options": [
+      "Der Monitor erhält kein Signal und steht im Standby",
+      "Das Netzteil des Monitors ist defekt und muss getauscht werden",
+      "Das Panel des Monitors ist beschädigt und nicht mehr zu reparieren",
+      "Der Monitor ist überhitzt und schaltet sich zum Schutz ab"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Netzwerkdrucker wurde gegen ein anderes Modell mit derselben IP-Adresse getauscht. Seitdem kommen Seiten voller wirrer Zeichen heraus. Was ist die Ursache?",
+    "a": "Die Druckerwarteschlange nutzt noch den Treiber des alten Modells",
+    "a_full": "Der Treiber erzeugt Daten in der Druckersprache des alten Geräts. Das neue Modell versteht diese Befehle nicht vollständig und druckt sie als Text. Man hinterlegt in der Warteschlange auf dem Druckserver den passenden Treiber, dann erhalten die Clients ihn automatisch.",
+    "options": [
+      "Die Druckerwarteschlange nutzt noch den Treiber des alten Modells",
+      "Die IP-Adresse wird doppelt vergeben und stört die Daten",
+      "Das Netzwerkkabel ist beschädigt und verfälscht die Pakete",
+      "Der Druckerspeicher ist zu klein für die großen Druckaufträge"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Linux-Server läuft die Partition /var immer wieder durch wachsende Logdateien voll. Was ist die dauerhafte Lösung?",
+    "a": "Logrotation mit logrotate einrichten bzw. anpassen",
+    "a_full": "logrotate benennt Logdateien nach Zeit oder Größe um, komprimiert alte Stände und löscht sie nach einer festgelegten Anzahl von Rotationen. So bleibt der Platzbedarf begrenzt. Zusätzlich sollte man klären, warum ein Dienst so viel protokolliert, und die Belegung im Monitoring überwachen.",
+    "options": [
+      "Logrotation mit logrotate einrichten bzw. anpassen",
+      "Die Logdateien täglich von Hand leeren und den Server neu starten",
+      "Das Protokollieren der Dienste in der Konfiguration ganz abschalten",
+      "Die Partition /var bei jedem Alarm um weitere 50 GB vergrößern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Windows-Dienst startet nach dem Neustart nicht mehr, die Ereignisanzeige meldet einen Anmeldefehler (Fehler 1069). Was ist eine typische Ursache?",
+    "a": "Das Kennwort des Dienstkontos wurde geändert oder ist abgelaufen",
+    "a_full": "Läuft ein Dienst unter einem Benutzerkonto, ist dessen Kennwort in den Diensteigenschaften hinterlegt. Ändert jemand das Kennwort im AD, scheitert die Anmeldung beim nächsten Start. Man trägt das neue Kennwort ein. Auf Dauer vermeidet ein gruppenverwaltetes Dienstkonto (gMSA) das Problem.",
+    "options": [
+      "Das Kennwort des Dienstkontos wurde geändert oder ist abgelaufen",
+      "Der Dienst ist nicht mit der aktuellen Windows-Version kompatibel",
+      "Die Festplatte des Servers hat zu wenig freien Speicherplatz",
+      "Die Windows-Firewall blockiert den Dienst beim Systemstart"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Notebook wird bei rechenintensiven Arbeiten sehr langsam und schaltet sich gelegentlich ganz ab. Was ist die wahrscheinliche Ursache?",
+    "a": "Überhitzung durch verstaubte Lüfter oder verbrauchte Wärmeleitpaste",
+    "a_full": "Wird die CPU zu heiß, senkt sie zuerst ihren Takt (Thermal Throttling). Reicht das nicht, schaltet sich das Gerät zum Schutz ab. Abhilfe schaffen das Reinigen von Lüfter und Kühlrippen und gegebenenfalls neue Wärmeleitpaste, bei Garantiegeräten über den Hersteller.",
+    "options": [
+      "Überhitzung durch verstaubte Lüfter oder verbrauchte Wärmeleitpaste",
+      "Ein Virus, der im Hintergrund die Prozessorlast erhöht",
+      "Ein zu kleiner Arbeitsspeicher, der ständig ausgelagert wird",
+      "Eine defekte Festplatte, die beim Lesen zu viele Fehler hat"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine zusätzlich eingebaute SSD erscheint nicht im Windows-Explorer, im UEFI wird sie aber erkannt. Was fehlt noch?",
+    "a": "Initialisieren, ein Volume anlegen und formatieren",
+    "a_full": "Ein fabrikneuer Datenträger hat weder Partitionstabelle noch Dateisystem. In der Datenträgerverwaltung (diskmgmt.msc) initialisiert man ihn, meist mit GPT. Danach legt man ein Volume an, formatiert es mit NTFS und weist einen Laufwerksbuchstaben zu.",
+    "options": [
+      "Initialisieren, ein Volume anlegen und formatieren",
+      "Ein spezieller Treiber des Herstellers für SSD-Laufwerke",
+      "Die Aktivierung der SSD über den Windows-Produktschlüssel",
+      "Das Umstellen des SATA-Modus von AHCI auf IDE im UEFI"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Benutzer meldet: \"Die Vertrauensstellung zwischen dieser Arbeitsstation und der primären Domäne konnte nicht hergestellt werden.\" Der PC wurde vorher auf ein altes Image zurückgesetzt. Was ist die Ursache?",
+    "a": "Das Kennwort des Computerkontos passt nicht mehr zum AD",
+    "a_full": "Jeder Domänenrechner ändert regelmäßig das Kennwort seines Computerkontos. Ein altes Image enthält noch das frühere Kennwort, der Domänencontroller kennt nur das neue. Man meldet sich lokal an und repariert den sicheren Kanal mit Test-ComputerSecureChannel -Repair oder nimmt den PC neu in die Domäne auf.",
+    "options": [
+      "Das Kennwort des Computerkontos passt nicht mehr zum AD",
+      "Das Benutzerkennwort ist abgelaufen und muss geändert werden",
+      "Der DHCP-Server hat dem PC eine neue IP-Adresse gegeben",
+      "Die Windows-Lizenz des PCs wurde durch das Image ungültig"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PC zeigt in unregelmäßigen Abständen Bluescreens mit immer anderen Fehlercodes, auch ohne neue Software. Welcher Test ist sinnvoll?",
+    "a": "Den Arbeitsspeicher mit der Windows-Speicherdiagnose testen",
+    "a_full": "Wechselnde Fehlercodes ohne erkennbaren Auslöser deuten oft auf defekten Arbeitsspeicher hin. Die Windows-Speicherdiagnose (mdsched.exe) oder MemTest86 testen den RAM außerhalb von Windows. Findet der Test Fehler, prüft man die Module einzeln und tauscht das defekte.",
+    "options": [
+      "Den Arbeitsspeicher mit der Windows-Speicherdiagnose testen",
+      "Einen vollständigen Virenscan im laufenden Windows",
+      "Eine Defragmentierung der Systempartition mit defrag",
+      "Einen Test der Netzwerkverbindung mit ping und tracert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Upgrade auf Windows 11 wird mit dem Hinweis abgelehnt, der PC erfülle die Anforderungen nicht. Die Hardware ist zwei Jahre alt. Was prüfen Sie im UEFI?",
+    "a": "Ob TPM 2.0 (fTPM bzw. PTT) und Secure Boot aktiviert sind",
+    "a_full": "Windows 11 setzt TPM 2.0 und Secure Boot voraus. Bei vielen Mainboards ist das TPM in der CPU vorhanden (AMD fTPM, Intel PTT), aber ab Werk abgeschaltet. Nach dem Aktivieren im UEFI läuft die Prüfung meist erfolgreich durch.",
+    "options": [
+      "Ob TPM 2.0 (fTPM bzw. PTT) und Secure Boot aktiviert sind",
+      "Ob der Legacy-Modus (CSM) statt UEFI aktiviert ist",
+      "Ob die Virtualisierung der CPU abgeschaltet ist",
+      "Ob das Hyper-Threading des Prozessors aktiv ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Konstruktionsbüro fragt, warum Sie für die CAD-Arbeitsplätze eine teurere Workstation-Grafikkarte statt einer Gaming-Karte empfehlen. Was ist das Hauptargument?",
+    "a": "Sie ist mit ihren Treibern für die CAD-Software zertifiziert (ISV)",
+    "a_full": "Hersteller von CAD-Software testen bestimmte Grafikkarten und Treiberversionen und bestätigen sie per ISV-Zertifizierung. Mit diesen Kombinationen laufen die Programme stabil, und der Softwarehersteller leistet Support. Bei nicht zertifizierter Hardware kann er Hilfe ablehnen.",
+    "options": [
+      "Sie ist mit ihren Treibern für die CAD-Software zertifiziert (ISV)",
+      "Sie hat immer deutlich mehr Anschlüsse für Monitore",
+      "Sie verbraucht grundsätzlich weniger Strom im Betrieb",
+      "Sie ist die einzige Karte, die mehrere Monitore unterstützt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum sollte man für ein NAS mit RAID-Verbund keine Festplatten mit SMR-Technik (Shingled Magnetic Recording) einsetzen?",
+    "a": "Weil sie beim Dauerschreiben einbrechen und den Rebuild stark verlängern",
+    "a_full": "SMR-Platten überlappen die Spuren wie Dachziegel. Das erhöht die Kapazität, aber beim Überschreiben müssen ganze Bereiche neu geschrieben werden. Bei langen Schreibvorgängen wie einem Rebuild sinkt die Leistung stark, manche Controller werfen die Platte sogar aus dem Verbund. Für NAS und RAID wählt man Platten mit CMR-Technik und Freigabe für Dauerbetrieb.",
+    "options": [
+      "Weil sie beim Dauerschreiben einbrechen und den Rebuild stark verlängern",
+      "Weil sie nur an USB-Anschlüssen und nicht an SATA laufen",
+      "Weil sie keine S.M.A.R.T.-Werte an den Controller melden",
+      "Weil sie nur unter Windows und nicht im NAS lesbar sind"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kleinbüro mit fünf Mitarbeitern möchte ein NAS für gemeinsame Dateien. Welche Ausstattung empfehlen Sie?",
+    "a": "Zwei NAS-Festplatten im RAID 1, Snapshots und Sicherung auf ein externes Ziel",
+    "a_full": "Das RAID 1 überbrückt den Ausfall einer Platte. Snapshots helfen bei versehentlich gelöschten oder durch Ransomware verschlüsselten Dateien. Eine zusätzliche Sicherung auf ein Ziel außerhalb des NAS, z.B. USB-Platte im Wechsel oder Cloud, schützt vor Diebstahl, Brand und Totalausfall.",
+    "options": [
+      "Zwei NAS-Festplatten im RAID 1, Snapshots und Sicherung auf ein externes Ziel",
+      "Eine einzelne große Festplatte, weil das NAS selbst schon sichert",
+      "Vier Festplatten im RAID 0, damit Zugriffe möglichst schnell sind",
+      "Zwei Festplatten im RAID 1, das RAID ersetzt dann das Backup"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde möchte seinen Datenbankserver aus einem günstigen Büro-PC bauen. Welche Servermerkmale fehlen dabei?",
+    "a": "ECC-RAM, redundante Netzteile, Hot-Swap-Laufwerke und Fernwartung",
+    "a_full": "ECC-Speicher erkennt und korrigiert Bitfehler, bevor sie Daten beschädigen. Zwei Netzteile und Hot-Swap-Laufwerke erlauben den Tausch defekter Teile im Betrieb. Ein Management-Controller wie iDRAC oder iLO ermöglicht Fernzugriff auch bei ausgeschaltetem System. Dazu kommen Herstellerservice und Ersatzteilgarantie.",
+    "options": [
+      "ECC-RAM, redundante Netzteile, Hot-Swap-Laufwerke und Fernwartung",
+      "Eine größere Grafikkarte und mehr USB-Anschlüsse",
+      "Ein leiseres Gehäuse und eine vorinstallierte Office-Suite",
+      "Ein WLAN-Modul und eine eingebaute Webcam für Fernwartung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Server meldet eine defekte Festplatte im RAID 5. Was ist vor dem Ziehen der Platte unbedingt zu tun?",
+    "a": "Die richtige Platte eindeutig identifizieren und die Sicherung prüfen",
+    "a_full": "Wird im degradierten RAID 5 versehentlich eine intakte Platte gezogen, ist der Verbund zerstört. Man prüft deshalb Slot und Seriennummer im Controller-Tool und lässt die Locate-LED blinken. Vorher stellt man sicher, dass eine aktuelle Sicherung existiert, weil während des Rebuilds eine weitere Platte ausfallen kann.",
+    "options": [
+      "Die richtige Platte eindeutig identifizieren und die Sicherung prüfen",
+      "Den Server herunterfahren und alle Platten vorsorglich formatieren",
+      "Den RAID-Verbund im Controller löschen und danach neu anlegen",
+      "Den Controller auf Werkseinstellungen setzen und neu starten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Beim Domänenbeitritt eines neuen PCs erscheint: \"Ein Active Directory-Domänencontroller für die Domäne konnte nicht kontaktiert werden.\" Der PC hat Internet. Was prüfen Sie zuerst?",
+    "a": "Ob als DNS-Server der Domänencontroller eingetragen ist",
+    "a_full": "Der Client findet den Domänencontroller über SRV-Einträge im DNS. Steht als DNS-Server nur der Internetrouter, kennt dieser die interne Domäne nicht. Man trägt den internen DNS-Server ein, meist per DHCP, und wiederholt den Beitritt.",
+    "options": [
+      "Ob als DNS-Server der Domänencontroller eingetragen ist",
+      "Ob die Windows-Lizenz des PCs bereits aktiviert ist",
+      "Ob der Benutzer ein Postfach in Exchange besitzt",
+      "Ob die Windows-Firewall des PCs ganz abgeschaltet ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Vor einem Update wurde ein Snapshot der Server-VM erstellt. Das Update läuft seit drei Tagen fehlerfrei. Was tun Sie mit dem Snapshot?",
+    "a": "Ihn zeitnah löschen bzw. zusammenführen lassen",
+    "a_full": "Nach einem Snapshot schreibt die VM alle Änderungen in eine Differenzdatei. Diese wächst ständig, belegt Speicher und bremst die Leistung. Außerdem dauert das spätere Zusammenführen umso länger. Snapshots sind nur ein kurzfristiger Rückweg, kein Backup.",
+    "options": [
+      "Ihn zeitnah löschen bzw. zusammenführen lassen",
+      "Ihn dauerhaft als Ersatz für die Datensicherung behalten",
+      "Ihn auf einen USB-Stick kopieren und im Tresor lagern",
+      "Vor jedem weiteren Update einfach einen neuen dazu anlegen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Microsoft-Werkzeug lassen sich Benutzerprofile, Dateien und Einstellungen per Skript vom alten auf einen neuen Windows-PC übertragen?",
+    "a": "Mit dem User State Migration Tool (USMT)",
+    "a_full": "USMT besteht aus ScanState, das Daten und Einstellungen auf dem alten PC einsammelt, und LoadState, das sie auf dem neuen PC einspielt. Welche Daten übertragen werden, legen XML-Dateien fest. Das Werkzeug eignet sich für viele PCs, z.B. im Rahmen eines Rollouts mit MDT.",
+    "options": [
+      "Mit dem User State Migration Tool (USMT)",
+      "Mit robocopy und der Option /MIR für das Profil",
+      "Mit Sysprep und der Option /generalize",
+      "Mit der Windows-Speicherdiagnose mdsched.exe"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Daten eines Mitarbeiters wurden auf seinen neuen PC übertragen. Wann darf der alte PC gelöscht und ausgesondert werden?",
+    "a": "Erst wenn der Benutzer die vollständige Übernahme bestätigt hat",
+    "a_full": "Auf alten Rechnern liegen oft Daten außerhalb des Profils, etwa in lokalen Ordnern oder alten Mailarchiven. Deshalb prüft der Benutzer zuerst, ob alles da ist, und bestätigt das schriftlich. Danach wird der Datenträger sicher gelöscht und die Löschung dokumentiert.",
+    "options": [
+      "Erst wenn der Benutzer die vollständige Übernahme bestätigt hat",
+      "Sofort nach dem Kopieren, damit keine Doppelbestände entstehen",
+      "Erst nach Ablauf der gesetzlichen Gewährleistung von zwei Jahren",
+      "Nie, alte PCs werden für Notfälle immer unverändert aufbewahrt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Linux-Server meldet Lesefehler im Kernel-Log. Mit welchem Befehl prüfen Sie den Gesundheitszustand der Festplatte /dev/sda?",
+    "a": "smartctl -a /dev/sda",
+    "a_full": "smartctl aus dem Paket smartmontools liest die S.M.A.R.T.-Werte des Laufwerks aus. Wichtige Werte sind neu zugewiesene und ausstehende Sektoren sowie der Gesamtstatus. Steigen diese Zähler, sollte man das Laufwerk vorsorglich tauschen.",
+    "options": [
+      "smartctl -a /dev/sda",
+      "fsck -y /dev/sda",
+      "mkfs.ext4 /dev/sda",
+      "mount -a /dev/sda"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Einbau einer Netzwerkkarte in einen Linux-Server fehlt die Schnittstelle. Mit welchem Befehl sehen Sie, ob die Karte erkannt wird und welcher Treiber sie nutzt?",
+    "a": "lspci -k",
+    "a_full": "lspci listet alle Geräte am PCI-Bus auf. Mit -k zeigt es zu jedem Gerät das geladene Kernelmodul. Fehlt die Zeile mit dem Treiber, muss das passende Modul nachinstalliert oder mit modprobe geladen werden.",
+    "options": [
+      "lspci -k",
+      "ip route show",
+      "lsblk -f",
+      "df -h"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Mitarbeiter beklagt, dass der Akku seines zwei Jahre alten Notebooks nur noch kurz hält. Womit dokumentieren Sie den Zustand des Akkus unter Windows?",
+    "a": "powercfg /batteryreport",
+    "a_full": "Der Befehl erstellt einen HTML-Bericht mit Auslegungskapazität, aktueller voller Ladekapazität und Nutzungsverlauf. Daraus lässt sich der Verschleiß ablesen. Der Bericht eignet sich als Nachweis für einen Garantieantrag oder für die Entscheidung über einen Akkutausch.",
+    "options": [
+      "powercfg /batteryreport",
+      "chkdsk /f",
+      "msinfo32 /report",
+      "sfc /scannow"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Für die Inventarisierung benötigen Sie die Seriennummer eines entfernten Windows-PCs. Welcher PowerShell-Befehl liefert sie?",
+    "a": "Get-CimInstance Win32_BIOS",
+    "a_full": "Die Klasse Win32_BIOS enthält unter anderem die Seriennummer, die der Hersteller im BIOS hinterlegt hat. Mit dem Parameter -ComputerName fragt man sie auch aus der Ferne ab. So muss niemand das Gerät umdrehen oder das Gehäuse öffnen.",
+    "options": [
+      "Get-CimInstance Win32_BIOS",
+      "Get-NetIPAddress",
+      "Get-Service",
+      "Get-ChildItem"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Neustart eines Linux-Servers funktioniert eine Anwendung nicht. Mit welchem Befehl sehen Sie auf einen Blick alle Dienste, deren Start fehlgeschlagen ist?",
+    "a": "systemctl --failed",
+    "a_full": "systemctl --failed listet alle systemd-Units im Zustand failed. Für die Details ruft man danach systemctl status dienst oder journalctl -u dienst auf. So findet man nach Updates oder Neustarts schnell die Ursache.",
+    "options": [
+      "systemctl --failed",
+      "ps aux --failed",
+      "uname -a",
+      "lsof -i"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie haben die Konfiguration des Webservers nginx geändert. Was tun Sie vor dem Neuladen des Dienstes?",
+    "a": "Die Syntax mit nginx -t prüfen",
+    "a_full": "Ein Tippfehler in der Konfiguration verhindert, dass der Dienst wieder startet. nginx -t prüft die Dateien, ohne den laufenden Dienst anzutasten. Vergleichbare Tests gibt es für andere Dienste, z.B. apachectl configtest oder sshd -t.",
+    "options": [
+      "Die Syntax mit nginx -t prüfen",
+      "Den Server sicherheitshalber komplett neu starten",
+      "Die alte Konfigurationsdatei ungeprüft löschen",
+      "Den Dienst deaktivieren und dann wieder aktivieren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde meint, sein tägliches Backup mit 30 Tagen Aufbewahrung erfülle die achtjährige Aufbewahrungspflicht für Buchungsbelege. Was entgegnen Sie?",
+    "a": "Dafür braucht er eine Archivierung, das Backup dient nur der Wiederherstellung",
+    "a_full": "Ein Backup ist eine Kopie, die bei Datenverlust hilft und nach kurzer Zeit überschrieben wird. Eine Archivierung bewahrt Daten langfristig, unveränderbar und auffindbar auf, wie es die GoBD verlangen. Archiv und Backup ergänzen sich, das Archiv muss selbst auch gesichert werden.",
+    "options": [
+      "Dafür braucht er eine Archivierung, das Backup dient nur der Wiederherstellung",
+      "Das reicht aus, wenn die Sicherung zusätzlich stark verschlüsselt ist",
+      "Das reicht aus, wenn das Backup auf einem RAID-System gespeichert ist",
+      "Dafür genügt es, die Aufbewahrung der Sicherung auf 60 Tage zu verlängern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege will eine langsame SSD wie früher die Festplatte defragmentieren. Was ist stattdessen richtig?",
+    "a": "TRIM nutzen, damit die SSD freie Blöcke kennt",
+    "a_full": "Bei SSDs spielt die Lage der Daten für die Zugriffszeit keine Rolle, Defragmentieren erzeugt nur unnötige Schreibvorgänge. Mit TRIM meldet das Betriebssystem gelöschte Blöcke, sodass die SSD sie vorab leeren kann. Windows erledigt das über Laufwerke optimieren automatisch.",
+    "options": [
+      "TRIM nutzen, damit die SSD freie Blöcke kennt",
+      "Die SSD vollständig formatieren und neu befüllen",
+      "Den Schreibcache der SSD dauerhaft abschalten",
+      "Die SSD im UEFI in den IDE-Modus umstellen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Zwei eigenständige Windows-Server sollen dieselbe iSCSI-LUN gleichzeitig als Laufwerk einbinden, um Daten auszutauschen. Warum ist das gefährlich?",
+    "a": "Ohne Cluster-Dateisystem überschreiben sie sich gegenseitig die Daten",
+    "a_full": "Eine LUN ist ein Blockspeicher. Jeder Server hält seine eigene Sicht auf das Dateisystem im Cache und weiß nichts von den Schreibzugriffen des anderen. Das führt schnell zu einem beschädigten Dateisystem. Gemeinsamer Zugriff braucht ein Cluster-Dateisystem wie CSV oder VMFS, für einfachen Datenaustausch nimmt man eine Freigabe.",
+    "options": [
+      "Ohne Cluster-Dateisystem überschreiben sie sich gegenseitig die Daten",
+      "Weil iSCSI nur eine Verbindung pro Netzwerkkarte erlaubt",
+      "Weil Windows keine LUNs mit NTFS formatieren kann",
+      "Weil der Storage dann doppelt so viele Lizenzen braucht"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi soll in einem Büro mit Teppichboden RAM-Module tauschen. Wie schützt er die Bauteile vor elektrostatischer Entladung (ESD)?",
+    "a": "Erdungsarmband mit ESD-Matte nutzen und Module nur an den Kanten anfassen",
+    "a_full": "Schon eine unbemerkte Entladung vom Körper kann Chips beschädigen. Ein Erdungsarmband leitet die Ladung über eine ESD-Matte oder das blanke Gehäusemetall ab. Die Module bleiben bis zum Einbau im Abschirmbeutel und werden nicht an den Kontakten berührt.",
+    "options": [
+      "Erdungsarmband mit ESD-Matte nutzen und Module nur an den Kanten anfassen",
+      "Gummihandschuhe tragen und die Module auf den Teppich legen",
+      "Die Module vor dem Einbau kurz mit einem Tuch abreiben",
+      "Den PC eingeschaltet lassen, damit er geerdet bleibt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei einem Notebook im Support fällt auf, dass sich das Gehäuse wölbt und das Touchpad hochdrückt. Wie reagieren Sie?",
+    "a": "Nicht mehr laden, den Akku sicher lagern und fachgerecht entsorgen",
+    "a_full": "Ein aufgeblähter Lithium-Ionen-Akku kann sich entzünden, vor allem beim Laden oder bei Beschädigung. Man trennt das Gerät vom Netzteil, durchsticht oder presst den Akku nicht und lagert ihn feuerfest, z.B. in einem Behälter mit Sand. Der Akku wird über den Hersteller oder eine Sammelstelle entsorgt.",
+    "options": [
+      "Nicht mehr laden, den Akku sicher lagern und fachgerecht entsorgen",
+      "Das Gehäuse kräftig zudrücken und das Notebook weiter nutzen",
+      "Den Akku anstechen, damit das Gas entweichen kann",
+      "Das Notebook über Nacht voll laden, um den Akku zu kalibrieren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei einem langen Stromausfall gingen die Server abrupt aus, obwohl eine USV vorhanden war. Was wurde versäumt?",
+    "a": "Die Server waren nicht für den automatischen Shutdown an die USV angebunden",
+    "a_full": "Eine USV überbrückt nur eine begrenzte Zeit. Damit die Server vor dem Ende der Batterie sauber herunterfahren, müssen sie über USB oder die Netzwerkkarte der USV einen Agenten nutzen, z.B. die Software des Herstellers oder NUT. Dort legt man fest, bei welcher Restlaufzeit der Shutdown beginnt.",
+    "options": [
+      "Die Server waren nicht für den automatischen Shutdown an die USV angebunden",
+      "Die USV wurde nicht im Rack ganz oben über den Servern eingebaut",
+      "Die Server hatten keine zweite Netzwerkkarte für die USV",
+      "Die USV wurde nicht per WLAN mit dem Internetrouter verbunden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Das Management-Board eines Servers meldet den Ausfall von Netzteil 2, der Server läuft normal weiter. Wie gehen Sie vor?",
+    "a": "Stromzufuhr prüfen und das Netzteil im laufenden Betrieb tauschen",
+    "a_full": "Mit redundanten Netzteilen trägt das zweite Netzteil die Last allein, eine weitere Störung führt aber zum Ausfall. Zuerst prüft man, ob nur Kabel oder Stromkreis unterbrochen sind. Ist das Netzteil defekt, wird es als Hot-Swap-Teil getauscht, meist über den Herstellerservice, und der Vorgang dokumentiert.",
+    "options": [
+      "Stromzufuhr prüfen und das Netzteil im laufenden Betrieb tauschen",
+      "Nichts tun, der Server läuft ja mit einem Netzteil weiter",
+      "Den Server sofort herunterfahren und das Mainboard tauschen",
+      "Beide Netzteile gleichzeitig ziehen und neu einstecken"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen Server steht ein BIOS- bzw. Firmware-Update an. Was bereiten Sie vor?",
+    "a": "Wartungsfenster, Versionshinweise, Einstellungen sichern, Strom absichern",
+    "a_full": "Die Versionshinweise zeigen, ob Zwischenversionen nötig sind oder Einstellungen verloren gehen. Man notiert oder exportiert die aktuelle Konfiguration. Der Flash-Vorgang darf nicht unterbrochen werden, daher läuft der Server an der USV. Bei Notebooks muss das Netzteil angeschlossen sein.",
+    "options": [
+      "Wartungsfenster, Versionshinweise, Einstellungen sichern, Strom absichern",
+      "Das Update ohne Ankündigung mitten in der Arbeitszeit starten",
+      "Vorher alle Festplatten ausbauen und vorsorglich formatieren",
+      "Die USV abklemmen, damit sie den Flash-Vorgang nicht stört"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein öffentlicher Auftraggeber verlangt bei der Beschaffung von PCs und Monitoren ein anerkanntes Umweltzeichen. Welche Siegel kommen in Frage?",
+    "a": "Blauer Engel, TCO Certified, EPEAT oder Energy Star",
+    "a_full": "Der Blaue Engel prüft u.a. Energieverbrauch, Schadstoffe, Reparierbarkeit und Ersatzteilversorgung. TCO Certified und EPEAT bewerten zusätzlich soziale Aspekte der Herstellung und die Rücknahme. Energy Star betrifft vor allem den Stromverbrauch.",
+    "options": [
+      "Blauer Engel, TCO Certified, EPEAT oder Energy Star",
+      "CE-Zeichen, GS-Zeichen, VDE-Zeichen oder RoHS",
+      "ISO 27001, BSI C5, TISAX oder SOC 2",
+      "Wi-Fi Certified, Bluetooth SIG, HDMI oder USB-IF"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Kriterien zählen bei der Beschaffung neuer Notebooks aus Sicht der Green IT neben dem Stromverbrauch?",
+    "a": "Lange Nutzungsdauer, Reparierbarkeit, Ersatzteile, Updates und Rücknahme",
+    "a_full": "Der größte Teil der Umweltbelastung eines Notebooks entsteht bei der Herstellung. Je länger ein Gerät genutzt wird, desto besser ist seine Bilanz. Wichtig sind tauschbare Akkus, lange Ersatzteil- und Treiberversorgung sowie ein Rücknahmesystem des Herstellers.",
+    "options": [
+      "Lange Nutzungsdauer, Reparierbarkeit, Ersatzteile, Updates und Rücknahme",
+      "Möglichst kurze Leasingzeiten, damit die Geräte immer aktuell sind",
+      "Ein möglichst geringes Gewicht, weil leichte Geräte sparsamer sind",
+      "Ein Gehäuse aus Kunststoff, weil es leichter als Aluminium ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie übergeben einem Mitarbeiter seinen neu eingerichteten PC. Was zeigen Sie ihm bei der kurzen Einweisung?",
+    "a": "Erstanmeldung mit MFA, Speicherorte der Daten, Drucker und den Weg zum Support",
+    "a_full": "Der Benutzer meldet sich im Beisein des Technikers erstmals an, ändert sein Startkennwort und richtet die Mehrfaktor-Anmeldung ein. Man zeigt, wo Daten gespeichert werden, damit nichts nur lokal liegt, und prüft gemeinsam Drucker und wichtige Programme. Zum Schluss erklärt man, wie er ein Ticket beim Support eröffnet.",
+    "options": [
+      "Erstanmeldung mit MFA, Speicherorte der Daten, Drucker und den Weg zum Support",
+      "Den Aufbau des Mainboards, die BIOS-Einstellungen und die RAID-Level",
+      "Das lokale Administratorkennwort, damit er Software selbst installiert",
+      "Die Firewallregeln des Unternehmens und die Konfiguration der Switches"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde sagt am Telefon: „Wir brauchen zehn neue Notebooks.“ Welche Frage stellen Sie in der Bedarfsanalyse als erste?",
+    "a": "Eine offene Frage, z.B. „Wofür und wo werden die Geräte genutzt?“",
+    "a_full": "Am Anfang der Bedarfsanalyse stehen offene Fragen, damit der Kunde seine Anforderungen selbst beschreibt. Erst wenn Einsatzzweck, Software und Arbeitsorte klar sind, grenzt man mit geschlossenen oder Alternativfragen ein. Wer sofort ein Modell anbietet, berät am Bedarf vorbei.",
+    "options": [
+      "Eine offene Frage, z.B. „Wofür und wo werden die Geräte genutzt?“",
+      "Eine Alternativfrage, z.B. „Möchten Sie lieber 14 oder 15 Zoll haben?“",
+      "Eine Suggestivfrage, z.B. „Sie wollen doch sicher das Topmodell?“",
+      "Eine geschlossene Frage, z.B. „Soll es wieder Modell X sein?“"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde ruft verärgert an, weil sein Server seit zwei Stunden nicht erreichbar ist. Wie reagieren Sie zuerst?",
+    "a": "Ruhig zuhören, den Ärger ernst nehmen und den Sachverhalt genau aufnehmen",
+    "a_full": "Ein verärgerter Kunde will zuerst gehört werden. Man lässt ihn ausreden, zeigt Verständnis und fasst das Problem mit eigenen Worten zusammen. Danach nennt man die nächsten Schritte und einen realistischen Zeitpunkt für die Rückmeldung.",
+    "options": [
+      "Ruhig zuhören, den Ärger ernst nehmen und den Sachverhalt genau aufnehmen",
+      "Sofort auf die Reaktionszeit im Vertrag hinweisen und auflegen",
+      "Erklären, dass wahrscheinlich der Provider schuld ist",
+      "Einen Rückruf zusagen, ohne das Problem aufzunehmen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde sagt nach Ihrer Preisnennung: „Das ist mir zu teuer.“ Wie gehen Sie sinnvoll vor?",
+    "a": "Nachfragen, womit er vergleicht, und den Nutzen über die Laufzeit aufzeigen",
+    "a_full": "Ein Preiseinwand ist oft ein Vergleich mit einem billigeren Angebot oder ein Zeichen, dass der Nutzen nicht klar ist. Durch Nachfragen erfährt man den Vergleichsmaßstab. Dann stellt man Leistungen wie Service, Garantie und Folgekosten gegenüber, statt sofort nachzulassen.",
+    "options": [
+      "Nachfragen, womit er vergleicht, und den Nutzen über die Laufzeit aufzeigen",
+      "Sofort einen Rabatt von 15 Prozent anbieten, um den Kunden zu halten",
+      "Ohne Rückfrage ein deutlich schwächeres und billigeres Gerät anbieten",
+      "Dem Kunden widersprechen und den Preis als marktüblich verteidigen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Kundin ohne IT-Kenntnisse fragt, warum sie eine Firewall braucht. Wie erklären Sie es am besten?",
+    "a": "Mit einem Vergleich aus ihrem Alltag und dem Nutzen für ihren Betrieb",
+    "a_full": "Bei Laien vermeidet man Fachbegriffe und Datenblätter. Ein Bild wie „Pförtner, der nur berechtigte Besucher hereinlässt“ macht die Funktion verständlich. Entscheidend ist der Nutzen für sie, z.B. Schutz der Kundendaten und weniger Ausfälle.",
+    "options": [
+      "Mit einem Vergleich aus ihrem Alltag und dem Nutzen für ihren Betrieb",
+      "Mit dem Datenblatt und allen unterstützten Protokollen",
+      "Mit einer genauen Erklärung der Paketfilterregeln",
+      "Mit dem Hinweis, dass das jede Firma heute so macht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Beratungsgespräch mit einem Kunden ist fast beendet. Was gehört an den Schluss des Gesprächs?",
+    "a": "Ergebnisse zusammenfassen und die nächsten Schritte mit Termin festhalten",
+    "a_full": "Die Zusammenfassung stellt sicher, dass beide dasselbe verstanden haben. Konkrete nächste Schritte, z.B. „Angebot bis Freitag“, schaffen Verbindlichkeit. Die Gesprächsnotiz im CRM oder Ticket hilft Kollegen, die den Kunden später betreuen.",
+    "options": [
+      "Ergebnisse zusammenfassen und die nächsten Schritte mit Termin festhalten",
+      "Zum Abschluss noch einmal alle technischen Daten ausführlich vorlesen",
+      "Das Gespräch freundlich beenden und sich alles Wichtige im Kopf merken",
+      "Den Kunden bitten, das Besprochene selbst schriftlich zu protokollieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das Budget eines Kunden reicht nicht für alle gewünschten Funktionen. Wie beraten Sie ihn?",
+    "a": "Anforderungen mit ihm nach Muss und Kann ordnen und Ausbaustufen vorschlagen",
+    "a_full": "Man klärt, welche Anforderungen für den Betrieb unverzichtbar sind und welche später folgen können. Daraus entsteht eine erste Ausbaustufe im Budget und ein Plan für die Erweiterung. So bleibt die Lösung ausbaufähig, ohne das Budget zu sprengen.",
+    "options": [
+      "Anforderungen mit ihm nach Muss und Kann ordnen und Ausbaustufen vorschlagen",
+      "Alle Funktionen anbieten und die Mehrkosten erst später abrechnen",
+      "Die Anfrage ablehnen, weil das Budget offensichtlich nicht reicht",
+      "Die günstigsten Komponenten wählen, auch wenn Anforderungen fehlen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde wird am Telefon persönlich beleidigend. Wie verhalten Sie sich professionell?",
+    "a": "Sachlich bleiben, mit einer Ich-Botschaft Grenzen setzen und zum Anliegen lenken",
+    "a_full": "Eine Ich-Botschaft wie „Ich möchte Ihnen helfen, dafür brauche ich einen sachlichen Ton“ greift den Kunden nicht an. Man nimmt die Beleidigung nicht persönlich und lenkt auf das Anliegen zurück. Hört es nicht auf, darf man das Gespräch ankündigen zu beenden und den Vorgesetzten informieren.",
+    "options": [
+      "Sachlich bleiben, mit einer Ich-Botschaft Grenzen setzen und zum Anliegen lenken",
+      "Im gleichen Ton antworten, damit der Kunde merkt, wie seine Worte wirken",
+      "Sofort wortlos auflegen und den Vorfall weder melden noch dokumentieren",
+      "Alle Forderungen sofort erfüllen, damit sich der Kunde schnell beruhigt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus baut nach Vorgaben eines Kunden 30 PCs zusammen und liefert sie. Welche Vertragsart liegt vor und welches Recht gilt?",
+    "a": "Ein Werklieferungsvertrag, auf den Kaufrecht anzuwenden ist",
+    "a_full": "Beim Werklieferungsvertrag werden bewegliche Sachen erst hergestellt und dann geliefert. Nach § 650 BGB gilt dafür Kaufrecht, z.B. bei Mängeln und Verjährung. Eine Abnahme wie beim Werkvertrag ist deshalb nicht vorgesehen.",
+    "options": [
+      "Ein Werklieferungsvertrag, auf den Kaufrecht anzuwenden ist",
+      "Ein Werkvertrag, bei dem eine förmliche Abnahme nötig ist",
+      "Ein Dienstvertrag, weil vor allem Arbeitszeit bezahlt wird",
+      "Ein Mietvertrag, bis die PCs vollständig bezahlt sind"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei einer Reparatur merkt der Techniker, dass der Kostenvoranschlag deutlich überschritten wird. Was muss das Systemhaus tun?",
+    "a": "Den Kunden unverzüglich informieren, bevor weitergearbeitet wird",
+    "a_full": "Ein Kostenvoranschlag ist meist unverbindlich, eine wesentliche Überschreitung muss aber sofort angezeigt werden (§ 649 BGB). Der Kunde kann dann kündigen und zahlt nur die bisher erbrachte Arbeit. Als Faustregel gelten etwa 15 bis 20 Prozent als wesentlich.",
+    "options": [
+      "Den Kunden unverzüglich informieren, bevor weitergearbeitet wird",
+      "Die Reparatur beenden und die Mehrkosten einfach nachberechnen",
+      "Nichts, ein Kostenvoranschlag ist immer ein fester Festpreis",
+      "Die Arbeit abbrechen und das Gerät unrepariert zurückschicken"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bestellt telefonisch fünf Drucker zu den besprochenen Konditionen. Warum schicken Sie trotzdem eine Auftragsbestätigung?",
+    "a": "Sie hält den Inhalt des schon geschlossenen Vertrags als Beweis fest",
+    "a_full": "Ein Kaufvertrag kann mündlich wirksam geschlossen werden. Ohne schriftliche Unterlage lässt sich später aber schwer beweisen, was vereinbart war. Die Auftragsbestätigung nennt Artikel, Menge, Preis, Liefertermin und Zahlungsbedingungen, so fallen Missverständnisse früh auf.",
+    "options": [
+      "Sie hält den Inhalt des schon geschlossenen Vertrags als Beweis fest",
+      "Ohne sie ist ein telefonischer Kaufvertrag grundsätzlich nichtig",
+      "Sie verlängert die gesetzliche Gewährleistung um ein weiteres Jahr",
+      "Sie ersetzt die spätere Rechnung und deren gesetzliche Pflichtangaben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie haben einem Kunden per E-Mail ein Angebot ohne Frist geschickt. Er bestellt erst nach sechs Wochen. Sind Sie gebunden?",
+    "a": "Nein, die Annahme ist verspätet und gilt als neues Angebot des Kunden",
+    "a_full": "Ohne Frist ist man an ein Angebot unter Abwesenden nur so lange gebunden, wie man unter normalen Umständen eine Antwort erwarten darf (§ 147 BGB). Das sind eher Tage als Wochen. Die verspätete Bestellung ist nach § 150 BGB ein neues Angebot, das man annehmen oder ablehnen kann.",
+    "options": [
+      "Nein, die Annahme ist verspätet und gilt als neues Angebot des Kunden",
+      "Ja, ein Angebot ohne Frist bindet den Anbieter unbegrenzt lange",
+      "Ja, bis zum Ende des laufenden Kalenderjahres, danach nicht mehr",
+      "Nein, weil per E-Mail verschickte Angebote rechtlich nie bindend sind"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bestellt auf Ihr Angebot hin, zieht aber eigenmächtig 5 Prozent Rabatt ab. Ist ein Vertrag entstanden?",
+    "a": "Nein, die Bestellung ist eine Ablehnung mit neuem Angebot",
+    "a_full": "Eine Annahme mit Änderungen gilt nach § 150 Abs. 2 BGB als Ablehnung verbunden mit einem neuen Antrag. Der Vertrag kommt erst zustande, wenn Sie diese geänderten Bedingungen annehmen. Sie können auch ablehnen oder ein Gegenangebot machen.",
+    "options": [
+      "Nein, die Bestellung ist eine Ablehnung mit neuem Angebot",
+      "Ja, zum ursprünglichen Preis aus Ihrem Angebot",
+      "Ja, zum Preis mit dem abgezogenen Rabatt",
+      "Ja, aber der Rabatt gilt nur bei Barzahlung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bestellt Notebooks ausdrücklich „fix zum 10. März“ für eine Messe. Sie kommen am 12. März. Was kann er tun?",
+    "a": "Ohne Nachfrist vom Vertrag zurücktreten",
+    "a_full": "Bei einem Fixgeschäft steht und fällt der Vertrag mit dem Termin. Eine spätere Lieferung ist für den Kunden nutzlos. Deshalb kann er ohne Nachfrist zurücktreten (§ 323 Abs. 2 BGB, bei Kaufleuten § 376 HGB).",
+    "options": [
+      "Ohne Nachfrist vom Vertrag zurücktreten",
+      "Erst nach einer Mahnung und einer Nachfrist zurücktreten",
+      "Nur einen Preisnachlass für die Verspätung verlangen",
+      "Nichts, zwei Tage Verspätung sind unerheblich"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Lieferant ist mit Switches in Verzug. Der Kunde will sie woanders teurer kaufen und die Mehrkosten fordern. Was muss er vorher tun?",
+    "a": "Eine angemessene Nachfrist setzen, die erfolglos abläuft",
+    "a_full": "Schadensersatz statt der Leistung, z.B. die Mehrkosten eines Deckungskaufs, setzt nach § 281 BGB eine erfolglose Nachfrist voraus. Außerdem muss der Lieferant die Verzögerung zu vertreten haben, was vermutet wird. Nur bei Fixgeschäften oder ernsthafter Verweigerung ist keine Frist nötig.",
+    "options": [
+      "Eine angemessene Nachfrist setzen, die erfolglos abläuft",
+      "Den Vertrag sofort wegen Irrtums anfechten",
+      "Das gerichtliche Mahnverfahren einleiten",
+      "Die Ware beim Lieferanten schriftlich abbestellen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus entdeckt drei Monate nach Lieferung einen Mangel an Switches, der beim Wareneingang nicht erkennbar war. Was gilt unter Kaufleuten?",
+    "a": "Der Mangel muss unverzüglich nach der Entdeckung gerügt werden",
+    "a_full": "Nach § 377 HGB muss ein versteckter Mangel sofort gerügt werden, sobald er entdeckt wird. Wer zu lange wartet, verliert seine Mängelrechte. Die Rüge sollte nachweisbar erfolgen und den Mangel genau beschreiben.",
+    "options": [
+      "Der Mangel muss unverzüglich nach der Entdeckung gerügt werden",
+      "Die Mängelrechte sind verloren, weil die Eingangsprüfung vorbei ist",
+      "Der Mangel kann bis zum Ende der Gewährleistung beliebig gerügt werden",
+      "Der Mangel muss innerhalb von 14 Tagen nach Lieferung gerügt werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde verweigert die Abnahme einer fertigen Netzwerkinstallation, weil ein Patchkabel falsch beschriftet ist. Darf er das?",
+    "a": "Nein, wegen unwesentlicher Mängel darf die Abnahme nicht verweigert werden",
+    "a_full": "Nach § 640 Abs. 1 BGB kann der Besteller die Abnahme wegen unwesentlicher Mängel nicht verweigern. Die falsche Beschriftung wird im Abnahmeprotokoll festgehalten und nachgebessert. Die Anlage funktioniert und kann abgenommen werden.",
+    "options": [
+      "Nein, wegen unwesentlicher Mängel darf die Abnahme nicht verweigert werden",
+      "Ja, jeder noch so kleine Mangel berechtigt zur Verweigerung der Abnahme",
+      "Ja, aber nur wenn er den Mangel schriftlich und ausführlich begründet",
+      "Nein, eine Abnahme gibt es bei Netzwerkinstallationen überhaupt nicht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde kennt bei der Abnahme einen Mangel, erwähnt ihn aber nicht im Protokoll. Welche Folge hat das?",
+    "a": "Er verliert u.a. den Anspruch auf Nacherfüllung für diesen Mangel",
+    "a_full": "Wer ein Werk in Kenntnis eines Mangels ohne Vorbehalt abnimmt, verliert nach § 640 Abs. 3 BGB die Rechte auf Nacherfüllung, Selbstvornahme, Rücktritt und Minderung. Schadensersatz bleibt möglich. Bekannte Mängel gehören deshalb immer ins Abnahmeprotokoll.",
+    "options": [
+      "Er verliert u.a. den Anspruch auf Nacherfüllung für diesen Mangel",
+      "Keine, Mängel kann man auch später jederzeit geltend machen",
+      "Die gesamte Abnahme wird dadurch nachträglich unwirksam",
+      "Die Gewährleistungsfrist verlängert sich um den Mangel"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie übergeben einem Kunden 25 eingerichtete Arbeitsplätze. Was gehört in das Übergabeprotokoll?",
+    "a": "Geräte mit Seriennummern, Zustand, offene Punkte, Datum und Unterschriften",
+    "a_full": "Das Übergabeprotokoll belegt, was in welchem Zustand übergeben wurde. Dazu gehören Geräteliste mit Seriennummern, mitgelieferte Zugangsdaten und Dokumente sowie festgestellte Mängel. Beide Seiten unterschreiben mit Datum, damit es später als Nachweis dient.",
+    "options": [
+      "Geräte mit Seriennummern, Zustand, offene Punkte, Datum und Unterschriften",
+      "Nur die Rechnungsnummer und die Unterschrift des ausführenden Technikers",
+      "Die internen Stundenzettel und die Kalkulation des Systemhauses",
+      "Die Passwörter aller Benutzer im Klartext als Nachweis für den Kunden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Onlinehändler verschickt einen Monitor an eine Privatperson. Das Paket geht beim Versand verloren. Wer trägt das Risiko?",
+    "a": "Der Händler, beim Verbrauchsgüterkauf geht die Gefahr erst mit der Übergabe über",
+    "a_full": "Beim Verbrauchsgüterkauf gilt die Regel des Versendungskaufs aus § 447 BGB grundsätzlich nicht (§ 475 BGB). Die Gefahr geht erst über, wenn die Kundin die Ware erhält. Der Händler muss also neu liefern. Unter Unternehmen ginge die Gefahr dagegen schon bei Übergabe an den Paketdienst über.",
+    "options": [
+      "Der Händler, beim Verbrauchsgüterkauf geht die Gefahr erst mit der Übergabe über",
+      "Die Käuferin, weil der Monitor das Lager schon verlassen hat",
+      "Der Paketdienst allein, Händler und Käuferin sind nicht betroffen",
+      "Beide tragen den Schaden jeweils zur Hälfte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Arztpraxis-Kunde will seinen Server-Servicevertrag verlängern. Laut Vertrag gehen defekte Festplatten an den Hersteller zurück. Was bieten Sie an?",
+    "a": "Eine Vertragsoption, bei der defekte Datenträger beim Kunden bleiben",
+    "a_full": "Viele Hersteller bieten gegen Aufpreis Optionen wie „Keep Your Drive“ an. Der Kunde erhält die Ersatzplatte, behält aber die defekte und vernichtet sie selbst nachweisbar. So verlassen Patientendaten nie die Praxis, was bei besonders schützenswerten Daten wichtig ist.",
+    "options": [
+      "Eine Vertragsoption, bei der defekte Datenträger beim Kunden bleiben",
+      "Die defekten Festplatten vor dem Versand kurz formatieren lassen",
+      "Auf den Servicevertrag verzichten und Festplatten selbst kaufen",
+      "Die defekten Festplatten nur noch per Einschreiben einschicken"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In Ihrem Projekt wird ein Meilenstein nicht erreicht. Was tun Sie als Projektleiter zuerst?",
+    "a": "Ursache klären, Folgen für Termine und Kosten bewerten, Auftraggeber informieren",
+    "a_full": "Zuerst braucht es eine Analyse: Warum wurde der Meilenstein verfehlt und liegt er auf dem kritischen Pfad? Dann bewertet man die Folgen für Endtermin und Budget. Mit Vorschlägen für Gegenmaßnahmen informiert man den Auftraggeber zeitnah.",
+    "options": [
+      "Ursache klären, Folgen für Termine und Kosten bewerten, Auftraggeber informieren",
+      "Den Puffer stillschweigend nutzen und erst beim Projektende berichten",
+      "Sofort für alle Teammitglieder Überstunden anordnen und weiterarbeiten",
+      "Den verfehlten Meilenstein einfach aus dem Projektplan streichen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Warum sollte ein Projektauftrag neben den Zielen auch ausdrücklich Nicht-Ziele enthalten?",
+    "a": "Damit klar ist, was nicht zum Projekt gehört, und Scope Creep ausbleibt",
+    "a_full": "Nicht-Ziele legen fest, welche Leistungen ausdrücklich nicht geliefert werden, z.B. „keine Migration der Altdaten“. So entstehen später weniger Diskussionen, ob ein Wunsch schon beauftragt war. Zusätzliche Wünsche laufen dann klar über einen Änderungsantrag.",
+    "options": [
+      "Damit klar ist, was nicht zum Projekt gehört, und Scope Creep ausbleibt",
+      "Damit das Projektteam später weniger Dokumentation schreiben muss",
+      "Damit der Auftraggeber das Projektbudget nicht mehr kürzen kann",
+      "Damit Risiken im weiteren Projektverlauf nicht bewertet werden müssen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Abteilungsleiter gibt seine Mitarbeiter nicht für die geplanten Tests frei. Das Projekt stockt. Wie gehen Sie vor?",
+    "a": "Das Gespräch suchen, seine Bedenken klären und bei Bedarf den Auftraggeber einschalten",
+    "a_full": "Blockaden haben oft einen Grund, z.B. Termindruck in der Abteilung. Im Gespräch sucht man eine Lösung, etwa andere Testzeiten. Gelingt keine Einigung, eskaliert man an den Auftraggeber oder Lenkungsausschuss, der über die Ressourcen entscheidet.",
+    "options": [
+      "Das Gespräch suchen, seine Bedenken klären und bei Bedarf den Auftraggeber einschalten",
+      "Die Tests ohne die Fachabteilung durch das Projektteam ersetzen",
+      "Den Abteilungsleiter bei der Geschäftsführung sofort abmahnen lassen",
+      "Die Tests weglassen und den Termin trotzdem als erreicht melden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der einzige Mitarbeiter, der die Firewall-Migration kennt, fällt drei Wochen krankheitsbedingt aus. Was ist sinnvoll?",
+    "a": "Folgen prüfen, Vertretung oder externe Hilfe holen und den Plan anpassen",
+    "a_full": "Man prüft, welche Arbeitspakete betroffen sind und ob der kritische Pfad verschoben wird. Dann sucht man Ersatz, z.B. einen Kollegen mit Dokumentation oder einen externen Dienstleister. Für die Zukunft zeigt der Fall, dass Wissen auf mehrere Personen verteilt werden muss.",
+    "options": [
+      "Folgen prüfen, Vertretung oder externe Hilfe holen und den Plan anpassen",
+      "Den kranken Mitarbeiter bitten, von zu Hause weiterzuarbeiten",
+      "Die Migration ohne Vorbereitung durch den Auszubildenden starten",
+      "Das Projekt anhalten, ohne den Auftraggeber zu informieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde möchte ein neues Kundenportal. Die Anforderungen sind noch unklar, er will früh Zwischenergebnisse sehen. Welches Vorgehen passt?",
+    "a": "Ein agiles Vorgehen wie Scrum mit kurzen Sprints",
+    "a_full": "Bei unklaren und sich ändernden Anforderungen ist ein iteratives Vorgehen sinnvoll. Scrum liefert nach jedem Sprint ein nutzbares Ergebnis, das der Kunde im Review bewertet. So werden Anforderungen schrittweise konkret.",
+    "options": [
+      "Ein agiles Vorgehen wie Scrum mit kurzen Sprints",
+      "Das Wasserfallmodell mit vollständigem Pflichtenheft vorab",
+      "Das V-Modell mit fester Testplanung für jede Phase",
+      "Ein Festpreisprojekt ohne Abstimmung bis zur Abnahme"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "An 200 Arbeitsplätzen soll bis zu einem festen Termin ein genau festgelegtes Betriebssystem-Update ausgerollt werden. Welches Vorgehen passt?",
+    "a": "Ein klassisches, phasenorientiertes Vorgehen mit festem Plan",
+    "a_full": "Umfang, Ziel und Termin sind von Anfang an bekannt und ändern sich kaum. Ein klassischer Plan mit Phasen, Meilensteinen und Rollout-Wellen ist hier gut steuerbar. Agile Methoden bringen bei so stabilen Anforderungen wenig Vorteil.",
+    "options": [
+      "Ein klassisches, phasenorientiertes Vorgehen mit festem Plan",
+      "Scrum mit Sprints, weil jedes Projekt agil sein sollte",
+      "Ein Prototyping-Ansatz, um die Anforderungen zu finden",
+      "Ein Vorgehen ganz ohne Planung nach Zuruf der Nutzer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Projekt besteht das Risiko, dass die Server zu spät geliefert werden. Welche Maßnahme vermindert dieses Risiko?",
+    "a": "Früh bestellen und einen zweiten Lieferanten als Ausweichmöglichkeit einplanen",
+    "a_full": "Risiken kann man vermeiden, vermindern, übertragen oder akzeptieren. Frühe Bestellung und ein Ersatzlieferant senken die Eintrittswahrscheinlichkeit und die Folgen. Die Maßnahme wird im Risikoregister mit Verantwortlichem eingetragen.",
+    "options": [
+      "Früh bestellen und einen zweiten Lieferanten als Ausweichmöglichkeit einplanen",
+      "Das Risiko im Plan weglassen, weil es nicht beeinflussbar ist",
+      "Den Liefertermin im Projektplan einfach zwei Wochen früher setzen",
+      "Erst reagieren, wenn die Lieferung tatsächlich ausbleibt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt zur Einführung eines neuen Mailsystems ist technisch fertig. Was ist für die Übergabe in den Regelbetrieb nötig?",
+    "a": "Betriebsdokumentation, Einweisung des Betriebsteams, Abnahme und geklärte Zuständigkeiten",
+    "a_full": "Das Betriebsteam muss das System ohne das Projektteam betreiben können. Dafür braucht es Dokumentation, z.B. Konfiguration, Backup und Notfallabläufe. Mit der Abnahme und geklärten Zuständigkeiten im Support endet die Verantwortung des Projekts.",
+    "options": [
+      "Betriebsdokumentation, Einweisung des Betriebsteams, Abnahme und geklärte Zuständigkeiten",
+      "Nur die Rechnung an den Auftraggeber und das Löschen der Projektdaten",
+      "Eine Pressemitteilung und die Auflösung des Tickets im Service Desk",
+      "Nur ein kurzes Gespräch des Projektleiters mit der Geschäftsführung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Änderungsantrag im Projekt erhöht das Budget um 20 Prozent. Wer entscheidet darüber?",
+    "a": "Der Auftraggeber bzw. der Lenkungsausschuss",
+    "a_full": "Der Projektleiter bewertet die Änderung und legt Aufwand, Kosten und Terminfolgen vor. Über Änderungen, die Budget oder Ziele des Projektauftrags betreffen, entscheidet aber der Auftraggeber. So bleibt nachvollziehbar, wer die Mehrkosten verantwortet.",
+    "options": [
+      "Der Auftraggeber bzw. der Lenkungsausschuss",
+      "Der Projektleiter allein, weil er das Projekt steuert",
+      "Das Projektteam per Mehrheitsbeschluss im Daily",
+      "Der Mitarbeiter, der die Änderung umsetzen soll"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Drei Tickets gehen gleichzeitig ein: Maus des Geschäftsführers defekt, Kassensystem einer Filiale ausgefallen, neues Benutzerkonto für nächste Woche. Was bearbeiten Sie zuerst?",
+    "a": "Das ausgefallene Kassensystem der Filiale",
+    "a_full": "Die Priorität ergibt sich aus Auswirkung und Dringlichkeit, nicht aus der Position des Anrufers. Der Kassenausfall stoppt den Verkauf und betrifft viele Kunden. Die Maus lässt sich schnell ersetzen, das Konto ist erst nächste Woche nötig.",
+    "options": [
+      "Das ausgefallene Kassensystem der Filiale",
+      "Die Maus des Geschäftsführers, weil er die höchste Position hat",
+      "Das Benutzerkonto, weil es am schnellsten zu erledigen ist",
+      "Die Tickets streng in der Reihenfolge ihres Eingangs"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie können ein Ticket im First Level nicht lösen und geben es an den Second Level weiter. Was muss das Ticket enthalten?",
+    "a": "Fehlerbild, betroffene Nutzer und die bisherigen Lösungsschritte",
+    "a_full": "Der Second Level soll nicht von vorn anfangen. Deshalb dokumentiert man genau, was auftritt, seit wann, wie viele Nutzer betroffen sind und was schon versucht wurde. Auch Fehlermeldungen und Screenshots gehören dazu.",
+    "options": [
+      "Fehlerbild, betroffene Nutzer und die bisherigen Lösungsschritte",
+      "Nur den Namen des Anwenders und den Vermerk „dringend“ im Betreff",
+      "Eine Vermutung zur Ursache ohne weitere Angaben zum Fehlerbild",
+      "Die persönliche Einschätzung, ob der Anwender selbst schuld ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Anwender ruft Sie direkt auf dem Handy an, statt ein Ticket zu erstellen. Wie reagieren Sie richtig?",
+    "a": "Das Anliegen aufnehmen und dafür sorgen, dass ein Ticket angelegt wird",
+    "a_full": "Nur über ein Ticket ist die Anfrage nachvollziehbar, priorisierbar und für Kollegen sichtbar. Außerdem lassen sich Reaktions- und Lösungszeiten messen. Man kann das Ticket selbst anlegen und den Anwender auf den richtigen Weg hinweisen.",
+    "options": [
+      "Das Anliegen aufnehmen und dafür sorgen, dass ein Ticket angelegt wird",
+      "Das Problem sofort lösen und nichts weiter dokumentieren",
+      "Den Anwender abweisen, bis er selbst eine E-Mail geschrieben hat",
+      "Das Anliegen notieren und bei Gelegenheit nebenher erledigen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein volljähriger Auszubildender soll regelmäßig zwei Stunden länger bleiben. Was gilt nach dem BBiG?",
+    "a": "Mehrarbeit muss besonders vergütet oder durch Freizeit ausgeglichen werden",
+    "a_full": "Nach § 17 BBiG ist eine Beschäftigung über die vereinbarte tägliche Ausbildungszeit hinaus besonders zu bezahlen oder mit Freizeit auszugleichen. Sie muss außerdem dem Ausbildungszweck dienen und das Arbeitszeitgesetz einhalten. Regelmäßige Überstunden widersprechen dem Charakter einer Ausbildung.",
+    "options": [
+      "Mehrarbeit muss besonders vergütet oder durch Freizeit ausgeglichen werden",
+      "Mehrarbeit ist mit der Ausbildungsvergütung bereits abgegolten",
+      "Azubis dürfen unbegrenzt länger bleiben, wenn sie zustimmen",
+      "Mehrarbeit wird erst ab 50 Stunden pro Woche ausgeglichen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein 20-jähriger Auszubildender hat dienstags sechs Unterrichtsstunden zu je 45 Minuten. Sein Ausbilder will, dass er danach in den Betrieb kommt. Ist das zulässig?",
+    "a": "Nein, einmal pro Woche gilt ein solcher Tag als voller Ausbildungstag",
+    "a_full": "Nach § 15 BBiG ist der Azubi an einem Berufsschultag mit mehr als fünf Unterrichtsstunden einmal pro Woche freizustellen. Der Tag wird mit der durchschnittlichen täglichen Ausbildungszeit angerechnet. Seit 2020 gilt das auch für volljährige Auszubildende.",
+    "options": [
+      "Nein, einmal pro Woche gilt ein solcher Tag als voller Ausbildungstag",
+      "Ja, die Regel gilt nur für Auszubildende unter 18 Jahren",
+      "Ja, wenn er danach höchstens vier Stunden arbeitet",
+      "Nein, nach der Berufsschule darf nie gearbeitet werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mitarbeiter wacht am Montag krank auf. Was muss er gegenüber dem Arbeitgeber tun?",
+    "a": "Sich sofort krankmelden und ab dem vierten Tag ärztlich krankschreiben lassen",
+    "a_full": "Die Arbeitsunfähigkeit muss sofort mitgeteilt werden, am besten vor Arbeitsbeginn (§ 5 EFZG). Dauert sie länger als drei Kalendertage, braucht es eine ärztliche Feststellung, die der Arbeitgeber bei gesetzlich Versicherten elektronisch abruft (eAU). Der Arbeitgeber darf den Nachweis auch schon ab dem ersten Tag verlangen.",
+    "options": [
+      "Sich sofort krankmelden und ab dem vierten Tag ärztlich krankschreiben lassen",
+      "Sich erst melden, wenn er nach der Genesung wieder zur Arbeit erscheint",
+      "Nur eine E-Mail an Kollegen schreiben, die dem Chef Bescheid geben sollen",
+      "Sofort die genaue Diagnose seines Arztes an den Vorgesetzten senden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Arbeitgeber lehnt einen Urlaubsantrag in der Hauptsaison ab. Wann darf er das nach dem BUrlG?",
+    "a": "Bei dringenden betrieblichen Gründen oder vorrangigen Wünschen anderer Mitarbeiter",
+    "a_full": "Nach § 7 BUrlG muss der Arbeitgeber die Urlaubswünsche berücksichtigen. Ablehnen darf er nur, wenn dringende betriebliche Belange oder Wünsche anderer mit sozialem Vorrang entgegenstehen, z.B. Eltern schulpflichtiger Kinder. Der Mitarbeiter darf nicht eigenmächtig Urlaub nehmen, das kann eine Kündigung rechtfertigen.",
+    "options": [
+      "Bei dringenden betrieblichen Gründen oder vorrangigen Wünschen anderer Mitarbeiter",
+      "Jederzeit und ohne Begründung, weil er als Arbeitgeber allein entscheidet",
+      "Nie, ein fristgerecht gestellter Urlaubsantrag muss immer genehmigt werden",
+      "Nur wenn sich der Mitarbeiter noch in der vereinbarten Probezeit befindet"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender zum Fachinformatiker soll jeden Freitag den Firmenwagen des Chefs waschen. Ist das zulässig?",
+    "a": "Nein, Azubis dürfen nur Aufgaben erhalten, die dem Ausbildungszweck dienen",
+    "a_full": "Nach § 14 BBiG dürfen Auszubildenden nur Aufgaben übertragen werden, die dem Ausbildungszweck dienen und ihren Kräften angemessen sind. Ausbildungsfremde Tätigkeiten wie private Dienste für den Chef gehören nicht dazu. Der Azubi kann sich an die Ausbildungsberatung der IHK oder die JAV wenden.",
+    "options": [
+      "Nein, Azubis dürfen nur Aufgaben erhalten, die dem Ausbildungszweck dienen",
+      "Ja, Auszubildende müssen jede Weisung des Chefs befolgen",
+      "Ja, solange es während der normalen Arbeitszeit geschieht",
+      "Ja, wenn er dafür eine kleine Zusatzvergütung erhält"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Firma führt ein Ticketsystem ein, das Bearbeitungszeiten je Mitarbeiter auswerten kann. Die Leitung sagt, sie wolle niemanden überwachen. Muss der Betriebsrat zustimmen?",
+    "a": "Ja, es reicht, dass die Software zur Überwachung geeignet ist",
+    "a_full": "Nach § 87 Abs. 1 Nr. 6 BetrVG hat der Betriebsrat bei technischen Einrichtungen mit, die Leistung oder Verhalten überwachen können. Es kommt nicht auf die Absicht des Arbeitgebers an, sondern auf die objektive Eignung. Ohne Einigung kann der Betriebsrat verlangen, dass der Einsatz unterbleibt.",
+    "options": [
+      "Ja, es reicht, dass die Software zur Überwachung geeignet ist",
+      "Nein, weil keine Überwachung beabsichtigt ist",
+      "Nein, Software ist grundsätzlich mitbestimmungsfrei",
+      "Nur, wenn mehr als 100 Mitarbeiter betroffen sind"
+    ]
   }
 ]

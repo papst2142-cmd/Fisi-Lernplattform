@@ -13630,5 +13630,2477 @@
     ],
     "a": "4",
     "exp": "Frei: 24 - 5 = 19 HE. 19 / 4 = 4 Server. In der Praxis plant man zusätzlich Reserve für Luftführung und Kabelmanagement."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping auf einen Server in einem anderen Subnetz meldet viermal \"Zeitüberschreitung der Anforderung\". Welche Aussage ist richtig?",
+    "options": [
+      "Es kam keine Antwort, z.B. weil eine Firewall ICMP verwirft",
+      "Der eigene Rechner fand keine MAC-Adresse des Ziels",
+      "Der DNS-Server konnte den Servernamen nicht auflösen",
+      "Das Gateway meldete, dass das Zielnetz unbekannt ist"
+    ],
+    "a": "Es kam keine Antwort, z.B. weil eine Firewall ICMP verwirft",
+    "exp": "Bei einer Zeitüberschreitung wurde die Anfrage gesendet, aber es kam nichts zurück. Ursachen sind ausgeschaltete Ziele, Filter oder fehlende Rückroute. Eine Meldung \"nicht erreichbar\" käme dagegen aktiv von einem Gerät."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "tracert zu einem Webserver zeigt Hop 1 (Firmenrouter) und Hop 2 (Provider), ab Hop 3 bis 30 nur noch Sternchen. ping auf den Server scheitert ebenfalls. Was schließen Sie?",
+    "options": [
+      "Das lokale Netz ist in Ordnung, das Problem liegt ab dem Provider",
+      "Das lokale Netz ist gestört, weil nur Hop 1 und 2 antworten",
+      "Der DNS-Server kann den Namen des Webservers nicht auflösen",
+      "Der eigene PC hat eine falsche Subnetzmaske eingetragen"
+    ],
+    "a": "Das lokale Netz ist in Ordnung, das Problem liegt ab dem Provider",
+    "exp": "Firmenrouter und Provider antworten, der Weg bis dorthin funktioniert. Da auch das Ziel nicht antwortet, liegt die Störung im Providernetz, weiter hinten oder beim Server selbst."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ipconfig /all zeigt \"DHCP aktiviert: Nein\" und die Adresse 192.168.50.20. Das Netz wurde auf 192.168.60.0/24 umgestellt. Was ist zu tun?",
+    "options": [
+      "Die Karte auf automatischen Bezug umstellen oder neu statisch einrichten",
+      "ipconfig /renew ausführen, damit die neue Adresse vom Server kommt",
+      "ipconfig /flushdns ausführen, um die alte Adresse zu löschen",
+      "Den Rechner neu starten, damit der DHCP-Server ihn wieder erkennt"
+    ],
+    "a": "Die Karte auf automatischen Bezug umstellen oder neu statisch einrichten",
+    "exp": "Die Adresse ist statisch eingetragen, daher fragt der Rechner keinen DHCP-Server. /renew und ein Neustart ändern daran nichts. /flushdns leert nur den DNS-Cache."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "nslookup meldet eine Zeitüberschreitung bei der Anfrage an den Server 10.0.0.53, ping auf 10.0.0.53 funktioniert. Was ist wahrscheinlich?",
+    "options": [
+      "Der DNS-Dienst läuft nicht oder Port 53 wird gefiltert",
+      "Der gesuchte Name existiert nicht in der Zone",
+      "Das Standardgateway des Clients ist falsch eingetragen",
+      "Die hosts-Datei des Clients enthält einen Fehler"
+    ],
+    "a": "Der DNS-Dienst läuft nicht oder Port 53 wird gefiltert",
+    "exp": "Der Server ist per ICMP erreichbar, beantwortet aber keine DNS-Anfragen. Ein nicht existierender Name ergäbe eine Antwort mit NXDOMAIN statt einer Zeitüberschreitung. Die hosts-Datei nutzt nslookup gar nicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ping 127.0.0.1 und ping auf die eigene IP-Adresse klappen, ping auf das Gateway im selben Subnetz nicht. Wo liegt der Fehler am wahrscheinlichsten?",
+    "options": [
+      "Auf dem Weg zum Gateway, z.B. Kabel, Port oder VLAN",
+      "Im TCP/IP-Stack des Betriebssystems auf dem PC",
+      "Beim DNS-Server, der die Namen im Netz auflöst",
+      "Beim Internetprovider, der das Firmennetz anbindet"
+    ],
+    "a": "Auf dem Weg zum Gateway, z.B. Kabel, Port oder VLAN",
+    "exp": "Die ersten beiden Tests zeigen, dass TCP/IP und die eigene Adresse funktionieren. Scheitert erst der Weg zum Gateway, liegt das Problem auf der Strecke dorthin oder am Gateway selbst."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender meldet \"kein Internet\". ping auf das Gateway klappt, ping auf 8.8.8.8 nicht. Wo liegt der Fehler am wahrscheinlichsten?",
+    "options": [
+      "Hinter dem Gateway, z.B. an Firewall oder Provider",
+      "Am Netzwerkkabel zwischen PC und Netzwerkdose",
+      "Am DNS-Server, der die Namen im Netz auflöst",
+      "An der IP-Adresse und Subnetzmaske des PCs"
+    ],
+    "a": "Hinter dem Gateway, z.B. an Firewall oder Provider",
+    "exp": "Der PC erreicht sein Gateway, also sind Kabel und IP-Konfiguration in Ordnung. Da eine öffentliche IP-Adresse ohne Namensauflösung scheitert, ist auch DNS nicht die Ursache."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Anwender meldet \"kein Netz\". In welcher Reihenfolge prüfen Sie sinnvoll?",
+    "options": [
+      "Link-LED, ipconfig, ping Gateway, ping externe IP, nslookup",
+      "nslookup, ping externe IP, ping Gateway, ipconfig, Link-LED",
+      "ping externe IP, Link-LED, nslookup, ipconfig, ping Gateway",
+      "ipconfig, nslookup, Link-LED, ping externe IP, ping Gateway"
+    ],
+    "a": "Link-LED, ipconfig, ping Gateway, ping externe IP, nslookup",
+    "exp": "Man arbeitet sich von der physischen Verbindung über die IP-Konfiguration und die Erreichbarkeit bis zur Namensauflösung hoch. So schließt jeder Test eine Ebene sicher aus."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Client sendet ein TCP-SYN an Port 3389 eines Servers und erhält sofort ein RST zurück. Was bedeutet das?",
+    "options": [
+      "Der Server ist erreichbar, auf dem Port lauscht aber kein Dienst",
+      "Eine Firewall hat das SYN ohne Rückmeldung verworfen",
+      "Der Handshake war erfolgreich, die Verbindung steht",
+      "Der Server hat die Verbindung wegen Überlast umgeleitet"
+    ],
+    "a": "Der Server ist erreichbar, auf dem Port lauscht aber kein Dienst",
+    "exp": "Ein RST auf ein SYN heißt meist: Port geschlossen. Das Gerät ist also da, aber der Dienst (hier RDP) läuft nicht. Ein erfolgreicher Aufbau würde mit SYN-ACK beantwortet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitschnitt zeigt, dass ein Client sein TCP-SYN an einen Server mehrfach wiederholt und nie eine Antwort erhält. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Eine Firewall verwirft die Pakete, ohne zu antworten",
+      "Auf dem Zielport lauscht gerade kein Dienst",
+      "Der Client nutzt eine doppelt vergebene IP-Adresse",
+      "Der Server hat die Verbindung bereits abgeschlossen"
+    ],
+    "a": "Eine Firewall verwirft die Pakete, ohne zu antworten",
+    "exp": "Eine Firewall mit der Aktion Drop verwirft Pakete kommentarlos, der Client wiederholt das SYN dann mehrmals. Ein geschlossener Port antwortet dagegen mit RST."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Tausch des Internetrouters erreichen alle PCs mit statischer IP das Internet nicht mehr, DHCP-Clients schon. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Der neue Router hat eine andere LAN-Adresse als das eingetragene Gateway",
+      "Neue Router unterstützen grundsätzlich keine statischen Adressen",
+      "Die DHCP-Clients belegen alle verfügbaren Adressen des Routers",
+      "Der neue Router hat eine andere MAC-Adresse als der alte Router"
+    ],
+    "a": "Der neue Router hat eine andere LAN-Adresse als das eingetragene Gateway",
+    "exp": "DHCP-Clients bekommen das neue Gateway automatisch mitgeteilt. Bei statischer Konfiguration steht noch die alte Adresse. Eine geänderte MAC-Adresse löst sich dagegen nach kurzer Zeit über den ARP-Cache von selbst."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Netzwerkdrucker mit fester IP-Adresse fällt immer wieder aus, weil ein PC dieselbe Adresse per DHCP erhält. Welche Lösung ist dauerhaft?",
+    "options": [
+      "Die Adresse im DHCP-Bereich ausschließen oder für den Drucker reservieren",
+      "Die Lease-Zeit im DHCP-Server auf wenige Minuten verkürzen lassen",
+      "Den Drucker per WLAN statt per Kabel an das Firmennetz anbinden",
+      "Den PC nach jedem Neustart neu anmelden und die Adresse erneuern"
+    ],
+    "a": "Die Adresse im DHCP-Bereich ausschließen oder für den Drucker reservieren",
+    "exp": "Der DHCP-Server weiß nichts von der statischen Adresse und vergibt sie deshalb. Mit Ausschluss oder Reservierung kann er sie keinem anderen Gerät mehr zuteilen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Neue Geräte im Gäste-WLAN erhalten ab Mittag keine Adresse mehr, bereits verbundene Geräte funktionieren. Was ist wahrscheinlich?",
+    "options": [
+      "Der DHCP-Bereich ist erschöpft, weil die Leases zu lang sind",
+      "Der Access Point hat seine SSID mittags abgeschaltet",
+      "Die WPA2-Passphrase ist um 12 Uhr automatisch abgelaufen",
+      "Das Standardgateway des Gäste-VLANs ist ausgefallen"
+    ],
+    "a": "Der DHCP-Bereich ist erschöpft, weil die Leases zu lang sind",
+    "exp": "Gäste wechseln häufig, ihre Leases blockieren aber lange Adressen. Abhilfe sind kürzere Lease-Zeiten im Gästenetz oder ein größerer Adressbereich."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Einstellung für Geschwindigkeit und Duplex ist an Endgeräte-Ports heute empfohlen?",
+    "options": [
+      "Auf beiden Seiten Autonegotiation",
+      "Switch fest auf 1000/Voll, Client auf Auto",
+      "Client fest auf 100/Voll, Switch auf Auto",
+      "Beide Seiten fest auf 1000/Halbduplex"
+    ],
+    "a": "Auf beiden Seiten Autonegotiation",
+    "exp": "Werden nur auf einer Seite feste Werte gesetzt, kann die andere Seite den Duplex-Modus nicht aushandeln und fällt auf Halbduplex zurück. Autonegotiation auf beiden Seiten vermeidet diesen Mismatch."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ordnen Sie die Befunde den OSI-Schichten zu: (a) Link-LED aus, (b) falsches Access-VLAN, (c) falsches Gateway, (d) Firewall sperrt TCP 443.",
+    "options": [
+      "a = 1, b = 2, c = 3, d = 4",
+      "a = 1, b = 3, c = 2, d = 4",
+      "a = 2, b = 2, c = 3, d = 7",
+      "a = 1, b = 2, c = 4, d = 3"
+    ],
+    "a": "a = 1, b = 2, c = 3, d = 4",
+    "exp": "Die Link-LED betrifft die Bitübertragung, VLANs die Sicherungsschicht, das Gateway die Vermittlung mit IP. Die Sperre eines TCP-Ports wirkt auf der Transportschicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Medienkonverter setzt Kupfer auf Glasfaser um, ohne Adressen auszuwerten. Auf welcher OSI-Schicht arbeitet er?",
+    "options": [
+      "Schicht 1, Bitübertragung",
+      "Schicht 2, Sicherung",
+      "Schicht 3, Vermittlung",
+      "Schicht 4, Transport"
+    ],
+    "a": "Schicht 1, Bitübertragung",
+    "exp": "Er wandelt nur elektrische in optische Signale um und umgekehrt. Weil er keine MAC- oder IP-Adressen auswertet, gehört er wie ein Repeater zur Schicht 1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einer alten Laborumgebung hängen zwölf Rechner an einem Hub. Warum bricht der Durchsatz bei gleichzeitiger Nutzung stark ein?",
+    "options": [
+      "Alle teilen sich eine Kollisionsdomäne im Halbduplex",
+      "Der Hub filtert Frames zu langsam nach MAC-Adressen",
+      "Der Hub vergibt allen Rechnern dieselbe IP-Adresse",
+      "Der Hub leitet nur Broadcasts, aber keine Unicasts weiter"
+    ],
+    "a": "Alle teilen sich eine Kollisionsdomäne im Halbduplex",
+    "exp": "Ein Hub gibt jedes Signal an alle Ports weiter, daher kann immer nur ein Gerät senden. Gleichzeitige Sendungen kollidieren und müssen wiederholt werden. Ein Switch trennt die Kollisionsdomänen je Port und erlaubt Vollduplex."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Videoserver soll einen Schulungsstream gleichzeitig an 40 Rechner in mehreren Räumen senden, ohne die übrigen Geräte zu belasten. Welche Übertragungsart passt?",
+    "options": [
+      "Multicast an eine Gruppenadresse",
+      "Broadcast an alle Geräte im Subnetz",
+      "Unicast an jeden Rechner einzeln",
+      "Anycast an den nächsten Rechner"
+    ],
+    "a": "Multicast an eine Gruppenadresse",
+    "exp": "Beim Multicast sendet der Server jeden Datenstrom nur einmal, Switches und Router verteilen ihn an die angemeldeten Empfänger. Unicast würde die Last vervielfachen, Broadcast alle Geräte stören."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein IPTV-Multicast-Stream wird von einem Switch an alle Ports gesendet und belastet auch Büro-PCs. Welche Funktion hilft?",
+    "options": [
+      "IGMP Snooping auf dem Switch",
+      "Port-Security auf allen Büro-Ports",
+      "Rapid Spanning Tree auf dem Switch",
+      "Jumbo Frames auf dem Uplink-Port"
+    ],
+    "a": "IGMP Snooping auf dem Switch",
+    "exp": "Ohne IGMP Snooping behandelt ein Switch Multicast wie Broadcast. Mit Snooping liest er die IGMP-Anmeldungen mit und schickt den Stream nur an Ports mit angemeldeten Empfängern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem flachen Netz mit 900 Geräten in einem einzigen Subnetz steigt die Grundlast durch Broadcasts. Welche Maßnahme ist sinnvoll?",
+    "options": [
+      "Das Netz in mehrere VLANs mit eigenen Subnetzen aufteilen",
+      "Alle Switches durch Hubs mit mehr Ports ersetzen",
+      "Die Subnetzmaske auf /16 vergrößern, damit Platz entsteht",
+      "Die MTU auf allen Geräten deutlich verkleinern"
+    ],
+    "a": "Das Netz in mehrere VLANs mit eigenen Subnetzen aufteilen",
+    "exp": "Jedes VLAN ist eine eigene Broadcast-Domäne. Broadcasts wie ARP oder DHCP erreichen dann nur noch die Geräte im jeweiligen VLAN, das Routing dazwischen übernimmt ein Layer-3-Gerät."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Filialstandort braucht Internet über einen Glasfaseranschluss mit PPPoE und NAT. Welches Gerät ist hier richtig?",
+    "options": [
+      "Ein Router bzw. eine Firewall mit WAN-Funktionen",
+      "Ein Layer-3-Switch ohne jede WAN-Funktion",
+      "Ein Managed Layer-2-Switch mit mehreren VLANs",
+      "Ein Access Point mit mehreren getrennten SSIDs"
+    ],
+    "a": "Ein Router bzw. eine Firewall mit WAN-Funktionen",
+    "exp": "PPPoE-Einwahl und NAT sind typische Router-Aufgaben am Übergang zum Provider. Ein Layer-3-Switch routet zwar schnell zwischen VLANs, bietet diese WAN-Funktionen aber meist nicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Unternehmen will IP-Telefone über den Switch mit Strom versorgen und Sprache bevorzugt übertragen. Welche Switch-Eigenschaften braucht es?",
+    "options": [
+      "PoE, Voice-VLAN und QoS",
+      "Stacking, Jumbo Frames und SFP+",
+      "Port-Mirroring und LACP",
+      "Routing, NAT und DHCP"
+    ],
+    "a": "PoE, Voice-VLAN und QoS",
+    "exp": "PoE versorgt die Telefone ohne Netzteil. Das Voice-VLAN trennt Sprache von Daten und QoS priorisiert die Sprachpakete, damit Gespräche bei Last nicht stocken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für einen Etagenverteiler werden 48 Arbeitsplatzports und zwei redundante Glasfaser-Uplinks zum Core benötigt. Welcher Switch passt?",
+    "options": [
+      "48 RJ45-Ports mit 1 Gbit/s und mindestens 2 SFP+-Slots",
+      "48 SFP+-Slots ohne einen einzigen RJ45-Port",
+      "24 RJ45-Ports mit 1 Gbit/s und einem SFP-Slot",
+      "48 RJ45-Ports mit 1 Gbit/s ohne Uplink-Slots"
+    ],
+    "a": "48 RJ45-Ports mit 1 Gbit/s und mindestens 2 SFP+-Slots",
+    "exp": "Die Arbeitsplätze werden über Kupfer angebunden, die Uplinks über Glasfaser mit steckbaren Modulen. Für Redundanz braucht man mindestens zwei Uplink-Slots."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access Point soll zwei SSIDs ausstrahlen, die in zwei verschiedenen VLANs landen. Wie konfigurieren Sie den Switchport des APs?",
+    "options": [
+      "Als Trunk-Port mit beiden VLANs getaggt",
+      "Als Access-Port im VLAN der ersten SSID",
+      "Als Access-Port im Native VLAN 1",
+      "Als Spiegelport (SPAN) für beide VLANs"
+    ],
+    "a": "Als Trunk-Port mit beiden VLANs getaggt",
+    "exp": "Der AP ordnet jede SSID einem VLAN zu und sendet die Frames getaggt zum Switch. Nur ein Trunk-Port kann mehrere VLANs über eine Leitung transportieren."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege will zwei Etagenswitches mit zwei parallelen Kabeln verbinden, um die Bandbreite zu erhöhen. Was ist nötig, damit beide Leitungen genutzt werden und kein Loop entsteht?",
+    "options": [
+      "Link Aggregation (LACP) auf beiden Switches",
+      "Spanning Tree auf beiden Switches abschalten",
+      "Beide Leitungen als Crossover-Kabel ausführen",
+      "Beide Ports unterschiedlichen VLANs zuordnen"
+    ],
+    "a": "Link Aggregation (LACP) auf beiden Switches",
+    "exp": "Ohne Bündelung würde Spanning Tree eine der beiden Leitungen blockieren, ohne STP entstünde ein Loop. Mit LACP gelten beide Leitungen als ein logischer Link."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwischen zwei Standorten soll der tatsächlich erreichbare Durchsatz gemessen werden. Welches Werkzeug eignet sich?",
+    "options": [
+      "iperf3 mit Server und Client an beiden Enden",
+      "ping mit großer Paketgröße auf die Gegenstelle",
+      "nslookup gegen den entfernten DNS-Server",
+      "tracert mit der Option -d zur Gegenstelle"
+    ],
+    "a": "iperf3 mit Server und Client an beiden Enden",
+    "exp": "iperf3 erzeugt gezielt Last zwischen zwei Endpunkten und misst den Durchsatz über TCP oder UDP. ping und tracert messen Laufzeit und Weg, aber nicht die nutzbare Bandbreite."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Mitarbeiter im Homeoffice klagt über stockende Videokonferenzen, Downloads laufen aber schnell. Welche Messwerte sind am aussagekräftigsten?",
+    "options": [
+      "Jitter und Paketverlust",
+      "Maximale Downloadrate",
+      "Anzahl der DNS-Anfragen",
+      "Länge des Patchkabels"
+    ],
+    "a": "Jitter und Paketverlust",
+    "exp": "Echtzeitanwendungen brauchen gleichmäßige Laufzeiten und wenig Verlust. Eine hohe Downloadrate sagt darüber nichts aus, weil Downloads Schwankungen puffern können."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie haben einen Switchport von VLAN 10 auf VLAN 20 umgestellt. Was ist direkt danach zu tun?",
+    "options": [
+      "Konfiguration speichern und Patchliste aktualisieren",
+      "Den Switch neu starten, damit die Änderung wirkt",
+      "Alle Clients im VLAN 10 neu starten lassen",
+      "Den DHCP-Server von VLAN 10 neu einrichten"
+    ],
+    "a": "Konfiguration speichern und Patchliste aktualisieren",
+    "exp": "Ohne Speichern geht die Änderung beim nächsten Neustart verloren. Eine nicht gepflegte Patchliste führt bei der nächsten Störung zu falschen Annahmen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einer Störungsbehebung soll ein Störungsbericht angelegt werden. Welche Angaben gehören hinein?",
+    "options": [
+      "Symptom, Ursache, Maßnahme, Zeitpunkt und Bearbeiter",
+      "Nur Uhrzeit und Namen der betroffenen Anwender",
+      "Nur die geänderte Konfiguration ohne Begründung",
+      "Nur eine Bewertung, wer den Fehler verursacht hat"
+    ],
+    "a": "Symptom, Ursache, Maßnahme, Zeitpunkt und Bearbeiter",
+    "exp": "Ein vollständiger Bericht hilft, gleiche Störungen später schneller zu lösen und Muster zu erkennen. Er dient der Nachvollziehbarkeit, nicht der Schuldzuweisung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Buchhaltung erhält eine Mail des Geschäftsführers: Für eine geheime Firmenübernahme soll sofort Geld überwiesen werden, sie solle mit niemandem darüber sprechen. Was ist das deutlichste Warnzeichen?",
+    "options": [
+      "Die Bitte um Geheimhaltung am normalen Freigabeweg vorbei",
+      "Der Versand der Mail kurz nach dem Mittagessen",
+      "Die Signatur mit dem Firmenlogo am Ende der Mail",
+      "Die freundliche Anrede mit dem Vornamen der Mitarbeiterin"
+    ],
+    "a": "Die Bitte um Geheimhaltung am normalen Freigabeweg vorbei",
+    "exp": "Zeitdruck, Autorität und Geheimhaltung sind typisch für CEO-Fraud. Die Täter wollen verhindern, dass jemand nachfragt. Solche Anweisungen prüft man immer über einen bekannten Kanal und den regulären Freigabeprozess."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Anrufer gibt sich als Microsoft-Support aus: Ihr Rechner sende Virenmeldungen, Sie sollen eine Fernwartungssoftware installieren. Wie reagieren Sie?",
+    "options": [
+      "Auflegen, nichts installieren und den Anruf der IT melden",
+      "Die Software installieren, aber die Sitzung beobachten",
+      "Nach einer Rückrufnummer fragen und dort die Software laden",
+      "Dem Anrufer nur die Rechnerkennung, aber kein Passwort nennen"
+    ],
+    "a": "Auflegen, nichts installieren und den Anruf der IT melden",
+    "exp": "Hersteller rufen nicht ungefragt an, um Viren zu melden. Mit der Fernwartungssoftware hätte der Täter volle Kontrolle über den Rechner. Die Meldung an die IT hilft, Kollegen zu warnen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mann in Arbeitskleidung steht ohne Termin am Empfang und will \"dringend den Server tauschen\". Was ist richtig?",
+    "options": [
+      "Auftrag über eine bekannte Nummer prüfen und ihn nur begleitet einlassen",
+      "Ihn einlassen, weil die Arbeitskleidung den Auftrag belegt",
+      "Ihn allein in den Serverraum lassen, um Zeit zu sparen",
+      "Ihm den Schlüssel geben und die Uhrzeit notieren"
+    ],
+    "a": "Auftrag über eine bekannte Nummer prüfen und ihn nur begleitet einlassen",
+    "exp": "Arbeitskleidung und Zeitdruck sind klassische Mittel des Social Engineering. Ob es einen Auftrag gibt, klärt man bei der zuständigen Stelle über eine selbst herausgesuchte Nummer. Externe bewegen sich im Gebäude nur mit Ausweis und Begleitung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einer Fernwartungssitzung sieht der externe Techniker eine geöffnete Gehaltsliste auf Ihrem Bildschirm. Welches Schutzziel ist verletzt?",
+    "options": [
+      "Vertraulichkeit",
+      "Integrität",
+      "Verfügbarkeit",
+      "Authentizität"
+    ],
+    "a": "Vertraulichkeit",
+    "exp": "Eine unbefugte Person hat Einblick in geschützte Daten erhalten. Vor einer Fernwartung schließt man daher alle nicht benötigten Anwendungen und teilt nach Möglichkeit nur ein Fenster."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einer Änderung der Berechtigungen kann der Vertrieb die Vertragsordner auf dem Dateiserver nicht mehr öffnen. Die Dateien sind unverändert. Welches Schutzziel ist betroffen?",
+    "options": [
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Integrität",
+      "Verbindlichkeit"
+    ],
+    "a": "Verfügbarkeit",
+    "exp": "Die Daten sind unversehrt und niemand Unbefugtes hat sie gesehen. Die berechtigten Benutzer können sie aber nicht nutzen, wenn sie sie brauchen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Angreifer verschickt Mails, die als Absender die Adresse des Geschäftsführers zeigen, obwohl sie nicht von ihm stammen. Welches Schutzziel wird angegriffen?",
+    "options": [
+      "Authentizität",
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Belastbarkeit"
+    ],
+    "a": "Authentizität",
+    "exp": "Authentizität bedeutet, dass eine Nachricht wirklich von dem angegebenen Absender stammt. Dagegen helfen auf Serverseite SPF, DKIM und DMARC, für einzelne Mails digitale Signaturen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Außendienstmitarbeiter will im Hotel-WLAN auf das CRM im Firmennetz zugreifen. Welche Maßnahme ist passend?",
+    "options": [
+      "Zugriff nur über ein VPN mit Mehrfaktor-Anmeldung",
+      "Das CRM direkt per Portfreigabe ins Internet stellen",
+      "Das Hotel-WLAN vorher nach seinem Passwort fragen",
+      "Die Kundendaten vorab als Excel-Liste mitnehmen"
+    ],
+    "a": "Zugriff nur über ein VPN mit Mehrfaktor-Anmeldung",
+    "exp": "Das VPN verschlüsselt den Verkehr durch das fremde, unsichere Netz. Die Mehrfaktor-Anmeldung verhindert, dass gestohlene Passwörter allein für den Zugang reichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Azubi in der Buchhaltung kann auf dem Dateiserver auch die Ordner der Personalabteilung öffnen. Welche Maßnahme behebt das dauerhaft?",
+    "options": [
+      "Ein Berechtigungskonzept mit Rechten über Rollen und Gruppen",
+      "Die Personalordner in einen Unterordner verschieben",
+      "Den Azubi bitten, die Ordner nicht mehr zu öffnen",
+      "Die Personalordner nur noch auf USB-Sticks speichern"
+    ],
+    "a": "Ein Berechtigungskonzept mit Rechten über Rollen und Gruppen",
+    "exp": "Zugriffsrechte richten sich nach der Aufgabe (Need-to-know). Werden Rechte über Gruppen je Abteilung vergeben und regelmäßig geprüft, entstehen solche Lücken seltener."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Marketing will das Kaufverhalten der Kunden auswerten, braucht dafür aber keine Namen. Die Ergebnisse sollen später einzelnen Kundennummern zugeordnet werden können. Welche Maßnahme passt?",
+    "options": [
+      "Pseudonymisierung der Datensätze",
+      "Vollständige Anonymisierung der Datensätze",
+      "Verschlüsselung der Datenbank mit AES-256",
+      "Löschung aller Datensätze nach der Auswertung"
+    ],
+    "a": "Pseudonymisierung der Datensätze",
+    "exp": "Bei der Pseudonymisierung ersetzt man Namen durch Kennungen, die Zuordnungstabelle liegt getrennt. Eine Anonymisierung würde die spätere Zuordnung unmöglich machen, eine Verschlüsselung würde die Auswertung behindern."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Anwendung für den Speiseplan der Kantine fällt einen Tag aus. Die Mitarbeiter lesen den Plan dann am Aushang. Welcher Verfügbarkeitsbedarf ist angemessen?",
+    "options": [
+      "Normal",
+      "Hoch",
+      "Sehr hoch",
+      "Existenzkritisch"
+    ],
+    "a": "Normal",
+    "exp": "Der Schaden ist gering und leicht zu überbrücken. Nach BSI ist der Schutzbedarf normal, wenn die Schadensauswirkungen begrenzt und überschaubar sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf einem Server laufen die Zeiterfassung mit normalem und die Lohnbuchhaltung mit hohem Vertraulichkeitsbedarf. Welchen Vertraulichkeitsbedarf hat der Server?",
+    "options": [
+      "Hoch",
+      "Normal",
+      "Sehr hoch",
+      "Normal bis hoch"
+    ],
+    "a": "Hoch",
+    "exp": "Nach dem Maximumprinzip übernimmt ein System den höchsten Schutzbedarf der Anwendungen, die darauf laufen. Einen Durchschnitt bildet man nicht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Arbeitgeber speichert die Bankverbindung eines Mitarbeiters, um das Gehalt zu überweisen. Welche Rechtsgrundlage greift?",
+    "options": [
+      "Erfüllung des Arbeitsvertrags",
+      "Einwilligung des Mitarbeiters",
+      "Berechtigtes Interesse des Arbeitgebers",
+      "Schutz lebenswichtiger Interessen"
+    ],
+    "a": "Erfüllung des Arbeitsvertrags",
+    "exp": "Ohne Bankverbindung kann der Arbeitgeber seine Pflicht zur Gehaltszahlung nicht erfüllen. Die Verarbeitung ist daher für die Durchführung des Vertrags erforderlich (Art. 6 Abs. 1 lit. b DSGVO)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Polizei legt einen richterlichen Beschluss vor und verlangt die Log-Daten eines Servers. Welche Rechtsgrundlage erlaubt die Herausgabe?",
+    "options": [
+      "Eine rechtliche Verpflichtung des Unternehmens",
+      "Eine Einwilligung aller Benutzer des Servers",
+      "Ein berechtigtes Interesse der Polizei",
+      "Ein Vertrag zwischen Unternehmen und Polizei"
+    ],
+    "a": "Eine rechtliche Verpflichtung des Unternehmens",
+    "exp": "Ein Gericht ordnet die Herausgabe an, das Unternehmen ist dazu gesetzlich verpflichtet (Art. 6 Abs. 1 lit. c DSGVO). Man prüft den Beschluss und gibt nur die darin genannten Daten heraus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen lässt alte Akten mit Kundendaten von einem Entsorgungsdienstleister abholen und vernichten. Welche Rolle hat der Dienstleister?",
+    "options": [
+      "Auftragsverarbeiter",
+      "Verantwortlicher",
+      "Betroffener",
+      "Gemeinsam Verantwortlicher"
+    ],
+    "a": "Auftragsverarbeiter",
+    "exp": "Der Dienstleister vernichtet die Daten nur im Auftrag und nach Weisung. Das Unternehmen braucht daher einen Vertrag nach Art. 28 DSGVO, der z.B. die Sicherheitsstufe nach DIN 66399 festlegt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Onlineshop leitet Kunden zum Bezahlen an einen Zahlungsdienstleister weiter. Dieser prüft die Zahlungsdaten auch nach eigenen gesetzlichen Pflichten, z.B. zur Geldwäsche. Welche Rolle hat er?",
+    "options": [
+      "Eigenständiger Verantwortlicher",
+      "Auftragsverarbeiter des Shops",
+      "Betroffene Person",
+      "Unterauftragsverarbeiter"
+    ],
+    "a": "Eigenständiger Verantwortlicher",
+    "exp": "Wer Daten für eigene Zwecke und nach eigenen gesetzlichen Pflichten verarbeitet, handelt nicht nur nach Weisung. Der Zahlungsdienstleister ist deshalb selbst Verantwortlicher, ein Vertrag nach Art. 28 DSGVO passt hier nicht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ihr Mailserver überträgt Mails per TLS zum Mailserver des Steuerbüros. Ein Kollege hält die Lohndaten damit für Ende-zu-Ende geschützt. Stimmt das?",
+    "options": [
+      "Nein, auf den Mailservern liegen die Mails im Klartext vor",
+      "Ja, TLS verschlüsselt die Mail bis in das Postfach",
+      "Ja, sofern beide Mailserver TLS 1.3 unterstützen",
+      "Nein, TLS verschlüsselt nur den Betreff der Mail"
+    ],
+    "a": "Nein, auf den Mailservern liegen die Mails im Klartext vor",
+    "exp": "TLS schützt nur den Transportweg zwischen zwei Servern. Für einen Schutz vom Absender bis zum Empfänger braucht man S/MIME, PGP oder ein verschlüsseltes Austauschportal."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sicherungsbänder werden wöchentlich in ein Bankschließfach gebracht. Nur die eigene IT soll sie später lesen können. Welche Verschlüsselung ist sinnvoll?",
+    "options": [
+      "Symmetrisch mit AES-256, Schlüssel getrennt vom Band verwahrt",
+      "Asymmetrisch mit dem öffentlichen Schlüssel der Bank",
+      "Ein MD5-Hash für jede Datei auf dem Band",
+      "Eine Base64-Kodierung der gesamten Sicherung"
+    ],
+    "a": "Symmetrisch mit AES-256, Schlüssel getrennt vom Band verwahrt",
+    "exp": "Ver- und Entschlüsselung erfolgen durch dieselbe Stelle, daher passt ein schnelles symmetrisches Verfahren. Der Schlüssel darf nicht beim Band liegen und muss selbst gesichert sein, sonst ist die Rücksicherung unmöglich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Hersteller stellt ein Firmware-Update und daneben dessen SHA-256-Hashwert auf derselben Webseite bereit. Wie prüfen Sie zusätzlich, dass das Update wirklich vom Hersteller stammt?",
+    "options": [
+      "Die digitale Code-Signatur mit dem Zertifikat des Herstellers prüfen",
+      "Den Hashwert zweimal hintereinander berechnen und vergleichen",
+      "Die Dateigröße mit der Angabe auf der Webseite vergleichen",
+      "Das Update zuerst in ein ZIP-Archiv packen und entpacken"
+    ],
+    "a": "Die digitale Code-Signatur mit dem Zertifikat des Herstellers prüfen",
+    "exp": "Ist die Webseite kompromittiert, kann ein Angreifer Datei und Hashwert gemeinsam austauschen. Eine Signatur lässt sich ohne den privaten Schlüssel des Herstellers nicht fälschen und belegt so Herkunft und Integrität."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter wählt das Passwort \"Firmenname2026!\". Es erfüllt alle Komplexitätsregeln. Wie bewerten Sie es?",
+    "options": [
+      "Schwach, weil es naheliegend und leicht zu erraten ist",
+      "Stark, weil es alle geforderten Zeichenarten enthält",
+      "Stark, weil es mehr als zwölf Zeichen lang ist",
+      "Ausreichend, wenn es jeden Monat gewechselt wird"
+    ],
+    "a": "Schwach, weil es naheliegend und leicht zu erraten ist",
+    "exp": "Firmenname und Jahreszahl gehören zu den ersten Versuchen jedes Angreifers. Moderne Richtlinien prüfen neue Passwörter deshalb gegen Listen mit bekannten und naheliegenden Passwörtern."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Richtlinie sperrt ein Konto nach 3 Fehlversuchen dauerhaft, bis der Helpdesk es freischaltet. Welches Problem entsteht dadurch?",
+    "options": [
+      "Angreifer können gezielt viele Konten aussperren",
+      "Angreifer erhalten dadurch unbegrenzt viele Versuche",
+      "Die Passwörter werden dadurch im Klartext gespeichert",
+      "Benutzer müssen ihr Passwort dann täglich ändern"
+    ],
+    "a": "Angreifer können gezielt viele Konten aussperren",
+    "exp": "Mit absichtlichen Fehleingaben lässt sich so ein Denial of Service gegen Benutzer und Helpdesk auslösen. Besser ist eine zeitlich begrenzte, mit jedem Fehlversuch wachsende Sperre in Verbindung mit MFA."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Administratoren speichern die Kennwörter aller Server in einer Excel-Datei auf einem Netzlaufwerk. Welche Lösung ist besser?",
+    "options": [
+      "Ein zentraler Passwort-Manager mit Rechten und Protokollierung",
+      "Die Excel-Datei mit einem Blattschutz versehen",
+      "Die Excel-Datei zusätzlich ausdrucken und abheften",
+      "Die Kennwörter in einer Textdatei auf dem Desktop"
+    ],
+    "a": "Ein zentraler Passwort-Manager mit Rechten und Protokollierung",
+    "exp": "Ein Passwort-Manager speichert die Kennwörter verschlüsselt, vergibt Zugriff nur an berechtigte Personen und protokolliert jeden Abruf. Ein Blattschutz in Excel ist keine Verschlüsselung und leicht zu umgehen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter erfährt, dass sein privates Passwort bei einem Onlineshop gestohlen wurde. Er nutzt es auch für sein Firmenkonto. Was ist zu tun?",
+    "options": [
+      "Das Passwort überall sofort ändern, wo er es nutzt",
+      "Nur das Passwort beim Onlineshop ändern",
+      "Abwarten, ob das Firmenkonto angegriffen wird",
+      "Das Passwort um eine Ziffer am Ende ergänzen"
+    ],
+    "a": "Das Passwort überall sofort ändern, wo er es nutzt",
+    "exp": "Angreifer probieren gestohlene Zugangsdaten automatisiert bei vielen Diensten aus (Credential Stuffing). Jedes Konto braucht daher ein eigenes Passwort, am einfachsten mit einem Passwort-Manager."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Geschäftsführung verlangt, dass bei einem Ausfall höchstens eine Stunde Buchungsdaten verloren geht. Es gibt nur eine nächtliche Vollsicherung. Wie bewerten Sie das Konzept?",
+    "options": [
+      "Es erfüllt die Anforderung nicht, nötig sind z.B. stündliche Sicherungen der Transaktionsprotokolle",
+      "Es erfüllt die Anforderung, weil jede Nacht vollständig gesichert wird",
+      "Es erfüllt die Anforderung, wenn die Sicherung auf Band erfolgt",
+      "Es erfüllt die Anforderung, wenn die Wiederherstellung unter einer Stunde dauert"
+    ],
+    "a": "Es erfüllt die Anforderung nicht, nötig sind z.B. stündliche Sicherungen der Transaktionsprotokolle",
+    "exp": "Der maximal tolerierbare Datenverlust (RPO) bestimmt, wie oft gesichert werden muss. Bei nur einer Sicherung pro Nacht können fast 24 Stunden Daten verloren gehen. Die Dauer der Wiederherstellung betrifft dagegen das RTO."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Backup-Software meldet sich mit einem Domänen-Admin-Konto an den Sicherungsspeicher an. Warum ist das riskant?",
+    "options": [
+      "Ein Angreifer mit Domänenrechten kann auch alle Sicherungen löschen",
+      "Die Sicherungen laufen dadurch deutlich langsamer als sonst",
+      "Domänen-Admins dürfen auf Sicherungsspeichern nichts lesen",
+      "Das Konto verfällt nach 30 Tagen und die Sicherung bricht ab"
+    ],
+    "a": "Ein Angreifer mit Domänenrechten kann auch alle Sicherungen löschen",
+    "exp": "Angreifer suchen gezielt nach den Sicherungen, bevor sie verschlüsseln. Der Sicherungsspeicher braucht deshalb eigene Zugangsdaten außerhalb der Domäne, MFA und möglichst unveränderbare Sicherungen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Regelwerk steht an Position 3 \"any → any: Allow\", an Position 10 \"any → Server: Telnet Deny\". Was passiert mit einer Telnet-Verbindung zum Server?",
+    "options": [
+      "Sie wird erlaubt, weil Regel 3 zuerst passt",
+      "Sie wird blockiert, weil Deny immer Vorrang hat",
+      "Sie wird blockiert, weil die spezielle Regel gewinnt",
+      "Sie wird verworfen, weil sich die Regeln widersprechen"
+    ],
+    "a": "Sie wird erlaubt, weil Regel 3 zuerst passt",
+    "exp": "Die Firewall prüft die Regeln von oben nach unten, die erste passende Regel entscheidet. Spezielle Sperren gehören daher über allgemeine Freigaben, und eine any-Freigabe sollte es gar nicht geben."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für die Fernwartung wurde SSH (TCP 22) aus dem Internet von \"any\" auf den Server freigegeben. Wie verbessern Sie die Regel?",
+    "options": [
+      "Nur die festen IP-Adressen des Dienstleisters oder den VPN-Zugang zulassen",
+      "Den SSH-Dienst auf Port 2222 verlegen und die Regel lassen",
+      "Die Regel nur nachts deaktivieren, wenn niemand arbeitet",
+      "Statt SSH lieber Telnet mit derselben Regel freigeben"
+    ],
+    "a": "Nur die festen IP-Adressen des Dienstleisters oder den VPN-Zugang zulassen",
+    "exp": "Eine Freigabe für alle Quellen macht den Dienst weltweit zum Ziel von Passwortangriffen. Die Einschränkung der Quelle verkleinert die Angriffsfläche deutlich, ein anderer Port verschleiert nur."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Webserver in der DMZ braucht Zugriff auf die Datenbank im LAN. Im Regelwerk steht \"DMZ → LAN: any Allow\". Wie sollte die Regel richtig lauten?",
+    "options": [
+      "Nur Webserver-IP zur Datenbank-IP auf dem Datenbankport erlauben",
+      "Die Regel so lassen, weil die DMZ als vertrauenswürdig gilt",
+      "Umgekehrt LAN → DMZ: any Allow, damit Antworten ankommen",
+      "Den Webserver für den Zugriff direkt ins LAN verschieben"
+    ],
+    "a": "Nur Webserver-IP zur Datenbank-IP auf dem Datenbankport erlauben",
+    "exp": "Wird der Webserver übernommen, hätte der Angreifer sonst freien Zugang ins LAN. Die Regel erlaubt nur genau die nötige Verbindung, eine zustandsorientierte Firewall lässt die Antworten automatisch zu."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Firewall erlaubt allen Clients ausgehende Verbindungen auf TCP 25. Warum sollte nur der Mailserver diesen Port nutzen dürfen?",
+    "options": [
+      "Infizierte Clients könnten sonst direkt Spam oder Schadcode versenden",
+      "Clients brauchen Port 25 zum Abrufen ihrer eigenen Mails",
+      "Port 25 wird von Windows für das Laden von Updates benötigt",
+      "Port 25 ist im LAN für Windows-Dateifreigaben reserviert"
+    ],
+    "a": "Infizierte Clients könnten sonst direkt Spam oder Schadcode versenden",
+    "exp": "Botnetz-Schadsoftware verschickt Spam oft direkt per SMTP. Wird Port 25 ausgehend nur für den Mailserver erlaubt, fällt das auf und die Firmen-IP landet nicht auf Sperrlisten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für die Sachbearbeitung (Office, Browser, ERP-Client) sollen 20 neue PCs beschafft werden. Welche Ausstattung passt am besten?",
+    "options": [
+      "Aktuelle Mittelklasse-CPU mit integrierter Grafik, 16 GB RAM, SSD",
+      "High-End-CPU mit Workstation-Grafikkarte, 128 GB ECC-RAM",
+      "Einstiegs-CPU mit Gaming-Grafikkarte, 4 GB RAM, HDD",
+      "Server-CPU mit RAID-Controller, 64 GB RAM, zwei HDDs"
+    ],
+    "a": "Aktuelle Mittelklasse-CPU mit integrierter Grafik, 16 GB RAM, SSD",
+    "exp": "Büroanwendungen brauchen keine eigene Grafikkarte. Genug Arbeitsspeicher und eine SSD sorgen für flüssiges Arbeiten. Überdimensionierte Geräte kosten mehr und verbrauchen mehr Strom."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Grafikerin bereitet Druckdaten vor und braucht farbverbindliche Darstellung. Welcher Monitor passt?",
+    "options": [
+      "Ein hardwarekalibrierbarer Monitor mit großem Farbraum wie Adobe RGB",
+      "Ein TN-Monitor mit besonders kurzer Reaktionszeit",
+      "Ein gebogener Monitor mit hoher Bildwiederholrate",
+      "Ein Monitor mit integrierten Lautsprechern und Webcam"
+    ],
+    "a": "Ein hardwarekalibrierbarer Monitor mit großem Farbraum wie Adobe RGB",
+    "exp": "Für die Druckvorstufe zählen Farbtreue und ein großer Farbraum. Mit einem Kalibriergerät wird das Farbprofil direkt im Monitor gespeichert. Kurze Reaktionszeiten sind eher für Spiele wichtig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege schlägt vor, drei Produktivserver als VMs in VirtualBox auf einem Windows-11-PC zu betreiben. Was spricht dagegen?",
+    "options": [
+      "Für Produktivbetrieb gehört ein Typ-1-Hypervisor direkt auf die Hardware",
+      "VirtualBox kann grundsätzlich keine Server-Betriebssysteme starten",
+      "Windows 11 erlaubt insgesamt nur eine einzige laufende VM",
+      "VMs dürfen laut Lizenz nie auf einem Client-PC laufen"
+    ],
+    "a": "Für Produktivbetrieb gehört ein Typ-1-Hypervisor direkt auf die Hardware",
+    "exp": "Ein Typ-2-Hypervisor läuft als Programm auf einem Gastgeber-Betriebssystem. Updates, Neustarts und Fehler dieses Systems treffen alle VMs. Typ-1-Hypervisoren wie Hyper-V Server, ESXi oder Proxmox VE sind schlanker und für den Dauerbetrieb gebaut."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi möchte auf seinem Windows-11-Home-Notebook Hyper-V für eine Testumgebung aktivieren, findet die Funktion aber nicht. Warum?",
+    "options": [
+      "Hyper-V gibt es nur ab Windows Pro, Enterprise oder Education",
+      "Hyper-V muss erst im Microsoft Store gekauft werden",
+      "Hyper-V läuft nur auf Rechnern mit ARM-Prozessor",
+      "Hyper-V ist nur in Windows Server 2025 enthalten"
+    ],
+    "a": "Hyper-V gibt es nur ab Windows Pro, Enterprise oder Education",
+    "exp": "In der Home-Edition fehlt die Hyper-V-Rolle. Möglich ist ein Upgrade auf Pro oder ein Typ-2-Hypervisor wie VirtualBox. In jedem Fall muss die Hardware-Virtualisierung im UEFI aktiviert sein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kleinbetrieb braucht ein Sicherungsziel mit etwa 40 TB, das nachts beschrieben wird. Die Kosten sollen gering bleiben. Welche Laufwerke wählen Sie?",
+    "options": [
+      "HDDs für den Dauerbetrieb in einem NAS",
+      "NVMe-SSDs mit hoher Schreibrate",
+      "SATA-SSDs mit hoher TBW-Angabe",
+      "Speicherkarten in einem USB-Hub"
+    ],
+    "a": "HDDs für den Dauerbetrieb in einem NAS",
+    "exp": "Für große Datenmengen mit überwiegend sequenziellem Schreiben sind HDDs pro Terabyte deutlich günstiger. Die Geschwindigkeit reicht für nächtliche Sicherungen aus. SSDs lohnen sich vor allem für Betriebssysteme, Datenbanken und VMs."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Linux-Server wurde eine 20 GB große Logdatei mit rm gelöscht, df zeigt aber weiter eine volle Partition. Was ist die Ursache?",
+    "options": [
+      "Ein laufender Prozess hält die gelöschte Datei noch offen",
+      "Der Papierkorb von Linux muss erst geleert werden",
+      "Das Dateisystem zeigt Änderungen erst nach einer Stunde an",
+      "rm löscht Dateien erst beim nächsten Neustart endgültig"
+    ],
+    "a": "Ein laufender Prozess hält die gelöschte Datei noch offen",
+    "exp": "Der Speicher wird erst frei, wenn kein Prozess die Datei mehr geöffnet hat. lsof +L1 zeigt solche gelöschten, noch offenen Dateien. Ein Neustart oder Neuladen des Dienstes gibt den Platz frei. Besser leert man eine offene Logdatei mit truncate statt sie zu löschen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Das systemd-Journal eines Servers belegt inzwischen 8 GB. Mit welchem Befehl verkleinern Sie es auf 500 MB?",
+    "options": [
+      "journalctl --vacuum-size=500M",
+      "systemctl reset-failed --size=500M",
+      "logrotate --force --size=500M",
+      "rm -rf /var/log/journal/500M"
+    ],
+    "a": "journalctl --vacuum-size=500M",
+    "exp": "Der Befehl löscht die ältesten archivierten Journaldateien, bis die Grenze erreicht ist. Dauerhaft legt man die Obergrenze mit SystemMaxUse in der Datei journald.conf fest."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Windows-Dienst startet beim Booten nicht, lässt sich aber später von Hand problemlos starten. Er benötigt eine Netzwerkfreigabe. Was hilft?",
+    "options": [
+      "Den Starttyp auf Automatisch (verzögerter Start) stellen",
+      "Den Starttyp auf Deaktiviert stellen",
+      "Den Dienst unter einem Gastkonto laufen lassen",
+      "Die Auslagerungsdatei des Systems vergrößern"
+    ],
+    "a": "Den Starttyp auf Automatisch (verzögerter Start) stellen",
+    "exp": "Der Dienst startet zu früh, bevor Netzwerk und Anmeldung bereit sind. Mit verzögertem Start beginnt er erst kurz nach den übrigen automatischen Diensten. Alternativ trägt man eine Abhängigkeit zu dem benötigten Dienst ein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Einbau einer zweiten Festplatte meldet ein PC \"No bootable device\". Was prüfen Sie zuerst?",
+    "options": [
+      "Die Bootreihenfolge im UEFI",
+      "Die Lizenz des Betriebssystems",
+      "Den Treiber der Grafikkarte",
+      "Die IP-Adresse der Netzwerkkarte"
+    ],
+    "a": "Die Bootreihenfolge im UEFI",
+    "exp": "Das UEFI versucht womöglich, von der neuen, leeren Platte zu starten. Man stellt den Windows Boot Manager bzw. die Systemplatte wieder an die erste Stelle. Auch ein versehentlich gelockertes Kabel der Systemplatte ist zu prüfen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Systemplatte wurde auf eine doppelt so große SSD geklont. Windows zeigt aber nur die alte Größe von Laufwerk C: an. Was ist zu tun?",
+    "options": [
+      "Das Volume C: in den nicht zugeordneten Bereich erweitern",
+      "Die SSD im UEFI auf die volle Größe freischalten",
+      "Windows neu installieren, weil Klonen nicht zulässig ist",
+      "Die SSD in der Datenträgerverwaltung neu initialisieren"
+    ],
+    "a": "Das Volume C: in den nicht zugeordneten Bereich erweitern",
+    "exp": "Beim Klonen wird die Partitionsgröße übernommen, der Rest der SSD bleibt nicht zugeordnet. In der Datenträgerverwaltung oder mit diskpart erweitert man das Volume. Liegt eine Wiederherstellungspartition dahinter, muss sie zuvor verschoben werden. Neu initialisieren würde die Daten löschen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Benutzer meldet, dass Outlook seit einigen Tagen öfter abstürzt. Welches Windows-Werkzeug zeigt Abstürze, Updates und Installationen übersichtlich auf einer Zeitleiste?",
+    "options": [
+      "Die Zuverlässigkeitsüberwachung (perfmon /rel)",
+      "Die Datenträgerbereinigung (cleanmgr)",
+      "Der Geräte-Manager (devmgmt.msc)",
+      "Die Systemkonfiguration (msconfig)"
+    ],
+    "a": "Die Zuverlässigkeitsüberwachung (perfmon /rel)",
+    "exp": "Die Zuverlässigkeitsüberwachung stellt Ereignisse Tag für Tag dar. So erkennt man, ob die Abstürze nach einem bestimmten Update oder einer Installation begonnen haben. Per Klick gelangt man zu den technischen Details."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem fehlgeschlagenen Windows-Update startet ein PC nicht mehr. Welcher erste Schritt ist sinnvoll?",
+    "options": [
+      "In der Wiederherstellungsumgebung das letzte Update deinstallieren",
+      "Die Festplatte sofort ausbauen und neu formatieren",
+      "Das Mainboard tauschen und Windows neu aktivieren",
+      "Den PC an den Hersteller zur Reparatur einsenden"
+    ],
+    "a": "In der Wiederherstellungsumgebung das letzte Update deinstallieren",
+    "exp": "Die Windows-Wiederherstellungsumgebung (WinRE) startet nach mehreren fehlgeschlagenen Bootversuchen automatisch. Dort lassen sich das letzte Qualitäts- oder Funktionsupdate entfernen, die Starthilfe ausführen oder ein Wiederherstellungspunkt nutzen. Neuinstallation ist erst der letzte Schritt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Windows-PC ist Laufwerk C: fast voll. Welches integrierte Werkzeug entfernt gefahrlos alte Update-Dateien und temporäre Dateien?",
+    "options": [
+      "Die Datenträgerbereinigung mit der Option Systemdateien bereinigen",
+      "Die Defragmentierung mit der Option Laufwerke optimieren",
+      "Der Befehl chkdsk /f mit anschließendem Neustart",
+      "Das manuelle Löschen des Ordners C:\\Windows\\WinSxS"
+    ],
+    "a": "Die Datenträgerbereinigung mit der Option Systemdateien bereinigen",
+    "exp": "Die Datenträgerbereinigung (cleanmgr) findet temporäre Dateien, Reste alter Updates und frühere Windows-Installationen. Erst mit Systemdateien bereinigen werden auch die Update-Reste angeboten. Den Komponentenspeicher WinSxS darf man nie von Hand löschen, sonst lässt sich Windows nicht mehr aktualisieren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einer Neuinstallation zeigt ein PC nur eine niedrige Auflösung, im Geräte-Manager steht \"Microsoft Basic Display Adapter\". Was fehlt?",
+    "options": [
+      "Der passende Treiber für die Grafikkarte",
+      "Ein neues Monitorkabel mit höherer Bandbreite",
+      "Eine Lizenz für die höhere Bildschirmauflösung",
+      "Mehr Arbeitsspeicher für die Grafikausgabe"
+    ],
+    "a": "Der passende Treiber für die Grafikkarte",
+    "exp": "Windows nutzt ohne Herstellertreiber einen einfachen Standardtreiber. Er bietet nur Grundfunktionen und begrenzte Auflösungen. Nach Installation des Treibers von Hersteller oder Windows Update steht die volle Auflösung zur Verfügung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei einem Laserdrucker lässt sich der Toner auf frisch gedruckten Seiten mit dem Finger verwischen. Welche Baugruppe ist wahrscheinlich defekt?",
+    "options": [
+      "Die Fixiereinheit",
+      "Die Netzwerkkarte",
+      "Der Papiereinzug",
+      "Der Druckertreiber"
+    ],
+    "a": "Die Fixiereinheit",
+    "exp": "Die Fixiereinheit schmilzt den Toner mit Hitze und Druck auf das Papier. Wird sie nicht mehr heiß genug, bleibt der Toner lose auf der Seite. Fixiereinheiten sind Verschleißteile und werden nach einer bestimmten Seitenzahl getauscht."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Reihenfolge gehen Sie beim Update eines virtuellen Servers vor?",
+    "options": [
+      "Ankündigen, Backup prüfen, Snapshot, Update, Test, Snapshot löschen",
+      "Snapshot, Update, Ankündigen, Test, Backup prüfen, Snapshot löschen",
+      "Update, Test, Snapshot, Ankündigen, Backup prüfen, Snapshot löschen",
+      "Backup prüfen, Update, Snapshot, Test, Snapshot löschen, Ankündigen"
+    ],
+    "a": "Ankündigen, Backup prüfen, Snapshot, Update, Test, Snapshot löschen",
+    "exp": "Die Benutzer werden vorab über das Wartungsfenster informiert. Vor dem Eingriff muss eine funktionierende Sicherung und ein Snapshot als schneller Rückweg existieren. Nach erfolgreichem Test wird der Snapshot zeitnah entfernt."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Reihenfolge tauschen Sie eine defekte Platte in einem Hot-Swap-RAID?",
+    "options": [
+      "Platte identifizieren, Sicherung prüfen, tauschen, Rebuild überwachen, dokumentieren",
+      "Platte tauschen, identifizieren, Sicherung prüfen, Rebuild überwachen, dokumentieren",
+      "Sicherung prüfen, Rebuild überwachen, Platte identifizieren, tauschen, dokumentieren",
+      "Dokumentieren, Platte tauschen, Sicherung prüfen, identifizieren, Rebuild überwachen"
+    ],
+    "a": "Platte identifizieren, Sicherung prüfen, tauschen, Rebuild überwachen, dokumentieren",
+    "exp": "Erst wenn die defekte Platte sicher identifiziert und eine aktuelle Sicherung vorhanden ist, wird im laufenden Betrieb getauscht. Der Rebuild startet erst nach dem Einsetzen der neuen Platte und wird bis zum Ende überwacht. Zum Schluss dokumentiert man den Tausch."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein neuer Windows-PC soll Mitglied der Domäne werden. Wie lautet die richtige Reihenfolge?",
+    "options": [
+      "Installieren, Treiber und Updates, DNS prüfen, Name setzen, Domäne beitreten",
+      "Domäne beitreten, installieren, Name setzen, DNS prüfen, Treiber",
+      "Name setzen, Domäne beitreten, installieren, Treiber, DNS prüfen",
+      "DNS prüfen, Domäne beitreten, installieren, Treiber, Name setzen"
+    ],
+    "a": "Installieren, Treiber und Updates, DNS prüfen, Name setzen, Domäne beitreten",
+    "exp": "Erst ein lauffähiges System mit Netzwerktreiber kann der Domäne beitreten. Der Computername sollte vor dem Beitritt feststehen, sonst entsteht ein Konto mit falschem Namen im AD. Der DNS-Server muss auf den Domänencontroller zeigen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin möchte einen PC per PowerShell in die Domäne firma.local aufnehmen und danach neu starten. Welcher Befehl passt?",
+    "options": [
+      "Add-Computer -DomainName firma.local -Restart",
+      "Join-Domain -Name firma.local -Reboot",
+      "Set-ADDomain -Computer firma.local -Force",
+      "New-ADComputer -Domain firma.local -Restart"
+    ],
+    "a": "Add-Computer -DomainName firma.local -Restart",
+    "exp": "Add-Computer fragt nach den Anmeldedaten eines berechtigten Kontos und legt das Computerkonto an. Mit -OUPath lässt sich die Ziel-OU festlegen, damit die richtigen Gruppenrichtlinien sofort greifen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Vor dem Umzug eines Mitarbeiters auf einen neuen PC fragen Sie nach Daten, die leicht übersehen werden. Was gehört dazu?",
+    "options": [
+      "Lokale Ordner außerhalb des Profils, Mailarchive und Browser-Favoriten",
+      "Die Treiber der alten Grafikkarte und des alten Chipsatzes",
+      "Die Auslagerungsdatei und der Ruhezustand des alten PCs",
+      "Die temporären Dateien und der Inhalt des Papierkorbs"
+    ],
+    "a": "Lokale Ordner außerhalb des Profils, Mailarchive und Browser-Favoriten",
+    "exp": "Viele Nutzer speichern Daten in eigenen Ordnern wie C:\\Daten oder in lokalen PST-Dateien. Auch Favoriten, Signaturen und Zertifikate gehen leicht verloren. Eine kurze Checkliste mit dem Benutzer verhindert späteren Ärger."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein RAID 5 mit Hot Spare meldet eine ausgefallene Platte. Der Rebuild auf die Hot-Spare-Platte ist abgeschlossen. Was ist jetzt noch zu tun?",
+    "options": [
+      "Die defekte Platte tauschen und die neue als Hot Spare einrichten",
+      "Nichts, der Verbund ist wieder vollständig und geschützt",
+      "Den Verbund auf RAID 0 umstellen, um Platz zu gewinnen",
+      "Die Hot-Spare-Platte ziehen und die defekte wieder einsetzen"
+    ],
+    "a": "Die defekte Platte tauschen und die neue als Hot Spare einrichten",
+    "exp": "Nach dem Rebuild arbeitet der Verbund wieder mit Redundanz, aber ohne Reserve. Fällt eine weitere Platte aus, gibt es kein automatisches Ersatzlaufwerk mehr. Deshalb wird die defekte Platte zeitnah ersetzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum darf ein IT-Techniker ein defektes PC-Netzteil nicht selbst öffnen, auch wenn der Netzstecker gezogen ist?",
+    "options": [
+      "Kondensatoren können noch gefährliche Spannung speichern",
+      "Das Netzteil verliert beim Öffnen seine 80-PLUS-Einstufung",
+      "Beim Öffnen werden gesundheitsschädliche Gase frei",
+      "Das Netzteil speichert Daten, die dabei verloren gehen"
+    ],
+    "a": "Kondensatoren können noch gefährliche Spannung speichern",
+    "exp": "Die Primärseite eines Netzteils arbeitet mit Netzspannung, große Kondensatoren bleiben auch nach dem Trennen geladen. Netzteile werden deshalb als Ganzes getauscht. Arbeiten an Netzspannung sind Elektrofachkräften vorbehalten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum ist ein ESD-Schaden an einem Bauteil besonders tückisch?",
+    "options": [
+      "Das Bauteil kann vorgeschädigt sein und erst Wochen später ausfallen",
+      "Das Bauteil ist danach sichtbar verbrannt und riecht stark",
+      "Das Bauteil funktioniert danach nur noch unter Linux",
+      "Das Bauteil verliert dadurch sofort seine Garantie"
+    ],
+    "a": "Das Bauteil kann vorgeschädigt sein und erst Wochen später ausfallen",
+    "exp": "Eine elektrostatische Entladung spürt der Mensch erst ab einigen tausend Volt. Schon kleinere Entladungen können feine Strukturen im Chip schwächen. Solche latenten Schäden führen später zu sporadischen Fehlern, die schwer zu finden sind."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein 30 kg schwerer Server soll in ein halb leeres Rack eingebaut werden. Was ist richtig?",
+    "options": [
+      "Zu zweit oder mit Lift einbauen und schwere Geräte möglichst unten montieren",
+      "Allein einbauen und den Server ganz oben montieren",
+      "Den Server ohne Schienen auf ein anderes Gerät stellen",
+      "Den Rackschrank zum Einbau leicht nach vorne kippen"
+    ],
+    "a": "Zu zweit oder mit Lift einbauen und schwere Geräte möglichst unten montieren",
+    "exp": "Schwere Geräte unten halten den Schwerpunkt niedrig und verringern die Kippgefahr. Beim Herausziehen auf Schienen verhindern Standfüße oder eine Verschraubung am Boden das Umkippen. Das Heben zu zweit schützt vor Verletzungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie vergleichen zwei Monitore für eine Ausschreibung. Welche Kennzeichnung zeigt in der EU den Energieverbrauch in Klassen von A bis G?",
+    "options": [
+      "Das EU-Energielabel",
+      "Das CE-Kennzeichen",
+      "Das GS-Prüfzeichen",
+      "Die RoHS-Konformität"
+    ],
+    "a": "Das EU-Energielabel",
+    "exp": "Das EU-Energielabel gilt u.a. für Monitore und Fernseher. Es zeigt die Effizienzklasse und den Verbrauch im Betrieb. Das CE-Kennzeichen bestätigt nur die Einhaltung von EU-Vorschriften, nicht die Effizienz."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Unternehmen will den Stromverbrauch seiner 200 Arbeitsplätze ohne Neuanschaffung senken. Welche Maßnahme ist am wirksamsten?",
+    "options": [
+      "Energieoptionen per Gruppenrichtlinie zentral vorgeben",
+      "Alle Bildschirmschoner auf eine Animation umstellen",
+      "Die Auflösung aller Monitore auf 1024 x 768 senken",
+      "Die Rechner nachts nur in den Sperrbildschirm schicken"
+    ],
+    "a": "Energieoptionen per Gruppenrichtlinie zentral vorgeben",
+    "exp": "Per GPO schaltet man Monitore nach kurzer Zeit ab und schickt ungenutzte PCs in den Energiesparmodus. Für nächtliche Updates lassen sich die Geräte per Wake-on-LAN wecken. Ein Bildschirmschoner spart keinen Strom."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie haben einen neuen Linux-Server in Betrieb genommen. Welche Angaben gehören in seine Systemdokumentation?",
+    "options": [
+      "Name, IP-Adressen, Dienste, Hardware, Sicherung und Ort der Zugangsdaten",
+      "Nur die Rechnung des Händlers, das Lieferdatum und die Garantiezeit",
+      "Alle Kennwörter im Klartext, damit Kollegen sie schnell finden",
+      "Nur ein Foto des Servers im Rack und die Nummer des Schranks"
+    ],
+    "a": "Name, IP-Adressen, Dienste, Hardware, Sicherung und Ort der Zugangsdaten",
+    "exp": "Mit der Dokumentation können Kollegen bei einer Störung oder in der Vertretung schnell handeln. Kennwörter stehen nicht im Dokument, sondern im Passwortsafe, auf den das Dokument verweist. Nach jeder Änderung wird die Dokumentation aktualisiert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach dem Tausch einer defekten Serverfestplatte aktualisieren Sie die Dokumentation. Welche Angaben sind wichtig?",
+    "options": [
+      "Datum, Slot, Seriennummern alt und neu sowie das Ergebnis des Rebuilds",
+      "Nur der Preis der neuen Festplatte und die Lieferzeit",
+      "Die Farbe der Festplatte und die Temperatur im Serverraum",
+      "Nur die Uhrzeit, zu der der Server gemeldet hat"
+    ],
+    "a": "Datum, Slot, Seriennummern alt und neu sowie das Ergebnis des Rebuilds",
+    "exp": "Mit Slot und Seriennummern lassen sich Garantiefälle abwickeln und die CMDB aktuell halten. Das Ergebnis des Rebuilds belegt, dass der Verbund wieder intakt ist. Häufen sich Ausfälle in einer Charge, fällt das so schneller auf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde meldet nur: „Das WLAN ist schlecht.“ Welche Frage hilft in der Bedarfsanalyse am meisten weiter?",
+    "options": [
+      "„In welchen Räumen und bei welchen Anwendungen tritt das auf?“",
+      "„Soll ich Ihnen gleich neue Access Points anbieten?“",
+      "„Haben Sie den Router schon einmal neu gestartet?“",
+      "„Möchten Sie lieber WLAN 6 oder WLAN 7 haben?“"
+    ],
+    "a": "„In welchen Räumen und bei welchen Anwendungen tritt das auf?“",
+    "exp": "Die offene Präzisierungsfrage klärt Ort und Einsatz des Problems. Erst damit lässt sich entscheiden, ob Ausleuchtung, Störungen oder Kapazität die Ursache sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde reklamiert zu Recht, dass Ihr Techniker bei der Installation ein Kabel beschädigt hat. Wie reagieren Sie?",
+    "options": [
+      "Den Fehler einräumen und eine schnelle Behebung zusagen",
+      "Auf den Haftungsausschluss in den AGB verweisen",
+      "Den Techniker vor dem Kunden deutlich kritisieren",
+      "Erst prüfen lassen, ob der Kunde es selbst war"
+    ],
+    "a": "Den Fehler einräumen und eine schnelle Behebung zusagen",
+    "exp": "Eine berechtigte Reklamation erkennt man offen an. Eine schnelle Lösung erhält das Vertrauen des Kunden. Interne Ursachen klärt man später im Team, nicht vor dem Kunden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde schweift im Beratungsgespräch immer wieder vom Thema ab. Wie führen Sie das Gespräch zurück?",
+    "options": [
+      "Das Gesagte zusammenfassen und mit einer gezielten Frage weitermachen",
+      "Den Kunden direkt unterbrechen und auf die knappe Zeit hinweisen",
+      "Geduldig zuhören, bis der Kunde von selbst zurückkommt",
+      "Das Gespräch beenden und ein Angebot nach Gefühl schicken"
+    ],
+    "a": "Das Gesagte zusammenfassen und mit einer gezielten Frage weitermachen",
+    "exp": "Eine Zusammenfassung würdigt die Aussagen des Kunden und schafft Struktur. Eine gezielte, oft geschlossene Frage lenkt danach höflich zum eigentlichen Thema zurück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde möchte dringend einen Rückruf vom zuständigen Techniker, der gerade im Einsatz ist. Was tun Sie?",
+    "options": [
+      "Rückrufnotiz mit Anliegen anlegen und einen realistischen Zeitpunkt nennen",
+      "Die private Handynummer des Technikers an den Kunden weitergeben",
+      "Einen Rückruf des Technikers innerhalb von fünf Minuten fest zusagen",
+      "Den Kunden bitten, es später am Tag einfach noch einmal zu versuchen"
+    ],
+    "a": "Rückrufnotiz mit Anliegen anlegen und einen realistischen Zeitpunkt nennen",
+    "exp": "Eine vollständige Rückrufnotiz mit Name, Nummer, Anliegen und Dringlichkeit sorgt dafür, dass der Techniker vorbereitet zurückruft. Man sagt nur zu, was man einhalten kann. Private Kontaktdaten gibt man nicht heraus."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Kaufvertrag steht „Lieferung voraussichtlich in KW 20“. Die Ware kommt nicht. Ist der Lieferant ohne Weiteres in Verzug?",
+    "options": [
+      "Nein, der Kunde muss ihn zuerst mahnen",
+      "Ja, mit Ablauf der KW 20 tritt der Verzug automatisch ein",
+      "Ja, aber erst vier Wochen nach dem genannten Termin",
+      "Nein, bei ungefähren Terminen gibt es keinen Verzug"
+    ],
+    "a": "Nein, der Kunde muss ihn zuerst mahnen",
+    "exp": "Ein nur ungefährer Termin ist nicht kalendermäßig bestimmt. Verzug tritt dann erst mit einer Mahnung ein. Bei „Lieferung bis 15. Mai“ wäre keine Mahnung nötig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bestellt wurden Switches mit 24 Ports, geliefert werden Switches mit 16 Ports. Was liegt rechtlich vor?",
+    "options": [
+      "Ein Sachmangel, der Käufer kann zuerst Nacherfüllung verlangen",
+      "Ein Annahmeverzug, weil der Käufer die Ware ablehnt",
+      "Ein neuer Vertrag über die gelieferten 16-Port-Switches",
+      "Kein Mangel, da die Switches technisch einwandfrei sind"
+    ],
+    "a": "Ein Sachmangel, der Käufer kann zuerst Nacherfüllung verlangen",
+    "exp": "Eine Falschlieferung gilt nach § 434 BGB als Sachmangel. Der Käufer kann die Lieferung der bestellten Geräte verlangen und bei Fehlschlagen weitere Rechte geltend machen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Ausbilder bittet Sie, ein Angebot an einen Privatkunden zu prüfen. Es nennt nur Nettopreise. Was ist zu ändern?",
+    "options": [
+      "Der Gesamtpreis inklusive Umsatzsteuer muss angegeben werden",
+      "Nichts, Nettopreise sind gegenüber jedem Kunden üblich",
+      "Es muss zusätzlich die Steuernummer des Kunden stehen",
+      "Die Preise dürfen nur als ungefähre Spanne erscheinen"
+    ],
+    "a": "Der Gesamtpreis inklusive Umsatzsteuer muss angegeben werden",
+    "exp": "Nach der Preisangabenverordnung müssen Verbrauchern Gesamtpreise einschließlich Umsatzsteuer genannt werden. Nettopreise sind nur im Geschäft mit Unternehmen üblich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker kommt zum vereinbarten Liefer- und Aufbautermin, der Kunde hat den Termin vergessen. Wer trägt die Kosten der zweiten Anfahrt?",
+    "options": [
+      "Der Kunde, er ist in Annahmeverzug",
+      "Das Systemhaus, weil es den Termin hätte bestätigen müssen",
+      "Beide Seiten tragen die Kosten jeweils zur Hälfte",
+      "Niemand, eine zweite Anfahrt ist immer kostenlos"
+    ],
+    "a": "Der Kunde, er ist in Annahmeverzug",
+    "exp": "Wer eine ordnungsgemäß angebotene Leistung nicht annimmt, gerät in Annahmeverzug. Nach § 304 BGB kann der Lieferant Ersatz der Mehraufwendungen verlangen, z.B. für die erneute Anfahrt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Geschäftskunde zahlt eine Rechnung erst lange nach Verzugseintritt. Was kann Ihr Systemhaus neben Verzugszinsen verlangen?",
+    "options": [
+      "Eine Verzugspauschale von 40 Euro",
+      "Eine Bearbeitungsgebühr in beliebiger Höhe",
+      "Die komplette Rückgabe der gelieferten Ware",
+      "Einen Zuschlag von 10 Prozent des Rechnungsbetrags"
+    ],
+    "a": "Eine Verzugspauschale von 40 Euro",
+    "exp": "Nach § 288 Abs. 5 BGB steht dem Gläubiger gegenüber Unternehmen eine Pauschale von 40 Euro zu. Gegenüber Verbrauchern gilt diese Pauschale nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Privatkunde hat einen Wartungsvertrag über zwei Jahre. Laut AGB verlängert er sich danach automatisch. Wie kann er nach der Erstlaufzeit kündigen?",
+    "options": [
+      "Jederzeit mit einer Frist von höchstens einem Monat",
+      "Nur zum Ende jedes weiteren Vertragsjahres",
+      "Mit einer Frist von drei Monaten zum Quartalsende",
+      "Gar nicht, bis eine neue Laufzeit abgelaufen ist"
+    ],
+    "a": "Jederzeit mit einer Frist von höchstens einem Monat",
+    "exp": "Seit März 2022 dürfen sich Verbraucherverträge per AGB nach der Erstlaufzeit nur noch auf unbestimmte Zeit verlängern. Sie sind dann jederzeit mit höchstens einem Monat Frist kündbar (§ 309 Nr. 9 BGB)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde beauftragt Sie, seine Serverlandschaft in ein neues Rechenzentrum umzuziehen. Danach sollen alle Dienste laufen. Welcher Vertrag liegt vor?",
+    "options": [
+      "Ein Werkvertrag",
+      "Ein Dienstvertrag",
+      "Ein Kaufvertrag",
+      "Ein Mietvertrag"
+    ],
+    "a": "Ein Werkvertrag",
+    "exp": "Geschuldet ist ein bestimmter Erfolg, nämlich funktionierende Dienste am neuen Standort. Das kennzeichnet den Werkvertrag. Die Vergütung wird mit der Abnahme fällig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach Fertigstellung setzen Sie einem Geschäftskunden eine Frist zur Abnahme. Er reagiert nicht und nennt keinen Mangel. Was gilt?",
+    "options": [
+      "Das Werk gilt nach Ablauf der Frist als abgenommen",
+      "Ohne Unterschrift des Kunden gibt es keine Abnahme",
+      "Sie müssen die Abnahme vor Gericht einklagen",
+      "Die Frist verlängert sich automatisch um einen Monat"
+    ],
+    "a": "Das Werk gilt nach Ablauf der Frist als abgenommen",
+    "exp": "Nach § 640 Abs. 2 BGB gilt ein Werk als abgenommen, wenn der Besteller die Frist verstreichen lässt, ohne einen Mangel zu nennen. Bei Verbrauchern muss man zusätzlich in Textform auf diese Folge hinweisen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei der Abnahme eines Netzwerks fallen zwei kleine Mängel auf. Wie gehen Sie korrekt vor?",
+    "options": [
+      "Abnahme erklären und die Mängel mit Frist zur Behebung im Protokoll vorbehalten",
+      "Die Abnahme verschieben, bis alles vollständig fehlerfrei ist",
+      "Die Mängel mündlich besprechen und nicht aufschreiben",
+      "Die Abnahme erklären und die Mängel einfach weglassen"
+    ],
+    "a": "Abnahme erklären und die Mängel mit Frist zur Behebung im Protokoll vorbehalten",
+    "exp": "Kleine Mängel verhindern die Abnahme nicht. Sie werden aber als Vorbehalt mit Frist ins Protokoll aufgenommen. So behält der Kunde seine Rechte und die Nacharbeit ist verbindlich geregelt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Privatkundin kommt nach 26 Monaten mit einem defekten neuen Notebook. Der Hersteller gibt drei Jahre Garantie. Was gilt?",
+    "options": [
+      "Die Gewährleistung ist abgelaufen, sie kann die Herstellergarantie nutzen",
+      "Der Händler muss aus der Gewährleistung kostenlos reparieren",
+      "Weder Gewährleistung noch Garantie greifen nach 24 Monaten",
+      "Die Garantie verlängert die Gewährleistung auf drei Jahre"
+    ],
+    "a": "Die Gewährleistung ist abgelaufen, sie kann die Herstellergarantie nutzen",
+    "exp": "Die gesetzliche Gewährleistung gegenüber dem Händler endet bei neuen Sachen nach zwei Jahren. Die Garantie ist eine freiwillige Zusage des Herstellers und gilt nach ihren eigenen Bedingungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welchem Fall braucht ein Unternehmen KEINEN Vertrag zur Auftragsverarbeitung?",
+    "options": [
+      "Bei der Beauftragung eines Steuerberaters für den Jahresabschluss",
+      "Beim Hosting der Kundendatenbank in einer Cloud",
+      "Bei der Vernichtung alter Festplatten durch einen Entsorger",
+      "Bei der Lohnabrechnung durch ein externes Abrechnungsbüro"
+    ],
+    "a": "Bei der Beauftragung eines Steuerberaters für den Jahresabschluss",
+    "exp": "Ein Steuerberater arbeitet eigenverantwortlich und weisungsfrei, er ist selbst Verantwortlicher. Cloud-Hosting, Datenträgervernichtung und ausgelagerte Lohnabrechnung sind dagegen typische Auftragsverarbeitungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde möchte einen Ihrer Techniker für ein Jahr fest in seiner IT-Abteilung einsetzen, wo er nach Weisung des Kunden arbeitet. Was liegt vor?",
+    "options": [
+      "Arbeitnehmerüberlassung, die eine Erlaubnis nach dem AÜG braucht",
+      "Ein Werkvertrag ohne besondere rechtliche Voraussetzungen",
+      "Ein Kaufvertrag über die Arbeitsleistung des Technikers",
+      "Ein Mietvertrag über den Techniker für die Dauer eines Jahres"
+    ],
+    "a": "Arbeitnehmerüberlassung, die eine Erlaubnis nach dem AÜG braucht",
+    "exp": "Wird ein Mitarbeiter in den Betrieb des Kunden eingegliedert und erhält dort Weisungen, ist das Arbeitnehmerüberlassung. Dafür braucht der Verleiher eine Erlaubnis der Bundesagentur für Arbeit. Beim Werk- oder Dienstvertrag bleibt das Weisungsrecht beim eigenen Arbeitgeber."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Supportteam erhält laufend neue Aufgaben unterschiedlicher Größe und will den Arbeitsfluss sichtbar machen. Welche Methode passt?",
+    "options": [
+      "Kanban",
+      "Scrum",
+      "Wasserfallmodell",
+      "V-Modell"
+    ],
+    "a": "Kanban",
+    "exp": "Kanban eignet sich für einen stetigen Strom von Aufgaben ohne feste Iterationen. Das Board macht Engpässe sichtbar, WIP-Limits verhindern Überlastung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zur Projekthalbzeit zeichnet sich ab, dass das Budget um 15 Prozent überschritten wird. Was sollte der Projektleiter tun?",
+    "options": [
+      "Den Auftraggeber frühzeitig informieren und Handlungsoptionen vorlegen",
+      "Die Überschreitung erst im Abschlussbericht des Projekts erwähnen",
+      "Ohne Absprache einzelne Leistungen aus dem Projektumfang streichen",
+      "Die Mehrkosten auf andere laufende Projekte der Firma verbuchen"
+    ],
+    "a": "Den Auftraggeber frühzeitig informieren und Handlungsoptionen vorlegen",
+    "exp": "Abweichungen muss der Projektleiter früh melden, solange noch gegengesteuert werden kann. Optionen sind z.B. Budgeterhöhung, geringerer Umfang oder späterer Termin. Die Entscheidung trifft der Auftraggeber."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt schließt für mögliche Schäden durch Datenverlust bei der Migration eine Versicherung ab. Welche Strategie der Risikobehandlung ist das?",
+    "options": [
+      "Risikoübertragung",
+      "Risikovermeidung",
+      "Risikoakzeptanz",
+      "Risikoverminderung"
+    ],
+    "a": "Risikoübertragung",
+    "exp": "Bei der Übertragung trägt ein Dritter die finanziellen Folgen, z.B. eine Versicherung oder ein Dienstleister per Vertrag. Das Risiko selbst bleibt bestehen, nur der Schaden wird abgefedert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Fachabteilungen stellen im Projekt widersprüchliche Anforderungen. Wie gehen Sie als Projektleiter vor?",
+    "options": [
+      "Den Konflikt offenlegen und vom Auftraggeber verbindlich entscheiden lassen",
+      "Einfach die Anforderung der Abteilung umsetzen, die lauter auftritt",
+      "Beide Anforderungen gleichzeitig umsetzen und das Ergebnis abwarten",
+      "Beide Anforderungen streichen, um jeden Streit im Projekt zu vermeiden"
+    ],
+    "a": "Den Konflikt offenlegen und vom Auftraggeber verbindlich entscheiden lassen",
+    "exp": "Widersprüche klärt man früh und dokumentiert sie. Einigen sich die Beteiligten nicht, entscheidet der Auftraggeber. Die Entscheidung wird im Anforderungsdokument festgehalten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker hat einen Druckerfehler behoben. Was ist vor dem Schließen des Tickets sinnvoll?",
+    "options": [
+      "Die Lösung dokumentieren und vom Anwender bestätigen lassen",
+      "Das Ticket sofort schließen, der Fehler ist ja behoben",
+      "Das Ticket offen lassen, falls der Fehler wiederkommt",
+      "Das Ticket löschen, weil es keine Bedeutung mehr hat"
+    ],
+    "a": "Die Lösung dokumentieren und vom Anwender bestätigen lassen",
+    "exp": "Erst die Bestätigung zeigt, dass das Problem für den Anwender wirklich gelöst ist. Die dokumentierte Lösung hilft bei ähnlichen Fällen und füllt die Wissensdatenbank."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die vereinbarte Lösungszeit für einen Incident läuft in einer Stunde ab, der Second Level kommt nicht weiter. Was ist jetzt richtig?",
+    "options": [
+      "Rechtzeitig hierarchisch eskalieren und den Kunden informieren",
+      "Das Ticket kurz vor Ablauf schließen und neu eröffnen",
+      "Abwarten und nach Ablauf der Frist die Ursache suchen",
+      "Den Incident ohne Rücksprache als Service Request einstufen"
+    ],
+    "a": "Rechtzeitig hierarchisch eskalieren und den Kunden informieren",
+    "exp": "Droht ein SLA-Bruch, müssen Vorgesetzte informiert werden, damit sie Ressourcen freigeben oder Entscheidungen treffen. Der Kunde erfährt den Stand, bevor die Frist abläuft."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Mitarbeiterin erkrankt während ihres Urlaubs und legt ein ärztliches Attest vor. Was gilt?",
+    "options": [
+      "Die attestierten Krankheitstage zählen nicht als Urlaub",
+      "Der Urlaub gilt trotz Krankheit als genommen",
+      "Sie muss den Urlaub sofort abbrechen und arbeiten",
+      "Die Krankheitstage werden vom Lohn abgezogen"
+    ],
+    "a": "Die attestierten Krankheitstage zählen nicht als Urlaub",
+    "exp": "Nach § 9 BUrlG zählen durch ärztliches Zeugnis nachgewiesene Krankheitstage nicht als Urlaub. Die Tage bleiben als Resturlaub erhalten. Eine Verlängerung des Urlaubs muss aber neu beantragt werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihre schriftliche Abschlussprüfung ist am Mittwoch. Was gilt für den Dienstag nach dem BBiG?",
+    "options": [
+      "Sie sind an diesem Arbeitstag freizustellen",
+      "Sie müssen dafür einen Urlaubstag nehmen",
+      "Sie arbeiten normal, nur ohne Überstunden",
+      "Nur minderjährige Azubis sind freizustellen"
+    ],
+    "a": "Sie sind an diesem Arbeitstag freizustellen",
+    "exp": "Nach § 15 BBiG müssen Auszubildende an dem Arbeitstag, der der schriftlichen Abschlussprüfung unmittelbar vorangeht, freigestellt werden. Die Zeit wird auf die Ausbildungszeit angerechnet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender soll seinen Ausbildungsnachweis nur zu Hause in seiner Freizeit schreiben. Was gilt?",
+    "options": [
+      "Der Betrieb muss Zeit geben, ihn während der Ausbildung zu führen",
+      "Der Nachweis ist freiwillig und reine Privatsache des Azubis",
+      "Nur die Berufsschule darf dafür Unterrichtszeit einräumen",
+      "Der Ausbilder muss den Nachweis vollständig selbst schreiben"
+    ],
+    "a": "Der Betrieb muss Zeit geben, ihn während der Ausbildung zu führen",
+    "exp": "Nach § 14 BBiG haben Ausbildende Gelegenheit zu geben, den Ausbildungsnachweis am Arbeitsplatz zu führen. Der Nachweis ist Voraussetzung für die Zulassung zur Abschlussprüfung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Administrator will nebenbei selbstständig die Netzwerke von Kunden seines Arbeitgebers betreuen. Was gilt?",
+    "options": [
+      "Das ist als Konkurrenztätigkeit ohne Erlaubnis unzulässig",
+      "Das ist erlaubt, solange er es nur am Wochenende tut",
+      "Das ist erlaubt, weil jede Nebentätigkeit frei ist",
+      "Das ist nur mit eigener Gewerbeanmeldung verboten"
+    ],
+    "a": "Das ist als Konkurrenztätigkeit ohne Erlaubnis unzulässig",
+    "exp": "Während des Arbeitsverhältnisses darf ein Arbeitnehmer seinem Arbeitgeber keine Konkurrenz machen. Andere Nebenjobs sind meist zulässig, wenn sie die Arbeit nicht beeinträchtigen und das Arbeitszeitgesetz einhalten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Azubi verletzt sich beim Einbau eines Servers und ist danach fünf Tage arbeitsunfähig. Was muss der Betrieb tun?",
+    "options": [
+      "Eine Unfallanzeige an die Berufsgenossenschaft schicken",
+      "Den Unfall nur im Verbandbuch des Betriebs eintragen",
+      "Den Unfall nur der Krankenkasse des Azubis melden",
+      "Nichts, der Azubi muss den Unfall selbst melden"
+    ],
+    "a": "Eine Unfallanzeige an die Berufsgenossenschaft schicken",
+    "exp": "Führt ein Arbeitsunfall zu mehr als drei Kalendertagen Arbeitsunfähigkeit, muss der Unternehmer ihn innerhalb von drei Tagen dem Unfallversicherungsträger melden. Kleinere Verletzungen werden im Verbandbuch dokumentiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Einem Mitarbeiter wird gekündigt, ohne dass der vorhandene Betriebsrat vorher angehört wurde. Welche Folge hat das?",
+    "options": [
+      "Die Kündigung ist unwirksam, auch wenn ein Grund vorliegt",
+      "Die Kündigung ist wirksam, nur die Frist verlängert sich",
+      "Die Kündigung ist wirksam, der Arbeitgeber zahlt ein Bußgeld",
+      "Die Kündigung wird erst nach drei Monaten wirksam"
+    ],
+    "a": "Die Kündigung ist unwirksam, auch wenn ein Grund vorliegt",
+    "exp": "Nach § 102 BetrVG muss der Betriebsrat vor jeder Kündigung angehört werden. Eine ohne Anhörung ausgesprochene Kündigung ist unwirksam, auch wenn ein Kündigungsgrund vorliegt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus mit 60 Mitarbeitern und Betriebsrat will einen neuen Administrator einstellen. Was ist vorher nötig?",
+    "options": [
+      "Den Betriebsrat unterrichten und seine Zustimmung einholen",
+      "Die Zustimmung der zuständigen IHK einholen",
+      "Nur die Agentur für Arbeit über die Stelle informieren",
+      "Nichts, Einstellungen entscheidet allein die Leitung"
+    ],
+    "a": "Den Betriebsrat unterrichten und seine Zustimmung einholen",
+    "exp": "Bei mehr als 20 wahlberechtigten Arbeitnehmern hat der Betriebsrat bei Einstellungen ein Zustimmungsrecht (§ 99 BetrVG). Er darf nur aus gesetzlich genannten Gründen und innerhalb einer Woche widersprechen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Notebook lässt sich am Markt nur für 899,00 Euro (Barverkaufspreis) verkaufen. Ihr Betrieb rechnet mit 25 % Handlungskosten und 10 % Gewinn. Wie hoch darf der Bezugspreis höchstens sein?",
+    "options": [
+      "653,82 Euro",
+      "584,35 Euro",
+      "606,83 Euro",
+      "817,27 Euro"
+    ],
+    "a": "653,82 Euro",
+    "exp": "Rückwärts wird durch die Zuschlagsfaktoren geteilt: 899,00 Euro / 1,10 = 817,27 Euro (Selbstkosten); 817,27 Euro / 1,25 = 653,82 Euro. Prozentabzüge vom Verkaufspreis wären falsch, weil die Zuschläge auf den kleineren Grundwert gerechnet wurden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Notebook lässt sich am Markt nur für 1.450,00 Euro (Barverkaufspreis) verkaufen. Ihr Betrieb rechnet mit 30 % Handlungskosten und 8 % Gewinn. Wie hoch darf der Bezugspreis höchstens sein?",
+    "options": [
+      "1.032,76 Euro",
+      "899,00 Euro",
+      "933,80 Euro",
+      "1.342,59 Euro"
+    ],
+    "a": "1.032,76 Euro",
+    "exp": "Rückwärts wird durch die Zuschlagsfaktoren geteilt: 1.450,00 Euro / 1,08 = 1.342,59 Euro (Selbstkosten); 1.342,59 Euro / 1,30 = 1.032,76 Euro. Prozentabzüge vom Verkaufspreis wären falsch, weil die Zuschläge auf den kleineren Grundwert gerechnet wurden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Router hat einen Bezugspreis von 400,00 Euro und einen Listenverkaufspreis (netto) von 580,00 Euro. Wie hoch ist der Kalkulationsfaktor?",
+    "options": [
+      "1,45",
+      "0,69",
+      "0,31",
+      "0,45"
+    ],
+    "a": "1,45",
+    "exp": "Kalkulationsfaktor = Listenverkaufspreis / Bezugspreis = 580,00 Euro / 400,00 Euro = 1,45. Der Kalkulationszuschlag wäre 45,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Router hat einen Bezugspreis von 1.250,00 Euro und einen Listenverkaufspreis (netto) von 2.000,00 Euro. Wie hoch ist der Kalkulationsfaktor?",
+    "options": [
+      "1,60",
+      "0,62",
+      "0,38",
+      "0,60"
+    ],
+    "a": "1,60",
+    "exp": "Kalkulationsfaktor = Listenverkaufspreis / Bezugspreis = 2.000,00 Euro / 1.250,00 Euro = 1,60. Der Kalkulationszuschlag wäre 60,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bezugspreis 400,00 Euro, Listenverkaufspreis (netto) 580,00 Euro. Wie hoch ist die Handelsspanne?",
+    "options": [
+      "31,0 %",
+      "45,0 %",
+      "69,0 %",
+      "14,5 %"
+    ],
+    "a": "31,0 %",
+    "exp": "Handelsspanne = (Listenverkaufspreis - Bezugspreis) / Listenverkaufspreis * 100 = 180,00 Euro / 580,00 Euro * 100 = 31,0 %. Bezogen auf den Bezugspreis wäre es der Kalkulationszuschlag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bezugspreis 1.250,00 Euro, Listenverkaufspreis (netto) 2.000,00 Euro. Wie hoch ist die Handelsspanne?",
+    "options": [
+      "37,5 %",
+      "60,0 %",
+      "62,5 %",
+      "16,0 %"
+    ],
+    "a": "37,5 %",
+    "exp": "Handelsspanne = (Listenverkaufspreis - Bezugspreis) / Listenverkaufspreis * 100 = 750,00 Euro / 2.000,00 Euro * 100 = 37,5 %. Bezogen auf den Bezugspreis wäre es der Kalkulationszuschlag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Barverkaufspreis eines Servers beträgt 970,00 Euro. Der Kunde soll 3 % Skonto und 10 % Rabatt abziehen dürfen. Welchen Listenverkaufspreis setzen Sie an?",
+    "options": [
+      "1.111,11 Euro",
+      "1.099,01 Euro",
+      "1.096,10 Euro",
+      "1.000,00 Euro"
+    ],
+    "a": "1.111,11 Euro",
+    "exp": "Skonto und Rabatt werden vom späteren Preis abgezogen, also im Hundert gerechnet: 970,00 Euro / 0,97 = 1.000,00 Euro (Zielverkaufspreis); 1.000,00 Euro / 0,90 = 1.111,11 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Barverkaufspreis eines Servers beträgt 1.960,00 Euro. Der Kunde soll 2 % Skonto und 20 % Rabatt abziehen dürfen. Welchen Listenverkaufspreis setzen Sie an?",
+    "options": [
+      "2.500,00 Euro",
+      "2.399,04 Euro",
+      "2.391,20 Euro",
+      "2.000,00 Euro"
+    ],
+    "a": "2.500,00 Euro",
+    "exp": "Skonto und Rabatt werden vom späteren Preis abgezogen, also im Hundert gerechnet: 1.960,00 Euro / 0,98 = 2.000,00 Euro (Zielverkaufspreis); 2.000,00 Euro / 0,80 = 2.500,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für ein Wartungsprodukt fallen 24.000,00 Euro Fixkosten und 35,00 Euro variable Kosten je Stück an. Wie hoch sind die Stückkosten bei 800 Stück?",
+    "options": [
+      "65,00 Euro",
+      "30,00 Euro",
+      "35,00 Euro",
+      "70,00 Euro"
+    ],
+    "a": "65,00 Euro",
+    "exp": "Stückkosten = Fixkosten / Menge + variable Stückkosten = 24.000,00 Euro / 800 + 35,00 Euro = 65,00 Euro. Bei größerer Menge sinkt der Fixkostenanteil (Fixkostendegression)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für ein Wartungsprodukt fallen 9.000,00 Euro Fixkosten und 12,50 Euro variable Kosten je Stück an. Wie hoch sind die Stückkosten bei 1.500 Stück?",
+    "options": [
+      "18,50 Euro",
+      "6,00 Euro",
+      "12,50 Euro",
+      "25,00 Euro"
+    ],
+    "a": "18,50 Euro",
+    "exp": "Stückkosten = Fixkosten / Menge + variable Stückkosten = 9.000,00 Euro / 1.500 + 12,50 Euro = 18,50 Euro. Bei größerer Menge sinkt der Fixkostenanteil (Fixkostendegression)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Storage kostet 12.000,00 Euro, Nutzungsdauer 4 Jahre, kalkulatorischer Zins 6 % auf das durchschnittlich gebundene Kapital, Betriebskosten 1.500,00 Euro pro Jahr. Wie hoch sind die jährlichen Kosten?",
+    "options": [
+      "4.860,00 Euro",
+      "5.220,00 Euro",
+      "4.500,00 Euro",
+      "18.000,00 Euro"
+    ],
+    "a": "4.860,00 Euro",
+    "exp": "Abschreibung: 12.000,00 Euro / 4 = 3.000,00 Euro. Zinsen: 12.000,00 Euro / 2 * 6 % = 360,00 Euro. Summe mit Betriebskosten: 3.000,00 Euro + 360,00 Euro + 1.500,00 Euro = 4.860,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Storage kostet 30.000,00 Euro, Nutzungsdauer 5 Jahre, kalkulatorischer Zins 5 % auf das durchschnittlich gebundene Kapital, Betriebskosten 2.800,00 Euro pro Jahr. Wie hoch sind die jährlichen Kosten?",
+    "options": [
+      "9.550,00 Euro",
+      "10.300,00 Euro",
+      "8.800,00 Euro",
+      "44.000,00 Euro"
+    ],
+    "a": "9.550,00 Euro",
+    "exp": "Abschreibung: 30.000,00 Euro / 5 = 6.000,00 Euro. Zinsen: 30.000,00 Euro / 2 * 5 % = 750,00 Euro. Summe mit Betriebskosten: 6.000,00 Euro + 750,00 Euro + 2.800,00 Euro = 9.550,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Einsparung von 10.000,00 Euro fällt erst in 3 Jahren an. Wie hoch ist ihr Barwert bei 5 % Zins?",
+    "options": [
+      "8.638,38 Euro",
+      "8.500,00 Euro",
+      "11.576,25 Euro",
+      "8.695,65 Euro"
+    ],
+    "a": "8.638,38 Euro",
+    "exp": "Barwert = Betrag / (1 + i)^n = 10.000,00 Euro / 1,05^3 = 8.638,38 Euro. Geld, das später fließt, ist heute weniger wert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Einsparung von 25.000,00 Euro fällt erst in 2 Jahren an. Wie hoch ist ihr Barwert bei 4 % Zins?",
+    "options": [
+      "23.113,91 Euro",
+      "23.000,00 Euro",
+      "27.040,00 Euro",
+      "23.148,15 Euro"
+    ],
+    "a": "23.113,91 Euro",
+    "exp": "Barwert = Betrag / (1 + i)^n = 25.000,00 Euro / 1,04^2 = 23.113,91 Euro. Geld, das später fließt, ist heute weniger wert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kontokorrentkredit über 15.000,00 Euro wird für 90 Tage zu 8 % Jahreszins genutzt. Wie hoch sind die Zinsen (kaufmännisch, 360 Tage)?",
+    "options": [
+      "300,00 Euro",
+      "1.200,00 Euro",
+      "295,89 Euro",
+      "3.600,00 Euro"
+    ],
+    "a": "300,00 Euro",
+    "exp": "Zinsen = Kapital * Zinssatz * Tage / 360 = 15.000,00 Euro * 8 % * 90 / 360 = 300,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kontokorrentkredit über 4.800,00 Euro wird für 45 Tage zu 11 % Jahreszins genutzt. Wie hoch sind die Zinsen (kaufmännisch, 360 Tage)?",
+    "options": [
+      "66,00 Euro",
+      "528,00 Euro",
+      "65,10 Euro",
+      "792,00 Euro"
+    ],
+    "a": "66,00 Euro",
+    "exp": "Zinsen = Kapital * Zinssatz * Tage / 360 = 4.800,00 Euro * 11 % * 45 / 360 = 66,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Monitor für 800,00 Euro netto wird in den Sammelposten (Pool 250 bis 1.000 Euro) aufgenommen. Wie hoch ist die jährliche Abschreibung?",
+    "options": [
+      "160,00 Euro",
+      "800,00 Euro",
+      "266,67 Euro",
+      "80,00 Euro"
+    ],
+    "a": "160,00 Euro",
+    "exp": "Der Sammelposten wird über 5 Jahre mit je 20 % abgeschrieben: 800,00 Euro / 5 = 160,00 Euro, unabhängig von der tatsächlichen Nutzungsdauer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Monitor für 450,00 Euro netto wird in den Sammelposten (Pool 250 bis 1.000 Euro) aufgenommen. Wie hoch ist die jährliche Abschreibung?",
+    "options": [
+      "90,00 Euro",
+      "450,00 Euro",
+      "150,00 Euro",
+      "45,00 Euro"
+    ],
+    "a": "90,00 Euro",
+    "exp": "Der Sammelposten wird über 5 Jahre mit je 20 % abgeschrieben: 450,00 Euro / 5 = 90,00 Euro, unabhängig von der tatsächlichen Nutzungsdauer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker verdient 18,50 Euro pro Stunde und leistet 6 Überstunden mit 25 % Zuschlag. Wie hoch ist die Vergütung dafür?",
+    "options": [
+      "138,75 Euro",
+      "111,00 Euro",
+      "27,75 Euro",
+      "573,50 Euro"
+    ],
+    "a": "138,75 Euro",
+    "exp": "6 * 18,50 Euro = 111,00 Euro; plus 25 % Zuschlag = 138,75 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker verdient 22,00 Euro pro Stunde und leistet 10 Überstunden mit 30 % Zuschlag. Wie hoch ist die Vergütung dafür?",
+    "options": [
+      "286,00 Euro",
+      "220,00 Euro",
+      "66,00 Euro",
+      "880,00 Euro"
+    ],
+    "a": "286,00 Euro",
+    "exp": "10 * 22,00 Euro = 220,00 Euro; plus 30 % Zuschlag = 286,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bruttogehalt 2.800,00 Euro, Arbeitnehmeranteil Sozialversicherung vereinfacht 20 %, Lohnsteuer laut Tabelle (angenommen) 260,00 Euro. Wie hoch ist das Nettogehalt?",
+    "options": [
+      "1.980,00 Euro",
+      "2.240,00 Euro",
+      "2.540,00 Euro",
+      "1.420,00 Euro"
+    ],
+    "a": "1.980,00 Euro",
+    "exp": "2.800,00 Euro - 560,00 Euro (SV) - 260,00 Euro (Lohnsteuer) = 1.980,00 Euro. Der Arbeitgeberanteil wird nicht vom Brutto abgezogen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bruttogehalt 3.500,00 Euro, Arbeitnehmeranteil Sozialversicherung vereinfacht 20 %, Lohnsteuer laut Tabelle (angenommen) 420,00 Euro. Wie hoch ist das Nettogehalt?",
+    "options": [
+      "2.380,00 Euro",
+      "2.800,00 Euro",
+      "3.080,00 Euro",
+      "1.680,00 Euro"
+    ],
+    "a": "2.380,00 Euro",
+    "exp": "3.500,00 Euro - 700,00 Euro (SV) - 420,00 Euro (Lohnsteuer) = 2.380,00 Euro. Der Arbeitgeberanteil wird nicht vom Brutto abgezogen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Umsatz lag im Vorjahr bei 480.000,00 Euro und in diesem Jahr bei 540.000,00 Euro. Um wie viel Prozent hat er sich verändert?",
+    "options": [
+      "+12,5 %",
+      "+11,1 %",
+      "-12,5 %",
+      "+125,0 %"
+    ],
+    "a": "+12,5 %",
+    "exp": "Veränderung = (neu - alt) / alt * 100 = 60.000,00 Euro / 480.000,00 Euro * 100 = 12,5 %. Grundwert ist immer der alte Wert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Umsatz lag im Vorjahr bei 1.250.000,00 Euro und in diesem Jahr bei 1.150.000,00 Euro. Um wie viel Prozent hat er sich verändert?",
+    "options": [
+      "-8,0 %",
+      "-8,7 %",
+      "+8,0 %",
+      "-80,0 %"
+    ],
+    "a": "-8,0 %",
+    "exp": "Veränderung = (neu - alt) / alt * 100 = -100.000,00 Euro / 1.250.000,00 Euro * 100 = -8,0 %. Grundwert ist immer der alte Wert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein SLA sagt 98 % Verfügbarkeit innerhalb der Servicezeit zu (Mo bis Fr, 10 Stunden pro Tag, 22 Arbeitstage im Monat). Wie viel Ausfall ist im Monat erlaubt?",
+    "options": [
+      "4,4 Stunden",
+      "14,4 Stunden",
+      "215,6 Stunden",
+      "2,2 Stunden"
+    ],
+    "a": "4,4 Stunden",
+    "exp": "Servicezeit: 22 * 10 = 220 Stunden. Erlaubter Ausfall: 2 % davon = 4,4 Stunden. Ausfälle außerhalb der Servicezeit zählen nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein SLA sagt 99 % Verfügbarkeit innerhalb der Servicezeit zu (Mo bis Fr, 12 Stunden pro Tag, 21 Arbeitstage im Monat). Wie viel Ausfall ist im Monat erlaubt?",
+    "options": [
+      "2,5 Stunden",
+      "7,2 Stunden",
+      "249,5 Stunden",
+      "1,3 Stunden"
+    ],
+    "a": "2,5 Stunden",
+    "exp": "Servicezeit: 21 * 12 = 252 Stunden. Erlaubter Ausfall: 1 % davon = 2,5 Stunden. Ausfälle außerhalb der Servicezeit zählen nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt hat ein Budget (BAC) von 120.000,00 Euro. Der Kostenentwicklungsindex (CPI) liegt bei 0,80. Mit welchen Gesamtkosten (EAC) ist zu rechnen, wenn es so weitergeht?",
+    "options": [
+      "150.000,00 Euro",
+      "96.000,00 Euro",
+      "120.000,00 Euro",
+      "144.000,00 Euro"
+    ],
+    "a": "150.000,00 Euro",
+    "exp": "EAC = BAC / CPI = 120.000,00 Euro / 0,80 = 150.000,00 Euro. Das Projekt wird teurer als geplant."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt hat ein Budget (BAC) von 60.000,00 Euro. Der Kostenentwicklungsindex (CPI) liegt bei 1,20. Mit welchen Gesamtkosten (EAC) ist zu rechnen, wenn es so weitergeht?",
+    "options": [
+      "50.000,00 Euro",
+      "72.000,00 Euro",
+      "60.000,00 Euro",
+      "48.000,00 Euro"
+    ],
+    "a": "50.000,00 Euro",
+    "exp": "EAC = BAC / CPI = 60.000,00 Euro / 1,20 = 50.000,00 Euro. Das Projekt bleibt unter Budget."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Vorgang im Netzplan hat den frühesten Anfangszeitpunkt 4 und den spätesten Anfangszeitpunkt 9 (Tage). Wie groß ist sein Gesamtpuffer, und liegt er auf dem kritischen Pfad?",
+    "options": [
+      "5 Tage, nicht kritisch",
+      "5 Tage, kritisch",
+      "13 Tage, nicht kritisch",
+      "6 Tage, kritisch"
+    ],
+    "a": "5 Tage, nicht kritisch",
+    "exp": "GP = SAZ - FAZ = 9 - 4 = 5. Vorgänge mit Gesamtpuffer 0 liegen auf dem kritischen Pfad."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Vorgang im Netzplan hat den frühesten Anfangszeitpunkt 12 und den spätesten Anfangszeitpunkt 12 (Tage). Wie groß ist sein Gesamtpuffer, und liegt er auf dem kritischen Pfad?",
+    "options": [
+      "0 Tage, kritisch",
+      "0 Tage, nicht kritisch",
+      "24 Tage, nicht kritisch",
+      "1 Tage, kritisch"
+    ],
+    "a": "0 Tage, kritisch",
+    "exp": "GP = SAZ - FAZ = 12 - 12 = 0. Vorgänge mit Gesamtpuffer 0 liegen auf dem kritischen Pfad."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Drei parallele Wege führen vom Projektstart zum Ende: Weg 1: 3 + 5 + 2 Tage; Weg 2: 4 + 4 Tage; Weg 3: 2 + 3 + 3 + 1 Tage. Wie lange dauert das Projekt mindestens?",
+    "options": [
+      "10 Tage",
+      "8 Tage",
+      "27 Tage",
+      "9 Tage"
+    ],
+    "a": "10 Tage",
+    "exp": "Wege: 10, 8, 9 Tage. Der längste Weg ist der kritische Pfad und bestimmt die Projektdauer: 10 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Drei parallele Wege führen vom Projektstart zum Ende: Weg 1: 6 + 5 Tage; Weg 2: 3 + 3 + 4 Tage; Weg 3: 5 + 4 Tage. Wie lange dauert das Projekt mindestens?",
+    "options": [
+      "11 Tage",
+      "9 Tage",
+      "30 Tage",
+      "10 Tage"
+    ],
+    "a": "11 Tage",
+    "exp": "Wege: 11, 10, 9 Tage. Der längste Weg ist der kritische Pfad und bestimmt die Projektdauer: 11 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "3 Mitarbeiter arbeiten je 12 Tage (8 Stunden) an einem Projekt. Der interne Stundensatz beträgt 65,00 Euro. Wie hoch sind die Personalkosten?",
+    "options": [
+      "18.720,00 Euro",
+      "2.340,00 Euro",
+      "6.240,00 Euro",
+      "17.550,00 Euro"
+    ],
+    "a": "18.720,00 Euro",
+    "exp": "3 * 12 Tage * 8 h = 288 Stunden; * 65,00 Euro = 18.720,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "2 Mitarbeiter arbeiten je 20 Tage (8 Stunden) an einem Projekt. Der interne Stundensatz beträgt 72,00 Euro. Wie hoch sind die Personalkosten?",
+    "options": [
+      "23.040,00 Euro",
+      "2.880,00 Euro",
+      "11.520,00 Euro",
+      "21.600,00 Euro"
+    ],
+    "a": "23.040,00 Euro",
+    "exp": "2 * 20 Tage * 8 h = 320 Stunden; * 72,00 Euro = 23.040,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Angebot A: 2.400,00 Euro, 5 % Rabatt, 2 % Skonto, 30,00 Euro Versand. Angebot B: 2.300,00 Euro, 0 % Rabatt, 3 % Skonto, 45,00 Euro Versand. Welches ist günstiger?",
+    "options": [
+      "A, um 11,60 Euro",
+      "B, um 11,60 Euro",
+      "B, um 100,00 Euro",
+      "Beide kosten gleich viel"
+    ],
+    "a": "A, um 11,60 Euro",
+    "exp": "Bezugspreis A: 2.264,40 Euro. Bezugspreis B: 2.276,00 Euro. Erst alle Abzüge und Kosten einrechnen, dann vergleichen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Angebot A: 980,00 Euro, 10 % Rabatt, 0 % Skonto, 0,00 Euro Versand. Angebot B: 900,00 Euro, 0 % Rabatt, 2 % Skonto, 25,00 Euro Versand. Welches ist günstiger?",
+    "options": [
+      "A, um 25,00 Euro",
+      "B, um 25,00 Euro",
+      "B, um 80,00 Euro",
+      "Beide kosten gleich viel"
+    ],
+    "a": "A, um 25,00 Euro",
+    "exp": "Bezugspreis A: 882,00 Euro. Bezugspreis B: 907,00 Euro. Erst alle Abzüge und Kosten einrechnen, dann vergleichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele mögliche Passwörter gibt es mit genau 6 Zeichen aus Kleinbuchstaben und Ziffern (36 Zeichen Vorrat)?",
+    "options": [
+      "2.176.782.336",
+      "216",
+      "60.466.176",
+      "1.838.265.625"
+    ],
+    "a": "2.176.782.336",
+    "exp": "Jede Stelle hat 36 Möglichkeiten: 36^6 = 2.176.782.336."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele mögliche Passwörter gibt es mit genau 8 Zeichen aus Ziffern (10 Zeichen Vorrat)?",
+    "options": [
+      "100.000.000",
+      "80",
+      "10.000.000",
+      "43.046.721"
+    ],
+    "a": "100.000.000",
+    "exp": "Jede Stelle hat 10 Möglichkeiten: 10^8 = 100.000.000."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Anwendung braucht Firewall (99,9 %), Switch (99,95 %) und Server (99,5 %) gleichzeitig. Wie hoch ist die Gesamtverfügbarkeit?",
+    "options": [
+      "99,35 %",
+      "99,50 %",
+      "99,78 %",
+      "99,95 %"
+    ],
+    "a": "99,35 %",
+    "exp": "In Reihe werden die Verfügbarkeiten multipliziert: 0,9990 * 0,9995 * 0,9950 = 99,35 %. Die Kette ist schlechter als ihr schwächstes Glied."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Anwendung braucht Firewall (99,99 %), Switch (99,9 %) und Server (99,8 %) gleichzeitig. Wie hoch ist die Gesamtverfügbarkeit?",
+    "options": [
+      "99,69 %",
+      "99,80 %",
+      "99,90 %",
+      "99,99 %"
+    ],
+    "a": "99,69 %",
+    "exp": "In Reihe werden die Verfügbarkeiten multipliziert: 0,9999 * 0,9990 * 0,9980 = 99,69 %. Die Kette ist schlechter als ihr schwächstes Glied."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Zwei Internetleitungen mit je 99 % Verfügbarkeit arbeiten redundant (eine reicht). Wie hoch ist die Verfügbarkeit des Anschlusses?",
+    "options": [
+      "99,99 %",
+      "98,01 %",
+      "99,00 %",
+      "99,50 %"
+    ],
+    "a": "99,99 %",
+    "exp": "Ausfall nur, wenn beide gleichzeitig ausfallen: 0,01 * 0,01 = 0,0001. Verfügbarkeit: 1 - 0,0001 = 99,99 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Zwei Internetleitungen mit je 98 % Verfügbarkeit arbeiten redundant (eine reicht). Wie hoch ist die Verfügbarkeit des Anschlusses?",
+    "options": [
+      "99,96 %",
+      "96,04 %",
+      "98,00 %",
+      "99,00 %"
+    ],
+    "a": "99,96 %",
+    "exp": "Ausfall nur, wenn beide gleichzeitig ausfallen: 0,02 * 0,02 = 0,0004. Verfügbarkeit: 1 - 0,0004 = 99,96 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein System fällt im Mittel nach 2.000 Stunden aus (MTBF), die Reparatur dauert im Mittel 4 Stunden (MTTR). Wie hoch ist die Verfügbarkeit?",
+    "options": [
+      "99,80 %",
+      "96,00 %",
+      "99,60 %",
+      "0,20 %"
+    ],
+    "a": "99,80 %",
+    "exp": "Verfügbarkeit = MTBF / (MTBF + MTTR) = 2.000 / 2.004 = 99,80 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein System fällt im Mittel nach 8.760 Stunden aus (MTBF), die Reparatur dauert im Mittel 24 Stunden (MTTR). Wie hoch ist die Verfügbarkeit?",
+    "options": [
+      "99,73 %",
+      "76,00 %",
+      "99,45 %",
+      "0,27 %"
+    ],
+    "a": "99,73 %",
+    "exp": "Verfügbarkeit = MTBF / (MTBF + MTTR) = 8.760 / 8.784 = 99,73 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Konzern hat 800 Mio. Euro weltweiten Jahresumsatz. Wie hoch ist das höchstmögliche DSGVO-Bußgeld bei einem schweren Verstoß (Art. 83 Abs. 5)?",
+    "options": [
+      "32 Mio. Euro",
+      "20 Mio. Euro",
+      "16 Mio. Euro",
+      "80 Mio. Euro"
+    ],
+    "a": "32 Mio. Euro",
+    "exp": "Grenze: 20 Mio. Euro oder 4 % des Jahresumsatzes, je nachdem, was höher ist. 4 % von 800 Mio. = 32 Mio. Euro, also gilt 32 Mio. Euro."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Konzern hat 250 Mio. Euro weltweiten Jahresumsatz. Wie hoch ist das höchstmögliche DSGVO-Bußgeld bei einem schweren Verstoß (Art. 83 Abs. 5)?",
+    "options": [
+      "20 Mio. Euro",
+      "10 Mio. Euro",
+      "5 Mio. Euro",
+      "25 Mio. Euro"
+    ],
+    "a": "20 Mio. Euro",
+    "exp": "Grenze: 20 Mio. Euro oder 4 % des Jahresumsatzes, je nachdem, was höher ist. 4 % von 250 Mio. = 10 Mio. Euro, also gilt 20 Mio. Euro."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen erfährt am Freitag, 02.10. um 14:00 Uhr von einer meldepflichtigen Datenpanne. Bis wann muss die Meldung an die Aufsichtsbehörde spätestens erfolgen?",
+    "options": [
+      "Montag, 05.10. um 14:00 Uhr",
+      "Mittwoch, 07.10. um 14:00 Uhr",
+      "Samstag, 03.10. um 14:00 Uhr",
+      "Dienstag, 06.10. um 14:00 Uhr"
+    ],
+    "a": "Montag, 05.10. um 14:00 Uhr",
+    "exp": "Art. 33 DSGVO: unverzüglich, möglichst binnen 72 Stunden nach Bekanntwerden. Die Frist läuft auch über das Wochenende: Freitag, 02.10. um 14:00 Uhr + 72 h = Montag, 05.10. um 14:00 Uhr."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen erfährt am Mittwoch, 18.11. um 09:30 Uhr von einer meldepflichtigen Datenpanne. Bis wann muss die Meldung an die Aufsichtsbehörde spätestens erfolgen?",
+    "options": [
+      "Samstag, 21.11. um 09:30 Uhr",
+      "Montag, 23.11. um 09:30 Uhr",
+      "Donnerstag, 19.11. um 09:30 Uhr",
+      "Sonntag, 22.11. um 09:30 Uhr"
+    ],
+    "a": "Samstag, 21.11. um 09:30 Uhr",
+    "exp": "Art. 33 DSGVO: unverzüglich, möglichst binnen 72 Stunden nach Bekanntwerden. Die Frist läuft auch über das Wochenende: Mittwoch, 18.11. um 09:30 Uhr + 72 h = Samstag, 21.11. um 09:30 Uhr."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde meldet: Der PC mit 10.20.37.130/21 soll einen Netzwerkdrucker direkt ohne Router erreichen. Welche Druckeradresse liegt im selben Subnetz?",
+    "options": [
+      "10.20.39.200",
+      "10.20.40.10",
+      "10.20.31.250",
+      "10.20.47.5"
+    ],
+    "a": "10.20.39.200",
+    "exp": "/21: Blockgröße im 3. Oktett 2^(24 - 21) = 8. 37 liegt im Block 32 bis 39. Netz 10.20.32.0, Broadcast 10.20.39.255. Nur 10.20.39.200 liegt dazwischen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC hat die Adresse 192.168.77.100 mit der Maske 255.255.255.224. Der Kollege will das Standardgateway eintragen. Welche Adresse kommt dafür in Frage?",
+    "options": [
+      "192.168.77.126",
+      "192.168.77.96",
+      "192.168.77.127",
+      "192.168.77.129"
+    ],
+    "a": "192.168.77.126",
+    "exp": "Maske 255.255.255.224 = /27, Blockgröße 32. Netz 192.168.77.96, Broadcast 192.168.77.127. Nutzbar sind nur 192.168.77.97 bis 192.168.77.126. Netz- und Broadcastadresse sind für Hosts tabu."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Server im Netz 172.16.48.0/20 soll eine feste Adresse bekommen. Welche der folgenden Adressen ist als Host-Adresse gültig?",
+    "options": [
+      "172.16.56.0",
+      "172.16.63.255",
+      "172.16.48.0",
+      "172.16.64.1"
+    ],
+    "a": "172.16.56.0",
+    "exp": "172.16.48.0/20 reicht von 172.16.48.0 (Netz) bis 172.16.63.255 (Broadcast). 172.16.56.0 liegt mitten im Bereich und ist trotz der 0 im letzten Oktett eine normale Host-Adresse."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Server hat die Adresse 10.1.13.77, sein Gateway 10.1.8.1. Er erreicht das Gateway nicht, weil die Maske zu lang ist. Welche Maske ist die längste, bei der beide im selben Netz liegen?",
+    "options": [
+      "255.255.248.0",
+      "255.255.252.0",
+      "255.255.240.0",
+      "255.255.255.0"
+    ],
+    "a": "255.255.248.0",
+    "exp": "3. Oktett: 13 = 00001101, 8 = 00001000. Die ersten 5 Bit dieses Oktetts sind gleich, also /21 = 255.255.248.0. Mit /22 läge das Gateway in 10.1.8.0/22, der Server in 10.1.12.0/22."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Klasse-B-Netz 172.20.0.0/16 wird mit der Maske 255.255.252.0 in gleich große Subnetze unterteilt. Wie viele Subnetze entstehen, und wie viele Hosts hat jedes?",
+    "options": [
+      "64 Subnetze mit je 1.022 Hosts",
+      "64 Subnetze mit je 1.024 Hosts",
+      "62 Subnetze mit je 1.022 Hosts",
+      "32 Subnetze mit je 2.046 Hosts"
+    ],
+    "a": "64 Subnetze mit je 1.022 Hosts",
+    "exp": "255.255.252.0 = /22. Geliehene Bits: 22 - 16 = 6, also 2^6 = 64 Subnetze. Hostbits: 32 - 22 = 10, also 2^10 - 2 = 1.022 Hosts je Subnetz."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 10.64.0.0/16 wird in /19-Subnetze aufgeteilt und der Reihe nach an Standorte vergeben. Welches Netz erhält der 5. Standort?",
+    "options": [
+      "10.64.128.0/19",
+      "10.64.96.0/19",
+      "10.64.160.0/19",
+      "10.64.64.0/19"
+    ],
+    "a": "10.64.128.0/19",
+    "exp": "/19: Blockgröße im 3. Oktett 2^(24 - 19) = 32. Netze der Reihe nach: 10.64.0.0, 10.64.32.0, 10.64.64.0, 10.64.96.0, 10.64.128.0, 10.64.160.0. Der 5. Standort bekommt 10.64.128.0/19."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 192.168.40.0/24 wird in /28-Netze geteilt. Die Abteilungen erhalten sie der Reihe nach, die erste bekommt 192.168.40.0/28. Welchen Host-Bereich hat die 7. Abteilung?",
+    "options": [
+      "192.168.40.97 bis 192.168.40.110",
+      "192.168.40.96 bis 192.168.40.111",
+      "192.168.40.113 bis 192.168.40.126",
+      "192.168.40.81 bis 192.168.40.94"
+    ],
+    "a": "192.168.40.97 bis 192.168.40.110",
+    "exp": "/28 = 16 Adressen je Netz. Die 7. Abteilung beginnt bei (7 - 1) * 16 = 96, also 192.168.40.96/28. Nutzbar ohne Netz- und Broadcastadresse: 192.168.40.97 bis 192.168.40.110."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Client-VLAN nutzt 10.30.8.0/23. Neben dem Gateway brauchen 14 Drucker und Access Points feste Adressen. Wie viele Adressen können höchstens im DHCP-Pool liegen?",
+    "options": [
+      "495",
+      "497",
+      "496",
+      "239"
+    ],
+    "a": "495",
+    "exp": "/23 = 2^9 = 512 Adressen, minus Netz- und Broadcastadresse = 510 Hosts. Minus Gateway und 14 feste Adressen: 510 - 1 - 14 = 495."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In der Dokumentation soll die Adresse fd12:0000:0000:0100:0000:0000:0000:0af0 nach RFC 5952 so kurz wie möglich stehen. Welche Schreibweise ist richtig?",
+    "options": [
+      "fd12:0:0:100::af0",
+      "fd12::100::af0",
+      "fd12::100:0:0:0:af0",
+      "fd12:0:0:1::af"
+    ],
+    "a": "fd12:0:0:100::af0",
+    "exp": "Führende Nullen je Block entfallen (0100 wird 100, 0af0 wird af0). Die längste Folge von Nullblöcken (hier drei statt zwei) wird durch :: ersetzt, und :: darf nur einmal vorkommen: fd12:0:0:100::af0."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Firewall-Filter verlangt IPv6-Adressen in voller Länge. Wie lautet fe80::2a0:c9ff:fe14:1 ausgeschrieben?",
+    "options": [
+      "fe80:0000:0000:0000:02a0:c9ff:fe14:0001",
+      "fe80:0000:0000:0000:2a00:c9ff:fe14:1000",
+      "fe80:0000:0000:02a0:c9ff:fe14:0000:0001",
+      "fe80:0000:0000:0000:0000:02a0:c9ff:fe14:0001"
+    ],
+    "a": "fe80:0000:0000:0000:02a0:c9ff:fe14:0001",
+    "exp": "Vorhanden sind 5 Blöcke, es fehlen also 8 - 5 = 3 Nullblöcke an der Stelle von ::. Jeder Block wird vorne auf 4 Stellen aufgefüllt: fe80:0000:0000:0000:02a0:c9ff:fe14:0001."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Client mit der MAC-Adresse 3C:52:82:1A:07:BE bildet seine Interface-ID per EUI-64. Welche Interface-ID entsteht?",
+    "options": [
+      "3e52:82ff:fe1a:7be",
+      "3c52:82ff:fe1a:7be",
+      "3e52:82fe:ff1a:7be",
+      "3d52:82ff:fe1a:7be"
+    ],
+    "a": "3e52:82ff:fe1a:7be",
+    "exp": "MAC teilen: 3C:52:82 | 1A:07:BE, dazwischen FFFE einfügen. Im ersten Oktett das 7. Bit umdrehen: 3C = 00111100 wird 3E = 00111110. Ergebnis: 3e52:82ff:fe1a:7be."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine VM mit der MAC-Adresse 00:15:5D:A4:0C:21 nutzt EUI-64. Welche link-lokale IPv6-Adresse erhält sie?",
+    "options": [
+      "fe80::215:5dff:fea4:c21",
+      "fe80::15:5dff:fea4:c21",
+      "fe80::215:5dfe:ffa4:c21",
+      "fe80::115:5dff:fea4:c21"
+    ],
+    "a": "fe80::215:5dff:fea4:c21",
+    "exp": "Präfix fe80::/64 plus Interface-ID. Das erste Oktett 00 wird durch das Umdrehen des 7. Bits zu 02, in der Mitte steht FFFE: fe80::215:5dff:fea4:c21."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Provider hat das Präfix 2001:db8::/32 und vergibt an jeden Geschäftskunden ein /56. Wie viele Kunden kann er damit versorgen?",
+    "options": [
+      "16.777.216",
+      "16.777.214",
+      "256",
+      "4.294.967.296"
+    ],
+    "a": "16.777.216",
+    "exp": "Frei wählbare Bits: 56 - 32 = 24, also 2^24 = 16.777.216 Präfixe. Bei IPv6 werden keine Netz- und Broadcastadressen abgezogen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "7 Standorte sollen vollvermascht per Site-to-Site-VPN verbunden werden, jeder direkt mit jedem. Wie viele VPN-Tunnel sind nötig?",
+    "options": [
+      "21",
+      "42",
+      "6",
+      "7"
+    ],
+    "a": "21",
+    "exp": "Jeder Standort braucht 6 Verbindungen. Jeder Tunnel verbindet zwei Standorte, er wird also doppelt gezählt: 7 * 6 / 2 = 21."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Techniker lädt ein Installationsimage von 6 GiB über eine Leitung mit 200 Mbit/s (ohne Overhead). Wie lange dauert der Download?",
+    "options": [
+      "ca. 4 Minuten 18 Sekunden",
+      "ca. 4 Minuten 0 Sekunden",
+      "ca. 4 Minuten 6 Sekunden",
+      "ca. 32 Sekunden"
+    ],
+    "a": "ca. 4 Minuten 18 Sekunden",
+    "exp": "6 GiB = 6 * 1.073.741.824 Byte * 8 = 51.539.607.552 Bit. 51.539.607.552 Bit / 200.000.000 Bit/s = 257,7 s. Achtung: GiB ist binär (1024), Mbit/s dezimal (10^6)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde hat einen 250-Mbit/s-Anschluss. Sein Downloadprogramm zeigt die Geschwindigkeit in MiB/s. Welcher Wert ist bei voller Auslastung ohne Overhead höchstens zu erwarten?",
+    "options": [
+      "ca. 29,8 MiB/s",
+      "ca. 31,2 MiB/s",
+      "ca. 238,4 MiB/s",
+      "ca. 32,8 MiB/s"
+    ],
+    "a": "ca. 29,8 MiB/s",
+    "exp": "250 Mbit/s / 8 = 31,25 MB/s = 31.250.000 Byte/s. Geteilt durch 1.048.576 (1 MiB) ergibt 29,8 MiB/s. Der Kunde bekommt also die volle Leistung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Betriebsversammlung wird per Unicast-Stream an 45 Mitarbeiter im Homeoffice übertragen, je Stream 3,5 Mbit/s. Geplant sind 25 % Reserve. Welche Upload-Bandbreite braucht der Streamingserver?",
+    "options": [
+      "ca. 196,9 Mbit/s",
+      "ca. 157,5 Mbit/s",
+      "ca. 24,6 Mbit/s",
+      "ca. 4,4 Mbit/s"
+    ],
+    "a": "ca. 196,9 Mbit/s",
+    "exp": "Bei Unicast erhält jeder Zuschauer einen eigenen Stream: 45 * 3,5 Mbit/s = 157,5 Mbit/s. Plus 25 % Reserve: 196,9 Mbit/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access Point zeigt 1.201 Mbit/s Datenrate an, netto kommen erfahrungsgemäß etwa 50 % an. 24 Clients sind gleichzeitig aktiv. Wie viel Durchsatz hat ein Client im Mittel?",
+    "options": [
+      "ca. 25,0 Mbit/s",
+      "ca. 50,0 Mbit/s",
+      "ca. 3,1 Mbit/s",
+      "ca. 600,5 Mbit/s"
+    ],
+    "a": "ca. 25,0 Mbit/s",
+    "exp": "Netto: 1.201 * 50 % = 600,5 Mbit/s. WLAN ist ein geteiltes Medium, also / 24 Clients = 25,0 Mbit/s je Client."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Außenstelle sendet rund um die Uhr Replikationsdaten mit durchschnittlich 12 Mbit/s. Der Provider rechnet nach Volumen ab. Wie viele Daten fallen in 30 Tagen an (1 TB = 10^12 Byte)?",
+    "options": [
+      "ca. 3,89 TB",
+      "ca. 31,10 TB",
+      "ca. 3,54 TB",
+      "ca. 0,13 TB"
+    ],
+    "a": "ca. 3,89 TB",
+    "exp": "12 Mbit/s / 8 = 1,5 MB/s. Ein Tag hat 86.400 s: 1,5 MB/s * 86.400 * 30 = 3.888.000.000.000 Byte = 3,89 TB."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Rechenzentren sind über eine 900 km lange Glasfasertrasse verbunden. Licht ist in der Faser etwa 200.000 km/s schnell. Wie groß ist die Round-Trip-Time mindestens (nur Signallaufzeit)?",
+    "options": [
+      "9,0 ms",
+      "4,5 ms",
+      "6,0 ms",
+      "3,0 ms"
+    ],
+    "a": "9,0 ms",
+    "exp": "Einweg: 900 km / 200.000 km/s = 4,5 ms. Die RTT umfasst Hin- und Rückweg: 2 * 4,5 ms = 9,0 ms. Router und Switches kommen in der Praxis noch hinzu."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde auf einer Berghütte nutzt Internet über einen geostationären Satelliten (ca. 35.800 km Höhe, Funksignal ca. 300.000 km/s). Wie groß ist die Round-Trip-Time bis zur Bodenstation mindestens?",
+    "options": [
+      "ca. 477 ms",
+      "ca. 119 ms",
+      "ca. 239 ms",
+      "ca. 716 ms"
+    ],
+    "a": "ca. 477 ms",
+    "exp": "Eine Richtung führt hoch zum Satelliten und wieder herunter: 2 * 35.800 km. Hin und zurück sind es 4 * 35.800 = 143.200 km. 143.200 km / 300.000 km/s = 477 ms."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Außenstelle ist noch mit 10 Mbit/s angebunden. Wie lange dauert es allein, einen 1.518-Byte-Frame auf die Leitung zu bringen (Serialisierungszeit)?",
+    "options": [
+      "ca. 1,21 ms",
+      "ca. 0,15 ms",
+      "ca. 1,16 ms",
+      "ca. 12,14 ms"
+    ],
+    "a": "ca. 1,21 ms",
+    "exp": "1.518 Byte * 8 = 12.144 Bit. 12.144 Bit / 10.000.000 Bit/s = 1,21 ms. Bei 1 Gbit/s wäre es nur ein Hundertstel davon."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Hexdump eines Wireshark-Mitschnitts stehen die 4 Byte der Ziel-IPv4-Adresse als C0 A8 0A 32. Welche Adresse ist das?",
+    "options": [
+      "192.168.10.50",
+      "192.168.10.32",
+      "50.10.168.192",
+      "192.186.10.50"
+    ],
+    "a": "192.168.10.50",
+    "exp": "Jedes Byte einzeln umrechnen: C0 = 192, A8 = 168, 0A = 10, 32 = 50. Die Reihenfolge bleibt erhalten (Network Byte Order): 192.168.10.50."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PXE-Bootloader sucht seine Konfigurationsdatei unter der IPv4-Adresse des Clients in Hexadezimalschreibweise. Welchen Dateinamen sucht der Client 172.31.200.15?",
+    "options": [
+      "AC1FC80F",
+      "AC1FC8F0",
+      "AC31C80F",
+      "0FC81FAC"
+    ],
+    "a": "AC1FC80F",
+    "exp": "Jedes Oktett in zwei Hex-Stellen: 172 = AC, 31 = 1F, 200 = C8, 15 = 0F. Zusammengesetzt: AC1FC80F."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Container-Host zeigt die MAC-Adresse 02:42:AC:11:00:02. Was verrät das erste Oktett 02 über die Adresse?",
+    "options": [
+      "Unicast-Adresse, lokal verwaltet",
+      "Unicast-Adresse, weltweit eindeutig (OUI)",
+      "Multicast-Adresse, lokal verwaltet",
+      "Multicast-Adresse, weltweit eindeutig (OUI)"
+    ],
+    "a": "Unicast-Adresse, lokal verwaltet",
+    "exp": "0x02 = 00000010. Das niederwertigste Bit (I/G) ist 0, also Unicast-Adresse. Das Bit davor (U/L) ist 1, also lokal verwaltet."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Schulungsvideo läuft 75 Minuten mit 6 Mbit/s Video- und 192 kbit/s Audiobitrate. Wie groß wird die Datei (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 3,48 GB",
+      "ca. 27,86 GB",
+      "ca. 3,38 GB",
+      "ca. 3,24 GB"
+    ],
+    "a": "ca. 3,48 GB",
+    "exp": "Gesamtbitrate: 6 Mbit/s + 0,192 Mbit/s = 6,192 Mbit/s. 75 Minuten = 4.500 s. 6,192 Mbit/s * 4.500 s = 27.864 Mbit. / 8 = 3.483 MB = 3,48 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Videorekorder (NVR) hat 8 TB nutzbaren Speicher. 6 Kameras zeichnen dauerhaft mit je 4 Mbit/s auf. Wie viele volle Tage lassen sich speichern?",
+    "options": [
+      "30 Tage",
+      "31 Tage",
+      "3 Tage",
+      "185 Tage"
+    ],
+    "a": "30 Tage",
+    "exp": "Je Tag: 6 * 4 Mbit/s / 8 * 86.400 s = 259,2 GB. 8.000 GB / 259,2 GB = 30,86, also 30 volle Tage."
+  },
+  {
+    "cat": "systeme",
+    "q": "10 Kameras zeichnen nur bei Bewegung auf, dann mit je 6 Mbit/s. Bewegung gibt es etwa 20 % der Zeit. Die Aufnahmen werden 14 Tage aufbewahrt. Wie viel Speicher ist nötig (1 TB = 10^12 Byte)?",
+    "options": [
+      "ca. 1,81 TB",
+      "ca. 9,07 TB",
+      "ca. 14,52 TB",
+      "ca. 0,13 TB"
+    ],
+    "a": "ca. 1,81 TB",
+    "exp": "Dauerbetrieb: 10 * 6 Mbit/s / 8 * 86.400 s * 14 Tage = 9,07 TB. Davon 20 %: 1,81 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Toner kostet 96,00 Euro und reicht laut Hersteller für 6.000 Seiten bei 5 % Deckung. Ihre Dokumente haben im Schnitt 12 % Deckung. Wie hoch sind die Tonerkosten je Seite?",
+    "options": [
+      "3,84 Cent",
+      "1,60 Cent",
+      "0,67 Cent",
+      "19,20 Cent"
+    ],
+    "a": "3,84 Cent",
+    "exp": "Reichweite bei 12 %: 6.000 * 5 / 12 = 2.500 Seiten. 96,00 Euro / 2.500 Seiten = 3,84 Cent je Seite."
+  },
+  {
+    "cat": "systeme",
+    "q": "Farblaser: Schwarztoner 85,00 Euro für 7.000 Seiten, jeder der drei Farbtoner 110,00 Euro für 5.000 Seiten, Papier 5,00 Euro je 500 Blatt. Was kostet eine Farbseite?",
+    "options": [
+      "8,81 Cent",
+      "7,81 Cent",
+      "4,41 Cent",
+      "7,60 Cent"
+    ],
+    "a": "8,81 Cent",
+    "exp": "Schwarz 1,21 Cent, drei Farben je 2,20 Cent = 6,60 Cent, Papier 1,00 Cent. Summe: 8,81 Cent je Farbseite."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde bestückt ein Storage mit 12 Festplatten zu je 8 TB: ein RAID 6 und zusätzlich eine globale Hot-Spare-Platte. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "72 TB",
+      "80 TB",
+      "88 TB",
+      "64 TB"
+    ],
+    "a": "72 TB",
+    "exp": "Die Hot-Spare-Platte gehört nicht zum Verbund: 12 - 1 = 11 Platten im RAID 6. Davon gehen 2 für Parität ab: (11 - 2) * 8 TB = 72 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Datenbankserver hat 10 SSDs zu je 4 TB. 2 davon sind Hot Spares, die übrigen bilden ein RAID 10. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "16 TB",
+      "20 TB",
+      "32 TB",
+      "24 TB"
+    ],
+    "a": "16 TB",
+    "exp": "Im RAID 10 sind 10 - 2 = 8 SSDs. Die Hälfte davon spiegelt: 8 / 2 * 4 TB = 16 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi baut ein RAID 5 aus drei 8-TB-Platten und einer übrig gebliebenen 4-TB-Platte. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "12 TB",
+      "24 TB",
+      "21 TB",
+      "28 TB"
+    ],
+    "a": "12 TB",
+    "exp": "Im RAID wird jede Platte nur so weit genutzt wie die kleinste: 4 TB. (4 - 1) * 4 TB = 12 TB. Auf den 8-TB-Platten bleiben je 4 TB ungenutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Ransomware-Angriff müssen 2,4 TB aus dem Backup zurückgespielt werden. Die Rücksicherung schafft 180 MB/s, das RTO beträgt 4 Stunden. Wie lange dauert es?",
+    "options": [
+      "ca. 3,7 Stunden, das RTO wird eingehalten",
+      "ca. 29,6 Stunden, das RTO wird verfehlt",
+      "ca. 0,5 Stunden, das RTO wird eingehalten",
+      "ca. 3,7 Stunden, das RTO wird verfehlt"
+    ],
+    "a": "ca. 3,7 Stunden, das RTO wird eingehalten",
+    "exp": "2,4 TB = 2.400.000 MB. 2.400.000 MB / 180 MB/s = 13.333 s = 3,7 Stunden. Das RTO von 4 Stunden wird eingehalten, der Puffer ist aber klein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Webformular speichert den Text \"Preis: 49 €\" in UTF-8. Wie viele Byte belegt er?",
+    "options": [
+      "13 Byte",
+      "11 Byte",
+      "12 Byte",
+      "22 Byte"
+    ],
+    "a": "13 Byte",
+    "exp": "11 Zeichen, davon 10 aus dem ASCII-Bereich mit je 1 Byte. Das Euro-Zeichen braucht in UTF-8 3 Byte: 10 + 3 = 13 Byte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Datenbankfeld erlaubt höchstens 20 Byte in UTF-8. Ein Kunde heißt \"Müller-Lüdenscheidt\". Wie viele Byte braucht der Name, und passt er?",
+    "options": [
+      "21 Byte, passt nicht",
+      "19 Byte, passt",
+      "38 Byte, passt nicht",
+      "20 Byte, passt"
+    ],
+    "a": "21 Byte, passt nicht",
+    "exp": "19 Zeichen, davon 2 Umlaute mit je 2 Byte: 19 + 2 = 21 Byte. Das ist mehr als 20, der Name würde abgeschnitten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Grafikmonitor arbeitet mit 10 Bit je Farbkanal (Rot, Grün, Blau). Wie viele Farben kann er darstellen?",
+    "options": [
+      "1.073.741.824",
+      "16.777.216",
+      "3.072",
+      "1.024"
+    ],
+    "a": "1.073.741.824",
+    "exp": "Je Pixel 3 * 10 = 30 Bit. 2^30 = 1.073.741.824 Farben. Zum Vergleich: 8 Bit je Kanal ergeben 2^24 = 16.777.216 Farben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Industriedisplay soll mindestens 3.000 verschiedene Farbtöne aus einer Palette darstellen. Wie viele Bit je Pixel sind mindestens nötig?",
+    "options": [
+      "12 Bit",
+      "11 Bit",
+      "16 Bit",
+      "8 Bit"
+    ],
+    "a": "12 Bit",
+    "exp": "2^11 = 2.048 reicht nicht, 2^12 = 4.096 reicht. Also sind 12 Bit je Pixel nötig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine CPU taktet mit 3,2 GHz. Wie lange dauert ein einzelner Takt (Periodendauer)?",
+    "options": [
+      "0,3125 ns",
+      "3,125 ns",
+      "0,3125 µs",
+      "3,2 ns"
+    ],
+    "a": "0,3125 ns",
+    "exp": "Periodendauer T = 1 / f = 1 / (3,2 * 10^9 Hz) = 0,3125 * 10^-9 s = 0,3125 ns."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Zugriff auf den Arbeitsspeicher dauert 80 ns. Wie viele Takte wartet eine CPU mit 4,5 GHz in dieser Zeit ungefähr?",
+    "options": [
+      "ca. 360 Takte",
+      "ca. 18 Takte",
+      "ca. 3.600 Takte",
+      "ca. 36 Takte"
+    ],
+    "a": "ca. 360 Takte",
+    "exp": "Ein Takt dauert 1 / 4,5 GHz = 0,222 ns. 80 ns / 0,222 ns = 360 Takte. Deshalb sind CPU-Caches so wichtig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Archivfestplatte dreht mit 7.200 U/min. Wie groß ist die mittlere Rotationslatenz (im Mittel eine halbe Umdrehung)?",
+    "options": [
+      "ca. 4,17 ms",
+      "ca. 8,33 ms",
+      "ca. 2,08 ms",
+      "ca. 16,67 ms"
+    ],
+    "a": "ca. 4,17 ms",
+    "exp": "7.200 U/min / 60 = 120 Umdrehungen pro Sekunde. Eine Umdrehung dauert 1.000 ms / 120 = 8,33 ms, eine halbe also 4,17 ms."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Gerät belegt den Speicherbereich von 0x2000 bis 0x2FFF (je Adresse 1 Byte). Wie groß ist der Bereich?",
+    "options": [
+      "4.096 Byte (4 KiB)",
+      "4.095 Byte",
+      "4.000 Byte (4 KB)",
+      "8.192 Byte (8 KiB)"
+    ],
+    "a": "4.096 Byte (4 KiB)",
+    "exp": "0x2FFF - 0x2000 = 0xFFF = 4.095. Die Endadresse zählt mit, also + 1 = 4.096 Byte = 4 KiB."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Rack laufen 4 Server mit je 450 W, 2 Switches mit je 120 W und ein Storage mit 650 W an einem 230-V-Stromkreis. Welche Stromstärke fließt ungefähr?",
+    "options": [
+      "ca. 11,7 A",
+      "ca. 6,7 A",
+      "ca. 8,9 A",
+      "ca. 5,8 A"
+    ],
+    "a": "ca. 11,7 A",
+    "exp": "Gesamtleistung: 4 * 450 W + 2 * 120 W + 650 W = 2.690 W. I = P / U = 2.690 W / 230 V = 11,7 A. Bei einer 16-A-Absicherung bleibt damit nur wenig Reserve."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 3.000 VA bei einem Leistungsfaktor von 0,9. Angeschlossen sind Geräte mit zusammen 1.850 W. Wie hoch ist die Auslastung?",
+    "options": [
+      "68,5 %",
+      "61,7 %",
+      "55,5 %",
+      "31,5 %"
+    ],
+    "a": "68,5 %",
+    "exp": "Wirkleistung der USV: 3.000 VA * 0,9 = 2.700 W. Auslastung: 1.850 W / 2.700 W * 100 = 68,5 %."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV liefert 3.000 VA bei Leistungsfaktor 0,9 und soll höchstens zu 80 % ausgelastet werden. Es hängen bereits 1.350 W daran. Wie viele Server mit je 230 W dürfen noch dazu?",
+    "options": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "a": "3",
+    "exp": "Grenze: 3.000 VA * 0,9 * 80 % = 2.160 W. Frei: 2.160 W - 1.350 W = 810 W. 810 W / 230 W = 3,52, also 3 Server (immer abrunden)."
   }
 ]

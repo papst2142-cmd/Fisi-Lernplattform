@@ -860,5 +860,155 @@
       "Zugang nur über das RD-Gateway auf Port 443, kein offener RDP-Port 3389 im Internet. Mehrfaktor-Authentifizierung am Gateway, Zugriff nur für eine AD-Gruppe. Zwischenablage und Laufwerksumleitung per Gruppenrichtlinie sperren, damit keine Daten auf private Geräte gelangen. Bandbreite: 80 * 150 kbit/s = 12 Mbit/s, mit 50 % Reserve 18 Mbit/s Upload am Firmenstandort.",
       "Je Benutzer eine RDS-Benutzer-CAL (140 Stück) auf dem Lizenzserver, dazu Windows-Server-CALs und die Lizenzen der Session-Host-VMs. Office auf Terminalservern braucht eine dafür zugelassene Lizenz (Volumenlizenz oder Microsoft-365-Tarif mit Shared Computer Activation). Einführung: Pilot mit einer Abteilung, Lasttest mit vielen gleichzeitigen Anmeldungen am Morgen, dann schrittweise Umstellung. Für Updates einen Host für neue Anmeldungen sperren (Drain Mode), leer laufen lassen, patchen und wieder freigeben."
     ]
+  },
+  {
+    "title": "Trennung von Verwaltungsnetz und pädagogischem Netz an einer Gesamtschule",
+    "cat": "netzwerk",
+    "branche": "Schulträger (Stadt Lindenfeld, Fachbereich Schulen) für die Gesamtschule am Park, 1.100 Schüler, 95 Lehrkräfte",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "In der Gesamtschule hängen Sekretariat, Schulleitung, Lehrkräfte, Computerräume und die neuen Schüler-Tablets in einem einzigen flachen Netz. Im Sekretariat werden Zeugnisse, Schülerakten und Gesundheitsangaben verarbeitet. Der Datenschutzbeauftragte des Schulträgers hat bemängelt, dass jedes Schülergerät die Verwaltungsrechner erreichen kann. Gleichzeitig soll jeder Unterrichtsraum WLAN erhalten, und die Oberstufe soll eigene Geräte mitbringen dürfen.",
+    "auftrag": "Planen Sie die Aufteilung in ein Verwaltungsnetz und ein pädagogisches Netz mit mehreren Teilnetzen, erstellen Sie den Adressplan, prüfen Sie Internetanschluss und PoE-Budget und bereiten Sie Umsetzung, Test und Übergabe in den Herbstferien vor.",
+    "rahmenbedingungen": [
+      "Vorgabe des Schulträgers: Das Verwaltungsnetz muss vom pädagogischen Netz getrennt sein. Verwaltungsrechner sind nur kabelgebunden angeschlossen",
+      "Für die Schule steht der Adressbereich 10.40.0.0/16 zur Verfügung. Jedes Teilnetz erhält 25 % Reserve auf die heutige Geräteanzahl",
+      "Geräte: Verwaltung 18 PCs und 4 Drucker, Lehrkräfte 95 Dienst-Notebooks, Schulgeräte 360 Tablets (12 Klassensätze zu 30 Stück) und 64 PCs in zwei Computerräumen, private Geräte der Oberstufe bis zu 300, Netzwerkgeräte 40 Access Points und 14 Switches",
+      "40 Unterrichtsräume mit je einem Access Point. Die drei Etagenverteiler versorgen 14, 14 und 12 Access Points. Jeder Access Point benötigt PoE+ und zieht höchstens 18 W. Die Etagenswitches haben ein PoE-Budget von 370 W",
+      "Internetanschluss des Schulträgers: Glasfaser 1 Gbit/s symmetrisch. Im Spitzenfall arbeiten 10 Klassen mit je 30 Schulgeräten gleichzeitig online, je Gerät werden 3 Mbit/s angesetzt. Verwaltung und Lehrkräfte brauchen zusammen garantiert 60 Mbit/s",
+      "Ein Jugendschutzfilter für das pädagogische Netz ist Pflicht. Die Schulgeräte werden über ein Mobile Device Management verwaltet. Umsetzung in den zwei Wochen der Herbstferien"
+    ],
+    "aufgaben": [
+      "Ist-Analyse: Welche Informationen erheben Sie vor der Planung, und welche Risiken hat das heutige flache Netz?",
+      "Soll-Konzept: Legen Sie die Teilnetze fest, bestimmen Sie für jedes die kleinste passende Präfixlänge und erstellen Sie einen Adressplan im Bereich 10.40.0.0/16.",
+      "Welche Verbindungen zwischen den Netzen erlauben Sie, und wie setzen Sie die Trennung in Firewall und WLAN um?",
+      "Prüfen Sie, ob Internetanschluss und PoE-Budget der Etagenswitches ausreichen. Welche Maßnahmen schlagen Sie vor?",
+      "Wie gehen Sie bei Umsetzung, Test und Übergabe an Schule und Schulträger vor?"
+    ],
+    "hinweise": [
+      "Bestandsaufnahme aller Geräte mit Standort, Anschlussart und Zuständigkeit, vorhandene Verkabelung und Etagenverteiler, Switchmodelle mit VLAN- und PoE-Fähigkeit, genutzte Anwendungen (Schulverwaltungssoftware, Lernplattform, Druck), bestehende Firewall und Jugendschutzfilter, Ansprechpartner bei Schule und Schulträger. Risiken des flachen Netzes: Schülergeräte können Verwaltungsrechner angreifen oder mitlesen, Schadsoftware breitet sich im ganzen Netz aus, Broadcasts belasten alle Geräte, und Datenschutzvorgaben für Schülerdaten werden verletzt.",
+      "Mit 25 % Reserve: Verwaltung 22 * 1,25 = 27,5, also 28 Adressen, /27 (30 Hosts). Lehrkräfte 95 * 1,25 = 118,75, also 119, /25 (126 Hosts). Schulgeräte 424 * 1,25 = 530, /23 reicht nur für 510, daher /22 (1.022 Hosts). Private Geräte 300 * 1,25 = 375, /23 (510 Hosts). Management 54 * 1,25 = 67,5, also 68, /26 reicht nur für 62, daher /25 (126 Hosts). Adressplan vom größten Netz an: Schulgeräte 10.40.0.0/22, private Geräte 10.40.4.0/23, Lehrkräfte 10.40.6.0/25, Management 10.40.6.128/25, Verwaltung 10.40.7.0/27. Der Rest ab 10.40.7.32 bleibt frei.",
+      "Grundsatz: Alles ist verboten, was nicht ausdrücklich erlaubt ist. Aus dem pädagogischen Netz gibt es keinen Zugriff auf die Verwaltung. Die Verwaltung erreicht nur ihre Server beim Schulträger, die Drucker im eigenen Netz und das Internet bzw. den VPN-Zugang zur Landesverwaltung. Schul- und Privatgeräte dürfen nur über den Jugendschutzfilter ins Internet und auf die Lernplattform, private Geräte zusätzlich mit Client-Isolation. Das Management-Netz ist nur von den Admin-Rechnern erreichbar. WLAN mit getrennten SSIDs je Gruppe: Lehrkräfte mit WPA3-Enterprise über 802.1X, Schulgeräte mit Zertifikat aus dem MDM, private Geräte mit Anmeldung über das Schulkonto. Für die Verwaltung wird keine SSID ausgestrahlt.",
+      "Spitzenlast: 10 * 30 * 3 Mbit/s = 900 Mbit/s, dazu 60 Mbit/s für Verwaltung und Lehrkräfte, zusammen 960 Mbit/s. Das passt knapp in 1 Gbit/s, für private Geräte bleiben nur 40 Mbit/s. Maßnahmen: Bandbreite der privaten Geräte begrenzen, Verwaltung priorisieren, Updates der Tablets über einen Caching-Server und außerhalb der Unterrichtszeit verteilen. PoE: Etagen 1 und 2 brauchen je 14 * 18 W = 252 W, Etage 3 12 * 18 W = 216 W. Alle liegen unter 370 W, auf den vollen Etagen bleiben 118 W Reserve.",
+      "Umsetzung: Konfiguration vorab im Testaufbau vorbereiten, in den Ferien zuerst Switches und Firewall umstellen, dann die Verwaltung, danach Lehrkräfte und Schulgeräte, zuletzt das WLAN für private Geräte. Test mit Testprotokoll: Adressvergabe per DHCP in jedem Netz, Ping und Portscan von einem Schülergerät auf die Verwaltung muss scheitern, Jugendschutzfilter blockiert Testseiten, Lastprobe mit einem Klassensatz, PoE-Verbrauch am Switch ablesen. Übergabe: Netzplan, Adressplan, Firewall-Regeln mit Begründung, Zugangsdaten sicher an den Schulträger, Kurzanleitung und Einweisung für die IT-Beauftragten der Schule, Abnahmeprotokoll unterschreiben lassen."
+    ]
+  },
+  {
+    "title": "Einführung eines Passwortmanagers in einer Werbeagentur",
+    "cat": "sicherheit",
+    "branche": "Werbeagentur (Blickfang Kommunikation GmbH, 28 Mitarbeiter)",
+    "schwierigkeit": "Leicht",
+    "ausgangssituation": "Die Agentur betreut für ihre Kunden Social-Media-Konten, Webseiten und Werbekonten. Die Zugangsdaten stehen in einer Excel-Liste auf dem Fileserver, einige auch auf Zetteln am Monitor. Viele Konten werden von mehreren Personen gemeinsam genutzt. Ein ausgeschiedener Mitarbeiter konnte sich noch Wochen später in ein Kundenkonto einloggen. Außerdem gehen häufig Tickets ein, weil Passwörter für Portale vergessen wurden.",
+    "auftrag": "Erheben Sie die Anforderungen, vergleichen Sie eine Cloud-Lösung mit einem selbst betriebenen Passwortmanager, legen Sie eine Richtlinie für das Master-Passwort fest und führen Sie die gewählte Lösung ein.",
+    "rahmenbedingungen": [
+      "28 Benutzer in 4 Teams, Betrachtungszeitraum 3 Jahre, alle Preise netto",
+      "Variante A (Cloud): 4 Euro je Benutzer und Monat, Einrichtung durch das Systemhaus 8 Stunden zu 85 Euro. Der Anbieter verschlüsselt Ende-zu-Ende (Zero Knowledge) und speichert in der EU",
+      "Variante B (selbst betrieben): Open-Source-Software ohne Lizenzkosten auf einer vorhandenen VM, Einrichtung 24 Stunden zu 85 Euro, Betrieb, Updates und Sicherung 2 Stunden pro Monat zu 85 Euro",
+      "Heute gibt es 15 Tickets pro Monat wegen vergessener Portal-Passwörter, ein Ticket kostet vereinfacht 20 Euro. Mit dem Passwortmanager wird ein Rückgang um 60 % erwartet",
+      "Master-Passwort als Vorschlag: Passphrase aus 5 zufällig gewählten Wörtern einer Liste mit 7.776 Wörtern. Zum Vergleich ein zufälliges Passwort aus 10 Zeichen mit 72 möglichen Zeichen",
+      "Der Zugang zum Passwortmanager erfolgt zusätzlich mit einem zweiten Faktor"
+    ],
+    "aufgaben": [
+      "Ist-Analyse: Welche Schwachstellen hat der heutige Umgang mit Zugangsdaten, und welche Anforderungen leiten Sie ab?",
+      "Berechnen Sie die Kosten beider Varianten über 3 Jahre und wählen Sie eine Variante aus.",
+      "Nach welcher Zeit hat sich die gewählte Variante durch weniger Tickets bezahlt gemacht?",
+      "Vergleichen Sie die Anzahl der Möglichkeiten beider Master-Passwörter. Wie regeln Sie den Notfall, wenn jemand sein Master-Passwort vergisst?",
+      "Wie führen Sie den Passwortmanager ein, wie testen Sie ihn, und was übergeben Sie an die Agentur?"
+    ],
+    "hinweise": [
+      "Schwachstellen: Die Excel-Liste ist unverschlüsselt und für viele lesbar, es gibt keine Protokollierung, wer welches Passwort gesehen hat, Zettel am Monitor sind für Besucher sichtbar, gemeinsame Passwörter werden beim Austritt nicht geändert. Anforderungen: verschlüsselte Ablage, Freigabe von Einträgen je Team, Rechte und Protokoll je Eintrag, Browser-Erweiterung und App, Passwortgenerator, Mehrfaktor-Anmeldung, Notfallzugang, Import der Excel-Liste, Datenschutz nach DSGVO.",
+      "A: Lizenzen 28 * 4 * 36 = 4.032 Euro, Einrichtung 8 * 85 = 680 Euro, zusammen 4.712 Euro. B: Einrichtung 24 * 85 = 2.040 Euro, Betrieb 2 * 85 * 36 = 6.120 Euro, zusammen 8.160 Euro. A ist über 3 Jahre 3.448 Euro günstiger. Außerdem entfallen bei A eigene Updates, Sicherung und Härtung des Servers. Vor der Entscheidung Auftragsverarbeitungsvertrag, Serverstandort und Verschlüsselungskonzept des Anbieters prüfen.",
+      "Heute kosten die Tickets 15 * 20 = 300 Euro pro Monat, also 3.600 Euro pro Jahr. Ersparnis bei 60 % Rückgang: 3.600 * 0,6 = 2.160 Euro pro Jahr. Laufende Kosten von A: 28 * 4 * 12 = 1.344 Euro pro Jahr. Es bleiben 2.160 - 1.344 = 816 Euro pro Jahr übrig. Amortisation der Einrichtung: 680 / 816 = 0,83 Jahre, also nach 10 Monaten. Der größere Nutzen ist die geringere Gefahr eines Datenlecks bei Kunden, der sich kaum in Euro ausdrücken lässt.",
+      "Passphrase: 7.776^5 = rund 2,84 * 10^19 Möglichkeiten. Zeichenpasswort: 72^10 = rund 3,74 * 10^18 Möglichkeiten. Die Passphrase hat etwa 7,6-mal so viele Möglichkeiten und ist leichter zu merken. Voraussetzung ist, dass die Wörter wirklich zufällig gewählt werden und kein Satz aus dem Alltag sind. Notfall: Bei Zero Knowledge kann der Anbieter das Master-Passwort nicht zurücksetzen. Daher die Kontowiederherstellung durch zwei Administratoren aktivieren und für die Administratoren ein Notfallblatt im Tresor hinterlegen.",
+      "Einführung: Pilot mit einem Team, Struktur der Sammlungen je Team und Kunde festlegen, Excel-Liste importieren, alle importierten Passwörter nach und nach durch neue, zufällige ersetzen, danach die Excel-Liste sicher löschen. Kurzschulung für alle, Richtlinie zum Master-Passwort unterschreiben lassen, Austrittsprozess ergänzen: Konto sperren und alle geteilten Passwörter des Teams ändern. Test: Freigabe nur für das eigene Team sichtbar, zweiter Faktor wird verlangt, Wiederherstellung eines Kontos einmal durchspielen. Übergabe: Admin-Dokumentation, Benutzeranleitung und Abnahmeprotokoll."
+    ]
+  },
+  {
+    "title": "Unveränderbare Datensicherung auf S3-kompatiblem Objektspeicher",
+    "cat": "systeme",
+    "branche": "Kunststoffverarbeiter (Rheinplast GmbH, 150 Mitarbeiter)",
+    "schwierigkeit": "Anspruchsvoll",
+    "ausgangssituation": "Die Backupsoftware sichert jede Nacht alle virtuellen Server auf ein NAS im selben Serverraum. Die Bandsicherung wurde vor zwei Jahren eingestellt. Bei einem Zulieferer hat eine Ransomware erst die Server und dann mit den Administratorrechten auch das Backup-NAS verschlüsselt. Die Geschäftsführung verlangt deshalb eine zweite Kopie außer Haus, die für einen festen Zeitraum niemand löschen oder verändern kann.",
+    "auftrag": "Planen Sie eine zusätzliche, unveränderbare Sicherungskopie in einem S3-kompatiblen Objektspeicher mit Object Lock, berechnen Sie Speicher, Kosten und Übertragungszeiten und prüfen Sie die Wiederherstellung.",
+    "rahmenbedingungen": [
+      "Datenbestand nach Deduplizierung und Komprimierung 12 TB, tägliche Änderungsrate 2 %. Rechnen Sie dezimal: 1 TB = 1.000 GB, 1 GB = 8.000 Mbit",
+      "Aufbewahrung in der Cloud 30 Tage unveränderbar. Die Backupsoftware verlängert die Sperre technisch bedingt um bis zu 10 Tage, daher rechnen Sie vereinfacht mit einer Vollsicherung und 40 Tagesinkrementen, dazu 20 % Reserve",
+      "Objektspeicher eines Anbieters mit Rechenzentrum in Deutschland: 7 Euro je gebuchtem TB und Monat, keine Kosten für Up- und Download. Gebucht wird in ganzen TB",
+      "Internetanschluss 500 Mbit/s Download und 200 Mbit/s Upload. Für die Sicherung sind nachts von 22 bis 6 Uhr 150 Mbit/s Upload nutzbar. Bei einer Wiederherstellung steht der volle Download zur Verfügung",
+      "Wiederanlaufzeit: Das ERP-System (Datenbank und Anwendung zusammen 800 GB) muss nach 8 Stunden wieder laufen, alle übrigen Systeme nach 3 Tagen",
+      "Die Backupsoftware unterstützt S3 mit Object Lock im Governance- und Compliance-Modus"
+    ],
+    "aufgaben": [
+      "Ist-Analyse: Warum schützt die heutige Sicherung nicht vor Ransomware? Welche Anforderungen leiten Sie mit der 3-2-1-1-0-Regel ab?",
+      "Soll-Konzept: Wie funktioniert die Unveränderbarkeit im Objektspeicher, welchen Modus wählen Sie, und wie schützen Sie Zugangsdaten und Schlüssel?",
+      "Berechnen Sie den Speicherbedarf in der Cloud und die Kosten pro Monat und pro Jahr.",
+      "Passen Erstsicherung und tägliche Sicherung in das nächtliche Zeitfenster? Wie lösen Sie die Erstsicherung?",
+      "Lassen sich die Wiederanlaufzeiten aus der Cloud einhalten? Wie testen Sie die Wiederherstellung, und was dokumentieren Sie bei der Übergabe?"
+    ],
+    "hinweise": [
+      "Das NAS liegt im selben Raum, im selben Netz und in derselben Windows-Domäne. Wer Administratorrechte erbeutet, kann die Sicherungen löschen oder verschlüsseln. Brand oder Wasser treffen Server und Sicherung gleichzeitig. 3-2-1-1-0: 3 Kopien der Daten, auf 2 verschiedenen Medien, 1 Kopie außer Haus, 1 Kopie offline oder unveränderbar, 0 Fehler bei der geprüften Wiederherstellung. Die Cloud-Kopie deckt die Punkte außer Haus und unveränderbar ab.",
+      "Der Bucket wird mit Versionierung und Object Lock angelegt. Jedes Objekt erhält eine Sperrfrist, bis zu deren Ablauf es weder gelöscht noch überschrieben werden kann. Im Governance-Modus können Konten mit Sonderrecht die Sperre aufheben, im Compliance-Modus niemand, auch nicht der Anbieter. Gewählt wird Compliance, weil ein Angreifer mit gestohlenen Zugangsdaten sonst die Sperre lösen könnte. Eigener Zugang nur für die Backupsoftware mit minimalen Rechten, Konsole des Anbieters mit Mehrfaktor-Anmeldung und nicht mit der Domäne verbunden, Verschlüsselung in der Backupsoftware mit einem Schlüssel, der zusätzlich ausgedruckt im Tresor liegt.",
+      "Tagesinkrement: 12 TB * 0,02 = 0,24 TB = 240 GB. Speicher: 12 + 40 * 0,24 = 12 + 9,6 = 21,6 TB, mit 20 % Reserve 25,92 TB, gebucht werden 26 TB. Kosten: 26 * 7 = 182 Euro pro Monat, 182 * 12 = 2.184 Euro pro Jahr. Wächst der Datenbestand, steigen die Kosten entsprechend. Der Speicherverbrauch sollte daher im Monitoring beobachtet werden.",
+      "Täglich: 240 GB * 8.000 = 1.920.000 Mbit, geteilt durch 150 Mbit/s = 12.800 s, also rund 3,56 Stunden. Das passt in das Fenster von 8 Stunden. Erstsicherung: 12.000 GB * 8.000 = 96.000.000 Mbit / 150 = 640.000 s, rund 177,8 Stunden oder 7,4 Tage ohne Pause. Nur nachts wären es 177,8 / 8 = 22,2, also 23 Nächte. Lösung: Erstbefüllung per verschlüsselter Festplatte, die der Anbieter einspielt (Seeding), oder die Erstsicherung in Abschnitten über mehrere Wochenenden mit voller Bandbreite. Danach laufen nur noch Inkremente.",
+      "ERP: 800 GB * 8.000 = 6.400.000 Mbit / 500 Mbit/s = 12.800 s, rund 3,56 Stunden. Das liegt unter 8 Stunden, wenn Hardware bereitsteht. Alles: 96.000.000 Mbit / 500 = 192.000 s, rund 53,3 Stunden. Das liegt unter 3 Tagen (72 Stunden). Im Normalfall wird trotzdem vom lokalen NAS wiederhergestellt, weil das schneller ist. Test: vierteljährlich eine VM und das ERP aus der Cloud in eine isolierte Testumgebung zurückholen, Zeit messen und protokollieren, Löschversuch auf ein gesperrtes Objekt durchführen, der scheitern muss. Übergabe: Sicherungskonzept, Wiederherstellungsanleitung auf Papier, Zugangsdaten und Schlüssel im Tresor, Testprotokolle."
+    ]
+  },
+  {
+    "title": "Konsolidierung der Druckerlandschaft mit einem Managed-Print-Vertrag",
+    "cat": "wirtschaft",
+    "branche": "Fachverlag (Lahntal Fachverlag GmbH, 75 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Im Verlag stehen 38 Drucker von 11 verschiedenen Modellen, viele davon als Arbeitsplatzdrucker. Toner wird bei Bedarf einzeln bestellt, und die IT verbringt viel Zeit mit Störungen. Vertrauliche Manuskripte und Personalunterlagen bleiben oft im Ausgabefach liegen. Ein Anbieter hat vorgeschlagen, alle Drucker durch 6 Multifunktionsgeräte auf den Etagen zu ersetzen. Gedruckt wird dort erst, wenn sich der Mitarbeiter mit seiner Karte am Gerät anmeldet (Follow-Me-Printing).",
+    "auftrag": "Erfassen Sie die heutige Druckerlandschaft, vergleichen Sie die jährlichen Kosten mit dem Managed-Print-Angebot, prüfen Sie Gerätezahl und Vertrag und planen Sie die Umstellung.",
+    "rahmenbedingungen": [
+      "Druckvolumen pro Jahr: 360.000 Seiten schwarz-weiß und 60.000 Seiten farbig. Papier kostet in beiden Varianten gleich viel und bleibt außen vor. Alle Preise netto",
+      "Heute: Verbrauchsmaterial 2,8 Cent je Schwarz-Weiß-Seite und 9 Cent je Farbseite, Reparaturen und Ersatzgeräte 1.800 Euro pro Jahr, Aufwand der IT 120 Stunden pro Jahr zu 45 Euro, Stromverbrauch 4.200 kWh pro Jahr",
+      "Managed Print: 6 Geräte mit Grundgebühr 65 Euro je Gerät und Monat inklusive Wartung, Seitenpreis 1,1 Cent schwarz-weiß und 6,5 Cent farbig inklusive Toner, Aufwand der IT 30 Stunden pro Jahr, Stromverbrauch 1.500 kWh pro Jahr",
+      "Einmalig: Druckserver und Follow-Me-Printing einrichten 2.900 Euro, 6 Kartenleser zu je 250 Euro, Entsorgung der Altgeräte 600 Euro",
+      "Strompreis vereinfacht 0,30 Euro je kWh. Vertragslaufzeit 5 Jahre. Im Vertrag ist ein Mindestvolumen von 300.000 Schwarz-Weiß-Seiten pro Jahr vereinbart",
+      "Der Hersteller empfiehlt für die Geräte höchstens 8.000 Seiten pro Monat. Durch Follow-Me-Printing wird ein Rückgang des Druckvolumens um 15 % erwartet"
+    ],
+    "aufgaben": [
+      "Ist-Analyse: Wie erfassen Sie Geräte und Druckvolumen, und welche Schwachstellen hat die heutige Druckerlandschaft?",
+      "Berechnen Sie die jährlichen Kosten heute und mit Managed Print sowie die Amortisationszeit der einmaligen Kosten.",
+      "Reichen 6 Geräte aus? Wie verändert sich das Ergebnis, wenn das Druckvolumen um 15 % sinkt, und welche Rolle spielt das Mindestvolumen?",
+      "Welche Punkte prüfen Sie im Vertrag, und was ist bei Datenschutz und Mitbestimmung zu beachten?",
+      "Wie planen Sie Umstellung, Test und Übergabe?"
+    ],
+    "hinweise": [
+      "Geräteliste mit Modell, Standort, Alter, Anschluss und Zählerstand erstellen, Zählerstände per SNMP oder über die Druckerwebseite auslesen und nach einigen Wochen erneut ablesen, Druckprotokolle des Druckservers auswerten, Rechnungen für Toner und Reparaturen der letzten Jahre zusammenstellen. Schwachstellen: viele Modelle mit eigenen Verbrauchsmaterialien und Treibern, hohe Kosten je Seite, keine Übersicht über Kosten, vertrauliche Ausdrucke im Ausgabefach, veraltete Geräte ohne Sicherheitsupdates.",
+      "Heute: 360.000 * 0,028 = 10.080 Euro, 60.000 * 0,09 = 5.400 Euro, Reparaturen 1.800 Euro, IT 120 * 45 = 5.400 Euro, Strom 4.200 * 0,30 = 1.260 Euro, zusammen 23.940 Euro pro Jahr. Managed Print: 6 * 65 * 12 = 4.680 Euro, 360.000 * 0,011 = 3.960 Euro, 60.000 * 0,065 = 3.900 Euro, IT 30 * 45 = 1.350 Euro, Strom 1.500 * 0,30 = 450 Euro, zusammen 14.340 Euro pro Jahr. Ersparnis 9.600 Euro pro Jahr. Einmalig 2.900 + 6 * 250 + 600 = 5.000 Euro. Amortisation 5.000 / 9.600 = 0,52 Jahre, also nach gut 6 Monaten. Über 5 Jahre: heute 119.700 Euro, Managed Print 5.000 + 5 * 14.340 = 76.700 Euro, Vorteil 43.000 Euro.",
+      "Gesamtvolumen 420.000 Seiten pro Jahr, das sind 35.000 Seiten pro Monat oder rund 5.833 Seiten je Gerät. Das liegt unter 8.000, 6 Geräte reichen also. Bei 15 % Rückgang: 306.000 Schwarz-Weiß-Seiten zu 0,011 = 3.366 Euro und 51.000 Farbseiten zu 0,065 = 3.315 Euro. Managed Print kostet dann 14.340 - 1.179 = 13.161 Euro pro Jahr, die Ersparnis steigt auf 10.779 Euro. 306.000 Seiten liegen noch über dem Mindestvolumen von 300.000. Sinkt das Volumen darunter, müssen trotzdem 300.000 Seiten bezahlt werden.",
+      "Vertrag: Leistungsumfang (Toner, Wartung, Ersatzteile), Reaktionszeit bei Störungen, automatische Tonerlieferung, Abrechnung der Zähler, Mindestvolumen und Preis für Mehrseiten, Preisanpassungen, Laufzeit und Kündigung, Rücknahme der Geräte. Datenschutz: Die Geräte speichern Druck- und Scandaten auf einem internen Datenträger. Dieser muss verschlüsselt sein und bei Rückgabe nachweisbar gelöscht werden. Hat der Anbieter Fernzugriff, ist ein Auftragsverarbeitungsvertrag nötig. Die Druckprotokolle zeigen, wer was gedruckt hat. Damit ist eine Leistungskontrolle möglich, deshalb hat der Betriebsrat nach § 87 Abs. 1 Nr. 6 BetrVG mitzubestimmen.",
+      "Umstellung etagenweise: Geräte aufstellen und ins Druckernetz einbinden, Druckserver mit einer Warteschlange für Follow-Me einrichten, Treiber per Gruppenrichtlinie verteilen, Karten den Benutzerkonten zuordnen, Scan-to-Mail und Scan-to-Folder einrichten. Erst wenn eine Etage läuft, werden dort die alten Drucker abgebaut. Test: Druck von jedem Client, Anmeldung mit Karte, farbig und beidseitig drucken, Scan an eigene Adresse, nicht abgeholte Aufträge werden nach der festgelegten Zeit gelöscht. Übergabe: Geräteliste, Kurzanleitung am Gerät, Einweisung der Mitarbeiter, Entsorgungsnachweis für die Altgeräte, Abnahmeprotokoll."
+    ]
+  },
+  {
+    "title": "Einführung eines zentralen Monitorings für Netzwerk und Server",
+    "cat": "netzwerk",
+    "branche": "Verpackungshersteller (Kartonagen Wendt GmbH, 210 Mitarbeiter, zwei Werke)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Störungen fallen bisher erst auf, wenn Mitarbeiter anrufen. Im letzten Jahr fiel in einem Server eine RAID-Festplatte aus, drei Wochen später die zweite, und Daten gingen verloren. Die Standortverbindung zu Werk 2 ist nachmittags oft überlastet, und niemand kann sagen, wie stark. Die IT soll ein zentrales Monitoring mit einer Open-Source-Lösung auf einer eigenen VM einführen, das Probleme meldet, bevor die Benutzer sie bemerken.",
+    "auftrag": "Planen Sie die Monitoring-Lösung, dimensionieren Sie den Monitoring-Server, werten Sie die Auslastung der Standortverbindung aus, legen Sie Schwellwerte und Alarmierung fest und übergeben Sie die Lösung an den IT-Betrieb.",
+    "rahmenbedingungen": [
+      "Zu überwachen: 24 Switches, 2 Firewalls, 18 Access Points, 16 virtuelle Server, 3 Virtualisierungshosts, 2 USV und 1 Storage-System",
+      "Durchschnittlich 25 Messwerte je Gerät, Abfrageintervall 60 Sekunden",
+      "Rohdaten werden 30 Tage gespeichert, danach nur noch Stundenwerte für 365 Tage. Jeder gespeicherte Wert belegt vereinfacht 100 Byte in der Datenbank (dezimal rechnen), dazu 50 % Reserve",
+      "Standortverbindung zu Werk 2: 100 Mbit/s. Zwei Abfragen des Zählers ifHCInOctets im Abstand von 60 Sekunden ergaben 3.918.402.117.550 und 3.918.852.117.550",
+      "Die Uplinks zwischen Core- und Etagenswitches laufen mit 1 Gbit/s. Einige ältere Switches liefern nur 32-Bit-Zähler",
+      "Das ERP-System soll rund um die Uhr zu 99,9 % verfügbar sein. Der Monitoring-Server steht im Management-VLAN"
+    ],
+    "aufgaben": [
+      "Ist-Analyse: Welche Informationen erheben Sie, und welche Anforderungen leiten Sie aus den Vorfällen ab?",
+      "Wie viele Messwerte fallen an, wie viele Werte pro Sekunde muss der Server verarbeiten, und wie viel Speicher braucht die Datenbank?",
+      "Berechnen Sie die Auslastung der Standortverbindung. Warum sind 32-Bit-Zähler an den 1-Gbit/s-Uplinks bei 60 Sekunden Abfrageintervall ungeeignet?",
+      "Legen Sie Schwellwerte und Alarmierung fest. Wie binden Sie die Geräte sicher an?",
+      "Wie testen Sie das Monitoring, wie viel Ausfallzeit erlaubt die ERP-Vorgabe pro Jahr und pro Monat, und was übergeben Sie an den IT-Betrieb?"
+    ],
+    "hinweise": [
+      "Liste aller Geräte mit Typ, IP-Adresse, Standort und Verantwortlichem, unterstützte Protokolle (SNMP-Version, Agent für Windows und Linux, Schnittstellen der Hosts, Storage und USV), kritische Dienste und Geschäftsprozesse, Erreichbarkeit der IT außerhalb der Arbeitszeit. Anforderungen aus den Vorfällen: Hardwarezustand von RAID und Festplatten überwachen, Auslastung der Standortverbindung aufzeichnen und als Verlauf darstellen, Alarm per E-Mail und Push, Eskalation, wenn niemand reagiert.",
+      "Geräte: 24 + 2 + 18 + 16 + 3 + 2 + 1 = 66. Messwerte: 66 * 25 = 1.650. Verarbeitung: 1.650 / 60 = 27,5 Werte pro Sekunde. Das schafft eine kleine VM leicht. Rohdaten: 1.650 * 1.440 Abfragen pro Tag * 30 Tage = 71.280.000 Werte * 100 Byte = 7,128 GB. Stundenwerte: 1.650 * 24 * 365 = 14.454.000 Werte * 100 Byte = 1,4454 GB. Zusammen 8,5734 GB, mit 50 % Reserve rund 12,9 GB. Der Speicher ist also unkritisch.",
+      "Differenz der Zähler: 3.918.852.117.550 - 3.918.402.117.550 = 450.000.000 Byte in 60 Sekunden. 450.000.000 * 8 / 60 = 60.000.000 bit/s = 60 Mbit/s, also 60 % von 100 Mbit/s im Mittel der Minute. Kurze Spitzen liegen höher. Ein 32-Bit-Zähler läuft bei 2^32 = 4.294.967.296 Byte über. Bei 1 Gbit/s Volllast sind das 4.294.967.296 * 8 / 1.000.000.000 = 34,4 Sekunden. In 60 Sekunden können bei Volllast 1.000.000.000 * 60 / 8 = 7.500.000.000 Byte übertragen werden, mehr als der Zähler fassen kann. Der Überlauf lässt sich dann nicht mehr eindeutig herausrechnen, und die Werte sind zu niedrig. Daher 64-Bit-Zähler (ifHCInOctets, ab SNMPv2c) verwenden oder die alten Switches schneller abfragen bzw. ersetzen.",
+      "Beispiele: Verbindung über 5 Minuten über 70 % Warnung, über 90 % kritisch. Festplatte oder RAID nicht optimal sofort kritisch. Dateisystem über 80 % Warnung, über 90 % kritisch. USV im Batteriebetrieb sofort kritisch. Gerät nicht erreichbar nach drei fehlgeschlagenen Abfragen. Abhängigkeiten eintragen, damit bei Ausfall eines Switches nicht jedes Gerät dahinter einzeln alarmiert. Alarm an die IT per E-Mail, kritische Alarme zusätzlich als Push an die Rufbereitschaft. Sicherheit: SNMPv3 mit Authentifizierung und Verschlüsselung (authPriv) statt SNMPv2c mit der Community public, nur Lesezugriff, Abfragen nur aus dem Management-VLAN erlauben.",
+      "Test: Kabel eines Test-Access-Points ziehen, Dienst auf einem Testserver stoppen, Dateisystem mit einer großen Datei füllen, USV-Selbsttest auslösen. Prüfen, ob Alarm und Entwarnung ankommen. Das Monitoring selbst wird von außen überwacht, damit sein Ausfall bemerkt wird. 99,9 % rund um die Uhr: 8.760 * 0,001 = 8,76 Stunden pro Jahr bzw. 730 * 0,001 = 0,73 Stunden, also 43,8 Minuten pro Monat. Nachweis über den Verfügbarkeitsbericht des Monitorings. Übergabe: Liste der Hosts und Schwellwerte, Anleitung zum Aufnehmen neuer Geräte, Handlungsanweisungen je Alarm, Einweisung der Kollegen, Abnahmeprotokoll."
+    ]
   }
 ]

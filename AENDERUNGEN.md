@@ -6,15 +6,21 @@ Update-Fenster des Programms.
 
 ## 0.25
 
-- **Viel mehr Lernstoff:** 2.288 statt 368 Aufgaben – 795 Karteikarten,
-  1.190 Quizfragen, 124 AP1-Szenarien, 150 AP2-Szenarien und 29 Testprojekte,
-  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 230 neue
+- **Viel mehr Lernstoff:** 2.721 statt 368 Aufgaben – 947 Karteikarten,
+  1.396 Quizfragen, 156 AP1-Szenarien, 188 AP2-Szenarien und 34 Testprojekte,
+  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 323 neue
   Rechenaufgaben (Zahlensysteme, Zweierkomplement, Subnetting, VLSM,
   IPv6-Präfixe, RAID 5/6/50/60, chmod und umask, VM-Dimensionierung,
   SSD-Lebensdauer, Verfügbarkeit, Übertragungsdauer, Passwortstärke,
   Umsatzsteuer, Bezugs- und Handelskalkulation, Zuschlagskalkulation,
   Skonto-Zinssatz, Deckungsbeitrag, Kennzahlen, Earned Value, Abschreibung,
-  TCO, Lizenzierung) mit Rechenweg.
+  TCO, Lizenzierung, Kostenvergleich, Barwert, Kreditzinsen, MTBF und MTTR,
+  Netzplan und Puffer) mit Rechenweg.
+- **Prüfungsnahe Situationsaufgaben:** Viele Karten und Quizfragen schildern
+  jetzt einen Fall aus dem Betriebsalltag (Kundengespräch, Ticket, Störung,
+  Vertragsproblem) statt nur eine Definition abzufragen. Die neuen AP1- und
+  AP2-Szenarien verbinden in jeder Aufgabe eine Rechnung mit Technik,
+  Sicherheit, Recht oder Projektablauf – so wie in der echten Prüfung.
 - **Vertiefung Netzwerk und Sicherheit:** u.a. IPv6, OSPF und BGP, WLAN-Planung,
   DNS und DHCP im Detail, NAT und QoS, Kryptografie und Zertifikate,
   DSGVO-Praxisfälle, Angriffe und Abwehr im Netz und im Web.
