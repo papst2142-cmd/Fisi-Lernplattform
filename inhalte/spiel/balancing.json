@@ -1,0 +1,30 @@
+{
+  "_hinweis": [
+    "Alle Stellschrauben des Lernspiels. Werte hier aendern, nicht im Code.",
+    "Geld in Euro (Spielgeld), Reputation je Achse 0 bis 100."
+  ],
+  "tickets_pro_tag": 3,
+  "reputation_start": 20,
+  "gehalt_pro_tag": {"Azubi-Niveau": 90, "Junior": 140, "Fachkraft": 190, "Senior": 250},
+  "raenge": [
+    {"name": "Azubi-Niveau", "ab": 0},
+    {"name": "Junior", "ab": 35},
+    {"name": "Fachkraft", "ab": 55},
+    {"name": "Senior", "ab": 75}
+  ],
+  "bonus_ohne_hilfe": 0.25,
+  "bonus_sicher_geloest": 0.10,
+  "faktor_unter_niveau": 2,
+  "fehlerkosten": 15,
+  "reputation_verlust": 3,
+  "zuverlaessigkeit_pro_ticket": 1,
+  "verschieben_verlust": 2,
+  "prioritaet_faktor": {"niedrig": 0.5, "normal": 1, "hoch": 1.5, "kritisch": 2},
+  "wissen": {
+    "letzte_antworten": 200,
+    "mindest_antworten": 20,
+    "volle_abdeckung_prozent": 50,
+    "abdeckung_exponent": 0.5
+  },
+  "gruendung": {"startkapital": 25000, "mindest_reputation": 60}
+}

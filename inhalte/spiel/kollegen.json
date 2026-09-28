@@ -1,0 +1,17 @@
+[
+  {"id": "sabine", "name": "Sabine Kranich", "rolle": "Geschäftsführerin", "raum": "chefbuero",
+   "macke": "Braucht alles „sofort“, bedankt sich aber immer mit Keksen."},
+  {"id": "lea", "name": "Lea Sommer", "rolle": "Kundenberaterin", "raum": "kundenberatung",
+   "macke": "Verspricht Kunden gern etwas mehr, als im Angebot steht."},
+  {"id": "petra", "name": "Petra Lindner", "rolle": "IT-Koordinatorin der Talbahn Nordlicht AG",
+   "raum": "kundenberatung", "extern": true,
+   "macke": "Kommt pünktlich wie ein Zug, der nie Verspätung hat. Also selten."},
+  {"id": "frank", "name": "Frank Heider", "rolle": "Buchhaltung und Einkauf", "raum": "verwaltung",
+   "macke": "Rechnet alles zweimal nach und hat für jede Frage eine Tabelle."},
+  {"id": "jonas", "name": "Jonas Pieper", "rolle": "Helpdesk", "raum": "helpdesk",
+   "macke": "Superhilfsbereit, schreibt Passwörter aber gern auf Klebezettel."},
+  {"id": "mehmet", "name": "Mehmet Aydın", "rolle": "Techniker IT-Werkstatt", "raum": "werkstatt",
+   "macke": "Sortiert Schrauben nach Farbe und Größe. Wehe, jemand bringt sie durcheinander."},
+  {"id": "ulla", "name": "Ulla Brandt", "rolle": "Systemadministratorin", "raum": "serverraum",
+   "macke": "Spricht mit den Servern. Die Server antworten angeblich."}
+]

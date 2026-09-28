@@ -15,7 +15,8 @@ traegt eine eindeutige Kennung (uid) - zusammengefuehrt wird deshalb einfach
 die Vereinigung beider Seiten. Nur Loeschen braucht eine Regel: Der Zeitpunkt
 von "Alle Lerndaten loeschen" (reset_at) bzw. "Historie loeschen"
 (history_cleared_at) wird mit abgeglichen, und alles davor faellt auf allen
-Geraeten weg.
+Geraeten weg. Der Spielstand des Lernspiels hat einen eigenen Zeitpunkt
+(spiel_reset_at) und bleibt von den beiden anderen unberuehrt.
 
 Ablauf:
   ergebnis = sync(db, einstellungen, geraet="PC")   -> SyncResult
@@ -29,13 +30,13 @@ import sqlite3
 import urllib.error
 import urllib.request
 
-from fisi_core import EVENT_TABLES
+from fisi_core import GAME_TABLES, SYNC_TABLES
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
 REMOTE_FILE = "lernstand.json.gz"
 FORMAT = 1
-MARKERS = ("reset_at", "history_cleared_at")
+MARKERS = ("reset_at", "history_cleared_at", "spiel_reset_at")
 TIMEOUT = 15
 
 SETTING_DEFAULTS = {"sync_repo": "", "sync_token": "", "sync_auto": True,
@@ -211,7 +212,7 @@ def export_local(db):
     conn = sqlite3.connect(db.db_path)
     try:
         tables = {}
-        for table, columns in EVENT_TABLES.items():
+        for table, columns in SYNC_TABLES.items():
             rows = conn.execute("SELECT uid, %s FROM %s ORDER BY timestamp, id"
                                 % (", ".join(columns), table)).fetchall()
             tables[table] = [list(row) for row in rows]
@@ -222,7 +223,7 @@ def export_local(db):
         conn.close()
     return {
         "format": FORMAT,
-        "columns": {table: list(columns) for table, columns in EVENT_TABLES.items()},
+        "columns": {table: list(columns) for table, columns in SYNC_TABLES.items()},
         "markers": markers,
         "tables": tables,
     }
@@ -249,6 +250,7 @@ def merge_into_local(db, remote):
     markers = _merged_markers(local_markers, remote.get("markers") or {})
     reset = markers.get("reset_at")
     cleared = _later(reset, markers.get("history_cleared_at"))
+    game_reset = markers.get("spiel_reset_at")
     remote_columns = remote.get("columns") or {}
     remote_tables = remote.get("tables") or {}
 
@@ -259,8 +261,13 @@ def merge_into_local(db, remote):
         for key, value in markers.items():
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         (key, value))
-        for table, columns in EVENT_TABLES.items():
-            cutoff = cleared if table == "test_results" else reset
+        for table, columns in SYNC_TABLES.items():
+            if table in GAME_TABLES:
+                cutoff = game_reset
+            elif table == "test_results":
+                cutoff = cleared
+            else:
+                cutoff = reset
             if cutoff:
                 cur.execute("DELETE FROM %s WHERE timestamp <= ?" % table, (cutoff,))
             names = ["uid"] + list(remote_columns.get(table) or columns)

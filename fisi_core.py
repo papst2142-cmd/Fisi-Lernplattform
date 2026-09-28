@@ -209,6 +209,17 @@ EVENT_TABLES = {
     "ap1_events": ("timestamp", "scenario_index", "title", "theme"),
 }
 
+# Tabellen des Lernspiels (fisi_game.py). Bewusst getrennt von EVENT_TABLES:
+# "Alle Lerndaten loeschen" und "Historie loeschen" beruehren den Spielstand
+# nicht, dafuer gibt es "Spielstand zuruecksetzen" (Marker spiel_reset_at).
+GAME_TABLES = {
+    "spiel_ereignisse": ("timestamp", "typ", "daten", "geraet"),
+}
+
+# Alles, was zwischen den Geraeten abgeglichen wird
+SYNC_TABLES = dict(EVENT_TABLES)
+SYNC_TABLES.update(GAME_TABLES)
+
 
 class DBManager:
     """SQLite-Anbindung fuer Testergebnisse und einzelne Lern-Ereignisse.
@@ -321,6 +332,16 @@ class DBManager:
                 theme TEXT NOT NULL
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS spiel_ereignisse (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                typ TEXT NOT NULL,
+                daten TEXT NOT NULL,
+                geraet TEXT NOT NULL DEFAULT '',
+                uid TEXT
+            )
+            """,
         ]
         conn = None
         try:
@@ -342,7 +363,7 @@ class DBManager:
         mehreren Geraeten braucht: eine eindeutige Kennung (uid) je Eintrag,
         damit zusammengefuehrte Eintraege nie doppelt zaehlen, und die
         Tabelle sync_meta fuer Zeitpunkte wie "alles zurueckgesetzt"."""
-        for table in EVENT_TABLES:
+        for table in SYNC_TABLES:
             columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
             if "uid" not in columns:
                 cur.execute("ALTER TABLE %s ADD COLUMN uid TEXT" % table)
@@ -416,6 +437,29 @@ class DBManager:
             (self._now(), index, title, theme, self._uid()),
             commit=True, default=False)
 
+    def log_game_event(self, kind, data, device=""):
+        """Ein Ereignis des Lernspiels (data ist JSON-Text)."""
+        return bool(self._execute(
+            "INSERT INTO spiel_ereignisse (timestamp, typ, daten, geraet, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), kind, data, device or "", self._uid()),
+            commit=True, default=False))
+
+    def game_events(self):
+        """Alle Spielereignisse chronologisch: [(timestamp, typ, daten-dict)]."""
+        rows = self._execute(
+            "SELECT timestamp, typ, daten FROM spiel_ereignisse"
+            " ORDER BY timestamp, id", fetch="all", default=[]) or []
+        events = []
+        for timestamp, kind, data in rows:
+            try:
+                payload = json.loads(data) if data else {}
+            except ValueError:
+                continue
+            if isinstance(payload, dict):
+                events.append((timestamp, kind, payload))
+        return events
+
     # -- Loeschen -----------------------------------------------------------
 
     # Der Zeitpunkt des Loeschens wird in sync_meta vermerkt: Der Abgleich
@@ -451,6 +495,26 @@ class DBManager:
             return True
         except sqlite3.Error as exc:
             self._report("Zuruecksetzen fehlgeschlagen: %s" % exc)
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
+
+    def reset_game(self):
+        """Spielstand zuruecksetzen (Profil, Geld, Reputation, Tickets). Der
+        Lernfortschritt bleibt unberuehrt."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            for table in GAME_TABLES:
+                cur.execute("DELETE FROM " + table)
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        ("spiel_reset_at", self._now()))
+            conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self._report("Spielstand zuruecksetzen fehlgeschlagen: %s" % exc)
             return False
         finally:
             if conn is not None:
@@ -961,6 +1025,10 @@ def validate_content():
         if len(project.get("aufgaben", [])) != len(project.get("hinweise", [])):
             problems.append("Testprojekt Nr. %d: je Aufgabe wird genau ein Hinweis "
                             "gebraucht" % number)
+
+    # Inhalte des Lernspiels (inhalte/spiel/)
+    from fisi_game import validate_game_content
+    problems.extend(validate_game_content())
     return problems
 
 

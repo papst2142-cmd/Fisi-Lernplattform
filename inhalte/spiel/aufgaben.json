@@ -1,0 +1,323 @@
+[
+  {
+    "id": "ports-serverraum",
+    "typ": "zuordnung",
+    "titel": "Firewall-Freigaben zuordnen",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 15},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 30, "reputation": 4},
+    "ab_tag": 1,
+    "ticket": [
+      "Ulla hat eine alte Firewall-Liste gefunden. Die Dienstnamen sind verrutscht, nur die Ports stimmen noch.",
+      "„Bevor ich hier etwas freigebe, will ich wissen, welcher Port zu welchem Dienst gehört. Die Server sind da sehr empfindlich.“"
+    ],
+    "frage": "Ordne jedem Port den passenden Standarddienst zu.",
+    "paare": [["TCP 22", "SSH"], ["UDP/TCP 53", "DNS"], ["TCP 443", "HTTPS"], ["TCP 3389", "RDP (Remotedesktop)"]],
+    "hilfe": [
+      "Gefragt sind die Standardports (Well-Known Ports) häufiger Dienste.",
+      "Merkhilfe: 22 = SSH (sichere Fernwartung), 53 = DNS (Namensauflösung), 443 = HTTPS (verschlüsseltes Web), 3389 = RDP (Windows-Remotedesktop).",
+      "Tipp: Wer HTTP (80) kennt, merkt sich HTTPS als „die verschlüsselte 443“."
+    ],
+    "erklaerung": [
+      "Firewall-Regeln werden fast immer über Ports formuliert. Wer die Standardports kennt, erkennt sofort, welche Freigabe welchen Dienst öffnet, und gibt nur das frei, was wirklich gebraucht wird."
+    ],
+    "suchbegriffe": ["SSH", "RDP"]
+  },
+  {
+    "id": "phishing-fahrkarten",
+    "typ": "auswahl",
+    "titel": "Verdächtige Mail im Service-Center",
+    "auftraggeber": "petra",
+    "raum": "kundenberatung",
+    "prioritaet": "kritisch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 20},
+    "achsen": ["fachkompetenz", "sicherheit", "kundenzufriedenheit"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 1,
+    "ticket": [
+      "Petra Lindner ruft aus dem Fahrkarten-Service-Center der Talbahn an:",
+      "„Eine Kollegin hat eine Mail bekommen: ‚Ihr Kassensystem wird gesperrt, bitte sofort hier anmelden.‘ Der Absender sieht fast aus wie unserer. Sie hat den Link noch nicht angeklickt. Was soll sie tun?“"
+    ],
+    "frage": "Was ist die richtige erste Maßnahme?",
+    "optionen": [
+      "Mail nicht weiter öffnen, als Phishing an die IT-Sicherheit melden und die Kollegen warnen",
+      "Den Link kurz öffnen, um zu prüfen, ob die Seite echt aussieht",
+      "Auf die Mail antworten und den Absender fragen, ob sie echt ist",
+      "Die Mail löschen und niemandem davon erzählen, damit keine Unruhe entsteht"
+    ],
+    "antwort": "Mail nicht weiter öffnen, als Phishing an die IT-Sicherheit melden und die Kollegen warnen",
+    "hilfe": [
+      "Typische Phishing-Merkmale: Zeitdruck („sofort“), Drohung („wird gesperrt“), leicht veränderte Absenderadresse, Link zu einer Anmeldeseite.",
+      "Ein Klick auf den Link oder eine Antwort bestätigt dem Angreifer, dass die Adresse aktiv ist, und kann Schadcode nachladen.",
+      "Wichtig ist, dass der Vorfall gemeldet wird: Nur so kann die IT die Mail bei allen anderen Postfächern sperren und die Kollegen warnen."
+    ],
+    "erklaerung": [
+      "Melden statt still löschen: Phishing-Mails kommen selten nur bei einer Person an. Die Meldung ermöglicht es, die Mail zentral zu blockieren und alle zu warnen."
+    ],
+    "suchbegriffe": ["Phishing"]
+  },
+  {
+    "id": "ram-servicecenter",
+    "typ": "auswahl",
+    "titel": "Arbeitsspeicher für neue Kassen-PCs",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 20},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 35, "reputation": 4},
+    "ab_tag": 1,
+    "ticket": [
+      "Für das neue Service-Center der Talbahn werden acht Desktop-PCs aufgerüstet. Mehmet hat die Mainboards schon sortiert (natürlich nach Farbe).",
+      "„Im Handbuch steht: 4 Steckplätze, DDR5, bis 5600 MT/s. Welche Riegel soll ich bestellen? Und bitte keine, die nicht passen. Ich hasse Schrauben, die übrig bleiben.“"
+    ],
+    "frage": "Welcher Arbeitsspeicher passt in diese Desktop-Mainboards?",
+    "optionen": [
+      "DDR5-5600 UDIMM",
+      "DDR4-3200 UDIMM",
+      "DDR5-5600 SO-DIMM",
+      "DDR3-1600 UDIMM"
+    ],
+    "antwort": "DDR5-5600 UDIMM",
+    "hilfe": [
+      "Zwei Dinge müssen passen: die Speichergeneration und die Bauform.",
+      "DDR-Generationen sind mechanisch verschieden (die Kerbe sitzt an anderer Stelle). Ein DDR5-Board nimmt nur DDR5.",
+      "UDIMM ist die lange Bauform für Desktop-PCs, SO-DIMM die kurze Bauform für Notebooks und Mini-PCs."
+    ],
+    "erklaerung": [
+      "DDR5 im Desktop-Format (UDIMM) passt. SO-DIMM wäre zu kurz, DDR4 und DDR3 haben eine andere Kerbe und lassen sich gar nicht einsetzen."
+    ],
+    "suchbegriffe": ["DDR5", "SO-DIMM"]
+  },
+  {
+    "id": "subnetz-servicecenter",
+    "typ": "auswahl",
+    "titel": "Subnetz für das Service-Center",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 30},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 50, "reputation": 5},
+    "ab_tag": 2,
+    "ticket": [
+      "Das neue Service-Center bekommt ein eigenes Subnetz: 38 PCs, 6 Drucker, 4 Kartenterminals und 2 Access Points. Das sind 50 Geräte.",
+      "Ulla: „Ich will kein /24 verschwenden, das Netz 10.40.0.0 ist schon eng. Welches Präfix ist das kleinste, das reicht?“"
+    ],
+    "frage": "Welches Präfix ist das kleinste, das 50 Geräte aufnehmen kann?",
+    "optionen": ["/26", "/27", "/25", "/24"],
+    "antwort": "/26",
+    "hilfe": [
+      "Nutzbare Hosts = 2 hoch (32 - Präfix) minus 2 (Netzadresse und Broadcast).",
+      "/27: 2^5 - 2 = 30 Hosts, das reicht nicht.",
+      "/26: 2^6 - 2 = 62 Hosts, das reicht für 50 Geräte.",
+      "/25 (126 Hosts) und /24 (254 Hosts) würden auch reichen, verschwenden aber Adressen."
+    ],
+    "erklaerung": [
+      "Ein /26 bietet 62 nutzbare Adressen und ist das kleinste Netz für 50 Geräte. Der Rest bleibt als Reserve, zum Beispiel für weitere Kartenterminals."
+    ],
+    "suchbegriffe": ["Subnetz", "/26"]
+  },
+  {
+    "id": "usv-leitstelle",
+    "typ": "auswahl",
+    "titel": "USV für die Leitstelle",
+    "auftraggeber": "petra",
+    "raum": "kundenberatung",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 35},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 60, "reputation": 5},
+    "ab_tag": 2,
+    "ticket": [
+      "Petra Lindner: „In der Leitstelle ist letzte Woche kurz der Strom weg gewesen. Drei Bildschirme schwarz, der Fahrdienstleiter war nicht begeistert.“",
+      "Die Arbeitsplätze in der Leitstelle ziehen zusammen 1.200 Watt Wirkleistung. Der Leistungsfaktor der Geräte liegt bei 0,8. Die Talbahn möchte 25 % Reserve."
+    ],
+    "frage": "Welche USV ist die kleinste, die mit 25 % Reserve reicht?",
+    "optionen": ["2.000 VA", "1.500 VA", "1.000 VA", "3.000 VA"],
+    "antwort": "2.000 VA",
+    "hilfe": [
+      "USVs werden in Voltampere (VA, Scheinleistung) angegeben, Geräte oft in Watt (W, Wirkleistung).",
+      "Scheinleistung = Wirkleistung / Leistungsfaktor = 1.200 W / 0,8 = 1.500 VA.",
+      "Mit 25 % Reserve: 1.500 VA × 1,25 = 1.875 VA.",
+      "Die kleinste passende Größe darüber ist 2.000 VA."
+    ],
+    "erklaerung": [
+      "1.500 VA würden genau die heutige Last tragen, aber ohne Reserve. 3.000 VA wären unnötig teuer. 2.000 VA ist die wirtschaftliche Wahl."
+    ],
+    "suchbegriffe": ["USV", "Leistungsfaktor"]
+  },
+  {
+    "id": "raid-dateiserver",
+    "typ": "zuordnung",
+    "titel": "RAID-Level für den Dateiserver",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 2,
+    "ticket": [
+      "Der Dateiserver bekommt neue Platten. Ulla hat vier Zettel mit RAID-Leveln an das Rack geklebt und die Beschreibungen daneben.",
+      "„Leider hat der Wind aus der Klimaanlage alles durcheinandergewirbelt. Sortierst du das wieder?“"
+    ],
+    "frage": "Ordne jedem RAID-Level die passende Beschreibung zu.",
+    "paare": [
+      ["RAID 0", "Striping ohne Ausfallschutz"],
+      ["RAID 1", "Spiegelung auf zwei Platten"],
+      ["RAID 5", "Verteilte Parität, mindestens 3 Platten"],
+      ["RAID 10", "Spiegelung plus Striping, mindestens 4 Platten"]
+    ],
+    "hilfe": [
+      "RAID 0 verteilt Daten nur (Striping): schnell, aber eine defekte Platte zerstört alles.",
+      "RAID 1 spiegelt: beide Platten enthalten dasselbe.",
+      "RAID 5 verteilt Daten und eine Parität über mindestens 3 Platten, eine Platte darf ausfallen.",
+      "RAID 10 kombiniert Spiegelung (RAID 1) und Striping (RAID 0) und braucht mindestens 4 Platten."
+    ],
+    "erklaerung": [
+      "Für einen Dateiserver kommen RAID 5 oder RAID 10 in Frage. RAID 0 ist nie eine Datensicherung, und auch ein RAID ersetzt kein Backup."
+    ],
+    "suchbegriffe": ["RAID 5", "Striping"]
+  },
+  {
+    "id": "klebezettel-passwoerter",
+    "typ": "auswahl",
+    "titel": "Passwörter am Bildschirmrand",
+    "auftraggeber": "sabine",
+    "raum": "chefbuero",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 30},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 40, "reputation": 5},
+    "ab_tag": 3,
+    "ticket": [
+      "Sabine Kranich hat beim Rundgang am Helpdesk sechs Klebezettel mit Passwörtern gefunden. Alle an Jonas’ Monitor.",
+      "„Ich will Jonas keinen Ärger machen, er hilft ja allen. Aber so geht das nicht. Was führen wir ein, damit sich niemand mehr Passwörter aufschreiben muss? Und zwar sofort.“"
+    ],
+    "frage": "Welche Maßnahme löst das Problem am besten?",
+    "optionen": [
+      "Einen Passwortmanager einführen und zusätzlich Mehrfaktor-Authentifizierung (MFA) aktivieren",
+      "Alle Passwörter auf „Bitweiche2026“ vereinheitlichen, damit sie leichter zu merken sind",
+      "Die Klebezettel unter die Tastatur kleben, dann sieht sie keiner",
+      "Passwörter alle zwei Wochen ändern lassen und in einer Excel-Datei sammeln"
+    ],
+    "antwort": "Einen Passwortmanager einführen und zusätzlich Mehrfaktor-Authentifizierung (MFA) aktivieren",
+    "hilfe": [
+      "Menschen schreiben Passwörter auf, wenn sie sich zu viele komplexe Passwörter merken müssen.",
+      "Ein Passwortmanager speichert sie verschlüsselt, man merkt sich nur noch ein starkes Master-Passwort.",
+      "MFA sorgt dafür, dass ein erbeutetes Passwort allein nicht reicht."
+    ],
+    "erklaerung": [
+      "Gleiche Passwörter, versteckte Zettel oder eine Excel-Liste verschieben das Problem nur. Passwortmanager plus MFA senkt das Risiko wirklich, und Jonas muss sich nichts mehr aufschreiben."
+    ],
+    "suchbegriffe": ["Passwortmanager", "Mehrfaktor"]
+  },
+  {
+    "id": "angebot-notebooks",
+    "typ": "auswahl",
+    "titel": "Bruttopreis für das Notebook-Angebot",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 25},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 40, "reputation": 4},
+    "ab_tag": 3,
+    "ticket": [
+      "Die Talbahn möchte 12 Notebooks für die Zugbegleiter. Der Einkaufspreis steht fest: 899,00 Euro netto pro Stück.",
+      "Frank: „Ich habe das schon zweimal gerechnet und zwei verschiedene Ergebnisse. Rechnest du bitte das dritte Mal, dann haben wir eine Mehrheit? Gesucht ist der Bruttobetrag inklusive 19 % Umsatzsteuer.“"
+    ],
+    "frage": "Wie hoch ist der Bruttobetrag für alle 12 Notebooks?",
+    "optionen": ["12.837,72 €", "10.788,00 €", "12.945,60 €", "11.543,16 €"],
+    "antwort": "12.837,72 €",
+    "hilfe": [
+      "Nettobetrag: 12 × 899,00 € = 10.788,00 €.",
+      "Umsatzsteuer: 10.788,00 € × 0,19 = 2.049,72 €.",
+      "Bruttobetrag: 10.788,00 € + 2.049,72 € = 12.837,72 € (oder direkt 10.788,00 € × 1,19)."
+    ],
+    "erklaerung": [
+      "10.788,00 € ist nur der Nettobetrag. 12.945,60 € entsteht mit 20 % statt 19 %, 11.543,16 € mit dem ermäßigten Satz von 7 %, der für IT-Hardware nicht gilt."
+    ],
+    "suchbegriffe": ["Umsatzsteuer", "Brutto"]
+  },
+  {
+    "id": "sql-automaten",
+    "typ": "auswahl",
+    "titel": "Defekte Fahrkartenautomaten finden",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 20},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 3,
+    "ticket": [
+      "In der Anlagendatenbank steht jeder Fahrkartenautomat der Talbahn in der Tabelle automaten, mit der Spalte status.",
+      "Frank: „Die Talbahn will bis heute Abend eine Liste aller Automaten mit dem Status ‚defekt‘. Ich hätte ja eine Tabelle gebaut, aber die Datenbank war schneller.“"
+    ],
+    "frage": "Welche Abfrage liefert alle defekten Automaten?",
+    "optionen": [
+      "SELECT * FROM automaten WHERE status = 'defekt';",
+      "SELECT * FROM automaten HAVING status = 'defekt';",
+      "UPDATE automaten SET status = 'defekt';",
+      "SELECT status FROM automaten GROUP BY 'defekt';"
+    ],
+    "antwort": "SELECT * FROM automaten WHERE status = 'defekt';",
+    "hilfe": [
+      "SELECT liest Daten, UPDATE ändert sie. Hier sollen nur Daten gelesen werden.",
+      "WHERE filtert einzelne Zeilen. HAVING filtert erst nach einer Gruppierung mit GROUP BY.",
+      "Texte stehen in SQL in einfachen Anführungszeichen: 'defekt'."
+    ],
+    "erklaerung": [
+      "Vorsicht mit dem UPDATE: Es würde alle Automaten auf ‚defekt‘ setzen, und dann wäre Frank wirklich unglücklich."
+    ],
+    "suchbegriffe": ["WHERE", "HAVING"]
+  },
+  {
+    "id": "backup-beratung",
+    "typ": "auswahl",
+    "titel": "Backup-Beratung für die Verwaltung",
+    "auftraggeber": "lea",
+    "raum": "kundenberatung",
+    "prioritaet": "niedrig",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 25, "systeme": 20},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 40, "reputation": 4},
+    "ab_tag": 4,
+    "ticket": [
+      "Lea Sommer hat der Verwaltung der Talbahn „das beste Backup der Welt“ versprochen. Jetzt fragt die Talbahn, was das genau heißt.",
+      "„Kannst du mir kurz die Regel sagen, nach der wir Backups empfehlen? Ich möchte nicht schon wieder etwas versprechen, das ich nicht erklären kann.“"
+    ],
+    "frage": "Welche Regel empfiehlst du für die Datensicherung?",
+    "optionen": [
+      "3-2-1-Regel: 3 Kopien der Daten, auf 2 verschiedenen Medien, 1 Kopie außer Haus",
+      "Ein RAID 1 reicht, dann sind die Daten ja doppelt vorhanden",
+      "Einmal im Jahr alles auf einen USB-Stick kopieren",
+      "Backups auf derselben Festplatte wie die Originaldaten speichern, damit sie schnell da sind"
+    ],
+    "antwort": "3-2-1-Regel: 3 Kopien der Daten, auf 2 verschiedenen Medien, 1 Kopie außer Haus",
+    "hilfe": [
+      "Ein Backup soll auch dann helfen, wenn der Server defekt, verschlüsselt (Ransomware) oder das Gebäude betroffen ist (Brand, Wasser).",
+      "Ein RAID schützt nur vor dem Ausfall einer Platte, nicht vor Löschen, Viren oder Brand.",
+      "Bewährt hat sich die 3-2-1-Regel."
+    ],
+    "erklaerung": [
+      "3 Kopien, 2 Medientypen, 1 Kopie außer Haus. Viele ergänzen heute noch eine unveränderbare (offline oder immutable) Kopie gegen Ransomware."
+    ],
+    "suchbegriffe": ["3-2-1", "Backup"]
+  }
+]
