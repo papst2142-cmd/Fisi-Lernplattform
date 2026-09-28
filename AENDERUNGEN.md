@@ -4,6 +4,23 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.25
+
+- **Viel mehr Lernstoff:** 916 statt 368 Aufgaben – 316 Karteikarten,
+  521 Quizfragen, 30 AP1-Szenarien, 37 AP2-Szenarien und 12 Testprojekte,
+  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 64 neue
+  Rechenaufgaben (Zahlensysteme, Subnetting, RAID, Verfügbarkeit,
+  Übertragungsdauer, Umsatzsteuer, Kalkulation, Abschreibung) mit Rechenweg.
+- **Szenarien und Testprojekte mit Suche, Filter und Seiten:** Die Listen
+  lassen sich nach Titel oder Nummer durchsuchen und nach Thema,
+  Fachbereich, Schwierigkeit und Status (offen/bearbeitet) filtern.
+  Bearbeitete Aufgaben tragen einen Haken. „Nächstes Szenario“ bleibt
+  innerhalb der gewählten Auswahl. Gilt für PC und Handy.
+- **Stabiler bei großen Datenmengen:** Die Listen zeigen seitenweise
+  höchstens 15 Einträge. Vorher konnte das Programm bei sehr vielen
+  Szenarien beim Start abstürzen. Ein neuer Belastungstest
+  (`test_grosse_datenmengen.py`) prüft das Programm mit über 7.000 Aufgaben.
+
 ## 0.24
 
 - **Neu: Handy-App für Android** mit allen Bereichen der PC-Version –
