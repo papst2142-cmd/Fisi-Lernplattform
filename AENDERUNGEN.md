@@ -6,9 +6,9 @@ Update-Fenster des Programms.
 
 ## 0.25
 
-- **Viel mehr Lernstoff:** 3.151 statt 368 Aufgaben – 1.099 Karteikarten,
-  1.598 Quizfragen, 196 AP1-Szenarien, 218 AP2-Szenarien und 40 Testprojekte,
-  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 413 neue
+- **Viel mehr Lernstoff:** 3.578 statt 368 Aufgaben – 1.251 Karteikarten,
+  1.800 Quizfragen, 223 AP1-Szenarien, 259 AP2-Szenarien und 45 Testprojekte,
+  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 503 neue
   Rechenaufgaben (Zahlensysteme, Zweierkomplement, Subnetting, VLSM,
   IPv6-Präfixe, RAID 5/6/50/60, chmod und umask, VM-Dimensionierung,
   SSD-Lebensdauer, Verfügbarkeit, Übertragungsdauer, Passwortstärke,
@@ -16,7 +16,8 @@ Update-Fenster des Programms.
   Skonto-Zinssatz, Deckungsbeitrag, Kennzahlen, Earned Value, Abschreibung,
   TCO, Lizenzierung, Kostenvergleich, Barwert, Kreditzinsen, MTBF und MTTR,
   Netzplan und Puffer, Speicherbedarf von Bildern und Audio, Netzteil und
-  USV, Stromkosten) mit Rechenweg.
+  USV, Stromkosten, IOPS, Kapitalwert, Risikowert, SQL-Abfragen, Skripte und
+  cron-Zeiten) mit Rechenweg.
 - **Prüfungsnahe Situationsaufgaben:** Viele Karten und Quizfragen schildern
   jetzt einen Fall aus dem Betriebsalltag (Kundengespräch, Ticket, Störung,
   Vertragsproblem) statt nur eine Definition abzufragen. Die neuen AP1- und
@@ -28,6 +29,11 @@ Update-Fenster des Programms.
   erstmals Pseudocode, Struktogramm, Programmablaufplan und
   Tabellenkalkulation, auch mit Aufgaben zum Nachverfolgen von Programmen
   und Formeln.
+- **Mehr für die AP2:** Konfigurations- und Logausschnitte zum Deuten
+  (ACL, Routing, STP, VPN, Firewall, SIEM, Windows-Ereignisse), Skripte mit
+  PowerShell und Bash, SQL-Abfragen, Ansible, Kubernetes und Proxmox, PKI im
+  Betrieb, Incident Response sowie Beratung, Verträge und Projektmanagement
+  auf Abschlussniveau.
 - **Vertiefung Netzwerk und Sicherheit:** u.a. IPv6, OSPF und BGP, WLAN-Planung,
   DNS und DHCP im Detail, NAT und QoS, Kryptografie und Zertifikate,
   DSGVO-Praxisfälle, Angriffe und Abwehr im Netz und im Web.

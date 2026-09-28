@@ -4428,5 +4428,991 @@
       "",
       "3. Mit 2 Neuen: 7 * 6 / 2 = 21 Wege, (21 - 10) * 0,5 * 6 = 33 Stunden = 0,825 Personenwochen. Zusätzlich: 2 * 5 - 2 * 0,25 * 2 - 0,825 = 8,175. Gesamt 38,175 Personenwochen, das reicht nicht. Voraussetzungen: Die Arbeit lässt sich in unabhängige Pakete teilen (z.B. Montage der Medienstationen je Saal), die Neuen haben passende Vorkenntnisse, die Aufgaben sind klar beschrieben, und es gibt feste Ansprechpartner. Sonst gilt die Erfahrung, dass zusätzliche Personen ein verspätetes Projekt noch weiter verzögern (Brooks'sches Gesetz). Alternativ Umfang zur Eröffnung reduzieren."
     ]
+  },
+  {
+    "title": "OSPF-Nachbarschaft zwischen Molkerei und Käserei kommt nicht zustande",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Molkerei hat ihr Hauptwerk (Router R1) mit der neuen Käserei (Router R2) verbunden. Direkt verbindet beide eine Richtfunkstrecke mit 1 Gbit/s. Ein zweiter Weg führt über das Kühllager (Router R3): R1 zu R3 und R3 zu R2 sind Glasfaserleitungen mit je 10 Gbit/s.",
+      "Alle Router nutzen OSPF in Area 0 mit Standardwerten: Referenzbandbreite 100 Mbit/s, Hello 10 s, Dead 40 s. Kosten = Referenzbandbreite / Bandbreite, mindestens 1.",
+      "Auszug aus der Konfiguration von R2:",
+      "  interface GigabitEthernet0/1        (Richtfunk zu R1, dort 10.90.0.1/30, IP-MTU 1.500)",
+      "   ip address 10.90.0.2 255.255.255.252",
+      "   ip mtu 9000",
+      "  interface TenGigabitEthernet0/2     (Glasfaser zu R3, dort 10.90.2.1/30)",
+      "   ip address 10.90.2.2 255.255.255.248",
+      "Ausgabe auf R1:",
+      "  R1# show ip ospf neighbor",
+      "  Neighbor ID   Pri  State        Dead Time  Address    Interface",
+      "  10.255.0.3    1    FULL/DR      00:00:35   10.90.1.2  Te0/1",
+      "  10.255.0.2    1    EXSTART/DR   00:00:38   10.90.0.2  Gi0/1",
+      "Auf R3 fehlt R2 in der Nachbarliste ganz. Ein Ping von R3 auf 10.90.2.2 funktioniert aber.",
+      "In der Käserei senden 6 Annahmestellen für Tankwagen alle 2 Sekunden einen Messdatensatz an das Hauptwerk.",
+      "",
+      "1. Analysieren Sie die beiden Fehler. Warum klappt der Ping von R3 auf R2 trotzdem?",
+      "2. Beide Fehler sind behoben. Welchen Weg nimmt der Verkehr vom Hauptwerk zur Käserei mit der Standard-Referenzbandbreite? Berechnen Sie die Kosten. Was ändern Sie, und wie sehen die Kosten danach aus?",
+      "3. Ein Bagger beschädigt die Glasfaser zwischen R3 und R2. Der Port an R3 bleibt wegen eines Medienkonverters aktiv. Wie lange dauert es höchstens, bis OSPF umschaltet, und wie viele Messdatensätze sind in dieser Zeit betroffen? Wie verkürzen Sie die Zeit?"
+    ],
+    "solution": [
+      "1. Fehler 1: Auf der Richtfunkstrecke hat R2 eine IP-MTU von 9.000 Byte, R1 den Standardwert 1.500 Byte. OSPF vergleicht beim Austausch der Datenbankbeschreibungen (DBD) die MTU. Bei ungleichen Werten bleibt die Nachbarschaft im Zustand EXSTART oder EXCHANGE hängen. Lösung: auf beiden Seiten die gleiche MTU, hier 1.500 Byte. Fehler 2: R3 hat 10.90.2.1/30, R2 aber 10.90.2.2/29. Auf Ethernet-Leitungen (Netztyp Broadcast) müssen Maske, Area, Hello- und Dead-Intervall übereinstimmen, sonst werden die Hello-Pakete verworfen. Deshalb sieht R3 keinen Nachbarn. Lösung: Maske an R2 auf 255.255.255.252 ändern. Der Ping klappt, weil 10.90.2.1 und 10.90.2.2 sowohl im /30 (10.90.2.0 bis .3) als auch im /29 (10.90.2.0 bis .7) liegen. Beide Router halten den anderen für direkt erreichbar.",
+      "",
+      "2. Mit 100 Mbit/s Referenz: Richtfunk 100 / 1.000 = 0,1, Glasfaser 100 / 10.000 = 0,01. Beide werden auf den Mindestwert 1 gesetzt. Direkter Weg: 1. Weg über R3: 1 + 1 = 2. OSPF wählt die Richtfunkstrecke mit 1 Gbit/s, obwohl über das Kühllager 10 Gbit/s möglich sind. Lösung: Referenzbandbreite auf allen drei Routern auf 100 Gbit/s setzen (auto-cost reference-bandwidth 100000). Dann: Richtfunk 100.000 / 1.000 = 100, Glasfaser 100.000 / 10.000 = 10. Direkt 100, über R3 10 + 10 = 20. OSPF nutzt jetzt den Glasfaserweg, die Richtfunkstrecke bleibt Reserve. Der Wert muss auf allen Routern gleich sein, sonst rechnen die Router mit verschiedenen Maßstäben.",
+      "",
+      "3. Da der Port aktiv bleibt, merken R3 und R2 den Fehler erst, wenn 40 s lang kein Hello mehr ankommt (Dead-Intervall). So lange schicken sie den Verkehr weiter in die defekte Leitung. In 40 s entstehen 6 * 40 / 2 = 120 Messdatensätze. Sie gehen verloren, wenn die Annahmestellen sie nicht puffern und nachsenden. Verbesserung: BFD (Bidirectional Forwarding Detection) auf den Glasfaserleitungen, zum Beispiel mit 300 ms Intervall und 3 Fehlversuchen. Dann wird der Ausfall nach 3 * 0,3 = 0,9 s erkannt. Weil das kürzer ist als 2 s, sendet jede Annahmestelle in dieser Zeit höchstens 1 Datensatz, betroffen sind also höchstens 6. Kürzere Hello- und Dead-Zeiten wären eine Alternative, belasten die Router aber stärker."
+    ]
+  },
+  {
+    "title": "Firewallregel für das Waschkarten-Terminal eines Studentenwohnheims greift nicht",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein privater Betreiber von Studentenwohnheimen hat das Wohnheim Mühlbach mit 240 Zimmern. Der Router erhält vom Provider das Präfix 2001:db8:4a00:3700::/56. Jedes VLAN bekommt ein /64. Die Subnetz-ID entspricht der VLAN-Nummer in hexadezimaler Schreibweise. VLAN 2 ist die Haustechnik, VLAN 20 das Netz der Bewohner.",
+      "In der Waschküche hängt ein Terminal für die Bezahlung mit Waschkarten. Es bildet seine IPv6-Adresse per SLAAC im EUI-64-Verfahren. Seine MAC-Adresse lautet 3C:52:82:1A:07:F4.",
+      "Der Abrechnungsserver in der Zentrale des Betreibers soll das Terminal per HTTPS abfragen. Ein Kollege hat folgende Regel angelegt:",
+      "  erlauben  Quelle 2001:db8:4a00:10::25  Ziel 2001:db8:4a00:3702:3c52:82ff:fe1a:7f4  TCP 443",
+      "Der Abrechnungsserver erhält keine Antwort. Im VLAN 2 ist das Terminal erreichbar.",
+      "",
+      "1. Bilden Sie die Interface-ID nach EUI-64 und die vollständige Adresse des Terminals. Warum greift die Regel nicht?",
+      "2. Wie viele /64-Netze stehen im Wohnheim zur Verfügung? Geben Sie die Präfixe für VLAN 2 und VLAN 20 an. Welcher Fehler droht, wenn jemand die VLAN-Nummer 20 dezimal in die Adresse schreibt?",
+      "3. Das Terminal wird nach einem Defekt getauscht. Was passiert mit der Regel, und wie verhindern Sie das künftig? Ein Bewohner fragt, ob sein Rechner ohne NAT aus dem Internet angreifbar ist. Wie lange bräuchte ein Angreifer, um ein /64 mit 1 Million Adressen pro Sekunde abzusuchen, und welche Schutzmaßnahmen sind trotzdem nötig?"
+    ],
+    "solution": [
+      "1. EUI-64: Die MAC-Adresse wird in der Mitte geteilt und FF:FE eingefügt: 3C:52:82:FF:FE:1A:07:F4. Dann wird das 7. Bit des ersten Bytes (U/L-Bit) umgedreht: 3C = 0011 1100 wird zu 0011 1110 = 3E. Interface-ID: 3e52:82ff:fe1a:7f4 (führende Null von 07f4 entfällt). Vollständige Adresse: 2001:db8:4a00:3702:3e52:82ff:fe1a:7f4. Der Kollege hat das Bit nicht umgedreht und 3c52 statt 3e52 eingetragen. Die Regel passt auf keine vorhandene Adresse, die Anfragen fallen unter die Standard-Verwerfen-Regel.",
+      "",
+      "2. Von /56 bis /64 sind 8 Bit frei: 2^8 = 256 Netze mit den Subnetz-IDs 00 bis ff. VLAN 2: 2001:db8:4a00:3702::/64. VLAN 20 ist hexadezimal 14: 2001:db8:4a00:3714::/64. Schreibt jemand 20 dezimal, entsteht 2001:db8:4a00:3720::/64. Nach der Regel ist das hexadezimal 20, also das Netz von VLAN 32. Router, DHCPv6-Server und Firewall passen dann nicht mehr zusammen. Die Schreibweise muss im Adresskonzept eindeutig festgelegt sein.",
+      "",
+      "3. Ein neues Terminal hat eine andere MAC-Adresse und damit eine andere Interface-ID. Die Regel passt wieder nicht. Besser: dem Terminal eine feste Adresse geben, statisch (zum Beispiel 2001:db8:4a00:3702::50) oder per DHCPv6-Reservierung, und die Regel auf diese Adresse beziehen. Ein /64 hat 2^64 = ca. 1,8 * 10^19 Adressen. Bei 1 Million Adressen pro Sekunde dauert die vollständige Suche 2^64 / 10^6 s = ca. 585.000 Jahre. Blindes Scannen ist praktisch unmöglich. Geschützt ist das Netz dadurch aber nicht: Adressen werden über DNS, Protokolle oder aufgerufene Server bekannt. Die Firewall muss eingehende Verbindungen aus dem Internet standardmäßig verwerfen und nur Antworten auf eigene Verbindungen und nötige ICMPv6-Typen zulassen. Dazu Privacy Extensions auf den Geräten der Bewohner, Client-Isolation im Bewohnernetz und RA-Guard auf den Switches gegen fremde Router-Ankündigungen."
+    ]
+  },
+  {
+    "title": "Ersatzroute über LTE greift bei den Kassen einer Tankstellenkette nicht",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Tankstellenkette hat 120 Stationen. Jeder Stationsrouter hat zwei Wege ins Rechenzentrum: DSL über ein separates Modem (Next Hop 192.168.100.1) und LTE über ein Mobilfunkmodul (Next Hop 10.64.0.1). Auszug:",
+      "  ip route 0.0.0.0 0.0.0.0 192.168.100.1",
+      "  ip route 0.0.0.0 0.0.0.0 10.64.0.1 250",
+      "Gestern fiel an Station 47 die DSL-Leitung für 4 Stunden aus. Die Kassen konnten keine Kartenzahlungen durchführen, obwohl LTE funktionierte. Die Verbindung vom Router zum Modem blieb die ganze Zeit aktiv.",
+      "Pro Station und Tag fallen heute über DSL an: 5 GB Kamera-Uploads in die Cloud, 0,8 GB Updates und 0,2 GB für Kasse, Kartenzahlung und Preisdaten. Der LTE-Tarif enthält 20 GB pro Monat.",
+      "",
+      "1. Warum hat die Ersatzroute nicht gegriffen? Erklären Sie dabei die Bedeutung der Zahl 250.",
+      "2. Beschreiben Sie eine Lösung mit Erreichbarkeitsprüfung. Geprüft wird alle 5 s, nach 3 Fehlschlägen in Folge gilt der Weg als ausgefallen. Nach welcher Zeit schaltet der Router frühestens und spätestens um? Was ist bei der Rückschaltung zu beachten?",
+      "3. Wie viele Tage reicht das LTE-Volumen, wenn der gesamte Verkehr über LTE läuft? Wie viele Tage sind es, wenn nur Kasse, Kartenzahlung und Preisdaten darüber laufen? Wie setzen Sie diese Einschränkung um?"
+    ],
+    "solution": [
+      "1. Beide Einträge sind Standardrouten. Der Router nutzt die mit der kleinsten administrativen Distanz: DSL mit dem Standardwert 1 für statische Routen, LTE mit 250. Die LTE-Route ist eine Floating Static Route. Sie kommt erst in die Routingtabelle, wenn die bessere Route verschwindet. Eine statische Route verschwindet aber nur, wenn das Interface zum Next Hop ausfällt. Die Verbindung zum Modem blieb aktiv, also hielt der Router die DSL-Route für gültig und schickte alle Pakete ins Leere.",
+      "",
+      "2. Der Router prüft regelmäßig per Ping ein Ziel hinter der DSL-Leitung, besser zwei (zum Beispiel das VPN-Gateway im Rechenzentrum und einen öffentlichen DNS-Server). Die DSL-Route wird an das Ergebnis gekoppelt (IP SLA mit Tracking: ip route 0.0.0.0 0.0.0.0 192.168.100.1 track 1). Die Prüf-Pings müssen fest über DSL laufen, sonst gingen sie nach der Umschaltung über LTE und meldeten den Weg wieder als gut. Frühestens: Der Ausfall beginnt kurz vor einer Prüfung, die 3 Fehlschläge liegen bei 0, 5 und 10 s, also Umschaltung nach etwa 2 * 5 = 10 s. Spätestens: Der Ausfall beginnt direkt nach einer erfolgreichen Prüfung, dann nach 3 * 5 = 15 s. Rückschaltung mit Verzögerung, zum Beispiel erst nach 60 s stabiler Erreichbarkeit, damit eine flackernde Leitung nicht ständig hin- und herschaltet. Die VPN-Tunnel bauen sich nach jeder Umschaltung neu auf.",
+      "",
+      "3. Gesamter Verkehr: 5 + 0,8 + 0,2 = 6 GB pro Tag, 20 / 6 = ca. 3,3 Tage. Danach ist das Volumen verbraucht und die Station wird für den Rest des Monats gedrosselt. Nur Kasse, Zahlung und Preisdaten: 20 / 0,2 = 100 Tage, das reicht für jeden realistischen Ausfall. Umsetzung: Im Ersatzbetrieb lassen Firewallregeln oder richtlinienbasiertes Routing nur die Verbindungen zu Kassen-, Zahlungs- und Preisservern über LTE. Kamera-Uploads und Updates werden gesperrt und nach der Rückschaltung nachgeholt. Zusätzlich wird das LTE-Volumen überwacht, und jede Umschaltung erzeugt eine Meldung in der Zentrale."
+    ]
+  },
+  {
+    "title": "Falsche Subnetzmasken an zwei Geräten einer Pferdeklinik",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Eine Pferdeklinik nutzt für Praxis und Diagnostik das Netz 10.12.8.0/22 mit dem Gateway 10.12.8.1. Der Bildspeicher (PACS) hat die Adresse 10.12.10.20, der Befundungs-PC 10.12.9.33. Die Laborsoftware läuft auf einem Server im Verwaltungsnetz 10.12.40.0/24 (10.12.40.5), das über das Gateway erreichbar ist.",
+      "Zwei Techniker verschiedener Hersteller haben neue Geräte fest eingerichtet:",
+      "  Röntgengerät:      IP 10.12.10.50  Maske 255.255.255.0  Gateway 10.12.8.1",
+      "  Blutanalysegerät:  IP 10.12.11.80  Maske 255.255.0.0    Gateway 10.12.8.1",
+      "Das Röntgengerät kann Bilder an das PACS senden, der Befundungs-PC erreicht es aber nicht. Das Blutanalysegerät erreicht alle Geräte im Praxisnetz, aber nicht den Laborserver.",
+      "",
+      "1. Bestimmen Sie für das Praxisnetz Netzadresse, Broadcast und Anzahl der Hostadressen. Welche Adressbereiche halten die beiden Geräte jeweils für lokal?",
+      "2. Erklären Sie die beiden Fehlerbilder. Wie viele Adressen des Praxisnetzes hält das Röntgengerät fälschlich für entfernt?",
+      "3. Wie beheben Sie die Fehler, und wie verhindern Sie solche Fehler bei künftigen Geräteinstallationen? Mit welchen Befehlen prüfen Sie das Ergebnis?"
+    ],
+    "solution": [
+      "1. Praxisnetz 10.12.8.0/22: Netzadresse 10.12.8.0, Broadcast 10.12.11.255, 2^10 - 2 = 1.022 Hostadressen (10.12.8.1 bis 10.12.11.254). Röntgengerät mit /24: lokal ist nur 10.12.10.0 bis 10.12.10.255. Blutanalysegerät mit /16: lokal ist 10.12.0.0 bis 10.12.255.255, das sind 65.534 Hostadressen.",
+      "",
+      "2. Röntgengerät: Das PACS (10.12.10.20) liegt in seinem /24, die Bilder gehen direkt dorthin. Der Befundungs-PC (10.12.9.33) liegt aus Sicht des Geräts außerhalb. Er müsste über das Gateway erreicht werden, doch 10.12.8.1 liegt ebenfalls nicht im /24 des Geräts. Das Gateway ist damit unbrauchbar, je nach Gerät wird es abgelehnt oder per ARP nicht gefunden. Der PC hält das Gerät für lokal und sendet direkt, die Antwort des Geräts kommt aber nicht zurück. Fälschlich entfernt: 1.024 - 256 = 768 Adressen des /22. Blutanalysegerät: Es hält alles in 10.12.x.x für lokal, auch den Laborserver 10.12.40.5. Es fragt per ARP im Praxisnetz nach dessen MAC-Adresse und erhält keine Antwort, weil der Server hinter dem Gateway liegt. Das Gateway wird gar nicht erst benutzt.",
+      "",
+      "3. Beide Geräte auf die Maske 255.255.252.0 (/22) einstellen und die Funktion testen. Vorbeugung: Geräte erhalten ihre Adresse per DHCP mit Reservierung, oder die Klinik gibt dem Techniker vorab ein ausgefülltes Adressblatt (IP, Maske, Gateway, DNS, NTP) aus dem IP-Adressmanagement. Die Abnahme erfolgt mit Testprotokoll. Prüfung: Netzwerkeinstellungen am Gerät anzeigen lassen, vom PC ping auf das Gerät, arp -a zeigt, ob die MAC-Adresse aufgelöst wird, tracert zum Laborserver, route print (Windows) bzw. ip route (Linux) für die Routingtabelle."
+    ]
+  },
+  {
+    "title": "Zugriffsliste für das Fernwirknetz von Stadtwerken",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Stadtwerke schützen ihr Fernwirknetz 10.40.32.0/24 (Steuerung von Pumpen und Umspannstationen) mit einer erweiterten Zugriffsliste. Sie ist ausgehend am VLAN-Interface des Fernwirknetzes auf dem Layer-3-Switch gebunden. Netze: Verwaltung 10.40.0.0/21, Technik 10.40.8.0/22, Leitstelle 10.40.20.0/24. Der Visualisierungsserver hat 10.40.32.10, der Jump-Host der Techniker 10.40.9.25.",
+      "Vorgaben: Verwaltung und Leitstelle dürfen nur per HTTPS auf den Visualisierungsserver. Aus dem Technik-Netz darf nur der Jump-Host per SSH auf das ganze Fernwirknetz. Ping (ICMP) ist aus allen internen Netzen 10.40.0.0/16 erlaubt. Alles andere ist verboten.",
+      "  ip access-list extended FERNWIRK",
+      "   10 permit tcp 10.40.0.0 0.0.15.255 host 10.40.32.10 eq 443",
+      "   20 deny   ip 10.40.8.0 0.0.3.255 10.40.32.0 0.0.0.255",
+      "   30 permit tcp host 10.40.9.25 10.40.32.0 0.0.0.255 eq 22",
+      "   40 permit icmp 10.40.0.0 0.0.255.255 10.40.32.0 0.0.0.255",
+      "Die Leitstelle meldet, dass die Visualisierung nicht lädt. Die Techniker kommen nicht per SSH auf die Stationen.",
+      "",
+      "1. Welche Quelladressbereiche erfassen die Zeilen 10, 20 und 40? Wie viele Adressen sind es jeweils?",
+      "2. Welche Zeile greift bei folgenden Paketen, und ist das Ergebnis richtig? a) 10.40.20.7 an 10.40.32.10 TCP 443, b) 10.40.9.25 an 10.40.32.14 TCP 22, c) 10.40.9.60 an 10.40.32.10 TCP 443, d) 10.40.3.12 an 10.40.32.14 ICMP.",
+      "3. Schreiben Sie die korrigierte Zugriffsliste. Warum müssen die Antwortpakete aus dem Fernwirknetz in dieser Liste nicht erlaubt werden?"
+    ],
+    "solution": [
+      "1. Zeile 10: 10.40.0.0 bis 10.40.15.255, 2^12 = 4.096 Adressen (entspricht /20). Zeile 20: 10.40.8.0 bis 10.40.11.255, 2^10 = 1.024 Adressen (/22, das Technik-Netz). Zeile 40: 10.40.0.0 bis 10.40.255.255, 2^16 = 65.536 Adressen (/16). Das Ziel in Zeile 20 und 40 ist 10.40.32.0 bis 10.40.32.255.",
+      "",
+      "2. a) 10.40.20.7 liegt nicht im Bereich von Zeile 10 (endet bei 10.40.15.255) und nicht in Zeile 20. Zeile 30 gilt nur für den Jump-Host, Zeile 40 nur für ICMP. Es greift das implizite deny am Ende: falsch, die Leitstelle muss zugreifen dürfen. b) Zeile 20 greift zuerst, weil 10.40.9.25 im Technik-Netz liegt: deny, falsch. Zeile 30 wird nie erreicht. c) Zeile 10 erfasst auch das Technik-Netz: permit, falsch, die Technik darf nicht auf die Visualisierung. d) Zeile 10 gilt nur für TCP, Zeile 20 nicht für diese Quelle, Zeile 40 erlaubt: richtig.",
+      "",
+      "3. Korrigierte Liste:",
+      "   10 permit tcp host 10.40.9.25 10.40.32.0 0.0.0.255 eq 22",
+      "   20 permit tcp 10.40.0.0 0.0.7.255 host 10.40.32.10 eq 443",
+      "   30 permit tcp 10.40.20.0 0.0.0.255 host 10.40.32.10 eq 443",
+      "   40 permit icmp 10.40.0.0 0.0.255.255 10.40.32.0 0.0.0.255",
+      "   50 deny ip any any log",
+      "Die Freigabe für den Jump-Host steht vorne. Eine eigene deny-Zeile für das Technik-Netz ist nicht mehr nötig, weil es außer bei ICMP in keiner permit-Zeile vorkommt. Die letzte Zeile protokolliert Verstöße. Die Liste ist ausgehend gebunden, prüft also nur Pakete, die in das Fernwirknetz geroutet werden. Antworten der Stationen kommen auf diesem Interface herein und werden nicht geprüft. Eine Zugriffsliste arbeitet zustandslos, für ein so kritisches Netz wäre eine Firewall mit Zustandsprüfung die bessere Lösung."
+    ]
+  },
+  {
+    "title": "Nachtsicherung eines Zeitungsverlags nutzt nur eine Leitung des Bündels",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Zeitungsverlag sichert jede Nacht 18 TB vom Backupserver (10.30.5.20) auf einen Sicherungsspeicher (10.30.6.40). Beide sind über je 4 Leitungen mit 10 Gbit/s per LACP an den Core-Switch angebunden. Das Sicherungsfenster reicht von 0 bis 3 Uhr. Seit Wochen läuft die Sicherung bis in den Druck der Morgenausgabe hinein.",
+      "Der Switch verteilt den Verkehr nach Quell- und Ziel-IP. Vereinfacht gilt: Leitung = (letztes Oktett Quell-IP XOR letztes Oktett Ziel-IP) mod 4, die Leitungen 0 bis 3 entsprechen den Ports Te1/0/1 bis Te1/0/4.",
+      "Portstatistik zum Sicherungsspeicher um 1 Uhr:",
+      "  Port     Ausgang",
+      "  Te1/0/1  9,4 Gbit/s",
+      "  Te1/0/2  0,1 Gbit/s",
+      "  Te1/0/3  0,3 Gbit/s",
+      "  Te1/0/4  0,0 Gbit/s",
+      "Nutzbar sind 90 % der Leitungsrate. Der Sicherungsspeicher schreibt höchstens 2,5 GB/s. 1 TB = 10^12 Byte.",
+      "",
+      "1. Berechnen Sie die Leitung für die Sicherung und für zwei weitere nächtliche Datenströme: Redaktionssystem 10.30.5.21 an 10.30.6.41 und Bildarchiv 10.30.5.22 an 10.30.6.40. Erklären Sie die Portstatistik.",
+      "2. Wie lange dauert die Sicherung heute mindestens? Wie lange dauert sie, wenn die Last ideal auf alle 4 Leitungen verteilt wird? Was begrenzt dann?",
+      "3. Wie erreichen Sie eine bessere Verteilung? Was müssen Sie dabei beachten?"
+    ],
+    "solution": [
+      "1. Sicherung: 20 XOR 40 = 010100 XOR 101000 = 111100 = 60, 60 mod 4 = 0, also Leitung 0 (Te1/0/1). Redaktionssystem: 21 XOR 41 = 010101 XOR 101001 = 111100 = 60, ebenfalls Leitung 0. Bildarchiv: 22 XOR 40 = 010110 XOR 101000 = 111110 = 62, 62 mod 4 = 2, Leitung 2 (Te1/0/3). Verteilt wird pro Adresspaar, nicht pro Paket. Ein Paar landet immer auf derselben Leitung. Sicherung und Redaktionssystem teilen sich eine 10-Gbit/s-Leitung, die voll ausgelastet ist, während die anderen fast leer sind.",
+      "",
+      "2. Heute stehen höchstens 10 * 0,9 = 9 Gbit/s zur Verfügung, und die teilt sich die Sicherung noch mit dem Redaktionssystem. Selbst allein: 18 * 10^12 * 8 Bit / (9 * 10^9 Bit/s) = 16.000 s = ca. 4,4 Stunden. Das Fenster hat nur 3 Stunden. Ideal verteilt: 4 * 9 = 36 Gbit/s = 4,5 GB/s. Der Speicher schafft aber nur 2,5 GB/s: 18 * 10^12 / (2,5 * 10^9) = 7.200 s = 2 Stunden. Dann begrenzt der Speicher, nicht mehr das Netz, und die Sicherung passt ins Fenster.",
+      "",
+      "3. Die Verteilung zusätzlich nach Ports berechnen lassen (Layer 3 und 4, zum Beispiel port-channel load-balance src-dst-ip-port am Switch bzw. xmit_hash_policy layer3+4 unter Linux). In der Sicherungssoftware mehrere parallele Datenströme einstellen, zum Beispiel 8. Jeder Strom hat einen eigenen Quellport und landet mit hoher Wahrscheinlichkeit auf einer anderen Leitung. Ein einzelner TCP-Strom bleibt trotzdem auf eine Leitung begrenzt. Zu beachten: Jedes Gerät verteilt nur seinen eigenen Sendeverkehr. Backupserver, Switch und Sicherungsspeicher müssen also jeweils passend eingestellt werden. Beide Seiten eines Bündels brauchen gleiche Einstellungen für LACP, Geschwindigkeit und VLANs. Die Änderung erfolgt im Wartungsfenster, danach wird die Portstatistik erneut geprüft."
+    ]
+  },
+  {
+    "title": "Audio-Netz für die Bühnentechnik eines Opernhauses",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Opernhaus ersetzt die analogen Kabel zwischen Bühne und Tonregie durch ein Audio-over-IP-System. Auf der Bühne steht eine Stagebox mit 64 Eingängen, deren Signale an das Mischpult in der Tonregie gehen. Das Mischpult schickt 32 Kanäle zurück an die Verstärker auf der Bühne.",
+      "Abgetastet wird mit 48 kHz und 24 Bit. Rechnen Sie vereinfacht mit 25 % Aufschlag für den Paket-Overhead. Die Tontechnik plant später 96 kHz.",
+      "Im Haus sind noch Switches mit 100-Mbit/s-Ports vorhanden. Im selben Netz arbeiten heute auch die Rechner der Verwaltung.",
+      "Das System arbeitet mit einer eingestellten Netzlatenz von 1 ms. Schall breitet sich mit rund 343 m/s aus.",
+      "",
+      "1. Berechnen Sie die Datenrate der Stagebox und des Rückwegs bei 48 kHz und bei 96 kHz. Reichen die vorhandenen Ports?",
+      "2. Welche Anforderungen stellt Audio-over-IP an das Netz? Nennen Sie die nötigen Einstellungen an den Switches.",
+      "3. Ordnen Sie die Latenz von 1 ms ein, indem Sie sie in eine Entfernung umrechnen. Wie machen Sie das System ausfallsicher?"
+    ],
+    "solution": [
+      "1. Stagebox: 64 * 48.000 * 24 Bit/s = 73.728.000 Bit/s = ca. 73,7 Mbit/s, mit Overhead * 1,25 = ca. 92,2 Mbit/s. Rückweg: 32 * 48.000 * 24 = ca. 36,9 Mbit/s, mit Overhead ca. 46,1 Mbit/s. Bei 96 kHz verdoppeln sich die Werte: ca. 184,3 Mbit/s und 92,2 Mbit/s. Ein 100-Mbit/s-Port wäre für die Stagebox schon bei 48 kHz zu über 90 % ausgelastet, bei 96 kHz reicht er nicht mehr. Alle Ports im Audio-Netz brauchen mindestens 1 Gbit/s.",
+      "",
+      "2. Audio braucht sehr geringe, gleichmäßige Laufzeiten und darf keine Pakete verlieren. Alle Geräte laufen im selben Takt, der über das Precision Time Protocol (PTP) verteilt wird. Einstellungen: eigenes VLAN für Audio, getrennt von der Verwaltung. QoS nach DSCP-Markierung mit strikter Priorität: Taktpakete (PTP) vor Audio, Audio vor allem anderen. IGMP-Snooping mit Querier, damit Multicast-Ströme nur an die Ports gehen, die sie abonniert haben. Energy Efficient Ethernet (EEE) abschalten, weil das Aufwachen der Ports Verzögerungen verursacht. Nur verwaltete Switches einsetzen, keine unverwalteten Tischswitches.",
+      "",
+      "3. In 1 ms legt der Schall 343 * 0,001 = 0,343 m zurück. Die Netzlatenz wirkt also so, als stünde der Lautsprecher gut 34 cm weiter weg. Das fällt niemandem auf. Ausfallsicherheit: zwei getrennte Netze (primär und sekundär) mit eigenen Switches, jedes Gerät hängt an beiden. Fällt ein Netz aus, läuft das Audio ohne Unterbrechung über das andere weiter. Dazu USV für Switches, Stagebox und Mischpult, gesicherte Switch-Konfigurationen und ein dokumentierter Notbetrieb für laufende Vorstellungen."
+    ]
+  },
+  {
+    "title": "WLAN-Richtfunkstrecke zum Seeufer eines Ferienparks",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Ferienpark will die Ferienhäuser am Seeufer mit WLAN versorgen. Dort gibt es Strom, aber kein Netzwerkkabel. Zwischen Rezeption und einem Mast am Ufer liegen 800 m freie Sicht über eine Wiese mit Obstbäumen. Geplant ist eine Richtfunkstrecke im 5-GHz-Band bei 5.500 MHz.",
+      "Geräte: Sendeleistung 17 dBm, Antennengewinn je Seite 23 dBi, Kabelverlust je Seite 1 dB. Die Empfängerempfindlichkeit für die höchste Datenrate beträgt -65 dBm. Als Reserve (Fading Margin) sind mindestens 10 dB gefordert.",
+      "Vereinfacht gilt: höchstens 30 dBm EIRP in diesem Band (mit Leistungsregelung und DFS). Freiraumdämpfung in dB = 20 * log10(d in km) + 20 * log10(f in MHz) + 32,44. Radius der ersten Fresnelzone in der Mitte in m = 17,32 * Wurzel(d in km / (4 * f in GHz)).",
+      "",
+      "1. Berechnen Sie die EIRP. Ist die Planung zulässig? Welche Sendeleistung stellen Sie ein?",
+      "2. Berechnen Sie die Freiraumdämpfung und den Empfangspegel mit der zulässigen Sendeleistung. Reicht die Reserve?",
+      "3. Wie groß ist die erste Fresnelzone in der Mitte der Strecke? Wie hoch muss die Sichtlinie dort über den Obstbäumen liegen, wenn 60 % der Zone frei bleiben sollen? Was ist im Betrieb außerdem zu beachten?"
+    ],
+    "solution": [
+      "1. EIRP = Sendeleistung - Kabelverlust + Antennengewinn = 17 - 1 + 23 = 39 dBm. Das liegt 9 dB über dem Grenzwert, die Planung ist unzulässig. Zulässige Sendeleistung: 30 - 23 + 1 = 8 dBm. Die Richtantenne gleicht die geringe Leistung aus, zumal die Empfangsantenne ihren Gewinn noch einmal einbringt.",
+      "",
+      "2. Freiraumdämpfung: 20 * log10(0,8) + 20 * log10(5.500) + 32,44 = -1,94 + 74,81 + 32,44 = ca. 105,3 dB. Empfangspegel: 30 dBm EIRP - 105,3 dB + 23 dBi - 1 dB = ca. -53,3 dBm. Reserve: -53,3 - (-65) = 11,7 dB. Das erfüllt die geforderten 10 dB, aber knapp. Laub, Nebel und eine ungenaue Ausrichtung kosten Pegel.",
+      "",
+      "3. r = 17,32 * Wurzel(0,8 / (4 * 5,5)) = 17,32 * Wurzel(0,0364) = ca. 3,3 m. 60 % davon: 0,6 * 3,3 = ca. 2,0 m. Die direkte Sichtlinie muss in der Mitte mindestens 2 m über den Baumkronen liegen, besser mit Reserve für das Wachstum der Bäume. Belaubte Bäume dämpfen im Sommer stärker, eine Messung im Winter ist daher zu optimistisch. Im Betrieb: DFS wechselt bei erkanntem Radar den Kanal, die Strecke ist dann kurz unterbrochen. Die Strecke wird verschlüsselt, die Verwaltung der Funkgeräte liegt in einem eigenen VLAN. Die Masten brauchen Blitz- und Überspannungsschutz, die Ausrichtung wird nach Stürmen geprüft."
+    ]
+  },
+  {
+    "title": "Netz für ein E-Sport-Turnier in einer Stadthalle",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Stadthalle richtet ein E-Sport-Turnier aus. 16 Teams mit je 5 Spielern spielen an 80 gestellten PCs mit 1-Gbit/s-Anschluss. Die Spielserver laufen lokal in der Halle.",
+      "Für den Livestream liefern 4 Kameras je 8 Mbit/s an einen Regie-PC. Er schickt einen Hauptstream mit 12 Mbit/s an die Streaming-Plattform. Der Internetanschluss hat 1 Gbit/s symmetrisch. Zuschauer erhalten ein WLAN.",
+      "Am Vortag erscheint ein Update des Spiels mit 60 GB. Während des Spiels sendet jeder PC 128 Pakete pro Sekunde (Tickrate) mit durchschnittlich 300 Byte an den Spielserver. Rechnen Sie mit 90 % nutzbarer Übertragungsrate und 1 GB = 10^9 Byte.",
+      "",
+      "1. Wie lange dauert das Update, wenn alle 80 PCs es einzeln aus dem Internet laden? Wie lange dauert es mit einem lokalen Zwischenspeicher (Cache-Server mit 10-Gbit/s-Anschluss)?",
+      "2. Welche Datenrate erzeugen die Spiel-PCs zum Spielserver? Wie groß ist der Abstand zwischen zwei Paketen eines PCs? Welche Anforderungen sind für das Spiel wichtiger als die Bandbreite?",
+      "3. Entwerfen Sie Netztrennung und QoS-Regeln für die Veranstaltung. Wie groß ist der Upload-Bedarf des Livestreams?"
+    ],
+    "solution": [
+      "1. Einzeln: 80 * 60 GB = 4.800 GB. 4.800 * 10^9 * 8 / (0,9 * 10^9) = ca. 42.667 s = ca. 11,9 Stunden. Mit Cache: einmal 60 GB aus dem Internet: 60 * 10^9 * 8 / (0,9 * 10^9) = ca. 533 s = ca. 9 Minuten. Verteilung an 80 PCs über den 10-Gbit/s-Anschluss des Cache: 4.800 * 10^9 * 8 / (9 * 10^9) = ca. 4.267 s = ca. 71 Minuten. Der Anschluss des Cache ist dabei der Engpass. Gesamt etwa 1 Stunde 20 Minuten statt fast 12 Stunden, und die Internetleitung bleibt frei.",
+      "",
+      "2. Pro PC: 128 * 300 * 8 = 307.200 Bit/s = ca. 0,31 Mbit/s. Alle 80 PCs: 80 * 307.200 = ca. 24,6 Mbit/s. Das ist für ein Gigabit-Netz sehr wenig. Paketabstand: 1 / 128 s = ca. 7,8 ms. Wichtiger sind geringe Latenz, geringer Jitter und keine Paketverluste. Schon wenige Millisekunden Verzögerung oder ein verlorenes Paket fallen im Spiel auf. Deshalb kurze Wege, keine überlasteten Uplinks und für die Spieler nur Kabel, kein WLAN.",
+      "",
+      "3. Getrennte VLANs: Spielernetz (nur Spielserver und die nötigen Dienste für Anmeldung und Anti-Cheat), Server, Regie und Kameras, Organisation und Kasse, Zuschauer-WLAN mit Client-Isolation. Dazwischen eine Firewall, damit niemand fremde PCs stören oder angreifen kann. QoS: Spielverkehr höchste Priorität, dann der Livestream, dann der Rest. Update-Verkehr und Zuschauer-WLAN werden in der Bandbreite begrenzt. Upload: Der Hauptstream braucht 12 Mbit/s. Die Kameraströme mit 4 * 8 = 32 Mbit/s bleiben lokal zwischen Kameras und Regie. Werden sie zusätzlich als Sicherung hochgeladen, sind es 12 + 32 = 44 Mbit/s. Beides passt in den Anschluss, das Zuschauer-WLAN muss aber begrenzt werden, damit der Stream stabil bleibt."
+    ]
+  },
+  {
+    "title": "Drucker in den Filialen einer Genossenschaftsbank starten ohne Netz",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Genossenschaftsbank hat an den Switchports ihrer 35 Filialen die Anmeldung nach 802.1X eingeführt. PCs melden sich mit Zertifikat an (EAP-TLS). Geräte ohne 802.1X wie Drucker und Kontoauszugsdrucker werden über ihre MAC-Adresse zugelassen (MAB). Der RADIUS-Server weist das VLAN zu. Auszug eines Druckerports:",
+      "  interface GigabitEthernet1/0/5",
+      "   switchport mode access",
+      "   authentication order dot1x mab",
+      "   authentication port-control auto",
+      "   dot1x timeout tx-period 30",
+      "   dot1x max-reauth-req 2",
+      "Protokoll des Switches nach dem Einschalten eines Druckers:",
+      "  07:58:12 %LINK-3-UPDOWN: Interface Gi1/0/5, changed state to up",
+      "  07:59:42 %DOT1X-5-FAIL: Authentication failed for client (0017.c8a4.12b0) on Interface Gi1/0/5",
+      "  07:59:43 %MAB-5-SUCCESS: Authentication successful for client (0017.c8a4.12b0) on Interface Gi1/0/5",
+      "  07:59:43 %AUTHMGR-5-VLANASSIGN: VLAN 30 assigned to Interface Gi1/0/5",
+      "Der Drucker gibt nach 60 s ohne DHCP-Antwort auf und nutzt dann eine Adresse aus 169.254.0.0/16.",
+      "",
+      "1. Erklären Sie anhand von Protokoll und Konfiguration, warum der Drucker ohne Netz startet. Berechnen Sie die Wartezeit bis zur MAC-Prüfung.",
+      "2. Nennen Sie zwei Lösungen und berechnen Sie die Wartezeit für eine davon. Welche RADIUS-Attribute legen das VLAN fest?",
+      "3. MAB gilt als schwache Anmeldung. Wie begrenzen Sie das Risiko, und was passiert, wenn der RADIUS-Server nicht erreichbar ist? In jeder Filiale starten 12 PCs zwischen 7:45 und 8:00 Uhr, eine Anmeldung mit Zertifikat braucht etwa 10 RADIUS-Pakete. Welche Last entsteht am RADIUS-Server?"
+    ],
+    "solution": [
+      "1. Der Switch versucht zuerst 802.1X. Er schickt eine EAP-Anfrage, wartet 30 s (tx-period) und wiederholt sie 2 Mal (max-reauth-req 2). Erst nach (2 + 1) * 30 = 90 s gibt er auf und prüft die MAC-Adresse. Das passt zum Protokoll: Von 07:58:12 bis 07:59:42 sind es 90 s. So lange lässt der Port keinen Verkehr durch. Der Drucker hat seine DHCP-Versuche schon nach 60 s eingestellt und behält die Adresse aus 169.254.0.0/16. Er bleibt unerreichbar, bis er neu startet oder DHCP erneut versucht.",
+      "",
+      "2. Lösung A: An Druckerports die Reihenfolge umdrehen (authentication order mab dot1x). Dann wird die MAC-Adresse sofort geprüft, die Wartezeit liegt bei wenigen Sekunden. Lösung B: tx-period auf 10 s senken: (2 + 1) * 10 = 30 s, das liegt unter den 60 s des Druckers. Die VLAN-Zuweisung erfolgt mit den RADIUS-Attributen Tunnel-Type = VLAN (13), Tunnel-Medium-Type = 802 (6) und Tunnel-Private-Group-ID = 30.",
+      "",
+      "3. MAC-Adressen lassen sich fälschen. Das Drucker-VLAN darf deshalb nur den Druckserver und die nötigen Ports erreichen, nicht die Bankanwendungen. Dazu Geräteerkennung (Profiling), ein Alarm, wenn eine Drucker-MAC an einem anderen Port oder doppelt auftaucht, und ungenutzte Ports abschalten. Ohne RADIUS scheitern alle Anmeldungen. Deshalb mindestens zwei RADIUS-Server an verschiedenen Standorten und ein kritisches VLAN mit eingeschränkten Rechten, in das Ports bei Ausfall aller RADIUS-Server fallen. Last: 35 * 12 = 420 Anmeldungen in 15 Minuten = 900 s, also ca. 0,47 Anmeldungen pro Sekunde. Mit 10 Paketen je Anmeldung sind es rund 4,7 Pakete pro Sekunde. Das schafft jeder RADIUS-Server, entscheidend ist die Erreichbarkeit, nicht die Leistung."
+    ]
+  },
+  {
+    "title": "Unmögliche Reise im Anmeldeprotokoll einer Immobilienverwaltung",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Eine Immobilienverwaltung betreut 4.000 Mietwohnungen. Die Mitarbeiter melden sich an einem Cloud-Dienst für E-Mail und Dateien an. Das SIEM zeigt folgende Einträge:",
+      "  12.05.2026 08:14:03  m.krause  Anmeldung erfolgreich  Hamburg (DE)    MFA per App bestätigt",
+      "  12.05.2026 08:52:47  m.krause  Anmeldung erfolgreich  Lissabon (PT)   MFA durch Sitzungstoken erfüllt",
+      "  12.05.2026 08:55:10  m.krause  Neue Posteingangsregel: Mails mit \"Kaution\" oder \"IBAN\" in den Ordner \"RSS-Feeds\" verschieben",
+      "  12.05.2026 09:10:00  j.berg    Anmeldung erfolgreich  Kiel (DE)       MFA per App bestätigt",
+      "  12.05.2026 09:40:00  j.berg    Anmeldung erfolgreich  Frankfurt (DE)  MFA per App bestätigt",
+      "Frau Krause arbeitet in Hamburg. Herr Berg arbeitet in Kiel und nutzt das Firmen-VPN, dessen Internetausgang in einem Rechenzentrum in Frankfurt liegt. Entfernungen laut Geodatenbank: Hamburg bis Lissabon 2.200 km, Kiel bis Frankfurt 490 km. Die SIEM-Regel alarmiert ab einer rechnerischen Reisegeschwindigkeit von 900 km/h.",
+      "",
+      "1. Berechnen Sie für beide Fälle die nötige Reisegeschwindigkeit. Welcher Alarm ist echt? Begründen Sie mit den Einträgen.",
+      "2. Welcher Angriff steckt vermutlich hinter dem Fall Krause, obwohl MFA aktiv ist? Beschreiben Sie die Sofortmaßnahmen.",
+      "3. Die Regel erzeugt bei 1.300 Anmeldungen pro Tag eine Fehlalarmquote von 0,8 %. Drei Viertel der Fehlalarme entstehen durch das VPN. Wie viele Fehlalarme gibt es pro Tag vor und nach einer Anpassung, die das VPN berücksichtigt? Wie passen Sie die Regel an?"
+    ],
+    "solution": [
+      "1. Krause: 08:14:03 bis 08:52:47 sind 38 min 44 s = 2.324 s = ca. 0,646 h. 2.200 km / 0,646 h = ca. 3.408 km/h. Das ist auch mit dem Flugzeug unmöglich. Berg: 30 min = 0,5 h, 490 / 0,5 = 980 km/h, ebenfalls über 900 km/h. Echt ist der Fall Krause: Die zweite Anmeldung nutzt ein Sitzungstoken statt einer neuen MFA-Bestätigung, und kurz danach wird eine Posteingangsregel angelegt, die Mails versteckt. Der Fall Berg ist ein Fehlalarm: Frankfurt ist der Internetausgang des Firmen-VPN, Herr Berg war die ganze Zeit in Kiel.",
+      "",
+      "2. Vermutlich Phishing über einen zwischengeschalteten Proxy (Adversary in the Middle). Frau Krause hat sich auf einer gefälschten Seite angemeldet und die MFA bestätigt. Der Angreifer hat dabei das Sitzungstoken abgegriffen und nutzt es ohne eigene MFA. Die Regel soll Mails zu Kautionen und Bankdaten vor ihr verbergen, typisch für Rechnungsbetrug mit geänderter Kontoverbindung. Sofortmaßnahmen: alle Sitzungen des Kontos beenden und Tokens widerrufen, Passwort zurücksetzen, hinterlegte MFA-Methoden prüfen, Posteingangsregel und Weiterleitungen löschen. Protokolle sichern und prüfen, welche Mails und Dateien gelesen oder verschickt wurden. Buchhaltung und betroffene Mieter warnen, dass Kontoänderungen per Mail nicht gelten. Weil personenbezogene Daten betroffen sein können, den Datenschutzbeauftragten einbinden und die 72-Stunden-Frist nach Art. 33 DSGVO prüfen.",
+      "",
+      "3. Vorher: 1.300 * 0,008 = 10,4 Fehlalarme pro Tag. Entfallen drei Viertel, bleibt ein Viertel: 10,4 * 0,25 = 2,6 pro Tag. Anpassung: bekannte Internetausgänge der Firma (VPN, Rechenzentrum) als vertrauenswürdige Standorte hinterlegen und nicht in die Geschwindigkeitsrechnung einbeziehen. Den Alarm höher bewerten, wenn weitere Merkmale dazukommen, etwa Anmeldung ohne neue MFA, unbekanntes Gerät oder neue Posteingangsregel. Zusätzlich phishingresistente MFA (FIDO2) und Zugriff nur von verwalteten Geräten, damit gestohlene Tokens weniger nützen."
+    ]
+  },
+  {
+    "title": "Abgelaufene Sperrliste legt das WLAN eines Messtechnikherstellers lahm",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Messtechnikhersteller betreibt eine zweistufige PKI. Die Root-CA ist offline und wird nur zum Signieren eingeschaltet. Die ausstellende CA (Issuing CA) ist online. PCs melden sich per 802.1X mit Zertifikat (EAP-TLS) am WLAN an.",
+      "Die Root-CA hat ihre Sperrliste (CRL) am Montag, 16.03.2026, um 10:00 Uhr veröffentlicht. Die Gültigkeit beträgt 26 Wochen. Danach wurde die Root-CA nicht mehr eingeschaltet.",
+      "Seit Montag, 14.09.2026, 10:00 Uhr, kann sich kein PC mehr am WLAN anmelden. Der RADIUS-Server protokolliert:",
+      "  Grund: Die Sperrfunktion konnte die Sperrung nicht überprüfen, da der Sperrserver offline war. (0x80092013)",
+      "Das Zertifikat der Issuing CA ist bis 01.02.2027 gültig. Neue PC-Zertifikate werden mit 2 Jahren Laufzeit beantragt.",
+      "",
+      "1. Berechnen Sie, wann die Root-CRL abgelaufen ist, und erklären Sie den Zusammenhang mit dem Fehler. Warum ist das Abschalten der Sperrprüfung keine Lösung?",
+      "2. Beschreiben Sie die Behebung und einen Zeitplan, der den Fehler künftig verhindert.",
+      "3. Ein PC bekommt am 14.09.2026 ein neues Zertifikat. Wie lange ist es tatsächlich gültig? Was folgt daraus für die Issuing CA?"
+    ],
+    "solution": [
+      "1. 26 Wochen = 26 * 7 = 182 Tage. 16.03.2026 + 182 Tage = Montag, 14.09.2026, 10:00 Uhr. Das ist der Wert \"Nächste Aktualisierung\" (Next Update) der CRL, ab dann ist sie abgelaufen. Der RADIUS-Server prüft die ganze Kette: das PC-Zertifikat gegen die CRL der Issuing CA und das Zertifikat der Issuing CA gegen die CRL der Root-CA. Ist eine CRL abgelaufen, kann er die Sperrung nicht prüfen und lehnt die Anmeldung ab. Das ist gewollt: Ohne Sperrprüfung würde auch ein gestohlenes, gesperrtes Zertifikat angenommen. Wer die Prüfung abschaltet, öffnet genau diese Lücke.",
+      "",
+      "2. Root-CA einschalten und ihre Uhrzeit prüfen, eine neue CRL erzeugen (certutil -crl), sie an allen Verteilpunkten (CDP, meist ein HTTP-Server) veröffentlichen und die Root-CA wieder ausschalten. Auf dem RADIUS-Server den CRL-Zwischenspeicher leeren oder das Neuladen abwarten und die Anmeldung testen. Künftig: Gültigkeit der Root-CRL auf 52 Wochen setzen und sie alle 26 Wochen neu veröffentlichen. So bleibt immer ein halbes Jahr Puffer. Termine mit Verantwortlichem und Vertretung im Kalender eintragen und den Next-Update-Wert aller CRLs überwachen, mit Warnung 30 Tage vorher.",
+      "",
+      "3. Ein Zertifikat kann nicht länger gültig sein als das Zertifikat der CA, die es ausgestellt hat. Vom 14.09.2026 bis 01.02.2027 sind es 140 Tage statt 2 Jahren. Die CA kürzt die Laufzeit entsprechend. Daraus folgt: Das Zertifikat der Issuing CA rechtzeitig erneuern, üblich zur Hälfte seiner Laufzeit. Die Restlaufzeit der CA muss immer länger sein als die Laufzeit der ausgestellten Zertifikate, bei 2 Jahren also mehr als 2 Jahre. Danach die neue Kette an alle Clients und den RADIUS-Server verteilen."
+    ]
+  },
+  {
+    "title": "Regelwerk für die Fahrkartenautomaten eines Verkehrsverbunds",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Verkehrsverbund betreibt 350 Fahrkartenautomaten im Netz 10.77.0.0/16. Sie brauchen HTTPS zum Tarifserver 172.20.1.10, HTTPS zum Zahlungsdienstleister 203.0.113.50 und NTP zum Zeitserver 172.20.1.5. Die Techniker (10.99.5.0/24) warten die Automaten per SSH. Aktuelles Regelwerk (die erste passende Regel gilt):",
+      "  Nr  Quelle         Ziel           Dienst    Aktion     Log",
+      "  1   10.77.0.0/16   172.20.1.10    TCP 443   erlauben   nein",
+      "  2   any            10.77.0.0/16   any       verwerfen  ja",
+      "  3   10.99.5.0/24   10.77.0.0/16   TCP 22    erlauben   ja",
+      "  4   10.77.0.0/16   any            TCP 443   erlauben   nein",
+      "  5   10.77.0.0/16   172.20.1.5     UDP 123   erlauben   nein",
+      "  6   any            any            any       verwerfen  ja",
+      "Die Firewall schreibt im Mittel 600 Logeinträge pro Sekunde mit je 350 Byte. Die Logs sollen 90 Tage aufbewahrt werden. Das Logsystem komprimiert im Verhältnis 5:1. 1 GB = 10^9 Byte.",
+      "",
+      "1. Welche Regel greift jeweils? a) 10.99.5.14 an 10.77.3.200 TCP 22, b) 10.77.3.200 an 198.51.100.77 TCP 443, c) 10.77.3.200 an 172.20.1.5 UDP 123. Bewerten Sie die Ergebnisse.",
+      "2. Erstellen Sie ein korrigiertes Regelwerk.",
+      "3. Wie viel Speicher brauchen die Logs pro Tag und für 90 Tage, unkomprimiert und komprimiert? Wie senken Sie die Menge, ohne wichtige Informationen zu verlieren?"
+    ],
+    "solution": [
+      "1. a) Regel 2 greift vor Regel 3: verworfen. Die Wartung ist unmöglich, Regel 3 wird nie erreicht (verdeckte Regel). b) Regel 4 greift: erlaubt. Sie gibt HTTPS zu jedem Ziel im Internet frei. Ein kompromittierter Automat könnte Daten an beliebige Server senden oder Schadcode nachladen. Die Regel ist zu weit gefasst. c) Regel 5 greift: erlaubt, das ist richtig.",
+      "",
+      "2. Korrigiertes Regelwerk:",
+      "  1  10.99.5.0/24  10.77.0.0/16  TCP 22   erlauben   ja",
+      "  2  10.77.0.0/16  172.20.1.10   TCP 443  erlauben   nein",
+      "  3  10.77.0.0/16  203.0.113.50  TCP 443  erlauben   nein",
+      "  4  10.77.0.0/16  172.20.1.5    UDP 123  erlauben   nein",
+      "  5  any           any           any      verwerfen  ja",
+      "Die alte Regel 2 entfällt, die Schlussregel verwirft alles Übrige. Besser noch: SSH nur von einem Jump-Host mit MFA statt aus dem ganzen Techniker-Netz. Jede Regel bekommt einen Kommentar, einen Verantwortlichen und ein Prüfdatum.",
+      "",
+      "3. Pro Tag: 600 * 350 * 86.400 = 18.144.000.000 Byte = ca. 18,1 GB. 90 Tage: 18,144 * 90 = ca. 1.633 GB = ca. 1,6 TB. Komprimiert: 1.633 / 5 = ca. 327 GB. Senken: Prüfen, woher die meisten verworfenen Pakete stammen, zum Beispiel Automaten, die ständig gesperrte Dienste wie Update- oder Zeitserver im Internet anfragen. Die Ursache am Automaten abstellen, statt jedes Paket zu protokollieren. Bekanntes Rauschen wie Broadcasts zusammenfassen oder ohne Log verwerfen. Erlaubte Verbindungen nur mit Beginn und Ende protokollieren. Sicherheitsrelevante Ereignisse wie SSH-Zugriffe und Regeländerungen immer vollständig behalten."
+    ]
+  },
+  {
+    "title": "Auffällige DNS-Anfragen im Netz eines Spielwarenherstellers",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Spielwarenhersteller bereitet seine Neuheiten für die nächste Spielwarenmesse vor. Einer Mitarbeiterin der IT fällt im Protokoll des internen DNS-Servers eine Häufung auf:",
+      "  10:14:02.118 client 10.8.3.57 query: mfzwk3tfon2gk4tb...q.x7.datasync-cdn.net TXT",
+      "  10:14:02.162 client 10.8.3.57 query: nbswy3dpeb3w64tm...a.x7.datasync-cdn.net TXT",
+      "  10:14:02.207 client 10.8.3.57 query: ojsxg5dfnfxgc3tb...m.x7.datasync-cdn.net TXT",
+      "Der Rechner 10.8.3.57 gehört zur Produktentwicklung. Er stellt seit 9 Tagen rund um die Uhr im Mittel 22 solcher Anfragen pro Sekunde. Der Teil vor x7.datasync-cdn.net ist jeweils 180 Zeichen lang (auf mehrere Abschnitte mit höchstens 63 Zeichen verteilt) und besteht nur aus Kleinbuchstaben und den Ziffern 2 bis 7. Normale Clients stellen im Mittel 0,5 Anfragen pro Sekunde.",
+      "Die Firewall erlaubt DNS ins Internet nur vom internen DNS-Server.",
+      "",
+      "1. Was geht hier vermutlich vor? Warum hilft die Firewallregel nicht?",
+      "2. Die Zeichen sind Base32-codiert, jedes Zeichen trägt 5 Bit. Wie viele Daten können pro Anfrage, pro Tag und in 9 Tagen abgeflossen sein (1 MB = 10^6 Byte)? Um welchen Faktor liegt die Anfragerate über dem Normalwert?",
+      "3. Beschreiben Sie das Vorgehen im Vorfall und Maßnahmen zur künftigen Erkennung. Besteht eine Meldepflicht nach der DSGVO?"
+    ],
+    "solution": [
+      "1. Vermutlich DNS-Tunneling: Eine Schadsoftware auf 10.8.3.57 verpackt Daten in die Namen der DNS-Anfragen. Der interne DNS-Server leitet jede unbekannte Anfrage weiter, am Ende landet sie beim Nameserver von datasync-cdn.net, den der Angreifer betreibt. Über die TXT-Antworten kann er Befehle zurückschicken. Die Firewall sieht nur erlaubte Anfragen des eigenen DNS-Servers, deshalb greift die Regel nicht. Hinweise: sehr lange, zufällig wirkende Namen, nur Base32-Zeichen (a bis z, 2 bis 7), TXT-Anfragen, eine gleichmäßig hohe Rate rund um die Uhr und eine unbekannte Domain.",
+      "",
+      "2. Pro Anfrage: 180 * 5 / 8 = 112,5 Byte. Pro Sekunde: 22 * 112,5 = 2.475 Byte. Pro Tag: 2.475 * 86.400 = 213.840.000 Byte = ca. 214 MB. In 9 Tagen: 213,84 * 9 = ca. 1.925 MB = ca. 1,9 GB. Das reicht für viele Konstruktionsdaten und Entwürfe. Die Rate liegt beim 22 / 0,5 = 44-Fachen des Normalwerts.",
+      "",
+      "3. Rechner vom Netz trennen, aber nicht ausschalten, damit Arbeitsspeicher und Spuren für die Forensik erhalten bleiben. Die Domain auf dem DNS-Server sperren (Response Policy Zone) und nach weiteren Rechnern suchen, die sie anfragen. Beweise sichern, den Einfallsweg klären, betroffene Konten zurücksetzen und den Rechner neu aufsetzen. Die Geschäftsleitung informieren, beim Diebstahl von Geschäftsgeheimnissen kommt eine Strafanzeige in Betracht. Erkennung: SIEM-Regeln für lange Namen, hohe Zufälligkeit der Zeichen (Entropie), viele TXT-Anfragen und hohe Raten pro Client, dazu ein DNS-Filter, der neue und unbekannte Domains bewertet. Eine Meldepflicht nach Art. 33 DSGVO besteht nur, wenn personenbezogene Daten betroffen sind. Konstruktionsdaten allein sind es nicht. Mit dem Datenschutzbeauftragten ist zu prüfen, ob auf dem Rechner auch Kunden- oder Mitarbeiterdaten lagen."
+    ]
+  },
+  {
+    "title": "Ausgefallene Controllerbatterie bremst die Warenwirtschaft einer Möbelhauskette",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Die Warenwirtschaft einer Möbelhauskette läuft auf einem Datenbankserver mit Hardware-RAID-Controller. Das RAID 6 besteht aus 10 SAS-Festplatten mit je 1,2 TB und je 200 IOPS. Der nächtliche Inventurabgleich dauerte bisher 35 Minuten, seit Dienstag braucht er 1 Stunde 40 Minuten. Im Ereignisprotokoll des Controllers steht:",
+      "  Mo 23:41  BBU: Battery capacity below threshold, replace battery",
+      "  Mo 23:41  VD 0: Current cache policy changed from WriteBack to WriteThrough (reason: BBU bad)",
+      "Der Abgleich erzeugt 4,8 Millionen I/O-Vorgänge, davon 70 % Lesen und 30 % Schreiben. Write Penalty: RAID 6 = 6, RAID 10 = 2. Die Datenbank ist 3,1 TB groß und wächst um 20 % pro Jahr.",
+      "",
+      "1. Was ist passiert? Ein Kollege schlägt vor, den Cache mit der Einstellung \"Always WriteBack\" wieder einzuschalten. Wie bewerten Sie das?",
+      "2. Berechnen Sie die effektiven IOPS des RAID 6 ohne Schreibcache und die Laufzeit des Abgleichs. Wie lange würde er auf einem RAID 10 aus denselben Platten dauern?",
+      "3. Vergleichen Sie die Nutzkapazität von RAID 6 und RAID 10. Wann erreicht die Datenbank auf dem RAID 10 die 80-%-Grenze? Was empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Die Batterie (BBU) des Controllers ist zu schwach. Sie schützt den Schreibcache: Fällt der Strom aus, hält sie die noch nicht geschriebenen Daten im Cache. Ohne funktionierende Batterie schaltet der Controller auf Write-Through. Jeder Schreibvorgang wird erst bestätigt, wenn er auf den Platten steht, und kostet bei RAID 6 sechs Plattenzugriffe. Deshalb bricht die Leistung ein. \"Always WriteBack\" ist gefährlich: Bei Stromausfall oder Absturz gehen bereits bestätigte Schreibvorgänge verloren, die Datenbank kann beschädigt werden. Vertretbar ist das höchstens kurzzeitig mit USV, aktueller Sicherung und Freigabe durch die Verantwortlichen. Richtig ist, die Batterie oder das Cache-Schutzmodul (Kondensator mit Flash) sofort zu tauschen.",
+      "",
+      "2. Rohleistung: 10 * 200 = 2.000 IOPS. RAID 6: 2.000 / (0,7 + 0,3 * 6) = 2.000 / 2,5 = 800 IOPS. Laufzeit: 4.800.000 / 800 = 6.000 s = 100 Minuten, das passt zur Beobachtung. RAID 10: 2.000 / (0,7 + 0,3 * 2) = 2.000 / 1,3 = ca. 1.538 IOPS. Laufzeit: 4.800.000 / 1.538 = ca. 3.120 s = 52 Minuten.",
+      "",
+      "3. RAID 6: (10 - 2) * 1,2 = 9,6 TB. RAID 10: 10 / 2 * 1,2 = 6 TB. 80 % von 6 TB = 4,8 TB. 3,1 * 1,2^n = 4,8, also n = ln(4,8 / 3,1) / ln(1,2) = ca. 2,4 Jahre. Empfehlung: zuerst die Batterie tauschen, damit ist die Störung behoben. RAID 10 wäre bei dieser Last schneller, reicht mit den vorhandenen Platten aber nur etwa 2,4 Jahre. Mittelfristig ist ein neues Speichersystem mit SSDs im RAID 10 sinnvoll, das ein Vielfaches an IOPS liefert und für mehrere Jahre Wachstum ausgelegt wird. Laufzeit des Abgleichs und Zustand der Batterie werden ins Monitoring aufgenommen."
+    ]
+  },
+  {
+    "title": "Neuen ZFS-Speicher für die Fundfotos eines Landesamts für Archäologie planen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Landesamt für Archäologie fotografiert jedes Fundstück für die Dokumentation. Pro Jahr kommen 12.000 Fundstücke mit je 40 Fotos zu 25 MB dazu. Der alte Server mit ZFS ist fast voll und wird immer langsamer. Er zeigt:",
+      "    pool: bilder",
+      "   state: ONLINE",
+      "  status: One or more devices has experienced an unrecoverable error. An attempt was made to correct the error. Applications are unaffected.",
+      "    scan: scrub repaired 1.2M in 09:15:12 with 0 errors on Sun Sep 20 2026",
+      "          NAME        STATE   READ WRITE CKSUM",
+      "          bilder      ONLINE     0     0     0",
+      "            raidz2-0  ONLINE     0     0     0",
+      "              sda     ONLINE     0     0     0",
+      "              sdb     ONLINE     0     0    23",
+      "              (sdc bis sdf ONLINE, keine Fehler)",
+      "Auf dem Pool liegen 30 TB. Der neue Server bekommt 8 Festplatten mit je 16 TB. Zur Wahl stehen 4 Spiegel (Mirror) aus je 2 Platten oder ein RAIDZ2 aus allen 8 Platten. Ein ZFS-Pool soll höchstens zu 80 % gefüllt sein. 1 TB = 10^12 Byte, 1 MB = 10^6 Byte.",
+      "",
+      "1. Werten Sie die Ausgabe aus. Was bedeuten die 23 Prüfsummenfehler, und wie gehen Sie mit sdb um?",
+      "2. Wie viele Daten kommen pro Jahr dazu? Berechnen Sie für beide Varianten die Nutzkapazität, die 80-%-Grenze und die Zeit, bis sie erreicht ist. Welche Variante empfehlen Sie?",
+      "3. Mit welcher Geschwindigkeit lief der letzte Scrub? Wie lange dauert ein Scrub bei gleicher Geschwindigkeit, wenn der neue Pool 70 TB enthält? Wann planen Sie ihn ein?"
+    ],
+    "solution": [
+      "1. ZFS hat beim Scrub auf sdb 23 Blöcke gefunden, deren Prüfsumme nicht stimmte. Die Platte hat falsche Daten geliefert, ohne einen Lesefehler zu melden (stille Datenfehler). Dank RAIDZ2 hat ZFS die richtigen Daten aus der Parität rekonstruiert und 1,2 MB repariert, deshalb \"0 errors\". Ursache können Platte, Kabel oder Controller sein. Vorgehen: S.M.A.R.T.-Werte von sdb und das Kabel prüfen, die Zähler mit zpool clear zurücksetzen und beobachten. Kommen neue Fehler dazu, die Platte mit zpool replace tauschen. Auch der Füllstand ist ein Problem: Ein fast voller ZFS-Pool wird deutlich langsamer, weil freie Blöcke schwer zu finden sind.",
+      "",
+      "2. Pro Jahr: 12.000 * 40 * 25 MB = 12.000.000 MB = 12 TB. Spiegel: 4 * 16 = 64 TB, 80 % = 51,2 TB, (51,2 - 30) / 12 = ca. 1,8 Jahre. RAIDZ2: (8 - 2) * 16 = 96 TB, 80 % = 76,8 TB, (76,8 - 30) / 12 = 3,9 Jahre. Empfehlung: RAIDZ2. Fotos werden einmal geschrieben und oft gelesen, dafür reicht die Leistung. RAIDZ2 verkraftet den Ausfall von 2 beliebigen Platten. Bei Spiegeln ist der Pool verloren, wenn beide Platten eines Spiegels ausfallen. Spiegel sind die bessere Wahl für Datenbanken oder VMs mit vielen kleinen, zufälligen Zugriffen.",
+      "",
+      "3. Letzter Scrub: 9 h 15 min 12 s = 33.312 s. 30 * 10^12 Byte / 33.312 s = ca. 900 MB/s. Bei 70 TB: 70 * 10^12 / (900 * 10^6) = ca. 77.778 s = ca. 21,6 Stunden. Planung: einmal im Monat am Wochenende, zum Beispiel ab Samstagabend, und nicht während großer Importe nach einer Grabung. ZFS ersetzt keine Sicherung: Zusätzlich regelmäßige Snapshots gegen versehentliches Löschen und eine Kopie auf ein zweites System an einem anderen Ort."
+    ]
+  },
+  {
+    "title": "iSCSI-Pfad einer Fruchtsaftkelterei verliert nach Switchtausch Pakete",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Fruchtsaftkelterei betreibt den Datenbankserver für Abfüllung und Versand mit Speicher aus einem iSCSI-SAN. Der Server hat zwei Pfade über zwei getrennte Switches: Pfad A (10.50.1.0/24) und Pfad B (10.50.2.0/24). Multipath (MPIO) verteilt die Last im Round-Robin-Verfahren. Server und SAN nutzen eine MTU von 9.000 Byte.",
+      "Nach dem Tausch des defekten Switches B hängt die Datenbank immer wieder für einige Sekunden. Tests vom Server:",
+      "  ping -f -l 8972 10.50.1.10   Antwort von 10.50.1.10: Bytes=8972 Zeit<1ms TTL=64",
+      "  ping -f -l 8972 10.50.2.10   Zeitüberschreitung der Anforderung.",
+      "  ping -f -l 1472 10.50.2.10   Antwort von 10.50.2.10: Bytes=1472 Zeit<1ms TTL=64",
+      "Beide Pfade haben 10 Gbit/s. Pro Ethernet-Rahmen kommen 38 Byte auf der Leitung dazu (Ethernet-Header, Prüfsumme, Präambel und Pause). IP- und TCP-Header haben je 20 Byte.",
+      "",
+      "1. Werten Sie die Tests aus. Wie ergeben sich die Werte 8.972 und 1.472? Warum hängt die Datenbank, statt nur langsamer zu werden?",
+      "2. Berechnen Sie für MTU 1.500 und MTU 9.000 den Anteil der TCP-Nutzdaten auf der Leitung und die Anzahl Rahmen pro Sekunde bei voller Auslastung von 10 Gbit/s. Lohnen sich Jumbo-Frames?",
+      "3. Wie beheben Sie den Fehler, und wie ist ein iSCSI-Netz grundsätzlich aufzubauen? Warum nutzt man hier MPIO statt Link Aggregation?"
+    ],
+    "solution": [
+      "1. Pfad A überträgt große Rahmen, Pfad B nur Standardrahmen. Der neue Switch B arbeitet mit der Standard-MTU von 1.500 Byte und verwirft größere Rahmen ohne Meldung. -f setzt das Don't-Fragment-Bit, -l gibt die Nutzdaten an: 8.972 = 9.000 - 20 (IP) - 8 (ICMP), 1.472 = 1.500 - 20 - 8. Anmeldung und kleine Pakete funktionieren, deshalb hält MPIO den Pfad B für gesund. Große Datenpakete gehen verloren, bis Zeitüberschreitungen und Wiederholungen greifen. Da Round Robin abwechselnd auch Pfad B nutzt, hängt die Datenbank immer wieder.",
+      "",
+      "2. MTU 1.500: Nutzdaten 1.500 - 40 = 1.460 Byte, auf der Leitung 1.500 + 38 = 1.538 Byte. Anteil: 1.460 / 1.538 = ca. 94,9 %. Rahmen: 10 * 10^9 / (1.538 * 8) = ca. 812.744 pro Sekunde. MTU 9.000: 8.960 / 9.038 = ca. 99,1 %. Rahmen: 10 * 10^9 / (9.038 * 8) = ca. 138.305 pro Sekunde. Der Durchsatz steigt nur um gut 4 Prozentpunkte, aber Server und SAN verarbeiten fast 6 Mal weniger Rahmen. Das senkt die CPU-Last. Jumbo-Frames lohnen sich, wenn sie durchgängig auf allen Geräten eines Pfades eingestellt sind.",
+      "",
+      "3. Sofort Pfad B in MPIO deaktivieren, dann an Switch B für die iSCSI-Ports Jumbo-Frames einstellen (zum Beispiel MTU 9.216) und mit ping -f -l 8972 von beiden Seiten testen. Danach Pfad B wieder zuschalten. Switch-Konfigurationen werden gesichert, damit ein Ersatzgerät gleich eingerichtet ist. Aufbau: pro Pfad ein eigenes, nicht geroutetes Netz oder VLAN, getrennte Switches, Flusskontrolle nach Herstellerempfehlung, CHAP-Authentifizierung und keine anderen Geräte im Speichernetz. Link Aggregation verteilt pro Verbindung, eine iSCSI-Sitzung nutzt also nur eine Leitung, und beide Leitungen müssen am selben Switch bzw. Stack enden. MPIO nutzt mehrere Sitzungen über getrennte Netze, erkennt Pfadausfälle auf Speicherebene und funktioniert mit zwei unabhängigen Switches."
+    ]
+  },
+  {
+    "title": "Sicherungsberichte einer Hörakustik-Kette per SQL auswerten",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Eine Hörakustik-Kette mit 25 Filialen sichert jede Nacht die Filialserver mit Kunden- und Messdaten in die Zentrale. Die Sicherungssoftware schreibt jedes Ergebnis in die Tabelle backup_jobs (job_id, filiale_id, ende_zeit, status, datenmenge_gb), status ist 'OK' oder 'FEHLER'. Die Tabelle filialen (filiale_id, name) enthält alle Filialen.",
+      "Ein Kollege will jeden Morgen wissen, welche Filialen seit mehr als 24 Stunden keine erfolgreiche Sicherung haben. Er nutzt:",
+      "  SELECT filiale_id, MAX(ende_zeit) AS letzte",
+      "  FROM backup_jobs",
+      "  WHERE status = 'OK' AND ende_zeit < NOW() - INTERVAL 24 HOUR",
+      "  GROUP BY filiale_id;",
+      "Die Abfrage liefert jeden Morgen alle 25 Filialen. Die neue Filiale 26 taucht nie auf, obwohl sie noch nie gesichert wurde.",
+      "Im September gab es 25 * 30 = 750 Sicherungsjobs, 27 davon mit Status FEHLER. Der Dienstleister sichert vertraglich 98 % erfolgreiche Sicherungen zu. Die Filialen haben 50 Mbit/s im Upload, davon sind 80 % nutzbar. Das Sicherungsfenster reicht von 20 bis 6 Uhr.",
+      "",
+      "1. Erklären Sie die beiden Fehler der Abfrage und schreiben Sie eine korrekte Abfrage.",
+      "2. Berechnen Sie die Erfolgsquote im September. Wurde die Zusage eingehalten? Wie viele Fehler wären höchstens erlaubt gewesen?",
+      "3. Filiale 26 hat 800 GB Daten. Passt die erste Vollsicherung über die Leitung ins Sicherungsfenster (1 GB = 10^9 Byte)? Wie gehen Sie vor?"
+    ],
+    "solution": [
+      "1. Fehler 1: WHERE filtert vor dem Gruppieren. Die Abfrage betrachtet nur erfolgreiche Sicherungen, die älter als 24 Stunden sind, und bildet davon das Maximum. Jede Filiale hat irgendeine alte Sicherung, deshalb erscheinen alle 25. Die Bedingung muss auf das Maximum wirken, gehört also in HAVING. Fehler 2: Filialen ganz ohne erfolgreiche Sicherung kommen in backup_jobs mit Status OK nicht vor. Nötig ist ein LEFT JOIN, der von der Tabelle filialen ausgeht. Korrekt:",
+      "  SELECT f.filiale_id, f.name, MAX(b.ende_zeit) AS letzte",
+      "  FROM filialen f",
+      "  LEFT JOIN backup_jobs b ON b.filiale_id = f.filiale_id AND b.status = 'OK'",
+      "  GROUP BY f.filiale_id, f.name",
+      "  HAVING MAX(b.ende_zeit) IS NULL OR MAX(b.ende_zeit) < NOW() - INTERVAL 24 HOUR;",
+      "Die Bedingung status = 'OK' steht in der JOIN-Bedingung und nicht im WHERE, damit Filialen ohne Treffer mit NULL erhalten bleiben.",
+      "",
+      "2. Erfolgreich: 750 - 27 = 723. Quote: 723 / 750 = 96,4 %. Die Zusage von 98 % wurde nicht eingehalten. Erlaubt wären 2 % von 750 = 15 Fehler gewesen. Das ist Anlass für ein Gespräch mit dem Dienstleister und eine Ursachenanalyse, zum Beispiel ob die Fehler immer dieselben Filialen betreffen (Problem Management).",
+      "",
+      "3. Nutzbar: 50 * 0,8 = 40 Mbit/s. 800 * 10^9 * 8 / (40 * 10^6) = 160.000 s = ca. 44,4 Stunden. Das Fenster hat 10 Stunden, die Vollsicherung passt nicht hinein. Vorgehen (Seeding): Die erste Vollsicherung vor Ort auf eine verschlüsselte Festplatte schreiben, per Kurier in die Zentrale bringen und dort einspielen. Danach laufen nur noch inkrementelle Sicherungen über die Leitung. Da es Gesundheitsdaten sind (Art. 9 DSGVO), müssen Transport und Übertragung verschlüsselt sein, und die Übergabe wird dokumentiert. Alternativ die Vollsicherung auf mehrere Nächte verteilen, wenn die Software das Fortsetzen unterstützt."
+    ]
+  },
+  {
+    "title": "Speicher für Drohnenbilder eines Vermessungsbüros läuft voll",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Vermessungsbüro fliegt Baustellen und Steinbrüche mit Drohnen ab. Die Daten liegen auf einem Linux-Server mit einem Software-RAID 6 aus 8 Festplatten zu je 8 TB (Dateisystem XFS). Ausgabe von df -h:",
+      "  Dateisystem  Größe  Benutzt  Verf.  Verw%  Eingehängt auf",
+      "  /dev/md0       44T      38T   6,0T    87%  /daten",
+      "In der Saison gibt es 9 Flüge pro Woche. Jeder Flug erzeugt 180 GB Rohbilder und 60 GB berechnete Ergebnisse (Orthofotos, Punktwolken). Ein Skript soll per Cronjob täglich warnen, wenn /daten zu 90 % oder mehr belegt ist. Es hat noch nie eine Mail geschickt:",
+      "  #!/bin/bash",
+      "  GRENZE=90",
+      "  BELEGT=$(df /daten | tail -1 | awk '{print $5}')",
+      "  if [ $BELEGT -gt $GRENZE ]; then",
+      "    echo \"/daten ist zu $BELEGT belegt\" | mail -s \"Speicherwarnung\" it@vermessung.example",
+      "  fi",
+      "Die Ausgabe des Cronjobs enthält jeden Tag: \"[: 87%: Ganzzahliger Ausdruck erwartet\".",
+      "",
+      "1. Warum zeigt df -h 44T an, obwohl das RAID rechnerisch 48 TB hat? Rechnen Sie nach.",
+      "2. Wie stark wächst der Bestand pro Woche, umgerechnet in die Einheit von df? Wann ist die 90-%-Grenze erreicht, wann ist der Speicher voll? Rechnen Sie mit den gerundeten Werten aus df und 1 TB = 10^12 Byte.",
+      "3. Finden Sie die Fehler im Skript und korrigieren Sie es. Welche Maßnahmen schlagen Sie gegen das Volllaufen vor?"
+    ],
+    "solution": [
+      "1. RAID 6: (8 - 2) * 8 TB = 48 TB = 48 * 10^12 Byte. df -h rechnet in Zweierpotenzen, T steht für TiB = 2^40 Byte. 48 * 10^12 / 2^40 = ca. 43,7 TiB, gerundet 44T. Es fehlt kein Speicher, es ist nur eine andere Einheit.",
+      "",
+      "2. Pro Woche: 9 * (180 + 60) = 2.160 GB = 2,16 TB = 2,16 * 10^12 / 2^40 = ca. 1,96 TiB. 90 % von 44T = 39,6T. Bis dahin fehlen 39,6 - 38 = 1,6T: 1,6 / 1,96 = ca. 0,8 Wochen, also knapp 6 Tage. Voll: 6,0 / 1,96 = ca. 3,1 Wochen. Die Warnung ist also sehr dringend.",
+      "",
+      "3. awk liefert den Wert mit Prozentzeichen, also \"87%\". Der Vergleich -gt erwartet eine ganze Zahl, meldet einen Fehler, und die Bedingung ist nie wahr. Außerdem warnt -gt erst über 90 %, verlangt ist \"90 % oder mehr\", also -ge. Korrektur:",
+      "  BELEGT=$(df --output=pcent /daten | tail -1 | tr -dc '0-9')",
+      "  if [ \"$BELEGT\" -ge \"$GRENZE\" ]; then",
+      "Variablen in Anführungszeichen setzen, das Skript einmal mit GRENZE=80 testen und prüfen, ob der Server überhaupt Mails versenden kann. Maßnahmen: abgeschlossene Projekte, zum Beispiel älter als 12 Monate, auf ein Archivsystem oder Band auslagern. Rohbilder nach der Abnahme komprimiert archivieren statt auf dem schnellen Speicher zu halten. Speicher rechtzeitig erweitern. Im Monitoring den Trend auswerten und das voraussichtliche Volllaufdatum melden, statt nur eine feste Schwelle zu prüfen."
+    ]
+  },
+  {
+    "title": "Buchungsdatenbank eines Freizeitparks auf einen Zeitpunkt zurücksetzen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Freizeitpark verkauft Tickets und Hotelübernachtungen über eine Buchungsdatenbank auf Microsoft SQL Server (Wiederherstellungsmodell FULL). Sicherungen: Vollsicherung sonntags um 22:00 Uhr, differenzielle Sicherung Montag bis Samstag um 22:00 Uhr, Protokollsicherung alle 15 Minuten, jeweils um :10, :25, :40 und :55 Uhr.",
+      "Am Mittwoch um 14:37 Uhr hat ein fehlerhaftes Wartungsskript alle Buchungen für Juli gelöscht. Der Fehler wird um 15:05 Uhr bemerkt. Im Mittel gehen 180 Buchungen pro Stunde ein, auch zwischen 14:37 und 15:05 Uhr kamen neue hinzu.",
+      "Größen: Vollsicherung 400 GB, differenzielle Sicherung von Dienstag 60 GB, jede Protokollsicherung im Mittel 0,5 GB. Zurückgespielt wird mit 250 MB/s, 1 GB = 1.000 MB.",
+      "",
+      "1. Welche Sicherungen spielen Sie in welcher Reihenfolge zurück? Wie viele Protokollsicherungen sind es?",
+      "2. Wie lange dauert das Zurückspielen? Ist ein RTO von 1 Stunde einhaltbar? Wie viele Buchungen wären verloren, wenn es nur die nächtlichen Sicherungen gäbe?",
+      "3. Warum spielen Sie die Sicherung besser in eine zweite Datenbank zurück, statt die Produktivdatenbank zu überschreiben? Beschreiben Sie das Vorgehen."
+    ],
+    "solution": [
+      "1. Reihenfolge: Vollsicherung vom Sonntag, differenzielle Sicherung vom Dienstag 22:00 Uhr, danach alle Protokollsicherungen ab Dienstag 22:10 Uhr bis Mittwoch 14:40 Uhr. Die letzte wird mit STOPAT 14:36:59 eingespielt, damit der Löschvorgang nicht mehr enthalten ist. Alle Schritte laufen mit NORECOVERY, erst der letzte mit RECOVERY. Anzahl: Von 22:10 bis 14:40 Uhr sind es 16 Stunden 30 Minuten = 16,5 * 4 = 66 Abstände, also 66 + 1 = 67 Protokollsicherungen.",
+      "",
+      "2. Vollsicherung: 400.000 MB / 250 MB/s = 1.600 s. Differenziell: 60.000 / 250 = 240 s. Protokolle: 67 * 0,5 = 33,5 GB = 33.500 MB / 250 = 134 s. Zusammen 1.974 s = ca. 33 Minuten. Mit Prüfung und Übernahme der Daten ist ein RTO von 1 Stunde einhaltbar, wenn die Sicherungen sofort verfügbar sind und das Vorgehen geübt ist. Nur nächtliche Sicherungen: Stand Dienstag 22:00 Uhr. Bis 14:37 Uhr sind es 16 Stunden 37 Minuten = ca. 16,6 Stunden: 16,6 * 180 = rund 3.000 Buchungen wären verloren.",
+      "",
+      "3. Setzt man die Produktivdatenbank auf 14:36:59 zurück, gehen alle Buchungen danach verloren, bis zur Entdeckung etwa 28 Minuten: 180 * 28 / 60 = 84 Buchungen, und weitere während der Wiederherstellung. Besser: die Kette unter neuem Namen (zum Beispiel Buchung_Restore) mit STOPAT zurückspielen. Dann die gelöschten Juli-Buchungen per SQL (INSERT ... SELECT mit Filter auf Juli und Prüfung auf doppelte Schlüssel) in die Produktivdatenbank übernehmen. Vorher das Wartungsskript stoppen, danach Anzahl und Summen mit der Wiederherstellung vergleichen und alles als Change dokumentieren. Der Verkauf läuft währenddessen weiter."
+    ]
+  },
+  {
+    "title": "Ticketverkauf eines Freilichttheaters auf Kubernetes skalieren",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Freilichttheater verkauft seine Karten über eine eigene Webanwendung. Das Frontend läuft als Deployment in einem gemieteten Kubernetes-Cluster, die Datenbank ist ein verwalteter Dienst des Anbieters.",
+      "Ein Frontend-Pod schafft laut Lasttest höchstens 100 Anfragen pro Sekunde. Er soll im Betrieb höchstens zu 75 % ausgelastet sein. Jeder Pod hat die Requests 400m CPU und 768 MiB RAM.",
+      "Ein Worker-Knoten stellt 3.500m CPU und 13.312 MiB RAM für Pods bereit. Davon belegen DaemonSets (Logging, Monitoring) je Knoten 300m CPU und 512 MiB RAM.",
+      "Im Normalbetrieb kommen 200 Anfragen pro Sekunde. Beim Start des Vorverkaufs für die Sommersaison sind es 1.800 Anfragen pro Sekunde. Der Cluster soll den Ausfall eines Knotens verkraften (N+1).",
+      "",
+      "1. Wie viele Frontend-Pods braucht der Vorverkaufsstart? Wie viele Pods passen auf einen Knoten, und wie viele Knoten sind nötig?",
+      "2. Ein Horizontal Pod Autoscaler (HPA) regelt nach Anfragen pro Pod mit dem Zielwert 75. Beim Vorverkaufsstart laufen 6 Pods, jeder erhält 300 Anfragen pro Sekunde. Wie viele Pods fordert der HPA an? Im HPA steht maxReplicas: 20. Was passiert, und was ändern Sie?",
+      "3. Während der Saison wird ein Update mit maxSurge 25 % und maxUnavailable 0 bei 24 Pods ausgerollt. Wie viele Pods laufen höchstens gleichzeitig? Reicht der Cluster, auch wenn ein Knoten fehlt? Wie lange dauert das Update, wenn eine Runde 90 Sekunden braucht?"
+    ],
+    "solution": [
+      "1. Nutzbar sind je Pod 100 * 0,75 = 75 Anfragen pro Sekunde. Vorverkauf: 1.800 / 75 = 24 Pods. Normalbetrieb: 200 / 75 = 2,67, also 3 Pods (3 sind ohnehin das Minimum für Verfügbarkeit). Frei je Knoten: 3.500m - 300m = 3.200m CPU und 13.312 - 512 = 12.800 MiB RAM. CPU: 3.200 / 400 = 8 Pods. RAM: 12.800 / 768 = 16,67, also 16 Pods. Die CPU begrenzt auf 8 Pods je Knoten. 24 / 8 = 3 Knoten, mit N+1 also 4 Knoten. Wichtig: Der Scheduler verteilt nach den Requests, nicht nach der tatsächlichen Last.",
+      "",
+      "2. Der HPA rechnet: gewünschte Pods = aufgerundet (aktuelle Pods * Messwert / Zielwert) = 6 * 300 / 75 = 24 Pods. Mit maxReplicas 20 bleibt er bei 20 Pods. Jeder Pod erhält dann 1.800 / 20 = 90 Anfragen pro Sekunde, also 90 % Auslastung ohne Reserve. Schon kleine Spitzen führen zu Fehlern und langen Antwortzeiten. Außerdem dauert das Hochskalieren: Neue Knoten brauchen einige Minuten, bis sie bereit sind. Änderungen: maxReplicas auf mindestens 30 setzen, vor dem bekannten Vorverkaufsstart per Zeitplan vorab auf 24 Pods und 4 Knoten skalieren, eine Warteschlange (Wartezimmer) vor den Checkout legen und das Verhalten vorher mit einem Lasttest prüfen.",
+      "",
+      "3. maxSurge 25 % von 24 = 6 zusätzliche Pods, maxUnavailable 0: höchstens 24 + 6 = 30 Pods. 4 Knoten bieten 4 * 8 = 32 Plätze, das reicht. Fehlt ein Knoten, gibt es nur 3 * 8 = 24 Plätze. Die zusätzlichen Pods bleiben im Zustand Pending, das Update stockt. Wegen maxUnavailable 0 fällt aber kein alter Pod weg, der Betrieb läuft weiter. Dauer: 24 / 6 = 4 Runden * 90 Sekunden = 360 Sekunden = 6 Minuten. Readiness-Probes sorgen dafür, dass ein neuer Pod erst Anfragen erhält, wenn er bereit ist. Updates legt man nicht in die Zeit des Vorverkaufsstarts."
+    ]
+  },
+  {
+    "title": "VM-Sicherung eines Großhändlers für Heimtierbedarf ins Nachtfenster bringen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Großhändler für Heimtierbedarf betreibt 42 VMs auf 3 Hosts. Die VMs belegen zusammen 14 TB. Rechnen Sie vereinfacht mit 1 TB = 1.000 GB = 1.000.000 MB.",
+      "Die Sicherungssoftware sichert die VMs über den Hypervisor auf ein Backup-Repository. Sie erreicht vereinfacht 600 MB/s. Das Backup-Fenster liegt zwischen 22 und 5 Uhr. Täglich ändern sich etwa 3 % der Datenblöcke.",
+      "Zu den VMs gehören ein SQL-Server mit der Warenwirtschaft und ein Dateiserver mit 4,5 TB. Für den Dateiserver gilt ein RTO von 1 Stunde.",
+      "",
+      "1. Wie lange dauert eine Vollsicherung aller VMs, und passt sie ins Fenster? Wie lange dauert eine inkrementelle Sicherung mit Changed Block Tracking (CBT)? Ohne CBT muss die Software jede Nacht alle Blöcke lesen, der Speicher liefert dabei 800 MB/s. Wie lange dauert das?",
+      "2. Aufbewahrt werden 30 Tage: eine Vollsicherung und 29 inkrementelle Sicherungen. Kompression und Deduplizierung sparen vereinfacht 50 %. Wie viel Platz braucht das Repository mit 20 % Reserve? Was gehört zusätzlich zu einem vollständigen Konzept?",
+      "3. Kann der Dateiserver per normaler Rücksicherung innerhalb des RTO wiederhergestellt werden? Welche Alternative gibt es? Worauf achten Sie bei der SQL-Server-VM?"
+    ],
+    "solution": [
+      "1. Vollsicherung: 14.000.000 MB / 600 MB/s = 23.333 Sekunden = ca. 6,48 Stunden. Das Fenster hat 7 Stunden. Es passt, aber nur mit etwa 30 Minuten Reserve. Deshalb nur einmalig oder selten eine Vollsicherung. Inkrementell mit CBT: 3 % von 14 TB = 420 GB = 420.000 MB / 600 = 700 Sekunden = ca. 11,7 Minuten. Der Hypervisor merkt sich die geänderten Blöcke, die Software liest nur diese. Ohne CBT: 14.000.000 / 800 = 17.500 Sekunden = ca. 4,86 Stunden Lesen pro Nacht, obwohl nur 3 % neu sind. Das belastet den Produktivspeicher unnötig.",
+      "",
+      "2. Rohdaten: 14.000 GB + 29 * 420 GB = 14.000 + 12.180 = 26.180 GB. Mit 50 % Einsparung: 13.090 GB. Mit 20 % Reserve: 13.090 * 1,2 = 15.708 GB, also etwa 15,7 TB. Zum Konzept gehören außerdem: eine zweite Kopie an einem anderen Ort (3-2-1-Regel), mindestens eine Kopie unveränderbar oder offline gegen Ransomware, ein eigenes Konto für die Sicherung ohne Domänen-Admin-Rechte, Überwachung der Sicherungsjobs und regelmäßige Wiederherstellungstests.",
+      "",
+      "3. Rücksicherung: 4.500.000 MB / 600 MB/s = 7.500 Sekunden = ca. 2,08 Stunden. Das überschreitet das RTO von 1 Stunde. Alternative: Instant Recovery. Die VM startet direkt aus dem Repository und ist nach wenigen Minuten erreichbar, allerdings langsamer. Danach wird sie im laufenden Betrieb auf den Produktivspeicher verschoben. Außerdem können einzelne Dateien direkt aus der Sicherung zurückgeholt werden. SQL-Server-VM: anwendungskonsistent sichern (VSS im Gast), damit die Datenbank sauber wiederhergestellt werden kann. Transaktionsprotokolle sichern bzw. kürzen lassen und die Wiederherstellung der Datenbank regelmäßig testen."
+    ]
+  },
+  {
+    "title": "VMs einer Großwäscherei am Sonntag auf einen neuen Hypervisor umziehen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Großwäscherei arbeitet von Montag bis Samstag rund um die Uhr. Für den Wechsel auf einen neuen Hypervisor steht nur der Sonntag von 6 bis 22 Uhr zur Verfügung.",
+      "Umziehen sollen 26 VMs. Ihre virtuellen Festplatten sind mit 9,6 TB provisioniert, belegt sind 5,4 TB. Rechnen Sie mit 1 TB = 1.000.000 MB. Das Konvertierungswerkzeug überträgt die VMs nacheinander.",
+      "Über das 1-GbE-Managementnetz erreicht es vereinfacht 100 MB/s, über ein eigenes 10-GbE-Netz 500 MB/s. Kopiert es Thick-Disks, überträgt es die volle provisionierte Größe. Nach jeder VM fallen 15 Minuten Nacharbeit und Test an.",
+      "Die größte VM ist das ERP-System mit 1,2 TB belegten Daten.",
+      "",
+      "1. Berechnen Sie die Übertragungsdauer über 1 GbE (nur belegte Daten und volle Größe) und über 10 GbE (nur belegte Daten). Welche Variante passt mit der Nacharbeit in das Fenster?",
+      "2. Welche Vorbereitungen und welche Reihenfolge planen Sie? Welche Probleme treten nach der Konvertierung von Windows-VMs typischerweise auf?",
+      "3. Wie lange ist das ERP-System über 10 GbE mindestens nicht verfügbar? Wie sieht der Rückfallplan aus?"
+    ],
+    "solution": [
+      "1. 1 GbE, nur belegte Daten: 5.400.000 MB / 100 MB/s = 54.000 Sekunden = 15 Stunden. 1 GbE, volle Größe: 9.600.000 / 100 = 96.000 Sekunden = ca. 26,7 Stunden. 10 GbE, belegte Daten: 5.400.000 / 500 = 10.800 Sekunden = 3 Stunden. Nacharbeit: 26 * 15 Minuten = 390 Minuten = 6,5 Stunden. Das Fenster hat 16 Stunden. Über 1 GbE: 15 + 6,5 = 21,5 Stunden, das passt nicht. Über 10 GbE: 3 + 6,5 = 9,5 Stunden, das passt mit 6,5 Stunden Reserve.",
+      "",
+      "2. Vorbereitung: Zielcluster aufbauen und testen, Netze (VLANs) und Speicher gleich benennen, Sicherung aller VMs vorher prüfen, Freigabe der Hersteller von ERP und Datenbank für den neuen Hypervisor einholen. Paravirtualisierte Treiber (z.B. VirtIO) vorab in den Windows-VMs installieren. Probelauf mit einer Test-VM an einem früheren Sonntag. Reihenfolge: zuerst unkritische VMs, dann Anwendungsserver mit ihren Datenbanken jeweils gemeinsam. Domänencontroller besser neu auf dem Zielsystem aufsetzen und die alten herabstufen, statt sie zu konvertieren. Typische Probleme: neue Netzwerkkarte mit anderer MAC-Adresse, die feste IP-Adresse fehlt; Boot-Fehler ohne passenden Festplattentreiber; Windows oder Software verlangen eine neue Aktivierung; alte Gastwerkzeuge des bisherigen Hypervisors müssen entfernt werden.",
+      "",
+      "3. ERP: 1.200.000 MB / 500 MB/s = 2.400 Sekunden = 40 Minuten Übertragung plus 15 Minuten Test = mindestens 55 Minuten. Die VM muss während der Übertragung ausgeschaltet sein, damit keine Daten verloren gehen. Rückfallplan: Die alten VMs bleiben unverändert und nur ausgeschaltet auf dem alten System. Vorher wird festgelegt, bis wann und nach welchen Kriterien entschieden wird (z.B. ERP bis 18 Uhr nicht fehlerfrei getestet). Dann werden die neuen VMs gestoppt und die alten wieder gestartet. Das alte System wird erst nach einigen Tagen stabilen Betriebs abgebaut."
+    ]
+  },
+  {
+    "title": "Anmeldesturm beim Schichtwechsel in einem Rehazentrum",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Rehazentrum stellt Pflege- und Therapiepersonal 150 nicht-persistente virtuelle Desktops bereit. Nach der Abmeldung wird jeder Desktop auf den Stand des Masterimages zurückgesetzt. Die Benutzereinstellungen liegen in Profilcontainern auf einem Dateiserver.",
+      "Das Speichersystem schafft vereinfacht 6.000 IOPS. Ein Desktop erzeugt im Betrieb 12 IOPS. Während einer Anmeldung erzeugt er 90 Sekunden lang 80 IOPS. Ein Neustart erzeugt 2 Minuten lang 200 IOPS.",
+      "Beim Schichtwechsel um 6 Uhr melden sich 110 Personen innerhalb von 3 Minuten an. Rechnen Sie mit gleichmäßig verteilten Anmeldungen.",
+      "Das Masterimage hat 60 GB. Jeder verknüpfte Klon braucht höchstens 8 GB zusätzlich. Das Zentrum hat 260 Beschäftigte mit Profilcontainern von je 5 GB.",
+      "",
+      "1. Wie viele Desktops sind beim Schichtwechsel gleichzeitig in der Anmeldung? Welche Last entsteht insgesamt, und reicht das Speichersystem?",
+      "2. Nach einem Update des Masterimages müssen nachts 120 Desktops neu starten, 30 sind durch die Nachtschicht belegt. Das Speichersystem soll höchstens zu 80 % ausgelastet werden. Wie viele Desktops dürfen gleichzeitig starten, und wie lange dauert der Neustart aller 120?",
+      "3. Vergleichen Sie den Speicherbedarf von vollständigen und verknüpften Klonen. Wie viel Platz brauchen die Profilcontainer? Warum passen nicht-persistente Desktops hier gut?"
+    ],
+    "solution": [
+      "1. Anmeldungen pro Sekunde: 110 / 180. Jede dauert 90 Sekunden. Gleichzeitig in der Anmeldung: 110 / 180 * 90 = 55 Desktops. Last: 55 * 80 = 4.400 IOPS plus die übrigen 150 - 55 = 95 Desktops mit je 12 IOPS = 1.140 IOPS. Zusammen 5.540 IOPS. Das reicht knapp, die Reserve beträgt nur 460 IOPS (ca. 7,7 %). Abhilfe: Desktops vorab starten, Anmeldeskripte und Profile schlank halten, einen Lese-Cache auf dem Host für das Masterimage nutzen.",
+      "",
+      "2. Grenze: 6.000 * 0,8 = 4.800 IOPS. Die Nachtschicht belegt 30 * 12 = 360 IOPS. Frei für Neustarts: 4.800 - 360 = 4.440 IOPS. 4.440 / 200 = 22,2, also 22 Desktops gleichzeitig. 120 / 22 = 5,45, also 6 Durchgänge zu je 2 Minuten = 12 Minuten. Die Verwaltungssoftware der VDI begrenzt dazu die Zahl paralleler Starts. Ein Update beginnt nie direkt vor dem Schichtwechsel.",
+      "",
+      "3. Vollständige Klone: 150 * 60 GB = 9.000 GB. Verknüpfte Klone: 60 GB + 150 * 8 GB = 1.260 GB. Ersparnis: 7.740 GB, also 86 %. Profilcontainer: 260 * 5 GB = 1.300 GB auf dem Dateiserver, der gesichert werden muss. Nicht-persistente Desktops passen, weil das Personal an wechselnden Geräten und Stationen arbeitet. Alle bekommen denselben geprüften Stand. Fehler oder Schadsoftware verschwinden bei der Abmeldung. Updates werden einmal im Masterimage eingespielt statt auf 150 Desktops."
+    ]
+  },
+  {
+    "title": "Wenige große oder viele kleine Hosts für einen Regionalradiosender",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Regionalradiosender konsolidiert seine Server. Die VMs brauchen zusammen 180 vCPU und 1.400 GB RAM. CPU wird im Verhältnis 3:1 überbucht, RAM nicht. Der Hypervisor belegt je Host 16 GB RAM. Der Cluster soll den Ausfall eines Hosts verkraften (N+1).",
+      "Angebot A: 3 Hosts mit je 2 CPUs zu 24 Kernen und 1.024 GB RAM, je 21.000 Euro, Leistungsaufnahme je 650 W.",
+      "Angebot B: 5 Hosts mit je 2 CPUs zu 12 Kernen und 512 GB RAM, je 9.500 Euro, Leistungsaufnahme je 400 W.",
+      "Die Virtualisierungssoftware kostet vereinfacht angenommen 150 Euro pro Kern und Jahr. Strom wird vereinfacht mit 0,30 Euro pro kWh im Dauerbetrieb angesetzt. Betrachtet werden 5 Jahre.",
+      "",
+      "1. Wie viele physische Kerne werden benötigt? Reichen beide Angebote auch bei Ausfall eines Hosts? Wie hoch ist die Auslastung von Kernen und RAM im Normalbetrieb, und welcher Anteil der Kapazität dient nur als N+1-Reserve?",
+      "2. Berechnen Sie die Kosten beider Angebote über 5 Jahre.",
+      "3. Die Sendeablaufsteuerung (Playout) braucht eine VM mit 28 vCPU und 256 GB RAM. Was bedeutet das für die Auswahl? Nennen Sie weitere Vor- und Nachteile vieler kleiner Hosts."
+    ],
+    "solution": [
+      "1. Kerne: 180 / 3 = 60. A bei Ausfall: 2 Hosts mit 96 Kernen und 2 * (1.024 - 16) = 2.016 GB. B bei Ausfall: 4 Hosts mit 4 * 24 = 96 Kernen und 4 * (512 - 16) = 1.984 GB. Beide reichen. Normalbetrieb A: 144 Kerne, 60 / 144 = 41,7 %; RAM 3 * 1.008 = 3.024 GB, 1.400 / 3.024 = 46,3 %. Normalbetrieb B: 120 Kerne, 60 / 120 = 50 %; RAM 5 * 496 = 2.480 GB, 1.400 / 2.480 = 56,5 %. N+1-Reserve: bei A ein Drittel (33,3 %), bei B ein Fünftel (20 %) der Kapazität.",
+      "",
+      "2. A: Kauf 3 * 21.000 = 63.000 Euro. Software 144 * 150 * 5 = 108.000 Euro. Strom 3 * 0,65 kW = 1,95 kW * 8.760 h = 17.082 kWh * 0,30 = 5.124,60 Euro pro Jahr, 5 Jahre 25.623 Euro. Summe 196.623 Euro. B: Kauf 5 * 9.500 = 47.500 Euro. Software 120 * 150 * 5 = 90.000 Euro. Strom 5 * 0,4 kW = 2,0 kW * 8.760 h = 17.520 kWh * 0,30 = 5.256 Euro pro Jahr, 5 Jahre 26.280 Euro. Summe 163.780 Euro. B ist um 32.843 Euro günstiger, vor allem wegen der geringeren Kernzahl.",
+      "",
+      "3. Eine VM sollte nicht mehr vCPU haben, als ihr Host physische Kerne hat. Ein Host in B hat nur 24 Kerne, die Playout-VM mit 28 vCPU passt dort nicht sinnvoll. In A hat ein Host 48 Kerne, die VM läuft dort, reicht aber über zwei CPU-Sockel (NUMA). B scheidet in dieser Form aus. Möglich ist B mit größeren CPUs neu anfragen oder A wählen. Weitere Vorteile vieler kleiner Hosts: ein Ausfall trifft weniger VMs, weniger Reserve für N+1, Wartung eines Hosts reduziert die Kapazität weniger. Nachteile: mehr Rackplatz, Switchports und Verkabelung, mehr Firmware-Updates und Verwaltung, große VMs finden weniger leicht Platz."
+    ]
+  },
+  {
+    "title": "Container-Images eines Pollenflug-Vorhersagedienstes verschlanken",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein privater Wetterdienst berechnet Pollenflug-Vorhersagen für Allergiker-Apps. Er betreibt 14 Dienste als Container auf 12 Knoten. Die Images liegen in einer eigenen Registry, pro Dienst werden die letzten 10 Versionen aufbewahrt.",
+      "Jedes Image besteht aus drei Schichten: Basisimage einer vollständigen Linux-Distribution (780 MB), Laufzeitumgebung (320 MB) und Anwendung (60 MB). Alle Dienste nutzen dieselben Basis- und Laufzeitschichten. Pro Version ändert sich nur die Anwendungsschicht.",
+      "Ein Sicherheitsscan meldet für das Basisimage 142 Schwachstellen, davon 3 kritisch. Ein schlankes Basisimage hätte 80 MB, die passende Laufzeitschicht 120 MB. Der Scan meldet dafür 9 Schwachstellen, keine kritische.",
+      "Bei einer Prüfung fällt auf: Die Container laufen als root, das Passwort der Messdatenbank steht als ENV-Zeile im Dockerfile und alle Deployments nutzen den Tag latest.",
+      "",
+      "1. Wie viel Speicher belegt die Registry dank gemeinsamer Schichten? Wie viel wäre es, wenn jedes Image vollständig gespeichert würde?",
+      "2. Das Basisimage wird jeden Monat mit Sicherheitsupdates neu gebaut. Dabei ändern sich alle Schichten. Wie viele Daten lädt jeder Knoten und der ganze Cluster dann für alle 14 Dienste, heute und mit dem schlanken Image? Welche weiteren Vorteile bringt das schlanke Image?",
+      "3. Bewerten Sie die Befunde der Prüfung und nennen Sie jeweils die Abhilfe."
+    ],
+    "solution": [
+      "1. Gemeinsame Schichten werden nur einmal gespeichert: 780 + 320 = 1.100 MB. Anwendungsschichten: 14 * 10 * 60 = 8.400 MB. Zusammen 9.500 MB = 9,5 GB. Ohne gemeinsame Schichten: 140 Images * 1.160 MB = 162.400 MB = 162,4 GB, also etwa das 17-Fache.",
+      "",
+      "2. Heute je Knoten: 780 + 320 + 14 * 60 = 1.940 MB, im Cluster 12 * 1.940 = 23.280 MB. Schlank je Knoten: 80 + 120 + 840 = 1.040 MB, im Cluster 12 * 1.040 = 12.480 MB. Das spart 10.800 MB pro Monat. Weitere Vorteile: kleinere Angriffsfläche (142 statt 9 Befunde, keine kritischen), weniger Patchaufwand, schnellerer Start neuer Knoten und Container. Werkzeuge, die im Image fehlen (z.B. Shell, Paketmanager), helfen auch einem Angreifer nicht.",
+      "",
+      "3. Root: Bricht ein Angreifer aus der Anwendung aus, hat er im Container volle Rechte und bessere Chancen auf den Host. Abhilfe: eigener Benutzer im Dockerfile (USER), Rechte im Deployment einschränken, Dateisystem möglichst nur lesbar. Passwort im Dockerfile: Es steckt in jeder Imageschicht und ist für jeden mit Zugriff auf die Registry lesbar. Abhilfe: Passwort sofort ändern, als Secret zur Laufzeit übergeben, alte Images löschen. Tag latest: Es ist nicht nachvollziehbar, welche Version läuft, und ein Neustart kann ungeplant eine neue Version laden. Abhilfe: feste Versionsnummern oder Digest verwenden und Versionen über die Pipeline freigeben."
+    ]
+  },
+  {
+    "title": "CPU-Engpass mit Ressourcenpools in einer Senfmanufaktur steuern",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Senfmanufaktur betreibt auf einem Host mit 2 CPUs zu je 10 Kernen und 2,0 GHz alle Server. Der Hypervisor braucht vereinfacht 4 GHz, der Rest steht den VMs zur Verfügung.",
+      "Die VMs sind in drei Ressourcenpools eingeteilt: Produktion (Abfüllsteuerung, Qualitätsmessung) mit 8.000 Shares, Büro mit 4.000 Shares und Test mit 2.000 Shares.",
+      "Zu Spitzenzeiten fordern die Pools an: Produktion 14 GHz, Büro 16 GHz, Test 12 GHz.",
+      "Ein Pool erhält bei Engpass einen Anteil nach seinen Shares. Braucht ein Pool weniger, geht der Rest an die anderen Pools, wieder im Verhältnis ihrer Shares.",
+      "",
+      "1. Wie viel Rechenleistung steht den VMs zur Verfügung? Wie viel erhält jeder Pool zur Spitzenzeit, und wem fehlt wie viel?",
+      "2. Der Test-Pool bekommt ein Limit von 5 GHz. Wie verteilt sich die Leistung jetzt? Wann setzt man Reservierung, Limit und Shares jeweils ein?",
+      "3. Die Produktion wächst auf 40 VMs, im Test-Pool bleiben 4 VMs. Wie viel Leistung erhält eine einzelne VM je Pool, wenn alle VMs voll Last erzeugen und das Limit nicht mehr besteht? Welches Problem zeigt sich, und wie lösen Sie es?"
+    ],
+    "solution": [
+      "1. Host: 2 * 10 * 2,0 GHz = 40 GHz, für VMs 40 - 4 = 36 GHz. Angefordert sind 14 + 16 + 12 = 42 GHz, es gibt also einen Engpass. Anteil Produktion: 36 * 8.000 / 14.000 = 20,57 GHz. Sie braucht nur 14 GHz und erhält diese. Rest: 36 - 14 = 22 GHz, verteilt 4.000 : 2.000. Büro: 22 * 2 / 3 = 14,67 GHz, es fehlen 1,33 GHz. Test: 22 / 3 = 7,33 GHz, es fehlen 4,67 GHz.",
+      "",
+      "2. Test erhält höchstens 5 GHz. Büro kann 36 - 14 - 5 = 17 GHz erhalten, braucht 16 GHz und ist voll versorgt. 1 GHz bleibt frei. Shares wirken nur bei Engpass und legen die Rangfolge fest. Eine Reservierung garantiert eine Mindestleistung, z.B. für die Qualitätsmessung. Sie verringert aber die Kapazität für andere VMs und für einen Neustart nach Hostausfall. Ein Limit begrenzt auch dann, wenn der Host frei ist. Es verschenkt Leistung und wird nur gezielt eingesetzt, z.B. gegen Lasttests, die alles belegen.",
+      "",
+      "3. Anteil Produktion: 36 * 8 / 14 = 20,57 GHz, je VM 20,57 / 40 = 0,51 GHz. Anteil Test: 36 * 2 / 14 = 5,14 GHz, je VM 5,14 / 4 = 1,29 GHz. Eine Test-VM erhält damit mehr als doppelt so viel wie eine Produktions-VM. Die Shares eines Pools gelten für den ganzen Pool und werden unter seinen VMs aufgeteilt. Lösung: Shares der Pools an die Zahl der VMs anpassen und regelmäßig prüfen, Reservierungen für kritische Produktions-VMs setzen und langfristig mehr Kapazität schaffen oder die Test-VMs auf einen anderen Host verlagern."
+    ]
+  },
+  {
+    "title": "Zwei-Knoten-Cluster einer Patentanwaltskanzlei verliert das Quorum",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Eine Patentanwaltskanzlei betreibt ihre Kanzleisoftware mit Fristenverwaltung und das Aktenarchiv auf einem Cluster aus zwei Proxmox-VE-Hosts. Jeder Host hat lokalen ZFS-Speicher. Die VMs werden alle 15 Minuten auf den anderen Host repliziert, Hochverfügbarkeit (HA) ist eingerichtet.",
+      "Die Hosts sind über ein Netz für Clusterkommunikation (Corosync) und ein 1-GbE-Netz für die Replikation verbunden. Die Replikation erreicht vereinfacht 100 MB/s.",
+      "Nach Bauarbeiten ist Host 2 ausgefallen. Die VMs auf Host 1 laufen weiter. Die VMs von Host 2 starten aber nicht automatisch auf Host 1, und in der Weboberfläche lassen sich keine Änderungen speichern.",
+      "Die Datenbank der Kanzleisoftware ändert sich um etwa 2 GB pro Stunde (1 GB = 1.000 MB). Pro Stunde werden etwa 36 Fristen und Aktenvermerke erfasst.",
+      "",
+      "1. Erklären Sie das Verhalten mit dem Quorum. Wie viele Stimmen braucht ein Cluster mit 2, 3, 4 und 5 Knoten, und wie viele Ausfälle verkraftet er? Wie hilft ein QDevice?",
+      "2. Wie viele Daten überträgt ein Replikationslauf, und wie lange dauert er? Wie viele Einträge gehen bei einem Ausfall höchstens verloren? Was ändert ein Intervall von 1 Minute?",
+      "3. Was ist ein Split-Brain, und warum verhindert das Quorum es? Welche weiteren Verbesserungen empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Ein Cluster arbeitet nur weiter, wenn eine Mehrheit der Stimmen erreichbar ist: Quorum = abgerundet (Stimmen / 2) + 1. 2 Knoten: 2 Stimmen nötig, kein Ausfall möglich. 3 Knoten: 2, ein Ausfall. 4 Knoten: 3, ein Ausfall. 5 Knoten: 3, zwei Ausfälle. Host 1 hat allein nur 1 von 2 Stimmen. Er schützt sich, indem er keine Änderungen und keine HA-Neustarts zulässt. Ein QDevice ist eine dritte Stimme auf einem kleinen externen System (z.B. dem Backup-Server). Dann gibt es 3 Stimmen, das Quorum ist 2, Host 1 und das QDevice erreichen es gemeinsam.",
+      "",
+      "2. In 15 Minuten ändern sich 2.000 MB / 4 = 500 MB. 500 / 100 = 5 Sekunden Übertragung. Höchstens verloren gehen die Änderungen seit dem letzten Lauf, also bis zu gut 15 Minuten: 36 / 4 = 9 Einträge. Bei 1 Minute: 2.000 / 60 = 33,3 MB je Lauf, ca. 0,33 Sekunden. Verloren gehen höchstens etwa 0,6 Einträge, meist also keiner. Das Netz schafft das problemlos. Wichtig: Nach einem HA-Neustart fehlen die Daten seit der letzten Replikation. Das muss mit der Geschäftsleitung als RPO vereinbart sein. Eine verlorene Frist kann zu einem versäumten Termin beim Patentamt und zu Haftungsansprüchen führen.",
+      "",
+      "3. Split-Brain: Beide Hosts halten den anderen für ausgefallen und starten dieselben VMs. Beide schreiben dann unabhängig in ihre Kopie, und die Daten laufen auseinander. Ohne Mehrheit darf kein Host VMs übernehmen, deshalb kann das nicht passieren. Verbesserungen: QDevice an einem dritten Ort im Gebäude, zwei getrennte Corosync-Verbindungen (redundante Links), Replikationsintervall verkürzen, USV und Überwachung mit Alarm, regelmäßiger Test des Ausfalls. Alternativ ein dritter vollwertiger Knoten."
+    ]
+  },
+  {
+    "title": "Check-in-Terminals für eine Kette von Trampolinhallen zum Zielpreis anbieten",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Kette von 6 Trampolinhallen möchte an jedem Eingang 2 Check-in-Terminals mit Kartenleser. Die Geschäftsführung nennt eine Obergrenze: 2.300 Euro netto je Terminal nach Abzug des Rabatts, aber vor Skonto.",
+      "Ihr Systemhaus kalkuliert mit: Kundenrabatt 5 %, Kundenskonto 2 %, Gewinnzuschlag 10 %, Handlungskostenzuschlag 25 %, Bezugskosten 18 Euro je Terminal, Lieferantenskonto 2 %, Lieferantenrabatt 15 %. Rechnen Sie auf Cent gerundet.",
+      "Der bevorzugte Hersteller verlangt einen Listeneinkaufspreis von 2.050 Euro je Terminal.",
+      "",
+      "1. Welchen Listeneinkaufspreis darf ein Terminal höchstens haben, damit der volle Gewinnzuschlag erreicht wird (Rückwärtskalkulation)? Welcher Listenverkaufspreis steht im Angebot?",
+      "2. Wie hoch ist der Gewinn je Terminal und für alle Terminals, wenn Sie beim bevorzugten Hersteller kaufen und den Zielpreis halten (Differenzkalkulation)? Wie viel Prozent der Selbstkosten sind das?",
+      "3. 30 % der Handlungskosten sind variabel (Montage, Fahrt). Wo liegt die kurzfristige Preisuntergrenze je Terminal (Barverkaufspreis)? Sollte das Systemhaus den Auftrag annehmen? Nennen Sie weitere Möglichkeiten."
+    ],
+    "solution": [
+      "1. Zielverkaufspreis 2.300,00 Euro. Minus 2 % Skonto: Barverkaufspreis 2.254,00. Gewinn im Hundert herausrechnen: 2.254,00 / 1,10 = Selbstkosten 2.049,09. Handlungskosten herausrechnen: 2.049,09 / 1,25 = Bezugspreis 1.639,27. Minus Bezugskosten 18: Bareinkaufspreis 1.621,27. Lieferantenskonto zurückrechnen: 1.621,27 / 0,98 = Zieleinkaufspreis 1.654,36. Lieferantenrabatt zurückrechnen: 1.654,36 / 0,85 = Listeneinkaufspreis 1.946,31 Euro. Im Angebot steht der Listenverkaufspreis 2.300 / 0,95 = 2.421,05 Euro, davon 5 % Rabatt.",
+      "",
+      "2. 2.050,00 minus 15 % = 1.742,50 Zieleinkaufspreis. Minus 2 % = 1.707,65 Bareinkaufspreis. Plus 18 = 1.725,65 Bezugspreis. Plus 25 % = 2.157,06 Selbstkosten. Barverkaufspreis 2.254,00 minus 2.157,06 = 96,94 Euro Gewinn je Terminal. Das sind 96,94 / 2.157,06 = 4,49 % statt 10 %. 12 Terminals: 12 * 96,94 = 1.163,28 Euro.",
+      "",
+      "3. Handlungskosten: 2.157,06 - 1.725,65 = 431,41 Euro, davon variabel 30 % = 129,42 Euro. Preisuntergrenze: 1.725,65 + 129,42 = 1.855,07 Euro. Der Barverkaufspreis von 2.254,00 liegt darüber, jedes Terminal trägt 398,93 Euro zur Deckung der fixen Kosten bei. Der Auftrag lohnt sich, wenn freie Kapazität vorhanden ist. Er deckt die Gemeinkosten aber nicht voll und darf kein Dauerpreis werden. Weitere Möglichkeiten: günstigeren Hersteller oder höheren Rabatt bei Abnahme von 12 Stück verhandeln, einen Wartungsvertrag mit anbieten, der den Deckungsbeitrag über die Laufzeit erhöht, oder dem Kunden ein einfacheres Modell vorschlagen."
+    ]
+  },
+  {
+    "title": "IT-Kosten einer Messebaufirma verursachungsgerecht auf Bereiche verteilen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Messebaufirma hat drei Bereiche: Konstruktion mit 14 Arbeitsplätzen (CAD), Werkstatt mit 10 und Verwaltung mit 16 Arbeitsplätzen. Die IT kostet pro Jahr 216.000 Euro. Bisher wird sie gleichmäßig nach Arbeitsplätzen auf die Kostenstellen umgelegt.",
+      "Die Kosten setzen sich zusammen: Grundkosten für Arbeitsplätze (Geräte, Office, Support) 96.000 Euro, CAD-Lizenzen und Workstations 72.000 Euro, Server und Speicher 48.000 Euro.",
+      "Die CAD-Kosten entstehen nur in der Konstruktion. Den Speicher belegt die Konstruktion zu 60 %, die Werkstatt zu 10 % und die Verwaltung zu 30 %.",
+      "Die Konstruktion hat 14 Mitarbeitende mit je 1.500 verrechenbaren Stunden pro Jahr. Ihr Stundensatz für Kundenprojekte enthält einen Anteil für IT-Kosten.",
+      "",
+      "1. Welche IT-Kosten trägt jeder Bereich heute? Verteilen Sie die Kosten verursachungsgerecht und berechnen Sie die Kosten je Arbeitsplatz in jedem Bereich.",
+      "2. Wie hoch ist der IT-Anteil je verrechenbarer Konstruktionsstunde bisher und nach der neuen Verteilung? Welche Folge hatte die alte Umlage für ein Kundenprojekt mit 400 Konstruktionsstunden?",
+      "3. Erklären Sie Einzel- und Gemeinkosten am Beispiel. Welche Vor- und Nachteile hat eine genaue Verrechnung der IT-Kosten?"
+    ],
+    "solution": [
+      "1. Heute: 216.000 / 40 = 5.400 Euro je Arbeitsplatz. Konstruktion 14 * 5.400 = 75.600, Werkstatt 54.000, Verwaltung 86.400 Euro. Neu: Grundkosten 96.000 / 40 = 2.400 je Arbeitsplatz. Konstruktion: 14 * 2.400 = 33.600 + CAD 72.000 + 60 % von 48.000 = 28.800, zusammen 134.400 Euro, je Arbeitsplatz 9.600. Werkstatt: 24.000 + 4.800 = 28.800 Euro, je Arbeitsplatz 2.880. Verwaltung: 38.400 + 14.400 = 52.800 Euro, je Arbeitsplatz 3.300. Summe 216.000 Euro.",
+      "",
+      "2. Stunden: 14 * 1.500 = 21.000. Bisher: 75.600 / 21.000 = 3,60 Euro je Stunde. Neu: 134.400 / 21.000 = 6,40 Euro je Stunde. Projekt mit 400 Stunden: bisher 1.440 Euro, richtig wären 2.560 Euro. Das Projekt war um 1.120 Euro zu niedrig kalkuliert. Umgekehrt wurden Werkstatt und Verwaltung zu hoch belastet.",
+      "",
+      "3. Einzelkosten lassen sich einem Bereich direkt zuordnen, z.B. die CAD-Lizenzen. Gemeinkosten entstehen für mehrere Bereiche gemeinsam, z.B. Server und Speicher. Sie werden über einen Schlüssel verteilt, hier die Speicherbelegung. Vorteile einer genauen Verrechnung: richtige Preise und Stundensätze, Kostenbewusstsein in den Bereichen, bessere Entscheidungen. Nachteile: Erfassung kostet Aufwand, Schlüssel können streiten lassen. Zu hohe interne Preise verleiten Bereiche, eigene Lösungen ohne die IT einzukaufen (Schatten-IT). Ein einfacher, nachvollziehbarer Schlüssel ist daher meist besser als ein sehr genauer."
+    ]
+  },
+  {
+    "title": "Transkription einer Untertitelagentur in der Cloud oder auf eigener GPU",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Agentur erstellt Untertitel für Filme und Serien. Die Tonspuren werden zuerst automatisch transkribiert. Heute nutzt sie einen Cloud-Dienst, vereinfacht angenommener Preis 0,02 Euro je Audiominute.",
+      "Alternative: ein eigener GPU-Server mit einem Open-Source-Sprachmodell. Anschaffung 14.400 Euro, Nutzungsdauer 4 Jahre (linear), kalkulatorische Zinsen 6 % auf den halben Anschaffungswert, Wartung und Betrieb 1.800 Euro pro Jahr. Der Strom kostet vereinfacht 0,002 Euro je Audiominute.",
+      "Die Agentur verarbeitet 1.000 Stunden Audio pro Monat. Der Server transkribiert 25-mal schneller als Echtzeit. Vor einem Filmfestival kommen einmal im Jahr zusätzlich 90.000 Audiominuten, die innerhalb von 5 Tagen fertig sein müssen.",
+      "Die Auftraggeber sind Filmstudios. Das Material ist oft unveröffentlicht und vertraglich streng vertraulich.",
+      "",
+      "1. Berechnen Sie die fixen Kosten des eigenen Servers pro Jahr und die kritische Menge. Welche Variante ist bei der heutigen Menge günstiger, und um wie viel?",
+      "2. Reicht die Leistung des Servers im Normalbetrieb und vor dem Festival?",
+      "3. Welche weiteren Gesichtspunkte sprechen für oder gegen den eigenen Server? Welche Lösung empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Abschreibung: 14.400 / 4 = 3.600 Euro. Zinsen: 14.400 / 2 * 0,06 = 432 Euro. Fixkosten: 3.600 + 432 + 1.800 = 5.832 Euro pro Jahr. Kritische Menge: Fixkosten / Unterschied der variablen Kosten = 5.832 / (0,02 - 0,002) = 5.832 / 0,018 = 324.000 Minuten (5.400 Stunden) pro Jahr. Heutige Menge: 1.000 * 60 * 12 = 720.000 Minuten. Cloud: 720.000 * 0,02 = 14.400 Euro. Eigener Server: 5.832 + 720.000 * 0,002 = 5.832 + 1.440 = 7.272 Euro. Der eigene Server spart 7.128 Euro pro Jahr.",
+      "",
+      "2. Normalbetrieb: 720.000 / 25 = 28.800 Minuten Rechenzeit = 480 Stunden pro Jahr. Bei 250 Arbeitstagen sind das etwa 1,9 Stunden pro Tag, der Server ist wenig ausgelastet. Festival: 90.000 / 25 = 3.600 Minuten = 60 Stunden in 5 Tagen, also 12 Stunden pro Tag zusätzlich. Das schafft er, wenn Aufträge auch nachts laufen. Eine Warteschlange muss die Arbeit verteilen.",
+      "",
+      "3. Für den eigenen Server: Das vertrauliche Material verlässt das Haus nicht, keine Übermittlung an einen Anbieter in einem Drittland, keine Abhängigkeit von Preisänderungen. Dagegen: Ausfall des Servers stoppt die Arbeit, eigenes Wissen für Betrieb und Updates des Modells nötig, die Erkennungsqualität muss geprüft werden. Empfehlung: eigener Server, weil die Menge mehr als doppelt so hoch wie die kritische Menge ist und die Vertraulichkeit besser gesichert wird. Der Cloud-Dienst bleibt als Ausweichlösung, aber nur für Material, bei dem die Studios zugestimmt haben und ein Vertrag zur Auftragsverarbeitung vorliegt."
+    ]
+  },
+  {
+    "title": "Mangelhafte Buchungssoftware einer Segelschule nachbessern lassen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ihr Systemhaus betreut eine Segelschule (GmbH). Sie hat bei einer Agentur ein Online-Buchungssystem für Kurse und Bootsvermietung als Werkvertrag bestellt. Vereinbart ist eine Vergütung von 16.200 Euro netto, ein Abschlag von 50 % ist bezahlt.",
+      "Nach der Abnahme zeigen sich zwei Mängel: Gutscheincodes werden nicht verrechnet, und der Kalenderexport für die Skipper fehlt, obwohl er im Pflichtenheft steht. Die Agentur reagiert auf E-Mails nur ausweichend.",
+      "Ein anderer Entwickler könnte die Mängel mit 26 Stunden zu 95 Euro netto beheben. Ein Gutachter schätzt den Wert der Software ohne Mängel auf 18.000 Euro, mit den Mängeln auf 15.000 Euro. Alle Beträge sind netto.",
+      "",
+      "1. Welche Rechte hat die Segelschule, und in welcher Reihenfolge geht sie vor?",
+      "2. Die Agentur lässt eine angemessene Frist zur Nacherfüllung ohne Ergebnis verstreichen. Was kostet die Selbstvornahme, und wie viel muss die Segelschule der Agentur dann noch zahlen?",
+      "3. Die Segelschule überlegt stattdessen, die Vergütung zu mindern. Berechnen Sie die geminderte Vergütung und die Restzahlung. Was empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Beim Werkvertrag hat der Besteller bei Mängeln zuerst Anspruch auf Nacherfüllung (§ 634, § 635 BGB). Die Agentur wählt, ob sie nachbessert oder neu herstellt. Die Segelschule muss die Mängel genau beschreiben und schriftlich eine angemessene Frist setzen. Erst wenn die Frist erfolglos abläuft, kann sie wählen: den Mangel selbst beseitigen lassen und die Kosten verlangen (Selbstvornahme, auch als Vorschuss), die Vergütung mindern, bei erheblichem Mangel zurücktreten und zusätzlich Schadensersatz verlangen, wenn die Agentur den Mangel zu vertreten hat.",
+      "",
+      "2. Selbstvornahme: 26 * 95 = 2.470 Euro. Diese Kosten muss die Agentur ersetzen (§ 637 BGB). Die Segelschule kann sie mit der offenen Vergütung verrechnen. Offen sind 16.200 - 8.100 = 8.100 Euro. Restzahlung: 8.100 - 2.470 = 5.630 Euro. Insgesamt erhält die Agentur 13.730 Euro, und die Software funktioniert.",
+      "",
+      "3. Minderung: vereinbarte Vergütung * Wert mit Mangel / Wert ohne Mangel = 16.200 * 15.000 / 18.000 = 13.500 Euro. Minderung um 2.700 Euro. Restzahlung: 13.500 - 8.100 = 5.400 Euro. Das ist 230 Euro weniger als bei der Selbstvornahme, aber die Mängel bleiben bestehen. Gutscheine und Kalenderexport sind für den Betrieb wichtig. Empfehlung: Selbstvornahme nach Fristablauf. Die Segelschule sollte Fristsetzung und Mängel gut dokumentieren."
+    ]
+  },
+  {
+    "title": "Preiserhöhung im Wartungsvertrag einer Privatschule prüfen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Privatschule (gGmbH) hat mit einem IT-Dienstleister einen Wartungsvertrag für Netzwerk und Server über 1.450 Euro netto im Monat. Der Vertrag enthält eine Preisklausel:",
+      "Der Preis kann jährlich entsprechend der Veränderung eines vereinbarten Index der Arbeitskosten angepasst werden, höchstens um 5 % pro Jahr. Die Anpassung wird zum Monatsersten nach Ablauf von sechs Wochen nach Zugang der schriftlichen Mitteilung wirksam. Bei einer Erhöhung über 3 % hat die Schule ein Sonderkündigungsrecht.",
+      "Der Index ist vereinfacht angenommen von 118,0 auf 124,1 gestiegen. Der Dienstleister kündigt mit Schreiben, das am 2. Dezember 2025 zugeht, eine Erhöhung um 7,2 % ab 1. Januar 2026 an.",
+      "Ein anderer Anbieter bietet 1.480 Euro im Monat fest für 24 Monate, dazu eine Einrichtungspauschale von 2.400 Euro.",
+      "",
+      "1. Um wie viel Prozent ist der Index gestiegen? Welchen Monatspreis darf der Dienstleister verlangen? Wie groß ist der Unterschied zur Forderung pro Monat und pro Jahr?",
+      "2. Ab wann gilt der neue Preis? Was zahlt die Schule im Jahr 2026 tatsächlich, und wie viel spart sie gegenüber der Forderung?",
+      "3. Die Schule prüft das Sonderkündigungsrecht. Vergleichen Sie 24 Monate beim bisherigen Dienstleister (im ungünstigsten Fall nach 12 Monaten weitere 5 %) mit dem Angebot des anderen Anbieters. Was empfehlen Sie?"
+    ],
+    "solution": [
+      "1. Anstieg: (124,1 - 118,0) / 118,0 = 5,17 %. Die Klausel begrenzt auf 5 %. Neuer Preis: 1.450 * 1,05 = 1.522,50 Euro. Gefordert: 1.450 * 1,072 = 1.554,40 Euro. Unterschied: 31,90 Euro pro Monat, 382,80 Euro pro Jahr. Die Schule weist die Forderung schriftlich zurück, soweit sie über 5 % hinausgeht.",
+      "",
+      "2. Zugang 2. Dezember 2025 plus sechs Wochen = 13. Januar 2026. Wirksam ab dem nächsten Monatsersten, also ab 1. Februar 2026. Im Januar gilt noch der alte Preis. 2026: 1.450 + 11 * 1.522,50 = 1.450 + 16.747,50 = 18.197,50 Euro. Nach der Forderung wären es 12 * 1.554,40 = 18.652,80 Euro. Ersparnis: 455,30 Euro.",
+      "",
+      "3. Die Erhöhung beträgt 5 % und liegt über 3 %, das Sonderkündigungsrecht besteht. Bisheriger Dienstleister: 12 * 1.522,50 = 18.270,00 Euro, im zweiten Jahr höchstens 1.522,50 * 1,05 = 1.598,63 Euro, 12 * 1.598,63 = 19.183,56 Euro. Zusammen höchstens 37.453,56 Euro. Anderer Anbieter: 24 * 1.480 = 35.520 + 2.400 = 37.920 Euro. Der bisherige Dienstleister ist selbst im ungünstigsten Fall 466,44 Euro günstiger. Dazu kommen beim Wechsel Einarbeitung, Übergabe der Dokumentation und das Risiko von Störungen. Empfehlung: nicht kündigen, aber nur die zulässigen 5 % akzeptieren und den Vertrag vor dem nächsten Jahr neu verhandeln."
+    ]
+  },
+  {
+    "title": "Zeitpuffer bis zur Eröffnung einer Drogeriemarktfiliale absichern",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus richtet die IT einer neuen Filiale einer Drogeriemarktkette ein: Kassen, WLAN, Anbindung an die Warenwirtschaft und elektronische Preisschilder. Der Eröffnungstermin ist fest und beworben. Laut Plan ist das Projekt 10 Arbeitstage vorher fertig, das ist der Zeitpuffer.",
+      "Das Projektteam hat Terminrisiken mit Wahrscheinlichkeit und möglicher Verzögerung bewertet:",
+      "  R1 Lieferverzug der Kassensysteme: 30 %, 8 Arbeitstage",
+      "  R2 Schnittstelle zwischen Warenwirtschaft und Preisschildern fehlerhaft: 40 %, 5 Arbeitstage",
+      "  R3 Glasfaseranschluss des Netzbetreibers kommt später: 25 %, 6 Arbeitstage",
+      "  R4 Ausfall der einzigen Kassenspezialistin: 20 %, 3 Arbeitstage",
+      "Maßnahme M1: Beim Händler werden Mietkassen reserviert. Dann verzögert ein Lieferverzug nur noch um 2 Arbeitstage. Die Risiken treten unabhängig voneinander ein.",
+      "",
+      "1. Berechnen Sie den Risikowert jedes Risikos in Tagen und die Summe. Reicht der Puffer rechnerisch?",
+      "2. Wie wahrscheinlich treten R1 und R2 gemeinsam ein, und was bedeutet das für den Puffer? Welche Wirkung hat M1? Welche Kombination aus zwei Risiken überschreitet den Puffer danach noch, und wie wahrscheinlich ist sie?",
+      "3. Welche Vorkehrungen treffen Sie für den Eröffnungstag, falls das neue System nicht rechtzeitig oder nicht stabil läuft? Wer kümmert sich um ein Risiko?"
+    ],
+    "solution": [
+      "1. Risikowert = Wahrscheinlichkeit * Verzögerung. R1: 0,3 * 8 = 2,4 Tage. R2: 0,4 * 5 = 2,0 Tage. R3: 0,25 * 6 = 1,5 Tage. R4: 0,2 * 3 = 0,6 Tage. Summe: 6,5 Tage. Im Mittel reicht der Puffer von 10 Tagen. Der Erwartungswert sagt aber nichts über ungünstige Kombinationen. Treten alle Risiken ein, sind es 8 + 5 + 6 + 3 = 22 Tage.",
+      "",
+      "2. R1 und R2 gemeinsam: 0,3 * 0,4 = 0,12, also 12 %. Verzögerung 8 + 5 = 13 Tage, das überschreitet den Puffer um 3 Tage. Mit M1: R1 verzögert nur noch 2 Tage, Risikowert 0,3 * 2 = 0,6 Tage, Summe 4,7 Tage. R1 und R2 ergeben nur noch 7 Tage und passen in den Puffer. Weiterhin kritisch sind R2 und R3: 5 + 6 = 11 Tage. Wahrscheinlichkeit 0,4 * 0,25 = 0,1, also 10 %. Deshalb sollte auch R2 behandelt werden, z.B. durch einen frühen Schnittstellentest.",
+      "",
+      "3. Rückfallebene für den Eröffnungstag: Kassen mit Offline-Modus, die Verkäufe später an die Warenwirtschaft übertragen. LTE-Router als Ersatz für den fehlenden Glasfaseranschluss. Preise notfalls auf gedruckten Etiketten statt auf elektronischen Schildern. Mietkassen als Reserve und eine kurze Anleitung für das Personal. Vorher einen Probetag mit Testkäufen durchführen. Für jedes Risiko wird ein Risikoverantwortlicher benannt. Er beobachtet Frühwarnzeichen (z.B. fehlende Versandbestätigung der Kassen), setzt Maßnahmen um und meldet Veränderungen an die Projektleitung. Die Liste wird wöchentlich aktualisiert."
+    ]
+  },
+  {
+    "title": "Digitaler Dienstplan im Rettungsdienst mit Betriebsrat und Beschäftigten",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Eine Rettungsdienst-gGmbH mit 4 Rettungswachen und 140 Beschäftigten führt eine Dienstplan-App ein. Die Beschäftigten sollen Schichten per Smartphone tauschen und ihre Arbeitszeit erfassen können. Es gibt einen Betriebsrat.",
+      "Beteiligte: Geschäftsführung (Auftraggeber), Wachleitungen, Beschäftigte im Schichtdienst, Betriebsrat, Personalabteilung und Lohnbuchhaltung, Datenschutzbeauftragter, Softwareanbieter.",
+      "In einer ersten Info-Runde sagen einige Beschäftigte, sie befürchten eine Überwachung per Standort. Die Lohnbuchhaltung freut sich auf weniger Papierzettel.",
+      "Geschult wird in Terminen von 3 Stunden. Je Termin dürfen aus jeder Wache höchstens 2 Personen fehlen. Pro Schulungstag gibt es 2 Termine. Vereinfacht angenommen: Personalkosten 38 Euro je Stunde, Trainer 900 Euro je Schulungstag.",
+      "",
+      "1. Ordnen Sie die Beteiligten in eine Stakeholder-Matrix nach Einfluss und Einstellung ein und leiten Sie Maßnahmen ab. Welche Rechte hat der Betriebsrat bei diesem Projekt?",
+      "2. Wie viele Schulungstermine und Schulungstage sind nötig, und was kosten die Schulungen?",
+      "3. Die Betriebsvereinbarung braucht etwa 8 Wochen. Geschult wird dienstags bis donnerstags. Wann kann die App frühestens starten, wenn die Schulung erst nach Abschluss der Vereinbarung beginnt? Wie gehen Sie mit den Befürchtungen der Beschäftigten um?"
+    ],
+    "solution": [
+      "1. Hoher Einfluss, positive Einstellung: Geschäftsführung, eng einbinden und über Meilensteine entscheiden lassen. Hoher Einfluss, Einstellung offen oder kritisch: Betriebsrat und Wachleitungen, früh beteiligen und Bedenken ernst nehmen. Geringer Einfluss, positiv: Lohnbuchhaltung, als Unterstützer nutzen. Viele Betroffene mit Sorgen: Beschäftigte, regelmäßig informieren, Pilotgruppe bilden. Datenschutzbeauftragter und Anbieter: fachlich beteiligen. Der Betriebsrat hat ein Mitbestimmungsrecht nach § 87 Abs. 1 Nr. 6 BetrVG, weil die App geeignet ist, Verhalten oder Leistung zu überwachen, und nach Nr. 2 bei der Lage der Arbeitszeit. Ohne seine Zustimmung, meist in einer Betriebsvereinbarung, darf die App nicht eingeführt werden.",
+      "",
+      "2. Je Termin höchstens 4 * 2 = 8 Personen. 140 / 8 = 17,5, also 18 Termine. Bei 2 Terminen pro Tag: 9 Schulungstage. Personalkosten: 140 * 3 h * 38 Euro = 15.960 Euro. Trainer: 9 * 900 = 8.100 Euro. Zusammen 24.060 Euro.",
+      "",
+      "3. 9 Schulungstage bei 3 Tagen pro Woche = 3 Wochen. Start frühestens nach 8 + 3 = 11 Wochen. Umgang mit den Befürchtungen: klar sagen und in der Betriebsvereinbarung festlegen, welche Daten erfasst werden (keine Standortdaten) und wer sie wofür sehen darf. Der Datenschutzbeauftragte prüft die App und die Verarbeitung. Beschäftigte aus jeder Wache in eine Pilotgruppe holen, Fragen sammeln und beantworten, erste Erfahrungen offen weitergeben."
+    ]
+  },
+  {
+    "title": "Änderungswünsche beim Filialrollout einer Schuhhauskette bewerten",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus stattet 18 Filialen einer Schuhhauskette mit neuen Routern, Switches und Kassen-PCs aus. Festpreis 126.000 Euro netto. Ein Team schafft 3 Filialen pro Woche, das Projekt endet planmäßig nach Woche 6. Nach Woche 2 sind 6 Filialen fertig.",
+      "Jetzt wünscht der Kunde zwei Änderungen:",
+      "  a) 4 neu übernommene Filialen sollen mit ausgestattet werden. Je Filiale: 2 Personentage (PT) und Hardware im Einkauf 2.800 Euro, Aufschlag 20 %.",
+      "  b) In jeder Filiale sollen Kundenzähler und Werbedisplays in ein eigenes VLAN. In noch nicht ausgestatteten Filialen kostet das 0,25 PT zusätzlich. Die 6 fertigen Filialen müssen erneut angefahren werden: je 0,5 PT und 120 Euro Fahrtkosten. Die Nachbesuche brauchen zusammen 1 zusätzliche Woche.",
+      "Der Tagessatz beträgt 880 Euro. Auf den Nachtrag wird ein Risikozuschlag von 10 % gerechnet.",
+      "",
+      "1. Wie läuft ein Änderungsantrag (Change Request) ab? Was darf das Team bis zur Entscheidung tun?",
+      "2. Berechnen Sie den Nachtrag und den neuen Auftragswert. Um wie viele Wochen verschiebt sich das Ende?",
+      "3. Der Kunde will trotzdem nach Woche 6 fertig sein. Ein zweites Team schafft ebenfalls 3 Filialen pro Woche und kostet 1.200 Euro pro Woche für Fahrt und Unterkunft. Reicht das? Welche Alternativen gibt es?"
+    ],
+    "solution": [
+      "1. Der Kunde stellt den Wunsch schriftlich. Die Projektleitung prüft die Auswirkungen auf Leistung, Kosten, Termine, Qualität und Risiken. Das zuständige Gremium (z.B. Lenkungsausschuss) entscheidet: annehmen, ablehnen oder zurückstellen. Bei Annahme folgt ein schriftlicher Nachtrag zum Vertrag, danach werden Plan, Budget und Dokumentation angepasst. Bis dahin arbeitet das Team nach dem bisherigen Auftrag weiter und setzt die Änderung nicht um.",
+      "",
+      "2. a) Je Filiale: 2 * 880 = 1.760 Euro Arbeit + 2.800 * 1,2 = 3.360 Euro Hardware = 5.120 Euro. 4 Filialen: 20.480 Euro. b) Noch nicht ausgestattet: 12 + 4 = 16 Filialen * 0,25 * 880 = 3.520 Euro. Nachbesuche: 6 * (0,5 * 880 + 120) = 6 * 560 = 3.360 Euro. Zusammen 6.880 Euro. Summe 27.360 Euro, mit 10 % Risikozuschlag 30.096 Euro. Neuer Auftragswert: 126.000 + 30.096 = 156.096 Euro netto. Termine: Bisher blieben 12 / 3 = 4 Wochen. Jetzt 16 / 3 = 5,33, also 6 Wochen plus 1 Woche Nachbesuche = 7 Wochen. Das Ende verschiebt sich um 3 Wochen von Woche 6 auf Woche 9.",
+      "",
+      "3. Zwei Teams schaffen 6 Filialen pro Woche: 16 / 6 = 2,67, also 3 Wochen. Die Nachbesuche teilen sich beide Teams in der vierten Woche. Damit ist nach 4 Wochen, also nach Woche 6, alles fertig. Zusatzkosten: 4 * 1.200 = 4.800 Euro, die ebenfalls in den Nachtrag gehören. Risiko: Das zweite Team muss eingearbeitet werden. Alternativen: zuerst nur a) umsetzen und b) als eigenes Folgeprojekt, die neuen Filialen nach Woche 6 ausstatten oder den Umfang anders priorisieren. Die Entscheidung trifft der Kunde nach dem magischen Dreieck aus Leistung, Zeit und Kosten."
+    ]
+  },
+  {
+    "title": "Releasetermin einer Carsharing-App trotz wachsendem Backlog prognostizieren",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Scrum-Team entwickelt die App eines Carsharing-Anbieters. Sprints dauern 2 Wochen. Für das erste Release waren zu Beginn 360 Story Points geschätzt.",
+      "Nach 6 Sprints sind erledigt: 28, 34, 30, 26, 36 und 32 Story Points. Durch neue Anforderungen umfasst das Release inzwischen 402 Story Points. Es wird angenommen, dass der Umfang weiter so wächst wie bisher.",
+      "Das Marketing hat den Release in 8 Sprints fest eingeplant. Der Product Owner schätzt, dass die unverzichtbaren Stories (Must-haves) noch 150 Story Points umfassen.",
+      "",
+      "1. Wie hoch ist die durchschnittliche Velocity, und wie viele Story Points sind offen? Wie viele Sprints braucht das Team ohne weiteres Wachstum und mit dem bisherigen Wachstum?",
+      "2. Erstellen Sie eine optimistische und eine pessimistische Prognose (Mittel der drei besten bzw. drei schwächsten Sprints, jeweils mit Wachstum). Ist der Termin realistisch? Schafft das Team die Must-haves in 8 Sprints?",
+      "3. Warum zeigt ein Burn-up-Chart die Lage hier besser als ein Burndown-Chart? Die Geschäftsführung schlägt vor, zwei weitere Entwickler dazuzuholen. Wie bewerten Sie das?"
+    ],
+    "solution": [
+      "1. Velocity: (28 + 34 + 30 + 26 + 36 + 32) / 6 = 186 / 6 = 31 Story Points. Offen: 402 - 186 = 216 Story Points. Ohne Wachstum: 216 / 31 = 6,97, also 7 Sprints. Wachstum bisher: (402 - 360) / 6 = 7 Story Points pro Sprint. Netto-Fortschritt: 31 - 7 = 24 pro Sprint. 216 / 24 = 9 Sprints.",
+      "",
+      "2. Optimistisch: (36 + 34 + 32) / 3 = 34, netto 27. 216 / 27 = 8 Sprints. Pessimistisch: (26 + 28 + 30) / 3 = 28, netto 21. 216 / 21 = 10,29, also 11 Sprints. Der Termin nach 8 Sprints wird nur im günstigsten Fall erreicht. Must-haves: 150 / 24 = 6,25, also 7 Sprints; pessimistisch 150 / 21 = 7,14, also 8 Sprints. Die Must-haves sind in 8 Sprints erreichbar. Empfehlung: Den Release-Umfang auf die Must-haves und die wichtigsten weiteren Stories festlegen und neue Wünsche konsequent nach hinten priorisieren.",
+      "",
+      "3. Ein Burndown-Chart zeigt nur die offene Arbeit. Wächst der Umfang, sieht es aus, als arbeite das Team zu langsam. Ein Burn-up-Chart zeigt zwei Linien: erledigte Arbeit und Gesamtumfang. So erkennt jeder, dass der Umfang wächst, und kann beide Ursachen getrennt steuern. Zwei neue Entwickler bringen nicht sofort mehr Velocity. Sie müssen eingearbeitet werden, das bindet erfahrene Teammitglieder, und die Abstimmung im Team wird aufwendiger. Kurz vor dem Termin verlangsamt das eher (Brooks'sches Gesetz). Sinnvoller ist es, den Umfang zu steuern."
+    ]
+  },
+  {
+    "title": "WLAN-Erneuerung einer Gartencenterkette mit TCPI und Prognose bewerten",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus erneuert in 10 Märkten einer Gartencenterkette das WLAN und die Infrastruktur für Handscanner. Budget (BAC) 240.000 Euro, Laufzeit 20 Wochen. Jeder Markt ist gleich viel wert, die Planung verläuft gleichmäßig.",
+      "Stand am Ende von Woche 12: 5 Märkte sind fertig, Markt 6 ist zu 40 % fertig. Die Istkosten betragen 151.200 Euro.",
+      "In den ersten drei Märkten mussten unerwartet alte Kabeltrassen ersetzt werden. In den übrigen Märkten sind die Trassen laut Begehung in Ordnung.",
+      "",
+      "1. Berechnen Sie Planwert (PV), Fertigstellungswert (EV), Kosten- und Terminabweichung sowie Kosten- und Terminindex (CPI, SPI).",
+      "2. Berechnen Sie die Gesamtkostenprognose (EAC) auf zwei Arten: wenn die Kostenentwicklung so weitergeht (typisch) und wenn die Restarbeit wie geplant kostet (atypisch). Wie lange dauert das Projekt voraussichtlich? Welche Prognose halten Sie hier für passender?",
+      "3. Berechnen Sie den TCPI (To-Complete Performance Index), also die Kosteneffizienz, die das Restprojekt braucht, um im Budget zu bleiben. Was folgt daraus für das Gespräch mit dem Kunden?"
+    ],
+    "solution": [
+      "1. Je Markt: 240.000 / 10 = 24.000 Euro. PV nach 12 von 20 Wochen: 240.000 * 12 / 20 = 144.000 Euro. EV: 5 * 24.000 + 0,4 * 24.000 = 120.000 + 9.600 = 129.600 Euro. Kostenabweichung: EV - AC = 129.600 - 151.200 = -21.600 Euro. Terminabweichung: EV - PV = 129.600 - 144.000 = -14.400 Euro. CPI = 129.600 / 151.200 = 0,857. SPI = 129.600 / 144.000 = 0,9. Das Projekt ist teurer und langsamer als geplant.",
+      "",
+      "2. Typisch: EAC = BAC / CPI = 240.000 / 0,857 = ca. 280.000 Euro, also 40.000 Euro über Budget. Atypisch: EAC = AC + (BAC - EV) = 151.200 + 110.400 = 261.600 Euro, also 21.600 Euro über Budget. Dauer: 20 / 0,9 = ca. 22,2 Wochen. Die atypische Prognose passt besser, wenn die Ursache wirklich einmalig war (Kabeltrassen der ersten drei Märkte) und die Begehung stimmt. Das sollte man am nächsten Markt überprüfen. Unsicher bleibt, ob nicht auch die Arbeitsweise zu teuer ist.",
+      "",
+      "3. TCPI = (BAC - EV) / (BAC - AC) = 110.400 / (240.000 - 151.200) = 110.400 / 88.800 = 1,243. Die restliche Arbeit müsste 24,3 % effizienter laufen als geplant. Das ist unrealistisch. Folge: Das Budget von 240.000 Euro ist kaum zu halten. Die Projektleitung informiert den Kunden früh mit den Zahlen, nennt die Ursache und bespricht, wer die Mehrkosten trägt. Bei einem Festpreis trägt sie das Systemhaus, bei unvorhersehbaren Trassenschäden kann ein Nachtrag begründet sein. Maßnahmen: Ablauf der restlichen Märkte straffen, Material bündeln, Ergebnis wöchentlich berichten."
+    ]
+  },
+  {
+    "title": "Hypercare und Übergabe in den Betrieb bei einer Kette von Bowlingcentern",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus hat in 8 Bowlingcentern ein neues Kassen- und Bahnreservierungssystem eingeführt. Der Go-live ist erfolgt. Vereinbart ist eine Hypercare-Phase von 4 Wochen: Das Projektteam betreut die Center in dieser Zeit selbst, an allen 7 Tagen der Woche.",
+      "Danach übernimmt der reguläre Support. Übergabekriterien: weniger als 10 neue Tickets pro Woche und kein offenes Ticket der Priorität 1.",
+      "In Woche 1 gehen 64 Tickets ein. Vereinfacht halbiert sich die Zahl jede Woche. Ein Ticket kostet im Mittel 25 Minuten. Samstags, am stärksten Tag der Center, fallen 40 % der Tickets einer Woche an. Kalkuliert waren für die Hypercare 4 Personentage (PT) zu 8 Stunden, interner Kostensatz 720 Euro je PT. Ein Techniker kann an einem Tag 8 Stunden Tickets bearbeiten.",
+      "",
+      "1. Wie viele Tickets fallen in den 4 Wochen an, und wie hoch ist der Aufwand in Stunden und PT? Wie groß ist die Abweichung zur Kalkulation in Euro? In welcher Woche ist das Zahlenkriterium für die Übergabe erfüllt?",
+      "2. Wie viele Techniker braucht die Hypercare am Samstag der ersten Woche? Wie viel Arbeit bleibt in dieser Woche für die übrigen 6 Tage pro Tag?",
+      "3. Was übergibt das Projektteam an den regulären Support? Welche Schritte gehören außerdem zum formalen Projektabschluss?"
+    ],
+    "solution": [
+      "1. Tickets: 64 + 32 + 16 + 8 = 120. Aufwand: 120 * 25 Minuten = 3.000 Minuten = 50 Stunden = 6,25 PT. Kalkuliert waren 4 PT, also 2,25 PT mehr: 2,25 * 720 = 1.620 Euro Mehrkosten. Woche 3 hat noch 16 Tickets, erst Woche 4 liegt mit 8 Tickets unter 10. Die Übergabe ist also frühestens am Ende von Woche 4 möglich, wenn dann auch kein Ticket der Priorität 1 offen ist. Sonst wird die Hypercare verlängert.",
+      "",
+      "2. Samstag: 0,4 * 64 = 25,6, also rund 26 Tickets. 26 * 25 = 650 Minuten = ca. 10,8 Stunden. Ein Techniker schafft 8 Stunden, also werden 2 Techniker gebraucht. Übrige Tage: 64 - 26 = 38 Tickets, 38 / 6 = ca. 6,3 Tickets pro Tag, also etwa 6,3 * 25 = 158 Minuten, gut 2,6 Stunden pro Tag. Dafür reicht ein Techniker, der nebenbei Restpunkte abarbeitet.",
+      "",
+      "3. Übergabe an den Support: Betriebsdokumentation (Netzplan, Konfigurationen, Zugangsdaten sicher hinterlegt), bekannte Fehler mit Workarounds, offene Restpunkte mit Verantwortlichen und Terminen, Ansprechpartner und Eskalationswege beim Hersteller, vereinbartes SLA. Die Supportmitarbeiter werden vorher eingewiesen und bearbeiten in der letzten Woche schon Tickets mit. Formaler Abschluss: Abnahme und Übergabe schriftlich bestätigen lassen, Schlussrechnung stellen, Abschlussbericht mit Soll-Ist-Vergleich, Lessons Learned mit dem Team festhalten (z.B. Hypercare-Aufwand künftig höher ansetzen), Projektkonto schließen, Ressourcen freigeben, Unterlagen archivieren."
+    ]
+  },
+  {
+    "title": "Kostenganglinie und Budgettranchen für ein DMS eines Abfallwirtschaftsbetriebs",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Der Abfallwirtschaftsbetrieb eines Landkreises führt in 6 Monaten ein Dokumentenmanagementsystem (DMS) ein. Geplante Kosten je Monat: 18.000, 9.000, 12.000, 15.000, 6.000 und 4.000 Euro.",
+      "Der Verwaltungsrat gibt das Budget in zwei Tranchen frei: 30.000 Euro zu Beginn, der Rest erst nach dem Meilenstein Pilotbetrieb abgeschlossen am Ende von Monat 3. Für das Gesamtprojekt ist eine Reserve von 5 % genehmigt.",
+      "Nach Monat 3 liegen die Istkosten vor: 16.500, 11.200 und 13.900 Euro.",
+      "",
+      "1. Stellen Sie die geplanten Kosten als Kostenganglinie und als Kostensummenlinie dar (Tabelle genügt). Passt die erste Tranche zum Plan?",
+      "2. Vergleichen Sie Ist und Plan nach Monat 3 in Euro und Prozent. Wie hoch werden die Gesamtkosten, wenn der Rest wie geplant verläuft? Reicht das Budget mit Reserve, und wie viel der Reserve ist verbraucht?",
+      "3. Welche Maßnahmen schlagen Sie für die Tranchen vor? Wozu dienen Kostenganglinie und Summenlinie im Projektcontrolling?"
+    ],
+    "solution": [
+      "1. Ganglinie (je Monat): 18.000, 9.000, 12.000, 15.000, 6.000, 4.000. Summenlinie: 18.000, 27.000, 39.000, 54.000, 60.000, 64.000 Euro. Gesamtbudget 64.000 Euro. Nach Monat 2 sind 27.000 Euro verbraucht, das liegt in der ersten Tranche. In Monat 3 steigt die Summe auf 39.000 Euro. Das sind 9.000 Euro mehr als die erste Tranche, noch vor dem Meilenstein. Der Plan passt nicht zur Freigabe.",
+      "",
+      "2. Ist-Summe nach Monat 3: 16.500 + 11.200 + 13.900 = 41.600 Euro, Plan 39.000 Euro. Abweichung: 2.600 Euro, also 6,67 % über Plan. Prognose: 41.600 + 15.000 + 6.000 + 4.000 = 66.600 Euro, das sind 4,06 % über 64.000 Euro. Budget mit Reserve: 64.000 * 1,05 = 67.200 Euro. Es reicht noch. Von der Reserve (3.200 Euro) sind 2.600 Euro verbraucht, also 81,25 %.",
+      "",
+      "3. Maßnahmen: vor Projektstart die erste Tranche auf mindestens 39.000 Euro anpassen lassen oder Zahlungen aus Monat 3 hinter den Meilenstein legen (z.B. Zahlungsziel für Lizenzen verhandeln). Die Überschreitung früh an den Verwaltungsrat melden. Die Kostenganglinie zeigt, wann wie viel Geld fließt, und hilft bei der Planung der Liquidität und der Freigaben. Die Summenlinie zeigt den Stand gegenüber dem Budget. Liegt die Ist-Summenlinie über dem Plan, erkennt man Abweichungen früh und kann gegensteuern."
+    ]
+  },
+  {
+    "title": "Urlaub einer Schlüsselperson im Netzplan eines Reifengroßhändlers",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Reifengroßhändler bekommt einen neuen Server, und die Warenwirtschaft wird migriert. Vorgänge mit Dauer in Arbeitstagen und Vorgängern:",
+      "  A Bestandsaufnahme: 3, keiner",
+      "  B Hardware bestellen und liefern: 10, nach A",
+      "  C Testmigration der Warenwirtschaft: 6, nach A (Frau Kaya, einzige Datenbankspezialistin)",
+      "  D Server installieren: 4, nach B",
+      "  E Finale Datenmigration: 3, nach C und D (Frau Kaya)",
+      "  F Schulung der Anwender: 5, nach C",
+      "  G Umstellung und Nacharbeit: 2, nach E und F",
+      "Frau Kaya hat an den Projekttagen 6 bis 10 Urlaub. Ein Vorgang darf nicht unterbrochen werden. Das Projekt startet mit Tag 1 (Zeitpunkt 0).",
+      "",
+      "1. Berechnen Sie FAZ, FEZ, SAZ, SEZ, Gesamtpuffer und freien Puffer aller Vorgänge. Wie lange dauert das Projekt, und welcher Weg ist kritisch?",
+      "2. Kann C vor dem Urlaub von Frau Kaya erledigt werden? Wann beginnt C frühestens nach dem Urlaub, und was bedeutet das für das Projektende?",
+      "3. Nennen Sie zwei Möglichkeiten, das ursprüngliche Projektende trotzdem zu halten. Wie hilft ein Belastungsdiagramm bei solchen Konflikten?"
+    ],
+    "solution": [
+      "1. Vorwärts: A 0 bis 3. B 3 bis 13. C 3 bis 9. D 13 bis 17. E beginnt nach C (9) und D (17), also 17 bis 20. F 9 bis 14. G nach E (20) und F (14): 20 bis 22. Projektdauer 22 Tage. Rückwärts: G SAZ 20, SEZ 22. E SEZ 20, SAZ 17. F SEZ 20, SAZ 15. D SEZ 17, SAZ 13. C SEZ = min(17, 15) = 15, SAZ 9. B SEZ 13, SAZ 3. A SEZ = min(3, 9) = 3, SAZ 0. Gesamtpuffer: A, B, D, E, G je 0; C 6; F 6. Freier Puffer: C 0 (F soll direkt danach beginnen), F 20 - 14 = 6, alle anderen 0. Kritischer Weg: A - B - D - E - G.",
+      "",
+      "2. C kann frühestens am Tag 4 beginnen und braucht 6 Tage. Bis zum Urlaub bleiben nur Tag 4 und 5, eine Unterbrechung ist nicht erlaubt. C beginnt deshalb frühestens an Tag 11 (Zeitpunkt 10) und endet zum Zeitpunkt 16. Der späteste Anfang von C ist 9, C liegt also einen Tag über seinem Gesamtpuffer. E beginnt weiterhin nach D zum Zeitpunkt 17 und endet bei 20. F läuft von 16 bis 21. G beginnt erst nach F bei 21 und endet bei 23. Das Projekt dauert 23 statt 22 Tage.",
+      "",
+      "3. Möglichkeiten: Die Schulung F mit zwei Trainern in 4 Tagen durchführen, dann endet F bei 20 und G wieder bei 22. Oder einen Teil der Schulung vor dem Ende der Testmigration beginnen, z.B. allgemeine Bedienung. Oder mit Frau Kaya eine Verschiebung des Urlaubs besprechen bzw. eine externe Unterstützung für C einplanen. Ein Belastungsdiagramm zeigt für jede Person pro Tag die geplante Belastung. Überlastungen und Abwesenheiten werden sofort sichtbar, und Vorgänge mit Puffer lassen sich gezielt verschieben (Kapazitätsabgleich)."
+    ]
   }
 ]

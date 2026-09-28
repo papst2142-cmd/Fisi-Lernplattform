@@ -13186,5 +13186,1829 @@
       "Die alten PCs ungenutzt im Lager behalten und neue dazukaufen",
       "Die PCs rund um die Uhr laufen lassen, damit sie länger halten"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf einem Router ist eingehend folgende ACL aktiv: access-list 110 deny ip any any | access-list 110 permit tcp any host 10.0.5.10 eq 443. Der Webserver 10.0.5.10 ist nicht erreichbar. Warum?",
+    "a": "Die erste Zeile trifft jedes Paket, die Freigabe wird nie erreicht",
+    "a_full": "ACLs werden von oben nach unten abgearbeitet, der erste Treffer entscheidet. deny ip any any passt auf jedes Paket, danach prüft der Router keine weitere Zeile. Die permit-Regel muss vorne stehen, die Sperre am Ende erledigt ohnehin das implizite deny.",
+    "options": [
+      "Die erste Zeile trifft jedes Paket, die Freigabe wird nie erreicht",
+      "Port 443 muss in einer ACL als Name https geschrieben werden",
+      "Erweiterte ACLs dürfen nur ausgehend gebunden werden",
+      "Die Regel für den Host braucht zusätzlich eine Wildcard-Maske"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Admin bindet an die Schnittstelle zum Server-VLAN nur die Regel permit tcp 10.1.20.0 0.0.0.255 host 10.1.50.5 eq 3389. RDP klappt, aber DNS-Abfragen und ping zu anderen Servern scheitern jetzt. Warum?",
+    "a": "Am Ende jeder ACL steht ein implizites deny any",
+    "a_full": "Alles, was nicht ausdrücklich erlaubt ist, verwirft der Router durch die unsichtbare Sperrregel am Ende. Mit dieser einen Zeile ist die Schnittstelle also bis auf RDP gesperrt. Vor dem Aktivieren einer ACL erfasst man alle benötigten Dienste wie DNS und gibt sie frei.",
+    "options": [
+      "Am Ende jeder ACL steht ein implizites deny any",
+      "RDP belegt die Schnittstelle exklusiv für eine Sitzung",
+      "ACLs sperren UDP automatisch, sobald TCP erlaubt ist",
+      "Die Wildcard 0.0.0.255 gilt auch für alle Zielnetze"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einer Cisco-ACL steht permit ip 192.168.10.0 255.255.255.0 any. Die Clients aus 192.168.10.0/24 werden trotzdem blockiert. Was ist falsch?",
+    "a": "Dort steht eine Subnetzmaske statt der Wildcard 0.0.0.255",
+    "a_full": "Cisco-ACLs erwarten eine Wildcard-Maske, bei der ein 0-Bit bedeutet: Dieses Bit muss passen. 255.255.255.0 ignoriert deshalb die ersten drei Oktette und verlangt im letzten Oktett eine 0. Richtig ist 0.0.0.255, dann müssen die ersten drei Oktette übereinstimmen.",
+    "options": [
+      "Dort steht eine Subnetzmaske statt der Wildcard 0.0.0.255",
+      "Vor der Netzadresse fehlt das Schlüsselwort host",
+      "Die Quelle muss als 192.168.10.0/24 notiert werden",
+      "Mit ip statt tcp wird nur ICMP-Verkehr erfasst"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine ACL soll Gäste aus VLAN 90 vom Server-VLAN fernhalten. Sie ist mit dem Zusatz in an die SVI des Server-VLANs gebunden. Die Gäste kommen weiter durch. Warum?",
+    "a": "Falsche Richtung, in prüft dort nur Pakete aus dem Server-VLAN",
+    "a_full": "in und out gelten immer aus Sicht des Routers. Pakete der Gäste treten über die SVI von VLAN 90 ein und verlassen den Router über die Server-SVI. Die ACL gehört daher als in an die Gäste-SVI, möglichst nah an der Quelle, oder als out an die Server-SVI.",
+    "options": [
+      "Falsche Richtung, in prüft dort nur Pakete aus dem Server-VLAN",
+      "ACLs werden erst nach einem Neustart des Switches wirksam",
+      "ACLs auf SVIs filtern grundsätzlich nur den IPv6-Verkehr",
+      "Gäste-VLANs sind von allen ACLs automatisch ausgenommen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "R1 soll das Filialnetz 10.40.0.0/16 über R2 erreichen, beide hängen am Transfernetz 172.16.0.0/30 (R1 .1, R2 .2). Eingetragen ist ip route 10.40.0.0 255.255.0.0 10.40.0.1. Was ist falsch?",
+    "a": "Der Next Hop muss der Nachbar im Transfernetz sein, also 172.16.0.2",
+    "a_full": "Ein Router kann einen Next Hop nur über ein direkt verbundenes Netz oder eine andere Route erreichen. 10.40.0.1 liegt im Zielnetz selbst, dafür kennt R1 keinen Weg, die Route bleibt unwirksam. Richtig ist ip route 10.40.0.0 255.255.0.0 172.16.0.2.",
+    "options": [
+      "Der Next Hop muss der Nachbar im Transfernetz sein, also 172.16.0.2",
+      "Die Maske muss /24 lauten, weil Filialen nur /24 nutzen",
+      "Statische Routen brauchen immer die Distanz 110",
+      "Die Route braucht zusätzlich das Schlüsselwort permanent"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Providerwechsel steht auf dem Router: ip route 0.0.0.0 255.255.255.255 203.0.113.1. Kein Client erreicht das Internet. Was ist der Fehler?",
+    "a": "Falsche Maske, so entsteht nur eine Hostroute auf 0.0.0.0",
+    "a_full": "Eine Standardroute hat die Präfixlänge 0 und passt damit auf jedes Ziel. Mit der Maske 255.255.255.255 entsteht eine /32-Route nur zur Adresse 0.0.0.0. Für alle echten Ziele im Internet fehlt damit weiterhin ein Weg.",
+    "options": [
+      "Falsche Maske, so entsteht nur eine Hostroute auf 0.0.0.0",
+      "Der Next Hop muss die eigene WAN-Adresse des Routers sein",
+      "Standardrouten dürfen nur per DHCP vom Provider kommen",
+      "Die Maske muss für Standardrouten 255.255.255.0 lauten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Hinter Router R3 wurde das Labornetz 10.60.0.0/24 angeschlossen. Vom Labor aus erreichen Sie R3, aber keinen Server im Rechenzentrum. Ein Mitschnitt am Server zeigt eingehende Anfragen aus dem Labor. Was fehlt?",
+    "a": "Die Rückroute zum Labornetz auf dem Core-Router",
+    "a_full": "Die Anfragen kommen an, die Antworten schickt der Core mangels passender Route aber über seine Standardroute weg. Routing muss in beide Richtungen stimmen. Auf dem Core fehlt eine Route 10.60.0.0/24 über R3, oder R3 verteilt das Netz per OSPF.",
+    "options": [
+      "Die Rückroute zum Labornetz auf dem Core-Router",
+      "Eine Freigabe für ICMP auf dem Labor-Switch",
+      "Eine NAT-Regel auf R3 für das Rechenzentrum",
+      "Ein DNS-Eintrag für R3 auf dem Server"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Clients in VLAN 70 bekommen keine Adresse. Auf dem Layer-3-Switch steht ip helper-address 10.1.10.5 unter interface Vlan10, dem VLAN des DHCP-Servers. Was ist falsch?",
+    "a": "Der Helper gehört auf die SVI von VLAN 70 der Clients",
+    "a_full": "Der Relay-Agent muss auf der Schnittstelle arbeiten, auf der die DHCP-Broadcasts der Clients eintreffen. Dort trägt er seine eigene Adresse als giaddr ein und schickt die Anfrage per Unicast zum Server. Auf der Server-SVI hat der Eintrag für VLAN 70 keine Wirkung.",
+    "options": [
+      "Der Helper gehört auf die SVI von VLAN 70 der Clients",
+      "Der Helper muss auf die Adresse 255.255.255.255 zeigen",
+      "Der DHCP-Server muss selbst in VLAN 70 umziehen",
+      "ip helper-address wirkt nur auf Trunk-Ports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Port hat switchport mode access und switchport access vlan 25. Der PC bleibt ohne Verbindung, show interfaces switchport meldet \"Access Mode VLAN: 25 (Inactive)\". Was fehlt?",
+    "a": "VLAN 25 ist auf diesem Switch nicht angelegt",
+    "a_full": "Ein Access-Port kann nur ein VLAN nutzen, das in der VLAN-Datenbank des Switches existiert. Fehlt es, bleibt der Port inaktiv und leitet keine Frames weiter. Mit vlan 25 und einem sprechenden Namen wird es angelegt, danach arbeitet der Port.",
+    "options": [
+      "VLAN 25 ist auf diesem Switch nicht angelegt",
+      "Der Port muss zusätzlich als Trunk konfiguriert sein",
+      "Der PC braucht einen VLAN-fähigen Netzwerktreiber",
+      "VLAN 25 muss im DHCP-Server freigeschaltet sein"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Log erscheint regelmäßig: \"%CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on Gi0/48 (1), with SW2 Gi0/48 (99)\". Welche Folge hat das?",
+    "a": "Ungetaggte Frames landen in zwei verschiedenen VLANs",
+    "a_full": "Frames im Native VLAN laufen ohne Tag über den Trunk. SW1 ordnet sie VLAN 1 zu, SW2 dagegen VLAN 99, so werden zwei Broadcastdomänen ungewollt verbunden. Das stört Spanning Tree und ist ein Sicherheitsrisiko, beide Seiten brauchen dasselbe Native VLAN.",
+    "options": [
+      "Ungetaggte Frames landen in zwei verschiedenen VLANs",
+      "Der Trunk überträgt nur noch die VLANs 1 und 99",
+      "Der Switch verwirft alle getaggten Frames auf Gi0/48",
+      "CDP schaltet den Trunk-Port nach 60 Sekunden ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "show ip interface brief zeigt für Gi0/2 den Status \"administratively down\" und das Protokoll \"down\". Was bedeutet das?",
+    "a": "Die Schnittstelle ist per shutdown abgeschaltet",
+    "a_full": "administratively down heißt, dass der Befehl shutdown auf der Schnittstelle steht. Kabel und Gegenstelle spielen dafür keine Rolle. Mit no shutdown im Interface-Modus wird sie aktiviert, danach sollte up/up erscheinen.",
+    "options": [
+      "Die Schnittstelle ist per shutdown abgeschaltet",
+      "Das Kabel steckt, aber die Gegenstelle ist ausgeschaltet",
+      "Die Schnittstelle wurde von BPDU Guard gesperrt",
+      "Die IP-Adresse der Schnittstelle ist doppelt vergeben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "show spanning-tree zeigt, dass ein alter 8-Port-Switch im Besprechungsraum Root Bridge ist. Alle Switches haben die Priorität 32768. Warum ist das so und was tun Sie?",
+    "a": "Kleinste MAC gewinnt, Priorität am Core senken",
+    "a_full": "Bei gleicher Bridge-Priorität entscheidet die kleinste MAC-Adresse, alte Geräte haben oft niedrige MACs. Der Verkehr läuft dann ungünstig über den kleinen Switch. Man setzt am Core gezielt eine kleinere Priorität wie 4096 und am Ersatz-Core z.B. 8192.",
+    "options": [
+      "Kleinste MAC gewinnt, Priorität am Core senken",
+      "Root wird der Switch mit den meisten Ports, Ports ergänzen",
+      "Root wird der zuletzt gestartete Switch, Core neu starten",
+      "Root wird die höchste Priorität, Core auf 61440 setzen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Dienstleister schließt im Etagenverteiler einen eigenen Switch mit Bridge-Priorität 0 an. Er wird Root Bridge und das Netz ist kurz gestört. Welche Funktion hätte das verhindert?",
+    "a": "Root Guard an den Ports zu nachgelagerten Switches",
+    "a_full": "Root Guard sperrt einen Port, sobald dort BPDUs eintreffen, die einen besseren Root ankündigen. Der Port geht in den Zustand root-inconsistent, bis diese BPDUs ausbleiben. So bleibt die geplante Root Bridge erhalten, auch wenn jemand einen Switch mit niedriger Priorität ansteckt.",
+    "options": [
+      "Root Guard an den Ports zu nachgelagerten Switches",
+      "PortFast an allen Ports zum Etagenverteiler",
+      "Storm Control mit einer Broadcastgrenze von 1 %",
+      "Loop Guard an allen Endgeräteports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege sieht in show spanning-tree auf einem der beiden Uplinks des Etagenswitches \"Altn BLK\" und will den Port tauschen lassen. Was sagen Sie?",
+    "a": "Normal, STP hält den zweiten Weg als Reserve",
+    "a_full": "Mit zwei aktiven Uplinks entstünde eine Schleife. Ein Port bleibt deshalb als Alternate Port blockiert und übernimmt, wenn der andere ausfällt. Beide Wege gleichzeitig nutzt man nur mit Link Aggregation über einen Stack oder MLAG.",
+    "options": [
+      "Normal, STP hält den zweiten Weg als Reserve",
+      "Der Port meldet einen Hardwaredefekt am SFP-Modul",
+      "Der Port ist wegen Duplex-Mismatch abgeschaltet",
+      "Der Port wartet noch auf eine 802.1X-Anmeldung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Syslog des Core-Switches steht: \"MACFLAP_NOTIF: Host 0050.56a1.2b3c in vlan 10 is flapping between port Gi1/0/1 and port Gi1/0/2\". Was deutet das an?",
+    "a": "Eine Schleife oder ein falsches NIC-Teaming",
+    "a_full": "Der Switch lernt dieselbe MAC-Adresse abwechselnd an zwei Ports. Das passiert bei einer Layer-2-Schleife oder wenn ein Server zwei Netzwerkkarten ohne passende Switch-Konfiguration bündelt. Man prüft, was an beiden Ports hängt, und richtet z.B. LACP auf beiden Seiten ein.",
+    "options": [
+      "Eine Schleife oder ein falsches NIC-Teaming",
+      "Der DHCP-Server vergibt eine Adresse doppelt",
+      "Die MAC-Adresstabelle des Switches ist voll",
+      "Der Host nutzt IPv6 Privacy Extensions"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Switch A ist mit channel-group 1 mode active konfiguriert, der Nachbarswitch B mit channel-group 1 mode on. Das Bündel kommt nicht sauber zustande. Warum?",
+    "a": "A spricht LACP, B bündelt statisch und sendet kein LACP",
+    "a_full": "mode on bildet ein festes Bündel und verschickt keine LACP-Pakete. Die Seite mit mode active wartet vergeblich auf einen LACP-Partner und nimmt ihre Ports nicht ins Bündel. Beide Seiten müssen LACP sprechen (active/active oder active/passive) oder beide statisch arbeiten.",
+    "options": [
+      "A spricht LACP, B bündelt statisch und sendet kein LACP",
+      "Die Kanalnummern müssen auf beiden Seiten verschieden sein",
+      "mode active ist nur an Glasfaserports zulässig",
+      "Ein Bündel braucht mindestens vier Ports je Seite"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Server soll mit je einer Leitung an zwei getrennte, nicht gestapelte Switches angeschlossen und per LACP gebündelt werden. Warum scheitert das?",
+    "a": "Die Switches bilden kein gemeinsames LACP-System",
+    "a_full": "Ein LACP-Bündel endet auf jeder Seite in einem System mit gemeinsamer System-ID. Zwei unabhängige Switches bilden kein solches System. Abhilfe sind ein Stack, MLAG bzw. vPC oder auf dem Server ein switch-unabhängiges Teaming ohne LACP.",
+    "options": [
+      "Die Switches bilden kein gemeinsames LACP-System",
+      "LACP funktioniert nur mit Kupferleitungen gleicher Länge",
+      "Server dürfen mit LACP nur Aktiv-Passiv-Bündel bilden",
+      "LACP erlaubt höchstens einen Server je Switch"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Router stellen per VRRP das Gateway für VLAN 20 bereit. Beide zeigen sich als Master, Clients haben sporadisch Aussetzer. Was ist die wahrscheinlichste Ursache?",
+    "a": "Die VRRP-Advertisements erreichen den jeweils anderen Router nicht",
+    "a_full": "Ein Backup-Router wird Master, sobald er keine Advertisements mehr empfängt. Fehlt VLAN 20 auf dem Trunk zwischen den Routern oder filtert eine ACL die Multicasts an 224.0.0.18, halten sich beide für Master. Beide antworten dann mit derselben virtuellen MAC, was zu Flapping und Aussetzern führt.",
+    "options": [
+      "Die VRRP-Advertisements erreichen den jeweils anderen Router nicht",
+      "Beide Router haben die gleiche Priorität 100 eingestellt",
+      "Die virtuelle IP liegt außerhalb des Client-Subnetzes",
+      "Die Clients haben beide Router als DNS-Server eingetragen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Router A (VRRP-Priorität 120) war ausgefallen, Router B (100) hat übernommen. Nach der Reparatur bleibt B Master, obwohl A wieder läuft. Woran liegt das?",
+    "a": "Auf Router A ist Preemption deaktiviert",
+    "a_full": "Ohne Preemption übernimmt ein Router mit höherer Priorität die Masterrolle nicht zurück, solange der aktuelle Master funktioniert. Bei VRRP ist Preemption meist standardmäßig aktiv, sie kann aber abgeschaltet sein. Soll A wieder Master sein, aktiviert man sie, oft mit einer Verzögerung, bis A vollständig bereit ist.",
+    "options": [
+      "Auf Router A ist Preemption deaktiviert",
+      "Router B hat die virtuelle MAC dauerhaft übernommen",
+      "VRRP erlaubt nur einen Rollenwechsel pro Tag",
+      "Router A braucht eine niedrigere Priorität als B"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Router A ist VRRP-Master für das Büro-VLAN. Seine Internetleitung fällt aus, die LAN-Seite läuft weiter. Die Clients sind offline, obwohl Router B eine funktionierende Leitung hat. Was fehlt?",
+    "a": "Tracking, das bei WAN-Ausfall die Priorität von A senkt",
+    "a_full": "VRRP prüft von sich aus nur, ob der Master im LAN antwortet. Mit Tracking überwacht Router A seine WAN-Schnittstelle oder ein Ziel im Internet und senkt bei Ausfall seine Priorität unter die von B. Mit Preemption übernimmt B dann die Masterrolle.",
+    "options": [
+      "Tracking, das bei WAN-Ausfall die Priorität von A senkt",
+      "Eine zweite virtuelle IP für den Fall eines WAN-Ausfalls",
+      "Ein kürzeres Advertisement-Intervall von 100 ms",
+      "Eine statische ARP-Tabelle auf allen Clients"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege plant im IPv6-Konzept für ein Drucker-VLAN mit 20 Geräten ein /120, um Adressen zu sparen. Was entgegnen Sie?",
+    "a": "Jedes VLAN bekommt ein /64, sonst funktioniert SLAAC nicht",
+    "a_full": "IPv6-Adressen sind nicht knapp, ein /48 enthält 65.536 Netze der Größe /64. SLAAC und viele weitere Funktionen setzen eine 64 Bit lange Interface-ID voraus. Kleinere Netze erschweren den Betrieb ohne Vorteil, üblich ist /64 für jedes Segment.",
+    "options": [
+      "Jedes VLAN bekommt ein /64, sonst funktioniert SLAAC nicht",
+      "Richtig, IPv6-Netze hält man wie bei IPv4 möglichst klein",
+      "Für Drucker wäre ein /127 die bessere Wahl",
+      "Drucker brauchen unter IPv6 grundsätzlich ein /48"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Unternehmen mit sechs Standorten erhält 2001:db8:4a00::/48. Wie gestalten Sie ein übersichtliches Adresskonzept?",
+    "a": "Je Standort ein /56, darin je VLAN ein /64",
+    "a_full": "Man teilt an Nibble-Grenzen auf, damit die Struktur in der Hex-Schreibweise lesbar bleibt. Standort 1 erhält z.B. 2001:db8:4a00:100::/56, darin VLAN 10 das Netz 2001:db8:4a00:110::/64. So erkennt man Standort und VLAN direkt an der Adresse.",
+    "options": [
+      "Je Standort ein /56, darin je VLAN ein /64",
+      "Je Standort ein /64, darin je VLAN ein /80",
+      "Alle Standorte teilen sich ein /64 mit DHCPv6",
+      "Je Standort ein /120 nach Anzahl der Geräte"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kleinunternehmen bekommt vom Provider per Präfixdelegation ein /56, das sich nach jeder Zwangstrennung ändert. Intern per IPv6 eingetragene Server sind danach unerreichbar. Was empfehlen Sie?",
+    "a": "Zusätzlich ULA-Adressen oder ein festes Präfix nutzen",
+    "a_full": "Ändert sich das Präfix, ändern sich alle globalen Adressen im Netz. Für interne Verbindungen vergibt man zusätzlich stabile ULA-Adressen aus fd00::/8 und trägt diese im DNS ein. Für Dienste, die von außen erreichbar sein sollen, ist ein Tarif mit festem Präfix die saubere Lösung.",
+    "options": [
+      "Zusätzlich ULA-Adressen oder ein festes Präfix nutzen",
+      "Die Server auf rein link-lokale Adressen umstellen",
+      "Die Leasedauer im Router auf 30 Tage erhöhen",
+      "Die Server per EUI-64 an die MAC-Adresse binden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im IPv6-Netz eines Kunden ist nur stateful DHCPv6 aktiv, SLAAC ist im Router Advertisement abgeschaltet. Windows-PCs funktionieren, Android-Smartphones erhalten keine globale Adresse. Warum?",
+    "a": "Android bezieht Adressen nicht per DHCPv6, nur per SLAAC",
+    "a_full": "Android bildet seine globalen IPv6-Adressen nur per SLAAC und lernt DNS-Server über RDNSS im Router Advertisement. Ohne Präfix mit gesetztem A-Flag entsteht keine globale Adresse. In gemischten Netzen aktiviert man daher SLAAC mit RDNSS, bei Bedarf zusätzlich DHCPv6.",
+    "options": [
+      "Android bezieht Adressen nicht per DHCPv6, nur per SLAAC",
+      "Android braucht ein /56 statt eines /64 im WLAN",
+      "Android akzeptiert nur Adressen aus dem ULA-Bereich",
+      "Android fragt Adressen nur über DHCP-Option 82 an"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nachdem ein Mitarbeiter einen privaten Router ins Büro-VLAN gesteckt hat, erhalten Kollegen IPv6-Adressen aus einem fremden Präfix und ein falsches Gateway. Welche Switch-Funktion schützt davor?",
+    "a": "RA Guard an den Endgeräteports des Switches",
+    "a_full": "Jedes Gerät kann Router Advertisements senden und sich so als IPv6-Gateway anbieten. RA Guard lässt diese Nachrichten nur an Ports zu, an denen die echten Router hängen. Es ist für SLAAC das Gegenstück zu DHCP Snooping.",
+    "options": [
+      "RA Guard an den Endgeräteports des Switches",
+      "DHCP Snooping mit vertrauenswürdigem Uplink",
+      "Port Security mit höchstens zwei MAC-Adressen",
+      "Storm Control für Multicast-Verkehr"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Firewall-Admin sperrt aus Sicherheitsgründen jeglichen ICMPv6-Verkehr. Danach fallen im IPv6-Netz Adressauflösung und große Übertragungen aus. Warum?",
+    "a": "ICMPv6 trägt NDP und die Meldung Packet Too Big",
+    "a_full": "IPv6 nutzt ICMPv6 für die Nachbarermittlung, Router Advertisements und die Meldung Packet Too Big. Router fragmentieren unter IPv6 nicht, ohne diese Meldung scheitert die Path-MTU-Ermittlung. ICMPv6 wird daher nur gezielt nach Typen gefiltert, nie pauschal.",
+    "options": [
+      "ICMPv6 trägt NDP und die Meldung Packet Too Big",
+      "ICMPv6 transportiert unter IPv6 die DNS-Antworten",
+      "Ohne ICMPv6 schaltet sich IPsec automatisch ab",
+      "ICMPv6 ersetzt unter IPv6 den TCP-Handshake"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einer Firmenübernahme sollen zwei Standorte per Site-to-Site-VPN verbunden werden. Beide nutzen intern 192.168.1.0/24. Welche Lösungen gibt es?",
+    "a": "Umnummerieren oder per NAT auf ein Ersatznetz abbilden",
+    "a_full": "Ein Router kann nicht unterscheiden, ob 192.168.1.20 lokal oder am anderen Standort liegt. Dauerhaft sauber ist die Umnummerierung eines Standorts. Kurzfristig hilft 1:1-NAT auf ein freies Netz, der andere Standort erscheint dann z.B. als 10.99.1.0/24.",
+    "options": [
+      "Umnummerieren oder per NAT auf ein Ersatznetz abbilden",
+      "Eine längere DHCP-Leasedauer an beiden Standorten",
+      "Eine höhere Metrik für die Route in den Tunnel",
+      "IPsec im Transportmodus statt im Tunnelmodus"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf der Firewall ist TCP 443 an den Webserver 192.168.5.20 weitergeleitet. Von außen kommt keine Verbindung zustande, am Server kommen aber SYN-Pakete an. Sein Gateway ist 192.168.5.254, der alte Router. Was ist das Problem?",
+    "a": "Die Antworten laufen nicht zurück durch das NAT",
+    "a_full": "Die Firewall übersetzt die Zieladresse, die Antwort muss über dieselbe Firewall zurück, damit sie die Absenderadresse zurücksetzt. Über den alten Router kommt die Antwort mit falscher Adresse oder gar nicht beim Client an. Das Gateway des Servers muss die Firewall sein, sonst braucht man zusätzlich Source-NAT.",
+    "options": [
+      "Die Antworten laufen nicht zurück durch das NAT",
+      "Port 443 darf nicht weitergeleitet werden, nur Port 80",
+      "Die Weiterleitung braucht zusätzlich eine UDP-Regel",
+      "Der Server muss die öffentliche IP selbst eintragen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde hat eine öffentliche IPv4-Adresse und zwei interne Webserver, die per HTTPS unter eigenen Namen erreichbar sein sollen. Warum reicht Portweiterleitung allein nicht?",
+    "a": "Port 443 ist nur einmal weiterleitbar, ein Reverse Proxy hilft",
+    "a_full": "Eine Portweiterleitung unterscheidet nur nach Port, nicht nach Hostname. Ein Reverse Proxy nimmt alle Anfragen auf Port 443 an und leitet sie anhand des Namens aus SNI bzw. Host-Header weiter. Alternativ bucht man eine zweite öffentliche Adresse.",
+    "options": [
+      "Port 443 ist nur einmal weiterleitbar, ein Reverse Proxy hilft",
+      "Beide Server müssten dieselbe interne IP-Adresse nutzen",
+      "PAT kann Port 443 nur für HTTP, nicht für HTTPS nutzen",
+      "Weiterleitungen gelten nur für Server im VLAN des Routers"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Site-to-Site-IPsec-VPN zur Filiale zeigt Phase 1 als aufgebaut, Phase 2 scheitert mit \"no proposal chosen\". Was prüfen Sie?",
+    "a": "Ob die Phase-2-Parameter und Netze beider Seiten passen",
+    "a_full": "In Phase 2 handeln beide Seiten die IPsec-SAs für die Nutzdaten aus. Weichen Verschlüsselung, Integritätsverfahren, PFS-Gruppe oder die lokalen und entfernten Netze ab, gibt es keinen gemeinsamen Vorschlag. Die Einstellungen müssen auf beiden Seiten spiegelbildlich passen.",
+    "options": [
+      "Ob die Phase-2-Parameter und Netze beider Seiten passen",
+      "Ob der Pre-Shared Key auf beiden Seiten identisch ist",
+      "Ob UDP 500 in der Firewall der Filiale freigegeben ist",
+      "Ob die öffentliche IP der Filiale im DNS eingetragen ist"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Der VPN-Tunnel zur Filiale steht, Pakete ins Filialnetz 10.20.0.0/24 kommen aber nicht an. Auf der Firewall übersetzt eine Regel den gesamten ausgehenden LAN-Verkehr per PAT auf die WAN-Adresse. Was fehlt?",
+    "a": "Eine NAT-Ausnahme für Verkehr ins Filialnetz",
+    "a_full": "Wird NAT vor der Tunnelzuordnung angewendet, tragen die Pakete die öffentliche Absenderadresse. Sie passen dann nicht mehr zu den vereinbarten Netzen des Tunnels und werden nicht verschlüsselt. Eine NAT-Ausnahme für LAN zu Filialnetz löst das.",
+    "options": [
+      "Eine NAT-Ausnahme für Verkehr ins Filialnetz",
+      "Eine zweite Phase-1-Verbindung für den Rückweg",
+      "Eine Portweiterleitung von UDP 4500 auf den Server",
+      "Eine höhere MTU auf der WAN-Schnittstelle"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach Einführung von 802.1X an den Switchports ist bei der ersten Anmeldung an neuen PCs die Domäne nicht erreichbar und Gruppenrichtlinien fehlen. Authentifiziert werden nur Benutzerkonten. Was ändern Sie?",
+    "a": "Computerauthentifizierung aktivieren, damit der Port schon vor der Anmeldung offen ist",
+    "a_full": "Bei reiner Benutzerauthentifizierung bleibt der Port bis zur Anmeldung gesperrt. Der PC erreicht dann keinen Domänencontroller, und neue Geräte haben keine zwischengespeicherte Anmeldung. Mit Computerauthentifizierung, z.B. per Maschinenzertifikat, ist der Rechner schon beim Start im Netz.",
+    "options": [
+      "Computerauthentifizierung aktivieren, damit der Port schon vor der Anmeldung offen ist",
+      "PortFast an allen 802.1X-Ports abschalten, damit der Port länger wartet",
+      "Den RADIUS-Server in das Gäste-VLAN verschieben, damit er erreichbar ist",
+      "Die Gruppenrichtlinien lokal per USB-Stick auf die neuen PCs kopieren"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mitarbeiter aus Einkauf und Entwicklung sollen an jeder beliebigen Dose automatisch in ihrem Abteilungs-VLAN landen. Wie lösen Sie das mit 802.1X?",
+    "a": "Der RADIUS-Server gibt das VLAN als Attribut zurück",
+    "a_full": "Nach erfolgreicher Anmeldung sendet der RADIUS-Server im Access-Accept Attribute wie Tunnel-Private-Group-ID mit der VLAN-Nummer. Der Switch ordnet den Port dann diesem VLAN zu. Welches VLAN gilt, legt eine Netzwerkrichtlinie anhand der AD-Gruppe fest.",
+    "options": [
+      "Der RADIUS-Server gibt das VLAN als Attribut zurück",
+      "Jede Dose wird fest dem VLAN einer Abteilung zugewiesen",
+      "Der DHCP-Server wählt das VLAN nach dem Hostnamen aus",
+      "Die Clients taggen ihre Frames selbst mit der Abteilung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neuer Switch soll 802.1X nutzen. Alle Anmeldungen scheitern, im NPS-Ereignisprotokoll steht, dass eine Anfrage von einem unbekannten RADIUS-Client verworfen wurde. Was fehlt?",
+    "a": "Der Switch ist auf dem NPS nicht als RADIUS-Client angelegt",
+    "a_full": "Ein RADIUS-Server beantwortet nur Anfragen von bekannten Clients wie Switches, Access Points oder VPN-Gateways. Man trägt den Switch mit seiner Absenderadresse und einem gemeinsamen geheimen Schlüssel ein. Derselbe Schlüssel muss auch auf dem Switch hinterlegt sein.",
+    "options": [
+      "Der Switch ist auf dem NPS nicht als RADIUS-Client angelegt",
+      "Der Switch hat kein eigenes Benutzerkonto im Active Directory",
+      "Der Switch hängt nicht im selben VLAN wie der NPS-Server",
+      "Auf dem NPS-Server fehlt die installierte DHCP-Serverrolle"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Beim Verbinden mit dem Firmen-WLAN (WPA2-Enterprise mit PEAP) fragen Notebooks, ob einem Zertifikat vertraut werden soll. Viele Mitarbeiter bestätigen einfach. Warum ist das gefährlich?",
+    "a": "Ein gefälschter AP kann so Anmeldedaten abgreifen",
+    "a_full": "Ohne Prüfung des Serverzertifikats kann ein Angreifer ein WLAN mit gleicher SSID und eigenem RADIUS-Server aufbauen. Bestätigt der Nutzer, landet seine MSCHAPv2-Anmeldung beim Angreifer, der sie offline knacken kann. Per Gruppenrichtlinie gibt man vertrauenswürdige CA und Servernamen fest vor, dann erscheint keine Rückfrage.",
+    "options": [
+      "Ein gefälschter AP kann so Anmeldedaten abgreifen",
+      "Das WLAN läuft danach unverschlüsselt weiter",
+      "Das Notebook wird dauerhaft ins Gäste-VLAN verschoben",
+      "Das Zertifikat überschreibt das Maschinenkonto in der Domäne"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde mit eigener PKI und Geräteverwaltung per MDM fragt, ob er fürs Firmen-WLAN EAP-TLS oder PEAP-MSCHAPv2 nehmen soll. Was empfehlen Sie?",
+    "a": "EAP-TLS, weil Clientzertifikate statt Passwörter genutzt werden",
+    "a_full": "Bei EAP-TLS weisen sich Server und Client mit Zertifikaten aus, es gibt kein abgreifbares Passwort. Mit vorhandener PKI und MDM lassen sich die Clientzertifikate automatisch verteilen. PEAP-MSCHAPv2 ist einfacher einzurichten, aber anfälliger für Angriffe auf Anmeldedaten.",
+    "options": [
+      "EAP-TLS, weil Clientzertifikate statt Passwörter genutzt werden",
+      "PEAP-MSCHAPv2, weil EAP-TLS keine Verschlüsselung bietet",
+      "WPA2-Personal, weil Zertifikate zu viel Aufwand machen",
+      "EAP-MD5, weil es von allen Geräten unterstützt wird"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Während nächtlicher Offsite-Backups über die 100-Mbit/s-Leitung sind Telefonate zum Bereitschaftsdienst abgehackt, obwohl Sprache mit EF markiert ist. Der Provider-Router priorisiert nichts. Was hilft?",
+    "a": "Ausgehenden Verkehr knapp unter der Leitungsrate shapen",
+    "a_full": "Priorisierung wirkt nur dort, wo sich Pakete stauen. Sendet die Firewall mit voller Geschwindigkeit, entsteht die Warteschlange im Provider-Router ohne QoS. Begrenzt man den Ausgang auf z.B. 95 % der Leitungsrate, staut es sich im eigenen Gerät, das Sprache zuerst sendet.",
+    "options": [
+      "Ausgehenden Verkehr knapp unter der Leitungsrate shapen",
+      "Die DSCP-Markierung der Sprache von EF auf AF11 ändern",
+      "Die MTU der WAN-Schnittstelle auf 9000 Byte erhöhen",
+      "Das Backup auf UDP umstellen, damit es weniger belastet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einem Firewallwechsel kommen IP-Telefonate zustande, aber nur eine Seite hört die andere. Was ist die typische Ursache?",
+    "a": "NAT oder Firewall behindern die RTP-Sprachströme",
+    "a_full": "Der Verbindungsaufbau per SIP klappt, die Sprache läuft aber über eigene RTP-Ports. Stehen in SIP nicht übersetzte Adressen oder sind die RTP-Portbereiche gesperrt, kommt der Ton nur in eine Richtung an. Man prüft RTP-Freigaben, das SIP-ALG und die NAT-Einstellungen der Telefonanlage.",
+    "options": [
+      "NAT oder Firewall behindern die RTP-Sprachströme",
+      "Der Codec G.711 überträgt Sprache nur in eine Richtung",
+      "Die DNS-Auflösung der Telefonanlage ist fehlerhaft",
+      "PoE liefert zu wenig Leistung für den Lautsprecher"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nur der Admin-PC 10.0.30.15 soll per RDP auf den Server 10.0.20.10 zugreifen. Im Regelwerk steht \"allow tcp 10.0.30.15/24 -> 10.0.20.10 port 3389\". Was ist falsch?",
+    "a": "Durch /24 ist das ganze Netz 10.0.30.0/24 freigegeben statt nur ein Host",
+    "a_full": "Die Firewall wertet die Quelle zusammen mit der Präfixlänge aus. 10.0.30.15/24 steht damit für alle Adressen von 10.0.30.0 bis 10.0.30.255. Für einen einzelnen Host gehört /32 in die Regel oder besser ein benanntes Hostobjekt.",
+    "options": [
+      "Durch /24 ist das ganze Netz 10.0.30.0/24 freigegeben statt nur ein Host",
+      "Nichts, die Firewall ignoriert die Präfixlänge bei Quelladressen",
+      "RDP nutzt UDP 3389, deshalb greift die TCP-Regel gar nicht",
+      "Die Regel gibt nur den Server frei, der Admin-PC fehlt ganz"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Regelwerk erlaubt \"allow udp LAN-Clients -> any port 53\". Der Sicherheitsdienstleister empfiehlt, das zu ändern. Wie sollte die DNS-Freigabe aussehen?",
+    "a": "Nur der interne DNS-Resolver darf DNS ins Internet, Clients fragen nur ihn",
+    "a_full": "Dürfen alle Clients beliebige DNS-Server fragen, umgeht Schadsoftware den Filter des Firmen-Resolvers oder schmuggelt Daten per DNS-Tunnel hinaus. Mit nur einem erlaubten Weg nach außen lassen sich DNS-Anfragen zentral protokollieren und filtern. Direkte Anfragen der Clients nach außen werden gesperrt und fallen im Log auf.",
+    "options": [
+      "Nur der interne DNS-Resolver darf DNS ins Internet, Clients fragen nur ihn",
+      "Die Freigabe bleibt, sie wird nur zusätzlich auf TCP 53 erweitert",
+      "Nur öffentliche DNS-Server großer Anbieter werden als Ziel erlaubt",
+      "Die Clients bekommen DNS über HTTPS direkt zum Browseranbieter"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für den Webserver in der DMZ gibt es die Regel \"allow DMZ-Web -> any : any\". Der Server selbst muss nur Updates über den Proxy laden. Was ist das Risiko?",
+    "a": "Ein gekaperter Server kann frei Schadcode nachladen und Daten ausleiten",
+    "a_full": "Angreifer nutzen nach einem erfolgreichen Einbruch ausgehende Verbindungen für Nachladecode, Steuerserver und Datenabfluss. Ein DMZ-Server braucht meist nur wenige Ziele, etwa den Update-Proxy und den Zeitserver. Ausgehender Verkehr wird deshalb genauso restriktiv geregelt wie eingehender.",
+    "options": [
+      "Ein gekaperter Server kann frei Schadcode nachladen und Daten ausleiten",
+      "Kein Risiko, weil ausgehende Verbindungen immer ungefährlich sind",
+      "Der Webserver wird dadurch aus dem Internet schlechter erreichbar",
+      "Die Firewall muss für jede ausgehende Verbindung eine Lizenz zählen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kollege hat für den Webserver 10.0.20.10 folgende Regel angelegt: \"allow tcp any Quellport 443 -> 10.0.20.10 Zielport any\". Was ist falsch?",
+    "a": "Quell- und Zielport sind vertauscht, 443 gehört als Zielport hinein",
+    "a_full": "Ein Client öffnet Verbindungen von einem zufälligen hohen Quellport zum Zielport 443 des Servers. Die Regel lässt so keine normalen Aufrufe zu. Stattdessen erlaubt sie jedem Angreifer alle Ports des Servers, wenn er nur den Quellport 443 wählt.",
+    "options": [
+      "Quell- und Zielport sind vertauscht, 443 gehört als Zielport hinein",
+      "Nichts, bei TCP sind Quell- und Zielport völlig gleichwertig",
+      "Es fehlt nur die zusätzliche Freigabe von UDP 443 für ältere Browser",
+      "Der Zielport any ist richtig, falsch ist nur die Quelladresse any"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde veröffentlicht seine interne Warenwirtschaft mit einer Portweiterleitung vom Router direkt auf einen Server im LAN. Was empfehlen Sie?",
+    "a": "Den Zugang über einen Reverse Proxy in der DMZ führen oder per VPN anbieten",
+    "a_full": "Bei einer direkten Weiterleitung steht der Angreifer nach einem erfolgreichen Angriff sofort im internen Netz. Ein Reverse Proxy in der DMZ nimmt die Verbindungen an, prüft sie und leitet nur erlaubte Anfragen weiter. Braucht nur ein kleiner Nutzerkreis Zugriff, ist ein VPN oft die bessere Wahl.",
+    "options": [
+      "Den Zugang über einen Reverse Proxy in der DMZ führen oder per VPN anbieten",
+      "Die Weiterleitung auf einen ungewöhnlichen hohen Port verlegen",
+      "Den Server zusätzlich per Ping aus dem Internet erreichbar machen",
+      "Die Weiterleitung nur während der Geschäftszeiten einschalten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf einem frisch installierten Linux-Webserver zeigt \"ss -tulpn\" neben nginx auch cupsd auf Port 631 und rpcbind auf Port 111. Was tun Sie im Rahmen der Härtung?",
+    "a": "Nicht benötigte Dienste stoppen, deaktivieren und möglichst deinstallieren",
+    "a_full": "Jeder lauschende Dienst ist eine mögliche Angriffsfläche. Ein Webserver braucht weder Druckdienst noch RPC. Mit systemctl disable --now und dem Entfernen der Pakete bleibt nur übrig, was für den Zweck des Servers nötig ist.",
+    "options": [
+      "Nicht benötigte Dienste stoppen, deaktivieren und möglichst deinstallieren",
+      "Beide Dienste laufen lassen, weil die Firewall sie ohnehin schützt",
+      "Nur die Ports der Dienste auf ungewöhnliche Nummern umstellen",
+      "Die Dienste behalten und nur ihre Protokollierung einschalten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einem internen Penetrationstest fängt der Tester mit einem Werkzeug wie Responder NTLM-Hashes von Clients ab, die Namen falsch eintippen. Welche Härtung hilft?",
+    "a": "LLMNR und NetBIOS over TCP/IP per Gruppenrichtlinie abschalten",
+    "a_full": "Findet ein Windows-Client einen Namen nicht per DNS, fragt er per Broadcast oder Multicast mit LLMNR und NBT-NS nach. Ein Angreifer im selben Netz antwortet darauf und erhält die Anmeldedaten des Clients. Ohne diese Fallback-Protokolle bleibt nur DNS als Namensauflösung.",
+    "options": [
+      "LLMNR und NetBIOS over TCP/IP per Gruppenrichtlinie abschalten",
+      "DNS abschalten und die Namen nur noch per LLMNR auflösen",
+      "Die Hosts-Datei auf allen Clients täglich automatisch leeren",
+      "SMB-Signierung auf allen Clients per Richtlinie deaktivieren"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Fernwartungskarten (iDRAC, iLO) der Server hängen im normalen Server-VLAN und haben noch das Werkskennwort. Wie härten Sie das?",
+    "a": "Kennwort ändern und die Karten in ein getrenntes Managementnetz legen",
+    "a_full": "Über die Managementkarte lässt sich der Server ein- und ausschalten, die Konsole übernehmen und ein Datenträger einbinden. Das ist so mächtig wie physischer Zugriff. Deshalb gehören die Karten in ein eigenes VLAN, das nur Admins über einen Jump Host erreichen, mit eigenen Konten und aktueller Firmware.",
+    "options": [
+      "Kennwort ändern und die Karten in ein getrenntes Managementnetz legen",
+      "Die Karten im Server-VLAN lassen und nur ihre IP-Adresse ändern",
+      "Die Karten ins Gäste-WLAN legen, damit sie vom LAN getrennt sind",
+      "Das Werkskennwort behalten, aber den Webzugang auf HTTP umstellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach dem Zertifikatstausch am Webserver melden Android-Nutzer einen Zertifikatsfehler, auf Windows-PCs öffnet die Seite ohne Warnung. Was ist die wahrscheinlichste Ursache?",
+    "a": "Der Server liefert das Zwischenzertifikat nicht mit aus",
+    "a_full": "Der Browser muss eine Kette vom Serverzertifikat bis zur vertrauten Root-CA bilden. Fehlt das Zwischenzertifikat in der Serverkonfiguration, laden manche Systeme es selbst nach, andere brechen ab. Man hinterlegt deshalb die vollständige Kette (Fullchain) am Server und prüft sie mit einem Testwerkzeug.",
+    "options": [
+      "Der Server liefert das Zwischenzertifikat nicht mit aus",
+      "Android unterstützt grundsätzlich keine TLS-Zertifikate mit RSA",
+      "Das Zertifikat wurde auf den Windows-PCs lokal zwischengespeichert",
+      "Das Root-Zertifikat muss zusätzlich am Server installiert werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie bauen eine zweistufige interne PKI auf. Warum wird die Root-CA nach dem Ausstellen des Zertifikats für die Issuing-CA ausgeschaltet und offline verwahrt?",
+    "a": "Ihr privater Schlüssel ist die Vertrauensbasis und soll nie angreifbar sein",
+    "a_full": "Wer den Schlüssel der Root-CA stiehlt, kann beliebige Zertifikate ausstellen, denen alle Clients vertrauen. Offline ist die Root-CA nur für seltene Aufgaben nötig, etwa die Verlängerung der Issuing-CA oder das Erneuern der Sperrliste. Den täglichen Betrieb übernimmt die untergeordnete CA im Netz.",
+    "options": [
+      "Ihr privater Schlüssel ist die Vertrauensbasis und soll nie angreifbar sein",
+      "Eine Root-CA kann technisch nur ohne Netzwerkverbindung betrieben werden",
+      "Offline läuft die Gültigkeitsdauer der Root-CA langsamer ab",
+      "Damit die Clients ihre Sperrliste künftig nicht mehr abrufen müssen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Zertifikat eines entlassenen Mitarbeiters wurde um 9 Uhr gesperrt. Um 14 Uhr meldet sich sein Gerät noch erfolgreich am WLAN an. Was ist eine typische Erklärung?",
+    "a": "Der RADIUS-Server nutzt noch eine zwischengespeicherte, ältere Sperrliste",
+    "a_full": "Eine CRL hat eine festgelegte Gültigkeit und wird von Prüfern bis zum nächsten Update zwischengespeichert. Eine Sperrung wird erst sichtbar, wenn eine neue CRL veröffentlicht und abgerufen wurde. Abhilfe schaffen kürzere CRL-Intervalle, Delta-CRLs, OCSP oder ein zusätzliches Deaktivieren des Kontos.",
+    "options": [
+      "Der RADIUS-Server nutzt noch eine zwischengespeicherte, ältere Sperrliste",
+      "Gesperrte Zertifikate gelten grundsätzlich noch 24 Stunden weiter",
+      "Die Sperrung wirkt erst, wenn das Zertifikat abgelaufen ist",
+      "WLAN-Anmeldungen prüfen den Sperrstatus grundsätzlich nie"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach dem Abschalten eines alten Intranet-Webservers scheitern alle VPN-Anmeldungen mit Zertifikat. Die Zertifikate selbst sind gültig. Woran liegt es vermutlich?",
+    "a": "Die im Zertifikat eingetragene CRL-Adresse (CDP) lag auf dem alten Server",
+    "a_full": "Viele VPN-Gateways lehnen ein Zertifikat ab, wenn sie den Sperrstatus nicht prüfen können. Die Adresse der Sperrliste steht fest im Zertifikat. Man stellt sie unter derselben URL wieder bereit, am besten auf einem hochverfügbaren Webserver, und plant solche Abhängigkeiten künftig mit ein.",
+    "options": [
+      "Die im Zertifikat eingetragene CRL-Adresse (CDP) lag auf dem alten Server",
+      "Der alte Webserver hat die Zertifikate beim Abschalten gelöscht",
+      "VPN-Gateways brauchen für jede Anmeldung eine Intranetseite",
+      "Das VPN nutzt den Webserver als zweiten Faktor der Anmeldung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am Samstag ist das TLS-Zertifikat des Kundenportals abgelaufen. Das Portal war bis Montag nicht nutzbar. Welche Maßnahme verhindert das künftig am besten?",
+    "a": "Ablaufdaten im Monitoring überwachen und die Erneuerung automatisieren",
+    "a_full": "Eine Warnung 30 und 14 Tage vor Ablauf gibt genug Zeit zum Handeln. Noch besser ist eine automatische Erneuerung, etwa per ACME oder Autoenrollment der internen CA. Ein Zertifikatsinventar zeigt dabei, wo welches Zertifikat eingesetzt ist.",
+    "options": [
+      "Ablaufdaten im Monitoring überwachen und die Erneuerung automatisieren",
+      "Künftig nur noch Zertifikate mit zehn Jahren Laufzeit beantragen",
+      "Das Portal bei Ablauf automatisch auf HTTP umschalten lassen",
+      "Die Systemzeit des Webservers um ein Jahr zurückstellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der private Schlüssel der Issuing-CA Ihrer internen PKI gilt nach einem Einbruch als kompromittiert. Was ist zu tun?",
+    "a": "Das CA-Zertifikat über die Root-CA sperren und alle Zertifikate neu ausstellen",
+    "a_full": "Mit dem gestohlenen Schlüssel kann der Angreifer selbst gültig wirkende Zertifikate erzeugen. Deshalb sperrt die Root-CA das Zertifikat der Issuing-CA und veröffentlicht eine neue Sperrliste. Danach wird eine neue Issuing-CA mit neuem Schlüssel aufgebaut, die alle Zertifikate neu ausstellt.",
+    "options": [
+      "Das CA-Zertifikat über die Root-CA sperren und alle Zertifikate neu ausstellen",
+      "Nur die Zertifikate der letzten Woche sperren, ältere bleiben gültig",
+      "Den Schlüssel der CA ändern, die alten Zertifikate gelten unverändert",
+      "Die CA neu starten, damit der gestohlene Schlüssel ungültig wird"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Advisory nennt den CVSS-Vektor AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H. Was sagt der Anfang AV:N/AC:L/PR:N/UI:N aus?",
+    "a": "Über das Netz, einfach, ohne Anmeldung und ohne Nutzeraktion ausnutzbar",
+    "a_full": "AV steht für den Angriffsvektor, AC für die Komplexität, PR für nötige Rechte und UI für eine nötige Benutzeraktion. Mit N, L, N, N ist die Lücke aus dem Netz leicht und ohne Konto ausnutzbar. Solche Lücken lassen sich automatisiert massenhaft angreifen und haben hohe Priorität.",
+    "options": [
+      "Über das Netz, einfach, ohne Anmeldung und ohne Nutzeraktion ausnutzbar",
+      "Nur lokal, aufwendig, mit Adminrechten und einem Nutzerklick",
+      "Über das Netz, aber nur mit gültigem Konto und hohem Aufwand",
+      "Nur mit physischem Zugang zum Gerät und nach einem Neustart"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Scan meldet CVSS 9.8 auf einem isolierten Testserver ohne Netzanbindung nach außen und CVSS 7.5 auf dem Webshop im Internet. Die Lücke im Webshop wird laut BSI bereits aktiv ausgenutzt. Was patchen Sie zuerst?",
+    "a": "Den Webshop, weil er erreichbar ist und die Lücke aktiv ausgenutzt wird",
+    "a_full": "Der CVSS-Basiswert beschreibt nur die Schwere der Lücke an sich. Für die Priorität zählen auch Erreichbarkeit, Wert des Systems und ob es schon Angriffe gibt, etwa laut KEV-Liste oder BSI-Warnung. Der Testserver folgt danach im normalen Patchzyklus.",
+    "options": [
+      "Den Webshop, weil er erreichbar ist und die Lücke aktiv ausgenutzt wird",
+      "Den Testserver, weil der höhere CVSS-Wert immer zuerst kommt",
+      "Beide erst im nächsten regulären Wartungsfenster in drei Monaten",
+      "Keinen, weil CVSS-Werte unter 10 keine Eile verlangen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für eine kritische Lücke im VPN-Gateway gibt es noch keinen Patch. Der Hersteller nennt einen Workaround. Was tun Sie bis zum Patch?",
+    "a": "Workaround umsetzen, Zugriff einschränken, Logs genau überwachen",
+    "a_full": "Ohne Patch senkt man das Risiko mit kompensierenden Maßnahmen. Dazu gehören der Workaround des Herstellers, eine Begrenzung der erlaubten Quelladressen und ein genauer Blick auf Anmeldungen und Anomalien. Die Entscheidung und das Restrisiko werden dokumentiert, der Patch wird sofort nach Erscheinen eingespielt.",
+    "options": [
+      "Workaround umsetzen, Zugriff einschränken, Logs genau überwachen",
+      "Nichts, bis der Hersteller den offiziellen Patch veröffentlicht",
+      "Das Gateway vorsorglich auf eine ältere Firmware zurücksetzen",
+      "Die Lücke im Ticket schließen, weil man nichts tun kann"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Schwachstellenscanner meldet auf einem Debian-Server OpenSSH in einer angeblich verwundbaren Version. Laut Changelog des Pakets ist die Lücke aber behoben. Wie erklären Sie das?",
+    "a": "Die Distribution hat den Fix zurückportiert, die Versionsnummer blieb gleich",
+    "a_full": "Stabile Distributionen übernehmen Sicherheitskorrekturen in ihre bestehende Paketversion (Backport). Ein Scanner, der nur die Versionsnummer liest, meldet dann eine falsche Lücke. Man prüft das über die Sicherheitshinweise der Distribution und markiert den Befund begründet als False Positive.",
+    "options": [
+      "Die Distribution hat den Fix zurückportiert, die Versionsnummer blieb gleich",
+      "Der Scanner hat recht, das Changelog ist bei Debian immer veraltet",
+      "OpenSSH meldet dem Scanner absichtlich eine falsche Version",
+      "Die Lücke ist behoben, sobald der Dienst neu gestartet wurde"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das EDR meldet auf einem Dateiserver ein verdächtiges PowerShell-Skript. Der Admin will den Server sofort neu aufsetzen. Was fehlt vorher?",
+    "a": "Isolieren, Spuren sichern und prüfen, ob weitere Systeme betroffen sind",
+    "a_full": "Wer sofort neu installiert, vernichtet Beweise und weiß nicht, wie der Angreifer hereinkam. Sitzt er schon auf anderen Systemen oder hat er Zugangsdaten erbeutet, ist der neue Server schnell wieder befallen. Erst Analyse und Eindämmung, dann Beseitigung und Wiederherstellung.",
+    "options": [
+      "Isolieren, Spuren sichern und prüfen, ob weitere Systeme betroffen sind",
+      "Nichts, eine Neuinstallation beseitigt jeden Angriff vollständig",
+      "Nur das Skript löschen und den Server danach normal weiter betreiben",
+      "Das EDR auf dem Server abschalten, damit es nicht weiter Alarm gibt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine virtuelle Maschine auf Proxmox ist wahrscheinlich kompromittiert. Wie sichern Sie Beweise, ohne den Arbeitsspeicher zu verlieren?",
+    "a": "Einen Snapshot mit RAM-Inhalt erstellen und die VM vom Netz trennen",
+    "a_full": "Bei VMs lässt sich der Zustand samt Arbeitsspeicher festhalten, ohne das Gastsystem herunterzufahren. Die Netzwerkkarte wird im Hypervisor getrennt, so bleibt die VM für die Analyse erhalten. Snapshot und Abbilder werden gehasht und mit Zeitpunkt und Bearbeiter dokumentiert.",
+    "options": [
+      "Einen Snapshot mit RAM-Inhalt erstellen und die VM vom Netz trennen",
+      "Die VM herunterfahren und danach ein Backup der Festplatte ziehen",
+      "Die VM löschen und aus dem letzten Backup neu starten",
+      "Im Gastsystem alle verdächtigen Dateien auf einen USB-Stick kopieren"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einem Ransomware-Verdacht will das Krisenteam per Firmen-Mail und im internen Chat koordinieren. Warum ist das riskant?",
+    "a": "Angreifer können die internen Kanäle mitlesen, deshalb nutzt man getrennte Kanäle",
+    "a_full": "Wer im Netz sitzt, hat oft Zugriff auf Postfächer oder Chatverläufe und sieht so die Gegenmaßnahmen. Zudem können die Systeme jederzeit ausfallen. Das Notfallkonzept legt deshalb vorab Out-of-Band-Kanäle fest, etwa Telefonliste auf Papier oder einen separaten Messenger.",
+    "options": [
+      "Angreifer können die internen Kanäle mitlesen, deshalb nutzt man getrennte Kanäle",
+      "Firmen-Mail ist zu langsam, deshalb reicht ein Rundruf per Lautsprecher",
+      "Das Krisenteam darf wegen Datenschutz gar nicht kommunizieren",
+      "Interne Kanäle dürfen nur mit Zustimmung des Betriebsrats genutzt werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In /var/log/auth.log stehen um 03:10 Uhr über 2.000 Zeilen \"Failed password for root from 203.0.113.44\". Um 03:12 Uhr folgt \"Accepted password for root from 203.0.113.44\". Wie bewerten Sie das?",
+    "a": "Ein Brute-Force-Angriff war erfolgreich, der Server gilt als kompromittiert",
+    "a_full": "Die erfolgreiche Anmeldung von derselben Adresse nach vielen Fehlversuchen zeigt, dass das root-Kennwort erraten wurde. Der Server wird isoliert und untersucht, Kennwörter und Schlüssel werden getauscht. Danach gehören Root-Login per Passwort abgeschaltet und fail2ban oder ein Zugriff nur über VPN eingerichtet.",
+    "options": [
+      "Ein Brute-Force-Angriff war erfolgreich, der Server gilt als kompromittiert",
+      "Unbedenklich, weil die Anmeldung am Ende regulär akzeptiert wurde",
+      "Ein Fehler im Logdienst, der Meldungen doppelt schreibt",
+      "Ein normaler Kennworttest, den SSH nachts selbst durchführt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Sicherheitsprotokoll eines DC stehen nachts um 02:14 Uhr die Ereignisse 4720 und kurz danach 4728 mit dem Konto einer Auszubildenden als Auslöser. Was ist passiert?",
+    "a": "Ein Konto wurde angelegt und in eine globale Sicherheitsgruppe aufgenommen",
+    "a_full": "4720 bedeutet \"Benutzerkonto wurde erstellt\", 4728 \"Mitglied zu einer globalen Sicherheitsgruppe hinzugefügt\". Nachts und durch ein Konto ohne solche Aufgaben deutet das auf einen Angreifer hin, der sich dauerhaften Zugang verschafft. Man prüft sofort die Gruppe, etwa Domänen-Admins, und behandelt den Fall als Vorfall.",
+    "options": [
+      "Ein Konto wurde angelegt und in eine globale Sicherheitsgruppe aufgenommen",
+      "Das Konto der Auszubildenden wurde wegen Fehlversuchen gesperrt",
+      "Die Auszubildende hat sich zweimal nacheinander erfolgreich angemeldet",
+      "Ein Gruppenrichtlinienobjekt wurde nachts neu auf den DC angewendet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das SIEM zeigt 4625-Ereignisse von einer externen IP: in 20 Minuten 380 verschiedene Benutzernamen mit je einem oder zwei Fehlversuchen. Was liegt vor?",
+    "a": "Password Spraying mit wenigen gängigen Kennwörtern gegen viele Konten",
+    "a_full": "Beim Spraying probiert der Angreifer ein häufiges Kennwort bei vielen Konten aus und bleibt so unter der Sperrschwelle. Ein klassischer Brute-Force-Angriff hätte dagegen viele Versuche auf wenige Konten. Hilfreich sind MFA, gesperrte Legacy-Protokolle und eine Erkennungsregel über viele Konten je Quelle.",
+    "options": [
+      "Password Spraying mit wenigen gängigen Kennwörtern gegen viele Konten",
+      "Ein Brute-Force-Angriff auf ein einzelnes Administratorkonto",
+      "Ein Ausfall des DC, der alle Anmeldungen ablehnt",
+      "Nutzer, die nach dem Urlaub ihr Kennwort vergessen haben"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das SIEM alarmiert: Ein Konto meldet sich um 10:02 Uhr in Köln am VPN an und um 10:15 Uhr aus Brasilien am Webmail. Welche Regel hat angeschlagen?",
+    "a": "Eine Impossible-Travel-Regel, die unmögliche Ortswechsel erkennt",
+    "a_full": "Die Regel vergleicht Zeit und Standort aufeinanderfolgender Anmeldungen. In 13 Minuten kommt niemand von Köln nach Brasilien, also nutzt wahrscheinlich jemand anderes die Zugangsdaten. Man prüft die Sitzung, sperrt sie gegebenenfalls und setzt das Kennwort zurück, VPN-Dienste des Nutzers können aber auch Fehlalarme auslösen.",
+    "options": [
+      "Eine Impossible-Travel-Regel, die unmögliche Ortswechsel erkennt",
+      "Eine Regel, die Anmeldungen außerhalb der Arbeitszeit meldet",
+      "Eine Regel, die zu viele Fehlversuche in kurzer Zeit meldet",
+      "Eine Regel, die abgelaufene Kennwörter vor der Anmeldung meldet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das neue SIEM erzeugt täglich 600 Alarme, das Team schaut kaum noch hin. Was ist der richtige Weg?",
+    "a": "Regeln tunen, harmlose Muster ausnehmen und Alarme nach Risiko ordnen",
+    "a_full": "Eine Alarmflut führt dazu, dass echte Angriffe übersehen werden. Man analysiert die häufigsten Fehlalarme, passt Schwellwerte an und dokumentiert begründete Ausnahmen. Wenige gut beschriebene Anwendungsfälle mit klarer Reaktion sind wertvoller als viele ungeprüfte Standardregeln.",
+    "options": [
+      "Regeln tunen, harmlose Muster ausnehmen und Alarme nach Risiko ordnen",
+      "Alle Alarme abschalten und nur noch Berichte am Monatsende lesen",
+      "Die Zahl der Logquellen halbieren, damit weniger Alarme entstehen",
+      "Alle Alarme künftig per Mail an sämtliche Mitarbeiter verteilen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Domänencontroller ist ans SIEM angebunden. Bei einem Test mit falschen Kennwörtern erscheinen dort aber keine fehlgeschlagenen Anmeldungen. Was ist die wahrscheinlichste Ursache?",
+    "a": "Die Überwachungsrichtlinie protokolliert fehlgeschlagene Anmeldungen nicht",
+    "a_full": "Ein SIEM kann nur auswerten, was die Quelle überhaupt protokolliert. Ist in der Überwachungsrichtlinie die Anmeldeüberwachung für Fehler nicht aktiv, entsteht kein Ereignis 4625. Die Richtlinie wird per GPO für alle DCs gesetzt und die Anbindung danach mit einem Test geprüft.",
+    "options": [
+      "Die Überwachungsrichtlinie protokolliert fehlgeschlagene Anmeldungen nicht",
+      "Das SIEM zeigt Fehlversuche grundsätzlich erst nach einer Woche an",
+      "Fehlgeschlagene Anmeldungen werden nur auf Clients protokolliert",
+      "Der DC löscht Fehlversuche sofort, wenn das Kennwort stimmt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie modellieren nach IT-Grundschutz einen neuen Linux-Server, auf dem ein Apache-Webserver läuft. Wie gehen Sie vor?",
+    "a": "Mehrere Bausteine zuordnen, z.B. SYS.1.3 für Linux und APP.3.2 für Apache",
+    "a_full": "Bei der Modellierung erhält jedes Zielobjekt alle Bausteine, die darauf passen. Der Server bekommt die Server- und Linux-Bausteine, die Anwendung den Webserver-Baustein. Aus den Anforderungen dieser Bausteine ergibt sich später der Grundschutz-Check.",
+    "options": [
+      "Mehrere Bausteine zuordnen, z.B. SYS.1.3 für Linux und APP.3.2 für Apache",
+      "Genau einen Baustein wählen, der insgesamt am besten zum Server passt",
+      "Nur den Baustein für Webanwendungen, weil der Server zweitrangig ist",
+      "Keinen Baustein, weil Linux-Server im Kompendium gar nicht vorkommen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine alte Maschinensteuerung läuft auf Windows 7 und kann nicht aktualisiert werden. Der Admin will sie einfach weiter betreiben. Wie geht man im ISMS korrekt vor?",
+    "a": "Risiko bewerten, abschotten und von der Leitung befristet akzeptieren lassen",
+    "a_full": "Ein Altsystem ohne Updates ist ein bekanntes Risiko, das nicht stillschweigend weiterlaufen darf. Man isoliert es etwa in ein eigenes Netzsegment und beschränkt Zugriffe. Die Risikoakzeptanz trifft die Leitung schriftlich und mit Prüftermin, weil sie die Verantwortung trägt.",
+    "options": [
+      "Risiko bewerten, abschotten und von der Leitung befristet akzeptieren lassen",
+      "Der Admin entscheidet allein, weil er das System am besten kennt",
+      "Das System gilt als sicher, solange es noch nie angegriffen wurde",
+      "Das Risiko wird an den Hersteller übertragen, weil er keine Updates liefert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein internes ISMS-Audit stellt fest, dass die vorgeschriebene Rezertifizierung der Adminrechte seit einem Jahr nicht stattgefunden hat. Was folgt daraus?",
+    "a": "Eine Korrekturmaßnahme mit Ursache, Verantwortlichem, Frist und Wirksamkeitsprüfung",
+    "a_full": "Eine Abweichung wird nicht nur behoben, sondern auch auf ihre Ursache untersucht, etwa fehlende Zuständigkeit. Die Maßnahme erhält einen Verantwortlichen und eine Frist. Beim nächsten Audit wird geprüft, ob sie gewirkt hat, so schließt sich der PDCA-Kreislauf.",
+    "options": [
+      "Eine Korrekturmaßnahme mit Ursache, Verantwortlichem, Frist und Wirksamkeitsprüfung",
+      "Die Vorgabe zur Rezertifizierung wird gestrichen, weil sie nicht gelebt wird",
+      "Der Befund bleibt bis zum nächsten externen Audit unbearbeitet liegen",
+      "Der zuständige Admin wird abgemahnt, damit gilt der Befund als erledigt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Totalausfall sollen im Rechenzentrum ERP, Dateiserver, Domänencontroller und Datenbankserver wieder anlaufen. In welcher Reihenfolge starten Sie?",
+    "a": "Zuerst DC mit DNS, dann Datenbankserver, danach ERP und Dateiserver",
+    "a_full": "Fast alle Dienste brauchen Namensauflösung und Anmeldung, deshalb kommen AD und DNS zuerst. Das ERP braucht seine Datenbank, also startet diese vorher. Diese Abhängigkeiten gehören als Wiederanlaufplan ins Notfallhandbuch, damit niemand sie im Ernstfall erraten muss.",
+    "options": [
+      "Zuerst DC mit DNS, dann Datenbankserver, danach ERP und Dateiserver",
+      "Zuerst das ERP, weil es geschäftlich am wichtigsten ist",
+      "Alle Server gleichzeitig starten, damit es am schnellsten geht",
+      "Zuerst den Dateiserver, weil dort die meisten Daten liegen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Notfallhandbuch liegt als Word-Datei auf dem Dateiserver, die Passwörter für die Wiederherstellung im Passwort-Manager auf demselben Cluster. Was ist das Problem?",
+    "a": "Bei einem Ausfall oder einer Verschlüsselung des Clusters ist beides nicht erreichbar",
+    "a_full": "Das Notfallhandbuch wird genau dann gebraucht, wenn die IT nicht läuft. Es muss daher auch unabhängig davon verfügbar sein, etwa als aktueller Ausdruck im Tresor und als Kopie außerhalb. Notfallzugänge werden ebenso getrennt verwahrt, z.B. versiegelt oder in einem externen Tresor.",
+    "options": [
+      "Bei einem Ausfall oder einer Verschlüsselung des Clusters ist beides nicht erreichbar",
+      "Word-Dateien dürfen nach BSI nicht für Notfallhandbücher genutzt werden",
+      "Ein Notfallhandbuch darf grundsätzlich keine Passwörter nennen",
+      "Das Handbuch muss vom Hersteller des Clusters geschrieben werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Helpdesk-Mitarbeiter sind Mitglied der Domänen-Admins, damit sie Kennwörter zurücksetzen können. Wie setzen Sie Least Privilege um?",
+    "a": "Das Reset-Recht auf die Benutzer-OUs an eine Helpdesk-Gruppe delegieren",
+    "a_full": "Domänen-Admins haben volle Kontrolle über alle Tier-0-Systeme, das ist für einen Kennwort-Reset weit zu viel. Mit dem Assistenten zum Zuweisen der Objektverwaltung erhält eine Gruppe nur dieses Recht auf ausgewählte OUs. Admin- und Dienstkonten liegen in eigenen OUs und bleiben ausgenommen.",
+    "options": [
+      "Das Reset-Recht auf die Benutzer-OUs an eine Helpdesk-Gruppe delegieren",
+      "Den Helpdesk aus den Domänen-Admins in die Schema-Admins verschieben",
+      "Den Helpdesk die Kennwörter an einem gemeinsamen Admin-PC ändern lassen",
+      "Allen Benutzern erlauben, fremde Kennwörter selbst zurückzusetzen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ihre Tier-0-Administratoren verwalten die DCs von ihrem normalen Büro-PC aus, auf dem sie auch Mails lesen und surfen. Was empfehlen Sie?",
+    "a": "Eigene gehärtete Admin-Arbeitsplätze (PAW) nur für Tier-0-Aufgaben",
+    "a_full": "Wird der Büro-PC über eine Mail oder Webseite infiziert, kann der Angreifer die Admin-Anmeldedaten beim nächsten DC-Zugriff abgreifen. Eine Privileged Access Workstation hat keinen Mail- und Internetzugang und nur die nötigen Werkzeuge. So bleibt die höchste Ebene vom Alltagsrisiko getrennt.",
+    "options": [
+      "Eigene gehärtete Admin-Arbeitsplätze (PAW) nur für Tier-0-Aufgaben",
+      "Einen stärkeren Virenscanner auf den Büro-PCs der Admins",
+      "Die DC-Verwaltung per RDP vom Smartphone der Admins",
+      "Ein zweites Browserprofil auf dem Büro-PC nur für Admin-Seiten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Newsletter-Dienstleister versendet im Namen von firma.de. SPF ist beim Empfänger \"pass\" für die Domain des Dienstleisters, DMARC schlägt trotzdem fehl. Warum?",
+    "a": "Die geprüfte Domain passt nicht zur From-Domain (fehlendes Alignment)",
+    "a_full": "DMARC verlangt, dass SPF oder DKIM für eine Domain besteht, die zur sichtbaren From-Domain passt. Der Dienstleister nutzt als Envelope-Absender aber seine eigene Domain. Die Lösung ist meist eine DKIM-Signatur mit d=firma.de, deren Schlüssel man im eigenen DNS veröffentlicht.",
+    "options": [
+      "Die geprüfte Domain passt nicht zur From-Domain (fehlendes Alignment)",
+      "DMARC prüft nur die IP-Adresse des Empfängers und nie den Absender",
+      "SPF und DMARC schließen sich bei Dienstleistern gegenseitig aus",
+      "Newsletter dürfen nach DMARC grundsätzlich nicht zugestellt werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für firma.de gibt es im DNS zwei TXT-Einträge: \"v=spf1 mx -all\" und \"v=spf1 include:mailanbieter.example -all\". Empfänger melden SPF-Fehler. Was ist falsch?",
+    "a": "Pro Domain ist nur ein SPF-Eintrag erlaubt, beide gehören zusammen",
+    "a_full": "Findet ein Empfänger mehrere Einträge mit v=spf1, liefert die Prüfung einen Permerror. Richtig ist ein einziger Eintrag, z.B. \"v=spf1 mx include:mailanbieter.example -all\". Dabei achtet man auf die Grenze von zehn DNS-Abfragen pro Prüfung.",
+    "options": [
+      "Pro Domain ist nur ein SPF-Eintrag erlaubt, beide gehören zusammen",
+      "Die Einträge brauchen zusätzlich eine Priorität wie MX-Einträge",
+      "SPF-Einträge dürfen nur als Typ CNAME im DNS angelegt werden",
+      "Mit -all werden auch alle eigenen Mails vom Empfänger abgelehnt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Skript auf einer Cloud-VM lädt Dateien in den Objektspeicher. Dafür steht ein dauerhafter Zugriffsschlüssel im Klartext im Skript. Was ist besser?",
+    "a": "Der VM eine verwaltete Identität mit genau diesem Recht zuweisen",
+    "a_full": "Statische Schlüssel im Code geraten leicht in Repositorys, Backups oder Logs und gelten, bis jemand sie sperrt. Eine Rolle oder Managed Identity liefert kurzlebige Tokens, die die Plattform selbst erneuert. Die Rolle erhält nur Schreibrechte auf den einen Bucket.",
+    "options": [
+      "Der VM eine verwaltete Identität mit genau diesem Recht zuweisen",
+      "Den Schlüssel im Skript per Base64 unkenntlich machen",
+      "Den Schlüssel des Root-Kontos nutzen, weil er nie abläuft",
+      "Den Schlüssel in einer Textdatei neben dem Skript ablegen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als erstes formal erledigen?",
+    "a": "Sich beim BSI registrieren und eine Kontaktstelle für Meldungen benennen",
+    "a_full": "Betroffene Einrichtungen müssen sich selbst beim BSI registrieren, das BSI schreibt sie nicht an. Dabei werden unter anderem Sektor, Kontaktdaten und IP-Bereiche angegeben. Danach laufen Meldepflichten und Risikomanagementmaßnahmen, die Leitung muss sie billigen und überwachen.",
+    "options": [
+      "Sich beim BSI registrieren und eine Kontaktstelle für Meldungen benennen",
+      "Warten, bis das BSI ihn schriftlich zur Teilnahme auffordert",
+      "Eine ISO-27001-Zertifizierung innerhalb eines Monats vorlegen",
+      "Alle Server in ein deutsches Rechenzentrum verlagern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine neue Laufwerkszuordnung per GPO kommt bei einer Mitarbeiterin nicht an, bei Kollegen schon. Mit welchem Werkzeug finden Sie heraus, ob das GPO bei ihr gefiltert wurde?",
+    "a": "Mit gpresult /r oder gpresult /h bericht.html im Kontext der Benutzerin",
+    "a_full": "gpresult zeigt, welche GPOs für Computer und Benutzer angewendet wurden und welche nicht. Bei nicht angewendeten GPOs steht der Grund dabei, z.B. Sicherheitsfilterung, WMI-Filter oder leeres GPO. Der HTML-Bericht zeigt zusätzlich, welches GPO bei einer Einstellung gewonnen hat.",
+    "options": [
+      "Mit gpresult /r oder gpresult /h bericht.html im Kontext der Benutzerin",
+      "Mit gpupdate /force und einem anschließenden Neustart des Clients",
+      "Mit dcdiag /v auf dem Domänencontroller am Standort der Benutzerin",
+      "Mit repadmin /showrepl auf dem Rechner der betroffenen Benutzerin"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "An der OU Vertrieb sind zwei GPOs verknüpft. GPO A setzt den Bildschirmschoner auf 10 Minuten, GPO B auf 5 Minuten. A hat die Verknüpfungsreihenfolge 1, B die 2. Welcher Wert gilt?",
+    "a": "10 Minuten, weil das GPO mit Reihenfolge 1 zuletzt verarbeitet wird und gewinnt",
+    "a_full": "Innerhalb einer OU werden die GPOs von der höchsten zur niedrigsten Nummer verarbeitet. Das GPO mit der Verknüpfungsreihenfolge 1 kommt zuletzt und überschreibt widersprüchliche Einstellungen. Die Reihenfolge lässt sich in der Gruppenrichtlinienverwaltung mit den Pfeiltasten ändern.",
+    "options": [
+      "10 Minuten, weil das GPO mit Reihenfolge 1 zuletzt verarbeitet wird und gewinnt",
+      "5 Minuten, weil das zuletzt erstellte GPO bei Konflikten immer gewinnt",
+      "5 Minuten, weil bei Konflikten immer der strengere Wert angewendet wird",
+      "Keiner, weil widersprüchliche GPOs an einer OU sich gegenseitig aufheben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin hat bei einem Benutzer-GPO in der Sicherheitsfilterung Authentifizierte Benutzer entfernt und nur die Gruppe GG_Buchhaltung eingetragen. Seitdem wirkt das GPO bei niemandem. Was fehlt?",
+    "a": "Leserecht für Computerkonten, z.B. über Authentifizierte Benutzer",
+    "a_full": "Windows liest GPOs im Sicherheitskontext des Computers ein, auch Benutzereinstellungen. Ohne Leserecht für das Computerkonto wird das GPO gar nicht erst geladen. Richtig ist: Authentifizierte Benutzer oder Domänencomputer nur mit Lesen in der Registerkarte Delegierung eintragen, das Übernehmen bleibt bei der Gruppe.",
+    "options": [
+      "Leserecht für Computerkonten, z.B. über Authentifizierte Benutzer",
+      "Die Gruppe muss zusätzlich das Recht Vollzugriff auf das GPO erhalten",
+      "Das GPO muss zusätzlich an der Domäne verknüpft und erzwungen werden",
+      "Die Benutzer müssen einmal gpupdate /force mit Adminrechten ausführen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein GPO mit Einstellungen unter Computerkonfiguration ist an der OU Mitarbeiter verknüpft. Dort liegen nur Benutzerkonten. Warum wirken die Einstellungen nicht?",
+    "a": "Computereinstellungen gelten nur für Computerkonten in der verknüpften OU oder darunter",
+    "a_full": "Ein GPO wirkt auf die Objekte in der OU, an der es verknüpft ist. Die Computerkonfiguration greift deshalb nur, wenn Computerkonten dort liegen. Das GPO muss an die OU mit den Rechnern verknüpft werden. Die Loopbackverarbeitung hilft hier nicht, sie betrifft nur Benutzereinstellungen.",
+    "options": [
+      "Computereinstellungen gelten nur für Computerkonten in der verknüpften OU oder darunter",
+      "Computereinstellungen werden erst nach sieben Tagen automatisch übernommen",
+      "Computereinstellungen gelten grundsätzlich nur bei aktivierter Loopbackverarbeitung",
+      "Computereinstellungen wirken nur, wenn das GPO an der Domäne verknüpft ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin meldet sich per RDP am Fileserver an und kann in D:\\Daten\\Einkauf Dateien ändern. Über \\\\fs01\\Einkauf bekommt er nur Lesezugriff. Woran liegt das?",
+    "a": "Die Freigabeberechtigung gilt nur beim Zugriff über das Netz und erlaubt dort nur Lesen",
+    "a_full": "Beim lokalen Zugriff am Server wirken nur die NTFS-Berechtigungen. Über das Netz werden Freigabe- und NTFS-Berechtigung kombiniert, und die restriktivere gilt. Steht die Freigabe auf Lesen, hilft auch Ändern im NTFS nichts.",
+    "options": [
+      "Die Freigabeberechtigung gilt nur beim Zugriff über das Netz und erlaubt dort nur Lesen",
+      "Die NTFS-Berechtigung gilt nur bei lokaler Anmeldung am Server",
+      "Über RDP gelten automatisch die Rechte des lokalen Administrators",
+      "Der UNC-Zugriff nutzt ein zwischengespeichertes Kerberos-Ticket"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einer Freigabe sehen alle Mitarbeiter sämtliche Abteilungsordner, erhalten beim Öffnen fremder Ordner aber Zugriff verweigert. Die Geschäftsleitung will nur die eigenen Ordner sichtbar haben. Was aktivieren Sie?",
+    "a": "Die zugriffsbasierte Aufzählung (Access-based Enumeration) für die Freigabe",
+    "a_full": "Mit der zugriffsbasierten Aufzählung blendet der Server Ordner und Dateien aus, auf die der Benutzer kein Leserecht hat. Die Berechtigungen selbst ändern sich dadurch nicht. Die Funktion wird in den Eigenschaften der Freigabe im Server-Manager eingeschaltet.",
+    "options": [
+      "Die zugriffsbasierte Aufzählung (Access-based Enumeration) für die Freigabe",
+      "Das Attribut Versteckt für alle Abteilungsordner auf dem Server",
+      "Ein Dollarzeichen am Ende der Freigabe, um sie zu verbergen",
+      "Die Offline-Verfügbarkeit der Freigabe für alle Benutzer abschalten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Außenstelle hat einen eigenen DHCP-Server. Fällt er aus, soll der Server in der Zentrale einspringen, im Normalbetrieb aber keine Adressen vergeben. Welcher DHCP-Failover-Modus passt?",
+    "a": "Hot Standby mit dem Server der Außenstelle als aktivem Partner",
+    "a_full": "Beim Hot Standby vergibt nur der aktive Server Adressen, der Partner hält eine Reserve und übernimmt erst bei Ausfall. Das passt, wenn die Zentrale als Ersatz für mehrere Standorte dient. Im Lastenausgleichsmodus würden beide Server dauerhaft Adressen verteilen, auch über die WAN-Strecke.",
+    "options": [
+      "Hot Standby mit dem Server der Außenstelle als aktivem Partner",
+      "Lastenausgleich mit einer Verteilung von 50 zu 50 Prozent auf beide",
+      "Zwei getrennte Bereiche nach der 80/20-Regel ohne Failover-Beziehung",
+      "Ein DHCP-Relay in der Außenstelle, das direkt zur Zentrale weiterleitet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Über ein VPN zu einer Partnerfirma sollen interne Namen der Zone partner.intern aufgelöst werden. Alle anderen Anfragen laufen wie bisher. Was richten Sie auf Ihrem DNS-Server ein?",
+    "a": "Eine bedingte Weiterleitung für partner.intern an die DNS-Server des Partners",
+    "a_full": "Eine bedingte Weiterleitung schickt nur Anfragen für eine bestimmte Domäne an festgelegte Server. Alle übrigen Anfragen gehen weiter an die normalen Weiterleitungen oder Root-Hints. Die DNS-Server des Partners müssen über das VPN erreichbar sein und Anfragen aus Ihrem Netz zulassen.",
+    "options": [
+      "Eine bedingte Weiterleitung für partner.intern an die DNS-Server des Partners",
+      "Eine globale Weiterleitung aller Anfragen an die DNS-Server des Partners",
+      "Eine eigene primäre Zone partner.intern mit manuell gepflegten Einträgen",
+      "Einen zusätzlichen Eintrag in der hosts-Datei jedes einzelnen Clients"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In der AD-integrierten DNS-Zone stehen viele A-Einträge von Notebooks, die längst ausgemustert sind. Neue Geräte erhalten dadurch falsche Namensauflösungen. Was richten Sie ein?",
+    "a": "Alterung und Aufräumen (Scavenging) für die Zone und den DNS-Server",
+    "a_full": "Dynamisch registrierte Einträge tragen einen Zeitstempel. Mit aktivierter Alterung löscht der Server Einträge, die über die eingestellten Intervalle nicht aktualisiert wurden. Statisch angelegte Einträge sind davon nicht betroffen. Die Funktion muss an der Zone und am Server aktiviert sein.",
+    "options": [
+      "Alterung und Aufräumen (Scavenging) für die Zone und den DNS-Server",
+      "Einen kürzeren TTL-Wert im SOA-Eintrag der betroffenen Zone",
+      "Einen Zonentransfer an einen zusätzlichen sekundären DNS-Server",
+      "Einen nächtlichen Neustart des DNS-Dienstes auf allen Domänencontrollern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mehrere VMs auf einem Host werden plötzlich angehalten. Der Datenspeicher ist voll, darauf liegen große Delta-Dateien alter Snapshots. Was ist die Ursache?",
+    "a": "Die Snapshot-Deltas sind über Monate gewachsen und haben den Speicher gefüllt",
+    "a_full": "Nach einem Snapshot schreibt die VM alle Änderungen in eine Delta-Datei, die ständig wächst. Ist der Datenspeicher voll, hält der Hypervisor die VMs an, um Datenverlust zu vermeiden. Snapshots gehören nur kurzfristig vor Änderungen angelegt und danach wieder zusammengeführt. Ein Monitoring auf Snapshot-Alter hilft.",
+    "options": [
+      "Die Snapshot-Deltas sind über Monate gewachsen und haben den Speicher gefüllt",
+      "Die VMs haben ihren Arbeitsspeicher in Auslagerungsdateien geschrieben",
+      "Der Hypervisor legt bei jedem Neustart automatisch neue Snapshots an",
+      "Die Thin-Provisioning-Datenträger wurden in Thick umgewandelt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Virtualisierungshost ist mehr RAM an VMs vergeben, als physisch vorhanden ist. Alle VMs reagieren träge, der Host lagert Speicher auf Datenträger aus. Was ist der richtige Schritt?",
+    "a": "Die Speicherüberbuchung abbauen: VMs verteilen, RAM der VMs anpassen oder Host aufrüsten",
+    "a_full": "Speicherüberbuchung geht nur gut, solange die VMs ihren Speicher nicht gleichzeitig voll nutzen. Muss der Host auslagern, werden alle VMs langsam. Man verschiebt VMs auf andere Hosts, reduziert überdimensionierte Zuweisungen anhand der tatsächlichen Nutzung oder erweitert den Arbeitsspeicher.",
+    "options": [
+      "Die Speicherüberbuchung abbauen: VMs verteilen, RAM der VMs anpassen oder Host aufrüsten",
+      "Allen VMs zusätzliche vCPUs zuweisen, damit sie schneller rechnen",
+      "Die Auslagerungsdatei des Hosts auf die doppelte Größe erweitern",
+      "In allen VMs die Auslagerungsdatei abschalten, um Zugriffe zu sparen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Update des Datenbank-Images wurde der Container mit docker compose neu erstellt. Seitdem ist die Datenbank leer. Was wurde versäumt?",
+    "a": "Das Datenverzeichnis der Datenbank lag nicht in einem Volume",
+    "a_full": "Alles, was ein Container in sein eigenes Dateisystem schreibt, verschwindet beim Löschen und Neuerstellen des Containers. Datenbankdateien gehören in ein benanntes Volume oder einen Bind Mount, z.B. für /var/lib/mysql. Dann übersteht der Datenbestand auch ein Image-Update.",
+    "options": [
+      "Das Datenverzeichnis der Datenbank lag nicht in einem Volume",
+      "Das neue Image wurde nicht mit docker pull vorher geladen",
+      "Der Container wurde ohne die Option -p für die Ports gestartet",
+      "Die Datenbank wurde vor dem Update nicht mit docker stop beendet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Azubi löscht in Kubernetes einen Pod mit kubectl delete pod web-7f9c. Kurz darauf läuft wieder ein Pod mit ähnlichem Namen. Warum?",
+    "a": "Ein Deployment hält über sein ReplicaSet die gewünschte Anzahl Pods aufrecht",
+    "a_full": "In Kubernetes beschreibt man einen Sollzustand, z.B. drei Replikate einer Anwendung. Das Deployment sorgt über ein ReplicaSet dafür, dass fehlende Pods sofort neu gestartet werden. Wer die Anwendung wirklich verkleinern will, ändert die Anzahl der Replikate im Deployment.",
+    "options": [
+      "Ein Deployment hält über sein ReplicaSet die gewünschte Anzahl Pods aufrecht",
+      "Der Pod wurde nur angehalten und wird nach kurzer Zeit wieder fortgesetzt",
+      "kubectl delete wirkt erst, wenn der Knoten danach neu gestartet wird",
+      "Ein Service startet gelöschte Pods automatisch an seiner Adresse neu"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Proxmox-Cluster besteht aus zwei Knoten. Fällt einer aus, lassen sich auf dem verbleibenden Knoten keine VMs mehr starten oder ändern. Wie lösen Sie das dauerhaft?",
+    "a": "Eine dritte Stimme ergänzen, z.B. ein QDevice oder einen dritten Knoten",
+    "a_full": "Proxmox braucht die Mehrheit der Stimmen (Quorum), damit der Cluster Änderungen zulässt. Bei zwei Knoten hat der verbleibende nur die Hälfte und sperrt sich, um Split Brain zu vermeiden. Ein externes QDevice auf einem kleinen Rechner oder ein dritter Knoten liefert die fehlende Stimme.",
+    "options": [
+      "Eine dritte Stimme ergänzen, z.B. ein QDevice oder einen dritten Knoten",
+      "Auf beiden Knoten eine zweite Netzwerkkarte für die Migration einbauen",
+      "Den Cluster auflösen und beide Knoten mit gleicher Konfiguration betreiben",
+      "Beiden Knoten jeweils zwei Stimmen im Cluster zuweisen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Hyper-V-Host bindet eine iSCSI-LUN über zwei Netzwerkkarten in zwei getrennten Storage-Netzen an. Fällt ein Pfad aus, soll der Zugriff weiterlaufen. Was richten Sie ein?",
+    "a": "Multipath I/O (MPIO) mit je einer iSCSI-Sitzung pro Pfad",
+    "a_full": "MPIO erkennt, dass dieselbe LUN über mehrere Wege erreichbar ist, und nutzt sie zur Ausfallsicherheit und Lastverteilung. Für iSCSI nimmt man dafür getrennte Pfade statt eines NIC-Teams. Der Initiator baut zu jedem Target-Portal eine eigene Sitzung auf.",
+    "options": [
+      "Multipath I/O (MPIO) mit je einer iSCSI-Sitzung pro Pfad",
+      "Ein NIC-Team beider Karten mit einer gemeinsamen IP-Adresse",
+      "Zwei LUNs mit denselben Daten und einem Software-RAID 1 darüber",
+      "Einen zweiten iSCSI-Initiator-Dienst auf einem anderen Port"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Deduplizierung auf dem Backup-Speicher spart bei den VM-Sicherungen sehr viel Platz. Bei den Sicherungen des verschlüsselten Archivservers bringt sie fast nichts. Warum?",
+    "a": "Verschlüsselte Daten enthalten kaum wiederkehrende Blöcke",
+    "a_full": "Deduplizierung speichert gleiche Datenblöcke nur einmal. Viele VMs mit demselben Betriebssystem liefern sehr viele gleiche Blöcke. Verschlüsselte oder stark komprimierte Daten sehen dagegen zufällig aus, gleiche Blöcke sind selten. Deshalb verschlüsselt man möglichst erst nach der Deduplizierung.",
+    "options": [
+      "Verschlüsselte Daten enthalten kaum wiederkehrende Blöcke",
+      "Verschlüsselte Daten dürfen aus Datenschutzgründen nicht dedupliziert werden",
+      "Deduplizierung funktioniert grundsätzlich nur bei Sicherungen von VMs",
+      "Der Archivserver sichert inkrementell, das schließt Deduplizierung aus"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Das Backup eines Linux-Servers kopiert nachts einfach die Dateien unter /var/lib/mysql, während die Datenbank läuft. Bei einem Restore-Test startet MariaDB nicht. Was ist das Problem?",
+    "a": "Die Dateien einer laufenden Datenbank werden nicht konsistent gesichert",
+    "a_full": "Während der Kopie ändert die Datenbank ihre Dateien weiter, die Sicherung enthält dann einen gemischten Zustand. Richtig ist ein Dump, z.B. mit mariadb-dump, oder eine Sicherung, die die Datenbank vorher in einen konsistenten Zustand bringt. Unter Windows übernehmen das VSS-fähige Backupprogramme.",
+    "options": [
+      "Die Dateien einer laufenden Datenbank werden nicht konsistent gesichert",
+      "Das Verzeichnis /var/lib/mysql darf nur mit root-Rechten gelesen werden",
+      "MariaDB kann grundsätzlich nur auf identischer Hardware wiederhergestellt werden",
+      "Die Sicherung war zu groß, weil Datenbankdateien nicht komprimiert werden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde spiegelt seinen Fileserver per Replikation im Minutentakt auf einen zweiten Standort und will deshalb auf Backups verzichten. Was entgegnen Sie?",
+    "a": "Replikation überträgt auch Löschungen und Verschlüsselung sofort, ältere Stände fehlen",
+    "a_full": "Replikation schützt gut vor dem Ausfall von Hardware oder Standort. Löscht ein Benutzer versehentlich Dateien oder verschlüsselt Ransomware den Server, wird das ebenfalls auf die Kopie übertragen. Ein Backup mit mehreren Versionen und Aufbewahrungsfristen bleibt deshalb nötig.",
+    "options": [
+      "Replikation überträgt auch Löschungen und Verschlüsselung sofort, ältere Stände fehlen",
+      "Replikation ist nur über schnelle Glasfaserleitungen zuverlässig möglich",
+      "Replikation erlaubt keine Wiederherstellung auf einen anderen Server",
+      "Replikation ist teurer als ein Backup und lohnt sich für Dateien nicht"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient Fencing (auch STONITH genannt) in einem Hochverfügbarkeitscluster?",
+    "a": "Einen nicht mehr erreichbaren Knoten sicher abzuschalten, bevor ein anderer übernimmt",
+    "a_full": "Antwortet ein Knoten nicht mehr, weiß der Cluster nicht, ob er wirklich ausgefallen ist oder nur die Verbindung fehlt. Fencing schaltet den Knoten z.B. über IPMI oder eine schaltbare Steckdosenleiste ab. So greifen nie zwei Knoten gleichzeitig auf dieselben Daten zu.",
+    "options": [
+      "Einen nicht mehr erreichbaren Knoten sicher abzuschalten, bevor ein anderer übernimmt",
+      "Den Datenverkehr zwischen den Clusterknoten durchgehend zu verschlüsseln",
+      "Die Last gleichmäßig auf alle aktiven Knoten des Clusters zu verteilen",
+      "Einen ausgefallenen Knoten automatisch neu zu installieren und einzubinden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Das Monitoring meldet für einen Server alle paar Minuten abwechselnd Warnung und OK, weil die CPU-Last um den Schwellwert von 80 % schwankt. Das Team ignoriert die Meldungen inzwischen. Was verbessern Sie?",
+    "a": "Erst nach mehreren Überschreitungen alarmieren und mit Hysterese entwarnen",
+    "a_full": "Werte, die um einen Schwellwert pendeln, erzeugen eine Alarmflut. Hilfreich ist, erst nach mehreren aufeinanderfolgenden Überschreitungen zu alarmieren. Mit einer Hysterese wird erst wieder entwarnt, wenn der Wert deutlich unter die Schwelle fällt, z.B. unter 70 %.",
+    "options": [
+      "Erst nach mehreren Überschreitungen alarmieren und mit Hysterese entwarnen",
+      "Den Server aus dem Monitoring nehmen, bis die Last dauerhaft gesunken ist",
+      "Das Abfrageintervall auf eine Sekunde senken, um genauer zu messen",
+      "Die Warnschwelle auf 99 % setzen, damit nur noch echte Ausfälle melden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Hyper-V-Failover-Cluster mit drei Knoten soll gepatcht werden, ohne dass die VMs ausfallen. Wie gehen Sie vor?",
+    "a": "Knoten nacheinander leeren, patchen, neu starten, prüfen und erst dann den nächsten",
+    "a_full": "Man verschiebt die Rollen eines Knotens per Live-Migration auf die anderen und versetzt ihn in den Wartungsmodus. Nach Patch, Neustart und Kontrolle nimmt er wieder Last auf. Erst dann folgt der nächste Knoten. Unter Windows kann das Cluster-Aware Updating automatisch erledigen.",
+    "options": [
+      "Knoten nacheinander leeren, patchen, neu starten, prüfen und erst dann den nächsten",
+      "Alle Knoten gleichzeitig patchen, damit der Cluster einheitlich bleibt",
+      "Die VMs herunterfahren und dann alle Knoten parallel neu starten",
+      "Nur den Knoten mit den meisten VMs patchen, die anderen später"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin führt Get-ADUser -Filter * | Select-Object Name, LastLogonDate aus. Die Spalte LastLogonDate bleibt leer. Was fehlt?",
+    "a": "Der Parameter -Properties LastLogonDate beim Get-ADUser",
+    "a_full": "Get-ADUser liefert standardmäßig nur einen kleinen Satz an Eigenschaften, z.B. Name, SamAccountName und Enabled. Weitere Attribute muss man mit -Properties ausdrücklich anfordern. Erst dann kann Select-Object sie ausgeben.",
+    "options": [
+      "Der Parameter -Properties LastLogonDate beim Get-ADUser",
+      "Das Modul ActiveDirectory muss vorher mit Update-Module aktualisiert werden",
+      "Select-Object gibt Datumswerte nur mit dem Schalter -ExpandProperty aus",
+      "Die Anmeldezeit steht nur im Ereignisprotokoll, nicht im Active Directory"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was liefert Get-ADUser -Filter * -Properties LastLogonDate | Where-Object { $_.LastLogonDate -lt (Get-Date).AddDays(-90) }?",
+    "a": "Alle Benutzerkonten, deren letzte Anmeldung länger als 90 Tage zurückliegt",
+    "a_full": "Get-ADUser holt alle Konten mit dem Anmeldedatum, Where-Object lässt nur die durch, deren Datum vor dem Stichtag liegt. (Get-Date).AddDays(-90) ist das Datum vor 90 Tagen. Konten, die sich nie angemeldet haben, haben kein Datum und sollten gesondert geprüft werden.",
+    "options": [
+      "Alle Benutzerkonten, deren letzte Anmeldung länger als 90 Tage zurückliegt",
+      "Alle Benutzerkonten, die in den letzten 90 Tagen neu angelegt wurden",
+      "Alle Benutzerkonten, deren Kennwort in 90 Tagen abläuft",
+      "Alle Benutzerkonten, die sich in den letzten 90 Tagen angemeldet haben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Liste aus Get-ADUser wird mit Export-Csv C:\\temp\\user.csv gespeichert. In Excel steht jede Zeile komplett in Spalte A. Wie beheben Sie das?",
+    "a": "Beim Export -Delimiter ';' oder -UseCulture angeben",
+    "a_full": "Export-Csv trennt die Felder standardmäßig mit Kommas. Deutsches Excel erwartet beim Öffnen ein Semikolon. Mit -Delimiter ';' oder -UseCulture passt das Trennzeichen. Umlaute bleiben mit -Encoding UTF8 erhalten.",
+    "options": [
+      "Beim Export -Delimiter ';' oder -UseCulture angeben",
+      "Beim Export -NoClobber angeben, damit keine Datei überschrieben wird",
+      "Die Ausgabe vorher mit Format-Table in eine Tabelle umwandeln",
+      "Die Datei statt .csv mit der Endung .xlsx speichern lassen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Server gilt die Execution Policy RemoteSigned. Ein Skript, das ein Admin aus dem Internet heruntergeladen und geprüft hat, startet trotzdem nicht. Was hilft, ohne die Richtlinie zu lockern?",
+    "a": "Die Datei nach der Prüfung mit Unblock-File freigeben",
+    "a_full": "Windows markiert heruntergeladene Dateien mit einer Zonenkennung. Bei RemoteSigned gelten sie deshalb als entfernt und müssen signiert sein. Unblock-File entfernt diese Markierung nach der eigenen Prüfung. Die Richtlinie für alle anderen Skripte bleibt unverändert.",
+    "options": [
+      "Die Datei nach der Prüfung mit Unblock-File freigeben",
+      "Das Skript in das Verzeichnis C:\\Windows\\System32 kopieren",
+      "Die Dateiendung von .ps1 in .bat ändern und erneut starten",
+      "Das Skript mit Get-Content einlesen und in die Zwischenablage legen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Für 25 neue Azubis liegt eine CSV mit Vorname, Nachname und Abteilung vor. Wie legen Sie die Konten per PowerShell sinnvoll an?",
+    "a": "Import-Csv neu.csv | ForEach-Object { New-ADUser -Name $_.Nachname ... }",
+    "a_full": "Import-Csv (bei Semikolon mit -Delimiter ';') macht aus jeder Zeile ein Objekt, dessen Eigenschaften die Spaltenüberschriften sind. ForEach-Object ruft für jedes Objekt New-ADUser auf und setzt z.B. -GivenName $_.Vorname und -Path für die OU. Vorher testet man mit wenigen Zeilen oder mit -WhatIf.",
+    "options": [
+      "Import-Csv neu.csv | ForEach-Object { New-ADUser -Name $_.Nachname ... }",
+      "Get-Content neu.csv | Set-ADUser -Identity $_ für jede einzelne Zeile",
+      "Export-Csv neu.csv | New-ADUser mit den Spalten als Parameter",
+      "Import-Csv neu.csv | Format-Table | New-ADUser -Name $_.Nachname"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript soll alle deaktivierten Konten einer OU mit Remove-ADUser löschen. Wie prüfen Sie vor dem echten Lauf gefahrlos, welche Konten betroffen wären?",
+    "a": "Das Skript mit dem Parameter -WhatIf beim Remove-ADUser ausführen",
+    "a_full": "-WhatIf zeigt für jedes Objekt an, was der Befehl tun würde, ohne etwas zu ändern. So erkennt man einen zu weit gefassten Filter, bevor Konten verschwinden. Viele Cmdlets, die etwas ändern, unterstützen -WhatIf und -Confirm.",
+    "options": [
+      "Das Skript mit dem Parameter -WhatIf beim Remove-ADUser ausführen",
+      "Das Skript mit dem Parameter -Verbose beim Remove-ADUser ausführen",
+      "Das Skript in der PowerShell ISE mit gesetztem Haltepunkt starten",
+      "Das Skript mit der Execution Policy Restricted einmal ausführen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Backup-Skript läuft von Hand fehlerfrei. Als Cronjob bricht es mit command not found ab. Was ist eine typische Ursache?",
+    "a": "Cron startet mit einer minimalen Umgebung und einem kurzen PATH",
+    "a_full": "Im Cronjob fehlen viele Umgebungsvariablen der Anmeldeshell, vor allem ein vollständiger PATH. Befehle wie rsync oder mysqldump in anderen Verzeichnissen werden dann nicht gefunden. Abhilfe schaffen absolute Pfade im Skript oder eine PATH-Zeile in der crontab.",
+    "options": [
+      "Cron startet mit einer minimalen Umgebung und einem kurzen PATH",
+      "Cronjobs dürfen grundsätzlich keine Programme aus /usr/bin aufrufen",
+      "Cron führt Skripte immer mit der sh statt mit der Bash aus",
+      "Cron startet nur Skripte, die im Verzeichnis /etc/cron.d liegen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Bash-Skript sichert mit rsync und endet mit der Zeile echo \"Sicherung beendet\". Das Monitoring wertet den Exit-Code aus und meldet immer Erfolg, obwohl rsync oft fehlschlägt. Warum?",
+    "a": "Der Exit-Code des Skripts ist der des letzten Befehls, also von echo",
+    "a_full": "Ein Skript gibt ohne ausdrückliches exit den Rückgabewert des letzten Befehls zurück. echo liefert fast immer 0. Man prüft deshalb den Code von rsync, z.B. mit if ! rsync ...; then exit 1; fi, oder bricht mit set -e bei Fehlern ab.",
+    "options": [
+      "Der Exit-Code des Skripts ist der des letzten Befehls, also von echo",
+      "rsync liefert grundsätzlich keinen Rückgabewert an die Shell",
+      "Das Monitoring kann Exit-Codes nur von kompilierten Programmen lesen",
+      "echo überschreibt die Variable $? nur, wenn es in Anführungszeichen steht"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ermittelt awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -5 bei einem Webserver-Log, in dem die Client-IP in der ersten Spalte steht?",
+    "a": "Die fünf IP-Adressen mit den meisten Anfragen samt Anzahl",
+    "a_full": "awk gibt nur die erste Spalte aus, also die IP-Adressen. sort bringt gleiche Adressen zusammen, uniq -c zählt sie. sort -rn sortiert nach Anzahl absteigend, und head -5 zeigt die ersten fünf Zeilen. So findet man z.B. auffällige Clients bei einem Angriff.",
+    "options": [
+      "Die fünf IP-Adressen mit den meisten Anfragen samt Anzahl",
+      "Die fünf zuletzt eingetragenen IP-Adressen im Log",
+      "Die fünf IP-Adressen mit den wenigsten Anfragen",
+      "Die ersten fünf Zeilen der Logdatei ohne Dubletten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Cronjob ruft /opt/skripte/sync.sh 2>&1 > /var/log/sync.log auf. Im Log stehen nur normale Ausgaben, Fehlermeldungen fehlen. Was ist falsch?",
+    "a": "Die Reihenfolge der Umleitungen, richtig ist > /var/log/sync.log 2>&1",
+    "a_full": "Umleitungen werden von links nach rechts ausgewertet. Bei 2>&1 zuerst zeigt die Fehlerausgabe auf die alte Standardausgabe, danach wird nur die Standardausgabe in die Datei gelenkt. Mit > datei 2>&1 wird zuerst die Standardausgabe umgelenkt und die Fehlerausgabe folgt ihr.",
+    "options": [
+      "Die Reihenfolge der Umleitungen, richtig ist > /var/log/sync.log 2>&1",
+      "Die Fehlerausgabe hat die Nummer 3, es muss also 3>&1 heißen",
+      "Cron verwirft Fehlerausgaben grundsätzlich, bevor sie umgeleitet werden",
+      "Die Logdatei muss mit >> geöffnet werden, sonst fehlen die Fehler"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Aufräumskript steht rm -rf $ZIEL/*. Warum ist diese Zeile gefährlich?",
+    "a": "Ist ZIEL leer oder nicht gesetzt, wird daraus rm -rf /*",
+    "a_full": "Eine leere Variable wird einfach durch nichts ersetzt, der Befehl löscht dann ab dem Wurzelverzeichnis. Schutz bieten eine Prüfung vorher, set -u oder die Schreibweise \"${ZIEL:?}\"/*, die bei leerer Variable abbricht. Variablen sollten außerdem immer in Anführungszeichen stehen.",
+    "options": [
+      "Ist ZIEL leer oder nicht gesetzt, wird daraus rm -rf /*",
+      "rm -rf löscht zusätzlich alle versteckten Dateien im Zielverzeichnis",
+      "Das Sternchen wird nicht aufgelöst und die Zeile löscht gar nichts",
+      "rm -rf funktioniert nur mit absoluten Pfaden ohne jede Variable"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die sshd_config hat Hunderte Zeilen, die meisten sind Kommentare. Mit welchem Befehl sehen Sie nur die wirksamen Einstellungen?",
+    "a": "grep -v '^#' /etc/ssh/sshd_config | grep -v '^$'",
+    "a_full": "grep -v kehrt die Suche um und zeigt nur Zeilen, auf die das Muster nicht passt. '^#' trifft Zeilen, die mit # beginnen, '^$' trifft leere Zeilen. Übrig bleiben die aktiven Einstellungen. Mit sshd -T lässt sich zusätzlich die tatsächlich geladene Konfiguration anzeigen.",
+    "options": [
+      "grep -v '^#' /etc/ssh/sshd_config | grep -v '^$'",
+      "grep '#' /etc/ssh/sshd_config | grep -v ' '",
+      "cat /etc/ssh/sshd_config | sort | uniq -c",
+      "grep -c '^#' /etc/ssh/sshd_config | grep '$'"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Inventartabelle geraete hat die Spalten id, typ, standort und kaufdatum. Die Leitung möchte wissen, wie viele Geräte an jedem Standort stehen. Welche Abfrage passt?",
+    "a": "SELECT standort, COUNT(*) FROM geraete GROUP BY standort;",
+    "a_full": "GROUP BY fasst alle Zeilen mit demselben Standort zu einer Gruppe zusammen. COUNT(*) zählt die Zeilen jeder Gruppe. Jede Spalte in der Auswahl muss entweder gruppiert oder durch eine Aggregatfunktion ausgewertet sein.",
+    "options": [
+      "SELECT standort, COUNT(*) FROM geraete GROUP BY standort;",
+      "SELECT standort, COUNT(*) FROM geraete ORDER BY standort;",
+      "SELECT COUNT(standort) FROM geraete WHERE standort = standort;",
+      "SELECT DISTINCT standort, id FROM geraete GROUP BY id;"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Tabelle geraete (id, seriennr, mitarbeiter_id) und Tabelle mitarbeiter (id, name). Sie brauchen eine Liste Seriennummer mit Namen des Nutzers. Welche Abfrage liefert sie?",
+    "a": "SELECT g.seriennr, m.name FROM geraete g JOIN mitarbeiter m ON g.mitarbeiter_id = m.id;",
+    "a_full": "Der JOIN verbindet jede Zeile aus geraete mit der Zeile aus mitarbeiter, deren id zum Fremdschlüssel mitarbeiter_id passt. Die Kürzel g und m sparen Schreibarbeit. Geräte ohne Zuordnung fehlen bei diesem INNER JOIN, für sie bräuchte man einen LEFT JOIN.",
+    "options": [
+      "SELECT g.seriennr, m.name FROM geraete g JOIN mitarbeiter m ON g.mitarbeiter_id = m.id;",
+      "SELECT g.seriennr, m.name FROM geraete g JOIN mitarbeiter m ON g.id = m.id;",
+      "SELECT seriennr, name FROM geraete, mitarbeiter WHERE name IS NOT NULL;",
+      "SELECT g.seriennr, m.name FROM geraete g GROUP BY m.mitarbeiter_id;"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Logtabelle ereignisse hat die Spalten zeit, host, stufe und meldung. Sie wollen die 20 neuesten Einträge der Stufe ERROR vom Host srv-db01 sehen. Welche Abfrage passt?",
+    "a": "SELECT * FROM ereignisse WHERE host = 'srv-db01' AND stufe = 'ERROR' ORDER BY zeit DESC LIMIT 20;",
+    "a_full": "WHERE verknüpft beide Bedingungen mit AND, sodass nur passende Zeilen übrig bleiben. ORDER BY zeit DESC sortiert die neuesten zuerst, LIMIT 20 begrenzt die Ausgabe. In MS SQL Server schreibt man dafür SELECT TOP 20.",
+    "options": [
+      "SELECT * FROM ereignisse WHERE host = 'srv-db01' AND stufe = 'ERROR' ORDER BY zeit DESC LIMIT 20;",
+      "SELECT * FROM ereignisse WHERE host = 'srv-db01' OR stufe = 'ERROR' ORDER BY zeit DESC LIMIT 20;",
+      "SELECT * FROM ereignisse WHERE host = 'srv-db01' AND stufe = 'ERROR' ORDER BY zeit ASC LIMIT 20;",
+      "SELECT TOP 20 FROM ereignisse GROUP BY host, stufe HAVING stufe = 'ERROR';"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin will 40 Linux-Server mit Ansible einheitlich konfigurieren. Was braucht er dafür grundsätzlich?",
+    "a": "Ein Inventory mit den Hosts, ein Playbook in YAML und SSH-Zugang zu den Servern",
+    "a_full": "Ansible arbeitet ohne Agent. Der Steuerrechner verbindet sich per SSH mit den Zielen, auf denen nur Python vorhanden sein muss. Im Inventory stehen die Hosts in Gruppen, im Playbook die Aufgaben mit Modulen wie apt, copy oder service.",
+    "options": [
+      "Ein Inventory mit den Hosts, ein Playbook in YAML und SSH-Zugang zu den Servern",
+      "Einen Ansible-Agenten auf jedem Server und eine zentrale Datenbank",
+      "Ein Active Directory mit einem GPO für jede einzelne Servergruppe",
+      "Einen Kubernetes-Cluster, auf dem die Playbooks als Pods laufen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Ansible-Playbook wird die nginx-Konfiguration verteilt. nginx soll nur neu geladen werden, wenn sich die Datei tatsächlich geändert hat. Welches Mittel ist dafür vorgesehen?",
+    "a": "Ein Handler, den die Kopieraufgabe per notify auslöst",
+    "a_full": "Ein Handler ist eine Aufgabe, die nur läuft, wenn eine andere Aufgabe mit notify eine Änderung meldet. Ändert sich die Datei nicht, meldet die Aufgabe ok und der Handler bleibt aus. Handler laufen gesammelt am Ende des Plays, auch wenn mehrere Aufgaben sie auslösen.",
+    "options": [
+      "Ein Handler, den die Kopieraufgabe per notify auslöst",
+      "Eine zweite Aufgabe mit dem Modul shell, die nginx jedes Mal neu lädt",
+      "Ein Cronjob auf jedem Server, der nginx stündlich neu startet",
+      "Eine Variable im Inventory, die den Neustart für jeden Host erzwingt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Spedition plant ihre Touren mit einem selbst entwickelten Verfahren, das ihr einen klaren Vorsprung vor der Konkurrenz verschafft. Sie soll die Software erneuern. Was spricht hier für Make statt Buy?",
+    "a": "Die Software bildet eine Kernkompetenz ab, die kein Standardprodukt enthält",
+    "a_full": "Bei einer Make-or-Buy-Entscheidung spricht die strategische Bedeutung für die Eigenerstellung. Wer seinen Wettbewerbsvorteil in Standardsoftware überführt, verliert ihn, weil die Konkurrenz dasselbe Produkt kaufen kann. Eigenentwicklung oder Individualsoftware hält das Wissen im Haus, kostet aber mehr Zeit und Pflegeaufwand.",
+    "options": [
+      "Die Software bildet eine Kernkompetenz ab, die kein Standardprodukt enthält",
+      "Eigenentwicklung ist grundsätzlich günstiger als jede Standardsoftware",
+      "Standardsoftware darf in der Logistik aus rechtlichen Gründen nicht laufen",
+      "Bei Eigenentwicklung entfallen Wartung, Tests und Dokumentation"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mittelständler will seinen kompletten IT-Betrieb an einen Dienstleister auslagern und dafür alle eigenen Administratoren abbauen. Was raten Sie ihm?",
+    "a": "Eine kleine eigene Einheit behalten, die den Dienstleister steuert und kontrolliert",
+    "a_full": "Auch nach dem Outsourcing bleibt das Unternehmen für seine IT verantwortlich. Es braucht Fachleute, die Anforderungen formulieren, SLA-Berichte prüfen, Verträge verhandeln und Rechnungen bewerten. Ohne diese Steuerungskompetenz wird der Kunde abhängig und kann einen späteren Anbieterwechsel kaum noch planen.",
+    "options": [
+      "Eine kleine eigene Einheit behalten, die den Dienstleister steuert und kontrolliert",
+      "Alle Administratoren abbauen, weil der Dienstleister die Verantwortung übernimmt",
+      "Die Administratoren behalten und den Dienstleister nur für Hardware nutzen",
+      "Das Outsourcing vorab vom Betriebsrat genehmigen lassen und sonst nichts ändern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde vergleicht einen neuen Serverraum mit einer Cloud-Lösung. Er fragt, wie sich seine Kostenstruktur bei der Cloud verändert. Was antworten Sie?",
+    "a": "Aus einmaligen Investitionen werden laufende, nutzungsabhängige Betriebskosten",
+    "a_full": "Beim eigenen Rechenzentrum fallen hohe Anschaffungen an, die über Jahre abgeschrieben werden (CapEx). In der Cloud zahlt der Kunde laufend nach Verbrauch oder Abo (OpEx). Das schont die Liquidität und passt sich dem Bedarf an, macht die Kosten aber schwerer planbar, wenn niemand den Verbrauch überwacht.",
+    "options": [
+      "Aus einmaligen Investitionen werden laufende, nutzungsabhängige Betriebskosten",
+      "Die Kosten sinken immer, weil in der Cloud keine Personalkosten entstehen",
+      "Die Kosten bleiben gleich, nur die Rechnung kommt von einem anderen Anbieter",
+      "Aus laufenden Kosten werden einmalige Investitionen mit fester Abschreibung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Softwarehersteller kündigt bei Ihrem Kunden ein Lizenzaudit an. Der Geschäftsführer ist nervös. Was empfehlen Sie als Vorbereitung?",
+    "a": "Vertrag und Auditklausel prüfen, eigenen Bestand abgleichen, Nachweise sammeln",
+    "a_full": "Zuerst klärt man, welche Prüfrechte der Lizenzvertrag dem Hersteller einräumt. Dann gleicht man die installierte und genutzte Software mit den gekauften Lizenzen ab und legt Rechnungen und Lizenzzertifikate bereit. Eine feste Ansprechperson koordiniert die Kommunikation, damit keine ungeprüften Daten an den Hersteller gehen.",
+    "options": [
+      "Vertrag und Auditklausel prüfen, eigenen Bestand abgleichen, Nachweise sammeln",
+      "Das Audit ablehnen, weil Hersteller keine Kundensysteme prüfen dürfen",
+      "Vor dem Audit schnell alle nicht lizenzierten Installationen löschen",
+      "Dem Hersteller sofort vollen Administratorzugang zu allen Servern geben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde will Geld sparen und gebrauchte Office-Lizenzen von einem Händler kaufen. Unter welchen Voraussetzungen ist das zulässig?",
+    "a": "Bei unbefristeten Kauflizenzen, deren Vorbesitzer alle Kopien gelöscht hat",
+    "a_full": "Nach der Rechtsprechung des EuGH (UsedSoft) darf eine unbefristet gegen Einmalzahlung erworbene Lizenz weiterverkauft werden. Der Vorbesitzer muss seine Installationen löschen, und der Käufer sollte die Kette der Vorbesitzer lückenlos nachweisen können. Abonnements und Cloud-Lizenzen lassen sich so nicht weiterverkaufen.",
+    "options": [
+      "Bei unbefristeten Kauflizenzen, deren Vorbesitzer alle Kopien gelöscht hat",
+      "Gebrauchte Lizenzen sind in der EU grundsätzlich verboten",
+      "Jede Lizenz darf weiterverkauft werden, auch ein laufendes Abonnement",
+      "Der Käufer braucht nur einen Lizenzschlüssel, Nachweise sind unnötig"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde will eine alte Warenwirtschaft ohne jede Änderung auf virtuelle Server in der Cloud umziehen, um sein Rechenzentrum schnell zu räumen. Wie heißt dieses Vorgehen und was ist der Nachteil?",
+    "a": "Lift and Shift (Rehosting), die Vorteile der Cloud werden kaum genutzt",
+    "a_full": "Beim Rehosting wird die Anwendung unverändert auf IaaS übertragen. Das geht schnell und mit wenig Risiko. Die Anwendung skaliert aber nicht besser als vorher und läuft oft dauerhaft auf großen VMs, sodass die Kosten höher ausfallen können als bei einem späteren Umbau auf Cloud-Dienste.",
+    "options": [
+      "Lift and Shift (Rehosting), die Vorteile der Cloud werden kaum genutzt",
+      "Refactoring, die Anwendung muss dabei vollständig neu programmiert werden",
+      "Retire, die Anwendung wird dabei ersatzlos abgeschaltet",
+      "Repurchase, die Anwendung wird durch ein SaaS-Produkt ersetzt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde und sein Hostinganbieter streiten, ob die zugesagten 99,5 Prozent Verfügbarkeit erreicht wurden. Der Kunde misst von seinem Standort aus, der Anbieter im Rechenzentrum. Was hat im SLA gefehlt?",
+    "a": "Eine Festlegung von Messpunkt, Messmethode und Berichtsweg",
+    "a_full": "Eine Verfügbarkeitszusage ist nur prüfbar, wenn der Vertrag sagt, wo und wie gemessen wird, z.B. am Übergabepunkt des Rechenzentrums mit einer Abfrage pro Minute. Außerdem gehören Ausnahmen wie Wartungsfenster und ein regelmäßiger Bericht hinein. Sonst misst jede Seite anders und der Streit ist vorprogrammiert.",
+    "options": [
+      "Eine Festlegung von Messpunkt, Messmethode und Berichtsweg",
+      "Eine höhere Verfügbarkeit, damit kleine Ausfälle nicht auffallen",
+      "Eine Vertragsstrafe, die unabhängig von der Messung fällig wird",
+      "Die Unterschrift des Geschäftsführers auf jeder Seite des SLA"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im SLA-Entwurf eines Anbieters steht: „Wartungsarbeiten werden nicht auf die Verfügbarkeit angerechnet.“ Was prüfen Sie für Ihren Kunden?",
+    "a": "Ob Zeitraum, Höchstdauer und Ankündigungsfrist der Wartung festgelegt sind",
+    "a_full": "Ohne Begrenzung könnte der Anbieter jeden Ausfall zur Wartung erklären. Deshalb sollte das SLA festlegen, wann Wartung stattfinden darf, z.B. sonntags nachts, wie lange sie höchstens dauert und wie früh sie angekündigt wird. Ungeplante Notfallwartung sollte weiter als Ausfall zählen.",
+    "options": [
+      "Ob Zeitraum, Höchstdauer und Ankündigungsfrist der Wartung festgelegt sind",
+      "Ob der Anbieter während der Wartung eine Vertragsstrafe zahlt",
+      "Ob die Wartung ausschließlich von Auszubildenden durchgeführt wird",
+      "Ob der Kunde während der Wartung seine Daten löschen muss"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Dienstleister möchte in seine AGB für Geschäftskunden schreiben: „Jede Haftung für Schäden ist ausgeschlossen.“ Wie beurteilen Sie die Klausel?",
+    "a": "Unwirksam, bei Vorsatz und grober Fahrlässigkeit ist kein Ausschluss möglich",
+    "a_full": "Auch zwischen Unternehmen prüfen Gerichte AGB auf unangemessene Benachteiligung. Die Haftung für Vorsatz, grobe Fahrlässigkeit und für Schäden an Leben, Körper und Gesundheit kann in AGB nicht ausgeschlossen werden. Zulässig ist z.B., die Haftung bei leichter Fahrlässigkeit auf den vertragstypisch vorhersehbaren Schaden zu begrenzen.",
+    "options": [
+      "Unwirksam, bei Vorsatz und grober Fahrlässigkeit ist kein Ausschluss möglich",
+      "Wirksam, weil zwischen Unternehmen völlige Vertragsfreiheit herrscht",
+      "Wirksam, sofern der Kunde die AGB nicht innerhalb von 14 Tagen widerruft",
+      "Unwirksam, weil Haftungsklauseln nur im Arbeitsvertrag erlaubt sind"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Vertrag über ein Rechenzentrumsprojekt ist eine Vertragsstrafe für jeden Tag Verzug vereinbart. Welchen Vorteil hat sie für den Kunden gegenüber normalem Schadensersatz?",
+    "a": "Er muss keinen Schaden nachweisen, die Strafe ist bei Verzug fällig",
+    "a_full": "Beim Schadensersatz muss der Kunde Höhe und Ursache des Schadens beweisen, was bei Verzögerungen oft schwierig ist. Die Vertragsstrafe wird schon durch den Verzug fällig. Ein höherer Schaden kann zusätzlich verlangt werden, die Strafe wird darauf angerechnet. Nimmt der Kunde die verspätete Leistung ab, muss er sich die Strafe dabei vorbehalten.",
+    "options": [
+      "Er muss keinen Schaden nachweisen, die Strafe ist bei Verzug fällig",
+      "Er erhält die Strafe zusätzlich zum vollen Schadensersatz ohne Anrechnung",
+      "Er darf den Vertrag nach dem ersten Verzugstag fristlos kündigen",
+      "Er muss die Leistung bei Verzug überhaupt nicht mehr bezahlen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Systemhaus bestellt bei einem Großhändler unter Hinweis auf die eigenen Einkaufs-AGB. Der Großhändler bestätigt unter Hinweis auf seine Verkaufs-AGB. Beide Bedingungen widersprechen sich bei der Haftung. Was gilt?",
+    "a": "Die widersprüchlichen Klauseln entfallen, es gilt insoweit das Gesetz",
+    "a_full": "Wenn beide Seiten auf ihre AGB verweisen und den Vertrag trotzdem durchführen, ist der Vertrag wirksam. Übereinstimmende Klauseln gelten, sich widersprechende Klauseln werden nicht Vertragsinhalt. An ihre Stelle treten die gesetzlichen Regeln, im Beispiel also die gesetzliche Haftung.",
+    "options": [
+      "Die widersprüchlichen Klauseln entfallen, es gilt insoweit das Gesetz",
+      "Es gelten die AGB, die zuletzt verschickt wurden",
+      "Es gelten die AGB des Unternehmens mit dem höheren Umsatz",
+      "Der gesamte Vertrag ist nichtig und muss neu geschlossen werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Geschäftskunde ärgert sich: Sein Wartungsvertrag über drei Jahre hat sich laut Vertrag automatisch um weitere zwei Jahre verlängert, weil er die Kündigungsfrist verpasst hat. Er beruft sich auf die Regeln für Verbraucher. Hat er recht?",
+    "a": "Nein, die Verbraucherregeln zur Verlängerung gelten hier nicht",
+    "a_full": "Die strengen Grenzen für automatische Vertragsverlängerungen schützen Verbraucher. Zwischen Unternehmen sind längere Laufzeiten und Verlängerungen grundsätzlich zulässig, solange sie nicht unangemessen benachteiligen. Unternehmen sollten deshalb ein Vertragsmanagement führen, das Laufzeiten und Kündigungsfristen überwacht.",
+    "options": [
+      "Nein, die Verbraucherregeln zur Verlängerung gelten hier nicht",
+      "Ja, jeder Vertrag ist nach der Erstlaufzeit monatlich kündbar",
+      "Ja, automatische Verlängerungen sind im Geschäftsverkehr verboten",
+      "Nein, er kann nur noch mit Zustimmung des Anbieters kündigen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein kleines Softwarehaus entwickelt für Ihren Kunden eine Spezialanwendung. Der Kunde bekommt nur ausführbare Programme. Er fürchtet, dass die Firma aufgibt und niemand die Software mehr pflegen kann. Welche Vertragsregelung hilft?",
+    "a": "Eine Hinterlegung des Quellcodes bei einer neutralen Stelle (Escrow)",
+    "a_full": "Beim Source-Code-Escrow hinterlegt der Hersteller den aktuellen Quellcode samt Dokumentation bei einem Treuhänder. Tritt ein vereinbarter Fall ein, z.B. Insolvenz oder Einstellung der Pflege, erhält der Kunde den Code. Wichtig ist, dass die Hinterlegung regelmäßig aktualisiert und auf Vollständigkeit geprüft wird.",
+    "options": [
+      "Eine Hinterlegung des Quellcodes bei einer neutralen Stelle (Escrow)",
+      "Eine Vertragsstrafe, falls das Softwarehaus Insolvenz anmeldet",
+      "Eine OEM-Lizenz, die an die Hardware des Kunden gebunden ist",
+      "Eine Garantie des Softwarehauses über zehn Jahre Lebensdauer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde hat einen Supportvertrag für seine Server. Er erwartet, dass Sie im Rahmen der Pauschale auch zwölf neue Arbeitsplätze einrichten. Was klärt die Situation?",
+    "a": "Die Leistungsbeschreibung, Zusatzleistungen werden gesondert berechnet",
+    "a_full": "Ein Supportvertrag sollte in einem Leistungsschein genau festlegen, welche Systeme und Tätigkeiten die Pauschale abdeckt. Projekte wie neue Arbeitsplätze liegen meist außerhalb und werden nach Aufwand oder mit eigenem Angebot abgerechnet. Eine klare Abgrenzung verhindert Streit und unbezahlte Mehrarbeit.",
+    "options": [
+      "Die Leistungsbeschreibung, Zusatzleistungen werden gesondert berechnet",
+      "Die Einschätzung des Technikers, der gerade beim Kunden vor Ort ist",
+      "Das Gesetz, das bei Pauschalen alle IT-Leistungen einschließt",
+      "Die Anzahl der Tickets, die der Kunde im Vormonat eröffnet hat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde will ein CRM eines US-Anbieters einführen, die Daten liegen in den USA. Was prüfen Sie zuerst, um eine einfache Rechtsgrundlage für die Übermittlung zu finden?",
+    "a": "Ob der Anbieter unter dem EU-U.S. Data Privacy Framework zertifiziert ist",
+    "a_full": "Für die USA gibt es seit 2023 einen Angemessenheitsbeschluss, der aber nur für Unternehmen gilt, die sich unter dem Data Privacy Framework zertifiziert haben. Ob das zutrifft, zeigt die offizielle Liste des US-Handelsministeriums. Ist der Anbieter nicht gelistet, braucht man z.B. Standardvertragsklauseln und eine Prüfung der Rechtslage im Zielland.",
+    "options": [
+      "Ob der Anbieter unter dem EU-U.S. Data Privacy Framework zertifiziert ist",
+      "Ob der Anbieter eine deutsche Telefonnummer für den Support hat",
+      "Ob die Mitarbeitenden des Kunden der Nutzung einzeln zustimmen",
+      "Ob der Anbieter mehr als 1.000 Kunden in der EU betreut"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde will die Firmenwagen seines Außendienstes mit Telematik ausstatten. Die Software soll Standort und Fahrweise jedes Fahrers auswerten und bewerten. Ist eine Datenschutz-Folgenabschätzung nötig?",
+    "a": "Ja, Beschäftigte werden systematisch überwacht und bewertet, das Risiko ist hoch",
+    "a_full": "Eine DSFA ist Pflicht, wenn eine Verarbeitung voraussichtlich ein hohes Risiko für die Betroffenen hat. Die laufende Ortung und Bewertung von Beschäftigten ist ein typischer Fall, den die Aufsichtsbehörden auf ihrer Liste für DSFA-pflichtige Verarbeitungen führen. Die DSFA muss vor dem Start erfolgen.",
+    "options": [
+      "Ja, Beschäftigte werden systematisch überwacht und bewertet, das Risiko ist hoch",
+      "Nein, Firmenwagen sind Eigentum des Arbeitgebers und frei auswertbar",
+      "Nein, eine DSFA ist nur für Behörden und Krankenhäuser vorgesehen",
+      "Ja, aber erst nach einem Jahr Betrieb, wenn Erfahrungswerte vorliegen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Kunde schließt einen AV-Vertrag mit einem Rechenzentrum. Er möchte belegt haben, dass dort die zugesagten technischen und organisatorischen Maßnahmen wirklich umgesetzt sind. Wie kann er das prüfen?",
+    "a": "Über Zertifikate und Prüfberichte oder eigene Kontrollen nach dem AV-Vertrag",
+    "a_full": "Der Auftraggeber bleibt Verantwortlicher und muss die Eignung seines Dienstleisters nachweisen können. Der Auftragsverarbeiter muss Nachweise liefern und Überprüfungen ermöglichen. Üblich sind Zertifikate wie ISO/IEC 27001 mit passendem Geltungsbereich, Prüfberichte unabhängiger Stellen oder Audits vor Ort.",
+    "options": [
+      "Über Zertifikate und Prüfberichte oder eigene Kontrollen nach dem AV-Vertrag",
+      "Über eine Selbstauskunft auf der Webseite des Rechenzentrums",
+      "Gar nicht, die Verantwortung liegt allein beim Rechenzentrum",
+      "Über die Anzahl der Mitarbeiter, die im Rechenzentrum arbeiten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Dienstleister, der für Ihren Kunden die Lohnabrechnung im Auftrag verarbeitet, stellt einen Hackerangriff auf seine Systeme fest. Wen muss er informieren?",
+    "a": "Unverzüglich den Kunden, der als Verantwortlicher über die Meldung entscheidet",
+    "a_full": "Der Auftragsverarbeiter meldet eine Datenpanne ohne schuldhaftes Zögern an den Verantwortlichen. Der Verantwortliche bewertet das Risiko und meldet binnen 72 Stunden an die Aufsichtsbehörde, wenn ein Risiko für die Betroffenen besteht. Details regelt der AV-Vertrag, z.B. Ansprechpartner und Meldewege.",
+    "options": [
+      "Unverzüglich den Kunden, der als Verantwortlicher über die Meldung entscheidet",
+      "Nur die Polizei, weil es sich bei dem Angriff um eine Straftat handelt",
+      "Direkt alle betroffenen Mitarbeiter des Kunden per E-Mail und Brief",
+      "Niemanden, solange keine Daten nachweislich veröffentlicht wurden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Kunde kündigt den Vertrag mit einem Cloud-Backup-Anbieter, der im Auftrag personenbezogene Daten gespeichert hat. Was muss nach dem AV-Vertrag am Vertragsende geschehen?",
+    "a": "Rückgabe oder Löschung der Daten nach Wahl des Kunden, mit Bestätigung",
+    "a_full": "Der AV-Vertrag muss regeln, dass der Auftragsverarbeiter nach Ende der Leistung alle Daten nach Wahl des Verantwortlichen löscht oder zurückgibt. Kopien darf er nur behalten, wenn ein Gesetz das verlangt. Der Kunde sollte sich die Löschung schriftlich bestätigen lassen.",
+    "options": [
+      "Rückgabe oder Löschung der Daten nach Wahl des Kunden, mit Bestätigung",
+      "Der Anbieter darf die Daten noch zehn Jahre für eigene Zwecke nutzen",
+      "Die Daten gehen automatisch in das Eigentum des Anbieters über",
+      "Der Kunde muss die Daten selbst beim Anbieter vor Ort löschen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Risikoregister eines Migrationsprojekts stehen zwei Risiken: A ist sehr wahrscheinlich, aber mit geringem Schaden. B ist wenig wahrscheinlich, würde aber den Betrieb eine Woche lahmlegen. Wie ordnen Sie die Risiken ein?",
+    "a": "Per Risikomatrix aus Wahrscheinlichkeit und Auswirkung, B kann vorne liegen",
+    "a_full": "Eine Risikomatrix kombiniert Eintrittswahrscheinlichkeit und Schadensausmaß. Ein seltenes Risiko mit sehr großem Schaden kann gefährlicher sein als ein häufiges mit kleinem Schaden. Für beide legt man Maßnahmen fest, bei B z.B. ein getestetes Rollback-Konzept.",
+    "options": [
+      "Per Risikomatrix aus Wahrscheinlichkeit und Auswirkung, B kann vorne liegen",
+      "Nur nach der Wahrscheinlichkeit, deshalb wird A zuerst behandelt",
+      "Nur nach dem Schaden, deshalb kann A ganz gestrichen werden",
+      "Beide gleich, weil sich Risiken grundsätzlich nicht vergleichen lassen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Risikoregister Ihres Projekts steht bei jedem Risiko eine Spalte „Risikoeigner“. Wozu dient sie?",
+    "a": "Eine Person überwacht das Risiko und stößt die Maßnahmen an",
+    "a_full": "Ein Risiko ohne Zuständigen wird oft nicht beobachtet. Der Risikoeigner verfolgt Frühwarnzeichen, prüft den Stand der Maßnahmen und meldet Änderungen an die Projektleitung. Er muss die Maßnahmen nicht selbst umsetzen, ist aber dafür verantwortlich, dass sich jemand kümmert.",
+    "options": [
+      "Eine Person überwacht das Risiko und stößt die Maßnahmen an",
+      "Sie nennt die Person, die bei Eintritt den Schaden bezahlen muss",
+      "Sie nennt den Mitarbeiter, der das Risiko verursacht hat",
+      "Sie nennt den Kunden, der das Risiko freigeben muss"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie planen die Einführung eines Dokumentenmanagementsystems, das Arbeitsabläufe in allen Abteilungen verändert. Wie stufen Sie in der Stakeholderanalyse den Betriebsrat ein und wie gehen Sie mit ihm um?",
+    "a": "Hoher Einfluss und hohes Interesse, früh und eng einbinden",
+    "a_full": "Der Betriebsrat hat bei solchen Systemen Mitbestimmungs- und Informationsrechte und kann die Einführung verzögern. Gleichzeitig vertritt er die Beschäftigten, die das System nutzen sollen. Deshalb bindet man ihn früh ein, informiert ihn laufend und stimmt eine Betriebsvereinbarung ab.",
+    "options": [
+      "Hoher Einfluss und hohes Interesse, früh und eng einbinden",
+      "Geringer Einfluss, er wird nach Projektende informiert",
+      "Hohes Interesse ohne Einfluss, eine Rundmail genügt",
+      "Kein Stakeholder, weil er nicht Teil des Projektteams ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde hat einen Change Request für ein zusätzliches Standortnetz eingereicht. Welche Punkte gehören in die Bewertung, bevor darüber entschieden wird?",
+    "a": "Auswirkungen auf Kosten, Termine, Qualität, Risiken und andere Arbeitspakete",
+    "a_full": "Ein Change Request wird nicht einfach umgesetzt, sondern erst bewertet. Man schätzt den Aufwand, prüft Folgen für Meilensteine, Budget, Ressourcen und bestehende Anforderungen und nennt neue Risiken. Auf dieser Grundlage entscheidet der Auftraggeber oder ein Änderungsgremium über Annahme oder Ablehnung.",
+    "options": [
+      "Auswirkungen auf Kosten, Termine, Qualität, Risiken und andere Arbeitspakete",
+      "Nur die Frage, ob der Kunde den Wunsch schriftlich eingereicht hat",
+      "Nur die Kosten, weil Termine bei Änderungen nicht verschoben werden",
+      "Nur die Meinung des Technikers, der die Änderung umsetzen soll"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Mitten im Sprint kommt der Geschäftsführer des Kunden direkt zu den Entwicklern und verlangt, sofort eine neue Auswertung zu bauen. Wie reagieren Sie in Scrum richtig?",
+    "a": "Ihn an den Product Owner verweisen, der den Wunsch priorisiert",
+    "a_full": "In Scrum ist der Product Owner allein für die Reihenfolge im Product Backlog verantwortlich. Neue Wünsche laufen über ihn, damit das Team nicht von mehreren Seiten Aufträge bekommt. Der laufende Sprint bleibt auf sein Sprint-Ziel ausgerichtet, der Wunsch kann in einem der nächsten Sprints umgesetzt werden.",
+    "options": [
+      "Ihn an den Product Owner verweisen, der den Wunsch priorisiert",
+      "Den Sprint sofort abbrechen und die Auswertung als Erstes bauen",
+      "Die Auswertung heimlich neben dem Sprint-Ziel mit erledigen",
+      "Den Scrum Master bitten, die Auswertung selbst zu programmieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Daily Scrum berichtet ein Entwickler, dass er seit drei Tagen auf Zugangsdaten der Kunden-IT wartet und nicht weiterkommt. Wessen Aufgabe ist es, dieses Hindernis zu beseitigen?",
+    "a": "Des Scrum Masters, er treibt die Beseitigung von Hindernissen voran",
+    "a_full": "Der Scrum Master unterstützt das Team, indem er Hindernisse (Impediments) sichtbar macht und ihre Beseitigung vorantreibt. Er klärt z.B. mit der Kunden-IT, wer die Zugänge freigibt. Er ist dabei kein Vorgesetzter des Teams, sondern dient ihm.",
+    "options": [
+      "Des Scrum Masters, er treibt die Beseitigung von Hindernissen voran",
+      "Des Product Owners, er verteilt die Aufgaben im Team einfach neu",
+      "Des Kunden, er muss selbst merken, dass dem Team Zugänge fehlen",
+      "Des Entwicklers allein, Hindernisse sind allein seine Sache"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Sprint Planning drängt der Product Owner das Team, noch zwei weitere Backlog-Einträge in den Sprint zu nehmen. Die Entwickler halten das für nicht schaffbar. Wer entscheidet?",
+    "a": "Die Entwickler, sie legen fest, wie viel Arbeit sie in den Sprint aufnehmen",
+    "a_full": "Der Product Owner bringt die Prioritäten und das gewünschte Sprint-Ziel ein. Wie viel davon im Sprint realistisch ist, schätzen und entscheiden die Entwickler, denn das Sprint Backlog gehört ihnen. So bleibt die Planung verlässlich und das Team überlastet sich nicht.",
+    "options": [
+      "Die Entwickler, sie legen fest, wie viel Arbeit sie in den Sprint aufnehmen",
+      "Der Product Owner, weil er die Verantwortung für das Produkt trägt",
+      "Der Scrum Master, weil er den Sprint leitet und die Arbeit verteilt",
+      "Der Kunde, weil er das Projekt bezahlt und die Menge bestimmt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Netzwerkprojekt ist abgenommen. Ihr Projektleiter will das Team sofort auflösen. Was gehört vorher noch zu einem sauberen Projektabschluss?",
+    "a": "Abschlussbericht, Nachkalkulation, Übergabe der Doku und Lessons Learned",
+    "a_full": "Zum Projektabschluss gehören ein Bericht über die Zielerreichung, der Soll-Ist-Vergleich von Kosten und Terminen und die Übergabe aller Unterlagen an den Betrieb. Erfahrungen werden in einer Lessons-Learned-Runde gesichert. Erst danach entlastet der Auftraggeber die Projektleitung und das Team wird freigegeben.",
+    "options": [
+      "Abschlussbericht, Nachkalkulation, Übergabe der Doku und Lessons Learned",
+      "Nur die Rechnung an den Kunden, der Rest ist nach der Abnahme freiwillig",
+      "Eine neue Risikoanalyse für das gesamte bereits abgeschlossene Projekt",
+      "Das Löschen aller Projektunterlagen, damit keine Altdaten bleiben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Sie moderieren die Lessons-Learned-Runde eines Projekts, das den Termin um sechs Wochen verfehlt hat. Wie gestalten Sie die Runde, damit sie wirklich nützt?",
+    "a": "Ursachen sachlich ohne Schuldzuweisung sammeln, Maßnahmen ableiten und zugänglich ablegen",
+    "a_full": "Lessons Learned funktionieren nur, wenn alle offen sprechen können. Deshalb fragt man, was gut lief, was nicht und warum, statt Schuldige zu suchen. Die Ergebnisse werden als konkrete Empfehlungen dokumentiert und so abgelegt, dass künftige Projektteams sie finden, z.B. im Wiki.",
+    "options": [
+      "Ursachen sachlich ohne Schuldzuweisung sammeln, Maßnahmen ableiten und zugänglich ablegen",
+      "Den Verantwortlichen für die Verspätung benennen und abmahnen",
+      "Nur die Projektleitung befragen, weil sie den Überblick hat",
+      "Die Ergebnisse vertraulich halten, damit das Projekt nicht schlecht dasteht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Systemhaus betreut einen Kunden mit einem SLA. Der Kunde fühlt sich schlecht betreut, obwohl alle Werte erfüllt sind. Welches Instrument aus dem Service-Management hilft?",
+    "a": "Ein regelmäßiges Service Review mit dem Kunden auf Basis der SLA-Berichte",
+    "a_full": "Im Service Review besprechen Anbieter und Kunde in festen Abständen die Kennzahlen, besondere Vorfälle und die Zufriedenheit. Dabei zeigt sich oft, dass das SLA nicht mehr zu den Anforderungen passt. Daraus entstehen Verbesserungsmaßnahmen oder eine Anpassung des SLA.",
+    "options": [
+      "Ein regelmäßiges Service Review mit dem Kunden auf Basis der SLA-Berichte",
+      "Ein Emergency Change, um die Unzufriedenheit schnell zu beheben",
+      "Eine Senkung der vereinbarten Werte, damit der Kunde weniger erwartet",
+      "Eine Kündigung des SLA, weil der Kunde nicht zufrieden zu stellen ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Anbieter bietet seine Services in den Stufen Gold, Silber und Bronze mit unterschiedlichen Reaktionszeiten und Preisen an. Wie beraten Sie einen Kunden bei der Auswahl?",
+    "a": "Für jeden Service nach seiner Bedeutung für die Geschäftsprozesse die passende Stufe wählen",
+    "a_full": "Nicht jeder Dienst ist gleich kritisch. Das Warenwirtschaftssystem eines Händlers braucht vielleicht Gold, das Intranet reicht mit Bronze. Grundlage ist eine Bewertung, wie stark ein Ausfall den Geschäftsbetrieb trifft. So zahlt der Kunde nur dort für hohe Service Level, wo er sie braucht.",
+    "options": [
+      "Für jeden Service nach seiner Bedeutung für die Geschäftsprozesse die passende Stufe wählen",
+      "Für alle Services immer die höchste Stufe, um jedes Risiko auszuschließen",
+      "Für alle Services die günstigste Stufe, weil Störungen selten sind",
+      "Die Stufe nach dem Wunsch der Mitarbeiter, die am meisten anrufen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde hat in den letzten Monaten mehrfach erlebt, dass sein Anbieter die zugesagte Lösungszeit deutlich überschritten hat. Die Gutschriften sind gering. Welche Regelung sollte er beim nächsten Vertrag verlangen?",
+    "a": "Ein Sonderkündigungsrecht bei wiederholter SLA-Verletzung",
+    "a_full": "Kleine Gutschriften schrecken einen Anbieter oft nicht ab. Ein Sonderkündigungsrecht erlaubt dem Kunden, bei dauerhaft schlechter Leistung vorzeitig auszusteigen. Dazu gehören klare Schwellen, z.B. dreimal in sechs Monaten verfehlt, und ein geregeltes Eskalationsverfahren.",
+    "options": [
+      "Ein Sonderkündigungsrecht bei wiederholter SLA-Verletzung",
+      "Eine längere Vertragslaufzeit, damit der Anbieter sich mehr Mühe gibt",
+      "Einen Verzicht auf Gutschriften gegen einen einmaligen Preisnachlass",
+      "Eine höhere Monatsgebühr, damit der Anbieter mehr Personal einstellt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde verlangt für seine interne Zeiterfassung eine zugesagte Verfügbarkeit von 99,999 Prozent. Wie beraten Sie ihn?",
+    "a": "Den Bedarf aus den Ausfallfolgen ableiten, jede weitere Neun kostet viel mehr",
+    "a_full": "Sehr hohe Verfügbarkeiten verlangen redundante Standorte, Überwachung rund um die Uhr und automatische Umschaltung. Das ist teuer und lohnt sich nur, wenn ein Ausfall großen Schaden anrichtet. Für eine Zeiterfassung reicht meist ein deutlich geringerer Wert mit schneller Wiederherstellung.",
+    "options": [
+      "Den Bedarf aus den Ausfallfolgen ableiten, jede weitere Neun kostet viel mehr",
+      "Die Zusage ohne Rückfrage übernehmen, weil der Kunde sie wünscht",
+      "Die Zusage ablehnen, weil mehr als 99 Prozent technisch unmöglich sind",
+      "Die Zusage geben und Ausfälle einfach als Wartung deklarieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Interessent sagt: „Ihr Systemhaus ist nach ISO 9001 zertifiziert, also liefern Sie fehlerfreie Arbeit.“ Wie korrigieren Sie diese Aussage?",
+    "a": "Das Zertifikat bestätigt ein funktionierendes QM-System, nicht fehlerfreie Produkte",
+    "a_full": "Bei der Zertifizierung prüft eine unabhängige Stelle, ob Prozesse festgelegt, gelenkt und laufend verbessert werden. Das erhöht die Chance auf gleichbleibende Qualität, garantiert aber keine fehlerfreie Leistung. Das Zertifikat gilt drei Jahre, in denen jährliche Überwachungsaudits stattfinden.",
+    "options": [
+      "Das Zertifikat bestätigt ein funktionierendes QM-System, nicht fehlerfreie Produkte",
+      "Das Zertifikat bestätigt, dass alle Produkte vom TÜV geprüft sind",
+      "Das Zertifikat ist eine gesetzliche Pflicht für alle IT-Firmen",
+      "Das Zertifikat garantiert dem Kunden längere Gewährleistungsfristen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bevor Ihr Systemhaus einen neuen Ablauf für die Übergabe von Kundenservern einführt, sammelt das Team mögliche Fehler und bewertet jeden nach Bedeutung, Auftretens- und Entdeckungswahrscheinlichkeit. Wie heißt diese Methode?",
+    "a": "FMEA, eine vorbeugende Fehlermöglichkeits- und Einflussanalyse",
+    "a_full": "Die FMEA sucht Fehler, bevor sie auftreten. Für jeden möglichen Fehler vergibt das Team Punkte für Bedeutung, Auftreten und Entdeckung und multipliziert sie zur Risikoprioritätszahl. Fehler mit hoher Zahl erhalten zuerst Gegenmaßnahmen, z.B. einen zusätzlichen Prüfschritt.",
+    "options": [
+      "FMEA, eine vorbeugende Fehlermöglichkeits- und Einflussanalyse",
+      "Ishikawa-Diagramm, eine Sammlung bereits aufgetretener Fehlerursachen",
+      "Pareto-Analyse, eine Sortierung vergangener Fehler nach Häufigkeit",
+      "ABC-Analyse, eine Einteilung der Fehler nach ihrem Wertanteil"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Drucker im Kundenbüro fällt immer wieder aus. Sie fragen: Warum? Papierstau. Warum? Falsches Papier. Warum? Einkauf bestellt billigeres Papier. Wie heißt diese Methode und was ist ihr Ziel?",
+    "a": "5-Why-Methode, die eigentliche Ursache hinter dem Symptom finden",
+    "a_full": "Bei der 5-Why-Methode fragt man so lange nach dem Warum, bis man bei einer Ursache ankommt, die man dauerhaft abstellen kann. Die Zahl fünf ist ein Richtwert. Im Beispiel liegt die Lösung im Einkauf und nicht in der Reparatur des Druckers.",
+    "options": [
+      "5-Why-Methode, die eigentliche Ursache hinter dem Symptom finden",
+      "Ishikawa-Methode, alle Ursachen nach Kategorien in einer Grafik sammeln",
+      "Delphi-Methode, Fachleute in mehreren Runden anonym befragen",
+      "Brainstorming, möglichst viele Lösungsideen ohne Bewertung sammeln"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Kostenrechnung zeigt: Eigene Server und eine Cloud-Lösung kosten den Kunden über fünf Jahre fast gleich viel. Wie begründen Sie trotzdem eine Empfehlung?",
+    "a": "Mit qualitativen Kriterien wie Abhängigkeit, Datenschutz und Know-how",
+    "a_full": "Wenn die Zahlen kaum Unterschiede zeigen, entscheiden die nicht in Geld messbaren Faktoren. Dazu gehören z.B. Anbieterabhängigkeit, Speicherort der Daten, Flexibilität bei Wachstum und ob eigenes Personal den Betrieb leisten kann. Eine Nutzwertanalyse macht diese Bewertung nachvollziehbar.",
+    "options": [
+      "Mit qualitativen Kriterien wie Abhängigkeit, Datenschutz und Know-how",
+      "Gar nicht, bei gleichen Kosten ist die Entscheidung völlig beliebig",
+      "Mit einem Losverfahren, damit kein Anbieter bevorzugt wird",
+      "Mit der Lösung, die der größere und bekanntere Hersteller anbietet"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen gibt seine IT-Abteilung mit allen Geräten, Verträgen und den acht Administratoren an einen IT-Dienstleister ab, der den Betrieb weiterführt. Was gilt für die Arbeitsverhältnisse?",
+    "a": "Sie gehen mit allen Rechten und Pflichten auf den Dienstleister über",
+    "a_full": "Beim Übergang eines Betriebsteils tritt der neue Inhaber in die bestehenden Arbeitsverhältnisse ein. Eine Kündigung wegen des Übergangs ist unwirksam. Die Beschäftigten müssen vorher in Textform unterrichtet werden und können innerhalb eines Monats schriftlich widersprechen, dann bleiben sie beim alten Arbeitgeber.",
+    "options": [
+      "Sie gehen mit allen Rechten und Pflichten auf den Dienstleister über",
+      "Sie enden automatisch, der Dienstleister stellt nach Bedarf neu ein",
+      "Sie bleiben beim alten Arbeitgeber, die Admins werden nur ausgeliehen",
+      "Sie gehen über, aber nur mit neuer Probezeit und neuem Gehalt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus mit 40 Beschäftigten muss wegen eines verlorenen Großkunden zwei Technikerstellen streichen. Mehrere Techniker sind vergleichbar. Nach welchen Kriterien wird ausgewählt, wem gekündigt wird?",
+    "a": "Betriebszugehörigkeit, Lebensalter, Unterhaltspflichten und Schwerbehinderung",
+    "a_full": "Bei einer betriebsbedingten Kündigung muss der Arbeitgeber unter vergleichbaren Beschäftigten eine Sozialauswahl treffen. Es trifft die Personen, die sozial am wenigsten schutzbedürftig sind. Leistungsträger dürfen nur in engen Grenzen aus der Auswahl herausgenommen werden.",
+    "options": [
+      "Betriebszugehörigkeit, Lebensalter, Unterhaltspflichten und Schwerbehinderung",
+      "Leistung im letzten Jahr, Zahl der Krankheitstage und Gehaltshöhe",
+      "Ausbildungsabschluss, Entfernung zum Wohnort und Überstunden",
+      "Freie Wahl des Arbeitgebers, weil er allein den Betrieb führt"
+    ]
   }
 ]

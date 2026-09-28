@@ -3991,5 +3991,621 @@
       "",
       "3. Das Arbeitsverhältnis besteht bereits unbefristet. Eine nachträgliche Befristung geht nur, wenn Nils zustimmt, und ohne Sachgrund gar nicht mehr, weil schon ein Arbeitsverhältnis mit demselben Arbeitgeber besteht (§ 14 Abs. 2 TzBfG). Eine neue Probezeit braucht er nicht zu akzeptieren, der Betrieb kennt ihn aus drei Jahren Ausbildung. Kündigungsfrist: 4 Wochen zum 15. oder zum Monatsende (§ 622 Abs. 1 BGB). Die Ausbildungszeit zählt bei der Wartezeit von 6 Monaten nach dem Kündigungsschutzgesetz mit. Hat der Betrieb mehr als 10 Beschäftigte, gilt der Kündigungsschutz also sofort. Unterlagen: Nachweis der wesentlichen Arbeitsbedingungen nach dem Nachweisgesetz (u.a. Beginn, Tätigkeit, Arbeitsort, Arbeitszeit, Gehalt, Urlaub, Kündigungsfristen). Außerdem ein Ausbildungszeugnis nach § 16 BBiG (auf Wunsch qualifiziert, mit Angaben zu Verhalten und Leistung)."
     ]
+  },
+  {
+    "title": "Temperaturprotokoll des Arzneimittelkühlschranks einer Apotheke",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Apotheke lagert Impfstoffe und Insuline in einem Arzneimittelkühlschrank. Zulässig sind 2 °C bis 8 °C. Ein Datenlogger misst stündlich die Temperatur. Die Werte werden in eine Tabellenkalkulation übernommen: Spalte A Uhrzeit, Spalte B Temperatur in °C, ab Zeile 2. Die Grenzwerte stehen in F1 (2) und F2 (8).",
+      "  A2 06:00 / B2 5,1   A3 07:00 / B3 4,8   A4 08:00 / B4 6,2   A5 09:00 / B5 8,4",
+      "  A6 10:00 / B6 9,1   A7 11:00 / B7 7,6   A8 12:00 / B8 5,5   A9 13:00 / B9 1,8",
+      "Ein Kollege hat in C2 geschrieben: =WENN(UND(B2<$F$1;B2>$F$2);\"Abweichung\";\"ok\") und die Formel bis C9 kopiert. In allen Zeilen steht \"ok\".",
+      "",
+      "1. Erklären Sie, warum die Formel des Kollegen nie \"Abweichung\" anzeigt. Geben Sie die korrigierte Formel für C2 an. Warum sind die Dollarzeichen vor F1 und F2 nötig?",
+      "2. Welche Werte stehen nach der Korrektur in C2 bis C9? Berechnen Sie die Ergebnisse von =MIN(B2:B9), =MAX(B2:B9), =MITTELWERT(B2:B9) und =ZÄHLENWENN(C2:C9;\"Abweichung\"). Was sagt der Mittelwert über die Lagerung aus?",
+      "3. Künftig soll der Logger alle 10 Minuten messen, und die Werte eines ganzen Jahres sollen in einem Tabellenblatt stehen. Wie viele Zeilen sind das? Reicht ein Blatt mit 1.048.576 Zeilen? Wie sorgen Sie dafür, dass das Protokoll bei einer Kontrolle durch die Aufsichtsbehörde glaubwürdig ist?"
+    ],
+    "solution": [
+      "1. UND ist nur wahr, wenn beide Bedingungen gleichzeitig erfüllt sind. Eine Temperatur kann aber nicht zugleich unter 2 °C und über 8 °C liegen. Die Bedingung ist deshalb immer falsch, und es erscheint immer \"ok\". Richtig ist ODER, denn es reicht, wenn eine Grenze verletzt ist: =WENN(ODER(B2<$F$1;B2>$F$2);\"Abweichung\";\"ok\"). Die Dollarzeichen machen die Bezüge absolut. Beim Kopieren nach unten wandert B2 zu B3, B4 usw., die Grenzwerte in F1 und F2 bleiben fest. Ohne $ stünde in C3 F2 und F3. F3 ist leer und zählt als 0, die Prüfung wäre falsch.",
+      "",
+      "2. C2 ok (5,1), C3 ok (4,8), C4 ok (6,2), C5 Abweichung (8,4 > 8), C6 Abweichung (9,1 > 8), C7 ok (7,6), C8 ok (5,5), C9 Abweichung (1,8 < 2). MIN = 1,8 °C, MAX = 9,1 °C. MITTELWERT: Summe 5,1 + 4,8 + 6,2 + 8,4 + 9,1 + 7,6 + 5,5 + 1,8 = 48,5, geteilt durch 8 = 6,0625, also ca. 6,06 °C. ZÄHLENWENN ergibt 3, das sind 3 von 8 Messungen = 37,5 %. Der Mittelwert liegt im zulässigen Bereich und verdeckt die Ausreißer. Für Arzneimittel zählt jeder einzelne Wert: Mindestens von 09:00 bis 10:00 Uhr war es zu warm, um 13:00 Uhr zu kalt (Gefahr des Gefrierens bei Insulin). Die Apothekerin muss anhand der Herstellerangaben entscheiden, ob die Arzneimittel noch verwendet werden dürfen, und das dokumentieren.",
+      "",
+      "3. 6 Messungen pro Stunde x 24 Stunden x 365 Tage = 52.560 Zeilen, dazu 1 Überschriftenzeile. Das Blatt reicht locker, rechnerisch für knapp 20 Jahre (1.048.576 / 52.560 = ca. 19,95). Glaubwürdigkeit: Die Rohdaten des Loggers unverändert archivieren (Export mit Prüfsumme oder Logger-Software mit Änderungsprotokoll). Die Tabelle dient nur der Auswertung und wird mit Blattschutz versehen. Schreibrechte haben nur die verantwortlichen Personen. Jede Abweichung wird mit Datum, Ursache, Maßnahme und Namenszeichen dokumentiert. Dazu kommen ein Alarm per SMS oder E-Mail bei Grenzwertverletzung, eine richtig gestellte Uhr im Logger, die regelmäßige Kalibrierung des Fühlers und eine Datensicherung der Protokolle."
+    ]
+  },
+  {
+    "title": "Gebührenberechnung für den Kassenautomaten eines Parkhauses",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein kleines Softwarehaus programmiert für den Betreiber eines Parkhauses an einem Einkaufszentrum die Gebührenberechnung der Kassenautomaten. Tarif: Die ersten 30 Minuten sind frei. Wer länger parkt, zahlt für jede angefangene Stunde ab Einfahrt 1,50 Euro, höchstens aber 12,00 Euro. Das Parkhaus ist von 6 bis 24 Uhr geöffnet. Dauerparker mit Monatskarte zahlen am Automaten nichts. Ein Kollege hat folgenden Pseudocode geschrieben (DIV = ganzzahlige Division, MOD = Rest der Division):",
+      "  FUNKTION gebuehr(minuten, dauerparker)",
+      "    WENN dauerparker = wahr DANN RÜCKGABE 0",
+      "    WENN minuten <= 30 DANN RÜCKGABE 0",
+      "    stunden <- minuten DIV 60",
+      "    betrag <- stunden * 1,50",
+      "    WENN betrag > 12,00 DANN betrag <- 12,00",
+      "    RÜCKGABE betrag",
+      "Die Auswertung eines Samstags ergab: 180 Fahrzeuge mit 20 Minuten Parkdauer, 240 mit 45 Minuten, 310 mit 100 Minuten, 150 mit 190 Minuten, 60 mit 540 Minuten und 35 Dauerparker.",
+      "",
+      "1. Führen Sie einen Schreibtischtest mit 45, 61, 120 und 540 Minuten durch und vergleichen Sie mit dem Tarif. Welcher Fehler steckt im Pseudocode? Korrigieren Sie ihn.",
+      "2. Berechnen Sie die Einnahmen des Samstags mit dem fehlerhaften und mit dem korrigierten Programm. Wie hoch ist der Verlust an einem solchen Tag?",
+      "3. Stellen Sie nach der Grenzwertanalyse mindestens sechs Testfälle mit erwartetem Ergebnis zusammen. Ab welcher Parkdauer wird der Höchstbetrag fällig? Welche ungültigen Eingaben sollte das Programm abfangen?"
+    ],
+    "solution": [
+      "1. 45 Minuten: 45 DIV 60 = 0, Betrag 0,00 Euro. Laut Tarif ist 1 Stunde angefangen, also 1,50 Euro. 61 Minuten: 61 DIV 60 = 1, Betrag 1,50 Euro. Richtig wären 2 angefangene Stunden = 3,00 Euro. 120 Minuten: 2 x 1,50 = 3,00 Euro, richtig. 540 Minuten: 9 x 1,50 = 13,50 Euro, begrenzt auf 12,00 Euro, richtig. Fehler: DIV rundet ab, der Tarif verlangt aber jede angefangene Stunde. Das Ergebnis stimmt nur, wenn die Minuten genau durch 60 teilbar sind oder der Höchstbetrag greift. Korrektur nach der Zeile \"stunden <- minuten DIV 60\": WENN minuten MOD 60 > 0 DANN stunden <- stunden + 1. Kürzer: stunden <- (minuten + 59) DIV 60.",
+      "",
+      "2. Korrigiert: 180 x 0 = 0 Euro. 45 Minuten = 1 Stunde: 240 x 1,50 = 360 Euro. 100 Minuten = 2 Stunden: 310 x 3,00 = 930 Euro. 190 Minuten = 4 angefangene Stunden: 150 x 6,00 = 900 Euro. 540 Minuten: 60 x 12,00 = 720 Euro. Dauerparker 0 Euro. Summe 2.910,00 Euro. Fehlerhaft: 240 x 0 = 0 Euro. 100 DIV 60 = 1: 310 x 1,50 = 465 Euro. 190 DIV 60 = 3: 150 x 4,50 = 675 Euro. 540 Minuten: 720 Euro. Summe 1.860,00 Euro. Verlust: 1.050,00 Euro an einem Samstag, das sind ca. 36,1 % der richtigen Einnahmen.",
+      "",
+      "3. Testfälle: 30 Minuten: 0,00 Euro (letzte freie Minute). 31 Minuten: 1,50 Euro. 60 Minuten: 1,50 Euro. 61 Minuten: 3,00 Euro. 420 Minuten (genau 7 Stunden): 10,50 Euro. 421 Minuten: 8 angefangene Stunden = 12,00 Euro. 1.080 Minuten (18 Stunden, ganze Öffnungszeit): 12,00 Euro. Dauerparker mit 200 Minuten: 0,00 Euro. Höchstbetrag: 12,00 / 1,50 = 8 Stunden. Er wird ab der 8. angefangenen Stunde fällig, also ab 421 Minuten. Ungültige Eingaben: negative Parkdauer (Ausfahrt vor Einfahrt, z.B. nach falsch gestellter Uhr), mehr als 1.080 Minuten (Ticket vom Vortag, dafür gibt es einen Sondertarif), fehlende oder unlesbare Ticketdaten. In diesen Fällen darf der Automat nicht einfach 0 Euro berechnen. Er zeigt eine Fehlermeldung und ruft das Personal."
+    ]
+  },
+  {
+    "title": "Digitaler Orgelspieltisch sendet MIDI-Daten an den Sample-PC",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Orgelbauwerkstatt baut für eine Musikhochschule einen digitalen Übungsspieltisch mit zwei Manualen und Pedal. Die Tasten senden MIDI-Nachrichten über eine klassische MIDI-Schnittstelle an einen PC (31.250 Bit/s, je Byte 10 Bit mit Start- und Stoppbit). Eine Software erzeugt dort aus aufgenommenen Pfeifenklängen (Samples) den Orgelton. Eine Note-On-Nachricht hat 3 Byte: Statusbyte (oberes Nibble 9 = Note On, 8 = Note Off, unteres Nibble 0 bis F = Kanal 1 bis 16), Notennummer (60 = eingestrichenes c) und Anschlagstärke.",
+      "Mitgeschnittene Bytes (hexadezimal): 91 3C 64 | 91 43 50 | 90 24 7F | 81 3C 40",
+      "Das Sample-Set hat 40 Register mit vereinfacht je 56 Tönen. Jeder Ton ist 6 Sekunden lang, Stereo, 48 kHz, 24 Bit. Die Software legt jedes 24-Bit-Sample im Arbeitsspeicher als 32-Bit-Wert ab und lädt 3 Mikrofonperspektiven (nah, mittel, fern). Für Windows und Programme werden 6 GB angesetzt (1 GB = 10^9 Byte).",
+      "",
+      "1. Wandeln Sie die mitgeschnittenen Bytes in Binär- und Dezimalwerte um und deuten Sie die vier Nachrichten (Art, Kanal, Note, Anschlagstärke). Woran erkennt der Empfänger ein Statusbyte?",
+      "2. Wie lange dauert die Übertragung einer Note-On-Nachricht? Der Organist schlägt 10 Töne auf dem Manual (Kanal 2) und 2 Töne im Pedal (Kanal 1) gleichzeitig an. Wann kommt der letzte Ton an? Wie viel spart Running Status (das Statusbyte wird bei gleichem Status nicht wiederholt)?",
+      "3. Berechnen Sie den Arbeitsspeicherbedarf für das Sample-Set. Reichen 16 GB? Welche Anschlussart empfehlen Sie statt der klassischen MIDI-Buchse?"
+    ],
+    "solution": [
+      "1. 91h = 1001 0001 = 145: oberes Nibble 9 = Note On, unteres Nibble 1 = Kanal 2. 3Ch = 0011 1100 = 60, das eingestrichene c. 64h = 0110 0100 = 100, Anschlagstärke 100. Zweite Nachricht: 91h = Note On Kanal 2, 43h = 0100 0011 = 67 (eingestrichenes g), 50h = 0101 0000 = 80. Dritte: 90h = 1001 0000 = 144 = Note On Kanal 1 (Pedal), 24h = 0010 0100 = 36 (großes C, zwei Oktaven unter 60), 7Fh = 0111 1111 = 127, die größte Anschlagstärke. Vierte: 81h = 1000 0001 = 129 = Note Off Kanal 2, 3Ch = 60: Das c wird losgelassen, 40h = 64 ist die Loslassgeschwindigkeit. Ein Statusbyte hat das höchste Bit 1 (128 bis 255). Datenbytes haben das höchste Bit 0, deshalb reichen Noten und Anschlagstärke nur von 0 bis 127.",
+      "",
+      "2. 3 Byte x 10 Bit = 30 Bit. 30 / 31.250 Bit/s = 0,00096 s = 0,96 ms. 12 Töne x 3 Byte = 36 Byte = 360 Bit, das dauert 11,52 ms. Der letzte Ton kommt also 11,52 ms nach dem ersten Tastendruck an. Mit Running Status: Manual 1 Statusbyte + 10 x 2 Datenbytes = 21 Byte, Pedal 1 + 2 x 2 = 5 Byte, zusammen 26 Byte = 260 Bit = 8,32 ms. Ersparnis 3,2 ms, das sind ca. 27,8 %. Geübte Organisten bemerken Verzögerungen ab etwa 10 ms, dazu kommt noch die Latenz der Audioausgabe.",
+      "",
+      "3. Ein Ton: 6 s x 48.000 Werte/s x 2 Kanäle x 3 Byte = 1.728.000 Byte. Pfeifen: 40 x 56 = 2.240. Daten: 2.240 x 1.728.000 = 3.870.720.000 Byte = ca. 3,87 GB. Im Arbeitsspeicher als 32 Bit (4 statt 3 Byte): 3.870.720.000 x 4 / 3 = 5.160.960.000 Byte = ca. 5,16 GB. 3 Perspektiven: 15.482.880.000 Byte = ca. 15,48 GB. Mit 6 GB für System und Programme: ca. 21,48 GB. 16 GB reichen nicht, empfohlen werden 32 GB als 2 x 16 GB (Dual-Channel). Anschluss: USB-MIDI. Die Nachrichten werden viel schneller übertragen, die Verzögerung liegt bei etwa 1 ms, auch bei vollen Akkorden. Dazu ein Audio-Interface mit ASIO-Treiber für geringe Latenz und eine SSD, damit das Sample-Set schnell lädt."
+    ]
+  },
+  {
+    "title": "Barrierefreier Dispositionsplatz in einer Taxizentrale",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "In einer Taxizentrale nimmt Frau Albers seit 12 Jahren Bestellungen an und vergibt Fahrten über eine Dispositionssoftware. Durch eine Augenerkrankung ist sie stark sehbehindert, ihr Grad der Behinderung beträgt 60. Sie arbeitet an einem 24-Zoll-Monitor mit Full HD (1920 x 1080) und nutzt die Windows-Lupe. Dabei verliert sie ständig den Überblick über die Fahrzeugliste.",
+      "Anforderungen: Großbuchstaben der Standardschrift sind bei 100 % Skalierung 9 Pixel hoch. Für Frau Albers müssen sie mindestens 4 mm hoch sein (1 Zoll = 25,4 mm). Die Software braucht mindestens 1280 x 720 logische Bildpunkte (Auflösung geteilt durch Skalierung). Windows bietet die Skalierungen 100, 125, 150, 175, 200, 225, 250 und 300 %. Zur Auswahl stehen ein 27-Zoll- und ein 32-Zoll-Monitor, beide mit 4K (3840 x 2160).",
+      "Geplante Anschaffungen (netto): Monitor 32 Zoll 690 Euro, Monitorarm 160 Euro, Vergrößerungssoftware mit Sprachausgabe 1.450 Euro, Tastatur mit großer, kontrastreicher Beschriftung 90 Euro. Vereinfacht angenommen übernimmt das Integrationsamt 80 % der Kosten für diese technischen Arbeitshilfen.",
+      "",
+      "1. Berechnen Sie die Pixeldichte (ppi) des bisherigen Monitors und der beiden 4K-Monitore. Welche Skalierung braucht Frau Albers jeweils mindestens, und welche logische Auflösung ergibt sich? Welcher Monitor erfüllt beide Anforderungen am besten?",
+      "2. Berechnen Sie die Gesamtkosten, den Zuschuss und den Eigenanteil der Taxizentrale.",
+      "3. Welche Einstellungen und Hilfen richten Sie am Arbeitsplatz zusätzlich ein? Welche Rechte hat Frau Albers als schwerbehinderte Beschäftigte, die bei der Planung zu beachten sind?"
+    ],
+    "solution": [
+      "1. Diagonale in Pixeln: Full HD: Wurzel aus (1920² + 1080²) = ca. 2.202,9. 4K: Wurzel aus (3840² + 2160²) = ca. 4.405,8. Pixeldichte: 24 Zoll: 2.202,9 / 24 = ca. 91,8 ppi. 27 Zoll: 4.405,8 / 27 = ca. 163,2 ppi. 32 Zoll: 4.405,8 / 32 = ca. 137,7 ppi. Buchstabenhöhe = 9 x Skalierung x 25,4 / ppi. Daraus folgt: Skalierung mindestens 4 x ppi / (9 x 25,4) = 4 x ppi / 228,6. 24 Zoll: mindestens 1,61, also 175 %. Logisch 1920 / 1,75 = ca. 1097 x 617 Bildpunkte, zu wenig. 27 Zoll: mindestens 2,86, also 300 %. Logisch 1280 x 720, erfüllt gerade so, ohne Reserve. 32 Zoll: mindestens 2,41, also 250 %. Logisch 1536 x 864, erfüllt beides mit Reserve. Buchstabenhöhe dort: 9 x 2,5 x 25,4 / 137,7 = ca. 4,15 mm. Empfehlung: 32 Zoll.",
+      "",
+      "2. 690 + 160 + 1.450 + 90 = 2.390 Euro netto. Zuschuss 80 %: 1.912 Euro. Eigenanteil: 478 Euro. Der Antrag muss vor dem Kauf gestellt werden. Beraten kann der technische Beratungsdienst des Integrationsamts (in manchen Ländern Inklusionsamt) oder der Integrationsfachdienst.",
+      "",
+      "3. Monitorarm: Bildschirm näher an die Augen und auf passende Höhe, seitlich zum Fenster ohne Blendung. In Windows: Kontrastdesign oder dunkler Modus nach Wunsch, großer farbiger Mauszeiger, Textcursor-Indikator, deutliche Fokusmarkierung. Die Sprachausgabe läuft über ein eigenes Ohr des Headsets, damit Telefon und Funk verständlich bleiben. Tastenkürzel der Dispositionssoftware schulen, Farben nicht als einziges Merkmal nutzen. Rechte: Anspruch auf eine behinderungsgerechte Einrichtung des Arbeitsplatzes (§ 164 Abs. 4 SGB IX). Zusatzurlaub von 5 Arbeitstagen bei der 5-Tage-Woche (§ 208 SGB IX). Besonderer Kündigungsschutz, eine Kündigung braucht die Zustimmung des Integrationsamts (§ 168 SGB IX). Gibt es eine Schwerbehindertenvertretung, wird sie beteiligt. Frau Albers wird von Anfang an in die Auswahl einbezogen und probiert die Lösung aus."
+    ]
+  },
+  {
+    "title": "Füllstand der Regenwasserzisterne einer Gärtnerei per Struktogramm steuern",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Gärtnerei bewässert ihre Gewächshäuser mit Regenwasser aus einer Zisterne mit 10.230 Litern. Ein Füllstandssensor liefert über einen 10-Bit-Analog-Digital-Wandler Werte von 0 (leer) bis 1023 (voll). Die Steuerung zeigt die Werte hexadezimal an. Ein Steuerprogramm soll alle 10 Minuten so arbeiten:",
+      "  - Unter 1.500 Litern: Pumpe aus, Ventil für Stadtwasser öffnen, Meldung \"Zisterne leer\".",
+      "  - Von 1.500 bis unter 3.000 Litern: Stadtwasser zu, Pumpe an, nur Gewächshaus 1 bewässern (Sparbetrieb), Warnmeldung.",
+      "  - Ab 3.000 Litern: Stadtwasser zu, Pumpe an, alle Gewächshäuser bewässern. Über 9.800 Litern zusätzlich Meldung \"Überlauf droht\".",
+      "Abgelesene Werte: 2A8h, 096h, 3E8h, 05Ah.",
+      "",
+      "1. Wie viele Liter entspricht ein Schritt des Wandlers? Wandeln Sie die vier Werte in Dezimalzahlen und Liter um, 2A8h auch in eine Binärzahl. Wie groß wäre ein Schritt bei einem 8-Bit-Wandler?",
+      "2. Erstellen Sie ein Struktogramm (Nassi-Shneiderman) für das Programm in Textform und führen Sie einen Schreibtischtest mit den vier Werten durch.",
+      "3. Bei 6.800 Litern verbraucht die Gärtnerei ohne Regen 850 Liter am Tag. Am wievielten Tag wechselt die Steuerung in den Sparbetrieb? Im Betrieb schaltet das Ventil um 1.500 Liter herum ständig auf und zu. Wie beheben Sie das?"
+    ],
+    "solution": [
+      "1. 10 Bit ergeben 2^10 = 1.024 Werte (0 bis 1023). 10.230 Liter / 1023 = 10 Liter je Schritt. 2A8h = 2 x 256 + 10 x 16 + 8 = 680, also 6.800 Liter, binär 10 1010 1000. 096h = 9 x 16 + 6 = 150, also 1.500 Liter. 3E8h = 3 x 256 + 14 x 16 + 8 = 1.000, also 10.000 Liter. 05Ah = 5 x 16 + 10 = 90, also 900 Liter. 8-Bit-Wandler: 256 Werte (0 bis 255), 10.230 / 255 = ca. 40,1 Liter je Schritt, also etwa viermal gröber.",
+      "",
+      "2. Struktogramm (Blöcke von oben nach unten, eingerückt = innerhalb des Blocks):",
+      "  Wiederhole solange wahr (Endlosschleife)",
+      "    Lies wert",
+      "    liter <- wert * 10",
+      "    Verzweigung: liter < 1500 ?",
+      "      ja: Pumpe aus | Ventil Stadtwasser auf | Meldung \"Zisterne leer\"",
+      "      nein: Ventil Stadtwasser zu | Pumpe an",
+      "            Verzweigung: liter < 3000 ?",
+      "              ja: Nur Gewächshaus 1 bewässern | Warnmeldung",
+      "              nein: Alle Gewächshäuser bewässern",
+      "                    Verzweigung: liter > 9800 ?  ja: Meldung \"Überlauf droht\" | nein: (leer)",
+      "    Warte 10 Minuten",
+      "Schreibtischtest: 680 ergibt 6.800 Liter: nicht unter 1.500, nicht unter 3.000, alle Gewächshäuser, nicht über 9.800. 150 ergibt 1.500 Liter: nicht unter 1.500 (der Grenzwert gehört zum Sparbetrieb), aber unter 3.000, Sparbetrieb mit Warnung. 1.000 ergibt 10.000 Liter: alle Gewächshäuser und Meldung \"Überlauf droht\". 90 ergibt 900 Liter: Pumpe aus, Stadtwasser auf, Meldung \"Zisterne leer\".",
+      "",
+      "3. (6.800 - 3.000) / 850 = ca. 4,47 Tage. Nach 4 Tagen sind noch 6.800 - 4 x 850 = 3.400 Liter da, im Laufe des 5. Tages fällt der Stand unter 3.000 Liter, dann beginnt der Sparbetrieb. Ständiges Schalten: Beim Pumpen oder Nachlaufen schwankt der Messwert um die Grenze. Lösung: Hysterese. Das Stadtwasser öffnet unter 1.500 Litern und schließt erst wieder ab z.B. 2.000 Litern. Dafür braucht das Programm eine Merkervariable (stadtwasserAktiv). Zusätzlich hilft ein Mittelwert aus mehreren Messungen gegen Wellen beim Zulauf."
+    ]
+  },
+  {
+    "title": "Adressplan für das Depot eines Busunternehmens",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Busunternehmen mit Linien- und Reiseverkehr baut sein Depot um. Für das Depot steht das Netz 192.168.40.0/24 zur Verfügung. Es sollen getrennte Subnetze entstehen:",
+      "  - Verwaltung und Werkstatt: 55 Geräte (PCs, Drucker, Diagnosegeräte)",
+      "  - Busse: 45 Fahrzeugrouter, die beim Abstellen im Depot Fahrgastzählung und Fahrzeugdaten hochladen",
+      "  - Videokameras auf dem Hof und in der Waschhalle: 20",
+      "  - Verwaltung der Netzwerkgeräte (Switches, Access Points): 9",
+      "In jedem Subnetz braucht der Router zusätzlich eine Adresse. Die Subnetze sollen so klein wie möglich sein und ohne Lücke ab 192.168.40.0 vergeben werden, das größte zuerst.",
+      "",
+      "1. Bestimmen Sie für jedes Subnetz Präfixlänge, Subnetzmaske, Netzadresse, nutzbare Adressen und Broadcastadresse. Wie viele Adressen bleiben frei?",
+      "2. In zwei Jahren hat das Unternehmen 70 Busse. Passt das in Ihren Plan? Machen Sie zwei Lösungsvorschläge und bewerten Sie sie.",
+      "3. Warum werden Kameras und Busse nicht einfach mit ins Verwaltungsnetz genommen? Was muss auf dem Router und für DHCP eingerichtet werden, damit die Subnetze funktionieren?"
+    ],
+    "solution": [
+      "1. Verwaltung: 55 + 1 = 56 Adressen, 2^6 - 2 = 62, also /26 (255.255.255.192). Netz 192.168.40.0, nutzbar .1 bis .62, Broadcast .63. Busse: 45 + 1 = 46, ebenfalls /26: Netz 192.168.40.64, nutzbar .65 bis .126, Broadcast .127. Kameras: 20 + 1 = 21, 2^5 - 2 = 30, also /27 (255.255.255.224): Netz 192.168.40.128, nutzbar .129 bis .158, Broadcast .159. Netzwerkgeräte: 9 + 1 = 10, 2^4 - 2 = 14, also /28 (255.255.255.240): Netz 192.168.40.160, nutzbar .161 bis .174, Broadcast .175. Belegt sind .0 bis .175 = 176 Adressen, frei bleiben .176 bis .255 = 80 Adressen (z.B. als 192.168.40.176/28 und 192.168.40.192/26).",
+      "",
+      "2. 70 Busse + Router = 71 Adressen, dafür reicht ein /26 nicht. Nötig ist ein /25 mit 126 nutzbaren Adressen. Ein /25 beginnt immer bei .0 oder .128, es passt nicht an die Stelle .64. Vorschlag A: alles neu aufteilen. Busse 192.168.40.0/25 (.1 bis .126), Verwaltung .128/26 (.129 bis .190), Kameras .192/27 (.193 bis .222), Netzwerkgeräte .224/28 (.225 bis .238), frei bleibt .240/28. Nachteil: Verwaltung, Kameras und Netzwerkgeräte bekommen neue Adressen. Feste Adressen, DHCP-Bereiche, Firewallregeln und die Dokumentation müssen geändert werden, und es bleibt kaum Reserve. Vorschlag B: Die Busse bekommen ein zusätzliches Netz, z.B. 192.168.41.0/25 oder /24. Die anderen Netze bleiben, das bisherige Busnetz wird frei. Vorteil: wenig Umstellung und viel Reserve. Voraussetzung: Das Netz ist im Unternehmen noch nicht vergeben. Empfehlung: B.",
+      "",
+      "3. Eigene Subnetze verkleinern die Broadcastdomänen. Die Kameras sind vor Zugriffen aus dem Büro und von den Bussen geschützt, die Aufnahmen sind personenbezogene Daten. Der große Upload der Busse bremst das Büro nicht. Der Router bzw. die Firewall regelt, wer mit wem sprechen darf, und die Fehlersuche wird übersichtlicher. Router: je Subnetz eine Schnittstelle oder VLAN-Schnittstelle, meist mit der ersten nutzbaren Adresse als Gateway (.1, .65, .129, .161), dazu Regeln zwischen den Netzen. DHCP: je Subnetz ein eigener Bereich mit passender Maske und passendem Gateway. Steht der DHCP-Server zentral, muss der Router die Anfragen weiterleiten (DHCP-Relay), weil Broadcasts nicht über den Router gehen. Kameras und Netzwerkgeräte erhalten feste Adressen oder Reservierungen."
+    ]
+  },
+  {
+    "title": "Hundehaus eines Tierheims per Glasfaser anbinden",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Tierheim hat ein Verwaltungsgebäude und 170 m entfernt ein neues Hundehaus mit Quarantänestation. Dort sollen 10 Netzwerkkameras (je 4 Mbit/s Dauerstrom zum Rekorder in der Verwaltung), ein PC in der Futterküche und ein IP-Telefon angeschlossen werden. Zurzeit gibt es nur einen WLAN-Repeater am Fenster, der real 20 bis 30 Mbit/s schafft und oft abbricht. Zwischen den Gebäuden liegt ein leeres Leerrohr, der Kabelweg einschließlich Reserve beträgt 180 m.",
+      "Ein Kollege schlägt ein Netzwerkkabel Cat. 7 durch das Leerrohr vor. Sie planen eine Multimode-Glasfaser OM3 mit 1000BASE-SX. Angaben (vereinfacht): Faserdämpfung bei 850 nm 3,5 dB/km, je Steckverbindung 0,75 dB, je Spleiß 0,3 dB. Die Strecke hat 2 Steckverbindungen und 2 Spleiße. Das Dämpfungsbudget der SFP-Module beträgt 7,5 dB, es sollen 3 dB Reserve bleiben.",
+      "Kosten Glasfaser: Kabel 2,80 Euro/m, Spleißen und Messen pauschal 450 Euro, 2 SFP-Module je 45 Euro, 1 PoE-Switch mit SFP-Port im Hundehaus 280 Euro. Alternative: Richtfunkbrücke mit 2 Antennen je 190 Euro und Montage für 150 Euro, 250 Mbit/s nutzbar, der PoE-Switch wird ebenfalls gebraucht. Richtfunk braucht freie Sicht, zwischen den Gebäuden stehen hohe Laubbäume.",
+      "",
+      "1. Welche Datenrate wird im Hundehaus mindestens gebraucht? Warum scheiden der Repeater und das Kupferkabel aus? Nennen Sie für das Kupferkabel zwei Gründe.",
+      "2. Berechnen Sie die Gesamtdämpfung der Glasfaserstrecke. Reicht das Budget mit Reserve?",
+      "3. Vergleichen Sie die Kosten von Glasfaser und Richtfunk. Welche Lösung empfehlen Sie? Begründen Sie."
+    ],
+    "solution": [
+      "1. Kameras: 10 x 4 = 40 Mbit/s dauerhaft, dazu PC und Telefon mit einigen Mbit/s. Nötig sind also mindestens etwa 50 Mbit/s. Der Repeater liefert höchstens 20 bis 30 Mbit/s und bricht ab, die Aufnahmen hätten Lücken. Kupfer: Twisted-Pair-Ethernet ist auf 100 m begrenzt (90 m fest verlegt plus Patchkabel), 180 m sind zu lang. Außerdem verbindet ein Kupferkabel zwei Gebäude elektrisch. Potenzialunterschiede und Überspannungen, z.B. bei Blitzeinschlag, können Geräte zerstören. Glasfaser leitet keinen Strom (galvanische Trennung) und ist unempfindlich gegen elektromagnetische Störungen.",
+      "",
+      "2. Faser: 0,18 km x 3,5 dB/km = 0,63 dB. Steckverbindungen: 2 x 0,75 = 1,5 dB. Spleiße: 2 x 0,3 = 0,6 dB. Gesamtdämpfung: 0,63 + 1,5 + 0,6 = 2,73 dB. Mit 3 dB Reserve: 5,73 dB. Das ist kleiner als 7,5 dB, es bleiben sogar noch 1,77 dB Luft. Das Budget reicht.",
+      "",
+      "3. Glasfaser: 180 x 2,80 = 504 Euro + 450 + 2 x 45 + 280 = 1.324 Euro. Richtfunk: 2 x 190 + 150 + 280 = 810 Euro. Die Glasfaser kostet 514 Euro mehr. Empfehlung: Glasfaser. Das Leerrohr liegt schon, die Verbindung ist unabhängig von Wetter und Laub (Blätter dämpfen Funk im Sommer stark, Bäume wachsen), braucht keine Mastmontage und keine Funkplanung. Sie liefert 1 Gbit/s mit viel Reserve und später mit anderen Modulen 10 Gbit/s. Für die Überwachung der Quarantänestation zählt Zuverlässigkeit mehr als der Preisunterschied. Die Kameras werden im Hundehaus über den PoE-Switch mit Strom versorgt."
+    ]
+  },
+  {
+    "title": "IPv6-Präfix für Pfarrbüro, Gemeindehaus und Kita aufteilen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Kirchengemeinde erhält einen neuen Glasfaseranschluss. Der Provider delegiert das Präfix 2001:db8:4c20:ab00::/56 (Dokumentationsbereich, als Beispiel verwendet). Im Pfarrhaus sollen Subnetze mit je einem /64 entstehen, die Subnetz-ID ist hexadezimal: Pfarrbüro (10), Gäste-WLAN im Gemeindehaus (20), Verwaltung der Kita (30) und Haustechnik mit Läuteanlage und Heizungssteuerung (40).",
+      "Ein ehrenamtlicher Helfer hat diese Adressen für die Dokumentation notiert:",
+      "  a) Router im Pfarrbüro: 2001:0db8:4c20:ab10:0000:0000:0000:0001",
+      "  b) Drucker im Pfarrbüro: 2001:db8:4c20:ab10::a:12",
+      "  c) Läuteanlage: 2001:db8::ab40::5",
+      "  d) PC der Kita-Leitung: 2001:db8:4c20:ac30::25",
+      "  e) Heizungssteuerung: fe80::2d0:c9ff:fe12:3456",
+      "",
+      "1. Wie viele /64-Subnetze kann die Gemeinde bilden? Wie viele Adressen hat ein /64? Nennen Sie das erste und das letzte /64 sowie die vier geplanten Subnetze in Kurzschreibweise.",
+      "2. Prüfen Sie die Adressen a) bis e). Kürzen Sie a), schreiben Sie b) vollständig aus und erklären Sie, was an c) bis e) auffällt.",
+      "3. Die Geräte bekommen öffentliche IPv6-Adressen, NAT gibt es nicht. Welche Folgen hat das für die Sicherheit, und welche Regeln richten Sie auf dem Router ein? Was passiert, wenn der Provider das Präfix ändert?"
+    ],
+    "solution": [
+      "1. Für Subnetze bleiben 64 - 56 = 8 Bit, also 2^8 = 256 Subnetze mit /64. Ein /64 hat 2^64 = 18.446.744.073.709.551.616 Adressen (ca. 1,8 x 10^19). Die Subnetz-ID sind die letzten 8 Bit des vierten Blocks, 00 bis ff. Erstes /64: 2001:db8:4c20:ab00::/64, letztes: 2001:db8:4c20:abff::/64. Geplant: 2001:db8:4c20:ab10::/64 (Pfarrbüro), 2001:db8:4c20:ab20::/64 (Gäste), 2001:db8:4c20:ab30::/64 (Kita), 2001:db8:4c20:ab40::/64 (Haustechnik).",
+      "",
+      "2. a) 2001:db8:4c20:ab10::1. Führende Nullen je Block fallen weg, die längste Folge von Nullblöcken wird durch :: ersetzt. b) Vorhanden sind 6 Blöcke (2001, db8, 4c20, ab10, a, 12), :: steht also für 8 - 6 = 2 Nullblöcke: 2001:0db8:4c20:ab10:0000:0000:000a:0012. c) Ungültig: :: darf nur einmal vorkommen, sonst ist unklar, wie viele Nullblöcke an welcher Stelle fehlen. Gemeint war vermutlich 2001:db8:4c20:ab40::5. d) Der vierte Block ac30 liegt nicht im eigenen Präfix ab00 bis abff. Wahrscheinlich ein Tippfehler, richtig ist 2001:db8:4c20:ab30::25. Mit der falschen Adresse wäre der PC nicht erreichbar. e) fe80:: ist eine link-lokale Adresse. Sie gilt nur im eigenen Subnetz und wird nicht geroutet, jede IPv6-Schnittstelle hat so eine Adresse zusätzlich. Für den Zugriff aus dem Pfarrbüro braucht die Heizung eine globale Adresse aus 2001:db8:4c20:ab40::/64. Das ff:fe in der Mitte zeigt, dass die Interface-ID aus der MAC-Adresse gebildet wurde (EUI-64).",
+      "",
+      "3. Ohne NAT sind alle Geräte grundsätzlich aus dem Internet adressierbar. Schutz bietet nur die Firewall des Routers. Regeln: Eingehende Verbindungen aus dem Internet standardmäßig blockieren, nur Antworten auf ausgehende Verbindungen zulassen (zustandsorientiert). Das Gäste-WLAN (ab20) darf nur ins Internet, nicht in ab10, ab30 und ab40. Die Kita (ab30) wird vom Pfarrbüro getrennt, weil dort Daten von Kindern liegen. Die Haustechnik (ab40) ist nur von bestimmten Geräten im Pfarrbüro oder per VPN erreichbar. ICMPv6 nicht komplett sperren, IPv6 braucht es für Neighbor Discovery und Path MTU Discovery. Präfixwechsel: Alle globalen Adressen ändern sich. Fest eingetragene Adressen, Druckerports, Firewallregeln und DNS-Einträge stimmen nicht mehr. Abhilfe: einen Tarif mit festem Präfix wählen, intern zusätzlich ULA-Adressen (fd00::/8) für feste Geräte nutzen, mit Namen statt Adressen arbeiten."
+    ]
+  },
+  {
+    "title": "Kassen-Tablet eines Friseursalons verliert mittags das WLAN",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Friseursalon in einer Einkaufspassage kassiert mit einem Tablet und bucht Termine online. Seit einigen Wochen bricht die WLAN-Verbindung des Tablets immer wieder ab, besonders zwischen 12 und 13 Uhr. Dann wärmt das Team im Pausenraum hinter der Wand sein Essen in der Mikrowelle auf. Der Router des Salons funkt nur im 2,4-GHz-Band auf Kanal 3 mit 20 MHz Kanalbreite. Eine WLAN-Scan-App am Kassenplatz zeigt:",
+      "  Salon (eigenes Netz): Kanal 3, -48 dBm",
+      "  Baeckerei-Gast: Kanal 1, -55 dBm",
+      "  Handyshop: Kanal 5, -58 dBm",
+      "  Optik-Buero: Kanal 6, -62 dBm",
+      "  Passage-Free: Kanal 11, -78 dBm",
+      "Vereinfacht gilt: Mittenfrequenz im 2,4-GHz-Band = 2.407 MHz + 5 MHz x Kanalnummer. Zwei Netze stören sich, wenn ihre Mittenfrequenzen weniger als 20 MHz auseinanderliegen. In Deutschland sind die Kanäle 1 bis 13 erlaubt.",
+      "",
+      "1. Berechnen Sie die Mittenfrequenzen der genannten Kanäle. Mit welchen Netzen überlappt der Salon? Welche Kanäle können im 2,4-GHz-Band gleichzeitig ohne Überlappung genutzt werden, und welcher Kanal wäre hier am besten?",
+      "2. Um welchen Faktor ist das eigene Signal (-48 dBm) stärker als Passage-Free (-78 dBm)? Warum stört die Mikrowelle, und warum hilft der Wechsel ins 5-GHz-Band?",
+      "3. Nach dem Kanalwechsel bricht die Verbindung seltener, aber immer noch ab. Welche weiteren Ursachen prüfen Sie, und wie gehen Sie bei der Fehlersuche vor?"
+    ],
+    "solution": [
+      "1. Kanal 1: 2.407 + 5 = 2.412 MHz. Kanal 3: 2.422 MHz. Kanal 5: 2.432 MHz. Kanal 6: 2.437 MHz. Kanal 11: 2.462 MHz. Abstände zu Kanal 3: Kanal 1 und Kanal 5 je 10 MHz, Kanal 6 15 MHz, der Salon überlappt also mit drei Netzen. Kanal 11 ist 40 MHz entfernt, keine Überlappung. Ohne Überlappung sind Kanäle mit mindestens 4 Kanälen Abstand (20 MHz), in Deutschland 1, 5, 9 und 13. Kanal 9 (2.452 MHz) läge nur 15 MHz neben Kanal 6 und 10 MHz neben Kanal 11. Am besten ist Kanal 13 (2.472 MHz). Er überlappt nur mit Passage-Free auf Kanal 11 (10 MHz Abstand), das mit -78 dBm sehr schwach ist. Hinweis: Manche Geräte für den nordamerikanischen Markt können Kanal 13 nicht nutzen.",
+      "",
+      "2. Der Unterschied beträgt 30 dB. 10 dB entsprechen dem Faktor 10, 30 dB also 10 x 10 x 10 = 1.000. Das eigene Signal ist am Kassenplatz 1.000-mal stärker. Die Mikrowelle arbeitet bei etwa 2,45 GHz, also mitten im 2,4-GHz-Band (zwischen Kanal 8 und 9). Ihre Abschirmung ist nie ganz dicht, während des Betriebs stört sie das WLAN in der Nähe. Im 5-GHz-Band arbeiten weder Mikrowellen noch Bluetooth, es gibt viel mehr überlappungsfreie Kanäle (z.B. 36, 40, 44 und 48 für Innenräume, Kanal 36 = 5.180 MHz) und weniger Nachbarnetze. Nötig ist ein Dualband-Router oder Access Point, das Tablet muss 5 GHz unterstützen. Die geringere Reichweite bei 5 GHz spielt im Salon keine Rolle.",
+      "",
+      "3. Weitere Ursachen: große Spiegel mit Metallbeschichtung und Metallregale dämpfen und reflektieren das Signal, der Router steht versteckt in einem Metallschrank, Bluetooth-Lautsprecher für die Musik, Energiesparfunktion des Tablets trennt WLAN im Standby, veraltete Firmware von Router oder Tablet, der DHCP-Bereich ist voll oder die Lease-Zeit zu kurz. Vorgehen: Fehler genau aufnehmen (wann, wie oft, welche Meldung), Protokoll des Routers lesen, immer nur eine Änderung gleichzeitig vornehmen und testen, Signalstärke am Kassenplatz messen, Router frei und erhöht aufstellen. Ergebnisse und Einstellungen dokumentieren, damit der Salon bei erneuten Problemen darauf zurückgreifen kann."
+    ]
+  },
+  {
+    "title": "Neue Verkabelung für den Verwaltungstrakt eines Stadttheaters",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Stadttheater saniert seinen dreigeschossigen Verwaltungstrakt. Jeder Arbeitsplatz erhält eine Doppeldose (2 Anschlüsse), jede Etage außerdem 2 Access Points und einen Netzwerkdrucker mit je einem Anschluss. Arbeitsplätze: Erdgeschoss 14 (Kasse, Abonnementbüro), 1. Obergeschoss 18 (Intendanz, Dramaturgie, Probebühne), 2. Obergeschoss 10 (Verwaltung). In jede Etage kommt ein Etagenverteiler in einen Wandschrank, der Gebäudeverteiler steht im Keller.",
+      "Vorgaben: 20 % Reserve bei den Ports (aufrunden), Patchfelder mit 24 Ports, Switches mit 48 Ports. Durchschnittliche Kabellänge je Anschluss: EG 38 m, 1. OG 52 m, 2. OG 41 m, dazu 10 % Verschnitt. Das Kabel wird auf Trommeln zu 500 m geliefert. Der Anschluss in der Probebühne hat einen Kabelweg von 97 m bis zum Patchfeld.",
+      "",
+      "1. Berechnen Sie für jede Etage die Zahl der Anschlüsse, die Ports mit Reserve und die Zahl der Patchfelder. Reicht je Etage ein Switch?",
+      "2. Berechnen Sie die benötigte Kabelmenge und die Zahl der Trommeln. Was ist bei der Probebühne das Problem, und wie lösen Sie es?",
+      "3. Ordnen Sie die Verkabelung den Bereichen Primär-, Sekundär- und Tertiärverkabelung zu. Welches Medium empfehlen Sie jeweils? Warum sind Beschriftung und Dokumentation wichtig?"
+    ],
+    "solution": [
+      "1. EG: 14 x 2 + 2 + 1 = 31 Anschlüsse, mit Reserve 31 x 1,2 = 37,2, also 38 Ports, 2 Patchfelder (48 Ports). 1. OG: 18 x 2 + 3 = 39 Anschlüsse, 39 x 1,2 = 46,8, also 47 Ports, 2 Patchfelder. 2. OG: 10 x 2 + 3 = 23 Anschlüsse, 23 x 1,2 = 27,6, also 28 Ports, 2 Patchfelder. Insgesamt 93 Anschlüsse und 6 Patchfelder. Ein 48-Port-Switch reicht in jeder Etage, im 1. OG knapp (47 von 48). Die Uplinks laufen über zusätzliche SFP-Ports, für die Access Points brauchen die Switches PoE.",
+      "",
+      "2. EG: 31 x 38 = 1.178 m. 1. OG: 39 x 52 = 2.028 m. 2. OG: 23 x 41 = 943 m. Summe 4.149 m, mit 10 % Verschnitt 4.563,9 m. 4.563,9 / 500 = 9,13, also 10 Trommeln. Probebühne: Die fest verlegte Strecke (Permanent Link) darf höchstens 90 m lang sein, der ganze Übertragungskanal mit Patchkabeln höchstens 100 m. 97 m verletzen die Norm, es drohen Übertragungsfehler und langsame Verbindungen. Lösungen: einen kürzeren Kabelweg suchen, den Etagenverteiler zentraler setzen oder nahe der Probebühne einen kleinen Verteiler mit Switch aufbauen und per Glasfaser anbinden.",
+      "",
+      "3. Primärverkabelung (zwischen Gebäuden, z.B. zu Werkstätten und Bühnenhaus): Glasfaser, bei großen Entfernungen Singlemode. Sekundärverkabelung (Steigbereich vom Gebäudeverteiler zu den Etagenverteilern): Glasfaser Multimode OM3 oder OM4, unempfindlich gegen Störungen, hohe Datenraten. Tertiärverkabelung (Etagenverteiler bis zur Dose): Twisted Pair mindestens Cat. 6A, 10 Gbit/s bis 100 m und PoE für Access Points. Beschriftung und Dokumentation: Jede Dose und jeder Patchfeldport erhält eine eindeutige Bezeichnung (z.B. 1OG-PF1-12), dazu ein Plan mit Räumen und die Messprotokolle der Abnahme. Das beschleunigt die Fehlersuche, Umzüge und Erweiterungen und ist Grundlage für die Gewährleistung."
+    ]
+  },
+  {
+    "title": "Fingerabdruck am Drehkreuz einer Thermenlandschaft",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Therme mit Saunalandschaft hat 2.400 Stammgäste mit Jahreskarte. Die Betreiberin vermutet, dass Karten an Freunde verliehen werden. Sie schätzt, dass 0,5 % aller Eintritte mit fremden Karten erfolgen. Ein Tageseintritt kostet vereinfacht angenommen 14 Euro. Im Schnitt gibt es 350 Eintritte mit Jahreskarte pro Tag, die Therme hat an 360 Tagen geöffnet.",
+      "Ein Anbieter schlägt einen Fingerabdruckscanner am Drehkreuz vor: Anschaffung 6.500 Euro, Wartung 900 Euro im Jahr. Laut Datenblatt beträgt die Falschrückweisungsrate (FRR) 1,5 % und die Falschakzeptanzrate (FAR) 0,002 %. Eine Rückweisung kostet das Kassenpersonal im Schnitt 2 Minuten. Der Anbieter sagt: \"Beim nächsten Besuch scannen einfach alle Stammgäste ihren Finger ein, dann ist das Thema erledigt.\"",
+      "",
+      "1. Ist der Plan des Anbieters datenschutzrechtlich zulässig? Was muss die Therme beachten, wenn sie Fingerabdrücke nutzen will?",
+      "2. Vereinfacht wird angenommen, dass 60 % der Stammgäste einwilligen und nur bei ihnen der Kartenmissbrauch wegfällt. Berechnen Sie den jährlichen Nutzen nach Wartungskosten, die Amortisationszeit, die Zahl der Falschrückweisungen pro Tag und die Arbeitszeit dafür im Jahr. Was bedeutet die FAR?",
+      "3. Nennen Sie technische und organisatorische Maßnahmen zum Schutz der Fingerabdruckdaten."
+    ],
+    "solution": [
+      "1. Nein. Fingerabdrücke, die zur eindeutigen Identifizierung verarbeitet werden, sind biometrische Daten und gehören zu den besonderen Kategorien personenbezogener Daten (Art. 9 DSGVO). Ihre Verarbeitung ist grundsätzlich verboten. Hier kommt nur eine ausdrückliche Einwilligung in Frage (Art. 9 Abs. 2 lit. a DSGVO). Sie muss freiwillig sein, eine Pflicht für alle ist deshalb unzulässig. Die Therme muss eine gleichwertige Alternative ohne Nachteile anbieten, z.B. eine Karte mit Foto oder einen QR-Code in der App. Die Einwilligung wird schriftlich dokumentiert und kann jederzeit widerrufen werden, dann werden die Daten gelöscht. Dazu kommen die Informationspflichten (Art. 13 DSGVO), der Eintrag im Verzeichnis von Verarbeitungstätigkeiten und eine Datenschutz-Folgenabschätzung (Art. 35 DSGVO), weil sensible Daten vieler Personen verarbeitet werden. Hat der Anbieter Zugriff auf die Daten, braucht es einen Vertrag zur Auftragsverarbeitung.",
+      "",
+      "2. Eintritte pro Jahr: 350 x 360 = 126.000. Missbrauch: 0,5 % = 630 Eintritte x 14 Euro = 8.820 Euro. Davon fallen 60 % weg: 5.292 Euro. Nutzen nach Wartung: 5.292 - 900 = 4.392 Euro im Jahr. Amortisation: 6.500 / 4.392 = ca. 1,48 Jahre. Rückweisungen: Nur 60 % der Eintritte laufen über den Scanner, 350 x 0,6 = 210 Scans pro Tag x 1,5 % = 3,15 Rückweisungen pro Tag. Im Jahr: 3,15 x 360 = 1.134 Rückweisungen x 2 Minuten = 2.268 Minuten = 37,8 Stunden. FAR 0,002 % bedeutet: Von 50.000 Versuchen mit einem fremden Finger wird im Schnitt einer fälschlich akzeptiert. Stellt man das System strenger ein, sinkt die FAR, dafür steigt die FRR, und umgekehrt.",
+      "",
+      "3. Technisch: nur Templates (Merkmalsdaten) statt Fingerbilder speichern, verschlüsselt und nur lokal im Gerät oder auf dem eigenen Server, nicht in einer Cloud außerhalb der EU. Templates getrennt von den Kundendaten mit einer Kennnummer verknüpfen. Lebenderkennung gegen Attrappen, Updates, Zugriff nur für wenige Administratoren mit Protokollierung, automatische Löschung bei Widerruf oder Ende der Jahreskarte. Organisatorisch: verständliches Einwilligungsformular, Schulung des Kassenpersonals, klares Verfahren bei Rückweisung (Ausweis oder Karte zeigen), Alternative ohne Nachteil tatsächlich anbieten, Folgenabschätzung und Löschfristen dokumentieren, Vertrag zur Auftragsverarbeitung bei Fernwartung durch den Anbieter."
+    ]
+  },
+  {
+    "title": "Verwaiste Benutzerkonten bei einem Gerüstbauer",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Gerüstbauunternehmen mit 85 Beschäftigten nutzt ein Cloud-Office-Paket mit E-Mail, Dateiablage und Chat. Die Lizenz kostet vereinfacht angenommen 12,50 Euro je Benutzer und Monat. Bei einer Prüfung finden Sie 64 lizenzierte Konten. 13 davon gehören Personen, die das Unternehmen im Durchschnitt vor 7 Monaten verlassen haben. Die Personalabteilung meldet Austritte bisher nicht an die IT. Mehrfaktor-Authentifizierung ist nicht eingerichtet. In den Angeboten stehen Namen und Anschriften der Kunden, darunter viele private Bauherren.",
+      "Ausschnitt aus dem Anmeldeprotokoll (Kolonnenführer Kai Brandl ist am Freitag, 21.08.2026, ausgeschieden):",
+      "  12.09.2026 02:14  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
+      "  12.09.2026 02:15  lager@...     Anmeldung fehlgeschlagen (falsches Kennwort)  IP aus dem Ausland",
+      "  14.09.2026 21:47  k.brandl@...  Anmeldung erfolgreich  IP Mobilfunk Deutschland",
+      "  14.09.2026 21:52  k.brandl@...  Download Ordner \"Angebote 2026\" (46 Dateien)",
+      "",
+      "1. Berechnen Sie den Anteil der verwaisten Konten und die Lizenzkosten, die dafür bisher angefallen sind und pro Jahr weiter anfallen würden. Welche Sicherheitsrisiken entstehen durch solche Konten?",
+      "2. Werten Sie den Protokollausschnitt aus. Wie viele Tage nach seinem Austritt hat sich Herr Brandl angemeldet? Was tun Sie jetzt sofort, und muss der Vorfall der Datenschutz-Aufsichtsbehörde gemeldet werden?",
+      "3. Entwerfen Sie einen Ablauf für das Ausscheiden von Beschäftigten (Offboarding), damit das nicht wieder passiert. Wer ist jeweils beteiligt?"
+    ],
+    "solution": [
+      "1. Anteil: 13 / 64 = ca. 20,3 %. Bisher angefallen: 13 x 7 x 12,50 = 1.137,50 Euro. Pro Jahr: 13 x 12 x 12,50 = 1.950 Euro. Risiken: Ehemalige haben weiter Zugriff auf Firmen- und Kundendaten (Vertraulichkeit) und könnten Daten ändern oder löschen (Integrität). Niemand achtet auf diese Konten, Angreifer probieren dort unbemerkt Kennwörter aus. E-Mails von Kunden an alte Adressen bleiben unbeantwortet. Sammelkonten wie lager@ haben oft keinen Verantwortlichen und ein schwaches Kennwort, das viele kennen.",
+      "",
+      "2. Vom 21.08. bis 14.09.2026 sind es 24 Tage. Herr Brandl hat sich angemeldet und 46 Angebote heruntergeladen, möglicherweise für einen neuen Arbeitgeber. Die zwei nächtlichen Fehlversuche aus dem Ausland auf lager@ deuten auf einen Angriff hin. Sofort: Konto k.brandl sperren, alle Sitzungen beenden, Kennwort ändern, Zugriffe von Apps widerrufen. Kennwort von lager@ ändern und einen Verantwortlichen festlegen. Alle 13 verwaisten Konten sperren, Protokolle als Beweis sichern, Geschäftsleitung und Datenschutzbeauftragten informieren, zeitnah Mehrfaktor-Authentifizierung einführen. Die Geschäftsleitung prüft rechtliche Schritte (unbefugter Zugriff, Geschäftsgeheimnisse). Meldung: Ein Unbefugter hat personenbezogene Daten (Namen und Anschriften der Kunden) heruntergeladen. Das ist eine Verletzung des Schutzes personenbezogener Daten. Ein Risiko für die Betroffenen ist nicht auszuschließen, deshalb Meldung an die Aufsichtsbehörde binnen 72 Stunden nach Bekanntwerden (Art. 33 DSGVO) und Dokumentation des Vorfalls.",
+      "",
+      "3. Ablauf: Die Personalabteilung meldet jeden Austritt mit dem letzten Arbeitstag frühzeitig per Ticket an die IT. Der Vorgesetzte legt fest, wer Daten und Aufgaben übernimmt. Die IT sperrt das Konto am letzten Arbeitstag, beendet Sitzungen auf Handy und Tablet, entzieht Gruppen und Berechtigungen und richtet eine Abwesenheitsnotiz mit neuem Ansprechpartner ein. Dienstliche Daten werden übergeben. Geräte, Schlüssel und Transponder werden zurückgegeben und zurückgesetzt, das hält eine Checkliste mit Unterschrift fest. Nach einer festgelegten Frist (z.B. 30 Tage) wird das Konto gelöscht und die Lizenz frei. Beteiligt: Personalabteilung (Auslöser), Vorgesetzter (Übergabe), IT (Umsetzung), Datenschutzbeauftragter (Löschfristen). Dazu kommt eine Rezertifizierung: Jedes Quartal bestätigen die Vorgesetzten die Kontenliste ihres Bereichs. Sammelkonten haben immer einen benannten Verantwortlichen."
+    ]
+  },
+  {
+    "title": "Löschfristen für die Daten einer Autovermietung festlegen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Autovermietung mit drei Stationen schließt rund 9.500 Mietverträge im Jahr ab. Bisher wird nichts gelöscht. Die Geschäftsführung bittet Sie, ein Löschkonzept vorzubereiten. Die Steuerberaterin nennt folgende Fristen, die jeweils am Ende des Kalenderjahres beginnen, in dem das Dokument entstanden ist: Buchungsbelege wie Rechnungen 8 Jahre, empfangene und versandte Handels- und Geschäftsbriefe 6 Jahre.",
+      "Beispieldaten:",
+      "  a) Rechnung zu einem Mietvertrag vom 14.07.2026",
+      "  b) E-Mail-Korrespondenz mit einem Firmenkunden über einen Rahmenvertrag vom 03.02.2026",
+      "  c) Scan des Führerscheins (Vorder- und Rückseite) jedes Mieters, bisher unbegrenzt gespeichert",
+      "  d) Bewerbung eines abgelehnten Bewerbers, Absage am 20.10.2026",
+      "  e) Aufnahme der Videokameras auf dem Abstellplatz (Diebstahlschutz) vom 14.07.2026, 08:00 Uhr, Speicherdauer laut Konzept 72 Stunden",
+      "Ein Mietvertrag mit Rechnung ist als PDF im Schnitt 0,8 MB groß (1 GB = 1.000 MB).",
+      "",
+      "1. Bestimmen Sie für a), b), d) und e), ab wann die Daten gelöscht werden müssen. Begründen Sie die Frist für d).",
+      "2. Wie gehen Sie mit c) um? Wie viel Speicher belegen die Mietverträge im Archiv, wenn dauerhaft 8 Jahrgänge aufbewahrt werden? Ist das ein Argument gegen das Löschen?",
+      "3. Beschreiben Sie, wie das Löschkonzept technisch und organisatorisch umgesetzt wird. Was gilt für die Daten während der Aufbewahrungsfrist und für die Datensicherungen?"
+    ],
+    "solution": [
+      "1. a) Die Frist beginnt am 31.12.2026 und endet nach 8 Jahren am 31.12.2034. Löschung ab 01.01.2035. b) Fristbeginn 31.12.2026, 6 Jahre, Ende 31.12.2032. Löschung ab 01.01.2033. d) Bewerbungen dürfen nur so lange aufbewahrt werden, wie Ansprüche drohen. Ein abgelehnter Bewerber muss Ansprüche wegen Benachteiligung innerhalb von 2 Monaten schriftlich geltend machen (§ 15 Abs. 4 AGG) und danach innerhalb von 3 Monaten klagen (§ 61b ArbGG). Üblich ist deshalb eine Löschung nach 6 Monaten, hier ab 20.04.2027. Länger nur mit Einwilligung, z.B. für einen Bewerberpool. e) 14.07.2026, 08:00 Uhr + 72 Stunden = 17.07.2026, 08:00 Uhr. Dann wird automatisch überschrieben. Nur wenn ein Vorfall passiert ist, wird die Aufnahme als Beweis gesichert, bis der Fall abgeschlossen ist.",
+      "",
+      "2. c) Grundsatz der Datenminimierung (Art. 5 Abs. 1 lit. c DSGVO): Die Vermietung muss sich den Führerschein zeigen lassen und prüfen, ob der Mieter die passende, gültige Fahrerlaubnis hat. Eine Kopie ist dafür nicht nötig. Es reicht, Führerscheinnummer, Klasse, Ausstellungsdatum und einen Prüfvermerk (wer, wann) im Mietvertrag festzuhalten. Die vorhandenen Scans werden gelöscht, neue nicht mehr angelegt. Speicher: 9.500 x 8 = 76.000 Verträge x 0,8 MB = 60.800 MB = 60,8 GB. Das ist wenig, aber kein Argument: Personenbezogene Daten müssen gelöscht werden, sobald der Zweck und die Aufbewahrungspflicht entfallen (Art. 17 DSGVO). Das ist eine Rechtspflicht und keine Frage der Speicherkosten.",
+      "",
+      "3. In einer Tabelle je Datenart festhalten: Zweck, Rechtsgrundlage, Frist, Fristbeginn, Verantwortlicher, Löschverfahren. Die Mietsoftware löscht abgelaufene Jahrgänge automatisch (z.B. jährlich im Januar), das Kamerasystem überschreibt nach 72 Stunden, das Bewerbermanagement erhält ein Löschdatum. Jeder Löschlauf wird protokolliert (was, wann, durch wen, ohne die gelöschten Inhalte). Während der Aufbewahrungsfrist werden die Daten gesperrt: Nach Vertragsende dürfen nur noch Buchhaltung und Steuerberatung zugreifen, nicht mehr Vertrieb oder Werbung. Datensicherungen: Einzelnes Löschen ist dort meist nicht möglich. Die Sicherungen laufen nach dem Rotationsplan aus. Nach einer Wiederherstellung werden bereits gelöschte Daten anhand einer Löschliste erneut gelöscht. Geschäftsführung und Datenschutzbeauftragter prüfen das Konzept jährlich."
+    ]
+  },
+  {
+    "title": "Getrenntes Gäste-WLAN für eine Jugendherberge",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Jugendherberge hat 180 Betten, meist belegt mit Schulklassen, die 2 Nächte bleiben. Alle Gäste, Lehrkräfte und die 25 Beschäftigten nutzen ein gemeinsames WLAN mit dem Kennwort \"Herberge2019\", das auf jedem Zimmerschild steht. Im selben Netz 192.168.0.0/24 hängen der Rezeptions-PC mit der Buchungssoftware, die Kasse und ein NAS mit Personalunterlagen. Der DHCP-Server vergibt Adressen für 8 Tage. Abends melden viele Gäste \"keine Verbindung\". Der Internetanschluss hat 250 Mbit/s im Download und 40 Mbit/s im Upload.",
+      "Geplant ist ein eigenes Gästenetz. Jeder Gast bringt im Schnitt 2 Geräte mit. Für die Verwaltung werden 50 Mbit/s Download und 10 Mbit/s Upload reserviert. Abends sind 60 % der Gäste gleichzeitig online.",
+      "",
+      "1. Nennen Sie die Sicherheitsrisiken der jetzigen Lösung. Erklären Sie mit einer Rechnung, warum abends viele Gäste keine Adresse bekommen.",
+      "2. Planen Sie das Gästenetz: Welches Präfix braucht es mindestens? Welche Lease-Zeit schlagen Sie vor? Wie viel Bandbreite steht einem Gast abends im Schnitt zur Verfügung?",
+      "3. Welche weiteren Einstellungen und Regeln gehören zum Gästenetz, gerade weil viele Gäste minderjährig sind? Haftet die Jugendherberge, wenn ein Gast über das WLAN Filme illegal herunterlädt?"
+    ],
+    "solution": [
+      "1. Das Kennwort ist öffentlich und seit Jahren gleich, auch frühere Gäste kennen es. Alle Gäste sind im selben Netz wie Buchungs-PC, Kasse und NAS mit Personalunterlagen. Sie können diese Geräte angreifen, Schadsoftware von einem Gästegerät kann sich ausbreiten. Die Gäste sehen außerdem die Geräte und Freigaben der anderen Gäste. Adressen: Ein /24 hat 254 nutzbare Adressen, davon belegen Router, Rezeption, Kasse, NAS und die Geräte der Beschäftigten schon einige. Allein die Gäste bringen 180 x 2 = 360 Geräte mit, das Netz ist also schon bei voller Belegung zu klein. Mit 8 Tagen Lease-Zeit bleiben außerdem die Adressen abgereister Gruppen reserviert: Bei einem Wechsel alle 2 Nächte kommen in 8 Tagen bis zu 4 Belegungen, also bis zu 4 x 360 = 1.440 Geräte auf 254 Adressen.",
+      "",
+      "2. 360 Geräte brauchen mindestens ein /23 mit 2^9 - 2 = 510 nutzbaren Adressen, es bleiben 150 Adressen Reserve. Ein /24 wäre zu klein. Lease-Zeit kurz, z.B. 2 bis 4 Stunden, damit Adressen abgereister Gäste schnell frei werden. Bandbreite: 250 - 50 = 200 Mbit/s für Gäste. Abends online: 180 x 0,6 = 108 Gäste. 200 / 108 = ca. 1,85 Mbit/s je Gast im Schnitt, im Upload (40 - 10) / 108 = ca. 0,28 Mbit/s. Deshalb eine Bandbreitenbegrenzung je Gerät einrichten, damit wenige Streams nicht alles belegen, und die Verwaltung priorisieren.",
+      "",
+      "3. Eigene SSID in einem eigenen VLAN, die Firewall lässt aus dem Gästenetz nur Verbindungen ins Internet zu. Client-Isolierung, damit Gäste sich nicht gegenseitig erreichen. Die Verwaltung erhält ein eigenes WLAN mit WPA3 und starkem Kennwort, das NAS ist nur aus dem Verwaltungsnetz erreichbar. Zugang für Gäste über Voucher oder eine Anmeldeseite mit Nutzungsbedingungen bzw. ein regelmäßig wechselndes Kennwort. Wegen der Minderjährigen einen Jugendschutzfilter (z.B. DNS-Filter) einsetzen und das WLAN zur Nachtruhe nach Absprache mit den Lehrkräften zeitlich begrenzen. Werden bei der Anmeldung Namen erhoben, gilt die DSGVO, also nur das Nötige erfassen. Haftung: Als WLAN-Betreiber ist die Jugendherberge Zugangsanbieter. Für Rechtsverletzungen der Nutzer haftet sie grundsätzlich nicht auf Schadensersatz (§ 8 DDG, früher TMG). Rechteinhaber können aber verlangen, dass bestimmte Inhalte gesperrt werden. Nutzungsbedingungen, die illegale Nutzung verbieten, sind trotzdem sinnvoll."
+    ]
+  },
+  {
+    "title": "Einladung zum Vorspielabend mit offenem Verteiler",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine private Musikschule mit 12 Lehrkräften verschickt am Freitag, 13.11.2026, um 16:40 Uhr eine Einladung zum Vorspielabend. Die Mitarbeiterin der Verwaltung setzt alle 146 Adressen von Eltern und erwachsenen Schülern in das Feld CC. 52 Adressen enthalten Vor- und Nachnamen der Kinder und ihr Geburtsjahr, z.B. mia.krause2016@... Um 17:15 Uhr ruft ein Vater die Schulleiterin an und beschwert sich. Bis dahin haben 7 Empfänger mit \"Allen antworten\" reagiert.",
+      "",
+      "1. Welcher Fehler ist passiert, und warum ist das eine Verletzung des Schutzes personenbezogener Daten? Wie viele Zustellungen mit allen Adressen sind durch \"Allen antworten\" zusätzlich entstanden (jede Antwort geht an die Musikschule und die übrigen 145 Empfänger)? Wie hoch ist der Anteil der Adressen mit Kindernamen?",
+      "2. Muss die Musikschule den Vorfall der Aufsichtsbehörde melden, und bis wann spätestens? Müssen die Betroffenen benachrichtigt werden? Was tun Sie noch am Freitagabend?",
+      "3. Wie verhindern Sie technisch und organisatorisch, dass so etwas wieder passiert?"
+    ],
+    "solution": [
+      "1. Die Adressen standen im CC statt im BCC. Jeder Empfänger sieht alle 146 Adressen. E-Mail-Adressen sind personenbezogene Daten, hier wurden sie ohne Rechtsgrundlage 145 anderen Personen offengelegt. Die Vertraulichkeit ist verletzt, das ist eine Verletzung des Schutzes personenbezogener Daten (Art. 4 Nr. 12 DSGVO). Zusätzliche Zustellungen: 7 Antworten x 146 Empfänger = 1.022, jede enthält wieder alle Adressen. Anteil mit Kindernamen: 52 / 146 = ca. 35,6 %.",
+      "",
+      "2. Meldung nach Art. 33 DSGVO unverzüglich, möglichst binnen 72 Stunden nach Bekanntwerden, außer die Verletzung führt voraussichtlich zu keinem Risiko. Hier sind viele Personen betroffen, ein Drittel der Adressen verrät Namen und Alter von Kindern, und die Adressen wurden durch die Antworten weiterverbreitet. Spam und gezielte Betrugsmails sind möglich. Ein Risiko ist also nicht auszuschließen, die Musikschule sollte melden. Kenntnis: Freitag, 13.11.2026, 17:15 Uhr. Frist: Montag, 16.11.2026, 17:15 Uhr, das Wochenende zählt mit. Eine Benachrichtigung der Betroffenen (Art. 34 DSGVO) ist nur bei hohem Risiko Pflicht, das liegt hier eher nicht vor. Eine kurze Entschuldigung ist trotzdem sinnvoll. Am Freitagabend: Schulleitung und Datenschutzbeauftragten informieren, Rückruf der Mail versuchen (klappt bei externen Empfängern meist nicht), alle Empfänger per BCC bitten, die Mail zu löschen und nicht mehr \"Allen antworten\" zu nutzen. Den Vorfall mit Zeitpunkt, Art, Zahl der Betroffenen und Maßnahmen dokumentieren. Die Dokumentation ist immer Pflicht, auch ohne Meldung (Art. 33 Abs. 5 DSGVO).",
+      "",
+      "3. Technisch: Rundmails nur noch über ein Newsletter- oder Serienmailprogramm oder eine Verteilerliste, bei der die Empfänger nicht sichtbar sind. Eine Regel im Mailsystem warnt oder blockiert, wenn mehr als z.B. 10 externe Empfänger im An oder CC stehen. Das BCC-Feld wird standardmäßig eingeblendet, der Versand wird um eine Minute verzögert, damit man ihn noch stoppen kann. Organisatorisch: Dienstanweisung für Rundmails, Schulung der Verwaltung, Vier-Augen-Prinzip bei Mails an viele Empfänger. Eltern darauf hinweisen, dass eine Adresse ohne Namen und Geburtsjahr des Kindes datensparsamer ist."
+    ]
+  },
+  {
+    "title": "Einlasssystem mit Onlinetickets für ein städtisches Freibad",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Der Bäderbetrieb einer Kleinstadt führt im Freibad Onlinetickets ein. Ein Systemhaus richtet 2 Kassen-PCs ein, bindet QR-Code-Scanner an 3 Drehkreuzen ein und konfiguriert den Ticketshop. Die Drehkreuze montiert der Hersteller, Netz und Firewall richtet die IT der Stadtverwaltung ein. Beteiligt sind außerdem die Betriebsleiterin des Bades (Auftraggeberin), die Kassenleitung, der Datenschutzbeauftragte der Stadt und der Personalrat. Die Saison beginnt am Samstag, 15.05.2027.",
+      "Aufwand des Systemhauses in Technikerstunden: Kassen-PCs je 5 h, Scanner je Drehkreuz 6 h, Ticketshop 24 h, Gesamttest 12 h, Schulung von 8 Kassenkräften in Gruppen von höchstens 4 Personen, je Gruppe 3 h. Für die Projektleitung werden 15 % der Technikerstunden angesetzt. Stundensätze netto: Techniker 95 Euro, Projektleitung 115 Euro, zuzüglich 19 % Umsatzsteuer.",
+      "Zeitplan: Die Hardware hat 6 Wochen Lieferzeit, Montage und Einrichtung dauern 3 Wochen, der Probebetrieb läuft 1 Woche vor der Eröffnung.",
+      "",
+      "1. Berechnen Sie die Technikerstunden, die Stunden der Projektleitung und den Angebotspreis netto und brutto.",
+      "2. Erstellen Sie eine Verantwortungsmatrix (RACI) für die Arbeitspakete Firewall-Freigaben, Scanner einbinden, Datenschutzprüfung des Ticketshops und Abnahme. Erklären Sie R, A, C und I. Welche Regel gilt für A?",
+      "3. Bis wann muss die Hardware spätestens bestellt werden? Warum sollte der Personalrat früh beteiligt werden, und wie informieren Sie die Badegäste?"
+    ],
+    "solution": [
+      "1. Kassen-PCs 2 x 5 = 10 h, Scanner 3 x 6 = 18 h, Ticketshop 24 h, Test 12 h, Schulung: 8 / 4 = 2 Gruppen x 3 h = 6 h. Technikerstunden: 70 h. Projektleitung: 70 x 0,15 = 10,5 h. Kosten: 70 x 95 = 6.650,00 Euro, 10,5 x 115 = 1.207,50 Euro. Netto 7.857,50 Euro, Umsatzsteuer 1.492,93 Euro, brutto 9.350,43 Euro.",
+      "",
+      "2. R (Responsible) führt die Arbeit aus. A (Accountable) trägt die Verantwortung, entscheidet und nimmt ab. C (Consulted) wird vorher fachlich gefragt. I (Informed) wird über das Ergebnis informiert. Je Arbeitspaket gibt es genau ein A, R kann bei mehreren liegen. Vorschlag: Firewall-Freigaben: R und A Stadt-IT, C Projektleiter Systemhaus, I Betriebsleiterin. Scanner einbinden: R Techniker Systemhaus, A Projektleiter Systemhaus, C Hersteller der Drehkreuze, I Kassenleitung. Datenschutzprüfung Ticketshop: R Projektleiter Systemhaus (liefert Unterlagen, Vertrag zur Auftragsverarbeitung), A Betriebsleiterin (der Bäderbetrieb ist Verantwortlicher), C Datenschutzbeauftragter, I Stadt-IT und Personalrat. Abnahme: R Kassenleitung (testet im Probebetrieb), A Betriebsleiterin (unterschreibt das Abnahmeprotokoll), C Projektleiter Systemhaus, I Stadt-IT und Hersteller.",
+      "",
+      "3. Rückwärts ab Samstag, 15.05.2027: 1 Woche Probebetrieb ergibt 08.05.2027, 3 Wochen Montage ergeben 17.04.2027, 6 Wochen Lieferzeit ergeben Samstag, 06.03.2027. Bestellung also spätestens am Freitag, 05.03.2027, besser mit 1 bis 2 Wochen Puffer schon Ende Februar. Personalrat: Kassensystem und Drehkreuze erfassen Buchungen je Kassenkraft und eignen sich damit zur Überwachung von Leistung und Verhalten. Solche technischen Einrichtungen sind mitbestimmungspflichtig (Personalvertretungsrecht, vergleichbar § 87 Abs. 1 Nr. 6 BetrVG). Ohne Zustimmung darf das System nicht in Betrieb gehen, der Eröffnungstermin wäre gefährdet. Badegäste: Aushang im Bad, Webseite, soziale Medien und Lokalpresse, kurze Anleitung und häufige Fragen zum Onlineticket, Datenschutzhinweise im Shop. Wichtig: Die Kasse bleibt für Barzahler geöffnet, damit auch Gäste ohne Smartphone ins Bad kommen."
+    ]
+  },
+  {
+    "title": "Nachkalkulation eines Festpreisprojekts im Dentallabor",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Systemhaus hat in einem Dentallabor 4 CAD-Arbeitsplätze eingerichtet und an die Fräsmaschine angebunden. Vereinbart war ein Festpreis von 18.500 Euro netto. Nach Abschluss erstellen Sie die Nachkalkulation. Der interne Kostensatz für eine Technikerstunde beträgt 70 Euro, eine Anfahrt kostet intern 60 Euro.",
+      "  Vorkalkulation: Material 11.200 Euro, Arbeitszeit 48 h, 4 Anfahrten",
+      "  Ist: Material 11.650 Euro (Grafikkarten teurer geworden), Arbeitszeit 71 h, 7 Anfahrten",
+      "Laut Stundenzetteln entfielen 15 zusätzliche Stunden und 2 Anfahrten auf Treiberprobleme mit der Fräsmaschine. 8 Stunden und 1 Anfahrt gingen auf den Wunsch der Laborleitung zurück, zusätzlich einen 3D-Scanner einzubinden. Dieser Wunsch wurde am Telefon geäußert und nirgends schriftlich festgehalten. Für Zusatzleistungen berechnet das Systemhaus 95 Euro je Stunde und 75 Euro je Anfahrt.",
+      "",
+      "1. Stellen Sie Soll- und Istkosten gegenüber (Material, Arbeit, Anfahrten, gesamt) mit der Abweichung in Euro und Prozent.",
+      "2. Wie hoch waren der geplante und der tatsächliche Gewinn in Euro und in Prozent der Kosten? Wie viel hätte das Systemhaus zusätzlich einnehmen können, wenn der Scanner als Nachtrag vereinbart worden wäre? Wie hoch wäre der Gewinn dann gewesen?",
+      "3. Welche Lehren (Lessons Learned) ziehen Sie für künftige Festpreisprojekte?"
+    ],
+    "solution": [
+      "1. Material: Soll 11.200, Ist 11.650, Abweichung +450 Euro (+4,0 %). Arbeit: Soll 48 x 70 = 3.360, Ist 71 x 70 = 4.970, Abweichung +1.610 Euro (+47,9 %). Anfahrten: Soll 4 x 60 = 240, Ist 7 x 60 = 420, Abweichung +180 Euro (+75 %). Gesamt: Soll 14.800, Ist 17.040, Abweichung +2.240 Euro (+15,1 %). Den größten Anteil hat die Arbeitszeit: 23 Stunden mehr als geplant.",
+      "",
+      "2. Geplant: 18.500 - 14.800 = 3.700 Euro, das sind 25 % der Kosten. Tatsächlich: 18.500 - 17.040 = 1.460 Euro, nur ca. 8,6 % der Kosten. Nachtrag: 8 x 95 + 75 = 835 Euro. Der Gewinn wäre auf 1.460 + 835 = 2.295 Euro gestiegen, ca. 13,5 % der Kosten. Die Treiberprobleme trägt das Systemhaus beim Festpreis selbst, sie gehören zum eigenen Risiko.",
+      "",
+      "3. Änderungswünsche nur mit schriftlichem Änderungsantrag (Change Request) umsetzen: Beschreibung, Aufwand, Preis, Auswirkung auf den Termin, Unterschrift des Kunden vor Beginn der Arbeit. Kompatibilität mit vorhandenen Geräten (Treiber der Fräsmaschine) vor dem Angebot testen oder beim Hersteller klären. Einen Risikozuschlag in den Festpreis einrechnen. Hardwarepreise im Angebot nur befristet zusichern oder Material sofort nach Auftrag bestellen. Stundenzettel zeitnah führen und den Soll-Ist-Vergleich schon während des Projekts machen, nicht erst am Ende. Die Erkenntnisse dokumentieren und im Team teilen, z.B. in einer Checkliste für Laborprojekte."
+    ]
+  },
+  {
+    "title": "Onlinebuchung und Check-in-Tablets für eine Tanzschule",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Tanzschule stellt die Kursanmeldung auf eine Onlinebuchung um. Am Eingang sollen zwei Tablets die Teilnehmer per QR-Code einchecken. Vorgänge (Dauer in Arbeitstagen):",
+      "  A Anforderungen mit der Inhaberin aufnehmen: 1, ohne Vorgänger",
+      "  B Buchungssoftware einrichten und Kurse anlegen: 4, nach A",
+      "  C Tablets bestellen und liefern lassen: 3, nach A",
+      "  D Access Point im Eingangsbereich montieren: 2, nach A",
+      "  E Tablets einrichten (Geräteverwaltung, Check-in-App): 2, nach C und D",
+      "  F Buchung in die Webseite einbinden: 2, nach B",
+      "  G Gesamttest: 1, nach E und F",
+      "  H Einweisung des Teams: 1, nach G",
+      "Start ist Montag, 26.04.2027. Gearbeitet wird montags bis freitags, gesetzliche Feiertage sind frei. Im Zeitraum liegen der 1. Mai (Samstag) und Christi Himmelfahrt am Donnerstag, 06.05.2027.",
+      "",
+      "1. Berechnen Sie FAZ, FEZ, SAZ, SEZ, Gesamtpuffer und freien Puffer aller Vorgänge. Nennen Sie den kritischen Pfad, die Projektdauer und das Enddatum.",
+      "2. Erklären Sie am Beispiel der Vorgänge C und D den Unterschied zwischen Gesamtpuffer und freiem Puffer.",
+      "3. Der Lieferant meldet, dass die Tablets 2 Tage später kommen (C dauert 5 Tage). Wann endet das Projekt jetzt? Was hätte eine Verzögerung von D um 1 Tag bewirkt?"
+    ],
+    "solution": [
+      "1. Vorwärtsrechnung (FAZ-FEZ): A 0-1, B 1-5, C 1-4, D 1-3, E 4-6 (wartet auf C), F 5-7, G 7-8 (wartet auf F), H 8-9. Rückwärtsrechnung (SAZ-SEZ): H 8-9, G 7-8, F 5-7, E 5-7, B 1-5, C 2-5, D 3-5, A 0-1. Gesamtpuffer (SAZ - FAZ): A 0, B 0, C 1, D 2, E 1, F 0, G 0, H 0. Freier Puffer (FAZ des Nachfolgers - eigener FEZ): C 4 - 4 = 0, D 4 - 3 = 1, E 7 - 6 = 1, alle anderen 0. Kritischer Pfad: A-B-F-G-H mit 1 + 4 + 2 + 1 + 1 = 9 Arbeitstagen. Tag 1 ist Montag, 26.04., Tag 5 Freitag, 30.04. (der 1. Mai fällt auf einen Samstag), Tag 6 Montag, 03.05., Tag 8 Mittwoch, 05.05. Donnerstag, 06.05., ist Feiertag. Tag 9 und Projektende: Freitag, 07.05.2027.",
+      "",
+      "2. Der Gesamtpuffer gibt an, um wie viele Tage ein Vorgang sich verschieben darf, ohne das Projektende zu gefährden. Der freie Puffer gibt an, um wie viele Tage er sich verschieben darf, ohne dass ein Nachfolger später anfangen kann. C hat 1 Tag Gesamtpuffer, aber 0 Tage freien Puffer: Verzögert sich C um 1 Tag, beginnt E einen Tag später und verliert seinen Puffer, das Projektende bleibt. D hat 2 Tage Gesamtpuffer und 1 Tag freien Puffer: 1 Tag Verzögerung wirkt sich gar nicht aus, ein 2. Tag verschiebt E, aber noch nicht das Ende.",
+      "",
+      "3. C dauert 1-6, E beginnt erst bei 6 und läuft 6-8. G wartet auf E und F und läuft 8-9, H 9-10. Das Projekt dauert 10 Arbeitstage und endet am Montag, 10.05.2027, einen Tag später. C hatte nur 1 Tag Gesamtpuffer, der 2. Tag Verzögerung geht auf das Ende. Eine Verzögerung von D um 1 Tag (D 1-4) hätte nichts bewirkt: E beginnt ohnehin erst nach C bei 4, der freie Puffer von D fängt den Tag auf."
+    ]
+  },
+  {
+    "title": "RFID-Umstellung einer Stadtbibliothek mit Dreipunktschätzung planen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Stadtbibliothek stellt die Ausleihe auf RFID um. Künftig buchen Selbstverbuchungsautomaten die Medien. Vorher muss in jedes der 24.000 Medien ein RFID-Etikett geklebt und in der Bibliothekssoftware mit der Mediennummer verknüpft werden. Das soll in der Schließzeit im Sommer geschehen: 2 Wochen mit 10 Arbeitstagen. Eingesetzt werden studentische Aushilfen, die jeweils 5 Stunden am Tag produktiv arbeiten.",
+      "Die Mitarbeitenden schätzen die Zeit für 100 Medien: optimistisch 40 Minuten, wahrscheinlich 55 Minuten, pessimistisch 100 Minuten. Die Leitung rechnet auf den Erwartungswert 15 % Sicherheitszuschlag. Eine Aushilfsstunde kostet vereinfacht angenommen 16,50 Euro einschließlich Nebenkosten, bezahlt wird die tatsächlich geleistete Zeit. Ein Etikett kostet 0,18 Euro, für Fehlverklebungen werden 3 % mehr Etiketten bestellt.",
+      "",
+      "1. Berechnen Sie mit der Dreipunktschätzung (PERT) den Erwartungswert je 100 Medien und die Standardabweichung. Wie viele Stunden sind mit Sicherheitszuschlag einzuplanen?",
+      "2. Wie viele Aushilfen werden gebraucht, damit die Arbeit in die Schließzeit passt? Berechnen Sie die Kosten für Aushilfen und Etiketten.",
+      "3. In einem Probelauf werden 500 Medien in insgesamt 330 Arbeitsminuten umgestellt. Hält die Planung? Welche Risiken sehen Sie, und wie begegnen Sie ihnen?"
+    ],
+    "solution": [
+      "1. Erwartungswert E = (optimistisch + 4 x wahrscheinlich + pessimistisch) / 6 = (40 + 220 + 100) / 6 = 360 / 6 = 60 Minuten je 100 Medien. Standardabweichung = (pessimistisch - optimistisch) / 6 = 60 / 6 = 10 Minuten. Gesamt: 24.000 / 100 = 240 Pakete x 60 Minuten = 14.400 Minuten = 240 Stunden. Mit 15 % Zuschlag: 240 x 1,15 = 276 Stunden.",
+      "",
+      "2. 4 Aushilfen: 20 h am Tag, 276 / 20 = 13,8 Tage, zu lang. 5 Aushilfen: 25 h am Tag, 11,04 Tage, zu lang. 6 Aushilfen: 30 h am Tag, 9,2 Tage, passt. Es werden 6 Aushilfen gebraucht. Kosten Aushilfen: 276 x 16,50 = 4.554,00 Euro. Etiketten: 24.000 x 1,03 = 24.720 Stück x 0,18 = 4.449,60 Euro. Zusammen 9.003,60 Euro.",
+      "",
+      "3. Probelauf: 330 / 500 x 100 = 66 Minuten je 100 Medien. Hochgerechnet: 240 x 66 = 15.840 Minuten = 264 Stunden. Das liegt über dem Erwartungswert von 240 Stunden, aber unter den geplanten 276 Stunden. Die Planung hält, der Puffer schrumpft aber von 36 auf 12 Stunden. Mit 6 Aushilfen: 264 / 30 = 8,8 Tage. Risiken und Maßnahmen: Krankheit von Aushilfen (Ersatzliste, eine siebte Person auf Abruf), defekte oder falsch geklebte Etiketten (Stichproben mit dem Lesegerät), langsame oder ausgefallene Bibliothekssoftware (vorher testen, Ansprechpartner beim Hersteller), ausgeliehene Medien (werden bei der Rückgabe nachgerüstet), späte Lieferung der Etiketten (früh bestellen, Liefertermin bestätigen lassen), langsamer Start am ersten Tag (Einweisung, Arbeitsplätze vorbereiten)."
+    ]
+  },
+  {
+    "title": "Robuste Tablets für die Einsatzfahrzeuge der Freiwilligen Feuerwehr",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Gemeinde beschafft für die 6 Einsatzfahrzeuge ihrer Freiwilligen Feuerwehr robuste Tablets mit Einsatz-App, Kartendienst und Gefahrstoffdatenbank. Budget: 9.000 Euro netto für die Geräte. Muss-Kriterien: Schutzart mindestens IP65, eingebautes LTE, Bedienung mit Handschuhen. Angebote je Gerät (netto):",
+      "  A 1.180 Euro, IP65, LTE, Handschuhmodus",
+      "  B 1.420 Euro, IP67, LTE, Handschuhmodus",
+      "  C 990 Euro, IP54, LTE, Handschuhmodus",
+      "  D 1.560 Euro, IP68, LTE, Handschuhmodus",
+      "Bewertung mit 0 bis 10 Punkten: Akkulaufzeit (Gewicht 30 %) A 8, B 9. Ablesbarkeit in der Sonne (25 %) A 7, B 9. Handschuhbedienung (20 %) A 9, B 8. Austauschservice am nächsten Tag (25 %) A 9, B 10. D erreicht überall 10 Punkte. Leistungspunkte = Summe aus Gewicht in Prozent mal Punkte. Den Zuschlag erhält das Angebot mit den meisten Leistungspunkten je 1.000 Euro Preis.",
+      "",
+      "1. Welche Angebote scheiden aus und warum? Was bedeuten die beiden Ziffern der IP-Schutzart?",
+      "2. Berechnen Sie die Leistungspunkte und die Kennzahl für die verbleibenden Angebote. Welches Angebot erhält den Zuschlag?",
+      "3. Für jedes Tablet kommen vereinfacht angenommen 9 Euro Mobilfunk und 4 Euro Geräteverwaltung (MDM) im Monat dazu. Berechnen Sie die jährlichen Folgekosten und die Gesamtkosten des Gewinners für 4 Jahre. Was muss vor dem Einsatz noch geklärt werden?"
+    ],
+    "solution": [
+      "1. C scheidet aus: IP54 erfüllt das Muss-Kriterium IP65 nicht, obwohl es das günstigste Angebot ist. D scheidet aus: 6 x 1.560 = 9.360 Euro liegt über dem Budget von 9.000 Euro. IP-Schutzart: Die erste Ziffer steht für den Schutz gegen Fremdkörper und Staub (5 = staubgeschützt, 6 = staubdicht). Die zweite Ziffer steht für den Schutz gegen Wasser (4 = Spritzwasser, 5 = Strahlwasser, 7 = zeitweiliges Untertauchen, 8 = dauerndes Untertauchen).",
+      "",
+      "2. A: 30 x 8 + 25 x 7 + 20 x 9 + 25 x 9 = 240 + 175 + 180 + 225 = 820 Punkte. Preis 6 x 1.180 = 7.080 Euro. Kennzahl 820 / 7,08 = ca. 115,8 Punkte je 1.000 Euro. B: 30 x 9 + 25 x 9 + 20 x 8 + 25 x 10 = 270 + 225 + 160 + 250 = 905 Punkte. Preis 6 x 1.420 = 8.520 Euro. Kennzahl 905 / 8,52 = ca. 106,2. Zuschlag für A: B ist ca. 20,3 % teurer, aber nur ca. 10,4 % besser.",
+      "",
+      "3. Folgekosten: 6 x (9 + 4) x 12 = 936 Euro im Jahr. 4 Jahre: 936 x 4 = 3.744 Euro. Gesamtkosten A: 7.080 + 3.744 = 10.824 Euro. Die Folgekosten müssen im Haushalt der Gemeinde eingeplant werden. Zu klären: crashsichere Halterung und Stromversorgung im Fahrzeug, Einrichtung der Geräteverwaltung (Kiosk-Modus, Updates, Fernlöschung bei Verlust), Datenschutz der Einsatzdaten mit Namen und Adressen (Verschlüsselung, Zugriffsrechte, Vertrag zur Auftragsverarbeitung mit dem App-Anbieter), Mobilfunkabdeckung im Gemeindegebiet, Schulung der Einsatzkräfte, Support am Wochenende und in der Nacht, Ersatzgerät."
+    ]
+  },
+  {
+    "title": "Elternzeit für den Systemadministrator eines Sägewerks",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Tobias Kern ist Systemadministrator in einem Sägewerk mit 140 Beschäftigten. Seine Tochter wurde am Freitag, 12.03.2027, geboren. Am Montag, 15.03.2027, gibt er der Personalabteilung einen unterschriebenen Brief: Er möchte vom 12.05.2027 bis 11.09.2027 Elternzeit nehmen (3. bis 6. Lebensmonat). Sein Nettogehalt betrug vor der Geburt 2.900 Euro im Monat. Er hat 28 Urlaubstage im Jahr.",
+      "Vereinfacht angenommen beträgt das Elterngeld 65 % des Nettogehalts vor der Geburt, höchstens 1.800 Euro im Monat.",
+      "Ein Kollege meint: \"Pass auf, nach der Elternzeit setzt dich der Chef in den Versand. Und kündigen kann er dir vorher sowieso.\"",
+      "",
+      "1. Bis wann hätte Tobias die Elternzeit spätestens verlangen müssen, und in welcher Form? Ab wann gilt für ihn der besondere Kündigungsschutz?",
+      "2. Wie viel Elterngeld erhält Tobias im Monat und insgesamt? Wie hoch ist der Einkommensverlust gegenüber seinem Nettogehalt? Um wie viele Tage darf der Arbeitgeber den Jahresurlaub 2027 kürzen?",
+      "3. Nehmen Sie Stellung zur Aussage des Kollegen. Wie kann das Sägewerk die Arbeit von Tobias während der Elternzeit abdecken?"
+    ],
+    "solution": [
+      "1. Elternzeit bis zum 3. Geburtstag muss spätestens 7 Wochen vor Beginn schriftlich verlangt werden (§ 16 Abs. 1 BEEG). Schriftlich heißt: eigenhändig unterschrieben, eine E-Mail reicht nicht. 12.05.2027 minus 49 Tage = Mittwoch, 24.03.2027. Tobias war mit dem 15.03. rechtzeitig. Der besondere Kündigungsschutz (§ 18 BEEG) beginnt mit dem Verlangen, frühestens aber 8 Wochen vor Beginn der Elternzeit: 12.05.2027 minus 56 Tage = 17.03.2027. Er gilt bis zum Ende der Elternzeit am 11.09.2027. Am 15. und 16.03. gilt nur der allgemeine Kündigungsschutz.",
+      "",
+      "2. 65 % von 2.900 Euro = 1.885 Euro, das liegt über dem Höchstbetrag. Tobias erhält 1.800 Euro im Monat, für 4 Monate 7.200 Euro. Verlust: 1.100 Euro im Monat, insgesamt 4.400 Euro. Das Elterngeld ist steuerfrei, erhöht aber den Steuersatz auf das übrige Einkommen (Progressionsvorbehalt). Urlaub: Der Arbeitgeber darf für jeden vollen Kalendermonat Elternzeit um 1/12 kürzen (§ 17 Abs. 1 BEEG). Volle Monate sind Juni, Juli und August, Mai und September sind nur teilweise dabei. 28 x 3 / 12 = 7 Tage, es bleiben 21 Urlaubstage. Die Kürzung muss der Arbeitgeber erklären, sie geschieht nicht automatisch.",
+      "",
+      "3. Der Kollege liegt falsch. Ab 17.03.2027 bis zum Ende der Elternzeit ist eine Kündigung grundsätzlich verboten, nur in besonderen Ausnahmefällen mit Zustimmung der zuständigen Landesbehörde. Nach der Elternzeit hat Tobias Anspruch auf eine Beschäftigung zu den Bedingungen seines Arbeitsvertrags, also eine gleichwertige Tätigkeit mit gleicher Bezahlung. Eine Versetzung in den Versand wäre eine geringerwertige Tätigkeit und ist vom Weisungsrecht nicht gedeckt. Vertretung: befristete Einstellung einer Ersatzkraft mit dem Sachgrund Vertretung (§ 21 BEEG), auch für eine Einarbeitungszeit. Alternativ ein Systemhaus für Bereitschaft und Störungen beauftragen oder Aufgaben im Team verteilen. Vor Beginn übergibt Tobias Dokumentation und Notfallzugänge. Möchte er, kann er während der Elternzeit bis zu 32 Stunden pro Woche in Teilzeit arbeiten (§ 15 Abs. 4 BEEG)."
+    ]
+  },
+  {
+    "title": "Webshop-Betreuerin einer Kaffeerösterei kündigt",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Jana Weiß (29) betreut seit dem 01.02.2023 den Webshop und die IT einer Kaffeerösterei mit 35 Beschäftigten. Sie verdient 3.250 Euro brutto im Monat, arbeitet 5 Tage die Woche und hat laut Vertrag 28 Urlaubstage (20 gesetzlich, 8 vertraglich). Der Vertrag regelt: Im Jahr des Ausscheidens wird der vertragliche Mehrurlaub mit 1/12 je vollem Beschäftigungsmonat gewährt. Zu Kündigungsfristen und Wettbewerb enthält er nichts. 2026 hat sie bisher 18 Urlaubstage genommen.",
+      "Jana hat eine neue Stelle bei einer anderen Rösterei ab 01.10.2026 in Aussicht. Am Freitag, 04.09.2026, kündigt sie per WhatsApp an den Chef. Am Montag, 07.09.2026, übergibt sie ihm ein unterschriebenes Kündigungsschreiben zum nächstmöglichen Termin. Der Chef sagt: \"Urlaub gibt es bis zum Ende nicht mehr, wir bereiten das Weihnachtsgeschäft vor.\"",
+      "",
+      "1. Ist die Kündigung per WhatsApp wirksam? Zu welchem Termin endet das Arbeitsverhältnis? Wie kann Jana trotzdem am 01.10.2026 anfangen?",
+      "2. Wie viele Urlaubstage stehen Jana für 2026 noch zu? Darf der Chef den Urlaub verweigern? Wie hoch ist die Urlaubsabgeltung, wenn sie den Resturlaub wirklich nicht nehmen kann (vereinfacht 3 Monatsgehälter geteilt durch 65 Arbeitstage je Tag)?",
+      "3. Darf Jana bis zum Ende des Arbeitsverhältnisses schon für die neue Rösterei arbeiten, und danach? Was muss sie vor dem Weggang übergeben, und was kann sie verlangen?"
+    ],
+    "solution": [
+      "1. Nein. Eine Kündigung braucht die Schriftform mit eigenhändiger Unterschrift (§ 623 BGB), die elektronische Form ist ausgeschlossen. Wirksam ist erst das Schreiben vom 07.09.2026. Für Arbeitnehmer gilt die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 Abs. 1 BGB). Die längeren Fristen nach Betriebszugehörigkeit gelten nur für Kündigungen durch den Arbeitgeber. 07.09.2026 + 4 Wochen = 05.10.2026, nächster Termin ist Donnerstag, 15.10.2026. Für einen Start am 01.10.: Aufhebungsvertrag zum 30.09.2026 mit dem Chef, ebenfalls schriftlich. Sonst muss der neue Arbeitgeber den Beginn auf den 16.10.2026 verschieben.",
+      "",
+      "2. Jana scheidet in der zweiten Jahreshälfte aus und ist länger als 6 Monate beschäftigt. Sie hat deshalb den vollen gesetzlichen Urlaub von 20 Tagen (Teilurlaub nach § 5 BUrlG nur bei Ausscheiden in der ersten Jahreshälfte). Vertraglicher Mehrurlaub: volle Monate Januar bis September = 9, 8 x 9 / 12 = 6 Tage. Anspruch 26 Tage, genommen 18, Rest 8 Tage. Der Chef muss Urlaubswünsche berücksichtigen, außer dringende betriebliche Belange sprechen dagegen (§ 7 Abs. 1 BUrlG). Ein pauschaler Hinweis auf das Weihnachtsgeschäft reicht nicht ohne Weiteres, bis zum 15.10. sind noch genug Arbeitstage. Kann der Urlaub wegen der Beendigung nicht mehr genommen werden, ist er abzugelten (§ 7 Abs. 4 BUrlG): 3 x 3.250 = 9.750 Euro / 65 = 150 Euro je Tag, 8 x 150 = 1.200 Euro brutto.",
+      "",
+      "3. Bis 15.10.2026 besteht das Arbeitsverhältnis. Solange gilt ein Wettbewerbsverbot (§ 60 HGB bzw. die allgemeine Rücksichtnahmepflicht), sie darf nicht für die Konkurrenz arbeiten, auch nicht nebenbei. Danach ist sie frei, denn es gibt kein nachvertragliches Wettbewerbsverbot. Ein solches wäre nur verbindlich, wenn es schriftlich vereinbart ist und eine Karenzentschädigung von mindestens der Hälfte der letzten Bezüge für höchstens 2 Jahre vorsieht (§§ 74 ff. HGB). Geschäftsgeheimnisse wie Kundenlisten und Einkaufspreise darf sie nicht mitnehmen oder nutzen. Übergabe: Zugangsdaten zu Webshop, Hosting, Domain, Zahlungsanbietern und Administratorkonten (in den Passwortmanager der Firma), Dokumentation, Notebook, Handy und Schlüssel. Verlangen kann sie ein qualifiziertes Arbeitszeugnis (§ 109 GewO), eine Bescheinigung über den genommenen Urlaub für den neuen Arbeitgeber (§ 6 Abs. 2 BUrlG) und die Abrechnung des letzten Gehalts mit einer etwaigen Urlaubsabgeltung."
+    ]
+  },
+  {
+    "title": "Ab wie vielen Geräten lohnt sich die Aufbereitung gebrauchter Notebooks?",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein kleines Unternehmen kauft Notebooks aus auslaufenden Leasingverträgen, löscht die Daten zertifiziert, tauscht Akkus und Verschleißteile, installiert Windows neu und verkauft die Geräte an Schulen, Vereine und Privatkunden. Monatliche Fixkosten: Miete und Nebenkosten 3.200 Euro, Personal 10.400 Euro, Lösch- und Prüfsoftware 600 Euro, Sonstiges 800 Euro. Variable Kosten je Gerät: Einkauf 95 Euro, Ersatzteile im Schnitt 35 Euro, Windows-Lizenz für Aufbereiter vereinfacht angenommen 20 Euro, Verpackung und Versand 10 Euro. Verkaufspreis 285 Euro netto. Zwei Techniker arbeiten je 150 Stunden im Monat produktiv, ein Gerät braucht 45 Minuten.",
+      "Zurzeit werden 170 Geräte im Monat verkauft. Ein Schulträger fragt 80 Geräte für den kommenden Monat zum Sonderpreis von 230 Euro netto je Gerät an.",
+      "",
+      "1. Berechnen Sie den Deckungsbeitrag je Gerät, die Gewinnschwelle (Break-even-Menge) und den Monatsgewinn bei 170 Geräten. Wie hoch ist die monatliche Kapazität?",
+      "2. Soll das Unternehmen den Auftrag des Schulträgers annehmen? Berechnen Sie den Gewinn mit Auftrag und die Stückkosten bei 250 Geräten. Wo liegt die kurzfristige Preisuntergrenze?",
+      "3. Der Leasinggeber verlangt einen Nachweis über die sichere Löschung. Wie gehen Sie bei Festplatten (HDD) und SSDs vor? Welche ökonomischen und ökologischen Ziele verfolgt das Unternehmen, und wie hängen sie zusammen?"
+    ],
+    "solution": [
+      "1. Fixkosten: 3.200 + 10.400 + 600 + 800 = 15.000 Euro im Monat. Variable Kosten: 95 + 35 + 20 + 10 = 160 Euro je Gerät. Deckungsbeitrag: 285 - 160 = 125 Euro. Gewinnschwelle: 15.000 / 125 = 120 Geräte im Monat. Gewinn bei 170 Geräten: 170 x 125 - 15.000 = 21.250 - 15.000 = 6.250 Euro. Kapazität: 2 x 150 h x 60 / 45 = 400 Geräte im Monat.",
+      "",
+      "2. Deckungsbeitrag des Auftrags: 230 - 160 = 70 Euro je Gerät, also positiv. Die Fixkosten sind durch die normalen Verkäufe schon gedeckt, und mit 250 Geräten ist die Kapazität von 400 nicht erreicht. Der Auftrag bringt 80 x 70 = 5.600 Euro zusätzlich, der Gewinn steigt auf 11.850 Euro. Annehmen. Stückkosten bei 250 Geräten: 15.000 / 250 + 160 = 60 + 160 = 220 Euro, der Sonderpreis von 230 Euro deckt sogar die vollen Kosten. Kurzfristige Preisuntergrenze sind die variablen Kosten von 160 Euro. Langfristig müssen alle Kosten gedeckt sein. Risiko: Andere Kunden erfahren vom Sonderpreis und verlangen ihn auch.",
+      "",
+      "3. HDD: alle Sektoren mit einer geprüften Löschsoftware überschreiben und das Ergebnis verifizieren. SSD: Überschreiben ist unzuverlässig, weil der Controller Daten verteilt (Wear Leveling) und Reservebereiche nicht erreichbar sind. Deshalb den Secure-Erase- bzw. Sanitize-Befehl des Herstellers nutzen oder kryptografisch löschen (Schlüssel der Selbstverschlüsselung vernichten). Defekte Datenträger physisch vernichten (DIN 66399, passende Sicherheitsstufe). Nachweis: Löschprotokoll je Seriennummer mit Datum, Verfahren, Ergebnis und Bearbeiter. Ziele: ökonomisch Gewinn und Liquidität, ökologisch Schonung von Rohstoffen und Energie sowie weniger Elektroschrott durch längere Nutzung. Meist ergänzen sich die Ziele (Zielharmonie): Jedes verkaufte Gerät bringt Deckungsbeitrag und verlängert die Nutzungsdauer. Ein Zielkonflikt entsteht, wenn teure Reparaturen alter Geräte Ressourcen sparen, aber den Deckungsbeitrag senken. Der Schulauftrag unterstützt zusätzlich ein soziales Ziel."
+    ]
+  },
+  {
+    "title": "Wer darf beim Fliesenhändler was unterschreiben?",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Die Fliesen Hansen GmbH handelt mit Fliesen und Naturstein und betreibt zwei Ausstellungen mit Lager (70 Beschäftigte). Frau Lange hat Einzelprokura, eingetragen im Handelsregister. IT-Leiter Herr Wolf hat eine allgemeine Handlungsvollmacht. Intern darf er Bestellungen nur bis 10.000 Euro netto ohne Rücksprache auslösen, das wissen die Lieferanten nicht. Der Auszubildende Finn (19) hat keine Vollmacht. Im Oktober 2026 passiert Folgendes:",
+      "  a) Frau Lange unterschreibt einen Leasingvertrag für neue Server über 48 Monate zu 690 Euro netto im Monat.",
+      "  b) Frau Lange will das alte Lagergrundstück der GmbH verkaufen und dafür ein Nachbargrundstück kaufen.",
+      "  c) Herr Wolf bestellt eine Firewall-Lösung für 12.400 Euro netto.",
+      "  d) Herr Wolf nimmt bei der Hausbank im Namen der GmbH einen Kredit über 20.000 Euro für neue Notebooks auf.",
+      "  e) Finn bestellt im Onlineshop eines Händlers Druckertoner für 480 Euro netto auf Rechnung der GmbH.",
+      "",
+      "1. Beurteilen Sie a) bis e): Ist die GmbH jeweils wirksam verpflichtet? Wie unterschreiben Frau Lange und Herr Wolf?",
+      "2. Berechnen Sie die Gesamtsumme des Leasingvertrags, den Bruttobetrag der Firewall (19 % Umsatzsteuer) und um wie viel Prozent Herr Wolf seine interne Grenze überschritten hat. Welche Folgen kann die Überschreitung für ihn haben?",
+      "3. Frau Lange wechselt zum 30.11.2026 zu einem anderen Unternehmen. Was muss die GmbH rechtlich tun, und welche Zugänge und Berechtigungen muss die IT anpassen?"
+    ],
+    "solution": [
+      "1. a) Wirksam: Die Prokura erlaubt alle Geschäfte, die der Betrieb irgendeines Handelsgewerbes mit sich bringt (§ 49 Abs. 1 HGB). b) Den Kauf des Nachbargrundstücks darf sie abschließen. Den Verkauf (Veräußerung) und die Belastung von Grundstücken darf ein Prokurist nur mit besonderer Befugnis (§ 49 Abs. 2 HGB), ohne diese ist der Verkauf nicht gedeckt. c) Wirksam: Die Bestellung ist ein gewöhnliches Geschäft. Die interne Grenze muss der Lieferant nicht gegen sich gelten lassen, weil er sie weder kannte noch kennen musste (§ 54 Abs. 3 HGB). d) Nicht gedeckt: Für die Aufnahme von Darlehen braucht ein Handlungsbevollmächtigter eine besondere Befugnis (§ 54 Abs. 2 HGB). Der Geschäftsführer kann den Vertrag aber nachträglich genehmigen. e) Finn handelt ohne Vertretungsmacht, der Vertrag ist schwebend unwirksam (§ 177 BGB). Die GmbH kann ihn genehmigen. Verweigert sie, kann sich der Händler an Finn halten (§ 179 BGB). Unterschrift: Frau Lange mit \"ppa. Lange\", Herr Wolf mit \"i. V. Wolf\".",
+      "",
+      "2. Leasing: 48 x 690 = 33.120 Euro netto. Firewall brutto: 12.400 x 1,19 = 14.756 Euro. Überschreitung: 12.400 - 10.000 = 2.400 Euro, das sind 24 % der Grenze. Der Vertrag mit dem Lieferanten bleibt wirksam. Im Innenverhältnis hat Herr Wolf gegen eine Weisung verstoßen: Abmahnung, Entzug oder Einschränkung der Vollmacht und bei einem Schaden unter Umständen Schadensersatz (begrenzt durch die Grundsätze der Arbeitnehmerhaftung).",
+      "",
+      "3. Die Prokura widerrufen (jederzeit möglich, § 52 HGB) und das Erlöschen zum Handelsregister anmelden (notariell beglaubigt). Bis zur Eintragung und Bekanntmachung dürfen sich Geschäftspartner, die nichts davon wissen, auf die eingetragene Prokura verlassen (§ 15 Abs. 1 HGB). Banken und wichtige Geschäftspartner zusätzlich direkt informieren. IT: Berechtigungen im Onlinebanking und für Zahlungsfreigaben entziehen, Zugänge und Zertifikate für Portale (Finanzamt, Leasinggeber, Lieferanten) sperren oder neu ausstellen, Signaturkarten einziehen, Freigaberechte im Warenwirtschaftssystem entfernen, E-Mail-Signaturen mit \"ppa.\" anpassen, Abwesenheitsnotiz mit neuem Ansprechpartner, Benutzerkonto am letzten Arbeitstag sperren, Geräte zurücknehmen."
+    ]
+  },
+  {
+    "title": "Umsatzsteuer-Voranmeldung nach dem WLAN-Ausbau eines Campingplatzes",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Campingplatz (Einzelunternehmen, Regelbesteuerung, monatliche Umsatzsteuer-Voranmeldung) hat im Mai 2027 das WLAN auf dem Platz ausgebaut. Vereinfacht angenommen gelten 7 % Umsatzsteuer für die Vermietung der Stellplätze und 19 % für alle anderen Leistungen.",
+      "Umsätze im Mai (netto): Stellplätze 48.000 Euro, Fahrrad- und Kanuverleih 6.500 Euro, WLAN-Tagespässe 1.200 Euro.",
+      "Eingangsrechnungen im Mai (netto, jeweils zuzüglich 19 % Umsatzsteuer): 12 Outdoor-Access-Points je 390 Euro, 1 PoE-Switch 640 Euro, 1 Richtfunkstrecke zum Sanitärgebäude 1.450 Euro, Reparatur der Stromsäulen durch einen Elektriker 2.600 Euro, Hotspot-Software im Abo 89 Euro.",
+      "",
+      "1. Berechnen Sie die Umsatzsteuer, die Vorsteuer und die Zahllast für Mai. Bis wann müssen Voranmeldung und Zahlung ohne Dauerfristverlängerung beim Finanzamt sein?",
+      "2. Access Points und Switch sollen vereinfacht als geringwertige Wirtschaftsgüter (Grenze 800 Euro netto) sofort abgeschrieben werden, die Richtfunkstrecke linear über vereinfacht 5 Jahre, monatsgenau ab Mai. Berechnen Sie die Abschreibung für 2027. Warum werden Reparatur und Abo anders behandelt?",
+      "3. Der Inhaber meint: \"Durch den WLAN-Ausbau zahle ich im Mai weniger Steuer. Die Access Points sparen also Steuern.\" Erklären Sie das Prinzip der Umsatzsteuer und wer sie am Ende trägt."
+    ],
+    "solution": [
+      "1. Umsatzsteuer: 48.000 x 0,07 = 3.360 Euro, 6.500 x 0,19 = 1.235 Euro, 1.200 x 0,19 = 228 Euro, zusammen 4.823,00 Euro. Vorsteuer: 12 x 390 = 4.680 + 640 + 1.450 + 2.600 + 89 = 9.459 Euro netto, x 0,19 = 1.797,21 Euro. Zahllast: 4.823,00 - 1.797,21 = 3.025,79 Euro. Voranmeldung (elektronisch über ELSTER) und Zahlung bis zum 10. des Folgemonats, also Donnerstag, 10.06.2027.",
+      "",
+      "2. Geringwertige Wirtschaftsgüter: 4.680 + 640 = 5.320 Euro werden 2027 voll als Aufwand gebucht. Richtfunkstrecke: 1.450 / 5 = 290 Euro im Jahr, für Mai bis Dezember 8 Monate: 290 x 8 / 12 = 193,33 Euro. Abschreibungen 2027 zusammen: 5.513,33 Euro. Die Reparatur schafft kein neues Wirtschaftsgut, sondern erhält die vorhandenen Stromsäulen. Sie ist Erhaltungsaufwand und sofort Aufwand. Das Abo ist eine laufende Betriebsausgabe für eine Dienstleistung. Die Vorsteuer ist in keinem Fall Aufwand, sie wird vom Finanzamt verrechnet.",
+      "",
+      "3. Die Umsatzsteuer ist eine Verbrauchsteuer. Der Campingplatz stellt sie seinen Kunden in Rechnung, zieht die an Lieferanten gezahlte Vorsteuer ab und führt nur die Differenz an das Finanzamt ab. Für den Unternehmer ist sie ein durchlaufender Posten. Tragen muss sie am Ende der Endverbraucher, also der Camper. Die Zahllast ist im Mai nur niedriger, weil 1.797,21 Euro Vorsteuer verrechnet werden, die der Inhaber vorher an die Lieferanten gezahlt hat. Das ist keine Ersparnis, sondern die Erstattung vorgestreckter Steuer. Steuerlich wirkt die Investition über die Abschreibung, die den Gewinn und damit die Einkommensteuer mindert."
+    ]
+  },
+  {
+    "title": "Arbeitszeitkonto nach dem Scanner-Rollout im Kurierdienst",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Mehmet (26) betreut in einem Kurierdienst mit 90 Beschäftigten die Handscanner und die Sendungsverfolgung. Es gibt einen Betriebsrat. Laut Betriebsvereinbarung gilt Gleitzeit: Sollzeit 39 Stunden an 5 Tagen, Rahmenzeit 6 bis 20 Uhr, Kernzeit 9 bis 14 Uhr, Arbeitszeitkonto höchstens +20 Stunden. Sein Konto stand am Montag bei +12,5 Stunden. In der Rollout-Woche der neuen Scanner hat er erfasst:",
+      "  Mo 06:30 bis 18:00 Uhr, 30 Minuten Pause",
+      "  Di 07:00 bis 16:15 Uhr, 45 Minuten Pause",
+      "  Mi 08:00 bis 17:00 Uhr, 30 Minuten Pause",
+      "  Do 12:00 bis 23:30 Uhr, 45 Minuten Pause (Umstellung nach Tourenende)",
+      "  Fr 07:00 bis 13:00 Uhr, keine Pause",
+      "",
+      "1. Berechnen Sie die Arbeitszeit je Tag, die Wochenarbeitszeit und den neuen Stand des Arbeitszeitkontos. Wie viele Stunden kann er noch aufbauen?",
+      "2. Prüfen Sie jeden Tag auf Verstöße gegen das Arbeitszeitgesetz und die Gleitzeitregelung. Wann hätte Mehmet am Montag spätestens gehen müssen, und wann durfte er am Freitag frühestens anfangen?",
+      "3. Die nächste Umstellung soll wieder abends nach Tourenende laufen. Wie planen Sie den Einsatz rechtssicher? Wer muss beteiligt werden?"
+    ],
+    "solution": [
+      "1. Mo: 11,5 h - 0,5 h = 11,0 h. Di: 9,25 h - 0,75 h = 8,5 h. Mi: 9,0 h - 0,5 h = 8,5 h. Do: 11,5 h - 0,75 h = 10,75 h. Fr: 6,0 h. Woche: 44,75 h, Soll 39 h, also +5,75 h. Neuer Kontostand: 12,5 + 5,75 = 18,25 h. Bis zur Obergrenze bleiben 1,75 h.",
+      "",
+      "2. Mo: 11 h überschreiten die Höchstgrenze von 10 h am Tag (§ 3 ArbZG). Bei mehr als 9 h sind 45 Minuten Pause nötig (§ 4 ArbZG), 30 Minuten reichen nicht. Di: 8,5 h mit 45 Minuten Pause, in Ordnung. Mi: 8,5 h, bei mehr als 6 bis 9 h reichen 30 Minuten, in Ordnung. Do: 10,75 h, Verstoß gegen § 3 ArbZG. Beginn um 12 Uhr verletzt die Kernzeit, Arbeit nach 20 Uhr liegt außerhalb der Rahmenzeit. Das geht nur mit Anordnung und Beteiligung des Betriebsrats. Fr: Die Ruhezeit von Donnerstag 23:30 Uhr bis Freitag 07:00 Uhr beträgt nur 7,5 h statt mindestens 11 h (§ 5 ArbZG). 6 h ohne Pause sind erlaubt, Pause erst bei mehr als 6 h. Das Ende um 13 Uhr liegt vor dem Ende der Kernzeit, das braucht eine Absprache. Montag: 06:30 Uhr + 10 h Arbeit + 45 Minuten Pause = spätestens 17:15 Uhr. Freitag: 23:30 Uhr + 11 h = frühestens 10:30 Uhr. Hinweis: 10 h am Tag sind nur erlaubt, wenn im Durchschnitt von 6 Monaten 8 h je Werktag nicht überschritten werden.",
+      "",
+      "3. Den Betriebsrat vorher beteiligen, er bestimmt bei Beginn und Ende der Arbeitszeit und bei vorübergehender Verlängerung mit (§ 87 Abs. 1 Nr. 2 und 3 BetrVG). Einsatz planen: Mehmet beginnt am Umstellungstag später, z.B. um 13:00 Uhr, und arbeitet höchstens 10 h. Am Folgetag beginnt er erst nach 11 h Ruhezeit oder hat frei. Ein zweiter Kollege übernimmt einen Teil, Pausen werden fest eingeplant. Liegen mehr als 2 h in der Nachtzeit (23 bis 6 Uhr), gelten die Regeln für Nachtarbeit mit Ausgleich (§ 6 ArbZG). Die Arbeitszeit wird vollständig erfasst, der Arbeitgeber ist zur Zeiterfassung verpflichtet. Die Mehrstunden werden über das Konto ausgeglichen. Außerdem die Umstellung vorher testen, damit sie nicht bis in die Nacht dauert."
+    ]
+  },
+  {
+    "title": "Zwei IT-Techniker aus der Zeitarbeit für die Saison einer Ausflugsreederei",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Eine Reederei mit 9 Ausflugsschiffen, 220 festen Beschäftigten und Betriebsrat fährt von März bis Oktober. Für die Saison 2027 (01.03. bis 31.10.2027) braucht die IT zwei zusätzliche Techniker für Kassen, Ticketscanner an Bord und das Bord-WLAN. Zwei Möglichkeiten:",
+      "  A) Arbeitnehmerüberlassung: Eine Zeitarbeitsfirma stellt zwei Techniker. Verrechnungssatz vereinfacht angenommen 44 Euro je Stunde, 160 Stunden im Monat je Person.",
+      "  B) Eigene befristete Einstellung: 3.400 Euro brutto im Monat je Person, Arbeitgeberanteil zur Sozialversicherung vereinfacht angenommen 21 %, Stellenanzeigen und Auswahl einmalig 2.000 Euro je Person.",
+      "",
+      "1. Berechnen Sie die Kosten beider Varianten für die Saison. Warum entscheiden sich Unternehmen trotz höherer Kosten oft für Zeitarbeit?",
+      "2. Beschreiben Sie die Vertragsbeziehungen bei der Arbeitnehmerüberlassung. Ab wann hätten die Leiharbeitnehmer Anspruch auf die gleiche Bezahlung wie Stammbeschäftigte? Die Reederei will dieselben Techniker ab 01.03.2028 wieder einsetzen. Zählen die Einsatzzeiten von 2027 dann mit?",
+      "3. Welche Rechte hat der Betriebsrat der Reederei? Was muss die IT für die Leiharbeitnehmer vorbereiten?"
+    ],
+    "solution": [
+      "1. A: 44 x 160 x 8 = 56.320 Euro je Person, für zwei 112.640 Euro. B: 3.400 x 1,21 = 4.114 Euro im Monat x 8 = 32.912 Euro + 2.000 Euro = 34.912 Euro je Person, für zwei 69.824 Euro. Die Zeitarbeit kostet 42.816 Euro mehr. Gründe für Zeitarbeit: Die Techniker sind schnell verfügbar, es gibt keinen Aufwand und kein Risiko bei der Personalsuche. Bei Krankheit oder Nichteignung stellt der Verleiher Ersatz. Abgerechnet werden nur geleistete Stunden, Urlaub und Krankheit trägt der Verleiher. Es gibt keine Fragen zu Befristung oder Kündigung, die Lohnabrechnung macht der Verleiher, und der Einsatz lässt sich flexibel verlängern oder verkürzen.",
+      "",
+      "2. Dreiecksverhältnis: Der Leiharbeitnehmer hat einen Arbeitsvertrag mit dem Verleiher, der ihn bezahlt. Verleiher und Reederei (Entleiher) schließen einen schriftlichen Arbeitnehmerüberlassungsvertrag. Im Einsatz gibt die Reederei die fachlichen Weisungen. Der Verleiher braucht eine Erlaubnis der Bundesagentur für Arbeit. Gleiche Bezahlung (Equal Pay) spätestens nach 9 Monaten Überlassung an denselben Entleiher (§ 8 Abs. 4 AÜG): 01.03.2027 + 9 Monate = 01.12.2027. Der Einsatz endet am 31.10.2027, der Anspruch wird nicht erreicht. Die Höchstüberlassungsdauer beträgt 18 Monate. Frühere Einsätze zählen nur mit, wenn zwischen den Einsätzen nicht mehr als 3 Monate liegen. Vom 01.11.2027 bis 29.02.2028 sind es 4 Monate Pause, die Zählung beginnt 2028 neu.",
+      "",
+      "3. Der Einsatz von Leiharbeitnehmern gilt als Einstellung, der Betriebsrat muss nach § 99 BetrVG zustimmen (§ 14 Abs. 3 AÜG). Er ist über den Einsatz zu informieren. Die Leiharbeitnehmer dürfen die Sprechstunden des Betriebsrats und Betriebsversammlungen besuchen. Sie haben Zugang zu Kantine und anderen Gemeinschaftseinrichtungen (§ 13b AÜG), müssen über freie Stellen informiert werden (§ 13a AÜG) und dürfen nicht als Streikbrecher eingesetzt werden. Für den Arbeitsschutz am Einsatzort ist die Reederei verantwortlich. IT: Benutzerkonten mit Ablaufdatum 31.10.2027, Rechte nur nach Bedarf, Geräte und Zutrittsmedien, Verpflichtung auf Vertraulichkeit und Datenschutz, Einweisung in die IT-Richtlinien, Sicherheitsunterweisung und ein geplantes Offboarding zum Saisonende."
+    ]
   }
 ]
