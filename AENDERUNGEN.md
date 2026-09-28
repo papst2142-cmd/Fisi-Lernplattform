@@ -4,6 +4,34 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.26
+
+- **Neu: das Lernspiel.** Deine Spielfigur arbeitet bei der Bitweiche
+  IT-Service GmbH, die die IT der Talbahn Nordlicht AG betreut. Jeden
+  Arbeitstag kommen Tickets von Kolleginnen, Kollegen und dem Kunden:
+  Phishing-Verdacht, Arbeitsspeicher für neue Kassen-PCs, Subnetz fürs
+  Service-Center, USV für die Leitstelle, RAID, Passwörter, Angebot, SQL und
+  Backup-Beratung. Am PC über „Lernspiel“ in der Seitenleiste, auf dem Handy
+  über „Spiel“ in der unteren Leiste.
+- **Gekoppelt an deinen Lernfortschritt:** Aus deinen Antworten in
+  Karteikarten und Prüfungstrainer wird je Fachbereich ein Wissensstand
+  berechnet. Fehlt dir für ein Ticket noch Wissen, bekommst du einen Hinweis
+  und kannst trotzdem loslegen – ein Fehler kostet dann aber doppelt.
+  Nach jedem Ticket gibt es passende Karteikarten und Fragen zum Weiterlernen.
+- **Spielfigur, Reputation und Spielgeld:** Name und Aussehen frei wählbar,
+  Reputation in vier Bereichen (Fachkompetenz, Zuverlässigkeit,
+  Kundenzufriedenheit, Sicherheitsbewusstsein), Rang von Azubi-Niveau bis
+  Senior, Gehalt pro Arbeitstag und ein erstes Sparziel für das spätere
+  eigene Unternehmen. Ohne Hilfe gelöste Tickets bringen einen Bonus.
+- **Grundriss zum Antippen:** Chefbüro, Kundenberatung, Verwaltung,
+  Helpdesk, IT-Werkstatt und Serverraum – ein Tipp auf einen Raum zeigt, wer
+  dort sitzt und was zu tun ist.
+- **Abgleich PC und Handy:** Der Spielstand wird wie der Lernstand
+  abgeglichen. Wichtig: Beide Geräte sollten auf 0.26 sein, bevor du auf
+  beiden spielst.
+- **Eigener Knopf „Spielstand zurücksetzen“** in den Einstellungen. „Alle
+  Lerndaten löschen“ und „Historie löschen“ lassen den Spielstand stehen.
+
 ## 0.25
 
 - **Viel mehr Lernstoff:** 4.000 statt 368 Aufgaben – 1.400 Karteikarten,

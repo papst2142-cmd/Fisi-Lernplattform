@@ -43,9 +43,11 @@ from fisi_core import (  # noqa: E402
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
 )
+import fisi_game  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
+from fisi_game_gui import GameView  # noqa: E402
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
@@ -80,6 +82,7 @@ NAV_ITEMS = [
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
     ("calc", "calc", "Praxis-Rechner", None),
+    ("game", "game", "Lernspiel", None),
     ("progress", "chart", "Lernfortschritt", None),
     ("settings", "gear", "Einstellungen", None),
 ]
@@ -101,6 +104,7 @@ VIEW_TITLES = {
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
     "testproject": ("LERNEN", "TEST PROJEKT"),
     "calc": ("WERKZEUGE", "PRAXIS-RECHNER"),
+    "game": ("PRAXIS", "LERNSPIEL"),
     "progress": ("AUSWERTUNG", "LERNFORTSCHRITT"),
     "settings": ("SYSTEM", "EINSTELLUNGEN"),
     "search": ("SUCHE", "ERGEBNISSE"),
@@ -2004,10 +2008,23 @@ class SettingsView(View):
         make_label(danger.body,
                    "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
                    "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
-                   "Szenarien. Dieser Schritt lässt sich nicht rückgängig machen.",
+                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
+                   "Dieser Schritt lässt sich nicht rückgängig machen.",
                    font=F["small"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
+
+        game = Card(self.content, title="Lernspiel", accent=C["pink"])
+        game.pack(fill="x", pady=(14, 0))
+        make_label(game.body,
+                   "Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
+                   "Reputation, Arbeitstage und erledigte Tickets. Der "
+                   "Lernfortschritt bleibt erhalten. Mit eingerichtetem Abgleich "
+                   "auch auf dem Handy.",
+                   font=F["small"], fg=C["text_dim"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w")
+        NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
         about = Card(self.content, title="Über das Programm", accent=C["green"])
@@ -2077,6 +2094,19 @@ class SettingsView(View):
         else:
             self.lbl_update.configure(text="Version %s ist verfügbar." % info.version,
                                       text_color=C["cyan"])
+
+    def reset_game(self):
+        if not messagebox.askyesno("Spielstand zurücksetzen",
+                                   "Wirklich den gesamten Spielstand des "
+                                   "Lernspiels löschen? Der Lernfortschritt "
+                                   "bleibt erhalten."):
+            return
+        if fisi_game.Game(self.db).reset():
+            messagebox.showinfo("Zurückgesetzt",
+                                "Der Spielstand wurde zurückgesetzt.")
+            self.app.views["game"].ticket = None
+            self.app.views["game"].room = None
+            self.app.notify_progress()
 
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
@@ -2483,7 +2513,8 @@ class FISIApp:
                          ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
                          ("scenarios", ScenarioView),
                          ("testproject", ProjectView),
-                         ("calc", CalcView), ("progress", ProgressView),
+                         ("calc", CalcView), ("game", GameView),
+                         ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)
             view.grid(row=0, column=0, sticky="nsew")
@@ -2602,6 +2633,8 @@ class FISIApp:
         self.notify_progress(refresh_view=False)
         if self.current in ("dashboard", "progress"):
             self.views[self.current].refresh()
+        elif self.current == "game" and not self.views["game"].ticket:
+            self.views["game"].refresh()
         elif self.current == "testproject":
             self.views["testproject"]._highlight()
 

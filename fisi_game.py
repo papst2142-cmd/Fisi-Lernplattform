@@ -157,10 +157,12 @@ def avatar_shapes(appearance):
         shapes.append(("oval", (40, 40, 45, 45), EXTRA_COLOR))
         shapes.append(("oval", (55, 40, 60, 45), EXTRA_COLOR))
     elif look["extra"] == "headset":
-        shapes.append(("rect", (25, 36, 31, 50), EXTRA_COLOR))
-        shapes.append(("rect", (69, 36, 75, 50), EXTRA_COLOR))
-        shapes.append(("line", (28, 36, 72, 20), EXTRA_COLOR))
-        shapes.append(("line", (28, 50, 44, 58), EXTRA_COLOR))
+        shapes.append(("line", (28, 38, 32, 16), EXTRA_COLOR))
+        shapes.append(("line", (32, 16, 68, 16), EXTRA_COLOR))
+        shapes.append(("line", (68, 16, 72, 38), EXTRA_COLOR))
+        shapes.append(("rect", (24, 36, 32, 50), EXTRA_COLOR))
+        shapes.append(("rect", (68, 36, 76, 50), EXTRA_COLOR))
+        shapes.append(("line", (28, 50, 42, 57), EXTRA_COLOR))
     elif look["extra"] == "kappe":
         shapes.append(("rect", (28, 14, 72, 30), shirt))
         shapes.append(("rect", (50, 26, 82, 32), shirt))
@@ -416,12 +418,13 @@ def learn_links(task, limit=6):
     found, seen = [], set()
     for term in task.get("suchbegriffe") or []:
         hits = learn_links_for_term(term, limit=50)
-        hits.sort(key=lambda hit: hit[1] != home)
+        # Treffer im eigenen Fachbereich und mit dem Begriff in der Frage
+        # selbst (nicht nur in der Erklaerung) zuerst
+        hits.sort(key=lambda hit: (hit[1] != home, term.lower() not in hit[2].lower()))
         for hit in hits:
             if hit[2] not in seen:
                 seen.add(hit[2])
                 found.append(hit)
-    found.sort(key=lambda hit: hit[1] != home)
     return found[:limit]
 
 

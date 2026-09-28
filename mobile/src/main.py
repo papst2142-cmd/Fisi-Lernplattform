@@ -42,6 +42,8 @@ from fisi_core import (  # noqa: E402
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR  # noqa: E402
+import fisi_game  # noqa: E402
+import spiel  # noqa: E402
 import ui  # noqa: E402
 
 APP_TITLE = "FISI Lernplattform"
@@ -1160,11 +1162,20 @@ class SettingsScreen(Screen):
             ui.Card("Daten zurücksetzen", [
                 ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
                         "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
-                        "Mit eingerichtetem Abgleich auch auf dem PC. Dieser Schritt lässt "
-                        "sich nicht rückgängig machen.", size=13, color=C["text_dim"]),
+                        "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
+                        "Abgleich auch auf dem PC. Dieser Schritt lässt sich nicht "
+                        "rückgängig machen.", size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                           kind="danger")]),
             ], accent=C["red"]),
+            ui.Card("Lernspiel", [
+                ui.text("Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
+                        "Reputation, Arbeitstage und erledigte Tickets. Der Lernfortschritt "
+                        "bleibt erhalten. Mit eingerichtetem Abgleich auch auf dem PC.",
+                        size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
+                                          kind="danger")]),
+            ], accent=C["pink"]),
             ui.Card("Über das Programm", [ui.text(
                 "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
                 "Systemintegration mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
@@ -1236,6 +1247,17 @@ class SettingsScreen(Screen):
         else:
             self.lbl_update.value = "Version %s ist verfügbar." % info.version
             self.lbl_update.color = C["cyan"]
+
+    def reset_game(self, _event=None):
+        def confirmed():
+            if fisi_game.Game(self.db).reset():
+                self.toast("Der Spielstand wurde zurückgesetzt.", C["green"])
+                self.app.screens["game"].room = None
+                self.app.notify_progress()
+
+        self.app.confirm("Spielstand zurücksetzen",
+                         "Wirklich den gesamten Spielstand des Lernspiels löschen? Der "
+                         "Lernfortschritt bleibt erhalten.", confirmed)
 
     def reset_all(self, _event=None):
         def confirmed():
@@ -1378,12 +1400,14 @@ NAV = [
     ("dashboard", ft.Icons.DASHBOARD_OUTLINED, ft.Icons.DASHBOARD_ROUNDED, "Start"),
     ("learn", ft.Icons.SCHOOL_OUTLINED, ft.Icons.SCHOOL_ROUNDED, "Lernen"),
     ("calc", ft.Icons.CALCULATE_OUTLINED, ft.Icons.CALCULATE_ROUNDED, "Rechner"),
+    ("game", ft.Icons.SPORTS_ESPORTS_OUTLINED, ft.Icons.SPORTS_ESPORTS_ROUNDED, "Spiel"),
     ("progress", ft.Icons.INSIGHTS_OUTLINED, ft.Icons.INSIGHTS_ROUNDED, "Fortschritt"),
     ("settings", ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS_ROUNDED, "Einstellungen"),
 ]
 
 SCREEN_CLASSES = {
     "dashboard": DashboardScreen, "learn": LearnScreen, "cards": CardsScreen,
+    "game": spiel.GameScreen,
     "quiz": QuizScreen, "ap1scenarios": Ap1ScenarioScreen, "scenarios": ScenarioScreen,
     "testproject": ProjectScreen, "calc": CalcScreen, "progress": ProgressScreen,
     "settings": SettingsScreen, "search": SearchScreen,
@@ -1651,6 +1675,15 @@ def selftest():
         except Exception:
             failures.append("%s: %s" % (key, traceback.format_exc()))
     try:
+        # Lernspiel: Uebersicht und ein Ticket aufbauen, ohne etwas zu speichern
+        game = app.screens["game"]
+        game.game.state.profile = {"name": "Test",
+                                   "aussehen": dict(fisi_game.DEFAULT_APPEARANCE)}
+        game.render()
+        for task in fisi_game.GAME["aufgaben"]:
+            game.open_ticket(task["id"])
+            game._show_help()
+        game._select_room("serverraum")
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()

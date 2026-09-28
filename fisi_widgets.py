@@ -396,6 +396,19 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         canvas.create_arc(left, bottom - rim, right, bottom, start=180,
                           extent=180, style="arc", **line_opts)
 
+    elif name == "game":          # Lernspiel (Gamepad)
+        canvas.create_rectangle(left, top + size * 0.2, right, bottom - size * 0.16,
+                                fill="", **line_opts)
+        arm = size * 0.14
+        cx, cy = left + size * 0.3, y + size * 0.02
+        canvas.create_line(cx - arm, cy, cx + arm, cy, **opts)
+        canvas.create_line(cx, cy - arm, cx, cy + arm, **opts)
+        dot = size * 0.07
+        for dx, dy in ((0.66, -0.06), (0.78, 0.1)):
+            px_, py_ = left + size * dx, y + size * dy
+            canvas.create_oval(px_ - dot, py_ - dot, px_ + dot, py_ + dot,
+                               **fill_opts)
+
     elif name == "search":
         radius = size * 0.32
         canvas.create_oval(x - radius - size * 0.1, y - radius - size * 0.1,
