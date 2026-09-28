@@ -562,5 +562,610 @@
       "",
       "3. Höherer Gründungsaufwand und Kosten (Notar, Handelsregister), Pflicht zur Bilanzierung und Veröffentlichung des Jahresabschlusses. Banken verlangen für Kredite oft trotzdem private Bürgschaften."
     ]
+  },
+  {
+    "title": "DHCP-Ablauf erklären und Fehler finden",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In einer Zahnarztpraxis erhalten neue Laptops im Behandlungsraum keine Netzwerkverbindung. Ein Laptop zeigt die Adresse 169.254.83.12.",
+      "",
+      "1. Beschreiben Sie die vier Schritte, mit denen ein Client per DHCP eine Adresse erhält.",
+      "2. Was sagt die Adresse 169.254.83.12 über das Problem aus?",
+      "3. Nennen Sie drei mögliche Ursachen und wie Sie sie prüfen."
+    ],
+    "solution": [
+      "1. DHCPDISCOVER: Der Client sucht per Broadcast einen Server. DHCPOFFER: Der Server bietet eine Adresse an. DHCPREQUEST: Der Client fordert die angebotene Adresse an. DHCPACK: Der Server bestätigt, der Client nutzt die Adresse für die Lease-Dauer.",
+      "",
+      "2. Es ist eine APIPA-Adresse (169.254.0.0/16). Windows vergibt sie selbst, wenn kein DHCP-Server geantwortet hat. Der Laptop hat also keine Antwort vom DHCP-Server erhalten.",
+      "",
+      "3. DHCP-Dienst gestoppt oder Adressbereich voll: Dienst und freie Adressen im DHCP-Server prüfen. Falsches VLAN am Switchport bzw. Netzwerkdose nicht gepatcht: Port-Konfiguration und Patchfeld prüfen. Kabel oder WLAN-Verbindung gestört: Link-LED, anderes Kabel, WLAN-Anmeldung prüfen. Mit ipconfig /renew lässt sich danach ein neuer Versuch starten."
+    ]
+  },
+  {
+    "title": "DNS-Auflösung Schritt für Schritt",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Auszubildender fragt Sie, was eigentlich passiert, wenn er www.beispiel.de im Browser eingibt.",
+      "",
+      "1. Beschreiben Sie den Weg der Namensauflösung von der Anfrage des PCs bis zur IP-Adresse.",
+      "2. Welche Rolle spielen der Cache und die hosts-Datei?",
+      "3. Mit welchem Befehl prüfen Sie, welche IP-Adresse ein Name liefert, und welchen DNS-Server der PC fragt?"
+    ],
+    "solution": [
+      "1. Der PC fragt seinen konfigurierten DNS-Server (Resolver, z.B. den Router). Kennt dieser die Antwort nicht, fragt er einen Root-Server nach .de, der auf die Nameserver der Zone .de verweist. Diese verweisen auf die zuständigen Nameserver von beispiel.de. Der autoritative Nameserver liefert den A- bzw. AAAA-Eintrag. Der Resolver gibt die Antwort an den PC zurück.",
+      "",
+      "2. Vor der Anfrage prüft der PC seinen DNS-Cache und die hosts-Datei. Ein Eintrag dort wird sofort verwendet, ohne den DNS-Server zu fragen. Auch der Resolver speichert Antworten für die Dauer der TTL. Das beschleunigt die Auflösung, kann aber veraltete Einträge liefern (dann ipconfig /flushdns).",
+      "",
+      "3. nslookup www.beispiel.de zeigt die Antwort und den befragten Server. Unter Windows zeigt ipconfig /all die eingetragenen DNS-Server, unter Linux z.B. resolvectl status."
+    ]
+  },
+  {
+    "title": "MAC- und IP-Adresse im Zusammenspiel",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "PC1 (192.168.1.10/24) sendet Daten an einen Webserver im Internet. Das Standardgateway ist 192.168.1.1.",
+      "",
+      "1. Welche Ziel-IP-Adresse und welche Ziel-MAC-Adresse stehen im Frame, den PC1 verschickt?",
+      "2. Wie ermittelt PC1 die benötigte MAC-Adresse?",
+      "3. Wie lernt der Switch, an welchem Port PC1 angeschlossen ist?"
+    ],
+    "solution": [
+      "1. Ziel-IP ist die Adresse des Webservers, denn die IP-Adresse gilt Ende zu Ende. Ziel-MAC ist die MAC-Adresse des Standardgateways, denn der Webserver liegt nicht im eigenen Netz und der Frame muss zuerst zum Router.",
+      "",
+      "2. Per ARP: PC1 sendet einen Broadcast \"Wer hat 192.168.1.1?\". Der Router antwortet mit seiner MAC-Adresse, PC1 speichert sie im ARP-Cache (arp -a).",
+      "",
+      "3. Der Switch liest bei jedem eingehenden Frame die Quell-MAC-Adresse und trägt sie mit dem Eingangsport in seine MAC-Adresstabelle ein. Frames an diese MAC schickt er künftig nur noch an diesen Port."
+    ]
+  },
+  {
+    "title": "Kabel und Stecker für neue Arbeitsplätze",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In einem Büro werden 12 neue Arbeitsplätze eingerichtet. Der Etagenverteiler ist 65 m entfernt, zum Serverraum im Nachbargebäude sind es 250 m.",
+      "",
+      "1. Welches Kabel empfehlen Sie zwischen Verteiler und Arbeitsplatzdosen? Begründen Sie.",
+      "2. Welche Verbindung eignet sich zwischen Etagenverteiler und Serverraum?",
+      "3. Unterscheiden Sie Installationskabel und Patchkabel."
+    ],
+    "solution": [
+      "1. Ein Cat-7-Verlegekabel bzw. Cat-6A-Installation: 65 m liegen unter der maximalen Übertragungsstrecke von 100 m, und Cat 6A erlaubt 10 Gbit/s. Die Verkabelung bleibt damit viele Jahre nutzbar.",
+      "",
+      "2. Kupfer ist auf 250 m nicht möglich (maximal 100 m). Geeignet ist Glasfaser, z.B. Multimode OM4 mit 10GBASE-SR (bis ca. 400 m) oder Singlemode OS2 für größere Reserven. Glasfaser trennt die Gebäude zudem galvanisch (kein Potenzialausgleich-Problem).",
+      "",
+      "3. Das Installationskabel (starre Adern) wird fest in Kanälen verlegt und auf Dosen und Patchfeld aufgelegt. Das Patchkabel (flexible Litzen) verbindet Patchfeld und Switch bzw. Dose und PC und kann oft gesteckt werden."
+    ]
+  },
+  {
+    "title": "WLAN im Besprechungsraum einrichten",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Im Besprechungsraum eines Steuerbüros sollen bis zu 20 Laptops und Smartphones per WLAN arbeiten. Im Haus gibt es bereits mehrere WLANs der Nachbarn im 2,4-GHz-Band.",
+      "",
+      "1. Welches Frequenzband empfehlen Sie und warum?",
+      "2. Welche Verschlüsselung stellen Sie ein?",
+      "3. Nennen Sie zwei Punkte, die Sie bei der Montage des Access Points beachten."
+    ],
+    "solution": [
+      "1. Das 5-GHz-Band (ggf. 6 GHz bei Wi-Fi 6E): Es bietet mehr überlappungsfreie Kanäle, weniger Störungen durch die Nachbar-WLANs und höhere Datenraten. Die geringere Reichweite ist in einem Raum kein Nachteil. 2,4 GHz kann für ältere Geräte zusätzlich aktiv bleiben.",
+      "",
+      "2. WPA3-Personal (SAE), ersatzweise WPA3/WPA2-Übergangsmodus für ältere Geräte, mit langem, zufälligem Passwort. Für Gäste ein eigenes, getrenntes Gäste-WLAN.",
+      "",
+      "3. Möglichst zentral und erhöht (Decke) montieren, nicht hinter Metallschränken. Per PoE mit dem Switch verbinden. Kanal nicht mit Nachbarnetzen überlappen lassen, ggf. automatische Kanalwahl nutzen."
+    ]
+  },
+  {
+    "title": "Ping und Traceroute auswerten",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Benutzer meldet, dass der Server 10.2.0.20 in der Zentrale nicht erreichbar ist. Sie führen tracert 10.2.0.20 aus:",
+      "  1   <1 ms   192.168.5.1",
+      "  2    8 ms   10.255.0.1",
+      "  3    *  *  *   Zeitüberschreitung",
+      "  4    *  *  *   Zeitüberschreitung",
+      "",
+      "1. Was prüft ping, was zeigt tracert zusätzlich?",
+      "2. Werten Sie die Ausgabe aus: Bis wohin funktioniert die Verbindung?",
+      "3. Warum ist \"Zeitüberschreitung\" nicht immer ein Fehler?"
+    ],
+    "solution": [
+      "1. ping prüft mit ICMP Echo Request und Echo Reply, ob ein Ziel antwortet, und misst die Laufzeit. tracert zeigt zusätzlich jeden Router auf dem Weg, indem es Pakete mit steigender TTL sendet.",
+      "",
+      "2. Das lokale Gateway (192.168.5.1) und der nächste Router (10.255.0.1, z.B. der VPN- oder WAN-Router) antworten. Ab dem dritten Hop kommt keine Antwort mehr. Das Problem liegt also hinter 10.255.0.1: z.B. VPN-Tunnel oder Leitung zur Zentrale gestört oder eine fehlende Route auf dem Rückweg.",
+      "",
+      "3. Manche Router oder Firewalls beantworten ICMP bewusst nicht. Dann erscheinen Sterne, obwohl der Datenverkehr weiterläuft. Entscheidend ist, ob das Ziel selbst erreichbar ist und die Anwendung funktioniert."
+    ]
+  },
+  {
+    "title": "Netzwerkdrucker einbinden",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein neuer Netzwerkdrucker soll für alle 15 Mitarbeiter eines Architekturbüros nutzbar sein. Die PCs erhalten ihre Adressen per DHCP.",
+      "",
+      "1. Wie sorgen Sie dafür, dass der Drucker immer dieselbe IP-Adresse hat? Nennen Sie zwei Wege.",
+      "2. Warum ist ein DNS-Name für den Drucker sinnvoll?",
+      "3. Über welche Protokolle bzw. Ports wird typischerweise gedruckt?"
+    ],
+    "solution": [
+      "1. Eine DHCP-Reservierung (feste Zuordnung zur MAC-Adresse des Druckers) oder eine statische Adresse am Drucker außerhalb des DHCP-Bereichs bzw. mit Ausschluss im DHCP-Server.",
+      "",
+      "2. Die PCs verbinden sich mit einem Namen wie drucker-og1.buero.local. Ändert sich später die IP-Adresse, muss nur der DNS-Eintrag angepasst werden, nicht jeder PC.",
+      "",
+      "3. RAW-Druck über TCP-Port 9100, IPP über Port 631 (bzw. IPPS mit TLS), LPD über Port 515. Moderne Systeme nutzen meist IPP."
+    ]
+  },
+  {
+    "title": "IPv6-Adressen lesen und kürzen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Auf einem Windows-PC zeigt ipconfig mehrere IPv6-Adressen an. Der Kollege ist verwirrt.",
+      "",
+      "1. Kürzen Sie die Adresse 2001:0db8:0000:0000:0a00:0000:0000:0042 so weit wie möglich.",
+      "2. Ordnen Sie zu: fe80::1c2b:3aff:fe4d:12, ::1, ff02::1, 2001:db8:10:1::25.",
+      "3. Warum hat ein IPv6-PC oft mehrere Adressen gleichzeitig?"
+    ],
+    "solution": [
+      "1. Führende Nullen je Block weglassen und die längste Nullfolge durch :: ersetzen: 2001:db8::a00:0:0:42. Die zweite Nullfolge darf nicht auch mit :: gekürzt werden, weil :: nur einmal vorkommen darf. Gleich lange Folgen: die erste wird gekürzt.",
+      "",
+      "2. fe80::... ist eine link-lokale Adresse (nur im eigenen Segment). ::1 ist die Loopback-Adresse. ff02::1 ist die Multicast-Adresse aller Knoten im Segment. 2001:db8:10:1::25 ist eine globale Unicast-Adresse (hier aus dem Dokumentationsbereich).",
+      "",
+      "3. Jede Schnittstelle hat immer eine link-lokale Adresse, dazu eine oder mehrere globale Adressen (z.B. per SLAAC) und oft zusätzliche temporäre Adressen durch die Privacy Extensions."
+    ]
+  },
+  {
+    "title": "Ports für eine Firewall-Freigabe bestimmen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Handwerksbetrieb betreibt einen eigenen Webshop und einen Mailserver. Sie sollen die nötigen Freigaben in der Firewall benennen.",
+      "",
+      "1. Welche Ports müssen für den Webshop aus dem Internet erreichbar sein?",
+      "2. Welche Ports braucht der Mailserver für den Empfang aus dem Internet und für die Mitarbeiter-Clients?",
+      "3. Welche Ports sollten auf keinen Fall aus dem Internet erreichbar sein? Nennen Sie zwei Beispiele."
+    ],
+    "solution": [
+      "1. TCP 443 (HTTPS) und TCP 80 (HTTP, nur zur Weiterleitung auf HTTPS).",
+      "",
+      "2. Empfang von anderen Mailservern: TCP 25 (SMTP). Für die Clients: TCP 587 (Submission mit STARTTLS) oder 465 (SMTPS) zum Senden und TCP 993 (IMAPS) zum Abrufen.",
+      "",
+      "3. Z.B. TCP 3389 (RDP), TCP 445 (SMB), TCP 22 (SSH ohne Einschränkung), Datenbankports wie 3306. Fernzugriff gehört hinter ein VPN."
+    ]
+  },
+  {
+    "title": "Ein Netz für drei Abteilungen aufteilen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Das Netz 192.168.20.0/24 soll in vier gleich große Subnetze aufgeteilt werden: Verwaltung, Vertrieb, Lager und eine Reserve.",
+      "",
+      "1. Welche Präfixlänge und welche Subnetzmaske haben die Subnetze?",
+      "2. Nennen Sie für jedes Subnetz Netzadresse und Broadcast-Adresse.",
+      "3. Wie viele Hosts passen jeweils in ein Subnetz?"
+    ],
+    "solution": [
+      "1. Vier Subnetze brauchen 2 zusätzliche Bit: /24 + 2 = /26, Maske 255.255.255.192.",
+      "",
+      "2. Verwaltung 192.168.20.0 bis 192.168.20.63, Vertrieb 192.168.20.64 bis 192.168.20.127, Lager 192.168.20.128 bis 192.168.20.191, Reserve 192.168.20.192 bis 192.168.20.255. Die erste Adresse ist jeweils die Netzadresse, die letzte die Broadcast-Adresse.",
+      "",
+      "3. 2^6 - 2 = 62 Hosts je Subnetz."
+    ]
+  },
+  {
+    "title": "Auskunftsersuchen eines Kunden bearbeiten",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Kundin schreibt per E-Mail an einen Onlinehändler: \"Welche Daten haben Sie über mich gespeichert?\"",
+      "",
+      "1. Auf welches Recht beruft sich die Kundin und bis wann muss geantwortet werden?",
+      "2. Welche Informationen gehören in die Antwort? Nennen Sie vier.",
+      "3. Warum sollte die Identität der Anfragenden geprüft werden?"
+    ],
+    "solution": [
+      "1. Auf das Auskunftsrecht nach Art. 15 DSGVO. Die Antwort muss unverzüglich, spätestens innerhalb eines Monats erfolgen (in komplexen Fällen mit Begründung um zwei Monate verlängerbar).",
+      "",
+      "2. Eine Kopie der gespeicherten Daten, die Zwecke der Verarbeitung, die Empfänger (z.B. Versanddienstleister, Zahlungsanbieter), die geplante Speicherdauer, die Herkunft der Daten sowie der Hinweis auf die Rechte auf Berichtigung, Löschung, Einschränkung, Widerspruch und Beschwerde bei der Aufsichtsbehörde.",
+      "",
+      "3. Sonst könnte jemand Fremdes die Daten einer anderen Person abfragen. Das wäre selbst eine Datenschutzverletzung. Geprüft wird z.B., ob die Anfrage von der hinterlegten E-Mail-Adresse kommt, oder über das Kundenkonto."
+    ]
+  },
+  {
+    "title": "Verlorener USB-Stick mit Personaldaten",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Mitarbeiterin der Personalabteilung hat auf dem Heimweg einen unverschlüsselten USB-Stick mit Gehaltslisten verloren.",
+      "",
+      "1. Handelt es sich um eine meldepflichtige Datenschutzverletzung? Begründen Sie.",
+      "2. Welche Schritte sind jetzt nötig und welche Frist gilt?",
+      "3. Welche technischen und organisatorischen Maßnahmen verhindern so einen Fall künftig?"
+    ],
+    "solution": [
+      "1. Ja. Gehaltsdaten sind personenbezogen und sensibel, der Finder kann sie ohne Hürde lesen. Es besteht ein Risiko für die Betroffenen, deshalb ist eine Meldung an die Aufsichtsbehörde nötig (Art. 33 DSGVO). Wegen des hohen Risikos sind wahrscheinlich auch die Betroffenen zu informieren (Art. 34).",
+      "",
+      "2. Datenschutzbeauftragten und Vorgesetzte sofort informieren, Umfang ermitteln (welche Daten, wie viele Personen), Vorfall dokumentieren, innerhalb von 72 Stunden nach Bekanntwerden an die Aufsichtsbehörde melden, Betroffene informieren, ggf. Fundbüro und Polizei einschalten.",
+      "",
+      "3. Nur verschlüsselte USB-Sticks zulassen (z.B. per Richtlinie), Daten besser über gesicherte Freigaben oder VPN statt USB transportieren, Schulung der Mitarbeiter, Regelung zum Mitnehmen von Daten, Datenminimierung auf mobilen Datenträgern."
+    ]
+  },
+  {
+    "title": "Einwilligung für einen Newsletter",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Fahrradladen möchte einen E-Mail-Newsletter einführen. Die Anmeldung soll über die Webseite laufen.",
+      "",
+      "1. Welche Anforderungen muss die Einwilligung erfüllen?",
+      "2. Was ist das Double-Opt-in-Verfahren und warum wird es eingesetzt?",
+      "3. Was muss passieren, wenn ein Kunde den Newsletter abbestellt?"
+    ],
+    "solution": [
+      "1. Freiwillig, für den bestimmten Zweck, informiert und eindeutig durch eine aktive Handlung (kein vorangekreuztes Kästchen). Der Hinweis auf das jederzeitige Widerrufsrecht gehört dazu. Das Unternehmen muss die Einwilligung nachweisen können.",
+      "",
+      "2. Nach der Anmeldung erhält der Interessent eine E-Mail mit Bestätigungslink. Erst nach dem Klick wird er eingetragen. So ist sichergestellt, dass wirklich der Inhaber der Adresse zugestimmt hat, und die Einwilligung ist dokumentiert.",
+      "",
+      "3. Der Widerruf muss so einfach sein wie die Anmeldung (z.B. Abmeldelink in jeder Mail). Danach darf kein Newsletter mehr gesendet werden. Die Adresse wird aus dem Verteiler gelöscht bzw. zur Vermeidung erneuter Zusendung gesperrt."
+    ]
+  },
+  {
+    "title": "Schutzziele an Beispielen erkennen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "In einem Monat gab es in einer Firma folgende Vorfälle:",
+      "  a) Der Webshop war wegen eines DDoS-Angriffs 5 Stunden offline.",
+      "  b) Ein Praktikant konnte versehentlich die Gehaltsordner öffnen.",
+      "  c) In einer Überweisungsdatei wurde eine IBAN heimlich geändert.",
+      "  d) Eine Mail mit falschem Absender \"Geschäftsführung\" forderte eine Zahlung.",
+      "",
+      "1. Ordnen Sie jedem Vorfall das hauptsächlich verletzte Schutzziel zu.",
+      "2. Nennen Sie zu jedem Vorfall eine passende Gegenmaßnahme."
+    ],
+    "solution": [
+      "1. a) Verfügbarkeit. b) Vertraulichkeit. c) Integrität. d) Authentizität.",
+      "",
+      "2. a) DDoS-Schutz beim Provider bzw. Content Delivery Network. b) Berechtigungen nach dem Need-to-know-Prinzip prüfen und korrigieren. c) Vier-Augen-Prinzip und Prüfsummen bzw. Signaturen für Zahlungsdateien. d) SPF, DKIM, DMARC und Rückruf über bekannte Nummer bei Zahlungsaufforderungen."
+    ]
+  },
+  {
+    "title": "Verdächtige E-Mail-Anhänge und Makros",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Buchhalterin erhält eine Mail \"Offene Rechnung\" mit einer Word-Datei. Beim Öffnen erscheint: \"Inhalt aktivieren, um das Dokument anzuzeigen\".",
+      "",
+      "1. Warum ist diese Meldung gefährlich?",
+      "2. Wie sollte sich die Mitarbeiterin verhalten?",
+      "3. Welche technischen Maßnahmen schützen das Unternehmen?"
+    ],
+    "solution": [
+      "1. Mit der Aktivierung werden Makros ausgeführt. Diese können Schadsoftware nachladen, z.B. einen Trojaner oder Ransomware. Die Aufforderung ist ein typischer Trick.",
+      "",
+      "2. Inhalte nicht aktivieren, das Dokument schließen, die Mail nicht weiterleiten und sofort der IT bzw. über den vereinbarten Meldeweg melden. Bei Unsicherheit den Absender über einen bekannten Kontaktweg fragen.",
+      "",
+      "3. Makros aus dem Internet per Gruppenrichtlinie blockieren, E-Mail-Filter mit Anhangsprüfung und Sandbox, aktueller Virenschutz bzw. EDR, eingeschränkte Benutzerrechte, regelmäßige Awareness-Schulungen."
+    ]
+  },
+  {
+    "title": "Symmetrisch und asymmetrisch verschlüsseln",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Sie sollen einem Kunden erklären, wie seine Webseite per HTTPS geschützt wird.",
+      "",
+      "1. Erklären Sie den Unterschied zwischen symmetrischer und asymmetrischer Verschlüsselung.",
+      "2. Warum kombiniert HTTPS beide Verfahren?",
+      "3. Wozu braucht der Webserver ein Zertifikat?"
+    ],
+    "solution": [
+      "1. Symmetrisch: Beide Seiten nutzen denselben geheimen Schlüssel (z.B. AES). Schnell, aber der Schlüssel muss sicher ausgetauscht werden. Asymmetrisch: Es gibt ein Schlüsselpaar aus öffentlichem und privatem Schlüssel (z.B. RSA, ECC). Was mit dem öffentlichen Schlüssel verschlüsselt wird, kann nur der private entschlüsseln. Kein geheimer Austausch nötig, aber deutlich langsamer.",
+      "",
+      "2. Hybride Verschlüsselung: Mit asymmetrischen Verfahren wird beim Verbindungsaufbau sicher ein gemeinsamer Sitzungsschlüssel vereinbart, die eigentlichen Daten werden dann schnell symmetrisch verschlüsselt.",
+      "",
+      "3. Das Zertifikat bestätigt, dass der öffentliche Schlüssel wirklich zu dieser Domain gehört. Es ist von einer vertrauenswürdigen Zertifizierungsstelle signiert. So kann sich kein Angreifer als der Webserver ausgeben."
+    ]
+  },
+  {
+    "title": "Zugriffsrechte für eine Ordnerstruktur planen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Auf dem Fileserver eines Ingenieurbüros gibt es die Ordner Projekte, Buchhaltung, Personal und Vorlagen. Bisher dürfen alle Mitarbeiter alles lesen und ändern.",
+      "",
+      "1. Nach welchem Prinzip sollten die Rechte vergeben werden?",
+      "2. Schlagen Sie eine sinnvolle Rechtevergabe über Gruppen vor.",
+      "3. Warum vergibt man Rechte über Gruppen statt direkt an Benutzer?"
+    ],
+    "solution": [
+      "1. Nach dem Need-to-know- bzw. Least-Privilege-Prinzip: Jeder erhält nur die Rechte, die er für seine Aufgabe braucht.",
+      "",
+      "2. Projekte: Gruppe Ingenieure ändern, Geschäftsführung lesen. Buchhaltung: Gruppe Buchhaltung ändern, Geschäftsführung lesen. Personal: nur Gruppe Personal und Geschäftsführung. Vorlagen: alle lesen, nur eine Gruppe Vorlagen-Pflege ändern.",
+      "",
+      "3. Wechselt jemand die Abteilung oder kommt neu dazu, ändert man nur die Gruppenmitgliedschaft. Rechte bleiben übersichtlich und lassen sich leichter prüfen."
+    ]
+  },
+  {
+    "title": "Updates und Virenschutz auf Arbeitsplätzen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "In einem kleinen Betrieb installiert jeder Mitarbeiter Updates selbst, wenn er daran denkt. Einige PCs haben seit Monaten keine Updates erhalten.",
+      "",
+      "1. Warum ist das ein Sicherheitsrisiko?",
+      "2. Wie organisieren Sie das Einspielen von Updates zentral?",
+      "3. Warum reicht ein klassischer signaturbasierter Virenscanner heute allein nicht aus?"
+    ],
+    "solution": [
+      "1. Updates schließen bekannte Schwachstellen. Sobald ein Patch erscheint, analysieren Angreifer ihn und greifen ungepatchte Systeme gezielt an. Veraltete Rechner sind ein leichtes Einfallstor.",
+      "",
+      "2. Zentrale Verwaltung z.B. über Windows Update for Business, Intune oder WSUS bzw. ein Patch-Management-Werkzeug. Updates zuerst auf Testgeräten, dann gestaffelt verteilen, feste Wartungsfenster, Übersicht über den Patchstand aller Geräte, auch Updates für Drittsoftware wie Browser und PDF-Reader.",
+      "",
+      "3. Er erkennt nur bekannte Schädlinge. Neue oder veränderte Schadsoftware erkennt er oft nicht. Moderne Lösungen (EDR) beobachten zusätzlich das Verhalten und können verdächtige Aktionen stoppen."
+    ]
+  },
+  {
+    "title": "Homeoffice sicher gestalten",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Unternehmen erlaubt seinen Mitarbeitern zwei Tage Homeoffice pro Woche mit Firmen-Laptops.",
+      "",
+      "1. Wie greifen die Mitarbeiter sicher auf die Server im Büro zu?",
+      "2. Nennen Sie drei technische Maßnahmen für die Laptops.",
+      "3. Welche organisatorischen Regeln sind im Homeoffice wichtig?"
+    ],
+    "solution": [
+      "1. Über ein VPN (z.B. IPsec, WireGuard oder SSL-VPN) mit Mehrfaktor-Authentifizierung. Alternativ über veröffentlichte Anwendungen mit MFA. Keine direkt offenen Ports wie RDP im Internet.",
+      "",
+      "2. Festplattenverschlüsselung (BitLocker), aktuelle Updates und Virenschutz/EDR, Bildschirmsperre nach kurzer Zeit, Benutzer ohne Admin-Rechte, lokale Firewall aktiv.",
+      "",
+      "3. Laptop nicht von Familienmitgliedern nutzen lassen, Bildschirm sperren beim Verlassen, keine Gespräche über vertrauliche Inhalte in Hörweite Dritter, Ausdrucke vermeiden bzw. sicher vernichten, Verlust sofort melden."
+    ]
+  },
+  {
+    "title": "Alte Festplatten sicher entsorgen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Anwaltskanzlei tauscht 20 PCs aus. Die alten Geräte enthalten Festplatten und SSDs mit Mandantendaten.",
+      "",
+      "1. Warum reicht Löschen und Formatieren nicht aus?",
+      "2. Welche Verfahren zur sicheren Datenvernichtung gibt es?",
+      "3. Was sollte bei der Beauftragung eines Entsorgers beachtet werden?"
+    ],
+    "solution": [
+      "1. Beim Löschen und Schnellformatieren werden nur die Verweise entfernt, die Daten selbst bleiben erhalten und lassen sich mit Werkzeugen wiederherstellen.",
+      "",
+      "2. Mehrfaches Überschreiben (bei HDDs), herstellereigenes Secure Erase bzw. kryptografisches Löschen (bei SSDs und verschlüsselten Laufwerken), physische Zerstörung (Schreddern nach DIN 66399 mit passender Sicherheitsstufe, bei Mandantendaten mindestens H-4 bzw. E-4), Entmagnetisieren bei HDDs.",
+      "",
+      "3. Vertrag zur Auftragsverarbeitung, zertifizierter Dienstleister, Transport in verschlossenen Behältern, Vernichtungsprotokoll bzw. Zertifikat mit Seriennummern der Datenträger."
+    ]
+  },
+  {
+    "title": "Subnetzmasken binär und hexadezimal lesen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Kollege versteht nicht, warum 255.255.255.192 dasselbe ist wie /26.",
+      "",
+      "1. Wandeln Sie die Maske 255.255.255.192 in Binärschreibweise um und zählen Sie die Einsen.",
+      "2. Welche Präfixlänge hat die Maske 255.255.240.0?",
+      "3. Schreiben Sie die Oktette 192 und 240 als Hexadezimalzahl."
+    ],
+    "solution": [
+      "1. 11111111.11111111.11111111.11000000. Das sind 8 + 8 + 8 + 2 = 26 Einsen, also /26.",
+      "",
+      "2. 240 = 11110000. 8 + 8 + 4 = 20 Einsen, also /20.",
+      "",
+      "3. 192 = 1100 0000 = C0 (hex), 240 = 1111 0000 = F0 (hex). Jeweils 4 Bit ergeben eine Hexziffer."
+    ]
+  },
+  {
+    "title": "USV für den Serverschrank auswählen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Im Serverschrank eines Büros laufen: ein Server mit 350 W, ein NAS mit 60 W, ein Switch mit 40 W und ein Router mit 20 W.",
+      "Die USV soll bei einem Stromausfall mindestens 20 Minuten überbrücken. Der Leistungsfaktor beträgt 0,9, als Reserve werden 25 % eingeplant.",
+      "",
+      "1. Berechnen Sie die Gesamtleistung in Watt und die benötigte Scheinleistung in VA inklusive Reserve.",
+      "2. Die USV-Akkus liefern nutzbar 250 Wh. Wie lange überbrücken sie rechnerisch?",
+      "3. Welche weitere Funktion sollte die USV bieten, damit der Server sauber herunterfährt?"
+    ],
+    "solution": [
+      "1. 350 + 60 + 40 + 20 = 470 W. Scheinleistung: 470 W / 0,9 = 522,2 VA. Mit 25 % Reserve: 522,2 * 1,25 = 652,8 VA. Gewählt wird die nächste Baugröße, z.B. 750 VA (bzw. passend zur Wattangabe des Herstellers).",
+      "",
+      "2. 250 Wh / 470 W = 0,53 h, also rund 31,9 Minuten. Die geforderten 20 Minuten werden erreicht.",
+      "",
+      "3. Eine Netzwerk- oder USB-Verbindung zum Server mit Software, die bei niedrigem Akkustand ein geordnetes Herunterfahren auslöst und Meldungen verschickt."
+    ]
+  },
+  {
+    "title": "SSD oder HDD für Arbeit und Archiv",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Fotostudio braucht schnellen Speicher für die Bildbearbeitung und ein Archiv von 40 TB.",
+      "Angebote: SSD 4 TB für 280 Euro, HDD 16 TB für 320 Euro.",
+      "",
+      "1. Berechnen Sie für beide Laufwerke den Preis pro TB.",
+      "2. Wie viele Laufwerke und welche Kosten wären für 40 TB Archiv jeweils nötig (ohne RAID)?",
+      "3. Welches Medium empfehlen Sie wofür? Begründen Sie."
+    ],
+    "solution": [
+      "1. SSD: 280 / 4 = 70 Euro pro TB. HDD: 320 / 16 = 20 Euro pro TB.",
+      "",
+      "2. SSD: 40 / 4 = 10 Laufwerke, 10 * 280 = 2.800 Euro. HDD: 40 / 16 = 2,5, also 3 Laufwerke (48 TB), 3 * 320 = 960 Euro.",
+      "",
+      "3. SSD für die Arbeitsdaten: viel höhere IOPS und Datenraten, kurze Ladezeiten großer Bilddateien. HDD für das Archiv: deutlich günstiger pro TB, Geschwindigkeit ist dort weniger wichtig. Für das Archiv zusätzlich RAID und Backup einplanen."
+    ]
+  },
+  {
+    "title": "Monitor und Anschluss für 4K auswählen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Grafiker soll einen 4K-Monitor (3840 x 2160 Pixel, 60 Hz, 24 Bit Farbtiefe) erhalten.",
+      "",
+      "1. Berechnen Sie die unkomprimierte Datenrate des Bildsignals in Gbit/s (1 Gbit = 10^9 Bit, ohne Austastlücken).",
+      "2. Reicht HDMI 1.4 mit 10,2 Gbit/s? Welche Schnittstellen sind geeignet?",
+      "3. Welchen Vorteil bietet ein Monitor mit USB-C-Anschluss am Notebook-Arbeitsplatz?"
+    ],
+    "solution": [
+      "1. 3840 * 2160 * 24 * 60 = 11.943.936.000 Bit/s, also rund 11,94 Gbit/s.",
+      "",
+      "2. Nein, 10,2 Gbit/s reichen nicht (in der Praxis unterstützt HDMI 1.4 4K nur mit 30 Hz). Geeignet sind HDMI 2.0 (18 Gbit/s), HDMI 2.1 oder DisplayPort 1.2 (21,6 Gbit/s) und neuer.",
+      "",
+      "3. Über ein einziges Kabel werden Bild, USB-Daten (z.B. Tastatur, Maus, Netzwerk) und Strom zum Laden des Notebooks übertragen. Das vereinfacht den Arbeitsplatz und das Andocken."
+    ]
+  },
+  {
+    "title": "Netzwerkumbau am Wochenende planen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Der Netzwerkumbau einer Arztpraxis soll an einem Samstag erfolgen. Vorgänge und Dauer:",
+      "  A Planung vor Ort: 2 h",
+      "  B Hardware einbauen: 3 h (nach A)",
+      "  C Neue Kabel verlegen: 4 h (nach A)",
+      "  D Konfiguration: 3 h (nach B)",
+      "  E Test und Abnahme: 2 h (nach C und D)",
+      "",
+      "1. Ermitteln Sie die Gesamtdauer und den kritischen Pfad.",
+      "2. Wie viel Puffer hat Vorgang C?",
+      "3. Warum sollte vorab ein Rückfallplan (Rollback) festgelegt werden?"
+    ],
+    "solution": [
+      "1. Weg A-B-D-E: 2 + 3 + 3 + 2 = 10 h. Weg A-C-E: 2 + 4 + 2 = 8 h. Der kritische Pfad ist A-B-D-E mit 10 Stunden Gesamtdauer.",
+      "",
+      "2. C kann frühestens nach 2 h beginnen und endet nach 6 h. E beginnt erst nach D, also nach 8 h. C hat damit 8 - 6 = 2 h Puffer.",
+      "",
+      "3. Die Praxis muss am Montag arbeiten können. Scheitert der Umbau, muss klar sein, wann und wie der alte Zustand wiederhergestellt wird (alte Hardware und Konfigurationssicherung bereithalten, Entscheidungszeitpunkt festlegen)."
+    ]
+  },
+  {
+    "title": "Risiken in einem IT-Projekt bewerten",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Für die Umstellung der Telefonanlage einer Spedition auf VoIP haben Sie folgende Risiken gesammelt:",
+      "  R1 Lieferverzug der Telefone: Wahrscheinlichkeit hoch (3), Auswirkung mittel (2)",
+      "  R2 Internetleitung zu schwach: Wahrscheinlichkeit mittel (2), Auswirkung hoch (3)",
+      "  R3 Mitarbeiter kommen mit der Bedienung nicht zurecht: Wahrscheinlichkeit gering (1), Auswirkung mittel (2)",
+      "",
+      "1. Berechnen Sie die Risikowerte (Wahrscheinlichkeit x Auswirkung) und bringen Sie die Risiken in eine Reihenfolge.",
+      "2. Nennen Sie zu jedem Risiko eine Gegenmaßnahme.",
+      "3. Warum wird die Risikoliste während des Projekts regelmäßig aktualisiert?"
+    ],
+    "solution": [
+      "1. R1: 3 * 2 = 6. R2: 2 * 3 = 6. R3: 1 * 2 = 2. R1 und R2 haben den gleichen Wert. Weil R2 den Betrieb komplett stören kann, wird es oft zuerst behandelt. R3 ist am geringsten.",
+      "",
+      "2. R1: früh bestellen, Liefertermin vertraglich festlegen, Ersatzlieferanten. R2: vorher Bandbreite messen und berechnen, ggf. Leitung aufrüsten, QoS einrichten. R3: Schulung und Kurzanleitung, Ansprechpartner in der ersten Woche.",
+      "",
+      "3. Neue Risiken kommen hinzu, bekannte ändern sich oder fallen weg. Nur eine aktuelle Liste erlaubt rechtzeitiges Gegensteuern."
+    ]
+  },
+  {
+    "title": "Lastenheft für ein WLAN-Projekt",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Hotel möchte ein neues WLAN für Gäste und Personal. Es bittet mehrere Systemhäuser um Angebote.",
+      "",
+      "1. Wer erstellt das Lastenheft und was beschreibt es?",
+      "2. Nennen Sie fünf Anforderungen, die im Lastenheft des Hotels stehen sollten.",
+      "3. Was antwortet das Systemhaus mit dem Pflichtenheft?"
+    ],
+    "solution": [
+      "1. Der Auftraggeber (das Hotel). Es beschreibt, was gefordert ist und wofür, also die Anforderungen aus Sicht des Kunden, nicht die technische Umsetzung.",
+      "",
+      "2. Abdeckung aller Zimmer, Flure, Lobby und Terrasse; Anzahl gleichzeitiger Nutzer; getrennte Netze für Gäste und Personal; einfache Anmeldung der Gäste (z.B. Voucher oder Anmeldeseite); Mindestgeschwindigkeit je Gast; zentrale Verwaltung; Budget und Zeitrahmen; Wartung und Support.",
+      "",
+      "3. Im Pflichtenheft beschreibt der Auftragnehmer, wie und womit er die Anforderungen umsetzt (Hardware, Anzahl und Standorte der Access Points, Konfiguration, Zeitplan). Es wird Grundlage des Vertrags und der Abnahme."
+    ]
+  },
+  {
+    "title": "Aufwand für einen PC-Austausch berechnen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "In einer Behörde werden 60 PCs ausgetauscht. Pro Arbeitsplatz rechnen Sie mit 1,5 Stunden (Aufbau, Datenübernahme, Test). Für Unvorhergesehenes planen Sie 10 % Puffer ein.",
+      "Zwei Techniker arbeiten je 7,5 Stunden pro Tag.",
+      "",
+      "1. Wie viele Stunden Aufwand sind insgesamt einzuplanen?",
+      "2. Wie viele Arbeitstage brauchen die beiden Techniker?",
+      "3. Warum ist ein Pilot mit wenigen Arbeitsplätzen vor dem Rollout sinnvoll?"
+    ],
+    "solution": [
+      "1. 60 * 1,5 h = 90 h. Mit 10 % Puffer: 90 * 1,1 = 99 h.",
+      "",
+      "2. Beide zusammen schaffen 2 * 7,5 h = 15 h pro Tag. 99 / 15 = 6,6, also 7 Arbeitstage.",
+      "",
+      "3. Im Pilot fallen Probleme (fehlende Software, Druckertreiber, Zeitbedarf) früh auf. Der Zeitplan kann danach realistischer werden, und der eigentliche Rollout läuft reibungsloser."
+    ]
+  },
+  {
+    "title": "Arbeitszeit bei einem Wartungseinsatz",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Techniker (24 Jahre) soll an einem Samstag von 8:00 bis 20:00 Uhr ein Rechenzentrum umziehen und dabei 45 Minuten Pause machen.",
+      "",
+      "1. Wie viele Stunden würde er arbeiten und ist das nach dem Arbeitszeitgesetz erlaubt?",
+      "2. Welche Pausen stehen ihm zu?",
+      "3. Wann darf er frühestens wieder arbeiten, wenn er um 20:00 Uhr aufhört?"
+    ],
+    "solution": [
+      "1. 12 Stunden minus 45 Minuten Pause = 11,25 Stunden. Erlaubt sind werktäglich 8 Stunden, verlängerbar auf höchstens 10 Stunden (mit Ausgleich). 11,25 Stunden sind unzulässig. Der Einsatz muss geteilt oder ein zweiter Techniker eingeplant werden.",
+      "",
+      "2. Bei mehr als 6 bis 9 Stunden mindestens 30 Minuten, bei mehr als 9 Stunden mindestens 45 Minuten, aufteilbar in Abschnitte von mindestens 15 Minuten.",
+      "",
+      "3. Nach Arbeitsende gilt eine ununterbrochene Ruhezeit von mindestens 11 Stunden, also frühestens am nächsten Tag um 7:00 Uhr."
+    ]
+  },
+  {
+    "title": "Betriebsrat und Überwachungssoftware",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Die Geschäftsleitung will eine Software einführen, die protokolliert, welche Programme die Mitarbeiter wie lange nutzen.",
+      "",
+      "1. Welches Recht hat der Betriebsrat bei der Einführung dieser Software?",
+      "2. Was passiert, wenn sich Betriebsrat und Geschäftsleitung nicht einigen?",
+      "3. Welche datenschutzrechtlichen Fragen müssen außerdem geklärt werden?"
+    ],
+    "solution": [
+      "1. Ein echtes Mitbestimmungsrecht nach § 87 Abs. 1 Nr. 6 BetrVG: Technische Einrichtungen, die geeignet sind, Verhalten oder Leistung zu überwachen, dürfen nur mit Zustimmung des Betriebsrats eingeführt werden. Üblich ist eine Betriebsvereinbarung.",
+      "",
+      "2. Dann entscheidet die Einigungsstelle. Ihr Spruch ersetzt die fehlende Einigung.",
+      "",
+      "3. Rechtsgrundlage und Zweck, Erforderlichkeit und Verhältnismäßigkeit (Datenminimierung), Speicherdauer, Zugriffsrechte, Information der Mitarbeiter, ggf. eine Datenschutz-Folgenabschätzung."
+    ]
+  },
+  {
+    "title": "Mangelhafte Lieferung von Switches",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ihr Unternehmen (GmbH) kauft bei einem Großhändler 10 Switches. Bei der Eingangsprüfung stellen Sie fest, dass bei zwei Geräten mehrere Ports defekt sind.",
+      "",
+      "1. Was müssen Sie als Kaufmann nach § 377 HGB tun?",
+      "2. Welches Recht haben Sie zunächst?",
+      "3. Welche Rechte haben Sie, wenn die Nacherfüllung fehlschlägt?"
+    ],
+    "solution": [
+      "1. Beim zweiseitigen Handelskauf muss die Ware unverzüglich geprüft und ein offener Mangel unverzüglich gerügt werden (schriftlich, mit genauer Beschreibung). Sonst gilt die Ware als genehmigt.",
+      "",
+      "2. Nacherfüllung: nach Wahl des Käufers Nachbesserung (Reparatur) oder Ersatzlieferung. In der Praxis werden defekte Switches meist ausgetauscht.",
+      "",
+      "3. Nach erfolglosem Fristablauf bzw. Fehlschlagen: Rücktritt vom Vertrag oder Minderung des Kaufpreises, bei Verschulden zusätzlich Schadenersatz, ggf. Ersatz vergeblicher Aufwendungen."
+    ]
   }
 ]

@@ -5602,5 +5602,2813 @@
     ],
     "a": "15 %",
     "exp": "36.000,00 Euro / 240.000,00 Euro * 100 = 15 %."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür ist das IPv6-Präfix 2001:db8::/32 reserviert?",
+    "options": [
+      "Für Beispiele in Dokumentationen",
+      "Für link-lokale Adressen",
+      "Für Multicast",
+      "Für private Netze wie 192.168.0.0/16"
+    ],
+    "a": "Für Beispiele in Dokumentationen",
+    "exp": "2001:db8::/32 ist das Dokumentationspräfix. Es wird im Internet nicht geroutet und eignet sich für Beispiele in Handbüchern und Prüfungen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient die Solicited-Node-Multicast-Adresse bei IPv6?",
+    "options": [
+      "Zur Adressauflösung, ohne alle Knoten im Segment zu stören",
+      "Zur Anmeldung beim DHCPv6-Server",
+      "Zur Verbindung mit allen Routern im Internet",
+      "Zur Verschlüsselung von Nachbarnachrichten"
+    ],
+    "a": "Zur Adressauflösung, ohne alle Knoten im Segment zu stören",
+    "exp": "Statt eines Broadcasts wie bei ARP sendet NDP die Neighbor Solicitation an ff02::1:ffXX:XXXX (die letzten 24 Bit der gesuchten Adresse). Nur Geräte mit passender Adresse hören darauf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche ICMPv6-Nachricht sendet ein Host beim Start, um sofort einen Router zu finden?",
+    "options": [
+      "Router Solicitation",
+      "Router Advertisement",
+      "Neighbor Advertisement",
+      "Echo Request"
+    ],
+    "a": "Router Solicitation",
+    "exp": "Mit einer Router Solicitation an ff02::2 bittet der Host alle Router um ein sofortiges Router Advertisement, statt auf das nächste regelmäßige zu warten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Bitfolge wird beim EUI-64-Verfahren in die Mitte der MAC-Adresse eingefügt?",
+    "options": [
+      "FFFE",
+      "FFFF",
+      "0000",
+      "FE80"
+    ],
+    "a": "FFFE",
+    "exp": "Die 48-Bit-MAC wird geteilt, FFFE eingefügt und das 7. Bit umgedreht. Aus 00:1A:2B:3C:4D:5E wird so die Interface-ID 021A:2BFF:FE3C:4D5E."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wer darf bei IPv6 Pakete fragmentieren?",
+    "options": [
+      "Nur der Absender",
+      "Jeder Router auf dem Weg",
+      "Nur der letzte Router vor dem Ziel",
+      "Nur der Empfänger"
+    ],
+    "a": "Nur der Absender",
+    "exp": "IPv6-Router fragmentieren nicht. Ist ein Paket zu groß, verwerfen sie es und senden \"Packet Too Big\". Der Absender ermittelt per Path MTU Discovery die passende Größe."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie groß muss die MTU in einem IPv6-Netz mindestens sein?",
+    "options": [
+      "1280 Byte",
+      "576 Byte",
+      "1500 Byte",
+      "9000 Byte"
+    ],
+    "a": "1280 Byte",
+    "exp": "IPv6 verlangt auf jeder Verbindung eine MTU von mindestens 1280 Byte. Bei IPv4 waren es nur 576 Byte, die jeder Host verarbeiten können muss."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet das gesetzte M-Flag in einem IPv6-Router-Advertisement?",
+    "options": [
+      "Die Clients sollen ihre Adresse per stateful DHCPv6 beziehen",
+      "Die Clients sollen nur Multicast nutzen",
+      "Der Router ist der einzige im Segment",
+      "Die Clients sollen IPv4 abschalten"
+    ],
+    "a": "Die Clients sollen ihre Adresse per stateful DHCPv6 beziehen",
+    "exp": "M steht für Managed Address Configuration: Adressen kommen vom DHCPv6-Server. Das O-Flag (Other) bedeutet dagegen, dass nur Zusatzinfos wie DNS per DHCPv6 kommen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Bit umfasst die Interface-ID einer IPv6-Adresse in einem /64-Netz?",
+    "options": [
+      "64 Bit",
+      "48 Bit",
+      "32 Bit",
+      "16 Bit"
+    ],
+    "a": "64 Bit",
+    "exp": "128 Bit Gesamtlänge minus 64 Bit Präfix ergeben 64 Bit für die Interface-ID, also den Host-Anteil."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht ein 6in4-Tunnel?",
+    "options": [
+      "Er verpackt IPv6-Pakete in IPv4-Pakete",
+      "Er übersetzt IPv6-Adressen in IPv4-Adressen",
+      "Er verschlüsselt IPv6-Verkehr",
+      "Er verbindet vier IPv6-Netze"
+    ],
+    "a": "Er verpackt IPv6-Pakete in IPv4-Pakete",
+    "exp": "Beim 6in4-Tunnel werden IPv6-Pakete als Nutzlast in IPv4-Pakete (IP-Protokoll 41) gepackt. So kann IPv6 über ein reines IPv4-Netz transportiert werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll übernimmt bei IPv6 die Aufgabe von IGMP?",
+    "options": [
+      "MLD (Multicast Listener Discovery)",
+      "NDP",
+      "DHCPv6",
+      "ICMP für IPv4"
+    ],
+    "a": "MLD (Multicast Listener Discovery)",
+    "exp": "Mit MLD melden IPv6-Hosts, welche Multicast-Gruppen sie empfangen wollen. MLD ist Teil von ICMPv6."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Feld im IPv6-Header gibt an, welcher Header als Nächstes folgt?",
+    "options": [
+      "Next Header",
+      "Hop Limit",
+      "Flow Label",
+      "Payload Length"
+    ],
+    "a": "Next Header",
+    "exp": "Next Header nennt den nächsten Erweiterungsheader oder das Transportprotokoll, z.B. 6 für TCP oder 17 für UDP. Damit werden die Erweiterungsheader wie eine Kette verknüpft."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu senden OSPF-Router regelmäßig Hello-Pakete?",
+    "options": [
+      "Um Nachbarn zu finden und ihre Erreichbarkeit zu überwachen",
+      "Um IP-Adressen zu vergeben",
+      "Um die Uhrzeit abzugleichen",
+      "Um Broadcasts zu blockieren"
+    ],
+    "a": "Um Nachbarn zu finden und ihre Erreichbarkeit zu überwachen",
+    "exp": "Über Hello-Pakete entdecken OSPF-Router ihre Nachbarn. Bleiben sie länger als das Dead-Intervall aus, gilt der Nachbar als ausgefallen und die Routen werden neu berechnet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie werden OSPF-Pakete transportiert?",
+    "options": [
+      "Direkt in IP mit der Protokollnummer 89",
+      "Über TCP-Port 179",
+      "Über UDP-Port 520",
+      "Über TCP-Port 89"
+    ],
+    "a": "Direkt in IP mit der Protokollnummer 89",
+    "exp": "OSPF nutzt weder TCP noch UDP, sondern setzt direkt auf IP auf (Protokollnummer 89). BGP nutzt TCP 179, RIP UDP 520."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ab wie vielen Hops gilt ein Ziel bei RIP als unerreichbar?",
+    "options": [
+      "16",
+      "15",
+      "255",
+      "100"
+    ],
+    "a": "16",
+    "exp": "RIP erlaubt maximal 15 Hops. Die Metrik 16 bedeutet unendlich, also unerreichbar. Deshalb eignet sich RIP nur für kleine Netze."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt RIP?",
+    "options": [
+      "UDP-Port 520",
+      "TCP-Port 520",
+      "UDP-Port 179",
+      "TCP-Port 179"
+    ],
+    "a": "UDP-Port 520",
+    "exp": "RIP-Router senden ihre Routingtabellen per UDP auf Port 520 an die Nachbarn. RIPng für IPv6 nutzt UDP 521."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Problem ist typisch für Distanzvektor-Protokolle?",
+    "options": [
+      "Count to Infinity",
+      "Split Brain",
+      "Broadcast Storm",
+      "Duplicate Address"
+    ],
+    "a": "Count to Infinity",
+    "exp": "Fällt ein Netz aus, können sich Router gegenseitig immer schlechtere Routen dorthin melden, bis die Metrik unendlich erreicht. Split Horizon und Route Poisoning bekämpfen das."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche administrative Distanz hat bei Cisco eine statische Route standardmäßig?",
+    "options": [
+      "1",
+      "0",
+      "110",
+      "120"
+    ],
+    "a": "1",
+    "exp": "Direkt angeschlossene Netze haben 0, statische Routen 1, OSPF 110 und RIP 120. Je kleiner der Wert, desto vertrauenswürdiger die Quelle."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche administrative Distanz hat OSPF bei Cisco standardmäßig?",
+    "options": [
+      "110",
+      "90",
+      "120",
+      "20"
+    ],
+    "a": "110",
+    "exp": "OSPF hat 110. EIGRP liegt bei 90, RIP bei 120, eBGP bei 20. Lernt ein Router ein Ziel über OSPF und RIP, gewinnt OSPF."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Router kennt die Routen 10.0.0.0/8, 10.1.0.0/16, 10.1.2.0/24 und 0.0.0.0/0. Welche nutzt er für 10.1.2.5?",
+    "options": [
+      "10.1.2.0/24",
+      "10.0.0.0/8",
+      "10.1.0.0/16",
+      "0.0.0.0/0"
+    ],
+    "a": "10.1.2.0/24",
+    "exp": "Alle vier Routen passen, aber 10.1.2.0/24 hat das längste Präfix und ist damit am spezifischsten (Longest Prefix Match)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Router kennt die Routen 10.0.0.0/8, 10.1.0.0/16, 10.1.2.0/24 und 0.0.0.0/0. Welche nutzt er für 10.1.9.9?",
+    "options": [
+      "10.1.0.0/16",
+      "10.1.2.0/24",
+      "10.0.0.0/8",
+      "0.0.0.0/0"
+    ],
+    "a": "10.1.0.0/16",
+    "exp": "10.1.2.0/24 passt nicht (10.1.9.9 liegt nicht darin). Von den passenden Routen hat 10.1.0.0/16 das längste Präfix."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der wichtigste Vorteil der Routenzusammenfassung (Summarization)?",
+    "options": [
+      "Kleinere Routingtabellen und weniger Updates",
+      "Höhere Verschlüsselung",
+      "Mehr Hosts pro Subnetz",
+      "Keine Standardroute mehr nötig"
+    ],
+    "a": "Kleinere Routingtabellen und weniger Updates",
+    "exp": "Mehrere Netze werden als eine Route gemeldet. Das spart Speicher und Rechenzeit, und Änderungen in einem Teilnetz lösen nicht überall neue Berechnungen aus."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches BGP-Attribut listet die durchlaufenen autonomen Systeme auf?",
+    "options": [
+      "AS_PATH",
+      "NEXT_HOP",
+      "LOCAL_PREF",
+      "MED"
+    ],
+    "a": "AS_PATH",
+    "exp": "AS_PATH enthält die AS-Nummern auf dem Weg. Er dient der Schleifenvermeidung (sieht ein Router seine eigene AS, verwirft er die Route) und bei sonst gleichen Routen gewinnt der kürzere Pfad."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient ein First Hop Redundancy Protocol wie VRRP?",
+    "options": [
+      "Damit Clients bei Ausfall eines Routers weiter ein Gateway haben",
+      "Damit Router schneller routen",
+      "Damit DHCP auf zwei Servern läuft",
+      "Damit Switches keine Schleifen bilden"
+    ],
+    "a": "Damit Clients bei Ausfall eines Routers weiter ein Gateway haben",
+    "exp": "Die Clients kennen nur eine virtuelle Gateway-Adresse. Welcher physische Router sie gerade bedient, ist für sie unsichtbar. Fällt er aus, übernimmt ein anderer."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Policy-Based Routing?",
+    "options": [
+      "Routing nach Regeln wie Quelladresse oder Anwendung statt nur nach Ziel",
+      "Routing ausschließlich über Standardrouten",
+      "Routing nach Firmenrichtlinien auf Papier",
+      "Routing nur zu Bürozeiten"
+    ],
+    "a": "Routing nach Regeln wie Quelladresse oder Anwendung statt nur nach Ziel",
+    "exp": "Normales Routing entscheidet nur nach der Zieladresse. Mit Policy-Based Routing kann z.B. Gastverkehr über eine andere Internetleitung geschickt werden als Firmenverkehr."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum nutzt man in dichten WLAN-Umgebungen oft 20-MHz-Kanäle statt 80 MHz?",
+    "options": [
+      "Es gibt mehr überlappungsfreie Kanäle und weniger Störungen",
+      "20-MHz-Kanäle sind immer schneller",
+      "80 MHz ist in Europa verboten",
+      "20 MHz verschlüsselt besser"
+    ],
+    "a": "Es gibt mehr überlappungsfreie Kanäle und weniger Störungen",
+    "exp": "Breite Kanäle bringen einem Client mehr Durchsatz, belegen aber das Spektrum. Bei vielen Access Points nebeneinander stören sie sich gegenseitig, schmale Kanäle lassen sich besser verteilen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Problem lösen RTS/CTS-Nachrichten im WLAN?",
+    "options": [
+      "Das Hidden-Node-Problem",
+      "Das Roaming zwischen Access Points",
+      "Die Verschlüsselung der Daten",
+      "Die Kanalwahl bei Radar"
+    ],
+    "a": "Das Hidden-Node-Problem",
+    "exp": "Zwei Clients sehen den Access Point, aber nicht einander, und senden gleichzeitig. Mit Request to Send / Clear to Send reserviert ein Client das Medium, alle anderen warten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür ist 802.11k im WLAN zuständig?",
+    "options": [
+      "Nachbarberichte, damit Clients geeignete Access Points für das Roaming kennen",
+      "Verschlüsselung mit WPA3",
+      "Stromversorgung der Access Points",
+      "Priorisierung von Sprachdaten"
+    ],
+    "a": "Nachbarberichte, damit Clients geeignete Access Points für das Roaming kennen",
+    "exp": "802.11k liefert dem Client eine Liste benachbarter Access Points. 802.11v kann ihn aktiv zum Wechsel auffordern, 802.11r beschleunigt die Anmeldung beim neuen AP."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt Beamforming im WLAN?",
+    "options": [
+      "Das Funksignal wird gezielt in Richtung des Clients verstärkt",
+      "Das WLAN wird unsichtbar",
+      "Der Kanal wird automatisch gewechselt",
+      "Mehrere SSIDs werden zusammengelegt"
+    ],
+    "a": "Das Funksignal wird gezielt in Richtung des Clients verstärkt",
+    "exp": "Durch gezielte Phasenverschiebung mehrerer Antennen addieren sich die Signale beim Client. Das verbessert Empfang und Datenrate."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Um welchen Faktor ändert sich die Sendeleistung bei +3 dB ungefähr?",
+    "options": [
+      "Sie verdoppelt sich",
+      "Sie verdreifacht sich",
+      "Sie verzehnfacht sich",
+      "Sie steigt um 3 Prozent"
+    ],
+    "a": "Sie verdoppelt sich",
+    "exp": "Dezibel ist ein logarithmisches Maß. +3 dB bedeutet etwa doppelte Leistung, +10 dB zehnfache Leistung, -3 dB etwa halbe Leistung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum hat 2,4 GHz meist eine größere Reichweite als 5 GHz?",
+    "options": [
+      "Niedrigere Frequenzen werden von Wänden weniger gedämpft",
+      "2,4 GHz sendet mit mehr Antennen",
+      "5 GHz ist in Gebäuden verboten",
+      "2,4 GHz nutzt breitere Kanäle"
+    ],
+    "a": "Niedrigere Frequenzen werden von Wänden weniger gedämpft",
+    "exp": "Höhere Frequenzen werden stärker gedämpft. 2,4 GHz kommt weiter und besser durch Wände, hat aber weniger Kanäle und mehr Störungen, z.B. durch Bluetooth oder Mikrowellen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist bei einem Mesh-WLAN der Backhaul?",
+    "options": [
+      "Die Verbindung der Access Points untereinander",
+      "Die Verbindung eines Clients zum Access Point",
+      "Die Stromversorgung per PoE",
+      "Das Gäste-WLAN"
+    ],
+    "a": "Die Verbindung der Access Points untereinander",
+    "exp": "Im Mesh verbinden sich die Knoten per Funk (oder Kabel) miteinander. Diese Verbindung heißt Backhaul. Ein eigener Funkkanal oder ein Kabel dafür verhindert Geschwindigkeitseinbußen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Wi-Fi-6-Funktion spart Akku bei IoT-Geräten, weil sie Sendezeiten vereinbart?",
+    "options": [
+      "Target Wake Time (TWT)",
+      "Band Steering",
+      "DFS",
+      "Beamforming"
+    ],
+    "a": "Target Wake Time (TWT)",
+    "exp": "Mit Target Wake Time vereinbaren Client und Access Point, wann der Client aufwachen soll. Dazwischen kann er schlafen und spart viel Energie."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Captive Portal im Gäste-WLAN?",
+    "options": [
+      "Eine Anmeldeseite, die vor dem Internetzugang erscheint",
+      "Ein versteckter Access Point",
+      "Eine Firewall-Regel für Server",
+      "Ein WLAN ohne Verschlüsselung für Admins"
+    ],
+    "a": "Eine Anmeldeseite, die vor dem Internetzugang erscheint",
+    "exp": "Nach der Verbindung leitet der Access Point alle Webanfragen auf eine Seite um, auf der man z.B. Nutzungsbedingungen bestätigt oder einen Gutscheincode eingibt. Erst dann ist das Internet frei."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele logische Root-Server (benannt A bis M) gibt es im DNS?",
+    "options": [
+      "13",
+      "1",
+      "7",
+      "26"
+    ],
+    "a": "13",
+    "exp": "Es gibt 13 Root-Server-Identitäten (a.root-servers.net bis m.root-servers.net). Dahinter stehen per Anycast weltweit über tausend einzelne Server."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Webserver zieht in einer Woche um. Was sollte man vorab mit dem DNS-Eintrag tun?",
+    "options": [
+      "Die TTL deutlich verringern",
+      "Den Eintrag löschen",
+      "Die TTL auf mehrere Tage erhöhen",
+      "Den MX-Eintrag ändern"
+    ],
+    "a": "Die TTL deutlich verringern",
+    "exp": "Mit kurzer TTL (z.B. 300 Sekunden) verfallen alte Einträge in den Caches schnell, und die neue Adresse wirkt nach dem Umzug fast sofort."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Woran erkennt ein sekundärer DNS-Server, dass sich die Zone geändert hat?",
+    "options": [
+      "An einer höheren Seriennummer im SOA-Eintrag",
+      "An der Uhrzeit der letzten Anfrage",
+      "An einem neuen MX-Eintrag",
+      "An der geänderten TTL des A-Eintrags"
+    ],
+    "a": "An einer höheren Seriennummer im SOA-Eintrag",
+    "exp": "Der sekundäre Server vergleicht regelmäßig die Seriennummer. Ist sie beim primären höher, holt er die Zone neu. Wer die Seriennummer nicht erhöht, verteilt Änderungen nicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein IXFR im DNS?",
+    "options": [
+      "Ein inkrementeller Zonentransfer, bei dem nur Änderungen übertragen werden",
+      "Eine Abfrage nach IPv6-Adressen",
+      "Ein verschlüsselter DNS-Transport",
+      "Die Rückwärtsauflösung"
+    ],
+    "a": "Ein inkrementeller Zonentransfer, bei dem nur Änderungen übertragen werden",
+    "exp": "Beim IXFR (Incremental Zone Transfer) werden nur die Unterschiede seit der letzten Seriennummer übertragen. Das spart gegenüber dem vollständigen AXFR Bandbreite."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient ein Glue Record im DNS?",
+    "options": [
+      "Er liefert die IP-Adresse eines Nameservers, der innerhalb der eigenen Domain liegt",
+      "Er verbindet zwei Zonen zu einer",
+      "Er speichert Mailserver-Prioritäten",
+      "Er hält den SOA-Eintrag zusammen"
+    ],
+    "a": "Er liefert die IP-Adresse eines Nameservers, der innerhalb der eigenen Domain liegt",
+    "exp": "Liegt der Nameserver ns1.firma.de in der Zone firma.de selbst, könnte man ihn ohne seine Adresse nicht finden. Die übergeordnete Zone liefert daher seine IP-Adresse gleich mit."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt DNS over TLS (DoT)?",
+    "options": [
+      "TCP 853",
+      "UDP 53",
+      "TCP 443",
+      "UDP 5353"
+    ],
+    "a": "TCP 853",
+    "exp": "DNS over TLS nutzt den eigenen Port 853. DNS over HTTPS (DoH) nutzt dagegen Port 443 und ist damit schwer von normalem Webverkehr zu unterscheiden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet die DNS-Antwort NXDOMAIN?",
+    "options": [
+      "Der angefragte Name existiert nicht",
+      "Der DNS-Server ist überlastet",
+      "Die Antwort ist zu groß für UDP",
+      "Der Name hat nur eine IPv6-Adresse"
+    ],
+    "a": "Der angefragte Name existiert nicht",
+    "exp": "NXDOMAIN (Non-Existent Domain) sagt, dass es den Namen nicht gibt. Tippfehler im Namen sind die häufigste Ursache."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Linux-Werkzeug zeigt DNS-Antworten mit allen Details wie TTL und Flags an?",
+    "options": [
+      "dig",
+      "ping",
+      "ss",
+      "arp"
+    ],
+    "a": "dig",
+    "exp": "dig www.beispiel.de A zeigt Antwort, TTL, verwendeten Server und Flags. nslookup kann ähnliches, dig ist aber ausführlicher und in Skripten beliebt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie finden Windows-Clients im Active Directory ihre Domänencontroller?",
+    "options": [
+      "Über SRV-Einträge im DNS",
+      "Über Broadcasts per ARP",
+      "Über die hosts-Datei",
+      "Über DHCP-Option 66"
+    ],
+    "a": "Über SRV-Einträge im DNS",
+    "exp": "Die Domänencontroller registrieren SRV-Einträge wie _ldap._tcp.dc._msdcs.firma.local. Funktioniert der DNS nicht richtig, schlägt deshalb oft auch die Domänenanmeldung fehl."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche DHCP-Option überträgt die DNS-Server?",
+    "options": [
+      "Option 6",
+      "Option 3",
+      "Option 1",
+      "Option 67"
+    ],
+    "a": "Option 6",
+    "exp": "Option 6 nennt die DNS-Server, Option 3 das Standardgateway, Option 1 die Subnetzmaske, Option 67 die Bootdatei."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wann versucht ein DHCP-Client zum ersten Mal, seine Lease zu verlängern?",
+    "options": [
+      "Nach der Hälfte der Lease-Dauer",
+      "Erst wenn die Lease abgelaufen ist",
+      "Nach einem Viertel der Lease-Dauer",
+      "Bei jedem Neustart der Netzwerkkarte, sonst nie"
+    ],
+    "a": "Nach der Hälfte der Lease-Dauer",
+    "exp": "Nach 50 % (T1) fragt der Client direkt beim bisherigen Server nach. Antwortet dieser nicht, versucht er es ab 87,5 % (T2) per Broadcast bei jedem DHCP-Server."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet eine DHCPNAK-Nachricht?",
+    "options": [
+      "Der Server lehnt die gewünschte Adresse ab, der Client muss neu anfragen",
+      "Der Client bestätigt die Adresse",
+      "Der Server hat keine freien Adressen mehr gemeldet",
+      "Die Lease wurde erfolgreich verlängert"
+    ],
+    "a": "Der Server lehnt die gewünschte Adresse ab, der Client muss neu anfragen",
+    "exp": "Mit DHCPNAK lehnt der Server einen Request ab, z.B. weil der Client in ein anderes Subnetz gewechselt ist. Der Client startet danach wieder mit DHCPDISCOVER."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie teilt man bei zwei DHCP-Servern ohne Failover den Adressbereich klassisch auf?",
+    "options": [
+      "Nach der 80/20-Regel",
+      "Beide vergeben den kompletten Bereich",
+      "Nach der 50/50-Regel ohne Ausschlüsse",
+      "Ein Server vergibt nur gerade, der andere nur ungerade Adressen"
+    ],
+    "a": "Nach der 80/20-Regel",
+    "exp": "Der Hauptserver vergibt 80 % des Bereichs, der zweite Server 20 % (jeweils mit Ausschluss des anderen Teils). Fällt der Hauptserver aus, kann der zweite übernehmen, ohne dass Adressen doppelt vergeben werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Clients erhalten plötzlich eine falsche Gateway-Adresse per DHCP. Was ist eine typische Ursache?",
+    "options": [
+      "Ein fremder DHCP-Server im Netz, z.B. ein angeschlossener Heimrouter",
+      "Ein defektes Patchkabel",
+      "Ein voller DNS-Cache",
+      "Eine zu kurze TTL"
+    ],
+    "a": "Ein fremder DHCP-Server im Netz, z.B. ein angeschlossener Heimrouter",
+    "exp": "Ein zweiter DHCP-Server (Rogue DHCP) antwortet schneller als der richtige. DHCP Snooping am Switch erlaubt Angebote nur von freigegebenen Ports."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Adressbereich nutzt Carrier-Grade NAT zwischen Provider und Kundenrouter?",
+    "options": [
+      "100.64.0.0/10",
+      "169.254.0.0/16",
+      "172.16.0.0/12",
+      "192.0.2.0/24"
+    ],
+    "a": "100.64.0.0/10",
+    "exp": "Für CGNAT ist der Shared Address Space 100.64.0.0/10 reserviert. Sieht man ihn als WAN-Adresse am Router, sitzt man hinter Carrier-Grade NAT."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ermöglicht NAT-Loopback (Hairpin-NAT)?",
+    "options": [
+      "Interne Clients erreichen einen internen Server über dessen öffentliche Adresse",
+      "Externe Clients erreichen jeden internen Rechner",
+      "Der Router übersetzt IPv6 in IPv4",
+      "Zwei Router teilen sich eine öffentliche Adresse"
+    ],
+    "a": "Interne Clients erreichen einen internen Server über dessen öffentliche Adresse",
+    "exp": "Ohne Hairpin-NAT scheitert der Aufruf der eigenen öffentlichen Adresse von innen, weil der Router die Pakete nicht zurück ins LAN übersetzt. Alternativ hilft Split-DNS."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum bereitet NAT Protokollen wie IPsec oder SIP Probleme?",
+    "options": [
+      "Sie transportieren IP-Adressen oder Ports in den Nutzdaten bzw. schützen den Header",
+      "Sie nutzen nur IPv6",
+      "Sie sind zu langsam für NAT",
+      "Sie benötigen Broadcasts"
+    ],
+    "a": "Sie transportieren IP-Adressen oder Ports in den Nutzdaten bzw. schützen den Header",
+    "exp": "NAT ändert Adressen und Ports im Header. SIP nennt Adressen aber auch im Inhalt, IPsec-AH prüft den Header auf Veränderungen. Abhilfe schaffen NAT-Traversal (UDP 4500) oder SIP-ALGs."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie heißt das 3-Bit-Prioritätsfeld im VLAN-Tag nach IEEE 802.1p?",
+    "options": [
+      "PCP (Priority Code Point)",
+      "DSCP",
+      "TTL",
+      "VID"
+    ],
+    "a": "PCP (Priority Code Point)",
+    "exp": "Im 802.1Q-Tag stehen 3 Bit Priorität (PCP, Werte 0 bis 7), 1 Bit DEI und 12 Bit VLAN-ID. DSCP ist dagegen das Prioritätsfeld im IP-Header."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu richtet man ein Voice-VLAN ein?",
+    "options": [
+      "Um Telefone vom PC-Verkehr zu trennen und Sprache zu priorisieren",
+      "Um Telefonate zu verschlüsseln",
+      "Um mehr IP-Adressen zu erhalten",
+      "Um PoE einzusparen"
+    ],
+    "a": "Um Telefone vom PC-Verkehr zu trennen und Sprache zu priorisieren",
+    "exp": "Telefon und PC hängen oft am selben Switchport. Das Telefon taggt seinen Verkehr ins Voice-VLAN, der PC bleibt im Daten-VLAN. So lassen sich QoS und eigene Regeln anwenden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht ein Switch mit einem Frame an eine MAC-Adresse, die nicht in seiner Tabelle steht?",
+    "options": [
+      "Er flutet ihn an alle Ports im VLAN außer dem Eingangsport",
+      "Er verwirft ihn",
+      "Er schickt ihn an den Router",
+      "Er fragt per DNS nach"
+    ],
+    "a": "Er flutet ihn an alle Ports im VLAN außer dem Eingangsport",
+    "exp": "Unbekannter Unicast wird geflutet. Antwortet das Ziel, lernt der Switch dessen Port und sendet künftig gezielt dorthin."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach welcher Zeit löscht ein Switch unbenutzte Einträge standardmäßig oft aus der MAC-Tabelle?",
+    "options": [
+      "Nach 300 Sekunden",
+      "Nach 30 Sekunden",
+      "Nach 24 Stunden",
+      "Nie, bis zum Neustart"
+    ],
+    "a": "Nach 300 Sekunden",
+    "exp": "Die Aging Time beträgt bei vielen Herstellern 300 Sekunden. So bleibt die Tabelle aktuell, wenn Geräte umgesteckt werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet Store-and-Forward von Cut-Through beim Switching?",
+    "options": [
+      "Store-and-Forward prüft den ganzen Frame auf Fehler, Cut-Through leitet sofort weiter",
+      "Cut-Through prüft gründlicher",
+      "Store-and-Forward arbeitet nur mit Glasfaser",
+      "Cut-Through speichert Frames dauerhaft"
+    ],
+    "a": "Store-and-Forward prüft den ganzen Frame auf Fehler, Cut-Through leitet sofort weiter",
+    "exp": "Store-and-Forward liest den kompletten Frame und prüft die FCS, fehlerhafte Frames werden verworfen. Cut-Through beginnt nach der Zieladresse mit dem Senden und hat weniger Verzögerung, leitet aber auch fehlerhafte Frames weiter."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist das Native VLAN auf einem 802.1Q-Trunk?",
+    "options": [
+      "Das VLAN, dessen Frames ohne Tag übertragen werden",
+      "Das VLAN mit der höchsten Priorität",
+      "Das VLAN für die Verwaltung des Routers",
+      "Das VLAN, das verschlüsselt wird"
+    ],
+    "a": "Das VLAN, dessen Frames ohne Tag übertragen werden",
+    "exp": "Frames des Native VLAN (standardmäßig VLAN 1) laufen ungetaggt über den Trunk. Beide Seiten müssen dasselbe Native VLAN nutzen, sonst landen Frames im falschen VLAN."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum wird eine einzelne Dateiübertragung über ein LACP-Bündel aus 2 x 1 Gbit/s meist nicht schneller als 1 Gbit/s?",
+    "options": [
+      "Eine Verbindung wird per Hash immer über dieselbe Leitung geschickt",
+      "LACP halbiert die Bandbreite",
+      "LACP funktioniert nur mit UDP",
+      "Die zweite Leitung ist nur für Broadcasts"
+    ],
+    "a": "Eine Verbindung wird per Hash immer über dieselbe Leitung geschickt",
+    "exp": "Der Switch verteilt Verbindungen anhand eines Hashwerts (z.B. aus MAC- oder IP-Adressen) auf die Leitungen. Viele parallele Verbindungen profitieren, eine einzelne bleibt auf einer Leitung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Switch-Stacking?",
+    "options": [
+      "Mehrere Switches werden verbunden und wie ein einziger verwaltet",
+      "Switches werden übereinander ins Rack geschraubt",
+      "Mehrere VLANs werden zusammengelegt",
+      "Ein Switch wird hinter einen Router geschaltet"
+    ],
+    "a": "Mehrere Switches werden verbunden und wie ein einziger verwaltet",
+    "exp": "Im Stack haben alle Switches eine gemeinsame Konfiguration und Verwaltungsadresse. Fällt ein Mitglied aus, läuft der Rest weiter, und Link Aggregation über mehrere Mitglieder ist möglich."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Byte fügt ein 802.1Q-VLAN-Tag in einen Ethernet-Frame ein?",
+    "options": [
+      "4 Byte",
+      "2 Byte",
+      "8 Byte",
+      "12 Byte"
+    ],
+    "a": "4 Byte",
+    "exp": "Das Tag besteht aus 2 Byte Kennung (TPID 0x8100) und 2 Byte mit Priorität, DEI und 12-Bit-VLAN-ID."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie groß muss ein Ethernet-Frame mindestens sein?",
+    "options": [
+      "64 Byte",
+      "46 Byte",
+      "128 Byte",
+      "1500 Byte"
+    ],
+    "a": "64 Byte",
+    "exp": "Ein Ethernet-Frame hat mindestens 64 Byte (inklusive Header und FCS). Kleinere Nutzdaten werden aufgefüllt (Padding), damit Kollisionen erkannt werden können."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Bis zu welcher Frequenz ist ein Cat-6A-Kabel spezifiziert?",
+    "options": [
+      "500 MHz",
+      "100 MHz",
+      "250 MHz",
+      "2000 MHz"
+    ],
+    "a": "500 MHz",
+    "exp": "Cat 5e: 100 MHz, Cat 6: 250 MHz, Cat 6A: 500 MHz, Cat 8: 2000 MHz. Die höhere Frequenz erlaubt höhere Datenraten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Datenrate erlaubt Cat 8 und auf welcher Länge?",
+    "options": [
+      "25 oder 40 Gbit/s auf bis zu 30 m",
+      "10 Gbit/s auf 100 m",
+      "100 Gbit/s auf 100 m",
+      "1 Gbit/s auf 300 m"
+    ],
+    "a": "25 oder 40 Gbit/s auf bis zu 30 m",
+    "exp": "Cat 8 ist für kurze Strecken im Rechenzentrum gedacht, z.B. zwischen Server und Top-of-Rack-Switch. Für 100 m bleibt Cat 6A die Wahl."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Adernpaare nutzt 1000BASE-T?",
+    "options": [
+      "Alle vier Paare",
+      "Zwei Paare",
+      "Ein Paar",
+      "Drei Paare"
+    ],
+    "a": "Alle vier Paare",
+    "exp": "Gigabit-Ethernet über Kupfer sendet und empfängt gleichzeitig auf allen vier Paaren. 100BASE-TX kam noch mit zwei Paaren aus."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet 10GBASE-SR von 10GBASE-LR?",
+    "options": [
+      "SR nutzt Multimode für kurze Strecken, LR Singlemode bis etwa 10 km",
+      "SR ist Kupfer, LR ist Glasfaser",
+      "SR hat 10 Gbit/s, LR nur 1 Gbit/s",
+      "Es gibt keinen Unterschied"
+    ],
+    "a": "SR nutzt Multimode für kurze Strecken, LR Singlemode bis etwa 10 km",
+    "exp": "SR (Short Range) arbeitet mit Multimode-Faser, z.B. bis 300 m auf OM3. LR (Long Range) nutzt Singlemode-Faser und schafft rund 10 km."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Glasfaserkategorie ist typisch für 10 Gbit/s über Multimode bis etwa 300 m?",
+    "options": [
+      "OM3",
+      "OM1",
+      "OS2",
+      "OM2"
+    ],
+    "a": "OM3",
+    "exp": "OM3 und OM4 sind laseroptimierte Multimode-Fasern (OM3 ca. 300 m, OM4 ca. 400 m bei 10 Gbit/s). OS2 ist Singlemode für lange Strecken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Steckertyp ist an SFP-Glasfasermodulen am verbreitetsten?",
+    "options": [
+      "LC-Duplex",
+      "RJ45",
+      "BNC",
+      "ST"
+    ],
+    "a": "LC-Duplex",
+    "exp": "SFP-Module sind sehr schmal, deshalb nutzen sie den kleinen LC-Stecker, meist als Duplex für Senden und Empfangen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem TCP-Flag wird eine Verbindung regulär beendet?",
+    "options": [
+      "FIN",
+      "SYN",
+      "RST",
+      "URG"
+    ],
+    "a": "FIN",
+    "exp": "FIN beendet eine Richtung geordnet, beide Seiten bestätigen. RST bricht eine Verbindung sofort ab, z.B. wenn ein Port geschlossen ist."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Portbereich ist für dynamische bzw. private Ports (Client-Ports) vorgesehen?",
+    "options": [
+      "49152 bis 65535",
+      "0 bis 1023",
+      "1024 bis 49151",
+      "1 bis 255"
+    ],
+    "a": "49152 bis 65535",
+    "exp": "0 bis 1023 sind Well-Known Ports, 1024 bis 49151 Registered Ports, 49152 bis 65535 dynamische Ports, die Clients als Quellport nutzen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher ICMP-Typ bedeutet \"Ziel nicht erreichbar\"?",
+    "options": [
+      "Typ 3",
+      "Typ 0",
+      "Typ 8",
+      "Typ 11"
+    ],
+    "a": "Typ 3",
+    "exp": "Typ 3 (Destination Unreachable) hat verschiedene Codes, z.B. Netz, Host oder Port nicht erreichbar. Typ 0 ist Echo Reply, 8 Echo Request, 11 Time Exceeded."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Pakete sendet traceroute unter Linux standardmäßig?",
+    "options": [
+      "UDP-Pakete an hohe Ports",
+      "ICMP Echo Requests",
+      "TCP-SYN an Port 80",
+      "ARP-Anfragen"
+    ],
+    "a": "UDP-Pakete an hohe Ports",
+    "exp": "Linux-traceroute nutzt UDP ab Port 33434, Windows-tracert ICMP Echo Requests. Blockiert eine Firewall das eine, hilft oft die andere Variante (traceroute -I für ICMP)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Werkzeug verbindet ping und traceroute zu einer laufenden Statistik je Hop?",
+    "options": [
+      "mtr (unter Windows ähnlich pathping)",
+      "netstat",
+      "nslookup",
+      "ipconfig"
+    ],
+    "a": "mtr (unter Windows ähnlich pathping)",
+    "exp": "mtr misst fortlaufend Paketverlust und Laufzeit zu jedem Router auf dem Weg. So sieht man, ab welchem Hop die Probleme beginnen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient das DF-Bit im IPv4-Header?",
+    "options": [
+      "Es verbietet Routern, das Paket zu fragmentieren",
+      "Es markiert das Paket als Broadcast",
+      "Es aktiviert die Verschlüsselung",
+      "Es setzt die TTL zurück"
+    ],
+    "a": "Es verbietet Routern, das Paket zu fragmentieren",
+    "exp": "Don't Fragment: Ist das Paket zu groß für die nächste Leitung, verwirft der Router es und meldet per ICMP \"Fragmentation Needed\". Darauf baut die Path MTU Discovery auf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt SIP für unverschlüsselte Signalisierung?",
+    "options": [
+      "5060",
+      "5061",
+      "1720",
+      "3478"
+    ],
+    "a": "5060",
+    "exp": "SIP nutzt 5060 (UDP/TCP), SIP über TLS 5061. 1720 gehört zu H.323, 3478 zu STUN für NAT-Traversal."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt SMTP mit direkter TLS-Verschlüsselung (SMTPS)?",
+    "options": [
+      "465",
+      "25",
+      "587",
+      "993"
+    ],
+    "a": "465",
+    "exp": "Port 465 startet sofort mit TLS. Port 587 (Submission) startet unverschlüsselt und wechselt per STARTTLS. Port 25 dient dem Versand zwischen Mailservern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen UDP-Port nutzt Multicast-DNS (z.B. Bonjour) im lokalen Netz?",
+    "options": [
+      "5353",
+      "53",
+      "5355",
+      "137"
+    ],
+    "a": "5353",
+    "exp": "mDNS löst Namen wie drucker.local ohne DNS-Server per Multicast auf Port 5353 auf. LLMNR nutzt 5355, NetBIOS-Namensdienst 137."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Blockgröße hat AES unabhängig von der Schlüssellänge?",
+    "options": [
+      "128 Bit",
+      "64 Bit",
+      "256 Bit",
+      "512 Bit"
+    ],
+    "a": "128 Bit",
+    "exp": "AES verschlüsselt immer Blöcke von 128 Bit. Die Schlüssellänge kann 128, 192 oder 256 Bit betragen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Länge hat ein SHA-256-Hashwert?",
+    "options": [
+      "256 Bit (64 Hexadezimalzeichen)",
+      "128 Bit (32 Hexadezimalzeichen)",
+      "160 Bit (40 Hexadezimalzeichen)",
+      "Er hängt von der Länge der Eingabe ab"
+    ],
+    "a": "256 Bit (64 Hexadezimalzeichen)",
+    "exp": "Ein Hash hat immer eine feste Länge, egal wie groß die Eingabe ist. Bei SHA-256 sind es 256 Bit, also 64 Hexadezimalzeichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches der folgenden Verfahren ist KEINE Hashfunktion?",
+    "options": [
+      "AES",
+      "SHA-256",
+      "SHA-3",
+      "MD5"
+    ],
+    "a": "AES",
+    "exp": "AES ist ein symmetrisches Verschlüsselungsverfahren. SHA-256, SHA-3 und das veraltete MD5 sind Hashfunktionen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Mindestlänge empfiehlt das BSI heute für RSA-Schlüssel?",
+    "options": [
+      "3000 Bit",
+      "512 Bit",
+      "1024 Bit",
+      "128 Bit"
+    ],
+    "a": "3000 Bit",
+    "exp": "Laut BSI TR-02102 sollen RSA-Schlüssel für neue Systeme mindestens 3000 Bit lang sein. 1024 Bit gilt seit Langem als unsicher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Nachteil des Betriebsmodus ECB bei der Verschlüsselung eines Bildes?",
+    "options": [
+      "Die Umrisse des Bildes bleiben im Geheimtext erkennbar",
+      "Das Bild wird doppelt so groß",
+      "Das Bild kann nicht mehr entschlüsselt werden",
+      "Die Farben werden vertauscht"
+    ],
+    "a": "Die Umrisse des Bildes bleiben im Geheimtext erkennbar",
+    "exp": "Gleiche Klartextblöcke (z.B. gleichfarbige Flächen) ergeben im ECB gleiche Geheimtextblöcke. Das Muster bleibt sichtbar, bekannt als \"ECB-Pinguin\"."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Womit prüft ein Empfänger, dass eine Nachricht mit gemeinsamem Schlüssel unverändert und vom Partner ist?",
+    "options": [
+      "Mit einem HMAC",
+      "Mit einem einfachen CRC-Prüfwert",
+      "Mit Base64-Kodierung",
+      "Mit einem öffentlichen Schlüssel"
+    ],
+    "a": "Mit einem HMAC",
+    "exp": "Ein HMAC kann nur mit dem gemeinsamen Schlüssel korrekt berechnet werden. Eine einfache Prüfsumme wie CRC erkennt Übertragungsfehler, kann aber von jedem neu berechnet werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Zertifikat ist in der Vertrauenskette selbstsigniert?",
+    "options": [
+      "Das Root-Zertifikat der CA",
+      "Das Serverzertifikat",
+      "Das Zertifikat der Zwischen-CA",
+      "Keines, alle sind fremdsigniert"
+    ],
+    "a": "Das Root-Zertifikat der CA",
+    "exp": "Die Root-CA signiert ihr eigenes Zertifikat. Ihr Vertrauen entsteht dadurch, dass Betriebssysteme und Browser es im Vertrauensspeicher mitliefern."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist OCSP Stapling?",
+    "options": [
+      "Der Webserver liefert die signierte OCSP-Antwort beim TLS-Handshake gleich mit",
+      "Der Browser speichert alle Zertifikate dauerhaft",
+      "Mehrere Zertifikate werden zusammengeheftet",
+      "Die CA sperrt Zertifikate automatisch"
+    ],
+    "a": "Der Webserver liefert die signierte OCSP-Antwort beim TLS-Handshake gleich mit",
+    "exp": "Beim Stapling fragt der Server selbst regelmäßig bei der CA nach und reicht die Antwort weiter. Der Client muss die CA nicht kontaktieren, das spart Zeit und schützt seine Privatsphäre."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Wildcard-Zertifikat lautet auf *.firma.de. Für welche Adresse gilt es?",
+    "options": [
+      "shop.firma.de",
+      "firma.de",
+      "test.shop.firma.de",
+      "firma.com"
+    ],
+    "a": "shop.firma.de",
+    "exp": "Der Stern steht für genau eine Namensebene. firma.de selbst und tiefere Ebenen wie test.shop.firma.de sind nicht abgedeckt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Feld eines TLS-Zertifikats prüfen Browser heute für den Hostnamen?",
+    "options": [
+      "Subject Alternative Name (SAN)",
+      "Common Name (CN)",
+      "Issuer",
+      "Serial Number"
+    ],
+    "a": "Subject Alternative Name (SAN)",
+    "exp": "Moderne Browser werten nur noch das SAN-Feld aus. Ein Zertifikat, dessen Name nur im Common Name steht, wird abgelehnt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum bietet TLS 1.3 immer Perfect Forward Secrecy?",
+    "options": [
+      "Es erlaubt nur noch Schlüsselaustausch mit flüchtigem Diffie-Hellman",
+      "Es nutzt längere RSA-Schlüssel",
+      "Es verschlüsselt doppelt",
+      "Es verzichtet auf Zertifikate"
+    ],
+    "a": "Es erlaubt nur noch Schlüsselaustausch mit flüchtigem Diffie-Hellman",
+    "exp": "TLS 1.3 hat den statischen RSA-Schlüsselaustausch entfernt. Jede Sitzung bekommt einen neuen Schlüssel per (EC)DHE. Wird der Serverschlüssel später gestohlen, bleiben alte Sitzungen geschützt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wogegen ist ein einfacher Diffie-Hellman-Schlüsselaustausch ohne Authentifizierung anfällig?",
+    "options": [
+      "Gegen Man-in-the-Middle-Angriffe",
+      "Gegen Brute Force auf AES",
+      "Gegen SQL-Injection",
+      "Gegen Überhitzung der CPU"
+    ],
+    "a": "Gegen Man-in-the-Middle-Angriffe",
+    "exp": "Ohne Zertifikat oder Signatur kann sich ein Angreifer in die Mitte setzen und mit beiden Seiten getrennt Schlüssel aushandeln. Deshalb wird DH in TLS mit dem Serverzertifikat kombiniert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Verfahren wären durch einen leistungsfähigen Quantencomputer vor allem bedroht?",
+    "options": [
+      "RSA und elliptische Kurven",
+      "AES-256 und SHA-3",
+      "Nur Passwörter mit Sonderzeichen",
+      "Nur symmetrische Stromchiffren"
+    ],
+    "a": "RSA und elliptische Kurven",
+    "exp": "Shors Algorithmus bricht Faktorisierung und diskrete Logarithmen, also RSA, DH und ECC. Symmetrische Verfahren wie AES-256 gelten mit ausreichender Schlüssellänge weiter als sicher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein One-Time-Pad?",
+    "options": [
+      "Ein Schlüssel so lang wie die Nachricht, zufällig und nur einmal genutzt",
+      "Ein Einmalpasswort per App",
+      "Ein Zertifikat mit einem Tag Gültigkeit",
+      "Ein Notizblock für Passwörter"
+    ],
+    "a": "Ein Schlüssel so lang wie die Nachricht, zufällig und nur einmal genutzt",
+    "exp": "Das One-Time-Pad ist beweisbar sicher, wenn der Schlüssel echt zufällig, so lang wie der Klartext und nur einmal verwendet wird. Die Schlüsselverteilung macht es im Alltag unpraktisch."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Um welche Art von Verfahren handelt es sich bei der Caesar-Verschlüsselung?",
+    "options": [
+      "Eine einfache Verschiebe-Chiffre (monoalphabetische Substitution)",
+      "Ein asymmetrisches Verfahren",
+      "Eine Hashfunktion",
+      "Eine Blockchiffre wie AES"
+    ],
+    "a": "Eine einfache Verschiebe-Chiffre (monoalphabetische Substitution)",
+    "exp": "Jeder Buchstabe wird um eine feste Anzahl Stellen im Alphabet verschoben. Mit nur 25 möglichen Schlüsseln ist sie sofort per Durchprobieren zu knacken."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wo liegen bei einer Zertifizierungsstelle die privaten Schlüssel idealerweise?",
+    "options": [
+      "In einem Hardware-Sicherheitsmodul (HSM)",
+      "In einer Textdatei auf dem Webserver",
+      "Im E-Mail-Postfach des Administrators",
+      "Auf einem Netzlaufwerk für alle"
+    ],
+    "a": "In einem Hardware-Sicherheitsmodul (HSM)",
+    "exp": "Im HSM werden Schlüssel erzeugt und benutzt, ohne es jemals zu verlassen. Selbst Administratoren können sie nicht auslesen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Excel-Liste mit Kundendaten wurde versehentlich an einen falschen externen Empfänger gemailt. Was ist zu tun?",
+    "options": [
+      "Vorfall dokumentieren, Risiko bewerten und ggf. binnen 72 Stunden der Aufsichtsbehörde melden",
+      "Nichts, es war ja ein Versehen",
+      "Sofort alle Kunden anrufen und um Entschuldigung bitten, keine weitere Meldung",
+      "Die Mail aus dem eigenen Postausgang löschen und abwarten"
+    ],
+    "a": "Vorfall dokumentieren, Risiko bewerten und ggf. binnen 72 Stunden der Aufsichtsbehörde melden",
+    "exp": "Das ist eine Datenschutzverletzung nach Art. 4 Nr. 12 DSGVO. Jede Panne wird dokumentiert (Art. 33 Abs. 5). Besteht ein Risiko für die Betroffenen, ist sie binnen 72 Stunden zu melden, bei hohem Risiko auch den Betroffenen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde verlangt die Löschung seiner Daten, seine Rechnungen unterliegen aber noch der Aufbewahrungspflicht. Was gilt?",
+    "options": [
+      "Die Rechnungsdaten werden gesperrt und nach Ablauf der Frist gelöscht",
+      "Alle Daten müssen sofort gelöscht werden",
+      "Der Kunde muss auf sein Recht verzichten",
+      "Die Daten dürfen weiter für Werbung genutzt werden"
+    ],
+    "a": "Die Rechnungsdaten werden gesperrt und nach Ablauf der Frist gelöscht",
+    "exp": "Gesetzliche Aufbewahrungspflichten gehen dem Löschanspruch vor (Art. 17 Abs. 3 lit. b DSGVO). Die Daten werden in der Verarbeitung eingeschränkt und nach Fristablauf gelöscht. Andere Daten, z.B. für Werbung, sind sofort zu löschen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein externer IT-Dienstleister wartet die Server mit Kundendaten. Was ist datenschutzrechtlich nötig?",
+    "options": [
+      "Ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO",
+      "Die Einwilligung jedes Kunden",
+      "Eine Genehmigung der Aufsichtsbehörde",
+      "Nichts, Wartung ist keine Verarbeitung"
+    ],
+    "a": "Ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO",
+    "exp": "Wer im Auftrag personenbezogene Daten verarbeitet oder darauf zugreifen kann, braucht einen AV-Vertrag. Darin stehen u.a. Weisungsbindung, TOM und Regeln für Unterauftragnehmer."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist bei der Videoüberwachung eines Firmeneingangs unter anderem Pflicht?",
+    "options": [
+      "Ein gut sichtbarer Hinweis mit Verantwortlichem und Zweck",
+      "Eine Genehmigung durch die Polizei",
+      "Eine Aufbewahrung der Aufnahmen für mindestens ein Jahr",
+      "Eine Einwilligung jedes Besuchers per Unterschrift"
+    ],
+    "a": "Ein gut sichtbarer Hinweis mit Verantwortlichem und Zweck",
+    "exp": "Betroffene müssen vor Betreten erkennen, dass überwacht wird, wer verantwortlich ist und wozu (Art. 13 DSGVO, in Kurzform per Hinweisschild). Aufnahmen sind zu löschen, sobald sie nicht mehr gebraucht werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie lange darf ein Unternehmen Bewerbungsunterlagen nach einer Absage in der Regel noch aufbewahren?",
+    "options": [
+      "Etwa sechs Monate, wegen möglicher Ansprüche nach dem AGG",
+      "Zehn Jahre wie Rechnungen",
+      "Unbegrenzt, falls später eine Stelle frei wird",
+      "Keinen Tag, sie sind sofort zu vernichten"
+    ],
+    "a": "Etwa sechs Monate, wegen möglicher Ansprüche nach dem AGG",
+    "exp": "Abgelehnte Bewerber können Ansprüche nach dem Allgemeinen Gleichbehandlungsgesetz geltend machen. Üblich ist deshalb eine Aufbewahrung von rund sechs Monaten. Für längere Speicherung (Talentpool) braucht es eine Einwilligung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Unter welcher Voraussetzung dürfen Daten an einen Cloud-Anbieter in einem Drittland übermittelt werden?",
+    "options": [
+      "Mit geeigneter Grundlage wie Angemessenheitsbeschluss oder Standardvertragsklauseln",
+      "Nur, wenn der Anbieter günstiger ist",
+      "Immer, wenn die Daten verschlüsselt übertragen werden",
+      "Nie, Übermittlungen in Drittländer sind verboten"
+    ],
+    "a": "Mit geeigneter Grundlage wie Angemessenheitsbeschluss oder Standardvertragsklauseln",
+    "exp": "Kapitel V der DSGVO verlangt für Drittlandübermittlungen einen Angemessenheitsbeschluss (z.B. für zertifizierte US-Firmen das EU-US Data Privacy Framework) oder geeignete Garantien wie Standardvertragsklauseln."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiterfoto soll auf die Firmenwebseite. Was ist dafür in der Regel nötig?",
+    "options": [
+      "Eine freiwillige Einwilligung des Mitarbeiters, am besten schriftlich",
+      "Nichts, der Arbeitsvertrag reicht",
+      "Eine Genehmigung des Betriebsrats genügt allein",
+      "Die Zustimmung der Aufsichtsbehörde"
+    ],
+    "a": "Eine freiwillige Einwilligung des Mitarbeiters, am besten schriftlich",
+    "exp": "Die Veröffentlichung ist für das Arbeitsverhältnis meist nicht erforderlich. Es braucht eine Einwilligung, die freiwillig und widerrufbar ist. Nach einem Widerruf muss das Foto entfernt werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was darf ein Unternehmen für die erste Kopie der Daten bei einer Auskunft nach Art. 15 DSGVO verlangen?",
+    "options": [
+      "Nichts, die erste Kopie ist kostenlos",
+      "Eine Bearbeitungsgebühr von 25 Euro",
+      "Die Portokosten und eine Pauschale",
+      "Einen Nachweis über das Einkommen"
+    ],
+    "a": "Nichts, die erste Kopie ist kostenlos",
+    "exp": "Die erste Kopie ist unentgeltlich. Nur für weitere Kopien darf ein angemessenes Entgelt auf Grundlage der Verwaltungskosten verlangt werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Onlineshop analysiert das Surfverhalten mit einem Tracking-Tool. Worauf stützt sich das Setzen des Tracking-Cookies?",
+    "options": [
+      "Auf eine Einwilligung des Besuchers",
+      "Auf den Kaufvertrag",
+      "Auf ein berechtigtes Interesse ohne Einwilligung",
+      "Auf eine rechtliche Verpflichtung"
+    ],
+    "a": "Auf eine Einwilligung des Besuchers",
+    "exp": "Tracking ist technisch nicht unbedingt erforderlich. Nach § 25 TDDDG und DSGVO braucht es eine vorherige, aktive Einwilligung, z.B. über ein Cookie-Banner mit gleichwertiger Ablehnen-Möglichkeit."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Rechtsgrundlage nutzt ein Arbeitgeber für die Weitergabe von Lohndaten an das Finanzamt?",
+    "options": [
+      "Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO)",
+      "Einwilligung des Mitarbeiters",
+      "Berechtigtes Interesse",
+      "Schutz lebenswichtiger Interessen"
+    ],
+    "a": "Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c DSGVO)",
+    "exp": "Die Lohnsteuerpflichten sind gesetzlich vorgeschrieben. Eine Einwilligung wäre hier falsch, weil der Mitarbeiter nicht frei ablehnen kann."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde widerspricht der Nutzung seiner Adresse für Werbebriefe. Was muss das Unternehmen tun?",
+    "options": [
+      "Die Adresse ab sofort nicht mehr für Werbung verwenden",
+      "Den Widerspruch nur bei Begründung beachten",
+      "Den Kunden aus allen Systemen löschen, auch aus offenen Rechnungen",
+      "Erst nach Ende des Jahres reagieren"
+    ],
+    "a": "Die Adresse ab sofort nicht mehr für Werbung verwenden",
+    "exp": "Gegen Direktwerbung gilt der Widerspruch uneingeschränkt (Art. 21 Abs. 2 und 3). Um den Kunden nicht versehentlich erneut anzuschreiben, wird er in eine Sperrliste eingetragen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In welcher Form müssen Daten beim Recht auf Datenübertragbarkeit bereitgestellt werden?",
+    "options": [
+      "Strukturiert, gängig und maschinenlesbar",
+      "Als handschriftliche Liste",
+      "Als Foto des Bildschirms",
+      "In einem geheimen Format des Unternehmens"
+    ],
+    "a": "Strukturiert, gängig und maschinenlesbar",
+    "exp": "Art. 20 DSGVO verlangt ein Format wie CSV, XML oder JSON, damit ein anderer Anbieter die Daten übernehmen kann."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Womit schützt man einen Server wirksam gegen SYN-Flood-Angriffe?",
+    "options": [
+      "SYN-Cookies",
+      "Längere Passwörter",
+      "Ein größeres RAID",
+      "Eine höhere TTL"
+    ],
+    "a": "SYN-Cookies",
+    "exp": "Mit SYN-Cookies speichert der Server für halb offene Verbindungen keinen Zustand, sondern kodiert ihn in der Sequenznummer. Erst bei gültigem ACK wird die Verbindung angelegt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Server werden bei Amplification-Angriffen häufig missbraucht?",
+    "options": [
+      "Offen erreichbare DNS- oder NTP-Server",
+      "Interne Druckserver",
+      "Domänencontroller ohne Internet",
+      "Lokale Dateiserver"
+    ],
+    "a": "Offen erreichbare DNS- oder NTP-Server",
+    "exp": "Offene Resolver oder NTP-Server mit monlist-Funktion beantworten kleine Anfragen mit großen Antworten. Betreiber sollten ihre Dienste nur für berechtigte Clients öffnen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was leistet DNSSEC NICHT?",
+    "options": [
+      "Die Verschlüsselung der DNS-Anfragen",
+      "Die Prüfung der Echtheit von DNS-Antworten",
+      "Das Erkennen manipulierter Einträge",
+      "Die Absicherung gegen Cache Poisoning"
+    ],
+    "a": "Die Verschlüsselung der DNS-Anfragen",
+    "exp": "DNSSEC signiert Einträge, verschlüsselt aber nichts. Wer DNS-Anfragen vertraulich übertragen will, nutzt DNS over TLS oder DNS over HTTPS."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Switch-Funktion prüft ARP-Pakete gegen die DHCP-Snooping-Tabelle?",
+    "options": [
+      "Dynamic ARP Inspection",
+      "Storm Control",
+      "Spanning Tree",
+      "Link Aggregation"
+    ],
+    "a": "Dynamic ARP Inspection",
+    "exp": "Dynamic ARP Inspection verwirft ARP-Antworten, deren IP-MAC-Zuordnung nicht zur DHCP-Snooping-Tabelle passt. Das verhindert ARP-Spoofing."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Maßnahme hilft gegen VLAN-Hopping durch Double Tagging?",
+    "options": [
+      "Ein ungenutztes VLAN als Native VLAN auf Trunks verwenden",
+      "Alle Ports in VLAN 1 legen",
+      "Den Spanning Tree abschalten",
+      "Die MAC-Tabelle vergrößern"
+    ],
+    "a": "Ein ungenutztes VLAN als Native VLAN auf Trunks verwenden",
+    "exp": "Double Tagging funktioniert nur, wenn der Angreifer im Native VLAN des Trunks sitzt. Ist das Native VLAN ein ungenutztes VLAN, läuft der Angriff ins Leere."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sollte man mit ungenutzten Switchports tun?",
+    "options": [
+      "Deaktivieren und in ein ungenutztes VLAN legen",
+      "Als Trunk konfigurieren",
+      "In das Server-VLAN legen",
+      "Mit PoE maximaler Leistung versorgen"
+    ],
+    "a": "Deaktivieren und in ein ungenutztes VLAN legen",
+    "exp": "Offene Netzwerkdosen sind ein einfacher Zugang für Angreifer. Abgeschaltete Ports in einem Quarantäne-VLAN verhindern das. Zusätzlich hilft 802.1X."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher Cookie-Parameter verhindert, dass JavaScript das Sitzungscookie lesen kann?",
+    "options": [
+      "HttpOnly",
+      "Secure",
+      "Expires",
+      "Path"
+    ],
+    "a": "HttpOnly",
+    "exp": "HttpOnly-Cookies sind für Skripte im Browser unsichtbar. Selbst bei einer XSS-Lücke kann der Angreifer das Sitzungscookie nicht per JavaScript stehlen. Secure sorgt dafür, dass es nur über HTTPS gesendet wird."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher Cookie-Parameter erschwert CSRF-Angriffe?",
+    "options": [
+      "SameSite",
+      "HttpOnly",
+      "Domain",
+      "Max-Age"
+    ],
+    "a": "SameSite",
+    "exp": "Mit SameSite=Lax oder Strict sendet der Browser das Cookie nicht bei Anfragen, die von fremden Seiten ausgelöst werden. Damit laufen viele CSRF-Angriffe ins Leere."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher HTTP-Header verhindert, dass eine Seite in fremde Frames eingebettet wird?",
+    "options": [
+      "X-Frame-Options",
+      "Content-Type",
+      "Cache-Control",
+      "Accept-Language"
+    ],
+    "a": "X-Frame-Options",
+    "exp": "X-Frame-Options: DENY oder SAMEORIGIN (bzw. frame-ancestors in der CSP) schützt vor Clickjacking."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Benutzer ändert in der URL die Rechnungsnummer 1001 in 1002 und sieht eine fremde Rechnung. Welche Schwachstelle liegt vor?",
+    "options": [
+      "Fehlerhafte Zugriffskontrolle (IDOR)",
+      "Cross-Site-Scripting",
+      "SQL-Injection",
+      "Pufferüberlauf"
+    ],
+    "a": "Fehlerhafte Zugriffskontrolle (IDOR)",
+    "exp": "Bei einer Insecure Direct Object Reference prüft die Anwendung nicht, ob der Benutzer das angeforderte Objekt sehen darf. Das gehört zur Kategorie Broken Access Control der OWASP Top 10."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Webanwendung übergibt Benutzereingaben ungeprüft an die Shell des Servers. Welcher Angriff droht?",
+    "options": [
+      "Command Injection",
+      "Clickjacking",
+      "Phishing",
+      "Tailgating"
+    ],
+    "a": "Command Injection",
+    "exp": "Mit Zeichen wie ; oder && hängt der Angreifer eigene Befehle an. Abhilfe: keine Shell-Aufrufe mit Benutzereingaben, strikte Prüfung und Aufruf mit Parameterlisten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der Unterschied zwischen einem Schwachstellenscan und einem Penetrationstest?",
+    "options": [
+      "Der Scan sucht automatisiert bekannte Lücken, der Pentest nutzt sie gezielt aus",
+      "Es gibt keinen Unterschied",
+      "Der Scan ist immer manuell, der Pentest automatisch",
+      "Der Pentest prüft nur Hardware"
+    ],
+    "a": "Der Scan sucht automatisiert bekannte Lücken, der Pentest nutzt sie gezielt aus",
+    "exp": "Ein Schwachstellenscanner vergleicht Versionen und Konfigurationen mit bekannten Lücken. Beim Pentest versuchen Fachleute, Lücken zu kombinieren und tatsächlich einzudringen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was kennzeichnet einen Black-Box-Penetrationstest?",
+    "options": [
+      "Die Tester haben vorab keine Informationen über das Ziel",
+      "Die Tester erhalten alle Pläne und Quellcodes",
+      "Der Test läuft nur nachts",
+      "Der Test wird ohne Auftrag durchgeführt"
+    ],
+    "a": "Die Tester haben vorab keine Informationen über das Ziel",
+    "exp": "Black Box simuliert einen externen Angreifer. Beim White-Box-Test kennen die Tester alles, beim Grey-Box-Test einen Teil, z.B. ein normales Benutzerkonto."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Bug-Bounty-Programm?",
+    "options": [
+      "Belohnungen für Sicherheitsforscher, die Schwachstellen verantwortungsvoll melden",
+      "Eine Strafe für fehlerhafte Software",
+      "Ein Rabatt für Kunden bei Softwarefehlern",
+      "Eine Versicherung gegen Hackerangriffe"
+    ],
+    "a": "Belohnungen für Sicherheitsforscher, die Schwachstellen verantwortungsvoll melden",
+    "exp": "Unternehmen legen Regeln fest, was getestet werden darf, und zahlen für gemeldete Lücken. So werden Schwachstellen gefunden, bevor Kriminelle sie ausnutzen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Phase steht am Ende des Incident-Response-Prozesses?",
+    "options": [
+      "Lessons Learned (Nachbereitung)",
+      "Erkennung",
+      "Eindämmung",
+      "Vorbereitung"
+    ],
+    "a": "Lessons Learned (Nachbereitung)",
+    "exp": "Nach Vorbereitung, Erkennung, Eindämmung, Beseitigung und Wiederherstellung wird der Vorfall ausgewertet. Die Erkenntnisse fließen in bessere Maßnahmen und Pläne ein."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum sollte man einen kompromittierten Rechner nicht sofort ausschalten, wenn Forensik geplant ist?",
+    "options": [
+      "Weil der Inhalt des Arbeitsspeichers dann verloren geht",
+      "Weil er dann nie wieder startet",
+      "Weil sonst die Garantie erlischt",
+      "Weil der Angreifer dann gewarnt wird und sich meldet"
+    ],
+    "a": "Weil der Inhalt des Arbeitsspeichers dann verloren geht",
+    "exp": "Im RAM stecken laufende Prozesse, Netzwerkverbindungen und manchmal Schlüssel. Er wird zuerst gesichert. Vom Netz getrennt wird der Rechner trotzdem sofort."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Womit belegt ein Forensiker, dass ein Festplattenabbild unverändert ist?",
+    "options": [
+      "Mit einem Hashwert vom Original und von der Kopie",
+      "Mit einem Foto der Festplatte",
+      "Mit der Seriennummer",
+      "Mit der Dateigröße"
+    ],
+    "a": "Mit einem Hashwert vom Original und von der Kopie",
+    "exp": "Stimmen die Hashwerte (z.B. SHA-256) überein, ist das Abbild bitgenau. Untersucht wird nur die Kopie, das Original wird mit einem Schreibschutz (Write Blocker) gesichert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Konto sollte ein Administrator für die tägliche E-Mail-Arbeit nutzen?",
+    "options": [
+      "Ein normales Benutzerkonto ohne Admin-Rechte",
+      "Das Domänen-Administratorkonto",
+      "Das lokale Administratorkonto",
+      "Ein gemeinsames Konto aller Admins"
+    ],
+    "a": "Ein normales Benutzerkonto ohne Admin-Rechte",
+    "exp": "Öffnet ein Admin mit Domänen-Admin-Rechten einen verseuchten Anhang, hat die Schadsoftware sofort volle Kontrolle. Admin-Konten nutzt man nur für Verwaltungsaufgaben, am besten von einem eigenen Admin-Arbeitsplatz."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Windows-Werkzeug vergibt für jeden Rechner ein eigenes, wechselndes lokales Administratorpasswort?",
+    "options": [
+      "LAPS",
+      "BitLocker",
+      "Defender SmartScreen",
+      "Remote Desktop"
+    ],
+    "a": "LAPS",
+    "exp": "Local Administrator Password Solution speichert die Passwörter sicher im Active Directory bzw. Entra ID. Ein erbeutetes lokales Admin-Passwort hilft dann nicht auf anderen Rechnern."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Port nutzt Kerberos?",
+    "options": [
+      "88",
+      "389",
+      "636",
+      "443"
+    ],
+    "a": "88",
+    "exp": "Kerberos arbeitet auf Port 88 (TCP und UDP). 389 ist LDAP, 636 LDAPS, 443 HTTPS."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum sollte RDP (Port 3389) nicht direkt aus dem Internet erreichbar sein?",
+    "options": [
+      "Er ist ein häufiges Ziel für Passwortangriffe und Exploits",
+      "Weil RDP im Internet zu langsam ist",
+      "Weil RDP nur im WLAN funktioniert",
+      "Weil Port 3389 für DNS reserviert ist"
+    ],
+    "a": "Er ist ein häufiges Ziel für Passwortangriffe und Exploits",
+    "exp": "Offene RDP-Zugänge werden ständig automatisiert angegriffen und sind ein häufiger Einstieg für Ransomware. Remotezugriff gehört hinter ein VPN oder ein RDP-Gateway mit MFA."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches XML-basierte Verfahren wird oft für Single Sign-on zwischen Firmen und Cloud-Diensten eingesetzt?",
+    "options": [
+      "SAML",
+      "SNMP",
+      "SMTP",
+      "SMB"
+    ],
+    "a": "SAML",
+    "exp": "Mit der Security Assertion Markup Language bestätigt ein Identity Provider einem Dienst, dass der Benutzer angemeldet ist. So braucht man für viele Dienste nur ein Firmenkonto."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen UDP-Port nutzt RADIUS für die Authentifizierung?",
+    "options": [
+      "1812",
+      "1813",
+      "1194",
+      "500"
+    ],
+    "a": "1812",
+    "exp": "RADIUS-Authentifizierung läuft auf UDP 1812, das Accounting auf 1813. 1194 ist der Standardport von OpenVPN, 500 der von IKE."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Ports braucht ein IPsec-VPN mit NAT-Traversal mindestens in der Firewall?",
+    "options": [
+      "UDP 500 und UDP 4500",
+      "TCP 443 und TCP 80",
+      "TCP 22 und TCP 23",
+      "UDP 53 und UDP 123"
+    ],
+    "a": "UDP 500 und UDP 4500",
+    "exp": "IKE verhandelt die Schlüssel über UDP 500. Liegt NAT auf dem Weg, werden IKE und die ESP-Daten über UDP 4500 gekapselt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Standardport nutzt OpenVPN?",
+    "options": [
+      "UDP 1194",
+      "UDP 51820",
+      "TCP 3389",
+      "TCP 1723"
+    ],
+    "a": "UDP 1194",
+    "exp": "OpenVPN nutzt standardmäßig UDP 1194, kann aber auch über TCP 443 laufen. 51820 ist der übliche WireGuard-Port, 1723 gehört zum veralteten PPTP."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Fingerabdruckscanner wird strenger eingestellt. Was passiert typischerweise?",
+    "options": [
+      "Die FAR sinkt und die FRR steigt",
+      "FAR und FRR steigen beide",
+      "FAR und FRR sinken beide",
+      "Die FAR steigt und die FRR sinkt"
+    ],
+    "a": "Die FAR sinkt und die FRR steigt",
+    "exp": "Strengere Prüfung lässt weniger Unberechtigte durch (niedrigere False Acceptance Rate), weist aber öfter Berechtigte ab (höhere False Rejection Rate)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist ein MAC-Adressfilter im WLAN nur ein schwacher Schutz?",
+    "options": [
+      "MAC-Adressen lassen sich mitlesen und leicht fälschen",
+      "MAC-Adressen ändern sich jede Minute",
+      "Der Filter bremst das WLAN stark",
+      "Der Filter funktioniert nur mit WEP"
+    ],
+    "a": "MAC-Adressen lassen sich mitlesen und leicht fälschen",
+    "exp": "Erlaubte MAC-Adressen sind im Funkverkehr sichtbar. Ein Angreifer übernimmt eine davon für sein Gerät. Den echten Schutz bieten Verschlüsselung und Authentifizierung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Angaben gehören mindestens in eine Meldung an die Aufsichtsbehörde nach Art. 33 DSGVO?",
+    "options": [
+      "Art der Verletzung, ungefähre Zahl der Betroffenen, mögliche Folgen und ergriffene Maßnahmen",
+      "Nur der Name des verantwortlichen Mitarbeiters",
+      "Eine vollständige Liste aller Kundendaten",
+      "Der Jahresumsatz des Unternehmens"
+    ],
+    "a": "Art der Verletzung, ungefähre Zahl der Betroffenen, mögliche Folgen und ergriffene Maßnahmen",
+    "exp": "Die Meldung nennt Art der Verletzung, Kategorien und ungefähre Zahl der Betroffenen und Datensätze, den Kontakt des Datenschutzbeauftragten, wahrscheinliche Folgen und die ergriffenen oder geplanten Maßnahmen. Fehlendes darf nachgereicht werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist das Ergebnis eines IT-Grundschutz-Checks nach BSI?",
+    "options": [
+      "Ein Soll-Ist-Vergleich, welche Anforderungen bereits umgesetzt sind",
+      "Ein Zertifikat nach ISO 27001",
+      "Eine Liste aller Virenfunde",
+      "Ein Bußgeldbescheid"
+    ],
+    "a": "Ein Soll-Ist-Vergleich, welche Anforderungen bereits umgesetzt sind",
+    "exp": "Beim IT-Grundschutz-Check wird für jeden Baustein geprüft, ob die Anforderungen ganz, teilweise oder nicht erfüllt sind. Die Lücken bilden die Grundlage für die weitere Planung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche DMARC-Richtlinie weist Empfänger an, nicht bestandene Mails abzulehnen?",
+    "options": [
+      "p=reject",
+      "p=none",
+      "p=quarantine",
+      "p=allow"
+    ],
+    "a": "p=reject",
+    "exp": "p=none beobachtet nur, p=quarantine schiebt verdächtige Mails in den Spam, p=reject lässt sie gar nicht zu. Man steigert die Richtlinie schrittweise, wenn die Berichte sauber sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist das Ziel einer Netzwerk-Mikrosegmentierung?",
+    "options": [
+      "Verkehr auch zwischen einzelnen Servern nur nach Regeln erlauben",
+      "Mehr IP-Adressen bereitstellen",
+      "Kleinere Kabel verwenden",
+      "Das WLAN in kleine Zellen teilen"
+    ],
+    "a": "Verkehr auch zwischen einzelnen Servern nur nach Regeln erlauben",
+    "exp": "Statt nur Zonen zu trennen, wird jede Verbindung einzelner Systeme per Regel erlaubt. Ein Angreifer auf einem Server kann sich so kaum weiter ausbreiten. Das ist ein Baustein von Zero Trust."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Jump Host (Bastion Host)?",
+    "options": [
+      "Ein gesicherter Zwischenrechner, über den Admins auf geschützte Systeme zugreifen",
+      "Ein Server, der besonders schnell neu startet",
+      "Ein Router zwischen zwei VLANs",
+      "Ein Honeypot für Angreifer"
+    ],
+    "a": "Ein gesicherter Zwischenrechner, über den Admins auf geschützte Systeme zugreifen",
+    "exp": "Admin-Zugriffe auf Server sind nur vom Jump Host aus erlaubt. Er ist gehärtet, erfordert MFA und protokolliert alle Sitzungen. So gibt es nur einen kontrollierten Zugang."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sollte man bei einer Deepfake-Sprachnachricht des \"Chefs\" mit einer eiligen Überweisungsbitte tun?",
+    "options": [
+      "Über einen bekannten, unabhängigen Kanal zurückrufen und nachfragen",
+      "Sofort überweisen, weil die Stimme echt klingt",
+      "Die Nachricht an alle Kollegen weiterleiten",
+      "Auf die Nachricht antworten und die Kontonummer bestätigen"
+    ],
+    "a": "Über einen bekannten, unabhängigen Kanal zurückrufen und nachfragen",
+    "exp": "Stimmen lassen sich heute mit KI täuschend echt nachahmen. Bei ungewöhnlichen Zahlungsanweisungen gilt das Vier-Augen-Prinzip und ein Rückruf über eine bekannte Nummer."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rechte braucht ein privater SSH-Schlüssel, damit ssh ihn akzeptiert?",
+    "options": [
+      "600 (nur der Besitzer darf lesen und schreiben)",
+      "777",
+      "644",
+      "755"
+    ],
+    "a": "600 (nur der Besitzer darf lesen und schreiben)",
+    "exp": "Ist der private Schlüssel für andere lesbar, verweigert ssh die Nutzung mit der Meldung \"UNPROTECTED PRIVATE KEY FILE\". chmod 600 ~/.ssh/id_ed25519 behebt das."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt ssh -L 8080:intern:80 benutzer@jumphost?",
+    "options": [
+      "Lokaler Port 8080 wird durch den SSH-Tunnel an intern:80 weitergeleitet",
+      "Der Webserver auf Port 80 wird abgeschaltet",
+      "Port 8080 auf dem Jumphost wird für alle geöffnet",
+      "Die SSH-Verbindung läuft über Port 8080"
+    ],
+    "a": "Lokaler Port 8080 wird durch den SSH-Tunnel an intern:80 weitergeleitet",
+    "exp": "Lokale Portweiterleitung: Ruft man http://localhost:8080 auf, landet die Verbindung verschlüsselt über den Jumphost beim internen Webserver."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl kopiert man eine Datei verschlüsselt per SSH auf einen anderen Server?",
+    "options": [
+      "scp",
+      "cp",
+      "ftp",
+      "telnet"
+    ],
+    "a": "scp",
+    "exp": "scp datei.txt benutzer@server:/tmp/ überträgt über SSH. Für große oder wiederholte Kopien ist rsync besser, weil es nur Änderungen überträgt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Vorteil hat rsync gegenüber einfachem Kopieren?",
+    "options": [
+      "Es überträgt nur geänderte Dateien bzw. Dateiteile",
+      "Es verschlüsselt ohne SSH",
+      "Es komprimiert Dateien dauerhaft",
+      "Es löscht nach dem Kopieren die Quelle"
+    ],
+    "a": "Es überträgt nur geänderte Dateien bzw. Dateiteile",
+    "exp": "rsync vergleicht Quelle und Ziel und überträgt nur Unterschiede. Das macht wiederholte Sicherungen und Synchronisationen sehr schnell."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher ufw-Befehl erlaubt eingehende SSH-Verbindungen?",
+    "options": [
+      "ufw allow 22/tcp",
+      "ufw open ssh-port",
+      "ufw deny 22/tcp",
+      "ufw enable 22"
+    ],
+    "a": "ufw allow 22/tcp",
+    "exp": "ufw allow 22/tcp (oder ufw allow OpenSSH) erlaubt SSH. Diese Regel sollte man vor ufw enable setzen, sonst sperrt man sich auf einem entfernten Server selbst aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl zeigt man unter systemd die Logmeldungen eines bestimmten Dienstes an?",
+    "options": [
+      "journalctl -u dienstname",
+      "systemctl log dienstname",
+      "cat /var/log/dienstname",
+      "dmesg -u dienstname"
+    ],
+    "a": "journalctl -u dienstname",
+    "exp": "journalctl -u nginx zeigt die Meldungen des Dienstes nginx, mit -f fortlaufend, mit --since \"1 hour ago\" nur die letzte Stunde."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches PowerShell-Cmdlet fragt einen DNS-Namen ab?",
+    "options": [
+      "Resolve-DnsName",
+      "Test-DnsServer",
+      "Get-DnsClientCache",
+      "Set-DnsName"
+    ],
+    "a": "Resolve-DnsName",
+    "exp": "Resolve-DnsName www.beispiel.de -Type MX entspricht nslookup, liefert die Ergebnisse aber als Objekte, die sich in Skripten weiterverarbeiten lassen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl zeigt man unter Windows die Routingtabelle an?",
+    "options": [
+      "route print",
+      "ipconfig /routes",
+      "tracert -r",
+      "netstat -a"
+    ],
+    "a": "route print",
+    "exp": "route print (oder netstat -r) zeigt alle Routen, die Standardroute 0.0.0.0 und die Metriken. Unter Linux nutzt man ip route."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl übernimmt man unter Ubuntu eine geänderte Netplan-Konfiguration?",
+    "options": [
+      "netplan apply",
+      "netplan start",
+      "systemctl netplan",
+      "ifconfig reload"
+    ],
+    "a": "netplan apply",
+    "exp": "netplan apply liest /etc/netplan/*.yaml und wendet die Einstellungen an. Mit netplan try wird die Änderung nach kurzer Zeit zurückgerollt, wenn man sie nicht bestätigt, ideal bei Fernzugriff."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Kommandozeilenwerkzeug verwaltet man Verbindungen des NetworkManagers?",
+    "options": [
+      "nmcli",
+      "netsh",
+      "ipconfig",
+      "arp"
+    ],
+    "a": "nmcli",
+    "exp": "nmcli con show listet Verbindungen, nmcli dev wifi connect verbindet mit einem WLAN. netsh ist das Windows-Gegenstück für viele Netzwerkeinstellungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welchen Hyper-V-Switch wählen Sie, wenn VMs nur untereinander, nicht aber mit dem Host kommunizieren sollen?",
+    "options": [
+      "Privat",
+      "Extern",
+      "Intern",
+      "Standard"
+    ],
+    "a": "Privat",
+    "exp": "Ein privater Switch verbindet nur die VMs. Beim internen Switch kann zusätzlich der Host teilnehmen, beim externen Switch auch das physische Netz."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine VM im NAT-Modus soll einen Webdienst für das LAN anbieten. Was ist nötig?",
+    "options": [
+      "Eine Portweiterleitung vom Host zur VM",
+      "Nichts, NAT-VMs sind immer erreichbar",
+      "Ein zweiter DHCP-Server",
+      "Ein privater virtueller Switch"
+    ],
+    "a": "Eine Portweiterleitung vom Host zur VM",
+    "exp": "Im NAT-Modus ist die VM von außen unsichtbar. Entweder richtet man eine Portweiterleitung ein oder wechselt in den Bridged-Modus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was enthält ein Wake-on-LAN-Magic-Packet?",
+    "options": [
+      "6 Byte FF und danach 16-mal die MAC-Adresse des Zielrechners",
+      "Die IP-Adresse und ein Passwort",
+      "Den Rechnernamen im Klartext",
+      "Einen Befehl an das BIOS zum Update"
+    ],
+    "a": "6 Byte FF und danach 16-mal die MAC-Adresse des Zielrechners",
+    "exp": "Die Netzwerkkarte erkennt ihre MAC-Adresse im Paket und weckt den Rechner. Weil der Rechner noch keine IP-Adresse aktiv hat, wird das Paket meist als Broadcast gesendet."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Linux-Bonding-Modus entspricht LACP nach IEEE 802.3ad?",
+    "options": [
+      "Modus 4 (802.3ad)",
+      "Modus 0 (balance-rr)",
+      "Modus 1 (active-backup)",
+      "Modus 6 (balance-alb)"
+    ],
+    "a": "Modus 4 (802.3ad)",
+    "exp": "Modus 4 handelt das Bündel per LACP mit dem Switch aus. Der Switch muss dafür ebenfalls LACP konfiguriert haben. Modus 1 braucht keine Switch-Konfiguration, nutzt aber nur eine Leitung gleichzeitig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Werkzeug richtet man einen Windows Server Core nach der Installation am schnellsten ein?",
+    "options": [
+      "sconfig",
+      "msconfig",
+      "regedit",
+      "diskpart"
+    ],
+    "a": "sconfig",
+    "exp": "sconfig ist ein textbasiertes Menü für Rechnername, Domänenbeitritt, Netzwerk, Remoteverwaltung und Updates."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl stößt man unter Windows eine sofortige Zeitsynchronisation an?",
+    "options": [
+      "w32tm /resync",
+      "time /sync",
+      "net time /force",
+      "ntpdate windows"
+    ],
+    "a": "w32tm /resync",
+    "exp": "w32tm /resync fordert eine neue Synchronisation an, w32tm /query /status zeigt die aktuelle Zeitquelle und die Abweichung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl prüft man unter Linux mit systemd, ob die Uhrzeit synchronisiert wird?",
+    "options": [
+      "timedatectl",
+      "date --sync",
+      "hwclock --net",
+      "ntpq -time"
+    ],
+    "a": "timedatectl",
+    "exp": "timedatectl zeigt Uhrzeit, Zeitzone und den Status \"System clock synchronized\". Mit timedatectl set-ntp true wird die Synchronisation aktiviert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt docker run -p 8080:80 nginx?",
+    "options": [
+      "Port 8080 des Hosts wird an Port 80 im Container weitergeleitet",
+      "Der Container nutzt 8080 Prozessoren",
+      "Port 80 des Hosts wird an Port 8080 im Container weitergeleitet",
+      "Der Container darf 80 MB RAM nutzen"
+    ],
+    "a": "Port 8080 des Hosts wird an Port 80 im Container weitergeleitet",
+    "exp": "Die Angabe lautet immer Host-Port:Container-Port. Der Webserver im Container lauscht auf 80, von außen erreicht man ihn über http://host:8080."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wo sollte der BitLocker-Wiederherstellungsschlüssel von Firmenrechnern gespeichert werden?",
+    "options": [
+      "Zentral im Active Directory bzw. in Entra ID",
+      "Auf einem Zettel am Monitor",
+      "Auf demselben Laufwerk wie die Daten",
+      "Nirgends, er wird nie gebraucht"
+    ],
+    "a": "Zentral im Active Directory bzw. in Entra ID",
+    "exp": "Nach einem Hardwaretausch oder BIOS-Update fragt BitLocker oft nach dem Schlüssel. Ist er zentral hinterlegt, kann der Support ihn nach Identitätsprüfung herausgeben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was kann ein Admin per MDM tun, wenn ein Firmenhandy gestohlen wurde?",
+    "options": [
+      "Das Gerät aus der Ferne sperren oder löschen",
+      "Das Gerät orten und automatisch zurückschicken lassen",
+      "Die SIM-Karte in ein neues Gerät übertragen",
+      "Den Dieb über die Kamera identifizieren und anzeigen"
+    ],
+    "a": "Das Gerät aus der Ferne sperren oder löschen",
+    "exp": "Remote Lock und Remote Wipe verhindern den Zugriff auf Firmendaten. Bei privat genutzten Geräten (BYOD) wird oft nur der Firmenbereich gelöscht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Werkzeug öffnet unter Windows die Zertifikate des lokalen Computers?",
+    "options": [
+      "certlm.msc",
+      "certmgr.exe /user",
+      "services.msc",
+      "devmgmt.msc"
+    ],
+    "a": "certlm.msc",
+    "exp": "certlm.msc zeigt den Speicher des Computers (z.B. Serverzertifikate), certmgr.msc den des aktuellen Benutzers."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Befehl zeigt nur die HTTP-Header einer Webseite an?",
+    "options": [
+      "curl -I https://www.beispiel.de",
+      "ping -h www.beispiel.de",
+      "nslookup -header www.beispiel.de",
+      "tracert -http www.beispiel.de"
+    ],
+    "a": "curl -I https://www.beispiel.de",
+    "exp": "curl -I schickt eine HEAD-Anfrage und zeigt Statuscode und Header, z.B. ob eine Weiterleitung auf HTTPS oder HSTS eingerichtet ist."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher nmap-Aufruf ermittelt zusätzlich die Versionen der gefundenen Dienste?",
+    "options": [
+      "nmap -sV ziel",
+      "nmap -v ziel",
+      "nmap -p0 ziel",
+      "nmap --help ziel"
+    ],
+    "a": "nmap -sV ziel",
+    "exp": "-sV fragt offene Ports nach Dienst und Version ab. Damit erkennt man z.B. veraltete Serverversionen im eigenen Netz."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lassen sich Server Core-Maschinen grafisch aus der Ferne verwalten?",
+    "options": [
+      "Mit Windows Admin Center oder den RSAT-Werkzeugen",
+      "Gar nicht, nur direkt an der Konsole",
+      "Nur mit einem Monitor am Server",
+      "Nur über einen Webbrowser auf dem Server selbst"
+    ],
+    "a": "Mit Windows Admin Center oder den RSAT-Werkzeugen",
+    "exp": "Windows Admin Center (webbasiert) und die Remoteserver-Verwaltungstools (RSAT) verbinden sich über das Netz. Auf dem Server selbst braucht es keine grafische Oberfläche."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie heißt die Mandatory-Access-Control-Lösung, die bei Red Hat Enterprise Linux standardmäßig aktiv ist?",
+    "options": [
+      "SELinux",
+      "AppArmor",
+      "fail2ban",
+      "sudo"
+    ],
+    "a": "SELinux",
+    "exp": "RHEL, Fedora und Rocky Linux nutzen SELinux, Ubuntu und SUSE setzen AppArmor ein. Mit getenforce sieht man den SELinux-Modus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rechte hat die Datei /etc/shadow typischerweise?",
+    "options": [
+      "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+      "Alle Benutzer dürfen sie lesen",
+      "Alle Benutzer dürfen sie schreiben",
+      "Sie ist ausführbar"
+    ],
+    "a": "Nur root darf sie lesen (z.B. 640 oder 000 mit Gruppe shadow)",
+    "exp": "Wären die Hashes für alle lesbar, könnte jeder Benutzer Passwörter offline knacken. Deshalb stehen sie nicht in /etc/passwd, sondern in der geschützten /etc/shadow."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher PowerShell-Befehl zeigt die IP-Adressen aller Netzwerkkarten an?",
+    "options": [
+      "Get-NetIPAddress",
+      "Get-Process",
+      "Get-ItemProperty",
+      "Show-NetCard"
+    ],
+    "a": "Get-NetIPAddress",
+    "exp": "Get-NetIPAddress listet IPv4- und IPv6-Adressen je Schnittstelle. Get-NetIPConfiguration zeigt zusätzlich Gateway und DNS-Server."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein SLA garantiert 4 Stunden Reaktionszeit, Servicezeit Mo-Fr 8-17 Uhr. Eine Störung wird Freitag um 16 Uhr gemeldet. Bis wann muss reagiert werden?",
+    "options": [
+      "Montag um 11 Uhr",
+      "Freitag um 20 Uhr",
+      "Samstag um 12 Uhr",
+      "Montag um 8 Uhr"
+    ],
+    "a": "Montag um 11 Uhr",
+    "exp": "Nur die Servicezeit zählt: Freitag 16-17 Uhr ist 1 Stunde, die restlichen 3 Stunden laufen ab Montag 8 Uhr, also bis 11 Uhr."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet die Servicezeit 24/7 in einem SLA?",
+    "options": [
+      "Der Service gilt rund um die Uhr an allen Tagen",
+      "24 Stunden Reaktionszeit an 7 Werktagen",
+      "24 Supportanfragen in 7 Tagen",
+      "Der Service gilt 24 Tage, dann 7 Tage Pause"
+    ],
+    "a": "Der Service gilt rund um die Uhr an allen Tagen",
+    "exp": "24/7 heißt 24 Stunden an 7 Tagen pro Woche. Das ist deutlich teurer als z.B. 5x9 (Mo-Fr, 9 Stunden am Tag)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Mit wem schließt ein IT-Dienstleister einen Underpinning Contract?",
+    "options": [
+      "Mit einem externen Zulieferer",
+      "Mit dem eigenen Kunden",
+      "Mit der eigenen Personalabteilung",
+      "Mit dem Finanzamt"
+    ],
+    "a": "Mit einem externen Zulieferer",
+    "exp": "Kundenverträge heißen SLA, interne Absprachen OLA und Verträge mit externen Zulieferern UC. Alle drei müssen zueinander passen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen hat 60 Mitarbeiter, von denen höchstens 15 gleichzeitig ein CAD-Programm nutzen. Wie viele Concurrent-User-Lizenzen braucht es?",
+    "options": [
+      "15",
+      "60",
+      "30",
+      "1"
+    ],
+    "a": "15",
+    "exp": "Bei Concurrent-User-Lizenzen zählt die maximale gleichzeitige Nutzung. Mit Named-User-Lizenzen bräuchte man dagegen eine für jede berechtigte Person."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen verändert eine GPL-Software und verkauft sie an Kunden. Was muss es beachten?",
+    "options": [
+      "Es muss den Quellcode der Änderungen unter der GPL bereitstellen",
+      "Es darf die Software gar nicht verkaufen",
+      "Es muss dem ursprünglichen Autor Lizenzgebühren zahlen",
+      "Es darf den Quellcode geheim halten"
+    ],
+    "a": "Es muss den Quellcode der Änderungen unter der GPL bereitstellen",
+    "exp": "Die GPL erlaubt den Verkauf, verlangt aber, dass Empfänger den Quellcode unter denselben Bedingungen erhalten (Copyleft)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Lizenz erlaubt die Nutzung von Code auch in geschlossener, kommerzieller Software, solange der Lizenzhinweis erhalten bleibt?",
+    "options": [
+      "MIT-Lizenz",
+      "GPL",
+      "AGPL",
+      "Keine, Open Source darf nie kommerziell genutzt werden"
+    ],
+    "a": "MIT-Lizenz",
+    "exp": "MIT, BSD und Apache sind freizügige (permissive) Lizenzen. Sie verlangen im Wesentlichen nur, dass Urheber- und Lizenzhinweis mitgeliefert werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Darf eine OEM-Lizenz nach dem Austausch des PCs auf das neue Gerät übertragen werden?",
+    "options": [
+      "In der Regel nein, sie ist an die ursprüngliche Hardware gebunden",
+      "Ja, beliebig oft",
+      "Ja, aber nur auf Server",
+      "Nur, wenn der alte PC älter als 5 Jahre ist"
+    ],
+    "a": "In der Regel nein, sie ist an die ursprüngliche Hardware gebunden",
+    "exp": "OEM-Lizenzen sind günstig, weil sie zusammen mit dem Gerät verkauft werden. Für übertragbare Lizenzen braucht man Voll- oder Volumenlizenzen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Ergebnis liefert eine Business Impact Analyse unter anderem?",
+    "options": [
+      "Die maximal tolerierbare Ausfallzeit je Geschäftsprozess",
+      "Den Jahresgewinn des Unternehmens",
+      "Die Anzahl benötigter Lizenzen",
+      "Die Reihenfolge der Mitarbeiterurlaube"
+    ],
+    "a": "Die maximal tolerierbare Ausfallzeit je Geschäftsprozess",
+    "exp": "Aus der BIA ergeben sich kritische Prozesse, ihre maximal tolerierbare Ausfallzeit sowie RTO und RPO. Daraus werden Notfallmaßnahmen und Backup-Konzepte abgeleitet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Kriterium spricht bei einer Make-or-Buy-Entscheidung eher für Buy (Zukauf)?",
+    "options": [
+      "Fehlendes eigenes Know-how und schwankender Bedarf",
+      "Die Leistung ist ein zentrales Geschäftsgeheimnis",
+      "Es gibt viele eigene freie Fachkräfte",
+      "Der Zukauf ist deutlich teurer als die Eigenleistung"
+    ],
+    "a": "Fehlendes eigenes Know-how und schwankender Bedarf",
+    "exp": "Zukauf lohnt sich, wenn ein Spezialist die Leistung günstiger, besser oder flexibler erbringt. Kernkompetenzen und vertrauliche Leistungen behält man eher im Haus."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Server hat einen Hardwarevertrag mit NBD-Service. Die Störung tritt Freitag um 15 Uhr auf. Wann kommt der Techniker in der Regel?",
+    "options": [
+      "Am Montag",
+      "Am Freitag bis 19 Uhr",
+      "Am Samstag",
+      "Innerhalb von 4 Stunden"
+    ],
+    "a": "Am Montag",
+    "exp": "Next Business Day bedeutet nächster Werktag. Wer Wochenenden abdecken muss, braucht z.B. einen 24/7-Vertrag mit 4 Stunden Reaktionszeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Unternehmen setzt noch ein Betriebssystem ein, dessen Support endet. Was ist die richtige Folgerung?",
+    "options": [
+      "Rechtzeitig migrieren oder das System isolieren, weil keine Sicherheitsupdates mehr kommen",
+      "Nichts, das System läuft ja weiter",
+      "Den Virenscanner abschalten",
+      "Die Lizenz verlängert sich automatisch"
+    ],
+    "a": "Rechtzeitig migrieren oder das System isolieren, weil keine Sicherheitsupdates mehr kommen",
+    "exp": "Nach dem Supportende werden Lücken nicht mehr geschlossen. Ist eine Ablösung nicht sofort möglich, muss das System vom Netz abgeschottet werden, oder man kauft verlängerten Support."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Monitor kostet 349 Euro netto. Wie kann er steuerlich behandelt werden?",
+    "options": [
+      "Als geringwertiges Wirtschaftsgut sofort voll abgeschrieben werden",
+      "Er muss über 13 Jahre abgeschrieben werden",
+      "Er darf gar nicht abgeschrieben werden",
+      "Er wird als Umlaufvermögen gebucht"
+    ],
+    "a": "Als geringwertiges Wirtschaftsgut sofort voll abgeschrieben werden",
+    "exp": "Selbstständig nutzbare Anlagegüter bis 800 Euro netto sind GWG und dürfen im Anschaffungsjahr voll als Aufwand angesetzt werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie werden Anlagegüter über 250 und bis 1.000 Euro netto im Sammelposten abgeschrieben?",
+    "options": [
+      "Gleichmäßig über 5 Jahre",
+      "Sofort im ersten Jahr",
+      "Über 10 Jahre",
+      "Gar nicht"
+    ],
+    "a": "Gleichmäßig über 5 Jahre",
+    "exp": "Statt GWG-Sofortabschreibung kann man einen jährlichen Sammelposten bilden, der pauschal über 5 Jahre mit je 20 % aufgelöst wird. Das Wahlrecht gilt einheitlich für alle Güter eines Jahres."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bis zu welchem Bruttobetrag gilt eine Rechnung als Kleinbetragsrechnung?",
+    "options": [
+      "250 Euro",
+      "100 Euro",
+      "500 Euro",
+      "1.000 Euro"
+    ],
+    "a": "250 Euro",
+    "exp": "Bis 250 Euro brutto genügen vereinfachte Angaben. Darüber müssen alle Pflichtangaben nach § 14 UStG enthalten sein, z.B. Rechnungsnummer und Name des Empfängers."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Angabe ist auf einer normalen Rechnung (über 250 Euro) nach § 14 UStG Pflicht?",
+    "options": [
+      "Eine fortlaufende, einmalige Rechnungsnummer",
+      "Die Telefonnummer des Käufers",
+      "Die Kontonummer des Käufers",
+      "Die Unterschrift des Geschäftsführers"
+    ],
+    "a": "Eine fortlaufende, einmalige Rechnungsnummer",
+    "exp": "Pflicht sind u.a. Name und Anschrift beider Parteien, Steuernummer oder USt-IdNr., Ausstellungsdatum, Rechnungsnummer, Menge und Art der Leistung, Leistungszeitpunkt, Nettobetrag, Steuersatz und Steuerbetrag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Lieferant schickt eine Rechnung als einfaches PDF per E-Mail an ein Unternehmen. Ist das eine E-Rechnung im Sinne des UStG?",
+    "options": [
+      "Nein, eine E-Rechnung braucht ein strukturiertes Format wie XRechnung oder ZUGFeRD",
+      "Ja, jede Rechnung per E-Mail ist eine E-Rechnung",
+      "Ja, wenn das PDF unterschrieben ist",
+      "Nur, wenn die Rechnung unter 250 Euro liegt"
+    ],
+    "a": "Nein, eine E-Rechnung braucht ein strukturiertes Format wie XRechnung oder ZUGFeRD",
+    "exp": "Ein reines PDF gilt als sonstige Rechnung. Eine E-Rechnung enthält die Daten maschinenlesbar nach EN 16931, z.B. als XML (XRechnung) oder als PDF mit eingebettetem XML (ZUGFeRD)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange müssen Buchungsbelege wie Rechnungen seit 2025 aufbewahrt werden?",
+    "options": [
+      "8 Jahre",
+      "2 Jahre",
+      "6 Jahre",
+      "30 Jahre"
+    ],
+    "a": "8 Jahre",
+    "exp": "Mit dem Bürokratieentlastungsgesetz IV wurde die Frist für Buchungsbelege von 10 auf 8 Jahre verkürzt. Handelsbücher und Jahresabschlüsse bleiben bei 10 Jahren, Geschäftsbriefe bei 6 Jahren."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was verlangen die GoBD für die Archivierung elektronischer Rechnungen?",
+    "options": [
+      "Sie müssen unveränderbar und jederzeit lesbar aufbewahrt werden",
+      "Sie dürfen nach dem Ausdrucken gelöscht werden",
+      "Sie müssen jeden Monat neu gespeichert werden",
+      "Sie müssen öffentlich einsehbar sein"
+    ],
+    "a": "Sie müssen unveränderbar und jederzeit lesbar aufbewahrt werden",
+    "exp": "Eine elektronisch eingegangene Rechnung muss elektronisch aufbewahrt werden, geschützt vor Veränderung und für das Finanzamt auswertbar. Ein Ausdruck allein reicht nicht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde wünscht mitten im Projekt eine zusätzliche Funktion. Was ist der richtige Weg?",
+    "options": [
+      "Einen Change Request mit Auswirkungen auf Zeit und Kosten erstellen und freigeben lassen",
+      "Die Funktion ohne Rücksprache sofort einbauen",
+      "Den Wunsch ignorieren",
+      "Das Projekt abbrechen"
+    ],
+    "a": "Einen Change Request mit Auswirkungen auf Zeit und Kosten erstellen und freigeben lassen",
+    "exp": "Über den Change Request werden Aufwand, Kosten und Termin der Änderung bewertet. Erst nach Freigabe wird umgesetzt. So vermeidet man Scope Creep."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer ist in der RACI-Matrix für eine Aufgabe \"Accountable\"?",
+    "options": [
+      "Die Person mit der Gesamtverantwortung, die das Ergebnis abnimmt",
+      "Die Person, die die Arbeit ausführt",
+      "Die Person, die nur informiert wird",
+      "Jede beteiligte Person gleichermaßen"
+    ],
+    "a": "Die Person mit der Gesamtverantwortung, die das Ergebnis abnimmt",
+    "exp": "Pro Aufgabe gibt es genau eine Person mit A. Sie entscheidet und trägt die Verantwortung. Die Durchführung (R) kann bei anderen liegen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welches Feld der Eisenhower-Matrix gehört eine Aufgabe, die wichtig, aber nicht dringend ist?",
+    "options": [
+      "Terminieren und selbst erledigen",
+      "Sofort selbst erledigen",
+      "Delegieren",
+      "Nicht bearbeiten"
+    ],
+    "a": "Terminieren und selbst erledigen",
+    "exp": "Wichtig und dringend: sofort erledigen. Wichtig, nicht dringend: einplanen. Dringend, nicht wichtig: delegieren. Weder noch: weglassen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet ein Ergebnisprotokoll von einem Verlaufsprotokoll?",
+    "options": [
+      "Das Ergebnisprotokoll hält nur Beschlüsse und Aufgaben fest",
+      "Das Ergebnisprotokoll gibt die Diskussion wörtlich wieder",
+      "Das Verlaufsprotokoll ist immer kürzer",
+      "Es gibt keinen Unterschied"
+    ],
+    "a": "Das Ergebnisprotokoll hält nur Beschlüsse und Aufgaben fest",
+    "exp": "Das Ergebnisprotokoll nennt Beschlüsse, Aufgaben, Verantwortliche und Termine. Das Verlaufsprotokoll gibt zusätzlich den Ablauf der Diskussion wieder."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Frage ist im Kundengespräch eine offene Frage?",
+    "options": [
+      "Welche Probleme treten bei Ihrem Netzwerk auf?",
+      "Ist das WLAN langsam?",
+      "Haben Sie den Router neu gestartet?",
+      "Nutzen Sie Windows 11?"
+    ],
+    "a": "Welche Probleme treten bei Ihrem Netzwerk auf?",
+    "exp": "Offene Fragen beginnen mit W-Wörtern und laden zu ausführlichen Antworten ein. Geschlossene Fragen lassen sich mit Ja oder Nein beantworten und eignen sich zum Bestätigen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Rechenzentrum verbraucht insgesamt 1.500 MWh im Jahr, die IT-Geräte davon 1.000 MWh. Wie hoch ist der PUE?",
+    "options": [
+      "1,5",
+      "0,67",
+      "2,5",
+      "500"
+    ],
+    "a": "1,5",
+    "exp": "PUE = Gesamtenergie / IT-Energie = 1.500 / 1.000 = 1,5. Je näher der Wert an 1,0 liegt, desto weniger Energie geht für Kühlung und Infrastruktur verloren."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sollte ein Cloud-Vertrag enthalten, um einen Vendor Lock-in zu vermeiden?",
+    "options": [
+      "Regeln für Datenexport und Unterstützung beim Anbieterwechsel",
+      "Eine möglichst lange Mindestlaufzeit ohne Kündigung",
+      "Ausschließlich proprietäre Datenformate",
+      "Einen Verzicht auf alle Kündigungsrechte"
+    ],
+    "a": "Regeln für Datenexport und Unterstützung beim Anbieterwechsel",
+    "exp": "Exit-Klauseln regeln, in welchem Format und in welcher Frist die Daten herausgegeben werden und wie der Anbieter bei der Migration hilft."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Leistung ist typischerweise ein Managed Service?",
+    "options": [
+      "Der Dienstleister betreibt und überwacht die Firewall des Kunden dauerhaft zum Festpreis",
+      "Einmaliger Verkauf eines Laptops",
+      "Eine einmalige Schulung",
+      "Die Reparatur eines Druckers nach Stundenaufwand"
+    ],
+    "a": "Der Dienstleister betreibt und überwacht die Firewall des Kunden dauerhaft zum Festpreis",
+    "exp": "Beim Managed Service übernimmt ein Dienstleister den laufenden Betrieb eines Bereichs mit festgelegten Service-Levels und meist monatlicher Pauschale."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /27?",
+    "options": [
+      "0.0.0.31",
+      "255.255.255.224",
+      "0.0.0.15",
+      "0.0.0.63"
+    ],
+    "a": "0.0.0.31",
+    "exp": "Die Wildcard-Maske ist die invertierte Subnetzmaske: 255.255.255.255 - 255.255.255.224 = 0.0.0.31."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /22?",
+    "options": [
+      "0.0.3.255",
+      "255.255.252.0",
+      "0.0.1.255",
+      "0.0.7.255"
+    ],
+    "a": "0.0.3.255",
+    "exp": "Die Wildcard-Maske ist die invertierte Subnetzmaske: 255.255.255.255 - 255.255.252.0 = 0.0.3.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Wildcard-Maske (z.B. für ACLs oder OSPF) zum Präfix /19?",
+    "options": [
+      "0.0.31.255",
+      "255.255.224.0",
+      "0.0.15.255",
+      "0.0.63.255"
+    ],
+    "a": "0.0.31.255",
+    "exp": "Die Wildcard-Maske ist die invertierte Subnetzmaske: 255.255.255.255 - 255.255.224.0 = 0.0.31.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die erste nutzbare Host-Adresse im Netz von 192.168.44.100/28?",
+    "options": [
+      "192.168.44.97",
+      "192.168.44.96",
+      "192.168.44.113",
+      "192.168.44.101"
+    ],
+    "a": "192.168.44.97",
+    "exp": "Netzadresse 192.168.44.96 (Maske 255.255.255.240), die erste nutzbare Adresse ist die Netzadresse + 1 = 192.168.44.97."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die erste nutzbare Host-Adresse im Netz von 10.12.77.3/21?",
+    "options": [
+      "10.12.72.1",
+      "10.12.72.0",
+      "10.12.80.1",
+      "10.12.77.4"
+    ],
+    "a": "10.12.72.1",
+    "exp": "Netzadresse 10.12.72.0 (Maske 255.255.248.0), die erste nutzbare Adresse ist die Netzadresse + 1 = 10.12.72.1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die erste nutzbare Host-Adresse im Netz von 172.18.200.9/23?",
+    "options": [
+      "172.18.200.1",
+      "172.18.200.0",
+      "172.18.202.1",
+      "172.18.200.10"
+    ],
+    "a": "172.18.200.1",
+    "exp": "Netzadresse 172.18.200.0 (Maske 255.255.254.0), die erste nutzbare Adresse ist die Netzadresse + 1 = 172.18.200.1."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die letzte nutzbare Host-Adresse im Netz von 10.50.3.77/26?",
+    "options": [
+      "10.50.3.126",
+      "10.50.3.127",
+      "10.50.3.62",
+      "10.50.3.128"
+    ],
+    "a": "10.50.3.126",
+    "exp": "Das Netz 10.50.3.64/26 reicht bis zur Broadcast-Adresse 10.50.3.127. Die letzte nutzbare Adresse ist eins davor: 10.50.3.126."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die letzte nutzbare Host-Adresse im Netz von 192.168.130.5/22?",
+    "options": [
+      "192.168.131.254",
+      "192.168.131.255",
+      "192.168.127.254",
+      "192.168.132.0"
+    ],
+    "a": "192.168.131.254",
+    "exp": "Das Netz 192.168.128.0/22 reicht bis zur Broadcast-Adresse 192.168.131.255. Die letzte nutzbare Adresse ist eins davor: 192.168.131.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die letzte nutzbare Host-Adresse im Netz von 172.16.99.140/27?",
+    "options": [
+      "172.16.99.158",
+      "172.16.99.159",
+      "172.16.99.126",
+      "172.16.99.160"
+    ],
+    "a": "172.16.99.158",
+    "exp": "Das Netz 172.16.99.128/27 reicht bis zur Broadcast-Adresse 172.16.99.159. Die letzte nutzbare Adresse ist eins davor: 172.16.99.158."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele nutzbare Host-Adressen bietet ein Netz mit dem Präfix /21?",
+    "options": [
+      "2.046",
+      "2.048",
+      "1.022",
+      "4.094"
+    ],
+    "a": "2.046",
+    "exp": "Host-Bits: 32 - 21 = 11. 2^11 - 2 = 2.046 (Netz- und Broadcast-Adresse abgezogen)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele nutzbare Host-Adressen bietet ein Netz mit dem Präfix /19?",
+    "options": [
+      "8.190",
+      "8.192",
+      "4.094",
+      "16.382"
+    ],
+    "a": "8.190",
+    "exp": "Host-Bits: 32 - 19 = 13. 2^13 - 2 = 8.190 (Netz- und Broadcast-Adresse abgezogen)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele nutzbare Host-Adressen bietet ein Netz mit dem Präfix /18?",
+    "options": [
+      "16.382",
+      "16.384",
+      "8.190",
+      "32.766"
+    ],
+    "a": "16.382",
+    "exp": "Host-Bits: 32 - 18 = 14. 2^14 - 2 = 16.382 (Netz- und Broadcast-Adresse abgezogen)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 192.168.50.0/24 wird nach VLSM der Größe nach aufgeteilt: zuerst 100 Hosts, dann 50 Hosts, dann 20 Hosts. Welches Subnetz erhält die Abteilung mit 20 Hosts?",
+    "options": [
+      "192.168.50.192/27",
+      "192.168.50.192/26",
+      "192.168.50.160/27",
+      "192.168.50.193/27"
+    ],
+    "a": "192.168.50.192/27",
+    "exp": "Die Netze werden der Größe nach lückenlos vergeben: 192.168.50.0/25, 192.168.50.128/26, 192.168.50.192/27. Das Subnetz für 20 Hosts ist 192.168.50.192/27 (30 nutzbare Adressen)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 10.20.0.0/24 wird nach VLSM der Größe nach aufgeteilt: zuerst 60 Hosts, dann 28 Hosts, dann 12 Hosts. Welches Subnetz erhält die Abteilung mit 28 Hosts?",
+    "options": [
+      "10.20.0.64/27",
+      "10.20.0.64/26",
+      "10.20.0.32/27",
+      "10.20.0.65/27"
+    ],
+    "a": "10.20.0.64/27",
+    "exp": "Die Netze werden der Größe nach lückenlos vergeben: 10.20.0.0/26, 10.20.0.64/27, 10.20.0.96/28. Das Subnetz für 28 Hosts ist 10.20.0.64/27 (30 nutzbare Adressen)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche einzelne Route fasst die Netze 172.16.8.0/24 bis 172.16.15.0/24 zusammen?",
+    "options": [
+      "172.16.8.0/21",
+      "172.16.0.0/20",
+      "172.16.8.0/22",
+      "172.16.8.0/24"
+    ],
+    "a": "172.16.8.0/21",
+    "exp": "8 Netze sind 2^3, also 3 Bit weniger als /24: /21. Die gemeinsame Startadresse ist 172.16.8.0, also 172.16.8.0/21."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche einzelne Route fasst die Netze 10.1.64.0/24 bis 10.1.67.0/24 zusammen?",
+    "options": [
+      "10.1.64.0/22",
+      "10.1.64.0/21",
+      "10.1.64.0/23",
+      "10.1.64.0/24"
+    ],
+    "a": "10.1.64.0/22",
+    "exp": "4 Netze sind 2^2, also 2 Bit weniger als /24: /22. Die gemeinsame Startadresse ist 10.1.64.0, also 10.1.64.0/22."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele /64-Subnetze lassen sich aus einem IPv6-Präfix /56 bilden?",
+    "options": [
+      "256",
+      "8",
+      "128",
+      "4.096"
+    ],
+    "a": "256",
+    "exp": "64 - 56 = 8 Bit für Subnetze, 2^8 = 256 Subnetze."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele /64-Subnetze lassen sich aus einem IPv6-Präfix /60 bilden?",
+    "options": [
+      "16",
+      "4",
+      "8",
+      "256"
+    ],
+    "a": "16",
+    "exp": "64 - 60 = 4 Bit für Subnetze, 2^4 = 16 Subnetze."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele /64-Subnetze lassen sich aus einem IPv6-Präfix /52 bilden?",
+    "options": [
+      "4.096",
+      "12",
+      "2.048",
+      "65.536"
+    ],
+    "a": "4.096",
+    "exp": "64 - 52 = 12 Bit für Subnetze, 2^12 = 4.096 Subnetze."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet das Netzpräfix der Adresse 2001:db8:abcd:1234:5678::1/48?",
+    "options": [
+      "2001:db8:abcd::/48",
+      "2001:db8:abcd:1200::/56",
+      "2001:db8::/32",
+      "2001:db8:abcd::/64"
+    ],
+    "a": "2001:db8:abcd::/48",
+    "exp": "Die ersten 48 Bit (12 Hexziffern) bleiben stehen, der Rest wird 0: 2001:db8:abcd::/48."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet das Netzpräfix der Adresse 2001:db8:abcd:1234:5678::1/56?",
+    "options": [
+      "2001:db8:abcd:1200::/56",
+      "2001:db8:abcd:1234::/64",
+      "2001:db8:ab00::/40",
+      "2001:db8:abcd:1200::/64"
+    ],
+    "a": "2001:db8:abcd:1200::/56",
+    "exp": "Die ersten 56 Bit (14 Hexziffern) bleiben stehen, der Rest wird 0: 2001:db8:abcd:1200::/56."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Backup mit 500 GB soll in 4 Stunden über das Netz übertragen werden. Welche Datenrate ist mindestens nötig (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "277,8 Mbit/s",
+      "1.000,0 Mbit/s",
+      "16.666,7 Mbit/s",
+      "34,7 Mbit/s"
+    ],
+    "a": "277,8 Mbit/s",
+    "exp": "500 GB * 8.000 = 4.000.000 Mbit; 4 h = 14.400 s; 4.000.000 Mbit / 14.400 s = 277,8 Mbit/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Backup mit 1.200 GB soll in 8 Stunden über das Netz übertragen werden. Welche Datenrate ist mindestens nötig (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "333,3 Mbit/s",
+      "1.200,0 Mbit/s",
+      "20.000,0 Mbit/s",
+      "41,7 Mbit/s"
+    ],
+    "a": "333,3 Mbit/s",
+    "exp": "1.200 GB * 8.000 = 9.600.000 Mbit; 8 h = 28.800 s; 9.600.000 Mbit / 28.800 s = 333,3 Mbit/s."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie lange dauert es höchstens, alle Passwörter mit 8 Stellen aus nur Kleinbuchstaben (26 Zeichen) durchzuprobieren, wenn 1.000.000.000 Versuche pro Sekunde möglich sind?",
+    "options": [
+      "ca. 3,5 Minuten",
+      "ca. 90,5 Minuten",
+      "ca. 3,5 Sekunden",
+      "ca. 3,5 Stunden"
+    ],
+    "a": "ca. 3,5 Minuten",
+    "exp": "26^8 = 208.827.064.576 Kombinationen; / 1.000.000.000 pro Sekunde = 209 Sekunden = ca. 3,5 Minuten. Jedes weitere Zeichen vervielfacht die Zeit um den Faktor 26."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie lange dauert es höchstens, alle Passwörter mit 10 Stellen aus Groß- und Kleinbuchstaben und Ziffern (62 Zeichen) durchzuprobieren, wenn 10.000.000.000 Versuche pro Sekunde möglich sind?",
+    "options": [
+      "ca. 2,7 Jahre",
+      "ca. 165,0 Jahre",
+      "ca. 2,7 Tage",
+      "ca. 2,7 Sekunden"
+    ],
+    "a": "ca. 2,7 Jahre",
+    "exp": "62^10 = 839.299.365.868.340.224 Kombinationen; / 10.000.000.000 pro Sekunde = 83.929.937 Sekunden = ca. 2,7 Jahre. Jedes weitere Zeichen vervielfacht die Zeit um den Faktor 62."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viel Bit Entropie hat ein zufälliges Passwort mit 12 Zeichen aus einem Vorrat von 62 Zeichen (gerundet)?",
+    "options": [
+      "ca. 71 Bit",
+      "ca. 96 Bit",
+      "ca. 6 Bit",
+      "ca. 36 Bit"
+    ],
+    "a": "ca. 71 Bit",
+    "exp": "Entropie = Länge * log2(Zeichenvorrat) = 12 * 5,95 = 71,5 Bit."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viel Bit Entropie hat ein zufälliges Passwort mit 16 Zeichen aus einem Vorrat von 94 Zeichen (gerundet)?",
+    "options": [
+      "ca. 105 Bit",
+      "ca. 128 Bit",
+      "ca. 7 Bit",
+      "ca. 52 Bit"
+    ],
+    "a": "ca. 105 Bit",
+    "exp": "Entropie = Länge * log2(Zeichenvorrat) = 16 * 6,55 = 104,9 Bit."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele symmetrische Schlüssel werden benötigt, damit 25 Personen jeweils paarweise vertraulich kommunizieren können?",
+    "options": [
+      "300",
+      "50",
+      "600",
+      "25"
+    ],
+    "a": "300",
+    "exp": "Jedes Paar braucht einen eigenen Schlüssel: n * (n - 1) / 2 = 25 * 24 / 2 = 300. Asymmetrisch wären es nur 25 Schlüsselpaare."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele symmetrische Schlüssel werden benötigt, damit 40 Personen jeweils paarweise vertraulich kommunizieren können?",
+    "options": [
+      "780",
+      "80",
+      "1.560",
+      "40"
+    ],
+    "a": "780",
+    "exp": "Jedes Paar braucht einen eigenen Schlüssel: n * (n - 1) / 2 = 40 * 39 / 2 = 780. Asymmetrisch wären es nur 40 Schlüsselpaare."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Sicherheitsvorfall verursacht jeweils 20.000,00 Euro Schaden und tritt statistisch alle 4 Jahre einmal auf. Wie hoch ist der erwartete Schaden pro Jahr?",
+    "options": [
+      "5.000,00 Euro",
+      "80.000,00 Euro",
+      "20.000,00 Euro",
+      "416,67 Euro"
+    ],
+    "a": "5.000,00 Euro",
+    "exp": "Erwarteter Jahresschaden = Schadenshöhe * Häufigkeit pro Jahr = 20.000,00 Euro * 1/4 = 5.000,00 Euro. Eine Schutzmaßnahme lohnt sich, wenn sie pro Jahr weniger kostet als der Betrag, den sie verhindert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Sicherheitsvorfall verursacht jeweils 150.000,00 Euro Schaden und tritt statistisch alle 10 Jahre einmal auf. Wie hoch ist der erwartete Schaden pro Jahr?",
+    "options": [
+      "15.000,00 Euro",
+      "1.500.000,00 Euro",
+      "150.000,00 Euro",
+      "1.250,00 Euro"
+    ],
+    "a": "15.000,00 Euro",
+    "exp": "Erwarteter Jahresschaden = Schadenshöhe * Häufigkeit pro Jahr = 150.000,00 Euro * 1/10 = 15.000,00 Euro. Eine Schutzmaßnahme lohnt sich, wenn sie pro Jahr weniger kostet als der Betrag, den sie verhindert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Monat (30 Tage) erlaubt eine Verfügbarkeit von 99,9 %?",
+    "options": [
+      "43,2 Minuten",
+      "432,0 Minuten",
+      "0,7 Minuten",
+      "518,4 Minuten"
+    ],
+    "a": "43,2 Minuten",
+    "exp": "30 Tage = 43.200 Minuten; (100 % - 99,9 %) * 43.200 = 43,2 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Monat (30 Tage) erlaubt eine Verfügbarkeit von 99,95 %?",
+    "options": [
+      "21,6 Minuten",
+      "216,0 Minuten",
+      "0,4 Minuten",
+      "259,2 Minuten"
+    ],
+    "a": "21,6 Minuten",
+    "exp": "30 Tage = 43.200 Minuten; (100 % - 99,95 %) * 43.200 = 21,6 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 1.200 Wh nutzbare Energie, die angeschlossenen Geräte ziehen 400 W. Wie lange überbrückt sie rechnerisch (ohne Verluste)?",
+    "options": [
+      "180 Minuten",
+      "3 Minuten",
+      "20 Minuten",
+      "360 Minuten"
+    ],
+    "a": "180 Minuten",
+    "exp": "Laufzeit = Energie / Leistung = 1.200 Wh / 400 W = 3,00 h = 180 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 900 Wh nutzbare Energie, die angeschlossenen Geräte ziehen 600 W. Wie lange überbrückt sie rechnerisch (ohne Verluste)?",
+    "options": [
+      "90 Minuten",
+      "2 Minuten",
+      "40 Minuten",
+      "180 Minuten"
+    ],
+    "a": "90 Minuten",
+    "exp": "Laufzeit = Energie / Leistung = 900 Wh / 600 W = 1,50 h = 90 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PoE-Switch hat ein Leistungsbudget von 370 W. Jeder Access Point benötigt am Port 30 W. Wie viele Access Points lassen sich maximal versorgen?",
+    "options": [
+      "12",
+      "13",
+      "24",
+      "10"
+    ],
+    "a": "12",
+    "exp": "370 W / 30 W = 12,33, abgerundet 12 Access Points. Ein weiterer würde das Budget überschreiten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PoE-Switch hat ein Leistungsbudget von 740 W. Jeder Access Point benötigt am Port 45 W. Wie viele Access Points lassen sich maximal versorgen?",
+    "options": [
+      "16",
+      "17",
+      "33",
+      "14"
+    ],
+    "a": "16",
+    "exp": "740 W / 45 W = 16,44, abgerundet 16 Access Points. Ein weiterer würde das Budget überschreiten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Server läuft rund um die Uhr mit durchschnittlich 400 W. Wie hoch sind die Stromkosten pro Jahr (365 Tage) bei 0,30 Euro je kWh?",
+    "options": [
+      "1.051,20 Euro",
+      "43,80 Euro",
+      "1.051.200,00 Euro",
+      "10.512,00 Euro"
+    ],
+    "a": "1.051,20 Euro",
+    "exp": "400 W * 8.760 h = 3.504,0 kWh; 3.504,0 kWh * 0,30 Euro = 1.051,20 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Server läuft rund um die Uhr mit durchschnittlich 250 W. Wie hoch sind die Stromkosten pro Jahr (365 Tage) bei 0,28 Euro je kWh?",
+    "options": [
+      "613,20 Euro",
+      "25,55 Euro",
+      "613.200,00 Euro",
+      "6.132,00 Euro"
+    ],
+    "a": "613,20 Euro",
+    "exp": "250 W * 8.760 h = 2.190,0 kWh; 2.190,0 kWh * 0,28 Euro = 613,20 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein SLA sieht bei unterschrittener Verfügbarkeit eine Gutschrift von 10 % der Monatsgebühr von 2.400,00 Euro vor. Wie hoch ist die Gutschrift?",
+    "options": [
+      "240,00 Euro",
+      "2.160,00 Euro",
+      "2.880,00 Euro",
+      "24,00 Euro"
+    ],
+    "a": "240,00 Euro",
+    "exp": "2.400,00 Euro * 10 % = 240,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein SLA sieht bei unterschrittener Verfügbarkeit eine Gutschrift von 15 % der Monatsgebühr von 850,00 Euro vor. Wie hoch ist die Gutschrift?",
+    "options": [
+      "127,50 Euro",
+      "722,50 Euro",
+      "1.530,00 Euro",
+      "12,75 Euro"
+    ],
+    "a": "127,50 Euro",
+    "exp": "850,00 Euro * 15 % = 127,50 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Firewall kostet 8.000,00 Euro in der Anschaffung und 1.200,00 Euro pro Jahr für Wartung und Lizenzen. Wie hoch sind die Gesamtkosten (TCO) über 5 Jahre?",
+    "options": [
+      "14.000,00 Euro",
+      "9.200,00 Euro",
+      "46.000,00 Euro",
+      "6.000,00 Euro"
+    ],
+    "a": "14.000,00 Euro",
+    "exp": "TCO = Anschaffung + laufende Kosten * Jahre = 8.000,00 Euro + 1.200,00 Euro * 5 = 14.000,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Firewall kostet 3.500,00 Euro in der Anschaffung und 450,00 Euro pro Jahr für Wartung und Lizenzen. Wie hoch sind die Gesamtkosten (TCO) über 4 Jahre?",
+    "options": [
+      "5.300,00 Euro",
+      "3.950,00 Euro",
+      "15.800,00 Euro",
+      "1.800,00 Euro"
+    ],
+    "a": "5.300,00 Euro",
+    "exp": "TCO = Anschaffung + laufende Kosten * Jahre = 3.500,00 Euro + 450,00 Euro * 4 = 5.300,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Notebook kann für 2.900,00 Euro gekauft oder für 36 Monate zu je 95,00 Euro geleast werden. Um wie viel ist Leasing insgesamt teurer?",
+    "options": [
+      "520,00 Euro",
+      "3.420,00 Euro",
+      "1.760,00 Euro",
+      "1.140,00 Euro"
+    ],
+    "a": "520,00 Euro",
+    "exp": "Leasing kostet 36 * 95,00 Euro = 3.420,00 Euro; 3.420,00 Euro - 2.900,00 Euro = 520,00 Euro mehr. Dafür bleibt Liquidität erhalten und die Raten sind sofort Betriebsausgaben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "40 Mitarbeiter nutzen eine Software, höchstens 15 gleichzeitig. Named-User kostet 12,00 Euro, Concurrent-User 25,00 Euro pro Lizenz und Monat. Wie viel spart die günstigere Variante monatlich?",
+    "options": [
+      "105,00 Euro",
+      "480,00 Euro",
+      "375,00 Euro",
+      "520,00 Euro"
+    ],
+    "a": "105,00 Euro",
+    "exp": "Named-User: 40 * 12,00 Euro = 480,00 Euro. Concurrent-User: 15 * 25,00 Euro = 375,00 Euro. Differenz: 105,00 Euro zugunsten von Concurrent-User."
   }
 ]

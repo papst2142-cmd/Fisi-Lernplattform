@@ -361,5 +361,150 @@
       "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z.B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
       "Wartungsvertrag mit Updates für Firewall und Access Points, Monitoring, Firewall-Lizenzverlängerung, Schulung der Mitarbeiter, Backup-Lösung, später Erweiterung um ein Gäste-WLAN."
     ]
+  },
+  {
+    "title": "IPv6-Einführung im Unternehmensnetz",
+    "cat": "netzwerk",
+    "branche": "Maschinenbau (Keller Antriebstechnik GmbH, 180 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Das Unternehmen nutzt bisher nur IPv4 mit privaten Adressen. Der Provider stellt künftig ein IPv6-Präfix 2001:db8:c0:a00::/56 bereit, und ein Großkunde verlangt die Erreichbarkeit des Lieferantenportals über IPv6. Im Netz gibt es die VLANs 10 (Clients), 20 (Server), 30 (WLAN), 40 (Drucker) und 99 (Management).",
+    "auftrag": "Planen Sie die schrittweise Einführung von IPv6 im Dual-Stack-Betrieb, erstellen Sie einen Adressplan und berücksichtigen Sie Sicherheit und Betrieb.",
+    "rahmenbedingungen": [
+      "Präfix vom Provider: 2001:db8:c0:a00::/56",
+      "IPv4 bleibt vorerst parallel in Betrieb",
+      "Clients sollen ihre Adressen automatisch erhalten, Server und Netzwerkgeräte feste Adressen",
+      "Die Firewall unterstützt IPv6, die Regeln existieren bisher nur für IPv4",
+      "Einführung ohne Unterbrechung des Tagesbetriebs"
+    ],
+    "aufgaben": [
+      "Wie viele /64-Netze stehen zur Verfügung? Legen Sie für jedes VLAN ein /64-Präfix fest.",
+      "Wie erhalten Clients und Server ihre IPv6-Adressen? Begründen Sie die Wahl.",
+      "Welche Firewall-Regeln sind für IPv6 zusätzlich nötig, und warum darf ICMPv6 nicht komplett blockiert werden?",
+      "Warum ist NAT bei IPv6 nicht erforderlich, und was schützt die Clients stattdessen?",
+      "Beschreiben Sie eine sinnvolle Reihenfolge für die Einführung."
+    ],
+    "hinweise": [
+      "64 - 56 = 8 Bit, also 256 Netze. Schema mit VLAN-Nummer in den letzten Hexziffern: VLAN 10: 2001:db8:c0:a10::/64, VLAN 20: 2001:db8:c0:a20::/64, VLAN 30: 2001:db8:c0:a30::/64, VLAN 40: 2001:db8:c0:a40::/64, VLAN 99: 2001:db8:c0:a99::/64.",
+      "Clients per SLAAC (Router Advertisements), DNS-Server per RDNSS oder stateless DHCPv6; Privacy Extensions sind möglich. Server, Router und Drucker erhalten statische Adressen (z.B. ::10, ::20), damit DNS-Einträge und Regeln stabil bleiben.",
+      "Die IPv4-Regeln müssen für IPv6 nachgebildet werden: eingehend alles verbieten außer erlaubten Diensten (z.B. HTTPS zum Portal), ausgehend wie bei IPv4. ICMPv6 wird für Neighbor Discovery, Router Advertisements und Path MTU Discovery (Packet Too Big) gebraucht; ohne diese Nachrichten funktioniert IPv6 nicht richtig.",
+      "Es gibt genug globale Adressen für jedes Gerät. Schutz bietet die zustandsorientierte Firewall: Verbindungen von außen werden nur zugelassen, wenn eine Regel sie erlaubt, Antworten auf ausgehende Verbindungen werden automatisch erlaubt.",
+      "Schulung und Planung, Test im Labor, Firewall-Regeln und Monitoring für IPv6 vorbereiten, Management- und Server-VLAN, dann DMZ mit dem Lieferantenportal (AAAA-Eintrag), zuletzt Clients und WLAN. Nach jedem Schritt testen, Dokumentation und IPAM aktualisieren."
+    ]
+  },
+  {
+    "title": "Umstellung der Telefonie auf VoIP mit QoS",
+    "cat": "netzwerk",
+    "branche": "Callcenter-Dienstleister (DialogPlus GmbH, 120 Arbeitsplätze)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Die alte ISDN-Telefonanlage wird abgelöst. Künftig sollen IP-Telefone an allen 120 Arbeitsplätzen über einen SIP-Trunk telefonieren. Das Netz besteht aus einem Core-Switch und vier Access-Switches ohne PoE. Der Internetanschluss hat 100 Mbit/s Download und 40 Mbit/s Upload.",
+    "auftrag": "Planen Sie die Netzwerkanpassungen für VoIP, berechnen Sie den Bandbreitenbedarf und die PoE-Versorgung und sichern Sie eine gute Sprachqualität.",
+    "rahmenbedingungen": [
+      "Bis zu 90 Gespräche gleichzeitig nach außen",
+      "Codec G.711, ca. 100 kbit/s je Gespräch und Richtung inklusive Overhead",
+      "IP-Telefone benötigen je 7 W PoE, die PCs werden am Telefon durchgeschleift",
+      "Die Access-Switches müssen ersetzt werden, Budget für neue Switches: 16.000 Euro netto",
+      "Notrufe müssen auch bei Stromausfall mindestens 30 Minuten möglich sein"
+    ],
+    "aufgaben": [
+      "Berechnen Sie die benötigte Bandbreite für 90 Gespräche und bewerten Sie den Internetanschluss.",
+      "Berechnen Sie den PoE-Bedarf aller Telefone mit 20 % Reserve.",
+      "Wie trennen und priorisieren Sie den Sprachverkehr im LAN und am Router?",
+      "Wie stellen Sie die Stromversorgung für Notrufe sicher?",
+      "Nennen Sie Messwerte und Tests, mit denen Sie die Sprachqualität vor dem Go-Live prüfen."
+    ],
+    "hinweise": [
+      "90 * 100 kbit/s = 9.000 kbit/s = 9 Mbit/s je Richtung. Im Upload sind das 9 / 40 = 22,5 %. Der Anschluss reicht, aber nur mit QoS am Router, damit Uploads (z.B. Backups) die Sprache nicht verdrängen. Alternativ eigener Anschluss für den SIP-Trunk.",
+      "120 * 7 W = 840 W. Mit 20 % Reserve: 840 * 1,2 = 1.008 W. Das Budget muss auf die Access-Switches verteilt werden, z.B. vier Switches mit je mindestens 252 W (besser 370 W).",
+      "Voice-VLAN, das die Telefone per LLDP-MED erhalten, PC-Verkehr bleibt ungetaggt im Daten-VLAN. Sprachpakete mit DSCP EF (46) und CoS 5 markieren, Priority Queue in Switches und Router, Traffic Shaping am Internetanschluss knapp unter der Leitungsrate, damit die Priorisierung greift.",
+      "USV für Core-Switch, Access-Switches, Router und Firewall mit mindestens 30 Minuten Laufzeit bei Last, Überwachung der USV. Alternativ ein Notfalltelefon über Mobilfunk. Dazu die Standortangabe für Notrufe beim Provider pflegen.",
+      "Latenz unter 150 ms, Jitter unter 30 ms, Paketverlust unter 1 %, MOS-Wert über 4. Testanrufe unter Last, Messung mit Monitoring bzw. der Telefonanlage, Prüfung von Rufumleitung, Faxgeräten und Notruf."
+    ]
+  },
+  {
+    "title": "Aufbau einer internen PKI für Server und WLAN",
+    "cat": "sicherheit",
+    "branche": "Stadtwerke (Stadtwerke Talheim, 350 Mitarbeiter)",
+    "schwierigkeit": "Anspruchsvoll",
+    "ausgangssituation": "Interne Webanwendungen laufen mit selbstsignierten Zertifikaten, Mitarbeiter klicken Browserwarnungen weg. Das WLAN nutzt ein gemeinsames Passwort. Die IT möchte eine eigene PKI aufbauen und das WLAN auf 802.1X mit Zertifikaten (EAP-TLS) umstellen. Als Betreiber kritischer Infrastruktur gelten erhöhte Anforderungen.",
+    "auftrag": "Konzipieren Sie die PKI, planen Sie die Zertifikatsverteilung und die Umstellung des WLANs und berücksichtigen Sie Betrieb und Sicherheit.",
+    "rahmenbedingungen": [
+      "Windows-Domäne mit 2 Domänencontrollern, 320 Windows-Notebooks, 40 Diensthandys im MDM",
+      "12 interne Webserver, davon 4 unter Linux",
+      "WLAN mit 45 Access Points und einem Controller, RADIUS-Server vorhanden",
+      "Zertifikate sollen möglichst automatisch ausgestellt und erneuert werden",
+      "Die Umstellung des WLANs darf den Betrieb nicht unterbrechen"
+    ],
+    "aufgaben": [
+      "Beschreiben Sie den Aufbau der PKI und begründen Sie ihn.",
+      "Wie verteilen Sie Vertrauen und Zertifikate auf Notebooks, Handys und Linux-Server?",
+      "Warum ist EAP-TLS sicherer als ein gemeinsames WLAN-Passwort?",
+      "Wie gehen Sie mit verlorenen Geräten und ausscheidenden Mitarbeitern um?",
+      "Planen Sie die Umstellung des WLANs ohne Unterbrechung."
+    ],
+    "hinweise": [
+      "Zweistufig: Offline-Root-CA (ausgeschaltet, sicher verwahrt, lange Laufzeit) und eine Issuing CA in der Domäne für Server-, Computer- und Benutzerzertifikate. Die Root signiert nur die Issuing CA. So bleibt der wertvollste Schlüssel geschützt, die Issuing CA ist bei Kompromittierung ersetzbar. Sperrlisten (CRL) und OCSP hochverfügbar veröffentlichen, private Schlüssel der CAs idealerweise im HSM.",
+      "Root-Zertifikat per Gruppenrichtlinie und MDM verteilen. Notebooks erhalten Computerzertifikate per Autoenrollment (Zertifikatsvorlage), Handys per SCEP über das MDM. Linux-Server erhalten Zertifikate per ACME (z.B. interne ACME-Schnittstelle) oder per CSR; die Root-CA wird in den Systemspeicher aufgenommen. Laufzeiten und Erneuerung überwachen.",
+      "Jedes Gerät hat ein eigenes Zertifikat mit privatem Schlüssel, der das Gerät nicht verlässt (idealerweise im TPM). Es gibt kein gemeinsames Passwort, das weitergegeben oder abgegriffen werden kann. Der Client prüft zudem das Serverzertifikat des RADIUS-Servers und fällt nicht auf gefälschte Access Points herein.",
+      "Zertifikat des Geräts widerrufen (CRL/OCSP), Gerät im AD bzw. MDM deaktivieren oder löschen. Der RADIUS-Server prüft den Sperrstatus bzw. die Kontoeigenschaften und lehnt die Anmeldung ab. Das greift sofort und betrifft nur dieses eine Gerät.",
+      "Neue SSID mit WPA2/WPA3-Enterprise parallel zur alten ausstrahlen, zuerst Pilotgruppe (IT), dann abteilungsweise per Richtlinie das neue WLAN-Profil verteilen, Anmeldungen am RADIUS überwachen. Wenn alle Geräte umgestellt sind, alte SSID abschalten und Passwort ungültig machen."
+    ]
+  },
+  {
+    "title": "Zentrales Logmanagement und Alarmierung",
+    "cat": "sicherheit",
+    "branche": "Onlinehandel (Gartenwelt Direkt GmbH, 90 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Nach einem Angriff auf ein Admin-Konto konnte nicht festgestellt werden, wann und von wo sich der Angreifer angemeldet hatte. Die Logs der Server wurden nach 7 Tagen überschrieben, die Firewall speichert gar nichts dauerhaft. Die Geschäftsführung möchte ein zentrales Logmanagement mit Alarmierung.",
+    "auftrag": "Planen Sie ein zentrales Logmanagement, legen Sie Quellen, Aufbewahrung und Alarme fest und klären Sie die datenschutzrechtlichen Rahmenbedingungen.",
+    "rahmenbedingungen": [
+      "Quellen: 2 Firewalls, 1 VPN-Gateway, 2 Domänencontroller, 14 Server, Webshop, E-Mail-Dienst in der Cloud",
+      "Erwartete Logmenge: ca. 12 GB pro Tag, komprimiert auf ein Viertel",
+      "Aufbewahrung: 90 Tage durchsuchbar",
+      "Es gibt einen Betriebsrat",
+      "Budget für Software und Hardware: 25.000 Euro"
+    ],
+    "aufgaben": [
+      "Welche Ereignisse sollen von welchen Quellen gesammelt werden?",
+      "Berechnen Sie den Speicherbedarf für 90 Tage mit 30 % Reserve.",
+      "Formulieren Sie vier Alarmregeln mit Begründung.",
+      "Welche datenschutzrechtlichen und mitbestimmungsrechtlichen Punkte sind zu klären?",
+      "Wie stellen Sie sicher, dass Logs vollständig, zeitlich korrekt und unverändert sind?"
+    ],
+    "hinweise": [
+      "Firewall und VPN: erlaubte und blockierte Verbindungen, VPN-Anmeldungen. Domänencontroller: Anmeldungen, fehlgeschlagene Anmeldungen, Änderungen an Gruppen und Konten. Server: Systemereignisse, Dienststarts, Anmeldungen. Webshop: Admin-Anmeldungen, Fehler. Cloud-Mail: Anmeldungen, Weiterleitungsregeln.",
+      "12 GB / 4 = 3 GB pro Tag komprimiert. 3 GB * 90 Tage = 270 GB. Mit 30 % Reserve: 270 * 1,3 = 351 GB.",
+      "Mehr als 10 fehlgeschlagene Anmeldungen in 5 Minuten für ein Konto (Brute Force). Anmeldung eines Admin-Kontos außerhalb der Arbeitszeit oder aus dem Ausland. Neues Mitglied in einer Admin-Gruppe. Neue automatische Weiterleitungsregel an externe Adressen im Mailsystem (typisch nach Kontoübernahme).",
+      "Logs enthalten personenbezogene Daten: Zweck (IT-Sicherheit) festlegen, Rechtsgrundlage (berechtigtes Interesse), Speicherdauer begrenzen, Zugriff nur für wenige berechtigte Admins, Eintrag im Verarbeitungsverzeichnis. Die Auswertung ist zur Leistungs- und Verhaltenskontrolle geeignet, daher Mitbestimmung des Betriebsrats und Betriebsvereinbarung (z.B. keine Leistungsauswertung).",
+      "Alle Quellen per NTP synchronisieren, Übertragung verschlüsselt (z.B. Syslog über TLS), Überwachung, ob jede Quelle regelmäßig liefert, Speicherung schreibgeschützt bzw. mit Hashes und eingeschränkten Löschrechten, Backup des Logspeichers."
+    ]
+  },
+  {
+    "title": "Einführung eines Mobile Device Managements",
+    "cat": "systeme",
+    "branche": "Handwerksbetrieb (Elektro Brandt GmbH, 60 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Die Monteure nutzen 45 Firmen-Smartphones und 15 Tablets für Aufträge, Zeiterfassung und E-Mail. Die Geräte werden bisher einzeln von Hand eingerichtet, PINs sind nicht Pflicht, und nach dem Verlust eines Tablets waren Kundendaten ungeschützt. Einige Mitarbeiter möchten zusätzlich ihr privates Handy für E-Mails nutzen.",
+    "auftrag": "Wählen Sie ein MDM-Konzept, legen Sie Richtlinien fest, planen Sie die Einführung und kalkulieren Sie die laufenden Kosten.",
+    "rahmenbedingungen": [
+      "Microsoft 365 wird bereits genutzt",
+      "MDM-Lizenz: 6 Euro pro Gerät und Monat bzw. 8 Euro pro Benutzer und Monat (bis zu 5 Geräte je Benutzer)",
+      "10 der 45 Monteure wollen zusätzlich ihr privates Handy nutzen (BYOD)",
+      "Die Geräte sollen ohne Besuch in der Firma eingerichtet werden können",
+      "Die Einführung soll in 6 Wochen abgeschlossen sein"
+    ],
+    "aufgaben": [
+      "Vergleichen Sie die jährlichen Lizenzkosten pro Gerät und pro Benutzer.",
+      "Legen Sie fünf Richtlinien für die Firmengeräte fest.",
+      "Wie gehen Sie mit den privaten Handys (BYOD) um?",
+      "Wie werden neue Geräte automatisch eingerichtet?",
+      "Was passiert bei Verlust eines Geräts?"
+    ],
+    "hinweise": [
+      "Pro Gerät: 60 Geräte (45 Smartphones + 15 Tablets) + 10 private Handys = 70 Geräte * 6 Euro * 12 = 5.040 Euro pro Jahr. Pro Benutzer: 45 Monteure (Smartphone und Tablet zusammen; 15 davon haben beides) * 8 Euro * 12 = 4.320 Euro pro Jahr. Die private Nutzung ist darin enthalten, da sie zu denselben Benutzern gehört. Die Benutzerlizenz ist günstiger.",
+      "PIN bzw. Biometrie mit Sperre nach wenigen Minuten, Geräteverschlüsselung, automatische Updates mit Mindestversion, nur freigegebene Apps aus einem Firmenkatalog, E-Mail- und WLAN-Profile zentral verteilt, Sperren gerooteter Geräte.",
+      "Kein vollständiges Gerätemanagement auf Privatgeräten. Stattdessen App-Schutzrichtlinien bzw. ein getrennter Arbeitsbereich: Firmendaten nur in verwalteten Apps, kein Kopieren in private Apps, bei Austritt wird nur der Firmenbereich gelöscht. Einwilligung und Regelung in einer Nutzungsvereinbarung, Betriebsrat einbeziehen.",
+      "Automatische Registrierung über die Programme der Hersteller (z.B. Apple Business Manager, Android Zero-Touch) mit dem Händler: Beim ersten Einschalten meldet sich das Gerät beim MDM und lädt Profile und Apps.",
+      "Verlust sofort melden, Gerät im MDM sperren und bei Bedarf komplett löschen, Zugangsdaten bzw. Sitzungen zurücksetzen, Vorfall dokumentieren und prüfen, ob eine Datenschutzmeldung nötig ist (bei verschlüsseltem, gesperrtem Gerät meist nicht)."
+    ]
   }
 ]

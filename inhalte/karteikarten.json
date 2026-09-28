@@ -3790,5 +3790,2081 @@
       "Ein Vertrag mit dem Kunden",
       "Die Rechnung am Projektende"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie groß ist der feste Grundheader eines IPv6-Pakets?",
+    "a": "40 Byte",
+    "a_full": "Der IPv6-Header hat immer 40 Byte. Optionale Angaben stehen nicht im Grundheader, sondern in angehängten Erweiterungsheadern (Extension Headers). Der IPv4-Header ist dagegen 20 bis 60 Byte groß.",
+    "options": [
+      "40 Byte",
+      "20 Byte",
+      "32 Byte",
+      "60 Byte"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Feld im IPv6-Header übernimmt die Aufgabe der TTL aus IPv4?",
+    "a": "Hop Limit",
+    "a_full": "Das Hop Limit wird von jedem Router um 1 verringert. Bei 0 wird das Paket verworfen und der Absender per ICMPv6 (Time Exceeded) informiert, genau wie bei der TTL in IPv4.",
+    "options": [
+      "Hop Limit",
+      "Flow Label",
+      "Traffic Class",
+      "Next Header"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht das EUI-64-Verfahren bei IPv6?",
+    "a": "Es bildet die Interface-ID aus der MAC-Adresse",
+    "a_full": "Die 48-Bit-MAC-Adresse wird in der Mitte geteilt, dazwischen wird FFFE eingefügt und das 7. Bit (Universal/Local-Bit) umgedreht. So entsteht eine 64-Bit-Interface-ID.",
+    "options": [
+      "Es bildet die Interface-ID aus der MAC-Adresse",
+      "Es verschlüsselt die Interface-ID",
+      "Es teilt ein /48-Präfix in /64-Netze auf",
+      "Es rechnet IPv4-Adressen in IPv6-Adressen um"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dienen die Privacy Extensions bei IPv6?",
+    "a": "Zufällige, regelmäßig wechselnde Interface-IDs gegen Nachverfolgung",
+    "a_full": "Eine aus der MAC-Adresse gebildete Interface-ID bleibt in jedem Netz gleich und macht Geräte im Internet wiedererkennbar. Privacy Extensions erzeugen deshalb zufällige temporäre Adressen, die regelmäßig gewechselt werden.",
+    "options": [
+      "Zufällige, regelmäßig wechselnde Interface-IDs gegen Nachverfolgung",
+      "Verschlüsselung aller IPv6-Pakete",
+      "Verstecken des Präfixes hinter NAT",
+      "Sperren von Multicast-Nachrichten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was prüft die Duplicate Address Detection (DAD) bei IPv6?",
+    "a": "Ob eine Adresse im Segment schon vergeben ist",
+    "a_full": "Bevor ein Gerät eine neue IPv6-Adresse nutzt, sendet es eine Neighbor Solicitation an die zugehörige Solicited-Node-Multicast-Adresse. Antwortet niemand, ist die Adresse frei.",
+    "options": [
+      "Ob eine Adresse im Segment schon vergeben ist",
+      "Ob der Router erreichbar ist",
+      "Ob ein DNS-Eintrag doppelt existiert",
+      "Ob zwei Switches dieselbe MAC-Adresse melden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche ICMPv6-Nachricht verteilt ein Router, um Präfix und Standardgateway bekannt zu geben?",
+    "a": "Router Advertisement",
+    "a_full": "Router senden Router Advertisements (RA) regelmäßig und als Antwort auf eine Router Solicitation. Darin stehen das Präfix für SLAAC, die Router-Adresse als Gateway und Flags, ob DHCPv6 genutzt werden soll.",
+    "options": [
+      "Router Advertisement",
+      "Router Solicitation",
+      "Neighbor Advertisement",
+      "Redirect"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet stateless DHCPv6 von stateful DHCPv6?",
+    "a": "Stateless verteilt nur Zusatzangaben wie DNS, die Adresse kommt per SLAAC",
+    "a_full": "Beim stateless DHCPv6 bildet der Client seine Adresse selbst per SLAAC und holt sich nur Zusatzinfos (z.B. DNS-Server). Beim stateful DHCPv6 vergibt der Server auch die Adressen und merkt sich die Zuordnung.",
+    "options": [
+      "Stateless verteilt nur Zusatzangaben wie DNS, die Adresse kommt per SLAAC",
+      "Stateless vergibt Adressen, stateful nur DNS-Server",
+      "Stateless funktioniert nur ohne Router",
+      "Es gibt keinen Unterschied, nur zwei Namen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist eine Anycast-Adresse?",
+    "a": "Eine Adresse mehrerer Geräte, von denen das nächstgelegene antwortet",
+    "a_full": "Bei Anycast tragen mehrere Systeme dieselbe Adresse. Das Routing liefert ein Paket an das nächstgelegene System. Genutzt wird das z.B. bei DNS-Root-Servern und großen Content-Netzen.",
+    "options": [
+      "Eine Adresse mehrerer Geräte, von denen das nächstgelegene antwortet",
+      "Eine Adresse, an die alle Geräte einer Gruppe Pakete erhalten",
+      "Eine Adresse, die genau ein bestimmtes Gerät bezeichnet",
+      "Eine Adresse, die alle Geräte im Segment erreicht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet Dual Stack?",
+    "a": "IPv4 und IPv6 laufen gleichzeitig auf einem Gerät",
+    "a_full": "Beim Dual Stack haben Geräte und Router sowohl eine IPv4- als auch eine IPv6-Konfiguration. Sie können so mit beiden Welten sprechen. Das ist das häufigste Übergangsverfahren.",
+    "options": [
+      "IPv4 und IPv6 laufen gleichzeitig auf einem Gerät",
+      "Zwei Netzwerkkarten werden gebündelt",
+      "Zwei Router arbeiten als redundantes Paar",
+      "IPv6 wird in IPv4-Pakete verpackt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient NAT64 zusammen mit DNS64?",
+    "a": "Reine IPv6-Clients können IPv4-Server erreichen",
+    "a_full": "DNS64 erzeugt für IPv4-only-Ziele eine künstliche IPv6-Adresse. Das NAT64-Gateway übersetzt die Pakete dann zwischen IPv6 und IPv4. So braucht das interne Netz selbst kein IPv4 mehr.",
+    "options": [
+      "Reine IPv6-Clients können IPv4-Server erreichen",
+      "IPv4-Clients erhalten automatisch eine IPv6-Adresse",
+      "Zwei IPv6-Netze werden über das Internet verbunden",
+      "IPv6-Adressen werden auf 64 Bit gekürzt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche IPv6-Multicast-Adresse erreicht alle Router im lokalen Segment?",
+    "a": "ff02::2",
+    "a_full": "ff02::1 erreicht alle Knoten, ff02::2 alle Router im lokalen Segment (link-local). Ein Client sendet z.B. seine Router Solicitation an ff02::2.",
+    "options": [
+      "ff02::2",
+      "ff02::1",
+      "ff02::5",
+      "ff02::1:2"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie heißt die OSPF-Area, mit der alle anderen Areas verbunden sein müssen?",
+    "a": "Area 0 (Backbone)",
+    "a_full": "OSPF teilt große Netze in Areas auf. Die Area 0 ist der Backbone. Alle anderen Areas müssen an sie angebunden sein, damit Routen zwischen den Areas ausgetauscht werden können.",
+    "options": [
+      "Area 0 (Backbone)",
+      "Area 1",
+      "Stub Area",
+      "Totally Stubby Area"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum wählt OSPF in einem Ethernet-Segment einen Designated Router (DR)?",
+    "a": "Um den Austausch der Link-State-Informationen zu bündeln",
+    "a_full": "Ohne DR müsste jeder Router mit jedem anderen eine volle Nachbarschaft aufbauen. Mit DR (und Backup-DR) tauschen alle Router ihre Informationen nur mit dem DR aus, der sie weiterverteilt.",
+    "options": [
+      "Um den Austausch der Link-State-Informationen zu bündeln",
+      "Um den Clients als Standardgateway zu dienen",
+      "Um Schleifen wie beim Spanning Tree zu verhindern",
+      "Um IP-Adressen an die anderen Router zu vergeben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Transportprotokoll und welchen Port nutzt BGP?",
+    "a": "TCP-Port 179",
+    "a_full": "BGP baut zwischen zwei Nachbarn (Peers) eine TCP-Verbindung auf Port 179 auf. TCP sorgt dafür, dass die Routing-Informationen vollständig und in der richtigen Reihenfolge ankommen.",
+    "options": [
+      "TCP-Port 179",
+      "UDP-Port 179",
+      "UDP-Port 520",
+      "TCP-Port 89"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet eBGP von iBGP?",
+    "a": "eBGP verbindet verschiedene autonome Systeme, iBGP arbeitet innerhalb eines AS",
+    "a_full": "External BGP tauscht Routen zwischen Providern bzw. autonomen Systemen aus. Internal BGP verteilt diese Routen innerhalb des eigenen autonomen Systems an die anderen BGP-Router.",
+    "options": [
+      "eBGP verbindet verschiedene autonome Systeme, iBGP arbeitet innerhalb eines AS",
+      "eBGP ist verschlüsselt, iBGP nicht",
+      "eBGP ist für IPv6, iBGP für IPv4",
+      "eBGP nutzt UDP, iBGP nutzt TCP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach welcher Regel wählt ein Router aus mehreren passenden Routen aus?",
+    "a": "Längste Präfixübereinstimmung",
+    "a_full": "Der Router nimmt die spezifischste Route, also die mit der längsten passenden Präfixlänge (Longest Prefix Match). Erst bei gleicher Präfixlänge entscheiden administrative Distanz und Metrik.",
+    "options": [
+      "Längste Präfixübereinstimmung",
+      "Die zuerst eingetragene Route",
+      "Die Standardroute hat immer Vorrang",
+      "Die Route mit dem kürzesten Präfix"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was versteht man unter Konvergenz beim dynamischen Routing?",
+    "a": "Alle Router haben wieder eine einheitliche, aktuelle Sicht auf das Netz",
+    "a_full": "Nach einer Änderung (z.B. Ausfall einer Leitung) tauschen die Router Informationen aus, bis alle Routingtabellen wieder übereinstimmen. Die Zeit bis dahin heißt Konvergenzzeit, in ihr kann es zu Paketverlusten kommen.",
+    "options": [
+      "Alle Router haben wieder eine einheitliche, aktuelle Sicht auf das Netz",
+      "Mehrere Leitungen werden zu einer zusammengefasst",
+      "Router vergeben einheitliche IP-Adressen",
+      "Alle Pakete nehmen denselben Weg"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was verhindert Split Horizon bei Distanzvektor-Protokollen?",
+    "a": "Dass eine Route über die Schnittstelle zurückgemeldet wird, über die sie gelernt wurde",
+    "a_full": "Split Horizon verhindert Routing-Schleifen: Ein Router meldet eine Route nicht an den Nachbarn zurück, von dem er sie gelernt hat. Das bekämpft das Count-to-Infinity-Problem.",
+    "options": [
+      "Dass eine Route über die Schnittstelle zurückgemeldet wird, über die sie gelernt wurde",
+      "Dass zwei Router dieselbe IP-Adresse verwenden",
+      "Dass Broadcasts in andere Netze gelangen",
+      "Dass OSPF-Areas getrennt werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe haben VRRP oder HSRP?",
+    "a": "Ein ausfallsicheres Standardgateway über eine virtuelle IP-Adresse",
+    "a_full": "Zwei oder mehr Router teilen sich eine virtuelle IP- und MAC-Adresse, die als Gateway bei den Clients eingetragen ist. Fällt der aktive Router aus, übernimmt ein anderer die virtuelle Adresse.",
+    "options": [
+      "Ein ausfallsicheres Standardgateway über eine virtuelle IP-Adresse",
+      "Automatische Vergabe von IP-Adressen",
+      "Verschlüsselung zwischen zwei Routern",
+      "Aufteilen eines Netzes in VLANs"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet ECMP beim Routing?",
+    "a": "Lastverteilung über mehrere gleich gute Wege",
+    "a_full": "Equal-Cost Multi-Path: Gibt es mehrere Wege mit gleicher Metrik zum Ziel, trägt der Router alle ein und verteilt die Verbindungen darauf. Das erhöht Bandbreite und Ausfallsicherheit.",
+    "options": [
+      "Lastverteilung über mehrere gleich gute Wege",
+      "Verschlüsselung mehrerer Routen",
+      "Bevorzugung des teuersten Weges",
+      "Nur eine einzige Route pro Ziel erlauben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie groß war eine AS-Nummer ursprünglich und wie groß ist sie heute?",
+    "a": "Früher 16 Bit, heute 32 Bit",
+    "a_full": "Autonome Systeme wurden anfangs mit 16 Bit nummeriert (bis 65.535). Weil diese Nummern knapp wurden, gibt es heute 32-Bit-AS-Nummern (4-Byte-ASN).",
+    "options": [
+      "Früher 16 Bit, heute 32 Bit",
+      "Früher 8 Bit, heute 16 Bit",
+      "Früher 32 Bit, heute 128 Bit",
+      "Immer 48 Bit wie eine MAC-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche 2,4-GHz-Kanäle nutzt man klassisch als drei überlappungsfreie WLAN-Kanäle?",
+    "a": "1, 6 und 11",
+    "a_full": "Im 2,4-GHz-Band liegen die Kanäle nur 5 MHz auseinander, ein Kanal ist aber rund 20 MHz breit. Klassisch nutzt man deshalb 1, 6 und 11. In Europa sind mit 13 Kanälen bei 20 MHz auch 1, 5, 9 und 13 möglich.",
+    "options": [
+      "1, 6 und 11",
+      "1, 2 und 3",
+      "2, 4 und 6",
+      "6, 7 und 8"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist DFS im 5-GHz-WLAN?",
+    "a": "Automatischer Kanalwechsel, wenn Radar erkannt wird",
+    "a_full": "Dynamic Frequency Selection: Viele 5-GHz-Kanäle teilt sich das WLAN mit Wetter- und Flugradar. Erkennt der Access Point ein Radarsignal, muss er den Kanal verlassen.",
+    "options": [
+      "Automatischer Kanalwechsel, wenn Radar erkannt wird",
+      "Automatische Verschlüsselung des Funkkanals",
+      "Verdopplung der Kanalbreite",
+      "Abschalten des 2,4-GHz-Bandes"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Standard beschleunigt das WLAN-Roaming durch schnelle Schlüsselübergabe?",
+    "a": "IEEE 802.11r",
+    "a_full": "802.11r (Fast BSS Transition) übergibt die Schlüssel vorab an den nächsten Access Point. Der Client muss sich beim Wechsel nicht komplett neu anmelden, wichtig z.B. für WLAN-Telefonie.",
+    "options": [
+      "IEEE 802.11r",
+      "IEEE 802.11ac",
+      "IEEE 802.11e",
+      "IEEE 802.3af"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist MU-MIMO?",
+    "a": "Gleichzeitige Übertragung an mehrere Clients über mehrere Antennen",
+    "a_full": "Multi-User MIMO nutzt mehrere Antennen, um mehrere Datenströme gleichzeitig an verschiedene Clients zu senden. Ohne MU-MIMO bedient ein Access Point die Clients nacheinander.",
+    "options": [
+      "Gleichzeitige Übertragung an mehrere Clients über mehrere Antennen",
+      "Mehrere SSIDs auf einem Access Point",
+      "Verbindung mehrerer Access Points per Kabel",
+      "Nutzung beider Frequenzbänder durch einen Client"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was leistet OFDMA bei Wi-Fi 6?",
+    "a": "Es teilt einen Kanal in Ressourceneinheiten für mehrere Clients gleichzeitig",
+    "a_full": "Mit OFDMA wird ein Kanal in kleine Teilbereiche (Resource Units) aufgeteilt. So können viele Clients mit kleinen Datenmengen gleichzeitig senden, was bei vielen Geräten die Verzögerung senkt.",
+    "options": [
+      "Es teilt einen Kanal in Ressourceneinheiten für mehrere Clients gleichzeitig",
+      "Es verschlüsselt die Funkverbindung",
+      "Es verdoppelt die Sendeleistung",
+      "Es ersetzt das 5-GHz-Band"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet Band Steering im WLAN?",
+    "a": "Dualband-Clients werden bevorzugt ins 5-GHz-Band gelenkt",
+    "a_full": "Der Access Point beantwortet Anfragen im 2,4-GHz-Band verzögert oder gar nicht, wenn der Client auch 5 GHz kann. So bleibt das volle 2,4-GHz-Band für ältere Geräte frei.",
+    "options": [
+      "Dualband-Clients werden bevorzugt ins 5-GHz-Band gelenkt",
+      "Der Access Point richtet die Antennen aus",
+      "Gäste werden in ein eigenes VLAN gelenkt",
+      "Die Sendeleistung wird automatisch erhöht"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher WLAN-Standard wird als Wi-Fi 7 bezeichnet?",
+    "a": "IEEE 802.11be",
+    "a_full": "Wi-Fi 7 (802.11be) bringt u.a. 320-MHz-Kanäle im 6-GHz-Band, 4096-QAM und Multi-Link Operation, bei der ein Gerät mehrere Bänder gleichzeitig nutzt.",
+    "options": [
+      "IEEE 802.11be",
+      "IEEE 802.11ax",
+      "IEEE 802.11ac",
+      "IEEE 802.11ad"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was sagt ein RSSI-Wert von -65 dBm aus?",
+    "a": "Die empfangene Signalstärke, je näher an 0, desto stärker",
+    "a_full": "dBm-Werte beim WLAN sind negativ. -30 dBm ist sehr stark, -67 dBm gilt als gute Grenze für Sprache und Video, unter -80 dBm wird die Verbindung instabil.",
+    "options": [
+      "Die empfangene Signalstärke, je näher an 0, desto stärker",
+      "Die Verzögerung in Millisekunden",
+      "Die Anzahl der verbundenen Clients",
+      "Die verwendete Kanalbreite"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist eine WLAN-Ausleuchtung (Site Survey)?",
+    "a": "Messung der Funkabdeckung vor Ort, um Access Points zu planen",
+    "a_full": "Bei einer Ausleuchtung werden Signalstärke, Störungen und Kanalbelegung gemessen. Daraus ergeben sich Anzahl, Standort und Kanäle der Access Points.",
+    "options": [
+      "Messung der Funkabdeckung vor Ort, um Access Points zu planen",
+      "Ein Lasttest des Internetanschlusses",
+      "Die Suche nach offenen Ports",
+      "Das Zählen der Netzwerkdosen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was steht im SOA-Eintrag einer DNS-Zone?",
+    "a": "Verwaltungsdaten wie primärer Nameserver, Seriennummer und Zeiten",
+    "a_full": "Start of Authority: Er nennt den primären Nameserver, die Kontaktadresse, die Seriennummer der Zone sowie Zeiten für Aktualisierung, Wiederholung und Ablauf bei sekundären Servern.",
+    "options": [
+      "Verwaltungsdaten wie primärer Nameserver, Seriennummer und Zeiten",
+      "Die Mailserver der Domain",
+      "Die IPv6-Adresse der Domain",
+      "Das TLS-Zertifikat der Domain"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Zonentransfer (AXFR) im DNS?",
+    "a": "Die Kopie der kompletten Zone vom primären zum sekundären Nameserver",
+    "a_full": "Beim AXFR überträgt der primäre Server die ganze Zone per TCP an einen sekundären Server. Beim IXFR werden nur die Änderungen übertragen. Zonentransfers sollten nur für bekannte Server erlaubt sein.",
+    "options": [
+      "Die Kopie der kompletten Zone vom primären zum sekundären Nameserver",
+      "Der Umzug einer Domain zu einem anderen Registrar",
+      "Die Weiterleitung einer Anfrage an einen Forwarder",
+      "Die Übersetzung eines Namens in eine IP-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür dient ein SRV-Eintrag im DNS?",
+    "a": "Er nennt Server und Port für einen bestimmten Dienst",
+    "a_full": "Ein SRV-Eintrag wie _ldap._tcp.firma.local nennt Host, Port, Priorität und Gewichtung eines Dienstes. Windows-Clients finden so z.B. die Domänencontroller im Active Directory.",
+    "options": [
+      "Er nennt Server und Port für einen bestimmten Dienst",
+      "Er legt die Mailserver fest",
+      "Er speichert Schlüssel für die E-Mail-Signatur",
+      "Er verweist auf einen Aliasnamen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein DNS-Forwarder?",
+    "a": "Ein Server, an den nicht selbst beantwortbare Anfragen weitergereicht werden",
+    "a_full": "Ein interner DNS-Server beantwortet die eigene Zone selbst und gibt alle anderen Anfragen an einen Forwarder weiter, z.B. den DNS-Server des Providers.",
+    "options": [
+      "Ein Server, an den nicht selbst beantwortbare Anfragen weitergereicht werden",
+      "Ein Eintrag, der eine Domain auf eine andere umleitet",
+      "Ein Router, der DNS-Pakete blockiert",
+      "Ein sekundärer Server mit Zonenkopie"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was legt die TTL eines DNS-Eintrags fest?",
+    "a": "Wie lange der Eintrag zwischengespeichert werden darf",
+    "a_full": "Die Time to Live eines DNS-Eintrags gibt in Sekunden an, wie lange Resolver und Clients die Antwort im Cache behalten dürfen. Vor einem Umzug setzt man sie herunter, damit Änderungen schnell wirken.",
+    "options": [
+      "Wie lange der Eintrag zwischengespeichert werden darf",
+      "Wie viele Router eine Anfrage passieren darf",
+      "Wie lange die Domain registriert ist",
+      "Wie oft ein Client neu anfragen muss"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Split-DNS?",
+    "a": "Für denselben Namen gibt es intern und extern unterschiedliche Antworten",
+    "a_full": "Beim Split-DNS liefert der interne DNS-Server für z.B. mail.firma.de die interne Adresse, der öffentliche DNS-Server die öffentliche Adresse. Interne Clients erreichen den Dienst so direkt.",
+    "options": [
+      "Für denselben Namen gibt es intern und extern unterschiedliche Antworten",
+      "Eine Zone wird auf zwei Server verteilt",
+      "Anfragen werden abwechselnd an zwei Server geschickt",
+      "IPv4 und IPv6 nutzen getrennte DNS-Server"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet eine iterative von einer rekursiven DNS-Anfrage?",
+    "a": "Iterativ gibt es nur einen Verweis, rekursiv die fertige Antwort",
+    "a_full": "Bei einer rekursiven Anfrage erwartet der Client eine vollständige Antwort, der Resolver fragt dafür selbst weiter. Bei einer iterativen Anfrage antwortet der Server nur mit einem Verweis auf den nächsten zuständigen Server.",
+    "options": [
+      "Iterativ gibt es nur einen Verweis, rekursiv die fertige Antwort",
+      "Iterativ nutzt TCP, rekursiv UDP",
+      "Iterativ ist verschlüsselt, rekursiv nicht",
+      "Iterativ fragt nur IPv6-Adressen ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche DHCP-Option überträgt das Standardgateway?",
+    "a": "Option 3 (Router)",
+    "a_full": "Wichtige DHCP-Optionen: 1 Subnetzmaske, 3 Router (Standardgateway), 6 DNS-Server, 15 Domänenname, 51 Lease-Dauer.",
+    "options": [
+      "Option 3 (Router)",
+      "Option 6",
+      "Option 15",
+      "Option 51"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche DHCP-Optionen braucht ein klassischer PXE-Netzwerkboot?",
+    "a": "Option 66 und 67",
+    "a_full": "Option 66 nennt den TFTP-Bootserver, Option 67 den Namen der Bootdatei. Der Client lädt diese Datei per TFTP und startet damit z.B. eine Installationsumgebung.",
+    "options": [
+      "Option 66 und 67",
+      "Option 1 und 3",
+      "Option 6 und 15",
+      "Option 51 und 53"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche UDP-Ports verwendet DHCPv6?",
+    "a": "546 (Client) und 547 (Server)",
+    "a_full": "DHCPv6 nutzt eigene Ports: Clients lauschen auf UDP 546, Server und Relays auf UDP 547. DHCP für IPv4 nutzt dagegen die Ports 67 (Server) und 68 (Client).",
+    "options": [
+      "546 (Client) und 547 (Server)",
+      "67 (Client) und 68 (Server)",
+      "5353 (Client) und 5355 (Server)",
+      "546 (Server) und 547 (Client)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Ausschlussbereich in einem DHCP-Bereich?",
+    "a": "Adressen im Bereich, die der Server nicht vergibt",
+    "a_full": "Ein Ausschluss (Exclusion) nimmt Adressen innerhalb des Bereichs von der Vergabe aus, z.B. für Drucker oder Server mit fester Adresse. So entstehen keine Adresskonflikte.",
+    "options": [
+      "Adressen im Bereich, die der Server nicht vergibt",
+      "Clients, die keine Adresse erhalten dürfen",
+      "Adressen außerhalb des Subnetzes",
+      "Adressen, die nur nachts vergeben werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Carrier-Grade NAT (CGNAT)?",
+    "a": "NAT beim Provider, viele Kunden teilen sich eine öffentliche IPv4-Adresse",
+    "a_full": "Wegen der IPv4-Knappheit übersetzen Provider die Adressen ihrer Kunden noch einmal selbst. Der Kundenrouter erhält dann keine öffentliche IPv4-Adresse, Portweiterleitungen von außen funktionieren nicht mehr.",
+    "options": [
+      "NAT beim Provider, viele Kunden teilen sich eine öffentliche IPv4-Adresse",
+      "NAT mit besonders hoher Geschwindigkeit",
+      "NAT nur für IPv6-Adressen",
+      "Verschlüsseltes NAT zwischen zwei Standorten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist statisches NAT?",
+    "a": "Eine feste 1:1-Zuordnung einer internen zu einer öffentlichen Adresse",
+    "a_full": "Beim statischen NAT ist ein interner Server dauerhaft unter einer bestimmten öffentlichen Adresse erreichbar. Beim PAT teilen sich dagegen viele interne Geräte eine öffentliche Adresse über verschiedene Ports.",
+    "options": [
+      "Eine feste 1:1-Zuordnung einer internen zu einer öffentlichen Adresse",
+      "Viele Geräte teilen sich eine Adresse über Ports",
+      "Die Adresse wechselt bei jeder Verbindung",
+      "NAT ohne Router direkt am Switch"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Feld im IP-Header nutzt man, um Pakete für QoS zu markieren?",
+    "a": "DSCP im DS-Feld",
+    "a_full": "Differentiated Services Code Point: 6 Bit im früheren Type-of-Service-Feld. Router und Switches ordnen Pakete anhand des DSCP-Werts einer Warteschlange zu.",
+    "options": [
+      "DSCP im DS-Feld",
+      "TTL",
+      "Frame Check Sequence",
+      "Fragment Offset"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche DSCP-Klasse wird üblicherweise für Sprachdaten verwendet?",
+    "a": "EF (Expedited Forwarding, Wert 46)",
+    "a_full": "EF steht für bevorzugte Weiterleitung mit geringer Verzögerung und wird für VoIP-Sprachdaten genutzt. Normaler Verkehr läuft als Best Effort (Wert 0).",
+    "options": [
+      "EF (Expedited Forwarding, Wert 46)",
+      "BE (Best Effort, Wert 0)",
+      "AF11 (Wert 10)",
+      "CS1 (Wert 8)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet Traffic Shaping von Traffic Policing?",
+    "a": "Shaping puffert Überschuss und verzögert ihn, Policing verwirft ihn",
+    "a_full": "Beide begrenzen die Bandbreite. Shaping hält überzählige Pakete in einem Puffer zurück und sendet sie später (glatter Verkehr). Policing verwirft oder markiert alles über dem Limit sofort.",
+    "options": [
+      "Shaping puffert Überschuss und verzögert ihn, Policing verwirft ihn",
+      "Shaping verwirft Pakete, Policing puffert sie",
+      "Shaping gilt für UDP, Policing für TCP",
+      "Beide sind dasselbe"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient LLDP?",
+    "a": "Nachbarerkennung zwischen direkt verbundenen Netzwerkgeräten",
+    "a_full": "Mit dem Link Layer Discovery Protocol melden Geräte ihren Namen, Port, ihre Fähigkeiten und z.B. das Voice-VLAN an direkte Nachbarn. So lässt sich schnell sehen, was an welchem Port hängt. CDP ist das Cisco-eigene Gegenstück.",
+    "options": [
+      "Nachbarerkennung zwischen direkt verbundenen Netzwerkgeräten",
+      "Verteilung von IP-Adressen",
+      "Vermeidung von Switch-Schleifen",
+      "Zeitsynchronisation im Netz"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Port Mirroring (SPAN)?",
+    "a": "Der Verkehr eines Ports wird auf einen Analyseport kopiert",
+    "a_full": "Ein Switch schickt eine Kopie aller Frames eines oder mehrerer Ports bzw. VLANs an einen Spiegelport. Dort kann z.B. Wireshark oder ein IDS den Verkehr auswerten.",
+    "options": [
+      "Der Verkehr eines Ports wird auf einen Analyseport kopiert",
+      "Zwei Ports werden zu einer Leitung gebündelt",
+      "Ein Port wird bei Ausfall automatisch ersetzt",
+      "Der Switch spiegelt seine Konfiguration auf einen zweiten Switch"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was sind Jumbo Frames?",
+    "a": "Ethernet-Frames mit einer MTU über 1500 Byte, meist 9000",
+    "a_full": "Jumbo Frames senken bei großen Datenmengen (z.B. iSCSI-Speichernetz) den Overhead. Alle Geräte auf dem Weg müssen die größere MTU unterstützen, sonst gibt es Fehler.",
+    "options": [
+      "Ethernet-Frames mit einer MTU über 1500 Byte, meist 9000",
+      "Frames mit mehreren VLAN-Tags",
+      "Besonders kleine Frames für Sprachdaten",
+      "Frames an die Broadcast-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt Storm Control an einem Switchport?",
+    "a": "Es begrenzt Broadcast- und Multicast-Fluten",
+    "a_full": "Überschreitet der Anteil von Broadcast-, Multicast- oder unbekanntem Unicast-Verkehr eine Schwelle, verwirft der Switch den Überschuss oder schaltet den Port ab. Das schützt z.B. bei einer Schleife.",
+    "options": [
+      "Es begrenzt Broadcast- und Multicast-Fluten",
+      "Es schützt den Switch vor Überspannung",
+      "Es verteilt Last auf mehrere Ports",
+      "Es schaltet PoE bei Gewitter ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist VXLAN?",
+    "a": "Tunnelung von Layer-2-Netzen über ein Layer-3-Netz per UDP",
+    "a_full": "Virtual Extensible LAN verpackt Ethernet-Frames in UDP (Port 4789). Die 24-Bit-Kennung erlaubt rund 16 Millionen Segmente statt 4094 VLANs. Eingesetzt wird es vor allem in Rechenzentren.",
+    "options": [
+      "Tunnelung von Layer-2-Netzen über ein Layer-3-Netz per UDP",
+      "Ein VLAN mit besonders hoher Geschwindigkeit",
+      "Eine Verschlüsselung für WLAN",
+      "Ein Glasfaserstandard für 100 Gbit/s"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was gibt die MSS bei TCP an?",
+    "a": "Die größte Nutzdatenmenge eines TCP-Segments",
+    "a_full": "Maximum Segment Size: Bei einer MTU von 1500 Byte bleiben nach 20 Byte IP- und 20 Byte TCP-Header 1460 Byte Nutzdaten. Die MSS wird beim Verbindungsaufbau ausgehandelt.",
+    "options": [
+      "Die größte Nutzdatenmenge eines TCP-Segments",
+      "Die maximale Anzahl offener TCP-Verbindungen",
+      "Die maximale Übertragungsgeschwindigkeit",
+      "Die größte Portnummer"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was regelt das Sliding Window bei TCP?",
+    "a": "Wie viele Daten ohne Bestätigung gesendet werden dürfen",
+    "a_full": "Das Empfangsfenster (Window Size) sagt dem Sender, wie viele Bytes er schicken darf, bevor eine Bestätigung kommen muss. So passt TCP die Datenmenge an den Empfänger an (Flusskontrolle).",
+    "options": [
+      "Wie viele Daten ohne Bestätigung gesendet werden dürfen",
+      "Die Reihenfolge der Ports",
+      "Die Verschlüsselung der Verbindung",
+      "Die Größe der IP-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll meldet Multicast-Gruppenmitgliedschaften in IPv4-Netzen?",
+    "a": "IGMP",
+    "a_full": "Mit dem Internet Group Management Protocol melden Hosts, welche Multicast-Gruppen sie empfangen wollen. Switches mit IGMP Snooping leiten Multicast dann nur an diese Ports. Bei IPv6 übernimmt das MLD.",
+    "options": [
+      "IGMP",
+      "ICMP",
+      "ARP",
+      "SNMP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher ICMP-Typ meldet \"Zeit überschritten\" und wird von traceroute ausgewertet?",
+    "a": "Typ 11 (Time Exceeded)",
+    "a_full": "Traceroute sendet Pakete mit steigender TTL. Jeder Router, bei dem die TTL 0 erreicht, antwortet mit ICMP Typ 11. So wird jeder Router auf dem Weg sichtbar.",
+    "options": [
+      "Typ 11 (Time Exceeded)",
+      "Typ 0 (Echo Reply)",
+      "Typ 3 (Destination Unreachable)",
+      "Typ 8 (Echo Request)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche SNMP-Version bietet Authentifizierung und Verschlüsselung?",
+    "a": "SNMPv3",
+    "a_full": "SNMPv1 und v2c übertragen den Community-String im Klartext. Erst SNMPv3 bietet Benutzer mit Authentifizierung (z.B. SHA) und Verschlüsselung (z.B. AES).",
+    "options": [
+      "SNMPv3",
+      "SNMPv1",
+      "SNMPv2c",
+      "Keine, SNMP ist immer unverschlüsselt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein SNMP-Trap?",
+    "a": "Eine unaufgeforderte Meldung eines Geräts an den Management-Server",
+    "a_full": "Normalerweise fragt der Management-Server die Geräte ab (Polling). Bei einem Trap meldet sich das Gerät selbst, z.B. wenn ein Port ausfällt, standardmäßig an UDP-Port 162.",
+    "options": [
+      "Eine unaufgeforderte Meldung eines Geräts an den Management-Server",
+      "Eine Falle für Angreifer",
+      "Eine Abfrage aller Werte eines Geräts",
+      "Eine Sperre für unbekannte Geräte"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Syslog-Schweregrad ist der kritischste?",
+    "a": "0 (Emergency)",
+    "a_full": "Syslog kennt 8 Stufen: 0 Emergency, 1 Alert, 2 Critical, 3 Error, 4 Warning, 5 Notice, 6 Informational, 7 Debug. Je kleiner die Zahl, desto schwerer die Meldung.",
+    "options": [
+      "0 (Emergency)",
+      "7 (Debug)",
+      "3 (Error)",
+      "4 (Warning)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür nutzt man NetFlow bzw. IPFIX?",
+    "a": "Auswertung, wer mit wem wie viel Verkehr austauscht",
+    "a_full": "Router und Switches fassen Verbindungen zu Flows zusammen (Quelle, Ziel, Ports, Datenmenge) und exportieren sie an einen Collector. So lassen sich Bandbreitenfresser und Auffälligkeiten finden.",
+    "options": [
+      "Auswertung, wer mit wem wie viel Verkehr austauscht",
+      "Verschlüsselung von Verbindungen",
+      "Automatische Vergabe von VLANs",
+      "Zeitsynchronisation im Netzwerk"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist Vectoring bei VDSL?",
+    "a": "Ausgleich des Übersprechens zwischen Leitungen für mehr Bandbreite",
+    "a_full": "Adern im selben Kabelbündel stören sich gegenseitig (Übersprechen). Beim Vectoring rechnet die Technik im Verteiler diese Störungen heraus und erreicht so höhere Geschwindigkeiten.",
+    "options": [
+      "Ausgleich des Übersprechens zwischen Leitungen für mehr Bandbreite",
+      "Bündelung von zwei DSL-Anschlüssen",
+      "Verschlüsselung der DSL-Leitung",
+      "Umstellung von Kupfer auf Glasfaser"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll transportiert bei VoIP die eigentlichen Sprachdaten?",
+    "a": "RTP",
+    "a_full": "Das Real-time Transport Protocol überträgt die Sprach- und Videodaten per UDP, mit Zeitstempeln und Sequenznummern. SIP baut das Gespräch nur auf und ab.",
+    "options": [
+      "RTP",
+      "SIP",
+      "SDP",
+      "SNMP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Duplex-Mismatch?",
+    "a": "Eine Seite arbeitet mit Vollduplex, die andere mit Halbduplex",
+    "a_full": "Stimmen die Duplex-Einstellungen der beiden Seiten nicht überein, entstehen Kollisionen und späte Fehler. Die Verbindung funktioniert, ist aber sehr langsam. Beide Seiten sollten auf Autonegotiation stehen.",
+    "options": [
+      "Eine Seite arbeitet mit Vollduplex, die andere mit Halbduplex",
+      "Zwei Geräte haben dieselbe IP-Adresse",
+      "Ein Kabel ist falsch gecrimpt",
+      "Zwei VLANs haben dieselbe ID"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet eine Blockchiffre von einer Stromchiffre?",
+    "a": "Die Blockchiffre verschlüsselt feste Blöcke, die Stromchiffre Bit für Bit",
+    "a_full": "Eine Blockchiffre wie AES verarbeitet Blöcke fester Länge (bei AES 128 Bit). Eine Stromchiffre wie ChaCha20 verknüpft den Klartext fortlaufend mit einem Schlüsselstrom.",
+    "options": [
+      "Die Blockchiffre verschlüsselt feste Blöcke, die Stromchiffre Bit für Bit",
+      "Die Blockchiffre ist asymmetrisch, die Stromchiffre symmetrisch",
+      "Die Stromchiffre braucht keinen Schlüssel",
+      "Die Blockchiffre funktioniert nur für Festplatten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum gilt der Betriebsmodus ECB als unsicher?",
+    "a": "Gleiche Klartextblöcke ergeben gleiche Geheimtextblöcke",
+    "a_full": "Im Electronic Code Book wird jeder Block einzeln mit demselben Schlüssel verschlüsselt. Muster im Klartext bleiben so im Geheimtext sichtbar. Sichere Modi wie GCM oder CBC mischen einen Zufallswert bzw. vorherige Blöcke ein.",
+    "options": [
+      "Gleiche Klartextblöcke ergeben gleiche Geheimtextblöcke",
+      "Er nutzt zu kurze Schlüssel",
+      "Er ist zu langsam",
+      "Er funktioniert nur mit RSA"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was leistet der Betriebsmodus AES-GCM zusätzlich zur Verschlüsselung?",
+    "a": "Er prüft die Integrität und Echtheit der Daten",
+    "a_full": "GCM (Galois/Counter Mode) ist eine authentifizierte Verschlüsselung: Neben dem Geheimtext entsteht ein Prüfwert (Tag). Wurde der Geheimtext verändert, schlägt die Prüfung beim Entschlüsseln fehl.",
+    "options": [
+      "Er prüft die Integrität und Echtheit der Daten",
+      "Er komprimiert die Daten",
+      "Er ersetzt den Schlüsselaustausch",
+      "Er macht die Verschlüsselung asymmetrisch"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein HMAC?",
+    "a": "Ein Prüfwert aus Hashfunktion und geheimem Schlüssel",
+    "a_full": "Ein HMAC (Hash-based Message Authentication Code) bildet den Hash über Nachricht und gemeinsamen Schlüssel. Nur wer den Schlüssel kennt, kann den richtigen Wert erzeugen. So sind Integrität und Herkunft geprüft.",
+    "options": [
+      "Ein Prüfwert aus Hashfunktion und geheimem Schlüssel",
+      "Eine Hashfunktion ohne Schlüssel",
+      "Ein asymmetrisches Verschlüsselungsverfahren",
+      "Ein Zertifikatsformat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welchen Vorteil hat Kryptografie mit elliptischen Kurven (ECC) gegenüber RSA?",
+    "a": "Gleiche Sicherheit mit deutlich kürzeren Schlüsseln",
+    "a_full": "Ein ECC-Schlüssel mit 256 Bit bietet etwa die Sicherheit eines RSA-Schlüssels mit 3072 Bit. Das spart Rechenzeit, Speicher und Bandbreite, z.B. auf Smartcards und Smartphones.",
+    "options": [
+      "Gleiche Sicherheit mit deutlich kürzeren Schlüsseln",
+      "ECC ist symmetrisch und braucht keinen Schlüsselaustausch",
+      "ECC ist gegen Quantencomputer sicher",
+      "ECC braucht keine Zertifikate"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient ein Initialisierungsvektor (IV) bei der Verschlüsselung?",
+    "a": "Damit gleiche Klartexte bei gleichem Schlüssel unterschiedlich verschlüsselt werden",
+    "a_full": "Der IV ist ein Zufallswert oder Zähler, der beim Start der Verschlüsselung eingemischt wird. Er muss nicht geheim sein, darf aber mit demselben Schlüssel nicht wiederverwendet werden.",
+    "options": [
+      "Damit gleiche Klartexte bei gleichem Schlüssel unterschiedlich verschlüsselt werden",
+      "Er ersetzt den geheimen Schlüssel",
+      "Er speichert das Passwort des Benutzers",
+      "Er startet den Rechner sicher"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Kollision bei einer Hashfunktion?",
+    "a": "Zwei verschiedene Eingaben ergeben denselben Hashwert",
+    "a_full": "Da Hashwerte eine feste Länge haben, gibt es theoretisch immer Kollisionen. Eine sichere Hashfunktion macht es aber praktisch unmöglich, sie gezielt zu finden. Bei MD5 und SHA-1 ist das gelungen.",
+    "options": [
+      "Zwei verschiedene Eingaben ergeben denselben Hashwert",
+      "Zwei Personen nutzen dasselbe Passwort",
+      "Ein Hashwert lässt sich zurückrechnen",
+      "Zwei Pakete stoßen im Netzwerk zusammen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet einen Pepper von einem Salt beim Passwort-Hashing?",
+    "a": "Der Pepper ist geheim und wird nicht in der Datenbank gespeichert",
+    "a_full": "Ein Salt ist pro Passwort zufällig und steht offen neben dem Hash. Ein Pepper ist ein zusätzlicher geheimer Wert, der z.B. in der Anwendung oder einem HSM liegt. Wird nur die Datenbank gestohlen, fehlt dem Angreifer der Pepper.",
+    "options": [
+      "Der Pepper ist geheim und wird nicht in der Datenbank gespeichert",
+      "Der Pepper ist für jedes Passwort neu",
+      "Der Pepper ersetzt den Hash",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient OCSP?",
+    "a": "Zur Online-Prüfung, ob ein Zertifikat zurückgezogen wurde",
+    "a_full": "Mit dem Online Certificate Status Protocol fragt ein Client bei der CA nach, ob ein Zertifikat noch gültig ist. Das ist aktueller als eine Sperrliste (CRL). Beim OCSP Stapling liefert der Server die Antwort gleich mit.",
+    "options": [
+      "Zur Online-Prüfung, ob ein Zertifikat zurückgezogen wurde",
+      "Zum Erstellen neuer Zertifikate",
+      "Zum Verschlüsseln von E-Mails",
+      "Zum Tausch von Schlüsseln per Diffie-Hellman"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Zertifikatskette (Chain of Trust)?",
+    "a": "Die Vertrauenskette vom Serverzertifikat über Zwischen-CAs bis zur Root-CA",
+    "a_full": "Das Serverzertifikat ist von einer Zwischenzertifizierungsstelle signiert, diese von der Root-CA. Das Root-Zertifikat liegt im Vertrauensspeicher von Browser oder Betriebssystem. Fehlt ein Glied, erscheint eine Warnung.",
+    "options": [
+      "Die Vertrauenskette vom Serverzertifikat über Zwischen-CAs bis zur Root-CA",
+      "Eine Liste zurückgezogener Zertifikate",
+      "Mehrere Zertifikate für dieselbe Domain",
+      "Eine Sammlung privater Schlüssel"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für welche Namen gilt ein Wildcard-Zertifikat für *.firma.de?",
+    "a": "Für alle direkten Subdomains wie shop.firma.de",
+    "a_full": "Der Stern ersetzt genau eine Ebene. shop.firma.de und mail.firma.de sind abgedeckt, firma.de selbst und a.b.firma.de dagegen nicht.",
+    "options": [
+      "Für alle direkten Subdomains wie shop.firma.de",
+      "Für firma.de und alle Ebenen darunter",
+      "Nur für www.firma.de",
+      "Für alle Domains, die firma enthalten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht der Eintrag SAN in einem Zertifikat?",
+    "a": "Subject Alternative Name: weitere Namen, für die das Zertifikat gilt",
+    "a_full": "Im SAN-Feld stehen alle Hostnamen (und ggf. IP-Adressen), für die das Zertifikat gültig ist. Browser prüfen heute nur noch dieses Feld und nicht mehr den Common Name.",
+    "options": [
+      "Subject Alternative Name: weitere Namen, für die das Zertifikat gilt",
+      "Storage Area Network",
+      "Secure Authentication Number",
+      "Signed Access Node"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was leistet das ACME-Protokoll, z.B. bei Let's Encrypt?",
+    "a": "Automatische Ausstellung und Verlängerung von Zertifikaten",
+    "a_full": "ACME prüft automatisch, ob der Antragsteller die Domain kontrolliert (z.B. per HTTP- oder DNS-Challenge), und stellt dann das Zertifikat aus. Ein Dienst auf dem Server verlängert es regelmäßig.",
+    "options": [
+      "Automatische Ausstellung und Verlängerung von Zertifikaten",
+      "Verschlüsselung von Festplatten",
+      "Anmeldung per Fingerabdruck",
+      "Überwachung von Firewall-Regeln"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche elektronische Signatur ist nach eIDAS der handschriftlichen Unterschrift gleichgestellt?",
+    "a": "Die qualifizierte elektronische Signatur",
+    "a_full": "eIDAS unterscheidet einfache, fortgeschrittene und qualifizierte elektronische Signaturen. Nur die qualifizierte (mit qualifiziertem Zertifikat und sicherer Signaturerstellungseinheit) ersetzt die Schriftform.",
+    "options": [
+      "Die qualifizierte elektronische Signatur",
+      "Die einfache elektronische Signatur",
+      "Die fortgeschrittene elektronische Signatur",
+      "Eine eingescannte Unterschrift"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum braucht man Post-Quanten-Kryptografie?",
+    "a": "Quantencomputer könnten RSA und ECC brechen",
+    "a_full": "Mit Shors Algorithmus könnte ein leistungsfähiger Quantencomputer die Faktorisierung und diskrete Logarithmen effizient lösen. Neue Verfahren wie ML-KEM (Kyber) sollen auch dann sicher bleiben.",
+    "options": [
+      "Quantencomputer könnten RSA und ECC brechen",
+      "Quantencomputer machen AES überflüssig",
+      "Heutige Hashfunktionen sind zu langsam",
+      "Zertifikate laufen sonst nie ab"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Hardware-Sicherheitsmodul (HSM)?",
+    "a": "Ein geschütztes Gerät, das Schlüssel erzeugt, speichert und nutzt",
+    "a_full": "Private Schlüssel verlassen ein HSM nie. Die Kryptooperationen laufen im Gerät, das gegen Manipulation geschützt ist. HSMs nutzen z.B. Zertifizierungsstellen und Banken.",
+    "options": [
+      "Ein geschütztes Gerät, das Schlüssel erzeugt, speichert und nutzt",
+      "Eine Firewall für Server",
+      "Ein verschlüsselter USB-Stick für Backups",
+      "Ein Virenscanner in der Hardware"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Steganografie?",
+    "a": "Das Verstecken von Informationen in unauffälligen Trägerdaten",
+    "a_full": "Bei der Steganografie wird schon die Existenz der Nachricht verborgen, z.B. in den niederwertigsten Bits eines Bildes. Verschlüsselung macht den Inhalt unlesbar, verbirgt aber nicht, dass es eine Nachricht gibt.",
+    "options": [
+      "Das Verstecken von Informationen in unauffälligen Trägerdaten",
+      "Eine besonders starke Verschlüsselung",
+      "Das Signieren von Dokumenten",
+      "Das Knacken von Passwörtern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Worauf beruht das Vertrauen bei PGP im Web of Trust?",
+    "a": "Benutzer bestätigen sich gegenseitig ihre Schlüssel",
+    "a_full": "Statt einer zentralen CA signieren sich Benutzer gegenseitig ihre öffentlichen Schlüssel. Wer einer Person vertraut, vertraut damit auch den von ihr bestätigten Schlüsseln.",
+    "options": [
+      "Benutzer bestätigen sich gegenseitig ihre Schlüssel",
+      "Auf einer staatlichen Zertifizierungsstelle",
+      "Auf dem Passwort des Benutzers",
+      "Auf der IP-Adresse des Absenders"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele Rechtsgrundlagen für eine Verarbeitung nennt Art. 6 Abs. 1 DSGVO?",
+    "a": "Sechs",
+    "a_full": "Einwilligung, Vertrag, rechtliche Verpflichtung, lebenswichtige Interessen, öffentliche Aufgabe und berechtigtes Interesse. Mindestens eine muss vorliegen, sonst ist die Verarbeitung unzulässig.",
+    "options": [
+      "Sechs",
+      "Drei",
+      "Vier",
+      "Zehn"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was verlangt das Recht auf Datenübertragbarkeit nach Art. 20 DSGVO?",
+    "a": "Herausgabe der Daten in einem gängigen, maschinenlesbaren Format",
+    "a_full": "Betroffene können ihre bereitgestellten Daten strukturiert und maschinenlesbar (z.B. CSV oder JSON) erhalten oder direkt an einen anderen Anbieter übermitteln lassen. Das erleichtert den Anbieterwechsel.",
+    "options": [
+      "Herausgabe der Daten in einem gängigen, maschinenlesbaren Format",
+      "Ausdruck aller Daten auf Papier",
+      "Löschung aller Daten beim Anbieter",
+      "Übertragung der Daten in ein Drittland"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bewirkt ein Widerspruch gegen Direktwerbung nach Art. 21 DSGVO?",
+    "a": "Die Daten dürfen nicht mehr für Werbung genutzt werden",
+    "a_full": "Gegen Direktwerbung kann jeder jederzeit ohne Begründung widersprechen. Das Unternehmen muss die Werbenutzung dann einstellen, eine Interessenabwägung findet hier nicht statt.",
+    "options": [
+      "Die Daten dürfen nicht mehr für Werbung genutzt werden",
+      "Das Unternehmen muss alle Daten sofort löschen",
+      "Der Widerspruch gilt erst nach einem Jahr",
+      "Das Unternehmen darf weiter werben, wenn es ein Interesse hat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Recht haben Betroffene nach Art. 16 DSGVO?",
+    "a": "Das Recht auf Berichtigung falscher Daten",
+    "a_full": "Sind gespeicherte Daten unrichtig oder unvollständig, können Betroffene verlangen, dass sie unverzüglich berichtigt oder ergänzt werden.",
+    "options": [
+      "Das Recht auf Berichtigung falscher Daten",
+      "Das Recht auf Löschung",
+      "Das Recht auf Auskunft",
+      "Das Recht auf Datenübertragbarkeit"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet die Einschränkung der Verarbeitung nach Art. 18 DSGVO?",
+    "a": "Die Daten werden gesperrt und nur noch gespeichert",
+    "a_full": "Bei einer Einschränkung dürfen die Daten nicht mehr genutzt, aber noch aufbewahrt werden, z.B. während die Richtigkeit geprüft wird oder wenn gesetzliche Aufbewahrungsfristen eine Löschung verhindern.",
+    "options": [
+      "Die Daten werden gesperrt und nur noch gespeichert",
+      "Die Daten werden verschlüsselt verschickt",
+      "Nur noch der Datenschutzbeauftragte darf sie lesen und ändern",
+      "Die Daten werden in ein Drittland verlagert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann müssen Betroffene nach Art. 34 DSGVO über eine Datenpanne benachrichtigt werden?",
+    "a": "Wenn voraussichtlich ein hohes Risiko für sie besteht",
+    "a_full": "Die Meldung an die Aufsichtsbehörde ist schon bei einem Risiko nötig (72 Stunden). Die Betroffenen selbst müssen zusätzlich unverzüglich informiert werden, wenn ein hohes Risiko besteht, z.B. bei gestohlenen Gesundheitsdaten.",
+    "options": [
+      "Wenn voraussichtlich ein hohes Risiko für sie besteht",
+      "Bei jeder Datenpanne sofort",
+      "Nie, nur die Behörde wird informiert",
+      "Erst nach einem Gerichtsurteil"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind gemeinsam Verantwortliche nach Art. 26 DSGVO?",
+    "a": "Zwei oder mehr Stellen, die Zweck und Mittel gemeinsam festlegen",
+    "a_full": "Legen mehrere Unternehmen gemeinsam fest, warum und wie Daten verarbeitet werden, müssen sie in einer Vereinbarung regeln, wer welche Pflichten erfüllt. Anders als ein Auftragsverarbeiter entscheiden beide mit.",
+    "options": [
+      "Zwei oder mehr Stellen, die Zweck und Mittel gemeinsam festlegen",
+      "Ein Verantwortlicher und sein Auftragsverarbeiter",
+      "Zwei Datenschutzbeauftragte im selben Unternehmen",
+      "Eine Aufsichtsbehörde und ein Gericht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Angemessenheitsbeschluss nach DSGVO?",
+    "a": "Die Feststellung der EU-Kommission, dass ein Drittland ein ausreichendes Datenschutzniveau hat",
+    "a_full": "Liegt ein Angemessenheitsbeschluss vor, dürfen Daten in dieses Land übermittelt werden wie innerhalb der EU. Sonst braucht es andere Garantien, z.B. Standardvertragsklauseln.",
+    "options": [
+      "Die Feststellung der EU-Kommission, dass ein Drittland ein ausreichendes Datenschutzniveau hat",
+      "Ein Urteil über die Höhe eines Bußgelds",
+      "Die Zustimmung des Betriebsrats",
+      "Eine Zertifizierung nach ISO 27001"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Norm regelt in Deutschland die Einwilligung für Cookies und ähnliche Zugriffe auf Endgeräte?",
+    "a": "§ 25 TDDDG (früher TTDSG)",
+    "a_full": "Für das Speichern und Auslesen von Informationen auf dem Endgerät braucht es grundsätzlich eine Einwilligung, außer es ist technisch unbedingt erforderlich (z.B. Warenkorb-Cookie). Die weitere Verarbeitung richtet sich nach der DSGVO.",
+    "options": [
+      "§ 25 TDDDG (früher TTDSG)",
+      "§ 823 BGB",
+      "§ 202a StGB",
+      "Art. 9 DSGVO"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was verlangt die Rechenschaftspflicht nach Art. 5 Abs. 2 DSGVO?",
+    "a": "Der Verantwortliche muss die Einhaltung der Grundsätze nachweisen können",
+    "a_full": "Es reicht nicht, datenschutzkonform zu arbeiten, man muss es auch belegen können, z.B. mit Verarbeitungsverzeichnis, Einwilligungsnachweisen, TOM-Dokumentation und Schulungsnachweisen.",
+    "options": [
+      "Der Verantwortliche muss die Einhaltung der Grundsätze nachweisen können",
+      "Jede Verarbeitung muss vorher genehmigt werden",
+      "Der Datenschutzbeauftragte haftet für alle Verstöße",
+      "Betroffene müssen ihre Rechte begründen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt der Grundsatz der Speicherbegrenzung?",
+    "a": "Personenbezogene Daten nur so lange speichern, wie es für den Zweck nötig ist",
+    "a_full": "Nach Art. 5 Abs. 1 lit. e DSGVO sind Daten zu löschen oder zu anonymisieren, sobald der Zweck erfüllt ist und keine Aufbewahrungspflicht mehr besteht. Ein Löschkonzept legt dafür Fristen fest.",
+    "options": [
+      "Personenbezogene Daten nur so lange speichern, wie es für den Zweck nötig ist",
+      "Speicherplatz für personenbezogene Daten begrenzen",
+      "Daten nur auf deutschen Servern speichern",
+      "Pro Person höchstens 1 MB speichern"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Watering-Hole-Angriff?",
+    "a": "Eine von der Zielgruppe oft besuchte Webseite wird mit Schadcode präpariert",
+    "a_full": "Statt das Ziel direkt anzugreifen, infiziert der Angreifer eine Seite, die z.B. Mitarbeiter einer Branche regelmäßig besuchen. Die Besucher werden beim Aufruf infiziert.",
+    "options": [
+      "Eine von der Zielgruppe oft besuchte Webseite wird mit Schadcode präpariert",
+      "Ein Angriff auf die Wasserversorgung",
+      "Ein Angriff über manipulierte USB-Sticks",
+      "Ein Angriff mit gefälschten Anrufen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Supply-Chain-Angriff?",
+    "a": "Ein Angriff über einen Lieferanten oder eine genutzte Software",
+    "a_full": "Der Angreifer kompromittiert z.B. ein Update oder eine Bibliothek eines Herstellers. Alle Kunden, die das Update einspielen, sind betroffen. Bekannt wurde das z.B. beim SolarWinds-Vorfall.",
+    "options": [
+      "Ein Angriff über einen Lieferanten oder eine genutzte Software",
+      "Ein Diebstahl von Waren aus dem Lager",
+      "Ein DDoS-Angriff auf einen Onlineshop",
+      "Ein Phishing-Angriff auf die Buchhaltung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Privilege Escalation?",
+    "a": "Ein Angreifer verschafft sich höhere Rechte als vorgesehen",
+    "a_full": "Nach dem Eindringen mit einem normalen Konto nutzt der Angreifer Schwachstellen oder Fehlkonfigurationen, um Administrator- oder Systemrechte zu erlangen.",
+    "options": [
+      "Ein Angreifer verschafft sich höhere Rechte als vorgesehen",
+      "Ein Benutzer vergisst sein Passwort",
+      "Ein Admin vergibt Rechte nach Rollen",
+      "Ein Dienst startet automatisch neu"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Lateral Movement bei einem Angriff?",
+    "a": "Das Ausbreiten von einem übernommenen System auf weitere im Netz",
+    "a_full": "Nach dem ersten Einbruch sucht der Angreifer im internen Netz nach weiteren Zielen, z.B. mit gestohlenen Zugangsdaten. Netzsegmentierung und getrennte Admin-Konten erschweren das.",
+    "options": [
+      "Das Ausbreiten von einem übernommenen System auf weitere im Netz",
+      "Ein Angriff über WLAN aus dem Nachbargebäude",
+      "Das Löschen von Logdateien",
+      "Ein Angriff auf die seitliche Gehäuseöffnung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Pass-the-Hash-Angriff?",
+    "a": "Anmeldung mit einem gestohlenen Passwort-Hash, ohne das Passwort zu kennen",
+    "a_full": "Bei manchen Verfahren (z.B. NTLM) reicht der Hash zur Anmeldung. Ein Angreifer liest ihn aus dem Speicher eines kompromittierten Rechners und meldet sich damit an anderen Systemen an.",
+    "options": [
+      "Anmeldung mit einem gestohlenen Passwort-Hash, ohne das Passwort zu kennen",
+      "Das Zurückrechnen eines Hashs in das Passwort",
+      "Das Weitergeben eines Passworts per E-Mail",
+      "Das Erraten eines Passworts per Wörterbuch"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Session Hijacking?",
+    "a": "Die Übernahme einer bestehenden Sitzung durch Stehlen der Sitzungs-ID",
+    "a_full": "Gelangt ein Angreifer an das Sitzungscookie eines angemeldeten Benutzers (z.B. per XSS), kann er dessen Sitzung ohne Passwort nutzen. HttpOnly- und Secure-Cookies sowie kurze Sitzungsdauern helfen.",
+    "options": [
+      "Die Übernahme einer bestehenden Sitzung durch Stehlen der Sitzungs-ID",
+      "Das Erraten einer Sitzungsnummer am Telefon",
+      "Das Abschalten eines Servers per DDoS",
+      "Das Kopieren einer Festplatte"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Clickjacking?",
+    "a": "Ein Benutzer klickt unbemerkt auf eine unsichtbar überlagerte fremde Seite",
+    "a_full": "Die Angreiferseite bettet eine echte Seite in einen unsichtbaren Rahmen ein und legt sie über harmlose Knöpfe. Der Header X-Frame-Options bzw. frame-ancestors in der CSP verhindert das Einbetten.",
+    "options": [
+      "Ein Benutzer klickt unbemerkt auf eine unsichtbar überlagerte fremde Seite",
+      "Ein Benutzer klickt zu oft auf Werbung",
+      "Ein Programm zählt Mausklicks mit",
+      "Eine Maus wird per Funk übernommen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Directory-Traversal-Angriff?",
+    "a": "Mit Pfadangaben wie ../ wird auf Dateien außerhalb des erlaubten Ordners zugegriffen",
+    "a_full": "Übernimmt eine Anwendung Dateinamen ungeprüft aus der Anfrage, kann ein Angreifer mit ../../etc/passwd Systemdateien lesen. Abhilfe: Eingaben prüfen und Pfade auf den erlaubten Ordner begrenzen.",
+    "options": [
+      "Mit Pfadangaben wie ../ wird auf Dateien außerhalb des erlaubten Ordners zugegriffen",
+      "Das Durchsuchen eines Verzeichnisdienstes wie LDAP",
+      "Das Kopieren eines kompletten Laufwerks",
+      "Das Umbenennen von Ordnern durch Malware"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient DNSSEC?",
+    "a": "Es sichert die Echtheit und Unverfälschtheit von DNS-Antworten",
+    "a_full": "DNS-Einträge werden digital signiert. Ein validierender Resolver erkennt so gefälschte Antworten, z.B. bei Cache Poisoning. Die Anfragen selbst bleiben aber unverschlüsselt.",
+    "options": [
+      "Es sichert die Echtheit und Unverfälschtheit von DNS-Antworten",
+      "Es verschlüsselt alle DNS-Anfragen",
+      "Es blockiert Werbung per DNS",
+      "Es beschleunigt die Namensauflösung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist DNS-Cache-Poisoning?",
+    "a": "Einschleusen falscher Einträge in den Zwischenspeicher eines DNS-Servers",
+    "a_full": "Gelingt es, einem Resolver eine gefälschte Antwort unterzuschieben, leitet er alle seine Clients z.B. auf eine Phishing-Seite um. DNSSEC und zufällige Quellports erschweren den Angriff.",
+    "options": [
+      "Einschleusen falscher Einträge in den Zwischenspeicher eines DNS-Servers",
+      "Überlastung eines DNS-Servers mit Anfragen",
+      "Löschen einer Domain beim Registrar",
+      "Abhören von DNS-Anfragen im WLAN"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bewirkt ein MAC-Flooding-Angriff auf einen Switch?",
+    "a": "Die MAC-Tabelle läuft über und der Switch flutet Frames an alle Ports",
+    "a_full": "Der Angreifer sendet massenhaft Frames mit gefälschten Absender-MACs. Ist die Tabelle voll, verhält sich der Switch wie ein Hub, und der Angreifer kann fremden Verkehr mitlesen. Port-Security begrenzt die MACs pro Port.",
+    "options": [
+      "Die MAC-Tabelle läuft über und der Switch flutet Frames an alle Ports",
+      "Der Switch vergibt doppelte IP-Adressen",
+      "Der Switch startet dauerhaft neu",
+      "Der Switch sperrt alle VLANs"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist VLAN-Hopping?",
+    "a": "Ein Angreifer gelangt unerlaubt in fremde VLANs",
+    "a_full": "Möglich z.B. durch Double Tagging (zwei VLAN-Tags, wenn das Native VLAN genutzt wird) oder durch Aushandeln eines Trunks. Gegenmaßnahmen: DTP abschalten, Access-Ports fest einstellen, ungenutztes Native VLAN.",
+    "options": [
+      "Ein Angreifer gelangt unerlaubt in fremde VLANs",
+      "Das Umstecken eines PCs in ein anderes Büro",
+      "Das Wechseln zwischen WLAN-Access-Points",
+      "Das Zusammenlegen zweier VLANs durch den Admin"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist DHCP Snooping?",
+    "a": "Der Switch erlaubt DHCP-Angebote nur von vertrauenswürdigen Ports",
+    "a_full": "Ports zum echten DHCP-Server werden als trusted markiert. DHCP-Antworten von anderen Ports verwirft der Switch. Das stoppt fremde DHCP-Server. Die dabei erstellte Tabelle nutzt auch Dynamic ARP Inspection.",
+    "options": [
+      "Der Switch erlaubt DHCP-Angebote nur von vertrauenswürdigen Ports",
+      "Das Mitlesen von DHCP-Paketen mit Wireshark",
+      "Das Reservieren von Adressen für Server",
+      "Das Weiterleiten von DHCP über Router"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein SYN-Flood-Angriff?",
+    "a": "Massenhaft halb geöffnete TCP-Verbindungen überlasten den Server",
+    "a_full": "Der Angreifer sendet viele SYN-Pakete, beantwortet aber das SYN-ACK nicht. Der Server hält die halb offenen Verbindungen vor, bis keine neuen mehr möglich sind. SYN-Cookies schaffen Abhilfe.",
+    "options": [
+      "Massenhaft halb geöffnete TCP-Verbindungen überlasten den Server",
+      "Viele gleichzeitige Anmeldeversuche mit Passwörtern",
+      "Das Fluten des Postfachs mit Spam",
+      "Das Überlasten einer Festplatte mit Daten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Amplification-Angriff (Verstärkungsangriff)?",
+    "a": "Kleine Anfragen mit gefälschter Absenderadresse erzeugen große Antworten an das Opfer",
+    "a_full": "Der Angreifer schickt z.B. DNS- oder NTP-Anfragen mit der IP des Opfers als Absender an offene Server. Deren viel größere Antworten gehen an das Opfer. So lässt sich die Angriffsbandbreite vervielfachen.",
+    "options": [
+      "Kleine Anfragen mit gefälschter Absenderadresse erzeugen große Antworten an das Opfer",
+      "Ein Angriff mit besonders lauten Geräuschen",
+      "Das Verstärken eines WLAN-Signals",
+      "Das Erhöhen der eigenen Benutzerrechte"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine APT (Advanced Persistent Threat)?",
+    "a": "Ein gezielter, lang andauernder Angriff professioneller Angreifer",
+    "a_full": "APT-Gruppen (oft staatlich unterstützt) dringen gezielt in Organisationen ein, bleiben lange unentdeckt und spähen Daten aus. Typisch sind maßgeschneiderte Phishing-Mails und Lateral Movement.",
+    "options": [
+      "Ein gezielter, lang andauernder Angriff professioneller Angreifer",
+      "Ein automatisches Update-Programm",
+      "Ein besonders schneller Virenscanner",
+      "Ein einmaliger DDoS-Angriff"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Typosquatting?",
+    "a": "Registrierung von Domains mit Tippfehlern bekannter Namen",
+    "a_full": "Angreifer registrieren z.B. paypa1.com oder gooogle.de. Wer sich vertippt oder nicht genau hinsieht, landet auf einer Phishing- oder Schadseite.",
+    "options": [
+      "Registrierung von Domains mit Tippfehlern bekannter Namen",
+      "Das Blockieren von Tastaturen",
+      "Das Mitlesen von Tastatureingaben",
+      "Das Besetzen fremder Büros"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Quishing?",
+    "a": "Phishing über manipulierte QR-Codes",
+    "a_full": "Ein QR-Code in einer E-Mail, auf einem Brief oder an einer Ladesäule führt auf eine gefälschte Seite. Weil QR-Codes meist mit dem Handy gescannt werden, greifen die Schutzfilter des Firmen-PCs nicht.",
+    "options": [
+      "Phishing über manipulierte QR-Codes",
+      "Phishing per Sprachanruf",
+      "Phishing per SMS",
+      "Phishing über gefälschte WLANs"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet Defense in Depth?",
+    "a": "Mehrere hintereinander gestaffelte Schutzschichten",
+    "a_full": "Statt sich auf eine Maßnahme zu verlassen, werden mehrere kombiniert: Firewall, Segmentierung, Härtung, Virenschutz, MFA, Monitoring, Backups und Schulungen. Fällt eine Schicht, greift die nächste.",
+    "options": [
+      "Mehrere hintereinander gestaffelte Schutzschichten",
+      "Ein einziger, besonders starker Schutz",
+      "Tiefe Verschlüsselung mit langen Schlüsseln",
+      "Ein Serverraum im Keller"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet Red Team und Blue Team?",
+    "a": "Das Red Team greift an, das Blue Team verteidigt",
+    "a_full": "Bei Übungen simuliert das Red Team realistische Angriffe, das Blue Team (z.B. SOC) muss sie erkennen und abwehren. Arbeiten beide eng zusammen, spricht man von Purple Teaming.",
+    "options": [
+      "Das Red Team greift an, das Blue Team verteidigt",
+      "Das Red Team ist für Notfälle, das Blue Team für Backups",
+      "Das Red Team ist extern, das Blue Team die Geschäftsführung",
+      "Beide testen nur Hardware"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Indicator of Compromise (IoC)?",
+    "a": "Ein Merkmal, das auf einen erfolgten Angriff hinweist",
+    "a_full": "Beispiele sind bekannte Hashwerte von Schadsoftware, verdächtige IP-Adressen oder Domains und auffällige Registry-Einträge. Mit IoCs durchsucht man Systeme nach Spuren eines Angriffs.",
+    "options": [
+      "Ein Merkmal, das auf einen erfolgten Angriff hinweist",
+      "Ein Messwert für die Serverauslastung",
+      "Eine Kennzahl für Backup-Größen",
+      "Ein Zertifikat für sichere Webseiten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt die EU-Richtlinie NIS2?",
+    "a": "Pflichten zur Cybersicherheit und Meldung für viele wichtige Unternehmen",
+    "a_full": "NIS2 erweitert den Kreis der regulierten Unternehmen deutlich (z.B. Energie, Gesundheit, digitale Dienste, Produktion). Sie verlangt Risikomanagement, Meldung erheblicher Vorfälle und macht die Geschäftsleitung verantwortlich.",
+    "options": [
+      "Pflichten zur Cybersicherheit und Meldung für viele wichtige Unternehmen",
+      "Den Schutz personenbezogener Daten von Kunden",
+      "Die Barrierefreiheit von Webseiten",
+      "Die Kennzeichnung von KI-Inhalten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Privileged Access Management (PAM)?",
+    "a": "Absicherung und Überwachung von Konten mit erhöhten Rechten",
+    "a_full": "PAM-Lösungen verwalten Admin-Zugänge zentral: Passwörter werden verwahrt und rotiert, Rechte nur bei Bedarf und zeitlich begrenzt vergeben und Sitzungen protokolliert.",
+    "options": [
+      "Absicherung und Überwachung von Konten mit erhöhten Rechten",
+      "Verwaltung von Druckern",
+      "Zugangskontrolle zum Parkplatz",
+      "Verteilung von Software-Updates"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum gelten FIDO2-Sicherheitsschlüssel und Passkeys als phishing-resistent?",
+    "a": "Die Anmeldung ist fest an die echte Domain gebunden",
+    "a_full": "Der Schlüssel signiert eine Anfrage nur für die Domain, für die er registriert wurde. Eine gefälschte Seite mit anderer Domain bekommt keine gültige Antwort. Zudem wird kein Geheimnis übertragen, das man abfangen könnte.",
+    "options": [
+      "Die Anmeldung ist fest an die echte Domain gebunden",
+      "Sie nutzen besonders lange Passwörter",
+      "Sie senden einen Code per SMS",
+      "Sie funktionieren nur im Firmennetz"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreiben die Kennzahlen FAR und FRR bei biometrischen Verfahren?",
+    "a": "Falsche Annahme Unberechtigter und falsche Ablehnung Berechtigter",
+    "a_full": "Die False Acceptance Rate gibt an, wie oft ein Unberechtigter akzeptiert wird, die False Rejection Rate, wie oft ein Berechtigter abgewiesen wird. Wird das System strenger, sinkt die FAR und steigt die FRR.",
+    "options": [
+      "Falsche Annahme Unberechtigter und falsche Ablehnung Berechtigter",
+      "Schnelligkeit und Speicherbedarf des Systems",
+      "Anzahl der Finger und Gesichter",
+      "Kosten und Lebensdauer des Sensors"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was erhält ein Benutzer bei der Kerberos-Anmeldung als Erstes vom Key Distribution Center?",
+    "a": "Ein Ticket Granting Ticket (TGT)",
+    "a_full": "Mit dem TGT fordert der Client später für jeden Dienst ein eigenes Service-Ticket an, ohne das Passwort erneut einzugeben. Kerberos braucht dafür eine synchrone Uhrzeit, meist maximal 5 Minuten Abweichung.",
+    "options": [
+      "Ein Ticket Granting Ticket (TGT)",
+      "Ein X.509-Zertifikat",
+      "Ein Einmalpasswort per SMS",
+      "Einen VPN-Schlüssel"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet OAuth 2.0 von OpenID Connect?",
+    "a": "OAuth 2.0 regelt Berechtigungen, OpenID Connect ergänzt die Anmeldung (Identität)",
+    "a_full": "Mit OAuth 2.0 erlaubt ein Benutzer einer App den Zugriff auf Daten (Autorisierung). OpenID Connect baut darauf auf und liefert zusätzlich ein ID-Token mit Angaben zur Identität (Authentifizierung).",
+    "options": [
+      "OAuth 2.0 regelt Berechtigungen, OpenID Connect ergänzt die Anmeldung (Identität)",
+      "OAuth ist verschlüsselt, OpenID Connect nicht",
+      "OpenID Connect ist ein Virenscanner",
+      "Beide sind identisch"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist das Verstecken der SSID keine wirksame Sicherheitsmaßnahme?",
+    "a": "Die SSID lässt sich trotzdem aus dem Funkverkehr auslesen",
+    "a_full": "Verbundene Clients senden die SSID weiterhin im Klartext mit. Werkzeuge zeigen versteckte Netze daher schnell an. Schutz bietet nur eine starke Verschlüsselung wie WPA3 oder WPA2-Enterprise.",
+    "options": [
+      "Die SSID lässt sich trotzdem aus dem Funkverkehr auslesen",
+      "Weil versteckte Netze schneller sind",
+      "Weil die SSID immer verschlüsselt ist",
+      "Weil Clients sich dann nie verbinden können"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bewirkt Client Isolation im Gäste-WLAN?",
+    "a": "Die Gäste-Geräte können nicht untereinander kommunizieren",
+    "a_full": "Der Access Point lässt nur Verkehr zwischen Client und Gateway zu. Ein infiziertes Gäste-Handy kann so keine anderen Gäste angreifen.",
+    "options": [
+      "Die Gäste-Geräte können nicht untereinander kommunizieren",
+      "Gäste erhalten kein Internet",
+      "Gäste werden in das Firmen-VLAN gelegt",
+      "Der Access Point sendet keine SSID"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet Security by Default?",
+    "a": "Produkte werden ab Werk mit sicheren Voreinstellungen ausgeliefert",
+    "a_full": "Sichere Einstellungen sind von Anfang an aktiv, z.B. individuelle Startpasswörter, abgeschaltete unnötige Dienste und automatische Updates. Der Benutzer muss Sicherheit nicht erst selbst einschalten.",
+    "options": [
+      "Produkte werden ab Werk mit sicheren Voreinstellungen ausgeliefert",
+      "Sicherheit wird erst nach einem Vorfall nachgerüstet",
+      "Alle Funktionen sind ab Werk eingeschaltet",
+      "Sicherheit ist Aufgabe des Kunden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Threat Intelligence?",
+    "a": "Aufbereitete Informationen über aktuelle Angreifer, Methoden und Angriffsmerkmale",
+    "a_full": "Threat Intelligence sammelt Wissen über Bedrohungen, z.B. Kampagnen gegen die eigene Branche, genutzte Schwachstellen und IoCs. Damit lassen sich Abwehrmaßnahmen gezielt priorisieren.",
+    "options": [
+      "Aufbereitete Informationen über aktuelle Angreifer, Methoden und Angriffsmerkmale",
+      "Eine künstliche Intelligenz, die Viren schreibt",
+      "Ein Intelligenztest für Administratoren",
+      "Ein Verfahren zur Passwortspeicherung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient DMARC bei E-Mails?",
+    "a": "Es legt fest, wie Empfänger mit Mails umgehen, die SPF oder DKIM nicht bestehen",
+    "a_full": "DMARC baut auf SPF und DKIM auf. Der Domaininhaber veröffentlicht im DNS eine Richtlinie (none, quarantine, reject) und erhält Berichte über missbräuchliche Nutzung seiner Absenderdomain.",
+    "options": [
+      "Es legt fest, wie Empfänger mit Mails umgehen, die SPF oder DKIM nicht bestehen",
+      "Es verschlüsselt E-Mails Ende-zu-Ende",
+      "Es filtert Viren aus Anhängen",
+      "Es komprimiert große Anhänge"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Daten sichert man bei der IT-Forensik zuerst?",
+    "a": "Die flüchtigsten Daten, z.B. den Arbeitsspeicher",
+    "a_full": "Nach der Order of Volatility werden zuerst Daten gesichert, die schnell verloren gehen: RAM-Inhalt, laufende Prozesse, Netzwerkverbindungen. Danach folgen Festplatten und Logs.",
+    "options": [
+      "Die flüchtigsten Daten, z.B. den Arbeitsspeicher",
+      "Die Festplatte, weil sie am größten ist",
+      "Die Backups vom Vormonat",
+      "Die Druckerwarteschlange"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bedeutet Chain of Custody bei der Beweissicherung?",
+    "a": "Lückenlose Dokumentation, wer ein Beweismittel wann hatte",
+    "a_full": "Damit digitale Beweise vor Gericht verwertbar sind, wird jeder Zugriff und jede Übergabe protokolliert. Außerdem wird mit Hashwerten nachgewiesen, dass die Kopie unverändert ist.",
+    "options": [
+      "Lückenlose Dokumentation, wer ein Beweismittel wann hatte",
+      "Eine Kette von Sicherheitsschlössern am Serverraum",
+      "Eine Reihenfolge von Firewall-Regeln",
+      "Eine Zertifikatskette bis zur Root-CA"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist die OWASP Top 10?",
+    "a": "Eine Liste der kritischsten Sicherheitsrisiken für Webanwendungen",
+    "a_full": "Das Open Worldwide Application Security Project veröffentlicht regelmäßig die zehn wichtigsten Risikokategorien, z.B. fehlerhafte Zugriffskontrolle, Injection und kryptografische Fehler. Sie dient als Leitfaden für Entwicklung und Tests.",
+    "options": [
+      "Eine Liste der kritischsten Sicherheitsrisiken für Webanwendungen",
+      "Die zehn besten Virenscanner",
+      "Die zehn größten Hackerangriffe",
+      "Die zehn sichersten Programmiersprachen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie schützt eine Content Security Policy (CSP) eine Webseite?",
+    "a": "Sie legt fest, aus welchen Quellen Skripte und Inhalte geladen werden dürfen",
+    "a_full": "Der Server schickt die CSP als HTTP-Header. Der Browser führt dann z.B. keine eingeschleusten Inline-Skripte aus. Das erschwert Cross-Site-Scripting deutlich.",
+    "options": [
+      "Sie legt fest, aus welchen Quellen Skripte und Inhalte geladen werden dürfen",
+      "Sie verschlüsselt die Verbindung",
+      "Sie prüft Passwörter auf Stärke",
+      "Sie blockiert DDoS-Angriffe"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was erzeugt der Befehl ssh-keygen?",
+    "a": "Ein Schlüsselpaar für die SSH-Anmeldung",
+    "a_full": "ssh-keygen erzeugt einen privaten und einen öffentlichen Schlüssel (z.B. Typ ed25519). Der öffentliche Schlüssel kommt auf den Server, der private bleibt geschützt beim Benutzer.",
+    "options": [
+      "Ein Schlüsselpaar für die SSH-Anmeldung",
+      "Ein neues Root-Passwort",
+      "Ein TLS-Zertifikat für den Webserver",
+      "Eine Liste aller offenen Ports"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In welche Datei trägt man öffentliche Schlüssel für die SSH-Anmeldung eines Benutzers ein?",
+    "a": "~/.ssh/authorized_keys",
+    "a_full": "Jede Zeile in ~/.ssh/authorized_keys ist ein erlaubter öffentlicher Schlüssel. Mit ssh-copy-id benutzer@server wird der eigene Schlüssel automatisch dort eingetragen.",
+    "options": [
+      "~/.ssh/authorized_keys",
+      "/etc/passwd",
+      "~/.ssh/known_hosts",
+      "/etc/hosts"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt die Einstellung PermitRootLogin no in der sshd_config?",
+    "a": "Der Benutzer root darf sich nicht direkt per SSH anmelden",
+    "a_full": "Admins melden sich mit ihrem eigenen Konto an und nutzen sudo. So ist nachvollziehbar, wer was getan hat, und Angreifer können das bekannte Konto root nicht direkt angreifen.",
+    "options": [
+      "Der Benutzer root darf sich nicht direkt per SSH anmelden",
+      "SSH wird komplett abgeschaltet",
+      "root darf sich nur mit Passwort anmelden",
+      "Nur root darf sich anmelden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was macht fail2ban?",
+    "a": "Es sperrt IP-Adressen nach zu vielen fehlgeschlagenen Anmeldungen",
+    "a_full": "fail2ban liest Logdateien (z.B. von SSH oder dem Webserver) und legt bei wiederholten Fehlversuchen automatisch eine Firewall-Regel gegen die Absenderadresse an.",
+    "options": [
+      "Es sperrt IP-Adressen nach zu vielen fehlgeschlagenen Anmeldungen",
+      "Es verschlüsselt Festplatten",
+      "Es erstellt automatisch Backups",
+      "Es aktualisiert installierte Pakete"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches einfache Firewall-Werkzeug ist unter Ubuntu vorinstalliert?",
+    "a": "ufw (Uncomplicated Firewall)",
+    "a_full": "ufw vereinfacht die Regeln des Linux-Paketfilters, z.B. ufw allow 22/tcp und ufw enable. Im Hintergrund erzeugt es iptables- bzw. nftables-Regeln.",
+    "options": [
+      "ufw (Uncomplicated Firewall)",
+      "Windows Defender Firewall",
+      "pfSense",
+      "firewalld-gui"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Datei stehen unter Linux die Passwort-Hashes der Benutzer?",
+    "a": "/etc/shadow",
+    "a_full": "/etc/passwd ist für alle lesbar und enthält nur ein x als Platzhalter. Die Hashes liegen in /etc/shadow, die nur root lesen kann.",
+    "options": [
+      "/etc/shadow",
+      "/etc/passwd",
+      "/etc/group",
+      "/etc/sudoers"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl bearbeitet man die sudo-Berechtigungen sicher?",
+    "a": "visudo",
+    "a_full": "visudo öffnet /etc/sudoers, sperrt die Datei gegen gleichzeitige Bearbeitung und prüft vor dem Speichern die Syntax. Ein Tippfehler könnte sonst jeden sudo-Zugriff blockieren.",
+    "options": [
+      "visudo",
+      "nano /etc/passwd",
+      "chmod sudo",
+      "sudo -edit"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was leisten SELinux und AppArmor unter Linux?",
+    "a": "Zusätzliche Zugriffskontrolle, die Programme auf erlaubte Aktionen beschränkt",
+    "a_full": "Beide sind Mandatory-Access-Control-Systeme. Selbst wenn ein Dienst als root läuft, darf er nur auf die Dateien und Ports zugreifen, die sein Profil erlaubt. AppArmor ist bei Ubuntu, SELinux bei Red Hat verbreitet.",
+    "options": [
+      "Zusätzliche Zugriffskontrolle, die Programme auf erlaubte Aktionen beschränkt",
+      "Sie ersetzen den Virenscanner",
+      "Sie verwalten Softwarepakete",
+      "Sie synchronisieren die Uhrzeit"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche drei Netzwerkprofile kennt die Windows-Firewall?",
+    "a": "Domäne, Privat und Öffentlich",
+    "a_full": "Je nach Netz gelten unterschiedliche Regeln. Im Profil Öffentlich (z.B. Hotel-WLAN) ist die Firewall am strengsten, Freigaben und Netzwerkerkennung sind aus.",
+    "options": [
+      "Domäne, Privat und Öffentlich",
+      "Intern, Extern und DMZ",
+      "Benutzer, Admin und Gast",
+      "LAN, WAN und WLAN"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Arten virtueller Switches bietet Hyper-V?",
+    "a": "Extern, Intern und Privat",
+    "a_full": "Ein externer Switch verbindet VMs mit dem physischen Netz. Ein interner Switch erlaubt Verkehr zwischen VMs und Host. Ein privater Switch verbindet nur die VMs untereinander.",
+    "options": [
+      "Extern, Intern und Privat",
+      "Layer 2, Layer 3 und Layer 4",
+      "Access, Trunk und Hybrid",
+      "Bridge, Hub und Router"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet der Netzwerkmodus Bridged bei einer VM?",
+    "a": "Die VM erscheint als eigenes Gerät im physischen Netz",
+    "a_full": "Im Bridged-Modus bekommt die VM eine eigene Adresse aus dem LAN, z.B. per DHCP, und ist für andere Geräte direkt erreichbar. Im NAT-Modus versteckt sie sich hinter der Adresse des Hosts.",
+    "options": [
+      "Die VM erscheint als eigenes Gerät im physischen Netz",
+      "Die VM hat keinen Netzwerkzugang",
+      "Die VM teilt sich die IP-Adresse des Hosts",
+      "Die VM kann nur mit anderen VMs sprechen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Wake-on-LAN?",
+    "a": "Das Einschalten eines Rechners über ein spezielles Netzwerkpaket",
+    "a_full": "Die Netzwerkkarte bleibt im ausgeschalteten Zustand mit Strom versorgt und wartet auf ein Magic Packet mit ihrer MAC-Adresse. So lassen sich Rechner z.B. nachts für Updates starten.",
+    "options": [
+      "Das Einschalten eines Rechners über ein spezielles Netzwerkpaket",
+      "Das Wecken eines Benutzers per E-Mail",
+      "Das Aufwecken des WLANs aus dem Energiesparmodus",
+      "Das Starten eines Dienstes beim Anmelden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist NIC-Teaming (unter Linux Bonding)?",
+    "a": "Das Bündeln mehrerer Netzwerkkarten zu einer logischen Schnittstelle",
+    "a_full": "Mehrere Netzwerkkarten eines Servers arbeiten zusammen, für Ausfallsicherheit (Active-Backup) oder mehr Bandbreite (z.B. LACP). Fällt ein Kabel oder Switchport aus, bleibt der Server erreichbar.",
+    "options": [
+      "Das Bündeln mehrerer Netzwerkkarten zu einer logischen Schnittstelle",
+      "Das Teilen einer Netzwerkkarte durch mehrere VMs",
+      "Das Umbenennen von Netzwerkkarten",
+      "Das Deaktivieren ungenutzter Netzwerkkarten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Windows Server Core?",
+    "a": "Eine Installation ohne grafische Oberfläche",
+    "a_full": "Server Core verzichtet auf den Desktop. Das spart Ressourcen, verringert die Angriffsfläche und die Zahl der Updates. Verwaltet wird per PowerShell, sconfig oder remote (Windows Admin Center, RSAT).",
+    "options": [
+      "Eine Installation ohne grafische Oberfläche",
+      "Eine Testversion für 180 Tage",
+      "Ein Server nur für Domänencontroller",
+      "Ein Linux-Kernel in Windows"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Microsoft Entra ID?",
+    "a": "Der Cloud-Verzeichnisdienst von Microsoft, früher Azure AD",
+    "a_full": "Entra ID verwaltet Identitäten für Microsoft 365 und andere Cloud-Dienste und bietet SSO und MFA. Anders als das lokale Active Directory arbeitet es mit Webprotokollen wie OAuth, OpenID Connect und SAML.",
+    "options": [
+      "Der Cloud-Verzeichnisdienst von Microsoft, früher Azure AD",
+      "Ein Virenscanner von Microsoft",
+      "Ein Nachfolger von Windows Server",
+      "Eine Firewall für Azure"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was leistet ein Mobile Device Management (MDM) wie Intune?",
+    "a": "Zentrale Verwaltung und Absicherung von Smartphones, Tablets und Laptops",
+    "a_full": "Per MDM werden Richtlinien (z.B. PIN-Pflicht, Verschlüsselung), Apps und WLAN-Profile verteilt. Geht ein Gerät verloren, kann es aus der Ferne gesperrt oder gelöscht werden.",
+    "options": [
+      "Zentrale Verwaltung und Absicherung von Smartphones, Tablets und Laptops",
+      "Reparatur von Displays",
+      "Verwaltung von Druckaufträgen",
+      "Kauf neuer Mobilgeräte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient das Werkzeug nmap?",
+    "a": "Zum Erkunden von Netzen und Scannen offener Ports",
+    "a_full": "nmap findet aktive Hosts, offene Ports und oft auch Dienstversionen und Betriebssysteme. Admins prüfen damit ihre eigenen Netze. Fremde Netze darf man nur mit Erlaubnis scannen.",
+    "options": [
+      "Zum Erkunden von Netzen und Scannen offener Ports",
+      "Zum Verwalten von Benutzerkonten",
+      "Zum Erstellen von Netzwerkplänen als Grafik",
+      "Zum Komprimieren von Dateien"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient tcpdump?",
+    "a": "Zum Mitschneiden von Netzwerkverkehr auf der Kommandozeile",
+    "a_full": "tcpdump zeichnet Pakete auf einer Schnittstelle auf, z.B. tcpdump -i eth0 port 53. Mit -w wird eine Datei geschrieben, die man später in Wireshark auswerten kann.",
+    "options": [
+      "Zum Mitschneiden von Netzwerkverkehr auf der Kommandozeile",
+      "Zum Löschen von TCP-Verbindungen",
+      "Zum Sichern der Firewall-Regeln",
+      "Zum Anzeigen der CPU-Temperatur"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Womit wird unter Ubuntu die Netzwerkkonfiguration in YAML-Dateien beschrieben?",
+    "a": "Netplan",
+    "a_full": "Die Dateien liegen unter /etc/netplan/. Mit netplan apply werden Adressen, Gateway und DNS übernommen. Netplan erzeugt daraus die Konfiguration für systemd-networkd oder NetworkManager.",
+    "options": [
+      "Netplan",
+      "Ansible",
+      "Docker Compose",
+      "Kubernetes"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches PowerShell-Cmdlet prüft, ob ein bestimmter TCP-Port auf einem Server erreichbar ist?",
+    "a": "Test-NetConnection",
+    "a_full": "Test-NetConnection server01 -Port 443 zeigt, ob ein Ping und eine TCP-Verbindung zum Port möglich sind. Das hilft bei der Frage, ob eine Firewall den Zugriff blockiert.",
+    "options": [
+      "Test-NetConnection",
+      "Get-Service",
+      "Resolve-DnsName",
+      "Get-ChildItem"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Domänencontroller ist in einer AD-Gesamtstruktur die oberste Zeitquelle?",
+    "a": "Der PDC-Emulator der Stammdomäne",
+    "a_full": "Clients holen die Zeit von ihrem Domänencontroller, diese vom PDC-Emulator. Er selbst sollte eine zuverlässige externe Zeitquelle per NTP nutzen. Mit w32tm lässt sich das prüfen.",
+    "options": [
+      "Der PDC-Emulator der Stammdomäne",
+      "Der zuletzt installierte Domänencontroller",
+      "Der DHCP-Server",
+      "Jeder Client selbst"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Windows Hello for Business?",
+    "a": "Eine passwortlose Anmeldung mit PIN oder Biometrie und gerätegebundenem Schlüssel",
+    "a_full": "Beim Einrichten entsteht ein Schlüsselpaar, dessen privater Teil im TPM liegt. Die PIN entsperrt nur diesen Schlüssel auf diesem Gerät, sie wird nicht zum Server übertragen.",
+    "options": [
+      "Eine passwortlose Anmeldung mit PIN oder Biometrie und gerätegebundenem Schlüssel",
+      "Ein Begrüßungsbildschirm beim Start",
+      "Ein Chatprogramm für Unternehmen",
+      "Eine Fernwartungssoftware"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür nutzt man unter Debian und Ubuntu unattended-upgrades?",
+    "a": "Zum automatischen Einspielen von Sicherheitsupdates",
+    "a_full": "Das Paket installiert Sicherheitsupdates selbstständig und kann bei Bedarf zu festgelegten Zeiten neu starten. So bleiben Server auch ohne tägliches Eingreifen aktuell.",
+    "options": [
+      "Zum automatischen Einspielen von Sicherheitsupdates",
+      "Zum Upgrade auf eine neue Hauptversion",
+      "Zum Entfernen alter Benutzer",
+      "Zum Sichern der Konfiguration"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Proxmox VE?",
+    "a": "Eine Open-Source-Virtualisierungsplattform auf Basis von KVM und LXC",
+    "a_full": "Proxmox VE ist ein Typ-1-Hypervisor auf Debian-Basis. Er verwaltet VMs (KVM) und Container (LXC) über eine Weboberfläche und unterstützt Cluster, Live-Migration und Backups.",
+    "options": [
+      "Eine Open-Source-Virtualisierungsplattform auf Basis von KVM und LXC",
+      "Ein Proxy-Server für Webseiten",
+      "Ein Monitoring-Werkzeug",
+      "Ein Linux-Paketmanager"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Womit prüft man auf der Kommandozeile das TLS-Zertifikat eines Webservers?",
+    "a": "openssl s_client -connect server:443",
+    "a_full": "Der Befehl baut eine TLS-Verbindung auf und zeigt Zertifikatskette, Aussteller und ausgehandelte Version. Mit openssl x509 -noout -dates lassen sich die Gültigkeitsdaten auslesen.",
+    "options": [
+      "openssl s_client -connect server:443",
+      "ping -tls server",
+      "netstat -cert",
+      "ssh-keygen -verify"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet Reaktionszeit und Wiederherstellungszeit in einem SLA?",
+    "a": "Reaktion ist der Arbeitsbeginn, Wiederherstellung die Behebung der Störung",
+    "a_full": "Die Reaktionszeit sagt, wann sich der Dienstleister nach der Meldung meldet und mit der Arbeit beginnt. Die Wiederherstellungszeit sagt, bis wann der Dienst wieder laufen muss. Beide werden meist nur innerhalb der vereinbarten Servicezeit gezählt.",
+    "options": [
+      "Reaktion ist der Arbeitsbeginn, Wiederherstellung die Behebung der Störung",
+      "Beide bedeuten dasselbe",
+      "Die Reaktionszeit ist immer länger",
+      "Die Wiederherstellungszeit gilt nur am Wochenende"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein OLA (Operational Level Agreement)?",
+    "a": "Eine interne Vereinbarung zwischen Abteilungen, die ein SLA absichert",
+    "a_full": "Damit die IT ihr SLA gegenüber dem Kunden einhalten kann, sichert sie sich intern ab, z.B. sagt das Netzwerkteam dem Service Desk eine bestimmte Bearbeitungszeit zu. Mit externen Lieferanten schließt man dafür Underpinning Contracts.",
+    "options": [
+      "Eine interne Vereinbarung zwischen Abteilungen, die ein SLA absichert",
+      "Ein Vertrag mit einem externen Kunden",
+      "Ein Gesetz zur Betriebssicherheit",
+      "Eine Lizenz für Betriebssysteme"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Underpinning Contract (UC)?",
+    "a": "Ein Vertrag mit einem externen Lieferanten, der ein SLA absichert",
+    "a_full": "Verspricht ein IT-Dienstleister seinem Kunden 4 Stunden Wiederherstellung, braucht er z.B. einen Hardware-Wartungsvertrag, der ihm Ersatzteile schneller liefert. Das ist ein Underpinning Contract.",
+    "options": [
+      "Ein Vertrag mit einem externen Lieferanten, der ein SLA absichert",
+      "Ein Arbeitsvertrag mit einem Auszubildenden",
+      "Eine interne Absprache zwischen zwei Teams",
+      "Ein Mietvertrag für Büroräume"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Vertragsstrafe (Pönale) in einem SLA?",
+    "a": "Eine vereinbarte Zahlung oder Gutschrift, wenn zugesagte Werte verfehlt werden",
+    "a_full": "Wird z.B. die vereinbarte Verfügbarkeit unterschritten, erhält der Kunde eine Gutschrift auf die Monatsgebühr. Pönalen geben dem SLA Gewicht.",
+    "options": [
+      "Eine vereinbarte Zahlung oder Gutschrift, wenn zugesagte Werte verfehlt werden",
+      "Eine Gebühr für jede Supportanfrage",
+      "Ein Bonus für besonders schnelle Techniker",
+      "Eine Strafe für den Kunden bei später Zahlung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was versteht man unter Vendor Lock-in?",
+    "a": "Starke Abhängigkeit von einem Anbieter, dessen Wechsel sehr aufwendig ist",
+    "a_full": "Proprietäre Formate, Schnittstellen oder Cloud-Dienste können einen Wechsel teuer machen. Offene Standards, Exportmöglichkeiten und eine Exit-Strategie im Vertrag verringern das Risiko.",
+    "options": [
+      "Starke Abhängigkeit von einem Anbieter, dessen Wechsel sehr aufwendig ist",
+      "Ein abschließbarer Serverschrank",
+      "Ein Rabatt für langjährige Kunden",
+      "Ein Liefervertrag mit fester Menge"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet eine Named-User-Lizenz von einer Concurrent-User-Lizenz?",
+    "a": "Named ist an eine Person gebunden, Concurrent begrenzt die gleichzeitige Nutzung",
+    "a_full": "Bei Named-User braucht jede berechtigte Person eine eigene Lizenz. Bei Concurrent-User zählt nur, wie viele gleichzeitig arbeiten, egal wer.",
+    "options": [
+      "Named ist an eine Person gebunden, Concurrent begrenzt die gleichzeitige Nutzung",
+      "Named ist kostenlos, Concurrent kostenpflichtig",
+      "Named gilt für Geräte, Concurrent für Server",
+      "Es gibt keinen Unterschied"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine OEM-Lizenz?",
+    "a": "Eine Lizenz, die mit neuer Hardware verkauft und an dieses Gerät gebunden ist",
+    "a_full": "OEM-Lizenzen (Original Equipment Manufacturer) sind günstig, dürfen aber in der Regel nicht auf ein anderes Gerät übertragen werden. Sie gelten für die Lebensdauer des Geräts.",
+    "options": [
+      "Eine Lizenz, die mit neuer Hardware verkauft und an dieses Gerät gebunden ist",
+      "Eine Lizenz für Open-Source-Software",
+      "Eine Lizenz für beliebig viele Geräte",
+      "Eine Lizenz nur für Behörden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Copyleft, z.B. bei der GPL?",
+    "a": "Veränderte und weitergegebene Versionen müssen unter derselben Lizenz stehen",
+    "a_full": "Wer GPL-Software verändert und verbreitet, muss den Quellcode seiner Änderungen ebenfalls unter der GPL freigeben. Freizügige Lizenzen wie MIT oder Apache erlauben dagegen auch geschlossene Weiterentwicklungen.",
+    "options": [
+      "Veränderte und weitergegebene Versionen müssen unter derselben Lizenz stehen",
+      "Die Software darf nicht kopiert werden",
+      "Die Software ist nur für private Nutzung frei",
+      "Der Hersteller behält alle Rechte am Quellcode"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Business Impact Analyse (BIA)?",
+    "a": "Die Ermittlung, wie stark der Ausfall einzelner Prozesse dem Unternehmen schadet",
+    "a_full": "Die BIA bewertet für jeden Geschäftsprozess die Folgen eines Ausfalls über die Zeit und leitet daraus die maximal tolerierbare Ausfallzeit, RTO und RPO ab. Sie ist Grundlage des Notfallmanagements.",
+    "options": [
+      "Die Ermittlung, wie stark der Ausfall einzelner Prozesse dem Unternehmen schadet",
+      "Eine Analyse der Werbewirkung",
+      "Eine Prüfung der Bilanz",
+      "Eine Befragung der Kunden zur Zufriedenheit"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Make-or-Buy-Entscheidung?",
+    "a": "Die Entscheidung, eine Leistung selbst zu erbringen oder zuzukaufen",
+    "a_full": "Beispiel: eigenes Rechenzentrum betreiben oder Cloud-Dienst mieten. Verglichen werden Kosten, Know-how, Abhängigkeit, Qualität und strategische Bedeutung.",
+    "options": [
+      "Die Entscheidung, eine Leistung selbst zu erbringen oder zuzukaufen",
+      "Die Wahl zwischen zwei Lieferanten",
+      "Die Entscheidung über den Verkaufspreis",
+      "Die Wahl zwischen Leasing und Miete"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Next Business Day (NBD) in einem Hardware-Servicevertrag?",
+    "a": "Der Techniker oder das Ersatzteil kommt am nächsten Werktag",
+    "a_full": "Bei NBD wird ein am Montag gemeldeter Defekt am Dienstag behoben, ein am Freitag gemeldeter meist erst am Montag. Für kritische Systeme gibt es teurere Stufen wie 4 Stunden, 24/7.",
+    "options": [
+      "Der Techniker oder das Ersatzteil kommt am nächsten Werktag",
+      "Der Techniker kommt innerhalb einer Stunde",
+      "Der Service gilt nur an Feiertagen",
+      "Die Rechnung ist am nächsten Werktag fällig"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet End of Life (EOL) bzw. End of Support bei einem Produkt?",
+    "a": "Der Hersteller liefert keine Updates und keine Unterstützung mehr",
+    "a_full": "Nach dem Supportende gibt es keine Sicherheitsupdates mehr. Das Produkt sollte vorher ersetzt werden, sonst bleiben neue Lücken dauerhaft offen.",
+    "options": [
+      "Der Hersteller liefert keine Updates und keine Unterstützung mehr",
+      "Das Produkt wird kostenlos",
+      "Das Produkt erhält eine längere Garantie",
+      "Das Produkt wird automatisch ersetzt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein geringwertiges Wirtschaftsgut (GWG)?",
+    "a": "Ein bewegliches Anlagegut bis 800 Euro netto, das sofort abgeschrieben werden darf",
+    "a_full": "Selbstständig nutzbare Anlagegüter bis 800 Euro netto (z.B. ein Monitor) dürfen im Jahr der Anschaffung voll als Aufwand gebucht werden, statt über die Nutzungsdauer abgeschrieben zu werden.",
+    "options": [
+      "Ein bewegliches Anlagegut bis 800 Euro netto, das sofort abgeschrieben werden darf",
+      "Jedes Gut unter 5.000 Euro",
+      "Verbrauchsmaterial wie Druckerpapier",
+      "Ein Gebäude mit geringem Wert"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Kleinbetragsrechnung?",
+    "a": "Eine Rechnung bis 250 Euro brutto mit vereinfachten Pflichtangaben",
+    "a_full": "Bis 250 Euro brutto genügen z.B. Name und Anschrift des Verkäufers, Datum, Menge und Art der Leistung, Bruttobetrag und Steuersatz. Name des Käufers und Rechnungsnummer sind nicht nötig.",
+    "options": [
+      "Eine Rechnung bis 250 Euro brutto mit vereinfachten Pflichtangaben",
+      "Eine Rechnung ohne Umsatzsteuer",
+      "Eine Rechnung unter 10 Euro",
+      "Eine Rechnung nur für Privatkunden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Formate gelten in Deutschland als E-Rechnung im B2B-Bereich?",
+    "a": "Strukturierte Formate wie XRechnung oder ZUGFeRD",
+    "a_full": "Eine E-Rechnung ist ein strukturierter Datensatz nach EN 16931, der maschinell verarbeitet werden kann. Ein einfaches PDF gilt nicht als E-Rechnung. Seit 2025 müssen Unternehmen E-Rechnungen empfangen können.",
+    "options": [
+      "Strukturierte Formate wie XRechnung oder ZUGFeRD",
+      "Jedes PDF per E-Mail",
+      "Ein eingescannter Papierbeleg",
+      "Eine Word-Datei mit Rechnungsdaten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür stehen die GoBD?",
+    "a": "Grundsätze für die ordnungsgemäße elektronische Buchführung und Archivierung",
+    "a_full": "Die GoBD verlangen u.a., dass steuerrelevante elektronische Unterlagen vollständig, unveränderbar und nachvollziehbar aufbewahrt werden und das Finanzamt darauf zugreifen kann.",
+    "options": [
+      "Grundsätze für die ordnungsgemäße elektronische Buchführung und Archivierung",
+      "Gesetz über Datenschutz im Betrieb",
+      "Richtlinie für Grafikdesign",
+      "Vorschriften für Gebäudeverkabelung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Kostenstelle?",
+    "a": "Ein Bereich, dem Kosten verursachungsgerecht zugeordnet werden",
+    "a_full": "Kostenstellen sind z.B. Abteilungen wie IT, Vertrieb oder Produktion. So wird sichtbar, wo welche Kosten entstehen, und Gemeinkosten lassen sich verteilen.",
+    "options": [
+      "Ein Bereich, dem Kosten verursachungsgerecht zugeordnet werden",
+      "Ein Konto für Bargeld",
+      "Ein Lagerplatz für Ersatzteile",
+      "Ein Preisnachlass für Stammkunden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Compliance im Unternehmen?",
+    "a": "Die Einhaltung von Gesetzen, Vorschriften und internen Richtlinien",
+    "a_full": "Compliance umfasst z.B. Datenschutz, Steuerrecht, Lizenzbedingungen und interne Regeln. Verstöße können Bußgelder, Schadenersatz und Imageschäden nach sich ziehen.",
+    "options": [
+      "Die Einhaltung von Gesetzen, Vorschriften und internen Richtlinien",
+      "Die Zufriedenheit der Kunden",
+      "Die Höhe des Gewinns",
+      "Die Anzahl der Mitarbeiter"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Scope Creep in einem Projekt?",
+    "a": "Der Projektumfang wächst schleichend ohne geregelte Änderung",
+    "a_full": "Immer neue kleine Wünsche werden zusätzlich umgesetzt, ohne Zeit und Budget anzupassen. Ein Change-Request-Verfahren verhindert das.",
+    "options": [
+      "Der Projektumfang wächst schleichend ohne geregelte Änderung",
+      "Das Projekt wird vorzeitig beendet",
+      "Das Budget wird gekürzt",
+      "Das Team wird verkleinert"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür stehen die Buchstaben der RACI-Matrix?",
+    "a": "Responsible, Accountable, Consulted, Informed",
+    "a_full": "Die RACI-Matrix legt für jede Aufgabe fest, wer sie durchführt (R), wer die Gesamtverantwortung trägt (A), wer beratend beteiligt ist (C) und wer informiert wird (I).",
+    "options": [
+      "Responsible, Accountable, Consulted, Informed",
+      "Risk, Action, Control, Improvement",
+      "Request, Approval, Change, Implementation",
+      "Resource, Analysis, Cost, Impact"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist PUE bei Rechenzentren?",
+    "a": "Das Verhältnis von Gesamtenergie zu Energie der IT-Geräte",
+    "a_full": "Power Usage Effectiveness: Ein PUE von 1,5 bedeutet, dass für jede Kilowattstunde der IT weitere 0,5 kWh für Kühlung, USV und Beleuchtung nötig sind. Der Idealwert ist 1,0.",
+    "options": [
+      "Das Verhältnis von Gesamtenergie zu Energie der IT-Geräte",
+      "Die Anzahl der Server pro Rack",
+      "Die Verfügbarkeit in Prozent",
+      "Die Kosten pro Terabyte Speicher"
+    ]
   }
 ]

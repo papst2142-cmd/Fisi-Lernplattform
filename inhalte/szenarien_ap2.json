@@ -722,5 +722,755 @@
       "",
       "3. Er vertritt die Interessen des Kunden, pflegt und priorisiert das Product Backlog und entscheidet, was als Nächstes umgesetzt wird. Er maximiert den Wert des Produkts."
     ]
+  },
+  {
+    "title": "VLSM-Adressplan für eine neue Filiale",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Für eine neue Filiale steht das Netz 172.20.8.0/22 zur Verfügung. Benötigt werden:",
+      "  Clients: 200 Hosts, Voice (Telefone): 100 Hosts, WLAN: 60 Hosts, Server: 50 Hosts",
+      "  sowie ein Transfernetz zum Provider-Router mit 2 Adressen.",
+      "",
+      "1. Vergeben Sie die Subnetze nach VLSM der Größe nach lückenlos ab 172.20.8.0. Nennen Sie Netzadresse, Präfix und Broadcast.",
+      "2. Welches Transfernetz vergeben Sie und welche Adressen erhalten die beiden Router?",
+      "3. Welcher Adressbereich bleibt als Reserve frei?"
+    ],
+    "solution": [
+      "1. Clients (200 Hosts, /24 mit 254): 172.20.8.0/24, Broadcast 172.20.8.255.",
+      "Voice (100 Hosts, /25 mit 126): 172.20.9.0/25, Broadcast 172.20.9.127.",
+      "WLAN (60 Hosts, /26 mit 62): 172.20.9.128/26, Broadcast 172.20.9.191.",
+      "Server (50 Hosts, /26 mit 62): 172.20.9.192/26, Broadcast 172.20.9.255.",
+      "",
+      "2. Transfernetz 172.20.10.0/30: Router Filiale 172.20.10.1, Provider-Router 172.20.10.2, Broadcast 172.20.10.3.",
+      "",
+      "3. 172.20.10.4 bis 172.20.11.255 bleiben frei (z.B. für Management-VLAN oder spätere Erweiterungen)."
+    ]
+  },
+  {
+    "title": "Statische Routen zwischen zwei Standorten",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Standort A (LAN 10.1.0.0/24) und Standort B (LAN 10.2.0.0/24) sind über ein Transfernetz 192.168.255.0/30 verbunden: Router A hat 192.168.255.1, Router B 192.168.255.2.",
+      "Router A hat außerdem einen Internetzugang über 203.0.113.1, Standort B nutzt das Internet über Standort A.",
+      "",
+      "1. Welche statischen Routen braucht Router A?",
+      "2. Welche statischen Routen braucht Router B?",
+      "3. Warum reicht es nicht, nur auf einer Seite eine Route einzutragen?"
+    ],
+    "solution": [
+      "1. Router A: 10.2.0.0/24 über 192.168.255.2 und die Standardroute 0.0.0.0/0 über 203.0.113.1 (Internet).",
+      "",
+      "2. Router B: Standardroute 0.0.0.0/0 über 192.168.255.1. Damit erreicht B sowohl das LAN von A als auch das Internet. (Alternativ zusätzlich 10.1.0.0/24 über 192.168.255.1.)",
+      "",
+      "3. Pakete brauchen einen Hin- und einen Rückweg. Fehlt die Route auf der Gegenseite, kommen die Anfragen an, die Antworten aber nicht zurück. Außerdem muss NAT auf Router A auch das Netz 10.2.0.0/24 übersetzen."
+    ]
+  },
+  {
+    "title": "Fehlende Rückroute finden",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein neues Labor-Netz 10.50.0.0/24 wurde an einen zweiten internen Router (10.0.0.254) angeschlossen. Clients im Labor erreichen ihr Gateway, aber keine Server im Netz 10.0.0.0/24. Der Standardgateway der Server ist die Firewall 10.0.0.1.",
+      "",
+      "1. Was ist die wahrscheinlichste Ursache?",
+      "2. Nennen Sie zwei Möglichkeiten, das Problem zu beheben.",
+      "3. Wie weisen Sie die Ursache mit Werkzeugen nach?"
+    ],
+    "solution": [
+      "1. Die Server schicken ihre Antworten an ihr Standardgateway (Firewall 10.0.0.1). Die Firewall kennt das Netz 10.50.0.0/24 nicht bzw. leitet es ins Internet. Es fehlt eine Route zurück ins Labor.",
+      "",
+      "2. Auf der Firewall eine statische Route 10.50.0.0/24 über 10.0.0.254 eintragen (und die Firewall-Regeln anpassen). Oder ein dynamisches Routing-Protokoll einsetzen bzw. das Labor als eigenes Interface direkt an die Firewall anbinden.",
+      "",
+      "3. Mitschnitt (tcpdump/Wireshark) auf einem Server: Anfragen aus 10.50.0.x kommen an, Antworten gehen an die MAC der Firewall. tracert von einem Server zu einem Labor-Client endet an der Firewall bzw. geht Richtung Internet. Die Routingtabelle der Firewall zeigt die fehlende Route."
+    ]
+  },
+  {
+    "title": "OSPF-Pfadkosten berechnen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Zwischen Zentrale und Rechenzentrum gibt es drei Wege. Die OSPF-Referenzbandbreite ist auf 10.000 Mbit/s eingestellt (Kosten = Referenzbandbreite / Bandbreite).",
+      "  Weg 1: zwei Leitungen mit je 1 Gbit/s",
+      "  Weg 2: drei Leitungen mit je 10 Gbit/s",
+      "  Weg 3: eine Leitung mit 100 Mbit/s",
+      "",
+      "1. Berechnen Sie die Kosten jeder Leitung und jedes Weges.",
+      "2. Welchen Weg wählt OSPF?",
+      "3. Warum ist die Standard-Referenzbandbreite von 100 Mbit/s in modernen Netzen ungeeignet?"
+    ],
+    "solution": [
+      "1. 1 Gbit/s: 10.000 / 1.000 = 10, Weg 1: 10 + 10 = 20. 10 Gbit/s: 10.000 / 10.000 = 1, Weg 2: 1 + 1 + 1 = 3. 100 Mbit/s: 10.000 / 100 = 100, Weg 3: 100.",
+      "",
+      "2. Weg 2 mit den geringsten Gesamtkosten 3, obwohl er mehr Hops hat.",
+      "",
+      "3. Mit 100 Mbit/s als Referenz erhalten 100 Mbit/s, 1 Gbit/s und 10 Gbit/s alle die Kosten 1 (Minimum). OSPF kann dann schnelle und langsame Leitungen nicht unterscheiden. Die Referenzbandbreite muss auf allen Routern gleich hoch eingestellt werden."
+    ]
+  },
+  {
+    "title": "Routen der Außenstellen zusammenfassen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Acht Außenstellen nutzen die Netze 10.8.0.0/24 bis 10.8.7.0/24. Der Zentralrouter hat bisher acht einzelne Routen zum VPN-Konzentrator.",
+      "",
+      "1. Fassen Sie die acht Netze zu einer Route zusammen und begründen Sie das Präfix.",
+      "2. Welche Vorteile hat die Zusammenfassung?",
+      "3. Was müssen Sie bei der Vergabe weiterer Außenstellen-Netze beachten?"
+    ],
+    "solution": [
+      "1. 10.8.0.0/21: Acht Netze sind 2^3, also 3 Bit weniger als /24. Das dritte Oktett 0 bis 7 unterscheidet sich nur in den letzten 3 Bit (00000000 bis 00000111), die ersten 21 Bit sind gleich.",
+      "",
+      "2. Kleinere Routingtabellen, weniger Konfiguration, und das Hinzufügen oder Ausfallen einzelner Außenstellen erfordert keine Änderung an anderen Routern.",
+      "",
+      "3. Neue Außenstellen sollten wieder zusammenhängende Blöcke erhalten (z.B. 10.8.8.0/21 für die nächsten acht). Netze aus dem Bereich 10.8.0.0/21 dürfen nicht an anderer Stelle verwendet werden, sonst entstehen falsche Routen."
+    ]
+  },
+  {
+    "title": "IPv6-Präfix vom Provider auf VLANs verteilen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen erhält vom Provider das Präfix 2001:db8:4a:7300::/56. Es gibt die VLANs 10 (Clients), 20 (Server), 30 (WLAN) und 99 (Management).",
+      "",
+      "1. Wie viele /64-Netze stehen zur Verfügung?",
+      "2. Schlagen Sie ein leicht lesbares Schema vor und nennen Sie die Präfixe der vier VLANs.",
+      "3. Warum sollte man im LAN bei /64 bleiben und nicht kleiner aufteilen?"
+    ],
+    "solution": [
+      "1. 64 - 56 = 8 Bit, also 2^8 = 256 Netze (2001:db8:4a:7300::/64 bis 2001:db8:4a:73ff::/64).",
+      "",
+      "2. Die letzten beiden Hexziffern des vierten Blocks entsprechen der VLAN-Nummer: VLAN 10: 2001:db8:4a:7310::/64, VLAN 20: 2001:db8:4a:7320::/64, VLAN 30: 2001:db8:4a:7330::/64, VLAN 99: 2001:db8:4a:7399::/64. So erkennt man das VLAN direkt an der Adresse.",
+      "",
+      "3. SLAAC und viele weitere Funktionen setzen eine 64-Bit-Interface-ID voraus. Kleinere Netze würden die automatische Adressvergabe verhindern, Adressknappheit gibt es bei IPv6 ohnehin nicht."
+    ]
+  },
+  {
+    "title": "NAT und Portweiterleitung für einen Webserver",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Webserver mit der internen Adresse 192.168.10.20 soll aus dem Internet erreichbar sein. Der Router hat die öffentliche Adresse 198.51.100.7. Alle Clients surfen über dieselbe öffentliche Adresse.",
+      "",
+      "1. Welche NAT-Art nutzen die Clients zum Surfen? Erklären Sie kurz die Funktion.",
+      "2. Wie machen Sie den Webserver erreichbar?",
+      "3. Warum sollte der Webserver in einer DMZ statt im internen LAN stehen?"
+    ],
+    "solution": [
+      "1. PAT (NAT Overload, Masquerading): Der Router ersetzt die private Quelladresse durch 198.51.100.7 und merkt sich die Zuordnung über den Quellport. Antworten werden anhand der Portnummer dem richtigen Client zugeordnet.",
+      "",
+      "2. Mit einer Portweiterleitung (Destination-NAT): Anfragen an 198.51.100.7 auf TCP 443 (und 80 zur Umleitung) werden an 192.168.10.20 weitergeleitet. Dazu eine Firewall-Regel, die nur diese Ports erlaubt.",
+      "",
+      "3. Wird der Webserver kompromittiert, kann der Angreifer aus der DMZ nicht direkt ins interne LAN. Die Firewall erlaubt aus der DMZ nur die unbedingt nötigen Verbindungen nach innen."
+    ]
+  },
+  {
+    "title": "Adressschema für ein wachsendes Unternehmen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen nutzt das Netz 10.0.0.0/16 für alle Standorte. Jeder Standort soll einen gleich großen Block erhalten, in dem bis zu 16 VLANs mit je einem /24 Platz haben.",
+      "",
+      "1. Welche Blockgröße (Präfix) erhält jeder Standort, und wie viele Standorte sind möglich?",
+      "2. Welchen Block erhält der vierte Standort (Standorte werden ab 0 gezählt, also Standort 3)?",
+      "3. Nennen Sie die ersten drei VLAN-Netze dieses Standorts."
+    ],
+    "solution": [
+      "1. 16 VLANs mit /24 brauchen 4 Bit: /24 - 4 = /20 je Standort. Aus /16 entstehen 2^(20-16) = 16 Standorte.",
+      "",
+      "2. Jeder /20-Block umfasst 16 Werte im dritten Oktett. Standort 3 beginnt bei 3 * 16 = 48: 10.0.48.0/20 (10.0.48.0 bis 10.0.63.255).",
+      "",
+      "3. 10.0.48.0/24, 10.0.49.0/24 und 10.0.50.0/24."
+    ]
+  },
+  {
+    "title": "Ausfallsicheres Gateway mit VRRP",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Im Client-VLAN 192.168.40.0/24 gibt es bisher nur einen Router als Gateway (192.168.40.1). Ein zweiter Router soll die Ausfallsicherheit erhöhen.",
+      "",
+      "1. Erklären Sie, wie VRRP ein ausfallsicheres Gateway bereitstellt.",
+      "2. Welche Adressen vergeben Sie für Router 1, Router 2 und die virtuelle Adresse, damit die Clients nicht umkonfiguriert werden müssen?",
+      "3. Was bewirken Priorität, Preemption und Interface-Tracking?"
+    ],
+    "solution": [
+      "1. Beide Router bilden eine Gruppe mit einer gemeinsamen virtuellen IP- und MAC-Adresse. Der Master beantwortet Anfragen an diese Adresse und sendet regelmäßig Lebenszeichen. Bleiben sie aus, übernimmt der Backup-Router.",
+      "",
+      "2. Virtuelle Adresse 192.168.40.1 (bisheriges Gateway), Router 1 z.B. 192.168.40.2, Router 2 192.168.40.3. Die Clients behalten ihr Gateway.",
+      "",
+      "3. Die höhere Priorität bestimmt den Master. Preemption lässt den bevorzugten Router nach seiner Rückkehr wieder Master werden. Tracking senkt die Priorität, wenn z.B. die WAN-Leitung des Masters ausfällt, damit der andere Router übernimmt."
+    ]
+  },
+  {
+    "title": "Routingentscheidungen nach Longest Prefix Match",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Die Routingtabelle eines Standortrouters enthält:",
+      "  0.0.0.0/0 über WAN (Internet)",
+      "  10.0.0.0/8 über VPN-Tunnel",
+      "  10.20.0.0/16 über MPLS-Router",
+      "  10.20.5.0/24 direkt verbunden (VLAN 5)",
+      "",
+      "1. Über welchen Weg gehen Pakete an 10.20.5.9, 10.20.77.1, 10.99.0.1 und 8.8.8.8?",
+      "2. Erklären Sie die zugrunde liegende Regel.",
+      "3. Was passiert mit Paketen an 10.20.77.1, wenn der MPLS-Router ausfällt und die Route entfernt wird?"
+    ],
+    "solution": [
+      "1. 10.20.5.9: direkt in VLAN 5 (/24 passt am genauesten). 10.20.77.1: MPLS-Router (/16). 10.99.0.1: VPN-Tunnel (/8). 8.8.8.8: WAN (nur die Standardroute passt).",
+      "",
+      "2. Longest Prefix Match: Von allen passenden Routen wird die mit der längsten Präfixlänge gewählt, also die spezifischste.",
+      "",
+      "3. Dann passt 10.0.0.0/8 als nächstspezifische Route, die Pakete gehen über den VPN-Tunnel. Das kann als Ausweichweg gewollt sein, sollte aber bewusst geplant werden."
+    ]
+  },
+  {
+    "title": "Datenleck im Onlineshop nach SQL-Injection",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Onlineshop stellt fest, dass über eine SQL-Injection die Kundentabelle (Namen, Adressen, E-Mail, Passwort-Hashes) ausgelesen wurde.",
+      "",
+      "1. Welche Sofortmaßnahmen ergreifen Sie technisch?",
+      "2. Welche Pflichten ergeben sich aus der DSGVO und welche Fristen gelten?",
+      "3. Wie verhindern Sie SQL-Injection dauerhaft?"
+    ],
+    "solution": [
+      "1. Lücke schließen bzw. die betroffene Funktion abschalten, Logs und Beweise sichern, Umfang ermitteln, alle Passwörter zurücksetzen und Kunden zum Ändern auffordern, Sitzungen ungültig machen, nach weiteren Hintertüren suchen.",
+      "",
+      "2. Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden nach Bekanntwerden (Art. 33). Wegen des hohen Risikos (Phishing, Passwortknacken) sind die Kunden unverzüglich zu benachrichtigen (Art. 34). Dokumentation des Vorfalls.",
+      "",
+      "3. Prepared Statements bzw. parametrisierte Abfragen, Eingaben prüfen, Datenbankbenutzer mit minimalen Rechten, WAF als zusätzliche Schicht, regelmäßige Code-Reviews und Penetrationstests. Passwörter mit Salt und langsamem Verfahren (z.B. Argon2, bcrypt) speichern."
+    ]
+  },
+  {
+    "title": "Interne PKI für Server und WLAN aufbauen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein mittelständisches Unternehmen möchte eigene Zertifikate für interne Webserver und für die WLAN-Anmeldung per 802.1X ausstellen.",
+      "",
+      "1. Beschreiben Sie eine zweistufige PKI und warum die Root-CA offline betrieben wird.",
+      "2. Wie erhalten alle Firmenrechner Vertrauen in die neue CA?",
+      "3. Wie wird ein gestohlenes oder falsch ausgestelltes Zertifikat gesperrt, und wie erfahren Clients davon?"
+    ],
+    "solution": [
+      "1. Die Root-CA stellt nur Zertifikate für eine oder mehrere untergeordnete CAs (Issuing CAs) aus. Die Issuing CA stellt die Server- und Benutzerzertifikate aus. Die Root-CA wird danach ausgeschaltet und sicher verwahrt. Wird die Issuing CA kompromittiert, kann sie über die Root-CA gesperrt und ersetzt werden, ohne alles neu aufzubauen.",
+      "",
+      "2. Das Root-Zertifikat wird per Gruppenrichtlinie bzw. MDM in den Speicher der vertrauenswürdigen Stammzertifizierungsstellen verteilt, das Zertifikat der Issuing CA in den Zwischenspeicher.",
+      "",
+      "3. Die CA widerruft das Zertifikat. Clients prüfen den Status über die Sperrliste (CRL) oder per OCSP. Die Adressen dafür stehen im Zertifikat und müssen für alle Clients erreichbar sein."
+    ]
+  },
+  {
+    "title": "TLS-Zertifikat für einen Webserver einrichten",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Der neue Kundenportal-Server soll unter portal.firma.de und www.portal.firma.de per HTTPS erreichbar sein.",
+      "",
+      "1. Beschreiben Sie die Schritte vom Schlüssel bis zum installierten Zertifikat.",
+      "2. Welche Namen müssen im Zertifikat stehen und in welchem Feld?",
+      "3. Nennen Sie drei Einstellungen für eine sichere TLS-Konfiguration und wie Sie verhindern, dass das Zertifikat unbemerkt abläuft."
+    ],
+    "solution": [
+      "1. Privaten Schlüssel auf dem Server erzeugen, daraus einen Certificate Signing Request (CSR) erstellen, bei der CA einreichen, Domainbesitz nachweisen (z.B. per DNS- oder HTTP-Challenge), Zertifikat samt Zwischenzertifikat(en) erhalten und im Webserver einbinden.",
+      "",
+      "2. portal.firma.de und www.portal.firma.de im Feld Subject Alternative Name (SAN).",
+      "",
+      "3. Nur TLS 1.2 und 1.3, starke Cipher Suites mit Forward Secrecy, HSTS, vollständige Zertifikatskette, HTTP auf HTTPS umleiten. Gegen Ablauf: automatische Verlängerung per ACME und Überwachung der Ablaufdaten im Monitoring."
+    ]
+  },
+  {
+    "title": "Sicherer Fernzugriff für einen Dienstleister",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Der Hersteller einer Produktionsmaschine braucht für die Wartung Fernzugriff auf deren Steuerungsrechner im Produktionsnetz.",
+      "",
+      "1. Warum ist ein dauerhafter, direkter Zugang (z.B. per Fernwartungssoftware ohne Kontrolle) riskant?",
+      "2. Entwerfen Sie eine sichere Lösung.",
+      "3. Welche vertraglichen und organisatorischen Punkte gehören dazu?"
+    ],
+    "solution": [
+      "1. Der Zugang ist ein Einfallstor: Wird der Dienstleister gehackt oder das Passwort gestohlen, gelangt der Angreifer direkt ins Produktionsnetz. Ohne Kontrolle weiß niemand, wann und was getan wird.",
+      "",
+      "2. Zugang nur über VPN mit MFA auf einen gehärteten Jump Host in einer eigenen Zone. Von dort nur zum Steuerungsrechner und nur die nötigen Ports. Zugang standardmäßig gesperrt, Freischaltung nur auf Anfrage und zeitlich begrenzt. Sitzungen werden protokolliert oder aufgezeichnet, persönliche Konten statt Sammelkonten.",
+      "",
+      "3. Vertrag mit Sicherheitsanforderungen und Meldepflichten bei Vorfällen, AV-Vertrag falls personenbezogene Daten erreichbar sind, festgelegter Freigabeprozess, Ansprechpartner, regelmäßige Überprüfung der Zugänge."
+    ]
+  },
+  {
+    "title": "Switchports im Büro absichern",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "In einem Beratungsunternehmen sind alle Netzwerkdosen aktiv, auch in Besprechungsräumen mit Besucherzugang. Kürzlich hat ein Besucher einen eigenen Router angeschlossen, der als DHCP-Server Adressen verteilt hat.",
+      "",
+      "1. Welche Folgen hatte der fremde DHCP-Server und welche Angriffe wären so möglich?",
+      "2. Nennen Sie vier Switch-Funktionen, die solche Probleme verhindern, und erklären Sie sie kurz.",
+      "3. Was tun Sie mit Ports in Besprechungsräumen?"
+    ],
+    "solution": [
+      "1. Clients erhielten falsche Adressen, Gateways oder DNS-Server und verloren den Netzzugang. Ein Angreifer könnte sich so als Gateway oder DNS-Server eintragen und Verkehr mitlesen oder umleiten (Man-in-the-Middle).",
+      "",
+      "2. DHCP Snooping: DHCP-Antworten nur von vertrauenswürdigen Ports. Dynamic ARP Inspection: prüft ARP-Pakete gegen die DHCP-Snooping-Tabelle. Port-Security: begrenzt die MAC-Adressen pro Port. 802.1X: Zugang nur nach Anmeldung. BPDU Guard: schaltet Access-Ports ab, an denen ein Switch Spanning-Tree-Pakete sendet.",
+      "",
+      "3. Ungenutzte Ports abschalten oder in ein Gäste-/Quarantäne-VLAN legen, das nur Internetzugang hat. Für Mitarbeiter 802.1X, für Besucher WLAN-Gästenetz statt Kabel."
+    ]
+  },
+  {
+    "title": "E-Mail-Domain mit SPF, DKIM und DMARC schützen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Kunden eines Versicherungsmaklers erhalten gefälschte Mails mit dessen Absenderdomain makler-muster.de. Der Makler versendet über seinen eigenen Mailserver und einen Newsletter-Dienst.",
+      "",
+      "1. Erklären Sie SPF, DKIM und DMARC jeweils in einem Satz.",
+      "2. Welche Absender müssen im SPF-Eintrag stehen?",
+      "3. Wie führen Sie DMARC ein, ohne legitime Mails zu verlieren?"
+    ],
+    "solution": [
+      "1. SPF: Im DNS steht, welche Server Mails für die Domain versenden dürfen. DKIM: Der Mailserver signiert jede Mail, der Empfänger prüft die Signatur mit dem öffentlichen Schlüssel aus dem DNS. DMARC: Legt fest, was Empfänger mit Mails tun sollen, die SPF bzw. DKIM nicht passend zur Absenderdomain bestehen, und liefert Berichte.",
+      "",
+      "2. Der eigene Mailserver (IP-Adresse oder Name) und der Newsletter-Dienst (meist per include), am Ende -all bzw. ~all.",
+      "",
+      "3. Zuerst p=none mit Berichtsadresse, Berichte auswerten und fehlende legitime Absender ergänzen. Danach schrittweise auf p=quarantine und zuletzt p=reject umstellen."
+    ]
+  },
+  {
+    "title": "Gestohlene Passwort-Hashes bewerten",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Bei einem Angriff wurden Passwort-Hashes einer alten Anwendung erbeutet. Die Passwörter sind 8 Zeichen lang aus 62 Zeichen (Groß-, Kleinbuchstaben, Ziffern) und wurden ungesalzen mit MD5 gespeichert.",
+      "Ein Angreifer schafft mit Grafikkarten 50 Milliarden MD5-Berechnungen pro Sekunde, bei bcrypt nur 50.000 pro Sekunde.",
+      "",
+      "1. Wie lange dauert das Durchprobieren aller Kombinationen bei MD5?",
+      "2. Wie lange würde es bei bcrypt dauern?",
+      "3. Warum ist zusätzlich das fehlende Salt ein Problem?"
+    ],
+    "solution": [
+      "1. 62^8 = 218.340.105.584.896 Kombinationen. / 50.000.000.000 pro Sekunde = ca. 4.367 Sekunden, also rund 73 Minuten für alle Kombinationen.",
+      "",
+      "2. 218.340.105.584.896 / 50.000 = ca. 4,37 Milliarden Sekunden, das sind rund 138 Jahre. Langsame Verfahren wie bcrypt oder Argon2 machen Brute Force unwirtschaftlich.",
+      "",
+      "3. Ohne Salt ergeben gleiche Passwörter gleiche Hashes. Der Angreifer kann vorberechnete Tabellen (Rainbow Tables) nutzen und alle Konten mit demselben Passwort auf einmal knacken. Ein zufälliges Salt je Passwort verhindert das."
+    ]
+  },
+  {
+    "title": "IoT-Geräte der Haustechnik absichern",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "In einem Bürogebäude hängen Heizungssteuerung, Zutrittskontrolle und Überwachungskameras im selben Netz wie die Arbeitsplatz-PCs. Viele Geräte haben noch Standardpasswörter.",
+      "",
+      "1. Welche Risiken bestehen?",
+      "2. Wie trennen Sie die Geräte netzwerktechnisch?",
+      "3. Nennen Sie drei weitere Maßnahmen zur Absicherung."
+    ],
+    "solution": [
+      "1. IoT-Geräte sind oft schlecht gepflegt und leicht angreifbar. Ein übernommenes Gerät dient als Sprungbrett zu den PCs und Servern, Kameras könnten ausgespäht und Anlagen manipuliert werden. Standardpasswörter sind öffentlich bekannt.",
+      "",
+      "2. Eigene VLANs je Gerätegruppe (z.B. Gebäudetechnik, Kameras) mit Firewall dazwischen. Nur die nötigen Verbindungen erlauben, z.B. Kameras nur zum Videorekorder, Steuerung nur zum Verwaltungsserver. Kein direkter Internetzugang.",
+      "",
+      "3. Standardpasswörter ändern, Firmware-Updates einspielen, ungenutzte Dienste (z.B. Telnet, UPnP) abschalten, Geräte inventarisieren, Zugriffe protokollieren und überwachen."
+    ]
+  },
+  {
+    "title": "Zentrales Logging mit SIEM einführen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Nach einem Vorfall konnte nicht nachvollzogen werden, wann sich der Angreifer angemeldet hatte, weil Logs nur lokal und kurz gespeichert wurden. Die Geschäftsleitung wünscht ein SIEM.",
+      "",
+      "1. Welche Systeme sollten ihre Logs an das SIEM liefern?",
+      "2. Nennen Sie drei Ereignisse, bei denen das SIEM alarmieren sollte.",
+      "3. Was ist beim Speichern der Logs rechtlich und technisch zu beachten?"
+    ],
+    "solution": [
+      "1. Firewall, VPN, Domänencontroller (Anmeldungen), Server, Mailsystem, EDR/Virenschutz, Proxy bzw. DNS, wichtige Netzwerkgeräte und Cloud-Dienste.",
+      "",
+      "2. Viele fehlgeschlagene Anmeldungen hintereinander, Anmeldung eines Admins zu ungewöhnlicher Zeit oder aus dem Ausland, neue Mitglieder in Admin-Gruppen, Abschalten des Virenschutzes, auffällige Datenabflüsse.",
+      "",
+      "3. Logs enthalten personenbezogene Daten: Zweck, Rechtsgrundlage, Speicherdauer und Zugriffsrechte festlegen, Betriebsrat beteiligen. Technisch: synchrone Uhrzeit (NTP), manipulationssichere Speicherung, ausreichender Speicherplatz, verschlüsselte Übertragung."
+    ]
+  },
+  {
+    "title": "Awareness-Kampagne mit Phishing-Simulation",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Unternehmen mit 300 Mitarbeitern möchte die Sicherheitsaufmerksamkeit verbessern und plant simulierte Phishing-Mails.",
+      "",
+      "1. Wer muss vor dem Start beteiligt werden?",
+      "2. Wie gestalten Sie die Kampagne so, dass sie wirkt und nicht bloßstellt?",
+      "3. Mit welchen Kennzahlen messen Sie den Erfolg?"
+    ],
+    "solution": [
+      "1. Geschäftsleitung, Betriebsrat (Mitbestimmung bei Leistungs- und Verhaltenskontrolle), Datenschutzbeauftragter, ggf. IT-Sicherheitsbeauftragter und Service Desk, damit Meldungen richtig bearbeitet werden.",
+      "",
+      "2. Mitarbeiter vorab allgemein informieren, keine Auswertung einzelner Personen gegenüber Vorgesetzten, nach einem Klick sofort eine kurze Lernseite zeigen, realistische Szenarien mit steigender Schwierigkeit, einfache Meldefunktion (Button im Mailprogramm), kombiniert mit kurzen Schulungen.",
+      "",
+      "3. Klickrate und Eingaberate von Zugangsdaten (sollen sinken), Melderate verdächtiger Mails (soll steigen), Zeit bis zur ersten Meldung."
+    ]
+  },
+  {
+    "title": "Risikoanalyse mit Schadenserwartung",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Ransomware-Angriff würde ein Logistikunternehmen ca. 200.000 Euro kosten. Ohne weitere Maßnahmen schätzt man die Häufigkeit auf einmal in 5 Jahren (0,2 pro Jahr).",
+      "Ein Paket aus EDR, MFA und unveränderbaren Backups kostet 18.000 Euro pro Jahr und senkt die Häufigkeit auf 0,05 pro Jahr.",
+      "",
+      "1. Berechnen Sie den erwarteten jährlichen Schaden ohne und mit Maßnahmen.",
+      "2. Lohnt sich das Maßnahmenpaket wirtschaftlich? Rechnen Sie.",
+      "3. Welche Grenzen hat diese Rechnung?"
+    ],
+    "solution": [
+      "1. Ohne Maßnahmen: 200.000 * 0,2 = 40.000 Euro pro Jahr. Mit Maßnahmen: 200.000 * 0,05 = 10.000 Euro pro Jahr.",
+      "",
+      "2. Die Maßnahmen senken den erwarteten Schaden um 30.000 Euro pro Jahr und kosten 18.000 Euro. Der Nutzen liegt 12.000 Euro pro Jahr über den Kosten, die Investition lohnt sich.",
+      "",
+      "3. Häufigkeit und Schadenshöhe sind Schätzungen. Imageschäden, Bußgelder und Existenzbedrohung lassen sich schwer beziffern. Seltene Ereignisse mit sehr hohem Schaden werden durch Durchschnittswerte unterschätzt."
+    ]
+  },
+  {
+    "title": "Notebooks und USB-Datenträger verschlüsseln",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Pflegedienst gibt 40 Notebooks an Außendienstmitarbeiter aus. Darauf liegen Gesundheitsdaten der Patienten. USB-Sticks werden bisher unkontrolliert genutzt.",
+      "",
+      "1. Wie verschlüsseln Sie die Notebooks und welche Rolle spielt das TPM?",
+      "2. Wo wird der Wiederherstellungsschlüssel aufbewahrt?",
+      "3. Wie regeln Sie die Nutzung von USB-Datenträgern?"
+    ],
+    "solution": [
+      "1. Mit BitLocker (Windows) für das ganze Laufwerk, zentral per Gruppenrichtlinie oder MDM ausgerollt. Das TPM speichert den Schlüssel und gibt ihn nur frei, wenn der Startvorgang unverändert ist. Zusätzlich eine Pre-Boot-PIN (TPM + PIN) schützt, wenn das Gerät gestohlen wird.",
+      "",
+      "2. Automatisch im Active Directory bzw. Entra ID oder im MDM. Nur berechtigte Supportmitarbeiter können ihn nach Identitätsprüfung abrufen.",
+      "",
+      "3. Nur freigegebene, verschlüsselte USB-Sticks zulassen (BitLocker To Go per Richtlinie erzwingen), unbekannte Geräte per Gerätesteuerung sperren, Datenaustausch bevorzugt über gesicherte Cloud-Freigaben."
+    ]
+  },
+  {
+    "title": "WLAN-Planung für eine Lagerhalle",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Lagerhalle ist 120 m lang und 60 m breit. Handscanner sollen überall eine stabile WLAN-Verbindung haben. Ein Access Point deckt bei Hochregalen erfahrungsgemäß etwa 600 m² zuverlässig ab. Planen Sie 20 % Reserve ein.",
+      "",
+      "1. Wie viele Access Points sind rechnerisch nötig?",
+      "2. Warum ersetzt die Rechnung keine Ausleuchtung vor Ort?",
+      "3. Welche Einstellungen sind für die Handscanner beim Roaming wichtig?"
+    ],
+    "solution": [
+      "1. Fläche: 120 * 60 = 7.200 m². 7.200 / 600 = 12 Access Points. Mit 20 % Reserve: 12 * 1,2 = 14,4, also 15 Access Points.",
+      "",
+      "2. Metallregale, Waren (z.B. Flüssigkeiten) und Gabelstapler dämpfen und reflektieren das Signal stark und verändern sich mit dem Lagerbestand. Nur eine Messung zeigt Funklöcher und Überlappungen.",
+      "",
+      "3. Schnelles Roaming (802.11r, k und v), ausreichend Überlappung der Funkzellen (z.B. -67 dBm an der Zellgrenze), einheitliche SSID, nicht überlappende Kanäle, Sendeleistung nicht zu hoch, damit Geräte rechtzeitig wechseln."
+    ]
+  },
+  {
+    "title": "PoE-Budget für ein neues Stockwerk",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Auf einem neuen Stockwerk werden per PoE versorgt: 40 IP-Telefone (je 7 W), 8 Access Points (je 30 W am Switchport) und 6 Kameras (je 15,4 W).",
+      "Der geplante Switch-Stack hat ein PoE-Budget von 740 W. Es sollen 20 % Reserve bleiben.",
+      "",
+      "1. Berechnen Sie den gesamten PoE-Bedarf.",
+      "2. Reicht das Budget inklusive Reserve?",
+      "3. Welche weiteren Punkte prüfen Sie bei der PoE-Planung?"
+    ],
+    "solution": [
+      "1. Telefone: 40 * 7 = 280 W. Access Points: 8 * 30 = 240 W. Kameras: 6 * 15,4 = 92,4 W. Gesamt: 612,4 W.",
+      "",
+      "2. Mit 20 % Reserve: 612,4 * 1,2 = 734,88 W. Das liegt knapp unter 740 W und reicht rechnerisch, lässt aber kaum Luft für Erweiterungen. Empfehlung: Netzteile mit höherem PoE-Budget oder einen zusätzlichen Switch einplanen.",
+      "",
+      "3. Budget pro Switch bzw. Netzteil (nicht nur im Stack), benötigter PoE-Standard je Gerät (802.3af, at, bt), Kabelqualität und Wärme im Kabelbündel, USV-Leistung für den Switch, damit Telefone und Kameras bei Stromausfall laufen."
+    ]
+  },
+  {
+    "title": "VoIP mit QoS einführen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Spedition stellt auf VoIP um. Es sollen bis zu 25 Gespräche gleichzeitig nach außen möglich sein. Ein Gespräch mit G.711 benötigt inklusive Overhead ca. 100 kbit/s je Richtung. Der Internetanschluss hat 50 Mbit/s Download und 10 Mbit/s Upload.",
+      "",
+      "1. Wie viel Bandbreite brauchen 25 Gespräche je Richtung? Welcher Anteil des Uploads ist das?",
+      "2. Wie stellen Sie im LAN sicher, dass Sprache Vorrang hat?",
+      "3. Warum reicht die reine Bandbreite nicht aus, und welche Werte sind für Sprachqualität entscheidend?"
+    ],
+    "solution": [
+      "1. 25 * 100 kbit/s = 2.500 kbit/s = 2,5 Mbit/s je Richtung. Im Upload sind das 2,5 / 10 = 25 %.",
+      "",
+      "2. Eigenes Voice-VLAN für die Telefone (per LLDP-MED zugewiesen), Markierung der Sprachpakete mit DSCP EF (46) bzw. CoS 5, Priorisierung in Switches und Router mit einer Priority Queue, QoS auch am Internetanschluss (Upload) einrichten.",
+      "",
+      "3. Sprache ist empfindlich gegenüber Verzögerung, Schwankung und Verlust. Richtwerte: Latenz unter 150 ms (eine Richtung), Jitter unter 30 ms, Paketverlust unter 1 %. Bei ausgelasteter Leitung verschlechtern sich diese Werte, wenn nicht priorisiert wird."
+    ]
+  },
+  {
+    "title": "Uplinks mit Link Aggregation planen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Access-Switch mit 48 Ports zu je 1 Gbit/s wird über zwei 10-Gbit/s-Leitungen per LACP an den Core-Switch angebunden.",
+      "",
+      "1. Berechnen Sie das Überbuchungsverhältnis (Oversubscription) zwischen Access-Ports und Uplink.",
+      "2. Ist das Verhältnis für Büro-Arbeitsplätze vertretbar? Begründen Sie.",
+      "3. Warum erreicht eine einzelne Datei-Kopie trotzdem nicht 20 Gbit/s, und was passiert beim Ausfall einer Leitung?"
+    ],
+    "solution": [
+      "1. Access: 48 * 1 Gbit/s = 48 Gbit/s. Uplink: 2 * 10 Gbit/s = 20 Gbit/s. Verhältnis 48 : 20 = 2,4 : 1.",
+      "",
+      "2. Ja. Büro-Arbeitsplätze nutzen ihre Bandbreite nur zeitweise, Verhältnisse bis etwa 20 : 1 gelten im Access-Bereich als üblich. 2,4 : 1 ist großzügig.",
+      "",
+      "3. LACP verteilt Verbindungen per Hash (z.B. über Adressen und Ports) auf die Leitungen, eine einzelne Verbindung nutzt immer nur eine Leitung, also max. 10 Gbit/s. Fällt eine Leitung aus, läuft der gesamte Verkehr ohne Unterbrechung über die andere weiter, mit halber Kapazität."
+    ]
+  },
+  {
+    "title": "Spanning Tree gezielt einstellen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "In einem Netz mit zwei Core-Switches und acht Access-Switches läuft Spanning Tree mit Standardeinstellungen. Ein alter Access-Switch im Keller wurde als Root Bridge gewählt, und PCs brauchen nach dem Einschalten 30 Sekunden bis zur Verbindung.",
+      "",
+      "1. Warum wurde der alte Switch Root Bridge und warum ist das ungünstig?",
+      "2. Wie legen Sie die Root Bridge fest?",
+      "3. Was bewirken PortFast und BPDU Guard an den Ports zu Endgeräten?"
+    ],
+    "solution": [
+      "1. Bei gleicher Priorität gewinnt die niedrigste MAC-Adresse, und ältere Geräte haben oft niedrige MAC-Adressen. Der Verkehr fließt dann über den langsamen Keller-Switch statt über die Core-Switches.",
+      "",
+      "2. Auf dem ersten Core-Switch die Bridge-Priorität senken (z.B. 4096), auf dem zweiten etwas höher (z.B. 8192) als Ersatz-Root. Mit RSTP bzw. MSTP arbeiten, um schneller zu konvergieren.",
+      "",
+      "3. PortFast schaltet Endgeräte-Ports sofort in den Weiterleitungszustand, die Wartezeit entfällt. BPDU Guard schaltet einen solchen Port ab, wenn dort Spanning-Tree-Pakete eintreffen, z.B. weil jemand einen Switch anschließt. So entstehen keine Schleifen."
+    ]
+  },
+  {
+    "title": "Netzwerk-Monitoring aufbauen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Systemhaus soll für einen Kunden mit 3 Standorten, 20 Switches, 2 Firewalls und 15 Servern ein Monitoring einrichten. Bisher fallen Störungen erst auf, wenn Mitarbeiter anrufen.",
+      "",
+      "1. Welche Protokolle bzw. Datenquellen nutzen Sie für die Überwachung?",
+      "2. Nennen Sie fünf Werte, die überwacht werden sollten, mit sinnvoller Alarmschwelle.",
+      "3. Wie verhindern Sie, dass das Team in Alarmen untergeht?"
+    ],
+    "solution": [
+      "1. SNMPv3 für Geräte-Werte, Syslog für Meldungen, NetFlow bzw. IPFIX für Verkehrsanalysen, ICMP und Dienstprüfungen (HTTP, DNS) für Erreichbarkeit, Agenten auf Servern.",
+      "",
+      "2. Erreichbarkeit der Geräte (Ausfall sofort), Auslastung der WAN-Leitungen (z.B. über 80 % für 10 Minuten), Fehler und Verwerfungen an Ports, CPU und Speicher der Firewalls (über 90 %), freier Plattenplatz der Server (unter 15 %), Ablaufdatum von Zertifikaten (30 Tage vorher), Temperatur und USV-Status.",
+      "",
+      "3. Abhängigkeiten abbilden (fällt der Standort-Router aus, keine Einzelalarme für alle Geräte dahinter), Warn- und Kritisch-Stufen, Wartungsfenster unterdrücken Alarme, Eskalation nach Priorität, Schwellwerte regelmäßig anpassen."
+    ]
+  },
+  {
+    "title": "Glasfaseranbindung eines Rechenzentrumsraums",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein neuer Serverraum soll mit dem Hauptverteiler verbunden werden. Die Strecke im Gebäude ist 180 m lang, zusätzlich soll ein zweites Gebäude in 2,5 km Entfernung angebunden werden. Geplant sind jeweils 10 Gbit/s.",
+      "",
+      "1. Welche Faserart und welche Transceiver wählen Sie für die 180 m?",
+      "2. Welche Lösung benötigen Sie für die 2,5 km?",
+      "3. Warum werden zwei getrennt verlegte Leitungen empfohlen?"
+    ],
+    "solution": [
+      "1. Multimode OM4 (oder OM3) mit 10GBASE-SR-Transceivern (SFP+), LC-Duplex-Stecker. OM4 reicht bei 10 Gbit/s bis ca. 400 m.",
+      "",
+      "2. Multimode reicht nicht mehr. Nötig ist Singlemode OS2 mit 10GBASE-LR-Transceivern (bis ca. 10 km).",
+      "",
+      "3. Ein einzelner Kabelweg ist ein Single Point of Failure (z.B. durch Bauarbeiten). Mit zwei Trassen auf verschiedenen Wegen und Link Aggregation oder Routing bleibt die Verbindung bei Beschädigung einer Trasse erhalten."
+    ]
+  },
+  {
+    "title": "Zwei Internetleitungen sinnvoll nutzen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Unternehmen hat einen Glasfaseranschluss (500 Mbit/s) und als Ersatz einen Kabelanschluss (250 Mbit/s). Der Kabelanschluss hat eine WAN-Adresse aus 100.64.0.0/10.",
+      "",
+      "1. Wie stellen Sie sicher, dass bei Ausfall der Glasfaser automatisch die zweite Leitung genutzt wird?",
+      "2. Wie kann die zweite Leitung auch im Normalbetrieb sinnvoll genutzt werden?",
+      "3. Was bedeutet die Adresse aus 100.64.0.0/10 für die Erreichbarkeit von außen?"
+    ],
+    "solution": [
+      "1. Router bzw. Firewall mit zwei WAN-Anschlüssen: Standardroute über die Glasfaser, zweite Standardroute mit schlechterer Distanz über den Kabelanschluss (Floating Static Route). Eine Verbindungsprüfung (z.B. Ping auf ein Ziel im Internet) erkennt den Ausfall und schaltet um. VPN-Tunnel müssen ebenfalls umschalten können.",
+      "",
+      "2. Per Policy-Based Routing oder SD-WAN: z.B. Gäste-WLAN und Updates über die Kabelleitung, Geschäftsanwendungen über die Glasfaser, oder Lastverteilung nach Auslastung.",
+      "",
+      "3. Die Leitung liegt hinter Carrier-Grade NAT. Über IPv4 sind von außen keine Portweiterleitungen oder eingehende VPN-Verbindungen möglich. Abhilfe: IPv6 nutzen, eine öffentliche IPv4-Adresse beim Provider buchen oder VPN-Verbindungen von innen aufbauen."
+    ]
+  },
+  {
+    "title": "Netzwerkdokumentation erstellen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Nach dem Ausscheiden des einzigen Admins findet der neue Dienstleister keine Dokumentation vor.",
+      "",
+      "1. Welche Pläne und Listen gehören zu einer vollständigen Netzwerkdokumentation?",
+      "2. Wie stellen Sie sicher, dass die Dokumentation aktuell bleibt?",
+      "3. Wo und wie werden Zugangsdaten sicher dokumentiert?"
+    ],
+    "solution": [
+      "1. Logischer Netzplan (VLANs, Subnetze, Routing, Firewall-Zonen), physischer Plan (Räume, Schränke, Kabelwege), IP-Adressliste bzw. IPAM, Patchliste (Dose zu Patchfeld zu Switchport), Geräteinventar mit Seriennummern, Firmware und Wartungsverträgen, Konfigurationssicherungen, Firewall-Regelwerk mit Begründung, Ansprechpartner und Notfallhandbuch.",
+      "",
+      "2. Dokumentation ist Teil jedes Changes (keine Änderung ohne Aktualisierung), automatische Werkzeuge wie Netzwerk-Scanner, IPAM und Konfigurationsbackups, regelmäßige Überprüfung, eindeutige Beschriftung von Kabeln und Geräten.",
+      "",
+      "3. In einem Passwortmanager bzw. Tresor mit Rollen und Protokollierung, nicht im Klartext in der Dokumentation. Notfallzugang (z.B. versiegelter Umschlag im Safe) für den Fall, dass der Tresor nicht erreichbar ist."
+    ]
+  },
+  {
+    "title": "DNS und Zeitsynchronisation im Firmennetz",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Unternehmen hat eine Active-Directory-Domäne firma.local, einen Webshop unter shop.firma.de (extern gehostet) und einen Mailserver im eigenen Haus, der intern und extern als mail.firma.de erreichbar sein soll.",
+      "",
+      "1. Wie konfigurieren Sie die DNS-Server der Clients und die Weiterleitung von Anfragen ins Internet?",
+      "2. Wie erreichen interne Clients den Mailserver unter mail.firma.de direkt über die interne Adresse?",
+      "3. Wie ist die Zeitsynchronisation im Netz aufgebaut und warum ist sie wichtig?"
+    ],
+    "solution": [
+      "1. Clients nutzen nur die internen DNS-Server (Domänencontroller), sonst funktionieren Domänenanmeldung und Gruppenrichtlinien nicht. Die DC-DNS-Server leiten externe Anfragen an einen Forwarder weiter (z.B. Provider oder Firewall).",
+      "",
+      "2. Mit Split-DNS: Intern gibt es eine Zone firma.de (oder nur einen Eintrag mail.firma.de) mit der internen IP-Adresse. Einträge wie shop.firma.de müssen dann intern ebenfalls gepflegt werden, oder man legt nur eine Zone für mail.firma.de an.",
+      "",
+      "3. Der PDC-Emulator holt die Zeit von zuverlässigen externen NTP-Servern, alle DCs von ihm, alle Clients und Server von ihrem DC. Netzwerkgeräte nutzen dieselbe Quelle. Wichtig für Kerberos (max. 5 Minuten Abweichung), Zertifikate und nachvollziehbare Logs."
+    ]
+  },
+  {
+    "title": "iSCSI-Speichernetz für Virtualisierungshosts",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Drei Virtualisierungshosts sollen ein gemeinsames Speichersystem per iSCSI nutzen. Jeder Host hat vier 10-Gbit/s-Ports.",
+      "",
+      "1. Warum sollte der iSCSI-Verkehr vom übrigen Netzwerkverkehr getrennt werden, und wie?",
+      "2. Wozu dient Multipath I/O (MPIO) und wie verkabeln Sie es?",
+      "3. Welche Einstellungen verbessern Leistung und Sicherheit?"
+    ],
+    "solution": [
+      "1. Speicherverkehr braucht geringe Latenz und darf nicht durch Benutzerverkehr gestört werden. Außerdem sollen Clients keinen Zugriff auf das Speichernetz haben. Trennung über eigene Switches oder eigene VLANs mit eigenen Subnetzen, ohne Routing ins LAN.",
+      "",
+      "2. MPIO nutzt mehrere Wege zwischen Host und Speicher gleichzeitig bzw. als Ersatz. Je Host zwei Ports für iSCSI, verbunden mit zwei getrennten Switches und zwei Controllern des Speichersystems, in zwei getrennten Subnetzen.",
+      "",
+      "3. Jumbo Frames (MTU 9000) durchgehend auf Hosts, Switches und Speicher, Flow Control nach Herstellerempfehlung, CHAP-Authentifizierung, Zugriff auf LUNs nur für die IQNs der Hosts, Management-Zugang getrennt."
+    ]
+  },
+  {
+    "title": "Virtuelle Netzwerke im Hypervisor planen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Auf zwei Hypervisor-Hosts laufen VMs aus den VLANs 10 (Server), 20 (DMZ) und 30 (Test). Außerdem gibt es Verkehr für Management und Live-Migration. Jeder Host hat vier Netzwerkports.",
+      "",
+      "1. Wie bringen Sie mehrere VLANs über wenige physische Ports zu den VMs?",
+      "2. Schlagen Sie eine Aufteilung der vier Ports vor.",
+      "3. Warum darf die DMZ-VM trotz gleichem Host keinen direkten Weg ins Server-VLAN haben, und wie stellen Sie das sicher?"
+    ],
+    "solution": [
+      "1. Die Switchports zum Host werden als Trunk (802.1Q) konfiguriert. Im virtuellen Switch erhält jede VM-Netzwerkkarte bzw. Portgruppe ihre VLAN-ID. Der virtuelle Switch taggt den Verkehr.",
+      "",
+      "2. Zwei Ports als Team bzw. Bond für VM-Verkehr (Trunk mit VLAN 10, 20, 30), zwei Ports als Team für Management und Live-Migration (getrennte VLANs). Jeweils an zwei verschiedene physische Switches für Ausfallsicherheit.",
+      "",
+      "3. Die DMZ ist eine eigene Sicherheitszone. Verkehr zwischen den VLANs darf nur über die Firewall laufen. Der Hypervisor routet nicht zwischen VLANs, die VMs haben nur eine Netzwerkkarte im eigenen VLAN, und das Management-Netz ist für VMs nicht erreichbar."
+    ]
+  },
+  {
+    "title": "Datenreplikation zwischen zwei Standorten",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Unternehmen repliziert seinen Fileserver (2 TB) jede Nacht an einen zweiten Standort. Täglich ändern sich etwa 3 % der Daten. Die Replikation soll in einem Zeitfenster von 6 Stunden abgeschlossen sein.",
+      "",
+      "1. Wie viele Daten müssen pro Nacht übertragen werden (1 TB = 1.000 GB)?",
+      "2. Welche Datenrate ist dafür mindestens nötig (ohne Overhead)?",
+      "3. Warum ersetzt die Replikation kein Backup?"
+    ],
+    "solution": [
+      "1. 2.000 GB * 3 % = 60 GB pro Nacht.",
+      "",
+      "2. 60 GB * 8.000 = 480.000 Mbit. 6 h = 21.600 s. 480.000 / 21.600 = ca. 22,2 Mbit/s. Wegen Overhead und Schwankungen sollte die Leitung deutlich mehr liefern.",
+      "",
+      "3. Die Replikation überträgt auch Fehler: Gelöschte oder von Ransomware verschlüsselte Dateien sind nach der nächsten Replikation auch am zweiten Standort kaputt. Ein Backup mit mehreren Versionen und unveränderbarer Kopie ist weiterhin nötig."
+    ]
+  },
+  {
+    "title": "SLA für den Netzwerkbetrieb prüfen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Dienstleister betreibt das Netz eines Kunden für 3.200 Euro im Monat. Das SLA garantiert 99,8 % Verfügbarkeit pro Monat (30 Tage). Bei Unterschreitung gibt es 10 % Gutschrift auf die Monatsgebühr.",
+      "Im Juni fiel das Netz insgesamt 2,5 Stunden aus.",
+      "",
+      "1. Wie viele Minuten Ausfall erlaubt das SLA pro Monat?",
+      "2. Welche Verfügbarkeit wurde im Juni erreicht, und steht dem Kunden eine Gutschrift zu? Wie hoch?",
+      "3. Welche Punkte sollten neben der Verfügbarkeit in einem SLA geregelt sein?"
+    ],
+    "solution": [
+      "1. 30 Tage = 43.200 Minuten. 0,2 % davon sind 86,4 Minuten.",
+      "",
+      "2. 2,5 h = 150 Minuten. Verfügbarkeit: (43.200 - 150) / 43.200 = 99,65 %. Das liegt unter 99,8 %, der Kunde erhält 10 % von 3.200 Euro = 320 Euro Gutschrift.",
+      "",
+      "3. Servicezeiten, Reaktions- und Wiederherstellungszeiten nach Priorität, Messmethode und Berichtswesen, geplante Wartungsfenster (zählen meist nicht als Ausfall), Ansprechpartner und Eskalation, Mitwirkungspflichten des Kunden, Laufzeit und Kündigung."
+    ]
+  },
+  {
+    "title": "Angebot für eine Firewall-Erneuerung kalkulieren",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Systemhaus erstellt ein Angebot für zwei Firewalls im Hochverfügbarkeitsverbund:",
+      "  Einkaufspreis je Firewall 4.200 Euro netto, Aufschlag auf Hardware 25 %",
+      "  Sicherheitslizenzen je Gerät 1.100 Euro netto pro Jahr, Laufzeit 3 Jahre (ohne Aufschlag)",
+      "  Dienstleistung 16 Stunden zu 110 Euro netto",
+      "",
+      "1. Berechnen Sie den Verkaufspreis der Hardware, die Lizenzkosten und die Dienstleistung.",
+      "2. Berechnen Sie den Gesamtbetrag netto, die Umsatzsteuer (19 %) und den Bruttobetrag.",
+      "3. Wie begründen Sie dem Kunden, warum zwei Firewalls statt einer angeboten werden?"
+    ],
+    "solution": [
+      "1. Hardware: 2 * 4.200 = 8.400 Euro Einkauf, mit 25 % Aufschlag 8.400 * 1,25 = 10.500 Euro. Lizenzen: 2 * 1.100 * 3 = 6.600 Euro. Dienstleistung: 16 * 110 = 1.760 Euro.",
+      "",
+      "2. Netto: 10.500 + 6.600 + 1.760 = 18.860 Euro. Umsatzsteuer: 18.860 * 0,19 = 3.583,40 Euro. Brutto: 22.443,40 Euro.",
+      "",
+      "3. Die Firewall ist ein Single Point of Failure: Fällt sie aus, sind Internet, VPN und Standortverbindungen weg. Im HA-Verbund übernimmt die zweite automatisch, Updates können ohne Ausfall eingespielt werden. Die Mehrkosten sind meist geringer als ein Tag Stillstand."
+    ]
+  },
+  {
+    "title": "Standortvernetzung mit dem Netzplan steuern",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Für die Anbindung eines neuen Standorts gibt es folgende Vorgänge (Dauer in Arbeitstagen):",
+      "  A Bestandsaufnahme: 3 (Start)",
+      "  B Konzept: 4 (nach A)",
+      "  C Hardware bestellen und liefern: 10 (nach B)",
+      "  D Leitung beauftragen und schalten: 15 (nach B)",
+      "  E Konfiguration vorbereiten: 5 (nach B)",
+      "  F Installation vor Ort: 3 (nach C und E)",
+      "  G Inbetriebnahme und Test: 2 (nach D und F)",
+      "  H Dokumentation und Abnahme: 2 (nach G)",
+      "",
+      "1. Ermitteln Sie die Projektdauer und den kritischen Pfad.",
+      "2. Berechnen Sie den Gesamtpuffer von C und von E.",
+      "3. Die Leitung verzögert sich um 4 Tage. Welche Auswirkung hat das, und was können Sie tun?"
+    ],
+    "solution": [
+      "1. Wege: A-B-C-F-G-H = 3 + 4 + 10 + 3 + 2 + 2 = 24. A-B-E-F-G-H = 3 + 4 + 5 + 3 + 2 + 2 = 19. A-B-D-G-H = 3 + 4 + 15 + 2 + 2 = 26. Kritischer Pfad A-B-D-G-H, Projektdauer 26 Arbeitstage.",
+      "",
+      "2. G kann erst nach Tag 22 beginnen (Ende von D). F muss also spätestens an Tag 22 enden, also spätestens an Tag 19 beginnen. C endet frühestens an Tag 17 und darf spätestens an Tag 19 enden: Gesamtpuffer C = 2 Tage. E endet frühestens an Tag 12 und darf ebenfalls spätestens an Tag 19 enden: Gesamtpuffer E = 7 Tage.",
+      "",
+      "3. D liegt auf dem kritischen Pfad, das Projekt verlängert sich um 4 auf 30 Tage. Möglich: Übergangslösung (z.B. LTE- oder 5G-Router) für die Inbetriebnahme, beim Provider eskalieren, Leitung frühzeitiger beauftragen (parallel zum Konzept), Auftraggeber informieren und Termine anpassen."
+    ]
   }
 ]
