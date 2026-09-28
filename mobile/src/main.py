@@ -157,7 +157,7 @@ class DashboardScreen(Screen):
             ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["pink"],
                     subtitle="Intensität pro Tag"),
             ui.Card("Fortschritt je Fachbereich",
-                    [ft.Row(fach_cells[:2]), ft.Row(fach_cells[2:])],
+                    [ft.Row(fach_cells[:3]), ft.Row(fach_cells[3:])],
                     accent=C["green"], subtitle="Abdeckung und Erfolgsquote", spacing=16),
             ui.Card("Aktivitäten", [self.activity_box], subtitle="zuletzt"),
             ui.Card("Lerntage", [self.calendar], accent=C["purple"],

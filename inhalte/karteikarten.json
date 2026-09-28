@@ -15010,5 +15010,1793 @@
       "Ausbildungsabschluss, Entfernung zum Wohnort und Überstunden",
       "Freie Wahl des Arbeitgebers, weil er allein den Betrieb führt"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf einem stark genutzten Webserver zeigt ss -tan mehrere Tausend Verbindungen im Zustand TIME-WAIT. Der Dienst läuft stabil. Wie bewerten Sie das?",
+    "a": "Normal: Wer aktiv schließt, wartet nach dem Abbau kurz ab",
+    "a_full": "Wer eine TCP-Verbindung zuerst mit FIN beendet, geht nach dem Abbau in TIME-WAIT. Dort wartet er die doppelte maximale Segmentlebensdauer ab, damit verspätete Segmente keine neue Verbindung stören. Bei vielen kurzen HTTP-Verbindungen sind Tausende solcher Einträge üblich und kein Fehler.",
+    "options": [
+      "Normal: Wer aktiv schließt, wartet nach dem Abbau kurz ab",
+      "Ein SYN-Flood-Angriff hält die Verbindungen halb offen",
+      "Die Clients haben den Handshake nicht abgeschlossen",
+      "Der Webserver hat keine freien Ports mehr zum Lauschen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf einem Anwendungsserver wächst die Zahl der Verbindungen im Zustand CLOSE-WAIT zur Datenbank über Tage stetig an. Was ist die wahrscheinlichste Ursache?",
+    "a": "Die Anwendung schließt ihre Sockets nach dem FIN nicht",
+    "a_full": "CLOSE-WAIT bedeutet: Die Gegenseite hat mit FIN beendet, die eigene Seite hat das bestätigt, aber noch nicht selbst geschlossen. Das Schließen ist Aufgabe der Anwendung. Wachsen diese Einträge dauerhaft, liegt meist ein Programmfehler vor, etwa ein Verbindungspool, der Sockets nicht freigibt.",
+    "options": [
+      "Die Anwendung schließt ihre Sockets nach dem FIN nicht",
+      "Die Firewall verwirft die Antwortpakete der Datenbank",
+      "Der Datenbankserver bestätigt den Verbindungsaufbau nicht",
+      "Die Netzwerkkarte arbeitet im falschen Duplexmodus"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Mitschnitt sendet der Client nach einem Upload ein FIN. Der Server bestätigt mit ACK, schickt danach aber noch Daten und erst Sekunden später sein eigenes FIN. Ist das ein Fehler?",
+    "a": "Nein, TCP beendet jede Richtung getrennt",
+    "a_full": "TCP ist vollduplex, deshalb schließt jede Seite ihre Senderichtung einzeln mit FIN, das die Gegenseite mit ACK bestätigt. Nach dem ersten FIN ist die Verbindung nur halb geschlossen, der Server darf weiter senden. Der reguläre Abbau besteht so aus vier Segmenten: FIN, ACK, FIN, ACK.",
+    "options": [
+      "Nein, TCP beendet jede Richtung getrennt",
+      "Ja, der Server hätte sofort mit RST antworten müssen",
+      "Ja, nach einem FIN darf keine Seite mehr Daten senden",
+      "Nein, der Server startet damit einen neuen Handshake"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nutzer klagen über langsame Kopien vom Backupserver. Im Mitschnitt meldet der empfangende Client wiederholt TCP ZeroWindow, Paketverluste gibt es keine. Wo liegt das Problem?",
+    "a": "Der Client verarbeitet die Daten nicht schnell genug",
+    "a_full": "Mit dem Empfangsfenster teilt ein Empfänger mit, wie viele Daten er noch puffern kann. ZeroWindow bedeutet: Der Puffer ist voll, der Sender muss pausieren. Die Ursache liegt beim Empfänger, etwa an einer langsamen Festplatte oder hoher Last, nicht an der Leitung.",
+    "options": [
+      "Der Client verarbeitet die Daten nicht schnell genug",
+      "Die Leitung zwischen Server und Client ist überlastet",
+      "Der Server sendet Pakete mit zu kleiner MTU",
+      "Die Firewall verwirft einen Teil der Bestätigungen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Über den neuen IPsec-Tunnel zur Filiale funktionieren ping und kleine Webseiten, große SMB-Kopien hängen aber. Die Firewall verwirft sämtliches ICMP. Was ist die Ursache?",
+    "a": "PMTUD scheitert, weil ICMP Fragmentierung nötig fehlt",
+    "a_full": "Der Tunnel verkleinert die MTU. Große Pakete mit gesetztem DF-Bit darf der Router nicht zerlegen und meldet deshalb ICMP Typ 3 Code 4 an den Absender. Wird diese Meldung verworfen, sendet der Absender immer wieder zu große Pakete. Abhilfe schaffen die Freigabe dieser ICMP-Meldung oder MSS Clamping am VPN-Gateway.",
+    "options": [
+      "PMTUD scheitert, weil ICMP Fragmentierung nötig fehlt",
+      "Der Tunnel überträgt SMB nur mit aktivierter Signierung",
+      "Das Tunnelnetz überschneidet sich mit dem Filialnetz",
+      "Die Phase 1 der IPsec-Verbindung läuft regelmäßig ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege ordnet DHCP in der Netzdokumentation der OSI-Schicht 3 zu, weil es IP-Adressen vergibt. Stimmt das?",
+    "a": "Nein, DHCP ist ein Anwendungsprotokoll über UDP 67 und 68",
+    "a_full": "Für die Zuordnung zählt, wo ein Protokoll im Stapel arbeitet, nicht welche Daten es verteilt. DHCP-Nachrichten werden in UDP-Segmente verpackt und damit von Schicht 4 transportiert. DHCP gehört deshalb zur Anwendungsschicht, auch wenn es die Schicht-3-Konfiguration liefert.",
+    "options": [
+      "Nein, DHCP ist ein Anwendungsprotokoll über UDP 67 und 68",
+      "Ja, alle Protokolle zur Adressvergabe gehören zu Schicht 3",
+      "Nein, DHCP gehört als Broadcast-Dienst zu Schicht 2",
+      "Nein, DHCP arbeitet als Transportprotokoll auf Schicht 4"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem IPTV-VLAN ohne Multicast-Router ist auf allen Switches IGMP Snooping aktiv. Die Streams starten, brechen aber nach einigen Minuten an allen Empfängern ab. Was fehlt?",
+    "a": "Ein IGMP-Querier, der die Gruppen regelmäßig abfragt",
+    "a_full": "Snooping-Switches merken sich Gruppen nur, solange Mitgliedschaftsberichte eintreffen. Diese Berichte senden Empfänger vor allem als Antwort auf Abfragen eines Queriers, sonst meist nur beim Beitritt. Ohne Router aktiviert man deshalb die Querier-Funktion auf einem Switch im VLAN.",
+    "options": [
+      "Ein IGMP-Querier, der die Gruppen regelmäßig abfragt",
+      "Ein DHCP-Server, der Multicast-Adressen verteilt",
+      "Ein Spanning Tree, der die Streams voneinander trennt",
+      "Ein Trunk, der alle VLANs bis zum Router führt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Admin setzt einem Server manuell die Adresse 2001:db8:10::20/64. ip -6 addr zeigt danach bei dieser Adresse den Zusatz dadfailed. Was ist passiert?",
+    "a": "Ein anderes Gerät im Segment nutzt die Adresse bereits",
+    "a_full": "Vor der Nutzung prüft IPv6 per Duplicate Address Detection, ob eine Adresse frei ist. Dazu sendet der Host eine Neighbor Solicitation an die eigene Adresse. Antwortet ein anderes Gerät, ist die Adresse doppelt. Sie bleibt dann unbenutzt, bis der Konflikt gelöst ist.",
+    "options": [
+      "Ein anderes Gerät im Segment nutzt die Adresse bereits",
+      "Der Router hat das Präfix nicht per RA angekündigt",
+      "Die Adresse liegt außerhalb des Link-Local-Bereichs",
+      "Der DHCPv6-Server hat die Adresse schon vergeben"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Gebäude auf einem Werksgelände sollen mit 10 Gbit/s verbunden werden. Die Kabeltrasse ist 1,8 km lang. Welche Kombination planen Sie?",
+    "a": "Singlemode OS2 mit 10GBASE-LR-Transceivern",
+    "a_full": "Multimode-Fasern wie OM3 oder OM4 schaffen 10 Gbit/s nur über einige Hundert Meter. Für Kilometerstrecken nutzt man Singlemode-Faser der Kategorie OS2. 10GBASE-LR arbeitet mit 1310 nm und reicht bis etwa 10 km.",
+    "options": [
+      "Singlemode OS2 mit 10GBASE-LR-Transceivern",
+      "Multimode OM4 mit 10GBASE-SR-Transceivern",
+      "Multimode OM3 mit 10GBASE-LRM-Transceivern",
+      "Kupfer Cat 8.2 mit 10GBASE-T-Ports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Aufräumen im Verteiler sind die LWL-Patchkabel eng aufgewickelt und mit Kabelbindern fest zusammengezogen. Zwei Uplinks melden nun schwache Empfangspegel und CRC-Fehler. Warum?",
+    "a": "Mindestbiegeradius unterschritten und Fasern gequetscht",
+    "a_full": "Wird eine Faser zu stark gebogen oder gedrückt, tritt Licht aus dem Kern aus. Die Dämpfung steigt, das Signal kommt zu schwach an und es entstehen Bitfehler. LWL-Kabel führt man in großen Bögen und fixiert sie nur locker, etwa mit Klettband.",
+    "options": [
+      "Mindestbiegeradius unterschritten und Fasern gequetscht",
+      "Kabelbinder leiten Störspannungen in die Fasern ein",
+      "Aufgewickelte Fasern ändern ihre Wellenlänge",
+      "Die Transceiver erkennen gebündelte Kabel als Loop"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Elektrobetrieb hat neue LWL-Strecken zwischen den Etagenverteilern verlegt. Welche Messung gehört mindestens in das Abnahmeprotokoll?",
+    "a": "Dämpfungsmessung je Faser mit Lichtquelle und Leistungsmesser",
+    "a_full": "Die Grundmessung (Tier 1) ermittelt die Einfügedämpfung jeder Faser mit einer kalibrierten Lichtquelle und einem Leistungsmesser. Das Ergebnis wird mit dem berechneten Dämpfungsbudget verglichen, dazu kommen Länge und Polarität. Eine OTDR-Messung ergänzt das um die Lage einzelner Stecker und Spleiße.",
+    "options": [
+      "Dämpfungsmessung je Faser mit Lichtquelle und Leistungsmesser",
+      "Ein Ping über jeden neuen Uplink nach der Inbetriebnahme",
+      "Eine Wiremap-Messung mit dem Kupfer-Kabeltester je Faser",
+      "Eine Durchgangsprüfung jeder Faser mit rotem Laserpointer"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Der Kunde verlangt bei der Abnahme den Nachweis, dass jede neue Kupferstrecke die Klasse EA erfüllt. Der Techniker hat nur einen einfachen Kabeltester dabei. Reicht das?",
+    "a": "Nein, dafür braucht man ein Zertifizierungsmessgerät",
+    "a_full": "Ein einfacher Tester prüft nur Belegung und Durchgang. Die Einhaltung einer Klasse zeigt erst ein Zertifizierungsmessgerät, das Werte wie NEXT, Einfügedämpfung und Rückflussdämpfung gegen die Grenzwerte der Norm misst. Jede Strecke erhält ein Messprotokoll mit Bestanden oder Nicht bestanden.",
+    "options": [
+      "Nein, dafür braucht man ein Zertifizierungsmessgerät",
+      "Ja, wenn alle acht Adern korrekt aufgelegt sind",
+      "Ja, wenn danach jeder Port mit 10 Gbit/s verbindet",
+      "Nein, dafür braucht man eine OTDR-Messung je Strecke"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "An einem Standort werden IP-Telefone mehrerer Hersteller angeschlossen. Sie sollen ihr Voice-VLAN 20 und die QoS-Markierung automatisch vom Switch erhalten. Welches Verfahren nutzen Sie?",
+    "a": "LLDP-MED mit einer Network Policy für Sprache",
+    "a_full": "LLDP-MED ist eine herstellerunabhängige Erweiterung von LLDP für Endgeräte wie Telefone. Der Switch teilt dem Telefon darüber VLAN-ID und Priorität für Sprache mit, auch der PoE-Bedarf lässt sich aushandeln. Das Telefon markiert seine Sprachpakete dann selbst im richtigen VLAN.",
+    "options": [
+      "LLDP-MED mit einer Network Policy für Sprache",
+      "DHCP Option 82 mit der Kennung des Switchports",
+      "Ein statischer Trunk mit Native VLAN 20 am Port",
+      "Port Security mit fest hinterlegter MAC-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die 100-Mbit/s-Leitung einer Filiale ist laut SNMP-Grafik jeden Nachmittag voll ausgelastet. Sie wollen wissen, welche Rechner und Anwendungen den Verkehr verursachen. Was setzen Sie ein?",
+    "a": "Flow-Export wie NetFlow oder sFlow an einen Collector",
+    "a_full": "Die SNMP-Zähler zeigen nur, wie viel über eine Schnittstelle läuft. Flow-Daten fassen Verbindungen mit Quelle, Ziel, Ports und Datenmenge zusammen. Im Collector sieht man so die größten Verursacher, ohne alle Pakete mitzuschneiden.",
+    "options": [
+      "Flow-Export wie NetFlow oder sFlow an einen Collector",
+      "Eine kürzere Abfragezeit für alle SNMP-Zähler des Routers",
+      "Einen SNMP-Trap bei 90 Prozent Auslastung der Leitung",
+      "Eine Syslog-Weiterleitung aller Router-Meldungen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Bei Änderungen am Core-Switch hat sich ein Admin schon einmal selbst ausgesperrt und musste nachts ins Rechenzentrum fahren. Wie beugen Sie dem dauerhaft vor?",
+    "a": "Out-of-Band-Zugang über einen Konsolenserver",
+    "a_full": "Ein Out-of-Band-Zugang ist vom produktiven Datennetz unabhängig. Ein Konsolenserver verbindet die seriellen Konsolen der Geräte und ist etwa über ein eigenes Netz oder LTE erreichbar. Auch bei einer fehlerhaften Konfiguration kommt der Admin so noch an das Gerät.",
+    "options": [
+      "Out-of-Band-Zugang über einen Konsolenserver",
+      "Ein zweites SSH-Konto mit denselben Rechten",
+      "Eine Sicherung der Konfiguration auf USB-Stick",
+      "Ein VLAN-Interface mit zusätzlicher IP-Adresse"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine PTZ-Außenkamera mit Heizung braucht am Gerät bis zu 45 W. Der vorhandene Switch liefert PoE+ nach 802.3at. Was ist nötig?",
+    "a": "Ein PoE-Port nach 802.3bt, mindestens Typ 3",
+    "a_full": "PoE+ (802.3at) liefert am Port höchstens 30 W, am Gerät kommen rund 25,5 W an. 802.3bt nutzt alle vier Adernpaare. Typ 3 liefert bis 60 W am Port und rund 51 W am Gerät, Typ 4 bis 90 W. Alternativ versorgt ein passender 802.3bt-Injektor die Kamera.",
+    "options": [
+      "Ein PoE-Port nach 802.3bt, mindestens Typ 3",
+      "Ein zweiter PoE+-Port, der parallel einspeist",
+      "Ein Switch nach 802.3af mit höherem Gesamtbudget",
+      "Ein Patchkabel der Kategorie 7 statt Cat 6A"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde fragt, was die Funktion Multi-Link Operation (MLO) bei Wi-Fi 7 für Videokonferenzen bringt. Was antworten Sie?",
+    "a": "Das Gerät nutzt mehrere Bänder gleichzeitig in einer Verbindung",
+    "a_full": "Mit MLO kann ein Wi-Fi-7-Client zum Beispiel über 5 GHz und 6 GHz zugleich mit dem Access Point verbunden sein. Die Daten laufen parallel oder über die gerade bessere Verbindung. Das senkt Latenz und Aussetzer, wenn ein Band kurz gestört ist.",
+    "options": [
+      "Das Gerät nutzt mehrere Bänder gleichzeitig in einer Verbindung",
+      "Der Access Point bündelt mehrere Kabel-Uplinks zum Switch",
+      "Mehrere Access Points senden dieselben Daten gleichzeitig",
+      "Das Gerät wechselt schneller zwischen zwei SSIDs hin und her"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ihr interner Zeitserver holt die Zeit von Stratum-1-Servern der PTB. Welchen Stratum haben der interne Server und die Clients, die ihn nutzen?",
+    "a": "Der Server hat Stratum 2, die Clients haben Stratum 3",
+    "a_full": "Stratum 0 ist die Referenzuhr selbst, etwa eine Atomuhr oder ein GPS-Empfänger. Ein direkt daran angeschlossener Server hat Stratum 1, jede weitere Stufe zählt eins hoch. Stratum 16 bedeutet: nicht synchronisiert.",
+    "options": [
+      "Der Server hat Stratum 2, die Clients haben Stratum 3",
+      "Der Server hat Stratum 1, die Clients haben Stratum 2",
+      "Der Server hat Stratum 0, die Clients haben Stratum 1",
+      "Server und Clients übernehmen beide Stratum 1"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege trägt auf dem Zeitserver der Firma genau zwei externe NTP-Quellen ein. Warum empfiehlt man mindestens drei, besser vier?",
+    "a": "Erst ab drei Quellen lässt sich eine falsche Quelle erkennen",
+    "a_full": "Weichen zwei Quellen voneinander ab, kann NTP nicht entscheiden, welche falsch geht. Mit drei oder mehr Quellen erkennt der Algorithmus Ausreißer und verwirft sie. Vier Quellen halten das auch dann aus, wenn eine davon ausfällt.",
+    "options": [
+      "Erst ab drei Quellen lässt sich eine falsche Quelle erkennen",
+      "NTP verteilt die Last gleichmäßig nur auf ungerade Quellenzahlen",
+      "Mit zwei Quellen verwendet NTP automatisch das SNTP-Protokoll",
+      "Jede Quelle darf nur ein Drittel der Clients bedienen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Webfilter soll auch für Gastgeräte gelten, auf denen niemand eine Proxy-Einstellung setzen kann. Welche Proxy-Art passt, und wo liegt ihre Grenze?",
+    "a": "Ein transparenter Proxy, der bei HTTPS nur begrenzt filtern kann",
+    "a_full": "Beim transparenten Proxy leitet das Gateway den Webverkehr ohne Wissen der Clients an den Proxy um. Bei HTTPS sieht er ohne TLS-Aufbruch nur Zieladresse und Servernamen, nicht die aufgerufene Seite. Ein Aufbrechen erfordert eine eigene CA auf den Geräten, was bei Gastgeräten nicht möglich ist.",
+    "options": [
+      "Ein transparenter Proxy, der bei HTTPS nur begrenzt filtern kann",
+      "Ein Reverse Proxy, der aber nur IPv6-Verkehr filtern kann",
+      "Ein SOCKS-Proxy, der auf jedem Gerät installiert sein muss",
+      "Ein Caching-Proxy, der nur statische Inhalte filtern kann"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kollege schlägt vor, einen Reverse Proxy einzurichten, damit die Mitarbeiter nur noch freigegebene Webseiten aufrufen können. Was entgegnen Sie?",
+    "a": "Dafür braucht man einen Forward Proxy vor den Clients",
+    "a_full": "Ein Forward Proxy vertritt die internen Clients gegenüber dem Internet und kann ihre Aufrufe filtern und protokollieren. Ein Reverse Proxy steht dagegen vor eigenen Servern und nimmt Anfragen von außen entgegen. Er dient zum Beispiel zur Lastverteilung oder TLS-Terminierung.",
+    "options": [
+      "Dafür braucht man einen Forward Proxy vor den Clients",
+      "Ein Reverse Proxy filtert nur, wenn er in der DMZ steht",
+      "Dafür reicht ein Reverse Proxy mit aktiviertem Cache",
+      "Dafür braucht man einen Reverse Proxy je Abteilung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Außendienstler wechselt während eines Uploads vom Firmen-WLAN ins Mobilfunknetz und erhält eine neue IP-Adresse. Bei HTTP/3 läuft der Upload weiter. Warum?",
+    "a": "QUIC ordnet Pakete über eine Connection-ID statt über IP zu",
+    "a_full": "Eine TCP-Verbindung ist fest an Quell- und Ziel-IP sowie Ports gebunden und bricht beim Adresswechsel ab. QUIC, die Grundlage von HTTP/3, ordnet Pakete über eine eigene Verbindungskennung zu. Der Server erkennt den Client deshalb auch unter der neuen Adresse wieder.",
+    "options": [
+      "QUIC ordnet Pakete über eine Connection-ID statt über IP zu",
+      "Das Mobilfunknetz übernimmt die alte IP-Adresse aus dem WLAN",
+      "HTTP/3 baut die TCP-Verbindung im Hintergrund neu auf",
+      "Der Browser puffert den Upload und sendet ihn später erneut"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ihr Mailserver soll eingehende Mails anderer Server nur noch verschlüsselt annehmen. Ein Angreifer im Übertragungsweg soll STARTTLS nicht einfach unterdrücken können. Was richten Sie ein?",
+    "a": "MTA-STS oder DANE für die eigene Maildomain",
+    "a_full": "STARTTLS allein ist opportunistisch: Fehlt das Angebot, senden viele Server unverschlüsselt weiter. Mit MTA-STS veröffentlicht die Domain per DNS und HTTPS eine Richtlinie, dass nur verschlüsselt und nur an die genannten MX-Server zugestellt wird. DANE erreicht das über TLSA-Einträge in einer per DNSSEC gesicherten Zone.",
+    "options": [
+      "MTA-STS oder DANE für die eigene Maildomain",
+      "Einen SPF-Eintrag mit der Regel -all",
+      "Eine DMARC-Richtlinie mit p=reject",
+      "Einen zweiten MX-Eintrag mit Priorität 20"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Neue Access Points in einem Außenstandort erhalten per DHCP eine Adresse, finden aber ihren WLAN-Controller im Rechenzentrum nicht. Im Hauptstandort klappt es. Wie teilen Sie ihnen die Controller-Adresse mit?",
+    "a": "Per DHCP-Option 43 oder einem DNS-Eintrag für den Controller",
+    "a_full": "Access Points suchen ihren Controller oft zuerst per Broadcast im eigenen Subnetz. In anderen Subnetzen braucht man einen Hinweis, etwa die herstellerspezifische DHCP-Option 43 oder einen festgelegten DNS-Namen. Im Hauptstandort steht der Controller vermutlich im selben Netz wie die Access Points.",
+    "options": [
+      "Per DHCP-Option 43 oder einem DNS-Eintrag für den Controller",
+      "Per DHCP-Option 3 mit dem Controller als Gateway",
+      "Per Port-Security mit der MAC-Adresse des Controllers",
+      "Per Spanning Tree mit dem Controller als Root-Bridge"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Interne Telefonate über die neue Firewall werden aufgebaut, brechen aber immer nach etwa 32 Sekunden ab. Was ist die typische Ursache?",
+    "a": "Das ACK auf das 200 OK des Angerufenen kommt nicht an",
+    "a_full": "Nach dem Abheben sendet das Zieltelefon 200 OK und wiederholt es, bis ein ACK eintrifft. Bleibt das ACK aus, beendet es den Anruf nach Ablauf des Timers von 32 Sekunden. Ursache sind oft falsche Adressen durch NAT oder ein SIP-ALG, das die Signalisierung verändert.",
+    "options": [
+      "Das ACK auf das 200 OK des Angerufenen kommt nicht an",
+      "Der Codec wechselt nach 32 Sekunden auf G.729",
+      "Die RTP-Pakete haben eine zu kleine TTL",
+      "Die PoE-Leistung reicht nur für kurze Gespräche"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Geschäftsleitung verlangt, dass Telefonate über den SIP-Trunk verschlüsselt laufen. Was richten Sie ein?",
+    "a": "SIP über TLS auf Port 5061 und SRTP für die Sprache",
+    "a_full": "SIP transportiert nur die Signalisierung, die Sprache läuft getrennt per RTP. Beides muss deshalb einzeln geschützt werden: die Signalisierung mit TLS, üblich auf Port 5061, die Sprache mit SRTP. Der Anbieter des Trunks muss beide Verfahren unterstützen.",
+    "options": [
+      "SIP über TLS auf Port 5061 und SRTP für die Sprache",
+      "SIP über UDP 5060 und einen Codec mit Kompression",
+      "Ein eigenes Voice-VLAN mit hoher QoS-Priorität am Switch",
+      "RTP über TCP statt UDP für alle Gespräche nutzen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach dem Tausch der Netzwerkkarte eines Servers (IP unverändert) erreichen ihn Clients im eigenen Subnetz nach kurzer Zeit wieder, Clients aus anderen Subnetzen stundenlang nicht. Warum?",
+    "a": "Der Router nutzt noch die alte MAC aus seinem ARP-Cache",
+    "a_full": "Router halten ARP-Einträge oft sehr lange, bei Cisco standardmäßig vier Stunden. Bis dahin schickt der Router Pakete an die MAC-Adresse der alten Karte. Abhilfe schaffen das Löschen des Eintrags am Router oder ein Gratuitous ARP des Servers.",
+    "options": [
+      "Der Router nutzt noch die alte MAC aus seinem ARP-Cache",
+      "Die Clients anderer Subnetze haben die alte MAC im Cache",
+      "Der DHCP-Server vergibt die Adresse noch an die alte Karte",
+      "Der Switch sperrt die neue MAC-Adresse per Spanning Tree"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Entwickler speichert Passwörter als SHA-256 mit Salt. Das Sicherheitsaudit empfiehlt stattdessen Argon2id. Warum?",
+    "a": "SHA-256 ist sehr schnell, Argon2id bremst Rateversuche gezielt aus",
+    "a_full": "Eine Grafikkarte berechnet Milliarden SHA-256-Werte pro Sekunde, gestohlene Hashes lassen sich so schnell durchprobieren. Argon2id und bcrypt sind absichtlich langsam und brauchen viel Speicher. Über einen Kostenfaktor lässt sich der Aufwand später erhöhen, wenn Hardware schneller wird.",
+    "options": [
+      "SHA-256 ist sehr schnell, Argon2id bremst Rateversuche gezielt aus",
+      "SHA-256 ist umkehrbar, aus dem Hash lässt sich das Passwort berechnen",
+      "SHA-256 erlaubt keinen Salt, Argon2id dagegen schon",
+      "Argon2id verschlüsselt das Passwort, damit Admins es wieder lesen können"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Zwei Konfigurationsdateien unterscheiden sich nur in einem einzigen Zeichen. Ihre SHA-256-Werte haben trotzdem keinerlei Ähnlichkeit. Welche Eigenschaft der Hashfunktion zeigt sich hier?",
+    "a": "Der Lawineneffekt",
+    "a_full": "Schon die Änderung eines Bits der Eingabe ändert im Mittel etwa die Hälfte der Bits im Hashwert. Deshalb lässt sich aus zwei ähnlichen Hashes nicht auf ähnliche Eingaben schließen. Jede noch so kleine Manipulation fällt beim Vergleich der Hashwerte sofort auf.",
+    "options": [
+      "Der Lawineneffekt",
+      "Die Kollisionsfreiheit",
+      "Die Umkehrbarkeit",
+      "Die Kompressionsrate"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bob prüft einen signierten Vertrag von Alice. Er bildet den Hashwert des Dokuments und vergleicht ihn mit dem Hashwert, den er aus der Signatur mit Alices öffentlichem Schlüssel gewinnt. Die Werte weichen ab. Was folgt daraus?",
+    "a": "Die Signatur ist ungültig, das Dokument wurde verändert oder stammt nicht von Alice",
+    "a_full": "Bei der Signatur hat Alice den Hashwert des Dokuments mit ihrem privaten Schlüssel verarbeitet. Stimmen der neu berechnete und der aus der Signatur gewonnene Hash überein, sind Integrität und Herkunft belegt. Weichen sie ab, darf Bob dem Dokument nicht vertrauen.",
+    "options": [
+      "Die Signatur ist ungültig, das Dokument wurde verändert oder stammt nicht von Alice",
+      "Bob muss den Vertrag mit seinem eigenen privaten Schlüssel neu signieren",
+      "Die Abweichung ist normal, weil jeder Hashwert einen Zufallswert enthält",
+      "Das Dokument ist gültig, nur die Verschlüsselung beim Versand ist fehlgeschlagen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Mitarbeiterin schickt die Gehaltsliste per S/MIME signiert an die Steuerberatung und hält sie damit für geschützt. Was erklären Sie ihr?",
+    "a": "Die Signatur sichert Echtheit und Unverändertheit, der Inhalt bleibt aber lesbar",
+    "a_full": "Eine digitale Signatur schützt Integrität und Authentizität, nicht die Vertraulichkeit. Wer die Mail unterwegs abfängt, kann die Gehaltsliste lesen. Für Vertraulichkeit muss sie zusätzlich mit dem öffentlichen Schlüssel der Steuerberatung verschlüsselt werden.",
+    "options": [
+      "Die Signatur sichert Echtheit und Unverändertheit, der Inhalt bleibt aber lesbar",
+      "Die Signatur verschlüsselt die Mail automatisch mit ihrem privaten Schlüssel",
+      "S/MIME ist veraltet, nur PGP kann Mails wirklich schützen",
+      "Signierte Mails darf nur der Empfänger öffnen, der Inhalt ist also sicher"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Admin will PowerShell-Skripte mit dem vorhandenen Webserver-Zertifikat signieren. Windows lehnt das Zertifikat dafür ab. Welches Zertifikatsfeld ist der Grund?",
+    "a": "Die Extended Key Usage erlaubt nur Serverauthentifizierung",
+    "a_full": "Im Feld Extended Key Usage legt die CA fest, wofür ein Zertifikat genutzt werden darf, etwa Serverauthentifizierung, Clientauthentifizierung oder Codesignatur. Ein reines Webserver-Zertifikat ist für Codesignatur nicht zugelassen. Der Admin braucht ein eigenes Codesignatur-Zertifikat.",
+    "options": [
+      "Die Extended Key Usage erlaubt nur Serverauthentifizierung",
+      "Der Subject Alternative Name enthält keinen Skriptnamen",
+      "Die Seriennummer ist für Codesignatur zu kurz gewählt",
+      "Der Aussteller steht nicht im Feld Common Name des Servers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Admin nutzt das Zertifikat seines Testservers, um damit Zertifikate für weitere Testserver auszustellen. Alle Clients lehnen diese neuen Zertifikate ab. Warum?",
+    "a": "Das Feld Basic Constraints steht auf CA:FALSE, das Zertifikat darf nichts ausstellen",
+    "a_full": "Nur Zertifikate mit der Erweiterung Basic Constraints CA:TRUE dürfen andere Zertifikate signieren. Ein gewöhnliches Serverzertifikat ist als Endzertifikat gekennzeichnet. Für eigene Testzertifikate richtet man eine interne CA ein.",
+    "options": [
+      "Das Feld Basic Constraints steht auf CA:FALSE, das Zertifikat darf nichts ausstellen",
+      "Ein Zertifikat darf höchstens einen Hostnamen im Feld SAN tragen",
+      "Die Clients akzeptieren grundsätzlich nur Zertifikate von Let's Encrypt",
+      "Der öffentliche Schlüssel ist für die Ausstellung zu lang"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als erstes ein ClientHello. Was teilt der Client darin mit?",
+    "a": "Unterstützte TLS-Versionen, Cipher Suites und einen Zufallswert",
+    "a_full": "Mit dem ClientHello beginnt der TLS-Handshake. Der Server wählt im ServerHello eine Version und eine Cipher Suite aus und schickt sein Zertifikat. Danach tauschen beide Seiten Schlüsselmaterial aus und leiten die symmetrischen Sitzungsschlüssel ab.",
+    "options": [
+      "Unterstützte TLS-Versionen, Cipher Suites und einen Zufallswert",
+      "Den fertigen symmetrischen Sitzungsschlüssel im Klartext",
+      "Sein eigenes Zertifikat samt zugehörigem privaten Schlüssel",
+      "Benutzername und Passwort für die aufgerufene Webanwendung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Firewall protokolliert bei HTTPS-Verbindungen den aufgerufenen Hostnamen, obwohl sie den Datenverkehr nicht aufbricht. Wie ist das möglich?",
+    "a": "Der Client nennt den Hostnamen per SNI unverschlüsselt im ClientHello",
+    "a_full": "Über Server Name Indication teilt der Client mit, welche Website er erreichen will, damit der Server das passende Zertifikat wählt. Das geschieht, bevor die Verschlüsselung steht. Firewalls und Proxys können den Namen deshalb lesen, den weiteren Inhalt aber nicht.",
+    "options": [
+      "Der Client nennt den Hostnamen per SNI unverschlüsselt im ClientHello",
+      "Die Firewall entschlüsselt TLS mit dem öffentlichen Schlüssel des Servers",
+      "Der Hostname steht verschlüsselt im Zertifikat des Clients",
+      "HTTPS verschlüsselt nur den Inhalt von Formularen, nicht die URL"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Benutzer hat sich morgens an der Domäne angemeldet und besitzt ein TGT. Jetzt öffnet er eine Freigabe auf dem Dateiserver. Wie läuft die Kerberos-Anmeldung am Dateiserver ab?",
+    "a": "Mit dem TGT holt er beim KDC ein Service-Ticket und legt es dem Server vor",
+    "a_full": "Der Client schickt sein TGT an den Ticket Granting Service auf dem Domänencontroller und fordert ein Ticket für den Dienst an. Dieses Service-Ticket ist mit dem Schlüssel des Dateiserver-Kontos verschlüsselt. Das Passwort des Benutzers wird dabei nicht erneut übertragen.",
+    "options": [
+      "Mit dem TGT holt er beim KDC ein Service-Ticket und legt es dem Server vor",
+      "Er schickt sein Passwort verschlüsselt direkt an den Dateiserver",
+      "Der Dateiserver fragt beim DC per LDAP das Passwort des Benutzers ab",
+      "Er legt dem Dateiserver sein TGT vor, der es dann selbst verlängert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Mitarbeiterin wurde in die Gruppe \"Einkauf\" aufgenommen. Auf die Freigabe des Einkaufs kommt sie trotzdem noch nicht. Was ist die wahrscheinliche Ursache?",
+    "a": "Ihr Kerberos-Ticket enthält noch die alten Gruppenmitgliedschaften",
+    "a_full": "Die Gruppen stehen im Ticket, das sie bei der Anmeldung bekommen hat. Neue Mitgliedschaften wirken erst mit einem neuen Ticket. Ab- und wieder Anmelden oder klist purge mit anschließendem erneuten Zugriff löst das Problem.",
+    "options": [
+      "Ihr Kerberos-Ticket enthält noch die alten Gruppenmitgliedschaften",
+      "Neue Gruppen werden grundsätzlich erst nach 24 Stunden repliziert",
+      "Die Freigabe muss nach jeder Gruppenänderung neu angelegt werden",
+      "Ihr Passwort muss nach der Gruppenaufnahme geändert werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen will nach dem Zero-Trust-Prinzip arbeiten. Bisher bekommen Außendienstler per VPN Zugriff auf das komplette Firmennetz. Was ändert sich?",
+    "a": "Zugriff gibt es nur noch je Anwendung, nach Prüfung von Identität, Gerät und Kontext",
+    "a_full": "Zero Trust vertraut weder dem Netzwerkstandort noch einer einmal aufgebauten Verbindung. Bei Zero Trust Network Access prüft ein Dienst bei jeder Anfrage die Anmeldung mit MFA, den Zustand des Geräts und die Berechtigung. Der Nutzer sieht nur die Anwendungen, die er braucht, statt des ganzen Netzes.",
+    "options": [
+      "Zugriff gibt es nur noch je Anwendung, nach Prüfung von Identität, Gerät und Kontext",
+      "Das VPN wird durch ein längeres Passwort für alle Nutzer ersetzt",
+      "Außendienstler bekommen zusätzlich Zugriff auf das Admin-Netz",
+      "Die Firewall wird abgeschaltet, weil jedes Gerät sich selbst schützt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Servernetz steht ein Honeypot, der wie ein Dateiserver mit dem Namen \"Buchhaltung-Archiv\" aussieht. Kein Mitarbeiter nutzt ihn. Warum ist jeder Zugriff darauf ein wertvoller Alarm?",
+    "a": "Es gibt keinen legitimen Grund für einen Zugriff, Fehlalarme sind daher selten",
+    "a_full": "Ein Honeypot hat keine echte Funktion, deshalb deutet jede Verbindung auf Neugier, einen Scan oder einen Angreifer hin, der sich im Netz umsieht. Anders als bei vielen SIEM-Regeln muss kaum zwischen normalem und verdächtigem Verhalten unterschieden werden. Der Honeypot zeigt außerdem, welche Werkzeuge und Wege der Angreifer nutzt.",
+    "options": [
+      "Es gibt keinen legitimen Grund für einen Zugriff, Fehlalarme sind daher selten",
+      "Der Honeypot blockiert jeden Angreifer automatisch an der Firewall",
+      "Der Honeypot enthält echte Buchhaltungsdaten als Beweismittel",
+      "Jeder Zugriff löscht beim Angreifer die genutzten Werkzeuge"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Mail-Gateway führt Anhänge vor der Zustellung in einer Sandbox aus und stuft eine Datei als unauffällig ein. Später verschlüsselt genau diese Datei einen Client. Wie konnte das passieren?",
+    "a": "Die Schadsoftware hat die Sandbox erkannt oder ihre Ausführung verzögert",
+    "a_full": "Manche Schadprogramme prüfen, ob sie in einer virtuellen Umgebung laufen, oder warten erst einige Minuten oder auf eine Benutzeraktion. In der kurzen Analysezeit zeigen sie dann kein schädliches Verhalten. Eine Sandbox ist deshalb nur eine Schutzschicht neben EDR, Rechtekonzept und Backups.",
+    "options": [
+      "Die Schadsoftware hat die Sandbox erkannt oder ihre Ausführung verzögert",
+      "Die Sandbox hat den Anhang absichtlich ohne Prüfung zugestellt",
+      "Die Sandbox hat nur die Signatur des Absenders geprüft",
+      "Der Client hatte den Anhang vor der Sandbox-Prüfung geöffnet"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Angreifer nutzen im Netz nur Bordmittel wie PowerShell, WMI und certutil. Der klassische Virenscanner schlägt nicht an, das EDR schon. Warum?",
+    "a": "Das EDR bewertet Verhalten und Abfolge von Aktionen statt Dateimuster",
+    "a_full": "Bordmittel sind signierte, legitime Programme, ein signaturbasierter Scanner findet an ihnen nichts. Ein EDR sammelt Prozess-, Netzwerk- und Anmeldedaten und erkennt verdächtige Ketten, etwa Office startet PowerShell, die Code aus dem Internet lädt. Außerdem kann es betroffene Rechner isolieren.",
+    "options": [
+      "Das EDR bewertet Verhalten und Abfolge von Aktionen statt Dateimuster",
+      "Das EDR hat eine größere Datenbank mit bekannten Virensignaturen",
+      "Das EDR blockiert grundsätzlich jede Nutzung von PowerShell",
+      "Der Virenscanner prüft nur Dateien auf eingesteckten USB-Sticks"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Geschäftsführer eines Kunden sagt am Telefon: \"Testen Sie mal, ob man bei uns reinkommt.\" Was muss vor dem ersten Scan geklärt sein?",
+    "a": "Ein schriftlicher Auftrag mit Umfang, Zeitfenster, erlaubten Methoden und Notfallkontakt",
+    "a_full": "Ohne klare Erlaubnis kann ein Angriff auf fremde Systeme strafbar sein, etwa nach § 202a StGB. Der Auftrag legt fest, welche Systeme und IP-Bereiche getestet werden und was verboten ist, zum Beispiel Lasttests. Werden Systeme bei Dritten betrieben, etwa beim Hoster, muss auch deren Zustimmung vorliegen.",
+    "options": [
+      "Ein schriftlicher Auftrag mit Umfang, Zeitfenster, erlaubten Methoden und Notfallkontakt",
+      "Nur die öffentliche IP-Adresse des Kunden, alles Weitere ergibt der Test",
+      "Eine mündliche Zusage reicht, wenn sie vom Geschäftsführer kommt",
+      "Die Liste der Passwörter aller Administratoren des Kunden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde will wissen, wie weit ein Angreifer mit dem gestohlenen Konto einer normalen Sachbearbeiterin kommt. Welche Art von Penetrationstest passt?",
+    "a": "Ein Gray-Box-Test mit einem gewöhnlichen Benutzerkonto",
+    "a_full": "Beim Gray-Box-Test erhält der Tester Teilwissen oder Zugänge, hier ein normales Konto ohne Adminrechte. Er prüft, ob er Rechte ausweiten und auf fremde Daten zugreifen kann. Ein Black-Box-Test würde viel Zeit schon mit dem ersten Zugang verbrauchen.",
+    "options": [
+      "Ein Gray-Box-Test mit einem gewöhnlichen Benutzerkonto",
+      "Ein Black-Box-Test ohne jede Vorabinformation",
+      "Ein White-Box-Test mit vollem Zugriff auf alle Admin-Konten",
+      "Ein automatischer Schwachstellenscan der Internetadressen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Webserver eines Kunden zeigt bei Fehlern ausführliche Stacktraces mit Versionsnummern, listet Verzeichnisse auf und das Standard-Admin-Konto ist aktiv. Welche OWASP-Kategorie passt?",
+    "a": "Security Misconfiguration (Fehlkonfiguration)",
+    "a_full": "Unnötige Funktionen, Standardkonten und geschwätzige Fehlerseiten liefern Angreifern Informationen und Einstiegspunkte. Abhilfe schaffen eine Härtung nach Vorgabe, eigene Fehlerseiten ohne Details und das Abschalten nicht benötigter Funktionen. Die Konfiguration sollte regelmäßig automatisch geprüft werden.",
+    "options": [
+      "Security Misconfiguration (Fehlkonfiguration)",
+      "Cryptographic Failures (Kryptofehler)",
+      "Server-Side Request Forgery (SSRF)",
+      "Insecure Design (unsicheres Design)"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Webshop bindet eine JavaScript-Bibliothek in einer sechs Jahre alten Version ein, für die eine bekannte CVE existiert. Welche OWASP-Kategorie liegt vor und was hilft?",
+    "a": "Veraltete Komponenten, Abhilfe durch Inventar der Bibliotheken und Updates",
+    "a_full": "Viele Angriffe nutzen bekannte Lücken in Fremdkomponenten, nicht im eigenen Code. Eine Stückliste der Software (SBOM) zeigt, welche Bibliotheken in welcher Version im Einsatz sind. Automatische Abhängigkeitsprüfungen melden neue CVEs, damit zeitnah aktualisiert wird.",
+    "options": [
+      "Veraltete Komponenten, Abhilfe durch Inventar der Bibliotheken und Updates",
+      "Fehlerhafte Zugriffskontrolle, Abhilfe durch längere Passwörter",
+      "Unsicheres Design, Abhilfe durch einen neuen Webserver",
+      "Fehlende Protokollierung, Abhilfe durch mehr Logspeicher"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einem Test fällt auf: Die Sitzungs-ID einer Webanwendung ist vor und nach dem Login dieselbe. Welche Schwachstelle droht und wie wird sie behoben?",
+    "a": "Session Fixation, nach dem Login muss eine neue Sitzungs-ID vergeben werden",
+    "a_full": "Ein Angreifer kann einem Opfer eine ihm bekannte Sitzungs-ID unterschieben. Meldet sich das Opfer damit an, nutzt der Angreifer dieselbe, nun angemeldete Sitzung. Die Anwendung erzeugt deshalb bei jeder Anmeldung eine neue ID und verwirft die alte.",
+    "options": [
+      "Session Fixation, nach dem Login muss eine neue Sitzungs-ID vergeben werden",
+      "Cross-Site-Scripting, die Sitzungs-ID muss länger werden",
+      "Clickjacking, die Seite muss per HTTPS ausgeliefert werden",
+      "Brute Force, die Sitzungs-ID muss per E-Mail bestätigt werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde bestreitet, dass seine gespeicherte Bonitätseinstufung stimmt. Die Prüfung dauert zwei Wochen. Welches Recht kann er für diese Zeit geltend machen?",
+    "a": "Das Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)",
+    "a_full": "Bestreitet ein Betroffener die Richtigkeit, kann er verlangen, dass die Daten für die Dauer der Prüfung nur noch gespeichert werden. Das Unternehmen markiert sie und nutzt sie nicht für Entscheidungen. Stellt sich der Eintrag als falsch heraus, folgt die Berichtigung.",
+    "options": [
+      "Das Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)",
+      "Das Recht auf Datenübertragbarkeit (Art. 20 DSGVO)",
+      "Das Recht auf sofortige Löschung aller Daten (Art. 17 DSGVO)",
+      "Das Recht auf Schadenersatz vor Abschluss der Prüfung (Art. 82 DSGVO)"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen wertet das Surfverhalten auf seiner Website auf Grundlage des berechtigten Interesses aus. Ein Nutzer widerspricht nach Art. 21 DSGVO. Was gilt jetzt?",
+    "a": "Die Auswertung endet, außer es gibt nachweislich überwiegende zwingende Gründe",
+    "a_full": "Beim Widerspruch gegen eine Verarbeitung nach Art. 6 Abs. 1 lit. f muss der Verantwortliche aufhören oder nachweisen, dass seine Gründe die Interessen des Betroffenen überwiegen. Das gelingt nur selten, etwa zur Durchsetzung von Rechtsansprüchen. Gegen Direktwerbung wirkt der Widerspruch sogar ausnahmslos.",
+    "options": [
+      "Die Auswertung endet, außer es gibt nachweislich überwiegende zwingende Gründe",
+      "Nichts, bei berechtigtem Interesse ist gar kein Widerspruch möglich",
+      "Der Nutzer muss zuerst die Aufsichtsbehörde einschalten und klagen",
+      "Die Daten dürfen weiter genutzt werden, nur anonymisiert gespeichert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Onlineshop lässt Bestellungen nur zu, wenn der Kunde auch in die Weitergabe seiner Adresse an Werbepartner einwilligt. Wie ist diese Einwilligung zu bewerten?",
+    "a": "Sie ist wegen des Kopplungsverbots meist nicht freiwillig und damit unwirksam",
+    "a_full": "Nach Art. 7 Abs. 4 DSGVO spricht es gegen die Freiwilligkeit, wenn ein Vertrag von einer Einwilligung abhängt, die für ihn nicht nötig ist. Für den Versand braucht der Shop die Adresse, für Werbepartner nicht. Die Einwilligung muss deshalb getrennt und ohne Nachteil verweigerbar sein.",
+    "options": [
+      "Sie ist wegen des Kopplungsverbots meist nicht freiwillig und damit unwirksam",
+      "Sie ist wirksam, weil der Kunde die Bestellung ja freiwillig abschickt",
+      "Sie ist wirksam, wenn der Hinweis in den AGB steht",
+      "Sie ist nur für Kunden unter 16 Jahren unwirksam"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Geschäftsführung verlangt vom internen Datenschutzbeauftragten, seine kritische Stellungnahme zu einem neuen Kamerasystem abzuschwächen. Was gilt?",
+    "a": "Er ist bei seinen Aufgaben weisungsfrei und darf nicht benachteiligt werden",
+    "a_full": "Nach Art. 38 DSGVO erhält der Datenschutzbeauftragte bei der Erfüllung seiner Aufgaben keine Anweisungen und berichtet direkt der höchsten Leitungsebene. Er darf wegen seiner Tätigkeit weder abberufen noch benachteiligt werden, im BDSG ist zusätzlich ein Kündigungsschutz geregelt. Die Entscheidung über das Kamerasystem trifft trotzdem die Geschäftsführung.",
+    "options": [
+      "Er ist bei seinen Aufgaben weisungsfrei und darf nicht benachteiligt werden",
+      "Er muss die Stellungnahme anpassen, weil er weisungsgebunden angestellt ist",
+      "Er muss den Fall sofort und ohne Rücksprache der Aufsichtsbehörde melden",
+      "Er darf die Einführung des Kamerasystems selbst verbindlich verbieten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Für einen Server mit sehr hohem Schutzbedarf erstellen Sie eine Risikoanalyse nach BSI-Standard 200-3. Womit beginnen Sie die Gefährdungsübersicht?",
+    "a": "Mit den elementaren Gefährdungen aus dem IT-Grundschutz-Kompendium",
+    "a_full": "Das Kompendium enthält eine Liste elementarer Gefährdungen wie Feuer, Schadprogramme oder Ausfall von Kommunikationsnetzen. Sie werden für das Zielobjekt auf Relevanz geprüft und um zusätzliche Gefährdungen ergänzt. Danach werden die Risiken bewertet und behandelt.",
+    "options": [
+      "Mit den elementaren Gefährdungen aus dem IT-Grundschutz-Kompendium",
+      "Mit der Liste der Windows-Updates des letzten Monats",
+      "Mit einem Penetrationstest durch einen externen Dienstleister",
+      "Mit der Kostenaufstellung aller Server im Unternehmen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Die Business-Impact-Analyse ergibt: Die Auftragsannahme darf höchstens 8 Stunden ausfallen. Der IT-Dienstleister sagt für das ERP-System eine Wiederherstellung innerhalb von 24 Stunden zu. Was bedeutet das?",
+    "a": "Die Zusage reicht nicht, der Wiederanlauf muss unter der tolerierbaren Ausfallzeit liegen",
+    "a_full": "Die BIA nach BSI-Standard 200-4 legt für jeden zeitkritischen Prozess eine maximal tolerierbare Ausfallzeit fest. Die IT-Systeme, von denen der Prozess abhängt, müssen deutlich schneller wieder laufen, damit Zeit für Prüfung und Nacharbeit bleibt. Hier braucht es eine schnellere Wiederherstellung oder einen Notbetrieb.",
+    "options": [
+      "Die Zusage reicht nicht, der Wiederanlauf muss unter der tolerierbaren Ausfallzeit liegen",
+      "Die Zusage reicht, weil nur Werktage mit 8 Arbeitsstunden zählen",
+      "Die Zusage reicht, weil RTO und Ausfallzeit nichts miteinander zu tun haben",
+      "Die BIA muss an die Zusage angepasst werden, nicht umgekehrt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Aus dem Serverraum ist am Wochenende ein Notebook verschwunden. Die Tür hat ein Zahlenschloss, alle sechs Admins kennen denselben Code. Was ändern Sie, damit sich solche Fälle künftig aufklären lassen?",
+    "a": "Personengebundene Zutrittskarten mit Protokollierung jedes Zutritts",
+    "a_full": "Ein gemeinsamer Code lässt nicht erkennen, wer den Raum wann betreten hat. Mit persönlichen Karten oder Transpondern schreibt das System jeden Zutritt mit Person und Uhrzeit ins Protokoll. Die Zutrittsrechte werden zudem regelmäßig überprüft und bei Ausscheiden sofort entzogen.",
+    "options": [
+      "Personengebundene Zutrittskarten mit Protokollierung jedes Zutritts",
+      "Einen längeren Zahlencode, der monatlich an alle verteilt wird",
+      "Ein Schild an der Tür, dass der Zutritt nur für Admins erlaubt ist",
+      "Einen zweiten Code, den nur die Geschäftsführung kennen darf"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein neuer Serverraum soll im Keller direkt unter den Sanitärräumen entstehen, weil dort Platz frei ist. Welches Risiko sprechen Sie an?",
+    "a": "Wasser durch undichte Leitungen, Rückstau oder Hochwasser",
+    "a_full": "Wasserführende Leitungen über oder im Serverraum und Kellerlagen mit Überflutungsgefahr sind klassische Gefährdungen der physischen Sicherheit. Besser ist ein Raum ohne Wasserleitungen oberhalb der Hochwassergefahr. Geht das nicht, helfen Wassermelder, Auffangwannen und erhöhte Aufstellung.",
+    "options": [
+      "Wasser durch undichte Leitungen, Rückstau oder Hochwasser",
+      "Zu hohe Luftfeuchtigkeit verbessert die Kühlung zu stark",
+      "Im Keller ist kein WLAN-Empfang für die Server möglich",
+      "Kellerräume dürfen keine Zutrittskontrolle erhalten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine Auszubildende soll für die Betriebsdokumentation festhalten, wie ein Linux-Server mit UEFI startet. Welche Reihenfolge ist richtig?",
+    "a": "Firmware mit POST, Bootloader aus der ESP, Kernel mit initramfs, systemd",
+    "a_full": "Nach dem Einschalten prüft die Firmware die Hardware (POST) und startet den eingetragenen Bootloader, z.B. GRUB, von der EFI-Systempartition. GRUB lädt den Kernel und die initramfs in den Speicher. Der Kernel bindet mit ihrer Hilfe das Root-Dateisystem ein und startet systemd als ersten Prozess, der dann die Dienste hochfährt.",
+    "options": [
+      "Firmware mit POST, Bootloader aus der ESP, Kernel mit initramfs, systemd",
+      "Firmware mit POST, Kernel aus dem MBR, systemd, danach GRUB mit initramfs",
+      "Bootloader aus der ESP, danach POST, Kernel mit initramfs, systemd",
+      "Firmware mit POST, systemd aus der ESP, danach Kernel und initramfs"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin trägt in /etc/default/grub einen zusätzlichen Kernelparameter ein und startet den Server neu. Der Parameter ist danach nicht aktiv. Was hat er vergessen?",
+    "a": "Die GRUB-Konfiguration mit update-grub bzw. grub-mkconfig neu zu erzeugen",
+    "a_full": "/etc/default/grub ist nur die Vorlage. GRUB liest beim Start die daraus erzeugte Datei grub.cfg. Erst update-grub (Debian, Ubuntu) oder grub-mkconfig -o mit dem Pfad zur grub.cfg schreibt die Änderung dort hinein. Mit cat /proc/cmdline lässt sich nach dem Neustart prüfen, ob der Parameter übergeben wurde.",
+    "options": [
+      "Die GRUB-Konfiguration mit update-grub bzw. grub-mkconfig neu zu erzeugen",
+      "Den Parameter zusätzlich in die Datei /etc/fstab einzutragen",
+      "Die initramfs mit dem Befehl systemctl daemon-reload neu zu laden",
+      "Den Secure-Boot-Schlüssel im UEFI für den Kernel neu zu setzen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Linux-Server startet nicht mehr bis zur Anmeldung, sondern bleibt im Notfallmodus (emergency mode) hängen. Am Vortag wurde die USB-Sicherungsplatte abgezogen, die in /etc/fstab steht. Wie verhindern Sie das künftig?",
+    "a": "Den fstab-Eintrag der Platte mit der Option nofail versehen",
+    "a_full": "systemd behandelt jeden fstab-Eintrag als notwendig für den Start. Fehlt das Gerät, bricht der Start ab und landet im Notfallmodus. Mit nofail darf das Einhängen fehlschlagen, ohne den Start zu blockieren. Zusätzlich hilft x-systemd.device-timeout, damit der Start nicht lange auf das Gerät wartet.",
+    "options": [
+      "Den fstab-Eintrag der Platte mit der Option nofail versehen",
+      "Den fstab-Eintrag der Platte mit der Option noexec versehen",
+      "Die Platte statt per UUID über /dev/sdb1 in fstab eintragen",
+      "Die Platte als Swap-Bereich statt als Dateisystem eintragen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Linux-Webserver schlagen Schreibvorgänge mit No space left on device fehl. df -h zeigt für die Partition nur 40 % Belegung. Eine Anwendung legt Millionen kleiner Sitzungsdateien an. Was prüfen Sie?",
+    "a": "Mit df -i, ob alle Inodes des Dateisystems verbraucht sind",
+    "a_full": "Jede Datei braucht unter ext4 einen Inode, der Metadaten wie Rechte und Blockadressen speichert. Die Zahl der Inodes wird beim Anlegen des Dateisystems festgelegt. Sind sie aufgebraucht, lassen sich keine Dateien mehr anlegen, obwohl noch Blöcke frei sind. Abhilfe schafft das Aufräumen der kleinen Dateien.",
+    "options": [
+      "Mit df -i, ob alle Inodes des Dateisystems verbraucht sind",
+      "Mit du -sh, ob die Sitzungsdateien mehr als 60 % Platz belegen",
+      "Mit free -h, ob der Arbeitsspeicher und der Swap-Bereich voll sind",
+      "Mit lsblk, ob die Partition schreibgeschützt eingehängt wurde"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein logisches Volume mit XFS-Dateisystem ist zu groß angelegt worden. Ein Kollege will es mit lvreduce und einem Werkzeug zum Verkleinern des Dateisystems schrumpfen. Was sagen Sie ihm?",
+    "a": "XFS lässt sich nicht verkleinern, nur sichern, neu anlegen und zurückspielen",
+    "a_full": "XFS unterstützt das Vergrößern im laufenden Betrieb mit xfs_growfs, aber kein Verkleinern. Wer das Volume trotzdem lvreduce unterzieht, zerstört Daten. Der Weg ist: Daten sichern, ein kleineres Volume mit neuem XFS anlegen und die Daten zurückspielen. ext4 kann dagegen im ausgehängten Zustand verkleinert werden.",
+    "options": [
+      "XFS lässt sich nicht verkleinern, nur sichern, neu anlegen und zurückspielen",
+      "XFS lässt sich nur im eingehängten Zustand mit xfs_repair verkleinern",
+      "XFS verkleinert sich automatisch, sobald lvreduce ausgeführt wurde",
+      "XFS lässt sich nur verkleinern, wenn vorher ein Snapshot existiert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Für einen neuen Windows Server 2025 möchte ein Admin auch das Systemlaufwerk C: mit ReFS statt NTFS formatieren, weil ReFS robuster sei. Was antworten Sie?",
+    "a": "ReFS ist nicht als Startlaufwerk gedacht und wird für Datenvolumes eingesetzt",
+    "a_full": "Windows lässt sich nicht von ReFS starten, das Systemlaufwerk bleibt NTFS. ReFS spielt seine Stärken bei Datenvolumes aus, z.B. für Hyper-V-VMs, Storage Spaces oder Sicherungsziele. Einige NTFS-Funktionen wie EFS-Verschlüsselung oder Datenträgerkontingente fehlen ReFS.",
+    "options": [
+      "ReFS ist nicht als Startlaufwerk gedacht und wird für Datenvolumes eingesetzt",
+      "ReFS ist nur für Wechseldatenträger gedacht und nicht für Server",
+      "ReFS ist nur für das Systemlaufwerk gedacht und nicht für Daten",
+      "ReFS ist veraltet und wird nur noch für ältere Server unterstützt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Systemupdate startet auf einem openSUSE-Server ein wichtiger Dienst nicht mehr. Das Root-Dateisystem ist Btrfs, Snapper ist eingerichtet. Wie kommen Sie am schnellsten zum alten Stand?",
+    "a": "Einen Snapshot von vor dem Update starten bzw. mit snapper rollback zurückkehren",
+    "a_full": "Btrfs arbeitet mit Copy-on-Write und kann Snapshots fast ohne Zeit- und Platzbedarf anlegen. Snapper erstellt bei openSUSE vor und nach jeder Paketinstallation automatisch einen Snapshot. Diese lassen sich im GRUB-Menü starten und mit snapper rollback zum Standard machen.",
+    "options": [
+      "Einen Snapshot von vor dem Update starten bzw. mit snapper rollback zurückkehren",
+      "Das Dateisystem mit fsck.btrfs prüfen und fehlerhafte Blöcke löschen",
+      "Das komplette System aus der letzten Bandsicherung zurückspielen",
+      "Die alten Pakete mit zypper erneut aus dem Internet herunterladen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Neustart findet ein Admin mit journalctl keine Meldungen mehr vom Vortag. Die Absturzursache lässt sich nicht mehr klären. Was hat gefehlt?",
+    "a": "Eine dauerhafte Speicherung des Journals über Storage=persistent",
+    "a_full": "Ohne das Verzeichnis /var/log/journal speichert journald bei vielen Distributionen nur flüchtig unter /run. Nach einem Neustart sind die Meldungen dann weg. Mit Storage=persistent in der journald.conf oder durch Anlegen des Verzeichnisses bleiben sie erhalten. journalctl -b -1 zeigt danach die Meldungen des vorherigen Starts.",
+    "options": [
+      "Eine dauerhafte Speicherung des Journals über Storage=persistent",
+      "Eine Rotation des Journals mit logrotate, z.B. täglich um Mitternacht",
+      "Eine Freigabe des Journals über systemctl enable journalctl.service",
+      "Eine Begrenzung des Journals über journalctl --vacuum-size=500M"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie haben in /etc/systemd/system/backup.service den Pfad zum Skript korrigiert. systemctl restart backup startet trotzdem noch den alten Pfad, und systemctl warnt vor einer geänderten Unit-Datei. Was fehlt?",
+    "a": "systemctl daemon-reload, damit systemd die Unit-Dateien neu einliest",
+    "a_full": "systemd hält die Unit-Dateien im Speicher. Nach einer Änderung muss es sie mit systemctl daemon-reload neu einlesen. Erst danach verwendet ein Neustart des Dienstes die neue Konfiguration. Mit systemctl cat backup lässt sich prüfen, welche Fassung aktiv ist.",
+    "options": [
+      "systemctl daemon-reload, damit systemd die Unit-Dateien neu einliest",
+      "systemctl enable backup, damit systemd die neue Fassung übernimmt",
+      "journalctl --rotate, damit systemd die alten Einträge verwirft",
+      "systemctl isolate backup, damit der Dienst allein neu startet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Server soll der Dienst rpcbind auf keinen Fall mehr laufen, auch nicht, wenn ein anderer Dienst ihn als Abhängigkeit anfordert. systemctl disable reicht dafür nicht. Was nutzen Sie?",
+    "a": "systemctl mask rpcbind, sodass die Unit gar nicht mehr gestartet werden kann",
+    "a_full": "disable entfernt nur den automatischen Start beim Booten. Andere Units oder ein Admin können den Dienst trotzdem starten. mask verknüpft die Unit mit /dev/null, jeder Startversuch schlägt fehl. Mit systemctl unmask wird das rückgängig gemacht.",
+    "options": [
+      "systemctl mask rpcbind, sodass die Unit gar nicht mehr gestartet werden kann",
+      "systemctl stop rpcbind, sodass der Dienst dauerhaft angehalten bleibt",
+      "systemctl isolate rpcbind, sodass der Dienst vom Netz getrennt wird",
+      "systemctl reset-failed rpcbind, sodass der Dienst nie mehr anläuft"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein selbst geschriebener Dienst stürzt gelegentlich ab und muss dann von Hand neu gestartet werden. Wie sorgen Sie mit systemd dafür, dass er automatisch wieder anläuft?",
+    "a": "In der Unit Restart=on-failure setzen, am besten über systemctl edit als Override",
+    "a_full": "Mit Restart=on-failure startet systemd den Dienst neu, wenn er mit einem Fehler endet oder abstürzt. RestartSec legt die Wartezeit fest. systemctl edit legt eine Override-Datei an, die bei Paketupdates erhalten bleibt, und lädt die Konfiguration danach automatisch neu.",
+    "options": [
+      "In der Unit Restart=on-failure setzen, am besten über systemctl edit als Override",
+      "Einen cron-Job anlegen, der den Dienst jede Minute mit start aufruft",
+      "In der Unit WantedBy=multi-user.target setzen und neu aktivieren",
+      "In der Unit Type=oneshot setzen, damit er nach Fehlern neu startet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Ubuntu-Server läuft eine Fachanwendung nur mit einer bestimmten Version des Pakets openjdk-17-jre. Die übrigen Updates sollen weiter normal eingespielt werden. Wie gehen Sie vor?",
+    "a": "Das Paket mit apt-mark hold von Aktualisierungen ausnehmen",
+    "a_full": "apt-mark hold markiert ein Paket so, dass apt upgrade es nicht mehr aktualisiert. Alle anderen Pakete werden weiter auf den neuesten Stand gebracht. apt-mark showhold zeigt die gesperrten Pakete, apt-mark unhold hebt die Sperre auf. Die Sperre gehört in die Dokumentation, damit Sicherheitsupdates nicht vergessen werden.",
+    "options": [
+      "Das Paket mit apt-mark hold von Aktualisierungen ausnehmen",
+      "Die Paketquellen des Servers in sources.list vollständig auskommentieren",
+      "Das Paket mit apt purge entfernen und die Datei von Hand einspielen",
+      "Die automatischen Updates mit systemctl mask apt-daily abschalten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Gruppe webadmins soll auf einem Linux-Server nur den Dienst nginx neu starten dürfen, aber keine anderen Befehle als root ausführen. Welcher Eintrag per visudo passt?",
+    "a": "%webadmins ALL=(root) /usr/bin/systemctl restart nginx",
+    "a_full": "In sudoers steht ein Prozentzeichen vor Gruppennamen. Danach folgen Host, Zielbenutzer in Klammern und die erlaubten Befehle mit vollem Pfad. So erlaubt der Eintrag genau diesen einen Befehl. Ein Eintrag mit ALL am Ende würde dagegen volle Root-Rechte vergeben.",
+    "options": [
+      "%webadmins ALL=(root) /usr/bin/systemctl restart nginx",
+      "%webadmins ALL=(ALL) ALL, danach nginx in die Gruppe sudo aufnehmen",
+      "webadmins ALL=(root) NOPASSWD: ALL mit Verweis auf den Dienst nginx",
+      "%webadmins nginx=(root) /usr/bin/sudo für alle Befehle des Dienstes"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Entwickler verlässt die Firma. Sein Linux-Konto wurde mit usermod -L gesperrt. Kurz danach meldet er sich trotzdem noch per SSH an. Warum, und wie sperren Sie richtig?",
+    "a": "Nur das Passwort ist gesperrt, der SSH-Schlüssel wirkt. Konto mit usermod -e 1 ablaufen lassen",
+    "a_full": "usermod -L setzt ein Ausrufezeichen vor den Passwort-Hash in /etc/shadow. Eine Anmeldung mit SSH-Schlüssel prüft das Passwort gar nicht. Ein abgelaufenes Konto (usermod -e 1 oder chage -E 0) verhindert dagegen jede Anmeldung. Zusätzlich sollte man die authorized_keys-Datei entfernen.",
+    "options": [
+      "Nur das Passwort ist gesperrt, der SSH-Schlüssel wirkt. Konto mit usermod -e 1 ablaufen lassen",
+      "Die Sperre wirkt erst nach einem Neustart. Das Konto sofort mit userdel -f entfernen",
+      "Die Sperre gilt nur an der Konsole. sshd mit PermitRootLogin no neu starten lassen",
+      "Die Sperre betrifft nur Gruppen. Das Passwort des Kontos mit passwd -d leeren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Bei einem Benutzer, der gerade nicht angemeldet ist, muss ein fehlerhafter Registry-Wert unter HKEY_CURRENT_USER korrigiert werden. Wie kommen Sie an seinen Zweig?",
+    "a": "Seine NTUSER.DAT im Registrierungs-Editor unter HKEY_USERS als Struktur laden",
+    "a_full": "HKEY_CURRENT_USER ist nur beim angemeldeten Benutzer sichtbar und stammt aus der Datei NTUSER.DAT in seinem Profilordner. Mit Datei, Struktur laden lässt sich diese Datei unter HKEY_USERS einhängen und bearbeiten. Danach muss sie mit Struktur entfernen wieder freigegeben werden, sonst kann sich der Benutzer nicht richtig anmelden.",
+    "options": [
+      "Seine NTUSER.DAT im Registrierungs-Editor unter HKEY_USERS als Struktur laden",
+      "Seinen Zweig unter HKEY_LOCAL_MACHINE\\SOFTWARE suchen und dort ändern",
+      "Seine NTUSER.DAT mit dem Editor Notepad öffnen und den Wert ersetzen",
+      "Seinen Zweig mit reg export aus HKEY_CURRENT_USER des Admins holen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Server ohne Internetzugang soll .NET Framework 3.5 für eine ältere Fachanwendung erhalten. Install-WindowsFeature NET-Framework-Core bricht mit einem Fehler ab, die Quelldateien fehlen. Was hilft?",
+    "a": "Die Installation mit -Source auf den Ordner sources\\sxs des Mediums wiederholen",
+    "a_full": ".NET 3.5 gehört zu den Funktionen, deren Dateien nicht vollständig im System liegen. Windows lädt sie sonst über Windows Update nach. Ohne Internet gibt man mit -Source den Ordner sources\\sxs des passenden Installationsmediums an. Die Version des Mediums muss zum installierten Server passen.",
+    "options": [
+      "Die Installation mit -Source auf den Ordner sources\\sxs des Mediums wiederholen",
+      "Die Installation mit -IncludeManagementTools im abgesicherten Modus wiederholen",
+      "Die Installation mit -Restart nach einem Wechsel auf Server Core wiederholen",
+      "Die Installation mit -Force nach dem Abschalten des Virenscanners wiederholen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In der WSUS-Konsole sollen Server und Clients automatisch in den Gruppen Server und Pilot-Clients landen. Stattdessen erscheinen alle Rechner unter Nicht zugewiesene Computer. Was fehlt?",
+    "a": "Die clientseitige Zielgruppenadressierung per GPO und die passende Option in WSUS",
+    "a_full": "WSUS ordnet Rechner nur dann selbst Gruppen zu, wenn in den WSUS-Optionen die Gruppenrichtlinien-Einstellung für Computer gewählt ist. Per GPO erhalten die Rechner dann den Gruppennamen, z.B. über ein GPO an der OU Server. Der Gruppenname in der GPO muss genau dem Namen in WSUS entsprechen.",
+    "options": [
+      "Die clientseitige Zielgruppenadressierung per GPO und die passende Option in WSUS",
+      "Die automatische Genehmigung aller Updates für die Gruppe Alle Computer",
+      "Die Synchronisation des WSUS mit Microsoft Update im Stundentakt",
+      "Die Freigabe des WSUS-Ports 8530 in der Firewall des Domänencontrollers"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Druckserver mit 40 Druckern stürzt der Spoolerdienst mehrmals am Tag ab. Jedes Mal fallen alle Drucker aus. Die Ereignisanzeige nennt den Treiber eines einzelnen alten Etikettendruckers. Was hilft, bis ein neuer Treiber da ist?",
+    "a": "Den Treiber in der Druckverwaltung auf Isoliert stellen",
+    "a_full": "Mit der Druckertreiberisolation läuft ein Treiber in einem eigenen Prozess außerhalb des Spoolers. Stürzt er ab, betrifft das nur die Drucker mit diesem Treiber. Die übrigen Warteschlangen laufen weiter. Die Einstellung findet sich in der Druckverwaltung unter Treiber, Treiberisolation festlegen.",
+    "options": [
+      "Den Treiber in der Druckverwaltung auf Isoliert stellen",
+      "Den Spoolerdienst auf Starttyp Manuell stellen und nur bei Bedarf starten",
+      "Den Treiber als Typ-3-Treiber direkt auf allen Clients installieren",
+      "Den Etikettendrucker in eine eigene Freigabe mit Leserecht verschieben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem RDS-Sitzungshost soll eine neue Anwendung installiert werden. Ein Kollege startet das Setup einfach in seiner Sitzung. Was sollte er vorher tun?",
+    "a": "Den Server mit change user /install in den Installationsmodus versetzen",
+    "a_full": "Im Installationsmodus schreibt Windows benutzerbezogene Einstellungen so mit, dass sie allen Benutzern bereitgestellt werden. Danach wechselt man mit change user /execute zurück. Viele Setups erkennen einen Sitzungshost und schalten selbst um. Außerdem sollten während der Installation keine Benutzer angemeldet sein, z.B. per change logon /disable.",
+    "options": [
+      "Den Server mit change user /install in den Installationsmodus versetzen",
+      "Den Server mit shutdown /r /o im abgesicherten Modus neu starten",
+      "Das Setup mit gpupdate /force für alle Sitzungen vorbereiten",
+      "Den Server mit query session aus der RDS-Sammlung entfernen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Außendienstmitarbeiter sollen von unterwegs auf die RDS-Farm zugreifen. Der Chef will dafür keinen RDP-Port 3389 ins Internet öffnen und kein VPN einrichten. Welche RDS-Rolle setzen Sie ein?",
+    "a": "Das Remotedesktopgateway, das RDP in HTTPS über Port 443 kapselt",
+    "a_full": "Das RD-Gateway steht in der DMZ oder hinter einem Reverse Proxy und nimmt Verbindungen über HTTPS entgegen. Es prüft die Anmeldung und leitet erst dann per RDP an die Sitzungshosts weiter. Über Richtlinien legt man fest, wer auf welche Server darf. Eine Mehrfaktor-Anmeldung lässt sich ergänzen.",
+    "options": [
+      "Das Remotedesktopgateway, das RDP in HTTPS über Port 443 kapselt",
+      "Den Verbindungsbroker, der RDP über Port 3389 auf alle Hosts verteilt",
+      "Die Lizenzierung, die externe Sitzungen über Geräte-CALs freischaltet",
+      "Den Web Access, der RDP-Sitzungen direkt über Port 80 bereitstellt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Test von extern zeigt: Der Mailserver der Firma nimmt ohne Anmeldung Mails von fremden Absendern an fremde Empfänger an und leitet sie weiter. Welches Problem liegt vor?",
+    "a": "Ein Open Relay, das Spammer missbrauchen und das auf Sperrlisten führt",
+    "a_full": "Ein Mailserver soll von außen nur Mails für die eigenen Domänen annehmen. Weiterleiten an fremde Domänen darf er nur für eigene Benutzer nach Anmeldung oder aus dem eigenen Netz. Ein Open Relay wird schnell für Spam genutzt. Die IP-Adresse landet dann auf Sperrlisten und die eigenen Mails werden abgelehnt.",
+    "options": [
+      "Ein Open Relay, das Spammer missbrauchen und das auf Sperrlisten führt",
+      "Ein fehlender MX-Eintrag, der fremde Mails an den Server umleitet",
+      "Ein Greylisting, das fremde Mails erst beim zweiten Versuch annimmt",
+      "Ein fehlendes DKIM, das fremde Mails ohne Signatur weiterreicht"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Apache-Webserver mit einer IP-Adresse wurde die zweite Website shop.firma.de ergänzt und mit a2ensite aktiviert. Beim Aufruf erscheint aber die Startseite von www.firma.de. Was ist die typische Ursache?",
+    "a": "Im VirtualHost des Shops passt der ServerName nicht, also greift der erste vHost",
+    "a_full": "Bei namensbasierten virtuellen Hosts wählt Apache die Website anhand des Host-Headers aus. Passt kein ServerName oder ServerAlias, liefert er den ersten passenden VirtualHost als Standard aus. Mit apachectl -S sieht man, welche vHosts für welchen Namen und Port aktiv sind. Nach der Korrektur folgt apachectl configtest und ein Reload.",
+    "options": [
+      "Im VirtualHost des Shops passt der ServerName nicht, also greift der erste vHost",
+      "Im VirtualHost des Shops fehlt eine zweite IP-Adresse für den Namen shop",
+      "In der DNS-Zone fehlt ein MX-Eintrag für den Namen shop.firma.de",
+      "Im Browser fehlt das Stammzertifikat der Firma für den Namen shop"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Domänencontroller mit allen FSMO-Rollen ist durch einen Hardwareschaden endgültig verloren. Ein zweiter DC läuft noch. Wie gehen Sie vor?",
+    "a": "Die Rollen auf dem zweiten DC übernehmen (seize), den alten nie wieder anschließen",
+    "a_full": "Ein normales Übertragen geht nur, wenn der alte Rolleninhaber erreichbar ist. Bei einem Totalausfall werden die Rollen mit Move-ADDirectoryServerOperationMasterRole -Force oder ntdsutil übernommen. Danach entfernt man den alten DC per Metadatenbereinigung aus dem AD. Er darf nicht wieder eingeschaltet werden, weil dann zwei DCs dieselbe Rolle beanspruchen.",
+    "options": [
+      "Die Rollen auf dem zweiten DC übernehmen (seize), den alten nie wieder anschließen",
+      "Die Rollen warten, bis sie nach 24 Stunden automatisch zum zweiten DC wechseln",
+      "Den alten DC aus einer drei Monate alten Sicherung wiederherstellen und starten",
+      "Den zweiten DC herabstufen und die Domäne mit einem neuen Namen neu aufbauen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Die PDC-Emulator-Rolle wurde auf einen neuen Domänencontroller verschoben. Seit einigen Tagen driftet die Zeit in der Domäne, und erste Kerberos-Anmeldungen scheitern. Was wurde vergessen?",
+    "a": "Den neuen PDC-Emulator mit w32tm so einzurichten, dass er eine externe NTP-Quelle nutzt",
+    "a_full": "Der PDC-Emulator der Stammdomäne ist die oberste Zeitquelle der Gesamtstruktur. Er holt die Zeit nicht automatisch von außen, das muss eingerichtet werden, z.B. mit w32tm /config /manualpeerlist mit NTP-Servern, /syncfromflags:manual und /reliable:yes. Der alte DC sollte danach wieder der Domänenhierarchie folgen. w32tm /query /status zeigt die aktuelle Quelle.",
+    "options": [
+      "Den neuen PDC-Emulator mit w32tm so einzurichten, dass er eine externe NTP-Quelle nutzt",
+      "Den neuen PDC-Emulator als globalen Katalog einzurichten und neu zu starten",
+      "Allen Clients per GPO die Zeitzone des neuen Domänencontrollers zuzuweisen",
+      "Den alten Domänencontroller als RID-Master in der Domäne zu belassen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einer Außenstelle steht ein eigener Domänencontroller ohne globalen Katalog. Fällt die WAN-Leitung aus, können sich Benutzer nicht mehr anmelden, obwohl der DC erreichbar ist. Was hilft?",
+    "a": "Den DC zum globalen Katalog machen oder universelle Gruppen zwischenspeichern",
+    "a_full": "Bei der Anmeldung muss ein globaler Katalog die Mitgliedschaften in universellen Gruppen liefern. Ist in der Außenstelle keiner erreichbar, scheitert die Anmeldung. Abhilfe ist, den DC als globalen Katalog einzurichten. Alternativ speichert der Standort die universellen Gruppenmitgliedschaften zwischen, das wird in den Standorteinstellungen aktiviert.",
+    "options": [
+      "Den DC zum globalen Katalog machen oder universelle Gruppen zwischenspeichern",
+      "Den DC der Außenstelle zum PDC-Emulator machen und die Zeitquelle ändern",
+      "Den DC der Außenstelle als RODC neu aufsetzen und alle Kennwörter löschen",
+      "Den Clients der Außenstelle eine feste IP-Adresse aus dem Zentralnetz geben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Hypervisor-Host hat zwei Prozessoren mit je 16 Kernen und je 256 GB RAM. Eine VM mit 24 vCPUs und 400 GB RAM läuft spürbar langsamer als erwartet. Welche Ursache kommt in Frage?",
+    "a": "Die VM überspannt beide NUMA-Knoten und greift oft auf entfernten Speicher zu",
+    "a_full": "Bei NUMA hat jeder Prozessor seinen eigenen, schnell angebundenen Arbeitsspeicher. Zugriffe auf den Speicher des anderen Prozessors dauern länger. Eine VM, die größer als ein Knoten ist, sollte eine passende vNUMA-Topologie erhalten, damit das Gastsystem Last und Speicher sinnvoll verteilt. Besser ist oft, VMs so zu bemessen, dass sie in einen Knoten passen.",
+    "options": [
+      "Die VM überspannt beide NUMA-Knoten und greift oft auf entfernten Speicher zu",
+      "Die VM nutzt mehr vCPUs, als der Host über Hyper-Threading bereitstellen kann",
+      "Die VM hat mehr als 256 GB RAM, deshalb schaltet der Host den Cache ab",
+      "Die VM läuft auf zwei Prozessoren, deshalb halbiert sich ihr Takt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Team werden 30 Linux-Server von Hand gepflegt. Bei einer Prüfung zeigt sich, dass auf jedem Server leicht andere SSH-Einstellungen gelten, obwohl alle gleich sein sollten. Wie heißt das Problem, und wie begegnet man ihm?",
+    "a": "Konfigurationsdrift, der man mit festem Soll-Zustand und Automatisierung begegnet",
+    "a_full": "Von Konfigurationsdrift spricht man, wenn Systeme durch einzelne Handänderungen vom geplanten Stand abweichen. Konfigurationsmanagement legt eine Baseline fest und dokumentiert Änderungen. Werkzeuge wie Ansible setzen den Soll-Zustand aus einer versionierten Beschreibung regelmäßig durch. Abweichungen werden so erkannt und behoben.",
+    "options": [
+      "Konfigurationsdrift, der man mit festem Soll-Zustand und Automatisierung begegnet",
+      "Schatten-IT, der man mit einer Sperre aller SSH-Zugänge von außen begegnet",
+      "Vendor Lock-in, dem man mit einem Wechsel auf eine andere Distribution begegnet",
+      "Scope Creep, dem man mit einem genehmigten Change Request je Server begegnet"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In einem kleinen Systemhaus hat jeder Mitarbeiter genau einen Vorgesetzten. Ein Techniker will eine Frage an den Vertrieb klären und muss dafür über seinen Teamleiter und die Geschäftsführung gehen. Welches Leitungssystem liegt vor und was ist sein Nachteil?",
+    "a": "Einliniensystem, der Nachteil sind lange und langsame Dienstwege",
+    "a_full": "Im Einliniensystem erhält jede Stelle nur von einer übergeordneten Instanz Weisungen. Das schafft klare Zuständigkeiten und eindeutige Verantwortung. Weil alle Informationen über den Dienstweg laufen, werden die oberen Ebenen aber stark belastet und Abstimmungen zwischen Abteilungen dauern lange.",
+    "options": [
+      "Einliniensystem, der Nachteil sind lange und langsame Dienstwege",
+      "Mehrliniensystem, der Nachteil sind widersprüchliche Weisungen",
+      "Matrixorganisation, der Nachteil sind Konflikte zwischen zwei Chefs",
+      "Stabliniensystem, der Nachteil ist die fehlende Beratung der Leitung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Dienstleister legt fest, in welcher Reihenfolge ein Störungsticket angenommen, klassifiziert, bearbeitet und geschlossen wird. Zu welchem Bereich der Organisation gehört diese Regelung?",
+    "a": "Zur Ablauforganisation, sie regelt Arbeitsprozesse in Raum und Zeit",
+    "a_full": "Die Aufbauorganisation legt die Struktur fest: Stellen, Abteilungen, Instanzen und Weisungsbeziehungen, meist dargestellt im Organigramm. Die Ablauforganisation beschreibt dagegen, wie Arbeit abläuft: Reihenfolge, Zuständigkeit je Schritt, Zeiten und Orte. Ein Ticketprozess ist ein typisches Beispiel für Ablauforganisation.",
+    "options": [
+      "Zur Ablauforganisation, sie regelt Arbeitsprozesse in Raum und Zeit",
+      "Zur Aufbauorganisation, sie regelt Stellen und Weisungsbefugnisse",
+      "Zur Unternehmensverfassung, sie regelt die Rechte der Gesellschafter",
+      "Zur Personalplanung, sie regelt den künftigen Bedarf an Fachkräften"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine neue Stelle „Systemadministrator Netzwerk“ wird geschaffen. Die Personalabteilung will schriftlich festhalten, welche Aufgaben, Befugnisse und Vorgesetzten zu dieser Stelle gehören. Welches Dokument erstellt sie?",
+    "a": "Eine Stellenbeschreibung",
+    "a_full": "Die Stellenbeschreibung ist ein Instrument der Aufbauorganisation. Sie enthält Bezeichnung und Ziel der Stelle, Aufgaben, Kompetenzen, Über- und Unterstellung, Vertretung und Anforderungen an den Stelleninhaber. Sie hilft bei Einarbeitung, Stellenausschreibung und Abgrenzung von Zuständigkeiten.",
+    "options": [
+      "Eine Stellenbeschreibung",
+      "Ein Organigramm des gesamten Unternehmens",
+      "Einen Ausbildungsrahmenplan für die neue Stelle",
+      "Eine Betriebsvereinbarung mit dem Betriebsrat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die neue Leiterin des Supports bespricht geplante Änderungen im Team, sammelt Vorschläge und überträgt Aufgaben mit eigener Verantwortung. Die letzte Entscheidung trifft sie selbst. Welcher Führungsstil ist das?",
+    "a": "Der kooperative Führungsstil",
+    "a_full": "Beim kooperativen Führungsstil bezieht die Führungskraft die Mitarbeiter in Entscheidungen ein und delegiert Verantwortung. Das stärkt Motivation, Eigeninitiative und die Akzeptanz von Entscheidungen. Nachteil ist, dass Abstimmungen Zeit kosten und in Eilsituationen bremsen können.",
+    "options": [
+      "Der kooperative Führungsstil",
+      "Der autoritäre Führungsstil",
+      "Der Laissez-faire-Führungsstil",
+      "Der patriarchalische Führungsstil"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Teamleiter vereinbart mit jedem Admin für das Jahr messbare Ziele, etwa „Patchquote der Server über 95 Prozent“. Wie die Ziele erreicht werden, entscheiden die Admins selbst. Welches Führungsprinzip wendet er an?",
+    "a": "Management by Objectives, Führen durch Zielvereinbarung",
+    "a_full": "Bei Management by Objectives vereinbaren Führungskraft und Mitarbeiter gemeinsam überprüfbare Ziele. Der Weg dorthin liegt in der Verantwortung des Mitarbeiters. Am Ende des Zeitraums wird die Zielerreichung besprochen, oft verbunden mit Feedback oder einer variablen Vergütung.",
+    "options": [
+      "Management by Objectives, Führen durch Zielvereinbarung",
+      "Management by Exception, Eingreifen nur bei Ausnahmen",
+      "Management by Delegation, Abgabe der gesamten Verantwortung",
+      "Management by Walking Around, Führen durch Rundgänge"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen erhöht allen Admins das Gehalt. Die Unzufriedenheit sinkt, doch mehr Engagement zeigt kaum jemand. Wie erklärt die Zwei-Faktoren-Theorie von Herzberg das?",
+    "a": "Gehalt ist ein Hygienefaktor, der Unzufriedenheit verhindert, aber nicht motiviert",
+    "a_full": "Herzberg unterscheidet Hygienefaktoren wie Gehalt, Arbeitsbedingungen und Arbeitsplatzsicherheit von Motivatoren wie Anerkennung, Verantwortung, interessanten Aufgaben und Entwicklungsmöglichkeiten. Fehlen Hygienefaktoren, entsteht Unzufriedenheit. Echte Zufriedenheit und Leistungsbereitschaft entstehen erst durch Motivatoren.",
+    "options": [
+      "Gehalt ist ein Hygienefaktor, der Unzufriedenheit verhindert, aber nicht motiviert",
+      "Gehalt ist ein Motivator, die Erhöhung war nur noch zu gering",
+      "Gehalt ist ein Grundbedürfnis, danach folgt automatisch Leistung",
+      "Gehalt wirkt nur, wenn es mit einer Zielvereinbarung gekoppelt ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wegen eines Booms bei KI-Servern steigt die Nachfrage nach Arbeitsspeicher stark. Die Hersteller können ihre Produktion kurzfristig kaum erhöhen. Was passiert nach dem Marktmodell mit dem Preis?",
+    "a": "Der Gleichgewichtspreis steigt, bis Angebot und Nachfrage wieder übereinstimmen",
+    "a_full": "Steigt die Nachfrage bei gleichem Angebot, entsteht zum alten Preis ein Nachfrageüberhang. Der Preis steigt, bis sich ein neuer Gleichgewichtspreis einstellt, bei dem angebotene und nachgefragte Menge gleich sind. Hohe Preise locken langfristig zusätzliche Produktion an, wodurch der Preis später wieder sinken kann.",
+    "options": [
+      "Der Gleichgewichtspreis steigt, bis Angebot und Nachfrage wieder übereinstimmen",
+      "Der Preis bleibt gleich, weil der Staat Preise für Bauteile festlegt",
+      "Der Preis sinkt, weil größere Mengen günstiger hergestellt werden",
+      "Der Preis sinkt, weil ein Angebotsüberhang entsteht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im einfachen Wirtschaftskreislauf stehen sich private Haushalte und Unternehmen gegenüber. Welche Ströme fließen zwischen ihnen?",
+    "a": "Güterströme (Arbeit, Konsumgüter) und entgegengesetzte Geldströme (Einkommen, Konsumausgaben)",
+    "a_full": "Haushalte stellen den Unternehmen Arbeitskraft und andere Produktionsfaktoren zur Verfügung und erhalten dafür Einkommen. Mit diesem Einkommen kaufen sie die Güter der Unternehmen, das Geld fließt als Konsumausgaben zurück. Im erweiterten Kreislauf kommen Staat, Banken und Ausland hinzu.",
+    "options": [
+      "Güterströme (Arbeit, Konsumgüter) und entgegengesetzte Geldströme (Einkommen, Konsumausgaben)",
+      "Nur Geldströme, weil Güter im Modell nicht betrachtet werden",
+      "Steuern und Subventionen, die der Staat zwischen beiden verteilt",
+      "Kredite und Zinsen, die nur zwischen Unternehmen fließen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In einer Wirtschaftsnachricht heißt es, die Regierung kämpfe mit dem „magischen Viereck“. Welche Ziele sind gemeint und warum „magisch“?",
+    "a": "Stabiles Preisniveau, hoher Beschäftigungsstand, außenwirtschaftliches Gleichgewicht, stetiges Wachstum, die nicht alle gleichzeitig erreichbar sind",
+    "a_full": "Das Stabilitäts- und Wachstumsgesetz von 1967 verpflichtet Bund und Länder auf diese vier Ziele. „Magisch“ heißt das Viereck, weil die Ziele in Konflikt stehen: Mehr Wachstum und Beschäftigung können etwa die Inflation antreiben. Im erweiterten Sechseck kommen gerechte Einkommensverteilung und Umweltschutz hinzu.",
+    "options": [
+      "Stabiles Preisniveau, hoher Beschäftigungsstand, außenwirtschaftliches Gleichgewicht, stetiges Wachstum, die nicht alle gleichzeitig erreichbar sind",
+      "Hohe Gewinne, niedrige Löhne, starker Export, niedrige Steuern, die nur durch Zauberei steigen",
+      "Geringe Staatsschulden, hohe Zinsen, starke Währung, viele Firmen, die sich gegenseitig verstärken",
+      "Vollbeschäftigung, Nullinflation, Nullwachstum, Exportverbot, die gesetzlich garantiert sind"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Wirtschaft steckt in einer Rezession. Der Staat legt ein kreditfinanziertes Förderprogramm für die Digitalisierung von Schulen und Behörden auf. Welche Idee steckt dahinter?",
+    "a": "Antizyklische Fiskalpolitik: Der Staat stützt die fehlende private Nachfrage",
+    "a_full": "Bei antizyklischer Fiskalpolitik handelt der Staat gegen den Konjunkturverlauf. Im Abschwung erhöht er Ausgaben oder senkt Steuern, auch über Kredite, damit Aufträge und Arbeitsplätze erhalten bleiben. Im Boom soll er sparen und Schulden zurückzahlen, damit die Wirtschaft nicht überhitzt.",
+    "options": [
+      "Antizyklische Fiskalpolitik: Der Staat stützt die fehlende private Nachfrage",
+      "Prozyklische Politik: Der Staat verstärkt den Abschwung durch Sparen",
+      "Geldpolitik: Die Regierung senkt selbst den Leitzins für Banken",
+      "Angebotspolitik: Der Staat übernimmt dauerhaft die IT-Unternehmen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Auszubildende bekommt im zweiten Lehrjahr etwas mehr Vergütung. Die Preise für Miete und Lebensmittel sind im selben Zeitraum deutlich stärker gestiegen. Was bedeutet das für sie?",
+    "a": "Ihr Reallohn sinkt, weil ihre Kaufkraft trotz mehr Geld abnimmt",
+    "a_full": "Inflation ist ein anhaltender Anstieg des allgemeinen Preisniveaus, gemessen am Verbraucherpreisindex. Entscheidend ist nicht der Nominallohn, sondern was man sich davon kaufen kann. Steigen die Preise stärker als die Vergütung, kann sie sich weniger leisten als vorher.",
+    "options": [
+      "Ihr Reallohn sinkt, weil ihre Kaufkraft trotz mehr Geld abnimmt",
+      "Ihr Reallohn steigt, weil sie nominal mehr Geld erhält",
+      "Ihr Reallohn bleibt gleich, weil Inflation nur Sparguthaben betrifft",
+      "Ihr Reallohn steigt, weil höhere Preise die Löhne automatisch anheben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus bestellt bei einem Großhändler in einer anderen Stadt Server und bittet um Versand. Beim Transport durch die Spedition werden die Server beschädigt, keine Seite trifft ein Verschulden. Wer trägt das Risiko?",
+    "a": "Das Systemhaus als Käufer, die Gefahr ging bei Übergabe an die Spedition über",
+    "a_full": "Beim Versendungskauf zwischen Unternehmen geht die Gefahr des zufälligen Untergangs mit der Übergabe an die Transportperson auf den Käufer über (§ 447 BGB). Das Systemhaus muss also zahlen und kann sich an die Spedition oder deren Versicherung halten. Anders ist es beim Verbrauchsgüterkauf, dort trägt der Händler das Versandrisiko bis zur Übergabe.",
+    "options": [
+      "Das Systemhaus als Käufer, die Gefahr ging bei Übergabe an die Spedition über",
+      "Der Großhändler, weil er bis zur Ankunft beim Kunden haftet",
+      "Die Spedition, weil sie ohne Verschulden immer voll haftet",
+      "Beide je zur Hälfte, weil niemand den Schaden verschuldet hat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine IT-GmbH hat ihrem Prokuristen die Prokura entzogen, die Löschung aber nicht im Handelsregister eintragen lassen. Er bestellt danach im Namen der GmbH Hardware bei einem Lieferanten, der vom Widerruf nichts weiß. Ist die GmbH an den Vertrag gebunden?",
+    "a": "Ja, der Lieferant darf auf das Handelsregister vertrauen",
+    "a_full": "Das Handelsregister genießt öffentlichen Glauben. Nach § 15 Abs. 1 HGB kann eine eintragungspflichtige Tatsache wie das Erlöschen der Prokura einem gutgläubigen Dritten nicht entgegengehalten werden, solange sie nicht eingetragen und bekannt gemacht ist. Die GmbH muss den Vertrag erfüllen und kann sich nur intern an den früheren Prokuristen halten.",
+    "options": [
+      "Ja, der Lieferant darf auf das Handelsregister vertrauen",
+      "Nein, der Widerruf wirkt sofort gegenüber jedem",
+      "Nein, Prokuristen dürfen generell keine Hardware kaufen",
+      "Ja, aber nur wenn die Bestellung unter 1.000 Euro liegt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus hat einem Kunden unter einfachem Eigentumsvorbehalt Netzwerktechnik geliefert, die noch unbezahlt im Lager des Kunden steht. Nun wird über das Vermögen des Kunden das Insolvenzverfahren eröffnet. Welches Recht hat das Systemhaus?",
+    "a": "Ein Aussonderungsrecht: Es kann die Ware als Eigentümer herausverlangen",
+    "a_full": "Unter Eigentumsvorbehalt gelieferte Ware gehört bis zur vollständigen Zahlung dem Lieferanten und damit nicht zur Insolvenzmasse. Der Lieferant kann sie deshalb aussondern lassen (§ 47 InsO), sofern der Insolvenzverwalter nicht die Erfüllung wählt und zahlt. Ohne Eigentumsvorbehalt wäre er nur einfacher Insolvenzgläubiger mit meist geringer Quote.",
+    "options": [
+      "Ein Aussonderungsrecht: Es kann die Ware als Eigentümer herausverlangen",
+      "Nur einen Anspruch auf die Insolvenzquote wie alle Gläubiger",
+      "Ein Recht auf sofortige Zahlung aus dem Vermögen der Geschäftsführer",
+      "Kein Recht mehr, weil das Eigentum mit Lieferung übergegangen ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde schuldet Ihrem Betrieb seit zwei Jahren eine Rechnung. Kurz vor Jahresende überweist er eine Abschlagszahlung und bittet um Geduld für den Rest. Was bewirkt das für die Verjährung der Restforderung?",
+    "a": "Die Verjährung beginnt neu, weil der Kunde die Forderung anerkannt hat",
+    "a_full": "Erkennt der Schuldner den Anspruch an, etwa durch Abschlagszahlung, Zinszahlung oder Sicherheitsleistung, beginnt die Verjährung von vorne (§ 212 BGB). Davon zu unterscheiden ist die Hemmung, zum Beispiel durch Verhandlungen oder die Zustellung eines Mahnbescheids. Bei der Hemmung wird die Frist nur angehalten und läuft danach weiter.",
+    "options": [
+      "Die Verjährung beginnt neu, weil der Kunde die Forderung anerkannt hat",
+      "Die Verjährung wird nur gehemmt und läuft später weiter",
+      "Die Verjährung ändert sich nicht, Teilzahlungen sind ohne Bedeutung",
+      "Die Restforderung ist sofort verjährt, weil der Kunde gezahlt hat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ihr Betrieb hat gegen einen säumigen Kunden einen Mahnbescheid beantragt. Der Kunde legt innerhalb von zwei Wochen Widerspruch ein. Wie geht es weiter?",
+    "a": "Das Mahnverfahren endet, auf Antrag folgt ein streitiges Gerichtsverfahren",
+    "a_full": "Das gerichtliche Mahnverfahren prüft nicht, ob die Forderung besteht. Widerspricht der Schuldner dem Mahnbescheid, kann kein Vollstreckungsbescheid ergehen. Die Sache wird auf Antrag an das zuständige Gericht abgegeben, dort muss der Gläubiger seinen Anspruch wie in einer Klage begründen und beweisen.",
+    "options": [
+      "Das Mahnverfahren endet, auf Antrag folgt ein streitiges Gerichtsverfahren",
+      "Das Gericht erlässt trotzdem sofort einen Vollstreckungsbescheid",
+      "Der Gerichtsvollzieher pfändet ohne weiteres Verfahren beim Kunden",
+      "Die Forderung erlischt, weil ein Widerspruch sie endgültig beseitigt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Händler zählt am 31. Dezember alle Switches, Kabel und Notebooks in seinem Lager und hält die Mengen in Listen fest. Wie heißt dieser Vorgang und welches Ergebnis entsteht daraus?",
+    "a": "Stichtagsinventur, das Ergebnis ist das Inventar",
+    "a_full": "Die Inventur ist die mengen- und wertmäßige Bestandsaufnahme aller Vermögensteile und Schulden. Bei der Stichtagsinventur erfolgt sie zeitnah zum Bilanzstichtag, bei der permanenten Inventur laufend über die Lagerbuchführung. Das Inventar ist das ausführliche Bestandsverzeichnis, aus dem die kurz gefasste Bilanz abgeleitet wird.",
+    "options": [
+      "Stichtagsinventur, das Ergebnis ist das Inventar",
+      "Permanente Inventur, das Ergebnis ist die Gewinn- und Verlustrechnung",
+      "Stichtagsinventur, das Ergebnis ist direkt der Jahresüberschuss",
+      "Buchinventur, das Ergebnis ist das Handelsregister"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus kauft einen neuen Server für die eigene IT und bezahlt ihn erst in 30 Tagen. Wie verändert dieser Vorgang die Bilanz?",
+    "a": "Aktiv-Passiv-Mehrung: Anlagevermögen und Verbindlichkeiten steigen gleich stark",
+    "a_full": "Der Server ist Betriebs- und Geschäftsausstattung und erhöht auf der Aktivseite das Anlagevermögen. Gleichzeitig entsteht eine Verbindlichkeit aus Lieferungen und Leistungen auf der Passivseite. Beide Seiten wachsen um denselben Betrag, die Bilanzsumme steigt, man spricht von Bilanzverlängerung.",
+    "options": [
+      "Aktiv-Passiv-Mehrung: Anlagevermögen und Verbindlichkeiten steigen gleich stark",
+      "Aktivtausch: Anlagevermögen steigt, das Bankguthaben sinkt",
+      "Passivtausch: Eigenkapital sinkt, Verbindlichkeiten steigen",
+      "Aktiv-Passiv-Minderung: Vermögen und Schulden sinken gleich stark"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Geschäftsführer wundert sich: Das Unternehmen hat im Dezember Server für 60.000 Euro gekauft, trotzdem sinkt der Gewinn in der GuV nicht um diesen Betrag. Wie erklären Sie das?",
+    "a": "Der Kauf ist kein Aufwand, nur die jährliche Abschreibung mindert den Gewinn",
+    "a_full": "Ein Serverkauf tauscht Geld gegen einen Vermögensgegenstand, das Vermögen bleibt zunächst gleich. Erst die Wertminderung über die Nutzungsdauer wird als Abschreibung zum Aufwand in der Gewinn- und Verlustrechnung. Laufende Kosten wie Miete, Strom oder Gehälter sind dagegen sofort Aufwand.",
+    "options": [
+      "Der Kauf ist kein Aufwand, nur die jährliche Abschreibung mindert den Gewinn",
+      "Anschaffungen werden in der GuV grundsätzlich gar nicht erfasst",
+      "Der Kauf wird erst im Jahr der Bezahlung vollständig als Aufwand gebucht",
+      "Server gelten steuerlich als Ertrag, weil sie den Firmenwert erhöhen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein wachsendes Systemhaus mit 40 Beschäftigten hat sich um den Arbeitsschutz bisher kaum gekümmert. Welche Fachleute muss der Arbeitgeber nach dem Arbeitssicherheitsgesetz bestellen?",
+    "a": "Einen Betriebsarzt und eine Fachkraft für Arbeitssicherheit",
+    "a_full": "Das Arbeitssicherheitsgesetz verpflichtet Arbeitgeber, Betriebsärzte und Fachkräfte für Arbeitssicherheit zu bestellen. Beide können angestellt oder als externer Dienst beauftragt werden, der Umfang richtet sich nach Betriebsgröße und Gefährdung. Sie beraten den Arbeitgeber, die Verantwortung für den Arbeitsschutz bleibt aber bei ihm.",
+    "options": [
+      "Einen Betriebsarzt und eine Fachkraft für Arbeitssicherheit",
+      "Einen Datenschutzbeauftragten und einen Brandschutzhelfer",
+      "Einen Betriebsrat und eine Jugend- und Auszubildendenvertretung",
+      "Einen Qualitätsbeauftragten und einen externen Gutachter"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In einem IT-Betrieb mit Betriebsrat arbeiten sechs Auszubildende zwischen 17 und 23 Jahren. Sie möchten eine Jugend- und Auszubildendenvertretung wählen. Ist das möglich?",
+    "a": "Ja, ab fünf Jugendlichen oder Azubis unter 25 in einem Betrieb mit Betriebsrat",
+    "a_full": "Eine JAV wird gewählt, wenn im Betrieb in der Regel mindestens fünf Arbeitnehmer unter 18 Jahren oder Auszubildende unter 25 Jahren beschäftigt sind und ein Betriebsrat besteht. Die Amtszeit beträgt zwei Jahre. Die JAV setzt ihre Anliegen über den Betriebsrat durch und kann an dessen Sitzungen teilnehmen.",
+    "options": [
+      "Ja, ab fünf Jugendlichen oder Azubis unter 25 in einem Betrieb mit Betriebsrat",
+      "Nein, dafür müssen alle Azubis jünger als 18 Jahre sein",
+      "Nein, eine JAV gibt es erst ab 20 Auszubildenden",
+      "Ja, aber nur mit Zustimmung der Geschäftsführung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein erfahrener IT-Architekt verdient deutlich mehr als seine Kollegen. Er stellt fest, dass sein Beitrag zur Krankenversicherung trotz weiterer Gehaltserhöhungen nicht mehr steigt. Woran liegt das?",
+    "a": "Sein Gehalt liegt über der Beitragsbemessungsgrenze, darüber fallen keine Beiträge an",
+    "a_full": "Sozialversicherungsbeiträge werden nur bis zur Beitragsbemessungsgrenze berechnet, der Teil darüber ist beitragsfrei. Für Kranken- und Pflegeversicherung gilt eine niedrigere Grenze als für Renten- und Arbeitslosenversicherung. Die Werte werden jährlich angepasst.",
+    "options": [
+      "Sein Gehalt liegt über der Beitragsbemessungsgrenze, darüber fallen keine Beiträge an",
+      "Ab einem bestimmten Alter werden Beiträge eingefroren",
+      "Gutverdiener zahlen einen festen Pauschalbeitrag an die Kasse",
+      "Der Arbeitgeber übernimmt ab einer Grenze den gesamten Beitrag"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender kauft Fachbücher für die Prüfung und fährt täglich mit dem Auto zum Betrieb. Er fragt, ob sich eine Einkommensteuererklärung lohnt. Was antworten Sie?",
+    "a": "Die Kosten sind Werbungskosten, sie wirken aber nur, soweit sie den Arbeitnehmer-Pauschbetrag übersteigen",
+    "a_full": "Aufwendungen für den Beruf, wie Fachliteratur, Arbeitsmittel und die Entfernungspauschale für den Arbeitsweg, sind Werbungskosten. Beim Lohnsteuerabzug ist bereits ein Arbeitnehmer-Pauschbetrag berücksichtigt. Nur wer höhere Werbungskosten nachweist oder zu viel Lohnsteuer gezahlt hat, bekommt über die Erklärung Geld zurück.",
+    "options": [
+      "Die Kosten sind Werbungskosten, sie wirken aber nur, soweit sie den Arbeitnehmer-Pauschbetrag übersteigen",
+      "Die Kosten sind Sonderausgaben, sie werden immer vollständig erstattet",
+      "Azubis dürfen grundsätzlich keine Steuererklärung abgeben",
+      "Die Kosten mindern nur die Sozialversicherungsbeiträge, nicht die Steuer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen will aus Gründen der Green IT alle drei Jahre alten Notebooks gegen neue, sparsamere Modelle tauschen. Was geben Sie zu bedenken?",
+    "a": "Die Herstellung verursacht einen großen Teil der Umweltbelastung, längere Nutzung ist oft besser",
+    "a_full": "Bei Notebooks entsteht ein großer Teil des CO2-Fußabdrucks bei der Rohstoffgewinnung und Produktion, nicht im Betrieb. Ein etwas geringerer Stromverbrauch gleicht das über Jahre oft nicht aus. Sinnvoller sind Aufrüsten, Reparieren, Weiternutzung oder refurbished Geräte und ein zertifiziertes Recycling am Ende.",
+    "options": [
+      "Die Herstellung verursacht einen großen Teil der Umweltbelastung, längere Nutzung ist oft besser",
+      "Neue Geräte sind immer umweltfreundlicher, weil sie weniger Strom brauchen",
+      "Alte Notebooks müssen nach drei Jahren gesetzlich entsorgt werden",
+      "Die Umweltbelastung entsteht fast nur durch den Versand der Geräte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kollege sitzt im Teammeeting mit verschränkten Armen und sagt kein Wort, als der Plan für die Rufbereitschaft vorgestellt wird. Die Teamleiterin meint, er habe ja nichts gesagt. Welches Axiom von Watzlawick widerspricht ihr?",
+    "a": "Man kann nicht nicht kommunizieren",
+    "a_full": "Nach Watzlawick ist jedes Verhalten in Gegenwart anderer eine Mitteilung, auch Schweigen und Körperhaltung. Der Kollege sendet also eine Botschaft, möglicherweise Ablehnung. Die Teamleiterin sollte nachfragen, statt sein Schweigen als Zustimmung zu werten.",
+    "options": [
+      "Man kann nicht nicht kommunizieren",
+      "Jede Nachricht hat vier Seiten mit Sachinhalt und Appell",
+      "Kommunikation ist immer symmetrisch zwischen Gleichgestellten",
+      "Nur gesprochene Worte gelten als Kommunikation"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Admins streiten angeblich über die richtige Backup-Software. Schnell wird klar, dass einer sich übergangen fühlt, weil die Entscheidung ohne ihn vorbereitet wurde. Welches Modell beschreibt diese Situation?",
+    "a": "Das Eisbergmodell: Die Sachebene ist sichtbar, der größere Teil liegt auf der Beziehungsebene",
+    "a_full": "Das Eisbergmodell besagt, dass nur ein kleiner Teil der Kommunikation sichtbar auf der Sachebene liegt. Der größere Teil mit Gefühlen, Erwartungen und Beziehungen liegt verborgen unter der Oberfläche. Konflikte lassen sich oft erst lösen, wenn diese Ebene angesprochen wird.",
+    "options": [
+      "Das Eisbergmodell: Die Sachebene ist sichtbar, der größere Teil liegt auf der Beziehungsebene",
+      "Das Sender-Empfänger-Modell: Die Nachricht wurde falsch codiert",
+      "Die Maslowsche Bedürfnispyramide: Grundbedürfnisse fehlen",
+      "Das Harvard-Konzept: Beide Seiten beharren auf Positionen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde fordert bei einer Vertragsverlängerung 20 Prozent Rabatt, Ihr Systemhaus will den Preis halten. Im Gespräch zeigt sich, dass der Kunde vor allem seine Budgetplanung absichern will. Wie gehen Sie nach dem Harvard-Konzept vor?",
+    "a": "Die Interessen hinter den Positionen klären und Optionen zum beiderseitigen Vorteil suchen",
+    "a_full": "Das Harvard-Konzept setzt auf sachgerechtes Verhandeln: Menschen und Probleme trennen, Interessen statt Positionen betrachten, Optionen zum beiderseitigen Vorteil entwickeln und neutrale Beurteilungskriterien nutzen. Hier könnte etwa ein Festpreis über mehrere Jahre dem Kunden Planungssicherheit geben, ohne den Rabatt zu gewähren. So entsteht eine Win-win-Lösung.",
+    "options": [
+      "Die Interessen hinter den Positionen klären und Optionen zum beiderseitigen Vorteil suchen",
+      "Hart auf dem eigenen Preis bestehen, bis der Kunde nachgibt",
+      "Den Rabatt sofort gewähren, damit die Beziehung nicht leidet",
+      "Den Mittelwert von 10 Prozent als Kompromiss anbieten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Konflikt zwischen zwei Teamleitern über die Aufgabenteilung zwischen Netzwerk- und Serverteam eskaliert. Die Geschäftsführung schlägt vor, dass eine neutrale Person ein Gespräch leitet, in dem beide selbst eine Lösung erarbeiten. Wie nennt man das?",
+    "a": "Mediation",
+    "a_full": "Bei einer Mediation unterstützt ein neutraler Dritter die Konfliktparteien, ohne selbst zu entscheiden. Die Teilnahme ist freiwillig, die Gespräche sind vertraulich und die Parteien entwickeln die Lösung eigenverantwortlich. Das erhöht die Chance, dass die Einigung auch dauerhaft getragen wird.",
+    "options": [
+      "Mediation",
+      "Schlichtung",
+      "Abmahnung",
+      "Supervision"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Im relationalen Modell spricht man von Relation, Tupel und Attribut. Was entspricht diesen Begriffen in einer Tabelle?",
+    "a": "Relation = Tabelle, Tupel = Zeile (Datensatz), Attribut = Spalte",
+    "a_full": "Eine Relation ist eine Tabelle mit festem Aufbau. Jede Zeile ist ein Tupel, also ein Datensatz. Jede Spalte ist ein Attribut mit einem festen Wertebereich (Domäne). Die Reihenfolge der Zeilen spielt im Modell keine Rolle, für eine feste Sortierung braucht man ORDER BY.",
+    "options": [
+      "Relation = Tabelle, Tupel = Zeile (Datensatz), Attribut = Spalte",
+      "Relation = Datenbank, Tupel = Tabelle, Attribut = Zeile",
+      "Relation = Verknüpfung, Tupel = Spalte, Attribut = Einzelwert",
+      "Relation = Spalte, Tupel = Schlüssel, Attribut = Datensatz"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In einer Firma arbeitet jeder Mitarbeiter in mehreren Projekten, und jedes Projekt hat mehrere Mitarbeiter. Wie setzen Sie diese Beziehung in Tabellen um?",
+    "a": "Als n:m-Beziehung mit einer Zwischentabelle, die beide Fremdschlüssel enthält",
+    "a_full": "Eine n:m-Beziehung lässt sich nicht mit einem einzelnen Fremdschlüssel abbilden. Man legt eine Zwischentabelle an, z.B. projekt_mitarbeiter (mitarbeiter_id, projekt_id). Beide Spalten zusammen bilden meist den Primärschlüssel. Dort passen auch Attribute der Beziehung hin, etwa die Rolle im Projekt.",
+    "options": [
+      "Als n:m-Beziehung mit einer Zwischentabelle, die beide Fremdschlüssel enthält",
+      "Als 1:n-Beziehung mit einer Spalte projekt_id in der Tabelle mitarbeiter",
+      "Als 1:1-Beziehung, indem beide Tabellen zu einer Tabelle vereint werden",
+      "Mit einer Textspalte in projekte, die alle Namen durch Kommas trennt"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Jede Abteilung hat viele Mitarbeiter, jeder Mitarbeiter gehört zu genau einer Abteilung. In welcher Tabelle steht der Fremdschlüssel?",
+    "a": "In der Tabelle mitarbeiter als Spalte abteilung_id",
+    "a_full": "Bei einer 1:n-Beziehung steht der Fremdschlüssel immer auf der n-Seite. Jeder Mitarbeiter verweist auf seine eine Abteilung. Stünde der Schlüssel in der Tabelle abteilung, bräuchte man dort mehrere Werte pro Zeile. Das würde die 1. Normalform verletzen.",
+    "options": [
+      "In der Tabelle mitarbeiter als Spalte abteilung_id",
+      "In der Tabelle abteilung als Spalte mitarbeiter_id",
+      "In beiden Tabellen jeweils als Verweis auf die andere",
+      "In einer eigenen Zwischentabelle mit beiden Schlüsseln"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In einem ER-Diagramm in Krähenfußnotation endet die Linie von kunde an der Tabelle bestellung mit einem Kreis und einem Krähenfuß. Was bedeutet das?",
+    "a": "Ein Kunde hat keine, eine oder viele Bestellungen",
+    "a_full": "In der Krähenfußnotation steht der Kreis für null, der Strich für eins und der Krähenfuß für viele. Kreis und Krähenfuß zusammen heißen also null bis viele. Zwei Striche bedeuten genau eins, Strich und Krähenfuß bedeuten mindestens eins.",
+    "options": [
+      "Ein Kunde hat keine, eine oder viele Bestellungen",
+      "Ein Kunde hat genau eine Bestellung, die Pflicht ist",
+      "Ein Kunde hat mindestens eine oder beliebig viele Bestellungen",
+      "Ein Kunde hat höchstens eine Bestellung, die auch fehlen darf"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Kollege will in der Tabelle kunden die E-Mail-Adresse als Primärschlüssel nutzen, weil sie ohnehin eindeutig ist. Was spricht für eine eigene fortlaufende Kundennummer?",
+    "a": "Die E-Mail kann sich ändern, ein künstlicher Schlüssel bleibt stabil",
+    "a_full": "Ein Primärschlüssel sollte sich nie ändern, weil Fremdschlüssel in anderen Tabellen auf ihn verweisen. Wechselt ein Kunde seine E-Mail-Adresse, müssten alle Bestellungen und Rechnungen mitgeändert werden. Ein künstlicher Schlüssel (Surrogatschlüssel) hat keine fachliche Bedeutung und bleibt gleich. Die E-Mail erhält dann eine UNIQUE-Bedingung.",
+    "options": [
+      "Die E-Mail kann sich ändern, ein künstlicher Schlüssel bleibt stabil",
+      "E-Mail-Adressen sind zu lang, um überhaupt indiziert zu werden",
+      "Textspalten dürfen laut SQL-Standard kein Primärschlüssel sein",
+      "Eine Kundennummer verhindert automatisch doppelte Kunden"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Admin will einen alten Kunden mit DELETE FROM kunden WHERE id = 17; löschen. Die Datenbank meldet einen Fehler wegen einer Foreign-Key-Bedingung. Warum?",
+    "a": "Es gibt noch Bestellungen, die auf diesen Kunden verweisen",
+    "a_full": "Die referentielle Integrität stellt sicher, dass jeder Fremdschlüssel auf einen vorhandenen Datensatz zeigt. Würde der Kunde gelöscht, blieben Bestellungen ohne Kunden zurück. Standardmäßig lehnt die Datenbank das Löschen deshalb ab (RESTRICT bzw. NO ACTION). Man behandelt zuerst die abhängigen Datensätze oder markiert den Kunden nur als inaktiv.",
+    "options": [
+      "Es gibt noch Bestellungen, die auf diesen Kunden verweisen",
+      "Der Benutzer hat kein Recht, in der Tabelle kunden zu schreiben",
+      "Die Tabelle kunden ist durch eine laufende Sicherung gesperrt",
+      "Primärschlüssel dürfen grundsätzlich nicht gelöscht werden"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In der Tabelle mitarbeiter steht in der Spalte telefon z.B. \"0221 4711, 0171 123456\". Welche Normalform ist verletzt, und wie beheben Sie das?",
+    "a": "Die 1. NF, jede Nummer kommt als eigene Zeile in eine eigene Tabelle",
+    "a_full": "Die 1. Normalform verlangt atomare Werte, also nur einen Wert pro Feld. Mehrere Nummern in einem Feld lassen sich schlecht suchen, ändern und auswerten. Man legt eine Tabelle telefon (id, mitarbeiter_id, art, nummer) an, in der jede Nummer eine eigene Zeile bekommt.",
+    "options": [
+      "Die 1. NF, jede Nummer kommt als eigene Zeile in eine eigene Tabelle",
+      "Die 2. NF, die Spalte telefon muss Teil des Primärschlüssels werden",
+      "Die 3. NF, die Nummern gehören in die Spalten telefon1 und telefon2",
+      "Keine, solange die Nummern sauber durch Kommas getrennt sind"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle bestellposition hat den Primärschlüssel (bestell_nr, artikel_nr) und die Spalten menge und artikelbezeichnung. Welche Normalform ist verletzt?",
+    "a": "Die 2. NF, weil artikelbezeichnung nur von artikel_nr abhängt",
+    "a_full": "Die 2. Normalform verlangt, dass jedes Nichtschlüsselattribut vom gesamten zusammengesetzten Schlüssel abhängt. Die Menge hängt von Bestellung und Artikel ab, die Bezeichnung aber nur vom Artikel. Sie gehört in eine Tabelle artikel, sonst steht sie in jeder Position doppelt.",
+    "options": [
+      "Die 2. NF, weil artikelbezeichnung nur von artikel_nr abhängt",
+      "Die 1. NF, weil der Primärschlüssel aus zwei Spalten besteht",
+      "Die 3. NF, weil menge von artikelbezeichnung abhängt",
+      "Keine, weil alle Werte atomar in eigenen Spalten stehen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle auftraege speichert zu jedem Auftrag Name und Anschrift des Kunden. Nach einem Umzug wurde die Anschrift nur bei einigen Aufträgen geändert. Wie heißt dieses Problem?",
+    "a": "Änderungsanomalie (Update-Anomalie) durch redundante Daten",
+    "a_full": "Steht dieselbe Information mehrfach in einer Tabelle, muss sie bei Änderungen überall angepasst werden. Wird eine Stelle vergessen, widersprechen sich die Daten. Die Lösung ist Normalisierung: Kundendaten stehen einmal in der Tabelle kunden, Aufträge verweisen nur per Fremdschlüssel darauf.",
+    "options": [
+      "Änderungsanomalie (Update-Anomalie) durch redundante Daten",
+      "Einfügeanomalie (Insert-Anomalie) durch fehlende Pflichtfelder",
+      "Löschanomalie (Delete-Anomalie) durch verwaiste Schlüssel",
+      "Phantomanomalie (Phantom Read) durch parallele Transaktionen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ordnen Sie die Befehle CREATE TABLE, INSERT, SELECT und GRANT den Sprachbereichen von SQL zu.",
+    "a": "CREATE TABLE = DDL, INSERT = DML, SELECT = DQL, GRANT = DCL",
+    "a_full": "Die Data Definition Language legt Strukturen an und ändert sie (CREATE, ALTER, DROP). Die Data Manipulation Language ändert Daten (INSERT, UPDATE, DELETE). Die Data Query Language fragt Daten ab (SELECT), oft wird SELECT auch zur DML gezählt. Die Data Control Language vergibt und entzieht Rechte (GRANT, REVOKE).",
+    "options": [
+      "CREATE TABLE = DDL, INSERT = DML, SELECT = DQL, GRANT = DCL",
+      "CREATE TABLE = DML, INSERT = DDL, SELECT = DCL, GRANT = DQL",
+      "CREATE TABLE = DDL, INSERT = DQL, SELECT = DML, GRANT = DDL",
+      "CREATE TABLE = DCL, INSERT = DML, SELECT = DQL, GRANT = DDL"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle kunden (id, name) existiert. Mit welcher Anweisung legen Sie die Tabelle bestellungen an, deren Spalte kunde_id auf kunden verweist?",
+    "a": "CREATE TABLE bestellungen (id INT PRIMARY KEY, kunde_id INT, FOREIGN KEY (kunde_id) REFERENCES kunden(id));",
+    "a_full": "PRIMARY KEY legt den eindeutigen Schlüssel der neuen Tabelle fest. FOREIGN KEY ... REFERENCES verknüpft kunde_id mit dem Primärschlüssel von kunden. Ab jetzt lehnt die Datenbank Bestellungen mit einer Kundennummer ab, die es nicht gibt. Die Datentypen beider Spalten müssen zusammenpassen.",
+    "options": [
+      "CREATE TABLE bestellungen (id INT PRIMARY KEY, kunde_id INT, FOREIGN KEY (kunde_id) REFERENCES kunden(id));",
+      "CREATE TABLE bestellungen (id INT PRIMARY KEY, kunde_id INT PRIMARY KEY, REFERENCES kunden(kunde_id));",
+      "CREATE TABLE bestellungen (id INT FOREIGN KEY, kunde_id INT, PRIMARY KEY (kunde_id) REFERENCES kunden(id));",
+      "ALTER TABLE kunden ADD bestellungen (id INT PRIMARY KEY, kunde_id INT, FOREIGN KEY REFERENCES kunden(id));"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle geraete ist seit Jahren in Betrieb. Nun soll zusätzlich das Ende der Garantie gespeichert werden, ohne vorhandene Daten zu verlieren. Welche Anweisung passt?",
+    "a": "ALTER TABLE geraete ADD garantie_bis DATE;",
+    "a_full": "ALTER TABLE ändert die Struktur einer bestehenden Tabelle, die Daten bleiben erhalten. Die neue Spalte ist bei allen vorhandenen Zeilen zunächst NULL, falls kein DEFAULT angegeben ist. Auf großen Tabellen kann die Änderung dauern oder die Tabelle kurz sperren. Man plant sie deshalb im Wartungsfenster.",
+    "options": [
+      "ALTER TABLE geraete ADD garantie_bis DATE;",
+      "UPDATE geraete SET garantie_bis DATE;",
+      "INSERT INTO geraete (garantie_bis DATE);",
+      "CREATE TABLE geraete ADD garantie_bis DATE;"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Worin unterscheiden sich DELETE FROM protokoll;, TRUNCATE TABLE protokoll; und DROP TABLE protokoll;?",
+    "a": "DELETE und TRUNCATE leeren die Tabelle, DROP entfernt sie samt Struktur",
+    "a_full": "DELETE löscht Zeilen einzeln, lässt sich mit WHERE einschränken und wird vollständig protokolliert. TRUNCATE leert die ganze Tabelle sehr schnell und kennt kein WHERE, Trigger laufen dabei nicht. DROP TABLE entfernt die Tabelle mit Struktur, Indizes und Rechten, sie existiert danach nicht mehr.",
+    "options": [
+      "DELETE und TRUNCATE leeren die Tabelle, DROP entfernt sie samt Struktur",
+      "DELETE entfernt die Tabelle, TRUNCATE die Spalten und DROP nur die Zeilen",
+      "Alle drei entfernen die Tabelle, sie sind nur verschieden schnell",
+      "DELETE und DROP leeren die Tabelle, TRUNCATE kürzt lange Textfelder"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Azubi schreibt SELECT * FROM kunden, bestellungen; und erhält Millionen Zeilen, obwohl es nur einige Tausend Bestellungen gibt. Was ist passiert?",
+    "a": "Ohne Verknüpfungsbedingung entsteht das kartesische Produkt beider Tabellen",
+    "a_full": "Werden zwei Tabellen ohne JOIN-Bedingung abgefragt, kombiniert die Datenbank jede Zeile der einen mit jeder Zeile der anderen (CROSS JOIN). Die Zeilenzahl ist das Produkt beider Tabellengrößen. Richtig ist z.B. FROM kunden k JOIN bestellungen b ON b.kunde_id = k.id.",
+    "options": [
+      "Ohne Verknüpfungsbedingung entsteht das kartesische Produkt beider Tabellen",
+      "Die Datenbank gibt bei SELECT * zusätzlich alle gelöschten Zeilen aus",
+      "Das Komma hängt beide Tabellen automatisch per UNION aneinander",
+      "Ohne ORDER BY werden alle Zeilen mehrfach hintereinander ausgegeben"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Abfrage SELECT abteilung, name, COUNT(*) FROM mitarbeiter GROUP BY abteilung; bricht mit einem Fehler ab. Warum?",
+    "a": "name steht in der Auswahl, ist aber weder gruppiert noch aggregiert",
+    "a_full": "Nach GROUP BY gibt es pro Abteilung nur noch eine Ergebniszeile. Welcher der vielen Namen dort stehen soll, ist nicht festgelegt. Jede Spalte in SELECT muss deshalb in GROUP BY stehen oder in einer Aggregatfunktion wie COUNT oder MAX. Ältere MySQL-Einstellungen liefern hier stillschweigend einen beliebigen Namen.",
+    "options": [
+      "name steht in der Auswahl, ist aber weder gruppiert noch aggregiert",
+      "COUNT(*) darf nicht zusammen mit GROUP BY verwendet werden",
+      "GROUP BY muss immer vor der FROM-Klausel der Abfrage stehen",
+      "abteilung muss zusätzlich in einer ORDER BY-Klausel stehen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Sie wollen alle Artikel anzeigen, deren Preis über dem Durchschnittspreis aller Artikel liegt. Welche Abfrage ist richtig?",
+    "a": "SELECT name, preis FROM artikel WHERE preis > (SELECT AVG(preis) FROM artikel);",
+    "a_full": "Die Unterabfrage in Klammern berechnet zuerst einen einzelnen Wert, den Durchschnittspreis. Die äußere Abfrage vergleicht jeden Artikel damit. Direkt in WHERE sind Aggregatfunktionen nicht erlaubt, weil WHERE einzelne Zeilen prüft.",
+    "options": [
+      "SELECT name, preis FROM artikel WHERE preis > (SELECT AVG(preis) FROM artikel);",
+      "SELECT name, preis FROM artikel WHERE preis > AVG(preis);",
+      "SELECT name, preis FROM artikel HAVING preis > AVG(preis) ORDER BY preis;",
+      "SELECT name, AVG(preis) FROM artikel WHERE preis > preis GROUP BY name;"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "SELECT name FROM kunden WHERE id NOT IN (SELECT kunde_id FROM bestellungen); liefert keine Zeile, obwohl es Kunden ohne Bestellung gibt. In bestellungen ist kunde_id manchmal NULL. Was ist die Ursache?",
+    "a": "NOT IN wird nie wahr, sobald die Unterabfrage ein NULL enthält",
+    "a_full": "x NOT IN (1, 2, NULL) bedeutet x <> 1 AND x <> 2 AND x <> NULL. Der Vergleich mit NULL ist unbekannt, deshalb wird die gesamte Bedingung nie wahr. Abhilfe: in der Unterabfrage WHERE kunde_id IS NOT NULL ergänzen oder NOT EXISTS bzw. einen LEFT JOIN mit IS NULL verwenden.",
+    "options": [
+      "NOT IN wird nie wahr, sobald die Unterabfrage ein NULL enthält",
+      "NOT IN darf in Unterabfragen nur mit festen Zahlen stehen",
+      "Die Unterabfrage liefert zu viele Zeilen und wird abgebrochen",
+      "NULL-Werte werden bei NOT IN automatisch als 0 behandelt"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Hotline soll Name, Ort und Telefonnummer der Kunden sehen, aber nicht Geburtsdatum und IBAN aus derselben Tabelle. Wie setzen Sie das in der Datenbank um?",
+    "a": "Eine View mit den erlaubten Spalten anlegen und nur darauf SELECT gewähren",
+    "a_full": "Eine View ist eine gespeicherte Abfrage, die wie eine Tabelle genutzt wird, z.B. CREATE VIEW v_hotline AS SELECT name, ort, telefon FROM kunden;. Die Hotline erhält GRANT SELECT nur auf die View, nicht auf die Tabelle. So sieht sie die sensiblen Spalten nicht, und niemand muss Daten doppelt pflegen.",
+    "options": [
+      "Eine View mit den erlaubten Spalten anlegen und nur darauf SELECT gewähren",
+      "Eine Kopie der Tabelle ohne die Spalten anlegen und nachts abgleichen",
+      "Die Spalten Geburtsdatum und IBAN in der Anwendung weiß einfärben",
+      "Der Hotline SELECT auf die Tabelle geben und ORDER BY vorschreiben"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Abfrage SELECT * FROM sendungen WHERE sendungsnr = 'DE4711'; dauert bei 30 Millionen Zeilen mehrere Sekunden. EXPLAIN zeigt einen vollständigen Tabellenscan. Was hilft?",
+    "a": "Einen Index auf der Spalte sendungsnr anlegen",
+    "a_full": "Ohne Index muss die Datenbank jede Zeile lesen und vergleichen. Ein Index, meist als B-Baum, funktioniert wie ein Stichwortverzeichnis und führt direkt zu den passenden Zeilen, z.B. CREATE INDEX idx_sendungsnr ON sendungen (sendungsnr);. Danach zeigt EXPLAIN, dass der Index genutzt wird.",
+    "options": [
+      "Einen Index auf der Spalte sendungsnr anlegen",
+      "Die Abfrage zusätzlich mit ORDER BY sendungsnr sortieren",
+      "Die Tabelle mit TRUNCATE leeren und die Daten neu einfügen",
+      "Statt SELECT * die Abfrage mit SELECT DISTINCT * starten"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Reporting-Werkzeug meldet sich mit dem Datenbankbenutzer report an. Es soll die Tabelle umsatz nur lesen dürfen. Welche Anweisung vergibt genau dieses Recht?",
+    "a": "GRANT SELECT ON umsatz TO report;",
+    "a_full": "GRANT vergibt Rechte an Benutzer oder Rollen. SELECT erlaubt nur das Lesen, INSERT, UPDATE und DELETE bleiben verboten. Nach dem Prinzip der minimalen Rechte bekommt jedes Werkzeug nur die Rechte, die es wirklich braucht.",
+    "options": [
+      "GRANT SELECT ON umsatz TO report;",
+      "GRANT ALL PRIVILEGES ON umsatz TO report;",
+      "GRANT SELECT, UPDATE ON umsatz TO report;",
+      "REVOKE SELECT ON umsatz FROM report;"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle kunden hat die Spalten id (wird automatisch hochgezählt), name und ort. INSERT INTO kunden VALUES ('Meier', 'Köln'); schlägt fehl. Wie lautet die Anweisung richtig?",
+    "a": "INSERT INTO kunden (name, ort) VALUES ('Meier', 'Köln');",
+    "a_full": "Ohne Spaltenliste erwartet INSERT einen Wert für jede Spalte in der Reihenfolge der Tabelle. Hier fehlt der Wert für id. Mit einer Spaltenliste gibt man nur name und ort an, die id vergibt die Datenbank selbst. Die Spaltenliste macht Skripte außerdem robust gegen später ergänzte Spalten.",
+    "options": [
+      "INSERT INTO kunden (name, ort) VALUES ('Meier', 'Köln');",
+      "INSERT INTO kunden SET VALUES ('Meier', 'Köln');",
+      "INSERT kunden (name, ort) = ('Meier', 'Köln');",
+      "UPDATE kunden VALUES ('Meier', 'Köln') WHERE id = NULL;"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Inventurliste (Tabelle scan) soll über die Seriennummer mit der Anlagenbuchhaltung (Tabelle anlagen) abgeglichen werden. Gesucht sind alle Geräte, auch solche, die nur in einer der beiden Tabellen stehen. Welche JOIN-Art passt?",
+    "a": "FULL OUTER JOIN über die Seriennummer",
+    "a_full": "Ein FULL OUTER JOIN liefert alle Zeilen beider Tabellen. Wo ein Partner fehlt, sind dessen Spalten NULL. So erkennt man Geräte, die gebucht, aber nicht gefunden wurden, und umgekehrt. MySQL kennt FULL OUTER JOIN nicht, dort kombiniert man LEFT JOIN und RIGHT JOIN mit UNION.",
+    "options": [
+      "FULL OUTER JOIN über die Seriennummer",
+      "INNER JOIN über die Seriennummer",
+      "LEFT JOIN von scan auf anlagen",
+      "CROSS JOIN über beide Tabellen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Was bedeuten Konsistenz, Isolation und Dauerhaftigkeit bei den ACID-Eigenschaften einer Transaktion?",
+    "a": "Regeln bleiben erfüllt, parallele Transaktionen stören sich nicht, bestätigte Daten bleiben",
+    "a_full": "Konsistenz heißt, dass eine Transaktion die Datenbank von einem gültigen in einen anderen gültigen Zustand bringt, alle Bedingungen wie Fremdschlüssel bleiben erfüllt. Isolation heißt, dass gleichzeitige Transaktionen so ablaufen, als liefen sie nacheinander. Dauerhaftigkeit heißt, dass Daten nach COMMIT auch einen Absturz überstehen, dafür sorgt das Transaktionslog.",
+    "options": [
+      "Regeln bleiben erfüllt, parallele Transaktionen stören sich nicht, bestätigte Daten bleiben",
+      "Daten werden gespiegelt, Benutzer sind getrennt, Sicherungen laufen täglich",
+      "Tabellen sind normalisiert, Zugriffe sind verschlüsselt, Logs werden archiviert",
+      "Abfragen laufen schnell, Server sind redundant, Indizes werden gepflegt"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Anwendung bucht Lagerbestand um: Ein UPDATE verringert den Bestand in Lager A, ein zweites erhöht ihn in Lager B. Zwischen beiden stürzt der Server ab. Wie verhindern Sie halbe Buchungen?",
+    "a": "Beide UPDATEs in eine Transaktion mit BEGIN und COMMIT fassen",
+    "a_full": "In einer Transaktion gelten alle Änderungen erst mit COMMIT. Bricht der Server vorher ab, macht die Datenbank beim Neustart alle Teile rückgängig. Tritt in der Anwendung ein Fehler auf, ruft sie ROLLBACK auf. So gibt es entweder beide Buchungen oder keine.",
+    "options": [
+      "Beide UPDATEs in eine Transaktion mit BEGIN und COMMIT fassen",
+      "Nach jedem UPDATE sofort eine Vollsicherung der Datenbank starten",
+      "Beide UPDATEs in umgekehrter Reihenfolge nacheinander ausführen",
+      "Die Tabelle lager vor den UPDATEs durch eine View schützen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Transaktion A ändert einen Preis, hat aber noch nicht bestätigt. Transaktion B liest den neuen Preis und erstellt damit eine Rechnung. Danach macht A ein ROLLBACK. Wie heißt dieses Problem?",
+    "a": "Dirty Read, möglich bei der Isolationsstufe READ UNCOMMITTED",
+    "a_full": "B hat einen Wert gelesen, der nie gültig wurde. Das heißt Dirty Read. Ab READ COMMITTED sehen Transaktionen nur bestätigte Änderungen. READ COMMITTED ist z.B. bei PostgreSQL und SQL Server die Voreinstellung, bei MySQL mit InnoDB ist es REPEATABLE READ.",
+    "options": [
+      "Dirty Read, möglich bei der Isolationsstufe READ UNCOMMITTED",
+      "Lost Update, möglich bei der Isolationsstufe SERIALIZABLE",
+      "Phantom Read, möglich bei der Isolationsstufe SERIALIZABLE",
+      "Deadlock, möglich bei der Isolationsstufe READ COMMITTED"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Im Log der Warenwirtschaft steht gelegentlich \"Deadlock found when trying to get lock; try restarting transaction\". Was ist passiert, und was hilft?",
+    "a": "Zwei Transaktionen warteten gegenseitig auf Sperren, eine wurde abgebrochen",
+    "a_full": "Transaktion 1 sperrt Zeile A und wartet auf B, Transaktion 2 sperrt B und wartet auf A. Die Datenbank erkennt den Kreis und bricht eine Transaktion als Opfer mit ROLLBACK ab. Die Anwendung sollte sie wiederholen. Vorbeugend greifen alle Programmteile in derselben Reihenfolge auf Tabellen zu und halten Transaktionen kurz.",
+    "options": [
+      "Zwei Transaktionen warteten gegenseitig auf Sperren, eine wurde abgebrochen",
+      "Die Datenbankdatei ist beschädigt und muss aus der Sicherung zurück",
+      "Der Server hat zu wenig Arbeitsspeicher für die geöffneten Tabellen",
+      "Ein Benutzer hat keine Schreibrechte auf die gesperrte Tabelle"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Admin testet in einem SQL-Client mit abgeschaltetem Autocommit ein UPDATE auf der Tabelle auftraege und geht in die Mittagspause. Kurz darauf hängt die Auftragserfassung. Warum?",
+    "a": "Die offene Transaktion hält Sperren auf den geänderten Zeilen",
+    "a_full": "Geänderte Zeilen bleiben bis COMMIT oder ROLLBACK gesperrt. Andere Transaktionen, die dieselben Zeilen ändern wollen, warten so lange oder laufen in einen Timeout. Man findet die blockierende Sitzung z.B. über die Prozessliste und beendet sie. Tests gehören auf ein Testsystem, und Transaktionen sollen kurz sein.",
+    "options": [
+      "Die offene Transaktion hält Sperren auf den geänderten Zeilen",
+      "Der SQL-Client hat die Datenbank in den Einzelbenutzermodus versetzt",
+      "Das UPDATE hat den Index der Tabelle auftraege gelöscht",
+      "Der Datenbankserver geht bei Inaktivität in den Energiesparmodus"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Admin überlegt, ob er die MariaDB per mysqldump oder per Mariabackup sichern soll. Was unterscheidet diese logische von der physischen Sicherung?",
+    "a": "Der Dump enthält SQL-Befehle, die physische Sicherung die Datendateien selbst",
+    "a_full": "Ein Dump mit mysqldump oder pg_dump schreibt Struktur und Daten als SQL-Anweisungen. Er ist weitgehend unabhängig von Version und Plattform, lässt sich bei großen Datenbanken aber nur langsam zurückspielen. Eine physische Sicherung kopiert die Datendateien konsistent, z.B. mit Mariabackup oder pg_basebackup. Sie ist schneller und bildet mit den Transaktionslogs die Grundlage für Point-in-Time-Recovery.",
+    "options": [
+      "Der Dump enthält SQL-Befehle, die physische Sicherung die Datendateien selbst",
+      "Der Dump sichert nur die Struktur, die physische Sicherung nur die Daten",
+      "Der Dump ist immer verschlüsselt, die physische Sicherung dagegen nie",
+      "Der Dump läuft nur bei gestoppter Datenbank, die physische nur im Betrieb"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Wozu schreibt eine Datenbank jede Änderung zuerst in ein Transaktionslog (z.B. WAL oder Redo-Log)?",
+    "a": "Damit bestätigte Änderungen nach einem Absturz wiederhergestellt werden können",
+    "a_full": "Jede Änderung wird im Log festgehalten, bevor sie in die Datendateien gelangt (Write-Ahead Logging). Stürzt der Server ab, spielt die Datenbank beim Start bestätigte Transaktionen aus dem Log nach und verwirft unbestätigte. Gesicherte Logs ermöglichen außerdem Point-in-Time-Recovery und Replikation.",
+    "options": [
+      "Damit bestätigte Änderungen nach einem Absturz wiederhergestellt werden können",
+      "Damit Administratoren nachvollziehen können, wer sich angemeldet hat",
+      "Damit Abfragen schneller laufen, weil das Log als Index dient",
+      "Damit die Datendateien nachts automatisch komprimiert werden können"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine MariaDB wird jede Nacht um 1 Uhr per Dump gesichert, das Binärlog ist aktiviert. Um 11:42 Uhr löscht ein fehlerhaftes Skript eine Tabelle. Wie stellen Sie den Stand von 11:41 Uhr her?",
+    "a": "Den Dump von 1 Uhr einspielen und das Binärlog bis kurz vor 11:42 Uhr nachspielen",
+    "a_full": "Der Dump liefert den Stand der Nacht, alle Änderungen danach stehen im Binärlog. Mit mysqlbinlog und --stop-datetime spielt man sie bis direkt vor dem Fehler nach. Das nennt man Point-in-Time-Recovery. Am besten stellt man auf einem zweiten System wieder her und übernimmt nur die fehlende Tabelle.",
+    "options": [
+      "Den Dump von 1 Uhr einspielen und das Binärlog bis kurz vor 11:42 Uhr nachspielen",
+      "Nur den Dump von 1 Uhr einspielen und die Daten danach neu erfassen",
+      "Das Binärlog rückwärts abspielen, bis die Tabelle wieder da ist",
+      "Die Tabelle aus dem Papierkorb des Datenbankservers zurückholen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Auf einem SQL Server läuft das Laufwerk mit den Logdateien voll, die .ldf-Datei der Warenwirtschaft ist auf 300 GB gewachsen. Die Datenbank steht im Wiederherstellungsmodell FULL, gesichert wird nur nachts voll. Was fehlt?",
+    "a": "Regelmäßige Protokollsicherungen, erst danach wird das Log wieder frei",
+    "a_full": "Im Modell FULL bleiben die Einträge im Transaktionslog, bis sie per Protokollsicherung gesichert wurden. Eine Vollsicherung gibt das Log nicht frei. Man richtet deshalb z.B. alle 15 Minuten eine Protokollsicherung ein. Wird keine Point-in-Time-Recovery gebraucht, ist das Modell SIMPLE eine Alternative.",
+    "options": [
+      "Regelmäßige Protokollsicherungen, erst danach wird das Log wieder frei",
+      "Eine tägliche Neuindizierung aller Tabellen der Warenwirtschaft",
+      "Eine zweite .ldf-Datei auf demselben Laufwerk wie die erste",
+      "Ein Neustart des SQL-Server-Dienstes nach jeder Vollsicherung"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Große Monatsauswertungen des Controllings bremsen die Datenbank des Onlineshops tagsüber stark aus. Was schlagen Sie vor?",
+    "a": "Eine Lesereplik einrichten und die Auswertungen dort laufen lassen",
+    "a_full": "Bei der Replikation übernimmt ein zweiter Server laufend alle Änderungen des Primärservers. Lesende Auswertungen belasten dann nur die Replik, der Shop schreibt weiter auf den Primärserver. Bei asynchroner Replikation hinkt die Replik wenige Sekunden hinterher, für Monatsberichte ist das unkritisch.",
+    "options": [
+      "Eine Lesereplik einrichten und die Auswertungen dort laufen lassen",
+      "Die Auswertungen in viele kleine Transaktionen mit Autocommit teilen",
+      "Alle Indizes der Shopdatenbank entfernen, um Speicher freizugeben",
+      "Die Isolationsstufe des Shops auf SERIALIZABLE hochsetzen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine neue Webanwendung verbindet sich mit dem Konto root zur MariaDB. Wie richten Sie den Datenbankzugang sicherer ein?",
+    "a": "Ein eigenes Konto nur für diese Datenbank, nur vom App-Server, nur nötige Rechte",
+    "a_full": "Mit root kann ein Angreifer über eine Lücke in der Anwendung alle Datenbanken lesen, löschen oder Dateien schreiben. Ein eigenes Konto wie 'shop'@'10.0.5.20' darf sich nur vom Anwendungsserver anmelden. Es erhält z.B. nur SELECT, INSERT, UPDATE und DELETE auf die Shopdatenbank, aber kein DROP und kein GRANT.",
+    "options": [
+      "Ein eigenes Konto nur für diese Datenbank, nur vom App-Server, nur nötige Rechte",
+      "root behalten, aber das Passwort verlängern und verschlüsselt ablegen",
+      "root behalten, aber den Datenbankport von 3306 auf 13306 verlegen",
+      "Für jeden Seitenaufruf automatisch ein neues root-Konto anlegen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Warum schützt ein Prepared Statement zuverlässiger vor SQL-Injection als das Herausfiltern gefährlicher Zeichen aus der Eingabe?",
+    "a": "Befehl und Werte werden getrennt übergeben, Eingaben werden nie als Code gelesen",
+    "a_full": "Beim Prepared Statement wird zuerst die Abfrage mit Platzhaltern wie ? an die Datenbank geschickt und übersetzt. Die Eingaben folgen danach nur als Daten. Selbst ein Hochkomma oder OR 1=1 ist dann nur Text. Filterlisten übersehen dagegen leicht Sonderfälle, andere Kodierungen oder neue Tricks.",
+    "options": [
+      "Befehl und Werte werden getrennt übergeben, Eingaben werden nie als Code gelesen",
+      "Prepared Statements verschlüsseln die Eingaben vor der Übertragung",
+      "Prepared Statements lassen nur Zahlen und Buchstaben als Eingabe zu",
+      "Prepared Statements laufen immer nur mit Leserechten in der Datenbank"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "15 Sachbearbeiter der Buchhaltung brauchen in der Datenbank dieselben Rechte, und es kommen regelmäßig neue hinzu. Wie verwalten Sie die Rechte am besten?",
+    "a": "Eine Rolle anlegen, ihr die Rechte geben und die Benutzer der Rolle zuweisen",
+    "a_full": "Mit CREATE ROLE buchhaltung und GRANT SELECT, INSERT ON rechnungen TO buchhaltung werden die Rechte einmal gebündelt. Neue Mitarbeiter bekommen nur die Rolle, z.B. mit GRANT buchhaltung TO neuer_benutzer. Ändern sich die Anforderungen, passt man nur die Rolle an. Das ist übersichtlich und weniger fehleranfällig.",
+    "options": [
+      "Eine Rolle anlegen, ihr die Rechte geben und die Benutzer der Rolle zuweisen",
+      "Allen ein gemeinsames Datenbankkonto mit demselben Passwort geben",
+      "Jedem Benutzer alle Rechte einzeln mit eigenen GRANT-Befehlen geben",
+      "Allen die GRANT OPTION geben, damit sie sich die Rechte selbst geben"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Dumps der Kundendatenbank werden auf Bändern bei einem externen Dienstleister gelagert. Was schützt die Daten, wenn ein Band verloren geht?",
+    "a": "Die Sicherung verschlüsseln und den Schlüssel getrennt vom Band verwahren",
+    "a_full": "Ein logischer Dump enthält alle Daten im Klartext, wer das Band findet, kann sie lesen. Man verschlüsselt deshalb die Sicherung selbst, z.B. in der Backupsoftware oder mit GPG. Der Schlüssel liegt getrennt, sonst nützt die Verschlüsselung nichts. Eine Verschlüsselung der Datendateien (TDE) allein reicht nicht, denn der Dump liest die Daten entschlüsselt aus.",
+    "options": [
+      "Die Sicherung verschlüsseln und den Schlüssel getrennt vom Band verwahren",
+      "Den Dump vor dem Auslagern mit gzip möglichst stark komprimieren",
+      "Den Dump auf dem Band mit einem Schreibschutz versehen lassen",
+      "Den Dateinamen des Dumps unauffällig und nichtssagend wählen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Kundin verlangt nach Art. 17 DSGVO die Löschung ihrer Daten. Sie stehen in der Produktivdatenbank und in Sicherungen, die 90 Tage aufbewahrt werden. Wie gehen Sie vor?",
+    "a": "In der Datenbank löschen, Sicherungen nach Frist ablaufen lassen, nach Restore erneut löschen",
+    "a_full": "In der Produktivdatenbank werden die Daten gelöscht, soweit keine Aufbewahrungspflicht besteht. Rechnungen z.B. müssen weiter aufbewahrt werden und werden dann gesperrt. Einzelne Datensätze aus Sicherungen zu entfernen ist meist nicht möglich. Die Sicherungen laufen daher nach Frist ab, und ein Löschprotokoll sorgt dafür, dass die Daten nach einer Wiederherstellung erneut gelöscht werden.",
+    "options": [
+      "In der Datenbank löschen, Sicherungen nach Frist ablaufen lassen, nach Restore erneut löschen",
+      "Alle Sicherungen der letzten 90 Tage sofort und vollständig vernichten lassen",
+      "Nur ihr Kundenkonto sperren, die Daten aber unverändert in der Datenbank lassen",
+      "Ihre Datensätze in eine Archivtabelle verschieben und dort unbefristet behalten"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Entwickler möchten für Tests eine Kopie der Produktivdatenbank mit echten Kundendaten. Wie gehen Sie datenschutzgerecht vor?",
+    "a": "Die Kopie vor der Weitergabe anonymisieren oder pseudonymisieren (maskieren)",
+    "a_full": "Echte personenbezogene Daten gehören nicht ungeschützt in Testsysteme, die oft schwächer abgesichert sind. Beim Maskieren werden Namen, Adressen, E-Mail-Adressen und Bankdaten durch erfundene Werte ersetzt, die Struktur bleibt erhalten. Bei Pseudonymisierung liegt die Zuordnung getrennt und geschützt, bei Anonymisierung gibt es sie gar nicht mehr.",
+    "options": [
+      "Die Kopie vor der Weitergabe anonymisieren oder pseudonymisieren (maskieren)",
+      "Die Kopie unverändert weitergeben, die Entwickler sind ja Mitarbeiter",
+      "Die Kopie nur mit einem stärkeren Passwort für die Entwickler versehen",
+      "Die Kopie unverändert weitergeben, aber nur auf Firmennotebooks nutzen"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Welche vier Hauptarten von NoSQL-Datenbanken unterscheidet man, und wofür eignen sie sich typischerweise?",
+    "a": "Key-Value, Dokument, spaltenorientiert (Wide Column) und Graph",
+    "a_full": "Key-Value-Speicher wie Redis liefern zu einem Schlüssel schnell einen Wert, z.B. für Sitzungen und Caches. Dokumentdatenbanken wie MongoDB speichern flexible JSON-Dokumente, z.B. Produktkataloge. Spaltenorientierte Systeme wie Cassandra verkraften sehr viele Schreibzugriffe, z.B. bei Messwerten. Graphdatenbanken wie Neo4j eignen sich für stark vernetzte Daten wie Beziehungen oder Netztopologien.",
+    "options": [
+      "Key-Value, Dokument, spaltenorientiert (Wide Column) und Graph",
+      "Relational, hierarchisch, objektorientiert und dateibasiert",
+      "Primär, sekundär, repliziert und horizontal verteilt",
+      "Tabelle, View, Index und gespeicherte Prozedur"
+    ]
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Was besagt das CAP-Theorem für verteilte Datenbanken?",
+    "a": "Bei einer Netztrennung muss man zwischen Konsistenz und Verfügbarkeit wählen",
+    "a_full": "CAP steht für Consistency, Availability und Partition Tolerance. Ein verteiltes System kann nicht alle drei zugleich garantieren. Da Netzstörungen vorkommen, entscheidet man, ob Knoten bei einer Trennung Anfragen ablehnen (konsistent) oder mit eventuell veralteten Daten antworten (verfügbar). Viele NoSQL-Systeme wählen Verfügbarkeit mit späterer Angleichung (Eventual Consistency).",
+    "options": [
+      "Bei einer Netztrennung muss man zwischen Konsistenz und Verfügbarkeit wählen",
+      "Ab drei Knoten ist eine verteilte Datenbank automatisch voll konsistent",
+      "Konsistenz, Verfügbarkeit und Performance lassen sich beliebig verbinden",
+      "Verteilte Datenbanken brauchen immer Caching, Archiv und Partitionen"
+    ]
   }
 ]

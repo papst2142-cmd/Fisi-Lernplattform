@@ -10,7 +10,7 @@ ohne jede Oberflaeche nutzbar bleibt.
 """
 
 from fisi_core import (
-    AP1_THEMES, AP2_THEMES, CAT_BIZ, CAT_NET, CAT_SEC, CAT_SYS,
+    AP1_THEMES, AP2_THEMES, CAT_BIZ, CAT_DB, CAT_NET, CAT_SEC, CAT_SYS,
 )
 
 # ============================================================================
@@ -59,6 +59,7 @@ CATEGORY_COLOR = {
     CAT_SEC: C["pink"],
     CAT_SYS: C["purple"],
     CAT_BIZ: C["green"],
+    CAT_DB: C["orange"],
 }
 
 # Farbe je Themenblock der AP1/AP2 (gleiche Reihenfolge wie in fisi_core)

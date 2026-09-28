@@ -6,9 +6,9 @@ Update-Fenster des Programms.
 
 ## 0.25
 
-- **Viel mehr Lernstoff:** 3.578 statt 368 Aufgaben – 1.251 Karteikarten,
-  1.800 Quizfragen, 223 AP1-Szenarien, 259 AP2-Szenarien und 45 Testprojekte,
-  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 503 neue
+- **Viel mehr Lernstoff:** 4.000 statt 368 Aufgaben – 1.400 Karteikarten,
+  2.000 Quizfragen, 250 AP1-Szenarien, 300 AP2-Szenarien und 50 Testprojekte,
+  verteilt auf alle Fachbereiche und alle Themenblöcke. Darunter 583 neue
   Rechenaufgaben (Zahlensysteme, Zweierkomplement, Subnetting, VLSM,
   IPv6-Präfixe, RAID 5/6/50/60, chmod und umask, VM-Dimensionierung,
   SSD-Lebensdauer, Verfügbarkeit, Übertragungsdauer, Passwortstärke,
@@ -18,6 +18,13 @@ Update-Fenster des Programms.
   Netzplan und Puffer, Speicherbedarf von Bildern und Audio, Netzteil und
   USV, Stromkosten, IOPS, Kapitalwert, Risikowert, SQL-Abfragen, Skripte und
   cron-Zeiten) mit Rechenweg.
+- **Neuer Fachbereich Datenbanken:** „Datenbanken & SQL“ ist jetzt ein eigener
+  Fachbereich mit eigenem Kartenstapel, eigenem Filter, eigenem Menüpunkt und
+  einem orangefarbenen Fortschrittsring am PC und auf dem Handy. Die Aufgaben
+  reichen vom ER-Modell über Normalisierung, SQL-Abfragen, Rechte und
+  Transaktionen bis zu Backup, Replikation und NoSQL. Die bisherigen
+  SQL-Aufgaben bleiben in ihren Fachbereichen, der Lernfortschritt bleibt
+  erhalten.
 - **Prüfungsnahe Situationsaufgaben:** Viele Karten und Quizfragen schildern
   jetzt einen Fall aus dem Betriebsalltag (Kundengespräch, Ticket, Störung,
   Vertragsproblem) statt nur eine Definition abzufragen. Die neuen AP1- und

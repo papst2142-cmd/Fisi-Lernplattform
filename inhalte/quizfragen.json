@@ -20950,5 +20950,2405 @@
     ],
     "a": "12-mal pro Tag",
     "exp": "*/4 im Stundenfeld bedeutet alle 4 Stunden ab 0 Uhr: 0, 4, 8, 12, 16, 20 (6 Stunden). Je Stunde läuft er zweimal (Minute 0 und 30): 6 * 2 = 12."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Azubi ordnet in der Dokumentation Protokolle den OSI-Schichten zu. Welche Zuordnung ist vollständig richtig?",
+    "options": [
+      "ICMP: Schicht 3, UDP: Schicht 4, DNS: Schicht 7",
+      "ICMP: Schicht 4, UDP: Schicht 3, DNS: Schicht 7",
+      "ICMP: Schicht 3, UDP: Schicht 4, DNS: Schicht 5",
+      "ICMP: Schicht 2, UDP: Schicht 4, DNS: Schicht 7"
+    ],
+    "a": "ICMP: Schicht 3, UDP: Schicht 4, DNS: Schicht 7",
+    "exp": "ICMP wird direkt in IP-Pakete verpackt und gehört als Hilfsprotokoll zur Vermittlungsschicht. UDP ist ein Transportprotokoll, DNS ein Anwendungsprotokoll."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie dokumentieren die Protokolle, die auf den Access-Switches ohne IP-Routing laufen. Welche Gruppe arbeitet vollständig auf OSI-Schicht 2?",
+    "options": [
+      "STP, LLDP und LACP",
+      "OSPF, BGP und RIP",
+      "ICMP, IGMP und IPsec",
+      "NTP, SNMP und Syslog"
+    ],
+    "a": "STP, LLDP und LACP",
+    "exp": "Spanning Tree, LLDP und LACP tauschen Ethernet-Frames direkt zwischen Nachbarn aus und brauchen keine IP-Adressen. Routingprotokolle und Managementdienste arbeiten auf höheren Schichten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Router soll Syslog per UDP 514 an einen neuen Logserver senden. Im Mitschnitt antwortet der Logserver auf jedes Paket mit ICMP Destination Unreachable, Port Unreachable. Was folgt daraus?",
+    "options": [
+      "Der Server lebt, auf UDP 514 lauscht aber kein Dienst",
+      "Der Router kennt keine Route zum Netz des Logservers",
+      "Die Pakete sind zu groß und müssen fragmentiert werden",
+      "Die TTL der Pakete läuft auf dem Weg zum Server ab"
+    ],
+    "a": "Der Server lebt, auf UDP 514 lauscht aber kein Dienst",
+    "exp": "UDP kennt keinen Handshake. Trifft ein Paket auf einen geschlossenen Port, meldet der Zielhost selbst ICMP Typ 3 Code 3, der Syslog-Dienst läuft also nicht oder lauscht auf einem anderen Port."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein PC schickt Pakete an ein Labornetz über sein Standardgateway R1. R1 leitet sie an R2 im selben Subnetz weiter und sendet dem PC eine ICMP-Redirect-Meldung. Was teilt R1 damit mit?",
+    "options": [
+      "R2 im selben Subnetz ist der bessere nächste Hop",
+      "Das Labornetz ist vorübergehend nicht erreichbar",
+      "Der PC soll seine IP-Adresse per DHCP erneuern",
+      "Die Pakete des PCs überschreiten die MTU von R2"
+    ],
+    "a": "R2 im selben Subnetz ist der bessere nächste Hop",
+    "exp": "Ein Redirect (ICMP Typ 5) sagt dem Host, dass er ein Ziel direkt über einen anderen Router im eigenen Netz erreicht. Viele Admins deaktivieren die Annahme aus Sicherheitsgründen und pflegen stattdessen Routen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Anwendung verliert nach 70 Minuten ohne Aktivität die Verbindung zur Datenbank hinter einer Firewall. Die Firewall löscht Sitzungen nach 60 Minuten Leerlauf. Was hilft am besten?",
+    "options": [
+      "TCP-Keepalives mit einem Intervall unter 60 Minuten",
+      "Ein längerer DHCP-Lease für den Anwendungsserver",
+      "Eine größere MTU auf der Strecke zur Datenbank",
+      "Ein höherer TTL-Wert in den Paketen der Anwendung"
+    ],
+    "a": "TCP-Keepalives mit einem Intervall unter 60 Minuten",
+    "exp": "Die Firewall kennt die Verbindung nach dem Leerlauf nicht mehr und verwirft oder beendet sie. Regelmäßige Keepalive-Pakete halten den Sitzungseintrag aktiv, alternativ passt man das Timeout an."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im Mitschnitt hat ein Frame die Ziel-MAC-Adresse 01:00:5e:00:00:fb. Um welche Art von Frame handelt es sich?",
+    "options": [
+      "Um einen IPv4-Multicast, hier für mDNS",
+      "Um einen Broadcast an alle Geräte im VLAN",
+      "Um einen Unicast an einen Hersteller-Switch",
+      "Um einen IPv6-Multicast an alle Router"
+    ],
+    "a": "Um einen IPv4-Multicast, hier für mDNS",
+    "exp": "IPv4-Multicast-Adressen werden auf MAC-Adressen mit dem Präfix 01:00:5e abgebildet, IPv6-Multicast auf 33:33. Die Adresse gehört zu 224.0.0.251, der Gruppe von Multicast-DNS."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für eine interne Durchsage-Anlage wird eine Multicast-Gruppe gewählt, die nur im Firmennetz gilt. Welcher Bereich ist für organisationsinterne Nutzung vorgesehen?",
+    "options": [
+      "239.0.0.0/8",
+      "224.0.0.0/24",
+      "232.0.0.0/8",
+      "233.0.0.0/8"
+    ],
+    "a": "239.0.0.0/8",
+    "exp": "239.0.0.0/8 ist für administrativ begrenzte Multicast-Gruppen reserviert, vergleichbar mit privaten Adressen. 224.0.0.0/24 ist für lokale Steuerprotokolle reserviert und wird nicht geroutet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine neue Duplex-LWL-Strecke mit passenden Transceivern bleibt ohne Link. Die Transceiver-Diagnose zeigt auf beiden Seiten keinen Empfangspegel. Was prüfen Sie zuerst?",
+    "options": [
+      "Ob Sende- und Empfangsfaser vertauscht sind",
+      "Ob das Native VLAN auf beiden Seiten gleich ist",
+      "Ob auf beiden Seiten LACP aktiviert wurde",
+      "Ob die Portgeschwindigkeit auf Auto steht"
+    ],
+    "a": "Ob Sende- und Empfangsfaser vertauscht sind",
+    "exp": "Bei Duplex-Strecken muss der Sender einer Seite auf den Empfänger der anderen treffen. Sind die Fasern nicht gekreuzt, sendet Sender auf Sender und keine Seite empfängt Licht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwischen zwei Switches kommt kein Link zustande. Auf der einen Seite steckt ein 10GBASE-SR-, auf der anderen ein 10GBASE-LR-Transceiver. Wie bewerten Sie das?",
+    "options": [
+      "Das passt nicht, beide Seiten brauchen denselben Typ",
+      "Das passt, der Switch gleicht die Wellenlänge an",
+      "Das passt, wenn die Strecke kürzer als 300 m ist",
+      "Das passt, sofern beide Module vom Hersteller sind"
+    ],
+    "a": "Das passt nicht, beide Seiten brauchen denselben Typ",
+    "exp": "SR arbeitet mit 850 nm auf Multimode, LR mit 1310 nm auf Singlemode. Wellenlänge und Faserart müssen auf beiden Seiten zusammenpassen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Dokumentation eines Standorts fehlt. Sie wollen per SSH herausfinden, welcher Switch an Port Gi1/0/48 angeschlossen ist. Welcher Befehl hilft am meisten?",
+    "options": [
+      "show lldp neighbors detail",
+      "show mac address-table",
+      "show vlan brief",
+      "show interfaces status"
+    ],
+    "a": "show lldp neighbors detail",
+    "exp": "LLDP zeigt Gerätenamen, Port und Management-Adresse des direkten Nachbarn. Die MAC-Tabelle liefert nur Adressen ohne Namen, und die anderen Befehle zeigen nur den eigenen Switch."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Switchport führt zum Router des Providers. Warum schaltet man LLDP an solchen Ports ab?",
+    "options": [
+      "LLDP verrät Gerätetyp, Firmware und Adressen",
+      "LLDP erzeugt Schleifen im Netz des Providers",
+      "LLDP halbiert den Durchsatz auf dem Port",
+      "LLDP überschreibt die VLAN-Konfiguration"
+    ],
+    "a": "LLDP verrät Gerätetyp, Firmware und Adressen",
+    "exp": "LLDP sendet regelmäßig Informationen über das eigene Gerät an jeden Nachbarn. An Ports zu fremden oder unsicheren Netzen hilft das nur einem Angreifer bei der Vorbereitung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie starten Wireshark auf einem PC an einem Access-Port, um den Verkehr zwischen zwei Servern zu untersuchen. Sie sehen aber nur eigene Pakete und Broadcasts. Was brauchen Sie?",
+    "options": [
+      "Port Mirroring der Serverports auf diesen Port",
+      "Einen Trunk-Port mit allen VLANs zum Analyse-PC",
+      "Eine feste IP-Adresse aus dem Netz der Server",
+      "Einen Hub zwischen Switch und dem Analyse-PC"
+    ],
+    "a": "Port Mirroring der Serverports auf diesen Port",
+    "exp": "Ein Switch leitet Unicast-Frames nur an den Port des Ziels weiter. Mit Port Mirroring (SPAN) kopiert er den Verkehr der gewählten Ports zusätzlich an den Analyse-Port."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Azubi fürchtet, dass ein Büro-PC ohne PoE-Unterstützung an einem PoE-Switchport beschädigt wird. Was antworten Sie?",
+    "options": [
+      "Der Switch speist erst nach erkannter Signatur ein",
+      "Der Switch speist dauerhaft ein, der PC begrenzt es",
+      "Der PC muss vorher im BIOS PoE abschalten",
+      "Der Port liefert nur bei Cat-5-Kabeln keine Spannung"
+    ],
+    "a": "Der Switch speist erst nach erkannter Signatur ein",
+    "exp": "Normgerechtes PoE prüft vor dem Einspeisen, ob das Gerät einen Signaturwiderstand hat. Fehlt er, bleibt der Port spannungsfrei. Vorsicht gilt nur bei passivem PoE ohne Erkennung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In einem Großraumbüro teilen sich mehrere Access Points dieselben Kanäle und bremsen sich gegenseitig aus. Welche Wi-Fi-6-Funktion hilft dabei?",
+    "options": [
+      "BSS Coloring zur Kennzeichnung der Funkzellen",
+      "WPS zur schnellen Anmeldung neuer Geräte",
+      "WEP zur einfachen Verschlüsselung der Frames",
+      "MAC-Filter zur Begrenzung der Teilnehmer"
+    ],
+    "a": "BSS Coloring zur Kennzeichnung der Funkzellen",
+    "exp": "Mit BSS Coloring tragen Frames eine Kennung ihrer Funkzelle. Ein Gerät kann schwache Frames einer fremden Zelle auf demselben Kanal ignorieren und trotzdem senden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde tauscht seine Access Points gegen Wi-Fi-6E-Modelle und erwartet, dass das neue 6-GHz-Band mehr Räume durch Wände hindurch abdeckt. Was stimmt?",
+    "options": [
+      "6 GHz bietet mehr Kanäle, reicht aber weniger weit",
+      "6 GHz durchdringt Wände besser als 2,4 GHz",
+      "6 GHz hat die gleiche Reichweite wie 2,4 GHz",
+      "6 GHz nutzt weniger Kanäle, reicht aber weiter"
+    ],
+    "a": "6 GHz bietet mehr Kanäle, reicht aber weniger weit",
+    "exp": "Höhere Frequenzen werden von Wänden stärker gedämpft. Das 6-GHz-Band bringt viele freie, breite Kanäle, braucht aber eine dichtere Planung der Access Points."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Notebooks sollen im Büro über den Proxy surfen, interne Adressen und das Homeoffice aber direkt erreichen. Wie lösen Sie das ohne manuelles Umstellen?",
+    "options": [
+      "Mit einer PAC-Datei, verteilt per WPAD oder GPO",
+      "Mit einem festen Proxy-Eintrag in jedem Browser",
+      "Mit Einträgen für den Proxy in der hosts-Datei",
+      "Mit einem Reverse Proxy vor jedem Notebook"
+    ],
+    "a": "Mit einer PAC-Datei, verteilt per WPAD oder GPO",
+    "exp": "Eine PAC-Datei enthält eine Funktion, die je Ziel entscheidet, ob ein Proxy genutzt wird. Ist der Proxy nicht erreichbar, kann sie auf direkte Verbindungen ausweichen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach der Einführung eines neuen Proxys erhalten Nutzer beim Aufruf von Webseiten den HTTP-Statuscode 407. Was bedeutet das?",
+    "options": [
+      "Der Proxy verlangt eine Anmeldung des Clients",
+      "Der Zielserver hat die Seite dauerhaft verschoben",
+      "Der Proxy hat keine Antwort vom Zielserver erhalten",
+      "Der Client hat zu viele Anfragen gesendet"
+    ],
+    "a": "Der Proxy verlangt eine Anmeldung des Clients",
+    "exp": "407 Proxy Authentication Required entspricht 401, bezieht sich aber auf den Proxy. Der Browser muss Anmeldedaten mitsenden, etwa per Kerberos oder NTLM."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Woran erkennen Browser und Webserver beim Verbindungsaufbau, dass sie HTTP/2 statt HTTP/1.1 sprechen?",
+    "options": [
+      "An der TLS-Erweiterung ALPN im Handshake",
+      "An einem eigenen TCP-Port für HTTP/2",
+      "An einem Eintrag im MX-Record der Domain",
+      "An einem Header in der ersten HTTP-Antwort"
+    ],
+    "a": "An der TLS-Erweiterung ALPN im Handshake",
+    "exp": "Mit ALPN (Application-Layer Protocol Negotiation) nennt der Client im TLS-Handshake die unterstützten Protokolle, der Server wählt eines aus. Browser nutzen HTTP/2 nur über TLS."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Browser verbindet sich zuerst per HTTP/2 über TCP mit einem Server. Woher weiß er, dass der Server auch HTTP/3 anbietet?",
+    "options": [
+      "Der Server kündigt es im Header Alt-Svc an",
+      "Der Server sendet einen Redirect mit Code 301",
+      "Der Server nennt es in seinem SPF-Eintrag",
+      "Der Server schickt eine ICMP-Meldung zurück"
+    ],
+    "a": "Der Server kündigt es im Header Alt-Svc an",
+    "exp": "Mit Alt-Svc teilt der Server mit, dass derselbe Dienst per HTTP/3 über UDP erreichbar ist. Ab der nächsten Anfrage versucht der Browser dann QUIC, alternativ steht die Angabe in einem HTTPS-Eintrag im DNS."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sie beschreiben einem Azubi den Weg einer Mail. Welche Komponente legt die Mail nach der Annahme durch den Empfangsserver im Postfach des Empfängers ab?",
+    "options": [
+      "Der Mail Delivery Agent (MDA)",
+      "Der Mail User Agent (MUA)",
+      "Der Mail Submission Agent (MSA)",
+      "Der Mail Transfer Agent (MTA)"
+    ],
+    "a": "Der Mail Delivery Agent (MDA)",
+    "exp": "Der MUA ist das Mailprogramm, der MSA nimmt Mails der Nutzer an, und MTAs übertragen sie per SMTP zwischen Servern. Der MDA stellt sie schließlich ins Postfach zu."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Im SIP-Trace eines Anrufs folgt auf das INVITE die Antwort 486. Was bedeutet das?",
+    "options": [
+      "Der Angerufene ist besetzt",
+      "Der Angerufene klingelt gerade",
+      "Die Rufnummer existiert nicht",
+      "Der Anruf wurde angenommen"
+    ],
+    "a": "Der Angerufene ist besetzt",
+    "exp": "SIP nutzt Statuscodes wie HTTP. 180 Ringing meldet Klingeln, 200 OK die Annahme, 404 Not Found eine unbekannte Nummer und 486 Busy Here besetzt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein neues SIP-Telefon zeigt Nicht registriert. Der Trace zeigt: REGISTER, Antwort 401, erneutes REGISTER mit Anmeldedaten, Antwort 403. Wo liegt der Fehler?",
+    "options": [
+      "Die hinterlegten SIP-Zugangsdaten sind falsch",
+      "Der Registrar ist im Netz nicht erreichbar",
+      "Das Telefon erhält keine IP-Adresse per DHCP",
+      "Der Codec wird von der Anlage nicht unterstützt"
+    ],
+    "a": "Die hinterlegten SIP-Zugangsdaten sind falsch",
+    "exp": "401 ist die normale Aufforderung, sich anzumelden. Wird das zweite REGISTER mit 403 Forbidden abgelehnt, hat die Anlage die Anmeldedaten geprüft und nicht akzeptiert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einer Prüfung der Benutzerdatenbank fällt auf, dass der Salt jedes Kontos im Klartext direkt neben dem Passwort-Hash steht. Wie bewerten Sie das?",
+    "options": [
+      "Das ist in Ordnung, der Salt muss nur zufällig und je Konto einzigartig sein",
+      "Das ist ein schwerer Fehler, der Salt muss verschlüsselt gespeichert werden",
+      "Das ist ein Fehler, der Salt muss für alle Konten gleich sein",
+      "Das ist in Ordnung, weil der Salt das Passwort ohnehin ersetzt"
+    ],
+    "a": "Das ist in Ordnung, der Salt muss nur zufällig und je Konto einzigartig sein",
+    "exp": "Der Salt verhindert, dass gleiche Passwörter gleiche Hashes ergeben und vorberechnete Tabellen greifen. Das System braucht ihn bei jeder Anmeldung, er muss daher nicht geheim sein. Geheim wäre nur ein zusätzlicher Pepper."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ausfall der CMOS-Batterie zeigt ein PC das Datum 01.01.2010. Seitdem melden alle HTTPS-Seiten Zertifikatsfehler. Warum?",
+    "options": [
+      "Aus Sicht des PCs sind die Zertifikate noch gar nicht gültig",
+      "Die Zertifikate wurden durch den Batterieausfall gesperrt",
+      "Der Browser hat seinen privaten Schlüssel verloren",
+      "Der PC kann ohne Batterie kein TLS mehr verschlüsseln"
+    ],
+    "a": "Aus Sicht des PCs sind die Zertifikate noch gar nicht gültig",
+    "exp": "Jedes Zertifikat hat einen Gültigkeitszeitraum mit Beginn und Ende. Liegt die Systemzeit außerhalb, gilt es als ungültig. Nach dem Stellen der Uhr, am besten per NTP, verschwinden die Fehler."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Sie greifen erstmals auf die Weboberfläche eines neuen Switches zu, der ein selbstsigniertes Zertifikat nutzt. Wie stellen Sie sicher, dass Sie wirklich mit diesem Switch verbunden sind?",
+    "options": [
+      "Den Fingerabdruck des Zertifikats im Browser mit dem an der Switch-Konsole angezeigten vergleichen",
+      "Die Warnung einfach bestätigen, weil selbstsignierte Zertifikate immer sicher sind",
+      "Die Seite per HTTP statt HTTPS aufrufen, um die Warnung zu vermeiden",
+      "Den Common Name mit dem Hostnamen in der Adresszeile vergleichen"
+    ],
+    "a": "Den Fingerabdruck des Zertifikats im Browser mit dem an der Switch-Konsole angezeigten vergleichen",
+    "exp": "Ein selbstsigniertes Zertifikat bestätigt keine CA, ein Angreifer könnte ein eigenes mit gleichem Namen vorlegen. Der Fingerabdruck ist ein Hashwert über das ganze Zertifikat. Stimmt er mit dem Wert überein, den das Gerät selbst anzeigt, ist es das richtige Zertifikat."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein älterer Industrie-PC beherrscht nur TLS 1.0. Der neue Server erlaubt nur TLS 1.2 und 1.3. Was passiert beim Verbindungsaufbau?",
+    "options": [
+      "Der Handshake bricht ab, weil es keine gemeinsame Protokollversion gibt",
+      "Der Server schaltet automatisch auf unverschlüsseltes HTTP um",
+      "Die Verbindung läuft mit TLS 1.3, der PC lernt es beim Handshake",
+      "Der Server stellt dem PC ein Zertifikat für TLS 1.0 aus"
+    ],
+    "a": "Der Handshake bricht ab, weil es keine gemeinsame Protokollversion gibt",
+    "exp": "Im ClientHello nennt der Client seine Versionen, der Server wählt eine gemeinsame aus. Gibt es keine Schnittmenge, endet der Handshake mit einer Fehlermeldung. Lösungen sind ein Update, ein vorgeschaltetes Gateway oder die Isolation des Altgeräts, aber nicht die Freigabe von TLS 1.0 für alle."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Dateiserver erhält ein Kerberos-Service-Ticket eines Benutzers. Wie prüft er, ob das Ticket echt ist?",
+    "options": [
+      "Er entschlüsselt es mit dem Schlüssel seines eigenen Computerkontos",
+      "Er schickt das Passwort des Benutzers zum Vergleich an den DC",
+      "Er vergleicht die Uhrzeit im Ticket mit der des Benutzers",
+      "Er fragt den Benutzer per Dialog erneut nach seinem Passwort"
+    ],
+    "a": "Er entschlüsselt es mit dem Schlüssel seines eigenen Computerkontos",
+    "exp": "Der KDC verschlüsselt das Service-Ticket mit dem Schlüssel des Dienstkontos, den nur KDC und Dienst kennen. Kann der Server es entschlüsseln, stammt es vom KDC. Eine Rückfrage beim Domänencontroller ist dafür im Normalfall nicht nötig."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter sitzt im Büro am Firmen-LAN und ruft die Personaldatenbank auf. Wie behandelt ein Zero-Trust-Modell diese Anfrage?",
+    "options": [
+      "Wie jede andere: Identität, Gerätezustand und Berechtigung werden geprüft",
+      "Sie wird ohne Prüfung erlaubt, weil sie aus dem internen Netz kommt",
+      "Sie wird immer abgelehnt, weil Personaldaten nie abrufbar sind",
+      "Sie wird nur geprüft, wenn der Mitarbeiter im Homeoffice arbeitet"
+    ],
+    "a": "Wie jede andere: Identität, Gerätezustand und Berechtigung werden geprüft",
+    "exp": "Zero Trust folgt dem Grundsatz \"Never trust, always verify\". Der Netzwerkstandort allein begründet kein Vertrauen, auch ein Gerät im LAN kann kompromittiert sein. Jede Anfrage wird daher nach denselben Regeln geprüft."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen will einen Honeypot in der DMZ betreiben. Was muss beim Aufbau unbedingt sichergestellt sein?",
+    "options": [
+      "Er ist streng isoliert, damit Angreifer ihn nicht als Sprungbrett nutzen können",
+      "Er enthält echte Kundendaten, damit er glaubwürdig wirkt",
+      "Er ist mit denselben Admin-Passwörtern wie die Produktivserver gesichert",
+      "Er wird nicht protokolliert, damit Angreifer nichts bemerken"
+    ],
+    "a": "Er ist streng isoliert, damit Angreifer ihn nicht als Sprungbrett nutzen können",
+    "exp": "Ein Honeypot ist absichtlich angreifbar. Ohne strenge Abschottung könnte ein Angreifer von dort ins Produktivnetz oder gegen Dritte vorgehen. Er wird deshalb eng überwacht und darf keine echten Daten oder Zugangsdaten enthalten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Über eine präparierte Webseite wird eine Lücke im Browser ausgenutzt. Der Schadcode kann trotzdem nicht auf die Dateien des Benutzers zugreifen. Was hat das verhindert?",
+    "options": [
+      "Die Sandbox, in der der Browser Webinhalte mit wenig Rechten verarbeitet",
+      "Die lokale Firewall, die den Zugriff auf lokale Dateien filtert",
+      "Das TLS-Zertifikat, mit dem die präparierte Webseite signiert ist",
+      "Der Pop-up-Blocker, der fremde Fenster im Browser unterdrückt"
+    ],
+    "a": "Die Sandbox, in der der Browser Webinhalte mit wenig Rechten verarbeitet",
+    "exp": "Moderne Browser verarbeiten Webseiten in eigenen Prozessen mit stark eingeschränkten Rechten. Ein Angreifer bräuchte eine zweite Lücke, um aus der Sandbox auszubrechen. Deshalb sind schnelle Browserupdates trotzdem wichtig."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Das Sicherheitsteam klickt in der EDR-Konsole bei einem verdächtigen Notebook auf \"Host isolieren\". Was bewirkt das?",
+    "options": [
+      "Das Gerät verliert jede Netzwerkverbindung außer der zur EDR-Plattform",
+      "Das Notebook wird ausgeschaltet und alle Daten werden gelöscht",
+      "Das Notebook wird in ein Gast-WLAN mit Internetzugang verschoben",
+      "Nur der Benutzer wird gesperrt, das Netzwerk bleibt offen"
+    ],
+    "a": "Das Gerät verliert jede Netzwerkverbindung außer der zur EDR-Plattform",
+    "exp": "Die Isolation stoppt die Ausbreitung und den Datenabfluss, ohne Spuren im Arbeitsspeicher zu vernichten. Über die verbleibende Verbindung zur EDR-Plattform kann das Team das Gerät weiter untersuchen. Nach der Bereinigung wird die Isolation aufgehoben."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Betrieb mit 40 Mitarbeitern hat EDR auf allen Geräten, doch nachts und am Wochenende sieht niemand die Alarme. Welche Lösung passt?",
+    "options": [
+      "Ein MDR-Dienst, der rund um die Uhr überwacht und reagiert",
+      "Ein zweiter Virenscanner zusätzlich auf jedem Gerät",
+      "Ein längerer Aufbewahrungszeitraum für die Alarme",
+      "Eine Firewall-Regel, die nachts alle Verbindungen sperrt"
+    ],
+    "a": "Ein MDR-Dienst, der rund um die Uhr überwacht und reagiert",
+    "exp": "Managed Detection and Response ergänzt das Werkzeug um Menschen, die Alarme bewerten und im Ernstfall etwa Geräte isolieren. Für kleine Betriebe ist ein eigenes 24/7-Team zu teuer. Wichtig ist eine vertraglich geregelte Reaktionszeit und Befugnis."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Pentester recherchiert zuerst Stellenanzeigen, Mitarbeiterprofile in Karrierenetzwerken und öffentliche DNS-Einträge des Kunden, ohne dessen Systeme zu berühren. In welcher Phase ist er?",
+    "options": [
+      "Informationsbeschaffung (passive Aufklärung)",
+      "Ausnutzung gefundener Schwachstellen",
+      "Rechteausweitung im internen Netz",
+      "Abschlussbericht mit Empfehlungen"
+    ],
+    "a": "Informationsbeschaffung (passive Aufklärung)",
+    "exp": "Ein Penetrationstest läuft typisch in Phasen: Vorbereitung, Informationsbeschaffung, Schwachstellenanalyse, Ausnutzung und Bericht. Öffentlich verfügbare Quellen (OSINT) verraten oft Softwareversionen und Namen für Phishing. Diese Informationen sammelt auch ein echter Angreifer zuerst."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Webanwendung bietet die Funktion \"Bild von URL importieren\". Ein Angreifer gibt die interne Metadaten-Adresse der Cloud-Plattform ein und erhält Zugangsdaten zurück. Welche Schwachstelle liegt vor?",
+    "options": [
+      "Server-Side Request Forgery (SSRF)",
+      "Cross-Site Request Forgery (CSRF)",
+      "Cross-Site-Scripting (XSS)",
+      "Session Fixation"
+    ],
+    "a": "Server-Side Request Forgery (SSRF)",
+    "exp": "Bei SSRF bringt der Angreifer den Server dazu, Anfragen an von ihm gewählte Ziele zu schicken, auch an interne Dienste. Der Server hat oft Zugriff auf Adressen, die von außen nicht erreichbar sind. Abhilfe sind erlaubte Ziellisten und das Sperren interner Adressbereiche."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Log eines Webservers steht die Anfrage \"download.php?datei=../../../etc/passwd\". Welcher Angriff wird versucht?",
+    "options": [
+      "Path Traversal (Verzeichnisüberschreitung)",
+      "Cross-Site-Scripting im Dateinamen",
+      "Ein Denial-of-Service durch große Dateien",
+      "Session Hijacking über den Dateiparameter"
+    ],
+    "a": "Path Traversal (Verzeichnisüberschreitung)",
+    "exp": "Mit \"../\" versucht der Angreifer, das vorgesehene Download-Verzeichnis zu verlassen und beliebige Dateien des Servers zu lesen. Die Anwendung darf Dateinamen aus Anfragen nie ungeprüft in Pfade übernehmen. Sicher ist eine Positivliste erlaubter Dateien oder die Auswahl über eine ID."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Online-Kreditantrag wird allein von einem Algorithmus abgelehnt, kein Mensch war beteiligt. Welches Recht hat der Antragsteller nach Art. 22 DSGVO mindestens?",
+    "options": [
+      "Das Eingreifen einer Person zu verlangen und die Entscheidung anzufechten",
+      "Die Herausgabe des vollständigen Quellcodes des Algorithmus",
+      "Einen Kredit zu den beantragten Bedingungen zu erhalten",
+      "Die Löschung aller Kreditdaten bei allen Banken"
+    ],
+    "a": "Das Eingreifen einer Person zu verlangen und die Entscheidung anzufechten",
+    "exp": "Art. 22 DSGVO schützt vor Entscheidungen mit rechtlicher oder ähnlich erheblicher Wirkung, die ausschließlich automatisiert fallen. Ist sie ausnahmsweise erlaubt, etwa für einen Vertrag, muss der Betroffene eine menschliche Prüfung verlangen und seinen Standpunkt darlegen können. Er hat zudem Anspruch auf aussagekräftige Informationen über die Logik der Entscheidung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Kunde lässt seine falsch gespeicherte Adresse berichtigen. Das Unternehmen hat die alte Adresse vorher an einen Versanddienstleister übermittelt. Was muss es nach Art. 19 DSGVO tun?",
+    "options": [
+      "Dem Versanddienstleister die Berichtigung mitteilen",
+      "Nichts, die Pflicht endet mit der eigenen Korrektur",
+      "Den Kunden bitten, den Dienstleister selbst zu informieren",
+      "Den Fall als Datenpanne an die Aufsichtsbehörde melden"
+    ],
+    "a": "Dem Versanddienstleister die Berichtigung mitteilen",
+    "exp": "Art. 19 verpflichtet den Verantwortlichen, allen Empfängern jede Berichtigung, Löschung oder Einschränkung mitzuteilen. Das entfällt nur, wenn es unmöglich oder unverhältnismäßig aufwendig ist. Auf Wunsch erfährt der Kunde, wer die Empfänger waren."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen hat eine externe Datenschutzbeauftragte benannt. Wem müssen ihre Kontaktdaten nach Art. 37 DSGVO mitgeteilt werden?",
+    "options": [
+      "Der zuständigen Aufsichtsbehörde, zusätzlich werden sie veröffentlicht",
+      "Nur dem Betriebsrat, eine Veröffentlichung ist verboten",
+      "Dem BSI, das eine Liste aller Datenschutzbeauftragten führt",
+      "Niemandem, bei externen Beauftragten reicht der Vertrag"
+    ],
+    "a": "Der zuständigen Aufsichtsbehörde, zusätzlich werden sie veröffentlicht",
+    "exp": "Der Verantwortliche veröffentlicht die Kontaktdaten, etwa in der Datenschutzerklärung, und teilt sie der Aufsichtsbehörde mit. So können Betroffene und Behörde sie direkt erreichen. Das gilt für interne und externe Datenschutzbeauftragte gleichermaßen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter bricht in der Werkstatt bewusstlos zusammen. Die Kollegin nennt dem Rettungsdienst seine bekannte Diabetes-Erkrankung aus der Notfallliste. Welche Rechtsgrundlage greift?",
+    "options": [
+      "Der Schutz lebenswichtiger Interessen des Mitarbeiters",
+      "Die Erfüllung des bestehenden Arbeitsvertrags",
+      "Das berechtigte Interesse des Arbeitgebers",
+      "Allein eine vorherige schriftliche Einwilligung"
+    ],
+    "a": "Der Schutz lebenswichtiger Interessen des Mitarbeiters",
+    "exp": "Art. 6 Abs. 1 lit. d DSGVO erlaubt die Verarbeitung, wenn sie das Leben oder die Gesundheit eines Menschen schützt. Für Gesundheitsdaten gilt zusätzlich Art. 9 Abs. 2 lit. c, wenn der Betroffene nicht einwilligen kann. Eine Einwilligung einzuholen ist bei Bewusstlosigkeit gerade nicht möglich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Von einer unbekannten Freemail-Adresse kommt ein Auskunftsersuchen nach Art. 15 DSGVO zu einer Kundin. Die Adresse ist im Kundenkonto nicht hinterlegt. Wie reagieren Sie?",
+    "options": [
+      "Die Identität angemessen prüfen, bevor Daten herausgegeben werden",
+      "Sofort alle gespeicherten Daten an die Absenderadresse schicken",
+      "Das Ersuchen ignorieren, weil Freemail-Adressen unzulässig sind",
+      "Für die Auskunft vorab eine Bearbeitungsgebühr verlangen"
+    ],
+    "a": "Die Identität angemessen prüfen, bevor Daten herausgegeben werden",
+    "exp": "Nach Art. 12 Abs. 6 DSGVO darf der Verantwortliche bei begründeten Zweifeln zusätzliche Angaben zur Identität verlangen. Sonst könnte ein Betrüger über die Auskunft an fremde Daten gelangen. Die Prüfung soll verhältnismäßig sein, etwa eine Rückfrage an die hinterlegte Adresse."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Stadtwerk prüft, ob es als Betreiber einer kritischen Anlage (KRITIS) gilt. Wonach richtet sich das?",
+    "options": [
+      "Nach dem Sektor und dem Überschreiten festgelegter Schwellenwerte",
+      "Nach der Anzahl der IT-Mitarbeiter im Unternehmen",
+      "Nach der freiwilligen Anmeldung beim Bundeskartellamt",
+      "Nach der Höhe des IT-Budgets im letzten Jahr"
+    ],
+    "a": "Nach dem Sektor und dem Überschreiten festgelegter Schwellenwerte",
+    "exp": "Eine Rechtsverordnung legt je Sektor, etwa Energie oder Wasser, Anlagenarten und Schwellenwerte fest. Der Regelschwellenwert liegt meist bei 500.000 versorgten Personen. Wer darüber liegt, hat erweiterte Pflichten nach dem BSI-Gesetz, zum Beispiel Nachweise und Meldungen an das BSI."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Der Notfallstab spielt anhand eines Drehbuchs einen Ransomware-Angriff am Besprechungstisch durch, ohne ein System anzufassen. Welche Übungsart ist das?",
+    "options": [
+      "Ein Planspiel (Tabletop-Übung)",
+      "Eine Vollübung mit echter Abschaltung",
+      "Ein Wiederherstellungstest der Backups",
+      "Ein technischer Penetrationstest"
+    ],
+    "a": "Ein Planspiel (Tabletop-Übung)",
+    "exp": "Im Planspiel diskutieren die Beteiligten Entscheidungen, Meldewege und Zuständigkeiten an einem Szenario. Es ist günstig und stört den Betrieb nicht, deckt aber Lücken im Notfallhandbuch auf. Aufwendigere Übungen bis zur Vollübung folgen nach BSI-Standard 200-4 schrittweise."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Im Rechenzentrum halten Mitarbeiter anderen Personen immer wieder die Tür auf, sodass diese ohne eigene Karte hineinkommen. Welche technische Maßnahme verhindert das?",
+    "options": [
+      "Eine Vereinzelungsanlage, die je Karte nur eine Person durchlässt",
+      "Ein längerer PIN-Code für das Kartenlesegerät an der Tür",
+      "Eine Videokamera ohne Aufzeichnung im Flur davor",
+      "Ein zweites Kartenlesegerät an der Innenseite der Tür"
+    ],
+    "a": "Eine Vereinzelungsanlage, die je Karte nur eine Person durchlässt",
+    "exp": "Das Mitgehen hinter einer berechtigten Person heißt Tailgating. Drehkreuze oder Personenschleusen lassen nach jeder Buchung nur eine Person passieren. Ergänzend helfen Schulungen, damit Mitarbeiter Fremde ansprechen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter hat den Generalschlüssel der mechanischen Schließanlage verloren, der auch den Serverraum öffnet. Was ist die angemessene Reaktion?",
+    "options": [
+      "Die betroffenen Schließzylinder austauschen lassen",
+      "Einen Ersatzschlüssel nachmachen lassen",
+      "Den Verlust nur im Schlüsselbuch vermerken",
+      "Einen Zettel mit der Bitte um Rückgabe aufhängen"
+    ],
+    "a": "Die betroffenen Schließzylinder austauschen lassen",
+    "exp": "Ein verlorener mechanischer Schlüssel lässt sich nicht sperren, jeder Finder kann damit aufschließen. Deshalb werden die betroffenen Zylinder getauscht. Elektronische Schließsysteme haben den Vorteil, dass ein Transponder sofort gesperrt werden kann."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach einem Stromausfall startet ein Linux-Server mit ext4 schnell wieder, ohne stundenlange Dateisystemprüfung. Welche Eigenschaft von ext4 sorgt dafür?",
+    "options": [
+      "Das Journal, das angefangene Metadatenänderungen protokolliert",
+      "Das RAID, das alle Datenblöcke auf zwei Platten spiegelt",
+      "Der Swap-Bereich, der offene Dateien zwischenspeichert",
+      "Die Inode-Tabelle, die alle Dateien doppelt ablegt"
+    ],
+    "a": "Das Journal, das angefangene Metadatenänderungen protokolliert",
+    "exp": "Ein Journaling-Dateisystem schreibt Änderungen an den Metadaten zuerst in ein Journal. Nach einem Absturz werden nur die offenen Einträge nachgeholt oder verworfen. Eine vollständige Prüfung ist dann nicht nötig. Der Inhalt gerade geschriebener Dateien ist dadurch aber nicht immer geschützt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Sicherungsrepository unter Windows Server soll synthetische Vollsicherungen schnell zusammenbauen, ohne jeden Block neu zu kopieren. Welches Dateisystem bietet dafür Block Cloning?",
+    "options": [
+      "ReFS",
+      "FAT32",
+      "exFAT",
+      "NTFS"
+    ],
+    "a": "ReFS",
+    "exp": "ReFS kann Blöcke zwischen Dateien verweisen, statt sie physisch zu kopieren. Sicherungsprogramme nutzen das für synthetische Vollsicherungen, Hyper-V für schnelles Zusammenführen von Prüfpunkten. Das spart Zeit und Speicherplatz."
+  },
+  {
+    "cat": "systeme",
+    "q": "Sie haben den Benutzer tom mit usermod -aG docker tom zur Gruppe docker hinzugefügt. Tom ist per SSH angemeldet und bekommt bei docker ps weiter Zugriff verweigert. Was muss er tun?",
+    "options": [
+      "Sich ab- und neu anmelden, damit die neue Gruppe gilt",
+      "Den Docker-Dienst mit systemctl restart neu starten",
+      "Den Befehl groupadd docker selbst noch einmal ausführen",
+      "Die Datei /etc/group mit chmod 644 neu berechtigen"
+    ],
+    "a": "Sich ab- und neu anmelden, damit die neue Gruppe gilt",
+    "exp": "Die Gruppenzugehörigkeit eines Prozesses wird bei der Anmeldung festgelegt. Laufende Sitzungen kennen die neue Gruppe noch nicht. Nach einer neuen Anmeldung oder mit newgrp docker in der aktuellen Shell greift sie."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf einem Rocky-Linux-Server hat das letzte Update mit dnf eine Bibliothek aktualisiert, seitdem startet eine Anwendung nicht mehr. Wie machen Sie genau diesen Vorgang rückgängig?",
+    "options": [
+      "Mit dnf history undo und der Nummer des Vorgangs",
+      "Mit dnf clean all und einem anschließenden Neustart",
+      "Mit rpm -qa und der Nummer des betroffenen Vorgangs",
+      "Mit dnf makecache und der Nummer des alten Pakets"
+    ],
+    "a": "Mit dnf history undo und der Nummer des Vorgangs",
+    "exp": "dnf protokolliert jede Transaktion. dnf history zeigt die Liste mit Nummern, dnf history info die betroffenen Pakete. Mit dnf history undo wird eine Transaktion zurückgenommen, sofern die alten Paketversionen noch aus den Quellen verfügbar sind."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Webprojekt wurde als root nach /srv/www/portal kopiert. nginx liefert seitdem für alle Seiten 403 Forbidden, die Konfiguration ist korrekt. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Der nginx-Benutzer darf die Dateien oder Verzeichnisse nicht lesen",
+      "Die Website braucht zwingend ein gültiges TLS-Zertifikat",
+      "Der Port 80 ist schon durch einen anderen Dienst belegt",
+      "Der DNS-Eintrag zeigt noch auf den alten Webserver"
+    ],
+    "a": "Der nginx-Benutzer darf die Dateien oder Verzeichnisse nicht lesen",
+    "exp": "403 bedeutet, dass der Server die Anfrage verstanden hat, den Zugriff aber verweigert. Nach einem Kopieren als root fehlen oft Leserechte auf Dateien oder das Ausführrecht auf Verzeichnisse für den Webserver-Benutzer. Abhilfe schaffen passende Rechte oder chown auf den Webserver-Benutzer."
+  },
+  {
+    "cat": "systeme",
+    "q": "Für den neuen Server sollen die Windows Server-Sicherung und der DHCP-Server installiert werden. Wie ordnet der Server-Manager diese beiden ein?",
+    "options": [
+      "DHCP-Server als Rolle, Windows Server-Sicherung als Feature",
+      "DHCP-Server als Feature, Windows Server-Sicherung als Rolle",
+      "Beide als Rolle, weil sie einen eigenen Dienst starten",
+      "Beide als Feature, weil sie keinen Netzwerkdienst bieten"
+    ],
+    "a": "DHCP-Server als Rolle, Windows Server-Sicherung als Feature",
+    "exp": "Rollen sind Dienste, die der Server für andere im Netz erbringt, z.B. DHCP, DNS oder Hyper-V. Features ergänzen den Server selbst um Funktionen wie Sicherung, BitLocker oder Failover-Clustering. Beide werden mit Install-WindowsFeature installiert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Admin hat mit Install-WindowsFeature DNS die DNS-Rolle auf einem Server mit Desktopdarstellung installiert. Die DNS-Verwaltungskonsole fehlt aber. Was hat er vergessen?",
+    "options": [
+      "Den Parameter -IncludeManagementTools",
+      "Den Parameter -IncludeAllSubFeature",
+      "Den Parameter -Source mit dem sxs-Ordner",
+      "Den Parameter -WhatIf vor der Installation"
+    ],
+    "a": "Den Parameter -IncludeManagementTools",
+    "exp": "Install-WindowsFeature installiert ohne Zusatz nur die Rolle selbst. Die Verwaltungskonsolen und PowerShell-Module kommen erst mit -IncludeManagementTools dazu. Der Server-Manager setzt diesen Haken in der grafischen Oberfläche automatisch."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript in der Windows-Aufgabenplanung soll jede Nacht auf einem Server laufen. Es funktioniert nur, solange der Admin angemeldet ist. Welche Einstellung fehlt?",
+    "options": [
+      "Unabhängig von der Benutzeranmeldung ausführen",
+      "Mit höchsten Privilegien ausführen",
+      "Aufgabe so schnell wie möglich nach verpasstem Start",
+      "Nur starten, wenn der Computer im Leerlauf ist"
+    ],
+    "a": "Unabhängig von der Benutzeranmeldung ausführen",
+    "exp": "Standardmäßig läuft eine Aufgabe nur in der Sitzung des angemeldeten Benutzers. Mit der Option Unabhängig von der Benutzeranmeldung ausführen startet sie auch ohne Anmeldung. Das hinterlegte Konto braucht dafür das Recht, sich als Batchauftrag anzumelden. Sinnvoll ist ein eigenes Dienstkonto."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine MSI-Datei wurde per GPO der Computer-OU zugewiesen. Nach gpupdate /force auf einem Client ist die Software noch nicht installiert. Was ist der Grund?",
+    "options": [
+      "Zugewiesene Software für Computer wird erst beim nächsten Neustart installiert",
+      "Zugewiesene Software für Computer wird erst nach sieben Tagen installiert",
+      "Zugewiesene Software braucht zusätzlich eine Freigabe in WSUS",
+      "Zugewiesene Software wird nur bei Benutzern mit Adminrechten installiert"
+    ],
+    "a": "Zugewiesene Software für Computer wird erst beim nächsten Neustart installiert",
+    "exp": "Die Softwareinstallation per GPO läuft im Vordergrund und nicht während eines normalen Hintergrundupdates. Bei einer Computerzuweisung geschieht sie beim Start, bevor sich jemand anmeldet. gpupdate /force weist deshalb meist auf einen nötigen Neustart hin. Die MSI-Datei muss auf einer Freigabe liegen, die Computerkonten lesen dürfen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Installationsskript soll eine MSI-Datei auf 80 Rechnern ohne Rückfragen und ohne automatischen Neustart installieren und ein ausführliches Protokoll schreiben. Welcher Aufruf passt?",
+    "options": [
+      "msiexec /i app.msi /qn /norestart /l*v C:\\Logs\\app.log",
+      "msiexec /x app.msi /qn /forcerestart /l*v C:\\Logs\\app.log",
+      "msiexec /i app.msi /qf /promptrestart /l C:\\Logs\\app.log",
+      "msiexec /a app.msi /passive /restart /log C:\\Logs\\app.log"
+    ],
+    "a": "msiexec /i app.msi /qn /norestart /l*v C:\\Logs\\app.log",
+    "exp": "/i installiert das Paket, /qn unterdrückt jede Oberfläche. /norestart verhindert einen Neustart mitten im Arbeitstag. /l*v schreibt ein ausführliches Protokoll, das bei Fehlern mit dem Rückgabewert hilft."
+  },
+  {
+    "cat": "systeme",
+    "q": "Intune verteilt eine Win32-App an 200 Notebooks. Die Software ist auf allen Geräten installiert und läuft, trotzdem meldet Intune bei jedem Gerät Fehler bei der Installation. Was prüfen Sie zuerst?",
+    "options": [
+      "Die Erkennungsregel der App, z.B. Pfad oder Versionsnummer",
+      "Die Lizenz des Intune-Mandanten für Win32-Apps",
+      "Die Zuordnung der Geräte zu den Windows-Update-Ringen",
+      "Die Zuweisung der App an eine Benutzergruppe statt Gerätegruppe"
+    ],
+    "a": "Die Erkennungsregel der App, z.B. Pfad oder Versionsnummer",
+    "exp": "Intune prüft nach der Installation mit der Erkennungsregel, ob die App vorhanden ist. Zeigt die Regel auf einen falschen Pfad, Registry-Schlüssel oder eine andere Version, gilt die Installation als gescheitert. Oft ist nach einem Update die Versionsnummer in der Regel nicht angepasst worden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Notebooks ohne aktive BitLocker-Verschlüsselung sollen automatisch keinen Zugriff mehr auf Exchange Online und SharePoint erhalten. Welche Kombination richten Sie in Intune und Entra ID ein?",
+    "options": [
+      "Eine Compliance-Richtlinie mit bedingtem Zugriff",
+      "Ein Konfigurationsprofil mit Update-Ring",
+      "Eine App-Schutzrichtlinie mit Autopilot",
+      "Ein Sicherheitsbaseline-Profil mit WSUS"
+    ],
+    "a": "Eine Compliance-Richtlinie mit bedingtem Zugriff",
+    "exp": "Eine Compliance-Richtlinie legt fest, welche Bedingungen ein Gerät erfüllen muss, z.B. aktive Verschlüsselung. Intune meldet den Status an Entra ID. Eine Richtlinie für bedingten Zugriff sperrt dann den Zugriff auf die Dienste für nicht konforme Geräte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf den Sitzungshosts einer RDS-Farm dauert die Anmeldung mehrere Minuten, weil große servergespeicherte Profile kopiert werden. Welche Lösung ist heute üblich?",
+    "options": [
+      "Profilcontainer mit FSLogix, die als VHDX eingebunden werden",
+      "Lokale Profile, die auf jedem Host nach Neustart gelöscht werden",
+      "Verbindliche Profile, die bei jeder Anmeldung neu angelegt werden",
+      "Temporäre Profile, die der Host im Arbeitsspeicher bereitstellt"
+    ],
+    "a": "Profilcontainer mit FSLogix, die als VHDX eingebunden werden",
+    "exp": "FSLogix legt das Benutzerprofil in einer VHDX-Datei auf einer Freigabe ab. Bei der Anmeldung wird die Datei nur eingebunden statt kopiert. Das beschleunigt die Anmeldung deutlich, auch bei großen Profilen wie Outlook-Caches."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Betrieb arbeitet in drei Schichten. 60 Mitarbeiter nutzen nacheinander 20 Thin Clients, um auf eine RDS-Farm zuzugreifen. Welche Lizenzierung ist günstiger?",
+    "options": [
+      "RDS-CALs pro Gerät für die 20 Thin Clients",
+      "RDS-CALs pro Benutzer für alle 60 Mitarbeiter",
+      "RDS-CALs pro Server für jeden Sitzungshost",
+      "RDS-CALs pro Sitzung für die gleichzeitigen Zugriffe"
+    ],
+    "a": "RDS-CALs pro Gerät für die 20 Thin Clients",
+    "exp": "Eine Geräte-CAL erlaubt jedem Benutzer an diesem Gerät den Zugriff. Teilen sich viele Mitarbeiter wenige Geräte, sind Geräte-CALs günstiger. Benutzer-CALs lohnen sich dagegen, wenn wenige Personen viele Geräte nutzen."
+  },
+  {
+    "cat": "systeme",
+    "q": "In der Warteschlange des Postfix-Mailservers liegen Mails an einen Kunden mit dem Status deferred und der Meldung 450 greylisted, try again later. Was tun Sie?",
+    "options": [
+      "Nichts, Postfix stellt die Mails nach einer Wartezeit erneut zu",
+      "Die Mails löschen und den Absender neu senden lassen",
+      "Den MX-Eintrag der eigenen Domäne sofort ändern",
+      "Den Kunden bitten, den eigenen Server zu sperren"
+    ],
+    "a": "Nichts, Postfix stellt die Mails nach einer Wartezeit erneut zu",
+    "exp": "Codes mit 4 am Anfang melden einen vorübergehenden Fehler. Greylisting lehnt Mails von unbekannten Absendern zunächst ab und erwartet einen späteren zweiten Versuch. Postfix versucht es automatisch erneut. Erst ein 5xx-Code bedeutet eine endgültige Ablehnung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein großer Mailanbieter lehnt Mails der Firma ab, weil die Rückwärtsauflösung der Absender-IP nicht zum Namen mail.firma.de passt. Die IP-Adresse gehört zum Anschluss des Internetproviders. Wo lassen Sie den PTR-Eintrag setzen?",
+    "options": [
+      "Beim Internetprovider, dem der IP-Adressbereich gehört",
+      "In der eigenen DNS-Zone firma.de beim Domain-Hoster",
+      "In der internen AD-integrierten DNS-Zone der Firma",
+      "Im SPF-Eintrag der Domäne firma.de beim Registrar"
+    ],
+    "a": "Beim Internetprovider, dem der IP-Adressbereich gehört",
+    "exp": "Die Rückwärtszone einer IP-Adresse verwaltet der Inhaber des Adressbereichs, bei Firmenanschlüssen also der Provider. Nur er kann den PTR-Eintrag setzen oder die Verwaltung delegieren. Der Name im PTR sollte auf dieselbe IP zurückzeigen und zum HELO-Namen passen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Vor einer Wartung soll dokumentiert werden, welche Domänencontroller die FSMO-Rollen halten. Welcher Befehl liefert alle fünf Rollen auf einen Blick?",
+    "options": [
+      "netdom query fsmo",
+      "dcdiag /test:dns",
+      "repadmin /replsummary",
+      "nltest /dclist:firma"
+    ],
+    "a": "netdom query fsmo",
+    "exp": "netdom query fsmo zeigt, welcher DC Schemamaster, Domänennamenmaster, RID-Master, PDC-Emulator und Infrastrukturmaster ist. In PowerShell liefern Get-ADForest und Get-ADDomain dieselben Angaben. Die Liste gehört in die Betriebsdokumentation."
+  },
+  {
+    "cat": "systeme",
+    "q": "Die Domänenfunktionsebene soll angehoben werden, um neue AD-Funktionen zu nutzen. Welche Voraussetzung muss erfüllt sein?",
+    "options": [
+      "Alle DCs der Domäne laufen mindestens mit der passenden Serverversion",
+      "Alle Clients der Domäne laufen mindestens mit Windows 11",
+      "Alle DCs der Domäne sind zugleich als globaler Katalog aktiv",
+      "Alle FSMO-Rollen liegen vorher auf demselben Domänencontroller"
+    ],
+    "a": "Alle DCs der Domäne laufen mindestens mit der passenden Serverversion",
+    "exp": "Die Funktionsebene legt fest, welche AD-Funktionen alle DCs beherrschen müssen. Deshalb darf kein DC mit älterer Serverversion mehr in der Domäne sein. Die Version der Clients spielt dafür keine Rolle. Das Anheben lässt sich nur eingeschränkt rückgängig machen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Kollege fragt, warum ein kleiner CPU-Cache von wenigen Megabyte überhaupt spürbar beschleunigt. Welches Prinzip steckt dahinter?",
+    "options": [
+      "Programme greifen oft wiederholt auf dieselben oder benachbarte Daten zu",
+      "Programme speichern ihre Daten dauerhaft im Cache statt auf der SSD",
+      "Programme laden beim Start immer ihren gesamten Code in den Cache",
+      "Programme nutzen den Cache anstelle des RAM als Auslagerungsbereich"
+    ],
+    "a": "Programme greifen oft wiederholt auf dieselben oder benachbarte Daten zu",
+    "exp": "Das Lokalitätsprinzip besagt, dass kürzlich genutzte Daten bald wieder gebraucht werden (zeitliche Lokalität) und benachbarte Adressen oft folgen (räumliche Lokalität). Deshalb landen viele Zugriffe im schnellen Cache, obwohl er klein ist. Ein Fehlgriff (Cache Miss) muss dagegen im langsameren RAM nachladen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Auf neuen Hypervisor-Hosts schwanken die Antwortzeiten von VMs stark. Im BIOS ist ein Energiesparprofil aktiv, das die CPU tief schlafen lässt. Was empfiehlt sich für diese Hosts?",
+    "options": [
+      "Ein Leistungsprofil im BIOS, das tiefe Schlafzustände begrenzt",
+      "Den Ruhezustand im Gastsystem jeder einzelnen VM aktivieren",
+      "Den Takt der CPU im BIOS dauerhaft auf einen festen Wert senken",
+      "Den Hyper-Threading-Modus im BIOS vollständig abschalten"
+    ],
+    "a": "Ein Leistungsprofil im BIOS, das tiefe Schlafzustände begrenzt",
+    "exp": "Tiefe Schlafzustände der CPU (C-States) sparen Strom, das Aufwachen kostet aber Zeit. Bei Hypervisoren mit vielen VMs führt das zu schwankenden Latenzen. Hersteller empfehlen daher oft ein Leistungsprofil im BIOS und den passenden Energiesparplan im Hostsystem."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein PC geht trotz Energiesparplan nachts nicht in den Energiesparmodus. Mit welchem Befehl sehen Sie, welcher Prozess oder Treiber das verhindert?",
+    "options": [
+      "powercfg /requests",
+      "powercfg /batteryreport",
+      "shutdown /s /hybrid",
+      "systeminfo /fo list"
+    ],
+    "a": "powercfg /requests",
+    "exp": "powercfg /requests listet Anforderungen von Anwendungen, Diensten und Treibern, die den Standby blockieren, z.B. eine laufende Wiedergabe oder eine offene Datei im Netz. powercfg /lastwake zeigt dagegen, was den Rechner zuletzt geweckt hat."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Service Desk wertet die Tickets der letzten sechs Monate aus und stellt fest, dass VPN-Abbrüche jeden Monatsanfang zunehmen. Es gab noch keinen Ausfall. Welcher ITIL-Prozess befasst sich damit?",
+    "options": [
+      "Das proaktive Problem Management",
+      "Das Incident Management",
+      "Das Release Management",
+      "Das Service Request Management"
+    ],
+    "a": "Das proaktive Problem Management",
+    "exp": "Problem Management sucht die Ursachen von Störungen. Reaktiv geschieht das nach Incidents, proaktiv durch Trendanalysen, bevor ein größerer Ausfall entsteht. Ergebnis kann ein Known Error mit Workaround oder ein Change zur dauerhaften Lösung sein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Der Fileserver ist zu 70 % belegt, der Datenbestand wächst stetig. Die IT will früh genug planen, wann Speicher nachgekauft werden muss. Welcher ITIL-Prozess ist zuständig?",
+    "options": [
+      "Das Kapazitätsmanagement",
+      "Das Verfügbarkeitsmanagement",
+      "Das Continuity Management",
+      "Das Konfigurationsmanagement"
+    ],
+    "a": "Das Kapazitätsmanagement",
+    "exp": "Kapazitätsmanagement sorgt dafür, dass Ressourcen wie Speicher, Rechenleistung und Bandbreite zum aktuellen und künftigen Bedarf passen. Es wertet Trends aus dem Monitoring aus und plant Erweiterungen rechtzeitig und wirtschaftlich. Verfügbarkeitsmanagement kümmert sich dagegen um die zugesagte Betriebszeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Geschäftsführung eines IT-Dienstleisters braucht Fachwissen zu Informationssicherheit, will aber keine neue Abteilung mit Weisungsrecht schaffen. Welches Leitungssystem passt?",
+    "options": [
+      "Das Stabliniensystem mit einer beratenden Stabsstelle",
+      "Das Mehrliniensystem mit einem zusätzlichen Fachvorgesetzten",
+      "Die Matrixorganisation mit doppelter Unterstellung aller Teams",
+      "Die Spartenorganisation mit einer eigenen Sparte für Sicherheit"
+    ],
+    "a": "Das Stabliniensystem mit einer beratenden Stabsstelle",
+    "exp": "Das Stabliniensystem ergänzt das Einliniensystem um Stabsstellen. Diese beraten die Leitung fachlich, haben aber keine Weisungsbefugnis, sodass die klaren Dienstwege erhalten bleiben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach einer Umstrukturierung sind einem Teamleiter 25 Techniker direkt unterstellt. Er kommt kaum noch zu Gesprächen mit einzelnen Mitarbeitern. Welche Kennzahl der Aufbauorganisation ist zu groß?",
+    "options": [
+      "Die Leitungsspanne",
+      "Die Gliederungstiefe",
+      "Die Stellenbeschreibung",
+      "Die Instanzenebene"
+    ],
+    "a": "Die Leitungsspanne",
+    "exp": "Die Leitungsspanne (Kontrollspanne) gibt an, wie viele Mitarbeiter einer Instanz direkt unterstellt sind. Ist sie zu groß, bleibt zu wenig Zeit für Führung, Abhilfe schafft etwa eine zusätzliche Teamleiterebene."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Konzern lässt alle Notebooks, Monitore und Lizenzen nur noch über den zentralen IT-Einkauf beschaffen. Die Standorte dürfen nicht mehr selbst bestellen. Was ist ein typischer Vorteil dieser Zentralisation?",
+    "options": [
+      "Einheitliche Geräte und bessere Konditionen durch größere Bestellmengen",
+      "Schnellere Entscheidungen direkt vor Ort an jedem einzelnen Standort",
+      "Mehr Eigenverantwortung und Motivation der Mitarbeiter an den Standorten",
+      "Geringere Abhängigkeit von einzelnen Lieferanten und Rahmenverträgen"
+    ],
+    "a": "Einheitliche Geräte und bessere Konditionen durch größere Bestellmengen",
+    "exp": "Zentralisation bündelt gleichartige Aufgaben an einer Stelle. Das erleichtert Standardisierung und Mengenrabatte, macht die Standorte aber weniger flexibel."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Während eines Ransomware-Angriffs verteilt die IT-Leiterin knappe, klare Anweisungen und lässt keine Diskussion zu. Wie ist dieser Führungsstil in dieser Lage zu bewerten?",
+    "options": [
+      "Autoritär, in einer akuten Krise aber angemessen, weil schnell entschieden werden muss",
+      "Kooperativ, weil alle Mitarbeiter ihre Aufgaben selbst wählen dürfen",
+      "Laissez-faire, weil die Leiterin die Verantwortung an das Team abgibt",
+      "Autoritär und in jeder Lage unzulässig, weil er das Team demotiviert"
+    ],
+    "a": "Autoritär, in einer akuten Krise aber angemessen, weil schnell entschieden werden muss",
+    "exp": "Beim autoritären Stil entscheidet die Führungskraft allein. Im Alltag schwächt das Motivation und Eigeninitiative, in Notfällen mit Zeitdruck sind klare Ansagen aber oft die beste Wahl."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Teamleiter gibt seinem neuen Projektteam weder Ziele noch Regeln vor und mischt sich nie ein. Nach wenigen Wochen streiten sich die Mitglieder über Zuständigkeiten. Welcher Führungsstil liegt vor?",
+    "options": [
+      "Laissez-faire",
+      "Kooperativ",
+      "Autoritär",
+      "Situativ"
+    ],
+    "a": "Laissez-faire",
+    "exp": "Beim Laissez-faire-Stil verzichtet die Führungskraft weitgehend auf Führung. Erfahrene, selbstständige Teams kommen damit zurecht, neue Teams verlieren schnell die Orientierung und es entstehen Konflikte."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Rechenzentrum dürfen die Admins im Rahmen fester Regeln alles selbst entscheiden. Die Leiterin wird nur eingeschaltet, wenn Kosten, Ausfallzeiten oder Risiken festgelegte Grenzen überschreiten. Welches Führungsprinzip ist das?",
+    "options": [
+      "Management by Exception",
+      "Management by Objectives",
+      "Management by Walking Around",
+      "Management by Results"
+    ],
+    "a": "Management by Exception",
+    "exp": "Bei Management by Exception greift die Führungskraft nur bei Ausnahmen und Abweichungen ein. Das entlastet sie, setzt aber klare Regeln und ein gutes Berichtswesen voraus."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender im dritten Lehrjahr ist unkonzentriert. Er weiß nicht, ob er übernommen wird, und sorgt sich um seine Wohnung. Welche Stufe der Bedürfnispyramide nach Maslow ist betroffen?",
+    "options": [
+      "Sicherheitsbedürfnisse",
+      "Soziale Bedürfnisse",
+      "Wertschätzungsbedürfnisse",
+      "Selbstverwirklichung"
+    ],
+    "a": "Sicherheitsbedürfnisse",
+    "exp": "Maslow ordnet Bedürfnisse in Stufen: körperliche Grundbedürfnisse, Sicherheit, soziale Bedürfnisse, Wertschätzung und Selbstverwirklichung. Ein unsicherer Arbeitsplatz betrifft die Sicherheit, eine frühe Übernahmezusage kann hier mehr bewirken als Lob."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Händler bietet ein Monitormodell deutlich über dem üblichen Marktpreis an. Viele Geräte bleiben im Lager liegen. Was liegt nach dem Marktmodell vor?",
+    "options": [
+      "Ein Angebotsüberhang, der Preis muss sinken",
+      "Ein Nachfrageüberhang, der Preis muss steigen",
+      "Ein Marktgleichgewicht, der Preis bleibt stabil",
+      "Ein Monopol, der Preis wird vom Staat gesenkt"
+    ],
+    "a": "Ein Angebotsüberhang, der Preis muss sinken",
+    "exp": "Liegt der Preis über dem Gleichgewichtspreis, wollen die Anbieter mehr verkaufen, als nachgefragt wird. Um die Ware loszuwerden, senken sie den Preis, bis Angebot und Nachfrage wieder übereinstimmen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus erhält kaum noch Aufträge, Kunden verschieben Investitionen, die Lager sind voll und einige Betriebe melden Kurzarbeit an. In welcher Konjunkturphase befindet sich die Wirtschaft?",
+    "options": [
+      "Im Abschwung (Rezession)",
+      "Im Aufschwung (Expansion)",
+      "In der Hochkonjunktur (Boom)",
+      "In der Erholung nach dem Tiefpunkt"
+    ],
+    "a": "Im Abschwung (Rezession)",
+    "exp": "Typisch für den Abschwung sind sinkende Auftragseingänge, zurückgehaltene Investitionen, steigende Lagerbestände und wachsende Arbeitslosigkeit. Im Tiefpunkt (Depression) verharren diese Werte auf niedrigem Niveau."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Inflation im Euroraum liegt deutlich über dem Zielwert. Die Europäische Zentralbank erhöht deshalb den Leitzins. Welche Wirkung soll das haben?",
+    "options": [
+      "Kredite werden teurer, die Nachfrage sinkt und der Preisanstieg wird gebremst",
+      "Kredite werden billiger, damit Unternehmen mehr investieren können",
+      "Die Löhne sinken direkt, weil die EZB sie an den Leitzins bindet",
+      "Die Staaten erhalten mehr Steuern, um Schulden schneller zu tilgen"
+    ],
+    "a": "Kredite werden teurer, die Nachfrage sinkt und der Preisanstieg wird gebremst",
+    "exp": "Das vorrangige Ziel der EZB ist Preisstabilität, angestrebt wird mittelfristig eine Inflation von 2 Prozent. Höhere Leitzinsen verteuern Kredite und machen Sparen attraktiver, dadurch sinkt die Nachfrage und mit ihr der Preisdruck."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In den Nachrichten heißt es, das Bruttoinlandsprodukt sei im letzten Jahr real gesunken. Was misst diese Größe?",
+    "options": [
+      "Den Wert aller im Inland in einem Jahr erstellten Waren und Dienstleistungen",
+      "Die Summe aller Gewinne der börsennotierten Unternehmen im Inland",
+      "Den Wert aller Exporte abzüglich der Steuern des Staates im Jahr",
+      "Das gesamte Vermögen aller Haushalte und Unternehmen im Inland"
+    ],
+    "a": "Den Wert aller im Inland in einem Jahr erstellten Waren und Dienstleistungen",
+    "exp": "Das BIP ist der wichtigste Maßstab für die Wirtschaftsleistung eines Landes. „Real“ bedeutet, dass Preissteigerungen herausgerechnet sind, ein realer Rückgang zeigt also eine tatsächlich geringere Produktion."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Über Monate sinken die Preise für viele Güter. Kunden verschieben den Kauf neuer PCs, weil sie noch niedrigere Preise erwarten. Welche Gefahr droht der Wirtschaft?",
+    "options": [
+      "Eine Deflationsspirale aus sinkender Nachfrage, Produktion und Beschäftigung",
+      "Eine Inflationsspirale aus steigenden Löhnen und steigenden Preisen",
+      "Ein Boom, weil niedrige Preise automatisch mehr Umsatz bedeuten",
+      "Eine Stagflation aus stark steigenden Preisen bei hohem Wachstum"
+    ],
+    "a": "Eine Deflationsspirale aus sinkender Nachfrage, Produktion und Beschäftigung",
+    "exp": "Bei Deflation sinkt das allgemeine Preisniveau. Wenn Verbraucher und Unternehmen Käufe aufschieben, fehlen Aufträge, Firmen bauen Stellen ab und die Nachfrage sinkt weiter."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus kauft zehn Notebooks. Fünf sind für den Weiterverkauf an Kunden bestimmt, fünf bekommen die eigenen Techniker. Wie werden sie in der Bilanz zugeordnet?",
+    "options": [
+      "Die Verkaufsware zum Umlaufvermögen, die Technikergeräte zum Anlagevermögen",
+      "Alle zehn Geräte zum Anlagevermögen, weil es dieselben Modelle sind",
+      "Alle zehn Geräte zum Umlaufvermögen, weil Notebooks schnell altern",
+      "Die Verkaufsware zum Eigenkapital, die Technikergeräte zum Fremdkapital"
+    ],
+    "a": "Die Verkaufsware zum Umlaufvermögen, die Technikergeräte zum Anlagevermögen",
+    "exp": "Entscheidend ist der Zweck: Anlagevermögen dient dem Betrieb dauerhaft, Umlaufvermögen ist zum Verbrauch oder Verkauf bestimmt. Das gleiche Gerät kann deshalb unterschiedlich zugeordnet werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde überweist eine offene Rechnung auf das Geschäftskonto Ihres Betriebs. Wie verändert sich die Bilanz?",
+    "options": [
+      "Aktivtausch: Forderungen sinken, das Bankguthaben steigt, die Bilanzsumme bleibt gleich",
+      "Aktiv-Passiv-Mehrung: Bankguthaben und Eigenkapital steigen gleichzeitig",
+      "Passivtausch: Verbindlichkeiten sinken, das Eigenkapital steigt entsprechend",
+      "Aktiv-Passiv-Minderung: Forderungen und Verbindlichkeiten sinken zusammen"
+    ],
+    "a": "Aktivtausch: Forderungen sinken, das Bankguthaben steigt, die Bilanzsumme bleibt gleich",
+    "exp": "Beide betroffenen Posten stehen auf der Aktivseite. Ein Posten nimmt ab, der andere um denselben Betrag zu. Ertrag entsteht dabei nicht, denn der Umsatz wurde schon mit der Rechnung gebucht."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine 16-jährige Auszubildende beginnt in einem IT-Betrieb. Wie oft muss sie nach dem Jugendarbeitsschutzgesetz über Unfall- und Gesundheitsgefahren unterwiesen werden?",
+    "options": [
+      "Vor Beginn der Beschäftigung und danach mindestens halbjährlich",
+      "Nur einmal zu Beginn der gesamten Ausbildungszeit",
+      "Einmal jährlich wie alle erwachsenen Beschäftigten",
+      "Nur nach einem Unfall oder auf eigenen Wunsch"
+    ],
+    "a": "Vor Beginn der Beschäftigung und danach mindestens halbjährlich",
+    "exp": "Für Jugendliche schreibt das Jugendarbeitsschutzgesetz eine Unterweisung vor Beginn und dann mindestens alle sechs Monate vor. Für Erwachsene verlangt das Arbeitsschutzrecht regelmäßige, in der Praxis mindestens jährliche Unterweisungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Ehefrau eines Netzwerktechnikers hat kein eigenes Einkommen, das Paar hat ein Kind. Beide Angehörige haben Arztbesuche, für die der Techniker keine zusätzlichen Beiträge zahlt. Warum?",
+    "options": [
+      "Sie sind über die beitragsfreie Familienversicherung der gesetzlichen Krankenkasse versichert",
+      "Der Arbeitgeber zahlt für Angehörige automatisch einen eigenen Beitrag",
+      "Angehörige sind grundsätzlich über die Rentenversicherung abgesichert",
+      "Arztbesuche von Angehörigen übernimmt immer das Sozialamt"
+    ],
+    "a": "Sie sind über die beitragsfreie Familienversicherung der gesetzlichen Krankenkasse versichert",
+    "exp": "In der gesetzlichen Kranken- und Pflegeversicherung sind Ehepartner und Kinder ohne oder mit geringem eigenen Einkommen beitragsfrei mitversichert. In der privaten Krankenversicherung braucht dagegen jede Person einen eigenen Vertrag."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Admin lehnt eine Gehaltserhöhung ab, weil er „in eine höhere Steuerstufe rutscht und dann netto weniger hat“. Was stimmt?",
+    "options": [
+      "Nur der zusätzliche Betrag wird mit dem höheren Grenzsteuersatz belastet, netto bleibt mehr",
+      "Das gesamte Einkommen wird dann mit dem höheren Satz besteuert",
+      "Ab einer Grenze entfällt der Grundfreibetrag für das ganze Jahr",
+      "Er hat recht, deshalb lehnen viele Arbeitnehmer Erhöhungen ab"
+    ],
+    "a": "Nur der zusätzliche Betrag wird mit dem höheren Grenzsteuersatz belastet, netto bleibt mehr",
+    "exp": "Der Einkommensteuertarif ist progressiv: Der Grenzsteuersatz steigt mit dem Einkommen, gilt aber nur für jeden weiteren Euro. Der Durchschnittssteuersatz steigt langsamer, eine Gehaltserhöhung führt daher immer zu mehr Netto."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker erklärt einer Kundin am Telefon, ihr „DHCP-Lease sei abgelaufen“. Sie versteht nichts und macht nichts. Wo liegt nach dem Sender-Empfänger-Modell das Problem?",
+    "options": [
+      "Der Sender codiert mit Begriffen, die nicht zum Zeichenvorrat der Empfängerin gehören",
+      "Der Übertragungskanal Telefon ist für technische Inhalte ungeeignet",
+      "Die Empfängerin hat die Nachricht absichtlich falsch decodiert",
+      "Der Sender hat die Beziehungsebene der Nachricht vergessen"
+    ],
+    "a": "Der Sender codiert mit Begriffen, die nicht zum Zeichenvorrat der Empfängerin gehören",
+    "exp": "Nach dem Sender-Empfänger-Modell gelingt Kommunikation nur mit einem gemeinsamen Zeichenvorrat. Fachbegriffe muss der Sender in Worte übersetzen, die der Empfänger kennt, und durch Rückfragen das Verständnis prüfen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In den Teammeetings fallen sich zwei Kollegen ständig ins Wort. Die Teamleiterin sagt: „Lasst uns kurz darüber sprechen, wie wir hier miteinander reden.“ Wie nennt man das?",
+    "options": [
+      "Metakommunikation",
+      "Aktives Zuhören",
+      "Ich-Botschaft",
+      "Paraphrasieren"
+    ],
+    "a": "Metakommunikation",
+    "exp": "Metakommunikation ist die Kommunikation über die Kommunikation. Sie macht Störungen im Umgang miteinander zum Thema und hilft, gemeinsame Gesprächsregeln festzulegen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde sagt nach Ihrer Präsentation „Ja, klingt gut“, schaut dabei aber auf sein Handy und lehnt sich zurück. Wie reagieren Sie am besten?",
+    "options": [
+      "Den Widerspruch zwischen Worten und Körpersprache bemerken und offen nachfragen",
+      "Die Zustimmung als verbindlich werten und den Auftrag vorbereiten",
+      "Die Präsentation sofort von Anfang an noch einmal wiederholen",
+      "Das Gespräch beenden, weil der Kunde offensichtlich kein Interesse hat"
+    ],
+    "a": "Den Widerspruch zwischen Worten und Körpersprache bemerken und offen nachfragen",
+    "exp": "Passen verbale und nonverbale Signale nicht zusammen, ist die Botschaft nicht stimmig. Offene Fragen wie „Welche Punkte sind für Sie noch offen?“ klären, was der Kunde wirklich denkt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Teams streiten, wer die Rufbereitschaft am Wochenende übernimmt. Man einigt sich, dass jedes Team jedes zweite Wochenende übernimmt, obwohl keines damit ganz zufrieden ist. Welche Art der Konfliktlösung ist das?",
+    "options": [
+      "Ein Kompromiss",
+      "Ein Konsens",
+      "Eine Eskalation",
+      "Eine Delegation"
+    ],
+    "a": "Ein Kompromiss",
+    "exp": "Beim Kompromiss geben beide Seiten einen Teil ihrer Forderung auf und treffen sich in der Mitte. Beim Konsens finden die Parteien dagegen eine Lösung, die alle voll mittragen, oft durch kreative neue Optionen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Frank betreibt allein einen kleinen PC-Reparaturservice ohne kaufmännische Buchhaltung und ist nicht im Handelsregister eingetragen. Er möchte seiner Bürokraft Prokura erteilen. Geht das?",
+    "options": [
+      "Nein, als Kleingewerbetreibender ist er kein Kaufmann und kann keine Prokura erteilen",
+      "Ja, jeder Gewerbetreibende darf seinen Mitarbeitern Prokura erteilen",
+      "Ja, aber die Prokura gilt dann nur für Geschäfte unter 5.000 Euro",
+      "Nein, Prokura darf nur eine Kapitalgesellschaft wie eine GmbH erteilen"
+    ],
+    "a": "Nein, als Kleingewerbetreibender ist er kein Kaufmann und kann keine Prokura erteilen",
+    "exp": "Prokura kann nach § 48 HGB nur ein Kaufmann erteilen. Ein Kleingewerbetreibender wird erst durch freiwillige Eintragung ins Handelsregister Kaufmann (Kannkaufmann), bis dahin kann er nur eine allgemeine Vollmacht nach BGB erteilen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus überarbeitet Logo, Farben, E-Mail-Signaturen und den Umgang der Techniker mit Kunden, damit es überall gleich wiedererkannt wird. Wie heißt das Gesamtkonzept?",
+    "options": [
+      "Corporate Identity",
+      "Corporate Governance",
+      "Customer Relationship Management",
+      "Compliance-Management"
+    ],
+    "a": "Corporate Identity",
+    "exp": "Die Corporate Identity ist das einheitliche Selbstbild eines Unternehmens. Sie umfasst das Erscheinungsbild (Corporate Design), die Kommunikation (Corporate Communication) und das Verhalten (Corporate Behaviour)."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Jeder Mitarbeiter hat höchstens einen Firmenwagen, und jeder Firmenwagen ist genau einem Mitarbeiter zugeordnet. Welche Kardinalität hat die Beziehung?",
+    "options": [
+      "1:1-Beziehung",
+      "1:n-Beziehung",
+      "n:m-Beziehung",
+      "Rekursive Beziehung"
+    ],
+    "a": "1:1-Beziehung",
+    "exp": "Auf beiden Seiten gibt es höchstens einen Partner. Da nicht jeder Mitarbeiter einen Wagen hat, spricht man genauer von 1:c. Umgesetzt wird die Beziehung mit einem Fremdschlüssel mit UNIQUE-Bedingung, z.B. mitarbeiter_id in der Tabelle firmenwagen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In einem ER-Diagramm nach Chen steht zwischen den Rechtecken Kunde und Artikel eine Raute mit der Beschriftung bestellt. Wofür steht die Raute?",
+    "options": [
+      "Für einen Beziehungstyp zwischen den Entitätstypen",
+      "Für einen Entitätstyp mit eigenem Schlüssel",
+      "Für ein Attribut, das mehrere Werte haben kann",
+      "Für den gemeinsamen Primärschlüssel beider"
+    ],
+    "a": "Für einen Beziehungstyp zwischen den Entitätstypen",
+    "exp": "In der Chen-Notation stehen Rechtecke für Entitätstypen, Rauten für Beziehungen und Ellipsen für Attribute. An den Linien stehen die Kardinalitäten, z.B. n und m. Unterstrichene Attribute kennzeichnen Schlüssel."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In der Tabelle mitarbeiter sind sowohl personalnr als auch sozialversicherungsnr eindeutig. Wie nennt man beide Spalten, bevor eine davon zum Primärschlüssel gewählt wird?",
+    "options": [
+      "Schlüsselkandidaten",
+      "Fremdschlüssel",
+      "Sekundärindizes",
+      "Surrogatschlüssel"
+    ],
+    "a": "Schlüsselkandidaten",
+    "exp": "Ein Schlüsselkandidat ist eine minimale Spalte oder Spaltenkombination, die jede Zeile eindeutig kennzeichnet. Einer wird Primärschlüssel, die anderen heißen Alternativschlüssel und erhalten meist eine UNIQUE-Bedingung. Sensible Daten wie die Sozialversicherungsnummer eignen sich schlecht als Primärschlüssel."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Tabelle mitarbeiter hat die Spalten personalnr (Primärschlüssel), name, abteilung_nr und abteilung_name. Welche Normalform ist verletzt?",
+    "options": [
+      "Die 3. NF, weil abteilung_name über abteilung_nr vom Schlüssel abhängt",
+      "Die 1. NF, weil abteilung_name mehrere Werte in einem Feld enthält",
+      "Die 2. NF, weil der Primärschlüssel aus nur einer Spalte besteht",
+      "Keine, weil jede Spalte der Tabelle genau einen Wert enthält"
+    ],
+    "a": "Die 3. NF, weil abteilung_name über abteilung_nr vom Schlüssel abhängt",
+    "exp": "abteilung_name hängt nicht direkt von der Personalnummer ab, sondern von abteilung_nr. Diese transitive Abhängigkeit verletzt die 3. Normalform. Man lagert die Abteilungen in eine eigene Tabelle aus, mitarbeiter behält nur abteilung_nr als Fremdschlüssel."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In der Tabelle schulungen stehen Kursname, Termin und Raum zusammen mit dem jeweiligen Teilnehmer. Meldet sich der einzige Teilnehmer eines Kurses ab und wird seine Zeile gelöscht, ist auch der Kurs verschwunden. Wie heißt das?",
+    "options": [
+      "Löschanomalie",
+      "Einfügeanomalie",
+      "Änderungsanomalie",
+      "Dirty Read"
+    ],
+    "a": "Löschanomalie",
+    "exp": "Werden mit einem Datensatz ungewollt andere Informationen gelöscht, spricht man von einer Löschanomalie. Ursache ist, dass Kurse und Teilnahmen in einer Tabelle stehen. Nach der Normalisierung gibt es die Tabellen kurs, teilnehmer und eine Zwischentabelle anmeldung."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Der Fremdschlüssel bestellungen.kunde_id ist mit ON DELETE CASCADE angelegt. Was passiert beim Löschen eines Kunden, der Bestellungen hat?",
+    "options": [
+      "Seine Bestellungen werden automatisch mitgelöscht",
+      "Das Löschen wird mit einer Fehlermeldung abgelehnt",
+      "Bei seinen Bestellungen wird kunde_id auf NULL gesetzt",
+      "Seine Bestellungen gehen an einen Standardkunden"
+    ],
+    "a": "Seine Bestellungen werden automatisch mitgelöscht",
+    "exp": "CASCADE überträgt das Löschen auf alle abhängigen Datensätze. Das ist bequem, kann aber versehentlich große Datenmengen entfernen. ON DELETE SET NULL setzt den Fremdschlüssel auf NULL, RESTRICT oder NO ACTION lehnen das Löschen ab."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In einem Data Warehouse für Umsatzberichte werden Tabellen bewusst nicht vollständig normalisiert. Was ist der Grund?",
+    "options": [
+      "Auswertungen laufen ohne viele JOINs schneller",
+      "Redundante Daten brauchen weniger Speicherplatz",
+      "Anomalien können dort grundsätzlich nicht auftreten",
+      "Normalisierte Tabellen erlauben keine Summenbildung"
+    ],
+    "a": "Auswertungen laufen ohne viele JOINs schneller",
+    "exp": "Normalisierung vermeidet Anomalien beim Ändern, erfordert für Auswertungen aber viele JOINs. Ein Data Warehouse wird überwiegend gelesen und nur über gesteuerte Ladeprozesse befüllt. Deshalb nimmt man Redundanz in Kauf, z.B. im Sternschema mit Fakten- und Dimensionstabellen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Für die Postleitzahl in der Tabelle kunden wählt ein Kollege den Datentyp INT. Warum ist CHAR(5) besser?",
+    "options": [
+      "Führende Nullen wie in 01067 gingen bei INT verloren",
+      "INT kann keine fünfstelligen Zahlen speichern",
+      "CHAR(5) wird grundsätzlich schneller durchsucht",
+      "Mit INT ist keine Sortierung nach PLZ möglich"
+    ],
+    "a": "Führende Nullen wie in 01067 gingen bei INT verloren",
+    "exp": "Postleitzahlen sind Kennungen, mit denen nicht gerechnet wird. Als Zahl würde aus 01067 (Dresden) die 1067. Als Zeichenkette bleibt die Schreibweise erhalten. Das gilt ebenso für Telefonnummern und Artikelnummern mit führenden Nullen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Sie suchen in der Tabelle benutzer alle Konten, deren E-Mail-Adresse auf @firma.de endet. Welche Bedingung passt?",
+    "options": [
+      "WHERE email LIKE '%@firma.de'",
+      "WHERE email = '*@firma.de'",
+      "WHERE email LIKE '@firma.de%'",
+      "WHERE email IN ('%@firma.de')"
+    ],
+    "a": "WHERE email LIKE '%@firma.de'",
+    "exp": "LIKE vergleicht mit einem Muster. % steht für beliebig viele Zeichen, _ für genau ein Zeichen. Das Sternchen ist in SQL kein Platzhalter, und = vergleicht nur exakt. '@firma.de%' würde Adressen finden, die mit @firma.de beginnen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Abfrage SELECT firma FROM lieferanten WHERE ort = Bonn; bricht mit dem Fehler Unknown column 'Bonn' ab. Was ist falsch?",
+    "options": [
+      "Der Text Bonn muss in einfachen Hochkommas stehen",
+      "Der Spaltenname ort muss in Hochkommas stehen",
+      "Ortsnamen dürfen in WHERE nicht vorkommen",
+      "Statt = muss bei Texten immer LIKE stehen"
+    ],
+    "a": "Der Text Bonn muss in einfachen Hochkommas stehen",
+    "exp": "Ohne Hochkommas hält die Datenbank Bonn für einen Spaltennamen. Zeichenketten und Datumswerte stehen in SQL in einfachen Hochkommas: WHERE ort = 'Bonn'. In Anwendungen setzt man solche Werte nicht selbst ein, sondern übergibt sie als Parameter."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Gesucht sind Kunden aus Köln oder Bonn mit mehr als 10.000 Euro Umsatz. Ein Kollege schreibt WHERE ort = 'Köln' OR ort = 'Bonn' AND umsatz > 10000. Warum stimmt das Ergebnis nicht?",
+    "options": [
+      "AND bindet stärker als OR, es fehlen Klammern um die Orte",
+      "OR darf nur zwischen Zahlenwerten verwendet werden",
+      "Die Bedingung umsatz > 10000 muss in HAVING stehen",
+      "Zwei Bedingungen auf dieselbe Spalte schließen sich aus"
+    ],
+    "a": "AND bindet stärker als OR, es fehlen Klammern um die Orte",
+    "exp": "Die Datenbank wertet AND vor OR aus. Die Bedingung lautet damit: alle Kölner Kunden oder Bonner Kunden mit mehr als 10.000 Euro. Richtig ist WHERE (ort = 'Köln' OR ort = 'Bonn') AND umsatz > 10000 oder kürzer mit ort IN ('Köln', 'Bonn')."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In der Tabelle benutzer ist id der Primärschlüssel. Zusätzlich darf jeder Anmeldename nur einmal vorkommen. Wie stellen Sie das in der Datenbank sicher?",
+    "options": [
+      "Mit einer UNIQUE-Bedingung auf der Spalte anmeldename",
+      "Mit einem zweiten PRIMARY KEY auf der Spalte anmeldename",
+      "Mit einer CHECK-Bedingung anmeldename IS NOT NULL",
+      "Mit einem FOREIGN KEY von anmeldename auf die Spalte id"
+    ],
+    "a": "Mit einer UNIQUE-Bedingung auf der Spalte anmeldename",
+    "exp": "Eine Tabelle hat genau einen Primärschlüssel, weitere eindeutige Spalten sichert man mit UNIQUE, z.B. ALTER TABLE benutzer ADD CONSTRAINT uq_login UNIQUE (anmeldename);. Die Datenbank lehnt dann doppelte Werte ab, egal welche Anwendung schreibt. Intern legt sie dafür einen Index an."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In der Tabelle lagerbestand darf die Spalte menge nie negativ werden, auch wenn eine Anwendung fehlerhaft ist. Welche Bedingung legen Sie fest?",
+    "options": [
+      "CHECK (menge >= 0)",
+      "DEFAULT (menge >= 0)",
+      "UNIQUE (menge >= 0)",
+      "NOT NULL (menge >= 0)"
+    ],
+    "a": "CHECK (menge >= 0)",
+    "exp": "Eine CHECK-Bedingung prüft bei jedem INSERT und UPDATE eine Regel. Verletzt ein Wert sie, lehnt die Datenbank die Änderung ab. DEFAULT legt nur einen Vorgabewert fest, NOT NULL verbietet leere Werte. MySQL vor Version 8.0.16 hat CHECK ignoriert."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Der Datenbankbenutzer praktikant hat das Recht INSERT auf der Tabelle kunden. Nach dem Praktikum soll er es verlieren. Welche Anweisung ist richtig?",
+    "options": [
+      "REVOKE INSERT ON kunden FROM praktikant;",
+      "DELETE INSERT ON kunden FROM praktikant;",
+      "GRANT NO INSERT ON kunden TO praktikant;",
+      "DROP INSERT ON kunden FOR praktikant;"
+    ],
+    "a": "REVOKE INSERT ON kunden FROM praktikant;",
+    "exp": "REVOKE entzieht Rechte, die mit GRANT vergeben wurden. Endet das Praktikum ganz, sperrt oder löscht man das Konto am besten vollständig, z.B. mit DROP USER. Rechte, die über eine Rolle kommen, entzieht man, indem man die Rolle entfernt."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Kollege schlägt vor, auf jede Spalte der Tabelle bestellungen einen Index zu legen, damit alles schneller wird. Was spricht dagegen?",
+    "options": [
+      "Jeder Index bremst INSERT, UPDATE und DELETE und braucht Speicher",
+      "Eine Tabelle darf höchstens einen einzigen Index haben",
+      "Indizes machen SELECT-Abfragen grundsätzlich langsamer",
+      "Indizes verhindern das Anlegen von Fremdschlüsseln"
+    ],
+    "a": "Jeder Index bremst INSERT, UPDATE und DELETE und braucht Speicher",
+    "exp": "Bei jeder Änderung muss die Datenbank alle betroffenen Indizes mitpflegen. Viele Indizes bremsen deshalb schreibende Zugriffe und belegen Platz. Sinnvoll sind Indizes auf Spalten, die oft in WHERE, JOIN oder ORDER BY vorkommen und viele verschiedene Werte haben."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Preisliste berechnet SELECT artikel, preis + versandkosten AS gesamt FROM artikel;. Bei Artikeln ohne eingetragene Versandkosten ist gesamt leer. Wie beheben Sie das?",
+    "options": [
+      "Mit COALESCE(versandkosten, 0), das NULL durch 0 ersetzt",
+      "Mit der Bedingung WHERE versandkosten IS NULL",
+      "Mit DISTINCT, das die leeren Zeilen herausfiltert",
+      "Mit ORDER BY gesamt, das NULL-Werte nach hinten stellt"
+    ],
+    "a": "Mit COALESCE(versandkosten, 0), das NULL durch 0 ersetzt",
+    "exp": "Jede Rechnung mit NULL ergibt wieder NULL, weil ein unbekannter Wert plus eine Zahl unbekannt bleibt. COALESCE liefert den ersten Wert, der nicht NULL ist, hier also 0. Besser ist oft, schon beim Anlegen der Spalte NOT NULL DEFAULT 0 festzulegen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Für eine Karte braucht der Vertrieb eine Liste aller Orte, in denen Kunden wohnen, jeden Ort nur einmal. Welche Abfrage passt?",
+    "options": [
+      "SELECT DISTINCT ort FROM kunden;",
+      "SELECT ALL ort FROM kunden ORDER BY ort;",
+      "SELECT ort FROM kunden WHERE ort IS UNIQUE;",
+      "SELECT ort, COUNT(*) FROM kunden;"
+    ],
+    "a": "SELECT DISTINCT ort FROM kunden;",
+    "exp": "DISTINCT entfernt doppelte Zeilen aus dem Ergebnis. Dasselbe erreicht SELECT ort FROM kunden GROUP BY ort;. ALL ist die Voreinstellung und behält alle Dubletten, IS UNIQUE gibt es als Bedingung nicht."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Kollege fürchtet, dass die View v_umsatz_2025 genauso viel Speicher belegt wie die zugrunde liegende Tabelle. Was speichert eine normale View tatsächlich?",
+    "options": [
+      "Nur die Abfrage, die Daten liest sie bei jedem Zugriff neu",
+      "Eine vollständige Kopie der Daten vom Zeitpunkt der Erstellung",
+      "Eine komprimierte Kopie der Daten, die nachts aktualisiert wird",
+      "Nur die Indizes der Tabelle, nicht aber die Daten selbst"
+    ],
+    "a": "Nur die Abfrage, die Daten liest sie bei jedem Zugriff neu",
+    "exp": "Eine View ist eine gespeicherte SELECT-Anweisung. Bei jedem Zugriff führt die Datenbank sie auf den aktuellen Tabellendaten aus, deshalb ist das Ergebnis immer aktuell. Nur materialisierte Views speichern das Ergebnis tatsächlich und müssen aktualisiert werden."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Alle Tickets, die vor dem 01.01.2024 erstellt wurden, sollen in die gleich aufgebaute Tabelle tickets_archiv kopiert werden. Welche Anweisung passt?",
+    "options": [
+      "INSERT INTO tickets_archiv SELECT * FROM tickets WHERE erstellt < '2024-01-01';",
+      "INSERT INTO tickets_archiv VALUES (SELECT * FROM tickets) WHERE erstellt < '2024-01-01';",
+      "UPDATE tickets_archiv SET * = tickets.* WHERE erstellt < '2024-01-01';",
+      "SELECT * INTO tickets WHERE erstellt < '2024-01-01' FROM tickets_archiv;"
+    ],
+    "a": "INSERT INTO tickets_archiv SELECT * FROM tickets WHERE erstellt < '2024-01-01';",
+    "exp": "INSERT ... SELECT fügt das Ergebnis einer Abfrage direkt in eine andere Tabelle ein. Die Spalten müssen in Anzahl und Reihenfolge passen, sonst gibt man Spaltenlisten an. Danach löscht man die Originale mit DELETE und derselben Bedingung, am besten in einer Transaktion."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Skript enthält DELETE * FROM sitzungen WHERE letzte_aktivitaet < '2026-01-01';. Die Datenbank meldet einen Syntaxfehler. Wie lautet die Anweisung richtig?",
+    "options": [
+      "DELETE FROM sitzungen WHERE letzte_aktivitaet < '2026-01-01';",
+      "DELETE ALL FROM sitzungen WHERE letzte_aktivitaet < '2026-01-01';",
+      "DROP * FROM sitzungen WHERE letzte_aktivitaet < '2026-01-01';",
+      "DELETE sitzungen.* WHERE letzte_aktivitaet < '2026-01-01';"
+    ],
+    "a": "DELETE FROM sitzungen WHERE letzte_aktivitaet < '2026-01-01';",
+    "exp": "DELETE löscht immer ganze Zeilen, eine Spaltenauswahl wie * gibt es dabei nicht. Die Schreibweise DELETE * stammt aus Microsoft Access. Vor dem Löschen prüft man die Bedingung mit SELECT COUNT(*) und derselben WHERE-Klausel."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Auswertung zählt in einer Transaktion zweimal die offenen Tickets. Dazwischen legt eine andere Transaktion ein neues Ticket an und bestätigt es. Die zweite Zählung liefert einen Treffer mehr. Wie heißt das?",
+    "options": [
+      "Phantom Read",
+      "Dirty Read",
+      "Lost Update",
+      "Deadlock"
+    ],
+    "a": "Phantom Read",
+    "exp": "Tauchen bei wiederholter Abfrage neue Zeilen auf, die eine andere Transaktion eingefügt hat, spricht man von Phantom Read. Beim Non-Repeatable Read ändert sich dagegen der Wert einer bereits gelesenen Zeile. Vollständig verhindert das die Isolationsstufe SERIALIZABLE."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Entwickler will alle Transaktionen der Warenwirtschaft auf die Isolationsstufe SERIALIZABLE stellen, um jede Anomalie auszuschließen. Was ist der Nachteil?",
+    "options": [
+      "Mehr Sperren und Abbrüche, weniger gleichzeitige Zugriffe",
+      "Transaktionen lassen sich nicht mehr per ROLLBACK zurücknehmen",
+      "Die Datenbank schreibt in dieser Stufe kein Transaktionslog",
+      "Fremdschlüssel werden in dieser Stufe nicht mehr geprüft"
+    ],
+    "a": "Mehr Sperren und Abbrüche, weniger gleichzeitige Zugriffe",
+    "exp": "SERIALIZABLE lässt Transaktionen so wirken, als liefen sie nacheinander. Dafür sperrt die Datenbank mehr oder bricht Transaktionen bei Konflikten ab. Bei vielen gleichzeitigen Benutzern sinkt der Durchsatz. Man wählt die Stufe deshalb nur dort, wo sie wirklich nötig ist."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Der nächtliche mysqldump der Shopdatenbank sperrt die Tabellen, Bestellungen hängen dann minutenlang. Alle Tabellen nutzen InnoDB. Welche Option hilft?",
+    "options": [
+      "--single-transaction für einen konsistenten Stand ohne Sperren",
+      "--no-data, damit nur die Tabellenstruktur gesichert wird",
+      "--lock-all-tables, damit die Sicherung schneller endet",
+      "--skip-triggers, damit keine Tabelle gesperrt wird"
+    ],
+    "a": "--single-transaction für einen konsistenten Stand ohne Sperren",
+    "exp": "Mit --single-transaction startet mysqldump eine Transaktion und liest einen konsistenten Schnappschuss, während der Shop weiterschreibt. Das funktioniert nur mit transaktionsfähigen Engines wie InnoDB. Für sehr große Datenbanken ist eine physische Sicherung mit Mariabackup oder XtraBackup schneller."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Nach dem Ausfall des Primärservers wird die Replik zum neuen Primärserver gemacht. Dabei fehlen die Bestellungen der letzten Sekunden vor dem Ausfall. Woran liegt das?",
+    "options": [
+      "Die Replikation lief asynchron, die Replik hinkte hinterher",
+      "Die Replikation lief synchron und hat den Server gebremst",
+      "Die Replik übernimmt nur Änderungen, die älter als eine Minute sind",
+      "Beim Umschalten löscht die Replik offene Bestellungen automatisch"
+    ],
+    "a": "Die Replikation lief asynchron, die Replik hinkte hinterher",
+    "exp": "Bei asynchroner Replikation bestätigt der Primärserver ein COMMIT, bevor die Replik die Änderung hat. Fällt er aus, fehlen die noch nicht übertragenen Transaktionen. Synchrone Replikation wartet auf die Bestätigung der Replik und vermeidet das, verlängert aber jeden Schreibzugriff, besonders über weite Entfernungen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "In einer Anmeldemaske gibt ein Angreifer als Benutzernamen admin'-- und ein beliebiges Passwort ein. Er ist danach als admin angemeldet. Welche Rolle spielen die zwei Bindestriche?",
+    "options": [
+      "Sie leiten einen Kommentar ein, die Passwortprüfung entfällt",
+      "Sie beenden die Datenbankverbindung vor der Passwortprüfung",
+      "Sie verwandeln das Passwortfeld in eine leere Zeichenkette",
+      "Sie schalten die Protokollierung der Anmeldung in der Datenbank ab"
+    ],
+    "a": "Sie leiten einen Kommentar ein, die Passwortprüfung entfällt",
+    "exp": "Die Anwendung baut z.B. WHERE name = 'admin'--' AND passwort = '...' zusammen. Das Hochkomma schließt den Text, -- macht den Rest der Zeile zum Kommentar. Übrig bleibt nur WHERE name = 'admin'. Mit Prepared Statements wäre die Eingabe nur ein ungültiger Benutzername."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Anwendung lässt den Benutzer die Sortierspalte einer Liste wählen. Der Spaltenname soll per Prepared Statement als Parameter übergeben werden, das funktioniert aber nicht. Wie verhindern Sie hier SQL-Injection?",
+    "options": [
+      "Den Wert gegen eine feste Liste erlaubter Spaltennamen prüfen",
+      "Den Spaltennamen einfach in doppelte Anführungszeichen setzen",
+      "Die Eingabe vor dem Einsetzen in Großbuchstaben umwandeln",
+      "Die Sortierung nur für angemeldete Benutzer freischalten"
+    ],
+    "a": "Den Wert gegen eine feste Liste erlaubter Spaltennamen prüfen",
+    "exp": "Platzhalter in Prepared Statements gelten nur für Werte, nicht für Tabellen- oder Spaltennamen und Schlüsselwörter wie ASC. Solche Teile setzt man nur aus einer Positivliste (Whitelist) ein, z.B. name, datum oder preis. Alles andere wird abgelehnt oder durch einen Standardwert ersetzt."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein stark besuchter Webshop verteilt die Last auf mehrere Webserver. Die Sitzungsdaten der Besucher sollen zentral und sehr schnell abrufbar sein. Welche Datenbankart passt am besten?",
+    "options": [
+      "Ein Key-Value-Speicher im Arbeitsspeicher, z.B. Redis",
+      "Eine Graphdatenbank für vernetzte Daten, z.B. Neo4j",
+      "Eine spaltenorientierte Datenbank für Langzeitarchive",
+      "Eine relationale Datenbank mit vielen verknüpften Tabellen"
+    ],
+    "a": "Ein Key-Value-Speicher im Arbeitsspeicher, z.B. Redis",
+    "exp": "Sitzungen werden immer über ihre Sitzungs-ID gelesen und geschrieben. Ein Key-Value-Speicher liefert zu einem Schlüssel sehr schnell den Wert und kann Einträge nach Ablauf automatisch löschen. Komplexe Abfragen oder Beziehungen braucht man dafür nicht."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Ein Händler verkauft Kleidung, Elektronik und Möbel. Jede Produktart hat ganz andere Merkmale, und es kommen ständig neue hinzu. Welche Datenbankart passt für den Produktkatalog gut?",
+    "options": [
+      "Eine Dokumentdatenbank mit flexiblen JSON-Dokumenten",
+      "Ein Key-Value-Speicher ohne Suche in den Werten",
+      "Eine Graphdatenbank mit einem Knoten pro Merkmal",
+      "Eine relationale Tabelle mit einer Spalte je Merkmal"
+    ],
+    "a": "Eine Dokumentdatenbank mit flexiblen JSON-Dokumenten",
+    "exp": "In einer Dokumentdatenbank wie MongoDB kann jedes Dokument eigene Felder haben, ohne dass ein Schema geändert werden muss. Trotzdem lässt sich nach Feldern suchen und indizieren. Eine relationale Tabelle mit einer Spalte pro Merkmal wäre voller NULL-Werte und müsste ständig erweitert werden."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Nutzer melden, dass die Warenwirtschaft zu bestimmten Zeiten träge ist. Wie finden Sie in MariaDB heraus, welche Abfragen die Datenbank ausbremsen?",
+    "options": [
+      "Das Slow Query Log aktivieren und auffällige Abfragen mit EXPLAIN prüfen",
+      "Den Datenbankdienst neu starten und die Dauer des Starts messen",
+      "Das Binärlog abschalten, weil es alle Abfragen verlangsamt",
+      "Die Isolationsstufe auf READ UNCOMMITTED senken und abwarten"
+    ],
+    "a": "Das Slow Query Log aktivieren und auffällige Abfragen mit EXPLAIN prüfen",
+    "exp": "Das Slow Query Log schreibt Abfragen mit, die länger als eine festgelegte Zeit laufen (long_query_time). Mit EXPLAIN sieht man dann, ob Indizes genutzt oder ganze Tabellen gelesen werden. So findet man gezielt fehlende Indizes oder ungünstige Abfragen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Kundendatenbank nutzt transparente Datenverschlüsselung (TDE). Ein Kollege meint, damit sei sie auch gegen SQL-Injection geschützt. Was stimmt?",
+    "options": [
+      "Nein, TDE schützt die Dateien, Abfragen erhalten die Daten entschlüsselt",
+      "Ja, verschlüsselte Tabellen lassen sich per SQL gar nicht auslesen",
+      "Ja, TDE prüft alle Abfragen vorher auf verdächtige Zeichen",
+      "Nein, TDE verschlüsselt ausschließlich das Transaktionslog"
+    ],
+    "a": "Nein, TDE schützt die Dateien, Abfragen erhalten die Daten entschlüsselt",
+    "exp": "TDE verschlüsselt Datendateien und Logs auf dem Datenträger. Das hilft bei gestohlenen Festplatten oder kopierten Dateien. Wer über die Anwendung Abfragen stellt, erhält die Daten wie gewohnt entschlüsselt. Gegen SQL-Injection helfen Prepared Statements und minimale Rechte."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Handelskette teilt das Netz 10.0.0.0/8 in gleich große Subnetze auf. Es werden mindestens 300 Filialnetze gebraucht, jedes soll so viele Hosts wie möglich bieten. Welche Subnetzmaske wählen Sie?",
+    "options": [
+      "255.255.128.0 (/17)",
+      "255.255.0.0 (/16)",
+      "255.255.192.0 (/18)",
+      "255.255.254.0 (/23)"
+    ],
+    "a": "255.255.128.0 (/17)",
+    "exp": "2^8 = 256 Subnetze reichen nicht, 2^9 = 512 reichen. Also 8 + 9 = 17 Bit Netzanteil: 255.255.128.0. Jedes Subnetz hat dann 2^15 - 2 = 32.766 Hosts."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Drucker hat die Adresse 172.19.77.140 mit der Maske 255.255.248.0. Wie viele Bit umfasst der Hostanteil, und wie viele Hosts passen in dieses Netz?",
+    "options": [
+      "11 Bit, 2.046 Hosts",
+      "21 Bit, 2.097.150 Hosts",
+      "3 Bit, 6 Hosts",
+      "11 Bit, 2.048 Hosts"
+    ],
+    "a": "11 Bit, 2.046 Hosts",
+    "exp": "255.255.248.0 entspricht /21 (8 + 8 + 5 Einsen). Hostanteil: 32 - 21 = 11 Bit. 2^11 - 2 = 2.046 Hosts, weil Netz- und Broadcastadresse wegfallen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für eine Firewall-Regel muss die Serveradresse 2a01:4f8:10b:2e41::d0:2 vollständig ausgeschrieben werden. Welche Schreibweise ist richtig?",
+    "options": [
+      "2a01:04f8:010b:2e41:0000:0000:00d0:0002",
+      "2a01:4f80:10b0:2e41:0000:0000:d000:2000",
+      "2a01:04f8:010b:2e41:00d0:0000:0000:0002",
+      "2a01:04f8:010b:2e41:0000:00d0:0000:0002"
+    ],
+    "a": "2a01:04f8:010b:2e41:0000:0000:00d0:0002",
+    "exp": "Vorhanden sind 6 Blöcke, :: steht also für 8 - 6 = 2 Nullblöcke an genau dieser Stelle. Jeder Block wird vorne mit Nullen auf 4 Stellen aufgefüllt (4f8 wird 04f8, d0 wird 00d0): 2a01:04f8:010b:2e41:0000:0000:00d0:0002."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Die Adresse 2001:0db8:0000:0000:00f0:0000:0000:0c01 enthält zwei gleich lange Nullfolgen. Welche Schreibweise ist nach RFC 5952 die empfohlene Kurzform?",
+    "options": [
+      "2001:db8::f0:0:0:c01",
+      "2001:db8:0:0:f0::c01",
+      "2001:db8::f0::c01",
+      "2001:db8::f:0:0:c01"
+    ],
+    "a": "2001:db8::f0:0:0:c01",
+    "exp": "Führende Nullen je Block entfallen (00f0 wird f0, nicht f). :: darf nur einmal vorkommen. Sind zwei Nullfolgen gleich lang, ersetzt :: nach RFC 5952 die erste: 2001:db8::f0:0:0:c01."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Carrier nennt für eine angemietete Glasfaserverbindung eine minimale Round-Trip-Time von 4,2 ms, die nur aus Signallaufzeit besteht. Licht ist in der Faser etwa 200.000 km/s schnell. Wie lang ist die Trasse ungefähr?",
+    "options": [
+      "ca. 420 km",
+      "ca. 840 km",
+      "ca. 630 km",
+      "ca. 1.260 km"
+    ],
+    "a": "ca. 420 km",
+    "exp": "Die RTT umfasst Hin- und Rückweg: 4,2 ms / 2 = 2,1 ms. Strecke: 0,0021 s * 200.000 km/s = 420 km. 300.000 km/s gilt nur im Vakuum."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein SFP sendet mit mindestens -2 dBm, der Empfänger braucht mindestens -18 dBm. Die Strecke ist 18 km lang (0,35 dB/km) und hat 4 Steckverbindungen (je 0,5 dB) und 5 Spleiße (je 0,1 dB). Wie viel Reserve bleibt im Dämpfungsbudget?",
+    "options": [
+      "7,2 dB",
+      "11,2 dB",
+      "9,2 dB",
+      "7,7 dB"
+    ],
+    "a": "7,2 dB",
+    "exp": "Budget: -2 dBm - (-18 dBm) = 16 dB. Verluste: 18 * 0,35 = 6,3 dB, 4 * 0,5 = 2,0 dB, 5 * 0,1 = 0,5 dB, zusammen 8,8 dB. Reserve: 16 - 8,8 = 7,2 dB."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Richtfunkstrecke zwischen zwei Gebäuden arbeitet mit 64-QAM und einer Symbolrate von 56 MBaud. Welche Brutto-Bitrate ergibt sich?",
+    "options": [
+      "336 Mbit/s",
+      "3.584 Mbit/s",
+      "9,3 Mbit/s",
+      "448 Mbit/s"
+    ],
+    "a": "336 Mbit/s",
+    "exp": "64-QAM unterscheidet 64 Zustände, also log2(64) = 6 Bit pro Symbol. Bitrate = Symbolrate * Bits pro Symbol: 56 MBaud * 6 = 336 Mbit/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Monitoring fragt am Uplink eines Switches mit 1 Gbit/s den 32-Bit-Zähler ifInOctets ab (zählt Byte). Nach wie vielen Sekunden läuft der Zähler bei Volllast über?",
+    "options": [
+      "ca. 34,4 s",
+      "ca. 4,3 s",
+      "ca. 17,2 s",
+      "ca. 32,0 s"
+    ],
+    "a": "ca. 34,4 s",
+    "exp": "Der Zähler fasst 2^32 = 4.294.967.296 Byte = 34.359.738.368 Bit. Bei 10^9 bit/s: 34.359.738.368 / 10^9 = 34,4 s. Deshalb nutzt man bei schnellen Schnittstellen die 64-Bit-Zähler (ifHCInOctets)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Firmware-Image mit 18.400.000 Byte wird per HTTP über Ethernet (MTU 1500 Byte) geladen. IPv4- und TCP-Header haben je 20 Byte ohne Optionen. Wie viele TCP-Segmente sind mindestens nötig?",
+    "options": [
+      "12.603 Segmente",
+      "12.267 Segmente",
+      "12.433 Segmente",
+      "12.122 Segmente"
+    ],
+    "a": "12.603 Segmente",
+    "exp": "MSS = MTU - IP-Header - TCP-Header = 1500 - 20 - 20 = 1460 Byte Nutzdaten je Segment. 18.400.000 / 1460 = 12.602,7, aufgerundet 12.603 Segmente."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Zwei Standorte sind per GRE-Tunnel über IPv4 verbunden, die Leitung hat eine MTU von 1500 Byte. GRE mit äußerem IPv4-Header fügt 24 Byte hinzu. Auf welchen Wert setzen Sie das MSS-Clamping für TCP über IPv4?",
+    "options": [
+      "1436 Byte",
+      "1460 Byte",
+      "1476 Byte",
+      "1456 Byte"
+    ],
+    "a": "1436 Byte",
+    "exp": "Tunnel-MTU: 1500 - 24 = 1476 Byte. Davon gehen der innere IPv4-Header (20) und der TCP-Header (20) ab: 1476 - 40 = 1436 Byte."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein altes Backup-Programm nutzt TCP ohne Window Scaling (Fenster 65.535 Byte). Die Leitung zum Rechenzentrum hat 250 Mbit/s und eine RTT von 18 ms. Welcher Durchsatz ist höchstens möglich?",
+    "options": [
+      "ca. 29,1 Mbit/s",
+      "ca. 3,6 Mbit/s",
+      "ca. 58,3 Mbit/s",
+      "ca. 250,0 Mbit/s"
+    ],
+    "a": "ca. 29,1 Mbit/s",
+    "exp": "Pro RTT kann höchstens ein volles Fenster unterwegs sein. 65.535 Byte * 8 = 524.280 Bit. 524.280 Bit / 0,018 s = 29,1 Mbit/s. Die 250 Mbit/s der Leitung werden also nicht erreicht."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Replikation über 1 Gbit/s mit 32 ms RTT soll die Leitung voll auslasten. Das TCP-Fenster ist ohne Skalierung höchstens 65.535 Byte groß. Welchen Window-Scale-Wert (Zweierpotenz) braucht die Verbindung mindestens?",
+    "options": [
+      "Shift-Wert 6 (Faktor 64)",
+      "Shift-Wert 5 (Faktor 32)",
+      "Shift-Wert 9 (Faktor 512)",
+      "Shift-Wert 7 (Faktor 128)"
+    ],
+    "a": "Shift-Wert 6 (Faktor 64)",
+    "exp": "Bandbreite-Verzögerungs-Produkt: 10^9 bit/s * 0,032 s / 8 = 4.000.000 Byte. 4.000.000 / 65.535 = 61,0, also Faktor 2^6 = 64 (2^5 = 32 reicht nicht)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine serielle Verbindung überträgt 7 Datenbit plus 1 Paritätsbit mit gerader Parität. Welches empfangene Byte ist sicher fehlerhaft?",
+    "options": [
+      "1001 0111",
+      "1100 0011",
+      "0101 1010",
+      "0110 0110"
+    ],
+    "a": "1001 0111",
+    "exp": "Bei gerader Parität muss die Anzahl der Einsen im ganzen Byte gerade sein. 1001 0111 hat 5 Einsen, die anderen je 4. Ein Fehler in zwei Bits bliebe allerdings unerkannt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Funkprotokoll nutzt nur die Codewörter 00000, 01011, 10101, 11110. Wie viele Bitfehler je Codewort kann der Empfänger sicher erkennen und wie viele korrigieren?",
+    "options": [
+      "erkennt 2, korrigiert 1 Bitfehler",
+      "erkennt 3, korrigiert 1 Bitfehler",
+      "erkennt 2, korrigiert 2 Bitfehler",
+      "erkennt 3, korrigiert 2 Bitfehler"
+    ],
+    "a": "erkennt 2, korrigiert 1 Bitfehler",
+    "exp": "Die kleinste Hamming-Distanz zwischen zwei Codewörtern ist d = 3 (z.B. 00000 und 01011 unterscheiden sich in 3 Stellen). Erkennbar sind d - 1 = 2, korrigierbar (d - 1) / 2 abgerundet = 1 Fehler."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Für Telefonie über WLAN verlangt der Hersteller einen Signal-Rausch-Abstand von mindestens 25 dB. Am Arbeitsplatz misst die Ausleuchtung -71 dBm Signal und -93 dBm Grundrauschen. Wie ist das Ergebnis?",
+    "options": [
+      "22 dB, zu gering",
+      "164 dB, ausreichend",
+      "22 dB, ausreichend",
+      "1,3 dB, zu gering"
+    ],
+    "a": "22 dB, zu gering",
+    "exp": "SNR = Signal - Rauschen = -71 dBm - (-93 dBm) = 22 dB. Das liegt unter den geforderten 25 dB. Abhilfe: Access Point näher oder zusätzlich planen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access Point für 2,4 GHz sendet mit 14 dBm an eine Richtantenne mit 8 dBi, Kabel und Stecker dämpfen 1 dB. Erlaubt sind in Deutschland 100 mW (20 dBm) EIRP. Wie ist die Lage?",
+    "options": [
+      "21 dBm (ca. 126 mW), zu hoch",
+      "23 dBm (ca. 200 mW), zu hoch",
+      "21 dBm (ca. 21 mW), zulässig",
+      "7 dBm (ca. 5 mW), zulässig"
+    ],
+    "a": "21 dBm (ca. 126 mW), zu hoch",
+    "exp": "EIRP = Sendeleistung + Antennengewinn - Kabeldämpfung = 14 + 8 - 1 = 21 dBm. 21 dBm = 10^2,1 mW = ca. 126 mW, also über 100 mW. Die Sendeleistung muss um mindestens 1 dB sinken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Access-Switch hat 24 Ports mit 2,5 Gbit/s und 4 Uplinks mit 25 Gbit/s. Welche Switching-Kapazität braucht er, um blockierungsfrei im Vollduplex zu arbeiten?",
+    "options": [
+      "320 Gbit/s",
+      "160 Gbit/s",
+      "640 Gbit/s",
+      "220 Gbit/s"
+    ],
+    "a": "320 Gbit/s",
+    "exp": "Summe aller Ports: 24 * 2,5 + 4 * 25 = 160 Gbit/s. Vollduplex heißt Senden und Empfangen gleichzeitig: 160 * 2 = 320 Gbit/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Firewall soll an einem 10-Gbit/s-Port auch bei kleinsten Ethernet-Frames (64 Byte) Line Rate schaffen. Präambel (8 Byte) und Interframe Gap (12 Byte) belegen die Leitung zusätzlich. Wie viele Pakete pro Sekunde sind das?",
+    "options": [
+      "ca. 14,88 Mio. Pakete/s",
+      "ca. 19,53 Mio. Pakete/s",
+      "ca. 16,45 Mio. Pakete/s",
+      "ca. 0,81 Mio. Pakete/s"
+    ],
+    "a": "ca. 14,88 Mio. Pakete/s",
+    "exp": "Je Frame belegt die Leitung 64 + 8 + 12 = 84 Byte = 672 Bit. 10^10 bit/s / 672 Bit = ca. 14,88 Mio. Pakete/s."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Router hat zwei LAN-Schnittstellen. An der ersten hängt Switch A mit 10 PCs. An der zweiten hängt Switch B mit 5 PCs, an einem weiteren Port von Switch B ein Hub mit 4 PCs. Es gibt keine VLANs. Wie viele Domänen entstehen?",
+    "options": [
+      "Kollisionsdomänen: 18, Broadcastdomänen: 2",
+      "Kollisionsdomänen: 21, Broadcastdomänen: 2",
+      "Kollisionsdomänen: 16, Broadcastdomänen: 2",
+      "Kollisionsdomänen: 18, Broadcastdomänen: 1"
+    ],
+    "a": "Kollisionsdomänen: 18, Broadcastdomänen: 2",
+    "exp": "Jeder Switchport ist eine eigene Kollisionsdomäne: Switch A 10 PCs + 1 Uplink = 11, Switch B 5 PCs + 1 Hub-Port + 1 Uplink = 7. Der Hub mit seinen PCs bildet nur eine Domäne. Summe 18. Jede Routerschnittstelle begrenzt eine Broadcastdomäne: 2."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sechs Pings zur Telefonanlage der Zentrale zeigen nacheinander 31, 35, 30, 38, 34, 36 ms. Wie groß ist der Jitter als mittlere Abweichung aufeinanderfolgender Laufzeiten?",
+    "options": [
+      "4,6 ms",
+      "8,0 ms",
+      "34,0 ms",
+      "2,3 ms"
+    ],
+    "a": "4,6 ms",
+    "exp": "Differenzen der Nachbarwerte: 4, 5, 8, 4, 2 ms. Summe 23 ms, geteilt durch 5 Differenzen = 4,6 ms. Die mittlere Laufzeit (34,0 ms) ist die Latenz, nicht der Jitter."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Prozessor findet 94 % der Daten im Cache (Zugriff 3 ns). Bei einem Fehlzugriff dauert der Zugriff insgesamt 70 ns. Wie groß ist die mittlere Zugriffszeit?",
+    "options": [
+      "ca. 7,0 ns",
+      "ca. 36,5 ns",
+      "ca. 66,0 ns",
+      "ca. 4,2 ns"
+    ],
+    "a": "ca. 7,0 ns",
+    "exp": "Gewichtetes Mittel: 0,94 * 3 ns + 0,06 * 70 ns = 2,82 + 4,20 = 7,02 ns."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Storage-Controller liefert Daten aus dem SSD-Cache in 0,2 ms, von den Festplatten in 8,2 ms. Im Mittel sollen es höchstens 0,6 ms sein. Welche Cache-Trefferquote ist mindestens nötig?",
+    "options": [
+      "95,0 %",
+      "92,7 %",
+      "97,6 %",
+      "5,0 %"
+    ],
+    "a": "95,0 %",
+    "exp": "Ansatz: h * 0,2 + (1 - h) * 8,2 = 0,6. Umgestellt: h = (8,2 - 0,6) / (8,2 - 0,2) = 7,6 / 8,0 = 95,0 %."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Serverprozessor hat 12 Kerne mit 3,6 GHz und führt je Kern und Takt im Mittel 4 Befehle aus. Wie viele Befehle schafft er theoretisch pro Sekunde?",
+    "options": [
+      "172,8 Mrd. Befehle/s",
+      "14,4 Mrd. Befehle/s",
+      "43,2 Mrd. Befehle/s",
+      "10,8 Mrd. Befehle/s"
+    ],
+    "a": "172,8 Mrd. Befehle/s",
+    "exp": "Takte je Kern: 3,6 * 10^9 pro Sekunde. 3,6 Mrd. * 4 Befehle * 12 Kerne = 172,8 Mrd. Befehle/s. In der Praxis bremsen Speicherzugriffe diesen Wert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Batchjob führt 7,2 Mrd. Befehle aus. Im Mittel braucht ein Befehl 1,5 Takte (CPI), die CPU läuft mit 2,4 GHz auf einem Kern. Wie lange rechnet der Job?",
+    "options": [
+      "4,5 s",
+      "3,0 s",
+      "2,0 s",
+      "0,5 s"
+    ],
+    "a": "4,5 s",
+    "exp": "Benötigte Takte: 7,2 Mrd. * 1,5 = 10,8 Mrd. Takte. Bei 2,4 Mrd. Takten pro Sekunde: 10,8 / 2,4 = 4,5 s."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Renderjob ist zu 85 % parallelisierbar, der Rest läuft nur auf einem Kern. Er wird von einem auf 16 Kerne verteilt. Welche Beschleunigung ist nach Amdahl höchstens zu erwarten?",
+    "options": [
+      "ca. 4,9-fach",
+      "ca. 16,0-fach",
+      "ca. 13,6-fach",
+      "ca. 6,7-fach"
+    ],
+    "a": "ca. 4,9-fach",
+    "exp": "Speedup = 1 / ((1 - p) + p / n) = 1 / (0,15 + 0,85 / 16) = 1 / 0,2031 = 4,92. Der serielle Anteil begrenzt selbst mit unendlich vielen Kernen auf 1 / 0,15 = 6,7."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Messwertregister enthält 16 Bit im Zweierkomplement. Das Diagnosetool zeigt den Inhalt 0xFF9C. Welchen Dezimalwert hat das Register?",
+    "options": [
+      "-100",
+      "65.436",
+      "-99",
+      "156"
+    ],
+    "a": "-100",
+    "exp": "Das höchste Bit ist 1, die Zahl ist also negativ. Invertieren ergibt 0x0063 = 99, plus 1 = 100. Der Wert ist -100. Ohne Vorzeichen gelesen wären es 65.436."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Programm addiert in einem vorzeichenbehafteten 8-Bit-Register (Zweierkomplement) die Werte 100 und 60. Welcher Wert steht danach im Register?",
+    "options": [
+      "-96",
+      "160",
+      "32",
+      "96"
+    ],
+    "a": "-96",
+    "exp": "100 + 60 = 160 = 1010 0000 binär. Das höchste Bit ist gesetzt, im Zweierkomplement gilt der Wert daher als 160 - 256 = -96. Der Wertebereich -128 bis 127 wurde überschritten (Überlauf)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Analog-Digital-Wandler liefert Messwerte als 12-Bit-Zahl im Zweierkomplement. Welcher Wertebereich ist darstellbar?",
+    "options": [
+      "-2.048 bis 2.047",
+      "-2.047 bis 2.047",
+      "0 bis 4.095",
+      "-2.048 bis 2.048"
+    ],
+    "a": "-2.048 bis 2.047",
+    "exp": "Mit 12 Bit gibt es 2^12 = 4.096 Werte. Im Zweierkomplement ist die Hälfte negativ, die Null zählt zur positiven Hälfte: -2^11 = -2.048 bis 2^11 - 1 = 2.047."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem Speicherabbild steht die 32-Bit-Gleitkommazahl (IEEE 754) 0x41A00000 = 0 10000011 0100000 (Rest Nullen). Welchen Wert hat sie?",
+    "options": [
+      "20,0",
+      "4,0",
+      "10,0",
+      "-20,0"
+    ],
+    "a": "20,0",
+    "exp": "Vorzeichen 0 = positiv. Exponent 10000011 = 131, minus Bias 127 = 4. Mantisse mit verstecktem 1-Bit: 1,01 binär = 1,25. Wert: 1,25 * 2^4 = 20,0."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Entwickler prüft einen Hexdump. Wie wird die Zahl -6,5 als 32-Bit-Gleitkommazahl nach IEEE 754 abgelegt?",
+    "options": [
+      "0xC0D00000",
+      "0x40D00000",
+      "0xC1500000",
+      "0xC0C00000"
+    ],
+    "a": "0xC0D00000",
+    "exp": "6,5 = 110,1 binär = 1,101 * 2^2. Vorzeichen 1, Exponent 2 + 127 = 129 = 1000 0001, Mantisse 101 und Nullen. Bitfolge 1 10000001 1010...0 ergibt 0xC0D00000."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Dateisystem begrenzt Dateinamen auf 255 Byte in UTF-8. Wie viele Byte belegt der Name Maßnahmenplan_Übergabe_€.pdf?",
+    "options": [
+      "32 Byte",
+      "28 Byte",
+      "56 Byte",
+      "31 Byte"
+    ],
+    "a": "32 Byte",
+    "exp": "Der Name hat 28 Zeichen. ASCII-Zeichen brauchen 1 Byte, ß und Ü je 2 Byte, das Eurozeichen 3 Byte. 28 + 1 + 1 + 2 = 32 Byte. UTF-16 bräuchte 56 Byte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Skript wandelt Kleinbuchstaben in Großbuchstaben um, indem es vom ASCII-Code einen festen Wert abzieht. 'g' hat den Code 0x67. Welchen Code hat 'G', und welcher Dezimalwert wird abgezogen?",
+    "options": [
+      "0x47, Differenz 32",
+      "0x57, Differenz 16",
+      "0x27, Differenz 64",
+      "0x47, Differenz 20"
+    ],
+    "a": "0x47, Differenz 32",
+    "exp": "Groß- und Kleinbuchstaben liegen in ASCII genau 0x20 auseinander ('A' = 0x41, 'a' = 0x61). 0x67 - 0x20 = 0x47. 0x20 sind dezimal 32, das entspricht Bit 5."
+  },
+  {
+    "cat": "systeme",
+    "q": "In einem RAID 5 aus vier Platten fällt die Platte mit Block D3 aus. Im Stripe stehen D1 = 1011 0010, D2 = 0110 1101 und die Parität P = 1100 1011. Welchen Inhalt hatte D3?",
+    "options": [
+      "0001 0100",
+      "0111 1001",
+      "1101 1111",
+      "1110 1011"
+    ],
+    "a": "0001 0100",
+    "exp": "Die Parität ist das XOR aller Datenblöcke. Also gilt D3 = P XOR D1 XOR D2. P XOR D1 = 0111 1001, XOR D2 = 0001 0100."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Datenbankserver erhält 12 SSDs mit je 3,84 TB im RAID 10 (Spiegelpaare, darüber Striping). Wie groß ist die Nutzkapazität, und wie viele Plattenausfälle verkraftet das Array sicher bzw. im günstigsten Fall?",
+    "options": [
+      "23,04 TB, Ausfälle: sicher 1, bestenfalls 6",
+      "23,04 TB, Ausfälle: sicher 6, bestenfalls 6",
+      "42,24 TB, Ausfälle: sicher 1, bestenfalls 1",
+      "23,04 TB, Ausfälle: sicher 2, bestenfalls 6"
+    ],
+    "a": "23,04 TB, Ausfälle: sicher 1, bestenfalls 6",
+    "exp": "Die Hälfte dient der Spiegelung: 12 / 2 * 3,84 TB = 23,04 TB. Fallen beide Platten eines Spiegelpaars aus, sind Daten verloren. Sicher ist also nur 1 Ausfall, bestenfalls fällt aus jedem der 6 Paare eine Platte aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Controller bietet RAID 1E, das jeden Block versetzt auf zwei benachbarte Platten spiegelt und auch eine ungerade Plattenzahl erlaubt. Welche Nutzkapazität haben 5 Platten mit je 1,92 TB?",
+    "options": [
+      "4,80 TB",
+      "3,84 TB",
+      "7,68 TB",
+      "9,60 TB"
+    ],
+    "a": "4,80 TB",
+    "exp": "Jeder Block liegt zweimal vor, nutzbar ist die Hälfte der Gesamtkapazität: 5 * 1,92 TB / 2 = 4,80 TB. Anders als bei RAID 10 bleibt die fünfte Platte nicht ungenutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Webserver schreibt täglich 1,6 GB Log. logrotate rotiert täglich, behält 14 alte Dateien und komprimiert sie mit gzip auf 12 % der Größe. Die aktuelle Datei bleibt unkomprimiert. Wie viel Platz belegen die Logs höchstens?",
+    "options": [
+      "ca. 4,3 GB",
+      "ca. 22,4 GB",
+      "ca. 2,9 GB",
+      "ca. 21,3 GB"
+    ],
+    "a": "ca. 4,3 GB",
+    "exp": "Alte Dateien: 14 * 1,6 GB * 0,12 = 2,688 GB. Dazu die aktuelle, unkomprimierte Datei mit 1,6 GB: zusammen 4,288 GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Serverraum hat 3 Racks mit je 2,6 kW, dazu 450 W Verlustwärme der USV und 250 W Beleuchtung. Die Klimatisierung soll 20 % Reserve haben (1 W = 3,412 BTU/h). Welche Kühlleistung ist nötig?",
+    "options": [
+      "ca. 34.802 BTU/h",
+      "ca. 29.002 BTU/h",
+      "ca. 31.936 BTU/h",
+      "ca. 2.989 BTU/h"
+    ],
+    "a": "ca. 34.802 BTU/h",
+    "exp": "Wärmelast: 3 * 2.600 W + 450 W + 250 W = 8.500 W. 8.500 W * 3,412 = 29.002 BTU/h, mit 20 % Reserve * 1,2 = 34.802 BTU/h."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Grafikarbeitsplatz soll einen Monitor mit 3840 x 2160 Pixeln, 120 Hz und 10 Bit je Farbkanal (30 Bit je Pixel) betreiben. DisplayPort 1.4 überträgt nutzbar 25,92 Gbit/s. Welche Datenrate braucht das Bild ohne Austastlücken und Kompression?",
+    "options": [
+      "ca. 29,9 Gbit/s, DP 1.4 reicht nicht",
+      "ca. 10,0 Gbit/s, DP 1.4 reicht",
+      "ca. 23,9 Gbit/s, DP 1.4 reicht",
+      "ca. 3,7 Gbit/s, DP 1.4 reicht"
+    ],
+    "a": "ca. 29,9 Gbit/s, DP 1.4 reicht nicht",
+    "exp": "3840 * 2160 Pixel * 120 Bilder/s * 30 Bit = 29.859.840.000 Bit/s = ca. 29,9 Gbit/s. Das liegt über 25,92 Gbit/s. Nötig sind DSC-Kompression oder ein schnellerer Anschluss."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Mikrocontroller auf einer Steuerplatine hat 22 Adressleitungen, jede Adresse spricht genau 1 Byte an. Wie viel Speicher kann er direkt adressieren?",
+    "options": [
+      "4 MiB",
+      "2 MiB",
+      "8 MiB",
+      "512 KiB"
+    ],
+    "a": "4 MiB",
+    "exp": "Mit 22 Leitungen gibt es 2^22 = 4.194.304 Adressen. Je 1 Byte ergibt 4.194.304 Byte = 4 * 2^20 Byte = 4 MiB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine ältere Steuerungssoftware zählt die Betriebszeit in Millisekunden in einem vorzeichenlosen 32-Bit-Zähler. Nach welcher Laufzeit läuft der Zähler über?",
+    "options": [
+      "ca. 49,7 Tage",
+      "ca. 24,9 Tage",
+      "ca. 71,6 Minuten",
+      "ca. 136 Jahre"
+    ],
+    "a": "ca. 49,7 Tage",
+    "exp": "2^32 = 4.294.967.296 ms = 4.294.967 s. Geteilt durch 86.400 s pro Tag ergibt 49,7 Tage. Ein regelmäßiger Neustart oder ein 64-Bit-Zähler vermeidet den Fehler."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Der Vertrieb möchte eine Liste aller Kunden mit ihren Aufträgen. Tabelle kunden (id, name): (1, 'Albers'), (2, 'Brandt'), (3, 'Celik'), (4, 'Dorn'), (5, 'Ehlers'), (6, 'Franke'). Tabelle auftraege (nr, kunde_id): (501, 1), (502, 3), (503, 1), (504, 4), (505, 3), (506, 1), (507, 4). Wie viele Zeilen liefert diese Abfrage? SELECT k.name, a.nr FROM kunden k LEFT JOIN auftraege a ON a.kunde_id = k.id;",
+    "options": [
+      "10 Zeilen",
+      "7 Zeilen",
+      "6 Zeilen",
+      "13 Zeilen"
+    ],
+    "a": "10 Zeilen",
+    "exp": "Der INNER JOIN liefert je Auftrag eine Zeile, also 7. Der LEFT JOIN behält zusätzlich die Kunden ohne Auftrag (Brandt, Ehlers, Franke) mit NULL in nr: 7 + 3 = 10 Zeilen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Das Monitoring soll Konten mit auffällig vielen fehlgeschlagenen Anmeldungen melden. Tabelle anmeldungen (benutzer, ergebnis): ('jkoch', 'fehler'), ('mschulz', 'fehler'), ('lweber', 'ok'), ('tbauer', 'fehler'), ('jkoch', 'fehler'), ('pneu', 'fehler'), ('mschulz', 'fehler'), ('lweber', 'fehler'), ('jkoch', 'ok'), ('tbauer', 'fehler'), ('mschulz', 'fehler'), ('lweber', 'fehler'), ('jkoch', 'fehler'), ('pneu', 'ok'), ('tbauer', 'fehler'), ('mschulz', 'fehler'), ('lweber', 'ok'). Welche Benutzer liefert diese Abfrage? SELECT benutzer FROM anmeldungen WHERE ergebnis = 'fehler' GROUP BY benutzer HAVING COUNT(*) >= 3 ORDER BY benutzer;",
+    "options": [
+      "jkoch, mschulz, tbauer",
+      "mschulz",
+      "jkoch, lweber, mschulz, tbauer",
+      "jkoch, tbauer"
+    ],
+    "a": "jkoch, mschulz, tbauer",
+    "exp": "WHERE filtert zuerst die Fehlversuche, erst danach wird gruppiert. Fehlversuche je Benutzer: jkoch 3, lweber 2, mschulz 4, pneu 1, tbauer 3. HAVING COUNT(*) >= 3 behält jkoch, mschulz, tbauer."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Vor einer Telefonaktion prüft der Innendienst die Tabelle kontakte (name, telefon): ('Arslan', '0431 55012'), ('Böhm', NULL), ('Claus', '0431 55017'), ('Demir', ''), ('Engel', '0431 55020'), ('Fuchs', NULL), ('Gerlach', '0431 55031'), ('Haas', '0431 55033'). Welchen Wert liefert diese Abfrage? SELECT COUNT(*) - COUNT(telefon) FROM kontakte;",
+    "options": [
+      "2",
+      "3",
+      "0",
+      "6"
+    ],
+    "a": "2",
+    "exp": "COUNT(*) zählt alle 8 Zeilen, COUNT(telefon) nur Werte ungleich NULL: 6. Der Leerstring '' ist kein NULL und wird mitgezählt. 8 - 6 = 2."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Für den Telefonplan braucht die IT alle Kombinationen aus Abteilung und Standort. Tabelle mitarbeiter (name, abteilung, standort): ('Koch', 'IT', 'Kiel'), ('Lange', 'Vertrieb', 'Lübeck'), ('Maas', 'IT', 'Kiel'), ('Nowak', 'Vertrieb', 'Kiel'), ('Otto', 'Buchhaltung', 'Kiel'), ('Peters', 'IT', 'Kiel'), ('Quast', 'Vertrieb', 'Lübeck'), ('Rehm', 'Buchhaltung', 'Kiel'), ('Sander', 'Vertrieb', 'Kiel'). Wie viele Zeilen liefert diese Abfrage? SELECT DISTINCT abteilung, standort FROM mitarbeiter;",
+    "options": [
+      "4 Zeilen",
+      "3 Zeilen",
+      "9 Zeilen",
+      "6 Zeilen"
+    ],
+    "a": "4 Zeilen",
+    "exp": "DISTINCT wirkt auf die ganze Zeile, also auf die Kombination beider Spalten. Vorhanden sind Buchhaltung/Kiel, IT/Kiel, Vertrieb/Kiel, Vertrieb/Lübeck, also 4 Zeilen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Für eine RAM-Aufrüstung sucht die IT Server mit überdurchschnittlichem Arbeitsspeicher. Tabelle server (name, ram_gb): ('dc01', 8), ('file01', 16), ('print01', 16), ('app01', 24), ('mail01', 32), ('backup01', 48), ('sql01', 96). Welche Namen liefert diese Abfrage? SELECT name FROM server WHERE ram_gb > (SELECT AVG(ram_gb) FROM server) ORDER BY name;",
+    "options": [
+      "backup01, sql01",
+      "backup01, mail01, sql01",
+      "sql01",
+      "app01, backup01, mail01, sql01"
+    ],
+    "a": "backup01, sql01",
+    "exp": "Die Unterabfrage liefert den Durchschnitt 240 / 7 = 34,29 GB. Größer sind nur backup01, sql01. Der mittlere Wert (Median 24 GB) spielt keine Rolle."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Datenschutzbeauftragte will wissen, wie viele Beschäftigte schon geschult sind. Tabelle personal (id, name): (11, 'Adam'), (12, 'Berger'), (13, 'Cramer'), (14, 'Dietz'), (15, 'Eich'), (16, 'Faber'), (17, 'Graf'), (18, 'Horn'). Tabelle schulungen (mitarbeiter_id, thema): (12, 'Datenschutz'), (15, 'Datenschutz'), (13, 'Brandschutz'), (12, 'Datenschutz'), (15, 'Erste Hilfe'), (17, 'Datenschutz'), (12, 'Brandschutz'). Welchen Wert liefert diese Abfrage? SELECT COUNT(*) FROM personal WHERE id IN (SELECT mitarbeiter_id FROM schulungen WHERE thema = 'Datenschutz');",
+    "options": [
+      "3",
+      "4",
+      "7",
+      "5"
+    ],
+    "a": "3",
+    "exp": "Die Unterabfrage liefert die IDs 12, 15, 12, 17. IN prüft nur, ob eine ID in dieser Liste vorkommt. Die doppelte Schulung von ID 12 zählt deshalb nur einmal: 3 Personen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Buchhaltung prüft offene Posten. Tabelle rechnungen (nr, kunde, betrag): ('R-801', 'Hansen', 1240.0), ('R-802', 'Ivanov', 385.5), ('R-803', 'Jäger', 2980.0), ('R-804', 'Kaya', 760.0), ('R-805', 'Lorenz', 1875.0), ('R-806', 'Mertens', 95.9). Welche Kunden liefert diese Abfrage? SELECT kunde FROM rechnungen ORDER BY betrag DESC LIMIT 2 OFFSET 1;",
+    "options": [
+      "Lorenz, Hansen",
+      "Jäger, Lorenz",
+      "Hansen, Kaya",
+      "Ivanov, Kaya"
+    ],
+    "a": "Lorenz, Hansen",
+    "exp": "ORDER BY betrag DESC sortiert absteigend: Jäger, Lorenz, Hansen, Kaya, Ivanov, Mertens. OFFSET 1 überspringt die erste Zeile, LIMIT 2 gibt die nächsten zwei aus: Lorenz, Hansen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Knappe Kabel sollen teurer werden. Tabelle artikel (nr, kategorie, bestand, preis): (1, 'Kabel', 12, 4.9), (2, 'Kabel', 35, 7.5), (3, 'Adapter', 8, 14.0), (4, 'Kabel', 20, 9.9), (5, 'Kabel', 6, 21.0), (6, 'Adapter', 40, 11.5), (7, 'Kabel', 19, 3.2), (8, 'Maus', 15, 18.0). Wie viele Zeilen ändert diese Anweisung? UPDATE artikel SET preis = preis * 1.05 WHERE kategorie = 'Kabel' AND bestand < 20;",
+    "options": [
+      "3 Zeilen",
+      "7 Zeilen",
+      "4 Zeilen",
+      "5 Zeilen"
+    ],
+    "a": "3 Zeilen",
+    "exp": "Beide Bedingungen müssen gelten: Kategorie Kabel und Bestand kleiner als 20. Das trifft auf die Artikel 1, 5, 7 zu. Artikel 4 mit Bestand 20 fällt nicht darunter."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Alte Sitzungen einer Webanwendung sollen entfernt werden. Tabelle sitzungen (id, benutzer, letzter_zugriff): (1, 'akoch', '2026-08-14'), (2, 'bweiss', '2026-09-03'), (3, 'cfranz', NULL), (4, 'dlink', '2026-07-30'), (5, 'ehuber', '2026-09-01'), (6, 'fmoll', NULL), (7, 'gsauer', '2026-08-31'), (8, 'hbrandt', '2026-09-12'), (9, 'iwolf', '2026-06-18'), (10, 'jpohl', NULL). Wie viele Zeilen enthält die Tabelle nach dieser Anweisung? DELETE FROM sitzungen WHERE letzter_zugriff < '2026-09-01';",
+    "options": [
+      "6 Zeilen",
+      "4 Zeilen",
+      "3 Zeilen",
+      "5 Zeilen"
+    ],
+    "a": "6 Zeilen",
+    "exp": "Gelöscht werden nur Zeilen mit einem Datum vor dem 01.09.2026: 4 Stück. NULL ist mit keinem Datum vergleichbar, die Bedingung ergibt dort UNKNOWN, deshalb bleiben die 3 Zeilen ohne Datum stehen. 10 - 4 = 6."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Kollegin will alle Drucker an Kölner Standorten auflisten. Tabelle drucker (name, standort_id): ('DR-EG', 1), ('DR-OG1', 1), ('DR-Lager', 2), ('DR-Empfang', 3), ('DR-Labor', 4). Tabelle standorte (id, stadt): (1, 'Köln'), (2, 'Bonn'), (3, 'Köln'), (4, 'Aachen'). Wie viele Zeilen liefert ihre Abfrage? SELECT d.name, s.stadt FROM drucker d, standorte s WHERE s.stadt = 'Köln';",
+    "options": [
+      "10 Zeilen",
+      "3 Zeilen",
+      "20 Zeilen",
+      "5 Zeilen"
+    ],
+    "a": "10 Zeilen",
+    "exp": "Die Join-Bedingung d.standort_id = s.id fehlt. Jeder der 5 Drucker wird mit jedem der 2 Kölner Standorte kombiniert: 5 * 2 = 10 Zeilen. Richtig wären 3 Zeilen."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Herr Yilmaz geht in Urlaub. Seine Vertretung fragt, wie viele Störungen andere Personen bearbeiten. Tabelle stoerungen (id, bearbeiter): (1, 'Yilmaz'), (2, NULL), (3, 'Keller'), (4, 'Vogt'), (5, NULL), (6, 'Keller'), (7, 'Yilmaz'), (8, NULL), (9, 'Keller'). Welchen Wert liefert diese Abfrage? SELECT COUNT(*) FROM stoerungen WHERE bearbeiter <> 'Yilmaz';",
+    "options": [
+      "4",
+      "7",
+      "2",
+      "3"
+    ],
+    "a": "4",
+    "exp": "Der Vergleich NULL <> 'Yilmaz' ergibt UNKNOWN, solche Zeilen fallen heraus. Gezählt werden nur Keller und Vogt: 4. Die 3 Störungen ohne Bearbeiter findet nur WHERE bearbeiter IS NULL."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Für einen Hardwaretausch sucht die IT Server bestimmter Baujahre. Tabelle hosts (name, baujahr): ('SRVDC1', 2019), ('SRVFS1', 2020), ('SRVSQL1', 2023), ('WSSRV01', 2021), ('SRVWEB2', 2022), ('NASBACKUP', 2021), ('SRVAPP3', 2024), ('SRVMAIL', 2021), ('CLTSRV2', 2020). Welchen Wert liefert diese Abfrage? SELECT COUNT(*) FROM hosts WHERE name LIKE 'SRV%' AND baujahr BETWEEN 2020 AND 2023;",
+    "options": [
+      "4",
+      "2",
+      "6",
+      "3"
+    ],
+    "a": "4",
+    "exp": "LIKE 'SRV%' verlangt SRV am Anfang des Namens, WSSRV01 und CLTSRV2 fallen weg. BETWEEN schließt beide Grenzen ein, 2020 und 2023 zählen also mit. Treffer: SRVFS1, SRVSQL1, SRVWEB2, SRVMAIL."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Eine Zeiterfassung speichert Buchungen in einer Tabelle mit festen Feldlängen: id BIGINT (8 Byte), mitarbeiter_id INT (4 Byte), projekt_nr CHAR(10) (10 Byte), datum DATE (3 Byte), minuten SMALLINT (2 Byte), bemerkung CHAR(60) (60 Byte). 240 Beschäftigte buchen im Schnitt 6 Mal pro Tag an 220 Arbeitstagen im Jahr. Die Daten bleiben 5 Jahre gespeichert. Für Indizes und Verwaltung kommen angenommen 25 % dazu. Wie viel Speicher braucht die Tabelle (1 MB = 10^6 Byte)?",
+    "options": [
+      "172,3 MB",
+      "137,8 MB",
+      "34,5 MB",
+      "285,8 MB"
+    ],
+    "a": "172,3 MB",
+    "exp": "Zeilenlänge: 87 Byte. Zeilen: 240 * 6 * 220 * 5 = 1.584.000. Rohdaten: 1.584.000 * 87 Byte = 137,8 MB, mit 25 % Zuschlag 172,3 MB."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Die Datenbank eines Webshops schreibt tagsüber (12 Stunden) 5.400 Transaktionen pro Stunde, in den übrigen Stunden 600 pro Stunde. Jede Transaktion erzeugt etwa 6 KB im Transaktionslog. Für Point-in-Time-Recovery werden die Log-Backups 14 Tage aufbewahrt. Wie viel Speicher brauchen sie (1 KB = 1.000 Byte, 1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 6,05 GB",
+      "ca. 10,89 GB",
+      "ca. 5,44 GB",
+      "ca. 0,43 GB"
+    ],
+    "a": "ca. 6,05 GB",
+    "exp": "Pro Tag: (12 * 5.400 + 12 * 600) * 6 KB = 432.000 KB, also 0,432 GB. Für 14 Tage: 0,432 GB * 14 = ca. 6,05 GB."
+  },
+  {
+    "cat": "datenbanken",
+    "q": "Das ER-Modell einer Schulungsverwaltung hat die Entitäten Mitarbeiter, Kurs, Trainer, Raum, Thema. Beziehungen: Mitarbeiter zu Kurs n:m, Trainer zu Kurs 1:n, Raum zu Kurs 1:n, Kurs zu Thema n:m, Trainer zu Thema n:m. Wie viele Tabellen entstehen bei der Umsetzung ins relationale Modell?",
+    "options": [
+      "8 Tabellen",
+      "5 Tabellen",
+      "10 Tabellen",
+      "7 Tabellen"
+    ],
+    "a": "8 Tabellen",
+    "exp": "Jede Entität wird eine Tabelle, jede n:m-Beziehung zusätzlich eine Zwischentabelle mit zwei Fremdschlüsseln: 5 + 3 = 8. 1:n-Beziehungen brauchen keine eigene Tabelle, nur einen Fremdschlüssel auf der n-Seite."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus arbeitet mit 320.000,00 Euro Eigenkapital und 480.000,00 Euro Fremdkapital zu 5 % Zinsen. Das Ergebnis vor Abzug der Fremdkapitalzinsen beträgt 72.000,00 Euro. Wie hoch ist die Eigenkapitalrentabilität?",
+    "options": [
+      "15,0 %",
+      "22,5 %",
+      "6,0 %",
+      "9,0 %"
+    ],
+    "a": "15,0 %",
+    "exp": "Zinsen: 480.000,00 Euro * 5 % = 24.000,00 Euro. Gewinn: 72.000,00 Euro - 24.000,00 Euro = 48.000,00 Euro. Eigenkapitalrentabilität: 48.000,00 Euro / 320.000,00 Euro * 100 = 15,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Händler erzielt 1.800.000,00 Euro Umsatz mit einem Gesamtkapital von 600.000,00 Euro. Die Umsatzrentabilität beträgt 4,5 %. Wie hoch ist der Return on Investment (ROI)?",
+    "options": [
+      "13,5 %",
+      "1,5 %",
+      "4,5 %",
+      "7,5 %"
+    ],
+    "a": "13,5 %",
+    "exp": "Kapitalumschlag: 1.800.000,00 Euro / 600.000,00 Euro = 3. ROI = Umsatzrentabilität * Kapitalumschlag = 4,5 % * 3 = 13,5 %. Probe: Gewinn 81.000,00 Euro / 600.000,00 Euro = 13,5 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Bank verlangt von einem IT-Dienstleister die Liquidität 3. Grades. Bilanzauszug: flüssige Mittel 18.000,00 Euro, kurzfristige Forderungen 42.000,00 Euro, Vorräte 36.000,00 Euro, kurzfristige Verbindlichkeiten 64.000,00 Euro. Welcher Wert ist richtig?",
+    "options": [
+      "150,0 %",
+      "28,1 %",
+      "93,8 %",
+      "121,9 %"
+    ],
+    "a": "150,0 %",
+    "exp": "Liquidität 3. Grades: (flüssige Mittel + Forderungen + Vorräte) / kurzfristige Verbindlichkeiten * 100 = 96.000,00 Euro / 64.000,00 Euro * 100 = 150,0 %. Zum Vergleich: 1. Grad 28,1 %, 2. Grad 93,8 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus lagert SSDs für Kundenrechner. Mindestbestand 30 Stück, Bestellmenge je Lieferung 240 Stück, Jahresverbrauch 2.250 Stück. Wie lange liegt eine SSD durchschnittlich im Lager (360 Tage)?",
+    "options": [
+      "24,0 Tage",
+      "19,2 Tage",
+      "43,2 Tage",
+      "15,0 Tage"
+    ],
+    "a": "24,0 Tage",
+    "exp": "Durchschnittlicher Bestand: 30 + 240 / 2 = 150 Stück. Umschlagshäufigkeit: 2.250 / 150 = 15. Lagerdauer: 360 / 15 = 24,0 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Händler für Netzwerktechnik hat einen Wareneinsatz von 1.080.000,00 Euro im Jahr. Durch Lieferungen auf Abruf sinkt die durchschnittliche Lagerdauer von 40 auf 25 Tage. Wie viel Zinsen spart er pro Jahr bei 5 % Zinssatz (360 Tage)?",
+    "options": [
+      "2.250,00 Euro",
+      "45.000,00 Euro",
+      "3.750,00 Euro",
+      "6.000,00 Euro"
+    ],
+    "a": "2.250,00 Euro",
+    "exp": "Gebundenes Kapital: 1.080.000,00 Euro / 360 * 40 = 120.000,00 Euro vorher, * 25 = 75.000,00 Euro nachher. Frei werden 45.000,00 Euro. Zinsersparnis: 45.000,00 Euro * 5 % = 2.250,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Im Lager liegen 510 Patchkabel, täglich werden 15 verbraucht. Die Lieferzeit beträgt 8 Tage, als Sicherheitsbestand soll der Verbrauch von 6 Tagen bleiben. Nach wie vielen Tagen ist der Meldebestand erreicht?",
+    "options": [
+      "nach 20 Tagen",
+      "nach 26 Tagen",
+      "nach 28 Tagen",
+      "nach 34 Tagen"
+    ],
+    "a": "nach 20 Tagen",
+    "exp": "Sicherheitsbestand: 15 * 6 = 90 Stück. Meldebestand: 15 * 8 + 90 = 210 Stück. Bis dahin: (510 - 210) / 15 = 20 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für eine Serverbeschaffung nimmt ein Betrieb einen Überbrückungskredit über 24.000,00 Euro zu 7,5 % Jahreszins auf, vom 18.03.2026 bis zum 29.07.2026. Wie hoch sind die Zinsen nach der kaufmännischen Methode (30 Tage je Monat, 360 Tage je Jahr)?",
+    "options": [
+      "655,00 Euro",
+      "655,89 Euro",
+      "665,00 Euro",
+      "600,00 Euro"
+    ],
+    "a": "655,00 Euro",
+    "exp": "Zinstage: März 12, April bis Juni je 30, Juli 29, zusammen 131 Tage. Zinsen: 24.000 * 7,5 * 131 / 36.000 = 655,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wartungsvertrag kostet nach einer Preiserhöhung um 8 % jetzt 3.726,00 Euro im Jahr. Der Kunde fragt nach dem bisherigen Preis. Welcher Betrag ist richtig?",
+    "options": [
+      "3.450,00 Euro",
+      "3.427,92 Euro",
+      "4.024,08 Euro",
+      "4.050,00 Euro"
+    ],
+    "a": "3.450,00 Euro",
+    "exp": "Der neue Preis entspricht 108 % des alten (Rechnung auf Hundert). Alter Preis: 3.726,00 Euro / 1,08 = 3.450,00 Euro. Wer 8 % vom neuen Preis abzieht, nimmt den falschen Grundwert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde zahlt nach Abzug von 12 % Projektrabatt 5.192,00 Euro netto für eine WLAN-Ausleuchtung. Wie hoch war der Listenpreis?",
+    "options": [
+      "5.900,00 Euro",
+      "5.815,04 Euro",
+      "4.635,71 Euro",
+      "4.568,96 Euro"
+    ],
+    "a": "5.900,00 Euro",
+    "exp": "Der Zahlbetrag entspricht 88 % des Listenpreises (Rechnung im Hundert). Listenpreis: 5.192,00 Euro / 0,88 = 5.900,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Techniker erhält 180,00 Euro mehr Bruttogehalt pro Monat, gezahlt werden 13 Gehälter im Jahr. Der Arbeitgeberanteil zur Sozialversicherung beträgt vereinfacht 20,5 %, die Umlagen (U1, U2, Insolvenzgeld) angenommen 1,5 %. Um wie viel steigen die jährlichen Personalkosten?",
+    "options": [
+      "2.854,80 Euro",
+      "2.819,70 Euro",
+      "2.635,20 Euro",
+      "2.340,00 Euro"
+    ],
+    "a": "2.854,80 Euro",
+    "exp": "Mehr Brutto pro Jahr: 180,00 Euro * 13 = 2.340,00 Euro. Darauf kommen 20,5 % + 1,5 % = 22,0 % Arbeitgeberkosten: 2.340,00 Euro * 1,22 = 2.854,80 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Kosten der IT-Abteilung (138.000,00 Euro im Jahr) werden als Hilfskostenstelle nach der Zahl der Tickets auf die Hauptkostenstellen umgelegt. Tickets und Arbeitsplätze: Vertrieb 420 Tickets und 14 Arbeitsplätze, Werkstatt 1.260 Tickets und 18 Arbeitsplätze, Verwaltung 620 Tickets und 16 Arbeitsplätze, Lager 460 Tickets und 12 Arbeitsplätze. Welcher Betrag entfällt auf die Werkstatt?",
+    "options": [
+      "63.000,00 Euro",
+      "34.500,00 Euro",
+      "41.400,00 Euro",
+      "75.000,00 Euro"
+    ],
+    "a": "63.000,00 Euro",
+    "exp": "Tickets gesamt: 2.760. Satz: 138.000,00 Euro / 2.760 = 50,00 Euro je Ticket. Werkstatt: 1.260 * 50,00 Euro = 63.000,00 Euro, die Arbeitsplätze sind hier nicht der Schlüssel."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Auszubildende bekommt 5,2 % mehr Vergütung. Die Inflationsrate im selben Jahr beträgt angenommen 3,1 %. Um wie viel Prozent steigt ihre Kaufkraft genau?",
+    "options": [
+      "2,04 %",
+      "2,10 %",
+      "8,46 %",
+      "5,20 %"
+    ],
+    "a": "2,04 %",
+    "exp": "Reale Steigerung: 1,052 / 1,031 - 1 = 2,04 %. Die einfache Differenz 5,2 % - 3,1 % = 2,10 % ist nur eine Näherung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Das IT-Budget bleibt 3 Jahre lang bei 180.000,00 Euro. Die Preise für IT-Dienstleistungen steigen angenommen um 4 % pro Jahr. Wie viel ist das Budget im dritten Jahr in heutigen Preisen noch wert?",
+    "options": [
+      "160.019,34 Euro",
+      "158.400,00 Euro",
+      "159.252,48 Euro",
+      "202.475,52 Euro"
+    ],
+    "a": "160.019,34 Euro",
+    "exp": "Die Preissteigerung wirkt mit Zinseszins: 180.000,00 Euro / 1,04^3 = 180.000,00 Euro / 1,124864 = 160.019,34 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Softwarelizenz kostet 14.400,00 US-Dollar im Jahr. Im Vorjahr stand der Kurs bei 1 Euro = 1,12 US-Dollar, jetzt bei 1 Euro = 1,05 US-Dollar. Wie viel Euro kostet die Lizenz jetzt mehr?",
+    "options": [
+      "857,14 Euro",
+      "1.008,00 Euro",
+      "900,00 Euro",
+      "960,00 Euro"
+    ],
+    "a": "857,14 Euro",
+    "exp": "Der Kurs nennt US-Dollar je Euro, also teilen: 14.400,00 / 1,05 = 13.714,29 Euro jetzt, 14.400,00 / 1,12 = 12.857,14 Euro vorher. Mehrkosten: 857,14 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus hat 1.440.000,00 Euro Umsatz im Jahr (inklusive Umsatzsteuer). Der durchschnittliche Bestand an Kundenforderungen beträgt 156.000,00 Euro, das Zahlungsziel laut AGB 30 Tage. Wie lange brauchen die Kunden im Durchschnitt, um zu zahlen (360 Tage)?",
+    "options": [
+      "39,0 Tage",
+      "9,0 Tage",
+      "9,2 Tage",
+      "30,0 Tage"
+    ],
+    "a": "39,0 Tage",
+    "exp": "Umschlagshäufigkeit der Forderungen: 1.440.000,00 Euro / 156.000,00 Euro = 9,23. Kundenziel: 360 / 9,23 = 39,0 Tage. Die Kunden zahlen also 9 Tage später als vereinbart."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Deduplizierungssystem erkennt gleiche Datenblöcke an einem auf 48 Bit gekürzten Hashwert. Nach der Faustregel des Geburtstagsparadoxons: Ab etwa wie vielen gespeicherten Blöcken wird eine Kollision (zwei verschiedene Blöcke, gleicher Hash) wahrscheinlich?",
+    "options": [
+      "ca. 16,8 Millionen",
+      "ca. 281,5 Billionen",
+      "ca. 140,7 Billionen",
+      "ca. 4.096"
+    ],
+    "a": "ca. 16,8 Millionen",
+    "exp": "Faustregel: Kollisionen werden ab etwa 2^(n/2) Werten wahrscheinlich, nicht erst nach 2^n. 2^(48/2) = 2^24 = 16.777.216. Deshalb sind kurze Hashes für Deduplizierung und Signaturen gefährlich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Passphrasen werden zufällig aus einer Wortliste mit 7.776 Wörtern gebildet. Die Richtlinie verlangt künftig 6 statt 4 Wörter. Um wie viele Bit steigt die Entropie?",
+    "options": [
+      "ca. 25,8 Bit",
+      "ca. 12,9 Bit",
+      "ca. 51,7 Bit",
+      "ca. 77,5 Bit"
+    ],
+    "a": "ca. 25,8 Bit",
+    "exp": "Ein Wort bringt log2(7.776) = 12,92 Bit. 2 zusätzliche Wörter: 2 * 12,92 = ca. 25,8 Bit. Der Suchraum wächst damit um den Faktor 7.776^2, also rund 60,5 Millionen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kfz-Werkstatt zeichnet mit 12 Kameras dauerhaft auf, je 3 Mbit/s. Nach Rücksprache mit dem Datenschutzbeauftragten wird die Aufbewahrung von 30 Tagen auf 72 Stunden verkürzt. Wie viel Speicher wird frei (1 TB = 10^12 Byte)?",
+    "options": [
+      "ca. 10,50 TB",
+      "ca. 11,66 TB",
+      "ca. 1,17 TB",
+      "ca. 83,98 TB"
+    ],
+    "a": "ca. 10,50 TB",
+    "exp": "Datenrate: 12 * 3 Mbit/s = 36 Mbit/s = 4,5 MB/s. Wegfallende Zeit: 720 - 72 = 648 Stunden. 4,5 MB/s * 2.332.800 s = ca. 10,50 TB."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Anwendung braucht Router (99,9 %), Firewall (99,8 %) und Server (99,5 %) in Reihe. Jetzt kommt ein zweiter, gleich guter Server als Cluster dazu, einer der beiden reicht. Wie hoch ist die Gesamtverfügbarkeit danach?",
+    "options": [
+      "99,70 %",
+      "99,20 %",
+      "98,71 %",
+      "99,45 %"
+    ],
+    "a": "99,70 %",
+    "exp": "Serverpaar: 1 - 0,005^2 = 99,9975 %, nur ein gleichzeitiger Ausfall beider Server stört. Gesamt: 0,999 * 0,998 * 0,999975 = 99,70 % statt vorher 99,20 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Betrieb führt eine interne PKI ein. 38 Beschäftigte bekommen S/MIME mit getrennten Zertifikaten für Signatur und Verschlüsselung. 4 Funktionspostfächer brauchen nur ein Verschlüsselungszertifikat. 52 Notebooks erhalten ein Gerätezertifikat für 802.1X, 6 interne Webserver je ein Serverzertifikat. Wie viele Zertifikate stellt die CA aus?",
+    "options": [
+      "138 Zertifikate",
+      "100 Zertifikate",
+      "142 Zertifikate",
+      "132 Zertifikate"
+    ],
+    "a": "138 Zertifikate",
+    "exp": "S/MIME: 38 * 2 + 4 = 80. Dazu 52 Geräte- und 6 Serverzertifikate: 80 + 52 + 6 = 138."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ransomware-Vorfall fällt das ERP-System 5 Stunden aus. 45 Beschäftigte können nicht arbeiten (Personalkosten angenommen 48,00 Euro je Stunde), es entgeht ein Deckungsbeitrag von 1.200,00 Euro je Stunde. Ein Dienstleister arbeitet 3 Stunden zu 170,00 Euro. Wie hoch sind die Kosten des Vorfalls?",
+    "options": [
+      "17.310,00 Euro",
+      "16.800,00 Euro",
+      "17.650,00 Euro",
+      "6.510,00 Euro"
+    ],
+    "a": "17.310,00 Euro",
+    "exp": "Je Stunde Ausfall: 45 * 48,00 Euro + 1.200,00 Euro = 3.360,00 Euro, für 5 Stunden also 16.800,00 Euro. Dazu der Dienstleister mit 3 * 170,00 Euro = 510,00 Euro, zusammen 17.310,00 Euro."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein IDS bewertet 1.200.000 Ereignisse pro Tag. Die Rate der Fehlalarme (False Positives) liegt bei 0,02 %. Jeder Alarm wird im SOC etwa 3 Minuten geprüft. Wie viel Prüfzeit entsteht allein durch Fehlalarme pro Tag?",
+    "options": [
+      "12 Stunden",
+      "120 Stunden",
+      "1.200 Stunden",
+      "4 Stunden"
+    ],
+    "a": "12 Stunden",
+    "exp": "Fehlalarme: 1.200.000 * 0,0002 = 240. Prüfzeit: 240 * 3 Minuten = 720 Minuten = 12 Stunden. Schon kleine Raten erzeugen bei vielen Ereignissen viel Arbeit."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bei einer ersten Phishing-Simulation klicken 104 von 520 Beschäftigten auf den Link. Nach einer Awareness-Schulung sind es beim zweiten Test 39. Um wie viel Prozent ist die Klickrate gesunken?",
+    "options": [
+      "62,5 %",
+      "12,5 %",
+      "37,5 %",
+      "65,0 %"
+    ],
+    "a": "62,5 %",
+    "exp": "Klickrate vorher 20,0 %, nachher 7,5 %. Der Rückgang beträgt 12,5 Prozentpunkte. Bezogen auf den Ausgangswert: 12,5 / 20,0 * 100 = 62,5 %."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Aus einem Datenleck stammen 12.000 Passwort-Hashes. Ein Angreifer testet eine Wortliste mit 1,5 Mrd. Einträgen. Seine GPUs schaffen angenommen 30 Mrd. SHA-256-Hashes oder 60.000 bcrypt-Hashes pro Sekunde. Wie lange dauert ein vollständiger Durchlauf, wenn die Passwörter mit bcrypt und individuellem Salt gespeichert sind?",
+    "options": [
+      "ca. 9,5 Jahre",
+      "ca. 6,9 Stunden",
+      "ca. 10 Minuten",
+      "ca. 0,05 Sekunden"
+    ],
+    "a": "ca. 9,5 Jahre",
+    "exp": "Mit individuellem Salt muss jedes Konto einzeln angegriffen werden: 1,5 Mrd. * 12.000 Konten. Bei 60.000 bcrypt-Hashes pro Sekunde sind das 300 Mio. Sekunden, ca. 9,5 Jahre. Ohne Salt würde ein Durchlauf für alle Konten reichen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Konzern mit 640,0 Mio. Euro weltweitem Jahresumsatz verarbeitet Kundendaten ohne Rechtsgrundlage (Verstoß gegen Art. 6 DSGVO). Wie hoch ist der mögliche Bußgeldrahmen höchstens?",
+    "options": [
+      "25,6 Mio. Euro",
+      "20,0 Mio. Euro",
+      "12,8 Mio. Euro",
+      "10,0 Mio. Euro"
+    ],
+    "a": "25,6 Mio. Euro",
+    "exp": "Art. 83 Abs. 5 DSGVO: bis 20 Mio. Euro oder bis 4 % des weltweiten Jahresumsatzes, je nachdem, was höher ist. 4 % von 640,0 Mio. Euro = 25,6 Mio. Euro, das liegt über 20 Mio. Euro."
   }
 ]

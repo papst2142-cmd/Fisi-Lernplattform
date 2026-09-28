@@ -90,6 +90,7 @@ CATEGORY_NAV_ICON = {
     CATEGORIES[1]: "shield",
     CATEGORIES[2]: "server",
     CATEGORIES[3]: "case",
+    CATEGORIES[4]: "database",
 }
 
 VIEW_TITLES = {

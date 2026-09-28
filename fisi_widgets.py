@@ -388,6 +388,14 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         canvas.create_line(right - size * 0.3, top + size * 0.08,
                            right - size * 0.3, top + size * 0.26, **opts)
 
+    elif name == "database":      # Datenbanken
+        rim = size * 0.32
+        canvas.create_oval(left, top, right, top + rim, **fill_opts)
+        canvas.create_line(left, top + rim / 2, left, bottom - rim / 2, **opts)
+        canvas.create_line(right, top + rim / 2, right, bottom - rim / 2, **opts)
+        canvas.create_arc(left, bottom - rim, right, bottom, start=180,
+                          extent=180, style="arc", **line_opts)
+
     elif name == "search":
         radius = size * 0.32
         canvas.create_oval(x - radius - size * 0.1, y - radius - size * 0.1,
@@ -1015,7 +1023,7 @@ class Heatmap(tk.Canvas):
         if width <= 1 or height <= 1 or not self._rows or not self._columns:
             return
 
-        label_w = px(88)
+        label_w = px(98)
         grid_x = label_w
         grid_w = width - label_w - px(4)
         gap = px(4)

@@ -4607,5 +4607,579 @@
       "",
       "3. Der Einsatz von Leiharbeitnehmern gilt als Einstellung, der Betriebsrat muss nach § 99 BetrVG zustimmen (§ 14 Abs. 3 AÜG). Er ist über den Einsatz zu informieren. Die Leiharbeitnehmer dürfen die Sprechstunden des Betriebsrats und Betriebsversammlungen besuchen. Sie haben Zugang zu Kantine und anderen Gemeinschaftseinrichtungen (§ 13b AÜG), müssen über freie Stellen informiert werden (§ 13a AÜG) und dürfen nicht als Streikbrecher eingesetzt werden. Für den Arbeitsschutz am Einsatzort ist die Reederei verantwortlich. IT: Benutzerkonten mit Ablaufdatum 31.10.2027, Rechte nur nach Bedarf, Geräte und Zutrittsmedien, Verpflichtung auf Vertraulichkeit und Datenschutz, Einweisung in die IT-Richtlinien, Sicherheitsunterweisung und ein geplantes Offboarding zum Saisonende."
     ]
+  },
+  {
+    "title": "Paketmitschnitt am Bondrucker einer Goldschmiede auswerten",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "In einer Goldschmiede druckt die Kasse nach einem Firmware-Update des Bondruckers keine Belege mehr. Ping zum Drucker funktioniert. Sie schneiden am Kassen-PC (192.168.20.15/24, MAC 3c:7c:3f:21:9a:10) mit Wireshark mit, während die Kasse einen Beleg sendet. Der Bondrucker hat die feste Adresse 192.168.20.40.",
+      "  Nr. 1  Zeit 0,000000  3c:7c:3f:21:9a:10 -> ff:ff:ff:ff:ff:ff  ARP  60 Byte  Who has 192.168.20.40? Tell 192.168.20.15",
+      "  Nr. 2  Zeit 0,001210  00:0e:c6:5b:02:7d -> 3c:7c:3f:21:9a:10  ARP  60 Byte  192.168.20.40 is at 00:0e:c6:5b:02:7d",
+      "  Nr. 3  Zeit 0,001540  192.168.20.15 -> 192.168.20.40  TCP  66 Byte  [SYN]",
+      "  Nr. 4  Zeit 0,002310  192.168.20.40 -> 192.168.20.15  TCP  60 Byte  [RST, ACK]",
+      "In der Hex-Ansicht von Nr. 3 beginnt der TCP-Header mit den Bytes C8 22 23 8C. Das Feld EtherType lautet bei Nr. 1 und 2 0x0806, bei Nr. 3 und 4 0x0800.",
+      "",
+      "1. Erklären Sie, was in Nr. 1 und Nr. 2 passiert und warum Nr. 1 an ff:ff:ff:ff:ff:ff geht. Auf welcher OSI-Schicht arbeitet ARP? Eine ARP-Nachricht ist 28 Byte lang, der Ethernet-Header 14 Byte. Warum zeigt Wireshark trotzdem 60 Byte an?",
+      "2. Rechnen Sie Quell- und Zielport aus der Hex-Ansicht ins Dezimalsystem um. Was bedeutet die Antwort [RST, ACK] auf das [SYN]? Wie lange hat der Drucker für die Antwort gebraucht?",
+      "3. Nennen Sie die wahrscheinliche Ursache und zwei Schritte zur Lösung. Worauf achten Sie beim Mitschneiden in einem Geschäft mit Kundendaten?"
+    ],
+    "solution": [
+      "1. Der Kassen-PC kennt nur die IP-Adresse des Druckers. Für den Versand im eigenen Netz braucht er die MAC-Adresse. Er fragt deshalb per ARP-Request: Wer hat 192.168.20.40? Da er die Ziel-MAC noch nicht kennt, geht die Anfrage als Broadcast an ff:ff:ff:ff:ff:ff, also an alle Geräte im Netz. Nur der Drucker antwortet mit einem ARP-Reply direkt (Unicast) an den PC und nennt seine MAC 00:0e:c6:5b:02:7d. Der PC speichert sie im ARP-Cache. ARP verbindet Schicht 3 (IP) mit Schicht 2 (MAC) und wird meist Schicht 2 zugeordnet. EtherType 0x0806 kennzeichnet ARP, 0x0800 IPv4. Länge: 14 + 28 = 42 Byte. Ein Ethernet-Frame muss aber mindestens 64 Byte lang sein, davon 4 Byte Prüfsumme (FCS). Wireshark zeigt den Frame ohne FCS, also 60 Byte. Die fehlenden 60 - 42 = 18 Byte werden mit Füllbytes (Padding) aufgefüllt.",
+      "",
+      "2. Quellport 0xC822 = 12 x 4096 + 8 x 256 + 2 x 16 + 2 = 51.234 (dynamischer Port des PCs). Zielport 0x238C = 2 x 4096 + 3 x 256 + 8 x 16 + 12 = 9.100. Port 9100 ist der übliche Port für Rohdaten-Druck (RAW, JetDirect). Das [SYN] ist der erste Schritt des Drei-Wege-Handshakes. Mit [RST, ACK] lehnt der Drucker die Verbindung sofort ab. Das Gerät ist also erreichbar, auf Port 9100 lauscht aber kein Dienst. Antwortzeit: 0,002310 s - 0,001540 s = 0,000770 s = 0,77 ms. Eine Firewall, die Pakete verwirft, würde gar nicht antworten, der PC würde das SYN wiederholen.",
+      "",
+      "3. Wahrscheinlich hat das Firmware-Update den RAW-Druck auf Port 9100 abgeschaltet oder auf einen anderen Port oder ein anderes Protokoll (z.B. IPP) umgestellt. Lösung: Im Webinterface des Druckers den RAW-Port 9100 wieder aktivieren oder den Druckertreiber der Kasse auf den neuen Port anpassen. Danach mit Test-NetConnection 192.168.20.40 -Port 9100 (oder telnet) prüfen und einen Testbon drucken. Die Änderung dokumentieren und beim nächsten Update vorher die Release Notes lesen. Beim Mitschnitt: Nur mit Auftrag der Inhaberin mitschneiden, einen Aufzeichnungsfilter setzen (host 192.168.20.40), möglichst kurz aufzeichnen und die Datei nach der Analyse löschen. Bons enthalten Artikel, Preise und eventuell Kundennamen. Die Datei nicht unverschlüsselt per E-Mail versenden."
+    ]
+  },
+  {
+    "title": "Mesh-WLAN oder Powerline für das Clubhaus eines Golfclubs",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Golfclub will im Clubhaus und im Pro-Shop WLAN für ein Kassentablet und für Gäste. Der Router steht im Sekretariat. Die Gastronomie liegt 25 m entfernt im selben Gebäude hinter zwei Stahlbetonwänden. Der Pro-Shop liegt 60 m entfernt in einem Nebengebäude mit eigener Stromunterverteilung. Direkt am Router messen Sie 400 Mbit/s.",
+      "  Angebot A: Mesh-Set mit 3 Knoten, Dual-Band. Die Knoten sind per Funk im 5-GHz-Band verbunden (Funk-Backhaul), auf derselben Frequenz werden auch die Endgeräte versorgt. Kette: Router -> Knoten Gastronomie -> Knoten Pro-Shop. Vereinfacht angenommen halbiert sich der Durchsatz mit jeder Funkstrecke.",
+      "  Angebot B: Powerline-Adapter \"bis 1.200 Mbit/s\". Ein Test vom Sekretariat zur Gastronomie ergibt 180 Mbit/s, zum Pro-Shop kommt keine Verbindung zustande.",
+      "",
+      "1. Berechnen Sie für Angebot A den Durchsatz in der Gastronomie und im Pro-Shop. Wie viel Prozent der Herstellerangabe erreicht Powerline? Ein Update der Kassensoftware ist 1,2 GB groß. Wie lange dauert der Download im Pro-Shop mit A und in der Gastronomie mit B? Warum bekommt Powerline keine Verbindung zum Pro-Shop?",
+      "2. Im 2,4-GHz-Band gilt für die Mittenfrequenz f = 2.407 MHz + 5 MHz x Kanalnummer, ein Kanal ist 20 MHz breit. Berechnen Sie die Mittenfrequenzen der Kanäle 1, 3, 6 und 11. Welche Kanäle überlappen nicht? Welche Kanäle wählen Sie für drei benachbarte Access Points?",
+      "3. Welche Lösung empfehlen Sie für die Gastronomie und für den Pro-Shop? Wie trennen Sie das Gäste-WLAN von der Kasse?"
+    ],
+    "solution": [
+      "1. A: Gastronomie nach einer Funkstrecke 400 / 2 = 200 Mbit/s, Pro-Shop nach zwei Funkstrecken 200 / 2 = 100 Mbit/s. Grund: Ein Dual-Band-Knoten muss auf demselben Kanal Daten empfangen und weitersenden, die Sendezeit wird geteilt. B: 180 / 1.200 = 0,15, also nur 15 % der Herstellerangabe. Die Angabe ist eine Brutto-Datenrate unter Idealbedingungen. Update: 1,2 GB = 1,2 x 8 = 9,6 Gbit = 9.600 Mbit. Pro-Shop mit A: 9.600 / 100 = 96 s. Gastronomie mit B: 9.600 / 180 = ca. 53,3 s. Powerline nutzt die Stromleitung als Übertragungsweg. Über eine andere Unterverteilung, den Zähler oder eine andere Phase wird das Signal stark gedämpft oder ganz blockiert.",
+      "",
+      "2. Kanal 1: 2.407 + 5 x 1 = 2.412 MHz, belegt 2.402 bis 2.422 MHz. Kanal 3: 2.422 MHz, belegt 2.412 bis 2.432 MHz. Kanal 6: 2.437 MHz, belegt 2.427 bis 2.447 MHz. Kanal 11: 2.462 MHz, belegt 2.452 bis 2.472 MHz. Zwischen Kanal 1 und 6 liegen 2.437 - 2.412 = 25 MHz, das ist mehr als die Kanalbreite von 20 MHz, sie überlappen also nicht. Dasselbe gilt für 6 und 11. Kanal 3 überlappt mit 1 und 6 (nur 10 MHz bzw. 15 MHz Abstand). Für drei benachbarte Access Points wählen Sie 1, 6 und 11. So stören sich die Zellen nicht gegenseitig. Im 5-GHz-Band gibt es deutlich mehr überlappungsfreie Kanäle.",
+      "",
+      "3. Gastronomie: Powerline mit 180 Mbit/s oder besser ein LAN-Kabel zu einem Access Point, falls ein Leerrohr vorhanden ist. Pro-Shop: 100 Mbit/s reichen für Tablet und Kartenterminal zwar, zwei Funkstrecken hintereinander sind aber störanfällig. Für die Kasse empfiehlt sich eine feste Verbindung: Erdkabel (Glasfaser zwischen Gebäuden wegen Potentialtrennung) oder eine Richtfunkstrecke als Punkt-zu-Punkt-Verbindung, dahinter ein Access Point. Alternativ ein Tri-Band-Mesh mit eigenem Funkband nur für den Backhaul. Gäste-WLAN: eigene SSID in einem eigenen VLAN, nur Internetzugang, Client-Isolation, Bandbreitenbegrenzung und ein Vorschaltportal mit Nutzungsbedingungen. Die Kasse bekommt eine eigene SSID mit WPA3 und einem starken Schlüssel, der Gästen nicht bekannt ist."
+    ]
+  },
+  {
+    "title": "Gebündelte NAS-Ports im Tonstudio bringen keine 2 Gbit/s",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Tonstudio speichert alle Aufnahmen auf einem NAS. Das NAS ist mit zwei 1-Gbit/s-Ports per Link-Aggregation (LACP, IEEE 802.3ad) an den Switch angebunden. Die drei Workstations für Aufnahme, Schnitt und Mastering haben je einen 1-Gbit/s-Anschluss. Der Studioleiter hatte erwartet, dass eine Session jetzt mit 2 Gbit/s kopiert wird. Tatsächlich dauert das Kopieren einer 60-GB-Session auf den Schnitt-PC so lange wie vorher. Vereinfacht angenommen erreicht eine 1-Gbit/s-Strecke netto 110 MB/s, die Festplatten des NAS liefern bis zu 400 MB/s. Rechnen Sie mit 1 GB = 1.000 MB.",
+      "",
+      "1. Warum wird eine einzelne Kopie nicht schneller? Berechnen Sie die Kopierdauer für die 60-GB-Session in Minuten und Sekunden.",
+      "2. Nun kopieren alle drei Workstations gleichzeitig je eine 60-GB-Session. LACP verteilt die Verbindungen anhand der MAC- oder IP-Adressen auf die beiden Leitungen. Zwei Workstations landen auf derselben Leitung. Berechnen Sie die Kopierdauer für jede Workstation und den Gesamtdurchsatz des NAS.",
+      "3. Der Schnitt-PC und das NAS sollen je eine 10-Gbit/s-Karte bekommen, der Switch hat zwei 10-Gbit/s-Ports. Wie lange dauert die Kopie dann, und wie viel Zeit spart das Studio bei 12 Kopien am Tag? Welches Kabel brauchen Sie für 10GBASE-T? Welchen Vorteil hat die Link-Aggregation trotzdem?"
+    ],
+    "solution": [
+      "1. LACP verteilt nicht einzelne Pakete, sondern ganze Verbindungen (Flows) auf die Leitungen. Die Zuordnung erfolgt per Hash über MAC- oder IP-Adressen, damit die Pakete einer Verbindung in der richtigen Reihenfolge ankommen. Eine Kopie zwischen NAS und Schnitt-PC nutzt deshalb immer nur eine Leitung. Außerdem hat der Schnitt-PC selbst nur 1 Gbit/s. Dauer: 60.000 MB / 110 MB/s = ca. 545,5 s = 9 min 5 s (9 x 60 = 540 s, Rest 5,5 s).",
+      "",
+      "2. Leitung 1 mit zwei Workstations: Sie teilen sich 110 MB/s, jede bekommt 55 MB/s. 60.000 / 55 = ca. 1.090,9 s = 18 min 11 s. Leitung 2 mit einer Workstation: 110 MB/s, also 9 min 5 s. Gesamtdurchsatz des NAS: 110 + 110 = 220 MB/s. Die Festplatten (400 MB/s) sind nicht der Engpass. Die Bündelung erhöht also die Gesamtbandbreite für mehrere Clients, aber nicht die Geschwindigkeit einer einzelnen Verbindung. Die Verteilung hängt vom Hash ab und kann ungleich sein.",
+      "",
+      "3. 10 Gbit/s liefern netto über 1.000 MB/s, jetzt bremsen die Festplatten mit 400 MB/s. 60.000 / 400 = 150 s = 2 min 30 s. Ersparnis je Kopie: 545,5 - 150 = 395,5 s. Bei 12 Kopien: 12 x 395,5 = 4.746 s = ca. 79 Minuten am Tag. 10GBASE-T braucht mindestens Cat 6A für 100 m (Cat 6 nur bis etwa 55 m, abhängig von den Störbedingungen). Alternativ SFP+ mit DAC-Kabel oder Glasfaser. Vorteil der Link-Aggregation: Fällt ein Kabel oder Port aus, läuft der Verkehr ohne Unterbrechung über die zweite Leitung (Redundanz). Außerdem bekommen die übrigen Workstations zusammen mehr als 1 Gbit/s."
+    ]
+  },
+  {
+    "title": "Kartenzahlung auf einer Berghütte über Satellit",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Berghütte auf 2.100 m Höhe mit 60 Schlafplätzen soll Kartenzahlung anbieten. Es gibt keinen Kabelanschluss und nur schwachen Mobilfunk. Zur Wahl stehen ein geostationärer Satellit (35.786 km Höhe) und ein Satellitennetz in niedriger Umlaufbahn (LEO, ca. 550 km Höhe). Vereinfacht angenommen: Signalgeschwindigkeit 300.000 km/s, Satellit senkrecht über Hütte und Bodenstation, Verarbeitungszeiten werden vernachlässigt. Ein Datenpaket läuft Hütte -> Satellit -> Bodenstation, die Antwort denselben Weg zurück.",
+      "",
+      "1. Berechnen Sie die minimale Umlaufzeit (Round Trip Time) für beide Systeme. Eine Kartenzahlung benötigt vereinfacht 8 Hin- und Rückwege (Verbindungsaufbau, Verschlüsselung, Autorisierung). Wie lange dauert allein die Signallaufzeit einer Zahlung? Die Hütte will auch per Internet telefonieren. Für Sprache soll die Verzögerung in eine Richtung unter 150 ms bleiben. Welche Lösung eignet sich?",
+      "2. Der Tarif des geostationären Anbieters enthält 50 GB im Monat. Geplant sind 3.000 Kartenzahlungen zu je 10 KB, eine Webcam, die 16 Stunden am Tag alle 10 Minuten ein Bild mit 500 KB hochlädt, und E-Mails mit 20 MB pro Tag. Berechnen Sie das Monatsvolumen (30 Tage, 1 GB = 1.000 MB = 1.000.000 KB). Was passiert, wenn 40 Gäste am Tag je 150 MB im Gäste-WLAN verbrauchen?",
+      "3. Die Hütte erzeugt Strom mit einer Solaranlage. Router, Satellitenmodem und Kartenterminal brauchen zusammen im Schnitt 50 W rund um die Uhr. Der Akku hat 24 V und 200 Ah, nutzbar sind vereinfacht angenommen 50 %. Wie viele Tage ohne Sonne überbrückt der Akku? Nennen Sie zwei weitere Maßnahmen für einen sicheren Betrieb."
+    ],
+    "solution": [
+      "1. Weg Hütte -> Satellit -> Bodenstation = 2 x Höhe, mit Antwort 4 x Höhe. Geostationär: 4 x 35.786 km / 300.000 km/s = ca. 0,477 s = 477 ms. LEO: 4 x 550 / 300.000 = ca. 0,00733 s = 7,33 ms. Zahlung: geostationär 8 x 0,477 = ca. 3,8 s nur für die Laufzeit, LEO 8 x 7,33 ms = ca. 58,7 ms. Die Zahlung klappt mit beiden, geostationär wartet der Gast aber spürbar. Telefonie: Eine Richtung dauert geostationär 2 x 35.786 / 300.000 = ca. 239 ms und liegt über 150 ms. Die Gesprächspartner fallen sich ins Wort. LEO bleibt mit ca. 3,7 ms weit darunter. Empfehlung: LEO-System. In der Praxis kommen Laufzeiten im Netz der Bodenstation hinzu.",
+      "",
+      "2. Zahlungen: 3.000 x 10 KB = 30.000 KB = 30 MB. Webcam: 16 x 6 = 96 Bilder am Tag x 0,5 MB = 48 MB, im Monat 48 x 30 = 1.440 MB. E-Mails: 20 x 30 = 600 MB. Summe: 30 + 1.440 + 600 = 2.070 MB = ca. 2,07 GB, also nur gut 4 % des Volumens. Gäste-WLAN: 40 x 150 MB = 6.000 MB = 6 GB am Tag. Das Volumen ist nach 50 / 6 = ca. 8,3 Tagen verbraucht. Danach wird gedrosselt oder es kostet extra, und auch die Kasse wird langsam. Maßnahmen: Gäste-WLAN weglassen oder mit Volumenbegrenzung, Zeitkontingenten und eigener Priorität unterhalb der Kasse betreiben.",
+      "",
+      "3. Verbrauch: 50 W x 24 h = 1.200 Wh = 1,2 kWh am Tag. Akku: 24 V x 200 Ah = 4.800 Wh, nutzbar 50 % = 2.400 Wh. 2.400 / 1.200 = 2 Tage ohne Sonne. Weitere Maßnahmen: Webcam und Gäste-WLAN nachts abschalten, einen Lithium-Akku mit größerer nutzbarer Kapazität einsetzen, Überspannungs- und Blitzschutz für Antenne und Geräte, ein Offline-Modus des Kartenterminals für kurze Ausfälle (mit Risiko nicht gedeckter Zahlungen) und ein Mobilfunk-Router als Rückfallebene."
+    ]
+  },
+  {
+    "title": "Linux-Übungsumgebung in virtuellen Maschinen für eine Volkshochschule",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Volkshochschule bietet einen Kurs \"Linux-Grundlagen\" an. Im Kursraum stehen 12 PCs mit Windows 11 Pro, 6 CPU-Kernen, 16 GB RAM und einer SSD mit 180 GB freiem Platz. Die PCs werden auch für andere Kurse genutzt. Jede Person im Kurs braucht gleichzeitig drei virtuelle Maschinen (VMs):",
+      "  Linux-Server: 2 GB RAM, 2 vCPU, dynamische Festplatte bis 25 GB, nach der Installation 9 GB belegt",
+      "  Linux-Client: 2 GB RAM, 2 vCPU, dynamische Festplatte bis 25 GB, nach der Installation 7 GB belegt",
+      "  Router-VM: 1 GB RAM, 1 vCPU, dynamische Festplatte bis 8 GB, nach der Installation 2 GB belegt",
+      "Windows braucht 4 GB RAM, 1 GB soll als Reserve frei bleiben. Die fertigen VMs werden von einem NAS über 1 Gbit/s (netto vereinfacht 110 MB/s, 1 GB = 1.000 MB) nacheinander auf alle PCs kopiert.",
+      "",
+      "1. Erklären Sie den Unterschied zwischen einem Hypervisor Typ 1 und Typ 2. Welchen Typ wählen Sie hier und warum? Welche Voraussetzung muss im UEFI erfüllt sein?",
+      "2. Prüfen Sie RAM, CPU und Festplatte. Wie viele VMs mit je 2 GB RAM könnten neben Windows und Reserve höchstens gleichzeitig laufen? Wie lange dauert das Verteilen der VMs auf alle 12 PCs?",
+      "3. Die Teilnehmenden sollen in den VMs einen eigenen DHCP-Server einrichten. Welchen Netzwerkmodus stellen Sie für die VMs ein, damit das Netz der VHS nicht gestört wird? Wie setzen Sie die VMs nach jedem Kurstag schnell in den Ausgangszustand zurück?"
+    ],
+    "solution": [
+      "1. Typ 1 (Bare Metal) läuft direkt auf der Hardware ohne darunterliegendes Betriebssystem, z.B. Hyper-V Server, VMware ESXi oder Proxmox VE. Er ist schlank und schnell und wird auf Servern eingesetzt. Typ 2 (Hosted) läuft als Programm auf einem vorhandenen Betriebssystem, z.B. VirtualBox oder VMware Workstation. Hier passt Typ 2, weil Windows 11 für die anderen Kurse erhalten bleiben muss. Voraussetzung: Die CPU muss Hardware-Virtualisierung unterstützen (Intel VT-x bzw. AMD-V), und die Funktion muss im UEFI aktiviert sein. Außerdem braucht man ein 64-Bit-System.",
+      "",
+      "2. RAM: 4 (Windows) + 2 + 2 + 1 = 9 GB, mit Reserve 10 GB. Es bleiben 16 - 10 = 6 GB frei, das reicht. CPU: 2 + 2 + 1 = 5 vCPU bei 6 Kernen, das passt ohne Überbuchung. Festplatte: Maximal wachsen die VMs auf 25 + 25 + 8 = 58 GB, belegt sind anfangs 9 + 7 + 2 = 18 GB, beides passt in 180 GB. Höchstzahl: (16 - 4 - 1) GB / 2 GB = 5,5, also höchstens 5 VMs mit je 2 GB. Verteilen: 12 x 18 GB = 216 GB = 216.000 MB. 216.000 / 110 = ca. 1.963,6 s = ca. 32,7 Minuten, also gut eine halbe Stunde.",
+      "",
+      "3. Die VMs kommen in ein internes Netz (\"Internes Netzwerk\" oder \"Host-only\"). Nur die Router-VM bekommt zusätzlich einen NAT-Adapter ins Internet. So bleibt ein Übungs-DHCP-Server in seinem eigenen Netz und verteilt keine falschen Adressen an Geräte der VHS. Im Modus \"Netzwerkbrücke\" hingen die VMs dagegen direkt im VHS-Netz. Zurücksetzen: Nach der Einrichtung einen Snapshot \"Kursbeginn\" anlegen und nach jedem Kurstag auf diesen Snapshot zurückkehren. Alternativ die VMs aus einer schreibgeschützten Vorlage als verknüpfte Klone neu erzeugen. Wer seine Arbeit behalten will, exportiert seine Dateien vorher auf einen eigenen Datenträger."
+    ]
+  },
+  {
+    "title": "Skript sortiert die Fotos einer Hochzeitsfotografin falsch",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Hochzeitsfotografin fotografiert mit zwei Kameras. Ein Skript soll die RAW-Dateien aus dem Ordner \"Import\" nach Aufnahmetag ablegen und umbenennen. Vorgabe: Name = Datum_Kunde_Nummer.CR3, die Nummer beginnt je Aufnahmetag bei 0001 und ist vierstellig, damit die Dateien alphabetisch richtig sortiert sind. Der Pseudocode eines Kollegen:",
+      "  zaehler <- 0",
+      "  FÜR JEDE datei IN \"Import\", sortiert nach Aufnahmezeit",
+      "    tag <- AUFNAHMEDATUM(datei)                  // Format JJJJ-MM-TT",
+      "    zaehler <- zaehler + 1",
+      "    name <- tag + \"_\" + kunde + \"_\" + NULLEN(zaehler; 3) + \".CR3\"",
+      "    VERSCHIEBE datei NACH \"Archiv/\" + tag + \"/\" + name",
+      "  ENDE FÜR",
+      "NULLEN(z; n) füllt z links mit Nullen auf n Stellen auf, längere Zahlen bleiben unverändert. Kunde ist \"Keller\". Die Hochzeit ging über Mitternacht. Vor den folgenden Dateien steht zaehler auf 997:",
+      "  IMG_0412.CR3 12.06.2027 23:57:50 | IMG_0413.CR3 12.06.2027 23:58:30 | DSC_1207.CR3 12.06.2027 23:59:40 | IMG_0414.CR3 13.06.2027 00:00:20 | DSC_1208.CR3 13.06.2027 00:01:10",
+      "",
+      "1. Führen Sie einen Schreibtischtest für die fünf Dateien durch. Welche Namen entstehen, welche wären richtig? Nennen Sie die zwei Fehler im Pseudocode.",
+      "2. Im Ordner vom 12.06. liegen nun unter anderem ..._100.CR3, ..._101.CR3 und ..._1000.CR3. In welcher Reihenfolge sortiert der Dateiexplorer sie alphabetisch? Begründen Sie mit den ASCII-Codes von \".\" (0x2E) und \"0\" (0x30).",
+      "3. Die Fotografin macht im Schnitt 1.850 Fotos zu je 42 MB pro Hochzeit und exportiert je Hochzeit 600 JPEGs zu je 9 MB. In der Saison hat sie 28 Hochzeiten. Wie viel Speicher braucht eine Saison (1 TB = 1.000 GB = 1.000.000 MB)? Wie viel Prozent einer 4-TB-Festplatte sind das? Was sollte das Skript statt VERSCHIEBE tun?"
+    ],
+    "solution": [
+      "1. Schreibtischtest mit dem Pseudocode: IMG_0412 -> zaehler 998 -> Archiv/2027-06-12/2027-06-12_Keller_998.CR3. IMG_0413 -> 999 -> 2027-06-12_Keller_999.CR3. DSC_1207 -> 1000 -> 2027-06-12_Keller_1000.CR3. IMG_0414 -> 1001 -> Archiv/2027-06-13/2027-06-13_Keller_1001.CR3. DSC_1208 -> 1002 -> 2027-06-13_Keller_1002.CR3. Richtig wären: _0998, _0999, _1000, am 13.06. dann _0001 und _0002. Fehler 1: NULLEN(zaehler; 3) statt 4 Stellen, ab 1000 ist die Nummer länger und die Sortierung stimmt nicht mehr. Fehler 2: zaehler wird beim Tageswechsel nicht auf 0 zurückgesetzt. Korrektur: vor der Schleife letzterTag <- \"\"; in der Schleife WENN tag <> letzterTag DANN zaehler <- 0; letzterTag <- tag; danach zaehler <- zaehler + 1 und NULLEN(zaehler; 4).",
+      "",
+      "2. Alphabetische Sortierung vergleicht Zeichen für Zeichen. _100.CR3 und _1000.CR3 stimmen bis \"100\" überein. Dann folgt \".\" (0x2E = 46) gegen \"0\" (0x30 = 48). 46 ist kleiner, also steht _100.CR3 vor _1000.CR3. _1000.CR3 und _101.CR3 unterscheiden sich an der dritten Ziffer: \"0\" (48) gegen \"1\" (49), also steht _1000 vor _101. Reihenfolge: _100.CR3, _1000.CR3, _101.CR3. Das Foto 1000 steht mitten zwischen 100 und 101. Mit vier Stellen (_0100, _0101, _1000) stimmt die Reihenfolge. Manche Dateiexplorer sortieren Zahlen \"natürlich\", andere Programme (Bildbearbeitung, Webgalerie, Kopierskripte) aber nicht.",
+      "",
+      "3. RAW je Hochzeit: 1.850 x 42 = 77.700 MB. Saison: 77.700 x 28 = 2.175.600 MB = 2.175,6 GB. Exporte: 600 x 9 = 5.400 MB je Hochzeit x 28 = 151.200 MB = 151,2 GB. Gesamt: 2.175,6 + 151,2 = 2.326,8 GB = ca. 2,33 TB. Auf 4 TB sind das 2,3268 / 4 = ca. 58,2 %. Auch 1.850 Fotos an einem Tag zeigen: Drei Stellen (bis 999) reichen nicht. Das Skript sollte zuerst KOPIEREN, dann die Kopie per Prüfsumme (z.B. SHA-256) mit dem Original vergleichen und die Originale erst nach erfolgreicher Prüfung und Datensicherung löschen. Bei einem Fehler mitten im Lauf gehen so keine Hochzeitsfotos verloren. Außerdem sollte es vorhandene Zieldateien nie überschreiben und ein Protokoll schreiben."
+    ]
+  },
+  {
+    "title": "Waage im Hofladen sendet Gewichte mit Paritätsbit",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Hofladen hat eine neue PC-Kasse. Die geeichte Waage ist über ein serielles Kabel (RS-232 mit USB-Adapter) angeschlossen und sendet nach jedem Wiegen das Gewicht in Gramm als fünf ASCII-Zeichen und ein Wagenrücklauf CR (0x0D). Laut Handbuch: 9600 Baud, 7 Datenbits, gerade Parität (even), 1 Stoppbit, kurz 7E1. Jedes Zeichen beginnt mit einem Startbit. Das Paritätsbit folgt auf die 7 Datenbits. Der Kassenhersteller hat die Schnittstelle auf 8N1 (8 Datenbits, keine Parität, 1 Stoppbit) eingestellt. Bei 1.250 g (\"01250\") zeigt die Kasse \"0±²50\".",
+      "",
+      "1. Geben Sie für die Zeichen \"0\", \"1\", \"2\" und \"5\" den ASCII-Code hexadezimal und als 7-Bit-Binärzahl an und bestimmen Sie jeweils das Paritätsbit bei gerader Parität.",
+      "2. Erklären Sie, warum die Kasse \"0±²50\" anzeigt. Tipp: Die Kasse liest das Paritätsbit als achtes Datenbit, im Zeichensatz Latin-1 ist 0xB1 \"±\" und 0xB2 \"²\". Wie viele Bits umfasst ein Zeichen bei 7E1 auf der Leitung? Wie lange dauert die Übertragung einer Gewichtsmeldung mit CR, und wie viele Zeichen pro Sekunde sind bei 9600 Baud höchstens möglich?",
+      "3. Welche Übertragungsfehler erkennt ein Paritätsbit, welche nicht? Zeigen Sie an \"5\" ein Beispiel, bei dem zwei gekippte Bits unerkannt bleiben. Warum ist das an einer Kasse mit Waage besonders kritisch?"
+    ],
+    "solution": [
+      "1. \"0\" = 0x30 = 011 0000, zwei Einsen, Parität 0. \"1\" = 0x31 = 011 0001, drei Einsen, Parität 1. \"2\" = 0x32 = 011 0010, drei Einsen, Parität 1. \"5\" = 0x35 = 011 0101, vier Einsen, Parität 0. Bei gerader Parität wird das Paritätsbit so gesetzt, dass die Gesamtzahl der Einsen aus Daten- und Paritätsbit gerade ist.",
+      "",
+      "2. Bei 7E1 ist das Paritätsbit das 8. Bit nach dem Startbit. Die Kasse mit 8N1 erwartet an dieser Stelle das höchstwertige Datenbit. Ist die Parität 1, wird zum Zeichencode 0x80 = 128 addiert: \"1\" 0x31 + 0x80 = 0xB1 = 177 = \"±\", \"2\" 0x32 + 0x80 = 0xB2 = 178 = \"²\". Bei \"0\" und \"5\" ist die Parität 0, sie kommen richtig an. Da beide Einstellungen 10 Bit je Zeichen haben, passt der Takt, und es gibt keine Rahmenfehler. Deshalb fällt der Fehler nicht sofort auf. Bitzahl bei 7E1: 1 Startbit + 7 Datenbits + 1 Paritätsbit + 1 Stoppbit = 10 Bit. Meldung: 6 Zeichen x 10 Bit = 60 Bit, 60 / 9.600 = 0,00625 s = 6,25 ms. Höchstens 9.600 / 10 = 960 Zeichen pro Sekunde. Lösung: Kasse auf 7E1 einstellen.",
+      "",
+      "3. Ein Paritätsbit erkennt jede ungerade Zahl gekippter Bits (1, 3, 5 ...), aber keine gerade Zahl. Es kann den Fehler auch nicht korrigieren. Beispiel: \"5\" = 011 0101 mit Parität 0. Kippen die beiden letzten Bits, entsteht 011 0110 = 0x36 = \"6\". Auch das hat vier Einsen, die Parität 0 passt, der Fehler bleibt unerkannt. Aus 1.250 g könnten so 1.260 g werden, der Kunde zahlt falsch. Bei einer eichpflichtigen Waage muss der angezeigte und berechnete Wert stimmen. Deshalb nutzen Waagen-Protokolle zusätzlich Prüfsummen, Plausibilitätsprüfungen oder senden Werte doppelt, und die Kasse zeigt das Gewicht der Waage unverändert an."
+    ]
+  },
+  {
+    "title": "Kundendatenbank für eine Hundeschule entwerfen",
+    "cat": "datenbanken",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Hundeschule verwaltet Kunden, Hunde und Kurse bisher in einer Tabellenkalkulation. Künftig soll eine kleine relationale Datenbank genutzt werden. Anforderungen: Eine Kundin oder ein Kunde kann mehrere Hunde haben, jeder Hund gehört genau einer Person. Ein Hund kann an mehreren Kursen teilnehmen, ein Kurs hat mehrere Hunde. Je Teilnahme wird gespeichert, ob bezahlt ist. Zu einem Kurs gehören Bezeichnung, Preis und die höchste Teilnehmerzahl. Beispieldaten:",
+      "  Kurs: 10 Welpengruppe (120 Euro, max. 4), 11 Junghundekurs (150 Euro, max. 3), 12 Agility Einsteiger (180 Euro, max. 4), 13 Rally Obedience (160 Euro, max. 5)",
+      "  Hunde: 1 Bella, 2 Rocky, 3 Luna, 4 Emil, 5 Frieda",
+      "  Teilnahmen (HundNr, KursNr): (1, 11), (2, 11), (3, 11), (4, 10), (5, 12), (1, 12), (3, 12)",
+      "",
+      "1. Zeichnen Sie ein Entity-Relationship-Modell mit den Entitäten, wichtigen Attributen und Kardinalitäten. Wie wird die Beziehung zwischen Hund und Kurs in Tabellen umgesetzt?",
+      "2. Geben Sie die Tabellen mit Primär- und Fremdschlüsseln an und schreiben Sie das CREATE TABLE für die Teilnahme-Tabelle. Was bedeutet referentielle Integrität, wenn eine Person gelöscht werden soll, die noch Hunde hat?",
+      "3. Die Leiterin möchte eine Übersicht aller Kurse mit Anzahl der Hunde, freien Plätzen und Umsatz, sortiert nach freien Plätzen. Schreiben Sie die SQL-Abfrage und geben Sie das Ergebnis an. Warum ist hier ein LEFT JOIN nötig?"
+    ],
+    "solution": [
+      "1. Entitäten: KUNDE (KundenNr, Name, Telefon, E-Mail), HUND (HundNr, Name, Rasse, Geburtsdatum), KURS (KursNr, Bezeichnung, Beginn, Preis, MaxTeilnehmer). Beziehungen: KUNDE 1 : n HUND (\"besitzt\"), HUND n : m KURS (\"nimmt teil\") mit dem Attribut bezahlt. Eine n:m-Beziehung lässt sich nicht direkt mit einem Fremdschlüssel abbilden. Sie wird in eine eigene Zwischentabelle TEILNAHME aufgelöst, die zwei 1:n-Beziehungen bildet (HUND 1 : n TEILNAHME n : 1 KURS).",
+      "",
+      "2. Kunde (KundenNr PK, Name, Telefon, EMail); Hund (HundNr PK, Name, Rasse, Geburtsdatum, KundenNr FK -> Kunde); Kurs (KursNr PK, Bezeichnung, Beginn, Preis, MaxTeilnehmer); Teilnahme (HundNr PK/FK -> Hund, KursNr PK/FK -> Kurs, Bezahlt). CREATE TABLE Teilnahme (HundNr INTEGER NOT NULL, KursNr INTEGER NOT NULL, Bezahlt BOOLEAN DEFAULT FALSE, PRIMARY KEY (HundNr, KursNr), FOREIGN KEY (HundNr) REFERENCES Hund(HundNr), FOREIGN KEY (KursNr) REFERENCES Kurs(KursNr)); Der zusammengesetzte Primärschlüssel verhindert, dass ein Hund zweimal im selben Kurs steht. Referentielle Integrität heißt: Jeder Fremdschlüsselwert muss auf einen vorhandenen Datensatz zeigen. Die Datenbank verweigert daher das Löschen einer Person, solange noch Hunde auf sie verweisen (Standard bzw. ON DELETE RESTRICT). Alternativ löscht ON DELETE CASCADE die Hunde mit. Das ist hier gefährlich, weil dabei auch Kursteilnahmen verschwinden könnten.",
+      "",
+      "3. SELECT k.Bezeichnung, COUNT(t.HundNr) AS Anzahl, k.MaxTeilnehmer - COUNT(t.HundNr) AS Frei, COUNT(t.HundNr) * k.Preis AS Umsatz FROM Kurs k LEFT JOIN Teilnahme t ON t.KursNr = k.KursNr GROUP BY k.KursNr, k.Bezeichnung, k.MaxTeilnehmer, k.Preis ORDER BY Frei;",
+      "  Ergebnis: Junghundekurs | 3 | 0 | 450; Agility Einsteiger | 3 | 1 | 540; Welpengruppe | 1 | 3 | 120; Rally Obedience | 0 | 5 | 0. Umsatz gesamt: 450 + 540 + 120 = 1.110 Euro.",
+      "  Ein INNER JOIN liefert nur Kurse mit mindestens einer Teilnahme, Rally Obedience würde fehlen. Der LEFT JOIN behält alle Kurse. COUNT(t.HundNr) zählt nur Werte, die nicht NULL sind, deshalb erscheint 0. COUNT(*) würde dort fälschlich 1 zählen. Der Junghundekurs ist ausgebucht, neue Anmeldungen müssen auf eine Warteliste."
+    ]
+  },
+  {
+    "title": "Instrumentenverleih eines Blasorchesters in eine Datenbank überführen",
+    "cat": "datenbanken",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Ein Blasorchester verleiht vereinseigene Instrumente an seine Mitglieder. Der Kassenwart führt eine Tabelle:",
+      "  InvNr    | Instrument            | Kaufpreis    | Mitglied     | Telefon      | Register | Registerführung",
+      "  101      | Trompete              | 890          | Lea Winter   | 0151 4455667 | Blech    | Tom Adler",
+      "  102      | Klarinette            | 1.250        | Max Scholz   | 0160 9988776 | Holz     | Eva Sommer",
+      "  103, 104 | Tenorhorn, Flügelhorn | 2.100, 1.400 | Jan Petersen | 0171 2233445 | Blech    | Tom Adler",
+      "  105      | Querflöte             | 980          |              |              | Holz     | Eva Sommer",
+      "  106      | Posaune               | 1.100        | Lea Winter   | 0151 4455676 | Blech    | Tom Adler",
+      "Tom Adler und Eva Sommer sind ebenfalls Mitglieder. Künftig sollen auch Beginn und Ende jeder Ausleihe gespeichert werden.",
+      "",
+      "1. Beschreiben Sie die Probleme der Tabelle. Gegen welche Normalform verstößt Zeile 3? Nennen Sie je ein Beispiel für eine Einfüge-, eine Lösch- und eine Änderungsanomalie. Was fällt bei Lea Winter auf?",
+      "2. Überführen Sie die Daten in die 3. Normalform. Geben Sie die Tabellen mit Primär- und Fremdschlüsseln an und begründen Sie kurz jeden Schritt.",
+      "3. Der Vorstand will für die Versicherung wissen, wie viele Instrumente je Register gerade verliehen sind und welchen Kaufwert sie haben. Eine laufende Ausleihe hat kein Ende (Bis ist NULL). Schreiben Sie die SQL-Abfrage und geben Sie das Ergebnis an. Warum liefert WHERE a.Bis = NULL keine Zeile? Wie viel Prozent des gesamten Instrumentenwerts sind verliehen?"
+    ],
+    "solution": [
+      "1. Zeile 3 enthält zwei Werte in einer Zelle (zwei Inventarnummern, Instrumente und Preise). Das verstößt gegen die 1. Normalform (atomare Werte). Name und Telefon eines Mitglieds stehen mehrfach (Redundanz), die Registerführung hängt vom Register ab und nicht von der Inventarnummer (transitive Abhängigkeit). Einfügeanomalie: Ein neues Mitglied ohne Instrument oder ein neues Register ohne Instrument lässt sich nicht sauber erfassen. Löschanomalie: Gibt Max Scholz die Klarinette zurück und man löscht seine Angaben aus der Zeile, geht seine Telefonnummer verloren. Änderungsanomalie: Wechselt die Registerführung Blech, muss sie in drei Zeilen geändert werden. Wird eine vergessen, ist der Bestand widersprüchlich. Genau das ist bei Lea Winter passiert: 0151 4455667 und 0151 4455676 (Zahlendreher). Welche Nummer stimmt, ist nicht mehr erkennbar.",
+      "",
+      "2. 1. NF: Jede Zeile enthält genau ein Instrument, Zeile 3 wird in 103 Tenorhorn und 104 Flügelhorn aufgeteilt. 2. NF und 3. NF: Mitgliedsdaten hängen nur vom Mitglied ab, die Registerführung nur vom Register, Beginn und Ende von der einzelnen Ausleihe. Daher eigene Tabellen: Mitglied (MitgliedNr PK, Name, Telefon); Register (RegisterNr PK, Bezeichnung, FuehrungNr FK -> Mitglied); Instrument (InvNr PK, Bezeichnung, Kaufpreis, RegisterNr FK -> Register); Ausleihe (AusleiheNr PK, InvNr FK -> Instrument, MitgliedNr FK -> Mitglied, Von, Bis). Jedes Mitglied und jedes Register steht nur einmal in der Datenbank, eine Telefonnummer wird an genau einer Stelle geändert. Die Querflöte 105 steht in Instrument, hat aber keine offene Ausleihe.",
+      "",
+      "3. SELECT r.Bezeichnung, COUNT(*) AS Anzahl, SUM(i.Kaufpreis) AS Wert FROM Ausleihe a JOIN Instrument i ON a.InvNr = i.InvNr JOIN Register r ON i.RegisterNr = r.RegisterNr WHERE a.Bis IS NULL GROUP BY r.Bezeichnung;",
+      "  Ergebnis: Blech | 4 | 5.490 (890 + 2.100 + 1.400 + 1.100); Holz | 1 | 1.250. Verliehen sind 5.490 + 1.250 = 6.740 Euro. Gesamtwert aller Instrumente: 890 + 1.250 + 2.100 + 1.400 + 980 + 1.100 = 7.720 Euro. Anteil: 6.740 / 7.720 = ca. 87,3 %.",
+      "  NULL bedeutet \"unbekannt\". Ein Vergleich mit NULL über = ergibt in SQL weder wahr noch falsch, sondern unbekannt (UNKNOWN). WHERE lässt nur Zeilen durch, bei denen die Bedingung wahr ist. Deshalb muss man IS NULL bzw. IS NOT NULL verwenden."
+    ]
+  },
+  {
+    "title": "Risikomatrix für den Onlineshop einer Imkerei",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Imkerei verkauft Honig über einen gemieteten Onlineshop, im Hofverkauf und auf Wochenmärkten. Kundendaten und Buchhaltung liegen auf einem Büro-PC, am Marktstand wird ein Notebook genutzt. Die Inhaberin will wissen, wo sie zuerst investieren soll. Sie schätzt vier Risiken (vereinfachte Annahmen):",
+      "  R1 Ausfall des Onlineshops durch eine Störung beim Anbieter: 2-mal im Jahr, Schaden je Fall 400 Euro",
+      "  R2 Verschlüsselungstrojaner (Ransomware) auf dem Büro-PC: einmal in 10 Jahren (0,1 pro Jahr), Schaden 15.000 Euro",
+      "  R3 Diebstahl des Notebooks am Marktstand: einmal in 5 Jahren (0,2 pro Jahr), Schaden 2.500 Euro (Gerät und Aufwand für die Datenpanne)",
+      "  R4 Zugangsdaten des Shop-Admins werden per Phishing gestohlen: einmal in 2 Jahren (0,5 pro Jahr), Schaden 4.000 Euro",
+      "Einstufung: Wahrscheinlichkeit selten (unter 0,2 pro Jahr), möglich (0,2 bis unter 1), häufig (ab 1). Schaden gering (unter 1.000 Euro), mittel (1.000 bis unter 5.000 Euro), hoch (ab 5.000 Euro).",
+      "",
+      "1. Berechnen Sie für jedes Risiko den erwarteten Schaden pro Jahr (Eintrittswahrscheinlichkeit x Schadenshöhe) und bilden Sie eine Rangfolge.",
+      "2. Ordnen Sie die Risiken in die Risikomatrix ein. Nennen Sie die vier Strategien im Umgang mit Risiken und ordnen Sie jedem Risiko eine passende Strategie mit Maßnahme zu.",
+      "3. Eine Zwei-Faktor-Anmeldung für den Shop kostet 60 Euro im Jahr, die Einrichtung dauert 2 Stunden zu 45 Euro. Sie senkt die Wahrscheinlichkeit von R4 auf 0,05. Eine automatische Offline-Sicherung kostet 300 Euro im Jahr und senkt den Schaden von R2 auf 3.000 Euro. Lohnen sich beide Maßnahmen im ersten Jahr?"
+    ],
+    "solution": [
+      "1. R1: 2 x 400 = 800 Euro. R2: 0,1 x 15.000 = 1.500 Euro. R3: 0,2 x 2.500 = 500 Euro. R4: 0,5 x 4.000 = 2.000 Euro. Rangfolge: R4 (2.000), R2 (1.500), R1 (800), R3 (500). Summe: 4.800 Euro erwarteter Schaden pro Jahr.",
+      "",
+      "2. R1: häufig / gering. R2: selten / hoch. R3: möglich / mittel. R4: möglich / mittel. Die Matrix zeigt, dass der erwartete Wert allein nicht alles sagt: R2 ist selten, kann die Imkerei aber hart treffen. Strategien: vermeiden (Tätigkeit nicht mehr ausführen), vermindern (Wahrscheinlichkeit oder Schaden senken), übertragen (auf Versicherung oder Dienstleister) und akzeptieren (bewusst tragen). Zuordnung: R1 akzeptieren oder übertragen (Vertrag mit zugesicherter Verfügbarkeit und Gutschrift). R2 vermindern (Offline-Sicherung, Updates, Virenschutz) und zusätzlich übertragen (Cyberversicherung). R3 vermindern (Festplattenverschlüsselung, keine Kundendaten auf dem Marktnotebook, Diebstahlsicherung). R4 vermindern (Zwei-Faktor-Anmeldung, Schulung zu Phishing, Passwortmanager).",
+      "",
+      "3. Zwei-Faktor-Anmeldung: neuer Erwartungswert 0,05 x 4.000 = 200 Euro, Senkung 2.000 - 200 = 1.800 Euro. Kosten im ersten Jahr 60 + 2 x 45 = 150 Euro. Nutzen 1.800 - 150 = 1.650 Euro, lohnt sich deutlich. Offline-Sicherung: neuer Erwartungswert 0,1 x 3.000 = 300 Euro, Senkung 1.500 - 300 = 1.200 Euro. Kosten 300 Euro, Nutzen 1.200 - 300 = 900 Euro, lohnt sich ebenfalls. Die Sicherung schützt zusätzlich vor Hardwaredefekten und Bedienfehlern. Die Zahlen sind Schätzungen. Die Bewertung sollte jährlich wiederholt werden."
+    ]
+  },
+  {
+    "title": "Follow-Me-Printing in einer Schuldnerberatungsstelle",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Schuldnerberatungsstelle eines Wohlfahrtsverbands hat 9 Beraterinnen und Berater. Alle drucken auf ein Multifunktionsgerät im Flur, an dem auch der Wartebereich für Ratsuchende liegt. Bei einer Kontrolle lagen in einer Woche 23 nicht abgeholte Ausdrucke mit 140 Seiten am Gerät, darunter Kontoauszüge, Pfändungsbescheide und Haushaltspläne. Vorgeschlagen wird Follow-Me-Printing: Druckaufträge werden erst ausgegeben, wenn sich die Person mit Chipkarte am Gerät anmeldet. Nicht abgeholte Aufträge werden nach 24 Stunden gelöscht. Vereinfacht angenommen: 6.800 Seiten im Monat, davon 12 % nie abgeholt, Kosten je Seite 0,035 Euro, Lizenz 2,50 Euro je Nutzer und Monat, Kartenleser einmalig 180 Euro.",
+      "",
+      "1. Welche Schutzziele sind durch die bisherige Lösung gefährdet? Warum sind Schuldnerdaten besonders schutzbedürftig, obwohl sie keine besonderen Kategorien nach Art. 9 DSGVO sind? Welche Pflicht aus der DSGVO verletzt die Stelle?",
+      "2. Berechnen Sie die jährliche Ersparnis durch nicht mehr gedruckte Seiten und die Kosten im ersten und in den Folgejahren. Rechnet sich die Lösung finanziell?",
+      "3. Nennen Sie eine kostenlose Alternative, die viele Geräte schon eingebaut haben, und ihre Nachteile. Welche weiteren Einstellungen am Multifunktionsgerät verbessern den Datenschutz?"
+    ],
+    "solution": [
+      "1. Gefährdet ist vor allem die Vertraulichkeit: Ratsuchende, Reinigungskräfte oder andere Mitarbeitende können fremde Unterlagen lesen oder mitnehmen. Auch die Verfügbarkeit leidet, wenn Ausdrucke verschwinden oder vertauscht werden. Schuldnerdaten zeigen die gesamte finanzielle Lage einer Person. Bekannt gewordene Schulden können zu Scham, Nachteilen bei Arbeitgeber oder Vermieter und Erpressung führen. Das Risiko für die Betroffenen ist daher hoch, auch ohne Art. 9. Verletzt ist Art. 32 DSGVO: Der Verantwortliche muss geeignete technische und organisatorische Maßnahmen treffen, die dem Risiko angemessen sind (Vertraulichkeit der Verarbeitung). Liegen Ausdrucke offen, kann schon eine meldepflichtige Datenpanne vorliegen.",
+      "",
+      "2. Nicht abgeholt: 6.800 x 0,12 = 816 Seiten im Monat. Ersparnis: 816 x 0,035 = 28,56 Euro im Monat, x 12 = 342,72 Euro im Jahr. Lizenz: 9 x 2,50 = 22,50 Euro im Monat, x 12 = 270 Euro im Jahr. Erstes Jahr: 270 + 180 = 450 Euro Kosten, Ergebnis 342,72 - 450 = -107,28 Euro. Folgejahre: 342,72 - 270 = +72,72 Euro. Die Lösung trägt sich ab dem zweiten Jahr knapp selbst. Entscheidend ist aber der Datenschutz: Schon eine einzige Beschwerde bei der Aufsichtsbehörde verursacht mehr Aufwand als die Lizenz.",
+      "",
+      "3. Kostenlos ist \"vertraulicher Druck\" (Secure Print): Im Druckdialog wird eine PIN vergeben, am Gerät gibt man sie ein. Nachteile: Die PIN muss bei jedem Auftrag neu eingegeben werden und wird oft vergessen oder weggelassen. Es gibt meist keine automatische Löschung und keinen Überblick, und der Auftrag hängt an einem bestimmten Gerät. Weitere Einstellungen: Druckaufträge verschlüsselt übertragen (IPPS), die Festplatte des Geräts verschlüsseln und Aufträge nach dem Druck überschreiben lassen, Scan-to-Mail nur an interne Adressen erlauben, das Webinterface mit eigenem Passwort schützen, Firmware aktuell halten und das Gerät möglichst außer Sichtweite des Wartebereichs aufstellen. Dazu kommt eine Anweisung, Fehldrucke in einen verschlossenen Datenschutzbehälter zu werfen."
+    ]
+  },
+  {
+    "title": "Falscher Kassensupport ruft bei einem Schlüsseldienst an",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Schlüsseldienst mit drei Filialen und 14 Beschäftigten nutzt ein cloudbasiertes Kassen- und Auftragssystem. Eines Nachmittags ruft ein Mann in der Zentrale an: Er sei vom Support des Kassenherstellers, es gebe eine dringende Sicherheitslücke. Die Mitarbeiterin solle sofort ein Fernwartungsprogramm von einer genannten Webseite installieren und ihm den Code aus der gleich eintreffenden SMS vorlesen. Sonst werde die Kasse noch heute gesperrt. Die Nummer im Display sieht aus wie eine Servicenummer. Die Mitarbeiterin wird unsicher und fragt Sie.",
+      "",
+      "1. Woran erkennen Sie, dass es sich um Social Engineering (Vishing) handelt? Wie soll sich die Mitarbeiterin jetzt verhalten? Warum darf sie den SMS-Code auf keinen Fall weitergeben?",
+      "2. Der Chef plant eine Schulung für alle 14 Beschäftigten: je 2 Stunden, interne Kosten vereinfacht angenommen 32 Euro pro Stunde, externe Trainerin 600 Euro. Vorher klickten bei einer Test-Phishingmail 9 von 14 Beschäftigten auf den Link, bei einem Test nach der Schulung nur noch 2. Berechnen Sie die Kosten der Schulung und die Klickquoten vorher und nachher. Um wie viel Prozent ist die Quote gesunken?",
+      "3. Angenommen, eine andere Filiale hat das Programm bereits installiert und den Code weitergegeben. Beschreiben Sie die Sofortmaßnahmen und prüfen Sie die Meldepflicht nach DSGVO. Welche Regel für Fernwartung legen Sie für die Zukunft fest?"
+    ],
+    "solution": [
+      "1. Typische Merkmale: unerwarteter Anruf, angebliche Autorität (Hersteller-Support), Zeitdruck und Drohung (\"heute gesperrt\"), Aufforderung zur Installation von Software und zur Herausgabe eines Codes. Seriöse Hersteller rufen nicht unaufgefordert an und fragen nie nach Einmalcodes. Die Anzeige der Nummer lässt sich fälschen (Call-ID-Spoofing). Verhalten: freundlich, aber bestimmt das Gespräch beenden, nichts installieren, nichts vorlesen, die IT oder den Chef informieren und bei Bedarf den Hersteller über die bekannte Nummer aus dem Vertrag zurückrufen. Der SMS-Code ist der zweite Faktor der Anmeldung. Wer ihn weitergibt, gibt dem Angreifer den Zugang zum Konto, die Zwei-Faktor-Anmeldung ist dann wirkungslos.",
+      "",
+      "2. Kosten: 14 x 2 x 32 = 896 Euro Arbeitszeit + 600 Euro Trainerin = 1.496 Euro. Klickquote vorher: 9 / 14 = ca. 64,3 %. Nachher: 2 / 14 = ca. 14,3 %. Die Quote sank um 50 Prozentpunkte. Relativ: (9 - 2) / 9 = ca. 77,8 % weniger Klicks. Schulungen wirken aber nicht dauerhaft. Sie sollten regelmäßig wiederholt werden, z.B. jährlich mit kurzen Auffrischungen.",
+      "",
+      "3. Sofort: Den betroffenen PC vom Netz trennen (Kabel ziehen, WLAN aus), das Fernwartungsprogramm nicht weiter nutzen und die IT informieren. Von einem sauberen Gerät aus das Passwort des Kassenkontos ändern, alle aktiven Sitzungen beenden und die Zwei-Faktor-Anmeldung neu einrichten. Den Hersteller über die bekannte Nummer informieren, die Protokolle auf Zugriffe prüfen, den PC neu aufsetzen und Kontobewegungen und Aufträge kontrollieren. Anzeige bei der Polizei erstatten. Meldepflicht: Konnte der Angreifer auf Kundendaten zugreifen (Namen, Adressen, Aufträge), liegt eine Verletzung des Schutzes personenbezogener Daten vor. Sie ist innerhalb von 72 Stunden an die Aufsichtsbehörde zu melden (Art. 33 DSGVO), außer es besteht voraussichtlich kein Risiko. Bei hohem Risiko sind auch die Kunden zu informieren (Art. 34). Der Vorfall wird in jedem Fall dokumentiert. Regel: Fernwartung nur nach eigenem Anruf oder Ticket bei einem bekannten Dienstleister, nur mit dem freigegebenen Tool und nur mit Zustimmung der IT. Einmalcodes werden nie weitergegeben."
+    ]
+  },
+  {
+    "title": "Dokumentations-Notebook einer freiberuflichen Hebamme verschlüsseln",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine freiberufliche Hebamme betreut Schwangere und Wöchnerinnen bei Hausbesuchen. Sie dokumentiert Befunde, Geburtsverläufe und Kontaktdaten auf einem Notebook, das sie im Auto mitnimmt. Das Notebook hat Windows 11 Pro, einen TPM-Chip und eine 1-TB-SSD, davon sind 380 GB belegt. Die Festplatte ist nicht verschlüsselt, die Anmeldung erfolgt mit einer vierstelligen PIN. Eine Kollegin wurde kürzlich bestohlen. Vereinfacht angenommen verschlüsselt BitLocker mit 250 MB/s (1 GB = 1.000 MB).",
+      "",
+      "1. Welche Datenkategorie verarbeitet die Hebamme? Welche Folgen hätte der Diebstahl des unverschlüsselten Notebooks nach DSGVO? Was ändert sich, wenn die Festplatte sicher verschlüsselt ist?",
+      "2. Wie lange dauert die Verschlüsselung, wenn nur der belegte Speicher verschlüsselt wird, und wie lange bei der ganzen SSD? Welche Variante empfehlen Sie für ein neues und welche für ein seit Jahren genutztes Notebook? Der Wiederherstellungsschlüssel hat 48 Ziffern. Wie viele Kombinationen sind das? Wo wird er aufbewahrt?",
+      "3. Reicht TPM allein aus? Wie schützt sie außerdem die Datensicherung? Die Dokumentation muss mehrere Jahre aufbewahrt werden. Die Datenmenge wächst um vereinfacht 12 GB pro Jahr. Welche Größe brauchen die Sicherungsmedien für 10 Jahre mindestens?"
+    ],
+    "solution": [
+      "1. Es sind Gesundheitsdaten, also besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO, dazu Daten von Neugeborenen. Bei einem Diebstahl ist die Vertraulichkeit verletzt: Die SSD kann ausgebaut und an einem anderen Rechner gelesen werden, die Windows-PIN schützt davor nicht. Folge: Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden (Art. 33) und wegen des hohen Risikos Benachrichtigung aller betroffenen Frauen (Art. 34), dazu möglicherweise Bußgeld und Schadensersatz. Außerdem droht eine Verletzung der Schweigepflicht. Ist die Festplatte nach dem Stand der Technik verschlüsselt und der Schlüssel nicht mitgestohlen, sind die Daten für den Dieb unlesbar. Die Benachrichtigung der Betroffenen entfällt dann in der Regel (Art. 34 Abs. 3 Buchst. a). Der Vorfall wird trotzdem dokumentiert und geprüft.",
+      "",
+      "2. Nur belegter Speicher: 380 GB = 380.000 MB / 250 MB/s = 1.520 s = ca. 25 Minuten. Ganze SSD: 1.000.000 MB / 250 = 4.000 s = ca. 67 Minuten. Bei einem neuen Notebook reicht \"nur belegten Speicher\", neue Daten werden automatisch verschlüsselt. Bei einem lange genutzten Notebook die ganze Festplatte verschlüsseln, weil in freien Bereichen noch Reste gelöschter Dateien liegen können. Wiederherstellungsschlüssel: 10^48 Kombinationen, praktisch nicht zu erraten. Er wird nicht auf dem Notebook gespeichert, sondern ausgedruckt und verschlossen aufbewahrt (z.B. im Tresor in der Praxis) oder in einem gesicherten Konto bzw. Passwortmanager hinterlegt.",
+      "",
+      "3. Mit TPM allein startet Windows ohne Eingabe, ein Dieb landet direkt am Anmeldebildschirm. Besser ist TPM mit PIN vor dem Start (Pre-Boot-Authentifizierung) und ein starkes Windows-Passwort statt der vierstelligen PIN. Dazu automatische Bildschirmsperre und das Notebook nicht sichtbar im Auto liegen lassen. Datensicherung: zwei verschlüsselte externe SSDs im Wechsel, eine davon außer Haus, regelmäßiger Test der Wiederherstellung. Speicherbedarf: 380 GB + 10 x 12 GB = 380 + 120 = 500 GB. Mit Reserve für mehrere Sicherungsstände sind 1-TB-Medien sinnvoll. Nach Ablauf der Aufbewahrungsfrist aus der Berufsordnung werden die Daten gelöscht, auch auf den Sicherungen."
+    ]
+  },
+  {
+    "title": "Anmeldeprotokoll des Mitgliederportals einer Kletterhalle auswerten",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Kletterhalle betreibt ein Onlineportal, in dem 3.200 Mitglieder Zeitfenster buchen, Rechnungen sehen und ihre Adresse ändern. Am Montag fällt im Anmeldeprotokoll auf: Zwischen 02:10 und 02:20 Uhr gab es 1.800 fehlgeschlagene Anmeldungen von nur 3 IP-Adressen. Betroffen waren 600 verschiedene Benutzernamen, jeder genau 3-mal. 7 Anmeldungen waren erfolgreich. Das Portal sperrt ein Konto nach 5 Fehlversuchen für 30 Minuten.",
+      "",
+      "1. Berechnen Sie die Versuche pro Sekunde und die Erfolgsquote. Warum hat die Kontosperre nicht gegriffen? Um welche Angriffsart handelt es sich vermutlich, und wie unterscheidet sie sich von einem klassischen Brute-Force-Angriff?",
+      "2. Ab sofort sollen je IP-Adresse höchstens 5 Anmeldeversuche pro Minute möglich sein. Wie lange hätte der Angreifer mit 3 IP-Adressen für die 1.800 Versuche gebraucht? Warum reicht das allein nicht? Nennen Sie drei weitere Maßnahmen.",
+      "3. Liegt eine Datenpanne vor? Was ist in den nächsten Tagen zu tun? Das Protokoll speichert IP-Adressen. Darf die Kletterhalle das, und wie lange?"
+    ],
+    "solution": [
+      "1. 10 Minuten = 600 s. 1.800 / 600 = 3 Versuche pro Sekunde. Erfolgsquote: 7 / 1.800 = ca. 0,39 %. Pro Konto gab es nur 3 Versuche, die Sperre greift erst beim 5. Fehlversuch. Der Angreifer bleibt bewusst darunter. Vermutlich Credential Stuffing: Der Angreifer probiert Kombinationen aus Benutzername und Passwort aus Datenlecks anderer Dienste aus. Es klappt bei Mitgliedern, die dasselbe Passwort mehrfach verwenden. Beim Brute Force werden dagegen für ein Konto sehr viele Passwörter durchprobiert. Das würde die Kontosperre auslösen.",
+      "",
+      "2. 3 IP-Adressen x 5 Versuche = 15 Versuche pro Minute. 1.800 / 15 = 120 Minuten = 2 Stunden statt 10 Minuten. Das bremst, verhindert den Angriff aber nicht. Angreifer nutzen oft Hunderte IP-Adressen (Botnetze) und verteilen die Versuche. Weitere Maßnahmen: Zwei-Faktor-Anmeldung anbieten oder verlangen, neue Passwörter gegen Listen bekannter geleakter Passwörter prüfen, Captcha nach auffälligen Fehlversuchen, Benachrichtigung der Mitglieder bei Anmeldung von einem neuen Gerät, automatische Alarmierung bei vielen Fehlversuchen und Sperren auffälliger IP-Bereiche.",
+      "",
+      "3. Bei den 7 Konten hatte ein Unbefugter Zugriff auf Namen, Adressen, Buchungen und Rechnungen. Das ist eine Verletzung des Schutzes personenbezogener Daten. Zu tun: die 7 Konten sofort sperren und die Passwörter zurücksetzen, prüfen, was dort geändert oder abgerufen wurde (z.B. geänderte Adresse oder Bankverbindung), die Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden nach Bekanntwerden (Art. 33 DSGVO), sofern ein Risiko nicht ausgeschlossen ist, die Betroffenen informieren und zum Passwortwechsel auch bei anderen Diensten auffordern, alles dokumentieren. IP-Adressen sind personenbezogene Daten. Die Speicherung zur Abwehr von Angriffen ist auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 Buchst. f DSGVO) zulässig, aber nur so lange wie nötig, üblich sind wenige Tage bis Wochen (z.B. 14 Tage). Die Protokolle werden in der Datenschutzerklärung genannt. Zugriff haben nur Administratoren."
+    ]
+  },
+  {
+    "title": "Dashcams in den Lkw eines Umzugsunternehmens",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Umzugsunternehmen mit 8 Lkw hatte zwei Unfälle mit strittiger Schuldfrage und mehrere Vorwürfe von Kunden, Möbel seien beim Transport beschädigt worden. Der Geschäftsführer will in jeden Lkw eine Dashcam nach vorne und eine Kamera im Fahrerhaus einbauen, die während der ganzen Fahrt aufzeichnen. Die Aufnahmen sollen ein Jahr lang aufbewahrt werden. Das Unternehmen hat einen Betriebsrat. Technische Daten (vereinfacht angenommen): Bitrate 12 Mbit/s je Kamera, Speicherkarte 64 GB, 1 GB = 1.000 MB.",
+      "",
+      "1. Beurteilen Sie den Plan nach Datenschutzrecht. Unterscheiden Sie die Kamera nach vorne und die Kamera im Fahrerhaus. Welche Rolle spielt der Betriebsrat?",
+      "2. Wie viele Stunden Video passen bei Daueraufnahme auf die 64-GB-Karte? Eine datenschutzfreundliche Dashcam überschreibt laufend einen Ringspeicher von 3 Minuten und speichert nur bei einem Aufprall (Beschleunigungssensor) 30 Sekunden vor und 30 Sekunden nach dem Ereignis dauerhaft. Wie groß sind Ringspeicher und ein Ereignisclip? Vereinfacht werden je Lkw 6 Ereignisse pro Monat ausgelöst. Wie viel Speicher fällt pro Jahr für alle 8 Lkw an?",
+      "3. Die Geräte kosten 180 Euro je Lkw, eine Speicherkarte 25 Euro. Berechnen Sie die Anschaffungskosten. Entwerfen Sie drei Regeln für den Umgang mit den Aufnahmen."
+    ],
+    "solution": [
+      "1. Eine anlasslose Daueraufzeichnung des Straßenverkehrs ist nach DSGVO unzulässig, weil sie viele Unbeteiligte erfasst. Nach einem Urteil des BGH (2018) kann eine solche Aufnahme vor Gericht trotzdem als Beweis verwertet werden, das macht sie aber nicht datenschutzkonform. Zulässig ist eine kurze, anlassbezogene Aufzeichnung (Ringspeicher mit Speicherung nur bei einem Unfall) auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 Buchst. f). Eine Aufbewahrung von einem Jahr ohne Anlass ist nicht erforderlich. Die Kamera im Fahrerhaus überwacht dauerhaft die Beschäftigten. Das ist ein schwerer Eingriff in ihr Persönlichkeitsrecht und in der Regel unverhältnismäßig. Transportschäden lassen sich besser mit Fotos beim Be- und Entladen belegen. Der Betriebsrat hat ein Mitbestimmungsrecht bei technischen Einrichtungen, die Verhalten oder Leistung der Beschäftigten überwachen können (§ 87 Abs. 1 Nr. 6 BetrVG). Ohne Betriebsvereinbarung dürfen die Kameras nicht in Betrieb gehen.",
+      "",
+      "2. 12 Mbit/s / 8 = 1,5 MB/s. Pro Stunde 1,5 x 3.600 = 5.400 MB = 5,4 GB. 64 / 5,4 = ca. 11,9 Stunden Daueraufnahme. Ringspeicher: 3 Minuten = 180 s x 1,5 MB/s = 270 MB. Ereignisclip: 60 s x 1,5 = 90 MB. Pro Jahr: 8 Lkw x 6 x 12 = 576 Clips x 90 MB = 51.840 MB = ca. 51,8 GB. Das ist viel weniger Speicher und vor allem viel weniger personenbezogene Daten.",
+      "",
+      "3. Kosten: 8 x 180 = 1.440 Euro + 8 x 25 = 200 Euro = 1.640 Euro. Regeln: Ereignisclips werden automatisch nach 72 Stunden gelöscht, außer sie werden für einen konkreten Schadensfall gebraucht. Dann werden sie gesichert und nach Abschluss des Falls gelöscht. Zugriff haben nur zwei benannte Personen, jeder Zugriff wird protokolliert. Am Lkw weist ein Hinweisschild auf die Aufzeichnung hin, die Informationen nach Art. 13 DSGVO sind online abrufbar. Die Fahrer werden unterwiesen und können die Aufzeichnung nicht manipulieren. Keine Tonaufzeichnung und keine Kamera im Fahrerhaus."
+    ]
+  },
+  {
+    "title": "Meilensteintrendanalyse beim Netzwerkausbau eines Wildparks",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Wildpark lässt vor dem Saisonstart am Samstag, 01.05.2027, Kassen, Drehkreuze, WLAN und Gehegekameras vernetzen. Ihr Systemhaus berichtet alle zwei Wochen die voraussichtlichen Termine von drei Meilensteinen: M1 Verkabelung fertig, M2 Access Points und Kameras montiert, M3 Kassen und Drehkreuze in Betrieb.",
+      "  Bericht vom 01.03.: M1 29.03. | M2 12.04. | M3 26.04.",
+      "  Bericht vom 15.03.: M1 02.04. | M2 16.04. | M3 28.04.",
+      "  Bericht vom 29.03.: M1 06.04. | M2 21.04. | M3 03.05.",
+      "  Bericht vom 12.04.: M1 06.04. (erreicht) | M2 23.04. | M3 05.05.",
+      "Vereinfacht angenommen verschiebt jeder eingesparte Arbeitstag bei M2 auch M3 um einen Kalendertag nach vorn.",
+      "",
+      "1. Skizzieren Sie das Diagramm einer Meilensteintrendanalyse (Achsen, Verlauf der Linien) und lesen Sie es aus: Um wie viele Tage haben sich die Meilensteine seit dem ersten Bericht verschoben? Was bedeuten steigende, waagerechte und fallende Linien?",
+      "2. Um wie viele Tage verfehlt M3 den Saisonstart? Maßnahme A: Ein zweites Montageteam (2 Techniker, 3 Tage zu 8 Stunden, 55 Euro pro Stunde) verkürzt M2 um 3 Arbeitstage. Maßnahme B: Die Gehegekameras werden erst nach Saisonstart montiert, das spart bei M2 4 Arbeitstage. Berechnen Sie die Kosten von A und den neuen Termin von M3 bei A, bei B und bei A und B zusammen. Was empfehlen Sie?",
+      "3. Welche Vorteile hat die Meilensteintrendanalyse gegenüber einem reinen Balkenplan? Wie informieren Sie den Wildpark über die Lage?"
+    ],
+    "solution": [
+      "1. Die x-Achse zeigt die Berichtszeitpunkte, die y-Achse die prognostizierten Termine. Beide Achsen haben denselben Maßstab. Die Diagonale (Berichtstermin = Meilensteintermin) begrenzt das Diagramm: Erreicht eine Linie sie, ist der Meilenstein erreicht. Verschiebungen: M1 vom 29.03. auf den 06.04. = 8 Tage, M2 vom 12.04. auf den 23.04. = 11 Tage, M3 vom 26.04. auf den 05.05. = 9 Tage. Steigende Linien bedeuten Verzögerung, waagerechte Linien Termintreue, fallende Linien eine Verfrühung. Hier steigen alle Linien. Die Verzögerung von M1 wurde an M2 und M3 weitergegeben. Das ist ein Warnsignal für das ganze Projekt.",
+      "",
+      "2. M3 liegt am 05.05., der Saisonstart am 01.05. M3 kommt also 4 Tage zu spät. Maßnahme A: 2 x 3 x 8 = 48 Stunden x 55 Euro = 2.640 Euro. M3 rückt 3 Tage vor auf den 02.05., immer noch einen Tag zu spät. Maßnahme B: M3 rückt 4 Tage vor auf den 01.05., also genau zum Saisonstart ohne Puffer. A und B: 3 + 4 = 7 Tage, M3 am 28.04., 3 Tage Puffer für Tests und Schulung der Kassenkräfte. Empfehlung: B auf jeden Fall, da Kameras für den Saisonstart nicht nötig sind. A zusätzlich, weil ein Termin ohne Puffer bei der bisherigen Entwicklung sehr unsicher ist. Die Mehrkosten und die Änderung des Leistungsumfangs müssen mit dem Wildpark schriftlich vereinbart werden.",
+      "",
+      "3. Die MTA zeigt nicht nur den aktuellen Stand, sondern die Entwicklung der Prognosen über die Zeit. Trends werden früh sichtbar, auch wenn noch kein Termin überschritten ist. Sie ist einfach zu lesen und gut für Berichte an Auftraggeber geeignet. Ein Balkenplan zeigt dagegen nur den aktuellen Plan. Information: Den Wildpark sofort und offen informieren, nicht erst kurz vor dem Termin. Ein kurzer Statusbericht mit dem Diagramm, der Ursache (Verzögerung bei der Verkabelung), den Maßnahmen A und B mit Kosten und Terminen und der Bitte um Entscheidung bis zu einem festen Datum. Danach alle zwei Wochen weiter berichten."
+    ]
+  },
+  {
+    "title": "Scrum-Sprints für die Terminbuchung einer Tattoo-Studio-Kette",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Kette mit vier Tattoo-Studios lässt ein Systemhaus eine Online-Terminbuchung mit Anzahlung einrichten. In jedem Studio sollen Tablets für die digitale Einverständniserklärung und ein getrenntes Kunden-WLAN folgen. Das Systemhaus arbeitet nach Scrum mit Sprints von zwei Wochen (Montag bis Freitag der Folgewoche). Die Velocity der bisherigen Sprints betrug 18, 22 und 20 Story Points. Im Product Backlog stehen noch 110 Story Points, davon 64 Story Points \"Muss\" für die Eröffnung eines fünften Studios am Donnerstag, 01.07.2027. Beispiele: Tablets per MDM einrichten (8 SP), Kunden-WLAN in allen Studios (13 SP), Anzahlung per Onlinezahlung (13 SP). Sprint 4 beginnt am Montag, 03.05.2027.",
+      "",
+      "1. Nennen Sie die drei Rollen in Scrum mit ihren Aufgaben. Wer entscheidet über die Reihenfolge im Product Backlog? Beschreiben Sie kurz die Ereignisse eines Sprints.",
+      "2. Berechnen Sie die durchschnittliche Velocity. Wie viele Sprints braucht das Team für die Muss-Punkte und für das ganze Backlog? An welchem Freitag endet jeweils der letzte nötige Sprint? Wird die Eröffnung erreicht?",
+      "3. Nach Sprint 4 zeigt das Burndown-Chart 12 Story Points erledigt statt 20. Welche Ursachen kann das haben, und was tut das Team? Warum passt Scrum für die Buchung besser als ein starrer Wasserfallplan, und wo stößt es bei der Hardware an Grenzen?"
+    ],
+    "solution": [
+      "1. Product Owner: vertritt den Kunden, pflegt das Product Backlog und legt die Reihenfolge nach Nutzen fest. Er entscheidet also über die Prioritäten. Scrum Master: sorgt dafür, dass Scrum eingehalten wird, beseitigt Hindernisse und moderiert die Ereignisse. Entwicklungsteam (Developers): plant und erledigt die Arbeit im Sprint selbstorganisiert. Ereignisse: Sprint Planning (Auswahl der Einträge und Sprint-Ziel), Daily Scrum (tägliches 15-Minuten-Treffen), Sprint Review (Ergebnis dem Kunden zeigen, Rückmeldung einholen), Sprint Retrospektive (Zusammenarbeit verbessern).",
+      "",
+      "2. Velocity: (18 + 22 + 20) / 3 = 60 / 3 = 20 Story Points je Sprint. Muss-Punkte: 64 / 20 = 3,2, also 4 Sprints. Ende: 03.05. + 4 x 14 Tage - 3 = Freitag, 25.06.2027. Die Eröffnung am 01.07. wird erreicht, mit knapp einer Woche Luft. Ganzes Backlog: 110 / 20 = 5,5, also 6 Sprints. Ende: 03.05. + 6 x 14 - 3 = Freitag, 23.07.2027. Die übrigen Funktionen folgen nach der Eröffnung. Die Prognose gilt nur, wenn die Velocity stabil bleibt und das Backlog nicht wächst.",
+      "",
+      "3. Ursachen: Aufgaben zu klein geschätzt, Krankheit oder Urlaub, Störungen durch andere Kunden, ungeklärte Anforderungen, z.B. Vorgaben des Zahlungsanbieters, oder Lieferverzug der Tablets. Das Team spricht das in der Retrospektive an und passt die Planung für Sprint 5 an. Der Product Owner prüft mit dem Kunden, ob alle Muss-Punkte wirklich für die Eröffnung nötig sind. Bleibt es bei 12 Punkten, fehlen nach Sprint 4 noch 64 - 12 = 52 Muss-Punkte, 52 / 12 = ca. 4,3, also 5 weitere Sprints. Das wären 6 Sprints bis Freitag, 23.07.2027, die Eröffnung wäre verfehlt. Vorteil von Scrum: Die Anforderungen an die Buchung ändern sich erfahrungsgemäß, wenn die Studios erste Versionen testen. Nach jedem Sprint gibt es ein nutzbares Ergebnis. Grenzen: Hardware muss mit Lieferzeit bestellt werden, WLAN-Ausleuchtung und Verkabelung folgen einer festen Reihenfolge und lassen sich schlecht in kleine Stücke teilen. Hier helfen ein fester Vorlauf und Kanban für die Montagetermine."
+    ]
+  },
+  {
+    "title": "Stakeholder und Kommunikationswege beim Tablet-Projekt einer Tafel",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Tafel (eingetragener Verein) gibt mit 45 ehrenamtlich Helfenden an zwei Tagen pro Woche Lebensmittel aus. Die Berechtigung der Kundinnen und Kunden wird bisher mit Papierkarten geprüft. Künftig sollen an drei Ausgabestellen Tablets einen QR-Code auf dem Kundenausweis scannen und die Ausgabe zählen. Eine Stiftung fördert das Projekt mit höchstens 1.500 Euro. Sie sind als Azubi eines Systemhauses für die Einrichtung eingeplant. Das Projektteam besteht aus 5 Personen, insgesamt sind 12 Personen regelmäßig eingebunden. Kosten (vereinfacht angenommen): Tablet 329 Euro, robuste Hülle 35 Euro, Geräteverwaltung (MDM) 4 Euro je Gerät und Monat, Laufzeit 12 Monate.",
+      "",
+      "1. Nennen Sie sechs Stakeholder des Projekts. Ordnen Sie sie in eine Matrix nach Einfluss und Interesse ein und nennen Sie für zwei davon mögliche Befürchtungen.",
+      "2. Berechnen Sie die Zahl der möglichen Kommunikationswege mit der Formel n x (n - 1) / 2 für das Projektteam, für alle 12 Beteiligten und für alle 45 Helfenden. Was folgt daraus? Erstellen Sie einen kleinen Kommunikationsplan mit drei Einträgen.",
+      "3. Berechnen Sie die Kosten für ein Jahr. Reicht die Förderung, und wie viel bleibt übrig?"
+    ],
+    "solution": [
+      "1. Stakeholder: Vorstand der Tafel (Auftraggeber), ehrenamtliche Helfende an der Ausgabe, Kundinnen und Kunden, die Stiftung als Geldgeberin, der Datenschutzbeauftragte des Dachverbands, das Sozialamt bzw. Jobcenter (stellt Nachweise aus), das Systemhaus und die spendenden Supermärkte. Matrix: hoher Einfluss und hohes Interesse (eng einbinden): Vorstand, Stiftung. Hoher Einfluss, weniger Interesse (zufriedenstellen): Datenschutzbeauftragter. Hohes Interesse, wenig Einfluss (informieren): Helfende, Kundinnen und Kunden. Geringes Interesse und wenig Einfluss (beobachten): Supermärkte. Befürchtungen: Ältere Helfende fürchten, mit der Technik nicht zurechtzukommen oder bloßgestellt zu werden. Kundinnen und Kunden fürchten, dass ihre Daten weitergegeben werden oder die Ausgabe länger dauert. Beide Sorgen müssen früh angesprochen werden, sonst scheitert das Projekt an fehlender Akzeptanz.",
+      "",
+      "2. Projektteam: 5 x 4 / 2 = 10 Wege. Alle 12 Beteiligten: 12 x 11 / 2 = 66 Wege. Alle 45 Helfenden: 45 x 44 / 2 = 990 Wege. Die Zahl wächst viel schneller als die Zahl der Personen. Deshalb braucht es feste Kommunikationswege statt Absprachen jeder mit jedem. Kommunikationsplan: Wöchentliches Projekttreffen des Teams (Teilnehmende: Projektteam, Inhalt: Stand und Probleme, Medium: 30 Minuten vor Ort oder per Video, verantwortlich: Projektleitung). Monatlicher Kurzbericht an den Vorstand und an die Stiftung (Inhalt: Fortschritt, Kosten, Entscheidungen, Medium: E-Mail mit einer Seite PDF). Aushang und Kurzschulung für die Helfenden vor dem Start (Inhalt: Bedienung, Ansprechpartner, Medium: Infoblatt mit Bildern und 30 Minuten Einweisung je Ausgabestelle).",
+      "",
+      "3. Tablets: 3 x 329 = 987 Euro. Hüllen: 3 x 35 = 105 Euro. MDM: 3 x 4 x 12 = 144 Euro. Summe: 987 + 105 + 144 = 1.236 Euro. Die Förderung reicht, es bleiben 1.500 - 1.236 = 264 Euro, z.B. für ein Ersatz-Tablet-Ladegerät oder als Reserve. Zu beachten: Die MDM-Kosten fallen jedes Jahr an und müssen ab dem zweiten Jahr aus dem Vereinshaushalt bezahlt werden."
+    ]
+  },
+  {
+    "title": "Technikereinsatz vor der Weinlese einer Winzergenossenschaft planen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Die Kellerei einer Winzergenossenschaft braucht vor der Weinlese ab Mittwoch, 01.09.2027, neue Technik: 18 PC-Arbeitsplätze, 6 Terminals an den Traubenwaagen, dazu Netzwerkarbeiten und Tests. Zeitfenster: KW 33 (16. bis 20.08.2027) und KW 34 (23. bis 27.08.2027). Aufwand: 3 Stunden je PC-Arbeitsplatz, 4 Stunden je Waagenterminal, 20 Stunden Netzwerk, 12 Stunden Tests und Übergabe. Ihr Systemhaus plant zwei Techniker mit je 40 Stunden pro Woche. Vereinfacht angenommen sind 80 % ihrer Zeit für das Projekt nutzbar, der Rest geht für Störungen anderer Kunden weg. Die Auszubildende hilft in KW 33 mit 16 Stunden wirksamer Projektzeit, in KW 34 hat sie Berufsschule.",
+      "",
+      "1. Berechnen Sie den Gesamtaufwand, die verfügbare Kapazität in beiden Wochen und die Auslastung in Prozent.",
+      "2. Techniker B hat in KW 33 drei Tage Urlaub (je 8 Stunden). Berechnen Sie Kapazität, Auslastung und Puffer neu. Wie beurteilen Sie das Ergebnis?",
+      "3. Die Waagenterminals können erst eingerichtet werden, wenn der Waagenhersteller vor Ort war. Er hat nur Donnerstag, 26.08., frei. Was bedeutet das für die Planung? Nennen Sie drei Maßnahmen, um das Risiko zu senken."
+    ],
+    "solution": [
+      "1. Aufwand: 18 x 3 = 54 h + 6 x 4 = 24 h + 20 h + 12 h = 110 Stunden. Kapazität Techniker: 2 x 40 x 0,8 = 64 Stunden pro Woche. KW 33: 64 + 16 = 80 Stunden, KW 34: 64 Stunden, zusammen 144 Stunden. Auslastung: 110 / 144 = ca. 76,4 %. Es bleiben 34 Stunden Puffer.",
+      "",
+      "2. Urlaub: 3 x 8 = 24 Stunden, davon nutzbar 24 x 0,8 = 19,2 Stunden weniger. Kapazität: 144 - 19,2 = 124,8 Stunden. Auslastung: 110 / 124,8 = ca. 88,1 %. Puffer: 124,8 - 110 = 14,8 Stunden, also knapp zwei Arbeitstage eines Technikers. Das ist noch machbar, aber eng. Schon kleine Probleme, z.B. ein defektes Gerät oder eine größere Störung bei einem anderen Kunden, verbrauchen den Puffer. Die Planung sollte Arbeiten, die nicht vom Kunden abhängen, nach vorne ziehen (Vorbereitung der PCs per Image im Systemhaus).",
+      "",
+      "3. Die Waagenterminals (24 Stunden) hängen am Termin des Herstellers. Sie können frühestens am 26.08. beginnen. Mit zwei Technikern (2 x 8 h = 16 h am Tag, bei 80 % ca. 12,8 h) dauern sie rechnerisch zwei Tage, also bis Freitag, 27.08. Danach bleiben nur das Wochenende und der 30. und 31.08. für die Tests. Der Termin des Herstellers liegt damit auf dem kritischen Pfad. Maßnahmen: Den Termin des Herstellers sofort schriftlich bestätigen lassen und einen Ersatztermin vereinbaren. Die Terminals vorab im Systemhaus vorkonfigurieren, damit vor Ort nur noch angeschlossen und getestet wird. Für 30. und 31.08. einen Techniker fest reservieren und die Störungsbearbeitung für andere Kunden in dieser Zeit auf eine Vertretung legen."
+    ]
+  },
+  {
+    "title": "Änderungswunsch beim Hafen-WLAN eines Yachthafens",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Yachthafen hat bei Ihrem Systemhaus zum Festpreis von 9.800 Euro netto ein WLAN für Hafenmeisterei und die Stege A bis C bestellt: 6 Outdoor-Access-Points, fertig zum Saisonbeginn am Donnerstag, 15.04.2027. Am Donnerstag, 01.04.2027, wünscht der Hafenmeister zusätzlich die neuen Stege D und E und einen Hotspot mit Zugangsgutscheinen für Gastlieger. Kalkulation (vereinfacht angenommen): 3 weitere Access Points zu 690 Euro, 140 m Außenkabel zu 4,20 Euro je Meter, Montage 3,5 Stunden je Access Point, Einrichtung des Hotspots 6 Stunden, Stundensatz 80 Euro netto. Die Access Points haben eine Lieferzeit von 10 Arbeitstagen, die Bestellung wäre am Freitag, 02.04.2027, möglich.",
+      "",
+      "1. Erklären Sie am magischen Dreieck, was der Wunsch für das Projekt bedeutet. Warum sollte die Änderung schriftlich als Änderungsantrag (Change Request) behandelt werden?",
+      "2. Berechnen Sie die Mehrkosten netto und brutto (19 % Umsatzsteuer), den neuen Auftragswert und die Erhöhung in Prozent. Wann wären die Access Points frühestens da?",
+      "3. Welches Vorgehen empfehlen Sie dem Hafenmeister? Was gehört in die Abnahme?"
+    ],
+    "solution": [
+      "1. Das magische Dreieck verbindet Leistung (Umfang und Qualität), Zeit und Kosten. Ändert sich eine Größe, wirkt das auf die anderen: Mehr Leistung bei gleichem Termin braucht mehr Personal und kostet mehr, oder der Termin verschiebt sich. Bei gleichem Budget müsste die Qualität sinken. Schriftlicher Änderungsantrag: Beim Festpreis ist nur der vereinbarte Umfang bezahlt. Der Antrag beschreibt die Änderung, ihre Auswirkungen auf Kosten, Termin und Risiken und wird vom Auftraggeber freigegeben. So gibt es später keinen Streit, und die Projektdokumentation bleibt vollständig.",
+      "",
+      "2. Access Points: 3 x 690 = 2.070 Euro. Kabel: 140 x 4,20 = 588 Euro. Arbeit: 3 x 3,5 = 10,5 h + 6 h = 16,5 h x 80 = 1.320 Euro. Mehrkosten netto: 2.070 + 588 + 1.320 = 3.978 Euro, brutto 3.978 x 1,19 = 4.733,82 Euro. Neuer Auftragswert netto: 9.800 + 3.978 = 13.778 Euro. Erhöhung: 3.978 / 9.800 = ca. 40,6 %. Lieferung: Bestellung am Freitag, 02.04. Der 1. Arbeitstag ist Montag, 05.04., der 10. Arbeitstag Freitag, 16.04. Die Geräte kämen also erst einen Tag nach Saisonbeginn.",
+      "",
+      "3. Empfehlung: Den vereinbarten Umfang (Stege A bis C) unverändert bis 15.04. fertigstellen und abnehmen. Die Erweiterung als zweite Phase nach dem Saisonbeginn umsetzen, z.B. in der Woche ab 19.04. So ist der Saisonstart nicht gefährdet und das Risiko bleibt klein. Beim Hotspot für Gastlieger sind zusätzlich Nutzungsbedingungen, ein Vorschaltportal und die Trennung vom internen Netz nötig. Abnahme: Prüfung gegen die vereinbarten Leistungen (Ausleuchtung aller Liegeplätze mit Messprotokoll, Durchsatz, Roaming, Trennung von Gast- und Verwaltungsnetz), Übergabe der Dokumentation (Standorte der Access Points, IP-Plan, Zugangsdaten, Konfigurationssicherung), Einweisung des Hafenmeisters, ein Abnahmeprotokoll mit Datum, Unterschriften und eventuellen Mängeln. Mit der Abnahme beginnt die Gewährleistung, und die Rechnung wird fällig."
+    ]
+  },
+  {
+    "title": "Statusbericht mit Ampel für die neue Software eines Bestattungsinstituts",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Bestattungsinstitut mit drei Standorten führt eine Branchensoftware ein und bekommt 10 neue Arbeitsplätze. Budget 19.200 Euro, Dauer 10 Wochen. Die Kosten sollen gleichmäßig über die Zeit anfallen. Nach 5 Wochen sollen Sie einen Statusbericht schreiben. Bisher sind 9.900 Euro ausgegeben. Stand der Arbeitspakete (geplanter Aufwand in Stunden, Fertigstellung):",
+      "  AP1 Anforderungen aufnehmen 20 h, 100 % | AP2 Hardware beschaffen 16 h, 100 % | AP3 Arbeitsplätze einrichten 60 h, 50 %",
+      "  AP4 Datenübernahme aus der Altsoftware 40 h, 0 % | AP5 Schulung 24 h, 0 % | AP6 Abnahme und Dokumentation 16 h, 0 %",
+      "Ampelregeln im Unternehmen: grün ab 0,95, gelb von 0,80 bis unter 0,95, rot unter 0,80. Bewertet werden Termin (Leistungswert / Planwert) und Kosten (Leistungswert / Istkosten).",
+      "",
+      "1. Berechnen Sie den Fertigstellungsgrad des Projekts, gewichtet mit dem geplanten Aufwand.",
+      "2. Berechnen Sie Planwert, Leistungswert (Fertigstellungsgrad x Budget), die Kennzahlen für Termin und Kosten und die Ampelfarben. Wie hoch werden die Gesamtkosten und die Dauer, wenn es so weitergeht (Budget / Kostenkennzahl, Dauer / Terminkennzahl)?",
+      "3. Was gehört in einen Statusbericht? Nennen Sie zwei mögliche Ursachen und zwei Maßnahmen. Worauf ist bei der Datenübernahme in diesem Betrieb besonders zu achten?"
+    ],
+    "solution": [
+      "1. Gesamtaufwand: 20 + 16 + 60 + 40 + 24 + 16 = 176 Stunden. Erledigt: 20 + 16 + 0,5 x 60 = 66 Stunden. Fertigstellungsgrad: 66 / 176 = 0,375 = 37,5 %.",
+      "",
+      "2. Planwert nach 5 von 10 Wochen: 50 % von 19.200 = 9.600 Euro. Leistungswert: 0,375 x 19.200 = 7.200 Euro. Termin: 7.200 / 9.600 = 0,75, also rot. Kosten: 7.200 / 9.900 = ca. 0,727, also rot. Das Projekt ist hinter dem Plan und teurer als geplant: Für 7.200 Euro Leistung wurden 9.900 Euro ausgegeben. Prognose Kosten: 19.200 / (7.200 / 9.900) = 19.200 x 9.900 / 7.200 = 26.400 Euro, also 7.200 Euro bzw. 37,5 % über Budget. Prognose Dauer: 10 / 0,75 = ca. 13,3 Wochen statt 10.",
+      "",
+      "3. Statusbericht: Projektname, Stichtag, Gesamtampel und Ampeln für Termin, Kosten und Qualität, erledigte und nächste Arbeitspakete, Kennzahlen, Abweichungen mit Ursachen, Risiken, Maßnahmen und benötigte Entscheidungen. Kurz und sachlich, möglichst eine Seite. Ursachen: Die Einrichtung der Arbeitsplätze dauert länger als geschätzt (z.B. fehlende Treiber für Spezialdrucker für Trauerdrucksachen) oder es gab Mehraufwand durch Anforderungen, die erst später bekannt wurden. Maßnahmen: Die Arbeitsplätze per Image vorbereiten statt einzeln, die Schätzung für AP4 bis AP6 prüfen, zusätzliche Kapazität einplanen oder mit dem Auftraggeber über Budget oder Umfang sprechen. Datenübernahme: Die Daten betreffen Verstorbene und vor allem Angehörige (Namen, Adressen, Rechnungen) und werden oft in schwierigen Lebenslagen erhoben. Nötig sind ein Testlauf mit Kontrolle der Vollständigkeit, eine Sicherung der Altdaten, ein Vertrag zur Auftragsverarbeitung mit dem Softwareanbieter und die Löschung nicht mehr benötigter Altdaten nach Ablauf der Aufbewahrungsfristen."
+    ]
+  },
+  {
+    "title": "Organigramm einer Fleischerei mit fünf Filialen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Eine Fleischerei mit fünf Filialen soll ein Organigramm bekommen, weil eine neue Stelle \"IT-Koordination\" geschaffen wird. Heute gilt: Der Inhaber leitet das Unternehmen. Ihm direkt unterstellt sind die Stabsstelle Qualität und Hygiene (1 Person), der Produktionsmeister, die Verkaufsleiterin, die Leiterin der Verwaltung und der Leiter des Partyservice. Dem Meister unterstehen 12 Beschäftigte in der Produktion. Der Verkaufsleiterin unterstehen 5 Filialleitungen, diesen 6, 5, 5, 5 und 5 Verkaufskräfte. Die Verwaltung hat 3 Beschäftigte (Buchhaltung, Personal), der Partyservice 4. Jede Person hat genau eine vorgesetzte Stelle.",
+      "",
+      "1. Zeichnen Sie das Organigramm. Um welches Leitungssystem handelt es sich? Welche Aufgaben und Befugnisse hat eine Stabsstelle?",
+      "2. Bestimmen Sie die Leitungsspanne jeder leitenden Stelle, die Zahl der Beschäftigten insgesamt und die Zahl der Hierarchieebenen im Verkauf. Prüfen Sie Ihre Rechnung: Summe aller Leitungsspannen + 1 muss die Zahl der Beschäftigten ergeben. Der Meister ist mit seiner Leitungsspanne überlastet. Er soll zwei Vorarbeiter mit je gleich vielen Beschäftigten bekommen. Wie ändern sich Leitungsspannen und Ebenen in der Produktion?",
+      "3. Die IT-Koordination soll den Filialen vorschreiben dürfen, wann Kassen-Updates eingespielt werden. Wo ordnen Sie die Stelle ein? Welches Problem entsteht, wenn Filialleitungen dann zwei Vorgesetzte haben?"
+    ],
+    "solution": [
+      "1. Organigramm: oben Inhaber, daneben mit Querlinie die Stabsstelle Qualität und Hygiene. Darunter vier Abteilungen: Produktion (Meister, 12 Beschäftigte), Verkauf (Verkaufsleiterin, 5 Filialleitungen mit ihren Verkaufskräften), Verwaltung (Leiterin, 3 Beschäftigte), Partyservice (Leiter, 4 Beschäftigte). Es ist ein Stabliniensystem: ein Einliniensystem, in dem jede Stelle genau eine vorgesetzte Stelle hat, ergänzt um eine Stabsstelle. Die Stabsstelle berät die Leitung, bereitet Entscheidungen vor und kontrolliert, z.B. Hygienepläne. Sie hat aber keine Weisungsbefugnis gegenüber den Linienstellen.",
+      "",
+      "2. Leitungsspannen: Inhaber 5 (4 Abteilungsleitungen + Stab), Meister 12, Verkaufsleiterin 5, Filialleitungen 6, 5, 5, 5 und 5, Verwaltungsleiterin 3, Leiter Partyservice 4. Beschäftigte: Inhaber 1 + Stab 1 + Produktion 1 + 12 = 13 + Verkauf 1 + 5 + 26 = 32 + Verwaltung 1 + 3 = 4 + Partyservice 1 + 4 = 5, zusammen 1 + 1 + 13 + 32 + 4 + 5 = 56. Probe: 5 + 12 + 5 + 26 + 3 + 4 = 55 Leitungsspannen + 1 (der Inhaber hat keinen Vorgesetzten) = 56. Ebenen im Verkauf: Inhaber, Verkaufsleitung, Filialleitung, Verkaufskraft = 4 Ebenen. Neu in der Produktion: 12 Beschäftigte, davon werden 2 zu Vorarbeitern, es bleiben 10, also je 5 je Vorarbeiter. Leitungsspanne Meister 2, Vorarbeiter je 5. Die Produktion hat dann ebenfalls 4 Ebenen (Inhaber, Meister, Vorarbeiter, Beschäftigte). Die Zahl der Beschäftigten bleibt 56.",
+      "",
+      "3. Möglichkeit 1: IT-Koordination als Stabsstelle beim Inhaber. Sie berät, darf den Filialen aber nichts anweisen, Anweisungen gehen über die Verkaufsleiterin. Möglichkeit 2: eigene Linienstelle, z.B. in der Verwaltung, mit fachlicher Weisungsbefugnis nur für IT-Fragen (funktionale Weisung). Dann haben die Filialleitungen zwei Vorgesetzte, wie im Mehrliniensystem. Vorteil: kurze Wege und Fachwissen direkt vor Ort. Problem: widersprüchliche Anweisungen, z.B. die IT will das Update am Samstagvormittag, der Verkauf braucht dann alle Kassen. Unklar ist, wer entscheidet. Lösung: klare Regeln, z.B. Updates nur in festen Wartungsfenstern nach Ladenschluss, und eine eindeutige Eskalation an den Inhaber."
+    ]
+  },
+  {
+    "title": "Siebzehnjähriger Azubi kauft einen Gaming-PC auf Raten",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Leon, geboren am 14.11.2009, macht eine Ausbildung zum Fachinformatiker. Seine Nettovergütung beträgt vereinfacht angenommen 820 Euro im Monat. Die Eltern haben ihm erlaubt, frei über seine Vergütung zu verfügen. Am Montag, 02.08.2027, passiert Folgendes:",
+      "  a) Er kauft im Laden eine Grafikkarte für 649 Euro und zahlt sofort bar von seinem Ersparten aus der Vergütung.",
+      "  b) Er bestellt online einen Gaming-PC für 1.800 Euro auf Raten: 12 Monatsraten zu je 162 Euro. Die Eltern wissen davon nichts.",
+      "  c) Sein Ausbildungsbetrieb schenkt ihm ein ausgemustertes Notebook.",
+      "",
+      "1. Wie alt ist Leon am 02.08.2027, und wie viele Tage dauert es bis zu seinem 18. Geburtstag? Beschreiben Sie die Stufen der Geschäftsfähigkeit.",
+      "2. Prüfen Sie, ob die Verträge a), b) und c) wirksam sind. Nennen Sie die Paragraphen des BGB.",
+      "3. Berechnen Sie für b) den Gesamtpreis bei Ratenzahlung, die Mehrkosten gegenüber dem Barpreis in Euro und Prozent und den Anteil einer Rate an Leons Nettovergütung. Die Eltern verweigern die Genehmigung. Was bedeutet das für Leon und für den Händler? Was ändert sich, wenn Leon nach seinem Geburtstag weiter zahlt?"
+    ],
+    "solution": [
+      "1. Am 02.08.2027 ist Leon 17 Jahre alt, 18 wird er am 14.11.2027. Vom 02.08. bis 14.11.2027 sind es 29 (Rest August) + 30 + 31 + 14 = 104 Tage. Stufen: Geschäftsunfähig sind Kinder unter 7 Jahren (§ 104 BGB), ihre Willenserklärungen sind nichtig. Beschränkt geschäftsfähig sind Minderjährige von 7 bis unter 18 Jahren (§ 106 BGB): Ihre Verträge brauchen grundsätzlich die Zustimmung der gesetzlichen Vertreter. Voll geschäftsfähig ist man ab 18 Jahren. Rechtsfähigkeit, also Träger von Rechten und Pflichten zu sein, hat jeder Mensch schon ab der Geburt (§ 1 BGB).",
+      "",
+      "2. a) Wirksam nach § 110 BGB (Taschengeldparagraph): Leon erfüllt den Vertrag vollständig mit Mitteln, die ihm die Eltern zur freien Verfügung überlassen haben. b) Schwebend unwirksam (§ 108 BGB). Bei Ratenkauf ist die Leistung nicht sofort vollständig bewirkt, § 110 greift daher nicht. Der Vertrag wird erst mit der Genehmigung der Eltern wirksam. Außerdem entstehen langfristige Zahlungspflichten. c) Wirksam nach § 107 BGB: Die Annahme eines Geschenks bringt Leon lediglich einen rechtlichen Vorteil, er muss nichts dafür leisten. Hinweis: Die Sonderregel für Arbeitsverhältnisse (§ 113 BGB) gilt nach herrschender Meinung nicht für Ausbildungsverhältnisse, weil dort die Ausbildung im Vordergrund steht.",
+      "",
+      "3. Gesamtpreis: 12 x 162 = 1.944 Euro. Mehrkosten: 1.944 - 1.800 = 144 Euro, das sind 144 / 1.800 = 8 %. Anteil einer Rate: 162 / 820 = ca. 19,8 % der Nettovergütung, ein Jahr lang. Verweigern die Eltern die Genehmigung, ist der Vertrag von Anfang an unwirksam. Der Händler muss bereits gezahlte Raten erstatten, Leon muss den PC zurückgeben. Fordert der Händler die Eltern zur Erklärung auf, können sie nur noch ihm gegenüber entscheiden. Äußern sie sich nicht innerhalb von zwei Wochen, gilt die Genehmigung als verweigert (§ 108 Abs. 2 BGB). Ab dem 18. Geburtstag kann Leon einen noch schwebend unwirksamen Vertrag selbst genehmigen (§ 108 Abs. 3 BGB), z.B. indem er bewusst weiter zahlt. Wurde die Genehmigung aber schon verweigert, ist der Vertrag endgültig unwirksam und müsste neu geschlossen werden."
+    ]
+  },
+  {
+    "title": "Kurzarbeit bei einem Verleih für Veranstaltungstechnik",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Verleih für Veranstaltungstechnik (Licht, Ton, Medientechnik) hat 24 Beschäftigte und 2 Auszubildende, darunter die angehende Fachinformatikerin Mara. Nach dem Ausfall eines Großkunden fehlen für mehrere Monate Aufträge. Die Geschäftsführung plant Kurzarbeit mit 50 % Arbeitsausfall für 14 Beschäftigte. Es gibt einen Betriebsrat. Beispielwerte (vereinfacht angenommen, pauschalierte Nettoentgelte aus der Tabelle der Arbeitsagentur):",
+      "  Techniker Paul, keine Kinder: Soll-Netto 2.420 Euro, Ist-Netto bei 50 % Arbeit 1.340 Euro",
+      "  Medientechnikerin Sina, ein Kind: Soll-Netto 2.300 Euro, Ist-Netto 1.280 Euro",
+      "Kurzarbeitergeld: 60 % der Nettoentgeltdifferenz, mit mindestens einem Kind 67 %.",
+      "",
+      "1. Nennen Sie die Voraussetzungen für Kurzarbeitergeld. Prüfen Sie, ob die Mindestzahl der betroffenen Beschäftigten erreicht ist (mindestens ein Drittel mit mehr als 10 % Entgeltausfall). Welche Rolle hat der Betriebsrat, und wo wird Kurzarbeit angezeigt?",
+      "2. Berechnen Sie für Paul und Sina das Kurzarbeitergeld und das Monatsnetto insgesamt. Wie viel Euro und Prozent verliert Paul gegenüber seinem Soll-Netto?",
+      "3. Darf Mara als Auszubildende in Kurzarbeit geschickt werden? Was muss der Betrieb vorher versuchen? Welche Aufgaben kommen während der Kurzarbeit auf die IT zu?"
+    ],
+    "solution": [
+      "1. Voraussetzungen: ein erheblicher, vorübergehender und unvermeidbarer Arbeitsausfall mit Entgeltausfall aus wirtschaftlichen Gründen oder durch ein unabwendbares Ereignis. Die betrieblichen Voraussetzungen müssen erfüllt sein, die Beschäftigten müssen versicherungspflichtig beschäftigt bleiben, und die Kurzarbeit muss bei der Agentur für Arbeit angezeigt werden. Vorher sind Überstunden und Resturlaub in zumutbarem Umfang abzubauen. Mindestzahl: 24 / 3 = 8 Beschäftigte. Betroffen sind 14 mit je 50 % Ausfall, 14 > 8, die Voraussetzung ist erfüllt. Die Einführung von Kurzarbeit ist mitbestimmungspflichtig (§ 87 Abs. 1 Nr. 3 BetrVG). Sie wird meist in einer Betriebsvereinbarung geregelt, ohne Betriebsrat braucht es eine Vereinbarung mit jedem Beschäftigten. Die Anzeige geht an die Agentur für Arbeit, in deren Bezirk der Betrieb liegt, spätestens in dem Monat, in dem die Kurzarbeit beginnt. Kurzarbeitergeld gibt es in der Regel bis zu 12 Monate, per Verordnung kann die Bezugsdauer verlängert werden.",
+      "",
+      "2. Paul: Differenz 2.420 - 1.340 = 1.080 Euro, davon 60 % = 648 Euro Kurzarbeitergeld. Monatsnetto: 1.340 + 648 = 1.988 Euro. Verlust: 2.420 - 1.988 = 432 Euro, 432 / 2.420 = ca. 17,9 %. Sina: Differenz 2.300 - 1.280 = 1.020 Euro, davon 67 % = 683,40 Euro. Monatsnetto: 1.280 + 683,40 = 1.963,40 Euro. Die Sozialversicherungsbeiträge auf das ausgefallene Entgelt trägt grundsätzlich der Arbeitgeber. Das Kurzarbeitergeld ist steuerfrei, unterliegt aber dem Progressionsvorbehalt.",
+      "",
+      "3. Auszubildende sollen möglichst nicht in Kurzarbeit. Der Betrieb muss alles tun, um die Ausbildung fortzusetzen: Ausbildungsplan umstellen, Inhalte vorziehen, Mara in andere Bereiche versetzen (z.B. Lager, Inventur, Wartung der Verleihtechnik, interne IT-Projekte) oder sie von einer Ausbilderin betreuen lassen, die nicht in Kurzarbeit ist. Fällt die Ausbildung trotzdem aus, erhält Mara ihre Vergütung bis zu sechs Wochen weiter (§ 19 Abs. 1 Nr. 2 BBiG). Erst danach ist Kurzarbeitergeld für sie möglich. IT-Aufgaben: Arbeitszeiterfassung und Lohnabrechnung auf Kurzarbeit umstellen, Zugänge für Kurzarbeitende so regeln, dass außerhalb der Arbeitszeit nicht gearbeitet wird, und die ruhigere Zeit für Updates, Inventur der Leihgeräte und Dokumentation nutzen."
+    ]
+  },
+  {
+    "title": "Gewinnschwelle für Wartungsverträge mit Logopädiepraxen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein selbstständiger Fachinformatiker betreut Therapiepraxen. Er bietet Logopädiepraxen eine monatliche Wartungspauschale an: Fernwartung, Überwachung, Virenschutz und Cloud-Sicherung für 89 Euro netto pro Praxis und Monat. Vereinfacht angenommen:",
+      "  Fixe Kosten pro Monat: Überwachungs- und Fernwartungsplattform 240 Euro, Anteil Betriebshaftpflicht 60 Euro, Anteil Fahrzeug 300 Euro",
+      "  Variable Kosten pro Praxis und Monat: Virenschutzlizenz 12 Euro, Speicher für die Cloud-Sicherung 9 Euro",
+      "Derzeit hat er 14 Verträge.",
+      "",
+      "1. Erklären Sie fixe und variable Kosten mit Beispielen aus dem Fall. Berechnen Sie den Deckungsbeitrag je Vertrag und den monatlichen Gewinn bei 14 Verträgen.",
+      "2. Ab wie vielen Verträgen erreicht er die Gewinnschwelle (Break-even-Point)? Ein Mitbewerber bietet 79 Euro an. Wie viele Verträge wären bei diesem Preis nötig, und wie hoch wäre der Gewinn bei 14 Verträgen?",
+      "3. Wo liegen die kurzfristige und die langfristige Preisuntergrenze bei 14 Verträgen? Welche Leistungen sollte er in den Vertrag schreiben, und welche Pflicht nach DSGVO entsteht, weil er auf Patientendaten zugreifen kann?"
+    ],
+    "solution": [
+      "1. Fixe Kosten fallen unabhängig von der Zahl der Verträge an, hier 240 + 60 + 300 = 600 Euro im Monat. Variable Kosten steigen mit jedem Vertrag, hier 12 + 9 = 21 Euro pro Praxis. Deckungsbeitrag je Vertrag: 89 - 21 = 68 Euro. Er deckt zuerst die Fixkosten, danach ist er Gewinn. Gewinn bei 14 Verträgen: 14 x 68 = 952 Euro - 600 Euro = 352 Euro im Monat. Seine eigene Arbeitszeit ist darin noch nicht bezahlt, sie muss aus dem Gewinn kommen.",
+      "",
+      "2. Break-even: 600 / 68 = ca. 8,8, also ab 9 Verträgen. Mit 8 Verträgen macht er 8 x 68 - 600 = -56 Euro Verlust, mit 9 Verträgen 9 x 68 - 600 = +12 Euro Gewinn. Bei 79 Euro: Deckungsbeitrag 79 - 21 = 58 Euro, Break-even 600 / 58 = ca. 10,3, also 11 Verträge. Gewinn bei 14 Verträgen: 14 x 58 - 600 = 812 - 600 = 212 Euro, also 140 Euro weniger im Monat.",
+      "",
+      "3. Kurzfristige Preisuntergrenze: die variablen Kosten, 21 Euro. Darunter verliert er mit jedem zusätzlichen Vertrag Geld. Langfristige Preisuntergrenze: variable Kosten + Fixkosten je Vertrag = 21 + 600 / 14 = ca. 63,86 Euro. Darunter sind die Kosten auf Dauer nicht gedeckt. Vertragsinhalt: genaue Leistungen, Reaktionszeiten, Erreichbarkeit, was nicht enthalten ist (z.B. Vor-Ort-Einsätze nach Aufwand), Laufzeit und Kündigungsfrist, Haftung. DSGVO: Er verarbeitet im Auftrag Gesundheitsdaten der Praxen. Deshalb braucht er mit jeder Praxis einen Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) mit technischen und organisatorischen Maßnahmen. Außerdem muss er zur Verschwiegenheit verpflichtet werden, weil die Praxen der Schweigepflicht unterliegen."
+    ]
+  },
+  {
+    "title": "Inventur und Abschreibung der Technik eines Escape-Room-Anbieters",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Escape-Room-Anbieter hat 2027 in neue Technik investiert. Zum Jahresende (31.12.2027) sollen Sie die Inventur der IT-Geräte unterstützen. Anschaffungen (netto):",
+      "  Steuerungs-PC für die Rätseltechnik, 1.450 Euro, gekauft am 01.04.2027, Nutzungsdauer 3 Jahre",
+      "  NAS für Videoaufzeichnungen, 2.160 Euro, gekauft am 01.10.2027, Nutzungsdauer 3 Jahre",
+      "  4 Monitore für die Spielleitung, je 219 Euro, gekauft im Mai 2027",
+      "  12 Raumkameras mit Speicherkarte, je 95 Euro, gekauft im Juni 2027",
+      "Bei der Inventur finden Sie nur 11 Raumkameras. Vereinfacht angenommen: Geringwertige Wirtschaftsgüter bis 800 Euro netto werden im Jahr der Anschaffung voll abgeschrieben, alle anderen Geräte linear und monatsgenau.",
+      "",
+      "1. Was ist eine Inventur, und warum ist sie vorgeschrieben? Nennen Sie zwei Inventurverfahren. Wie gehen Sie bei der Inventur der IT-Geräte praktisch vor?",
+      "2. Berechnen Sie die Abschreibung 2027 für jedes Gerät und den Restbuchwert am 31.12.2027 für PC und NAS. Wie hoch ist die gesamte Abschreibung 2027? Welche Anschaffungskosten stehen hinter der fehlenden Kamera?",
+      "3. Was tun Sie mit der Inventurdifferenz? Warum kann die fehlende Kamera auch ein Datenschutzproblem sein?"
+    ],
+    "solution": [
+      "1. Die Inventur ist die Bestandsaufnahme aller Vermögensgegenstände und Schulden nach Art, Menge und Wert zu einem Stichtag. Das Ergebnis ist das Inventar. Kaufleute müssen sie bei Gründung und zu jedem Geschäftsjahresende durchführen (§ 240 HGB), sie ist Grundlage für die Bilanz. Verfahren: Stichtagsinventur (körperliche Zählung am oder nahe dem Stichtag), permanente Inventur (laufende Fortschreibung mit mindestens einer Zählung im Jahr), Stichprobeninventur. Praktisch: Inventarliste mit Inventarnummern, Seriennummern und Standort vorbereiten, jedes Gerät vor Ort suchen und Etikett bzw. Seriennummer abgleichen, Zustand notieren, zu zweit zählen (einer zählt, einer schreibt) und die Liste unterschreiben.",
+      "",
+      "2. Steuerungs-PC: 1.450 / 3 = ca. 483,33 Euro pro Jahr, 2027 für 9 Monate (April bis Dezember): 1.450 / 36 x 9 = 362,50 Euro. Restbuchwert: 1.450 - 362,50 = 1.087,50 Euro. NAS: 2.160 / 3 = 720 Euro pro Jahr, für 3 Monate: 720 x 3 / 12 = 180 Euro. Restbuchwert: 2.160 - 180 = 1.980 Euro. Monitore: 4 x 219 = 876 Euro, als geringwertige Wirtschaftsgüter voll abgeschrieben. Kameras: 12 x 95 = 1.140 Euro, voll abgeschrieben. Summe: 362,50 + 180 + 876 + 1.140 = 2.558,50 Euro. Die fehlende Kamera hatte Anschaffungskosten von 95 Euro, ihr Buchwert ist bereits 0 Euro. Hinweis: Steuerlich darf Computerhardware nach einem Schreiben des Bundesfinanzministeriums auch mit einer Nutzungsdauer von einem Jahr angesetzt werden. Die Aufgabe rechnet vereinfacht linear.",
+      "",
+      "3. Die Differenz wird dokumentiert und geklärt: Ist die Kamera nur umgebaut, defekt im Lager, verliehen oder gestohlen? Bleibt sie verschwunden, wird sie aus dem Anlagenverzeichnis ausgebucht, die Inventurliste wird entsprechend berichtigt. Bei Diebstahl: Anzeige und Meldung an die Versicherung. Die Kamera hatte eine Speicherkarte. Darauf können Aufnahmen von Gästen in den Räumen sein, also personenbezogene Daten. Ist die Karte in fremde Hände gelangt, kann eine Datenpanne vorliegen. Dann ist zu prüfen, ob eine Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden nötig ist (Art. 33 DSGVO). Künftig: Aufnahmen nur verschlüsselt oder nur auf dem NAS speichern, Karten nach kurzer Zeit überschreiben und die Kameras mit Inventaretiketten sichern."
+    ]
+  },
+  {
+    "title": "Bildschirmarbeitsplätze im Dachgeschossbüro eines Solarplanungsbüros",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Planungsbüro für Photovoltaikanlagen auf Gewerbedächern bezieht ein Büro im ausgebauten Dachgeschoss. Der Raum hat 44 m² Grundfläche und eine lichte Höhe von 2,60 m. Geplant sind 5 Bildschirmarbeitsplätze, später vielleicht ein sechster. Sie sollen die Arbeitsplätze einrichten. Je Arbeitsplatz sind vereinfacht angenommen ein Sitz-Steh-Tisch für 620 Euro, ein Bürostuhl für 450 Euro und ein Monitorarm für 80 Euro vorgesehen. Richtwerte aus den Technischen Regeln für Arbeitsstätten (ASR A1.2): mindestens 8 m² für einen Arbeitsplatz und 6 m² für jeden weiteren, für Büroarbeitsplätze ein Flächenbedarf von 8 bis 10 m² je Arbeitsplatz einschließlich Möbeln, Luftraum mindestens 12 m³ je Person bei überwiegend sitzender Tätigkeit.",
+      "",
+      "1. Prüfen Sie für 5 und für 6 Arbeitsplätze die Mindestgrundfläche, den Richtwert von 8 bis 10 m² je Arbeitsplatz und den Luftraum. Wie viele Arbeitsplätze wären nach der Mindestgrundfläche höchstens erlaubt?",
+      "2. Berechnen Sie die Kosten der Möbel für 5 Arbeitsplätze. Nennen Sie vier Anforderungen an einen ergonomischen Bildschirmarbeitsplatz (Bildschirm, Beleuchtung, Aufstellung, Tätigkeit).",
+      "3. Welche Pflichten hat das Planungsbüro als Arbeitgeber nach Arbeitsschutzgesetz und Arbeitsmedizinischer Vorsorge? Worauf achten Sie bei der Verkabelung der Arbeitsplätze aus Sicht des Arbeitsschutzes?"
+    ],
+    "solution": [
+      "1. Mindestgrundfläche: 5 Arbeitsplätze: 8 + 4 x 6 = 32 m², 6 Arbeitsplätze: 8 + 5 x 6 = 38 m², beide unter 44 m². Richtwert 8 bis 10 m²: bei 5 Plätzen 40 bis 50 m², 44 m² liegen im Bereich. Bei 6 Plätzen 48 bis 60 m², 44 m² liegen darunter. Ein sechster Platz ist nach der Mindestfläche erlaubt, wird aber eng (44 / 6 = ca. 7,3 m² je Platz). Luftraum: 44 x 2,60 = 114,4 m³, 114,4 / 12 = ca. 9,5, also reicht er für bis zu 9 Personen. Höchstzahl nach Mindestgrundfläche: 8 + (n - 1) x 6 <= 44, also (n - 1) <= 6, n höchstens 7. In der Praxis zählen auch Dachschrägen, Fenster, Türen und Fluchtwege, die Planung erfolgt mit einem Möbelplan.",
+      "",
+      "2. Je Arbeitsplatz 620 + 450 + 80 = 1.150 Euro, für 5 Plätze 5 x 1.150 = 5.750 Euro. Anforderungen: Bildschirm flimmerfrei, entspiegelt, in Höhe und Neigung einstellbar, oberer Bildschirmrand etwa auf Augenhöhe oder leicht darunter, Sehabstand passend zur Bildschirmgröße. Beleuchtung: für Büroarbeit etwa 500 Lux, blendfrei, Blickrichtung parallel zum Fenster, bei Dachfenstern ein Sonnenschutz. Aufstellung: ausreichend Bewegungsfläche, Tastatur und Maus getrennt vom Bildschirm, Tisch- und Stuhlhöhe einstellbar. Tätigkeit: Bildschirmarbeit durch andere Tätigkeiten oder Pausen unterbrechen (Mischarbeit), Software passend zur Aufgabe.",
+      "",
+      "3. Nach § 5 Arbeitsschutzgesetz muss der Arbeitgeber eine Gefährdungsbeurteilung für die Arbeitsplätze erstellen und dokumentieren, auch zu psychischen Belastungen, und die Beschäftigten unterweisen. Nach der Verordnung zur arbeitsmedizinischen Vorsorge muss er Vorsorge bei Bildschirmarbeit anbieten (Angebotsvorsorge) mit Untersuchung der Augen. Braucht jemand eine spezielle Bildschirmbrille, weil eine normale Brille nicht reicht, trägt der Arbeitgeber die Kosten. Außerdem Erste Hilfe, Brandschutz und Fluchtwege organisieren. Verkabelung: keine Kabel über Laufwege (Stolpergefahr), Kabelkanäle oder Kabelwannen unter dem Tisch nutzen, bei Sitz-Steh-Tischen Kabel mit genug Länge und Kabelkette verlegen, keine hintereinander gesteckten Mehrfachsteckdosen, nur geprüfte Geräte und Leitungen (regelmäßige Prüfung ortsveränderlicher Betriebsmittel)."
+    ]
   }
 ]

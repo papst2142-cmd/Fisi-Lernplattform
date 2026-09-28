@@ -75,14 +75,16 @@ CAT_NET = "Netzwerk & Protokolle"
 CAT_SEC = "IT-Sicherheit & Datenschutz"
 CAT_SYS = "Systeme, RAID & Hardware"
 CAT_BIZ = "Wirtschaft & Prozesse"
+CAT_DB = "Datenbanken & SQL"
 
-CATEGORIES = [CAT_NET, CAT_SEC, CAT_SYS, CAT_BIZ]
+CATEGORIES = [CAT_NET, CAT_SEC, CAT_SYS, CAT_BIZ, CAT_DB]
 
 CATEGORY_SHORT = {
     CAT_NET: "Netzwerk",
     CAT_SEC: "Sicherheit",
     CAT_SYS: "Systeme",
     CAT_BIZ: "Wirtschaft",
+    CAT_DB: "Datenbanken",
 }
 
 CATEGORY_ICON = {
@@ -90,6 +92,7 @@ CATEGORY_ICON = {
     CAT_SEC: "\u25c9",
     CAT_SYS: "\u25a3",
     CAT_BIZ: "\u25b2",
+    CAT_DB: "\u25c6",
 }
 
 # Die Farben der Oberflaeche (Palette, Kategorie- und Themenfarben) liegen in
@@ -713,6 +716,7 @@ CATEGORY_KEYS = {
     "sicherheit": CAT_SEC,
     "systeme": CAT_SYS,
     "wirtschaft": CAT_BIZ,
+    "datenbanken": CAT_DB,
 }
 
 # Felder, die in den JSON-Dateien auch als Liste von Zeilen stehen duerfen
