@@ -8,9 +8,10 @@ Der Praxisteil zur Lernplattform: Der Spieler arbeitet bei einem IT-Dienst-
 leister, der die IT eines Zugbetreibers betreut, und bearbeitet Tickets. Was
 er kann, haengt vom echten Lernfortschritt ab (Wissensstand je Fachbereich).
 
-Bewusst ohne Oberflaeche und nur mit der Standardbibliothek, damit PC- und
-Handy-App dieselbe Logik nutzen und sie sich ohne Bildschirm testen laesst
-(test_spiel.py).
+Bewusst ohne Oberflaeche und nur mit der Standardbibliothek (plus den Farben
+aus fisi_theme), damit PC- und Handy-App dieselbe Logik nutzen und sie sich
+ohne Bildschirm testen laesst (test_spiel.py). Auch der Grundriss wird hier
+beschrieben (building_shapes) und von beiden Oberflaechen nur gezeichnet.
 
 Spielstand als Ereignisprotokoll: In der Datenbank steht nur, was passiert
 ist (Profil gesetzt, Ticket erledigt, Ticket verschoben, Arbeitstag beendet).
@@ -28,6 +29,7 @@ import os
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, search_content,
 )
+from fisi_theme import C, CATEGORY_COLOR, mix
 
 GAME_DIR = os.path.join(CONTENT_DIR, "spiel")
 
@@ -244,10 +246,29 @@ def validate_game_content(content=None):
                 item["x"] + item["w"] > content["gebaeude"]["breite"] or \
                 item["y"] + item["h"] > content["gebaeude"]["hoehe"]:
             problems.append("%s: liegt ausserhalb des Grundrisses" % where)
+        door = item.get("tuer")
+        if door and not item["x"] <= door["von"] < door["bis"] <= item["x"] + item["w"]:
+            problems.append("%s: Tuer liegt nicht an der Raumwand" % where)
+        for deco in item.get("deko", []):
+            if deco.get("typ") not in DECO_TYPES:
+                problems.append("%s: unbekannte Einrichtung '%s'" % (where, deco.get("typ")))
+            elif not _inside(deco, item):
+                problems.append("%s: Einrichtung '%s' ragt aus dem Raum" % (where, deco["typ"]))
+    hall = content["gebaeude"].get("flur", {})
+    hall_area = {"x": 0, "y": hall.get("y", 0), "w": content["gebaeude"]["breite"],
+                 "h": hall.get("h", 0)}
+    for deco in hall.get("deko", []):
+        if deco.get("typ") not in DECO_TYPES or not _inside(deco, hall_area):
+            problems.append("Spiel-Flur: Einrichtung '%s' unbekannt oder ausserhalb"
+                            % deco.get("typ"))
     for person in content["kollegen"]:
+        where = "Spiel-Kollege %s" % person.get("id")
         if person.get("raum") not in rooms:
-            problems.append("Spiel-Kollege %s: unbekannter Raum '%s'"
-                            % (person.get("id"), person.get("raum")))
+            problems.append("%s: unbekannter Raum '%s'" % (where, person.get("raum")))
+        elif person.get("platz"):
+            x, y = person["platz"]
+            if room_at(x, y, content) is not room(person["raum"], content):
+                problems.append("%s: Sitzplatz liegt nicht im eigenen Raum" % where)
 
     for rank in balancing["raenge"]:
         if rank["name"] not in balancing["gehalt_pro_tag"]:
@@ -701,10 +722,372 @@ class Game:
 # ============================================================================
 #  GRUNDRISS
 # ============================================================================
+#
+# Das Buerogebaeude wird als Liste einfacher Zeichenbefehle in Grundriss-
+# Einheiten beschrieben (building_shapes). PC (Tk-Canvas) und Handy (Flet-
+# Canvas) muessen sie nur noch skalieren und zeichnen - so sehen beide
+# Gebaeude gleich aus und Aenderungen passieren nur an einer Stelle.
+#
+# Befehle (Woerterbuecher, Schluessel "k"):
+#   rect  x, y, w, h, fill, line, lw, r   (r = Eckenradius)
+#   oval  x, y, w, h, fill, line, lw
+#   line  pts [x1, y1, x2, y2], color, lw
+#   arc   x, y, w, h (umgebendes Rechteck), start, extent (Grad, im
+#         Uhrzeigersinn ab 3 Uhr wie auf dem Bildschirm), color, lw
+#   text  x, y, text, kurz, role, color, anchor ("w" oder "c"), maxw und
+#         optional bg/border (Schild hinter dem Text, Groesse nach Textbreite)
+# Linienstaerken (lw, r) sind ebenfalls Grundriss-Einheiten. role ist
+# "raum", "person" oder "badge" - die Schriftgroesse waehlt die Oberflaeche.
+
+# Rand um das Gebaeude, damit die Aussenwand nicht abgeschnitten wird
+PLAN_MARGIN = 0.4
+
+WALL = "#B7A6DD"
+WALL_OUTER = "#D9CCF5"
+WINDOW = "#7FE3F5"
+WOOD = "#9A6B45"
+WOOD_DARK = "#6E4A2F"
+METAL = "#8E8AA3"
+METAL_DARK = "#4A4560"
+SCREEN = "#16122A"
+PLANT = "#34D399"
+PLANT_DARK = "#159A6C"
+POT = "#B7643A"
+CARDBOARD = "#C79A62"
+CHAIR = "#3A2A5C"
+PAPER = "#F4F1FA"
+
+
+def _rect(x, y, w, h, fill, line="", lw=0.0, r=0.0):
+    return {"k": "rect", "x": x, "y": y, "w": w, "h": h, "fill": fill,
+            "line": line, "lw": lw, "r": r}
+
+
+def _oval(x, y, w, h, fill, line="", lw=0.0):
+    return {"k": "oval", "x": x, "y": y, "w": w, "h": h, "fill": fill,
+            "line": line, "lw": lw}
+
+
+def _line(x1, y1, x2, y2, color, lw=0.06):
+    return {"k": "line", "pts": [x1, y1, x2, y2], "color": color, "lw": lw}
+
+
+def _text(x, y, text, role, color, anchor="w", maxw=None, kurz=None):
+    return {"k": "text", "x": x, "y": y, "text": text, "kurz": kurz or text,
+            "role": role, "color": color, "anchor": anchor, "maxw": maxw}
+
+
+def _floor(x, y, w, h, kind, color):
+    """Bodenbelag: Grundfarbe plus feine Struktur."""
+    shapes = [_rect(x, y, w, h, color)]
+    seam = mix(color, "#000000", 0.18)
+    if kind == "parkett":
+        row = 0
+        yy = y + 0.5
+        while yy < y + h - 0.01:
+            shapes.append(_line(x, yy, x + w, yy, seam, 0.025))
+            row += 1
+            yy += 0.5
+        # versetzte Stossfugen der Dielen
+        for index in range(int(h / 0.5)):
+            offset = 1.3 if index % 2 else 0.4
+            xx = x + offset
+            while xx < x + w:
+                shapes.append(_line(xx, y + index * 0.5, xx, y + index * 0.5 + 0.5,
+                                    seam, 0.025))
+                xx += 2.2
+    elif kind in ("fliesen", "doppelboden", "flur"):
+        step = 1.0 if kind != "flur" else 0.66
+        xx = x + step
+        while xx < x + w - 0.01:
+            shapes.append(_line(xx, y, xx, y + h, seam, 0.03))
+            xx += step
+        yy = y + step
+        while yy < y + h - 0.01:
+            shapes.append(_line(x, yy, x + w, yy, seam, 0.03))
+            yy += step
+    else:  # teppichboden: dezentes Punktmuster
+        dot = mix(color, "#FFFFFF", 0.06)
+        yy = y + 0.6
+        while yy < y + h:
+            xx = x + (0.6 if int((yy - y) / 1.2) % 2 else 1.2)
+            while xx < x + w:
+                shapes.append(_oval(xx - 0.05, yy - 0.05, 0.1, 0.1, dot))
+                xx += 1.2
+            yy += 1.2
+    return shapes
+
+
+def _chair(cx, cy):
+    return [_oval(cx - 0.33, cy - 0.33, 0.66, 0.66, CHAIR, mix(CHAIR, "#000000", 0.3), 0.04),
+            _rect(cx - 0.3, cy + 0.18, 0.6, 0.16, mix(CHAIR, "#000000", 0.35), r=0.06)]
+
+
+DECO_TYPES = ("schreibtisch", "pflanze", "regal", "aktenregal", "sessel",
+              "besprechungstisch", "kaffeemaschine", "rack", "usv", "klima",
+              "werkbank", "tisch", "pc", "drucker", "kartons", "whiteboard",
+              "wasserspender", "feuerloescher", "teppich", "fussmatte", "bank")
+
+
+def _inside(deco, area):
+    return area["x"] <= deco["x"] and deco["x"] + deco["w"] <= area["x"] + area["w"] and \
+        area["y"] <= deco["y"] and deco["y"] + deco["h"] <= area["y"] + area["h"]
+
+
+def _deco(item):
+    """Ein Einrichtungsgegenstand als Zeichenbefehle."""
+    kind = item["typ"]
+    x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+    s = []
+    if kind == "schreibtisch":
+        facing = item.get("blick", "s")
+        chair_y = y + h + 0.3 if facing == "s" else y - 0.3
+        s += _chair(x + w / 2.0, chair_y)
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.08))
+        # Bildschirm auf der dem Stuhl abgewandten Seite, Tastatur davor
+        my = y + 0.12 if facing == "s" else y + h - 0.32
+        ky = y + h - 0.3 if facing == "s" else y + 0.14
+        s.append(_rect(x + w / 2.0 - 0.55, my, 1.1, 0.2, SCREEN, "#6B5F9A", 0.03, 0.03))
+        s.append(_rect(x + w / 2.0 - 0.4, ky, 0.8, 0.16, METAL, r=0.03))
+        s.append(_oval(x + w / 2.0 + 0.55, ky, 0.16, 0.2, METAL))
+        s.append(_rect(x + 0.15, y + 0.2, 0.35, 0.45, PAPER))
+        if item.get("klebezettel"):
+            for index, color in enumerate(("#FBBF24", "#F472B6", "#FBBF24")):
+                s.append(_rect(x + w / 2.0 - 0.5 + index * 0.38, my - 0.12,
+                               0.22, 0.22, color))
+    elif kind == "pflanze":
+        s.append(_oval(x + w * 0.2, y + h * 0.2, w * 0.6, h * 0.6, POT))
+        for dx, dy in ((0.05, 0.25), (0.45, 0.2), (0.25, 0.0), (0.25, 0.45)):
+            s.append(_oval(x + w * dx, y + h * dy, w * 0.5, h * 0.5, PLANT, PLANT_DARK, 0.03))
+        s.append(_oval(x + w * 0.38, y + h * 0.38, w * 0.24, h * 0.24, PLANT_DARK))
+    elif kind in ("regal", "aktenregal"):
+        s.append(_rect(x, y, w, h, WOOD_DARK, r=0.04))
+        colors = (["#60A5FA", "#F87171", "#FBBF24", "#34D399", "#A78BFA"]
+                  if kind == "aktenregal" else [METAL, "#22D3EE", METAL, "#F472B6"])
+        vertical = h >= w
+        count = int((h if vertical else w) / 0.26)
+        for index in range(count):
+            color = colors[index % len(colors)]
+            if vertical:
+                s.append(_rect(x + 0.06, y + 0.08 + index * 0.26, w - 0.12, 0.18, color))
+            else:
+                s.append(_rect(x + 0.08 + index * 0.26, y + 0.06, 0.18, h - 0.12, color))
+    elif kind == "sessel":
+        s.append(_rect(x, y, w, h, "#7C3AED", mix("#7C3AED", "#000000", 0.3), 0.04, 0.2))
+        s.append(_rect(x + 0.14, y + 0.24, w - 0.28, h - 0.34,
+                       mix("#7C3AED", "#FFFFFF", 0.18), r=0.14))
+    elif kind == "besprechungstisch":
+        for index in range(3):
+            cx = x + w * (index + 1) / 4.0
+            s += _chair(cx, y - 0.3)
+            s += _chair(cx, y + h + 0.3)
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.6))
+        s.append(_rect(x + w * 0.35, y + h * 0.3, 0.5, 0.35, PAPER))
+        s.append(_oval(x + w * 0.62, y + h * 0.35, 0.3, 0.3, "#F4F1FA", METAL, 0.03))
+    elif kind == "kaffeemaschine":
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.03, 0.06))
+        s.append(_oval(x + w * 0.3, y + h * 0.3, w * 0.4, w * 0.4, "#F87171"))
+        s.append(_oval(x - 0.28, y + h * 0.35, 0.22, 0.22, PAPER, METAL, 0.03))
+    elif kind == "rack":
+        s.append(_rect(x, y, w, h, "#1E1A30", "#5B5480", 0.05, 0.05))
+        units = int((h - 0.2) / 0.28)
+        for index in range(units):
+            yy = y + 0.12 + index * 0.28
+            s.append(_rect(x + 0.1, yy, w - 0.2, 0.2, "#2E2848"))
+            led = "#34D399" if index % 3 else "#22D3EE"
+            s.append(_oval(x + w - 0.26, yy + 0.05, 0.1, 0.1, led))
+    elif kind == "usv":
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.04, 0.06))
+        s.append(_rect(x + 0.15, y + 0.15, w * 0.45, 0.25, "#0B3B2E"))
+        s.append(_oval(x + w - 0.35, y + 0.18, 0.18, 0.18, "#34D399"))
+        s.append(_line(x + 0.15, y + h - 0.25, x + w - 0.15, y + h - 0.25, METAL, 0.04))
+    elif kind == "klima":
+        s.append(_rect(x, y, w, h, "#DDE6F0", METAL, 0.04, 0.05))
+        yy = y + 0.25
+        while yy < y + h - 0.15:
+            s.append(_line(x + 0.1, yy, x + w - 0.1, yy, "#7FA0B8", 0.035))
+            yy += 0.22
+    elif kind == "werkbank":
+        s += _chair(x + w * 0.5, y - 0.3)
+        s.append(_rect(x, y, w, h, "#8A7A5C", "#5E523C", 0.05, 0.05))
+        # PC-Gehaeuse mit offener Seite, Werkzeug und Mehmets Schraubenkaesten
+        s.append(_rect(x + 0.3, y + 0.15, 0.9, 0.75, METAL_DARK, METAL, 0.03, 0.04))
+        s.append(_rect(x + 0.42, y + 0.28, 0.5, 0.2, "#34D399"))
+        s.append(_line(x + 1.6, y + 0.3, x + 2.3, y + 0.7, "#F87171", 0.08))
+        s.append(_line(x + 2.3, y + 0.7, x + 2.5, y + 0.8, METAL, 0.05))
+        for index, color in enumerate(("#F87171", "#FBBF24", "#34D399", "#60A5FA",
+                                       "#A78BFA")):
+            bx = x + w - 2.3 + index * 0.42
+            s.append(_rect(bx, y + 0.3, 0.34, 0.34, color, r=0.05))
+    elif kind == "tisch":
+        s.append(_rect(x, y, w, h, "#8A7A5C", "#5E523C", 0.05, 0.05))
+    elif kind == "pc":
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.04, 0.05))
+        s.append(_oval(x + w / 2.0 - 0.07, y + 0.12, 0.14, 0.14, "#22D3EE"))
+    elif kind == "drucker":
+        s.append(_rect(x, y, w, h, "#CFCBDD", METAL, 0.04, 0.06))
+        s.append(_rect(x + 0.15, y + 0.12, w - 0.3, 0.25, PAPER))
+        s.append(_rect(x + w - 0.3, y + h - 0.25, 0.15, 0.1, "#34D399"))
+    elif kind == "kartons":
+        size = min(w, h) * 0.62
+        for dx, dy in ((0, 0), (w - size, h - size), (w - size, 0)):
+            s.append(_rect(x + dx, y + dy, size, size, CARDBOARD, "#8E6A3E", 0.04))
+            s.append(_line(x + dx + size / 2.0, y + dy, x + dx + size / 2.0, y + dy + size,
+                           "#E8D2A8", 0.06))
+    elif kind == "whiteboard":
+        s.append(_rect(x, y, w, h, PAPER, METAL, 0.03))
+    elif kind == "wasserspender":
+        s.append(_rect(x, y, w, h, METAL_DARK, r=0.06))
+        s.append(_oval(x + 0.08, y + 0.08, w - 0.16, h - 0.16, "#60A5FA", "#BFDBFE", 0.03))
+    elif kind == "feuerloescher":
+        s.append(_oval(x, y, w, h, "#EF4444", "#7F1D1D", 0.03))
+        s.append(_oval(x + w * 0.35, y + h * 0.35, w * 0.3, h * 0.3, "#1B1031"))
+    elif kind == "teppich":
+        s.append(_rect(x, y, w, h, "#3B2466", "#5B3A8F", 0.06, 0.1))
+        s.append(_rect(x + 0.2, y + 0.2, w - 0.4, h - 0.4, "", "#6D4AA8", 0.03, 0.08))
+    elif kind == "fussmatte":
+        s.append(_rect(x, y, w, h, "#3D3550", "#595070", 0.04, 0.05))
+        yy = y + 0.15
+        while yy < y + h - 0.1:
+            s.append(_line(x + 0.1, yy, x + w - 0.1, yy, "#595070", 0.03))
+            yy += 0.15
+    elif kind == "bank":
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.04, 0.08))
+        for index in range(1, 4):
+            s.append(_line(x + w * index / 4.0, y, x + w * index / 4.0, y + h, WOOD_DARK, 0.03))
+    return s
+
+
+def person_shapes(cx, cy, appearance, size=1.0, ring=None):
+    """Eine Person von oben: Schultern im Oberteil, Kopf mit Haaren."""
+    look = normalize_appearance(appearance)
+    skin = SKIN_COLORS[look["haut"]]
+    hair = HAIR_COLORS[look["haarfarbe"]]
+    shirt = SHIRT_COLORS[look["oberteil"]]
+    s = []
+    if ring:
+        s.append(_oval(cx - size * 0.7, cy - size * 0.55, size * 1.4, size * 1.1, "", ring,
+                       0.08))
+    s.append(_rect(cx - size / 2.0, cy - size * 0.22, size, size * 0.5, shirt,
+                   mix(shirt, "#000000", 0.35), 0.04, size * 0.22))
+    head = size * 0.5
+    if look["frisur"] == "lang":
+        s.append(_oval(cx - head * 0.6, cy - head * 0.55, head * 1.2, head * 1.25, hair))
+    if look["frisur"] == "zopf":
+        s.append(_oval(cx - head * 0.18, cy + head * 0.35, head * 0.36, head * 0.5, hair))
+    s.append(_oval(cx - head / 2.0, cy - head / 2.0, head, head,
+                   skin if look["frisur"] == "glatze" else hair,
+                   mix(hair, "#000000", 0.4), 0.03))
+    if look["frisur"] == "locken":
+        for dx, dy in ((-0.28, -0.2), (0.28, -0.2), (0.0, -0.36)):
+            s.append(_oval(cx + head * dx - head * 0.2, cy + head * dy - head * 0.2,
+                           head * 0.4, head * 0.4, hair))
+    if look.get("extra") == "kappe":
+        s.append(_oval(cx - head * 0.5, cy - head * 0.5, head, head, shirt))
+        s.append(_rect(cx - head * 0.3, cy - head * 0.85, head * 0.6, head * 0.4, shirt,
+                       r=0.05))
+    return s
+
+
+def building_shapes(counts=None, selected=None, player=None, content=None):
+    """Zeichenbefehle fuer das ganze Buerogebaeude.
+
+    counts:   offene Tickets je Raum-ID (rosa Plakette)
+    selected: ausgewaehlte Raum-ID (farbiger Rahmen)
+    player:   (Name, Aussehen) des Protagonisten oder None
+    """
+    content = content or GAME
+    building = content["gebaeude"]
+    counts = counts or {}
+    width, height = building["breite"], building["hoehe"]
+    hall = building["flur"]
+    s = []
+
+    # Boeden
+    s += _floor(0, hall["y"], width, hall["h"], "flur", mix(C["card_alt"], "#FFFFFF", 0.05))
+    for item in building["raeume"]:
+        color = mix(C["card_alt"], CATEGORY_COLOR[CAT_NAME[item["cat"]]], 0.13)
+        s += _floor(item["x"], item["y"], item["w"], item["h"],
+                    item.get("boden", "teppichboden"), color)
+
+    # Einrichtung
+    for item in building["raeume"]:
+        for deco in item.get("deko", []):
+            s += _deco(deco)
+    for deco in hall.get("deko", []):
+        s += _deco(deco)
+
+    # Kollegen an ihren Plaetzen
+    for person in content["kollegen"]:
+        if person.get("platz"):
+            s += person_shapes(person["platz"][0], person["platz"][1],
+                               person.get("aussehen"))
+
+    # Innenwaende (Raumgrenzen) und Aussenwand
+    inner = 0.16
+    for item in building["raeume"]:
+        x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+        s.append(_rect(x, y, w, h, "", WALL, inner))
+    s.append(_rect(0, 0, width, height, "", WALL_OUTER, 0.3))
+
+    # Fenster in der Aussenwand
+    for x1, y1, x2, y2 in building.get("fenster", []):
+        s.append(_line(x1, y1, x2, y2, WINDOW, 0.14))
+        s.append(_line(x1, y1, x2, y2, mix(WINDOW, "#FFFFFF", 0.6), 0.04))
+
+    # Tueren: Oeffnung in der Wand, Tuerblatt und Schwenkbogen zum Flur hin
+    floor_hall = mix(C["card_alt"], "#FFFFFF", 0.05)
+    for item in building["raeume"]:
+        door = item.get("tuer")
+        if not door:
+            continue
+        top_row = item["y"] + item["h"] <= hall["y"]
+        wall_y = item["y"] + item["h"] if top_row else item["y"]
+        span = door["bis"] - door["von"]
+        s.append(_rect(door["von"], wall_y - 0.16, span, 0.32, floor_hall))
+        swing = span if top_row else -span
+        hinge = door["von"]
+        s.append(_line(hinge, wall_y, hinge, wall_y + swing * 0.9, WALL_OUTER, 0.07))
+        s.append({"k": "arc", "x": hinge - span, "y": wall_y - span, "w": span * 2,
+                  "h": span * 2, "start": 0 if top_row else -90, "extent": 90,
+                  "color": mix(WALL, C["card_alt"], 0.45), "lw": 0.03})
+    entrance = hall["eingang"]
+    s.append(_rect(-0.2, entrance["von"], 0.4, entrance["bis"] - entrance["von"], floor_hall))
+    s.append(_line(0, entrance["von"], 0, entrance["bis"], mix(WINDOW, C["card"], 0.3), 0.06))
+
+    # Spielfigur im Flur
+    if player:
+        px_, py_ = hall.get("spieler", [2.4, 7.0])
+        s += person_shapes(px_, py_, player[1], ring=C["pink"])
+        s.append(_text(px_ + 0.8, py_, player[0] or "Du", "person", C["pink"]))
+
+    # Beschriftung, Auswahl und Ticket-Plaketten zuletzt, damit sie oben liegen
+    for item in building["raeume"]:
+        x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+        color = CATEGORY_COLOR[CAT_NAME[item["cat"]]]
+        if item["id"] == selected:
+            s.append(_rect(x + 0.14, y + 0.14, w - 0.28, h - 0.28, "", color, 0.12, 0.2))
+        label = _text(x + 0.55, y + 0.78, item["name"], "raum", C["text"],
+                      maxw=w - 2.2, kurz=item.get("kurz"))
+        label["bg"] = mix(C["card"], color, 0.1)
+        label["border"] = mix(color, C["card"], 0.3)
+        s.append(label)
+        count = counts.get(item["id"], 0)
+        if count:
+            s.append(_oval(x + w - 1.05, y + 0.38, 0.8, 0.8, C["pink"], C["card"], 0.06))
+            s.append(_text(x + w - 0.65, y + 0.78, str(count), "badge", C["on_accent"],
+                           anchor="c"))
+    for person in content["kollegen"]:
+        if person.get("platz"):
+            px_, py_ = person["platz"]
+            s.append(_text(px_, py_ + 0.62, person["name"].split()[0], "person",
+                           C["text_soft"], anchor="c"))
+    return s
+
 
 def room_at(x, y, content=None):
     """Raum an der Stelle (x, y) in Grundriss-Einheiten - Treffer ueber die
-    Raumflaechen, damit PC und Handy gleich reagieren."""
+    Raumflaechen, damit PC und Handy gleich reagieren. Der Flur ist kein Raum."""
     for item in (content or GAME)["gebaeude"]["raeume"]:
         if item["x"] <= x < item["x"] + item["w"] and item["y"] <= y < item["y"] + item["h"]:
             return item

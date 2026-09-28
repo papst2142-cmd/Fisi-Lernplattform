@@ -1,17 +1,9 @@
 [
-  {"id": "sabine", "name": "Sabine Kranich", "rolle": "Geschäftsführerin", "raum": "chefbuero",
-   "macke": "Braucht alles „sofort“, bedankt sich aber immer mit Keksen."},
-  {"id": "lea", "name": "Lea Sommer", "rolle": "Kundenberaterin", "raum": "kundenberatung",
-   "macke": "Verspricht Kunden gern etwas mehr, als im Angebot steht."},
-  {"id": "petra", "name": "Petra Lindner", "rolle": "IT-Koordinatorin der Talbahn Nordlicht AG",
-   "raum": "kundenberatung", "extern": true,
-   "macke": "Kommt pünktlich wie ein Zug, der nie Verspätung hat. Also selten."},
-  {"id": "frank", "name": "Frank Heider", "rolle": "Buchhaltung und Einkauf", "raum": "verwaltung",
-   "macke": "Rechnet alles zweimal nach und hat für jede Frage eine Tabelle."},
-  {"id": "jonas", "name": "Jonas Pieper", "rolle": "Helpdesk", "raum": "helpdesk",
-   "macke": "Superhilfsbereit, schreibt Passwörter aber gern auf Klebezettel."},
-  {"id": "mehmet", "name": "Mehmet Aydın", "rolle": "Techniker IT-Werkstatt", "raum": "werkstatt",
-   "macke": "Sortiert Schrauben nach Farbe und Größe. Wehe, jemand bringt sie durcheinander."},
-  {"id": "ulla", "name": "Ulla Brandt", "rolle": "Systemadministratorin", "raum": "serverraum",
-   "macke": "Spricht mit den Servern. Die Server antworten angeblich."}
+  {"id": "sabine", "name": "Sabine Kranich", "rolle": "Geschäftsführerin", "raum": "chefbuero", "macke": "Braucht alles „sofort“, bedankt sich aber immer mit Keksen.", "platz": [3.0, 3.25], "aussehen": {"haut": "hell", "frisur": "lang", "haarfarbe": "blond", "oberteil": "violett"}},
+  {"id": "lea", "name": "Lea Sommer", "rolle": "Kundenberaterin", "raum": "kundenberatung", "macke": "Verspricht Kunden gern etwas mehr, als im Angebot steht.", "platz": [14.4, 4.05], "aussehen": {"haut": "mittel", "frisur": "zopf", "haarfarbe": "braun", "oberteil": "pink"}},
+  {"id": "petra", "name": "Petra Lindner", "rolle": "IT-Koordinatorin der Talbahn Nordlicht AG", "raum": "kundenberatung", "extern": true, "macke": "Kommt pünktlich wie ein Zug, der nie Verspätung hat. Also selten.", "platz": [9.6, 4.2], "aussehen": {"haut": "hell", "frisur": "kurz", "haarfarbe": "rot", "oberteil": "orange"}},
+  {"id": "frank", "name": "Frank Heider", "rolle": "Buchhaltung und Einkauf", "raum": "verwaltung", "macke": "Rechnet alles zweimal nach und hat für jede Frage eine Tabelle.", "platz": [20.3, 2.95], "aussehen": {"haut": "hell", "frisur": "glatze", "haarfarbe": "grau", "oberteil": "gruen"}},
+  {"id": "jonas", "name": "Jonas Pieper", "rolle": "Helpdesk", "raum": "helpdesk", "macke": "Superhilfsbereit, schreibt Passwörter aber gern auf Klebezettel.", "platz": [2.2, 11.75], "aussehen": {"haut": "oliv", "frisur": "locken", "haarfarbe": "schwarz", "oberteil": "cyan"}},
+  {"id": "mehmet", "name": "Mehmet Aydın", "rolle": "Techniker IT-Werkstatt", "raum": "werkstatt", "macke": "Sortiert Schrauben nach Farbe und Größe. Wehe, jemand bringt sie durcheinander.", "platz": [12.7, 13.85], "aussehen": {"haut": "mittel", "frisur": "kurz", "haarfarbe": "schwarz", "oberteil": "orange"}},
+  {"id": "ulla", "name": "Ulla Brandt", "rolle": "Systemadministratorin", "raum": "serverraum", "macke": "Spricht mit den Servern. Die Server antworten angeblich.", "platz": [18.6, 14.6], "aussehen": {"haut": "dunkel", "frisur": "kurz", "haarfarbe": "grau", "oberteil": "cyan"}}
 ]

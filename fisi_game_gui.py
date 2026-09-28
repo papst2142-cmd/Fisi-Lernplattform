@@ -11,6 +11,7 @@ von fisi_widgets.py und in der Farbwelt aus fisi_theme.py.
 
 import random
 import tkinter as tk
+from tkinter import font as tkfont
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -106,10 +107,10 @@ class ChoiceRow(ctk.CTkFrame):
 
 
 class FloorPlan(tk.Canvas):
-    """Grundriss von oben. Raeume sind anklickbar (Treffer ueber die
-    Raumflaechen mit fisi_game.room_at)."""
+    """Das Buerogebaeude von oben (Zeichnung aus fisi_game.building_shapes).
+    Raeume sind anklickbar (Treffer ueber die Raumflaechen mit room_at)."""
 
-    MAX_HEIGHT = 320
+    MAX_HEIGHT = 440
 
     def __init__(self, parent, on_room, bg=None):
         self.bg = bg or C["card"]
@@ -117,7 +118,8 @@ class FloorPlan(tk.Canvas):
         self.state = None
         self.selected = None
         self.scale = 1.0
-        self.scale_y = 1.0
+        self.offset = 0.0
+        self.offset_y = 0.0
         super().__init__(parent, height=px(300), width=px(400), bg=self.bg,
                          highlightthickness=0, bd=0, cursor="hand2")
         self.bind("<Configure>", lambda _e: self.draw())
@@ -134,50 +136,80 @@ class FloorPlan(tk.Canvas):
         if width <= 1 or self.state is None:
             return
         building = fg.GAME["gebaeude"]
-        self.scale = width / float(building["breite"])
-        # Nicht hoeher als MAX_HEIGHT, sonst wird der Grundriss bei breitem
-        # Fenster unnoetig lang - die Raeume werden dann etwas flacher.
-        self.scale_y = min(self.scale, px(self.MAX_HEIGHT) / float(building["hoehe"]))
-        height = int(self.scale_y * building["hoehe"])
+        # Gleicher Massstab in beide Richtungen, damit das Gebaeude nicht
+        # verzerrt; bei sehr breitem Fenster wird es mittig gesetzt.
+        margin = fg.PLAN_MARGIN
+        self.scale = min(width / (building["breite"] + 2 * margin),
+                         px(self.MAX_HEIGHT) / (building["hoehe"] + 2 * margin))
+        self.offset = (width - self.scale * building["breite"]) / 2.0
+        self.offset_y = margin * self.scale
+        height = int(round(self.scale * (building["hoehe"] + 2 * margin)))
         if abs(int(self.cget("height")) - height) > 2:
             self.configure(height=height)
-        counts = self.state.open_count_by_room()
-        gap = px(4)
-        for item in building["raeume"]:
-            color = cat_color(item["cat"])
-            x1, y1 = item["x"] * self.scale + gap, item["y"] * self.scale_y + gap
-            x2 = (item["x"] + item["w"]) * self.scale - gap
-            y2 = (item["y"] + item["h"]) * self.scale_y - gap
-            active = item["id"] == self.selected
-            rounded_rect(self, x1, y1, x2, y2, px(12),
-                         fill=mix(C["card_alt"], color, 0.22 if active else 0.12),
-                         outline=color if active else mix(color, C["card"], 0.45),
-                         width=px(3) if active else px(2))
-            self.create_text(x1 + px(14), y1 + px(16), text=item["name"], anchor="w",
-                             fill=C["text"], font=tk_font(F["small_bold"]))
-            people = [p["name"].split()[0] for p in fg.GAME["kollegen"]
-                      if p["raum"] == item["id"]]
-            self.create_text(x1 + px(14), y1 + px(36), text=", ".join(people), anchor="w",
-                             fill=C["muted"], font=tk_font(F["tiny"]))
-            # Schreibtische als Andeutung der Einrichtung
-            for index in range(len(people)):
-                dx = x1 + px(16) + index * px(34)
-                dy = y2 - px(26)
-                if dx + px(26) < x2:
-                    rounded_rect(self, dx, dy, dx + px(26), dy + px(14), px(4),
-                                 fill=mix(C["card_hi"], color, 0.2), outline="")
-            count = counts.get(item["id"], 0)
-            if count:
-                r = px(12)
-                cx, cy = x2 - px(18), y1 + px(18)
-                self.create_oval(cx - r, cy - r, cx + r, cy + r, fill=C["pink"], outline="")
-                self.create_text(cx, cy, text=str(count), fill=C["on_accent"],
-                                 font=tk_font(F["small_bold"]))
+        profile = self.state.profile
+        shapes = fg.building_shapes(self.state.open_count_by_room(), self.selected,
+                                    (profile["name"], profile["aussehen"]))
+        for shape in shapes:
+            self._shape(shape)
+
+    def _xy(self, x, y):
+        return self.offset + x * self.scale, self.offset_y + y * self.scale
+
+    def _stroke(self, value):
+        return max(1, int(round(value * self.scale)))
+
+    def _shape(self, shape):
+        kind = shape["k"]
+        if kind in ("rect", "oval"):
+            x1, y1 = self._xy(shape["x"], shape["y"])
+            x2, y2 = self._xy(shape["x"] + shape["w"], shape["y"] + shape["h"])
+            width = self._stroke(shape["lw"]) if shape["line"] else 0
+            if kind == "oval":
+                self.create_oval(x1, y1, x2, y2, fill=shape["fill"],
+                                 outline=shape["line"], width=width)
+            elif shape["r"] * self.scale >= 2:
+                rounded_rect(self, x1, y1, x2, y2, shape["r"] * self.scale,
+                             fill=shape["fill"], outline=shape["line"], width=width)
+            else:
+                self.create_rectangle(x1, y1, x2, y2, fill=shape["fill"],
+                                      outline=shape["line"], width=width)
+        elif kind == "line":
+            x1, y1, x2, y2 = shape["pts"]
+            self.create_line(*self._xy(x1, y1), *self._xy(x2, y2), fill=shape["color"],
+                             width=self._stroke(shape["lw"]), capstyle="round")
+        elif kind == "arc":
+            x1, y1 = self._xy(shape["x"], shape["y"])
+            x2, y2 = self._xy(shape["x"] + shape["w"], shape["y"] + shape["h"])
+            # Tk zaehlt Winkel gegen den Uhrzeigersinn
+            self.create_arc(x1, y1, x2, y2, start=-(shape["start"] + shape["extent"]),
+                            extent=shape["extent"], style="arc", outline=shape["color"],
+                            width=self._stroke(shape["lw"]))
+        elif kind == "text":
+            self._text(shape)
+
+    def _text(self, shape):
+        role = shape["role"]
+        font = tk_font(F["small_bold"] if role in ("raum", "badge") else F["tiny"])
+        x, y = self._xy(shape["x"], shape["y"])
+        text = shape["text"]
+        if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
+                shape["maxw"] * self.scale:
+            text = shape["kurz"]
+        item = self.create_text(x, y, text=text, fill=shape["color"], font=font,
+                                anchor="w" if shape["anchor"] == "w" else "center")
+        if shape.get("bg"):
+            x1, y1, x2, y2 = self.bbox(item)
+            pad_x, pad_y = px(8), px(3)
+            back = rounded_rect(self, x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y,
+                                (y2 - y1) / 2.0 + pad_y, fill=shape["bg"],
+                                outline=shape.get("border", ""), width=px(1))
+            self.tag_lower(back, item)
 
     def _click(self, event):
         if self.scale <= 0:
             return
-        item = fg.room_at(event.x / self.scale, event.y / self.scale_y)
+        item = fg.room_at((event.x - self.offset) / self.scale,
+                          (event.y - self.offset_y) / self.scale)
         if item:
             self.on_room(item["id"])
 

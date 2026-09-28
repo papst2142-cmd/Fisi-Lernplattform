@@ -23,12 +23,17 @@ Update-Fenster des Programms.
   Kundenzufriedenheit, Sicherheitsbewusstsein), Rang von Azubi-Niveau bis
   Senior, Gehalt pro Arbeitstag und ein erstes Sparziel für das spätere
   eigene Unternehmen. Ohne Hilfe gelöste Tickets bringen einen Bonus.
-- **Grundriss zum Antippen:** Chefbüro, Kundenberatung, Verwaltung,
-  Helpdesk, IT-Werkstatt und Serverraum – ein Tipp auf einen Raum zeigt, wer
+- **Das Bürogebäude von oben:** Chefbüro, Kundenberatung, Verwaltung,
+  Helpdesk, IT-Werkstatt und Serverraum mit Flur, Eingang, Wänden, Türen und
+  Fenstern, eingerichtet mit Schreibtischen, Pflanzen, Regalen, Server-Racks,
+  USV, Werkbank und mehr. Die Kolleginnen und Kollegen sitzen an ihren
+  Plätzen, deine Spielfigur steht im Flur. Ein Tipp auf einen Raum zeigt, wer
   dort sitzt und was zu tun ist.
 - **Abgleich PC und Handy:** Der Spielstand wird wie der Lernstand
   abgeglichen. Wichtig: Beide Geräte sollten auf 0.26 sein, bevor du auf
   beiden spielst.
+- **Handy:** Der Eintrag „Einstellungen“ in der unteren Leiste heißt jetzt
+  „Optionen“, damit alle sechs Einträge in eine Zeile passen.
 - **Eigener Knopf „Spielstand zurücksetzen“** in den Einstellungen. „Alle
   Lerndaten löschen“ und „Historie löschen“ lassen den Spielstand stehen.
 

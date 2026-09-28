@@ -290,6 +290,32 @@ class GrundrissUndAvatarTest(unittest.TestCase):
                         if r["x"] <= x < r["x"] + r["w"] and r["y"] <= y < r["y"] + r["h"]]
                 self.assertLessEqual(len(hits), 1, (x, y))
 
+    def test_gebaeude_zeichnung(self):
+        state = fg.GameState([])
+        shapes = fg.building_shapes(state.open_count_by_room(), "serverraum",
+                                    ("Nico", fg.DEFAULT_APPEARANCE))
+        kinds = {shape["k"] for shape in shapes}
+        self.assertLessEqual(kinds, {"rect", "oval", "line", "arc", "text"})
+        texts = [shape["text"] for shape in shapes if shape["k"] == "text"]
+        for item in fg.GAME["gebaeude"]["raeume"]:
+            self.assertIn(item["name"], texts)
+        self.assertIn("Nico", texts)
+        # Ohne Spielfigur keine Figur im Flur
+        texts = [shape["text"] for shape in fg.building_shapes() if shape["k"] == "text"]
+        self.assertNotIn("Nico", texts)
+
+    def test_einrichtung_und_plaetze_in_den_raeumen(self):
+        for item in fg.GAME["gebaeude"]["raeume"]:
+            for deco in item.get("deko", []):
+                self.assertIn(deco["typ"], fg.DECO_TYPES)
+                self.assertTrue(fg._inside(deco, item), (item["id"], deco))
+        for person in fg.GAME["kollegen"]:
+            hit = fg.room_at(*person["platz"])
+            self.assertEqual(hit["id"], person["raum"], person["id"])
+        # Der Flur gehoert zu keinem Raum
+        hall = fg.GAME["gebaeude"]["flur"]
+        self.assertIsNone(fg.room_at(5, hall["y"] + hall["h"] / 2.0))
+
     def test_avatar_alle_varianten(self):
         for part, options in fg.APPEARANCE.items():
             for key, _name in options:

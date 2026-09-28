@@ -1402,7 +1402,7 @@ NAV = [
     ("calc", ft.Icons.CALCULATE_OUTLINED, ft.Icons.CALCULATE_ROUNDED, "Rechner"),
     ("game", ft.Icons.SPORTS_ESPORTS_OUTLINED, ft.Icons.SPORTS_ESPORTS_ROUNDED, "Spiel"),
     ("progress", ft.Icons.INSIGHTS_OUTLINED, ft.Icons.INSIGHTS_ROUNDED, "Fortschritt"),
-    ("settings", ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS_ROUNDED, "Einstellungen"),
+    ("settings", ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS_ROUNDED, "Optionen"),
 ]
 
 SCREEN_CLASSES = {

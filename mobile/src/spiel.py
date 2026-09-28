@@ -11,6 +11,7 @@ Hinweis wie in ui.py: In Ereignissen (Tippen) nie control.update() aufrufen,
 Flet uebernimmt die Aenderungen danach selbst.
 """
 
+import math
 import random
 
 import flet as ft
@@ -78,8 +79,8 @@ def avatar(appearance, size=96):
 
 
 class FloorPlan(ft.GestureDetector):
-    """Grundriss von oben. Treffer ueber die Raumflaechen (fisi_game.room_at),
-    genau wie am PC."""
+    """Das Buerogebaeude von oben (Zeichnung aus fisi_game.building_shapes).
+    Treffer ueber die Raumflaechen (fisi_game.room_at), genau wie am PC."""
 
     MAX_HEIGHT = 300
 
@@ -98,53 +99,89 @@ class FloorPlan(ft.GestureDetector):
         self._draw()
         self.canvas.update()
 
-    def _scales(self):
+    def _layout(self):
+        """Massstab und Verschiebung - gleicher Massstab in beide Richtungen."""
         building = fg.GAME["gebaeude"]
-        sx = self.width_px / float(building["breite"])
-        sy = min(sx, self.MAX_HEIGHT / float(building["hoehe"]))
-        return sx, sy
+        margin = fg.PLAN_MARGIN
+        scale = min(self.width_px / (building["breite"] + 2 * margin),
+                    self.MAX_HEIGHT / (building["hoehe"] + 2 * margin))
+        offset_x = (self.width_px - scale * building["breite"]) / 2.0
+        return scale, offset_x, margin * scale
 
     def _draw(self):
         building = fg.GAME["gebaeude"]
-        sx, sy = self._scales()
-        self.canvas.height = sy * building["hoehe"]
-        counts = self.state.open_count_by_room()
+        scale, ox, oy = self._layout()
+        self.canvas.height = scale * (building["hoehe"] + 2 * fg.PLAN_MARGIN)
+        profile = self.state.profile
         shapes = []
-        gap = 3
-        for item in building["raeume"]:
-            color = cat_color(item["cat"])
-            active = item["id"] == self.selected
-            x, y = item["x"] * sx + gap, item["y"] * sy + gap
-            w, h = item["w"] * sx - 2 * gap, item["h"] * sy - 2 * gap
-            shapes.append(cv.Rect(x, y, w, h, border_radius=10, paint=ft.Paint(
-                color=mix(C["card_alt"], color, 0.22 if active else 0.12))))
-            shapes.append(cv.Rect(x, y, w, h, border_radius=10, paint=ft.Paint(
-                color=color if active else mix(color, C["card"], 0.45),
-                style=ft.PaintingStyle.STROKE, stroke_width=3 if active else 1.5)))
-            # Schmale Raeume (Handy hochkant) zeigen den Kurznamen
-            name = item["name"] if w >= 130 else item.get("kurz", item["name"])
-            shapes.append(cv.Text(x + 9, y + 9, name, max_width=w - 34, max_lines=1,
-                                  ellipsis="…",
-                                  style=ft.TextStyle(size=12, weight=ft.FontWeight.BOLD,
-                                                     color=C["text"])))
-            people = [p["name"].split()[0] for p in fg.GAME["kollegen"]
-                      if p["raum"] == item["id"]]
-            shapes.append(cv.Text(x + 9, y + 27, ", ".join(people), max_width=w - 14,
-                                  max_lines=1, ellipsis="…",
-                                  style=ft.TextStyle(size=10, color=C["muted"])))
-            count = counts.get(item["id"], 0)
-            if count:
-                cx, cy = x + w - 14, y + 14
-                shapes.append(cv.Circle(cx, cy, 10, ft.Paint(color=C["pink"])))
-                shapes.append(cv.Text(cx, cy, str(count), alignment=ft.Alignment.CENTER,
-                                      style=ft.TextStyle(size=11, weight=ft.FontWeight.BOLD,
-                                                         color=C["on_accent"])))
+        for shape in fg.building_shapes(self.state.open_count_by_room(), self.selected,
+                                        (profile["name"], profile["aussehen"])):
+            shapes += self._shape(shape, scale, ox, oy)
         self.canvas.shapes = shapes
 
+    @staticmethod
+    def _shape(shape, scale, ox, oy):
+        kind = shape["k"]
+
+        def stroke(color, width):
+            return ft.Paint(color=color, style=ft.PaintingStyle.STROKE,
+                            stroke_width=max(1.0, width * scale),
+                            stroke_cap=ft.StrokeCap.ROUND)
+
+        if kind in ("rect", "oval"):
+            x, y = ox + shape["x"] * scale, oy + shape["y"] * scale
+            w, h = shape["w"] * scale, shape["h"] * scale
+            paints = []
+            if shape["fill"]:
+                paints.append(ft.Paint(color=shape["fill"]))
+            if shape["line"]:
+                paints.append(stroke(shape["line"], shape["lw"]))
+            if kind == "oval":
+                return [cv.Oval(x, y, w, h, paint) for paint in paints]
+            return [cv.Rect(x, y, w, h, border_radius=shape["r"] * scale, paint=paint)
+                    for paint in paints]
+        if kind == "line":
+            x1, y1, x2, y2 = shape["pts"]
+            return [cv.Line(ox + x1 * scale, oy + y1 * scale, ox + x2 * scale,
+                            oy + y2 * scale, stroke(shape["color"], shape["lw"]))]
+        if kind == "arc":
+            return [cv.Arc(ox + shape["x"] * scale, oy + shape["y"] * scale,
+                           shape["w"] * scale, shape["h"] * scale,
+                           math.radians(shape["start"]), math.radians(shape["extent"]),
+                           paint=stroke(shape["color"], shape["lw"]))]
+        # Text: Namen der Kollegen nur, wenn genug Platz ist (Tablet, quer)
+        role = shape["role"]
+        if role == "person" and scale < 18:
+            return []
+        size = 11 if role in ("raum", "badge") else 9
+        text = shape["text"]
+        # Ohne Textmessung: Breite grob ueber die Zeichenzahl schaetzen
+        if shape.get("maxw") and len(text) * size * 0.56 > shape["maxw"] * scale:
+            text = shape["kurz"]
+        x, y = ox + shape["x"] * scale, oy + shape["y"] * scale
+        style = ft.TextStyle(size=size, color=shape["color"],
+                             weight=ft.FontWeight.BOLD if role != "person" else None)
+        result = []
+        if shape.get("bg"):
+            width = len(text) * size * 0.56 + 12
+            height = size + 8
+            left = x - 6 if shape["anchor"] == "w" else x - width / 2.0
+            result.append(cv.Rect(left, y - height / 2.0, width, height,
+                                  border_radius=height / 2.0,
+                                  paint=ft.Paint(color=shape["bg"])))
+            if shape.get("border"):
+                result.append(cv.Rect(left, y - height / 2.0, width, height,
+                                      border_radius=height / 2.0,
+                                      paint=stroke(shape["border"], 1.0 / scale)))
+        alignment = ft.Alignment.CENTER_LEFT if shape["anchor"] == "w" \
+            else ft.Alignment.CENTER
+        result.append(cv.Text(x, y, text, style=style, alignment=alignment))
+        return result
+
     def _tapped(self, event):
-        sx, sy = self._scales()
+        scale, ox, oy = self._layout()
         position = event.local_position
-        item = fg.room_at(position.x / sx, position.y / sy)
+        item = fg.room_at((position.x - ox) / scale, (position.y - oy) / scale)
         if item:
             self.on_room(item["id"])
 
