@@ -239,5 +239,127 @@
       "Kurze Einführung für alle Mitarbeiter, einfache Anleitung, eindeutige Regel \"Nur Tickets werden bearbeitet\" mit Unterstützung der Geschäftsführung, Übergangsphase, in der Anrufe von der IT selbst als Ticket erfasst werden, und schnelle, sichtbare Bearbeitung als Motivation.",
       "Anzahl Tickets je Zeitraum und Kategorie, durchschnittliche Reaktions- und Lösungszeit, Anteil der beim ersten Kontakt gelösten Tickets, Einhaltung vereinbarter Service-Level, häufigste Störungsursachen und Aufwand je Standort."
     ]
+  },
+  {
+    "title": "VLAN-Segmentierung für eine Produktionshalle",
+    "cat": "netzwerk",
+    "branche": "Metallverarbeitung (Schmidt Präzisionsteile GmbH), 120 Mitarbeiter",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Im Firmennetz 192.168.0.0/24 hängen Büro-PCs, Maschinensteuerungen, IP-Kameras, Drucker und das Gäste-WLAN ohne Trennung zusammen. Nach einem Schadsoftware-Befall auf einem Büro-PC fielen zwei Maschinensteuerungen aus. Die Geschäftsführung möchte das Netz segmentieren.",
+    "auftrag": "Planen Sie die Aufteilung des Netzes in VLANs mit eigenem Adressplan, legen Sie die Kommunikationsregeln zwischen den Segmenten fest und beschreiben Sie die Umstellung im laufenden Betrieb.",
+    "rahmenbedingungen": [
+      "Vorhandene managebare Switches mit 802.1Q-Unterstützung, eine Firewall mit mehreren Schnittstellen",
+      "Produktion darf höchstens an einem Wochenende für die Umstellung unterbrochen werden",
+      "Budget: 6.000 Euro für zusätzliche Hardware und externe Unterstützung",
+      "Die Maschinensteuerungen erhalten nur vom Hersteller Updates und benötigen Fernwartung",
+      "Zeitrahmen: 5 Wochen"
+    ],
+    "aufgaben": [
+      "Führen Sie eine Ist-Analyse durch: Welche Informationen erheben Sie über die vorhandenen Geräte?",
+      "Legen Sie sinnvolle VLANs fest und erstellen Sie einen Adressplan aus dem Bereich 10.20.0.0/16.",
+      "Erstellen Sie eine Kommunikationsmatrix: Welche Segmente dürfen mit welchen kommunizieren?",
+      "Wie ermöglichen Sie die Fernwartung der Maschinen durch den Hersteller sicher?",
+      "Planen Sie die Umstellung am Wochenende inklusive Rückfallplan.",
+      "Wie prüfen Sie nach der Umstellung, dass alles funktioniert?"
+    ],
+    "hinweise": [
+      "Geräteliste mit Standort, MAC- und IP-Adresse, Switchport, Funktion und Kommunikationsbedarf. Hilfreich sind Switch-Tabellen (MAC-Adressen pro Port), ein Netzwerkscan und Gespräche mit Produktion und Herstellern.",
+      "Z.B. VLAN 10 Verwaltung 10.20.10.0/24, VLAN 20 Produktion 10.20.20.0/24, VLAN 30 Kameras 10.20.30.0/24, VLAN 40 Drucker 10.20.40.0/24, VLAN 50 Server 10.20.50.0/24, VLAN 99 Gäste 10.20.99.0/24, VLAN 100 Management 10.20.100.0/24. Die dritte Stelle entspricht der VLAN-ID, das erleichtert die Übersicht.",
+      "Grundsatz Default Deny. Verwaltung darf auf Server und Drucker, aber nicht direkt auf die Produktion. Produktion nur auf die benötigten Server (z.B. Auftragsdaten). Kameras nur zum Videorekorder. Gäste nur ins Internet. Management nur von Admin-Arbeitsplätzen erreichbar.",
+      "Kein dauerhaft offener Zugang. Fernwartung über ein VPN oder einen Fernwartungs-Gateway mit Freischaltung nur bei Bedarf (Vier-Augen-Prinzip), MFA, Zugriff nur auf die jeweilige Maschine, Protokollierung der Sitzungen und vertragliche Regelung mit dem Hersteller.",
+      "Vorher: Konfigurationen sichern, Switch-Konfigurationen vorbereiten und testen, Ansprechpartner der Produktion vor Ort. Reihenfolge: Server und Management, dann Verwaltung, zuletzt Produktion. Rückfallplan: gesicherte Konfiguration zurückspielen, Zeitpunkt für die Entscheidung zum Abbruch festlegen.",
+      "Testliste pro Segment: Adressvergabe (DHCP), Erreichbarkeit der erlaubten Dienste, Blockierung der verbotenen Wege, Funktionstest jeder Maschine mit der Produktion, Kontrolle der Firewall-Logs. Ergebnisse im Abnahmeprotokoll festhalten und Netzplan aktualisieren."
+    ]
+  },
+  {
+    "title": "Datenschutzkonforme Videoüberwachung im Lager",
+    "cat": "sicherheit",
+    "branche": "Getränkegroßhandel (Nordquell Getränke KG), 45 Mitarbeiter",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Im Lager verschwinden regelmäßig Waren. Die Geschäftsführung möchte eine Videoüberwachung mit acht IP-Kameras im Lager, an der Laderampe und am Eingang installieren lassen. Es gibt einen Betriebsrat.",
+    "auftrag": "Planen Sie die Videoüberwachung technisch und datenschutzrechtlich so, dass sie rechtssicher betrieben werden kann.",
+    "rahmenbedingungen": [
+      "8 IP-Kameras, Aufzeichnung auf einem Netzwerk-Videorekorder (NVR)",
+      "Die Kameras sollen über PoE versorgt werden",
+      "Budget: 7.500 Euro",
+      "Betriebsrat muss beteiligt werden",
+      "Aufnahmen dürfen nur so lange gespeichert werden wie nötig"
+    ],
+    "aufgaben": [
+      "Welche Rechtsgrundlage kommt für die Videoüberwachung in Betracht und welche Interessen müssen abgewogen werden?",
+      "Welche Rolle spielt der Betriebsrat und welches Dokument regelt die Nutzung?",
+      "Welche Maßnahmen zur Datenminimierung sehen Sie vor (Bereiche, Speicherdauer, Zugriff)?",
+      "Planen Sie die technische Umsetzung inklusive Netzwerk und PoE-Budget (je Kamera 12,95 W).",
+      "Wie informieren Sie die Betroffenen?",
+      "Welche Dokumentation ist nach DSGVO erforderlich?"
+    ],
+    "hinweise": [
+      "Berechtigtes Interesse nach Art. 6 Abs. 1 f DSGVO (Schutz vor Diebstahl), abzuwägen gegen die Persönlichkeitsrechte der Beschäftigten. Die Überwachung muss geeignet, erforderlich und angemessen sein, mildere Mittel (z.B. Zutrittskontrolle) sind zu prüfen. Für Beschäftigte ist zusätzlich § 26 BDSG zu beachten.",
+      "Eine Videoüberwachung ist eine technische Einrichtung zur Überwachung von Verhalten und Leistung, daher hat der Betriebsrat nach § 87 Abs. 1 Nr. 6 BetrVG ein Mitbestimmungsrecht. Die Details werden in einer Betriebsvereinbarung geregelt.",
+      "Keine Aufnahme von Sozialräumen, Toiletten oder Arbeitsplätzen mit Daueraufenthalt. Kamerawinkel auf Lagerbereiche und Rampe beschränken, Privatzonen maskieren. Speicherdauer z.B. 72 Stunden mit automatischer Löschung. Zugriff nur für wenige Berechtigte im Vier-Augen-Prinzip, mit Protokollierung.",
+      "Eigenes Kamera-VLAN ohne Internetzugang, nur der NVR ist erreichbar. PoE-Budget: 8 * 12,95 W = 103,6 W, der Switch braucht also mindestens rund 104 W PoE-Leistung, sinnvoll mit Reserve z.B. 120 W oder mehr. Standardpasswörter ändern, Firmware aktualisieren, Zeit per NTP synchronisieren.",
+      "Hinweisschilder vor dem überwachten Bereich mit Kamerasymbol, Verantwortlichem, Zweck, Kontakt des Datenschutzbeauftragten und Hinweis auf weitere Informationen (Art. 13 DSGVO). Beschäftigte zusätzlich schriftlich informieren.",
+      "Eintrag im Verzeichnis von Verarbeitungstätigkeiten, dokumentierte Interessenabwägung, ggf. Datenschutz-Folgenabschätzung (bei systematischer Überwachung von Beschäftigten oft erforderlich), Löschkonzept und TOM."
+    ]
+  },
+  {
+    "title": "Migration eines Fileservers auf ein neues System",
+    "cat": "systeme",
+    "branche": "Ingenieurbüro (Weber & Partner), 30 Mitarbeiter",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Der 8 Jahre alte Fileserver (Windows Server 2016, 4 TB Daten, RAID 1 aus zwei HDDs) ist fast voll und hat keinen Herstellersupport mehr. Die Freigaben sind über Jahre gewachsen, Berechtigungen wurden direkt an Benutzer vergeben.",
+    "auftrag": "Planen Sie die Ablösung des Fileservers durch eine neue Lösung, bereinigen Sie die Berechtigungsstruktur und migrieren Sie die Daten mit möglichst kurzer Unterbrechung.",
+    "rahmenbedingungen": [
+      "Datenwachstum ca. 20 % pro Jahr, Planungszeitraum 5 Jahre",
+      "Maximal ein Arbeitstag Unterbrechung für die Umstellung",
+      "Budget: 9.000 Euro für Hardware und Lizenzen",
+      "Active Directory ist vorhanden",
+      "Zeitrahmen: 6 Wochen"
+    ],
+    "aufgaben": [
+      "Berechnen Sie den Speicherbedarf in 5 Jahren und wählen Sie ein RAID-Level mit passenden Platten.",
+      "Vergleichen Sie einen neuen physischen Server, eine VM auf vorhandener Virtualisierung und einen Cloud-Speicher.",
+      "Entwerfen Sie eine neue Berechtigungsstruktur nach dem AGDLP-Prinzip.",
+      "Wie migrieren Sie die Daten mit kurzer Unterbrechung und ohne Rechteverlust?",
+      "Wie stellen Sie sicher, dass die Benutzer nach der Umstellung wieder auf ihre Laufwerke zugreifen?",
+      "Welche Sicherungs- und Wiederherstellungstests planen Sie?"
+    ],
+    "hinweise": [
+      "4 TB * 1,2^5 = 4 TB * 2,48832 = 9,95 TB. Bei max. 80 % Füllgrad werden ca. 12,44 TB Nutzkapazität benötigt. Beispiel: RAID 6 aus 6 Platten zu je 4 TB = 16 TB nutzbar, zwei Platten dürfen ausfallen, dazu eine Hot-Spare.",
+      "Physisch: volle Kontrolle, aber eigene Hardware und Wartung. VM: nutzt vorhandene Infrastruktur, einfaches Backup per Snapshot, abhängig von der Kapazität des Hosts. Cloud: keine Hardware, aber laufende Kosten, Bandbreite und Datenschutz klären. Entscheidung per Nutzwertanalyse.",
+      "Benutzer in globale Gruppen nach Abteilung (z.B. G_Konstruktion), Berechtigungen auf domänenlokale Gruppen je Ordner und Recht (z.B. DL_Projekte_Lesen, DL_Projekte_Ändern), globale Gruppen in die DL-Gruppen aufnehmen. Keine Rechte direkt an Benutzer.",
+      "Vorab-Kopie mit robocopy /MIR /COPYALL (oder /SEC) im laufenden Betrieb, am Umstellungstag nur noch eine Differenzkopie, danach alter Server schreibgeschützt. Protokolle der Kopie prüfen, Stichproben der Rechte vergleichen.",
+      "Laufwerkszuordnungen per Gruppenrichtlinie auf den neuen Server bzw. einen DFS-Namespace umstellen. Ein DFS-Namespace entkoppelt den Pfad vom Servernamen und erleichtert spätere Migrationen. Anwender vorab informieren.",
+      "Backup nach 3-2-1-Regel einrichten (z.B. NAS vor Ort und Kopie außer Haus oder in der Cloud, eine Kopie unveränderbar), Restore-Test einzelner Dateien und eines kompletten Ordners, Dokumentation der Ergebnisse und regelmäßige Wiederholung."
+    ]
+  },
+  {
+    "title": "Kalkulation und Angebot für eine Netzwerkmodernisierung",
+    "cat": "wirtschaft",
+    "branche": "IT-Systemhaus (NetPro Solutions GmbH) für einen Kunden aus der Pflegebranche",
+    "schwierigkeit": "Leicht",
+    "ausgangssituation": "Ein Pflegedienst mit 25 Mitarbeitern möchte sein Netzwerk erneuern lassen: neuer Switch, zwei Access Points, eine Firewall und die Konfiguration. Sie sollen als Mitarbeiter des Systemhauses das Angebot kalkulieren und dem Kunden vorstellen.",
+    "auftrag": "Kalkulieren Sie das Angebot für Hardware und Dienstleistung, erstellen Sie ein Angebot mit allen notwendigen Angaben und bereiten Sie das Kundengespräch vor.",
+    "rahmenbedingungen": [
+      "Einkaufspreise netto: Switch 890 Euro, Access Point je 310 Euro, Firewall 1.450 Euro",
+      "Das Systemhaus kalkuliert auf Hardware 20 % Aufschlag",
+      "Dienstleistung: 12 Stunden zu 95 Euro netto",
+      "Umsatzsteuer 19 %",
+      "Der Kunde wünscht eine Entscheidung innerhalb von zwei Wochen"
+    ],
+    "aufgaben": [
+      "Berechnen Sie den Nettoverkaufspreis der Hardware.",
+      "Berechnen Sie den Gesamtpreis netto, die Umsatzsteuer und den Bruttopreis.",
+      "Welche Angaben muss ein vollständiges Angebot enthalten?",
+      "Wie reagieren Sie, wenn der Kunde 10 % Rabatt auf alles verlangt?",
+      "Welche Folgeleistungen können Sie dem Kunden anbieten?"
+    ],
+    "hinweise": [
+      "Einkauf: 890 + 2 * 310 + 1.450 = 2.960 Euro. Mit 20 % Aufschlag: 2.960 * 1,2 = 3.552 Euro netto.",
+      "Dienstleistung: 12 * 95 = 1.140 Euro. Gesamt netto: 3.552 + 1.140 = 4.692 Euro. Umsatzsteuer: 4.692 * 19 % = 891,48 Euro. Brutto: 5.583,48 Euro.",
+      "Absender und Empfänger, Datum und Angebotsnummer, genaue Beschreibung der Leistungen und Mengen, Einzel- und Gesamtpreise netto, Umsatzsteuer und Bruttobetrag, Liefer- und Zahlungsbedingungen, Gültigkeitsdauer (Bindefrist), ggf. Hinweis auf AGB.",
+      "Nicht pauschal nachgeben: Nutzen und Qualität erklären und prüfen, wo Spielraum ist. Z.B. 10 % Rabatt auf alles würden 469,20 Euro kosten, das sind fast 80 % des gesamten Hardware-Aufschlags von 592 Euro. Alternativ kleinen Rabatt nur auf die Hardware oder Skonto bei schneller Zahlung anbieten.",
+      "Wartungsvertrag mit Updates für Firewall und Access Points, Monitoring, Firewall-Lizenzverlängerung, Schulung der Mitarbeiter, Backup-Lösung, später Erweiterung um ein Gäste-WLAN."
+    ]
   }
 ]

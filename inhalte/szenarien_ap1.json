@@ -266,5 +266,301 @@
       "",
       "3. Lieferzeit, Garantie und Service (z.B. Vor-Ort-Austausch), Qualität und technische Eigenschaften der Monitore, Zuverlässigkeit des Lieferanten, Zahlungsbedingungen und Energieverbrauch."
     ]
+  },
+  {
+    "title": "TCP oder UDP? Dienste richtig zuordnen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Sie sollen einem neuen Kollegen erklären, wie Anwendungen im Netzwerk Daten transportieren.",
+      "",
+      "1. Nennen Sie je zwei Unterschiede zwischen TCP und UDP.",
+      "2. Ordnen Sie zu, ob die Dienste HTTPS, DNS-Abfrage, VoIP-Sprachdaten und SSH typischerweise TCP oder UDP nutzen.",
+      "3. Erklären Sie, warum eine Videokonferenz trotz gelegentlich verlorener Pakete mit UDP besser funktioniert als mit TCP."
+    ],
+    "solution": [
+      "1. TCP ist verbindungsorientiert (Drei-Wege-Handshake), bestätigt empfangene Segmente, sendet Verlorenes neu und hält die Reihenfolge ein. UDP ist verbindungslos, ohne Bestätigung und Neusendung, dafür mit weniger Overhead und geringerer Verzögerung.",
+      "",
+      "2. HTTPS: TCP (Port 443, bei HTTP/3 auch UDP über QUIC). DNS-Abfrage: UDP (Port 53, TCP bei großen Antworten). VoIP-Sprachdaten: UDP (RTP). SSH: TCP (Port 22).",
+      "",
+      "3. Bei Echtzeitübertragung ist ein verspätet neu gesendetes Paket nutzlos, weil der Moment schon vorbei ist. TCP würde auf die Neuübertragung warten und dadurch Ruckler und Verzögerungen erzeugen. Mit UDP gehen einzelne Pakete verloren, das Bild bleibt aber flüssig."
+    ]
+  },
+  {
+    "title": "IP-Konfiguration eines Arbeitsplatzes prüfen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Mitarbeiter meldet: \"Ich komme nicht ins Internet.\" ipconfig /all zeigt:",
+      "  IPv4-Adresse: 192.168.10.57, Subnetzmaske: 255.255.255.0",
+      "  Standardgateway: 192.168.1.1, DNS-Server: 192.168.10.1",
+      "Der Router des Büros hat die Adresse 192.168.10.1.",
+      "",
+      "1. Finden Sie den Fehler in der Konfiguration und begründen Sie ihn.",
+      "2. Wie lautet die richtige Einstellung?",
+      "3. Mit welchen zwei Befehlen prüfen Sie anschließend, ob Internet und Namensauflösung funktionieren?"
+    ],
+    "solution": [
+      "1. Das Standardgateway 192.168.1.1 liegt nicht im eigenen Netz 192.168.10.0/24. Der Rechner kann es nicht direkt erreichen und damit keine Pakete in fremde Netze senden.",
+      "",
+      "2. Standardgateway 192.168.10.1 (der Router im eigenen Netz). Am besten die Adresse per DHCP beziehen, damit solche Tippfehler nicht passieren.",
+      "",
+      "3. ping 8.8.8.8 (oder eine andere Internet-IP) prüft die Verbindung ohne DNS. nslookup www.beispiel.de (oder ping mit Namen) prüft die Namensauflösung."
+    ]
+  },
+  {
+    "title": "Kleines Büronetz planen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Steuerberatung mit 9 PCs, einem Netzwerkdrucker, einem NAS und WLAN für Laptops soll neu vernetzt werden. Der Internetanschluss kommt über einen Glasfaser-Router.",
+      "",
+      "1. Welche aktiven Netzwerkkomponenten werden benötigt? Begründen Sie kurz.",
+      "2. Schlagen Sie ein privates IPv4-Netz vor und teilen Sie Adressbereiche für feste Geräte und DHCP ein.",
+      "3. Welche Kabelkategorie empfehlen Sie für die neue Verkabelung und warum?"
+    ],
+    "solution": [
+      "1. Ein Router (Internetzugang, NAT, Firewall), ein Switch mit mindestens 16 Ports (9 PCs, Drucker, NAS, Access Point, Uplink und Reserve), ein Access Point für das WLAN. Ein Switch mit PoE kann den Access Point direkt mit Strom versorgen.",
+      "",
+      "2. Zum Beispiel 192.168.50.0/24: Router 192.168.50.1, feste Adressen für Drucker, NAS und Access Point im Bereich .2 bis .49, DHCP-Bereich .100 bis .199 für PCs und Laptops. Der Rest bleibt Reserve.",
+      "",
+      "3. Cat 6A (oder Cat 7-Verlegekabel mit Cat-6A-Komponenten): Damit sind 10 Gbit/s auf bis zu 100 m möglich, die Verkabelung bleibt viele Jahre zukunftssicher. Der Mehrpreis gegenüber Cat 6 ist bei Neuinstallation gering."
+    ]
+  },
+  {
+    "title": "Technische und organisatorische Maßnahmen im Büro",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Eine Arztpraxis verarbeitet Patientendaten. Der Praxisinhaber bittet Sie um Vorschläge für TOM nach Art. 32 DSGVO.",
+      "",
+      "1. Nennen Sie je drei technische und drei organisatorische Maßnahmen.",
+      "2. Warum sind Gesundheitsdaten besonders schutzbedürftig?",
+      "3. Was muss die Praxis tun, wenn ein Laptop mit unverschlüsselten Patientendaten gestohlen wird?"
+    ],
+    "solution": [
+      "1. Technisch: Festplattenverschlüsselung, automatische Bildschirmsperre, Zugriffsrechte nach Rollen, regelmäßige Backups, Virenschutz und Updates, Firewall. Organisatorisch: Datenschutzschulung, Verschwiegenheitsverpflichtung, Passwortrichtlinie, Clean-Desk-Regel, Besucherregelung, Löschkonzept.",
+      "",
+      "2. Gesundheitsdaten gehören zu den besonderen Kategorien nach Art. 9 DSGVO. Ein Missbrauch kann Betroffene stark schädigen, z.B. durch Diskriminierung, und die Verarbeitung ist nur unter engen Voraussetzungen erlaubt.",
+      "",
+      "3. Den Vorfall dokumentieren und innerhalb von 72 Stunden an die Datenschutz-Aufsichtsbehörde melden (Art. 33). Weil voraussichtlich ein hohes Risiko besteht, müssen auch die betroffenen Patienten benachrichtigt werden (Art. 34). Außerdem Passwörter und Zugänge des Geräts sperren und künftig verschlüsseln."
+    ]
+  },
+  {
+    "title": "Phishing-Mail erkennen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Mitarbeiter erhält folgende E-Mail: Absender \"IT-Support <support@firma-it-service.info>\", Betreff \"DRINGEND: Ihr Postfach wird heute gesperrt\". Im Text wird er aufgefordert, über einen Link sein Passwort zu bestätigen.",
+      "",
+      "1. Nennen Sie vier Merkmale, an denen man diese Mail als Phishing erkennen kann.",
+      "2. Wie sollte sich der Mitarbeiter verhalten?",
+      "3. Welche technische Maßnahme hätte den Schaden begrenzt, falls er das Passwort doch eingegeben hätte?"
+    ],
+    "solution": [
+      "1. Fremde Absenderdomain statt der Firmendomain, Zeitdruck und Drohung (\"DRINGEND\", \"heute gesperrt\"), Aufforderung zur Passworteingabe über einen Link, unpersönliche Anrede, Link führt auf eine fremde Adresse (per Mauszeiger prüfen), ggf. Rechtschreibfehler.",
+      "",
+      "2. Nicht auf den Link klicken und keine Daten eingeben, die Mail nicht weiterleiten, sondern über den vorgesehenen Weg an die IT melden (z.B. Meldebutton) und danach löschen.",
+      "",
+      "3. Eine Mehrfaktor-Authentifizierung: Mit dem Passwort allein kann sich der Angreifer dann nicht anmelden. Zusätzlich hilft es, das Passwort sofort zu ändern und die Anmeldungen zu prüfen."
+    ]
+  },
+  {
+    "title": "Sichere Passwörter und Passwortmanager",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Die Geschäftsleitung möchte eine neue Passwortrichtlinie. Bisher gilt: 8 Zeichen, Wechsel alle 30 Tage.",
+      "",
+      "1. Wie viele Kombinationen hat ein Passwort aus 8 Zeichen bei 62 möglichen Zeichen (Groß-, Kleinbuchstaben, Ziffern)? Wie viele sind es bei 12 Zeichen? (Angabe als Potenz und gerundet)",
+      "2. Warum wird ein erzwungener Passwortwechsel alle 30 Tage heute nicht mehr empfohlen?",
+      "3. Schlagen Sie eine zeitgemäße Richtlinie mit drei Punkten vor."
+    ],
+    "solution": [
+      "1. 8 Zeichen: 62^8 ≈ 2,18 * 10^14 Kombinationen. 12 Zeichen: 62^12 ≈ 3,23 * 10^21 Kombinationen, also rund 14,8 Millionen Mal so viele (62^4). Die Länge erhöht die Sicherheit am stärksten.",
+      "",
+      "2. Häufige Wechsel führen zu einfachen Mustern (Sommer2025!, Sommer2026!) oder zu Notizzetteln. Das BSI empfiehlt einen Wechsel nur bei Anlass, z.B. wenn ein Passwort kompromittiert sein könnte.",
+      "",
+      "3. Mindestens 12 Zeichen (oder eine lange Passphrase), für jeden Dienst ein eigenes Passwort mit Unterstützung eines Passwortmanagers, Mehrfaktor-Authentifizierung für wichtige Zugänge und Prüfung gegen Listen bekannter geleakter Passwörter."
+    ]
+  },
+  {
+    "title": "Arbeitsplatzrechner nach Anforderungen auswählen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Für die Konstruktionsabteilung (CAD) und für die Buchhaltung sollen neue PCs beschafft werden.",
+      "",
+      "1. Welche Komponenten sind für einen CAD-Arbeitsplatz besonders wichtig?",
+      "2. Welche Ausstattung reicht für einen Buchhaltungs-PC?",
+      "3. Erklären Sie, warum eine NVMe-SSD den Arbeitsalltag spürbar beschleunigt."
+    ],
+    "solution": [
+      "1. Eine leistungsstarke, für CAD zertifizierte Grafikkarte, eine schnelle CPU mit hoher Taktrate, viel Arbeitsspeicher (z.B. 32 GB oder mehr), eine schnelle NVMe-SSD und ein großer, farbgenauer Monitor bzw. zwei Monitore.",
+      "",
+      "2. Ein Büro-PC mit aktueller Mittelklasse-CPU, integrierter Grafik, 16 GB RAM, SSD mit 512 GB und zwei Monitoren. Wichtiger als Leistung sind hier leiser Betrieb, geringer Stromverbrauch und lange Ersatzteilversorgung.",
+      "",
+      "3. NVMe-SSDs sind direkt über PCIe angebunden und haben sehr kurze Zugriffszeiten ohne mechanische Teile. Betriebssystem und Programme starten schneller, Dateien öffnen sich ohne Wartezeit."
+    ]
+  },
+  {
+    "title": "Bildgrößen und Speicherbedarf berechnen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Überwachungskamera speichert Einzelbilder mit 1920 x 1080 Pixeln und 24 Bit Farbtiefe, unkomprimiert.",
+      "",
+      "1. Berechnen Sie den Speicherbedarf eines Bildes in Byte und in MiB (2 Nachkommastellen).",
+      "2. Die Kamera speichert ein Bild pro Sekunde, 8 Stunden am Tag. Wie viel Speicher in GiB entsteht pro Tag (2 Nachkommastellen)?",
+      "3. Wie viel Speicher wird mit einer JPEG-Kompression auf 10 % der Größe pro Tag benötigt?"
+    ],
+    "solution": [
+      "1. 1920 * 1080 * 24 Bit / 8 = 6.220.800 Byte. 6.220.800 / 1024 / 1024 = 5,93 MiB.",
+      "",
+      "2. 8 Stunden = 28.800 Sekunden, also 28.800 Bilder. 28.800 * 6.220.800 Byte = 179.159.040.000 Byte. / 1024^3 = 166,85 GiB pro Tag.",
+      "",
+      "3. 10 % davon sind ca. 16,69 GiB pro Tag. Kompression spart also enorm Speicher, verlustbehaftete Verfahren wie JPEG verringern dabei aber die Bildqualität."
+    ]
+  },
+  {
+    "title": "Logische Verknüpfungen und Wahrheitstabelle",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Eine Serverraumtür soll sich nur öffnen, wenn eine gültige Karte vorgehalten wird (A = 1) UND entweder die richtige PIN eingegeben wurde (B = 1) ODER ein Administrator per Fernfreigabe öffnet (C = 1).",
+      "",
+      "1. Stellen Sie die logische Funktion für das Öffnen (Y) auf.",
+      "2. Erstellen Sie die Wahrheitstabelle für A, B, C und Y.",
+      "3. Wie oft öffnet die Tür bei allen 8 Kombinationen?"
+    ],
+    "solution": [
+      "1. Y = A UND (B ODER C), kurz Y = A ∧ (B ∨ C).",
+      "",
+      "2. A B C | Y",
+      "   0 0 0 | 0",
+      "   0 0 1 | 0",
+      "   0 1 0 | 0",
+      "   0 1 1 | 0",
+      "   1 0 0 | 0",
+      "   1 0 1 | 1",
+      "   1 1 0 | 1",
+      "   1 1 1 | 1",
+      "",
+      "3. In 3 von 8 Fällen: Nur wenn die Karte gültig ist und zusätzlich PIN oder Fernfreigabe vorliegt."
+    ]
+  },
+  {
+    "title": "Projektstrukturplan für einen PC-Rollout",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "In einer Behörde sollen 40 Arbeitsplätze auf neue PCs mit Windows 11 umgestellt werden.",
+      "",
+      "1. Erstellen Sie einen Projektstrukturplan mit mindestens vier Teilaufgaben und je zwei Arbeitspaketen.",
+      "2. Nennen Sie zwei Meilensteine des Projekts.",
+      "3. Formulieren Sie das Projektziel nach der SMART-Regel."
+    ],
+    "solution": [
+      "1. Beispiel: Planung (Ist-Aufnahme der Arbeitsplätze, Hardwareauswahl), Vorbereitung (Image erstellen, Software und Treiber testen), Rollout (Geräte aufstellen, Benutzerdaten migrieren), Abschluss (Altgeräte sicher entsorgen, Dokumentation und Übergabe).",
+      "",
+      "2. Z.B. \"Standard-Image freigegeben\" und \"Alle 40 Arbeitsplätze umgestellt\". Meilensteine haben keine Dauer, sie markieren einen wichtigen Zwischenstand.",
+      "",
+      "3. Beispiel: \"Bis zum 30.11. sind alle 40 Arbeitsplätze der Behörde mit neuen PCs unter Windows 11 ausgestattet, die Benutzerdaten sind vollständig übernommen und die Kosten bleiben unter 48.000 Euro.\""
+    ]
+  },
+  {
+    "title": "Aufwandsschätzung und Zeitplanung",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Für den Austausch von 40 Arbeitsplätzen werden je PC benötigt: 20 Minuten Aufbau, 30 Minuten Datenmigration, 10 Minuten Test mit dem Anwender. Zwei Techniker arbeiten parallel, je 7 Stunden produktiv pro Tag.",
+      "",
+      "1. Wie viele Stunden Arbeitsaufwand entstehen insgesamt?",
+      "2. Wie viele Arbeitstage dauert der Rollout mindestens?",
+      "3. Nennen Sie zwei Risiken, die den Zeitplan gefährden, und je eine Gegenmaßnahme."
+    ],
+    "solution": [
+      "1. Je PC: 20 + 30 + 10 = 60 Minuten. 40 PCs * 60 Minuten = 2.400 Minuten = 40 Stunden.",
+      "",
+      "2. Zwei Techniker schaffen 2 * 7 = 14 Stunden pro Tag. 40 / 14 ≈ 2,86, also 3 Arbeitstage.",
+      "",
+      "3. Lieferverzögerung der Hardware - früh bestellen und Liefertermin vertraglich festlegen. Anwender nicht anwesend - Termine vorab abstimmen und Ersatztermine einplanen. Probleme mit Fachanwendungen - vorher an Testgeräten prüfen und Puffer einplanen."
+    ]
+  },
+  {
+    "title": "Projektabschluss und Übergabe",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ihr Projekt \"Neues WLAN im Lager\" ist technisch fertig.",
+      "",
+      "1. Was gehört in ein Abnahmeprotokoll?",
+      "2. Welche Unterlagen übergeben Sie dem Kunden bzw. dem Betrieb?",
+      "3. Wozu dient eine Lessons-learned-Runde am Projektende?"
+    ],
+    "solution": [
+      "1. Projekt und Beteiligte, Datum, abgenommener Leistungsumfang, Ergebnis der Funktionsprüfung, festgestellte Mängel mit Frist zur Behebung, Erklärung der Abnahme und Unterschriften beider Seiten.",
+      "",
+      "2. Netzplan mit Standorten der Access Points, Konfigurationsdokumentation (SSIDs, VLANs, Sicherheitseinstellungen), Zugangsdaten sicher übergeben, Messprotokoll der Ausleuchtung, Anleitung für Anwender, Wartungs- und Garantiehinweise.",
+      "",
+      "3. Das Team hält fest, was gut lief und was schiefging. Die Erkenntnisse verbessern künftige Projekte, z.B. Schätzungen, Kommunikation oder Risikoplanung."
+    ]
+  },
+  {
+    "title": "Rechte und Pflichten in der Ausbildung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Tim ist 17 Jahre alt und Auszubildender zum Fachinformatiker. Sein Ausbilder verlangt, dass er den Berufsschultag nachholt und abends private Botengänge für ihn erledigt.",
+      "",
+      "1. Beurteilen Sie beide Forderungen nach BBiG bzw. Jugendarbeitsschutzgesetz.",
+      "2. Nennen Sie drei Pflichten des Ausbildenden.",
+      "3. An wen kann sich Tim wenden, wenn es Probleme gibt?"
+    ],
+    "solution": [
+      "1. Beides ist unzulässig. Die Berufsschulzeit wird auf die Arbeitszeit angerechnet und muss nicht nachgeholt werden, für Jugendliche zählt ein Berufsschultag mit mehr als fünf Unterrichtsstunden (einmal pro Woche) als voller Arbeitstag. Private Botengänge dienen nicht dem Ausbildungszweck, Auszubildenden dürfen nur Aufgaben übertragen werden, die der Ausbildung dienen (§ 14 BBiG).",
+      "",
+      "2. Ausbildung planmäßig nach Ausbildungsrahmenplan durchführen, Ausbildungsmittel kostenlos stellen, zum Berufsschulbesuch freistellen, angemessene Vergütung zahlen, Zeugnis ausstellen.",
+      "",
+      "3. An den Ausbilder bzw. die Ausbildungsleitung, an die Jugend- und Auszubildendenvertretung oder den Betriebsrat, an die Ausbildungsberater der IHK und an die Berufsschule."
+    ]
+  },
+  {
+    "title": "Lohnabrechnung verstehen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Eine Fachinformatikerin erhält 3.200 Euro brutto. Vereinfacht werden 20 % Sozialversicherungsanteil des Arbeitnehmers und 12 % Lohnsteuer inklusive Zuschläge angenommen.",
+      "",
+      "1. Berechnen Sie die Abzüge und den Nettolohn.",
+      "2. Welche vier Zweige der Sozialversicherung werden vom Lohn abgezogen?",
+      "3. Welche Kosten hat der Arbeitgeber zusätzlich zum Bruttolohn, wenn er ebenfalls rund 20 % Sozialversicherung trägt?"
+    ],
+    "solution": [
+      "1. Sozialversicherung: 3.200 * 20 % = 640 Euro. Lohnsteuer: 3.200 * 12 % = 384 Euro. Nettolohn: 3.200 - 640 - 384 = 2.176 Euro.",
+      "",
+      "2. Rentenversicherung, Krankenversicherung, Pflegeversicherung und Arbeitslosenversicherung. Die Unfallversicherung zahlt allein der Arbeitgeber.",
+      "",
+      "3. Arbeitgeberanteil ca. 640 Euro, also Personalkosten von rund 3.840 Euro pro Monat (zzgl. Unfallversicherung und ggf. Umlagen)."
+    ]
+  },
+  {
+    "title": "Unternehmensformen vergleichen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Zwei Freunde möchten ein IT-Systemhaus gründen. Sie haben zusammen 30.000 Euro Startkapital und möchten ihr Privatvermögen schützen.",
+      "",
+      "1. Welche Rechtsform empfehlen Sie? Begründen Sie mit der Haftung.",
+      "2. Wie viel Stammkapital muss bei der Anmeldung mindestens eingezahlt sein?",
+      "3. Nennen Sie einen Nachteil dieser Rechtsform gegenüber einer GbR."
+    ],
+    "solution": [
+      "1. Eine GmbH: Die Gesellschafter haften grundsätzlich nur mit dem Gesellschaftsvermögen, nicht mit ihrem Privatvermögen. Das Mindeststammkapital von 25.000 Euro können sie aufbringen.",
+      "",
+      "2. Mindestens die Hälfte des Mindeststammkapitals, also 12.500 Euro (bei Sacheinlagen gelten Sonderregeln).",
+      "",
+      "3. Höherer Gründungsaufwand und Kosten (Notar, Handelsregister), Pflicht zur Bilanzierung und Veröffentlichung des Jahresabschlusses. Banken verlangen für Kredite oft trotzdem private Bürgschaften."
+    ]
   }
 ]

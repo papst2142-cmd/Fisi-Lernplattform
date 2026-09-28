@@ -1846,5 +1846,3761 @@
     ],
     "a": "Durchführung",
     "exp": "Typischer Ablauf: Initialisierung, Definition, Planung, Durchführung (mit Steuerung), Abschluss."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf welcher OSI-Schicht arbeitet ein Router?",
+    "options": [
+      "Schicht 3 (Vermittlungsschicht)",
+      "Schicht 1 (Bitübertragungsschicht)",
+      "Schicht 2 (Sicherungsschicht)",
+      "Schicht 7 (Anwendungsschicht)"
+    ],
+    "a": "Schicht 3 (Vermittlungsschicht)",
+    "exp": "Router treffen Weiterleitungsentscheidungen anhand von IP-Adressen und arbeiten damit auf Schicht 3."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher OSI-Schicht wird die Verschlüsselung und Umwandlung von Datenformaten zugeordnet?",
+    "options": [
+      "Schicht 6 (Darstellungsschicht)",
+      "Schicht 5 (Sitzungsschicht)",
+      "Schicht 4 (Transportschicht)",
+      "Schicht 2 (Sicherungsschicht)"
+    ],
+    "a": "Schicht 6 (Darstellungsschicht)",
+    "exp": "Die Darstellungsschicht kümmert sich um Kodierung, Kompression und Verschlüsselung der Daten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Dateneinheit (PDU) gehört zur OSI-Schicht 2?",
+    "options": [
+      "Frame (Rahmen)",
+      "Paket",
+      "Segment",
+      "Bit"
+    ],
+    "a": "Frame (Rahmen)",
+    "exp": "Schicht 1: Bits, Schicht 2: Frames, Schicht 3: Pakete, Schicht 4: Segmente (TCP) bzw. Datagramme (UDP)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Dateneinheit (PDU) gehört zur OSI-Schicht 3?",
+    "options": [
+      "Paket",
+      "Frame",
+      "Segment",
+      "Bit"
+    ],
+    "a": "Paket",
+    "exp": "Auf der Vermittlungsschicht werden IP-Pakete gebildet und geroutet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Information steht im Ethernet-Frame, aber nicht im IP-Paket?",
+    "options": [
+      "Die MAC-Adresse von Absender und Empfänger",
+      "Die IP-Adresse des Empfängers",
+      "Die Portnummer des Dienstes",
+      "Die TTL"
+    ],
+    "a": "Die MAC-Adresse von Absender und Empfänger",
+    "exp": "Der Ethernet-Header enthält Ziel- und Quell-MAC-Adresse. IP-Adressen und TTL stehen im IP-Header, Ports im TCP/UDP-Header."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was prüft die Frame Check Sequence (FCS) am Ende eines Ethernet-Frames?",
+    "options": [
+      "Ob der Frame bei der Übertragung beschädigt wurde",
+      "Ob der Absender berechtigt ist",
+      "Ob der Empfänger erreichbar ist",
+      "Ob der Frame verschlüsselt ist"
+    ],
+    "a": "Ob der Frame bei der Übertragung beschädigt wurde",
+    "exp": "Die FCS ist eine CRC-Prüfsumme. Stimmt sie beim Empfänger nicht, wird der Frame verworfen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche MAC-Adresse ist die Broadcast-Adresse in Ethernet?",
+    "options": [
+      "FF:FF:FF:FF:FF:FF",
+      "00:00:00:00:00:00",
+      "01:00:5E:00:00:01",
+      "FE:80:00:00:00:01"
+    ],
+    "a": "FF:FF:FF:FF:FF:FF",
+    "exp": "Frames an FF:FF:FF:FF:FF:FF werden von allen Geräten im Segment angenommen, z.B. ARP-Requests."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Teil einer MAC-Adresse kennzeichnet den Hersteller?",
+    "options": [
+      "Die ersten 24 Bit (OUI)",
+      "Die letzten 24 Bit",
+      "Die ersten 8 Bit",
+      "Die gesamte Adresse"
+    ],
+    "a": "Die ersten 24 Bit (OUI)",
+    "exp": "Die ersten 3 Byte bilden den Organizationally Unique Identifier, den die IEEE an Hersteller vergibt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Client hat die Adresse 192.168.1.20/24 und das Gateway 192.168.2.1. Was ist das Problem?",
+    "options": [
+      "Das Gateway liegt nicht im eigenen Subnetz",
+      "Die Adresse ist keine private Adresse",
+      "Die Subnetzmaske ist zu groß",
+      "Das Gateway muss immer .254 sein"
+    ],
+    "a": "Das Gateway liegt nicht im eigenen Subnetz",
+    "exp": "Das Standardgateway muss im selben Subnetz wie der Client liegen, hier 192.168.1.0/24. 192.168.2.1 ist direkt nicht erreichbar."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Adresse ist im Netz 192.168.5.0/24 als Host-Adresse NICHT nutzbar?",
+    "options": [
+      "192.168.5.255",
+      "192.168.5.1",
+      "192.168.5.128",
+      "192.168.5.254"
+    ],
+    "a": "192.168.5.255",
+    "exp": "192.168.5.255 ist die Broadcast-Adresse des /24-Netzes und kann keinem Host zugewiesen werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Subnetzmaske gehört zu /22?",
+    "options": [
+      "255.255.252.0",
+      "255.255.254.0",
+      "255.255.248.0",
+      "255.255.255.252"
+    ],
+    "a": "255.255.252.0",
+    "exp": "22 Einsen: 8 + 8 + 6 Bit, das dritte Oktett ist 11111100 = 252."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Subnetzmaske gehört zu /20?",
+    "options": [
+      "255.255.240.0",
+      "255.255.224.0",
+      "255.255.248.0",
+      "255.255.255.240"
+    ],
+    "a": "255.255.240.0",
+    "exp": "20 Einsen: 8 + 8 + 4 Bit, das dritte Oktett ist 11110000 = 240."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele nutzbare Hosts bietet ein /23-Netz?",
+    "options": [
+      "510",
+      "254",
+      "512",
+      "1022"
+    ],
+    "a": "510",
+    "exp": "2^(32-23) = 512 Adressen, abzüglich Netz- und Broadcast-Adresse bleiben 510 Hosts."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge braucht man mindestens für ein Subnetz mit 100 Hosts?",
+    "options": [
+      "/25",
+      "/24",
+      "/26",
+      "/27"
+    ],
+    "a": "/25",
+    "exp": "/25 bietet 126 Hosts, /26 nur 62. Also ist /25 das kleinste passende Subnetz."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge braucht man mindestens für ein Subnetz mit 30 Hosts?",
+    "options": [
+      "/27",
+      "/26",
+      "/28",
+      "/29"
+    ],
+    "a": "/27",
+    "exp": "/27 bietet 2^5 - 2 = 30 Hosts und reicht damit genau aus. /28 hätte nur 14."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist die erste nutzbare Host-Adresse im Netz 10.0.8.0/21?",
+    "options": [
+      "10.0.8.1",
+      "10.0.8.0",
+      "10.0.0.1",
+      "10.0.9.1"
+    ],
+    "a": "10.0.8.1",
+    "exp": "10.0.8.0 ist die Netzadresse, die erste nutzbare Adresse ist daher 10.0.8.1. Das Netz reicht bis 10.0.15.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist die Broadcast-Adresse des Netzes 172.16.32.0/20?",
+    "options": [
+      "172.16.47.255",
+      "172.16.32.255",
+      "172.16.63.255",
+      "172.16.39.255"
+    ],
+    "a": "172.16.47.255",
+    "exp": "/20 umfasst 16 Werte im dritten Oktett: 32 bis 47. Die Broadcast-Adresse ist daher 172.16.47.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Sind 192.168.1.130/25 und 192.168.1.100/25 im selben Subnetz?",
+    "options": [
+      "Nein, .100 liegt in .0/25 und .130 in .128/25",
+      "Ja, beide liegen in 192.168.1.0/25",
+      "Ja, weil das dritte Oktett gleich ist",
+      "Nein, weil /25 keine gültige Maske ist"
+    ],
+    "a": "Nein, .100 liegt in .0/25 und .130 in .128/25",
+    "exp": "Ein /25 teilt das /24 in 0-127 und 128-255. .100 und .130 liegen in unterschiedlichen Hälften."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge fasst die Netze 192.168.0.0/24 bis 192.168.3.0/24 zu einer Route zusammen?",
+    "options": [
+      "/22",
+      "/23",
+      "/21",
+      "/16"
+    ],
+    "a": "/22",
+    "exp": "Vier /24-Netze = 2 zusätzliche Bit, also 24 - 2 = /22: 192.168.0.0/22 umfasst genau 0.0 bis 3.255."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum ist für Punkt-zu-Punkt-Verbindungen zwischen zwei Routern ein /30 üblich?",
+    "options": [
+      "Es bietet genau zwei nutzbare Adressen",
+      "Es ist die einzige Maske, die Router unterstützen",
+      "Es verhindert Broadcasts vollständig",
+      "Es ist für öffentliche Adressen vorgeschrieben"
+    ],
+    "a": "Es bietet genau zwei nutzbare Adressen",
+    "exp": "Ein /30 hat 4 Adressen: Netz, zwei Hosts, Broadcast. Das passt genau für zwei Router und verschwendet keine Adressen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie wird die IPv6-Adresse 2001:0db8:0000:0000:0000:0000:0000:0001 korrekt gekürzt?",
+    "options": [
+      "2001:db8::1",
+      "2001:db8:0:0::0:1::",
+      "2001:db8::0::1",
+      "21:db8::1"
+    ],
+    "a": "2001:db8::1",
+    "exp": "Führende Nullen je Block dürfen entfallen und eine einzige zusammenhängende Nullfolge wird durch :: ersetzt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum darf \"::\" in einer IPv6-Adresse nur einmal vorkommen?",
+    "options": [
+      "Sonst ließe sich nicht eindeutig bestimmen, wie viele Nullblöcke wo fehlen",
+      "Weil IPv6 nur einen Nullblock erlaubt",
+      "Weil :: für die Loopback-Adresse reserviert ist",
+      "Weil Router sonst die Prüfsumme nicht berechnen können"
+    ],
+    "a": "Sonst ließe sich nicht eindeutig bestimmen, wie viele Nullblöcke wo fehlen",
+    "exp": "Bei zwei :: wäre unklar, wie sich die fehlenden Blöcke auf beide Stellen verteilen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele /64-Subnetze kann ein Unternehmen aus einem /48-Präfix bilden?",
+    "options": [
+      "65.536",
+      "256",
+      "4.096",
+      "16.777.216"
+    ],
+    "a": "65.536",
+    "exp": "Zwischen /48 und /64 liegen 16 Bit: 2^16 = 65.536 Subnetze."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche IPv6-Multicast-Adresse erreicht alle Knoten im lokalen Segment?",
+    "options": [
+      "ff02::1",
+      "ff02::2",
+      "fe80::1",
+      "::1"
+    ],
+    "a": "ff02::1",
+    "exp": "ff02::1 ist die All-Nodes-Adresse (link-local), ff02::2 erreicht alle Router."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DHCP-Nachrichtentyp wird vom Client zuerst gesendet?",
+    "options": [
+      "DHCPDISCOVER",
+      "DHCPOFFER",
+      "DHCPREQUEST",
+      "DHCPACK"
+    ],
+    "a": "DHCPDISCOVER",
+    "exp": "Der Client sucht per Broadcast einen Server (Discover), erhält ein Angebot (Offer), fordert es an (Request) und bekommt die Bestätigung (Ack)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was wird benötigt, wenn der DHCP-Server in einem anderen Subnetz steht als die Clients?",
+    "options": [
+      "Ein DHCP-Relay-Agent (IP-Helper) auf dem Router",
+      "Ein zweiter DNS-Server",
+      "Eine statische ARP-Tabelle",
+      "Ein Access Point im Servernetz"
+    ],
+    "a": "Ein DHCP-Relay-Agent (IP-Helper) auf dem Router",
+    "exp": "DHCP-Discover ist ein Broadcast und wird nicht geroutet. Der Relay-Agent leitet die Anfrage als Unicast an den DHCP-Server weiter."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie nennt man eine feste Zuordnung einer IP-Adresse zu einer MAC-Adresse im DHCP-Server?",
+    "options": [
+      "Reservierung",
+      "Lease",
+      "Scope",
+      "Exklusion"
+    ],
+    "a": "Reservierung",
+    "exp": "Eine Reservierung sorgt dafür, dass ein Gerät (z.B. ein Drucker) per DHCP immer dieselbe Adresse erhält."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bezeichnet die Lease Time bei DHCP?",
+    "options": [
+      "Wie lange ein Client eine zugewiesene Adresse nutzen darf",
+      "Wie lange der DHCP-Server auf Anfragen wartet",
+      "Wie lange ein DNS-Eintrag gültig ist",
+      "Wie lange ein Kabel maximal sein darf"
+    ],
+    "a": "Wie lange ein Client eine zugewiesene Adresse nutzen darf",
+    "exp": "Vor Ablauf der Lease (bei der Hälfte der Zeit) versucht der Client, sie beim Server zu verlängern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt DNS für normale Anfragen?",
+    "options": [
+      "53 (UDP, bei großen Antworten TCP)",
+      "67 (UDP)",
+      "853 (TCP)",
+      "25 (TCP)"
+    ],
+    "a": "53 (UDP, bei großen Antworten TCP)",
+    "exp": "DNS arbeitet standardmäßig über UDP-Port 53. Für Zonentransfers und große Antworten wird TCP-Port 53 genutzt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DNS-Eintrag gibt die zuständigen Nameserver einer Zone an?",
+    "options": [
+      "NS",
+      "SOA",
+      "MX",
+      "CNAME"
+    ],
+    "a": "NS",
+    "exp": "NS-Einträge (Name Server) legen fest, welche Server für die Zone autoritativ sind."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür wird ein TXT-Eintrag im DNS häufig genutzt?",
+    "options": [
+      "Für SPF-, DKIM- oder Verifizierungsangaben",
+      "Für die IPv6-Adresse des Webservers",
+      "Für die Rückwärtsauflösung",
+      "Für die Zeitsynchronisation"
+    ],
+    "a": "Für SPF-, DKIM- oder Verifizierungsangaben",
+    "exp": "TXT-Einträge enthalten freien Text. Sie werden oft für E-Mail-Schutz (SPF, DKIM, DMARC) und Domain-Nachweise verwendet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein rekursiver DNS-Resolver?",
+    "options": [
+      "Ein Server, der eine Anfrage für den Client vollständig bis zur Antwort auflöst",
+      "Ein Server, der nur für eine eigene Zone antwortet",
+      "Ein Client, der Namen aus der hosts-Datei liest",
+      "Ein Router, der DNS-Pakete verwirft"
+    ],
+    "a": "Ein Server, der eine Anfrage für den Client vollständig bis zur Antwort auflöst",
+    "exp": "Der Resolver fragt nacheinander Root-, TLD- und autoritative Server und liefert dem Client das Ergebnis."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Datei kann unter Windows und Linux Namen lokal ohne DNS auflösen?",
+    "options": [
+      "hosts",
+      "resolv.conf",
+      "lmhosts.sam",
+      "dhcpd.conf"
+    ],
+    "a": "hosts",
+    "exp": "Einträge in der hosts-Datei haben Vorrang vor der DNS-Abfrage (Windows: C:\\Windows\\System32\\drivers\\etc\\hosts, Linux: /etc/hosts)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In welcher Datei stehen unter Linux klassisch die DNS-Server des Systems?",
+    "options": [
+      "/etc/resolv.conf",
+      "/etc/hosts",
+      "/etc/network/dns",
+      "/etc/passwd"
+    ],
+    "a": "/etc/resolv.conf",
+    "exp": "In /etc/resolv.conf sind die Nameserver und Suchdomänen eingetragen (bei systemd-resolved oft als Verweis)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll arbeitet auf Port 587 und wird für den authentifizierten Mailversand vom Client genutzt?",
+    "options": [
+      "SMTP Submission",
+      "IMAP",
+      "POP3S",
+      "LDAP"
+    ],
+    "a": "SMTP Submission",
+    "exp": "Port 587 ist der Submission-Port für E-Mail-Clients, meist mit STARTTLS und Anmeldung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt IMAP über TLS (IMAPS)?",
+    "options": [
+      "993",
+      "143",
+      "995",
+      "465"
+    ],
+    "a": "993",
+    "exp": "IMAP unverschlüsselt: 143, IMAPS: 993. POP3S nutzt 995."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt POP3 über TLS (POP3S)?",
+    "options": [
+      "995",
+      "110",
+      "993",
+      "587"
+    ],
+    "a": "995",
+    "exp": "POP3 unverschlüsselt: 110, POP3S: 995."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt STARTTLS bei SMTP oder IMAP?",
+    "options": [
+      "Eine zunächst unverschlüsselte Verbindung wird auf TLS umgestellt",
+      "Der Server startet nach einem Absturz neu",
+      "Die Mail wird mit dem öffentlichen Schlüssel des Empfängers verschlüsselt",
+      "Der Client lädt alle Mails auf einmal herunter"
+    ],
+    "a": "Eine zunächst unverschlüsselte Verbindung wird auf TLS umgestellt",
+    "exp": "Mit STARTTLS beginnt die Verbindung auf dem Standardport und wechselt dann per Befehl in eine verschlüsselte Verbindung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher HTTP-Statuscode bedeutet \"Seite nicht gefunden\"?",
+    "options": [
+      "404",
+      "200",
+      "301",
+      "500"
+    ],
+    "a": "404",
+    "exp": "4xx sind Fehler des Clients, 404 heißt Not Found. 200 = OK, 301 = dauerhaft umgeleitet, 500 = Serverfehler."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche HTTP-Methode wird typischerweise zum Absenden von Formulardaten verwendet?",
+    "options": [
+      "POST",
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ],
+    "a": "POST",
+    "exp": "POST überträgt Daten im Body der Anfrage. GET hängt Parameter an die URL und soll nur Daten abrufen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat das Spanning Tree Protocol bei redundanten Switch-Verbindungen?",
+    "options": [
+      "Es blockiert Ports so, dass keine Schleife entsteht",
+      "Es bündelt alle Verbindungen zu einer",
+      "Es verteilt VLAN-Informationen",
+      "Es vergibt IP-Adressen an Switches"
+    ],
+    "a": "Es blockiert Ports so, dass keine Schleife entsteht",
+    "exp": "STP berechnet einen schleifenfreien Baum. Redundante Ports werden blockiert und bei Ausfall eines Weges freigeschaltet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie heißt der Switch, der beim Spanning Tree die Wurzel des Baums bildet?",
+    "options": [
+      "Root Bridge",
+      "Designated Router",
+      "Core Switch",
+      "Master Bridge"
+    ],
+    "a": "Root Bridge",
+    "exp": "Die Root Bridge wird anhand der niedrigsten Bridge-ID gewählt. Von ihr aus werden die kürzesten Wege berechnet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Vorteil von RSTP (802.1w) gegenüber dem klassischen STP?",
+    "options": [
+      "Deutlich schnellere Umschaltung nach einer Topologieänderung",
+      "Es verschlüsselt BPDUs",
+      "Es benötigt keine Root Bridge",
+      "Es erlaubt Schleifen im Netz"
+    ],
+    "a": "Deutlich schnellere Umschaltung nach einer Topologieänderung",
+    "exp": "Klassisches STP braucht 30-50 Sekunden, RSTP reagiert meist in wenigen Sekunden oder schneller."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Standard beschreibt Link Aggregation mit dem Protokoll LACP?",
+    "options": [
+      "IEEE 802.3ad (heute 802.1AX)",
+      "IEEE 802.1Q",
+      "IEEE 802.11ac",
+      "IEEE 802.3af"
+    ],
+    "a": "IEEE 802.3ad (heute 802.1AX)",
+    "exp": "LACP handelt die Bündelung mehrerer Ports zwischen zwei Geräten automatisch aus."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher PoE-Standard liefert bis zu 30 W am Port (PoE+)?",
+    "options": [
+      "IEEE 802.3at",
+      "IEEE 802.3af",
+      "IEEE 802.3bt",
+      "IEEE 802.3ad"
+    ],
+    "a": "IEEE 802.3at",
+    "exp": "802.3af liefert bis 15,4 W, 802.3at (PoE+) bis 30 W und 802.3bt (PoE++) bis 60 bzw. 90 W am Port."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Access-Port an einem Switch?",
+    "options": [
+      "Ein Port, der genau einem VLAN ungetaggt zugeordnet ist",
+      "Ein Port für die Verbindung zwischen zwei Switches mit mehreren VLANs",
+      "Ein Port nur für Administratoren",
+      "Ein Port mit aktiviertem PoE"
+    ],
+    "a": "Ein Port, der genau einem VLAN ungetaggt zugeordnet ist",
+    "exp": "Endgeräte hängen an Access-Ports. Der Switch ordnet ihren Verkehr intern dem konfigurierten VLAN zu."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie werden zwei VLANs miteinander verbunden, damit ihre Geräte kommunizieren können?",
+    "options": [
+      "Über einen Router oder Layer-3-Switch (Inter-VLAN-Routing)",
+      "Über ein Crossover-Kabel",
+      "Über einen Hub",
+      "Das ist technisch nicht möglich"
+    ],
+    "a": "Über einen Router oder Layer-3-Switch (Inter-VLAN-Routing)",
+    "exp": "VLANs sind getrennte Broadcast-Domänen und eigene IP-Netze. Verkehr zwischen ihnen muss geroutet werden."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist \"Router on a Stick\"?",
+    "options": [
+      "Ein Router routet über einen einzigen Trunk-Port mit Subinterfaces zwischen VLANs",
+      "Ein USB-Stick mit Router-Firmware",
+      "Ein Router ohne Netzwerkkabel",
+      "Ein WLAN-Router für unterwegs"
+    ],
+    "a": "Ein Router routet über einen einzigen Trunk-Port mit Subinterfaces zwischen VLANs",
+    "exp": "Pro VLAN wird ein Subinterface mit 802.1Q-Tag angelegt, alles läuft über ein physisches Kabel zum Switch."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele VLAN-IDs sind mit 802.1Q theoretisch möglich?",
+    "options": [
+      "4096 (nutzbar 1 bis 4094)",
+      "256",
+      "1024",
+      "65.536"
+    ],
+    "a": "4096 (nutzbar 1 bis 4094)",
+    "exp": "Die VLAN-ID hat 12 Bit, also 4096 Werte. 0 und 4095 sind reserviert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher WLAN-Standard wird als Wi-Fi 5 bezeichnet?",
+    "options": [
+      "IEEE 802.11ac",
+      "IEEE 802.11n",
+      "IEEE 802.11ax",
+      "IEEE 802.11g"
+    ],
+    "a": "IEEE 802.11ac",
+    "exp": "Wi-Fi 4 = 802.11n, Wi-Fi 5 = 802.11ac, Wi-Fi 6 = 802.11ax, Wi-Fi 7 = 802.11be."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Frequenzband kommt mit Wi-Fi 6E hinzu?",
+    "options": [
+      "6 GHz",
+      "900 MHz",
+      "3,5 GHz",
+      "60 GHz"
+    ],
+    "a": "6 GHz",
+    "exp": "Wi-Fi 6E erweitert Wi-Fi 6 (802.11ax) um das 6-GHz-Band mit vielen zusätzlichen Kanälen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was beschreibt Roaming im WLAN?",
+    "options": [
+      "Den Wechsel eines Clients zwischen Access Points ohne Verbindungsabbruch",
+      "Das Verbinden mit einem fremden Mobilfunknetz",
+      "Das automatische Wechseln des Kanals",
+      "Das Verstecken der SSID"
+    ],
+    "a": "Den Wechsel eines Clients zwischen Access Points ohne Verbindungsabbruch",
+    "exp": "Stehen mehrere Access Points mit gleicher SSID bereit, wechselt der Client beim Bewegen zum stärksten Signal."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient ein WLAN-Controller?",
+    "options": [
+      "Zur zentralen Verwaltung und Konfiguration vieler Access Points",
+      "Zur Verschlüsselung der Internetleitung",
+      "Zum Ersatz des DHCP-Servers",
+      "Zur Messung der Kabelqualität"
+    ],
+    "a": "Zur zentralen Verwaltung und Konfiguration vieler Access Points",
+    "exp": "Der Controller verteilt Einstellungen, steuert Kanäle und Sendeleistung und unterstützt das Roaming."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Vorteil hat Glasfaser gegenüber Kupferkabel?",
+    "options": [
+      "Unempfindlich gegen elektromagnetische Störungen und für große Distanzen geeignet",
+      "Günstiger und leichter zu konfektionieren",
+      "Überträgt zusätzlich Strom (PoE)",
+      "Braucht keine aktiven Komponenten"
+    ],
+    "a": "Unempfindlich gegen elektromagnetische Störungen und für große Distanzen geeignet",
+    "exp": "Lichtwellenleiter übertragen Licht und sind daher störsicher, abhörsicherer und überbrücken Kilometer."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was misst man mit einem Kabeltester bzw. Zertifizierer bei Twisted-Pair-Kabeln u.a.?",
+    "options": [
+      "Belegung, Länge und Übertragungswerte wie Dämpfung und Nebensprechen",
+      "Die IP-Adresse des angeschlossenen Geräts",
+      "Die Anzahl der VLANs",
+      "Die Stromaufnahme des Switches"
+    ],
+    "a": "Belegung, Länge und Übertragungswerte wie Dämpfung und Nebensprechen",
+    "exp": "Ein Zertifizierer weist nach, dass die Strecke die Werte der Kategorie (z.B. Cat 6A) einhält."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet die Kennzeichnung S/FTP bei einem Netzwerkkabel?",
+    "options": [
+      "Gesamtschirm aus Geflecht und zusätzlich jedes Adernpaar in Folie",
+      "Ungeschirmtes Kabel mit Folie um das Kabel",
+      "Nur einzelne Adern sind geschirmt",
+      "Glasfaserkabel mit Stahlmantel"
+    ],
+    "a": "Gesamtschirm aus Geflecht und zusätzlich jedes Adernpaar in Folie",
+    "exp": "Vor dem Schrägstrich steht der Gesamtschirm (S = Geflecht), danach die Paarschirmung (F = Folie), TP = Twisted Pair."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Befehl zeigt unter Windows alle aktiven Verbindungen und lauschenden Ports mit Prozess-ID?",
+    "options": [
+      "netstat -ano",
+      "ipconfig /all",
+      "tracert -d",
+      "arp -a"
+    ],
+    "a": "netstat -ano",
+    "exp": "-a zeigt alle Verbindungen, -n numerische Adressen, -o die Prozess-ID des zuständigen Programms."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Linux-Befehl zeigt lauschende TCP- und UDP-Ports an?",
+    "options": [
+      "ss -tulpn",
+      "ip route",
+      "ping -c 4",
+      "dig -x"
+    ],
+    "a": "ss -tulpn",
+    "exp": "ss (Nachfolger von netstat) mit -t TCP, -u UDP, -l lauschend, -p Prozess, -n numerisch."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Befehl zeigt unter Linux die Routingtabelle an?",
+    "options": [
+      "ip route",
+      "ip link",
+      "ifconfig -a",
+      "cat /etc/hosts"
+    ],
+    "a": "ip route",
+    "exp": "ip route (kurz ip r) listet die Routen einschließlich der Default-Route."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Rechner erreicht 8.8.8.8 per ping, aber keine Webseiten per Name. Wo liegt der Fehler am wahrscheinlichsten?",
+    "options": [
+      "Bei der DNS-Auflösung",
+      "Beim Standardgateway",
+      "Beim Netzwerkkabel",
+      "Bei der Subnetzmaske"
+    ],
+    "a": "Bei der DNS-Auflösung",
+    "exp": "Wenn IP-Verbindungen ins Internet funktionieren, sind Kabel, Adresse und Gateway in Ordnung. Nur die Namensauflösung fehlt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Windows-PC hat die Adresse 169.254.12.7. Was ist die wahrscheinlichste Ursache?",
+    "options": [
+      "Er hat keine Antwort von einem DHCP-Server erhalten",
+      "Er hat eine statische Adresse",
+      "Er ist mit einem VPN verbunden",
+      "Die DNS-Server sind falsch eingetragen"
+    ],
+    "a": "Er hat keine Antwort von einem DHCP-Server erhalten",
+    "exp": "169.254.0.0/16 ist der APIPA-Bereich, den Windows nutzt, wenn DHCP nicht antwortet."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Werkzeug zeichnet Netzwerkverkehr zur Analyse auf?",
+    "options": [
+      "Wireshark",
+      "PuTTY",
+      "Notepad++",
+      "Robocopy"
+    ],
+    "a": "Wireshark",
+    "exp": "Wireshark schneidet Pakete mit und zeigt sie Schicht für Schicht an. Auf der Kommandozeile gibt es dafür tcpdump."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Metrik verwendet OSPF zur Bewertung von Wegen?",
+    "options": [
+      "Kosten (Cost), abgeleitet von der Bandbreite",
+      "Anzahl der Hops",
+      "Alter der Route",
+      "Anzahl der VLANs"
+    ],
+    "a": "Kosten (Cost), abgeleitet von der Bandbreite",
+    "exp": "OSPF berechnet die Kosten meist als Referenzbandbreite geteilt durch Schnittstellenbandbreite. Der Weg mit den geringsten Gesamtkosten gewinnt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Floating Static Route?",
+    "options": [
+      "Eine statische Backup-Route mit höherer administrativer Distanz",
+      "Eine Route, die sich automatisch jede Stunde ändert",
+      "Eine Route ohne Ziel",
+      "Eine Route nur für Multicast"
+    ],
+    "a": "Eine statische Backup-Route mit höherer administrativer Distanz",
+    "exp": "Sie wird erst aktiv, wenn die bevorzugte Route (kleinere Distanz) ausfällt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht SD-WAN?",
+    "options": [
+      "Software-Defined Wide Area Network",
+      "Secure Data WAN",
+      "Standard Digital WAN",
+      "Switched Dual WAN"
+    ],
+    "a": "Software-Defined Wide Area Network",
+    "exp": "SD-WAN steuert mehrere WAN-Leitungen zentral per Software und verteilt den Verkehr nach Regeln, z.B. nach Anwendung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel wird durch einen DDoS-Angriff vor allem verletzt?",
+    "options": [
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Integrität",
+      "Authentizität"
+    ],
+    "a": "Verfügbarkeit",
+    "exp": "Ein DDoS-Angriff überlastet Dienste, sodass sie nicht mehr erreichbar sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel wird verletzt, wenn ein Angreifer Kundendaten kopiert und veröffentlicht?",
+    "options": [
+      "Vertraulichkeit",
+      "Verfügbarkeit",
+      "Integrität",
+      "Verbindlichkeit"
+    ],
+    "a": "Vertraulichkeit",
+    "exp": "Unbefugte haben Kenntnis von Daten erlangt, die nur Befugten zugänglich sein sollten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Angreifer ändert unbemerkt Kontonummern in Rechnungen. Welches Schutzziel ist betroffen?",
+    "options": [
+      "Integrität",
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Anonymität"
+    ],
+    "a": "Integrität",
+    "exp": "Die Daten wurden unbefugt verändert, damit ist die Integrität verletzt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Verfahren eignet sich, um die Integrität einer heruntergeladenen Datei zu prüfen?",
+    "options": [
+      "Vergleich des SHA-256-Hashwerts mit dem veröffentlichten Wert",
+      "Die Datei zweimal herunterladen",
+      "Die Dateigröße in KB schätzen",
+      "Die Datei in ein ZIP-Archiv packen"
+    ],
+    "a": "Vergleich des SHA-256-Hashwerts mit dem veröffentlichten Wert",
+    "exp": "Stimmt der berechnete Hashwert mit dem vom Anbieter veröffentlichten überein, wurde die Datei nicht verändert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Hashverfahren gilt heute als unsicher und sollte nicht mehr für Sicherheitszwecke verwendet werden?",
+    "options": [
+      "MD5",
+      "SHA-256",
+      "SHA-3",
+      "SHA-512"
+    ],
+    "a": "MD5",
+    "exp": "Für MD5 (und SHA-1) lassen sich praktisch Kollisionen erzeugen. Stattdessen nutzt man SHA-2 oder SHA-3."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Verfahren ist speziell für das sichere Speichern von Passwörtern gedacht?",
+    "options": [
+      "Argon2 (oder bcrypt)",
+      "MD5",
+      "Base64",
+      "ROT13"
+    ],
+    "a": "Argon2 (oder bcrypt)",
+    "exp": "Passwort-Hashverfahren wie Argon2, bcrypt oder scrypt sind absichtlich langsam und nutzen Salts. Base64 ist nur eine Kodierung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist Base64 keine Verschlüsselung?",
+    "options": [
+      "Es ist eine umkehrbare Kodierung ohne Schlüssel",
+      "Weil es zu langsam ist",
+      "Weil es nur Zahlen verarbeitet",
+      "Weil es immer 64 Bit lange Ausgaben erzeugt"
+    ],
+    "a": "Es ist eine umkehrbare Kodierung ohne Schlüssel",
+    "exp": "Jeder kann Base64 ohne Geheimnis zurückwandeln. Es dient nur dazu, Binärdaten als Text zu übertragen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Schlüssellänge ist bei AES NICHT vorgesehen?",
+    "options": [
+      "512 Bit",
+      "128 Bit",
+      "192 Bit",
+      "256 Bit"
+    ],
+    "a": "512 Bit",
+    "exp": "AES gibt es mit 128, 192 und 256 Bit Schlüssellänge."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele Schlüssel werden bei symmetrischer Verschlüsselung benötigt, damit 10 Personen paarweise geheim kommunizieren können?",
+    "options": [
+      "45",
+      "10",
+      "20",
+      "100"
+    ],
+    "a": "45",
+    "exp": "Jedes Paar braucht einen eigenen Schlüssel: n * (n - 1) / 2 = 10 * 9 / 2 = 45."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie viele Schlüssel werden bei asymmetrischer Verschlüsselung für 10 Teilnehmer insgesamt benötigt?",
+    "options": [
+      "20",
+      "10",
+      "45",
+      "100"
+    ],
+    "a": "20",
+    "exp": "Jeder Teilnehmer hat ein Schlüsselpaar (öffentlich und privat): 10 * 2 = 20 Schlüssel."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Mit welchem Schlüssel prüft Bob die digitale Signatur von Alice?",
+    "options": [
+      "Mit dem öffentlichen Schlüssel von Alice",
+      "Mit dem privaten Schlüssel von Alice",
+      "Mit seinem eigenen privaten Schlüssel",
+      "Mit seinem eigenen öffentlichen Schlüssel"
+    ],
+    "a": "Mit dem öffentlichen Schlüssel von Alice",
+    "exp": "Alice signiert mit ihrem privaten Schlüssel, jeder kann die Signatur mit ihrem öffentlichen Schlüssel prüfen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Womit entschlüsselt Bob eine Nachricht, die mit seinem öffentlichen Schlüssel verschlüsselt wurde?",
+    "options": [
+      "Mit seinem privaten Schlüssel",
+      "Mit seinem öffentlichen Schlüssel",
+      "Mit dem öffentlichen Schlüssel des Absenders",
+      "Mit dem privaten Schlüssel des Absenders"
+    ],
+    "a": "Mit seinem privaten Schlüssel",
+    "exp": "Was mit dem öffentlichen Schlüssel verschlüsselt wurde, kann nur der zugehörige private Schlüssel entschlüsseln."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was wird bei einer digitalen Signatur tatsächlich mit dem privaten Schlüssel verarbeitet?",
+    "options": [
+      "Der Hashwert der Nachricht",
+      "Die komplette Nachricht im Klartext",
+      "Der öffentliche Schlüssel des Empfängers",
+      "Das Passwort des Absenders"
+    ],
+    "a": "Der Hashwert der Nachricht",
+    "exp": "Aus der Nachricht wird ein Hashwert gebildet und dieser mit dem privaten Schlüssel signiert. Das ist effizient und sichert die Integrität."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche TLS-Version sollte heute bevorzugt eingesetzt werden?",
+    "options": [
+      "TLS 1.3",
+      "SSL 3.0",
+      "TLS 1.0",
+      "TLS 1.1"
+    ],
+    "a": "TLS 1.3",
+    "exp": "SSL und TLS 1.0/1.1 gelten als veraltet. Empfohlen werden TLS 1.2 und bevorzugt TLS 1.3."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was prüft ein Browser beim Aufruf einer HTTPS-Seite am Serverzertifikat unter anderem?",
+    "options": [
+      "Gültigkeit, Hostname und Vertrauenskette bis zu einer Root-CA",
+      "Nur die Farbe des Schloss-Symbols",
+      "Die IP-Adresse des Clients",
+      "Die Größe des Zertifikats"
+    ],
+    "a": "Gültigkeit, Hostname und Vertrauenskette bis zu einer Root-CA",
+    "exp": "Das Zertifikat muss gültig sein, zum aufgerufenen Namen passen und von einer vertrauenswürdigen CA signiert sein."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist HSTS?",
+    "options": [
+      "Ein HTTP-Header, der Browser anweist, eine Seite nur per HTTPS aufzurufen",
+      "Ein Hashverfahren für Zertifikate",
+      "Ein Protokoll zur Mailverschlüsselung",
+      "Ein Standard für Hardware-Sicherheitsmodule"
+    ],
+    "a": "Ein HTTP-Header, der Browser anweist, eine Seite nur per HTTPS aufzurufen",
+    "exp": "HTTP Strict Transport Security verhindert Downgrade-Angriffe auf unverschlüsseltes HTTP."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Verfahren verschlüsselt und signiert E-Mails mit X.509-Zertifikaten?",
+    "options": [
+      "S/MIME",
+      "SPF",
+      "DKIM",
+      "STARTTLS"
+    ],
+    "a": "S/MIME",
+    "exp": "S/MIME ermöglicht Ende-zu-Ende-Verschlüsselung und Signatur von E-Mails. Die Alternative ist OpenPGP."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient SPF bei E-Mails?",
+    "options": [
+      "Es legt fest, welche Server für eine Domain Mails versenden dürfen",
+      "Es verschlüsselt den Mailinhalt",
+      "Es signiert jede Mail mit einem Zertifikat",
+      "Es filtert Viren aus Anhängen"
+    ],
+    "a": "Es legt fest, welche Server für eine Domain Mails versenden dürfen",
+    "exp": "Das Sender Policy Framework steht als TXT-Eintrag im DNS. Empfänger prüfen, ob der sendende Server erlaubt ist."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was leistet DKIM bei E-Mails?",
+    "options": [
+      "Eine Signatur des Absenderservers, die der Empfänger über einen DNS-Schlüssel prüft",
+      "Ende-zu-Ende-Verschlüsselung für den Empfänger",
+      "Blockieren aller Anhänge",
+      "Verkürzen von Links"
+    ],
+    "a": "Eine Signatur des Absenderservers, die der Empfänger über einen DNS-Schlüssel prüft",
+    "exp": "DomainKeys Identified Mail signiert Kopfzeilen und Inhalt. Der öffentliche Schlüssel steht im DNS der Absenderdomain."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Firewall-Art merkt sich den Zustand von Verbindungen und lässt Antwortpakete automatisch zu?",
+    "options": [
+      "Stateful Packet Inspection (SPI)",
+      "Statischer Paketfilter",
+      "Proxy ohne Cache",
+      "Personal Firewall ohne Regeln"
+    ],
+    "a": "Stateful Packet Inspection (SPI)",
+    "exp": "Eine zustandsorientierte Firewall führt eine Verbindungstabelle und erlaubt nur passende Antworten auf ausgehende Anfragen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Next-Generation-Firewall (NGFW)?",
+    "options": [
+      "Eine Firewall, die zusätzlich Anwendungen erkennt und z.B. IPS und TLS-Inspektion bietet",
+      "Eine Firewall ohne Regelwerk",
+      "Eine rein softwarebasierte Personal Firewall",
+      "Eine Firewall für WLAN-Kanäle"
+    ],
+    "a": "Eine Firewall, die zusätzlich Anwendungen erkennt und z.B. IPS und TLS-Inspektion bietet",
+    "exp": "NGFWs arbeiten bis zur Anwendungsschicht und kombinieren Paketfilter, Application Control, IPS und oft Benutzererkennung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In welcher Reihenfolge werden Firewall-Regeln üblicherweise abgearbeitet?",
+    "options": [
+      "Von oben nach unten, die erste passende Regel gilt",
+      "Alle Regeln gleichzeitig, die strengste gewinnt",
+      "Von unten nach oben",
+      "Zufällig"
+    ],
+    "a": "Von oben nach unten, die erste passende Regel gilt",
+    "exp": "Deshalb stehen spezielle Regeln oben und die allgemeine Deny-Regel ganz unten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Reverse Proxy vor einem Webserver?",
+    "options": [
+      "Ein vorgeschalteter Server, der Anfragen aus dem Internet entgegennimmt und intern weiterleitet",
+      "Ein Proxy, der ausgehende Anfragen der Mitarbeiter filtert",
+      "Ein Router für Rückrouten",
+      "Ein Backupserver für Webseiten"
+    ],
+    "a": "Ein vorgeschalteter Server, der Anfragen aus dem Internet entgegennimmt und intern weiterleitet",
+    "exp": "Der Reverse Proxy schützt und entlastet die internen Server, z.B. durch TLS-Terminierung und Lastverteilung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Web Application Firewall (WAF) typischerweise in der Lage abzuwehren?",
+    "options": [
+      "SQL-Injection und Cross-Site-Scripting",
+      "Stromausfälle",
+      "Festplattendefekte",
+      "Kabelbrüche"
+    ],
+    "a": "SQL-Injection und Cross-Site-Scripting",
+    "exp": "Die WAF prüft HTTP-Anfragen auf Angriffsmuster gegen Webanwendungen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Maßnahme schützt am wirksamsten vor SQL-Injection?",
+    "options": [
+      "Vorbereitete Anweisungen (Prepared Statements) mit Parametern",
+      "Längere Passwörter für die Datenbank",
+      "Ein schnellerer Datenbankserver",
+      "Die Datenbank auf SSD speichern"
+    ],
+    "a": "Vorbereitete Anweisungen (Prepared Statements) mit Parametern",
+    "exp": "Bei Prepared Statements werden Eingaben als Daten und nicht als SQL-Code behandelt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Cross-Site Request Forgery (CSRF)?",
+    "options": [
+      "Ein Angreifer bringt den Browser eines angemeldeten Nutzers dazu, ungewollt Aktionen auszuführen",
+      "Das Auslesen von Cookies per Skript",
+      "Das Erraten von Passwörtern",
+      "Das Umleiten von DNS-Anfragen"
+    ],
+    "a": "Ein Angreifer bringt den Browser eines angemeldeten Nutzers dazu, ungewollt Aktionen auszuführen",
+    "exp": "Schutz bieten z.B. Anti-CSRF-Tokens und das SameSite-Attribut von Cookies."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Pufferüberlauf (Buffer Overflow)?",
+    "options": [
+      "Ein Programm schreibt mehr Daten in einen Speicherbereich als vorgesehen",
+      "Eine Festplatte ist voll",
+      "Ein Drucker hat zu viele Aufträge",
+      "Ein Switch verwirft Frames"
+    ],
+    "a": "Ein Programm schreibt mehr Daten in einen Speicherbereich als vorgesehen",
+    "exp": "Angreifer können dadurch benachbarten Speicher überschreiben und im schlimmsten Fall eigenen Code ausführen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Angriffsart probiert systematisch Wörter aus einer Liste als Passwort aus?",
+    "options": [
+      "Wörterbuchangriff",
+      "Phishing",
+      "Replay-Angriff",
+      "Spoofing"
+    ],
+    "a": "Wörterbuchangriff",
+    "exp": "Ein Wörterbuchangriff nutzt Listen häufiger Passwörter und Wörter. Lange, zufällige Passwörter und Sperren helfen dagegen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Rainbow Table?",
+    "options": [
+      "Eine vorberechnete Tabelle zum schnellen Zurückrechnen von Hashwerten auf Passwörter",
+      "Eine farbige Übersicht der Firewall-Regeln",
+      "Ein Diagramm zur Risikoanalyse",
+      "Eine Liste gesperrter Zertifikate"
+    ],
+    "a": "Eine vorberechnete Tabelle zum schnellen Zurückrechnen von Hashwerten auf Passwörter",
+    "exp": "Salts machen Rainbow Tables wirkungslos, weil jedes Passwort mit einem anderen Zusatzwert gehasht wird."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Replay-Angriff?",
+    "options": [
+      "Mitgeschnittene gültige Daten werden später erneut gesendet",
+      "Ein Angreifer löscht Logdateien",
+      "Ein Virus kopiert sich selbst",
+      "Ein Nutzer vergisst sein Passwort"
+    ],
+    "a": "Mitgeschnittene gültige Daten werden später erneut gesendet",
+    "exp": "Schutz bieten Zeitstempel, Nonces und Sitzungsschlüssel, sodass alte Nachrichten ungültig sind."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist IP-Spoofing?",
+    "options": [
+      "Das Fälschen der Absender-IP-Adresse in Paketen",
+      "Das Verstecken der eigenen MAC-Adresse",
+      "Das Abhören von WLAN-Verkehr",
+      "Das Kopieren eines Zertifikats"
+    ],
+    "a": "Das Fälschen der Absender-IP-Adresse in Paketen",
+    "exp": "Gefälschte Absenderadressen werden z.B. bei DDoS-Reflexionsangriffen genutzt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ARP-Spoofing?",
+    "options": [
+      "Gefälschte ARP-Antworten leiten Verkehr im LAN über den Rechner des Angreifers",
+      "Ein Angriff auf DNS-Server im Internet",
+      "Das Fälschen von E-Mail-Absendern",
+      "Das Überlasten eines Access Points"
+    ],
+    "a": "Gefälschte ARP-Antworten leiten Verkehr im LAN über den Rechner des Angreifers",
+    "exp": "Der Angreifer gibt sich z.B. als Gateway aus und wird so zum Man-in-the-Middle. Schutz: Dynamic ARP Inspection, Port Security."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Evil Twin im WLAN?",
+    "options": [
+      "Ein gefälschter Access Point mit derselben SSID wie ein legitimes WLAN",
+      "Ein zweiter Access Point zur Redundanz",
+      "Ein WLAN mit doppelter Verschlüsselung",
+      "Ein Access Point mit zwei Antennen"
+    ],
+    "a": "Ein gefälschter Access Point mit derselben SSID wie ein legitimes WLAN",
+    "exp": "Clients verbinden sich mit dem stärkeren Signal des Angreifers, der den Verkehr mitlesen kann."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche WLAN-Verschlüsselung gilt als geknackt und darf nicht mehr genutzt werden?",
+    "options": [
+      "WEP",
+      "WPA2-Enterprise",
+      "WPA3-Personal",
+      "WPA3-Enterprise"
+    ],
+    "a": "WEP",
+    "exp": "WEP lässt sich in Minuten brechen. Mindeststandard ist WPA2, besser WPA3."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Funktion sollte beim WLAN-Router wegen bekannter Schwächen deaktiviert werden?",
+    "options": [
+      "WPS mit PIN-Verfahren",
+      "WPA3",
+      "Die Firewall",
+      "Automatische Updates"
+    ],
+    "a": "WPS mit PIN-Verfahren",
+    "exp": "Die WPS-PIN lässt sich per Brute-Force in kurzer Zeit erraten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was bewirkt Port-Security an einem Switch?",
+    "options": [
+      "Nur bestimmte bzw. eine begrenzte Zahl von MAC-Adressen dürfen einen Port nutzen",
+      "Der Port wird verschlüsselt",
+      "Der Port liefert Strom",
+      "Der Port wird für alle VLANs geöffnet"
+    ],
+    "a": "Nur bestimmte bzw. eine begrenzte Zahl von MAC-Adressen dürfen einen Port nutzen",
+    "exp": "Unbekannte Geräte werden blockiert oder der Port wird abgeschaltet."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher Standard regelt die portbasierte Netzwerkzugangskontrolle mit Anmeldung am Switch?",
+    "options": [
+      "IEEE 802.1X",
+      "IEEE 802.1Q",
+      "IEEE 802.3af",
+      "IEEE 802.11ax"
+    ],
+    "a": "IEEE 802.1X",
+    "exp": "Bei 802.1X muss sich ein Gerät erst über einen RADIUS-Server authentifizieren, bevor der Port freigeschaltet wird."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Network Access Control (NAC)?",
+    "options": [
+      "Ein Verfahren, das Geräte vor dem Netzzugang prüft und je nach Zustand zulässt oder isoliert",
+      "Eine Liste erlaubter Webseiten",
+      "Ein Kabeltyp für Rechenzentren",
+      "Ein Backupverfahren für Router"
+    ],
+    "a": "Ein Verfahren, das Geräte vor dem Netzzugang prüft und je nach Zustand zulässt oder isoliert",
+    "exp": "NAC prüft z.B. Identität, Patchstand und Virenschutz und verschiebt unsichere Geräte in ein Quarantäne-VLAN."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Art VPN verbindet ganze Standortnetze dauerhaft miteinander?",
+    "options": [
+      "Site-to-Site-VPN",
+      "Client-to-Site-VPN",
+      "SSL-Portal ohne Tunnel",
+      "Proxy-VPN im Browser"
+    ],
+    "a": "Site-to-Site-VPN",
+    "exp": "Beim Site-to-Site-VPN bauen zwei Gateways einen Tunnel auf, die Clients merken davon nichts."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Split Tunneling bei einem Client-VPN?",
+    "options": [
+      "Nur Verkehr ins Firmennetz läuft durch den Tunnel, der Rest direkt ins Internet",
+      "Der Tunnel wird auf zwei Server aufgeteilt",
+      "Jede Verbindung wird doppelt verschlüsselt",
+      "Das VPN wird nach der Hälfte der Zeit getrennt"
+    ],
+    "a": "Nur Verkehr ins Firmennetz läuft durch den Tunnel, der Rest direkt ins Internet",
+    "exp": "Split Tunneling entlastet die Firmenleitung, der Internetverkehr des Clients wird dann aber nicht zentral gefiltert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches moderne VPN-Protokoll ist für seinen schlanken Code und hohe Geschwindigkeit bekannt?",
+    "options": [
+      "WireGuard",
+      "PPTP",
+      "L2TP ohne IPsec",
+      "Telnet"
+    ],
+    "a": "WireGuard",
+    "exp": "WireGuard nutzt moderne Kryptografie mit wenig Code. PPTP gilt dagegen als unsicher."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Phase folgt im Incident-Response-Prozess direkt auf die Erkennung eines Vorfalls?",
+    "options": [
+      "Eindämmung (Containment)",
+      "Lessons Learned",
+      "Wiederherstellung",
+      "Neuanschaffung der Hardware"
+    ],
+    "a": "Eindämmung (Containment)",
+    "exp": "Übliche Reihenfolge: Vorbereitung, Erkennung und Analyse, Eindämmung, Beseitigung, Wiederherstellung, Nachbereitung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sollte man bei einem Ransomware-Befall als Erstes mit dem betroffenen Rechner tun?",
+    "options": [
+      "Vom Netzwerk trennen, aber nicht ausschalten",
+      "Das Lösegeld zahlen",
+      "Alle Dateien sofort löschen",
+      "Den Rechner neu installieren und weiterarbeiten"
+    ],
+    "a": "Vom Netzwerk trennen, aber nicht ausschalten",
+    "exp": "Die Netztrennung stoppt die Ausbreitung. Eingeschaltet bleiben Spuren im Arbeitsspeicher für die Analyse erhalten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein CVE-Eintrag?",
+    "options": [
+      "Eine eindeutige Kennung für eine öffentlich bekannte Schwachstelle",
+      "Ein Virenschutzprogramm",
+      "Ein Zertifikat für Webserver",
+      "Eine Datenschutzerklärung"
+    ],
+    "a": "Eine eindeutige Kennung für eine öffentlich bekannte Schwachstelle",
+    "exp": "CVE (Common Vulnerabilities and Exposures) vergibt Nummern wie CVE-2021-44228 (Log4Shell)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht der CVSS-Wert einer Schwachstelle?",
+    "options": [
+      "Für die Schwere der Schwachstelle auf einer Skala von 0 bis 10",
+      "Für die Anzahl betroffener Rechner",
+      "Für die Kosten eines Patches",
+      "Für das Alter der Lücke in Tagen"
+    ],
+    "a": "Für die Schwere der Schwachstelle auf einer Skala von 0 bis 10",
+    "exp": "Das Common Vulnerability Scoring System bewertet u.a. Angriffsweg, Komplexität und Auswirkungen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Hardening (Härtung) eines Systems?",
+    "options": [
+      "Das Reduzieren der Angriffsfläche, z.B. durch Deaktivieren unnötiger Dienste",
+      "Das Einbauen einer robusteren Festplatte",
+      "Das Erhöhen der CPU-Leistung",
+      "Das Verschlüsseln des Gehäuses"
+    ],
+    "a": "Das Reduzieren der Angriffsfläche, z.B. durch Deaktivieren unnötiger Dienste",
+    "exp": "Dazu gehören u.a. unnötige Dienste und Konten entfernen, sichere Konfiguration, Updates und restriktive Rechte."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Whitelist (Allowlist) bei der Anwendungskontrolle?",
+    "options": [
+      "Nur ausdrücklich erlaubte Programme dürfen ausgeführt werden",
+      "Alle Programme außer den gesperrten dürfen laufen",
+      "Nur Programme mit weißem Symbol dürfen laufen",
+      "Programme werden zufällig blockiert"
+    ],
+    "a": "Nur ausdrücklich erlaubte Programme dürfen ausgeführt werden",
+    "exp": "Allowlisting ist restriktiver und sicherer als Blocklisting, aber aufwendiger zu pflegen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum sollten Administratoren für alltägliche Arbeiten ein normales Benutzerkonto nutzen?",
+    "options": [
+      "Damit Schadsoftware nicht automatisch Administratorrechte erhält",
+      "Weil Administratorkonten kein Internet haben",
+      "Weil Administratorkonten langsamer sind",
+      "Weil es gesetzlich vorgeschrieben ist"
+    ],
+    "a": "Damit Schadsoftware nicht automatisch Administratorrechte erhält",
+    "exp": "Getrennte Konten setzen Least Privilege um: Admin-Rechte nur, wenn sie wirklich gebraucht werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was schützt eine Festplattenverschlüsselung wie BitLocker vor allem?",
+    "options": [
+      "Die Daten bei Verlust oder Diebstahl des ausgeschalteten Geräts",
+      "Vor Phishing-Mails",
+      "Vor Angriffen über das Netzwerk im laufenden Betrieb",
+      "Vor Hardwaredefekten"
+    ],
+    "a": "Die Daten bei Verlust oder Diebstahl des ausgeschalteten Geräts",
+    "exp": "Ohne Schlüssel sind die Daten auf dem Datenträger unlesbar. Im entsperrten Betrieb schützt sie nicht vor Schadsoftware."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür wird ein TPM-Chip im Rechner genutzt?",
+    "options": [
+      "Zum sicheren Speichern von Schlüsseln und zur Prüfung der Systemintegrität beim Start",
+      "Zur Beschleunigung der Grafik",
+      "Als zusätzlicher Arbeitsspeicher",
+      "Für die WLAN-Verbindung"
+    ],
+    "a": "Zum sicheren Speichern von Schlüsseln und zur Prüfung der Systemintegrität beim Start",
+    "exp": "Das Trusted Platform Module hält z.B. BitLocker-Schlüssel und misst den Bootvorgang (Measured Boot)."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was verhindert Secure Boot bei UEFI-Systemen?",
+    "options": [
+      "Das Starten nicht signierter Bootloader und Treiber",
+      "Das Booten vom Netzwerk",
+      "Das Ändern der Uhrzeit",
+      "Das Abschalten des Rechners"
+    ],
+    "a": "Das Starten nicht signierter Bootloader und Treiber",
+    "exp": "Secure Boot lässt nur Bootkomponenten mit gültiger Signatur zu und erschwert so Bootkits."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach welcher Frist muss ein Unternehmen spätestens auf ein Auskunftsersuchen nach Art. 15 DSGVO antworten?",
+    "options": [
+      "Innerhalb eines Monats",
+      "Innerhalb von 72 Stunden",
+      "Innerhalb von 14 Tagen",
+      "Innerhalb eines Jahres"
+    ],
+    "a": "Innerhalb eines Monats",
+    "exp": "Die Frist beträgt einen Monat und kann in begründeten Fällen um zwei weitere Monate verlängert werden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ab wie vielen Personen, die ständig mit der Verarbeitung personenbezogener Daten beschäftigt sind, muss ein Unternehmen in Deutschland in der Regel einen Datenschutzbeauftragten benennen?",
+    "options": [
+      "20",
+      "5",
+      "50",
+      "250"
+    ],
+    "a": "20",
+    "exp": "Nach § 38 BDSG ist das in der Regel ab 20 Personen der Fall, bei besonders riskanten Verarbeitungen auch darunter."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Rechtsgrundlage nach Art. 6 DSGVO erlaubt die Verarbeitung von Lieferadressen für einen Onlinekauf?",
+    "options": [
+      "Erfüllung eines Vertrags",
+      "Berechtigtes Interesse des Nachbarn",
+      "Öffentliches Interesse",
+      "Schutz lebenswichtiger Interessen"
+    ],
+    "a": "Erfüllung eines Vertrags",
+    "exp": "Art. 6 Abs. 1 b DSGVO: Die Adresse ist zur Erfüllung des Kaufvertrags erforderlich."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Anforderung gilt für eine wirksame Einwilligung nach DSGVO?",
+    "options": [
+      "Sie muss freiwillig, informiert und eindeutig sein und jederzeit widerrufbar",
+      "Sie muss notariell beglaubigt sein",
+      "Sie gilt automatisch durch Besuch der Webseite",
+      "Sie darf nur mündlich erteilt werden"
+    ],
+    "a": "Sie muss freiwillig, informiert und eindeutig sein und jederzeit widerrufbar",
+    "exp": "Vorangekreuzte Kästchen oder Schweigen sind keine wirksame Einwilligung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine technische Maßnahme im Sinne der TOM?",
+    "options": [
+      "Verschlüsselung der Laptops",
+      "Datenschutzschulung der Mitarbeiter",
+      "Eine unterschriebene Verschwiegenheitserklärung",
+      "Eine Besucherregelung"
+    ],
+    "a": "Verschlüsselung der Laptops",
+    "exp": "Technische Maßnahmen setzen Technik ein (Verschlüsselung, Firewall, Zutrittskontrollsystem). Organisatorische Maßnahmen regeln Abläufe und Verhalten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Zutrittskontrolle im Unterschied zur Zugangskontrolle?",
+    "options": [
+      "Zutritt betrifft Räume, Zugang betrifft die Nutzung von IT-Systemen",
+      "Beides bedeutet dasselbe",
+      "Zutritt betrifft Dateien, Zugang betrifft Gebäude",
+      "Zutritt betrifft nur Besucher"
+    ],
+    "a": "Zutritt betrifft Räume, Zugang betrifft die Nutzung von IT-Systemen",
+    "exp": "Zutrittskontrolle: Wer darf in den Serverraum? Zugangskontrolle: Wer darf sich am System anmelden? Zugriffskontrolle: Wer darf welche Daten nutzen?"
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Schutzbedarfskategorie ist nach BSI zu wählen, wenn ein Schaden existenzbedrohend für das Unternehmen sein kann?",
+    "options": [
+      "sehr hoch",
+      "normal",
+      "hoch",
+      "niedrig"
+    ],
+    "a": "sehr hoch",
+    "exp": "normal = begrenzte Auswirkungen, hoch = beträchtliche Auswirkungen, sehr hoch = existenzbedrohende, katastrophale Auswirkungen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt das Maximumprinzip bei der Schutzbedarfsfeststellung?",
+    "options": [
+      "Ein System erbt den höchsten Schutzbedarf der Anwendungen, die darauf laufen",
+      "Es gilt immer der Schutzbedarf sehr hoch",
+      "Der Schutzbedarf wird addiert",
+      "Es gilt der niedrigste Wert"
+    ],
+    "a": "Ein System erbt den höchsten Schutzbedarf der Anwendungen, die darauf laufen",
+    "exp": "Läuft auf einem Server eine Anwendung mit Schutzbedarf hoch, hat auch der Server mindestens den Schutzbedarf hoch."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt der Kumulationseffekt bei der Schutzbedarfsfeststellung?",
+    "options": [
+      "Viele Anwendungen mit normalem Schutzbedarf auf einem System können zusammen einen höheren Schutzbedarf ergeben",
+      "Der Schutzbedarf sinkt, je mehr Systeme es gibt",
+      "Schäden werden erst nach einem Jahr berücksichtigt",
+      "Nur Kosten werden aufaddiert"
+    ],
+    "a": "Viele Anwendungen mit normalem Schutzbedarf auf einem System können zusammen einen höheren Schutzbedarf ergeben",
+    "exp": "Fällt ein zentraler Virtualisierungshost aus, sind alle VMs gleichzeitig betroffen. Der Gesamtschaden kann deutlich größer sein."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt der Verteilungseffekt bei der Schutzbedarfsfeststellung?",
+    "options": [
+      "Der Schutzbedarf kann sinken, wenn eine Anwendung redundant auf mehrere Systeme verteilt ist",
+      "Der Schutzbedarf wird auf alle Mitarbeiter verteilt",
+      "Die Kosten werden auf Abteilungen verteilt",
+      "Backups werden auf mehrere Standorte verteilt"
+    ],
+    "a": "Der Schutzbedarf kann sinken, wenn eine Anwendung redundant auf mehrere Systeme verteilt ist",
+    "exp": "Fällt nur eines von mehreren redundanten Systemen aus, ist die Verfügbarkeit weniger stark betroffen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Komponente der CPU führt arithmetische und logische Operationen aus?",
+    "options": [
+      "Rechenwerk (ALU)",
+      "Steuerwerk",
+      "Cache",
+      "Chipsatz"
+    ],
+    "a": "Rechenwerk (ALU)",
+    "exp": "Die ALU (Arithmetic Logic Unit) rechnet, das Steuerwerk koordiniert den Ablauf der Befehle."
+  },
+  {
+    "cat": "systeme",
+    "q": "Nach welchem Architekturprinzip teilen sich Programme und Daten einen gemeinsamen Speicher?",
+    "options": [
+      "Von-Neumann-Architektur",
+      "Harvard-Architektur",
+      "Client-Server-Architektur",
+      "RISC-Architektur"
+    ],
+    "a": "Von-Neumann-Architektur",
+    "exp": "Bei Von Neumann liegen Befehle und Daten im selben Speicher und nutzen denselben Bus. Die Harvard-Architektur trennt beides."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Speicher ist flüchtig?",
+    "options": [
+      "DRAM (Arbeitsspeicher)",
+      "SSD",
+      "Festplatte (HDD)",
+      "Flash-EEPROM des BIOS/UEFI"
+    ],
+    "a": "DRAM (Arbeitsspeicher)",
+    "exp": "Arbeitsspeicher verliert ohne Strom seinen Inhalt, die anderen Speicher behalten ihre Daten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie heißt die Reihenfolge der Speicher von schnell zu langsam?",
+    "options": [
+      "Register, Cache, RAM, SSD, HDD",
+      "RAM, Register, Cache, HDD, SSD",
+      "Cache, RAM, Register, SSD, HDD",
+      "SSD, HDD, RAM, Cache, Register"
+    ],
+    "a": "Register, Cache, RAM, SSD, HDD",
+    "exp": "Die Speicherhierarchie: je näher an der CPU, desto schneller, kleiner und teurer pro Byte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine GPU?",
+    "options": [
+      "Ein Grafikprozessor, der viele Berechnungen parallel ausführt",
+      "Ein Netzteil mit hoher Leistung",
+      "Ein Speicher für Grafiken",
+      "Ein Monitoranschluss"
+    ],
+    "a": "Ein Grafikprozessor, der viele Berechnungen parallel ausführt",
+    "exp": "GPUs berechnen Grafik und werden wegen ihrer Parallelität auch für KI und wissenschaftliches Rechnen genutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Monitoranschluss überträgt nur analoge Signale?",
+    "options": [
+      "VGA",
+      "HDMI",
+      "DisplayPort",
+      "USB-C mit DisplayPort-Modus"
+    ],
+    "a": "VGA",
+    "exp": "VGA ist analog und veraltet. HDMI, DisplayPort und USB-C übertragen digital."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche USB-Version bietet nominell 5 Gbit/s?",
+    "options": [
+      "USB 3.2 Gen 1 (früher USB 3.0)",
+      "USB 2.0",
+      "USB 1.1",
+      "USB 3.2 Gen 2x2"
+    ],
+    "a": "USB 3.2 Gen 1 (früher USB 3.0)",
+    "exp": "USB 2.0: 480 Mbit/s, USB 3.2 Gen 1: 5 Gbit/s, Gen 2: 10 Gbit/s, Gen 2x2: 20 Gbit/s."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Bit hat ein Byte?",
+    "options": [
+      "8",
+      "4",
+      "16",
+      "10"
+    ],
+    "a": "8",
+    "exp": "1 Byte = 8 Bit. Ein Nibble (Halbbyte) sind 4 Bit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele verschiedene Werte lassen sich mit 8 Bit darstellen?",
+    "options": [
+      "256",
+      "255",
+      "128",
+      "512"
+    ],
+    "a": "256",
+    "exp": "2^8 = 256 Werte, bei vorzeichenlosen Zahlen von 0 bis 255."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele verschiedene Werte lassen sich mit 16 Bit darstellen?",
+    "options": [
+      "65.536",
+      "32.768",
+      "65.535",
+      "16.384"
+    ],
+    "a": "65.536",
+    "exp": "2^16 = 65.536 Werte, z.B. die Portnummern 0 bis 65.535."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Bit werden benötigt, um eine Hexadezimalziffer darzustellen?",
+    "options": [
+      "4",
+      "2",
+      "8",
+      "16"
+    ],
+    "a": "4",
+    "exp": "Eine Hexziffer hat 16 mögliche Werte (0 bis F), dafür reichen 4 Bit (2^4 = 16)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Byte sind ein Kilobyte (kB) nach SI-Präfix?",
+    "options": [
+      "1.000 Byte",
+      "1.024 Byte",
+      "100 Byte",
+      "8.000 Byte"
+    ],
+    "a": "1.000 Byte",
+    "exp": "SI-Präfixe sind dezimal (kB = 1.000 Byte). Binärpräfixe nach IEC: 1 KiB = 1.024 Byte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum zeigt Windows bei einer 1-TB-Festplatte nur ca. 931 \"GB\" an?",
+    "options": [
+      "Der Hersteller rechnet dezimal, Windows binär (GiB)",
+      "Ein Teil ist für das Betriebssystem reserviert",
+      "Die Platte ist defekt",
+      "Die Partitionstabelle belegt 69 GB"
+    ],
+    "a": "Der Hersteller rechnet dezimal, Windows binär (GiB)",
+    "exp": "1 TB = 10^12 Byte = 10^12 / 2^30 GiB ≈ 931,3 GiB. Windows zeigt GiB an, beschriftet sie aber als GB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Codierung stellt nahezu alle Schriftzeichen der Welt dar und ist heute Standard im Web?",
+    "options": [
+      "UTF-8 (Unicode)",
+      "ASCII",
+      "ISO-8859-1",
+      "EBCDIC"
+    ],
+    "a": "UTF-8 (Unicode)",
+    "exp": "UTF-8 ist eine Unicode-Kodierung mit variabler Länge (1 bis 4 Byte), die ASCII-kompatibel ist."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viele Zeichen umfasst der ursprüngliche 7-Bit-ASCII-Zeichensatz?",
+    "options": [
+      "128",
+      "256",
+      "64",
+      "1.024"
+    ],
+    "a": "128",
+    "exp": "7 Bit ergeben 2^7 = 128 Zeichen. Umlaute sind darin nicht enthalten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist das Zweierkomplement?",
+    "options": [
+      "Eine Darstellung negativer ganzer Zahlen im Binärsystem",
+      "Eine Methode zur Fehlerkorrektur",
+      "Die Verdopplung einer Binärzahl",
+      "Eine Hexadezimal-Schreibweise"
+    ],
+    "a": "Eine Darstellung negativer ganzer Zahlen im Binärsystem",
+    "exp": "Man invertiert alle Bits und addiert 1. So lassen sich Subtraktionen als Additionen ausführen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Linux-Befehl zeigt den belegten und freien Speicherplatz der Dateisysteme an?",
+    "options": [
+      "df -h",
+      "du -s",
+      "free -m",
+      "lsblk -f"
+    ],
+    "a": "df -h",
+    "exp": "df (disk free) zeigt je Dateisystem Größe, Belegung und Einhängepunkt. -h gibt lesbare Einheiten aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Linux-Befehl zeigt die Belegung des Arbeitsspeichers an?",
+    "options": [
+      "free -h",
+      "df -h",
+      "mem -a",
+      "top -disk"
+    ],
+    "a": "free -h",
+    "exp": "free zeigt belegten, freien und als Cache genutzten Arbeitsspeicher sowie den Swap."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Linux-Befehl sucht man nach einem Text in Dateien?",
+    "options": [
+      "grep",
+      "find",
+      "cat",
+      "touch"
+    ],
+    "a": "grep",
+    "exp": "grep durchsucht Dateien nach Mustern. find sucht dagegen nach Dateien anhand von Namen und Eigenschaften."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt der Linux-Befehl chmod +x skript.sh?",
+    "options": [
+      "Er macht die Datei ausführbar",
+      "Er löscht die Datei",
+      "Er ändert den Besitzer",
+      "Er verschlüsselt die Datei"
+    ],
+    "a": "Er macht die Datei ausführbar",
+    "exp": "+x fügt das Ausführungsrecht hinzu, danach kann das Skript mit ./skript.sh gestartet werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Rechte hat eine Datei mit chmod 644?",
+    "options": [
+      "Besitzer: rw-, Gruppe: r--, Andere: r--",
+      "Besitzer: rwx, Gruppe: r-x, Andere: r-x",
+      "Besitzer: rw-, Gruppe: rw-, Andere: ---",
+      "Besitzer: r--, Gruppe: r--, Andere: r--"
+    ],
+    "a": "Besitzer: rw-, Gruppe: r--, Andere: r--",
+    "exp": "6 = 4 + 2 (rw-), 4 = r--. Typisch für normale Dateien, die alle lesen, aber nur der Besitzer ändern darf."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Datei enthält unter Linux die Liste der Benutzerkonten?",
+    "options": [
+      "/etc/passwd",
+      "/etc/shadow",
+      "/etc/group",
+      "/etc/hosts"
+    ],
+    "a": "/etc/passwd",
+    "exp": "/etc/passwd enthält Benutzername, UID, Heimatverzeichnis und Shell. Die Passwort-Hashes stehen in /etc/shadow."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche UID hat der Benutzer root unter Linux?",
+    "options": [
+      "0",
+      "1",
+      "1000",
+      "65534"
+    ],
+    "a": "0",
+    "exp": "root hat die UID 0 und damit volle Rechte. Normale Benutzer beginnen meist bei 1000."
+  },
+  {
+    "cat": "systeme",
+    "q": "Womit werden unter Linux zeitgesteuerte Aufgaben klassisch eingerichtet?",
+    "options": [
+      "cron (crontab)",
+      "at-Dienst nur beim Booten",
+      "systemctl mask",
+      "fstab"
+    ],
+    "a": "cron (crontab)",
+    "exp": "In der crontab legt man fest, wann ein Befehl regelmäßig laufen soll, z.B. täglich um 2 Uhr ein Backup."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Datei werden unter Linux Dateisysteme für das automatische Einhängen beim Start eingetragen?",
+    "options": [
+      "/etc/fstab",
+      "/etc/mtab.conf",
+      "/etc/crontab",
+      "/boot/grub.cfg"
+    ],
+    "a": "/etc/fstab",
+    "exp": "fstab enthält Gerät bzw. UUID, Einhängepunkt, Dateisystemtyp und Optionen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Paketmanager installiert man Software unter Debian und Ubuntu?",
+    "options": [
+      "apt",
+      "dnf",
+      "pacman",
+      "brew"
+    ],
+    "a": "apt",
+    "exp": "apt install <paket> installiert Pakete. dnf wird bei Fedora/RHEL, pacman bei Arch genutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Windows-Werkzeug zeigt System-, Sicherheits- und Anwendungsprotokolle an?",
+    "options": [
+      "Ereignisanzeige (eventvwr)",
+      "Datenträgerverwaltung",
+      "Taskplaner",
+      "Registrierungs-Editor"
+    ],
+    "a": "Ereignisanzeige (eventvwr)",
+    "exp": "In der Ereignisanzeige findet man Fehler, Warnungen und Anmeldeereignisse, z.B. Ereignis-ID 4625 für fehlgeschlagene Anmeldungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl erzwingt man unter Windows die sofortige Aktualisierung der Gruppenrichtlinien?",
+    "options": [
+      "gpupdate /force",
+      "gpresult /r",
+      "ipconfig /renew",
+      "sfc /scannow"
+    ],
+    "a": "gpupdate /force",
+    "exp": "gpupdate /force wendet alle Richtlinien neu an. gpresult /r zeigt an, welche Richtlinien wirken."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Windows-Befehl prüft Systemdateien auf Beschädigungen und repariert sie?",
+    "options": [
+      "sfc /scannow",
+      "chkdsk /f",
+      "gpupdate /force",
+      "diskpart"
+    ],
+    "a": "sfc /scannow",
+    "exp": "Der System File Checker ersetzt beschädigte geschützte Systemdateien. chkdsk prüft dagegen das Dateisystem."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welcher Reihenfolge werden Gruppenrichtlinien in AD angewendet (LSDOU)?",
+    "options": [
+      "Lokal, Standort, Domäne, Organisationseinheit",
+      "Domäne, Lokal, OU, Standort",
+      "OU, Domäne, Standort, Lokal",
+      "Standort, Lokal, OU, Domäne"
+    ],
+    "a": "Lokal, Standort, Domäne, Organisationseinheit",
+    "exp": "Später angewendete Richtlinien überschreiben frühere. Die GPO an der OU hat daher standardmäßig das letzte Wort."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Berechtigung gilt, wenn Freigabe- und NTFS-Berechtigungen gemeinsam wirken?",
+    "options": [
+      "Die restriktivere von beiden",
+      "Die großzügigere von beiden",
+      "Immer die Freigabeberechtigung",
+      "Immer die NTFS-Berechtigung"
+    ],
+    "a": "Die restriktivere von beiden",
+    "exp": "Beim Zugriff über das Netzwerk werden beide ausgewertet, es gilt die jeweils strengere Einschränkung."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt ein explizites Verweigern (Deny) bei NTFS-Berechtigungen?",
+    "options": [
+      "Es hat Vorrang vor erteilten Berechtigungen",
+      "Es wird ignoriert, wenn eine Gruppe Vollzugriff hat",
+      "Es gilt nur für Administratoren",
+      "Es gilt nur beim lokalen Zugriff"
+    ],
+    "a": "Es hat Vorrang vor erteilten Berechtigungen",
+    "exp": "Explizite Verweigerungen gehen erlaubenden Einträgen vor. Man setzt sie daher sparsam ein."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Prinzip empfiehlt Microsoft für die Rechtevergabe in AD (AGDLP)?",
+    "options": [
+      "Konten in globale Gruppen, diese in domänenlokale Gruppen, diese erhalten die Berechtigungen",
+      "Berechtigungen direkt an jeden Benutzer vergeben",
+      "Alle Benutzer in die Gruppe Domänen-Admins",
+      "Nur lokale Konten verwenden"
+    ],
+    "a": "Konten in globale Gruppen, diese in domänenlokale Gruppen, diese erhalten die Berechtigungen",
+    "exp": "Account - Global Group - Domain Local Group - Permission. Das macht die Rechtevergabe übersichtlich und skalierbar."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Protokoll nutzt Active Directory standardmäßig zur Authentifizierung?",
+    "options": [
+      "Kerberos",
+      "NTLM ausschließlich",
+      "RADIUS",
+      "OAuth"
+    ],
+    "a": "Kerberos",
+    "exp": "Kerberos arbeitet mit Tickets vom Key Distribution Center auf dem Domänencontroller. NTLM ist nur noch Fallback."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum ist bei Kerberos eine genaue Zeitsynchronisation wichtig?",
+    "options": [
+      "Tickets enthalten Zeitstempel und werden bei zu großer Abweichung abgelehnt",
+      "Weil sonst die Passwörter ablaufen",
+      "Weil DNS sonst nicht funktioniert",
+      "Weil die Lizenzen zeitgebunden sind"
+    ],
+    "a": "Tickets enthalten Zeitstempel und werden bei zu großer Abweichung abgelehnt",
+    "exp": "Standardmäßig sind nur 5 Minuten Abweichung erlaubt. Die Domänencontroller dienen als Zeitquelle."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher DNS-Eintragstyp hilft Clients, Domänencontroller und Dienste in AD zu finden?",
+    "options": [
+      "SRV",
+      "MX",
+      "PTR",
+      "CNAME"
+    ],
+    "a": "SRV",
+    "exp": "SRV-Einträge (z.B. _ldap._tcp.dc._msdcs.firma.local) zeigen auf die Server, die einen Dienst anbieten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist WSUS?",
+    "options": [
+      "Ein Windows-Serverdienst zur zentralen Verteilung von Updates",
+      "Ein Virenscanner von Microsoft",
+      "Ein Backupprogramm",
+      "Ein Webserver"
+    ],
+    "a": "Ein Windows-Serverdienst zur zentralen Verteilung von Updates",
+    "exp": "Windows Server Update Services lädt Updates einmal herunter und verteilt sie nach Freigabe an die Clients."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Failover bei einem Cluster?",
+    "options": [
+      "Ein anderer Knoten übernimmt automatisch die Dienste eines ausgefallenen Knotens",
+      "Der Cluster wird manuell neu installiert",
+      "Alle Knoten werden gleichzeitig neu gestartet",
+      "Die Last wird dauerhaft verdoppelt"
+    ],
+    "a": "Ein anderer Knoten übernimmt automatisch die Dienste eines ausgefallenen Knotens",
+    "exp": "Beim Failover wechseln die Dienste auf einen funktionierenden Knoten, meist innerhalb weniger Sekunden bis Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Quorum in einem Failover-Cluster?",
+    "options": [
+      "Die Mehrheitsregel, die festlegt, ob der Cluster weiterarbeiten darf",
+      "Die Anzahl der Festplatten im Cluster",
+      "Die maximale Zahl an VMs",
+      "Das Passwort des Clusters"
+    ],
+    "a": "Die Mehrheitsregel, die festlegt, ob der Cluster weiterarbeiten darf",
+    "exp": "Das Quorum verhindert eine Split-Brain-Situation, in der zwei Teile des Clusters gleichzeitig die Dienste übernehmen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie nennt man bei einem Cluster den Zustand, in dem mehrere Knoten gleichzeitig glauben, aktiv zu sein?",
+    "options": [
+      "Split Brain",
+      "Hot Standby",
+      "Load Balancing",
+      "Heartbeat"
+    ],
+    "a": "Split Brain",
+    "exp": "Split Brain kann zu inkonsistenten Daten führen. Quorum und Zeugen (Witness) verhindern das."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient ein Heartbeat in einem Cluster?",
+    "options": [
+      "Die Knoten prüfen gegenseitig regelmäßig, ob sie noch erreichbar sind",
+      "Er misst die Temperatur des Servers",
+      "Er synchronisiert die Uhrzeit",
+      "Er verschlüsselt den Clusterverkehr"
+    ],
+    "a": "Die Knoten prüfen gegenseitig regelmäßig, ob sie noch erreichbar sind",
+    "exp": "Bleibt der Heartbeat eines Knotens aus, wird ein Failover ausgelöst."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Active/Passive-Cluster?",
+    "options": [
+      "Ein Knoten arbeitet, der andere steht bereit und übernimmt nur bei Ausfall",
+      "Beide Knoten verteilen ständig die Last",
+      "Ein Knoten ist dauerhaft ausgeschaltet und wird manuell gestartet",
+      "Ein Cluster ohne Netzwerk"
+    ],
+    "a": "Ein Knoten arbeitet, der andere steht bereit und übernimmt nur bei Ausfall",
+    "exp": "Bei Active/Active arbeiten dagegen alle Knoten gleichzeitig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Vorteil ergibt sich aus einem zentralen Storage (SAN/NAS) für einen Virtualisierungscluster?",
+    "options": [
+      "VMs können bei Hostausfall auf einem anderen Host gestartet werden",
+      "Die VMs brauchen keinen Arbeitsspeicher mehr",
+      "Es wird kein Netzwerk benötigt",
+      "Die Lizenzkosten entfallen"
+    ],
+    "a": "VMs können bei Hostausfall auf einem anderen Host gestartet werden",
+    "exp": "Liegen die VM-Dateien auf gemeinsamem Speicher, kann jeder Host sie ausführen. Das ist die Grundlage für HA und Live-Migration."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet ein NAS von einem SAN beim Zugriff?",
+    "options": [
+      "NAS arbeitet dateibasiert (SMB/NFS), SAN blockbasiert (iSCSI/Fibre Channel)",
+      "NAS ist immer schneller als SAN",
+      "SAN ist ein Cloud-Dienst",
+      "NAS benötigt kein Netzwerk"
+    ],
+    "a": "NAS arbeitet dateibasiert (SMB/NFS), SAN blockbasiert (iSCSI/Fibre Channel)",
+    "exp": "Ein SAN stellt Server Blockgeräte wie lokale Platten bereit, ein NAS liefert Freigaben mit Dateien."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Protokoll nutzt ein NAS typischerweise für Linux-Clients?",
+    "options": [
+      "NFS",
+      "SMB",
+      "iSCSI",
+      "FTP"
+    ],
+    "a": "NFS",
+    "exp": "NFS (Network File System) ist der Standard für Dateifreigaben unter Unix/Linux, SMB unter Windows."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bezeichnet eine LUN im SAN?",
+    "options": [
+      "Eine logische Speichereinheit, die einem Server als Laufwerk bereitgestellt wird",
+      "Eine Netzwerkkarte im Server",
+      "Ein Kabeltyp für Fibre Channel",
+      "Ein Benutzerkonto im Speichersystem"
+    ],
+    "a": "Eine logische Speichereinheit, die einem Server als Laufwerk bereitgestellt wird",
+    "exp": "Die Logical Unit Number adressiert ein Volume im Speichersystem, das der Server wie eine lokale Platte nutzt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Tiering bei Speichersystemen?",
+    "options": [
+      "Häufig genutzte Daten liegen automatisch auf schnellem, selten genutzte auf günstigem Speicher",
+      "Das Aufteilen einer Datei auf mehrere Server",
+      "Das Spiegeln aller Daten",
+      "Das Verschlüsseln nach Stufen"
+    ],
+    "a": "Häufig genutzte Daten liegen automatisch auf schnellem, selten genutzte auf günstigem Speicher",
+    "exp": "Beim Tiering werden Daten zwischen SSD, schnellen und langsamen HDDs verschoben, je nach Zugriffshäufigkeit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Backupart benötigt bei der Wiederherstellung nur die letzte Vollsicherung und die letzte Sicherung ihrer Art?",
+    "options": [
+      "Differenzielle Sicherung",
+      "Inkrementelle Sicherung",
+      "Kopiesicherung",
+      "Spiegelung"
+    ],
+    "a": "Differenzielle Sicherung",
+    "exp": "Die differenzielle Sicherung enthält alle Änderungen seit der letzten Vollsicherung. Bei inkrementellen Sicherungen braucht man die ganze Kette."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Backupart benötigt am wenigsten Speicherplatz pro Sicherungslauf?",
+    "options": [
+      "Inkrementelle Sicherung",
+      "Vollsicherung",
+      "Differenzielle Sicherung",
+      "Image-Sicherung"
+    ],
+    "a": "Inkrementelle Sicherung",
+    "exp": "Inkrementell werden nur die Änderungen seit der letzten Sicherung (egal welcher Art) gespeichert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein unveränderbares Backup (Immutable Backup)?",
+    "options": [
+      "Eine Sicherung, die für eine festgelegte Zeit nicht gelöscht oder verändert werden kann",
+      "Ein Backup ohne Verschlüsselung",
+      "Ein Backup auf einem USB-Stick",
+      "Ein Backup, das nie geprüft wird"
+    ],
+    "a": "Eine Sicherung, die für eine festgelegte Zeit nicht gelöscht oder verändert werden kann",
+    "exp": "Immutable Storage (z.B. WORM, Object Lock) schützt Sicherungen vor Ransomware und versehentlichem Löschen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Bare-Metal-Restore?",
+    "options": [
+      "Die Wiederherstellung eines kompletten Systems auf leere Hardware",
+      "Das Zurückspielen einer einzelnen Datei",
+      "Das Reinigen eines Servers",
+      "Die Installation ohne Treiber"
+    ],
+    "a": "Die Wiederherstellung eines kompletten Systems auf leere Hardware",
+    "exp": "Dabei werden Betriebssystem, Einstellungen und Daten aus einem Image auf eine neue oder leere Maschine gebracht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Continuous Data Protection (CDP)?",
+    "options": [
+      "Jede Änderung wird nahezu sofort gesichert, sodass ein sehr kleiner RPO erreicht wird",
+      "Ein Backup einmal pro Woche",
+      "Ein Virenscanner mit Echtzeitschutz",
+      "Ein Schutz vor Stromausfällen"
+    ],
+    "a": "Jede Änderung wird nahezu sofort gesichert, sodass ein sehr kleiner RPO erreicht wird",
+    "exp": "CDP protokolliert Änderungen fortlaufend und erlaubt die Wiederherstellung auf beliebige Zeitpunkte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Maßnahme allein reicht NICHT aus, um einen Stromausfall über mehrere Stunden zu überbrücken?",
+    "options": [
+      "Eine USV mit kurzer Batterielaufzeit",
+      "Ein Notstromaggregat mit Tank",
+      "Eine zweite unabhängige Einspeisung plus Aggregat",
+      "Ein georedundantes Rechenzentrum"
+    ],
+    "a": "Eine USV mit kurzer Batterielaufzeit",
+    "exp": "Eine USV überbrückt meist nur Minuten, genug für ein geordnetes Herunterfahren oder den Start eines Aggregats."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 1 aus einer 2-TB- und einer 4-TB-Festplatte?",
+    "options": [
+      "2 TB",
+      "4 TB",
+      "6 TB",
+      "3 TB"
+    ],
+    "a": "2 TB",
+    "exp": "Beim Spiegeln wird auf beide Platten dasselbe geschrieben, nutzbar ist daher nur die Größe der kleinsten Platte."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum hat RAID 5 eine schlechtere Schreibleistung als RAID 10?",
+    "options": [
+      "Bei jedem Schreibvorgang muss die Parität neu berechnet und geschrieben werden",
+      "Weil RAID 5 keine Striping-Technik nutzt",
+      "Weil RAID 5 nur zwei Platten hat",
+      "Weil RAID 5 alle Daten doppelt schreibt"
+    ],
+    "a": "Bei jedem Schreibvorgang muss die Parität neu berechnet und geschrieben werden",
+    "exp": "Kleine Schreibzugriffe erfordern bei RAID 5 Lesen, Paritätsberechnung und zweimal Schreiben (Write Penalty 4)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Werkzeug dient der Orchestrierung von Containern über mehrere Hosts?",
+    "options": [
+      "Kubernetes",
+      "VirtualBox",
+      "Wireshark",
+      "PuTTY"
+    ],
+    "a": "Kubernetes",
+    "exp": "Kubernetes verteilt Container auf mehrere Hosts, startet sie bei Ausfall neu und skaliert sie."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was beschreibt eine Dockerfile?",
+    "options": [
+      "Die Bauanleitung für ein Container-Image",
+      "Die Liste laufender Container",
+      "Die Lizenz von Docker",
+      "Die Netzwerkkonfiguration des Hosts"
+    ],
+    "a": "Die Bauanleitung für ein Container-Image",
+    "exp": "In der Dockerfile stehen Basis-Image, zu kopierende Dateien, Befehle und der Startbefehl."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Infrastructure as Code (IaC)?",
+    "options": [
+      "Infrastruktur wird in Textdateien beschrieben und automatisiert bereitgestellt",
+      "Server werden nur per Hand konfiguriert",
+      "Der Quellcode wird auf Servern gespeichert",
+      "Die Verkabelung wird programmiert"
+    ],
+    "a": "Infrastruktur wird in Textdateien beschrieben und automatisiert bereitgestellt",
+    "exp": "Werkzeuge wie Terraform oder Ansible machen Infrastruktur versionierbar und reproduzierbar."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Aufgabe hat ein Ticketsystem im IT-Support?",
+    "options": [
+      "Anfragen und Störungen erfassen, zuordnen, verfolgen und dokumentieren",
+      "Kinokarten für Mitarbeiter verwalten",
+      "Netzwerkverkehr filtern",
+      "Backups erstellen"
+    ],
+    "a": "Anfragen und Störungen erfassen, zuordnen, verfolgen und dokumentieren",
+    "exp": "Tickets machen den Bearbeitungsstand transparent und liefern Kennzahlen wie Lösungszeiten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Stufe des IT-Supports löst einfache Anfragen direkt am ersten Kontakt?",
+    "options": [
+      "1st-Level-Support",
+      "2nd-Level-Support",
+      "3rd-Level-Support",
+      "Hersteller-Support"
+    ],
+    "a": "1st-Level-Support",
+    "exp": "Der 1st Level nimmt Anfragen an und löst Standardfälle. Komplexere Fälle gehen an den 2nd Level, Spezialfälle an den 3rd Level oder Hersteller."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Wissensdatenbank (Knowledge Base) im Support?",
+    "options": [
+      "Eine Sammlung dokumentierter Lösungen für wiederkehrende Probleme",
+      "Eine Liste aller Mitarbeiter",
+      "Ein Backup der Datenbankserver",
+      "Ein Schulungsvideo für Kunden"
+    ],
+    "a": "Eine Sammlung dokumentierter Lösungen für wiederkehrende Probleme",
+    "exp": "Sie beschleunigt die Bearbeitung, weil bekannte Lösungen schnell gefunden werden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Asset-Management bzw. eine CMDB?",
+    "options": [
+      "Eine Datenbank der IT-Komponenten und ihrer Beziehungen",
+      "Ein Programm für die Buchhaltung",
+      "Eine Firewall-Regelbasis",
+      "Ein Kalender für Wartungen"
+    ],
+    "a": "Eine Datenbank der IT-Komponenten und ihrer Beziehungen",
+    "exp": "Die Configuration Management Database erfasst Hardware, Software, Lizenzen und Abhängigkeiten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welcher Vertrag liegt vor, wenn ein IT-Dienstleister monatlich 20 Supportstunden erbringt, ohne ein bestimmtes Ergebnis zu schulden?",
+    "options": [
+      "Dienstvertrag",
+      "Werkvertrag",
+      "Kaufvertrag",
+      "Mietvertrag"
+    ],
+    "a": "Dienstvertrag",
+    "exp": "Geschuldet ist die Tätigkeit, nicht ein bestimmter Erfolg. Das kennzeichnet den Dienstvertrag nach § 611 BGB."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie kommt ein Kaufvertrag zustande, wenn der Kunde auf ein unverbindliches Angebot eine Bestellung sendet?",
+    "options": [
+      "Erst mit der Auftragsbestätigung des Verkäufers",
+      "Schon mit dem Angebot",
+      "Mit der Bestellung des Kunden",
+      "Erst mit der Bezahlung"
+    ],
+    "a": "Erst mit der Auftragsbestätigung des Verkäufers",
+    "exp": "Das freibleibende Angebot ist nur eine Aufforderung zur Abgabe eines Angebots. Die Bestellung ist dann der Antrag, die Auftragsbestätigung die Annahme."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ab welchem Alter ist man in Deutschland voll geschäftsfähig?",
+    "options": [
+      "18 Jahre",
+      "7 Jahre",
+      "14 Jahre",
+      "16 Jahre"
+    ],
+    "a": "18 Jahre",
+    "exp": "Unter 7 Jahren ist man geschäftsunfähig, von 7 bis 17 beschränkt geschäftsfähig, ab 18 voll geschäftsfähig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gilt für Verträge beschränkt Geschäftsfähiger ohne Zustimmung der Eltern?",
+    "options": [
+      "Sie sind schwebend unwirksam, außer sie werden mit dem Taschengeld bewirkt",
+      "Sie sind immer wirksam",
+      "Sie sind immer nichtig",
+      "Sie gelten nur für ein Jahr"
+    ],
+    "a": "Sie sind schwebend unwirksam, außer sie werden mit dem Taschengeld bewirkt",
+    "exp": "Bis zur Genehmigung der Eltern ist der Vertrag schwebend unwirksam. Der Taschengeldparagraf (§ 110 BGB) ist eine Ausnahme."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange kann ein Verbraucher einen Fernabsatzvertrag, z.B. einen Onlinekauf, in der Regel widerrufen?",
+    "options": [
+      "14 Tage",
+      "7 Tage",
+      "30 Tage",
+      "2 Jahre"
+    ],
+    "a": "14 Tage",
+    "exp": "Das Widerrufsrecht beträgt 14 Tage ab Erhalt der Ware und gilt nur für Verbraucher, nicht zwischen Unternehmen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gilt bei der Beweislastumkehr beim Verbrauchsgüterkauf?",
+    "options": [
+      "Tritt ein Mangel innerhalb eines Jahres auf, wird vermutet, dass er schon bei Übergabe bestand",
+      "Der Käufer muss immer beweisen, dass der Mangel schon da war",
+      "Der Verkäufer haftet nie",
+      "Die Vermutung gilt zehn Jahre"
+    ],
+    "a": "Tritt ein Mangel innerhalb eines Jahres auf, wird vermutet, dass er schon bei Übergabe bestand",
+    "exp": "Seit 2022 beträgt diese Frist nach § 477 BGB ein Jahr (vorher sechs Monate)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Recht hat der Käufer, wenn die Nacherfüllung fehlschlägt?",
+    "options": [
+      "Rücktritt oder Minderung, ggf. zusätzlich Schadensersatz",
+      "Nur ein neuer Nacherfüllungsversuch ohne Ende",
+      "Gar keine weiteren Rechte",
+      "Nur eine Entschuldigung des Verkäufers"
+    ],
+    "a": "Rücktritt oder Minderung, ggf. zusätzlich Schadensersatz",
+    "exp": "Nachrangige Rechte greifen erst, wenn die Nacherfüllung scheitert, verweigert wird oder unzumutbar ist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange ist die regelmäßige Verjährungsfrist nach BGB?",
+    "options": [
+      "3 Jahre",
+      "1 Jahr",
+      "2 Jahre",
+      "10 Jahre"
+    ],
+    "a": "3 Jahre",
+    "exp": "Die regelmäßige Verjährung beträgt 3 Jahre und beginnt am Ende des Jahres, in dem der Anspruch entstanden ist (§§ 195, 199 BGB)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Anspruch aus einer Rechnung entsteht am 15.03.2025. Wann verjährt er nach der regelmäßigen Verjährung?",
+    "options": [
+      "Mit Ablauf des 31.12.2028",
+      "Am 15.03.2028",
+      "Mit Ablauf des 31.12.2027",
+      "Am 15.03.2026"
+    ],
+    "a": "Mit Ablauf des 31.12.2028",
+    "exp": "Die Frist beginnt mit Schluss des Jahres 2025 und läuft drei Jahre, also bis 31.12.2028."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Maßnahme ist im gerichtlichen Mahnverfahren der erste Schritt?",
+    "options": [
+      "Antrag auf Erlass eines Mahnbescheids",
+      "Zwangsvollstreckung",
+      "Vollstreckungsbescheid",
+      "Klage vor dem Landgericht"
+    ],
+    "a": "Antrag auf Erlass eines Mahnbescheids",
+    "exp": "Nach dem Mahnbescheid kann, wenn kein Widerspruch kommt, ein Vollstreckungsbescheid beantragt werden. Er ist Grundlage für die Zwangsvollstreckung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Kalkulationsgröße entsteht, wenn man vom Listeneinkaufspreis den Liefererrabatt abzieht?",
+    "options": [
+      "Zieleinkaufspreis",
+      "Bareinkaufspreis",
+      "Bezugspreis",
+      "Selbstkosten"
+    ],
+    "a": "Zieleinkaufspreis",
+    "exp": "Listeneinkaufspreis - Rabatt = Zieleinkaufspreis, - Skonto = Bareinkaufspreis, + Bezugskosten = Bezugspreis."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Kalkulationsgröße entsteht, wenn man zum Bareinkaufspreis die Bezugskosten addiert?",
+    "options": [
+      "Bezugspreis (Einstandspreis)",
+      "Zieleinkaufspreis",
+      "Listenverkaufspreis",
+      "Selbstkostenpreis"
+    ],
+    "a": "Bezugspreis (Einstandspreis)",
+    "exp": "Der Bezugspreis ist die Grundlage für die weitere Verkaufskalkulation."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was wird auf die Selbstkosten aufgeschlagen, um zum Barverkaufspreis zu kommen?",
+    "options": [
+      "Der Gewinnzuschlag",
+      "Die Umsatzsteuer",
+      "Der Kundenrabatt",
+      "Die Bezugskosten"
+    ],
+    "a": "Der Gewinnzuschlag",
+    "exp": "Selbstkosten + Gewinn = Barverkaufspreis. Danach folgen Kundenskonto und Kundenrabatt bis zum Listenverkaufspreis."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Ziel der ABC-Analyse im Einkauf?",
+    "options": [
+      "Güter nach ihrem Wertanteil einteilen, um den Einkaufsaufwand zu steuern",
+      "Güter alphabetisch sortieren",
+      "Lieferanten nach Schulnoten bewerten",
+      "Kunden nach Wohnort gruppieren"
+    ],
+    "a": "Güter nach ihrem Wertanteil einteilen, um den Einkaufsaufwand zu steuern",
+    "exp": "A-Güter haben einen kleinen Mengenanteil, aber hohen Wertanteil und verdienen die meiste Aufmerksamkeit."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt der Meldebestand in der Lagerhaltung?",
+    "options": [
+      "Den Bestand, bei dem nachbestellt werden muss, damit rechtzeitig Ware eintrifft",
+      "Den höchsten erlaubten Bestand",
+      "Den Bestand, der nie unterschritten werden darf",
+      "Den Bestand am Jahresende"
+    ],
+    "a": "Den Bestand, bei dem nachbestellt werden muss, damit rechtzeitig Ware eintrifft",
+    "exp": "Meldebestand = Tagesverbrauch * Lieferzeit + Mindestbestand."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie berechnet man den Meldebestand?",
+    "options": [
+      "Tagesverbrauch * Lieferzeit in Tagen + Mindestbestand",
+      "Höchstbestand - Mindestbestand",
+      "Jahresverbrauch / 12",
+      "Mindestbestand * 2"
+    ],
+    "a": "Tagesverbrauch * Lieferzeit in Tagen + Mindestbestand",
+    "exp": "So reicht der Vorrat genau bis zur neuen Lieferung, der Mindestbestand bleibt als Sicherheitsreserve."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie berechnet man die Eigenkapitalrentabilität?",
+    "options": [
+      "Gewinn / Eigenkapital * 100",
+      "Eigenkapital / Gesamtkapital * 100",
+      "Umsatz / Gewinn * 100",
+      "Fremdkapital / Eigenkapital * 100"
+    ],
+    "a": "Gewinn / Eigenkapital * 100",
+    "exp": "Die Kennzahl zeigt, wie sich das eingesetzte Eigenkapital verzinst hat."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie berechnet man die Eigenkapitalquote?",
+    "options": [
+      "Eigenkapital / Gesamtkapital * 100",
+      "Gewinn / Eigenkapital * 100",
+      "Eigenkapital / Fremdkapital",
+      "Umsatz / Eigenkapital * 100"
+    ],
+    "a": "Eigenkapital / Gesamtkapital * 100",
+    "exp": "Eine hohe Eigenkapitalquote bedeutet mehr Unabhängigkeit von Kreditgebern."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet Wirtschaftlichkeit als Kennzahl?",
+    "options": [
+      "Erträge im Verhältnis zu den Aufwendungen",
+      "Gewinn im Verhältnis zum Eigenkapital",
+      "Ausbringungsmenge pro Arbeitsstunde",
+      "Umsatz minus Kosten"
+    ],
+    "a": "Erträge im Verhältnis zu den Aufwendungen",
+    "exp": "Wirtschaftlichkeit = Ertrag / Aufwand. Ein Wert über 1 bedeutet wirtschaftliches Arbeiten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was misst die Produktivität?",
+    "options": [
+      "Das Verhältnis von Ausbringungsmenge zu Einsatzmenge",
+      "Das Verhältnis von Gewinn zu Kapital",
+      "Das Verhältnis von Umsatz zu Kosten",
+      "Die Anzahl der Mitarbeiter"
+    ],
+    "a": "Das Verhältnis von Ausbringungsmenge zu Einsatzmenge",
+    "exp": "Beispiel Arbeitsproduktivität: bearbeitete Tickets pro Arbeitsstunde. Sie ist eine Mengenkennzahl."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt das ökonomische Minimalprinzip?",
+    "options": [
+      "Ein festgelegtes Ziel mit möglichst geringem Mitteleinsatz erreichen",
+      "Mit gegebenen Mitteln einen möglichst großen Erfolg erzielen",
+      "Möglichst wenig arbeiten",
+      "Möglichst billig einkaufen, egal in welcher Qualität"
+    ],
+    "a": "Ein festgelegtes Ziel mit möglichst geringem Mitteleinsatz erreichen",
+    "exp": "Beim Maximalprinzip ist dagegen der Mitteleinsatz fest und der Erfolg soll maximiert werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die dynamische Investitionsrechnung im Unterschied zur statischen?",
+    "options": [
+      "Sie berücksichtigt den Zeitpunkt der Zahlungen durch Auf- und Abzinsen",
+      "Sie betrachtet nur ein Jahr",
+      "Sie verzichtet auf Zahlen",
+      "Sie gilt nur für Immobilien"
+    ],
+    "a": "Sie berücksichtigt den Zeitpunkt der Zahlungen durch Auf- und Abzinsen",
+    "exp": "Beispiele sind Kapitalwertmethode und Methode des internen Zinsfußes."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Leasing?",
+    "options": [
+      "Die Nutzung eines Wirtschaftsguts gegen regelmäßige Raten, ohne Eigentümer zu werden",
+      "Der Kauf mit Ratenzahlung",
+      "Eine Schenkung",
+      "Ein Kredit ohne Zinsen"
+    ],
+    "a": "Die Nutzung eines Wirtschaftsguts gegen regelmäßige Raten, ohne Eigentümer zu werden",
+    "exp": "Vorteile: Liquidität bleibt erhalten, regelmäßige Erneuerung. Nachteil: auf Dauer oft teurer als Kauf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Vorteil von Leasing gegenüber dem Kauf aus Eigenmitteln?",
+    "options": [
+      "Die Liquidität wird geschont, weil keine hohe Einmalzahlung nötig ist",
+      "Man wird sofort Eigentümer",
+      "Es ist immer günstiger",
+      "Es gibt keine Vertragslaufzeit"
+    ],
+    "a": "Die Liquidität wird geschont, weil keine hohe Einmalzahlung nötig ist",
+    "exp": "Die Leasingraten verteilen sich über die Laufzeit. Eigentümer bleibt der Leasinggeber."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Kontokorrentkredit?",
+    "options": [
+      "Ein Kredit auf dem Geschäftskonto bis zu einem vereinbarten Limit",
+      "Ein Kredit für den Hauskauf",
+      "Ein zinsloser Lieferantenkredit",
+      "Ein Kredit, der nur einmal ausgezahlt wird"
+    ],
+    "a": "Ein Kredit auf dem Geschäftskonto bis zu einem vereinbarten Limit",
+    "exp": "Er dient kurzfristiger Liquidität, ist flexibel, aber meist teuer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Warum ist Skontoziehen oft günstiger als ein Lieferantenkredit?",
+    "options": [
+      "Der Lieferantenkredit hat umgerechnet auf ein Jahr einen sehr hohen Zinssatz",
+      "Weil Skonto steuerfrei ist",
+      "Weil Lieferanten Skonto verbieten",
+      "Weil ein Lieferantenkredit keine Kosten verursacht"
+    ],
+    "a": "Der Lieferantenkredit hat umgerechnet auf ein Jahr einen sehr hohen Zinssatz",
+    "exp": "Beispiel 2 % Skonto bei 10 Tagen, Ziel 30 Tage: 2 % für 20 Tage entsprechen etwa 36 % pro Jahr."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Rechtsform ist eine Kapitalgesellschaft?",
+    "options": [
+      "AG",
+      "OHG",
+      "KG",
+      "GbR"
+    ],
+    "a": "AG",
+    "exp": "Kapitalgesellschaften (GmbH, UG, AG) sind juristische Personen, bei denen grundsätzlich nur das Gesellschaftsvermögen haftet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Organ einer AG überwacht den Vorstand?",
+    "options": [
+      "Aufsichtsrat",
+      "Hauptversammlung",
+      "Betriebsrat",
+      "Prokurist"
+    ],
+    "a": "Aufsichtsrat",
+    "exp": "Der Vorstand leitet die AG, der Aufsichtsrat kontrolliert ihn, die Hauptversammlung ist die Versammlung der Aktionäre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Gremium vertritt die Interessen der Auszubildenden und jugendlichen Beschäftigten im Betrieb?",
+    "options": [
+      "Jugend- und Auszubildendenvertretung (JAV)",
+      "Aufsichtsrat",
+      "Gewerkschaftsvorstand",
+      "Industrie- und Handelskammer"
+    ],
+    "a": "Jugend- und Auszubildendenvertretung (JAV)",
+    "exp": "Die JAV kann gewählt werden, wenn mindestens fünf Jugendliche oder Auszubildende unter 25 Jahren im Betrieb beschäftigt sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ab wie vielen ständig wahlberechtigten Arbeitnehmern kann ein Betriebsrat gewählt werden?",
+    "options": [
+      "5",
+      "10",
+      "20",
+      "50"
+    ],
+    "a": "5",
+    "exp": "Nach § 1 BetrVG in Betrieben mit mindestens fünf ständigen wahlberechtigten Arbeitnehmern, von denen drei wählbar sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei welcher Maßnahme hat der Betriebsrat ein echtes Mitbestimmungsrecht?",
+    "options": [
+      "Einführung technischer Einrichtungen zur Überwachung von Leistung oder Verhalten",
+      "Festlegung des Verkaufspreises",
+      "Wahl des Lieferanten",
+      "Entscheidung über die Rechtsform"
+    ],
+    "a": "Einführung technischer Einrichtungen zur Überwachung von Leistung oder Verhalten",
+    "exp": "§ 87 Abs. 1 Nr. 6 BetrVG: z.B. Software, die Leistung oder Verhalten der Mitarbeiter auswerten kann."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Tarifvertrag?",
+    "options": [
+      "Eine Vereinbarung zwischen Gewerkschaft und Arbeitgeberverband bzw. Arbeitgeber",
+      "Ein Arbeitsvertrag eines einzelnen Mitarbeiters",
+      "Eine Vereinbarung zwischen Betriebsrat und Chef",
+      "Ein Gesetz des Bundestags"
+    ],
+    "a": "Eine Vereinbarung zwischen Gewerkschaft und Arbeitgeberverband bzw. Arbeitgeber",
+    "exp": "Er regelt z.B. Löhne, Arbeitszeit und Urlaub. Vereinbarungen zwischen Betriebsrat und Arbeitgeber heißen Betriebsvereinbarungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Streik?",
+    "options": [
+      "Die gemeinsame, planmäßige Arbeitsniederlegung von Arbeitnehmern zur Durchsetzung von Forderungen",
+      "Eine Kündigung durch den Arbeitgeber",
+      "Eine Betriebsversammlung",
+      "Eine Abmahnung"
+    ],
+    "a": "Die gemeinsame, planmäßige Arbeitsniederlegung von Arbeitnehmern zur Durchsetzung von Forderungen",
+    "exp": "Streiks sind nur zur Durchsetzung tariflich regelbarer Ziele und in der Regel durch eine Gewerkschaft zulässig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie viele Tage gesetzlichen Mindesturlaub hat ein Erwachsener bei einer 6-Tage-Woche?",
+    "options": [
+      "24 Werktage",
+      "20 Werktage",
+      "25 Werktage",
+      "30 Werktage"
+    ],
+    "a": "24 Werktage",
+    "exp": "Das Bundesurlaubsgesetz sieht 24 Werktage bei 6 Werktagen pro Woche vor, das entspricht 20 Arbeitstagen bei einer 5-Tage-Woche."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange muss die Ruhezeit nach Arbeitsende bis zum nächsten Arbeitsbeginn laut Arbeitszeitgesetz mindestens betragen?",
+    "options": [
+      "11 Stunden",
+      "8 Stunden",
+      "10 Stunden",
+      "12 Stunden"
+    ],
+    "a": "11 Stunden",
+    "exp": "§ 5 ArbZG schreibt eine ununterbrochene Ruhezeit von mindestens 11 Stunden vor."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Pause steht Erwachsenen bei 6 bis 9 Stunden Arbeitszeit mindestens zu?",
+    "options": [
+      "30 Minuten",
+      "15 Minuten",
+      "45 Minuten",
+      "60 Minuten"
+    ],
+    "a": "30 Minuten",
+    "exp": "Bei mehr als 6 Stunden 30 Minuten, bei mehr als 9 Stunden 45 Minuten (§ 4 ArbZG)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer ist für die Durchführung der Abschlussprüfungen im IT-Beruf zuständig?",
+    "options": [
+      "Die Industrie- und Handelskammer (IHK)",
+      "Die Berufsschule",
+      "Der Ausbildungsbetrieb",
+      "Die Agentur für Arbeit"
+    ],
+    "a": "Die Industrie- und Handelskammer (IHK)",
+    "exp": "Die IHK ist die zuständige Stelle: Sie überwacht die Ausbildung, führt das Verzeichnis der Ausbildungsverhältnisse und nimmt die Prüfungen ab."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann endet ein Ausbildungsverhältnis, wenn die Abschlussprüfung vor Ablauf der Ausbildungszeit bestanden wird?",
+    "options": [
+      "Mit Bekanntgabe des Prüfungsergebnisses",
+      "Am vertraglich vereinbarten Enddatum",
+      "Am Ende des Kalenderjahres",
+      "Nach einer Kündigung durch den Betrieb"
+    ],
+    "a": "Mit Bekanntgabe des Prüfungsergebnisses",
+    "exp": "§ 21 Abs. 2 BBiG: Das Ausbildungsverhältnis endet mit der Bekanntgabe des Ergebnisses durch den Prüfungsausschuss."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was muss ein Arbeitszeugnis mindestens enthalten, wenn es ein einfaches Zeugnis ist?",
+    "options": [
+      "Art und Dauer der Tätigkeit",
+      "Eine Bewertung von Leistung und Verhalten",
+      "Den Kündigungsgrund",
+      "Das Gehalt"
+    ],
+    "a": "Art und Dauer der Tätigkeit",
+    "exp": "Das qualifizierte Zeugnis enthält zusätzlich eine Bewertung von Leistung und Verhalten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Scrum?",
+    "options": [
+      "Ein agiles Rahmenwerk mit festen Sprints, Rollen und Ereignissen",
+      "Ein klassisches Phasenmodell",
+      "Eine Programmiersprache",
+      "Ein Tool zur Zeiterfassung"
+    ],
+    "a": "Ein agiles Rahmenwerk mit festen Sprints, Rollen und Ereignissen",
+    "exp": "Scrum arbeitet in Sprints von maximal einem Monat mit Sprint Planning, Daily Scrum, Review und Retrospektive."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Product Backlog in Scrum?",
+    "options": [
+      "Die priorisierte Liste aller Anforderungen an das Produkt",
+      "Die Liste der erledigten Aufgaben",
+      "Der Zeitplan für das ganze Projekt",
+      "Der Fehlerbericht nach dem Sprint"
+    ],
+    "a": "Die priorisierte Liste aller Anforderungen an das Produkt",
+    "exp": "Der Product Owner pflegt und priorisiert das Product Backlog."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange dauert das Daily Scrum?",
+    "options": [
+      "Höchstens 15 Minuten",
+      "30 Minuten",
+      "Eine Stunde",
+      "Einen halben Tag"
+    ],
+    "a": "Höchstens 15 Minuten",
+    "exp": "Das Daily ist ein kurzes tägliches Abstimmungstreffen der Entwickler."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Ziel der Sprint-Retrospektive?",
+    "options": [
+      "Die Zusammenarbeit und Arbeitsweise des Teams verbessern",
+      "Das Produkt dem Kunden vorführen",
+      "Neue Anforderungen erfassen",
+      "Die Rechnung für den Sprint erstellen"
+    ],
+    "a": "Die Zusammenarbeit und Arbeitsweise des Teams verbessern",
+    "exp": "Das Review zeigt das Ergebnis, die Retrospektive betrachtet den Prozess."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine User Story?",
+    "options": [
+      "Eine kurze Anforderung aus Sicht des Nutzers: Als ... möchte ich ..., damit ...",
+      "Ein Handbuch für Benutzer",
+      "Ein Fehlerprotokoll",
+      "Eine Beschreibung des Projektbudgets"
+    ],
+    "a": "Eine kurze Anforderung aus Sicht des Nutzers: Als ... möchte ich ..., damit ...",
+    "exp": "User Stories beschreiben Nutzen statt Technik und haben Akzeptanzkriterien."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was stellt ein Gantt-Diagramm dar?",
+    "options": [
+      "Vorgänge als Balken auf einer Zeitachse",
+      "Die Abhängigkeiten als Knoten ohne Zeitachse",
+      "Die Organisation des Unternehmens",
+      "Die Kostenverteilung als Kreis"
+    ],
+    "a": "Vorgänge als Balken auf einer Zeitachse",
+    "exp": "Es zeigt Dauer, Beginn, Ende und oft Abhängigkeiten und Meilensteine auf einen Blick."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie berechnet man im Netzplan den frühesten Endzeitpunkt (FEZ) eines Vorgangs?",
+    "options": [
+      "FAZ + Dauer",
+      "SAZ + Dauer",
+      "SEZ - Dauer",
+      "FAZ - Puffer"
+    ],
+    "a": "FAZ + Dauer",
+    "exp": "Der früheste Anfangszeitpunkt plus Dauer ergibt den frühesten Endzeitpunkt (Vorwärtsrechnung)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie berechnet man im Netzplan den Gesamtpuffer (GP) eines Vorgangs?",
+    "options": [
+      "SAZ - FAZ (oder SEZ - FEZ)",
+      "FEZ - FAZ",
+      "Dauer - FAZ",
+      "SEZ + FEZ"
+    ],
+    "a": "SAZ - FAZ (oder SEZ - FEZ)",
+    "exp": "Der Gesamtpuffer ist die Differenz zwischen spätester und frühester Lage. Auf dem kritischen Pfad ist er 0."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der freie Puffer (FP) im Netzplan?",
+    "options": [
+      "Die Zeit, um die sich ein Vorgang verschieben darf, ohne den frühesten Beginn des Nachfolgers zu verzögern",
+      "Die Zeit bis zum Projektende",
+      "Die gesamte Projektdauer",
+      "Die Zeit zwischen zwei Meilensteinen"
+    ],
+    "a": "Die Zeit, um die sich ein Vorgang verschieben darf, ohne den frühesten Beginn des Nachfolgers zu verzögern",
+    "exp": "FP = FAZ des Nachfolgers - FEZ des Vorgangs. Er ist nie größer als der Gesamtpuffer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche drei Größen bilden das magische Dreieck des Projektmanagements?",
+    "options": [
+      "Qualität (Leistung), Kosten, Zeit",
+      "Kunde, Lieferant, Bank",
+      "Hardware, Software, Netzwerk",
+      "Planung, Durchführung, Abschluss"
+    ],
+    "a": "Qualität (Leistung), Kosten, Zeit",
+    "exp": "Ändert man eine Größe, wirkt sich das auf die anderen aus: Mehr Leistung in gleicher Zeit kostet mehr."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Projektauftrag?",
+    "options": [
+      "Das Dokument, mit dem ein Projekt offiziell beauftragt wird, mit Zielen, Budget und Rahmen",
+      "Die Abschlussrechnung",
+      "Das Protokoll des Kick-off-Meetings",
+      "Ein Arbeitsvertrag"
+    ],
+    "a": "Das Dokument, mit dem ein Projekt offiziell beauftragt wird, mit Zielen, Budget und Rahmen",
+    "exp": "Er legt u.a. Auftraggeber, Projektleitung, Ziele, Termine und Budget fest."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was wird bei der Abnahme eines IT-Projekts dokumentiert?",
+    "options": [
+      "Dass der Auftraggeber die Leistung als vertragsgemäß anerkennt, ggf. mit Mängeln",
+      "Die Zahl der Überstunden",
+      "Die Kündigung des Projektleiters",
+      "Die Kundenzufriedenheit in Schulnoten"
+    ],
+    "a": "Dass der Auftraggeber die Leistung als vertragsgemäß anerkennt, ggf. mit Mängeln",
+    "exp": "Mit dem Abnahmeprotokoll beginnt beim Werkvertrag die Gewährleistung und die Vergütung wird fällig."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind SMART formulierte Ziele?",
+    "options": [
+      "Spezifisch, messbar, attraktiv/akzeptiert, realistisch, terminiert",
+      "Schnell, modern, agil, robust, technisch",
+      "Sicher, managebar, aktuell, relevant, teuer",
+      "Simpel, mittel, anspruchsvoll, riesig, total"
+    ],
+    "a": "Spezifisch, messbar, attraktiv/akzeptiert, realistisch, terminiert",
+    "exp": "Beispiel: Bis 30.06. sind alle 40 Arbeitsplätze auf Windows 11 umgestellt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Kick-off-Meeting?",
+    "options": [
+      "Das Auftakttreffen eines Projekts mit allen Beteiligten",
+      "Das letzte Meeting nach Projektende",
+      "Ein Treffen zur Kündigung",
+      "Ein Termin für die Rechnungsstellung"
+    ],
+    "a": "Das Auftakttreffen eines Projekts mit allen Beteiligten",
+    "exp": "Im Kick-off werden Ziele, Rollen, Zeitplan und Kommunikationswege vorgestellt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Stakeholder-Analyse?",
+    "options": [
+      "Die Ermittlung und Bewertung aller Beteiligten nach Einfluss und Einstellung zum Projekt",
+      "Die Analyse des Aktienkurses",
+      "Eine Kostenaufstellung",
+      "Die Auswahl eines Lieferanten"
+    ],
+    "a": "Die Ermittlung und Bewertung aller Beteiligten nach Einfluss und Einstellung zum Projekt",
+    "exp": "Aus ihr leitet man ab, wen man wie einbindet und informiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Pareto-Prinzip?",
+    "options": [
+      "Mit 20 % des Aufwands werden oft 80 % der Ergebnisse erreicht",
+      "Jedes Problem hat genau eine Ursache",
+      "Alle Aufgaben sind gleich wichtig",
+      "Ein Projekt muss 80 % Gewinn bringen"
+    ],
+    "a": "Mit 20 % des Aufwands werden oft 80 % der Ergebnisse erreicht",
+    "exp": "Die 80/20-Regel hilft beim Priorisieren, z.B. welche Fehler zuerst behoben werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Methode stellt Ursachen eines Problems nach Kategorien in Form einer Fischgräte dar?",
+    "options": [
+      "Ishikawa-Diagramm",
+      "Gantt-Diagramm",
+      "Netzplan",
+      "Kanban-Board"
+    ],
+    "a": "Ishikawa-Diagramm",
+    "exp": "Das Ursache-Wirkungs-Diagramm sammelt Ursachen z.B. nach Mensch, Maschine, Methode, Material, Milieu, Messung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was beschreibt der PDCA-Zyklus?",
+    "options": [
+      "Plan, Do, Check, Act als Kreislauf der kontinuierlichen Verbesserung",
+      "Planung, Dokumentation, Controlling, Abschluss",
+      "Preis, Design, Kosten, Absatz",
+      "Prozess, Daten, Code, Anwendung"
+    ],
+    "a": "Plan, Do, Check, Act als Kreislauf der kontinuierlichen Verbesserung",
+    "exp": "Der Deming-Kreis ist Grundlage des Qualitätsmanagements, z.B. nach ISO 9001."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Norm beschreibt Anforderungen an ein Qualitätsmanagementsystem?",
+    "options": [
+      "ISO 9001",
+      "ISO/IEC 27001",
+      "ISO 14001",
+      "DIN 5008"
+    ],
+    "a": "ISO 9001",
+    "exp": "ISO 27001 betrifft Informationssicherheit, ISO 14001 Umweltmanagement, DIN 5008 Schreib- und Gestaltungsregeln."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Eskalation im IT-Service-Management?",
+    "options": [
+      "Das Weiterleiten eines Vorfalls an eine höhere Support- oder Managementebene",
+      "Das Schließen eines Tickets",
+      "Die Erhöhung des Preises",
+      "Das Löschen eines Benutzerkontos"
+    ],
+    "a": "Das Weiterleiten eines Vorfalls an eine höhere Support- oder Managementebene",
+    "exp": "Funktionale Eskalation: an Spezialisten. Hierarchische Eskalation: an Vorgesetzte, z.B. wenn ein SLA gefährdet ist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Service Desk nach ITIL?",
+    "options": [
+      "Die zentrale Anlaufstelle (Single Point of Contact) für Anwender",
+      "Der Schreibtisch des IT-Leiters",
+      "Ein Serverraum",
+      "Ein Vertrag mit dem Hersteller"
+    ],
+    "a": "Die zentrale Anlaufstelle (Single Point of Contact) für Anwender",
+    "exp": "Er nimmt Störungen und Anfragen an, erfasst sie und löst sie oder leitet sie weiter."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Service Request im Unterschied zu einem Incident?",
+    "options": [
+      "Eine Standardanfrage, z.B. nach einem neuen Zugang, keine Störung",
+      "Eine schwere Störung",
+      "Eine Kundenbeschwerde",
+      "Ein Sicherheitsvorfall"
+    ],
+    "a": "Eine Standardanfrage, z.B. nach einem neuen Zugang, keine Störung",
+    "exp": "Incidents sind ungeplante Unterbrechungen, Service Requests planbare Standardleistungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 45 als 8-Bit-Binärzahl?",
+    "options": [
+      "0010 1101",
+      "0010 1100",
+      "0011 1101",
+      "1011 0100"
+    ],
+    "a": "0010 1101",
+    "exp": "45 = 32 + 8 + 4 + 1, also 00101101."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 99 als 8-Bit-Binärzahl?",
+    "options": [
+      "0110 0011",
+      "0110 0010",
+      "0111 0011",
+      "1100 0110"
+    ],
+    "a": "0110 0011",
+    "exp": "99 = 64 + 32 + 2 + 1, also 01100011."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 156 als 8-Bit-Binärzahl?",
+    "options": [
+      "1001 1100",
+      "1001 1101",
+      "1000 1100",
+      "0011 1001"
+    ],
+    "a": "1001 1100",
+    "exp": "156 = 128 + 16 + 8 + 4, also 10011100."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 201 als 8-Bit-Binärzahl?",
+    "options": [
+      "1100 1001",
+      "1100 1000",
+      "1101 1001",
+      "1001 0011"
+    ],
+    "a": "1100 1001",
+    "exp": "201 = 128 + 64 + 8 + 1, also 11001001."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Dezimalzahl 237 als 8-Bit-Binärzahl?",
+    "options": [
+      "1110 1101",
+      "1110 1100",
+      "1111 1101",
+      "1011 0111"
+    ],
+    "a": "1110 1101",
+    "exp": "237 = 128 + 64 + 32 + 8 + 4 + 1, also 11101101."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Binärzahl 1101 0110 in hexadezimaler Schreibweise?",
+    "options": [
+      "D6",
+      "6B",
+      "C6",
+      "D7"
+    ],
+    "a": "D6",
+    "exp": "Je 4 Bit ergeben eine Hexziffer: 1101 = D, 0110 = 6, also D6 (dezimal 214)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Binärzahl 0111 1011 in hexadezimaler Schreibweise?",
+    "options": [
+      "7B",
+      "DE",
+      "6B",
+      "7C"
+    ],
+    "a": "7B",
+    "exp": "Je 4 Bit ergeben eine Hexziffer: 0111 = 7, 1011 = B, also 7B (dezimal 123)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Binärzahl 1001 1100 in hexadezimaler Schreibweise?",
+    "options": [
+      "9C",
+      "39",
+      "8C",
+      "9D"
+    ],
+    "a": "9C",
+    "exp": "Je 4 Bit ergeben eine Hexziffer: 1001 = 9, 1100 = C, also 9C (dezimal 156)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lautet die Binärzahl 1110 0011 in hexadezimaler Schreibweise?",
+    "options": [
+      "E3",
+      "C7",
+      "F3",
+      "E4"
+    ],
+    "a": "E3",
+    "exp": "Je 4 Bit ergeben eine Hexziffer: 1110 = E, 0011 = 3, also E3 (dezimal 227)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Dezimalzahl entspricht der Hexadezimalzahl 3C?",
+    "options": [
+      "60",
+      "42",
+      "195",
+      "76"
+    ],
+    "a": "60",
+    "exp": "3C = 3 * 16 + 12 = 60."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Dezimalzahl entspricht der Hexadezimalzahl A7?",
+    "options": [
+      "167",
+      "107",
+      "122",
+      "183"
+    ],
+    "a": "167",
+    "exp": "A7 = 10 * 16 + 7 = 167."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Dezimalzahl entspricht der Hexadezimalzahl E4?",
+    "options": [
+      "228",
+      "144",
+      "78",
+      "244"
+    ],
+    "a": "228",
+    "exp": "E4 = 14 * 16 + 4 = 228."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Dezimalzahl entspricht der Hexadezimalzahl 7F?",
+    "options": [
+      "127",
+      "85",
+      "247",
+      "143"
+    ],
+    "a": "127",
+    "exp": "7F = 7 * 16 + 15 = 127."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lange dauert die Übertragung einer 4-GB-Datei über eine Leitung mit 100 Mbit/s (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "5,3 Minuten",
+      "0,7 Minuten",
+      "5,7 Minuten",
+      "10,7 Minuten"
+    ],
+    "a": "5,3 Minuten",
+    "exp": "4 GB * 8 = 32.000 Mbit; 32.000 Mbit / 100 Mbit/s = 320 s = 5,3 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lange dauert die Übertragung einer 12-GB-Datei über eine Leitung mit 250 Mbit/s (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "6,4 Minuten",
+      "0,8 Minuten",
+      "6,9 Minuten",
+      "12,8 Minuten"
+    ],
+    "a": "6,4 Minuten",
+    "exp": "12 GB * 8 = 96.000 Mbit; 96.000 Mbit / 250 Mbit/s = 384 s = 6,4 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lange dauert die Übertragung einer 30-GB-Datei über eine Leitung mit 1000 Mbit/s (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "4 Minuten",
+      "0,5 Minuten",
+      "4,3 Minuten",
+      "8 Minuten"
+    ],
+    "a": "4 Minuten",
+    "exp": "30 GB * 8 = 240.000 Mbit; 240.000 Mbit / 1000 Mbit/s = 240 s = 4 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie lange dauert die Übertragung einer 2-GB-Datei über eine Leitung mit 40 Mbit/s (ohne Overhead, 1 GB = 10^9 Byte)?",
+    "options": [
+      "6,7 Minuten",
+      "0,8 Minuten",
+      "7,2 Minuten",
+      "13,3 Minuten"
+    ],
+    "a": "6,7 Minuten",
+    "exp": "2 GB * 8 = 16.000 Mbit; 16.000 Mbit / 40 Mbit/s = 400 s = 6,7 Minuten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Speicher belegt ein unkomprimiertes Bild mit 1920 x 1080 Pixeln und 24 Bit Farbtiefe (in MiB, 2 Nachkommastellen)?",
+    "options": [
+      "5,93 MiB",
+      "47,46 MiB",
+      "9,33 MiB",
+      "1,98 MiB"
+    ],
+    "a": "5,93 MiB",
+    "exp": "1920 * 1080 Pixel * 24 Bit / 8 = 6.220.800 Byte; / 1024 / 1024 = 5,93 MiB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Speicher belegt ein unkomprimiertes Bild mit 3840 x 2160 Pixeln und 24 Bit Farbtiefe (in MiB, 2 Nachkommastellen)?",
+    "options": [
+      "23,73 MiB",
+      "189,84 MiB",
+      "37,32 MiB",
+      "7,91 MiB"
+    ],
+    "a": "23,73 MiB",
+    "exp": "3840 * 2160 Pixel * 24 Bit / 8 = 24.883.200 Byte; / 1024 / 1024 = 23,73 MiB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Speicher belegt ein unkomprimiertes Bild mit 1280 x 1024 Pixeln und 32 Bit Farbtiefe (in MiB, 2 Nachkommastellen)?",
+    "options": [
+      "5,00 MiB",
+      "40,00 MiB",
+      "7,86 MiB",
+      "1,67 MiB"
+    ],
+    "a": "5,00 MiB",
+    "exp": "1280 * 1024 Pixel * 32 Bit / 8 = 5.242.880 Byte; / 1024 / 1024 = 5,00 MiB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 5 aus 4 Festplatten mit je 8 TB?",
+    "options": [
+      "24 TB",
+      "32 TB",
+      "16 TB",
+      "8 TB"
+    ],
+    "a": "24 TB",
+    "exp": "RAID 5: (n - 1) * Kapazität = (4 - 1) * 8 TB = 24 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 6 aus 8 Festplatten mit je 2 TB?",
+    "options": [
+      "12 TB",
+      "16 TB",
+      "14 TB",
+      "8 TB"
+    ],
+    "a": "12 TB",
+    "exp": "RAID 6: (n - 2) * Kapazität = (8 - 2) * 2 TB = 12 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 10 aus 6 Festplatten mit je 4 TB?",
+    "options": [
+      "12 TB",
+      "24 TB",
+      "20 TB",
+      "16 TB"
+    ],
+    "a": "12 TB",
+    "exp": "RAID 10: n / 2 * Kapazität = 6 / 2 * 4 TB = 12 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Nutzkapazität hat ein RAID 5 aus 6 Festplatten mit je 3 TB?",
+    "options": [
+      "15 TB",
+      "18 TB",
+      "12 TB",
+      "9 TB"
+    ],
+    "a": "15 TB",
+    "exp": "RAID 5: (n - 1) * Kapazität = (6 - 1) * 3 TB = 15 TB."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Jahr (365 Tage) erlaubt eine Verfügbarkeit von 99 %?",
+    "options": [
+      "87,60 Stunden",
+      "876,00 Stunden",
+      "8,76 Stunden",
+      "25,55 Stunden"
+    ],
+    "a": "87,60 Stunden",
+    "exp": "(100 % - 99 %) * 8.760 Stunden = 87,60 Stunden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Jahr (365 Tage) erlaubt eine Verfügbarkeit von 99,5 %?",
+    "options": [
+      "43,80 Stunden",
+      "438,00 Stunden",
+      "4,38 Stunden",
+      "12,78 Stunden"
+    ],
+    "a": "43,80 Stunden",
+    "exp": "(100 % - 99,5 %) * 8.760 Stunden = 43,80 Stunden."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie viel Ausfallzeit pro Jahr (365 Tage) erlaubt eine Verfügbarkeit von 99,99 %?",
+    "options": [
+      "52,6 Minuten",
+      "525,6 Minuten",
+      "5,3 Minuten",
+      "630,7 Minuten"
+    ],
+    "a": "52,6 Minuten",
+    "exp": "(100 % - 99,99 %) * 8.760 Stunden = 0,876 Stunden = 52,6 Minuten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 192.168.20.77/27?",
+    "options": [
+      "192.168.20.64",
+      "192.168.20.96",
+      "192.168.20.65",
+      "192.168.20.0"
+    ],
+    "a": "192.168.20.64",
+    "exp": "Maske 255.255.255.224: Das Netz 192.168.20.64/27 reicht von 192.168.20.64 bis 192.168.20.95 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 192.168.20.77/27?",
+    "options": [
+      "192.168.20.95",
+      "192.168.20.94",
+      "192.168.20.127",
+      "192.168.20.64"
+    ],
+    "a": "192.168.20.95",
+    "exp": "Netzadresse 192.168.20.64, Blockgröße 32 Adressen, Broadcast = letzte Adresse 192.168.20.95. Nutzbar: 192.168.20.65 bis 192.168.20.94."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 10.4.130.9/20?",
+    "options": [
+      "10.4.128.0",
+      "10.4.144.0",
+      "10.4.128.1",
+      "10.4.112.0"
+    ],
+    "a": "10.4.128.0",
+    "exp": "Maske 255.255.240.0: Das Netz 10.4.128.0/20 reicht von 10.4.128.0 bis 10.4.143.255 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 10.4.130.9/20?",
+    "options": [
+      "10.4.143.255",
+      "10.4.143.254",
+      "10.4.159.255",
+      "10.4.191.255"
+    ],
+    "a": "10.4.143.255",
+    "exp": "Netzadresse 10.4.128.0, Blockgröße 4096 Adressen, Broadcast = letzte Adresse 10.4.143.255. Nutzbar: 10.4.128.1 bis 10.4.143.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 172.20.5.200/26?",
+    "options": [
+      "172.20.5.192",
+      "172.20.6.0",
+      "172.20.5.193",
+      "172.20.5.0"
+    ],
+    "a": "172.20.5.192",
+    "exp": "Maske 255.255.255.192: Das Netz 172.20.5.192/26 reicht von 172.20.5.192 bis 172.20.5.255 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 172.20.5.200/26?",
+    "options": [
+      "172.20.5.255",
+      "172.20.5.254",
+      "172.20.6.63",
+      "172.20.5.192"
+    ],
+    "a": "172.20.5.255",
+    "exp": "Netzadresse 172.20.5.192, Blockgröße 64 Adressen, Broadcast = letzte Adresse 172.20.5.255. Nutzbar: 172.20.5.193 bis 172.20.5.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 192.168.99.14/29?",
+    "options": [
+      "192.168.99.8",
+      "192.168.99.16",
+      "192.168.99.9",
+      "192.168.99.0"
+    ],
+    "a": "192.168.99.8",
+    "exp": "Maske 255.255.255.248: Das Netz 192.168.99.8/29 reicht von 192.168.99.8 bis 192.168.99.15 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 192.168.99.14/29?",
+    "options": [
+      "192.168.99.15",
+      "192.168.99.14",
+      "192.168.99.23",
+      "192.168.99.31"
+    ],
+    "a": "192.168.99.15",
+    "exp": "Netzadresse 192.168.99.8, Blockgröße 8 Adressen, Broadcast = letzte Adresse 192.168.99.15. Nutzbar: 192.168.99.9 bis 192.168.99.14."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 10.10.10.130/25?",
+    "options": [
+      "10.10.10.128",
+      "10.10.11.0",
+      "10.10.10.129",
+      "10.10.10.0"
+    ],
+    "a": "10.10.10.128",
+    "exp": "Maske 255.255.255.128: Das Netz 10.10.10.128/25 reicht von 10.10.10.128 bis 10.10.10.255 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 10.10.10.130/25?",
+    "options": [
+      "10.10.10.255",
+      "10.10.10.254",
+      "10.10.11.127",
+      "10.10.11.255"
+    ],
+    "a": "10.10.10.255",
+    "exp": "Netzadresse 10.10.10.128, Blockgröße 128 Adressen, Broadcast = letzte Adresse 10.10.10.255. Nutzbar: 10.10.10.129 bis 10.10.10.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Netzadresse von 172.31.66.1/22?",
+    "options": [
+      "172.31.64.0",
+      "172.31.68.0",
+      "172.31.64.1",
+      "172.31.60.0"
+    ],
+    "a": "172.31.64.0",
+    "exp": "Maske 255.255.252.0: Das Netz 172.31.64.0/22 reicht von 172.31.64.0 bis 172.31.67.255 (Broadcast)."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie lautet die Broadcast-Adresse von 172.31.66.1/22?",
+    "options": [
+      "172.31.67.255",
+      "172.31.67.254",
+      "172.31.71.255",
+      "172.31.79.255"
+    ],
+    "a": "172.31.67.255",
+    "exp": "Netzadresse 172.31.64.0, Blockgröße 1024 Adressen, Broadcast = letzte Adresse 172.31.67.255. Nutzbar: 172.31.64.1 bis 172.31.67.254."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge ist die kleinste, die mindestens 500 nutzbare Host-Adressen bietet?",
+    "options": [
+      "/23",
+      "/24",
+      "/22",
+      "/25"
+    ],
+    "a": "/23",
+    "exp": "2^9 - 2 = 510 Hosts reichen, 2^8 - 2 = 254 wären zu wenig. Also /23."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge ist die kleinste, die mindestens 60 nutzbare Host-Adressen bietet?",
+    "options": [
+      "/26",
+      "/27",
+      "/25",
+      "/28"
+    ],
+    "a": "/26",
+    "exp": "2^6 - 2 = 62 Hosts reichen, 2^5 - 2 = 30 wären zu wenig. Also /26."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge ist die kleinste, die mindestens 1000 nutzbare Host-Adressen bietet?",
+    "options": [
+      "/22",
+      "/23",
+      "/21",
+      "/24"
+    ],
+    "a": "/22",
+    "exp": "2^10 - 2 = 1022 Hosts reichen, 2^9 - 2 = 510 wären zu wenig. Also /22."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge ist die kleinste, die mindestens 12 nutzbare Host-Adressen bietet?",
+    "options": [
+      "/28",
+      "/29",
+      "/27",
+      "/30"
+    ],
+    "a": "/28",
+    "exp": "2^4 - 2 = 14 Hosts reichen, 2^3 - 2 = 6 wären zu wenig. Also /28."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 10.0.0.0/16 soll in 8 gleich große Subnetze aufgeteilt werden. Welche Präfixlänge haben die Subnetze?",
+    "options": [
+      "/19",
+      "/18",
+      "/20",
+      "/21"
+    ],
+    "a": "/19",
+    "exp": "8 Subnetze brauchen 3 zusätzliche Bit (2^3 = 8): /16 + 3 = /19."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Das Netz 192.168.0.0/24 soll in 16 gleich große Subnetze aufgeteilt werden. Welche Präfixlänge haben die Subnetze?",
+    "options": [
+      "/28",
+      "/27",
+      "/29",
+      "/30"
+    ],
+    "a": "/28",
+    "exp": "16 Subnetze brauchen 4 zusätzliche Bit (2^4 = 16): /24 + 4 = /28."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Angebot lautet auf 840,00 Euro netto. Wie hoch ist der Bruttobetrag bei 19 % Umsatzsteuer?",
+    "options": [
+      "999,60 Euro",
+      "159,60 Euro",
+      "705,88 Euro",
+      "898,80 Euro"
+    ],
+    "a": "999,60 Euro",
+    "exp": "840,00 Euro * 1,19 = 999,60 Euro (Umsatzsteuer 159,60 Euro)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Angebot lautet auf 2.350,00 Euro netto. Wie hoch ist der Bruttobetrag bei 19 % Umsatzsteuer?",
+    "options": [
+      "2.796,50 Euro",
+      "446,50 Euro",
+      "1.974,79 Euro",
+      "2.514,50 Euro"
+    ],
+    "a": "2.796,50 Euro",
+    "exp": "2.350,00 Euro * 1,19 = 2.796,50 Euro (Umsatzsteuer 446,50 Euro)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Angebot lautet auf 129,00 Euro netto. Wie hoch ist der Bruttobetrag bei 19 % Umsatzsteuer?",
+    "options": [
+      "153,51 Euro",
+      "24,51 Euro",
+      "108,40 Euro",
+      "138,03 Euro"
+    ],
+    "a": "153,51 Euro",
+    "exp": "129,00 Euro * 1,19 = 153,51 Euro (Umsatzsteuer 24,51 Euro)."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Rechnungsbetrag beträgt 714,00 Euro brutto (19 % USt.). Wie hoch ist die enthaltene Umsatzsteuer?",
+    "options": [
+      "114,00 Euro",
+      "135,66 Euro",
+      "600,00 Euro",
+      "578,34 Euro"
+    ],
+    "a": "114,00 Euro",
+    "exp": "Netto = 714,00 Euro / 1,19 = 600,00 Euro; Umsatzsteuer = 714,00 Euro - 600,00 Euro = 114,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Rechnungsbetrag beträgt 2.975,00 Euro brutto (19 % USt.). Wie hoch ist die enthaltene Umsatzsteuer?",
+    "options": [
+      "475,00 Euro",
+      "565,25 Euro",
+      "2.500,00 Euro",
+      "2.409,75 Euro"
+    ],
+    "a": "475,00 Euro",
+    "exp": "Netto = 2.975,00 Euro / 1,19 = 2.500,00 Euro; Umsatzsteuer = 2.975,00 Euro - 2.500,00 Euro = 475,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listenpreis 2.400,00 Euro, 15 % Rabatt und 3 % Skonto. Wie hoch ist der Überweisungsbetrag?",
+    "options": [
+      "1.978,80 Euro",
+      "1.968,00 Euro",
+      "2.040,00 Euro",
+      "2.328,00 Euro"
+    ],
+    "a": "1.978,80 Euro",
+    "exp": "Zieleinkaufspreis = 2.400,00 Euro - 15 % = 2.040,00 Euro; Bareinkaufspreis = 2.040,00 Euro - 3 % = 1.978,80 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listenpreis 560,00 Euro, 5 % Rabatt und 2 % Skonto. Wie hoch ist der Überweisungsbetrag?",
+    "options": [
+      "521,36 Euro",
+      "520,80 Euro",
+      "532,00 Euro",
+      "548,80 Euro"
+    ],
+    "a": "521,36 Euro",
+    "exp": "Zieleinkaufspreis = 560,00 Euro - 5 % = 532,00 Euro; Bareinkaufspreis = 532,00 Euro - 2 % = 521,36 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listenpreis 12.500,00 Euro, 8 % Rabatt und 2 % Skonto. Wie hoch ist der Überweisungsbetrag?",
+    "options": [
+      "11.270,00 Euro",
+      "11.250,00 Euro",
+      "11.500,00 Euro",
+      "12.250,00 Euro"
+    ],
+    "a": "11.270,00 Euro",
+    "exp": "Zieleinkaufspreis = 12.500,00 Euro - 8 % = 11.500,00 Euro; Bareinkaufspreis = 11.500,00 Euro - 2 % = 11.270,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Fixkosten 45.000,00 Euro, Verkaufspreis 90,00 Euro und variable Kosten 60,00 Euro je Stück. Bei welcher Menge liegt die Gewinnschwelle?",
+    "options": [
+      "1.500 Stück",
+      "500 Stück",
+      "750 Stück",
+      "3.000 Stück"
+    ],
+    "a": "1.500 Stück",
+    "exp": "Deckungsbeitrag je Stück = 90,00 Euro - 60,00 Euro = 30,00 Euro; 45.000,00 Euro / 30,00 Euro = 1.500 Stück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Fixkosten 14.000,00 Euro, Verkaufspreis 25,00 Euro und variable Kosten 17,00 Euro je Stück. Bei welcher Menge liegt die Gewinnschwelle?",
+    "options": [
+      "1.750 Stück",
+      "560 Stück",
+      "824 Stück",
+      "3.500 Stück"
+    ],
+    "a": "1.750 Stück",
+    "exp": "Deckungsbeitrag je Stück = 25,00 Euro - 17,00 Euro = 8,00 Euro; 14.000,00 Euro / 8,00 Euro = 1.750 Stück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Verkaufspreis 80,00 Euro, variable Kosten 50,00 Euro je Stück, Absatz 2.000 Stück, Fixkosten 40.000,00 Euro. Wie hoch ist der Gewinn?",
+    "options": [
+      "20.000,00 Euro",
+      "60.000,00 Euro",
+      "120.000,00 Euro",
+      "-20.000,00 Euro"
+    ],
+    "a": "20.000,00 Euro",
+    "exp": "Deckungsbeitrag = (80,00 Euro - 50,00 Euro) * 2.000 = 60.000,00 Euro; Gewinn = 60.000,00 Euro - 40.000,00 Euro = 20.000,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wirtschaftsgut kostet 15.000,00 Euro und wird über 5 Jahre linear abgeschrieben. Wie hoch ist der Buchwert nach 2 Jahren?",
+    "options": [
+      "9.000,00 Euro",
+      "6.000,00 Euro",
+      "12.000,00 Euro",
+      "7.500,00 Euro"
+    ],
+    "a": "9.000,00 Euro",
+    "exp": "Jährliche Abschreibung = 15.000,00 Euro / 5 = 3.000,00 Euro; Buchwert = 15.000,00 Euro - 2 * 3.000,00 Euro = 9.000,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wirtschaftsgut kostet 4.800,00 Euro und wird über 6 Jahre linear abgeschrieben. Wie hoch ist der Buchwert nach 2 Jahren?",
+    "options": [
+      "3.200,00 Euro",
+      "1.600,00 Euro",
+      "4.000,00 Euro",
+      "2.400,00 Euro"
+    ],
+    "a": "3.200,00 Euro",
+    "exp": "Jährliche Abschreibung = 4.800,00 Euro / 6 = 800,00 Euro; Buchwert = 4.800,00 Euro - 2 * 800,00 Euro = 3.200,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wirtschaftsgut kostet 2.100,00 Euro und wird über 3 Jahre linear abgeschrieben. Wie hoch ist der Buchwert nach 2 Jahren?",
+    "options": [
+      "700,00 Euro",
+      "1.400,00 Euro",
+      "1.050,00 Euro",
+      "0,00 Euro"
+    ],
+    "a": "700,00 Euro",
+    "exp": "Jährliche Abschreibung = 2.100,00 Euro / 3 = 700,00 Euro; Buchwert = 2.100,00 Euro - 2 * 700,00 Euro = 700,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Investition kostet 18.000,00 Euro und bringt jährlich 7.200,00 Euro Einsparung. Wie lang ist die Amortisationszeit?",
+    "options": [
+      "2,5 Jahre",
+      "5,0 Jahre",
+      "4,0 Jahre",
+      "3,5 Jahre"
+    ],
+    "a": "2,5 Jahre",
+    "exp": "Amortisationszeit = Anschaffungskosten / jährlicher Rückfluss = 18.000,00 Euro / 7.200,00 Euro = 2,5 Jahre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Investition kostet 9.000,00 Euro und bringt jährlich 2.000,00 Euro Einsparung. Wie lang ist die Amortisationszeit?",
+    "options": [
+      "4,5 Jahre",
+      "9,0 Jahre",
+      "2,2 Jahre",
+      "5,5 Jahre"
+    ],
+    "a": "4,5 Jahre",
+    "exp": "Amortisationszeit = Anschaffungskosten / jährlicher Rückfluss = 9.000,00 Euro / 2.000,00 Euro = 4,5 Jahre."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Tagesverbrauch 25 Stück, Lieferzeit 6 Tage, Mindestbestand 50 Stück. Wie hoch ist der Meldebestand?",
+    "options": [
+      "200 Stück",
+      "150 Stück",
+      "1.400 Stück",
+      "225 Stück"
+    ],
+    "a": "200 Stück",
+    "exp": "Meldebestand = Tagesverbrauch * Lieferzeit + Mindestbestand = 25 * 6 + 50 = 200 Stück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Tagesverbrauch 12 Stück, Lieferzeit 10 Tage, Mindestbestand 30 Stück. Wie hoch ist der Meldebestand?",
+    "options": [
+      "150 Stück",
+      "120 Stück",
+      "480 Stück",
+      "162 Stück"
+    ],
+    "a": "150 Stück",
+    "exp": "Meldebestand = Tagesverbrauch * Lieferzeit + Mindestbestand = 12 * 10 + 30 = 150 Stück."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen erzielt 36.000,00 Euro Gewinn bei 240.000,00 Euro Eigenkapital. Wie hoch ist die Eigenkapitalrentabilität?",
+    "options": [
+      "15 %",
+      "6,67 %",
+      "1,5 %",
+      "25 %"
+    ],
+    "a": "15 %",
+    "exp": "36.000,00 Euro / 240.000,00 Euro * 100 = 15 %."
   }
 ]

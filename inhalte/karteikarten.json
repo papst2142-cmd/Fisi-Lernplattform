@@ -1378,5 +1378,2417 @@
       "Die Steigerung des Umsatzes zum Vorjahr",
       "Die Zinsen auf das eingesetzte Kapital"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Schichten hat das OSI-Referenzmodell?",
+    "a": "7 Schichten",
+    "a_full": "Das OSI-Modell hat 7 Schichten: Bitübertragung, Sicherung, Vermittlung, Transport, Sitzung, Darstellung und Anwendung.",
+    "options": [
+      "7 Schichten",
+      "4 Schichten",
+      "5 Schichten",
+      "9 Schichten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Schichten hat das TCP/IP-Modell (DoD-Modell)?",
+    "a": "4 Schichten",
+    "a_full": "Das TCP/IP-Modell fasst die OSI-Schichten zu 4 Schichten zusammen: Netzzugang, Internet, Transport und Anwendung.",
+    "options": [
+      "4 Schichten",
+      "7 Schichten",
+      "3 Schichten",
+      "6 Schichten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche OSI-Schicht sorgt für die Ende-zu-Ende-Verbindung zwischen zwei Anwendungen?",
+    "a": "Schicht 4 (Transportschicht)",
+    "a_full": "Die Transportschicht (Schicht 4) mit TCP und UDP adressiert über Ports die Anwendungen und sorgt bei TCP für eine gesicherte Ende-zu-Ende-Übertragung.",
+    "options": [
+      "Schicht 4 (Transportschicht)",
+      "Schicht 2 (Sicherungsschicht)",
+      "Schicht 3 (Vermittlungsschicht)",
+      "Schicht 6 (Darstellungsschicht)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Auf welcher OSI-Schicht arbeitet ein Hub?",
+    "a": "Schicht 1 (Bitübertragungsschicht)",
+    "a_full": "Ein Hub verstärkt nur elektrische Signale und gibt sie an alle Ports weiter. Er wertet keine Adressen aus und arbeitet deshalb auf Schicht 1.",
+    "options": [
+      "Schicht 1 (Bitübertragungsschicht)",
+      "Schicht 2 (Sicherungsschicht)",
+      "Schicht 3 (Vermittlungsschicht)",
+      "Schicht 4 (Transportschicht)"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet einen Switch von einem Hub?",
+    "a": "Der Switch leitet Frames gezielt anhand seiner MAC-Adresstabelle weiter",
+    "a_full": "Ein Switch lernt, an welchem Port welche MAC-Adresse hängt, und sendet Frames nur an den passenden Port. Ein Hub schickt jedes Signal an alle Ports.",
+    "options": [
+      "Der Switch leitet Frames gezielt anhand seiner MAC-Adresstabelle weiter",
+      "Der Switch arbeitet mit IP-Adressen, der Hub mit MAC-Adressen",
+      "Der Hub ist schneller, weil er nichts prüfen muss",
+      "Der Switch verbindet unterschiedliche IP-Netze"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Domäne trennt ein Router, ein einfacher Switch aber nicht?",
+    "a": "Die Broadcast-Domäne",
+    "a_full": "Ein Switch leitet Broadcasts an alle Ports im gleichen VLAN weiter. Ein Router leitet Broadcasts nicht weiter und begrenzt damit die Broadcast-Domäne.",
+    "options": [
+      "Die Broadcast-Domäne",
+      "Die Kollisionsdomäne",
+      "Die DNS-Domäne",
+      "Die Active-Directory-Domäne"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht CSMA/CD?",
+    "a": "Carrier Sense Multiple Access with Collision Detection",
+    "a_full": "CSMA/CD ist das Zugriffsverfahren des klassischen Ethernets: vor dem Senden lauschen, Kollisionen erkennen und nach einer Zufallszeit erneut senden.",
+    "options": [
+      "Carrier Sense Multiple Access with Collision Detection",
+      "Carrier Sense Multiple Access with Collision Avoidance",
+      "Central Switching Multiple Access with Collision Delay",
+      "Channel Sharing Multiple Access with Code Division"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Zugriffsverfahren verwendet WLAN, um Kollisionen möglichst zu vermeiden?",
+    "a": "CSMA/CA",
+    "a_full": "Im WLAN kann ein Sender Kollisionen nicht zuverlässig erkennen. Deshalb nutzt IEEE 802.11 CSMA/CA (Collision Avoidance) mit Wartezeiten und Bestätigungen.",
+    "options": [
+      "CSMA/CA",
+      "CSMA/CD",
+      "Token Passing",
+      "Polling"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat das Standardgateway eines Rechners?",
+    "a": "Es leitet Pakete an Ziele außerhalb des eigenen Subnetzes weiter",
+    "a_full": "Liegt die Ziel-IP nicht im eigenen Subnetz, schickt der Rechner das Paket an das Standardgateway (meist ein Router), das es weiterleitet.",
+    "options": [
+      "Es leitet Pakete an Ziele außerhalb des eigenen Subnetzes weiter",
+      "Es vergibt IP-Adressen an die Clients",
+      "Es löst Namen in IP-Adressen auf",
+      "Es verbindet Geräte im gleichen Subnetz miteinander"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem Befehl leert man unter Windows den DNS-Zwischenspeicher?",
+    "a": "ipconfig /flushdns",
+    "a_full": "ipconfig /flushdns löscht den lokalen DNS-Cache. Das hilft, wenn sich ein DNS-Eintrag geändert hat und der Rechner noch die alte Adresse nutzt.",
+    "options": [
+      "ipconfig /flushdns",
+      "ipconfig /release",
+      "nslookup /clear",
+      "netsh dns reset"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was verhindert das TTL-Feld im IPv4-Header?",
+    "a": "Dass Pakete endlos im Netz kreisen",
+    "a_full": "Jeder Router verringert die TTL (Time to Live) um 1. Erreicht sie 0, wird das Paket verworfen und der Absender per ICMP informiert.",
+    "options": [
+      "Dass Pakete endlos im Netz kreisen",
+      "Dass Pakete doppelt zugestellt werden",
+      "Dass Pakete zu groß für das Netz sind",
+      "Dass Pakete unverschlüsselt übertragen werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie viele Bit umfasst eine IPv4-Adresse?",
+    "a": "32 Bit",
+    "a_full": "Eine IPv4-Adresse besteht aus 32 Bit, geschrieben als vier Oktette zu je 8 Bit in Dezimalschreibweise, z.B. 192.168.1.10.",
+    "options": [
+      "32 Bit",
+      "48 Bit",
+      "64 Bit",
+      "128 Bit"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was kennzeichnet das Transportprotokoll UDP?",
+    "a": "Verbindungslos und ohne Zustellgarantie",
+    "a_full": "UDP baut keine Verbindung auf, bestätigt keine Pakete und ordnet sie nicht neu. Dafür ist es schlank und schnell, z.B. für DNS, VoIP oder Streaming.",
+    "options": [
+      "Verbindungslos und ohne Zustellgarantie",
+      "Verbindungsorientiert mit Drei-Wege-Handshake",
+      "Verschlüsselt alle Daten automatisch",
+      "Arbeitet auf OSI-Schicht 3"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum nutzt Sprachübertragung (VoIP) für die Sprachdaten meist UDP statt TCP?",
+    "a": "Geringere Verzögerung, verspätete Pakete wären ohnehin nutzlos",
+    "a_full": "Bei Echtzeitsprache ist ein erneut gesendetes, verspätetes Paket wertlos. UDP vermeidet die Wartezeiten von Bestätigungen und Neuübertragungen.",
+    "options": [
+      "Geringere Verzögerung, verspätete Pakete wären ohnehin nutzlos",
+      "UDP verschlüsselt die Gespräche",
+      "UDP garantiert die richtige Reihenfolge",
+      "TCP unterstützt keine Audiodaten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was versteht man unter einem Socket?",
+    "a": "Die Kombination aus IP-Adresse und Portnummer",
+    "a_full": "Ein Socket (z.B. 192.168.1.10:443) identifiziert einen Kommunikationsendpunkt eindeutig. Eine Verbindung besteht aus zwei Sockets.",
+    "options": [
+      "Die Kombination aus IP-Adresse und Portnummer",
+      "Die Kombination aus MAC-Adresse und IP-Adresse",
+      "Ein Netzwerkkabel mit RJ45-Stecker",
+      "Die Kombination aus Subnetzmaske und Gateway"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Portbereich wird als Well-Known Ports bezeichnet?",
+    "a": "0 bis 1023",
+    "a_full": "Well-Known Ports (0-1023) sind festen Diensten zugeordnet, z.B. 22 für SSH oder 443 für HTTPS. Registered Ports reichen von 1024 bis 49151, dynamische Ports von 49152 bis 65535.",
+    "options": [
+      "0 bis 1023",
+      "1024 bis 49151",
+      "49152 bis 65535",
+      "0 bis 255"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DNS-Eintrag wird für die Rückwärtsauflösung (IP-Adresse zu Name) verwendet?",
+    "a": "PTR",
+    "a_full": "PTR-Einträge (Pointer) stehen in der Reverse-Zone, z.B. unter in-addr.arpa, und ordnen einer IP-Adresse einen Namen zu.",
+    "options": [
+      "PTR",
+      "A",
+      "CNAME",
+      "SOA"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher DNS-Eintrag ordnet einem Hostnamen eine IPv4-Adresse zu?",
+    "a": "A",
+    "a_full": "Der A-Record (Address) verknüpft einen Namen mit einer IPv4-Adresse. Für IPv6 gibt es den AAAA-Record.",
+    "options": [
+      "A",
+      "MX",
+      "PTR",
+      "TXT"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür wird ein CNAME-Eintrag im DNS verwendet?",
+    "a": "Als Alias, der auf einen anderen Namen verweist",
+    "a_full": "Ein CNAME (Canonical Name) leitet einen Namen auf einen anderen Namen um, z.B. www.firma.de auf server01.firma.de.",
+    "options": [
+      "Als Alias, der auf einen anderen Namen verweist",
+      "Für den zuständigen Mailserver",
+      "Für die Rückwärtsauflösung",
+      "Für die Angabe der Nameserver einer Zone"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein FQDN?",
+    "a": "Fully Qualified Domain Name",
+    "a_full": "Ein FQDN ist der vollständige Name eines Hosts mit allen Domänenebenen bis zur Wurzel, z.B. mail.firma.de. (der abschließende Punkt steht für die Root-Zone).",
+    "options": [
+      "Fully Qualified Domain Name",
+      "Fast Query Domain Network",
+      "File Queue Distribution Node",
+      "Full Quality Data Name"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was kann ein Layer-3-Switch zusätzlich zu einem normalen Switch?",
+    "a": "Zwischen VLANs bzw. IP-Netzen routen",
+    "a_full": "Ein Layer-3-Switch beherrscht neben dem Switching auch Routing auf Schicht 3, z.B. für das Inter-VLAN-Routing im Gebäude.",
+    "options": [
+      "Zwischen VLANs bzw. IP-Netzen routen",
+      "Frames verschlüsseln",
+      "IP-Adressen per DHCP vergeben",
+      "Strom über das Netzwerkkabel liefern"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Präfixlänge hat ein Standard-Subnetz in IPv6?",
+    "a": "/64",
+    "a_full": "In IPv6 sind Subnetze in der Regel /64 groß: 64 Bit Präfix und 64 Bit Interface-ID. Das ist u.a. Voraussetzung für SLAAC.",
+    "options": [
+      "/64",
+      "/48",
+      "/24",
+      "/128"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht SLAAC bei IPv6?",
+    "a": "Stateless Address Autoconfiguration",
+    "a_full": "Mit SLAAC bildet ein Gerät seine IPv6-Adresse selbst aus dem Präfix, das der Router per Router Advertisement ankündigt, und einer eigenen Interface-ID.",
+    "options": [
+      "Stateless Address Autoconfiguration",
+      "Secure Link Address Assignment Control",
+      "Static Local Address Allocation Configuration",
+      "Subnet Level Access Authentication Check"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem Präfix beginnen global erreichbare IPv6-Unicast-Adressen (Global Unicast)?",
+    "a": "2000::/3",
+    "a_full": "Global-Unicast-Adressen liegen im Bereich 2000::/3, sie beginnen also mit 2 oder 3 im ersten Hexadezimalzeichen.",
+    "options": [
+      "2000::/3",
+      "fe80::/10",
+      "fc00::/7",
+      "ff00::/8"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Aus wie vielen Blöcken zu je 16 Bit besteht eine IPv6-Adresse?",
+    "a": "8 Blöcke",
+    "a_full": "128 Bit werden in 8 Blöcke zu je 16 Bit (4 Hexadezimalziffern) aufgeteilt und durch Doppelpunkte getrennt.",
+    "options": [
+      "8 Blöcke",
+      "4 Blöcke",
+      "6 Blöcke",
+      "16 Blöcke"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ersetzt bei IPv6 die Broadcast-Adressen von IPv4?",
+    "a": "Multicast",
+    "a_full": "IPv6 kennt keinen Broadcast. Aufgaben wie die Nachbarerkennung laufen über Multicast-Adressen (ff00::/8), z.B. ff02::1 für alle Knoten im Segment.",
+    "options": [
+      "Multicast",
+      "Anycast über das Standardgateway",
+      "Unicast an jeden einzelnen Host",
+      "ARP-Requests"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat ein Access Point?",
+    "a": "Er bindet WLAN-Geräte an das kabelgebundene Netzwerk an",
+    "a_full": "Ein Access Point stellt eine Funkzelle bereit und verbindet die WLAN-Clients mit dem LAN (Bridge zwischen 802.11 und Ethernet).",
+    "options": [
+      "Er bindet WLAN-Geräte an das kabelgebundene Netzwerk an",
+      "Er vergibt öffentliche IP-Adressen",
+      "Er verbindet zwei Standorte über das Internet",
+      "Er filtert Schadsoftware aus E-Mails"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht die SSID beim WLAN?",
+    "a": "Service Set Identifier (Name des Funknetzes)",
+    "a_full": "Die SSID ist der Name, unter dem ein WLAN angezeigt wird. Ein Access Point kann mehrere SSIDs ausstrahlen, z.B. für Mitarbeiter und Gäste.",
+    "options": [
+      "Service Set Identifier (Name des Funknetzes)",
+      "Secure Signal Identification",
+      "System Security ID",
+      "Shared Session Identifier"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat ein Patchfeld im Netzwerkschrank?",
+    "a": "Dort enden die festen Installationskabel, die per Patchkabel mit dem Switch verbunden werden",
+    "a_full": "Das Patchfeld schützt die fest verlegte Verkabelung. Änderungen erfolgen nur über kurze Patchkabel zwischen Patchfeld und Switch.",
+    "options": [
+      "Dort enden die festen Installationskabel, die per Patchkabel mit dem Switch verbunden werden",
+      "Es verstärkt das Netzwerksignal",
+      "Es vergibt VLAN-Tags",
+      "Es dient als Stromverteiler für die Server"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bezeichnet die Tertiärverkabelung in der strukturierten Verkabelung?",
+    "a": "Die Etagenverkabelung vom Etagenverteiler zur Anschlussdose",
+    "a_full": "Primär = Gelände/Standort (zwischen Gebäuden), Sekundär = Gebäude-Steigbereich (zwischen den Etagen), Tertiär = Etage bis zur Anschlussdose am Arbeitsplatz.",
+    "options": [
+      "Die Etagenverkabelung vom Etagenverteiler zur Anschlussdose",
+      "Die Verkabelung zwischen mehreren Gebäuden",
+      "Die Verkabelung zwischen den Etagen",
+      "Die Verbindung zum Internetanbieter"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bezeichnet die Primärverkabelung in der strukturierten Verkabelung?",
+    "a": "Die Verkabelung zwischen den Gebäuden eines Standorts",
+    "a_full": "Die Primärverkabelung (Geländeverkabelung) verbindet die Gebäudeverteiler mit dem Standortverteiler, meist mit Glasfaser.",
+    "options": [
+      "Die Verkabelung zwischen den Gebäuden eines Standorts",
+      "Die Verkabelung innerhalb eines Raums",
+      "Die Verkabelung von der Dose zum PC",
+      "Die Verbindung zwischen zwei Switch-Ports"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was leistet Auto-MDI-X an einem Switchport?",
+    "a": "Er erkennt die Sende- und Empfangsadern automatisch",
+    "a_full": "Mit Auto-MDI-X funktioniert jede Verbindung mit einem normalen Patchkabel, ein Crossover-Kabel wird nicht mehr benötigt.",
+    "options": [
+      "Er erkennt die Sende- und Empfangsadern automatisch",
+      "Er stellt die Geschwindigkeit fest auf 1 Gbit/s",
+      "Er verschlüsselt den Datenverkehr",
+      "Er schaltet ungenutzte Ports ab"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein SFP-Modul?",
+    "a": "Ein steckbares Transceiver-Modul für Switch-Ports",
+    "a_full": "SFP (Small Form-factor Pluggable) Module werden in Switches gesteckt und ermöglichen je nach Modul Glasfaser- oder Kupferverbindungen, SFP+ z.B. 10 Gbit/s.",
+    "options": [
+      "Ein steckbares Transceiver-Modul für Switch-Ports",
+      "Ein Netzteil für Access Points",
+      "Ein Sicherheitsprotokoll für Funknetze",
+      "Eine Software zur Paketfilterung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie sind die Geräte bei einer Stern-Topologie verbunden?",
+    "a": "Jedes Gerät ist einzeln mit einem zentralen Knoten verbunden",
+    "a_full": "In der Stern-Topologie hängt jedes Gerät an einem zentralen Switch. Fällt ein Kabel aus, ist nur ein Gerät betroffen, fällt der Switch aus, alle.",
+    "options": [
+      "Jedes Gerät ist einzeln mit einem zentralen Knoten verbunden",
+      "Alle Geräte hängen an einem gemeinsamen Kabel",
+      "Jedes Gerät ist mit jedem anderen verbunden",
+      "Die Geräte bilden einen geschlossenen Kreis"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der größte Nachteil einer Bus-Topologie?",
+    "a": "Ein Kabelbruch legt das ganze Segment lahm",
+    "a_full": "Beim Bus teilen sich alle Geräte ein Kabel. Ein Defekt am Kabel oder ein fehlender Abschlusswiderstand stört das gesamte Netz.",
+    "options": [
+      "Ein Kabelbruch legt das ganze Segment lahm",
+      "Sie benötigt besonders viele Switches",
+      "Sie ist sehr teuer in der Verkabelung",
+      "Sie kann nur mit Glasfaser umgesetzt werden"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was kennzeichnet eine vermaschte Topologie (Mesh)?",
+    "a": "Knoten sind über mehrere Wege miteinander verbunden",
+    "a_full": "Durch mehrere Verbindungen zwischen den Knoten gibt es alternative Wege. Das erhöht die Ausfallsicherheit, aber auch Aufwand und Kosten.",
+    "options": [
+      "Knoten sind über mehrere Wege miteinander verbunden",
+      "Alle Knoten hängen an einem zentralen Verteiler",
+      "Jeder Knoten hat genau einen Nachbarn",
+      "Alle Knoten teilen sich ein Kabel"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht MPLS bei WAN-Verbindungen?",
+    "a": "Multiprotocol Label Switching",
+    "a_full": "MPLS leitet Pakete im Netz des Providers anhand kurzer Labels weiter. Unternehmen nutzen MPLS-VPNs, um Standorte mit zugesicherter Qualität zu verbinden.",
+    "options": [
+      "Multiprotocol Label Switching",
+      "Multi Path Load Sharing",
+      "Managed Private Line Service",
+      "Multiple Port LAN Switching"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie wird die Standardroute (Default Route) in IPv4 notiert?",
+    "a": "0.0.0.0/0",
+    "a_full": "Die Route 0.0.0.0/0 passt auf jedes Ziel. Sie wird genutzt, wenn keine spezifischere Route in der Routingtabelle existiert.",
+    "options": [
+      "0.0.0.0/0",
+      "255.255.255.255/32",
+      "127.0.0.0/8",
+      "0.0.0.0/32"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was gibt die administrative Distanz eines Routers an?",
+    "a": "Die Vertrauenswürdigkeit einer Routenquelle - der kleinere Wert gewinnt",
+    "a_full": "Kennt ein Router dasselbe Ziel aus mehreren Quellen, bevorzugt er die mit der kleinsten administrativen Distanz, z.B. eine statische Route (1) vor OSPF (110).",
+    "options": [
+      "Die Vertrauenswürdigkeit einer Routenquelle - der kleinere Wert gewinnt",
+      "Die Entfernung zum Ziel in Kilometern",
+      "Die Anzahl der Router bis zum Ziel",
+      "Die Bandbreite der Leitung"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Routing-Protokoll ist ein klassisches Distanzvektor-Protokoll mit dem Hop-Count als Metrik?",
+    "a": "RIP",
+    "a_full": "RIP (Routing Information Protocol) bewertet Wege nur nach der Anzahl der Router (Hops). Ab 16 Hops gilt ein Ziel als unerreichbar.",
+    "options": [
+      "RIP",
+      "OSPF",
+      "BGP",
+      "IS-IS"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Routing-Protokoll verbindet die autonomen Systeme im Internet?",
+    "a": "BGP",
+    "a_full": "BGP (Border Gateway Protocol) ist das Exterior Gateway Protocol des Internets und tauscht Routen zwischen den Providern (autonomen Systemen) aus.",
+    "options": [
+      "BGP",
+      "RIP",
+      "OSPF",
+      "EIGRP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht PAT (Port Address Translation)?",
+    "a": "Viele interne Adressen teilen sich eine öffentliche IP und werden über Ports unterschieden",
+    "a_full": "PAT, auch NAT-Overload oder Masquerading, ist die übliche Form von NAT im Router: Jede Verbindung bekommt einen eigenen Quellport auf der öffentlichen Adresse.",
+    "options": [
+      "Viele interne Adressen teilen sich eine öffentliche IP und werden über Ports unterschieden",
+      "Jede interne Adresse erhält eine eigene öffentliche Adresse",
+      "Ports werden verschlüsselt übertragen",
+      "Portnummern werden in MAC-Adressen übersetzt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt eine Portweiterleitung (Port Forwarding) am Router?",
+    "a": "Eingehende Verbindungen auf einem Port werden an einen internen Rechner weitergeleitet",
+    "a_full": "Mit Port Forwarding wird z.B. Port 443 der öffentlichen Adresse an einen internen Webserver weitergereicht. Jede Weiterleitung ist eine Öffnung nach außen und sollte begründet sein.",
+    "options": [
+      "Eingehende Verbindungen auf einem Port werden an einen internen Rechner weitergeleitet",
+      "Ausgehende Verbindungen werden blockiert",
+      "Alle Ports werden an alle Rechner weitergeleitet",
+      "Der Router wechselt automatisch den Internetanbieter"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Protokoll wird bei VoIP typischerweise für den Verbindungsaufbau (Signalisierung) genutzt?",
+    "a": "SIP",
+    "a_full": "SIP (Session Initiation Protocol) baut Gespräche auf und ab. Die eigentlichen Sprachdaten laufen meist über RTP.",
+    "options": [
+      "SIP",
+      "SMTP",
+      "SNMP",
+      "LDAP"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür steht FTTH?",
+    "a": "Fiber To The Home",
+    "a_full": "Bei FTTH reicht die Glasfaser bis in die Wohnung bzw. das Gebäude. Bei FTTC (Curb) endet sie am Verteilerkasten, danach geht es über Kupfer weiter.",
+    "options": [
+      "Fiber To The Home",
+      "Fast Transfer To Host",
+      "Fiber Through The Hub",
+      "Full Transmission To Home"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was beschreibt die Latenz einer Netzwerkverbindung?",
+    "a": "Die Verzögerungszeit, bis ein Paket beim Ziel ankommt",
+    "a_full": "Die Latenz wird meist in Millisekunden gemessen, z.B. als Round Trip Time per ping. Sie ist unabhängig von der Bandbreite.",
+    "options": [
+      "Die Verzögerungszeit, bis ein Paket beim Ziel ankommt",
+      "Die maximale Datenmenge pro Sekunde",
+      "Die Anzahl verlorener Pakete",
+      "Die Länge des Netzwerkkabels"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was versteht man unter Jitter?",
+    "a": "Die Schwankung der Laufzeit von Paketen",
+    "a_full": "Jitter ist die Varianz der Latenz. Hoher Jitter stört vor allem Echtzeitdienste wie VoIP und Videokonferenzen.",
+    "options": [
+      "Die Schwankung der Laufzeit von Paketen",
+      "Den Verlust von Paketen",
+      "Die maximale Paketgröße",
+      "Die Anzahl der Hops bis zum Ziel"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "An wen richtet sich eine Multicast-Übertragung?",
+    "a": "An eine Gruppe von Empfängern, die sich dafür angemeldet haben",
+    "a_full": "Multicast sendet ein Paket einmal an eine Gruppenadresse, z.B. für IPTV. Unicast geht an einen Empfänger, Broadcast an alle im Segment.",
+    "options": [
+      "An eine Gruppe von Empfängern, die sich dafür angemeldet haben",
+      "An alle Geräte im Netzsegment",
+      "An genau einen Empfänger",
+      "An den nächstgelegenen Server einer Gruppe"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Größe hat die Standard-MTU bei Ethernet?",
+    "a": "1500 Byte",
+    "a_full": "Ein Ethernet-Frame transportiert standardmäßig bis zu 1500 Byte Nutzdaten. Größere Werte (z.B. 9000 Byte) werden als Jumbo Frames bezeichnet.",
+    "options": [
+      "1500 Byte",
+      "576 Byte",
+      "1024 Byte",
+      "9000 Byte"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Mit welchem Befehl zeigt man unter Windows die ARP-Tabelle an?",
+    "a": "arp -a",
+    "a_full": "arp -a listet die zwischengespeicherten Zuordnungen von IP- zu MAC-Adressen der lokalen Schnittstellen.",
+    "options": [
+      "arp -a",
+      "ipconfig /all",
+      "netstat -r",
+      "route print -mac"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient der Befehl nslookup?",
+    "a": "Zum Abfragen von DNS-Servern",
+    "a_full": "Mit nslookup (unter Linux auch dig) prüft man, welche Adresse ein DNS-Server zu einem Namen liefert, und findet so DNS-Fehler.",
+    "options": [
+      "Zum Abfragen von DNS-Servern",
+      "Zum Anzeigen der Routingtabelle",
+      "Zum Testen der Erreichbarkeit per ICMP",
+      "Zum Anzeigen offener Ports"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel stellt sicher, dass Systeme und Daten bei Bedarf nutzbar sind?",
+    "a": "Verfügbarkeit",
+    "a_full": "Verfügbarkeit bedeutet, dass Informationen und Systeme im vereinbarten Umfang nutzbar sind. Bedroht wird sie z.B. durch Hardwareausfälle oder DDoS-Angriffe.",
+    "options": [
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Integrität",
+      "Authentizität"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Schutzziel stellt sicher, dass eine Nachricht wirklich vom angegebenen Absender stammt?",
+    "a": "Authentizität",
+    "a_full": "Authentizität ist die Echtheit und Überprüfbarkeit von Kommunikationspartnern und Daten, z.B. durch digitale Signaturen oder Zertifikate.",
+    "options": [
+      "Authentizität",
+      "Verfügbarkeit",
+      "Vertraulichkeit",
+      "Anonymität"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Authentifizierung?",
+    "a": "Die Prüfung, ob jemand wirklich der ist, der er vorgibt zu sein",
+    "a_full": "Bei der Authentifizierung weist sich ein Benutzer aus, z.B. mit Passwort, Token oder Fingerabdruck. Erst danach wird über die Rechte entschieden.",
+    "options": [
+      "Die Prüfung, ob jemand wirklich der ist, der er vorgibt zu sein",
+      "Die Vergabe von Zugriffsrechten",
+      "Die Protokollierung aller Zugriffe",
+      "Die Verschlüsselung von Daten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter Autorisierung?",
+    "a": "Die Entscheidung, worauf ein angemeldeter Benutzer zugreifen darf",
+    "a_full": "Autorisierung folgt auf die Authentifizierung: Das System prüft anhand von Rechten und Rollen, welche Aktionen erlaubt sind.",
+    "options": [
+      "Die Entscheidung, worauf ein angemeldeter Benutzer zugreifen darf",
+      "Die Prüfung des Passworts",
+      "Die Anmeldung per Fingerabdruck",
+      "Das Erstellen eines Benutzerkontos"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche drei Faktorarten gibt es bei der Authentifizierung?",
+    "a": "Wissen, Besitz und Inhärenz (Biometrie)",
+    "a_full": "Wissen (Passwort, PIN), Besitz (Smartcard, Smartphone, Token) und Inhärenz (Fingerabdruck, Gesicht). MFA kombiniert mindestens zwei verschiedene Faktorarten.",
+    "options": [
+      "Wissen, Besitz und Inhärenz (Biometrie)",
+      "Passwort, PIN und Sicherheitsfrage",
+      "Benutzername, Passwort und E-Mail",
+      "Hardware, Software und Netzwerk"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist die Kombination aus Passwort und PIN keine echte Zwei-Faktor-Authentifizierung?",
+    "a": "Beides sind Faktoren der Art Wissen",
+    "a_full": "Echte 2FA verlangt zwei unterschiedliche Faktorarten, z.B. Wissen (Passwort) und Besitz (Smartphone mit Code).",
+    "options": [
+      "Beides sind Faktoren der Art Wissen",
+      "Weil eine PIN zu kurz ist",
+      "Weil Passwörter nicht mehr erlaubt sind",
+      "Weil dafür eine Smartcard fehlt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wofür steht TOTP bei Einmalpasswörtern?",
+    "a": "Time-based One-Time Password",
+    "a_full": "TOTP-Apps berechnen aus einem geheimen Schlüssel und der aktuellen Uhrzeit alle 30 Sekunden einen neuen Code.",
+    "options": [
+      "Time-based One-Time Password",
+      "Token Operated Transfer Protocol",
+      "Trusted One-Time Pairing",
+      "Temporary Online Transaction PIN"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Single Sign-on (SSO)?",
+    "a": "Eine einmalige Anmeldung ermöglicht den Zugriff auf mehrere Anwendungen",
+    "a_full": "Bei SSO meldet sich der Benutzer einmal an (z.B. über Kerberos oder SAML) und wird für weitere Dienste automatisch authentifiziert.",
+    "options": [
+      "Eine einmalige Anmeldung ermöglicht den Zugriff auf mehrere Anwendungen",
+      "Jeder Dienst hat ein eigenes Passwort",
+      "Ein Benutzerkonto darf nur einmal genutzt werden",
+      "Die Anmeldung erfolgt nur per Fingerabdruck"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Passwort-Manager?",
+    "a": "Ein Programm, das Zugangsdaten verschlüsselt speichert und starke Passwörter erzeugt",
+    "a_full": "Mit einem Passwort-Manager muss man sich nur ein Master-Passwort merken und kann für jeden Dienst ein eigenes, langes Passwort nutzen.",
+    "options": [
+      "Ein Programm, das Zugangsdaten verschlüsselt speichert und starke Passwörter erzeugt",
+      "Ein Programm, das vergessene Passwörter knackt",
+      "Eine Richtlinie für Passwortwechsel",
+      "Ein Server, der alle Passwörter im Klartext sichert"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt das Prinzip der Funktionstrennung (Separation of Duties)?",
+    "a": "Kritische Aufgaben werden auf mehrere Personen verteilt",
+    "a_full": "Niemand soll einen kritischen Vorgang allein durchführen können, z.B. Bestellung anlegen und Zahlung freigeben. Das erschwert Betrug und Fehler.",
+    "options": [
+      "Kritische Aufgaben werden auf mehrere Personen verteilt",
+      "Jeder Mitarbeiter hat alle Rechte",
+      "Server und Clients stehen in getrennten Räumen",
+      "Daten werden auf mehrere Festplatten verteilt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist rollenbasierte Zugriffskontrolle (RBAC)?",
+    "a": "Rechte werden Rollen zugewiesen und Benutzer erhalten Rollen",
+    "a_full": "Statt jedem Benutzer einzeln Rechte zu geben, bekommt z.B. die Rolle 'Buchhaltung' Rechte. Das vereinfacht Verwaltung und Kontrolle.",
+    "options": [
+      "Rechte werden Rollen zugewiesen und Benutzer erhalten Rollen",
+      "Jeder Benutzer vergibt seine Rechte selbst",
+      "Rechte hängen nur von der Uhrzeit ab",
+      "Alle Benutzer haben dieselben Rechte"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist symmetrische Verschlüsselung?",
+    "a": "Ver- und Entschlüsselung mit demselben geheimen Schlüssel",
+    "a_full": "Symmetrische Verfahren wie AES sind schnell. Das Problem ist der sichere Austausch des gemeinsamen Schlüssels.",
+    "options": [
+      "Ver- und Entschlüsselung mit demselben geheimen Schlüssel",
+      "Verschlüsselung mit einem öffentlichen und einem privaten Schlüssel",
+      "Verschlüsselung ohne Schlüssel",
+      "Eine Einwegfunktion ohne Umkehrung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist der wichtigste Nachteil symmetrischer Verschlüsselung?",
+    "a": "Der gemeinsame Schlüssel muss sicher ausgetauscht werden",
+    "a_full": "Beide Seiten brauchen denselben geheimen Schlüssel. Bei vielen Partnern wächst zudem die Zahl der benötigten Schlüssel stark an.",
+    "options": [
+      "Der gemeinsame Schlüssel muss sicher ausgetauscht werden",
+      "Sie ist sehr langsam",
+      "Sie ist mathematisch nicht sicher",
+      "Sie funktioniert nur für kurze Texte"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches bekannte Verfahren ist ein asymmetrisches Verschlüsselungsverfahren?",
+    "a": "RSA",
+    "a_full": "RSA nutzt ein Schlüsselpaar aus öffentlichem und privatem Schlüssel. Weitere asymmetrische Verfahren basieren auf elliptischen Kurven (ECC).",
+    "options": [
+      "RSA",
+      "AES",
+      "3DES",
+      "SHA-256"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wozu dient das Diffie-Hellman-Verfahren?",
+    "a": "Zum sicheren Aushandeln eines gemeinsamen Schlüssels über einen unsicheren Kanal",
+    "a_full": "Beide Partner berechnen denselben geheimen Schlüssel, ohne ihn übertragen zu müssen. Das wird z.B. bei TLS und IPsec genutzt.",
+    "options": [
+      "Zum sicheren Aushandeln eines gemeinsamen Schlüssels über einen unsicheren Kanal",
+      "Zum Hashen von Passwörtern",
+      "Zum Signieren von E-Mails",
+      "Zum Komprimieren von Daten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Perfect Forward Secrecy?",
+    "a": "Ein späteres Bekanntwerden des Langzeitschlüssels entschlüsselt keine alten Sitzungen",
+    "a_full": "Für jede Sitzung wird ein eigener, flüchtiger Schlüssel ausgehandelt (z.B. per ECDHE). Aufgezeichneter Verkehr bleibt auch später geschützt.",
+    "options": [
+      "Ein späteres Bekanntwerden des Langzeitschlüssels entschlüsselt keine alten Sitzungen",
+      "Alle Sitzungen nutzen denselben Schlüssel",
+      "Der Schlüssel wird nie gewechselt",
+      "Die Verbindung ist ohne Zertifikat möglich"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Ende-zu-Ende-Verschlüsselung?",
+    "a": "Nur Absender und Empfänger können die Nachricht entschlüsseln",
+    "a_full": "Die Daten bleiben auf dem ganzen Weg verschlüsselt, auch auf den Servern des Anbieters. Bei reiner Transportverschlüsselung kann der Server mitlesen.",
+    "options": [
+      "Nur Absender und Empfänger können die Nachricht entschlüsseln",
+      "Nur die Verbindung zum Server ist verschlüsselt",
+      "Die Nachricht wird am Ende gelöscht",
+      "Der Server verschlüsselt die Nachricht für alle Empfänger gleich"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Zertifikat nach dem Standard X.509?",
+    "a": "Ein digitaler Nachweis, der einen öffentlichen Schlüssel an eine Identität bindet",
+    "a_full": "Ein X.509-Zertifikat enthält u.a. Inhaber, öffentlichen Schlüssel, Gültigkeitszeitraum und die Signatur der ausstellenden Zertifizierungsstelle.",
+    "options": [
+      "Ein digitaler Nachweis, der einen öffentlichen Schlüssel an eine Identität bindet",
+      "Ein Passwort für Webserver",
+      "Ein Hashwert einer Datei",
+      "Eine Lizenzdatei für Software"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie nennt man eine Liste zurückgezogener Zertifikate?",
+    "a": "CRL (Certificate Revocation List)",
+    "a_full": "Wird ein privater Schlüssel kompromittiert, sperrt die CA das Zertifikat. Clients prüfen Sperrungen per CRL oder online per OCSP.",
+    "options": [
+      "CRL (Certificate Revocation List)",
+      "CSR",
+      "CA-Bundle",
+      "Root Store"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine CSR (Certificate Signing Request)?",
+    "a": "Eine Anfrage an eine CA, ein Zertifikat für einen öffentlichen Schlüssel auszustellen",
+    "a_full": "Der Antragsteller erzeugt ein Schlüsselpaar und schickt den öffentlichen Schlüssel mit seinen Angaben als CSR an die CA. Der private Schlüssel bleibt bei ihm.",
+    "options": [
+      "Eine Anfrage an eine CA, ein Zertifikat für einen öffentlichen Schlüssel auszustellen",
+      "Eine Liste gesperrter Zertifikate",
+      "Ein Protokoll zur Zeitsynchronisation",
+      "Ein Bericht über Sicherheitsvorfälle"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein selbstsigniertes Zertifikat?",
+    "a": "Ein Zertifikat, das nicht von einer vertrauenswürdigen CA, sondern vom Inhaber selbst unterschrieben ist",
+    "a_full": "Browser warnen bei selbstsignierten Zertifikaten, weil niemand Drittes die Identität bestätigt hat. Intern kann man eine eigene CA verteilen.",
+    "options": [
+      "Ein Zertifikat, das nicht von einer vertrauenswürdigen CA, sondern vom Inhaber selbst unterschrieben ist",
+      "Ein Zertifikat ohne Ablaufdatum",
+      "Ein Zertifikat mit doppelter Signatur",
+      "Ein Zertifikat für E-Mails"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Malware?",
+    "a": "Oberbegriff für Schadsoftware",
+    "a_full": "Malware (malicious software) umfasst u.a. Viren, Würmer, Trojaner, Ransomware, Spyware und Rootkits.",
+    "options": [
+      "Oberbegriff für Schadsoftware",
+      "Ein Programm zur Malwareerkennung",
+      "Fehlerhafte, aber harmlose Software",
+      "Ein Werkzeug zur Datensicherung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Spyware?",
+    "a": "Schadsoftware, die heimlich Informationen über den Benutzer sammelt",
+    "a_full": "Spyware späht z.B. Surfverhalten, Zugangsdaten oder Dokumente aus und sendet sie an Dritte.",
+    "options": [
+      "Schadsoftware, die heimlich Informationen über den Benutzer sammelt",
+      "Software zur Überwachung von Servern",
+      "Ein Werbeprogramm mit Zustimmung",
+      "Ein Programm zum Datenschutz"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Exploit?",
+    "a": "Code oder Vorgehen, das eine Sicherheitslücke gezielt ausnutzt",
+    "a_full": "Ein Exploit nutzt eine Schwachstelle aus, um z.B. Code auszuführen oder Rechte zu erlangen. Patches schließen die zugrunde liegende Lücke.",
+    "options": [
+      "Code oder Vorgehen, das eine Sicherheitslücke gezielt ausnutzt",
+      "Ein Programm, das Lücken automatisch schließt",
+      "Ein Bericht über einen Vorfall",
+      "Ein Update des Herstellers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Backdoor?",
+    "a": "Ein versteckter Zugang, der die normale Anmeldung umgeht",
+    "a_full": "Backdoors werden von Angreifern oder absichtlich von Entwicklern eingebaut und erlauben Zugriff ohne reguläre Authentifizierung.",
+    "options": [
+      "Ein versteckter Zugang, der die normale Anmeldung umgeht",
+      "Der Notausgang im Serverraum",
+      "Eine Firewall-Regel für Administratoren",
+      "Ein Backup auf externem Speicher"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Pharming?",
+    "a": "Umleitung auf gefälschte Webseiten durch Manipulation der Namensauflösung",
+    "a_full": "Beim Pharming werden DNS-Einträge oder die hosts-Datei manipuliert. Der Benutzer tippt die richtige Adresse und landet trotzdem auf der Fälschung.",
+    "options": [
+      "Umleitung auf gefälschte Webseiten durch Manipulation der Namensauflösung",
+      "Massenhafte Werbe-E-Mails",
+      "Das Ausspähen von Tastatureingaben",
+      "Das Überlasten eines Servers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Vishing?",
+    "a": "Phishing per Telefonanruf",
+    "a_full": "Beim Voice-Phishing geben sich Angreifer am Telefon z.B. als Support oder Bank aus, um Zugangsdaten oder Zahlungen zu erschleichen.",
+    "options": [
+      "Phishing per Telefonanruf",
+      "Phishing per SMS",
+      "Phishing über gefälschte Videos",
+      "Phishing über soziale Netzwerke"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Smishing?",
+    "a": "Phishing per SMS oder Messenger",
+    "a_full": "Smishing nutzt Textnachrichten, z.B. angebliche Paketbenachrichtigungen mit Link auf eine Schadseite.",
+    "options": [
+      "Phishing per SMS oder Messenger",
+      "Phishing per Telefonanruf",
+      "Phishing per Brief",
+      "Phishing per QR-Code am Arbeitsplatz"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist CEO-Fraud?",
+    "a": "Betrüger geben sich als Geschäftsführung aus und veranlassen Überweisungen",
+    "a_full": "Beim CEO-Fraud (Fake President) setzen Täter Mitarbeitende mit gefälschten Mails oder Anrufen unter Druck. Schutz bieten klare Freigabeprozesse und Rückrufe.",
+    "options": [
+      "Betrüger geben sich als Geschäftsführung aus und veranlassen Überweisungen",
+      "Ein Geschäftsführer stiehlt Firmendaten",
+      "Ein Angriff auf das Mailsystem per DDoS",
+      "Die Kündigung eines Geschäftsführers"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Tailgating im Sinne der physischen Sicherheit?",
+    "a": "Eine unberechtigte Person folgt einer berechtigten durch eine gesicherte Tür",
+    "a_full": "Wer höflich die Tür aufhält, lässt eventuell Unbefugte ins Gebäude. Schutz: Vereinzelungsanlagen, Schulung, Ansprechen fremder Personen.",
+    "options": [
+      "Eine unberechtigte Person folgt einer berechtigten durch eine gesicherte Tür",
+      "Das Mitlesen von Bildschirmen",
+      "Das Durchsuchen von Papiermüll",
+      "Das Kopieren von Zugangskarten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Shoulder Surfing?",
+    "a": "Das Ausspähen von Eingaben durch Über-die-Schulter-Schauen",
+    "a_full": "Angreifer beobachten z.B. die PIN-Eingabe oder den Bildschirm. Blickschutzfilter und Aufmerksamkeit helfen.",
+    "options": [
+      "Das Ausspähen von Eingaben durch Über-die-Schulter-Schauen",
+      "Das Surfen mit fremdem WLAN",
+      "Das Mitschneiden von Netzwerkverkehr",
+      "Ein Angriff auf Webbrowser"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Dumpster Diving?",
+    "a": "Das Durchsuchen von Abfall nach verwertbaren Informationen",
+    "a_full": "Unvernichtete Ausdrucke, Notizen oder alte Datenträger im Müll liefern Angreifern wertvolle Informationen. Schutz: Aktenvernichter und sichere Datenträgerentsorgung.",
+    "options": [
+      "Das Durchsuchen von Abfall nach verwertbaren Informationen",
+      "Das Wiederherstellen gelöschter Dateien",
+      "Das Überlasten eines Speichers",
+      "Das Tauchen nach Unterseekabeln"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt die Norm DIN 66399?",
+    "a": "Die Vernichtung von Datenträgern in Sicherheitsstufen",
+    "a_full": "DIN 66399 legt Schutzklassen und Sicherheitsstufen (P-1 bis P-7 für Papier, H für Festplatten usw.) für die Datenträgervernichtung fest.",
+    "options": [
+      "Die Vernichtung von Datenträgern in Sicherheitsstufen",
+      "Die Verkabelung von Rechenzentren",
+      "Die Gestaltung von Passwörtern",
+      "Die Aufbewahrungsfristen von Rechnungen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind personenbezogene Daten nach DSGVO?",
+    "a": "Alle Informationen, die sich auf eine identifizierte oder identifizierbare Person beziehen",
+    "a_full": "Dazu gehören z.B. Name, Anschrift, E-Mail-Adresse, IP-Adresse, Personalnummer oder Standortdaten (Art. 4 Nr. 1 DSGVO).",
+    "options": [
+      "Alle Informationen, die sich auf eine identifizierte oder identifizierbare Person beziehen",
+      "Nur Name und Geburtsdatum",
+      "Nur Gesundheits- und Bankdaten",
+      "Alle Daten eines Unternehmens"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO?",
+    "a": "Besonders sensible Daten wie Gesundheit, Religion oder biometrische Daten",
+    "a_full": "Dazu zählen u.a. ethnische Herkunft, politische Meinung, Religion, Gewerkschaftszugehörigkeit, genetische, biometrische und Gesundheitsdaten. Ihre Verarbeitung ist grundsätzlich verboten, außer es greift eine Ausnahme.",
+    "options": [
+      "Besonders sensible Daten wie Gesundheit, Religion oder biometrische Daten",
+      "Alle Daten von Kunden",
+      "Daten, die älter als zehn Jahre sind",
+      "Daten aus öffentlichen Quellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wer ist nach DSGVO der Verantwortliche?",
+    "a": "Wer über Zwecke und Mittel der Verarbeitung entscheidet",
+    "a_full": "Der Verantwortliche (z.B. das Unternehmen) ist für die Einhaltung der DSGVO zuständig und rechenschaftspflichtig.",
+    "options": [
+      "Wer über Zwecke und Mittel der Verarbeitung entscheidet",
+      "Der Datenschutzbeauftragte",
+      "Jeder Mitarbeiter, der Daten eingibt",
+      "Die Aufsichtsbehörde"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Auftragsverarbeitung nach Art. 28 DSGVO?",
+    "a": "Ein Dienstleister verarbeitet personenbezogene Daten weisungsgebunden im Auftrag",
+    "a_full": "Beispiele: externer Cloud-Speicher, Lohnabrechnung, IT-Wartung mit Datenzugriff. Dafür ist ein Auftragsverarbeitungsvertrag (AVV) nötig.",
+    "options": [
+      "Ein Dienstleister verarbeitet personenbezogene Daten weisungsgebunden im Auftrag",
+      "Ein Mitarbeiter bearbeitet Kundenaufträge",
+      "Eine Behörde fordert Daten an",
+      "Ein Kunde bestellt online"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Verzeichnis von Verarbeitungstätigkeiten (VVT)?",
+    "a": "Eine Dokumentation aller Verarbeitungen personenbezogener Daten im Unternehmen",
+    "a_full": "Nach Art. 30 DSGVO beschreibt das VVT u.a. Zweck, Datenkategorien, Empfänger, Löschfristen und die technischen und organisatorischen Maßnahmen.",
+    "options": [
+      "Eine Dokumentation aller Verarbeitungen personenbezogener Daten im Unternehmen",
+      "Eine Liste aller Mitarbeiter",
+      "Das Inventar der IT-Hardware",
+      "Das Protokoll aller Anmeldungen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann ist eine Datenschutz-Folgenabschätzung (DSFA) nötig?",
+    "a": "Wenn eine Verarbeitung voraussichtlich ein hohes Risiko für die Betroffenen hat",
+    "a_full": "Art. 35 DSGVO verlangt eine DSFA z.B. bei umfangreicher Verarbeitung sensibler Daten oder systematischer Überwachung, etwa per Videoanlage.",
+    "options": [
+      "Wenn eine Verarbeitung voraussichtlich ein hohes Risiko für die Betroffenen hat",
+      "Bei jeder E-Mail an Kunden",
+      "Nur bei Unternehmen über 500 Mitarbeitern",
+      "Einmal pro Jahr für alle Daten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt der Grundsatz der Datenminimierung?",
+    "a": "Es dürfen nur so viele Daten erhoben werden, wie für den Zweck nötig sind",
+    "a_full": "Datenminimierung (Art. 5 DSGVO) heißt: angemessen, erheblich und auf das notwendige Maß beschränkt.",
+    "options": [
+      "Es dürfen nur so viele Daten erhoben werden, wie für den Zweck nötig sind",
+      "Daten müssen komprimiert gespeichert werden",
+      "Daten dürfen nur auf kleinen Datenträgern liegen",
+      "Es darf nur ein Backup geben"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt der Grundsatz der Zweckbindung?",
+    "a": "Daten dürfen nur für den festgelegten, eindeutigen Zweck verarbeitet werden",
+    "a_full": "Wer Daten für den Versand erhebt, darf sie nicht ohne Weiteres für andere Zwecke wie Werbung nutzen (Art. 5 Abs. 1 b DSGVO).",
+    "options": [
+      "Daten dürfen nur für den festgelegten, eindeutigen Zweck verarbeitet werden",
+      "Daten müssen an einen Zweckverband gemeldet werden",
+      "Daten dürfen nie gelöscht werden",
+      "Jeder Zweck ist erlaubt, wenn die Daten verschlüsselt sind"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Recht nach Art. 17 DSGVO wird auch \"Recht auf Vergessenwerden\" genannt?",
+    "a": "Recht auf Löschung",
+    "a_full": "Betroffene können die Löschung ihrer Daten verlangen, z.B. wenn der Zweck entfallen ist oder die Einwilligung widerrufen wurde, sofern keine Aufbewahrungspflicht besteht.",
+    "options": [
+      "Recht auf Löschung",
+      "Recht auf Auskunft",
+      "Recht auf Berichtigung",
+      "Recht auf Datenübertragbarkeit"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Informationssicherheits-Managementsystem (ISMS)?",
+    "a": "Ein System aus Regeln und Prozessen zur dauerhaften Steuerung der Informationssicherheit",
+    "a_full": "Ein ISMS legt Ziele, Verantwortlichkeiten, Risikobewertung und Verbesserung fest. Bekannte Grundlagen sind ISO/IEC 27001 und der BSI-IT-Grundschutz.",
+    "options": [
+      "Ein System aus Regeln und Prozessen zur dauerhaften Steuerung der Informationssicherheit",
+      "Eine Antivirensoftware",
+      "Ein Firewall-Produkt",
+      "Ein Programm zur Passwortverwaltung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Norm beschreibt die Anforderungen an ein ISMS?",
+    "a": "ISO/IEC 27001",
+    "a_full": "ISO/IEC 27001 ist die internationale Norm für Informationssicherheits-Managementsysteme, nach der sich Unternehmen zertifizieren lassen können.",
+    "options": [
+      "ISO/IEC 27001",
+      "ISO 9001",
+      "ISO 14001",
+      "DIN 66399"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Schwachstelle (Vulnerability)?",
+    "a": "Eine Lücke oder ein Fehler, der von einer Bedrohung ausgenutzt werden kann",
+    "a_full": "Risiko entsteht, wenn eine Bedrohung auf eine Schwachstelle trifft. Beispiele: ungepatchte Software, schwache Passwörter, fehlende Schulung.",
+    "options": [
+      "Eine Lücke oder ein Fehler, der von einer Bedrohung ausgenutzt werden kann",
+      "Ein bereits erfolgter Angriff",
+      "Ein Virenscanner",
+      "Eine Firewall-Regel"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie wird ein Risiko in der Risikoanalyse häufig bewertet?",
+    "a": "Eintrittswahrscheinlichkeit mal Schadenshöhe",
+    "a_full": "Aus Wahrscheinlichkeit und Auswirkung ergibt sich die Risikohöhe, z.B. in einer Risikomatrix. Danach wird über Maßnahmen entschieden.",
+    "options": [
+      "Eintrittswahrscheinlichkeit mal Schadenshöhe",
+      "Anzahl der Mitarbeiter mal Anzahl der Server",
+      "Kosten der Firewall geteilt durch Umsatz",
+      "Alter der Hardware in Jahren"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche vier Strategien gibt es im Umgang mit Risiken?",
+    "a": "Vermeiden, Vermindern, Übertragen, Akzeptieren",
+    "a_full": "Risiken kann man vermeiden (Tätigkeit lassen), vermindern (Maßnahmen), übertragen (z.B. Versicherung) oder bewusst akzeptieren.",
+    "options": [
+      "Vermeiden, Vermindern, Übertragen, Akzeptieren",
+      "Ignorieren, Verschieben, Löschen, Melden",
+      "Erkennen, Blockieren, Löschen, Sichern",
+      "Planen, Kaufen, Installieren, Testen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Virenscanner mit signaturbasierter Erkennung?",
+    "a": "Er erkennt Schadsoftware anhand bekannter Muster",
+    "a_full": "Signaturen erkennen bekannte Schädlinge zuverlässig. Neue Varianten erkennt man eher über Heuristik und Verhaltensanalyse.",
+    "options": [
+      "Er erkennt Schadsoftware anhand bekannter Muster",
+      "Er erkennt jede neue Schadsoftware sicher",
+      "Er prüft nur digitale Signaturen von E-Mails",
+      "Er blockiert alle Downloads"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist EDR (Endpoint Detection and Response)?",
+    "a": "Eine Lösung, die Endgeräte überwacht, Angriffe erkennt und darauf reagieren kann",
+    "a_full": "EDR sammelt Ereignisse auf Clients und Servern, erkennt verdächtiges Verhalten und ermöglicht z.B. das Isolieren eines Rechners.",
+    "options": [
+      "Eine Lösung, die Endgeräte überwacht, Angriffe erkennt und darauf reagieren kann",
+      "Ein Backupverfahren für Clients",
+      "Ein Protokoll zur Fernwartung",
+      "Eine Datenschutzrichtlinie"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist Zero Trust?",
+    "a": "Ein Sicherheitsmodell, das keinem Gerät und Benutzer automatisch vertraut, auch nicht im internen Netz",
+    "a_full": "Jeder Zugriff wird einzeln geprüft (Identität, Gerätezustand, Kontext). Der Grundsatz lautet: Never trust, always verify.",
+    "options": [
+      "Ein Sicherheitsmodell, das keinem Gerät und Benutzer automatisch vertraut, auch nicht im internen Netz",
+      "Ein Modell ohne Passwörter",
+      "Ein Netz ohne Firewall",
+      "Ein Vertrag ohne Haftung"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Security-Patch?",
+    "a": "Ein Update, das eine Sicherheitslücke schließt",
+    "a_full": "Sicherheitsupdates sollten zeitnah, aber geplant und getestet eingespielt werden, besonders bei aktiv ausgenutzten Lücken.",
+    "options": [
+      "Ein Update, das eine Sicherheitslücke schließt",
+      "Ein Aufkleber für Server",
+      "Ein neues Softwarefeature",
+      "Eine Lizenz für Antivirensoftware"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Hauptaufgabe hat die CPU?",
+    "a": "Befehle von Programmen verarbeiten und ausführen",
+    "a_full": "Die CPU (Central Processing Unit) holt Befehle aus dem Arbeitsspeicher, dekodiert sie und führt sie aus. Sie besteht u.a. aus Steuerwerk, Rechenwerk und Registern.",
+    "options": [
+      "Befehle von Programmen verarbeiten und ausführen",
+      "Daten dauerhaft speichern",
+      "Bilder für den Monitor berechnen",
+      "Den Rechner mit Strom versorgen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Cache einer CPU?",
+    "a": "Ein sehr schneller Zwischenspeicher direkt in bzw. an der CPU",
+    "a_full": "Der Cache (L1, L2, L3) hält häufig benötigte Daten vor, damit die CPU nicht auf den langsameren Arbeitsspeicher warten muss.",
+    "options": [
+      "Ein sehr schneller Zwischenspeicher direkt in bzw. an der CPU",
+      "Der Speicher für das BIOS",
+      "Ein Teil der Festplatte",
+      "Der Grafikspeicher"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Hyper-Threading bzw. SMT bei Prozessoren?",
+    "a": "Ein physischer Kern bearbeitet zwei Threads parallel",
+    "a_full": "Simultaneous Multithreading lässt einen Kern gegenüber dem Betriebssystem als zwei logische Kerne erscheinen und nutzt freie Recheneinheiten besser aus.",
+    "options": [
+      "Ein physischer Kern bearbeitet zwei Threads parallel",
+      "Die CPU wird übertaktet",
+      "Zwei CPUs teilen sich einen Kühler",
+      "Der Arbeitsspeicher wird verdoppelt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was verbindet der Chipsatz auf dem Mainboard?",
+    "a": "Die CPU mit weiteren Komponenten wie Schnittstellen und Erweiterungen",
+    "a_full": "Der Chipsatz steuert die Kommunikation zwischen CPU und Peripherie wie SATA, USB und zusätzlichen PCIe-Lanes.",
+    "options": [
+      "Die CPU mit weiteren Komponenten wie Schnittstellen und Erweiterungen",
+      "Nur die Lüfter mit dem Netzteil",
+      "Den Monitor mit der Tastatur",
+      "Die Festplatte mit dem Internet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht PCIe?",
+    "a": "Peripheral Component Interconnect Express",
+    "a_full": "PCIe ist die serielle Schnittstelle für Erweiterungskarten wie Grafik-, Netzwerk- oder NVMe-Karten. Die Bandbreite hängt von Generation und Anzahl der Lanes (x1, x4, x16) ab.",
+    "options": [
+      "Peripheral Component Interconnect Express",
+      "Personal Computer Interface Extension",
+      "Parallel Core Integrated Express",
+      "Power Control Interface Express"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ECC-Arbeitsspeicher?",
+    "a": "Arbeitsspeicher, der Bitfehler erkennen und einzelne korrigieren kann",
+    "a_full": "ECC (Error Correction Code) RAM wird in Servern eingesetzt, weil unbemerkte Speicherfehler dort zu Datenfehlern oder Abstürzen führen können.",
+    "options": [
+      "Arbeitsspeicher, der Bitfehler erkennen und einzelne korrigieren kann",
+      "Besonders energiesparender Speicher",
+      "Speicher mit integrierter Verschlüsselung",
+      "Grafikspeicher für Monitore"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Dual Channel beim Arbeitsspeicher?",
+    "a": "Zwei Speichermodule werden parallel angesprochen und erhöhen die Bandbreite",
+    "a_full": "Werden passende Module in die richtigen Bänke gesteckt, greift der Speichercontroller über zwei Kanäle gleichzeitig zu.",
+    "options": [
+      "Zwei Speichermodule werden parallel angesprochen und erhöhen die Bandbreite",
+      "Zwei Rechner teilen sich einen Speicher",
+      "Speicher mit zwei Spannungen",
+      "Ein Modul wird gespiegelt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was passiert, wenn der Arbeitsspeicher voll ist und das Betriebssystem auslagert?",
+    "a": "Daten werden in die Auslagerungsdatei bzw. Swap auf dem Datenträger verschoben",
+    "a_full": "Auslagern verhindert Abstürze, ist aber deutlich langsamer als RAM. Häufiges Auslagern ist ein Zeichen für zu wenig Arbeitsspeicher.",
+    "options": [
+      "Daten werden in die Auslagerungsdatei bzw. Swap auf dem Datenträger verschoben",
+      "Der Rechner schaltet sich sofort ab",
+      "Die Daten werden gelöscht",
+      "Die CPU übernimmt die Speicherung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Aufgabe hat ein Netzteil im PC?",
+    "a": "Es wandelt Netzwechselspannung in die benötigten Gleichspannungen um",
+    "a_full": "Ein PC-Netzteil liefert z.B. 12 V, 5 V und 3,3 V. Die Leistung (Watt) muss zum Bedarf der Komponenten passen, die 80-PLUS-Zertifizierung gibt die Effizienz an.",
+    "options": [
+      "Es wandelt Netzwechselspannung in die benötigten Gleichspannungen um",
+      "Es speichert Strom für Stromausfälle",
+      "Es kühlt die CPU",
+      "Es verbindet den PC mit dem Netzwerk"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt die Zertifizierung 80 PLUS bei Netzteilen an?",
+    "a": "Einen Mindestwirkungsgrad von 80 Prozent und mehr",
+    "a_full": "80 PLUS (Bronze, Silber, Gold, Platin, Titanium) steht für eine hohe Effizienz, also wenig Verlustwärme.",
+    "options": [
+      "Einen Mindestwirkungsgrad von 80 Prozent und mehr",
+      "Mindestens 80 Watt Leistung",
+      "80 Anschlüsse am Netzteil",
+      "Lebensdauer von 80.000 Stunden"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein M.2-Steckplatz?",
+    "a": "Ein kompakter Steckplatz vor allem für SSDs",
+    "a_full": "M.2 ist ein Formfaktor. Eine M.2-SSD kann je nach Modell über SATA oder deutlich schneller über NVMe/PCIe angebunden sein.",
+    "options": [
+      "Ein kompakter Steckplatz vor allem für SSDs",
+      "Ein Steckplatz für Arbeitsspeicher",
+      "Ein Anschluss für Monitore",
+      "Ein Stromanschluss für Lüfter"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist der Unterschied zwischen MBR und GPT?",
+    "a": "GPT unterstützt größere Datenträger und mehr Partitionen als MBR",
+    "a_full": "MBR erlaubt maximal 4 primäre Partitionen und ca. 2 TiB Größe. GPT (GUID Partition Table) ist Teil von UEFI und hebt diese Grenzen auf.",
+    "options": [
+      "GPT unterstützt größere Datenträger und mehr Partitionen als MBR",
+      "MBR ist neuer als GPT",
+      "GPT funktioniert nur mit HDDs",
+      "MBR ist ein Dateisystem"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Dateisystem wird häufig für USB-Sticks verwendet, die an vielen Geräten funktionieren sollen?",
+    "a": "exFAT",
+    "a_full": "exFAT wird von Windows, macOS und vielen Geräten unterstützt und kennt keine 4-GB-Dateigrößengrenze wie FAT32. Rechte wie bei NTFS gibt es nicht.",
+    "options": [
+      "exFAT",
+      "NTFS",
+      "ext4",
+      "ReFS"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Dateisystem ist unter Linux sehr verbreitet?",
+    "a": "ext4",
+    "a_full": "ext4 ist das Standarddateisystem vieler Linux-Distributionen. Alternativen sind z.B. XFS und Btrfs.",
+    "options": [
+      "ext4",
+      "NTFS",
+      "FAT16",
+      "APFS"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Betriebssystem-Kernel?",
+    "a": "Der zentrale Kern, der Hardware, Prozesse und Speicher verwaltet",
+    "a_full": "Der Kernel vermittelt zwischen Programmen und Hardware, teilt CPU-Zeit zu und verwaltet den Speicher.",
+    "options": [
+      "Der zentrale Kern, der Hardware, Prozesse und Speicher verwaltet",
+      "Die grafische Oberfläche",
+      "Ein Virenschutzprogramm",
+      "Das Installationsprogramm"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Treiber?",
+    "a": "Software, die dem Betriebssystem die Ansteuerung einer Hardware ermöglicht",
+    "a_full": "Treiber übersetzen zwischen Betriebssystem und Gerät. Fehlende oder fehlerhafte Treiber sind eine häufige Ursache für Hardwareprobleme.",
+    "options": [
+      "Software, die dem Betriebssystem die Ansteuerung einer Hardware ermöglicht",
+      "Ein Kabel für Peripheriegeräte",
+      "Ein Programm zum Brennen von CDs",
+      "Ein Bauteil auf dem Mainboard"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Dienst (Windows) bzw. Daemon (Linux)?",
+    "a": "Ein Programm, das im Hintergrund ohne Benutzeroberfläche läuft",
+    "a_full": "Dienste wie DNS-Server, Druckspooler oder SSH-Server starten oft automatisch mit dem System.",
+    "options": [
+      "Ein Programm, das im Hintergrund ohne Benutzeroberfläche läuft",
+      "Ein Benutzerkonto für Administratoren",
+      "Ein Fehler im Betriebssystem",
+      "Eine Datei mit Einstellungen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Linux-Befehl zeigt laufende Prozesse und Ressourcenverbrauch live an?",
+    "a": "top",
+    "a_full": "top (oder htop) zeigt Prozesse sortiert nach CPU- und Speicherverbrauch und aktualisiert die Anzeige laufend.",
+    "options": [
+      "top",
+      "ls",
+      "cd",
+      "pwd"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Linux-Befehl wechselt man zu einem Benutzer mit Root-Rechten für einen einzelnen Befehl?",
+    "a": "sudo",
+    "a_full": "sudo führt einen Befehl mit erhöhten Rechten aus und protokolliert das. Welche Benutzer das dürfen, steht in /etc/sudoers.",
+    "options": [
+      "sudo",
+      "chmod",
+      "chown",
+      "passwd"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was macht der Linux-Befehl chown?",
+    "a": "Er ändert den Besitzer (und die Gruppe) einer Datei",
+    "a_full": "Beispiel: chown anna:vertrieb bericht.txt macht anna zur Besitzerin und vertrieb zur Gruppe der Datei.",
+    "options": [
+      "Er ändert den Besitzer (und die Gruppe) einer Datei",
+      "Er ändert die Zugriffsrechte",
+      "Er wechselt das Verzeichnis",
+      "Er zeigt den Dateiinhalt an"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Oktalwert steht unter Linux für die Rechte rw-?",
+    "a": "6",
+    "a_full": "r = 4, w = 2, x = 1. rw- ergibt 4 + 2 = 6.",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "3"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht das Verzeichnis /etc unter Linux?",
+    "a": "Für systemweite Konfigurationsdateien",
+    "a_full": "In /etc liegen z.B. /etc/passwd, /etc/hosts oder die Konfigurationen von Diensten.",
+    "options": [
+      "Für systemweite Konfigurationsdateien",
+      "Für Benutzerdaten",
+      "Für temporäre Dateien",
+      "Für Programmdateien der Benutzer"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "In welchem Verzeichnis liegen unter Linux die Heimatverzeichnisse normaler Benutzer?",
+    "a": "/home",
+    "a_full": "Jeder Benutzer hat üblicherweise ein Verzeichnis /home/<name>. Das Heimatverzeichnis von root ist /root.",
+    "options": [
+      "/home",
+      "/usr",
+      "/var",
+      "/boot"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür wird unter Linux das Verzeichnis /var/log genutzt?",
+    "a": "Für Protokolldateien des Systems und der Dienste",
+    "a_full": "Dort liegen Logdateien, z.B. von Webservern oder der Anmeldung. Bei systemd werden viele Meldungen zusätzlich im Journal gespeichert (journalctl).",
+    "options": [
+      "Für Protokolldateien des Systems und der Dienste",
+      "Für Programmbibliotheken",
+      "Für Gerätedateien",
+      "Für Konfigurationsdateien"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welchem Befehl startet man unter Linux mit systemd einen Dienst neu?",
+    "a": "systemctl restart <dienst>",
+    "a_full": "systemctl steuert Dienste: start, stop, restart, status, enable (automatisch beim Booten starten).",
+    "options": [
+      "systemctl restart <dienst>",
+      "service reboot <dienst>",
+      "reboot <dienst>",
+      "kill -restart <dienst>"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür wird PowerShell unter Windows eingesetzt?",
+    "a": "Zur Automatisierung und Verwaltung per Skript und Befehlszeile",
+    "a_full": "PowerShell arbeitet mit Cmdlets (Verb-Nomen, z.B. Get-Service) und Objekten statt reinem Text.",
+    "options": [
+      "Zur Automatisierung und Verwaltung per Skript und Befehlszeile",
+      "Nur zum Surfen im Internet",
+      "Zur Bildbearbeitung",
+      "Als Ersatz für den Virenscanner"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Domäne in Active Directory?",
+    "a": "Eine Verwaltungseinheit mit gemeinsamer Benutzerdatenbank und Richtlinien",
+    "a_full": "Die Domäne wird von Domänencontrollern bereitgestellt. Benutzer melden sich zentral an und erhalten Richtlinien per GPO.",
+    "options": [
+      "Eine Verwaltungseinheit mit gemeinsamer Benutzerdatenbank und Richtlinien",
+      "Eine Internetadresse",
+      "Ein einzelner Arbeitsplatzrechner",
+      "Ein Netzwerkkabeltyp"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Domänencontroller?",
+    "a": "Ein Server, der Active Directory bereitstellt und Anmeldungen prüft",
+    "a_full": "Domänencontroller halten die AD-Datenbank, authentifizieren Benutzer (Kerberos) und replizieren Änderungen untereinander.",
+    "options": [
+      "Ein Server, der Active Directory bereitstellt und Anmeldungen prüft",
+      "Ein Router für das Internet",
+      "Ein Switch mit VLANs",
+      "Ein Programm zur Domainregistrierung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Organisationseinheit (OU) in Active Directory?",
+    "a": "Ein Container zur Strukturierung von Objekten, an den GPOs verknüpft werden können",
+    "a_full": "OUs bilden z.B. Abteilungen oder Standorte ab. Mit ihnen lassen sich Verwaltung delegieren und Richtlinien gezielt zuweisen.",
+    "options": [
+      "Ein Container zur Strukturierung von Objekten, an den GPOs verknüpft werden können",
+      "Eine Sicherheitsgruppe",
+      "Ein Benutzerkonto",
+      "Ein Server"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Protokoll wird für Abfragen an Verzeichnisdienste wie Active Directory genutzt?",
+    "a": "LDAP",
+    "a_full": "Das Lightweight Directory Access Protocol greift auf Verzeichnisdaten zu, verschlüsselt als LDAPS.",
+    "options": [
+      "LDAP",
+      "SMTP",
+      "FTP",
+      "SNMP"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein servergespeichertes Profil (Roaming Profile)?",
+    "a": "Das Benutzerprofil wird auf einem Server gespeichert und steht an jedem Rechner zur Verfügung",
+    "a_full": "Beim Anmelden wird das Profil geladen, beim Abmelden zurückgeschrieben. Oft kombiniert man es mit Ordnerumleitung.",
+    "options": [
+      "Das Benutzerprofil wird auf einem Server gespeichert und steht an jedem Rechner zur Verfügung",
+      "Ein Profil für WLAN-Roaming",
+      "Ein Benutzerkonto ohne Passwort",
+      "Ein lokales Gastprofil"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Druckserver?",
+    "a": "Ein Server, der Drucker zentral bereitstellt und Druckaufträge verwaltet",
+    "a_full": "Treiber, Warteschlangen und Berechtigungen werden zentral gepflegt, die Clients verbinden sich mit der Freigabe.",
+    "options": [
+      "Ein Server, der Drucker zentral bereitstellt und Druckaufträge verwaltet",
+      "Ein Drucker mit eigener Festplatte",
+      "Ein Programm zur PDF-Erstellung",
+      "Ein Server für Webseiten"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Cloud Computing im Modell IaaS?",
+    "a": "Infrastructure as a Service - der Anbieter stellt virtuelle Server, Speicher und Netz bereit",
+    "a_full": "Bei IaaS verwaltet der Kunde Betriebssystem und Anwendungen selbst, die Hardware betreibt der Anbieter.",
+    "options": [
+      "Infrastructure as a Service - der Anbieter stellt virtuelle Server, Speicher und Netz bereit",
+      "Der Anbieter stellt fertige Software bereit",
+      "Der Kunde kauft eigene Server",
+      "Der Anbieter stellt nur Internetzugang bereit"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches Cloud-Servicemodell ist z.B. ein webbasiertes Office-Paket?",
+    "a": "SaaS",
+    "a_full": "Software as a Service: Der Kunde nutzt nur die Anwendung, der Anbieter kümmert sich um alles darunter.",
+    "options": [
+      "SaaS",
+      "IaaS",
+      "PaaS",
+      "DaaS"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Private Cloud?",
+    "a": "Eine Cloud-Infrastruktur, die exklusiv für eine Organisation betrieben wird",
+    "a_full": "Eine Private Cloud kann im eigenen Rechenzentrum oder bei einem Dienstleister laufen, wird aber nur von einer Organisation genutzt.",
+    "options": [
+      "Eine Cloud-Infrastruktur, die exklusiv für eine Organisation betrieben wird",
+      "Eine Cloud für Privatpersonen",
+      "Eine kostenlose Cloud",
+      "Eine Cloud ohne Internetzugang"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Hybrid Cloud?",
+    "a": "Eine Kombination aus eigener (privater) Infrastruktur und Public-Cloud-Diensten",
+    "a_full": "Beispiel: sensible Daten im eigenen Rechenzentrum, Lastspitzen oder Backups in der Public Cloud.",
+    "options": [
+      "Eine Kombination aus eigener (privater) Infrastruktur und Public-Cloud-Diensten",
+      "Eine Cloud mit zwei Anbietern gleichzeitig ohne Verbindung",
+      "Eine Cloud nur für Hybridfahrzeuge",
+      "Ein Server mit zwei Netzteilen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was versteht man unter Hochverfügbarkeit (HA)?",
+    "a": "Ein System ist durch Redundanz so ausgelegt, dass es auch bei Ausfällen weiterläuft",
+    "a_full": "Hochverfügbarkeit wird meist als Prozentwert angegeben, z.B. 99,99 %. Mittel sind Cluster, redundante Komponenten und automatische Umschaltung.",
+    "options": [
+      "Ein System ist durch Redundanz so ausgelegt, dass es auch bei Ausfällen weiterläuft",
+      "Ein System ist besonders schnell",
+      "Ein System steht im obersten Stockwerk",
+      "Ein System hat viel Speicher"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Single Point of Failure (SPOF)?",
+    "a": "Eine Komponente, deren Ausfall das gesamte System lahmlegt",
+    "a_full": "Beispiel: ein einzelner Core-Switch ohne Ersatz. SPOFs werden durch Redundanz beseitigt.",
+    "options": [
+      "Eine Komponente, deren Ausfall das gesamte System lahmlegt",
+      "Ein besonders sicherer Server",
+      "Ein einzelner Benutzer mit Adminrechten",
+      "Ein Fehler in der Dokumentation"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was misst die MTTR?",
+    "a": "Die durchschnittliche Zeit bis zur Wiederherstellung nach einem Ausfall",
+    "a_full": "Mean Time To Repair/Recover. Zusammen mit der MTBF lässt sich die Verfügbarkeit berechnen: MTBF / (MTBF + MTTR).",
+    "options": [
+      "Die durchschnittliche Zeit bis zur Wiederherstellung nach einem Ausfall",
+      "Die durchschnittliche Zeit zwischen zwei Ausfällen",
+      "Die maximale Übertragungsrate",
+      "Die Lebensdauer einer Festplatte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Rebuild bei einem RAID?",
+    "a": "Das Wiederherstellen der Daten auf eine Ersatzplatte nach einem Ausfall",
+    "a_full": "Während des Rebuilds ist das RAID langsamer und je nach Level ungeschützt. Große Platten verlängern die Rebuild-Zeit deutlich.",
+    "options": [
+      "Das Wiederherstellen der Daten auf eine Ersatzplatte nach einem Ausfall",
+      "Das Neuformatieren aller Platten",
+      "Das Löschen des RAID-Verbunds",
+      "Das Erweitern um eine weitere Platte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum ersetzt ein RAID kein Backup?",
+    "a": "Weil versehentliches Löschen, Ransomware oder Controllerfehler sofort alle Platten betreffen",
+    "a_full": "RAID schützt vor dem Ausfall einzelner Platten, nicht vor logischen Fehlern. Ein Backup ist eine getrennte Kopie mit Versionen.",
+    "options": [
+      "Weil versehentliches Löschen, Ransomware oder Controllerfehler sofort alle Platten betreffen",
+      "Weil RAID zu teuer ist",
+      "Weil RAID nur mit HDDs funktioniert",
+      "Weil ein Backup schneller ist"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Hardware-RAID-Controller?",
+    "a": "Eine eigene Steuerungshardware, die den RAID-Verbund unabhängig vom Betriebssystem verwaltet",
+    "a_full": "Hardware-Controller haben oft einen eigenen Cache mit Batterie- oder Flashschutz (BBU) und entlasten die CPU.",
+    "options": [
+      "Eine eigene Steuerungshardware, die den RAID-Verbund unabhängig vom Betriebssystem verwaltet",
+      "Ein Programm im Betriebssystem",
+      "Ein Netzwerkswitch",
+      "Eine besonders große Festplatte"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Bandlaufwerk (LTO) im Backupkonzept?",
+    "a": "Ein Magnetband-Speicher für große, günstige und auslagerbare Sicherungen",
+    "a_full": "LTO-Bänder sind langlebig, günstig pro TB und lassen sich offline lagern (Schutz gegen Ransomware).",
+    "options": [
+      "Ein Magnetband-Speicher für große, günstige und auslagerbare Sicherungen",
+      "Ein besonders schneller SSD-Speicher",
+      "Ein Cloud-Dienst",
+      "Ein USB-Stick mit Verschlüsselung"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Restore-Test?",
+    "a": "Die regelmäßige Prüfung, ob sich Daten aus dem Backup tatsächlich wiederherstellen lassen",
+    "a_full": "Ein Backup ist erst dann etwas wert, wenn die Wiederherstellung funktioniert. Tests decken defekte Medien oder fehlende Daten auf.",
+    "options": [
+      "Die regelmäßige Prüfung, ob sich Daten aus dem Backup tatsächlich wiederherstellen lassen",
+      "Ein Test der Internetgeschwindigkeit",
+      "Ein Neustart des Servers",
+      "Die Prüfung der Festplattentemperatur"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Rack-Server und wie wird seine Höhe angegeben?",
+    "a": "Ein Server für 19-Zoll-Schränke, Höhe in Höheneinheiten (HE/U)",
+    "a_full": "Eine Höheneinheit (1 HE = 1U) entspricht 44,45 mm. Ein typischer Server ist 1 HE oder 2 HE hoch.",
+    "options": [
+      "Ein Server für 19-Zoll-Schränke, Höhe in Höheneinheiten (HE/U)",
+      "Ein Server im Tower-Gehäuse, Höhe in Zentimetern",
+      "Ein Server ohne Gehäuse, Höhe in Zoll",
+      "Ein Laptop als Server, Höhe in Millimetern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Out-of-Band-Management bei Servern (z.B. iLO, iDRAC, IPMI)?",
+    "a": "Fernverwaltung über einen eigenen Management-Controller, auch wenn das Betriebssystem nicht läuft",
+    "a_full": "Damit kann man den Server remote einschalten, die Konsole sehen und Hardwarezustände abfragen.",
+    "options": [
+      "Fernverwaltung über einen eigenen Management-Controller, auch wenn das Betriebssystem nicht läuft",
+      "Eine Verwaltung nur per Bildschirm vor Ort",
+      "Ein Backup außerhalb des Rechenzentrums",
+      "Die Verwaltung über das Internetportal des Herstellers ohne Netzwerk"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Hot Aisle / Cold Aisle Konzept im Rechenzentrum?",
+    "a": "Warm- und Kaltgänge trennen die Zuluft und Abluft der Server",
+    "a_full": "Die Racks werden so aufgestellt, dass die Server kalte Luft aus dem Kaltgang ansaugen und warme Luft in den Warmgang abgeben. Das verbessert die Kühlung.",
+    "options": [
+      "Warm- und Kaltgänge trennen die Zuluft und Abluft der Server",
+      "Getrennte Räume für Sommer und Winter",
+      "Ein Notstromkonzept",
+      "Eine Zutrittsregel für Besucher"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Hypervisor?",
+    "a": "Die Software, die virtuelle Maschinen erzeugt und die Hardware zwischen ihnen aufteilt",
+    "a_full": "Typ 1 läuft direkt auf der Hardware (z.B. ESXi, Hyper-V), Typ 2 als Anwendung auf einem Betriebssystem (z.B. VirtualBox).",
+    "options": [
+      "Die Software, die virtuelle Maschinen erzeugt und die Hardware zwischen ihnen aufteilt",
+      "Ein besonders schneller Prozessor",
+      "Ein Netzwerkprotokoll",
+      "Ein Backupprogramm"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine Live-Migration einer VM?",
+    "a": "Das Verschieben einer laufenden VM auf einen anderen Host ohne Unterbrechung",
+    "a_full": "Beispiele sind vMotion bei VMware oder Live-Migration bei Hyper-V. Voraussetzung ist meist ein gemeinsamer Speicher oder eine Speichermigration.",
+    "options": [
+      "Das Verschieben einer laufenden VM auf einen anderen Host ohne Unterbrechung",
+      "Das Kopieren einer VM auf einen USB-Stick",
+      "Das Neuinstallieren einer VM",
+      "Das Umbenennen einer VM"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Overcommitment bei Virtualisierung?",
+    "a": "Den VMs wird insgesamt mehr Ressource zugewiesen als physisch vorhanden ist",
+    "a_full": "Weil nicht alle VMs gleichzeitig ihre volle Leistung brauchen, ist moderates Overcommitment (z.B. bei CPU) üblich. Zu viel führt zu Engpässen.",
+    "options": [
+      "Den VMs wird insgesamt mehr Ressource zugewiesen als physisch vorhanden ist",
+      "Eine VM erhält gar keine Ressourcen",
+      "Der Host wird übertaktet",
+      "Die VMs laufen ohne Betriebssystem"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet einen Dienstvertrag von einem Werkvertrag?",
+    "a": "Beim Dienstvertrag wird eine Tätigkeit geschuldet, beim Werkvertrag ein Erfolg",
+    "a_full": "Beim Dienstvertrag (§ 611 BGB) wird die Arbeitsleistung bezahlt, z.B. Supportstunden. Beim Werkvertrag (§ 631 BGB) muss das vereinbarte Ergebnis erreicht werden.",
+    "options": [
+      "Beim Dienstvertrag wird eine Tätigkeit geschuldet, beim Werkvertrag ein Erfolg",
+      "Beim Dienstvertrag wird ein Erfolg geschuldet, beim Werkvertrag eine Tätigkeit",
+      "Beide Verträge sind identisch",
+      "Ein Werkvertrag gilt nur für Handwerker"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Mietvertrag im IT-Bereich, z.B. beim Leasing oder der Miete von Hardware?",
+    "a": "Die zeitweise Überlassung einer Sache gegen Entgelt",
+    "a_full": "Bei der Miete bleibt der Vermieter Eigentümer. Er muss die Sache in gebrauchsfähigem Zustand halten.",
+    "options": [
+      "Die zeitweise Überlassung einer Sache gegen Entgelt",
+      "Der dauerhafte Kauf einer Sache",
+      "Eine kostenlose Leihe",
+      "Ein Vertrag über eine Dienstleistung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet Besitz von Eigentum?",
+    "a": "Besitz ist die tatsächliche, Eigentum die rechtliche Herrschaft über eine Sache",
+    "a_full": "Wer einen geleasten Laptop nutzt, ist Besitzer. Eigentümer bleibt die Leasinggesellschaft.",
+    "options": [
+      "Besitz ist die tatsächliche, Eigentum die rechtliche Herrschaft über eine Sache",
+      "Besitz ist die rechtliche, Eigentum die tatsächliche Herrschaft",
+      "Beides bedeutet dasselbe",
+      "Eigentum gilt nur für Immobilien"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Eigentumsvorbehalt?",
+    "a": "Die gelieferte Ware bleibt bis zur vollständigen Bezahlung Eigentum des Verkäufers",
+    "a_full": "Der Käufer wird Besitzer, der Verkäufer bleibt Eigentümer, bis der Kaufpreis bezahlt ist. Das sichert den Verkäufer ab.",
+    "options": [
+      "Die gelieferte Ware bleibt bis zur vollständigen Bezahlung Eigentum des Verkäufers",
+      "Der Käufer darf die Ware nicht benutzen",
+      "Der Verkäufer darf die Ware jederzeit zurückholen",
+      "Die Ware darf nur im Laden verkauft werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Anfrage im Beschaffungsprozess?",
+    "a": "Eine unverbindliche Bitte an Lieferanten um ein Angebot",
+    "a_full": "Anfragen sind rechtlich unverbindlich. Sie dienen dazu, Angebote verschiedener Lieferanten zum Vergleich einzuholen.",
+    "options": [
+      "Eine unverbindliche Bitte an Lieferanten um ein Angebot",
+      "Eine verbindliche Bestellung",
+      "Die Annahme eines Angebots",
+      "Eine Mahnung an den Kunden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann ist ein Angebot rechtlich bindend?",
+    "a": "Grundsätzlich immer, außer es enthält eine Freizeichnungsklausel wie \"unverbindlich\"",
+    "a_full": "Ein Angebot ist eine Willenserklärung. Mit Klauseln wie 'freibleibend' oder 'solange Vorrat reicht' kann die Bindung eingeschränkt werden.",
+    "options": [
+      "Grundsätzlich immer, außer es enthält eine Freizeichnungsklausel wie \"unverbindlich\"",
+      "Erst nach Unterschrift beider Seiten",
+      "Nie, Angebote sind nur Informationen",
+      "Nur wenn es per Einschreiben verschickt wurde"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Lieferverzug?",
+    "a": "Der Verkäufer liefert trotz Fälligkeit schuldhaft nicht rechtzeitig",
+    "a_full": "Meist ist eine Mahnung nötig, außer bei kalendermäßig bestimmtem Liefertermin. Der Käufer kann dann u.a. Schadensersatz verlangen oder nach Nachfrist zurücktreten.",
+    "options": [
+      "Der Verkäufer liefert trotz Fälligkeit schuldhaft nicht rechtzeitig",
+      "Der Käufer bezahlt zu spät",
+      "Die Ware ist mangelhaft",
+      "Der Käufer nimmt die Ware nicht an"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Zahlungsverzug?",
+    "a": "Der Käufer zahlt eine fällige Rechnung nicht rechtzeitig",
+    "a_full": "Spätestens 30 Tage nach Fälligkeit und Zugang der Rechnung gerät der Schuldner in Verzug (§ 286 BGB), bei Verbrauchern nur mit Hinweis auf der Rechnung.",
+    "options": [
+      "Der Käufer zahlt eine fällige Rechnung nicht rechtzeitig",
+      "Der Verkäufer liefert zu spät",
+      "Die Ware geht beim Transport verloren",
+      "Der Käufer bestellt zu viel"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Annahmeverzug?",
+    "a": "Der Käufer nimmt ordnungsgemäß gelieferte Ware nicht an",
+    "a_full": "Beim Annahmeverzug geht u.a. die Gefahr für die Ware auf den Käufer über, und der Verkäufer kann die Ware einlagern.",
+    "options": [
+      "Der Käufer nimmt ordnungsgemäß gelieferte Ware nicht an",
+      "Der Verkäufer nimmt eine Zahlung nicht an",
+      "Die Ware kommt zu spät",
+      "Der Käufer zahlt zu früh"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein offener Mangel?",
+    "a": "Ein Mangel, der bei der Prüfung der Ware sofort erkennbar ist",
+    "a_full": "Beispiel: ein zerkratzter Monitor. Unter Kaufleuten muss ein offener Mangel unverzüglich nach Prüfung gerügt werden (§ 377 HGB).",
+    "options": [
+      "Ein Mangel, der bei der Prüfung der Ware sofort erkennbar ist",
+      "Ein Mangel, der erst später auftritt",
+      "Ein absichtlich verschwiegener Mangel",
+      "Ein Mangel am Verpackungsmaterial"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein versteckter Mangel?",
+    "a": "Ein Mangel, der bei der Prüfung nicht erkennbar war und erst später auftritt",
+    "a_full": "Beispiel: ein Netzteil fällt nach drei Wochen aus. Unter Kaufleuten ist er unverzüglich nach Entdeckung zu rügen.",
+    "options": [
+      "Ein Mangel, der bei der Prüfung nicht erkennbar war und erst später auftritt",
+      "Ein Mangel, den der Käufer selbst verursacht hat",
+      "Ein Mangel, der sofort sichtbar ist",
+      "Ein Fehler in der Rechnung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Nutzungslizenz bei Software?",
+    "a": "Das Recht, Software unter bestimmten Bedingungen zu nutzen",
+    "a_full": "Mit einer Lizenz erwirbt man nicht die Software selbst, sondern Nutzungsrechte, z.B. pro Benutzer, pro Gerät oder pro Kern.",
+    "options": [
+      "Das Recht, Software unter bestimmten Bedingungen zu nutzen",
+      "Der Kauf des Quellcodes",
+      "Eine Garantie für fehlerfreie Software",
+      "Ein Wartungsvertrag"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet Open-Source-Software?",
+    "a": "Der Quellcode ist offen und darf unter den Lizenzbedingungen genutzt, verändert und weitergegeben werden",
+    "a_full": "Beispiele für Lizenzen sind GPL, MIT oder Apache. Open Source heißt nicht automatisch ohne Pflichten: Lizenzbedingungen sind einzuhalten.",
+    "options": [
+      "Der Quellcode ist offen und darf unter den Lizenzbedingungen genutzt, verändert und weitergegeben werden",
+      "Die Software ist immer kostenlos und ohne Bedingungen",
+      "Die Software darf nur privat genutzt werden",
+      "Die Software hat keine Urheber"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Abonnement-Modell (Subscription) bei Software?",
+    "a": "Die Software wird für eine laufende Gebühr genutzt, solange das Abo besteht",
+    "a_full": "Statt einer einmaligen Kauflizenz zahlt man z.B. monatlich oder jährlich. Updates sind meist enthalten, bei Kündigung endet die Nutzung.",
+    "options": [
+      "Die Software wird für eine laufende Gebühr genutzt, solange das Abo besteht",
+      "Die Software wird einmalig gekauft",
+      "Die Software ist kostenlos",
+      "Die Software darf weiterverkauft werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Aufgabe hat der Einkauf im Unternehmen?",
+    "a": "Die wirtschaftliche Beschaffung von Waren und Dienstleistungen",
+    "a_full": "Der Einkauf vergleicht Angebote, verhandelt Konditionen und sorgt für termingerechte Lieferungen.",
+    "options": [
+      "Die wirtschaftliche Beschaffung von Waren und Dienstleistungen",
+      "Die Werbung für Produkte",
+      "Die Buchung der Löhne",
+      "Die Einstellung von Mitarbeitern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein quantitativer Angebotsvergleich?",
+    "a": "Ein Vergleich der Angebote nach dem Preis (Bezugspreis)",
+    "a_full": "Beim quantitativen Vergleich werden Listenpreis, Rabatt, Skonto und Bezugskosten verrechnet. Der qualitative Vergleich betrachtet z.B. Service, Qualität und Lieferzeit.",
+    "options": [
+      "Ein Vergleich der Angebote nach dem Preis (Bezugspreis)",
+      "Ein Vergleich nur nach Qualität",
+      "Ein Vergleich nach der Anzahl der Mitarbeiter des Lieferanten",
+      "Ein Vergleich nach der Farbe der Produkte"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Bezugspreis in der Einkaufskalkulation?",
+    "a": "Der Einstandspreis nach Rabatt, Skonto und inklusive Bezugskosten",
+    "a_full": "Schema: Listeneinkaufspreis - Rabatt = Zieleinkaufspreis - Skonto = Bareinkaufspreis + Bezugskosten = Bezugspreis.",
+    "options": [
+      "Der Einstandspreis nach Rabatt, Skonto und inklusive Bezugskosten",
+      "Der Listenpreis ohne Abzüge",
+      "Der Verkaufspreis an den Kunden",
+      "Der Preis inklusive Gewinn"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind Bezugskosten?",
+    "a": "Kosten, die für die Lieferung einer Ware zusätzlich anfallen, z.B. Fracht und Verpackung",
+    "a_full": "Bezugskosten werden auf den Bareinkaufspreis aufgeschlagen und ergeben den Bezugspreis.",
+    "options": [
+      "Kosten, die für die Lieferung einer Ware zusätzlich anfallen, z.B. Fracht und Verpackung",
+      "Die Kosten für die Werbung",
+      "Die Lohnkosten des Einkaufs",
+      "Die Umsatzsteuer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Handelsspanne?",
+    "a": "Der Unterschied zwischen Verkaufspreis und Bezugspreis in Prozent des Verkaufspreises",
+    "a_full": "Handelsspanne = (Nettoverkaufspreis - Bezugspreis) / Nettoverkaufspreis * 100. Der Kalkulationszuschlag bezieht sich dagegen auf den Bezugspreis.",
+    "options": [
+      "Der Unterschied zwischen Verkaufspreis und Bezugspreis in Prozent des Verkaufspreises",
+      "Der Rabatt des Lieferanten",
+      "Die Differenz zwischen Brutto und Netto",
+      "Der Gewinn nach Steuern"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind Gemeinkosten?",
+    "a": "Kosten, die einem Produkt nicht direkt zugerechnet werden können",
+    "a_full": "Beispiele: Miete, Verwaltung, Strom für das Gebäude. Sie werden über Zuschläge verteilt. Einzelkosten wie Material lassen sich direkt zuordnen.",
+    "options": [
+      "Kosten, die einem Produkt nicht direkt zugerechnet werden können",
+      "Kosten, die direkt einem Produkt zugeordnet werden",
+      "Kosten, die nur einmal anfallen",
+      "Kosten, die der Kunde zahlt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind Einzelkosten?",
+    "a": "Kosten, die einem Produkt oder Auftrag direkt zugerechnet werden können",
+    "a_full": "Beispiele: Hardware für einen Kundenauftrag, Arbeitsstunden eines Technikers für genau diesen Auftrag.",
+    "options": [
+      "Kosten, die einem Produkt oder Auftrag direkt zugerechnet werden können",
+      "Kosten für die gesamte Verwaltung",
+      "Kosten, die nicht bezahlt werden",
+      "Die Summe aller Fixkosten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Stundenverrechnungssatz?",
+    "a": "Der Betrag, der dem Kunden pro Arbeitsstunde in Rechnung gestellt wird",
+    "a_full": "Er enthält Lohnkosten, anteilige Gemeinkosten und Gewinnzuschlag. IT-Dienstleister kalkulieren damit Dienstleistungen.",
+    "options": [
+      "Der Betrag, der dem Kunden pro Arbeitsstunde in Rechnung gestellt wird",
+      "Der Stundenlohn des Mitarbeiters",
+      "Die Arbeitszeit pro Tag",
+      "Die Zahl der Überstunden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Bilanz?",
+    "a": "Eine Gegenüberstellung von Vermögen (Aktiva) und Kapital (Passiva) zu einem Stichtag",
+    "a_full": "Die Aktiva zeigen, wie das Kapital verwendet wird (Anlage- und Umlaufvermögen), die Passiva, woher es kommt (Eigen- und Fremdkapital).",
+    "options": [
+      "Eine Gegenüberstellung von Vermögen (Aktiva) und Kapital (Passiva) zu einem Stichtag",
+      "Eine Liste aller Einnahmen eines Jahres",
+      "Die Gewinn- und Verlustrechnung",
+      "Ein Kontoauszug der Bank"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gehört zum Anlagevermögen?",
+    "a": "Güter, die langfristig im Unternehmen bleiben, z.B. Server und Gebäude",
+    "a_full": "Anlagevermögen dient dauerhaft dem Betrieb und wird abgeschrieben. Umlaufvermögen (Waren, Forderungen, Bankguthaben) wechselt ständig.",
+    "options": [
+      "Güter, die langfristig im Unternehmen bleiben, z.B. Server und Gebäude",
+      "Waren, die verkauft werden sollen",
+      "Forderungen gegenüber Kunden",
+      "Das Bankguthaben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Eigenkapital?",
+    "a": "Das Kapital, das die Eigentümer dem Unternehmen zur Verfügung stellen",
+    "a_full": "Eigenkapital steht auf der Passivseite der Bilanz und haftet für die Schulden. Fremdkapital sind z.B. Kredite und Verbindlichkeiten.",
+    "options": [
+      "Das Kapital, das die Eigentümer dem Unternehmen zur Verfügung stellen",
+      "Kredite der Bank",
+      "Das Geld auf dem Firmenkonto",
+      "Die Summe aller Umsätze"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind Verbindlichkeiten?",
+    "a": "Schulden des Unternehmens gegenüber Dritten",
+    "a_full": "Beispiele: offene Lieferantenrechnungen, Kredite. Forderungen sind dagegen offene Ansprüche gegenüber Kunden.",
+    "options": [
+      "Schulden des Unternehmens gegenüber Dritten",
+      "Offene Rechnungen an Kunden",
+      "Das Eigenkapital",
+      "Die Umsatzerlöse"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Gewinn- und Verlustrechnung (GuV)?",
+    "a": "Die Gegenüberstellung von Aufwendungen und Erträgen eines Geschäftsjahres",
+    "a_full": "Die GuV zeigt, wie der Jahresgewinn oder -verlust zustande gekommen ist. Sie ist neben der Bilanz Teil des Jahresabschlusses.",
+    "options": [
+      "Die Gegenüberstellung von Aufwendungen und Erträgen eines Geschäftsjahres",
+      "Ein Vergleich von Vermögen und Schulden",
+      "Eine Liste aller Mitarbeiter",
+      "Die Planung des nächsten Jahres"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Vorsteuer?",
+    "a": "Die Umsatzsteuer, die ein Unternehmen beim Einkauf an Lieferanten zahlt",
+    "a_full": "Unternehmen ziehen die gezahlte Vorsteuer von der eingenommenen Umsatzsteuer ab und führen nur die Differenz (Zahllast) an das Finanzamt ab.",
+    "options": [
+      "Die Umsatzsteuer, die ein Unternehmen beim Einkauf an Lieferanten zahlt",
+      "Eine Steuer auf Löhne",
+      "Eine Steuer, die vor der Gründung gezahlt wird",
+      "Die Gewerbesteuer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Zahllast bei der Umsatzsteuer?",
+    "a": "Umsatzsteuer abzüglich Vorsteuer",
+    "a_full": "Die Zahllast ist der Betrag, den das Unternehmen an das Finanzamt überweist. Ist die Vorsteuer höher, entsteht ein Erstattungsanspruch.",
+    "options": [
+      "Umsatzsteuer abzüglich Vorsteuer",
+      "Umsatzsteuer plus Vorsteuer",
+      "Der gesamte Umsatz",
+      "Die Einkommensteuer des Inhabers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welcher Umsatzsteuersatz gilt in Deutschland regulär?",
+    "a": "19 Prozent",
+    "a_full": "Der Regelsatz beträgt 19 %, der ermäßigte Satz 7 % (z.B. für viele Lebensmittel und Bücher).",
+    "options": [
+      "19 Prozent",
+      "7 Prozent",
+      "16 Prozent",
+      "21 Prozent"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Einzelunternehmung?",
+    "a": "Ein Unternehmen mit einem Inhaber, der unbeschränkt mit seinem gesamten Vermögen haftet",
+    "a_full": "Der Inhaber entscheidet allein und trägt das volle Risiko. Ein Mindestkapital ist nicht vorgeschrieben.",
+    "options": [
+      "Ein Unternehmen mit einem Inhaber, der unbeschränkt mit seinem gesamten Vermögen haftet",
+      "Ein Unternehmen mit mindestens zwei Gesellschaftern",
+      "Ein Unternehmen mit beschränkter Haftung",
+      "Ein Unternehmen im Besitz des Staates"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie hoch ist das Mindeststammkapital einer GmbH?",
+    "a": "25.000 Euro",
+    "a_full": "Bei der Gründung muss mindestens die Hälfte (12.500 Euro) eingezahlt sein. Die UG (haftungsbeschränkt) kann mit 1 Euro gegründet werden.",
+    "options": [
+      "25.000 Euro",
+      "1 Euro",
+      "12.500 Euro",
+      "50.000 Euro"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie haften die Gesellschafter einer OHG?",
+    "a": "Unbeschränkt, unmittelbar und gesamtschuldnerisch",
+    "a_full": "Jeder Gesellschafter haftet mit seinem Privatvermögen für alle Schulden der OHG, Gläubiger können sich an jeden wenden.",
+    "options": [
+      "Unbeschränkt, unmittelbar und gesamtschuldnerisch",
+      "Nur mit ihrer Einlage",
+      "Gar nicht",
+      "Nur bis 25.000 Euro"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche beiden Gesellschaftertypen gibt es bei einer KG?",
+    "a": "Komplementäre (unbeschränkt haftend) und Kommanditisten (beschränkt haftend)",
+    "a_full": "Komplementäre führen die Geschäfte und haften voll. Kommanditisten haften nur mit ihrer Einlage und haben eingeschränkte Rechte.",
+    "options": [
+      "Komplementäre (unbeschränkt haftend) und Kommanditisten (beschränkt haftend)",
+      "Vorstand und Aufsichtsrat",
+      "Geschäftsführer und Prokuristen",
+      "Aktionäre und Gläubiger"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Prokura?",
+    "a": "Eine umfassende Handlungsvollmacht, die im Handelsregister eingetragen wird",
+    "a_full": "Ein Prokurist darf fast alle Geschäfte abschließen, aber z.B. keine Grundstücke verkaufen oder die Firma auflösen. Er zeichnet mit 'ppa.'.",
+    "options": [
+      "Eine umfassende Handlungsvollmacht, die im Handelsregister eingetragen wird",
+      "Eine Vollmacht nur für eine einzelne Aufgabe",
+      "Die Leitung des Betriebsrats",
+      "Eine Form der Kündigung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Handelsregister?",
+    "a": "Ein öffentliches Verzeichnis der Kaufleute und Handelsgesellschaften",
+    "a_full": "Es wird beim Amtsgericht geführt und enthält u.a. Firma, Sitz, Rechtsform, Geschäftsführer und Prokuristen.",
+    "options": [
+      "Ein öffentliches Verzeichnis der Kaufleute und Handelsgesellschaften",
+      "Eine Liste aller Steuerzahler",
+      "Ein Verzeichnis der Mitarbeiter",
+      "Die Kundendatenbank eines Unternehmens"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt das Kündigungsschutzgesetz grundsätzlich?",
+    "a": "Dass ordentliche Kündigungen sozial gerechtfertigt sein müssen",
+    "a_full": "Es gilt nach 6 Monaten Betriebszugehörigkeit in Betrieben mit mehr als 10 Arbeitnehmern. Gründe können personen-, verhaltens- oder betriebsbedingt sein.",
+    "options": [
+      "Dass ordentliche Kündigungen sozial gerechtfertigt sein müssen",
+      "Dass Kündigungen verboten sind",
+      "Dass nur der Arbeitnehmer kündigen darf",
+      "Dass Kündigungen mündlich erfolgen müssen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welcher Form muss eine Kündigung des Arbeitsverhältnisses erfolgen?",
+    "a": "Schriftlich mit eigenhändiger Unterschrift",
+    "a_full": "Nach § 623 BGB ist die Schriftform zwingend. Eine Kündigung per E-Mail, SMS oder Messenger ist unwirksam.",
+    "options": [
+      "Schriftlich mit eigenhändiger Unterschrift",
+      "Per E-Mail reicht aus",
+      "Mündlich reicht aus",
+      "Nur per Einschreiben mit Rückschein"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Abzüge gehören zu den Sozialversicherungsbeiträgen auf der Lohnabrechnung?",
+    "a": "Renten-, Kranken-, Pflege- und Arbeitslosenversicherung",
+    "a_full": "Diese Beiträge teilen sich Arbeitgeber und Arbeitnehmer im Wesentlichen. Die Unfallversicherung zahlt der Arbeitgeber allein.",
+    "options": [
+      "Renten-, Kranken-, Pflege- und Arbeitslosenversicherung",
+      "Lohnsteuer, Kirchensteuer und Solidaritätszuschlag",
+      "Umsatzsteuer und Gewerbesteuer",
+      "Kfz-Steuer und Grundsteuer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer zahlt die Beiträge zur gesetzlichen Unfallversicherung?",
+    "a": "Allein der Arbeitgeber",
+    "a_full": "Träger sind die Berufsgenossenschaften. Sie sichern Arbeits- und Wegeunfälle sowie Berufskrankheiten ab.",
+    "options": [
+      "Allein der Arbeitgeber",
+      "Allein der Arbeitnehmer",
+      "Arbeitgeber und Arbeitnehmer je zur Hälfte",
+      "Der Staat aus Steuermitteln"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist der Unterschied zwischen Brutto- und Nettolohn?",
+    "a": "Der Nettolohn ist der Bruttolohn nach Abzug von Steuern und Sozialversicherungsbeiträgen",
+    "a_full": "Der Bruttolohn ist das vereinbarte Entgelt. Ausgezahlt wird der Nettolohn.",
+    "options": [
+      "Der Nettolohn ist der Bruttolohn nach Abzug von Steuern und Sozialversicherungsbeiträgen",
+      "Der Nettolohn enthält zusätzlich die Umsatzsteuer",
+      "Der Bruttolohn ist der ausgezahlte Betrag",
+      "Beide Werte sind immer gleich"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das Ziel des Jugendarbeitsschutzgesetzes?",
+    "a": "Den Schutz von Beschäftigten unter 18 Jahren vor Überforderung und Gefahren",
+    "a_full": "Es regelt u.a. Arbeitszeiten (max. 8 Std. täglich, 40 Std. wöchentlich), Pausen, Urlaub und Berufsschulzeiten.",
+    "options": [
+      "Den Schutz von Beschäftigten unter 18 Jahren vor Überforderung und Gefahren",
+      "Den Schutz von Rentnern",
+      "Die Vergütung von Auszubildenden",
+      "Den Kündigungsschutz aller Arbeitnehmer"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist das duale System der Berufsausbildung?",
+    "a": "Ausbildung an zwei Lernorten: Betrieb und Berufsschule",
+    "a_full": "Der Betrieb vermittelt die Praxis nach Ausbildungsrahmenplan, die Berufsschule die Theorie nach Rahmenlehrplan.",
+    "options": [
+      "Ausbildung an zwei Lernorten: Betrieb und Berufsschule",
+      "Ausbildung in zwei Berufen gleichzeitig",
+      "Ausbildung mit zwei Ausbildern",
+      "Ausbildung mit Studium an zwei Hochschulen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Pflichten hat ein Auszubildender nach dem BBiG u.a.?",
+    "a": "Lernpflicht, Weisungen befolgen, Berufsschule besuchen, Ausbildungsnachweis führen",
+    "a_full": "Dazu kommen Sorgfaltspflicht, Schweigepflicht über Betriebsgeheimnisse und die Teilnahme an Prüfungen.",
+    "options": [
+      "Lernpflicht, Weisungen befolgen, Berufsschule besuchen, Ausbildungsnachweis führen",
+      "Eigene Arbeitsmittel kaufen",
+      "Die Ausbildungsvergütung festlegen",
+      "Die Prüfung selbst organisieren"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Stabsstelle im Organigramm?",
+    "a": "Eine beratende Stelle ohne Weisungsbefugnis gegenüber der Linie",
+    "a_full": "Stabsstellen (z.B. Datenschutzbeauftragter, Rechtsabteilung) unterstützen die Leitung fachlich, entscheiden aber nicht selbst in der Linie.",
+    "options": [
+      "Eine beratende Stelle ohne Weisungsbefugnis gegenüber der Linie",
+      "Die oberste Führungsebene",
+      "Eine Abteilung für Lagerhaltung",
+      "Ein Projektteam auf Zeit"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet eine Matrixorganisation?",
+    "a": "Mitarbeiter haben zwei Vorgesetzte, z.B. fachlich und projektbezogen",
+    "a_full": "Die Matrix kombiniert z.B. Funktionen (Abteilungen) und Projekte. Vorteil: Flexibilität, Nachteil: mögliche Kompetenzkonflikte.",
+    "options": [
+      "Mitarbeiter haben zwei Vorgesetzte, z.B. fachlich und projektbezogen",
+      "Jeder Mitarbeiter hat genau einen Vorgesetzten",
+      "Es gibt keine Hierarchie",
+      "Alle Entscheidungen trifft die Geschäftsführung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind die Phasen eines Projekts nach klassischem Vorgehen?",
+    "a": "Initiierung, Planung, Durchführung, Kontrolle, Abschluss",
+    "a_full": "Viele Modelle unterscheiden diese Phasen. Die Kontrolle (Controlling) begleitet die Durchführung, am Ende stehen Abnahme und Dokumentation.",
+    "options": [
+      "Initiierung, Planung, Durchführung, Kontrolle, Abschluss",
+      "Kauf, Einbau, Rechnung, Mahnung",
+      "Sprint, Review, Retrospektive, Release",
+      "Analyse, Programmierung, Werbung, Verkauf"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Projektstrukturplan (PSP)?",
+    "a": "Die hierarchische Gliederung aller Aufgaben eines Projekts in Teilaufgaben und Arbeitspakete",
+    "a_full": "Der PSP (englisch WBS) ist die Grundlage für Zeit-, Kosten- und Ressourcenplanung. Er enthält keine zeitliche Reihenfolge.",
+    "options": [
+      "Die hierarchische Gliederung aller Aufgaben eines Projekts in Teilaufgaben und Arbeitspakete",
+      "Ein Zeitplan mit Balken",
+      "Ein Organigramm des Unternehmens",
+      "Die Liste der Projektmitglieder"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Arbeitspaket im Projekt?",
+    "a": "Die kleinste Einheit im Projektstrukturplan, die einer verantwortlichen Person zugeordnet wird",
+    "a_full": "Arbeitspakete haben ein klares Ergebnis, Aufwand, Dauer und Verantwortlichen und lassen sich gut überwachen.",
+    "options": [
+      "Die kleinste Einheit im Projektstrukturplan, die einer verantwortlichen Person zugeordnet wird",
+      "Ein Paket mit Hardware für das Projekt",
+      "Ein Vertrag mit dem Kunden",
+      "Die Rechnung am Projektende"
+    ]
   }
 ]
