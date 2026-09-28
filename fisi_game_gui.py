@@ -112,11 +112,13 @@ class FloorPlan(tk.Canvas):
 
     MAX_HEIGHT = 440
 
-    def __init__(self, parent, on_room, bg=None):
+    def __init__(self, parent, on_room, bg=None, max_height=None):
         self.bg = bg or C["card"]
         self.on_room = on_room
+        self.max_height = max_height or self.MAX_HEIGHT
         self.state = None
         self.selected = None
+        self.player_pos = None
         self.scale = 1.0
         self.offset = 0.0
         self.offset_y = 0.0
@@ -125,31 +127,39 @@ class FloorPlan(tk.Canvas):
         self.bind("<Configure>", lambda _e: self.draw())
         self.bind("<Button-1>", self._click)
 
-    def set_state(self, state, selected=None):
+    def set_state(self, state, selected=None, player_pos=None):
         self.state = state
         self.selected = selected
+        self.player_pos = player_pos
         self.draw()
 
-    def draw(self):
-        self.delete("all")
+    def _layout(self):
         width = self.winfo_width()
-        if width <= 1 or self.state is None:
-            return
         building = fg.GAME["gebaeude"]
         # Gleicher Massstab in beide Richtungen, damit das Gebaeude nicht
         # verzerrt; bei sehr breitem Fenster wird es mittig gesetzt.
         margin = fg.PLAN_MARGIN
         self.scale = min(width / (building["breite"] + 2 * margin),
-                         px(self.MAX_HEIGHT) / (building["hoehe"] + 2 * margin))
+                         px(self.max_height) / (building["hoehe"] + 2 * margin))
         self.offset = (width - self.scale * building["breite"]) / 2.0
         self.offset_y = margin * self.scale
         height = int(round(self.scale * (building["hoehe"] + 2 * margin)))
         if abs(int(self.cget("height")) - height) > 2:
             self.configure(height=height)
+
+    def _building(self, with_player=True):
         profile = self.state.profile
-        shapes = fg.building_shapes(self.state.open_count_by_room(), self.selected,
-                                    (profile["name"], profile["aussehen"]))
-        for shape in shapes:
+        player = (profile["name"], profile["aussehen"]) if with_player else None
+        return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
+                                  quests=set(self.state.quests()),
+                                  player_pos=self.player_pos)
+
+    def draw(self):
+        self.delete("all")
+        if self.winfo_width() <= 1 or self.state is None:
+            return
+        self._layout()
+        for shape in self._building():
             self._shape(shape)
 
     def _xy(self, x, y):
@@ -158,7 +168,7 @@ class FloorPlan(tk.Canvas):
     def _stroke(self, value):
         return max(1, int(round(value * self.scale)))
 
-    def _shape(self, shape):
+    def _shape(self, shape, tags=()):
         kind = shape["k"]
         if kind in ("rect", "oval"):
             x1, y1 = self._xy(shape["x"], shape["y"])
@@ -166,52 +176,158 @@ class FloorPlan(tk.Canvas):
             width = self._stroke(shape["lw"]) if shape["line"] else 0
             if kind == "oval":
                 self.create_oval(x1, y1, x2, y2, fill=shape["fill"],
-                                 outline=shape["line"], width=width)
+                                 outline=shape["line"], width=width, tags=tags)
             elif shape["r"] * self.scale >= 2:
                 rounded_rect(self, x1, y1, x2, y2, shape["r"] * self.scale,
-                             fill=shape["fill"], outline=shape["line"], width=width)
+                             fill=shape["fill"], outline=shape["line"], width=width,
+                             tags=tags)
             else:
                 self.create_rectangle(x1, y1, x2, y2, fill=shape["fill"],
-                                      outline=shape["line"], width=width)
+                                      outline=shape["line"], width=width, tags=tags)
         elif kind == "line":
             x1, y1, x2, y2 = shape["pts"]
             self.create_line(*self._xy(x1, y1), *self._xy(x2, y2), fill=shape["color"],
-                             width=self._stroke(shape["lw"]), capstyle="round")
+                             width=self._stroke(shape["lw"]), capstyle="round", tags=tags)
         elif kind == "arc":
             x1, y1 = self._xy(shape["x"], shape["y"])
             x2, y2 = self._xy(shape["x"] + shape["w"], shape["y"] + shape["h"])
             # Tk zaehlt Winkel gegen den Uhrzeigersinn
             self.create_arc(x1, y1, x2, y2, start=-(shape["start"] + shape["extent"]),
                             extent=shape["extent"], style="arc", outline=shape["color"],
-                            width=self._stroke(shape["lw"]))
+                            width=self._stroke(shape["lw"]), tags=tags)
         elif kind == "text":
-            self._text(shape)
+            self._text(shape, tags)
 
-    def _text(self, shape):
+    def _text(self, shape, tags=()):
         role = shape["role"]
-        font = tk_font(F["small_bold"] if role in ("raum", "badge") else F["tiny"])
+        bold = role in ("raum", "badge", "player")
+        font = tk_font(F["small_bold"] if bold else F["tiny"])
         x, y = self._xy(shape["x"], shape["y"])
         text = shape["text"]
         if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
                 shape["maxw"] * self.scale:
             text = shape["kurz"]
         item = self.create_text(x, y, text=text, fill=shape["color"], font=font,
-                                anchor="w" if shape["anchor"] == "w" else "center")
+                                anchor="w" if shape["anchor"] == "w" else "center",
+                                tags=tags)
         if shape.get("bg"):
             x1, y1, x2, y2 = self.bbox(item)
             pad_x, pad_y = px(8), px(3)
             back = rounded_rect(self, x1 - pad_x, y1 - pad_y, x2 + pad_x, y2 + pad_y,
                                 (y2 - y1) / 2.0 + pad_y, fill=shape["bg"],
-                                outline=shape.get("border", ""), width=px(1))
+                                outline=shape.get("border", ""), width=px(1), tags=tags)
             self.tag_lower(back, item)
+
+    def to_building(self, event):
+        return ((event.x - self.offset) / self.scale,
+                (event.y - self.offset_y) / self.scale)
 
     def _click(self, event):
         if self.scale <= 0:
             return
-        item = fg.room_at((event.x - self.offset) / self.scale,
-                          (event.y - self.offset_y) / self.scale)
+        item = fg.room_at(*self.to_building(event))
         if item:
             self.on_room(item["id"])
+
+
+class WalkPlan(FloorPlan):
+    """Grossansicht des Bueros: Die Spielfigur laeuft per Klick (oder mit den
+    Pfeiltasten) durch Flur und Tueren. Der Weg kommt aus fisi_game.walk_path,
+    genau wie auf dem Handy."""
+
+    SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
+    TICK = 16              # Millisekunden pro Bild
+
+    def __init__(self, parent, on_arrive, max_height=640):
+        super().__init__(parent, on_room=lambda _room: None, max_height=max_height)
+        self.on_arrive = on_arrive
+        self.route = []
+        self.target = None
+        self._job = None
+        for key in ("<Left>", "<Right>", "<Up>", "<Down>", "a", "d", "w", "s"):
+            self.bind(key, self._key)
+
+    def draw(self):
+        self.delete("all")
+        if self.winfo_width() <= 1 or self.state is None:
+            return
+        self._layout()
+        for shape in self._building(with_player=False):
+            self._shape(shape)
+        self._draw_player()
+
+    def _draw_player(self):
+        self.delete("player")
+        profile = self.state.profile
+        for shape in fg.player_shapes(self.player_pos, (profile["name"],
+                                                        profile["aussehen"])):
+            self._shape(shape, tags=("player",))
+
+    def _click(self, event):
+        self.focus_set()
+        if self.scale <= 0 or self.state is None:
+            return
+        x, y = self.to_building(event)
+        person = fg.person_at(x, y)
+        if person:
+            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH)
+        else:
+            route = fg.walk_path(self.player_pos, (x, y))
+        self.walk(route, person)
+
+    def walk(self, route, person=None):
+        self.route = list(route)
+        self.target = person
+        if self._job is None:
+            self._step()
+        if not self.route:
+            self._arrived()
+
+    def _step(self):
+        self._job = None
+        if not self.route:
+            return
+        x, y = self.player_pos
+        tx, ty = self.route[0]
+        dist = ((tx - x) ** 2 + (ty - y) ** 2) ** 0.5
+        step = self.SPEED * self.TICK / 1000.0
+        if dist <= step:
+            self.player_pos = (tx, ty)
+            self.route.pop(0)
+        else:
+            self.player_pos = (x + (tx - x) * step / dist, y + (ty - y) * step / dist)
+        self._draw_player()
+        if self.route:
+            self._job = self.after(self.TICK, self._step)
+        else:
+            self._arrived()
+
+    def _arrived(self):
+        person = self.target or fg.person_near(*self.player_pos)
+        self.target = None
+        self.on_arrive(self.player_pos, person)
+
+    def _key(self, event):
+        moves = {"Left": (-1, 0), "a": (-1, 0), "Right": (1, 0), "d": (1, 0),
+                 "Up": (0, -1), "w": (0, -1), "Down": (0, 1), "s": (0, 1)}
+        dx, dy = moves.get(event.keysym, (0, 0))
+        if self._job is not None:
+            self.after_cancel(self._job)
+            self._job = None
+        self.route = []
+        x = self.player_pos[0] + dx * fg.WALK_STEP
+        y = self.player_pos[1] + dy * fg.WALK_STEP
+        if fg.can_stand(x, y):
+            self.player_pos = (x, y)
+            self._draw_player()
+            self._arrived()
+        return "break"
+
+    def destroy(self):
+        if self._job is not None:
+            self.after_cancel(self._job)
+            self._job = None
+        super().destroy()
 
 
 class MatchBoard(ctk.CTkFrame):
@@ -319,6 +435,9 @@ class GameView(ScrollArea):
         self.room = None
         self.ticket = None
         self.draft = {}
+        # Standort der Figur im Buero (nur waehrend die App laeuft)
+        self.player_pos = fg.start_position()
+        self.return_to = None     # Ticket kam aus der Bueroansicht
         self.render()
 
     # -- Aufbau -------------------------------------------------------------
@@ -351,7 +470,7 @@ class GameView(ScrollArea):
         self.draft["aussehen"] = look
 
         if state.profile is None:
-            intro = Card(self.content, title="Willkommen im Lernspiel", accent=C["pink"],
+            intro = Card(self.content, title="Willkommen im Spiel", accent=C["pink"],
                          subtitle="%s · Kunde: %s" % (fg.GAME["gebaeude"]["firma"],
                                                       fg.GAME["gebaeude"]["kunde"]))
             intro.pack(fill="x")
@@ -473,7 +592,10 @@ class GameView(ScrollArea):
         plan.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         self.floor = FloorPlan(plan.body, self._select_room)
         self.floor.pack(fill="x")
-        self.floor.set_state(state, self.room)
+        self.floor.set_state(state, self.room, self.player_pos)
+        NeoButton(plan.body, "Büro öffnen", lambda: self.app.show_view("buero"),
+                  kind="ghost", height=32, font=F["small_bold"]).pack(anchor="w",
+                                                                      pady=(10, 0))
 
         wissen = Card(middle, title="Wissensstand", accent=C["green"],
                       subtitle="aus deinem Lernfortschritt")
@@ -593,8 +715,19 @@ class GameView(ScrollArea):
         self.ticket = task_id
         self.render()
 
+    def open_from_office(self, task_id):
+        """Auftrag direkt bei der Person im Buero angenommen."""
+        self.return_to = "buero"
+        self.ticket = task_id
+        self.app.show_view("game")
+
     def _close_ticket(self):
         self.ticket = None
+        if self.return_to:
+            target, self.return_to = self.return_to, None
+            self.render()
+            self.app.show_view(target)
+            return
         self.render()
 
     def _build_ticket(self, task_id):
@@ -605,8 +738,8 @@ class GameView(ScrollArea):
         self.used_help = False
         self.answered = False
 
-        back = NeoButton(self.content, "Zurück zur Übersicht", self._close_ticket,
-                         kind="ghost", height=32, font=F["small_bold"], icon="arrow_left")
+        back = NeoButton(self.content, "Zurück ins Büro" if self.return_to else
+                         "Zurück zur Übersicht", self._close_ticket, kind="ghost", height=32, font=F["small_bold"], icon="arrow_left")
         back.pack(anchor="w")
 
         card = Card(self.content, title=task["titel"],
@@ -742,7 +875,8 @@ class GameView(ScrollArea):
 
         for child in self.controls.winfo_children():
             child.destroy()
-        NeoButton(self.controls, "Zurück zur Übersicht", self._close_ticket,
+        NeoButton(self.controls, "Zurück ins Büro" if self.return_to else
+                  "Zurück zur Übersicht", self._close_ticket,
                   kind="primary").pack(side="left")
 
     def _open_learn(self, kind, title):
@@ -762,6 +896,73 @@ class GameView(ScrollArea):
             messagebox.showinfo("Hinweis", str(exc))
         self.app.notify_progress()
         self._close_ticket()
+
+
+class OfficeView(ScrollArea):
+    """Unterpunkt "Buero": das Gebaeude in gross. Die Spielfigur laeuft per
+    Klick zu Kolleginnen und Kollegen; wer einen Auftrag hat, traegt ein
+    gruenes "!" - dort laesst sich das Ticket direkt annehmen."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=C["bg"])
+        self.app = app
+        self.content = _frame(self.inner)
+        self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
+        self.plan = None
+
+    @property
+    def game_view(self):
+        return self.app.views["game"]
+
+    def on_show(self):
+        self.game_view.game.reload()
+        self.render()
+
+    def refresh(self):
+        self.on_show()
+
+    def render(self):
+        for child in self.content.winfo_children():
+            child.destroy()
+        state = self.game_view.game.state
+        if state.profile is None:
+            card = Card(self.content, title="Büro", accent=C["cyan"])
+            card.pack(fill="x")
+            make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
+                       font=F["body"], fg=C["text_soft"]).pack(anchor="w")
+            NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
+                      kind="primary").pack(anchor="w", pady=(12, 0))
+            return
+        card = Card(self.content, title="Büro", accent=C["cyan"],
+                    subtitle="Klicke auf eine Person oder einen Ort · Pfeiltasten gehen auch")
+        card.pack(fill="x")
+        self.plan = WalkPlan(card.body, self._arrived)
+        self.plan.pack(fill="x")
+        self.plan.set_state(state, None, self.game_view.player_pos)
+        self.info = _frame(card.body)
+        self.info.pack(fill="x", pady=(12, 0))
+        self._show_info(self.game_view.player_pos, fg.person_near(*self.game_view.player_pos))
+        self.after(50, self.plan.focus_set)
+
+    def _arrived(self, position, person):
+        self.game_view.player_pos = position
+        self._show_info(position, person)
+
+    def _show_info(self, position, person):
+        for child in self.info.winfo_children():
+            child.destroy()
+        state = self.game_view.game.state
+        quests = state.quests()
+        title, text = fg.office_message(position, person, quests)
+        make_label(self.info, title, font=F["body_bold"], fg=C["text"],
+                   anchor="w").pack(anchor="w")
+        make_label(self.info, text, font=F["small"], fg=C["text_soft"], anchor="w",
+                   wraplength=900, justify="left").pack(anchor="w", pady=(2, 0))
+        if person and quests.get(person["id"]):
+            task = quests[person["id"]][0]
+            NeoButton(self.info, "Auftrag annehmen",
+                      lambda: self.game_view.open_from_office(task["id"]),
+                      kind="primary").pack(anchor="w", pady=(10, 0))
 
 
 def _euro(value):

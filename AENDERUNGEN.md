@@ -32,8 +32,14 @@ Update-Fenster des Programms.
 - **Abgleich PC und Handy:** Der Spielstand wird wie der Lernstand
   abgeglichen. Wichtig: Beide Geräte sollten auf 0.26 sein, bevor du auf
   beiden spielst.
-- **Handy:** Der Eintrag „Einstellungen“ in der unteren Leiste heißt jetzt
-  „Optionen“, damit alle sechs Einträge in eine Zeile passen.
+- **Büro in groß, Figur steuern:** Unter „Spiel“ gibt es den Unterpunkt
+  „Büro“ (am PC in der Seitenleiste, auf dem Handy über „Büro öffnen“). Dort
+  läuft deine Figur per Klick oder Tipp durch Flur und Türen, am PC auch mit
+  den Pfeiltasten. Wer einen Auftrag für dich hat, trägt ein grünes „!“ – bei
+  der Person angekommen, nimmst du das Ticket direkt an.
+- **Gleiche Namen auf PC und Handy:** Die Menüpunkte heißen jetzt überall
+  „Rechner“, „Spiel“, „Fortschritt“ und „Optionen“ (nur „Dashboard“ am PC
+  und „Start“ auf dem Handy bleiben verschieden).
 - **Eigener Knopf „Spielstand zurücksetzen“** in den Einstellungen. „Alle
   Lerndaten löschen“ und „Historie löschen“ lassen den Spielstand stehen.
 

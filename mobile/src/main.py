@@ -942,7 +942,7 @@ class ProjectScreen(Screen):
 # ============================================================================
 
 class CalcScreen(Screen):
-    crumbs = ("WERKZEUGE", "PRAXIS-RECHNER")
+    crumbs = ("WERKZEUGE", "RECHNER")
 
     def build(self):
         self.entry_ip = ui.entry("192.168.1.50/24", on_change=None)
@@ -1025,7 +1025,7 @@ class CalcScreen(Screen):
 # ============================================================================
 
 class ProgressScreen(Screen):
-    crumbs = ("AUSWERTUNG", "LERNFORTSCHRITT")
+    crumbs = ("AUSWERTUNG", "FORTSCHRITT")
 
     def build(self):
         self.stats = {}
@@ -1113,7 +1113,7 @@ class ProgressScreen(Screen):
 # ============================================================================
 
 class SettingsScreen(Screen):
-    crumbs = ("SYSTEM", "EINSTELLUNGEN")
+    crumbs = ("SYSTEM", "OPTIONEN")
 
     def build(self):
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
@@ -1168,7 +1168,7 @@ class SettingsScreen(Screen):
                 ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                           kind="danger")]),
             ], accent=C["red"]),
-            ui.Card("Lernspiel", [
+            ui.Card("Spiel", [
                 ui.text("Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
                         "Reputation, Arbeitstage und erledigte Tickets. Der Lernfortschritt "
                         "bleibt erhalten. Mit eingerichtetem Abgleich auch auf dem PC.",
@@ -1684,6 +1684,11 @@ def selftest():
             game.open_ticket(task["id"])
             game._show_help()
         game._select_room("serverraum")
+        # Bueroansicht (ohne reload, der Test-Spielstand steht nur im Speicher)
+        game.office = ft.Column()
+        game._fill_office()
+        for person in fisi_game.GAME["kollegen"]:
+            game._office_text(tuple(person["platz"]), person)
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()

@@ -11,6 +11,7 @@ Hinweis wie in ui.py: In Ereignissen (Tippen) nie control.update() aufrufen,
 Flet uebernimmt die Aenderungen danach selbst.
 """
 
+import asyncio
 import math
 import random
 
@@ -83,11 +84,13 @@ class FloorPlan(ft.GestureDetector):
     Treffer ueber die Raumflaechen (fisi_game.room_at), genau wie am PC."""
 
     MAX_HEIGHT = 300
+    ROTATE = False
 
-    def __init__(self, state, selected, on_room):
+    def __init__(self, state, selected, on_room, player_pos=None):
         self.state = state
         self.selected = selected
         self.on_room = on_room
+        self.player_pos = player_pos or fg.start_position()
         self.width_px = 340
         self.canvas = cv.Canvas(expand=True, height=240, on_resize=self._resized,
                                 resize_interval=100)
@@ -101,21 +104,25 @@ class FloorPlan(ft.GestureDetector):
 
     def _layout(self):
         """Massstab und Verschiebung - gleicher Massstab in beide Richtungen."""
-        building = fg.GAME["gebaeude"]
+        width, height = fg.plan_size(self.ROTATE)
         margin = fg.PLAN_MARGIN
-        scale = min(self.width_px / (building["breite"] + 2 * margin),
-                    self.MAX_HEIGHT / (building["hoehe"] + 2 * margin))
-        offset_x = (self.width_px - scale * building["breite"]) / 2.0
+        scale = min(self.width_px / (width + 2 * margin),
+                    self.MAX_HEIGHT / (height + 2 * margin))
+        offset_x = (self.width_px - scale * width) / 2.0
         return scale, offset_x, margin * scale
 
-    def _draw(self):
-        building = fg.GAME["gebaeude"]
-        scale, ox, oy = self._layout()
-        self.canvas.height = scale * (building["hoehe"] + 2 * fg.PLAN_MARGIN)
+    def _building(self, with_player=True):
         profile = self.state.profile
+        player = (profile["name"], profile["aussehen"]) if with_player else None
+        return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
+                                  quests=set(self.state.quests()),
+                                  player_pos=self.player_pos, rotate=self.ROTATE)
+
+    def _draw(self):
+        scale, ox, oy = self._layout()
+        self.canvas.height = scale * (fg.plan_size(self.ROTATE)[1] + 2 * fg.PLAN_MARGIN)
         shapes = []
-        for shape in fg.building_shapes(self.state.open_count_by_room(), self.selected,
-                                        (profile["name"], profile["aussehen"])):
+        for shape in self._building():
             shapes += self._shape(shape, scale, ox, oy)
         self.canvas.shapes = shapes
 
@@ -149,11 +156,11 @@ class FloorPlan(ft.GestureDetector):
                            shape["w"] * scale, shape["h"] * scale,
                            math.radians(shape["start"]), math.radians(shape["extent"]),
                            paint=stroke(shape["color"], shape["lw"]))]
-        # Text: Namen der Kollegen nur, wenn genug Platz ist (Tablet, quer)
+        # Text: Namen der Kollegen nur, wenn genug Platz ist (Grossansicht)
         role = shape["role"]
         if role == "person" and scale < 18:
             return []
-        size = 11 if role in ("raum", "badge") else 9
+        size = 11 if role in ("raum", "badge", "player") else 9
         text = shape["text"]
         # Ohne Textmessung: Breite grob ueber die Zeichenzahl schaetzen
         if shape.get("maxw") and len(text) * size * 0.56 > shape["maxw"] * scale:
@@ -178,12 +185,91 @@ class FloorPlan(ft.GestureDetector):
         result.append(cv.Text(x, y, text, style=style, alignment=alignment))
         return result
 
-    def _tapped(self, event):
+    def _to_building(self, event):
         scale, ox, oy = self._layout()
         position = event.local_position
-        item = fg.room_at((position.x - ox) / scale, (position.y - oy) / scale)
+        return fg.from_view((position.x - ox) / scale, (position.y - oy) / scale,
+                            self.ROTATE)
+
+    def _tapped(self, event):
+        item = fg.room_at(*self._to_building(event))
         if item:
             self.on_room(item["id"])
+
+
+class WalkPlan(FloorPlan):
+    """Grossansicht des Bueros (hochkant): Die Spielfigur laeuft per Tipp
+    durch Flur und Tueren - Weg aus fisi_game.walk_path, genau wie am PC.
+    Beim Laufen werden nur die Formen der Figur verschoben, nicht das ganze
+    Gebaeude neu gezeichnet."""
+
+    MAX_HEIGHT = 900
+    ROTATE = True
+    SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
+    FRAME = 0.04           # Sekunden pro Bild
+
+    def __init__(self, state, player_pos, on_arrive):
+        self.on_arrive = on_arrive
+        self.player = []
+        self.walk_id = 0
+        super().__init__(state, None, lambda _room: None, player_pos)
+
+    def _draw(self):
+        scale, ox, oy = self._layout()
+        self.canvas.height = scale * (fg.plan_size(True)[1] + 2 * fg.PLAN_MARGIN)
+        shapes = []
+        for shape in self._building(with_player=False):
+            shapes += self._shape(shape, scale, ox, oy)
+        profile = self.state.profile
+        self.player = []
+        for shape in fg.player_shapes(self.player_pos, (profile["name"],
+                                                        profile["aussehen"]), True):
+            self.player += self._shape(shape, scale, ox, oy)
+        self.canvas.shapes = shapes + self.player
+
+    def _shift(self, dx, dy):
+        for shape in self.player:
+            if isinstance(shape, cv.Line):
+                shape.x1 += dx
+                shape.x2 += dx
+                shape.y1 += dy
+                shape.y2 += dy
+            else:
+                shape.x += dx
+                shape.y += dy
+
+    def _tapped(self, event):
+        x, y = self._to_building(event)
+        person = fg.person_at(x, y)
+        if person:
+            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH)
+        else:
+            route = fg.walk_path(self.player_pos, (x, y))
+        self.walk_id += 1
+        self.page.run_task(self._walk, route, person, self.walk_id)
+
+    async def _walk(self, route, person, walk_id):
+        scale = self._layout()[0]
+        for tx, ty in route:
+            while walk_id == self.walk_id:
+                x, y = self.player_pos
+                dist = ((tx - x) ** 2 + (ty - y) ** 2) ** 0.5
+                step = self.SPEED * self.FRAME
+                if dist <= step:
+                    new = (tx, ty)
+                else:
+                    new = (x + (tx - x) * step / dist, y + (ty - y) * step / dist)
+                old_v = fg.to_view(x, y, True)
+                new_v = fg.to_view(new[0], new[1], True)
+                self._shift((new_v[0] - old_v[0]) * scale, (new_v[1] - old_v[1]) * scale)
+                self.player_pos = new
+                self.canvas.update()
+                await asyncio.sleep(self.FRAME)
+                if new == (tx, ty):
+                    break
+            if walk_id != self.walk_id:
+                return        # neuer Tipp - dieser Weg ist abgebrochen
+        self.on_arrive(self.player_pos, person or fg.person_near(*self.player_pos))
 
 
 # ============================================================================
@@ -289,7 +375,7 @@ class GameScreen:
     """Seite "Spiel" der Handy-App (gleiche Schnittstelle wie Screen in
     main.py: crumbs, root, on_show)."""
 
-    crumbs = ("PRAXIS", "LERNSPIEL")
+    crumbs = ("PRAXIS", "SPIEL")
 
     def __init__(self, app):
         self.app = app
@@ -297,6 +383,10 @@ class GameScreen:
         self.game = fg.Game(app.db, device="Handy")
         self.room = None
         self.draft = {}
+        # Standort der Figur im Buero (nur waehrend die App laeuft)
+        self.player_pos = fg.start_position()
+        self.from_office = False
+        self.office = None
         self.root = screen_list([])
         self.render()
 
@@ -344,7 +434,7 @@ class GameScreen:
 
         result = []
         if state.profile is None:
-            result.append(ui.Card("Willkommen im Lernspiel", [
+            result.append(ui.Card("Willkommen im Spiel", [
                 ui.text(fg.GAME["story"]["intro"], size=14, color=C["text_soft"]),
                 ui.text("%s · Kunde: %s" % (fg.GAME["gebaeude"]["firma"],
                                             fg.GAME["gebaeude"]["kunde"]),
@@ -404,9 +494,10 @@ class GameScreen:
                              subtitle="Ansehen %d %%" % round(state.mean_reputation))
 
         plan = ui.Card("Grundriss", [
-            FloorPlan(state, self.room, self._select_room),
+            FloorPlan(state, self.room, self._select_room, self.player_pos),
             ui.text("Raum antippen, um zu sehen, wer dort etwas braucht.", size=11,
                     color=C["muted"]),
+            ui.GradientButton("Büro öffnen", self.open_office, kind="ghost", height=38),
         ], accent=C["cyan"])
 
         knowledge_bars = []
@@ -496,7 +587,8 @@ class GameScreen:
 
     # -- Ticket als eigene Seite -------------------------------------------
 
-    def open_ticket(self, task_id):
+    def open_ticket(self, task_id, from_office=False):
+        self.from_office = from_office
         task = fg.task_by_id(task_id)
         person = fg.colleague(task["auftraggeber"])
         gaps = fg.requirement_gaps(task, self.game.knowledge())
@@ -617,7 +709,8 @@ class GameScreen:
                     on_click=lambda _e, k=kind, t=title: self._open_learn(k, t)))
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
-            "Zurück zur Übersicht", self._close, expand=True)])]
+            "Zurück ins Büro" if self.from_office else "Zurück zur Übersicht",
+            self._close, expand=True)])]
 
     def _defer(self, _event=None):
         if self.answered:
@@ -637,10 +730,58 @@ class GameScreen:
 
     def _close(self, _event=None):
         page = self.app.page
+        if self.from_office:
+            # zurueck in die Bueroansicht (die liegt direkt unter dem Ticket)
+            self.from_office = False
+            while len(page.views) > 2:
+                page.views.pop()
+            self.game.reload()
+            self.on_show()
+            self._fill_office()
+            page.update()
+            return
         while len(page.views) > 1:
             page.views.pop()
         self.on_show()
         page.update()
+
+    # -- Buero (Grossansicht) ---------------------------------------------
+
+    def open_office(self, _event=None):
+        self.game.reload()
+        self.office = ft.Column(spacing=12, tight=True,
+                                horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._fill_office()
+        self.app.push(("SPIEL", "BÜRO"), screen_list([self.office]))
+
+    def _fill_office(self):
+        state = self.game.state
+        self.office_info = ft.Column(spacing=6, tight=True,
+                                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.office_plan = WalkPlan(state, self.player_pos, self._arrived)
+        self.office.controls = [ui.Card("Büro", [self.office_plan, self.office_info],
+                                        accent=C["cyan"],
+                                        subtitle="Tippe auf eine Person oder einen Ort")]
+        self._office_text(self.player_pos, fg.person_near(*self.player_pos))
+
+    def _arrived(self, position, person):
+        self.player_pos = position
+        self._office_text(position, person)
+        self.office_info.update()
+
+    def _office_text(self, position, person):
+        quests = self.game.state.quests()
+        title, text = fg.office_message(position, person, quests)
+        controls = [ui.text(title, size=15, weight=ft.FontWeight.BOLD),
+                    ui.text(text, size=13, color=C["text_soft"])]
+        if person and quests.get(person["id"]):
+            task = quests[person["id"]][0]
+            controls.append(ui.GradientButton(
+                "Auftrag annehmen", lambda _e: self._accept(task["id"]), height=42))
+        self.office_info.controls = controls
+
+    def _accept(self, task_id):
+        self.open_ticket(task_id, from_office=True)
 
     def _open_cards(self, category):
         self.app.screens["cards"].set_category(category)

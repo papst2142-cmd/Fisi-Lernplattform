@@ -47,7 +47,7 @@ import fisi_game  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
-from fisi_game_gui import GameView  # noqa: E402
+from fisi_game_gui import GameView, OfficeView  # noqa: E402
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
@@ -81,10 +81,10 @@ NAV_ITEMS = [
     ("ap1scenarios", "layers", "AP1 Szenarien", None),
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
-    ("calc", "calc", "Praxis-Rechner", None),
-    ("game", "game", "Lernspiel", None),
-    ("progress", "chart", "Lernfortschritt", None),
-    ("settings", "gear", "Einstellungen", None),
+    ("calc", "calc", "Rechner", None),
+    ("game", "game", "Spiel", [("buero", "office", "Büro")]),
+    ("progress", "chart", "Fortschritt", None),
+    ("settings", "gear", "Optionen", None),
 ]
 
 # Symbole der Fachbereiche im Untermenue der Seitenleiste
@@ -103,10 +103,11 @@ VIEW_TITLES = {
     "ap1scenarios": ("LERNEN", "AP1 SZENARIEN"),
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
     "testproject": ("LERNEN", "TEST PROJEKT"),
-    "calc": ("WERKZEUGE", "PRAXIS-RECHNER"),
-    "game": ("PRAXIS", "LERNSPIEL"),
-    "progress": ("AUSWERTUNG", "LERNFORTSCHRITT"),
-    "settings": ("SYSTEM", "EINSTELLUNGEN"),
+    "calc": ("WERKZEUGE", "RECHNER"),
+    "game": ("PRAXIS", "SPIEL"),
+    "buero": ("SPIEL", "BÜRO"),
+    "progress": ("AUSWERTUNG", "FORTSCHRITT"),
+    "settings": ("SYSTEM", "OPTIONEN"),
     "search": ("SUCHE", "ERGEBNISSE"),
 }
 
@@ -491,6 +492,7 @@ class Sidebar(ctk.CTkFrame):
         self.rows = {}
         self.sub_frames = {}
         self.expanded = set()
+        self.parents = {}         # Unteransicht -> Menuepunkt (buero -> game)
 
         logo = transparent_frame(self)
         logo.pack(fill="x", pady=(22, 20), padx=20)
@@ -524,10 +526,18 @@ class Sidebar(ctk.CTkFrame):
                 container = transparent_frame(self)
                 self.sub_frames[key] = container
                 for item in sub_items:
-                    sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
-                                     CATEGORY_SHORT.get(item, item),
-                                     command=lambda c=item: self.app.open_cards(c),
-                                     sub=True)
+                    if isinstance(item, tuple):
+                        # Eigene Unteransicht, z.B. Spiel -> Buero
+                        sub_key, sub_icon, sub_text = item
+                        sub_row = NavRow(container, sub_icon, sub_text,
+                                         command=lambda k=sub_key: self.app.show_view(k),
+                                         sub=True)
+                        self.parents[sub_key] = key
+                    else:
+                        sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
+                                         CATEGORY_SHORT.get(item, item),
+                                         command=lambda c=item: self.app.open_cards(c),
+                                         sub=True)
                     sub_row.pack(fill="x", pady=1)
 
         self.footer = make_label(self, "Version %s" % APP_VERSION,
@@ -563,6 +573,10 @@ class Sidebar(ctk.CTkFrame):
             self.rows[key].set_expanded(True)
 
     def set_active(self, key):
+        if key in self.parents:
+            if self.parents[key] not in self.expanded:
+                self._toggle(self.parents[key])
+            key = self.parents[key]
         for name, row in self.rows.items():
             row.set_active(name == key)
 
@@ -2015,7 +2029,7 @@ class SettingsView(View):
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
-        game = Card(self.content, title="Lernspiel", accent=C["pink"])
+        game = Card(self.content, title="Spiel", accent=C["pink"])
         game.pack(fill="x", pady=(14, 0))
         make_label(game.body,
                    "Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
@@ -2513,7 +2527,7 @@ class FISIApp:
                          ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
                          ("scenarios", ScenarioView),
                          ("testproject", ProjectView),
-                         ("calc", CalcView), ("game", GameView),
+                         ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
                          ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)

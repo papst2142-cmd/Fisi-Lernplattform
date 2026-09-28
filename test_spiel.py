@@ -316,6 +316,51 @@ class GrundrissUndAvatarTest(unittest.TestCase):
         hall = fg.GAME["gebaeude"]["flur"]
         self.assertIsNone(fg.room_at(5, hall["y"] + hall["h"] / 2.0))
 
+    def test_alle_kollegen_erreichbar(self):
+        start = fg.start_position()
+        self.assertTrue(fg.can_stand(*start))
+        for person in fg.GAME["kollegen"]:
+            route = fg.walk_path(start, person["platz"], reach=fg.REACH)
+            self.assertTrue(route, person["id"])
+            end = route[-1]
+            self.assertLessEqual((end[0] - person["platz"][0]) ** 2 +
+                                 (end[1] - person["platz"][1]) ** 2,
+                                 fg.REACH ** 2 + 1e-9)
+            self.assertEqual(fg.person_near(*end)["id"], person["id"])
+            # jeder Wegpunkt ist begehbar
+            for point in route:
+                self.assertTrue(fg.can_stand(*point), (person["id"], point))
+
+    def test_waende_nur_durch_tueren(self):
+        # Von Raum zu Raum fuehrt der Weg immer durch den Flur
+        hall = fg.GAME["gebaeude"]["flur"]
+        route = fg.walk_path((3.5, 12.0), (3.5, 4.5))
+        self.assertTrue(route)
+        self.assertTrue(any(hall["y"] <= y <= hall["y"] + hall["h"] for _x, y in route))
+
+    def test_drehung_hin_und_zurueck(self):
+        for point in ((0, 0), (3.5, 12.25), (24, 16)):
+            self.assertEqual(fg.from_view(*fg.to_view(*point, rotate=True), rotate=True),
+                             point)
+        self.assertEqual(fg.plan_size(True), (16, 24))
+        shapes = fg.building_shapes(rotate=True)
+        width, height = fg.plan_size(True)
+        for shape in shapes:
+            if shape["k"] == "text":
+                self.assertTrue(-1 <= shape["x"] <= width + 1 and -1 <= shape["y"] <= height + 1)
+
+    def test_auftraege_je_person(self):
+        state = fg.GameState([])
+        quests = state.quests()
+        self.assertEqual(sum(len(tasks) for tasks in quests.values()),
+                         len(state.open_tickets()))
+        person_id = next(iter(quests))
+        person = fg.colleague(person_id)
+        title, _text = fg.office_message(person["platz"], person, quests)
+        self.assertIn("Auftrag", title)
+        texts = [s["text"] for s in fg.building_shapes(quests=set(quests)) if s["k"] == "text"]
+        self.assertEqual(texts.count("!"), len(quests))
+
     def test_avatar_alle_varianten(self):
         for part, options in fg.APPEARANCE.items():
             for key, _name in options:

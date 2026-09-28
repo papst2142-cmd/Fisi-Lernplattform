@@ -633,6 +633,13 @@ class GameState:
         return [(task, status) for task, status in self.todays_tickets()
                 if task["raum"] == room_id]
 
+    def quests(self):
+        """Offene Tickets je Auftraggeber: {kollegen_id: [aufgabe, ...]}."""
+        result = {}
+        for task in self.open_tickets():
+            result.setdefault(task["auftraggeber"], []).append(task)
+        return result
+
     def open_count_by_room(self):
         counts = {}
         for task in self.open_tickets():
@@ -743,6 +750,7 @@ class Game:
 PLAN_MARGIN = 0.4
 
 WALL = "#B7A6DD"
+WALL_INNER = 0.16
 WALL_OUTER = "#D9CCF5"
 WINDOW = "#7FE3F5"
 WOOD = "#9A6B45"
@@ -989,16 +997,78 @@ def person_shapes(cx, cy, appearance, size=1.0, ring=None):
     return s
 
 
-def building_shapes(counts=None, selected=None, player=None, content=None):
+def plan_size(rotate=False, content=None):
+    """Breite und Hoehe der Zeichnung in Grundriss-Einheiten. Gedreht (rotate)
+    steht das Gebaeude hochkant - so nutzt die Grossansicht auf dem Handy den
+    Bildschirm aus."""
+    building = (content or GAME)["gebaeude"]
+    if rotate:
+        return building["hoehe"], building["breite"]
+    return building["breite"], building["hoehe"]
+
+
+def to_view(x, y, rotate=False, content=None):
+    """Punkt im Gebaeude -> Punkt in der (evtl. gedrehten) Zeichnung."""
+    if not rotate:
+        return x, y
+    return (content or GAME)["gebaeude"]["hoehe"] - y, x
+
+
+def from_view(x, y, rotate=False, content=None):
+    """Punkt in der Zeichnung (z.B. ein Klick) -> Punkt im Gebaeude."""
+    if not rotate:
+        return x, y
+    return y, (content or GAME)["gebaeude"]["hoehe"] - x
+
+
+def _rotate_shape(shape, height):
+    """Dreht einen Zeichenbefehl um 90 Grad im Uhrzeigersinn."""
+    shape = dict(shape)
+    if shape["k"] in ("rect", "oval", "arc"):
+        shape["x"], shape["y"] = height - shape["y"] - shape["h"], shape["x"]
+        shape["w"], shape["h"] = shape["h"], shape["w"]
+        if shape["k"] == "arc":
+            shape["start"] += 90
+    elif shape["k"] == "line":
+        x1, y1, x2, y2 = shape["pts"]
+        shape["pts"] = [height - y1, x1, height - y2, x2]
+    elif shape["k"] == "text":
+        shape["x"], shape["y"] = height - shape["y"], shape["x"]
+    return shape
+
+
+def _view_rect(item, rotate, content):
+    """Raumflaeche in Zeichnungs-Koordinaten (x, y, w, h)."""
+    x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+    if rotate:
+        return content["gebaeude"]["hoehe"] - y - h, x, h, w
+    return x, y, w, h
+
+
+def player_shapes(position, player, rotate=False, content=None):
+    """Die Spielfigur (rosa Ring, Name daneben) an position im Gebaeude."""
+    x, y = to_view(position[0], position[1], rotate, content)
+    shapes = person_shapes(x, y, player[1], ring=C["pink"])
+    shapes.append(_text(x + 0.8, y, player[0] or "Du", "player", C["pink"]))
+    return shapes
+
+
+def building_shapes(counts=None, selected=None, player=None, content=None,
+                    quests=None, player_pos=None, rotate=False):
     """Zeichenbefehle fuer das ganze Buerogebaeude.
 
-    counts:   offene Tickets je Raum-ID (rosa Plakette)
-    selected: ausgewaehlte Raum-ID (farbiger Rahmen)
-    player:   (Name, Aussehen) des Protagonisten oder None
+    counts:     offene Tickets je Raum-ID (rosa Plakette)
+    selected:   ausgewaehlte Raum-ID (farbiger Rahmen)
+    player:     (Name, Aussehen) des Protagonisten oder None (dann zeichnet
+                die Oberflaeche die Figur selbst, z.B. waehrend sie laeuft)
+    quests:     IDs der Kollegen mit offenem Auftrag (gruenes "!" ueber dem Kopf)
+    player_pos: Standort der Spielfigur, sonst ihr Platz im Flur
+    rotate:     Gebaeude hochkant zeichnen (Handy-Grossansicht)
     """
     content = content or GAME
     building = content["gebaeude"]
     counts = counts or {}
+    quests = quests or set()
     width, height = building["breite"], building["hoehe"]
     hall = building["flur"]
     s = []
@@ -1024,10 +1094,9 @@ def building_shapes(counts=None, selected=None, player=None, content=None):
                                person.get("aussehen"))
 
     # Innenwaende (Raumgrenzen) und Aussenwand
-    inner = 0.16
     for item in building["raeume"]:
         x, y, w, h = item["x"], item["y"], item["w"], item["h"]
-        s.append(_rect(x, y, w, h, "", WALL, inner))
+        s.append(_rect(x, y, w, h, "", WALL, WALL_INNER))
     s.append(_rect(0, 0, width, height, "", WALL_OUTER, 0.3))
 
     # Fenster in der Aussenwand
@@ -1055,15 +1124,13 @@ def building_shapes(counts=None, selected=None, player=None, content=None):
     s.append(_rect(-0.2, entrance["von"], 0.4, entrance["bis"] - entrance["von"], floor_hall))
     s.append(_line(0, entrance["von"], 0, entrance["bis"], mix(WINDOW, C["card"], 0.3), 0.06))
 
-    # Spielfigur im Flur
-    if player:
-        px_, py_ = hall.get("spieler", [2.4, 7.0])
-        s += person_shapes(px_, py_, player[1], ring=C["pink"])
-        s.append(_text(px_ + 0.8, py_, player[0] or "Du", "person", C["pink"]))
+    if rotate:
+        s = [_rotate_shape(shape, height) for shape in s]
 
+    # Ab hier in Zeichnungs-Koordinaten, damit Schrift nie mitgedreht wird.
     # Beschriftung, Auswahl und Ticket-Plaketten zuletzt, damit sie oben liegen
     for item in building["raeume"]:
-        x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+        x, y, w, h = _view_rect(item, rotate, content)
         color = CATEGORY_COLOR[CAT_NAME[item["cat"]]]
         if item["id"] == selected:
             s.append(_rect(x + 0.14, y + 0.14, w - 0.28, h - 0.28, "", color, 0.12, 0.2))
@@ -1078,11 +1145,243 @@ def building_shapes(counts=None, selected=None, player=None, content=None):
             s.append(_text(x + w - 0.65, y + 0.78, str(count), "badge", C["on_accent"],
                            anchor="c"))
     for person in content["kollegen"]:
-        if person.get("platz"):
-            px_, py_ = person["platz"]
-            s.append(_text(px_, py_ + 0.62, person["name"].split()[0], "person",
-                           C["text_soft"], anchor="c"))
+        if not person.get("platz"):
+            continue
+        px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
+        s.append(_text(px_, py_ + 0.62, person["name"].split()[0], "person",
+                       C["text_soft"], anchor="c"))
+        if person["id"] in quests:
+            s.append(_oval(px_ + 0.25, py_ - 1.15, 0.68, 0.68, C["green"], C["card"], 0.05))
+            s.append(_text(px_ + 0.59, py_ - 0.81, "!", "badge", C["card"], anchor="c"))
+
+    if player:
+        s += player_shapes(player_pos or hall.get("spieler", [2.4, 7.0]), player,
+                           rotate, content)
     return s
+
+
+# ============================================================================
+#  LAUFEN DURCH DAS GEBAEUDE
+# ============================================================================
+#
+# Die Spielfigur laeuft auf einem feinen Raster (WALK_STEP Einheiten). Waende
+# (ausser an Tueren), Moebel und Kollegen sind Hindernisse. Der Weg wird mit
+# einer Breitensuche gefunden und danach geglaettet, damit die Figur nicht im
+# Zickzack laeuft. Alles ohne Oberflaeche, damit PC und Handy gleich laufen.
+
+WALK_STEP = 0.25
+BODY_RADIUS = 0.3          # Abstand der Figur zu Waenden und Moebeln
+PERSON_RADIUS = 0.5        # Kollegen stehen im Weg
+REACH = 1.3                # so nah muss man an eine Person heran
+WALK_FREE = ("teppich", "fussmatte", "whiteboard")   # darueber laeuft man
+_GRID_CACHE = {}
+
+
+def _segments(content):
+    """Wandstuecke als Rechtecke (x1, y1, x2, y2) - Tueroeffnungen ausgespart."""
+    building = content["gebaeude"]
+    hall = building["flur"]
+    width, height = building["breite"], building["hoehe"]
+    half = WALL_INNER / 2.0
+    walls = []
+
+    def horizontal(x1, x2, y, gap=None):
+        if gap:
+            walls.append((x1, y - half, gap[0], y + half))
+            walls.append((gap[1], y - half, x2, y + half))
+        else:
+            walls.append((x1, y - half, x2, y + half))
+
+    for item in building["raeume"]:
+        x, y, w, h = item["x"], item["y"], item["w"], item["h"]
+        door = item.get("tuer")
+        gap = (door["von"], door["bis"]) if door else None
+        top_row = y + h <= hall["y"]
+        horizontal(x, x + w, y, None if top_row else gap)
+        horizontal(x, x + w, y + h, gap if top_row else None)
+        walls.append((x - half, y, x + half, y + h))
+        walls.append((x + w - half, y, x + w + half, y + h))
+    # Aussenwand (der Eingang fuehrt nach draussen - dort ist Schluss)
+    walls += [(0, -1, width, 0.15), (0, height - 0.15, width, height + 1),
+              (-1, 0, 0.15, height), (width - 0.15, 0, width + 1, height)]
+    return walls
+
+
+def _obstacles(content):
+    rects = list(_segments(content))
+    building = content["gebaeude"]
+    decos = [d for item in building["raeume"] for d in item.get("deko", [])]
+    decos += building["flur"].get("deko", [])
+    for deco in decos:
+        if deco["typ"] in WALK_FREE:
+            continue
+        rects.append((deco["x"], deco["y"], deco["x"] + deco["w"], deco["y"] + deco["h"]))
+    return rects
+
+
+def _walk_grid(content=None):
+    """Begehbare Rasterzellen als Menge von (spalte, zeile)."""
+    content = content or GAME
+    key = id(content)
+    if key in _GRID_CACHE:
+        return _GRID_CACHE[key]
+    building = content["gebaeude"]
+    cols = int(building["breite"] / WALK_STEP)
+    rows = int(building["hoehe"] / WALK_STEP)
+    rects = _obstacles(content)
+    people = [p["platz"] for p in content["kollegen"] if p.get("platz")]
+    free = set()
+    for col in range(cols):
+        cx = (col + 0.5) * WALK_STEP
+        for row in range(rows):
+            cy = (row + 0.5) * WALK_STEP
+            blocked = False
+            for x1, y1, x2, y2 in rects:
+                dx = max(x1 - cx, 0, cx - x2)
+                dy = max(y1 - cy, 0, cy - y2)
+                if dx * dx + dy * dy < BODY_RADIUS * BODY_RADIUS:
+                    blocked = True
+                    break
+            if not blocked:
+                for px_, py_ in people:
+                    if (px_ - cx) ** 2 + (py_ - cy) ** 2 < PERSON_RADIUS ** 2:
+                        blocked = True
+                        break
+            if not blocked:
+                free.add((col, row))
+    _GRID_CACHE[key] = free
+    return free
+
+
+def _cell(x, y):
+    return int(x / WALK_STEP), int(y / WALK_STEP)
+
+
+def _center(cell):
+    return ((cell[0] + 0.5) * WALK_STEP, (cell[1] + 0.5) * WALK_STEP)
+
+
+def can_stand(x, y, content=None):
+    return _cell(x, y) in _walk_grid(content)
+
+
+def _nearest_free(x, y, free):
+    start = _cell(x, y)
+    if start in free:
+        return start
+    best, best_dist = None, None
+    for cell in free:
+        dist = (cell[0] - start[0]) ** 2 + (cell[1] - start[1]) ** 2
+        if best_dist is None or dist < best_dist:
+            best, best_dist = cell, dist
+    return best
+
+
+def _line_free(a, b, free):
+    """Geht die gerade Strecke a -> b nur ueber begehbare Zellen?"""
+    steps = int(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / (WALK_STEP / 3.0)) + 1
+    for index in range(steps + 1):
+        t = index / float(steps)
+        if _cell(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t) not in free:
+            return False
+    return True
+
+
+def walk_path(start, target, reach=0.0, content=None):
+    """Weg von start zu target als Liste von Punkten (ohne den Startpunkt).
+
+    reach > 0: Es genuegt, bis auf diesen Abstand an target heranzukommen
+    (z.B. an eine Person, die selbst im Weg steht). Leere Liste = schon da
+    oder nicht erreichbar."""
+    free = _walk_grid(content)
+    begin = _nearest_free(start[0], start[1], free)
+    if reach > 0:
+        goals = {cell for cell in free
+                 if (_center(cell)[0] - target[0]) ** 2 +
+                 (_center(cell)[1] - target[1]) ** 2 <= reach * reach}
+    else:
+        goal = _nearest_free(target[0], target[1], free)
+        goals = {goal} if goal else set()
+    if begin is None or not goals:
+        return []
+    if begin in goals:
+        return []
+    previous = {begin: None}
+    queue = [begin]
+    found = None
+    for cell in queue:            # Breitensuche (die Liste waechst mit)
+        if cell in goals:
+            found = cell
+            break
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                       (1, 1), (1, -1), (-1, 1), (-1, -1)):
+            nxt = (cell[0] + dx, cell[1] + dy)
+            if nxt in free and nxt not in previous:
+                # diagonal nur, wenn beide Nachbarn frei sind (keine Ecken schneiden)
+                if dx and dy and ((cell[0] + dx, cell[1]) not in free or
+                                  (cell[0], cell[1] + dy) not in free):
+                    continue
+                previous[nxt] = cell
+                queue.append(nxt)
+    if found is None:
+        return []
+    cells = []
+    while found is not None:
+        cells.append(found)
+        found = previous[found]
+    points = [_center(cell) for cell in reversed(cells)]
+    if reach <= 0 and can_stand(target[0], target[1], content):
+        points[-1] = (target[0], target[1])
+    # Glaetten: Zwischenpunkte weglassen, solange die gerade Strecke frei ist
+    smooth = [points[0]]
+    index = 0
+    while index < len(points) - 1:
+        nxt = len(points) - 1
+        while nxt > index + 1 and not _line_free(points[index], points[nxt], free):
+            nxt -= 1
+        smooth.append(points[nxt])
+        index = nxt
+    return smooth[1:]
+
+
+def person_at(x, y, content=None, radius=0.7):
+    """Kollege an der Stelle (x, y) im Gebaeude oder None."""
+    for person in (content or GAME)["kollegen"]:
+        if person.get("platz") and (person["platz"][0] - x) ** 2 + \
+                (person["platz"][1] - y) ** 2 <= radius * radius:
+            return person
+    return None
+
+
+def person_near(x, y, content=None):
+    """Kollege in Reichweite der Spielfigur (zum Ansprechen) oder None."""
+    return person_at(x, y, content, radius=REACH + 0.15)
+
+
+def office_message(position, person, quests, content=None):
+    """Text unter der Grossansicht: (Ueberschrift, Text) je nach Standort."""
+    if person:
+        first = person["name"].split()[0]
+        tasks = quests.get(person["id"]) or []
+        if tasks:
+            more = " (und %d weitere)" % (len(tasks) - 1) if len(tasks) > 1 else ""
+            return ("%s hat einen Auftrag für dich" % first,
+                    "„%s“ · Priorität %s%s" % (tasks[0]["titel"], tasks[0]["prioritaet"],
+                                               more))
+        return ("%s · %s" % (person["name"], person["rolle"]),
+                "Gerade nichts für dich. %s" % person.get("macke", ""))
+    item = room_at(position[0], position[1], content)
+    waiting = sum(len(tasks) for tasks in quests.values())
+    where = "Du bist im Raum %s." % item["name"] if item else "Du bist im Flur."
+    if waiting:
+        hint = "%d Auftrag wartet." % waiting if waiting == 1 else \
+            "%d Aufträge warten." % waiting
+        return (where, hint + " Wer einen hat, trägt ein grünes „!“.")
+    return (where, "Heute wartet kein Auftrag mehr.")
+
+
+def start_position(content=None):
+    return tuple((content or GAME)["gebaeude"]["flur"].get("spieler", [2.4, 7.0]))
 
 
 def room_at(x, y, content=None):
