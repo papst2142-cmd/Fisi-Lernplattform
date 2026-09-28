@@ -1808,5 +1808,667 @@
       "",
       "3. Die ersten 6 Wochen zahlt der Betrieb die Vergütung weiter (Entgeltfortzahlung, bei Azubis auch § 19 BBiG). Danach, also für die restlichen 2 Wochen, zahlt bei einem Wegeunfall die Berufsgenossenschaft Verletztengeld. Bei einer normalen Krankheit wäre es das Krankengeld der Krankenkasse."
     ]
+  },
+  {
+    "title": "Urlaubsanspruch eines jugendlichen Auszubildenden",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Jonas ist am 10.11.2009 geboren und Auszubildender zum Fachinformatiker. Im Betrieb gilt die 5-Tage-Woche (Montag bis Freitag). Sein Ausbildungsvertrag sieht nur den gesetzlichen Mindesturlaub vor, ein Tarifvertrag gilt nicht.",
+      "Der Betrieb rechnet Werktage (Montag bis Samstag) in Arbeitstage um (x 5/6) und rundet Bruchteile ab einem halben Tag auf.",
+      "",
+      "1. Wie viele Urlaubstage stehen Jonas im Jahr 2026 zu? Geben Sie Werktage und Arbeitstage an.",
+      "2. Wie viele Urlaubstage hat er in den Jahren 2027 und 2028?",
+      "3. Jonas nimmt 2026 zum ersten Mal Urlaub, und zwar 10 Arbeitstage. An 3 dieser Tage ist er krank und legt eine ärztliche Bescheinigung vor. Wie viele Urlaubstage bleiben ihm? Was gilt, wenn in seinen Urlaub Berufsschultage fallen?"
+    ],
+    "solution": [
+      "1. Entscheidend ist das Alter zu Beginn des Kalenderjahres (§ 19 JArbSchG). Am 01.01.2026 ist Jonas 16 Jahre alt, also noch nicht 17. Ihm stehen mindestens 27 Werktage zu. Umrechnung: 27 x 5/6 = 22,5 Arbeitstage, aufgerundet 23 Arbeitstage.",
+      "",
+      "2. 2027: Am 01.01.2027 ist er 17, also noch nicht 18. Das ergibt 25 Werktage = 25 x 5/6 = 20,83, aufgerundet 21 Arbeitstage. 2028: Am 01.01.2028 ist er 18. Das Jugendarbeitsschutzgesetz gilt nicht mehr, es gilt das Bundesurlaubsgesetz mit 24 Werktagen = 20 Arbeitstagen.",
+      "",
+      "3. Krankheitstage mit ärztlicher Bescheinigung werden nicht auf den Urlaub angerechnet (§ 9 BUrlG). Verbraucht sind nur 10 - 3 = 7 Tage. Es bleiben 23 - 7 = 16 Arbeitstage. Urlaub soll Berufsschülern in den Berufsschulferien gegeben werden. Besucht Jonas während des Urlaubs die Berufsschule, erhält er für jeden Berufsschultag einen zusätzlichen Urlaubstag (§ 19 Abs. 3 JArbSchG)."
+    ]
+  },
+  {
+    "title": "Kündigung nach mehr als zehn Jahren im Betrieb",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Herr Brandt (44 Jahre) ist seit dem 01.04.2016 Netzwerkadministrator in einem Systemhaus mit 60 Beschäftigten und Betriebsrat. Sein Arbeitsvertrag verweist auf die gesetzlichen Kündigungsfristen. Die Geschäftsleitung möchte ihm aus betrieblichen Gründen kündigen. Das Kündigungsschreiben wird ihm am Montag, 12.10.2026, übergeben.",
+      "",
+      "1. Welche Kündigungsfrist gilt, und an welchem Tag endet das Arbeitsverhältnis? In welcher Form muss gekündigt werden?",
+      "2. Was muss der Arbeitgeber vor der Kündigung beachten? Bis wann kann Herr Brandt Kündigungsschutzklage erheben?",
+      "3. Angenommen, nicht der Arbeitgeber kündigt, sondern Herr Brandt selbst übergibt am 12.10.2026 seine Kündigung. Wann endet das Arbeitsverhältnis dann?"
+    ],
+    "solution": [
+      "1. Am 12.10.2026 besteht das Arbeitsverhältnis 10 volle Jahre. Nach § 622 Abs. 2 BGB beträgt die Frist für den Arbeitgeber dann 4 Monate zum Ende eines Kalendermonats. 12.10.2026 + 4 Monate = 12.02.2027, das nächste Monatsende ist der 28.02.2027. Die Kündigung muss schriftlich mit eigenhändiger Unterschrift erfolgen (§ 623 BGB). Eine E-Mail reicht nicht.",
+      "",
+      "2. Der Betriebsrat muss vor jeder Kündigung angehört werden (§ 102 BetrVG), sonst ist sie unwirksam. Das Kündigungsschutzgesetz gilt (mehr als 10 Beschäftigte, länger als 6 Monate im Betrieb). Eine betriebsbedingte Kündigung braucht daher einen dringenden betrieblichen Grund und eine korrekte Sozialauswahl (Betriebszugehörigkeit, Alter, Unterhaltspflichten, Schwerbehinderung). Die Klage muss innerhalb von 3 Wochen nach Zugang erhoben werden (§ 4 KSchG): 12.10.2026 + 21 Tage = Montag, 02.11.2026.",
+      "",
+      "3. Die verlängerten Fristen gelten nach dem Gesetz nur für den Arbeitgeber. Für Herrn Brandt gilt die Grundkündigungsfrist von 4 Wochen zum 15. oder zum Ende eines Monats (§ 622 Abs. 1 BGB). 12.10.2026 + 4 Wochen = 09.11.2026, der nächste mögliche Termin ist der 15.11.2026. Will er früher wechseln, ist ein Aufhebungsvertrag möglich."
+    ]
+  },
+  {
+    "title": "Betriebsrat und JAV im Systemhaus wählen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein IT-Systemhaus hat 186 Beschäftigte, alle mindestens 16 Jahre alt. Darunter sind 3 leitende Angestellte. Es gibt 20 Auszubildende: 17 davon sind jünger als 25 Jahre, 3 sind Umschüler mit 25 Jahren oder älter. Außerdem arbeiten 2 Aushilfen mit 17 Jahren im Lager.",
+      "",
+      "1. Wer ist bei der Betriebsratswahl wahlberechtigt? Aus wie vielen Mitgliedern besteht der Betriebsrat?",
+      "2. Wer darf die Jugend- und Auszubildendenvertretung (JAV) wählen, und wie viele Mitglieder hat sie? Ein Kollege zählt einfach alle Auszubildenden und Aushilfen. Zu welchem Ergebnis käme er?",
+      "3. Welche Rechte hat die JAV? Was gilt für ein JAV-Mitglied am Ende seiner Ausbildung?"
+    ],
+    "solution": [
+      "1. Wahlberechtigt sind alle Arbeitnehmer ab 16 Jahren, auch Auszubildende (§ 7 BetrVG). Leitende Angestellte zählen nicht mit. 186 - 3 = 183 Wahlberechtigte. Bei 101 bis 200 Wahlberechtigten hat der Betriebsrat 7 Mitglieder (§ 9 BetrVG).",
+      "",
+      "2. Wahlberechtigt für die JAV sind Arbeitnehmer unter 18 Jahren und Auszubildende unter 25 Jahren (§ 60 BetrVG). Das sind 17 Auszubildende + 2 Aushilfen = 19 Personen. Bei 5 bis 20 Wahlberechtigten gibt es 1 Jugend- und Auszubildendenvertreter (§ 62 BetrVG). Wählbar sind Arbeitnehmer unter 25 Jahren. Wer die Umschüler mitzählt, kommt auf 20 + 2 = 22 und damit fälschlich auf 3 Vertreter.",
+      "",
+      "3. Die JAV vertritt die Interessen der Jugendlichen und Auszubildenden gegenüber dem Betriebsrat. Sie kann an Betriebsratssitzungen teilnehmen und hat Stimmrecht, wenn Beschlüsse überwiegend Jugendliche oder Auszubildende betreffen. Sie überwacht, ob Gesetze und Vorschriften zu ihren Gunsten eingehalten werden. Ein JAV-Mitglied hat einen Anspruch auf Übernahme in ein unbefristetes Arbeitsverhältnis, wenn es dies in den letzten 3 Monaten vor Ausbildungsende schriftlich verlangt (§ 78a BetrVG)."
+    ]
+  },
+  {
+    "title": "Neuer Entgelttarifvertrag im IT-Betrieb",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein IT-Unternehmen ist Mitglied im Arbeitgeberverband. Ein neuer Entgelttarifvertrag sieht vor (angenommene Werte): Entgeltgruppe E5 bisher 3.300 Euro, ab 01.01.2027 plus 4,5 %. Ausbildungsvergütung im 3. Ausbildungsjahr bisher 1.180 Euro, künftig plus 80 Euro fest.",
+      "Sara ist Gewerkschaftsmitglied und wird nach E5 bezahlt (3.300 Euro). Tom ist kein Gewerkschaftsmitglied, sein Arbeitsvertrag verweist nicht auf den Tarifvertrag. Er verdient 3.600 Euro.",
+      "",
+      "1. Wer schließt Tarifverträge ab? Was bedeutet Tarifautonomie? Nennen Sie zwei Arten von Tarifverträgen.",
+      "2. Wie viel verdient Sara ab 01.01.2027? Wie hoch ist die Erhöhung pro Monat und pro Jahr (12 Gehälter)? Um wie viel Prozent steigt die Vergütung im 3. Ausbildungsjahr?",
+      "3. Gilt die Erhöhung auch für Tom? Erklären Sie das Günstigkeitsprinzip. Was bedeutet Friedenspflicht?"
+    ],
+    "solution": [
+      "1. Tarifverträge schließen Gewerkschaften mit Arbeitgeberverbänden (Flächentarifvertrag) oder mit einzelnen Arbeitgebern (Haustarifvertrag). Tarifautonomie heißt: Die Tarifparteien handeln Löhne und Arbeitsbedingungen ohne Einmischung des Staates aus (Art. 9 Abs. 3 GG). Arten: Entgelttarifvertrag (Höhe der Löhne und Gehälter, kurze Laufzeit) und Manteltarifvertrag (z.B. Arbeitszeit, Urlaub, Zuschläge, längere Laufzeit).",
+      "",
+      "2. Sara: 3.300 Euro x 1,045 = 3.448,50 Euro. Erhöhung: 148,50 Euro pro Monat, 148,50 x 12 = 1.782 Euro pro Jahr. Ausbildungsvergütung: 1.180 + 80 = 1.260 Euro, das sind 80 / 1.180 x 100 = ca. 6,78 % mehr.",
+      "",
+      "3. Der Tarifvertrag gilt unmittelbar nur, wenn beide Seiten tarifgebunden sind (§ 3 TVG). Tom ist nicht in der Gewerkschaft und sein Vertrag verweist nicht darauf. Er hat also keinen Anspruch aus dem Tarifvertrag. Viele Arbeitgeber geben die Erhöhung trotzdem an alle weiter. Günstigkeitsprinzip: Vom Tarifvertrag darf nur zugunsten des Arbeitnehmers abgewichen werden (§ 4 Abs. 3 TVG). Selbst wenn der Tarifvertrag für Tom gelten würde, wären seine 3.600 Euro zulässig, denn sie liegen über dem neuen Tarif von 3.448,50 Euro. Friedenspflicht: Während der Laufzeit eines Tarifvertrags darf über die darin geregelten Punkte nicht gestreikt werden."
+    ]
+  },
+  {
+    "title": "Gehaltsabrechnung mit Überstunden nachrechnen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Leon ist Fachinformatiker mit einem Grundgehalt von 2.850 Euro brutto. Im Oktober hat er 12 Überstunden geleistet. Vereinbart sind 18 Euro je Überstunde plus 25 % Zuschlag.",
+      "Vereinfachte Annahmen: Arbeitnehmeranteil zur Sozialversicherung insgesamt 21 %, Lohnsteuer laut Tabelle 342,00 Euro, Kirchensteuer 9 % der Lohnsteuer, kein Solidaritätszuschlag.",
+      "",
+      "1. Berechnen Sie die Überstundenvergütung und das Bruttogehalt für Oktober.",
+      "2. Berechnen Sie alle Abzüge und das Nettogehalt.",
+      "3. Eine Kollegin hat dasselbe Bruttogehalt, erhält aber mehr netto. Nennen Sie drei mögliche Gründe."
+    ],
+    "solution": [
+      "1. Überstundenvergütung: 12 h x 18 Euro x 1,25 = 270 Euro (Zuschlag 4,50 Euro je Stunde). Bruttogehalt: 2.850 + 270 = 3.120 Euro. Der Überstundenzuschlag ist voll steuer- und beitragspflichtig. Steuerfrei können nur bestimmte Zuschläge für Sonntags-, Feiertags- und Nachtarbeit sein.",
+      "",
+      "2. Sozialversicherung: 3.120 x 0,21 = 655,20 Euro. Lohnsteuer: 342,00 Euro. Kirchensteuer: 342,00 x 0,09 = 30,78 Euro. Abzüge gesamt: 655,20 + 342,00 + 30,78 = 1.027,98 Euro. Netto: 3.120,00 - 1.027,98 = 2.092,02 Euro.",
+      "",
+      "3. Günstigere Steuerklasse (z.B. III bei Verheirateten). Kein Kirchenmitglied, dann entfällt die Kirchensteuer. Kinder: Kinderlose zahlen einen Zuschlag zur Pflegeversicherung, ab dem zweiten Kind gibt es einen Abschlag. Außerdem kann der Zusatzbeitrag der Krankenkasse unterschiedlich hoch sein."
+    ]
+  },
+  {
+    "title": "Wer haftet für die Schulden der KG?",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Die \"Kabel & Netz KG\" hat drei Gesellschafter:",
+      "  - Anna Roth: Komplementärin",
+      "  - Ben Kraus: Kommanditist, Einlage 40.000 Euro, voll eingezahlt",
+      "  - Carla Neumann: Kommanditistin, Einlage 30.000 Euro, davon 10.000 Euro eingezahlt",
+      "Nach einem geplatzten Großauftrag schuldet die KG einem Lieferanten 180.000 Euro. Das Gesellschaftsvermögen beträgt nur noch 60.000 Euro.",
+      "",
+      "1. Wie unterscheiden sich Komplementär und Kommanditist bei Geschäftsführung und Haftung?",
+      "2. Welche Beträge kann der Lieferant von den einzelnen Gesellschaftern verlangen, nachdem das Gesellschaftsvermögen verbraucht ist?",
+      "3. Anna möchte künftig nicht mehr mit ihrem Privatvermögen haften. Welche Gestaltung schlagen Sie vor?"
+    ],
+    "solution": [
+      "1. Der Komplementär führt die Geschäfte, vertritt die KG nach außen und haftet unbeschränkt, unmittelbar und mit seinem Privatvermögen. Der Kommanditist ist von der Geschäftsführung ausgeschlossen (er hat Kontrollrechte, z.B. Einsicht in den Jahresabschluss) und haftet nur bis zur Höhe seiner Einlage.",
+      "",
+      "2. Offen bleiben 180.000 - 60.000 = 120.000 Euro. Anna haftet unbeschränkt, der Lieferant kann die vollen 120.000 Euro von ihr verlangen. Ben hat seine Einlage voll eingezahlt und haftet nicht weiter (40.000 - 40.000 = 0 Euro). Carla haftet direkt mit dem noch nicht eingezahlten Teil: 30.000 - 10.000 = 20.000 Euro. Zahlt Carla die 20.000 Euro, bleiben 100.000 Euro, für die nur noch Anna haftet.",
+      "",
+      "3. Eine GmbH & Co. KG: Komplementärin wird eine GmbH, die unbeschränkt, aber nur mit ihrem Gesellschaftsvermögen haftet (Stammkapital mindestens 25.000 Euro). Anna kann Geschäftsführerin der GmbH werden und leitet die KG damit weiter. Der Firmenname muss den Zusatz \"GmbH & Co. KG\" tragen, damit Geschäftspartner die beschränkte Haftung erkennen."
+    ]
+  },
+  {
+    "title": "Firmenkunde zahlt nach dem vereinbarten Termin",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Systemhaus liefert einer Steuerkanzlei (Unternehmer) Hardware für 4.760 Euro brutto. Im Kaufvertrag ist vereinbart: Zahlung bis spätestens 30.06.2026. Die Kanzlei zahlt erst am 30.09.2026. Angenommener Basiszinssatz: 1,27 %.",
+      "",
+      "1. Ab wann ist die Kanzlei in Zahlungsverzug? Ist dafür eine Mahnung nötig?",
+      "2. Berechnen Sie die Verzugszinsen und die zusätzliche Pauschale. Rechnen Sie vereinfacht mit Zinstagen vom 01.07. bis einschließlich 30.09.2026 und 365 Tagen im Jahr.",
+      "3. Wie kann das Systemhaus Zahlungsausfälle bei künftigen Aufträgen vermeiden? Nennen Sie drei Maßnahmen."
+    ],
+    "solution": [
+      "1. Der Zahlungstermin ist nach dem Kalender bestimmt (§ 286 Abs. 2 Nr. 1 BGB). Eine Mahnung ist deshalb nicht nötig. Die Kanzlei ist ab dem 01.07.2026 in Verzug.",
+      "",
+      "2. Bei Geschäften zwischen Unternehmen beträgt der Verzugszins 9 Prozentpunkte über dem Basiszinssatz (§ 288 Abs. 2 BGB): 1,27 % + 9 % = 10,27 %. Zinstage: 31 (Juli) + 31 (August) + 30 (September) = 92 Tage. Zinsen: 4.760 Euro x 10,27 % x 92 / 365 = ca. 123,22 Euro. Dazu kommt die Verzugspauschale von 40 Euro (§ 288 Abs. 5 BGB). Insgesamt: 123,22 + 40 = 163,22 Euro.",
+      "",
+      "3. Bonität neuer Kunden prüfen (z.B. Auskunftei). Eigentumsvorbehalt vereinbaren. Bei großen Aufträgen Anzahlung oder Abschlagszahlungen verlangen. Skonto als Anreiz für schnelle Zahlung anbieten. Offene Posten regelmäßig prüfen und konsequent mahnen."
+    ]
+  },
+  {
+    "title": "Alte Forderungen vor der Verjährung sichern",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Am 16.11.2026 prüft die Buchhaltung eines Systemhauses die offenen Rechnungen:",
+      "  a) Kunde A: Rechnung vom 14.05.2023 über 1.850 Euro, fällig am 28.05.2023",
+      "  b) Kunde B: Rechnung vom 11.12.2023 über 3.400 Euro, fällig am 27.12.2023",
+      "  c) Kunde C: Rechnung vom 20.02.2024 über 960 Euro, fällig am 05.03.2024",
+      "Außerdem reklamiert Kunde D heute einen defekten Server. Er hat ihn beim Systemhaus gekauft, geliefert wurde am 15.09.2024.",
+      "",
+      "1. Wann verjähren die Forderungen a) bis c)? Wie viele Tage bleiben bei a) und b) noch?",
+      "2. Muss das Systemhaus den Server von Kunde D noch kostenlos reparieren oder ersetzen?",
+      "3. Wie kann das Systemhaus die Verjährung verhindern? Kunde A zahlt am 20.11.2026 einen Abschlag von 500 Euro. Was bewirkt das?"
+    ],
+    "solution": [
+      "1. Es gilt die regelmäßige Verjährungsfrist von 3 Jahren (§ 195 BGB). Sie beginnt am Ende des Jahres, in dem der Anspruch entstanden ist (§ 199 BGB). a) und b) sind 2023 entstanden, die Frist läuft vom 01.01.2024 bis zum 31.12.2026. c) ist 2024 entstanden und verjährt am 31.12.2027. Für a) und b) bleiben ab dem 16.11.2026 nur noch 45 Tage.",
+      "",
+      "2. Mängelansprüche beim Kauf verjähren in 2 Jahren ab Ablieferung (§ 438 BGB). Frist: 15.09.2024 bis 15.09.2026. Sie ist abgelaufen. Das Systemhaus kann die Einrede der Verjährung erheben. Möglich sind eine Kulanzlösung oder eine Herstellergarantie, falls diese noch läuft.",
+      "",
+      "3. Eine einfache Mahnung hält die Verjährung nicht auf. Die Verjährung wird gehemmt durch die Zustellung eines gerichtlichen Mahnbescheids oder eine Klage (§ 204 BGB) und durch laufende Verhandlungen (§ 203 BGB). Die Abschlagszahlung ist ein Anerkenntnis der Schuld. Die Verjährung beginnt neu (§ 212 BGB), und zwar sofort, nicht erst am Jahresende. Für die restlichen 1.850 - 500 = 1.350 Euro endet die Frist am 20.11.2029."
+    ]
+  },
+  {
+    "title": "Privatkundin zahlt die Reparaturrechnung nicht",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Ein Computerladen repariert das Notebook einer Privatkundin. Die Rechnung über 595 Euro brutto, zahlbar sofort, geht ihr am 03.08.2026 zu. Die Rechnung enthält keinen Hinweis auf die Folgen einer späten Zahlung. Die Kundin zahlt nicht. Am 01.09.2026 geht ihr eine Mahnung zu. Angenommener Basiszinssatz: 1,27 %.",
+      "",
+      "1. Ab wann ist die Kundin in Verzug? Was wäre gewesen, wenn die Rechnung den Hinweis enthalten hätte?",
+      "2. Berechnen Sie die Verzugszinsen vom 02.09. bis einschließlich 30.11.2026 (365 Tage im Jahr). Darf der Laden auch 40 Euro Pauschale verlangen?",
+      "3. Der Laden beantragt einen Mahnbescheid, der der Kundin am Dienstag, 08.12.2026, zugestellt wird. Beschreiben Sie den weiteren Ablauf des gerichtlichen Mahnverfahrens mit Fristen."
+    ],
+    "solution": [
+      "1. Bei Verbrauchern tritt der Verzug 30 Tage nach Zugang der Rechnung nur ein, wenn die Rechnung darauf hinweist (§ 286 Abs. 3 BGB). Hier fehlt der Hinweis, also ist eine Mahnung nötig. Mit Zugang der Mahnung am 01.09.2026 ist die Kundin in Verzug. Mit Hinweis wäre die 30-Tage-Frist am 02.09.2026 abgelaufen, Verzug also ab dem 03.09.2026, auch ohne Mahnung.",
+      "",
+      "2. Bei Verbrauchern beträgt der Verzugszins 5 Prozentpunkte über dem Basiszinssatz: 1,27 % + 5 % = 6,27 %. Zinstage: 29 (September) + 31 (Oktober) + 30 (November) = 90 Tage. Zinsen: 595 Euro x 6,27 % x 90 / 365 = ca. 9,20 Euro. Die Pauschale von 40 Euro gilt nur, wenn der Schuldner kein Verbraucher ist. Hier kann der Laden nur tatsächliche Kosten wie Porto verlangen.",
+      "",
+      "3. Die Kundin kann innerhalb von 2 Wochen Widerspruch einlegen, also bis zum 22.12.2026. Mit Widerspruch geht die Sache ins normale Gerichtsverfahren. Ohne Widerspruch beantragt der Laden den Vollstreckungsbescheid (spätestens 6 Monate nach Zustellung des Mahnbescheids). Gegen den Vollstreckungsbescheid kann sie innerhalb von 2 Wochen Einspruch einlegen. Danach ist er ein Vollstreckungstitel: Der Gerichtsvollzieher kann pfänden."
+    ]
+  },
+  {
+    "title": "Wochenplan einer 17-jährigen Auszubildenden prüfen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschafts- und Sozialkunde",
+    "text": [
+      "Mia ist 17 Jahre alt und Auszubildende zur Fachinformatikerin. Berufsschule hat sie montags von 7:45 bis 13:00 Uhr (6 Unterrichtsstunden zu 45 Minuten) und donnerstags von 8:00 bis 11:30 Uhr (4 Unterrichtsstunden), jeweils einschließlich Pausen. Der Betrieb plant:",
+      "  - Montag: 14:00 bis 17:00 Uhr im Betrieb",
+      "  - Dienstag, Mittwoch, Freitag: 8:00 bis 17:00 Uhr mit 60 Minuten Pause",
+      "  - Donnerstag: 12:30 bis 16:30 Uhr ohne Pause",
+      "",
+      "1. Darf Mia am Montag nach der Berufsschule im Betrieb arbeiten?",
+      "2. Berechnen Sie ihre anrechenbare Wochenarbeitszeit (ohne Montagnachmittag) und prüfen Sie Tageshöchstzeit, Pausen und Schichtzeit.",
+      "3. Am Freitag soll Mia zusätzlich bis 21:30 Uhr beim Kundenabend auf einer Messe helfen. Ist das erlaubt? Machen Sie einen Gegenvorschlag."
+    ],
+    "solution": [
+      "1. Nein. An einem Berufsschultag mit mehr als 5 Unterrichtsstunden zu mindestens 45 Minuten ist sie einmal pro Woche für den ganzen Tag freizustellen (§ 9 Abs. 1 JArbSchG). Dieser Tag wird mit 8 Stunden auf die Arbeitszeit angerechnet.",
+      "",
+      "2. Montag: 8 h angerechnet. Dienstag, Mittwoch, Freitag: 9 h Anwesenheit - 1 h Pause = je 8 h, zusammen 24 h. Donnerstag: Unterricht mit Pausen 3,5 h (wird angerechnet) + 4 h im Betrieb = 7,5 h. Summe: 8 + 24 + 7,5 = 39,5 h. Das liegt unter 40 h pro Woche und an keinem Tag über 8 h (§ 8 JArbSchG). Pausen: Bei mehr als 6 h stehen ihr 60 Minuten zu, das ist eingehalten. Am Donnerstag arbeitet sie nur 4 h im Betrieb, eine Pause ist erst ab mehr als 4,5 h Pflicht. Die Schichtzeit von 9 h liegt unter der Grenze von 10 h (§ 12).",
+      "",
+      "3. Nein. Jugendliche dürfen nur zwischen 6 und 20 Uhr beschäftigt werden (§ 14 JArbSchG), die Ausnahmen gelten z.B. für Gaststätten, nicht für einen IT-Betrieb auf einer Messe. Außerdem käme sie auf mehr als 8 h am Tag. Gegenvorschlag: Mia beginnt am Freitag erst um 12:00 Uhr und hilft bis 20:00 Uhr. Das sind 8 h Anwesenheit - 1 h Pause = 7 h Arbeit. Danach braucht sie 12 h ununterbrochene Freizeit (§ 13)."
+    ]
+  },
+  {
+    "title": "Drei Angebote für Netzwerkschränke vergleichen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Für die Erneuerung der Etagenverteiler werden 6 Netzwerkschränke (42 HE) benötigt. Drei Angebote liegen vor (alle Preise netto):",
+      "  - Anbieter A: 780 Euro je Stück, 12 % Rabatt, 2 % Skonto, Fracht pauschal 120 Euro",
+      "  - Anbieter B: 720 Euro je Stück, 5 % Rabatt, 3 % Skonto bei Zahlung in 10 Tagen (sonst 30 Tage netto), Fracht 18 Euro je Schrank",
+      "  - Anbieter C: 690 Euro je Stück, kein Rabatt, kein Skonto, frei Haus, Mindermengenzuschlag 60 Euro",
+      "Fracht und Zuschläge werden nicht rabattiert oder skontiert.",
+      "",
+      "1. Berechnen Sie für jedes Angebot den Bezugspreis.",
+      "2. Welches Angebot ist am günstigsten? Wie groß sind die Abstände, und was kostet ein Schrank beim günstigsten Anbieter?",
+      "3. Das Konto ist gerade leer. Lohnt es sich, bei Anbieter B für 20 Tage einen Kontokorrentkredit zu 12 % pro Jahr aufzunehmen, um Skonto zu nutzen (360 Zinstage)?"
+    ],
+    "solution": [
+      "1. A: Listenpreis 6 x 780 = 4.680,00 Euro, Rabatt 12 % = 561,60 Euro, Zieleinkaufspreis 4.118,40 Euro, Skonto 2 % = 82,37 Euro, Bareinkaufspreis 4.036,03 Euro, + Fracht 120 Euro = Bezugspreis 4.156,03 Euro.",
+      "B: 6 x 720 = 4.320,00 Euro, Rabatt 5 % = 216,00 Euro, Zieleinkaufspreis 4.104,00 Euro, Skonto 3 % = 123,12 Euro, Bareinkaufspreis 3.980,88 Euro, + Fracht 6 x 18 = 108 Euro = Bezugspreis 4.088,88 Euro.",
+      "C: 6 x 690 = 4.140 Euro + Mindermengenzuschlag 60 Euro = Bezugspreis 4.200,00 Euro.",
+      "",
+      "2. B ist am günstigsten. A kostet 4.156,03 - 4.088,88 = 67,15 Euro mehr, C 4.200,00 - 4.088,88 = 111,12 Euro mehr. Pro Schrank zahlt man bei B 4.088,88 / 6 = ca. 681,48 Euro. Vor der Entscheidung auch Lieferzeit, Ausstattung und Garantie vergleichen.",
+      "",
+      "3. Der Kredit wird nur für die Zeit zwischen Skontofrist und Zahlungsziel gebraucht: 30 - 10 = 20 Tage. Kreditbetrag ist die Zahlung am 10. Tag: 3.980,88 + 108 = 4.088,88 Euro. Zinsen: 4.088,88 x 12 % x 20 / 360 = ca. 27,26 Euro. Skontoertrag: 123,12 Euro. Vorteil: 123,12 - 27,26 = 95,86 Euro. Der Kredit lohnt sich. Überschlag: 3 % Skonto für 20 Tage entsprechen 3 x 360 / 20 = 54 % Jahreszins, weit mehr als die 12 % für den Kredit."
+    ]
+  },
+  {
+    "title": "Helpdesk-Software mit K.-o.-Kriterium auswählen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Die IT-Abteilung eines Maschinenbauers sucht eine Helpdesk-Software. Muss-Kriterien: Die Daten werden in der EU gespeichert, und die Anmeldung läuft über das vorhandene Active Directory. Produkt X speichert nur in den USA. Y und Z erfüllen beide Muss-Kriterien. Bewertung mit Punkten von 1 bis 10:",
+      "  Kriterium (Gewicht): X / Y / Z",
+      "  Bedienbarkeit (30 %): 9 / 7 / 8",
+      "  Funktionsumfang (25 %): 9 / 8 / 6",
+      "  Kosten (25 %): 7 / 6 / 8",
+      "  Support (20 %): 8 / 7 / 6",
+      "",
+      "1. Warum prüft man Muss-Kriterien vor der Nutzwertanalyse?",
+      "2. Berechnen Sie die Nutzwerte. Welches Produkt empfehlen Sie?",
+      "3. Die Fachabteilung möchte den Funktionsumfang mit 35 % und die Kosten mit 15 % gewichten. Berechnen Sie Y und Z neu. Was folgt daraus für die Entscheidung?"
+    ],
+    "solution": [
+      "1. Muss-Kriterien (K.-o.-Kriterien) sind nicht verhandelbar. Ein Produkt, das eines davon nicht erfüllt, scheidet sofort aus, egal wie gut es sonst ist. Sonst könnte eine hohe Punktzahl in anderen Kriterien einen rechtlichen oder technischen Ausschlussgrund überdecken.",
+      "",
+      "2. X: 9 x 0,30 + 9 x 0,25 + 7 x 0,25 + 8 x 0,20 = 2,70 + 2,25 + 1,75 + 1,60 = 8,30. Y: 2,10 + 2,00 + 1,50 + 1,40 = 7,00. Z: 2,40 + 1,50 + 2,00 + 1,20 = 7,10. X hat den höchsten Nutzwert, scheidet aber wegen des Speicherorts aus. Empfehlung: Z, allerdings nur mit 0,10 Punkten Vorsprung vor Y.",
+      "",
+      "3. Neue Gewichte 30 / 35 / 15 / 20 %. Y: 2,10 + 2,80 + 0,90 + 1,40 = 7,20. Z: 2,40 + 2,10 + 1,20 + 1,20 = 6,90. Jetzt liegt Y vorne. Das Ergebnis hängt also stark von der Gewichtung ab. Die Gewichte sollten vor der Bewertung gemeinsam festgelegt werden. Bei so knappen Ergebnissen helfen eine Teststellung beider Produkte und eine Befragung der späteren Nutzer."
+    ]
+  },
+  {
+    "title": "Netzplan einer Servermigration mit Verzögerungen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Anwaltskanzlei stellt auf einen neuen Server um. Start ist Montag, 01.03.2027, gearbeitet wird Montag bis Freitag. Vorgänge (Dauer in Arbeitstagen):",
+      "  A Ist-Aufnahme: 2 (Start)",
+      "  B Hardware bestellen und Lieferung: 6 (nach A)",
+      "  C Migrationskonzept: 3 (nach A)",
+      "  D Testumgebung aufbauen: 2 (nach C)",
+      "  E Server installieren: 3 (nach B)",
+      "  F Testmigration: 2 (nach D und E)",
+      "  G Datenmigration: 1 (nach F)",
+      "  H Schulung der Mitarbeiter: 2 (nach D)",
+      "  I Abnahme: 1 (nach G und H)",
+      "",
+      "1. Berechnen Sie FAZ, FEZ, SAZ und SEZ. Wie lange dauert das Projekt, und an welchem Datum ist es fertig?",
+      "2. Berechnen Sie Gesamtpuffer und freien Puffer. Nennen Sie den kritischen Pfad.",
+      "3. Das Konzept (C) dauert 2 Tage länger. Später verzögert sich zusätzlich die Lieferung (B) um 3 Tage. Welche Folgen hat jeweils die Verzögerung?"
+    ],
+    "solution": [
+      "1. Vorwärts (FAZ-FEZ): A 0-2, B 2-8, C 2-5, D 5-7, E 8-11, F 11-13, G 13-14, H 7-9, I 14-15. Rückwärts (SAZ-SEZ): I 14-15, G 13-14, H 12-14, F 11-13, E 8-11, D 9-11, B 2-8, C 6-9, A 0-2. Projektdauer: 15 Arbeitstage. Ende: Freitag, 19.03.2027.",
+      "",
+      "2. Gesamtpuffer (SAZ - FAZ): A 0, B 0, C 4, D 4, E 0, F 0, G 0, H 5, I 0. Freier Puffer (FAZ Nachfolger - FEZ): C 0, D 0, H 5, alle anderen 0. Kritischer Pfad: A - B - E - F - G - I.",
+      "",
+      "3. C dauert 5 statt 3 Tage: C hat 4 Tage Gesamtpuffer, das Projektende bleibt beim 19.03.2027. Da C keinen freien Puffer hat, verschiebt sich D um 2 Tage, der Puffer von C und D sinkt auf 2 Tage. B liegt auf dem kritischen Pfad: 3 Tage Verzug verschieben das Ende auf 18 Arbeitstage, also Mittwoch, 24.03.2027. Gegenmaßnahmen: anderen Lieferanten mit Lagerware fragen, die Installation (E) mit zwei Technikern verkürzen oder die Datenmigration auf ein Wochenende legen."
+    ]
+  },
+  {
+    "title": "Balkenplan für interaktive Displays mit Personalengpass",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Eine Berufsschule erhält interaktive Displays für 8 Klassenräume. Start ist Montag, 11.01.2027, gearbeitet wird Montag bis Freitag. Techniker Kai ist der einzige Techniker im Projekt. Vorgänge (Dauer in Arbeitstagen, AT):",
+      "  A Bestandsaufnahme (Kai): 2 AT (Start)",
+      "  B Displays bestellen, Lieferung abwarten (Einkauf): 5 AT (nach A)",
+      "  C Wandhalterungen und Kabelkanäle montieren (Kai): 4 AT (nach A)",
+      "  D Geräteverwaltung (MDM) einrichten (Kai): 1 AT (nach A)",
+      "  E Displays montieren und anschließen (Kai): 3 AT (nach B und C)",
+      "  F Funktionstest und Einweisung der Lehrkräfte (Kai): 1 AT (nach D und E)",
+      "",
+      "1. Wann liegen die Balken, wenn jeder Vorgang so früh wie möglich beginnt? Wann endet das Projekt?",
+      "2. Wo gibt es einen Personalengpass? Lösen Sie ihn so, dass sich der Endtermin nicht verschiebt.",
+      "3. Kai ist am 14. und 15.01.2027 krank. Welche Folgen hat das? Wie kann eine Kollegin helfen?"
+    ],
+    "solution": [
+      "1. A: AT 1-2 (11.-12.01.), B: AT 3-7 (13.-19.01.), C: AT 3-6 (13.-18.01.), D: AT 3 (13.01.), E: AT 8-10 (20.-22.01.), F: AT 11 (Montag, 25.01.2027). Kritisch sind A, B, E und F. C hat 1 AT Puffer, D hat 7 AT Puffer.",
+      "",
+      "2. Am 13.01. soll Kai gleichzeitig Halterungen montieren (C) und die Geräteverwaltung einrichten (D). Lösung: D in den Puffer verschieben. Kai macht C an AT 3-6, D an AT 7 (19.01.), während der Einkauf noch auf die Lieferung wartet, dann E an AT 8-10 und F an AT 11. Das Projekt endet weiterhin am 25.01.2027. Ein Balkenplan zeigt solche Überschneidungen gut, wenn man die Ressource an jeden Balken schreibt.",
+      "",
+      "3. C verlängert sich: Kai arbeitet an AT 3, 6, 7 und 8 daran. Macht Kai alles allein, folgen D an AT 9, E an AT 10-12 und F an AT 13. Das Ende verschiebt sich um 2 AT auf Mittwoch, 27.01.2027. Übernimmt eine Kollegin D parallel, kann Kai direkt nach C mit E beginnen (AT 9-11). F liegt dann an AT 12, Ende Dienstag, 26.01.2027, nur 1 AT später."
+    ]
+  },
+  {
+    "title": "Projektbudget für ein Dokumentenmanagementsystem",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Handelsunternehmen führt ein Dokumentenmanagementsystem (DMS) für 25 Benutzer ein. Die Geschäftsleitung hat ein Budget von 20.000 Euro freigegeben. Geplant sind (interne Verrechnungssätze je Stunde):",
+      "  - Projektleitung: 40 h zu 75 Euro",
+      "  - Systemadministrator: 64 h zu 62 Euro",
+      "  - Auszubildender: 80 h zu 28 Euro",
+      "  - Externer Berater: 3 Tage zu je 8 h, 110 Euro je Stunde",
+      "  - DMS-Lizenzen: 25 zu je 180 Euro, 2 Dokumentenscanner zu je 650 Euro, Schulung durch den Hersteller pauschal 1.200 Euro",
+      "Für Unvorhergesehenes sollen 10 % Risikoreserve eingeplant werden.",
+      "",
+      "1. Berechnen Sie die internen Personalkosten, die externen Kosten und die Sachkosten.",
+      "2. Berechnen Sie die Gesamtkosten mit Risikoreserve. Reicht das Budget?",
+      "3. Schlagen Sie zwei Maßnahmen vor. Gehört die jährliche Softwarewartung (20 % der Lizenzkosten) ins Projektbudget?"
+    ],
+    "solution": [
+      "1. Intern: Projektleitung 40 x 75 = 3.000 Euro, Administrator 64 x 62 = 3.968 Euro, Auszubildender 80 x 28 = 2.240 Euro, zusammen 9.208 Euro. Extern: 3 x 8 x 110 = 2.640 Euro. Sachkosten: 25 x 180 = 4.500 Euro + 2 x 650 = 1.300 Euro + 1.200 Euro = 7.000 Euro.",
+      "",
+      "2. Summe: 9.208 + 2.640 + 7.000 = 18.848 Euro. Risikoreserve 10 %: 1.884,80 Euro. Gesamt: 20.732,80 Euro. Das Budget wird um 732,80 Euro überschritten.",
+      "",
+      "3. Die Scanner erst in einer zweiten Stufe beschaffen: 20.732,80 - 1.300 = 19.432,80 Euro, das passt ins Budget. Oder bei der Geschäftsleitung ein höheres Budget beantragen, mit Begründung. Weitere Möglichkeit: Arbeitspakete des Beraters intern übernehmen. Die Wartung (4.500 x 20 % = 900 Euro pro Jahr) sind laufende Betriebskosten. Sie gehören nicht ins Projektbudget, müssen aber im IT-Budget der Folgejahre eingeplant werden."
+    ]
+  },
+  {
+    "title": "Stundensatz für einen Servicetechniker kalkulieren",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Systemhaus will den Stundensatz für Vor-Ort-Einsätze neu berechnen. Angaben für einen Techniker (vereinfachte Annahmen):",
+      "  - Bruttogehalt 3.400 Euro, 13 Gehälter im Jahr",
+      "  - Arbeitgeberanteil zur Sozialversicherung 21 % des Bruttogehalts",
+      "  - Gemeinkostenzuschlag (Fahrzeug, Werkzeug, Büro, Verwaltung) 60 % auf die Personalkosten",
+      "  - Jahr mit 365 Tagen: 104 Wochenendtage, 10 Feiertage, 30 Urlaubstage, 8 Krankheitstage, 5 Schulungstage, 8 Stunden je Arbeitstag",
+      "  - Nur 75 % der Arbeitszeit sind beim Kunden abrechenbar (Rest: Fahrzeiten, interne Aufgaben)",
+      "  - Gewinnzuschlag 15 %",
+      "",
+      "1. Berechnen Sie die jährlichen Personalkosten und die Selbstkosten des Technikers.",
+      "2. Wie viele Stunden kann der Techniker pro Jahr beim Kunden abrechnen?",
+      "3. Berechnen Sie den Stundensatz ohne und mit Gewinn. Runden Sie auf volle Euro und geben Sie den Bruttopreis für Privatkunden an. Ein Mitbewerber verlangt 85 Euro netto. Wie bewerten Sie das?"
+    ],
+    "solution": [
+      "1. Jahresgehalt: 3.400 x 13 = 44.200 Euro. Arbeitgeberanteil: 44.200 x 0,21 = 9.282 Euro. Personalkosten: 53.482 Euro. Gemeinkosten: 53.482 x 0,60 = 32.089,20 Euro. Selbstkosten: 53.482 + 32.089,20 = 85.571,20 Euro pro Jahr.",
+      "",
+      "2. Arbeitstage: 365 - 104 - 10 - 30 - 8 - 5 = 208 Tage. Anwesenheit: 208 x 8 = 1.664 Stunden. Abrechenbar: 1.664 x 0,75 = 1.248 Stunden.",
+      "",
+      "3. Selbstkosten je Stunde: 85.571,20 / 1.248 = ca. 68,57 Euro. Mit 15 % Gewinn: 68,57 x 1,15 = ca. 78,86 Euro, gerundet 79 Euro netto. Privatkunden zahlen 79 x 1,19 = 94,01 Euro brutto. Der Mitbewerber liegt 6 Euro höher. Das Systemhaus ist konkurrenzfähig und hat etwas Spielraum. Sinkt aber die Auslastung unter 75 %, steigen die Kosten je abrechenbarer Stunde."
+    ]
+  },
+  {
+    "title": "Angebot für ein Konferenzraum-Display kalkulieren",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Kunde fragt ein 86-Zoll-Display für seinen Konferenzraum an. Einkauf: Listeneinkaufspreis 2.400 Euro, Lieferantenrabatt 10 %, Lieferantenskonto 2 %, Bezugskosten 60 Euro. Das Systemhaus kalkuliert mit 30 % Handlungskosten und 12 % Gewinn. Dem Kunden werden 2 % Skonto und 5 % Rabatt eingeräumt.",
+      "",
+      "1. Berechnen Sie den Bezugspreis und die Selbstkosten.",
+      "2. Berechnen Sie Barverkaufspreis, Zielverkaufspreis, Listenverkaufspreis netto und den Bruttopreis mit 19 % Umsatzsteuer.",
+      "3. Berechnen Sie den Kalkulationsfaktor (Listenverkaufspreis netto / Bezugspreis) und den Kalkulationszuschlag. Kalkulieren Sie damit den Listenverkaufspreis einer passenden Wandhalterung mit einem Bezugspreis von 180 Euro."
+    ],
+    "solution": [
+      "1. Listeneinkaufspreis 2.400,00 - 10 % Rabatt (240,00) = Zieleinkaufspreis 2.160,00 - 2 % Skonto (43,20) = Bareinkaufspreis 2.116,80 + Bezugskosten 60,00 = Bezugspreis 2.176,80 Euro. Handlungskosten 30 %: 653,04 Euro. Selbstkosten: 2.829,84 Euro.",
+      "",
+      "2. Gewinn 12 %: 339,58 Euro. Barverkaufspreis: 3.169,42 Euro. Kundenskonto und Kundenrabatt werden \"im Hundert\" gerechnet, weil sie vom höheren Preis abgezogen werden. Zielverkaufspreis: 3.169,42 / 0,98 = 3.234,10 Euro (Skonto 64,68 Euro). Listenverkaufspreis netto: 3.234,10 / 0,95 = 3.404,32 Euro (Rabatt 170,22 Euro). Umsatzsteuer: 646,82 Euro. Bruttopreis: 4.051,14 Euro.",
+      "",
+      "3. Kalkulationsfaktor: 3.404,32 / 2.176,80 = ca. 1,5639. Kalkulationszuschlag: (1,5639 - 1) x 100 = ca. 56,39 % auf den Bezugspreis. Wandhalterung: 180 x 1,5639 = ca. 281,50 Euro netto. Der Faktor gilt nur, solange alle Zuschlagssätze gleich bleiben. Er spart bei vielen Artikeln die Rechnung Schritt für Schritt."
+    ]
+  },
+  {
+    "title": "Notebooks selbst vorbereiten oder Staging einkaufen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Unternehmen stellt 120 neue Notebooks bereit. Jedes Gerät muss ausgepackt, mit Image und Software versehen, inventarisiert und beschriftet werden.",
+      "  - Eigenleistung: Deployment-Lösung mit Einrichtung einmalig 4.200 Euro, danach 45 Minuten Technikerzeit je Gerät zu 60 Euro pro Stunde",
+      "  - Fremdleistung: Staging-Service des Händlers, 72 Euro je Gerät, alles inklusive",
+      "",
+      "1. Berechnen Sie die Kosten beider Varianten für 120 Geräte.",
+      "2. Ab welcher Stückzahl lohnt sich die Eigenleistung (kritische Menge)? Nächstes Jahr kommen weitere 100 Geräte dazu. Wie sieht der Vergleich für 220 Geräte aus?",
+      "3. Nennen Sie drei Punkte außer den Kosten, die bei der Make-or-Buy-Entscheidung zu beachten sind."
+    ],
+    "solution": [
+      "1. Variable Kosten Eigenleistung: 45/60 h x 60 Euro = 45 Euro je Gerät. Eigenleistung: 4.200 + 120 x 45 = 9.600 Euro. Fremdleistung: 120 x 72 = 8.640 Euro. Die Fremdleistung ist 960 Euro günstiger.",
+      "",
+      "2. Kritische Menge: 4.200 / (72 - 45) = ca. 155,6. Ab 156 Geräten ist die Eigenleistung günstiger. Bei 220 Geräten: Eigenleistung 4.200 + 220 x 45 = 14.100 Euro, Fremdleistung 220 x 72 = 15.840 Euro. Die Eigenleistung spart dann 1.740 Euro.",
+      "",
+      "3. Freie Kapazität der eigenen Techniker (sonst bleibt der Support liegen). Know-how: Die Deployment-Lösung kann auch künftig für Neuinstallationen genutzt werden. Termintreue und Qualität des Dienstleisters. Datenschutz und Sicherheit, wenn der Händler Zugangsdaten oder Zugriff auf die Geräteverwaltung braucht. Abhängigkeit von einem Anbieter."
+    ]
+  },
+  {
+    "title": "Server für ein Planungsbüro kaufen oder leasen",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Planungsbüro braucht einen neuen Server mit Speichersystem für 4 Jahre (48 Monate). Zwei Varianten stehen zur Wahl:",
+      "  - Kauf: 14.000 Euro, Wartungsvertrag 600 Euro pro Jahr. Das Geld liegt sonst auf einem Konto mit angenommen 3 % Zinsen pro Jahr (vereinfacht ohne Zinseszins). Nach 4 Jahren Verkaufserlös 1.000 Euro.",
+      "  - Leasing: Sonderzahlung 1.400 Euro zu Beginn, danach 48 Monatsraten zu 290 Euro inklusive Wartung. Am Ende wird der Server zurückgegeben.",
+      "",
+      "1. Berechnen Sie die Kosten beider Varianten über 4 Jahre.",
+      "2. Bei welcher monatlichen Leasingrate wären beide Varianten gleich teuer (Sonderzahlung unverändert)?",
+      "3. Nennen Sie je zwei Vorteile von Kauf und Leasing, die nicht in der Rechnung stehen. Worauf achten Sie bei der Rückgabe des Servers?"
+    ],
+    "solution": [
+      "1. Kauf: 14.000 Euro + Wartung 4 x 600 = 2.400 Euro. Entgangene Zinsen: 14.000 x 3 % x 4 = 1.680 Euro. Abzüglich Verkaufserlös 1.000 Euro. Kosten: 14.000 + 2.400 + 1.680 - 1.000 = 17.080 Euro. Leasing: 1.400 + 48 x 290 = 1.400 + 13.920 = 15.320 Euro. Das Leasing ist 17.080 - 15.320 = 1.760 Euro günstiger.",
+      "",
+      "2. (17.080 - 1.400) / 48 = 15.680 / 48 = ca. 326,67 Euro pro Monat. Bis zu dieser Rate wäre das Leasing nicht teurer als der Kauf.",
+      "",
+      "3. Kauf: Das Büro ist Eigentümer, kann den Server länger als 4 Jahre nutzen oder frei verkaufen, und es gibt keine Vertragsbindung. Leasing: schont die Liquidität, weil kein großer Betrag auf einmal fällig wird, und die Kosten sind monatlich planbar. Nach 4 Jahren ist der Austausch gegen neue Technik vorgesehen. Rückgabe: Die Daten müssen vorher nachweisbar sicher gelöscht werden (Löschprotokoll), denn auf dem Server liegen Kunden- und Projektdaten. Rechtzeitig die Migration auf das Nachfolgesystem planen und den Zustand bei der Rückgabe dokumentieren."
+    ]
+  },
+  {
+    "title": "Amortisation eines Videokonferenzsystems",
+    "cat": "wirtschaft",
+    "theme": "Projektplanung",
+    "text": [
+      "Ein Ingenieurbüro mit drei Standorten will seine Besprechungsräume mit Videokonferenztechnik ausstatten. Investition: 3 Räume zu je 5.400 Euro plus 1.800 Euro Installation. Laufende Kosten: Lizenzen und Wartung 1.500 Euro, Strom 150 Euro pro Jahr. Durch die Technik sollen 45 Dienstreisen pro Jahr zu durchschnittlich 280 Euro entfallen. Die Nutzungsdauer beträgt 5 Jahre.",
+      "",
+      "1. Berechnen Sie die Investitionssumme und die jährliche Nettoeinsparung.",
+      "2. Nach wie vielen Jahren bzw. Monaten hat sich die Investition amortisiert? Wie hoch ist die Einsparung über die ganze Nutzungsdauer?",
+      "3. Angenommen, es entfällt nur die Hälfte der Reisen. Wie ändert sich die Amortisationszeit? Nennen Sie zwei Vorteile, die nicht in Euro gerechnet sind."
+    ],
+    "solution": [
+      "1. Investition: 3 x 5.400 = 16.200 Euro + 1.800 Euro = 18.000 Euro. Einsparung Reisekosten: 45 x 280 = 12.600 Euro. Laufende Kosten: 1.500 + 150 = 1.650 Euro. Nettoeinsparung: 12.600 - 1.650 = 10.950 Euro pro Jahr.",
+      "",
+      "2. Amortisationszeit: 18.000 / 10.950 = ca. 1,64 Jahre, das sind ca. 19,7 Monate, also rund 20 Monate. Einsparung über 5 Jahre: 5 x 10.950 - 18.000 = 36.750 Euro.",
+      "",
+      "3. Einsparung: 0,5 x 12.600 - 1.650 = 4.650 Euro pro Jahr. Amortisation: 18.000 / 4.650 = ca. 3,87 Jahre. Das liegt noch in der Nutzungsdauer, das Risiko ist aber deutlich größer. Nicht monetäre Vorteile: weniger Reisezeit und Stress für die Mitarbeiter, weniger CO2-Ausstoß, schnellere Abstimmungen zwischen den Standorten."
+    ]
+  },
+  {
+    "title": "Erstsicherung in die Cloud über eine schmale Leitung",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Hausverwaltung will ihre Daten (600 GB) künftig in ein Cloud-Backup sichern. Der Internetanschluss hat 250 Mbit/s Download und 40 Mbit/s Upload. Damit das Büro weiterarbeiten kann, darf das Backup höchstens 80 % der Bandbreite nutzen. Täglich ändern sich etwa 2 % der Daten. Rechnen Sie mit 1 GB = 1.000 MB und ohne weiteren Protokoll-Overhead.",
+      "",
+      "1. Wie lange dauert die erste Vollsicherung mindestens?",
+      "2. Die Sicherung soll nur nachts zwischen 20:00 und 7:00 Uhr laufen. Wie viele Nächte dauert die Erstsicherung? Wie lange dauert danach die tägliche Sicherung der Änderungen?",
+      "3. Wie lange würde eine vollständige Wiederherstellung dauern? Nennen Sie zwei Möglichkeiten, die Erstsicherung zu beschleunigen."
+    ],
+    "solution": [
+      "1. Nutzbarer Upload: 40 Mbit/s x 0,8 = 32 Mbit/s. Datenmenge: 600 GB = 600.000 MB x 8 = 4.800.000 Mbit. Dauer: 4.800.000 / 32 = 150.000 s = ca. 41,67 Stunden.",
+      "",
+      "2. Ein Nachtfenster hat 4 + 7 = 11 Stunden. 41,67 / 11 = ca. 3,79, also 4 Nächte. Änderungen: 600 GB x 2 % = 12 GB = 96.000 Mbit. 96.000 / 32 = 3.000 s = 50 Minuten pro Nacht.",
+      "",
+      "3. Die Wiederherstellung läuft über den Download: 250 x 0,8 = 200 Mbit/s. 4.800.000 / 200 = 24.000 s = ca. 6,67 Stunden. Beschleunigen: Erstsicherung per Festplatte an den Anbieter schicken (Seeding), Kompression und Deduplizierung der Backup-Software nutzen oder vorübergehend mehr Upload-Bandbreite buchen. Wichtig: Die Daten vor dem Hochladen verschlüsseln."
+    ]
+  },
+  {
+    "title": "Kollisions- und Broadcastdomänen im Altbau-Netz",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Im Netz eines Handwerksbetriebs hat der Router zwei LAN-Schnittstellen, VLANs gibt es nicht.",
+      "  - Schnittstelle 1: Switch S1 mit 8 PCs. An S1 hängt außerdem ein alter Hub (100 Mbit/s) mit 3 PCs.",
+      "  - Schnittstelle 2: Switch S2 mit 6 PCs und einem Netzwerkdrucker.",
+      "Jedes Gerät ist mit einem eigenen Kabel angeschlossen.",
+      "",
+      "1. Wie viele Broadcastdomänen und wie viele Kollisionsdomänen gibt es?",
+      "2. Welche Nachteile hat der Hub für die 3 PCs? Wie viele Kollisionsdomänen gibt es, wenn der Hub durch einen Switch ersetzt wird?",
+      "3. Nennen Sie zwei Beispiele für Broadcasts im Netz. Warum sollte eine Broadcastdomäne nicht zu groß werden?"
+    ],
+    "solution": [
+      "1. Broadcastdomänen: 2. Der Router leitet keine Broadcasts weiter, jede Schnittstelle bildet eine eigene Domäne. Kollisionsdomänen: Jeder Switchport ist eine eigene Domäne. S1: 8 PCs + Hub-Anschluss + Verbindung zum Router = 10. Der Hub mit seinen 3 PCs bildet zusammen nur eine Domäne. S2: 6 PCs + Drucker + Verbindung zum Router = 8. Summe: 10 + 8 = 18.",
+      "",
+      "2. Ein Hub arbeitet nur im Halbduplex und sendet jedes Signal an alle Ports. Die 3 PCs teilen sich 100 Mbit/s, bei gleichzeitiger Last bleiben je ca. 33,3 Mbit/s. Es gibt Kollisionen, und jeder PC kann den Verkehr der anderen mitlesen. Mit einem Switch: Die eine Hub-Domäne wird zu 4 Domänen (Verbindung S1 zum neuen Switch + 3 PC-Ports). 18 - 1 + 4 = 21 Kollisionsdomänen, jeder Port im Vollduplex.",
+      "",
+      "3. Beispiele: ARP-Anfragen (\"Wer hat die IP-Adresse ...?\") und DHCP-Discover beim Start eines Clients. Jeder Broadcast wird von allen Geräten der Domäne verarbeitet. In großen Domänen kostet das Bandbreite und Rechenzeit, und Fehler oder Angriffe breiten sich weiter aus. Deshalb teilt man größere Netze mit VLANs und Routern auf."
+    ]
+  },
+  {
+    "title": "Das Schulnetz ist zu klein geworden",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Eine Schule nutzt das Netz 192.168.8.0/24. Es sind 230 Geräte im Netz. Zum neuen Schuljahr kommen 60 Tablets dazu. Ein Kollege schlägt vor, das Netz einfach auf 192.168.9.0/23 zu erweitern.",
+      "",
+      "1. Warum reicht das bisherige Netz nicht mehr aus?",
+      "2. Welches /23-Netz ist richtig? Geben Sie Subnetzmaske, Netzadresse, Broadcast-Adresse, Hostbereich und Anzahl der Hosts an. Was ist am Vorschlag des Kollegen falsch? Wie stark ist das neue Netz dann ausgelastet?",
+      "3. Welche Alternative zur Vergrößerung gibt es? Was muss bei der Vergrößerung auf /23 alles angepasst werden?"
+    ],
+    "solution": [
+      "1. Ein /24 hat 8 Hostbits: 2^8 - 2 = 254 nutzbare Adressen. Benötigt werden 230 + 60 = 290 Adressen, das sind mehr als 254.",
+      "",
+      "2. /23 hat 9 Hostbits: 2^9 - 2 = 510 Hosts, Maske 255.255.254.0. Ein /23-Netz beginnt immer bei einem geraden dritten Oktett. Richtig ist 192.168.8.0/23 mit dem Hostbereich 192.168.8.1 bis 192.168.9.254 und der Broadcast-Adresse 192.168.9.255. 192.168.9.0/23 ist keine gültige Netzadresse, denn die Adresse liegt mitten im Netz 192.168.8.0/23. Auslastung: 290 / 510 = ca. 56,9 %.",
+      "",
+      "3. Alternative: Die Tablets erhalten ein eigenes Netz, z.B. VLAN mit 192.168.10.0/24, und der Router oder die Firewall verbindet beide Netze. Das hält die Broadcastdomänen klein und die Tablets lassen sich getrennt absichern. Bei einer Vergrößerung auf /23 müssen angepasst werden: Router-Schnittstelle, DHCP-Bereich und Maske im DHCP-Server, alle statisch konfigurierten Geräte (Drucker, Server, Access Points, Switches), Firewall-Regeln und die Netzwerkdokumentation."
+    ]
+  },
+  {
+    "title": "Nutzdatenrate einer Gigabit-Verbindung berechnen",
+    "cat": "netzwerk",
+    "theme": "Rechnernetze Grundlagen",
+    "text": [
+      "Ein Mitarbeiter kopiert eine 3-GB-Datei über Gigabit-Ethernet vom Server. Der Explorer zeigt ca. 112 MB/s an. Er beschwert sich: \"1.000 Mbit/s sind doch 125 MB/s!\" Rechnen Sie mit 1 GB = 1.000 MB. Pro Frame gilt: MTU 1.500 Byte, IPv4-Header 20 Byte, TCP-Header 20 Byte, Ethernet-Header 14 Byte, Prüfsumme (FCS) 4 Byte, Präambel mit Startzeichen 8 Byte, Pause zwischen zwei Frames (Interframe Gap) 12 Byte.",
+      "",
+      "1. Beschreiben Sie die Kapselung der Daten. Wie viele Nutzdaten stecken in einem Frame, und wie viele Byte belegt er auf der Leitung? Wie hoch ist der Nutzdatenanteil?",
+      "2. Berechnen Sie die höchstmögliche Nutzdatenrate in Mbit/s und MB/s. Wie lange dauert die Kopie mindestens, und wie lange bei 112 MB/s? Warum werden die 118 MB/s nicht ganz erreicht?",
+      "3. Mit Jumbo Frames (MTU 9.000) steigt der Nutzdatenanteil. Berechnen Sie ihn. Was ist beim Einsatz von Jumbo Frames zu beachten?"
+    ],
+    "solution": [
+      "1. Die Anwendungsdaten werden in ein TCP-Segment gepackt (Schicht 4), dieses in ein IP-Paket (Schicht 3) und das in einen Ethernet-Frame (Schicht 2). Nutzdaten je Frame: 1.500 - 20 - 20 = 1.460 Byte. Frame: 1.500 + 14 + 4 = 1.518 Byte, auf der Leitung mit Präambel und Pause 1.518 + 8 + 12 = 1.538 Byte. Nutzdatenanteil: 1.460 / 1.538 = ca. 94,93 %.",
+      "",
+      "2. 1.000 Mbit/s x 0,9493 = ca. 949,3 Mbit/s = ca. 118,66 MB/s. Dauer: 3.000 MB / 118,66 MB/s = ca. 25,28 s, bei 112 MB/s ca. 26,79 s. Zusätzlicher Overhead entsteht durch TCP-Optionen (z.B. Zeitstempel), Bestätigungen, das SMB-Protokoll und die Geschwindigkeit der Festplatten.",
+      "",
+      "3. Nutzdaten: 9.000 - 40 = 8.960 Byte, auf der Leitung 9.000 + 38 = 9.038 Byte. Anteil: 8.960 / 9.038 = ca. 99,14 %. Alle Geräte auf dem Weg (Netzwerkkarten, Switches, Server, Speicher) müssen Jumbo Frames mit gleicher MTU unterstützen, sonst werden Frames verworfen oder zerlegt. Sinnvoll ist das vor allem in eigenen Speichernetzen, nicht ins Internet."
+    ]
+  },
+  {
+    "title": "Braucht der Handwerksbetrieb einen Datenschutzbeauftragten?",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Sanitärbetrieb hat 25 Beschäftigte:",
+      "  - 6 Vollzeitkräfte im Büro (Angebote, Kundenverwaltung, Terminplanung)",
+      "  - 2 Teilzeitkräfte in der Buchhaltung",
+      "  - 1 Auszubildende im Büro",
+      "  - 11 Monteure, die täglich per Tablet Aufträge mit Kundenname, Adresse und Unterschrift bearbeiten",
+      "  - 4 Lagerarbeiter ohne Zugang zu IT-Systemen",
+      "  - 1 Reinigungskraft",
+      "",
+      "1. Muss der Betrieb einen Datenschutzbeauftragten benennen? Begründen Sie mit einer Rechnung.",
+      "2. Wer kann Datenschutzbeauftragter werden, und wer eignet sich nicht? Wem muss die Benennung mitgeteilt werden?",
+      "3. Welche Aufgaben hat der Datenschutzbeauftragte? Wer bleibt für den Datenschutz verantwortlich?"
+    ],
+    "solution": [
+      "1. Nach § 38 BDSG ist ein Datenschutzbeauftragter nötig, wenn in der Regel mindestens 20 Personen ständig mit der automatisierten Verarbeitung personenbezogener Daten beschäftigt sind. Es zählt jede Person, auch Teilzeitkräfte und Auszubildende. Büro 6 + Buchhaltung 2 + Auszubildende 1 + Monteure 11 = 20 Personen. Die Grenze ist erreicht, der Betrieb muss einen Datenschutzbeauftragten benennen. Lager und Reinigung zählen nicht mit.",
+      "",
+      "2. Möglich ist ein interner Mitarbeiter oder ein externer Dienstleister mit Fachkunde im Datenschutzrecht und in der IT. Ungeeignet sind Personen mit Interessenkonflikt, z.B. der Inhaber, der Geschäftsführer oder der IT-Verantwortliche, weil sie sich selbst kontrollieren würden. Die Kontaktdaten werden veröffentlicht (z.B. in der Datenschutzerklärung) und der Aufsichtsbehörde mitgeteilt (Art. 37 Abs. 7 DSGVO).",
+      "",
+      "3. Aufgaben (Art. 39 DSGVO): Geschäftsleitung und Beschäftigte informieren und beraten, die Einhaltung des Datenschutzes überwachen, Schulungen anstoßen, bei der Datenschutz-Folgenabschätzung beraten und Ansprechpartner der Aufsichtsbehörde sein. Verantwortlich bleibt der Betrieb bzw. seine Leitung. Der Datenschutzbeauftragte berät und kontrolliert, er haftet nicht für die Umsetzung."
+    ]
+  },
+  {
+    "title": "Prüfsumme einer heruntergeladenen ISO-Datei kontrollieren",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Auszubildender lädt das Installationsabbild (ISO, 2,6 GB) für einen neuen Linux-Server von einem Spiegelserver herunter. Auf der offiziellen Projektseite steht der SHA-256-Wert der Datei. Er prüft mit dem Befehl Get-FileHash.",
+      "",
+      "1. Wozu dient der Vergleich des Hashwerts? Warum muss der Vergleichswert von der offiziellen Seite kommen und nicht vom Spiegelserver?",
+      "2. Wie viele Bit, Byte und Hexadezimalzeichen hat ein SHA-256-Wert? Wie viele Hexzeichen haben MD5 (128 Bit) und SHA-1 (160 Bit)? Warum ist der Hashwert der 2,6-GB-Datei nicht länger als der einer kleinen Textdatei?",
+      "3. Der berechnete Wert weicht in einem Zeichen ab. Was tun Sie? Wie unterscheidet sich ein Hashwert von einer Verschlüsselung?"
+    ],
+    "solution": [
+      "1. Der Hashwert prüft die Integrität: Schon eine kleine Änderung an der Datei ergibt einen völlig anderen Hashwert. So erkennt man beschädigte oder manipulierte Downloads. Liegt der Vergleichswert auf demselben Spiegelserver, könnte ein Angreifer Datei und Hashwert gemeinsam austauschen. Noch sicherer ist eine digitale Signatur der Hash-Liste, sie belegt auch die Herkunft (Authentizität).",
+      "",
+      "2. SHA-256: 256 Bit = 32 Byte = 64 Hexadezimalzeichen (je Zeichen 4 Bit). MD5: 128 / 4 = 32 Zeichen. SHA-1: 160 / 4 = 40 Zeichen. Eine Hashfunktion erzeugt immer einen Wert fester Länge, egal wie groß die Eingabe ist. Bei SHA-256 gibt es 2^256, also ca. 1,16 x 10^77 mögliche Werte. MD5 und SHA-1 gelten als unsicher, weil man gezielt Kollisionen erzeugen kann.",
+      "",
+      "3. Die Datei nicht verwenden. Erneut von der offiziellen Quelle über HTTPS laden und wieder prüfen. Bleibt die Abweichung, den Spiegelserver als verdächtig melden und einen anderen nutzen. Unterschied: Ein Hashwert ist eine Einwegfunktion, aus ihm lässt sich die Datei nicht zurückgewinnen, und es wird kein Schlüssel benutzt. Eine Verschlüsselung ist mit dem passenden Schlüssel umkehrbar und schützt die Vertraulichkeit."
+    ]
+  },
+  {
+    "title": "Sicherungsmedien nach dem Generationenprinzip planen",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Ein Architekturbüro sichert seinen Server (800 GB Daten) jeden Arbeitstag vollständig auf wechselnde externe Festplatten. Es gilt das Großvater-Vater-Sohn-Prinzip:",
+      "  - Söhne: Tagessicherung Montag bis Donnerstag, jede Woche überschrieben",
+      "  - Väter: Wochensicherung jeden Freitag, 4 Wochen aufbewahrt",
+      "  - Großväter: Monatssicherung am letzten Arbeitstag des Monats, 12 Monate aufbewahrt",
+      "Für Datenwachstum sollen 30 % Reserve eingeplant werden. Eine 1-TB-Festplatte kostet 55 Euro, eine 2-TB-Festplatte 75 Euro.",
+      "",
+      "1. Wie viele Festplatten werden benötigt, und welche Größe wählen Sie?",
+      "2. Was kostet die Ausstattung? Welche Stände lassen sich wiederherstellen?",
+      "3. Wo und wie sollten die Festplatten aufbewahrt werden? Wie stellen Sie sicher, dass die Sicherung im Notfall funktioniert?"
+    ],
+    "solution": [
+      "1. Söhne 4 + Väter 4 + Großväter 12 = 20 Festplatten. Speicherbedarf mit Reserve: 800 GB x 1,3 = 1.040 GB. Das ist mehr als 1 TB (1.000 GB), also werden 2-TB-Festplatten gewählt.",
+      "",
+      "2. 20 x 75 Euro = 1.500 Euro. Wiederherstellbar sind: jeder Tag der laufenden Woche (Söhne), jeder Freitag der letzten 4 Wochen (Väter) und jedes Monatsende der letzten 12 Monate (Großväter). Je älter ein Stand, desto gröber die Abstufung.",
+      "",
+      "3. Die Festplatten nach der Sicherung vom Server trennen (offline, Schutz vor Ransomware). Mindestens die Väter und Großväter an einem anderen Ort lagern, z.B. im Bankschließfach oder in einem feuerfesten Tresor in einem anderen Gebäude. Die Festplatten verschlüsseln, weil sie Kundendaten enthalten. Regelmäßig eine Wiederherstellung testen und das Ergebnis dokumentieren. Die Festplatten altern, daher Fehlerprotokolle prüfen und Platten rechtzeitig tauschen."
+    ]
+  },
+  {
+    "title": "Mitarbeiterfotos für die Teamseite der Webseite",
+    "cat": "sicherheit",
+    "theme": "Datenschutz & Sicherheit",
+    "text": [
+      "Die Marketingabteilung eines IT-Dienstleisters möchte auf der Webseite eine Teamseite veröffentlichen: Foto, Vor- und Nachname, Funktion, persönliche E-Mail-Adresse und Durchwahl aller Beschäftigten. Einige Kollegen wollen das nicht.",
+      "",
+      "1. Auf welcher Rechtsgrundlage dürfen die Fotos veröffentlicht werden? Welche Anforderungen gelten dafür?",
+      "2. Eine Mitarbeiterin widerruft ihre Einwilligung, ein anderer Mitarbeiter verlässt das Unternehmen. Was muss jeweils passieren?",
+      "3. Aus Sicht der IT-Sicherheit: Welches Risiko entsteht durch eine vollständige Teamseite? Wie kann man es verringern?"
+    ],
+    "solution": [
+      "1. Für Fotos auf der Webseite braucht man in der Regel eine Einwilligung (Art. 6 Abs. 1 a und Art. 7 DSGVO). Zusätzlich schützt das Kunsturhebergesetz das Recht am eigenen Bild. Die Einwilligung muss freiwillig sein, was im Arbeitsverhältnis besonders zu beachten ist: Wer nicht zustimmt, darf keine Nachteile haben. Sie muss informiert sein (Zweck, Umfang, Dauer), nachweisbar (am besten schriftlich oder elektronisch dokumentiert) und jederzeit widerrufbar.",
+      "",
+      "2. Widerruf: Das Foto und die Daten müssen unverzüglich von der Webseite entfernt werden. Der Widerruf gilt für die Zukunft, die bisherige Veröffentlichung bleibt rechtmäßig. Auch Kopien z.B. in Social-Media-Beiträgen prüfen und die Löschung aus Suchmaschinen beantragen. Austritt: Mit dem Ende des Arbeitsverhältnisses entfällt der Zweck. Foto und Daten werden entfernt, die E-Mail-Adresse wird deaktiviert oder weitergeleitet.",
+      "",
+      "3. Angreifer nutzen Namen, Funktionen und Mail-Adressen für gezieltes Phishing und Social Engineering, z.B. gefälschte Zahlungsanweisungen \"vom Chef\" an die Buchhaltung (CEO-Fraud). Gegenmaßnahmen: nur Personen mit Kundenkontakt zeigen, Funktionspostfächer (z.B. vertrieb@...) statt persönlicher Adressen und Durchwahlen, keine Angaben zu Hierarchie und Abwesenheiten, Beschäftigte zu solchen Angriffen schulen."
+    ]
+  },
+  {
+    "title": "Speicherbedarf für Gesprächsaufzeichnungen in der Hotline",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "In der Hotline eines Softwareherstellers führen 12 Mitarbeiter je 5 Stunden Gespräche pro Tag, an 220 Tagen im Jahr. Die Gespräche werden mit Einwilligung der Anrufer zu Schulungszwecken aufgezeichnet. Die Aufzeichnung erfolgt unkomprimiert: Abtastrate 8 kHz, 16 Bit je Abtastwert, mono. Rechnen Sie mit 1 MB = 1.000.000 Byte und 1 GB = 1.000 MB.",
+      "",
+      "1. Berechnen Sie die Datenrate in kbit/s und den Speicherbedarf für eine Stunde Gespräch.",
+      "2. Wie viel Speicher fällt pro Tag und pro Jahr an? Wie viel wäre es mit einem Sprachcodec mit 24 kbit/s?",
+      "3. Warum reicht für Telefongespräche eine Abtastrate von 8 kHz, während Musik mit 44,1 kHz aufgenommen wird?"
+    ],
+    "solution": [
+      "1. 8.000 Abtastwerte pro Sekunde x 16 Bit = 128.000 Bit/s = 128 kbit/s. Das sind 16.000 Byte pro Sekunde. Eine Stunde: 16.000 Byte x 3.600 s = 57.600.000 Byte = 57,6 MB.",
+      "",
+      "2. Pro Mitarbeiter und Tag: 57,6 MB x 5 = 288 MB. Alle 12 Mitarbeiter: 288 x 12 = 3.456 MB pro Tag. Pro Jahr: 3.456 MB x 220 = 760.320 MB = 760,32 GB. Mit 24 kbit/s statt 128 kbit/s wird die Datenmenge um den Faktor 128 / 24 = ca. 5,33 kleiner: 760,32 x 24 / 128 = 142,56 GB pro Jahr.",
+      "",
+      "3. Nach dem Abtasttheorem (Nyquist-Shannon) muss die Abtastrate mehr als doppelt so hoch sein wie die höchste Frequenz im Signal. Das Telefon überträgt Sprache bis ca. 3,4 kHz: 2 x 3,4 = 6,8 kHz, 8 kHz reichen also. Menschen hören bis ca. 20 kHz. Für Musik braucht man mehr als 2 x 20 = 40 kHz, daher 44,1 kHz. Datenschutz: Aufzeichnungen nur mit Einwilligung und mit festgelegter Löschfrist speichern."
+    ]
+  },
+  {
+    "title": "Kaputte Umlaute im CSV-Export erklären",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Die Warenwirtschaft exportiert eine Artikelliste als CSV-Datei. In Excel steht in der Spaltenüberschrift \"GrÃ¶ÃŸe\" statt \"Größe\". Ein Hex-Editor zeigt für das Wort folgende Bytes: 47 72 C3 B6 C3 9F 65.",
+      "",
+      "1. Das Zeichen \"ö\" hat den Unicode-Codepunkt U+00F6. Rechnen Sie F6 ins Dezimal- und Binärsystem um. Warum kann \"ö\" nicht in ASCII dargestellt werden?",
+      "2. Leiten Sie die UTF-8-Kodierung von \"ö\" her (zwei Byte: 110xxxxx 10xxxxxx). Wie viele Byte braucht \"Größe\" in UTF-8 und in Windows-1252?",
+      "3. Wie entsteht \"GrÃ¶ÃŸe\"? Wie lösen Sie das Problem?"
+    ],
+    "solution": [
+      "1. F6 hex = 15 x 16 + 6 = 246 dezimal = 1111 0110 binär. ASCII nutzt nur 7 Bit (Werte 0 bis 127). 246 liegt darüber, Umlaute gibt es in ASCII nicht. In Windows-1252 bzw. ISO-8859-1 ist \"ö\" ein einzelnes Byte F6.",
+      "",
+      "2. Die 11 Bit 00011 110110 werden auf zwei Byte verteilt: 110 00011 = 1100 0011 = C3 und 10 110110 = 1011 0110 = B6. \"ö\" ist in UTF-8 also C3 B6. Genauso wird \"ß\" (U+00DF) zu C3 9F. \"Größe\" in UTF-8: G (47), r (72), ö (C3 B6), ß (C3 9F), e (65) = 7 Byte. In Windows-1252: 47 72 F6 DF 65 = 5 Byte.",
+      "",
+      "3. Die Datei ist in UTF-8 gespeichert, Excel liest sie aber als Windows-1252. Dort ist C3 das Zeichen \"Ã\", B6 ist \"¶\" und 9F ist \"Ÿ\". So wird jeder Umlaut zu zwei falschen Zeichen. Lösung: In Excel über \"Daten > Aus Text/CSV\" importieren und als Dateiursprung UTF-8 wählen. Oder den Export als UTF-8 mit BOM (Byte-Folge EF BB BF am Dateianfang) einstellen, dann erkennt Excel die Kodierung selbst."
+    ]
+  },
+  {
+    "title": "Dateityp anhand der Hex-Signatur erkennen",
+    "cat": "systeme",
+    "theme": "Rechnertechnik & Zahlensysteme",
+    "text": [
+      "Der Mailfilter hat drei Anhänge in Quarantäne verschoben. Sie sehen sich jeweils die ersten Bytes im Hex-Editor an:",
+      "  a) Rechnung_Mai.pdf: 25 50 44 46 2D 31 2E 37",
+      "  b) Lieferschein.docx: 50 4B 03 04",
+      "  c) Bewerbung_Lebenslauf.pdf: 4D 5A 90 00",
+      "Auszug aus der ASCII-Tabelle: 25 = %, 2D = -, 2E = ., 31 = 1, 37 = 7, 44 = D, 46 = F, 4B = K, 4D = M, 50 = P, 5A = Z.",
+      "",
+      "1. Rechnen Sie die ersten vier Bytes von a) ins Dezimalsystem um und übersetzen Sie a) vollständig in ASCII-Zeichen. Geben Sie 4D und 5A auch binär an.",
+      "2. Welcher Dateityp steckt jeweils hinter a), b) und c)? Welche Datei ist gefährlich?",
+      "3. Welche Maßnahmen schützen Anwender vor solchen getarnten Dateien?"
+    ],
+    "solution": [
+      "1. 25 hex = 2 x 16 + 5 = 37, 50 hex = 80, 44 hex = 68, 46 hex = 70. a) ergibt \"%PDF-1.7\". 4D hex = 77 = 0100 1101, 5A hex = 90 = 0101 1010. Das sind die Zeichen \"MZ\".",
+      "",
+      "2. Die ersten Bytes (Dateisignatur, \"Magic Bytes\") verraten den echten Typ, unabhängig von der Endung. a) \"%PDF-1.7\" ist ein echtes PDF der Version 1.7. b) \"PK\" steht für ein ZIP-Archiv. Office-Dateien wie .docx sind ZIP-Container, das passt also. c) \"MZ\" ist die Signatur ausführbarer Windows-Programme (EXE, DLL). Die Datei gibt sich als PDF aus, ist aber ein Programm. Sie ist gefährlich und wird gelöscht, der Vorfall wird gemeldet.",
+      "",
+      "3. Im Mailfilter Anhänge nach dem echten Dateityp prüfen und ausführbare Dateien blockieren. Im Explorer Dateiendungen immer anzeigen lassen (per Gruppenrichtlinie). Unbekannte Anhänge in einer Sandbox prüfen. Nur freigegebene Programme zulassen (Application Whitelisting). Beschäftigte schulen, bei unerwarteten Anhängen nachzufragen."
+    ]
   }
 ]

@@ -11134,5 +11134,2501 @@
     ],
     "a": "nach 24 Monaten",
     "exp": "Pro Monat spart der eigene Server 300,00 Euro - 50,00 Euro = 250,00 Euro. 6.000,00 Euro / 250,00 Euro = 24 Monate, danach ist er günstiger."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie sollten Datendosen und Patchfeldports sinnvoll beschriftet werden?",
+    "options": [
+      "Nach einem einheitlichen Schema, das Dose und Patchfeldport eindeutig zuordnet",
+      "Frei nach Wunsch der Nutzer, damit sie ihre Dose wiedererkennen",
+      "Nur mit der IP-Adresse des gerade angeschlossenen Rechners",
+      "Gar nicht, weil sich die Belegung jederzeit ändern kann"
+    ],
+    "a": "Nach einem einheitlichen Schema, das Dose und Patchfeldport eindeutig zuordnet",
+    "exp": "Ein Schema wie Raum, Dose und Patchfeldport sorgt dafür, dass Beschriftung und Patchliste zusammenpassen. IP-Adressen ändern sich und gehören in die Dokumentation, nicht auf die Dose."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Benutzer kann eine einzige Webanwendung nicht öffnen, alle anderen Seiten funktionieren. Welches Vorgehen liegt nahe?",
+    "options": [
+      "Top-down, also bei der Anwendung beginnen",
+      "Bottom-up, also zuerst Kabel und Link prüfen",
+      "Den Switchport des Benutzers neu starten",
+      "Die Netzwerkkarte des Rechners tauschen"
+    ],
+    "a": "Top-down, also bei der Anwendung beginnen",
+    "exp": "Da andere Seiten laden, arbeiten die unteren Schichten offenbar. Man beginnt daher oben, z.B. bei Browser, Zertifikat, Proxy oder dem Dienst selbst."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum ändert man bei der strukturierten Fehlersuche immer nur eine Einstellung pro Schritt?",
+    "options": [
+      "Damit klar bleibt, welche Änderung den Fehler behoben oder verursacht hat",
+      "Damit die Geräte nicht wegen zu vieler Änderungen neu starten",
+      "Weil Switches nur eine Änderung pro Minute annehmen können",
+      "Damit die Protokolldateien auf den Geräten nicht überlaufen"
+    ],
+    "a": "Damit klar bleibt, welche Änderung den Fehler behoben oder verursacht hat",
+    "exp": "Werden mehrere Dinge gleichzeitig geändert, weiß man nicht, was gewirkt hat. Erfolglose Änderungen macht man wieder rückgängig und dokumentiert jeden Schritt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welcher Verkabelungsfehler wird von einem einfachen Durchgangsprüfer (Wiremap) nicht erkannt?",
+    "options": [
+      "Split Pair, also Adern aus zwei verschiedenen Paaren vertauscht",
+      "Ein offener Stromkreis durch eine gebrochene Ader",
+      "Ein Kurzschluss zwischen zwei Adern eines Paars",
+      "Zwei vertauschte Adern innerhalb eines Paars"
+    ],
+    "a": "Split Pair, also Adern aus zwei verschiedenen Paaren vertauscht",
+    "exp": "Bei einem Split Pair stimmt die Pinbelegung 1:1, die Adern gehören aber zu verschiedenen verdrillten Paaren. Das fällt erst bei der Messung des Nebensprechens mit einem Zertifizierer auf."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient ein OTDR bei Glasfaserstrecken?",
+    "options": [
+      "Es zeigt Dämpfung und Lage von Steckern, Spleißen und Bruchstellen entlang der Faser",
+      "Es reinigt die Stirnflächen der Stecker mit einem Lichtimpuls",
+      "Es wandelt das Lichtsignal in ein elektrisches Ethernet-Signal um",
+      "Es misst die Datenrate zwischen zwei angeschlossenen Switches"
+    ],
+    "a": "Es zeigt Dämpfung und Lage von Steckern, Spleißen und Bruchstellen entlang der Faser",
+    "exp": "Das optische Rückstreumessgerät sendet Lichtimpulse und wertet das zurückgestreute Licht über die Zeit aus. So findet man z.B. einen Faserbruch auf den Meter genau."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "In der Ausgabe von arp -a unter Windows steht bei einem Eintrag der Typ dynamisch. Was bedeutet das?",
+    "options": [
+      "Der Eintrag wurde per ARP gelernt und verfällt nach einiger Zeit",
+      "Der Eintrag wurde vom Administrator fest eingetragen",
+      "Die IP-Adresse wurde dem Gerät per DHCP zugewiesen",
+      "Das Gerät wechselt regelmäßig seine MAC-Adresse"
+    ],
+    "a": "Der Eintrag wurde per ARP gelernt und verfällt nach einiger Zeit",
+    "exp": "Dynamische Einträge entstehen durch ARP-Anfragen und werden nach Ablauf wieder gelöscht. Statische Einträge sind fest gesetzt, z.B. für Broadcast- und Multicast-Adressen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt der Befehl nslookup www.beispiel.de 9.9.9.9?",
+    "options": [
+      "Die Anfrage geht gezielt an den DNS-Server 9.9.9.9 statt an den eingestellten",
+      "Der Name www.beispiel.de wird fest auf 9.9.9.9 umgeleitet",
+      "Es wird geprüft, ob 9.9.9.9 den Webserver erreichen kann",
+      "Der eingestellte DNS-Server wird dauerhaft auf 9.9.9.9 geändert"
+    ],
+    "a": "Die Anfrage geht gezielt an den DNS-Server 9.9.9.9 statt an den eingestellten",
+    "exp": "So vergleicht man Antworten verschiedener DNS-Server, z.B. intern und extern. Die Einstellungen des Rechners bleiben dabei unverändert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht der Befehl dig -x 192.0.2.10?",
+    "options": [
+      "Er fragt den PTR-Eintrag ab, also den Namen zu dieser Adresse",
+      "Er fragt alle Einträge der Zone per Zonentransfer ab",
+      "Er sperrt die Adresse im Cache des lokalen Resolvers",
+      "Er fragt den A-Eintrag eines Hosts mit diesem Namen ab"
+    ],
+    "a": "Er fragt den PTR-Eintrag ab, also den Namen zu dieser Adresse",
+    "exp": "Mit -x baut dig automatisch den Namen 10.2.0.192.in-addr.arpa und fragt den PTR-Eintrag ab. Das ist die Rückwärtsauflösung."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Warum nutzt man bei tracert unter Windows oft die Option -d?",
+    "options": [
+      "Damit die Hop-Adressen nicht per DNS in Namen aufgelöst werden",
+      "Damit die Pakete mit gesetztem DF-Bit gesendet werden",
+      "Damit nur der letzte Hop vor dem Ziel angezeigt wird",
+      "Damit statt ICMP-Paketen TCP-Pakete verwendet werden"
+    ],
+    "a": "Damit die Hop-Adressen nicht per DNS in Namen aufgelöst werden",
+    "exp": "Ohne -d versucht tracert zu jedem Hop den Namen aufzulösen, was bei fehlenden PTR-Einträgen lange dauert. Mit -d läuft der Test deutlich schneller."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient unter Windows der Befehl ping -f -l 1472 ziel?",
+    "options": [
+      "Er prüft, ob Pakete mit 1500 Byte ohne Fragmentierung durchkommen",
+      "Er sendet 1472 Pings so schnell wie möglich hintereinander",
+      "Er begrenzt die Antwortzeit auf höchstens 1472 Millisekunden",
+      "Er ermittelt die Anzahl der Hops bis zum angegebenen Ziel"
+    ],
+    "a": "Er prüft, ob Pakete mit 1500 Byte ohne Fragmentierung durchkommen",
+    "exp": "Die Option -f setzt das DF-Bit, -l legt die Nutzdaten fest. Mit 28 Byte IP- und ICMP-Header ergibt das 1500 Byte. Kommt eine Fehlermeldung, ist die MTU auf dem Weg kleiner."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was erhält ein Client von einem validierenden Resolver, wenn die DNSSEC-Prüfung einer Antwort fehlschlägt?",
+    "options": [
+      "Eine Fehlermeldung (SERVFAIL) statt der Adresse",
+      "Die Adresse, aber mit einem Warnhinweis im Browser",
+      "Die Adresse eines Ersatzservers des Providers",
+      "Eine unsignierte Kopie aus dem lokalen Cache"
+    ],
+    "a": "Eine Fehlermeldung (SERVFAIL) statt der Adresse",
+    "exp": "Kann der Resolver eine Signatur nicht bestätigen, verwirft er die Antwort. Der Client bekommt dann keine Adresse, damit er nicht auf eine gefälschte Antwort hereinfällt."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Nach einem Browser-Update lassen sich interne Namen wie intranet.firma.local nicht mehr auflösen. Was ist eine typische Ursache?",
+    "options": [
+      "Der Browser fragt per DoH einen öffentlichen Resolver statt des internen",
+      "Der Browser hat beim Update den lokalen Hosts-Eintrag gelöscht",
+      "Der interne DNS-Server wurde beim Update auf DNSSEC umgestellt",
+      "Der Browser verbietet seit dem Update Namen mit der Endung .local"
+    ],
+    "a": "Der Browser fragt per DoH einen öffentlichen Resolver statt des internen",
+    "exp": "Ein öffentlicher Resolver kennt interne Zonen nicht. Unternehmen steuern DoH daher per Richtlinie oder bieten einen eigenen DoH-Resolver an. So greifen auch interne DNS-Filter wieder."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet es, dass Ansible-Aufgaben idempotent sind?",
+    "options": [
+      "Mehrfaches Ausführen führt immer zum gleichen Zielzustand",
+      "Jede Aufgabe darf nur ein einziges Mal ausgeführt werden",
+      "Alle Aufgaben laufen gleichzeitig auf allen Geräten",
+      "Die Aufgaben werden nach jedem Lauf automatisch gelöscht"
+    ],
+    "a": "Mehrfaches Ausführen führt immer zum gleichen Zielzustand",
+    "exp": "Ist der gewünschte Zustand schon erreicht, ändert Ansible nichts. Ein Playbook lässt sich daher gefahrlos erneut ausführen, um Abweichungen zu korrigieren."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Über welchen Transport und Standardport läuft NETCONF üblicherweise?",
+    "options": [
+      "SSH auf TCP-Port 830",
+      "HTTPS auf TCP-Port 443",
+      "SNMP auf UDP-Port 161",
+      "Telnet auf TCP-Port 23"
+    ],
+    "a": "SSH auf TCP-Port 830",
+    "exp": "NETCONF nutzt SSH als verschlüsselten Transport auf dem eigenen Port 830 und tauscht XML-Daten aus. Das verwandte RESTCONF arbeitet dagegen über HTTPS."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Womit erreicht Supervectoring (VDSL2-Profil 35b) bis zu 250 Mbit/s auf Kupfer?",
+    "options": [
+      "Mit einem breiteren Frequenzband bis etwa 35 MHz plus Vectoring",
+      "Mit einer Bündelung von zwei Kupferdoppeladern je Anschluss",
+      "Mit einer Glasfaserstrecke bis direkt in jede einzelne Wohnung",
+      "Mit einer stärkeren Komprimierung der übertragenen Nutzdaten"
+    ],
+    "a": "Mit einem breiteren Frequenzband bis etwa 35 MHz plus Vectoring",
+    "exp": "Normales VDSL2 nutzt Frequenzen bis etwa 17 MHz. Supervectoring verdoppelt das Band ungefähr und rechnet zusätzlich das Übersprechen heraus. Die hohe Rate erreicht man nur auf kurzen Kupferstrecken."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat das ONT bei einem Glasfaseranschluss?",
+    "options": [
+      "Es wandelt das optische Signal in Ethernet für den Router um",
+      "Es teilt die Faser des Providers auf mehrere Häuser auf",
+      "Es verstärkt das WLAN-Signal in der ganzen Wohnung",
+      "Es verbindet den Hausanschluss mit dem Kabelfernsehen"
+    ],
+    "a": "Es wandelt das optische Signal in Ethernet für den Router um",
+    "exp": "Das Optical Network Termination, oft Glasfasermodem genannt, schließt die Faser beim Kunden ab. Manche Router haben das ONT bereits eingebaut."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet Network Slicing im 5G-Netz?",
+    "options": [
+      "Mehrere logische Netze mit eigenen Eigenschaften auf einer Infrastruktur",
+      "Ein Frequenzband wird fest auf mehrere Mobilfunkprovider aufgeteilt",
+      "Große Datenpakete werden vor der Funkübertragung in Stücke zerlegt",
+      "Die Funkzelle eines Masts wird in mehrere kleinere Zellen geteilt"
+    ],
+    "a": "Mehrere logische Netze mit eigenen Eigenschaften auf einer Infrastruktur",
+    "exp": "Jede Slice erhält z.B. zugesicherte Latenz oder Bandbreite. So kann eine Fabrik niedrige Latenz für Maschinen bekommen, während andere Slices Datenvolumen priorisieren."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Über welche Entfernung arbeitet NFC typischerweise?",
+    "options": [
+      "Wenige Zentimeter",
+      "Einige Meter",
+      "Rund 100 Meter",
+      "Mehrere Kilometer"
+    ],
+    "a": "Wenige Zentimeter",
+    "exp": "NFC funkt auf 13,56 MHz und funktioniert nur bei fast direktem Kontakt. Das ist beim kontaktlosen Bezahlen oder bei Zutrittskarten gewollt, weil es unbemerktes Auslesen erschwert."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Port nutzt MQTT standardmäßig mit TLS-Verschlüsselung?",
+    "options": [
+      "TCP 8883",
+      "TCP 1883",
+      "UDP 5683",
+      "TCP 8443"
+    ],
+    "a": "TCP 8883",
+    "exp": "Unverschlüsseltes MQTT nutzt TCP 1883, mit TLS ist 8883 üblich. UDP 5683 gehört zu CoAP, 8443 ist ein häufiger alternativer HTTPS-Port."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wodurch unterscheidet sich CoAP von MQTT?",
+    "options": [
+      "CoAP arbeitet REST-ähnlich über UDP, MQTT über einen Broker mit TCP",
+      "CoAP arbeitet über einen Broker mit TCP, MQTT REST-ähnlich über UDP",
+      "CoAP ist nur für Kabelnetze, MQTT nur für Funknetze gedacht",
+      "CoAP verschlüsselt immer, MQTT kann gar nicht verschlüsseln"
+    ],
+    "a": "CoAP arbeitet REST-ähnlich über UDP, MQTT über einen Broker mit TCP",
+    "exp": "CoAP kennt Methoden wie GET und PUT wie HTTP, ist aber für sehr schwache Geräte optimiert. MQTT verteilt Nachrichten per Publish-Subscribe über einen zentralen Broker."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Präfix ist bei NAT64 als Well-Known Prefix festgelegt?",
+    "options": [
+      "64:ff9b::/96",
+      "2001:db8::/32",
+      "fe80::/64",
+      "::ffff:0:0/96"
+    ],
+    "a": "64:ff9b::/96",
+    "exp": "DNS64 bildet mit diesem Präfix aus einer IPv4-Adresse eine synthetische IPv6-Adresse. 2001:db8::/32 ist für Dokumentation reserviert, fe80:: ist Link-Local, ::ffff:0:0/96 sind IPv4-mapped Adressen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Ein Kunde mit DS-Lite-Anschluss will seine Kamera per IPv4-Portweiterleitung von außen erreichen. Warum klappt das nicht?",
+    "options": [
+      "Er hat keine eigene öffentliche IPv4-Adresse, das NAT macht der Provider",
+      "Sein Router unterstützt bei DS-Lite grundsätzlich kein NAT",
+      "Die Kamera kann bei DS-Lite keine IPv4-Adresse beziehen",
+      "Portweiterleitungen sind bei IPv4 generell nicht erlaubt"
+    ],
+    "a": "Er hat keine eigene öffentliche IPv4-Adresse, das NAT macht der Provider",
+    "exp": "Bei DS-Lite teilen sich viele Kunden öffentliche IPv4-Adressen im Carrier-Grade NAT des Providers. Lösungen sind der Zugriff per IPv6, ein VPN über einen Server oder ein Tarif mit echter IPv4-Adresse."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welchen Vorteil hat ein SSL-VPN gegenüber einem IPsec-VPN für Außendienstler?",
+    "options": [
+      "Es läuft über TCP-Port 443 und kommt so durch fast jede Firewall",
+      "Es verschlüsselt stärker, weil es mehrere Algorithmen kombiniert",
+      "Es benötigt keinerlei Authentifizierung der Benutzer",
+      "Es verbindet automatisch ganze Standortnetze miteinander"
+    ],
+    "a": "Es läuft über TCP-Port 443 und kommt so durch fast jede Firewall",
+    "exp": "Hotelnetze oder Gäste-WLANs blockieren oft IPsec-Ports, HTTPS ist dagegen fast immer offen. Manche SSL-VPNs funktionieren sogar ohne Client direkt im Browser."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was legt der Parameter AllowedIPs bei WireGuard für einen Peer fest?",
+    "options": [
+      "Welche Adressen durch den Tunnel zu diesem Peer geroutet und von ihm angenommen werden",
+      "Welche Benutzer sich mit Passwort an diesem Peer anmelden dürfen",
+      "Welche öffentlichen IP-Adressen den Tunnel aufbauen dürfen",
+      "Welche Ports auf dem Peer für das Internet geöffnet werden"
+    ],
+    "a": "Welche Adressen durch den Tunnel zu diesem Peer geroutet und von ihm angenommen werden",
+    "exp": "WireGuard verknüpft jeden öffentlichen Schlüssel mit Adressbereichen (Cryptokey Routing). Pakete an diese Bereiche gehen zum Peer, und nur Pakete mit passender Quelladresse werden von ihm angenommen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat ein Session Border Controller (SBC) in einer VoIP-Umgebung?",
+    "options": [
+      "Er sichert und steuert den SIP-Verkehr an der Grenze zum Provider",
+      "Er wandelt analoge Faxsignale in E-Mails an die Nutzer um",
+      "Er verteilt IP-Adressen an alle angeschlossenen IP-Telefone",
+      "Er speichert alle Gesprächsaufzeichnungen revisionssicher"
+    ],
+    "a": "Er sichert und steuert den SIP-Verkehr an der Grenze zum Provider",
+    "exp": "Der SBC sitzt zwischen interner Telefonanlage und SIP-Trunk. Er löst NAT-Probleme, verbirgt die interne Struktur, filtert Angriffe und gleicht Unterschiede in den SIP-Varianten aus."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was versteht man bei QoS unter der Trust Boundary (Vertrauensgrenze)?",
+    "options": [
+      "Den Punkt, ab dem das Netz QoS-Markierungen von Endgeräten übernimmt",
+      "Die Grenze, ab der Pakete verschlüsselt übertragen werden müssen",
+      "Die Firewall zwischen dem internen Netz und dem Internet",
+      "Die maximale Bandbreite, die eine Priorisierung erhalten darf"
+    ],
+    "a": "Den Punkt, ab dem das Netz QoS-Markierungen von Endgeräten übernimmt",
+    "exp": "Markierungen von IP-Telefonen übernimmt der Switch z.B., Markierungen von PCs setzt er zurück. Sonst könnte jeder Nutzer seinen Verkehr selbst hoch priorisieren."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bewirkt PortFast (Edge Port) an einem Switchport?",
+    "options": [
+      "Der Port geht beim Einstecken sofort in den Weiterleitungszustand",
+      "Der Port wird bei Überlast automatisch auf 10 Gbit/s umgeschaltet",
+      "Der Port übernimmt die Rolle der Root Bridge im Netz",
+      "Der Port leitet nur noch Frames eines einzigen VLANs weiter"
+    ],
+    "a": "Der Port geht beim Einstecken sofort in den Weiterleitungszustand",
+    "exp": "Ohne PortFast wartet ein Endgeräteport bei klassischem STP etwa 30 Sekunden, bevor er Daten weiterleitet. Das kann z.B. DHCP beim Start stören. PortFast gehört daher nur an Ports für Endgeräte."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was macht BPDU Guard, wenn an einem PortFast-Port ein BPDU ankommt?",
+    "options": [
+      "Er schaltet den Port ab (err-disabled)",
+      "Er macht den Port zur neuen Root Bridge",
+      "Er leitet das BPDU an alle Ports weiter",
+      "Er setzt nur einen Eintrag ins Syslog"
+    ],
+    "a": "Er schaltet den Port ab (err-disabled)",
+    "exp": "Ein BPDU an einem Endgeräteport deutet auf einen angeschlossenen Switch oder eine Schleife hin. BPDU Guard verhindert so, dass fremde Switches die Topologie verändern."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welches Problem erkennt UDLD auf Glasfaserverbindungen?",
+    "options": [
+      "Eine Verbindung, die nur noch in eine Richtung funktioniert",
+      "Eine zu hohe Temperatur des eingesetzten Transceivers",
+      "Eine falsch eingestellte VLAN-ID auf beiden Seiten",
+      "Einen Stecker mit verschmutzter Stirnfläche"
+    ],
+    "a": "Eine Verbindung, die nur noch in eine Richtung funktioniert",
+    "exp": "Fällt eine Faser eines Paars aus, kann der Link auf einer Seite noch aktiv wirken. STP bekommt dann keine BPDUs mehr und öffnet eventuell einen blockierten Port. UDLD erkennt das und schaltet den Port ab."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wann setzt man PTP (IEEE 1588) statt NTP ein?",
+    "options": [
+      "Wenn Uhren im Sub-Mikrosekundenbereich übereinstimmen müssen",
+      "Wenn Clients über das Internet synchronisiert werden sollen",
+      "Wenn die Zeit nur einmal täglich abgeglichen werden soll",
+      "Wenn im Netz keine Switches mit Zeitfunktion vorhanden sind"
+    ],
+    "a": "Wenn Uhren im Sub-Mikrosekundenbereich übereinstimmen müssen",
+    "exp": "NTP erreicht im LAN meist Genauigkeiten im Millisekundenbereich. PTP nutzt Hardware-Zeitstempel in Netzwerkkarten und Switches und wird z.B. in Industrie, Mobilfunk und Rundfunk eingesetzt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen will nach IT-Grundschutz vorgehen und sucht die Methodik für Strukturanalyse, Modellierung und Grundschutz-Check. Welcher BSI-Standard beschreibt sie?",
+    "options": [
+      "BSI-Standard 200-2",
+      "BSI-Standard 200-1",
+      "BSI-Standard 200-3",
+      "BSI-Standard 200-4"
+    ],
+    "a": "BSI-Standard 200-2",
+    "exp": "200-2 beschreibt die IT-Grundschutz-Methodik. 200-1 regelt das ISMS allgemein, 200-3 die Risikoanalyse und 200-4 das Notfallmanagement."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wer trägt nach ISO/IEC 27001 und BSI die Gesamtverantwortung für die Informationssicherheit?",
+    "options": [
+      "Die oberste Leitung des Unternehmens",
+      "Der Informationssicherheitsbeauftragte",
+      "Der Leiter der IT-Abteilung",
+      "Der externe Zertifizierungsauditor"
+    ],
+    "a": "Die oberste Leitung des Unternehmens",
+    "exp": "Die Leitung kann Aufgaben an einen ISB oder die IT delegieren, die Verantwortung aber nicht. Sie stellt Ressourcen bereit und verabschiedet die Sicherheitsleitlinie."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen verzichtet auf eine geplante Upload-Funktion für Kunden, weil das Risiko zu hoch ist. Welche Risikostrategie ist das?",
+    "options": [
+      "Risikovermeidung",
+      "Risikoverminderung",
+      "Risikoübertragung",
+      "Risikoakzeptanz"
+    ],
+    "a": "Risikovermeidung",
+    "exp": "Wer die riskante Tätigkeit gar nicht erst durchführt, vermeidet das Risiko. Verminderung hieße, die Funktion mit zusätzlichen Schutzmaßnahmen einzuführen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Nach einem Ransomware-Angriff kürzt die Cyberversicherung die Leistung. Im Antrag war MFA zugesichert, sie war aber nicht eingerichtet. Warum?",
+    "options": [
+      "Wegen einer Verletzung vertraglicher Obliegenheiten",
+      "Weil Ransomware grundsätzlich nie versichert ist",
+      "Weil der Angriff nicht innerhalb einer Stunde gemeldet wurde",
+      "Weil die Versicherung nur für Behörden gilt"
+    ],
+    "a": "Wegen einer Verletzung vertraglicher Obliegenheiten",
+    "exp": "Versicherer fragen Sicherheitsmaßnahmen wie MFA, Backups und Patchmanagement vorab ab. Falsche Angaben oder nicht eingehaltene Obliegenheiten können die Leistung mindern oder ganz ausschließen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ab welcher Größe fällt ein Unternehmen aus einem betroffenen Sektor in der Regel unter NIS2?",
+    "options": [
+      "Ab 50 Beschäftigten oder mehr als 10 Mio. Euro Umsatz und Bilanzsumme",
+      "Ab 10 Beschäftigten oder mehr als 2 Mio. Euro Umsatz und Bilanzsumme",
+      "Ab 500 Beschäftigten, unabhängig von Umsatz und Bilanzsumme",
+      "Ab 1.000 Beschäftigten oder mehr als 100 Mio. Euro Umsatz"
+    ],
+    "a": "Ab 50 Beschäftigten oder mehr als 10 Mio. Euro Umsatz und Bilanzsumme",
+    "exp": "NIS2 erfasst mittlere und große Unternehmen in den genannten Sektoren. Ab 250 Beschäftigten oder mehr als 50 Mio. Euro Umsatz und 43 Mio. Euro Bilanzsumme gilt ein Unternehmen als besonders wichtige Einrichtung. Einige Einrichtungen, z.B. DNS-Diensteanbieter, fallen unabhängig von der Größe darunter."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Pflicht hat die Geschäftsleitung einer Einrichtung nach NIS2?",
+    "options": [
+      "Sie muss die Sicherheitsmaßnahmen billigen, überwachen und regelmäßig geschult werden",
+      "Sie muss jeden Sicherheitsvorfall persönlich forensisch untersuchen",
+      "Sie darf die Verantwortung vollständig an die IT-Abteilung abgeben",
+      "Sie muss alle Firewall-Regeln selbst schreiben und freigeben"
+    ],
+    "a": "Sie muss die Sicherheitsmaßnahmen billigen, überwachen und regelmäßig geschult werden",
+    "exp": "NIS2 macht Cybersicherheit zur Chefsache. Die Leitung muss die Risikomanagementmaßnahmen billigen und ihre Umsetzung überwachen. Bei Pflichtverletzungen kann sie gegenüber der Einrichtung haften."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "An welche Stelle meldet eine deutsche NIS2-Einrichtung einen erheblichen Sicherheitsvorfall?",
+    "options": [
+      "An das Bundesamt für Sicherheit in der Informationstechnik (BSI)",
+      "An den Landesbeauftragten für Datenschutz des Bundeslandes",
+      "An die zuständige Industrie- und Handelskammer (IHK)",
+      "An das Bundeskartellamt als Wettbewerbsbehörde"
+    ],
+    "a": "An das Bundesamt für Sicherheit in der Informationstechnik (BSI)",
+    "exp": "Das BSI ist in Deutschland die zentrale Meldestelle nach dem BSI-Gesetz. Sind auch personenbezogene Daten betroffen, kommt zusätzlich die Meldung an die Datenschutzaufsicht nach Art. 33 DSGVO hinzu."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher der folgenden Bereiche gehört zu den KRITIS-Sektoren in Deutschland?",
+    "options": [
+      "Transport und Verkehr",
+      "Mode und Bekleidung",
+      "Tourismus und Gastronomie",
+      "Werbung und Marketing"
+    ],
+    "a": "Transport und Verkehr",
+    "exp": "Zu den KRITIS-Sektoren zählen u.a. Energie, Wasser, Ernährung, Gesundheit, IT und Telekommunikation, Finanz- und Versicherungswesen, Transport und Verkehr sowie Siedlungsabfallentsorgung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sollte ein Unternehmen bei einer internen Phishing-Simulation beachten?",
+    "options": [
+      "Den Betriebsrat beteiligen und niemanden einzeln bloßstellen",
+      "Die Ergebnisse mit Namen am Schwarzen Brett aushängen",
+      "Die Simulation nur an Führungskräfte senden",
+      "Nach jedem Klick eine Abmahnung ausstellen"
+    ],
+    "a": "Den Betriebsrat beteiligen und niemanden einzeln bloßstellen",
+    "exp": "Die Simulation kann Verhalten einzelner Mitarbeiter erfassen, daher hat der Betriebsrat ein Mitbestimmungsrecht. Ziel ist Lernen, nicht Bestrafen. Wer klickt, sollte sofort eine kurze Erklärung erhalten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Kennzahl zeigt am besten, dass eine Awareness-Kampagne gegen Phishing wirkt?",
+    "options": [
+      "Mehr Mitarbeiter melden verdächtige E-Mails an die IT",
+      "Mehr Mitarbeiter löschen verdächtige E-Mails ungelesen",
+      "Mehr Mitarbeiter nehmen am Schulungsvideo teil",
+      "Weniger E-Mails landen im Spam-Ordner der Nutzer"
+    ],
+    "a": "Mehr Mitarbeiter melden verdächtige E-Mails an die IT",
+    "exp": "Eine sinkende Klickrate ist gut, eine steigende Melderate ist noch wertvoller. Gemeldete Mails erlauben der IT, eine echte Angriffswelle früh zu erkennen und zu stoppen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Person ist als interner Datenschutzbeauftragter wegen eines Interessenkonflikts in der Regel ungeeignet?",
+    "options": [
+      "Der Leiter der IT-Abteilung",
+      "Eine Juristin der Rechtsabteilung",
+      "Ein Sachbearbeiter im Qualitätsmanagement",
+      "Ein Mitarbeiter der internen Revision"
+    ],
+    "a": "Der Leiter der IT-Abteilung",
+    "exp": "Nach Art. 38 Abs. 6 DSGVO darf der DSB keine Aufgaben haben, bei denen er sich selbst kontrollieren würde. Wer über Zwecke und Mittel der Verarbeitung entscheidet, wie IT-Leitung, Personalleitung oder Geschäftsführung, scheidet daher aus."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Eine Kundin widerruft ihre Einwilligung in die Newsletter-Auswertung. Was gilt für die bisherige Verarbeitung?",
+    "options": [
+      "Sie bleibt rechtmäßig, der Widerruf wirkt nur für die Zukunft",
+      "Sie wird rückwirkend rechtswidrig und löst ein Bußgeld aus",
+      "Sie muss der Kundin in Rechnung gestellt werden",
+      "Sie darf trotz Widerruf noch zwölf Monate fortgesetzt werden"
+    ],
+    "a": "Sie bleibt rechtmäßig, der Widerruf wirkt nur für die Zukunft",
+    "exp": "Nach Art. 7 Abs. 3 DSGVO kann eine Einwilligung jederzeit widerrufen werden, so einfach wie sie erteilt wurde. Bis zum Widerruf war die Verarbeitung erlaubt, danach muss sie enden."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie kann ein Unternehmen nachweisen, dass eine Newsletter-Anmeldung wirklich vom Inhaber der E-Mail-Adresse stammt?",
+    "options": [
+      "Mit dem Double-Opt-In-Verfahren und einem Bestätigungslink",
+      "Mit einem vorangekreuzten Kästchen im Anmeldeformular",
+      "Mit einem Hinweis im Impressum der Webseite",
+      "Mit der IP-Adresse des Mailservers des Unternehmens"
+    ],
+    "a": "Mit dem Double-Opt-In-Verfahren und einem Bestätigungslink",
+    "exp": "Der Verantwortliche muss die Einwilligung nach Art. 7 Abs. 1 DSGVO nachweisen können. Beim Double-Opt-In bestätigt der Empfänger die Anmeldung über einen Link, Zeitpunkt und Vorgang werden protokolliert."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ab welchem Alter kann ein Jugendlicher in Deutschland selbst wirksam in die Datenverarbeitung durch einen Online-Dienst einwilligen?",
+    "options": [
+      "Ab 16 Jahren",
+      "Ab 12 Jahren",
+      "Ab 14 Jahren",
+      "Ab 18 Jahren"
+    ],
+    "a": "Ab 16 Jahren",
+    "exp": "Art. 8 DSGVO setzt die Grenze bei 16 Jahren und erlaubt den Staaten, sie bis auf 13 zu senken. Deutschland hat das nicht getan. Bei Jüngeren müssen die Eltern zustimmen."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum ist eine Einwilligung als Rechtsgrundlage im Arbeitsverhältnis oft problematisch?",
+    "options": [
+      "Wegen der Abhängigkeit vom Arbeitgeber ist die Freiwilligkeit fraglich",
+      "Weil Arbeitnehmer grundsätzlich keine Einwilligung erteilen dürfen",
+      "Weil eine Einwilligung im Betrieb nur mündlich gültig ist",
+      "Weil der Betriebsrat jede Einwilligung einzeln genehmigen muss"
+    ],
+    "a": "Wegen der Abhängigkeit vom Arbeitgeber ist die Freiwilligkeit fraglich",
+    "exp": "Beschäftigte könnten Nachteile befürchten, wenn sie ablehnen. Freiwilligkeit liegt eher vor, wenn sie einen Vorteil haben oder beide Seiten gleiche Interessen verfolgen. Oft ist der Arbeitsvertrag oder eine Betriebsvereinbarung die passendere Grundlage."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Auf welche Rechtsgrundlage stützt ein privates Unternehmen typischerweise die Videoüberwachung seines Firmenparkplatzes?",
+    "options": [
+      "Auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)",
+      "Auf die Erfüllung eines Vertrags (Art. 6 Abs. 1 lit. b DSGVO)",
+      "Auf lebenswichtige Interessen (Art. 6 Abs. 1 lit. d DSGVO)",
+      "Auf eine öffentliche Aufgabe (Art. 6 Abs. 1 lit. e DSGVO)"
+    ],
+    "a": "Auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO)",
+    "exp": "Das Interesse ist z.B. der Schutz vor Diebstahl und Vandalismus. Die Überwachung muss erforderlich sein, die Interessen der Gefilmten dürfen nicht überwiegen, und Aufnahmen werden zeitnah gelöscht."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann müssen die Datenschutzhinweise nach Art. 13 DSGVO bei einer direkten Erhebung vorliegen?",
+    "options": [
+      "Zum Zeitpunkt der Erhebung der Daten",
+      "Innerhalb von 30 Tagen nach der Erhebung",
+      "Erst wenn die Daten gelöscht werden",
+      "Nur auf ausdrückliche Nachfrage der Person"
+    ],
+    "a": "Zum Zeitpunkt der Erhebung der Daten",
+    "exp": "Wer z.B. ein Kontaktformular ausfüllt, muss schon dabei erfahren, wer die Daten wozu verarbeitet. Üblich ist ein Link auf die Datenschutzerklärung direkt am Formular."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Angabe gehört zu den Pflichtinformationen nach Art. 13 DSGVO?",
+    "options": [
+      "Die Speicherdauer oder die Kriterien für ihre Festlegung",
+      "Die Namen aller Mitarbeiter mit Zugriff auf die Daten",
+      "Die IP-Adressen der eingesetzten Datenbankserver",
+      "Die Höhe des jährlichen Budgets für Datenschutz"
+    ],
+    "a": "Die Speicherdauer oder die Kriterien für ihre Festlegung",
+    "exp": "Pflicht sind u.a. Name und Kontakt des Verantwortlichen, Kontakt des DSB, Zwecke, Rechtsgrundlage, Empfänger, Speicherdauer und die Betroffenenrechte. Interne technische Details gehören nicht dazu."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wem muss ein Unternehmen sein Verzeichnis von Verarbeitungstätigkeiten auf Anfrage vorlegen?",
+    "options": [
+      "Der zuständigen Datenschutz-Aufsichtsbehörde",
+      "Jeder betroffenen Person, die danach fragt",
+      "Allen Kunden auf der eigenen Webseite",
+      "Dem Finanzamt bei jeder Betriebsprüfung"
+    ],
+    "a": "Der zuständigen Datenschutz-Aufsichtsbehörde",
+    "exp": "Das VVT nach Art. 30 DSGVO ist ein internes Dokument. Nach Art. 30 Abs. 4 muss es der Aufsichtsbehörde auf Anfrage zur Verfügung gestellt werden. Betroffene haben stattdessen ein Auskunftsrecht zu ihren eigenen Daten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wer erlässt die Standardvertragsklauseln für Datenübermittlungen in Drittländer?",
+    "options": [
+      "Die Europäische Kommission",
+      "Das Bundesamt für Sicherheit (BSI)",
+      "Jeder Cloud-Anbieter selbst",
+      "Der Europäische Gerichtshof"
+    ],
+    "a": "Die Europäische Kommission",
+    "exp": "Die Standardvertragsklauseln sind Vertragsmuster der EU-Kommission. Sie dürfen inhaltlich nicht verändert werden, man wählt nur das passende Modul, z.B. Verantwortlicher an Auftragsverarbeiter."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was muss ein Unternehmen zusätzlich prüfen, wenn es Daten auf Basis von Standardvertragsklauseln in ein Drittland übermittelt?",
+    "options": [
+      "Ob das Recht im Drittland, z.B. Behördenzugriffe, den Schutz aushebelt",
+      "Ob das Drittland mehr als 50 Millionen Einwohner hat",
+      "Ob der Empfänger ein ISO-9001-Zertifikat besitzt",
+      "Ob die Daten dort in einer EU-Sprache gespeichert werden"
+    ],
+    "a": "Ob das Recht im Drittland, z.B. Behördenzugriffe, den Schutz aushebelt",
+    "exp": "Seit dem Schrems-II-Urteil des EuGH von 2020 reicht der Vertrag allein nicht. Das Unternehmen bewertet in einem Transfer Impact Assessment die Rechtslage im Zielland und ergänzt bei Bedarf Maßnahmen wie Verschlüsselung."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein verschlüsselter Firmenlaptop geht verloren, der Schlüssel ist sicher. Eine Meldung an die Aufsichtsbehörde ist nicht nötig. Was muss trotzdem geschehen?",
+    "options": [
+      "Der Vorfall wird intern dokumentiert",
+      "Alle Kunden werden per Brief informiert",
+      "Der Vorfall wird dem BSI gemeldet",
+      "Das Verarbeitungsverzeichnis wird gelöscht"
+    ],
+    "a": "Der Vorfall wird intern dokumentiert",
+    "exp": "Art. 33 Abs. 5 DSGVO verlangt, alle Datenschutzverletzungen mit Fakten, Auswirkungen und Maßnahmen zu dokumentieren. So kann die Aufsichtsbehörde später prüfen, ob die Entscheidung gegen eine Meldung richtig war."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Auftragsverarbeiter bemerkt einen Datenabfluss bei Kundendaten seines Auftraggebers. Was muss er tun?",
+    "options": [
+      "Den Verantwortlichen unverzüglich informieren",
+      "Den Vorfall nur im nächsten Jahresbericht erwähnen",
+      "Die betroffenen Personen ohne Rücksprache anschreiben",
+      "Abwarten, ob der Verantwortliche es selbst bemerkt"
+    ],
+    "a": "Den Verantwortlichen unverzüglich informieren",
+    "exp": "Nach Art. 33 Abs. 2 DSGVO meldet der Auftragsverarbeiter die Verletzung unverzüglich dem Verantwortlichen. Dieser entscheidet über die Meldung an die Aufsichtsbehörde, seine 72-Stunden-Frist läuft ab Kenntnis."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welcher Umstand kann nach Art. 83 Abs. 2 DSGVO ein Bußgeld mindern?",
+    "options": [
+      "Schnelle Schadensbegrenzung und gute Mitwirkung",
+      "Ein besonders hoher Jahresumsatz des Unternehmens",
+      "Frühere gleichartige Verstöße in den Vorjahren",
+      "Die vorsätzliche Missachtung einer Anordnung"
+    ],
+    "a": "Schnelle Schadensbegrenzung und gute Mitwirkung",
+    "exp": "Die Behörde berücksichtigt u.a. Art, Schwere und Dauer des Verstoßes, Vorsatz oder Fahrlässigkeit, betroffene Datenkategorien, frühere Verstöße und die Mitwirkung des Unternehmens."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Unternehmen führt kein Verzeichnis von Verarbeitungstätigkeiten. Welcher Bußgeldrahmen gilt dafür?",
+    "options": [
+      "Bis zu 10 Mio. Euro oder 2% des weltweiten Jahresumsatzes",
+      "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
+      "Bis zu 50.000 Euro, unabhängig vom Jahresumsatz",
+      "Bis zu 1 Mio. Euro oder 1% des weltweiten Jahresumsatzes"
+    ],
+    "a": "Bis zu 10 Mio. Euro oder 2% des weltweiten Jahresumsatzes",
+    "exp": "Verstöße gegen organisatorische Pflichten wie VVT, TOM oder Meldepflichten fallen unter Art. 83 Abs. 4. Der höhere Rahmen gilt z.B. für Verstöße gegen die Grundsätze, Rechtsgrundlagen oder Betroffenenrechte."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welches Cookie darf nach § 25 TDDDG ohne Einwilligung gesetzt werden?",
+    "options": [
+      "Ein Sitzungscookie, das den Warenkorb im Onlineshop speichert",
+      "Ein Cookie, das Besucher über viele Webseiten verfolgt",
+      "Ein Cookie für personalisierte Werbung von Partnern",
+      "Ein Cookie, das Reichweite für Werbekunden misst"
+    ],
+    "a": "Ein Sitzungscookie, das den Warenkorb im Onlineshop speichert",
+    "exp": "Ohne Einwilligung ist nur erlaubt, was für den vom Nutzer ausdrücklich gewünschten Dienst unbedingt erforderlich ist. Dazu zählen Warenkorb, Login-Sitzung oder die gespeicherte Cookie-Auswahl selbst."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie lange muss ein Unternehmen per E-Mail empfangene Handelsbriefe, z.B. eine Auftragsbestätigung ohne Rechnungsfunktion, aufbewahren?",
+    "options": [
+      "6 Jahre",
+      "2 Jahre",
+      "8 Jahre",
+      "30 Jahre"
+    ],
+    "a": "6 Jahre",
+    "exp": "Handels- und Geschäftsbriefe sind nach HGB und AO sechs Jahre aufzubewahren, egal ob auf Papier oder per E-Mail. Für Buchungsbelege wie Rechnungen gelten seit 2025 acht Jahre."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann beginnt die Aufbewahrungsfrist für eine archivierte geschäftliche E-Mail?",
+    "options": [
+      "Mit dem Ende des Kalenderjahres, in dem sie empfangen oder versendet wurde",
+      "Mit dem Tag, an dem die E-Mail im Postfach eingeht",
+      "Mit dem Ende des Monats, in dem sie gelesen wurde",
+      "Mit dem Tag der nächsten Betriebsprüfung durch das Finanzamt"
+    ],
+    "a": "Mit dem Ende des Kalenderjahres, in dem sie empfangen oder versendet wurde",
+    "exp": "Die Frist startet immer zum Jahresende. Eine im März 2026 empfangene Auftragsbestätigung ist also ab dem 31.12.2026 sechs Jahre aufzubewahren."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Mitarbeiter tippt seinen Namen unter eine E-Mail. Um welche Signaturart nach eIDAS handelt es sich?",
+    "options": [
+      "Eine einfache elektronische Signatur",
+      "Eine fortgeschrittene elektronische Signatur",
+      "Eine qualifizierte elektronische Signatur",
+      "Ein qualifiziertes elektronisches Siegel"
+    ],
+    "a": "Eine einfache elektronische Signatur",
+    "exp": "Jede elektronische Angabe, mit der jemand unterzeichnet, ist eine einfache Signatur. Sie hat nur geringe Beweiskraft, reicht aber z.B. für die Textform."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was belegt ein qualifizierter elektronischer Zeitstempel nach eIDAS?",
+    "options": [
+      "Dass die Daten zu einem bestimmten Zeitpunkt in genau dieser Form vorlagen",
+      "Dass der Absender die Daten persönlich vor einem Notar erstellt hat",
+      "Dass die Daten vor dem Versand auf Viren geprüft worden sind",
+      "Dass der Empfänger die Daten bereits gelesen und verstanden hat"
+    ],
+    "a": "Dass die Daten zu einem bestimmten Zeitpunkt in genau dieser Form vorlagen",
+    "exp": "Ein Vertrauensdiensteanbieter verknüpft den Hashwert der Daten mit Datum und Uhrzeit und signiert beides. Für qualifizierte Zeitstempel gilt in der EU die Vermutung, dass Zeit und Unversehrtheit stimmen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was muss für ein neues Notebook hinterlegt werden, damit Windows Autopilot es beim ersten Start dem Unternehmen zuordnet?",
+    "options": [
+      "Der Hardware-Hash des Geräts",
+      "Die MAC-Adresse des WLAN-Routers",
+      "Der BitLocker-Schlüssel des Geräts",
+      "Das lokale Administratorkennwort"
+    ],
+    "a": "Der Hardware-Hash des Geräts",
+    "exp": "Der Hardware-Hash wird vom Händler oder per Skript in Intune registriert. Beim ersten Start mit Internetverbindung erkennt Autopilot das Gerät und wendet das Profil der Firma an."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Universal Print von Microsoft?",
+    "options": [
+      "Ein Cloud-Druckdienst, der lokale Druckserver ersetzen kann",
+      "Ein Druckertreiber, der für alle Hersteller gilt",
+      "Ein Dateiformat für druckfertige PDF-Dokumente",
+      "Ein Protokoll für das Drucken per Bluetooth"
+    ],
+    "a": "Ein Cloud-Druckdienst, der lokale Druckserver ersetzen kann",
+    "exp": "Bei Universal Print werden Drucker in Microsoft 365 registriert und über Entra ID berechtigt. Clients drucken über die Cloud, ein eigener Windows-Druckserver ist dafür nicht nötig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum dürfen Standardbenutzer seit der Schwachstelle PrintNightmare Druckertreiber nicht mehr ohne Weiteres per Point and Print installieren?",
+    "options": [
+      "Weil über Treiberinstallationen Schadcode mit Systemrechten lief",
+      "Weil Treiber seither nur noch per USB-Stick verteilt werden",
+      "Weil Druckertreiber seither eine eigene Lizenz benötigen",
+      "Weil Point and Print seither nur unter Linux funktioniert"
+    ],
+    "a": "Weil über Treiberinstallationen Schadcode mit Systemrechten lief",
+    "exp": "Die Lücke im Druckspooler erlaubte das Ausführen von Code mit SYSTEM-Rechten. Microsoft verlangt seitdem standardmäßig Administratorrechte für die Treiberinstallation. Admins sollten Treiber zentral vorinstallieren."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mehrere Druckaufträge hängen dauerhaft in der Windows-Warteschlange und lassen sich nicht löschen. Was hilft meist?",
+    "options": [
+      "Spooler-Dienst stoppen, Spool-Ordner leeren, Dienst neu starten",
+      "Drucker auf Werkseinstellungen setzen und neu einrichten",
+      "Druckertreiber entfernen und Windows neu installieren",
+      "IP-Adresse des Druckers ändern und Switch neu starten"
+    ],
+    "a": "Spooler-Dienst stoppen, Spool-Ordner leeren, Dienst neu starten",
+    "exp": "Die Aufträge liegen als Dateien in C:\\Windows\\System32\\spool\\PRINTERS. Ist der Dienst Spooler gestoppt, lassen sie sich löschen. Danach startet man den Dienst wieder."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür steht USB Power Delivery (USB PD)?",
+    "options": [
+      "Für das Laden von Geräten mit höherer Leistung über USB-C",
+      "Für die Übertragung von Bildsignalen über USB",
+      "Für die Stromsparfunktion von USB-Sticks im Leerlauf",
+      "Für die automatische Erkennung defekter USB-Kabel"
+    ],
+    "a": "Für das Laden von Geräten mit höherer Leistung über USB-C",
+    "exp": "Gerät und Netzteil handeln Spannung und Leistung aus. So lassen sich Notebooks über USB-C laden, z.B. über ein Netzteil oder eine Dockingstation."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum fährt Windows bei aktiviertem Schnellstart beim Herunterfahren nicht vollständig herunter?",
+    "options": [
+      "Der Kernel wird wie beim Ruhezustand gespeichert und beim Start geladen",
+      "Windows lässt alle Programme im Hintergrund weiterlaufen",
+      "Der Arbeitsspeicher bleibt wie im Standby mit Strom versorgt",
+      "Windows überspringt beim Start alle Treiber und Dienste"
+    ],
+    "a": "Der Kernel wird wie beim Ruhezustand gespeichert und beim Start geladen",
+    "exp": "Der Schnellstart ist ein hybrides Herunterfahren. Das beschleunigt den Start, kann aber Probleme machen, z.B. bei Dual-Boot oder wenn ein echter Neustart für Updates nötig ist. Ein Neustart ist immer vollständig."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ermöglicht der betreute Modus (Supervised Mode) bei firmeneigenen iPhones?",
+    "options": [
+      "Mehr MDM-Funktionen, z.B. das Sperren des App Store",
+      "Die Nutzung von zwei Mobilfunknetzen gleichzeitig",
+      "Das Telefonieren ohne eingelegte SIM-Karte",
+      "Das dauerhafte Abschalten aller iOS-Updates"
+    ],
+    "a": "Mehr MDM-Funktionen, z.B. das Sperren des App Store",
+    "exp": "Betreute Geräte sind klar der Organisation zugeordnet. Das MDM kann z.B. App-Installationen stumm durchführen, den App Store sperren oder das Entfernen des MDM-Profils verhindern."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches in Windows integrierte Werkzeug erlaubt Remote-Support, nachdem der Benutzer einen Sicherheitscode eingegeben hat?",
+    "options": [
+      "Schnellhilfe (Quick Assist)",
+      "Remotedesktopverbindung (mstsc)",
+      "Windows-Sicherheitscenter",
+      "Aufgabenplanung (taskschd)"
+    ],
+    "a": "Schnellhilfe (Quick Assist)",
+    "exp": "Der Helfer erzeugt einen Code und gibt ihn dem Benutzer. Der Benutzer gibt den Code ein und bestätigt die Freigabe des Bildschirms. Die Sitzung ist für ihn sichtbar und jederzeit beendbar."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bietet eine Microsoft-365-Gruppe zusätzlich zu einer reinen Verteilerliste?",
+    "options": [
+      "Gemeinsames Postfach, Kalender und SharePoint-Dokumentablage",
+      "Eine eigene Domäne mit eigenem DNS-Server für die Gruppe",
+      "Eine eigene Firewall und einen eigenen VPN-Zugang",
+      "Einen eigenen Domänencontroller mit Active Directory"
+    ],
+    "a": "Gemeinsames Postfach, Kalender und SharePoint-Dokumentablage",
+    "exp": "Eine Verteilerliste leitet Mails nur an ihre Mitglieder weiter. Eine Microsoft-365-Gruppe stellt zusätzlich gemeinsame Ressourcen für die Zusammenarbeit bereit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bezeichnet ein Tenant in Microsoft 365?",
+    "options": [
+      "Die abgegrenzte Instanz eines Unternehmens in der Microsoft-Cloud",
+      "Einen einzelnen lizenzierten Benutzer eines Unternehmens",
+      "Einen gemieteten physischen Server im Microsoft-Rechenzentrum",
+      "Eine lokale Installation aller Office-Programme auf dem PC"
+    ],
+    "a": "Die abgegrenzte Instanz eines Unternehmens in der Microsoft-Cloud",
+    "exp": "Im Tenant liegen Benutzer, Gruppen, Lizenzen, Domänen und Einstellungen einer Organisation. Er ist logisch von den Tenants anderer Kunden getrennt."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie erreicht man, dass ein GPO in einer OU nur für eine bestimmte Gruppe von Benutzern gilt?",
+    "options": [
+      "Über die Sicherheitsfilterung des GPO",
+      "Über das Umbenennen des GPO",
+      "Über die Zeitzone des Domänencontrollers",
+      "Über die Freigabe des SYSVOL-Ordners"
+    ],
+    "a": "Über die Sicherheitsfilterung des GPO",
+    "exp": "Standardmäßig gilt ein GPO für Authentifizierte Benutzer. Ersetzt man diesen Eintrag durch eine Gruppe, wenden nur deren Mitglieder das GPO an. Die Computer brauchen weiterhin Leserecht."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient ein WMI-Filter an einem Gruppenrichtlinienobjekt?",
+    "options": [
+      "Das GPO nur auf Rechnern mit bestimmten Eigenschaften anzuwenden",
+      "Das GPO vor dem Löschen durch Administratoren zu schützen",
+      "Die Größe des GPO im SYSVOL-Ordner zu begrenzen",
+      "Das GPO zu einem festen Zeitpunkt zu aktivieren"
+    ],
+    "a": "Das GPO nur auf Rechnern mit bestimmten Eigenschaften anzuwenden",
+    "exp": "Ein WMI-Filter fragt z.B. Betriebssystemversion oder Gerätetyp ab. Nur wenn die Abfrage zutrifft, wird das GPO angewendet, z.B. nur auf Notebooks oder nur auf Windows 11."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt die Option Erzwungen (Enforced) an einer GPO-Verknüpfung?",
+    "options": [
+      "Das GPO gilt auch bei deaktivierter Vererbung in Unter-OUs",
+      "Das GPO wird bei jeder Anmeldung neu erstellt",
+      "Das GPO wird sofort auf alle Clients übertragen",
+      "Das GPO kann von niemandem mehr bearbeitet werden"
+    ],
+    "a": "Das GPO gilt auch bei deaktivierter Vererbung in Unter-OUs",
+    "exp": "Erzwungene GPOs setzen sich gegen spätere, widersprechende GPOs durch und ignorieren eine gesperrte Vererbung. Man nutzt das sparsam für wichtige Sicherheitsvorgaben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was muss ein Administrator in WSUS tun, damit Clients ein bereitgestelltes Update installieren?",
+    "options": [
+      "Das Update für die passende Computergruppe genehmigen",
+      "Das Update auf jedem Client manuell herunterladen",
+      "Den WSUS-Server nach jedem Update neu installieren",
+      "Das Update per E-Mail an alle Benutzer senden"
+    ],
+    "a": "Das Update für die passende Computergruppe genehmigen",
+    "exp": "WSUS lädt Updates von Microsoft, verteilt sie aber erst nach Genehmigung. So kann man Updates zuerst einer Testgruppe und später allen Rechnern freigeben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet unter Windows ein Funktionsupdate von einem Qualitätsupdate?",
+    "options": [
+      "Funktionsupdate: neue Windows-Version, Qualitätsupdate: Fehler- und Sicherheitskorrekturen",
+      "Das Funktionsupdate betrifft nur Treiber, das Qualitätsupdate nur Office-Programme",
+      "Das Funktionsupdate ist kostenpflichtig, das Qualitätsupdate immer kostenlos",
+      "Das Funktionsupdate kommt monatlich, das Qualitätsupdate nur einmal pro Jahr"
+    ],
+    "a": "Funktionsupdate: neue Windows-Version, Qualitätsupdate: Fehler- und Sicherheitskorrekturen",
+    "exp": "Qualitätsupdates erscheinen monatlich, meist am Patchday. Funktionsupdates heben Windows auf eine neue Version, z.B. 24H2, und brauchen mehr Tests und Zeit."
+  },
+  {
+    "cat": "systeme",
+    "q": "In welchem Verzeichnis legt man unter Debian und Ubuntu zusätzliche Paketquellen üblicherweise als eigene Datei an?",
+    "options": [
+      "In /etc/apt/sources.list.d/",
+      "In /var/cache/apt/archives/",
+      "In /etc/default/grub.d/",
+      "In /etc/systemd/system/"
+    ],
+    "a": "In /etc/apt/sources.list.d/",
+    "exp": "Jede zusätzliche Quelle erhält eine eigene Datei. So bleibt sie übersichtlich und lässt sich leicht entfernen. Danach lädt apt update die neuen Paketlisten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist EPEL bei Red Hat Enterprise Linux und Rocky Linux?",
+    "options": [
+      "Ein Zusatz-Repository mit Paketen aus dem Fedora-Projekt",
+      "Ein Werkzeug zur Partitionierung von Festplatten",
+      "Eine grafische Oberfläche für den Paketmanager",
+      "Ein Sicherheitsmodul für den Linux-Kernel"
+    ],
+    "a": "Ein Zusatz-Repository mit Paketen aus dem Fedora-Projekt",
+    "exp": "EPEL (Extra Packages for Enterprise Linux) ergänzt die offiziellen Quellen um Programme, die dort fehlen. Die Pakete werden von der Community gepflegt, nicht vom Distributor."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt die Einstellung Persistent=true in einer systemd-Timer-Unit?",
+    "options": [
+      "Ein verpasster Lauf wird nach dem nächsten Start nachgeholt",
+      "Der Timer läuft auch nach einem Update weiter",
+      "Die Ausgabe wird dauerhaft in eine Datei geschrieben",
+      "Der Timer kann nicht mehr deaktiviert werden"
+    ],
+    "a": "Ein verpasster Lauf wird nach dem nächsten Start nachgeholt",
+    "exp": "War der Rechner zur geplanten Zeit ausgeschaltet, startet systemd den Job beim nächsten Hochfahren. Klassisches cron holt verpasste Läufe dagegen nicht nach."
+  },
+  {
+    "cat": "systeme",
+    "q": "Mit welcher Option zeigt journalctl nur die Meldungen seit dem letzten Systemstart?",
+    "options": [
+      "journalctl -b",
+      "journalctl -a",
+      "journalctl -r",
+      "journalctl -k"
+    ],
+    "a": "journalctl -b",
+    "exp": "-b steht für boot. Mit -b -1 sieht man den vorherigen Start, das hilft nach einem Absturz. -r kehrt die Reihenfolge um, -k zeigt nur Kernelmeldungen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Webserver unter SELinux kann eine neu kopierte Datei nicht ausliefern, obwohl die Dateirechte stimmen. Welcher Befehl hilft typischerweise?",
+    "options": [
+      "restorecon",
+      "chmod 777",
+      "chown root",
+      "setfacl -b"
+    ],
+    "a": "restorecon",
+    "exp": "Beim Kopieren oder Verschieben erhält die Datei oft einen falschen SELinux-Kontext. restorecon setzt den Kontext passend zum Speicherort zurück, ohne SELinux abzuschalten."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher Vorteil spricht für einen Monitoring-Agenten auf dem Server statt einer reinen SNMP-Abfrage?",
+    "options": [
+      "Der Agent liefert detaillierte Werte zu Diensten, Prozessen und Logs",
+      "Der Agent kommt ganz ohne installierte Software auf dem Server aus",
+      "Der Agent misst auch dann weiter, wenn der Server ausgeschaltet ist",
+      "Der Agent ersetzt die Firewall des Servers vollständig"
+    ],
+    "a": "Der Agent liefert detaillierte Werte zu Diensten, Prozessen und Logs",
+    "exp": "SNMP liefert vor allem Standardwerte, eignet sich aber gut für Switches und Drucker ohne eigene Software. Ein Agent muss installiert und gepflegt werden, sieht dafür aber tiefer ins System."
+  },
+  {
+    "cat": "systeme",
+    "q": "Wie heißt ein Feld, das auf den Primärschlüssel einer anderen Tabelle verweist?",
+    "options": [
+      "Fremdschlüssel",
+      "Sekundärindex",
+      "Zweitschlüssel",
+      "Hauptattribut"
+    ],
+    "a": "Fremdschlüssel",
+    "exp": "In einer Tabelle bestellungen verweist z.B. kunden_id auf die Tabelle kunden. Die Datenbank kann so prüfen, dass nur existierende Kunden eingetragen werden (referenzielle Integrität)."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welcher SQL-Join liefert alle Datensätze der linken Tabelle, auch wenn es in der rechten Tabelle keinen passenden Datensatz gibt?",
+    "options": [
+      "LEFT JOIN",
+      "INNER JOIN",
+      "CROSS JOIN",
+      "SELF JOIN"
+    ],
+    "a": "LEFT JOIN",
+    "exp": "Beim LEFT JOIN erscheinen auch Kunden ohne Bestellung, die Felder der rechten Tabelle sind dann NULL. Ein INNER JOIN liefert nur Datensätze mit Treffer in beiden Tabellen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche SQL-Anweisung liefert alle Kunden aus Köln aus der Tabelle kunden?",
+    "options": [
+      "SELECT * FROM kunden WHERE ort = 'Köln';",
+      "SELECT * WHERE kunden = 'Köln' FROM ort;",
+      "GET * FROM kunden IF ort = 'Köln';",
+      "SELECT kunden FROM * WHERE ort IS Köln;"
+    ],
+    "a": "SELECT * FROM kunden WHERE ort = 'Köln';",
+    "exp": "SELECT wählt die Spalten, FROM die Tabelle und WHERE die Bedingung. Textwerte stehen in einfachen Anführungszeichen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet Atomarität (das A in ACID) bei Datenbanktransaktionen?",
+    "options": [
+      "Eine Transaktion wird ganz oder gar nicht ausgeführt",
+      "Jede Transaktion läuft auf einem eigenen Server",
+      "Alle Daten werden in kleinste Einheiten zerlegt",
+      "Transaktionen werden nur nachts ausgeführt"
+    ],
+    "a": "Eine Transaktion wird ganz oder gar nicht ausgeführt",
+    "exp": "Bei einer Überweisung müssen Abbuchung und Gutschrift gemeinsam gelingen. Scheitert ein Schritt, wird alles zurückgerollt (Rollback). Die übrigen Eigenschaften sind Konsistenz, Isolation und Dauerhaftigkeit."
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum sollte man die Dateien einer laufenden Datenbank nicht einfach mit einem Dateibackup kopieren?",
+    "options": [
+      "Die Kopie kann inkonsistent sein, weil die Datenbank weiter schreibt",
+      "Weil Datenbankdateien grundsätzlich nicht kopiert werden können",
+      "Weil ein Dateibackup die laufende Datenbank sofort beendet",
+      "Weil Datenbankdateien grundsätzlich zu groß für Backups sind"
+    ],
+    "a": "Die Kopie kann inkonsistent sein, weil die Datenbank weiter schreibt",
+    "exp": "Man nutzt stattdessen die Sicherungsfunktionen der Datenbank, z.B. einen Dump (mysqldump, pg_dump) oder ein Backup-Programm mit Datenbankunterstützung. Mit Transaktionsprotokollen ist auch eine Wiederherstellung auf einen Zeitpunkt möglich."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was gibt die Bash-Schleife for datei in *.log; do echo $datei; done aus?",
+    "options": [
+      "Den Namen jeder .log-Datei im aktuellen Verzeichnis",
+      "Den Inhalt aller .log-Dateien nacheinander",
+      "Die Anzahl der .log-Dateien im Verzeichnis",
+      "Nur den Namen der neuesten .log-Datei"
+    ],
+    "a": "Den Namen jeder .log-Datei im aktuellen Verzeichnis",
+    "exp": "Die Shell ersetzt *.log durch alle passenden Dateinamen. Die Schleife weist jeden Namen nacheinander der Variablen datei zu, echo gibt ihn aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches PowerShell-Cmdlet führt in der Pipeline für jedes einzelne Objekt einen Skriptblock aus?",
+    "options": [
+      "ForEach-Object",
+      "Where-Object",
+      "Select-Object",
+      "Measure-Object"
+    ],
+    "a": "ForEach-Object",
+    "exp": "Beispiel: Get-ChildItem *.txt | ForEach-Object { $_.Name.ToUpper() }. $_ steht für das aktuelle Objekt. Where-Object filtert, Select-Object wählt Eigenschaften aus."
+  },
+  {
+    "cat": "systeme",
+    "q": "Was versteht man unter freier Kühlung (Free Cooling) im Rechenzentrum?",
+    "options": [
+      "Die Kühlung mit kalter Außenluft oder -wasser ohne Kältemaschine",
+      "Eine Kühlung, die der Energieversorger kostenlos stellt",
+      "Das Abschalten der Klimaanlage an Wochenenden",
+      "Das Öffnen der Rackschränke zur besseren Belüftung"
+    ],
+    "a": "Die Kühlung mit kalter Außenluft oder -wasser ohne Kältemaschine",
+    "exp": "Solange es draußen kühl genug ist, reicht die Außenluft oder ein Kühlturm. Die stromintensive Kältemaschine läuft dann nicht. Das senkt den Energieverbrauch und verbessert den PUE-Wert."
+  },
+  {
+    "cat": "systeme",
+    "q": "Welches deutsche Gesetz schreibt größeren Rechenzentren unter anderem Grenzwerte für den PUE und die Nutzung von Strom aus erneuerbaren Energien vor?",
+    "options": [
+      "Das Energieeffizienzgesetz (EnEfG)",
+      "Das Erneuerbare-Energien-Gesetz (EEG)",
+      "Das Gebäudeenergiegesetz (GEG)",
+      "Das Elektro- und Elektronikgerätegesetz (ElektroG)"
+    ],
+    "a": "Das Energieeffizienzgesetz (EnEfG)",
+    "exp": "Das EnEfG stellt Anforderungen an Energieeffizienz, Ökostrom und Abwärmenutzung von Rechenzentren ab einer bestimmten Anschlussleistung. Betreiber müssen außerdem ein Energie- oder Umweltmanagementsystem einführen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Händler tippt im Angebot versehentlich 199 statt 1.999 Euro für einen Server, der Kunde nimmt an. Was kann der Händler tun?",
+    "options": [
+      "Unverzüglich wegen Erklärungsirrtums anfechten",
+      "Innerhalb von drei Jahren wegen Täuschung anfechten",
+      "Den Vertrag einseitig zum richtigen Preis anpassen",
+      "Nichts, der Vertrag gilt ohne jede Ausnahme"
+    ],
+    "a": "Unverzüglich wegen Erklärungsirrtums anfechten",
+    "exp": "Ein Vertippen ist ein Erklärungsirrtum. Der Händler muss ohne schuldhaftes Zögern anfechten und dem Kunden ggf. den Vertrauensschaden ersetzen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde kauft einen Server, weil er einen Großauftrag erwartet. Der Auftrag platzt. Kann er den Kauf wegen Irrtums anfechten?",
+    "options": [
+      "Nein, ein Irrtum über das Motiv berechtigt nicht zur Anfechtung",
+      "Ja, weil er sich über den Nutzen des Kaufs geirrt hat",
+      "Ja, innerhalb eines Jahres ab dem geplatzten Auftrag",
+      "Ja, aber nur wenn der Verkäufer davon wusste"
+    ],
+    "a": "Nein, ein Irrtum über das Motiv berechtigt nicht zur Anfechtung",
+    "exp": "Das ist ein unbeachtlicher Motivirrtum. Die Beweggründe für einen Kauf sind das Risiko des Käufers und kein Anfechtungsgrund."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Händler schickt einer Privatperson unbestellt einen USB-Stick und schreibt, Schweigen gelte als Annahme. Was gilt?",
+    "options": [
+      "Es entsteht kein Vertrag, sie muss weder zahlen noch zurücksenden",
+      "Nach 14 Tagen Schweigen entsteht ein wirksamer Kaufvertrag",
+      "Sie muss den Stick auf eigene Kosten zurückschicken",
+      "Sie muss zahlen, sobald sie das Paket geöffnet hat"
+    ],
+    "a": "Es entsteht kein Vertrag, sie muss weder zahlen noch zurücksenden",
+    "exp": "Schweigen ist grundsätzlich keine Annahme. Bei unbestellter Ware an Verbraucher entsteht nach BGB kein Anspruch des Händlers."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zwei Kaufleute verhandeln telefonisch. Einer schickt ein Bestätigungsschreiben, der andere schweigt darauf. Was gilt in der Regel?",
+    "options": [
+      "Der Vertrag gilt mit dem Inhalt des Schreibens",
+      "Es ist kein Vertrag zustande gekommen",
+      "Nur das mündlich Vereinbarte zählt",
+      "Der Vertrag ist schwebend unwirksam"
+    ],
+    "a": "Der Vertrag gilt mit dem Inhalt des Schreibens",
+    "exp": "Beim kaufmännischen Bestätigungsschreiben gilt Schweigen ausnahmsweise als Zustimmung. Wer nicht einverstanden ist, muss unverzüglich widersprechen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein gekauftes Notebook ist mangelhaft. Wer wählt beim Kaufvertrag zwischen Reparatur und Lieferung eines neuen Geräts?",
+    "options": [
+      "Der Käufer",
+      "Der Verkäufer",
+      "Der Hersteller",
+      "Ein Gutachter"
+    ],
+    "a": "Der Käufer",
+    "exp": "Beim Kaufvertrag hat der Käufer das Wahlrecht der Nacherfüllung. Der Verkäufer kann die gewählte Art nur bei unverhältnismäßigen Kosten verweigern. Beim Werkvertrag wählt dagegen der Unternehmer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Monitor hat einen winzigen Kratzer am Rand. Die Nacherfüllung schlägt fehl. Welches Recht bleibt dem Käufer?",
+    "options": [
+      "Minderung, weil der Rücktritt bei unerheblichem Mangel ausgeschlossen ist",
+      "Rücktritt, weil jeder Mangel zum Rücktritt berechtigt",
+      "Keines, weil kleine Mängel immer hinzunehmen sind",
+      "Umtausch in ein beliebiges anderes Produkt des Händlers"
+    ],
+    "a": "Minderung, weil der Rücktritt bei unerheblichem Mangel ausgeschlossen ist",
+    "exp": "Bei einem unerheblichen Mangel kann der Käufer nicht vom Vertrag zurücktreten. Den Kaufpreis mindern darf er aber trotzdem."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Bei welchem Onlinekauf hat ein Verbraucher kein Widerrufsrecht?",
+    "options": [
+      "Software in versiegelter Packung, deren Siegel er geöffnet hat",
+      "Ein Notebook, das er ausgepackt und kurz getestet hat",
+      "Ein Drucker, den er telefonisch bestellt hat",
+      "Eine Tastatur, die er per App bestellt hat"
+    ],
+    "a": "Software in versiegelter Packung, deren Siegel er geöffnet hat",
+    "exp": "Das Widerrufsrecht ist u.a. ausgeschlossen bei versiegelter Software nach Entfernen des Siegels und bei Waren nach Kundenspezifikation. Normales Prüfen der Ware ist erlaubt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Onlinehändler hat eine Verbraucherin nicht über ihr Widerrufsrecht belehrt. Wann erlischt ihr Widerrufsrecht spätestens?",
+    "options": [
+      "12 Monate und 14 Tage nach Fristbeginn",
+      "14 Tage nach Erhalt der Ware",
+      "30 Tage nach Erhalt der Ware",
+      "Es erlischt nie"
+    ],
+    "a": "12 Monate und 14 Tage nach Fristbeginn",
+    "exp": "Ohne ordnungsgemäße Belehrung beginnt die 14-Tage-Frist nicht. Das Widerrufsrecht erlischt dann spätestens 12 Monate nach dem Ende der eigentlichen Frist."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus (GmbH) bestellt online zehn Switches. Hat es ein gesetzliches Widerrufsrecht?",
+    "options": [
+      "Nein, das Widerrufsrecht gilt nur für Verbraucher",
+      "Ja, 14 Tage wie jeder Käufer im Onlinehandel",
+      "Ja, aber nur 7 Tage bei geschäftlichen Käufen",
+      "Ja, wenn die Ware noch originalverpackt ist"
+    ],
+    "a": "Nein, das Widerrufsrecht gilt nur für Verbraucher",
+    "exp": "Das gesetzliche Widerrufsrecht bei Fernabsatzverträgen schützt Verbraucher. Unternehmen haben es nur, wenn der Händler es freiwillig einräumt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mitarbeiter gewinnt in erster Instanz vor dem Arbeitsgericht. Wer trägt seine Anwaltskosten?",
+    "options": [
+      "Er selbst, jede Partei zahlt dort ihren Anwalt",
+      "Der Arbeitgeber, weil er den Prozess verloren hat",
+      "Die Staatskasse, weil Arbeitsgerichte kostenlos sind",
+      "Die Gewerkschaft, auch wenn er kein Mitglied ist"
+    ],
+    "a": "Er selbst, jede Partei zahlt dort ihren Anwalt",
+    "exp": "In der ersten Instanz vor dem Arbeitsgericht erstattet die unterlegene Partei die Anwaltskosten der Gegenseite nicht. So bleibt das Kostenrisiko für Beschäftigte überschaubar. Gewerkschaftsmitglieder erhalten oft kostenlosen Rechtsschutz."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine alleinerziehende Mitarbeiterin lebt mit ihrem Kind allein. Welche Lohnsteuerklasse passt in der Regel?",
+    "options": [
+      "Steuerklasse II",
+      "Steuerklasse I",
+      "Steuerklasse IV",
+      "Steuerklasse VI"
+    ],
+    "a": "Steuerklasse II",
+    "exp": "Steuerklasse II gilt für Alleinerziehende, denen der Entlastungsbetrag für Alleinerziehende zusteht. Ledige ohne Kind haben Steuerklasse I, Verheiratete III, IV oder V."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In den AGB steht eine Lieferzeit von 6 Wochen, im Vertrag wurden individuell 2 Wochen vereinbart. Was gilt?",
+    "options": [
+      "2 Wochen, weil Individualabreden Vorrang vor AGB haben",
+      "6 Wochen, weil die AGB immer Vorrang haben",
+      "4 Wochen als Mittelwert beider Regelungen",
+      "Keine Frist, weil sich beide Angaben widersprechen"
+    ],
+    "a": "2 Wochen, weil Individualabreden Vorrang vor AGB haben",
+    "exp": "Individuell ausgehandelte Vereinbarungen gehen den AGB vor. Die AGB gelten nur, soweit nichts anderes vereinbart wurde."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus mit 30 Mitarbeitern ist noch nicht im Handelsregister eingetragen. Ist der Inhaber Kaufmann?",
+    "options": [
+      "Ja, als Istkaufmann, die Eintragung hat nur erklärende Wirkung",
+      "Nein, Kaufmann wird man immer erst mit der Eintragung",
+      "Nein, nur Kapitalgesellschaften können Kaufmann sein",
+      "Nur wenn er zusätzlich Mitglied der IHK geworden ist"
+    ],
+    "a": "Ja, als Istkaufmann, die Eintragung hat nur erklärende Wirkung",
+    "exp": "Wer ein Handelsgewerbe mit kaufmännischer Einrichtung betreibt, ist kraft Gesetzes Kaufmann. Er muss sich eintragen lassen, die Eintragung wirkt aber nur deklaratorisch."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Mitarbeiterin darf alle Einkäufe der IT-Abteilung selbstständig abschließen. Welche Vollmacht hat sie?",
+    "options": [
+      "Artvollmacht",
+      "Einzelvollmacht",
+      "Prokura",
+      "Generalvollmacht"
+    ],
+    "a": "Artvollmacht",
+    "exp": "Die Artvollmacht gilt für eine bestimmte Art wiederkehrender Geschäfte, z.B. Einkauf. Die Einzelvollmacht gilt für ein einzelnes Geschäft. Handlungsvollmachten werden nicht ins Handelsregister eingetragen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer verwaltet das Vermögen eines Unternehmens nach Eröffnung des Insolvenzverfahrens?",
+    "options": [
+      "Der Insolvenzverwalter",
+      "Der bisherige Geschäftsführer",
+      "Der größte Gläubiger",
+      "Das Finanzamt"
+    ],
+    "a": "Der Insolvenzverwalter",
+    "exp": "Mit der Eröffnung geht die Verfügungsbefugnis auf den Insolvenzverwalter über. Er verwertet das Vermögen oder saniert das Unternehmen und verteilt den Erlös an die Gläubiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wer darf in Deutschland zu einem rechtmäßigen Streik aufrufen?",
+    "options": [
+      "Eine Gewerkschaft",
+      "Der Betriebsrat",
+      "Jeder Arbeitnehmer",
+      "Die Jugendvertretung"
+    ],
+    "a": "Eine Gewerkschaft",
+    "exp": "Ein rechtmäßiger Streik muss von einer Gewerkschaft getragen werden und ein tariflich regelbares Ziel haben. Der Betriebsrat ist zur Neutralität verpflichtet und darf nicht zum Streik aufrufen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wodurch gilt ein Tarifvertrag auch für Betriebe, die nicht tarifgebunden sind?",
+    "options": [
+      "Durch eine Allgemeinverbindlicherklärung des Bundesarbeitsministeriums",
+      "Durch eine Betriebsvereinbarung mit dem örtlichen Betriebsrat",
+      "Durch einen Beschluss der zuständigen Industrie- und Handelskammer",
+      "Automatisch, sobald mehr als die Hälfte Gewerkschaftsmitglieder sind"
+    ],
+    "a": "Durch eine Allgemeinverbindlicherklärung des Bundesarbeitsministeriums",
+    "exp": "Das Bundesministerium für Arbeit und Soziales kann einen Tarifvertrag auf Antrag für allgemeinverbindlich erklären. Dann gilt er für alle Arbeitsverhältnisse der Branche im Geltungsbereich."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Arbeitgeber erfährt, dass ein Mitarbeiter Firmenhardware gestohlen hat. Bis wann muss er fristlos kündigen?",
+    "options": [
+      "Innerhalb von 2 Wochen, nachdem er davon erfahren hat",
+      "Innerhalb von 3 Monaten nach der eigentlichen Tat",
+      "Innerhalb von 4 Wochen jeweils zum Monatsende",
+      "Jederzeit, für die fristlose Kündigung gibt es keine Frist"
+    ],
+    "a": "Innerhalb von 2 Wochen, nachdem er davon erfahren hat",
+    "exp": "Eine außerordentliche Kündigung aus wichtigem Grund muss innerhalb von 2 Wochen ab Kenntnis der maßgeblichen Tatsachen erklärt werden. Wartet der Arbeitgeber länger, verliert er das Recht zur fristlosen Kündigung."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Form braucht der Gesellschaftsvertrag bei der Gründung einer GmbH?",
+    "options": [
+      "Notarielle Beurkundung",
+      "Einfache Schriftform",
+      "Textform per E-Mail",
+      "Keine besondere Form"
+    ],
+    "a": "Notarielle Beurkundung",
+    "exp": "Der Gesellschaftsvertrag einer GmbH muss notariell beurkundet werden, auch beim vereinfachten Musterprotokoll. Das geht inzwischen auch per Videoverfahren beim Notar. Die GmbH entsteht als solche erst mit der Eintragung ins Handelsregister."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender verunglückt auf dem direkten Weg zur Berufsschule. Welche Versicherung ist zuständig?",
+    "options": [
+      "Die gesetzliche Unfallversicherung",
+      "Die gesetzliche Krankenversicherung",
+      "Die private Haftpflichtversicherung",
+      "Die gesetzliche Rentenversicherung"
+    ],
+    "a": "Die gesetzliche Unfallversicherung",
+    "exp": "Auch Wegeunfälle auf dem direkten Weg zur Arbeit oder zur Berufsschule sind über die Berufsgenossenschaft versichert. Sie zahlt z.B. Heilbehandlung, Reha und Verletztengeld."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Organ einer GmbH bestellt den Geschäftsführer?",
+    "options": [
+      "Die Gesellschafterversammlung",
+      "Der Aufsichtsrat",
+      "Das Registergericht",
+      "Die Hauptversammlung"
+    ],
+    "a": "Die Gesellschafterversammlung",
+    "exp": "Die Gesellschafterversammlung ist das oberste Organ der GmbH. Sie bestellt und entlässt die Geschäftsführer und stellt den Jahresabschluss fest. Einen Aufsichtsrat braucht eine GmbH nur in bestimmten Fällen, z.B. ab mehr als 500 Beschäftigten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein neuer Mitarbeiter wird in seiner dritten Arbeitswoche krank. Wer zahlt ihm in dieser Zeit Geld?",
+    "options": [
+      "Die Krankenkasse zahlt Krankengeld",
+      "Der Arbeitgeber zahlt das volle Entgelt weiter",
+      "Die Bundesagentur zahlt Arbeitslosengeld",
+      "Niemand, er bekommt in dieser Zeit nichts"
+    ],
+    "a": "Die Krankenkasse zahlt Krankengeld",
+    "exp": "Der Anspruch auf Entgeltfortzahlung entsteht erst nach 4 Wochen ununterbrochenem Arbeitsverhältnis. Vorher zahlt die gesetzliche Krankenkasse Krankengeld."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange kann jeder Elternteil für ein Kind Elternzeit nehmen?",
+    "options": [
+      "Bis zu 3 Jahre",
+      "Bis zu 14 Monate",
+      "Bis zu 1 Jahr",
+      "Bis zu 6 Monate"
+    ],
+    "a": "Bis zu 3 Jahre",
+    "exp": "Jeder Elternteil hat bis zum 3. Geburtstag des Kindes Anspruch auf bis zu 3 Jahre Elternzeit. Bis zu 24 Monate davon können auf die Zeit bis zum 8. Geburtstag übertragen werden. Nicht verwechseln mit dem Bezug von Elterngeld."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Für wie viele Jahre wird ein Betriebsrat regulär gewählt?",
+    "options": [
+      "4 Jahre",
+      "2 Jahre",
+      "3 Jahre",
+      "5 Jahre"
+    ],
+    "a": "4 Jahre",
+    "exp": "Die regelmäßige Amtszeit beträgt 4 Jahre. Die regulären Betriebsratswahlen finden bundesweit zwischen dem 1. März und dem 31. Mai statt, zuletzt im Jahr 2026."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Resturlaub wurde aus betrieblichen Gründen ins nächste Jahr übertragen. Bis wann muss er nach dem BUrlG genommen werden?",
+    "options": [
+      "Bis zum 31. März des Folgejahres",
+      "Bis zum 30. Juni des Folgejahres",
+      "Bis zum 31. Dezember des Folgejahres",
+      "Er verfällt nie und kann beliebig angespart werden"
+    ],
+    "a": "Bis zum 31. März des Folgejahres",
+    "exp": "Übertragener Urlaub muss in den ersten drei Monaten des Folgejahres genommen werden. Er verfällt aber nur, wenn der Arbeitgeber rechtzeitig auf den drohenden Verfall hingewiesen hat."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender streitet mit seiner Krankenkasse über die Zahlung von Krankengeld. Welches Gericht ist zuständig?",
+    "options": [
+      "Das Sozialgericht",
+      "Das Arbeitsgericht",
+      "Das Amtsgericht",
+      "Das Verwaltungsgericht"
+    ],
+    "a": "Das Sozialgericht",
+    "exp": "Streitigkeiten mit Trägern der Sozialversicherung gehören vor die Sozialgerichte. Das Arbeitsgericht entscheidet Streit zwischen Arbeitnehmer und Arbeitgeber."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Auszubildender will nach der Probezeit die Ausbildung aufgeben und studieren. Wie kann er kündigen?",
+    "options": [
+      "Schriftlich mit einer Frist von 4 Wochen",
+      "Mündlich und ohne Einhaltung einer Frist",
+      "Gar nicht, er muss die Ausbildung beenden",
+      "Schriftlich mit einer Frist von 3 Monaten"
+    ],
+    "a": "Schriftlich mit einer Frist von 4 Wochen",
+    "exp": "Nach der Probezeit kann der Auszubildende mit 4 Wochen Frist kündigen, wenn er die Ausbildung aufgibt oder einen anderen Beruf erlernen will. Der Betrieb kann nur noch aus wichtigem Grund fristlos kündigen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Stelle erhebt die Gewerbesteuer?",
+    "options": [
+      "Die Gemeinde",
+      "Das Bundesland",
+      "Der Bund",
+      "Die IHK"
+    ],
+    "a": "Die Gemeinde",
+    "exp": "Die Gewerbesteuer ist die wichtigste eigene Einnahme der Gemeinden. Jede Gemeinde legt dafür einen eigenen Hebesatz fest. Freiberufler zahlen keine Gewerbesteuer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Mehrere IT-Händler einer Region sprechen ihre Verkaufspreise heimlich ab. Welche Behörde geht in Deutschland dagegen vor?",
+    "options": [
+      "Das Bundeskartellamt",
+      "Die Bundesnetzagentur",
+      "Das Gewerbeaufsichtsamt",
+      "Die Verbraucherzentrale"
+    ],
+    "a": "Das Bundeskartellamt",
+    "exp": "Preisabsprachen sind nach dem Gesetz gegen Wettbewerbsbeschränkungen verboten. Das Bundeskartellamt kann hohe Bußgelder verhängen und prüft auch größere Unternehmenszusammenschlüsse."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Hardwarehersteller übernimmt seinen wichtigsten Zulieferer für Chips. Welche Art von Zusammenschluss liegt vor?",
+    "options": [
+      "Ein vertikaler Zusammenschluss",
+      "Ein horizontaler Zusammenschluss",
+      "Ein diagonaler Zusammenschluss",
+      "Ein Kartell gleicher Anbieter"
+    ],
+    "a": "Ein vertikaler Zusammenschluss",
+    "exp": "Vertikal verbinden sich Unternehmen aufeinanderfolgender Wirtschaftsstufen. Horizontal wären es Unternehmen derselben Stufe, diagonal Unternehmen verschiedener Branchen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bietet für einen Zusatzauftrag einen Preis unter den Selbstkosten, aber über den variablen Kosten. Es ist Kapazität frei. Was gilt kurzfristig?",
+    "options": [
+      "Die Annahme kann sinnvoll sein, weil ein positiver Deckungsbeitrag entsteht",
+      "Ablehnen, weil jeder Auftrag die vollen Selbstkosten decken muss",
+      "Annehmen nur, wenn der Preis die Fixkosten allein vollständig deckt",
+      "Ablehnen, weil die variablen Kosten dabei nicht gedeckt werden"
+    ],
+    "a": "Die Annahme kann sinnvoll sein, weil ein positiver Deckungsbeitrag entsteht",
+    "exp": "Die Fixkosten fallen ohnehin an. Jeder Euro über den variablen Kosten trägt zu ihrer Deckung bei. Langfristig müssen die Preise aber alle Kosten decken."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Hilfskostenstelle im Betriebsabrechnungsbogen?",
+    "options": [
+      "Eine Stelle, die vor allem für andere Kostenstellen arbeitet",
+      "Eine Stelle, die direkt Produkte für die Kunden herstellt",
+      "Eine Stelle, die nur vorübergehend für ein Projekt besteht",
+      "Eine Stelle, die ausschließlich Einzelkosten erfasst"
+    ],
+    "a": "Eine Stelle, die vor allem für andere Kostenstellen arbeitet",
+    "exp": "Ein Beispiel ist die interne IT oder die Kantine. Ihre Kosten werden auf die Hauptkostenstellen umgelegt, die für den Absatz arbeiten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ermittelt ein Händler mit der Rückwärtskalkulation?",
+    "options": [
+      "Ausgehend vom Marktpreis den höchsten zulässigen Einkaufspreis",
+      "Ausgehend vom Einkaufspreis den nötigen Verkaufspreis",
+      "Ausgehend vom Gewinn die nötige Absatzmenge pro Jahr",
+      "Ausgehend von der Rechnung den nachträglichen Bonus"
+    ],
+    "a": "Ausgehend vom Marktpreis den höchsten zulässigen Einkaufspreis",
+    "exp": "Ist der Verkaufspreis durch den Markt vorgegeben, rechnet man die Zuschläge zurück. So erkennt man, wie viel man beim Lieferanten höchstens zahlen darf."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie sind die Mietkosten des Bürogebäudes in Bezug auf einen einzelnen Kundenauftrag einzuordnen?",
+    "options": [
+      "Fixe Gemeinkosten",
+      "Variable Einzelkosten",
+      "Fixe Einzelkosten",
+      "Variable Gemeinkosten"
+    ],
+    "a": "Fixe Gemeinkosten",
+    "exp": "Die Miete ändert sich nicht mit der Auftragsmenge und ist daher fix. Sie lässt sich keinem einzelnen Auftrag direkt zuordnen und ist damit Gemeinkosten."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Unternehmen spendet an einen örtlichen Sportverein. Wie wird das in der Kostenrechnung eingeordnet?",
+    "options": [
+      "Als neutraler Aufwand, der keine Kosten darstellt",
+      "Als Einzelkosten des nächsten Kundenauftrags",
+      "Als kalkulatorische Kosten ohne Aufwand",
+      "Als variable Kosten der Fertigung"
+    ],
+    "a": "Als neutraler Aufwand, der keine Kosten darstellt",
+    "exp": "Die Spende mindert zwar den Gewinn in der Buchhaltung, dient aber nicht dem Betriebszweck. Deshalb fließt sie nicht in die Kalkulation der Preise ein."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Schwäche hat die statische Amortisationsrechnung?",
+    "options": [
+      "Sie beachtet nicht, was nach der Amortisationszeit noch zurückfließt",
+      "Sie liefert als Ergebnis keine Zeitangabe in Jahren",
+      "Sie ist nur für Investitionen über eine Million Euro geeignet",
+      "Sie setzt voraus, dass die Anschaffung geleast wurde"
+    ],
+    "a": "Sie beachtet nicht, was nach der Amortisationszeit noch zurückfließt",
+    "exp": "Zwei Investitionen können sich gleich schnell amortisieren, aber danach sehr unterschiedlich lange Gewinn bringen. Außerdem berücksichtigt sie keine Zinsen. Sie ist vor allem ein Maß für das Risiko."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Warum ist ein Euro heute mehr wert als ein Euro in fünf Jahren?",
+    "options": [
+      "Weil er bis dahin angelegt werden und Zinsen bringen kann",
+      "Weil künftige Zahlungen steuerlich höher belastet werden",
+      "Weil Abschreibungen künftige Zahlungen automatisch mindern",
+      "Weil der Wechselkurs des Euro stetig und sicher sinkt"
+    ],
+    "a": "Weil er bis dahin angelegt werden und Zinsen bringen kann",
+    "exp": "Das ist der Grundgedanke der dynamischen Investitionsrechnung. Künftige Zahlungen werden deshalb abgezinst, um sie mit heutigen Zahlungen vergleichbar zu machen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Posten stehen bei der Liquidität 1. Grades im Zähler?",
+    "options": [
+      "Nur Kasse und Bankguthaben",
+      "Kasse, Bank und kurzfristige Forderungen",
+      "Das gesamte Umlaufvermögen",
+      "Anlagevermögen und Vorräte"
+    ],
+    "a": "Nur Kasse und Bankguthaben",
+    "exp": "Die Liquidität 1. Grades setzt die flüssigen Mittel ins Verhältnis zu den kurzfristigen Verbindlichkeiten. Beim 2. Grad kommen die Forderungen hinzu, beim 3. Grad die Vorräte."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Auf welcher Bilanzseite und unter welchem Posten stehen Verbindlichkeiten gegenüber Lieferanten?",
+    "options": [
+      "Auf der Passivseite als Fremdkapital",
+      "Auf der Aktivseite als Umlaufvermögen",
+      "Auf der Aktivseite als Anlagevermögen",
+      "Auf der Passivseite als Eigenkapital"
+    ],
+    "a": "Auf der Passivseite als Fremdkapital",
+    "exp": "Die Passivseite zeigt, woher das Kapital kommt. Offene Rechnungen bei Lieferanten sind Schulden und damit Fremdkapital."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein neuer Gesellschafter bringt Geld in die GmbH ein. Welche Finanzierungsart liegt vor?",
+    "options": [
+      "Außenfinanzierung mit Eigenkapital (Beteiligungsfinanzierung)",
+      "Innenfinanzierung mit Eigenkapital (Selbstfinanzierung)",
+      "Außenfinanzierung mit Fremdkapital (Kreditfinanzierung)",
+      "Innenfinanzierung mit Fremdkapital (aus Rückstellungen)"
+    ],
+    "a": "Außenfinanzierung mit Eigenkapital (Beteiligungsfinanzierung)",
+    "exp": "Das Geld kommt von außen, und der Geber wird Miteigentümer statt Gläubiger. Deshalb handelt es sich um Eigenkapital, das nicht zurückgezahlt werden muss."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Artikel hat einen hohen Wertanteil und einen sehr gleichmäßigen Verbrauch. Wie wird er eingeordnet?",
+    "options": [
+      "Als AX-Gut, gut geeignet für Just-in-time-Beschaffung",
+      "Als CZ-Gut, am besten auf großen Vorrat gelegt",
+      "Als AZ-Gut, nur bei Bedarf einzeln bestellt",
+      "Als CX-Gut, mit wenig Kontrolle nachbestellt"
+    ],
+    "a": "Als AX-Gut, gut geeignet für Just-in-time-Beschaffung",
+    "exp": "A steht für hohen Wert aus der ABC-Analyse, X für gut planbaren Verbrauch aus der XYZ-Analyse. Solche Güter lohnen eine genaue Planung, weil sie viel Kapital binden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wozu dient der Mindestbestand (eiserner Bestand) im Lager?",
+    "options": [
+      "Er überbrückt Lieferverzögerungen und unerwarteten Mehrverbrauch",
+      "Er legt fest, wie viel das Lager höchstens aufnehmen kann",
+      "Er zeigt den Bestand, der am Jahresende verkauft sein muss",
+      "Er gibt an, wie viel pro Bestellung mindestens zu ordern ist"
+    ],
+    "a": "Er überbrückt Lieferverzögerungen und unerwarteten Mehrverbrauch",
+    "exp": "Der Mindestbestand soll im Normalfall nicht angegriffen werden. Er sichert die Versorgung, wenn eine Lieferung später kommt oder mehr verbraucht wird als geplant."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zu welchem Bereich des Marketing-Mix gehört die Entscheidung, Produkte nur über einen Onlineshop zu verkaufen?",
+    "options": [
+      "Distributionspolitik",
+      "Kommunikationspolitik",
+      "Produktpolitik",
+      "Konditionenpolitik"
+    ],
+    "a": "Distributionspolitik",
+    "exp": "Die Distributionspolitik legt fest, über welche Wege ein Produkt zum Kunden gelangt. Werbung für den Shop wäre dagegen Kommunikationspolitik."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Anbieter startet einen neuen Cloud-Dienst mit sehr niedrigem Preis, um schnell viele Kunden zu gewinnen. Welche Strategie ist das?",
+    "options": [
+      "Penetrationsstrategie",
+      "Abschöpfungsstrategie",
+      "Premiumpreisstrategie",
+      "Preisdifferenzierung"
+    ],
+    "a": "Penetrationsstrategie",
+    "exp": "Ein niedriger Einstiegspreis soll schnell Marktanteile sichern. Später kann der Preis angehoben werden, wenn die Kunden gebunden sind."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Viele Anbieter treffen auf viele Nachfrager, keiner kann den Preis allein bestimmen. Welche Marktform liegt vor?",
+    "options": [
+      "Polypol",
+      "Oligopol",
+      "Angebotsmonopol",
+      "Nachfrageoligopol"
+    ],
+    "a": "Polypol",
+    "exp": "Im Polypol hat jeder einzelne Anbieter nur einen kleinen Marktanteil. Der Preis bildet sich durch Angebot und Nachfrage am Markt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist in der Portfolio-Matrix der Boston Consulting Group eine Cash Cow?",
+    "options": [
+      "Ein Produkt mit hohem Marktanteil in einem langsam wachsenden Markt",
+      "Ein Produkt mit geringem Marktanteil in einem stark wachsenden Markt",
+      "Ein Produkt mit hohem Marktanteil in einem stark wachsenden Markt",
+      "Ein Produkt mit geringem Marktanteil in einem schrumpfenden Markt"
+    ],
+    "a": "Ein Produkt mit hohem Marktanteil in einem langsam wachsenden Markt",
+    "exp": "Cash Cows bringen viel Geld bei wenig Investitionsbedarf. Mit diesem Geld werden oft Stars und Question Marks finanziert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde setzt ein Merkmal so selbstverständlich voraus, dass er es nicht erwähnt. Wie heißt es im Kano-Modell?",
+    "options": [
+      "Basismerkmal",
+      "Leistungsmerkmal",
+      "Begeisterungsmerkmal",
+      "Alleinstellungsmerkmal"
+    ],
+    "a": "Basismerkmal",
+    "exp": "Fehlt ein Basismerkmal, ist der Kunde sehr unzufrieden, ist es vorhanden, fällt es kaum auf. Deshalb muss man solche Erwartungen in der Bedarfsanalyse gezielt erfragen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Frageart ist „Sie möchten doch sicher auch die längere Garantie, oder?“",
+    "options": [
+      "Suggestivfrage",
+      "Offene Frage",
+      "Alternativfrage",
+      "Kontrollfrage"
+    ],
+    "a": "Suggestivfrage",
+    "exp": "Eine Suggestivfrage legt die gewünschte Antwort nahe. Im Beratungsgespräch wirkt sie schnell manipulativ und sollte sparsam eingesetzt werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Sandwich-Methode bei der Preisnennung?",
+    "options": [
+      "Den Preis zwischen zwei Nutzenargumenten nennen",
+      "Den Preis erst nach der Unterschrift des Kunden nennen",
+      "Den Preis nur schriftlich im späteren Angebot nennen",
+      "Den Preis gleich zu Beginn des Gesprächs nennen"
+    ],
+    "a": "Den Preis zwischen zwei Nutzenargumenten nennen",
+    "exp": "Der Preis wird von Nutzen umrahmt, z.B. schnelle Reaktionszeit, Preis, dann geringere Ausfallzeiten. So bleibt der Kunde nicht allein an der Zahl hängen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde fragt nach vielen technischen Details und Datenblättern. Wie berät man ihn am besten?",
+    "options": [
+      "Sachlich mit genauen Fakten und nachprüfbaren Belegen",
+      "Vor allem über Emotionen und das Markenimage sprechen",
+      "Das Gespräch kurz halten und sofort den Preis nennen",
+      "Details weglassen und nur das Endergebnis versprechen"
+    ],
+    "a": "Sachlich mit genauen Fakten und nachprüfbaren Belegen",
+    "exp": "Ein analytischer Kundentyp will Entscheidungen gut begründen. Er schätzt Zahlen, Vergleiche und Testergebnisse mehr als Werbeaussagen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Faustregel gilt für gute Präsentationsfolien?",
+    "options": [
+      "Wenige Stichpunkte je Folie und eine gut lesbare Schriftgröße",
+      "Möglichst vollständige Sätze, damit man ablesen kann",
+      "Viele Animationen, damit das Publikum wach bleibt",
+      "Kleine Schrift, damit alle Details auf eine Folie passen"
+    ],
+    "a": "Wenige Stichpunkte je Folie und eine gut lesbare Schriftgröße",
+    "exp": "Folien unterstützen den Vortrag, sie ersetzen ihn nicht. Das Publikum soll zuhören und nicht lange Texte lesen müssen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Vorgang auf dem kritischen Pfad verzögert sich um zwei Tage. Was folgt daraus ohne Gegenmaßnahmen?",
+    "options": [
+      "Das Projektende verschiebt sich um zwei Tage",
+      "Nur der nächste Meilenstein verschiebt sich, nicht das Ende",
+      "Der Gesamtpuffer des Vorgangs fängt die Verzögerung auf",
+      "Parallele Vorgänge gleichen die Verzögerung automatisch aus"
+    ],
+    "a": "Das Projektende verschiebt sich um zwei Tage",
+    "exp": "Vorgänge auf dem kritischen Pfad haben keinen Puffer. Jede Verzögerung wirkt sich direkt auf den Endtermin aus, wenn man z.B. nicht mehr Personal einsetzt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Fertigstellungswert eines Projekts liegt unter den Istkosten. Was bedeutet das?",
+    "options": [
+      "Die erbrachte Leistung war teurer als geplant",
+      "Das Projekt liegt dem Zeitplan deutlich voraus",
+      "Das Projekt ist bisher günstiger als geplant",
+      "Es wurde mehr Leistung erbracht als geplant"
+    ],
+    "a": "Die erbrachte Leistung war teurer als geplant",
+    "exp": "Für die geleistete Arbeit wurde mehr Geld ausgegeben, als dafür vorgesehen war. Es liegt also eine Kostenüberschreitung vor."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Vorgehensmodell durchläuft wiederholt Zyklen, in denen jeweils Risiken analysiert werden?",
+    "options": [
+      "Spiralmodell",
+      "Wasserfallmodell",
+      "V-Modell",
+      "Kanban"
+    ],
+    "a": "Spiralmodell",
+    "exp": "Jede Runde des Spiralmodells umfasst Zielsetzung, Risikoanalyse, Entwicklung und Planung der nächsten Runde. Es eignet sich für große, risikoreiche Vorhaben."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welcher Projektorganisation arbeitet das Team ausschließlich für das Projekt und untersteht voll dem Projektleiter?",
+    "options": [
+      "Reine (autonome) Projektorganisation",
+      "Einfluss-Projektorganisation",
+      "Matrix-Projektorganisation",
+      "Stab-Linien-Organisation"
+    ],
+    "a": "Reine (autonome) Projektorganisation",
+    "exp": "Der Projektleiter hat volle Weisungsbefugnis und ein eigenes Team. Das passt zu großen, wichtigen Projekten, erschwert aber die Rückkehr der Mitarbeiter in die Linie."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projektstrukturplan gliedert in „Serverraum“, „Netzwerk“ und „Arbeitsplätze“. Wie ist er aufgebaut?",
+    "options": [
+      "Objektorientiert",
+      "Funktionsorientiert",
+      "Phasenorientiert",
+      "Kostenorientiert"
+    ],
+    "a": "Objektorientiert",
+    "exp": "Ein objektorientierter PSP zerlegt das Ergebnis in seine Bestandteile. Ein funktionsorientierter gliedert nach Tätigkeiten wie Planen, Beschaffen und Installieren."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Anordnungsbeziehung ist im Netzplan der Standardfall?",
+    "options": [
+      "Normalfolge: Der Nachfolger beginnt, wenn der Vorgänger endet",
+      "Anfangsfolge: Beide Vorgänge beginnen zum gleichen Zeitpunkt",
+      "Endfolge: Beide Vorgänge enden zum gleichen Zeitpunkt",
+      "Sprungfolge: Der Nachfolger endet, wenn der Vorgänger beginnt"
+    ],
+    "a": "Normalfolge: Der Nachfolger beginnt, wenn der Vorgänger endet",
+    "exp": "Die Normalfolge (Ende-Anfang) ist am häufigsten, z.B. erst Kabel verlegen, dann Switches anschließen. Die übrigen Beziehungen werden nur bei Bedarf verwendet."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was folgt aus der 1-10-100-Regel für die Qualitätssicherung?",
+    "options": [
+      "Fehler sollten früh gefunden werden, weil sie später stark teurer werden",
+      "Späte Fehler sind billiger, weil dann mehr Wissen vorhanden ist",
+      "Frühe Tests können die Abnahme durch den Kunden ersetzen",
+      "Die Fehlerkosten bleiben in jeder Projektphase gleich hoch"
+    ],
+    "a": "Fehler sollten früh gefunden werden, weil sie später stark teurer werden",
+    "exp": "Nach der Regel steigen die Kosten zur Behebung eines Fehlers von Phase zu Phase etwa um den Faktor zehn. Ein Fehler in der Planung ist billig, beim Kunden im Betrieb sehr teuer."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein internes Audit im Qualitätsmanagement?",
+    "options": [
+      "Eine planmäßige Prüfung, ob Prozesse die festgelegten Vorgaben einhalten",
+      "Die jährliche Prüfung der Steuererklärung durch das Finanzamt",
+      "Ein Gespräch zur Leistungsbewertung eines einzelnen Mitarbeiters",
+      "Die formale Abnahme eines Projektergebnisses durch den Kunden"
+    ],
+    "a": "Eine planmäßige Prüfung, ob Prozesse die festgelegten Vorgaben einhalten",
+    "exp": "Interne Audits sind nach ISO 9001 vorgeschrieben. Sie decken Abweichungen auf, aus denen Korrektur- und Verbesserungsmaßnahmen abgeleitet werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welcher Organisationsform erhält ein Mitarbeiter Weisungen von mehreren spezialisierten Vorgesetzten?",
+    "options": [
+      "Mehrlinienorganisation",
+      "Einlinienorganisation",
+      "Stab-Linien-Organisation",
+      "Spartenorganisation"
+    ],
+    "a": "Mehrlinienorganisation",
+    "exp": "Die Mehrlinienorganisation nutzt das Fachwissen spezialisierter Vorgesetzter und verkürzt Wege. Nachteil sind mögliche widersprüchliche Anweisungen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listeneinkaufspreis 1.800,00 Euro, 10 % Liefererrabatt, 2 % Skonto und 45,00 Euro Bezugskosten (Fracht). Wie hoch ist der Bezugspreis?",
+    "options": [
+      "1.632,60 Euro",
+      "1.587,60 Euro",
+      "1.629,00 Euro",
+      "1.665,00 Euro"
+    ],
+    "a": "1.632,60 Euro",
+    "exp": "Zieleinkaufspreis: 1.800,00 Euro - 10 % = 1.620,00 Euro. Bareinkaufspreis: 1.620,00 Euro - 2 % Skonto = 1.587,60 Euro. Bezugspreis: + 45,00 Euro Bezugskosten = 1.632,60 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Listeneinkaufspreis 640,00 Euro, 15 % Liefererrabatt, 3 % Skonto und 25,00 Euro Bezugskosten (Fracht). Wie hoch ist der Bezugspreis?",
+    "options": [
+      "552,68 Euro",
+      "527,68 Euro",
+      "549,80 Euro",
+      "569,00 Euro"
+    ],
+    "a": "552,68 Euro",
+    "exp": "Zieleinkaufspreis: 640,00 Euro - 15 % = 544,00 Euro. Bareinkaufspreis: 544,00 Euro - 3 % Skonto = 527,68 Euro. Bezugspreis: + 25,00 Euro Bezugskosten = 552,68 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus kauft ein Gerät zum Bezugspreis von 500,00 Euro. Der Handlungskostenzuschlag beträgt 30 %, der Gewinnzuschlag 10 %. Wie hoch ist der Barverkaufspreis?",
+    "options": [
+      "715,00 Euro",
+      "700,00 Euro",
+      "650,00 Euro",
+      "850,85 Euro"
+    ],
+    "a": "715,00 Euro",
+    "exp": "Selbstkosten: 500,00 Euro + 30 % = 650,00 Euro. Barverkaufspreis: 650,00 Euro + 10 % Gewinn = 715,00 Euro. Die Zuschläge werden nacheinander gerechnet, nicht addiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Systemhaus kauft ein Gerät zum Bezugspreis von 1.240,00 Euro. Der Handlungskostenzuschlag beträgt 25 %, der Gewinnzuschlag 12 %. Wie hoch ist der Barverkaufspreis?",
+    "options": [
+      "1.736,00 Euro",
+      "1.698,80 Euro",
+      "1.550,00 Euro",
+      "2.065,84 Euro"
+    ],
+    "a": "1.736,00 Euro",
+    "exp": "Selbstkosten: 1.240,00 Euro + 25 % = 1.550,00 Euro. Barverkaufspreis: 1.550,00 Euro + 12 % Gewinn = 1.736,00 Euro. Die Zuschläge werden nacheinander gerechnet, nicht addiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kundenprojekt: Material 2.000,00 Euro (Materialgemeinkosten 10 %), 40 Stunden zu 45,00 Euro Lohn (Fertigungsgemeinkosten 80 %), Verwaltungs- und Vertriebsgemeinkosten 15 %. Wie hoch sind die Selbstkosten?",
+    "options": [
+      "6.256,00 Euro",
+      "5.440,00 Euro",
+      "7.790,00 Euro",
+      "3.800,00 Euro"
+    ],
+    "a": "6.256,00 Euro",
+    "exp": "Materialkosten: 2.000,00 Euro + 10 % = 2.200,00 Euro. Fertigungskosten: 40 * 45,00 Euro = 1.800,00 Euro + 80 % = 3.240,00 Euro. Herstellkosten: 5.440,00 Euro. Selbstkosten: + 15 % = 6.256,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kundenprojekt: Material 3.500,00 Euro (Materialgemeinkosten 8 %), 60 Stunden zu 50,00 Euro Lohn (Fertigungsgemeinkosten 60 %), Verwaltungs- und Vertriebsgemeinkosten 12 %. Wie hoch sind die Selbstkosten?",
+    "options": [
+      "9.609,60 Euro",
+      "8.580,00 Euro",
+      "11.700,00 Euro",
+      "6.500,00 Euro"
+    ],
+    "a": "9.609,60 Euro",
+    "exp": "Materialkosten: 3.500,00 Euro + 8 % = 3.780,00 Euro. Fertigungskosten: 60 * 50,00 Euro = 3.000,00 Euro + 60 % = 4.800,00 Euro. Herstellkosten: 8.580,00 Euro. Selbstkosten: + 12 % = 9.609,60 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Selbstkosten eines Auftrags betragen 4.200,00 Euro. Mit 15 % Gewinnzuschlag und 19 % Umsatzsteuer: Welchen Bruttopreis nennt das Angebot?",
+    "options": [
+      "5.747,70 Euro",
+      "4.830,00 Euro",
+      "5.628,00 Euro",
+      "4.998,00 Euro"
+    ],
+    "a": "5.747,70 Euro",
+    "exp": "Nettopreis: 4.200,00 Euro + 15 % = 4.830,00 Euro. Bruttopreis: 4.830,00 Euro * 1,19 = 5.747,70 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Die Selbstkosten eines Auftrags betragen 860,00 Euro. Mit 20 % Gewinnzuschlag und 19 % Umsatzsteuer: Welchen Bruttopreis nennt das Angebot?",
+    "options": [
+      "1.228,08 Euro",
+      "1.032,00 Euro",
+      "1.195,40 Euro",
+      "1.023,40 Euro"
+    ],
+    "a": "1.228,08 Euro",
+    "exp": "Nettopreis: 860,00 Euro + 20 % = 1.032,00 Euro. Bruttopreis: 1.032,00 Euro * 1,19 = 1.228,08 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zahlungsbedingung: 2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage netto. Welchem Jahreszinssatz entspricht der Verzicht auf Skonto (ca., 360 Tage)?",
+    "options": [
+      "ca. 36,7 %",
+      "ca. 24,0 %",
+      "ca. 2,0 %",
+      "ca. 72,0 %"
+    ],
+    "a": "ca. 36,7 %",
+    "exp": "Wer nicht sofort zahlt, bekommt 20 Tage mehr Zeit und zahlt dafür 2 % mehr. 2 / 98 * 360 / 20 = 36,7 %. Ein Kontokorrentkredit ist meist günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Zahlungsbedingung: 3 % Skonto bei Zahlung innerhalb von 14 Tagen, sonst 60 Tage netto. Welchem Jahreszinssatz entspricht der Verzicht auf Skonto (ca., 360 Tage)?",
+    "options": [
+      "ca. 24,2 %",
+      "ca. 18,0 %",
+      "ca. 3,0 %",
+      "ca. 77,1 %"
+    ],
+    "a": "ca. 24,2 %",
+    "exp": "Wer nicht sofort zahlt, bekommt 46 Tage mehr Zeit und zahlt dafür 3 % mehr. 3 / 97 * 360 / 46 = 24,2 %. Ein Kontokorrentkredit ist meist günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wartungspaket wird für 120,00 Euro verkauft, die variablen Kosten betragen 70,00 Euro je Paket. Wie hoch ist der Deckungsbeitrag je Paket?",
+    "options": [
+      "50,00 Euro",
+      "190,00 Euro",
+      "70,00 Euro",
+      "41,67 Euro"
+    ],
+    "a": "50,00 Euro",
+    "exp": "Deckungsbeitrag = Preis - variable Kosten = 120,00 Euro - 70,00 Euro = 50,00 Euro. Er trägt zur Deckung der Fixkosten bei."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Wartungspaket wird für 49,00 Euro verkauft, die variablen Kosten betragen 31,50 Euro je Paket. Wie hoch ist der Deckungsbeitrag je Paket?",
+    "options": [
+      "17,50 Euro",
+      "80,50 Euro",
+      "31,50 Euro",
+      "35,71 Euro"
+    ],
+    "a": "17,50 Euro",
+    "exp": "Deckungsbeitrag = Preis - variable Kosten = 49,00 Euro - 31,50 Euro = 17,50 Euro. Er trägt zur Deckung der Fixkosten bei."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Gerät hat variable Kosten von 38,00 Euro je Stück, die Fixkosten betragen 12.000,00 Euro bei 800 Stück. Wo liegt die kurzfristige Preisuntergrenze?",
+    "options": [
+      "38,00 Euro",
+      "53,00 Euro",
+      "15,00 Euro",
+      "0,00 Euro"
+    ],
+    "a": "38,00 Euro",
+    "exp": "Kurzfristig müssen nur die variablen Kosten gedeckt sein (38,00 Euro), die Fixkosten fallen ohnehin an. Langfristig liegt die Grenze bei den Stückkosten 38,00 Euro + 15,00 Euro = 53,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Gerät hat variable Kosten von 145,00 Euro je Stück, die Fixkosten betragen 30.000,00 Euro bei 400 Stück. Wo liegt die kurzfristige Preisuntergrenze?",
+    "options": [
+      "145,00 Euro",
+      "220,00 Euro",
+      "75,00 Euro",
+      "0,00 Euro"
+    ],
+    "a": "145,00 Euro",
+    "exp": "Kurzfristig müssen nur die variablen Kosten gedeckt sein (145,00 Euro), die Fixkosten fallen ohnehin an. Langfristig liegt die Grenze bei den Stückkosten 145,00 Euro + 75,00 Euro = 220,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Kunde bietet für 150 Geräte nur 72,00 Euro je Stück (normal 95,00 Euro). Die variablen Kosten sind 60,00 Euro je Stück, freie Kapazität ist vorhanden. Wie verändert der Zusatzauftrag den Gewinn?",
+    "options": [
+      "+1.800,00 Euro",
+      "-3.450,00 Euro",
+      "+10.800,00 Euro",
+      "+5.250,00 Euro"
+    ],
+    "a": "+1.800,00 Euro",
+    "exp": "Bei freier Kapazität zählt nur der Deckungsbeitrag: (72,00 Euro - 60,00 Euro) * 150 = 1.800,00 Euro. Der Auftrag lohnt sich, solange der Preis über den variablen Kosten liegt."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Fixkosten 60.000,00 Euro, Verkaufspreis 200,00 Euro, variable Kosten 120,00 Euro je Stück. Bei welchem Umsatz ist die Gewinnschwelle erreicht?",
+    "options": [
+      "150.000,00 Euro",
+      "36.000,00 Euro",
+      "60.000,00 Euro",
+      "90.000,00 Euro"
+    ],
+    "a": "150.000,00 Euro",
+    "exp": "Gewinnschwelle: 60.000,00 Euro / (200,00 Euro - 120,00 Euro) = 750 Stück. Umsatz: 750 * 200,00 Euro = 150.000,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Fixkosten 18.000,00 Euro, Verkaufspreis 45,00 Euro, variable Kosten 27,00 Euro je Stück. Bei welchem Umsatz ist die Gewinnschwelle erreicht?",
+    "options": [
+      "45.000,00 Euro",
+      "10.800,00 Euro",
+      "18.000,00 Euro",
+      "27.000,00 Euro"
+    ],
+    "a": "45.000,00 Euro",
+    "exp": "Gewinnschwelle: 18.000,00 Euro / (45,00 Euro - 27,00 Euro) = 1.000 Stück. Umsatz: 1.000 * 45,00 Euro = 45.000,00 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Drucker A: Fixkosten 4.000,00 Euro pro Jahr, 0,08 Euro je Seite. Drucker B: Fixkosten 1.500,00 Euro pro Jahr, 0,12 Euro je Seite. Ab welcher Seitenzahl pro Jahr ist A günstiger?",
+    "options": [
+      "ab 62.500",
+      "ab 27.500",
+      "ab 50.000",
+      "ab 12.500"
+    ],
+    "a": "ab 62.500",
+    "exp": "Kritische Menge: Fixkostendifferenz / Differenz der variablen Kosten = (4.000,00 Euro - 1.500,00 Euro) / (0,12 - 0,08) = 62.500. Darüber ist die Lösung mit den niedrigeren variablen Kosten günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Lösung A: Fixkosten 12.000,00 Euro pro Jahr, 2,00 Euro je Nutzer. Lösung B: Fixkosten 3.000,00 Euro pro Jahr, 5,00 Euro je Nutzer. Ab wie vielen Nutzern ist A günstiger?",
+    "options": [
+      "ab 3.000",
+      "ab 2.143",
+      "ab 6.000",
+      "ab 600"
+    ],
+    "a": "ab 3.000",
+    "exp": "Kritische Menge: Fixkostendifferenz / Differenz der variablen Kosten = (12.000,00 Euro - 3.000,00 Euro) / (5,00 - 2,00) = 3.000. Darüber ist die Lösung mit den niedrigeren variablen Kosten günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Investition kostet 40.000,00 Euro und bringt 6.000,00 Euro zusätzlichen Gewinn pro Jahr. Wie hoch ist die Rentabilität bezogen auf das durchschnittlich gebundene Kapital?",
+    "options": [
+      "30,0 %",
+      "15,0 %",
+      "6,7 %",
+      "60,0 %"
+    ],
+    "a": "30,0 %",
+    "exp": "Durchschnittlich gebundenes Kapital: 40.000,00 Euro / 2 = 20.000,00 Euro (es wird über die Nutzung abgeschrieben). 6.000,00 Euro / 20.000,00 Euro * 100 = 30,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Investition kostet 15.000,00 Euro und bringt 1.800,00 Euro zusätzlichen Gewinn pro Jahr. Wie hoch ist die Rentabilität bezogen auf das durchschnittlich gebundene Kapital?",
+    "options": [
+      "24,0 %",
+      "12,0 %",
+      "8,3 %",
+      "48,0 %"
+    ],
+    "a": "24,0 %",
+    "exp": "Durchschnittlich gebundenes Kapital: 15.000,00 Euro / 2 = 7.500,00 Euro (es wird über die Nutzung abgeschrieben). 1.800,00 Euro / 7.500,00 Euro * 100 = 24,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Dienstleister erzielt 84.000,00 Euro Gewinn bei 1.200.000,00 Euro Umsatz. Wie hoch ist die Umsatzrentabilität?",
+    "options": [
+      "7,0 %",
+      "14,3 %",
+      "70,0 %",
+      "93,0 %"
+    ],
+    "a": "7,0 %",
+    "exp": "Umsatzrentabilität = Gewinn / Umsatz * 100 = 84.000,00 Euro / 1.200.000,00 Euro * 100 = 7,0 %. Von jedem Euro Umsatz bleiben 7,0 Cent Gewinn."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein IT-Dienstleister erzielt 27.000,00 Euro Gewinn bei 450.000,00 Euro Umsatz. Wie hoch ist die Umsatzrentabilität?",
+    "options": [
+      "6,0 %",
+      "16,7 %",
+      "60,0 %",
+      "94,0 %"
+    ],
+    "a": "6,0 %",
+    "exp": "Umsatzrentabilität = Gewinn / Umsatz * 100 = 27.000,00 Euro / 450.000,00 Euro * 100 = 6,0 %. Von jedem Euro Umsatz bleiben 6,0 Cent Gewinn."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Bilanz weist 180.000,00 Euro Eigenkapital und 420.000,00 Euro Fremdkapital aus. Wie hoch ist die Eigenkapitalquote?",
+    "options": [
+      "30,0 %",
+      "42,9 %",
+      "70,0 %",
+      "15,0 %"
+    ],
+    "a": "30,0 %",
+    "exp": "Eigenkapitalquote = Eigenkapital / Gesamtkapital * 100 = 180.000,00 Euro / 600.000,00 Euro * 100 = 30,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Eine Bilanz weist 350.000,00 Euro Eigenkapital und 150.000,00 Euro Fremdkapital aus. Wie hoch ist die Eigenkapitalquote?",
+    "options": [
+      "70,0 %",
+      "233,3 %",
+      "30,0 %",
+      "35,0 %"
+    ],
+    "a": "70,0 %",
+    "exp": "Eigenkapitalquote = Eigenkapital / Gesamtkapital * 100 = 350.000,00 Euro / 500.000,00 Euro * 100 = 70,0 %."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Flüssige Mittel 30.000,00 Euro, kurzfristige Forderungen 50.000,00 Euro, kurzfristige Verbindlichkeiten 64.000,00 Euro. Wie hoch ist die Liquidität 2. Grades?",
+    "options": [
+      "125 %",
+      "47 %",
+      "80 %",
+      "78 %"
+    ],
+    "a": "125 %",
+    "exp": "(30.000,00 Euro + 50.000,00 Euro) / 64.000,00 Euro * 100 = 125 %. Ab etwa 100 % können alle kurzfristigen Schulden aus Geld und Forderungen bezahlt werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Flüssige Mittel 12.000,00 Euro, kurzfristige Forderungen 18.000,00 Euro, kurzfristige Verbindlichkeiten 40.000,00 Euro. Wie hoch ist die Liquidität 2. Grades?",
+    "options": [
+      "75 %",
+      "30 %",
+      "133 %",
+      "45 %"
+    ],
+    "a": "75 %",
+    "exp": "(12.000,00 Euro + 18.000,00 Euro) / 40.000,00 Euro * 100 = 75 %. Ab etwa 100 % können alle kurzfristigen Schulden aus Geld und Forderungen bezahlt werden."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Lager hat am Jahresanfang 60 und am Jahresende 100 Toner. Im Jahr wurden 960 Toner verbraucht. Wie oft wurde der Lagerbestand umgeschlagen?",
+    "options": [
+      "12,0 mal",
+      "16,0 mal",
+      "6,0 mal",
+      "8,3 mal"
+    ],
+    "a": "12,0 mal",
+    "exp": "Durchschnittlicher Bestand: (60 + 100) / 2 = 80. Umschlagshäufigkeit: 960 / 80 = 12,0."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Lagerbestand an Tonern wird 12,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "options": [
+      "30,0 Tage",
+      "43,8 Tage",
+      "60,0 Tage",
+      "360,0 Tage"
+    ],
+    "a": "30,0 Tage",
+    "exp": "Durchschnittliche Lagerdauer = 360 / Umschlagshäufigkeit = 360 / 12,0 = 30,0 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Lager hat am Jahresanfang 140 und am Jahresende 60 Toner. Im Jahr wurden 1.500 Toner verbraucht. Wie oft wurde der Lagerbestand umgeschlagen?",
+    "options": [
+      "15,0 mal",
+      "10,7 mal",
+      "7,5 mal",
+      "6,7 mal"
+    ],
+    "a": "15,0 mal",
+    "exp": "Durchschnittlicher Bestand: (140 + 60) / 2 = 100. Umschlagshäufigkeit: 1.500 / 100 = 15,0."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Der Lagerbestand an Tonern wird 15,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "options": [
+      "24,0 Tage",
+      "54,8 Tage",
+      "48,0 Tage",
+      "450,0 Tage"
+    ],
+    "a": "24,0 Tage",
+    "exp": "Durchschnittliche Lagerdauer = 360 / Umschlagshäufigkeit = 360 / 15,0 = 24,0 Tage."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Geschäftskunde zahlt eine Rechnung über 8.500,00 Euro 45 Tage zu spät. Angenommener Basiszinssatz: 2,0 %. Wie hoch sind die gesetzlichen Verzugszinsen?",
+    "options": [
+      "115,27 Euro",
+      "73,36 Euro",
+      "935,00 Euro",
+      "20,96 Euro"
+    ],
+    "a": "115,27 Euro",
+    "exp": "Verzugszins zwischen Unternehmen: Basiszins + 9 Prozentpunkte = 11,0 %. 8.500,00 Euro * 11,0 % * 45 / 365 = 115,27 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Privatkunde zahlt eine Rechnung über 1.200,00 Euro 60 Tage zu spät. Angenommener Basiszinssatz: 2,0 %. Wie hoch sind die gesetzlichen Verzugszinsen?",
+    "options": [
+      "13,81 Euro",
+      "21,70 Euro",
+      "84,00 Euro",
+      "3,95 Euro"
+    ],
+    "a": "13,81 Euro",
+    "exp": "Verzugszins bei Verbrauchern: Basiszins + 5 Prozentpunkte = 7,0 %. 1.200,00 Euro * 7,0 % * 60 / 365 = 13,81 Euro."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Projektstatus: Plankosten bis heute (PV) 50.000,00 Euro, Fertigstellungswert (EV) 40.000,00 Euro, Istkosten (AC) 45.000,00 Euro. Wie hoch ist der Kostenentwicklungsindex (CPI)?",
+    "options": [
+      "0,89",
+      "1,12",
+      "0,80",
+      "1,25"
+    ],
+    "a": "0,89",
+    "exp": "CPI = EV / AC = 40.000,00 Euro / 45.000,00 Euro = 0,89. Unter 1 ist das Projekt teurer als geplant, über 1 günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Projektstatus: Plankosten bis heute (PV) 80.000,00 Euro, Fertigstellungswert (EV) 88.000,00 Euro, Istkosten (AC) 76.000,00 Euro. Wie hoch ist der Kostenentwicklungsindex (CPI)?",
+    "options": [
+      "1,16",
+      "0,86",
+      "1,10",
+      "0,91"
+    ],
+    "a": "1,16",
+    "exp": "CPI = EV / AC = 88.000,00 Euro / 76.000,00 Euro = 1,16. Unter 1 ist das Projekt teurer als geplant, über 1 günstiger."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Projektstatus: Plankosten bis heute (PV) 60.000,00 Euro, Fertigstellungswert (EV) 45.000,00 Euro, Istkosten (AC) 50.000,00 Euro. Wie hoch ist der Terminentwicklungsindex (SPI)?",
+    "options": [
+      "0,75",
+      "0,90",
+      "1,33",
+      "0,83"
+    ],
+    "a": "0,75",
+    "exp": "SPI = EV / PV = 45.000,00 Euro / 60.000,00 Euro = 0,75. Das Projekt hat erst 75 % der bis heute geplanten Leistung erbracht und liegt hinter dem Plan."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mitarbeiter verdient 3.200,00 Euro brutto im Monat. Der Arbeitgeberanteil zur Sozialversicherung beträgt vereinfacht 21 %. Wie hoch sind die monatlichen Personalkosten?",
+    "options": [
+      "3.872,00 Euro",
+      "3.200,00 Euro",
+      "2.528,00 Euro",
+      "4.544,00 Euro"
+    ],
+    "a": "3.872,00 Euro",
+    "exp": "Der Arbeitgeber zahlt das Bruttogehalt plus seinen Anteil: 3.200,00 Euro + 21 % = 3.872,00 Euro. Der Arbeitnehmeranteil steckt schon im Brutto."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Mitarbeiter verdient 2.600,00 Euro brutto im Monat. Der Arbeitgeberanteil zur Sozialversicherung beträgt vereinfacht 21 %. Wie hoch sind die monatlichen Personalkosten?",
+    "options": [
+      "3.146,00 Euro",
+      "2.600,00 Euro",
+      "2.054,00 Euro",
+      "3.692,00 Euro"
+    ],
+    "a": "3.146,00 Euro",
+    "exp": "Der Arbeitgeber zahlt das Bruttogehalt plus seinen Anteil: 2.600,00 Euro + 21 % = 3.146,00 Euro. Der Arbeitnehmeranteil steckt schon im Brutto."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 5-Tage-Woche?",
+    "options": [
+      "20 Arbeitstage",
+      "24 Arbeitstage",
+      "30 Arbeitstage",
+      "22 Arbeitstage"
+    ],
+    "a": "20 Arbeitstage",
+    "exp": "Umrechnung: 24 Werktage / 6 * 5 = 20 Arbeitstage. So sind es in beiden Fällen 4 Wochen Urlaub."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?",
+    "options": [
+      "12 Arbeitstage",
+      "24 Arbeitstage",
+      "14 Arbeitstage",
+      "10 Arbeitstage"
+    ],
+    "a": "12 Arbeitstage",
+    "exp": "Umrechnung: 24 Werktage / 6 * 3 = 12 Arbeitstage. So sind es in beiden Fällen 4 Wochen Urlaub."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nutzwertanalyse mit den Gewichten Preis 40 %, Leistung 35 %, Service 25 %. Angebot A erhält die Punkte 6/9/7, Angebot B 9/6/8 (je 1 bis 10). Welches Ergebnis stimmt?",
+    "options": [
+      "B gewinnt mit 7,70 zu 7,30 Punkten",
+      "A gewinnt mit 7,70 zu 7,30 Punkten",
+      "B gewinnt mit 23 zu 22 Punkten",
+      "Gleichstand mit je 7,50 Punkten"
+    ],
+    "a": "B gewinnt mit 7,70 zu 7,30 Punkten",
+    "exp": "A: 40 % * 6 + 35 % * 9 + 25 % * 7 = 7,30. B: 40 % * 9 + 35 % * 6 + 25 % * 8 = 7,70. Punkte werden mit dem Gewicht multipliziert und addiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Nutzwertanalyse mit den Gewichten Preis 30 %, Sicherheit 50 %, Bedienung 20 %. Angebot A erhält die Punkte 8/5/9, Angebot B 5/9/6 (je 1 bis 10). Welches Ergebnis stimmt?",
+    "options": [
+      "B gewinnt mit 7,20 zu 6,70 Punkten",
+      "A gewinnt mit 7,20 zu 6,70 Punkten",
+      "A gewinnt mit 22 zu 20 Punkten",
+      "Gleichstand mit je 6,95 Punkten"
+    ],
+    "a": "B gewinnt mit 7,20 zu 6,70 Punkten",
+    "exp": "A: 30 % * 8 + 50 % * 5 + 20 % * 9 = 6,70. B: 30 % * 5 + 50 % * 9 + 20 % * 6 = 7,20. Punkte werden mit dem Gewicht multipliziert und addiert."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt ist auf 120 Personentage geschätzt. 3 Mitarbeiter arbeiten mit je 80 % ihrer Zeit daran. Wie viele Arbeitswochen (5 Tage) dauert es mindestens?",
+    "options": [
+      "10,0 Wochen",
+      "8,0 Wochen",
+      "24,0 Wochen",
+      "50,0 Wochen"
+    ],
+    "a": "10,0 Wochen",
+    "exp": "Verfügbare Kapazität pro Tag: 3 * 80 % = 2,4 Personentage. 120 / 2,4 = 50,0 Arbeitstage = 10,0 Wochen."
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Ein Projekt ist auf 90 Personentage geschätzt. 2 Mitarbeiter arbeiten mit je 75 % ihrer Zeit daran. Wie viele Arbeitswochen (5 Tage) dauert es mindestens?",
+    "options": [
+      "12,0 Wochen",
+      "9,0 Wochen",
+      "18,0 Wochen",
+      "60,0 Wochen"
+    ],
+    "a": "12,0 Wochen",
+    "exp": "Verfügbare Kapazität pro Tag: 2 * 75 % = 1,5 Personentage. 90 / 1,5 = 60,0 Arbeitstage = 12,0 Wochen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine WAN-Strecke hat 100 Mbit/s und eine Round-Trip-Time von 40 ms. Wie groß muss das TCP-Fenster mindestens sein, um die Leitung auszulasten (Bandbreite-Verzögerungs-Produkt)?",
+    "options": [
+      "500 KB",
+      "4.000 KB",
+      "250 KB",
+      "1.000 KB"
+    ],
+    "a": "500 KB",
+    "exp": "100 Mbit/s * 0,040 s = 4,0 Mbit = 500.000 Byte = 500 KB. Ein kleineres Fenster lässt die Leitung zwischen den Bestätigungen leerlaufen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine WAN-Strecke hat 1000 Mbit/s und eine Round-Trip-Time von 20 ms. Wie groß muss das TCP-Fenster mindestens sein, um die Leitung auszulasten (Bandbreite-Verzögerungs-Produkt)?",
+    "options": [
+      "2.500 KB",
+      "20.000 KB",
+      "1.250 KB",
+      "5.000 KB"
+    ],
+    "a": "2.500 KB",
+    "exp": "1000 Mbit/s * 0,020 s = 20,0 Mbit = 2.500.000 Byte = 2.500 KB. Ein kleineres Fenster lässt die Leitung zwischen den Bestätigungen leerlaufen."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Datei mit 20 GB wird über 250 Mbit/s übertragen, 10 % der Bandbreite gehen für Protokoll-Overhead verloren. Wie lange dauert es (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 11,9 Minuten",
+      "ca. 10,7 Minuten",
+      "ca. 1,5 Minuten",
+      "ca. 94,8 Minuten"
+    ],
+    "a": "ca. 11,9 Minuten",
+    "exp": "Nutzbare Rate: 250 Mbit/s - 10 % = 225,0 Mbit/s. 20 GB = 160.000 Mbit. 160.000 / 225,0 = 711 s = 11,9 Minuten."
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Eine Datei mit 4 GB wird über 50 Mbit/s übertragen, 5 % der Bandbreite gehen für Protokoll-Overhead verloren. Wie lange dauert es (1 GB = 10^9 Byte)?",
+    "options": [
+      "ca. 11,2 Minuten",
+      "ca. 10,7 Minuten",
+      "ca. 1,4 Minuten",
+      "ca. 89,8 Minuten"
+    ],
+    "a": "ca. 11,2 Minuten",
+    "exp": "Nutzbare Rate: 50 Mbit/s - 5 % = 47,5 Mbit/s. 4 GB = 32.000 Mbit. 32.000 / 47,5 = 674 s = 11,2 Minuten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In einer Risikomatrix wird die Eintrittswahrscheinlichkeit mit 4 und die Schadenshöhe mit 3 bewertet (je 1 bis 5). Welcher Risikowert ergibt sich?",
+    "options": [
+      "12",
+      "7",
+      "4",
+      "24"
+    ],
+    "a": "12",
+    "exp": "Risikowert = Eintrittswahrscheinlichkeit * Schadenshöhe = 4 * 3 = 12. Hohe Werte werden zuerst behandelt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "In einer Risikomatrix wird die Eintrittswahrscheinlichkeit mit 2 und die Schadenshöhe mit 5 bewertet (je 1 bis 5). Welcher Risikowert ergibt sich?",
+    "options": [
+      "10",
+      "7",
+      "5",
+      "20"
+    ],
+    "a": "10",
+    "exp": "Risikowert = Eintrittswahrscheinlichkeit * Schadenshöhe = 2 * 5 = 10. Hohe Werte werden zuerst behandelt."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Server wird alle 4 Stunden gesichert, die letzte Sicherung lief um 8:00 Uhr. Um 11:00 Uhr fällt er aus. Wie viele Stunden Daten gehen verloren, und wird ein RPO von 4 Stunden eingehalten?",
+    "options": [
+      "3 Stunden, RPO eingehalten",
+      "3 Stunden, RPO verletzt",
+      "4 Stunden, RPO eingehalten",
+      "7 Stunden, RPO verletzt"
+    ],
+    "a": "3 Stunden, RPO eingehalten",
+    "exp": "Verloren ist alles seit der letzten Sicherung: 3 Stunden. Das RPO (4 Stunden) ist der höchstens tolerierbare Datenverlust, es wird eingehalten."
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Ein Server wird alle 24 Stunden gesichert, die letzte Sicherung lief um 22:00 Uhr. Um 15:00 Uhr am nächsten Tag fällt er aus. Wie viele Stunden Daten gehen verloren, und wird ein RPO von 8 Stunden eingehalten?",
+    "options": [
+      "17 Stunden, RPO verletzt",
+      "17 Stunden, RPO eingehalten",
+      "24 Stunden, RPO verletzt",
+      "8 Stunden, RPO eingehalten"
+    ],
+    "a": "17 Stunden, RPO verletzt",
+    "exp": "Verloren ist alles seit der letzten Sicherung: 17 Stunden. Das RPO (8 Stunden) ist der höchstens tolerierbare Datenverlust, es wird verletzt. Die Sicherung muss mindestens alle 8 Stunden laufen."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 1.500 VA Scheinleistung und einen Leistungsfaktor von 0,9. Wie viel Wirkleistung (Watt) kann sie höchstens liefern?",
+    "options": [
+      "1.350 W",
+      "1.500 W",
+      "1.667 W",
+      "150 W"
+    ],
+    "a": "1.350 W",
+    "exp": "Wirkleistung = Scheinleistung * Leistungsfaktor = 1.500 VA * 0,9 = 1.350 W."
+  },
+  {
+    "cat": "systeme",
+    "q": "Eine USV hat 3.000 VA Scheinleistung und einen Leistungsfaktor von 0,8. Wie viel Wirkleistung (Watt) kann sie höchstens liefern?",
+    "options": [
+      "2.400 W",
+      "3.000 W",
+      "3.750 W",
+      "600 W"
+    ],
+    "a": "2.400 W",
+    "exp": "Wirkleistung = Scheinleistung * Leistungsfaktor = 3.000 VA * 0,8 = 2.400 W."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Serverschrank gibt 2.400 W Wärme ab. Wie viel Kühlleistung in BTU/h ist mindestens nötig (1 W = 3,412 BTU/h)?",
+    "options": [
+      "ca. 8.189 BTU/h",
+      "ca. 703 BTU/h",
+      "ca. 8,2 BTU/h",
+      "ca. 2.400 BTU/h"
+    ],
+    "a": "ca. 8.189 BTU/h",
+    "exp": "2.400 W * 3,412 = 8.189 BTU/h. Klimageräte werden oft in BTU/h angegeben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Serverschrank gibt 850 W Wärme ab. Wie viel Kühlleistung in BTU/h ist mindestens nötig (1 W = 3,412 BTU/h)?",
+    "options": [
+      "ca. 2.900 BTU/h",
+      "ca. 249 BTU/h",
+      "ca. 2,9 BTU/h",
+      "ca. 850 BTU/h"
+    ],
+    "a": "ca. 2.900 BTU/h",
+    "exp": "850 W * 3,412 = 2.900 BTU/h. Klimageräte werden oft in BTU/h angegeben."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Rack hat 42 HE. Patchfelder, Switches und USV belegen 6 HE. Wie viele Server mit je 2 HE passen noch hinein?",
+    "options": [
+      "18",
+      "21",
+      "19",
+      "36"
+    ],
+    "a": "18",
+    "exp": "Frei: 42 - 6 = 36 HE. 36 / 2 = 18 Server. In der Praxis plant man zusätzlich Reserve für Luftführung und Kabelmanagement."
+  },
+  {
+    "cat": "systeme",
+    "q": "Ein Rack hat 24 HE. Patchfelder, Switches und USV belegen 5 HE. Wie viele Server mit je 4 HE passen noch hinein?",
+    "options": [
+      "4",
+      "6",
+      "5",
+      "19"
+    ],
+    "a": "4",
+    "exp": "Frei: 24 - 5 = 19 HE. 19 / 4 = 4 Server. In der Praxis plant man zusätzlich Reserve für Luftführung und Kabelmanagement."
   }
 ]

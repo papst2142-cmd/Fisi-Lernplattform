@@ -680,5 +680,185 @@
       "Sensitivitätsanalyse: Gewichtung verändern (z.B. Kosten auf 50 % erhöhen) und neu rechnen. Bleibt C vorn, ist die Entscheidung stabil. Die Gewichtung sollte vor dem Öffnen der Angebote mit der Geschäftsführung festgelegt werden, damit sie nicht nachträglich angepasst wird.",
       "Liefertermin und Leistungsumfang (Installation, Datenmigration), Gewährleistung und Garantie, Wartungslaufzeit mit Reaktionszeiten (z.B. Vor-Ort-Service am nächsten Arbeitstag), Preis für Verlängerung nach 5 Jahren, Umgang mit defekten Platten (Datenträger bleiben beim Kunden), Zahlungsbedingungen und Abnahme."
     ]
+  },
+  {
+    "title": "Kosten-Nutzen-Analyse einer Cloud-Migration für eine Steuerkanzlei",
+    "cat": "wirtschaft",
+    "branche": "Steuerberatungskanzlei (Albers und Kollegen Steuerberater, 22 Mitarbeiter)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Die Kanzlei betreibt einen eigenen Server mit Kanzleisoftware, Dokumentenmanagement und E-Mail. Der Server ist sechs Jahre alt und muss ersetzt werden. Der Softwareanbieter bietet an, die Kanzleisoftware in seinem Rechenzentrum zu betreiben. E-Mail und Office würden als Cloud-Dienst genutzt. Die Partner wollen wissen, ob sich der Umstieg lohnt und was dabei rechtlich zu beachten ist.",
+    "auftrag": "Vergleichen Sie den Weiterbetrieb mit eigenem Server und die Cloud-Variante über 5 Jahre, beziehen Sie die Ausfallkosten ein und geben Sie eine begründete Empfehlung unter Beachtung der berufsrechtlichen Anforderungen.",
+    "rahmenbedingungen": [
+      "Betrachtungszeitraum 5 Jahre, 22 Benutzer, alle Preise netto. Die Arbeitsplatzrechner sind in beiden Varianten gleich und bleiben außen vor",
+      "Eigenbetrieb: Server mit Softwarelizenzen 24.000 Euro, Einrichtung 4.000 Euro, jährlich 3.200 Euro für Wartung, Strom und Sicherungsmedien, Betreuung durch das Systemhaus 6 Stunden pro Monat zu 90 Euro",
+      "Cloud: Kanzleisoftware im Rechenzentrum sowie E-Mail und Office zusammen 42 Euro je Benutzer und Monat, einmalige Migration 6.000 Euro, zweite Internetleitung 80 Euro pro Monat, Betreuung durch das Systemhaus 2 Stunden pro Monat zu 90 Euro",
+      "Erwartete Ausfallzeit pro Jahr: Eigenbetrieb 8 Stunden, Cloud 3 Stunden. Bei einem Ausfall können alle 22 Mitarbeiter nicht arbeiten",
+      "Personalkosten vereinfacht 38 Euro je Mitarbeiter und Stunde",
+      "Das Rechenzentrum steht in Deutschland. Der Anbieter bietet einen Auftragsverarbeitungsvertrag und eine Verschwiegenheitsverpflichtung an"
+    ],
+    "aufgaben": [
+      "Berechnen Sie die Gesamtkosten beider Varianten über 5 Jahre.",
+      "Nach welcher Zeit sind beide Varianten kumuliert gleich teuer? Was bedeutet das für die Entscheidung?",
+      "Beziehen Sie die erwarteten Ausfallkosten ein. Wie verändert sich das Ergebnis?",
+      "Welche rechtlichen Anforderungen gelten für eine Steuerkanzlei, wenn Mandantendaten bei einem Dienstleister liegen?",
+      "Welche Risiken hat die Cloud-Variante, wie begegnen Sie ihnen, und welche Variante empfehlen Sie?"
+    ],
+    "hinweise": [
+      "Eigenbetrieb: einmalig 24.000 + 4.000 = 28.000 Euro, laufend 3.200 + 6 * 12 * 90 = 3.200 + 6.480 = 9.680 Euro pro Jahr. 5 Jahre: 28.000 + 5 * 9.680 = 76.400 Euro. Cloud: einmalig 6.000 Euro, laufend 22 * 42 * 12 = 11.088 Euro plus 80 * 12 = 960 Euro plus 2 * 12 * 90 = 2.160 Euro, zusammen 14.208 Euro pro Jahr. 5 Jahre: 6.000 + 5 * 14.208 = 77.040 Euro. Die Cloud ist über 5 Jahre nur 640 Euro teurer.",
+      "Gleichsetzen: 28.000 + 9.680 * t = 6.000 + 14.208 * t, also 22.000 = 4.528 * t und t = 4,86 Jahre (etwa 4 Jahre und 10 Monate). Bis dahin ist die Cloud günstiger, danach der Eigenbetrieb. Die Cloud bindet am Anfang nur 6.000 statt 28.000 Euro und schont die Liquidität. Nach 5 Jahren müsste der eigene Server erneut ersetzt werden, die Cloud läuft einfach weiter.",
+      "Eine Ausfallstunde kostet 22 * 38 = 836 Euro. Eigenbetrieb: 8 * 836 = 6.688 Euro pro Jahr, über 5 Jahre 33.440 Euro, zusammen 109.840 Euro. Cloud: 3 * 836 = 2.508 Euro pro Jahr, über 5 Jahre 12.540 Euro, zusammen 89.580 Euro. Mit Ausfallkosten ist die Cloud um 20.260 Euro günstiger. Die Ausfallzeiten sind Schätzungen, daher die Annahmen im Bericht offenlegen.",
+      "Steuerberater sind Berufsgeheimnisträger (§ 203 StGB). § 62a StBerG erlaubt die Einbindung von Dienstleistern, wenn sie sorgfältig ausgewählt, in Textform zur Verschwiegenheit verpflichtet werden und nur die nötigen Daten erhalten. Dazu kommt die DSGVO: Auftragsverarbeitungsvertrag nach Art. 28, technische und organisatorische Maßnahmen prüfen, Serverstandort in der EU bzw. in Deutschland. Aufbewahrungspflichten und Zugriff bei Betriebsprüfungen müssen weiter erfüllt werden.",
+      "Risiken: Abhängigkeit vom Internetanschluss (daher zweite Leitung eines anderen Anbieters), Abhängigkeit vom Anbieter (Kündigungsfristen, Datenrückgabe in einem lesbaren Format regeln), Preiserhöhungen, Ausfall des Rechenzentrums (SLA mit Verfügbarkeit und Reaktionszeit). Gegenmaßnahmen: MFA für alle Konten, eigene Sicherung der Cloud-Postfächer, Exit-Strategie im Vertrag. Empfehlung: Cloud-Variante, weil die Kosten fast gleich sind, die Verfügbarkeit höher ist, weniger Kapital gebunden wird und keine Serverbetreuung in der Kanzlei nötig ist."
+    ]
+  },
+  {
+    "title": "Ausschreibung und Angebotsvergleich für neue Arbeitsplatzrechner",
+    "cat": "wirtschaft",
+    "branche": "Versicherungsmakler (Hansen Versicherungsmakler GmbH, 30 Mitarbeiter)",
+    "schwierigkeit": "Leicht",
+    "ausgangssituation": "Die 30 Arbeitsplatzrechner des Maklerbüros sind veraltet und sollen durch kompakte Business-PCs ersetzt werden. Sie haben eine Anfrage an drei Händler geschickt und drei Angebote mit unterschiedlichen Preisen, Rabatten, Lieferkosten und Garantien erhalten. Die Geschäftsführung möchte wissen, welches Angebot tatsächlich am günstigsten ist.",
+    "auftrag": "Erstellen Sie die Anforderungen für die Anfrage, vergleichen Sie die Angebote rechnerisch auf vergleichbarer Grundlage und bereiten Sie die Bestellung vor.",
+    "rahmenbedingungen": [
+      "30 PCs, geplante Nutzungsdauer 5 Jahre, Vor-Ort-Garantie über die gesamte Nutzungsdauer ist Pflicht",
+      "Angebot A: 780 Euro je PC, 8 % Rabatt, 2 % Skonto, Lieferung frei Haus, 3 Jahre Vor-Ort-Garantie. Verlängerung auf 5 Jahre: 25 Euro je PC",
+      "Angebot B: 720 Euro je PC, kein Rabatt, kein Skonto, Versand 150 Euro, 5 Jahre Vor-Ort-Garantie",
+      "Angebot C: 810 Euro je PC, 10 % Rabatt, 3 % Skonto, Versand 90 Euro, 5 Jahre Vor-Ort-Garantie",
+      "Alle Preise netto. Rabatt und Skonto gelten nur für die PCs, nicht für Versand und Garantieverlängerung",
+      "Skonto bei Zahlung innerhalb von 10 Tagen, sonst Zahlungsziel 30 Tage. Ein Kontokorrentkredit kostet vereinfacht 11 % pro Jahr (360 Zinstage)"
+    ],
+    "aufgaben": [
+      "Welche Mindestanforderungen und Angaben gehören in die Anfrage an die Händler?",
+      "Berechnen Sie für alle drei Angebote den Bezugspreis.",
+      "Machen Sie die Angebote vergleichbar und ermitteln Sie das günstigste Angebot.",
+      "Lohnt es sich, bei Angebot C das Skonto zu nutzen, wenn dafür der Kontokorrentkredit in Anspruch genommen wird?",
+      "Welche Schritte folgen nach der Entscheidung bis zur Inbetriebnahme?"
+    ],
+    "hinweise": [
+      "Menge und Liefertermin, technische Mindestanforderungen (z.B. CPU-Klasse, 16 GB RAM, 512 GB SSD, TPM 2.0, zwei Monitoranschlüsse), Betriebssystem, Garantie mit Vor-Ort-Service über 5 Jahre, Lieferung und Entsorgung der Altgeräte, Zahlungsbedingungen und Angebotsfrist. Die Anforderungen sollten herstellerneutral formuliert sein, damit mehrere Anbieter vergleichbare Angebote abgeben können.",
+      "A: 30 * 780 = 23.400 Euro, minus 8 % Rabatt (1.872 Euro) = 21.528 Euro, minus 2 % Skonto (430,56 Euro) = 21.097,44 Euro, Lieferung frei. B: 30 * 720 = 21.600 Euro plus 150 Euro Versand = 21.750 Euro. C: 30 * 810 = 24.300 Euro, minus 10 % Rabatt (2.430 Euro) = 21.870 Euro, minus 3 % Skonto (656,10 Euro) = 21.213,90 Euro, plus 90 Euro Versand = 21.303,90 Euro.",
+      "A erfüllt die Pflicht von 5 Jahren Vor-Ort-Garantie erst mit der Verlängerung: 30 * 25 = 750 Euro, also 21.097,44 + 750 = 21.847,44 Euro. Rangfolge: C (21.303,90 Euro), B (21.750 Euro), A (21.847,44 Euro). Das scheinbar günstigste Angebot A ist bei gleicher Leistung das teuerste. C ist 446,10 Euro günstiger als B und 543,54 Euro günstiger als A.",
+      "Der Zahlbetrag bei Skontoabzug beträgt 21.303,90 Euro. Er muss 20 Tage früher gezahlt werden (Tag 10 statt Tag 30). Zinsen: 21.303,90 * 0,11 * 20 / 360 = 130,19 Euro. Das Skonto bringt 656,10 Euro. Der Vorteil beträgt 525,91 Euro, also Skonto nutzen.",
+      "Bestellung schriftlich mit Bezug auf das Angebot, Auftragsbestätigung mit der Bestellung vergleichen, Wareneingang prüfen (Menge, Beschädigung, Seriennummern), Rechnung prüfen und fristgerecht mit Skonto zahlen, Geräte inventarisieren, Image bzw. Softwareverteilung vorbereiten, Rollout planen. Altgeräte datenschutzgerecht löschen oder die Datenträger zertifiziert vernichten lassen."
+    ]
+  },
+  {
+    "title": "Make-or-Buy-Entscheidung für die IT-Betreuung eines Großhändlers",
+    "cat": "wirtschaft",
+    "branche": "Sanitärgroßhandel (Kessler Haustechnik GmbH, 65 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Der einzige Systemadministrator des Unternehmens geht in einem halben Jahr in den Ruhestand. Die Geschäftsführung überlegt, ob sie die Stelle neu besetzt oder den IT-Betrieb an ein Systemhaus vergibt. Das Systemhaus hat ein Angebot für einen Managed-Service-Vertrag mit einem Service Level Agreement (SLA) vorgelegt. Das Unternehmen plant zu wachsen.",
+    "auftrag": "Vergleichen Sie die Kosten beider Varianten, berücksichtigen Sie das geplante Wachstum, prüfen Sie das angebotene SLA und geben Sie eine begründete Empfehlung ab.",
+    "rahmenbedingungen": [
+      "Eigene Stelle: Bruttojahresgehalt 54.000 Euro, Arbeitgeberanteil zur Sozialversicherung vereinfacht angenommen 21 %",
+      "Zusätzlich pro Jahr bei eigener Stelle: Weiterbildung 2.500 Euro, Arbeitsmittel 1.500 Euro, Urlaubs- und Krankheitsvertretung durch ein Systemhaus 40 Stunden zu 95 Euro. Die eigene Fachkraft übernimmt Betrieb und Projekte",
+      "Managed Service: 65 Euro je Arbeitsplatz und Monat, 180 Euro je Server und Monat. Derzeit 60 Arbeitsplätze und 5 Server",
+      "Bei Managed Service zusätzlich pro Jahr: Projekte außerhalb der Pauschale geschätzt 120 Stunden zu 95 Euro, interne Koordination 3 Stunden pro Woche an 46 Wochen zu 40 Euro",
+      "Geplant sind 75 Arbeitsplätze in zwei Jahren. Die Serverzahl bleibt gleich, eine Vollzeitstelle reicht weiterhin aus",
+      "Angebotenes SLA: Verfügbarkeit 99,5 % innerhalb der Servicezeit Montag bis Freitag 7 bis 18 Uhr, gerechnet mit 52 Wochen"
+    ],
+    "aufgaben": [
+      "Berechnen Sie die jährlichen Kosten der eigenen Stelle.",
+      "Berechnen Sie die jährlichen Kosten des Managed Service und vergleichen Sie beide Varianten.",
+      "Ab wie vielen Arbeitsplätzen ist die eigene Stelle günstiger? Was bedeutet das geplante Wachstum?",
+      "Wie viel Ausfallzeit pro Jahr erlaubt das SLA? Welche weiteren Punkte muss ein SLA regeln?",
+      "Welche nicht finanziellen Kriterien beachten Sie, und welche Variante empfehlen Sie?"
+    ],
+    "hinweise": [
+      "Personalkosten: 54.000 * 1,21 = 65.340 Euro. Vertretung: 40 * 95 = 3.800 Euro. Summe: 65.340 + 2.500 + 1.500 + 3.800 = 73.140 Euro pro Jahr.",
+      "Arbeitsplätze: 60 * 65 * 12 = 46.800 Euro. Server: 5 * 180 * 12 = 10.800 Euro. Projekte: 120 * 95 = 11.400 Euro. Koordination: 3 * 46 * 40 = 5.520 Euro. Summe: 74.520 Euro pro Jahr. Der Managed Service ist heute 1.380 Euro pro Jahr teurer, die Kosten liegen also fast gleichauf.",
+      "Je Arbeitsplatz kostet der Managed Service 65 * 12 = 780 Euro pro Jahr, die übrigen Kosten betragen 10.800 + 11.400 + 5.520 = 27.720 Euro. Gleichstand: 780 * n + 27.720 = 73.140, also n = 58,2. Ab 59 Arbeitsplätzen ist die eigene Stelle günstiger. Bei 75 Arbeitsplätzen kostet der Managed Service 780 * 75 + 27.720 = 86.220 Euro, die eigene Stelle ist dann 13.080 Euro pro Jahr günstiger.",
+      "Servicezeit: 11 Stunden * 5 Tage * 52 Wochen = 2.860 Stunden. Zulässiger Ausfall: 2.860 * 0,005 = 14,3 Stunden pro Jahr. Außerhalb der Servicezeit gilt keine Zusage. Ein SLA regelt außerdem Leistungsumfang, Reaktions- und Lösungszeiten je Priorität, Erreichbarkeit und Eskalationswege, regelmäßige Berichte, Folgen bei Verstößen (z.B. Gutschriften), Laufzeit, Kündigung und die Rückgabe von Daten und Dokumentation am Vertragsende.",
+      "Für die eigene Stelle: Wissen bleibt im Haus, kurze Wege, Kenntnis der Abläufe im Lager. Dagegen: Abhängigkeit von einer Person, schwierige Suche nach Fachkräften, Vertretung nur eingeschränkt. Für den Managed Service: Team mit breitem Wissen, Vertretung gesichert, planbare Kosten. Dagegen: Abhängigkeit vom Dienstleister, weniger Nähe zum Betrieb. Empfehlung: Wegen des geplanten Wachstums die Stelle neu besetzen und für Vertretung und Spezialthemen einen kleineren Rahmenvertrag mit dem Systemhaus schließen."
+    ]
+  },
+  {
+    "title": "Ausfallsichere Internetanbindung mit zwei Providern",
+    "cat": "netzwerk",
+    "branche": "Onlinehändler für Fahrradteile (Speichenwerk GmbH, 55 Mitarbeiter)",
+    "schwierigkeit": "Mittel",
+    "ausgangssituation": "Warenwirtschaft, Telefonie und E-Mail des Unternehmens laufen als Cloud-Dienste. Der einzige Internetanschluss ist ein Glasfaseranschluss. Bei Bauarbeiten wurde das Kabel beschädigt, und der Betrieb stand fast zwei Tage still. Die Geschäftsführung wünscht eine zweite Leitung eines anderen Anbieters, auf die die Firewall bei einer Störung automatisch umschaltet.",
+    "auftrag": "Wählen Sie eine passende zweite Leitung aus, begründen Sie die Investition und planen Sie die automatische Umschaltung auf der vorhandenen Firewall einschließlich der Tests.",
+    "rahmenbedingungen": [
+      "Leitung 1: Glasfaser 500/500 Mbit/s, vertraglich zugesicherte Verfügbarkeit 99,5 % pro Jahr (8.760 Stunden)",
+      "Angebote für Leitung 2: Kabel 1000/50 Mbit/s für 39 Euro pro Monat oder 5G-Geschäftstarif 300/100 Mbit/s für 69 Euro pro Monat, beide mit 98,5 % Verfügbarkeit",
+      "Der Notbetrieb muss in beide Richtungen tragen: 30 Telefongespräche zu je 100 kbit/s, 55 Nutzer der Warenwirtschaft zu je 0,5 Mbit/s und 5 Videokonferenzen zu je 2,5 Mbit/s, dazu 25 % Reserve",
+      "Eine Stunde ohne Internet kostet vereinfacht 800 Euro",
+      "Die vorhandene Firewall hat freie WAN-Anschlüsse und unterstützt Gateway-Gruppen bzw. SD-WAN-Regeln",
+      "Mitarbeiter im Homeoffice verbinden sich per VPN mit der Firewall"
+    ],
+    "aufgaben": [
+      "Berechnen Sie die maximale Ausfallzeit pro Jahr mit einer Leitung und die Verfügbarkeit mit zwei Leitungen. Unter welcher Voraussetzung gilt die Rechnung?",
+      "Welche Bandbreite braucht die zweite Leitung im Notbetrieb, welches Angebot wählen Sie, und ab welcher vermiedenen Ausfallzeit lohnt es sich?",
+      "Wie richten Sie Überwachung, Umschaltung und Rückschaltung auf der Firewall ein?",
+      "Was passiert beim Umschalten mit laufenden Verbindungen, Telefonie und VPN, und wie gehen Sie damit um?",
+      "Welche Schwachstellen bleiben trotz zweiter Leitung, und wie testen Sie die Lösung?"
+    ],
+    "hinweise": [
+      "Eine Leitung: 8.760 * 0,005 = 43,8 Stunden Ausfall pro Jahr sind zulässig. Zwei Leitungen fallen nur gleichzeitig aus mit 0,005 * 0,015 = 0,000075. Verfügbarkeit: 1 - 0,000075 = 99,9925 %, also 8.760 * 0,000075 = 0,657 Stunden (etwa 39 Minuten) pro Jahr. Die Rechnung gilt nur, wenn die Leitungen unabhängig ausfallen: anderer Anbieter, anderes Medium, anderer Leitungsweg ins Gebäude.",
+      "Bedarf: 30 * 0,1 = 3 Mbit/s plus 55 * 0,5 = 27,5 Mbit/s plus 5 * 2,5 = 12,5 Mbit/s = 43 Mbit/s, mit 25 % Reserve 53,75 Mbit/s in jede Richtung. Der Kabelanschluss hat nur 50 Mbit/s Upload und reicht nicht. Gewählt wird 5G mit 100 Mbit/s Upload. Kosten: 69 * 12 = 828 Euro pro Jahr. Bei 800 Euro je Stunde lohnt sich die Leitung schon ab 828 / 800 = 1,04 Stunden vermiedenem Ausfall pro Jahr (etwa 1 Stunde und 2 Minuten).",
+      "Beide Leitungen an eigene WAN-Schnittstellen, Gateway-Gruppe mit Leitung 1 als bevorzugter Verbindung. Überwachung per Ping auf mindestens zwei externe Ziele, nicht nur auf das Gateway des Providers. Umschalten bei Paketverlust oder hoher Latenz über einen festgelegten Zeitraum. Automatisches Rückschalten erst, wenn Leitung 1 einige Minuten stabil läuft, damit es kein ständiges Hin und Her gibt. Große Downloads wie Updates im Notbetrieb drosseln oder sperren.",
+      "Die öffentliche Absenderadresse ändert sich, bestehende Verbindungen brechen ab und werden neu aufgebaut. Telefone müssen sich neu am SIP-Anbieter registrieren. Kurze Registrierungsintervalle und eine Anmeldung ohne feste IP-Adresse beim Anbieter einrichten. Für VPN beide Adressen im Client eintragen oder einen DNS-Namen mit kurzer TTL nutzen. Cloud-Dienste, die den Zugriff auf feste IP-Adressen beschränken, müssen beide Adressen kennen.",
+      "Die Firewall selbst bleibt ein Single Point of Failure, daher ein Cluster aus zwei Firewalls oder ein Ersatzgerät mit gesicherter Konfiguration. Auch Stromversorgung (USV für Firewall, Modems und Switch) und der Core-Switch prüfen. Tests: Kabel von Leitung 1 ziehen, Umschaltzeit messen, Telefonat und Videokonferenz während der Umschaltung führen, VPN-Anmeldung prüfen, Rückschaltung beobachten, Alarmierung bei Leitungsausfall prüfen. Test regelmäßig wiederholen und dokumentieren."
+    ]
+  },
+  {
+    "title": "Einstieg in ein ISMS nach BSI IT-Grundschutz mit der Basis-Absicherung",
+    "cat": "sicherheit",
+    "branche": "Wohnungsbaugenossenschaft (WBG Rheinblick eG, 110 Mitarbeiter, 4.800 Wohnungen)",
+    "schwierigkeit": "Anspruchsvoll",
+    "ausgangssituation": "Die Genossenschaft verwaltet Mieterdaten, Mietverträge und Zahlungen. Es gibt 95 Clients, 12 virtuelle Server und ein extern betriebenes Mieterportal. Sicherheitsmaßnahmen wurden bisher einzeln eingeführt, es gibt weder eine Leitlinie noch einen Verantwortlichen für Informationssicherheit. Der Cyberversicherer verlangt bei der Vertragsverlängerung ein nachweisbares Sicherheitsmanagement.",
+    "auftrag": "Planen Sie den Einstieg in ein Informationssicherheitsmanagementsystem (ISMS) nach BSI-Standard 200-2 mit der Basis-Absicherung und bereiten Sie den späteren Ausbau vor.",
+    "rahmenbedingungen": [
+      "Zeitrahmen 6 Monate, ein externer Berater steht für höchstens 10 Tage zur Verfügung",
+      "Die IT besteht aus zwei Administratoren. Ein Informationssicherheitsbeauftragter (ISB) soll intern benannt werden",
+      "Geltungsbereich zunächst: Hauptverwaltung mit Mietenbuchhaltung und der Schnittstelle zum Mieterportal",
+      "Vereinfachte Risikobewertung zur Priorisierung: Häufigkeit 1 bis 4 mal Auswirkung 1 bis 4. Ergebnis 1 bis 3 gering, 4 bis 6 mittel, ab 8 hoch",
+      "Gefährdungen aus dem Workshop (Häufigkeit/Auswirkung): Ransomware per E-Mail 3/4, Ausfall des Virtualisierungshosts 2/3, Brand im Serverraum 1/4, Fehlversand von Mieterdaten per E-Mail 3/2, Verlust eines unverschlüsselten Notebooks 3/3",
+      "Bei gleicher Risikozahl wird die Gefährdung mit der höheren Auswirkung zuerst behandelt"
+    ],
+    "aufgaben": [
+      "Welche Schritte umfasst die Basis-Absicherung, und warum ist sie hier ein sinnvoller Einstieg?",
+      "Welche Rollen legen Sie fest, und was steht in der Sicherheitsleitlinie?",
+      "Wie bilden Sie den Informationsverbund ab, und wie führen Sie den IT-Grundschutz-Check durch?",
+      "Bewerten Sie die fünf Gefährdungen und legen Sie die Reihenfolge der Behandlung fest.",
+      "Wie sorgen Sie dafür, dass das ISMS dauerhaft gelebt wird, und wie geht es nach der Basis-Absicherung weiter?"
+    ],
+    "hinweise": [
+      "Initiierung des Sicherheitsprozesses durch die Leitung, Organisation und Leitlinie, Festlegung des Geltungsbereichs, Auswahl und Priorisierung der Bausteine (Modellierung), IT-Grundschutz-Check nur für die Basis-Anforderungen, Umsetzung der fehlenden Anforderungen, danach Entscheidung über die Folgevorgehensweise. Die Basis-Absicherung schließt schnell die größten Lücken und ist mit zwei Administratoren und begrenzter Beratung machbar. Eine Schutzbedarfsfeststellung ist dafür noch nicht nötig.",
+      "Der Vorstand trägt die Gesamtverantwortung und beschließt die Leitlinie. Der ISB berichtet direkt an den Vorstand und sollte nicht zugleich Administrator sein, weil er sonst seine eigene Arbeit kontrolliert. Der Datenschutzbeauftragte bleibt eine eigene Rolle, beide arbeiten eng zusammen. Die Administratoren setzen Maßnahmen um. Leitlinie: Stellenwert der Informationssicherheit, Sicherheitsziele, Geltungsbereich, Rollen und Verantwortung, Verpflichtung der Beschäftigten, Überprüfung und Fortschreibung.",
+      "Geschäftsprozesse, Anwendungen, IT-Systeme, Netze und Räume erfassen und gleichartige Objekte gruppieren (z.B. alle Windows-Clients als eine Gruppe). Für jedes Objekt passende Bausteine aus dem IT-Grundschutz-Kompendium zuordnen. Das Mieterportal wird über Bausteine zur Auslagerung bzw. Cloud-Nutzung abgebildet. Zuerst die Bausteine mit Umsetzungsreihenfolge R1 bearbeiten (z.B. ISMS.1, ORP.4, OPS.1.1.3). Im Check je Basis-Anforderung festhalten: ja, teilweise, nein oder entbehrlich mit Begründung, dazu Verantwortlichen und Termin.",
+      "Ransomware 3 * 4 = 12 (hoch), Notebookverlust 3 * 3 = 9 (hoch), Hostausfall 2 * 3 = 6 (mittel), Fehlversand 3 * 2 = 6 (mittel), Brand 1 * 4 = 4 (mittel). Reihenfolge: Ransomware, Notebookverlust, Hostausfall (höhere Auswirkung als Fehlversand), Fehlversand, Brand. Maßnahmen z.B. Offline- bzw. unveränderbare Sicherung und Schulungen, Festplattenverschlüsselung, zweiter Host oder Wiederanlaufplan, Verschlüsselung und Freigabeprüfung beim Mailversand. Beim Brand trotz mittlerer Einstufung günstige Maßnahmen umsetzen (Rauchmelder, Sicherung außer Haus), weil die Auswirkung maximal ist.",
+      "PDCA-Zyklus: Maßnahmen planen, umsetzen, prüfen, verbessern. Jährliche Überprüfung durch interne Audits, Bericht des ISB an den Vorstand (Management-Review), Kennzahlen wie Umsetzungsgrad der Anforderungen, Patchstand und Schulungsquote, regelmäßige Sensibilisierung, geregelter Umgang mit Sicherheitsvorfällen. Danach den Geltungsbereich erweitern und zur Standard-Absicherung mit Schutzbedarfsfeststellung übergehen. Diese ist Voraussetzung für eine spätere ISO-27001-Zertifizierung auf Basis von IT-Grundschutz."
+    ]
+  },
+  {
+    "title": "Remotedesktopdienste-Farm für Sachbearbeitung und Homeoffice",
+    "cat": "systeme",
+    "branche": "Inkassounternehmen (Falk Forderungsmanagement GmbH, 140 Sachbearbeiter)",
+    "schwierigkeit": "Schwer",
+    "ausgangssituation": "Die Sachbearbeiter arbeiten mit einer Fachanwendung, die direkt auf eine SQL-Datenbank im Rechenzentrum zugreift. Im Homeoffice ist die Anwendung über VPN sehr langsam, und Daten landen auf privaten Geräten. Die Anwendung soll künftig zentral auf Terminalservern laufen, sodass nur noch Bild, Tastatur und Maus übertragen werden. Der Virtualisierungscluster hat ausreichend Reserven.",
+    "auftrag": "Planen Sie eine Farm mit Remotedesktopdiensten (RDS), dimensionieren Sie Session Hosts, Profilspeicher und Internetbandbreite und legen Sie Lizenzierung und Einführung fest.",
+    "rahmenbedingungen": [
+      "140 Sachbearbeiter, höchstens 120 gleichzeitig angemeldet, davon bis zu 80 im Homeoffice",
+      "Session Host als VM mit 16 vCPU und 96 GB RAM. Das Betriebssystem benötigt 8 GB, jeder Benutzer 1,5 GB RAM. Höchstens 4 Benutzer je vCPU",
+      "Fällt ein Session Host aus, müssen alle 120 Benutzer weiterarbeiten können",
+      "Benutzerprofile als Profilcontainer: 5 GB je Benutzer, dazu 30 % Reserve",
+      "Durchschnittlich 150 kbit/s je Remotedesktopsitzung, 50 % Reserve",
+      "Die Fachanwendung ist vom Hersteller für Remotedesktopdienste freigegeben. Zugriff von außen nur mit Mehrfaktor-Authentifizierung"
+    ],
+    "aufgaben": [
+      "Welche RDS-Rollen benötigen Sie, und wie verteilen Sie diese auf Server?",
+      "Wie viele Benutzer passen auf einen Session Host, und wie viele Session Hosts planen Sie?",
+      "Wie verwalten Sie die Benutzerprofile, und wie viel Speicher benötigen Sie dafür?",
+      "Wie binden Sie das Homeoffice sicher an, und welche Upload-Bandbreite braucht der Internetanschluss dafür?",
+      "Welche Lizenzen sind nötig, und wie gehen Sie bei Einführung und Wartung vor?"
+    ],
+    "hinweise": [
+      "Session Hosts (führen die Sitzungen aus), Verbindungsbroker (verteilt die Benutzer und verbindet getrennte Sitzungen neu), Web Access (Webseite mit den freigegebenen Anwendungen), Gateway (leitet RDP über HTTPS aus dem Internet weiter) und Lizenzserver. Broker, Web Access und Gateway können gemeinsam auf zwei VMs laufen, für Ausfallsicherheit mit hochverfügbarem Broker und Lastverteilung. Das Gateway steht in der DMZ oder hinter einem Reverse Proxy.",
+      "RAM: (96 - 8) / 1,5 = 58,7, also 58 Benutzer. CPU: 16 * 4 = 64 Benutzer. Der Arbeitsspeicher begrenzt auf 58 Benutzer je Host. 120 / 58 = 2,07, also 3 Hosts im Normalbetrieb. Fällt einer aus, tragen zwei Hosts nur 2 * 58 = 116 Benutzer, es fehlen 4 Plätze. Daher 4 Session Hosts, verteilt auf verschiedene Virtualisierungshosts.",
+      "Profilcontainer (z.B. FSLogix) als virtuelle Festplatte je Benutzer auf einer Dateifreigabe. Der Container wird bei der Anmeldung eingebunden, dadurch ist die Anmeldung auf jedem Session Host gleich schnell und das Profil überall gleich. Speicher für alle 140 Benutzer, nicht nur für die gleichzeitigen: 140 * 5 = 700 GB, mit 30 % Reserve 910 GB. Die Freigabe muss ausfallsicher sein und gesichert werden.",
+      "Zugang nur über das RD-Gateway auf Port 443, kein offener RDP-Port 3389 im Internet. Mehrfaktor-Authentifizierung am Gateway, Zugriff nur für eine AD-Gruppe. Zwischenablage und Laufwerksumleitung per Gruppenrichtlinie sperren, damit keine Daten auf private Geräte gelangen. Bandbreite: 80 * 150 kbit/s = 12 Mbit/s, mit 50 % Reserve 18 Mbit/s Upload am Firmenstandort.",
+      "Je Benutzer eine RDS-Benutzer-CAL (140 Stück) auf dem Lizenzserver, dazu Windows-Server-CALs und die Lizenzen der Session-Host-VMs. Office auf Terminalservern braucht eine dafür zugelassene Lizenz (Volumenlizenz oder Microsoft-365-Tarif mit Shared Computer Activation). Einführung: Pilot mit einer Abteilung, Lasttest mit vielen gleichzeitigen Anmeldungen am Morgen, dann schrittweise Umstellung. Für Updates einen Host für neue Anmeldungen sperren (Drain Mode), leer laufen lassen, patchen und wieder freigeben."
+    ]
   }
 ]

@@ -6,19 +6,25 @@ Update-Fenster des Programms.
 
 ## 0.25
 
-- **Viel mehr Lernstoff:** 1.855 statt 368 Aufgaben – 644 Karteikarten,
-  982 Quizfragen, 93 AP1-Szenarien, 113 AP2-Szenarien und 23 Testprojekte,
-  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 172 neue
+- **Viel mehr Lernstoff:** 2.288 statt 368 Aufgaben – 795 Karteikarten,
+  1.190 Quizfragen, 124 AP1-Szenarien, 150 AP2-Szenarien und 29 Testprojekte,
+  verteilt auf alle vier Fachbereiche und alle Themenblöcke. Darunter 230 neue
   Rechenaufgaben (Zahlensysteme, Zweierkomplement, Subnetting, VLSM,
   IPv6-Präfixe, RAID 5/6/50/60, chmod und umask, VM-Dimensionierung,
   SSD-Lebensdauer, Verfügbarkeit, Übertragungsdauer, Passwortstärke,
-  Umsatzsteuer, Kalkulation, Abschreibung, TCO, Lizenzierung) mit Rechenweg.
+  Umsatzsteuer, Bezugs- und Handelskalkulation, Zuschlagskalkulation,
+  Skonto-Zinssatz, Deckungsbeitrag, Kennzahlen, Earned Value, Abschreibung,
+  TCO, Lizenzierung) mit Rechenweg.
 - **Vertiefung Netzwerk und Sicherheit:** u.a. IPv6, OSPF und BGP, WLAN-Planung,
   DNS und DHCP im Detail, NAT und QoS, Kryptografie und Zertifikate,
   DSGVO-Praxisfälle, Angriffe und Abwehr im Netz und im Web.
 - **Vertiefung Systeme:** u.a. Linux- und Windows-Administration,
   Active Directory, Virtualisierung und Container, Cloud, Storage und Backup,
   dazu HTTP/REST, Loadbalancer, Cloud-Sicherheit und IT-Service-Management.
+- **Vertiefung Wirtschaft:** u.a. Vertragsrecht und Kaufvertragsstörungen,
+  Arbeits- und Sozialrecht, Ausbildungsrecht, Rechtsformen, Kosten- und
+  Leistungsrechnung, Investition und Finanzierung, Marketing und
+  Kundenberatung, Projektmanagement, ISMS, NIS2 und Datenschutzpraxis.
 - **Szenarien und Testprojekte mit Suche, Filter und Seiten:** Die Listen
   lassen sich nach Titel oder Nummer durchsuchen und nach Thema,
   Fachbereich, Schwierigkeit und Status (offen/bearbeitet) filtern.

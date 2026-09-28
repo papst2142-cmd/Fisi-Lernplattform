@@ -2227,5 +2227,792 @@
       "",
       "3. Ursachen klären (z.B. unterschätzter Aufwand, Nachforderungen, Lieferverzug). Mögliche Maßnahmen: Umfang priorisieren und Nebensächliches verschieben, zusätzliche oder erfahrenere Ressourcen einsetzen, Änderungen nur noch über ein formales Änderungsverfahren zulassen, zusätzliches Budget beantragen. Den Auftraggeber bzw. Lenkungsausschuss frühzeitig mit einem Statusbericht (Ampel, Kennzahlen, Maßnahmen, Entscheidungsbedarf) informieren."
     ]
+  },
+  {
+    "title": "Anforderungen einer Physiotherapiepraxis aufnehmen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Physiotherapiepraxis mit 14 Therapeuten eröffnet einen zweiten Standort. Im Erstgespräch notieren Sie folgende Aussagen der Inhaberin:",
+      "  a) \"Die Therapeuten sollen an beiden Standorten auf alle Patientenakten zugreifen.\"",
+      "  b) \"Das System darf während der Öffnungszeiten höchstens eine Stunde am Stück ausfallen.\"",
+      "  c) \"Schön wäre, wenn Patienten Termine online buchen könnten.\"",
+      "  d) \"Die Anmeldung soll schnell gehen, die Therapeuten haben zwischen zwei Terminen nur fünf Minuten.\"",
+      "Pro Monat entstehen etwa 900 neue Dokumente (Befunde, Verordnungen, Berichte) mit durchschnittlich 2,5 MB. Die Behandlungsdokumentation muss 10 Jahre aufbewahrt werden. Rechnen Sie mit 1 GB = 1.000 MB.",
+      "",
+      "1. Ordnen Sie die Aussagen a) bis d) als funktionale oder nicht funktionale Anforderung und als Muss- oder Kann-Anforderung ein.",
+      "2. Berechnen Sie den Speicherbedarf für die Dokumente über 10 Jahre, zuzüglich 30 % Reserve.",
+      "3. Wie sichern Sie die Ergebnisse des Gesprächs ab, bevor Sie ein Angebot erstellen?"
+    ],
+    "solution": [
+      "1. a) funktional (was das System leisten soll), Muss. b) nicht funktional (Verfügbarkeit), Muss. c) funktional, Kann (\"schön wäre\" zeigt einen Wunsch). d) nicht funktional (Bedienbarkeit und Antwortzeit), Muss. Die Aussage d) sollte messbar gemacht werden, z.B. \"Anmeldung am Arbeitsplatz in unter 10 Sekunden\".",
+      "",
+      "2. Dokumente pro Jahr: 900 * 12 = 10.800. In 10 Jahren: 10.800 * 10 = 108.000 Dokumente. Speicher: 108.000 * 2,5 MB = 270.000 MB = 270 GB. Mit 30 % Reserve: 270 * 1,3 = 351 GB. Dazu kommen Datenbank, Backups und Versionen, die gesondert geplant werden.",
+      "",
+      "3. Ein Gesprächsprotokoll mit allen Anforderungen, Zahlen und offenen Punkten schreiben und von der Inhaberin bestätigen lassen. Unklare Aussagen nachfragen und messbar formulieren. Daraus ein Lastenheft ableiten bzw. gemeinsam abstimmen. Rahmenbedingungen wie Budget, Termin, Datenschutz (Gesundheitsdaten) und vorhandene Praxissoftware festhalten. Erst auf dieser Grundlage wird das Angebot erstellt."
+    ]
+  },
+  {
+    "title": "Listenpreis für ein Netzwerkpaket kalkulieren",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Systemhaus kalkuliert ein Netzwerkpaket (Switches, Access Points, Montage) mit der Zuschlagskalkulation:",
+      "  Materialeinzelkosten 8.000 Euro, Materialgemeinkosten 10 %",
+      "  Montagelöhne 36 Stunden zu 50 Euro, Fertigungsgemeinkosten 120 %",
+      "  Verwaltungs- und Vertriebsgemeinkosten 15 %, Gewinnzuschlag 12 %",
+      "  Kundenskonto 2 %, Kundenrabatt 10 %",
+      "",
+      "1. Berechnen Sie Materialkosten, Fertigungskosten, Herstellkosten und Selbstkosten.",
+      "2. Berechnen Sie Barverkaufspreis, Zielverkaufspreis und Listenverkaufspreis (netto).",
+      "3. Der Kunde verlangt 15 % statt 10 % Rabatt auf den Listenpreis. Wie hoch ist der Gewinn dann in Euro und in Prozent der Selbstkosten?"
+    ],
+    "solution": [
+      "1. Materialkosten: 8.000 + 10 % (800) = 8.800 Euro. Fertigungslöhne: 36 * 50 = 1.800 Euro, Fertigungsgemeinkosten 120 % = 2.160 Euro, Fertigungskosten 3.960 Euro. Herstellkosten: 8.800 + 3.960 = 12.760 Euro. Verwaltungs- und Vertriebsgemeinkosten 15 % = 1.914 Euro, Selbstkosten 14.674 Euro.",
+      "",
+      "2. Gewinn 12 %: 1.760,88 Euro, Barverkaufspreis 16.434,88 Euro. Skonto wird vom Zielverkaufspreis abgezogen, also rechnet man im Hundert: 16.434,88 / 0,98 = 16.770,29 Euro Zielverkaufspreis. Rabatt ebenso: 16.770,29 / 0,90 = 18.633,65 Euro Listenverkaufspreis netto.",
+      "",
+      "3. Zielverkaufspreis: 18.633,65 * 0,85 = 15.838,60 Euro. Barverkaufspreis nach Skonto: 15.838,60 * 0,98 = 15.521,83 Euro. Gewinn: 15.521,83 - 14.674 = 847,83 Euro, das sind 847,83 / 14.674 = 5,78 % der Selbstkosten statt 12 %. Der zusätzliche Rabatt senkt den Gewinn also um mehr als die Hälfte. Alternative: statt Rabatt Leistungen anbieten (z.B. verlängerte Gewährleistung) oder den Umfang anpassen."
+    ]
+  },
+  {
+    "title": "Warenwirtschaft als SaaS oder im eigenen Serverraum",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Großhändler mit 40 Benutzern braucht eine neue Warenwirtschaft. Betrachtet werden 5 Jahre:",
+      "  Eigener Betrieb: Server 16.000 Euro und Lizenzen 24.000 Euro sofort, Softwarepflege 20 % der Lizenzsumme pro Jahr, Betrieb (Strom, Betreuung) 3.000 Euro pro Jahr",
+      "  SaaS: 30 Euro je Benutzer und Monat im ersten Jahr, vertraglich jährliche Preiserhöhung um 4 %, einmalige Einrichtung 5.000 Euro",
+      "",
+      "1. Berechnen Sie die Gesamtkosten beider Varianten für 5 Jahre.",
+      "2. Stellen Sie die kumulierten Kosten Jahr für Jahr gegenüber. Ab welchem Jahr ist SaaS insgesamt teurer?",
+      "3. Welche Punkte muss der Kunde vor der Entscheidung zusätzlich berücksichtigen?"
+    ],
+    "solution": [
+      "1. Eigener Betrieb: 16.000 + 24.000 = 40.000 Euro sofort. Pro Jahr 24.000 * 0,2 = 4.800 Euro Pflege plus 3.000 Euro Betrieb = 7.800 Euro. Summe: 40.000 + 5 * 7.800 = 79.000 Euro.",
+      "SaaS: Jahr 1: 40 * 30 * 12 = 14.400 Euro, Jahr 2: 14.976 Euro, Jahr 3: 15.575,04 Euro, Jahr 4: 16.198,04 Euro, Jahr 5: 16.845,96 Euro. Summe Gebühren 77.995,04 Euro, mit Einrichtung 82.995,04 Euro.",
+      "",
+      "2. Kumuliert (eigen / SaaS): Jahr 1: 47.800 / 19.400, Jahr 2: 55.600 / 34.376, Jahr 3: 63.400 / 49.951,04, Jahr 4: 71.200 / 66.149,08, Jahr 5: 79.000 / 82.995,04 Euro. SaaS ist bis einschließlich Jahr 4 günstiger und wird erst im fünften Jahr insgesamt teurer, am Ende um 3.995,04 Euro.",
+      "",
+      "3. Nach 5 Jahren ist der Server abgeschrieben und muss ersetzt werden, bei SaaS fällt das weg. Beim eigenen Betrieb sind 40.000 Euro sofort gebunden (Liquidität). Weitere Punkte: Verfügbarkeit und SLA des Anbieters, Internetanbindung als neuer kritischer Faktor, Datenschutz und Auftragsverarbeitungsvertrag, Datenexport und Ausstieg (Lock-in), Anpassbarkeit der Software und Aufwand für Updates und Sicherung im Eigenbetrieb."
+    ]
+  },
+  {
+    "title": "30 Notebooks kaufen, leasen oder mieten",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Ingenieurbüro braucht 30 Notebooks für 36 Monate. Ein Notebook kostet 1.100 Euro netto. Drei Angebote liegen vor:",
+      "  Kauf: Restwert nach 36 Monaten 10 % des Kaufpreises, eigener Aufwand für Service und Austausch 2.400 Euro pro Jahr",
+      "  Leasing: monatliche Rate 2,9 % des Kaufpreises (Leasingfaktor), 36 Monate, Rückgabe am Ende, eigener Service wie beim Kauf",
+      "  Miete (Device as a Service): 38 Euro je Gerät und Monat inklusive Service, Austausch und Rücknahme",
+      "",
+      "1. Berechnen Sie die Kosten aller drei Varianten über 36 Monate.",
+      "2. Welche Variante ist am günstigsten, und wie groß ist der Abstand zur zweitbesten?",
+      "3. Nennen Sie Gründe, warum sich der Kunde trotzdem gegen die günstigste Variante entscheiden könnte."
+    ],
+    "solution": [
+      "1. Kauf: 30 * 1.100 = 33.000 Euro, abzüglich Restwert 3.300 Euro, plus Service 3 * 2.400 = 7.200 Euro, zusammen 36.900 Euro.",
+      "Leasing: Rate 33.000 * 0,029 = 957 Euro pro Monat, 957 * 36 = 34.452 Euro, plus Service 7.200 Euro, zusammen 41.652 Euro.",
+      "Miete: 30 * 38 * 36 = 41.040 Euro.",
+      "",
+      "2. Der Kauf ist mit 36.900 Euro am günstigsten. Zweitbeste Variante ist die Miete mit 41.040 Euro, der Abstand beträgt 4.140 Euro. Leasing ist mit 41.652 Euro am teuersten.",
+      "",
+      "3. Beim Kauf sind 33.000 Euro sofort gebunden, Leasing und Miete schonen die Liquidität und sind gleichmäßig planbar. Der Restwert ist nur geschätzt. Bei der Miete übernimmt der Anbieter Service, Austausch und fachgerechte Rücknahme mit Datenlöschung, das entlastet eine kleine IT-Abteilung. Nach 36 Monaten gibt es automatisch neue Geräte. Außerdem kann die Anzahl der Geräte bei manchen Mietverträgen angepasst werden."
+    ]
+  },
+  {
+    "title": "Pönale nach Servicezeiten berechnen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Dienstleister betreut die Server eines Kunden für 4.800 Euro im Monat. Das SLA regelt:",
+      "  Servicezeit Montag bis Freitag 8 bis 18 Uhr, nur diese Zeit zählt für die Fristen",
+      "  Priorität 1: Wiederherstellung innerhalb von 4 Stunden, Pönale 150 Euro je angefangene Stunde Überschreitung",
+      "  Priorität 2: Wiederherstellung innerhalb von 20 Stunden, Pönale 50 Euro je angefangene Stunde Überschreitung",
+      "  Die Pönale ist auf 15 % der Monatspauschale begrenzt.",
+      "Störungen im Monat:",
+      "  S1 Prio 1: gemeldet Dienstag 15:00, behoben Mittwoch 10:30",
+      "  S2 Prio 1: gemeldet Freitag 16:30, behoben Montag 9:00",
+      "  S3 Prio 2: gemeldet Montag 11:00, behoben Mittwoch 17:00",
+      "  S4 Prio 1: gemeldet Donnerstag 9:00, behoben Donnerstag 16:15",
+      "",
+      "1. Berechnen Sie für jede Störung die angerechnete Zeit innerhalb der Servicezeit.",
+      "2. Berechnen Sie die Pönale je Störung und den Betrag, den der Dienstleister tatsächlich gutschreibt.",
+      "3. Der Kunde betreibt einen Webshop, der rund um die Uhr läuft. Bewerten Sie das SLA aus seiner Sicht."
+    ],
+    "solution": [
+      "1. S1: Dienstag 15 bis 18 Uhr = 3 h, Mittwoch 8 bis 10:30 = 2,5 h, zusammen 5,5 h.",
+      "S2: Freitag 16:30 bis 18 Uhr = 1,5 h, Montag 8 bis 9 Uhr = 1 h, zusammen 2,5 h (das Wochenende zählt nicht).",
+      "S3: Montag 11 bis 18 Uhr = 7 h, Dienstag 10 h, Mittwoch 8 bis 17 Uhr = 9 h, zusammen 26 h.",
+      "S4: Donnerstag 9:00 bis 16:15 = 7,25 h.",
+      "",
+      "2. S1: 5,5 - 4 = 1,5 h Überschreitung, 2 angefangene Stunden * 150 = 300 Euro. S2: innerhalb von 4 h, keine Pönale. S3: 26 - 20 = 6 h, 6 * 50 = 300 Euro. S4: 7,25 - 4 = 3,25 h, 4 angefangene Stunden * 150 = 600 Euro. Summe 1.200 Euro. Obergrenze: 4.800 * 0,15 = 720 Euro. Gutgeschrieben werden 720 Euro.",
+      "",
+      "3. Für einen Webshop passt das SLA nicht: Ein Ausfall am Freitagabend würde erst ab Montag 8 Uhr gezählt, S2 hat den Shop fast drei Tage lahmgelegt, ohne dass eine Pönale fällig wird. Der Kunde sollte für Priorität 1 eine Servicezeit von 24 Stunden an 7 Tagen verlangen. Die Obergrenze von 15 % ist so niedrig, dass sie den Dienstleister kaum zu schneller Behebung antreibt. Außerdem sollten Messpunkt, Einstufung der Priorität und ein Sonderkündigungsrecht bei wiederholten Verstößen geregelt sein."
+    ]
+  },
+  {
+    "title": "Zugriffslizenzen für einen Schichtbetrieb wählen",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Produktionsbetrieb führt einen neuen Windows-Server ein. Für den Zugriff werden Zugriffslizenzen (CALs) benötigt. Vereinfacht angenommene Preise: User-CAL 45 Euro, Device-CAL 40 Euro.",
+      "  Produktion: 90 Mitarbeiter in drei Schichten teilen sich 30 feste PCs.",
+      "  Verwaltung: 20 Mitarbeiter mit je einem PC und einem Notebook.",
+      "",
+      "1. Erklären Sie den Unterschied zwischen User-CAL und Device-CAL.",
+      "2. Berechnen Sie die Kosten, wenn nur User-CALs, nur Device-CALs oder eine sinnvolle Mischung gekauft werden.",
+      "3. Was ändert sich, wenn die Verwaltungsmitarbeiter zusätzlich per Smartphone auf den Server zugreifen, und welche Lizenzen fallen außer den CALs noch an?"
+    ],
+    "solution": [
+      "1. Eine User-CAL gilt für eine Person, die von beliebig vielen Geräten zugreifen darf. Eine Device-CAL gilt für ein Gerät, an dem beliebig viele Personen arbeiten dürfen. User-CALs lohnen sich bei vielen Geräten pro Person, Device-CALs bei vielen Personen pro Gerät.",
+      "",
+      "2. Nur User-CALs: (90 + 20) * 45 = 4.950 Euro. Nur Device-CALs: 30 PCs + 20 * 2 Geräte = 70 Geräte, 70 * 40 = 2.800 Euro. Mischung: Produktion 30 Device-CALs = 1.200 Euro, Verwaltung 20 User-CALs = 900 Euro, zusammen 2.100 Euro. Die Mischung ist zulässig und spart 700 Euro gegenüber reinen Device-CALs.",
+      "",
+      "3. Mit User-CALs ändert sich nichts, das Smartphone ist durch die User-CAL der Person abgedeckt. Mit Device-CALs wären 20 weitere Lizenzen nötig. Außerdem muss der Server selbst lizenziert werden (Kernlizenzen), für Remotedesktop-Zugriffe fallen zusätzlich RDS-CALs an. Die Lizenzen sollten dokumentiert und bei Personal- oder Gerätewechsel angepasst werden."
+    ]
+  },
+  {
+    "title": "Wartungsvertrag nach Ablauf der Herstellergarantie",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Die Herstellergarantie eines Speichersystems läuft aus. Der Kunde rechnet mit durchschnittlich 0,5 Hardwareausfällen pro Jahr. Jede Stunde Stillstand kostet ihn vereinfacht 400 Euro. Angebote:",
+      "  A: Vor-Ort-Service am nächsten Arbeitstag, 2.100 Euro pro Jahr, erwartete Ausfalldauer 20 Stunden",
+      "  B: Vor-Ort-Service in 4 Stunden rund um die Uhr, 3.900 Euro pro Jahr, erwartete Ausfalldauer 5 Stunden",
+      "  C: kein Vertrag, Reparatur nach Aufwand durchschnittlich 2.500 Euro je Ausfall, erwartete Ausfalldauer 72 Stunden",
+      "",
+      "1. Berechnen Sie die erwarteten jährlichen Kosten der drei Varianten.",
+      "2. Ab welchen Stillstandskosten pro Stunde ist Variante B günstiger als Variante A?",
+      "3. Welche Punkte sollte ein Wartungsvertrag für ein Speichersystem außerdem regeln?"
+    ],
+    "solution": [
+      "1. A: 2.100 + 0,5 * 20 * 400 = 2.100 + 4.000 = 6.100 Euro. B: 3.900 + 0,5 * 5 * 400 = 3.900 + 1.000 = 4.900 Euro. C: 0,5 * (2.500 + 72 * 400) = 0,5 * 31.300 = 15.650 Euro. Variante B ist am günstigsten.",
+      "",
+      "2. Gleichsetzen mit x = Kosten pro Stunde: 2.100 + 0,5 * 20 * x = 3.900 + 0,5 * 5 * x, also 2.100 + 10x = 3.900 + 2,5x. 7,5x = 1.800, x = 240 Euro. Ab 240 Euro Stillstandskosten pro Stunde lohnt sich B.",
+      "",
+      "3. Unterschied zwischen Reaktionszeit und Wiederherstellungszeit, Servicezeiten und Ersatzteilverfügbarkeit, Firmware-Updates und Support-Hotline, Verbleib defekter Datenträger beim Kunden (Datenschutz), Laufzeit, Kündigung und Preisanpassung. Außerdem prüfen, bis wann der Hersteller das Gerät überhaupt noch unterstützt (End of Support), denn danach ist eine Ablösung sinnvoller als ein teurer Vertrag."
+    ]
+  },
+  {
+    "title": "TCO von Thin Clients und Desktop-PCs über fünf Jahre",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Versicherungsagentur mit 50 Arbeitsplätzen vergleicht für 5 Jahre:",
+      "  Desktop-PC: 750 Euro, 60 W, 3 Stunden Betreuung pro Jahr",
+      "  Thin Client: 350 Euro, 10 W, 1 Stunde Betreuung pro Jahr; zusätzlich Terminalserver-Infrastruktur 18.000 Euro, Remotedesktop-Lizenzen 120 Euro je Platz, Serverbetrieb 2.000 Euro pro Jahr",
+      "  Jedes Gerät läuft 2.000 Stunden pro Jahr, Strom 0,30 Euro/kWh, Betreuung 60 Euro pro Stunde",
+      "",
+      "1. Berechnen Sie die Gesamtkosten beider Varianten über 5 Jahre.",
+      "2. Berechnen Sie die Kosten je Arbeitsplatz und Jahr sowie die Einsparung.",
+      "3. Welche Risiken und versteckten Kosten sollte die Agentur vor der Entscheidung bedenken?"
+    ],
+    "solution": [
+      "1. Strom je Gerät und Jahr: PC 60 W * 2.000 h = 120 kWh = 36 Euro, Thin Client 10 W * 2.000 h = 20 kWh = 6 Euro.",
+      "PCs: Anschaffung 50 * 750 = 37.500 Euro, Strom 50 * 36 * 5 = 9.000 Euro, Betreuung 50 * 3 * 60 * 5 = 45.000 Euro, zusammen 91.500 Euro.",
+      "Thin Clients: Anschaffung 50 * 350 = 17.500 Euro, Strom 50 * 6 * 5 = 1.500 Euro, Betreuung 50 * 1 * 60 * 5 = 15.000 Euro, Infrastruktur 18.000 Euro, Lizenzen 50 * 120 = 6.000 Euro, Serverbetrieb 5 * 2.000 = 10.000 Euro, zusammen 68.000 Euro.",
+      "",
+      "2. PC: 91.500 / (50 * 5) = 366 Euro je Platz und Jahr. Thin Client: 68.000 / 250 = 272 Euro. Einsparung 23.500 Euro, also 94 Euro je Platz und Jahr (etwa 25,7 %).",
+      "",
+      "3. Der Terminalserver ist ein zentraler Ausfallpunkt, fällt er aus, kann niemand arbeiten. Er braucht daher Redundanz, was die Kosten erhöht. Grafiklastige Anwendungen, Videokonferenzen und Scanner oder Signaturpads funktionieren nicht immer gut. Mobiles Arbeiten ohne Netz ist nicht möglich. Die Server brauchen Fachwissen und Wartungsfenster. Die Betreuungsstunden sind Schätzungen, die das Ergebnis stark beeinflussen, deshalb mit Pilotbetrieb prüfen."
+    ]
+  },
+  {
+    "title": "Amortisation einer automatisierten Softwareverteilung",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Die IT eines Unternehmens installiert Software bisher manuell, etwa 400 Installationen pro Jahr zu je 45 Minuten. Eine Softwareverteilung kostet einmalig 14.000 Euro (Lizenz und Einrichtung) und 2.000 Euro Wartung pro Jahr. Eine Installation dauert danach nur noch 5 Minuten Betreuungszeit. Der interne Stundensatz beträgt 55 Euro.",
+      "",
+      "1. Berechnen Sie die jährliche Nettoeinsparung.",
+      "2. Berechnen Sie die Amortisationszeit in Jahren und Monaten.",
+      "3. Wie viele Installationen pro Jahr wären mindestens nötig, damit sich die Investition in 2 Jahren amortisiert? Welche Vorteile hat die Lösung, die sich nicht in Euro ausdrücken lassen?"
+    ],
+    "solution": [
+      "1. Ersparnis je Installation: 45 - 5 = 40 Minuten. Pro Jahr: 400 * 40 / 60 = 266,67 Stunden, 266,67 * 55 = 14.666,67 Euro. Abzüglich Wartung: 14.666,67 - 2.000 = 12.666,67 Euro Nettoeinsparung pro Jahr.",
+      "",
+      "2. 14.000 / 12.666,67 = 1,11 Jahre, also etwa 13,3 Monate.",
+      "",
+      "3. Für 2 Jahre muss die Nettoeinsparung 14.000 / 2 = 7.000 Euro pro Jahr betragen, die Bruttoeinsparung also 7.000 + 2.000 = 9.000 Euro. Eine Installation spart 40 / 60 * 55 = 36,67 Euro. 9.000 / 36,67 = 245,5, also mindestens 246 Installationen pro Jahr. Weitere Vorteile: einheitliche Softwarestände auf allen Clients, schnelleres Verteilen von Sicherheitsupdates, Protokollierung und Lizenzüberblick, weniger Fehler durch manuelle Arbeit und Installation auch außerhalb der Arbeitszeit."
+    ]
+  },
+  {
+    "title": "Deckungsbeitrag eines Managed-Workplace-Pakets",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ein Systemhaus bietet ein Managed-Workplace-Paket für 49 Euro je Arbeitsplatz und Monat an. Variable Kosten je Arbeitsplatz und Monat: Softwarelizenzen 14 Euro, Sicherheitslösung 4 Euro, Support 0,25 Stunden zu 60 Euro. Fixkosten für Plattform und Team: 6.400 Euro pro Monat. Aktuell sind 520 Arbeitsplätze unter Vertrag.",
+      "",
+      "1. Berechnen Sie den Deckungsbeitrag je Arbeitsplatz und das monatliche Betriebsergebnis des Pakets.",
+      "2. Ab wie vielen Arbeitsplätzen deckt das Paket seine Fixkosten (Break-even)?",
+      "3. Ein Neukunde mit 120 Arbeitsplätzen will nur 42 Euro zahlen. Soll das Systemhaus annehmen? Nennen Sie die kurzfristige und die langfristige Preisuntergrenze."
+    ],
+    "solution": [
+      "1. Variable Kosten: 14 + 4 + 0,25 * 60 = 33 Euro. Deckungsbeitrag: 49 - 33 = 16 Euro je Arbeitsplatz. Betriebsergebnis: 520 * 16 - 6.400 = 8.320 - 6.400 = 1.920 Euro pro Monat.",
+      "",
+      "2. 6.400 / 16 = 400 Arbeitsplätze.",
+      "",
+      "3. Bei 42 Euro bleibt ein Deckungsbeitrag von 42 - 33 = 9 Euro, also 120 * 9 = 1.080 Euro zusätzlich. Das Betriebsergebnis steigt auf 1.920 + 1.080 = 3.000 Euro, sofern die Fixkosten gleich bleiben. Kurzfristige Preisuntergrenze sind die variablen Kosten von 33 Euro. Langfristig müssen auch die Fixkosten gedeckt sein: Bei 640 Arbeitsplätzen sind das 33 + 6.400 / 640 = 43 Euro. 42 Euro liegen darunter. Das Systemhaus kann annehmen, sollte den Preis aber befristen und prüfen, ob Bestandskunden dann ebenfalls Rabatt fordern."
+    ]
+  },
+  {
+    "title": "Defektes NAS nach zehn Monaten reklamiert",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Ihr Systemhaus hat einer Arztpraxis (Unternehmerin) ein NAS mit vier Laufwerksschächten für 2.200 Euro netto verkauft. Vertraglich gilt die gesetzliche Gewährleistung von 2 Jahren. Nach zehn Monaten erkennt das NAS einen Schacht nicht mehr, die Backplane ist defekt. Die Praxis rügt den Mangel sofort und verlangt ihr Geld zurück.",
+      "",
+      "1. Welche Rechte hat die Praxis, und in welcher Reihenfolge kann sie sie geltend machen?",
+      "2. Nach zwei gescheiterten Reparaturen entscheidet sich die Praxis, das Gerät zu behalten und den Preis zu mindern. Ein mangelfreies NAS wäre 2.500 Euro wert, das defekte 2.000 Euro. Berechnen Sie den geminderten Preis und den Erstattungsbetrag.",
+      "3. Wie gehen Sie praktisch mit der Reklamation um, und was unterscheidet die Gewährleistung von einer Herstellergarantie?"
+    ],
+    "solution": [
+      "1. Vorrangig ist die Nacherfüllung: Die Praxis wählt Reparatur oder Lieferung eines neuen Geräts. Erst wenn die Nacherfüllung fehlschlägt (in der Regel nach dem zweiten erfolglosen Versuch), verweigert wird oder eine gesetzte Frist abläuft, kann sie vom Vertrag zurücktreten oder den Preis mindern. Schadensersatz gibt es zusätzlich, wenn der Verkäufer den Mangel zu vertreten hat. Da beide Seiten Unternehmer sind, muss die Praxis den Mangel unverzüglich rügen (hier erfüllt) und nachweisen, dass er schon bei Übergabe angelegt war.",
+      "",
+      "2. Geminderter Preis = Kaufpreis * Wert mit Mangel / Wert ohne Mangel = 2.200 * 2.000 / 2.500 = 1.760 Euro. Erstattung: 2.200 - 1.760 = 440 Euro netto.",
+      "",
+      "3. Reklamation dokumentieren, Mangel prüfen und sofort Nacherfüllung anbieten, bei Bedarf ein Leihgerät stellen, damit die Datensicherung weiterläuft. Datenträger bleiben wegen der Patientendaten in der Praxis. Beim eigenen Lieferanten kann das Systemhaus Rückgriff nehmen. Die Gewährleistung ist gesetzlich und richtet sich gegen den Verkäufer, sie deckt Mängel, die bei Übergabe vorhanden waren. Eine Garantie ist ein freiwilliges Versprechen, meist des Herstellers, mit selbst festgelegten Bedingungen und Laufzeit. Sie gilt zusätzlich und schränkt die Gewährleistung nicht ein."
+    ]
+  },
+  {
+    "title": "Angebote einer Kommune nach der Richtwertmethode werten",
+    "cat": "wirtschaft",
+    "theme": "Wirtschaft & Beratung",
+    "text": [
+      "Eine Stadtverwaltung hat die Erneuerung ihrer Server im offenen Verfahren ausgeschrieben. Gewertet wird mit der einfachen Richtwertmethode: Kennzahl = Leistungspunkte / Preis in Tausend Euro. Nur Angebote, die alle Ausschlusskriterien erfüllen, kommen in die Wertung.",
+      "  Angebot A: 84.000 Euro, 620 Leistungspunkte, alle Ausschlusskriterien erfüllt",
+      "  Angebot B: 72.000 Euro, 540 Leistungspunkte, alle Ausschlusskriterien erfüllt",
+      "  Angebot C: 65.000 Euro, 590 Leistungspunkte, Ausschlusskriterium \"Vor-Ort-Service in 4 Stunden\" nicht erfüllt",
+      "  Angebot D: 91.000 Euro, 700 Leistungspunkte, alle Ausschlusskriterien erfüllt",
+      "",
+      "1. Welche Angebote werden gewertet? Berechnen Sie deren Kennzahlen.",
+      "2. Welches Angebot erhält den Zuschlag? Warum gewinnt nicht das billigste Angebot?",
+      "3. Der Bieter C bietet nach der Öffnung an, den 4-Stunden-Service nachzureichen. Wie reagiert die Vergabestelle, und welche Möglichkeiten hatten die Bieter vorher?"
+    ],
+    "solution": [
+      "1. Angebot C wird ausgeschlossen, weil es ein Ausschlusskriterium nicht erfüllt, auch wenn es das günstigste Angebot ist. Kennzahlen: A: 620 / 84 = 7,38. B: 540 / 72 = 7,50. D: 700 / 91 = 7,69.",
+      "",
+      "2. Angebot D hat mit 7,69 das beste Verhältnis von Leistung zu Preis und erhält den Zuschlag. Öffentliche Auftraggeber müssen das wirtschaftlichste Angebot wählen, nicht das billigste. Die Leistungspunkte (z.B. Service, Energieeffizienz, Erweiterbarkeit) fließen deshalb in die Wertung ein.",
+      "",
+      "3. Nachverhandlungen über Preis und Leistung sind im offenen Verfahren nicht erlaubt, weil sonst die Gleichbehandlung der Bieter verletzt würde. C bleibt ausgeschlossen. Vor Ablauf der Angebotsfrist konnten die Bieter Fragen zu den Unterlagen stellen, die Antworten gehen an alle Bieter. Unklare oder benachteiligende Anforderungen hätten sie rügen können. Nicht berücksichtigte Bieter werden vor dem Zuschlag informiert."
+    ]
+  },
+  {
+    "title": "Rechenzentrumsumzug mit Netzplan beschleunigen",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Für den Umzug in einen neuen Serverraum gibt es folgende Vorgänge (Dauer in Arbeitstagen):",
+      "  A Planung: 5 (Start)",
+      "  B Hardware bestellen und liefern: 12 (nach A)",
+      "  C Racks und Stromversorgung einrichten: 6 (nach A)",
+      "  D Netzwerk im neuen Raum aufbauen: 8 (nach C)",
+      "  E Servermigration vorbereiten: 7 (nach A)",
+      "  F Umzug der Server: 4 (nach B, D und E)",
+      "  G Test und Abnahme: 3 (nach F)",
+      "",
+      "1. Berechnen Sie frühesten Anfang und frühestes Ende aller Vorgänge, die Projektdauer und den kritischen Pfad.",
+      "2. Berechnen Sie Gesamtpuffer und freien Puffer von B und E.",
+      "3. Der Kunde will das Projekt in 23 Tagen abschließen. Beschleunigen lassen sich nur: C um bis zu 2 Tage (600 Euro je Tag), D um bis zu 3 Tage (900 Euro je Tag), F um 1 Tag (1.500 Euro). Wie erreichen Sie das Ziel am günstigsten?"
+    ],
+    "solution": [
+      "1. A: 0 bis 5. B: 5 bis 17. C: 5 bis 11. D: 11 bis 19. E: 5 bis 12. F beginnt nach dem spätesten Vorgänger bei 19 und endet bei 23. G: 23 bis 26. Projektdauer 26 Tage, kritischer Pfad A - C - D - F - G.",
+      "",
+      "2. B: spätestes Ende 19 (Anfang von F), frühestes Ende 17, Gesamtpuffer 2 Tage. Freier Puffer: F beginnt frühestens bei 19, also ebenfalls 2 Tage. E: Gesamtpuffer 19 - 12 = 7 Tage, freier Puffer ebenfalls 7 Tage.",
+      "",
+      "3. Es müssen 3 Tage eingespart werden. Günstigster Schritt: C um 2 Tage kürzen (1.200 Euro). Der Weg über C und D endet dann nach 17 Tagen, gleich lang wie der Weg über B. Projektdauer 24 Tage. Ein weiterer Tag an D bringt nichts, weil B (nicht beschleunigbar) jetzt ebenfalls kritisch ist. Daher F um 1 Tag kürzen (1.500 Euro), das wirkt auf beide Wege. Ergebnis: 23 Tage für 2.700 Euro Mehrkosten. Die Kosten gehen an den Kunden, weil er die Verkürzung wünscht."
+    ]
+  },
+  {
+    "title": "Fertigstellungswert mit der 50/50-Regel ermitteln",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Für einen Client-Rollout (Budget 45.000 Euro) liegt am Stichtag folgender Stand vor. Fortschritt wird nach der 50/50-Regel bewertet (begonnen = 50 %, fertig = 100 %).",
+      "  AP1 Konzept: Plankosten 8.000, laut Plan fertig, tatsächlich fertig, Istkosten 9.000",
+      "  AP2 Image erstellen: Plankosten 6.000, laut Plan fertig, tatsächlich fertig, Istkosten 5.500",
+      "  AP3 Pilotphase: Plankosten 4.000, laut Plan fertig, tatsächlich begonnen, Istkosten 3.000",
+      "  AP4 Rollout Welle 1: Plankosten 12.000, laut Plan begonnen, tatsächlich begonnen, Istkosten 7.000",
+      "  AP5 Rollout Welle 2: Plankosten 12.000, nicht begonnen",
+      "  AP6 Abschluss: Plankosten 3.000, nicht begonnen",
+      "",
+      "1. Berechnen Sie Planwert, Fertigstellungswert und Istkosten zum Stichtag.",
+      "2. Berechnen Sie Kosten- und Terminabweichung, Kosten- und Terminindex sowie die Prognose der Gesamtkosten.",
+      "3. Warum arbeitet man mit festen Regeln wie 50/50 oder 0/100 statt mit geschätzten Prozentwerten? Welchen Fertigstellungswert ergäbe die 0/100-Regel?"
+    ],
+    "solution": [
+      "1. Planwert (Plan-Status): AP1 8.000 + AP2 6.000 + AP3 4.000 + AP4 50 % von 12.000 = 6.000, zusammen 24.000 Euro. Fertigstellungswert (Ist-Status): 8.000 + 6.000 + 50 % von 4.000 = 2.000 + 50 % von 12.000 = 6.000, zusammen 22.000 Euro. Istkosten: 9.000 + 5.500 + 3.000 + 7.000 = 24.500 Euro.",
+      "",
+      "2. Kostenabweichung: 22.000 - 24.500 = -2.500 Euro. Terminabweichung: 22.000 - 24.000 = -2.000 Euro. Kostenindex: 22.000 / 24.500 = 0,898. Terminindex: 22.000 / 24.000 = 0,917. Prognose: 45.000 / 0,898 = 50.113,64 Euro, also rund 5.100 Euro über Budget.",
+      "",
+      "3. Geschätzte Prozentwerte sind subjektiv. Arbeitspakete stehen oft lange bei \"90 % fertig\", der Fortschritt wird dadurch zu optimistisch dargestellt. Feste Regeln sind einfach und nachprüfbar. Die 0/100-Regel zählt nur fertige Pakete: 8.000 + 6.000 = 14.000 Euro. Sie ist sehr vorsichtig und eignet sich für kurze Arbeitspakete."
+    ]
+  },
+  {
+    "title": "Risikoreserve für eine ERP-Migration berechnen",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Für die Migration einer Warenwirtschaft wurden folgende Risiken und mögliche Maßnahmen ermittelt:",
+      "  R1 Datenmigration fehlerhaft: 30 %, Schaden 40.000 Euro. Maßnahme Probemigration: 5.000 Euro, senkt auf 10 %",
+      "  R2 Schlüsselperson fällt aus: 20 %, Schaden 25.000 Euro. Maßnahme Vertretung einarbeiten: 4.000 Euro, senkt auf 5 %",
+      "  R3 Hardware kommt zu spät: 40 %, Schaden 10.000 Euro. Maßnahme früher bestellen: 500 Euro, senkt auf 10 %",
+      "  R4 Anwender lehnen das System ab: 50 %, Schaden 15.000 Euro. Maßnahme Schulungen: 3.000 Euro, senkt auf 20 %",
+      "",
+      "1. Berechnen Sie die Risikowerte (Erwartungswerte) und die Risikoreserve ohne Maßnahmen.",
+      "2. Bewerten Sie jede Maßnahme rechnerisch. Wie hoch sind Reserve plus Maßnahmenkosten, wenn nur die lohnenden Maßnahmen umgesetzt werden?",
+      "3. Nennen Sie die vier grundsätzlichen Strategien im Umgang mit Risiken. Warum kann R2 trotz des Ergebnisses sinnvoll behandelt werden?"
+    ],
+    "solution": [
+      "1. R1: 0,3 * 40.000 = 12.000 Euro. R2: 0,2 * 25.000 = 5.000 Euro. R3: 0,4 * 10.000 = 4.000 Euro. R4: 0,5 * 15.000 = 7.500 Euro. Reserve: 28.500 Euro. Größtes Risiko ist R1.",
+      "",
+      "2. Nutzen = Senkung des Risikowerts minus Maßnahmenkosten. R1: 12.000 - 4.000 = 8.000, minus 5.000 = 3.000 Euro, lohnt. R2: 5.000 - 1.250 = 3.750, minus 4.000 = -250 Euro, lohnt rechnerisch nicht. R3: 4.000 - 1.000 = 3.000, minus 500 = 2.500 Euro, lohnt. R4: 7.500 - 3.000 = 4.500, minus 3.000 = 1.500 Euro, lohnt. Neue Reserve: 4.000 + 5.000 + 1.000 + 3.000 = 13.000 Euro, plus Maßnahmen 8.500 Euro = 21.500 Euro statt 28.500 Euro.",
+      "",
+      "3. Vermeiden (Ursache beseitigen), vermindern (Wahrscheinlichkeit oder Schaden senken), übertragen (z.B. Versicherung, Vertrag mit Dienstleister) und akzeptieren (bewusst tragen, Reserve bilden). R2 ist knapp unwirtschaftlich, aber die Zahlen sind Schätzungen. Hängt das Wissen an einer Person, ist das Unternehmen auch nach dem Projekt verwundbar. Die Vertretung verbessert also dauerhaft die Betriebssicherheit."
+    ]
+  },
+  {
+    "title": "Projektstrukturplan für die Einführung eines Ticketsystems",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Unternehmen führt ein Ticketsystem für den IT-Support ein. Folgende Arbeitspakete mit Aufwand in Personentagen (PT) wurden gesammelt:",
+      "  Ist-Aufnahme der Supportprozesse 3, Anforderungen festlegen 4, Produktauswahl 3, Server bereitstellen 2, Installation und Konfiguration 5, Anbindung an das Active Directory 2, E-Mail-Anbindung 1, Test 3, Schulung der Supportmitarbeiter 2, Anleitung für Anwender 1, Inbetriebnahme und Abnahme 1, Dokumentation 2, Projektmanagement 3",
+      "",
+      "1. Erstellen Sie einen phasenorientierten Projektstrukturplan mit nummerierten Teilprojekten und Arbeitspaketen.",
+      "2. Berechnen Sie den Aufwand je Teilprojekt und gesamt. Wie hoch sind die Personalkosten bei 8 Stunden pro PT und 75 Euro pro Stunde, mit 15 % Risikozuschlag?",
+      "3. Was gehört in eine Arbeitspaketbeschreibung, und worin unterscheidet sich der Projektstrukturplan vom Ablaufplan?"
+    ],
+    "solution": [
+      "1. 1 Projektmanagement: 1.1 Projektmanagement (3). 2 Analyse: 2.1 Ist-Aufnahme (3), 2.2 Anforderungen (4), 2.3 Produktauswahl (3). 3 Realisierung: 3.1 Server bereitstellen (2), 3.2 Installation und Konfiguration (5), 3.3 AD-Anbindung (2), 3.4 E-Mail-Anbindung (1). 4 Einführung: 4.1 Test (3), 4.2 Schulung Support (2), 4.3 Anleitung Anwender (1), 4.4 Inbetriebnahme und Abnahme (1). 5 Abschluss: 5.1 Dokumentation (2).",
+      "",
+      "2. Projektmanagement 3 PT, Analyse 3 + 4 + 3 = 10 PT, Realisierung 2 + 5 + 2 + 1 = 10 PT, Einführung 3 + 2 + 1 + 1 = 7 PT, Abschluss 2 PT. Gesamt 32 PT. Kosten: 32 * 8 * 75 = 19.200 Euro, mit 15 % Zuschlag 19.200 * 1,15 = 22.080 Euro.",
+      "",
+      "3. Arbeitspaketbeschreibung: Nummer und Name, Verantwortlicher, Ziel und Ergebnis, Tätigkeiten, Aufwand und Kosten, Voraussetzungen und Schnittstellen, Abnahmekriterien. Der Projektstrukturplan zeigt vollständig, was zu tun ist, aber nicht die Reihenfolge. Der Ablaufplan (z.B. Netzplan oder Gantt-Diagramm) ordnet die Arbeitspakete zeitlich und legt Abhängigkeiten fest."
+    ]
+  },
+  {
+    "title": "Ressourcenkonflikt um den einzigen Netzwerkspezialisten",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Netzwerkadministrator arbeitet 40 Stunden pro Woche, davon 30 % im Tagesgeschäft. Zwei Projekte brauchen ihn:",
+      "  Projekt A (Firewallmigration): 70 Stunden in KW 10 und KW 11, gleichmäßig verteilt. Die alte Firewall-Lizenz läuft Ende KW 12 ab.",
+      "  Projekt B (WLAN-Ausbau): 42 Stunden in KW 10 bis KW 12, gleichmäßig verteilt. Fertig sein muss es Ende KW 13.",
+      "",
+      "1. Wie viele Stunden stehen pro Woche für Projekte zur Verfügung? Berechnen Sie die Belastung und Überlast je Woche.",
+      "2. Erstellen Sie einen Einsatzplan nach Kapazitätsabgleich, der beide Termine einhält.",
+      "3. Welche weiteren Möglichkeiten gibt es, den Konflikt zu lösen, und wer entscheidet über die Priorität?"
+    ],
+    "solution": [
+      "1. Projektkapazität: 40 * 0,7 = 28 Stunden pro Woche. Bedarf A: 70 / 2 = 35 Stunden in KW 10 und 11. Bedarf B: 42 / 3 = 14 Stunden in KW 10 bis 12. KW 10 und KW 11: je 49 Stunden, Überlast je 21 Stunden. KW 12: 14 Stunden, 14 Stunden frei.",
+      "",
+      "2. A hat den härteren Termin und bekommt Vorrang: KW 10 28 h, KW 11 28 h, KW 12 14 h (zusammen 70 h). B erhält die Restkapazität: KW 12 14 h, KW 13 28 h (zusammen 42 h). A ist Ende KW 12 fertig, B Ende KW 13. Der Plan nutzt die gesamte Kapazität von 4 * 28 = 112 Stunden, es gibt also keinen Puffer mehr.",
+      "",
+      "3. Externe Unterstützung einkaufen, Tagesgeschäft zeitweise an Kollegen abgeben, Umfang von B reduzieren oder in Stufen umsetzen, kurzfristig Mehrarbeit (nur begrenzt und im Rahmen des Arbeitszeitgesetzes). Die Priorität legt nicht der Mitarbeiter fest, sondern der Auftraggeber bzw. das Multiprojektmanagement oder der Lenkungsausschuss. Die Projektleiter melden den Konflikt früh und legen Entscheidungsvorlagen vor."
+    ]
+  },
+  {
+    "title": "Sprintplanung mit Velocity und Teamkapazität",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Scrum-Team mit 5 Entwicklern arbeitet in Sprints von 2 Wochen (10 Arbeitstage). In den letzten drei Sprints wurden 34, 28 und 31 Story Points erledigt. Im nächsten Sprint hat ein Entwickler 3 Tage Urlaub, außerdem fällt ein Feiertag in den Sprint. Das Product Backlog ist geordnet: Story A (8 Punkte), B (5), C (13), D (3), E (5), F (8).",
+      "",
+      "1. Berechnen Sie die durchschnittliche Velocity und die verfügbare Kapazität des nächsten Sprints im Verhältnis zu einem normalen Sprint.",
+      "2. Wie viele Story Points sollte das Team einplanen, und welche Stories nimmt es in den Sprint auf?",
+      "3. Wer entscheidet, wie viel in den Sprint kommt, und was tut das Team, wenn Story C zu groß oder unklar ist?"
+    ],
+    "solution": [
+      "1. Velocity: (34 + 28 + 31) / 3 = 93 / 3 = 31 Story Points. Normale Kapazität: 5 * 10 = 50 Personentage. Nächster Sprint: 50 - 3 (Urlaub) - 5 (Feiertag für alle) = 42 Personentage, also 42 / 50 = 84 %.",
+      "",
+      "2. 31 * 0,84 = 26,04, also etwa 26 Story Points. In der Reihenfolge des Backlogs: A (8) + B (5) + C (13) = 26 Punkte. D würde die Grenze überschreiten und bleibt im Backlog. Die Prognose ist ein Richtwert, keine Zusage.",
+      "",
+      "3. Der Product Owner ordnet das Backlog, die Entwickler entscheiden selbst, wie viel sie im Sprint schaffen können, und formulieren mit ihm ein Sprintziel. Ist C zu groß oder unklar, wird die Story vor dem Sprint verfeinert und in kleinere Stories geteilt, die jeweils einen Nutzen liefern. Erfüllt sie die vereinbarte Definition of Ready nicht, kommt sie noch nicht in den Sprint, stattdessen rücken D und E nach."
+    ]
+  },
+  {
+    "title": "Nachforderung des Kunden im Festpreisprojekt",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ihr Systemhaus modernisiert zum Festpreis von 38.000 Euro netto das WLAN in den Büros eines Kunden. In der dritten Projektwoche bittet der Kunde den Techniker vor Ort, \"schnell noch\" das Lager mit WLAN zu versorgen. Dafür wären nötig:",
+      "  6 Access Points, Einkauf je 420 Euro, Aufschlag 20 %",
+      "  6 Netzwerkdosen durch einen Elektro-Subunternehmer, je 180 Euro, Aufschlag 10 %",
+      "  2,5 Personentage Arbeit (8 Stunden) zu 95 Euro pro Stunde",
+      "",
+      "1. Wie geht der Techniker richtig mit der Bitte um? Beschreiben Sie den Ablauf eines Änderungsantrags (Change Request).",
+      "2. Berechnen Sie den Nachtrag netto und den neuen Auftragswert.",
+      "3. Welche Folgen hat es, wenn solche Wünsche regelmäßig ohne Verfahren umgesetzt werden?"
+    ],
+    "solution": [
+      "1. Nicht auf Zuruf umsetzen, sondern den Wunsch aufnehmen und an die Projektleitung geben. Ablauf: Änderungsantrag schriftlich erfassen, Auswirkungen auf Kosten, Termine, Qualität und Risiken prüfen, Nachtragsangebot erstellen, Entscheidung durch den Kunden bzw. das Änderungsgremium, bei Zustimmung Vertrag bzw. Pflichtenheft und Projektplan anpassen und alles dokumentieren.",
+      "",
+      "2. Access Points: 420 * 1,2 = 504 Euro, 6 * 504 = 3.024 Euro. Dosen: 180 * 1,1 = 198 Euro, 6 * 198 = 1.188 Euro. Arbeit: 2,5 * 8 * 95 = 1.900 Euro. Nachtrag: 3.024 + 1.188 + 1.900 = 6.112 Euro netto. Neuer Auftragswert: 38.000 + 6.112 = 44.112 Euro netto.",
+      "",
+      "3. Der Umfang wächst schleichend (Scope Creep). Beim Festpreis trägt das Systemhaus die Mehrkosten, der Gewinn sinkt. Termine geraten in Gefahr, Gewährleistung und Abnahme sind für nicht vereinbarte Leistungen unklar, die Dokumentation stimmt nicht mehr. Außerdem entsteht beim Kunden die Erwartung, dass Zusatzleistungen kostenlos sind."
+    ]
+  },
+  {
+    "title": "Soll-Ist-Vergleich im Projektabschlussbericht",
+    "cat": "wirtschaft",
+    "theme": "Projektmanagement",
+    "text": [
+      "Ein Projekt zur Erneuerung der Serverlandschaft ist abgeschlossen. Plan- und Istwerte:",
+      "  Hardware: Plan 42.000 Euro, Ist 44.100 Euro",
+      "  Externe Dienstleistung: Plan 18.000 Euro, Ist 21.600 Euro",
+      "  Interne Arbeitszeit: Plan 240 Stunden, Ist 290 Stunden, jeweils 60 Euro pro Stunde",
+      "  Schulung: Plan 3.000 Euro, Ist 2.400 Euro",
+      "  Dauer: Plan 12 Wochen, Ist 14 Wochen",
+      "",
+      "1. Berechnen Sie für jede Kostenart die Abweichung in Euro und Prozent sowie die Gesamtabweichung.",
+      "2. Berechnen Sie die Terminabweichung in Prozent. Welche Kostenarten sollte der Bericht näher erklären?",
+      "3. Welche Inhalte gehören außerdem in den Projektabschlussbericht, und wie werden Lessons Learned sinnvoll gesammelt?"
+    ],
+    "solution": [
+      "1. Hardware: +2.100 Euro, +5 %. Externe Dienstleistung: +3.600 Euro, +20 %. Interne Arbeitszeit: Plan 240 * 60 = 14.400 Euro, Ist 290 * 60 = 17.400 Euro, +3.000 Euro, +20,8 %. Schulung: -600 Euro, -20 %. Gesamt: Plan 77.400 Euro, Ist 85.500 Euro, Abweichung +8.100 Euro, das sind +10,5 %.",
+      "",
+      "2. Termin: (14 - 12) / 12 = +16,7 %. Erklärungsbedürftig sind vor allem die externe Dienstleistung und die interne Arbeitszeit mit je rund 20 % Überschreitung. Sie machen 6.600 Euro der 8.100 Euro aus und hängen wahrscheinlich mit der Verzögerung zusammen. Die Einsparung bei der Schulung sollte ebenfalls erklärt werden (z.B. weniger Teilnehmer oder verschobene Schulung).",
+      "",
+      "3. Ausgangslage und Ziele, erreichte Ergebnisse und offene Punkte, Abnahmeprotokoll, Soll-Ist-Vergleich mit Ursachen, Übergabe an den Betrieb (Dokumentation, Zuständigkeiten, Wartungsverträge), Bewertung der Zusammenarbeit und Lessons Learned. Lessons Learned werden in einem gemeinsamen Abschlussworkshop gesammelt: Was lief gut, was schlecht, was machen wir künftig anders. Die Ergebnisse werden so abgelegt, dass künftige Projekte sie finden. Danach wird das Projektteam offiziell aufgelöst."
+    ]
+  },
+  {
+    "title": "Wiederanlaufziele für einen Onlinehändler festlegen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Onlinehändler führt eine Business-Impact-Analyse durch. Für den Webshop gilt: Pro Stunde Ausfall entgehen 720 Euro Gewinn. Nach 4 Stunden Ausfall fordert ein Marktplatzbetreiber pauschal 5.000 Euro Vertragsstrafe. Die Datenbank wird jede Nacht um 1:00 Uhr gesichert, im Durchschnitt gehen 45 Bestellungen pro Stunde ein.",
+      "",
+      "1. Erklären Sie die Begriffe RTO, RPO und maximal tolerierbare Ausfallzeit (MTA).",
+      "2. Die Datenbank fällt um 16:00 Uhr aus, die Wiederherstellung dauert 8 Stunden. Berechnen Sie den Schaden durch den Ausfall und wie viele Bestellungen verloren gehen.",
+      "3. Die Geschäftsleitung legt RTO 2 Stunden und RPO 15 Minuten fest. Welche technischen Maßnahmen sind nötig, und in welcher Reihenfolge werden die Systeme wieder angefahren?"
+    ],
+    "solution": [
+      "1. RTO (Recovery Time Objective): Zeit, bis ein System nach einem Ausfall wieder läuft. RPO (Recovery Point Objective): maximal tolerierbarer Datenverlust, gemessen als Zeitraum vor dem Ausfall. MTA: Zeit, nach der ein Ausfall existenzbedrohende Folgen hat. Das RTO muss darunter liegen.",
+      "",
+      "2. Entgangener Gewinn: 8 * 720 = 5.760 Euro, plus Vertragsstrafe 5.000 Euro (Ausfall länger als 4 Stunden), zusammen 10.760 Euro. Datenverlust: Sicherung um 1:00 Uhr, Ausfall um 16:00 Uhr, also 15 Stunden. 15 * 45 = 675 Bestellungen müssen manuell nachgepflegt oder bei Kunden erfragt werden.",
+      "",
+      "3. RPO 15 Minuten: Transaktionsprotokolle alle 15 Minuten sichern oder die Datenbank laufend auf ein zweites System replizieren. RTO 2 Stunden: Standby-Datenbank bzw. Cluster, vorbereitete Wiederherstellung auf virtualisierter Umgebung, regelmäßig geübte Rücksicherung. Reihenfolge nach Abhängigkeiten: Netzwerk und Firewall, Verzeichnisdienst und DNS, Datenbank, Anwendungsserver, Webshop, danach weniger kritische Systeme wie E-Mail-Archiv. Das Ganze wird im Notfallhandbuch festgehalten."
+    ]
+  },
+  {
+    "title": "Meldefristen nach einem Angriff bei einem NIS2-Unternehmen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Logistikdienstleister ist als wichtige Einrichtung nach dem NIS2-Umsetzungsgesetz beim BSI registriert. Am Freitag, 02.10.2026, um 22:40 Uhr stellt die IT fest, dass Angreifer die Lagerverwaltung verschlüsselt und Kundendaten (Namen, Adressen) abgezogen haben. Vereinfacht gelten: erste Meldung an das BSI innerhalb von 24 Stunden, Meldung mit erster Bewertung innerhalb von 72 Stunden, Abschlussmeldung spätestens einen Monat nach der Meldung. Die Meldung wird am Montag, 05.10.2026, um 15:00 Uhr abgegeben.",
+      "",
+      "1. Berechnen Sie die Fristen für die erste Meldung, die Meldung und die Abschlussmeldung.",
+      "2. Welche weitere Meldepflicht besteht wegen der Kundendaten, bei wem und bis wann?",
+      "3. Was sollte vorbereitet sein, damit die Fristen auch an einem Wochenende eingehalten werden?"
+    ],
+    "solution": [
+      "1. Erste Meldung: 24 Stunden nach Kenntnis, also bis Samstag, 03.10.2026, 22:40 Uhr (dass der 3. Oktober ein Feiertag ist, spielt keine Rolle). Meldung: 72 Stunden nach Kenntnis, bis Montag, 05.10.2026, 22:40 Uhr. Die Meldung um 15:00 Uhr ist rechtzeitig. Abschlussmeldung: einen Monat nach der Meldung, also bis 05.11.2026.",
+      "",
+      "2. Es liegt eine Verletzung des Schutzes personenbezogener Daten vor. Nach Art. 33 DSGVO muss der Verantwortliche sie der zuständigen Datenschutzaufsichtsbehörde innerhalb von 72 Stunden nach Bekanntwerden melden, also ebenfalls bis Montag, 05.10.2026, 22:40 Uhr. Besteht ein hohes Risiko für die Betroffenen, müssen auch die Kunden unverzüglich informiert werden (Art. 34 DSGVO). Die beiden Meldungen sind unabhängig voneinander.",
+      "",
+      "3. Ein Notfallplan mit Meldewegen, Vorlagen und Zugangsdaten für das Meldeportal, eine Rufbereitschaft mit klaren Zuständigkeiten (IT, Geschäftsleitung, Datenschutzbeauftragter), Kontaktdaten von Dienstleistern für Forensik, eine Entscheidungsbefugnis für Meldungen auch ohne Geschäftsleitung und ein lückenloses Protokoll aller Zeitpunkte und Maßnahmen. Das sollte regelmäßig geübt werden."
+    ]
+  },
+  {
+    "title": "Rollen und Funktionstrennung im Berechtigungskonzept",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "In der Warenwirtschaft eines Händlers haben viele Mitarbeiter über Jahre Rechte angesammelt. Eine Prüfung ergab: Von 180 Konten gehören 12 zu ausgeschiedenen Mitarbeitern, und 9 Mitarbeiter dürfen sowohl Lieferanten anlegen als auch Zahlungen freigeben.",
+      "",
+      "1. Erklären Sie rollenbasierte Zugriffskontrolle (RBAC) und das Prinzip der minimalen Rechte. Welche Rollen würden Sie im Einkauf und in der Buchhaltung bilden?",
+      "2. Warum ist die Kombination \"Lieferant anlegen\" und \"Zahlung freigeben\" gefährlich? Wie viel Prozent der Konten sind verwaist?",
+      "3. Wie stellen Sie sicher, dass die Rechte auch künftig aktuell bleiben?"
+    ],
+    "solution": [
+      "1. Rechte werden nicht einzelnen Personen, sondern Rollen zugeordnet (z.B. Einkäufer, Wareneingang, Rechnungsprüfung, Zahlungsfreigabe, Stammdatenpflege). Mitarbeiter erhalten die Rollen, die ihre Aufgabe erfordert, und nicht mehr (minimale Rechte). Das macht die Vergabe einheitlich und nachvollziehbar.",
+      "",
+      "2. Wer beide Rechte hat, kann einen Scheinlieferanten mit eigenem Konto anlegen und Zahlungen an ihn freigeben, ohne dass eine zweite Person beteiligt ist. Funktionstrennung verlangt, dass solche kritischen Schritte auf verschiedene Personen verteilt werden (Vier-Augen-Prinzip). Verwaiste Konten: 12 / 180 = 6,7 %. Sie werden sofort gesperrt und nach Prüfung gelöscht.",
+      "",
+      "3. Ein geregelter Prozess für Eintritt, Wechsel und Austritt, der mit der Personalabteilung gekoppelt ist. Beim Abteilungswechsel werden alte Rollen entzogen. Unvereinbare Rollen werden im System hinterlegt und automatisch geprüft. Führungskräfte bestätigen regelmäßig (z.B. halbjährlich) die Rechte ihrer Mitarbeiter (Rezertifizierung). Änderungen werden protokolliert."
+    ]
+  },
+  {
+    "title": "Penetrationstest für ein Kundenportal beauftragen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Energieberater betreibt ein Kundenportal bei einem Hosting-Anbieter. Vor einer größeren Werbekampagne soll ein externer Dienstleister einen Penetrationstest durchführen. Angebot: 6 Personentage Test, 2 Personentage Bericht, 1,5 Personentage Nachtest nach der Behebung, Tagessatz 1.400 Euro netto.",
+      "",
+      "1. Unterscheiden Sie Black-Box-, Grey-Box- und White-Box-Test. Welche Variante empfehlen Sie hier?",
+      "2. Was muss vor Testbeginn schriftlich geregelt sein? Berechnen Sie die Kosten netto und brutto (19 % Umsatzsteuer).",
+      "3. Der Bericht nennt: SQL-Injection im Login (CVSS 9,8), veraltete TLS-Version (CVSS 5,3), Passwort-Richtlinie ohne Mindestlänge (CVSS 6,5), fehlende Sicherheits-Header (CVSS 3,1). In welcher Reihenfolge beheben Sie die Befunde?"
+    ],
+    "solution": [
+      "1. Black Box: Der Tester hat keine Vorabinformationen, wie ein externer Angreifer. Grey Box: Er erhält z.B. Testzugänge und eine Übersicht der Anwendung. White Box: Er hat vollen Einblick, auch in Quellcode und Konfiguration. Empfehlung: Grey Box mit Testkonten für verschiedene Rollen. So wird die begrenzte Zeit für die Suche nach Schwachstellen genutzt, auch im angemeldeten Bereich.",
+      "",
+      "2. Schriftlich festzulegen sind: Umfang (Adressen, URLs, ausgeschlossene Systeme), Zeitfenster, erlaubte Methoden (z.B. keine Lasttests), Ansprechpartner und Notfallabbruch, Umgang mit gefundenen Daten und Vertraulichkeit, Haftung. Wichtig: Der Hosting-Anbieter muss zustimmen, weil seine Systeme betroffen sind. Kosten: 6 + 2 + 1,5 = 9,5 Personentage, 9,5 * 1.400 = 13.300 Euro netto, 13.300 * 1,19 = 15.827 Euro brutto.",
+      "",
+      "3. Zuerst die SQL-Injection (kritisch, direkt aus dem Internet ausnutzbar, Kundendaten gefährdet), möglichst vor dem Start der Kampagne. Danach die Passwort-Richtlinie (6,5), dann die TLS-Version (5,3), zuletzt die Sicherheits-Header (3,1). Der CVSS-Wert ist ein Anhaltspunkt, die Reihenfolge berücksichtigt auch Aufwand und Erreichbarkeit. Nach der Behebung bestätigt der Nachtest die Wirksamkeit."
+    ]
+  },
+  {
+    "title": "Anforderungen einer Cyberversicherung prüfen",
+    "cat": "sicherheit",
+    "theme": "IT-Sicherheit",
+    "text": [
+      "Ein Maschinenbauer mit 120 Mitarbeitern will eine Cyberversicherung abschließen (Prämie 6.800 Euro pro Jahr, Selbstbehalt 5.000 Euro je Schadenfall). Für Betriebsunterbrechung gilt eine zeitliche Selbstbeteiligung von 12 Stunden. Der Versicherer verlangt als Obliegenheiten unter anderem MFA für alle Fernzugriffe und Admin-Konten, offline oder unveränderbar gespeicherte Backups und das Einspielen kritischer Sicherheitsupdates innerhalb von 14 Tagen. Ist-Zustand: MFA nur für VPN, Backups auf einem NAS im Firmennetz, ein Server mit einem Betriebssystem ohne Herstellerunterstützung.",
+      "",
+      "1. Welche Lücken zu den Obliegenheiten bestehen, und wie beheben Sie sie?",
+      "2. Nach einem Angriff entstehen: Forensik 25.000 Euro, Wiederherstellung 40.000 Euro, Betriebsunterbrechung 30 Stunden bei 3.000 Euro Ertragsausfall pro Stunde. Berechnen Sie die Versicherungsleistung.",
+      "3. Warum ersetzt eine Cyberversicherung kein Sicherheitskonzept?"
+    ],
+    "solution": [
+      "1. MFA fehlt für Admin-Konten und andere Fernzugriffe: für alle privilegierten Konten und Cloud-Dienste einführen. Das Backup liegt im selben Netz und kann mitverschlüsselt werden: eine Kopie offline oder unveränderbar (z.B. Band, Immutable Storage) ablegen. Für den Server ohne Herstellerunterstützung gibt es keine Sicherheitsupdates: ersetzen oder bis dahin streng isolieren. Außerdem einen Patchprozess mit 14-Tage-Frist dokumentieren.",
+      "",
+      "2. Betriebsunterbrechung: (30 - 12) * 3.000 = 54.000 Euro. Schaden gesamt: 25.000 + 40.000 + 54.000 = 119.000 Euro. Abzüglich Selbstbehalt: 119.000 - 5.000 = 114.000 Euro Versicherungsleistung. Die ersten 12 Stunden (36.000 Euro Ertragsausfall) und der Selbstbehalt bleiben beim Unternehmen.",
+      "",
+      "3. Die Versicherung ist eine Form der Risikoübertragung und ersetzt nur einen Teil des finanziellen Schadens. Werden Obliegenheiten verletzt, kann sie die Leistung kürzen oder verweigern. Datenverlust, Imageschaden, verlorene Kunden und Bußgelder sind oft nicht oder nur begrenzt gedeckt. Die Pflichten der Geschäftsleitung zur Informationssicherheit bleiben bestehen. Die Versicherung ergänzt daher Maßnahmen wie Backups, Härtung und Notfallplanung."
+    ]
+  },
+  {
+    "title": "MPLS-Verbund durch SD-WAN ablösen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Eine Handelskette verbindet 12 Filialen per MPLS mit der Zentrale, jede Leitung kostet 450 Euro pro Monat. Alternative SD-WAN: je Filiale zwei Internetanschlüsse verschiedener Anbieter zu je 90 Euro pro Monat, Lizenz für die SD-WAN-Appliance 60 Euro pro Monat, Appliance einmalig 800 Euro je Filiale, Projektkosten einmalig 15.000 Euro. Betrachtet werden 36 Monate.",
+      "",
+      "1. Wie funktioniert SD-WAN, und worin unterscheidet es sich von klassischen VPN-Tunneln?",
+      "2. Berechnen Sie die Kosten beider Varianten über 36 Monate und die Einsparung.",
+      "3. Welche Risiken bestehen, und wie werden sie verringert?"
+    ],
+    "solution": [
+      "1. SD-WAN baut über mehrere Leitungen verschlüsselte Tunnel als Overlay auf. Eine zentrale Verwaltung (Controller) verteilt Richtlinien an alle Standorte. Die Geräte messen laufend Latenz, Jitter und Paketverlust jeder Leitung und wählen je Anwendung den besten Weg, z.B. Telefonie über die Leitung mit geringster Latenz. Klassische VPN-Tunnel werden einzeln konfiguriert und schalten meist nur bei Totalausfall um.",
+      "",
+      "2. MPLS: 12 * 450 * 36 = 194.400 Euro. SD-WAN monatlich: 12 * (2 * 90 + 60) = 2.880 Euro, über 36 Monate 103.680 Euro. Einmalig: 12 * 800 = 9.600 Euro plus 15.000 Euro. Gesamt SD-WAN: 128.280 Euro. Einsparung: 66.120 Euro (etwa 34 %).",
+      "",
+      "3. Internetanschlüsse haben keine zugesicherte Ende-zu-Ende-Qualität wie MPLS. Abhilfe: zwei Anbieter mit unterschiedlicher Technik (z.B. Glasfaser und Mobilfunk bzw. Kabel), damit nicht beide gleichzeitig ausfallen, und anwendungsbezogene Pfadwahl. Die Filialen hängen nun direkt am Internet, daher braucht jede eine Firewall-Funktion und eine gehärtete Konfiguration. Ein zentraler Controller ist ein neuer kritischer Punkt, er muss redundant und gesichert sein. Die Umstellung erfolgt schrittweise mit Pilotfiliale."
+    ]
+  },
+  {
+    "title": "WLAN-Kapazität für einen Veranstaltungssaal planen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Ein Veranstaltungssaal soll für 600 Besucher WLAN erhalten. Erfahrungswerte: 80 % der Besucher nutzen das WLAN, jeder mit durchschnittlich 1,5 Geräten. Gleichzeitig aktiv sind 50 % der Geräte, jedes mit etwa 2 Mbit/s. Ein Access Point soll im 5-GHz-Band höchstens 60 aktive Geräte versorgen.",
+      "",
+      "1. Berechnen Sie die Anzahl der Geräte, der aktiven Geräte und der benötigten Access Points.",
+      "2. Berechnen Sie die benötigte Gesamtbandbreite und die Last je Access Point. Was folgt daraus für Uplinks und Internetanschluss?",
+      "3. Warum werden in dichten Umgebungen schmale Kanäle (20 MHz) im 5-GHz-Band genutzt, und wie viele überschneidungsfreie Kanäle stehen dort in Europa zur Verfügung?"
+    ],
+    "solution": [
+      "1. Nutzer: 600 * 0,8 = 480. Geräte: 480 * 1,5 = 720. Aktiv: 720 * 0,5 = 360. Access Points: 360 / 60 = 6. Hier bestimmt die Zahl der Geräte die Anzahl der Access Points, nicht die Fläche.",
+      "",
+      "2. 360 * 2 Mbit/s = 720 Mbit/s gesamt, je Access Point 720 / 6 = 120 Mbit/s. Ein 1-Gbit/s-Uplink je Access Point reicht aus. Die Access Points hängen an einem Switch, der mit mindestens 10 Gbit/s angebunden ist. Der Internetanschluss braucht mindestens 1 Gbit/s, ein Bandbreitenlimit je Gerät verhindert, dass einzelne Nutzer alles belegen.",
+      "",
+      "3. Bei vielen Access Points auf engem Raum stören sich Geräte auf demselben Kanal. Schmale Kanäle ergeben mehr getrennte Kanäle, sodass benachbarte Access Points sich nicht überlagern. In Europa gibt es im 5-GHz-Band 19 Kanäle mit 20 MHz (36 bis 64 und 100 bis 140), einige davon mit DFS. Zusätzlich die Sendeleistung reduzieren, 2,4 GHz nur eingeschränkt nutzen und, wenn die Geräte es können, das 6-GHz-Band einsetzen."
+    ]
+  },
+  {
+    "title": "Out-of-Band-Management für Netzwerk und Server",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Nach einer fehlerhaften Firewall-Konfiguration war das gesamte Netz nicht mehr erreichbar, ein Techniker musste nachts ins Rechenzentrum fahren. Künftig soll ein Out-of-Band-Management (OOB) Zugriff auch bei gestörtem Produktivnetz ermöglichen. Vorhanden sind 2 Core-Switches, 12 Access-Switches, 2 Firewalls, 6 Server mit Fernwartungskarte (BMC) und ein Speichersystem mit 2 Controllern.",
+      "",
+      "1. Erklären Sie das Prinzip von OOB-Management und welche Komponenten dazu gehören.",
+      "2. Jedes Netzwerkgerät erhält einen Konsolenport am Konsolenserver und einen Management-Ethernet-Port im OOB-Netz. Dazu kommen die BMCs, die Speicher-Controller, der Konsolenserver und ein Mobilfunkrouter. Wie viele Konsolenports und Switchports werden benötigt? Reicht ein Adressbereich /27?",
+      "3. Wie wird das OOB-Netz selbst abgesichert?"
+    ],
+    "solution": [
+      "1. Die Verwaltung läuft über ein eigenes, physisch getrenntes Netz, das nicht von Produktivswitches und Firewall abhängt. Bestandteile: eigener Management-Switch, Konsolenserver mit seriellen Verbindungen zu Switches und Firewalls, Fernwartungskarten (BMC) der Server, ein eigener Zugang über Mobilfunk oder eine separate Leitung und eine eigene Stromversorgung über USV.",
+      "",
+      "2. Konsolenports: 2 + 12 + 2 = 16. Switchports: 16 Netzwerkgeräte + 6 BMCs + 2 Controller + 1 Konsolenserver + 1 Mobilfunkrouter = 26. Ein 24-Port-Switch reicht also nicht, nötig sind ein 48-Port-Switch oder zwei kleinere. Ein /27 bietet 30 Hostadressen. Mit Gateway werden 27 belegt, es bleiben nur 3 frei. Besser ist ein /26 mit 62 Hostadressen.",
+      "",
+      "3. Zugang nur über VPN mit MFA für wenige Administratoren, keine Verbindung zum Produktivnetz bzw. nur streng gefiltert. Standardpasswörter der BMCs und Konsolenserver ändern, Firmware aktuell halten, alle Anmeldungen zentral protokollieren. Der Mobilfunkzugang erlaubt nur ausgehende VPN-Verbindungen oder feste Gegenstellen. Regelmäßig testen, ob der Notzugang funktioniert."
+    ]
+  },
+  {
+    "title": "Core-Switch im Wartungsfenster tauschen",
+    "cat": "netzwerk",
+    "theme": "Netzwerkdesign",
+    "text": [
+      "Der zentrale Core-Switch eines Unternehmens soll am Samstag zwischen 22:00 und 02:00 Uhr getauscht werden. Geplante Schritte für einen Techniker:",
+      "  Konfiguration sichern und vorbereiten: 20 Minuten",
+      "  Alten Switch ausbauen, neuen einbauen und Grundkonfiguration einspielen: 60 Minuten",
+      "  12 Access-Switches mit je 2 Uplinks umstecken: 3 Minuten je Uplink",
+      "  20 Serververbindungen umstecken: 2 Minuten je Verbindung",
+      "  Funktionstests: 30 Minuten",
+      "Ein Rückbau auf den alten Switch dauert 45 Minuten.",
+      "",
+      "1. Berechnen Sie die Gesamtdauer. Bis wann muss spätestens über den Rückbau entschieden werden?",
+      "2. Passt der Plan in das Wartungsfenster? Wie ändert sich der Ablauf mit einem zweiten Techniker, der die Hälfte des Umsteckens übernimmt?",
+      "3. Welche Vorbereitungen senken das Risiko des Umbaus?"
+    ],
+    "solution": [
+      "1. Uplinks: 12 * 2 * 3 = 72 Minuten. Server: 20 * 2 = 40 Minuten. Gesamt: 20 + 60 + 72 + 40 + 30 = 222 Minuten, Ende um 01:42 Uhr. Damit ein Rückbau noch in das Fenster passt, muss spätestens 240 - 45 = 195 Minuten nach Beginn, also um 01:15 Uhr, entschieden werden.",
+      "",
+      "2. Nein. Die Tests enden erst um 01:42 Uhr, nach dem Entscheidungszeitpunkt. Ein Rückbau würde dann bis 02:27 Uhr dauern. Mit zweitem Techniker: Umstecken (72 + 40) / 2 = 56 Minuten. Gesamt: 20 + 60 + 56 + 30 = 166 Minuten, Ende um 00:46 Uhr. Das liegt vor 01:15 Uhr, der Rückbau bleibt möglich.",
+      "",
+      "3. Neuen Switch vorab im Labor mit der vollständigen Konfiguration testen, Kabel und Ports vorher beschriften und eine Zuordnungstabelle alt zu neu erstellen, Firmware vorher aktualisieren, Testliste mit wichtigen Diensten vorbereiten, Nutzer und Bereitschaft informieren, Change im Änderungsmanagement genehmigen lassen. Wo möglich, Redundanz nutzen, z.B. einen zweiten Core-Switch, damit der Tausch ohne Unterbrechung gelingt."
+    ]
+  },
+  {
+    "title": "Volles Kamera-Subnetz ohne Umnummerierung erweitern",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Im VLAN der Überwachungskameras (192.168.60.0/24, Gateway 192.168.60.1) sind 250 Kameras in Betrieb. Es kommen 150 Kameras hinzu. Das Druckernetz nutzt 192.168.61.0/24 mit 40 Geräten. Die Bereiche 192.168.62.0/24 und 192.168.63.0/24 sind frei.",
+      "",
+      "1. Welche Präfixlänge ist für 400 Kameras mindestens nötig? Kann das Kameranetz einfach auf 192.168.60.0/23 erweitert werden?",
+      "2. Vergleichen Sie zwei Lösungen: a) Druckernetz verlegen und Kameranetz auf /23 erweitern, b) Kameras komplett in 192.168.62.0/23 umziehen. Geben Sie jeweils Netzadresse, Broadcast und Hostbereich an.",
+      "3. Warum sind 192.168.60.255 und 192.168.61.0 im /23 gültige Hostadressen, und warum sollte man sie trotzdem nicht vergeben?"
+    ],
+    "solution": [
+      "1. 400 Kameras plus Gateway passen nicht in ein /24 mit 254 Hostadressen. Ein /23 bietet 2^9 - 2 = 510 Hostadressen. 192.168.60.0/23 umfasst 192.168.60.0 bis 192.168.61.255 und überschneidet sich mit dem Druckernetz. Die Erweiterung geht nur, wenn das Druckernetz vorher umzieht. Ein Netz 192.168.59.0/23 ist nicht möglich, weil ein /23 an einer geraden dritten Oktettgrenze beginnen muss.",
+      "",
+      "2. a) Drucker nach 192.168.63.0/24 verlegen (40 Geräte, wenig Aufwand). Kameranetz 192.168.60.0/23: Broadcast 192.168.61.255, Hosts 192.168.60.1 bis 192.168.61.254. Die 250 Kameras behalten Adresse und Gateway, nur die Maske ändert sich auf 255.255.254.0. b) Kameranetz 192.168.62.0/23: Broadcast 192.168.63.255, Hosts 192.168.62.1 bis 192.168.63.254. Alle 250 Kameras bekommen neue Adressen, Aufzeichnungsserver und Firewallregeln müssen angepasst werden. Lösung a) ist deutlich weniger Aufwand.",
+      "",
+      "3. Im /23 ist nur 192.168.60.0 die Netzadresse und 192.168.61.255 der Broadcast. Die Adressen dazwischen, auch .60.255 und .61.0, sind normale Hosts. Manche ältere Geräte oder Software halten Adressen mit .0 oder .255 am Ende aber für ungültig. Deshalb schließt man sie vom DHCP-Bereich aus, um schwer zu findende Fehler zu vermeiden."
+    ]
+  },
+  {
+    "title": "DHCP-Bereiche für geroutete VLANs mit Relay",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Layer-3-Switch routet zwischen den VLANs. Der zentrale DHCP-Server hat die Adresse 10.20.10.10/24 im Server-VLAN. Die Client-VLANs:",
+      "  VLAN 10 Clients: 10.20.0.0/23, Gateway 10.20.0.1",
+      "  VLAN 20 Telefonie: 10.20.2.0/24, Gateway 10.20.2.1",
+      "  VLAN 30 WLAN: 10.20.4.0/22, Gateway 10.20.4.1",
+      "In jedem VLAN sind die ersten 20 Hostadressen für Gateway und feste Geräte reserviert.",
+      "",
+      "1. Warum erhalten die Clients ohne weitere Konfiguration keine Adresse? Wie löst ein DHCP-Relay das Problem, und woher weiß der Server, aus welchem Bereich er vergeben muss?",
+      "2. Geben Sie für jedes VLAN den DHCP-Bereich (erste und letzte Adresse) und die Anzahl vergebbarer Adressen an.",
+      "3. Welche Lease-Dauer wählen Sie für das WLAN, und wie machen Sie den DHCP-Dienst ausfallsicher?"
+    ],
+    "solution": [
+      "1. DHCP-Discover ist ein Broadcast, und Router leiten Broadcasts nicht in andere Netze weiter. Auf jeder VLAN-Schnittstelle des Layer-3-Switches wird deshalb ein DHCP-Relay (z.B. ip helper-address 10.20.10.10) eingerichtet. Es nimmt den Broadcast an und schickt ihn als Unicast an den Server. Dabei trägt es die eigene Schnittstellenadresse im Feld giaddr ein, z.B. 10.20.0.1. Der Server wählt den Bereich, zu dem diese Adresse gehört.",
+      "",
+      "2. VLAN 10: Hosts 10.20.0.1 bis 10.20.1.254 (510). Bereich 10.20.0.21 bis 10.20.1.254, 490 Adressen. VLAN 20: Hosts 10.20.2.1 bis 10.20.2.254 (254). Bereich 10.20.2.21 bis 10.20.2.254, 234 Adressen. VLAN 30: Hosts 10.20.4.1 bis 10.20.7.254 (1.022). Bereich 10.20.4.21 bis 10.20.7.254, 1.002 Adressen.",
+      "",
+      "3. Im WLAN wechseln Geräte häufig, deshalb eine kurze Lease-Dauer von einigen Stunden (z.B. 4 Stunden), damit Adressen schnell wieder frei werden. Ausfallsicherheit: zweiter DHCP-Server mit DHCP-Failover (Lastverteilung oder Hot Standby) und beide Server als Relay-Ziel eintragen. Der Server sollte außerdem überwacht werden, damit volle Bereiche früh auffallen."
+    ]
+  },
+  {
+    "title": "Portknappheit bei PAT mit einer öffentlichen Adresse",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen mit 900 Arbeitsplätzen geht über eine Firewall mit einer einzigen öffentlichen IPv4-Adresse ins Internet (PAT, NAT-Overload). Zu Stoßzeiten brechen Verbindungen ab, im Log steht \"NAT port allocation failed\". Messungen zeigen in der Spitze 90 gleichzeitige Verbindungen je Arbeitsplatz. Für PAT nutzt die Firewall die Quellports 1024 bis 65535.",
+      "",
+      "1. Wie viele gleichzeitige Verbindungen erlaubt eine öffentliche Adresse? Berechnen Sie den Bedarf und erklären Sie die Fehlermeldung.",
+      "2. Wie viele öffentliche Adressen sind mit 25 % Reserve nötig? Der Provider bietet das Netz 203.0.113.8/29 an, sein Router nutzt die erste Hostadresse. Reichen die übrigen Adressen?",
+      "3. Nennen Sie weitere Maßnahmen gegen die Portknappheit."
+    ],
+    "solution": [
+      "1. 65.535 - 1.024 + 1 = 64.512 Ports je Adresse. Bedarf: 900 * 90 = 81.000 gleichzeitige Verbindungen. Die Firewall muss jeder ausgehenden Verbindung einen eigenen Quellport der öffentlichen Adresse zuordnen. Sind alle Ports belegt, kann sie keine neue Übersetzung anlegen, und Verbindungen schlagen fehl. Vereinfacht wird angenommen, dass Ports nicht je Ziel mehrfach genutzt werden.",
+      "",
+      "2. Mit Reserve: 81.000 * 1,25 = 101.250 Verbindungen. 101.250 / 64.512 = 1,57, also 2 Adressen (129.024 Ports). Das /29 hat die Hostadressen 203.0.113.9 bis 203.0.113.14 (6 Stück), Broadcast 203.0.113.15. Nach Abzug des Provider-Routers (.9) bleiben 5 Adressen, .10 bis .14. Zwei davon werden als NAT-Pool eingetragen, das reicht.",
+      "",
+      "3. Timeouts für inaktive Verbindungen verkürzen (besonders UDP und DNS), einen Proxy nutzen, der Verbindungen bündelt, auffällige Clients mit ungewöhnlich vielen Verbindungen prüfen (Schadsoftware), IPv6 einführen, weil dort keine Adressübersetzung nötig ist. Die Auslastung der NAT-Tabelle ins Monitoring aufnehmen."
+    ]
+  },
+  {
+    "title": "Adressbereiche für einen Container-Cluster abstimmen",
+    "cat": "netzwerk",
+    "theme": "Subnetting & Routing",
+    "text": [
+      "Ein Unternehmen richtet einen Kubernetes-Cluster ein. Die Installation schlägt als Standard vor: Pod-Netz 10.244.0.0/16 und Service-Netz 10.96.0.0/12. Im Firmennetz werden genutzt: Zentrale 10.10.0.0/16, Filialen 10.100.0.0/16, VPN-Clients 172.16.0.0/20.",
+      "",
+      "1. Prüfen Sie, ob sich die Standardbereiche mit vorhandenen Netzen überschneiden. Welche Adressen umfasst 10.96.0.0/12?",
+      "2. Welche Folge hätte eine Überschneidung für die Kommunikation zwischen Containern und Filialen?",
+      "3. Planen Sie stattdessen Pod-Netz 172.20.0.0/16 (je Knoten ein /24) und Service-Netz 172.21.0.0/20. Wie viele Knoten und Service-Adressen sind möglich, und überschneidet sich der Plan mit den vorhandenen Netzen?"
+    ],
+    "solution": [
+      "1. 10.96.0.0/12 reicht von 10.96.0.0 bis 10.111.255.255 und enthält damit das Filialnetz 10.100.0.0/16. Das Pod-Netz 10.244.0.0/16 überschneidet sich mit keinem vorhandenen Netz.",
+      "",
+      "2. Die Knoten leiten Verkehr an Adressen im Service-Netz an interne Dienste des Clusters weiter. Ein Container, der einen Server in einer Filiale (z.B. 10.100.4.20) erreichen will, landet dann nicht in der Filiale, sondern wird im Cluster umgeleitet oder verworfen. Solche Fehler sind schwer zu finden. Das Service-Netz lässt sich nach der Installation nur mit großem Aufwand ändern, deshalb vorher planen.",
+      "",
+      "3. 172.20.0.0/16 in /24 teilen: 2^(24-16) = 256 Knoten mit je 254 nutzbaren Pod-Adressen. 172.21.0.0/20 hat 2^12 = 4.096 Adressen für Services. Beide liegen außerhalb von 10.10.0.0/16, 10.100.0.0/16 und 172.16.0.0/20 (172.16.0.0 bis 172.16.15.255) und überschneiden sich auch nicht miteinander. Die Bereiche werden im zentralen Adressplan eingetragen, damit sie später nicht erneut vergeben werden."
+    ]
+  },
+  {
+    "title": "Erasure Coding oder dreifache Replikation im Objektspeicher",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Objektspeicher für Backups und Archivdaten soll 600 TB Nutzdaten aufnehmen. Zur Wahl stehen dreifache Replikation (jedes Objekt liegt dreimal auf verschiedenen Knoten) und Erasure Coding 8+3 (8 Datenfragmente und 3 Paritätsfragmente auf verschiedenen Knoten). Bruttospeicher kostet 25 Euro je TB.",
+      "",
+      "1. Berechnen Sie für beide Verfahren den Bruttobedarf und den Nutzungsgrad.",
+      "2. Berechnen Sie die Speicherkosten. Wie viele Knoten- oder Plattenausfälle verkraftet jedes Verfahren?",
+      "3. Welche Nachteile hat Erasure Coding, und für welche Daten eignet sich eher Replikation?"
+    ],
+    "solution": [
+      "1. Replikation: 600 * 3 = 1.800 TB brutto, Nutzungsgrad 1 / 3 = 33,3 %. Erasure Coding 8+3: 600 * 11 / 8 = 825 TB brutto, Nutzungsgrad 8 / 11 = 72,7 %.",
+      "",
+      "2. Replikation: 1.800 * 25 = 45.000 Euro. Erasure Coding: 825 * 25 = 20.625 Euro, also 24.375 Euro weniger. Replikation verkraftet den Ausfall von 2 Kopien. Erasure Coding 8+3 verkraftet 3 beliebige Ausfälle, weil aus 8 beliebigen der 11 Fragmente die Daten rekonstruiert werden können. Dafür sind mindestens 11 Knoten nötig, besser 12, damit nach einem Ausfall wieder vollständig verteilt werden kann.",
+      "",
+      "3. Beim Schreiben müssen Paritätsfragmente berechnet werden, das kostet Rechenleistung. Beim Lesen und bei der Wiederherstellung müssen Fragmente von vielen Knoten geholt werden, das erhöht Latenz und Netzlast. Für große, selten geänderte Daten wie Backups und Archive ist Erasure Coding ideal. Für kleine Objekte mit vielen Zugriffen und niedrigen Latenzanforderungen (z.B. Datenbanken, aktive VM-Speicher) ist Replikation besser."
+    ]
+  },
+  {
+    "title": "Schreiblast von SSDs im RAID in DWPD umrechnen",
+    "cat": "systeme",
+    "theme": "Storage & RAID",
+    "text": [
+      "Ein Datenbankserver schreibt pro Tag 3 TB Daten. Geplant sind 8 SSDs mit je 3,84 TB. Die Schreibzugriffe sind klein und zufällig verteilt. Zur Wahl stehen SSDs mit 1 DWPD (Drive Writes Per Day, leseintensiv) und mit 3 DWPD (gemischte Last), Garantie jeweils 5 Jahre.",
+      "",
+      "1. Berechnen Sie für RAID 10 und für RAID 6 die tatsächliche Schreibmenge je SSD und Tag. Gehen Sie bei RAID 6 davon aus, dass jede Schreiboperation den Datenblock und zwei Paritätsblöcke schreibt.",
+      "2. Rechnen Sie die Werte in DWPD um. Wie viele TB schreibt eine SSD bei RAID 6 in 5 Jahren, und was garantiert eine 1-DWPD-SSD in dieser Zeit?",
+      "3. Die Schreiblast soll sich in der Nutzungsdauer verdreifachen. Welche SSD empfehlen Sie für RAID 6?"
+    ],
+    "solution": [
+      "1. RAID 10: Jeder Block wird zweimal geschrieben, 3 * 2 = 6 TB pro Tag, verteilt auf 8 SSDs: 0,75 TB je SSD. RAID 6: 3 * 3 = 9 TB pro Tag, je SSD 9 / 8 = 1,125 TB.",
+      "",
+      "2. RAID 10: 0,75 / 3,84 = 0,20 DWPD. RAID 6: 1,125 / 3,84 = 0,29 DWPD. In 5 Jahren schreibt eine SSD bei RAID 6: 1,125 * 365 * 5 = 2.053,1 TB. Eine 1-DWPD-SSD ist ausgelegt für 3,84 * 365 * 5 = 7.008 TB (TBW). Heute reicht also die leseintensive SSD.",
+      "",
+      "3. Dreifache Last bei RAID 6: 1,125 * 3 / 3,84 = 0,88 DWPD. Das liegt knapp unter 1 DWPD und lässt kaum Reserve, z.B. für Rebuilds oder interne Schreibverstärkung der SSD. Empfehlung: SSDs mit 3 DWPD oder RAID 10 mit geringerer Schreiblast je SSD. Zusätzlich den Verschleiß über SMART-Werte überwachen."
+    ]
+  },
+  {
+    "title": "Überdimensionierte VMs anhand von Messwerten verkleinern",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Cluster aus 2 Hosts mit je 32 Kernen und 512 GB RAM ist laut Planung voll, der Kauf eines dritten Hosts für 18.000 Euro steht an. Eine Auswertung über 30 Tage zeigt:",
+      "  Gruppe 1: 12 VMs mit je 8 vCPU und 32 GB RAM, Spitze 3 vCPU und 12 GB",
+      "  Gruppe 2: 20 VMs mit je 4 vCPU und 16 GB RAM, Spitze 1 vCPU und 5 GB",
+      "Neue Größen: Gruppe 1 auf 4 vCPU und 16 GB, Gruppe 2 auf 2 vCPU und 8 GB.",
+      "",
+      "1. Berechnen Sie die zugewiesenen vCPUs und den RAM vor und nach der Anpassung sowie das Verhältnis vCPU zu physischen Kernen.",
+      "2. Warum kann eine zu große Anzahl an vCPUs eine VM sogar langsamer machen?",
+      "3. Ist der dritte Host noch nötig? Worauf achten Sie bei der Umsetzung?"
+    ],
+    "solution": [
+      "1. Vorher: 12 * 8 + 20 * 4 = 176 vCPU, 12 * 32 + 20 * 16 = 704 GB RAM. Nachher: 12 * 4 + 20 * 2 = 88 vCPU, 12 * 16 + 20 * 8 = 352 GB RAM. Physische Kerne: 2 * 32 = 64. Verhältnis vorher 176 / 64 = 2,75 : 1, nachher 88 / 64 = 1,375 : 1.",
+      "",
+      "2. Der Hypervisor muss für eine VM freie physische Kerne finden. Eine VM mit vielen vCPUs wartet länger, bis entsprechend viele Kerne gleichzeitig frei sind (CPU Ready). Große VMs verursachen außerdem mehr Verwaltungsaufwand im Hypervisor und bremsen andere VMs aus. Kleinere, passende VMs werden schneller eingeplant.",
+      "",
+      "3. Nach der Anpassung werden 352 GB RAM belegt. Bei Ausfall eines Hosts muss der andere alles tragen: 352 GB passen in 512 GB (abzüglich Hypervisor). Der dritte Host für 18.000 Euro kann entfallen oder verschoben werden. Umsetzung: Spitzenwerte über einen repräsentativen Zeitraum inklusive Monats- und Jahresabschluss prüfen, Reserve einplanen, Änderungen mit den Verantwortlichen der Anwendungen abstimmen, in Wartungsfenstern umsetzen (Neustart nötig) und danach die Leistung beobachten."
+    ]
+  },
+  {
+    "title": "Hyperkonvergenten Cluster mit Replikationsfaktor planen",
+    "cat": "systeme",
+    "theme": "Virtualisierung",
+    "text": [
+      "Ein Unternehmen plant einen hyperkonvergenten Cluster (HCI) aus 4 Knoten. Jeder Knoten hat 6 SSDs zu je 3,84 TB für den gemeinsamen Speicher. Die Daten werden mit Replikationsfaktor 2 (RF2) gespeichert. Nach dem Ausfall eines Knotens sollen alle Daten wieder vollständig redundant verteilt werden können. Der Speicher soll höchstens zu 80 % gefüllt werden. Benötigt werden 25 TB.",
+      "",
+      "1. Erklären Sie den Aufbau einer hyperkonvergenten Infrastruktur im Vergleich zu Hosts mit einem zentralen SAN.",
+      "2. Berechnen Sie Brutto- und Nettokapazität bei RF2, die nutzbare Kapazität bei Ausfall eines Knotens und mit der 80-%-Grenze. Reicht sie für 25 TB?",
+      "3. Wie ändert sich das Ergebnis mit RF3? Was spricht für RF3?"
+    ],
+    "solution": [
+      "1. Bei HCI stecken Rechenleistung und Speicher in denselben Servern. Eine Software fasst die lokalen Platten aller Knoten zu einem gemeinsamen Speicher zusammen und verteilt Kopien über das Netz. Es gibt kein separates Speichersystem. Erweitert wird durch weitere Knoten. Beim klassischen Aufbau greifen die Hosts über iSCSI oder Fibre Channel auf ein zentrales SAN zu.",
+      "",
+      "2. Brutto je Knoten: 6 * 3,84 = 23,04 TB, gesamt 4 * 23,04 = 92,16 TB. RF2: 92,16 / 2 = 46,08 TB netto. Bei Ausfall eines Knotens bleiben 3 * 23,04 = 69,12 TB, also 34,56 TB netto. Mit 80 %: 34,56 * 0,8 = 27,65 TB. Das reicht für 25 TB, die Reserve ist aber gering.",
+      "",
+      "3. RF3: 92,16 / 3 = 30,72 TB netto, bei Knotenausfall 69,12 / 3 = 23,04 TB, mit 80 % nur 18,43 TB. Das reicht nicht, es wären mehr Knoten oder größere SSDs nötig. RF3 verkraftet zwei gleichzeitige Ausfälle, z.B. einen Knoten in Wartung und einen defekten Datenträger. Das ist für geschäftskritische Daten wichtig."
+    ]
   }
 ]

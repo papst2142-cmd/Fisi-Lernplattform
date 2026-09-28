@@ -7726,5 +7726,1817 @@
       "Eine schlechte Leistungsbeurteilung im Arbeitszeugnis",
       "Eine Kürzung des Jahresurlaubs als Strafe für Fehlverhalten"
     ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Worin unterscheidet sich ein logischer von einem physischen Netzplan?",
+    "a": "Logisch zeigt Subnetze und VLANs, physisch Geräte, Räume und Kabelwege",
+    "a_full": "Der physische Netzplan zeigt, wo Schränke, Switches und Dosen stehen und wie die Kabel verlaufen. Der logische Netzplan zeigt Subnetze, VLANs, IP-Bereiche, Gateways und Firewall-Zonen. Für die Fehlersuche braucht man beide, weil ein Problem physisch oder logisch sein kann.",
+    "options": [
+      "Logisch zeigt Subnetze und VLANs, physisch Geräte, Räume und Kabelwege",
+      "Logisch zeigt Kabelwege und Räume, physisch Subnetze und VLANs",
+      "Logisch gilt nur für WLAN, physisch nur für kabelgebundene Netze",
+      "Logisch ist eine Skizze, physisch die gleiche Darstellung maßstabsgetreu"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was dokumentiert eine Patchliste (Portbelegungsplan)?",
+    "a": "Welcher Patchfeldport mit welchem Switchport und welcher Dose verbunden ist",
+    "a_full": "Jede Zeile nennt z.B. Raum, Dosennummer, Patchfeldport, Switch, Switchport und VLAN. Damit findet man bei einer Störung schnell den richtigen Port und kann Umzüge sauber planen. Die Liste ist nur nützlich, wenn sie nach jeder Änderung sofort gepflegt wird.",
+    "options": [
+      "Welcher Patchfeldport mit welchem Switchport und welcher Dose verbunden ist",
+      "Welche Benutzer an welchem Arbeitsplatz angemeldet sind",
+      "Welche Firewall-Regeln für welche Ports freigeschaltet sind",
+      "Welche Kabelkategorie der Hersteller im Datenblatt angibt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wozu dient ein IPAM-Werkzeug (IP Address Management)?",
+    "a": "Zur zentralen Verwaltung von Subnetzen, Adressen und Reservierungen",
+    "a_full": "IPAM ersetzt verstreute Tabellen durch eine zentrale Datenbank aller Netze und Adressen. Es zeigt freie und belegte Adressen und verhindert Doppelvergaben. Oft ist es mit DHCP und DNS gekoppelt, sodass Einträge automatisch abgeglichen werden.",
+    "options": [
+      "Zur zentralen Verwaltung von Subnetzen, Adressen und Reservierungen",
+      "Zur Verschlüsselung aller IP-Pakete zwischen zwei Standorten",
+      "Zur automatischen Vergabe von MAC-Adressen an Netzwerkkarten",
+      "Zur Messung der Bandbreite zwischen zwei IP-Adressen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet bei der Kupfermessung den Permanent Link vom Channel?",
+    "a": "Permanent Link ist nur die feste Strecke, Channel schließt Patchkabel ein",
+    "a_full": "Der Permanent Link reicht vom Patchfeld bis zur Anschlussdose und ist höchstens 90 m lang. Der Channel umfasst zusätzlich Patch- und Geräteanschlusskabel, zusammen höchstens 100 m. Der Installateur misst bei der Abnahme meist den Permanent Link, weil Patchkabel später oft getauscht werden.",
+    "options": [
+      "Permanent Link ist nur die feste Strecke, Channel schließt Patchkabel ein",
+      "Permanent Link gilt für Glasfaser, Channel für Kupferkabel",
+      "Permanent Link ist die Strecke zwischen zwei Switches im Schrank",
+      "Channel ist nur die feste Strecke, Permanent Link schließt Patchkabel ein"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist der Unterschied zwischen Kategorie (z.B. Cat 6A) und Klasse (z.B. EA) bei Kupferverkabelung?",
+    "a": "Kategorie gilt für Bauteile, Klasse für die ganze installierte Strecke",
+    "a_full": "Kabel, Dosen und Stecker werden nach Kategorien spezifiziert. Die fertige Strecke aus diesen Bauteilen wird nach Klassen bewertet. Bauteile der Kategorie 6A ergeben bei fachgerechter Installation eine Strecke der Klasse EA mit 500 MHz. Ein Zertifizierer prüft am Ende die Klasse.",
+    "options": [
+      "Kategorie gilt für Bauteile, Klasse für die ganze installierte Strecke",
+      "Kategorie gilt für Kupfer, Klasse ausschließlich für Glasfaser",
+      "Kategorie nennt die Länge, Klasse die Schirmung des Kabels",
+      "Kategorie gilt für Europa, Klasse ist die US-Bezeichnung dafür"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet NEXT bei der Messung von Twisted-Pair-Strecken?",
+    "a": "Nahnebensprechen, also Übersprechen zwischen Adernpaaren am selben Ende",
+    "a_full": "NEXT steht für Near End Crosstalk. Ein sendendes Paar koppelt dabei Störungen in ein benachbartes Paar ein, gemessen am selben Kabelende. Der Wert wird in dB angegeben, ein höherer Wert ist besser. Typische Ursache für schlechte Werte ist zu weit aufgedrilltes Kabel an Dose oder Patchfeld.",
+    "options": [
+      "Nahnebensprechen, also Übersprechen zwischen Adernpaaren am selben Ende",
+      "Nachlaufzeit, also die Verzögerung des Signals über die Strecke",
+      "Nennspannung, also die Spannung, die PoE auf die Adern legt",
+      "Netzersatz, also eine Reserveader für den Fall eines Aderbruchs"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie geht man beim Troubleshooting nach der Bottom-up-Methode vor?",
+    "a": "Man prüft von Schicht 1 aufwärts, also zuerst Kabel und Link",
+    "a_full": "Man beginnt bei der Bitübertragungsschicht, z.B. mit Kabel, Link-LED und Portstatus, und arbeitet sich nach oben bis zur Anwendung. Das Vorgehen ist gründlich und eignet sich, wenn ein physisches Problem vermutet wird. Bei Anwendungsfehlern kostet es aber viel Zeit.",
+    "options": [
+      "Man prüft von Schicht 1 aufwärts, also zuerst Kabel und Link",
+      "Man prüft von der Anwendung abwärts bis zur Verkabelung",
+      "Man beginnt bei Schicht 3 und entscheidet dann über die Richtung",
+      "Man tauscht nacheinander alle Geräte, bis der Fehler verschwindet"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was bedeutet Divide and Conquer bei der Fehlersuche im Netzwerk?",
+    "a": "Man beginnt in der Mitte des OSI-Modells, meist mit einem Ping",
+    "a_full": "Klappt z.B. ein Ping auf Schicht 3, sind die Schichten darunter sehr wahrscheinlich in Ordnung und man sucht darüber weiter. Scheitert der Ping, sucht man darunter weiter. So halbiert man den möglichen Fehlerbereich mit jedem Test.",
+    "options": [
+      "Man beginnt in der Mitte des OSI-Modells, meist mit einem Ping",
+      "Man verteilt die Fehlersuche gleichmäßig auf mehrere Kollegen",
+      "Man trennt das Netz in zwei Hälften und schaltet eine davon ab",
+      "Man beginnt immer bei der Anwendung und arbeitet sich nach unten"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was zeigt unter Linux der Befehl ip route get 8.8.8.8?",
+    "a": "Welche Route, welches Gateway und welche Schnittstelle für dieses Ziel genutzt werden",
+    "a_full": "Der Kernel wertet dabei seine Routingtabelle für genau dieses Ziel aus. Die Ausgabe nennt Gateway, ausgehende Schnittstelle und die verwendete Quelladresse. So klärt man schnell, ob ein Paket bei mehreren Routen den erwarteten Weg nimmt.",
+    "options": [
+      "Welche Route, welches Gateway und welche Schnittstelle für dieses Ziel genutzt werden",
+      "Den Verlauf aller Router bis zum Ziel mit den Antwortzeiten",
+      "Ob das Ziel auf TCP-Port 53 eine Verbindung annimmt",
+      "Die per DNS aufgelösten Namen aller Einträge der Routingtabelle"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür dient ein CAA-Eintrag im DNS?",
+    "a": "Er legt fest, welche Zertifizierungsstellen Zertifikate für die Domain ausstellen dürfen",
+    "a_full": "Im CAA-Eintrag nennt der Domaininhaber z.B. nur eine bestimmte CA. Öffentliche Zertifizierungsstellen müssen den Eintrag vor jeder Ausstellung prüfen und bei fehlender Berechtigung ablehnen. Das erschwert es Angreifern, bei einer anderen CA ein Zertifikat für fremde Domains zu erhalten.",
+    "options": [
+      "Er legt fest, welche Zertifizierungsstellen Zertifikate für die Domain ausstellen dürfen",
+      "Er legt fest, welche Mailserver E-Mails der Domain annehmen dürfen",
+      "Er legt fest, welche Nameserver für eine Unterdomain zuständig sind",
+      "Er legt fest, wie lange Resolver die Einträge der Zone speichern"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Welche Aufgabe hat der DS-Eintrag bei DNSSEC?",
+    "a": "Er verankert den Schlüssel einer Zone in der übergeordneten Zone",
+    "a_full": "Der DS-Eintrag (Delegation Signer) enthält einen Hashwert des Schlüssels der untergeordneten Zone und liegt in der Elternzone. Da die Elternzone selbst signiert ist, entsteht eine Vertrauenskette von der Root-Zone bis zur einzelnen Domain. Fehlt der DS-Eintrag, kann ein Resolver die Signaturen der Zone nicht bis zur Wurzel prüfen.",
+    "options": [
+      "Er verankert den Schlüssel einer Zone in der übergeordneten Zone",
+      "Er verschlüsselt die Antworten zwischen Resolver und Client",
+      "Er nennt den Server, der Zonentransfers annehmen darf",
+      "Er gibt an, wie lange eine Signatur im Cache gültig bleibt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist DNS over HTTPS (DoH)?",
+    "a": "DNS-Anfragen werden verschlüsselt als HTTPS-Verkehr über Port 443 übertragen",
+    "a_full": "Der Client schickt seine DNS-Anfragen per HTTPS an einen DoH-fähigen Resolver. Für Dritte im Netz sehen die Anfragen wie normaler Webverkehr aus und können nicht mitgelesen werden. Browser bringen DoH oft selbst mit und umgehen damit unter Umständen den DNS-Server des Unternehmens.",
+    "options": [
+      "DNS-Anfragen werden verschlüsselt als HTTPS-Verkehr über Port 443 übertragen",
+      "DNS-Einträge werden signiert und über Port 53 unverschlüsselt übertragen",
+      "Webseiten werden über ihren Namen statt über eine IP-Adresse abgerufen",
+      "DNS-Server tauschen ihre Zonen über eine verschlüsselte Verbindung aus"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie hängen NETCONF und YANG zusammen?",
+    "a": "YANG beschreibt die Datenmodelle, NETCONF überträgt die Konfiguration",
+    "a_full": "YANG ist eine Modellierungssprache, die festlegt, wie Konfiguration und Zustand eines Geräts strukturiert sind. NETCONF ist das Protokoll, mit dem man diese Daten per SSH ausliest und ändert, inklusive Prüfung und Rücknahme. Damit lassen sich Netzgeräte verschiedener Hersteller maschinenlesbar statt per CLI verwalten.",
+    "options": [
+      "YANG beschreibt die Datenmodelle, NETCONF überträgt die Konfiguration",
+      "NETCONF beschreibt die Datenmodelle, YANG überträgt die Konfiguration",
+      "YANG ist der Nachfolger von NETCONF und ersetzt es vollständig",
+      "Beide sind Routingprotokolle für den Einsatz im Rechenzentrum"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist das Grundprinzip von Software-Defined Networking (SDN)?",
+    "a": "Die Steuerungsebene wird zentral in einem Controller von der Datenebene getrennt",
+    "a_full": "Klassisch entscheidet jedes Gerät selbst, wie es Pakete weiterleitet. Bei SDN berechnet ein zentraler Controller die Regeln und verteilt sie an die Switches. Die Geräte leiten dann nur noch nach diesen Vorgaben weiter. Das Netz lässt sich so zentral und per Programmierschnittstelle steuern.",
+    "options": [
+      "Die Steuerungsebene wird zentral in einem Controller von der Datenebene getrennt",
+      "Jeder Switch berechnet seine Weiterleitung unabhängig von den anderen",
+      "Die Datenebene wird zentral in einem Controller zusammengefasst",
+      "Alle Netzgeräte werden durch virtuelle Maschinen auf Servern ersetzt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was leistet Zero-Touch-Provisioning (ZTP) bei Netzwerkgeräten?",
+    "a": "Neue Geräte holen sich beim ersten Start Konfiguration und Firmware selbst",
+    "a_full": "Das Gerät startet ohne Konfiguration und erhält per DHCP eine Adresse und den Hinweis auf einen Provisionierungsserver. Von dort lädt es Firmware und Konfiguration automatisch. Vor Ort muss nur noch jemand das Gerät einbauen und verkabeln, ohne Konsole und Fachwissen.",
+    "options": [
+      "Neue Geräte holen sich beim ersten Start Konfiguration und Firmware selbst",
+      "Neue Geräte arbeiten ganz ohne IP-Adresse und Konfiguration",
+      "Neue Geräte werden erst nach einer Schulung vor Ort eingerichtet",
+      "Neue Geräte übernehmen die Konfiguration per USB-Stick vom Nachbarn"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was unterscheidet FTTB von FTTH?",
+    "a": "Bei FTTB endet die Glasfaser im Keller, bei FTTH erst in der Wohnung",
+    "a_full": "Bei Fiber to the Building führt die Glasfaser bis in das Gebäude. Die letzten Meter in die Wohnungen laufen über vorhandene Kupferleitungen, z.B. mit VDSL oder G.fast. Bei Fiber to the Home reicht die Faser bis in die Wohnung. FTTH erlaubt höhere Datenraten, weil der Kupferabschnitt entfällt.",
+    "options": [
+      "Bei FTTB endet die Glasfaser im Keller, bei FTTH erst in der Wohnung",
+      "Bei FTTB endet die Glasfaser am Kabelverzweiger an der Straße",
+      "Bei FTTB wird Koaxialkabel, bei FTTH Twisted Pair verlegt",
+      "Bei FTTB endet die Glasfaser in der Wohnung, bei FTTH im Keller"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie funktioniert ein passives optisches Netz (PON, z.B. GPON)?",
+    "a": "Eine Faser wird über passive Splitter auf viele Anschlüsse aufgeteilt",
+    "a_full": "Vom Anbieter (OLT) führt eine Faser zu einem Splitter, der das Licht z.B. auf 32 Kundenanschlüsse verteilt. Der Splitter braucht keinen Strom, die Bandbreite der Faser teilen sich aber alle angeschlossenen Kunden. Die Daten sind je Kunde verschlüsselt, damit niemand fremden Verkehr mitliest.",
+    "options": [
+      "Eine Faser wird über passive Splitter auf viele Anschlüsse aufgeteilt",
+      "Jeder Kunde bekommt eine eigene Faser bis zur Vermittlungsstelle",
+      "Aktive Switches in jedem Straßenzug verstärken das Lichtsignal",
+      "Das Lichtsignal wird im Keller in ein Funksignal umgewandelt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was kennzeichnet Internetzugänge über das Kabelnetz nach DOCSIS?",
+    "a": "Die Kunden eines Segments teilen sich die Bandbreite im Koaxialnetz",
+    "a_full": "Kabelinternet nutzt das Koaxialnetz des Fernsehkabels, am Kunden sitzt ein Kabelmodem. Alle Anschlüsse eines Netzsegments teilen sich die verfügbare Kapazität. Zu Stoßzeiten kann die Datenrate daher sinken, wenn viele Nachbarn gleichzeitig surfen.",
+    "options": [
+      "Die Kunden eines Segments teilen sich die Bandbreite im Koaxialnetz",
+      "Jeder Kunde hat eine eigene Kupferdoppelader bis zum Verteiler",
+      "Die Daten werden per Satellit zum Kabelmodem übertragen",
+      "Die Bandbreite ist garantiert, weil jeder Kunde eine eigene Faser hat"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein 5G-Campusnetz?",
+    "a": "Ein privates Mobilfunknetz, das ein Unternehmen auf dem eigenen Gelände betreibt",
+    "a_full": "Unternehmen können in Deutschland bei der Bundesnetzagentur eigene Frequenzen beantragen, z.B. im Bereich 3,7 bis 3,8 GHz. Damit betreiben sie ein lokales 5G-Netz, etwa für Fertigung, Logistik oder fahrerlose Transportsysteme. Vorteile sind eigene Kontrolle, planbare Latenz und Unabhängigkeit von öffentlichen Netzen.",
+    "options": [
+      "Ein privates Mobilfunknetz, das ein Unternehmen auf dem eigenen Gelände betreibt",
+      "Ein öffentliches WLAN mit 5 GHz auf dem Gelände einer Hochschule",
+      "Ein 5-Gbit/s-Glasfaserring zwischen den Gebäuden eines Standorts",
+      "Ein Mobilfunkvertrag mit festem Kontingent für alle Firmenhandys"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür eignet sich LoRaWAN?",
+    "a": "Für Sensoren, die kleine Datenmengen über mehrere Kilometer funken",
+    "a_full": "LoRaWAN ist ein Low Power Wide Area Network und nutzt in Europa das freie 868-MHz-Band. Die Reichweite liegt bei mehreren Kilometern, die Datenrate nur bei wenigen kbit/s. Batteriebetriebene Sensoren wie Zähler oder Füllstandsmelder halten so jahrelang durch.",
+    "options": [
+      "Für Sensoren, die kleine Datenmengen über mehrere Kilometer funken",
+      "Für Videoübertragung mit hoher Datenrate über kurze Distanzen",
+      "Für die Anbindung von Access Points an den Core-Switch",
+      "Für schnelle Datenübertragung zwischen zwei Rechenzentren"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wofür ist Bluetooth Low Energy (BLE) ausgelegt?",
+    "a": "Für sehr sparsame Funkverbindungen mit kleinen Datenmengen",
+    "a_full": "BLE überträgt kurze Datenpakete und schläft dazwischen fast immer. Sensoren, Fitnessarmbänder oder Beacons laufen so monatelang oder jahrelang mit einer Knopfzelle. Für Audio oder große Dateien ist es nicht gedacht.",
+    "options": [
+      "Für sehr sparsame Funkverbindungen mit kleinen Datenmengen",
+      "Für Audioübertragung in hoher Qualität zu Kopfhörern",
+      "Für schnelle Dateiübertragung zwischen zwei Notebooks",
+      "Für die Vernetzung von Gebäuden über mehrere Kilometer"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie arbeitet das IoT-Protokoll MQTT?",
+    "a": "Nach dem Publish-Subscribe-Prinzip über einen zentralen Broker",
+    "a_full": "Geräte veröffentlichen Nachrichten zu einem Topic, z.B. halle1/temperatur, beim Broker. Alle Clients, die dieses Topic abonniert haben, erhalten die Nachricht vom Broker. MQTT läuft über TCP, ist sehr schlank und eignet sich für viele Sensoren mit schwacher Anbindung.",
+    "options": [
+      "Nach dem Publish-Subscribe-Prinzip über einen zentralen Broker",
+      "Nach dem Request-Response-Prinzip direkt zwischen zwei Geräten",
+      "Nach dem Broadcast-Prinzip an alle Geräte im Subnetz",
+      "Nach dem Peer-to-Peer-Prinzip ohne zentrale Komponente"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Wie funktioniert DS-Lite (Dual-Stack Lite) beim Internetanschluss?",
+    "a": "IPv4 wird im IPv6-Tunnel zum Provider geführt und dort per CGNAT übersetzt",
+    "a_full": "Der Kunde erhält eine echte IPv6-Anbindung, aber keine eigene öffentliche IPv4-Adresse. Der Router packt IPv4-Pakete in IPv6 und schickt sie zum Provider, der sie per Carrier-Grade NAT ins IPv4-Internet leitet. Von außen ist der Anschluss daher nur per IPv6 direkt erreichbar.",
+    "options": [
+      "IPv4 wird im IPv6-Tunnel zum Provider geführt und dort per CGNAT übersetzt",
+      "IPv6 wird im IPv4-Tunnel zum Provider geführt und dort übersetzt",
+      "Der Kunde erhält je eine eigene öffentliche IPv4- und IPv6-Adresse",
+      "IPv4 und IPv6 laufen über zwei getrennte physische Leitungen"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein Client-to-Site-VPN?",
+    "a": "Ein einzelnes Endgerät baut einen Tunnel ins Firmennetz auf",
+    "a_full": "Auf dem Notebook läuft eine VPN-Software, die sich mit dem VPN-Gateway der Firma verbindet. Der Mitarbeiter kann dann z.B. aus dem Homeoffice auf interne Dienste zugreifen. Im Unterschied zum Site-to-Site-VPN verbindet es kein ganzes Netz, sondern nur dieses eine Gerät.",
+    "options": [
+      "Ein einzelnes Endgerät baut einen Tunnel ins Firmennetz auf",
+      "Zwei Firmenstandorte werden dauerhaft über Gateways verbunden",
+      "Ein Webserver wird über einen Tunnel im Internet veröffentlicht",
+      "Zwei Clients im selben LAN verschlüsseln ihren Verkehr direkt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ist ein SIP-Trunk?",
+    "a": "Die Anbindung einer Telefonanlage an den Provider über IP mit mehreren Sprachkanälen",
+    "a_full": "Statt eines ISDN-Anlagenanschlusses verbindet sich die TK-Anlage per SIP über das Internet oder eine eigene Leitung mit dem Provider. Ein Trunk stellt mehrere gleichzeitige Gespräche und einen Rufnummernblock mit Durchwahlen bereit. Die Zahl der Kanäle lässt sich meist flexibel buchen.",
+    "options": [
+      "Die Anbindung einer Telefonanlage an den Provider über IP mit mehreren Sprachkanälen",
+      "Ein Bündel aus mehreren Kupferleitungen zwischen zwei Telefonanlagen",
+      "Ein VLAN, in dem nur die IP-Telefone eines Standorts liegen",
+      "Ein Codec, der Sprache besonders stark komprimiert überträgt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Was ermöglicht MSTP (Multiple Spanning Tree Protocol)?",
+    "a": "Mehrere VLANs werden zu Instanzen mit jeweils eigener Topologie zusammengefasst",
+    "a_full": "Jede Instanz hat eine eigene Root Bridge und damit eigene blockierte Ports. So nutzt z.B. Instanz 1 den einen und Instanz 2 den anderen Uplink, und beide Leitungen tragen Last. Anders als bei einer Instanz pro VLAN bleibt die Zahl der Berechnungen trotzdem klein.",
+    "options": [
+      "Mehrere VLANs werden zu Instanzen mit jeweils eigener Topologie zusammengefasst",
+      "Mehrere Switches werden zu einem logischen Gerät zusammengefasst",
+      "Alle VLANs teilen sich zwingend eine einzige gemeinsame Topologie",
+      "Mehrere Ports werden ohne Blockierung zu einem Link gebündelt"
+    ]
+  },
+  {
+    "cat": "netzwerk",
+    "q": "Worin unterscheidet sich Stacking von Link Aggregation?",
+    "a": "Stacking vereint Switches zu einem Gerät, Link Aggregation bündelt Leitungen",
+    "a_full": "Beim Stacking verhalten sich mehrere Switches wie ein einziger mit gemeinsamer Verwaltung. Link Aggregation fasst mehrere parallele Leitungen zwischen zwei Geräten zu einem logischen Link zusammen. Beides lässt sich kombinieren, indem ein Bündel auf Ports verschiedener Stack-Mitglieder verteilt wird.",
+    "options": [
+      "Stacking vereint Switches zu einem Gerät, Link Aggregation bündelt Leitungen",
+      "Stacking bündelt Leitungen, Link Aggregation vereint Switches zu einem Gerät",
+      "Stacking gilt nur für Router, Link Aggregation nur für Switches",
+      "Stacking verdoppelt die Portzahl, Link Aggregation die VLAN-Anzahl"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was enthält Anhang A der ISO/IEC 27001:2022?",
+    "a": "Einen Katalog von 93 Sicherheitsmaßnahmen (Controls) in vier Themen",
+    "a_full": "Die Maßnahmen sind in organisatorische, personenbezogene, physische und technologische Controls gegliedert. Das Unternehmen wählt anhand seiner Risikobewertung aus, welche davon es umsetzt. Die Fassung von 2013 hatte noch 114 Maßnahmen in 14 Bereichen.",
+    "options": [
+      "Einen Katalog von 93 Sicherheitsmaßnahmen (Controls) in vier Themen",
+      "Eine Liste aller zugelassenen Zertifizierungsstellen in Europa",
+      "Musterverträge für die Auftragsverarbeitung nach DSGVO",
+      "Die Prüfberichte der letzten Überwachungsaudits"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist die Erklärung zur Anwendbarkeit (Statement of Applicability, SoA)?",
+    "a": "Ein Dokument, das für jede Anhang-A-Maßnahme festhält, ob sie angewendet wird und warum",
+    "a_full": "Die SoA ist ein Pflichtdokument der ISO/IEC 27001. Sie nennt für jede Maßnahme aus Anhang A, ob sie umgesetzt oder ausgeschlossen wird, mit Begründung und Umsetzungsstand. Auditoren nutzen sie als Leitfaden für die Zertifizierung.",
+    "options": [
+      "Ein Dokument, das für jede Anhang-A-Maßnahme festhält, ob sie angewendet wird und warum",
+      "Eine Liste aller Geräte, auf denen die Sicherheitssoftware installiert und aktiv ist",
+      "Die Einwilligung der Mitarbeiter in die Überwachung ihrer E-Mail- und Benutzerkonten",
+      "Eine Bestätigung des Herstellers, dass ein Produkt allen Normen der ISO-Reihe entspricht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie unterscheiden sich ISO/IEC 27001 und ISO/IEC 27002?",
+    "a": "27001 enthält die zertifizierbaren Anforderungen, 27002 gibt Hinweise zur Umsetzung",
+    "a_full": "Nach ISO/IEC 27001 lässt sich ein ISMS zertifizieren, dort steht, was gefordert ist. ISO/IEC 27002 beschreibt die Maßnahmen aus Anhang A ausführlich und gibt Empfehlungen, wie man sie umsetzt. Nach 27002 selbst kann man sich nicht zertifizieren lassen.",
+    "options": [
+      "27001 enthält die zertifizierbaren Anforderungen, 27002 gibt Hinweise zur Umsetzung",
+      "27001 gilt nur für Behörden, 27002 gilt dagegen nur für private Unternehmen",
+      "27001 regelt den Datenschutz, 27002 regelt dagegen nur die physische Sicherheit",
+      "27001 ist die ältere Fassung, 27002 hat sie seit 2022 vollständig ersetzt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie läuft der Zertifizierungszyklus nach ISO/IEC 27001 ab?",
+    "a": "Das Zertifikat gilt drei Jahre, dazwischen finden jährliche Überwachungsaudits statt",
+    "a_full": "Zuerst prüft eine akkreditierte Zertifizierungsstelle in einem zweistufigen Audit die Dokumentation und die Umsetzung. In den beiden Folgejahren gibt es Überwachungsaudits. Nach drei Jahren folgt ein Rezertifizierungsaudit.",
+    "options": [
+      "Das Zertifikat gilt drei Jahre, dazwischen finden jährliche Überwachungsaudits statt",
+      "Das Zertifikat gilt unbegrenzt, wenn keine Vorfälle gemeldet werden",
+      "Das Zertifikat gilt ein Jahr und wird dann ohne Audit verlängert",
+      "Das Zertifikat gilt fünf Jahre, ein Audit findet nur am Anfang statt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt der BSI-Standard 200-1?",
+    "a": "Die allgemeinen Anforderungen an ein ISMS und dessen Betrieb",
+    "a_full": "BSI-Standard 200-1 beschreibt, wie ein ISMS aufgebaut und betrieben wird, z.B. Leitungsaufgaben, Sicherheitsorganisation und kontinuierliche Verbesserung. Er ist mit ISO/IEC 27001 vereinbar. Die weiteren Standards 200-2 bis 200-4 bauen darauf auf.",
+    "options": [
+      "Die allgemeinen Anforderungen an ein ISMS und dessen Betrieb",
+      "Die technischen Anforderungen an Firewalls in Behördennetzen",
+      "Die Vorgaben für die Vernichtung von Datenträgern",
+      "Die Prüfung von Software auf bekannte Schwachstellen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was unterscheidet Basis-, Standard- und Kern-Absicherung nach BSI-Standard 200-2?",
+    "a": "Wie breit und wie tief die Sicherheitsanforderungen umgesetzt werden",
+    "a_full": "Die Basis-Absicherung setzt zuerst die grundlegenden Anforderungen für alle Bereiche um, ein schneller Einstieg. Die Kern-Absicherung schützt zuerst nur die besonders wichtigen Werte umfassend. Die Standard-Absicherung ist das empfohlene Ziel und deckt alle Bereiche vollständig ab.",
+    "options": [
+      "Wie breit und wie tief die Sicherheitsanforderungen umgesetzt werden",
+      "Wie viele Mitarbeiter eine Sicherheitsschulung besucht haben",
+      "Welche Verschlüsselungsverfahren ein Unternehmen einsetzen darf",
+      "Wie oft ein Unternehmen seine Datensicherung wiederholen muss"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wann ist eine Risikoanalyse nach BSI-Standard 200-3 notwendig?",
+    "a": "Bei hohem Schutzbedarf oder wenn passende Grundschutz-Bausteine fehlen",
+    "a_full": "Die Anforderungen des IT-Grundschutz-Kompendiums reichen für normalen Schutzbedarf aus. Bei höherem Schutzbedarf, bei besonderen Einsatzszenarien oder bei Zielobjekten ohne passenden Baustein prüft man die Gefährdungen einzeln. Daraus leitet man zusätzliche Maßnahmen ab.",
+    "options": [
+      "Bei hohem Schutzbedarf oder wenn passende Grundschutz-Bausteine fehlen",
+      "Nur wenn das Unternehmen mehr als 1.000 Mitarbeiter beschäftigt",
+      "Nur nach einem Sicherheitsvorfall, der gemeldet werden musste",
+      "Grundsätzlich einmal pro Monat für jeden einzelnen Arbeitsplatz"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist eine Sicherheitsleitlinie (Informationssicherheitsleitlinie)?",
+    "a": "Ein Grundsatzdokument der Leitung zu Zielen und Stellenwert der Informationssicherheit",
+    "a_full": "Die Leitlinie legt fest, warum Informationssicherheit wichtig ist, welche Ziele gelten und wer verantwortlich ist. Die Unternehmensleitung verabschiedet sie und macht sie allen Mitarbeitern bekannt. Konkrete Maßnahmen stehen nicht dort, sondern im Sicherheitskonzept.",
+    "options": [
+      "Ein Grundsatzdokument der Leitung zu Zielen und Stellenwert der Informationssicherheit",
+      "Eine technische Anleitung zur Konfiguration der Firewall im Rechenzentrum",
+      "Ein Vertrag mit dem externen Dienstleister über die tägliche Datensicherung",
+      "Eine Liste der erlaubten Programme auf allen Arbeitsplätzen im Unternehmen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Worin unterscheiden sich Informationssicherheitsbeauftragter (ISB) und Datenschutzbeauftragter (DSB)?",
+    "a": "Der ISB schützt alle Informationen, der DSB die Rechte der betroffenen Personen",
+    "a_full": "Der ISB kümmert sich um Vertraulichkeit, Integrität und Verfügbarkeit aller Informationen, auch von Geschäftsgeheimnissen. Der DSB überwacht die Einhaltung der DSGVO bei personenbezogenen Daten. Der DSB ist gesetzlich vorgeschrieben, sobald die Voraussetzungen erfüllt sind, der ISB meist durch Normen oder Regelwerke gefordert.",
+    "options": [
+      "Der ISB schützt alle Informationen, der DSB die Rechte der betroffenen Personen",
+      "Der ISB ist nur für Server zuständig, der DSB nur für Arbeitsplätze",
+      "Der ISB arbeitet immer extern, der DSB immer als Angestellter",
+      "Beide Rollen sind rechtlich identisch und dürfen nie getrennt besetzt werden"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was versteht man unter einem Restrisiko?",
+    "a": "Das Risiko, das nach Umsetzung aller gewählten Maßnahmen noch bleibt",
+    "a_full": "Kein Risiko lässt sich vollständig beseitigen. Das verbleibende Restrisiko wird bewertet, dokumentiert und von der Unternehmensleitung bewusst getragen. Ist es zu hoch, braucht es weitere Maßnahmen.",
+    "options": [
+      "Das Risiko, das nach Umsetzung aller gewählten Maßnahmen noch bleibt",
+      "Das Risiko, das vor der Einführung von Maßnahmen bestand",
+      "Das Risiko, das ein Versicherer vollständig übernommen hat",
+      "Das Risiko, das nur für externe Dienstleister besteht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was gehört in ein Notfallhandbuch?",
+    "a": "Alarmierungswege, Kontaktlisten, Zuständigkeiten und Wiederanlaufpläne",
+    "a_full": "Das Notfallhandbuch sagt, wer im Notfall wen informiert, wer entscheidet und in welcher Reihenfolge Systeme wiederhergestellt werden. Es muss auch ohne funktionierende IT verfügbar sein, z.B. als Ausdruck. Regelmäßige Übungen zeigen, ob es aktuell ist.",
+    "options": [
+      "Alarmierungswege, Kontaktlisten, Zuständigkeiten und Wiederanlaufpläne",
+      "Die Lizenzschlüssel aller installierten Programme",
+      "Die Protokolle aller Anmeldungen der letzten zwölf Monate",
+      "Die Quelltexte der selbst entwickelten Anwendungen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie unterscheidet der BSI-Standard 200-4 zwischen Störung, Notfall und Krise?",
+    "a": "Nach Schwere und danach, ob die normale Organisation noch ausreicht",
+    "a_full": "Eine Störung behebt die normale Organisation im Tagesgeschäft. Bei einem Notfall fallen zeitkritische Prozesse länger aus, eine besondere Aufbauorganisation mit Stab übernimmt. Eine Krise lässt sich auch mit den vorbereiteten Notfallplänen nicht mehr bewältigen.",
+    "options": [
+      "Nach Schwere und danach, ob die normale Organisation noch ausreicht",
+      "Nach der Anzahl der betroffenen Server im Rechenzentrum",
+      "Nach der Uhrzeit, zu der das Ereignis bemerkt wurde",
+      "Nach der Höhe der Versicherungssumme des Unternehmens"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Meldefristen gelten nach NIS2 für erhebliche Sicherheitsvorfälle?",
+    "a": "24 Stunden Frühwarnung, 72 Stunden Meldung, ein Monat Abschlussbericht",
+    "a_full": "Die Fristen beginnen, sobald die Einrichtung von dem erheblichen Vorfall Kenntnis erlangt. In Deutschland geht die Meldung an das BSI. Die Frühwarnung ist kurz, die Meldung nach 72 Stunden enthält eine erste Bewertung, der Abschlussbericht die Ursache und die Maßnahmen.",
+    "options": [
+      "24 Stunden Frühwarnung, 72 Stunden Meldung, ein Monat Abschlussbericht",
+      "48 Stunden Frühwarnung, 7 Tage Meldung, ein Jahr Abschlussbericht",
+      "Eine einzige Meldung innerhalb von zwei Wochen nach dem Vorfall",
+      "Meldung erst nach Abschluss aller forensischen Untersuchungen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind Kritische Infrastrukturen (KRITIS)?",
+    "a": "Einrichtungen, deren Ausfall die Versorgung der Bevölkerung erheblich gefährdet",
+    "a_full": "Dazu gehören z.B. Strom- und Wasserversorgung, Krankenhäuser, Banken und Telekommunikation. Betreiber, die bestimmte Schwellenwerte überschreiten, haben besondere Pflichten nach dem BSI-Gesetz. Sie müssen ihre Sicherheitsmaßnahmen regelmäßig gegenüber dem BSI nachweisen.",
+    "options": [
+      "Einrichtungen, deren Ausfall die Versorgung der Bevölkerung erheblich gefährdet",
+      "Alle Server eines Unternehmens, die ohne unterbrechungsfreie Stromversorgung laufen",
+      "Netzwerkgeräte, deren Firmware vom Hersteller nicht mehr aktualisiert wird",
+      "Unternehmen, die in einem Kalenderjahr mehr als einen Sicherheitsvorfall hatten"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist das IT-Sicherheitsgesetz?",
+    "a": "Ein Gesetz, das KRITIS-Betreiber zu Mindeststandards und Meldungen verpflichtet",
+    "a_full": "Das erste IT-Sicherheitsgesetz von 2015 änderte vor allem das BSI-Gesetz. Das IT-Sicherheitsgesetz 2.0 von 2021 erweiterte die Pflichten, z.B. um Systeme zur Angriffserkennung. Mit der Umsetzung von NIS2 wurde das BSI-Gesetz erneut deutlich ausgeweitet.",
+    "options": [
+      "Ein Gesetz, das KRITIS-Betreiber zu Mindeststandards und Meldungen verpflichtet",
+      "Ein Gesetz, das jedem Bürger eine kostenlose Virenschutzsoftware garantiert",
+      "Ein Gesetz, das die Verschlüsselung privater E-Mails verbietet",
+      "Ein Gesetz, das Unternehmen den Einsatz von Cloud-Diensten untersagt"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Welche Schäden deckt eine Cyberversicherung typischerweise ab?",
+    "a": "Eigenschäden wie Betriebsunterbrechung und Forensik sowie Ansprüche Dritter",
+    "a_full": "Eigenschäden sind z.B. Umsatzausfall, Kosten für Forensiker, Datenwiederherstellung und Krisenkommunikation. Drittschäden sind Schadenersatzansprüche von Kunden oder Partnern, etwa nach einem Datenleck. Viele Versicherer bieten zusätzlich eine Notfall-Hotline mit Experten an.",
+    "options": [
+      "Eigenschäden wie Betriebsunterbrechung und Forensik sowie Ansprüche Dritter",
+      "Nur den Kaufpreis gestohlener Hardware wie Laptops und Handys",
+      "Nur die Kosten für neue Lizenzen nach einem Softwarefehler",
+      "Nur Schäden durch Feuer und Wasser im Serverraum"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was verlangt eine Clean-Desk-Policy?",
+    "a": "Vertrauliche Unterlagen und Datenträger nie offen am Platz liegen lassen",
+    "a_full": "Unterlagen, Notizen und USB-Sticks kommen in abschließbare Schränke. Meist gehört auch eine Clear-Screen-Regel dazu: Der Bildschirm wird beim Verlassen gesperrt. So sehen Reinigungskräfte, Besucher oder Kollegen keine vertraulichen Informationen.",
+    "options": [
+      "Vertrauliche Unterlagen und Datenträger nie offen am Platz liegen lassen",
+      "Den Schreibtisch jeden Abend mit Desinfektionsmittel reinigen",
+      "Am Arbeitsplatz nur Geräte des eigenen Unternehmens verwenden",
+      "Alle Arbeitsplätze nach Feierabend komplett vom Stromnetz trennen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was regelt eine Besucherregelung im Unternehmen?",
+    "a": "Anmeldung, Ausweis und Begleitung externer Personen im Gebäude",
+    "a_full": "Besucher melden sich am Empfang an, werden erfasst und tragen einen sichtbaren Besucherausweis. In sensiblen Bereichen wie dem Serverraum werden sie ständig begleitet. Beim Gehen geben sie den Ausweis zurück.",
+    "options": [
+      "Anmeldung, Ausweis und Begleitung externer Personen im Gebäude",
+      "Welche Kunden am Telefon eine Auskunft erhalten dürfen",
+      "Wie viele Mitarbeiter gleichzeitig Urlaub nehmen dürfen",
+      "Welche Webseiten Gäste im WLAN aufrufen dürfen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Warum verpflichtet man Beschäftigte schriftlich auf die Vertraulichkeit?",
+    "a": "Um nachzuweisen, dass sie Daten nur auf Weisung und für ihre Aufgaben verarbeiten",
+    "a_full": "Nach Art. 29 und Art. 32 Abs. 4 DSGVO dürfen Personen mit Zugang zu personenbezogenen Daten diese nur auf Anweisung des Verantwortlichen verarbeiten. Die unterschriebene Verpflichtung bei der Einstellung dient als Nachweis im Sinne der Rechenschaftspflicht. Sie gilt auch nach dem Ende des Arbeitsverhältnisses weiter.",
+    "options": [
+      "Um nachzuweisen, dass sie Daten nur auf Weisung und für ihre Aufgaben verarbeiten",
+      "Damit sie ohne Rückfrage Daten an Behörden herausgeben dürfen",
+      "Weil sonst ihr Arbeitsvertrag nach sechs Monaten unwirksam wird",
+      "Damit das Unternehmen keinen Datenschutzbeauftragten braucht"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein Drittland im Sinne der DSGVO?",
+    "a": "Ein Staat außerhalb des Europäischen Wirtschaftsraums (EWR)",
+    "a_full": "Der EWR umfasst die EU-Staaten sowie Island, Liechtenstein und Norwegen. Übermittlungen in diese Länder gelten wie innerhalb der EU. Für alle anderen Staaten braucht es eine besondere Grundlage nach Kapitel V der DSGVO.",
+    "options": [
+      "Ein Staat außerhalb des Europäischen Wirtschaftsraums (EWR)",
+      "Jeder Staat, der nicht an Deutschland angrenzt",
+      "Jeder Staat, in dem kein Rechenzentrum des Anbieters steht",
+      "Jeder Staat, dessen Amtssprache nicht Englisch ist"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was sind Binding Corporate Rules (verbindliche interne Datenschutzvorschriften)?",
+    "a": "Konzernweite Datenschutzregeln, die eine Aufsichtsbehörde genehmigt hat",
+    "a_full": "Internationale Konzerne können mit Binding Corporate Rules nach Art. 47 DSGVO Daten zwischen ihren Gesellschaften in Drittländer übermitteln. Die Regeln müssen verbindlich sein und den Betroffenen durchsetzbare Rechte geben. Das Genehmigungsverfahren ist aufwendig und lohnt sich vor allem für große Konzerne.",
+    "options": [
+      "Konzernweite Datenschutzregeln, die eine Aufsichtsbehörde genehmigt hat",
+      "Unverbindliche Empfehlungen eines Branchenverbands zum Datenschutz",
+      "Die internen Passwortregeln eines Konzerns für alle Tochterfirmen",
+      "Verträge, die Mitarbeiter bei ihrer Einstellung unterschreiben"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was besagt das Koppelungsverbot bei der Einwilligung nach DSGVO?",
+    "a": "Ein Vertrag darf nicht an eine dafür unnötige Einwilligung geknüpft werden",
+    "a_full": "Nach Art. 7 Abs. 4 DSGVO ist eine Einwilligung meist nicht freiwillig, wenn z.B. ein Kauf nur mit Zustimmung zu Werbemails möglich ist. Die Werbung ist für die Vertragserfüllung nicht erforderlich. Eine so erzwungene Einwilligung ist in der Regel unwirksam.",
+    "options": [
+      "Ein Vertrag darf nicht an eine dafür unnötige Einwilligung geknüpft werden",
+      "Eine Einwilligung darf nicht mit einer Unterschrift verbunden werden",
+      "Mehrere Einwilligungen dürfen nie auf einer Seite stehen",
+      "Eine Einwilligung gilt nur zusammen mit einem Arbeitsvertrag"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Wie prüft man, ob eine Verarbeitung auf ein berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO) gestützt werden kann?",
+    "a": "Mit einer Interessenabwägung zwischen Unternehmen und betroffenen Personen",
+    "a_full": "Zuerst muss ein berechtigtes Interesse vorliegen, z.B. Betrugsprävention oder Netzwerksicherheit. Dann muss die Verarbeitung dafür erforderlich sein. Zuletzt dürfen die Interessen und Grundrechte der Betroffenen nicht überwiegen, dabei zählt auch, womit sie vernünftigerweise rechnen.",
+    "options": [
+      "Mit einer Interessenabwägung zwischen Unternehmen und betroffenen Personen",
+      "Mit einer schriftlichen Genehmigung der Aufsichtsbehörde vorab",
+      "Mit einer Abstimmung aller Mitarbeiter in der Betriebsversammlung",
+      "Mit einem Zertifikat nach ISO/IEC 27001 für das Unternehmen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Bis wann muss informiert werden, wenn Daten nicht bei der betroffenen Person selbst erhoben wurden (Art. 14 DSGVO)?",
+    "a": "Innerhalb einer angemessenen Frist, spätestens nach einem Monat",
+    "a_full": "Das betrifft z.B. Adressen aus einem gekauften Verzeichnis oder Daten von einem Geschäftspartner. Wird die Person vorher kontaktiert, muss spätestens bei der ersten Kontaktaufnahme informiert werden. Die Pflichtangaben entsprechen weitgehend denen nach Art. 13, ergänzt um die Quelle der Daten.",
+    "options": [
+      "Innerhalb einer angemessenen Frist, spätestens nach einem Monat",
+      "Erst wenn die Person eine Auskunft ausdrücklich verlangt",
+      "Innerhalb von drei Jahren nach der ersten Speicherung",
+      "Gar nicht, weil keine direkte Erhebung stattgefunden hat"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was kennzeichnet eine fortgeschrittene elektronische Signatur nach eIDAS?",
+    "a": "Sie ist dem Unterzeichner eindeutig zugeordnet und macht spätere Änderungen erkennbar",
+    "a_full": "Die Signatur identifiziert den Unterzeichner und wird mit Mitteln erstellt, die er allein kontrolliert. Wird das Dokument danach verändert, fällt das bei der Prüfung auf. Ohne qualifiziertes Zertifikat und sichere Signaturerstellungseinheit ersetzt sie aber nicht die Schriftform.",
+    "options": [
+      "Sie ist dem Unterzeichner eindeutig zugeordnet und macht spätere Änderungen erkennbar",
+      "Sie besteht aus einer eingescannten handschriftlichen Unterschrift",
+      "Sie wird von einem Notar persönlich auf Papier bestätigt",
+      "Sie gilt nur innerhalb eines Unternehmens und nicht nach außen"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was ist ein elektronisches Siegel nach eIDAS?",
+    "a": "Eine Art Signatur für Organisationen, die Herkunft und Unversehrtheit von Dokumenten belegt",
+    "a_full": "Eine Signatur gehört immer zu einer natürlichen Person, ein Siegel zu einer juristischen Person wie einem Unternehmen oder einer Behörde. Siegel werden oft automatisch angebracht, z.B. auf Rechnungen oder Bescheiden. Wie bei Signaturen gibt es einfache, fortgeschrittene und qualifizierte Siegel.",
+    "options": [
+      "Eine Art Signatur für Organisationen, die Herkunft und Unversehrtheit von Dokumenten belegt",
+      "Ein Aufkleber, der das Öffnen eines Servergehäuses sichtbar macht",
+      "Ein Prüfzeichen für Webseiten mit einem gültigen TLS-Zertifikat",
+      "Ein Stempel des Datenschutzbeauftragten auf dem Verarbeitungsverzeichnis"
+    ]
+  },
+  {
+    "cat": "sicherheit",
+    "q": "Was beschreibt eine Verfahrensdokumentation nach den GoBD?",
+    "a": "Wie steuerrelevante Daten entstehen, verarbeitet und archiviert werden",
+    "a_full": "Sie besteht meist aus allgemeiner Beschreibung, Anwenderdokumentation, technischer Systemdokumentation und Betriebsdokumentation. Ein Prüfer des Finanzamts soll den Weg eines Belegs nachvollziehen können. Fehlt sie oder ist sie lückenhaft, kann das die Ordnungsmäßigkeit der Buchführung gefährden.",
+    "options": [
+      "Wie steuerrelevante Daten entstehen, verarbeitet und archiviert werden",
+      "Wie Mitarbeiter ihre Urlaubsanträge im Personalsystem stellen",
+      "Welche Programmiersprachen im Unternehmen verwendet werden",
+      "Wie der Datenschutzbeauftragte ausgewählt und benannt wurde"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Aufgaben übernehmen WDS und MDT beim Windows-Rollout?",
+    "a": "WDS verteilt Images per PXE, MDT steuert den Ablauf per Tasksequenz",
+    "a_full": "Die Windows-Bereitstellungsdienste (WDS) liefern Boot- und Installationsimages über das Netzwerk an PXE-Clients. Das Microsoft Deployment Toolkit (MDT) legt in einer Tasksequenz fest, welche Treiber, Updates und Programme in welcher Reihenfolge installiert werden. Zusammen ergibt das eine weitgehend automatische Installation.",
+    "options": [
+      "WDS verteilt Images per PXE, MDT steuert den Ablauf per Tasksequenz",
+      "WDS verschlüsselt Laufwerke, MDT verwaltet die Softwarelizenzen",
+      "WDS sichert die Clients, MDT stellt deren Backups wieder her",
+      "WDS vergibt IP-Adressen, MDT verteilt die DNS-Einträge im Netz"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet ein Thin Image von einem Thick Image?",
+    "a": "Thin: nur Betriebssystem und Basis, Thick: zusätzlich alle Anwendungen",
+    "a_full": "Ein Thick Image enthält Betriebssystem, Treiber und Anwendungen. Es ist schnell verteilt, muss aber bei jeder Programmänderung neu erstellt werden. Ein Thin Image bleibt schlank, die Programme kommen danach über die Softwareverteilung. Das ist flexibler und leichter zu pflegen.",
+    "options": [
+      "Thin: nur Betriebssystem und Basis, Thick: zusätzlich alle Anwendungen",
+      "Thin: komprimiert gespeichert, Thick: unkomprimiert gespeichert",
+      "Thin: nur für Server gedacht, Thick: nur für Clients gedacht",
+      "Thin: nur in VMs lauffähig, Thick: nur auf echter Hardware"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist eine unbeaufsichtigte Installation (Silent Installation) bei der Softwareverteilung?",
+    "a": "Eine Installation ohne Dialoge und ohne Eingaben des Benutzers",
+    "a_full": "Das Setup wird mit Parametern gestartet, z.B. msiexec /i programm.msi /qn. Alle Einstellungen stehen in den Parametern oder einer Antwortdatei. So lässt sich Software per Skript, Gruppenrichtlinie oder Verteilungswerkzeug auf viele Rechner gleichzeitig ausrollen.",
+    "options": [
+      "Eine Installation ohne Dialoge und ohne Eingaben des Benutzers",
+      "Eine Installation, die nur nachts im Wartungsfenster läuft",
+      "Eine Installation, die ohne Administratorrechte auskommt",
+      "Eine Installation, die keine eigene Lizenz benötigt"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet Druckertreiber vom Typ 3 und Typ 4 unter Windows?",
+    "a": "Typ 3: Herstellertreiber vom Server, Typ 4: gemeinsames Treibermodell",
+    "a_full": "Typ-3-Treiber stammen vom Hersteller und werden vom Druckserver per Point and Print an die Clients verteilt. Typ-4-Treiber bauen auf einer einheitlichen Architektur auf. Der Client muss dabei keinen herstellerspezifischen Treiber vom Server laden. Das vereinfacht die Verwaltung auf dem Druckserver.",
+    "options": [
+      "Typ 3: Herstellertreiber vom Server, Typ 4: gemeinsames Treibermodell",
+      "Typ 3: nur für USB-Drucker, Typ 4: nur für Netzwerkdrucker",
+      "Typ 3: nur Schwarz-Weiß-Druck, Typ 4: zusätzlich Farbdruck",
+      "Typ 3: für 32-Bit-Windows, Typ 4: nur für Windows Server"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was sind PCL und PostScript?",
+    "a": "Druckersprachen, die dem Drucker das Druckbild beschreiben",
+    "a_full": "Der Druckertreiber übersetzt das Dokument in eine Druckersprache. PCL stammt von HP und ist im Büro weit verbreitet. PostScript stammt von Adobe, beschreibt Seiten geräteunabhängig und ist im Grafik- und Druckbereich üblich. Passt die Sprache nicht zum Drucker, kommen oft nur wirre Zeichen heraus.",
+    "options": [
+      "Druckersprachen, die dem Drucker das Druckbild beschreiben",
+      "Netzwerkprotokolle für die Freigabe von Druckern im LAN",
+      "Dateisysteme für den internen Speicher von Druckern",
+      "Verschlüsselungsverfahren für vertrauliche Druckaufträge"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ermöglicht DisplayPort Multi-Stream Transport (MST)?",
+    "a": "Mehrere Monitore an einem einzigen DisplayPort-Ausgang zu betreiben",
+    "a_full": "Mit MST lassen sich Monitore hintereinander verketten (Daisy Chain) oder über einen MST-Hub anschließen. Die Bandbreite des Ausgangs wird dabei auf alle Monitore aufgeteilt. Grafikkarte und Monitore müssen MST unterstützen.",
+    "options": [
+      "Mehrere Monitore an einem einzigen DisplayPort-Ausgang zu betreiben",
+      "Ein Bild gleichzeitig über HDMI und VGA auszugeben",
+      "Einen Monitor ohne eigene Stromversorgung zu betreiben",
+      "Die Bildwiederholrate eines Monitors zu verdoppeln"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bedeutet der DisplayPort Alternate Mode bei USB-C?",
+    "a": "Ein USB-C-Anschluss überträgt zusätzlich ein DisplayPort-Bildsignal",
+    "a_full": "Im Alternate Mode werden Leitungen des USB-C-Kabels für ein DisplayPort-Signal genutzt. So kann ein Notebook über ein einziges Kabel Bild, Daten und oft auch Strom an Monitor oder Dockingstation liefern. Nicht jede USB-C-Buchse unterstützt diesen Modus, ein Displaysymbol am Port hilft bei der Erkennung.",
+    "options": [
+      "Ein USB-C-Anschluss überträgt zusätzlich ein DisplayPort-Bildsignal",
+      "USB-C schaltet bei Überlast auf USB 2.0 zurück",
+      "Ein USB-C-Kabel lässt sich in beide Richtungen stecken",
+      "Ein USB-C-Stick bootet ein zweites Betriebssystem"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was unterscheidet den ACPI-Zustand S3 vom Zustand S4?",
+    "a": "S3 hält den Arbeitsspeicher mit Strom, S4 schreibt ihn auf die Festplatte",
+    "a_full": "S3 ist der Energiesparmodus (Suspend to RAM). Der Rechner wacht in Sekunden auf, verliert aber bei Stromausfall den Zustand. S4 ist der Ruhezustand (Suspend to Disk). Windows schreibt den Speicherinhalt in die Datei hiberfil.sys und schaltet danach fast vollständig ab.",
+    "options": [
+      "S3 hält den Arbeitsspeicher mit Strom, S4 schreibt ihn auf die Festplatte",
+      "S3 fährt komplett herunter, S4 startet den Rechner sofort neu",
+      "S3 schaltet nur den Monitor aus, S4 nur die Festplatten ab",
+      "S3 und S4 sind zwei Namen für denselben Energiesparzustand"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Bedienungshilfen bietet Windows für Mitarbeitende mit Sehbehinderung?",
+    "a": "Bildschirmlupe, Sprachausgabe, Kontrastdesigns und Textskalierung",
+    "a_full": "Die Bildschirmlupe vergrößert Bildschirmbereiche, die Sprachausgabe (Narrator) liest Inhalte vor. Kontrastdesigns und größere Schrift verbessern die Lesbarkeit. Die IT sollte solche Einstellungen bei der Einrichtung eines barrierefreien Arbeitsplatzes berücksichtigen und passende Hardware wie Braillezeilen unterstützen.",
+    "options": [
+      "Bildschirmlupe, Sprachausgabe, Kontrastdesigns und Textskalierung",
+      "Bildschirmschoner, Hintergrundbild und eigene Designfarben",
+      "Kennwortrichtlinie, BitLocker-Verschlüsselung und Firewall",
+      "Energiesparplan, Schnellstart und Ruhezustand des Geräts"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Eigenschaften haben die Monitor-Paneltypen IPS, VA und TN?",
+    "a": "IPS: gute Farben und Blickwinkel, VA: hoher Kontrast, TN: schnell und günstig",
+    "a_full": "IPS-Panels zeigen Farben genau und aus vielen Blickwinkeln gleich, sie eignen sich für Büro und Grafik. VA-Panels bieten ein tiefes Schwarz und hohen Kontrast. TN-Panels reagieren sehr schnell, haben aber schwache Blickwinkel und Farben.",
+    "options": [
+      "IPS: gute Farben und Blickwinkel, VA: hoher Kontrast, TN: schnell und günstig",
+      "IPS: nur Schwarz-Weiß, VA: nur für Beamer, TN: nur für Notebooks",
+      "IPS: für Röhrenmonitore, VA: für OLED, TN: für E-Paper",
+      "Alle drei unterscheiden sich nur in der Anschlussart"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist das Arbeitsprofil bei Android Enterprise?",
+    "a": "Ein getrennter Bereich für Firmen-Apps auf dem Android-Gerät",
+    "a_full": "Das Arbeitsprofil trennt dienstliche und private Apps. Die Firma verwaltet per MDM nur den Arbeitsbereich und kann ihn löschen, ohne private Fotos oder Apps anzutasten. Das eignet sich besonders für BYOD, weil die Privatsphäre gewahrt bleibt.",
+    "options": [
+      "Ein getrennter Bereich für Firmen-Apps auf dem Android-Gerät",
+      "Ein Energiesparmodus für die Zeit während der Arbeit",
+      "Ein zweites Benutzerkonto für Kinder und Gäste",
+      "Eine Liste der erlaubten WLAN-Netze der Firma"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dienen der Apple Business Manager und die automatisierte Geräteregistrierung (ADE)?",
+    "a": "Firmen-iPhones und Macs melden sich beim ersten Start automatisch beim MDM an",
+    "a_full": "Beim Kauf über einen berechtigten Händler werden die Seriennummern dem Apple Business Manager der Firma zugeordnet. Dort sind sie mit dem MDM-Server verknüpft. Nimmt ein Mitarbeiter das Gerät in Betrieb, wird es ohne Handarbeit der IT registriert und konfiguriert (Zero-Touch).",
+    "options": [
+      "Firmen-iPhones und Macs melden sich beim ersten Start automatisch beim MDM an",
+      "Mitarbeitende kaufen Apps privat und erhalten das Geld zurück",
+      "Apple übernimmt die Reparatur aller Firmengeräte vor Ort",
+      "Die Geräte werden automatisch bei iCloud des Benutzers gesichert"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist bei Remote-Support auf dem Rechner eines Benutzers zu beachten?",
+    "a": "Nur mit Zustimmung, sichtbar für den Benutzer und ohne dauerhafte Hintertür",
+    "a_full": "Der Benutzer sollte der Sitzung ausdrücklich zustimmen und sehen, was passiert. Vertrauliche Fenster schließt er vorher. Die Sitzung wird im Ticket dokumentiert und danach beendet. Dauerhafte Fernzugänge ohne Kontrolle sind ein Sicherheitsrisiko und datenschutzrechtlich heikel.",
+    "options": [
+      "Nur mit Zustimmung, sichtbar für den Benutzer und ohne dauerhafte Hintertür",
+      "Der Benutzer sollte sich vor der Sitzung vom Rechner abmelden",
+      "Die Sitzung sollte möglichst ohne Wissen des Benutzers laufen",
+      "Der Zugang sollte für spätere Supportfälle dauerhaft offen bleiben"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Phasen durchläuft ein IT-Asset in seinem Lebenszyklus?",
+    "a": "Beschaffung, Inbetriebnahme, Betrieb, Aussonderung mit Datenlöschung",
+    "a_full": "Jedes Gerät wird bei der Beschaffung inventarisiert, z.B. mit Inventarnummer und Seriennummer. Im Betrieb pflegt man Standort, Benutzer und Garantie. Bei der Aussonderung werden die Daten nachweisbar gelöscht, das Gerät aus dem Inventar genommen und fachgerecht entsorgt oder verwertet.",
+    "options": [
+      "Beschaffung, Inbetriebnahme, Betrieb, Aussonderung mit Datenlöschung",
+      "Planung, Programmierung, Test und Auslieferung an den Kunden",
+      "Anfrage, Angebot, Bestellung, Lieferung und Rechnungsprüfung",
+      "Erfassung, Klassifizierung, Priorisierung und Eskalation"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist Software Asset Management (SAM)?",
+    "a": "Der Abgleich installierter Software mit den gekauften Lizenzen",
+    "a_full": "Ein SAM-Werkzeug liest die installierte Software aus und vergleicht sie mit den gekauften Lizenzen. So erkennt man Unterlizenzierung, die bei einem Audit teuer wird, und Überlizenzierung, die unnötig Geld kostet. Grundlage ist eine vollständige Inventarisierung.",
+    "options": [
+      "Der Abgleich installierter Software mit den gekauften Lizenzen",
+      "Die Entwicklung eigener Software im eigenen Unternehmen",
+      "Die Verschlüsselung von Softwarepaketen vor der Verteilung",
+      "Die Sicherung aller installierten Programme auf Band"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein freigegebenes Postfach (Shared Mailbox) in Exchange Online?",
+    "a": "Ein Postfach ohne eigene Anmeldung, auf das mehrere Benutzer zugreifen",
+    "a_full": "Typische Beispiele sind info@ oder support@. Berechtigte Benutzer sehen das Postfach in Outlook zusätzlich und können im Namen der Adresse senden. Ein freigegebenes Postfach benötigt bis zu einer bestimmten Größe keine eigene Lizenz, ein Kennwort für die direkte Anmeldung braucht es nicht.",
+    "options": [
+      "Ein Postfach ohne eigene Anmeldung, auf das mehrere Benutzer zugreifen",
+      "Ein Postfach, das Mails an externe Adressen weiterleitet",
+      "Ein Archiv, in das alte Mails automatisch verschoben werden",
+      "Ein Postfach, das nur Termine und Räume verwaltet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wozu dient Microsoft Entra Connect Sync?",
+    "a": "Es synchronisiert Benutzer und Gruppen aus dem lokalen AD nach Entra ID",
+    "a_full": "In einer hybriden Umgebung bleiben die Konten im lokalen Active Directory führend. Entra Connect überträgt sie regelmäßig in die Cloud, optional mit Kennwort-Hash-Synchronisierung. So melden sich Benutzer an lokalen Rechnern und in Microsoft 365 mit denselben Zugangsdaten an.",
+    "options": [
+      "Es synchronisiert Benutzer und Gruppen aus dem lokalen AD nach Entra ID",
+      "Es repliziert Postfächer zwischen zwei lokalen Exchange-Servern",
+      "Es verbindet Teams-Besprechungen mit dem öffentlichen Telefonnetz",
+      "Es kopiert OneDrive-Dateien regelmäßig auf einen lokalen NAS"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Wofür nutzt man in Microsoft 365 OneDrive, SharePoint und Teams?",
+    "a": "OneDrive: eigene Dateien, SharePoint: Abteilungsdaten, Teams: Zusammenarbeit",
+    "a_full": "OneDrive ersetzt das persönliche Home-Laufwerk. SharePoint stellt Websites und Dokumentbibliotheken für Gruppen bereit. Teams bündelt Chat, Besprechungen und Kanäle, die Dateien eines Teams liegen dabei in einer SharePoint-Bibliothek.",
+    "options": [
+      "OneDrive: eigene Dateien, SharePoint: Abteilungsdaten, Teams: Zusammenarbeit",
+      "OneDrive: E-Mails, SharePoint: Telefonie, Teams: Datensicherung",
+      "OneDrive: Serverdaten, SharePoint: Clientdaten, Teams: Druckaufträge",
+      "OneDrive: Lizenzen, SharePoint: Benutzerkonten, Teams: Updates"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was bewirkt die Loopbackverarbeitung bei Gruppenrichtlinien?",
+    "a": "Benutzereinstellungen kommen aus der OU des Computers statt des Benutzers",
+    "a_full": "Normalerweise gelten Benutzerrichtlinien aus der OU des Benutzers. Mit Loopback wendet der Computer die Benutzereinstellungen aus seiner eigenen OU an. Im Modus Ersetzen gelten nur diese, im Modus Zusammenführen werden beide kombiniert. Typisch ist das für Kiosk-PCs, Schulungsräume oder Terminalserver.",
+    "options": [
+      "Benutzereinstellungen kommen aus der OU des Computers statt des Benutzers",
+      "Richtlinien werden nur auf die Loopback-Adresse 127.0.0.1 angewendet",
+      "Richtlinien werden nach jedem Neustart vollständig gelöscht",
+      "Richtlinien werden vom Client an den Domänencontroller zurückgesendet"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was sind Update-Ringe bei der Verteilung von Windows-Updates?",
+    "a": "Gerätegruppen, die Updates gestaffelt nacheinander erhalten",
+    "a_full": "Zuerst erhält ein kleiner Pilotring aus der IT die Updates. Erst wenn dort keine Probleme auftreten, folgen breitere Ringe mit Rückstellungsfristen von einigen Tagen. So fallen fehlerhafte Updates auf, bevor sie alle Arbeitsplätze treffen.",
+    "options": [
+      "Gerätegruppen, die Updates gestaffelt nacheinander erhalten",
+      "Mehrere WSUS-Server, die sich gegenseitig ersetzen",
+      "Ringförmig verkabelte Server im Rechenzentrum",
+      "Updates, die sich automatisch wiederholt installieren"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Paket-Repository unter Linux und warum ist es signiert?",
+    "a": "Eine Paketquelle, die Signatur belegt die Echtheit der Pakete",
+    "a_full": "Der Paketmanager lädt Programme und Updates aus Repositories. Die Pakete bzw. Metadaten sind mit einem GPG-Schlüssel signiert. Der Paketmanager prüft die Signatur und lehnt manipulierte Pakete ab. Fremde Quellen und ihre Schlüssel sollte man nur nach Prüfung hinzufügen.",
+    "options": [
+      "Eine Paketquelle, die Signatur belegt die Echtheit der Pakete",
+      "Ein Backup-Speicher, die Signatur beschleunigt das Laden",
+      "Ein Benutzerverzeichnis, die Signatur verhindert das Löschen",
+      "Ein Logarchiv, die Signatur komprimiert die Einträge"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Vorteile bieten systemd-Timer gegenüber cron?",
+    "a": "Journal-Protokollierung, Abhängigkeiten, Nachholen verpasster Läufe",
+    "a_full": "Ein Timer startet eine systemd-Unit zu festen Zeiten (OnCalendar) oder nach Ereignissen. Die Ausgaben landen im Journal, der Status ist mit systemctl list-timers sichtbar. Mit Persistent=true wird ein Lauf nachgeholt, der wegen ausgeschaltetem Rechner ausgefallen ist.",
+    "options": [
+      "Journal-Protokollierung, Abhängigkeiten, Nachholen verpasster Läufe",
+      "Timer laufen ohne root-Rechte schneller als cron-Jobs",
+      "Timer ersetzen zusätzlich den Paketmanager des Systems",
+      "Timer funktionieren zusätzlich auch auf Windows-Servern"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Welche Betriebsmodi kennt SELinux?",
+    "a": "Enforcing, Permissive und Disabled",
+    "a_full": "Im Modus Enforcing blockiert SELinux Verstöße gegen die Richtlinie und protokolliert sie. Permissive protokolliert nur und blockiert nichts, das hilft bei der Fehlersuche. Disabled schaltet SELinux ganz ab. Den aktuellen Modus zeigt getenforce, setenforce wechselt ihn bis zum Neustart.",
+    "options": [
+      "Enforcing, Permissive und Disabled",
+      "Read, Write und Execute",
+      "User, Group und Other",
+      "Active, Standby und Offline"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Warum setzt man im Monitoring einen Warn- und einen kritischen Schwellwert?",
+    "a": "Damit man frühzeitig reagieren kann, bevor ein echter Ausfall droht",
+    "a_full": "Beispiel Festplatte: Bei 80 Prozent Belegung meldet das Monitoring eine Warnung, bei 95 Prozent einen kritischen Zustand. Die Warnung gibt Zeit zum Handeln, der kritische Alarm verlangt sofortiges Eingreifen. Zu niedrige Schwellwerte erzeugen dagegen viele Fehlalarme, die man schnell ignoriert.",
+    "options": [
+      "Damit man frühzeitig reagieren kann, bevor ein echter Ausfall droht",
+      "Damit das Monitoring doppelt so viele Messwerte speichert",
+      "Damit ein zweiter Server die Messung übernehmen kann",
+      "Damit die Lizenzkosten des Monitoring-Systems sinken"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist ein Primärschlüssel in einer relationalen Datenbank?",
+    "a": "Ein Feld, das jeden Datensatz einer Tabelle eindeutig kennzeichnet",
+    "a_full": "Der Primärschlüssel darf nicht leer sein und sich nicht wiederholen, typisch ist eine fortlaufende ID wie kunden_id. Andere Tabellen verweisen über Fremdschlüssel auf ihn. So lassen sich Datensätze verknüpfen, ohne Daten doppelt zu speichern.",
+    "options": [
+      "Ein Feld, das jeden Datensatz einer Tabelle eindeutig kennzeichnet",
+      "Das Kennwort des Administrators für den Datenbankzugriff",
+      "Die erste Spalte einer Tabelle, alphabetisch sortiert",
+      "Ein Schlüssel zur Verschlüsselung der gesamten Tabelle"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist das Ziel der Normalisierung einer Datenbank?",
+    "a": "Redundanzen und daraus folgende Widersprüche (Anomalien) zu vermeiden",
+    "a_full": "Bei der Normalisierung werden Daten schrittweise auf mehrere Tabellen verteilt. Die 1. Normalform verlangt atomare Werte, die 2. und 3. Normalform entfernen Abhängigkeiten, die zu doppelten Daten führen. Ändert sich z.B. eine Kundenadresse, muss sie dann nur an einer Stelle geändert werden.",
+    "options": [
+      "Redundanzen und daraus folgende Widersprüche (Anomalien) zu vermeiden",
+      "Alle Daten in einer einzigen großen Tabelle zu speichern",
+      "Die Datenbank vor der Sicherung vollständig zu verschlüsseln",
+      "Abfragen durch mehr Kopien der Daten zu beschleunigen"
+    ]
+  },
+  {
+    "cat": "systeme",
+    "q": "Was ist die Besonderheit der Pipeline in PowerShell?",
+    "a": "Sie reicht Objekte mit Eigenschaften weiter, nicht nur Text",
+    "a_full": "In der Bash wird Text von Befehl zu Befehl gereicht und muss oft mit grep oder cut zerlegt werden. PowerShell übergibt Objekte, z.B. Get-Process | Sort-Object CPU -Descending. Der folgende Befehl kann direkt auf Eigenschaften wie CPU oder Name zugreifen.",
+    "options": [
+      "Sie reicht Objekte mit Eigenschaften weiter, nicht nur Text",
+      "Sie verarbeitet ausschließlich Text aus Dateien",
+      "Sie führt alle Befehle gleichzeitig auf Servern aus",
+      "Sie speichert jede Ausgabe automatisch als CSV"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann beginnt die Rechtsfähigkeit eines Menschen?",
+    "a": "Mit der Vollendung der Geburt",
+    "a_full": "Rechtsfähigkeit heißt, Träger von Rechten und Pflichten zu sein. Ein Mensch kann z.B. schon als Baby erben oder Eigentümer sein. Die Rechtsfähigkeit endet mit dem Tod. Davon zu trennen ist die Geschäftsfähigkeit, die vom Alter abhängt.",
+    "options": [
+      "Mit der Vollendung der Geburt",
+      "Mit der Vollendung des 7. Lebensjahres",
+      "Mit dem Eintritt der Volljährigkeit",
+      "Mit der Eintragung ins Melderegister"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine juristische Person?",
+    "a": "Eine Organisation mit eigener Rechtsfähigkeit, z.B. eine GmbH",
+    "a_full": "Juristische Personen sind z.B. GmbH, AG, eingetragener Verein oder eine Stadt. Sie können selbst Verträge schließen, klagen und verklagt werden. Handeln müssen für sie ihre Organe, z.B. der Geschäftsführer der GmbH.",
+    "options": [
+      "Eine Organisation mit eigener Rechtsfähigkeit, z.B. eine GmbH",
+      "Ein Mensch mit juristischer Ausbildung und Zulassung",
+      "Eine Person, die für eine Firma Verträge unterschreibt",
+      "Ein Zusammenschluss ohne eigene Rechte und Pflichten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann wird eine Willenserklärung gegenüber einem Abwesenden wirksam?",
+    "a": "Mit dem Zugang beim Empfänger",
+    "a_full": "Zugegangen ist eine Erklärung, wenn sie in den Machtbereich des Empfängers gelangt und er sie unter normalen Umständen lesen kann. Ein Brief im Briefkasten oder eine E-Mail im Postfach während der Geschäftszeit reicht. Ob er sie wirklich liest, ist egal.",
+    "options": [
+      "Mit dem Zugang beim Empfänger",
+      "Schon mit dem Absenden durch den Erklärenden",
+      "Erst wenn der Empfänger sie tatsächlich gelesen hat",
+      "Erst mit einer schriftlichen Bestätigung des Empfängers"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Aus welchen Gründen kann eine Willenserklärung nach BGB angefochten werden?",
+    "a": "Wegen Irrtums, falscher Übermittlung, arglistiger Täuschung oder Drohung",
+    "a_full": "Anfechtbar sind Inhalts-, Erklärungs- und Eigenschaftsirrtum sowie eine falsche Übermittlung, z.B. durch einen Boten. Bei Irrtum muss man unverzüglich anfechten. Bei arglistiger Täuschung oder widerrechtlicher Drohung hat man ein Jahr ab Entdeckung bzw. Ende der Zwangslage Zeit.",
+    "options": [
+      "Wegen Irrtums, falscher Übermittlung, arglistiger Täuschung oder Drohung",
+      "Wegen gestiegener Preise, schlechter Laune oder späterer Reue",
+      "Wegen eines Irrtums über den Grund, warum man etwas kauft",
+      "Wegen einer Preisänderung beim Wettbewerber nach dem Kauf"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Wirkung hat eine wirksame Anfechtung?",
+    "a": "Das Rechtsgeschäft gilt als von Anfang an nichtig",
+    "a_full": "Die Anfechtung wirkt rückwirkend. Bereits ausgetauschte Leistungen werden zurückgegeben. Wer wegen eines eigenen Irrtums anficht, muss dem anderen den Vertrauensschaden ersetzen, z.B. unnütze Versandkosten.",
+    "options": [
+      "Das Rechtsgeschäft gilt als von Anfang an nichtig",
+      "Der Vertrag endet erst ab dem Tag der Anfechtung",
+      "Der Vertrag bleibt wirksam, der Preis wird gemindert",
+      "Der Vertrag ruht, bis ein Gericht darüber entschieden hat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann ist ein Rechtsgeschäft von Anfang an nichtig?",
+    "a": "Z.B. bei Gesetzesverstoß, Sittenwidrigkeit oder fehlender Pflichtform",
+    "a_full": "Nichtig sind u.a. Geschäfte Geschäftsunfähiger, Scheingeschäfte, Verstöße gegen ein gesetzliches Verbot, sittenwidrige Geschäfte wie Wucher und Verträge ohne vorgeschriebene Form. Ein nichtiges Geschäft entfaltet keine Wirkung, auch nicht durch spätere Genehmigung.",
+    "options": [
+      "Z.B. bei Gesetzesverstoß, Sittenwidrigkeit oder fehlender Pflichtform",
+      "Wenn eine Partei den Vertrag im Nachhinein bereut",
+      "Wenn der Preis etwas über dem üblichen Marktpreis liegt",
+      "Wenn der Vertrag nur mündlich geschlossen wurde"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet die Schriftform von der Textform?",
+    "a": "Schriftform braucht eine eigenhändige Unterschrift, Textform nicht",
+    "a_full": "Bei der Schriftform muss die Urkunde eigenhändig unterschrieben sein, ersetzbar durch die qualifizierte elektronische Signatur. Für die Textform genügt eine lesbare Erklärung auf einem dauerhaften Datenträger mit Namen des Erklärenden, z.B. eine E-Mail.",
+    "options": [
+      "Schriftform braucht eine eigenhändige Unterschrift, Textform nicht",
+      "Textform braucht eine Unterschrift, Schriftform nicht",
+      "Schriftform verlangt immer einen Notar, Textform nicht",
+      "Beide Formen sind rechtlich gleich und austauschbar"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet einen Leihvertrag?",
+    "a": "Eine Sache wird unentgeltlich zum Gebrauch überlassen",
+    "a_full": "Der Verleiher bekommt kein Geld. Der Entleiher muss genau dieselbe Sache zurückgeben. Verlangt man dagegen ein Entgelt, liegt ein Mietvertrag vor. Beispiel: Ein Händler stellt einem Kunden während der Reparatur kostenlos ein Leihgerät.",
+    "options": [
+      "Eine Sache wird unentgeltlich zum Gebrauch überlassen",
+      "Eine Sache wird gegen Entgelt zeitweise überlassen",
+      "Geld wird überlassen und später mit Zinsen zurückgezahlt",
+      "Eine Sache wird dauerhaft und kostenlos verschenkt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet einen Pachtvertrag von einem Mietvertrag?",
+    "a": "Bei der Pacht darf man auch die Erträge (Früchte) nutzen",
+    "a_full": "Der Mieter darf die Sache nur gebrauchen. Der Pächter darf sie gebrauchen und zusätzlich die Erträge daraus ziehen. Beispiel: Wer ein eingerichtetes Café pachtet, betreibt es und behält die Einnahmen.",
+    "options": [
+      "Bei der Pacht darf man auch die Erträge (Früchte) nutzen",
+      "Bei der Pacht wird die Sache kostenlos überlassen",
+      "Bei der Pacht geht das Eigentum auf den Pächter über",
+      "Bei der Pacht muss Gleichartiges zurückgegeben werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet ein verlängerter Eigentumsvorbehalt?",
+    "a": "Der Käufer darf weiterverkaufen, tritt die Forderung aber an den Lieferanten ab",
+    "a_full": "Beim einfachen Eigentumsvorbehalt erlischt der Schutz, wenn die Ware weiterverkauft wird. Beim verlängerten Eigentumsvorbehalt erhält der Lieferant stattdessen die Kaufpreisforderung gegen den Endkunden. So ist er beim Handel mit Waren wie Hardware geschützt.",
+    "options": [
+      "Der Käufer darf weiterverkaufen, tritt die Forderung aber an den Lieferanten ab",
+      "Der Lieferant bleibt Eigentümer auch nach voller Bezahlung",
+      "Der Käufer bekommt eine längere Frist zum Bezahlen",
+      "Die Gewährleistung wird auf drei Jahre verlängert"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Warum ist eine GmbH immer Kaufmann im Sinne des HGB?",
+    "a": "Sie ist Formkaufmann allein aufgrund ihrer Rechtsform",
+    "a_full": "Kapitalgesellschaften wie GmbH, UG und AG sind kraft ihrer Rechtsform Kaufleute. Es kommt nicht darauf an, welches Gewerbe sie betreiben oder wie groß sie sind. Für sie gelten deshalb immer die Regeln des HGB, z.B. über Prokura und Handelskauf.",
+    "options": [
+      "Sie ist Formkaufmann allein aufgrund ihrer Rechtsform",
+      "Weil sie mindestens zehn Mitarbeiter beschäftigen muss",
+      "Weil sie Mitglied in einer Handwerkskammer sein muss",
+      "Weil ihr Geschäftsführer eine kaufmännische Ausbildung hat"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was wird in Abteilung A und was in Abteilung B des Handelsregisters eingetragen?",
+    "a": "A: Einzelkaufleute und Personengesellschaften, B: Kapitalgesellschaften",
+    "a_full": "In Abteilung A stehen z.B. e.K., OHG und KG, in Abteilung B GmbH, UG und AG. Das Register wird elektronisch bei den Amtsgerichten geführt und ist öffentlich einsehbar. Eingetragen werden u.a. Firma, Sitz, Vertretungsberechtigte und Prokuristen.",
+    "options": [
+      "A: Einzelkaufleute und Personengesellschaften, B: Kapitalgesellschaften",
+      "A: Kapitalgesellschaften, B: Einzelkaufleute und Personengesellschaften",
+      "A: Unternehmen mit Gewinn, B: Unternehmen mit Verlust im Vorjahr",
+      "A: Handwerksbetriebe, B: Industrie- und Handelsbetriebe aller Art"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann werden AGB gegenüber einem Verbraucher Vertragsbestandteil?",
+    "a": "Bei klarem Hinweis, zumutbarer Kenntnisnahme und Einverständnis",
+    "a_full": "Der Verwender muss bei Vertragsschluss auf die AGB hinweisen, z.B. durch einen Link vor dem Bestellbutton. Der Kunde muss sie zumutbar lesen können und einverstanden sein. Nachträglich zugeschickte AGB werden nicht Vertragsbestandteil.",
+    "options": [
+      "Bei klarem Hinweis, zumutbarer Kenntnisnahme und Einverständnis",
+      "Automatisch, sobald sie auf der Website veröffentlicht sind",
+      "Erst wenn sie der Kunde auf jeder Seite unterschreibt",
+      "Nur wenn sie vorher von einem Notar beglaubigt wurden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was regelt das Produkthaftungsgesetz?",
+    "a": "Hersteller haften ohne Verschulden für Schäden durch fehlerhafte Produkte",
+    "a_full": "Verursacht ein fehlerhaftes Produkt einen Personenschaden oder beschädigt privat genutzte Sachen, haftet der Hersteller auch ohne Verschulden. Der Geschädigte muss Fehler, Schaden und Zusammenhang beweisen. Die neue EU-Produkthaftungsrichtlinie bezieht Software ausdrücklich ein.",
+    "options": [
+      "Hersteller haften ohne Verschulden für Schäden durch fehlerhafte Produkte",
+      "Händler haften nur bei Vorsatz für defekte Produkte",
+      "Käufer müssen Mängel innerhalb von 14 Tagen melden",
+      "Hersteller müssen freiwillig eine Garantie anbieten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Kannkaufmann?",
+    "a": "Ein Kleingewerbetreibender, der durch freiwillige Eintragung Kaufmann wird",
+    "a_full": "Wer ein kleines Gewerbe ohne kaufmännische Einrichtung betreibt, ist nicht automatisch Kaufmann. Lässt er sich freiwillig ins Handelsregister eintragen, gilt ab dann das HGB für ihn. Die Eintragung wirkt hier also rechtsbegründend.",
+    "options": [
+      "Ein Kleingewerbetreibender, der durch freiwillige Eintragung Kaufmann wird",
+      "Ein Unternehmer, der wegen seiner Größe Kaufmann sein muss",
+      "Eine GmbH, die durch ihre Rechtsform immer Kaufmann ist",
+      "Ein Angestellter, der für einen Kaufmann Verträge schließt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welches Geschäft darf ein Prokurist ohne besondere Befugnis nicht abschließen?",
+    "a": "Grundstücke des Unternehmens verkaufen oder belasten",
+    "a_full": "Die Prokura erlaubt fast alle Geschäfte eines Handelsgewerbes. Für Verkauf und Belastung von Grundstücken braucht der Prokurist eine besondere Befugnis. Grundlagengeschäfte wie Bilanz unterschreiben, Prokura erteilen oder Insolvenz anmelden bleiben dem Inhaber vorbehalten.",
+    "options": [
+      "Grundstücke des Unternehmens verkaufen oder belasten",
+      "Kredite für das Unternehmen bei der Bank aufnehmen",
+      "Mitarbeiter für das Unternehmen einstellen und entlassen",
+      "Prozesse für das Unternehmen vor Gericht führen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Besonderheit gilt für den Gewinn einer UG (haftungsbeschränkt)?",
+    "a": "Ein Viertel des Jahresüberschusses muss in eine Rücklage",
+    "a_full": "Die UG ist eine GmbH-Variante, die schon mit 1 Euro Stammkapital gegründet werden kann. Damit sie Kapital aufbaut, muss sie jedes Jahr 25 % ihres Jahresüberschusses zurücklegen. Das gilt, bis ein Stammkapital von 25.000 Euro erreicht ist.",
+    "options": [
+      "Ein Viertel des Jahresüberschusses muss in eine Rücklage",
+      "Der gesamte Gewinn muss sofort ausgeschüttet werden",
+      "Sie muss keine Steuern auf den Gewinn zahlen",
+      "Der Gewinn fließt vollständig an das Finanzamt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie entsteht eine GbR und wie haften ihre Gesellschafter?",
+    "a": "Formlos durch Vertrag, die Gesellschafter haften persönlich und unbeschränkt",
+    "a_full": "Schon zwei Freiberufler, die gemeinsam ein IT-Beratungsbüro betreiben, können eine GbR bilden. Ein schriftlicher Vertrag ist nicht nötig. Für Schulden haftet das Gesellschaftsvermögen und jeder Gesellschafter auch mit seinem Privatvermögen.",
+    "options": [
+      "Formlos durch Vertrag, die Gesellschafter haften persönlich und unbeschränkt",
+      "Nur durch Eintragung, die Haftung ist auf die Einlage begrenzt",
+      "Durch notariellen Vertrag, es haftet nur das Stammkapital",
+      "Nur mit 25.000 Euro Kapital, die Gesellschafter haften nicht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Gründe können ein Insolvenzverfahren auslösen?",
+    "a": "Zahlungsunfähigkeit, drohende Zahlungsunfähigkeit und Überschuldung",
+    "a_full": "Zahlungsunfähig ist, wer fällige Schulden nicht mehr begleichen kann. Drohende Zahlungsunfähigkeit berechtigt nur den Schuldner selbst zum Antrag. Überschuldung ist ein Grund bei juristischen Personen wie der GmbH, deren Geschäftsführer dann einen Antrag stellen müssen.",
+    "options": [
+      "Zahlungsunfähigkeit, drohende Zahlungsunfähigkeit und Überschuldung",
+      "Umsatzrückgang, Personalmangel und schlechte Bewertungen",
+      "Hohe Steuerlast, Streik und Lieferverzug eines Zulieferers",
+      "Ein Verlust in einem einzigen Geschäftsjahr des Unternehmens"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Aussperrung?",
+    "a": "Der Arbeitgeber schließt Beschäftigte im Arbeitskampf ohne Lohn von der Arbeit aus",
+    "a_full": "Die Aussperrung ist das Kampfmittel der Arbeitgeberseite. Sie ist in Deutschland nur als Abwehr gegen einen Streik und nur verhältnismäßig zulässig. Für die Dauer der Aussperrung ruhen Arbeitspflicht und Lohnanspruch.",
+    "options": [
+      "Der Arbeitgeber schließt Beschäftigte im Arbeitskampf ohne Lohn von der Arbeit aus",
+      "Der Arbeitgeber kündigt allen Streikenden fristlos",
+      "Die Gewerkschaft sperrt Nichtmitglieder vom Betrieb aus",
+      "Ein Beschäftigter wird wegen Fehlverhaltens abgemahnt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Schlichtung im Tarifkonflikt?",
+    "a": "Ein neutraler Schlichter erarbeitet einen Einigungsvorschlag für beide Seiten",
+    "a_full": "Scheitern die Tarifverhandlungen, können Gewerkschaft und Arbeitgeberseite einen Schlichter einschalten. Sein Vorschlag wird meist erst bindend, wenn beide Seiten ihn annehmen. Eine staatliche Zwangsschlichtung gibt es in Deutschland nicht.",
+    "options": [
+      "Ein neutraler Schlichter erarbeitet einen Einigungsvorschlag für beide Seiten",
+      "Ein Richter entscheidet den Tarifstreit mit einem verbindlichen Urteil",
+      "Der Staat legt die Löhne fest, wenn sich die Tarifparteien streiten",
+      "Die Beschäftigten stimmen in geheimer Wahl über einen Streik ab"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie wird die gesetzliche Rentenversicherung finanziert?",
+    "a": "Im Umlageverfahren: Die heutigen Beiträge zahlen die heutigen Renten",
+    "a_full": "Die Beiträge von Beschäftigten und Arbeitgebern werden direkt für die laufenden Renten verwendet, ergänzt durch einen Zuschuss des Bundes. Man spricht vom Generationenvertrag. Weil es immer mehr Rentner je Beitragszahler gibt, gerät das System unter Druck.",
+    "options": [
+      "Im Umlageverfahren: Die heutigen Beiträge zahlen die heutigen Renten",
+      "Jeder spart ein eigenes Konto an, das später ausgezahlt wird",
+      "Allein aus der Umsatzsteuer, ohne Beiträge der Beschäftigten",
+      "Allein durch die Arbeitgeber, die Beschäftigten zahlen nichts"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was geschieht, wenn sich Arbeitgeber und Betriebsrat in einer mitbestimmungspflichtigen Frage nicht einigen?",
+    "a": "Die Einigungsstelle entscheidet verbindlich",
+    "a_full": "Die Einigungsstelle besteht aus gleich vielen Beisitzern beider Seiten und einem unparteiischen Vorsitzenden. Ihr Spruch ersetzt die fehlende Einigung, z.B. bei der Einführung eines Zeiterfassungssystems. Einigen sich beide Seiten nicht auf einen Vorsitzenden, bestimmt ihn das Arbeitsgericht.",
+    "options": [
+      "Die Einigungsstelle entscheidet verbindlich",
+      "Der Arbeitgeber entscheidet allein und endgültig",
+      "Die Belegschaft stimmt in einer Urabstimmung ab",
+      "Die zuständige IHK trifft eine bindende Entscheidung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Schutzfristen gelten nach dem Mutterschutzgesetz rund um die Geburt?",
+    "a": "6 Wochen vor und 8 Wochen nach der Entbindung",
+    "a_full": "Vor der Geburt darf die Frau nur arbeiten, wenn sie es ausdrücklich wünscht. Nach der Geburt gilt ein striktes Beschäftigungsverbot, bei Früh- oder Mehrlingsgeburten 12 Wochen. Außerdem besteht ab der Schwangerschaft ein besonderer Kündigungsschutz.",
+    "options": [
+      "6 Wochen vor und 8 Wochen nach der Entbindung",
+      "4 Wochen vor und 4 Wochen nach der Entbindung",
+      "8 Wochen vor und 6 Wochen nach der Entbindung",
+      "Nur 14 Wochen nach der Entbindung, vorher keine"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange zahlt der Arbeitgeber bei Arbeitsunfähigkeit durch Krankheit das Entgelt weiter?",
+    "a": "Bis zu 6 Wochen je Krankheit",
+    "a_full": "Das regelt das Entgeltfortzahlungsgesetz. Der Arbeitgeber zahlt das volle Entgelt bis zu 6 Wochen. Dauert die Krankheit länger, zahlt die gesetzliche Krankenkasse Krankengeld, das niedriger ist als das Nettoentgelt.",
+    "options": [
+      "Bis zu 6 Wochen je Krankheit",
+      "Bis zu 3 Wochen je Krankheit",
+      "Bis zu 12 Wochen je Kalenderjahr",
+      "Unbegrenzt bis zur Genesung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie lange darf ein Arbeitsvertrag ohne sachlichen Grund befristet werden?",
+    "a": "Bis zu 2 Jahre, innerhalb dieser Zeit höchstens dreimal verlängert",
+    "a_full": "Das regelt das Teilzeit- und Befristungsgesetz. Die sachgrundlose Befristung ist nur bei einer Neueinstellung möglich. Wer länger oder öfter befristen will, braucht einen Sachgrund, z.B. eine Elternzeitvertretung.",
+    "options": [
+      "Bis zu 2 Jahre, innerhalb dieser Zeit höchstens dreimal verlängert",
+      "Bis zu 5 Jahre, beliebig oft verlängert",
+      "Bis zu 6 Monate, keine Verlängerung erlaubt",
+      "Bis zu 1 Jahr, höchstens einmal verlängert"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet einen Konzern von einer Fusion?",
+    "a": "Im Konzern bleiben die Unternehmen rechtlich selbstständig, bei der Fusion verschmelzen sie",
+    "a_full": "Ein Konzern entsteht, wenn rechtlich selbstständige Unternehmen unter einheitlicher Leitung stehen, meist über eine Muttergesellschaft mit Mehrheitsbeteiligung. Bei einer Fusion geht mindestens ein Unternehmen vollständig im anderen auf. Es verliert dabei seine rechtliche Selbstständigkeit.",
+    "options": [
+      "Im Konzern bleiben die Unternehmen rechtlich selbstständig, bei der Fusion verschmelzen sie",
+      "Im Konzern haften alle Gesellschafter privat, bei der Fusion keiner",
+      "Ein Konzern ist eine Preisabsprache, eine Fusion ein Kooperationsvertrag",
+      "Beide Begriffe bedeuten dasselbe, nur in unterschiedlichen Branchen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "In welchen Instanzen ist die Arbeitsgerichtsbarkeit aufgebaut?",
+    "a": "Arbeitsgericht, Landesarbeitsgericht, Bundesarbeitsgericht",
+    "a_full": "Arbeitsrechtliche Streitigkeiten beginnen beim Arbeitsgericht, das zuerst eine Güteverhandlung zur Einigung ansetzt. Berufung geht zum Landesarbeitsgericht, Revision zum Bundesarbeitsgericht in Erfurt. Ehrenamtliche Richter von Arbeitnehmer- und Arbeitgeberseite wirken mit.",
+    "options": [
+      "Arbeitsgericht, Landesarbeitsgericht, Bundesarbeitsgericht",
+      "Amtsgericht, Landgericht, Bundesgerichtshof",
+      "Sozialgericht, Landessozialgericht, Bundessozialgericht",
+      "Arbeitsgericht, Oberlandesgericht, Bundesverfassungsgericht"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Stelle zieht den Gesamtsozialversicherungsbeitrag vom Arbeitgeber ein?",
+    "a": "Die Krankenkasse des Beschäftigten als Einzugsstelle",
+    "a_full": "Der Arbeitgeber überweist Kranken-, Pflege-, Renten- und Arbeitslosenversicherungsbeitrag gesammelt an die Krankenkasse. Diese leitet die Anteile an Rentenversicherung und Bundesagentur für Arbeit weiter. Die Unfallversicherung zahlt der Arbeitgeber getrennt an die Berufsgenossenschaft.",
+    "options": [
+      "Die Krankenkasse des Beschäftigten als Einzugsstelle",
+      "Das Finanzamt zusammen mit der Lohnsteuer",
+      "Die Deutsche Rentenversicherung für alle Zweige",
+      "Die Bundesagentur für Arbeit als zentrale Kasse"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was muss der Ausbildungsbetrieb dem Auszubildenden laut BBiG bieten?",
+    "a": "Ausbildungsmittel kostenlos stellen und für Berufsschule und Prüfungen freistellen",
+    "a_full": "Der Betrieb muss die Ausbildung planmäßig durchführen und dafür Werkzeuge, Software und Fachliteratur kostenlos bereitstellen. Er stellt für Berufsschule und Prüfungen frei und hält zum Führen des Ausbildungsnachweises an. Er darf nur Aufgaben übertragen, die dem Ausbildungszweck dienen.",
+    "options": [
+      "Ausbildungsmittel kostenlos stellen und für Berufsschule und Prüfungen freistellen",
+      "Eine feste Übernahme nach der Prüfung schriftlich zusagen",
+      "Die Kosten für den Führerschein des Azubis übernehmen",
+      "Die Berufsschulnoten an die Eltern des Azubis melden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie werden die beiden Teile der gestreckten Abschlussprüfung beim Fachinformatiker gewichtet?",
+    "a": "Teil 1 zählt 20 %, Teil 2 zählt 80 %",
+    "a_full": "Teil 1 findet etwa in der Mitte der Ausbildung statt und prüft die Einrichtung eines IT-gestützten Arbeitsplatzes. Das Ergebnis fließt in die Gesamtnote ein, man kann Teil 1 aber nicht wiederholen. Teil 2 umfasst die betriebliche Projektarbeit und die schriftlichen Prüfungsbereiche.",
+    "options": [
+      "Teil 1 zählt 20 %, Teil 2 zählt 80 %",
+      "Teil 1 zählt 50 %, Teil 2 zählt 50 %",
+      "Teil 1 zählt 40 %, Teil 2 zählt 60 %",
+      "Teil 1 zählt nicht, nur Teil 2 ist entscheidend"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet direkte von indirekten Steuern?",
+    "a": "Bei direkten Steuern sind Steuerschuldner und Steuerträger dieselbe Person",
+    "a_full": "Die Einkommensteuer, auch als Lohnsteuer, trägt der Steuerpflichtige selbst. Bei indirekten Steuern wie der Umsatzsteuer führt das Unternehmen die Steuer ab, wirtschaftlich trägt sie aber der Endverbraucher über den Preis.",
+    "options": [
+      "Bei direkten Steuern sind Steuerschuldner und Steuerträger dieselbe Person",
+      "Direkte Steuern zahlt nur der Staat, indirekte nur Firmen",
+      "Direkte Steuern sind freiwillig, indirekte sind Pflicht",
+      "Direkte Steuern erhebt der Bund, indirekte die Gemeinden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wofür ist die Lohnsteuerklasse VI vorgesehen?",
+    "a": "Für ein zweites oder weiteres Arbeitsverhältnis",
+    "a_full": "Wer neben seinem Hauptjob einen weiteren Arbeitsvertrag hat, bekommt dort Steuerklasse VI. Sie hat keine Freibeträge, deshalb wird dort am meisten Lohnsteuer abgezogen. Minijobs mit Pauschalsteuer sind davon meist nicht betroffen.",
+    "options": [
+      "Für ein zweites oder weiteres Arbeitsverhältnis",
+      "Für ledige Beschäftigte ohne Kinder",
+      "Für Alleinerziehende mit Kindern",
+      "Für Verheiratete mit dem höheren Einkommen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet die soziale Marktwirtschaft?",
+    "a": "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialen Ausgleich",
+    "a_full": "Preise und Produktion bilden sich grundsätzlich über Angebot und Nachfrage. Der Staat schützt den Wettbewerb, z.B. durch das Kartellrecht, und sorgt für sozialen Ausgleich über Sozialversicherung, Steuern und Arbeitnehmerschutz. Sie ist die Wirtschaftsordnung der Bundesrepublik.",
+    "options": [
+      "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialen Ausgleich",
+      "Der Staat plant zentral, was und wie viel produziert wird",
+      "Der Markt regelt alles, der Staat greift nie ein",
+      "Nur staatliche Unternehmen dürfen Güter herstellen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche drei Dimensionen umfasst Nachhaltigkeit im Unternehmen?",
+    "a": "Ökologische, ökonomische und soziale Nachhaltigkeit",
+    "a_full": "Ökologisch heißt Ressourcen und Klima schonen, z.B. durch sparsame Rechenzentren. Ökonomisch heißt dauerhaft wirtschaftlich erfolgreich sein. Sozial heißt faire Arbeitsbedingungen, auch in der Lieferkette. Man spricht vom Drei-Säulen-Modell.",
+    "options": [
+      "Ökologische, ökonomische und soziale Nachhaltigkeit",
+      "Planung, Durchführung und Kontrolle",
+      "Qualität, Kosten und Zeit",
+      "Umwelt, Datenschutz und Informationssicherheit"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Aufgabe hat der Betriebsabrechnungsbogen (BAB)?",
+    "a": "Gemeinkosten auf Kostenstellen verteilen und Zuschlagssätze ermitteln",
+    "a_full": "Im BAB werden die Gemeinkosten mit Verteilungsschlüsseln wie Fläche oder Mitarbeiterzahl auf die Kostenstellen umgelegt. Aus dem Verhältnis zu den Einzelkosten ergeben sich die Zuschlagssätze. Diese nutzt die Zuschlagskalkulation, um Gemeinkosten auf Aufträge zu verteilen.",
+    "options": [
+      "Gemeinkosten auf Kostenstellen verteilen und Zuschlagssätze ermitteln",
+      "Einzelkosten direkt und vollständig an die Kunden weiterberechnen",
+      "Alle Zahlungseingänge eines Monats nach Kunden sortieren",
+      "Vermögen und Kapital zum Bilanzstichtag gegenüberstellen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche drei Stufen durchläuft die klassische Kostenrechnung?",
+    "a": "Kostenarten-, Kostenstellen- und Kostenträgerrechnung",
+    "a_full": "Die Kostenartenrechnung fragt, welche Kosten angefallen sind. Die Kostenstellenrechnung fragt, wo sie angefallen sind. Die Kostenträgerrechnung fragt, wofür sie angefallen sind, also für welches Produkt oder welchen Auftrag.",
+    "options": [
+      "Kostenarten-, Kostenstellen- und Kostenträgerrechnung",
+      "Buchführung, Inventur und Jahresabschluss",
+      "Vorkalkulation, Zwischenkalkulation und Steuerrechnung",
+      "Einkaufs-, Lager- und Vertriebsrechnung"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie funktioniert die Zuschlagskalkulation im Grundsatz?",
+    "a": "Einzelkosten direkt ansetzen, Gemeinkosten per Prozentzuschlag aufschlagen",
+    "a_full": "Material- und Fertigungseinzelkosten werden dem Auftrag direkt zugerechnet. Die Gemeinkosten kommen über Zuschlagssätze aus dem BAB hinzu, z.B. für Material, Verwaltung und Vertrieb. So entstehen die Selbstkosten, auf die dann der Gewinn aufgeschlagen wird.",
+    "options": [
+      "Einzelkosten direkt ansetzen, Gemeinkosten per Prozentzuschlag aufschlagen",
+      "Alle Kosten gleichmäßig durch die produzierte Stückzahl teilen",
+      "Nur die variablen Kosten ansetzen und den Rest weglassen",
+      "Den Preis der Konkurrenz übernehmen und leicht unterbieten"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind Handlungskosten in der Handelskalkulation?",
+    "a": "Die Gemeinkosten eines Handelsbetriebs, z.B. Miete, Gehälter und Werbung",
+    "a_full": "Ein Handelsbetrieb fertigt kaum selbst, deshalb fasst er seine Gemeinkosten als Handlungskosten zusammen. Sie werden als Prozentzuschlag auf den Bezugspreis gerechnet. Bezugspreis plus Handlungskosten ergibt den Selbstkostenpreis.",
+    "options": [
+      "Die Gemeinkosten eines Handelsbetriebs, z.B. Miete, Gehälter und Werbung",
+      "Die Frachtkosten vom Lieferanten bis ins eigene Lager",
+      "Der Rabatt, den ein Händler seinen Stammkunden gewährt",
+      "Die Umsatzsteuer, die an das Finanzamt abgeführt wird"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die kurzfristige Preisuntergrenze?",
+    "a": "Der Preis, der gerade noch die variablen Stückkosten deckt",
+    "a_full": "Liegt der Preis über den variablen Stückkosten, bleibt ein positiver Deckungsbeitrag, der einen Teil der Fixkosten trägt. Die Fixkosten fallen kurzfristig ohnehin an. Deshalb kann ein Unternehmen, z.B. bei freier Kapazität, kurzfristig bis zu dieser Grenze gehen.",
+    "options": [
+      "Der Preis, der gerade noch die variablen Stückkosten deckt",
+      "Der Preis, der alle fixen und variablen Kosten deckt",
+      "Der niedrigste Preis, den ein Mitbewerber am Markt verlangt",
+      "Der Preis, bei dem das Unternehmen den höchsten Gewinn erzielt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Worin unterscheiden sich Aufwand und Kosten?",
+    "a": "Aufwand ist jeder Werteverzehr, Kosten nur der betriebsbedingte",
+    "a_full": "Aufwand erfasst die Finanzbuchhaltung, z.B. auch einen Verlust aus Wertpapiergeschäften. Kosten sind nur der Werteverzehr für den eigentlichen Betriebszweck. Aufwand, der keine Kosten ist, heißt neutraler Aufwand.",
+    "options": [
+      "Aufwand ist jeder Werteverzehr, Kosten nur der betriebsbedingte",
+      "Kosten fallen nur bar an, Aufwand nur per Überweisung",
+      "Aufwand entsteht nur einmal, Kosten dagegen jeden Monat",
+      "Kosten zahlt immer der Kunde, Aufwand trägt das Unternehmen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sind kalkulatorische Kosten?",
+    "a": "Kosten ohne Aufwand oder mit anderem Aufwand in der Buchhaltung",
+    "a_full": "Beispiele sind der kalkulatorische Unternehmerlohn für einen Inhaber ohne Gehalt oder die kalkulatorische Miete für eigene Räume. So fließen alle tatsächlich eingesetzten Leistungen in die Preise ein. In der Finanzbuchhaltung erscheinen sie nicht oder in anderer Höhe.",
+    "options": [
+      "Kosten ohne Aufwand oder mit anderem Aufwand in der Buchhaltung",
+      "Kosten, die nur geschätzt und am Jahresende storniert werden",
+      "Kosten, die ausschließlich für den Steuerberater entstehen",
+      "Kosten, die der Kunde vorab als Anzahlung überweist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was vergleicht die Kostenvergleichsrechnung?",
+    "a": "Die durchschnittlichen Kosten je Periode mehrerer Alternativen",
+    "a_full": "Sie ist ein statisches Verfahren und wählt die Alternative mit den geringsten Kosten pro Jahr oder pro Stück. Unterschiedliche Erlöse der Alternativen bleiben unberücksichtigt. Auch der Zeitpunkt der Zahlungen spielt keine Rolle.",
+    "options": [
+      "Die durchschnittlichen Kosten je Periode mehrerer Alternativen",
+      "Die abgezinsten Barwerte aller künftigen Zahlungen",
+      "Die Zeit, bis das eingesetzte Kapital zurückgeflossen ist",
+      "Den Gewinn im Verhältnis zum eingesetzten Kapital"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wann ist die Gewinnvergleichsrechnung der Kostenvergleichsrechnung vorzuziehen?",
+    "a": "Wenn die Alternativen unterschiedliche Erlöse erzielen",
+    "a_full": "Die Gewinnvergleichsrechnung zieht von den Erlösen die Kosten ab und vergleicht den durchschnittlichen Gewinn pro Jahr. Bringt z.B. ein leistungsstärkerer Server mehr verkaufte Leistungen, reicht ein reiner Kostenvergleich nicht. Wie der Kostenvergleich ist sie ein statisches Verfahren.",
+    "options": [
+      "Wenn die Alternativen unterschiedliche Erlöse erzielen",
+      "Wenn die Investition länger als zehn Jahre genutzt wird",
+      "Wenn nur eine einzige Alternative geprüft werden soll",
+      "Wenn Zinseszinsen genau berücksichtigt werden sollen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was bedeutet ein positiver Kapitalwert einer Investition?",
+    "a": "Sie erwirtschaftet mehr als die geforderte Mindestverzinsung",
+    "a_full": "Die Kapitalwertmethode zinst alle künftigen Ein- und Auszahlungen auf heute ab und zieht die Anschaffungsauszahlung ab. Ist das Ergebnis größer als null, lohnt sich die Investition. Bei genau null wird der Kalkulationszinssatz gerade erreicht.",
+    "options": [
+      "Sie erwirtschaftet mehr als die geforderte Mindestverzinsung",
+      "Sie hat sich bereits im ersten Nutzungsjahr bezahlt gemacht",
+      "Sie ist steuerlich im Anschaffungsjahr voll abschreibbar",
+      "Sie wurde vollständig aus Eigenkapital bezahlt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was sagt die Liquidität 2. Grades aus?",
+    "a": "Ob flüssige Mittel plus Forderungen die kurzfristigen Schulden decken",
+    "a_full": "Die Liquidität 1. Grades setzt nur Kasse und Bankguthaben ins Verhältnis zu den kurzfristigen Verbindlichkeiten. Der 2. Grad nimmt die kurzfristigen Forderungen hinzu, der 3. Grad das gesamte Umlaufvermögen. Für den 2. Grad gilt ein Wert von mindestens 100 % als Faustregel.",
+    "options": [
+      "Ob flüssige Mittel plus Forderungen die kurzfristigen Schulden decken",
+      "Ob das Anlagevermögen vollständig durch Eigenkapital gedeckt ist",
+      "Wie hoch der Anteil des Eigenkapitals am Gesamtkapital ist",
+      "Wie viel Gewinn im Verhältnis zum Umsatz übrig bleibt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was besagt die goldene Bilanzregel?",
+    "a": "Langfristiges Vermögen soll mit langfristigem Kapital finanziert werden",
+    "a_full": "Anlagevermögen wie Server oder Gebäude bleibt lange im Unternehmen. Es sollte deshalb mit Eigenkapital oder langfristigem Fremdkapital bezahlt werden, nicht mit einem kurzfristigen Kontokorrentkredit. Man spricht auch von Fristenkongruenz.",
+    "options": [
+      "Langfristiges Vermögen soll mit langfristigem Kapital finanziert werden",
+      "Das Eigenkapital muss immer höher sein als der Jahresumsatz",
+      "Kurzfristige Kredite sind langfristigen stets vorzuziehen",
+      "Die Bilanzsumme soll jedes Jahr genau gleich hoch bleiben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet Innenfinanzierung von Außenfinanzierung?",
+    "a": "Innen stammt das Geld aus dem Umsatzprozess, außen von Kapitalgebern",
+    "a_full": "Innenfinanzierung nutzt z.B. einbehaltene Gewinne, Rückflüsse aus Abschreibungen oder Rückstellungen. Außenfinanzierung bringt Kapital von außen, etwa durch Bankkredite oder neue Gesellschafter. Innenfinanzierung macht unabhängiger von Banken.",
+    "options": [
+      "Innen stammt das Geld aus dem Umsatzprozess, außen von Kapitalgebern",
+      "Innen ist immer Fremdkapital, außen immer Eigenkapital",
+      "Innen betrifft nur Inlandsgeschäfte, außen nur den Export",
+      "Innen wird stets geleast, außen wird stets bar gekauft"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Factoring?",
+    "a": "Der Verkauf offener Kundenforderungen an ein Finanzinstitut",
+    "a_full": "Der Factor zahlt einen Großteil der Forderung sofort aus und zieht sie später beim Kunden ein. Das verbessert die Liquidität des Unternehmens. Beim echten Factoring übernimmt der Factor auch das Ausfallrisiko und verlangt dafür Gebühren.",
+    "options": [
+      "Der Verkauf offener Kundenforderungen an ein Finanzinstitut",
+      "Die Vermietung von Geräten mit späterer Kaufoption",
+      "Ein kurzfristiger Kredit auf dem Geschäftskonto",
+      "Die Zahlung einer Rechnung unter Abzug von Skonto"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet Operating-Leasing von Finanzierungsleasing?",
+    "a": "Kurze, kündbare Laufzeit statt langer, unkündbarer Grundmietzeit",
+    "a_full": "Beim Operating-Leasing trägt der Leasinggeber das Investitionsrisiko, der Vertrag ist kurzfristig kündbar und enthält oft Service. Beim Finanzierungsleasing ist die Grundmietzeit fest und das Risiko liegt weitgehend beim Leasingnehmer. Es ähnelt daher einem Ratenkauf.",
+    "options": [
+      "Kurze, kündbare Laufzeit statt langer, unkündbarer Grundmietzeit",
+      "Nur beim Operating-Leasing wird man sofort Eigentümer",
+      "Finanzierungsleasing ist nur für Privatkunden erlaubt",
+      "Operating-Leasing gibt es nur für Gebäude und Fahrzeuge"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was zeigt der Cashflow eines Unternehmens?",
+    "a": "Wie viel Geld aus eigener Kraft erwirtschaftet wurde",
+    "a_full": "Vereinfacht ist der Cashflow der Jahresüberschuss plus Abschreibungen und Zuführungen zu langfristigen Rückstellungen. Abschreibungen mindern den Gewinn, führen aber zu keinem Geldabfluss. Der Cashflow zeigt daher die Innenfinanzierungskraft für Investitionen und Tilgungen.",
+    "options": [
+      "Wie viel Geld aus eigener Kraft erwirtschaftet wurde",
+      "Den Wert aller Maschinen, Server und Gebäude",
+      "Die Summe aller noch offenen Kundenforderungen",
+      "Das Verhältnis von Eigenkapital zu Fremdkapital"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wonach teilt die XYZ-Analyse Güter ein?",
+    "a": "Nach der Gleichmäßigkeit und Vorhersagbarkeit des Verbrauchs",
+    "a_full": "X-Güter werden sehr gleichmäßig verbraucht, Y-Güter schwankend und Z-Güter unregelmäßig. Die XYZ-Analyse ergänzt die ABC-Analyse, die nach dem Wertanteil sortiert. AX-Güter eignen sich z.B. gut für eine Just-in-time-Beschaffung.",
+    "options": [
+      "Nach der Gleichmäßigkeit und Vorhersagbarkeit des Verbrauchs",
+      "Nach dem Anteil am gesamten Einkaufswert",
+      "Nach der Entfernung zum jeweiligen Lieferanten",
+      "Nach der Größe und dem Gewicht der Artikel"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was unterscheidet das Bestellpunktverfahren vom Bestellrhythmusverfahren?",
+    "a": "Auslöser ist der Meldebestand statt ein fester Zeitabstand",
+    "a_full": "Beim Bestellpunktverfahren wird bestellt, sobald der Lagerbestand den Meldebestand erreicht. Beim Bestellrhythmusverfahren wird in festen Abständen bestellt, z.B. monatlich. Der Rhythmus ist einfacher zu planen, reagiert aber schlechter auf Verbrauchsschwankungen.",
+    "options": [
+      "Auslöser ist der Meldebestand statt ein fester Zeitabstand",
+      "Auslöser ist der Einkaufspreis statt der Liefertermin",
+      "Bestellt wird nur beim Stammlieferanten statt bei allen",
+      "Es gilt nur für A-Güter statt für alle Lagerartikel"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welcher Zielkonflikt steckt hinter der optimalen Bestellmenge?",
+    "a": "Große Mengen senken die Bestellkosten, erhöhen aber die Lagerkosten",
+    "a_full": "Wer selten große Mengen bestellt, spart fixe Kosten je Bestellung, bindet aber viel Kapital im Lager. Wer oft kleine Mengen bestellt, hat es umgekehrt. Die optimale Bestellmenge liegt dort, wo die Summe beider Kosten am kleinsten ist.",
+    "options": [
+      "Große Mengen senken die Bestellkosten, erhöhen aber die Lagerkosten",
+      "Große Mengen senken die Lagerkosten und die Bestellkosten",
+      "Kleine Mengen erhöhen den Rabatt und senken die Fracht",
+      "Große Mengen verkürzen die Lieferzeit und den Meldebestand"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Kriterien prüft ein qualitativer Angebotsvergleich?",
+    "a": "Nicht in Geld messbare Merkmale wie Service und Zuverlässigkeit",
+    "a_full": "Neben dem Preis zählen Lieferzeit, Garantie, Supportqualität, Erfahrungen mit dem Lieferanten und Umweltaspekte. Diese Merkmale werden oft mit einer Nutzwertanalyse gewichtet und bewertet. Das günstigste Angebot ist deshalb nicht automatisch das beste.",
+    "options": [
+      "Nicht in Geld messbare Merkmale wie Service und Zuverlässigkeit",
+      "Nur Listenpreis, Rabatt und Skonto der einzelnen Anbieter",
+      "Nur die Bezugskosten wie Fracht, Porto und Verpackung",
+      "Nur die Zahlungsziele und Kreditzinsen der jeweiligen Banken"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Aus welchen vier Bereichen besteht der Marketing-Mix (4P)?",
+    "a": "Produkt-, Preis-, Distributions- und Kommunikationspolitik",
+    "a_full": "Die 4P stehen für Product, Price, Place und Promotion. Produktpolitik gestaltet das Angebot, Preispolitik die Konditionen, Distributionspolitik den Vertriebsweg und Kommunikationspolitik die Werbung. Alle vier Bereiche müssen zueinander passen.",
+    "options": [
+      "Produkt-, Preis-, Distributions- und Kommunikationspolitik",
+      "Personal-, Planungs-, Prozess- und Prüfungspolitik",
+      "Produkt-, Personal-, Partner- und Patentpolitik",
+      "Preis-, Planungs-, Presse- und Projektpolitik"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet die Marktform Oligopol?",
+    "a": "Wenige große Anbieter stehen vielen Nachfragern gegenüber",
+    "a_full": "Jeder Anbieter muss die Reaktion der Konkurrenz einplanen, z.B. bei Preisänderungen. Beispiele sind Mobilfunknetzbetreiber oder große Cloud-Anbieter. Beim Monopol gibt es nur einen Anbieter, beim Polypol sehr viele.",
+    "options": [
+      "Wenige große Anbieter stehen vielen Nachfragern gegenüber",
+      "Ein einziger Anbieter beherrscht den gesamten Markt",
+      "Sehr viele kleine Anbieter treffen auf viele Nachfrager",
+      "Ein einziger Käufer steht vielen Anbietern gegenüber"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Abschöpfungsstrategie (Skimming) in der Preispolitik?",
+    "a": "Ein hoher Einführungspreis, der später schrittweise gesenkt wird",
+    "a_full": "Zuerst kaufen Kunden, die für Neuheiten viel zu zahlen bereit sind. Danach sinkt der Preis, um weitere Käufergruppen zu erreichen. Das Gegenteil ist die Penetrationsstrategie mit niedrigem Einstiegspreis.",
+    "options": [
+      "Ein hoher Einführungspreis, der später schrittweise gesenkt wird",
+      "Ein niedriger Einführungspreis, der später angehoben wird",
+      "Ein gleicher Preis für alle Kunden über die ganze Laufzeit",
+      "Ein Preis, der sich allein nach dem Marktführer richtet"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Welche Phasen hat der Produktlebenszyklus?",
+    "a": "Einführung, Wachstum, Reife, Sättigung und Rückgang",
+    "a_full": "In der Einführung sind die Umsätze niedrig und die Kosten hoch. In Wachstum und Reife steigen Umsatz und Gewinn, in der Sättigung stagniert der Markt. Im Rückgang wird das Produkt abgelöst oder vom Markt genommen.",
+    "options": [
+      "Einführung, Wachstum, Reife, Sättigung und Rückgang",
+      "Planung, Analyse, Entwurf, Test und Betrieb",
+      "Beschaffung, Lagerung, Verkauf, Versand und Service",
+      "Idee, Patent, Produktion, Werbung und Recycling"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist die Merkmal-Vorteil-Nutzen-Argumentation im Verkaufsgespräch?",
+    "a": "Technische Merkmale in einen konkreten Nutzen für den Kunden übersetzen",
+    "a_full": "Ein Merkmal ist z.B. eine besonders schnelle NVMe-SSD. Der Vorteil ist ein schneller Systemstart, der Nutzen für den Kunden weniger Wartezeit im Arbeitsalltag. Kunden entscheiden eher nach ihrem Nutzen als nach Datenblattwerten.",
+    "options": [
+      "Technische Merkmale in einen konkreten Nutzen für den Kunden übersetzen",
+      "Möglichst viele technische Daten auf einmal vortragen",
+      "Nur den Preisvorteil gegenüber der Konkurrenz betonen",
+      "Die Nachteile anderer Anbieter ausführlich darstellen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wie funktioniert die Bumerang-Methode bei der Einwandbehandlung?",
+    "a": "Der Einwand des Kunden wird in ein Argument für das Angebot umgewandelt",
+    "a_full": "Sagt ein Kunde z.B. „Das System ist teurer als das alte“, antwortet der Berater: „Gerade wegen der besseren Ausstattung sparen Sie Wartungskosten.“ Der Einwand wird aufgegriffen und umgedreht. Wichtig ist, den Kunden dabei ernst zu nehmen und nicht zu belehren.",
+    "options": [
+      "Der Einwand des Kunden wird in ein Argument für das Angebot umgewandelt",
+      "Der Einwand wird überhört und das Gespräch einfach fortgesetzt",
+      "Der Kunde soll den Einwand schriftlich beim Vertrieb einreichen",
+      "Der Preis wird sofort um den genannten Betrag gesenkt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Alternativfrage im Kundengespräch?",
+    "a": "Eine Frage mit zwei vorgegebenen Antwortmöglichkeiten",
+    "a_full": "Beispiel: „Soll die Installation am Dienstag oder am Donnerstag stattfinden?“ Sie hilft, Entscheidungen herbeizuführen, etwa zum Abschluss eines Gesprächs. Für die Bedarfsanalyse zu Beginn eignen sich offene Fragen besser.",
+    "options": [
+      "Eine Frage mit zwei vorgegebenen Antwortmöglichkeiten",
+      "Eine Frage, auf die der Kunde frei und ausführlich antwortet",
+      "Eine Frage, die die gewünschte Antwort bereits nahelegt",
+      "Eine Frage, die nur mit Ja oder Nein beantwortet wird"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was zeigt eine Meilenstein-Trendanalyse (MTA)?",
+    "a": "Wie sich die Terminprognosen der Meilensteine im Zeitverlauf verändern",
+    "a_full": "Zu jedem Berichtstermin wird der erwartete Termin jedes Meilensteins in ein Diagramm eingetragen. Steigende Linien zeigen Verzögerungen, waagrechte Linien einen stabilen Plan. So erkennt man Terminrisiken früh.",
+    "options": [
+      "Wie sich die Terminprognosen der Meilensteine im Zeitverlauf verändern",
+      "Welche Vorgänge im Netzplan keinen Puffer mehr haben",
+      "Wie sich die Kosten auf die einzelnen Arbeitspakete verteilen",
+      "Wer im Projekt für welche Aufgabe verantwortlich ist"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was gibt der Fertigstellungswert (Earned Value) an?",
+    "a": "Die Plankosten der bis zum Stichtag erledigten Arbeit",
+    "a_full": "Der Fertigstellungswert bewertet die erbrachte Leistung mit den Plankosten. Im Vergleich mit den Istkosten erkennt man Kostenabweichungen. Im Vergleich mit dem Planwert zum Stichtag erkennt man Terminabweichungen.",
+    "options": [
+      "Die Plankosten der bis zum Stichtag erledigten Arbeit",
+      "Die bis zum Stichtag tatsächlich bezahlten Kosten",
+      "Das gesamte Budget des Projekts laut Projektauftrag",
+      "Den Gewinn, den das Projekt nach Abschluss einbringt"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet das V-Modell als Vorgehensmodell?",
+    "a": "Jeder Entwurfsphase steht eine passende Testphase gegenüber",
+    "a_full": "Der linke Ast beschreibt Anforderungen, Entwurf und Umsetzung, der rechte Ast die zugehörigen Tests bis zur Abnahme. So wird z.B. der Systementwurf durch den Systemtest geprüft. In Deutschland ist das V-Modell XT für öffentliche IT-Projekte verbreitet.",
+    "options": [
+      "Jeder Entwurfsphase steht eine passende Testphase gegenüber",
+      "Feste Sprints mit täglichen kurzen Abstimmungen",
+      "Wiederholte Zyklen mit jeweils eigener Risikoanalyse",
+      "Vorgänge werden als Balken auf einer Zeitachse geplant"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Wozu dient eine Lessons-Learned-Runde am Projektende?",
+    "a": "Erfahrungen sichern, um künftige Projekte zu verbessern",
+    "a_full": "Das Team bespricht, was gut lief, was schlecht lief und was man beim nächsten Mal anders macht. Die Ergebnisse werden dokumentiert und anderen Projekten zugänglich gemacht. Es geht um Verbesserung, nicht um die Suche nach Schuldigen.",
+    "options": [
+      "Erfahrungen sichern, um künftige Projekte zu verbessern",
+      "Die Verantwortlichen für Fehler ermitteln und benennen",
+      "Die Schlussrechnung an den Kunden erstellen und senden",
+      "Die Arbeitspakete für die nächste Projektphase verteilen"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was kennzeichnet die Einfluss-Projektorganisation?",
+    "a": "Der Projektleiter koordiniert nur und hat keine Weisungsbefugnis",
+    "a_full": "Die Mitarbeiter bleiben in ihren Abteilungen und deren Vorgesetzten unterstellt. Der Projektleiter berät und informiert die Linie ähnlich wie eine Stabsstelle. Die Form passt zu kleinen Projekten, führt bei Konflikten aber zu langsamen Entscheidungen.",
+    "options": [
+      "Der Projektleiter koordiniert nur und hat keine Weisungsbefugnis",
+      "Der Projektleiter hat volle Weisungsbefugnis über ein eigenes Team",
+      "Projektleitung und Linie teilen sich die Weisungsbefugnis",
+      "Das Projekt wird vollständig an eine Fremdfirma übergeben"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist ein Lenkungsausschuss in einem Projekt?",
+    "a": "Ein Gremium, das über Budget, Freigaben und Eskalationen entscheidet",
+    "a_full": "Im Lenkungsausschuss (Steering Committee) sitzen Auftraggeber und Führungskräfte. Er gibt Phasen frei, entscheidet über größere Änderungen und löst Konflikte, die der Projektleiter nicht selbst klären kann. Der Projektleiter berichtet ihm regelmäßig.",
+    "options": [
+      "Ein Gremium, das über Budget, Freigaben und Eskalationen entscheidet",
+      "Das Team, das die Arbeitspakete technisch umsetzt und testet",
+      "Die Abteilung, die Rechnungen an die Kunden erstellt und prüft",
+      "Ein Werkzeug, mit dem die Dauer der Vorgänge geplant wird"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist Total Quality Management (TQM)?",
+    "a": "Ein Ansatz, der Qualität zur Aufgabe aller Mitarbeiter und Prozesse macht",
+    "a_full": "Qualität wird nicht nur am Ende geprüft, sondern in allen Bereichen und auf allen Ebenen gelebt. Im Mittelpunkt stehen Kundenorientierung, Prozessdenken und ständige Verbesserung. Die Führung geht dabei mit Vorbild voran.",
+    "options": [
+      "Ein Ansatz, der Qualität zur Aufgabe aller Mitarbeiter und Prozesse macht",
+      "Eine Endkontrolle, bei der jedes Produkt einzeln geprüft wird",
+      "Eine Norm, nach der sich Firmen verpflichtend zertifizieren",
+      "Ein Werkzeug, mit dem Fehlerursachen grafisch dargestellt werden"
+    ]
+  },
+  {
+    "cat": "wirtschaft",
+    "q": "Was ist eine Spartenorganisation?",
+    "a": "Eine Gliederung nach Produkten, Kunden oder Regionen statt nach Funktionen",
+    "a_full": "Jede Sparte, z.B. Hardwarehandel, Cloud-Services und Schulungen, hat eigene Bereiche wie Vertrieb und Technik. Sie arbeitet wie ein Unternehmen im Unternehmen und ist oft für ihren eigenen Erfolg verantwortlich. Man nennt sie auch divisionale Organisation.",
+    "options": [
+      "Eine Gliederung nach Produkten, Kunden oder Regionen statt nach Funktionen",
+      "Eine Gliederung nach Tätigkeiten wie Einkauf, Vertrieb und Verwaltung",
+      "Eine Gliederung, in der jede Stelle mehrere Vorgesetzte hat",
+      "Eine Gliederung, die nur für die Dauer eines Projekts besteht"
+    ]
   }
 ]
