@@ -361,6 +361,14 @@ class GrundrissUndAvatarTest(unittest.TestCase):
         texts = [s["text"] for s in fg.building_shapes(quests=set(quests)) if s["k"] == "text"]
         self.assertEqual(texts.count("!"), len(quests))
 
+    def test_kreisfarbe_waehlbar(self):
+        for key, _name in fg.APPEARANCE["kreis"]:
+            shapes = fg.player_shapes(fg.start_position(), ("Nico", {"kreis": key}))
+            self.assertEqual(shapes[0]["line"], fg.RING_COLORS[key])
+            self.assertEqual(shapes[-1]["color"], fg.RING_COLORS[key])
+        # alte Spielstaende ohne Kreis bekommen Pink
+        self.assertEqual(fg.normalize_appearance({})["kreis"], "pink")
+
     def test_avatar_alle_varianten(self):
         for part, options in fg.APPEARANCE.items():
             for key, _name in options:

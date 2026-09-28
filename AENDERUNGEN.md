@@ -36,7 +36,8 @@ Update-Fenster des Programms.
   „Büro“ (am PC in der Seitenleiste, auf dem Handy über „Büro öffnen“). Dort
   läuft deine Figur per Klick oder Tipp durch Flur und Türen, am PC auch mit
   den Pfeiltasten. Wer einen Auftrag für dich hat, trägt ein grünes „!“ – bei
-  der Person angekommen, nimmst du das Ticket direkt an.
+  der Person angekommen, nimmst du das Ticket direkt an. Die Farbe des Kreises
+  um deine Figur wählst du selbst („Figur bearbeiten“ → „Kreis im Büro“).
 - **Gleiche Namen auf PC und Handy:** Die Menüpunkte heißen jetzt überall
   „Rechner“, „Spiel“, „Fortschritt“ und „Optionen“ (nur „Dashboard“ am PC
   und „Start“ auf dem Handy bleiben verschieden).

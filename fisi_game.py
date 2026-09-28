@@ -84,10 +84,13 @@ APPEARANCE = {
                  ("gruen", "Grün"), ("orange", "Orange")],
     "extra": [("keins", "Nichts"), ("brille", "Brille"), ("headset", "Headset"),
               ("kappe", "Kappe")],
+    # Kreis um die Spielfigur im Grundriss und im Buero
+    "kreis": [("pink", "Pink"), ("cyan", "Cyan"), ("gruen", "Grün"),
+              ("violett", "Violett"), ("orange", "Orange"), ("gelb", "Gelb")],
 }
 APPEARANCE_LABELS = [("haut", "Hautton"), ("frisur", "Frisur"),
                      ("haarfarbe", "Haarfarbe"), ("oberteil", "Oberteil"),
-                     ("extra", "Accessoire")]
+                     ("extra", "Accessoire"), ("kreis", "Kreis im Büro")]
 DEFAULT_APPEARANCE = {part: options[0][0] for part, options in APPEARANCE.items()}
 
 SKIN_COLORS = {"hell": "#F5D0B5", "mittel": "#D9A47E", "oliv": "#B98A5E",
@@ -98,6 +101,8 @@ HAIR_COLORS = {"schwarz": "#2B2233", "braun": "#6B4226", "blond": "#E8C872",
 SHIRT_COLORS = {"cyan": "#22D3EE", "pink": "#F472B6", "violett": "#A78BFA",
                 "gruen": "#34D399", "orange": "#FB923C"}
 EXTRA_COLOR = "#1B1031"
+RING_COLORS = {"pink": "#F472B6", "cyan": "#22D3EE", "gruen": "#34D399",
+               "violett": "#A78BFA", "orange": "#FB923C", "gelb": "#FBBF24"}
 
 
 def normalize_appearance(appearance):
@@ -1046,10 +1051,13 @@ def _view_rect(item, rotate, content):
 
 
 def player_shapes(position, player, rotate=False, content=None):
-    """Die Spielfigur (rosa Ring, Name daneben) an position im Gebaeude."""
+    """Die Spielfigur (Kreis in der gewaehlten Farbe, Name daneben) an position
+    im Gebaeude."""
     x, y = to_view(position[0], position[1], rotate, content)
-    shapes = person_shapes(x, y, player[1], ring=C["pink"])
-    shapes.append(_text(x + 0.8, y, player[0] or "Du", "player", C["pink"]))
+    ring = RING_COLORS[normalize_appearance(player[1])["kreis"]]
+    shapes = person_shapes(x, y, player[1], ring=ring)
+    # Name unter der Figur (wie bei den Kollegen), so verdeckt er kein "!"
+    shapes.append(_text(x, y + 0.8, player[0] or "Du", "player", ring, anchor="c"))
     return shapes
 
 
