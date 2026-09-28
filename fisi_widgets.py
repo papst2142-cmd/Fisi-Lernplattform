@@ -388,6 +388,14 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         canvas.create_line(right - size * 0.3, top + size * 0.08,
                            right - size * 0.3, top + size * 0.26, **opts)
 
+    elif name == "database":      # Datenbanken
+        rim = size * 0.32
+        canvas.create_oval(left, top, right, top + rim, **fill_opts)
+        canvas.create_line(left, top + rim / 2, left, bottom - rim / 2, **opts)
+        canvas.create_line(right, top + rim / 2, right, bottom - rim / 2, **opts)
+        canvas.create_arc(left, bottom - rim, right, bottom, start=180,
+                          extent=180, style="arc", **line_opts)
+
     elif name == "search":
         radius = size * 0.32
         canvas.create_oval(x - radius - size * 0.1, y - radius - size * 0.1,
@@ -565,25 +573,41 @@ class IconButton(tk.Canvas):
     """Kleiner, runder Symbolknopf (z.B. Pfeile im Kalender)."""
 
     def __init__(self, parent, icon, command=None, size=30, parent_bg=None,
-                 color=None, icon_size=None):
+                 color=None, icon_size=None, press_color=None):
         self.parent_bg = parent_bg or _bg_of(parent)
         self.icon = icon
         self.command = command
         self.size = size
         self.icon_size = icon_size or size * 0.46
         self.color = color or C["text_dim"]
+        # Optionale Farbe, solange die Maustaste gedrueckt gehalten wird
+        self.press_color = press_color
         self._hover = False
+        self._pressed = False
         self._photos = {}
         super().__init__(parent, width=px(size), height=px(size),
                          bg=self.parent_bg, highlightthickness=0, bd=0,
                          cursor="hand2")
         self.bind("<Enter>", lambda e: self._set_hover(True))
         self.bind("<Leave>", lambda e: self._set_hover(False))
-        self.bind("<Button-1>", lambda e: self.command() if self.command else None)
+        self.bind("<Button-1>", self._on_press)
+        self.bind("<ButtonRelease-1>", lambda e: self._set_pressed(False))
         self._draw()
+
+    def _on_press(self, _event=None):
+        self._set_pressed(True)
+        if self.command:
+            self.command()
+
+    def _set_pressed(self, flag):
+        if self.press_color:
+            self._pressed = flag
+            self._draw()
 
     def _set_hover(self, flag):
         self._hover = flag
+        if not flag:
+            self._pressed = False
         self._draw()
 
     def _draw(self):
@@ -595,8 +619,14 @@ class IconButton(tk.Canvas):
             photo = tk_photo(circle_image(self.size, fill=fill), size, size)
             self._photos[fill] = photo
         self.create_image(size / 2, size / 2, image=photo)
+        if self._pressed:
+            icon_color = self.press_color
+        elif self._hover:
+            icon_color = C["cyan"]
+        else:
+            icon_color = self.color
         draw_icon(self, self.icon, size / 2, size / 2, px(self.icon_size),
-                  C["cyan"] if self._hover else self.color, width=max(2, px(2)))
+                  icon_color, width=max(2, px(2)))
 
 
 # ============================================================================
@@ -1015,7 +1045,7 @@ class Heatmap(tk.Canvas):
         if width <= 1 or height <= 1 or not self._rows or not self._columns:
             return
 
-        label_w = px(88)
+        label_w = px(98)
         grid_x = label_w
         grid_w = width - label_w - px(4)
         gap = px(4)
@@ -1071,12 +1101,12 @@ class CalendarPanel(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x")
         IconButton(header, "arrow_left", self._prev_month, parent_bg=self.bg,
-                   color=C["yellow"]).pack(side="left")
+                   color=C["cyan"], press_color=C["green"]).pack(side="left")
         self.lbl_month = ctk.CTkLabel(header, text="", text_color=C["text"],
                                       font=F["h3"], height=0)
         self.lbl_month.pack(side="left", expand=True)
         IconButton(header, "arrow_right", self._next_month, parent_bg=self.bg,
-                   color=C["yellow"]).pack(side="right")
+                   color=C["cyan"], press_color=C["green"]).pack(side="right")
 
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 height=px(190), width=px(160))
@@ -1284,7 +1314,7 @@ class OptionList(ctk.CTkFrame):
         marker = ctk.CTkLabel(frame, text="", width=20, height=20, cursor="hand2")
         marker.pack(side="left", padx=(14, 10), pady=12)
 
-        label = ctk.CTkLabel(frame, text=text, text_color=C["text"],
+        label = ctk.CTkLabel(frame, text=text, text_color=C["text_soft"],
                              font=F["body"], justify="left", anchor="w",
                              wraplength=self._wrap, cursor="hand2", height=0)
         label.pack(side="left", fill="x", expand=True, padx=(0, 14), pady=11)
@@ -1336,15 +1366,15 @@ class OptionList(ctk.CTkFrame):
     def _paint(self, row):
         state = row["state"]
         if state == "selected":
-            bg, border, fg, dot = C["card_hi"], C["purple"], C["text"], C["purple"]
+            bg, border, fg, dot = C["card_hi"], C["purple"], C["text_soft"], C["purple"]
         elif state == "correct":
-            bg, border, fg, dot = mix(C["card"], C["green"], 0.18), C["green"], C["text"], C["green"]
+            bg, border, fg, dot = mix(C["card"], C["green"], 0.18), C["green"], C["text_soft"], C["green"]
         elif state == "wrong":
-            bg, border, fg, dot = mix(C["card"], C["red"], 0.18), C["red"], C["text"], C["red"]
+            bg, border, fg, dot = mix(C["card"], C["red"], 0.18), C["red"], C["text_soft"], C["red"]
         elif state == "muted":
             bg, border, fg, dot = C["card_alt"], C["border"], C["muted"], None
         else:
-            bg, border, fg, dot = C["card_alt"], C["border"], C["text"], None
+            bg, border, fg, dot = C["card_alt"], C["border"], C["text_soft"], None
 
         row["frame"].configure(fg_color=bg, border_color=border,
                                border_width=2 if state in ("selected", "correct", "wrong") else 1)
@@ -1475,7 +1505,7 @@ def make_text(parent, height=6, readonly=False, font=None):
     """Abgerundetes, mehrzeiliges Textfeld. height ist die Zeilenanzahl."""
     font = font or F["body"]
     widget = ctk.CTkTextbox(parent, height=_text_height(font, height), wrap="word",
-                            fg_color=C["card_alt"], text_color=C["text"],
+                            fg_color=C["card_alt"], text_color=C["text_soft"],
                             border_color=C["border"], border_width=1,
                             corner_radius=12, font=font,
                             scrollbar_button_color=C["scrollbar"],
