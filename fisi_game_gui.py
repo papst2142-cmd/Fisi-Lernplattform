@@ -28,14 +28,17 @@ PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"
                   "kritisch": C["red"]}
 STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
                fg.ST_WRONG: ("mit Fehlern", C["red"]),
-               fg.ST_DEFERRED: ("verschoben", C["yellow"])}
+               fg.ST_DEFERRED: ("verschoben", C["yellow"]),
+               fg.ST_WAITING: ("wartet auf Teil", C["purple"])}
 # Hinweis, wenn beim Einreichen noch nichts eingegeben ist
 EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "bestellung": "Der Warenkorb ist noch leer.",
               "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
               "formular": "Bitte fülle zuerst die Felder aus.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
-              "diagnose": "Bitte wähle Ursache und Maßnahme."}
+              "diagnose": "Bitte wähle Ursache und Maßnahme.",
+              "austausch": "Bitte wähle Ursache, Maßnahme, Ersatzteil und Ablauf.",
+              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss."}
 # Beschriftung "Zurueck ..." je nachdem, wo ein Auftrag angenommen wurde
 RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
@@ -1095,11 +1098,12 @@ class DiagnoseBoard(ctk.CTkFrame):
     """Fehlersuche: Pruefungen anklicken, die Ergebnisse landen im Notizblock.
     Danach Ursache und Massnahme waehlen."""
 
-    def __init__(self, parent, task, available=None):
+    def __init__(self, parent, task, available=None, stock=None, on_order=None):
         super().__init__(parent, fg_color="transparent")
         self.task = task
         self.done = []
         self.locked = False
+        self.exchange = None
         spare = fg.spare_parts_text(task, available)
         if spare:
             make_label(self, spare, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
@@ -1149,6 +1153,9 @@ class DiagnoseBoard(ctk.CTkFrame):
         random.shuffle(measures)
         self.measure.set_options(measures)
         self.measure.pack(fill="x")
+        if task.get("austausch"):
+            self.exchange = ExchangePanel(self, task, stock, on_order)
+            self.exchange.pack(fill="x")
         self._paint()
 
     def check(self, check_id):
@@ -1158,11 +1165,19 @@ class DiagnoseBoard(ctk.CTkFrame):
 
     @property
     def answer(self):
-        return {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
-                "massnahme": self.measure.get() or ""}
+        result = {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
+                  "massnahme": self.measure.get() or ""}
+        if self.exchange:
+            result.update(teil=self.exchange.part, reihenfolge=list(self.exchange.order))
+        return result
+
+    @property
+    def hint_key(self):
+        return "austausch" if self.exchange else "diagnose"
 
     def complete(self):
-        return bool(self.cause.get() and self.measure.get())
+        return bool(self.cause.get() and self.measure.get()) and \
+            (self.exchange is None or self.exchange.complete())
 
     def _paint(self):
         keys = fg.diagnosis_key_checks(self.task)
@@ -1196,7 +1211,205 @@ class DiagnoseBoard(ctk.CTkFrame):
         self.locked = True
         self.cause.reveal(self.task["ursache"])
         self.measure.reveal(self.task["massnahme"])
+        if self.exchange:
+            self.exchange.reveal()
         self._paint()
+
+
+class ExchangePanel(ctk.CTkFrame):
+    """Austausch-Schritt einer Diagnose: Ersatzteil waehlen (aus dem Lager,
+    sonst nachbestellen) und den Ablauf in die richtige Reihenfolge bringen."""
+
+    def __init__(self, parent, task, stock, on_order=None):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.stock = dict(stock or {})
+        self.on_order = on_order
+        self.part = None
+        self.order = []
+        self.locked = False
+        exchange = task["austausch"]
+        kind = fg.spare_kinds().get(exchange["typ"], "Ersatzteil")
+        make_label(self, "AUSTAUSCH: %s" % kind.upper(), font=F["label"],
+                   fg=C["muted"]).pack(anchor="w", pady=(16, 2))
+        make_label(self, "Wähle ein Teil aus dem Lager. Fehlt das passende, bestelle es "
+                   "nach: Es kommt am nächsten Arbeitstag, bis dahin wartet das Ticket.",
+                   font=F["small"], fg=C["text_dim"], wraplength=940, justify="left",
+                   anchor="w").pack(anchor="w", pady=(0, 6))
+        self.part_rows = {}
+        for item in fg.spare_catalog(task):
+            count = self.stock.get(item["id"], 0)
+            extra = "im Lager: %d" % count if count else "nicht im Lager"
+            row, title, detail, widgets = _pick_row(
+                self, item["name"], "%s · %d €" % (fg.spare_specs(item), item["preis"]),
+                extra, C["green"] if count else C["muted"])
+            row.pack(fill="x", pady=3)
+            if count:
+                for widget in widgets:
+                    widget.bind("<Button-1>", lambda _e, pid=item["id"]: self.pick(pid))
+            elif on_order:
+                NeoButton(row, "Nachbestellen (%d €)" % item["preis"],
+                          lambda pid=item["id"]: self.on_order(pid), kind="ghost",
+                          height=28, font=F["small_bold"]).pack(anchor="w", padx=14,
+                                                               pady=(0, 9))
+            self.part_rows[item["id"]] = (row, title)
+
+        make_label(self, "ABLAUF", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                        pady=(14, 2))
+        make_label(self, "Klicke die Schritte in der richtigen Reihenfolge an. Nicht "
+                   "jeder Schritt gehört dazu.", font=F["small"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w", pady=(0, 6))
+        self.step_rows = {}
+        for text in fg.exchange_steps(task):
+            row = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"], cursor="hand2")
+            row.pack(fill="x", pady=3)
+            number = make_label(row, "", font=F["body_bold"], fg=C["accent"], width=28)
+            number.pack(side="left", padx=(12, 0))
+            label = make_label(row, text, font=F["body"], fg=C["text_soft"], wraplength=860,
+                               justify="left", anchor="w", cursor="hand2")
+            label.pack(side="left", fill="x", expand=True, padx=(4, 14), pady=10)
+            for widget in (row, number, label):
+                widget.bind("<Button-1>", lambda _e, value=text: self.step(value))
+            self.step_rows[text] = (row, number, label)
+        NeoButton(self, "Ablauf zurücksetzen", self.reset, kind="ghost", height=30,
+                  font=F["small_bold"]).pack(anchor="w", pady=(8, 0))
+        self._paint()
+
+    def pick(self, part_id):
+        if not self.locked:
+            self.part = part_id
+            self._paint()
+
+    def step(self, text):
+        if not self.locked and text not in self.order:
+            self.order.append(text)
+            self._paint()
+
+    def reset(self):
+        if not self.locked:
+            self.order = []
+            self._paint()
+
+    def complete(self):
+        return bool(self.part and self.order)
+
+    def _paint(self, solution=None):
+        for part_id, (row, title) in self.part_rows.items():
+            chosen = part_id == self.part
+            right = solution is not None and not fg.spare_fits(self.task, part_id)
+            row.configure(border_color=C["green"] if right else
+                          (C["accent"] if chosen else C["border"]),
+                          border_width=2 if chosen or right else 1,
+                          fg_color=C["card"] if chosen else C["card_alt"])
+        for text, (row, number, label) in self.step_rows.items():
+            index = self.order.index(text) + 1 if text in self.order else None
+            number.configure(text=str(index) if index else "")
+            row.configure(fg_color=C["card"] if index else C["card_alt"])
+            if solution is not None:
+                steps = self.task["austausch"]["schritte"]
+                good = text in steps
+                row.configure(border_color=C["green"] if good else C["border"],
+                              border_width=2 if good else 1)
+                number.configure(text=str(steps.index(text) + 1) if good else "")
+
+    def reveal(self):
+        self.locked = True
+        self._paint(solution=True)
+
+
+class MaintenanceBoard(ctk.CTkFrame):
+    """Wartung: Pruefpunkte anklicken (Messwert erscheint), jeden als „in
+    Ordnung“ oder „auffällig“ bewerten, dann den Abschluss waehlen."""
+
+    def __init__(self, parent, task):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.checked = []
+        self.ratings = {}
+        self.shown = set()
+        self.locked = False
+        make_label(self, "PRÜFPUNKTE", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                            pady=(0, 6))
+        self.rows = {}
+        for item in task["pruefpunkte"]:
+            row = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"], cursor="hand2")
+            row.pack(fill="x", pady=3)
+            head = _frame(row)
+            head.pack(fill="x", padx=14, pady=(10, 0))
+            label = make_label(head, item["text"], font=F["body"], fg=C["text_soft"],
+                               wraplength=620, justify="left", anchor="w", cursor="hand2")
+            label.pack(side="left", fill="x", expand=True)
+            choice = ChoiceRow(head, [(key, fg.RATING_TEXT[key])
+                                      for key in (fg.RATING_OK, fg.RATING_ISSUE)], None,
+                               lambda key, pid=item["id"]: self.rate(pid, key))
+            result = make_label(row, "Zum Prüfen anklicken.", font=F["small"],
+                                fg=C["muted"], wraplength=900, justify="left", anchor="w",
+                                cursor="hand2")
+            result.pack(anchor="w", padx=14, pady=(2, 10))
+            for widget in (row, head, label, result):
+                widget.bind("<Button-1>", lambda _e, value=item["id"]: self.check(value))
+            self.rows[item["id"]] = (row, label, choice, result)
+        self.counter = make_label(self, "", font=F["small"], fg=C["muted"], anchor="w")
+        self.counter.pack(anchor="w", pady=(6, 0))
+        make_label(self, "ABSCHLUSS FÜR DAS PROTOKOLL", font=F["label"],
+                   fg=C["muted"]).pack(anchor="w", pady=(16, 2))
+        self.closing = OptionList(self, bg=C["card"])
+        options = list(task["abschluss"])
+        random.shuffle(options)
+        self.closing.set_options(options)
+        self.closing.pack(fill="x")
+        self._paint()
+
+    def check(self, point_id):
+        if not self.locked and point_id not in self.checked:
+            self.checked.append(point_id)
+            self._paint()
+
+    def rate(self, point_id, key):
+        if self.locked:
+            return
+        if point_id not in self.checked:
+            self.checked.append(point_id)
+        self.ratings[point_id] = key
+        self._paint()
+
+    @property
+    def answer(self):
+        return {"bewertung": dict(self.ratings), "abschluss": self.closing.get() or ""}
+
+    def complete(self):
+        return len(self.ratings) == len(self.task["pruefpunkte"]) and bool(self.closing.get())
+
+    def _paint(self, solution=False):
+        for point_id, (row, label, choice, result) in self.rows.items():
+            item = fg.maintenance_point(self.task, point_id)
+            done = point_id in self.checked
+            if done and point_id not in self.shown:
+                choice.pack(side="right", padx=(10, 0))
+                self.shown.add(point_id)
+            if choice.value != self.ratings.get(point_id):
+                choice.value = self.ratings.get(point_id)
+                choice._paint()
+            result.configure(text=item["ergebnis"] if done else "Zum Prüfen anklicken.",
+                             text_color=C["accent"] if done else C["muted"])
+            row.configure(fg_color=C["card"] if done else C["card_alt"])
+            if solution:
+                wanted = fg.RATING_ISSUE if item.get("auffaellig") else fg.RATING_OK
+                good = self.ratings.get(point_id) == wanted
+                row.configure(border_color=C["green"] if good else C["red"], border_width=2)
+                result.configure(text="%s · richtig: %s" % (item["ergebnis"],
+                                                            fg.RATING_TEXT[wanted]))
+        self.counter.configure(text=fg.maintenance_counter(self.task, self.ratings))
+
+    def reveal(self, right):
+        self.locked = True
+        self.closing.reveal(self.task["abschluss_antwort"])
+        for point_id in self.rows:
+            if point_id not in self.checked:
+                self.checked.append(point_id)
+        self._paint(solution=True)
 
 
 class GameView(ScrollArea):
@@ -1686,7 +1899,11 @@ class GameView(ScrollArea):
             self.options = TerminalBoard(body, task)
             self.options.pack(fill="x")
         elif task["typ"] == "diagnose":
-            self.options = DiagnoseBoard(body, task, self.available)
+            self.options = DiagnoseBoard(body, task, self.available, state.stock(),
+                                         lambda part_id: self._order_spare(task, part_id))
+            self.options.pack(fill="x")
+        elif task["typ"] == "wartung":
+            self.options = MaintenanceBoard(body, task)
             self.options.pack(fill="x")
         else:
             self.options = MatchBoard(body, task)
@@ -1738,7 +1955,8 @@ class GameView(ScrollArea):
                 return
         elif task["typ"] in fg.PROBLEM_TYPES:
             if not self.options.complete():
-                messagebox.showwarning("Hinweis", EMPTY_HINT[task["typ"]])
+                messagebox.showwarning("Hinweis", EMPTY_HINT[getattr(
+                    self.options, "hint_key", task["typ"])])
                 return
             answer = dict(self.options.answer)
         else:
@@ -1803,6 +2021,25 @@ class GameView(ScrollArea):
     def _open_learn(self, kind, title):
         self.ticket = None
         self.app.open_search_hit(kind, title)
+
+    def _order_spare(self, task, part_id):
+        """Austausch: fehlendes Ersatzteil nachbestellen, das Ticket wartet."""
+        if self.answered:
+            return
+        item = fg.part(part_id)
+        days = fg.spare_delivery_days()
+        if not messagebox.askyesno(
+                "Ersatzteil nachbestellen",
+                "%s für %d € nachbestellen? Es kommt %s, bis dahin wartet das Ticket." % (
+                    item["name"], item["preis"], "am nächsten Arbeitstag" if days == 1
+                    else "in %d Arbeitstagen" % days)):
+            return
+        try:
+            self.game.order_spare(task["id"], part_id)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+        self.app.notify_progress()
+        self._close_ticket()
 
     def _defer(self, task):
         if self.answered:

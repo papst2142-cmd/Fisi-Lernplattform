@@ -27,14 +27,17 @@ PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"
                   "kritisch": C["red"]}
 STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
                fg.ST_WRONG: ("mit Fehlern", C["red"]),
-               fg.ST_DEFERRED: ("verschoben", C["yellow"])}
+               fg.ST_DEFERRED: ("verschoben", C["yellow"]),
+               fg.ST_WAITING: ("wartet auf Teil", C["purple"])}
 # Hinweis, wenn beim Einreichen noch nichts eingegeben ist (wie am PC)
 EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "bestellung": "Der Warenkorb ist noch leer.",
               "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
               "formular": "Bitte fülle zuerst die Felder aus.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
-              "diagnose": "Bitte wähle Ursache und Maßnahme."}
+              "diagnose": "Bitte wähle Ursache und Maßnahme.",
+              "austausch": "Bitte wähle Ursache, Maßnahme, Ersatzteil und Ablauf.",
+              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss."}
 # Grossansichten der Orte: Kopfzeile und "Zurueck ..." nach einem Auftrag
 SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
                "zuhause": ("SPIEL", "ZUHAUSE")}
@@ -786,7 +789,8 @@ class FormBoard(ft.Column):
             self.choices[field["id"]] = {"value": "", "pills": pills}
             self._paint_choice(field["id"])
             return ft.Column([ui.text(field["label"], size=13, color=C["text_dim"]),
-                              ft.Row([pill for _o, pill in pills], spacing=8), mark],
+                              ft.Row([pill for _o, pill in pills], spacing=8, wrap=True,
+                                     run_spacing=8), mark],
                              spacing=6, tight=True)
         whole = field["art"] in ("zahl", "praefix") and float(field["soll"]).is_integer()
         box = ui.entry(hint=field["einheit"] or None,
@@ -939,12 +943,13 @@ class DiagnoseBoard(ft.Column):
     """Fehlersuche: Pruefungen antippen, Ergebnisse im Notizblock sammeln,
     dann Ursache und Massnahme waehlen."""
 
-    def __init__(self, task, available=None):
+    def __init__(self, task, available=None, stock=None, on_order=None):
         super().__init__(spacing=10, tight=True,
                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self.task = task
         self.done = []
         self.locked = False
+        self.exchange = None
         controls = []
         spare = fg.spare_parts_text(task, available)
         if spare:
@@ -978,6 +983,9 @@ class DiagnoseBoard(ft.Column):
         random.shuffle(measures)
         self.measure.set_options(measures)
         controls += [ui.label("Ursache"), self.cause, ui.label("Maßnahme"), self.measure]
+        if task.get("austausch"):
+            self.exchange = ExchangePanel(task, stock, on_order)
+            controls.append(self.exchange)
         self.controls = controls
         self._paint()
 
@@ -988,11 +996,19 @@ class DiagnoseBoard(ft.Column):
 
     @property
     def answer(self):
-        return {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
-                "massnahme": self.measure.get() or ""}
+        result = {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
+                  "massnahme": self.measure.get() or ""}
+        if self.exchange:
+            result.update(teil=self.exchange.part, reihenfolge=list(self.exchange.order))
+        return result
+
+    @property
+    def hint_key(self):
+        return "austausch" if self.exchange else "diagnose"
 
     def complete(self):
-        return bool(self.cause.get() and self.measure.get())
+        return bool(self.cause.get() and self.measure.get()) and \
+            (self.exchange is None or self.exchange.complete())
 
     def _paint(self):
         keys = fg.diagnosis_key_checks(self.task)
@@ -1021,6 +1037,207 @@ class DiagnoseBoard(ft.Column):
         self.locked = True
         self.cause.reveal(self.task["ursache"])
         self.measure.reveal(self.task["massnahme"])
+        if self.exchange:
+            self.exchange.reveal()
+        self._paint()
+
+
+def _pill(caption, on_click):
+    return ft.Container(content=ft.Text(caption, size=13, weight=ft.FontWeight.BOLD),
+                        height=34, border_radius=17, alignment=ft.Alignment.CENTER,
+                        padding=ft.Padding.symmetric(horizontal=14), ink=True,
+                        on_click=on_click)
+
+
+def _paint_pill(pill, active):
+    pill.gradient = ui.gradient("primary") if active else None
+    pill.bgcolor = None if active else C["card"]
+    pill.border = None if active else ft.Border.all(1, C["border"])
+    pill.content.color = C["on_accent"] if active else C["text_dim"]
+
+
+class ExchangePanel(ft.Column):
+    """Austausch-Schritt einer Diagnose (wie am PC): Ersatzteil waehlen (aus
+    dem Lager, sonst nachbestellen) und den Ablauf antippen."""
+
+    def __init__(self, task, stock, on_order=None):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.stock = dict(stock or {})
+        self.part = None
+        self.order = []
+        self.locked = False
+        self.solution = False
+        kind = fg.spare_kinds().get(task["austausch"]["typ"], "Ersatzteil")
+        controls = [ui.label("Austausch: %s" % kind),
+                    ui.text("Wähle ein Teil aus dem Lager. Fehlt das passende, bestelle es "
+                            "nach: Es kommt am nächsten Arbeitstag, bis dahin wartet das "
+                            "Ticket.", size=12, color=C["text_dim"])]
+        self.part_boxes = {}
+        for item in fg.spare_catalog(task):
+            count = self.stock.get(item["id"], 0)
+            rows = [ft.Row([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD,
+                                    expand=True),
+                            ui.text("im Lager: %d" % count if count else "nicht im Lager",
+                                    size=11, color=C["green"] if count else C["muted"],
+                                    weight=ft.FontWeight.BOLD)], spacing=8),
+                    ui.text("%s · %s" % (fg.spare_specs(item), euro(item["preis"])), size=12,
+                            color=C["muted"])]
+            if not count and on_order:
+                rows.append(ft.Row([ui.GradientButton(
+                    "Nachbestellen (%s)" % euro(item["preis"]),
+                    lambda _e, pid=item["id"]: on_order(pid), kind="ghost", height=34)]))
+            box = ft.Container(
+                content=ft.Column(rows, spacing=4, tight=True), border_radius=10,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=9), ink=bool(count),
+                on_click=(lambda _e, pid=item["id"]: self.pick(pid)) if count else None)
+            self.part_boxes[item["id"]] = box
+            controls.append(box)
+        controls += [ui.label("Ablauf"),
+                     ui.text("Tippe die Schritte in der richtigen Reihenfolge an. Nicht "
+                             "jeder Schritt gehört dazu.", size=12, color=C["text_dim"])]
+        self.step_boxes = {}
+        for text in fg.exchange_steps(task):
+            number = ft.Text("", size=14, color=C["accent"], weight=ft.FontWeight.BOLD,
+                             width=22)
+            box = ft.Container(
+                content=ft.Row([number, ft.Text(text, size=14, color=C["text_soft"],
+                                                expand=True)], spacing=6),
+                border_radius=12, ink=True,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=11),
+                on_click=lambda _e, value=text: self.step(value))
+            self.step_boxes[text] = (box, number)
+            controls.append(box)
+        controls.append(ft.Row([ui.GradientButton("Ablauf zurücksetzen", self.reset,
+                                                  kind="ghost", height=38)]))
+        self.controls = controls
+        self._paint()
+
+    def pick(self, part_id):
+        if not self.locked:
+            self.part = part_id
+            self._paint()
+
+    def step(self, text):
+        if not self.locked and text not in self.order:
+            self.order.append(text)
+            self._paint()
+
+    def reset(self, _event=None):
+        if not self.locked:
+            self.order = []
+            self._paint()
+
+    def complete(self):
+        return bool(self.part and self.order)
+
+    def _paint(self):
+        for part_id, box in self.part_boxes.items():
+            chosen = part_id == self.part
+            right = self.solution and not fg.spare_fits(self.task, part_id)
+            box.bgcolor = C["card_hi"] if chosen else C["card_alt"]
+            box.border = ft.Border.all(2 if chosen or right else 1,
+                                       C["green"] if right else
+                                       (C["purple"] if chosen else C["border"]))
+        steps = self.task["austausch"]["schritte"]
+        for text, (box, number) in self.step_boxes.items():
+            index = self.order.index(text) + 1 if text in self.order else None
+            if self.solution:
+                index = steps.index(text) + 1 if text in steps else None
+            number.value = str(index) if index else ""
+            good = self.solution and text in steps
+            box.bgcolor = C["card"] if index else C["card_alt"]
+            box.border = ft.Border.all(2 if good else 1, C["green"] if good else C["border"])
+
+    def reveal(self):
+        self.locked = True
+        self.solution = True
+        self._paint()
+
+
+class MaintenanceBoard(ft.Column):
+    """Wartung (wie am PC): Pruefpunkt antippen, Messwert lesen, als „in
+    Ordnung“ oder „auffällig“ bewerten, dann den Abschluss waehlen."""
+
+    def __init__(self, task):
+        super().__init__(spacing=10, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.checked = []
+        self.ratings = {}
+        self.locked = False
+        self.solution = False
+        controls = [ui.label("Prüfpunkte")]
+        self.rows = {}
+        for item in task["pruefpunkte"]:
+            result = ft.Text("Zum Prüfen antippen.", size=13, color=C["muted"])
+            pills = {key: _pill(fg.RATING_TEXT[key],
+                                lambda _e, pid=item["id"], k=key: self.rate(pid, k))
+                     for key in (fg.RATING_OK, fg.RATING_ISSUE)}
+            pill_row = ft.Row(list(pills.values()), spacing=8, visible=False)
+            box = ft.Container(
+                content=ft.Column([ft.Text(item["text"], size=14, color=C["text_soft"]),
+                                   result, pill_row], spacing=6, tight=True),
+                border_radius=12, ink=True,
+                padding=ft.Padding.symmetric(horizontal=14, vertical=11),
+                on_click=lambda _e, value=item["id"]: self.check(value))
+            self.rows[item["id"]] = (box, result, pills, pill_row)
+            controls.append(box)
+        self.counter = ui.text("", size=12, color=C["muted"])
+        self.closing = ui.OptionList()
+        options = list(task["abschluss"])
+        random.shuffle(options)
+        self.closing.set_options(options)
+        controls += [self.counter, ui.label("Abschluss für das Protokoll"), self.closing]
+        self.controls = controls
+        self._paint()
+
+    def check(self, point_id):
+        if not self.locked and point_id not in self.checked:
+            self.checked.append(point_id)
+            self._paint()
+
+    def rate(self, point_id, key):
+        if self.locked:
+            return
+        if point_id not in self.checked:
+            self.checked.append(point_id)
+        self.ratings[point_id] = key
+        self._paint()
+
+    @property
+    def answer(self):
+        return {"bewertung": dict(self.ratings), "abschluss": self.closing.get() or ""}
+
+    def complete(self):
+        return len(self.ratings) == len(self.task["pruefpunkte"]) and bool(self.closing.get())
+
+    def _paint(self):
+        for point_id, (box, result, pills, pill_row) in self.rows.items():
+            item = fg.maintenance_point(self.task, point_id)
+            done = point_id in self.checked
+            pill_row.visible = done
+            result.value = item["ergebnis"] if done else "Zum Prüfen antippen."
+            result.color = C["accent"] if done else C["muted"]
+            for key, pill in pills.items():
+                _paint_pill(pill, self.ratings.get(point_id) == key)
+            box.bgcolor = C["card"] if done else C["card_alt"]
+            border = C["border"]
+            if self.solution:
+                wanted = fg.RATING_ISSUE if item.get("auffaellig") else fg.RATING_OK
+                border = C["green"] if self.ratings.get(point_id) == wanted else C["red"]
+                result.value = "%s · richtig: %s" % (item["ergebnis"], fg.RATING_TEXT[wanted])
+            box.border = ft.Border.all(2 if self.solution else 1, border)
+        self.counter.value = fg.maintenance_counter(self.task, self.ratings)
+
+    def reveal(self, right):
+        self.locked = True
+        self.solution = True
+        self.closing.reveal(self.task["abschluss_antwort"])
+        for point_id in self.rows:
+            if point_id not in self.checked:
+                self.checked.append(point_id)
         self._paint()
 
 
@@ -1367,7 +1584,10 @@ class GameScreen:
         elif task["typ"] == "terminal":
             self.options = TerminalBoard(task)
         elif task["typ"] == "diagnose":
-            self.options = DiagnoseBoard(task, self.available)
+            self.options = DiagnoseBoard(task, self.available, state.stock(),
+                                         self._order_spare)
+        elif task["typ"] == "wartung":
+            self.options = MaintenanceBoard(task)
         else:
             self.options = MatchBoard(task)
         self.help_box = ft.Column(spacing=10, tight=True)
@@ -1414,7 +1634,8 @@ class GameScreen:
                 return
         elif task["typ"] in fg.PROBLEM_TYPES:
             if not self.options.complete():
-                self.toast(EMPTY_HINT[task["typ"]], C["yellow"])
+                self.toast(EMPTY_HINT[getattr(self.options, "hint_key", task["typ"])],
+                           C["yellow"])
                 return
             answer = dict(self.options.answer)
         else:
@@ -1459,6 +1680,27 @@ class GameScreen:
         self.buttons.controls = [ft.Row([ui.GradientButton(
             RETURN_LABEL.get(self.from_site, "Zurück zur Übersicht"),
             self._close, expand=True)])]
+
+    def _order_spare(self, part_id):
+        """Austausch: fehlendes Ersatzteil nachbestellen, das Ticket wartet."""
+        if self.answered:
+            return
+        item = fg.part(part_id)
+        days = fg.spare_delivery_days()
+
+        def confirmed():
+            try:
+                self.game.order_spare(self.task["id"], part_id)
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+            self.app.notify_progress()
+            self._close()
+
+        self.app.confirm("Ersatzteil nachbestellen",
+                         "%s für %s nachbestellen? Es kommt %s, bis dahin wartet das "
+                         "Ticket." % (item["name"], euro(item["preis"]),
+                                      "am nächsten Arbeitstag" if days == 1
+                                      else "in %d Arbeitstagen" % days), confirmed)
 
     def _defer(self, _event=None):
         if self.answered:
