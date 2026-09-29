@@ -1,0 +1,670 @@
+{
+  "_hinweis": [
+    "Eigenes Unternehmen (ab 0.33). Alle Werte hier aendern, nicht im Code.",
+    "Geld in Euro (Spielgeld) pro Arbeitstag. Werte der Mitarbeiter je Fachbereich 0 bis 100.",
+    "Gehalt eines Mitarbeiters = basis + je_punkt * Summe seiner fuenf Werte (fest ab Einstellung).",
+    "Umsatz eines Mitarbeiters pro Arbeitstag = basis + je_punkt * Summe seiner Werte (nicht waehrend einer Weiterbildung).",
+    "Bewerber werden aus Firmenname, Gruendungstag und Bewerbungsrunde berechnet - auf PC und Handy gleich."
+  ],
+  "gruendung": {
+    "kosten": 15000,
+    "text": [
+      "Sabine setzt sich zu dir, ausnahmsweise ohne Kekse. „Du hast alles geschafft, was wir hier zu tun hatten. Und ich sehe dir an, dass du mehr willst.“",
+      "Sie seufzt. „Wenn du gehst, dann richtig. Aber rechne damit, dass wir uns bei der Talbahn wiedersehen. Als Konkurrenz.“",
+      "Die Gründung kostet %s: Miete für den Gewerbehof, Einrichtung, Anmeldung. Bitweiche zahlt dir danach kein Gehalt mehr, dein Geld verdient ab dann deine Firma."
+    ],
+    "gegruendet": [
+      "Der Schlüssel zum Gewerbehof Am Stellwerk hängt an deinem Bund. Drei Schreibtische, ein leeres Whiteboard und ein Firmenschild mit dem Namen %s.",
+      "Noch arbeitest du allein. Unter Firma kannst du Bewerbungen ansehen und die ersten Leute einstellen."
+    ]
+  },
+  "gebaeude": {
+    "name": "Gewerbehof Am Stellwerk",
+    "kurz": "Gewerbehof",
+    "text": "Ein altes Nebengebäude der Talbahn am Stellwerk in Talheim, frisch gestrichen und bereit für deine Firma.",
+    "stufen": [
+      {
+        "stufe": 1,
+        "name": "Startbüro",
+        "preis": 0,
+        "nebenkosten": 40,
+        "text": "Ein Büro mit drei Schreibtischen (einer für dich) und eine Kaffeeecke.",
+        "plaetze": [
+          [
+            5.0,
+            2.75,
+            "grossraum"
+          ],
+          [
+            8.1,
+            2.75,
+            "grossraum"
+          ]
+        ],
+        "gebaeude": {
+          "breite": 16,
+          "hoehe": 7,
+          "flur": {
+            "y": 5,
+            "h": 2,
+            "name": "Eingang",
+            "eingang": {
+              "von": 5.3,
+              "bis": 6.7
+            },
+            "spieler": [
+              1.2,
+              6.0
+            ],
+            "deko": [
+              {
+                "typ": "fussmatte",
+                "x": 0.25,
+                "y": 5.35,
+                "w": 0.7,
+                "h": 1.3
+              },
+              {
+                "typ": "feuerloescher",
+                "x": 9.8,
+                "y": 6.45,
+                "w": 0.4,
+                "h": 0.4
+              }
+            ]
+          },
+          "fenster": [
+            [
+              1.0,
+              0,
+              3.2,
+              0
+            ],
+            [
+              4.2,
+              0,
+              6.4,
+              0
+            ],
+            [
+              7.4,
+              0,
+              9.4,
+              0
+            ],
+            [
+              11.0,
+              0,
+              13.6,
+              0
+            ],
+            [
+              0,
+              1.0,
+              0,
+              3.8
+            ],
+            [
+              16,
+              1.0,
+              16,
+              3.8
+            ]
+          ],
+          "raeume": [
+            {
+              "id": "grossraum",
+              "name": "Büro",
+              "cat": "netzwerk",
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 5,
+              "tuer": {
+                "von": 4.6,
+                "bis": 5.8
+              },
+              "boden": "teppichboden",
+              "text": "Dein erstes Büro: drei Schreibtische, ein Whiteboard und viel Ehrgeiz.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 3.4,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 0.8,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 3.9,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 7.0,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 9.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 0.3,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "kaffeeecke",
+              "name": "Kaffeeecke",
+              "kurz": "Kaffee",
+              "cat": "wirtschaft",
+              "x": 10,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 11.2,
+                "bis": 12.4
+              },
+              "boden": "fliesen",
+              "text": "Kaffeemaschine, Wasserspender und ein Tisch für die Besprechung mit Kunden.",
+              "deko": [
+                {
+                  "typ": "kaffeemaschine",
+                  "x": 15.2,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 0.6
+                },
+                {
+                  "typ": "wasserspender",
+                  "x": 14.3,
+                  "y": 0.35,
+                  "w": 0.55,
+                  "h": 0.55
+                },
+                {
+                  "typ": "tisch",
+                  "x": 11.6,
+                  "y": 1.4,
+                  "w": 2.4,
+                  "h": 1.2
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 15.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "stufe": 2,
+        "name": "Zweites Büro",
+        "preis": 12000,
+        "nebenkosten": 90,
+        "text": "Ein zweites Büro unter dem Flur: drei weitere Arbeitsplätze und eine Werkbank für Testgeräte.",
+        "plaetze": [
+          [
+            5.0,
+            2.75,
+            "grossraum"
+          ],
+          [
+            8.1,
+            2.75,
+            "grossraum"
+          ],
+          [
+            2.1,
+            10.05,
+            "buero2"
+          ],
+          [
+            5.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            12.5,
+            10.05,
+            "buero2"
+          ]
+        ],
+        "gebaeude": {
+          "breite": 16,
+          "hoehe": 12,
+          "flur": {
+            "y": 5,
+            "h": 2,
+            "name": "Eingang",
+            "eingang": {
+              "von": 5.3,
+              "bis": 6.7
+            },
+            "spieler": [
+              1.2,
+              6.0
+            ],
+            "deko": [
+              {
+                "typ": "fussmatte",
+                "x": 0.25,
+                "y": 5.35,
+                "w": 0.7,
+                "h": 1.3
+              },
+              {
+                "typ": "feuerloescher",
+                "x": 9.8,
+                "y": 6.45,
+                "w": 0.4,
+                "h": 0.4
+              }
+            ]
+          },
+          "fenster": [
+            [
+              1.0,
+              0,
+              3.2,
+              0
+            ],
+            [
+              4.2,
+              0,
+              6.4,
+              0
+            ],
+            [
+              7.4,
+              0,
+              9.4,
+              0
+            ],
+            [
+              11.0,
+              0,
+              13.6,
+              0
+            ],
+            [
+              0,
+              1.0,
+              0,
+              3.8
+            ],
+            [
+              16,
+              1.0,
+              16,
+              3.8
+            ],
+            [
+              1.4,
+              12,
+              3.6,
+              12
+            ],
+            [
+              5.0,
+              12,
+              7.2,
+              12
+            ],
+            [
+              11.0,
+              12,
+              13.4,
+              12
+            ],
+            [
+              0,
+              8.0,
+              0,
+              10.8
+            ],
+            [
+              16,
+              8.0,
+              16,
+              10.8
+            ]
+          ],
+          "raeume": [
+            {
+              "id": "grossraum",
+              "name": "Büro",
+              "cat": "netzwerk",
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 5,
+              "tuer": {
+                "von": 4.6,
+                "bis": 5.8
+              },
+              "boden": "teppichboden",
+              "text": "Dein erstes Büro: drei Schreibtische, ein Whiteboard und viel Ehrgeiz.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 3.4,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 0.8,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 3.9,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 7.0,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 9.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 0.3,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "kaffeeecke",
+              "name": "Kaffeeecke",
+              "kurz": "Kaffee",
+              "cat": "wirtschaft",
+              "x": 10,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 11.2,
+                "bis": 12.4
+              },
+              "boden": "fliesen",
+              "text": "Kaffeemaschine, Wasserspender und ein Tisch für die Besprechung mit Kunden.",
+              "deko": [
+                {
+                  "typ": "kaffeemaschine",
+                  "x": 15.2,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 0.6
+                },
+                {
+                  "typ": "wasserspender",
+                  "x": 14.3,
+                  "y": 0.35,
+                  "w": 0.55,
+                  "h": 0.55
+                },
+                {
+                  "typ": "tisch",
+                  "x": 11.6,
+                  "y": 1.4,
+                  "w": 2.4,
+                  "h": 1.2
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 15.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero2",
+              "name": "Zweites Büro",
+              "kurz": "Büro 2",
+              "cat": "systeme",
+              "x": 0,
+              "y": 7,
+              "w": 16,
+              "h": 5,
+              "tuer": {
+                "von": 7.4,
+                "bis": 8.6
+              },
+              "boden": "teppichboden",
+              "text": "Der Ausbau: drei weitere Arbeitsplätze und eine Ecke für Testgeräte.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 1.0,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 4.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 11.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "werkbank",
+                  "x": 14.3,
+                  "y": 8.4,
+                  "w": 1.4,
+                  "h": 2.4
+                },
+                {
+                  "typ": "regal",
+                  "x": 0.3,
+                  "y": 11.2,
+                  "w": 2.4,
+                  "h": 0.5
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 9.6,
+                  "y": 11.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "bewerbung": {
+    "abstand_tage": 5,
+    "anzahl": 3,
+    "werte_min": 10,
+    "werte_max": 50,
+    "schwerpunkt_plus": 20
+  },
+  "gehalt": {
+    "basis": 60,
+    "je_punkt": 0.8
+  },
+  "umsatz": {
+    "basis": 30,
+    "je_punkt": 1.8
+  },
+  "weiterbildung": {
+    "preis": 600,
+    "aufschlag": 200,
+    "tage": 3,
+    "plus": 10,
+    "max": 90
+  },
+  "namen": {
+    "vornamen": [
+      "Anna",
+      "Ben",
+      "Clara",
+      "David",
+      "Elif",
+      "Felix",
+      "Greta",
+      "Hannes",
+      "Ida",
+      "Jan",
+      "Kira",
+      "Leon",
+      "Mara",
+      "Niklas",
+      "Olga",
+      "Pia",
+      "Quentin",
+      "Rosa",
+      "Samir",
+      "Tessa",
+      "Umut",
+      "Vera",
+      "Wiebke",
+      "Yusuf",
+      "Zoe",
+      "Malte",
+      "Nele",
+      "Ole",
+      "Sina",
+      "Timo"
+    ],
+    "nachnamen": [
+      "Albrecht",
+      "Berger",
+      "Claasen",
+      "Dietz",
+      "Engel",
+      "Fink",
+      "Graf",
+      "Hahn",
+      "Iske",
+      "Jung",
+      "Keller",
+      "Lorenz",
+      "Möller",
+      "Neumann",
+      "Otto",
+      "Peters",
+      "Quast",
+      "Riedel",
+      "Schulz",
+      "Thiel",
+      "Ulrich",
+      "Vogt",
+      "Winter",
+      "Yilmaz",
+      "Ziegler",
+      "Brandl",
+      "Kuhn",
+      "Lang",
+      "Marx",
+      "Seidel"
+    ]
+  },
+  "macken": [
+    "Hat für jedes Kabel eine eigene Farbe und für jede Farbe eine Regel.",
+    "Trinkt nur Tee und erklärt gern, warum.",
+    "Schreibt Dokumentation, bevor jemand danach fragt.",
+    "Kennt jeden Bahnhof der Talbahn mit Gleisnummer.",
+    "Startet jeden Morgen mit einer Liste. Und endet mit einer längeren.",
+    "Hat immer einen Schraubendreher in der Jackentasche.",
+    "Testet alles zweimal, beim dritten Mal nur zur Sicherheit.",
+    "Summt beim Konfigurieren leise vor sich hin.",
+    "Hat ein Faible für alte Hardware und rettet jedes Netzteil.",
+    "Findet, dass jedes Problem mit einem Whiteboard kleiner wird."
+  ],
+  "wechsel": [
+    {
+      "kollege": "tim",
+      "nach_tagen": 5,
+      "offen_tage": 15,
+      "werte": {
+        "netzwerk": 35,
+        "sicherheit": 15,
+        "systeme": 25,
+        "wirtschaft": 10,
+        "datenbanken": 15
+      },
+      "text": [
+        "Eine Nachricht von Tim: „Ich hab die Ausbildung fast durch. Bei Bitweiche mache ich seit Wochen nur noch Tabellen für Paul. Bei dir würde ich mehr lernen.“",
+        "Tim steht jetzt in deinen Bewerbungen."
+      ]
+    },
+    {
+      "kollege": "svenja",
+      "nach_tagen": 15,
+      "offen_tage": 15,
+      "werte": {
+        "netzwerk": 60,
+        "sicherheit": 35,
+        "systeme": 50,
+        "wirtschaft": 20,
+        "datenbanken": 25
+      },
+      "text": [
+        "Svenja ruft an, ungewohnt leise: „Sabine will, dass ich nur noch Angebote gegen dich schreibe. Darauf habe ich keine Lust. Hast du Platz für eine Netzwerktechnikerin?“",
+        "Svenja steht jetzt in deinen Bewerbungen."
+      ]
+    }
+  ]
+}

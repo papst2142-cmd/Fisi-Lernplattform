@@ -1862,5 +1862,186 @@ class RuhestandTest(unittest.TestCase):
 
 
 
+class FirmaTest(unittest.TestCase):
+    """Eigenes Unternehmen (ab 0.33)."""
+
+    def setUp(self):
+        self.content = _content()
+        self.task = self.content["aufgaben"][0]
+        self.content["aufgaben"] = [self.task]
+        self.content["zwischenfaelle"] = []
+
+    def _rich(self, db, money=30000, done=True):
+        """Spielfigur mit genug Geld und Ansehen, alle Auftraege erledigt."""
+        game = fg.Game(db, "PC", self.content)
+        game.set_profile("Nico", {})
+        db.log_game_event(fg.EV_SOLVED, json.dumps(
+            {"aufgabe": self.task["id"] if done else "anderes", "tag": 1, "richtig": True,
+             "geld": money, "reputation": {key: 60 for key in fg.AXIS_KEYS}}), "PC")
+        game.reload()
+        return game
+
+    def _founded(self, db, money=30000):
+        game = self._rich(db, money)
+        game.found_firm("Nico IT-Service")
+        return game
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_firm(fg.GAME), [])
+        stages = fg.GAME["firma"]["gebaeude"]["stufen"]
+        self.assertEqual([len(stage["plaetze"]) for stage in stages], [2, 5])
+
+    def test_gruendung_braucht_schwelle_und_alles_erledigt(self):
+        with TempDB() as db:
+            game = self._rich(db, money=20000, done=False)
+            missing = game.state.founding_missing()
+            self.assertEqual(len(missing), 2)
+            self.assertFalse(game.state.founding_ready())
+            with self.assertRaises(ValueError):
+                game.found_firm("Test")
+        with TempDB() as db:
+            game = self._rich(db)
+            self.assertTrue(game.state.founding_ready())
+            with self.assertRaises(ValueError):
+                game.found_firm("   ")
+
+    def test_gruendung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            state = game.state
+            cost = fg.GAME["firma"]["gruendung"]["kosten"]
+            self.assertEqual(state.money, 30000 - cost)
+            self.assertEqual(state.firm["name"], "Nico IT-Service")
+            self.assertEqual(state.salary, 0)
+            self.assertEqual(state.open_tickets(), [])
+            self.assertTrue(state.can_end_day())
+            self.assertEqual(fg.site_name(fg.SITE_OFFICE, state=state), "Nico IT-Service")
+            site = fg.site_content(fg.SITE_OFFICE, state, self.content)
+            self.assertIs(site["gebaeude"], state.firm_stage()["gebaeude"])
+            with self.assertRaises(ValueError):
+                game.found_firm("Noch eine")
+            # Doppelte Gruendung (zwei Geraete) zaehlt nur einmal
+            db.log_game_event(fg.EV_FOUNDED, json.dumps({"tag": 1, "name": "X",
+                                                         "geld": -cost}), "Handy")
+            self.assertEqual(game.reload().money, 30000 - cost)
+            self.assertEqual(game.state.firm["name"], "Nico IT-Service")
+
+    def test_bewerber_einstellen_und_platzgrenze(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = fg.applicants(game.state, self.content)
+            self.assertEqual(len(first), fg.GAME["firma"]["bewerbung"]["anzahl"])
+            self.assertEqual(first, fg.applicants(game.reload(), self.content))
+            for item in first:
+                self.assertEqual(item["gehalt"], fg.staff_salary(item["werte"]))
+            game.hire(first[0]["id"])
+            game.hire(first[1]["id"])
+            self.assertEqual(len(game.state.staff), 2)
+            with self.assertRaises(ValueError):
+                game.hire(first[2]["id"])      # nur 2 Plaetze in Stufe 1
+            ids = [item["id"] for item in fg.applicants(game.state, self.content)]
+            self.assertNotIn(first[0]["id"], ids)
+            people = fg.people_at_site(fg.SITE_OFFICE, game.state, self.content)
+            self.assertEqual([p["id"] for p in people], [first[0]["id"], first[1]["id"]])
+            game.fire(first[0]["id"])
+            self.assertEqual(len(game.state.staff), 1)
+            ids = [item["id"] for item in fg.applicants(game.state, self.content)]
+            self.assertNotIn(first[0]["id"], ids)    # bewirbt sich nicht erneut
+
+    def test_neue_bewerber_je_runde(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = {item["id"] for item in fg.applicants(game.state, self.content)}
+            step = fg.GAME["firma"]["bewerbung"]["abstand_tage"]
+            for _ in range(step):
+                game.end_day()
+            later = {item["id"] for item in fg.applicants(game.state, self.content)
+                     if item["herkunft"] == "bewerbung"}
+            self.assertFalse(first & later)
+
+    def test_kollege_wechselt(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            tim = next(item for item in fg.GAME["firma"]["wechsel"] if item["kollege"] == "tim")
+            for _ in range(tim["nach_tagen"]):
+                game.end_day()
+            state = game.state
+            self.assertIn("Tim", fg.morning_text(state.day, self.content, state))
+            found = [item for item in fg.applicants(state, self.content)
+                     if item["id"] == "kollege:tim"]
+            self.assertEqual(len(found), 1)
+            self.assertEqual(found[0]["name"], "Tim Becker")
+            game.hire("kollege:tim")
+            self.assertNotIn("Tim", fg.morning_text(game.state.day, self.content, game.state))
+
+    def test_tagesabschluss_mit_firma(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = fg.applicants(game.state, self.content)
+            game.hire(first[0]["id"])
+            before = game.state.money
+            numbers = game.state.firm_day()
+            self.assertEqual(numbers["umsatz"], fg.staff_revenue(first[0]["werte"]))
+            payload = game.end_day()
+            self.assertEqual(payload["gehalt"], 0)
+            self.assertEqual(payload["firma"], numbers)
+            self.assertEqual(game.state.money, before + numbers["umsatz"] -
+                             numbers["gehaelter"] - numbers["nebenkosten"])
+            self.assertIn("Umsatz Mitarbeiter", fg.day_end_money_text(payload))
+            days = fg.finance_days(game.state)
+            self.assertEqual(days[0]["ein"][fg.BOOK_REVENUE], numbers["umsatz"])
+            self.assertEqual(days[0]["aus"][fg.BOOK_WAGES], numbers["gehaelter"])
+            self.assertEqual(days[0]["gewinn"], days[0]["einnahmen"] - days[0]["ausgaben"])
+            self.assertIn(fg.BOOK_FOUNDING, days[0]["aus"])
+            labels, values = fg.balance_series(game.state)
+            self.assertEqual(values[-1], game.state.money)
+
+    def test_weiterbildung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            cat = "wirtschaft"
+            value = game.state.staff_values(staff_id)[cat]
+            rules = fg.GAME["firma"]["weiterbildung"]
+            money = game.state.money
+            payload = game.train(staff_id, cat)
+            self.assertEqual(game.state.money, money - rules["preis"])
+            self.assertEqual(game.state.firm_day()["umsatz"], 0)
+            with self.assertRaises(ValueError):
+                game.train(staff_id, "netzwerk")      # schon in Weiterbildung
+            for _ in range(rules["tage"]):
+                game.end_day()
+            self.assertEqual(game.state.day, payload["bis_tag"])
+            self.assertEqual(game.state.staff_values(staff_id)[cat],
+                             min(rules["max"], value + rules["plus"]))
+            self.assertGreater(game.state.firm_day()["umsatz"], 0)
+            offer = fg.training_offer(game.state, staff_id, cat, self.content)
+            self.assertEqual(offer["preis"], rules["preis"] + rules["aufschlag"])
+
+    def test_ausbau(self):
+        with TempDB() as db:
+            game = self._founded(db, money=60000)
+            stage = fg.GAME["firma"]["gebaeude"]["stufen"][1]
+            money = game.state.money
+            game.expand()
+            self.assertEqual(game.state.capacity, len(stage["plaetze"]))
+            self.assertEqual(game.state.money, money - stage["preis"])
+            with self.assertRaises(ValueError):
+                game.expand()
+
+    def test_gleicher_stand_nach_abgleich(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = self._founded(pc)
+            game.hire(fg.applicants(game.state, self.content)[0]["id"])
+            game.end_day()
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other = fg.Game(handy, "Handy", self.content)
+            self.assertEqual(other.state.money, game.state.money)
+            self.assertEqual(other.state.firm, game.state.firm)
+            self.assertEqual(fg.applicants(other.state, self.content),
+                             fg.applicants(game.state, self.content))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
