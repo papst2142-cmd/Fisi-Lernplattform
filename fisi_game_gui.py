@@ -125,10 +125,12 @@ class FloorPlan(tk.Canvas):
 
     MAX_HEIGHT = 440
 
-    def __init__(self, parent, on_room, bg=None, max_height=None, site=fg.SITE_OFFICE):
+    def __init__(self, parent, on_room, bg=None, max_height=None, site=fg.SITE_OFFICE,
+                 stagger=False):
         self.bg = bg or C["card"]
         self.on_room = on_room
         self.site = site
+        self.stagger = stagger
         self.max_height = max_height or self.MAX_HEIGHT
         self.state = None
         self.selected = None
@@ -171,7 +173,7 @@ class FloorPlan(tk.Canvas):
         return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
                                   content=self.content(),
                                   quests=set(self.state.quests(self.site)),
-                                  player_pos=self.player_pos)
+                                  player_pos=self.player_pos, stagger=self.stagger)
 
     def draw(self):
         self.delete("all")
@@ -3239,7 +3241,7 @@ class FirmView(ScrollArea):
         make_label(card.body, "%s %s" % (rules["text"], stage["text"]), font=F["small"],
                    fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 8))
-        plan = FloorPlan(card.body, lambda _room: None, max_height=300)
+        plan = FloorPlan(card.body, lambda _room: None, max_height=300, stagger=True)
         plan.pack(fill="x")
         plan.set_state(state)
         NeoButton(card.body, "Büro öffnen", lambda: self.app.show_view("buero"), kind="ghost",
@@ -3248,21 +3250,71 @@ class FirmView(ScrollArea):
         more = Card(self.content, title="Ausbau", accent=C["accent"])
         more.pack(fill="x", pady=(14, 0))
         if following is None:
-            make_label(more.body, "Mehr Ausbau gibt es in einem der nächsten Updates.",
+            make_label(more.body, "Der Gewerbehof ist fertig ausgebaut. Mehr Ausbau gibt es "
+                       "in einem der nächsten Updates.",
                        font=F["body"], fg=C["text_soft"], anchor="w").pack(anchor="w")
+        else:
+            make_label(more.body, "Stufe %d · %s: %s" % (following["stufe"], following["name"],
+                                                        following["text"]),
+                       font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
+                       anchor="w").pack(anchor="w")
+            make_label(more.body, "Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
+                       "Arbeitstag" % (_euro(following["preis"]), len(following["plaetze"]),
+                                       _euro(following["nebenkosten"])),
+                       font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                           pady=(4, 10))
+            button = NeoButton(more.body, "Ausbauen", lambda: self._expand(following),
+                               kind="primary")
+            button.pack(anchor="w")
+            button.set_enabled(state.money >= following["preis"])
+        self._build_rooms(state)
+
+    def _build_rooms(self, state):
+        """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""
+        rooms = fg.room_status(state)
+        if not rooms:
             return
-        make_label(more.body, "%s: %s" % (following["name"], following["text"]),
-                   font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
-                   anchor="w").pack(anchor="w")
-        make_label(more.body, "Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
-                   "Arbeitstag" % (_euro(following["preis"]), len(following["plaetze"]),
-                                   _euro(following["nebenkosten"])),
-                   font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
-                                                                       pady=(4, 10))
-        button = NeoButton(more.body, "Ausbauen", lambda: self._expand(following),
-                           kind="primary")
-        button.pack(anchor="w")
-        button.set_enabled(state.money >= following["preis"])
+        card = Card(self.content, title="Sonderräume", accent=C["purple"],
+                    subtitle="frei wählbar, sobald die Ausbaustufe erreicht ist")
+        card.pack(fill="x", pady=(14, 0))
+        for item in rooms:
+            row = ctk.CTkFrame(card.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"])
+            row.pack(fill="x", pady=5)
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(text, item["vorteil"], font=F["small"], fg=C["text_soft"],
+                       wraplength=700, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(2, 0))
+            make_label(text, fg.room_status_text(item), font=F["small"], fg=C["text_dim"],
+                       anchor="w").pack(anchor="w", pady=(2, 0))
+            side = _frame(row)
+            side.pack(side="right", padx=14)
+            if item["gebaut"]:
+                make_label(side, "ausgebaut", font=F["small_bold"], fg=C["green"]).pack()
+            elif state.firm["stufe"] < item["ab_stufe"]:
+                make_label(side, "ab Stufe %d" % item["ab_stufe"], font=F["small_bold"],
+                           fg=C["muted"]).pack()
+            else:
+                button = NeoButton(side, "Ausbauen", lambda i=item: self._build_room(i),
+                                   kind="primary", height=32, font=F["small_bold"])
+                button.pack()
+                button.set_enabled(not item["problem"])
+
+    def _build_room(self, item):
+        if not messagebox.askyesno("Ausbauen", "„%s“ für %s ausbauen? Die Nebenkosten "
+                                   "steigen um %s pro Arbeitstag." % (
+                                       item["name"], _euro(item["preis"]),
+                                       _euro(item["nebenkosten"]))):
+            return
+        try:
+            self.game.build_room(item["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
 
     def _expand(self, stage):
         if not messagebox.askyesno("Ausbauen", "„%s“ für %s bauen?" % (

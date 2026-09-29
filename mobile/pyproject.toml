@@ -9,7 +9,7 @@
 
 [project]
 name = "fisi-lernplattform"
-version = "0.35.1"
+version = "0.36"
 description = "Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration"
 requires-python = ">=3.10"
 dependencies = [
@@ -21,7 +21,7 @@ dependencies = [
 product = "FISI Lernplattform"
 org = "io.github.papst2142cmd"
 company = "FISI Lernplattform Projekt"
-build_number = 3501
+build_number = 3600
 icon_background = "#120A24"
 
 [tool.flet.app]
@@ -34,6 +34,9 @@ dark_color = "#120A24"
 
 [tool.flet.android]
 split_per_abi = false
+# Nur 64-Bit-ARM (ab 0.36): laeuft auf dem Samsung S24 und allen neueren Handys.
+# Alte 32-Bit-Handys und Emulatoren braucht die App nicht - die APK wird kleiner.
+target_arch = ["arm64-v8a"]
 
 [tool.flet.android.permission]
 "android.permission.INTERNET" = true

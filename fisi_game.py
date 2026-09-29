@@ -90,9 +90,11 @@ EV_DELEGATED = "ticket_delegiert"
 EV_PROJECT_WON = "projekt_gewonnen"
 EV_PROJECT_LOST = "projekt_verloren"
 EV_PROJECT_TEAM = "projekt_team"
+# Sonderraeume im eigenen Gebaeude (ab 0.36): Lager, Besprechungsraum ...
+EV_ROOM = "raum_ausgebaut"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
-               EV_PROJECT_TEAM)
+               EV_PROJECT_TEAM, EV_ROOM)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -3071,6 +3073,7 @@ class GameState:
         self.project_offers = {}   # projekt -> Ergebnis des Angebots (ab 0.35)
         self.projects = {}         # projekt -> gewonnenes Projekt mit Stand und Team
         self.project_days = set()  # (projekt, tag) schon verbuchter Projekttage
+        self.rooms = {}            # sonderraum -> Ereignisdaten des Ausbaus (ab 0.36)
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3203,6 +3206,13 @@ class GameState:
             self.firm["stufe"] += 1
             self.money += int(data.get("geld", 0))
             self._book(day, BOOK_BUILDING, data.get("geld", 0))
+        elif kind == EV_ROOM and data.get("raum") not in self.rooms:
+            # Doppelt (zwei Geraete) oder ohne die noetige Stufe: zaehlt nicht
+            rule = special_room(data.get("raum"), self.content)
+            if rule and self.firm["stufe"] >= int(rule["ab_stufe"]):
+                self.rooms[data["raum"]] = dict(data)
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_BUILDING, data.get("geld", 0))
         elif kind in (EV_OFFER_WON, EV_OFFER_LOST) and data.get("anfrage") and \
                 data["anfrage"] not in self.offers:
             self.offers[data["anfrage"]] = dict(data, gewonnen=kind == EV_OFFER_WON)
@@ -3341,6 +3351,33 @@ class GameState:
     def capacity(self):
         return len(self.firm_stage()["plaetze"]) if self.firm else 0
 
+    def has_room(self, room_id):
+        """Ist der Sonderraum (lager, besprechung, ...) ausgebaut?"""
+        return room_id in self.rooms
+
+    def room_effect(self, key, default=0):
+        """Vorteil aller ausgebauten Sonderraeume: Summe, bei "..._faktor"
+        das Produkt (ohne Raum: default)."""
+        values = [(special_room(room_id, self.content) or {}).get("effekt", {}).get(key)
+                  for room_id in self.rooms]
+        values = [value for value in values if value is not None]
+        if not values:
+            return default
+        if key.endswith("_faktor"):
+            result = 1.0
+            for value in values:
+                result *= float(value)
+            return result
+        return sum(values)
+
+    def firm_costs(self):
+        """Nebenkosten pro Arbeitstag: Gebaeudestufe plus Sonderraeume."""
+        if not self.firm:
+            return 0
+        rooms = sum(int((special_room(room_id, self.content) or {}).get("nebenkosten", 0))
+                    for room_id in self.rooms)
+        return int(self.firm_stage().get("nebenkosten", 0)) + rooms
+
     def training_of(self, staff_id, day=None):
         """Laufende Weiterbildung eines Mitarbeiters am Tag (oder None)."""
         day = self.day if day is None else day
@@ -3386,7 +3423,7 @@ class GameState:
         staff = self.staff_list()
         return {"umsatz": sum(item["umsatz"] for item in staff),
                 "gehaelter": sum(int(item.get("gehalt", 0)) for item in staff),
-                "nebenkosten": int(self.firm_stage().get("nebenkosten", 0))}
+                "nebenkosten": self.firm_costs()}
 
     @property
     def firm_seed(self):
@@ -3844,6 +3881,19 @@ class Game:
         self._log(EV_EXPAND, payload)
         return payload
 
+    def build_room(self, room_id):
+        """Baut einen Sonderraum aus (ab 0.36), sobald die Stufe erreicht ist."""
+        self._firm_required()
+        status = next((item for item in room_status(self.state, self.content)
+                       if item["id"] == room_id), None)
+        if status is None:
+            raise ValueError("Diesen Raum gibt es nicht.")
+        if status["problem"]:
+            raise ValueError(status["problem"])
+        payload = {"raum": room_id, "geld": -int(status["preis"]), "tag": self.state.day}
+        self._log(EV_ROOM, payload)
+        return payload
+
     def send_offer(self, inquiry_id, markup, answer):
         """Gibt ein Angebot zu einer Kundenanfrage ab. Das Ergebnis (gegen
         Bitweiche gewonnen oder verloren) steht sofort fest."""
@@ -4210,8 +4260,11 @@ def training_offer(state, staff_id, cat, content=None):
     "problem" (leer = moeglich)}."""
     rules = firm_rules(content)["weiterbildung"]
     done = len(state.trainings_of(staff_id))
-    result = {"preis": int(rules["preis"] + rules["aufschlag"] * done),
-              "tage": int(rules["tage"]), "plus": 0, "problem": ""}
+    # Eigener Schulungsraum (ab 0.36): guenstiger und kuerzer
+    price = discounted(int(rules["preis"] + rules["aufschlag"] * done),
+                       state.room_effect("weiterbildung_rabatt"))
+    days = max(1, int(rules["tage"]) - int(state.room_effect("weiterbildung_tage_minus")))
+    result = {"preis": price, "tage": days, "plus": 0, "problem": ""}
     if staff_id not in state.staff:
         result["problem"] = "Diese Person arbeitet nicht bei dir."
         return result
@@ -4252,8 +4305,77 @@ def firm_people(state, content=None):
     return result
 
 
+def room_rules(content=None):
+    """firma.json "sonderraeume" (ab 0.36): {"leerstand" {...}, "raeume" [...]}."""
+    return firm_rules(content).get("sonderraeume") or {}
+
+
+def special_rooms(content=None):
+    return list(room_rules(content).get("raeume") or [])
+
+
+def special_room(room_id, content=None):
+    return next((item for item in special_rooms(content) if item["id"] == room_id), None)
+
+
+def room_status(state, content=None):
+    """Die Sonderraeume fuer die Oberflaeche: [{"id", "name", "vorteil",
+    "preis", "nebenkosten", "ab_stufe", "gebaut", "problem"}] - problem ist
+    leer, wenn man den Raum jetzt ausbauen kann."""
+    stage = state.firm["stufe"] if state.firm else 0
+    result = []
+    for rule in special_rooms(content):
+        item = {key: rule[key] for key in ("id", "name", "vorteil", "preis", "nebenkosten",
+                                           "ab_stufe")}
+        item["gebaut"] = state.has_room(rule["id"])
+        if item["gebaut"]:
+            item["problem"] = "Schon ausgebaut."
+        elif stage < int(rule["ab_stufe"]):
+            item["problem"] = "Erst ab Ausbaustufe %d möglich." % rule["ab_stufe"]
+        elif state.money < int(rule["preis"]):
+            item["problem"] = "Dafür reicht dein Geld noch nicht (%s fehlen)." % _whole_euro(
+                int(rule["preis"]) - max(0, state.money))
+        else:
+            item["problem"] = ""
+        result.append(item)
+    return result
+
+
+def room_status_text(item):
+    """Kurze Zeile zu Preis und Nebenkosten eines Sonderraums. Ist er schon
+    ausgebaut, zaehlen nur noch die Nebenkosten."""
+    if item["gebaut"]:
+        return "Nebenkosten +%s pro Arbeitstag" % _whole_euro(item["nebenkosten"])
+    return "%s · Nebenkosten +%s pro Arbeitstag" % (
+        _whole_euro(item["preis"]), _whole_euro(item["nebenkosten"]))
+
+
 def firm_building(state, content=None):
-    return state.firm_stage()["gebaeude"]
+    """Grundriss der jetzigen Ausbaustufe. Nicht ausgebaute Sonderraeume
+    sind Leerstand: Estrich, grau, ohne Einrichtung."""
+    building = state.firm_stage()["gebaeude"]
+    rules = room_rules(content or state.content)
+    empty = {rule["raum"]: rule for rule in rules.get("raeume") or []
+             if not state.has_room(rule["id"])}
+    if not empty or not any(item["id"] in empty for item in building["raeume"]):
+        return building
+    key = ("leerstand", id(building), frozenset(empty))
+    cached = _SITE_CACHE.get(key)
+    if cached and cached[0] is building:
+        return cached[1]
+    look = rules.get("leerstand") or {}
+    result = copy.deepcopy(building)
+    for item in result["raeume"]:
+        rule = empty.get(item["id"])
+        if rule is None:
+            continue
+        item.update({"name": look.get("name", "Leerstand"), "kurz": look.get("kurz", "Frei"),
+                     "farbe": look.get("farbe", "#8B93A1"), "boden": look.get("boden", "beton"),
+                     "deko": [], "leerstand": rule["id"],
+                     "text": look.get("text", "Hier kann ein %s entstehen.") % rule["name"]
+                     + " " + rule["vorteil"]})
+    _SITE_CACHE[key] = (building, result)
+    return result
 
 
 def founding_text(content=None):
@@ -4364,7 +4486,8 @@ def inquiries_for_day(state, day, content=None):
     seed = state.firm_seed
     first = int(_dice(seed, day, "anfrage-kunde") * len(customers))
     result = []
-    for number in range(int(rules["pro_tag"])):
+    discount = state.room_effect("material_rabatt")
+    for number in range(int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus"))):
         salt = "anfrage%d-" % number
         # Verschiedene Kunden am selben Tag
         customer = customers[(first + number * max(1, len(customers) // 2 - 1))
@@ -4383,7 +4506,10 @@ def inquiries_for_day(state, day, content=None):
             lieferzeit=delivery)
         inquiry_id = "%s%d:%d" % (INQUIRY_PREFIX, day, number + 1)
         result.append({"id": inquiry_id, "tag": day, "kunde": customer,
-                       "artikel": article["name"], "menge": count, "einkaufspreis": price,
+                       "artikel": article["name"], "menge": count,
+                       # Mit eigenem Lager kauft man guenstiger ein als die Mitbewerber
+                       "einkaufspreis": discounted(price, discount),
+                       "listenpreis": price,
                        "lieferzeit": delivery, "markt": cheapest["zuschlag"],
                        "laune": cheapest["laune"], "konkurrent": cheapest["id"],
                        "bieter": bids, "ausgefallen": absent,
@@ -4433,9 +4559,18 @@ def offer_numbers(inquiry, markup, content=None):
     return {key: value for key, _label, value in offer_values(task["daten"])}
 
 
+def discounted(price, percent):
+    """Einkaufspreis mit Rabatt in Prozent (ganze Euro, ab 0.36: Lager)."""
+    if not percent:
+        return price
+    return int(round(price * (1 - percent / 100.0)))
+
+
 def market_price(inquiry, content=None):
-    """Nettopreis von Bitweiche: dieselben Selbstkosten plus Bitweiches Zuschlag."""
-    cost = offer_numbers(inquiry, 0, content)["selbstkosten"]
+    """Nettopreis von Bitweiche: Selbstkosten zum Listenpreis (ohne den
+    Lager-Rabatt der eigenen Firma) plus Bitweiches Zuschlag."""
+    market = dict(inquiry, einkaufspreis=inquiry.get("listenpreis", inquiry["einkaufspreis"]))
+    cost = offer_numbers(market, 0, content)["selbstkosten"]
     return _money(cost * (1 + inquiry["markt"] / 100.0))
 
 
@@ -4452,27 +4587,35 @@ def offer_result(state, inquiry, markup, answer, content=None):
     content = content or GAME
     rules = offer_rules(content)
     task = inquiry_task(inquiry, markup, content)
-    payload = _judge_offer(state, task, inquiry, answer, content)
+    market = inquiry_task(dict(inquiry, einkaufspreis=inquiry.get("listenpreis",
+                                                                  inquiry["einkaufspreis"])),
+                          markup, content)
+    payload = _judge_offer(state, task, inquiry, answer, content, market)
     won = payload["gewonnen"]
+    satisfaction = rules["kundenzufriedenheit_gewonnen"] + \
+        int(state.room_effect("kundenzufriedenheit_plus"))
     payload.update({"anfrage": inquiry["id"], "tag": inquiry["tag"],
                     "kunde": inquiry["kunde"]["id"], "artikel": inquiry["artikel"],
                     "menge": inquiry["menge"], "zuschlag": markup,
                     "geld": int(round(payload["gewinn"])) if won else 0,
-                    "reputation": {"kundenzufriedenheit":
-                                   rules["kundenzufriedenheit_gewonnen"]} if won else {}})
+                    "reputation": {"kundenzufriedenheit": satisfaction} if won else {}})
     return payload
 
 
-def _judge_offer(state, task, offer, answer, content=None):
+def _judge_offer(state, task, offer, answer, content=None, market_task=None):
     """Gemeinsame Bewertung fuer Anfragen und Projekte: Rechnung richtig und
     Preis nicht hoeher als das guenstigste Angebot der Mitbewerber (plus
-    Vorteil durch guten Ruf)."""
+    Vorteil durch guten Ruf). market_task: dieselbe Rechnung zu Listenpreisen
+    (die Mitbewerber haben kein eigenes Lager, ab 0.36)."""
     problems = form_problems(task, answer, content)
     numbers = {key: value for key, _label, value in offer_values(task["daten"])}
-    cost = numbers["selbstkosten"]
-    bids = [dict(bid, netto=_money(cost * (1 + bid["zuschlag"] / 100.0)))
+    cost = rival_cost = numbers["selbstkosten"]
+    if market_task is not None:
+        rival_cost = {key: value for key, _label, value in
+                      offer_values(market_task["daten"])}["selbstkosten"]
+    bids = [dict(bid, netto=_money(rival_cost * (1 + bid["zuschlag"] / 100.0)))
             for bid in offer.get("bieter") or []]
-    market = _money(cost * (1 + offer["markt"] / 100.0))
+    market = _money(rival_cost * (1 + offer["markt"] / 100.0))
     advantage = offer_advantage(state, content)
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
@@ -4568,8 +4711,12 @@ def inquiry_status_text(inquiry):
     """Kurze Zeile zum Stand einer Anfrage."""
     result = inquiry.get("ergebnis")
     if not result:
-        return "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
+        text = "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
             inquiry["menge"], _euro(inquiry["einkaufspreis"]), inquiry["lieferzeit"])
+        listed = inquiry.get("listenpreis", inquiry["einkaufspreis"])
+        if listed > inquiry["einkaufspreis"]:
+            text += " · Lager-Rabatt (sonst %s)" % _euro(listed)
+        return text
     if result.get("gewonnen"):
         return "Gewonnen · Gewinn +%s" % _whole_euro(result.get("geld", 0))
     if result.get("grund") == "rechenfehler":
@@ -4856,7 +5003,8 @@ def project_limit(state, content=None):
     for key, value in table.items():
         if int(key) <= number:
             best = max(best, int(value))
-    return best
+    # Eigener Serverraum (ab 0.36): ein Projekt mehr
+    return best + int(state.room_effect("projekte_plus"))
 
 
 def customer_short(branche):
@@ -4896,7 +5044,10 @@ def project_for_slot(state, slot, content=None):
             "titel": template["title"], "kunde": template["branche"],
             "kunde_kurz": customer, "cat": cat,
             "schwierigkeit": template["schwierigkeit"], "aufwand": int(level["aufwand"]),
-            "anforderung": int(level["anforderung"]), "material": material,
+            "anforderung": int(level["anforderung"]),
+            # Mit eigenem Lager ist das Material guenstiger (ab 0.36)
+            "material": discounted(material, state.room_effect("material_rabatt")),
+            "material_markt": material,
             "frist": int(level["frist"]), "von_tag": start,
             "bis_tag": start + int(rules["gilt_tage"]) - 1,
             "markt": cheapest["zuschlag"], "laune": cheapest["laune"],
@@ -4961,7 +5112,10 @@ def project_offer_result(state, project, markup, answer, day, content=None):
     content = content or GAME
     rules = project_rules(content)
     task = project_task(project, markup, content)
-    payload = _judge_offer(state, task, project, answer, content)
+    market = project_task(dict(project, material=project.get("material_markt",
+                                                             project["material"])),
+                          markup, content)
+    payload = _judge_offer(state, task, project, answer, content, market)
     won = payload["gewonnen"]
     down = int(round(payload["netto"] * rules["anzahlung"] / 100.0)) if won else 0
     payload.update({"projekt": project["id"], "vorlage": project["vorlage"],
@@ -5124,9 +5278,10 @@ def project_outcomes(state, levels, learned, content=None):
         if bonus:
             factor *= 1 + rules.get("lernbonus", 0) / 100.0
         rule = rules.get("rueckschlag") or {}
+        # Eigener Serverraum (ab 0.36): seltener Rueckschlaege
+        chance = rule.get("chance", 0) * state.room_effect("rueckschlag_faktor", 1.0)
         if best < project["anforderung"] and \
-                _dice(state.firm_seed, state.day, "rueck|" + project["projekt"]) < \
-                rule.get("chance", 0):
+                _dice(state.firm_seed, state.day, "rueck|" + project["projekt"]) < chance:
             factor *= rule.get("faktor", 0.5)
             texts = (rules.get("rueckschlaege") or {}).get(project["cat"]) or \
                 ["Es gab Probleme, heute ging es nur langsam voran."]
@@ -5355,6 +5510,48 @@ def _validate_projects(rules, content):
     return problems
 
 
+ROOM_EFFECTS = ("material_rabatt", "anfragen_plus", "kundenzufriedenheit_plus",
+                "projekte_plus", "rueckschlag_faktor", "weiterbildung_rabatt",
+                "weiterbildung_tage_minus")
+
+
+def _validate_rooms(rules):
+    """firma.json "sonderraeume" (ab 0.36): jeder Raum liegt ab seiner Stufe
+    im Grundriss, ohne Arbeitsplaetze darin, mit bekannten Vorteilen."""
+    problems = []
+    setup = rules.get("sonderraeume")
+    if not setup:
+        return problems
+    stages = rules["gebaeude"].get("stufen") or []
+    ids = [item.get("id") for item in setup.get("raeume") or []]
+    if len(ids) != len(set(ids)):
+        problems.append("Spiel-Firma: Sonderraum-Kennungen sind nicht eindeutig")
+    for item in setup.get("raeume") or []:
+        where = "Spiel-Firma Sonderraum %s" % item.get("id")
+        for key in ("name", "raum", "vorteil"):
+            if not item.get(key):
+                problems.append("%s: '%s' fehlt" % (where, key))
+        number = item.get("ab_stufe")
+        if not isinstance(number, int) or not 1 <= number <= len(stages):
+            problems.append("%s: ab_stufe ungueltig" % where)
+            continue
+        if not isinstance(item.get("preis"), int) or item["preis"] <= 0 or \
+                not isinstance(item.get("nebenkosten"), int) or item["nebenkosten"] < 0:
+            problems.append("%s: Preis oder Nebenkosten ungueltig" % where)
+        for stage in stages[number - 1:]:
+            if item["raum"] not in {room_["id"] for room_ in stage["gebaeude"]["raeume"]}:
+                problems.append("%s: Flaeche '%s' fehlt in Stufe %d"
+                                % (where, item["raum"], stage["stufe"]))
+            if any(room_id == item["raum"] for _x, _y, room_id in stage.get("plaetze") or []):
+                problems.append("%s: Arbeitsplatz in der Flaeche" % where)
+        for key, value in (item.get("effekt") or {}).items():
+            if key not in ROOM_EFFECTS or not isinstance(value, (int, float)):
+                problems.append("%s: unbekannter Vorteil '%s'" % (where, key))
+        if not item.get("effekt"):
+            problems.append("%s: kein Vorteil" % where)
+    return problems
+
+
 def _validate_firm(content):
     """firma.json: Gebaeudestufen mit Arbeitsplaetzen, Formeln, Wechsel."""
     problems = []
@@ -5396,6 +5593,7 @@ def _validate_firm(content):
         problems.append("Spiel-Firma: Wertebereich der Bewerber ungueltig")
     problems += _validate_orders(rules)
     problems += _validate_projects(rules, content)
+    problems += _validate_rooms(rules)
     ids = {person["id"] for person in content["kollegen"]}
     for item in rules.get("wechsel", []):
         if item.get("kollege") not in ids:
@@ -6121,8 +6319,31 @@ def player_shapes(position, player, rotate=False, content=None):
     return shapes
 
 
+def _staggered_labels(building):
+    """Raeume der unteren Reihe, deren Schild unten steht: von links gezaehlt
+    jeder zweite (der erste oben, der zweite unten, der dritte oben ...)."""
+    hall = building["flur"]
+    lower = sorted((item for item in building["raeume"]
+                    if item["y"] >= hall["y"] + hall["h"] - 0.01),
+                   key=lambda item: item["x"])
+    return {item["id"] for index, item in enumerate(lower) if index % 2}
+
+
+def _covered_by_label(building, below):
+    """Prueft, ob ein Name unter einem nach unten versetzten Schild laege
+    (dann wird er in der kleinen Ansicht weggelassen)."""
+    rooms = [item for item in building["raeume"] if item["id"] in below]
+
+    def covered(spot):
+        x, y = spot[0], spot[1]
+        return any(item["x"] <= x <= item["x"] + item["w"]
+                   and item["y"] + item["h"] - 2.0 <= y <= item["y"] + item["h"]
+                   for item in rooms)
+    return covered
+
+
 def building_shapes(counts=None, selected=None, player=None, content=None,
-                    quests=None, player_pos=None, rotate=False):
+                    quests=None, player_pos=None, rotate=False, stagger=False):
     """Zeichenbefehle fuer das ganze Buerogebaeude.
 
     counts:     offene Tickets je Raum-ID (rosa Plakette)
@@ -6132,6 +6353,8 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
     quests:     IDs der Kollegen mit offenem Auftrag (gruenes "!" ueber dem Kopf)
     player_pos: Standort der Spielfigur, sonst ihr Platz im Flur
     rotate:     Gebaeude hochkant zeichnen (Handy-Grossansicht)
+    stagger:    Schilder der unteren Raumreihe abwechselnd oben und unten
+                (kleine Ansicht, damit sich schmale Raeume nicht verdecken)
     """
     content = content or GAME
     building = content["gebaeude"]
@@ -6232,12 +6455,14 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
 
     # Ab hier in Zeichnungs-Koordinaten, damit Schrift nie mitgedreht wird.
     # Beschriftung, Auswahl und Ticket-Plaketten zuletzt, damit sie oben liegen
+    below = _staggered_labels(building) if stagger and not rotate else set()
     for item in building["raeume"]:
         x, y, w, h = _view_rect(item, rotate, content)
         color = room_color(item)
         if item["id"] == selected:
             s.append(_rect(x + 0.14, y + 0.14, w - 0.28, h - 0.28, "", color, 0.12, 0.2))
-        label = _text(x + 0.55, y + 0.78, item["name"], "raum", C["text"],
+        label_y = y + h - 0.78 if item["id"] in below else y + 0.78
+        label = _text(x + 0.55, label_y, item["name"], "raum", C["text"],
                       maxw=w - 2.2, kurz=item.get("kurz"))
         label["bg"] = mix(C["card"], color, 0.1)
         label["border"] = mix(color, C["card"], 0.3)
@@ -6247,13 +6472,15 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
             s.append(_oval(x + w - 1.05, y + 0.38, 0.8, 0.8, C["pink"], C["card"], 0.06))
             s.append(_text(x + w - 0.65, y + 0.78, str(count), "badge", C["on_accent"],
                            anchor="c"))
+    covered = _covered_by_label(building, below)
     for person in content["kollegen"]:
         if not person.get("platz"):
             continue
         px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
 
-        s.append(_text(px_, py_ + 0.62, short_name(person), "person",
-                       C["text_soft"], anchor="c"))
+        if not covered(person["platz"]):
+            s.append(_text(px_, py_ + 0.62, short_name(person), "person",
+                           C["text_soft"], anchor="c"))
         if person["id"] in quests:
             s.append(_oval(px_ + 0.25, py_ - 1.15, 0.68, 0.68, C["green"], C["card"], 0.05))
             s.append(_text(px_ + 0.59, py_ - 0.81, "!", "badge", C["card"], anchor="c"))

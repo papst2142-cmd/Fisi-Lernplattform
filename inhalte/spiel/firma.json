@@ -9,7 +9,8 @@
     "Angebote: Bitweiche bietet Selbstkosten x (1 + Zuschlag). Der Zuschlag wird je Anfrage aus der Spanne der Kundenart gewuerfelt (Mitte wahrscheinlicher). Dazu die Laune von Bitweiche: mit laune.kampfpreis.chance ein Kampfpreis (von-bis), mit laune.ausgelastet.chance ein Aufschlag (plus_von-plus_bis). Gewonnen, wenn der eigene Nettopreis nicht hoeher ist; ab vorteil.ab_kundenzufriedenheit darf er vorteil.prozent darueber liegen.",
     "Kundentickets: Chance in Prozent = chance.basis + chance.je_punkt * (Wert - Anforderung), begrenzt auf chance.min bis chance.max. Anforderung und Honorar je Schwierigkeit in tickets.stufen.",
     "Ab 0.35: 'mitbewerber.firmen' bieten gegen dich. Pro Anfrage 1 Firma (Chance anfrage_bieter.eins) oder 2, pro Projekt projekt_bieter.von bis .bis Firmen, gezogen nach gewicht. Zuschlag aus von-bis (Mitte wahrscheinlicher, bei gleichmaessig alle gleich wahrscheinlich) plus fach[Fachbereich] bei Projekten; Bitweiche (kundenart) rechnet wie in 0.34. laune.ausgelastet.bietet_nicht: die Firma bietet dann gar nicht. Das guenstigste Angebot gewinnt.",
-    "Projekte: alle abstand_tage eine Ausschreibung aus den 50 Testprojekten (projektarbeiten.json), gilt gilt_tage. Einzelkosten = aufwand * stundensatz + material. Laufende Projekte je Gebaeudestufe in 'laufend'. Tagesleistung je Person = leistung.basis + leistung.je_punkt * Wert im Fachbereich, mit lernbonus Prozent mehr, wenn das Testprojekt im Lernbereich bearbeitet wurde; rueckschlag.chance, wenn der beste Wert im Team unter der Anforderung liegt."
+    "Projekte: alle abstand_tage eine Ausschreibung aus den 50 Testprojekten (projektarbeiten.json), gilt gilt_tage. Einzelkosten = aufwand * stundensatz + material. Laufende Projekte je Gebaeudestufe in 'laufend'. Tagesleistung je Person = leistung.basis + leistung.je_punkt * Wert im Fachbereich, mit lernbonus Prozent mehr, wenn das Testprojekt im Lernbereich bearbeitet wurde; rueckschlag.chance, wenn der beste Wert im Team unter der Anforderung liegt.",
+    "Ab 0.36: gebaeude.stufen 3 bis 5 (je 2 Arbeitsplaetze mehr). 'sonderraeume.raeume' baut man ab 'ab_stufe' auf der Flaeche 'raum' aus (bis dahin Leerstand). effekt: material_rabatt (Prozent auf Einkauf und Material), anfragen_plus, kundenzufriedenheit_plus (je gewonnenem Auftrag), projekte_plus, rueckschlag_faktor (mal die Rueckschlag-Chance), weiterbildung_rabatt (Prozent), weiterbildung_tage_minus. Nebenkosten des Raums kommen taeglich dazu."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -472,7 +473,7 @@
             },
             {
               "id": "buero2",
-              "name": "Zweites Büro",
+              "name": "Büro 2",
               "kurz": "Büro 2",
               "cat": "systeme",
               "x": 0,
@@ -528,6 +529,1698 @@
                   "typ": "pflanze",
                   "x": 9.6,
                   "y": 11.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "stufe": 3,
+        "name": "Anbau Ost",
+        "preis": 20000,
+        "nebenkosten": 130,
+        "text": "Der Anbau riecht noch nach frischer Farbe: ein drittes Büro mit zwei Arbeitsplätzen und zwei leere Flächen für ein Lager und einen Besprechungsraum.",
+        "plaetze": [
+          [
+            5.0,
+            2.75,
+            "grossraum"
+          ],
+          [
+            8.1,
+            2.75,
+            "grossraum"
+          ],
+          [
+            2.1,
+            10.05,
+            "buero2"
+          ],
+          [
+            5.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            12.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            17.7,
+            2.75,
+            "buero3"
+          ],
+          [
+            20.4,
+            2.75,
+            "buero3"
+          ]
+        ],
+        "gebaeude": {
+          "breite": 22,
+          "hoehe": 14,
+          "flur": {
+            "y": 5,
+            "h": 2,
+            "name": "Eingang",
+            "eingang": {
+              "von": 5.3,
+              "bis": 6.7
+            },
+            "spieler": [
+              1.2,
+              6.0
+            ],
+            "deko": [
+              {
+                "typ": "fussmatte",
+                "x": 0.25,
+                "y": 5.35,
+                "w": 0.7,
+                "h": 1.3
+              },
+              {
+                "typ": "feuerloescher",
+                "x": 9.8,
+                "y": 6.45,
+                "w": 0.4,
+                "h": 0.4
+              }
+            ]
+          },
+          "fenster": [
+            [
+              1.0,
+              0,
+              3.2,
+              0
+            ],
+            [
+              4.2,
+              0,
+              6.4,
+              0
+            ],
+            [
+              7.4,
+              0,
+              9.4,
+              0
+            ],
+            [
+              11.0,
+              0,
+              13.6,
+              0
+            ],
+            [
+              17.0,
+              0,
+              21.0,
+              0
+            ],
+            [
+              0,
+              1.0,
+              0,
+              3.8
+            ],
+            [
+              0,
+              8.5,
+              0,
+              12.5
+            ],
+            [
+              1.4,
+              14,
+              3.6,
+              14
+            ],
+            [
+              5.0,
+              14,
+              7.2,
+              14
+            ],
+            [
+              11.0,
+              14,
+              13.4,
+              14
+            ],
+            [
+              16.6,
+              14,
+              18.9,
+              14
+            ],
+            [
+              22,
+              1.0,
+              22,
+              3.8
+            ]
+          ],
+          "raeume": [
+            {
+              "id": "grossraum",
+              "name": "Büro",
+              "cat": "netzwerk",
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 5,
+              "tuer": {
+                "von": 4.6,
+                "bis": 5.8
+              },
+              "boden": "teppichboden",
+              "text": "Dein erstes Büro: drei Schreibtische, ein Whiteboard und viel Ehrgeiz.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 3.4,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 0.8,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 3.9,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 7.0,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 9.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 0.3,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "kaffeeecke",
+              "name": "Kaffeeecke",
+              "kurz": "Kaffee",
+              "cat": "wirtschaft",
+              "x": 10,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 11.2,
+                "bis": 12.4
+              },
+              "boden": "fliesen",
+              "text": "Kaffeemaschine, Wasserspender und ein Tisch für die Besprechung mit Kunden.",
+              "deko": [
+                {
+                  "typ": "kaffeemaschine",
+                  "x": 15.2,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 0.6
+                },
+                {
+                  "typ": "wasserspender",
+                  "x": 14.3,
+                  "y": 0.35,
+                  "w": 0.55,
+                  "h": 0.55
+                },
+                {
+                  "typ": "tisch",
+                  "x": 11.6,
+                  "y": 1.4,
+                  "w": 2.4,
+                  "h": 1.2
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 15.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero2",
+              "name": "Büro 2",
+              "kurz": "Büro 2",
+              "cat": "systeme",
+              "x": 0,
+              "y": 7,
+              "w": 16,
+              "h": 7,
+              "tuer": {
+                "von": 7.4,
+                "bis": 8.6
+              },
+              "boden": "teppichboden",
+              "text": "Der Ausbau: drei weitere Arbeitsplätze und ein Tisch für Testgeräte.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 1.0,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 4.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 11.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "tisch",
+                  "x": 14.0,
+                  "y": 8.2,
+                  "w": 1.6,
+                  "h": 2.6
+                },
+                {
+                  "typ": "regal",
+                  "x": 0.3,
+                  "y": 13.2,
+                  "w": 2.4,
+                  "h": 0.5
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 9.6,
+                  "y": 13.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero3",
+              "name": "Büro 3",
+              "kurz": "Büro 3",
+              "cat": "datenbanken",
+              "x": 16,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 18.4,
+                "bis": 19.6
+              },
+              "boden": "teppichboden",
+              "text": "Das dritte Büro im Anbau: zwei Arbeitsplätze mit Blick auf die Gleise.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 16.6,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 19.3,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 16.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 21.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "besprechung",
+              "name": "Besprechungsraum",
+              "kurz": "Bespr.",
+              "cat": "wirtschaft",
+              "x": 16,
+              "y": 7,
+              "w": 3.5,
+              "h": 7,
+              "tuer": {
+                "von": 16.9,
+                "bis": 18.1
+              },
+              "boden": "parkett",
+              "text": "Großer Tisch, Whiteboard, gute Stühle: Hier überzeugst du Kunden, bevor Bitweiche anruft.",
+              "deko": [
+                {
+                  "typ": "besprechungstisch",
+                  "x": 17.0,
+                  "y": 8.9,
+                  "w": 1.5,
+                  "h": 3.6
+                },
+                {
+                  "typ": "whiteboard",
+                  "x": 16.35,
+                  "y": 13.55,
+                  "w": 2.8,
+                  "h": 0.22
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 18.6,
+                  "y": 7.3,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "firmenlager",
+              "name": "Lager",
+              "kurz": "Lager",
+              "cat": "systeme",
+              "x": 19.5,
+              "y": 7,
+              "w": 2.5,
+              "h": 7,
+              "tuer": {
+                "von": 19.9,
+                "bis": 21.1
+              },
+              "boden": "beton",
+              "text": "Regale bis unter die Decke. Wer in größeren Mengen einkauft, zahlt weniger.",
+              "deko": [
+                {
+                  "typ": "hochregal",
+                  "x": 21.05,
+                  "y": 8.4,
+                  "w": 0.85,
+                  "h": 5.1
+                },
+                {
+                  "typ": "palette",
+                  "x": 19.7,
+                  "y": 9.0,
+                  "w": 1.2,
+                  "h": 0.8
+                },
+                {
+                  "typ": "kartons",
+                  "x": 19.7,
+                  "y": 11.4,
+                  "w": 1.2,
+                  "h": 0.9
+                },
+                {
+                  "typ": "feuerloescher",
+                  "x": 19.65,
+                  "y": 13.45,
+                  "w": 0.4,
+                  "h": 0.4
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "stufe": 4,
+        "name": "Halle Süd",
+        "preis": 34000,
+        "nebenkosten": 180,
+        "text": "Die alte Halle neben dem Stellwerk wird angebunden: ein viertes Büro mit zwei Arbeitsplätzen und Platz für einen eigenen Serverraum.",
+        "plaetze": [
+          [
+            5.0,
+            2.75,
+            "grossraum"
+          ],
+          [
+            8.1,
+            2.75,
+            "grossraum"
+          ],
+          [
+            2.1,
+            10.05,
+            "buero2"
+          ],
+          [
+            5.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            12.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            17.7,
+            2.75,
+            "buero3"
+          ],
+          [
+            20.4,
+            2.75,
+            "buero3"
+          ],
+          [
+            24.5,
+            9.95,
+            "buero4"
+          ],
+          [
+            24.5,
+            12.85,
+            "buero4"
+          ]
+        ],
+        "gebaeude": {
+          "breite": 26,
+          "hoehe": 14,
+          "flur": {
+            "y": 5,
+            "h": 2,
+            "name": "Eingang",
+            "eingang": {
+              "von": 5.3,
+              "bis": 6.7
+            },
+            "spieler": [
+              1.2,
+              6.0
+            ],
+            "deko": [
+              {
+                "typ": "fussmatte",
+                "x": 0.25,
+                "y": 5.35,
+                "w": 0.7,
+                "h": 1.3
+              },
+              {
+                "typ": "feuerloescher",
+                "x": 9.8,
+                "y": 6.45,
+                "w": 0.4,
+                "h": 0.4
+              }
+            ]
+          },
+          "fenster": [
+            [
+              1.0,
+              0,
+              3.2,
+              0
+            ],
+            [
+              4.2,
+              0,
+              6.4,
+              0
+            ],
+            [
+              7.4,
+              0,
+              9.4,
+              0
+            ],
+            [
+              11.0,
+              0,
+              13.6,
+              0
+            ],
+            [
+              17.0,
+              0,
+              21.0,
+              0
+            ],
+            [
+              0,
+              1.0,
+              0,
+              3.8
+            ],
+            [
+              0,
+              8.5,
+              0,
+              12.5
+            ],
+            [
+              1.4,
+              14,
+              3.6,
+              14
+            ],
+            [
+              5.0,
+              14,
+              7.2,
+              14
+            ],
+            [
+              11.0,
+              14,
+              13.4,
+              14
+            ],
+            [
+              16.6,
+              14,
+              18.9,
+              14
+            ],
+            [
+              23.0,
+              14,
+              25.4,
+              14
+            ],
+            [
+              26,
+              8.5,
+              26,
+              12.5
+            ]
+          ],
+          "raeume": [
+            {
+              "id": "grossraum",
+              "name": "Büro",
+              "cat": "netzwerk",
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 5,
+              "tuer": {
+                "von": 4.6,
+                "bis": 5.8
+              },
+              "boden": "teppichboden",
+              "text": "Dein erstes Büro: drei Schreibtische, ein Whiteboard und viel Ehrgeiz.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 3.4,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 0.8,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 3.9,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 7.0,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 9.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 0.3,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "kaffeeecke",
+              "name": "Kaffeeecke",
+              "kurz": "Kaffee",
+              "cat": "wirtschaft",
+              "x": 10,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 11.2,
+                "bis": 12.4
+              },
+              "boden": "fliesen",
+              "text": "Kaffeemaschine, Wasserspender und ein Tisch für die Besprechung mit Kunden.",
+              "deko": [
+                {
+                  "typ": "kaffeemaschine",
+                  "x": 15.2,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 0.6
+                },
+                {
+                  "typ": "wasserspender",
+                  "x": 14.3,
+                  "y": 0.35,
+                  "w": 0.55,
+                  "h": 0.55
+                },
+                {
+                  "typ": "tisch",
+                  "x": 11.6,
+                  "y": 1.4,
+                  "w": 2.4,
+                  "h": 1.2
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 15.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero2",
+              "name": "Büro 2",
+              "kurz": "Büro 2",
+              "cat": "systeme",
+              "x": 0,
+              "y": 7,
+              "w": 16,
+              "h": 7,
+              "tuer": {
+                "von": 7.4,
+                "bis": 8.6
+              },
+              "boden": "teppichboden",
+              "text": "Der Ausbau: drei weitere Arbeitsplätze und ein Tisch für Testgeräte.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 1.0,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 4.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 11.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "tisch",
+                  "x": 14.0,
+                  "y": 8.2,
+                  "w": 1.6,
+                  "h": 2.6
+                },
+                {
+                  "typ": "regal",
+                  "x": 0.3,
+                  "y": 13.2,
+                  "w": 2.4,
+                  "h": 0.5
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 9.6,
+                  "y": 13.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero3",
+              "name": "Büro 3",
+              "kurz": "Büro 3",
+              "cat": "datenbanken",
+              "x": 16,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 18.4,
+                "bis": 19.6
+              },
+              "boden": "teppichboden",
+              "text": "Das dritte Büro im Anbau: zwei Arbeitsplätze mit Blick auf die Gleise.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 16.6,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 19.3,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 16.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 21.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "besprechung",
+              "name": "Besprechungsraum",
+              "kurz": "Bespr.",
+              "cat": "wirtschaft",
+              "x": 16,
+              "y": 7,
+              "w": 3.5,
+              "h": 7,
+              "tuer": {
+                "von": 16.9,
+                "bis": 18.1
+              },
+              "boden": "parkett",
+              "text": "Großer Tisch, Whiteboard, gute Stühle: Hier überzeugst du Kunden, bevor Bitweiche anruft.",
+              "deko": [
+                {
+                  "typ": "besprechungstisch",
+                  "x": 17.0,
+                  "y": 8.9,
+                  "w": 1.5,
+                  "h": 3.6
+                },
+                {
+                  "typ": "whiteboard",
+                  "x": 16.35,
+                  "y": 13.55,
+                  "w": 2.8,
+                  "h": 0.22
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 18.6,
+                  "y": 7.3,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "firmenlager",
+              "name": "Lager",
+              "kurz": "Lager",
+              "cat": "systeme",
+              "x": 19.5,
+              "y": 7,
+              "w": 2.5,
+              "h": 7,
+              "tuer": {
+                "von": 19.9,
+                "bis": 21.1
+              },
+              "boden": "beton",
+              "text": "Regale bis unter die Decke. Wer in größeren Mengen einkauft, zahlt weniger.",
+              "deko": [
+                {
+                  "typ": "hochregal",
+                  "x": 21.05,
+                  "y": 8.4,
+                  "w": 0.85,
+                  "h": 5.1
+                },
+                {
+                  "typ": "palette",
+                  "x": 19.7,
+                  "y": 9.0,
+                  "w": 1.2,
+                  "h": 0.8
+                },
+                {
+                  "typ": "kartons",
+                  "x": 19.7,
+                  "y": 11.4,
+                  "w": 1.2,
+                  "h": 0.9
+                },
+                {
+                  "typ": "feuerloescher",
+                  "x": 19.65,
+                  "y": 13.45,
+                  "w": 0.4,
+                  "h": 0.4
+                }
+              ]
+            },
+            {
+              "id": "firmenserver",
+              "name": "Serverraum",
+              "kurz": "Server",
+              "cat": "netzwerk",
+              "x": 22,
+              "y": 0,
+              "w": 4,
+              "h": 5,
+              "tuer": {
+                "von": 22.6,
+                "bis": 23.8
+              },
+              "boden": "doppelboden",
+              "text": "Zwei Serverschränke, Klimagerät und USV: Hier testet dein Team, bevor es beim Kunden ernst wird.",
+              "deko": [
+                {
+                  "typ": "rack",
+                  "x": 22.3,
+                  "y": 0.3,
+                  "w": 1.0,
+                  "h": 2.6
+                },
+                {
+                  "typ": "rack",
+                  "x": 23.5,
+                  "y": 0.3,
+                  "w": 1.0,
+                  "h": 2.6
+                },
+                {
+                  "typ": "klima",
+                  "x": 25.25,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 1.9
+                },
+                {
+                  "typ": "usv",
+                  "x": 24.5,
+                  "y": 3.6,
+                  "w": 1.3,
+                  "h": 1.0
+                }
+              ]
+            },
+            {
+              "id": "buero4",
+              "name": "Büro 4",
+              "kurz": "Büro 4",
+              "cat": "sicherheit",
+              "x": 22,
+              "y": 7,
+              "w": 4,
+              "h": 7,
+              "tuer": {
+                "von": 22.4,
+                "bis": 23.6
+              },
+              "boden": "teppichboden",
+              "text": "Zwei Arbeitsplätze in der Halle Süd, ruhig und hell.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 23.4,
+                  "y": 8.3,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 23.4,
+                  "y": 11.2,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 22.2,
+                  "y": 13.05,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "stufe": 5,
+        "name": "Halle Nord",
+        "preis": 48000,
+        "nebenkosten": 230,
+        "text": "Der letzte freie Teil des Gewerbehofs: ein fünftes Büro mit zwei Arbeitsplätzen und Platz für einen Schulungsraum.",
+        "plaetze": [
+          [
+            5.0,
+            2.75,
+            "grossraum"
+          ],
+          [
+            8.1,
+            2.75,
+            "grossraum"
+          ],
+          [
+            2.1,
+            10.05,
+            "buero2"
+          ],
+          [
+            5.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            12.5,
+            10.05,
+            "buero2"
+          ],
+          [
+            17.7,
+            2.75,
+            "buero3"
+          ],
+          [
+            20.4,
+            2.75,
+            "buero3"
+          ],
+          [
+            24.5,
+            9.95,
+            "buero4"
+          ],
+          [
+            24.5,
+            12.85,
+            "buero4"
+          ],
+          [
+            28.5,
+            9.95,
+            "buero5"
+          ],
+          [
+            28.5,
+            12.85,
+            "buero5"
+          ]
+        ],
+        "gebaeude": {
+          "breite": 30,
+          "hoehe": 14,
+          "flur": {
+            "y": 5,
+            "h": 2,
+            "name": "Eingang",
+            "eingang": {
+              "von": 5.3,
+              "bis": 6.7
+            },
+            "spieler": [
+              1.2,
+              6.0
+            ],
+            "deko": [
+              {
+                "typ": "fussmatte",
+                "x": 0.25,
+                "y": 5.35,
+                "w": 0.7,
+                "h": 1.3
+              },
+              {
+                "typ": "feuerloescher",
+                "x": 9.8,
+                "y": 6.45,
+                "w": 0.4,
+                "h": 0.4
+              }
+            ]
+          },
+          "fenster": [
+            [
+              1.0,
+              0,
+              3.2,
+              0
+            ],
+            [
+              4.2,
+              0,
+              6.4,
+              0
+            ],
+            [
+              7.4,
+              0,
+              9.4,
+              0
+            ],
+            [
+              11.0,
+              0,
+              13.6,
+              0
+            ],
+            [
+              17.0,
+              0,
+              21.0,
+              0
+            ],
+            [
+              26.6,
+              0,
+              29.4,
+              0
+            ],
+            [
+              0,
+              1.0,
+              0,
+              3.8
+            ],
+            [
+              0,
+              8.5,
+              0,
+              12.5
+            ],
+            [
+              1.4,
+              14,
+              3.6,
+              14
+            ],
+            [
+              5.0,
+              14,
+              7.2,
+              14
+            ],
+            [
+              11.0,
+              14,
+              13.4,
+              14
+            ],
+            [
+              16.6,
+              14,
+              18.9,
+              14
+            ],
+            [
+              23.0,
+              14,
+              25.4,
+              14
+            ],
+            [
+              27.0,
+              14,
+              29.4,
+              14
+            ],
+            [
+              30,
+              1.0,
+              30,
+              3.8
+            ],
+            [
+              30,
+              8.5,
+              30,
+              12.5
+            ]
+          ],
+          "raeume": [
+            {
+              "id": "grossraum",
+              "name": "Büro",
+              "cat": "netzwerk",
+              "x": 0,
+              "y": 0,
+              "w": 10,
+              "h": 5,
+              "tuer": {
+                "von": 4.6,
+                "bis": 5.8
+              },
+              "boden": "teppichboden",
+              "text": "Dein erstes Büro: drei Schreibtische, ein Whiteboard und viel Ehrgeiz.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 3.4,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 0.8,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 3.9,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 7.0,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 9.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 0.3,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "kaffeeecke",
+              "name": "Kaffeeecke",
+              "kurz": "Kaffee",
+              "cat": "wirtschaft",
+              "x": 10,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 11.2,
+                "bis": 12.4
+              },
+              "boden": "fliesen",
+              "text": "Kaffeemaschine, Wasserspender und ein Tisch für die Besprechung mit Kunden.",
+              "deko": [
+                {
+                  "typ": "kaffeemaschine",
+                  "x": 15.2,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 0.6
+                },
+                {
+                  "typ": "wasserspender",
+                  "x": 14.3,
+                  "y": 0.35,
+                  "w": 0.55,
+                  "h": 0.55
+                },
+                {
+                  "typ": "tisch",
+                  "x": 11.6,
+                  "y": 1.4,
+                  "w": 2.4,
+                  "h": 1.2
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 15.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero2",
+              "name": "Büro 2",
+              "kurz": "Büro 2",
+              "cat": "systeme",
+              "x": 0,
+              "y": 7,
+              "w": 16,
+              "h": 7,
+              "tuer": {
+                "von": 7.4,
+                "bis": 8.6
+              },
+              "boden": "teppichboden",
+              "text": "Der Ausbau: drei weitere Arbeitsplätze und ein Tisch für Testgeräte.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 1.0,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 4.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 11.4,
+                  "y": 8.4,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "tisch",
+                  "x": 14.0,
+                  "y": 8.2,
+                  "w": 1.6,
+                  "h": 2.6
+                },
+                {
+                  "typ": "regal",
+                  "x": 0.3,
+                  "y": 13.2,
+                  "w": 2.4,
+                  "h": 0.5
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 9.6,
+                  "y": 13.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero3",
+              "name": "Büro 3",
+              "kurz": "Büro 3",
+              "cat": "datenbanken",
+              "x": 16,
+              "y": 0,
+              "w": 6,
+              "h": 5,
+              "tuer": {
+                "von": 18.4,
+                "bis": 19.6
+              },
+              "boden": "teppichboden",
+              "text": "Das dritte Büro im Anbau: zwei Arbeitsplätze mit Blick auf die Gleise.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 16.6,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 19.3,
+                  "y": 1.1,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "aktenregal",
+                  "x": 16.25,
+                  "y": 3.0,
+                  "w": 0.5,
+                  "h": 1.7
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 21.0,
+                  "y": 4.0,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "besprechung",
+              "name": "Besprechungsraum",
+              "kurz": "Bespr.",
+              "cat": "wirtschaft",
+              "x": 16,
+              "y": 7,
+              "w": 3.5,
+              "h": 7,
+              "tuer": {
+                "von": 16.9,
+                "bis": 18.1
+              },
+              "boden": "parkett",
+              "text": "Großer Tisch, Whiteboard, gute Stühle: Hier überzeugst du Kunden, bevor Bitweiche anruft.",
+              "deko": [
+                {
+                  "typ": "besprechungstisch",
+                  "x": 17.0,
+                  "y": 8.9,
+                  "w": 1.5,
+                  "h": 3.6
+                },
+                {
+                  "typ": "whiteboard",
+                  "x": 16.35,
+                  "y": 13.55,
+                  "w": 2.8,
+                  "h": 0.22
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 18.6,
+                  "y": 7.3,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "firmenlager",
+              "name": "Lager",
+              "kurz": "Lager",
+              "cat": "systeme",
+              "x": 19.5,
+              "y": 7,
+              "w": 2.5,
+              "h": 7,
+              "tuer": {
+                "von": 19.9,
+                "bis": 21.1
+              },
+              "boden": "beton",
+              "text": "Regale bis unter die Decke. Wer in größeren Mengen einkauft, zahlt weniger.",
+              "deko": [
+                {
+                  "typ": "hochregal",
+                  "x": 21.05,
+                  "y": 8.4,
+                  "w": 0.85,
+                  "h": 5.1
+                },
+                {
+                  "typ": "palette",
+                  "x": 19.7,
+                  "y": 9.0,
+                  "w": 1.2,
+                  "h": 0.8
+                },
+                {
+                  "typ": "kartons",
+                  "x": 19.7,
+                  "y": 11.4,
+                  "w": 1.2,
+                  "h": 0.9
+                },
+                {
+                  "typ": "feuerloescher",
+                  "x": 19.65,
+                  "y": 13.45,
+                  "w": 0.4,
+                  "h": 0.4
+                }
+              ]
+            },
+            {
+              "id": "firmenserver",
+              "name": "Serverraum",
+              "kurz": "Server",
+              "cat": "netzwerk",
+              "x": 22,
+              "y": 0,
+              "w": 4,
+              "h": 5,
+              "tuer": {
+                "von": 22.6,
+                "bis": 23.8
+              },
+              "boden": "doppelboden",
+              "text": "Zwei Serverschränke, Klimagerät und USV: Hier testet dein Team, bevor es beim Kunden ernst wird.",
+              "deko": [
+                {
+                  "typ": "rack",
+                  "x": 22.3,
+                  "y": 0.3,
+                  "w": 1.0,
+                  "h": 2.6
+                },
+                {
+                  "typ": "rack",
+                  "x": 23.5,
+                  "y": 0.3,
+                  "w": 1.0,
+                  "h": 2.6
+                },
+                {
+                  "typ": "klima",
+                  "x": 25.25,
+                  "y": 0.4,
+                  "w": 0.55,
+                  "h": 1.9
+                },
+                {
+                  "typ": "usv",
+                  "x": 24.5,
+                  "y": 3.6,
+                  "w": 1.3,
+                  "h": 1.0
+                }
+              ]
+            },
+            {
+              "id": "buero4",
+              "name": "Büro 4",
+              "kurz": "Büro 4",
+              "cat": "sicherheit",
+              "x": 22,
+              "y": 7,
+              "w": 4,
+              "h": 7,
+              "tuer": {
+                "von": 22.4,
+                "bis": 23.6
+              },
+              "boden": "teppichboden",
+              "text": "Zwei Arbeitsplätze in der Halle Süd, ruhig und hell.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 23.4,
+                  "y": 8.3,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 23.4,
+                  "y": 11.2,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 22.2,
+                  "y": 13.05,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "schulung",
+              "name": "Schulungsraum",
+              "kurz": "Schule",
+              "cat": "datenbanken",
+              "x": 26,
+              "y": 0,
+              "w": 4,
+              "h": 5,
+              "tuer": {
+                "von": 26.6,
+                "bis": 27.8
+              },
+              "boden": "teppichboden",
+              "text": "Tischreihen und ein Whiteboard: Hier lernt dein Team dazu, ohne weit zu fahren.",
+              "deko": [
+                {
+                  "typ": "whiteboard",
+                  "x": 26.5,
+                  "y": 0.2,
+                  "w": 3.0,
+                  "h": 0.22
+                },
+                {
+                  "typ": "tisch",
+                  "x": 26.6,
+                  "y": 1.1,
+                  "w": 2.8,
+                  "h": 0.8
+                },
+                {
+                  "typ": "tisch",
+                  "x": 26.6,
+                  "y": 2.5,
+                  "w": 2.8,
+                  "h": 0.8
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 29.1,
+                  "y": 4.1,
+                  "w": 0.75,
+                  "h": 0.75
+                }
+              ]
+            },
+            {
+              "id": "buero5",
+              "name": "Büro 5",
+              "kurz": "Büro 5",
+              "cat": "systeme",
+              "x": 26,
+              "y": 7,
+              "w": 4,
+              "h": 7,
+              "tuer": {
+                "von": 26.4,
+                "bis": 27.6
+              },
+              "boden": "teppichboden",
+              "text": "Zwei Arbeitsplätze in der Halle Nord, direkt neben dem Schulungsraum.",
+              "deko": [
+                {
+                  "typ": "schreibtisch",
+                  "x": 27.4,
+                  "y": 8.3,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "schreibtisch",
+                  "x": 27.4,
+                  "y": 11.2,
+                  "w": 2.2,
+                  "h": 1.0,
+                  "blick": "s"
+                },
+                {
+                  "typ": "pflanze",
+                  "x": 26.2,
+                  "y": 13.05,
                   "w": 0.75,
                   "h": 0.75
                 }
@@ -1635,7 +3328,8 @@
     "anzahlung": 30,
     "laufend": {
       "1": 1,
-      "2": 2
+      "2": 2,
+      "4": 3
     },
     "stufen": {
       "Leicht": {
@@ -1798,6 +3492,68 @@
       "Gewinn = Selbstkosten × Gewinnzuschlag. Nettoverkaufspreis = Selbstkosten + Gewinn.",
       "Umsatzsteuer = Nettoverkaufspreis × 19 %. Bruttoverkaufspreis = Nettoverkaufspreis + Umsatzsteuer.",
       "Bei Projekten bieten meist zwei oder drei Firmen mit. Wer wer ist, siehst du erst im Ergebnis. Das günstigste Angebot gewinnt."
+    ]
+  },
+  "sonderraeume": {
+    "leerstand": {
+      "name": "Leerstand",
+      "kurz": "Frei",
+      "farbe": "#8B93A1",
+      "boden": "beton",
+      "text": "Noch leer, nur Estrich und nackte Wände. Hier kann ein %s entstehen."
+    },
+    "raeume": [
+      {
+        "id": "lager",
+        "raum": "firmenlager",
+        "name": "Lager",
+        "ab_stufe": 3,
+        "preis": 10000,
+        "nebenkosten": 20,
+        "effekt": {
+          "material_rabatt": 15
+        },
+        "vorteil": "Material und Wareneinkauf 15 % günstiger, bei Anfragen und Projekten."
+      },
+      {
+        "id": "besprechung",
+        "raum": "besprechung",
+        "name": "Besprechungsraum",
+        "ab_stufe": 3,
+        "preis": 12000,
+        "nebenkosten": 20,
+        "effekt": {
+          "anfragen_plus": 1,
+          "kundenzufriedenheit_plus": 1
+        },
+        "vorteil": "3 statt 2 Kundenanfragen pro Tag, und jeder gewonnene Auftrag bringt +1 Kundenzufriedenheit extra."
+      },
+      {
+        "id": "serverraum",
+        "raum": "firmenserver",
+        "name": "Serverraum",
+        "ab_stufe": 4,
+        "preis": 22000,
+        "nebenkosten": 40,
+        "effekt": {
+          "projekte_plus": 1,
+          "rueckschlag_faktor": 0.5
+        },
+        "vorteil": "Ein Projekt mehr gleichzeitig, und nur noch halb so viele Rückschläge."
+      },
+      {
+        "id": "schulung",
+        "raum": "schulung",
+        "name": "Schulungsraum",
+        "ab_stufe": 5,
+        "preis": 25000,
+        "nebenkosten": 30,
+        "effekt": {
+          "weiterbildung_rabatt": 30,
+          "weiterbildung_tage_minus": 1
+        },
+        "vorteil": "Weiterbildungen 30 % günstiger und einen Tag kürzer."
+      }
     ]
   }
 }
