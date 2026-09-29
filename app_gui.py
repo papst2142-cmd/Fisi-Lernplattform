@@ -49,7 +49,7 @@ import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
-    ChoiceRow, CustomerView, GameView, HomeView, OfficeView,
+    ChoiceRow, CustomerView, FirmView, GameView, HomeView, OfficeView,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -66,7 +66,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.32"
+APP_VERSION = "0.33"
 
 
 def _resource_path(filename):
@@ -86,7 +86,7 @@ NAV_ITEMS = [
     ("testproject", "flag", "Test Projekt", None),
     ("calc", "calc", "Rechner", None),
     ("game", "game", "Spiel", [("buero", "office", "Büro"), ("kunde", "station", "Kunde"),
-                                 ("zuhause", "home", "Zuhause")]),
+                                 ("zuhause", "home", "Zuhause"), ("firma", "case", "Firma")]),
     ("progress", "chart", "Fortschritt", None),
     ("settings", "gear", "Optionen", None),
 ]
@@ -112,6 +112,7 @@ VIEW_TITLES = {
     "buero": ("SPIEL", "BÜRO"),
     "kunde": ("SPIEL", "KUNDE"),
     "zuhause": ("SPIEL", "ZUHAUSE"),
+    "firma": ("SPIEL", "FIRMA"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
     "search": ("SUCHE", "ERGEBNISSE"),
@@ -2639,6 +2640,7 @@ class FISIApp:
                          ("testproject", ProjectView),
                          ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
                          ("kunde", CustomerView), ("zuhause", HomeView),
+                         ("firma", FirmView),
                          ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)

@@ -72,6 +72,14 @@ EV_SELL = "moebel_verkauft"
 EV_LAYOUT = "einrichtung_gesetzt"
 # Austausch (ab 0.32): Ersatzteil fehlt im Lager und wird nachbestellt
 EV_SPARE_ORDER = "ersatzteil_bestellt"
+# Eigenes Unternehmen (ab 0.33): Gruendung, Mitarbeiter, Weiterbildung und
+# Ausbau stehen mit allen Werten im Ereignis (Bewerber, Gehalt, Kosten), damit
+# PC und Handy nach dem Abgleich dieselbe Firma berechnen
+EV_FOUNDED = "firma_gegruendet"
+EV_HIRED = "mitarbeiter_eingestellt"
+EV_FIRED = "mitarbeiter_gekuendigt"
+EV_TRAINING = "weiterbildung"
+EV_EXPAND = "gebaeude_erweitert"
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -235,6 +243,7 @@ def load_game_content(folder=None):
         "story": {key: _story_value(value) for key, value in story.items()},
         "balancing": read("balancing"),
         "hardware": read("hardware"),
+        "firma": read("firma") if os.path.exists(os.path.join(folder, "firma.json")) else {},
     }
 
 
@@ -386,6 +395,10 @@ def room(room_id, content=None):
     content = content or GAME
     buildings = [content["gebaeude"]] + [place["gebaeude"] for place in
                                          content.get("kunden", {}).get("orte", [])]
+    # Raeume der eigenen Firma (ab 0.33) - die letzte Ausbaustufe hat alle
+    stages = content.get("firma", {}).get("gebaeude", {}).get("stufen") or []
+    if stages:
+        buildings.append(stages[-1]["gebaeude"])
     for building in buildings:
         for item in building["raeume"]:
             if item["id"] == room_id:
@@ -509,6 +522,8 @@ def validate_game_content(content=None):
     content = content or GAME
     problems = []
     site_rooms = {SITE_OFFICE: {item["id"] for item in content["gebaeude"]["raeume"]}}
+    for stage in (content.get("firma") or {}).get("gebaeude", {}).get("stufen", [])[-1:]:
+        site_rooms["firma"] = {item["id"] for item in stage["gebaeude"]["raeume"]}
     for place in customer_places(content):
         site_rooms[place["id"]] = {item["id"] for item in place["gebaeude"]["raeume"]}
     rooms = set().union(*site_rooms.values())
@@ -526,6 +541,7 @@ def validate_game_content(content=None):
                                        place.get("personen", []))
     problems += _validate_homes(content)
     problems += _validate_rent(content)
+    problems += _validate_firm(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -3011,11 +3027,23 @@ class GameState:
         self.deposit = 0           # hinterlegte Kaution (kommt beim Auszug zurueck)
         self.first_event = None
         self.start_reputation = start   # mittlere Reputation zu Beginn des Arbeitstags
+        # Eigenes Unternehmen (ab 0.33)
+        self.firm = None           # {"name", "tag", "stufe"} ab der Gruendung
+        self.staff = {}            # mitarbeiter-id -> Daten aus der Einstellung
+        self.ever_hired = set()    # auch Entlassene (bewerben sich nicht erneut)
+        self.trainings = []        # alle Weiterbildungen (Ereignisdaten)
+        # Kassenbuch je Arbeitstag: tag -> {"ein": {art: euro}, "aus": {art: euro}}
+        self.book = {}
+        self.balances = []         # (tag, kontostand) nach jedem Feierabend
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
             if self.first_event is None:
                 self.first_event = str(timestamp)
+            today = int(data.get("tag") or 0) if isinstance(data.get("tag"), int) else 0
+            today = today or self.days_done + 1
+            if kind in (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND):
+                self._apply_firm(kind, data, today)
             if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
                 self.seen_incidents.add(data.get("aufgabe"))
                 incident = task_by_id(data.get("aufgabe"), self.content) or {}
@@ -3024,11 +3052,14 @@ class GameState:
                                                   int(data.get("tag", 0) or 0))
             if kind == EV_SPARE_ORDER:
                 self.money += int(data.get("geld", 0))
+                self._book(today, BOOK_GOODS, data.get("geld", 0))
                 item = {"teil": data.get("teil"), "menge": 1, "ankunft": data.get("ankunft", 0),
                         "aufgabe": data.get("aufgabe"), "haendler": data.get("haendler", ""),
                         "nachbestellt": True}
                 self.deliveries.append(item)
                 self.spare_orders.append(dict(data))
+            if kind in (EV_MOVE, EV_BUY, EV_SELL):
+                self._book(today, BOOK_HOME, data.get("geld", 0))
             if kind == EV_MOVE:
                 self.money += int(data.get("geld", 0))
                 self.home_id = data.get("wohnung", self.home_id)
@@ -3049,6 +3080,7 @@ class GameState:
             elif kind in (EV_SOLVED, EV_DEFERRED):
                 self._apply_reputation(data.get("reputation") or {})
                 self.money += int(data.get("geld", 0))
+                self._book(today, BOOK_TASKS, data.get("geld", 0))
                 if kind == EV_SOLVED:
                     self.tickets_done += 1
                     if data.get("fehllieferung"):
@@ -3071,6 +3103,15 @@ class GameState:
             elif kind == EV_DAY_END:
                 self.days_done += 1
                 self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
+                self._book(today, BOOK_SALARY, data.get("gehalt", 0))
+                self._book(today, BOOK_HOME, -int(data.get("miete", 0)))
+                firm = data.get("firma") or {}
+                self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
+                    - int(firm.get("nebenkosten", 0))
+                self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
+                self._book(today, BOOK_WAGES, -int(firm.get("gehaelter", 0)))
+                self._book(today, BOOK_COSTS, -int(firm.get("nebenkosten", 0)))
+                self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
 
         # Tickets des laufenden Tages (Tag steht in den Nutzdaten)
@@ -3084,6 +3125,39 @@ class GameState:
                 else:
                     status = ST_RIGHT if data.get("richtig") else ST_WRONG
                 self.handled[data.get("aufgabe")] = status
+
+    def _book(self, day, kind, amount):
+        amount = int(amount or 0)
+        if not amount:
+            return
+        side = self.book.setdefault(day, {"ein": {}, "aus": {}})["ein" if amount > 0 else "aus"]
+        side[kind] = side.get(kind, 0) + abs(amount)
+
+    def _apply_firm(self, kind, data, day):
+        """Ereignisse der eigenen Firma. Doppelte oder ueberholte Ereignisse
+        (z.B. auf zwei Geraeten gleichzeitig gegruendet) zaehlen nicht."""
+        if kind == EV_FOUNDED:
+            if self.firm is None:
+                self.firm = {"name": data.get("name", ""), "tag": int(data.get("tag", day)),
+                             "stufe": 1}
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_FOUNDING, data.get("geld", 0))
+            return
+        if self.firm is None:
+            return
+        if kind == EV_HIRED and data.get("id") and data["id"] not in self.staff:
+            self.staff[data["id"]] = dict(data)
+            self.ever_hired.add(data["id"])
+        elif kind == EV_FIRED:
+            self.staff.pop(data.get("id"), None)
+        elif kind == EV_TRAINING and data.get("id") in self.staff:
+            self.trainings.append(dict(data))
+            self.money += int(data.get("geld", 0))
+            self._book(day, BOOK_TRAINING, data.get("geld", 0))
+        elif kind == EV_EXPAND and int(data.get("stufe", 0)) == self.firm["stufe"] + 1:
+            self.firm["stufe"] += 1
+            self.money += int(data.get("geld", 0))
+            self._book(day, BOOK_BUILDING, data.get("geld", 0))
 
     def _apply_reputation(self, delta):
         for key, value in delta.items():
@@ -3119,6 +3193,9 @@ class GameState:
 
     @property
     def salary(self):
+        """Gehalt von Bitweiche - nach der Gruendung gibt es keins mehr."""
+        if self.firm:
+            return 0
         return self.content["balancing"]["gehalt_pro_tag"].get(self.rank, 0)
 
     def founding_progress(self):
@@ -3128,6 +3205,89 @@ class GameState:
         capital = min(1.0, max(0, self.money) / float(goal["startkapital"]))
         reputation = min(1.0, self.mean_reputation / float(goal["mindest_reputation"]))
         return min(capital, reputation)
+
+    # -- Eigenes Unternehmen (ab 0.33) ---------------------------------------
+
+    def founding_missing(self):
+        """Was fuer die Gruendung noch fehlt (leere Liste = alles erfuellt)."""
+        goal = self.content["balancing"]["gruendung"]
+        missing = []
+        if self.firm:
+            return missing
+        if self.money < goal["startkapital"]:
+            missing.append("noch %s Erspartes" % _whole_euro(goal["startkapital"] -
+                                                             max(0, self.money)))
+        if self.mean_reputation < goal["mindest_reputation"]:
+            missing.append("Ansehen %d %% statt %d %%" % (round(self.mean_reputation),
+                                                         goal["mindest_reputation"]))
+        if goal.get("alle_erledigt") and not self.all_done():
+            left = sum(1 for task in self.content["aufgaben"] if task["id"] not in self.solved)
+            missing.append("%s bei Bitweiche offen" % ("1 Auftrag" if left == 1 else
+                                                       "%d Aufträge" % left))
+        return missing
+
+    def founding_ready(self):
+        return self.profile is not None and self.firm is None and not self.founding_missing()
+
+    def firm_stage(self):
+        """Die Ausbaustufe des eigenen Gebaeudes (aus firma.json)."""
+        stages = self.content["firma"]["gebaeude"]["stufen"]
+        number = self.firm["stufe"] if self.firm else 1
+        return stages[min(number, len(stages)) - 1]
+
+    def next_stage(self):
+        stages = self.content["firma"]["gebaeude"]["stufen"]
+        number = self.firm["stufe"] if self.firm else 1
+        return stages[number] if number < len(stages) else None
+
+    @property
+    def capacity(self):
+        return len(self.firm_stage()["plaetze"]) if self.firm else 0
+
+    def training_of(self, staff_id, day=None):
+        """Laufende Weiterbildung eines Mitarbeiters am Tag (oder None)."""
+        day = self.day if day is None else day
+        for item in self.trainings:
+            if item.get("id") == staff_id and item.get("tag", 0) <= day < item.get("bis_tag", 0):
+                return item
+        return None
+
+    def staff_values(self, staff_id, day=None, pending=False):
+        """Werte je Fachbereich: Einstellung plus abgeschlossene
+        Weiterbildungen (pending=True: auch die laufende)."""
+        day = self.day if day is None else day
+        values = dict((self.staff.get(staff_id) or {}).get("werte") or {})
+        for item in self.trainings:
+            if item.get("id") == staff_id and (pending or item.get("bis_tag", 0) <= day):
+                cat = item.get("cat")
+                values[cat] = values.get(cat, 0) + int(item.get("plus", 0))
+        return values
+
+    def trainings_of(self, staff_id):
+        return [item for item in self.trainings if item.get("id") == staff_id]
+
+    def staff_list(self):
+        """Mitarbeiter in der Reihenfolge der Einstellung, mit Arbeitsplatz."""
+        places = self.firm_stage()["plaetze"] if self.firm else []
+        result = []
+        for index, (staff_id, data) in enumerate(self.staff.items()):
+            item = dict(data, werte=self.staff_values(staff_id))
+            item["weiterbildung"] = self.training_of(staff_id)
+            item["umsatz"] = 0 if item["weiterbildung"] else staff_revenue(item["werte"],
+                                                                           self.content)
+            if index < len(places):
+                item["platz"] = places[index]
+            result.append(item)
+        return result
+
+    def firm_day(self):
+        """Umsatz, Gehaelter und Nebenkosten des laufenden Arbeitstags."""
+        if not self.firm:
+            return {}
+        staff = self.staff_list()
+        return {"umsatz": sum(item["umsatz"] for item in staff),
+                "gehaelter": sum(int(item.get("gehalt", 0)) for item in staff),
+                "nebenkosten": int(self.firm_stage().get("nebenkosten", 0))}
 
     # -- Lager ------------------------------------------------------------
 
@@ -3232,6 +3392,8 @@ class GameState:
                     self.waiting_for_spare(task["id"]))]
 
     def open_tickets(self):
+        if self.firm:
+            return []       # Bitweiche-Tickets gibt es nach der Gruendung nicht mehr
         per_day = self.tickets_today
         regular = [task_id for task_id in self.handled if not is_incident(task_id, self.content)]
         result = self._pool()[:max(0, per_day - len(regular))]
@@ -3353,8 +3515,12 @@ class GameState:
 
     def can_end_day(self):
         # Auch ohne bearbeitetes Ticket, wenn heute nur auf Lieferungen oder
-        # spaetere Auftraege gewartet wird - sonst saesse man fest.
-        return not self.open_tickets() and (bool(self.handled) or not self.all_done())
+        # spaetere Auftraege gewartet wird - sonst saesse man fest. Ab 0.33
+        # auch, wenn alles erledigt ist: Bis zur Gruendung wird weiter
+        # gespart, danach laeuft die eigene Firma.
+        if self.firm:
+            return True
+        return not self.open_tickets()
 
     def all_done(self):
         """Keine Aufgabe mehr offen - weder heute noch an spaeteren Tagen."""
@@ -3444,7 +3610,81 @@ class Game:
                    "rang": self.state.rank}
         if self.state.rent:
             payload["miete"] = self.state.rent
+        if self.state.firm:
+            payload["firma"] = self.state.firm_day()
         self._log(EV_DAY_END, payload)
+        return payload
+
+    # -- Eigenes Unternehmen (ab 0.33) -----------------------------------------
+
+    def found_firm(self, name):
+        """Gruendet die eigene Firma (Schwelle erreicht, alles erledigt)."""
+        name = " ".join((name or "").split())[:FIRM_NAME_MAX]
+        if not name:
+            raise ValueError("Bitte gib deiner Firma einen Namen.")
+        if self.state.firm:
+            raise ValueError("Du hast schon eine Firma gegründet.")
+        missing = self.state.founding_missing()
+        if missing:
+            raise ValueError("Für die Gründung fehlt noch: %s." % ", ".join(missing))
+        cost = int(self.content["firma"]["gruendung"]["kosten"])
+        payload = {"tag": self.state.day, "name": name, "geld": -cost}
+        self._log(EV_FOUNDED, payload)
+        return payload
+
+    def _firm_required(self):
+        if not self.state.firm:
+            raise ValueError("Dafür brauchst du zuerst eine eigene Firma.")
+
+    def hire(self, applicant_id):
+        self._firm_required()
+        applicant = next((item for item in applicants(self.state, self.content)
+                          if item["id"] == applicant_id), None)
+        if applicant is None:
+            raise ValueError("Diese Bewerbung liegt nicht (mehr) vor.")
+        if len(self.state.staff) >= self.state.capacity:
+            raise ValueError("Alle Arbeitsplätze sind besetzt. Für mehr Leute musst du "
+                             "das Gebäude ausbauen.")
+        if self.state.money <= 0:
+            raise ValueError("Mit leerem Konto kannst du niemanden einstellen.")
+        payload = {key: applicant[key] for key in ("id", "name", "aussehen", "werte",
+                                                   "gehalt", "herkunft", "schwerpunkt",
+                                                   "macke", "rolle")}
+        payload["tag"] = self.state.day
+        self._log(EV_HIRED, payload)
+        return payload
+
+    def fire(self, staff_id):
+        self._firm_required()
+        if staff_id not in self.state.staff:
+            raise ValueError("Diese Person arbeitet nicht bei dir.")
+        payload = {"id": staff_id, "tag": self.state.day}
+        self._log(EV_FIRED, payload)
+        return payload
+
+    def train(self, staff_id, cat):
+        """Abstrakte Weiterbildung: kostet Geld und Arbeitstage ohne Umsatz,
+        danach steigt der Wert im Fachbereich."""
+        self._firm_required()
+        offer = training_offer(self.state, staff_id, cat, self.content)
+        if offer["problem"]:
+            raise ValueError(offer["problem"])
+        payload = {"id": staff_id, "cat": cat, "geld": -offer["preis"], "tag": self.state.day,
+                   "bis_tag": self.state.day + offer["tage"], "plus": offer["plus"]}
+        self._log(EV_TRAINING, payload)
+        return payload
+
+    def expand(self):
+        self._firm_required()
+        stage = self.state.next_stage()
+        if stage is None:
+            raise ValueError("Das Gebäude ist fertig ausgebaut.")
+        if self.state.money < stage["preis"]:
+            raise ValueError("Dafür reicht dein Geld noch nicht (%s fehlen)."
+                             % _whole_euro(stage["preis"] - max(0, self.state.money)))
+        payload = {"stufe": stage["stufe"], "geld": -int(stage["preis"]),
+                   "tag": self.state.day}
+        self._log(EV_EXPAND, payload)
         return payload
 
     def reset(self):
@@ -3526,6 +3766,340 @@ class Game:
             payload["kaution_zurueck"] = offer["zurueck"]
         self._log(EV_MOVE, payload)
         return payload
+
+
+# ============================================================================
+#  EIGENES UNTERNEHMEN (ab 0.33)
+# ============================================================================
+#
+# Alle Zahlen stehen in inhalte/spiel/firma.json. Bewerber werden nicht frei
+# ausgewuerfelt, sondern wie die Zwischenfaelle aus festen Pruefwerten
+# (Firmenname, Gruendungstag, Bewerbungsrunde) berechnet: PC und Handy sehen
+# dieselben Leute, gespeichert wird erst die Einstellung.
+
+FIRM_NAME_MAX = 40
+STAFF_PREFIX = "kollege:"          # Bitweiche-Kollegen, die zu dir wechseln
+
+# Arten im Kassenbuch (Anzeige "Finanzen")
+BOOK_TASKS = "Aufträge"
+BOOK_SALARY = "Gehalt"
+BOOK_HOME = "Wohnen"
+BOOK_GOODS = "Wareneinkauf"
+BOOK_FOUNDING = "Gründung"
+BOOK_REVENUE = "Umsatz Mitarbeiter"
+BOOK_WAGES = "Gehälter"
+BOOK_COSTS = "Nebenkosten"
+BOOK_TRAINING = "Weiterbildung"
+BOOK_BUILDING = "Ausbau"
+
+
+# Reiter im Unterpunkt "Firma" (PC und Handy gleich beschriftet)
+FIRM_TABS = [("mitarbeiter", "Mitarbeiter"), ("bewerbungen", "Bewerbungen"),
+             ("gebaeude", "Gebäude"), ("finanzen", "Finanzen")]
+
+
+FIRM_IDLE_TEXT = ("Bitweiche-Tickets gibt es für dich nicht mehr. Deine Leute kümmern sich "
+                  "um Routineaufträge, die bringen jeden Arbeitstag Umsatz. Neue "
+                  "Kundenanfragen kommen in einem der nächsten Updates.")
+FOUNDING_TEASER = ("Du hast alles, was du für eine eigene Firma brauchst: genug Erspartes, "
+                   "gutes Ansehen und keinen offenen Auftrag mehr.")
+
+
+def firm_tabs(state):
+    """Vor der Gruendung gibt es nur die Finanzen."""
+    return FIRM_TABS if state.firm else [tab for tab in FIRM_TABS if tab[0] == "finanzen"]
+
+
+def values_text(values):
+    """ "Netzwerk 35 · Sicherheit 15 · ..." """
+    return " · ".join("%s %d" % (CATEGORY_SHORT[CAT_NAME[key]], values.get(key, 0))
+                      for key in CAT_ORDER)
+
+
+def staff_money_text(item, content=None):
+    """Gehalt und Umsatz einer Person pro Arbeitstag."""
+    revenue = item.get("umsatz")
+    if revenue is None:
+        revenue = staff_revenue(item["werte"], content)
+    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro(item["gehalt"]),
+                                                     _whole_euro(revenue))
+
+
+def training_text(state, item):
+    """Zeile zur laufenden Weiterbildung (oder leer)."""
+    training = item.get("weiterbildung")
+    if not training:
+        return ""
+    left = training["bis_tag"] - state.day
+    return "In Weiterbildung (%s, +%d) · noch %s" % (
+        CATEGORY_SHORT[CAT_NAME[training["cat"]]], training["plus"],
+        "1 Arbeitstag" if left == 1 else "%d Arbeitstage" % left)
+
+
+def firm_rules(content=None):
+    return (content or GAME)["firma"]
+
+
+def staff_salary(values, content=None):
+    rule = firm_rules(content)["gehalt"]
+    return int(round(rule["basis"] + rule["je_punkt"] * sum(values.values())))
+
+
+def staff_revenue(values, content=None):
+    rule = firm_rules(content)["umsatz"]
+    return int(round(rule["basis"] + rule["je_punkt"] * sum(values.values())))
+
+
+def staff_focus(values):
+    """Fachbereich mit dem hoechsten Wert (bei Gleichstand der erste)."""
+    return max(CAT_ORDER, key=lambda key: (values.get(key, 0), -CAT_ORDER.index(key)))
+
+
+def staff_role(values):
+    return "Schwerpunkt %s" % CATEGORY_SHORT[CAT_NAME[staff_focus(values)]]
+
+
+def _pick(options, seed, batch, salt):
+    return options[int(_dice(seed, batch, salt) * len(options))]
+
+
+def _applicant(rules, seed, batch, number, content):
+    """Ein generischer Bewerber (fest aus seed, Runde und Nummer)."""
+    salt = "b%d-%d" % (batch, number)
+    low, high = rules["bewerbung"]["werte_min"], rules["bewerbung"]["werte_max"]
+    values = {}
+    for key in CAT_ORDER:
+        raw = low + _dice(seed, batch, salt + key) * (high - low)
+        values[key] = int(round(raw / 5.0) * 5)
+    focus = _pick(CAT_ORDER, seed, batch, salt + "schwerpunkt")
+    values[focus] = min(90, values[focus] + rules["bewerbung"]["schwerpunkt_plus"])
+    names = rules["namen"]
+    look = {part: _pick([key for key, _name in options], seed, batch, salt + part)
+            for part, options in APPEARANCE.items() if part != "kreis"}
+    look["kreis"] = "violett"
+    return {"id": "bw%d-%d" % (batch, number),
+            "name": "%s %s" % (_pick(names["vornamen"], seed, batch, salt + "vor"),
+                               _pick(names["nachnamen"], seed, batch, salt + "nach")),
+            "aussehen": normalize_appearance(look), "werte": values,
+            "gehalt": staff_salary(values, content), "herkunft": "bewerbung",
+            "schwerpunkt": staff_focus(values),
+            "macke": _pick(rules["macken"], seed, batch, salt + "macke"),
+            "rolle": staff_role(values)}
+
+
+def switchers(state, content=None):
+    """Bitweiche-Kollegen, die sich gerade bei dir bewerben:
+    [(wechsel-eintrag, erster tag, letzter tag)]."""
+    content = content or GAME
+    if not state.firm:
+        return []
+    start = state.firm["tag"]
+    result = []
+    for item in firm_rules(content).get("wechsel", []):
+        first = start + item["nach_tagen"]
+        last = first + item.get("offen_tage", 10) - 1
+        result.append((item, first, last))
+    return result
+
+
+def applicants(state, content=None):
+    """Bewerbungen, die heute vorliegen - generische Bewerber der laufenden
+    Runde und wechselwillige Bitweiche-Kollegen. Schon Eingestellte fehlen."""
+    content = content or GAME
+    if not state.firm:
+        return []
+    rules = firm_rules(content)
+    step = rules["bewerbung"]["abstand_tage"]
+    start = state.firm["tag"]
+    batch = max(0, state.day - start) // step
+    seed = "%s|%s" % (state.firm["name"], start)
+    result = []
+    for item, first, last in switchers(state, content):
+        staff_id = STAFF_PREFIX + item["kollege"]
+        person = colleague(item["kollege"], content)
+        if person is None or staff_id in state.ever_hired or not first <= state.day <= last:
+            continue
+        values = dict(item["werte"])
+        result.append({"id": staff_id, "name": person["name"],
+                       "aussehen": normalize_appearance(person.get("aussehen")),
+                       "werte": values, "gehalt": staff_salary(values, content),
+                       "herkunft": "bitweiche", "schwerpunkt": staff_focus(values),
+                       "macke": person.get("macke", ""),
+                       "rolle": "bisher %s bei Bitweiche" % person["rolle"],
+                       "bis_tag": last})
+    for number in range(rules["bewerbung"]["anzahl"]):
+        item = _applicant(rules, seed, batch, number, content)
+        if item["id"] in state.ever_hired:
+            continue
+        item["bis_tag"] = start + (batch + 1) * step - 1
+        result.append(item)
+    return result
+
+
+def switch_news(state, content=None):
+    """Story-Moment am Morgen: Ein Bitweiche-Kollege will wechseln."""
+    texts = []
+    for item, first, _last in switchers(state, content):
+        if first == state.day and STAFF_PREFIX + item["kollege"] not in state.ever_hired:
+            texts.append(_lines(item["text"]))
+    return "\n\n".join(texts)
+
+
+def training_offer(state, staff_id, cat, content=None):
+    """Was eine Weiterbildung kostet und bringt: {"preis", "tage", "plus",
+    "problem" (leer = moeglich)}."""
+    rules = firm_rules(content)["weiterbildung"]
+    done = len(state.trainings_of(staff_id))
+    result = {"preis": int(rules["preis"] + rules["aufschlag"] * done),
+              "tage": int(rules["tage"]), "plus": 0, "problem": ""}
+    if staff_id not in state.staff:
+        result["problem"] = "Diese Person arbeitet nicht bei dir."
+        return result
+    if cat not in CAT_ORDER:
+        result["problem"] = "Unbekannter Fachbereich."
+        return result
+    value = state.staff_values(staff_id, pending=True).get(cat, 0)
+    result["plus"] = max(0, min(int(rules["plus"]), int(rules["max"]) - value))
+    if state.training_of(staff_id):
+        result["problem"] = "Die Person ist gerade schon in einer Weiterbildung."
+    elif not result["plus"]:
+        result["problem"] = "In diesem Fachbereich ist das Maximum (%d) erreicht." % rules["max"]
+    elif state.money < result["preis"]:
+        result["problem"] = "Dafür reicht dein Geld noch nicht (%s fehlen)." % _whole_euro(
+            result["preis"] - max(0, state.money))
+    return result
+
+
+def firm_people(state, content=None):
+    """Die Mitarbeiter als Personen im eigenen Gebaeude (wie die Kollegen)."""
+    result = []
+    for item in state.staff_list():
+        if not item.get("platz"):
+            continue
+        x, y, room_id = item["platz"]
+        training = item.get("weiterbildung")
+        result.append({"id": item["id"], "name": item["name"], "rolle": item["rolle"],
+                       "raum": room_id, "platz": [float(x), float(y)],
+                       "aussehen": item.get("aussehen"), "macke": item.get("macke", ""),
+                       "mitarbeiter": True, "umsatz": item["umsatz"],
+                       "in_weiterbildung": bool(training)})
+    return result
+
+
+def firm_building(state, content=None):
+    return state.firm_stage()["gebaeude"]
+
+
+def founding_text(content=None):
+    rules = firm_rules(content)["gruendung"]
+    text = _lines(rules["text"])
+    return text.replace("%s", _whole_euro(rules["kosten"]))
+
+
+def founded_text(name, content=None):
+    return _lines(firm_rules(content)["gruendung"]["gegruendet"]).replace("%s", name)
+
+
+def default_firm_name(state):
+    name = (state.profile or {}).get("name", "").strip()
+    return ("%s IT-Service" % name.split()[0]) if name else "IT-Service"
+
+
+def finance_days(state, count=7):
+    """Die letzten Arbeitstage im Kassenbuch (neuester zuerst):
+    [{"tag", "ein" {art: euro}, "aus" {art: euro}, "einnahmen", "ausgaben",
+    "gewinn"}] - der laufende Tag ist dabei, sobald etwas gebucht ist."""
+    result = []
+    for day in sorted(state.book, reverse=True)[:count]:
+        entry = state.book[day]
+        income = sum(entry["ein"].values())
+        costs = sum(entry["aus"].values())
+        result.append({"tag": day, "ein": dict(entry["ein"]), "aus": dict(entry["aus"]),
+                       "einnahmen": income, "ausgaben": costs, "gewinn": income - costs})
+    return result
+
+
+def finance_totals(state):
+    """Summen ueber das ganze Spiel je Art: ({art: ein}, {art: aus})."""
+    income, costs = {}, {}
+    for entry in state.book.values():
+        for kind, value in entry["ein"].items():
+            income[kind] = income.get(kind, 0) + value
+        for kind, value in entry["aus"].items():
+            costs[kind] = costs.get(kind, 0) + value
+    return income, costs
+
+
+def balance_series(state, limit=30):
+    """Kontostand nach den letzten Feierabenden: (beschriftungen, werte)."""
+    points = state.balances[-limit:] + [(state.day, state.money)]
+    return ["T%d" % day for day, _money in points], [max(0, money) for _day, money in points]
+
+
+def firm_summary(state):
+    """Eine Zeile zur Firma (Uebersicht auf PC und Handy)."""
+    numbers = state.firm_day()
+    profit = numbers["umsatz"] - numbers["gehaelter"] - numbers["nebenkosten"]
+    return "%d von %d Plätzen besetzt · heute %s%s" % (
+        len(state.staff), state.capacity, "+" if profit >= 0 else "-",
+        _whole_euro(abs(profit)))
+
+
+def firm_day_text(numbers):
+    """ "Umsatz: +300 €. Gehälter: -180 €. Nebenkosten: -40 €." """
+    return "Umsatz Mitarbeiter: +%s. Gehälter: -%s. Nebenkosten: -%s." % (
+        _whole_euro(numbers.get("umsatz", 0)), _whole_euro(numbers.get("gehaelter", 0)),
+        _whole_euro(numbers.get("nebenkosten", 0)))
+
+
+def _validate_firm(content):
+    """firma.json: Gebaeudestufen mit Arbeitsplaetzen, Formeln, Wechsel."""
+    problems = []
+    rules = content.get("firma") or {}
+    if not rules:
+        return ["Spiel: firma.json fehlt"]
+    for key in ("gruendung", "gebaeude", "bewerbung", "gehalt", "umsatz", "weiterbildung",
+                "namen", "macken"):
+        if key not in rules:
+            problems.append("Spiel-Firma: Abschnitt '%s' fehlt" % key)
+    if problems:
+        return problems
+    stages = rules["gebaeude"].get("stufen") or []
+    if not stages:
+        problems.append("Spiel-Firma: keine Gebaeudestufen")
+    capacity = 0
+    for number, stage in enumerate(stages, 1):
+        where = "Spiel-Firma Stufe %d" % number
+        if stage.get("stufe") != number:
+            problems.append("%s: falsche Nummer" % where)
+        if number == 1 and stage.get("preis", 0):
+            problems.append("%s: die Startstufe kostet nichts extra" % where)
+        places = stage.get("plaetze") or []
+        if len(places) <= capacity:
+            problems.append("%s: bringt keine zusaetzlichen Arbeitsplaetze" % where)
+        capacity = len(places)
+        people = [{"id": "platz%d" % index, "raum": room_id, "platz": [x, y]}
+                  for index, (x, y, room_id) in enumerate(places)]
+        problems += _validate_building(stage["gebaeude"], where, people)
+        free = _base_grid(stage["gebaeude"])
+        for x, y, _room in places:
+            if _cell(x, y) not in free:
+                problems.append("%s: Arbeitsplatz %.1f/%.1f ist verstellt" % (where, x, y))
+    for key in ("vornamen", "nachnamen"):
+        if len(rules["namen"].get(key) or []) < 5:
+            problems.append("Spiel-Firma: zu wenige %s" % key)
+    rule = rules["bewerbung"]
+    if not 0 <= rule["werte_min"] <= rule["werte_max"] <= 90:
+        problems.append("Spiel-Firma: Wertebereich der Bewerber ungueltig")
+    ids = {person["id"] for person in content["kollegen"]}
+    for item in rules.get("wechsel", []):
+        if item.get("kollege") not in ids:
+            problems.append("Spiel-Firma: Wechsel von unbekannter Person '%s'"
+                            % item.get("kollege"))
+        if set(item.get("werte", {})) != set(CAT_ORDER):
+            problems.append("Spiel-Firma: Wechsel %s braucht Werte fuer alle Fachbereiche"
+                            % item.get("kollege"))
+    return problems
 
 
 # ============================================================================
@@ -4647,6 +5221,11 @@ def office_message(position, person, quests, content=None, state=None):
             return ("%s hat einen Auftrag für dich" % first,
                     "„%s“ · Priorität %s%s" % (tasks[0]["titel"], tasks[0]["prioritaet"],
                                                more))
+        if person.get("mitarbeiter"):
+            return ("%s · %s" % (person["name"], person["rolle"]),
+                    "In der Weiterbildung, heute kein Umsatz." if person.get("in_weiterbildung")
+                    else "Kümmert sich um Routineaufträge: %s Umsatz pro Arbeitstag. %s"
+                    % (_whole_euro(person.get("umsatz", 0)), person.get("macke", "")))
         if person.get("lagerist") and state is not None:
             return ("%s · %s" % (person["name"], person["rolle"]),
                     "Gerade nichts für dich. " + warehouse_summary(state, content))
@@ -4659,6 +5238,9 @@ def office_message(position, person, quests, content=None, state=None):
         hint = "%d Auftrag wartet." % waiting if waiting == 1 else \
             "%d Aufträge warten." % waiting
         return (where, hint + " Wer einen hat, trägt ein grünes „!“.")
+    if state is not None and state.firm:
+        return (where, "Deine Leute kümmern sich um die Routineaufträge. Feierabend "
+                       "machst du an der Eingangstür.")
     return (where, "Heute wartet kein Auftrag mehr.")
 
 
@@ -4737,9 +5319,11 @@ def place_label(place, places):
     return place.get("kurz", place["name"]) if len(places) > 2 else place["name"]
 
 
-def site_name(site_id, content=None):
+def site_name(site_id, content=None, state=None):
     content = content or GAME
     if site_id == SITE_OFFICE:
+        if state is not None and state.firm:
+            return state.firm["name"]
         return content["gebaeude"]["firma"]
     if site_id == SITE_HOME:
         return "Zuhause"
@@ -4800,6 +5384,8 @@ def people_at_site(site_id, state=None, content=None):
     Auftrag mit "stelle" hat, wartet dort (z.B. Petra neben dem kaputten
     Automaten oder Ulla im Technikraum des neuen Bahnhofs)."""
     content = content or GAME
+    if site_id == SITE_OFFICE and state is not None and state.firm:
+        return firm_people(state, content)
     day = state.day if state is not None else None
     waiting = {}
     if state is not None:
@@ -4822,7 +5408,9 @@ def site_content(site_id, state=None, content=None):
     content = content or GAME
     if site_id == SITE_HOME:
         return home_content(state, content)
-    if site_id == SITE_OFFICE:
+    if site_id == SITE_OFFICE and state is not None and state.firm:
+        base = firm_building(state, content)
+    elif site_id == SITE_OFFICE:
         base = content["gebaeude"]
     else:
         place = customer_place(site_id, content)
@@ -5237,7 +5825,10 @@ def rent_text(state):
 
 def day_end_money_text(payload):
     """ "Gehalt: +190 €." bzw. "Gehalt: +190 €. Miete: -140 €." """
-    text = "Gehalt: +%s." % _whole_euro(payload.get("gehalt", 0))
+    if payload.get("firma"):
+        text = firm_day_text(payload["firma"])
+    else:
+        text = "Gehalt: +%s." % _whole_euro(payload.get("gehalt", 0))
     if payload.get("miete"):
         text += " Miete: -%s." % _whole_euro(payload["miete"])
     return text
@@ -5255,9 +5846,14 @@ def moves_available(state, content=None):
 #  Story, Reaktionen
 # ----------------------------------------------------------------------------
 
-def morning_text(day, content=None):
-    """Szene zum Start eines Arbeitstags (oder leerer Text)."""
-    return ((content or GAME)["story"].get("tage") or {}).get(str(day), "")
+def morning_text(day, content=None, state=None):
+    """Szene zum Start eines Arbeitstags (oder leerer Text). Mit state kommen
+    die Story-Momente der eigenen Firma dazu (Kollegen, die wechseln wollen)."""
+    text = ((content or GAME)["story"].get("tage") or {}).get(str(day), "")
+    if state is not None and state.firm:
+        news = switch_news(state, content)
+        text = "\n\n".join(part for part in (text, news) if part)
+    return text
 
 
 def day_end_text(day, content=None):

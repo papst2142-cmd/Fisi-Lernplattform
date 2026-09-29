@@ -20,7 +20,7 @@ import fisi_game as fg
 from fisi_core import CATEGORY_SHORT
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 from fisi_widgets import (
-    Card, GradientBar, NeoButton, OptionList, ScrollArea, F,
+    Card, GradientBar, LineChart, NeoButton, OptionList, ScrollArea, F,
     make_label, px, tk_font,
 )
 
@@ -1487,7 +1487,7 @@ class GameView(ScrollArea):
         """Von zu Hause (oder vom Kunden) ins Buero - morgens mit der Szene
         des Tages, falls es eine gibt."""
         state = self.game.state
-        scene = fg.morning_text(state.day)
+        scene = fg.morning_text(state.day, state=state)
         self.positions.pop(fg.SITE_OFFICE, None)
         if scene:
             self.notices[fg.SITE_OFFICE] = ("Arbeitstag %d" % state.day, scene)
@@ -1602,26 +1602,38 @@ class GameView(ScrollArea):
         info.pack(side="left", fill="x", expand=True)
         make_label(info, state.profile["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
-        make_label(info, "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]),
-                   font=F["body_bold"], fg=C["accent"], anchor="w").pack(anchor="w", pady=(2, 0))
-        hint = fg.rank_hint(state)
+        job = ("Geschäftsführung · %s" % state.firm["name"] if state.firm else
+               "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
+        make_label(info, job, font=F["body_bold"], fg=C["accent"], anchor="w").pack(
+            anchor="w", pady=(2, 0))
+        hint = "" if state.firm else fg.rank_hint(state)
         if hint:
             make_label(info, hint, font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w")
         money = "Kontostand: %s   ·   Gehalt: %s pro Arbeitstag" % (
             _euro(state.money), _euro(state.salary))
+        if state.firm:
+            money = "Kontostand: %s   ·   %s" % (_euro(state.money), fg.firm_summary(state))
         if state.rent:
             money += "   ·   Miete: %s pro Arbeitstag" % _euro(state.rent)
         make_label(info, money,
                    font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w", pady=(8, 0))
         goal = fg.GAME["balancing"]["gruendung"]
-        bar = GradientBar(info, "Weg zum eigenen Unternehmen", C["green"], C["accent"],
-                          parent_bg=C["card"])
-        bar.pack(fill="x", pady=(8, 0))
-        bar.set(state.founding_progress() * 100,
-                "Ziel: %s und %d %% Ansehen" % (_euro(goal["startkapital"]),
-                                                goal["mindest_reputation"]))
-        NeoButton(profile.body, "Figur bearbeiten", self._edit_profile, kind="ghost",
-                  height=32, font=F["small_bold"]).pack(anchor="w", pady=(12, 0))
+        if not state.firm:
+            bar = GradientBar(info, "Weg zum eigenen Unternehmen", C["green"], C["accent"],
+                              parent_bg=C["card"])
+            bar.pack(fill="x", pady=(8, 0))
+            bar.set(state.founding_progress() * 100,
+                    "Ziel: %s und %d %% Ansehen" % (_euro(goal["startkapital"]),
+                                                    goal["mindest_reputation"]))
+        buttons = _frame(profile.body)
+        buttons.pack(anchor="w", pady=(12, 0))
+        NeoButton(buttons, "Figur bearbeiten", self._edit_profile, kind="ghost",
+                  height=32, font=F["small_bold"]).pack(side="left")
+        if state.firm or state.founding_ready():
+            NeoButton(buttons, "Firma öffnen" if state.firm else "Firma gründen",
+                      lambda: self.app.show_view("firma"),
+                      kind="ghost" if state.firm else "primary", height=32,
+                      font=F["small_bold"]).pack(side="left", padx=(10, 0))
 
         # Reputation
         reputation = Card(top, title="Reputation", accent=C["purple"],
@@ -1647,7 +1659,7 @@ class GameView(ScrollArea):
         places = _frame(plan.body)
         places.pack(anchor="w", pady=(10, 0))
         for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
-                           ("Zuhause öffnen", "zuhause")):
+                           ("Zuhause öffnen", "zuhause"), ("Firma öffnen", "firma")):
             NeoButton(places, label, lambda k=key: self.app.show_view(k), kind="ghost",
                       height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
         away = state.open_count_by_site()
@@ -1688,7 +1700,7 @@ class GameView(ScrollArea):
         card.pack(fill="x", pady=(14, 0))
         body = card.body
 
-        scene = fg.morning_text(state.day)
+        scene = fg.morning_text(state.day, state=state)
         if scene and not item:
             box = ctk.CTkFrame(body, fg_color=mix(C["card"], C["purple"], 0.1),
                                corner_radius=12, border_width=1,
@@ -1720,12 +1732,19 @@ class GameView(ScrollArea):
         if not tickets:
             waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if item else
+                    fg.FIRM_IDLE_TEXT if state.firm else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
                     "Heute stehen keine Tickets an. %s auf eine Lieferung."
                     % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
                     if waiting else "Heute stehen keine Tickets an.")
             make_label(body, text, font=F["body"], fg=C["text_soft"], wraplength=980,
                        justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
+            if not item and state.founding_ready():
+                make_label(body, fg.FOUNDING_TEASER, font=F["body_bold"], fg=C["green"],
+                           wraplength=980, justify="left", anchor="w").pack(anchor="w",
+                                                                            pady=(8, 0))
+                NeoButton(body, "Firma gründen", lambda: self.app.show_view("firma"),
+                          kind="primary").pack(anchor="w", pady=(8, 0))
 
         for task, status in tickets:
             self._ticket_row(body, task, status)
@@ -2497,6 +2516,369 @@ class HomeView(SiteView):
         if price:
             make_label(row, price, font=F["small"], fg=C["text_dim"]).pack(side="right",
                                                                            padx=4)
+
+
+class FirmView(ScrollArea):
+    """Unterpunkt "Firma" (ab 0.33): Gruendung, Mitarbeiter, Bewerbungen,
+    Gebaeude und Finanzen. Vor der Gruendung nur die Finanzen und was fuer
+    die Gruendung noch fehlt."""
+
+    KEY = "firma"
+
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=C["bg"])
+        self.app = app
+        self.content = _frame(self.inner)
+        self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
+        self.tab = "mitarbeiter"
+        self.training_for = None     # Mitarbeiter, fuer den gerade ein Fach gewaehlt wird
+        self.name_entry = None
+
+    @property
+    def game(self):
+        return self.app.views["game"].game
+
+    def on_show(self):
+        self.game.reload()
+        self.render()
+
+    def refresh(self):
+        self.on_show()
+
+    def render(self, keep_scroll=False):
+        for child in self.content.winfo_children():
+            child.destroy()
+        state = self.game.state
+        if state.profile is None:
+            card = Card(self.content, title="Firma", accent=C["accent"])
+            card.pack(fill="x")
+            make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
+                       font=F["body"], fg=C["text_soft"]).pack(anchor="w")
+            NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
+                      kind="primary").pack(anchor="w", pady=(12, 0))
+            return
+        if state.firm:
+            self._build_head(state)
+        else:
+            self._build_founding(state)
+        tabs = fg.firm_tabs(state)
+        if self.tab not in dict(tabs):
+            self.tab = tabs[0][0]
+        if len(tabs) > 1:
+            ChoiceRow(self.content, tabs, self.tab, self._choose).pack(anchor="w",
+                                                                       pady=(14, 0))
+        getattr(self, "_build_" + self.tab)(state)
+        if not keep_scroll:
+            self.to_top()
+
+    def _choose(self, tab):
+        self.tab = tab
+        self.training_for = None
+        self.render()
+
+    def _error(self, exc):
+        messagebox.showinfo("Hinweis", str(exc))
+
+    def _changed(self):
+        self.app.notify_progress()
+        self.render(keep_scroll=True)
+
+    # -- Kopf und Gruendung ---------------------------------------------------
+
+    def _build_head(self, state):
+        card = Card(self.content, title="Eigene Firma", accent=C["green"],
+                    subtitle="gegründet an Arbeitstag %d" % state.firm["tag"])
+        card.pack(fill="x")
+        make_label(card.body, state.firm["name"], font=F["h1"], fg=C["text"],
+                   anchor="w").pack(anchor="w")
+        stage = state.firm_stage()
+        make_label(card.body, "%s · %s" % (fg.firm_rules()["gebaeude"]["name"], stage["name"]),
+                   font=F["body_bold"], fg=C["green"], anchor="w").pack(anchor="w",
+                                                                        pady=(2, 0))
+        make_label(card.body, "Kontostand: %s   ·   %s" % (_euro(state.money),
+                                                         fg.firm_summary(state)),
+                   font=F["small"], fg=C["text_dim"] if state.money >= 0 else C["red"],
+                   anchor="w").pack(anchor="w", pady=(8, 0))
+
+    def _build_founding(self, state):
+        goal = fg.GAME["balancing"]["gruendung"]
+        card = Card(self.content, title="Eigenes Unternehmen", accent=C["green"],
+                    subtitle="Ziel: %s, %d %% Ansehen, alle Aufträge erledigt"
+                    % (_euro(goal["startkapital"]), goal["mindest_reputation"]))
+        card.pack(fill="x")
+        missing = state.founding_missing()
+        if missing:
+            bar = GradientBar(card.body, "Weg zum eigenen Unternehmen", C["green"],
+                              C["accent"], parent_bg=C["card"])
+            bar.pack(fill="x")
+            bar.set(state.founding_progress() * 100, "%d %%" % round(
+                state.founding_progress() * 100))
+            make_label(card.body, "Noch nicht so weit: %s." % ", ".join(missing),
+                       font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
+                       anchor="w").pack(anchor="w", pady=(10, 0))
+            make_label(card.body, "Sobald alles erfüllt ist, kannst du hier als Konkurrenz "
+                       "zu Bitweiche deine eigene Firma gründen.", font=F["small"],
+                       fg=C["muted"], wraplength=980, justify="left",
+                       anchor="w").pack(anchor="w", pady=(4, 0))
+            return
+        make_label(card.body, fg.founding_text(), font=F["body"], fg=C["text_soft"],
+                   wraplength=980, justify="left", anchor="w").pack(anchor="w")
+        make_label(card.body, "FIRMENNAME", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(14, 0))
+        entry = ctk.CTkEntry(card.body, width=360, height=38, corner_radius=10,
+                             border_width=1, fg_color=C["card_alt"],
+                             border_color=C["border"], text_color=C["text_soft"],
+                             font=F["body"], placeholder_text="Wie heißt deine Firma?",
+                             placeholder_text_color=C["muted"])
+        entry.pack(anchor="w", pady=(6, 12))
+        entry.insert(0, fg.default_firm_name(state))
+        self.name_entry = entry
+        NeoButton(card.body, "Firma gründen", lambda: self._found(entry.get()),
+                  kind="primary").pack(anchor="w")
+
+    def _found(self, name):
+        cost = fg.firm_rules()["gruendung"]["kosten"]
+        if not messagebox.askyesno("Firma gründen", "„%s“ für %s gründen? Danach arbeitest "
+                                   "du nicht mehr bei Bitweiche." % (name.strip(),
+                                                                     _euro(cost))):
+            return
+        try:
+            payload = self.game.found_firm(name)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        game_view = self.app.views["game"]
+        game_view.positions.pop(fg.SITE_OFFICE, None)
+        game_view.notices[fg.SITE_OFFICE] = ("Willkommen in deiner Firma",
+                                             fg.founded_text(payload["name"]))
+        self.tab = "bewerbungen"
+        self._changed()
+
+    # -- Mitarbeiter ------------------------------------------------------------
+
+    def _person_row(self, parent, item, state, applicant=False):
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        row.pack(fill="x", pady=5)
+        avatar = AvatarCanvas(row, size=72, bg=C["card_alt"])
+        avatar.pack(side="left", padx=(12, 14), pady=10, anchor="n")
+        avatar.show(item["aussehen"])
+        # Knoepfe zuerst packen, damit sie neben breitem Text sichtbar bleiben
+        buttons = _frame(row)
+        buttons.pack(side="right", padx=12, pady=10, anchor="n")
+        text = _frame(row)
+        text.pack(side="left", fill="x", expand=True, pady=10)
+        make_label(text, item["name"], font=F["body_bold"], fg=C["text"], anchor="w").pack(
+            anchor="w")
+        role = item["rolle"]
+        if item.get("herkunft") == "bitweiche" and "Bitweiche" not in role:
+            role += " · früher bei Bitweiche"
+        make_label(text, role, font=F["small"], fg=C["pink"] if item.get("herkunft") ==
+                   "bitweiche" else C["accent"], anchor="w").pack(anchor="w")
+        make_label(text, fg.values_text(item["werte"]), font=F["small"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w", pady=(4, 0))
+        make_label(text, fg.staff_money_text(item), font=F["small"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w")
+        extra = fg.training_text(state, item) if not applicant else \
+            "Bewerbung liegt vor bis Arbeitstag %d" % item["bis_tag"]
+        if extra:
+            make_label(text, extra, font=F["small"], fg=C["yellow"] if not applicant else
+                       C["muted"], anchor="w").pack(anchor="w")
+        if item.get("macke"):
+            make_label(text, item["macke"], font=F["tiny"], fg=C["muted"], wraplength=640,
+                       justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+        return text, buttons
+
+    def _build_mitarbeiter(self, state):
+        staff = state.staff_list()
+        card = Card(self.content, title="Mitarbeiter", accent=C["accent"],
+                    subtitle="%d von %d Plätzen besetzt" % (len(staff), state.capacity))
+        card.pack(fill="x", pady=(14, 0))
+        if not staff:
+            make_label(card.body, "Noch arbeitest du allein. Unter „Bewerbungen“ findest du "
+                       "Leute für deine Firma.", font=F["body"], fg=C["text_soft"],
+                       anchor="w").pack(anchor="w")
+            return
+        numbers = state.firm_day()
+        make_label(card.body, "Heute: %s" % fg.firm_day_text(numbers), font=F["small"],
+                   fg=C["text_dim"], anchor="w").pack(anchor="w", pady=(0, 6))
+        for item in staff:
+            text, buttons = self._person_row(card.body, item, state)
+            NeoButton(buttons, "Weiterbilden", lambda i=item["id"]: self._pick_training(i),
+                      kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
+            NeoButton(buttons, "Entlassen", lambda i=item: self._fire(i), kind="ghost",
+                      height=30, font=F["small_bold"]).pack()
+            if self.training_for == item["id"]:
+                self._training_choice(text, state, item)
+
+    def _training_choice(self, parent, state, item):
+        box = _frame(parent)
+        box.pack(anchor="w", pady=(8, 0))
+        make_label(box, "Weiterbildung in welchem Fachbereich?", font=F["small_bold"],
+                   fg=C["text"], anchor="w").pack(anchor="w")
+        row = _frame(box)
+        row.pack(anchor="w", pady=(4, 0))
+        for key in fg.CAT_ORDER:
+            offer = fg.training_offer(state, item["id"], key)
+            button = NeoButton(row, "%s (%s)" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
+                                                 _euro(offer["preis"])),
+                               lambda k=key: self._train(item["id"], k), kind="pill",
+                               height=30, font=F["small_bold"])
+            button.pack(side="left", padx=(0, 6))
+            button.set_enabled(not offer["problem"])
+        rules = fg.firm_rules()["weiterbildung"]
+        make_label(box, "+%d im Fachbereich (höchstens %d), dauert %d Arbeitstage ohne "
+                   "Umsatz." % (rules["plus"], rules["max"], rules["tage"]),
+                   font=F["tiny"], fg=C["muted"], anchor="w").pack(anchor="w", pady=(4, 0))
+        problem = next((fg.training_offer(state, item["id"], key)["problem"]
+                        for key in fg.CAT_ORDER), "")
+        if problem and all(fg.training_offer(state, item["id"], key)["problem"]
+                           for key in fg.CAT_ORDER):
+            make_label(box, problem, font=F["tiny"], fg=C["yellow"], anchor="w").pack(
+                anchor="w")
+
+    def _pick_training(self, staff_id):
+        self.training_for = None if self.training_for == staff_id else staff_id
+        self.render(keep_scroll=True)
+
+    def _train(self, staff_id, cat):
+        try:
+            self.game.train(staff_id, cat)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self.training_for = None
+        self._changed()
+
+    def _fire(self, item):
+        if not messagebox.askyesno("Entlassen", "%s wirklich entlassen? Die Person bewirbt "
+                                   "sich danach nicht erneut." % item["name"]):
+            return
+        try:
+            self.game.fire(item["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    # -- Bewerbungen ------------------------------------------------------------
+
+    def _build_bewerbungen(self, state):
+        found = fg.applicants(state)
+        free = state.capacity - len(state.staff)
+        rules = fg.firm_rules()["bewerbung"]
+        card = Card(self.content, title="Bewerbungen", accent=C["pink"],
+                    subtitle="alle %d Arbeitstage neue Bewerbungen" % rules["abstand_tage"])
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, "Freie Plätze: %d von %d. Gehalt und Umsatz richten sich nach "
+                   "den Werten je Fachbereich." % (max(0, free), state.capacity),
+                   font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                       pady=(0, 6))
+        if not found:
+            make_label(card.body, "Gerade liegen keine Bewerbungen vor.", font=F["body"],
+                       fg=C["text_soft"], anchor="w").pack(anchor="w")
+        for item in found:
+            _text, buttons = self._person_row(card.body, item, state, applicant=True)
+            button = NeoButton(buttons, "Einstellen", lambda i=item["id"]: self._hire(i),
+                               kind="primary", height=32, font=F["small_bold"])
+            button.pack()
+            button.set_enabled(free > 0)
+
+    def _hire(self, applicant_id):
+        try:
+            self.game.hire(applicant_id)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    # -- Gebaeude ---------------------------------------------------------------
+
+    def _build_gebaeude(self, state):
+        stage = state.firm_stage()
+        rules = fg.firm_rules()["gebaeude"]
+        card = Card(self.content, title=rules["name"], accent=C["green"],
+                    subtitle="Stufe %d · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag"
+                    % (stage["stufe"], state.capacity, _euro(stage["nebenkosten"])))
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, "%s %s" % (rules["text"], stage["text"]), font=F["small"],
+                   fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+            anchor="w", pady=(0, 8))
+        plan = FloorPlan(card.body, lambda _room: None, max_height=300)
+        plan.pack(fill="x")
+        plan.set_state(state)
+        NeoButton(card.body, "Büro öffnen", lambda: self.app.show_view("buero"), kind="ghost",
+                  height=32, font=F["small_bold"]).pack(anchor="w", pady=(10, 0))
+        following = state.next_stage()
+        more = Card(self.content, title="Ausbau", accent=C["accent"])
+        more.pack(fill="x", pady=(14, 0))
+        if following is None:
+            make_label(more.body, "Mehr Ausbau gibt es in einem der nächsten Updates.",
+                       font=F["body"], fg=C["text_soft"], anchor="w").pack(anchor="w")
+            return
+        make_label(more.body, "%s: %s" % (following["name"], following["text"]),
+                   font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w")
+        make_label(more.body, "Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
+                   "Arbeitstag" % (_euro(following["preis"]), len(following["plaetze"]),
+                                   _euro(following["nebenkosten"])),
+                   font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                       pady=(4, 10))
+        button = NeoButton(more.body, "Ausbauen", lambda: self._expand(following),
+                           kind="primary")
+        button.pack(anchor="w")
+        button.set_enabled(state.money >= following["preis"])
+
+    def _expand(self, stage):
+        if not messagebox.askyesno("Ausbauen", "„%s“ für %s bauen?" % (
+                stage["name"], _euro(stage["preis"]))):
+            return
+        try:
+            self.game.expand()
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self.app.views["game"].positions.pop(fg.SITE_OFFICE, None)
+        self._changed()
+
+    # -- Finanzen ---------------------------------------------------------------
+
+    def _build_finanzen(self, state):
+        card = Card(self.content, title="Kontostand", accent=C["accent"],
+                    subtitle="nach den letzten Arbeitstagen")
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, _euro(state.money), font=F["h1"],
+                   fg=C["text"] if state.money >= 0 else C["red"], anchor="w").pack(anchor="w")
+        labels, values = fg.balance_series(state)
+        chart = LineChart(card.body, height=220, parent_bg=C["card"])
+        chart.pack(fill="x", pady=(8, 0))
+        chart.set_data(labels, [{"name": "Kontostand", "values": values,
+                                 "color": C["green"]}])
+
+        days = Card(self.content, title="Einnahmen und Ausgaben", accent=C["green"],
+                    subtitle="die letzten 7 Arbeitstage")
+        days.pack(fill="x", pady=(14, 0))
+        rows = fg.finance_days(state)
+        if not rows:
+            make_label(days.body, "Noch nichts gebucht.", font=F["body"],
+                       fg=C["text_soft"], anchor="w").pack(anchor="w")
+        for item in rows:
+            row = ctk.CTkFrame(days.body, fg_color=C["card_alt"], corner_radius=10,
+                               border_width=1, border_color=C["border"])
+            row.pack(fill="x", pady=3)
+            head = _frame(row)
+            head.pack(fill="x", padx=12, pady=(7, 0))
+            make_label(head, "Arbeitstag %d" % item["tag"], font=F["small_bold"],
+                       fg=C["text"]).pack(side="left")
+            make_label(head, "%s%s" % ("+" if item["gewinn"] >= 0 else "-",
+                                       _euro(abs(item["gewinn"]))), font=F["small_bold"],
+                       fg=C["green"] if item["gewinn"] >= 0 else C["red"]).pack(side="right")
+            detail = []
+            detail += ["%s +%s" % (kind, _euro(value)) for kind, value in item["ein"].items()]
+            detail += ["%s -%s" % (kind, _euro(value)) for kind, value in item["aus"].items()]
+            make_label(row, " · ".join(detail), font=F["tiny"], fg=C["text_dim"],
+                       wraplength=960, justify="left", anchor="w").pack(anchor="w", padx=12,
+                                                                        pady=(2, 7))
 
 
 def _euro(value):
