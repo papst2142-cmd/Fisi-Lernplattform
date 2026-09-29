@@ -582,5 +582,279 @@
       "Die 1-TB-SSD passt technisch, sprengt aber zusammen mit den anderen das Budget."
     ],
     "suchbegriffe": ["SATA", "NVMe", "M.2"]
+  },
+  {
+    "id": "rack-leitstelle",
+    "typ": "rack",
+    "titel": "Netzwerkschrank für die Leitstelle",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 30, "netzwerk": 20},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 6,
+    "ticket": [
+      "Ulla schiebt dir einen leeren 12-HE-Schrank hin: „Der kommt in die Leitstelle der Talbahn. Da darf nichts ausfallen, auch nicht bei einem Stromausfall.“",
+      "„Rein müssen die beiden Leitstellenrechner, ein Switch mit Patchpanel für die 20 Arbeitsplätze und eine USV. Zwei HE lassen wir für später frei. Das alte Ding aus dem Keller kommt da nicht rein, das frisst zu viel Strom.“"
+    ],
+    "frage": "Bestücke den Schrank: erst ein Gerät wählen, dann die Höheneinheit, in der es unten sitzen soll.",
+    "schrank": {"he": 12, "traglast": 150, "kuehlung": 1200},
+    "geraete": ["srv_1he", "srv_1he", "srv_4he", "sw_24", "pp_24", "usv_1000"],
+    "vorgaben": {"mindestens": {"server": 2, "switch": 1, "patchpanel": 1, "usv": 1},
+                 "ports_min": 20, "frei_min": 2},
+    "hilfe": [
+      "Ein Serverschrank wird in Höheneinheiten gezählt, 1 HE sind 44,45 mm. HE 1 ist ganz unten.",
+      "Die USV ist schwer und gehört ganz nach unten, damit der Schrank nicht kopflastig wird.",
+      "Das Patchpanel sitzt direkt über oder unter dem Switch. So bleiben die Patchkabel kurz und übersichtlich.",
+      "Strom: Die USV liefert 1000 W, davon 20 % Reserve, also dürfen die Geräte höchstens 800 W brauchen. Zwei Leitstellenrechner (je 280 W) und der Switch (45 W) brauchen 605 W. Der 4-HE-Altserver (650 W) würde die USV überlasten."
+    ],
+    "erklaerung": [
+      "Eine mögliche Belegung: USV in HE 1–2, darüber die beiden Server in HE 3 und 4, dann der Switch in HE 5 und das Patchpanel in HE 6. HE 7 bis 12 bleiben frei.",
+      "Schwere Geräte nach unten, Patchpanel neben den Switch und die USV-Leistung mit Reserve planen: Das sind die Grundregeln für jeden Serverschrank."
+    ],
+    "suchbegriffe": ["Höheneinheit", "USV", "Rack"]
+  },
+  {
+    "id": "ipplan-talbahn",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan für vier Talbahn-Netze",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 30},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 60, "reputation": 6},
+    "ab_tag": 6,
+    "ticket": [
+      "Ulla hat auf dem Whiteboard das Netz 192.168.40.0/24 eingekreist: „Die Talbahn will Leitstelle, Service-Center, Automaten und Verwaltung sauber trennen. Vier gleich große Netze, in genau dieser Reihenfolge.“",
+      "„Schreib mir pro Netz die Netzadresse und den Broadcast auf. Und sag mir, welches Präfix die Teilnetze haben und wie viele Geräte in jedes passen.“"
+    ],
+    "frage": "Fülle den IP-Plan aus.",
+    "daten": {
+      "netz": "192.168.40.0/24",
+      "teilnetze": [
+        {"name": "Leitstelle", "hosts": 50},
+        {"name": "Service-Center", "hosts": 40},
+        {"name": "Automaten", "hosts": 30},
+        {"name": "Verwaltung", "hosts": 20}
+      ],
+      "vlsm": false
+    },
+    "felder_global": ["praefix", "hosts"],
+    "felder": ["netz", "broadcast"],
+    "hilfe": [
+      "Vier gleich große Netze brauchen 2 zusätzliche Netzbits, denn 2² = 4. Aus /24 wird /26.",
+      "Ein /26-Netz hat 2⁶ = 64 Adressen. Netzadresse und Broadcast gehen ab, bleiben 62 nutzbare Hosts.",
+      "Die Netze liegen in 64er-Schritten: .0, .64, .128 und .192. Der Broadcast ist immer die letzte Adresse, also die nächste Netzadresse minus 1 (.63, .127, .191, .255).",
+      "Zum Nachrechnen passt der Subnetz-Rechner unter Praxis, zum Beispiel mit 192.168.40.64/26."
+    ],
+    "erklaerung": [
+      "Präfix /26, 62 Hosts je Netz. Leitstelle 192.168.40.0 bis .63, Service-Center .64 bis .127, Automaten .128 bis .191, Verwaltung .192 bis .255.",
+      "Getrennte Netze sind die Grundlage für Firewall-Regeln zwischen den Bereichen. So kommt zum Beispiel ein Fahrkartenautomat nicht direkt an die Leitstelle."
+    ],
+    "suchbegriffe": ["Subnetz", "Broadcast", "Netzadresse"]
+  },
+  {
+    "id": "raid-dateiserver-neu",
+    "typ": "formular",
+    "art": "raid",
+    "titel": "Kapazität für den neuen Dateiserver",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 30},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 50, "reputation": 5},
+    "ab_tag": 6,
+    "ticket": [
+      "Ulla hält eine Festplatte hoch: „Sechs Stück davon, je 4 TB, als RAID 6. Die Verwaltung fragt, wie viel Platz sie am Ende wirklich hat.“",
+      "„Rechne mir das bitte sauber vor, damit ich es weitergeben kann. Und wie viele Platten dürfen gleichzeitig kaputtgehen?“"
+    ],
+    "frage": "Berechne die Werte für das RAID.",
+    "daten": {"level": "RAID 6", "platten": 6, "groesse": 4, "einheit": "TB"},
+    "hilfe": [
+      "Bruttokapazität = Anzahl Platten × Größe einer Platte.",
+      "RAID 6 speichert zwei Paritätsblöcke verteilt über alle Platten. Dadurch geht die Kapazität von zwei Platten verloren: Nutzkapazität = (n − 2) × Größe.",
+      "Deshalb dürfen bei RAID 6 zwei beliebige Platten gleichzeitig ausfallen.",
+      "Zum Nachrechnen passt der RAID-Rechner unter Praxis."
+    ],
+    "erklaerung": [
+      "6 × 4 TB = 24 TB brutto. Nutzbar sind (6 − 2) × 4 TB = 16 TB, 8 TB gehen für die doppelte Parität drauf. Zwei Platten dürfen ausfallen.",
+      "Ein RAID ersetzt trotzdem kein Backup: Gegen versehentliches Löschen oder Ransomware hilft es nicht."
+    ],
+    "suchbegriffe": ["RAID 6", "Parität"]
+  },
+  {
+    "id": "rack-serverraum",
+    "typ": "rack",
+    "titel": "Serverschrank im Serverraum erweitern",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 7,
+    "ticket": [
+      "Ulla zeigt auf den leeren 24-HE-Schrank neben den anderen: „Hier kommen das neue Storage und die zwei Datenbankserver rein, dazu ein Switch mit Patchpanel.“",
+      "„Strom kommt von der großen USV im Raum, 2000 W. Die Klimaanlage schafft für diesen Schrank aber nur 1500 W Abwärme. Mehmet will unbedingt seinen PoE-Switch loswerden, aber ob der passt?“"
+    ],
+    "frage": "Bestücke den Schrank so, dass Strom, Kühlung und Gewicht passen.",
+    "schrank": {"he": 24, "traglast": 400, "kuehlung": 1500, "usv_watt": 2000},
+    "geraete": ["storage_2he", "srv_2he", "srv_2he", "srv_2he", "sw_48_poe", "sw_24", "pp_24"],
+    "vorgaben": {"mindestens": {"storage": 1, "server": 2, "switch": 1, "patchpanel": 1}},
+    "hilfe": [
+      "Die USV im Raum liefert 2000 W, mit 20 % Reserve bleiben 1600 W. Die Kühlung schafft 1500 W, das ist hier die engere Grenze.",
+      "Fast die ganze aufgenommene Leistung wird im Schrank zu Wärme. Deshalb gilt: Summe der Leistungen ≤ Kühlleistung.",
+      "Storage (400 W) und zwei Datenbankserver (je 450 W) brauchen schon 1300 W. Ein PoE-Switch braucht 370 W, weil er angeschlossene Geräte mit Strom versorgt.",
+      "Alle Geräte ab 20 kg gehören ins untere Drittel, bei 24 HE also mit Beginn bis HE 8."
+    ],
+    "erklaerung": [
+      "Richtig ist der 24-Port-Switch: 1300 W + 45 W = 1345 W, das schaffen Kühlung und USV. Mit dem PoE-Switch wären es 1670 W, ein dritter Server brächte 1795 W.",
+      "Storage und Server wiegen jeweils mehr als 20 kg und stehen deshalb unten, zum Beispiel in HE 1–2, 3–4 und 5–6. Darüber folgen Switch und Patchpanel direkt übereinander."
+    ],
+    "suchbegriffe": ["Kühlung", "USV", "Serverschrank"]
+  },
+  {
+    "id": "angebot-leitstelle",
+    "typ": "formular",
+    "art": "angebot",
+    "titel": "Angebot für die Leitstellen-Arbeitsplätze",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 35},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 60, "reputation": 6},
+    "ab_tag": 7,
+    "ticket": [
+      "Frank Heider rückt seine Lesebrille zurecht: „Die Talbahn will sechs Leitstellen-PCs von uns. Wir kaufen sie für 780 € das Stück ein.“",
+      "„Wir rechnen wie immer mit 20 % Handlungskosten und 10 % Gewinn, dazu 19 % Umsatzsteuer. Rechne mir das Angebot bitte Schritt für Schritt bis zum Bruttopreis durch. Auf den Cent, bitte.“"
+    ],
+    "frage": "Kalkuliere das Angebot.",
+    "daten": {"artikel": "Leitstellen-PC", "menge": 6, "einkaufspreis": 780,
+              "handlungskosten": 20, "gewinn": 10, "ust": 19},
+    "hilfe": [
+      "Einkaufspreis gesamt = Menge × Einzelpreis.",
+      "Handlungskosten sind ein Zuschlag auf den Einkaufspreis. Einkaufspreis + Handlungskosten = Selbstkosten.",
+      "Der Gewinn wird auf die Selbstkosten aufgeschlagen. Selbstkosten + Gewinn = Nettoverkaufspreis.",
+      "Die Umsatzsteuer wird auf den Nettopreis aufgeschlagen. Netto + Umsatzsteuer = Brutto. Auf zwei Nachkommastellen runden."
+    ],
+    "erklaerung": [
+      "6 × 780 € = 4.680 €, + 20 % Handlungskosten (936 €) = 5.616 € Selbstkosten, + 10 % Gewinn (561,60 €) = 6.177,60 € netto, + 19 % USt (1.173,74 €) = 7.351,34 € brutto.",
+      "Wichtig ist die Reihenfolge: Jeder Zuschlag bezieht sich auf das Ergebnis des vorigen Schritts, nicht auf den Einkaufspreis."
+    ],
+    "suchbegriffe": ["Handlungskosten", "Selbstkosten", "Zuschlagskalkulation"]
+  },
+  {
+    "id": "vlsm-talbahn",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan nach Gerätezahl (VLSM)",
+    "auftraggeber": "petra",
+    "raum": "kundenberatung",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 7},
+    "ab_tag": 7,
+    "ticket": [
+      "Petra Lindner von der Talbahn hat nur ein einziges Netz übrig: 10.20.0.0/24. „Für das neue Depot brauchen wir WLAN für 100 Geräte, die Leitstelle mit 50, die Automaten mit 20 und die Technik mit 10.“",
+      "„Gleich große Netze reichen da nicht. Vergib die Netze bitte der Größe nach, das größte zuerst und ohne Lücken. Pro Netz brauche ich Netzadresse, Präfix und Broadcast.“"
+    ],
+    "frage": "Fülle den IP-Plan mit variabler Subnetzmaske aus.",
+    "daten": {
+      "netz": "10.20.0.0/24",
+      "teilnetze": [
+        {"name": "WLAN", "hosts": 100},
+        {"name": "Leitstelle", "hosts": 50},
+        {"name": "Automaten", "hosts": 20},
+        {"name": "Technik", "hosts": 10}
+      ],
+      "vlsm": true
+    },
+    "felder": ["netz", "praefix", "broadcast"],
+    "hilfe": [
+      "Für jedes Netz die kleinste Blockgröße suchen, in die Geräte + 2 (Netzadresse und Broadcast) passen: 100 → 128 (/25), 50 → 64 (/26), 20 → 32 (/27), 10 → 16 (/28).",
+      "Dann lückenlos vergeben, das größte zuerst: Die nächste Netzadresse ist immer die vorige Netzadresse plus deren Blockgröße.",
+      "Der Broadcast ist die nächste Netzadresse minus 1.",
+      "Zum Nachrechnen passt der Subnetz-Rechner unter Praxis, zum Beispiel mit 10.20.0.128/26."
+    ],
+    "erklaerung": [
+      "WLAN 10.20.0.0/25 (Broadcast .127), Leitstelle 10.20.0.128/26 (.191), Automaten 10.20.0.192/27 (.223), Technik 10.20.0.224/28 (.239). 10.20.0.240 bis .255 bleiben als Reserve frei.",
+      "Mit VLSM wird der Adressraum passend zum Bedarf aufgeteilt. Gleich große Netze hätten hier nicht gereicht, denn vier /26-Netze haben nur je 62 Hosts."
+    ],
+    "suchbegriffe": ["VLSM", "Subnetzmaske", "Broadcast"]
+  },
+  {
+    "id": "rack-servicecenter",
+    "typ": "rack",
+    "titel": "Netzwerkschrank fürs Service-Center",
+    "auftraggeber": "petra",
+    "raum": "kundenberatung",
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 40, "systeme": 30},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 7},
+    "ab_tag": 8,
+    "ticket": [
+      "Petra schickt Fotos vom neuen Service-Center: „Im Technikraum hängt ein Wandschrank mit 12 HE. Der darf laut Hersteller höchstens 50 kg tragen, und der Lüfter schafft 600 W.“",
+      "„Wir haben 48 Arbeitsplätze, jede Dose braucht einen Port im Patchpanel und am Switch. Eine eigene USV muss rein, und zwei HE sollen frei bleiben. Im Lager liegt einiges, such dir das Passende aus.“"
+    ],
+    "frage": "Bestücke den Wandschrank für 48 Arbeitsplätze.",
+    "schrank": {"he": 12, "traglast": 50, "kuehlung": 600},
+    "geraete": ["sw_24", "sw_24", "sw_48_poe", "pp_24", "pp_24", "pp_48", "usv_3000", "usv_1000"],
+    "vorgaben": {"mindestens": {"usv": 1}, "ports_min": 48, "frei_min": 2},
+    "hilfe": [
+      "48 Arbeitsplätze brauchen 48 Ports am Switch und 48 Ports im Patchpanel. Das geht mit zwei 24er-Paaren oder mit einem 48er-Switch und einem 48er-Patchpanel.",
+      "Traglast: Die große USV wiegt allein 48 kg. Mit Switch und Patchpanel wären das mehr als 50 kg.",
+      "Der PoE-Switch braucht 370 W. Das schaffen der Lüfter (600 W) und die kleine USV (800 W nutzbar) gerade noch.",
+      "Jeder Switch braucht ein Patchpanel direkt darüber oder darunter, und jedes Patchpanel einen Switch."
+    ],
+    "erklaerung": [
+      "Eine Lösung: USV 1000 W in HE 1–2, darüber Patchpanel, Switch, Switch und Patchpanel (je 24 Ports). Das sind 30 kg und 90 W, 6 HE bleiben frei.",
+      "Ebenfalls richtig: USV 1000 W mit dem 48-Port-PoE-Switch und dem 48er-Patchpanel. Bei Wandschränken ist die Traglast oft die engste Grenze, deshalb bleibt die schwere 3000-W-USV im Lager."
+    ],
+    "suchbegriffe": ["Patchfeld", "Switch", "USV"]
+  },
+  {
+    "id": "leasing-server",
+    "typ": "formular",
+    "art": "leasing",
+    "titel": "Kauf oder Leasing für die neuen Server?",
+    "auftraggeber": "sabine",
+    "raum": "chefbuero",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 8,
+    "ticket": [
+      "Sabine Kranich legt zwei Angebote auf den Tisch: „Die zwei Datenbankserver kosten im Kauf 14.400 €. Der Leasinggeber will 1.000 € Sonderzahlung und dann 36 Monate lang 395 €.“",
+      "„Am Ende können wir sie für 720 € übernehmen, das machen wir sowieso. Was kostet uns das insgesamt, und was ist günstiger? Ich brauche das sofort, also bis zum Mittag.“"
+    ],
+    "frage": "Vergleiche die Gesamtkosten.",
+    "daten": {"kaufpreis": 14400, "rate": 395, "laufzeit": 36, "sonderzahlung": 1000,
+              "restwert": 720},
+    "hilfe": [
+      "Gesamtkosten Leasing = Sonderzahlung + Rate × Laufzeit + Übernahmepreis am Ende.",
+      "Gesamtkosten Kauf = Kaufpreis (hier ohne Finanzierungskosten).",
+      "Der Unterschied ist die Differenz der beiden Summen. Günstiger ist die kleinere Summe."
+    ],
+    "erklaerung": [
+      "Leasing: 1.000 € + 36 × 395 € + 720 € = 15.940 €. Kauf: 14.400 €. Der Kauf ist um 1.540 € günstiger.",
+      "Leasing kann sich trotzdem lohnen: Es schont die Liquidität, weil nicht alles auf einmal bezahlt wird, und die Raten sind planbar."
+    ],
+    "suchbegriffe": ["Leasing", "Liquidität"]
   }
 ]

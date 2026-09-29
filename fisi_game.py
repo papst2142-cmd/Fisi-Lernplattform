@@ -29,7 +29,7 @@ import math
 import os
 
 from fisi_core import (
-    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, search_content,
+    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, ipv4_values, raid_values, search_content,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 
@@ -50,7 +50,9 @@ AXES = [
 AXIS_KEYS = [key for key, _name in AXES]
 
 PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"]
-TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung")
+TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung", "rack", "formular")
+# Typen, deren Rueckmeldung eine Liste von Problemen ist
+PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular")
 
 # Ereignistypen im Protokoll
 EV_PROFILE = "profil_gesetzt"
@@ -288,6 +290,7 @@ def validate_game_content(content=None):
             problems.append("Spiel-Balancing: kein Gehalt fuer Rang '%s'" % rank["name"])
 
     problems += _validate_hardware(content)
+    problems += _validate_rack_hardware(content)
 
     seen = set()
     for number, task in enumerate(content["aufgaben"], start=1):
@@ -328,6 +331,12 @@ def validate_game_content(content=None):
         if task.get("typ") in ("bauteile", "bestellung"):
             problems += ["%s: %s" % (where, text)
                          for text in _validate_hardware_task(task, content)]
+        elif task.get("typ") == "rack":
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_rack_task(task, content)]
+        elif task.get("typ") == "formular":
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_form_task(task, content)]
 
         if task.get("typ") == "auswahl":
             options = task.get("optionen") or []
@@ -780,12 +789,649 @@ def order_problems(task, cart, content=None):
     return problems
 
 
+# ============================================================================
+#  RACK (SERVERSCHRANK BESTUECKEN)
+# ============================================================================
+#
+# Die Geraete stehen in hardware.json unter "rack_geraete", die Grenzwerte
+# unter "rack_regeln". Ein Rack-Auftrag nennt den Schrank (Hoeheneinheiten,
+# Traglast, Kuehlleistung), die bereitliegenden Geraete (Liste von IDs, ein
+# Geraet darf mehrfach vorkommen) und seine Vorgaben.
+#
+# Antwort: {platz: unterste_HE} - platz ist die Nummer des Geraets in der
+# Liste "geraete" des Auftrags (als Text oder Zahl), die HE zaehlt von unten
+# ab 1. Nicht eingebaute Geraete bleiben einfach liegen.
+
+RACK_FIELDS = ("typ", "name", "he", "gewicht", "watt")
+# Vorgaben eines Rack-Auftrags
+RACK_RULES = ("mindestens", "ports_min", "frei_min")
+
+
+def rack_device(device_id, content=None):
+    for item in (content or GAME)["hardware"].get("rack_geraete", []):
+        if item["id"] == device_id:
+            return item
+    return None
+
+
+def rack_type_name(kind, content=None):
+    return (content or GAME)["hardware"].get("rack_typen", {}).get(kind, kind)
+
+
+def _he_text(bottom, height):
+    top = bottom + height - 1
+    return "HE %d" % bottom if top == bottom else "HE %d–%d" % (bottom, top)
+
+
+def rack_placed(task, answer, content=None):
+    """Eingebaute Geraete als Liste von (platz, geraet, unterste_HE), von
+    unten nach oben sortiert. Unbekannte Plaetze werden ignoriert."""
+    devices = task.get("geraete") or []
+    placed = []
+    for key, bottom in (answer or {}).items():
+        try:
+            index, bottom = int(key), int(bottom)
+        except (TypeError, ValueError):
+            continue
+        if 0 <= index < len(devices) and bottom >= 1:
+            item = rack_device(devices[index], content)
+            if item:
+                placed.append((index, item, bottom))
+    placed.sort(key=lambda row: (row[2], row[0]))
+    return placed
+
+
+def rack_power(placed):
+    """Leistungsaufnahme aller eingebauten Geraete ohne die USV selbst."""
+    return sum(item["watt"] for _index, item, _bottom in placed if item["typ"] != "usv")
+
+
+def ups_capacity(task, placed, content=None):
+    """Nutzbare USV-Leistung mit Reserve (W) oder None, wenn keine USV da ist.
+    Eine USV kann eingebaut sein oder schon im Raum stehen (schrank.usv_watt)."""
+    rules = (content or GAME)["hardware"]["rack_regeln"]
+    total = sum(item.get("leistung", 0) for _i, item, _b in placed if item["typ"] == "usv")
+    total += task["schrank"].get("usv_watt", 0)
+    if not total:
+        return None
+    return int(total * (1 - rules["strom_reserve"]))
+
+
+def lower_third(task):
+    """Hoechste HE, in der ein schweres Geraet noch beginnen darf."""
+    return max(1, task["schrank"]["he"] // 3)
+
+
+def _position_problems(task, placed, content):
+    """Alles, was von der Anordnung abhaengt (Platz, Gewicht, Verkabelung)."""
+    rules = (content or GAME)["hardware"]["rack_regeln"]
+    size = task["schrank"]["he"]
+    problems = []
+    used = {}
+    for index, item, bottom in placed:
+        top = bottom + item["he"] - 1
+        if top > size:
+            problems.append("%s (%d HE) passt ab HE %d nicht mehr in den Schrank, er hat "
+                            "nur %d HE." % (item["name"], item["he"], bottom, size))
+            continue
+        for unit in range(bottom, top + 1):
+            if unit in used:
+                problems.append("%s und %s überlappen in HE %d."
+                                % (used[unit]["name"], item["name"], unit))
+                break
+        for unit in range(bottom, top + 1):
+            used.setdefault(unit, item)
+    limit = lower_third(task)
+    for index, item, bottom in placed:
+        if item["gewicht"] >= rules["schwer_ab_kg"] and bottom > limit:
+            problems.append("%s wiegt %d kg und gehört ins untere Drittel "
+                            "(Beginn bis HE %d), steckt aber in %s."
+                            % (item["name"], item["gewicht"], limit,
+                               _he_text(bottom, item["he"])))
+    ups = [row for row in placed if row[1]["typ"] == "usv"]
+    others = [row for row in placed if row[1]["typ"] != "usv"]
+    if ups and others and max(b for _i, _it, b in ups) > min(b for _i, _it, b in others):
+        problems.append("Die USV gehört ganz nach unten, unter alle anderen Geräte.")
+
+    def neighbours(row, kind):
+        _index, item, bottom = row
+        top = bottom + item["he"] - 1
+        return [other for other in placed if other[1]["typ"] == kind and (
+            other[2] == top + 1 or other[2] + other[1]["he"] - 1 == bottom - 1)]
+
+    for row in placed:
+        if row[1]["typ"] == "patchpanel" and not neighbours(row, "switch"):
+            problems.append("%s in %s hat keinen Switch direkt darüber oder darunter "
+                            "(kurze Patchkabel)." % (row[1]["name"],
+                                                     _he_text(row[2], row[1]["he"])))
+        elif row[1]["typ"] == "switch" and not neighbours(row, "patchpanel"):
+            problems.append("%s in %s hat kein Patchpanel direkt darüber oder darunter."
+                            % (row[1]["name"], _he_text(row[2], row[1]["he"])))
+    return problems
+
+
+def _load_problems(task, placed, content):
+    """Alles, was nur davon abhaengt, WELCHE Geraete eingebaut sind."""
+    cabinet = task["schrank"]
+    problems = []
+    weight = sum(item["gewicht"] for _i, item, _b in placed)
+    if weight > cabinet["traglast"]:
+        problems.append("Zu schwer: %d kg bei %d kg Traglast des Schranks."
+                        % (weight, cabinet["traglast"]))
+    power = rack_power(placed)
+    capacity = ups_capacity(task, placed, content)
+    reserve = int(round(content["hardware"]["rack_regeln"]["strom_reserve"] * 100))
+    if capacity is not None and power > capacity:
+        problems.append("Die USV schafft mit %d %% Reserve nur %d W, die Geräte brauchen "
+                        "%d W." % (reserve, capacity, power))
+    if cabinet.get("kuehlung") and power > cabinet["kuehlung"]:
+        problems.append("Die Kühlung führt höchstens %d W Abwärme ab, die Geräte erzeugen "
+                        "%d W." % (cabinet["kuehlung"], power))
+    rules = task.get("vorgaben") or {}
+    for kind, count in sorted((rules.get("mindestens") or {}).items()):
+        have = sum(1 for _i, item, _b in placed if item["typ"] == kind)
+        if have < count:
+            problems.append("Der Auftrag verlangt %d × %s, eingebaut %s %d."
+                            % (count, rack_type_name(kind, content),
+                               "ist" if have == 1 else "sind", have))
+    if rules.get("ports_min"):
+        for kind in ("switch", "patchpanel"):
+            ports = sum(item.get("ports", 0) for _i, item, _b in placed if item["typ"] == kind)
+            if ports < rules["ports_min"]:
+                problems.append("Zu wenige Ports (%s): %d, gebraucht werden %d."
+                                % (rack_type_name(kind, content), ports, rules["ports_min"]))
+    if rules.get("frei_min"):
+        free = cabinet["he"] - sum(item["he"] for _i, item, _b in placed)
+        if free < rules["frei_min"]:
+            problems.append("Es sollen mindestens %d HE für später frei bleiben, frei "
+                            "sind %d." % (rules["frei_min"], max(0, free)))
+    return problems
+
+
+def rack_problems(task, answer, content=None):
+    """Alle Probleme einer Schrankbelegung (Aufgabentyp "rack")."""
+    content = content or GAME
+    placed = rack_placed(task, answer, content)
+    if not placed:
+        return ["Der Schrank ist noch leer."]
+    return _position_problems(task, placed, content) + _load_problems(task, placed, content)
+
+
+def rack_summary(task, answer, content=None):
+    """Live-Anzeige unter dem Schrank: (Text, ueberlastet)."""
+    content = content or GAME
+    placed = rack_placed(task, answer, content)
+    cabinet = task["schrank"]
+    used = sum(item["he"] for _i, item, _b in placed)
+    weight = sum(item["gewicht"] for _i, item, _b in placed)
+    power = rack_power(placed)
+    capacity = ups_capacity(task, placed, content)
+    parts = ["%d von %d HE" % (used, cabinet["he"]),
+             "%d von %d kg" % (weight, cabinet["traglast"])]
+    parts.append("%d W%s" % (power, " von %d W (USV)" % capacity if capacity else ""))
+    over = weight > cabinet["traglast"] or (capacity is not None and power > capacity) or \
+        bool(cabinet.get("kuehlung") and power > cabinet["kuehlung"])
+    return " · ".join(parts), over
+
+
+def rack_header(task, content=None):
+    """Schrank und Vorgaben eines Rack-Auftrags als Zeilen."""
+    content = content or GAME
+    cabinet = task["schrank"]
+    first = "Schrank: %d HE · Traglast %d kg" % (cabinet["he"], cabinet["traglast"])
+    if cabinet.get("kuehlung"):
+        first += " · Kühlung %d W" % cabinet["kuehlung"]
+    if cabinet.get("usv_watt"):
+        first += " · USV im Raum %d W" % cabinet["usv_watt"]
+    lines = [first]
+    rules = task.get("vorgaben") or {}
+    wanted = ["%d × %s" % (count, rack_type_name(kind, content))
+              for kind, count in sorted((rules.get("mindestens") or {}).items())]
+    if rules.get("ports_min"):
+        wanted.append("mind. %d Ports" % rules["ports_min"])
+    if rules.get("frei_min"):
+        wanted.append("%d HE frei lassen" % rules["frei_min"])
+    if wanted:
+        lines.append("Verlangt: " + ", ".join(wanted))
+    return lines
+
+
+def rack_specs(item, content=None):
+    """Kurze Beschreibung eines Rack-Geraets fuer die Anzeige."""
+    parts = ["%d HE" % item["he"], "%d kg" % item["gewicht"]]
+    if item["typ"] == "usv":
+        parts.append("liefert %d W" % item["leistung"])
+    else:
+        parts.append("%d W" % item["watt"])
+    if item.get("ports"):
+        parts.append("%d Ports" % item["ports"])
+    return " · ".join(parts)
+
+
+def rack_solution(task, content=None):
+    """Eine gueltige Belegung oder None. Zuerst wird ausgewaehlt, WELCHE
+    Geraete hinein sollen (Gewicht, Strom, Vorgaben), dann werden sie in allen
+    Reihenfolgen luekenlos von unten gestapelt. Die Auftraege sind klein."""
+    content = content or GAME
+    devices = task.get("geraete") or []
+    for size in range(1, len(devices) + 1):
+        for chosen in itertools.combinations(range(len(devices)), size):
+            rows = [(index, rack_device(devices[index], content), 1) for index in chosen]
+            if _load_problems(task, rows, content):
+                continue
+            seen = set()
+            for order in itertools.permutations(chosen):
+                signature = tuple(devices[index] for index in order)
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                answer, bottom = {}, 1
+                for index in order:
+                    answer[str(index)] = bottom
+                    bottom += rack_device(devices[index], content)["he"]
+                if not rack_problems(task, answer, content):
+                    return answer
+    return None
+
+
+def rack_lines(task, answer, content=None):
+    """Belegung als lesbare Zeilen von unten nach oben."""
+    return ["%s: %s" % (_he_text(bottom, item["he"]), item["name"])
+            for _index, item, bottom in rack_placed(task, answer, content)]
+
+
+def _validate_rack_task(task, content):
+    problems = []
+    cabinet = task.get("schrank") or {}
+    if not cabinet.get("he", 0) >= 3 or not cabinet.get("traglast", 0) > 0:
+        problems.append("Schrank braucht HE (mind. 3) und Traglast")
+    devices = task.get("geraete") or []
+    if not devices:
+        problems.append("keine Geraete")
+    for device_id in devices:
+        if not rack_device(device_id, content):
+            problems.append("unbekanntes Rack-Geraet '%s'" % device_id)
+    for key in task.get("vorgaben") or {}:
+        if key not in RACK_RULES:
+            problems.append("unbekannte Vorgabe '%s'" % key)
+    for kind in (task.get("vorgaben") or {}).get("mindestens") or {}:
+        if kind not in content["hardware"].get("rack_typen", {}):
+            problems.append("unbekannter Geraetetyp '%s'" % kind)
+    if not problems and rack_solution(task, content) is None:
+        problems.append("Schrank laesst sich mit den bereitliegenden Geraeten nicht "
+                        "richtig bestuecken")
+    return problems
+
+
+def _validate_rack_hardware(content):
+    problems, seen = [], set()
+    hardware = content["hardware"]
+    kinds = hardware.get("rack_typen", {})
+    for item in hardware.get("rack_geraete", []):
+        where = "Spiel-Rack-Geraet %s" % item.get("id")
+        if item.get("id") in seen:
+            problems.append("%s: Kennung doppelt vorhanden" % where)
+        seen.add(item.get("id"))
+        for field in RACK_FIELDS:
+            if field not in item:
+                problems.append("%s: Feld '%s' fehlt" % (where, field))
+        if item.get("typ") not in kinds:
+            problems.append("%s: unbekannter Typ '%s'" % (where, item.get("typ")))
+        if item.get("typ") == "usv" and not item.get("leistung", 0) > 0:
+            problems.append("%s: USV ohne Leistung" % where)
+        if item.get("typ") in ("switch", "patchpanel") and not item.get("ports", 0) > 0:
+            problems.append("%s: Ports fehlen" % where)
+    if hardware.get("rack_geraete") and not hardware.get("rack_regeln"):
+        problems.append("Spiel-Hardware: 'rack_regeln' fehlen")
+    return problems
+
+
+# ============================================================================
+#  FORMULAR (EINGABEFELDER MIT RECHENWEG)
+# ============================================================================
+#
+# Ein Formular-Auftrag nennt nur die Ausgangsdaten ("daten") und welche
+# Felder gefragt sind. Die richtigen Werte rechnet das Spiel selbst aus -
+# fuer IP-Plaene und RAID mit denselben Funktionen wie die Praxis-Rechner
+# (fisi_core.ipv4_values, fisi_core.raid_values). So koennen Aufgabe und
+# Rechner nie auseinanderlaufen.
+#
+# Arten ("art"):
+#   ip_plan     daten: netz, teilnetze [{name, hosts}], vlsm (true/false)
+#               felder_global: z.B. ["praefix", "hosts"] (nur ohne VLSM)
+#               felder: je Teilnetz, z.B. ["netz", "praefix", "broadcast"]
+#   raid        daten: level, platten, groesse, einheit (TB/GB)
+#   angebot     daten: menge, einkaufspreis, handlungskosten, gewinn, ust
+#               (Prozentwerte) - Zuschlagskalkulation bis zum Bruttopreis
+#   leasing     daten: kaufpreis, rate, laufzeit, sonderzahlung, restwert
+#
+# Antwort: {feld_id: eingegebener_text}
+
+FORM_KINDS = ("ip_plan", "raid", "angebot", "leasing")
+
+IP_FIELDS = {
+    "netz": "Netzadresse", "praefix": "Präfix", "maske": "Subnetzmaske",
+    "erste": "Erste Host-Adresse", "letzte": "Letzte Host-Adresse",
+    "broadcast": "Broadcast", "hosts": "Nutzbare Hosts",
+}
+# Art eines IP-Feldes fuer die Eingabepruefung
+IP_KIND = {"netz": "ip", "erste": "ip", "letzte": "ip", "broadcast": "ip",
+           "praefix": "praefix", "maske": "praefix", "hosts": "zahl"}
+
+
+class FormError(ValueError):
+    """Ungueltige Formular-Aufgabe (nur fuer die Inhaltspruefung)."""
+
+
+def _prefix_for_hosts(hosts):
+    prefix = 32
+    while (2 ** (32 - prefix)) - 2 < hosts:
+        prefix -= 1
+    return prefix
+
+
+def ip_plan(task):
+    """Teilnetze eines IP-Plans in der Reihenfolge der Aufgabe:
+    [(name, ipaddress.IPv4Network)]. Ohne VLSM wird das Netz in gleich
+    grosse Teile zerlegt (Anzahl auf die naechste Zweierpotenz aufgerundet,
+    Vergabe in der genannten Reihenfolge); mit VLSM bekommt jedes Teilnetz
+    das kleinste passende Netz, das groesste zuerst, lueckenlos."""
+    import ipaddress
+    data = task["daten"]
+    try:
+        base = ipaddress.ip_network(data["netz"], strict=True)
+    except ValueError as error:
+        raise FormError("ungueltiges Netz: %s" % error)
+    if base.version != 4:
+        raise FormError("nur IPv4")
+    nets = data["teilnetze"]
+    if data.get("vlsm"):
+        order = sorted(range(len(nets)), key=lambda i: (-nets[i]["hosts"], i))
+        result = [None] * len(nets)
+        start = int(base.network_address)
+        for index in order:
+            prefix = _prefix_for_hosts(nets[index]["hosts"])
+            if prefix < base.prefixlen:
+                raise FormError("Teilnetz %s passt nicht ins Netz" % nets[index]["name"])
+            net = ipaddress.ip_network("%s/%d" % (ipaddress.ip_address(start), prefix))
+            if not net.subnet_of(base):
+                raise FormError("Netz reicht nicht fuer alle Teilnetze")
+            result[index] = (nets[index]["name"], net)
+            start += net.num_addresses
+        return result
+    bits = max(0, int(math.ceil(math.log(len(nets), 2) - 1e-9)))
+    parts = list(base.subnets(prefixlen_diff=bits))
+    result = [(item["name"], net) for item, net in zip(nets, parts)]
+    for item, (_name, net) in zip(nets, result):
+        if ipv4_values(net)["hosts"] < item.get("hosts", 0):
+            raise FormError("Teilnetz %s hat zu wenige Hosts" % item["name"])
+    return result
+
+
+def _money(value):
+    return round(value + 1e-9, 2)
+
+
+def offer_values(data):
+    """Zuschlagskalkulation (Angebot) als Liste (schluessel, name, wert)."""
+    purchase = _money(data["menge"] * data["einkaufspreis"])
+    overhead = _money(purchase * data["handlungskosten"] / 100.0)
+    cost = _money(purchase + overhead)
+    profit = _money(cost * data["gewinn"] / 100.0)
+    net = _money(cost + profit)
+    tax = _money(net * data["ust"] / 100.0)
+    return [("einkauf", "Einkaufspreis gesamt", purchase),
+            ("handlungskosten", "Handlungskosten (%s %%)" % _num(data["handlungskosten"]),
+             overhead),
+            ("selbstkosten", "Selbstkosten", cost),
+            ("gewinn", "Gewinn (%s %%)" % _num(data["gewinn"]), profit),
+            ("netto", "Nettoverkaufspreis", net),
+            ("ust", "Umsatzsteuer (%s %%)" % _num(data["ust"]), tax),
+            ("brutto", "Bruttoverkaufspreis", _money(net + tax))]
+
+
+def leasing_values(data):
+    """Kauf gegen Leasing als Liste (schluessel, name, wert)."""
+    lease = _money(data.get("sonderzahlung", 0) + data["rate"] * data["laufzeit"]
+                   + data.get("restwert", 0))
+    buy = _money(data["kaufpreis"])
+    return [("leasing", "Gesamtkosten Leasing", lease),
+            ("kauf", "Gesamtkosten Kauf", buy),
+            ("differenz", "Unterschied", _money(abs(lease - buy))),
+            ("guenstiger", "Günstiger ist", "Kauf" if buy <= lease else "Leasing")]
+
+
+def _num(value):
+    """Zahl deutsch formatiert: 1.234,5 - ohne ueberfluessige Nachkommastellen."""
+    if isinstance(value, float) and not value.is_integer():
+        text = ("%.2f" % value).rstrip("0").rstrip(".")
+    else:
+        text = "%d" % int(round(value))
+    whole, _sep, frac = text.partition(".")
+    sign = "-" if whole.startswith("-") else ""
+    whole = whole.lstrip("-")
+    groups = []
+    while len(whole) > 3:
+        groups.insert(0, whole[-3:])
+        whole = whole[:-3]
+    groups.insert(0, whole)
+    return sign + ".".join(groups) + ("," + frac if frac else "")
+
+
+def _euro(value):
+    return "%s €" % ("{:,.2f}".format(value).replace(",", "X").replace(".", ",")
+                     .replace("X", "."))
+
+
+def form_fields(task, content=None):
+    """Die Felder eines Formulars mit Sollwert:
+    [{"id", "gruppe", "label", "einheit", "art", "soll", "anzeige", "optionen"}]
+    art: ip, praefix, zahl, geld, prozent, wahl."""
+    kind = task.get("art")
+    data = task.get("daten") or {}
+    fields = []
+
+    def add(key, label, art, soll, group=None, unit="", shown=None, options=None):
+        fields.append({"id": key, "gruppe": group, "label": label, "einheit": unit,
+                       "art": art, "soll": soll, "anzeige": shown or str(soll),
+                       "optionen": options})
+
+    if kind == "ip_plan":
+        plan = ip_plan(task)
+        first = ipv4_values(plan[0][1])
+        for key in task.get("felder_global") or []:
+            if key not in IP_FIELDS:
+                raise FormError("unbekanntes Feld '%s'" % key)
+            soll = first[key]
+            shown = "/%d" % soll if key == "praefix" else str(soll)
+            add(key, IP_FIELDS[key] + " je Teilnetz", IP_KIND[key],
+                first["praefix"] if IP_KIND[key] == "praefix" else soll, shown=shown)
+        for number, (name, net) in enumerate(plan):
+            values = ipv4_values(net)
+            for key in task.get("felder") or []:
+                if key not in IP_FIELDS:
+                    raise FormError("unbekanntes Feld '%s'" % key)
+                soll = values[key]
+                shown = "/%d" % soll if key == "praefix" else str(soll)
+                if key == "maske":
+                    soll, shown = values["praefix"], str(values["maske"])
+                add("%d.%s" % (number, key), IP_FIELDS[key], IP_KIND[key],
+                    soll if IP_KIND[key] != "ip" else str(soll), group=name, shown=shown)
+    elif kind == "raid":
+        values = raid_values(data["level"], data["platten"], data["groesse"])
+        if values is None:
+            raise FormError("RAID-Level passt nicht zur Plattenzahl")
+        unit = data.get("einheit", "TB")
+        add("brutto", "Bruttokapazität", "zahl", values["brutto"], unit=unit,
+            shown="%s %s" % (_num(values["brutto"]), unit))
+        add("netto", "Nutzkapazität", "zahl", values["netto"], unit=unit,
+            shown="%s %s" % (_num(values["netto"]), unit))
+        add("verlust", "Verlust durch Redundanz", "zahl", values["verlust"], unit=unit,
+            shown="%s %s" % (_num(values["verlust"]), unit))
+        add("toleranz", "Ausfalltoleranz", "zahl", values["toleranz"], unit="Platten",
+            shown="%d Platte%s" % (values["toleranz"], "" if values["toleranz"] == 1 else "n"))
+        if "effizienz" in (task.get("felder") or []):
+            add("effizienz", "Speichereffizienz", "prozent", round(values["effizienz"], 1),
+                unit="%", shown="%s %%" % _num(round(values["effizienz"], 1)))
+    elif kind in ("angebot", "leasing"):
+        rows = offer_values(data) if kind == "angebot" else leasing_values(data)
+        wanted = task.get("felder") or [row[0] for row in rows]
+        for key, label, value in rows:
+            if key not in wanted:
+                continue
+            if isinstance(value, str):
+                add(key, label, "wahl", value, options=["Kauf", "Leasing"])
+            else:
+                add(key, label, "geld", value, unit="€", shown=_euro(value))
+    else:
+        raise FormError("unbekannte Formular-Art '%s'" % kind)
+    return fields
+
+
+def form_given(task, content=None):
+    """Die Ausgangsdaten eines Formulars als Zeilen fuer die Anzeige."""
+    kind = task.get("art")
+    data = task.get("daten") or {}
+    if kind == "ip_plan":
+        lines = ["Netz: %s" % data["netz"]]
+        lines += ["%s: %d Geräte" % (item["name"], item["hosts"]) for item in data["teilnetze"]]
+        lines.append("Vergabe nach Größe, größtes Netz zuerst, lückenlos" if data.get("vlsm")
+                     else "Gleich große Teilnetze in der genannten Reihenfolge")
+        return lines
+    if kind == "raid":
+        return ["%s mit %d Festplatten zu je %s %s" % (
+            data["level"], data["platten"], _num(data["groesse"]), data.get("einheit", "TB"))]
+    if kind == "angebot":
+        return ["%d × %s zu je %s (Einkauf)" % (data["menge"], data.get("artikel", "Artikel"),
+                                                _euro(data["einkaufspreis"])),
+                "Handlungskosten %s %% · Gewinn %s %% · Umsatzsteuer %s %%" % (
+                    _num(data["handlungskosten"]), _num(data["gewinn"]), _num(data["ust"]))]
+    if kind == "leasing":
+        lines = ["Kaufpreis: %s" % _euro(data["kaufpreis"]),
+                 "Leasing: %d Monate zu je %s" % (data["laufzeit"], _euro(data["rate"]))]
+        if data.get("sonderzahlung"):
+            lines.append("Sonderzahlung zu Beginn: %s" % _euro(data["sonderzahlung"]))
+        if data.get("restwert"):
+            lines.append("Übernahme am Ende (Restwert): %s" % _euro(data["restwert"]))
+        return lines
+    return []
+
+
+def parse_number(text):
+    """Zahl aus einer Eingabe: "1.234,50 €", "16 TB", "66,7 %", "12000".
+    None, wenn es keine Zahl ist."""
+    import re
+    text = (text or "").strip().replace(" ", "").replace(" ", "")
+    text = re.sub(r"(€|EUR|TB|GB|Platten?|%|Hosts?)$", "", text, flags=re.I).strip()
+    if not text:
+        return None
+    if "," in text and "." in text:
+        text = text.replace(".", "").replace(",", ".")
+    elif "," in text:
+        text = text.replace(",", ".")
+    elif re.fullmatch(r"-?\d{1,3}(\.\d{3})+", text):
+        text = text.replace(".", "")
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def parse_prefix(text):
+    """Praefix aus "/26", "26" oder "255.255.255.192". None bei Unsinn."""
+    import ipaddress
+    text = (text or "").strip().replace(" ", "")
+    if "." in text:
+        try:
+            mask = int(ipaddress.IPv4Address(text))
+        except ValueError:
+            return None
+        bits = bin(mask)[2:].zfill(32)
+        if "01" in bits:
+            return None
+        return bits.count("1")
+    text = text.lstrip("/")
+    return int(text) if text.isdigit() and int(text) <= 32 else None
+
+
+def parse_ip(text):
+    import ipaddress
+    text = (text or "").strip().replace(" ", "").split("/")[0]
+    try:
+        return str(ipaddress.IPv4Address(text))
+    except ValueError:
+        return None
+
+
+def field_ok(field, text):
+    """Stimmt die Eingabe fuer ein Feld?"""
+    art = field["art"]
+    if art == "ip":
+        return parse_ip(text) == field["soll"]
+    if art == "praefix":
+        return parse_prefix(text) == field["soll"]
+    if art == "wahl":
+        return (text or "").strip().lower() == field["soll"].lower()
+    value = parse_number(text)
+    if value is None:
+        return False
+    tolerance = {"geld": 0.011, "prozent": 0.1}.get(art, 0.01)
+    return abs(value - field["soll"]) <= tolerance
+
+
+def form_check(task, answer, content=None):
+    """{feld_id: richtig} fuer alle Felder."""
+    answer = answer or {}
+    return {field["id"]: field_ok(field, answer.get(field["id"]))
+            for field in form_fields(task, content)}
+
+
+def form_problems(task, answer, content=None):
+    """Falsche Felder als Saetze mit dem richtigen Wert."""
+    answer = answer or {}
+    problems = []
+    for field in form_fields(task, content):
+        if field_ok(field, answer.get(field["id"])):
+            continue
+        label = field["label"] if not field["gruppe"] else \
+            "%s – %s" % (field["gruppe"], field["label"])
+        given = (answer.get(field["id"]) or "").strip()
+        if given:
+            problems.append("%s: „%s“ stimmt nicht, richtig ist %s."
+                            % (label, given, field["anzeige"]))
+        else:
+            problems.append("%s fehlt, richtig ist %s." % (label, field["anzeige"]))
+    return problems
+
+
+def _validate_form_task(task, content):
+    if task.get("art") not in FORM_KINDS:
+        return ["unbekannte Formular-Art '%s'" % task.get("art")]
+    if not task.get("daten"):
+        return ["Ausgangsdaten fehlen"]
+    try:
+        fields = form_fields(task, content)
+        form_given(task, content)
+    except (FormError, KeyError, TypeError, ValueError, ZeroDivisionError) as error:
+        return ["Formular laesst sich nicht berechnen: %s" % error]
+    if not fields:
+        return ["keine Eingabefelder"]
+    solution = find_solution(task, content=content)
+    if form_problems(task, solution, content):
+        return ["die eigene Loesung wird nicht als richtig erkannt"]
+    return []
+
+
 def answer_problems(task, answer, available=None, content=None):
-    """Probleme einer Loesung als Saetze (nur Bauteile und Bestellung)."""
+    """Probleme einer Loesung als Saetze (Bauteile, Bestellung, Rack, Formular)."""
     if task["typ"] == "bauteile":
         return build_problems(task, answer, available, content)
     if task["typ"] == "bestellung":
         return order_problems(task, answer, content)
+    if task["typ"] == "rack":
+        return rack_problems(task, answer, content)
+    if task["typ"] == "formular":
+        return form_problems(task, answer, content)
     return []
 
 
@@ -796,6 +1442,8 @@ def check_answer(task, answer, available=None, content=None):
     zuordnung:  answer ist {links: rechts}
     bauteile:   answer ist {steckplatz: bauteil_id}
     bestellung: answer ist {angebot_id: menge}
+    rack:       answer ist {platz: unterste_HE}
+    formular:   answer ist {feld_id: eingegebener_text}
     """
     if task["typ"] == "auswahl":
         right = answer == task["antwort"]
@@ -804,7 +1452,7 @@ def check_answer(task, answer, available=None, content=None):
         answer = answer or {}
         errors = sum(1 for left, right in task["paare"] if answer.get(left) != right)
         return errors == 0, errors
-    if task["typ"] in ("bauteile", "bestellung"):
+    if task["typ"] in PROBLEM_TYPES:
         problems = answer_problems(task, answer, available, content)
         return not problems, len(problems)
     raise ValueError("Unbekannter Aufgabentyp: %s" % task["typ"])
@@ -834,6 +1482,19 @@ def find_solution(task, available=None, content=None):
     if task["typ"] == "bestellung":
         carts = valid_carts(task, content)
         return carts[0] if carts else None
+    if task["typ"] == "rack":
+        return rack_solution(task, content)
+    if task["typ"] == "formular":
+        result = {}
+        for field in form_fields(task, content):
+            soll = field["soll"]
+            if field["art"] == "praefix":
+                result[field["id"]] = "/%d" % soll
+            elif field["art"] in ("ip", "wahl"):
+                result[field["id"]] = soll
+            else:
+                result[field["id"]] = _num(soll)
+        return result
     available = task.get("teile", []) if available is None else available
     choices = []
     for slot in task["slots"]:
@@ -939,6 +1600,8 @@ def solution_text(task, available=None, content=None):
         names = [part(solution[slot], content)["name"] for slot in task["slots"]
                  if solution.get(slot)]
         return "Eine passende Zusammenstellung: " + ", ".join(names) + "."
+    if task["typ"] == "rack":
+        return "Eine passende Belegung: " + ", ".join(rack_lines(task, solution, content)) + "."
     return ""
 
 
@@ -2117,7 +2780,12 @@ def result_text(task, payload, available=None, content=None):
     elif task["typ"] == "zuordnung":
         lines.append("Leider nicht ganz: %d Zuordnung(en) stimmen nicht."
                      % payload["fehler"])
-    elif task["typ"] in ("bauteile", "bestellung"):
+    elif task["typ"] == "formular":
+        count = payload["fehler"]
+        lines.append("Leider nicht ganz: %s." % (
+            "1 Feld stimmt nicht" if count == 1 else "%d Felder stimmen nicht" % count))
+        lines += ["• " + text for text in payload.get("probleme") or []]
+    elif task["typ"] in PROBLEM_TYPES:
         count = payload["fehler"]
         lines.append("Leider nicht ganz: %s gefunden." % (
             "1 Problem" if count == 1 else "%d Probleme" % count))

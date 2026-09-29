@@ -1,7 +1,8 @@
 {
   "_hinweis": [
     "Bauteile fuer die Aufgabentypen 'bauteile' (PC zusammensetzen) und 'bestellung'.",
-    "Preise in Euro (Spielgeld). Die Pruefregeln stehen unter 'regeln'."
+    "Preise in Euro (Spielgeld). Die Pruefregeln stehen unter 'regeln'.",
+    "Rack-Geraete fuer den Aufgabentyp 'rack' (Serverschrank): HE, Gewicht in kg, Leistungsaufnahme in W, USV mit 'leistung' in W, Switch und Patchpanel mit 'ports'. Grenzwerte unter 'rack_regeln'."
   ],
   "regeln": {
     "grundlast_watt": 60,
@@ -85,5 +86,33 @@
      "groesse": 16},
     {"id": "nb_15_32", "typ": "notebook", "name": "Business-Notebook 15,6 Zoll, 32 GB RAM", "preis": 1199,
      "groesse": 32}
+  ],
+  "rack_regeln": {
+    "_hinweis": "strom_reserve: Anteil der USV-Leistung, der frei bleiben muss. schwer_ab_kg: ab diesem Gewicht muss ein Geraet im unteren Drittel des Schranks beginnen.",
+    "strom_reserve": 0.2,
+    "schwer_ab_kg": 20
+  },
+  "rack_typen": {
+    "server": "Server",
+    "storage": "Storage",
+    "switch": "Switch",
+    "patchpanel": "Patchpanel",
+    "usv": "USV"
+  },
+  "rack_geraete": [
+    {"id": "srv_1he", "typ": "server", "name": "Server 1 HE (Leitstellenrechner)", "he": 1, "gewicht": 16, "watt": 280},
+    {"id": "srv_2he", "typ": "server", "name": "Server 2 HE (Datenbank)", "he": 2, "gewicht": 28, "watt": 450},
+    {"id": "srv_4he", "typ": "server", "name": "Server 4 HE (Altgerät aus dem Keller)", "he": 4, "gewicht": 38, "watt": 650},
+    {"id": "storage_2he", "typ": "storage", "name": "Storage mit 12 Festplatten", "he": 2, "gewicht": 32, "watt": 400},
+
+    {"id": "sw_24", "typ": "switch", "name": "Switch 24 Ports", "he": 1, "gewicht": 4, "watt": 45, "ports": 24},
+    {"id": "sw_48", "typ": "switch", "name": "Switch 48 Ports", "he": 1, "gewicht": 6, "watt": 70, "ports": 48},
+    {"id": "sw_48_poe", "typ": "switch", "name": "Switch 48 Ports mit PoE", "he": 1, "gewicht": 7, "watt": 370, "ports": 48},
+    {"id": "pp_24", "typ": "patchpanel", "name": "Patchpanel 24 Ports", "he": 1, "gewicht": 1, "watt": 0, "ports": 24},
+    {"id": "pp_48", "typ": "patchpanel", "name": "Patchpanel 48 Ports", "he": 1, "gewicht": 2, "watt": 0, "ports": 48},
+
+    {"id": "usv_1000", "typ": "usv", "name": "USV 1000 W", "he": 2, "gewicht": 24, "watt": 0, "leistung": 1000},
+    {"id": "usv_1500", "typ": "usv", "name": "USV 1500 W", "he": 2, "gewicht": 29, "watt": 0, "leistung": 1500},
+    {"id": "usv_3000", "typ": "usv", "name": "USV 3000 W", "he": 3, "gewicht": 48, "watt": 0, "leistung": 3000}
   ]
 }

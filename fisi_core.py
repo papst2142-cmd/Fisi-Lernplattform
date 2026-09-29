@@ -1099,6 +1099,25 @@ COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
                 ("32", "32 Bit (True Color + Alpha)")]
 
 
+def ipv4_values(network):
+    """Kennwerte eines IPv4-Netzes (ipaddress.IPv4Network) als Woerterbuch.
+    Genutzt vom Subnetz-Rechner und von den IP-Plaenen im Lernspiel."""
+    hosts = network.num_addresses - 2 if network.prefixlen < 31 else \
+        (2 if network.prefixlen == 31 else 1)
+    host_list = list(network.hosts())
+    return {
+        "netz": network.network_address,
+        "maske": network.netmask,
+        "wildcard": network.hostmask,
+        "broadcast": network.broadcast_address,
+        "erste": host_list[0] if host_list else network.network_address,
+        "letzte": host_list[-1] if host_list else network.broadcast_address,
+        "hosts": hosts,
+        "adressen": network.num_addresses,
+        "praefix": network.prefixlen,
+    }
+
+
 def subnet_report(value):
     """Berechnet die Netzwerkdaten zu einer Adresse mit Praefix (IPv4 oder
     IPv6) und liefert sie als mehrzeiligen Text."""
@@ -1111,21 +1130,17 @@ def subnet_report(value):
             "  2001:db8::1/64")
 
     if network.version == 4:
-        hosts = network.num_addresses - 2 if network.prefixlen < 31 else \
-            (2 if network.prefixlen == 31 else 1)
-        host_list = list(network.hosts())
-        first = host_list[0] if host_list else network.network_address
-        last = host_list[-1] if host_list else network.broadcast_address
+        v = ipv4_values(network)
         lines = [
-            "Netzwerk-Adresse      : %s" % network.network_address,
-            "Subnetzmaske          : %s" % network.netmask,
-            "Wildcard-Maske        : %s" % network.hostmask,
-            "Broadcast-Adresse     : %s" % network.broadcast_address,
-            "Erste Host-Adresse    : %s" % first,
-            "Letzte Host-Adresse   : %s" % last,
-            "Nutzbare Hosts        : %d" % hosts,
-            "Adressen gesamt       : %d" % network.num_addresses,
-            "CIDR-Präfix           : /%d" % network.prefixlen,
+            "Netzwerk-Adresse      : %s" % v["netz"],
+            "Subnetzmaske          : %s" % v["maske"],
+            "Wildcard-Maske        : %s" % v["wildcard"],
+            "Broadcast-Adresse     : %s" % v["broadcast"],
+            "Erste Host-Adresse    : %s" % v["erste"],
+            "Letzte Host-Adresse   : %s" % v["letzte"],
+            "Nutzbare Hosts        : %d" % v["hosts"],
+            "Adressen gesamt       : %d" % v["adressen"],
+            "CIDR-Präfix           : /%d" % v["praefix"],
         ]
     else:
         lines = [
@@ -1136,6 +1151,20 @@ def subnet_report(value):
             "Adressen gesamt       : %d" % network.num_addresses,
         ]
     return "\n".join(lines)
+
+
+def raid_values(level, disks, size):
+    """Kennwerte eines RAID als Woerterbuch (brutto, netto, verlust,
+    effizienz in Prozent, toleranz) oder None, wenn die Plattenzahl fuer das
+    Level nicht passt. Genutzt vom RAID-Rechner und vom Lernspiel."""
+    minimum, formula = RAID_RULES[level]
+    if disks < minimum or (level == "RAID 10" and disks % 2 != 0):
+        return None
+    netto, tolerance = formula(disks, size)
+    brutto = disks * size
+    return {"brutto": brutto, "netto": netto, "verlust": brutto - netto,
+            "effizienz": (netto / brutto * 100) if brutto else 0,
+            "toleranz": tolerance}
 
 
 def raid_report(level, disks_text, size_text):
@@ -1149,25 +1178,21 @@ def raid_report(level, disks_text, size_text):
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
 
-    minimum, formula = RAID_RULES[level]
-    if disks < minimum or (level == "RAID 10" and disks % 2 != 0):
+    values = raid_values(level, disks, size)
+    if values is None:
+        minimum = RAID_RULES[level][0]
         extra = " und eine gerade Anzahl" if level == "RAID 10" else ""
         return ("Ungültige Konfiguration für %s.\n\n"
                 "Benötigt werden mindestens %d Festplatten%s."
                 % (level, minimum, extra))
-
-    netto, tolerance = formula(disks, size)
-    brutto = disks * size
-    loss = brutto - netto
-    efficiency = (netto / brutto * 100) if brutto else 0
     return "\n".join([
         "RAID-Level            : %s" % level,
         "Festplatten           : %d x %.0f GB" % (disks, size),
-        "Bruttokapazität       : %.2f GB" % brutto,
-        "Nutzkapazität         : %.2f GB" % netto,
-        "Parität / Verlust     : %.2f GB" % loss,
-        "Speichereffizienz     : %.1f %%" % efficiency,
-        "Ausfalltoleranz       : %d Festplatte(n)" % tolerance,
+        "Bruttokapazität       : %.2f GB" % values["brutto"],
+        "Nutzkapazität         : %.2f GB" % values["netto"],
+        "Parität / Verlust     : %.2f GB" % values["verlust"],
+        "Speichereffizienz     : %.1f %%" % values["effizienz"],
+        "Ausfalltoleranz       : %d Festplatte(n)" % values["toleranz"],
     ])
 
 

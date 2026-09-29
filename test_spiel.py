@@ -599,5 +599,176 @@ class LagerTest(unittest.TestCase):
         self.assertEqual(fg.door_side(fg.room("chefbuero")), "s")
 
 
+class RackTest(unittest.TestCase):
+    def setUp(self):
+        self.task = fg.task_by_id("rack-leitstelle")
+        # Plaetze: 0/1 Server 1 HE, 2 Altserver 4 HE, 3 Switch, 4 Patchpanel, 5 USV
+        self.good = {"5": 1, "0": 3, "1": 4, "3": 5, "4": 6}
+
+    def test_richtige_belegung(self):
+        self.assertEqual(fg.rack_problems(self.task, self.good), [])
+        self.assertEqual(fg.check_answer(self.task, self.good), (True, 0))
+
+    def test_leer_und_ueberlappung(self):
+        self.assertEqual(fg.rack_problems(self.task, {}), ["Der Schrank ist noch leer."])
+        answer = dict(self.good, **{"1": 3})
+        self.assertTrue(any("überlappen in HE 3" in p
+                            for p in fg.rack_problems(self.task, answer)))
+
+    def test_ragt_oben_heraus(self):
+        answer = dict(self.good, **{"4": 13})
+        self.assertTrue(any("passt ab HE 13 nicht" in p
+                            for p in fg.rack_problems(self.task, answer)))
+
+    def test_usv_nach_unten(self):
+        answer = {"0": 1, "1": 2, "3": 3, "4": 4, "5": 5}
+        problems = fg.rack_problems(self.task, answer)
+        self.assertIn("Die USV gehört ganz nach unten, unter alle anderen Geräte.", problems)
+        answer = {"5": 5, "0": 7, "1": 8, "3": 9, "4": 10}
+        self.assertTrue(any("wiegt 24 kg" in p for p in fg.rack_problems(self.task, answer)))
+
+    def test_patchpanel_neben_switch(self):
+        answer = dict(self.good, **{"4": 8})
+        problems = fg.rack_problems(self.task, answer)
+        self.assertTrue(any(p.startswith("Patchpanel") for p in problems))
+        self.assertTrue(any(p.startswith("Switch") for p in problems))
+
+    def test_strom_und_kuehlung(self):
+        answer = dict(self.good, **{"2": 7})           # Altserver 650 W dazu
+        problems = fg.rack_problems(self.task, answer)
+        self.assertTrue(any("USV schafft mit 20 % Reserve nur 800 W" in p
+                            and "1255 W" in p for p in problems), problems)
+        self.assertTrue(any("Kühlung" in p for p in problems))
+
+    def test_vorgaben(self):
+        answer = {"5": 1, "0": 3, "3": 4, "4": 5}          # nur ein Server
+        self.assertTrue(any("2 × Server" in p for p in fg.rack_problems(self.task, answer)))
+        task = json.loads(json.dumps(self.task))
+        task["vorgaben"]["frei_min"] = 7                  # belegt sind 6 von 12 HE
+        self.assertTrue(any("mindestens 7 HE" in p and "frei sind 6" in p
+                            for p in fg.rack_problems(task, self.good)))
+
+    def test_traglast_und_ports(self):
+        task = fg.task_by_id("rack-servicecenter")
+        # 6 = USV 3000 W (48 kg), 2 = PoE-Switch 48, 5 = Patchpanel 48
+        problems = fg.rack_problems(task, {"6": 1, "2": 4, "5": 5})
+        self.assertEqual(problems, ["Zu schwer: 57 kg bei 50 kg Traglast des Schranks."])
+        problems = fg.rack_problems(task, {"7": 1, "0": 3, "3": 4})
+        self.assertTrue(any("Zu wenige Ports (Switch): 24" in p for p in problems))
+        # Zwei 24er-Paare sind ebenso richtig
+        self.assertEqual(fg.rack_problems(task, {"7": 1, "3": 3, "0": 4, "1": 5, "4": 6}), [])
+
+    def test_usv_im_raum(self):
+        task = fg.task_by_id("rack-serverraum")
+        # Storage + 2 Server + PoE-Switch = 1670 W: zu viel fuer Kuehlung und USV
+        answer = {"0": 1, "1": 3, "2": 5, "4": 7, "6": 8}
+        problems = fg.rack_problems(task, answer)
+        self.assertTrue(any("nur 1600 W" in p for p in problems), problems)
+        answer["5"] = answer.pop("4")
+        self.assertEqual(fg.rack_problems(task, answer), [])
+
+    def test_anzeige_und_loesungstext(self):
+        text, over = fg.rack_summary(self.task, self.good)
+        self.assertIn("6 von 12 HE", text)
+        self.assertIn("605 W von 800 W", text)
+        self.assertFalse(over)
+        payload = fg.evaluate(self.task, {"0": 1}, True, levels(100), 6)
+        self.assertFalse(payload["richtig"])
+        self.assertIn("Eine passende Belegung: HE 1–2: USV 1000 W",
+                      fg.result_text(self.task, payload))
+
+    def test_unloesbarer_schrank_wird_gefunden(self):
+        content = json.loads(json.dumps(fg.GAME))
+        task = next(t for t in content["aufgaben"] if t["id"] == "rack-leitstelle")
+        task["schrank"]["traglast"] = 40
+        problems = fg.validate_game_content(content)
+        self.assertTrue(any("rack-leitstelle" in p and "nicht richtig bestuecken" in p
+                            for p in problems), problems)
+
+
+class FormularTest(unittest.TestCase):
+    def test_eingaben_tolerant(self):
+        self.assertEqual(fg.parse_number("1.234,50 €"), 1234.5)
+        self.assertEqual(fg.parse_number("7351.34"), 7351.34)
+        self.assertEqual(fg.parse_number("12.000"), 12000)
+        self.assertEqual(fg.parse_number("16 TB"), 16)
+        self.assertEqual(fg.parse_number("66,7 %"), 66.7)
+        self.assertIsNone(fg.parse_number("viel"))
+        self.assertEqual(fg.parse_prefix("/26"), 26)
+        self.assertEqual(fg.parse_prefix("26"), 26)
+        self.assertEqual(fg.parse_prefix("255.255.255.192"), 26)
+        self.assertIsNone(fg.parse_prefix("255.0.255.0"))
+        self.assertEqual(fg.parse_ip(" 10.20.0.128/26 "), "10.20.0.128")
+        self.assertIsNone(fg.parse_ip("10.20.0.300"))
+
+    def test_ip_plan_gleich_gross(self):
+        task = fg.task_by_id("ipplan-talbahn")
+        values = {f["id"]: f["anzeige"] for f in fg.form_fields(task)}
+        self.assertEqual(values["praefix"], "/26")
+        self.assertEqual(values["hosts"], "62")
+        self.assertEqual(values["2.netz"], "192.168.40.128")
+        self.assertEqual(values["3.broadcast"], "192.168.40.255")
+
+    def test_ip_plan_vlsm(self):
+        task = fg.task_by_id("vlsm-talbahn")
+        values = {f["id"]: f["anzeige"] for f in fg.form_fields(task)}
+        self.assertEqual([values["%d.praefix" % i] for i in range(4)],
+                         ["/25", "/26", "/27", "/28"])
+        self.assertEqual(values["3.netz"], "10.20.0.224")
+        self.assertEqual(values["3.broadcast"], "10.20.0.239")
+        # Reihenfolge in der Aufgabe egal: vergeben wird nach Groesse
+        swapped = json.loads(json.dumps(task))
+        swapped["daten"]["teilnetze"].reverse()
+        plan = dict(fg.ip_plan(swapped))
+        self.assertEqual(str(plan["WLAN"]), "10.20.0.0/25")
+        self.assertEqual(str(plan["Technik"]), "10.20.0.224/28")
+
+    def test_raid_wie_der_rechner(self):
+        from fisi_core import raid_values
+        task = fg.task_by_id("raid-dateiserver-neu")
+        values = {f["id"]: f["soll"] for f in fg.form_fields(task)}
+        self.assertEqual(values["netto"], raid_values("RAID 6", 6, 4)["netto"])
+        self.assertEqual((values["brutto"], values["netto"], values["toleranz"]), (24, 16, 2))
+
+    def test_angebot_und_leasing(self):
+        task = fg.task_by_id("angebot-leitstelle")
+        values = {f["id"]: f["soll"] for f in fg.form_fields(task)}
+        self.assertEqual(values["netto"], 6177.6)
+        self.assertEqual(values["ust"], 1173.74)
+        self.assertEqual(values["brutto"], 7351.34)
+        task = fg.task_by_id("leasing-server")
+        values = {f["id"]: f["soll"] for f in fg.form_fields(task)}
+        self.assertEqual((values["leasing"], values["kauf"], values["differenz"]),
+                         (15940, 14400, 1540))
+        self.assertEqual(values["guenstiger"], "Kauf")
+
+    def test_pruefung_und_rueckmeldung(self):
+        task = fg.task_by_id("angebot-leitstelle")
+        answer = fg.find_solution(task)
+        self.assertEqual(fg.check_answer(task, answer), (True, 0))
+        answer["brutto"] = "7351,33"                     # ein Cent Rundung ist ok
+        self.assertTrue(fg.check_answer(task, answer)[0])
+        answer["gewinn"] = "617,76"                      # Gewinn auf den Netto gerechnet
+        answer["ust"] = ""
+        right, errors = fg.check_answer(task, answer)
+        self.assertEqual((right, errors), (False, 2))
+        payload = fg.evaluate(task, answer, False, levels(100), 7)
+        text = fg.result_text(task, payload)
+        self.assertIn("2 Felder stimmen nicht", text)
+        self.assertIn("„617,76“ stimmt nicht, richtig ist 561,60 €", text)
+        self.assertIn("Umsatzsteuer (19 %) fehlt", text)
+        check = fg.form_check(task, answer)
+        self.assertFalse(check["gewinn"])
+        self.assertTrue(check["netto"])
+
+    def test_kaputtes_formular_wird_gefunden(self):
+        content = json.loads(json.dumps(fg.GAME))
+        task = next(t for t in content["aufgaben"] if t["id"] == "raid-dateiserver-neu")
+        task["daten"]["platten"] = 3
+        problems = fg.validate_game_content(content)
+        self.assertTrue(any("raid-dateiserver-neu" in p and "nicht berechnen" in p
+                            for p in problems), problems)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
