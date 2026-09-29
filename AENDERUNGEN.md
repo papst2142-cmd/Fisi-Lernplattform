@@ -4,6 +4,33 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.36
+
+- **Drei neue Ausbaustufen** für deinen Gewerbehof unter Firma > Gebäude:
+  Anbau Ost (20.000 €, 7 Arbeitsplätze), Halle Süd (34.000 €, 9 Plätze,
+  drei Projekte gleichzeitig) und Halle Nord (48.000 €, 11 Plätze). Mehr
+  Plätze bringen wie bisher mehr Kundentickets pro Tag.
+- **Vier Sonderräume:** Ab Stufe 3 gibt es freie Flächen, die du in
+  beliebiger Reihenfolge ausbaust. Jeder Raum kostet einmalig Geld, erhöht
+  die Nebenkosten und bringt einen dauerhaften Vorteil:
+  - Lager (ab Stufe 3): Material und Wareneinkauf 15 % günstiger. Die
+    Mitbewerber zahlen weiter den normalen Preis.
+  - Besprechungsraum (ab Stufe 3): 3 statt 2 Kundenanfragen pro Tag und
+    +1 Kundenzufriedenheit je gewonnenem Auftrag.
+  - Serverraum (ab Stufe 4): ein Projekt mehr gleichzeitig und nur noch
+    halb so viele Rückschläge.
+  - Schulungsraum (ab Stufe 5): Weiterbildungen 30 % günstiger und einen
+    Tag kürzer.
+- Neue Karte „Sonderräume“ im Reiter Gebäude, auf PC und Handy gleich.
+- Die Büros heißen jetzt einheitlich Büro 2 bis Büro 5. In der kleinen
+  Gebäudeansicht stehen die Schilder der unteren Reihe abwechselnd oben
+  und unten, damit alle lesbar bleiben.
+- **Android:** Die App wird nur noch für moderne 64-Bit-Handys gebaut
+  (z. B. Samsung S24 und neuer). Die APK ist dadurch rund 30 MB statt
+  143 MB groß.
+- Bitte PC und Handy beide auf 0.36 aktualisieren, damit der Abgleich der
+  Sonderräume klappt.
+
 ## 0.35.1
 
 - **Fehlerbehebung PC:** Nach einem Wechsel von Grundfarbe oder Hintergrund
