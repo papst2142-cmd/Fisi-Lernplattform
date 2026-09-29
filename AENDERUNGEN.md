@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.32
+
+- **Viel mehr Aufträge im Lernspiel:** 442 Aufträge statt 46 und 50
+  Zwischenfälle statt 10. Die Geschichte reicht jetzt bis Tag 100 und endet
+  mit einem großen Finale: Jahreswartung aller Standorte, Audit und
+  Rückblick.
+- **Neue Ticket-Arten:** Bei der Wartung prüft man Punkte nach und hält
+  fest, ob sie in Ordnung oder auffällig sind. Beim Austausch findet man die
+  Ursache und baut das passende Ersatzteil ein. Fehlt das Teil im Lager,
+  kann man es nachbestellen.
+- **Neue Kunden:** Betriebswerkstatt (ab Tag 22), Verwaltung Lindenau (ab
+  Tag 45) und Haltepunkt Birkenhain (ab Tag 66), jeweils mit eigenem
+  Grundriss. Die Räume verändern sich, während man dort arbeitet.
+- **Neue Kolleginnen und Kollegen:** Svenja, Lina, Aylin, Dr. Wendt, Marta
+  und Paul. Horst (Tag 48) und Frank (Tag 80) gehen in Rente, beide
+  bekommen eine Abschiedsfeier.
+- **Ränge brauchen Arbeitstage:** Junior ab Tag 10, Fachkraft ab Tag 30,
+  Senior ab Tag 60, zusätzlich zur Reputation. Pro Tag gibt es 3, 4, 4 bzw.
+  5 Tickets.
+- PC und Handy haben dieselben Inhalte und Beschriftungen.
+
 ## 0.31
 
 - **Miete oder Kauf (Optionen > Spiel > Wohnungen).** Neben der bisherigen
