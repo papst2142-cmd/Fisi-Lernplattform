@@ -1465,7 +1465,7 @@ class FarbenTest(unittest.TestCase):
             th.apply_background("anthrazit")
             self.assertEqual(th.C["accent"], "#34D399")
             self.assertEqual(th.C["bg"], "#141416")
-            self.assertEqual(th.GRADIENTS["primary"], ("#059669", "#65A30D"))
+            self.assertEqual(th.GRADIENTS["primary"], ("#047857", "#4D7C0F"))
             self.assertEqual((dict(th.CATEGORY_COLOR), dict(th.THEME_COLOR), th.C["cyan"],
                               th.C["green"]), before)
             # Unbekannte Kennung -> Standard
@@ -1480,6 +1480,39 @@ class FarbenTest(unittest.TestCase):
             self.assertEqual(set(th.BACKGROUND_FIELDS) - set(item), set(), item["id"])
         self.assertEqual(len(set(th.BACKGROUND_IDS)), len(th.BACKGROUNDS))
         self.assertEqual(len(set(th.PRESET_IDS)), len(th.PRESETS))
+
+    def test_lesbarkeit_aller_kombinationen(self):
+        """WCAG-Kontrast: 4,5:1 fuer Schrift, auch in jeder Farbkombination."""
+        import fisi_theme as th
+
+        def lum(color):
+            def part(value):
+                value /= 255.0
+                return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+            r, g, b = th.hex_to_rgb(color)
+            return 0.2126 * part(r) + 0.7152 * part(g) + 0.0722 * part(b)
+
+        def ratio(a, b):
+            high, low = sorted((lum(a), lum(b)), reverse=True)
+            return (high + 0.05) / (low + 0.05)
+
+        surfaces = ("bg", "card", "card_alt", "card_hi")
+        for back in th.BACKGROUNDS:
+            for surface in surfaces:
+                for key in ("text", "text_soft"):
+                    self.assertGreaterEqual(ratio(th.C[key], back[surface]), 4.5)
+                for key in ("text_dim", "muted"):
+                    self.assertGreaterEqual(ratio(back[key], back[surface]), 4.5,
+                                            (back["id"], key, surface))
+                for item in th.PRESETS:
+                    for key in ("accent", "accent2"):
+                        self.assertGreaterEqual(ratio(item[key], back[surface]), 4.5,
+                                                (item["id"], back["id"], key, surface))
+        for item in th.PRESETS:
+            for gradient in ("primary", "verlauf", "hero"):
+                for color in item[gradient]:
+                    self.assertGreaterEqual(ratio("#FFFFFF", color), 4.5,
+                                            (item["id"], gradient, color))
 
 
 if __name__ == "__main__":

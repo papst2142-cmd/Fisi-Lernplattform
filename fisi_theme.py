@@ -35,7 +35,7 @@ C = {
     # Ueberschriften behalten "text".
     "text_soft": "#CFC6E0",
     "text_dim":  "#A794C6",
-    "muted":     "#7D6B9C",
+    "muted":     "#9986B8",
     "on_accent": "#FFFFFF",
     # Akzentfarben (aktiver Menuepunkt, Ringe, Links, Kalender-Pfeile ...).
     # Sie folgen der gewaehlten Grundfarbe (siehe PRESETS unten); "cyan" und
@@ -57,7 +57,7 @@ C = {
 # Farbverlaeufe (von, nach) - einheitlich fuer Buttons, Balken und Ringe
 GRADIENTS = {
     "primary": ("#7C3AED", "#DB2777"),   # Violett -> Magenta
-    "accent":  ("#0891B2", "#6366F1"),   # Tuerkis -> Indigo
+    "accent":  ("#0E7490", "#4F46E5"),   # Tuerkis -> Indigo
     "danger":  ("#DC2626", "#F97316"),   # Rot -> Orange
     "success": ("#059669", "#22D3EE"),   # Gruen -> Tuerkis
     "hero":    ("#4C1D95", "#9D174D"),   # Banner im Dashboard
@@ -78,7 +78,7 @@ DEFAULT_PRESET = "cyan_pink"
 PRESETS = [
     {"id": "cyan_pink", "name": "Cyan/Pink",
      "accent": "#22D3EE", "accent2": "#F472B6",
-     "primary": ("#7C3AED", "#DB2777"), "verlauf": ("#0891B2", "#6366F1"),
+     "primary": ("#7C3AED", "#DB2777"), "verlauf": ("#0E7490", "#4F46E5"),
      "hero": ("#4C1D95", "#9D174D")},
     {"id": "lila_magenta", "name": "Lila/Magenta",
      "accent": "#C084FC", "accent2": "#F0ABFC",
@@ -86,15 +86,15 @@ PRESETS = [
      "hero": ("#4C1D95", "#86198F")},
     {"id": "blau_tuerkis", "name": "Blau/Türkis",
      "accent": "#60A5FA", "accent2": "#2DD4BF",
-     "primary": ("#2563EB", "#0D9488"), "verlauf": ("#1D4ED8", "#0891B2"),
+     "primary": ("#2563EB", "#0F766E"), "verlauf": ("#1D4ED8", "#0E7490"),
      "hero": ("#1E3A8A", "#115E59")},
     {"id": "gruen_lime", "name": "Grün/Lime",
      "accent": "#34D399", "accent2": "#A3E635",
-     "primary": ("#059669", "#65A30D"), "verlauf": ("#047857", "#84CC16"),
+     "primary": ("#047857", "#4D7C0F"), "verlauf": ("#065F46", "#3F6212"),
      "hero": ("#064E3B", "#3F6212")},
     {"id": "orange_gelb", "name": "Orange/Gelb",
      "accent": "#FDBA74", "accent2": "#FDE047",
-     "primary": ("#EA580C", "#CA8A04"), "verlauf": ("#C2410C", "#EAB308"),
+     "primary": ("#C2410C", "#A16207"), "verlauf": ("#9A3412", "#854D0E"),
      "hero": ("#7C2D12", "#713F12")},
     {"id": "rot_pink", "name": "Rot/Pink",
      "accent": "#FB7185", "accent2": "#F9A8D4",
@@ -104,6 +104,10 @@ PRESETS = [
 PRESET_IDS = [item["id"] for item in PRESETS]
 current_preset = DEFAULT_PRESET
 
+# Lesbarkeit (WCAG-Kontrast, geprueft in test_spiel.FarbenTest): Texte und
+# "muted" mindestens 4,5:1 auf allen Flaechen, weisse Schrift auf den
+# Button-Verlaeufen mindestens 4,5:1, Akzentfarben als Schrift mindestens 4,5:1.
+#
 # Hintergrund (ab 0.31): Flaechen, Rahmen und die gedaempften Nebentexte.
 # Ueberschriften und Fliesstexte ("text", "text_soft") bleiben gleich, alle
 # Hintergruende sind dunkel genug dafuer. Lokal je Geraet ("hintergrund").
@@ -115,27 +119,27 @@ BACKGROUNDS = [
     {"id": "violett", "name": "Violett",
      "bg": "#120A24", "sidebar": "#0C0619", "card": "#1B1031", "card_alt": "#241541",
      "card_hi": "#301C57", "border": "#2F1D52", "border_hi": "#553289",
-     "ring_bg": "#2C1A4D", "text_dim": "#A794C6", "muted": "#7D6B9C"},
+     "ring_bg": "#2C1A4D", "text_dim": "#A794C6", "muted": "#9986B8"},
     {"id": "nachtblau", "name": "Nachtblau",
      "bg": "#0B1224", "sidebar": "#070C19", "card": "#111B33", "card_alt": "#172441",
      "card_hi": "#1E2F57", "border": "#1F2E52", "border_hi": "#33518A",
-     "ring_bg": "#1A2848", "text_dim": "#94A3C6", "muted": "#6B7A9C"},
+     "ring_bg": "#1A2848", "text_dim": "#94A3C6", "muted": "#8998BA"},
     {"id": "tannengruen", "name": "Tannengrün",
      "bg": "#0A1814", "sidebar": "#06100D", "card": "#10231D", "card_alt": "#152D26",
      "card_hi": "#1C3A31", "border": "#1D3A31", "border_hi": "#2F5F50",
-     "ring_bg": "#183229", "text_dim": "#93BBAE", "muted": "#6A8F83"},
+     "ring_bg": "#183229", "text_dim": "#93BBAE", "muted": "#7EA498"},
     {"id": "aubergine", "name": "Aubergine",
      "bg": "#1A0A14", "sidebar": "#11060D", "card": "#26101D", "card_alt": "#311527",
      "card_hi": "#401C33", "border": "#3D1D31", "border_hi": "#6A3255",
-     "ring_bg": "#3A1A2E", "text_dim": "#C294B0", "muted": "#99708A"},
+     "ring_bg": "#3A1A2E", "text_dim": "#C294B0", "muted": "#AE829D"},
     {"id": "anthrazit", "name": "Anthrazit",
      "bg": "#141416", "sidebar": "#0D0D0F", "card": "#1C1C20", "card_alt": "#242429",
      "card_hi": "#2E2E35", "border": "#2C2C33", "border_hi": "#4A4A55",
-     "ring_bg": "#2A2A31", "text_dim": "#A3A3B0", "muted": "#767684"},
+     "ring_bg": "#2A2A31", "text_dim": "#A3A3B0", "muted": "#9595A2"},
     {"id": "schwarz", "name": "Schwarz",
      "bg": "#050507", "sidebar": "#000000", "card": "#111114", "card_alt": "#18181C",
      "card_hi": "#222228", "border": "#25252B", "border_hi": "#3E3E48",
-     "ring_bg": "#1F1F25", "text_dim": "#A3A3B0", "muted": "#737380"},
+     "ring_bg": "#1F1F25", "text_dim": "#A3A3B0", "muted": "#888895"},
 ]
 BACKGROUND_IDS = [item["id"] for item in BACKGROUNDS]
 current_background = DEFAULT_BACKGROUND
