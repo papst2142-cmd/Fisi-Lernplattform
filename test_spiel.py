@@ -1902,6 +1902,8 @@ class FirmaTest(unittest.TestCase):
         with TempDB() as db:
             game = self._rich(db)
             self.assertTrue(game.state.founding_ready())
+            # Alles erledigt: Feierabend geht weiter (bis zur Gruendung sparen)
+            self.assertTrue(game.state.can_end_day())
             with self.assertRaises(ValueError):
                 game.found_firm("   ")
 

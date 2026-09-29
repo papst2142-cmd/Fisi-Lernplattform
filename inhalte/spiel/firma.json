@@ -228,7 +228,7 @@
         "name": "Zweites Büro",
         "preis": 12000,
         "nebenkosten": 90,
-        "text": "Ein zweites Büro unter dem Flur: drei weitere Arbeitsplätze und eine Werkbank für Testgeräte.",
+        "text": "Ein zweites Büro unter dem Flur: drei weitere Arbeitsplätze und ein Tisch für Testgeräte.",
         "plaetze": [
           [
             5.0,
@@ -479,7 +479,7 @@
                 "bis": 8.6
               },
               "boden": "teppichboden",
-              "text": "Der Ausbau: drei weitere Arbeitsplätze und eine Ecke für Testgeräte.",
+              "text": "Der Ausbau: drei weitere Arbeitsplätze und ein Tisch für Testgeräte.",
               "deko": [
                 {
                   "typ": "schreibtisch",
@@ -506,11 +506,11 @@
                   "blick": "s"
                 },
                 {
-                  "typ": "werkbank",
-                  "x": 14.3,
-                  "y": 8.4,
-                  "w": 1.4,
-                  "h": 2.4
+                  "typ": "tisch",
+                  "x": 14.0,
+                  "y": 8.2,
+                  "w": 1.6,
+                  "h": 2.6
                 },
                 {
                   "typ": "regal",

@@ -395,6 +395,10 @@ def room(room_id, content=None):
     content = content or GAME
     buildings = [content["gebaeude"]] + [place["gebaeude"] for place in
                                          content.get("kunden", {}).get("orte", [])]
+    # Raeume der eigenen Firma (ab 0.33) - die letzte Ausbaustufe hat alle
+    stages = content.get("firma", {}).get("gebaeude", {}).get("stufen") or []
+    if stages:
+        buildings.append(stages[-1]["gebaeude"])
     for building in buildings:
         for item in building["raeume"]:
             if item["id"] == room_id:
@@ -518,6 +522,8 @@ def validate_game_content(content=None):
     content = content or GAME
     problems = []
     site_rooms = {SITE_OFFICE: {item["id"] for item in content["gebaeude"]["raeume"]}}
+    for stage in (content.get("firma") or {}).get("gebaeude", {}).get("stufen", [])[-1:]:
+        site_rooms["firma"] = {item["id"] for item in stage["gebaeude"]["raeume"]}
     for place in customer_places(content):
         site_rooms[place["id"]] = {item["id"] for item in place["gebaeude"]["raeume"]}
     rooms = set().union(*site_rooms.values())
@@ -3509,10 +3515,12 @@ class GameState:
 
     def can_end_day(self):
         # Auch ohne bearbeitetes Ticket, wenn heute nur auf Lieferungen oder
-        # spaetere Auftraege gewartet wird - sonst saesse man fest.
+        # spaetere Auftraege gewartet wird - sonst saesse man fest. Ab 0.33
+        # auch, wenn alles erledigt ist: Bis zur Gruendung wird weiter
+        # gespart, danach laeuft die eigene Firma.
         if self.firm:
             return True
-        return not self.open_tickets() and (bool(self.handled) or not self.all_done())
+        return not self.open_tickets()
 
     def all_done(self):
         """Keine Aufgabe mehr offen - weder heute noch an spaeteren Tagen."""
@@ -3783,6 +3791,49 @@ BOOK_WAGES = "Gehälter"
 BOOK_COSTS = "Nebenkosten"
 BOOK_TRAINING = "Weiterbildung"
 BOOK_BUILDING = "Ausbau"
+
+
+# Reiter im Unterpunkt "Firma" (PC und Handy gleich beschriftet)
+FIRM_TABS = [("mitarbeiter", "Mitarbeiter"), ("bewerbungen", "Bewerbungen"),
+             ("gebaeude", "Gebäude"), ("finanzen", "Finanzen")]
+
+
+FIRM_IDLE_TEXT = ("Bitweiche-Tickets gibt es für dich nicht mehr. Deine Leute kümmern sich "
+                  "um Routineaufträge, die bringen jeden Arbeitstag Umsatz. Neue "
+                  "Kundenanfragen kommen in einem der nächsten Updates.")
+FOUNDING_TEASER = ("Du hast alles, was du für eine eigene Firma brauchst: genug Erspartes, "
+                   "gutes Ansehen und keinen offenen Auftrag mehr.")
+
+
+def firm_tabs(state):
+    """Vor der Gruendung gibt es nur die Finanzen."""
+    return FIRM_TABS if state.firm else [tab for tab in FIRM_TABS if tab[0] == "finanzen"]
+
+
+def values_text(values):
+    """ "Netzwerk 35 · Sicherheit 15 · ..." """
+    return " · ".join("%s %d" % (CATEGORY_SHORT[CAT_NAME[key]], values.get(key, 0))
+                      for key in CAT_ORDER)
+
+
+def staff_money_text(item, content=None):
+    """Gehalt und Umsatz einer Person pro Arbeitstag."""
+    revenue = item.get("umsatz")
+    if revenue is None:
+        revenue = staff_revenue(item["werte"], content)
+    return "Gehalt %s · Umsatz %s pro Arbeitstag" % (_whole_euro(item["gehalt"]),
+                                                     _whole_euro(revenue))
+
+
+def training_text(state, item):
+    """Zeile zur laufenden Weiterbildung (oder leer)."""
+    training = item.get("weiterbildung")
+    if not training:
+        return ""
+    left = training["bis_tag"] - state.day
+    return "In Weiterbildung (%s, +%d) · noch %s" % (
+        CATEGORY_SHORT[CAT_NAME[training["cat"]]], training["plus"],
+        "1 Arbeitstag" if left == 1 else "%d Arbeitstage" % left)
 
 
 def firm_rules(content=None):
