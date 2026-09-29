@@ -80,6 +80,14 @@ EV_HIRED = "mitarbeiter_eingestellt"
 EV_FIRED = "mitarbeiter_gekuendigt"
 EV_TRAINING = "weiterbildung"
 EV_EXPAND = "gebaeude_erweitert"
+# Angebote und Kundentickets (ab 0.34): Das Ergebnis eines Angebots steht mit
+# Bitweiche-Preis und Geld im Ereignis; wer ein Kundenticket uebernimmt steht
+# in ticket_delegiert, das Ergebnis im Feierabend (tag_beendet -> firma)
+EV_OFFER_WON = "angebot_gewonnen"
+EV_OFFER_LOST = "angebot_verloren"
+EV_DELEGATED = "ticket_delegiert"
+FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
+               EV_OFFER_LOST, EV_DELEGATED)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -3035,6 +3043,9 @@ class GameState:
         # Kassenbuch je Arbeitstag: tag -> {"ein": {art: euro}, "aus": {art: euro}}
         self.book = {}
         self.balances = []         # (tag, kontostand) nach jedem Feierabend
+        self.offers = {}           # anfrage -> Ergebnis des Angebots (ab 0.34)
+        self.delegations = {}      # kundenticket -> wer es uebernimmt (ab 0.34)
+        self.ticket_results = {}   # kundenticket -> Ergebnis aus dem Feierabend
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3042,7 +3053,7 @@ class GameState:
                 self.first_event = str(timestamp)
             today = int(data.get("tag") or 0) if isinstance(data.get("tag"), int) else 0
             today = today or self.days_done + 1
-            if kind in (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND):
+            if kind in FIRM_EVENTS:
                 self._apply_firm(kind, data, today)
             if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
                 self.seen_incidents.add(data.get("aufgabe"))
@@ -3111,6 +3122,13 @@ class GameState:
                 self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
                 self._book(today, BOOK_WAGES, -int(firm.get("gehaelter", 0)))
                 self._book(today, BOOK_COSTS, -int(firm.get("nebenkosten", 0)))
+                for item in firm.get("tickets") or []:
+                    if item.get("ticket") in self.ticket_results:
+                        continue
+                    self.ticket_results[item.get("ticket")] = dict(item)
+                    self.money += int(item.get("geld", 0))
+                    self._book(today, BOOK_TICKETS, item.get("geld", 0))
+                    self._apply_reputation(item.get("reputation") or {})
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
 
@@ -3158,6 +3176,20 @@ class GameState:
             self.firm["stufe"] += 1
             self.money += int(data.get("geld", 0))
             self._book(day, BOOK_BUILDING, data.get("geld", 0))
+        elif kind in (EV_OFFER_WON, EV_OFFER_LOST) and data.get("anfrage") and \
+                data["anfrage"] not in self.offers:
+            self.offers[data["anfrage"]] = dict(data, gewonnen=kind == EV_OFFER_WON)
+            self.money += int(data.get("geld", 0))
+            self._book(day, BOOK_OFFERS, data.get("geld", 0))
+            self._apply_reputation(data.get("reputation") or {})
+        elif kind == EV_DELEGATED and data.get("ticket") and \
+                data["ticket"] not in self.delegations:
+            # Auf zwei Geraeten gleichzeitig verteilt: Wer schon voll ist,
+            # bekommt nichts mehr dazu
+            taken = [item for item in self.delegations.values()
+                     if item.get("tag") == data.get("tag") and item.get("an") == data.get("an")]
+            if len(taken) < ticket_limit(data.get("an"), self.content):
+                self.delegations[data["ticket"]] = dict(data)
 
     def _apply_reputation(self, delta):
         for key, value in delta.items():
@@ -3288,6 +3320,33 @@ class GameState:
         return {"umsatz": sum(item["umsatz"] for item in staff),
                 "gehaelter": sum(int(item.get("gehalt", 0)) for item in staff),
                 "nebenkosten": int(self.firm_stage().get("nebenkosten", 0))}
+
+    @property
+    def firm_seed(self):
+        return "%s|%s" % (self.firm["name"], self.firm["tag"]) if self.firm else ""
+
+    def inquiries(self):
+        """Kundenanfragen des laufenden Arbeitstags (mit Ergebnis, falls schon
+        ein Angebot abgegeben wurde)."""
+        return inquiries_for_day(self, self.day, self.content)
+
+    def customer_tickets(self):
+        """Kundentickets des laufenden Arbeitstags (mit "an", falls verteilt)."""
+        return tickets_for_day(self, self.day, self.content)
+
+    def delegated_to(self, person, day=None):
+        """Kundentickets, die eine Person (Mitarbeiter-Kennung oder SELF) am
+        Tag uebernommen hat."""
+        day = self.day if day is None else day
+        return [item for item in self.delegations.values()
+                if item.get("tag") == day and item.get("an") == person]
+
+    def firm_open_count(self):
+        """Offene Anfragen und noch nicht verteilte Kundentickets heute."""
+        if not self.firm:
+            return 0
+        return sum(1 for item in self.inquiries() if not item.get("ergebnis")) + \
+            sum(1 for item in self.customer_tickets() if not item.get("an"))
 
     # -- Lager ------------------------------------------------------------
 
@@ -3612,6 +3671,9 @@ class Game:
             payload["miete"] = self.state.rent
         if self.state.firm:
             payload["firma"] = self.state.firm_day()
+            outcomes = ticket_outcomes(self.state, self.content)
+            if outcomes:
+                payload["firma"]["tickets"] = outcomes
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -3685,6 +3747,43 @@ class Game:
         payload = {"stufe": stage["stufe"], "geld": -int(stage["preis"]),
                    "tag": self.state.day}
         self._log(EV_EXPAND, payload)
+        return payload
+
+    def send_offer(self, inquiry_id, markup, answer):
+        """Gibt ein Angebot zu einer Kundenanfrage ab. Das Ergebnis (gegen
+        Bitweiche gewonnen oder verloren) steht sofort fest."""
+        self._firm_required()
+        inquiry = next((item for item in self.state.inquiries()
+                        if item["id"] == inquiry_id), None)
+        if inquiry is None or inquiry.get("ergebnis"):
+            raise ValueError("Diese Anfrage liegt heute nicht (mehr) vor.")
+        if markup not in offer_rules(self.content)["zuschlaege"]:
+            raise ValueError("Bitte wähle einen Gewinnzuschlag.")
+        payload = offer_result(self.state, inquiry, markup, answer, self.content)
+        self._log(EV_OFFER_WON if payload["gewonnen"] else EV_OFFER_LOST, payload)
+        return payload
+
+    def delegate(self, ticket_id, person):
+        """Verteilt ein Kundenticket an einen Mitarbeiter oder an sich selbst
+        (person = SELF). Die Erfolgschance wird hier festgehalten, das
+        Ergebnis gibt es beim Feierabend."""
+        self._firm_required()
+        ticket = next((item for item in self.state.customer_tickets()
+                       if item["id"] == ticket_id), None)
+        if ticket is None:
+            raise ValueError("Dieses Kundenticket liegt heute nicht (mehr) vor.")
+        if ticket.get("an"):
+            raise ValueError("Dieses Kundenticket ist schon verteilt.")
+        option = next((item for item in ticket_candidates(self.state, ticket,
+                                                          self.knowledge(), self.content)
+                       if item["an"] == person), None)
+        if option is None:
+            raise ValueError("Diese Person arbeitet nicht bei dir.")
+        if option["problem"]:
+            raise ValueError(option["problem"])
+        payload = {"ticket": ticket_id, "vorlage": ticket["vorlage"], "tag": self.state.day,
+                   "an": person, "name": option["name"], "chance": option["chance"]}
+        self._log(EV_DELEGATED, payload)
         return payload
 
     def reset(self):
@@ -3791,16 +3890,23 @@ BOOK_WAGES = "Gehälter"
 BOOK_COSTS = "Nebenkosten"
 BOOK_TRAINING = "Weiterbildung"
 BOOK_BUILDING = "Ausbau"
+BOOK_OFFERS = "Angebote"
+BOOK_TICKETS = "Kundentickets"
+
+SELF = "ich"                       # Kundenticket uebernimmt die Spielfigur selbst
+INQUIRY_PREFIX = "anfrage:"        # anfrage:<tag>:<nummer>
+TICKET_PREFIX = "kundenticket:"    # kundenticket:<tag>:<vorlage>
 
 
 # Reiter im Unterpunkt "Firma" (PC und Handy gleich beschriftet)
-FIRM_TABS = [("mitarbeiter", "Mitarbeiter"), ("bewerbungen", "Bewerbungen"),
+FIRM_TABS = [("auftraege", "Aufträge"), ("mitarbeiter", "Mitarbeiter"),
+             ("bewerbungen", "Bewerbungen"),
              ("gebaeude", "Gebäude"), ("finanzen", "Finanzen")]
 
 
-FIRM_IDLE_TEXT = ("Bitweiche-Tickets gibt es für dich nicht mehr. Deine Leute kümmern sich "
-                  "um Routineaufträge, die bringen jeden Arbeitstag Umsatz. Neue "
-                  "Kundenanfragen kommen in einem der nächsten Updates.")
+FIRM_IDLE_TEXT = ("Für heute ist alles verteilt und angeboten. Deine Leute kümmern sich "
+                  "außerdem um Routineaufträge, die bringen jeden Arbeitstag Umsatz. "
+                  "Die Ergebnisse der Kundentickets gibt es beim Feierabend.")
 FOUNDING_TEASER = ("Du hast alles, was du für eine eigene Firma brauchst: genug Erspartes, "
                    "gutes Ansehen und keinen offenen Auftrag mehr.")
 
@@ -3978,7 +4084,10 @@ def firm_people(state, content=None):
             continue
         x, y, room_id = item["platz"]
         training = item.get("weiterbildung")
+        task = next((ticket for ticket in state.customer_tickets()
+                     if ticket.get("an") == item["id"]), None)
         result.append({"id": item["id"], "name": item["name"], "rolle": item["rolle"],
+                       "kundenticket": task,
                        "raum": room_id, "platz": [float(x), float(y)],
                        "aussehen": item.get("aussehen"), "macke": item.get("macke", ""),
                        "mitarbeiter": True, "umsatz": item["umsatz"],
@@ -4046,10 +4155,373 @@ def firm_summary(state):
 
 
 def firm_day_text(numbers):
-    """ "Umsatz: +300 €. Gehälter: -180 €. Nebenkosten: -40 €." """
-    return "Umsatz Mitarbeiter: +%s. Gehälter: -%s. Nebenkosten: -%s." % (
+    """ "Umsatz: +300 €. Gehälter: -180 €. Nebenkosten: -40 €." - dazu je
+    Kundenticket eine Zeile mit dem Ergebnis (ab 0.34)."""
+    text = "Umsatz Mitarbeiter: +%s. Gehälter: -%s. Nebenkosten: -%s." % (
         _whole_euro(numbers.get("umsatz", 0)), _whole_euro(numbers.get("gehaelter", 0)),
         _whole_euro(numbers.get("nebenkosten", 0)))
+    lines = [ticket_result_text(item) for item in numbers.get("tickets") or []]
+    if lines:
+        text += "\n\nKundentickets:\n" + "\n".join("• " + line for line in lines)
+    return text
+
+
+# -- Angebote und Kundentickets (ab 0.34) ---------------------------------------
+#
+# Anfragen und Tickets eines Arbeitstags werden wie die Bewerber aus festen
+# Pruefwerten berechnet (Firmenname, Gruendungstag, Arbeitstag). Gespeichert
+# wird erst, was man daraus macht: das abgegebene Angebot mit Ergebnis und wer
+# welches Ticket uebernimmt.
+
+def offer_rules(content=None):
+    return firm_rules(content)["angebote"]
+
+
+def ticket_rules(content=None):
+    return firm_rules(content)["tickets"]
+
+
+def firm_customer(customer_id, content=None):
+    return next((item for item in firm_rules(content).get("kunden", [])
+                 if item["id"] == customer_id), None)
+
+
+def _between(seed, day, salt, low, high):
+    """Ganze Zahl von low bis high (beide einschliesslich), fest gewuerfelt."""
+    return low + min(high - low, int(_dice(seed, day, salt) * (high - low + 1)))
+
+
+def inquiries_for_day(state, day, content=None):
+    """Die Kundenanfragen eines Arbeitstags:
+    [{"id", "tag", "kunde" {...}, "artikel", "menge", "einkaufspreis",
+      "lieferzeit", "markt" (Bitweiche-Zuschlag in %, erst nach dem Angebot
+      zeigen), "text", "ergebnis" (Ereignisdaten oder None)}]"""
+    content = content or GAME
+    if not state.firm:
+        return []
+    rules = offer_rules(content)
+    customers = firm_rules(content)["kunden"]
+    seed = state.firm_seed
+    first = int(_dice(seed, day, "anfrage-kunde") * len(customers))
+    result = []
+    for number in range(int(rules["pro_tag"])):
+        salt = "anfrage%d-" % number
+        # Verschiedene Kunden am selben Tag
+        customer = customers[(first + number * max(1, len(customers) // 2 - 1))
+                             % len(customers)]
+        article = _pick(rules["artikel"], seed, day, salt + "artikel")
+        low, high = article["preis"]
+        price = int(round((low + _dice(seed, day, salt + "preis") * (high - low)) / 5.0) * 5)
+        count = _between(seed, day, salt + "menge", *article["menge"])
+        kind = rules["arten"][customer["art"]]
+        market = _between(seed, day, salt + "markt", kind["von"], kind["bis"])
+        delivery = _between(seed, day, salt + "lieferzeit", rules["lieferzeit"]["von"],
+                            rules["lieferzeit"]["bis"])
+        text = _pick(rules["texte"], seed, day, salt + "text").format(
+            kontakt=customer["kontakt"], menge=count, artikel=article["name"],
+            lieferzeit=delivery)
+        inquiry_id = "%s%d:%d" % (INQUIRY_PREFIX, day, number + 1)
+        result.append({"id": inquiry_id, "tag": day, "kunde": customer,
+                       "artikel": article["name"], "menge": count, "einkaufspreis": price,
+                       "lieferzeit": delivery, "markt": market,
+                       "text": "%s\n\n%s" % (text, customer["satz"]),
+                       "ergebnis": state.offers.get(inquiry_id)})
+    return result
+
+
+def inquiry_task(inquiry, markup, content=None):
+    """Die Anfrage als Formular-Aufgabe (Zuschlagskalkulation wie seit 0.28),
+    damit PC und Handy die vorhandene Formular-Ansicht nutzen koennen."""
+    rules = offer_rules(content)
+    return {"id": inquiry["id"], "typ": "formular", "art": "angebot",
+            "titel": "Angebot für %s" % inquiry["kunde"]["name"],
+            "ticket": inquiry["text"],
+            "frage": "Wähle deinen Gewinnzuschlag und rechne das Angebot durch.",
+            "daten": {"menge": inquiry["menge"], "artikel": inquiry["artikel"],
+                      "einkaufspreis": inquiry["einkaufspreis"],
+                      "handlungskosten": rules["handlungskosten"], "gewinn": markup,
+                      "ust": rules["ust"]},
+            "hilfe": list(rules.get("hilfe") or [])}
+
+
+def offer_numbers(inquiry, markup, content=None):
+    """{schluessel: wert} der richtigen Zuschlagskalkulation."""
+    task = inquiry_task(inquiry, markup, content)
+    return {key: value for key, _label, value in offer_values(task["daten"])}
+
+
+def market_price(inquiry, content=None):
+    """Nettopreis von Bitweiche: dieselben Selbstkosten plus Bitweiches Zuschlag."""
+    cost = offer_numbers(inquiry, 0, content)["selbstkosten"]
+    return _money(cost * (1 + inquiry["markt"] / 100.0))
+
+
+def offer_advantage(state, content=None):
+    """Wie viel Prozent man ueber Bitweiche liegen darf (guter Ruf)."""
+    rule = offer_rules(content)["vorteil"]
+    return rule["prozent"] if state.reputation.get("kundenzufriedenheit", 0) >= \
+        rule["ab_kundenzufriedenheit"] else 0
+
+
+def offer_result(state, inquiry, markup, answer, content=None):
+    """Bewertet ein Angebot: Rechnung richtig und Preis nicht hoeher als
+    der von Bitweiche (plus Vorteil) - dann ist der Auftrag gewonnen."""
+    content = content or GAME
+    rules = offer_rules(content)
+    task = inquiry_task(inquiry, markup, content)
+    problems = form_problems(task, answer, content)
+    numbers = offer_numbers(inquiry, markup, content)
+    market = market_price(inquiry, content)
+    advantage = offer_advantage(state, content)
+    right = not problems
+    cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
+    won = right and cheap
+    payload = {"anfrage": inquiry["id"], "tag": inquiry["tag"],
+               "kunde": inquiry["kunde"]["id"], "artikel": inquiry["artikel"],
+               "menge": inquiry["menge"], "zuschlag": markup,
+               "antwort": dict(answer or {}), "richtig": right,
+               "selbstkosten": numbers["selbstkosten"], "netto": numbers["netto"],
+               "marktpreis": market, "markt_zuschlag": inquiry["markt"],
+               "vorteil": advantage, "gewonnen": won,
+               "grund": "" if won else ("rechenfehler" if not right else "preis"),
+               "geld": int(round(numbers["gewinn"])) if won else 0,
+               "reputation": {"kundenzufriedenheit": rules["kundenzufriedenheit_gewonnen"]}
+               if won else {}}
+    if problems:
+        payload["probleme"] = problems
+    return payload
+
+
+def offer_result_text(payload, content=None):
+    """(Ueberschrift, Text) nach dem Abschicken eines Angebots."""
+    customer = firm_customer(payload.get("kunde"), content) or {"name": "Der Kunde"}
+    own = _euro(payload["netto"])
+    market = _euro(payload["marktpreis"])
+    if payload.get("gewonnen"):
+        head = "Auftrag gewonnen"
+        text = ("%s nimmt dein Angebot an. Du lagst netto bei %s, Bitweiche bei %s "
+                "(Zuschlag %d %%). Gewinn für deine Firma: +%s." % (
+                    customer["name"], own, market, payload["markt_zuschlag"],
+                    _whole_euro(payload["geld"])))
+        if payload.get("vorteil") and payload["netto"] > payload["marktpreis"]:
+            text += (" Knapp über Bitweiche, aber dein guter Ruf bei den Kunden hat "
+                     "den Ausschlag gegeben.")
+        return head, text
+    if payload.get("grund") == "rechenfehler":
+        head = "Auftrag verloren: Fehler im Angebot"
+        text = ("%s hat einen Fehler in deiner Kalkulation gefunden und bestellt bei "
+                "Bitweiche (netto %s). Richtig gerechnet wären es mit %d %% Zuschlag "
+                "netto %s gewesen." % (customer["name"], market, payload["zuschlag"], own))
+        return head, text
+    head = "Auftrag an Bitweiche verloren"
+    text = ("Die Rechnung stimmt, aber Bitweiche war günstiger: netto %s (Zuschlag %d %%) "
+            "gegen deine %s (Zuschlag %d %%)." % (market, payload["markt_zuschlag"], own,
+                                                  payload["zuschlag"]))
+    if payload.get("vorteil"):
+        text += " Selbst mit dem Bonus für deinen guten Ruf (%d %%) hat es nicht gereicht." \
+            % payload["vorteil"]
+    return head, text
+
+
+def inquiry_status_text(inquiry):
+    """Kurze Zeile zum Stand einer Anfrage."""
+    result = inquiry.get("ergebnis")
+    if not result:
+        return "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
+            inquiry["menge"], _euro(inquiry["einkaufspreis"]), inquiry["lieferzeit"])
+    if result.get("gewonnen"):
+        return "Gewonnen · Gewinn +%s" % _whole_euro(result.get("geld", 0))
+    if result.get("grund") == "rechenfehler":
+        return "Verloren · Fehler im Angebot"
+    return "Verloren · Bitweiche war günstiger"
+
+
+def ticket_limit(person, content=None):
+    rules = ticket_rules(content)
+    return int(rules["spieler_max"] if person == SELF else rules["mitarbeiter_max"])
+
+
+def ticket_chance(value, need, content=None):
+    """Erfolgschance in Prozent (ganze Zahl)."""
+    rule = ticket_rules(content)["chance"]
+    chance = rule["basis"] + rule["je_punkt"] * (float(value) - need)
+    return int(round(max(rule["min"], min(rule["max"], chance))))
+
+
+def tickets_for_day(state, day, content=None):
+    """Die Kundentickets eines Arbeitstags:
+    [{"id", "vorlage", "titel", "text", "kunde" {...}, "cat", "stufe",
+      "anforderung", "geld", "an" (Kennung oder None), "name", "chance",
+      "ergebnis" (nach dem Feierabend)}]"""
+    content = content or GAME
+    if not state.firm:
+        return []
+    rules = ticket_rules(content)
+    seed = state.firm_seed
+    count = max(int(rules["mindestens"]),
+                int(rules["grundzahl"]) + int(rules["je_mitarbeiter"]) * len(state.staff))
+    order = sorted(rules["vorlagen"], key=lambda item: _dice(seed, day, "kt|" + item["id"]))
+    chosen = order[:count]
+    # Schon verteilte Tickets bleiben, auch wenn inzwischen jemand gegangen ist
+    for item in order[count:]:
+        if "%s%d:%s" % (TICKET_PREFIX, day, item["id"]) in state.delegations:
+            chosen.append(item)
+    result = []
+    for item in chosen:
+        ticket_id = "%s%d:%s" % (TICKET_PREFIX, day, item["id"])
+        level = rules["stufen"][item["stufe"]]
+        given = state.delegations.get(ticket_id) or {}
+        result.append({"id": ticket_id, "vorlage": item["id"], "titel": item["titel"],
+                       "text": item["text"], "kunde": firm_customer(item["kunde"], content),
+                       "cat": item["cat"], "stufe": level["name"],
+                       "anforderung": level["anforderung"], "geld": level["geld"],
+                       "an": given.get("an"), "name": given.get("name"),
+                       "chance": given.get("chance"),
+                       "ergebnis": state.ticket_results.get(ticket_id)})
+    return result
+
+
+def ticket_candidates(state, ticket, levels, content=None):
+    """Wer ein Kundenticket uebernehmen kann: [{"an", "name", "wert", "chance",
+    "problem"}] - zuerst die Spielfigur (echter Wissensstand), dann die
+    Mitarbeiter. problem ist leer, wenn die Person frei ist."""
+    content = content or GAME
+    cat = ticket["cat"]
+    result = []
+    own = int(round((levels or {}).get(cat, 0)))
+    name = (state.profile or {}).get("name") or "Ich"
+    result.append({"an": SELF, "name": "Ich selbst (%s)" % name, "wert": own,
+                   "chance": ticket_chance(own, ticket["anforderung"], content),
+                   "problem": "" if len(state.delegated_to(SELF)) < ticket_limit(SELF, content)
+                   else "Du hast heute schon %d Kundentickets übernommen."
+                   % ticket_limit(SELF, content)})
+    for item in state.staff_list():
+        value = int(item["werte"].get(cat, 0))
+        problem = ""
+        if item.get("weiterbildung"):
+            problem = "%s ist gerade in einer Weiterbildung." % item["name"]
+        elif len(state.delegated_to(item["id"])) >= ticket_limit(item["id"], content):
+            problem = "%s hat heute schon ein Kundenticket." % item["name"]
+        result.append({"an": item["id"], "name": item["name"], "wert": value,
+                       "chance": ticket_chance(value, ticket["anforderung"], content),
+                       "problem": problem})
+    return result
+
+
+def ticket_outcomes(state, content=None):
+    """Ergebnisse der heute verteilten Kundentickets fuer den Feierabend.
+    Gewuerfelt wird fest aus Firma, Tag und Ticket - auf allen Geraeten gleich."""
+    content = content or GAME
+    rules = ticket_rules(content)
+    result = []
+    for ticket in state.customer_tickets():
+        if not ticket.get("an") or ticket.get("ergebnis"):
+            continue
+        roll = _dice(state.firm_seed, state.day, "erfolg|" + ticket["id"])
+        success = roll * 100 < ticket["chance"]
+        rule = rules["erfolg"] if success else rules["fehlschlag"]
+        result.append({"ticket": ticket["id"], "vorlage": ticket["vorlage"],
+                       "titel": ticket["titel"], "kunde": ticket["kunde"]["name"],
+                       "an": ticket["an"], "name": ticket["name"], "erfolg": success,
+                       "geld": ticket["geld"] if success else 0,
+                       "reputation": {key: value for key, value in rule.items() if value}})
+    return result
+
+
+def ticket_result_text(item):
+    """ "Mira Kessler: Scanner an der Anmeldung installieren (Praxis Dr. Keller)
+    erledigt, +60 €" """
+    who = "Du" if item.get("an") == SELF else short_name({"name": item.get("name", "")})
+    if item.get("erfolg"):
+        return "%s: „%s“ für %s erledigt, +%s" % (who, item["titel"], item["kunde"],
+                                                  _whole_euro(item.get("geld", 0)))
+    return "%s: „%s“ für %s nicht geschafft, der Kunde ist unzufrieden" % (
+        who, item["titel"], item["kunde"])
+
+
+def ticket_line(ticket):
+    """Zeile unter einem Kundenticket: Fachbereich, Schwierigkeit, Honorar."""
+    text = "%s · %s · %s" % (CATEGORY_SHORT[CAT_NAME[ticket["cat"]]], ticket["stufe"],
+                              _whole_euro(ticket["geld"]))
+    if ticket.get("an"):
+        who = "dir" if ticket["an"] == SELF else short_name({"name": ticket["name"]})
+        text += " · übernommen von %s (Chance %d %%)" % (who, ticket["chance"])
+    return text
+
+
+def firm_orders_summary(state):
+    """Eine Zeile fuer die Uebersicht: was heute noch zu tun ist."""
+    inquiries = [item for item in state.inquiries() if not item.get("ergebnis")]
+    tickets = [item for item in state.customer_tickets() if not item.get("an")]
+    parts = []
+    if inquiries:
+        parts.append("1 Anfrage" if len(inquiries) == 1 else "%d Anfragen" % len(inquiries))
+    if tickets:
+        parts.append("1 Kundenticket" if len(tickets) == 1 else
+                     "%d Kundentickets" % len(tickets))
+    return "Heute offen: %s" % " und ".join(parts) if parts else ""
+
+
+def _validate_orders(rules):
+    """firma.json ab 0.34: Kunden, Anfragen und Kundentickets."""
+    problems = []
+    for key in ("kunden", "angebote", "tickets"):
+        if key not in rules:
+            problems.append("Spiel-Firma: Abschnitt '%s' fehlt" % key)
+    if problems:
+        return problems
+    offers, tickets = rules["angebote"], rules["tickets"]
+    customers = {}
+    for item in rules["kunden"]:
+        if item.get("id") in customers:
+            problems.append("Spiel-Firma: Kunde '%s' doppelt" % item.get("id"))
+        customers[item.get("id")] = item
+        if item.get("art") not in offers.get("arten", {}):
+            problems.append("Spiel-Firma: Kunde '%s' hat eine unbekannte Art" % item.get("id"))
+        for key in ("name", "kontakt", "satz"):
+            if not item.get(key):
+                problems.append("Spiel-Firma: Kunde '%s' ohne %s" % (item.get("id"), key))
+    if len(customers) < 3:
+        problems.append("Spiel-Firma: zu wenige Kunden")
+    for key, kind in offers.get("arten", {}).items():
+        if not 0 <= kind["von"] <= kind["bis"] <= 100:
+            problems.append("Spiel-Firma: Spanne der Kundenart '%s' ungueltig" % key)
+    markups = offers.get("zuschlaege") or []
+    if not markups or any(not 0 <= value <= 100 for value in markups):
+        problems.append("Spiel-Firma: Gewinnzuschlaege fehlen oder sind ungueltig")
+    if not offers.get("artikel"):
+        problems.append("Spiel-Firma: keine Artikel fuer Anfragen")
+    for item in offers.get("artikel") or []:
+        low, high = item["preis"]
+        few, many = item["menge"]
+        if not 0 < low <= high or not 0 < few <= many:
+            problems.append("Spiel-Firma: Artikel '%s' mit ungueltiger Spanne" % item["name"])
+    for text in offers.get("texte") or []:
+        try:
+            text.format(kontakt="", menge=1, artikel="", lieferzeit=1)
+        except (KeyError, IndexError, ValueError):
+            problems.append("Spiel-Firma: Anfragetext mit unbekanntem Platzhalter")
+    if not offers.get("texte"):
+        problems.append("Spiel-Firma: keine Anfragetexte")
+    seen = set()
+    for item in tickets.get("vorlagen") or []:
+        where = "Spiel-Firma Kundenticket '%s'" % item.get("id")
+        if item.get("id") in seen:
+            problems.append("%s: doppelt" % where)
+        seen.add(item.get("id"))
+        if item.get("cat") not in CAT_ORDER:
+            problems.append("%s: unbekannter Fachbereich" % where)
+        if item.get("stufe") not in tickets.get("stufen", {}):
+            problems.append("%s: unbekannte Schwierigkeit" % where)
+        if item.get("kunde") not in customers:
+            problems.append("%s: unbekannter Kunde" % where)
+        if not item.get("titel") or len(item.get("text", "")) > MAX_TICKET_CHARS:
+            problems.append("%s: Titel fehlt oder Text zu lang" % where)
+    need = max(int(tickets.get("mindestens", 0)), int(tickets.get("grundzahl", 0)) +
+               int(tickets.get("je_mitarbeiter", 0)) * 10)
+    if len(seen) < need:
+        problems.append("Spiel-Firma: zu wenige Kundentickets (mindestens %d)" % need)
+    return problems
 
 
 def _validate_firm(content):
@@ -4091,6 +4563,7 @@ def _validate_firm(content):
     rule = rules["bewerbung"]
     if not 0 <= rule["werte_min"] <= rule["werte_max"] <= 90:
         problems.append("Spiel-Firma: Wertebereich der Bewerber ungueltig")
+    problems += _validate_orders(rules)
     ids = {person["id"] for person in content["kollegen"]}
     for item in rules.get("wechsel", []):
         if item.get("kollege") not in ids:
@@ -5221,6 +5694,13 @@ def office_message(position, person, quests, content=None, state=None):
             return ("%s hat einen Auftrag für dich" % first,
                     "„%s“ · Priorität %s%s" % (tasks[0]["titel"], tasks[0]["prioritaet"],
                                                more))
+        if person.get("mitarbeiter") and person.get("kundenticket"):
+            ticket = person["kundenticket"]
+            return ("%s · %s" % (person["name"], person["rolle"]),
+                    "Sitzt heute an „%s“ für %s (Chance %d %%). Dazu Routineaufträge: %s "
+                    "Umsatz pro Arbeitstag." % (ticket["titel"], ticket["kunde"]["name"],
+                                                ticket["chance"],
+                                                _whole_euro(person.get("umsatz", 0))))
         if person.get("mitarbeiter"):
             return ("%s · %s" % (person["name"], person["rolle"]),
                     "In der Weiterbildung, heute kein Umsatz." if person.get("in_weiterbildung")
