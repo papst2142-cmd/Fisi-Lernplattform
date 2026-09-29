@@ -4,6 +4,26 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.31
+
+- **Miete oder Kauf (Optionen > Spiel > Wohnungen).** Neben der bisherigen
+  Einmalzahlung (weiterhin Standard) kann man Wohnungen jetzt mieten: Beim
+  Umzug zahlt man nur eine Kaution (15 % des Kaufpreises), danach geht jeden
+  Arbeitstag die Miete vom Spielgeld ab – Zweizimmer 60 €, Altbau 140 €,
+  Loft 220 €. Die Miete erscheint beim Feierabend neben dem Gehalt, zu Hause
+  und in der Spielübersicht. Die Kaution gibt es beim nächsten Umzug zurück.
+  Der Schalter gilt für den nächsten Umzug; ein laufender Mietvertrag läuft
+  bis dahin weiter. PC und Handy rechnen immer denselben Kontostand.
+- **Farben wählbar (Optionen > Farben).** Sechs Grundfarben (Cyan/Pink,
+  Lila/Magenta, Blau/Türkis, Grün/Lime, Orange/Gelb, Rot/Pink) für Buttons,
+  Ringe, Balken und Banner, dazu sechs Hintergründe (Violett, Nachtblau,
+  Tannengrün, Aubergine, Anthrazit, Schwarz). Beides lässt sich frei
+  kombinieren, wirkt sofort und gilt nur für das jeweilige Gerät. Die
+  Farben der Fachbereiche und von Erfolg, Fehler und Warnung bleiben gleich.
+- **Bessere Lesbarkeit:** Alle Farbkombinationen erfüllen jetzt den
+  Kontrast-Standard für gut lesbaren Text (WCAG AA). Dafür sind die kleinen
+  Hinweistexte etwas heller und einige Button-Verläufe etwas dunkler.
+
 ## 0.30
 
 - **Feierabend heißt jetzt nach Hause gehen.** Wer alle Tickets erledigt hat,
