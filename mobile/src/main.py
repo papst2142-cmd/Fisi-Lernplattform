@@ -1856,6 +1856,23 @@ def selftest():
         game.assign_for = state.customer_tickets()[0]["id"]
         game._fill_firm()
         game._fill_firm()
+        # Projekte (ab 0.35): Kalkulation, laufendes Projekt mit Team und Details
+        game.firm_tab = "projekte"
+        tender = state.tenders()[0]
+        game.offer_for = tender["id"]
+        game.markup = 10
+        game._fill_firm()
+        won = dict(tender, projekt=tender["id"], tag=state.day, netto=1000.0, anzahlung=300,
+                   frist_tag=state.day + 4, stand=5.0, team=[fisi_game.SELF], fertig=None,
+                   tage=[])
+        state.projects[tender["id"]] = won
+        state.project_offers[tender["id"]] = dict(won, gewonnen=True, geld=0, marktpreis=1100.0,
+                                                  markt_zuschlag=12, zuschlag=10)
+        game.team_for = tender["id"]
+        game.details_for = {tender["id"]}
+        game._fill_firm()
+        game.firm_tab = "finanzen"
+        game._fill_firm()
         game.render()
         game.site_key = "buero"
         game._fill_site()

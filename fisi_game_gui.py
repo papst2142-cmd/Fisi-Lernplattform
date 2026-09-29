@@ -2934,7 +2934,7 @@ class FirmView(ScrollArea):
             past.pack(fill="x", pady=(14, 0))
             for project in done[-6:][::-1]:
                 last = project["tage"][-1] if project["tage"] else {}
-                make_label(past.body, "✓ %s · %s · fertig an Arbeitstag %d%s" % (
+                make_label(past.body, "• %s · %s · fertig an Arbeitstag %d%s" % (
                     project["titel"], project["kunde_kurz"], project["fertig"],
                     " · %d %s zu spät" % (last["verzug"], "Tag" if last["verzug"] == 1
                                           else "Tage") if last.get("verzug") else
@@ -2987,10 +2987,7 @@ class FirmView(ScrollArea):
         bar = GradientBar(text, "Fortschritt", C["green"], C["accent"], parent_bg=C["card_alt"])
         bar.pack(fill="x", pady=(8, 0))
         bar.set(share, "%d %%" % round(share))
-        phases = fg.project_phases(project)
-        make_label(text, "    ".join(("✓\u00a0" if done else "▸\u00a0" if now else "○\u00a0") +
-                                   name.replace(" ", "\u00a0")
-                                   for name, done, now in phases),
+        make_label(text, fg.project_phase_text(project),
                    font=F["small"], fg=C["text_soft"], wraplength=760, justify="left",
                    anchor="w").pack(anchor="w", pady=(6, 0))
         make_label(text, fg.project_status_text(state, project, levels), font=F["small"],

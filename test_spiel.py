@@ -2427,6 +2427,7 @@ class ProjekteTest(unittest.TestCase):
             self.assertIn("Projekte:", fg.firm_day_text(payload["firma"]))
             phases = fg.project_phases(running)
             self.assertEqual(len(phases), 5)
+            self.assertIn("Jetzt: ", fg.project_phase_text(running))
             self.assertIn("Tag 2 von", fg.project_status_text(game.state, running,
                                                                game.knowledge()))
             # Team wieder aufloesen: Routineumsatz ist zurueck

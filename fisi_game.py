@@ -4510,7 +4510,8 @@ def offer_result_text(payload, content=None):
 
 def bidders_text(payload, content=None):
     """ "Mitgeboten haben: Bitweiche 2.410,00 € (12 %), CloudKontor Nord ..." """
-    bids = sorted(payload.get("bieter") or [], key=lambda bid: bid.get("netto", 0))
+    bids = sorted([bid for bid in payload.get("bieter") or [] if "netto" in bid],
+                  key=lambda bid: bid["netto"])
     if len(bids) < 2:
         return ""
     return "Mitgeboten haben: %s." % ", ".join(
@@ -5045,6 +5046,22 @@ def project_phases(project, content=None):
     share = min(1.0, project["stand"] / float(project["aufwand"])) if project["aufwand"] else 1
     done = len(names) if project.get("fertig") or share >= 1 else int(share * len(names))
     return [(name, index < done, index == done) for index, name in enumerate(names)]
+
+
+def project_phase_text(project, content=None):
+    """ "Erledigt: Ist-Analyse, Planung · Jetzt: Beschaffung · Danach: ..." """
+    phases = project_phases(project, content)
+    parts = []
+    done = [name for name, finished, _now in phases if finished]
+    now = [name for name, _finished, current in phases if current]
+    later = [name for name, finished, current in phases if not finished and not current]
+    if done:
+        parts.append("Erledigt: " + ", ".join(done))
+    if now:
+        parts.append("Jetzt: " + now[0])
+    if later:
+        parts.append("Danach: " + ", ".join(later))
+    return " · ".join(parts)
 
 
 def project_phase_name(project, content=None):
