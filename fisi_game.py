@@ -4342,9 +4342,10 @@ def room_status(state, content=None):
 
 
 def room_status_text(item):
-    """Kurzer Zustand eines Sonderraums: "ausgebaut", "ab Stufe 4" ..."""
+    """Kurze Zeile zu Preis und Nebenkosten eines Sonderraums. Ist er schon
+    ausgebaut, zaehlen nur noch die Nebenkosten."""
     if item["gebaut"]:
-        return "ausgebaut"
+        return "Nebenkosten +%s pro Arbeitstag" % _whole_euro(item["nebenkosten"])
     return "%s · Nebenkosten +%s pro Arbeitstag" % (
         _whole_euro(item["preis"]), _whole_euro(item["nebenkosten"]))
 
@@ -4710,8 +4711,12 @@ def inquiry_status_text(inquiry):
     """Kurze Zeile zum Stand einer Anfrage."""
     result = inquiry.get("ergebnis")
     if not result:
-        return "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
+        text = "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
             inquiry["menge"], _euro(inquiry["einkaufspreis"]), inquiry["lieferzeit"])
+        listed = inquiry.get("listenpreis", inquiry["einkaufspreis"])
+        if listed > inquiry["einkaufspreis"]:
+            text += " · Lager-Rabatt (sonst %s)" % _euro(listed)
+        return text
     if result.get("gewonnen"):
         return "Gewonnen · Gewinn +%s" % _whole_euro(result.get("geld", 0))
     if result.get("grund") == "rechenfehler":

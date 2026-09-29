@@ -3286,8 +3286,7 @@ class FirmView(ScrollArea):
             make_label(text, item["vorteil"], font=F["small"], fg=C["text_soft"],
                        wraplength=700, justify="left", anchor="w").pack(anchor="w",
                                                                         pady=(2, 0))
-            make_label(text, fg.room_status_text(item), font=F["small"],
-                       fg=C["green"] if item["gebaut"] else C["text_dim"],
+            make_label(text, fg.room_status_text(item), font=F["small"], fg=C["text_dim"],
                        anchor="w").pack(anchor="w", pady=(2, 0))
             side = _frame(row)
             side.pack(side="right", padx=14)

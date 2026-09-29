@@ -2525,8 +2525,7 @@ class GameScreen:
         for item in rooms:
             parts = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
                      ui.text(item["vorteil"], size=13, color=C["text_soft"]),
-                     ui.text(fg.room_status_text(item), size=12,
-                             color=C["green"] if item["gebaut"] else C["text_dim"])]
+                     ui.text(fg.room_status_text(item), size=12, color=C["text_dim"])]
             if item["gebaut"]:
                 parts.append(ui.text("ausgebaut", size=13, weight=ft.FontWeight.BOLD,
                                      color=C["green"]))

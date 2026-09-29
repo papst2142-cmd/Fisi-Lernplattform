@@ -2622,6 +2622,8 @@ class GebaeudeAusbauTest(unittest.TestCase):
             after = game.state.inquiries()[0]
             self.assertEqual(after["listenpreis"], before["einkaufspreis"])
             self.assertEqual(after["einkaufspreis"], fg.discounted(before["einkaufspreis"], 15))
+            self.assertNotIn("Lager-Rabatt", fg.inquiry_status_text(before))
+            self.assertIn("Lager-Rabatt", fg.inquiry_status_text(after))
             # Mit 15 % Zuschlag waere man ohne Lager teurer als Bitweiche (10 %),
             # mit Lager ist man guenstiger
             answer = fg.find_solution(fg.inquiry_task(after, 15))
