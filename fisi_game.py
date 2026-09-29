@@ -6336,7 +6336,12 @@ def morning_text(day, content=None, state=None):
     return text
 
 
-def day_end_text(day, content=None):
+def day_end_text(day, content=None, firm=False):
+    """Szene zum Feierabend. Mit eigener Firma (ab 0.34) eigene Texte - dort
+    gibt es kein Gehalt von Bitweiche mehr."""
+    if firm and (content or GAME).get("firma", {}).get("feierabend"):
+        texts = (content or GAME)["firma"]["feierabend"]
+        return texts[(day - 1) % len(texts)]
     texts = (content or GAME)["story"].get("feierabend") or \
         [(content or GAME)["story"]["tagesende"]]
     if isinstance(texts, str):

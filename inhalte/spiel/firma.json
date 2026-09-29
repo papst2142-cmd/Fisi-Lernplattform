@@ -1489,5 +1489,12 @@
         "text": "„Wenn wir einen Kunden suchen, dauert das inzwischen eine halbe Minute.“"
       }
     ]
-  }
+  },
+  "feierabend": [
+    "Feierabend! Du schließt den Gewerbehof ab und wirfst noch einen Blick auf das Firmenschild.",
+    "Feierabend! Die Kaffeemaschine ist aus, das Whiteboard voll. Morgen geht es weiter.",
+    "Feierabend! Auf dem Heimweg fährst du an Bitweiche vorbei. Bei denen brennt noch Licht.",
+    "Feierabend! Du löschst das Licht im Büro und rechnest im Kopf schon das nächste Angebot durch.",
+    "Feierabend! Ein Kunde schreibt noch schnell: „Danke für heute!“ Das tut gut."
+  ]
 }

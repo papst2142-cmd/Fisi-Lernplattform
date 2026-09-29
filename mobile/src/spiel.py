@@ -1272,7 +1272,12 @@ class GameScreen:
         self.problem = ""
         # Unterseite "Firma" (ab 0.33)
         self.firm_box = None
-        self.firm_tab = "mitarbeiter"
+        self.firm_tab = "auftraege"
+        self.offer_for = None        # Anfrage, die gerade kalkuliert wird (ab 0.34)
+        self.markup = None
+        self.offer_board = None
+        self.offer_help = False
+        self.assign_for = None       # Kundenticket, fuer das jemand gewaehlt wird
         self.training_for = None
         self.root = screen_list([])
         self.render()
@@ -1471,12 +1476,15 @@ class GameScreen:
         if not tickets:
             waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if self.room else
-                    fg.FIRM_IDLE_TEXT if state.firm else
+                    (fg.firm_orders_summary(state) or fg.FIRM_IDLE_TEXT) if state.firm else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
                     "Heute stehen keine Tickets an. %s auf eine Lieferung."
                     % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
                     if waiting else "Heute stehen keine Tickets an.")
             controls.append(ui.text(text, size=14, color=C["text_soft"]))
+            if not self.room and state.firm and state.firm_open_count():
+                controls.append(ft.Row([ui.GradientButton("Aufträge öffnen", self.open_orders,
+                                                          expand=True)]))
             if not self.room and state.founding_ready():
                 controls += [ui.text(fg.FOUNDING_TEASER, size=14, color=C["green"],
                                      weight=ft.FontWeight.BOLD),
@@ -1889,7 +1897,7 @@ class GameScreen:
             self.positions.pop(fg.SITE_OFFICE, None)
             self.notices[fg.SITE_HOME] = (
                 "Feierabend nach Arbeitstag %d" % payload["tag"],
-                "%s %s" % (fg.day_end_text(payload["tag"]),
+                "%s %s" % (fg.day_end_text(payload["tag"], firm=bool(payload.get("firma"))),
                            fg.day_end_money_text(payload)))
             self.app.notify_progress()
             self.render()
@@ -1939,7 +1947,179 @@ class GameScreen:
     def _firm_choose(self, tab):
         self.firm_tab = tab
         self.training_for = None
+        self.offer_for = self.assign_for = None
         self._fill_firm()
+
+    def open_orders(self, _event=None):
+        """Aus der Spieluebersicht direkt zu Firma > Auftraege."""
+        self.firm_tab = "auftraege"
+        self.open_firm()
+
+    # -- Auftraege (ab 0.34) --------------------------------------------------
+
+    def _firm_auftraege(self, state):
+        rules = fg.offer_rules()
+        offers = [ui.text("Wähle deinen Gewinnzuschlag und rechne das Angebot durch. Liegst "
+                          "du nicht über Bitweiche und stimmt die Rechnung, bekommst du den "
+                          "Auftrag. Offene Anfragen verfallen beim Feierabend.", size=12,
+                          color=C["text_dim"])]
+        for inquiry in state.inquiries():
+            offers.append(self._inquiry_box(inquiry))
+        tickets = state.customer_tickets()
+        free = sum(1 for item in tickets if not item.get("an"))
+        limits = fg.ticket_rules()
+        rows = [ui.text("Verteile die Tickets an deine Leute oder übernimm selbst welche "
+                        "(höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
+                        "%d Ticket pro Tag, die Chance hängt vom Wert im Fachbereich ab."
+                        % (limits["spieler_max"], limits["mitarbeiter_max"]), size=12,
+                        color=C["text_dim"])]
+        levels = self.game.knowledge()
+        for ticket in tickets:
+            rows.append(self._customer_ticket_box(state, ticket, levels))
+        return [ui.Card("Kundenanfragen", offers, accent=C["pink"],
+                        subtitle="Handlungskosten %d %%, USt %d %%"
+                        % (rules["handlungskosten"], rules["ust"])),
+                ui.Card("Kundentickets", rows, accent=C["accent"],
+                        subtitle="%d von %d verteilt" % (len(tickets) - free, len(tickets)))]
+
+    def _inquiry_box(self, inquiry):
+        result = inquiry.get("ergebnis")
+        parts = [ui.text(inquiry["kunde"]["name"], size=15, weight=ft.FontWeight.BOLD),
+                 ui.text("%d × %s" % (inquiry["menge"], inquiry["artikel"]), size=13,
+                         weight=ft.FontWeight.BOLD, color=C["pink"]),
+                 ui.text(inquiry["text"], size=13, color=C["text_soft"]),
+                 ui.text(fg.inquiry_status_text(inquiry), size=12,
+                         color=C["text_dim"] if not result else
+                         C["green"] if result.get("gewonnen") else C["red"])]
+        if result:
+            _head, text = fg.offer_result_text(result)
+            parts.append(ui.text(text, size=12, color=C["text_soft"]))
+            parts += [ui.text("• " + line, size=11, color=C["red"])
+                      for line in result.get("probleme") or []]
+        elif self.offer_for == inquiry["id"]:
+            parts += self._offer_calc(inquiry)
+        else:
+            parts.append(ft.Row([ui.GradientButton(
+                "Angebot kalkulieren", lambda _e, i=inquiry["id"]: self._calc(i),
+                height=38, expand=True)]))
+        return self._person_box(parts)
+
+    def _offer_calc(self, inquiry):
+        rules = fg.offer_rules()
+        values = rules["zuschlaege"]
+        controls = [ui.label("Gewinnzuschlag"),
+                    ui.PillGroup([(value, "%d %%" % value) for value in values],
+                                 initial=values.index(self.markup) if self.markup in values
+                                 else -1, on_change=self._pick_markup)]
+        cancel = ui.GradientButton("Abbrechen", lambda _e: self._cancel_calc(), kind="ghost",
+                                   height=38, expand=True)
+        if self.markup is None:
+            controls += [ui.text("Je höher der Zuschlag, desto mehr bleibt hängen, aber desto "
+                                 "eher ist Bitweiche günstiger.", size=12, color=C["muted"]),
+                         ft.Row([cancel])]
+            return controls
+        old = self.offer_board.answer if self.offer_board is not None else {}
+        self.offer_board = FormBoard(fg.inquiry_task(inquiry, self.markup))
+        for key, value in old.items():
+            if key in self.offer_board.inputs:
+                self.offer_board.inputs[key].value = value
+        controls.append(self.offer_board)
+        if self.offer_help:
+            controls.append(ft.Container(
+                content=ft.Column([ui.text("• " + line, size=12, color=C["text_soft"])
+                                   for line in rules.get("hilfe") or []], spacing=4,
+                                  tight=True),
+                bgcolor=mix(C["card_alt"], C["accent"], 0.08), border_radius=10, padding=10))
+        controls += [
+            ft.Row([ui.GradientButton("Angebot abschicken",
+                                      lambda _e: self._send_offer(inquiry), height=40,
+                                      expand=True)]),
+            ft.Row([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
+                                      lambda _e: self._toggle_offer_help(), kind="ghost",
+                                      height=38, expand=True), cancel], spacing=8)]
+        return controls
+
+    def _calc(self, inquiry_id):
+        self.offer_for = inquiry_id
+        self.markup = None
+        self.offer_board = None
+        self.offer_help = False
+        self._fill_firm()
+
+    def _pick_markup(self, value):
+        self.markup = value
+        self._fill_firm()
+
+    def _toggle_offer_help(self):
+        self.offer_help = not self.offer_help
+        self._fill_firm()
+
+    def _cancel_calc(self):
+        self.offer_for = None
+        self.offer_board = None
+        self._fill_firm()
+
+    def _send_offer(self, inquiry):
+        if self.offer_board is None or not self.offer_board.complete():
+            self.toast("Bitte rechne das Angebot zuerst durch.", C["yellow"])
+            return
+        try:
+            payload = self.game.send_offer(inquiry["id"], self.markup,
+                                           self.offer_board.answer)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.offer_for = None
+        self.offer_board = None
+        head, _text = fg.offer_result_text(payload)
+        self.toast(head, C["green"] if payload["gewonnen"] else C["yellow"])
+        self._firm_changed()
+
+    def _customer_ticket_box(self, state, ticket, levels):
+        parts = [ft.Row([ft.Container(width=6, height=38, border_radius=3,
+                                      bgcolor=cat_color(ticket["cat"])),
+                         ft.Column([ui.text(ticket["titel"], size=15,
+                                            weight=ft.FontWeight.BOLD),
+                                    ui.text(ticket["kunde"]["name"], size=12,
+                                            weight=ft.FontWeight.BOLD,
+                                            color=cat_color(ticket["cat"]))],
+                                   spacing=2, tight=True, expand=True)], spacing=10),
+                 ui.text(ticket["text"], size=13, color=C["text_soft"]),
+                 ui.text(fg.ticket_line(ticket), size=12,
+                         color=C["green"] if ticket.get("an") else C["text_dim"])]
+        if ticket.get("an"):
+            return self._person_box(parts)
+        if self.assign_for != ticket["id"]:
+            parts.append(ft.Row([ui.GradientButton(
+                "Zuweisen", lambda _e, i=ticket["id"]: self._pick_ticket(i), height=38,
+                expand=True)]))
+            return self._person_box(parts)
+        parts.append(ui.label("Wer übernimmt?"))
+        for option in fg.ticket_candidates(state, ticket, levels):
+            button = ui.GradientButton("%s · %d · Chance %d %%" % (
+                option["name"], option["wert"], option["chance"]),
+                lambda _e, a=option["an"]: self._delegate(ticket["id"], a), kind="ghost",
+                height=38)
+            button.set_enabled(not option["problem"])
+            parts.append(button)
+            if option["problem"]:
+                parts.append(ui.text(option["problem"], size=11, color=C["muted"]))
+        parts.append(ft.Row([ui.GradientButton("Abbrechen", lambda _e: self._pick_ticket(None),
+                                               kind="ghost", height=38, expand=True)]))
+        return self._person_box(parts)
+
+    def _pick_ticket(self, ticket_id):
+        self.assign_for = ticket_id
+        self._fill_firm()
+
+    def _delegate(self, ticket_id, person):
+        try:
+            self.game.delegate(ticket_id, person)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.assign_for = None
+        self._firm_changed()
 
     def _firm_changed(self):
         self.app.notify_progress()

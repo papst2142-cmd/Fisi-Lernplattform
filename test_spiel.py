@@ -2176,6 +2176,8 @@ class AuftraegeTest(unittest.TestCase):
             for item in outcomes:
                 self.assertEqual(item["geld"] > 0, item["erfolg"])
             self.assertIn("Kundentickets", fg.day_end_money_text(payload))
+            for day in range(1, 8):
+                self.assertNotIn("Gehalt", fg.day_end_text(day, firm=True))
 
     def test_weiterbildung_sperrt_tickets(self):
         with TempDB() as db:
