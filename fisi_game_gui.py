@@ -1873,7 +1873,7 @@ class GameView(ScrollArea):
     def _build_ticket(self, task_id):
         task = self.game.state.prepared_task(fg.task_by_id(task_id))
         person = fg.colleague(task["auftraggeber"])
-        levels = self.game.knowledge()
+        levels = self.game.topic_knowledge()
         gaps = fg.requirement_gaps(task, levels)
         self.used_help = False
         self.answered = False

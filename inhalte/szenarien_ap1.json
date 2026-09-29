@@ -2,6 +2,7 @@
   {
     "title": "Zahlensysteme umrechnen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Auszubildender soll die Adresse eines Netzwerkgeräts in verschiedenen Zahlensystemen angeben.",
@@ -19,6 +20,7 @@
   {
     "title": "Aufbau eines Mainboards",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Kunde bringt einen PC, der nicht mehr startet, in die Werkstatt.",
@@ -36,6 +38,7 @@
   {
     "title": "OSI-Schichtenmodell in der Praxis",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Azubi soll einem Kollegen erklären, warum ein neuer Netzwerkdrucker im Büro nicht erreichbar ist.",
@@ -53,6 +56,7 @@
   {
     "title": "IP-Adressen und Subnetzmaske einfach erklärt",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein neuer Mitarbeiter soll die Grundlagen der IP-Adressierung verstehen.",
@@ -70,6 +74,7 @@
   {
     "title": "Datensicherung nach der 3-2-1-Regel",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein kleines Ausbildungsunternehmen möchte erstmals eine geordnete Datensicherung einführen.",
@@ -87,6 +92,7 @@
   {
     "title": "Passwortsicherheit und Datenschutz-Grundbegriffe",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Azubi soll neuen Kollegen die Grundlagen sicherer Passwörter und des Datenschutzes erklären.",
@@ -104,6 +110,7 @@
   {
     "title": "Netzplan und kritischer Pfad",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Für die Installation eines kleinen Büronetzwerks liegen folgende Vorgänge mit Dauer in Tagen vor: A Kabel verlegen (2), B Switch konfigurieren (1, startet nach A), C Server aufsetzen (3, kann parallel zu A/B laufen), D Endgeräte anschließen (1, startet nach B und C).",
@@ -121,6 +128,7 @@
   {
     "title": "GANTT-Diagramm als Planungswerkzeug",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Ausbildungsbetrieb plant ein kleines internes IT-Projekt und möchte den Fortschritt visualisieren.",
@@ -138,6 +146,7 @@
   {
     "title": "Grundlagen des Ausbildungsvertrags",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein neuer Auszubildender hat Fragen zu seinem Ausbildungsvertrag.",
@@ -155,6 +164,7 @@
   {
     "title": "Einfache Wirtschaftlichkeitsbetrachtung",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Ausbildungsbetrieb vergleicht zwei Wartungsverträge für seine Server: Vertrag A kostet einmalig 200 EUR Einrichtung plus 40 EUR pro Monat, Vertrag B kostet einmalig 500 EUR Einrichtung plus 15 EUR pro Monat.",
@@ -172,6 +182,7 @@
   {
     "title": "Speichergrößen und Übertragungsdauer",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Kundin wundert sich über Größenangaben an ihrem Computer.",
@@ -191,6 +202,7 @@
   {
     "title": "Netzwerkkomponenten im Büro",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein kleines Büro mit acht Arbeitsplätzen, einem Drucker und Laptops soll vernetzt und ans Internet angebunden werden.",
@@ -210,6 +222,7 @@
   {
     "title": "Schutzbedarf eines Arbeitsplatzes feststellen",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "In einer Arztpraxis wird ein neuer Arbeitsplatz am Empfang eingerichtet. Dort werden Termine vergeben und Patientendaten eingesehen.",
@@ -229,6 +242,7 @@
   {
     "title": "Projektziele und Projektphasen planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einem Betrieb sollen 20 veraltete Arbeitsplatzrechner durch neue Geräte ersetzt werden. Sie sollen das Projekt planen.",
@@ -248,6 +262,7 @@
   {
     "title": "Angebotsvergleich mit Rabatt und Skonto",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Für 12 neue Monitore liegen zwei Angebote vor (alle Preise netto):",
@@ -270,6 +285,7 @@
   {
     "title": "TCP oder UDP? Dienste richtig zuordnen",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Sie sollen einem neuen Kollegen erklären, wie Anwendungen im Netzwerk Daten transportieren.",
@@ -289,6 +305,7 @@
   {
     "title": "IP-Konfiguration eines Arbeitsplatzes prüfen",
     "cat": "netzwerk",
+    "thema": "fehlersuche",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Mitarbeiter meldet: \"Ich komme nicht ins Internet.\" ipconfig /all zeigt:",
@@ -311,6 +328,7 @@
   {
     "title": "Kleines Büronetz planen",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Steuerberatung mit 9 PCs, einem Netzwerkdrucker, einem NAS und WLAN für Laptops soll neu vernetzt werden. Der Internetanschluss kommt über einen Glasfaser-Router.",
@@ -330,6 +348,7 @@
   {
     "title": "Technische und organisatorische Maßnahmen im Büro",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Arztpraxis verarbeitet Patientendaten. Der Praxisinhaber bittet Sie um Vorschläge für TOM nach Art. 32 DSGVO.",
@@ -349,6 +368,7 @@
   {
     "title": "Phishing-Mail erkennen",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Mitarbeiter erhält folgende E-Mail: Absender \"IT-Support <support@firma-it-service.info>\", Betreff \"DRINGEND: Ihr Postfach wird heute gesperrt\". Im Text wird er aufgefordert, über einen Link sein Passwort zu bestätigen.",
@@ -368,6 +388,7 @@
   {
     "title": "Sichere Passwörter und Passwortmanager",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Die Geschäftsleitung möchte eine neue Passwortrichtlinie. Bisher gilt: 8 Zeichen, Wechsel alle 30 Tage.",
@@ -387,6 +408,7 @@
   {
     "title": "Arbeitsplatzrechner nach Anforderungen auswählen",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Für die Konstruktionsabteilung (CAD) und für die Buchhaltung sollen neue PCs beschafft werden.",
@@ -406,6 +428,7 @@
   {
     "title": "Bildgrößen und Speicherbedarf berechnen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Überwachungskamera speichert Einzelbilder mit 1920 x 1080 Pixeln und 24 Bit Farbtiefe, unkomprimiert.",
@@ -425,6 +448,7 @@
   {
     "title": "Logische Verknüpfungen und Wahrheitstabelle",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Serverraumtür soll sich nur öffnen, wenn eine gültige Karte vorgehalten wird (A = 1) UND entweder die richtige PIN eingegeben wurde (B = 1) ODER ein Administrator per Fernfreigabe öffnet (C = 1).",
@@ -452,6 +476,7 @@
   {
     "title": "Projektstrukturplan für einen PC-Rollout",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einer Behörde sollen 40 Arbeitsplätze auf neue PCs mit Windows 11 umgestellt werden.",
@@ -471,6 +496,7 @@
   {
     "title": "Aufwandsschätzung und Zeitplanung",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Für den Austausch von 40 Arbeitsplätzen werden je PC benötigt: 20 Minuten Aufbau, 30 Minuten Datenmigration, 10 Minuten Test mit dem Anwender. Zwei Techniker arbeiten parallel, je 7 Stunden produktiv pro Tag.",
@@ -490,6 +516,7 @@
   {
     "title": "Projektabschluss und Übergabe",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ihr Projekt \"Neues WLAN im Lager\" ist technisch fertig.",
@@ -509,6 +536,7 @@
   {
     "title": "Rechte und Pflichten in der Ausbildung",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Tim ist 17 Jahre alt und Auszubildender zum Fachinformatiker. Sein Ausbilder verlangt, dass er den Berufsschultag nachholt und abends private Botengänge für ihn erledigt.",
@@ -528,6 +556,7 @@
   {
     "title": "Lohnabrechnung verstehen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Eine Fachinformatikerin erhält 3.200 Euro brutto. Vereinfacht werden 20 % Sozialversicherungsanteil des Arbeitnehmers und 12 % Lohnsteuer inklusive Zuschläge angenommen.",
@@ -547,6 +576,7 @@
   {
     "title": "Unternehmensformen vergleichen",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Zwei Freunde möchten ein IT-Systemhaus gründen. Sie haben zusammen 30.000 Euro Startkapital und möchten ihr Privatvermögen schützen.",
@@ -566,6 +596,7 @@
   {
     "title": "DHCP-Ablauf erklären und Fehler finden",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einer Zahnarztpraxis erhalten neue Laptops im Behandlungsraum keine Netzwerkverbindung. Ein Laptop zeigt die Adresse 169.254.83.12.",
@@ -585,6 +616,7 @@
   {
     "title": "DNS-Auflösung Schritt für Schritt",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Auszubildender fragt Sie, was eigentlich passiert, wenn er www.beispiel.de im Browser eingibt.",
@@ -604,6 +636,7 @@
   {
     "title": "MAC- und IP-Adresse im Zusammenspiel",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "PC1 (192.168.1.10/24) sendet Daten an einen Webserver im Internet. Das Standardgateway ist 192.168.1.1.",
@@ -623,6 +656,7 @@
   {
     "title": "Kabel und Stecker für neue Arbeitsplätze",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einem Büro werden 12 neue Arbeitsplätze eingerichtet. Der Etagenverteiler ist 65 m entfernt, zum Serverraum im Nachbargebäude sind es 250 m.",
@@ -642,6 +676,7 @@
   {
     "title": "WLAN im Besprechungsraum einrichten",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Im Besprechungsraum eines Steuerbüros sollen bis zu 20 Laptops und Smartphones per WLAN arbeiten. Im Haus gibt es bereits mehrere WLANs der Nachbarn im 2,4-GHz-Band.",
@@ -661,6 +696,7 @@
   {
     "title": "Ping und Traceroute auswerten",
     "cat": "netzwerk",
+    "thema": "fehlersuche",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Benutzer meldet, dass der Server 10.2.0.20 in der Zentrale nicht erreichbar ist. Sie führen tracert 10.2.0.20 aus:",
@@ -684,6 +720,7 @@
   {
     "title": "Netzwerkdrucker einbinden",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein neuer Netzwerkdrucker soll für alle 15 Mitarbeiter eines Architekturbüros nutzbar sein. Die PCs erhalten ihre Adressen per DHCP.",
@@ -703,6 +740,7 @@
   {
     "title": "IPv6-Adressen lesen und kürzen",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Auf einem Windows-PC zeigt ipconfig mehrere IPv6-Adressen an. Der Kollege ist verwirrt.",
@@ -722,6 +760,7 @@
   {
     "title": "Ports für eine Firewall-Freigabe bestimmen",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Handwerksbetrieb betreibt einen eigenen Webshop und einen Mailserver. Sie sollen die nötigen Freigaben in der Firewall benennen.",
@@ -741,6 +780,7 @@
   {
     "title": "Ein Netz für drei Abteilungen aufteilen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Das Netz 192.168.20.0/24 soll in vier gleich große Subnetze aufgeteilt werden: Verwaltung, Vertrieb, Lager und eine Reserve.",
@@ -760,6 +800,7 @@
   {
     "title": "Auskunftsersuchen eines Kunden bearbeiten",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Kundin schreibt per E-Mail an einen Onlinehändler: \"Welche Daten haben Sie über mich gespeichert?\"",
@@ -779,6 +820,7 @@
   {
     "title": "Verlorener USB-Stick mit Personaldaten",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Mitarbeiterin der Personalabteilung hat auf dem Heimweg einen unverschlüsselten USB-Stick mit Gehaltslisten verloren.",
@@ -798,6 +840,7 @@
   {
     "title": "Einwilligung für einen Newsletter",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Fahrradladen möchte einen E-Mail-Newsletter einführen. Die Anmeldung soll über die Webseite laufen.",
@@ -817,6 +860,7 @@
   {
     "title": "Schutzziele an Beispielen erkennen",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "In einem Monat gab es in einer Firma folgende Vorfälle:",
@@ -837,6 +881,7 @@
   {
     "title": "Verdächtige E-Mail-Anhänge und Makros",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Buchhalterin erhält eine Mail \"Offene Rechnung\" mit einer Word-Datei. Beim Öffnen erscheint: \"Inhalt aktivieren, um das Dokument anzuzeigen\".",
@@ -856,6 +901,7 @@
   {
     "title": "Symmetrisch und asymmetrisch verschlüsseln",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Sie sollen einem Kunden erklären, wie seine Webseite per HTTPS geschützt wird.",
@@ -875,6 +921,7 @@
   {
     "title": "Zugriffsrechte für eine Ordnerstruktur planen",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Auf dem Fileserver eines Ingenieurbüros gibt es die Ordner Projekte, Buchhaltung, Personal und Vorlagen. Bisher dürfen alle Mitarbeiter alles lesen und ändern.",
@@ -894,6 +941,7 @@
   {
     "title": "Updates und Virenschutz auf Arbeitsplätzen",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "In einem kleinen Betrieb installiert jeder Mitarbeiter Updates selbst, wenn er daran denkt. Einige PCs haben seit Monaten keine Updates erhalten.",
@@ -913,6 +961,7 @@
   {
     "title": "Homeoffice sicher gestalten",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Unternehmen erlaubt seinen Mitarbeitern zwei Tage Homeoffice pro Woche mit Firmen-Laptops.",
@@ -932,6 +981,7 @@
   {
     "title": "Alte Festplatten sicher entsorgen",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Anwaltskanzlei tauscht 20 PCs aus. Die alten Geräte enthalten Festplatten und SSDs mit Mandantendaten.",
@@ -951,6 +1001,7 @@
   {
     "title": "Subnetzmasken binär und hexadezimal lesen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Kollege versteht nicht, warum 255.255.255.192 dasselbe ist wie /26.",
@@ -970,6 +1021,7 @@
   {
     "title": "USV für den Serverschrank auswählen",
     "cat": "systeme",
+    "thema": "it_betrieb",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Im Serverschrank eines Büros laufen: ein Server mit 350 W, ein NAS mit 60 W, ein Switch mit 40 W und ein Router mit 20 W.",
@@ -990,6 +1042,7 @@
   {
     "title": "SSD oder HDD für Arbeit und Archiv",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Fotostudio braucht schnellen Speicher für die Bildbearbeitung und ein Archiv von 40 TB.",
@@ -1010,6 +1063,7 @@
   {
     "title": "Monitor und Anschluss für 4K auswählen",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Grafiker soll einen 4K-Monitor (3840 x 2160 Pixel, 60 Hz, 24 Bit Farbtiefe) erhalten.",
@@ -1029,6 +1083,7 @@
   {
     "title": "Netzwerkumbau am Wochenende planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Der Netzwerkumbau einer Arztpraxis soll an einem Samstag erfolgen. Vorgänge und Dauer:",
@@ -1053,6 +1108,7 @@
   {
     "title": "Risiken in einem IT-Projekt bewerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Für die Umstellung der Telefonanlage einer Spedition auf VoIP haben Sie folgende Risiken gesammelt:",
@@ -1075,6 +1131,7 @@
   {
     "title": "Lastenheft für ein WLAN-Projekt",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Hotel möchte ein neues WLAN für Gäste und Personal. Es bittet mehrere Systemhäuser um Angebote.",
@@ -1094,6 +1151,7 @@
   {
     "title": "Aufwand für einen PC-Austausch berechnen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einer Behörde werden 60 PCs ausgetauscht. Pro Arbeitsplatz rechnen Sie mit 1,5 Stunden (Aufbau, Datenübernahme, Test). Für Unvorhergesehenes planen Sie 10 % Puffer ein.",
@@ -1114,6 +1172,7 @@
   {
     "title": "Arbeitszeit bei einem Wartungseinsatz",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Techniker (24 Jahre) soll an einem Samstag von 8:00 bis 20:00 Uhr ein Rechenzentrum umziehen und dabei 45 Minuten Pause machen.",
@@ -1133,6 +1192,7 @@
   {
     "title": "Betriebsrat und Überwachungssoftware",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Die Geschäftsleitung will eine Software einführen, die protokolliert, welche Programme die Mitarbeiter wie lange nutzen.",
@@ -1152,6 +1212,7 @@
   {
     "title": "Mangelhafte Lieferung von Switches",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ihr Unternehmen (GmbH) kauft bei einem Großhändler 10 Switches. Bei der Eingangsprüfung stellen Sie fest, dass bei zwei Geräten mehrere Ports defekt sind.",
@@ -1171,6 +1232,7 @@
   {
     "title": "Arbeitsspeicher eines Büro-PCs aufrüsten",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Büro-PC hat vier DIMM-Steckplätze (A1, A2, B1, B2). Eingebaut ist ein einzelnes Modul mit 8 GB DDR4-3200 in A2. Die Anwenderin klagt über lange Wartezeiten, wenn Browser, Teams und die Warenwirtschaft gleichzeitig laufen.",
@@ -1191,6 +1253,7 @@
   {
     "title": "Lebensdauer einer SSD im Videoschnitt abschätzen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Werbeagentur kauft für den Videoschnitt eine NVMe-SSD mit 2 TB. Laut Datenblatt: 1.200 TBW (Terabytes Written), 5 Jahre Garantie. Die Workstation schreibt pro Arbeitstag etwa 350 GB auf die SSD, gearbeitet wird an 220 Tagen im Jahr (1 TB = 1.000 GB).",
@@ -1210,6 +1273,7 @@
   {
     "title": "Projektdaten von HDD, SATA-SSD oder NVMe kopieren",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "In einem Architekturbüro wird täglich ein Projektordner mit 90 GB lokal kopiert. Zur Auswahl stehen drei Laufwerke mit folgenden sequenziellen Übertragungsraten (1 GB = 1.000 MB):",
@@ -1232,6 +1296,7 @@
   {
     "title": "Netzteil für eine CAD-Workstation dimensionieren",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Für eine CAD-Workstation sind folgende maximale Leistungsaufnahmen bekannt: CPU 125 W, Grafikkarte 285 W, Mainboard 50 W, 4 RAM-Module je 4 W, 2 NVMe-SSDs je 8 W, 5 Lüfter je 3 W, USB-Geräte 20 W.",
@@ -1252,6 +1317,7 @@
   {
     "title": "Stromkosten der Büroarbeitsplätze berechnen",
     "cat": "systeme",
+    "thema": "it_betrieb",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Versicherungsbüro hat 30 Arbeitsplätze. Im Betrieb braucht ein PC durchschnittlich 45 W, ein Monitor 20 W. Gearbeitet wird 9 Stunden an 220 Tagen im Jahr. Bisher bleiben alle PCs außerhalb der Arbeitszeit eingeschaltet: PC im Leerlauf 30 W, Monitor im Standby 0,5 W. Strompreis: 0,30 Euro/kWh. Ein Jahr hat 8.760 Stunden.",
@@ -1271,6 +1337,7 @@
   {
     "title": "Seitenpreis zweier Arbeitsgruppendrucker vergleichen",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Hausverwaltung druckt 2.500 Schwarzweiß-Seiten pro Monat (30.000 Seiten pro Jahr). Zwei Geräte stehen zur Wahl (Papier ist bei beiden gleich und wird nicht betrachtet):",
@@ -1292,6 +1359,7 @@
   {
     "title": "Farbwerte für das Firmenlayout umrechnen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Die Marketingabteilung liefert die Firmenfarbe als Hexcode #2A7F62. Für eine Software, die nur RGB-Dezimalwerte annimmt, und für die Webseite sollen die Werte umgerechnet werden.",
@@ -1311,6 +1379,7 @@
   {
     "title": "Dateirechte unter Linux oktal vergeben",
     "cat": "systeme",
+    "thema": "linux",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Auf einem Linux-Fileserver sollen Rechte für die Projektablage gesetzt werden:",
@@ -1333,6 +1402,7 @@
   {
     "title": "Messwerte eines Temperatursensors im Zweierkomplement",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Sensor im Kühlraum eines Lebensmittelhändlers meldet die Temperatur als 8-Bit-Wert im Zweierkomplement in Schritten von 1 °C. Die Überwachungssoftware zeigt die Rohwerte hexadezimal an.",
@@ -1352,6 +1422,7 @@
   {
     "title": "Benutzerdaten per USB auf den neuen Rechner übertragen",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Beim PC-Tausch sollen 240 GB Benutzerdaten übertragen werden (1 GB = 1.000 MB). Der alte PC hat nur USB 2.0, real werden dort 35 MB/s erreicht. Am neuen PC schafft die externe SSD über USB 3.2 Gen 1 real 400 MB/s. Beide PCs hängen außerdem mit 1 Gbit/s am Netzwerk, dort sind real 100 MB/s möglich.",
@@ -1371,6 +1442,7 @@
   {
     "title": "Pixeldichte und Bildspeicher am Mehrschirm-Arbeitsplatz",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Controller arbeitet an zwei 24-Zoll-Monitoren mit Full HD (1920 x 1080). Geplant sind zwei 27-Zoll-Monitore mit WQHD (2560 x 1440). Er befürchtet, dass die Schrift dann zu klein wird.",
@@ -1390,6 +1462,7 @@
   {
     "title": "Akkulaufzeit eines Außendienst-Notebooks",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Außendienstmitarbeiter beschwert sich, dass sein zwei Jahre altes Notebook keinen Arbeitstag mehr durchhält. Der Akku hat 60 Wh Nennkapazität, die Akkudiagnose zeigt 85 % Restkapazität. Im Mittel nimmt das Notebook 9 W auf. Ein Arbeitstag dauert 8 Stunden.",
@@ -1409,6 +1482,7 @@
   {
     "title": "Adressbereiche für DHCP und feste Geräte aufteilen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Kanzlei nutzt das Netz 192.168.50.0/24, der Router hat 192.168.50.1. Es gibt 60 Clients, in den nächsten Jahren wird mit 30 % Wachstum gerechnet. Server, Drucker, Access Points und Switches (zusammen 12 Geräte) sollen feste Adressen erhalten.",
@@ -1429,6 +1503,7 @@
   {
     "title": "Netzwerkkarte verbindet nur mit 100 Mbit/s",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Mitarbeiterin kopiert eine 4-GB-Datei vom NAS. Bei ihr dauert das viel länger als bei den Kollegen. In den Adaptereinstellungen steht: Verbindungsgeschwindigkeit 100 Mbit/s Vollduplex. Switch und Netzwerkkarte unterstützen 1 Gbit/s.",
@@ -1448,6 +1523,7 @@
   {
     "title": "IP-Telefon und PC an einer Netzwerkdose",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Unternehmen führt IP-Telefone ein. An jedem Arbeitsplatz gibt es nur eine Netzwerkdose. Die Telefone haben einen eingebauten Switch mit PC-Anschluss. Die PCs sollen im VLAN 10, die Telefone im VLAN 20 arbeiten.",
@@ -1467,6 +1543,7 @@
   {
     "title": "Private Adressen und NAT im Homeoffice erklären",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Mitarbeiter im Homeoffice wundert sich: ipconfig zeigt 192.168.178.23, eine Webseite \"Wie ist meine IP?\" zeigt 203.0.113.45. Außerdem erreicht er über VPN manche Server in der Firma nicht. Das Firmennetz nutzt ebenfalls 192.168.178.0/24.",
@@ -1486,6 +1563,7 @@
   {
     "title": "Switch für ein neues Großraumbüro auswählen",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einem Großraumbüro entstehen 22 Arbeitsplätze mit PC und IP-Telefon (der PC hängt am Telefon, pro Platz ein Port). Dazu kommen 2 Multifunktionsdrucker, 3 WLAN-Access-Points und 1 Uplink zum Serverraum. Es sollen 20 % freie Ports als Reserve bleiben.",
@@ -1509,6 +1587,7 @@
   {
     "title": "Falsche Subnetzmaske am Laborrechner",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Im Netz 192.168.1.0/24 hat ein Laborrechner die Adresse 192.168.1.77 mit der Maske 255.255.255.128 und dem Gateway 192.168.1.254. Alle anderen Geräte nutzen /24. Der Drucker 192.168.1.20 funktioniert, das NAS 192.168.1.150 und das Internet sind nicht erreichbar.",
@@ -1528,6 +1607,7 @@
   {
     "title": "Videoüberwachung im Warenlager datenschutzkonform planen",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Getränkegroßhandel hatte mehrere Diebstähle im Lager. Er möchte 4 Kameras installieren, die rund um die Uhr aufzeichnen. Jede Kamera erzeugt 4 Mbit/s. Die Aufnahmen sollen 72 Stunden gespeichert werden.",
@@ -1547,6 +1627,7 @@
   {
     "title": "Cloud-Speicher mit Kundendaten einführen",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Ingenieurbüro will seine Projektdaten künftig bei einem Cloud-Anbieter speichern. In den Projektordnern liegen auch Namen, Adressen und Telefonnummern von Bauherren.",
@@ -1566,6 +1647,7 @@
   {
     "title": "Löschanfrage eines ehemaligen Kunden",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Computerfachhandel erhält am 06.10.2026 eine E-Mail eines ehemaligen Kunden: \"Löschen Sie sofort alle meine Daten.\" Gespeichert sind: Kundenkonto im Webshop, Newsletter-Anmeldung, Support-E-Mails und Rechnungen über Reparaturen. Die letzte Rechnung stammt vom 15.03.2025.",
@@ -1585,6 +1667,7 @@
   {
     "title": "Private Smartphones für dienstliche E-Mails",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Die Monteure eines Handwerksbetriebs möchten ihre dienstlichen E-Mails und Kundentermine auf ihren privaten Smartphones abrufen (BYOD, Bring Your Own Device).",
@@ -1604,6 +1687,7 @@
   {
     "title": "Schadsoftware-Meldung am Empfangsrechner",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Am Montag, 05.10.2026, um 09:30 Uhr meldet der Virenschutz am Empfangsrechner einer Hausverwaltung einen Trojaner, der gespeicherte Passwörter ausliest (Infostealer). Die Mitarbeiterin hatte kurz zuvor eine ZIP-Datei aus einer E-Mail geöffnet.",
@@ -1623,6 +1707,7 @@
   {
     "title": "Balkenplan für einen neuen Schulungsraum",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Bildungsträger richtet einen Schulungsraum mit 12 PCs ein. Start ist Montag, 02.11.2026. Gearbeitet wird montags bis freitags. Vorgänge (Dauer in Arbeitstagen, AT):",
@@ -1647,6 +1732,7 @@
   {
     "title": "Netzplan für den IT-Umzug in neue Büroräume",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Steuerbüro zieht in neue Räume. Für die IT gibt es folgende Vorgänge (Dauer in Tagen):",
@@ -1672,6 +1758,7 @@
   {
     "title": "Nutzwertanalyse für Außendienst-Notebooks",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Projektplanung",
     "text": [
       "Für den Außendienst sollen neue Notebooks beschafft werden. Bewertet wird mit Punkten von 1 bis 10:",
@@ -1696,6 +1783,7 @@
   {
     "title": "Angebote für Dockingstationen unter Termindruck",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Projektplanung",
     "text": [
       "Für ein Desksharing-Projekt werden 30 Dockingstationen benötigt. Der Rollout beginnt in 14 Tagen. Zwei Angebote liegen vor (netto):",
@@ -1717,6 +1805,7 @@
   {
     "title": "Rollout neuer Notebooks in Wellen planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einem Unternehmen erhalten 126 Mitarbeiter neue Notebooks: Vertrieb 40, Buchhaltung 18, Technik 52, Verwaltung 16. Zuerst werden 6 Pilotgeräte an einem Tag ausgegeben, danach sammelt man 3 Arbeitstage lang Rückmeldungen. Anschließend schaffen 3 Techniker je 6 Geräte pro Tag.",
@@ -1736,6 +1825,7 @@
   {
     "title": "Ausbildung abbrechen oder verkürzen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Lena hat ihre Ausbildung zur Fachinformatikerin am 01.08.2025 begonnen, die Probezeit beträgt 4 Monate. Im März 2026 entscheidet sie sich für ein Studium und gibt die Ausbildung auf. Ihr Kollege Jonas hat Abitur und möchte seine Ausbildung verkürzen.",
@@ -1755,6 +1845,7 @@
   {
     "title": "Rufbereitschaft und nächtlicher Störungseinsatz",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Systemadministrator (28 Jahre) hat eine Woche Rufbereitschaft. Am Montag arbeitet er von 8:00 bis 16:15 Uhr mit 45 Minuten Pause. Von 22:30 bis 0:30 Uhr behebt er per Fernzugriff eine Serverstörung. Normalerweise beginnt er um 8:00 Uhr.",
@@ -1774,6 +1865,7 @@
   {
     "title": "Bestellte Notebooks werden nicht geliefert",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Systemhaus erhält am 25.08.2026 ein verbindliches Angebot eines Distributors über 15 Notebooks mit dem Liefertermin 21.09.2026. Es bestellt am 01.09.2026 zu den angebotenen Bedingungen. Am 28.09.2026 sind die Notebooks immer noch nicht da. Ein anderer Distributor könnte sofort liefern, allerdings für 60 Euro mehr pro Gerät.",
@@ -1793,6 +1885,7 @@
   {
     "title": "Sozialversicherung in der Ausbildungsvergütung",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Auszubildender (19 Jahre) erhält 1.050 Euro Ausbildungsvergütung im Monat. Vereinfacht gelten folgende Arbeitnehmeranteile: Krankenversicherung 8,75 %, Rentenversicherung 9,3 %, Arbeitslosenversicherung 1,3 %, Pflegeversicherung 1,8 %. Lohnsteuer wird in diesem Beispiel nicht berücksichtigt.",
@@ -1812,6 +1905,7 @@
   {
     "title": "Urlaubsanspruch eines jugendlichen Auszubildenden",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Jonas ist am 10.11.2009 geboren und Auszubildender zum Fachinformatiker. Im Betrieb gilt die 5-Tage-Woche (Montag bis Freitag). Sein Ausbildungsvertrag sieht nur den gesetzlichen Mindesturlaub vor, ein Tarifvertrag gilt nicht.",
@@ -1832,6 +1926,7 @@
   {
     "title": "Kündigung nach mehr als zehn Jahren im Betrieb",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Herr Brandt (44 Jahre) ist seit dem 01.04.2016 Netzwerkadministrator in einem Systemhaus mit 60 Beschäftigten und Betriebsrat. Sein Arbeitsvertrag verweist auf die gesetzlichen Kündigungsfristen. Die Geschäftsleitung möchte ihm aus betrieblichen Gründen kündigen. Das Kündigungsschreiben wird ihm am Montag, 12.10.2026, übergeben.",
@@ -1851,6 +1946,7 @@
   {
     "title": "Betriebsrat und JAV im Systemhaus wählen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein IT-Systemhaus hat 186 Beschäftigte, alle mindestens 16 Jahre alt. Darunter sind 3 leitende Angestellte. Es gibt 20 Auszubildende: 17 davon sind jünger als 25 Jahre, 3 sind Umschüler mit 25 Jahren oder älter. Außerdem arbeiten 2 Aushilfen mit 17 Jahren im Lager.",
@@ -1870,6 +1966,7 @@
   {
     "title": "Neuer Entgelttarifvertrag im IT-Betrieb",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein IT-Unternehmen ist Mitglied im Arbeitgeberverband. Ein neuer Entgelttarifvertrag sieht vor (angenommene Werte): Entgeltgruppe E5 bisher 3.300 Euro, ab 01.01.2027 plus 4,5 %. Ausbildungsvergütung im 3. Ausbildungsjahr bisher 1.180 Euro, künftig plus 80 Euro fest.",
@@ -1890,6 +1987,7 @@
   {
     "title": "Gehaltsabrechnung mit Überstunden nachrechnen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Leon ist Fachinformatiker mit einem Grundgehalt von 2.850 Euro brutto. Im Oktober hat er 12 Überstunden geleistet. Vereinbart sind 18 Euro je Überstunde plus 25 % Zuschlag.",
@@ -1910,6 +2008,7 @@
   {
     "title": "Wer haftet für die Schulden der KG?",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Die \"Kabel & Netz KG\" hat drei Gesellschafter:",
@@ -1933,6 +2032,7 @@
   {
     "title": "Firmenkunde zahlt nach dem vereinbarten Termin",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Systemhaus liefert einer Steuerkanzlei (Unternehmer) Hardware für 4.760 Euro brutto. Im Kaufvertrag ist vereinbart: Zahlung bis spätestens 30.06.2026. Die Kanzlei zahlt erst am 30.09.2026. Angenommener Basiszinssatz: 1,27 %.",
@@ -1952,6 +2052,7 @@
   {
     "title": "Alte Forderungen vor der Verjährung sichern",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Am 16.11.2026 prüft die Buchhaltung eines Systemhauses die offenen Rechnungen:",
@@ -1975,6 +2076,7 @@
   {
     "title": "Privatkundin zahlt die Reparaturrechnung nicht",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Computerladen repariert das Notebook einer Privatkundin. Die Rechnung über 595 Euro brutto, zahlbar sofort, geht ihr am 03.08.2026 zu. Die Rechnung enthält keinen Hinweis auf die Folgen einer späten Zahlung. Die Kundin zahlt nicht. Am 01.09.2026 geht ihr eine Mahnung zu. Angenommener Basiszinssatz: 1,27 %.",
@@ -1994,6 +2096,7 @@
   {
     "title": "Wochenplan einer 17-jährigen Auszubildenden prüfen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Mia ist 17 Jahre alt und Auszubildende zur Fachinformatikerin. Berufsschule hat sie montags von 7:45 bis 13:00 Uhr (6 Unterrichtsstunden zu 45 Minuten) und donnerstags von 8:00 bis 11:30 Uhr (4 Unterrichtsstunden), jeweils einschließlich Pausen. Der Betrieb plant:",
@@ -2016,6 +2119,7 @@
   {
     "title": "Drei Angebote für Netzwerkschränke vergleichen",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Projektplanung",
     "text": [
       "Für die Erneuerung der Etagenverteiler werden 6 Netzwerkschränke (42 HE) benötigt. Drei Angebote liegen vor (alle Preise netto):",
@@ -2041,6 +2145,7 @@
   {
     "title": "Helpdesk-Software mit K.-o.-Kriterium auswählen",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Projektplanung",
     "text": [
       "Die IT-Abteilung eines Maschinenbauers sucht eine Helpdesk-Software. Muss-Kriterien: Die Daten werden in der EU gespeichert, und die Anmeldung läuft über das vorhandene Active Directory. Produkt X speichert nur in den USA. Y und Z erfüllen beide Muss-Kriterien. Bewertung mit Punkten von 1 bis 10:",
@@ -2065,6 +2170,7 @@
   {
     "title": "Netzplan einer Servermigration mit Verzögerungen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Anwaltskanzlei stellt auf einen neuen Server um. Start ist Montag, 01.03.2027, gearbeitet wird Montag bis Freitag. Vorgänge (Dauer in Arbeitstagen):",
@@ -2093,6 +2199,7 @@
   {
     "title": "Balkenplan für interaktive Displays mit Personalengpass",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Berufsschule erhält interaktive Displays für 8 Klassenräume. Start ist Montag, 11.01.2027, gearbeitet wird Montag bis Freitag. Techniker Kai ist der einzige Techniker im Projekt. Vorgänge (Dauer in Arbeitstagen, AT):",
@@ -2118,6 +2225,7 @@
   {
     "title": "Projektbudget für ein Dokumentenmanagementsystem",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Handelsunternehmen führt ein Dokumentenmanagementsystem (DMS) für 25 Benutzer ein. Die Geschäftsleitung hat ein Budget von 20.000 Euro freigegeben. Geplant sind (interne Verrechnungssätze je Stunde):",
@@ -2143,6 +2251,7 @@
   {
     "title": "Stundensatz für einen Servicetechniker kalkulieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Projektplanung",
     "text": [
       "Ein Systemhaus will den Stundensatz für Vor-Ort-Einsätze neu berechnen. Angaben für einen Techniker (vereinfachte Annahmen):",
@@ -2168,6 +2277,7 @@
   {
     "title": "Angebot für ein Konferenzraum-Display kalkulieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Projektplanung",
     "text": [
       "Ein Kunde fragt ein 86-Zoll-Display für seinen Konferenzraum an. Einkauf: Listeneinkaufspreis 2.400 Euro, Lieferantenrabatt 10 %, Lieferantenskonto 2 %, Bezugskosten 60 Euro. Das Systemhaus kalkuliert mit 30 % Handlungskosten und 12 % Gewinn. Dem Kunden werden 2 % Skonto und 5 % Rabatt eingeräumt.",
@@ -2187,6 +2297,7 @@
   {
     "title": "Notebooks selbst vorbereiten oder Staging einkaufen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Projektplanung",
     "text": [
       "Ein Unternehmen stellt 120 neue Notebooks bereit. Jedes Gerät muss ausgepackt, mit Image und Software versehen, inventarisiert und beschriftet werden.",
@@ -2208,6 +2319,7 @@
   {
     "title": "Server für ein Planungsbüro kaufen oder leasen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Projektplanung",
     "text": [
       "Ein Planungsbüro braucht einen neuen Server mit Speichersystem für 4 Jahre (48 Monate). Zwei Varianten stehen zur Wahl:",
@@ -2229,6 +2341,7 @@
   {
     "title": "Amortisation eines Videokonferenzsystems",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Projektplanung",
     "text": [
       "Ein Ingenieurbüro mit drei Standorten will seine Besprechungsräume mit Videokonferenztechnik ausstatten. Investition: 3 Räume zu je 5.400 Euro plus 1.800 Euro Installation. Laufende Kosten: Lizenzen und Wartung 1.500 Euro, Strom 150 Euro pro Jahr. Durch die Technik sollen 45 Dienstreisen pro Jahr zu durchschnittlich 280 Euro entfallen. Die Nutzungsdauer beträgt 5 Jahre.",
@@ -2248,6 +2361,7 @@
   {
     "title": "Erstsicherung in die Cloud über eine schmale Leitung",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Hausverwaltung will ihre Daten (600 GB) künftig in ein Cloud-Backup sichern. Der Internetanschluss hat 250 Mbit/s Download und 40 Mbit/s Upload. Damit das Büro weiterarbeiten kann, darf das Backup höchstens 80 % der Bandbreite nutzen. Täglich ändern sich etwa 2 % der Daten. Rechnen Sie mit 1 GB = 1.000 MB und ohne weiteren Protokoll-Overhead.",
@@ -2267,6 +2381,7 @@
   {
     "title": "Kollisions- und Broadcastdomänen im Altbau-Netz",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Im Netz eines Handwerksbetriebs hat der Router zwei LAN-Schnittstellen, VLANs gibt es nicht.",
@@ -2289,6 +2404,7 @@
   {
     "title": "Das Schulnetz ist zu klein geworden",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Schule nutzt das Netz 192.168.8.0/24. Es sind 230 Geräte im Netz. Zum neuen Schuljahr kommen 60 Tablets dazu. Ein Kollege schlägt vor, das Netz einfach auf 192.168.9.0/23 zu erweitern.",
@@ -2308,6 +2424,7 @@
   {
     "title": "Nutzdatenrate einer Gigabit-Verbindung berechnen",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Mitarbeiter kopiert eine 3-GB-Datei über Gigabit-Ethernet vom Server. Der Explorer zeigt ca. 112 MB/s an. Er beschwert sich: \"1.000 Mbit/s sind doch 125 MB/s!\" Rechnen Sie mit 1 GB = 1.000 MB. Pro Frame gilt: MTU 1.500 Byte, IPv4-Header 20 Byte, TCP-Header 20 Byte, Ethernet-Header 14 Byte, Prüfsumme (FCS) 4 Byte, Präambel mit Startzeichen 8 Byte, Pause zwischen zwei Frames (Interframe Gap) 12 Byte.",
@@ -2327,6 +2444,7 @@
   {
     "title": "Braucht der Handwerksbetrieb einen Datenschutzbeauftragten?",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Sanitärbetrieb hat 25 Beschäftigte:",
@@ -2352,6 +2470,7 @@
   {
     "title": "Prüfsumme einer heruntergeladenen ISO-Datei kontrollieren",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Auszubildender lädt das Installationsabbild (ISO, 2,6 GB) für einen neuen Linux-Server von einem Spiegelserver herunter. Auf der offiziellen Projektseite steht der SHA-256-Wert der Datei. Er prüft mit dem Befehl Get-FileHash.",
@@ -2371,6 +2490,7 @@
   {
     "title": "Sicherungsmedien nach dem Generationenprinzip planen",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Architekturbüro sichert seinen Server (800 GB Daten) jeden Arbeitstag vollständig auf wechselnde externe Festplatten. Es gilt das Großvater-Vater-Sohn-Prinzip:",
@@ -2394,6 +2514,7 @@
   {
     "title": "Mitarbeiterfotos für die Teamseite der Webseite",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Die Marketingabteilung eines IT-Dienstleisters möchte auf der Webseite eine Teamseite veröffentlichen: Foto, Vor- und Nachname, Funktion, persönliche E-Mail-Adresse und Durchwahl aller Beschäftigten. Einige Kollegen wollen das nicht.",
@@ -2413,6 +2534,7 @@
   {
     "title": "Speicherbedarf für Gesprächsaufzeichnungen in der Hotline",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "In der Hotline eines Softwareherstellers führen 12 Mitarbeiter je 5 Stunden Gespräche pro Tag, an 220 Tagen im Jahr. Die Gespräche werden mit Einwilligung der Anrufer zu Schulungszwecken aufgezeichnet. Die Aufzeichnung erfolgt unkomprimiert: Abtastrate 8 kHz, 16 Bit je Abtastwert, mono. Rechnen Sie mit 1 MB = 1.000.000 Byte und 1 GB = 1.000 MB.",
@@ -2432,6 +2554,7 @@
   {
     "title": "Kaputte Umlaute im CSV-Export erklären",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Die Warenwirtschaft exportiert eine Artikelliste als CSV-Datei. In Excel steht in der Spaltenüberschrift \"GrÃ¶ÃŸe\" statt \"Größe\". Ein Hex-Editor zeigt für das Wort folgende Bytes: 47 72 C3 B6 C3 9F 65.",
@@ -2451,6 +2574,7 @@
   {
     "title": "Dateityp anhand der Hex-Signatur erkennen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Der Mailfilter hat drei Anhänge in Quarantäne verschoben. Sie sehen sich jeweils die ersten Bytes im Hex-Editor an:",
@@ -2474,6 +2598,7 @@
   {
     "title": "Röntgenbilder in einer Tierarztpraxis speichern und versenden",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Tierarztpraxis richtet im Behandlungsraum einen Arbeitsplatz für digitale Röntgenbilder ein. Der Röntgendetektor liefert Graustufenbilder mit 3.072 x 2.560 Pixeln und 16 Bit je Pixel. Die Bilder werden unkomprimiert gespeichert, Zusatzdaten im Dateikopf werden vernachlässigt. Im Schnitt entstehen 18 Aufnahmen pro Tag an 250 Praxistagen im Jahr.",
@@ -2494,6 +2619,7 @@
   {
     "title": "Notebook meldet an der Dockingstation ein langsames Ladegerät",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "In einem Planungsbüro hängen die Notebooks per USB-C an Dockingstationen. Eine Mitarbeiterin mit einem neuen, leistungsstärkeren Notebook meldet: \"Beim Einstecken erscheint 'Langsames Ladegerät', und der Akku wird kaum voll.\"",
@@ -2515,6 +2641,7 @@
   {
     "title": "Geräteliste für den MAC-Filter einer Grundschule",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Grundschule will nur noch bekannte Geräte ins Verwaltungs-WLAN lassen. Der Hausmeister hat eine Liste mit MAC-Adressen und Nutzernamen erstellt, die als MAC-Filter im Access Point eingetragen werden soll:",
@@ -2538,6 +2665,7 @@
   {
     "title": "Statusbyte des Etikettendruckers im Versand",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Im Versand eines Onlinehändlers druckt ein Thermotransferdrucker die Versandetiketten. Heute Morgen druckt er nicht mehr. Die Wartungssoftware zeigt das Statusbyte 0x2C. Laut Handbuch bedeutet ein gesetztes Bit:",
@@ -2559,6 +2687,7 @@
   {
     "title": "PC-Kasse mit Barcodescanner im Fahrradladen",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Fahrradladen ersetzt seine alte Registrierkasse durch ein PC-Kassensystem. Zum Arbeitsplatz gehören ein Kassen-PC mit Touchscreen, ein Bondrucker, eine Kassenschublade, ein Barcodescanner, ein Kundendisplay und das vorhandene Kartenterminal.",
@@ -2579,6 +2708,7 @@
   {
     "title": "Ultrawide-Monitor oder zwei Monitore für die Buchhaltung",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Die Buchhaltung eines Möbelhauses bekommt neue Arbeitsplätze. Die Schreibtische sind 140 cm breit und 80 cm tief. Zur Wahl stehen (1 Zoll = 2,54 cm):",
@@ -2600,6 +2730,7 @@
   {
     "title": "Neue 4-TB-Festplatte zeigt nur 2 TB an",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Dachdeckermeister lässt in seinen Büro-PC eine zweite Festplatte mit 4 TB für Baustellenfotos einbauen (Herstellerangabe: 1 TB = 10^12 Byte, 512 Byte je Sektor). Ein Kollege hat sie in der Datenträgerverwaltung als MBR-Datenträger initialisiert. Jetzt lässt sich nur eine Partition mit 2.048 GB anlegen, der Rest ist \"Nicht zugeordnet\". Windows rechnet dabei in GiB, schreibt aber \"GB\".",
@@ -2619,6 +2750,7 @@
   {
     "title": "IP-Telefonie im Immobilienbüro einführen",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Immobilienbüro mit 14 Arbeitsplätzen stellt auf IP-Telefone um. Die Telefone werden per PoE versorgt und nutzen den Codec G.711 (64 kbit/s Sprachdaten) mit 20 ms Sprache je Paket. Pro Paket kommen 12 Byte RTP-, 8 Byte UDP- und 20 Byte IPv4-Header dazu. Der Internetanschluss hat 10 Mbit/s im Upload. Tagsüber laufen manchmal große Uploads zu einem Cloud-Speicher.",
@@ -2639,6 +2771,7 @@
   {
     "title": "Fahrschul-WLAN vergibt keine Adressen mehr",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Fahrschule hat ein Büro mit Schulungsraum. Es gibt nur ein WLAN für Mitarbeiter und Fahrschüler, das Passwort hängt im Schulungsraum aus. Router und DHCP-Server ist eine Internet-Box mit dem Netz 192.168.10.0/24. Der DHCP-Bereich reicht von 192.168.10.100 bis 192.168.10.150, die Lease-Zeit beträgt 7 Tage.",
@@ -2659,6 +2792,7 @@
   {
     "title": "Abnahme der neuen Netzwerkdosen im Anbau",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Elektrobetrieb hat im Anbau eines Architekturbüros 8 Doppeldosen (16 Anschlüsse) mit Cat.-7-Verlegekabel und Cat.-6A-Anschlusstechnik installiert. Vereinbart war ein Festpreis von 4.284 Euro brutto für eine betriebsbereite, normgerecht gemessene Verkabelung. Bei der Abnahme messen Sie mit einem Kabeltester nach:",
@@ -2683,6 +2817,7 @@
   {
     "title": "Internetanschluss für eine Optikerfiliale auswählen",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Optiker eröffnet in 4 Wochen eine zweite Filiale. Dort laufen ein Cloud-Kassensystem, das Kartenterminal, 3 PCs mit einer Branchensoftware in der Cloud und ein Gerät zur 3D-Vermessung des Gesichts. Jede Vermessung erzeugt 250 MB (1 MB = 10^6 Byte) und wird sofort zum Brillenglashersteller hochgeladen. Im Schnitt gibt es 12 Vermessungen pro Tag. Angebote (netto, Mindestlaufzeit 24 Monate):",
@@ -2705,6 +2840,7 @@
   {
     "title": "CNC-Maschine ins Firmennetz einbinden",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Metallbaubetrieb hat eine CNC-Fräsmaschine gekauft. Ihr Steuerungsrechner hat ab Werk die feste Adresse 192.168.0.50/24 und läuft mit Windows 7. Der Hersteller erlaubt keine Updates, sonst erlischt die Gewährleistung. Die Fräsprogramme entstehen im Büro auf CAM-PCs im Netz 10.20.0.0/24 (Router 10.20.0.1). Bisher werden sie per USB-Stick zur Maschine getragen.",
@@ -2725,6 +2861,7 @@
   {
     "title": "Mobiles Internet für einen Messestand",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Hersteller von Küchengeräten stellt 3 Tage auf einer Messe aus. Am Stand gibt es keinen festen Internetzugang. Sie sollen einen 5G-Router mit WLAN einrichten. Nutzung pro Messetag (1 GB = 1.000 MB, 1 Byte = 8 Bit):",
@@ -2748,6 +2885,7 @@
   {
     "title": "Mitgebrachter Switch legt das Etagennetz lahm",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einem Bildungszentrum sind am Montag ab 9:15 Uhr alle PCs im 2. Obergeschoss extrem langsam, die Anmeldung am Server dauert Minuten. Die Port-LEDs des Etagenswitches blinken ununterbrochen. Im Schulungsraum hat eine Dozentin morgens einen mitgebrachten 8-Port-Switch aufgestellt. Von ihm führen zwei Patchkabel zu zwei Netzwerkdosen an der Wand. Der Etagenswitch ist managebar, Spanning Tree ist dort aber ausgeschaltet.",
@@ -2768,6 +2906,7 @@
   {
     "title": "Personalakten eines Pflegedienstes einscannen",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein ambulanter Pflegedienst mit 48 Beschäftigten will die Personalakten digitalisieren und künftig in einer Personalsoftware führen. Eine Akte hat im Schnitt 120 Seiten DIN A4. Darin liegen auch Arbeitsunfähigkeitsbescheinigungen und Impfnachweise.",
@@ -2788,6 +2927,7 @@
   {
     "title": "NAS-Sicherung für ein Übersetzungsbüro",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Übersetzungsbüro mit 9 Beschäftigten speichert Kundentexte (Verträge, Gutachten) auf einem Server: 1,4 TB Daten (1 TB = 1.000 GB = 1.000.000 MB). Geplant ist ein NAS als Sicherungsziel: freitags eine Vollsicherung, montags bis donnerstags je eine inkrementelle Sicherung. Pro Tag ändern sich etwa 2 % der Daten. Die Sicherungen der letzten 4 Wochen sollen aufbewahrt werden, dazu 25 % Reserve für Wachstum.",
@@ -2808,6 +2948,7 @@
   {
     "title": "Fernwartung für eine Hausarztpraxis vereinbaren",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Hausarztpraxis lässt ihre 7 PCs und den Praxisserver von einem IT-Dienstleister per Fernwartung betreuen. Dabei kann der Dienstleister auf die Praxissoftware mit Patientendaten zugreifen. Zwei Abrechnungsmodelle werden angeboten (netto):",
@@ -2830,6 +2971,7 @@
   {
     "title": "Diensthandys für den Außendienst absichern",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Hersteller von Medizinprodukten stattet 20 Außendienstmitarbeiter mit Diensthandys aus. Darauf liegen E-Mails, Kontakte von Ärzten und Kliniken sowie Angebote. Angebot (netto): Smartphone 489 Euro je Gerät, Verwaltung über ein Mobile Device Management (MDM) für 4,50 Euro je Gerät und Monat. Nutzungsdauer 3 Jahre.",
@@ -2850,6 +2992,7 @@
   {
     "title": "Lieferant meldet per E-Mail eine neue Bankverbindung",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Die Buchhalterin eines Sanitärgroßhandels erhält am Dienstag eine E-Mail des langjährigen Lieferanten. Absender: buchhaltung@rohrtechnik-meyer.de. Bisher kamen Mails immer von buchhaltung@rohrtechnik-meier.de. Text: \"Wegen einer Bankumstellung zahlen Sie bitte ab sofort nur noch auf unser neues Konto. Um den Skonto zu sichern, überweisen Sie bitte heute noch.\"",
@@ -2870,6 +3013,7 @@
   {
     "title": "Bewerbungsformular auf der Firmenwebseite",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein IT-Systemhaus mit 60 Beschäftigten erhält Bewerbungen bisher per E-Mail an eine allgemeine Adresse. Auf das Sammelpostfach haben 8 Mitarbeiter Zugriff. Jetzt soll ein Bewerbungsformular auf der Webseite entstehen. Der Entwurf fragt ab: Name, Anschrift, E-Mail, Telefon, Geburtsdatum, Familienstand, Religionszugehörigkeit, Foto (Pflichtfeld), Lebenslauf und Zeugnisse.",
@@ -2889,6 +3033,7 @@
   {
     "title": "Schulungs-PCs an einem Tag per Image einrichten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Bildungsträger hat 16 neue PCs für einen Schulungsraum gekauft, jeweils mit vorinstalliertem Windows 11 Pro (OEM-Lizenz). Alle PCs sollen dasselbe Image mit Schulungssoftware erhalten. Das Referenzimage ist fertig und geprüft, es ist 48 GB groß (1 GB = 1.000 MB).",
@@ -2909,6 +3054,7 @@
   {
     "title": "Leitungsarbeitsplätze für fünf Kitas planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Kita-Träger richtet in 5 Kitas je einen Arbeitsplatz für die Kita-Leitung ein: Notebook, Multifunktionsdrucker und Zugang zu einer Kita-Verwaltungssoftware in der Cloud. Darin stehen Daten der Kinder und Eltern, auch Allergien und Abholberechtigungen. Die Geschäftsführerin sagt: \"Die Leitungen sollen halt besser arbeiten können.\"",
@@ -2929,6 +3075,7 @@
   {
     "title": "Agentur will zwei Tage früher einziehen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Systemhaus richtet in den neuen Räumen einer Werbeagentur die IT ein (Festpreis nach Angebot). Geplant sind: 30 Arbeitsplätze zu je 2 Stunden, Server und Netzwerktechnik 12 Stunden, Drucker und Besprechungsräume 8 Stunden. Zwei Techniker arbeiten je 8 Stunden am Tag. Interner Kostensatz: 65 Euro je Stunde.",
@@ -2949,6 +3096,7 @@
   {
     "title": "Fileserver-Umzug am Wochenende mit Rückfallplan",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Logistikunternehmen stellt am Wochenende auf einen neuen Fileserver um. Auf dem alten Server liegen 2,4 TB Daten in 1,8 Millionen Dateien (1 TB = 1.000.000 MB). Ein Testlauf ergab eine mittlere Kopierrate von 95 MB/s. Kopiert wird mit Robocopy, die Berechtigungen werden mitkopiert. Am Montag um 6:00 Uhr beginnt die erste Schicht.",
@@ -2969,6 +3117,7 @@
   {
     "title": "Drei Störungsmeldungen am Freitagnachmittag",
     "cat": "wirtschaft",
+    "thema": "service",
     "theme": "Projektplanung",
     "text": [
       "Ein Systemhaus betreut Kunden mit folgendem Servicevertrag: Servicezeit Montag bis Freitag 8:00 bis 17:00 Uhr. Reaktions- und Wiederherstellungszeiten laufen nur innerhalb der Servicezeit.",
@@ -2995,6 +3144,7 @@
   {
     "title": "Zwischenstand beim PC-Tausch im Autohaus",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einem Autohaus werden 48 Arbeitsplätze auf neue PCs umgestellt. Plan: 4 PCs pro Arbeitstag, also 12 Arbeitstage, je PC 2 Stunden Arbeitszeit bei 80 Euro je Stunde. Nach 6 Arbeitstagen ist Zwischenbilanz: 19 PCs sind fertig, dafür wurden 44 Stunden gebraucht.",
@@ -3015,6 +3165,7 @@
   {
     "title": "Notebookkauf einer Studentin im Onlineshop",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Eine Studentin fragt im Chat des Onlineshops eines Systemhauses nach einem Notebook: \"Ich brauche es für Office, Videokonferenzen und Recherche, bin viel mit der Bahn unterwegs und habe höchstens 900 Euro.\" Sie bestellt am Sonntag, 04.10.2026, ein Notebook für 899 Euro. Es wird ihr am Donnerstag, 08.10.2026, zugestellt. Die Widerrufsbelehrung war korrekt.",
@@ -3034,6 +3185,7 @@
   {
     "title": "Vom Administrator zum Freelancer",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Der Netzwerkadministrator Herr Özdemir verdient bei einem Systemhaus 4.500 Euro brutto im Monat (12 Gehälter). Er möchte kündigen und selbstständig arbeiten. Sein Chef schlägt vor: \"Machen Sie doch dieselbe Arbeit wie bisher als Freelancer. Sie sitzen weiter an Ihrem Platz, halten sich an unsere Arbeitszeiten und bekommen Ihre Aufträge vom Teamleiter.\"",
@@ -3054,6 +3206,7 @@
   {
     "title": "Azubi möchte samstags im Elektronikmarkt jobben",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Kevin ist 19 Jahre alt und im 2. Ausbildungsjahr zum Fachinformatiker. Er arbeitet von Montag bis Freitag je 8 Stunden im Betrieb bzw. in der Berufsschule. Ab Oktober 2026 möchte er samstags in einem Elektronikmarkt Kunden bei der Einrichtung von PCs und Smartphones helfen. Sein Ausbildungsbetrieb ist ein Systemhaus mit eigenem Ladengeschäft in derselben Stadt.",
@@ -3074,6 +3227,7 @@
   {
     "title": "Sechs Arbeitsplätze für ein Hörakustikgeschäft abrechnen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Systemhaus soll für ein Hörakustikgeschäft (GmbH) 6 Arbeitsplätze liefern, einrichten und betriebsbereit übergeben, einschließlich der Anbindung der Anpasssoftware an die Messgeräte. Angebot (netto): 6 PCs mit Monitor zu je 1.180 Euro, darauf 5 % Rabatt; Arbeitszeit 22 Stunden zu je 85 Euro; Anfahrtspauschale 60 Euro. Umsatzsteuer 19 %. Zahlung innerhalb von 14 Tagen mit 2 % Skonto, innerhalb von 30 Tagen ohne Abzug.",
@@ -3093,6 +3247,7 @@
   {
     "title": "Administratorin im Mutterschutz vertreten",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Anna Weber ist die einzige Systemadministratorin eines Unternehmens mit 35 Beschäftigten und kennt alle Admin-Passwörter. Am 12.10.2026 teilt sie mit, dass sie schwanger ist. Der voraussichtliche Entbindungstermin ist Montag, 15.03.2027. Direkt nach dem Mutterschutz möchte sie Elternzeit nehmen. Für die Vertretung soll ein Administrator befristet eingestellt werden.",
@@ -3112,6 +3267,7 @@
   {
     "title": "Sturz vom Bürostuhl bei der Access-Point-Montage",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Der Auszubildende Emre (18 Jahre) montiert am Dienstag, 10.11.2026, gegen 10:30 Uhr bei einem Kunden einen Access Point an der Decke. Er steigt dafür auf einen Bürostuhl mit Rollen, weil die Leiter im Firmenwagen liegt. Er stürzt und bricht sich das Handgelenk. Nach dem Unfall arbeitet er nicht mehr. Der Arzt schreibt ihn ab dem 11.11.2026 für 4 Wochen arbeitsunfähig.",
@@ -3131,6 +3287,7 @@
   {
     "title": "Arbeitsplatz für die Grafikerin einer Werbetechnikfirma",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Werbetechnikfirma druckt Banner, Planen und Fahrzeugbeschriftungen. Die neue Grafikerin braucht einen Arbeitsplatz für Bildbearbeitung und Layout. Ein typisches Bannermotiv ist 254 cm x 127 cm groß (1 Zoll = 2,54 cm) und wird mit 150 dpi im Farbmodus CMYK mit 8 Bit je Farbkanal angelegt. Vereinfacht wird unkomprimiert gerechnet (1 MB = 10^6 Byte).",
@@ -3151,6 +3308,7 @@
   {
     "title": "USV für einen Messplatz im Baustofflabor",
     "cat": "systeme",
+    "thema": "it_betrieb",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "In einem Prüflabor für Baustoffe laufen Belastungsversuche bis zu 6 Stunden. Die Messdaten erfasst ein PC. Wegen einer Baustelle nebenan gibt es häufig kurze Stromausfälle und Spannungseinbrüche. Dann bricht der Versuch ab und muss mit einem neuen Prüfkörper wiederholt werden.",
@@ -3175,6 +3333,7 @@
   {
     "title": "Tower-PCs im Callcenter durch Mini-PCs ersetzen",
     "cat": "systeme",
+    "thema": "it_betrieb",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Das Callcenter eines Energieversorgers hat 40 Arbeitsplätze, die im Zwei-Schicht-Betrieb 10 Stunden an 250 Tagen im Jahr laufen. Die 7 Jahre alten Tower-PCs brauchen im Betrieb durchschnittlich 68 W. Sie können das aktuelle Windows nicht mehr bekommen und müssen ersetzt werden.",
@@ -3195,6 +3354,7 @@
   {
     "title": "Schadenfotos eines Kfz-Sachverständigen speichern",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Kfz-Sachverständiger fotografiert Unfallschäden mit einem Tablet. Die Kamera liefert 12 Megapixel (4.000 x 3.000 Pixel) mit 24 Bit Farbtiefe. Gespeichert wird als JPEG, im Mittel 4,5 MB je Foto (1 MB = 10^6 Byte, 1 GB = 1.000 MB). Pro Gutachten entstehen 40 Fotos, er erstellt 6 Gutachten am Tag an 230 Arbeitstagen im Jahr.",
@@ -3215,6 +3375,7 @@
   {
     "title": "Hilfsprogramm rechnet Präfixlängen in Subnetzmasken um",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Der Ausbilder eines Systemhauses möchte, dass die Azubis ein kleines Hilfsprogramm für den Support schreiben. Es soll eine Präfixlänge (z.B. 27) in eine Subnetzmaske in Punktschreibweise umrechnen. Ein Azubi hat diesen Pseudocode begonnen:",
@@ -3249,6 +3410,7 @@
   {
     "title": "Struktogramm für die Temperaturüberwachung im Serverraum",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Im kleinen Serverraum einer Spedition fällt im Sommer manchmal die Klimaanlage aus. Ein Sensor liefert jede Minute einen Temperaturwert t in °C. Ein Überwachungsprogramm soll so arbeiten:",
@@ -3279,6 +3441,7 @@
   {
     "title": "Inventarliste der Notebooks in der Tabellenkalkulation",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Steuerungsbaufirma führt ihre Notebooks in einer Tabellenkalkulation. Im Blatt \"Inventar\" stehen oben die Parameter: I1 = Nutzungsdauer 3 (Jahre), I2 = Austauschalter 5 (Jahre). Ab Zeile 5 folgen die Geräte, Spalte D enthält den Kaufpreis netto, Spalte E das Alter in ganzen Jahren zum Stichtag 31.12.2026. Vereinfacht wird linear in ganzen Jahren abgeschrieben.",
@@ -3304,6 +3467,7 @@
   {
     "title": "Monitore mit USB-C für Desksharing-Plätze",
     "cat": "systeme",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Der Kundenservice eines Stadtwerks führt Desksharing ein. 45 Mitarbeiter arbeiten mit 14-Zoll-Notebooks, im Mittel sind 60 % gleichzeitig im Büro. Es sollen 10 % Reserveplätze dazukommen. Jeder Platz bekommt einen 27-Zoll-Monitor mit WQHD. Die Notebooks laden per USB-C mit 65 W.",
@@ -3326,6 +3490,7 @@
   {
     "title": "Büro und Werkstatt einer Tischlerei vernetzen",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Tischlerei baut über der Werkstatt ein neues Büro aus. Im Büro kommen 5 PCs, 1 Multifunktionsdrucker, 1 NAS und 2 WLAN-Access-Points an einen neuen Switch. Dazu kommen je ein Port für den Internetrouter und für die Verbindung in die Werkstatt. Es sollen 30 % freie Ports als Reserve bleiben. Die Access Points (je höchstens 13 W) werden per PoE versorgt, später sollen zwei weitere dazukommen.",
@@ -3346,6 +3511,7 @@
   {
     "title": "IP-Adresskonflikt mit dem Ultraschallgerät einer Arztpraxis",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine internistische Praxis nutzt das Netz 192.168.1.0/24, der Router hat 192.168.1.1. Der DHCP-Bereich reicht von 192.168.1.50 bis 192.168.1.150. Der Techniker des Geräteherstellers hat ein neues Ultraschallgerät fest auf 192.168.1.60 eingestellt. Seitdem meldet ein Empfangs-PC ab und zu einen IP-Adresskonflikt, und das Ultraschallgerät kann seine Bilder zeitweise nicht an den Praxisserver senden.",
@@ -3367,6 +3533,7 @@
   {
     "title": "Videokonferenzen ruckeln im Besprechungsraum",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einem Verlag treffen sich jeden Morgen 10 Redakteure im Besprechungsraum. Jeder wählt sich mit seinem Notebook per WLAN in die Videokonferenz ein, damit die Kollegen im Homeoffice alle sehen. Seitdem ruckeln Bild und Ton, und es gibt Rückkopplungspfeifen.",
@@ -3387,6 +3554,7 @@
   {
     "title": "Nach dem Routertausch findet ein PC keine Webseiten mehr",
     "cat": "netzwerk",
+    "thema": "fehlersuche",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Reisebüro hat am Wochenende einen neuen Internetrouter bekommen. Das alte Netz war 192.168.2.0/24 mit dem Router 192.168.2.1, der neue Router nutzt 192.168.178.0/24 mit 192.168.178.1. Am Montag funktionieren alle PCs, nur die Inhaberin meldet: \"Bei mir geht kein Internet, aber der Drucker druckt.\"",
@@ -3407,6 +3575,7 @@
   {
     "title": "Scanner im Autohaus legt nach dem Serverupdate nichts mehr ab",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In der Serviceannahme eines Autohauses scannt ein Multifunktionsgerät Fahrzeugscheine, Aufträge und Rechnungen direkt in einen freigegebenen Ordner auf dem Server (Scan-to-Folder). Nach einem Update des Servers erscheint am Gerät nur noch \"Verbindung zum Ziel fehlgeschlagen\". Ein Kollege findet im Internet den Tipp, am Server SMB Version 1 wieder einzuschalten.",
@@ -3427,6 +3596,7 @@
   {
     "title": "Bauzeichnerin wartet im Homeoffice auf ihre Pläne",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Bauzeichnerin eines Ingenieurbüros arbeitet zwei Tage pro Woche von zu Hause. Sie öffnet die Planungsdateien über VPN direkt vom Fileserver im Büro. Eine typische Datei hat 1,2 GB (1 GB = 1.000 MB). Sie öffnet und speichert an einem Homeoffice-Tag im Schnitt 4 solche Dateien. Sie beschwert sich über lange Wartezeiten.",
@@ -3447,6 +3617,7 @@
   {
     "title": "Stallkamera ist nach dem Glasfaserwechsel nicht mehr erreichbar",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Die Inhaberin eines Reitstalls schaut abends per Smartphone auf die Netzwerkkamera im Abfohlstall. Bisher lief das über eine Portweiterleitung im DSL-Router auf die öffentliche IPv4-Adresse. Nach dem Wechsel auf einen Glasfaseranschluss geht das nicht mehr. Im neuen Router steht: Internetzugang über DS-Lite, IPv4 über Tunnel, IPv6-Präfix 2001:db8:4a2c:3f00::/56. Die Kamera hat die Adresse 2001:0db8:4a2c:3f00:02c0:a8ff:fe10:0a15.",
@@ -3466,6 +3637,7 @@
   {
     "title": "Mobilfunk-Backup für die Kassen einer Bäckereifiliale",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Bäckereifiliale hat zwei Cloud-Kassen und ein Kartenterminal. Letzten Monat fiel der DSL-Anschluss zwei Tage aus. Die Kassen konnten nur eingeschränkt arbeiten, Kartenzahlung ging gar nicht. Jetzt soll ein LTE-Router als Ausweichverbindung dazukommen, mit einem Tarif von 1 GB im Monat (1 GB = 1.000 MB, 1 MB = 1.000 KB).",
@@ -3486,6 +3658,7 @@
   {
     "title": "Empfangsrechner eines Fitnessstudios absichern",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Am Empfang eines Fitnessstudios steht ein PC mit der Mitgliederverwaltung: Name, Anschrift, Bankverbindung, Vertragsdaten und Hinweise zu Verletzungen. Der Bildschirm ist zur Theke gedreht, damit Mitglieder ihre Daten mitlesen können. Alle 9 Trainer melden sich mit dem Sammelkonto \"theke\" an, die 4-stellige PIN steht auf einem Zettel unter der Tastatur. Das Konto hat Administratorrechte, damit jeder Updates installieren kann.",
@@ -3506,6 +3679,7 @@
   {
     "title": "Leasingrückgabe von Notebooks, Druckern und Diensthandys",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Ingenieurbüro gibt nach 4 Jahren Leasing alle Geräte zurück: 35 Notebooks mit SSD, 6 Multifunktionsdrucker mit eingebauter Festplatte und 20 Diensthandys. Der Leasinggeber holt die Geräte in drei Wochen ab und verkauft sie weiter. Die Geräte müssen vollständig und funktionsfähig zurückgegeben werden.",
@@ -3528,6 +3702,7 @@
   {
     "title": "Ungetestete Datensicherung einer Ergotherapiepraxis",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Ergotherapiepraxis mit 6 Therapeutinnen hat 180 GB Daten auf ihrem Praxis-PC: Therapiesoftware mit Datenbank, Befunde, Verordnungen und Abrechnung (1 GB = 1.000 MB). Jede Nacht um 20 Uhr läuft eine Vollsicherung auf eine USB-Festplatte, die dauerhaft am PC steckt. Eine Wiederherstellung wurde nie ausprobiert.",
@@ -3548,6 +3723,7 @@
   {
     "title": "Zugangsdaten auf einer gefälschten Anmeldeseite eingegeben",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Vertriebsmitarbeiter einer Eventagentur erhält am Freitag, 16.10.2026, um 11:20 Uhr eine E-Mail \"Ein Dokument wurde für Sie freigegeben\". Er klickt auf den Link und gibt auf einer täuschend echten Anmeldeseite Benutzername und Passwort seines Cloud-Postfachs ein. Danach erscheint eine Fehlermeldung. MFA ist in der Agentur nicht eingerichtet.",
@@ -3568,6 +3744,7 @@
   {
     "title": "Check-in-Terminal im Wartebereich einer Kfz-Werkstatt",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Kfz-Werkstatt stellt im Kundenwartebereich ein Check-in-Terminal auf. Kunden geben dort Name, Telefonnummer und Kennzeichen ein, beschreiben den Schaden und unterschreiben den Reparaturauftrag auf dem Touchscreen. Das Terminal ist mit der Werkstattsoftware verbunden. Dort stehen auch Adressen, Fahrzeugdaten und Rechnungen aller Kunden.",
@@ -3588,6 +3765,7 @@
   {
     "title": "Rezeption eines Stadthotels datenschutzgerecht einrichten",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Stadthotel mit 60 Zimmern richtet seine Rezeption neu ein. An zwei PCs läuft die Hotelsoftware mit Namen, Anschriften, Zimmernummern, Kreditkartenhinweisen und Sonderwünschen der Gäste. Bisher sind beide Bildschirme zur Lobby hin sichtbar. Alle 11 Beschäftigten nutzen das Konto \"rezeption\". Ausgefüllte Meldescheine ausländischer Gäste liegen in einem offenen Ablagekorb. Nachts arbeitet ein Nachtportier allein und verlässt die Rezeption für Rundgänge.",
@@ -3609,6 +3787,7 @@
   {
     "title": "Zweiter Faktor für die Cloud-Konten einer Spedition",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Spedition mit 45 Beschäftigten nutzt E-Mail, Dateiablage und Tourenplanung in der Cloud. Nach einem Phishing-Angriff auf ein Nachbarunternehmen soll für alle Konten eine Mehr-Faktor-Authentifizierung (MFA) eingeführt werden. 18 Beschäftigte haben ein Diensthandy, die anderen 27 nicht. Der Geschäftsführer schlägt vor: \"Die Leute sollen einfach ihr privates Handy nehmen, SMS-Codes reichen doch.\"",
@@ -3629,6 +3808,7 @@
   {
     "title": "Fernsupport für die Filialen einer Getränkemarktkette",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Getränkemarktkette hat 14 Filialen mit Kassen-PCs und einem Büro-PC je Filiale. In der Zentrale arbeiten Buchhaltung und Lohnbüro. Bisher fährt der einzige IT-Techniker bei jedem Problem hin. Es gibt ca. 100 Einsätze im Jahr. Ein Einsatz vor Ort dauert im Schnitt 1,2 h Fahrt (hin und zurück) und 0,5 h Arbeit, gefahren werden im Schnitt 50 km. Die Stunde kostet 55 Euro, der Kilometer 0,40 Euro.",
@@ -3649,6 +3829,7 @@
   {
     "title": "Zwölf Arbeitsplätze für die neue Filiale eines Sanitätshauses",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Sanitätshaus eröffnet eine neue Filiale mit 12 Arbeitsplätzen für Beratung, Werkstatt und Verwaltung. Ihr Ausbilder gibt Ihnen die Vorgangsliste (Dauer in Arbeitstagen):",
@@ -3677,6 +3858,7 @@
   {
     "title": "Headsets für ein Kundenservice-Team per Nutzwertanalyse auswählen",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Projektplanung",
     "text": [
       "Der Kundenservice eines Energieversorgers erhält 24 neue Headsets für Telefonie am PC. Das Budget beträgt 3.000 Euro. Drei Angebote je Stück (netto):",
@@ -3700,6 +3882,7 @@
   {
     "title": "Testprotokoll für zehn Packplätze eines Versandhändlers",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Systemhaus hat bei einem Versandhändler 10 Packplätze eingerichtet: PC, Handscanner, Etikettendrucker und Paketwaage, angebunden an die Schnittstelle des Paketdienstes (Werkvertrag, 18.400 Euro netto zuzüglich 19 % Umsatzsteuer). 30 % des Bruttobetrags wurden angezahlt, der Rest ist bei Abnahme fällig. Vereinbart ist: Abnahme, wenn mindestens 95 % der Testfälle bestanden sind und kein wesentlicher Mangel vorliegt.",
@@ -3720,6 +3903,7 @@
   {
     "title": "Kostenplan für 25 Arbeitsplätze einer Versicherungsagentur",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Versicherungsagentur erneuert 25 Arbeitsplätze. Das Budget beträgt 38.000 Euro netto. Ihre Planung:",
@@ -3745,6 +3929,7 @@
   {
     "title": "Einweisungsplan für 42 Beschäftigte eines Möbelhauses",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Möbelhaus hat neue Beratungsarbeitsplätze mit 3D-Küchenplaner und Tablets für die Verkaufsfläche erhalten. Die Technik ist abgenommen. Jetzt sollen alle 42 Beschäftigten im Verkauf eingewiesen werden. Vorgaben: höchstens 8 Personen je Gruppe, damit die Verkaufsfläche besetzt bleibt. Eine Einweisung dauert 90 Minuten. Der Schulungsraum ist montags bis freitags von 8 bis 12 und von 13 bis 17 Uhr frei. Zwischen zwei Terminen braucht die Trainerin 15 Minuten. Samstags wird nicht geschult.",
@@ -3765,6 +3950,7 @@
   {
     "title": "Homeoffice-Pakete für ein Ingenieurbüro vor Ostern ausliefern",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Ingenieurbüro stellt 20 Beschäftigte ab Montag, 12.04.2027, auf Homeoffice um. Jede Person erhält ein Paket mit Notebook, Monitor, Dockingstation und Headset. Die Einweisung per Video muss vorher abgeschlossen sein. Ihr Plan in Arbeitstagen (AT), Start Montag, 15.03.2027:",
@@ -3792,6 +3978,7 @@
   {
     "title": "Monitortausch zwischen Technikerin und Azubi aufteilen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "In einem Großraumbüro einer Krankenkasse werden an 60 Arbeitsplätzen alte Monitore gegen höhenverstellbare Modelle getauscht und ergonomisch eingestellt. Die Arbeiten laufen am Abend nach Dienstschluss mit 8 Stunden je Einsatztag. Technikerin Frau Sommer braucht je Platz 20 Minuten, der Auszubildende Leon im 2. Jahr 30 Minuten. Interne Kosten: Frau Sommer 68 Euro je Stunde, Leon 25 Euro je Stunde.",
@@ -3811,6 +3998,7 @@
   {
     "title": "Pilotphase mit Dokumentenscannern im Rechnungseingang auswerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Handelsunternehmen will den Rechnungseingang digitalisieren. Vier Wochen lang wurden an 3 Arbeitsplätzen Dokumentenscanner mit Texterkennung getestet. Ergebnis der Pilotphase: 600 Belege gescannt, davon mussten 30 von Hand nachbearbeitet werden (je 3 Minuten). Ohne Nachbearbeitung spart ein gescannter Beleg 1 Minute gegenüber dem bisherigen Kopieren und Ablegen.",
@@ -3831,6 +4019,7 @@
   {
     "title": "Lange Krankheit in der Probezeit einer Auszubildenden",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Sophie beginnt am 01.09.2026 ihre Ausbildung zur Fachinformatikerin. Die Probezeit beträgt 4 Monate. Im Vertrag steht: \"Wird die Ausbildung während der Probezeit um mehr als ein Drittel unterbrochen, verlängert sich die Probezeit um die Dauer der Unterbrechung.\"",
@@ -3851,6 +4040,7 @@
   {
     "title": "Blockunterricht und Nachuntersuchung eines 16-jährigen Azubis",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Can ist 16 Jahre alt (geboren am 14.03.2010) und hat am Dienstag, 01.09.2026, seine Ausbildung in einem IT-Systemhaus begonnen. Die ärztliche Erstuntersuchung fand am 12.05.2026 statt. Im Betrieb gilt die 5-Tage-Woche, Montag bis Freitag, 8 Stunden am Tag.",
@@ -3872,6 +4062,7 @@
   {
     "title": "Servicetechniker beantragt eine Viertagewoche",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Kai arbeitet seit 2021 als Servicetechniker in einem IT-Unternehmen mit 55 Beschäftigten. Er arbeitet 40 Stunden an 5 Tagen und verdient 3.900 Euro brutto. Am 15.10.2026 beantragt er per E-Mail, ab 01.01.2027 nur noch 32 Stunden an 4 Tagen zu arbeiten. Er hat 30 Urlaubstage bei der 5-Tage-Woche.",
@@ -3892,6 +4083,7 @@
   {
     "title": "Drei Fachinformatiker gründen eine UG",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Lea, Ben und Omar wollen einen IT-Service für Arztpraxen gründen. Sie haben wenig Geld, wollen aber nicht mit ihrem Privatvermögen haften. Sie planen eine Unternehmergesellschaft (haftungsbeschränkt). Stammkapital: Lea 1.500 Euro, Ben 900 Euro, Omar 600 Euro. Ben möchte statt Geld sein Notebook im Wert von 900 Euro einbringen.",
@@ -3912,6 +4104,7 @@
   {
     "title": "Beamer für die Hausmesse kommt nach dem Fixtermin",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Systemhaus (GmbH) plant für Donnerstag, 15.10.2026, eine Hausmesse. Am 01.09.2026 erhält es von einem Großhändler ein Angebot \"freibleibend\": Laser-Beamer zu 1.290 Euro netto je Stück. Am 08.09. bestellt das Systemhaus 2 Beamer zu 1.290 Euro je Stück mit dem Vermerk \"Lieferung fix am 13.10.2026\". Am 10.09. antwortet der Großhändler: \"Wir liefern gern fix zum 13.10.2026, allerdings zu 1.340 Euro je Stück.\" Am 11.09. schreibt das Systemhaus: \"Einverstanden.\"",
@@ -3932,6 +4125,7 @@
   {
     "title": "Warnstreik beim IT-Dienstleister einer Versicherung",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Bei einem tarifgebundenen IT-Dienstleister ist der Entgelttarifvertrag zum 31.12.2026 ausgelaufen. Die Gewerkschaft fordert 7 %, mindestens 250 Euro im Monat. Nach der zweiten Verhandlungsrunde ruft sie im Januar 2027 zu zwei ganztägigen Warnstreiks auf. Der Administrator Jan (Gewerkschaftsmitglied, 3.600 Euro brutto) und die Auszubildende Mara (kein Mitglied) wollen mitstreiken. Verhandelt wird auch über die Ausbildungsvergütungen. Die Geschäftsführung fragt, wer dann die Server betreut.",
@@ -3953,6 +4147,7 @@
   {
     "title": "Neue oder aufbereitete Notebooks für einen Bio-Großhandel",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Bio-Großhandel will nachhaltiger wirtschaften und braucht 30 Notebooks für Vertrieb und Verwaltung. Zwei Angebote (netto, vereinfacht angenommene CO2-Werte):",
@@ -3975,6 +4170,7 @@
   {
     "title": "Nach bestandener Prüfung einfach weitergearbeitet",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Nils macht eine Ausbildung zum Fachinformatiker für Systemintegration. Im Vertrag steht als Ende der 31.07.2027. Am Donnerstag, 17.06.2027, besteht er das Fachgespräch, und der Prüfungsausschuss teilt ihm das Gesamtergebnis mit. Über eine Übernahme wurde nicht gesprochen. Nils kommt ab Freitag, 18.06.2027, ganz normal zur Arbeit, sein Ausbilder weiß davon.",
@@ -3995,6 +4191,7 @@
   {
     "title": "Temperaturprotokoll des Arzneimittelkühlschranks einer Apotheke",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Apotheke lagert Impfstoffe und Insuline in einem Arzneimittelkühlschrank. Zulässig sind 2 °C bis 8 °C. Ein Datenlogger misst stündlich die Temperatur. Die Werte werden in eine Tabellenkalkulation übernommen: Spalte A Uhrzeit, Spalte B Temperatur in °C, ab Zeile 2. Die Grenzwerte stehen in F1 (2) und F2 (8).",
@@ -4017,6 +4214,7 @@
   {
     "title": "Gebührenberechnung für den Kassenautomaten eines Parkhauses",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein kleines Softwarehaus programmiert für den Betreiber eines Parkhauses an einem Einkaufszentrum die Gebührenberechnung der Kassenautomaten. Tarif: Die ersten 30 Minuten sind frei. Wer länger parkt, zahlt für jede angefangene Stunde ab Einfahrt 1,50 Euro, höchstens aber 12,00 Euro. Das Parkhaus ist von 6 bis 24 Uhr geöffnet. Dauerparker mit Monatskarte zahlen am Automaten nichts. Ein Kollege hat folgenden Pseudocode geschrieben (DIV = ganzzahlige Division, MOD = Rest der Division):",
@@ -4044,6 +4242,7 @@
   {
     "title": "Digitaler Orgelspieltisch sendet MIDI-Daten an den Sample-PC",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Orgelbauwerkstatt baut für eine Musikhochschule einen digitalen Übungsspieltisch mit zwei Manualen und Pedal. Die Tasten senden MIDI-Nachrichten über eine klassische MIDI-Schnittstelle an einen PC (31.250 Bit/s, je Byte 10 Bit mit Start- und Stoppbit). Eine Software erzeugt dort aus aufgenommenen Pfeifenklängen (Samples) den Orgelton. Eine Note-On-Nachricht hat 3 Byte: Statusbyte (oberes Nibble 9 = Note On, 8 = Note Off, unteres Nibble 0 bis F = Kanal 1 bis 16), Notennummer (60 = eingestrichenes c) und Anschlagstärke.",
@@ -4065,6 +4264,7 @@
   {
     "title": "Barrierefreier Dispositionsplatz in einer Taxizentrale",
     "cat": "systeme",
+    "thema": "it_betrieb",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "In einer Taxizentrale nimmt Frau Albers seit 12 Jahren Bestellungen an und vergibt Fahrten über eine Dispositionssoftware. Durch eine Augenerkrankung ist sie stark sehbehindert, ihr Grad der Behinderung beträgt 60. Sie arbeitet an einem 24-Zoll-Monitor mit Full HD (1920 x 1080) und nutzt die Windows-Lupe. Dabei verliert sie ständig den Überblick über die Fahrzeugliste.",
@@ -4086,6 +4286,7 @@
   {
     "title": "Füllstand der Regenwasserzisterne einer Gärtnerei per Struktogramm steuern",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Gärtnerei bewässert ihre Gewächshäuser mit Regenwasser aus einer Zisterne mit 10.230 Litern. Ein Füllstandssensor liefert über einen 10-Bit-Analog-Digital-Wandler Werte von 0 (leer) bis 1023 (voll). Die Steuerung zeigt die Werte hexadezimal an. Ein Steuerprogramm soll alle 10 Minuten so arbeiten:",
@@ -4121,6 +4322,7 @@
   {
     "title": "Adressplan für das Depot eines Busunternehmens",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Busunternehmen mit Linien- und Reiseverkehr baut sein Depot um. Für das Depot steht das Netz 192.168.40.0/24 zur Verfügung. Es sollen getrennte Subnetze entstehen:",
@@ -4145,6 +4347,7 @@
   {
     "title": "Hundehaus eines Tierheims per Glasfaser anbinden",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Tierheim hat ein Verwaltungsgebäude und 170 m entfernt ein neues Hundehaus mit Quarantänestation. Dort sollen 10 Netzwerkkameras (je 4 Mbit/s Dauerstrom zum Rekorder in der Verwaltung), ein PC in der Futterküche und ein IP-Telefon angeschlossen werden. Zurzeit gibt es nur einen WLAN-Repeater am Fenster, der real 20 bis 30 Mbit/s schafft und oft abbricht. Zwischen den Gebäuden liegt ein leeres Leerrohr, der Kabelweg einschließlich Reserve beträgt 180 m.",
@@ -4166,6 +4369,7 @@
   {
     "title": "IPv6-Präfix für Pfarrbüro, Gemeindehaus und Kita aufteilen",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Kirchengemeinde erhält einen neuen Glasfaseranschluss. Der Provider delegiert das Präfix 2001:db8:4c20:ab00::/56 (Dokumentationsbereich, als Beispiel verwendet). Im Pfarrhaus sollen Subnetze mit je einem /64 entstehen, die Subnetz-ID ist hexadezimal: Pfarrbüro (10), Gäste-WLAN im Gemeindehaus (20), Verwaltung der Kita (30) und Haustechnik mit Läuteanlage und Heizungssteuerung (40).",
@@ -4191,6 +4395,7 @@
   {
     "title": "Kassen-Tablet eines Friseursalons verliert mittags das WLAN",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Friseursalon in einer Einkaufspassage kassiert mit einem Tablet und bucht Termine online. Seit einigen Wochen bricht die WLAN-Verbindung des Tablets immer wieder ab, besonders zwischen 12 und 13 Uhr. Dann wärmt das Team im Pausenraum hinter der Wand sein Essen in der Mikrowelle auf. Der Router des Salons funkt nur im 2,4-GHz-Band auf Kanal 3 mit 20 MHz Kanalbreite. Eine WLAN-Scan-App am Kassenplatz zeigt:",
@@ -4216,6 +4421,7 @@
   {
     "title": "Neue Verkabelung für den Verwaltungstrakt eines Stadttheaters",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Stadttheater saniert seinen dreigeschossigen Verwaltungstrakt. Jeder Arbeitsplatz erhält eine Doppeldose (2 Anschlüsse), jede Etage außerdem 2 Access Points und einen Netzwerkdrucker mit je einem Anschluss. Arbeitsplätze: Erdgeschoss 14 (Kasse, Abonnementbüro), 1. Obergeschoss 18 (Intendanz, Dramaturgie, Probebühne), 2. Obergeschoss 10 (Verwaltung). In jede Etage kommt ein Etagenverteiler in einen Wandschrank, der Gebäudeverteiler steht im Keller.",
@@ -4236,6 +4442,7 @@
   {
     "title": "Fingerabdruck am Drehkreuz einer Thermenlandschaft",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Therme mit Saunalandschaft hat 2.400 Stammgäste mit Jahreskarte. Die Betreiberin vermutet, dass Karten an Freunde verliehen werden. Sie schätzt, dass 0,5 % aller Eintritte mit fremden Karten erfolgen. Ein Tageseintritt kostet vereinfacht angenommen 14 Euro. Im Schnitt gibt es 350 Eintritte mit Jahreskarte pro Tag, die Therme hat an 360 Tagen geöffnet.",
@@ -4256,6 +4463,7 @@
   {
     "title": "Verwaiste Benutzerkonten bei einem Gerüstbauer",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Gerüstbauunternehmen mit 85 Beschäftigten nutzt ein Cloud-Office-Paket mit E-Mail, Dateiablage und Chat. Die Lizenz kostet vereinfacht angenommen 12,50 Euro je Benutzer und Monat. Bei einer Prüfung finden Sie 64 lizenzierte Konten. 13 davon gehören Personen, die das Unternehmen im Durchschnitt vor 7 Monaten verlassen haben. Die Personalabteilung meldet Austritte bisher nicht an die IT. Mehrfaktor-Authentifizierung ist nicht eingerichtet. In den Angeboten stehen Namen und Anschriften der Kunden, darunter viele private Bauherren.",
@@ -4280,6 +4488,7 @@
   {
     "title": "Löschfristen für die Daten einer Autovermietung festlegen",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Autovermietung mit drei Stationen schließt rund 9.500 Mietverträge im Jahr ab. Bisher wird nichts gelöscht. Die Geschäftsführung bittet Sie, ein Löschkonzept vorzubereiten. Die Steuerberaterin nennt folgende Fristen, die jeweils am Ende des Kalenderjahres beginnen, in dem das Dokument entstanden ist: Buchungsbelege wie Rechnungen 8 Jahre, empfangene und versandte Handels- und Geschäftsbriefe 6 Jahre.",
@@ -4306,6 +4515,7 @@
   {
     "title": "Getrenntes Gäste-WLAN für eine Jugendherberge",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Jugendherberge hat 180 Betten, meist belegt mit Schulklassen, die 2 Nächte bleiben. Alle Gäste, Lehrkräfte und die 25 Beschäftigten nutzen ein gemeinsames WLAN mit dem Kennwort \"Herberge2019\", das auf jedem Zimmerschild steht. Im selben Netz 192.168.0.0/24 hängen der Rezeptions-PC mit der Buchungssoftware, die Kasse und ein NAS mit Personalunterlagen. Der DHCP-Server vergibt Adressen für 8 Tage. Abends melden viele Gäste \"keine Verbindung\". Der Internetanschluss hat 250 Mbit/s im Download und 40 Mbit/s im Upload.",
@@ -4326,6 +4536,7 @@
   {
     "title": "Einladung zum Vorspielabend mit offenem Verteiler",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine private Musikschule mit 12 Lehrkräften verschickt am Freitag, 13.11.2026, um 16:40 Uhr eine Einladung zum Vorspielabend. Die Mitarbeiterin der Verwaltung setzt alle 146 Adressen von Eltern und erwachsenen Schülern in das Feld CC. 52 Adressen enthalten Vor- und Nachnamen der Kinder und ihr Geburtsjahr, z.B. mia.krause2016@... Um 17:15 Uhr ruft ein Vater die Schulleiterin an und beschwert sich. Bis dahin haben 7 Empfänger mit \"Allen antworten\" reagiert.",
@@ -4345,6 +4556,7 @@
   {
     "title": "Einlasssystem mit Onlinetickets für ein städtisches Freibad",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Der Bäderbetrieb einer Kleinstadt führt im Freibad Onlinetickets ein. Ein Systemhaus richtet 2 Kassen-PCs ein, bindet QR-Code-Scanner an 3 Drehkreuzen ein und konfiguriert den Ticketshop. Die Drehkreuze montiert der Hersteller, Netz und Firewall richtet die IT der Stadtverwaltung ein. Beteiligt sind außerdem die Betriebsleiterin des Bades (Auftraggeberin), die Kassenleitung, der Datenschutzbeauftragte der Stadt und der Personalrat. Die Saison beginnt am Samstag, 15.05.2027.",
@@ -4366,6 +4578,7 @@
   {
     "title": "Nachkalkulation eines Festpreisprojekts im Dentallabor",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Systemhaus hat in einem Dentallabor 4 CAD-Arbeitsplätze eingerichtet und an die Fräsmaschine angebunden. Vereinbart war ein Festpreis von 18.500 Euro netto. Nach Abschluss erstellen Sie die Nachkalkulation. Der interne Kostensatz für eine Technikerstunde beträgt 70 Euro, eine Anfahrt kostet intern 60 Euro.",
@@ -4388,6 +4601,7 @@
   {
     "title": "Onlinebuchung und Check-in-Tablets für eine Tanzschule",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Tanzschule stellt die Kursanmeldung auf eine Onlinebuchung um. Am Eingang sollen zwei Tablets die Teilnehmer per QR-Code einchecken. Vorgänge (Dauer in Arbeitstagen):",
@@ -4416,6 +4630,7 @@
   {
     "title": "RFID-Umstellung einer Stadtbibliothek mit Dreipunktschätzung planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Stadtbibliothek stellt die Ausleihe auf RFID um. Künftig buchen Selbstverbuchungsautomaten die Medien. Vorher muss in jedes der 24.000 Medien ein RFID-Etikett geklebt und in der Bibliothekssoftware mit der Mediennummer verknüpft werden. Das soll in der Schließzeit im Sommer geschehen: 2 Wochen mit 10 Arbeitstagen. Eingesetzt werden studentische Aushilfen, die jeweils 5 Stunden am Tag produktiv arbeiten.",
@@ -4436,6 +4651,7 @@
   {
     "title": "Robuste Tablets für die Einsatzfahrzeuge der Freiwilligen Feuerwehr",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Gemeinde beschafft für die 6 Einsatzfahrzeuge ihrer Freiwilligen Feuerwehr robuste Tablets mit Einsatz-App, Kartendienst und Gefahrstoffdatenbank. Budget: 9.000 Euro netto für die Geräte. Muss-Kriterien: Schutzart mindestens IP65, eingebautes LTE, Bedienung mit Handschuhen. Angebote je Gerät (netto):",
@@ -4460,6 +4676,7 @@
   {
     "title": "Elternzeit für den Systemadministrator eines Sägewerks",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Tobias Kern ist Systemadministrator in einem Sägewerk mit 140 Beschäftigten. Seine Tochter wurde am Freitag, 12.03.2027, geboren. Am Montag, 15.03.2027, gibt er der Personalabteilung einen unterschriebenen Brief: Er möchte vom 12.05.2027 bis 11.09.2027 Elternzeit nehmen (3. bis 6. Lebensmonat). Sein Nettogehalt betrug vor der Geburt 2.900 Euro im Monat. Er hat 28 Urlaubstage im Jahr.",
@@ -4481,6 +4698,7 @@
   {
     "title": "Webshop-Betreuerin einer Kaffeerösterei kündigt",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Jana Weiß (29) betreut seit dem 01.02.2023 den Webshop und die IT einer Kaffeerösterei mit 35 Beschäftigten. Sie verdient 3.250 Euro brutto im Monat, arbeitet 5 Tage die Woche und hat laut Vertrag 28 Urlaubstage (20 gesetzlich, 8 vertraglich). Der Vertrag regelt: Im Jahr des Ausscheidens wird der vertragliche Mehrurlaub mit 1/12 je vollem Beschäftigungsmonat gewährt. Zu Kündigungsfristen und Wettbewerb enthält er nichts. 2026 hat sie bisher 18 Urlaubstage genommen.",
@@ -4501,6 +4719,7 @@
   {
     "title": "Ab wie vielen Geräten lohnt sich die Aufbereitung gebrauchter Notebooks?",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein kleines Unternehmen kauft Notebooks aus auslaufenden Leasingverträgen, löscht die Daten zertifiziert, tauscht Akkus und Verschleißteile, installiert Windows neu und verkauft die Geräte an Schulen, Vereine und Privatkunden. Monatliche Fixkosten: Miete und Nebenkosten 3.200 Euro, Personal 10.400 Euro, Lösch- und Prüfsoftware 600 Euro, Sonstiges 800 Euro. Variable Kosten je Gerät: Einkauf 95 Euro, Ersatzteile im Schnitt 35 Euro, Windows-Lizenz für Aufbereiter vereinfacht angenommen 20 Euro, Verpackung und Versand 10 Euro. Verkaufspreis 285 Euro netto. Zwei Techniker arbeiten je 150 Stunden im Monat produktiv, ein Gerät braucht 45 Minuten.",
@@ -4521,6 +4740,7 @@
   {
     "title": "Wer darf beim Fliesenhändler was unterschreiben?",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Die Fliesen Hansen GmbH handelt mit Fliesen und Naturstein und betreibt zwei Ausstellungen mit Lager (70 Beschäftigte). Frau Lange hat Einzelprokura, eingetragen im Handelsregister. IT-Leiter Herr Wolf hat eine allgemeine Handlungsvollmacht. Intern darf er Bestellungen nur bis 10.000 Euro netto ohne Rücksprache auslösen, das wissen die Lieferanten nicht. Der Auszubildende Finn (19) hat keine Vollmacht. Im Oktober 2026 passiert Folgendes:",
@@ -4545,6 +4765,7 @@
   {
     "title": "Umsatzsteuer-Voranmeldung nach dem WLAN-Ausbau eines Campingplatzes",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Campingplatz (Einzelunternehmen, Regelbesteuerung, monatliche Umsatzsteuer-Voranmeldung) hat im Mai 2027 das WLAN auf dem Platz ausgebaut. Vereinfacht angenommen gelten 7 % Umsatzsteuer für die Vermietung der Stellplätze und 19 % für alle anderen Leistungen.",
@@ -4566,6 +4787,7 @@
   {
     "title": "Arbeitszeitkonto nach dem Scanner-Rollout im Kurierdienst",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Mehmet (26) betreut in einem Kurierdienst mit 90 Beschäftigten die Handscanner und die Sendungsverfolgung. Es gibt einen Betriebsrat. Laut Betriebsvereinbarung gilt Gleitzeit: Sollzeit 39 Stunden an 5 Tagen, Rahmenzeit 6 bis 20 Uhr, Kernzeit 9 bis 14 Uhr, Arbeitszeitkonto höchstens +20 Stunden. Sein Konto stand am Montag bei +12,5 Stunden. In der Rollout-Woche der neuen Scanner hat er erfasst:",
@@ -4590,6 +4812,7 @@
   {
     "title": "Zwei IT-Techniker aus der Zeitarbeit für die Saison einer Ausflugsreederei",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Eine Reederei mit 9 Ausflugsschiffen, 220 festen Beschäftigten und Betriebsrat fährt von März bis Oktober. Für die Saison 2027 (01.03. bis 31.10.2027) braucht die IT zwei zusätzliche Techniker für Kassen, Ticketscanner an Bord und das Bord-WLAN. Zwei Möglichkeiten:",
@@ -4611,6 +4834,7 @@
   {
     "title": "Paketmitschnitt am Bondrucker einer Goldschmiede auswerten",
     "cat": "netzwerk",
+    "thema": "fehlersuche",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "In einer Goldschmiede druckt die Kasse nach einem Firmware-Update des Bondruckers keine Belege mehr. Ping zum Drucker funktioniert. Sie schneiden am Kassen-PC (192.168.20.15/24, MAC 3c:7c:3f:21:9a:10) mit Wireshark mit, während die Kasse einen Beleg sendet. Der Bondrucker hat die feste Adresse 192.168.20.40.",
@@ -4635,6 +4859,7 @@
   {
     "title": "Mesh-WLAN oder Powerline für das Clubhaus eines Golfclubs",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Golfclub will im Clubhaus und im Pro-Shop WLAN für ein Kassentablet und für Gäste. Der Router steht im Sekretariat. Die Gastronomie liegt 25 m entfernt im selben Gebäude hinter zwei Stahlbetonwänden. Der Pro-Shop liegt 60 m entfernt in einem Nebengebäude mit eigener Stromunterverteilung. Direkt am Router messen Sie 400 Mbit/s.",
@@ -4656,6 +4881,7 @@
   {
     "title": "Gebündelte NAS-Ports im Tonstudio bringen keine 2 Gbit/s",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Tonstudio speichert alle Aufnahmen auf einem NAS. Das NAS ist mit zwei 1-Gbit/s-Ports per Link-Aggregation (LACP, IEEE 802.3ad) an den Switch angebunden. Die drei Workstations für Aufnahme, Schnitt und Mastering haben je einen 1-Gbit/s-Anschluss. Der Studioleiter hatte erwartet, dass eine Session jetzt mit 2 Gbit/s kopiert wird. Tatsächlich dauert das Kopieren einer 60-GB-Session auf den Schnitt-PC so lange wie vorher. Vereinfacht angenommen erreicht eine 1-Gbit/s-Strecke netto 110 MB/s, die Festplatten des NAS liefern bis zu 400 MB/s. Rechnen Sie mit 1 GB = 1.000 MB.",
@@ -4675,6 +4901,7 @@
   {
     "title": "Kartenzahlung auf einer Berghütte über Satellit",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Eine Berghütte auf 2.100 m Höhe mit 60 Schlafplätzen soll Kartenzahlung anbieten. Es gibt keinen Kabelanschluss und nur schwachen Mobilfunk. Zur Wahl stehen ein geostationärer Satellit (35.786 km Höhe) und ein Satellitennetz in niedriger Umlaufbahn (LEO, ca. 550 km Höhe). Vereinfacht angenommen: Signalgeschwindigkeit 300.000 km/s, Satellit senkrecht über Hütte und Bodenstation, Verarbeitungszeiten werden vernachlässigt. Ein Datenpaket läuft Hütte -> Satellit -> Bodenstation, die Antwort denselben Weg zurück.",
@@ -4694,6 +4921,7 @@
   {
     "title": "Linux-Übungsumgebung in virtuellen Maschinen für eine Volkshochschule",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Volkshochschule bietet einen Kurs \"Linux-Grundlagen\" an. Im Kursraum stehen 12 PCs mit Windows 11 Pro, 6 CPU-Kernen, 16 GB RAM und einer SSD mit 180 GB freiem Platz. Die PCs werden auch für andere Kurse genutzt. Jede Person im Kurs braucht gleichzeitig drei virtuelle Maschinen (VMs):",
@@ -4717,6 +4945,7 @@
   {
     "title": "Skript sortiert die Fotos einer Hochzeitsfotografin falsch",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Hochzeitsfotografin fotografiert mit zwei Kameras. Ein Skript soll die RAW-Dateien aus dem Ordner \"Import\" nach Aufnahmetag ablegen und umbenennen. Vorgabe: Name = Datum_Kunde_Nummer.CR3, die Nummer beginnt je Aufnahmetag bei 0001 und ist vierstellig, damit die Dateien alphabetisch richtig sortiert sind. Der Pseudocode eines Kollegen:",
@@ -4745,6 +4974,7 @@
   {
     "title": "Waage im Hofladen sendet Gewichte mit Paritätsbit",
     "cat": "systeme",
+    "thema": "zahlen",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Hofladen hat eine neue PC-Kasse. Die geeichte Waage ist über ein serielles Kabel (RS-232 mit USB-Adapter) angeschlossen und sendet nach jedem Wiegen das Gewicht in Gramm als fünf ASCII-Zeichen und ein Wagenrücklauf CR (0x0D). Laut Handbuch: 9600 Baud, 7 Datenbits, gerade Parität (even), 1 Stoppbit, kurz 7E1. Jedes Zeichen beginnt mit einem Startbit. Das Paritätsbit folgt auf die 7 Datenbits. Der Kassenhersteller hat die Schnittstelle auf 8N1 (8 Datenbits, keine Parität, 1 Stoppbit) eingestellt. Bei 1.250 g (\"01250\") zeigt die Kasse \"0±²50\".",
@@ -4764,6 +4994,7 @@
   {
     "title": "Kundendatenbank für eine Hundeschule entwerfen",
     "cat": "datenbanken",
+    "thema": "modellierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Eine Hundeschule verwaltet Kunden, Hunde und Kurse bisher in einer Tabellenkalkulation. Künftig soll eine kleine relationale Datenbank genutzt werden. Anforderungen: Eine Kundin oder ein Kunde kann mehrere Hunde haben, jeder Hund gehört genau einer Person. Ein Hund kann an mehreren Kursen teilnehmen, ein Kurs hat mehrere Hunde. Je Teilnahme wird gespeichert, ob bezahlt ist. Zu einem Kurs gehören Bezeichnung, Preis und die höchste Teilnehmerzahl. Beispieldaten:",
@@ -4788,6 +5019,7 @@
   {
     "title": "Instrumentenverleih eines Blasorchesters in eine Datenbank überführen",
     "cat": "datenbanken",
+    "thema": "modellierung",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Blasorchester verleiht vereinseigene Instrumente an seine Mitglieder. Der Kassenwart führt eine Tabelle:",
@@ -4816,6 +5048,7 @@
   {
     "title": "Risikomatrix für den Onlineshop einer Imkerei",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Imkerei verkauft Honig über einen gemieteten Onlineshop, im Hofverkauf und auf Wochenmärkten. Kundendaten und Buchhaltung liegen auf einem Büro-PC, am Marktstand wird ein Notebook genutzt. Die Inhaberin will wissen, wo sie zuerst investieren soll. Sie schätzt vier Risiken (vereinfachte Annahmen):",
@@ -4840,6 +5073,7 @@
   {
     "title": "Follow-Me-Printing in einer Schuldnerberatungsstelle",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Schuldnerberatungsstelle eines Wohlfahrtsverbands hat 9 Beraterinnen und Berater. Alle drucken auf ein Multifunktionsgerät im Flur, an dem auch der Wartebereich für Ratsuchende liegt. Bei einer Kontrolle lagen in einer Woche 23 nicht abgeholte Ausdrucke mit 140 Seiten am Gerät, darunter Kontoauszüge, Pfändungsbescheide und Haushaltspläne. Vorgeschlagen wird Follow-Me-Printing: Druckaufträge werden erst ausgegeben, wenn sich die Person mit Chipkarte am Gerät anmeldet. Nicht abgeholte Aufträge werden nach 24 Stunden gelöscht. Vereinfacht angenommen: 6.800 Seiten im Monat, davon 12 % nie abgeholt, Kosten je Seite 0,035 Euro, Lizenz 2,50 Euro je Nutzer und Monat, Kartenleser einmalig 180 Euro.",
@@ -4859,6 +5093,7 @@
   {
     "title": "Falscher Kassensupport ruft bei einem Schlüsseldienst an",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Schlüsseldienst mit drei Filialen und 14 Beschäftigten nutzt ein cloudbasiertes Kassen- und Auftragssystem. Eines Nachmittags ruft ein Mann in der Zentrale an: Er sei vom Support des Kassenherstellers, es gebe eine dringende Sicherheitslücke. Die Mitarbeiterin solle sofort ein Fernwartungsprogramm von einer genannten Webseite installieren und ihm den Code aus der gleich eintreffenden SMS vorlesen. Sonst werde die Kasse noch heute gesperrt. Die Nummer im Display sieht aus wie eine Servicenummer. Die Mitarbeiterin wird unsicher und fragt Sie.",
@@ -4878,6 +5113,7 @@
   {
     "title": "Dokumentations-Notebook einer freiberuflichen Hebamme verschlüsseln",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine freiberufliche Hebamme betreut Schwangere und Wöchnerinnen bei Hausbesuchen. Sie dokumentiert Befunde, Geburtsverläufe und Kontaktdaten auf einem Notebook, das sie im Auto mitnimmt. Das Notebook hat Windows 11 Pro, einen TPM-Chip und eine 1-TB-SSD, davon sind 380 GB belegt. Die Festplatte ist nicht verschlüsselt, die Anmeldung erfolgt mit einer vierstelligen PIN. Eine Kollegin wurde kürzlich bestohlen. Vereinfacht angenommen verschlüsselt BitLocker mit 250 MB/s (1 GB = 1.000 MB).",
@@ -4897,6 +5133,7 @@
   {
     "title": "Anmeldeprotokoll des Mitgliederportals einer Kletterhalle auswerten",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Eine Kletterhalle betreibt ein Onlineportal, in dem 3.200 Mitglieder Zeitfenster buchen, Rechnungen sehen und ihre Adresse ändern. Am Montag fällt im Anmeldeprotokoll auf: Zwischen 02:10 und 02:20 Uhr gab es 1.800 fehlgeschlagene Anmeldungen von nur 3 IP-Adressen. Betroffen waren 600 verschiedene Benutzernamen, jeder genau 3-mal. 7 Anmeldungen waren erfolgreich. Das Portal sperrt ein Konto nach 5 Fehlversuchen für 30 Minuten.",
@@ -4916,6 +5153,7 @@
   {
     "title": "Dashcams in den Lkw eines Umzugsunternehmens",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "Datenschutz & Sicherheit",
     "text": [
       "Ein Umzugsunternehmen mit 8 Lkw hatte zwei Unfälle mit strittiger Schuldfrage und mehrere Vorwürfe von Kunden, Möbel seien beim Transport beschädigt worden. Der Geschäftsführer will in jeden Lkw eine Dashcam nach vorne und eine Kamera im Fahrerhaus einbauen, die während der ganzen Fahrt aufzeichnen. Die Aufnahmen sollen ein Jahr lang aufbewahrt werden. Das Unternehmen hat einen Betriebsrat. Technische Daten (vereinfacht angenommen): Bitrate 12 Mbit/s je Kamera, Speicherkarte 64 GB, 1 GB = 1.000 MB.",
@@ -4935,6 +5173,7 @@
   {
     "title": "Meilensteintrendanalyse beim Netzwerkausbau eines Wildparks",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Wildpark lässt vor dem Saisonstart am Samstag, 01.05.2027, Kassen, Drehkreuze, WLAN und Gehegekameras vernetzen. Ihr Systemhaus berichtet alle zwei Wochen die voraussichtlichen Termine von drei Meilensteinen: M1 Verkabelung fertig, M2 Access Points und Kameras montiert, M3 Kassen und Drehkreuze in Betrieb.",
@@ -4959,6 +5198,7 @@
   {
     "title": "Scrum-Sprints für die Terminbuchung einer Tattoo-Studio-Kette",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Kette mit vier Tattoo-Studios lässt ein Systemhaus eine Online-Terminbuchung mit Anzahlung einrichten. In jedem Studio sollen Tablets für die digitale Einverständniserklärung und ein getrenntes Kunden-WLAN folgen. Das Systemhaus arbeitet nach Scrum mit Sprints von zwei Wochen (Montag bis Freitag der Folgewoche). Die Velocity der bisherigen Sprints betrug 18, 22 und 20 Story Points. Im Product Backlog stehen noch 110 Story Points, davon 64 Story Points \"Muss\" für die Eröffnung eines fünften Studios am Donnerstag, 01.07.2027. Beispiele: Tablets per MDM einrichten (8 SP), Kunden-WLAN in allen Studios (13 SP), Anzahlung per Onlinezahlung (13 SP). Sprint 4 beginnt am Montag, 03.05.2027.",
@@ -4978,6 +5218,7 @@
   {
     "title": "Stakeholder und Kommunikationswege beim Tablet-Projekt einer Tafel",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Eine Tafel (eingetragener Verein) gibt mit 45 ehrenamtlich Helfenden an zwei Tagen pro Woche Lebensmittel aus. Die Berechtigung der Kundinnen und Kunden wird bisher mit Papierkarten geprüft. Künftig sollen an drei Ausgabestellen Tablets einen QR-Code auf dem Kundenausweis scannen und die Ausgabe zählen. Eine Stiftung fördert das Projekt mit höchstens 1.500 Euro. Sie sind als Azubi eines Systemhauses für die Einrichtung eingeplant. Das Projektteam besteht aus 5 Personen, insgesamt sind 12 Personen regelmäßig eingebunden. Kosten (vereinfacht angenommen): Tablet 329 Euro, robuste Hülle 35 Euro, Geräteverwaltung (MDM) 4 Euro je Gerät und Monat, Laufzeit 12 Monate.",
@@ -4997,6 +5238,7 @@
   {
     "title": "Technikereinsatz vor der Weinlese einer Winzergenossenschaft planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Die Kellerei einer Winzergenossenschaft braucht vor der Weinlese ab Mittwoch, 01.09.2027, neue Technik: 18 PC-Arbeitsplätze, 6 Terminals an den Traubenwaagen, dazu Netzwerkarbeiten und Tests. Zeitfenster: KW 33 (16. bis 20.08.2027) und KW 34 (23. bis 27.08.2027). Aufwand: 3 Stunden je PC-Arbeitsplatz, 4 Stunden je Waagenterminal, 20 Stunden Netzwerk, 12 Stunden Tests und Übergabe. Ihr Systemhaus plant zwei Techniker mit je 40 Stunden pro Woche. Vereinfacht angenommen sind 80 % ihrer Zeit für das Projekt nutzbar, der Rest geht für Störungen anderer Kunden weg. Die Auszubildende hilft in KW 33 mit 16 Stunden wirksamer Projektzeit, in KW 34 hat sie Berufsschule.",
@@ -5016,6 +5258,7 @@
   {
     "title": "Änderungswunsch beim Hafen-WLAN eines Yachthafens",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Yachthafen hat bei Ihrem Systemhaus zum Festpreis von 9.800 Euro netto ein WLAN für Hafenmeisterei und die Stege A bis C bestellt: 6 Outdoor-Access-Points, fertig zum Saisonbeginn am Donnerstag, 15.04.2027. Am Donnerstag, 01.04.2027, wünscht der Hafenmeister zusätzlich die neuen Stege D und E und einen Hotspot mit Zugangsgutscheinen für Gastlieger. Kalkulation (vereinfacht angenommen): 3 weitere Access Points zu 690 Euro, 140 m Außenkabel zu 4,20 Euro je Meter, Montage 3,5 Stunden je Access Point, Einrichtung des Hotspots 6 Stunden, Stundensatz 80 Euro netto. Die Access Points haben eine Lieferzeit von 10 Arbeitstagen, die Bestellung wäre am Freitag, 02.04.2027, möglich.",
@@ -5035,6 +5278,7 @@
   {
     "title": "Statusbericht mit Ampel für die neue Software eines Bestattungsinstituts",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektplanung",
     "text": [
       "Ein Bestattungsinstitut mit drei Standorten führt eine Branchensoftware ein und bekommt 10 neue Arbeitsplätze. Budget 19.200 Euro, Dauer 10 Wochen. Die Kosten sollen gleichmäßig über die Zeit anfallen. Nach 5 Wochen sollen Sie einen Statusbericht schreiben. Bisher sind 9.900 Euro ausgegeben. Stand der Arbeitspakete (geplanter Aufwand in Stunden, Fertigstellung):",
@@ -5057,6 +5301,7 @@
   {
     "title": "Organigramm einer Fleischerei mit fünf Filialen",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Eine Fleischerei mit fünf Filialen soll ein Organigramm bekommen, weil eine neue Stelle \"IT-Koordination\" geschaffen wird. Heute gilt: Der Inhaber leitet das Unternehmen. Ihm direkt unterstellt sind die Stabsstelle Qualität und Hygiene (1 Person), der Produktionsmeister, die Verkaufsleiterin, die Leiterin der Verwaltung und der Leiter des Partyservice. Dem Meister unterstehen 12 Beschäftigte in der Produktion. Der Verkaufsleiterin unterstehen 5 Filialleitungen, diesen 6, 5, 5, 5 und 5 Verkaufskräfte. Die Verwaltung hat 3 Beschäftigte (Buchhaltung, Personal), der Partyservice 4. Jede Person hat genau eine vorgesetzte Stelle.",
@@ -5076,6 +5321,7 @@
   {
     "title": "Siebzehnjähriger Azubi kauft einen Gaming-PC auf Raten",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Leon, geboren am 14.11.2009, macht eine Ausbildung zum Fachinformatiker. Seine Nettovergütung beträgt vereinfacht angenommen 820 Euro im Monat. Die Eltern haben ihm erlaubt, frei über seine Vergütung zu verfügen. Am Montag, 02.08.2027, passiert Folgendes:",
@@ -5098,6 +5344,7 @@
   {
     "title": "Kurzarbeit bei einem Verleih für Veranstaltungstechnik",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Verleih für Veranstaltungstechnik (Licht, Ton, Medientechnik) hat 24 Beschäftigte und 2 Auszubildende, darunter die angehende Fachinformatikerin Mara. Nach dem Ausfall eines Großkunden fehlen für mehrere Monate Aufträge. Die Geschäftsführung plant Kurzarbeit mit 50 % Arbeitsausfall für 14 Beschäftigte. Es gibt einen Betriebsrat. Beispielwerte (vereinfacht angenommen, pauschalierte Nettoentgelte aus der Tabelle der Arbeitsagentur):",
@@ -5120,6 +5367,7 @@
   {
     "title": "Gewinnschwelle für Wartungsverträge mit Logopädiepraxen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein selbstständiger Fachinformatiker betreut Therapiepraxen. Er bietet Logopädiepraxen eine monatliche Wartungspauschale an: Fernwartung, Überwachung, Virenschutz und Cloud-Sicherung für 89 Euro netto pro Praxis und Monat. Vereinfacht angenommen:",
@@ -5142,6 +5390,7 @@
   {
     "title": "Inventur und Abschreibung der Technik eines Escape-Room-Anbieters",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Escape-Room-Anbieter hat 2027 in neue Technik investiert. Zum Jahresende (31.12.2027) sollen Sie die Inventur der IT-Geräte unterstützen. Anschaffungen (netto):",
@@ -5166,6 +5415,7 @@
   {
     "title": "Bildschirmarbeitsplätze im Dachgeschossbüro eines Solarplanungsbüros",
     "cat": "wirtschaft",
+    "thema": "arbeitswelt",
     "theme": "Wirtschafts- und Sozialkunde",
     "text": [
       "Ein Planungsbüro für Photovoltaikanlagen auf Gewerbedächern bezieht ein Büro im ausgebauten Dachgeschoss. Der Raum hat 44 m² Grundfläche und eine lichte Höhe von 2,60 m. Geplant sind 5 Bildschirmarbeitsplätze, später vielleicht ein sechster. Sie sollen die Arbeitsplätze einrichten. Je Arbeitsplatz sind vereinfacht angenommen ein Sitz-Steh-Tisch für 620 Euro, ein Bürostuhl für 450 Euro und ein Monitorarm für 80 Euro vorgesehen. Richtwerte aus den Technischen Regeln für Arbeitsstätten (ASR A1.2): mindestens 8 m² für einen Arbeitsplatz und 6 m² für jeden weiteren, für Büroarbeitsplätze ein Flächenbedarf von 8 bis 10 m² je Arbeitsplatz einschließlich Möbeln, Luftraum mindestens 12 m³ je Person bei überwiegend sitzender Tätigkeit.",

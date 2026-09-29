@@ -2,6 +2,7 @@
   {
     "title": "Subnetting & redundantes Routing",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein neuer Standort erhält den Netzbereich 172.16.0.0/21.",
@@ -24,6 +25,7 @@
   {
     "title": "Ransomware-Vorfall & Incident Response",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein System wurde mit Ransomware infiziert (Dateiendung .crypto).",
@@ -41,6 +43,7 @@
   {
     "title": "RAID-Ausfall & Wiederherstellung",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Fileserver mit RAID 5 (6 Platten à 2 TB) meldet den Ausfall einer Festplatte.",
@@ -58,6 +61,7 @@
   {
     "title": "VLAN-Konzept für ein Bürogebäude",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Unternehmen mit den Abteilungen Verwaltung, Entwicklung und Gäste-WLAN soll strukturiert vernetzt werden.",
@@ -75,6 +79,7 @@
   {
     "title": "Phishing-Angriff auf Mitarbeiter",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "IT-Sicherheit",
     "text": [
       "Mehrere Mitarbeiter haben eine gefälschte E-Mail erhalten, die zur Eingabe ihrer Zugangsdaten auf einer nachgebauten Login-Seite auffordert.",
@@ -92,6 +97,7 @@
   {
     "title": "Angebotsvergleich & TCO-Betrachtung",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde möchte zwischen zwei Serverangeboten wählen: Angebot A (günstiger Kaufpreis, hoher Stromverbrauch, kurze Garantie) und Angebot B (höherer Kaufpreis, energieeffizient, längere Garantie).",
@@ -109,6 +115,7 @@
   {
     "title": "WAN-Anbindung mit Redundanz",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Unternehmen betreibt zwei Standorte und möchte diese redundant über zwei unterschiedliche Internetprovider koppeln.",
@@ -126,6 +133,7 @@
   {
     "title": "Backup-Konzept nach Ransomware-Vorfall",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Nach einem Ransomware-Vorfall soll ein neues, widerstandsfähigeres Backup-Konzept für einen Fileserver mit 2 TB Nutzdaten entworfen werden.",
@@ -143,6 +151,7 @@
   {
     "title": "Härtung eines öffentlich erreichbaren Webservers",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Webserver soll aus dem Internet erreichbar sein und in die DMZ eines Unternehmens gestellt werden.",
@@ -160,6 +169,7 @@
   {
     "title": "Social Engineering am Telefon",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein vermeintlicher IT-Dienstleister ruft den Support an und bittet unter Zeitdruck um die Herausgabe eines Administrator-Passworts, um angeblich einen 'kritischen Fehler' zu beheben.",
@@ -177,6 +187,7 @@
   {
     "title": "Speicherkonzept für eine wachsende Datenbank",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Datenbank mit hoher Schreiblast soll auf einem neuen Server mit 8 Festplatten gleicher Größe betrieben werden. Höchste Ausfallsicherheit und gute Performance sind gefordert, das Budget erlaubt den Verlust von 50% Kapazität für Redundanz.",
@@ -194,6 +205,7 @@
   {
     "title": "Virtualisierung eines physischen Servers",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Unternehmen betreibt fünf separate, wenig ausgelastete physische Server und möchte diese konsolidieren.",
@@ -211,6 +223,7 @@
   {
     "title": "Notfallwiederherstellung nach Serverausfall",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein physischer Server mit kritischer Anwendung fällt komplett aus (Mainboard-Defekt). Es existiert ein tägliches Backup sowie ein zweiter, baugleicher Server als Kaltreserve.",
@@ -228,6 +241,7 @@
   {
     "title": "Investitionsentscheidung: Kauf vs. Leasing",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde überlegt, neue Arbeitsplatzrechner zu kaufen oder zu leasen.",
@@ -245,6 +259,7 @@
   {
     "title": "Angebotsabgabe mit Lasten- und Pflichtenheft",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde möchte eine neue Serverinfrastruktur ausschreiben und beauftragt Ihr Unternehmen mit einem Angebot.",
@@ -262,6 +277,7 @@
   {
     "title": "Projektorganisation mit Scrum",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein internes Entwicklungsteam soll künftig nach Scrum arbeiten statt nach dem bisherigen Wasserfallmodell.",
@@ -279,6 +295,7 @@
   {
     "title": "VLSM-Adressplan für einen Firmencampus",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen erhält für seinen Campus den Adressbereich 10.10.0.0/22. Benötigt werden:",
@@ -309,6 +326,7 @@
   {
     "title": "IPv6-Adressplan für einen Standort",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen stellt seinen Standort auf IPv6 um. Der Provider hat das Präfix 2001:db8:acad::/48 zugewiesen. Geplant sind die VLANs 10 (Verwaltung), 20 (Produktion) und 30 (Server).",
@@ -334,6 +352,7 @@
   {
     "title": "Unternehmens-WLAN mit 802.1X",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Bürogebäude mit drei Etagen und 120 Mitarbeitern soll flächendeckendes WLAN bekommen. Mitarbeiter sollen sich mit ihren persönlichen Zugangsdaten anmelden, Besucher ein getrenntes Gäste-WLAN nutzen.",
@@ -359,6 +378,7 @@
   {
     "title": "Strukturierte Verkabelung für einen Neubau",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Unternehmen bezieht einen Neubau mit Erdgeschoss und zwei Obergeschossen. Im Erdgeschoss befindet sich der Serverraum, jede Etage erhält einen eigenen Etagenverteiler. Pro Arbeitsplatz sind zwei Netzwerkanschlüsse geplant.",
@@ -381,6 +401,7 @@
   {
     "title": "Nutzwertanalyse zur Auswahl einer Firewall",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde soll eine neue Firewall-Lösung erhalten. Drei Angebote liegen vor. Bewertet wird mit Punkten von 1 (schlecht) bis 10 (sehr gut):",
@@ -409,6 +430,7 @@
   {
     "title": "Backupkonzept mit Speicher- und Zeitberechnung",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Fileserver enthält 2 TB Daten, täglich ändern sich etwa 5 % davon. Geplant sind eine Vollsicherung am Sonntag und inkrementelle Sicherungen von Montag bis Samstag. Die Sicherungen sollen 4 Wochen aufbewahrt werden. Gesichert wird über ein 1-Gbit/s-Netzwerk.",
@@ -431,6 +453,7 @@
   {
     "title": "Gleich große Subnetze für Abteilungen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen erhält für seinen Standort das Netz 10.40.0.0/22. Es soll in acht gleich große Subnetze für die Abteilungen aufgeteilt werden.",
@@ -451,6 +474,7 @@
   {
     "title": "Routingtabelle eines Standortrouters",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Router R1 hat folgende Einträge:",
@@ -473,6 +497,7 @@
   {
     "title": "IPv4 und IPv6 im Dual-Stack",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen erhält vom Provider das IPv6-Präfix 2001:db8:4c00::/48 und soll Dual-Stack einführen.",
@@ -492,6 +517,7 @@
   {
     "title": "Firewall-Regelwerk für eine DMZ",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Unternehmen betreibt einen Webserver (10.0.50.10) und einen Mail-Relay (10.0.50.20) in einer DMZ. Das interne Netz ist 10.0.10.0/24.",
@@ -514,6 +540,7 @@
   {
     "title": "Mehrfaktor-Authentifizierung für Fernzugriffe",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "IT-Sicherheit",
     "text": [
       "Nach einem Vorfall mit gestohlenen VPN-Zugangsdaten soll für alle Fernzugriffe MFA eingeführt werden.",
@@ -533,6 +560,7 @@
   {
     "title": "Schwachstellenmanagement nach einer Warnmeldung",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Das BSI warnt vor einer kritischen Schwachstelle (CVSS 9.8) in einer VPN-Appliance, die auch in Ihrem Unternehmen läuft. Ein Patch ist verfügbar, Angriffe werden bereits beobachtet.",
@@ -552,6 +580,7 @@
   {
     "title": "RAID-Level für einen Datenbankserver wählen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Für einen Datenbankserver stehen 8 SSDs mit je 1,92 TB zur Verfügung. Die Datenbank schreibt viel und muss hochverfügbar sein.",
@@ -571,6 +600,7 @@
   {
     "title": "Speicherbedarf und Wachstum planen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Fileserver hat heute 6 TB Daten. Die Datenmenge wächst jährlich um 25 %. Das neue Speichersystem soll 4 Jahre reichen und maximal zu 80 % gefüllt sein.",
@@ -590,6 +620,7 @@
   {
     "title": "Hypervisor-Hosts dimensionieren",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "In einem Cluster sollen 30 VMs laufen, jede mit durchschnittlich 4 vCPU und 12 GB RAM. Ein Host hat 32 physische Kerne und 256 GB RAM. Der Cluster soll den Ausfall eines Hosts verkraften (N+1). RAM wird nicht überbucht, CPU im Verhältnis 3:1.",
@@ -609,6 +640,7 @@
   {
     "title": "Hierarchisches Netzwerkdesign mit Redundanz",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Bürogebäude mit 4 Etagen und je 60 Anschlüssen soll ein neues Netzwerk erhalten. Ein Ausfall eines zentralen Switches darf nicht zum Ausfall des ganzen Gebäudes führen.",
@@ -628,6 +660,7 @@
   {
     "title": "Gäste-WLAN sicher trennen",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Hotel möchte ein WLAN für Gäste und eines für Mitarbeiter über dieselben Access Points bereitstellen.",
@@ -647,6 +680,7 @@
   {
     "title": "Standortvernetzung mit VPN und zweiter Leitung",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Drei Filialen sollen an die Zentrale angebunden werden. Die Warenwirtschaft läuft zentral und darf höchstens kurz ausfallen.",
@@ -666,6 +700,7 @@
   {
     "title": "Cloud oder eigener Server? Kostenvergleich über 3 Jahre",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde vergleicht zwei Lösungen für 25 Benutzer über 3 Jahre:",
@@ -688,6 +723,7 @@
   {
     "title": "Kundengespräch zur Bedarfsermittlung",
     "cat": "wirtschaft",
+    "thema": "beratung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Handwerksbetrieb sagt: \"Unsere Computer sind zu langsam, wir brauchen was Neues.\" Sie führen das Beratungsgespräch.",
@@ -707,6 +743,7 @@
   {
     "title": "Scrum im Softwareprojekt einführen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Team von fünf Entwicklern soll eine Kunden-App entwickeln. Der Kunde weiß noch nicht genau, welche Funktionen er braucht.",
@@ -726,6 +763,7 @@
   {
     "title": "VLSM-Adressplan für eine neue Filiale",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Für eine neue Filiale steht das Netz 172.20.8.0/22 zur Verfügung. Benötigt werden:",
@@ -750,6 +788,7 @@
   {
     "title": "Statische Routen zwischen zwei Standorten",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Standort A (LAN 10.1.0.0/24) und Standort B (LAN 10.2.0.0/24) sind über ein Transfernetz 192.168.255.0/30 verbunden: Router A hat 192.168.255.1, Router B 192.168.255.2.",
@@ -770,6 +809,7 @@
   {
     "title": "Fehlende Rückroute finden",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein neues Labor-Netz 10.50.0.0/24 wurde an einen zweiten internen Router (10.0.0.254) angeschlossen. Clients im Labor erreichen ihr Gateway, aber keine Server im Netz 10.0.0.0/24. Der Standardgateway der Server ist die Firewall 10.0.0.1.",
@@ -789,6 +829,7 @@
   {
     "title": "OSPF-Pfadkosten berechnen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Zwischen Zentrale und Rechenzentrum gibt es drei Wege. Die OSPF-Referenzbandbreite ist auf 10.000 Mbit/s eingestellt (Kosten = Referenzbandbreite / Bandbreite).",
@@ -811,6 +852,7 @@
   {
     "title": "Routen der Außenstellen zusammenfassen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Acht Außenstellen nutzen die Netze 10.8.0.0/24 bis 10.8.7.0/24. Der Zentralrouter hat bisher acht einzelne Routen zum VPN-Konzentrator.",
@@ -830,6 +872,7 @@
   {
     "title": "IPv6-Präfix vom Provider auf VLANs verteilen",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen erhält vom Provider das Präfix 2001:db8:4a:7300::/56. Es gibt die VLANs 10 (Clients), 20 (Server), 30 (WLAN) und 99 (Management).",
@@ -849,6 +892,7 @@
   {
     "title": "NAT und Portweiterleitung für einen Webserver",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Webserver mit der internen Adresse 192.168.10.20 soll aus dem Internet erreichbar sein. Der Router hat die öffentliche Adresse 198.51.100.7. Alle Clients surfen über dieselbe öffentliche Adresse.",
@@ -868,6 +912,7 @@
   {
     "title": "Adressschema für ein wachsendes Unternehmen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen nutzt das Netz 10.0.0.0/16 für alle Standorte. Jeder Standort soll einen gleich großen Block erhalten, in dem bis zu 16 VLANs mit je einem /24 Platz haben.",
@@ -887,6 +932,7 @@
   {
     "title": "Ausfallsicheres Gateway mit VRRP",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Im Client-VLAN 192.168.40.0/24 gibt es bisher nur einen Router als Gateway (192.168.40.1). Ein zweiter Router soll die Ausfallsicherheit erhöhen.",
@@ -906,6 +952,7 @@
   {
     "title": "Routingentscheidungen nach Longest Prefix Match",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Die Routingtabelle eines Standortrouters enthält:",
@@ -929,6 +976,7 @@
   {
     "title": "Datenleck im Onlineshop nach SQL-Injection",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Onlineshop stellt fest, dass über eine SQL-Injection die Kundentabelle (Namen, Adressen, E-Mail, Passwort-Hashes) ausgelesen wurde.",
@@ -948,6 +996,7 @@
   {
     "title": "Interne PKI für Server und WLAN aufbauen",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein mittelständisches Unternehmen möchte eigene Zertifikate für interne Webserver und für die WLAN-Anmeldung per 802.1X ausstellen.",
@@ -967,6 +1016,7 @@
   {
     "title": "TLS-Zertifikat für einen Webserver einrichten",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Der neue Kundenportal-Server soll unter portal.firma.de und www.portal.firma.de per HTTPS erreichbar sein.",
@@ -986,6 +1036,7 @@
   {
     "title": "Sicherer Fernzugriff für einen Dienstleister",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Der Hersteller einer Produktionsmaschine braucht für die Wartung Fernzugriff auf deren Steuerungsrechner im Produktionsnetz.",
@@ -1005,6 +1056,7 @@
   {
     "title": "Switchports im Büro absichern",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "In einem Beratungsunternehmen sind alle Netzwerkdosen aktiv, auch in Besprechungsräumen mit Besucherzugang. Kürzlich hat ein Besucher einen eigenen Router angeschlossen, der als DHCP-Server Adressen verteilt hat.",
@@ -1024,6 +1076,7 @@
   {
     "title": "E-Mail-Domain mit SPF, DKIM und DMARC schützen",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Kunden eines Versicherungsmaklers erhalten gefälschte Mails mit dessen Absenderdomain makler-muster.de. Der Makler versendet über seinen eigenen Mailserver und einen Newsletter-Dienst.",
@@ -1043,6 +1096,7 @@
   {
     "title": "Gestohlene Passwort-Hashes bewerten",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Bei einem Angriff wurden Passwort-Hashes einer alten Anwendung erbeutet. Die Passwörter sind 8 Zeichen lang aus 62 Zeichen (Groß-, Kleinbuchstaben, Ziffern) und wurden ungesalzen mit MD5 gespeichert.",
@@ -1063,6 +1117,7 @@
   {
     "title": "IoT-Geräte der Haustechnik absichern",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "In einem Bürogebäude hängen Heizungssteuerung, Zutrittskontrolle und Überwachungskameras im selben Netz wie die Arbeitsplatz-PCs. Viele Geräte haben noch Standardpasswörter.",
@@ -1082,6 +1137,7 @@
   {
     "title": "Zentrales Logging mit SIEM einführen",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Nach einem Vorfall konnte nicht nachvollzogen werden, wann sich der Angreifer angemeldet hatte, weil Logs nur lokal und kurz gespeichert wurden. Die Geschäftsleitung wünscht ein SIEM.",
@@ -1101,6 +1157,7 @@
   {
     "title": "Awareness-Kampagne mit Phishing-Simulation",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Unternehmen mit 300 Mitarbeitern möchte die Sicherheitsaufmerksamkeit verbessern und plant simulierte Phishing-Mails.",
@@ -1120,6 +1177,7 @@
   {
     "title": "Risikoanalyse mit Schadenserwartung",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Ransomware-Angriff würde ein Logistikunternehmen ca. 200.000 Euro kosten. Ohne weitere Maßnahmen schätzt man die Häufigkeit auf einmal in 5 Jahren (0,2 pro Jahr).",
@@ -1140,6 +1198,7 @@
   {
     "title": "Notebooks und USB-Datenträger verschlüsseln",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Pflegedienst gibt 40 Notebooks an Außendienstmitarbeiter aus. Darauf liegen Gesundheitsdaten der Patienten. USB-Sticks werden bisher unkontrolliert genutzt.",
@@ -1159,6 +1218,7 @@
   {
     "title": "WLAN-Planung für eine Lagerhalle",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Lagerhalle ist 120 m lang und 60 m breit. Handscanner sollen überall eine stabile WLAN-Verbindung haben. Ein Access Point deckt bei Hochregalen erfahrungsgemäß etwa 600 m² zuverlässig ab. Planen Sie 20 % Reserve ein.",
@@ -1178,6 +1238,7 @@
   {
     "title": "PoE-Budget für ein neues Stockwerk",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Auf einem neuen Stockwerk werden per PoE versorgt: 40 IP-Telefone (je 7 W), 8 Access Points (je 30 W am Switchport) und 6 Kameras (je 15,4 W).",
@@ -1198,6 +1259,7 @@
   {
     "title": "VoIP mit QoS einführen",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Spedition stellt auf VoIP um. Es sollen bis zu 25 Gespräche gleichzeitig nach außen möglich sein. Ein Gespräch mit G.711 benötigt inklusive Overhead ca. 100 kbit/s je Richtung. Der Internetanschluss hat 50 Mbit/s Download und 10 Mbit/s Upload.",
@@ -1217,6 +1279,7 @@
   {
     "title": "Uplinks mit Link Aggregation planen",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Access-Switch mit 48 Ports zu je 1 Gbit/s wird über zwei 10-Gbit/s-Leitungen per LACP an den Core-Switch angebunden.",
@@ -1236,6 +1299,7 @@
   {
     "title": "Spanning Tree gezielt einstellen",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "In einem Netz mit zwei Core-Switches und acht Access-Switches läuft Spanning Tree mit Standardeinstellungen. Ein alter Access-Switch im Keller wurde als Root Bridge gewählt, und PCs brauchen nach dem Einschalten 30 Sekunden bis zur Verbindung.",
@@ -1255,6 +1319,7 @@
   {
     "title": "Netzwerk-Monitoring aufbauen",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Systemhaus soll für einen Kunden mit 3 Standorten, 20 Switches, 2 Firewalls und 15 Servern ein Monitoring einrichten. Bisher fallen Störungen erst auf, wenn Mitarbeiter anrufen.",
@@ -1274,6 +1339,7 @@
   {
     "title": "Glasfaseranbindung eines Rechenzentrumsraums",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein neuer Serverraum soll mit dem Hauptverteiler verbunden werden. Die Strecke im Gebäude ist 180 m lang, zusätzlich soll ein zweites Gebäude in 2,5 km Entfernung angebunden werden. Geplant sind jeweils 10 Gbit/s.",
@@ -1293,6 +1359,7 @@
   {
     "title": "Zwei Internetleitungen sinnvoll nutzen",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Unternehmen hat einen Glasfaseranschluss (500 Mbit/s) und als Ersatz einen Kabelanschluss (250 Mbit/s). Der Kabelanschluss hat eine WAN-Adresse aus 100.64.0.0/10.",
@@ -1312,6 +1379,7 @@
   {
     "title": "Netzwerkdokumentation erstellen",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Netzwerkdesign",
     "text": [
       "Nach dem Ausscheiden des einzigen Admins findet der neue Dienstleister keine Dokumentation vor.",
@@ -1331,6 +1399,7 @@
   {
     "title": "DNS und Zeitsynchronisation im Firmennetz",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Unternehmen hat eine Active-Directory-Domäne firma.local, einen Webshop unter shop.firma.de (extern gehostet) und einen Mailserver im eigenen Haus, der intern und extern als mail.firma.de erreichbar sein soll.",
@@ -1350,6 +1419,7 @@
   {
     "title": "iSCSI-Speichernetz für Virtualisierungshosts",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Drei Virtualisierungshosts sollen ein gemeinsames Speichersystem per iSCSI nutzen. Jeder Host hat vier 10-Gbit/s-Ports.",
@@ -1369,6 +1439,7 @@
   {
     "title": "Virtuelle Netzwerke im Hypervisor planen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Auf zwei Hypervisor-Hosts laufen VMs aus den VLANs 10 (Server), 20 (DMZ) und 30 (Test). Außerdem gibt es Verkehr für Management und Live-Migration. Jeder Host hat vier Netzwerkports.",
@@ -1388,6 +1459,7 @@
   {
     "title": "Datenreplikation zwischen zwei Standorten",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Unternehmen repliziert seinen Fileserver (2 TB) jede Nacht an einen zweiten Standort. Täglich ändern sich etwa 3 % der Daten. Die Replikation soll in einem Zeitfenster von 6 Stunden abgeschlossen sein.",
@@ -1407,6 +1479,7 @@
   {
     "title": "SLA für den Netzwerkbetrieb prüfen",
     "cat": "wirtschaft",
+    "thema": "service",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Dienstleister betreibt das Netz eines Kunden für 3.200 Euro im Monat. Das SLA garantiert 99,8 % Verfügbarkeit pro Monat (30 Tage). Bei Unterschreitung gibt es 10 % Gutschrift auf die Monatsgebühr.",
@@ -1427,6 +1500,7 @@
   {
     "title": "Angebot für eine Firewall-Erneuerung kalkulieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Systemhaus erstellt ein Angebot für zwei Firewalls im Hochverfügbarkeitsverbund:",
@@ -1449,6 +1523,7 @@
   {
     "title": "Standortvernetzung mit dem Netzplan steuern",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Für die Anbindung eines neuen Standorts gibt es folgende Vorgänge (Dauer in Arbeitstagen):",
@@ -1476,6 +1551,7 @@
   {
     "title": "RAID 6, RAID 50 oder RAID 60 für ein Videoarchiv",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Für ein Videoarchiv stehen 12 Festplatten mit je 16 TB zur Verfügung. Zur Wahl stehen:",
@@ -1501,6 +1577,7 @@
   {
     "title": "Rebuild-Zeit großer Festplatten abschätzen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein NAS arbeitet mit RAID 5 aus 5 Festplatten zu je 18 TB und hat zusätzlich eine Hot-Spare-Platte. Der Controller schafft beim Rebuild ohne Last 150 MB/s, im laufenden Betrieb nur 60 MB/s. Rechnen Sie mit 1 TB = 1.000.000 MB.",
@@ -1520,6 +1597,7 @@
   {
     "title": "IOPS-Bedarf eines Datenbankspeichers berechnen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Datenbank erzeugt in der Spitze 6.000 IOPS, davon 70 % Lese- und 30 % Schreibzugriffe. Eine SAS-Festplatte mit 15.000 U/min liefert etwa 200 IOPS. Write Penalty: RAID 10 = 2, RAID 5 = 4, RAID 6 = 6.",
@@ -1542,6 +1620,7 @@
   {
     "title": "Speicher-Tiering für einen Fileserver planen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein neues Speichersystem soll 40 TB Daten aufnehmen. Auswertungen zeigen: 12 % der Daten werden häufig genutzt (heiße Daten), der Rest selten. Preise je TB Nutzkapazität: SSD 180 Euro, HDD 30 Euro. Die SSD-Stufe soll 25 % Reserve über den heißen Daten haben.",
@@ -1561,6 +1640,7 @@
   {
     "title": "NAS oder SAN für eine Werbeagentur",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Werbeagentur mit 35 Mitarbeitern speichert ihre Projektdaten bisher auf den lokalen Platten eines Servers. Geplant sind zwei Virtualisierungshosts und ein zentraler Speicher. Die Mitarbeiter arbeiten mit Windows und macOS.",
@@ -1580,6 +1660,7 @@
   {
     "title": "Fibre Channel oder iSCSI für ein neues SAN",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Datenbankserver braucht in der Spitze 1.200 MB/s Durchsatz zum Speichersystem. Die volle Leistung soll auch beim Ausfall eines Pfades erhalten bleiben. Zur Auswahl stehen iSCSI über 10-GbE- oder 25-GbE-Ports und Fibre Channel mit 16 Gbit/s (16GFC, etwa 1.600 MB/s je Port). Für iSCSI rechnen Sie mit 10 % Protokoll-Overhead.",
@@ -1599,6 +1680,7 @@
   {
     "title": "Deduplizierung im Backupspeicher bewerten",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Unternehmen sichert 20 TB Daten. Aufbewahrt werden 4 wöchentliche Vollsicherungen und 24 inkrementelle Sicherungen mit je 0,5 TB. Der Hersteller einer Backup-Appliance verspricht für diese Daten einen Reduktionsfaktor von 8:1 durch Deduplizierung und Kompression.",
@@ -1618,6 +1700,7 @@
   {
     "title": "Snapshot-Reserve im Speichersystem planen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Volume mit 10 TB Daten soll mit Snapshots geschützt werden: stündlich (24 Stück aufbewahrt) und täglich (14 Stück aufbewahrt). Pro Tag ändern sich etwa 2 % der Daten. Auf die berechnete Snapshot-Größe sollen 20 % Reserve kommen.",
@@ -1637,6 +1720,7 @@
   {
     "title": "Backupstrategie nach der 3-2-1-1-0-Regel prüfen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Steuerbüro mit 25 Arbeitsplätzen speichert alle Daten auf einem Server. Jede Nacht sichert eine Software die Daten auf ein NAS im selben Serverschrank. Freitags nimmt der Inhaber eine USB-Festplatte mit einer Kopie der Sicherung mit nach Hause. Dort bleibt sie bis zum nächsten Freitag an seinem Notebook angeschlossen. Eine Rücksicherung wurde noch nie getestet.",
@@ -1656,6 +1740,7 @@
   {
     "title": "LTO-Bandsicherung im Backupfenster",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Jeden Samstag sollen 45 TB als Vollsicherung auf LTO-9-Bänder geschrieben werden. Ein LTO-9-Band fasst 18 TB (nativ), ein Laufwerk schreibt 400 MB/s (nativ). Das Backupfenster reicht von Samstag 18 Uhr bis Sonntag 6 Uhr. Rechnen Sie ohne Kompression mit 1 TB = 1.000.000 MB.",
@@ -1675,6 +1760,7 @@
   {
     "title": "Cluster-Erweiterung um zwölf VMs prüfen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Cluster besteht aus 3 Hosts mit je 2 CPUs zu 16 Kernen und 384 GB RAM. Der Hypervisor belegt je Host 16 GB RAM. Heute laufen 40 VMs mit zusammen 180 vCPU und 720 GB RAM. Neu hinzukommen sollen 12 VMs mit je 4 vCPU und 16 GB RAM.",
@@ -1695,6 +1781,7 @@
   {
     "title": "HA-Cluster mit Admission Control einrichten",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Cluster mit 4 gleichen Hosts (je 512 GB RAM) soll bei Ausfall eines Hosts alle VMs automatisch neu starten. Die Admission Control wird prozentual eingestellt. Die VMs belegen zusammen 1.400 GB RAM.",
@@ -1714,6 +1801,7 @@
   {
     "title": "Live-Migration für Wartungsarbeiten planen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Host soll während der Arbeitszeit ein Firmware-Update erhalten. Vorher werden seine VMs per Live-Migration verschoben. Die größte VM hat 64 GB Arbeitsspeicher. Das Migrationsnetz hat heute 10 Gbit/s, geplant sind 25 Gbit/s.",
@@ -1733,6 +1821,7 @@
   {
     "title": "Container oder VMs für interne Webdienste",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Unternehmen betreibt 20 kleine interne Webdienste, bisher jeden in einer eigenen Linux-VM. Jede VM braucht 2 GB RAM für das Betriebssystem und 0,5 GB für den Dienst. Geplant ist, alle Dienste als Container in einer Linux-VM mit Container-Laufzeit zu betreiben (Grundbedarf 4 GB RAM, je Container 0,5 GB).",
@@ -1752,6 +1841,7 @@
   {
     "title": "Windows Server im Virtualisierungscluster lizenzieren",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Zwei Hosts mit je 2 CPUs zu 12 Kernen bilden einen Cluster. Es laufen 10 Windows-Server-VMs, die per Live-Migration zwischen den Hosts wandern. Windows Server wird pro physischem Kern lizenziert, mindestens 8 Kerne je CPU und 16 Kerne je Server. Die Standard Edition erlaubt je vollständiger Lizenzierung aller Kerne 2 VMs, die Datacenter Edition unbegrenzt viele.",
@@ -1771,6 +1861,7 @@
   {
     "title": "Virtuelle Desktops für ein Schulungszentrum",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Schulungszentrum will 120 virtuelle Desktops (VDI) mit je 2 vCPU und 6 GB RAM bereitstellen. Ein Host hat 32 Kerne und 512 GB RAM, davon belegt der Hypervisor 32 GB. Für VDI sind bis zu 5 vCPU je Kern vertretbar, RAM wird nicht überbucht. Der Betrieb soll den Ausfall eines Hosts verkraften.",
@@ -1790,6 +1881,7 @@
   {
     "title": "Drei Systeme in die Cloud verlagern",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Handelsunternehmen will drei Systeme in die Cloud verlagern:",
@@ -1812,6 +1904,7 @@
   {
     "title": "Cloud-VMs nach Nutzungsdauer abrechnen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Cloud-VM kostet nutzungsabhängig 0,20 Euro pro Stunde. Eine Reservierung für ein Jahr bringt 40 % Rabatt, wird aber für alle Stunden bezahlt, auch wenn die VM aus ist. Ein Monat wird mit 730 Stunden gerechnet.",
@@ -1834,6 +1927,7 @@
   {
     "title": "Vergessener Snapshot legt eine VM lahm",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Die VM der Warenwirtschaft ist plötzlich angehalten, der Datenspeicher (4 TB) ist voll. Vor 270 Tagen wurde vor einem Update ein Snapshot erstellt und nie gelöscht. Die Delta-Datei des Snapshots ist inzwischen 600 GB groß.",
@@ -1853,6 +1947,7 @@
   {
     "title": "Server-VMs mit Vorlagen und Sysprep bereitstellen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Für eine Filialumgebung werden 25 gleich aufgebaute Windows-Server-VMs benötigt. Eine manuelle Installation dauert je VM 90 Minuten. Alternativ wird einmalig in 4 Stunden eine Vorlage erstellt, danach dauert jede VM nur noch 15 Minuten. Ein Kollege möchte einfach eine fertige VM 25-mal kopieren.",
@@ -1872,6 +1967,7 @@
   {
     "title": "Gateway außerhalb des eigenen Subnetzes",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Server ist mit 10.14.37.200/21 und dem Standardgateway 10.14.40.1 konfiguriert. Er erreicht Rechner im eigenen Netz, aber keine anderen Netze. Ein zweiter Server hat die Adresse 10.14.39.10/21.",
@@ -1891,6 +1987,7 @@
   {
     "title": "Transfernetze mit /31 im Rechenzentrum",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Im Rechenzentrumsnetz gibt es 24 Punkt-zu-Punkt-Verbindungen zwischen Routern. Für Transfernetze ist der Block 10.255.0.0/25 reserviert. Bisher wurden /30-Netze verwendet. Außerdem braucht jeder der 12 Router eine Loopback-Adresse.",
@@ -1910,6 +2007,7 @@
   {
     "title": "Zu grobe Sammelroute korrigieren",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Standort Nord nutzt die Netze 192.168.16.0/24 bis 192.168.21.0/24 (6 Netze). Ein Kollege hat in der Zentrale die Sammelroute 192.168.16.0/21 Richtung Nord eingetragen. Standort Süd nutzt 192.168.22.0/24 und 192.168.23.0/24, dafür gibt es in der Zentrale zwei /24-Routen Richtung Süd.",
@@ -1929,6 +2027,7 @@
   {
     "title": "Wildcard-Masken für Access-Listen bestimmen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Auf einem Router sollen erweiterte Access-Listen (ACL) mit Wildcard-Masken eingerichtet werden:",
@@ -1955,6 +2054,7 @@
   {
     "title": "Überschneidende Adressbereiche nach einer Firmenübernahme",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Firma A hat Firma B übernommen. A nutzt 192.168.0.0/22 (aufgeteilt in vier /24-VLANs). B nutzt 192.168.2.0/24 für Clients und 10.30.0.0/24 für Server. Beide Standorte sollen per Site-to-Site-VPN verbunden werden.",
@@ -1974,6 +2074,7 @@
   {
     "title": "Gleiches lokales Adminpasswort auf allen Clients",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "IT-Sicherheit",
     "text": [
       "Bei einem Penetrationstest wurde auf einem Client der Passwort-Hash des lokalen Administratorkontos ausgelesen. Weil alle 300 Clients per Image mit demselben Passwort installiert wurden, konnte sich der Tester damit auf allen Clients und zwei Servern anmelden. Domänen-Admins melden sich außerdem regelmäßig an Clients an, um Software zu installieren.",
@@ -1993,6 +2094,7 @@
   {
     "title": "Verfügbarkeit einer Anwendungskette berechnen",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Webshop hängt von folgender Kette ab: Internetanschluss 99,5 %, Firewall 99,9 %, Switch 99,95 %, Server 99,5 %. Geplant sind ein zweiter, unabhängiger Internetanschluss (ebenfalls 99,5 %) und ein zweiter Server im Cluster (ebenfalls 99,5 %). Ein Jahr hat 8.760 Stunden.",
@@ -2012,6 +2114,7 @@
   {
     "title": "Schutzbedarf für einen Virtualisierungshost ableiten",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Auf einem einzelnen Virtualisierungshost laufen vier VMs. Ihr Schutzbedarf (Vertraulichkeit / Integrität / Verfügbarkeit) wurde festgestellt:",
@@ -2035,6 +2138,7 @@
   {
     "title": "TLS-Inspection am Web-Proxy einführen",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "In einem Unternehmen wurde mehrfach Schadsoftware über HTTPS-Webseiten geladen. Die Firewall sieht nur verschlüsselten Verkehr. Geplant ist, am Web-Proxy den TLS-Verkehr aufzubrechen und zu prüfen (TLS-Inspection).",
@@ -2054,6 +2158,7 @@
   {
     "title": "Manipuliertes Update eines Softwarelieferanten",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Der Hersteller einer Monitoring-Software meldet, dass ein Update der letzten Woche von Angreifern manipuliert wurde. Bei Ihnen wurde es automatisch auf dem Monitoring-Server installiert. Der Monitoring-Dienst fragt mit einem Domänen-Admin-Konto alle Server ab.",
@@ -2073,6 +2178,7 @@
   {
     "title": "Verdächtige Anmeldung nach einer MFA-Anfragenflut",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Eine Mitarbeiterin der Buchhaltung meldet, dass sie gestern Abend über 20 MFA-Anfragen auf ihrem Smartphone erhalten und irgendwann eine davon bestätigt hat. Heute fallen in ihrem Postfach eine neue Weiterleitungsregel an eine externe Adresse und mehrere gelöschte Mails von Lieferanten auf.",
@@ -2092,6 +2198,7 @@
   {
     "title": "Spine-Leaf-Architektur für ein Rechenzentrum",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein neues Rechenzentrumsnetz wird als Spine-Leaf aufgebaut. Es gibt 4 Spine-Switches mit je 32 Ports zu 100 Gbit/s. Jeder Leaf-Switch hat 48 Server-Ports zu 25 Gbit/s und ist mit je einem 100-Gbit/s-Uplink an jeden Spine angeschlossen.",
@@ -2111,6 +2218,7 @@
   {
     "title": "Internetbandbreite einer Filiale nach dem Cloud-Umstieg",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Filiale mit 40 Mitarbeitern nutzt künftig nur noch Cloud-Dienste. In der Spitze werden erwartet:",
@@ -2134,6 +2242,7 @@
   {
     "title": "Core-Switches per Stacking oder MLAG koppeln",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Zwei neue Core-Switches sollen redundant zusammenarbeiten. Jeder Access-Switch wird mit zwei Uplinks angebunden, einer zu jedem Core-Switch, und beide Uplinks sollen als LACP-Bündel aktiv sein.",
@@ -2153,6 +2262,7 @@
   {
     "title": "Langsame Dateiübertragung über eine WAN-Strecke",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Außenstelle ist über eine 100-Mbit/s-Leitung angebunden, die Round-Trip-Time (RTT) beträgt 40 ms. Große Dateien werden mit einem älteren Übertragungsprogramm kopiert, das ein festes TCP-Empfangsfenster von 65.535 Byte nutzt. Die Übertragung erreicht nur etwa 13 Mbit/s, obwohl die Leitung frei ist.",
@@ -2172,6 +2282,7 @@
   {
     "title": "Amortisation einer Serverkonsolidierung",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde betreibt 12 physische Server mit zusammen 6 kW Leistungsaufnahme im Dauerbetrieb. Nach einer Konsolidierung laufen 3 Virtualisierungshosts mit zusammen 2,4 kW. Der Serverraum hat eine PUE von 1,8 (für jedes kW IT-Leistung werden insgesamt 1,8 kW inklusive Kühlung verbraucht). Strompreis: 0,28 Euro/kWh. Die Wartungsverträge sinken von 9.600 auf 3.000 Euro pro Jahr. Die Investition beträgt 42.000 Euro.",
@@ -2191,6 +2302,7 @@
   {
     "title": "Backup selbst betreiben oder als Managed Service",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Kunde mit 60 Mitarbeitern fragt, ob er sein Backup selbst betreiben oder als Managed Service einkaufen soll.",
@@ -2212,6 +2324,7 @@
   {
     "title": "Projektstatus mit dem Fertigstellungswert bewerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Virtualisierungsprojekt hat ein Budget von 60.000 Euro und ist auf 10 Wochen mit gleichmäßigem Fortschritt geplant. Nach 5 Wochen liegen folgende Werte vor: geplante Kosten bis heute 30.000 Euro, tatsächliche Kosten 34.000 Euro, Fertigstellungsgrad 45 %.",
@@ -2231,6 +2344,7 @@
   {
     "title": "Anforderungen einer Physiotherapiepraxis aufnehmen",
     "cat": "wirtschaft",
+    "thema": "beratung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Physiotherapiepraxis mit 14 Therapeuten eröffnet einen zweiten Standort. Im Erstgespräch notieren Sie folgende Aussagen der Inhaberin:",
@@ -2255,6 +2369,7 @@
   {
     "title": "Listenpreis für ein Netzwerkpaket kalkulieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Systemhaus kalkuliert ein Netzwerkpaket (Switches, Access Points, Montage) mit der Zuschlagskalkulation:",
@@ -2278,6 +2393,7 @@
   {
     "title": "Warenwirtschaft als SaaS oder im eigenen Serverraum",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Großhändler mit 40 Benutzern braucht eine neue Warenwirtschaft. Betrachtet werden 5 Jahre:",
@@ -2300,6 +2416,7 @@
   {
     "title": "30 Notebooks kaufen, leasen oder mieten",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Ingenieurbüro braucht 30 Notebooks für 36 Monate. Ein Notebook kostet 1.100 Euro netto. Drei Angebote liegen vor:",
@@ -2324,6 +2441,7 @@
   {
     "title": "Pönale nach Servicezeiten berechnen",
     "cat": "wirtschaft",
+    "thema": "service",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Dienstleister betreut die Server eines Kunden für 4.800 Euro im Monat. Das SLA regelt:",
@@ -2355,6 +2473,7 @@
   {
     "title": "Zugriffslizenzen für einen Schichtbetrieb wählen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Produktionsbetrieb führt einen neuen Windows-Server ein. Für den Zugriff werden Zugriffslizenzen (CALs) benötigt. Vereinfacht angenommene Preise: User-CAL 45 Euro, Device-CAL 40 Euro.",
@@ -2376,6 +2495,7 @@
   {
     "title": "Wartungsvertrag nach Ablauf der Herstellergarantie",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Die Herstellergarantie eines Speichersystems läuft aus. Der Kunde rechnet mit durchschnittlich 0,5 Hardwareausfällen pro Jahr. Jede Stunde Stillstand kostet ihn vereinfacht 400 Euro. Angebote:",
@@ -2398,6 +2518,7 @@
   {
     "title": "TCO von Thin Clients und Desktop-PCs über fünf Jahre",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Versicherungsagentur mit 50 Arbeitsplätzen vergleicht für 5 Jahre:",
@@ -2422,6 +2543,7 @@
   {
     "title": "Amortisation einer automatisierten Softwareverteilung",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Die IT eines Unternehmens installiert Software bisher manuell, etwa 400 Installationen pro Jahr zu je 45 Minuten. Eine Softwareverteilung kostet einmalig 14.000 Euro (Lizenz und Einrichtung) und 2.000 Euro Wartung pro Jahr. Eine Installation dauert danach nur noch 5 Minuten Betreuungszeit. Der interne Stundensatz beträgt 55 Euro.",
@@ -2441,6 +2563,7 @@
   {
     "title": "Deckungsbeitrag eines Managed-Workplace-Pakets",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Systemhaus bietet ein Managed-Workplace-Paket für 49 Euro je Arbeitsplatz und Monat an. Variable Kosten je Arbeitsplatz und Monat: Softwarelizenzen 14 Euro, Sicherheitslösung 4 Euro, Support 0,25 Stunden zu 60 Euro. Fixkosten für Plattform und Team: 6.400 Euro pro Monat. Aktuell sind 520 Arbeitsplätze unter Vertrag.",
@@ -2460,6 +2583,7 @@
   {
     "title": "Defektes NAS nach zehn Monaten reklamiert",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ihr Systemhaus hat einer Arztpraxis (Unternehmerin) ein NAS mit vier Laufwerksschächten für 2.200 Euro netto verkauft. Vertraglich gilt die gesetzliche Gewährleistung von 2 Jahren. Nach zehn Monaten erkennt das NAS einen Schacht nicht mehr, die Backplane ist defekt. Die Praxis rügt den Mangel sofort und verlangt ihr Geld zurück.",
@@ -2479,6 +2603,7 @@
   {
     "title": "Angebote einer Kommune nach der Richtwertmethode werten",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Stadtverwaltung hat die Erneuerung ihrer Server im offenen Verfahren ausgeschrieben. Gewertet wird mit der einfachen Richtwertmethode: Kennzahl = Leistungspunkte / Preis in Tausend Euro. Nur Angebote, die alle Ausschlusskriterien erfüllen, kommen in die Wertung.",
@@ -2502,6 +2627,7 @@
   {
     "title": "Rechenzentrumsumzug mit Netzplan beschleunigen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Für den Umzug in einen neuen Serverraum gibt es folgende Vorgänge (Dauer in Arbeitstagen):",
@@ -2528,6 +2654,7 @@
   {
     "title": "Fertigstellungswert mit der 50/50-Regel ermitteln",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Für einen Client-Rollout (Budget 45.000 Euro) liegt am Stichtag folgender Stand vor. Fortschritt wird nach der 50/50-Regel bewertet (begonnen = 50 %, fertig = 100 %).",
@@ -2553,6 +2680,7 @@
   {
     "title": "Risikoreserve für eine ERP-Migration berechnen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Für die Migration einer Warenwirtschaft wurden folgende Risiken und mögliche Maßnahmen ermittelt:",
@@ -2576,6 +2704,7 @@
   {
     "title": "Projektstrukturplan für die Einführung eines Ticketsystems",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Unternehmen führt ein Ticketsystem für den IT-Support ein. Folgende Arbeitspakete mit Aufwand in Personentagen (PT) wurden gesammelt:",
@@ -2596,6 +2725,7 @@
   {
     "title": "Ressourcenkonflikt um den einzigen Netzwerkspezialisten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Netzwerkadministrator arbeitet 40 Stunden pro Woche, davon 30 % im Tagesgeschäft. Zwei Projekte brauchen ihn:",
@@ -2617,6 +2747,7 @@
   {
     "title": "Sprintplanung mit Velocity und Teamkapazität",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Scrum-Team mit 5 Entwicklern arbeitet in Sprints von 2 Wochen (10 Arbeitstage). In den letzten drei Sprints wurden 34, 28 und 31 Story Points erledigt. Im nächsten Sprint hat ein Entwickler 3 Tage Urlaub, außerdem fällt ein Feiertag in den Sprint. Das Product Backlog ist geordnet: Story A (8 Punkte), B (5), C (13), D (3), E (5), F (8).",
@@ -2636,6 +2767,7 @@
   {
     "title": "Nachforderung des Kunden im Festpreisprojekt",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus modernisiert zum Festpreis von 38.000 Euro netto das WLAN in den Büros eines Kunden. In der dritten Projektwoche bittet der Kunde den Techniker vor Ort, \"schnell noch\" das Lager mit WLAN zu versorgen. Dafür wären nötig:",
@@ -2658,6 +2790,7 @@
   {
     "title": "Soll-Ist-Vergleich im Projektabschlussbericht",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Projekt zur Erneuerung der Serverlandschaft ist abgeschlossen. Plan- und Istwerte:",
@@ -2682,6 +2815,7 @@
   {
     "title": "Wiederanlaufziele für einen Onlinehändler festlegen",
     "cat": "sicherheit",
+    "thema": "notfall",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Onlinehändler führt eine Business-Impact-Analyse durch. Für den Webshop gilt: Pro Stunde Ausfall entgehen 720 Euro Gewinn. Nach 4 Stunden Ausfall fordert ein Marktplatzbetreiber pauschal 5.000 Euro Vertragsstrafe. Die Datenbank wird jede Nacht um 1:00 Uhr gesichert, im Durchschnitt gehen 45 Bestellungen pro Stunde ein.",
@@ -2701,6 +2835,7 @@
   {
     "title": "Meldefristen nach einem Angriff bei einem NIS2-Unternehmen",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Logistikdienstleister ist als wichtige Einrichtung nach dem NIS2-Umsetzungsgesetz beim BSI registriert. Am Freitag, 02.10.2026, um 22:40 Uhr stellt die IT fest, dass Angreifer die Lagerverwaltung verschlüsselt und Kundendaten (Namen, Adressen) abgezogen haben. Vereinfacht gelten: erste Meldung an das BSI innerhalb von 24 Stunden, Meldung mit erster Bewertung innerhalb von 72 Stunden, Abschlussmeldung spätestens einen Monat nach der Meldung. Die Meldung wird am Montag, 05.10.2026, um 15:00 Uhr abgegeben.",
@@ -2720,6 +2855,7 @@
   {
     "title": "Rollen und Funktionstrennung im Berechtigungskonzept",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "theme": "IT-Sicherheit",
     "text": [
       "In der Warenwirtschaft eines Händlers haben viele Mitarbeiter über Jahre Rechte angesammelt. Eine Prüfung ergab: Von 180 Konten gehören 12 zu ausgeschiedenen Mitarbeitern, und 9 Mitarbeiter dürfen sowohl Lieferanten anlegen als auch Zahlungen freigeben.",
@@ -2739,6 +2875,7 @@
   {
     "title": "Penetrationstest für ein Kundenportal beauftragen",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Energieberater betreibt ein Kundenportal bei einem Hosting-Anbieter. Vor einer größeren Werbekampagne soll ein externer Dienstleister einen Penetrationstest durchführen. Angebot: 6 Personentage Test, 2 Personentage Bericht, 1,5 Personentage Nachtest nach der Behebung, Tagessatz 1.400 Euro netto.",
@@ -2758,6 +2895,7 @@
   {
     "title": "Anforderungen einer Cyberversicherung prüfen",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Maschinenbauer mit 120 Mitarbeitern will eine Cyberversicherung abschließen (Prämie 6.800 Euro pro Jahr, Selbstbehalt 5.000 Euro je Schadenfall). Für Betriebsunterbrechung gilt eine zeitliche Selbstbeteiligung von 12 Stunden. Der Versicherer verlangt als Obliegenheiten unter anderem MFA für alle Fernzugriffe und Admin-Konten, offline oder unveränderbar gespeicherte Backups und das Einspielen kritischer Sicherheitsupdates innerhalb von 14 Tagen. Ist-Zustand: MFA nur für VPN, Backups auf einem NAS im Firmennetz, ein Server mit einem Betriebssystem ohne Herstellerunterstützung.",
@@ -2777,6 +2915,7 @@
   {
     "title": "MPLS-Verbund durch SD-WAN ablösen",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Handelskette verbindet 12 Filialen per MPLS mit der Zentrale, jede Leitung kostet 450 Euro pro Monat. Alternative SD-WAN: je Filiale zwei Internetanschlüsse verschiedener Anbieter zu je 90 Euro pro Monat, Lizenz für die SD-WAN-Appliance 60 Euro pro Monat, Appliance einmalig 800 Euro je Filiale, Projektkosten einmalig 15.000 Euro. Betrachtet werden 36 Monate.",
@@ -2796,6 +2935,7 @@
   {
     "title": "WLAN-Kapazität für einen Veranstaltungssaal planen",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Veranstaltungssaal soll für 600 Besucher WLAN erhalten. Erfahrungswerte: 80 % der Besucher nutzen das WLAN, jeder mit durchschnittlich 1,5 Geräten. Gleichzeitig aktiv sind 50 % der Geräte, jedes mit etwa 2 Mbit/s. Ein Access Point soll im 5-GHz-Band höchstens 60 aktive Geräte versorgen.",
@@ -2815,6 +2955,7 @@
   {
     "title": "Out-of-Band-Management für Netzwerk und Server",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Nach einer fehlerhaften Firewall-Konfiguration war das gesamte Netz nicht mehr erreichbar, ein Techniker musste nachts ins Rechenzentrum fahren. Künftig soll ein Out-of-Band-Management (OOB) Zugriff auch bei gestörtem Produktivnetz ermöglichen. Vorhanden sind 2 Core-Switches, 12 Access-Switches, 2 Firewalls, 6 Server mit Fernwartungskarte (BMC) und ein Speichersystem mit 2 Controllern.",
@@ -2834,6 +2975,7 @@
   {
     "title": "Core-Switch im Wartungsfenster tauschen",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Der zentrale Core-Switch eines Unternehmens soll am Samstag zwischen 22:00 und 02:00 Uhr getauscht werden. Geplante Schritte für einen Techniker:",
@@ -2859,6 +3001,7 @@
   {
     "title": "Volles Kamera-Subnetz ohne Umnummerierung erweitern",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Im VLAN der Überwachungskameras (192.168.60.0/24, Gateway 192.168.60.1) sind 250 Kameras in Betrieb. Es kommen 150 Kameras hinzu. Das Druckernetz nutzt 192.168.61.0/24 mit 40 Geräten. Die Bereiche 192.168.62.0/24 und 192.168.63.0/24 sind frei.",
@@ -2878,6 +3021,7 @@
   {
     "title": "DHCP-Bereiche für geroutete VLANs mit Relay",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Layer-3-Switch routet zwischen den VLANs. Der zentrale DHCP-Server hat die Adresse 10.20.10.10/24 im Server-VLAN. Die Client-VLANs:",
@@ -2901,6 +3045,7 @@
   {
     "title": "Portknappheit bei PAT mit einer öffentlichen Adresse",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen mit 900 Arbeitsplätzen geht über eine Firewall mit einer einzigen öffentlichen IPv4-Adresse ins Internet (PAT, NAT-Overload). Zu Stoßzeiten brechen Verbindungen ab, im Log steht \"NAT port allocation failed\". Messungen zeigen in der Spitze 90 gleichzeitige Verbindungen je Arbeitsplatz. Für PAT nutzt die Firewall die Quellports 1024 bis 65535.",
@@ -2920,6 +3065,7 @@
   {
     "title": "Adressbereiche für einen Container-Cluster abstimmen",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Unternehmen richtet einen Kubernetes-Cluster ein. Die Installation schlägt als Standard vor: Pod-Netz 10.244.0.0/16 und Service-Netz 10.96.0.0/12. Im Firmennetz werden genutzt: Zentrale 10.10.0.0/16, Filialen 10.100.0.0/16, VPN-Clients 172.16.0.0/20.",
@@ -2939,6 +3085,7 @@
   {
     "title": "Erasure Coding oder dreifache Replikation im Objektspeicher",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Objektspeicher für Backups und Archivdaten soll 600 TB Nutzdaten aufnehmen. Zur Wahl stehen dreifache Replikation (jedes Objekt liegt dreimal auf verschiedenen Knoten) und Erasure Coding 8+3 (8 Datenfragmente und 3 Paritätsfragmente auf verschiedenen Knoten). Bruttospeicher kostet 25 Euro je TB.",
@@ -2958,6 +3105,7 @@
   {
     "title": "Schreiblast von SSDs im RAID in DWPD umrechnen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Datenbankserver schreibt pro Tag 3 TB Daten. Geplant sind 8 SSDs mit je 3,84 TB. Die Schreibzugriffe sind klein und zufällig verteilt. Zur Wahl stehen SSDs mit 1 DWPD (Drive Writes Per Day, leseintensiv) und mit 3 DWPD (gemischte Last), Garantie jeweils 5 Jahre.",
@@ -2977,6 +3125,7 @@
   {
     "title": "Überdimensionierte VMs anhand von Messwerten verkleinern",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Cluster aus 2 Hosts mit je 32 Kernen und 512 GB RAM ist laut Planung voll, der Kauf eines dritten Hosts für 18.000 Euro steht an. Eine Auswertung über 30 Tage zeigt:",
@@ -2999,6 +3148,7 @@
   {
     "title": "Hyperkonvergenten Cluster mit Replikationsfaktor planen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Unternehmen plant einen hyperkonvergenten Cluster (HCI) aus 4 Knoten. Jeder Knoten hat 6 SSDs zu je 3,84 TB für den gemeinsamen Speicher. Die Daten werden mit Replikationsfaktor 2 (RF2) gespeichert. Nach dem Ausfall eines Knotens sollen alle Daten wieder vollständig redundant verteilt werden können. Der Speicher soll höchstens zu 80 % gefüllt werden. Benötigt werden 25 TB.",
@@ -3018,6 +3168,7 @@
   {
     "title": "Adressplan und Scannerregeln für ein Logistikzentrum",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Versandhändler eröffnet ein Logistikzentrum. Für das Gelände steht das Netz 10.72.0.0/21 zur Verfügung. Benötigt werden:",
@@ -3047,6 +3198,7 @@
   {
     "title": "Server mit zweiter Netzwerkkarte für das Backupnetz",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Der Fileserver FS01 hat zwei Netzwerkkarten:",
@@ -3070,6 +3222,7 @@
   {
     "title": "Produktionsnetz einer Gießerei vom Büronetz trennen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "In einer Gießerei hängen Büro-PCs und Maschinensteuerungen bisher gemeinsam im Netz 192.168.100.0/22. Nach einem Schadsoftwarevorfall im Büro standen zwei Maschinen still. Künftig erhält die Produktion (OT) das Netz 172.18.0.0/23, getrennt durch eine Firewall. Benötigt werden:",
@@ -3096,6 +3249,7 @@
   {
     "title": "IPv6-Präfixe für die Filialen einer Handelskette vergeben",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Handelskette erhält vom Provider das Präfix 2001:db8:7a00::/48. Heute gibt es 12 Standorte mit den Nummern 0 (Zentrale) bis 11, in den nächsten Jahren können es bis zu 25 werden. Jeder Standort nutzt höchstens 200 VLANs mit Nummern zwischen 1 und 255. Standort- und VLAN-Nummer sollen in der Adresse direkt lesbar sein. NAT wird für IPv6 nicht eingesetzt.",
@@ -3115,6 +3269,7 @@
   {
     "title": "Asymmetrisches Routing an der Firewall beheben",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "In der Zentrale eines Möbelhändlers liegt das Client-Netz 10.1.0.0/23. Standardgateway der Clients ist die Firewall (10.1.0.1). Im selben Netz steht der Router der Filialanbindung (10.1.0.2), dahinter liegen die Filialnetze 10.2.0.0/24 bis 10.2.15.0/24. Die Firewall kennt die Filialnetze über statische Routen mit dem Next Hop 10.1.0.2. Seit einem Firmware-Update der Firewall brechen Verbindungen von Clients zu den Kassenservern der Filialen nach wenigen Sekunden ab, ein Ping funktioniert aber.",
@@ -3134,6 +3289,7 @@
   {
     "title": "Split-Tunneling für das Homeoffice-VPN",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Versicherungsmakler hat 150 Mitarbeitende, die im Homeoffice per VPN arbeiten. Bisher läuft der gesamte Verkehr durch den Tunnel (Full Tunnel). Das VPN-Gateway schafft laut Datenblatt 400 Mbit/s. Messungen: In der Spitze sind 70 % der Mitarbeitenden verbunden und nutzen je 4 Mbit/s. Nur 25 % davon gehen an interne Dienste, der Rest an Cloud-Dienste und Videokonferenzen.",
@@ -3154,6 +3310,7 @@
   {
     "title": "Router-on-a-Stick als Engpass ablösen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "In einem Ingenieurbüro routet ein Router zwischen vier VLANs. Er ist über eine einzige 1-Gbit/s-Trunkleitung (Vollduplex) an den Switch angeschlossen (Router-on-a-Stick):",
@@ -3176,6 +3333,7 @@
   {
     "title": "Neuen Serverraum eines Pflegeheims absichern",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Pflegeheim verlegt seine IT aus einem Abstellraum in einen eigenen Serverraum. Dort werden betrieben:",
@@ -3197,6 +3355,7 @@
   {
     "title": "Offener RDP-Port und Anmeldeversuche aus dem Internet",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Bei einer Spedition hat ein früherer Dienstleister den Terminalserver per Portweiterleitung (TCP 3389) aus dem Internet erreichbar gemacht, damit Disponenten von zu Hause arbeiten können. Die Auswertung der Protokolle zeigt: In den letzten 24 Stunden gab es 36.000 fehlgeschlagene Anmeldungen von rund 900 verschiedenen IP-Adressen gegen 300 verschiedene Benutzernamen. Die Kontosperre greift nach 5 Fehlversuchen und sperrt ein Konto für 30 Minuten.",
@@ -3216,6 +3375,7 @@
   {
     "title": "Kürzere Zertifikatslaufzeiten mit automatischer Erneuerung bewältigen",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Onlinehändler betreibt 35 öffentlich erreichbare Dienste (Webshop, Schnittstellen, Mail, VPN) mit Zertifikaten einer öffentlichen Zertifizierungsstelle. Bisher werden sie einmal im Jahr von Hand erneuert, jede Erneuerung einschließlich Einspielen und Test dauert 45 Minuten. Nach den Regeln des CA/Browser Forums wird die maximale Laufzeit öffentlicher TLS-Zertifikate schrittweise verkürzt: bis März 2026 waren es 398 Tage, seitdem sind es 200 Tage, ab März 2027 100 Tage und ab März 2029 47 Tage. Im letzten Jahr war der Webshop wegen eines abgelaufenen Zertifikats 5 Stunden gestört, der Umsatzausfall betrug 1.800 Euro je Stunde.",
@@ -3236,6 +3396,7 @@
   {
     "title": "Konstruktionsdaten nachts an einen Fertigungspartner übertragen",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Hersteller von Verpackungsanlagen schickt Konstruktionsdaten (CAD-Modelle, Zeichnungen, Stücklisten) an einen Fertigungspartner, bisher auf einer USB-Festplatte per Kurier. Künftig sollen die Daten jede Nacht zwischen 20:00 und 6:00 Uhr automatisch übertragen werden. Täglich fallen 18 GB an. Der Upload des Herstellers beträgt 50 Mbit/s, die Übertragung darf 80 % davon nutzen. Rechnen Sie mit 1 GB = 1.000 MB.",
@@ -3255,6 +3416,7 @@
   {
     "title": "Proxy-Protokolle speichern und datenschutzkonform auswerten",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Unternehmen mit 250 Beschäftigten führt einen Web-Proxy ein, um Schadseiten zu blockieren. Die private Internetnutzung ist per Betriebsvereinbarung verboten. Je Beschäftigtem fallen pro Arbeitstag etwa 3.000 Protokolleinträge mit durchschnittlich 350 Byte an. Die Protokolle sollen 60 Arbeitstage aufbewahrt und komprimiert gespeichert werden (Faktor 8 : 1). Rechnen Sie mit 1 MB = 1.000.000 Byte und 1 GB = 1.000 MB.",
@@ -3274,6 +3436,7 @@
   {
     "title": "Monatliche Sicherheitsupdates in Ringen verteilen",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Unternehmen verteilt Windows-Updates bisher an alle 400 Clients gleichzeitig. Nach einem fehlerhaften Druckertreiber-Update konnte im Frühjahr niemand drucken. Künftig soll in Ringen verteilt werden:",
@@ -3297,6 +3460,7 @@
   {
     "title": "Cloud-verwaltete Access Points für eine Berufsschule",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Berufsschule stattet alle Räume mit WLAN aus. Geplant sind 50 Access Points (38 Klassenräume je 1, Aula 4, Lehrerzimmer 2, Flure 6). In einem Klassenraum arbeiten bis zu 30 Schüler mit Tablets, je Tablet werden in der Spitze 2 Mbit/s angesetzt. Erfahrungsgemäß nutzen höchstens 60 % der Klassenräume gleichzeitig das WLAN intensiv. Der Internetanschluss hat 1 Gbit/s.",
@@ -3320,6 +3484,7 @@
   {
     "title": "Netz für eine Videoschnitt-Abteilung auslegen",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Filmproduktion richtet 12 Schnittplätze ein. Jeder Platz liest in der Spitze einen Videostrom von 1.200 Mbit/s vom zentralen NAS. Die Schnittplätze sind höchstens 35 m vom neuen Access-Switch entfernt. Das NAS steht im Serverraum, die Kabelstrecke zum Switch ist 70 m lang. Das NAS hat zwei 25-Gbit/s-Anschlüsse.",
@@ -3339,6 +3504,7 @@
   {
     "title": "Zweites Gebäude über eine öffentliche Straße anbinden",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Maschinenbauer mietet ein Bürogebäude auf der anderen Straßenseite, Luftlinie 180 m, freie Sicht zwischen den Dächern. Das Gebäude soll mit mindestens 1 Gbit/s ans Firmennetz angebunden werden. Betrachtet werden 5 Jahre:",
@@ -3361,6 +3527,7 @@
   {
     "title": "Verfügbarkeit des Krankenhausnetzes durch Redundanz erhöhen",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Das Krankenhausinformationssystem (KIS) einer Klinik ist von den Stationen über drei hintereinander liegende Netzebenen erreichbar: Access-Switch (Verfügbarkeit 99,9 %), Core-Switch (99,5 %, einschließlich Wartungen) und Rechenzentrums-Switch (99,9 %). Jede Ebene ist heute nur einfach vorhanden. Die Klinikleitung verlangt für den Netzpfad mindestens 99,99 %. Rechnen Sie mit 8.760 Stunden pro Jahr und unabhängigen Ausfällen.",
@@ -3380,6 +3547,7 @@
   {
     "title": "Mandantennetze in einem Coworking-Space",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Coworking-Anbieter vermietet Büros an 24 Firmen (Mandanten). Jeder Mandant soll ein eigenes Netz für Kabel und WLAN erhalten, mit höchstens 50 Geräten. Für die Mandanten steht 10.50.0.0/21 zur Verfügung, gleich große Netze werden der Reihe nach vergeben. Der Internetanschluss hat 1 Gbit/s, jedem Mandanten werden vertraglich mindestens 25 Mbit/s zugesichert. Gemeinsam genutzt werden zwei Multifunktionsdrucker.",
@@ -3399,6 +3567,7 @@
   {
     "title": "Kabelbedarf und Verteilerstandort in einer Werkhalle",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Werkhalle ist 150 m lang. Geplant sind 64 Anschlüsse für Maschinenterminals und Access Points, gleichmäßig über die Länge verteilt. Die Kabel laufen auf einer Kabeltrasse in 6 m Höhe. Jede Strecke braucht zusätzlich 6 m Abstieg zur Dose und 6 m Aufstieg am Verteiler. Der Elektriker schlägt vor, den Verteiler an eine Stirnseite der Halle zu setzen.",
@@ -3419,6 +3588,7 @@
   {
     "title": "Volles NAS eines Architekturbüros erweitern",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Das NAS eines Architekturbüros hat 8 Schächte. Belegt sind 4 Festplatten zu je 8 TB im RAID 5, das Volume ist zu 92 % gefüllt. Die Daten wachsen um 3 TB pro Jahr, das Volume soll höchstens zu 80 % gefüllt werden. Festplatten kosten 190 Euro (8 TB) bzw. 330 Euro (16 TB). Varianten:",
@@ -3444,6 +3614,7 @@
   {
     "title": "Wiederherstellung aus dem Cloud-Backup gegen das RTO prüfen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Planungsbüro sichert seinen Fileserver (4,5 TB) jede Nacht verschlüsselt und unveränderbar in eine Cloud. Eine Kopie vor Ort gibt es nicht. Laut Notfallplan darf der Fileserver nach einem Totalausfall höchstens 12 Stunden ausfallen (RTO). Der Internetanschluss hat 500 Mbit/s im Download, nutzbar sind 90 %. Rechnen Sie mit 1 TB = 1.000.000 MB.",
@@ -3463,6 +3634,7 @@
   {
     "title": "Revisionssichere E-Mail-Archivierung für einen Großhandel",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Großhandel mit 120 Postfächern will seine E-Mails revisionssicher archivieren. Je Postfach fallen pro Arbeitstag durchschnittlich 30 MB ein- und ausgehende Mails an, das Jahr hat 250 Arbeitstage. Deduplizierung und Komprimierung sparen 40 % Speicher. Vereinfacht werden alle Mails 10 Jahre aufbewahrt, dazu kommen 20 % Reserve. Rechnen Sie mit 1 GB = 1.000 MB und 1 TB = 1.000 GB.",
@@ -3482,6 +3654,7 @@
   {
     "title": "Falsche Festplatte aus einem degradierten RAID gezogen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Das Monitoring meldet an einem Server: RAID 5 aus 4 SAS-Festplatten zu je 4 TB, Platte in Schacht 2 ausgefallen, Array im Zustand \"degraded\". Ein Kollege soll die Platte tauschen und zieht versehentlich die Platte aus Schacht 3. Sofort geht das Volume offline, die Anwendung auf dem Server stürzt ab.",
@@ -3501,6 +3674,7 @@
   {
     "title": "Aufzeichnungsspeicher für die Videoüberwachung eines Parkhauses",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Parkhausbetreiber lässt 48 Kameras installieren, die rund um die Uhr mit je 6 Mbit/s aufzeichnen. Der Datenschutzbeauftragte empfiehlt eine Speicherdauer von 72 Stunden. Der Rekorder nimmt Festplatten zu je 4 TB auf, sie sollen im RAID 6 laufen. Es werden 20 % Reserve eingeplant. Rechnen Sie mit 1 Byte = 8 Bit, 1 TB = 1.000.000 MB.",
@@ -3520,6 +3694,7 @@
   {
     "title": "Terminalserver für ein Callcenter dimensionieren",
     "cat": "systeme",
+    "thema": "windows",
     "theme": "Virtualisierung",
     "text": [
       "Ein Callcenter hat 180 Mitarbeitende in zwei Schichten, gleichzeitig arbeiten höchstens 120 an festen Arbeitsplätzen. Die Anwendungen laufen auf Terminalservern (Remotedesktop-Sitzungshosts) als VMs. Messwerte je Sitzung: 0,2 vCPU und 0,4 GB RAM. Jede VM erhält 8 vCPU und 32 GB RAM, davon 4 GB für das Betriebssystem. Eine VM soll ausfallen oder gewartet werden dürfen (N+1). Vereinfacht angenommener Preis je Zugriffslizenz (RDS-CAL): 110 Euro.",
@@ -3539,6 +3714,7 @@
   {
     "title": "Altserver einer Stadtbücherei per P2V übernehmen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Stadtbücherei betreibt drei ältere physische Server: Katalogdatenbank (300 GB belegt), Fileserver (1.100 GB belegt) und einen Druck- und Verwaltungsserver (150 GB belegt). Sie sollen mit einem P2V-Werkzeug auf einen neuen Virtualisierungshost übertragen werden. Die Übertragung läuft mit effektiv 90 MB/s. Die Bücherei ist von Samstag 14:00 Uhr bis Montag 9:00 Uhr geschlossen. Nach der Übertragung braucht jede VM 2 Stunden für Anpassungen und Tests. Rechnen Sie mit 1 GB = 1.000 MB.",
@@ -3558,6 +3734,7 @@
   {
     "title": "CAD-Arbeitsplätze mit virtuellen GPUs bereitstellen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Ingenieurbüro will seine 40 CAD-Arbeitsplätze als virtuelle Desktops mit virtuellen GPUs (vGPU) bereitstellen. Eine Grafikkarte hat 48 GB Grafikspeicher, jeder Benutzer erhält ein Profil mit 4 GB. Ein Host nimmt 2 Grafikkarten auf. Fällt ein Host aus, sollen alle Benutzer weiterarbeiten können. Das Bildübertragungsprotokoll braucht je Benutzer in der Spitze 15 Mbit/s. 25 Mitarbeitende arbeiten zeitweise im Homeoffice. Vereinfacht angenommene Kosten der vGPU-Lizenz: 450 Euro je Benutzer und Jahr.",
@@ -3577,6 +3754,7 @@
   {
     "title": "Überbuchten Datenspeicher mit Thin Provisioning überwachen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Datenspeicher (Datastore) eines Virtualisierungsclusters hat 8 TB. Alle VMs nutzen Thin Provisioning, ihre virtuellen Festplatten sind zusammen 13 TB groß. Belegt sind aktuell 5,4 TB, der Verbrauch steigt um 180 GB pro Monat. Während der nächtlichen Sicherung entstehen Snapshots, die bis zu 300 GB zusätzlich belegen. Rechnen Sie mit 1 TB = 1.000 GB.",
@@ -3596,6 +3774,7 @@
   {
     "title": "Entwicklungs-VMs sicher neben der Produktion betreiben",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Softwarehaus betreibt einen Cluster aus 2 Hosts mit je 2 CPUs zu 16 Kernen und 384 GB RAM. Der Hypervisor braucht je Host 8 GB RAM. Die Produktions-VMs belegen zusammen 72 vCPU und 260 GB RAM. Die Entwickler wünschen 12 Test-VMs mit je 4 vCPU und 16 GB RAM auf demselben Cluster. Hausregeln: höchstens 3 vCPU je physischem Kern, kein RAM-Overcommitment, bei Ausfall eines Hosts muss die Produktion vollständig weiterlaufen.",
@@ -3615,6 +3794,7 @@
   {
     "title": "Switch-Angebote für eine Steuerkanzlei vergleichen",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Steuerkanzlei benötigt 3 Switches mit 48 Ports und PoE+. Zwei Angebote liegen vor:",
@@ -3638,6 +3818,7 @@
   {
     "title": "Rund-um-die-Uhr-Überwachung selbst leisten oder einkaufen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Zulieferer mit 400 Beschäftigten will seine IT rund um die Uhr auf Angriffe überwachen. Varianten:",
@@ -3659,6 +3840,7 @@
   {
     "title": "Handwerksbetrieb auf E-Rechnungen umstellen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Elektrobetrieb mit 18 Beschäftigten und 2,4 Mio. Euro Jahresumsatz schreibt pro Jahr etwa 1.500 Ausgangsrechnungen, davon 60 % an Unternehmen und 40 % an Privatkunden. Bisher werden Rechnungen als PDF oder auf Papier verschickt. Der Versand kostet heute 6,50 Euro je Rechnung (Druck, Porto, Arbeitszeit), mit E-Rechnung 1,80 Euro. Das Zusatzmodul für die Handwerkersoftware kostet 39 Euro im Monat, Einrichtung und Schulung einmalig 1.400 Euro.",
@@ -3678,6 +3860,7 @@
   {
     "title": "Telefonanlage eines Autohauses durch Cloud-Telefonie ersetzen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Die 12 Jahre alte Telefonanlage eines Autohauses mit 45 Nebenstellen muss ersetzt werden. Betrachtet werden 5 Jahre:",
@@ -3700,6 +3883,7 @@
   {
     "title": "Freie Kühlung für den Serverraum mit dem Kapitalwert bewerten",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Die Klimatisierung des Serverraums eines Verlags verbraucht 26.000 kWh pro Jahr. Eine Anlage mit freier Kühlung (Außenluft in der kalten Jahreszeit) würde den Verbrauch auf 8.000 kWh senken und die Wartung um 600 Euro pro Jahr verringern. Sie kostet 24.000 Euro und wird 5 Jahre genutzt. Vereinfacht angenommen: Strompreis 0,28 Euro je kWh, Kalkulationszins 6 %. Die IT-Geräte verbrauchen 60.000 kWh pro Jahr, Beleuchtung und USV-Verluste 4.000 kWh.",
@@ -3719,6 +3903,7 @@
   {
     "title": "Firewall-Migration mit Drei-Punkt-Schätzung planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus löst die Firewall eines Kunden durch einen Hochverfügbarkeitscluster ab. Für die Vorgänge liegen Schätzungen in Stunden vor (optimistisch / wahrscheinlich / pessimistisch):",
@@ -3744,6 +3929,7 @@
   {
     "title": "MFA-Einführung in Wellen mit begrenztem Helpdesk planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Unternehmen mit 600 Beschäftigten führt Mehrfaktor-Authentifizierung mit einer Authenticator-App ein. Aus einem Pilot ist bekannt: 25 % der Nutzer rufen bei der Einrichtung beim Helpdesk an, ein Anruf dauert im Schnitt 15 Minuten. Zwei Helpdesk-Mitarbeiter können dafür je 3 Stunden pro Arbeitstag einplanen. 20 % der Beschäftigten haben kein Diensthandy und lehnen es ab, die App auf ihrem privaten Smartphone zu installieren. Ein Hardware-Token kostet 28 Euro.",
@@ -3763,6 +3949,7 @@
   {
     "title": "Vertragsstrafe nach verspäteter Schulverkabelung prüfen",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus hat in einer Schule die Netzwerkverkabelung erneuert (Werkvertrag, Auftragssumme 64.000 Euro netto). Fertigstellung war für Freitag, 31.07.2026, vereinbart. Für jeden Werktag Verzug (Montag bis Samstag) gilt eine Vertragsstrafe von 0,2 % der Auftragssumme, höchstens 5 %. Abnahmebereit war die Anlage erst am Freitag, 14.08.2026. Ihr Projektleiter weist darauf hin, dass die Schule zwei Klassentrakte 4 Werktage später als vereinbart freigegeben hat, weil dort noch Möbel standen. Das wurde damals nur mündlich mit dem Hausmeister besprochen.",
@@ -3782,6 +3969,7 @@
   {
     "title": "Rückstau im Support-Team mit Kanban abbauen",
     "cat": "wirtschaft",
+    "thema": "service",
     "theme": "Projektmanagement",
     "text": [
       "Das Support-Team eines Systemhauses (4 Personen) arbeitet mit einem Kanban-Board (Neu, In Arbeit, Warten auf Kunde, Erledigt). Kunden beschweren sich über lange Bearbeitungszeiten. Zahlen der letzten Wochen: Im Durchschnitt befinden sich 48 Tickets gleichzeitig in Bearbeitung (In Arbeit und Warten auf Kunde). Das Team schließt 16 Tickets pro Arbeitstag ab, es kommen aber 18 neue hinzu.",
@@ -3801,6 +3989,7 @@
   {
     "title": "DHCP-Pool im Besucher-WLAN einer Messehalle läuft voll",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Messegesellschaft betreibt in Halle 3 ein offenes Besucher-WLAN. Es nutzt das Netz 172.30.0.0/22. Das Gateway hat 172.30.0.1, alle übrigen Hostadressen stehen im DHCP-Pool. Die Lease-Zeit beträgt 8 Stunden.",
@@ -3823,6 +4012,7 @@
   {
     "title": "Netze für die Anlagen eines Windparks",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Windparkbetreiber vernetzt den Windpark Nord mit heute 38 Windenergieanlagen (WEA). Durch Nachverdichtung sollen es bis zu 60 werden. In jeder Anlage hängen Steuerung, Sensoren und zwei Kameras, zusammen mit Reserve bis zu 22 Geräte und das Gateway der Anlage.",
@@ -3845,6 +4035,7 @@
   {
     "title": "Webseiten laden im Standort-VPN eines Reiseveranstalters nicht",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Reiseveranstalter hat ein Außenbüro über einen DSL-Anschluss mit PPPoE angebunden. Ein IPsec-Tunnel verbindet das Büro mit der Zentrale. Seit der Umstellung melden die Mitarbeiter: Ping auf den Buchungsserver klappt, die Weboberfläche lädt aber nur halb, große Dateien brechen ab.",
@@ -3866,6 +4057,7 @@
   {
     "title": "Praxis-VPN zum Dentallabor trotz gleicher Adressbereiche",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Zahnarztpraxis will ihre Intraoralscans direkt an ein Dentallabor schicken. Dafür soll ein Site-to-Site-VPN eingerichtet werden. Beide nutzen die Werkseinstellung ihres Routers: 192.168.178.0/24.",
@@ -3887,6 +4079,7 @@
   {
     "title": "Routingschleife nach dem Abbau einer Außenstelle",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Autovermietung hat ihre Außenstelle mit dem Netz 10.5.40.0/24 geschlossen. Der Tunnel und die spezifische Route dorthin wurden auf dem VPN-Router R2 gelöscht. Seitdem ist die Transferstrecke zwischen den Routern in der Zentrale zeitweise überlastet.",
@@ -3909,6 +4102,7 @@
   {
     "title": "Hausfernsehen per IPTV in einer Seniorenresidenz",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Seniorenresidenz mit 4 Etagen und je 30 Wohnungen ersetzt die alte Antennenanlage durch IPTV. Eine Kopfstation empfängt 40 Sender und speist sie ins Hausnetz. Jeder Sender belegt 8 Mbit/s.",
@@ -3930,6 +4124,7 @@
   {
     "title": "Ringnetz für die Steuerungstechnik einer Kläranlage",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Die Kläranlage einer Gemeinde vernetzt ihre Leitwarte mit 8 Außenstationen (Pumpwerke, Becken, Gebläse). Die Steuerungen melden einen Fehler, wenn die Verbindung länger als 500 ms unterbrochen ist.",
@@ -3952,6 +4147,7 @@
   {
     "title": "Lastverteilung für den Vorverkauf eines Konzertveranstalters",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Konzertveranstalter verkauft Tickets über einen eigenen Webshop. Beim letzten Vorverkaufsstart kamen in der Spitze 60.000 Anfragen pro Minute, der einzelne Webserver brach zusammen.",
@@ -3973,6 +4169,7 @@
   {
     "title": "Netz für die Bürocontainer einer Großbaustelle",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Bauunternehmen richtet für 18 Monate ein Baubüro aus Containern ein. Es gibt keinen Festnetzanschluss, geplant ist ein 5G-Router mit Außenantenne. Die Container stehen in zwei Blöcken, 80 m voneinander entfernt. Block A: Bauleitung, Server-Schrank. Block B: Besprechung, Poliere.",
@@ -3994,6 +4191,7 @@
   {
     "title": "WLAN-Schlüssel eines Weinguts offline geknackt",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Weingut mit Probierstube betreibt seit 8 Jahren ein Mitarbeiter-WLAN mit WPA2-Personal. Der Schlüssel besteht aus 8 Ziffern. Über dieses WLAN laufen auch Kasse, Warenwirtschaft und die Steuerung der Kühltanks. Jedes Jahr erhalten 35 Erntehelfer den Schlüssel, dazu kennen ihn 12 feste Mitarbeiter. Geändert wurde er nie.",
@@ -4014,6 +4212,7 @@
   {
     "title": "Laborbefunde in einem Praxisverbund verschlüsselt austauschen",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "In einem Verbund aus 30 Arztpraxen und Laboren tauschen alle Teilnehmer Befunde untereinander aus. Bisher werden die PDFs per E-Mail mit einem Passwort geschützt, das telefonisch durchgegeben wird.",
@@ -4034,6 +4233,7 @@
   {
     "title": "Liegengebliebene Ausdrucke in einer Anwaltskanzlei",
     "cat": "sicherheit",
+    "thema": "isms",
     "theme": "IT-Sicherheit",
     "text": [
       "Eine Anwaltskanzlei mit 60 Beschäftigten druckt auf 4 Multifunktionsgeräten im Flur. Mandanten warten im selben Flur. Bei einer Prüfung lagen Schriftsätze stundenlang im Ausgabefach. Laut Auswertung werden 12 % der Druckaufträge nie abgeholt. Pro Monat werden 9.000 Seiten gedruckt, eine Seite kostet 2,7 Cent (Toner, Papier, Wartung).",
@@ -4055,6 +4255,7 @@
   {
     "title": "DDoS-Angriff auf einen Blumenversand vor dem Valentinstag",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Blumenversand macht in den 5 Tagen vor dem Valentinstag 1,2 Mio. Euro Umsatz, rund um die Uhr gleich verteilt. Der Deckungsbeitrag beträgt 35 % des Umsatzes. Der Webshop läuft bei einem Hoster mit 1 Gbit/s Anbindung.",
@@ -4076,6 +4277,7 @@
   {
     "title": "Cloud-Zugangsschlüssel eines App-Start-ups veröffentlicht",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Start-up entwickelt eine Fitness-App. Ein Entwickler hat versehentlich eine Konfigurationsdatei mit einem Zugangsschlüssel zum Cloud-Konto in ein öffentliches Git-Repository hochgeladen. Der Schlüssel hat Administratorrechte.",
@@ -4096,6 +4298,7 @@
   {
     "title": "Bildarchiv einer Radiologiepraxis für zehn Jahre planen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Radiologiepraxis speichert alle Aufnahmen in einem Bildarchiv (PACS). Pro Arbeitstag entstehen: 60 MRT-Untersuchungen zu je 300 MB, 40 CT-Untersuchungen zu je 500 MB und 120 Röntgenbilder zu je 30 MB. Die Praxis arbeitet an 250 Tagen im Jahr.",
@@ -4117,6 +4320,7 @@
   {
     "title": "Ersatzplatten für ein Klimadatenarchiv vorhalten",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Forschungsinstitut speichert Klimadaten auf 480 Festplatten, aufgeteilt in 40 RAID-6-Gruppen zu je 12 Platten. Der Hersteller gibt eine jährliche Ausfallrate (AFR) von 1,4 % an. Nach 5 Jahren Betrieb rechnet das Institut mit 4 %.",
@@ -4138,6 +4342,7 @@
   {
     "title": "Kontingente für die Home-Laufwerke einer Hochschule",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Hochschule stellt Home-Laufwerke auf einem Speichersystem mit 40 TB Nutzkapazität bereit. 6.000 Studierende erhalten ein Kontingent (Quota) von je 10 GB, 800 Beschäftigte je 50 GB. Rechnen Sie mit 1 TB = 1.000 GB.",
@@ -4158,6 +4363,7 @@
   {
     "title": "Fileserver eines Landschaftsarchitekturbüros am Wochenende auf ein neues NAS umziehen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Landschaftsarchitekturbüro ersetzt seinen alten Fileserver durch ein NAS. Zu übertragen sind 2,4 TB in 1,8 Millionen Dateien (viele kleine Plan- und Bilddateien). Die Verbindung liefert 110 MB/s. Jede Datei kostet zusätzlich etwa 4 ms Verwaltungsaufwand. Rechnen Sie mit 1 TB = 1.000.000 MB.",
@@ -4179,6 +4385,7 @@
   {
     "title": "Datenbank-VM einer Versandapotheke über NUMA-Grenzen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Versandapotheke betreibt ihre Bestelldatenbank in einer VM mit 24 vCPU und 320 GB RAM. Der Host hat 2 CPUs mit je 16 Kernen und 512 GB RAM, je CPU 256 GB (zwei NUMA-Knoten). Der Hypervisor belegt je Knoten 16 GB.",
@@ -4200,6 +4407,7 @@
   {
     "title": "Hypervisor einer Kreisverwaltung nach Lizenzänderung wechseln",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Kreisverwaltung betreibt 3 Virtualisierungshosts mit je 2 CPUs zu 16 Kernen und 85 VMs. Der Hersteller des Hypervisors stellt auf Abonnements um. Angenommener Preis: 190 Euro pro Kern und Jahr. Bisher zahlte die Verwaltung 6.500 Euro Wartung pro Jahr.",
@@ -4221,6 +4429,7 @@
   {
     "title": "Virtualisierungshosts einer Bausparkasse nachts abschalten",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Bausparkasse betreibt einen Cluster aus 8 Hosts mit je 512 GB RAM. Tagsüber sind alle Hosts nötig. Nachts von 20 bis 6 Uhr laufen nur noch VMs mit zusammen 900 GB RAM, die CPU-Last ist gering.",
@@ -4242,6 +4451,7 @@
   {
     "title": "Hohe CPU-Ready-Werte bei der Lohnabrechnungs-VM",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Lohnabrechnungsdienstleister betreibt alle Server auf einem Host mit 2 CPUs zu je 10 Kernen. Die VMs haben zusammen 64 vCPU. Zum Monatsende ist die Abrechnungs-VM mit 8 vCPU sehr langsam, obwohl ihre CPU-Auslastung im Mittel nur 15 % beträgt.",
@@ -4263,6 +4473,7 @@
   {
     "title": "Anschaffungen einer Fahrschule richtig abschreiben",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Fahrschule kauft am 1. Juli: 6 Tablets für den Theorieunterricht zu je 690 Euro netto, einen Server für 4.200 Euro netto und einen Fahrsimulator für 9.600 Euro netto. Für den Fahrsimulator wird eine Nutzungsdauer von 8 Jahren angenommen. Der Inhaber fragt Sie, wie sich die Käufe auf den Gewinn auswirken.",
@@ -4283,6 +4494,7 @@
   {
     "title": "Server einer Ingenieurgesellschaft in ein Colocation-Rechenzentrum auslagern",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Ingenieurgesellschaft betreibt einen eigenen Serverraum. Die IT-Leistung beträgt dauerhaft 4,5 kW, die PUE 2,0. Angenommener Strompreis: 0,28 Euro pro kWh. Die Klimawartung kostet 2.400 Euro pro Jahr, der Batterietausch der USV 3.600 Euro alle 4 Jahre. Der Raum (20 m²) könnte sonst als Büro genutzt werden, die Miete beträgt 14 Euro pro m² und Monat.",
@@ -4303,6 +4515,7 @@
   {
     "title": "Lizenzprüfung durch einen Softwarehersteller bei einer Druckerei",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Druckerei nutzt eine Layoutsoftware im Abonnement, lizenziert sind 40 Plätze zu je 62 Euro pro Monat. Der Hersteller kündigt ein Lizenzaudit an. Ihre Inventur ergibt: Die Software ist auf 52 Rechnern installiert. In den letzten 90 Tagen wurde sie auf 47 Rechnern genutzt.",
@@ -4324,6 +4537,7 @@
   {
     "title": "Rahmenvertrag mit Staffelpreisen für eine Hotelgruppe",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Hotelgruppe mit 14 Hotels erneuert Rezeptions-PCs (3 pro Hotel) und kauft 20 Notebooks für die Verwaltung. Die Hotels werden in 3 Wellen im Abstand von 4 Monaten umgestellt, pro Welle etwa ein Drittel der Geräte.",
@@ -4346,6 +4560,7 @@
   {
     "title": "Meilensteintrendanalyse bei der ERP-Einführung einer Brauerei",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Brauerei führt ein neues ERP-System ein. Der Go-Live muss spätestens in Kalenderwoche (KW) 30 liegen, ab KW 31 beginnt die Hochsaison. Die Projektleitung meldet alle 4 Wochen die erwarteten Termine der Meilensteine:",
@@ -4370,6 +4585,7 @@
   {
     "title": "Zahlungsplan und Abnahme bei der Ausstattung eines Kinos",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus stattet ein Kino mit Kassensystem, Netzwerk und digitalen Werbedisplays aus (Werkvertrag). Auftragswert: 84.000 Euro netto. Zahlungsplan: 30 % bei Auftrag, 40 % nach der Installation, der Rest nach der Abnahme. Der Kunde behält 5 % der Schlusssumme als Sicherheit für 2 Jahre Gewährleistung ein. Er kann den Einbehalt gegen eine Bankbürgschaft freigeben (Kosten 1,5 % der Summe pro Jahr).",
@@ -4391,6 +4607,7 @@
   {
     "title": "Verkabelung von Feuerwachen parametrisch schätzen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Stadt lässt in 6 Feuerwachen die Netzwerkverkabelung erneuern. Anzahl Anschlüsse: 42, 38, 55, 30, 47 und 36. Die Wachen mit 55 und 30 Anschlüssen sind Altbauten mit schwierigen Wanddurchbrüchen.",
@@ -4412,6 +4629,7 @@
   {
     "title": "Zusätzliche Mitarbeiter im verspäteten Museumsprojekt",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Museum lässt Medienstationen, WLAN und ein Besucherleitsystem installieren. Das Projektteam hat 5 Personen und liegt 3 Wochen hinter dem Plan. Bis zur Eröffnung bleiben 6 Wochen, es fehlen noch 42 Personenwochen Arbeit. Die Geschäftsführung will 4 zusätzliche Mitarbeiter einsetzen.",
@@ -4432,6 +4650,7 @@
   {
     "title": "OSPF-Nachbarschaft zwischen Molkerei und Käserei kommt nicht zustande",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Molkerei hat ihr Hauptwerk (Router R1) mit der neuen Käserei (Router R2) verbunden. Direkt verbindet beide eine Richtfunkstrecke mit 1 Gbit/s. Ein zweiter Weg führt über das Kühllager (Router R3): R1 zu R3 und R3 zu R2 sind Glasfaserleitungen mit je 10 Gbit/s.",
@@ -4465,6 +4684,7 @@
   {
     "title": "Firewallregel für das Waschkarten-Terminal eines Studentenwohnheims greift nicht",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein privater Betreiber von Studentenwohnheimen hat das Wohnheim Mühlbach mit 240 Zimmern. Der Router erhält vom Provider das Präfix 2001:db8:4a00:3700::/56. Jedes VLAN bekommt ein /64. Die Subnetz-ID entspricht der VLAN-Nummer in hexadezimaler Schreibweise. VLAN 2 ist die Haustechnik, VLAN 20 das Netz der Bewohner.",
@@ -4488,6 +4708,7 @@
   {
     "title": "Ersatzroute über LTE greift bei den Kassen einer Tankstellenkette nicht",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Tankstellenkette hat 120 Stationen. Jeder Stationsrouter hat zwei Wege ins Rechenzentrum: DSL über ein separates Modem (Next Hop 192.168.100.1) und LTE über ein Mobilfunkmodul (Next Hop 10.64.0.1). Auszug:",
@@ -4511,6 +4732,7 @@
   {
     "title": "Falsche Subnetzmasken an zwei Geräten einer Pferdeklinik",
     "cat": "netzwerk",
+    "thema": "ipv4",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Pferdeklinik nutzt für Praxis und Diagnostik das Netz 10.12.8.0/22 mit dem Gateway 10.12.8.1. Der Bildspeicher (PACS) hat die Adresse 10.12.10.20, der Befundungs-PC 10.12.9.33. Die Laborsoftware läuft auf einem Server im Verwaltungsnetz 10.12.40.0/24 (10.12.40.5), das über das Gateway erreichbar ist.",
@@ -4534,6 +4756,7 @@
   {
     "title": "Zugriffsliste für das Fernwirknetz von Stadtwerken",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Stadtwerke schützen ihr Fernwirknetz 10.40.32.0/24 (Steuerung von Pumpen und Umspannstationen) mit einer erweiterten Zugriffsliste. Sie ist ausgehend am VLAN-Interface des Fernwirknetzes auf dem Layer-3-Switch gebunden. Netze: Verwaltung 10.40.0.0/21, Technik 10.40.8.0/22, Leitstelle 10.40.20.0/24. Der Visualisierungsserver hat 10.40.32.10, der Jump-Host der Techniker 10.40.9.25.",
@@ -4566,6 +4789,7 @@
   {
     "title": "Nachtsicherung eines Zeitungsverlags nutzt nur eine Leitung des Bündels",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Zeitungsverlag sichert jede Nacht 18 TB vom Backupserver (10.30.5.20) auf einen Sicherungsspeicher (10.30.6.40). Beide sind über je 4 Leitungen mit 10 Gbit/s per LACP an den Core-Switch angebunden. Das Sicherungsfenster reicht von 0 bis 3 Uhr. Seit Wochen läuft die Sicherung bis in den Druck der Morgenausgabe hinein.",
@@ -4593,6 +4817,7 @@
   {
     "title": "Audio-Netz für die Bühnentechnik eines Opernhauses",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Opernhaus ersetzt die analogen Kabel zwischen Bühne und Tonregie durch ein Audio-over-IP-System. Auf der Bühne steht eine Stagebox mit 64 Eingängen, deren Signale an das Mischpult in der Tonregie gehen. Das Mischpult schickt 32 Kanäle zurück an die Verstärker auf der Bühne.",
@@ -4615,6 +4840,7 @@
   {
     "title": "WLAN-Richtfunkstrecke zum Seeufer eines Ferienparks",
     "cat": "netzwerk",
+    "thema": "wlan",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Ferienpark will die Ferienhäuser am Seeufer mit WLAN versorgen. Dort gibt es Strom, aber kein Netzwerkkabel. Zwischen Rezeption und einem Mast am Ufer liegen 800 m freie Sicht über eine Wiese mit Obstbäumen. Geplant ist eine Richtfunkstrecke im 5-GHz-Band bei 5.500 MHz.",
@@ -4636,6 +4862,7 @@
   {
     "title": "Netz für ein E-Sport-Turnier in einer Stadthalle",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Stadthalle richtet ein E-Sport-Turnier aus. 16 Teams mit je 5 Spielern spielen an 80 gestellten PCs mit 1-Gbit/s-Anschluss. Die Spielserver laufen lokal in der Halle.",
@@ -4657,6 +4884,7 @@
   {
     "title": "Drucker in den Filialen einer Genossenschaftsbank starten ohne Netz",
     "cat": "netzwerk",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Genossenschaftsbank hat an den Switchports ihrer 35 Filialen die Anmeldung nach 802.1X eingeführt. PCs melden sich mit Zertifikat an (EAP-TLS). Geräte ohne 802.1X wie Drucker und Kontoauszugsdrucker werden über ihre MAC-Adresse zugelassen (MAB). Der RADIUS-Server weist das VLAN zu. Auszug eines Druckerports:",
@@ -4688,6 +4916,7 @@
   {
     "title": "Unmögliche Reise im Anmeldeprotokoll einer Immobilienverwaltung",
     "cat": "sicherheit",
+    "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
       "Eine Immobilienverwaltung betreut 4.000 Mietwohnungen. Die Mitarbeiter melden sich an einem Cloud-Dienst für E-Mail und Dateien an. Das SIEM zeigt folgende Einträge:",
@@ -4713,6 +4942,7 @@
   {
     "title": "Abgelaufene Sperrliste legt das WLAN eines Messtechnikherstellers lahm",
     "cat": "sicherheit",
+    "thema": "krypto",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Messtechnikhersteller betreibt eine zweistufige PKI. Die Root-CA ist offline und wird nur zum Signieren eingeschaltet. Die ausstellende CA (Issuing CA) ist online. PCs melden sich per 802.1X mit Zertifikat (EAP-TLS) am WLAN an.",
@@ -4736,6 +4966,7 @@
   {
     "title": "Regelwerk für die Fahrkartenautomaten eines Verkehrsverbunds",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Verkehrsverbund betreibt 350 Fahrkartenautomaten im Netz 10.77.0.0/16. Sie brauchen HTTPS zum Tarifserver 172.20.1.10, HTTPS zum Zahlungsdienstleister 203.0.113.50 und NTP zum Zeitserver 172.20.1.5. Die Techniker (10.99.5.0/24) warten die Automaten per SSH. Aktuelles Regelwerk (die erste passende Regel gilt):",
@@ -4769,6 +5000,7 @@
   {
     "title": "Auffällige DNS-Anfragen im Netz eines Spielwarenherstellers",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "theme": "IT-Sicherheit",
     "text": [
       "Ein Spielwarenhersteller bereitet seine Neuheiten für die nächste Spielwarenmesse vor. Einer Mitarbeiterin der IT fällt im Protokoll des internen DNS-Servers eine Häufung auf:",
@@ -4793,6 +5025,7 @@
   {
     "title": "Ausgefallene Controllerbatterie bremst die Warenwirtschaft einer Möbelhauskette",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Die Warenwirtschaft einer Möbelhauskette läuft auf einem Datenbankserver mit Hardware-RAID-Controller. Das RAID 6 besteht aus 10 SAS-Festplatten mit je 1,2 TB und je 200 IOPS. Der nächtliche Inventurabgleich dauerte bisher 35 Minuten, seit Dienstag braucht er 1 Stunde 40 Minuten. Im Ereignisprotokoll des Controllers steht:",
@@ -4815,6 +5048,7 @@
   {
     "title": "Neuen ZFS-Speicher für die Fundfotos eines Landesamts für Archäologie planen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Landesamt für Archäologie fotografiert jedes Fundstück für die Dokumentation. Pro Jahr kommen 12.000 Fundstücke mit je 40 Fotos zu 25 MB dazu. Der alte Server mit ZFS ist fast voll und wird immer langsamer. Er zeigt:",
@@ -4845,6 +5079,7 @@
   {
     "title": "iSCSI-Pfad einer Fruchtsaftkelterei verliert nach Switchtausch Pakete",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Eine Fruchtsaftkelterei betreibt den Datenbankserver für Abfüllung und Versand mit Speicher aus einem iSCSI-SAN. Der Server hat zwei Pfade über zwei getrennte Switches: Pfad A (10.50.1.0/24) und Pfad B (10.50.2.0/24). Multipath (MPIO) verteilt die Last im Round-Robin-Verfahren. Server und SAN nutzen eine MTU von 9.000 Byte.",
@@ -4869,6 +5104,7 @@
   {
     "title": "Sicherungsberichte einer Hörakustik-Kette per SQL auswerten",
     "cat": "systeme",
+    "thema": "programmierung",
     "theme": "Storage & RAID",
     "text": [
       "Eine Hörakustik-Kette mit 25 Filialen sichert jede Nacht die Filialserver mit Kunden- und Messdaten in die Zentrale. Die Sicherungssoftware schreibt jedes Ergebnis in die Tabelle backup_jobs (job_id, filiale_id, ende_zeit, status, datenmenge_gb), status ist 'OK' oder 'FEHLER'. Die Tabelle filialen (filiale_id, name) enthält alle Filialen.",
@@ -4901,6 +5137,7 @@
   {
     "title": "Speicher für Drohnenbilder eines Vermessungsbüros läuft voll",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Vermessungsbüro fliegt Baustellen und Steinbrüche mit Drohnen ab. Die Daten liegen auf einem Linux-Server mit einem Software-RAID 6 aus 8 Festplatten zu je 8 TB (Dateisystem XFS). Ausgabe von df -h:",
@@ -4933,6 +5170,7 @@
   {
     "title": "Buchungsdatenbank eines Freizeitparks auf einen Zeitpunkt zurücksetzen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Freizeitpark verkauft Tickets und Hotelübernachtungen über eine Buchungsdatenbank auf Microsoft SQL Server (Wiederherstellungsmodell FULL). Sicherungen: Vollsicherung sonntags um 22:00 Uhr, differenzielle Sicherung Montag bis Samstag um 22:00 Uhr, Protokollsicherung alle 15 Minuten, jeweils um :10, :25, :40 und :55 Uhr.",
@@ -4954,6 +5192,7 @@
   {
     "title": "Ticketverkauf eines Freilichttheaters auf Kubernetes skalieren",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Freilichttheater verkauft seine Karten über eine eigene Webanwendung. Das Frontend läuft als Deployment in einem gemieteten Kubernetes-Cluster, die Datenbank ist ein verwalteter Dienst des Anbieters.",
@@ -4976,6 +5215,7 @@
   {
     "title": "VM-Sicherung eines Großhändlers für Heimtierbedarf ins Nachtfenster bringen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Großhändler für Heimtierbedarf betreibt 42 VMs auf 3 Hosts. Die VMs belegen zusammen 14 TB. Rechnen Sie vereinfacht mit 1 TB = 1.000 GB = 1.000.000 MB.",
@@ -4997,6 +5237,7 @@
   {
     "title": "VMs einer Großwäscherei am Sonntag auf einen neuen Hypervisor umziehen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Großwäscherei arbeitet von Montag bis Samstag rund um die Uhr. Für den Wechsel auf einen neuen Hypervisor steht nur der Sonntag von 6 bis 22 Uhr zur Verfügung.",
@@ -5019,6 +5260,7 @@
   {
     "title": "Anmeldesturm beim Schichtwechsel in einem Rehazentrum",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Rehazentrum stellt Pflege- und Therapiepersonal 150 nicht-persistente virtuelle Desktops bereit. Nach der Abmeldung wird jeder Desktop auf den Stand des Masterimages zurückgesetzt. Die Benutzereinstellungen liegen in Profilcontainern auf einem Dateiserver.",
@@ -5041,6 +5283,7 @@
   {
     "title": "Wenige große oder viele kleine Hosts für einen Regionalradiosender",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Regionalradiosender konsolidiert seine Server. Die VMs brauchen zusammen 180 vCPU und 1.400 GB RAM. CPU wird im Verhältnis 3:1 überbucht, RAM nicht. Der Hypervisor belegt je Host 16 GB RAM. Der Cluster soll den Ausfall eines Hosts verkraften (N+1).",
@@ -5063,6 +5306,7 @@
   {
     "title": "Container-Images eines Pollenflug-Vorhersagedienstes verschlanken",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein privater Wetterdienst berechnet Pollenflug-Vorhersagen für Allergiker-Apps. Er betreibt 14 Dienste als Container auf 12 Knoten. Die Images liegen in einer eigenen Registry, pro Dienst werden die letzten 10 Versionen aufbewahrt.",
@@ -5085,6 +5329,7 @@
   {
     "title": "CPU-Engpass mit Ressourcenpools in einer Senfmanufaktur steuern",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Senfmanufaktur betreibt auf einem Host mit 2 CPUs zu je 10 Kernen und 2,0 GHz alle Server. Der Hypervisor braucht vereinfacht 4 GHz, der Rest steht den VMs zur Verfügung.",
@@ -5107,6 +5352,7 @@
   {
     "title": "Zwei-Knoten-Cluster einer Patentanwaltskanzlei verliert das Quorum",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Patentanwaltskanzlei betreibt ihre Kanzleisoftware mit Fristenverwaltung und das Aktenarchiv auf einem Cluster aus zwei Proxmox-VE-Hosts. Jeder Host hat lokalen ZFS-Speicher. Die VMs werden alle 15 Minuten auf den anderen Host repliziert, Hochverfügbarkeit (HA) ist eingerichtet.",
@@ -5129,6 +5375,7 @@
   {
     "title": "Check-in-Terminals für eine Kette von Trampolinhallen zum Zielpreis anbieten",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Kette von 6 Trampolinhallen möchte an jedem Eingang 2 Check-in-Terminals mit Kartenleser. Die Geschäftsführung nennt eine Obergrenze: 2.300 Euro netto je Terminal nach Abzug des Rabatts, aber vor Skonto.",
@@ -5150,6 +5397,7 @@
   {
     "title": "IT-Kosten einer Messebaufirma verursachungsgerecht auf Bereiche verteilen",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Messebaufirma hat drei Bereiche: Konstruktion mit 14 Arbeitsplätzen (CAD), Werkstatt mit 10 und Verwaltung mit 16 Arbeitsplätzen. Die IT kostet pro Jahr 216.000 Euro. Bisher wird sie gleichmäßig nach Arbeitsplätzen auf die Kostenstellen umgelegt.",
@@ -5172,6 +5420,7 @@
   {
     "title": "Transkription einer Untertitelagentur in der Cloud oder auf eigener GPU",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Agentur erstellt Untertitel für Filme und Serien. Die Tonspuren werden zuerst automatisch transkribiert. Heute nutzt sie einen Cloud-Dienst, vereinfacht angenommener Preis 0,02 Euro je Audiominute.",
@@ -5194,6 +5443,7 @@
   {
     "title": "Mangelhafte Buchungssoftware einer Segelschule nachbessern lassen",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ihr Systemhaus betreut eine Segelschule (GmbH). Sie hat bei einer Agentur ein Online-Buchungssystem für Kurse und Bootsvermietung als Werkvertrag bestellt. Vereinbart ist eine Vergütung von 16.200 Euro netto, ein Abschlag von 50 % ist bezahlt.",
@@ -5215,6 +5465,7 @@
   {
     "title": "Preiserhöhung im Wartungsvertrag einer Privatschule prüfen",
     "cat": "wirtschaft",
+    "thema": "recht",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Privatschule (gGmbH) hat mit einem IT-Dienstleister einen Wartungsvertrag für Netzwerk und Server über 1.450 Euro netto im Monat. Der Vertrag enthält eine Preisklausel:",
@@ -5237,6 +5488,7 @@
   {
     "title": "Zeitpuffer bis zur Eröffnung einer Drogeriemarktfiliale absichern",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus richtet die IT einer neuen Filiale einer Drogeriemarktkette ein: Kassen, WLAN, Anbindung an die Warenwirtschaft und elektronische Preisschilder. Der Eröffnungstermin ist fest und beworben. Laut Plan ist das Projekt 10 Arbeitstage vorher fertig, das ist der Zeitpuffer.",
@@ -5262,6 +5514,7 @@
   {
     "title": "Digitaler Dienstplan im Rettungsdienst mit Betriebsrat und Beschäftigten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Rettungsdienst-gGmbH mit 4 Rettungswachen und 140 Beschäftigten führt eine Dienstplan-App ein. Die Beschäftigten sollen Schichten per Smartphone tauschen und ihre Arbeitszeit erfassen können. Es gibt einen Betriebsrat.",
@@ -5284,6 +5537,7 @@
   {
     "title": "Änderungswünsche beim Filialrollout einer Schuhhauskette bewerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus stattet 18 Filialen einer Schuhhauskette mit neuen Routern, Switches und Kassen-PCs aus. Festpreis 126.000 Euro netto. Ein Team schafft 3 Filialen pro Woche, das Projekt endet planmäßig nach Woche 6. Nach Woche 2 sind 6 Filialen fertig.",
@@ -5307,6 +5561,7 @@
   {
     "title": "Releasetermin einer Carsharing-App trotz wachsendem Backlog prognostizieren",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Scrum-Team entwickelt die App eines Carsharing-Anbieters. Sprints dauern 2 Wochen. Für das erste Release waren zu Beginn 360 Story Points geschätzt.",
@@ -5328,6 +5583,7 @@
   {
     "title": "WLAN-Erneuerung einer Gartencenterkette mit TCPI und Prognose bewerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus erneuert in 10 Märkten einer Gartencenterkette das WLAN und die Infrastruktur für Handscanner. Budget (BAC) 240.000 Euro, Laufzeit 20 Wochen. Jeder Markt ist gleich viel wert, die Planung verläuft gleichmäßig.",
@@ -5349,6 +5605,7 @@
   {
     "title": "Hypercare und Übergabe in den Betrieb bei einer Kette von Bowlingcentern",
     "cat": "wirtschaft",
+    "thema": "service",
     "theme": "Projektmanagement",
     "text": [
       "Ihr Systemhaus hat in 8 Bowlingcentern ein neues Kassen- und Bahnreservierungssystem eingeführt. Der Go-live ist erfolgt. Vereinbart ist eine Hypercare-Phase von 4 Wochen: Das Projektteam betreut die Center in dieser Zeit selbst, an allen 7 Tagen der Woche.",
@@ -5370,6 +5627,7 @@
   {
     "title": "Kostenganglinie und Budgettranchen für ein DMS eines Abfallwirtschaftsbetriebs",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Der Abfallwirtschaftsbetrieb eines Landkreises führt in 6 Monaten ein Dokumentenmanagementsystem (DMS) ein. Geplante Kosten je Monat: 18.000, 9.000, 12.000, 15.000, 6.000 und 4.000 Euro.",
@@ -5391,6 +5649,7 @@
   {
     "title": "Urlaub einer Schlüsselperson im Netzplan eines Reifengroßhändlers",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Reifengroßhändler bekommt einen neuen Server, und die Warenwirtschaft wird migriert. Vorgänge mit Dauer in Arbeitstagen und Vorgängern:",
@@ -5418,6 +5677,7 @@
   {
     "title": "Projektauftrag und Projektstrukturplan für eine Glockengießerei",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Glockengießerei mit 35 Beschäftigten gießt Kirchenglocken und restauriert alte Glocken. Aufträge, Kalkulation und Werkstattplanung laufen über Papierlaufzettel und Tabellen. Ein Angebot braucht heute im Schnitt 10 Arbeitstage.",
@@ -5445,6 +5705,7 @@
   {
     "title": "Kundenportal eines Schornsteinfegerbetriebs mit Function Points schätzen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Schornsteinfegerbetrieb mit 4 Kehrbezirken lässt von Ihrem Systemhaus ein Kundenportal entwickeln. Hauseigentümer sollen Termine sehen, Messprotokolle abrufen und Wünsche melden. Sie schätzen den Aufwand mit der Function-Point-Methode.",
@@ -5472,6 +5733,7 @@
   {
     "title": "Softwareumstellung einer Textilreinigung per Analogie und Delphi schätzen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Textilreinigung mit 7 Annahmestellen stellt auf eine neue Branchensoftware um. Sie verwaltet Aufträge, Kundenkarten, Barcode-Etiketten für jedes Kleidungsstück und die Abholung bei Hotels und Arztpraxen. Ihr Systemhaus soll den Aufwand schätzen.",
@@ -5495,6 +5757,7 @@
   {
     "title": "Zwei Techniker für den Netzumbau an den Biogasanlagen einer Genossenschaft",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Energiegenossenschaft betreibt zwei Biogasanlagen. Ihr Systemhaus erneuert die Netzwerktechnik für die Fernwirkanlagen und die Leitwarte. Es stehen genau 2 Netzwerktechniker zur Verfügung. An den Gärbehältern und in den Schächten der Anlage Nord darf wegen Gasgefahr niemand allein arbeiten.",
@@ -5521,6 +5784,7 @@
   {
     "title": "Messbare Abnahmekriterien für das Bestellportal eines Fotolabors",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Fotolabor lässt von einer Agentur ein neues Bestellportal als Werk entwickeln. Kunden laden Fotos hoch und bestellen Abzüge, Fotobücher und Großformate bis 120 x 180 cm. Dateien für Großformate sind bis zu 120 MB groß. Ihr Systemhaus berät das Fotolabor bei der Abnahme.",
@@ -5544,6 +5808,7 @@
   {
     "title": "Kommunikationsplan und Eskalationsregeln im Ticketprojekt eines Botanischen Gartens",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Der Botanische Garten einer Universität führt einen Onlineshop für Eintrittskarten, ein neues Kassensystem und Jahreskarten mit QR-Code ein. Die Projektleiterin arbeitet im Rechenzentrum der Universität.",
@@ -5567,6 +5832,7 @@
   {
     "title": "Meilensteintrend beim Slotbuchungssystem einer Zuckerfabrik",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Zuckerfabrik führt ein Slotbuchungssystem ein. Landwirte und Speditionen buchen damit Zeitfenster für die Anlieferung von Zuckerrüben. Das System muss spätestens in Kalenderwoche (KW) 36 laufen. Ab KW 37 beginnt die Rübenkampagne, dann kommen rund um die Uhr Lkw an.",
@@ -5592,6 +5858,7 @@
   {
     "title": "Drei Scrum-Teams eines Versandhandels für Aquaristik gemeinsam planen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Ein Versandhandel für Aquaristik (Aquarien, Futter, Wasserpflege, Arzneimittel für Zierfische) ist stark gewachsen. Drei Scrum-Teams arbeiten an Webshop, Warenwirtschaft und Versand. Bisher plant jedes Team für sich. Abhängigkeiten fallen oft erst im Sprint Review auf.",
@@ -5617,6 +5884,7 @@
   {
     "title": "Buchungsplattform einer Kochschule mit MoSCoW ins Budget bringen",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Kochschule bietet Kurse und Firmenevents an. Sie beauftragt Ihr Systemhaus mit einer Buchungsplattform. Budget 24.000 Euro, ein PT kostet 800 Euro. Die Plattform muss am 1. November starten, weil dann das Weihnachtsgeschäft beginnt.",
@@ -5642,6 +5910,7 @@
   {
     "title": "Pilotbetrieb von Selbstbedienungskassen einer Biomarktkette mit Pareto auswerten",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "theme": "Projektmanagement",
     "text": [
       "Eine Biomarktkette mit 14 Märkten testet in einem Pilotmarkt 4 Selbstbedienungskassen. Danach entscheidet die Geschäftsführung über den Rollout. Vereinbartes Kriterium: höchstens 5 Eingriffe durch Personal je 1.000 Kassiervorgänge.",
@@ -5665,6 +5934,7 @@
   {
     "title": "Buchscanner für eine Universitätsbibliothek ausschreiben und Angebote werten",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Die Bibliothek einer Landesuniversität will historische Drucke und Zeitungsbände digitalisieren. Ihr Systemhaus berät die Vergabestelle. Beschafft werden sollen 3 Buchscanner, geschätzt je 38.000 Euro netto, eine Erfassungssoftware für 18.000 Euro und 4 Jahre Wartung zu je 7.500 Euro. Dazu kommt eine Option auf einen vierten Scanner zu 38.000 Euro.",
@@ -5688,6 +5958,7 @@
   {
     "title": "Office-Abonnement oder Open Source für eine Frühförderstelle",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Frühförderstelle beschäftigt 13 Heilpädagoginnen und Therapeutinnen sowie 5 Mitarbeiterinnen in Verwaltung und Leitung. Die alten Office-Kaufversionen auf den Verwaltungs-PCs erhalten keine Sicherheitsupdates mehr. Die Fachkräfte arbeiten meist bei Hausbesuchen in den Familien mit Tablet und Smartphone.",
@@ -5710,6 +5981,7 @@
   {
     "title": "Robuste oder günstige Tablets für die Streckenkontrolle einer Straßenmeisterei",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Straßenmeisterei stattet 24 Straßenwärter mit Tablets aus. Sie erfassen damit bei der Streckenkontrolle Schäden an Fahrbahn, Schildern und Leitplanken und nutzen Offline-Karten. Betrachtet werden 6 Jahre.",
@@ -5732,6 +6004,7 @@
   {
     "title": "Investitionsvorschlag vor den Inhabern eines Fischfeinkosthandels präsentieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ein Fischfeinkosthandel mit 6 Filialen pflegt Preise und Artikel bisher in jeder Filiale von Hand an Waagen und Kassen. Ihr Systemhaus schlägt eine Warenwirtschaft mit Anbindung der Waagen und Online-Vorbestellung (z.B. Fischplatten für Feiern) vor. Sie stellen den Vorschlag dem Inhaberehepaar und den 6 Filialleitungen vor.",
@@ -5753,6 +6026,7 @@
   {
     "title": "Wartungspauschale für die Medientechnik eines Varietétheaters kalkulieren",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ihr Systemhaus bietet einem Varietétheater einen Wartungsvertrag für die Medientechnik an: 6 Medienserver für die Videoprojektion, ein Steuerrechner für Licht und Ton, Netzwerk und Kasse, zusammen 14 überwachte Systeme. Vorstellungen finden an 120 Abenden und Wochenendtagen im Jahr statt.",
@@ -5778,6 +6052,7 @@
   {
     "title": "Kassentausch einer Konditoreikette als Zusatzauftrag bewerten",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Ihr Systemhaus beschäftigt 5 Techniker. Im Januar und Februar sind wie jedes Jahr etwa 200 Technikerstunden nicht verplant. Die Löhne sind fix und fallen auch ohne Aufträge an.",
@@ -5799,6 +6074,7 @@
   {
     "title": "Ausfallrisiken des Buchungsportals einer Ferienhausvermittlung in Euro bewerten",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "theme": "Wirtschaft & Beratung",
     "text": [
       "Eine Vermittlung von Ferienhäusern an der Nordsee betreibt ihr Buchungsportal auf einem einzelnen gemieteten Server. Von Januar bis März (3 Monate) buchen die meisten Gäste ihren Sommerurlaub. Fällt das Portal aus, gehen in dieser Buchungssaison 480 Euro Deckungsbeitrag pro Stunde verloren, außerhalb 90 Euro. 40 % der ausgefallenen Buchungen werden später nachgeholt.",
@@ -5825,6 +6101,7 @@
   {
     "title": "Anzeigetafeln eines Regionalflughafens fallen mit einem Host aus",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Regionalflughafen betreibt 38 VMs auf einem Cluster aus 4 Hosts. Jeder Host hat 2 CPUs mit je 16 Kernen und 512 GB RAM, der Hypervisor belegt je Host 16 GB. Hochverfügbarkeit (HA) und automatischer Lastausgleich (DRS) sind eingeschaltet, Regeln für die Platzierung gibt es nicht.",
@@ -5850,6 +6127,7 @@
   {
     "title": "VMs einer Uhrenmanufaktur in das Ausweichrechenzentrum replizieren",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Uhrenmanufaktur betreibt 20 VMs für Warenwirtschaft, Konstruktionsdaten (PDM) und Dokumentenmanagement. Die VMs belegen 6 TB. Als Ausweichrechenzentrum dient ein Raum im 12 km entfernten Montagewerk.",
@@ -5872,6 +6150,7 @@
   {
     "title": "Onlineshop einer Schokoladenfabrik in der Saison in die Cloud erweitern",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Schokoladenfabrik betreibt ihren Onlineshop auf einem eigenen Cluster mit 8 Web-VMs, die Datenbank läuft ebenfalls im eigenen Rechenzentrum. Vor Ostern (6 Wochen) und vor Weihnachten (8 Wochen) steigt die Last auf das Dreifache, dann sind 24 Web-VMs nötig.",
@@ -5894,6 +6173,7 @@
   {
     "title": "Suchdienst im Container-Shop einer Obstbrennerei stürzt ab",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Obstbrennerei verkauft Brände und Liköre über einen Onlineshop. Alles läuft mit Docker Compose auf einer Linux-VM mit 4 vCPU und 8 GB RAM. Das Betriebssystem braucht vereinfacht 1 GB. Auszug aus der docker-compose.yml:",
@@ -5923,6 +6203,7 @@
   {
     "title": "Überbuchter Arbeitsspeicher bremst das Antragsportal eines Studentenwerks",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Studentenwerk betreibt Wohnheimverwaltung, Antragsportal und Mensakassen auf 3 Hosts mit je 384 GB RAM. Der Hypervisor belegt je Host 12 GB. Die VMs sind zusammen mit 1.450 GB RAM konfiguriert. Gemessen werden im Semesterstart 820 GB aktiv genutzter RAM.",
@@ -5948,6 +6229,7 @@
   {
     "title": "Digitalisate eines Stadtarchivs im laufenden Betrieb auf neuen Speicher verschieben",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein Stadtarchiv betreibt 16 VMs, darunter eine große VM mit den Digitalisaten (Scans von Urkunden und Plänen). Die Wartung des alten SAN endet in drei Wochen. Ein neues All-Flash-System mit 20 TB Nutzkapazität steht bereit. Rechnen Sie mit 1 TB = 1.000 GB = 1.000.000 MB.",
@@ -5970,6 +6252,7 @@
   {
     "title": "Neue Version der Tippannahme einer Lotteriegesellschaft schrittweise ausrollen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Lotteriegesellschaft betreibt die Online-Tippannahme in einem Kubernetes-Cluster mit 6 Knoten. Jeder Knoten stellt 7.200m CPU und 28 GiB RAM für Pods bereit. Die Anwendung läuft mit 30 Pods, jeder mit den Requests 500m CPU und 1 GiB RAM. Der Cluster soll den Ausfall eines Knotens verkraften.",
@@ -5993,6 +6276,7 @@
   {
     "title": "Schulungsumgebungen einer Flugschule mit Terraform bereitstellen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Eine Flugschule baut für jeden Theorielehrgang eine eigene Übungsumgebung auf: je Flugschüler eine Windows-VM mit Navigations- und Wettersoftware (4 vCPU, 8 GB RAM), dazu eine VM für den Fluglehrer. Ein Lehrgang hat 12 Teilnehmer. Der Lizenzserver (2 vCPU, 4 GB) läuft dauerhaft. Pro Jahr gibt es 18 Lehrgänge, nach jedem Lehrgang wird die Umgebung gelöscht.",
@@ -6016,6 +6300,7 @@
   {
     "title": "Leitstellen-Server eines Verkehrsbetriebs über zwei Standorte spannen",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
       "Ein städtischer Verkehrsbetrieb (Straßenbahn und Bus) betreibt die Server für Betriebsleitsystem, Fahrgastinformation und Funk bisher in einem Raum am Betriebshof. Künftig soll ein gestreckter Cluster (Stretched Cluster) die Hosts auf den Betriebshof und die Leitstelle verteilen. Die Glasfaser zwischen beiden ist 18 km lang.",
@@ -6037,6 +6322,7 @@
   {
     "title": "Volles Messdaten-Volume eines Kühlhauses mit LVM erweitern",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Kühlhaus für Tiefkühlware speichert die Temperaturen aller Kühlzellen für die Nachweise gegenüber der Lebensmittelüberwachung. 180 Sensoren liefern jede Minute einen Wert, jeder Wert belegt mit Index und Protokoll 2.000 Byte. Die Daten müssen vereinfacht angenommen 2 Jahre aufbewahrt werden. Rechnen Sie mit 1 GB = 10^9 Byte und 365 Tagen pro Jahr.",
@@ -6063,6 +6349,7 @@
   {
     "title": "Kachelspeicher der Wanderkarte eines Tourismusverbands meldet vollen Datenträger",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Tourismusverband bietet auf seiner Webseite eine zoombare Wanderkarte seines Mittelgebirges an. Die Karte besteht aus kleinen Bildkacheln, die ein Linux-Server in einem ext4-Dateisystem mit 500 GB speichert. Beim Anlegen wurde je 16 KB Speicher ein Inode erzeugt. Rechnen Sie vereinfacht mit 1 KB = 1.000 Byte und 1 GB = 1.000.000 KB.",
@@ -6088,6 +6375,7 @@
   {
     "title": "Berichtsserver bremst die Pfandverwaltung eines Pfandleihhauses am Speicher aus",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Pfandleihhaus mit drei Geschäftsstellen betreibt alle VMs auf einem gemeinsamen Flash-Speicher. Laut Datenblatt liefert er bis zu 20.000 IOPS bei 1 ms Latenz, darüber steigt die Latenz stark an. Seit zwei Wochen dauert jede Pfandannahme am Schalter zwischen 8:30 und 9:30 Uhr quälend lange.",
@@ -6114,6 +6402,7 @@
   {
     "title": "Konzertmitschnitte eines Sinfonieorchesters in einen Cloud-Archivspeicher legen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Sinfonieorchester archiviert Mehrspur-Mitschnitte und Videos seiner Konzerte. Heute sind es 220 TB auf einem alten NAS, jedes Jahr kommen 18 TB hinzu. Rechnen Sie mit 1 TB = 1.000 GB.",
@@ -6136,6 +6425,7 @@
   {
     "title": "Laserscandaten eines Deichverbands per Leitung oder Transportbox in die Cloud bringen",
     "cat": "systeme",
+    "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
       "Ein Deichverband hat seine Deiche und das Hinterland per Flugzeug mit Laserscannern (LiDAR) vermessen lassen, um Setzungen und Schäden zu erkennen. Die Rohdaten (Punktwolken) umfassen 180 TB und liegen auf einem NAS in der Geschäftsstelle. Ein Dienstleister wertet sie in einem Cloud-Rechenzentrum aus. Rechnen Sie mit 1 TB = 1.000 GB = 1.000.000 MB.",
@@ -6158,6 +6448,7 @@
   {
     "title": "Datenbankserver für die Ausleih-App eines Fahrradverleihs dimensionieren",
     "cat": "datenbanken",
+    "thema": "db_betrieb",
     "theme": "Storage & RAID",
     "text": [
       "Ein regionaler Fahrradverleih mit 9.000 Leihrädern betreibt seine App mit einer PostgreSQL-Datenbank. Die Tabelle positionen speichert die GPS-Positionen der Räder während der Fahrten, die Tabelle buchungen die Ausleihen. Der Server soll ersetzt werden und 3 Jahre halten.",
@@ -6180,6 +6471,7 @@
   {
     "title": "Datenbank einer Kfz-Zulassungsstelle mit WAL-Archiv gegen Datenverlust absichern",
     "cat": "datenbanken",
+    "thema": "db_betrieb",
     "theme": "Storage & RAID",
     "text": [
       "Die Kfz-Zulassungsstelle eines Landkreises betreibt ihr Fachverfahren mit PostgreSQL 16. Die Datenbank ist 180 GB groß. Gefordert sind ein RPO von 5 Minuten und ein RTO von 2 Stunden. Bisher läuft nur jede Nacht um 23 Uhr ein pg_dump. Eine Test-Wiederherstellung daraus dauerte 3,5 Stunden, weil alle Indizes neu aufgebaut werden.",
@@ -6206,6 +6498,7 @@
   {
     "title": "Spenderdatenbank eines Blutspendedienstes auf Replikate verteilen",
     "cat": "datenbanken",
+    "thema": "db_betrieb",
     "theme": "Storage & RAID",
     "text": [
       "Ein regionaler Blutspendedienst verwaltet Spender, Termine und Spenden in einer MySQL-8.4-Datenbank. Die Hauptdatenbank (Primary) läuft im Rechenzentrum. Replikat 1 steht im selben Rechenzentrum (RTT 0,3 ms), Replikat 2 in der Außenstelle (RTT 12 ms) und wird für Berichte genutzt. Beide replizieren asynchron. In der Spitze schreibt die Anwendung 25 Transaktionen pro Sekunde.",
@@ -6233,6 +6526,7 @@
   {
     "title": "Filialen einer Eismanufaktur direkt oder über die Zentrale vernetzen",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Eismanufaktur hat eine Zentrale mit Produktion und 14 Eiscafés als Filialen. Heute hat jede Filiale einen VPN-Tunnel zur Zentrale (Hub-and-Spoke). Künftig sollen die Filialen untereinander telefonieren und die Temperaturdaten ihrer Eistheken austauschen. Ein Mitarbeiter schlägt vor, jeden Standort mit jedem direkt zu verbinden (Vollvermaschung). Das Einrichten eines Tunnels dauert 20 Minuten.",
@@ -6254,6 +6548,7 @@
   {
     "title": "Server eines Bistums mit Mikrosegmentierung gegen Seitwärtsbewegungen schützen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Netzwerkdesign",
     "text": [
       "Ein Bistum betreibt in seinem Rechenzentrum 40 VMs: Mitgliederverwaltung der Pfarreien, Finanzbuchhaltung, Personalverwaltung der Kitas, Mail, Dateiablage und Webseiten. Alle VMs liegen im selben Servernetz 10.8.0.0/24. Die Firewall kontrolliert nur den Verkehr zwischen Servernetz, Clients und Internet.",
@@ -6276,6 +6571,7 @@
   {
     "title": "Firewall-Cluster für eine Yachtwerft dimensionieren",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Yachtwerft mit 280 Beschäftigten trennt mit einer Firewall Büro, Konstruktion (CAD), Server und die Produktionsnetze der CNC-Fräsen und Lackieranlagen. Die einzelne Firewall ist in der Spitze zu 85 % ausgelastet und soll durch ein HA-Paar im Aktiv/Passiv-Betrieb ersetzt werden.",
@@ -6301,6 +6597,7 @@
   {
     "title": "Ruckelnde Hybridkurse einer Sprachschule mit NetFlow und Traffic Shaping beheben",
     "cat": "netzwerk",
+    "thema": "dienste",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Sprachschule unterrichtet in 12 Kursräumen, viele Kurse finden hybrid statt: Ein Teil der Teilnehmer ist per Videokonferenz zugeschaltet. Der Internetanschluss hat 300 Mbit/s im Download und 50 Mbit/s im Upload. Seit einigen Wochen friert das Bild der Kursräume zwischen 17 und 19 Uhr immer wieder ein.",
@@ -6326,6 +6623,7 @@
   {
     "title": "Alte statische Route leitet Daten einer Getreidemühle ins Leere",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Eine Getreidemühle hat drei Router: R1 in der Verwaltung, R2 an der Siloanlage und R3 an der Verladung. R2 und R3 melden ihre Netze per OSPF an R1. Während eines Umbaus hing die Siloanlage an einem provisorischen Router mit der Adresse 10.40.255.6, der inzwischen abgebaut ist. Auszug aus der Konfiguration von R1:",
@@ -6349,6 +6647,7 @@
   {
     "title": "Onlineshop eines Teehandels über zwei Provider mit BGP erreichbar machen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Ein Teehandel verkauft fast nur online und betreibt Shop, Mail und VPN im eigenen Serverraum. Bisher hängt alles an einem Provider. Künftig soll ein zweiter Provider die Erreichbarkeit sichern, und zwar mit denselben öffentlichen Adressen. Der Teehandel hat dafür das providerunabhängige Präfix 198.51.100.0/24 und eine eigene AS-Nummer erhalten (hier Beispielnummern aus dem Dokumentationsbereich: eigenes AS 64510, Provider A AS 64500, Provider B AS 64505).",
@@ -6377,6 +6676,7 @@
   {
     "title": "Netze der Mieter eines Güterverkehrszentrums mit VRFs trennen",
     "cat": "netzwerk",
+    "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
       "Die Betreibergesellschaft eines Güterverkehrszentrums stellt den Firmen auf dem Gelände ein gemeinsames Netz bereit: einem Kühllogistiker, einem Paketdienst und der Zollstelle. Jede Firma bringt eigene Geräte und Adressen mit. Kühllogistiker und Paketdienst nutzen beide 192.168.10.0/24. Alle sollen das Torportal (Anmeldung der Lkw) auf 10.60.15.20 erreichen, aber sich gegenseitig nicht.",

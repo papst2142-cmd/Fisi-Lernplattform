@@ -1573,7 +1573,7 @@ class GameScreen:
         self.from_site = from_site
         task = self.game.state.prepared_task(fg.task_by_id(task_id))
         person = fg.colleague(task["auftraggeber"])
-        gaps = fg.requirement_gaps(task, self.game.knowledge())
+        gaps = fg.requirement_gaps(task, self.game.topic_knowledge())
         self.used_help = False
         self.answered = False
         self.task = task

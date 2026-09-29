@@ -18,7 +18,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fisi_game as fg  # noqa: E402
 import fisi_sync  # noqa: E402
-from fisi_core import CAT_NET, CAT_SYS, DBManager, validate_content  # noqa: E402
+from fisi_core import (  # noqa: E402
+    AP1_SZENARIEN, CAT_NET, CAT_SYS, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS, SZENARIEN,
+    TOPICS, DBManager, topic_totals, validate_content,
+)
 
 BALANCING = fg.GAME["balancing"]
 
@@ -47,6 +50,10 @@ def _ordered_stock(state):
 
 def levels(value):
     return {key: value for key in fg.CAT_ORDER}
+
+
+def topic_levels(value):
+    return {key: value for key in fg.TOPIC_ORDER}
 
 
 class InhalteTest(unittest.TestCase):
@@ -105,6 +112,60 @@ class WissenTest(unittest.TestCase):
             self.assertEqual(result["wirtschaft"], 0)
 
 
+class ThemenTest(unittest.TestCase):
+    """Wissensstand je Thema (ab 0.37)."""
+
+    def test_jeder_inhalt_hat_ein_thema_seines_fachbereichs(self):
+        for items in (KARTEIKARTEN, QUIZ_QUESTIONS, SZENARIEN, AP1_SZENARIEN, PROJEKTARBEITEN):
+            for item in items:
+                self.assertIn(item.get("thema"), TOPICS[item["cat"]], item.get("q") or
+                              item.get("title"))
+
+    def test_jedes_thema_hat_genug_inhalte(self):
+        # Der Wissensstand braucht mindestens 20 Antworten je Thema
+        for topic, count in topic_totals().items():
+            self.assertGreaterEqual(count, 20, topic)
+
+    def test_auftraege_verlangen_themen(self):
+        for task in fg.GAME["aufgaben"]:
+            self.assertTrue(task["anforderungen"], task["id"])
+            for key in task["anforderungen"]:
+                self.assertIn(key, fg.TOPIC_CAT, task["id"])
+
+    def test_aus_der_datenbank(self):
+        ipv4 = [q["q"] for q in QUIZ_QUESTIONS if q["thema"] == "ipv4"][:30]
+        with TempDB() as db:
+            for question in ipv4:
+                db.log_quiz_answer(CAT_NET, question, True)
+            card = next(c for c in KARTEIKARTEN if c["thema"] == "linux")
+            db.log_card(CAT_SYS, card["q"], "mc", True)
+            db.log_quiz_answer(CAT_NET, "Frage, die es nicht gibt", True)
+            result = fg.topic_knowledge(db)
+            self.assertEqual(set(result), set(fg.TOPIC_ORDER))
+            self.assertGreater(result["ipv4"], 0)
+            self.assertEqual(result["ipv6"], 0)
+            self.assertEqual(result["switching"], 0)
+            # Eine einzelne Karte reicht nicht (mindestens 20 Antworten)
+            self.assertLess(result["linux"], 5)
+            stats = db.topic_stats()
+            self.assertEqual(stats["ipv4"]["answered"], len(ipv4))
+            self.assertEqual(stats["linux"], {"answered": 1, "correct": 1})
+            daily = db.topic_daily(CAT_NET, 7)
+            self.assertEqual(daily["ipv4"][-1], len(ipv4))
+            self.assertEqual(sum(daily["routing"]), 0)
+            coverage = db.topic_coverage(topic_totals())
+            self.assertGreater(coverage["ipv4"], 0)
+
+    def test_sperre_je_thema(self):
+        task = next(t for t in fg.GAME["aufgaben"] if len(t["anforderungen"]) == 2)
+        first, second = list(task["anforderungen"])
+        values = topic_levels(100)
+        values[first] = 0
+        gaps = fg.requirement_gaps(task, values)
+        self.assertEqual([gap[0] for gap in gaps], [first])
+        self.assertIn(fg.TOPIC_NAME[first], fg.gap_warning(gaps))
+
+
 class AufgabenTest(unittest.TestCase):
     def setUp(self):
         self.choice = next(t for t in fg.GAME["aufgaben"] if t["typ"] == "auswahl")
@@ -126,8 +187,8 @@ class AufgabenTest(unittest.TestCase):
 
     def test_bonus_ohne_hilfe(self):
         base = self.choice["belohnung"]
-        with_help = fg.evaluate(self.choice, self.choice["antwort"], True, levels(100), 1)
-        without = fg.evaluate(self.choice, self.choice["antwort"], False, levels(100), 1)
+        with_help = fg.evaluate(self.choice, self.choice["antwort"], True, topic_levels(100), 1)
+        without = fg.evaluate(self.choice, self.choice["antwort"], False, topic_levels(100), 1)
         self.assertGreater(without["geld"], with_help["geld"])
         self.assertGreaterEqual(with_help["geld"], base["geld"])
         self.assertGreater(without["reputation"]["fachkompetenz"],
@@ -135,8 +196,8 @@ class AufgabenTest(unittest.TestCase):
 
     def test_weiche_sperre_doppelter_verlust(self):
         wrong = [o for o in self.choice["optionen"] if o != self.choice["antwort"]][0]
-        normal = fg.evaluate(self.choice, wrong, False, levels(100), 1)
-        below = fg.evaluate(self.choice, wrong, False, levels(0), 1)
+        normal = fg.evaluate(self.choice, wrong, False, topic_levels(100), 1)
+        below = fg.evaluate(self.choice, wrong, False, topic_levels(0), 1)
         self.assertTrue(below["unter_niveau"])
         self.assertFalse(normal["unter_niveau"])
         self.assertEqual(below["reputation"]["fachkompetenz"],
@@ -144,10 +205,10 @@ class AufgabenTest(unittest.TestCase):
         self.assertLess(normal["geld"], 0)
 
     def test_warnhinweis(self):
-        gaps = fg.requirement_gaps(self.choice, levels(0))
+        gaps = fg.requirement_gaps(self.choice, topic_levels(0))
         self.assertTrue(gaps)
         self.assertIn("fehlt dir noch Wissen", fg.gap_warning(gaps))
-        self.assertEqual(fg.gap_warning(fg.requirement_gaps(self.choice, levels(100))), "")
+        self.assertEqual(fg.gap_warning(fg.requirement_gaps(self.choice, topic_levels(100))), "")
 
     def test_verweise_ins_lernen(self):
         for task in fg.GAME["aufgaben"]:
@@ -408,7 +469,7 @@ def _task(task_id):
 def _solved_event(stamp, task, answer, day, state=None):
     available = state.available_parts(task) if state is not None else None
     stock = state.stock() if state is not None else None
-    payload = fg.evaluate(task, answer, False, levels(100), day, BALANCING, available,
+    payload = fg.evaluate(task, answer, False, topic_levels(100), day, BALANCING, available,
                           None, stock)
     return (stamp, fg.EV_SOLVED, payload)
 
@@ -464,7 +525,7 @@ class BauteileTest(unittest.TestCase):
         self.assertIn("Netzteil fehlt noch.", fg.build_problems(task, missing))
         foreign = dict(right, ram="ram_ddr5_2x16")
         self.assertIn("Arbeitsspeicher fehlt noch.", fg.build_problems(task, foreign))
-        payload = fg.evaluate(task, wrong, False, levels(100), 4)
+        payload = fg.evaluate(task, wrong, False, topic_levels(100), 4)
         self.assertFalse(payload["richtig"])
         self.assertEqual(payload["fehler"], len(payload["probleme"]))
         text = fg.result_text(task, payload)
@@ -502,8 +563,8 @@ class BauteileTest(unittest.TestCase):
 
     def test_ersparnis_und_lieferung(self):
         task = _task("ssd-automaten")
-        cheap = fg.evaluate(task, {"s2": 3}, True, levels(100), 6)
-        dear = fg.evaluate(task, {"s2": 1, "s3": 2}, True, levels(100), 6)
+        cheap = fg.evaluate(task, {"s2": 3}, True, topic_levels(100), 6)
+        dear = fg.evaluate(task, {"s2": 1, "s3": 2}, True, topic_levels(100), 6)
         self.assertTrue(cheap["richtig"] and dear["richtig"])
         self.assertGreater(cheap["ersparnis_bonus"], dear.get("ersparnis_bonus", 0))
         self.assertEqual(cheap["geld"] - dear["geld"],
@@ -513,7 +574,7 @@ class BauteileTest(unittest.TestCase):
                                                "haendler": "kabelkoenig", "ankunft": 8}])
         self.assertEqual({item["ankunft"] for item in dear["lieferung"]}, {7, 8})
         self.assertIn("Arbeitstag 8", fg.result_text(task, cheap))
-        wrong = fg.evaluate(task, {"s1": 3}, True, levels(100), 6)
+        wrong = fg.evaluate(task, {"s1": 3}, True, topic_levels(100), 6)
         # Falsch bestellt: Die Ware kommt trotzdem (ohne Spar-Bonus)
         self.assertTrue(wrong["fehllieferung"])
         self.assertEqual(wrong["lieferung"][0]["menge"], 3)
@@ -697,7 +758,7 @@ class RackTest(unittest.TestCase):
         self.assertIn("6 von 12 HE", text)
         self.assertIn("605 W von 800 W", text)
         self.assertFalse(over)
-        payload = fg.evaluate(self.task, {"0": 1}, True, levels(100), 6)
+        payload = fg.evaluate(self.task, {"0": 1}, True, topic_levels(100), 6)
         self.assertFalse(payload["richtig"])
         self.assertIn("Eine passende Belegung: HE 1–2: USV 1000 W",
                       fg.result_text(self.task, payload))
@@ -777,7 +838,7 @@ class FormularTest(unittest.TestCase):
         answer["ust"] = ""
         right, errors = fg.check_answer(task, answer)
         self.assertEqual((right, errors), (False, 2))
-        payload = fg.evaluate(task, answer, False, levels(100), 7)
+        payload = fg.evaluate(task, answer, False, topic_levels(100), 7)
         text = fg.result_text(task, payload)
         self.assertIn("2 Felder stimmen nicht", text)
         self.assertIn("„617,76“ stimmt nicht, richtig ist 561,60 €", text)
@@ -812,12 +873,12 @@ class TerminalTest(unittest.TestCase):
         answer["schritte"][0] = [0, 1]                  # erst df -h, dann lsblk
         right, errors = fg.check_answer(self.task, answer)
         self.assertEqual((right, errors), (True, 1))
-        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        payload = fg.evaluate(self.task, answer, False, topic_levels(100), 9)
         self.assertTrue(payload["richtig"])
         self.assertEqual(payload["fehlgriffe"], 1)
         self.assertIn("Ein Fehlgriff war dabei", fg.result_text(self.task, payload))
         answer["schritte"][3] = [0, 2]                  # zweiter Fehlgriff
-        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        payload = fg.evaluate(self.task, answer, False, topic_levels(100), 9)
         self.assertFalse(payload["richtig"])
         text = fg.result_text(self.task, payload)
         self.assertIn("2 Fehlgriffe, erlaubt ist 1", text)
@@ -829,7 +890,7 @@ class TerminalTest(unittest.TestCase):
         kind, command, output, hint = fg.terminal_try(self.task, 1, 1)
         self.assertEqual(kind, fg.TRY_DANGER)
         self.assertIn("Ulla", output[0])
-        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        payload = fg.evaluate(self.task, answer, False, topic_levels(100), 9)
         self.assertFalse(payload["richtig"])
         self.assertEqual(payload["gefahr"], 1)
         # Fehler kostet Fachkompetenz, der gefaehrliche Befehl zusaetzlich Sicherheit
@@ -879,10 +940,10 @@ class DiagnoseTest(unittest.TestCase):
         review = fg.diagnosis_review(self.task, answer)
         self.assertTrue(review["richtig"])
         self.assertTrue(review["systematisch"])
-        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        payload = fg.evaluate(self.task, answer, False, topic_levels(100), 9)
         normal = fg.evaluate(self.task, dict(answer, pruefungen=["ipconfig", "dhcp", "kabel",
                                                                  "treiber"]),
-                             False, levels(100), 9)
+                             False, topic_levels(100), 9)
         self.assertEqual(payload["reputation"]["zuverlaessigkeit"] -
                          normal["reputation"].get("zuverlaessigkeit", 0),
                          BALANCING["systematik_bonus"])
@@ -899,7 +960,7 @@ class DiagnoseTest(unittest.TestCase):
     def test_falsche_ursache_und_unsichere_massnahme(self):
         answer = {"pruefungen": ["kabel"], "ursache": self.task["ursachen"][1],
                   "massnahme": "Die Firewall am Kassen-PC abschalten"}
-        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        payload = fg.evaluate(self.task, answer, False, topic_levels(100), 9)
         self.assertFalse(payload["richtig"])
         self.assertEqual(payload["gefahr"], 1)
         self.assertEqual(payload["reputation"]["sicherheit"], -BALANCING["gefahr_verlust"])

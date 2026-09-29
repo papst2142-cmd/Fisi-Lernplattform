@@ -2,6 +2,7 @@
   {
     "title": "Netzwerk-Rollout für eine neue Filiale",
     "cat": "netzwerk",
+    "thema": "grundlagen",
     "branche": "Einzelhandelskette (ModeWelt GmbH), 13. Filiale",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die Modekette \"ModeWelt GmbH\" betreibt zwölf Filialen mit zentralem Rechenzentrum am Hauptsitz. Für die neue 13. Filiale (ca. 180 m², 8 Kassenarbeitsplätze, Lager mit 2 PCs, Büro mit 3 PCs, WLAN für Kunden) muss die komplette Netzwerkinfrastruktur neu geplant und aufgebaut werden. Die Filiale soll an das zentrale Warenwirtschaftssystem am Hauptsitz angebunden werden.",
@@ -33,6 +34,7 @@
   {
     "title": "Einführung einer Mehrfaktor-Authentifizierung",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "branche": "Steuerberatungskanzlei, 25 Mitarbeiter",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die Kanzlei arbeitet mit sensiblen Mandantendaten (DATEV, E-Mail, Cloud-Speicher) und sichert die Anmeldung bislang ausschließlich über Benutzername und Passwort ab. Ein Phishing-Vorfall bei einem vergleichbaren Betrieb hat den Kanzleiinhaber alarmiert.",
@@ -64,6 +66,7 @@
   {
     "title": "Serverkonsolidierung durch Virtualisierung",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "branche": "Mittelständischer Maschinenbaubetrieb, 60 Mitarbeiter",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Der Betrieb nutzt fünf in die Jahre gekommene physische Server (Fileserver, Druckserver, ERP-Server, Domänencontroller, Backup-Server), die einzeln nur schwach ausgelastet sind und regelmäßig Wartungsaufwand verursachen. Die Hardware ist teils über sechs Jahre alt.",
@@ -95,6 +98,7 @@
   {
     "title": "Wirtschaftlichkeitsvergleich: Kauf vs. Leasing von Arbeitsplatzrechnern",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "branche": "Ingenieurbüro, 15 Mitarbeiter",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die vorhandenen 15 Arbeitsplatzrechner sind fünf Jahre alt und für aktuelle CAD-Software nicht mehr ausreichend leistungsfähig. Die Geschäftsführung möchte vor der Neubeschaffung eine fundierte Entscheidungsgrundlage: Kauf oder Leasing der neuen Rechner.",
@@ -124,6 +128,7 @@
   {
     "title": "WLAN- und Gästenetz für ein Autohaus",
     "cat": "netzwerk",
+    "thema": "wlan",
     "branche": "Autohaus mit Werkstatt und Kundenbereich",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Ein neues Autohausgebäude (Verkaufsraum, Werkstatt, Kundenlounge, Büros) verfügt noch über keine WLAN-Infrastruktur. Kunden sollen in der Lounge kostenlos surfen können, die Werkstatt benötigt WLAN für mobile Diagnosegeräte, der Verkauf für Tablets bei der Fahrzeugpräsentation.",
@@ -153,6 +158,7 @@
   {
     "title": "Backup- und Notfallkonzept für eine Zahnarztpraxis",
     "cat": "systeme",
+    "thema": "storage",
     "branche": "Zahnarztpraxis mit Praxisverwaltungssoftware und digitalem Röntgen",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Die Praxis speichert Patientendaten, Röntgenbilder und Abrechnungsdaten ausschließlich auf einem lokalen Server. Bisher existiert keine strukturierte Datensicherung - gelegentlich wird von Hand auf eine externe Festplatte kopiert. Der Praxisinhaber möchte ein zuverlässiges Backup- und Notfallkonzept, da ein Datenverlust den Praxisbetrieb gefährden würde.",
@@ -183,6 +189,7 @@
   {
     "title": "Einführung eines zentralen Patch-Managements",
     "cat": "sicherheit",
+    "thema": "haertung",
     "branche": "Metallbaubetrieb, 40 Mitarbeiter",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Der Betrieb nutzt 45 Windows-Clients und 4 Windows-Server. Updates werden bisher von den Mitarbeitern selbst oder gar nicht installiert; einige Rechner haben seit Monaten keine Sicherheitsupdates erhalten. Bei einem Sicherheitsaudit des Versicherers wurde das als erhebliches Risiko bewertet.",
@@ -214,6 +221,7 @@
   {
     "title": "Einführung eines Ticketsystems für den IT-Support",
     "cat": "wirtschaft",
+    "thema": "service",
     "branche": "Hausverwaltung, 60 Mitarbeiter an zwei Standorten",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "IT-Probleme werden bisher per Telefon, E-Mail oder auf Zuruf an die zwei IT-Mitarbeiter gemeldet. Anfragen gehen verloren, niemand weiß, wer woran arbeitet, und die Geschäftsführung kann den Aufwand der IT nicht nachvollziehen.",
@@ -243,6 +251,7 @@
   {
     "title": "VLAN-Segmentierung für eine Produktionshalle",
     "cat": "netzwerk",
+    "thema": "switching",
     "branche": "Metallverarbeitung (Schmidt Präzisionsteile GmbH), 120 Mitarbeiter",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Im Firmennetz 192.168.0.0/24 hängen Büro-PCs, Maschinensteuerungen, IP-Kameras, Drucker und das Gäste-WLAN ohne Trennung zusammen. Nach einem Schadsoftware-Befall auf einem Büro-PC fielen zwei Maschinensteuerungen aus. Die Geschäftsführung möchte das Netz segmentieren.",
@@ -274,6 +283,7 @@
   {
     "title": "Datenschutzkonforme Videoüberwachung im Lager",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "branche": "Getränkegroßhandel (Nordquell Getränke KG), 45 Mitarbeiter",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Im Lager verschwinden regelmäßig Waren. Die Geschäftsführung möchte eine Videoüberwachung mit acht IP-Kameras im Lager, an der Laderampe und am Eingang installieren lassen. Es gibt einen Betriebsrat.",
@@ -305,6 +315,7 @@
   {
     "title": "Migration eines Fileservers auf ein neues System",
     "cat": "systeme",
+    "thema": "windows",
     "branche": "Ingenieurbüro (Weber & Partner), 30 Mitarbeiter",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Der 8 Jahre alte Fileserver (Windows Server 2016, 4 TB Daten, RAID 1 aus zwei HDDs) ist fast voll und hat keinen Herstellersupport mehr. Die Freigaben sind über Jahre gewachsen, Berechtigungen wurden direkt an Benutzer vergeben.",
@@ -336,6 +347,7 @@
   {
     "title": "Kalkulation und Angebot für eine Netzwerkmodernisierung",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "branche": "IT-Systemhaus (NetPro Solutions GmbH) für einen Kunden aus der Pflegebranche",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Ein Pflegedienst mit 25 Mitarbeitern möchte sein Netzwerk erneuern lassen: neuer Switch, zwei Access Points, eine Firewall und die Konfiguration. Sie sollen als Mitarbeiter des Systemhauses das Angebot kalkulieren und dem Kunden vorstellen.",
@@ -365,6 +377,7 @@
   {
     "title": "IPv6-Einführung im Unternehmensnetz",
     "cat": "netzwerk",
+    "thema": "ipv6",
     "branche": "Maschinenbau (Keller Antriebstechnik GmbH, 180 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Das Unternehmen nutzt bisher nur IPv4 mit privaten Adressen. Der Provider stellt künftig ein IPv6-Präfix 2001:db8:c0:a00::/56 bereit, und ein Großkunde verlangt die Erreichbarkeit des Lieferantenportals über IPv6. Im Netz gibt es die VLANs 10 (Clients), 20 (Server), 30 (WLAN), 40 (Drucker) und 99 (Management).",
@@ -394,6 +407,7 @@
   {
     "title": "Umstellung der Telefonie auf VoIP mit QoS",
     "cat": "netzwerk",
+    "thema": "dienste",
     "branche": "Callcenter-Dienstleister (DialogPlus GmbH, 120 Arbeitsplätze)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Die alte ISDN-Telefonanlage wird abgelöst. Künftig sollen IP-Telefone an allen 120 Arbeitsplätzen über einen SIP-Trunk telefonieren. Das Netz besteht aus einem Core-Switch und vier Access-Switches ohne PoE. Der Internetanschluss hat 100 Mbit/s Download und 40 Mbit/s Upload.",
@@ -423,6 +437,7 @@
   {
     "title": "Aufbau einer internen PKI für Server und WLAN",
     "cat": "sicherheit",
+    "thema": "krypto",
     "branche": "Stadtwerke (Stadtwerke Talheim, 350 Mitarbeiter)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Interne Webanwendungen laufen mit selbstsignierten Zertifikaten, Mitarbeiter klicken Browserwarnungen weg. Das WLAN nutzt ein gemeinsames Passwort. Die IT möchte eine eigene PKI aufbauen und das WLAN auf 802.1X mit Zertifikaten (EAP-TLS) umstellen. Als Betreiber kritischer Infrastruktur gelten erhöhte Anforderungen.",
@@ -452,6 +467,7 @@
   {
     "title": "Zentrales Logmanagement und Alarmierung",
     "cat": "sicherheit",
+    "thema": "haertung",
     "branche": "Onlinehandel (Gartenwelt Direkt GmbH, 90 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Nach einem Angriff auf ein Admin-Konto konnte nicht festgestellt werden, wann und von wo sich der Angreifer angemeldet hatte. Die Logs der Server wurden nach 7 Tagen überschrieben, die Firewall speichert gar nichts dauerhaft. Die Geschäftsführung möchte ein zentrales Logmanagement mit Alarmierung.",
@@ -481,6 +497,7 @@
   {
     "title": "Einführung eines Mobile Device Managements",
     "cat": "systeme",
+    "thema": "windows",
     "branche": "Handwerksbetrieb (Elektro Brandt GmbH, 60 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die Monteure nutzen 45 Firmen-Smartphones und 15 Tablets für Aufträge, Zeiterfassung und E-Mail. Die Geräte werden bisher einzeln von Hand eingerichtet, PINs sind nicht Pflicht, und nach dem Verlust eines Tablets waren Kundendaten ungeschützt. Einige Mitarbeiter möchten zusätzlich ihr privates Handy für E-Mails nutzen.",
@@ -510,6 +527,7 @@
   {
     "title": "Ablösung der Domänencontroller auf Windows Server 2025",
     "cat": "systeme",
+    "thema": "windows",
     "branche": "Spedition (Brandt Logistik GmbH, 140 Mitarbeiter)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Die Domäne brandt.local wird von zwei Domänencontrollern mit Windows Server 2016 betrieben, deren erweiterter Support im Januar 2027 endet. Beide DCs sind auch DNS-Server, DC1 ist zusätzlich DHCP-Server und hält alle FSMO-Rollen. Die Domänen- und Gesamtstrukturfunktionsebene steht noch auf Windows Server 2012 R2. Einige ältere Geräte (Scanner, NAS) nutzen die DCs als DNS-Server und authentifizieren sich per LDAP.",
@@ -539,6 +557,7 @@
   {
     "title": "Zwei-Knoten-Virtualisierungscluster für einen Mittelständler",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "branche": "Möbelhersteller (Hofmann Wohnmöbel GmbH, 90 Mitarbeiter)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Ein einzelner Virtualisierungshost betreibt 18 VMs mit zusammen 64 vCPU, 320 GB RAM und 6 TB Daten. Fällt der Host aus, steht die gesamte Produktion. Die Geschäftsführung wünscht einen hochverfügbaren Betrieb mit zwei Hosts und gemeinsamem Speicher und plant mit 30 % Wachstum in den nächsten drei Jahren.",
@@ -568,6 +587,7 @@
   {
     "title": "Linux-Webserver mit Backup und Monitoring",
     "cat": "systeme",
+    "thema": "linux",
     "branche": "Reiseveranstalter (Nordlicht Reisen GmbH, 35 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die Buchungswebseite läuft bei einem Hoster auf einem veralteten Shared-Hosting-Tarif. Sie soll auf eine eigene Linux-VM in der DMZ umziehen. Die Anwendung besteht aus PHP-Dateien (40 GB inklusive Bilder) und einer MariaDB-Datenbank mit 5 GB. Bisher gibt es weder eine geprüfte Sicherung noch eine Überwachung.",
@@ -597,6 +617,7 @@
   {
     "title": "Anbindung eines Außenlagers per Site-to-Site-VPN",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "branche": "Getränkegroßhandel (Kramer Getränke GmbH, 70 Mitarbeiter)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Ein neu angemietetes Außenlager 8 km von der Zentrale entfernt soll an das Firmennetz angebunden werden. Im Lager arbeiten 15 Mitarbeiter an PCs, 25 Handscanner nutzen das WLAN, dazu kommen Drucker und eine Zugangskontrolle. Die Zentrale nutzt 10.10.0.0/16. Für das Lager ist der Bereich 10.20.0.0/22 vorgesehen. Beide Standorte haben einen Internetanschluss und eine Firewall.",
@@ -626,6 +647,7 @@
   {
     "title": "Portbasierte Zugangskontrolle mit 802.1X im kabelgebundenen LAN",
     "cat": "sicherheit",
+    "thema": "netzsicherheit",
     "branche": "Klinikum (Kreisklinik Waldberg, 900 Beschäftigte)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "In den Fluren und Patientenzimmern der Klinik gibt es frei zugängliche Netzwerkdosen. Ein fremdes Notebook erhält dort sofort eine Adresse im internen Netz. Angeschlossen sind 450 Windows-PCs, 60 Netzwerkdrucker und 40 medizinische Geräte, die kein 802.1X beherrschen. Eine interne PKI und ein Active Directory sind vorhanden. Das Netz besteht aus 22 Access-Switches.",
@@ -655,6 +677,7 @@
   {
     "title": "Auswahl eines neuen Speichersystems per Nutzwertanalyse",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "branche": "Architekturbüro (Lindner und Partner Architekten, 45 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Das bisherige Speichersystem ist voll und fällt aus der Wartung. Für die Nachfolge liegen drei Angebote vor. Die Geschäftsführung möchte eine nachvollziehbare Entscheidung, die nicht allein auf dem Anschaffungspreis beruht.",
@@ -684,6 +707,7 @@
   {
     "title": "Kosten-Nutzen-Analyse einer Cloud-Migration für eine Steuerkanzlei",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "branche": "Steuerberatungskanzlei (Albers und Kollegen Steuerberater, 22 Mitarbeiter)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Die Kanzlei betreibt einen eigenen Server mit Kanzleisoftware, Dokumentenmanagement und E-Mail. Der Server ist sechs Jahre alt und muss ersetzt werden. Der Softwareanbieter bietet an, die Kanzleisoftware in seinem Rechenzentrum zu betreiben. E-Mail und Office würden als Cloud-Dienst genutzt. Die Partner wollen wissen, ob sich der Umstieg lohnt und was dabei rechtlich zu beachten ist.",
@@ -714,6 +738,7 @@
   {
     "title": "Ausschreibung und Angebotsvergleich für neue Arbeitsplatzrechner",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "branche": "Versicherungsmakler (Hansen Versicherungsmakler GmbH, 30 Mitarbeiter)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Die 30 Arbeitsplatzrechner des Maklerbüros sind veraltet und sollen durch kompakte Business-PCs ersetzt werden. Sie haben eine Anfrage an drei Händler geschickt und drei Angebote mit unterschiedlichen Preisen, Rabatten, Lieferkosten und Garantien erhalten. Die Geschäftsführung möchte wissen, welches Angebot tatsächlich am günstigsten ist.",
@@ -744,6 +769,7 @@
   {
     "title": "Make-or-Buy-Entscheidung für die IT-Betreuung eines Großhändlers",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "branche": "Sanitärgroßhandel (Kessler Haustechnik GmbH, 65 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Der einzige Systemadministrator des Unternehmens geht in einem halben Jahr in den Ruhestand. Die Geschäftsführung überlegt, ob sie die Stelle neu besetzt oder den IT-Betrieb an ein Systemhaus vergibt. Das Systemhaus hat ein Angebot für einen Managed-Service-Vertrag mit einem Service Level Agreement (SLA) vorgelegt. Das Unternehmen plant zu wachsen.",
@@ -774,6 +800,7 @@
   {
     "title": "Ausfallsichere Internetanbindung mit zwei Providern",
     "cat": "netzwerk",
+    "thema": "wan_vpn",
     "branche": "Onlinehändler für Fahrradteile (Speichenwerk GmbH, 55 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Warenwirtschaft, Telefonie und E-Mail des Unternehmens laufen als Cloud-Dienste. Der einzige Internetanschluss ist ein Glasfaseranschluss. Bei Bauarbeiten wurde das Kabel beschädigt, und der Betrieb stand fast zwei Tage still. Die Geschäftsführung wünscht eine zweite Leitung eines anderen Anbieters, auf die die Firewall bei einer Störung automatisch umschaltet.",
@@ -804,6 +831,7 @@
   {
     "title": "Einstieg in ein ISMS nach BSI IT-Grundschutz mit der Basis-Absicherung",
     "cat": "sicherheit",
+    "thema": "isms",
     "branche": "Wohnungsbaugenossenschaft (WBG Rheinblick eG, 110 Mitarbeiter, 4.800 Wohnungen)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Die Genossenschaft verwaltet Mieterdaten, Mietverträge und Zahlungen. Es gibt 95 Clients, 12 virtuelle Server und ein extern betriebenes Mieterportal. Sicherheitsmaßnahmen wurden bisher einzeln eingeführt, es gibt weder eine Leitlinie noch einen Verantwortlichen für Informationssicherheit. Der Cyberversicherer verlangt bei der Vertragsverlängerung ein nachweisbares Sicherheitsmanagement.",
@@ -834,6 +862,7 @@
   {
     "title": "Remotedesktopdienste-Farm für Sachbearbeitung und Homeoffice",
     "cat": "systeme",
+    "thema": "windows",
     "branche": "Inkassounternehmen (Falk Forderungsmanagement GmbH, 140 Sachbearbeiter)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Die Sachbearbeiter arbeiten mit einer Fachanwendung, die direkt auf eine SQL-Datenbank im Rechenzentrum zugreift. Im Homeoffice ist die Anwendung über VPN sehr langsam, und Daten landen auf privaten Geräten. Die Anwendung soll künftig zentral auf Terminalservern laufen, sodass nur noch Bild, Tastatur und Maus übertragen werden. Der Virtualisierungscluster hat ausreichend Reserven.",
@@ -864,6 +893,7 @@
   {
     "title": "Trennung von Verwaltungsnetz und pädagogischem Netz an einer Gesamtschule",
     "cat": "netzwerk",
+    "thema": "switching",
     "branche": "Schulträger (Stadt Lindenfeld, Fachbereich Schulen) für die Gesamtschule am Park, 1.100 Schüler, 95 Lehrkräfte",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "In der Gesamtschule hängen Sekretariat, Schulleitung, Lehrkräfte, Computerräume und die neuen Schüler-Tablets in einem einzigen flachen Netz. Im Sekretariat werden Zeugnisse, Schülerakten und Gesundheitsangaben verarbeitet. Der Datenschutzbeauftragte des Schulträgers hat bemängelt, dass jedes Schülergerät die Verwaltungsrechner erreichen kann. Gleichzeitig soll jeder Unterrichtsraum WLAN erhalten, und die Oberstufe soll eigene Geräte mitbringen dürfen.",
@@ -894,6 +924,7 @@
   {
     "title": "Einführung eines Passwortmanagers in einer Werbeagentur",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "branche": "Werbeagentur (Blickfang Kommunikation GmbH, 28 Mitarbeiter)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Die Agentur betreut für ihre Kunden Social-Media-Konten, Webseiten und Werbekonten. Die Zugangsdaten stehen in einer Excel-Liste auf dem Fileserver, einige auch auf Zetteln am Monitor. Viele Konten werden von mehreren Personen gemeinsam genutzt. Ein ausgeschiedener Mitarbeiter konnte sich noch Wochen später in ein Kundenkonto einloggen. Außerdem gehen häufig Tickets ein, weil Passwörter für Portale vergessen wurden.",
@@ -924,6 +955,7 @@
   {
     "title": "Unveränderbare Datensicherung auf S3-kompatiblem Objektspeicher",
     "cat": "systeme",
+    "thema": "storage",
     "branche": "Kunststoffverarbeiter (Rheinplast GmbH, 150 Mitarbeiter)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Die Backupsoftware sichert jede Nacht alle virtuellen Server auf ein NAS im selben Serverraum. Die Bandsicherung wurde vor zwei Jahren eingestellt. Bei einem Zulieferer hat eine Ransomware erst die Server und dann mit den Administratorrechten auch das Backup-NAS verschlüsselt. Die Geschäftsführung verlangt deshalb eine zweite Kopie außer Haus, die für einen festen Zeitraum niemand löschen oder verändern kann.",
@@ -954,6 +986,7 @@
   {
     "title": "Konsolidierung der Druckerlandschaft mit einem Managed-Print-Vertrag",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "branche": "Fachverlag (Lahntal Fachverlag GmbH, 75 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Im Verlag stehen 38 Drucker von 11 verschiedenen Modellen, viele davon als Arbeitsplatzdrucker. Toner wird bei Bedarf einzeln bestellt, und die IT verbringt viel Zeit mit Störungen. Vertrauliche Manuskripte und Personalunterlagen bleiben oft im Ausgabefach liegen. Ein Anbieter hat vorgeschlagen, alle Drucker durch 6 Multifunktionsgeräte auf den Etagen zu ersetzen. Gedruckt wird dort erst, wenn sich der Mitarbeiter mit seiner Karte am Gerät anmeldet (Follow-Me-Printing).",
@@ -984,6 +1017,7 @@
   {
     "title": "Einführung eines zentralen Monitorings für Netzwerk und Server",
     "cat": "netzwerk",
+    "thema": "dienste",
     "branche": "Verpackungshersteller (Kartonagen Wendt GmbH, 210 Mitarbeiter, zwei Werke)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Störungen fallen bisher erst auf, wenn Mitarbeiter anrufen. Im letzten Jahr fiel in einem Server eine RAID-Festplatte aus, drei Wochen später die zweite, und Daten gingen verloren. Die Standortverbindung zu Werk 2 ist nachmittags oft überlastet, und niemand kann sagen, wie stark. Die IT soll ein zentrales Monitoring mit einer Open-Source-Lösung auf einer eigenen VM einführen, das Probleme meldet, bevor die Benutzer sie bemerken.",
@@ -1014,6 +1048,7 @@
   {
     "title": "Anbindung von Zeiterfassungsterminals in einer Großbäckerei",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "branche": "Großbäckerei (Backhaus Sommer GmbH & Co. KG, 180 Mitarbeiter, Produktion im Dreischichtbetrieb)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "In der Bäckerei stempeln die Beschäftigten noch mit Papierkarten an einer mechanischen Stempeluhr. Das Lohnbüro überträgt die Zeiten jeden Monat von Hand in die Lohnsoftware. Dabei entstehen Fehler, und fehlende Stempelungen fallen erst spät auf. Die Geschäftsführung hat eine Zeiterfassungssoftware gekauft, die als virtuelle Maschine im Servernetz läuft. Jetzt sollen vier Terminals mit Ausweisleser an das Firmennetz angeschlossen werden. Sie übernehmen als Auszubildende im 3. Ausbildungsjahr die Netzwerkanbindung.",
@@ -1044,6 +1079,7 @@
   {
     "title": "Datenschutzgerechter Empfangsbereich in einer Rechtsanwaltskanzlei",
     "cat": "sicherheit",
+    "thema": "datenschutz",
     "branche": "Rechtsanwaltskanzlei (Kanzlei Berger & Yilmaz, Familien- und Arbeitsrecht, 14 Mitarbeiter)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Die Kanzlei ist in neue Räume gezogen. Der Empfangstresen steht offen im Eingangsbereich, der Wartebereich liegt nur 3 m entfernt. Die Monitore der beiden Empfangsplätze zeigen zum Wartebereich. Ausdrucke bleiben am Multifunktionsgerät neben dem Tresen liegen, Post und Akten liegen offen auf dem Tresen. Telefonate mit Namen und Sachverhalten sind im Wartebereich zu hören. Fehldrucke landen im normalen Papierkorb. Das Passwort für das Gäste-WLAN hängt ausgedruckt am Tresen. Eine Mandantin hat sich beschwert, weil sie den Namen ihres Arbeitgebers auf einem Bildschirm lesen konnte.",
@@ -1074,6 +1110,7 @@
   {
     "title": "Aufbau eines IT-Inventars mit Tabellenkalkulation und Erfassungsskript",
     "cat": "systeme",
+    "thema": "programmierung",
     "branche": "Freier Träger der Jugendhilfe (Brückenschlag e. V., Geschäftsstelle und 5 Wohngruppen, 85 Beschäftigte)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Die Geräte des Vereins wurden über Jahre von verschiedenen Personen gekauft. Eine vollständige Liste gibt es nicht. Nach dem Diebstahl eines Notebooks aus einer Wohngruppe konnte niemand sagen, welche Seriennummer es hatte und ob die Festplatte verschlüsselt war. Außerdem verlangt ein Zuwendungsgeber einen Nachweis über geförderte Anschaffungen. Für eine Inventarsoftware ist kein Geld da. Ihr Ausbilder beauftragt Sie, ein Inventar mit der vorhandenen Tabellenkalkulation aufzubauen.",
@@ -1104,6 +1141,7 @@
   {
     "title": "Umstieg auf Windows 11 in einem Sanitätshaus: aufrüsten oder ersetzen",
     "cat": "systeme",
+    "thema": "windows",
     "branche": "Sanitätshaus mit Orthopädiewerkstatt (Sanitätshaus Kröger GmbH, Hauptgeschäft und 2 Filialen, 38 Mitarbeiter)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Auf den 16 PCs des Sanitätshauses läuft noch Windows 10. Der allgemeine Support ist im Oktober 2025 ausgelaufen, das Sanitätshaus hat für ein Jahr erweiterte Sicherheitsupdates (ESU) gekauft. Diese laufen im Oktober 2026 aus. Auf den PCs laufen Warenwirtschaft mit Kasse, Rezeptabrechnung und E-Mail. Die Geräte sind unterschiedlich alt, und niemand weiß genau, welche davon Windows 11 unterstützen. Ihr Systemhaus soll die Umstellung planen und durchführen.",
@@ -1134,6 +1172,7 @@
   {
     "title": "Multifunktionsgerät statt Einzelgeräten in einer Tierarztpraxis",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "branche": "Kleintierpraxis (Tierarztpraxis am Stadtwald, 3 Tierärztinnen, 9 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "In der Praxis stehen 4 Tintenstrahldrucker am Empfang und in den 3 Behandlungsräumen, dazu ein altes Faxgerät und ein Flachbettscanner am Empfang. Die Tinte ist oft leer, Patronen werden einzeln im Handel gekauft, und Laborbefunde auf Papier werden umständlich einzeln eingescannt. Die Behandlungsräume liegen im selben Flur, wenige Meter vom Empfang entfernt. Die Praxisinhaberin möchte alle Geräte durch ein Multifunktionsgerät am Empfang ersetzen. Die Etikettendrucker für Arzneimittel bleiben erhalten.",
@@ -1164,6 +1203,7 @@
   {
     "title": "Homeoffice-Ausstattung für den Kundenservice eines Energieversorgers",
     "cat": "wirtschaft",
+    "thema": "kalkulation",
     "branche": "Regionaler Energieversorger (Energie Mittelweser GmbH), Kundenservice mit 20 Mitarbeitern",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Der Kundenservice arbeitet bisher an 20 festen Desktop-PCs im Büro. Die PCs sind 6 Jahre alt und müssten 2027 ohnehin ersetzt werden. Ab 2027 sollen alle Beschäftigten an 3 Tagen pro Woche zu Hause und an 2 Tagen im Büro arbeiten. Im Büro gibt es dann geteilte Arbeitsplätze (Desk-Sharing). Telefoniert wird über eine Cloud-Telefonanlage mit Softphone. Der Betriebsrat möchte vor der Einführung eine Betriebsvereinbarung abschließen. Die Geschäftsführung verlangt eine Wirtschaftlichkeitsbetrachtung über 3 Jahre.",
@@ -1194,6 +1234,7 @@
   {
     "title": "SIEM-Einführung mit Alarmtuning bei einem Personaldienstleister",
     "cat": "sicherheit",
+    "thema": "haertung",
     "branche": "Personaldienstleister (Brenner Personalservice GmbH, Zentrale und 14 Niederlassungen, 210 interne Mitarbeiter)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Im Frühjahr hat ein Angreifer die Zugangsdaten einer Niederlassungsleiterin per Phishing abgegriffen. Er meldete sich um 3:12 Uhr aus dem Ausland über das VPN an und richtete in ihrem Postfach eine Weiterleitung an eine fremde Adresse ein. Drei Wochen lang flossen Bewerbungsunterlagen und Lohnabrechnungen ab, bis ein Kunde nachfragte. Die Protokolle lagen zwar auf den einzelnen Systemen, aber niemand hat sie ausgewertet. Der Cyberversicherer verlangt bei der Vertragsverlängerung eine zentrale Auswertung mit Alarmierung rund um die Uhr. Die Geschäftsführung hat sich für ein SIEM entschieden. Sie begleiten als Auszubildende im 3. Ausbildungsjahr die Einführung von der Planung bis zum Regelbetrieb.",
@@ -1224,6 +1265,7 @@
   {
     "title": "Automatisierter Kontolebenszyklus für Saisonkräfte einer Bergbahn",
     "cat": "sicherheit",
+    "thema": "zugriff",
     "branche": "Bergbahn mit Skigebiet (Bergbahnen Schneekar GmbH, 140 Festangestellte, in der Wintersaison von Dezember bis April bis zu 360 Saisonkräfte)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Die Saisonkräfte melden sich mit einem persönlichen Konto an den Kassen, im Gastronomiesystem, im Skiverleih und in der Dienstplan-App an. Die Personalabteilung meldet Eintritte per E-Mail an die IT, die jedes Konto von Hand anlegt. Austritte werden oft gar nicht gemeldet. Bei der Prüfung im Juli hat der Wirtschaftsprüfer bemängelt, dass viele Konten ehemaliger Beschäftigter noch aktiv sind und zu viele Personen Stornos an der Kasse freigeben dürfen. Ein Kollege hat schon einen ersten Entwurf für ein PowerShell-Skript geschrieben. Sie sollen als Auszubildende im 3. Ausbildungsjahr den Ablauf für Eintritt, Wechsel und Austritt (Joiner, Mover, Leaver) neu aufsetzen.",
@@ -1254,6 +1296,7 @@
   {
     "title": "OT-Segmentierung und Fernwirkanbindung für einen Wasserzweckverband",
     "cat": "netzwerk",
+    "thema": "routing",
     "branche": "Wasserversorgung (Zweckverband Wasserversorgung Hügelland, 1 Wasserwerk, 9 Außenstationen, 48 Beschäftigte, rund 38.000 versorgte Einwohner)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Im Wasserwerk laufen das Prozessleitsystem, die Steuerungen (SPS) und die Bedienpanels. Zwischen Büronetz und Wasserwerk steht zwar eine Firewall, sie erlaubt aber jeden Verkehr aus dem Büro. Die 9 Außenstationen (5 Hochbehälter, 3 Brunnen, 1 Druckerhöhungsanlage) sind über LTE-Router mit öffentlicher IP-Adresse angebunden. Damit das Leitsystem die Stationen erreicht, leiten die Router den Port des Fernwirkprotokolls direkt an die SPS weiter. Drei Dienstleister warten ihre Anlagen per Fernwartungssoftware, die dauerhaft auf einem Bedienplatz läuft. Eine Sicherheitsüberprüfung hat gezeigt, dass alle Stations-SPS aus dem Internet erreichbar sind und zwei davon in einer Suchmaschine für vernetzte Geräte auftauchen. Sie planen als Auszubildende im 3. Ausbildungsjahr im Team die neue Netzarchitektur und begleiten die Umstellung.",
@@ -1284,6 +1327,7 @@
   {
     "title": "Wechsel auf Proxmox VE mit Ceph und Migrationsplan für einen Fensterbauer",
     "cat": "systeme",
+    "thema": "virtualisierung",
     "branche": "Fensterbauer (Hagedorn Fenster und Türen GmbH, Werk mit Verwaltung und 7 Montageniederlassungen, 240 Mitarbeiter)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Die Server laufen als 42 virtuelle Maschinen auf 3 Hosts mit VMware vSphere (ESXi) und einem 8 Jahre alten Fibre-Channel-SAN. Der Supportvertrag für vSphere und die Wartung des SAN enden am 31.12.2026. Nach einem Kostenvergleich hat die Geschäftsführung entschieden, auf 3 neue Server mit Proxmox VE und Ceph als verteiltem Speicher umzusteigen. Der Aufbau ist hyperkonvergent, Rechenleistung und Speicher stecken also in denselben Servern. Die Hardware ist bestellt. Sie prüfen als Auszubildende im 3. Ausbildungsjahr gemeinsam mit dem Administrator die Dimensionierung und planen und begleiten die Migration.",
@@ -1314,6 +1358,7 @@
   {
     "title": "Anfrage und Angebotsauswertung für einen Rahmenvertrag über Diensthandys",
     "cat": "wirtschaft",
+    "thema": "beschaffung",
     "branche": "Gebäudedienstleister (Albrecht Gebäudeservice GmbH, Reinigung, Hausmeister- und Winterdienst, 1.100 Beschäftigte, davon 60 Objektleiter und Vorarbeiter mit Diensthandy)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Die Objektleiter und Vorarbeiter nutzen Smartphones verschiedener Hersteller, die über Jahre einzeln im Handel gekauft wurden. Viele Geräte erhalten keine Sicherheitsupdates mehr. Displays gehen auf Baustellen und im Winterdienst oft kaputt, und ein Ersatzgerät dauert bis zu zwei Wochen. Die Geschäftsführung möchte alle Geräte durch ein robustes Einheitsmodell ersetzen und Nachkäufe über einen Rahmenvertrag mit festen Bedingungen abwickeln. Sie haben als Auszubildende die Anfrage vorbereitet und drei Angebote erhalten.",
@@ -1344,6 +1389,7 @@
   {
     "title": "Ablösung der Excel-Mietliste durch eine Datenbank in einem Musikhaus",
     "cat": "datenbanken",
+    "thema": "modellierung",
     "branche": "Musikfachhandel (Musikhaus Adler GmbH, Verkauf, Reparaturwerkstatt und Mietinstrumente für Musikschüler, 24 Mitarbeiter)",
     "schwierigkeit": "Mittel",
     "ausgangssituation": "Das Musikhaus vermietet seit 2012 Instrumente an Musikschüler. Alle Mietverträge stehen in einer Excel-Datei auf dem Netzlaufwerk, eine Zeile je Vertrag. Wer ein zweites Instrument mietet, bekommt eine weitere Zeile, in die Name und Anschrift erneut eingetippt werden. Öffnet jemand die Datei, können die Kollegen sie nur schreibgeschützt lesen. Bei der letzten Mahnrunde gingen Briefe an alte Anschriften, und ein zurückgegebenes Instrument war nicht mehr auffindbar, weil seine einzige Zeile gelöscht worden war. Die Geschäftsführung möchte die Mietverwaltung auf den vorhandenen Datenbankserver umstellen. Ein Dienstleister liefert eine einfache Weboberfläche. Sie sind Auszubildende im 2. Ausbildungsjahr und übernehmen Datenmodell, Migration, Rechte und Datensicherung.",
@@ -1374,6 +1420,7 @@
   {
     "title": "Hochverfügbare Shopdatenbank mit Point-in-Time-Recovery für eine Kaffeerösterei",
     "cat": "datenbanken",
+    "thema": "db_betrieb",
     "branche": "Kaffeerösterei mit Onlineshop (Rösterei Bohnenkamp GmbH, 45 Mitarbeiter, rund 80 % des Umsatzes über den eigenen Onlineshop)",
     "schwierigkeit": "Anspruchsvoll",
     "ausgangssituation": "Der Onlineshop läuft auf zwei Webservern bei einem Hoster in Deutschland. Die gesamte Shopdatenbank mit Artikeln, Kunden und Bestellungen liegt auf einer einzigen virtuellen Maschine mit MariaDB. Im letzten Jahr gab es zwei schwere Ausfälle. Im März fiel der Host der Datenbank-VM aus, der Shop stand 6 Stunden still. Am Black Friday wollte eine Mitarbeiterin den Preis eines Artikels ändern und führte um 10:40 Uhr UPDATE produkte SET preis = 9.99; ohne WHERE aus. Bemerkt wurde der Fehler um 11:10 Uhr. Der Shop war bis 14:10 Uhr offline, zurückgespielt wurde die Sicherung von 2 Uhr. Alle Bestellungen zwischen 2 Uhr und 11:10 Uhr mussten von Hand aus den Daten des Zahlungsanbieters nacherfasst werden. Die Geschäftsführung verlangt ein Konzept, das beide Fälle abdeckt. Sie arbeiten als Auszubildende im 3. Ausbildungsjahr im Projektteam mit.",
@@ -1404,6 +1451,7 @@
   {
     "title": "Glasfaser-Backbone mit Dämpfungsbudget für einen Zoo",
     "cat": "netzwerk",
+    "thema": "verkabelung",
     "branche": "Zoologischer Garten (Tierpark Auenwald gGmbH, 28 Hektar, 9 Gebäude mit IT, 120 Beschäftigte, ganzjährig geöffnet von 9 bis 18 Uhr)",
     "schwierigkeit": "Schwer",
     "ausgangssituation": "Der Hauptverteiler steht im Verwaltungsgebäude. Die Kasse am Haupteingang ist über ein 190 m langes Kupfer-Erdkabel der Kategorie 5 angebunden. Bei Gewittern bricht die Verbindung oft ab, im letzten Sommer wurden nach einem Blitzeinschlag zwei Switchports zerstört. Das Tropenhaus hängt an einer WLAN-Richtfunkstrecke, die wachsende Bäume zunehmend stören. Die übrigen Gebäude haben eigene DSL-Anschlüsse ohne Verbindung zum Verwaltungsnetz. Kameras, Klimasteuerung der Tierhäuser, Kassen und das Warenwirtschaftssystem der Gastronomie sollen künftig zentral laufen. Beim Neubau des Wegenetzes lässt der Zoo Leerrohre zu allen Gebäuden verlegen. Sie planen als Auszubildende im 3. Ausbildungsjahr die passive Glasfaserverkabelung und die Anbindung.",
@@ -1434,6 +1482,7 @@
   {
     "title": "Phishing-Awareness-Kampagne mit Simulation in einer Gemeindeverwaltung",
     "cat": "sicherheit",
+    "thema": "angriffe",
     "branche": "Kommunalverwaltung (Gemeinde Wiesental, Rathaus mit Bürgerbüro, Kämmerei und Bauamt sowie Bauhof, 95 Beschäftigte)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Eine Nachbarkommune war nach einem Angriff mit Schadsoftware wochenlang nur eingeschränkt arbeitsfähig. Der Angriff begann mit einer gefälschten E-Mail. Auch in Wiesental kommen immer mehr solcher E-Mails an. Im Frühjahr hätte die Kämmerei beinahe eine Rechnung auf ein fremdes Konto überwiesen, weil ein vermeintlicher Lieferant per E-Mail eine neue Bankverbindung mitgeteilt hatte. Der Bürgermeister möchte die Beschäftigten gezielt schulen. Ein Dienstleister stellt eine Plattform für Schulungen und simulierte Phishing-Mails bereit. Sie begleiten als Auszubildende im 1. Ausbildungsjahr die Kampagne und werten sie aus.",
@@ -1464,6 +1513,7 @@
   {
     "title": "Netzplan und Kostenplan für den IT-Umzug eines ambulanten Pflegedienstes",
     "cat": "wirtschaft",
+    "thema": "projekt",
     "branche": "Ambulanter Pflegedienst (Pflegedienst Lebenswert GmbH in Niedersachsen, 60 Beschäftigte, davon 48 Pflegekräfte mit Tablets im Außendienst)",
     "schwierigkeit": "Leicht",
     "ausgangssituation": "Der Pflegedienst zieht in ein größeres Bürogebäude um. Tourenplanung und Pflegedokumentation laufen in einer Cloud-Software. Die Pflegekräfte arbeiten unterwegs mit Tablets, das Büro braucht für die Einsatzplanung eine stabile Internetverbindung. Die alten Räume müssen bis Freitag, 4. Dezember 2026, geräumt sein. Die Geschäftsführung möchte wissen, ob der Termin sicher zu halten ist und was der IT-Umzug kostet. Sie übernehmen als Auszubildende im 1. Ausbildungsjahr die Terminplanung mit einem Netzplan und den Kostenplan.",
