@@ -4,6 +4,17 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.35.1
+
+- **Fehlerbehebung PC:** Nach einem Wechsel von Grundfarbe oder Hintergrund
+  konnten alte, abgelaufene Zeitgeber der vorherigen Oberfläche zufällig
+  eine falsche Funktion aufrufen. Das hat den automatischen Starttest unter
+  macOS (Apple-Chip) scheitern lassen, deshalb gab es kein Release 0.35.
+  Solche Zeitgeber werden jetzt sofort entfernt, und der Starttest prüft
+  das mit.
+- Inhaltlich ist alles wie in 0.35 (Kundenprojekte, fünf neue Mitbewerber,
+  Farbwechsel ohne Flackern).
+
 ## 0.35
 
 - **Kundenprojekte:** Unter Firma gibt es den neuen Reiter „Projekte“. Alle

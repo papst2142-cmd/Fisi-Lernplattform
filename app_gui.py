@@ -66,7 +66,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.35"
+APP_VERSION = "0.35.1"
 
 
 def _resource_path(filename):
@@ -2564,6 +2564,20 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_later.set_enabled(True)
 
 
+def _orphaned_timers(root):
+    """Zeitgeber (after), deren Tcl-Befehl nicht mehr existiert."""
+    tk_ = root.tk
+    orphaned = []
+    for timer in tk_.splitlist(tk_.call("after", "info")):
+        try:
+            words = tk_.splitlist(tk_.splitlist(tk_.call("after", "info", timer))[0])
+        except tk.TclError:
+            continue  # inzwischen abgelaufen
+        if words and not tk_.call("info", "commands", words[0]):
+            orphaned.append(timer)
+    return orphaned
+
+
 def _apply_window_icon(root):
     """Setzt das Programm-Icon (icon.ico bzw. icon.png) fuer Titelleiste
     und Taskleiste, falls die Datei vorhanden ist. Schlaegt nie fehl, auch
@@ -2691,6 +2705,20 @@ class FISIApp:
         old.place_forget()
         self.root.update()
         old.destroy()
+        self._cancel_orphaned_timers()
+
+    def _cancel_orphaned_timers(self):
+        """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
+        der zerstoerten Widgets aus, deren Befehl es nicht mehr gibt.
+        Tkinter benennt Befehle nach Speicheradresse und Funktionsname
+        (z.B. "140...<lambda>"). Bekommt eine neue Funktion dieselbe Adresse,
+        wuerde der alte Zeitgeber sie ohne Argumente aufrufen - deshalb
+        werden solche verwaisten Zeitgeber sofort abgebrochen."""
+        for timer in _orphaned_timers(self.root):
+            try:
+                self.root.tk.call("after", "cancel", timer)
+            except tk.TclError:
+                pass
 
     # -- Infrastruktur ------------------------------------------------------
 
@@ -2837,6 +2865,9 @@ def _run_selftest(root, app, log_path):
                 app.change_color(background_id="anthrazit")
                 root.update()
                 app.change_color(background_id=original)
+                if _orphaned_timers(root):
+                    failures.append("Nach dem Farbwechsel stehen noch %d verwaiste "
+                                    "Zeitgeber aus." % len(_orphaned_timers(root)))
                 root.update()
                 dialog = UpdateDialog(app, fisi_update.UpdateInfo(
                     "9.9", "Starttest", fisi_update.RELEASES_PAGE))
