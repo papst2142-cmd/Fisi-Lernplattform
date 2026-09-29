@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.33
+
+- **Eigenes Unternehmen (Grundgerüst):** Wer 25.000 € Spielgeld und 60
+  Reputation hat und alle Aufträge bei Bitweiche erledigt hat, kann eine
+  eigene IT-Firma gründen (Gründungskosten 15.000 €, Name frei wählbar).
+  Danach gibt es kein Gehalt mehr, die Firma verdient selbst.
+- **Neuer Unterpunkt „Firma“** im Spiel mit den Reitern Mitarbeiter,
+  Bewerbungen, Gebäude und Finanzen.
+- **Mitarbeiter:** Alle 5 Arbeitstage kommen 3 neue Bewerbungen, jede mit
+  Werten in den fünf Fachbereichen, Schwerpunkt, Macke und Gehaltswunsch.
+  Eingestellte Mitarbeiter bringen täglich Umsatz und kosten Gehalt. Tim und
+  Svenja wollen nach einiger Zeit von Bitweiche wechseln. Weiterbildungen
+  heben einen Fachbereich um 10 Punkte.
+- **Eigenes Büro:** „Gewerbehof Am Stellwerk“ mit Großraum und Kaffeeecke,
+  begehbar wie das Bitweiche-Büro. Die Mitarbeiter sitzen an ihren Plätzen.
+  Für 12.000 € lässt sich ein zweites Büro mit drei weiteren Plätzen
+  ausbauen.
+- **Finanzen:** Umsatz, Gehälter und Nebenkosten pro Tag, dazu ein
+  Kontoverlauf als Diagramm.
+- Feierabend geht jetzt auch, wenn alle Aufträge erledigt sind.
+- Bitte PC und Handy beide auf 0.33 aktualisieren, damit der Spielstand
+  überall gleich gerechnet wird.
+
 ## 0.32
 
 - **Viel mehr Aufträge im Lernspiel:** 442 Aufträge statt 46 und 50
