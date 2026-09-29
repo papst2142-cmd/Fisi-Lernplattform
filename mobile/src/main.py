@@ -49,7 +49,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.29"
+APP_VERSION = "0.30"
 
 KIND_COLOR = {"Karteikarte": C["cyan"], "Quizfrage": C["purple"],
               "AP1-Szenario": C["blue"], "AP2-Szenario": C["pink"],
