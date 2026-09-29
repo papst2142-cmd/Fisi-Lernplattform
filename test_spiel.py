@@ -6,6 +6,7 @@ Tests fuer das Lernspiel (fisi_game.py) - ohne Oberflaeche.
 Start:  python test_spiel.py
 """
 
+import copy
 import json
 import os
 import shutil
@@ -2043,6 +2044,202 @@ class FirmaTest(unittest.TestCase):
             self.assertEqual(other.state.firm, game.state.firm)
             self.assertEqual(fg.applicants(other.state, self.content),
                              fg.applicants(game.state, self.content))
+
+
+class AuftraegeTest(unittest.TestCase):
+    """Angebote, Wettbewerb gegen Bitweiche und Kundentickets (ab 0.34)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    def _answer(self, inquiry, markup):
+        task = fg.inquiry_task(inquiry, markup)
+        return fg.find_solution(task)
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_orders(fg.GAME["firma"]), [])
+        broken = copy.deepcopy(fg.GAME["firma"])
+        broken["tickets"]["vorlagen"][0]["kunde"] = "gibtsnicht"
+        broken["kunden"][0]["art"] = "unbekannt"
+        self.assertEqual(len(fg._validate_orders(broken)), 2)
+        self.assertEqual(fg.FIRM_TABS[0], ("auftraege", "Aufträge"))
+
+    def test_anfragen_fest_und_verschieden(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = game.state.inquiries()
+            self.assertEqual(len(first), fg.GAME["firma"]["angebote"]["pro_tag"])
+            self.assertEqual(first, game.reload().inquiries())
+            self.assertNotEqual(first[0]["kunde"]["id"], first[1]["kunde"]["id"])
+            for item in first:
+                self.assertIn(item["artikel"], item["text"])
+            game.end_day()
+            self.assertNotEqual([item["id"] for item in game.state.inquiries()],
+                                [item["id"] for item in first])
+
+    def test_bitweiche_zuschlag_unberechenbar(self):
+        """Meist aus der Spanne der Kundenart, manchmal Kampfpreis oder teuer:
+        kein Zuschlag gewinnt oder verliert immer."""
+        with TempDB() as db:
+            state = self._founded(db).state
+            rules = fg.GAME["firma"]["angebote"]
+            seen = {}
+            for day in range(state.day, state.day + 400):
+                for item in fg.inquiries_for_day(state, day, self.content):
+                    seen.setdefault(item["laune"], []).append(item["markt"])
+                    kind = rules["arten"][item["kunde"]["art"]]
+                    if not item["laune"]:
+                        self.assertTrue(kind["von"] <= item["markt"] <= kind["bis"])
+            self.assertEqual(set(seen), {"", "kampfpreis", "ausgelastet"})
+            fight = rules["laune"]["kampfpreis"]
+            self.assertTrue(all(fight["von"] <= value <= fight["bis"]
+                                for value in seen["kampfpreis"]))
+            markets = [value for values in seen.values() for value in values]
+            lowest, highest = min(rules["zuschlaege"]), max(rules["zuschlaege"])
+            self.assertTrue(any(value < lowest for value in markets))     # 5 % kann verlieren
+            self.assertTrue(any(value >= highest for value in markets))   # 30 % kann gewinnen
+            payload = {"netto": 100.0, "marktpreis": 90.0, "markt_zuschlag": 2,
+                       "zuschlag": 10, "gewonnen": False, "grund": "preis",
+                       "laune": "kampfpreis", "vorteil": 0}
+            self.assertIn("Kampfpreis", fg.offer_result_text(payload)[1])
+
+    def test_angebot_gewonnen_und_verloren(self):
+        rules = self.content["firma"]["angebote"]
+        rules["laune"] = {}
+        for kind in rules["arten"].values():
+            kind["von"] = kind["bis"] = 15
+        with TempDB() as db:
+            game = self._founded(db)
+            low, high = game.state.inquiries()
+            money = game.state.money
+            # Bitweiche nimmt hier immer 15 %
+            payload = game.send_offer(low["id"], 5, self._answer(low, 5))
+            self.assertTrue(payload["gewonnen"])
+            numbers = fg.offer_numbers(low, 5)
+            self.assertEqual(payload["geld"], int(round(numbers["gewinn"])))
+            self.assertEqual(game.state.money, money + payload["geld"])
+            self.assertTrue(game.state.inquiries()[0]["ergebnis"]["gewonnen"])
+            with self.assertRaises(ValueError):
+                game.send_offer(low["id"], 5, self._answer(low, 5))
+            # 30 % ist teurer als Bitweiche (15 % + hoechstens 3 % Vorteil)
+            payload = game.send_offer(high["id"], 30, self._answer(high, 30))
+            self.assertFalse(payload["gewonnen"])
+            self.assertEqual(payload["grund"], "preis")
+            self.assertEqual(payload["geld"], 0)
+            head, _text = fg.offer_result_text(payload)
+            self.assertIn("Bitweiche", head)
+            days = fg.finance_days(game.state)
+            self.assertIn(fg.BOOK_OFFERS, days[0]["ein"])
+
+    def test_rechenfehler_verliert(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            inquiry = game.state.inquiries()[0]
+            answer = self._answer(inquiry, 5)
+            answer["brutto"] = "1"
+            payload = game.send_offer(inquiry["id"], 5, answer)
+            self.assertFalse(payload["gewonnen"])
+            self.assertEqual(payload["grund"], "rechenfehler")
+            self.assertTrue(payload["probleme"])
+            with self.assertRaises(ValueError):
+                game.send_offer(game.state.inquiries()[1]["id"], 7, {})   # kein Zuschlag
+
+    def test_marktpreis_und_vorteil(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            inquiry = dict(game.state.inquiries()[0], markt=10)
+            cost = fg.offer_numbers(inquiry, 0)["selbstkosten"]
+            self.assertAlmostEqual(fg.market_price(inquiry), cost * 1.1, places=1)
+            game.state.reputation["kundenzufriedenheit"] = 50
+            self.assertFalse(fg.offer_result(game.state, dict(inquiry, markt=9), 10,
+                                             self._answer(inquiry, 10))["gewonnen"])
+            game.state.reputation["kundenzufriedenheit"] = 90
+            self.assertTrue(fg.offer_result(game.state, dict(inquiry, markt=9), 10,
+                                            self._answer(inquiry, 10))["gewonnen"])
+            self.assertTrue(fg.offer_result(game.state, inquiry, 10,
+                                            self._answer(inquiry, 10))["gewonnen"])
+
+    def test_chance(self):
+        rule = fg.GAME["firma"]["tickets"]["chance"]
+        self.assertEqual(fg.ticket_chance(45, 45), rule["basis"])
+        self.assertEqual(fg.ticket_chance(50, 45), 68)
+        self.assertEqual(fg.ticket_chance(0, 65), rule["min"])
+        self.assertEqual(fg.ticket_chance(100, 25), rule["max"])
+
+    def test_tickets_verteilen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            rules = fg.GAME["firma"]["tickets"]
+            self.assertEqual(len(game.state.customer_tickets()), rules["mindestens"])
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            tickets = game.state.customer_tickets()
+            self.assertEqual(len(tickets), max(rules["mindestens"],
+                                               rules["grundzahl"] + rules["je_mitarbeiter"]))
+            self.assertEqual(tickets, game.reload().customer_tickets())
+            options = fg.ticket_candidates(game.state, tickets[0], game.knowledge())
+            self.assertEqual([item["an"] for item in options], [fg.SELF, staff_id])
+            payload = game.delegate(tickets[0]["id"], staff_id)
+            self.assertEqual(payload["chance"], options[1]["chance"])
+            with self.assertRaises(ValueError):
+                game.delegate(tickets[0]["id"], fg.SELF)      # schon verteilt
+            with self.assertRaises(ValueError):
+                game.delegate(tickets[1]["id"], staff_id)     # nur 1 pro Mitarbeiter
+            game.delegate(tickets[1]["id"], fg.SELF)
+            self.assertEqual(game.state.firm_open_count(), 2 + 0)
+            people = fg.firm_people(game.state, self.content)
+            self.assertEqual(people[0]["kundenticket"]["id"], tickets[0]["id"])
+            _head, text = fg.office_message(None, people[0], {}, self.content, game.state)
+            self.assertIn(tickets[0]["titel"], text)
+            money = game.state.money
+            numbers = game.state.firm_day()
+            outcomes = fg.ticket_outcomes(game.state, self.content)
+            payload = game.end_day()
+            self.assertEqual(payload["firma"]["tickets"], outcomes)
+            self.assertEqual(len(outcomes), 2)
+            gained = sum(item["geld"] for item in outcomes)
+            self.assertEqual(game.state.money, money + gained + numbers["umsatz"] -
+                             numbers["gehaelter"] - numbers["nebenkosten"])
+            for item in outcomes:
+                self.assertEqual(item["geld"] > 0, item["erfolg"])
+            self.assertIn("Kundentickets", fg.day_end_money_text(payload))
+            for day in range(1, 8):
+                self.assertNotIn("Gehalt", fg.day_end_text(day, firm=True))
+
+    def test_weiterbildung_sperrt_tickets(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            game.train(staff_id, "netzwerk")
+            ticket = game.state.customer_tickets()[0]
+            with self.assertRaises(ValueError):
+                game.delegate(ticket["id"], staff_id)
+
+    def test_gleicher_stand_nach_abgleich(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = self._founded(pc)
+            inquiry = game.state.inquiries()[0]
+            game.send_offer(inquiry["id"], 10, self._answer(inquiry, 10))
+            ticket = game.state.customer_tickets()[0]
+            game.delegate(ticket["id"], fg.SELF)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other = fg.Game(handy, "Handy", self.content)
+            self.assertEqual(other.state.inquiries(), game.state.inquiries())
+            self.assertEqual(other.state.customer_tickets(), game.state.customer_tickets())
+            # Dasselbe Ticket auf dem Handy nochmal verteilt: zaehlt nur einmal
+            handy.log_game_event(fg.EV_DELEGATED, json.dumps(
+                {"ticket": ticket["id"], "tag": ticket and game.state.day, "an": "x",
+                 "name": "X", "chance": 90}), "Handy")
+            handy.log_game_event(fg.EV_OFFER_WON, json.dumps(
+                {"anfrage": inquiry["id"], "tag": 1, "geld": 99999}), "Handy")
+            other.reload()
+            self.assertEqual(other.state.delegations[ticket["id"]]["an"], fg.SELF)
+            self.assertEqual(other.state.money, game.state.money)
+            game.end_day()
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertEqual(other.reload().ticket_results, game.state.ticket_results)
 
 
 if __name__ == "__main__":

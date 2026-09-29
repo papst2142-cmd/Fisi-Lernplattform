@@ -1478,7 +1478,8 @@ class GameView(ScrollArea):
         self.positions.pop(fg.SITE_OFFICE, None)
         self.notices[fg.SITE_HOME] = (
             "Feierabend nach Arbeitstag %d" % payload["tag"],
-            "%s %s" % (fg.day_end_text(payload["tag"]), fg.day_end_money_text(payload)))
+            "%s %s" % (fg.day_end_text(payload["tag"], firm=bool(payload.get("firma"))),
+                       fg.day_end_money_text(payload)))
         self.app.notify_progress()
         self.render()
         self.app.show_view("zuhause")
@@ -1732,13 +1733,17 @@ class GameView(ScrollArea):
         if not tickets:
             waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if item else
-                    fg.FIRM_IDLE_TEXT if state.firm else
+                    (fg.firm_orders_summary(state) or fg.FIRM_IDLE_TEXT) if state.firm else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
                     "Heute stehen keine Tickets an. %s auf eine Lieferung."
                     % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
                     if waiting else "Heute stehen keine Tickets an.")
             make_label(body, text, font=F["body"], fg=C["text_soft"], wraplength=980,
                        justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
+            if not item and state.firm and state.firm_open_count():
+                NeoButton(body, "Aufträge öffnen",
+                          lambda: self.app.views["firma"].open_tab("auftraege"),
+                          kind="primary").pack(anchor="w", pady=(8, 0))
             if not item and state.founding_ready():
                 make_label(body, fg.FOUNDING_TEASER, font=F["body_bold"], fg=C["green"],
                            wraplength=980, justify="left", anchor="w").pack(anchor="w",
@@ -1756,7 +1761,9 @@ class GameView(ScrollArea):
             button.pack(side="left")
             button.set_enabled(state.can_end_day())
             hint = ("Erst alle Tickets bearbeiten oder verschieben." if not state.can_end_day()
-                    else "Alle Tickets für heute sind bearbeitet." if state.handled else
+                    else "Offene Anfragen und Tickets verfallen beim Feierabend."
+                    if state.firm and state.firm_open_count() else
+                    "Alle Tickets für heute sind bearbeitet." if state.handled else
                     "Heute ist nichts mehr zu tun.")
             make_label(footer, hint, font=F["small"], fg=C["muted"]).pack(side="left",
                                                                           padx=14)
@@ -2530,9 +2537,15 @@ class FirmView(ScrollArea):
         self.app = app
         self.content = _frame(self.inner)
         self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
-        self.tab = "mitarbeiter"
+        self.tab = "auftraege"
         self.training_for = None     # Mitarbeiter, fuer den gerade ein Fach gewaehlt wird
         self.name_entry = None
+        self.offer_for = None        # Anfrage, die gerade kalkuliert wird
+        self.markup = None           # gewaehlter Gewinnzuschlag
+        self.board = None            # Formular der Kalkulation
+        self.saved_answer = {}
+        self.show_help = False
+        self.assign_for = None       # Kundenticket, fuer das gerade jemand gewaehlt wird
 
     @property
     def game(self):
@@ -2574,7 +2587,13 @@ class FirmView(ScrollArea):
     def _choose(self, tab):
         self.tab = tab
         self.training_for = None
+        self.offer_for = self.assign_for = None
         self.render()
+
+    def open_tab(self, tab):
+        """Von aussen (Spieluebersicht) direkt einen Reiter oeffnen."""
+        self.tab = tab
+        self.app.show_view(self.KEY)
 
     def _error(self, exc):
         messagebox.showinfo("Hinweis", str(exc))
@@ -2652,6 +2671,208 @@ class FirmView(ScrollArea):
         game_view.notices[fg.SITE_OFFICE] = ("Willkommen in deiner Firma",
                                              fg.founded_text(payload["name"]))
         self.tab = "bewerbungen"
+        self._changed()
+
+    # -- Auftraege (ab 0.34) ------------------------------------------------------
+
+    def _build_auftraege(self, state):
+        rules = fg.offer_rules()
+        card = Card(self.content, title="Kundenanfragen", accent=C["pink"],
+                    subtitle="Angebote gegen Bitweiche · Handlungskosten %d %%, "
+                    "Umsatzsteuer %d %%" % (rules["handlungskosten"], rules["ust"]))
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, "Wähle deinen Gewinnzuschlag und rechne das Angebot durch. "
+                   "Liegst du nicht über Bitweiche und stimmt die Rechnung, bekommst du den "
+                   "Auftrag. Offene Anfragen verfallen beim Feierabend.", font=F["small"],
+                   fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
+            anchor="w", pady=(0, 6))
+        for inquiry in state.inquiries():
+            self._inquiry_row(card.body, state, inquiry)
+
+        tickets = state.customer_tickets()
+        free = sum(1 for item in tickets if not item.get("an"))
+        box = Card(self.content, title="Kundentickets", accent=C["accent"],
+                   subtitle="%d von %d verteilt · Ergebnisse beim Feierabend"
+                   % (len(tickets) - free, len(tickets)))
+        box.pack(fill="x", pady=(14, 0))
+        limits = fg.ticket_rules()
+        make_label(box.body, "Verteile die Tickets an deine Leute oder übernimm selbst "
+                   "welche (höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
+                   "%d Ticket pro Tag, die Chance hängt vom Wert im Fachbereich ab."
+                   % (limits["spieler_max"], limits["mitarbeiter_max"]), font=F["small"],
+                   fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
+            anchor="w", pady=(0, 6))
+        levels = self.game.knowledge()
+        for ticket in tickets:
+            self._ticket_row(box.body, state, ticket, levels)
+
+    def _inquiry_row(self, parent, state, inquiry):
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        row.pack(fill="x", pady=5)
+        head = _frame(row)
+        head.pack(fill="x", padx=14, pady=(10, 0))
+        result = inquiry.get("ergebnis")
+        if not result and self.offer_for != inquiry["id"]:
+            NeoButton(head, "Angebot kalkulieren", lambda i=inquiry["id"]: self._calc(i),
+                      kind="primary", height=32, font=F["small_bold"]).pack(side="right")
+        make_label(head, inquiry["kunde"]["name"], font=F["body_bold"], fg=C["text"],
+                   anchor="w").pack(anchor="w")
+        make_label(head, "%d × %s" % (inquiry["menge"], inquiry["artikel"]),
+                   font=F["small_bold"], fg=C["pink"], anchor="w").pack(anchor="w")
+        make_label(row, inquiry["text"], font=F["small"], fg=C["text_soft"], wraplength=960,
+                   justify="left", anchor="w").pack(anchor="w", padx=14, pady=(4, 0))
+        make_label(row, fg.inquiry_status_text(inquiry), font=F["small"],
+                   fg=C["text_dim"] if not result else
+                   C["green"] if result.get("gewonnen") else C["red"],
+                   anchor="w").pack(anchor="w", padx=14, pady=(4, 0))
+        if result:
+            _head, text = fg.offer_result_text(result)
+            make_label(row, text, font=F["small"], fg=C["text_soft"], wraplength=960,
+                       justify="left", anchor="w").pack(anchor="w", padx=14, pady=(2, 0))
+            for line in result.get("probleme") or []:
+                make_label(row, "• " + line, font=F["tiny"], fg=C["red"], wraplength=940,
+                           justify="left", anchor="w").pack(anchor="w", padx=14)
+        elif self.offer_for == inquiry["id"]:
+            self._build_calc(row, inquiry)
+        _frame(row, height=10).pack()
+
+    def _build_calc(self, parent, inquiry):
+        rules = fg.offer_rules()
+        box = _frame(parent)
+        box.pack(fill="x", padx=14, pady=(10, 0))
+        make_label(box, "GEWINNZUSCHLAG", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        ChoiceRow(box, [(value, "%d %%" % value) for value in rules["zuschlaege"]],
+                  self.markup, self._pick_markup).pack(anchor="w", pady=(4, 10))
+        if self.markup is None:
+            make_label(box, "Je höher der Zuschlag, desto mehr bleibt hängen, aber desto "
+                       "eher ist Bitweiche günstiger.", font=F["small"], fg=C["muted"],
+                       anchor="w").pack(anchor="w")
+            NeoButton(box, "Abbrechen", self._cancel_calc, kind="ghost", height=32,
+                      font=F["small_bold"]).pack(anchor="w", pady=(10, 0))
+            return
+        old = self.saved_answer
+        self.board = FormBoard(box, fg.inquiry_task(inquiry, self.markup))
+        self.board.pack(fill="x")
+        for key, value in old.items():
+            if key in self.board.entries and value:
+                self.board.entries[key].insert(0, value)
+        if self.show_help:
+            tip = ctk.CTkFrame(box, fg_color=mix(C["card_alt"], C["accent"], 0.08),
+                               corner_radius=10)
+            tip.pack(fill="x", pady=(10, 0))
+            for line in rules.get("hilfe") or []:
+                make_label(tip, "• " + line, font=F["small"], fg=C["text_soft"],
+                           wraplength=920, justify="left", anchor="w").pack(
+                    anchor="w", padx=12, pady=(4, 0))
+            _frame(tip, height=8).pack()
+        buttons = _frame(box)
+        buttons.pack(anchor="w", pady=(12, 0))
+        NeoButton(buttons, "Angebot abschicken", lambda: self._send_offer(inquiry),
+                  kind="primary", height=34, font=F["small_bold"]).pack(side="left")
+        NeoButton(buttons, "Hilfe ausblenden" if self.show_help else "Hilfe",
+                  self._toggle_help, kind="ghost", height=34,
+                  font=F["small_bold"]).pack(side="left", padx=(10, 0))
+        NeoButton(buttons, "Abbrechen", self._cancel_calc, kind="ghost", height=34,
+                  font=F["small_bold"]).pack(side="left", padx=(10, 0))
+
+    def _calc(self, inquiry_id):
+        self.offer_for = inquiry_id
+        self.markup = None
+        self.board = None
+        self.saved_answer = {}
+        self.show_help = False
+        self.render(keep_scroll=True)
+
+    def _keep_answer(self):
+        """Eingaben merken, bevor das Formular neu gebaut wird."""
+        self.saved_answer = self.board.answer if self.board is not None else {}
+
+    def _pick_markup(self, value):
+        self._keep_answer()
+        self.markup = value
+        self.render(keep_scroll=True)
+
+    def _toggle_help(self):
+        self._keep_answer()
+        self.show_help = not self.show_help
+        self.render(keep_scroll=True)
+
+    def _cancel_calc(self):
+        self.offer_for = None
+        self.board = None
+        self.render(keep_scroll=True)
+
+    def _send_offer(self, inquiry):
+        if self.board is None or not self.board.complete():
+            messagebox.showinfo("Hinweis", "Bitte rechne das Angebot zuerst durch.")
+            return
+        try:
+            payload = self.game.send_offer(inquiry["id"], self.markup, self.board.answer)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self.offer_for = None
+        self.board = None
+        head, text = fg.offer_result_text(payload)
+        messagebox.showinfo(head, text)
+        self._changed()
+
+    def _ticket_row(self, parent, state, ticket, levels):
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        row.pack(fill="x", pady=5)
+        stripe = tk.Frame(row, width=6, bg=cat_color(ticket["cat"]), highlightthickness=0)
+        stripe.pack(side="left", fill="y", padx=(10, 0), pady=12)
+        buttons = None
+        if not ticket.get("an"):
+            buttons = _frame(row)
+            buttons.pack(side="right", padx=12, pady=10, anchor="n")
+        text = _frame(row)
+        text.pack(side="left", fill="x", expand=True, padx=(12, 0), pady=10)
+        make_label(text, ticket["titel"], font=F["body_bold"], fg=C["text"], anchor="w").pack(
+            anchor="w")
+        make_label(text, ticket["kunde"]["name"], font=F["small_bold"],
+                   fg=cat_color(ticket["cat"]), anchor="w").pack(anchor="w")
+        make_label(text, ticket["text"], font=F["small"], fg=C["text_soft"], wraplength=760,
+                   justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+        make_label(text, fg.ticket_line(ticket), font=F["small"],
+                   fg=C["green"] if ticket.get("an") else C["text_dim"], anchor="w").pack(
+            anchor="w", pady=(4, 0))
+        if ticket.get("an"):
+            return
+        if self.assign_for != ticket["id"]:
+            NeoButton(buttons, "Zuweisen", lambda i=ticket["id"]: self._pick_ticket(i),
+                      kind="primary", height=32, font=F["small_bold"]).pack()
+            return
+        NeoButton(buttons, "Abbrechen", lambda: self._pick_ticket(None), kind="ghost",
+                  height=32, font=F["small_bold"]).pack()
+        make_label(text, "WER ÜBERNIMMT?", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(10, 2))
+        for option in fg.ticket_candidates(state, ticket, levels):
+            line = _frame(text)
+            line.pack(anchor="w", pady=2)
+            button = NeoButton(line, "%s · %s %d · Chance %d %%" % (
+                option["name"], CATEGORY_SHORT[fg.CAT_NAME[ticket["cat"]]], option["wert"],
+                option["chance"]), lambda a=option["an"]: self._delegate(ticket["id"], a),
+                kind="pill", height=30, font=F["small_bold"])
+            button.pack(side="left")
+            button.set_enabled(not option["problem"])
+            if option["problem"]:
+                make_label(line, option["problem"], font=F["tiny"], fg=C["muted"]).pack(
+                    side="left", padx=(8, 0))
+
+    def _pick_ticket(self, ticket_id):
+        self.assign_for = ticket_id
+        self.render(keep_scroll=True)
+
+    def _delegate(self, ticket_id, person):
+        try:
+            self.game.delegate(ticket_id, person)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self.assign_for = None
         self._changed()
 
     # -- Mitarbeiter ------------------------------------------------------------

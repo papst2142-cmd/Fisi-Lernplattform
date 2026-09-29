@@ -50,7 +50,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.33"
+APP_VERSION = "0.34"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -1848,6 +1848,14 @@ def selftest():
         for key, _name in fisi_game.firm_tabs(state):
             game.firm_tab = key
             game._fill_firm()
+        # Auftraege (ab 0.34): Kalkulation offen, Ticket-Auswahl offen
+        game.firm_tab = "auftraege"
+        game.offer_for = state.inquiries()[0]["id"]
+        game.markup = 10
+        game.offer_help = True
+        game.assign_for = state.customer_tickets()[0]["id"]
+        game._fill_firm()
+        game._fill_firm()
         game.render()
         game.site_key = "buero"
         game._fill_site()
