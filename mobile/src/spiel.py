@@ -32,7 +32,9 @@ STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["gr
 EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "bestellung": "Der Warenkorb ist noch leer.",
               "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
-              "formular": "Bitte fülle zuerst die Felder aus."}
+              "formular": "Bitte fülle zuerst die Felder aus.",
+              "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
+              "diagnose": "Bitte wähle Ursache und Maßnahme."}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -815,6 +817,190 @@ class FormBoard(ft.Column):
             mark.color = color
 
 
+# Farben der Terminalzeilen (wie am PC)
+TERMINAL_BG = C["sidebar"]
+TERMINAL_COLOR = {"start": C["muted"], "ausgabe": C["text_soft"], "fehler": C["red"],
+                  "gefahr": C["yellow"], "kommentar": C["muted"]}
+
+
+class TerminalBoard(ft.Column):
+    """Simuliertes Terminal: je Schritt einen Befehl antippen, die Ausgabe
+    erscheint im Terminal. Nach einem falschen Befehl noch einmal versuchen."""
+
+    def __init__(self, task):
+        super().__init__(spacing=10, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.attempts = [[] for _step in task["schritte"]]
+        self.locked = False
+        self.success = None
+        self.step_label = ui.label("")
+        self.goal_label = ui.text("", size=15, weight=ft.FontWeight.BOLD)
+        self.lines = ft.Column(spacing=2, tight=True)
+        self.screen = ft.Container(content=self.lines, bgcolor=TERMINAL_BG, border_radius=12,
+                                   border=ft.Border.all(1, C["border"]),
+                                   padding=ft.Padding.symmetric(horizontal=12, vertical=10))
+        self.choices = ft.Column(spacing=8, tight=True,
+                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.controls = [ft.Column([self.step_label, self.goal_label], spacing=2, tight=True),
+                         self.screen, self.choices]
+        self._paint()
+
+    @property
+    def answer(self):
+        return {"schritte": [list(tries) for tries in self.attempts]}
+
+    def complete(self):
+        return fg.terminal_current_step(self.task, self.attempts) is None
+
+    def run(self, index):
+        step = fg.terminal_current_step(self.task, self.attempts)
+        if self.locked or step is None or index in self.attempts[step]:
+            return
+        self.attempts[step].append(index)
+        self._paint()
+
+    def _line(self, role, value):
+        if role in ("eingabe", "cursor"):
+            return ft.Text(spans=[
+                ft.TextSpan(self.task["prompt"] + " ",
+                            ft.TextStyle(color=C["green"], font_family=ui.MONO, size=12)),
+                ft.TextSpan(value, ft.TextStyle(
+                    color=C["cyan"] if role == "cursor" else C["text"],
+                    font_family=ui.MONO, size=12))])
+        return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
+
+    def _paint(self):
+        lines = [self._line(role, value)
+                 for role, value in fg.terminal_log(self.task, self.attempts)]
+        step = fg.terminal_current_step(self.task, self.attempts)
+        if step is not None and not self.locked:
+            lines.append(self._line("cursor", "_"))
+        self.lines.controls = lines
+        border = C["border"]
+        if self.locked:
+            border = C["green"] if self.success else C["red"]
+        self.screen.border = ft.Border.all(2 if self.locked else 1, border)
+
+        choices = []
+        if step is None:
+            self.step_label.value = "ALLE SCHRITTE ERLEDIGT"
+            self.goal_label.value = self.task["schritte"][-1]["ziel"]
+            if not self.locked:
+                choices.append(ui.text("Das System ist eingerichtet. Reiche jetzt die "
+                                       "Lösung ein.", size=13, color=C["green"]))
+        else:
+            self.step_label.value = fg.terminal_step_label(self.task, step).upper()
+            self.goal_label.value = self.task["schritte"][step]["ziel"]
+            if not self.locked:
+                choices.append(ui.label("Befehl wählen"))
+                for index, command in enumerate(self.task["schritte"][step]["befehle"]):
+                    tried = index in self.attempts[step]
+                    choices.append(ft.Container(
+                        content=ft.Text(command["befehl"], size=13, font_family=ui.MONO,
+                                        color=C["muted"] if tried else C["text_soft"]),
+                        bgcolor=C["card"] if tried else C["card_alt"], border_radius=12,
+                        border=ft.Border.all(1, C["border"]),
+                        padding=ft.Padding.symmetric(horizontal=14, vertical=12),
+                        ink=not tried,
+                        on_click=None if tried else (lambda _e, value=index: self.run(value))))
+        self.choices.controls = choices
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self._paint()
+
+
+class DiagnoseBoard(ft.Column):
+    """Fehlersuche: Pruefungen antippen, Ergebnisse im Notizblock sammeln,
+    dann Ursache und Massnahme waehlen."""
+
+    def __init__(self, task, available=None):
+        super().__init__(spacing=10, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.done = []
+        self.locked = False
+        controls = []
+        spare = fg.spare_parts_text(task, available)
+        if spare:
+            controls.append(ui.text(spare, size=13, color=C["cyan"],
+                                    weight=ft.FontWeight.BOLD))
+        controls.append(ui.label("Prüfungen"))
+        self.check_rows = {}
+        for item in task["pruefungen"]:
+            caption = ft.Text(item["text"], size=14, color=C["text_soft"], expand=True)
+            mark = ft.Text("", size=12, color=C["green"], weight=ft.FontWeight.BOLD)
+            row = ft.Container(
+                content=ft.Row([caption, mark], spacing=10,
+                               vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                bgcolor=C["card_alt"], border_radius=12, border=ft.Border.all(1, C["border"]),
+                padding=ft.Padding.symmetric(horizontal=14, vertical=11), ink=True,
+                on_click=lambda _e, value=item["id"]: self.check(value))
+            self.check_rows[item["id"]] = (row, caption, mark)
+            controls.append(row)
+        self.notes = ft.Column(spacing=4, tight=True)
+        self.counter = ui.text("", size=12, color=C["muted"])
+        controls += [ui.label("Notizblock"), ft.Container(
+            content=self.notes, bgcolor=C["card_alt"], border_radius=12,
+            border=ft.Border.all(1, C["border"]),
+            padding=ft.Padding.symmetric(horizontal=14, vertical=10)), self.counter]
+        self.cause = ui.OptionList()
+        causes = list(task["ursachen"])
+        random.shuffle(causes)
+        self.cause.set_options(causes)
+        self.measure = ui.OptionList()
+        measures = list(task["massnahmen"])
+        random.shuffle(measures)
+        self.measure.set_options(measures)
+        controls += [ui.label("Ursache"), self.cause, ui.label("Maßnahme"), self.measure]
+        self.controls = controls
+        self._paint()
+
+    def check(self, check_id):
+        if not self.locked and check_id not in self.done:
+            self.done.append(check_id)
+            self._paint()
+
+    @property
+    def answer(self):
+        return {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
+                "massnahme": self.measure.get() or ""}
+
+    def complete(self):
+        return bool(self.cause.get() and self.measure.get())
+
+    def _paint(self):
+        keys = fg.diagnosis_key_checks(self.task)
+        for check_id, (row, caption, mark) in self.check_rows.items():
+            done = check_id in self.done
+            if self.locked and check_id in keys:
+                row.border = ft.Border.all(2, C["green"])
+                mark.value = "geprüft · wichtig" if done else "wichtig"
+            else:
+                mark.value = "geprüft" if done else ""
+            row.bgcolor = C["card"] if done else C["card_alt"]
+            caption.color = C["muted"] if done else C["text_soft"]
+        notes = []
+        if not self.done:
+            notes.append(ui.text("Noch nichts geprüft. Die Ergebnisse erscheinen hier.",
+                                 size=13, color=C["muted"]))
+        for number, check_id in enumerate(self.done, start=1):
+            item = fg.diagnosis_check(self.task, check_id)
+            notes.append(ui.text("%d. %s" % (number, item["text"]), size=13,
+                                 weight=ft.FontWeight.BOLD))
+            notes.append(ui.text(item["ergebnis"], size=13, color=C["cyan"]))
+        self.notes.controls = notes
+        self.counter.value = fg.diagnosis_counter(self.task, self.done)
+
+    def reveal(self, right):
+        self.locked = True
+        self.cause.reveal(self.task["ursache"])
+        self.measure.reveal(self.task["massnahme"])
+        self._paint()
+
+
 # ============================================================================
 #  SEITE "SPIEL"
 # ============================================================================
@@ -1118,6 +1304,10 @@ class GameScreen:
             self.options = RackBoard(task)
         elif task["typ"] == "formular":
             self.options = FormBoard(task)
+        elif task["typ"] == "terminal":
+            self.options = TerminalBoard(task)
+        elif task["typ"] == "diagnose":
+            self.options = DiagnoseBoard(task, self.available)
         else:
             self.options = MatchBoard(task)
         self.help_box = ft.Column(spacing=10, tight=True)

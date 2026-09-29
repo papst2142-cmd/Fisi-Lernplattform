@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.29
+
+- **Neu im Spiel: Terminal.** Linux-Server und Windows-Arbeitsplätze werden
+  in einem nachgebauten Terminal eingerichtet. Zu jedem Schritt wählst du
+  einen Befehl und siehst eine echte Ausgabe. Ein falscher Befehl liefert
+  eine Fehlermeldung, dann darfst du es noch einmal versuchen. Ein Fehlgriff
+  ist erlaubt. Gefährliche Befehle wie `chmod 777` oder eine überschriebene
+  fstab führt das Spiel nicht aus, sie kosten aber Sicherheitsbewusstsein.
+- **Neu im Spiel: Fehlersuche.** Zu einem Symptom gibt es mehrere mögliche
+  Prüfungen, die Ergebnisse landen im Notizblock. Am Ende wählst du Ursache
+  und Maßnahme. Wer systematisch vorgeht und mit wenigen Prüfungen auskommt,
+  bekommt zusätzlich Zuverlässigkeit. Unsichere Maßnahmen kosten
+  Sicherheitsbewusstsein.
+- **Ersatzteile aus dem Lager:** Zwei Fehlersuchen enden mit einem Tausch.
+  Die SSDs für die Fahrkartenautomaten und das Netzteil aus der
+  Nachbestellung kommen dafür aus dem Lager.
+- **9 neue Aufträge** ab Arbeitstag 9: Datenplatte für den Fahrplanserver,
+  Benutzer und Rechte fürs Service-Center, Windows-Arbeitsplatz für die
+  Leitstelle per PowerShell, Webserver mit Firewall für die
+  Fahrplanauskunft, nächtliche Sicherung der Automaten-Datenbank sowie
+  Fehlersuche an Kassen-PC, Fahrkartenautomat, Verwaltungs-PC und
+  Leitstellen-PC.
+
 ## 0.28
 
 - **Neu im Spiel: Serverschrank bestücken.** Der Schrank wird in

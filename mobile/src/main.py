@@ -1710,6 +1710,17 @@ def selftest():
                     else:
                         game.options._choose(field_id, value)
                 game.options.reveal(True)
+            elif task["typ"] == "terminal":
+                game.options.run(len(task["schritte"][0]["befehle"]) - 1)
+                for step in task["schritte"]:
+                    game.options.run(fisi_game.terminal_right_index(step))
+                game.options.reveal(game.options.complete())
+            elif task["typ"] == "diagnose":
+                for check_id in solution["pruefungen"]:
+                    game.options.check(check_id)
+                game.options.cause.select(task["ursache"])
+                game.options.measure.select(task["massnahme"])
+                game.options.reveal(True)
         game._select_room("serverraum")
         game._select_room("lager")
         # Bueroansicht (ohne reload, der Test-Spielstand steht nur im Speicher)

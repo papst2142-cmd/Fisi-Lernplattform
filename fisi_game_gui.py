@@ -33,7 +33,9 @@ STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["gr
 EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "bestellung": "Der Warenkorb ist noch leer.",
               "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
-              "formular": "Bitte fülle zuerst die Felder aus."}
+              "formular": "Bitte fülle zuerst die Felder aus.",
+              "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
+              "diagnose": "Bitte wähle Ursache und Maßnahme."}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -956,6 +958,225 @@ class FormBoard(ctk.CTkFrame):
                 text="✓" if ok else "→ %s" % field["anzeige"], text_color=color)
 
 
+# Farben der Terminalzeilen (fisi_game.terminal_log liefert die Rollen)
+TERMINAL_BG = C["sidebar"]
+TERMINAL_COLOR = {"start": C["muted"], "ausgabe": C["text_soft"], "fehler": C["red"],
+                  "gefahr": C["yellow"], "kommentar": C["muted"]}
+
+
+class TerminalBoard(ctk.CTkFrame):
+    """Simuliertes Terminal: Zu jedem Schritt einen Befehl anklicken. Die
+    Ausgabe erscheint im Terminal, bei einem falschen Befehl darf man es
+    noch einmal versuchen (keine echte Shell)."""
+
+    def __init__(self, parent, task):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.attempts = [[] for _step in task["schritte"]]
+        self.locked = False
+        self.success = None
+        self.step_label = make_label(self, "", font=F["label"], fg=C["muted"], anchor="w")
+        self.step_label.pack(anchor="w")
+        self.goal_label = make_label(self, "", font=F["body_bold"], fg=C["text"],
+                                     wraplength=940, justify="left", anchor="w")
+        self.goal_label.pack(anchor="w", pady=(2, 8))
+        self.screen = ctk.CTkFrame(self, fg_color=TERMINAL_BG, corner_radius=12,
+                                   border_width=1, border_color=C["border"])
+        self.screen.pack(fill="x")
+        self.lines = _frame(self.screen)
+        self.lines.pack(fill="x", padx=16, pady=12)
+        # Mindesthoehe 1, sonst reserviert der leere Rahmen 200 Pixel
+        self.choices = _frame(self, height=1)
+        self.choices.pack(fill="x", pady=(12, 0))
+        self._paint()
+
+    @property
+    def answer(self):
+        return {"schritte": [list(tries) for tries in self.attempts]}
+
+    def complete(self):
+        return fg.terminal_current_step(self.task, self.attempts) is None
+
+    def run(self, index):
+        step = fg.terminal_current_step(self.task, self.attempts)
+        if self.locked or step is None or index in self.attempts[step]:
+            return
+        self.attempts[step].append(index)
+        self._paint()
+
+    def _line(self, role, text):
+        row = _frame(self.lines)
+        row.pack(fill="x", anchor="w")
+        if role == "eingabe" or role == "cursor":
+            make_label(row, self.task["prompt"], font=F["mono_small"], fg=C["green"]).pack(
+                side="left", anchor="n")
+            make_label(row, text, font=F["mono_small"],
+                       fg=C["cyan"] if role == "cursor" else C["text"], wraplength=820,
+                       justify="left", anchor="w").pack(side="left", anchor="n", padx=(8, 0))
+            return
+        make_label(row, text, font=F["mono_small"], fg=TERMINAL_COLOR[role],
+                   wraplength=900, justify="left", anchor="w").pack(anchor="w")
+
+    def _paint(self):
+        for child in self.lines.winfo_children():
+            child.destroy()
+        for role, text in fg.terminal_log(self.task, self.attempts):
+            self._line(role, text)
+        step = fg.terminal_current_step(self.task, self.attempts)
+        if step is not None and not self.locked:
+            self._line("cursor", "▌")
+        border = C["border"]
+        if self.locked:
+            border = C["green"] if self.success else C["red"]
+        self.screen.configure(border_color=border, border_width=2 if self.locked else 1)
+
+        for child in self.choices.winfo_children():
+            child.destroy()
+        # Platzhalter: Tk verkleinert einen Rahmen ohne Inhalt sonst nicht
+        _frame(self.choices, height=1).pack()
+        if step is None:
+            self.step_label.configure(text="ALLE SCHRITTE ERLEDIGT")
+            self.goal_label.configure(text=self.task["schritte"][-1]["ziel"])
+            if not self.locked:
+                make_label(self.choices, "Das System ist eingerichtet. Reiche jetzt die "
+                           "Lösung ein.", font=F["small"], fg=C["green"],
+                           anchor="w").pack(anchor="w")
+            return
+        self.step_label.configure(text=fg.terminal_step_label(self.task, step).upper())
+        self.goal_label.configure(text=self.task["schritte"][step]["ziel"])
+        if self.locked:
+            return
+        make_label(self.choices, "BEFEHL WÄHLEN", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(0, 4))
+        for index, command in enumerate(self.task["schritte"][step]["befehle"]):
+            tried = index in self.attempts[step]
+            row = ctk.CTkFrame(self.choices, fg_color=C["card"] if tried else C["card_alt"],
+                               corner_radius=12, border_width=1,
+                               border_color=C["border"], cursor="" if tried else "hand2")
+            row.pack(fill="x", pady=3)
+            label = make_label(row, command["befehl"], font=F["mono_small"],
+                               fg=C["muted"] if tried else C["text_soft"], wraplength=900,
+                               justify="left", anchor="w",
+                               cursor="" if tried else "hand2")
+            label.pack(anchor="w", padx=14, pady=10)
+            if not tried:
+                for widget in (row, label):
+                    widget.bind("<Button-1>", lambda _e, value=index: self.run(value))
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self._paint()
+
+
+class DiagnoseBoard(ctk.CTkFrame):
+    """Fehlersuche: Pruefungen anklicken, die Ergebnisse landen im Notizblock.
+    Danach Ursache und Massnahme waehlen."""
+
+    def __init__(self, parent, task, available=None):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.done = []
+        self.locked = False
+        spare = fg.spare_parts_text(task, available)
+        if spare:
+            make_label(self, spare, font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+                anchor="w", pady=(0, 10))
+        columns = _frame(self)
+        columns.pack(fill="x")
+        columns.columnconfigure(0, weight=1, uniform="diag")
+        columns.columnconfigure(1, weight=1, uniform="diag")
+        left = _frame(columns)
+        left.grid(row=0, column=0, sticky="new")
+        make_label(left, "PRÜFUNGEN", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                          pady=(0, 6))
+        self.check_rows = {}
+        for item in task["pruefungen"]:
+            row = ctk.CTkFrame(left, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"], cursor="hand2")
+            row.pack(fill="x", pady=3)
+            label = make_label(row, item["text"], font=F["body"], fg=C["text_soft"],
+                               wraplength=400, justify="left", anchor="w", cursor="hand2")
+            label.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            mark = make_label(row, "", font=F["small_bold"], fg=C["green"])
+            mark.pack(side="right", padx=(0, 14))
+            for widget in (row, label, mark):
+                widget.bind("<Button-1>", lambda _e, value=item["id"]: self.check(value))
+            self.check_rows[item["id"]] = (row, label, mark)
+        right = _frame(columns)
+        right.grid(row=0, column=1, sticky="new", padx=(14, 0))
+        make_label(right, "NOTIZBLOCK", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                            pady=(0, 6))
+        self.notes = ctk.CTkFrame(right, fg_color=C["card_alt"], corner_radius=12,
+                                  border_width=1, border_color=C["border"])
+        self.notes.pack(fill="x")
+        self.counter = make_label(right, "", font=F["small"], fg=C["muted"], anchor="w")
+        self.counter.pack(anchor="w", pady=(6, 0))
+
+        make_label(self, "URSACHE", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                        pady=(16, 2))
+        self.cause = OptionList(self, bg=C["card"])
+        causes = list(task["ursachen"])
+        random.shuffle(causes)
+        self.cause.set_options(causes)
+        self.cause.pack(fill="x")
+        make_label(self, "MASSNAHME", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                          pady=(14, 2))
+        self.measure = OptionList(self, bg=C["card"])
+        measures = list(task["massnahmen"])
+        random.shuffle(measures)
+        self.measure.set_options(measures)
+        self.measure.pack(fill="x")
+        self._paint()
+
+    def check(self, check_id):
+        if not self.locked and check_id not in self.done:
+            self.done.append(check_id)
+            self._paint()
+
+    @property
+    def answer(self):
+        return {"pruefungen": list(self.done), "ursache": self.cause.get() or "",
+                "massnahme": self.measure.get() or ""}
+
+    def complete(self):
+        return bool(self.cause.get() and self.measure.get())
+
+    def _paint(self):
+        keys = fg.diagnosis_key_checks(self.task)
+        for check_id, (row, label, mark) in self.check_rows.items():
+            done = check_id in self.done
+            if self.locked and check_id in keys:
+                row.configure(border_color=C["green"], border_width=2)
+                mark.configure(text="geprüft · wichtig" if done else "wichtig")
+            else:
+                mark.configure(text="geprüft" if done else "")
+            row.configure(fg_color=C["card"] if done else C["card_alt"])
+            label.configure(text_color=C["muted"] if done else C["text_soft"])
+        for child in self.notes.winfo_children():
+            child.destroy()
+        if not self.done:
+            make_label(self.notes, "Noch nichts geprüft. Die Ergebnisse erscheinen hier.",
+                       font=F["small"], fg=C["muted"], wraplength=420, justify="left",
+                       anchor="w").pack(anchor="w", padx=14, pady=10)
+        for number, check_id in enumerate(self.done, start=1):
+            item = fg.diagnosis_check(self.task, check_id)
+            make_label(self.notes, "%d. %s" % (number, item["text"]), font=F["small_bold"],
+                       fg=C["text"], wraplength=420, justify="left", anchor="w").pack(
+                anchor="w", padx=14, pady=(10 if number == 1 else 6, 0))
+            make_label(self.notes, item["ergebnis"], font=F["small"], fg=C["cyan"],
+                       wraplength=420, justify="left", anchor="w").pack(anchor="w", padx=14)
+        if self.done:
+            _frame(self.notes, height=10).pack()
+        self.counter.configure(text=fg.diagnosis_counter(self.task, self.done))
+
+    def reveal(self, right):
+        self.locked = True
+        self.cause.reveal(self.task["ursache"])
+        self.measure.reveal(self.task["massnahme"])
+        self._paint()
+
+
 class GameView(ScrollArea):
     """Ansicht "Lernspiel" in der PC-Version."""
 
@@ -1362,6 +1583,12 @@ class GameView(ScrollArea):
             self.options.pack(fill="x")
         elif task["typ"] == "formular":
             self.options = FormBoard(body, task)
+            self.options.pack(fill="x")
+        elif task["typ"] == "terminal":
+            self.options = TerminalBoard(body, task)
+            self.options.pack(fill="x")
+        elif task["typ"] == "diagnose":
+            self.options = DiagnoseBoard(body, task, self.available)
             self.options.pack(fill="x")
         else:
             self.options = MatchBoard(body, task)
