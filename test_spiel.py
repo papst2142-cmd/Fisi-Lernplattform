@@ -1890,7 +1890,7 @@ class FirmaTest(unittest.TestCase):
     def test_inhalte(self):
         self.assertEqual(fg._validate_firm(fg.GAME), [])
         stages = fg.GAME["firma"]["gebaeude"]["stufen"]
-        self.assertEqual([len(stage["plaetze"]) for stage in stages], [2, 5])
+        self.assertEqual([len(stage["plaetze"]) for stage in stages], [2, 5, 7, 9, 11])
 
     def test_gruendung_braucht_schwelle_und_alles_erledigt(self):
         with TempDB() as db:
@@ -2024,12 +2024,12 @@ class FirmaTest(unittest.TestCase):
 
     def test_ausbau(self):
         with TempDB() as db:
-            game = self._founded(db, money=60000)
-            stage = fg.GAME["firma"]["gebaeude"]["stufen"][1]
-            money = game.state.money
-            game.expand()
-            self.assertEqual(game.state.capacity, len(stage["plaetze"]))
-            self.assertEqual(game.state.money, money - stage["preis"])
+            game = self._founded(db, money=200000)
+            for stage in fg.GAME["firma"]["gebaeude"]["stufen"][1:]:
+                money = game.state.money
+                game.expand()
+                self.assertEqual(game.state.capacity, len(stage["plaetze"]))
+                self.assertEqual(game.state.money, money - stage["preis"])
             with self.assertRaises(ValueError):
                 game.expand()
 
@@ -2521,6 +2521,166 @@ class ProjekteTest(unittest.TestCase):
                 {"projekt": project["projekt"], "tag": 1, "anzahlung": 99999}), "Handy")
             other.reload()
             self.assertEqual(other.state.money, game.state.money)
+
+
+
+class GebaeudeAusbauTest(unittest.TestCase):
+    """Ausbaustufen 3 bis 5 und Sonderraeume (ab 0.36)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _only_bitweiche = ProjekteTest._only_bitweiche
+    _answer = ProjekteTest._answer
+
+    def _stage(self, db, number, money=300000):
+        game = self._founded(db, money=money)
+        while game.state.firm["stufe"] < number:
+            game.expand()
+        return game
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_rooms(fg.GAME["firma"]), [])
+        rooms = fg.special_rooms()
+        self.assertEqual([item["id"] for item in rooms],
+                         ["lager", "besprechung", "serverraum", "schulung"])
+        self.assertEqual([item["ab_stufe"] for item in rooms], [3, 3, 4, 5])
+        broken = copy.deepcopy(fg.GAME["firma"])
+        broken["sonderraeume"]["raeume"][0]["effekt"] = {"gibtsnicht": 1}
+        broken["sonderraeume"]["raeume"][1]["raum"] = "buero3"
+        self.assertEqual(len(fg._validate_rooms(broken)), 1 + 3)
+
+    def test_raum_erst_ab_stufe(self):
+        with TempDB() as db:
+            game = self._stage(db, 2)
+            status = {item["id"]: item for item in fg.room_status(game.state, self.content)}
+            self.assertIn("Ausbaustufe 3", status["lager"]["problem"])
+            with self.assertRaises(ValueError):
+                game.build_room("lager")
+            # Ein Ereignis ohne die Stufe (z.B. von einem alten Geraet) zaehlt nicht
+            game._log(fg.EV_ROOM, {"raum": "lager", "geld": -8000, "tag": game.state.day})
+            self.assertFalse(game.state.has_room("lager"))
+            game.expand()
+            money = game.state.money
+            game.build_room("lager")
+            self.assertTrue(game.state.has_room("lager"))
+            self.assertEqual(game.state.money, money - 8000)
+            with self.assertRaises(ValueError):
+                game.build_room("lager")
+            with self.assertRaises(ValueError):
+                game.build_room("serverraum")
+            with self.assertRaises(ValueError):
+                game.build_room("gibtsnicht")
+
+    def test_doppelt_zaehlt_einmal(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = self._stage(pc, 3)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other = fg.Game(handy, "Handy", self.content)
+            game.build_room("besprechung")
+            other.build_room("besprechung")
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other.reload()
+            self.assertEqual(list(other.state.rooms), ["besprechung"])
+            self.assertEqual(other.state.money, game.state.money)
+
+    def test_leerstand_im_grundriss(self):
+        with TempDB() as db:
+            game = self._stage(db, 3)
+            rooms = {item["id"]: item for item in
+                     fg.firm_building(game.state, self.content)["raeume"]}
+            self.assertEqual(rooms["firmenlager"]["name"], "Leerstand")
+            self.assertEqual(rooms["firmenlager"]["deko"], [])
+            self.assertIn("Lager", rooms["firmenlager"]["text"])
+            self.assertTrue(rooms["buero3"]["deko"])
+            game.build_room("lager")
+            rooms = {item["id"]: item for item in
+                     fg.firm_building(game.state, self.content)["raeume"]}
+            self.assertEqual(rooms["firmenlager"]["name"], "Lager")
+            self.assertTrue(rooms["firmenlager"]["deko"])
+            self.assertEqual(rooms["besprechung"]["name"], "Leerstand")
+            site = fg.site_content(fg.SITE_OFFICE, game.state, self.content)
+            self.assertEqual(len(site["gebaeude"]["raeume"]), len(rooms))
+
+    def test_nebenkosten(self):
+        with TempDB() as db:
+            game = self._stage(db, 3)
+            self.assertEqual(game.state.firm_day()["nebenkosten"], 130)
+            game.build_room("lager")
+            game.build_room("besprechung")
+            self.assertEqual(game.state.firm_day()["nebenkosten"], 170)
+            money = game.state.money
+            game.end_day()
+            self.assertEqual(game.state.money, money - 170)
+
+    def test_lager_macht_guenstiger(self):
+        with TempDB() as db:
+            self._only_bitweiche(markup=10)
+            game = self._stage(db, 3)
+            before = game.state.inquiries()[0]
+            game.build_room("lager")
+            after = game.state.inquiries()[0]
+            self.assertEqual(after["listenpreis"], before["einkaufspreis"])
+            self.assertEqual(after["einkaufspreis"], fg.discounted(before["einkaufspreis"], 15))
+            # Mit 15 % Zuschlag waere man ohne Lager teurer als Bitweiche (10 %),
+            # mit Lager ist man guenstiger
+            answer = fg.find_solution(fg.inquiry_task(after, 15))
+            payload = game.send_offer(after["id"], 15, answer)
+            self.assertTrue(payload["gewonnen"])
+            self.assertLess(payload["netto"], payload["marktpreis"])
+            tender = game.state.tenders()[0]
+            self.assertEqual(tender["material"], fg.discounted(tender["material_markt"], 15))
+
+    def test_besprechungsraum(self):
+        with TempDB() as db:
+            self._only_bitweiche(markup=30)
+            game = self._stage(db, 3)
+            self.assertEqual(len(game.state.inquiries()), 2)
+            first = game.state.inquiries()
+            game.build_room("besprechung")
+            now = game.state.inquiries()
+            self.assertEqual(len(now), 3)
+            self.assertEqual(now[:2], first)
+            before = game.state.reputation["kundenzufriedenheit"]
+            payload = game.send_offer(now[0]["id"], 5, fg.find_solution(
+                fg.inquiry_task(now[0], 5)))
+            self.assertTrue(payload["gewonnen"])
+            self.assertEqual(payload["reputation"]["kundenzufriedenheit"],
+                             self.content["firma"]["angebote"]["kundenzufriedenheit_gewonnen"]
+                             + 1)
+            self.assertGreater(game.state.reputation["kundenzufriedenheit"], before)
+
+    def test_serverraum(self):
+        with TempDB() as db:
+            game = self._stage(db, 4)
+            self.assertEqual(fg.project_limit(game.state, self.content), 3)
+            game.build_room("serverraum")
+            self.assertEqual(fg.project_limit(game.state, self.content), 4)
+            self.assertEqual(game.state.room_effect("rueckschlag_faktor", 1.0), 0.5)
+            self.assertEqual(game.state.room_effect("anfragen_plus"), 0)
+
+    def test_schulungsraum(self):
+        with TempDB() as db:
+            game = self._stage(db, 5)
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            rules = self.content["firma"]["weiterbildung"]
+            offer = fg.training_offer(game.state, staff_id, "netzwerk", self.content)
+            self.assertEqual((offer["preis"], offer["tage"]), (rules["preis"], rules["tage"]))
+            game.build_room("schulung")
+            offer = fg.training_offer(game.state, staff_id, "netzwerk", self.content)
+            self.assertEqual(offer["preis"], fg.discounted(rules["preis"], 30))
+            self.assertEqual(offer["tage"], rules["tage"] - 1)
+
+    def test_alter_stand_bleibt(self):
+        """Ein Spielstand aus 0.35 (Stufe 2, keine Sonderraeume) rechnet gleich."""
+        with TempDB() as db:
+            game = self._stage(db, 2)
+            self.assertEqual(game.state.firm_day()["nebenkosten"], 90)
+            self.assertEqual(fg.project_limit(game.state, self.content), 2)
+            self.assertEqual(len(game.state.inquiries()), 2)
+            building = fg.firm_building(game.state, self.content)
+            self.assertIs(building, game.state.firm_stage()["gebaeude"])
 
 
 if __name__ == "__main__":
