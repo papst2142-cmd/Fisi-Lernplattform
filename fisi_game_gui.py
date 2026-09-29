@@ -1744,6 +1744,13 @@ class GameView(ScrollArea):
                 NeoButton(body, "Aufträge öffnen",
                           lambda: self.app.views["firma"].open_tab("auftraege"),
                           kind="primary").pack(anchor="w", pady=(8, 0))
+            if not item and state.firm and fg.projects_summary(state):
+                make_label(body, fg.projects_summary(state), font=F["body"],
+                           fg=C["text_soft"], wraplength=980, justify="left",
+                           anchor="w").pack(anchor="w", pady=(10, 0))
+                NeoButton(body, "Projekte öffnen",
+                          lambda: self.app.views["firma"].open_tab("projekte"),
+                          kind="primary").pack(anchor="w", pady=(8, 0))
             if not item and state.founding_ready():
                 make_label(body, fg.FOUNDING_TEASER, font=F["body_bold"], fg=C["green"],
                            wraplength=980, justify="left", anchor="w").pack(anchor="w",
@@ -2546,6 +2553,8 @@ class FirmView(ScrollArea):
         self.saved_answer = {}
         self.show_help = False
         self.assign_for = None       # Kundenticket, fuer das gerade jemand gewaehlt wird
+        self.team_for = None         # Projekt, dessen Team gerade geaendert wird
+        self.details_for = set()     # Projekte/Ausschreibungen mit aufgeklappten Details
 
     @property
     def game(self):
@@ -2587,7 +2596,7 @@ class FirmView(ScrollArea):
     def _choose(self, tab):
         self.tab = tab
         self.training_for = None
-        self.offer_for = self.assign_for = None
+        self.offer_for = self.assign_for = self.team_for = None
         self.render()
 
     def open_tab(self, tab):
@@ -2678,12 +2687,13 @@ class FirmView(ScrollArea):
     def _build_auftraege(self, state):
         rules = fg.offer_rules()
         card = Card(self.content, title="Kundenanfragen", accent=C["pink"],
-                    subtitle="Angebote gegen Bitweiche · Handlungskosten %d %%, "
+                    subtitle="Angebote gegen die Mitbewerber · Handlungskosten %d %%, "
                     "Umsatzsteuer %d %%" % (rules["handlungskosten"], rules["ust"]))
         card.pack(fill="x", pady=(14, 0))
         make_label(card.body, "Wähle deinen Gewinnzuschlag und rechne das Angebot durch. "
-                   "Liegst du nicht über Bitweiche und stimmt die Rechnung, bekommst du den "
-                   "Auftrag. Offene Anfragen verfallen beim Feierabend.", font=F["small"],
+                   "Gegen dich bieten Bitweiche und andere Firmen, wer genau, siehst du erst "
+                   "im Ergebnis. Bist du am günstigsten und stimmt die Rechnung, bekommst du "
+                   "den Auftrag. Offene Anfragen verfallen beim Feierabend.", font=F["small"],
                    fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 6))
         for inquiry in state.inquiries():
@@ -2737,8 +2747,9 @@ class FirmView(ScrollArea):
             self._build_calc(row, inquiry)
         _frame(row, height=10).pack()
 
-    def _build_calc(self, parent, inquiry):
+    def _build_calc(self, parent, inquiry, project=False):
         rules = fg.offer_rules()
+        hints = fg.project_rules().get("hilfe") if project else rules.get("hilfe")
         box = _frame(parent)
         box.pack(fill="x", padx=14, pady=(10, 0))
         make_label(box, "GEWINNZUSCHLAG", font=F["label"], fg=C["muted"]).pack(anchor="w")
@@ -2746,13 +2757,15 @@ class FirmView(ScrollArea):
                   self.markup, self._pick_markup).pack(anchor="w", pady=(4, 10))
         if self.markup is None:
             make_label(box, "Je höher der Zuschlag, desto mehr bleibt hängen, aber desto "
-                       "eher ist Bitweiche günstiger.", font=F["small"], fg=C["muted"],
+                       "eher ist ein Mitbewerber günstiger.", font=F["small"], fg=C["muted"],
                        anchor="w").pack(anchor="w")
             NeoButton(box, "Abbrechen", self._cancel_calc, kind="ghost", height=32,
                       font=F["small_bold"]).pack(anchor="w", pady=(10, 0))
             return
         old = self.saved_answer
-        self.board = FormBoard(box, fg.inquiry_task(inquiry, self.markup))
+        task = fg.project_task(inquiry, self.markup) if project else \
+            fg.inquiry_task(inquiry, self.markup)
+        self.board = FormBoard(box, task)
         self.board.pack(fill="x")
         for key, value in old.items():
             if key in self.board.entries and value:
@@ -2761,14 +2774,15 @@ class FirmView(ScrollArea):
             tip = ctk.CTkFrame(box, fg_color=mix(C["card_alt"], C["accent"], 0.08),
                                corner_radius=10)
             tip.pack(fill="x", pady=(10, 0))
-            for line in rules.get("hilfe") or []:
+            for line in hints or []:
                 make_label(tip, "• " + line, font=F["small"], fg=C["text_soft"],
                            wraplength=920, justify="left", anchor="w").pack(
                     anchor="w", padx=12, pady=(4, 0))
             _frame(tip, height=8).pack()
         buttons = _frame(box)
         buttons.pack(anchor="w", pady=(12, 0))
-        NeoButton(buttons, "Angebot abschicken", lambda: self._send_offer(inquiry),
+        NeoButton(buttons, "Angebot abschicken",
+                  lambda: self._send_offer(inquiry, project),
                   kind="primary", height=34, font=F["small_bold"]).pack(side="left")
         NeoButton(buttons, "Hilfe ausblenden" if self.show_help else "Hilfe",
                   self._toggle_help, kind="ghost", height=34,
@@ -2803,12 +2817,13 @@ class FirmView(ScrollArea):
         self.board = None
         self.render(keep_scroll=True)
 
-    def _send_offer(self, inquiry):
+    def _send_offer(self, inquiry, project=False):
         if self.board is None or not self.board.complete():
             messagebox.showinfo("Hinweis", "Bitte rechne das Angebot zuerst durch.")
             return
+        send = self.game.send_project_offer if project else self.game.send_offer
         try:
-            payload = self.game.send_offer(inquiry["id"], self.markup, self.board.answer)
+            payload = send(inquiry["id"], self.markup, self.board.answer)
         except ValueError as exc:
             self._error(exc)
             return
@@ -2873,6 +2888,205 @@ class FirmView(ScrollArea):
             self._error(exc)
             return
         self.assign_for = None
+        self._changed()
+
+    # -- Projekte (ab 0.35) -------------------------------------------------------
+
+    def _build_projekte(self, state):
+        running = state.running_projects()
+        limit = state.project_limit()
+        card = Card(self.content, title="Laufende Projekte", accent=C["green"],
+                    subtitle="%d von %d · Fortschritt beim Feierabend" % (len(running), limit))
+        card.pack(fill="x", pady=(14, 0))
+        if not running:
+            make_label(card.body, "Gerade läuft kein Projekt. Gib unten ein Angebot für eine "
+                       "Ausschreibung ab. Gewinnst du, stellst du hier das Team zusammen.",
+                       font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
+                       anchor="w").pack(anchor="w")
+        levels = self.game.knowledge()
+        for project in running:
+            self._project_row(card.body, state, project, levels)
+
+        rules = fg.project_rules()
+        box = Card(self.content, title="Ausschreibungen", accent=C["pink"],
+                   subtitle="Angebote gegen die Mitbewerber · alle %d Arbeitstage eine neue"
+                   % rules["abstand_tage"])
+        box.pack(fill="x", pady=(14, 0))
+        make_label(box.body, "Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte "
+                   "× %s) plus Material, dazu Handlungskosten und dein Zuschlag. Bei Projekten "
+                   "bieten meist zwei oder drei Firmen mit. Gewonnen gibt es %d %% Anzahlung, "
+                   "den Rest bei Fertigstellung." % (_euro(rules["stundensatz"]),
+                                                     rules["anzahlung"]),
+                   font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w", pady=(0, 6))
+        problem = fg.project_offer_problem(state)
+        tenders = state.tenders()
+        if not tenders:
+            make_label(box.body, "Gerade liegt keine Ausschreibung vor.", font=F["body"],
+                       fg=C["text_soft"], anchor="w").pack(anchor="w")
+        for project in tenders:
+            self._tender_row(box.body, state, project, problem)
+
+        done = state.done_projects()
+        if done:
+            past = Card(self.content, title="Abgeschlossene Projekte", accent=C["accent"],
+                        subtitle="%d insgesamt" % len(done))
+            past.pack(fill="x", pady=(14, 0))
+            for project in done[-6:][::-1]:
+                last = project["tage"][-1] if project["tage"] else {}
+                make_label(past.body, "• %s · %s · fertig an Arbeitstag %d%s" % (
+                    project["titel"], project["kunde_kurz"], project["fertig"],
+                    " · %d %s zu spät" % (last["verzug"], "Tag" if last["verzug"] == 1
+                                          else "Tage") if last.get("verzug") else
+                    " · pünktlich"), font=F["small"], fg=C["text_soft"], wraplength=980,
+                    justify="left", anchor="w").pack(anchor="w", pady=1)
+
+    def _project_head(self, row, project):
+        stripe = tk.Frame(row, width=6, bg=cat_color(project["cat"]), highlightthickness=0)
+        stripe.pack(side="left", fill="y", padx=(10, 0), pady=12)
+        text = _frame(row)
+        text.pack(side="left", fill="x", expand=True, padx=(12, 12), pady=10)
+        make_label(text, project["titel"], font=F["body_bold"], fg=C["text"],
+                   wraplength=760, justify="left", anchor="w").pack(anchor="w")
+        make_label(text, project["kunde_kurz"], font=F["small_bold"],
+                   fg=cat_color(project["cat"]), anchor="w").pack(anchor="w")
+        return text
+
+    def _project_details(self, parent, project):
+        key = project.get("projekt") or project["id"]
+        if key not in self.details_for:
+            return
+        template = fg.GAME["projektarbeiten"][project["vorlage"]]
+        tip = ctk.CTkFrame(parent, fg_color=mix(C["card_alt"], C["accent"], 0.08),
+                           corner_radius=10)
+        tip.pack(fill="x", pady=(8, 0))
+        for head, body in (("Kunde", template["branche"]),
+                           ("Ausgangssituation", template["ausgangssituation"]),
+                           ("Auftrag", template["auftrag"])):
+            make_label(tip, head.upper(), font=F["label"], fg=C["muted"]).pack(
+                anchor="w", padx=12, pady=(8, 0))
+            make_label(tip, body, font=F["small"], fg=C["text_soft"], wraplength=740,
+                       justify="left", anchor="w").pack(anchor="w", padx=12)
+        make_label(tip, "RAHMENBEDINGUNGEN", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", padx=12, pady=(8, 0))
+        for line in template.get("rahmenbedingungen") or []:
+            make_label(tip, "• " + line, font=F["small"], fg=C["text_soft"], wraplength=740,
+                       justify="left", anchor="w").pack(anchor="w", padx=12)
+        make_label(tip, "Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses Projekt "
+                   "durcharbeiten. Dann arbeitet dein Team %d %% schneller."
+                   % fg.project_rules().get("lernbonus", 0), font=F["tiny"], fg=C["muted"],
+                   wraplength=740, justify="left", anchor="w").pack(anchor="w", padx=12,
+                                                                     pady=(8, 8))
+
+    def _project_row(self, parent, state, project, levels):
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        row.pack(fill="x", pady=5)
+        text = self._project_head(row, project)
+        share = project["stand"] / float(project["aufwand"]) * 100
+        bar = GradientBar(text, "Fortschritt", C["green"], C["accent"], parent_bg=C["card_alt"])
+        bar.pack(fill="x", pady=(8, 0))
+        bar.set(share, "%d %%" % round(share))
+        make_label(text, fg.project_phase_text(project),
+                   font=F["small"], fg=C["text_soft"], wraplength=760, justify="left",
+                   anchor="w").pack(anchor="w", pady=(6, 0))
+        make_label(text, fg.project_status_text(state, project, levels), font=F["small"],
+                   fg=C["red"] if state.day > project["frist_tag"] else C["text_dim"],
+                   wraplength=760, justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
+        make_label(text, fg.project_team_text(state, project), font=F["small_bold"],
+                   fg=C["green"] if project["team"] else C["orange"], anchor="w").pack(
+            anchor="w", pady=(2, 0))
+        buttons = _frame(text)
+        buttons.pack(anchor="w", pady=(8, 0))
+        pid = project["projekt"]
+        editing = self.team_for == pid
+        NeoButton(buttons, "Team fertig" if editing else "Team ändern",
+                  lambda: self._pick_team(None if editing else pid),
+                  kind="ghost" if editing else "primary", height=32,
+                  font=F["small_bold"]).pack(side="left")
+        NeoButton(buttons, "Details ausblenden" if pid in self.details_for else "Details",
+                  lambda: self._toggle_details(pid), kind="ghost", height=32,
+                  font=F["small_bold"]).pack(side="left", padx=(10, 0))
+        if editing:
+            make_label(text, "WER ARBEITET MIT? (antippen zum Aufnehmen oder Herausnehmen)",
+                       font=F["label"], fg=C["muted"]).pack(anchor="w", pady=(10, 2))
+            for option in fg.project_candidates(state, project, levels):
+                line = _frame(text)
+                line.pack(anchor="w", pady=2)
+                button = NeoButton(line, "%s · %s %d · %s Punkte am Tag" % (
+                    option["name"], CATEGORY_SHORT[fg.CAT_NAME[project["cat"]]],
+                    option["wert"], fg._num(option["punkte"])),
+                    lambda a=option["an"]: self._toggle_member(pid, a),
+                    kind="pill", height=30, font=F["small_bold"])
+                button.pack(side="left")
+                button.set_active(option["im_team"])
+                button.set_enabled(option["im_team"] or not option["problem"])
+                if option["problem"]:
+                    make_label(line, option["problem"], font=F["tiny"], fg=C["muted"]).pack(
+                        side="left", padx=(8, 0))
+            make_label(text, "Wer im Projekt ist, macht keine Kundentickets und keine "
+                       "Routineaufträge. Du selbst hast dann nur noch einen Ticketplatz.",
+                       font=F["tiny"], fg=C["muted"], wraplength=760, justify="left",
+                       anchor="w").pack(anchor="w", pady=(4, 0))
+        self._project_details(text, project)
+
+    def _tender_row(self, parent, state, project, problem):
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        row.pack(fill="x", pady=5)
+        text = self._project_head(row, project)
+        make_label(text, project["text"], font=F["small"], fg=C["text_soft"], wraplength=760,
+                   justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+        make_label(text, fg.tender_line(project), font=F["small_bold"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w", pady=(4, 0))
+        result = project.get("ergebnis")
+        make_label(text, fg.tender_status_text(state, project), font=F["small"],
+                   fg=C["text_dim"] if not result else
+                   C["green"] if result.get("gewonnen") else C["red"],
+                   anchor="w").pack(anchor="w", pady=(2, 0))
+        if result:
+            _head, body = fg.offer_result_text(result)
+            make_label(text, body, font=F["small"], fg=C["text_soft"], wraplength=760,
+                       justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            for line in result.get("probleme") or []:
+                make_label(text, "• " + line, font=F["tiny"], fg=C["red"], wraplength=740,
+                           justify="left", anchor="w").pack(anchor="w")
+        buttons = _frame(text)
+        buttons.pack(anchor="w", pady=(8, 0))
+        if not result and self.offer_for != project["id"]:
+            button = NeoButton(buttons, "Angebot kalkulieren",
+                               lambda i=project["id"]: self._calc(i), kind="primary",
+                               height=32, font=F["small_bold"])
+            button.pack(side="left")
+            button.set_enabled(not problem)
+        NeoButton(buttons, "Details ausblenden" if project["id"] in self.details_for
+                  else "Details", lambda i=project["id"]: self._toggle_details(i),
+                  kind="ghost", height=32, font=F["small_bold"]).pack(side="left",
+                                                                     padx=(10, 0))
+        if problem and not result:
+            make_label(text, problem, font=F["tiny"], fg=C["muted"], wraplength=740,
+                       justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
+        self._project_details(text, project)
+        if not result and self.offer_for == project["id"]:
+            self._build_calc(text, project, project=True)
+
+    def _pick_team(self, project_id):
+        self.team_for = project_id
+        self.render(keep_scroll=True)
+
+    def _toggle_details(self, key):
+        if key in self.details_for:
+            self.details_for.discard(key)
+        else:
+            self.details_for.add(key)
+        self.render(keep_scroll=True)
+
+    def _toggle_member(self, project_id, person):
+        try:
+            self.game.toggle_project_member(project_id, person)
+        except ValueError as exc:
+            self._error(exc)
+            return
         self._changed()
 
     # -- Mitarbeiter ------------------------------------------------------------
@@ -3100,6 +3314,21 @@ class FirmView(ScrollArea):
             make_label(row, " · ".join(detail), font=F["tiny"], fg=C["text_dim"],
                        wraplength=960, justify="left", anchor="w").pack(anchor="w", padx=12,
                                                                         pady=(2, 7))
+
+        lost = fg.lost_to(state)
+        rivals = Card(self.content, title="Gegen wen verloren", accent=C["pink"],
+                      subtitle="Anfragen und Projekte, die an Mitbewerber gingen")
+        rivals.pack(fill="x", pady=(14, 0))
+        if not lost:
+            make_label(rivals.body, "Bisher hast du keinen Auftrag an einen Mitbewerber "
+                       "verloren.", font=F["body"], fg=C["text_soft"], anchor="w").pack(
+                anchor="w")
+        for name, number in lost:
+            line = _frame(rivals.body)
+            line.pack(fill="x", pady=1)
+            make_label(line, name, font=F["small_bold"], fg=C["text"]).pack(side="left")
+            make_label(line, "1 Auftrag" if number == 1 else "%d Aufträge" % number,
+                       font=F["small"], fg=C["text_dim"]).pack(side="right")
 
 
 def _euro(value):

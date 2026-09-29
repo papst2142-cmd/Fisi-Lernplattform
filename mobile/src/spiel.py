@@ -1278,6 +1278,8 @@ class GameScreen:
         self.offer_board = None
         self.offer_help = False
         self.assign_for = None       # Kundenticket, fuer das jemand gewaehlt wird
+        self.team_for = None         # Projekt, dessen Team geaendert wird (ab 0.35)
+        self.details_for = set()     # Projekte/Ausschreibungen mit aufgeklappten Details
         self.training_for = None
         self.root = screen_list([])
         self.render()
@@ -1485,6 +1487,11 @@ class GameScreen:
             if not self.room and state.firm and state.firm_open_count():
                 controls.append(ft.Row([ui.GradientButton("Aufträge öffnen", self.open_orders,
                                                           expand=True)]))
+            if not self.room and state.firm and fg.projects_summary(state):
+                controls += [ui.text(fg.projects_summary(state), size=14,
+                                     color=C["text_soft"]),
+                             ft.Row([ui.GradientButton("Projekte öffnen", self.open_projects,
+                                                       expand=True)])]
             if not self.room and state.founding_ready():
                 controls += [ui.text(fg.FOUNDING_TEASER, size=14, color=C["green"],
                                      weight=ft.FontWeight.BOLD),
@@ -1947,8 +1954,13 @@ class GameScreen:
     def _firm_choose(self, tab):
         self.firm_tab = tab
         self.training_for = None
-        self.offer_for = self.assign_for = None
+        self.offer_for = self.assign_for = self.team_for = None
         self._fill_firm()
+
+    def open_projects(self, _event=None):
+        """Aus der Spieluebersicht direkt zu Firma > Projekte."""
+        self.firm_tab = "projekte"
+        self.open_firm()
 
     def open_orders(self, _event=None):
         """Aus der Spieluebersicht direkt zu Firma > Auftraege."""
@@ -1959,10 +1971,11 @@ class GameScreen:
 
     def _firm_auftraege(self, state):
         rules = fg.offer_rules()
-        offers = [ui.text("Wähle deinen Gewinnzuschlag und rechne das Angebot durch. Liegst "
-                          "du nicht über Bitweiche und stimmt die Rechnung, bekommst du den "
-                          "Auftrag. Offene Anfragen verfallen beim Feierabend.", size=12,
-                          color=C["text_dim"])]
+        offers = [ui.text("Wähle deinen Gewinnzuschlag und rechne das Angebot durch. Gegen "
+                          "dich bieten Bitweiche und andere Firmen, wer genau, siehst du erst "
+                          "im Ergebnis. Bist du am günstigsten und stimmt die Rechnung, "
+                          "bekommst du den Auftrag. Offene Anfragen verfallen beim Feierabend.",
+                          size=12, color=C["text_dim"])]
         for inquiry in state.inquiries():
             offers.append(self._inquiry_box(inquiry))
         tickets = state.customer_tickets()
@@ -2004,8 +2017,9 @@ class GameScreen:
                 height=38, expand=True)]))
         return self._person_box(parts)
 
-    def _offer_calc(self, inquiry):
+    def _offer_calc(self, inquiry, project=False):
         rules = fg.offer_rules()
+        hints = fg.project_rules().get("hilfe") if project else rules.get("hilfe")
         values = rules["zuschlaege"]
         controls = [ui.label("Gewinnzuschlag"),
                     ui.PillGroup([(value, "%d %%" % value) for value in values],
@@ -2015,11 +2029,13 @@ class GameScreen:
                                    height=38, expand=True)
         if self.markup is None:
             controls += [ui.text("Je höher der Zuschlag, desto mehr bleibt hängen, aber desto "
-                                 "eher ist Bitweiche günstiger.", size=12, color=C["muted"]),
+                                 "eher ist ein Mitbewerber günstiger.", size=12,
+                                 color=C["muted"]),
                          ft.Row([cancel])]
             return controls
         old = self.offer_board.answer if self.offer_board is not None else {}
-        self.offer_board = FormBoard(fg.inquiry_task(inquiry, self.markup))
+        self.offer_board = FormBoard(fg.project_task(inquiry, self.markup) if project
+                                     else fg.inquiry_task(inquiry, self.markup))
         for key, value in old.items():
             if key in self.offer_board.inputs:
                 self.offer_board.inputs[key].value = value
@@ -2027,12 +2043,12 @@ class GameScreen:
         if self.offer_help:
             controls.append(ft.Container(
                 content=ft.Column([ui.text("• " + line, size=12, color=C["text_soft"])
-                                   for line in rules.get("hilfe") or []], spacing=4,
+                                   for line in hints or []], spacing=4,
                                   tight=True),
                 bgcolor=mix(C["card_alt"], C["accent"], 0.08), border_radius=10, padding=10))
         controls += [
             ft.Row([ui.GradientButton("Angebot abschicken",
-                                      lambda _e: self._send_offer(inquiry), height=40,
+                                      lambda _e: self._send_offer(inquiry, project), height=40,
                                       expand=True)]),
             ft.Row([ui.GradientButton("Hilfe ausblenden" if self.offer_help else "Hilfe",
                                       lambda _e: self._toggle_offer_help(), kind="ghost",
@@ -2059,13 +2075,13 @@ class GameScreen:
         self.offer_board = None
         self._fill_firm()
 
-    def _send_offer(self, inquiry):
+    def _send_offer(self, inquiry, project=False):
         if self.offer_board is None or not self.offer_board.complete():
             self.toast("Bitte rechne das Angebot zuerst durch.", C["yellow"])
             return
+        send = self.game.send_project_offer if project else self.game.send_offer
         try:
-            payload = self.game.send_offer(inquiry["id"], self.markup,
-                                           self.offer_board.answer)
+            payload = send(inquiry["id"], self.markup, self.offer_board.answer)
         except ValueError as exc:
             self.toast(str(exc), C["yellow"])
             return
@@ -2119,6 +2135,169 @@ class GameScreen:
             self.toast(str(exc), C["yellow"])
             return
         self.assign_for = None
+        self._firm_changed()
+
+    # -- Projekte (ab 0.35) -----------------------------------------------------
+
+    def _firm_projekte(self, state):
+        running = state.running_projects()
+        levels = self.game.knowledge()
+        rows = []
+        if not running:
+            rows.append(ui.text("Gerade läuft kein Projekt. Gib unten ein Angebot für eine "
+                                "Ausschreibung ab. Gewinnst du, stellst du hier das Team "
+                                "zusammen.", size=14, color=C["text_soft"]))
+        for project in running:
+            rows.append(self._project_box(state, project, levels))
+        rules = fg.project_rules()
+        tenders = [ui.text("Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte × %s) "
+                           "plus Material, dazu Handlungskosten und dein Zuschlag. Bei "
+                           "Projekten bieten meist zwei oder drei Firmen mit. Gewonnen gibt es "
+                           "%d %% Anzahlung, den Rest bei Fertigstellung."
+                           % (euro(rules["stundensatz"]), rules["anzahlung"]), size=12,
+                           color=C["text_dim"])]
+        problem = fg.project_offer_problem(state)
+        items = state.tenders()
+        if not items:
+            tenders.append(ui.text("Gerade liegt keine Ausschreibung vor.", size=14,
+                                   color=C["text_soft"]))
+        for project in items:
+            tenders.append(self._tender_box(state, project, problem))
+        result = [ui.Card("Laufende Projekte", rows, accent=C["green"],
+                          subtitle="%d von %d" % (len(running), state.project_limit())),
+                  ui.Card("Ausschreibungen", tenders, accent=C["pink"],
+                          subtitle="alle %d Arbeitstage eine neue" % rules["abstand_tage"])]
+        done = state.done_projects()
+        if done:
+            lines = []
+            for project in done[-6:][::-1]:
+                last = project["tage"][-1] if project["tage"] else {}
+                lines.append(ui.text("• %s · %s · fertig an Arbeitstag %d%s" % (
+                    project["titel"], project["kunde_kurz"], project["fertig"],
+                    " · %d %s zu spät" % (last["verzug"], "Tag" if last["verzug"] == 1
+                                          else "Tage") if last.get("verzug") else
+                    " · pünktlich"), size=12, color=C["text_soft"]))
+            result.append(ui.Card("Abgeschlossene Projekte", lines, accent=C["accent"],
+                                  subtitle="%d insgesamt" % len(done)))
+        return result
+
+    def _project_title(self, project):
+        return ft.Row([ft.Container(width=6, height=38, border_radius=3,
+                                    bgcolor=cat_color(project["cat"])),
+                       ft.Column([ui.text(project["titel"], size=15, weight=ft.FontWeight.BOLD),
+                                  ui.text(project["kunde_kurz"], size=12,
+                                          weight=ft.FontWeight.BOLD,
+                                          color=cat_color(project["cat"]))],
+                                 spacing=2, tight=True, expand=True)], spacing=10)
+
+    def _project_details(self, project):
+        key = project.get("projekt") or project["id"]
+        if key not in self.details_for:
+            return []
+        template = fg.GAME["projektarbeiten"][project["vorlage"]]
+        lines = []
+        for head, body in (("Kunde", template["branche"]),
+                           ("Ausgangssituation", template["ausgangssituation"]),
+                           ("Auftrag", template["auftrag"])):
+            lines += [ui.label(head), ui.text(body, size=12, color=C["text_soft"])]
+        lines.append(ui.label("Rahmenbedingungen"))
+        lines += [ui.text("• " + line, size=12, color=C["text_soft"])
+                  for line in template.get("rahmenbedingungen") or []]
+        lines.append(ui.text("Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses "
+                             "Projekt durcharbeiten. Dann arbeitet dein Team %d %% schneller."
+                             % fg.project_rules().get("lernbonus", 0), size=11,
+                             color=C["muted"]))
+        return [ft.Container(content=ft.Column(lines, spacing=4, tight=True),
+                             bgcolor=mix(C["card_alt"], C["accent"], 0.08), border_radius=10,
+                             padding=10)]
+
+    def _details_button(self, key):
+        return ui.GradientButton("Details ausblenden" if key in self.details_for else "Details",
+                                 lambda _e, k=key: self._toggle_details(k), kind="ghost",
+                                 height=38, expand=True)
+
+    def _project_box(self, state, project, levels):
+        pid = project["projekt"]
+        share = project["stand"] / float(project["aufwand"]) * 100
+        bar = ui.GradientBar("Fortschritt", C["green"], C["accent"])
+        bar.set(share, "%d %%" % round(share))
+        parts = [self._project_title(project), bar,
+                 ui.text(fg.project_phase_text(project), size=12, color=C["text_soft"]),
+                 ui.text(fg.project_status_text(state, project, levels), size=12,
+                         color=C["red"] if state.day > project["frist_tag"] else C["text_dim"]),
+                 ui.text(fg.project_team_text(state, project), size=13,
+                         weight=ft.FontWeight.BOLD,
+                         color=C["green"] if project["team"] else C["orange"])]
+        editing = self.team_for == pid
+        parts.append(ft.Row([ui.GradientButton(
+            "Team fertig" if editing else "Team ändern",
+            lambda _e: self._pick_team(None if editing else pid),
+            kind="ghost" if editing else "primary", height=38, expand=True),
+            self._details_button(pid)], spacing=8))
+        if editing:
+            parts.append(ui.label("Wer arbeitet mit? (antippen)"))
+            for option in fg.project_candidates(state, project, levels):
+                button = ui.GradientButton("%s · %d · %s Punkte am Tag" % (
+                    option["name"], option["wert"], fg._num(option["punkte"])),
+                    lambda _e, a=option["an"]: self._toggle_member(pid, a),
+                    kind="success" if option["im_team"] else "ghost", height=38)
+                button.set_enabled(option["im_team"] or not option["problem"])
+                parts.append(button)
+                if option["problem"]:
+                    parts.append(ui.text(option["problem"], size=11, color=C["muted"]))
+            parts.append(ui.text("Wer im Projekt ist, macht keine Kundentickets und keine "
+                                 "Routineaufträge. Du selbst hast dann nur noch einen "
+                                 "Ticketplatz.", size=11, color=C["muted"]))
+        parts += self._project_details(project)
+        return self._person_box(parts)
+
+    def _tender_box(self, state, project, problem):
+        result = project.get("ergebnis")
+        parts = [self._project_title(project),
+                 ui.text(project["text"], size=13, color=C["text_soft"]),
+                 ui.text(fg.tender_line(project), size=12, weight=ft.FontWeight.BOLD,
+                         color=C["text_dim"]),
+                 ui.text(fg.tender_status_text(state, project), size=12,
+                         color=C["text_dim"] if not result else
+                         C["green"] if result.get("gewonnen") else C["red"])]
+        if result:
+            _head, text = fg.offer_result_text(result)
+            parts.append(ui.text(text, size=12, color=C["text_soft"]))
+            parts += [ui.text("• " + line, size=11, color=C["red"])
+                      for line in result.get("probleme") or []]
+            parts.append(ft.Row([self._details_button(project["id"])]))
+        elif self.offer_for == project["id"]:
+            parts += self._project_details(project)
+            parts += self._offer_calc(project, project=True)
+            return self._person_box(parts)
+        else:
+            button = ui.GradientButton("Angebot kalkulieren",
+                                       lambda _e, i=project["id"]: self._calc(i), height=38,
+                                       expand=True)
+            button.set_enabled(not problem)
+            parts.append(ft.Row([button, self._details_button(project["id"])], spacing=8))
+            if problem:
+                parts.append(ui.text(problem, size=11, color=C["muted"]))
+        parts += self._project_details(project)
+        return self._person_box(parts)
+
+    def _pick_team(self, project_id):
+        self.team_for = project_id
+        self._fill_firm()
+
+    def _toggle_details(self, key):
+        if key in self.details_for:
+            self.details_for.discard(key)
+        else:
+            self.details_for.add(key)
+        self._fill_firm()
+
+    def _toggle_member(self, project_id, person):
+        try:
+            self.game.toggle_project_member(project_id, person)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
         self._firm_changed()
 
     def _firm_changed(self):
@@ -2375,6 +2554,15 @@ class GameScreen:
             rows.append(ui.text("Noch nichts gebucht.", size=14, color=C["text_soft"]))
         result.append(ui.Card("Einnahmen und Ausgaben", rows, accent=C["green"],
                               subtitle="letzte 7 Arbeitstage"))
+        lost = fg.lost_to(state)
+        lines = [ft.Row([ui.text(name, size=13, weight=ft.FontWeight.BOLD, expand=True),
+                         ui.text("1 Auftrag" if number == 1 else "%d Aufträge" % number,
+                                 size=12, color=C["text_dim"])]) for name, number in lost]
+        if not lines:
+            lines.append(ui.text("Bisher hast du keinen Auftrag an einen Mitbewerber verloren.",
+                                 size=14, color=C["text_soft"]))
+        result.append(ui.Card("Gegen wen verloren", lines, accent=C["pink"],
+                              subtitle="an Mitbewerber"))
         return result
 
     # -- Wohnung einrichten -------------------------------------------------

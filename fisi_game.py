@@ -32,7 +32,8 @@ import os
 import uuid
 
 from fisi_core import (
-    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, ipv4_values, raid_values, search_content,
+    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, ipv4_values, raid_values,
+    search_content,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 
@@ -86,8 +87,12 @@ EV_EXPAND = "gebaeude_erweitert"
 EV_OFFER_WON = "angebot_gewonnen"
 EV_OFFER_LOST = "angebot_verloren"
 EV_DELEGATED = "ticket_delegiert"
+EV_PROJECT_WON = "projekt_gewonnen"
+EV_PROJECT_LOST = "projekt_verloren"
+EV_PROJECT_TEAM = "projekt_team"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
-               EV_OFFER_LOST, EV_DELEGATED)
+               EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
+               EV_PROJECT_TEAM)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -252,6 +257,8 @@ def load_game_content(folder=None):
         "balancing": read("balancing"),
         "hardware": read("hardware"),
         "firma": read("firma") if os.path.exists(os.path.join(folder, "firma.json")) else {},
+        # Die 50 Testprojekte aus dem Lernbereich (Kundenprojekte ab 0.35)
+        "projektarbeiten": PROJEKTARBEITEN,
     }
 
 
@@ -1630,13 +1637,16 @@ def _money(value):
 
 def offer_values(data):
     """Zuschlagskalkulation (Angebot) als Liste (schluessel, name, wert)."""
-    purchase = _money(data["menge"] * data["einkaufspreis"])
+    if data.get("positionen"):
+        purchase = _money(sum(item["menge"] * item["preis"] for item in data["positionen"]))
+    else:
+        purchase = _money(data["menge"] * data["einkaufspreis"])
     overhead = _money(purchase * data["handlungskosten"] / 100.0)
     cost = _money(purchase + overhead)
     profit = _money(cost * data["gewinn"] / 100.0)
     net = _money(cost + profit)
     tax = _money(net * data["ust"] / 100.0)
-    return [("einkauf", "Einkaufspreis gesamt", purchase),
+    return [("einkauf", data.get("einkauf_name") or "Einkaufspreis gesamt", purchase),
             ("handlungskosten", "Handlungskosten (%s %%)" % _num(data["handlungskosten"]),
              overhead),
             ("selbstkosten", "Selbstkosten", cost),
@@ -1796,6 +1806,18 @@ def form_given(task, content=None):
     if kind == "raid":
         return ["%s mit %d Festplatten zu je %s %s" % (
             data["level"], data["platten"], _num(data["groesse"]), data.get("einheit", "TB"))]
+    if kind == "angebot" and data.get("positionen"):
+        lines = []
+        for item in data["positionen"]:
+            if item["menge"] == 1 and not item.get("einheit"):
+                lines.append("%s: %s" % (item["text"], _euro(item["preis"])))
+            else:
+                lines.append("%s: %d %s × %s" % (item["text"], item["menge"],
+                                                  item.get("einheit", "Stück"),
+                                                  _euro(item["preis"])))
+        lines.append("Handlungskosten %s %% · Gewinn %s %% · Umsatzsteuer %s %%" % (
+            _num(data["handlungskosten"]), _num(data["gewinn"]), _num(data["ust"])))
+        return lines
     if kind == "angebot":
         return ["%d × %s zu je %s (Einkauf)" % (data["menge"], data.get("artikel", "Artikel"),
                                                 _euro(data["einkaufspreis"])),
@@ -3046,6 +3068,9 @@ class GameState:
         self.offers = {}           # anfrage -> Ergebnis des Angebots (ab 0.34)
         self.delegations = {}      # kundenticket -> wer es uebernimmt (ab 0.34)
         self.ticket_results = {}   # kundenticket -> Ergebnis aus dem Feierabend
+        self.project_offers = {}   # projekt -> Ergebnis des Angebots (ab 0.35)
+        self.projects = {}         # projekt -> gewonnenes Projekt mit Stand und Team
+        self.project_days = set()  # (projekt, tag) schon verbuchter Projekttage
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3129,6 +3154,8 @@ class GameState:
                     self.money += int(item.get("geld", 0))
                     self._book(today, BOOK_TICKETS, item.get("geld", 0))
                     self._apply_reputation(item.get("reputation") or {})
+                for item in firm.get("projekte") or []:
+                    self._apply_project_day(item, today)
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
 
@@ -3190,6 +3217,44 @@ class GameState:
                      if item.get("tag") == data.get("tag") and item.get("an") == data.get("an")]
             if len(taken) < ticket_limit(data.get("an"), self.content):
                 self.delegations[data["ticket"]] = dict(data)
+        elif kind in (EV_PROJECT_WON, EV_PROJECT_LOST) and data.get("projekt") and \
+                data["projekt"] not in self.project_offers:
+            won = kind == EV_PROJECT_WON
+            self.project_offers[data["projekt"]] = dict(data, gewonnen=won)
+            if won:
+                self.projects[data["projekt"]] = dict(data, stand=0.0, team=[], fertig=None,
+                                                      tage=[])
+                self.money += int(data.get("anzahlung", 0)) - int(data.get("material", 0))
+                self._book(day, BOOK_PROJECTS, data.get("anzahlung", 0))
+                self._book(day, BOOK_MATERIAL, -int(data.get("material", 0)))
+        elif kind == EV_PROJECT_TEAM and data.get("projekt") in self.projects:
+            project = self.projects[data["projekt"]]
+            if project["fertig"]:
+                return
+            team = [person for person in data.get("team") or [] if person]
+            # Jede Person arbeitet nur in einem Projekt mit
+            for other in self.projects.values():
+                if other is not project:
+                    other["team"] = [person for person in other["team"] if person not in team]
+            project["team"] = team
+
+    def _apply_project_day(self, item, day):
+        """Ein Projekt-Arbeitstag aus dem Feierabend: Punkte dazu, bei
+        Fertigstellung die Restzahlung."""
+        key = (item.get("projekt"), int(item.get("tag", day) or day))
+        project = self.projects.get(item.get("projekt"))
+        if project is None or key in self.project_days or project["fertig"]:
+            return
+        self.project_days.add(key)
+        project["stand"] = min(float(project["aufwand"]),
+                               project["stand"] + float(item.get("punkte", 0)))
+        project["tage"].append(dict(item))
+        if item.get("fertig"):
+            project["fertig"] = key[1]
+            project["team"] = []
+            self.money += int(item.get("geld", 0))
+            self._book(day, BOOK_PROJECTS, item.get("geld", 0))
+            self._apply_reputation(item.get("reputation") or {})
 
     def _apply_reputation(self, delta):
         for key, value in delta.items():
@@ -3305,8 +3370,10 @@ class GameState:
         for index, (staff_id, data) in enumerate(self.staff.items()):
             item = dict(data, werte=self.staff_values(staff_id))
             item["weiterbildung"] = self.training_of(staff_id)
-            item["umsatz"] = 0 if item["weiterbildung"] else staff_revenue(item["werte"],
-                                                                           self.content)
+            item["projekt"] = self.project_of(staff_id)
+            # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
+            item["umsatz"] = 0 if item["weiterbildung"] or item["projekt"] else \
+                staff_revenue(item["werte"], self.content)
             if index < len(places):
                 item["platz"] = places[index]
             result.append(item)
@@ -3347,6 +3414,30 @@ class GameState:
             return 0
         return sum(1 for item in self.inquiries() if not item.get("ergebnis")) + \
             sum(1 for item in self.customer_tickets() if not item.get("an"))
+
+    # -- Kundenprojekte (ab 0.35) ------------------------------------------
+
+    def running_projects(self):
+        """Gewonnene, noch nicht fertige Projekte (aelteste zuerst)."""
+        return [item for item in self.projects.values() if not item["fertig"]]
+
+    def done_projects(self):
+        return [item for item in self.projects.values() if item["fertig"]]
+
+    def project_of(self, person):
+        """Kennung des laufenden Projekts, in dem eine Person mitarbeitet."""
+        for item in self.running_projects():
+            if person in item["team"]:
+                return item["projekt"]
+        return None
+
+    def project_limit(self):
+        return project_limit(self, self.content)
+
+    def tenders(self):
+        """Projektausschreibungen, die heute vorliegen (mit Ergebnis, falls
+        schon ein Angebot abgegeben wurde)."""
+        return project_tenders(self, self.day, self.content)
 
     # -- Lager ------------------------------------------------------------
 
@@ -3674,6 +3765,10 @@ class Game:
             outcomes = ticket_outcomes(self.state, self.content)
             if outcomes:
                 payload["firma"]["tickets"] = outcomes
+            days = project_outcomes(self.state, self.knowledge(), self.learned_projects(),
+                                    self.content)
+            if days:
+                payload["firma"]["projekte"] = days
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -3786,6 +3881,61 @@ class Game:
         self._log(EV_DELEGATED, payload)
         return payload
 
+    def learned_projects(self):
+        """Nummern der Testprojekte, die im Lernbereich bearbeitet wurden."""
+        try:
+            return set(self.db.completed_projects())
+        except (AttributeError, TypeError):
+            return set()
+
+    def send_project_offer(self, project_id, markup, answer):
+        """Gibt ein Angebot fuer eine Projektausschreibung ab. Das Ergebnis
+        gegen die Mitbewerber steht sofort fest."""
+        self._firm_required()
+        project = next((item for item in self.state.tenders()
+                        if item["id"] == project_id), None)
+        if project is None or project.get("ergebnis"):
+            raise ValueError("Diese Ausschreibung liegt nicht (mehr) vor.")
+        problem = project_offer_problem(self.state, self.content)
+        if problem:
+            raise ValueError(problem)
+        if markup not in offer_rules(self.content)["zuschlaege"]:
+            raise ValueError("Bitte wähle einen Gewinnzuschlag.")
+        payload = project_offer_result(self.state, project, markup, answer, self.state.day,
+                                       self.content)
+        self._log(EV_PROJECT_WON if payload["gewonnen"] else EV_PROJECT_LOST, payload)
+        return payload
+
+    def set_project_team(self, project_id, team):
+        """Stellt das Team eines laufenden Projekts neu zusammen."""
+        self._firm_required()
+        project = self.state.projects.get(project_id)
+        if project is None or project["fertig"]:
+            raise ValueError("Dieses Projekt läuft nicht (mehr).")
+        team = [person for index, person in enumerate(team or []) if person not in team[:index]]
+        options = {item["an"]: item for item in project_candidates(
+            self.state, project, self.knowledge(), self.content)}
+        for person in team:
+            if person not in options:
+                raise ValueError("Diese Person arbeitet nicht bei dir.")
+            if options[person]["problem"] and person not in project["team"]:
+                raise ValueError(options[person]["problem"])
+        payload = {"projekt": project_id, "tag": self.state.day, "team": team}
+        self._log(EV_PROJECT_TEAM, payload)
+        return payload
+
+    def toggle_project_member(self, project_id, person):
+        """Nimmt eine Person ins Team auf oder wieder heraus."""
+        project = self.state.projects.get(project_id)
+        if project is None:
+            raise ValueError("Dieses Projekt läuft nicht (mehr).")
+        team = list(project["team"])
+        if person in team:
+            team.remove(person)
+        else:
+            team.append(person)
+        return self.set_project_team(project_id, team)
+
     def reset(self):
         ok = self.db.reset_game()
         self.reload()
@@ -3892,14 +4042,18 @@ BOOK_TRAINING = "Weiterbildung"
 BOOK_BUILDING = "Ausbau"
 BOOK_OFFERS = "Angebote"
 BOOK_TICKETS = "Kundentickets"
+BOOK_PROJECTS = "Projekte"
+BOOK_MATERIAL = "Projektmaterial"
 
 SELF = "ich"                       # Kundenticket uebernimmt die Spielfigur selbst
 INQUIRY_PREFIX = "anfrage:"        # anfrage:<tag>:<nummer>
 TICKET_PREFIX = "kundenticket:"    # kundenticket:<tag>:<vorlage>
+PROJECT_PREFIX = "projekt:"        # projekt:<nummer der ausschreibung>
 
 
 # Reiter im Unterpunkt "Firma" (PC und Handy gleich beschriftet)
-FIRM_TABS = [("auftraege", "Aufträge"), ("mitarbeiter", "Mitarbeiter"),
+FIRM_TABS = [("auftraege", "Aufträge"), ("projekte", "Projekte"),
+             ("mitarbeiter", "Mitarbeiter"),
              ("bewerbungen", "Bewerbungen"),
              ("gebaeude", "Gebäude"), ("finanzen", "Finanzen")]
 
@@ -4086,8 +4240,11 @@ def firm_people(state, content=None):
         training = item.get("weiterbildung")
         task = next((ticket for ticket in state.customer_tickets()
                      if ticket.get("an") == item["id"]), None)
+        project = state.projects.get(item.get("projekt")) if item.get("projekt") else None
         result.append({"id": item["id"], "name": item["name"], "rolle": item["rolle"],
                        "kundenticket": task,
+                       "projekt_text": project_office_text(state, project, content)
+                       if project else "",
                        "raum": room_id, "platz": [float(x), float(y)],
                        "aussehen": item.get("aussehen"), "macke": item.get("macke", ""),
                        "mitarbeiter": True, "umsatz": item["umsatz"],
@@ -4163,6 +4320,9 @@ def firm_day_text(numbers):
     lines = [ticket_result_text(item) for item in numbers.get("tickets") or []]
     if lines:
         text += "\n\nKundentickets:\n" + "\n".join("• " + line for line in lines)
+    lines = [project_day_text(item) for item in numbers.get("projekte") or []]
+    if lines:
+        text += "\n\nProjekte:\n" + "\n".join("• " + line for line in lines)
     return text
 
 
@@ -4213,7 +4373,9 @@ def inquiries_for_day(state, day, content=None):
         low, high = article["preis"]
         price = int(round((low + _dice(seed, day, salt + "preis") * (high - low)) / 5.0) * 5)
         count = _between(seed, day, salt + "menge", *article["menge"])
-        market, mood = _market_markup(rules, rules["arten"][customer["art"]], seed, day, salt)
+        bids, absent = competitor_bids("anfrage", customer["art"], None, seed, day, salt,
+                                       content)
+        cheapest = min(bids, key=lambda bid: bid["zuschlag"])
         delivery = _between(seed, day, salt + "lieferzeit", rules["lieferzeit"]["von"],
                             rules["lieferzeit"]["bis"])
         text = _pick(rules["texte"], seed, day, salt + "text").format(
@@ -4222,7 +4384,9 @@ def inquiries_for_day(state, day, content=None):
         inquiry_id = "%s%d:%d" % (INQUIRY_PREFIX, day, number + 1)
         result.append({"id": inquiry_id, "tag": day, "kunde": customer,
                        "artikel": article["name"], "menge": count, "einkaufspreis": price,
-                       "lieferzeit": delivery, "markt": market, "laune": mood,
+                       "lieferzeit": delivery, "markt": cheapest["zuschlag"],
+                       "laune": cheapest["laune"], "konkurrent": cheapest["id"],
+                       "bieter": bids, "ausgefallen": absent,
                        "text": "%s\n\n%s" % (text, customer["satz"]),
                        "ergebnis": state.offers.get(inquiry_id)})
     return result
@@ -4288,63 +4452,112 @@ def offer_result(state, inquiry, markup, answer, content=None):
     content = content or GAME
     rules = offer_rules(content)
     task = inquiry_task(inquiry, markup, content)
+    payload = _judge_offer(state, task, inquiry, answer, content)
+    won = payload["gewonnen"]
+    payload.update({"anfrage": inquiry["id"], "tag": inquiry["tag"],
+                    "kunde": inquiry["kunde"]["id"], "artikel": inquiry["artikel"],
+                    "menge": inquiry["menge"], "zuschlag": markup,
+                    "geld": int(round(payload["gewinn"])) if won else 0,
+                    "reputation": {"kundenzufriedenheit":
+                                   rules["kundenzufriedenheit_gewonnen"]} if won else {}})
+    return payload
+
+
+def _judge_offer(state, task, offer, answer, content=None):
+    """Gemeinsame Bewertung fuer Anfragen und Projekte: Rechnung richtig und
+    Preis nicht hoeher als das guenstigste Angebot der Mitbewerber (plus
+    Vorteil durch guten Ruf)."""
     problems = form_problems(task, answer, content)
-    numbers = offer_numbers(inquiry, markup, content)
-    market = market_price(inquiry, content)
+    numbers = {key: value for key, _label, value in offer_values(task["daten"])}
+    cost = numbers["selbstkosten"]
+    bids = [dict(bid, netto=_money(cost * (1 + bid["zuschlag"] / 100.0)))
+            for bid in offer.get("bieter") or []]
+    market = _money(cost * (1 + offer["markt"] / 100.0))
     advantage = offer_advantage(state, content)
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
     won = right and cheap
-    payload = {"anfrage": inquiry["id"], "tag": inquiry["tag"],
-               "kunde": inquiry["kunde"]["id"], "artikel": inquiry["artikel"],
-               "menge": inquiry["menge"], "zuschlag": markup,
-               "antwort": dict(answer or {}), "richtig": right,
-               "selbstkosten": numbers["selbstkosten"], "netto": numbers["netto"],
-               "marktpreis": market, "markt_zuschlag": inquiry["markt"],
-               "laune": inquiry.get("laune", ""),
+    payload = {"zuschlag": task["daten"]["gewinn"], "antwort": dict(answer or {}),
+               "richtig": right, "selbstkosten": cost, "netto": numbers["netto"],
+               "gewinn": numbers["gewinn"],
+               "marktpreis": market, "markt_zuschlag": offer["markt"],
+               "laune": offer.get("laune", ""), "konkurrent": offer.get("konkurrent", ""),
+               "bieter": bids, "ausgefallen": list(offer.get("ausgefallen") or []),
                "vorteil": advantage, "gewonnen": won,
-               "grund": "" if won else ("rechenfehler" if not right else "preis"),
-               "geld": int(round(numbers["gewinn"])) if won else 0,
-               "reputation": {"kundenzufriedenheit": rules["kundenzufriedenheit_gewonnen"]}
-               if won else {}}
+               "grund": "" if won else ("rechenfehler" if not right else "preis")}
     if problems:
         payload["probleme"] = problems
     return payload
 
 
 def offer_result_text(payload, content=None):
-    """(Ueberschrift, Text) nach dem Abschicken eines Angebots."""
+    """(Ueberschrift, Text) nach dem Abschicken eines Angebots (Anfrage oder
+    Projekt). Aeltere Angebote aus 0.34 liefen nur gegen Bitweiche."""
     head, text = _offer_result_text(payload, content)
-    mood = (offer_rules(content).get("laune") or {}).get(payload.get("laune") or "")
+    rival = competitor(payload.get("konkurrent") or BITWEICHE, content)
+    mood = competitor_mood(rival, payload.get("laune") or "", content)
     if mood:
         text += " " + mood["text"]
+    for rival_id in payload.get("ausgefallen") or []:
+        mood = competitor_mood(competitor(rival_id, content), "ausgelastet", content)
+        if mood:
+            text += " " + mood["text"]
+    others = bidders_text(payload, content)
+    if others:
+        text += "\n\n" + others
     return head, text
 
 
+def bidders_text(payload, content=None):
+    """ "Mitgeboten haben: Bitweiche 2.410,00 € (12 %), CloudKontor Nord ..." """
+    bids = sorted([bid for bid in payload.get("bieter") or [] if "netto" in bid],
+                  key=lambda bid: bid["netto"])
+    if len(bids) < 2:
+        return ""
+    return "Mitgeboten haben: %s." % ", ".join(
+        "%s %s (%d %%)" % (competitor(bid["id"], content)["kurz"], _euro(bid["netto"]),
+                           bid["zuschlag"]) for bid in bids)
+
+
 def _offer_result_text(payload, content=None):
-    customer = firm_customer(payload.get("kunde"), content) or {"name": "Der Kunde"}
+    if payload.get("projekt"):
+        customer = {"name": payload.get("kunde_kurz") or "Der Kunde"}
+        thing, won_head = "das Projekt", "Projekt gewonnen"
+    else:
+        customer = firm_customer(payload.get("kunde"), content) or {"name": "Der Kunde"}
+        thing, won_head = "den Auftrag", "Auftrag gewonnen"
+    rival = competitor(payload.get("konkurrent") or BITWEICHE, content)["kurz"]
     own = _euro(payload["netto"])
     market = _euro(payload["marktpreis"])
     if payload.get("gewonnen"):
-        head = "Auftrag gewonnen"
-        text = ("%s nimmt dein Angebot an. Du lagst netto bei %s, Bitweiche bei %s "
-                "(Zuschlag %d %%). Gewinn für deine Firma: +%s." % (
-                    customer["name"], own, market, payload["markt_zuschlag"],
-                    _whole_euro(payload["geld"])))
+        if payload.get("projekt"):
+            text = ("%s gibt dir den Zuschlag. Du lagst netto bei %s, am günstigsten unter "
+                    "den anderen war %s mit %s (Zuschlag %d %%). Anzahlung: +%s, "
+                    "Material und Lizenzen: -%s. Stell jetzt ein Team zusammen." % (
+                        customer["name"], own, rival, market, payload["markt_zuschlag"],
+                        _whole_euro(payload.get("anzahlung", 0)),
+                        _whole_euro(payload.get("material", 0))))
+        else:
+            text = ("%s nimmt dein Angebot an. Du lagst netto bei %s, %s bei %s "
+                    "(Zuschlag %d %%). Gewinn für deine Firma: +%s." % (
+                        customer["name"], own, rival, market, payload["markt_zuschlag"],
+                        _whole_euro(payload["geld"])))
         if payload.get("vorteil") and payload["netto"] > payload["marktpreis"]:
-            text += (" Knapp über Bitweiche, aber dein guter Ruf bei den Kunden hat "
-                     "den Ausschlag gegeben.")
-        return head, text
+            text += (" Knapp über %s, aber dein guter Ruf bei den Kunden hat "
+                     "den Ausschlag gegeben." % rival)
+        return won_head, text
     if payload.get("grund") == "rechenfehler":
-        head = "Auftrag verloren: Fehler im Angebot"
-        text = ("%s hat einen Fehler in deiner Kalkulation gefunden und bestellt bei "
-                "Bitweiche (netto %s). Richtig gerechnet wären es mit %d %% Zuschlag "
-                "netto %s gewesen." % (customer["name"], market, payload["zuschlag"], own))
+        head = "%s verloren: Fehler im Angebot" % ("Projekt" if payload.get("projekt")
+                                                   else "Auftrag")
+        text = ("%s hat einen Fehler in deiner Kalkulation gefunden und gibt %s an "
+                "%s (netto %s). Richtig gerechnet wären es mit %d %% Zuschlag "
+                "netto %s gewesen." % (customer["name"], thing, rival, market,
+                                       payload["zuschlag"], own))
         return head, text
-    head = "Auftrag an Bitweiche verloren"
-    text = ("Die Rechnung stimmt, aber Bitweiche war günstiger: netto %s (Zuschlag %d %%) "
-            "gegen deine %s (Zuschlag %d %%)." % (market, payload["markt_zuschlag"], own,
-                                                  payload["zuschlag"]))
+    head = "%s an %s verloren" % ("Projekt" if payload.get("projekt") else "Auftrag", rival)
+    text = ("Die Rechnung stimmt, aber %s war günstiger: netto %s (Zuschlag %d %%) "
+            "gegen deine %s (Zuschlag %d %%)." % (rival, market, payload["markt_zuschlag"],
+                                                  own, payload["zuschlag"]))
     if payload.get("vorteil"):
         text += " Selbst mit dem Bonus für deinen guten Ruf (%d %%) hat es nicht gereicht." \
             % payload["vorteil"]
@@ -4361,12 +4574,18 @@ def inquiry_status_text(inquiry):
         return "Gewonnen · Gewinn +%s" % _whole_euro(result.get("geld", 0))
     if result.get("grund") == "rechenfehler":
         return "Verloren · Fehler im Angebot"
-    return "Verloren · Bitweiche war günstiger"
+    return "Verloren · %s war günstiger" % competitor(result.get("konkurrent") or BITWEICHE)["kurz"]
 
 
 def ticket_limit(person, content=None):
     rules = ticket_rules(content)
     return int(rules["spieler_max"] if person == SELF else rules["mitarbeiter_max"])
+
+
+def own_ticket_limit(state, content=None):
+    """Kundentickets fuer die Spielfigur heute: einer weniger, wenn sie in
+    einem Projekt mitarbeitet."""
+    return max(1, ticket_limit(SELF, content) - (1 if state.project_of(SELF) else 0))
 
 
 def ticket_chance(value, need, content=None):
@@ -4418,16 +4637,24 @@ def ticket_candidates(state, ticket, levels, content=None):
     result = []
     own = int(round((levels or {}).get(cat, 0)))
     name = (state.profile or {}).get("name") or "Ich"
+    limit = own_ticket_limit(state, content)
+    problem = ""
+    if len(state.delegated_to(SELF)) >= limit:
+        problem = "Du hast heute schon %s übernommen." % (
+            "ein Kundenticket" if limit == 1 else "%d Kundentickets" % limit)
+        if state.project_of(SELF):
+            problem += " Mehr geht nicht, weil du im Projekt mitarbeitest."
     result.append({"an": SELF, "name": "Ich selbst (%s)" % name, "wert": own,
                    "chance": ticket_chance(own, ticket["anforderung"], content),
-                   "problem": "" if len(state.delegated_to(SELF)) < ticket_limit(SELF, content)
-                   else "Du hast heute schon %d Kundentickets übernommen."
-                   % ticket_limit(SELF, content)})
+                   "problem": problem})
     for item in state.staff_list():
         value = int(item["werte"].get(cat, 0))
         problem = ""
         if item.get("weiterbildung"):
             problem = "%s ist gerade in einer Weiterbildung." % item["name"]
+        elif item.get("projekt"):
+            problem = "%s arbeitet im Projekt „%s“ mit." % (
+                item["name"], state.projects[item["projekt"]]["titel"])
         elif len(state.delegated_to(item["id"])) >= ticket_limit(item["id"], content):
             problem = "%s hat heute schon ein Kundenticket." % item["name"]
         result.append({"an": item["id"], "name": item["name"], "wert": value,
@@ -4488,6 +4715,512 @@ def firm_orders_summary(state):
         parts.append("1 Kundenticket" if len(tickets) == 1 else
                      "%d Kundentickets" % len(tickets))
     return "Heute offen: %s" % " und ".join(parts) if parts else ""
+
+
+# -- Mitbewerber (ab 0.35) --------------------------------------------------
+#
+# Neben Bitweiche bieten fuenf weitere Firmen mit. Wer bei einer Anfrage oder
+# einem Projekt mitbietet und mit welchem Zuschlag, wird wie alles andere fest
+# gewuerfelt. Das guenstigste Angebot gewinnt.
+
+BITWEICHE = "bitweiche"
+_BITWEICHE_DEFAULT = {"id": BITWEICHE, "name": "Bitweiche IT-Service GmbH",
+                      "kurz": "Bitweiche", "text": "", "kundenart": True,
+                      "gewicht": {"anfrage": 1, "projekt": 1}}
+
+
+def competitor_rules(content=None):
+    return firm_rules(content).get("mitbewerber") or {}
+
+
+def competitors(content=None):
+    return list(competitor_rules(content).get("firmen") or [_BITWEICHE_DEFAULT])
+
+
+def competitor(competitor_id, content=None):
+    for item in competitors(content):
+        if item["id"] == competitor_id:
+            return item
+    return dict(_BITWEICHE_DEFAULT) if competitor_id == BITWEICHE else \
+        {"id": competitor_id, "name": competitor_id, "kurz": competitor_id}
+
+
+def competitor_mood(rival, mood, content=None):
+    """Laune einer Firma ("kampfpreis"/"ausgelastet") mit Text - bei Bitweiche
+    aus angebote.laune (wie in 0.34)."""
+    if not mood or not rival:
+        return None
+    moods = (offer_rules(content).get("laune") or {}) if rival.get("kundenart") \
+        else (rival.get("laune") or {})
+    return moods.get(mood)
+
+
+def _weighted_order(items, weights, seed, day, salt):
+    """Reihenfolge ohne Zuruecklegen, schwere Eintraege eher vorne."""
+    keyed = []
+    for item, weight in zip(items, weights):
+        if weight <= 0:
+            continue
+        roll = max(1e-9, _dice(seed, day, salt + "|" + item["id"]))
+        keyed.append((-math.log(roll) / weight, item))
+    return [item for _key, item in sorted(keyed, key=lambda pair: pair[0])]
+
+
+def _rival_markup(rival, rules, art, cat, seed, day, salt):
+    """(Zuschlag, Laune) einer Firma - None, wenn sie gar nicht bietet."""
+    if rival.get("kundenart"):
+        # Bitweiche wie in 0.34 (gleiche Wuerfel, damit nichts springt)
+        return _market_markup(rules, rules["arten"][art], seed, day, salt)
+    salt = "%s%s-" % (salt, rival["id"])
+    low, high = int(rival.get("von", 5)), int(rival.get("bis", 25))
+    if rival.get("gleichmaessig"):
+        middle = _dice(seed, day, salt + "markt")
+    else:
+        middle = (_dice(seed, day, salt + "markt") + _dice(seed, day, salt + "markt2")) / 2.0
+    markup = low + min(high - low, int(middle * (high - low + 1)))
+    if cat:
+        markup += int((rival.get("fach") or {}).get(cat, 0))
+    moods = rival.get("laune") or {}
+    roll = _dice(seed, day, salt + "laune")
+    fight, busy = moods.get("kampfpreis"), moods.get("ausgelastet")
+    if fight and roll < fight["chance"]:
+        return _between(seed, day, salt + "kampf", fight["von"], fight["bis"]), "kampfpreis"
+    if busy and roll > 1 - busy["chance"]:
+        if busy.get("bietet_nicht"):
+            return None
+        markup += _between(seed, day, salt + "teuer", busy.get("plus_von", 10),
+                           busy.get("plus_bis", 20))
+        return max(0, markup), "ausgelastet"
+    return max(0, markup), ""
+
+
+def competitor_bids(kind, art, cat, seed, day, salt, content=None):
+    """Wer mitbietet: ([{"id", "zuschlag", "laune"}], [ausgefallene ids]).
+    kind ist "anfrage" oder "projekt"."""
+    content = content or GAME
+    rules = offer_rules(content)
+    setup = competitor_rules(content)
+    rivals = competitors(content)
+    if kind == "projekt":
+        span = setup.get("projekt_bieter") or {"von": 2, "bis": 3}
+        count = _between(seed, day, salt + "bieterzahl", span["von"], span["bis"])
+    else:
+        single = (setup.get("anfrage_bieter") or {}).get("eins", 1.0)
+        count = 1 if _dice(seed, day, salt + "bieterzahl") < single else 2
+    order = _weighted_order(rivals, [(item.get("gewicht") or {}).get(kind, 1)
+                                     for item in rivals], seed, day, salt + "bieter")
+    bids, absent = [], []
+    for rival in order[:max(1, count)]:
+        result = _rival_markup(rival, rules, art, cat, seed, day, salt)
+        if result is None:
+            absent.append(rival["id"])
+            continue
+        bids.append({"id": rival["id"], "zuschlag": int(result[0]), "laune": result[1]})
+    if not bids:
+        # Niemand da? Bitweiche bietet immer
+        rival = competitor(BITWEICHE, content)
+        markup, mood = _rival_markup(rival, rules, art, cat, seed, day, salt)
+        bids.append({"id": BITWEICHE, "zuschlag": int(markup), "laune": mood})
+    return bids, absent
+
+
+def lost_to(state, content=None):
+    """Gegen wen Angebote verloren gingen: [(name, anzahl)], meiste zuerst."""
+    counts = {}
+    for item in list(state.offers.values()) + list(state.project_offers.values()):
+        if item.get("gewonnen"):
+            continue
+        rival = item.get("konkurrent") or BITWEICHE
+        counts[rival] = counts.get(rival, 0) + 1
+    order = [item["id"] for item in competitors(content)]
+    return [(competitor(rival, content)["name"], number) for rival, number in
+            sorted(counts.items(), key=lambda pair: (-pair[1], order.index(pair[0])
+                                                    if pair[0] in order else 99))]
+
+
+# -- Kundenprojekte (ab 0.35) -----------------------------------------------
+#
+# Die 50 Testprojekte aus dem Lernbereich kommen als Ausschreibungen. Wie bei
+# den Anfragen gibt man ein Angebot ab und bietet gegen die Mitbewerber. Ein
+# gewonnenes Projekt arbeitet ein Team ueber mehrere Arbeitstage ab.
+
+def project_rules(content=None):
+    return firm_rules(content).get("projekte") or {}
+
+
+def project_limit(state, content=None):
+    """Wie viele Projekte gleichzeitig laufen koennen (je Gebaeudestufe)."""
+    table = project_rules(content).get("laufend") or {"1": 1}
+    number = state.firm["stufe"] if state.firm else 1
+    best = 1
+    for key, value in table.items():
+        if int(key) <= number:
+            best = max(best, int(value))
+    return best
+
+
+def customer_short(branche):
+    """Kurzer Kundenname aus der Branche des Testprojekts: der Name in
+    Klammern ("ModeWelt GmbH") oder die Branche bis zum ersten Komma."""
+    if "(" in branche and ")" in branche:
+        inner = branche[branche.index("(") + 1:branche.index(")")].split(",")[0].strip()
+        if inner and inner[0].isupper():
+            return inner
+    return branche.split(",")[0].split(" mit ")[0].strip()
+
+
+def project_for_slot(state, slot, content=None):
+    """Die Ausschreibung Nummer slot (0, 1, 2 ...) seit der Gruendung."""
+    content = content or GAME
+    rules = project_rules(content)
+    templates = content.get("projektarbeiten") or []
+    seed = state.firm_seed
+    order = sorted(range(len(templates)), key=lambda index: _dice(seed, 0, "projekt|%d"
+                                                                  % index))
+    index = order[slot % len(order)]
+    template = templates[index]
+    level = rules["stufen"][template["schwierigkeit"]]
+    start = int(state.firm["tag"]) + slot * int(rules["abstand_tage"])
+    salt = "projekt%d-" % slot
+    low, high = level["material"]
+    material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
+                   * 10)
+    cat = CAT_KEY.get(template["cat"], template["cat"])
+    bids, absent = competitor_bids("projekt", "normal", cat, seed, start, salt, content)
+    cheapest = min(bids, key=lambda bid: bid["zuschlag"])
+    project_id = "%s%d" % (PROJECT_PREFIX, slot + 1)
+    customer = customer_short(template["branche"])
+    text = _pick(rules["texte"], seed, start, salt + "text").format(
+        kunde=customer, auftrag=template["auftrag"])
+    return {"id": project_id, "slot": slot, "vorlage": index, "folge": slot // len(order),
+            "titel": template["title"], "kunde": template["branche"],
+            "kunde_kurz": customer, "cat": cat,
+            "schwierigkeit": template["schwierigkeit"], "aufwand": int(level["aufwand"]),
+            "anforderung": int(level["anforderung"]), "material": material,
+            "frist": int(level["frist"]), "von_tag": start,
+            "bis_tag": start + int(rules["gilt_tage"]) - 1,
+            "markt": cheapest["zuschlag"], "laune": cheapest["laune"],
+            "konkurrent": cheapest["id"], "bieter": bids, "ausgefallen": absent,
+            "text": text, "ausgangssituation": template["ausgangssituation"],
+            "auftrag": template["auftrag"],
+            "rahmenbedingungen": list(template.get("rahmenbedingungen") or []),
+            "ergebnis": state.project_offers.get(project_id)}
+
+
+def project_tenders(state, day, content=None):
+    """Ausschreibungen, die an einem Arbeitstag vorliegen."""
+    content = content or GAME
+    if not state.firm or not content.get("projektarbeiten") or not project_rules(content):
+        return []
+    rules = project_rules(content)
+    gap, valid = int(rules["abstand_tage"]), int(rules["gilt_tage"])
+    since = day - int(state.firm["tag"])
+    if since < 0:
+        return []
+    first = max(0, (since - valid) // gap)
+    result = []
+    for slot in range(first, since // gap + 1):
+        item = project_for_slot(state, slot, content)
+        if item["von_tag"] <= day <= item["bis_tag"]:
+            result.append(item)
+    return result[-int(rules.get("max_offen", 2)):]
+
+
+def project_task(project, markup, content=None):
+    """Das Projekt als Formular-Aufgabe (Zuschlagskalkulation mit zwei
+    Positionen: Projektarbeit und Material)."""
+    rules = project_rules(content)
+    offers = offer_rules(content)
+    return {"id": project["id"], "typ": "formular", "art": "angebot",
+            "titel": "Angebot für „%s“" % project["titel"],
+            "ticket": [project["text"]],
+            "frage": "Wähle deinen Gewinnzuschlag und rechne das Angebot durch.",
+            "daten": {"positionen": [
+                {"text": "Projektarbeit", "menge": project["aufwand"], "einheit": "Punkte",
+                 "preis": rules["stundensatz"]},
+                {"text": "Material und Lizenzen", "menge": 1, "preis": project["material"]}],
+                "einkauf_name": "Einzelkosten gesamt",
+                "handlungskosten": offers["handlungskosten"], "gewinn": markup,
+                "ust": offers["ust"]},
+            "hilfe": list(rules.get("hilfe") or [])}
+
+
+def project_offer_problem(state, content=None):
+    """Warum man gerade auf kein Projekt bieten kann (leer = geht)."""
+    limit = project_limit(state, content)
+    if len(state.running_projects()) >= limit:
+        return ("Deine Firma schafft höchstens %s gleichzeitig. Bring zuerst ein "
+                "laufendes Projekt zu Ende." % ("1 Projekt" if limit == 1 else
+                                              "%d Projekte" % limit))
+    return ""
+
+
+def project_offer_result(state, project, markup, answer, day, content=None):
+    """Bewertet ein Projektangebot wie eine Anfrage. Gewonnen: Anzahlung
+    kommt, Material wird sofort bezahlt."""
+    content = content or GAME
+    rules = project_rules(content)
+    task = project_task(project, markup, content)
+    payload = _judge_offer(state, task, project, answer, content)
+    won = payload["gewonnen"]
+    down = int(round(payload["netto"] * rules["anzahlung"] / 100.0)) if won else 0
+    payload.update({"projekt": project["id"], "vorlage": project["vorlage"],
+                    "folge": project["folge"], "titel": project["titel"],
+                    "kunde": project["kunde"], "kunde_kurz": project["kunde_kurz"],
+                    "cat": project["cat"], "schwierigkeit": project["schwierigkeit"],
+                    "tag": day, "aufwand": project["aufwand"],
+                    "anforderung": project["anforderung"],
+                    "material": project["material"] if won else 0,
+                    "anzahlung": down, "frist": project["frist"],
+                    "frist_tag": day + project["frist"] - 1,
+                    "geld": down - project["material"] if won else 0})
+    return payload
+
+
+def project_points(value, content=None):
+    """Tagesleistung einer Person im Projekt (Punkte, eine Nachkommastelle)."""
+    rule = project_rules(content).get("leistung") or {"basis": 2, "je_punkt": 0.1}
+    return round(rule["basis"] + rule["je_punkt"] * float(value), 1)
+
+
+def project_value(state, person, cat, levels):
+    """Wert einer Person im Fachbereich (Spielfigur: echter Wissensstand)."""
+    if person == SELF:
+        return int(round((levels or {}).get(cat, 0)))
+    return int(state.staff_values(person).get(cat, 0))
+
+
+def person_name(state, person):
+    if person == SELF:
+        return "Ich selbst (%s)" % ((state.profile or {}).get("name") or "Ich")
+    return (state.staff.get(person) or {}).get("name", person)
+
+
+def project_candidates(state, project, levels, content=None):
+    """Wer im Projektteam mitarbeiten kann: [{"an", "name", "wert", "punkte",
+    "im_team", "problem"}] - zuerst die Spielfigur, dann die Mitarbeiter."""
+    content = content or GAME
+    cat = project["cat"]
+    result = []
+    own_tickets = len(state.delegated_to(SELF))
+    elsewhere = state.project_of(SELF)
+    problem = ""
+    if elsewhere and elsewhere != project["projekt"]:
+        problem = "Du arbeitest schon im Projekt „%s“ mit." % state.projects[elsewhere]["titel"]
+    elif SELF not in project["team"] and own_tickets >= ticket_limit(SELF, content):
+        problem = "Du hast heute schon %d Kundentickets übernommen." % own_tickets
+    value = project_value(state, SELF, cat, levels)
+    result.append({"an": SELF, "name": person_name(state, SELF), "wert": value,
+                   "punkte": project_points(value, content),
+                   "im_team": SELF in project["team"], "problem": problem})
+    for item in state.staff_list():
+        value = int(item["werte"].get(cat, 0))
+        problem = ""
+        if item.get("weiterbildung"):
+            problem = "%s ist gerade in einer Weiterbildung." % item["name"]
+        elif item.get("projekt") and item["projekt"] != project["projekt"]:
+            problem = "%s arbeitet schon im Projekt „%s“ mit." % (
+                item["name"], state.projects[item["projekt"]]["titel"])
+        elif item["id"] not in project["team"] and state.delegated_to(item["id"]):
+            problem = "%s hat heute schon ein Kundenticket." % item["name"]
+        result.append({"an": item["id"], "name": item["name"], "wert": value,
+                       "punkte": project_points(value, content),
+                       "im_team": item["id"] in project["team"], "problem": problem})
+    return result
+
+
+def project_team_points(state, project, levels, content=None):
+    """Punkte, die das Team an einem Arbeitstag schafft (ohne Zufall)."""
+    total = 0.0
+    for person in project["team"]:
+        if person != SELF and (person not in state.staff or state.training_of(person)):
+            continue
+        total += project_points(project_value(state, person, project["cat"], levels), content)
+    return round(total, 1)
+
+
+def project_phases(project, content=None):
+    """[(name, fertig, aktuell)] der fuenf Phasen je Fachbereich."""
+    names = (project_rules(content).get("phasen") or {}).get(project["cat"]) or \
+        ["Planung", "Umsetzung", "Abschluss"]
+    share = min(1.0, project["stand"] / float(project["aufwand"])) if project["aufwand"] else 1
+    done = len(names) if project.get("fertig") or share >= 1 else int(share * len(names))
+    return [(name, index < done, index == done) for index, name in enumerate(names)]
+
+
+def project_phase_text(project, content=None):
+    """ "Erledigt: Ist-Analyse, Planung · Jetzt: Beschaffung · Danach: ..." """
+    phases = project_phases(project, content)
+    parts = []
+    done = [name for name, finished, _now in phases if finished]
+    now = [name for name, _finished, current in phases if current]
+    later = [name for name, finished, current in phases if not finished and not current]
+    if done:
+        parts.append("Erledigt: " + ", ".join(done))
+    if now:
+        parts.append("Jetzt: " + now[0])
+    if later:
+        parts.append("Danach: " + ", ".join(later))
+    return " · ".join(parts)
+
+
+def project_phase_name(project, content=None):
+    current = [name for name, _done, now in project_phases(project, content) if now]
+    return current[0] if current else project_phases(project, content)[-1][0]
+
+
+def project_status_text(state, project, levels=None, content=None):
+    """ "Tag 2 von 5 · 21 von 35 Punkten · schafft heute etwa 12 Punkte" """
+    day = state.day - int(project["tag"]) + 1
+    text = "Tag %d von %d · %s von %d Punkten" % (
+        day, project["frist"], _num(round(project["stand"], 1)), project["aufwand"])
+    if day > project["frist"]:
+        text = "Frist überschritten (%d von %d Tagen) · %s von %d Punkten" % (
+            day, project["frist"], _num(round(project["stand"], 1)), project["aufwand"])
+    if not project["team"]:
+        return text + " · noch kein Team"
+    if levels is not None:
+        points = project_team_points(state, project, levels, content)
+        if points > 0:
+            left = max(0.0, project["aufwand"] - project["stand"])
+            days = int(math.ceil(left / points)) if points else 0
+            text += " · Team schafft etwa %s Punkte am Tag, %s" % (
+                _num(points), "heute fertig" if days <= 1 else
+                "noch etwa %d Arbeitstage" % days)
+    return text
+
+
+def project_team_text(state, project):
+    if not project["team"]:
+        return "Noch kein Team"
+    names = ["du" if person == SELF else short_name({"name": person_name(state, person)})
+             for person in project["team"]]
+    return "Team: " + ", ".join(names)
+
+
+def project_outcomes(state, levels, learned, content=None):
+    """Ergebnisse der Projekt-Arbeitstage fuer den Feierabend. learned ist
+    die Menge der im Lernbereich bearbeiteten Testprojekte (Nummern)."""
+    content = content or GAME
+    rules = project_rules(content)
+    result = []
+    for project in state.running_projects():
+        if (project["projekt"], state.day) in state.project_days or not project["team"]:
+            continue
+        shares = []
+        best = 0
+        for person in project["team"]:
+            if person != SELF and (person not in state.staff or state.training_of(person)):
+                continue
+            value = project_value(state, person, project["cat"], levels)
+            best = max(best, value)
+            shares.append({"an": person, "name": person_name(state, person),
+                           "punkte": project_points(value, content)})
+        if not shares:
+            continue
+        factor = 1.0
+        setback = ""
+        bonus = project.get("vorlage") in (learned or set())
+        if bonus:
+            factor *= 1 + rules.get("lernbonus", 0) / 100.0
+        rule = rules.get("rueckschlag") or {}
+        if best < project["anforderung"] and \
+                _dice(state.firm_seed, state.day, "rueck|" + project["projekt"]) < \
+                rule.get("chance", 0):
+            factor *= rule.get("faktor", 0.5)
+            texts = (rules.get("rueckschlaege") or {}).get(project["cat"]) or \
+                ["Es gab Probleme, heute ging es nur langsam voran."]
+            setback = _pick(texts, state.firm_seed, state.day, "rueck-text|" +
+                            project["projekt"])
+        points = round(sum(item["punkte"] for item in shares) * factor, 1)
+        stand = min(float(project["aufwand"]), project["stand"] + points)
+        item = {"projekt": project["projekt"], "titel": project["titel"],
+                "kunde": project.get("kunde_kurz", ""), "tag": state.day,
+                "beitraege": shares, "rueckschlag": setback, "lernbonus": bonus,
+                "punkte": points, "stand": round(stand, 1), "aufwand": project["aufwand"],
+                "fertig": stand >= project["aufwand"] - 0.001, "geld": 0, "verzug": 0,
+                "abzug": 0, "reputation": {}}
+        if item["fertig"]:
+            late = max(0, state.day - int(project["frist_tag"]))
+            delay = rules.get("verzug") or {}
+            cut = min(int(delay.get("max_prozent", 30)),
+                      late * int(delay.get("prozent_je_tag", 5)))
+            rest = project["netto"] - project["anzahlung"] - project["netto"] * cut / 100.0
+            item.update({"verzug": late, "abzug": cut, "geld": int(round(rest))})
+            if late:
+                item["reputation"] = {"kundenzufriedenheit": max(
+                    -20, late * int(delay.get("kundenzufriedenheit_je_tag", -2)))}
+            else:
+                item["reputation"] = {key: value for key, value in
+                                      (rules.get("puenktlich") or {}).items() if value}
+        result.append(item)
+    return result
+
+
+def project_day_text(item):
+    """Zeile fuer den Feierabend zu einem Projekt-Arbeitstag."""
+    text = "„%s“: +%s Punkte, jetzt %s von %d" % (item["titel"], _num(item["punkte"]),
+                                                 _num(item["stand"]), item["aufwand"])
+    if item.get("lernbonus"):
+        text += " (mit Lernbonus)"
+    if item.get("rueckschlag"):
+        text += ". Rückschlag: %s" % item["rueckschlag"]
+    if item.get("fertig"):
+        if item.get("verzug"):
+            text += ". Fertig, aber %d %s zu spät: Restzahlung +%s (%d %% Abzug)" % (
+                item["verzug"], "Tag" if item["verzug"] == 1 else "Tage",
+                _whole_euro(item["geld"]), item["abzug"])
+        else:
+            text += ". Pünktlich fertig! Restzahlung +%s" % _whole_euro(item["geld"])
+    return text
+
+
+def tender_line(project):
+    """Zeile unter einer Ausschreibung."""
+    return "%s · %s · %d Punkte Aufwand · Frist %d Arbeitstage" % (
+        CATEGORY_SHORT[CAT_NAME[project["cat"]]], project["schwierigkeit"],
+        project["aufwand"], project["frist"])
+
+
+def tender_status_text(state, project):
+    """Stand einer Ausschreibung: noch offen (bis wann) oder Ergebnis."""
+    result = project.get("ergebnis")
+    if not result:
+        left = project["bis_tag"] - state.day
+        return "Angebot möglich %s" % ("nur noch heute" if left <= 0 else
+                                       "noch %d Arbeitstage" % (left + 1))
+    if result.get("gewonnen"):
+        return "Gewonnen · läuft unter „Laufende Projekte“"
+    if result.get("grund") == "rechenfehler":
+        return "Verloren · Fehler im Angebot"
+    return "Verloren · %s war günstiger" % competitor(result.get("konkurrent")
+                                                     or BITWEICHE)["kurz"]
+
+
+def project_office_text(state, project, content=None):
+    """Satz eines Mitarbeiters im Buero, der im Projekt mitarbeitet."""
+    texts = project_rules(content).get("buero") or ["Ich arbeite am Projekt „{titel}“."]
+    return _pick(texts, state.firm_seed, state.day, "buero|" + project["projekt"]).format(
+        phase=project_phase_name(project, content), titel=project["titel"],
+        kunde=project.get("kunde_kurz", ""))
+
+
+def projects_summary(state):
+    """Zeile fuer die Uebersicht: laufende Projekte und offene Ausschreibungen."""
+    parts = []
+    running = state.running_projects()
+    if running:
+        without = [item for item in running if not item["team"]]
+        parts.append("%s läuft" % ("1 Projekt" if len(running) == 1 else
+                                   "%d Projekte" % len(running)))
+        if without:
+            parts[-1] += " (%s ohne Team)" % ("eins" if len(without) == 1 else
+                                              "%d" % len(without))
+    tenders = [item for item in state.tenders() if not item.get("ergebnis")]
+    if tenders:
+        parts.append("1 Ausschreibung" if len(tenders) == 1 else
+                     "%d Ausschreibungen" % len(tenders))
+    return "Projekte: %s" % " · ".join(parts) if parts else ""
 
 
 def _validate_orders(rules):
@@ -4555,6 +5288,73 @@ def _validate_orders(rules):
     return problems
 
 
+def _validate_projects(rules, content):
+    """firma.json ab 0.35: Mitbewerber und Kundenprojekte."""
+    problems = []
+    for key in ("mitbewerber", "projekte"):
+        if key not in rules:
+            problems.append("Spiel-Firma: Abschnitt '%s' fehlt" % key)
+    if problems:
+        return problems
+    rivals = rules["mitbewerber"].get("firmen") or []
+    ids = [item.get("id") for item in rivals]
+    if len(set(ids)) != len(ids) or BITWEICHE not in ids:
+        problems.append("Spiel-Firma: Mitbewerber doppelt oder Bitweiche fehlt")
+    for item in rivals:
+        where = "Spiel-Firma Mitbewerber '%s'" % item.get("id")
+        for key in ("name", "kurz", "text"):
+            if not item.get(key):
+                problems.append("%s: %s fehlt" % (where, key))
+        if not item.get("kundenart") and not 0 <= item.get("von", -1) <= item.get("bis", -1) \
+                <= 100:
+            problems.append("%s: Spanne ungueltig" % where)
+        for cat in item.get("fach") or {}:
+            if cat not in CAT_ORDER:
+                problems.append("%s: unbekannter Fachbereich '%s'" % (where, cat))
+        for key, mood in (item.get("laune") or {}).items():
+            if not 0 <= mood.get("chance", 0) <= 0.5 or not mood.get("text"):
+                problems.append("%s: Laune '%s' ungueltig" % (where, key))
+        weights = item.get("gewicht") or {}
+        if weights.get("anfrage", 0) <= 0 and weights.get("projekt", 0) <= 0:
+            problems.append("%s: bietet nie mit" % where)
+    span = rules["mitbewerber"].get("projekt_bieter") or {}
+    if not 1 <= span.get("von", 0) <= span.get("bis", 0) <= len(rivals):
+        problems.append("Spiel-Firma: projekt_bieter ungueltig")
+    projects = rules["projekte"]
+    for key in ("abstand_tage", "gilt_tage", "stundensatz", "anzahlung", "stufen", "phasen",
+                "rueckschlaege", "texte", "buero"):
+        if key not in projects:
+            problems.append("Spiel-Firma: projekte.%s fehlt" % key)
+    if problems:
+        return problems
+    for template in content.get("projektarbeiten") or []:
+        if template.get("schwierigkeit") not in projects["stufen"]:
+            problems.append("Spiel-Firma: keine Projektstufe fuer '%s'"
+                            % template.get("schwierigkeit"))
+        cat = CAT_KEY.get(template.get("cat"))
+        if len(projects["phasen"].get(cat) or []) < 2 or \
+                not projects["rueckschlaege"].get(cat):
+            problems.append("Spiel-Firma: Phasen oder Rueckschlaege fuer '%s' fehlen"
+                            % template.get("cat"))
+    for key, level in projects["stufen"].items():
+        low, high = level["material"]
+        if not 0 < level["aufwand"] or not 0 <= low <= high or level["frist"] < 1:
+            problems.append("Spiel-Firma: Projektstufe '%s' ungueltig" % key)
+    for text in projects["texte"]:
+        try:
+            text.format(kunde="", auftrag="")
+        except (KeyError, IndexError, ValueError):
+            problems.append("Spiel-Firma: Ausschreibungstext mit unbekanntem Platzhalter")
+    for text in projects["buero"]:
+        try:
+            text.format(phase="", titel="", kunde="")
+        except (KeyError, IndexError, ValueError):
+            problems.append("Spiel-Firma: Buerosatz mit unbekanntem Platzhalter")
+    if projects["gilt_tage"] < projects["abstand_tage"]:
+        problems.append("Spiel-Firma: Ausschreibungen gelten kuerzer als ihr Abstand")
+    return problems
+
+
 def _validate_firm(content):
     """firma.json: Gebaeudestufen mit Arbeitsplaetzen, Formeln, Wechsel."""
     problems = []
@@ -4595,6 +5395,7 @@ def _validate_firm(content):
     if not 0 <= rule["werte_min"] <= rule["werte_max"] <= 90:
         problems.append("Spiel-Firma: Wertebereich der Bewerber ungueltig")
     problems += _validate_orders(rules)
+    problems += _validate_projects(rules, content)
     ids = {person["id"] for person in content["kollegen"]}
     for item in rules.get("wechsel", []):
         if item.get("kollege") not in ids:
@@ -5725,6 +6526,10 @@ def office_message(position, person, quests, content=None, state=None):
             return ("%s hat einen Auftrag für dich" % first,
                     "„%s“ · Priorität %s%s" % (tasks[0]["titel"], tasks[0]["prioritaet"],
                                                more))
+        if person.get("mitarbeiter") and person.get("projekt_text"):
+            return ("%s · %s" % (person["name"], person["rolle"]),
+                    "%s Heute keine Routineaufträge, der Tag gehört dem Projekt."
+                    % person["projekt_text"])
         if person.get("mitarbeiter") and person.get("kundenticket"):
             ticket = person["kundenticket"]
             return ("%s · %s" % (person["name"], person["rolle"]),

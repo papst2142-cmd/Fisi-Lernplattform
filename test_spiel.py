@@ -2087,10 +2087,13 @@ class AuftraegeTest(unittest.TestCase):
             seen = {}
             for day in range(state.day, state.day + 400):
                 for item in fg.inquiries_for_day(state, day, self.content):
-                    seen.setdefault(item["laune"], []).append(item["markt"])
                     kind = rules["arten"][item["kunde"]["art"]]
-                    if not item["laune"]:
-                        self.assertTrue(kind["von"] <= item["markt"] <= kind["bis"])
+                    for bid in item["bieter"]:
+                        if bid["id"] != fg.BITWEICHE:
+                            continue
+                        seen.setdefault(bid["laune"], []).append(bid["zuschlag"])
+                        if not bid["laune"]:
+                            self.assertTrue(kind["von"] <= bid["zuschlag"] <= kind["bis"])
             self.assertEqual(set(seen), {"", "kampfpreis", "ausgelastet"})
             fight = rules["laune"]["kampfpreis"]
             self.assertTrue(all(fight["von"] <= value <= fight["bis"]
@@ -2109,6 +2112,9 @@ class AuftraegeTest(unittest.TestCase):
         rules["laune"] = {}
         for kind in rules["arten"].values():
             kind["von"] = kind["bis"] = 15
+        # Nur Bitweiche bietet mit (wie in 0.34)
+        rivals = self.content["firma"]["mitbewerber"]["firmen"]
+        rivals[:] = [item for item in rivals if item["id"] == fg.BITWEICHE]
         with TempDB() as db:
             game = self._founded(db)
             low, high = game.state.inquiries()
@@ -2240,6 +2246,281 @@ class AuftraegeTest(unittest.TestCase):
             game.end_day()
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
             self.assertEqual(other.reload().ticket_results, game.state.ticket_results)
+
+
+class ProjekteTest(unittest.TestCase):
+    """Kundenprojekte und Mitbewerber (ab 0.35)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    def _only_bitweiche(self, markup=15):
+        """Nur Bitweiche bietet, immer mit demselben Zuschlag."""
+        rules = self.content["firma"]["angebote"]
+        rules["laune"] = {}
+        for kind in rules["arten"].values():
+            kind["von"] = kind["bis"] = markup
+        rivals = self.content["firma"]["mitbewerber"]
+        rivals["firmen"] = [item for item in rivals["firmen"] if item["id"] == fg.BITWEICHE]
+        rivals["projekt_bieter"] = {"von": 1, "bis": 1}
+
+    def _answer(self, project, markup):
+        return fg.find_solution(fg.project_task(project, markup))
+
+    def _won(self, db):
+        """Firma mit zwei Mitarbeitern und einem gewonnenen Projekt."""
+        self._only_bitweiche()
+        game = self._founded(db, money=60000)
+        for applicant in fg.applicants(game.state, self.content)[:2]:
+            game.hire(applicant["id"])
+        project = game.state.tenders()[0]
+        game.send_project_offer(project["id"], 5, self._answer(project, 5))
+        return game, game.state.projects[project["id"]]
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_projects(fg.GAME["firma"], fg.GAME), [])
+        self.assertEqual(fg.FIRM_TABS[1], ("projekte", "Projekte"))
+        self.assertEqual(len(fg.GAME["projektarbeiten"]), 50)
+        names = {item["kurz"] for item in fg.competitors()}
+        self.assertEqual(len(names), 6)
+        broken = copy.deepcopy(fg.GAME["firma"])
+        broken["mitbewerber"]["firmen"][1]["fach"] = {"gibtsnicht": -5}
+        self.assertEqual(len(fg._validate_projects(broken, fg.GAME)), 1)
+        broken = copy.deepcopy(fg.GAME["firma"])
+        del broken["projekte"]["stufen"]["Leicht"]
+        self.assertEqual(len(fg._validate_projects(broken, fg.GAME)),
+                         sum(1 for item in fg.GAME["projektarbeiten"]
+                             if item["schwierigkeit"] == "Leicht"))
+
+    def test_kundenname(self):
+        self.assertEqual(fg.customer_short("Einzelhandelskette (ModeWelt GmbH), 13. Filiale"),
+                         "ModeWelt GmbH")
+        self.assertEqual(fg.customer_short("Steuerberatungskanzlei, 25 Mitarbeiter"),
+                         "Steuerberatungskanzlei")
+
+    def test_ausschreibungen_fest(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = game.state.tenders()
+            self.assertEqual(len(first), 1)
+            self.assertEqual(first, game.reload().tenders())
+            rules = self.content["firma"]["projekte"]
+            seen = set()
+            for _day in range(rules["abstand_tage"] * 4):
+                tenders = game.state.tenders()
+                self.assertTrue(1 <= len(tenders) <= rules["max_offen"])
+                seen.update(item["id"] for item in tenders)
+                for item in tenders:
+                    self.assertTrue(item["von_tag"] <= game.state.day <= item["bis_tag"])
+                    self.assertTrue(2 <= len(item["bieter"]) + len(item["ausgefallen"]) <= 3
+                                    or len(item["bieter"]) == 1)
+                game.end_day()
+            self.assertGreaterEqual(len(seen), 4)
+            # Alle 50 Testprojekte kommen dran, bevor sich eins wiederholt
+            state = game.state
+            templates = [fg.project_for_slot(state, slot, self.content)["vorlage"]
+                         for slot in range(50)]
+            self.assertEqual(sorted(templates), list(range(50)))
+            self.assertEqual(fg.project_for_slot(state, 50, self.content)["folge"], 1)
+
+    def test_projekt_gewinnen(self):
+        with TempDB() as db:
+            self._only_bitweiche()
+            game = self._founded(db, money=60000)
+            money = game.state.money
+            project = game.state.tenders()[0]
+            payload = game.send_project_offer(project["id"], 5, self._answer(project, 5))
+            self.assertTrue(payload["gewonnen"])
+            self.assertEqual(payload["anzahlung"], int(round(payload["netto"] * 0.3)))
+            self.assertEqual(game.state.money,
+                             money + payload["anzahlung"] - project["material"])
+            running = game.state.running_projects()
+            self.assertEqual([item["projekt"] for item in running], [project["id"]])
+            self.assertEqual(game.state.tenders()[0]["ergebnis"]["gewonnen"], True)
+            head, text = fg.offer_result_text(payload)
+            self.assertEqual(head, "Projekt gewonnen")
+            self.assertIn("Anzahlung", text)
+            with self.assertRaises(ValueError):
+                game.send_project_offer(project["id"], 5, self._answer(project, 5))
+            days = fg.finance_days(game.state)
+            self.assertIn(fg.BOOK_PROJECTS, days[0]["ein"])
+            self.assertIn(fg.BOOK_MATERIAL, days[0]["aus"])
+            # Im Startbuero laeuft nur ein Projekt gleichzeitig
+            for _day in range(3):
+                game.end_day()
+            other = [item for item in game.state.tenders() if not item.get("ergebnis")][0]
+            self.assertTrue(fg.project_offer_problem(game.state, self.content))
+            with self.assertRaises(ValueError):
+                game.send_project_offer(other["id"], 5, self._answer(other, 5))
+
+    def test_projekt_verlieren(self):
+        with TempDB() as db:
+            self._only_bitweiche()
+            game = self._founded(db)
+            project = game.state.tenders()[0]
+            payload = game.send_project_offer(project["id"], 30, self._answer(project, 30))
+            self.assertFalse(payload["gewonnen"])
+            self.assertEqual(payload["konkurrent"], fg.BITWEICHE)
+            self.assertEqual(game.state.running_projects(), [])
+            head, _text = fg.offer_result_text(payload)
+            self.assertIn("Bitweiche", head)
+            self.assertEqual(fg.lost_to(game.state), [("Bitweiche IT-Service GmbH", 1)])
+
+    def test_mitbewerber(self):
+        with TempDB() as db:
+            state = self._founded(db).state
+            winners, counts = set(), set()
+            for day in range(state.day, state.day + 200):
+                for item in fg.inquiries_for_day(state, day, self.content):
+                    counts.add(len(item["bieter"]) + len(item["ausgefallen"]))
+                    winners.add(item["konkurrent"])
+                    self.assertEqual(item["markt"], min(bid["zuschlag"]
+                                                        for bid in item["bieter"]))
+            self.assertEqual(counts, {1, 2})
+            self.assertEqual(winners, {item["id"] for item in fg.competitors()})
+            # Byteschmiede ist manchmal ausgelastet und bietet dann nicht
+            rival = fg.competitor("byteschmiede")
+            skipped = sum(1 for day in range(300) if fg._rival_markup(
+                rival, fg.offer_rules(), "normal", None, "x", day, "s") is None)
+            self.assertTrue(0 < skipped < 200)
+            # Fachbereich macht Spezialisten guenstiger
+            kranich = fg.competitor("kranich")
+            net = [fg._rival_markup(kranich, fg.offer_rules(), "normal", "netzwerk", "x",
+                                    day, "s")[0] for day in range(200)]
+            other = [fg._rival_markup(kranich, fg.offer_rules(), "normal", "wirtschaft", "x",
+                                      day, "s")[0] for day in range(200)]
+            self.assertLess(sum(net), sum(other))
+            payload = {"netto": 100.0, "marktpreis": 90.0, "markt_zuschlag": 2, "zuschlag": 10,
+                       "gewonnen": False, "grund": "preis", "laune": "", "vorteil": 0,
+                       "konkurrent": "cloudkontor",
+                       "bieter": [{"id": "cloudkontor", "zuschlag": 2, "netto": 90.0},
+                                  {"id": "bitweiche", "zuschlag": 20, "netto": 105.0}]}
+            head, text = fg.offer_result_text(payload)
+            self.assertIn("CloudKontor Nord", head)
+            self.assertIn("Mitgeboten haben", text)
+
+    def test_team_und_fortschritt(self):
+        with TempDB() as db:
+            game, project = self._won(db)
+            self.content["firma"]["projekte"]["rueckschlag"]["chance"] = 0
+            staff = [item["id"] for item in game.state.staff_list()]
+            revenue = game.state.firm_day()["umsatz"]
+            game.set_project_team(project["projekt"], [staff[0], fg.SELF])
+            state = game.state
+            self.assertEqual(state.project_of(staff[0]), project["projekt"])
+            self.assertEqual(state.staff_list()[0]["umsatz"], 0)
+            self.assertLess(state.firm_day()["umsatz"], revenue)
+            self.assertEqual(fg.own_ticket_limit(state), 1)
+            ticket = state.customer_tickets()[0]
+            options = {item["an"]: item for item in
+                       fg.ticket_candidates(state, ticket, game.knowledge())}
+            self.assertIn("Projekt", options[staff[0]]["problem"])
+            self.assertEqual(options[fg.SELF]["problem"], "")
+            expected = fg.project_team_points(state, state.projects[project["projekt"]],
+                                              game.knowledge())
+            payload = game.end_day()
+            item = payload["firma"]["projekte"][0]
+            self.assertEqual(item["punkte"], expected)
+            running = game.state.projects[project["projekt"]]
+            self.assertAlmostEqual(running["stand"], expected)
+            self.assertIn("Projekte:", fg.firm_day_text(payload["firma"]))
+            phases = fg.project_phases(running)
+            self.assertEqual(len(phases), 5)
+            self.assertIn("Jetzt: ", fg.project_phase_text(running))
+            self.assertIn("Tag 2 von", fg.project_status_text(game.state, running,
+                                                               game.knowledge()))
+            # Team wieder aufloesen: Routineumsatz ist zurueck
+            game.toggle_project_member(project["projekt"], staff[0])
+            self.assertEqual(game.state.firm_day()["umsatz"], revenue)
+            self.assertEqual(game.state.project_of(staff[0]), None)
+
+    def test_fertig_puenktlich_und_zu_spaet(self):
+        for extra_days, late in ((0, False), (8, True)):
+            with TempDB() as db:
+                game, project = self._won(db)
+                self.content["firma"]["projekte"]["rueckschlag"]["chance"] = 0
+                pid = project["projekt"]
+                for _day in range(extra_days):
+                    game.end_day()
+                staff = [item["id"] for item in game.state.staff_list()]
+                game.set_project_team(pid, staff + [fg.SELF])
+                reputation = game.state.reputation["kundenzufriedenheit"]
+                for _day in range(40):
+                    if game.state.projects[pid]["fertig"]:
+                        break
+                    money = game.state.money
+                    payload = game.end_day()
+                done = game.state.projects[pid]
+                self.assertTrue(done["fertig"])
+                item = payload["firma"]["projekte"][0]
+                self.assertTrue(item["fertig"])
+                self.assertEqual(bool(item["verzug"]), late)
+                rest = done["netto"] - done["anzahlung"]
+                if late:
+                    self.assertLess(item["geld"], rest)
+                    self.assertLess(game.state.reputation["kundenzufriedenheit"], reputation)
+                else:
+                    self.assertEqual(item["geld"], int(round(rest)))
+                    self.assertGreater(game.state.reputation["kundenzufriedenheit"],
+                                       reputation)
+                self.assertEqual(done["team"], [])
+                self.assertEqual(game.state.running_projects(), [])
+                self.assertGreater(game.state.money, money - 2000)
+
+    def test_lernbonus_und_rueckschlag(self):
+        with TempDB() as db:
+            game, project = self._won(db)
+            state = game.state
+            running = state.projects[project["projekt"]]
+            staff = [item["id"] for item in state.staff_list()]
+            game.set_project_team(project["projekt"], staff[:1])
+            state = game.state
+            running = state.projects[project["projekt"]]
+            plain = fg.project_outcomes(state, game.knowledge(), set(), self.content)[0]
+            bonus = fg.project_outcomes(state, game.knowledge(), {running["vorlage"]},
+                                        self.content)[0]
+            self.assertTrue(bonus["lernbonus"])
+            if not plain["rueckschlag"]:
+                self.assertAlmostEqual(bonus["punkte"], round(plain["punkte"] * 1.2, 1))
+            rules = self.content["firma"]["projekte"]
+            rules["rueckschlag"]["chance"] = 1.0
+            running["anforderung"] = 100
+            item = fg.project_outcomes(state, game.knowledge(), set(), self.content)[0]
+            self.assertTrue(item["rueckschlag"])
+            self.assertIn(item["rueckschlag"], rules["rueckschlaege"][running["cat"]])
+            self.assertIn("Rückschlag", fg.project_day_text(item))
+
+    def test_buero_und_uebersicht(self):
+        with TempDB() as db:
+            game, project = self._won(db)
+            self.assertIn("ohne Team", fg.projects_summary(game.state))
+            staff = [item["id"] for item in game.state.staff_list()]
+            game.set_project_team(project["projekt"], staff[:1])
+            people = {item["id"]: item for item in fg.firm_people(game.state, self.content)}
+            text = people[staff[0]]["projekt_text"]
+            self.assertTrue(text)
+            _head, message = fg.office_message((0, 0), people[staff[0]], {}, self.content)
+            self.assertIn("Projekt", message)
+            # Wer in einem Projekt ist, wechselt beim neuen Team dorthin
+            with self.assertRaises(ValueError):
+                game.set_project_team(project["projekt"], ["gibtsnicht"])
+
+    def test_gleicher_stand_nach_abgleich(self):
+        with TempDB() as pc, TempDB() as handy:
+            game, project = self._won(pc)
+            staff = [item["id"] for item in game.state.staff_list()]
+            game.set_project_team(project["projekt"], staff)
+            game.end_day()
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other = fg.Game(handy, "Handy", self.content)
+            self.assertEqual(other.state.projects, game.state.projects)
+            self.assertEqual(other.state.money, game.state.money)
+            # Dasselbe Projekt auf dem Handy nochmal gewonnen: zaehlt nur einmal
+            handy.log_game_event(fg.EV_PROJECT_WON, json.dumps(
+                {"projekt": project["projekt"], "tag": 1, "anzahlung": 99999}), "Handy")
+            other.reload()
+            self.assertEqual(other.state.money, game.state.money)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,9 @@
     "Bewerber werden aus Firmenname, Gruendungstag und Bewerbungsrunde berechnet - auf PC und Handy gleich.",
     "Ab 0.34: 'kunden' sind die Kunden der eigenen Firma (Anfragen und Kundentickets). 'art' legt fest, wie knapp Bitweiche kalkuliert (angebote.arten).",
     "Angebote: Bitweiche bietet Selbstkosten x (1 + Zuschlag). Der Zuschlag wird je Anfrage aus der Spanne der Kundenart gewuerfelt (Mitte wahrscheinlicher). Dazu die Laune von Bitweiche: mit laune.kampfpreis.chance ein Kampfpreis (von-bis), mit laune.ausgelastet.chance ein Aufschlag (plus_von-plus_bis). Gewonnen, wenn der eigene Nettopreis nicht hoeher ist; ab vorteil.ab_kundenzufriedenheit darf er vorteil.prozent darueber liegen.",
-    "Kundentickets: Chance in Prozent = chance.basis + chance.je_punkt * (Wert - Anforderung), begrenzt auf chance.min bis chance.max. Anforderung und Honorar je Schwierigkeit in tickets.stufen."
+    "Kundentickets: Chance in Prozent = chance.basis + chance.je_punkt * (Wert - Anforderung), begrenzt auf chance.min bis chance.max. Anforderung und Honorar je Schwierigkeit in tickets.stufen.",
+    "Ab 0.35: 'mitbewerber.firmen' bieten gegen dich. Pro Anfrage 1 Firma (Chance anfrage_bieter.eins) oder 2, pro Projekt projekt_bieter.von bis .bis Firmen, gezogen nach gewicht. Zuschlag aus von-bis (Mitte wahrscheinlicher, bei gleichmaessig alle gleich wahrscheinlich) plus fach[Fachbereich] bei Projekten; Bitweiche (kundenart) rechnet wie in 0.34. laune.ausgelastet.bietet_nicht: die Firma bietet dann gar nicht. Das guenstigste Angebot gewinnt.",
+    "Projekte: alle abstand_tage eine Ausschreibung aus den 50 Testprojekten (projektarbeiten.json), gilt gilt_tage. Einzelkosten = aufwand * stundensatz + material. Laufende Projekte je Gebaeudestufe in 'laufend'. Tagesleistung je Person = leistung.basis + leistung.je_punkt * Wert im Fachbereich, mit lernbonus Prozent mehr, wenn das Testprojekt im Lernbereich bearbeitet wurde; rueckschlag.chance, wenn der beste Wert im Team unter der Anforderung liegt."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -1510,5 +1512,292 @@
     "Feierabend! Auf dem Heimweg fährst du an Bitweiche vorbei. Bei denen brennt noch Licht.",
     "Feierabend! Du löschst das Licht im Büro und rechnest im Kopf schon das nächste Angebot durch.",
     "Feierabend! Ein Kunde schreibt noch schnell: „Danke für heute!“ Das tut gut."
-  ]
+  ],
+  "mitbewerber": {
+    "anfrage_bieter": {
+      "eins": 0.6
+    },
+    "projekt_bieter": {
+      "von": 2,
+      "bis": 3
+    },
+    "firmen": [
+      {
+        "id": "bitweiche",
+        "name": "Bitweiche IT-Service GmbH",
+        "kurz": "Bitweiche",
+        "text": "Dein alter Arbeitgeber. Kalkuliert je nach Kunde, mal mit Kampfpreis, mal ausgelastet und teuer.",
+        "gewicht": {
+          "anfrage": 5,
+          "projekt": 4
+        },
+        "kundenart": true
+      },
+      {
+        "id": "kranich",
+        "name": "NetzWerk Kranich GmbH",
+        "kurz": "NetzWerk Kranich",
+        "text": "Netzwerk-Spezialist aus Lindenau. Im Netzwerk sehr günstig, sonst eher teuer.",
+        "gewicht": {
+          "anfrage": 2,
+          "projekt": 2
+        },
+        "von": 10,
+        "bis": 28,
+        "fach": {
+          "netzwerk": -12
+        },
+        "laune": {
+          "kampfpreis": {
+            "chance": 0.08,
+            "von": 1,
+            "bis": 5,
+            "text": "NetzWerk Kranich wollte den Kunden unbedingt gewinnen."
+          }
+        }
+      },
+      {
+        "id": "falkenstein",
+        "name": "Falkenstein IT-Security",
+        "kurz": "Falkenstein",
+        "text": "Kleines Sicherheitsbüro mit Premiumpreisen, bei Sicherheit aber hartnäckig.",
+        "gewicht": {
+          "anfrage": 1,
+          "projekt": 2
+        },
+        "von": 18,
+        "bis": 34,
+        "fach": {
+          "sicherheit": -16
+        }
+      },
+      {
+        "id": "byteschmiede",
+        "name": "Byteschmiede Hartmann & Söhne",
+        "kurz": "Byteschmiede",
+        "text": "Familienbetrieb in Talheim. Oft Kampfpreise, aber häufig ausgelastet.",
+        "gewicht": {
+          "anfrage": 3,
+          "projekt": 2
+        },
+        "von": 6,
+        "bis": 20,
+        "laune": {
+          "kampfpreis": {
+            "chance": 0.25,
+            "von": 0,
+            "bis": 5,
+            "text": "Die Byteschmiede hat mal wieder einen Kampfpreis gemacht."
+          },
+          "ausgelastet": {
+            "chance": 0.3,
+            "bietet_nicht": true,
+            "text": "Die Byteschmiede war ausgelastet und hat gar nicht erst geboten."
+          }
+        }
+      },
+      {
+        "id": "systemhaus",
+        "name": "Talheimer Systemhaus AG",
+        "kurz": "Talheimer Systemhaus",
+        "text": "Großes Systemhaus mit stabilen mittleren Preisen, vor allem bei großen Projekten dabei.",
+        "gewicht": {
+          "anfrage": 1,
+          "projekt": 4
+        },
+        "von": 12,
+        "bis": 24
+      },
+      {
+        "id": "cloudkontor",
+        "name": "CloudKontor Nord GmbH",
+        "kurz": "CloudKontor Nord",
+        "text": "Junges Start-up. Unberechenbar: mal Dumpingpreis, mal völlig überteuert. Stark bei Wirtschaft und Datenbanken.",
+        "gewicht": {
+          "anfrage": 2,
+          "projekt": 2
+        },
+        "von": 0,
+        "bis": 42,
+        "gleichmaessig": true,
+        "fach": {
+          "wirtschaft": -8,
+          "datenbanken": -10
+        }
+      }
+    ]
+  },
+  "projekte": {
+    "abstand_tage": 3,
+    "gilt_tage": 5,
+    "max_offen": 2,
+    "stundensatz": 50,
+    "anzahlung": 30,
+    "laufend": {
+      "1": 1,
+      "2": 2
+    },
+    "stufen": {
+      "Leicht": {
+        "aufwand": 20,
+        "anforderung": 25,
+        "material": [
+          200,
+          500
+        ],
+        "frist": 4
+      },
+      "Mittel": {
+        "aufwand": 35,
+        "anforderung": 40,
+        "material": [
+          400,
+          900
+        ],
+        "frist": 5
+      },
+      "Schwer": {
+        "aufwand": 50,
+        "anforderung": 55,
+        "material": [
+          700,
+          1400
+        ],
+        "frist": 6
+      },
+      "Anspruchsvoll": {
+        "aufwand": 65,
+        "anforderung": 65,
+        "material": [
+          1000,
+          2000
+        ],
+        "frist": 7
+      }
+    },
+    "leistung": {
+      "basis": 2,
+      "je_punkt": 0.1
+    },
+    "lernbonus": 20,
+    "rueckschlag": {
+      "chance": 0.2,
+      "faktor": 0.5
+    },
+    "puenktlich": {
+      "kundenzufriedenheit": 3,
+      "zuverlaessigkeit": 2
+    },
+    "verzug": {
+      "prozent_je_tag": 5,
+      "max_prozent": 30,
+      "kundenzufriedenheit_je_tag": -2
+    },
+    "verloren_kundenzufriedenheit": 0,
+    "phasen": {
+      "netzwerk": [
+        "Ist-Analyse",
+        "Planung",
+        "Beschaffung",
+        "Aufbau und Konfiguration",
+        "Test und Übergabe"
+      ],
+      "sicherheit": [
+        "Bestandsaufnahme",
+        "Risikoanalyse",
+        "Konzept",
+        "Umsetzung",
+        "Schulung und Abnahme"
+      ],
+      "systeme": [
+        "Ist-Analyse",
+        "Konzept",
+        "Beschaffung",
+        "Installation und Migration",
+        "Test und Übergabe"
+      ],
+      "wirtschaft": [
+        "Anforderungen aufnehmen",
+        "Angebote einholen",
+        "Vergleich und Bewertung",
+        "Entscheidungsvorlage",
+        "Präsentation"
+      ],
+      "datenbanken": [
+        "Anforderungen",
+        "Datenmodell",
+        "Umsetzung",
+        "Datenübernahme",
+        "Test und Übergabe"
+      ]
+    },
+    "rueckschlaege": {
+      "netzwerk": [
+        "Der bestellte Switch hat die falsche Portanzahl und muss zurück.",
+        "Im Kabelkanal ist kein Platz mehr, die Leitungen müssen anders verlegt werden.",
+        "Der Provider hat den Anschlusstermin verschoben.",
+        "Das VLAN-Konzept passt nicht zum Grundriss, es muss nachgebessert werden.",
+        "Ein Access Point sitzt an der falschen Stelle, das Signal reicht nicht bis ins Lager.",
+        "Die Messung zeigt eine fehlerhafte Dose, sie muss neu aufgelegt werden.",
+        "Die Firewall-Regeln blockieren das Kassensystem, alles muss noch einmal geprüft werden.",
+        "Der Kunde hat kurzfristig drei Arbeitsplätze mehr eingeplant."
+      ],
+      "sicherheit": [
+        "Die Geschäftsführung will das Konzept noch einmal mit dem Datenschutzbeauftragten besprechen.",
+        "Ein altes System unterstützt die neue Anmeldung nicht und braucht eine Ausnahme.",
+        "Die Hälfte der Belegschaft war bei der Schulung krank.",
+        "Der Lizenzschlüssel für die Sicherheitssoftware kommt erst morgen.",
+        "Beim Test sperrt sich die Buchhaltung selbst aus.",
+        "Der Betriebsrat möchte vor der Einführung beteiligt werden.",
+        "Ein vergessener Admin-Zugang taucht auf und muss erst geklärt werden.",
+        "Die Protokollierung erzeugt viel mehr Daten als geplant."
+      ],
+      "systeme": [
+        "Der neue Server wird mit dem falschen Netzteil geliefert.",
+        "Die Migration dauert länger, weil alte Rechte völlig durcheinander sind.",
+        "Ein Treiber für das alte Spezialgerät fehlt.",
+        "Das Backup vor der Umstellung läuft über Nacht nicht durch.",
+        "Die Fachanwendung braucht eine ältere Version als gedacht.",
+        "Im Serverraum fehlt eine Steckdose an der USV.",
+        "Ein Update bricht mitten in der Installation ab.",
+        "Der Hersteller-Support meldet sich erst nach zwei Tagen zurück."
+      ],
+      "wirtschaft": [
+        "Zwei Anbieter schicken ihre Angebote zu spät.",
+        "Die Geschäftsführung ändert die Anforderungen mitten im Vergleich.",
+        "Ein Angebot ist nicht vergleichbar, weil die Wartung fehlt.",
+        "Die Zahlen aus der Buchhaltung stimmen nicht mit der Inventarliste überein.",
+        "Der Termin für die Präsentation wird verschoben.",
+        "Ein Anbieter zieht sein Angebot zurück.",
+        "Die Gewichtung der Kriterien muss neu abgestimmt werden.",
+        "Die Leasingkonditionen haben sich geändert und müssen neu gerechnet werden."
+      ],
+      "datenbanken": [
+        "In den alten Daten tauchen doppelte Kundennummern auf.",
+        "Das Datenmodell braucht eine zusätzliche Tabelle für Sonderfälle.",
+        "Beim Import gehen Umlaute verloren.",
+        "Der Kunde findet noch eine zweite Excel-Liste mit wichtigen Daten.",
+        "Eine Abfrage ist viel zu langsam und braucht einen Index.",
+        "Die Testdaten sind unvollständig."
+      ]
+    },
+    "buero": [
+      "Ich sitze an „{phase}“ für „{titel}“.",
+      "„{titel}“: Wir sind gerade bei „{phase}“. Läuft!",
+      "Heute ist „{phase}“ dran. {kunde} wartet schon darauf.",
+      "Projekt „{titel}“, Phase „{phase}“. Kaffee ist das Wichtigste."
+    ],
+    "texte": [
+      "Neue Ausschreibung von „{kunde}“: {auftrag}",
+      "„{kunde}“ sucht einen IT-Dienstleister. Der Auftrag: {auftrag}",
+      "Ausschreibung, Kunde „{kunde}“: {auftrag}"
+    ],
+    "hilfe": [
+      "Einzelkosten gesamt = Projektarbeit (Punkte × Satz) + Material und Lizenzen.",
+      "Handlungskosten (Gemeinkosten) = Einzelkosten gesamt × Zuschlagssatz. Selbstkosten = Einzelkosten + Handlungskosten.",
+      "Gewinn = Selbstkosten × Gewinnzuschlag. Nettoverkaufspreis = Selbstkosten + Gewinn.",
+      "Umsatzsteuer = Nettoverkaufspreis × 19 %. Bruttoverkaufspreis = Nettoverkaufspreis + Umsatzsteuer.",
+      "Bei Projekten bieten meist zwei oder drei Firmen mit. Wer wer ist, siehst du erst im Ergebnis. Das günstigste Angebot gewinnt."
+    ]
+  }
 }
