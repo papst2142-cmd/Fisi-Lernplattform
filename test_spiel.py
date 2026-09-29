@@ -2564,7 +2564,7 @@ class GebaeudeAusbauTest(unittest.TestCase):
             money = game.state.money
             game.build_room("lager")
             self.assertTrue(game.state.has_room("lager"))
-            self.assertEqual(game.state.money, money - 8000)
+            self.assertEqual(game.state.money, money - fg.special_room("lager")["preis"])
             with self.assertRaises(ValueError):
                 game.build_room("lager")
             with self.assertRaises(ValueError):

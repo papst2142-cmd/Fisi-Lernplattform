@@ -540,7 +540,7 @@
       {
         "stufe": 3,
         "name": "Anbau Ost",
-        "preis": 18000,
+        "preis": 20000,
         "nebenkosten": 130,
         "text": "Der Anbau riecht noch nach frischer Farbe: ein drittes Büro mit zwei Arbeitsplätzen und zwei leere Flächen für ein Lager und einen Besprechungsraum.",
         "plaetze": [
@@ -997,7 +997,7 @@
       {
         "stufe": 4,
         "name": "Halle Süd",
-        "preis": 30000,
+        "preis": 34000,
         "nebenkosten": 180,
         "text": "Die alte Halle neben dem Stellwerk wird angebunden: ein viertes Büro mit zwei Arbeitsplätzen und Platz für einen eigenen Serverraum.",
         "plaetze": [
@@ -1557,7 +1557,7 @@
       {
         "stufe": 5,
         "name": "Halle Nord",
-        "preis": 42000,
+        "preis": 48000,
         "nebenkosten": 230,
         "text": "Der letzte freie Teil des Gewerbehofs: ein fünftes Büro mit zwei Arbeitsplätzen und Platz für einen Schulungsraum.",
         "plaetze": [
@@ -3508,7 +3508,7 @@
         "raum": "firmenlager",
         "name": "Lager",
         "ab_stufe": 3,
-        "preis": 8000,
+        "preis": 10000,
         "nebenkosten": 20,
         "effekt": {
           "material_rabatt": 15
@@ -3520,7 +3520,7 @@
         "raum": "besprechung",
         "name": "Besprechungsraum",
         "ab_stufe": 3,
-        "preis": 10000,
+        "preis": 12000,
         "nebenkosten": 20,
         "effekt": {
           "anfragen_plus": 1,
@@ -3533,7 +3533,7 @@
         "raum": "firmenserver",
         "name": "Serverraum",
         "ab_stufe": 4,
-        "preis": 18000,
+        "preis": 22000,
         "nebenkosten": 40,
         "effekt": {
           "projekte_plus": 1,
@@ -3546,7 +3546,7 @@
         "raum": "schulung",
         "name": "Schulungsraum",
         "ab_stufe": 5,
-        "preis": 12000,
+        "preis": 25000,
         "nebenkosten": 30,
         "effekt": {
           "weiterbildung_rabatt": 30,
