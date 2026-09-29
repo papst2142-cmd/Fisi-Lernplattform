@@ -298,7 +298,7 @@ def expand_variants(items, template=False):
                 task["ab_tag"] = repeat.get("start", 1) + number * repeat.get("abstand", 1)
             task["id"] = item["id"] if number == 0 else "%s%s%d" % (item["id"], VARIANT_MARK,
                                                                      number + 1)
-            task["art"] = item["id"]
+            task["gruppe"] = item["id"]
             if template:
                 task["vorlage"] = item["id"]
             result.append(task)
@@ -570,6 +570,19 @@ def validate_game_content(content=None):
                             % (where, task.get("auftraggeber")))
         else:
             site = task_site(task, content)
+            person = colleague(task["auftraggeber"], content)
+            start = task.get("ab_tag", 1)
+            if start < person.get("ab_tag", 1):
+                problems.append("%s: %s ist erst ab Tag %d da"
+                                % (where, person["id"], person["ab_tag"]))
+            if person.get("bis_tag") is not None and start > person["bis_tag"] and \
+                    not person.get("nachfolger"):
+                problems.append("%s: %s ist nur bis Tag %d da"
+                                % (where, person["id"], person["bis_tag"]))
+            place = customer_place(site, content)
+            if place and start < place.get("ab_tag", 1):
+                problems.append("%s: Ort '%s' gibt es erst ab Tag %d"
+                                % (where, site, place["ab_tag"]))
             if site not in site_rooms:
                 problems.append("%s: unbekannter Ort '%s'" % (where, site))
             elif task.get("raum") not in site_rooms[site]:
@@ -2995,7 +3008,7 @@ class GameState:
             if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
                 self.seen_incidents.add(data.get("aufgabe"))
                 incident = task_by_id(data.get("aufgabe"), self.content) or {}
-                kind_id = incident.get("art", data.get("aufgabe"))
+                kind_id = incident.get("gruppe", data.get("aufgabe"))
                 self.incident_days[kind_id] = max(self.incident_days.get(kind_id, 0),
                                                   int(data.get("tag", 0) or 0))
             if kind == EV_SPARE_ORDER:
@@ -3251,11 +3264,18 @@ class GameState:
         candidates = [task for task in self.content.get("zwischenfaelle", [])
                       if task["id"] not in self.seen_incidents
                       and task.get("ab_tag", 1) <= self.day and self._ready(task)
-                      and self.day - self.incident_days.get(task.get("art", task["id"]),
+                      and self._reporter_present(task)
+                      and self.day - self.incident_days.get(task.get("gruppe", task["id"]),
                                                             -gap) >= gap]
         if not candidates:
             return None
         return self.staffed(candidates[int(_dice(seed, self.day, "wahl") * len(candidates))])
+
+    def _reporter_present(self, task):
+        """Zwischenfaelle meldet nur, wer noch da ist: Der Text nennt die
+        Person oft beim Namen, im Ruhestand passt er nicht mehr."""
+        person = colleague(task["auftraggeber"], self.content)
+        return person is None or person_present(person, self.day)
 
     # -- Rack mit Geraeten aus dem Lager -------------------------------------
 

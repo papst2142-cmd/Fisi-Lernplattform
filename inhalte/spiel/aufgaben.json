@@ -1114,8 +1114,8 @@
     "belohnung": {"geld": 75, "reputation": 6},
     "ab_tag": 9,
     "ticket": [
-      "Ulla: „Das Service-Center bekommt auf dem Dateiserver den Ordner /daten/service. Zugriff haben nur die Service-Mitarbeiterinnen, als Erste Aylin Kaya.“",
-      "„Leg eine Gruppe an, dann Aylins Konto mit Startpasswort, das sie gleich ändern muss. Jonas meint übrigens, chmod 777 ginge am schnellsten. Jonas meint viel.“"
+      "Ulla: „Das Service-Center bekommt auf dem Dateiserver den Ordner /daten/service. Zugriff haben nur die Service-Mitarbeiterinnen, als Erste Ayla Kaya.“",
+      "„Leg eine Gruppe an, dann Aylas Konto mit Startpasswort, das sie gleich ändern muss. Jonas meint übrigens, chmod 777 ginge am schnellsten. Jonas meint viel.“"
     ],
     "frage": "Wähle in jedem Schritt den passenden Befehl.",
     "start": ["Debian 12 · Dateiserver datei"],
@@ -1150,7 +1150,7 @@
           {
             "befehl": "useradd -m -G sudo akaya",
             "ausgabe": [
-              "Ulla schüttelt den Kopf: „sudo? Dann darf Aylin",
+              "Ulla schüttelt den Kopf: „sudo? Dann darf Ayla",
               "den ganzen Server verwalten. Nein.“"
             ],
             "gefaehrlich": true,
@@ -1196,7 +1196,7 @@
           },
           {
             "befehl": "usermod -L akaya",
-            "ausgabe": ["# Konto gesperrt. Aylin kommt gar nicht mehr rein."],
+            "ausgabe": ["# Konto gesperrt. Ayla kommt gar nicht mehr rein."],
             "hinweis": "usermod -L sperrt das Konto."
           },
           {"befehl": "chage -d 0 akaya", "ausgabe": [], "richtig": true}
@@ -1208,7 +1208,7 @@
           {"befehl": "chown root:servicecenter /daten/service", "ausgabe": [], "richtig": true},
           {
             "befehl": "chown akaya /daten/service",
-            "ausgabe": ["# Jetzt gehört der Ordner nur Aylin. Ihre", "# Kolleginnen kommen nicht dran."],
+            "ausgabe": ["# Jetzt gehört der Ordner nur Ayla. Ihre", "# Kolleginnen kommen nicht dran."],
             "hinweis": "Über die Gruppe bekommen alle Service-Mitarbeiterinnen Zugriff, auch wenn später jemand dazukommt oder geht."
           },
           {
@@ -2954,5 +2954,2895 @@
       "Der Herstellertreiber (PCL 6) kann Duplex und Fächer, der generische Nur-Text-Treiber hätte wieder Zeichensalat gebracht. Die Freigabe heißt nach Schema VERW-DRUCKER-01."
     ],
     "suchbegriffe": ["Drucker", "Gateway", "Subnetzmaske"]
+  },
+  {
+    "id": "sammelkonto-leitstelle",
+    "typ": "auswahl",
+    "titel": "Ein Konto für die ganze Leitstelle",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 40},
+    "achsen": ["sicherheit", "kundenzufriedenheit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 18,
+    "ticket": [
+      "Horst tippt stolz auf einen Zettel am Monitor: „Benutzer leitstelle, Passwort weiche1. Gilt für alle zwölf Kollegen. Hat noch nie jemand vergessen.“",
+      "Petra flüstert dir zu: „Gestern hat jemand im Namen der Leitstelle einen Zug auf Gleis 4 umgeleitet. Keiner war's. Im Protokoll steht nur ‚leitstelle‘.“"
+    ],
+    "frage": "Welche Maßnahme empfiehlst du Horst?",
+    "optionen": [
+      "Persönliche Konten für alle, dazu automatische Bildschirmsperre und schneller Benutzerwechsel",
+      "Das Sammelkonto behalten, das Passwort aber jeden Monat ändern und neu an den Monitor kleben",
+      "Das Passwort ganz abschaffen, damit im Notfall niemand ausgesperrt ist",
+      "Allen zwölf Kollegen Administratorrechte geben, damit sie sich selbst helfen können"
+    ],
+    "antwort": "Persönliche Konten für alle, dazu automatische Bildschirmsperre und schneller Benutzerwechsel",
+    "hilfe": [
+      "Im Protokoll steht nur ein Name. Was bräuchte man, um herauszufinden, wer den Zug umgeleitet hat?"
+    ],
+    "erklaerung": [
+      "Nur mit persönlichen Konten lässt sich nachvollziehen, wer was getan hat (Zurechenbarkeit). Die Bildschirmsperre verhindert, dass jemand am offenen Platz eines Kollegen weiterarbeitet, der schnelle Benutzerwechsel hält den Schichtwechsel trotzdem kurz.",
+      "Horst brummt: „Zwölf Passwörter. Früher hatten wir einen Schlüssel für den Hebelschrank.“"
+    ],
+    "suchbegriffe": ["Sammelkonto", "Benutzerkonto", "Passwort"]
+  },
+  {
+    "id": "vertragsarten-talheim-nord",
+    "typ": "zuordnung",
+    "titel": "Welche Rechnung, welcher Vertrag?",
+    "auftraggeber": "petra",
+    "raum": "it_buero",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 19,
+    "ticket": [
+      "Petra sitzt vor einem Stapel Rechnungen zu Talheim-Nord. „Unser Einkauf will für jede Position wissen, welche Vertragsart dahintersteckt. Sonst gibt es kein Geld.“",
+      "„Ich bin heute pünktlich gekommen, extra dafür. Hilfst du mir, bevor der Einkauf Mittagspause macht?“"
+    ],
+    "frage": "Ordne jeder Vertragsart die passende Position aus dem Projekt Talheim-Nord zu.",
+    "paare": [
+      ["Kaufvertrag", "Die Talbahn erwirbt die Kassen-PCs und wird Eigentümerin"],
+      [
+        "Werkvertrag",
+        "Bitweiche schuldet den fertig eingerichteten, abgenommenen Netzwerkschrank"
+      ],
+      [
+        "Dienstvertrag",
+        "Bitweiche stellt Helpdesk-Stunden bereit, geschuldet ist die Tätigkeit"
+      ],
+      [
+        "Mietvertrag",
+        "Der Kopierer wird gegen Monatsgebühr genutzt und bleibt Eigentum des Händlers"
+      ]
+    ],
+    "hilfe": [
+      "Frage dich jeweils: Wird Eigentum übertragen, ein Erfolg geschuldet, nur die Arbeit oder die Nutzung auf Zeit?"
+    ],
+    "erklaerung": [
+      "Kaufvertrag: Eigentum gegen Geld. Werkvertrag: Ein Erfolg ist geschuldet, deshalb gibt es eine Abnahme. Dienstvertrag: Geschuldet ist das Tätigwerden, nicht ein bestimmtes Ergebnis. Mietvertrag: Nutzung auf Zeit, das Eigentum bleibt beim Vermieter."
+    ],
+    "suchbegriffe": ["Werkvertrag", "Dienstvertrag", "Kaufvertrag"]
+  },
+  {
+    "id": "infoterminal-talheim-nord",
+    "typ": "bauteile",
+    "titel": "Infoterminal für den Warteraum Talheim-Nord",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 75, "reputation": 6},
+    "ab_tag": 19,
+    "ticket": [
+      "Mehmet hat die Teile nach Farbe sortiert auf die Werkbank gelegt. „Der Warteraum in Talheim-Nord bekommt ein Infoterminal mit Fahrplan. Die Fahrgäste starren sonst nur die Wand an.“",
+      "„16 GB RAM, 500 GB Speicher, Bild aus der CPU, das Gehäuse ist schon da. Budget 530 €. Und bring mir die Schrauben nicht durcheinander.“"
+    ],
+    "frage": "Baue das Infoterminal aus den bereitliegenden Teilen zusammen.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "netzteil", "gehaeuse"],
+    "teile": [
+      "mb_b760_matx",
+      "mb_a620_matx",
+      "cpu_i5_13400",
+      "cpu_i5_13400f",
+      "cpu_r7_7700x",
+      "ram_ddr4_1x8",
+      "ram_ddr4_2x8",
+      "ram_ddr5_2x8",
+      "ssd_nvme_500",
+      "ssd_sata_1000",
+      "nt_300",
+      "geh_matx"
+    ],
+    "vorgaben": {"ram_min": 16, "speicher_min": 500, "budget": 530},
+    "hilfe": [
+      "Sockel und RAM-Typ müssen zum Mainboard passen. Ein Prozessor mit „F“ im Namen hat keine eingebaute Grafik.",
+      "Rechne das Netzteil nach: (CPU-TDP + 60 W Grundlast) × 1,3."
+    ],
+    "erklaerung": [
+      "Eine günstige Lösung: Mainboard B760M DDR4 (Micro-ATX), Intel Core i5-13400, DDR4 16 GB (2 × 8 GB), NVMe-SSD 500 GB (M.2), Netzteil 300 W, Mini-Tower (Micro-ATX, Mini-ITX), zusammen 506 €. Der i5-13400F liefert kein Bild ohne Grafikkarte, 8 GB RAM sind zu wenig.",
+      "Das 300-W-Netzteil reicht: Für den i5-13400 braucht es mindestens 163 W, selbst der Ryzen 7 käme mit 215 W aus. Den sprengt dann aber das Budget."
+    ],
+    "suchbegriffe": ["Mainboard", "Arbeitsspeicher", "Netzteil"]
+  },
+  {
+    "id": "terminal-logserver-nord",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@log-nord:~#",
+    "titel": "Log-Server in Talheim-Nord läuft voll",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 20,
+    "ticket": [
+      "Ulla starrt auf ihr Monitoring: „Der Log-Server in Talheim-Nord sagt, er kann nicht mehr atmen. Die Kamera am Bahnsteig meldet seit der Eröffnung jede Sekunde einen Fehler, und er schreibt brav alles mit.“",
+      "„Finde heraus, was so groß ist, räum vorsichtig auf und sorg dafür, dass es nicht wieder passiert. Und nichts löschen, was wir für die Fehlersuche noch brauchen.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · Log-Server log-nord (Talheim-Nord)"],
+    "schritte": [
+      {
+        "ziel": "Die Belegung der Dateisysteme anzeigen",
+        "befehle": [
+          {
+            "befehl": "free -h",
+            "ausgabe": ["               total   used   free", "Mem:            7,7Gi  2,1Gi  4,9Gi"],
+            "hinweis": "free zeigt den Arbeitsspeicher, nicht die Festplatte. Für Dateisysteme gibt es df."
+          },
+          {
+            "befehl": "df -h",
+            "ausgabe": [
+              "Dateisystem  Größe Benutzt Verf. Verw% Eingehängt auf",
+              "/dev/sda1      50G     49G   1G   98% /"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "lsblk",
+            "ausgabe": ["NAME   SIZE TYPE MOUNTPOINT", "sda     50G disk", "└─sda1  50G part /"],
+            "hinweis": "lsblk zeigt, wie groß die Platten sind, aber nicht, wie voll sie sind. Das zeigt df -h."
+          }
+        ]
+      },
+      {
+        "ziel": "Die drei größten Verzeichnisse unter /var finden",
+        "befehle": [
+          {
+            "befehl": "ls /var",
+            "ausgabe": ["backups  cache  lib  local  log  mail  opt  spool  tmp"],
+            "hinweis": "ls zeigt nur Namen, keine Größen. du -sh fasst die Größe je Verzeichnis zusammen."
+          },
+          {
+            "befehl": "du -sh /var/* | sort -h | tail -n 3",
+            "ausgabe": ["1,2G\t/var/cache", "2,4G\t/var/lib", "19,1G\t/var/log"],
+            "richtig": true
+          },
+          {
+            "befehl": "rm -rf /var/*",
+            "ausgabe": [
+              "Ulla reißt dir die Tastatur weg: „Da liegen auch",
+              "Pakete und Datenbanken drin!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "rm -rf löscht ohne Rückfrage alles darunter, auch Programme und Daten. Erst messen, dann gezielt aufräumen."
+          }
+        ]
+      },
+      {
+        "ziel": "Das Journal auf 500 MB verkleinern, alte Einträge zuerst",
+        "befehle": [
+          {
+            "befehl": "rm -rf /var/log/*",
+            "ausgabe": ["Ulla: „Und womit suchen wir jetzt den Kamerafehler?“"],
+            "gefaehrlich": true,
+            "hinweis": "Alle Logs zu löschen vernichtet auch die Spuren, die man für die Fehlersuche braucht. journalctl räumt gezielt die ältesten Einträge ab."
+          },
+          {
+            "befehl": "journalctl -f",
+            "ausgabe": [
+              "kamera-bs2: stream timeout (retry 86401)",
+              "kamera-bs2: stream timeout (retry 86402)"
+            ],
+            "hinweis": "-f verfolgt das Journal live. Das zeigt den Übeltäter, macht aber keinen Platz."
+          },
+          {
+            "befehl": "journalctl --vacuum-size=500M",
+            "ausgabe": ["Vacuuming done, freed 18,0G of archived journals."],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die Grenze dauerhaft in der Journal-Konfiguration eintragen",
+        "befehle": [
+          {
+            "befehl": "echo 'SystemMaxUse=500M' >> /etc/systemd/journald.conf",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "echo 'SystemMaxUse=500M' > /etc/systemd/journald.conf",
+            "ausgabe": [
+              "# Die Datei enthält jetzt nur noch diese eine Zeile,",
+              "# der Abschnitt [Journal] ist weg."
+            ],
+            "hinweis": "Ein einfaches > überschreibt die ganze Datei. Anhängen geht mit >>."
+          },
+          {
+            "befehl": "echo 'SystemMaxUse=500M' >> /etc/fstab",
+            "ausgabe": [
+              "# fstab beschreibt Dateisysteme. Beim nächsten Start",
+              "# meckert das System über eine kaputte Zeile."
+            ],
+            "hinweis": "Die Journal-Grenze gehört in /etc/systemd/journald.conf, nicht in die Liste der Dateisysteme."
+          }
+        ]
+      },
+      {
+        "ziel": "Den Journal-Dienst neu starten und die Belegung erneut prüfen",
+        "befehle": [
+          {
+            "befehl": "systemctl restart systemd-journald && df -h /",
+            "ausgabe": [
+              "Dateisystem  Größe Benutzt Verf. Verw% Eingehängt auf",
+              "/dev/sda1      50G     31G   19G   62% /"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "systemctl stop systemd-journald",
+            "ausgabe": ["# Das Journal schreibt jetzt gar nichts mehr mit."],
+            "hinweis": "Ohne Journal gibt es keine Logs mehr. Neu starten lässt den Dienst die neue Grenze einlesen."
+          },
+          {
+            "befehl": "reboot",
+            "ausgabe": [
+              "Ulla: „Den ganzen Server neu starten, nur für eine",
+              "Einstellung? Die Kameras zeichnen gerade auf.“"
+            ],
+            "hinweis": "Ein Neustart des Servers ist unnötig. Es reicht, den einen Dienst neu zu starten."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Erst messen: df -h zeigt, welches Dateisystem voll ist, du -sh zeigt, welches Verzeichnis es füllt.",
+      "Das systemd-Journal räumt man mit journalctl --vacuum-size auf. Dauerhaft begrenzt SystemMaxUse in journald.conf."
+    ],
+    "erklaerung": [
+      "df -h zeigt 98 % Belegung, du findet 19,1 GB in /var/log. journalctl --vacuum-size=500M gibt 18 GB frei, SystemMaxUse=500M in journald.conf verhindert das nächste Volllaufen. Danach sind es 62 %.",
+      "Der eigentliche Auslöser, die Kamera am Bahnsteig, bleibt ein Fall für die Fehlersuche. Die Logs dafür sind zum Glück noch da."
+    ],
+    "suchbegriffe": ["df", "journalctl", "Logdatei"]
+  },
+  {
+    "id": "sql-stoerungen-bahnhof",
+    "typ": "auswahl",
+    "titel": "Welcher Bahnhof hat die meisten Störungen?",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 45},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 20,
+    "ticket": [
+      "Frank hat eine Tabelle über die Störungsmeldungen der Talbahn angelegt und sie gleich in die Datenbank übernommen: stoerung(stoerung_id, bahnhof, monat, art).",
+      "„Die Talbahn will wissen, welche Bahnhöfe im September mehr als fünf Störungen hatten. Mit Anzahl. Ich rechne es danach zur Sicherheit noch mal von Hand nach.“"
+    ],
+    "frage": "Welche Abfrage liefert die gewünschte Liste?",
+    "optionen": [
+      "SELECT bahnhof, COUNT(*) FROM stoerung WHERE monat = 9 GROUP BY bahnhof HAVING COUNT(*) > 5",
+      "SELECT bahnhof, COUNT(*) FROM stoerung WHERE monat = 9 AND COUNT(*) > 5 GROUP BY bahnhof",
+      "SELECT bahnhof, COUNT(*) FROM stoerung WHERE monat = 9 HAVING COUNT(*) > 5",
+      "SELECT bahnhof FROM stoerung WHERE monat = 9 ORDER BY bahnhof"
+    ],
+    "antwort": "SELECT bahnhof, COUNT(*) FROM stoerung WHERE monat = 9 GROUP BY bahnhof HAVING COUNT(*) > 5",
+    "hilfe": [
+      "WHERE filtert einzelne Zeilen, bevor gruppiert wird. Bedingungen auf Summen oder Zählungen gehören woanders hin."
+    ],
+    "erklaerung": [
+      "WHERE monat = 9 wählt die Septemberzeilen, GROUP BY bahnhof bildet je Bahnhof eine Gruppe, HAVING COUNT(*) > 5 filtert die Gruppen. Eine Aggregatfunktion wie COUNT darf nicht im WHERE stehen."
+    ],
+    "suchbegriffe": ["GROUP BY", "HAVING", "COUNT"]
+  },
+  {
+    "id": "diagnose-dhcp-leitstelle",
+    "typ": "diagnose",
+    "titel": "Neuer Leitstellen-PC findet kein Netz",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 21,
+    "ticket": [
+      "Horst steht vor dem neuen Arbeitsplatz für die Nachtschicht: „Kein Netz. Das Kabel steckt, ich hab dreimal dran gewackelt. Früher hat man einen Hebel umgelegt, dann ging's.“",
+      "Petra ergänzt: „Zur Eröffnung von Talheim-Nord hatten wir hier Besuch. Die Gäste durften ins Leitstellen-WLAN, damit sie Fotos hochladen können. Horst fand das modern.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "ipconfig",
+        "text": "ipconfig /all am neuen PC ausführen",
+        "ergebnis": "IPv4-Adresse 169.254.31.7, Subnetzmaske 255.255.0.0, kein Standardgateway. DHCP aktiviert: Ja.",
+        "entscheidend": true
+      },
+      {
+        "id": "dhcp",
+        "text": "Das Protokoll des DHCP-Servers ansehen",
+        "ergebnis": "„DHCPDISCOVER from 3c:7d:… : no free leases“. Bereich 10.20.0.100 bis 10.20.0.199: 100 von 100 Adressen vergeben.",
+        "entscheidend": true
+      },
+      {
+        "id": "leases",
+        "text": "Die Liste der vergebenen Adressen durchsehen",
+        "ergebnis": "41 Adressen gehören Handys mit Namen wie „Galaxy-von-Uwe“. Lease-Dauer: 8 Tage, die Eröffnung war vor 6 Tagen.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "Kabel und Link-LED prüfen",
+        "ergebnis": "Link-LED leuchtet grün, der Switch-Port zeigt 1 Gbit/s Vollduplex."
+      },
+      {
+        "id": "loopback",
+        "text": "ping 127.0.0.1 ausführen",
+        "ergebnis": "Antwort in unter 1 ms. Der Netzwerkstack des PCs funktioniert."
+      },
+      {
+        "id": "nachbar",
+        "text": "Einen anderen Leitstellen-PC prüfen",
+        "ergebnis": "Hat 10.20.0.112 und funktioniert. Er war seit Wochen nicht aus."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Der DHCP-Bereich ist erschöpft, der PC bekommt keine Adresse und vergibt sich selbst eine APIPA-Adresse.",
+      "Das Netzwerkkabel ist defekt.",
+      "Die Netzwerkkarte des neuen PCs ist kaputt.",
+      "Der DNS-Server der Leitstelle ist ausgefallen."
+    ],
+    "ursache": "Der DHCP-Bereich ist erschöpft, der PC bekommt keine Adresse und vergibt sich selbst eine APIPA-Adresse.",
+    "massnahmen": [
+      "DHCP-Bereich vergrößern, Gäste in ein eigenes Gast-WLAN mit kurzer Lease-Dauer verlegen",
+      "Dem PC fest die Adresse 10.20.0.1 geben",
+      "Die Netzwerkkarte tauschen",
+      "Den DHCP-Server abschalten und alle Adressen von Hand verteilen"
+    ],
+    "massnahme": "DHCP-Bereich vergrößern, Gäste in ein eigenes Gast-WLAN mit kurzer Lease-Dauer verlegen",
+    "unsicher": [
+      "Den DHCP-Server abschalten und alle Adressen von Hand verteilen"
+    ],
+    "hilfe": [
+      "Eine Adresse aus 169.254.0.0/16 bedeutet: Der PC hat keinen DHCP-Server erreicht oder keine Adresse bekommen.",
+      "Zähle nach: Wie viele Adressen hat der Bereich, wie viele sind vergeben, und wem gehören sie?"
+    ],
+    "erklaerung": [
+      "Der Bereich 10.20.0.100 bis 10.20.0.199 hat nur 100 Adressen, alle sind vergeben, 41 davon an Gästehandys, die noch zwei Tage reserviert bleiben. Der PC bekommt nichts und nimmt eine APIPA-Adresse.",
+      "Ein Bereich von 10.20.0.50 bis 10.20.0.249 bietet 200 Adressen, Gäste gehören ohnehin in ein eigenes Netz mit kurzer Lease-Dauer. 10.20.0.1 ist das Gateway, eine feste Adresse dort gäbe einen Adresskonflikt."
+    ],
+    "suchbegriffe": ["DHCP", "APIPA", "Lease"]
+  },
+  {
+    "id": "schutzziele-werkstatt",
+    "typ": "zuordnung",
+    "titel": "Rundgang durch die Betriebswerkstatt",
+    "auftraggeber": "marta",
+    "raum": "werkstattbuero",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 7},
+    "ab_tag": 22,
+    "ticket": [
+      "Marta Kowalczyk klopft mit dem Sicherheitsschuh gegen den Türrahmen. „Willkommen in der Werkstatt. Ich hab genau einen Zugumlauf Zeit, also eine Stunde und zwölf Minuten.“",
+      "„Petra sagt, ihr fragt immer zuerst nach Schutzzielen. Hier sind meine Sorgen. Sag mir, welches Schutzziel jeweils dahintersteckt.“"
+    ],
+    "frage": "Ordne jedem Schutzziel Martas passende Sorge zu.",
+    "paare": [
+      [
+        "Vertraulichkeit",
+        "Die Einkaufspreise der Lieferanten sollen nur Marta und der Einkauf sehen"
+      ],
+      [
+        "Integrität",
+        "Das Anzugsmoment der Radschrauben in der Datenbank darf niemand unbemerkt ändern"
+      ],
+      [
+        "Verfügbarkeit",
+        "Die Diagnose-Laptops müssen um 5 Uhr bereit sein, wenn der erste Zug einfährt"
+      ],
+      [
+        "Authentizität",
+        "Ein Software-Update für die Zugsteuerung muss nachweislich vom Hersteller stammen"
+      ]
+    ],
+    "hilfe": [
+      "Frage dich: Geht es darum, wer etwas sehen darf, ob es unverändert ist, ob es da ist, wenn man es braucht, oder ob es echt ist?"
+    ],
+    "erklaerung": [
+      "Vertraulichkeit schützt vor unbefugtem Lesen, Integrität vor unbemerkter Veränderung, Verfügbarkeit sichert den Zugriff zur richtigen Zeit. Authentizität bedeutet, dass die Herkunft nachweisbar echt ist, etwa über eine Signatur.",
+      "Marta nickt: „Gut. Das hat genau 11 Minuten gedauert. Bleiben 61 für den Rest.“"
+    ],
+    "suchbegriffe": ["Schutzziele", "Integrität", "Verfügbarkeit"]
+  },
+  {
+    "id": "bestellung-diagnose-laptops",
+    "typ": "bestellung",
+    "titel": "Diagnose-Laptops für die Werkstatt",
+    "auftraggeber": "marta",
+    "raum": "werkstattbuero",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 22,
+    "empfaenger": "marta",
+    "ticket": [
+      "Marta zeigt auf drei Laptops mit Klebeband am Scharnier: „Die haben 4 GB RAM. Die Diagnose-Software des Zugherstellers braucht mindestens 16, sonst dauert ein Check länger als ein Zugumlauf.“",
+      "„Ich brauche drei neue, dazu je ein Netzwerkkabel Cat 6A mit 5 Metern zum Diagnoseanschluss im Führerstand. In drei Arbeitstagen müssen sie da sein, mehr als 2.520 € gibt die Talbahn nicht frei.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {
+        "text": "Notebook mit mindestens 16 GB RAM",
+        "typ": "notebook",
+        "menge": 3,
+        "min": {"groesse": 16}
+      },
+      {
+        "text": "Patchkabel Cat 6A, 5 m",
+        "typ": "patchkabel",
+        "menge": 3,
+        "passt": {"kategorie": "Cat 6A", "laenge": 5}
+      }
+    ],
+    "angebote": [
+      {"id": "n1", "teil": "nb_14_16", "haendler": "kabelkoenig", "preis": 829, "lieferzeit": 2},
+      {"id": "n2", "teil": "nb_14_16", "haendler": "serverhaus", "preis": 879, "lieferzeit": 1},
+      {"id": "n3", "teil": "nb_14_16", "haendler": "bitlager", "preis": 779, "lieferzeit": 5},
+      {"id": "n4", "teil": "nb_14_8", "haendler": "bitlager", "preis": 599, "lieferzeit": 1},
+      {"id": "n5", "teil": "nb_15_32", "haendler": "serverhaus", "preis": 1149, "lieferzeit": 2},
+      {"id": "k1", "teil": "pk_cat6a_5", "haendler": "kabelkoenig", "preis": 8, "lieferzeit": 1},
+      {"id": "k2", "teil": "pk_cat6a_2", "haendler": "bitlager", "preis": 5, "lieferzeit": 1},
+      {"id": "k3", "teil": "pk_cat5e_2", "haendler": "bitlager", "preis": 3, "lieferzeit": 1}
+    ],
+    "budget": 2520,
+    "frist": 3,
+    "hilfe": [
+      "Sortiere erst aus, was nicht passt (zu wenig RAM, falsches Kabel), dann was zu spät kommt. Unter dem Rest zählt der Preis.",
+      "Drei Stück heißt: Der Stückpreis zählt dreimal. Rechne das Budget mit allen sechs Teilen nach."
+    ],
+    "erklaerung": [
+      "Das billigste 16-GB-Angebot braucht 5 Arbeitstage, zu spät. 8 GB sind zu wenig, das 32-GB-Modell sprengt das Budget. Richtig: 3 × Business-Notebook 14 Zoll, 16 GB RAM für 829 € und 3 × Cat-6A-Kabel 5 m für 8 €, zusammen 2.511 € bei 2.520 € Budget.",
+      "Schon ein einziges schnelleres Notebook für 879 € würde das Budget sprengen (2.561 €). Marta: „Zwei Tage. Das sind 40 Zugumläufe. Geht.“"
+    ],
+    "suchbegriffe": ["Angebotsvergleich", "Lieferzeit", "Patchkabel"]
+  },
+  {
+    "id": "wlan-werkstatt",
+    "typ": "auswahl",
+    "titel": "Ein WLAN für die Werkhalle",
+    "auftraggeber": "marta",
+    "raum": "werkhalle",
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45, "sicherheit": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 23,
+    "ticket": [
+      "In der Werkhalle zeigt Marta auf eine Tafel neben Gleis 3. Darauf steht mit Kreide: „WLAN: Werkstatt2019“. „Das WLAN von damals. Das Passwort kennen alle, auch drei Fremdfirmen und der Getränkelieferant.“",
+      "„Die neuen Diagnose-Laptops sollen ins WLAN. Wenn einer verloren geht, will ich genau diesen einen aussperren. Nicht alle 40 Leute neu einweisen.“"
+    ],
+    "frage": "Welche WLAN-Absicherung empfiehlst du für die Diagnose-Laptops?",
+    "optionen": [
+      "WPA3-Enterprise mit 802.1X: Anmeldung je Gerät über RADIUS, einzeln sperrbar",
+      "WPA2-Personal mit einem neuen, langen Passwort auf der Tafel",
+      "Offenes WLAN mit versteckter SSID, dann findet es niemand",
+      "WEP mit 128-Bit-Schlüssel, das ist mit den alten Laptops kompatibel"
+    ],
+    "antwort": "WPA3-Enterprise mit 802.1X: Anmeldung je Gerät über RADIUS, einzeln sperrbar",
+    "hilfe": [
+      "Marta will ein einzelnes Gerät aussperren können, ohne allen anderen ein neues Passwort zu geben. Welches Verfahren kennt jedes Gerät einzeln?"
+    ],
+    "erklaerung": [
+      "Bei WPA3-Enterprise meldet sich jedes Gerät mit eigenem Zugang (Zertifikat oder Konto) über 802.1X am RADIUS-Server an. Ein verlorener Laptop wird dort einzeln gesperrt.",
+      "Ein gemeinsames Passwort (Personal/PSK) müsste man bei jedem Verlust für alle ändern. Eine versteckte SSID schützt nicht, und WEP ist seit Jahren geknackt."
+    ],
+    "suchbegriffe": ["WPA3", "802.1X", "RADIUS"]
+  },
+  {
+    "id": "terminal-diagnose-laptops",
+    "typ": "terminal",
+    "system": "windows",
+    "prompt": "PS C:\\>",
+    "titel": "Diagnose-Laptops einrichten und verschlüsseln",
+    "auftraggeber": "marta",
+    "raum": "diagnoseplatz",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 45, "systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 24,
+    "nach": "bestellung-diagnose-laptops",
+    "ticket": [
+      "Die drei Laptops liegen ausgepackt auf der Werkbank am Diagnoseplatz. Marta: „Die fahren jeden Tag im Zug mit. Irgendwann bleibt einer liegen. Dann soll der Finder nur einen Briefbeschwerer haben.“",
+      "„Namen nach Schema WS-DIAG-01 bis 03, Festplatte verschlüsseln, und die Monteure arbeiten ohne Adminrechte. Fang mit dem ersten an, die anderen machst du genauso.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl (PowerShell als Administrator).",
+    "start": ["Windows 11 Pro · Notebook 14 Zoll, 16 GB RAM"],
+    "schritte": [
+      {
+        "ziel": "Den Rechnernamen WS-DIAG-01 setzen",
+        "befehle": [
+          {
+            "befehl": "set COMPUTERNAME=WS-DIAG-01",
+            "ausgabe": [
+              "# Ändert nur eine Variable in dieser Sitzung.",
+              "# Der Rechner heißt weiter DESKTOP-7Q2K9."
+            ],
+            "hinweis": "set ändert nur eine Umgebungsvariable der offenen Sitzung. Umbenannt wird mit Rename-Computer."
+          },
+          {
+            "befehl": "Rename-Computer -NewName WS-DIAG-01 -Restart",
+            "ausgabe": ["Neustart … Der Rechner heißt jetzt WS-DIAG-01."],
+            "richtig": true
+          },
+          {
+            "befehl": "hostname WS-DIAG-01",
+            "ausgabe": ["sethostname: Use the Network Control Panel Applet", "to set hostname."],
+            "hinweis": "hostname zeigt unter Windows den Namen nur an. Zum Ändern dient Rename-Computer."
+          }
+        ]
+      },
+      {
+        "ziel": "Das Systemlaufwerk C: mit BitLocker verschlüsseln",
+        "befehle": [
+          {
+            "befehl": "cipher /e C:\\Users",
+            "ausgabe": [
+              "# EFS verschlüsselt einzelne Dateien eines Kontos.",
+              "# Windows und Auslagerungsdatei bleiben lesbar."
+            ],
+            "hinweis": "cipher /e nutzt EFS und verschlüsselt nur Dateien. Für das ganze Laufwerk ist BitLocker zuständig."
+          },
+          {
+            "befehl": "format C: /fs:ntfs",
+            "ausgabe": [
+              "Marta stellt ihren Sicherheitsschuh auf das",
+              "Netzkabel: „Formatieren? Da ist Windows drauf!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "format löscht das Laufwerk. Verschlüsselt wird mit manage-bde -on."
+          },
+          {
+            "befehl": "manage-bde -on C: -RecoveryPassword",
+            "ausgabe": [
+              "Schlüsselschutzvorrichtungen hinzugefügt:",
+              "  Numerisches Kennwort",
+              "Verschlüsselung wird ausgeführt …"
+            ],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Den Wiederherstellungsschlüssel anzeigen, um ihn sicher abzulegen",
+        "befehle": [
+          {
+            "befehl": "manage-bde -protectors -get C:",
+            "ausgabe": ["Numerisches Kennwort:", "  ID: {8F1C…}", "  Kennwort: 402237-118030-…-625834"],
+            "richtig": true
+          },
+          {
+            "befehl": "manage-bde -off C:",
+            "ausgabe": [
+              "Entschlüsselung wird ausgeführt …",
+              "# Genau das Gegenteil von dem, was Marta will."
+            ],
+            "gefaehrlich": true,
+            "hinweis": "-off schaltet BitLocker wieder aus und entschlüsselt das Laufwerk."
+          },
+          {
+            "befehl": "Get-Volume C",
+            "ausgabe": [
+              "DriveLetter FileSystem SizeRemaining Size",
+              "C           NTFS       421 GB        475 GB"
+            ],
+            "hinweis": "Get-Volume zeigt Größe und Dateisystem, aber keine BitLocker-Schlüssel."
+          }
+        ]
+      },
+      {
+        "ziel": "Ein Konto „werkstatt“ ohne Administratorrechte anlegen",
+        "befehle": [
+          {
+            "befehl": "net user werkstatt * /add",
+            "ausgabe": [
+              "Geben Sie ein Kennwort für den Benutzer ein:",
+              "Der Befehl wurde erfolgreich ausgeführt."
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "net localgroup Administratoren werkstatt /add",
+            "ausgabe": [
+              "Marta: „Admin für alle? Dann installiert morgen",
+              "jemand ein Spiel auf dem Diagnose-Laptop.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Die Monteure sollen gerade keine Adminrechte bekommen (Prinzip der minimalen Rechte)."
+          },
+          {
+            "befehl": "net user werkstatt /delete",
+            "ausgabe": ["Der Benutzername konnte nicht gefunden werden."],
+            "hinweis": "/delete löscht ein Konto. Angelegt wird mit /add, * fragt das Kennwort verdeckt ab."
+          }
+        ]
+      },
+      {
+        "ziel": "Den Stand der Verschlüsselung prüfen",
+        "befehle": [
+          {
+            "befehl": "chkdsk C:",
+            "ausgabe": ["Windows hat das Dateisystem überprüft.", "Es wurden keine Probleme festgestellt."],
+            "hinweis": "chkdsk prüft das Dateisystem, nicht die Verschlüsselung."
+          },
+          {
+            "befehl": "manage-bde -status C:",
+            "ausgabe": [
+              "Konvertierungsstatus:  Verschlüsselung läuft",
+              "Verschlüsselt (Prozent): 37,4 %",
+              "Schutzstatus:          Schutz aktiviert"
+            ],
+            "richtig": true
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "BitLocker steuert man auf der Kommandozeile mit manage-bde: -on schaltet ein, -status zeigt den Stand, -protectors -get zeigt die Schlüssel.",
+      "Monteure brauchen für die Diagnose-Software keine Adminrechte. Ein normales Konto legt net user NAME * /add an."
+    ],
+    "erklaerung": [
+      "Rename-Computer setzt den Namen, manage-bde -on C: -RecoveryPassword verschlüsselt das ganze Laufwerk, -protectors -get zeigt den Wiederherstellungsschlüssel für die sichere Ablage, net user … /add legt das Standardkonto an, -status prüft.",
+      "Ohne abgelegten Wiederherstellungsschlüssel ist ein vergessener PIN ein verlorener Laptop. Marta klebt keinen Zettel dran. Sie hat es dir versprochen."
+    ],
+    "suchbegriffe": ["BitLocker", "Wiederherstellungsschlüssel", "Standardbenutzer"]
+  },
+  {
+    "id": "normalisierung-teileliste",
+    "typ": "auswahl",
+    "titel": "Die Teileliste aus der Tabellenkalkulation",
+    "auftraggeber": "marta",
+    "raum": "teilelager",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 45},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 24,
+    "ticket": [
+      "Im Teilelager öffnet Marta eine riesige Tabelle: Teilenummer, Bezeichnung, Bestand, Lieferant, Lieferant-Telefon, Lieferant-Ort. „Der Bremsbelag-Lieferant ist umgezogen. Ich hab die Telefonnummer in 312 Zeilen geändert. In 309 hat's geklappt.“",
+      "„Das soll jetzt eine richtige Datenbank werden. Wie teile ich das auf, damit so etwas nie wieder passiert?“"
+    ],
+    "frage": "Welche Aufteilung beseitigt das Problem?",
+    "optionen": [
+      "Lieferanten in eine eigene Tabelle auslagern, die Teile verweisen per Fremdschlüssel lieferant_id darauf",
+      "Für jeden Lieferanten eine eigene Teile-Tabelle anlegen",
+      "Die Telefonnummer weglassen, dann muss sie niemand mehr ändern",
+      "Alle Lieferantendaten in eine einzige Textspalte schreiben"
+    ],
+    "antwort": "Lieferanten in eine eigene Tabelle auslagern, die Teile verweisen per Fremdschlüssel lieferant_id darauf",
+    "hilfe": [
+      "Telefon und Ort hängen nicht vom Teil ab, sondern vom Lieferanten. Wo sollten sie also genau einmal stehen?"
+    ],
+    "erklaerung": [
+      "Telefon und Ort hängen nur transitiv über den Lieferanten von der Teilenummer ab, das verletzt die 3. Normalform. In einer eigenen Tabelle lieferant stehen sie genau einmal, eine Änderung wirkt sofort überall.",
+      "So verschwinden Redundanz und Änderungsanomalie. Die drei falschen Zeilen hätte es nie gegeben."
+    ],
+    "suchbegriffe": ["Normalisierung", "Normalform", "Redundanz"]
+  },
+  {
+    "id": "er-modell-ersatzteile",
+    "typ": "zuordnung",
+    "titel": "Das Datenmodell der Ersatzteil-Datenbank",
+    "auftraggeber": "marta",
+    "raum": "teilelager",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 25,
+    "nach": "normalisierung-teileliste",
+    "ticket": [
+      "Marta hat dein Modell ausgedruckt und an die Tür des Teilelagers geklebt: Tabellen teil, lieferant, zugtyp und einbau (zugtyp_id, teil_id, menge).",
+      "„Der Einkauf fragt, was die ganzen Fachwörter bedeuten. Ich hab gesagt, ich frag den, der sie hingeschrieben hat.“"
+    ],
+    "frage": "Ordne jedem Begriff das passende Beispiel aus der Ersatzteil-Datenbank zu.",
+    "paare": [
+      [
+        "Primärschlüssel",
+        "teil_id identifiziert jedes Teil in der Tabelle teil eindeutig"
+      ],
+      [
+        "Fremdschlüssel",
+        "lieferant_id in der Tabelle teil verweist auf einen Datensatz in lieferant"
+      ],
+      [
+        "1:n-Beziehung",
+        "Ein Lieferant liefert viele Teile, jedes Teil kommt von genau einem Lieferanten"
+      ],
+      [
+        "n:m-Beziehung",
+        "Ein Zugtyp braucht viele Teile, ein Teil passt in viele Zugtypen"
+      ],
+      ["Zusammengesetzter Schlüssel", "(zugtyp_id, teil_id) in der Zwischentabelle einbau"]
+    ],
+    "hilfe": [
+      "Eine n:m-Beziehung kann eine relationale Datenbank nicht direkt speichern. Sie braucht eine Zwischentabelle, deren Schlüssel aus zwei Spalten besteht."
+    ],
+    "erklaerung": [
+      "Der Primärschlüssel identifiziert einen Datensatz, der Fremdschlüssel verweist auf den Primärschlüssel einer anderen Tabelle. 1:n wird über einen Fremdschlüssel auf der n-Seite gelöst.",
+      "n:m braucht die Zwischentabelle einbau. Ihr Primärschlüssel setzt sich aus den beiden Fremdschlüsseln zusammen, dazu kommt die Menge je Zugtyp."
+    ],
+    "suchbegriffe": ["Primärschlüssel", "Fremdschlüssel", "Kardinalität"]
+  },
+  {
+    "id": "rack-werkstatt",
+    "typ": "rack",
+    "titel": "Netzwerkschrank im Technikraum der Werkstatt",
+    "auftraggeber": "ulla",
+    "ort": "betriebswerkstatt",
+    "raum": "technik_werkstatt",
+    "stelle": [23.2, 2.9],
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50, "netzwerk": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 95, "reputation": 8},
+    "ab_tag": 25,
+    "schrank": {"he": 12, "traglast": 120, "kuehlung": 1000},
+    "geraete": ["srv_2he", "storage_2he", "sw_24", "sw_48_poe", "pp_24", "pp_48", "usv_1000", "usv_1500"],
+    "vorgaben": {
+      "mindestens": {"usv": 1, "server": 1, "switch": 1, "patchpanel": 1},
+      "ports_min": 30,
+      "frei_min": 4
+    },
+    "ticket": [
+      "Ulla steht im Technikraum der Werkstatt vor einem leeren 12-HE-Schrank, auf dem Boden liegen Kartons. „Der Server für die Ersatzteil-Datenbank kommt hier rein, dazu das Netz für Diagnoseplätze und Access Points. Mindestens 30 Ports.“",
+      "„Die Access Points hängen am PoE-Switch. Die Klimaanlage schafft 1.000 W, der Schrank trägt 120 kg, mindestens 4 HE bleiben frei. Das Storage mit den zwölf Platten braucht hier niemand, hat Marta gesagt. Der Server hört das hoffentlich nicht.“"
+    ],
+    "frage": "Bestücke den Schrank so, dass Ports, Strom, Kühlung und Gewicht passen.",
+    "hilfe": [
+      "Mindestens 30 Ports heißt: Switch und Patchpanel mit 48 Ports. Rechne danach die Leistung aller Geräte zusammen und vergleiche mit der USV (20 % Reserve) und der Kühlung.",
+      "Schwere Geräte ab 20 kg gehören ins untere Drittel, die USV ganz nach unten. Switch und Patchpanel direkt übereinander."
+    ],
+    "erklaerung": [
+      "Server (450 W) und PoE-Switch (370 W) brauchen zusammen 820 W. Die 1000-W-USV liefert mit Reserve nur 800 W, die 1500-W-USV 1200 W. Mit dem Storage wären es 1220 W, zu viel für die Kühlung.",
+      "Von unten: USV 1500 W, Datenbankserver, darüber 48er-Switch und 48er-Patchpanel. Belegt sind 6 HE mit 66 kg, 6 HE bleiben frei."
+    ],
+    "suchbegriffe": ["Rack", "USV", "Höheneinheit"]
+  },
+  {
+    "id": "angebot-access-points",
+    "typ": "formular",
+    "art": "angebot",
+    "titel": "Angebot: Access Points für die Werkhalle",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 26,
+    "ticket": [
+      "Frank hat die Ausleuchtung der Werkhalle ausgewertet, die Marta gemacht hat, mit einem Laptop auf dem Gabelstapler. „Sechs Access Points, sagt die Messung. Die kaufen wir für 214 € das Stück ein.“",
+      "„25 % Handlungskosten, weil die Montage in der Halle aufwendig ist, 12 % Gewinn, 19 % Umsatzsteuer. Rechne mir das Angebot bis zum Bruttopreis. Ich rechne es danach zweimal nach.“"
+    ],
+    "frage": "Kalkuliere das Angebot.",
+    "daten": {
+      "artikel": "WLAN-Access-Point (WPA3-Enterprise, PoE)",
+      "menge": 6,
+      "einkaufspreis": 214,
+      "handlungskosten": 25,
+      "gewinn": 12,
+      "ust": 19
+    },
+    "hilfe": [
+      "Schema: Einkaufspreis + Handlungskosten = Selbstkosten, + Gewinn = Nettoverkaufspreis, + Umsatzsteuer = Bruttoverkaufspreis.",
+      "Jeder Zuschlag bezieht sich auf das Zwischenergebnis davor, nicht auf den Einkaufspreis."
+    ],
+    "erklaerung": [
+      "Einkauf 1.284 €, Handlungskosten 321 €, Selbstkosten 1.605 €, Gewinn 192,60 €, netto 1.797,60 €, Umsatzsteuer 341,54 €, brutto 2.139,14 €.",
+      "Frank hat es zweimal nachgerechnet. Beide Male derselbe Cent."
+    ],
+    "suchbegriffe": ["Zuschlagskalkulation", "Handlungskosten", "Selbstkosten"]
+  },
+  {
+    "id": "laptop-verloren",
+    "typ": "auswahl",
+    "titel": "Ein Diagnose-Laptop ist weg",
+    "auftraggeber": "marta",
+    "raum": "werkstattbuero",
+    "prioritaet": "kritisch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 50},
+    "achsen": ["sicherheit", "zuverlaessigkeit"],
+    "belohnung": {"geld": 85, "reputation": 8},
+    "ab_tag": 27,
+    "nach": "terminal-diagnose-laptops",
+    "ticket": [
+      "Marta kommt ins Büro, die Sicherheitsschuhe quietschen: „WS-DIAG-02 ist weg. Ein Monteur hat ihn im Führerstand liegen lassen, der Zug ist Richtung Lindenau raus. Der kommt erst in sechs Zugumläufen wieder.“",
+      "„Auf dem Laptop ist die Anmeldung fürs Werkstatt-WLAN und der Zugang zur Ersatzteil-Datenbank. Was machen wir jetzt, und zwar als Erstes?“"
+    ],
+    "frage": "Was ist jetzt der richtige erste Schritt?",
+    "optionen": [
+      "Gerät im RADIUS und in der Datenbank sperren, Verlust dokumentieren, Datenschutz prüfen lassen",
+      "Nichts tun, der Laptop ist mit BitLocker verschlüsselt",
+      "Das WLAN-Passwort auf der Tafel in der Werkhalle ändern",
+      "Warten, bis der Zug zurück ist, und dann im Führerstand nachsehen"
+    ],
+    "antwort": "Gerät im RADIUS und in der Datenbank sperren, Verlust dokumentieren, Datenschutz prüfen lassen",
+    "hilfe": [
+      "BitLocker schützt die Daten auf der Platte. Aber was ist mit den Zugängen, die auf dem Gerät gespeichert sind?"
+    ],
+    "erklaerung": [
+      "Die Verschlüsselung schützt die gespeicherten Daten, gespeicherte Zugänge sperrt man trotzdem sofort: den Gerätezugang im RADIUS (dafür gibt es 802.1X) und das Datenbankkonto. Den Vorfall dokumentiert man.",
+      "Die Datenschutzbeauftragte prüft, ob personenbezogene Daten betroffen sind und eine Meldung nötig ist (binnen 72 Stunden). Der Laptop tauchte übrigens in Lindenau im Fundbüro auf, neben einer Warnweste."
+    ],
+    "suchbegriffe": ["Datenpanne", "RADIUS", "Verschlüsselung"]
+  },
+  {
+    "id": "terminal-teiledb-backup",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "postgres@teiledb:~$",
+    "titel": "Sicherung der Ersatzteil-Datenbank",
+    "auftraggeber": "marta",
+    "raum": "teilelager",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50, "systeme": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 27,
+    "nach": "rack-werkstatt",
+    "ticket": [
+      "Die Ersatzteil-Datenbank läuft auf dem neuen Server im Technikraum. Marta steht mit verschränkten Armen im Teilelager: „4.812 Teile. Wenn die weg sind, steht die Werkstatt länger als ein Zug in der Wartung.“",
+      "„Mach eine Sicherung, leg eine Kopie auf das NAS im Werkstattbüro und prüf, ob man sie zurückspielen kann. Aber nicht in die echte Datenbank, da wird gerade gebucht.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · teiledb (PostgreSQL 15), Datenbank ersatzteile"],
+    "schritte": [
+      {
+        "ziel": "Die Datenbank ersatzteile in eine Sicherungsdatei schreiben",
+        "befehle": [
+          {
+            "befehl": "pg_dump ersatzteile",
+            "ausgabe": [
+              "-- PostgreSQL database dump",
+              "CREATE TABLE public.teil (",
+              "# … und 90.000 weitere Zeilen auf dem Bildschirm."
+            ],
+            "hinweis": "Ohne Zieldatei schreibt pg_dump alles auf den Bildschirm. Mit -f oder > landet es in einer Datei."
+          },
+          {
+            "befehl": "pg_dump -Fc -f /backup/ersatzteile.dump ersatzteile",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "psql -c 'DROP DATABASE ersatzteile'",
+            "ausgabe": ["Marta: „Sichern heißt aufheben, nicht wegwerfen!“"],
+            "gefaehrlich": true,
+            "hinweis": "DROP DATABASE löscht die Datenbank. Gesichert wird mit pg_dump."
+          }
+        ]
+      },
+      {
+        "ziel": "Prüfen, ob die Sicherung Tabellen enthält",
+        "befehle": [
+          {
+            "befehl": "cat /backup/ersatzteile.dump",
+            "ausgabe": ["PGDMP·······ersatzteile····", "# Binärsalat. Das Terminal piept."],
+            "hinweis": "Das Format -Fc ist binär. Den Inhalt zeigt pg_restore --list."
+          },
+          {
+            "befehl": "pg_restore --list /backup/ersatzteile.dump | grep TABLE",
+            "ausgabe": [
+              "215; 1259 16390 TABLE public einbau postgres",
+              "216; 1259 16395 TABLE public lieferant postgres",
+              "217; 1259 16401 TABLE public teil postgres",
+              "218; 1259 16410 TABLE public zugtyp postgres"
+            ],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Eine Kopie auf das NAS im Werkstattbüro legen",
+        "befehle": [
+          {
+            "befehl": "cp /backup/ersatzteile.dump /backup/ersatzteile-kopie.dump",
+            "ausgabe": ["# Die Kopie liegt auf derselben Platte wie das Original."],
+            "hinweis": "Eine Kopie auf derselben Platte hilft nicht, wenn die Platte stirbt. Die Kopie gehört auf ein anderes Gerät an einem anderen Ort."
+          },
+          {
+            "befehl": "scp /backup/ersatzteile.dump backup@nas-werkstatt:/sicherung/",
+            "ausgabe": ["ersatzteile.dump        100%   18MB  96.3MB/s   00:00"],
+            "richtig": true
+          },
+          {
+            "befehl": "chmod 777 /backup/ersatzteile.dump",
+            "ausgabe": ["# Jetzt darf jeder die Sicherung lesen und ändern."],
+            "gefaehrlich": true,
+            "hinweis": "777 gibt allen Benutzern alle Rechte, auch auf die Einkaufspreise in der Sicherung."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Sicherung in eine Testdatenbank zurückspielen",
+        "befehle": [
+          {
+            "befehl": "pg_restore --clean -d ersatzteile /backup/ersatzteile.dump",
+            "ausgabe": [
+              "Marta: „Stopp! Da wird gerade gebucht. --clean",
+              "wirft erst alles weg, was drin ist.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Ein Test gehört nie in die Live-Datenbank. --clean löscht dort vorher alle Objekte."
+          },
+          {
+            "befehl": "createdb test_teile && pg_restore -d test_teile /backup/ersatzteile.dump",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "pg_dump -d test_teile /backup/ersatzteile.dump",
+            "ausgabe": ["pg_dump: error: too many command-line arguments"],
+            "hinweis": "pg_dump sichert nur. Zurückgespielt wird mit pg_restore (Format -Fc) oder psql (SQL-Text)."
+          }
+        ]
+      },
+      {
+        "ziel": "Prüfen, ob alle Teile angekommen sind",
+        "befehle": [
+          {
+            "befehl": "psql test_teile -c '\\dt'",
+            "ausgabe": [
+              " public | einbau    | table",
+              " public | lieferant | table",
+              " public | teil      | table"
+            ],
+            "hinweis": "\\dt zeigt nur, dass die Tabellen da sind. Ob die Daten drinstehen, zeigt eine Zählung."
+          },
+          {
+            "befehl": "psql test_teile -c 'SELECT COUNT(*) FROM teil'",
+            "ausgabe": [" count", "-------", "  4812", "(1 row)"],
+            "richtig": true
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "pg_dump -Fc schreibt eine komprimierte Sicherung, pg_restore spielt sie zurück und zeigt mit --list ihren Inhalt.",
+      "Eine Sicherung zählt erst, wenn sie auf einem zweiten Gerät liegt und die Rücksicherung getestet ist."
+    ],
+    "erklaerung": [
+      "pg_dump -Fc -f … sichert, pg_restore --list zeigt die Tabellen, scp legt die Kopie aufs NAS, createdb test_teile und pg_restore testen die Rücksicherung, SELECT COUNT(*) zeigt alle 4.812 Teile.",
+      "Test in einer eigenen Datenbank, nie im laufenden Betrieb. Marta: „4.812. Stimmt. Ich hab gestern gezählt. Also, die Datenbank hat gezählt.“"
+    ],
+    "suchbegriffe": ["pg_dump", "Rücksicherung", "Backup"]
+  },
+  {
+    "id": "sql-mindestbestand",
+    "typ": "auswahl",
+    "titel": "Welche Teile müssen nachbestellt werden?",
+    "auftraggeber": "marta",
+    "raum": "teilelager",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 28,
+    "nach": "er-modell-ersatzteile",
+    "ticket": [
+      "Marta will jeden Morgen eine Liste: „Alle Teile, deren Bestand unter dem Mindestbestand liegt, mit dem Namen des Lieferanten. Dann ruf ich an, bevor mir die Bremsbeläge ausgehen.“",
+      "Die Abfrage beginnt mit SELECT t.bezeichnung, l.name FROM teil t … Tabellen: teil(teil_id, bezeichnung, bestand, mindestbestand, lieferant_id), lieferant(lieferant_id, name, telefon)."
+    ],
+    "frage": "Wie muss die Abfrage nach „FROM teil t“ weitergehen?",
+    "optionen": [
+      "JOIN lieferant l ON t.lieferant_id = l.lieferant_id WHERE t.bestand < t.mindestbestand",
+      "JOIN lieferant l ON t.teil_id = l.lieferant_id WHERE t.bestand < t.mindestbestand",
+      "CROSS JOIN lieferant l WHERE t.bestand < t.mindestbestand",
+      "JOIN lieferant l ON t.lieferant_id = l.lieferant_id WHERE t.bestand > t.mindestbestand"
+    ],
+    "antwort": "JOIN lieferant l ON t.lieferant_id = l.lieferant_id WHERE t.bestand < t.mindestbestand",
+    "hilfe": [
+      "Verbunden wird über das Spaltenpaar, das wirklich zusammengehört: Fremdschlüssel in teil und Primärschlüssel in lieferant."
+    ],
+    "erklaerung": [
+      "Der JOIN verbindet jedes Teil mit seinem Lieferanten über Fremdschlüssel und Primärschlüssel. WHERE t.bestand < t.mindestbestand lässt nur die knappen Teile übrig.",
+      "Ein CROSS JOIN kombiniert jedes Teil mit jedem Lieferanten, dann ruft Marta bei allen an. Der Vergleich teil_id = lieferant_id verbindet zufällige Paare."
+    ],
+    "suchbegriffe": ["JOIN", "WHERE", "Mindestbestand"]
+  },
+  {
+    "id": "wartung-diagnoseplatz",
+    "typ": "wartung",
+    "titel": "Wartung des PCs am Diagnoseplatz",
+    "auftraggeber": "marta",
+    "raum": "diagnoseplatz",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 28,
+    "ticket": [
+      "Marta klopft auf den PC am Diagnoseplatz, auf dem die Auswertung der Zugdaten läuft: „Den hat die Talbahn vor fünf Jahren hingestellt und dann vergessen. Neben der Werkhalle, mit Bremsstaub in der Luft.“",
+      "„Er wird manchmal laut und manchmal langsam. Prüf ihn einmal richtig durch, bevor er mitten in einem Check ausgeht.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "filter",
+        "text": "Staubfilter an der Gehäusefront prüfen und reinigen",
+        "ergebnis": "Grau, aber luftdurchlässig. Ausgeklopft und wieder eingesetzt.",
+        "auffaellig": false
+      },
+      {
+        "id": "luefter",
+        "text": "Alle Lüfter bei offenem Gehäuse beobachten",
+        "ergebnis": "CPU-Lüfter dreht. Der hintere Gehäuselüfter (120 mm) steht still, obwohl er Strom bekommt.",
+        "auffaellig": true
+      },
+      {
+        "id": "temperatur",
+        "text": "CPU-Temperatur unter Last ablesen (Grenzwert 80 °C)",
+        "ergebnis": "91 °C nach zehn Minuten Diagnose-Software. Der Takt sinkt, der PC drosselt sich.",
+        "auffaellig": true
+      },
+      {
+        "id": "ssd",
+        "text": "SMART-Werte der SSD auslesen (Restlebensdauer mindestens 20 %)",
+        "ergebnis": "Restlebensdauer 88 %, keine Fehler.",
+        "auffaellig": false
+      },
+      {
+        "id": "updates",
+        "text": "Letzte Windows-Updates prüfen (höchstens 30 Tage alt)",
+        "ergebnis": "Letztes Update vor 6 Tagen installiert.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Gehäuselüfter defekt, CPU überhitzt: Folgeauftrag Lüftertausch anlegen",
+      "Alles in Ordnung, nächste Wartung in sechs Monaten",
+      "Den PC sofort verschrotten und einen neuen bestellen",
+      "Das Gehäuse offen lassen, damit mehr Luft an die CPU kommt"
+    ],
+    "abschluss_antwort": "Gehäuselüfter defekt, CPU überhitzt: Folgeauftrag Lüftertausch anlegen",
+    "hilfe": [
+      "Vergleiche jeden Messwert mit seinem Grenzwert. Ein stehender Lüfter ist nie „in Ordnung“."
+    ],
+    "erklaerung": [
+      "Der hintere Lüfter steht, deshalb staut sich die warme Luft und die CPU erreicht 91 °C statt höchstens 80 °C. Sie drosselt sich, daher ist der PC langsam.",
+      "Ein offenes Gehäuse saugt noch mehr Bremsstaub an, verschrotten wäre bei einem 12-€-Teil übertrieben. Richtig ist der Folgeauftrag für den Lüftertausch."
+    ],
+    "suchbegriffe": ["Wartung", "Lüfter", "Staub"]
+  },
+  {
+    "id": "luefter-diagnoseplatz",
+    "typ": "diagnose",
+    "titel": "Lüfter am Diagnoseplatz tauschen",
+    "auftraggeber": "marta",
+    "raum": "diagnoseplatz",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 85, "reputation": 8},
+    "ab_tag": 29,
+    "nach": "wartung-diagnoseplatz",
+    "ticket": [
+      "Dein Wartungsprotokoll liegt auf Martas Schreibtisch, mit gelbem Textmarker. „Heute Nachmittag kommt der Triebwagen 7 zum Check. Bis dahin soll der PC wieder kühl sein.“",
+      "Rainer hat am Telefon gesagt: „Lüfter hab ich im Regal. Aber nicht jeder passt, schau aufs Etikett.“"
+    ],
+    "frage": "Prüfe den Lüfter, wähle Ursache und Maßnahme und tausche danach das passende Teil.",
+    "pruefungen": [
+      {
+        "id": "etikett",
+        "text": "Etikett und Stecker des stehenden Lüfters ansehen",
+        "ergebnis": "120 mm, Stecker mit 4 Pins (PWM), am Mainboard-Anschluss SYS_FAN1.",
+        "entscheidend": true
+      },
+      {
+        "id": "bios",
+        "text": "Lüfterdrehzahl im BIOS ablesen",
+        "ergebnis": "SYS_FAN1: 0 U/min. CPU_FAN: 1.850 U/min.",
+        "entscheidend": true
+      },
+      {
+        "id": "drehen",
+        "text": "Den ausgeschalteten Lüfter von Hand drehen",
+        "ergebnis": "Er dreht schwer und kratzt, das Lager ist verschlissen.",
+        "entscheidend": true
+      },
+      {
+        "id": "netzteil",
+        "text": "Netzteil-Lüfter prüfen",
+        "ergebnis": "Dreht ruhig, bläst warme Luft aus."
+      },
+      {
+        "id": "paste",
+        "text": "Wärmeleitpaste unter dem CPU-Kühler ansehen",
+        "ergebnis": "Gleichmäßig verteilt, noch weich."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Das Lager des hinteren Gehäuselüfters ist verschlissen, der Lüfter steht.",
+      "Die Wärmeleitpaste ist ausgetrocknet.",
+      "Das Netzteil ist zu schwach.",
+      "Die Diagnose-Software hat einen Fehler."
+    ],
+    "ursache": "Das Lager des hinteren Gehäuselüfters ist verschlissen, der Lüfter steht.",
+    "massnahmen": [
+      "Den Gehäuselüfter gegen einen passenden neuen tauschen",
+      "Die CPU im BIOS übertakten, damit sie schneller fertig wird",
+      "Den Lüfter mit Öl aus der Werkhalle schmieren",
+      "Den Lüfter im laufenden Betrieb mit dem Finger anschubsen"
+    ],
+    "massnahme": "Den Gehäuselüfter gegen einen passenden neuen tauschen",
+    "unsicher": ["Den Lüfter im laufenden Betrieb mit dem Finger anschubsen"],
+    "austausch": {
+      "typ": "luefter",
+      "passt": {"groesse": 120, "anschluss": "4-Pin PWM"},
+      "schritte": [
+        "Den PC herunterfahren und vom Strom trennen",
+        "Ein ESD-Armband anlegen und das Gehäuse öffnen",
+        "Den alten Lüfter abstecken und abschrauben",
+        "Den neuen Lüfter mit Luftrichtung nach hinten einschrauben und an SYS_FAN1 anstecken",
+        "Das Gehäuse schließen und den PC starten"
+      ],
+      "falsch": [
+        "Den Staub mit dem Werkstatt-Druckluftschlauch bei laufendem PC wegblasen",
+        "Den neuen Lüfter so einbauen, dass er Luft ins Gehäuse drückt"
+      ],
+      "test": "SYS_FAN1: 1.150 U/min. CPU unter Last: 64 °C statt 91 °C. Der Check für Triebwagen 7 läuft ohne Drosseln durch."
+    },
+    "hilfe": [
+      "Etikett und Stecker verraten, welcher Ersatz passt: Größe und Anschluss müssen stimmen.",
+      "Vor jedem Eingriff ins Gehäuse: Strom weg und ESD-Schutz. Der hintere Lüfter bläst die warme Luft hinaus."
+    ],
+    "erklaerung": [
+      "0 U/min und ein kratzendes Lager: Der Lüfter ist mechanisch hinüber. Passend ist nur ein 120-mm-Lüfter mit 4-Pin-PWM-Stecker, der 3-Pin-Lüfter ließe sich nicht regeln.",
+      "Ablauf: Strom trennen, ESD-Schutz, alten Lüfter raus, neuen mit der richtigen Luftrichtung rein, starten und Temperatur prüfen. Öl aus der Werkhalle zieht nur noch mehr Staub an."
+    ],
+    "suchbegriffe": ["Lüfter", "ESD", "Wartung"]
+  },
+  {
+    "id": "vlan-plan-werkstatt",
+    "typ": "zuordnung",
+    "titel": "Svenjas erster Tag: VLAN-Plan für die Werkstatt",
+    "auftraggeber": "svenja",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 50},
+    "achsen": ["fachkompetenz"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 30,
+    "ticket": [
+      "Svenja Brück, seit heute Morgen Netzwerktechnikerin bei Bitweiche, hat schon jedes Kabel im Serverraum an beiden Enden beschriftet. Jetzt hängt sie einen Plan an die Wand: „Betriebswerkstatt, alles in einem Netz. Das ändern wir.“",
+      "„Büro, Diagnose-Laptops, Kameras und die Verwaltung der Switches bekommen je ein eigenes VLAN. Sag mir, was wohin gehört, dann konfiguriere ich morgen mit dir den Switch.“"
+    ],
+    "frage": "Ordne jedem VLAN bzw. Porttyp die passenden Geräte oder Verbindungen zu.",
+    "paare": [
+      ["VLAN 10 Büro", "Martas PC und der Drucker im Werkstattbüro"],
+      ["VLAN 20 Diagnose", "Die Diagnose-Laptops im WLAN und an der Ladestation"],
+      ["VLAN 30 Kameras", "Die Kameras über Gleis 3"],
+      ["VLAN 99 Management", "Die Verwaltungsoberflächen der Switches und Access Points"],
+      ["Trunk (tagged, 802.1Q)", "Die Glasfaser zwischen Technikraum und Werkhallen-Switch"]
+    ],
+    "hilfe": [
+      "Jedes VLAN trennt eine Gerätegruppe mit eigenem Schutzbedarf. Eine Leitung, über die mehrere VLANs laufen, braucht Markierungen (Tags)."
+    ],
+    "erklaerung": [
+      "VLANs trennen die Geräte logisch, auch wenn sie am selben Switch hängen. Kameras und Management sind so für die Laptops nicht direkt erreichbar, ein Router oder eine Firewall regelt, was darf.",
+      "Zwischen zwei Switches laufen alle VLANs über einen Trunk. Jeder Rahmen trägt dort ein 802.1Q-Tag mit der VLAN-Nummer. Svenja beschriftet den Plan an beiden Enden."
+    ],
+    "suchbegriffe": ["VLAN", "Trunk", "Switch"]
+  },
+  {
+    "id": "terminal-switch-werkstatt",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "sw-werkstatt#",
+    "titel": "Den Switch der Werkstatt konfigurieren",
+    "auftraggeber": "svenja",
+    "ort": "betriebswerkstatt",
+    "raum": "technik_werkstatt",
+    "stelle": [22.6, 3.4],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 95, "reputation": 8},
+    "ab_tag": 31,
+    "nach": "vlan-plan-werkstatt",
+    "ticket": [
+      "Svenja hat ihr Laptop per Konsolenkabel an den 48er-Switch im Technikraum der Werkstatt gehängt. Das Kabel ist natürlich an beiden Enden beschriftet.",
+      "„Du tippst, ich schau zu. VLAN 20 für die Diagnose-Laptops, Port 5 ist die Ladestation am Diagnoseplatz, Port 48 die Glasfaser zur Werkhalle. Und wir machen das Netz schleifenfest, bevor Tim hier jemals ein Kabel umsteckt.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Netzfalke NF-2448P · Switch-CLI, Konfigurationsmodus"],
+    "schritte": [
+      {
+        "ziel": "VLAN 20 mit dem Namen DIAGNOSE anlegen",
+        "befehle": [
+          {
+            "befehl": "create vlan 5000 name DIAGNOSE",
+            "ausgabe": ["% Fehler: VLAN-ID muss zwischen 1 und 4094 liegen"],
+            "hinweis": "Das VLAN-Tag hat 12 Bit für die ID, gültig sind 1 bis 4094. Gewollt ist VLAN 20."
+          },
+          {
+            "befehl": "create vlan 20 name DIAGNOSE",
+            "ausgabe": ["VLAN 20 (DIAGNOSE) angelegt."],
+            "richtig": true
+          },
+          {
+            "befehl": "set port 20 name DIAGNOSE",
+            "ausgabe": ["Port 20 heißt jetzt DIAGNOSE."],
+            "hinweis": "Das benennt nur Port 20. Ein VLAN ist etwas anderes als ein Port."
+          }
+        ]
+      },
+      {
+        "ziel": "Port 5 (Ladestation) als Access-Port ins VLAN 20",
+        "befehle": [
+          {
+            "befehl": "set port 5 vlan 20 tagged",
+            "ausgabe": ["# Der Laptop an Port 5 bekommt keine Adresse mehr."],
+            "hinweis": "Endgeräte senden normalerweise ohne VLAN-Tag. Für sie ist der Port untagged (Access-Port)."
+          },
+          {
+            "befehl": "set port 5 vlan 20 untagged",
+            "ausgabe": ["Port 5: untagged VLAN 20 (PVID 20)."],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Port 48 (Glasfaser zur Werkhalle) als Trunk für alle vier VLANs",
+        "befehle": [
+          {
+            "befehl": "set port 48 vlan 20 untagged",
+            "ausgabe": [
+              "# In der Werkhalle kommt nur noch VLAN 20 an.",
+              "# Kameras und Management sind weg."
+            ],
+            "hinweis": "Untagged kann ein Port nur ein VLAN führen. Mehrere VLANs über eine Leitung brauchen Tags."
+          },
+          {
+            "befehl": "set port 48 vlan 10,20,30,99 tagged",
+            "ausgabe": ["Port 48: tagged VLAN 10,20,30,99."],
+            "richtig": true
+          },
+          {
+            "befehl": "set port 48 disable",
+            "ausgabe": ["Svenja: „Und jetzt ist die ganze Werkhalle offline.“"],
+            "gefaehrlich": true,
+            "hinweis": "Den Uplink abzuschalten trennt alle Geräte in der Werkhalle vom Netz."
+          }
+        ]
+      },
+      {
+        "ziel": "Schleifen verhindern: Rapid Spanning Tree einschalten",
+        "befehle": [
+          {
+            "befehl": "set stp mode rstp",
+            "ausgabe": ["Spanning Tree: RSTP (802.1w) aktiv."],
+            "richtig": true
+          },
+          {
+            "befehl": "set stp off",
+            "ausgabe": ["Svenja: „Aus? Dann legt die erste Schleife", "die Werkstatt lahm.“"],
+            "gefaehrlich": true,
+            "hinweis": "Ohne Spanning Tree führt ein falsch gestecktes Kabel zu einem Broadcast-Sturm."
+          },
+          {
+            "befehl": "set port 48 speed 10",
+            "ausgabe": ["# Glasfaser-Uplink jetzt mit 10 Mbit/s."],
+            "hinweis": "Die Geschwindigkeit hat mit Schleifen nichts zu tun. Gegen Schleifen hilft Spanning Tree."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Einstellungen für VLAN 20 kontrollieren",
+        "befehle": [
+          {
+            "befehl": "show clock",
+            "ausgabe": ["07:42:13 Di"],
+            "hinweis": "Die Uhrzeit hilft hier nicht weiter. show vlan zeigt die Ports eines VLANs."
+          },
+          {
+            "befehl": "show vlan 20",
+            "ausgabe": ["VLAN 20 DIAGNOSE", "  untagged: 5", "  tagged:   48"],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die Konfiguration dauerhaft speichern",
+        "befehle": [
+          {
+            "befehl": "reboot",
+            "ausgabe": [
+              "Svenja zieht dir die Hand weg: „Ohne Speichern",
+              "ist nach dem Neustart alles weg!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Die laufende Konfiguration geht beim Neustart verloren, wenn sie nicht gespeichert ist."
+          },
+          {
+            "befehl": "save config",
+            "ausgabe": ["Konfiguration gespeichert (startup-config)."],
+            "richtig": true
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Endgeräte hängen untagged (Access-Port) in genau einem VLAN. Verbindungen zwischen Switches führen mehrere VLANs tagged (Trunk).",
+      "Gegen Schleifen hilft Spanning Tree. Und was nicht gespeichert ist, ist nach dem Neustart weg."
+    ],
+    "erklaerung": [
+      "create vlan 20 name DIAGNOSE, Port 5 untagged in VLAN 20, Port 48 tagged mit 10, 20, 30 und 99, RSTP an, mit show vlan 20 kontrollieren, dann save config.",
+      "Svenja nickt: „Sauber. Jetzt noch beide Enden beschriften, dann ist die Welt in Ordnung.“"
+    ],
+    "suchbegriffe": ["VLAN", "Access-Port", "RSTP"]
+  },
+  {
+    "id": "ipplan-werkstatt",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan für die VLANs der Werkstatt",
+    "auftraggeber": "svenja",
+    "ort": "betriebswerkstatt",
+    "raum": "technik_werkstatt",
+    "stelle": [22.6, 3.4],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 32,
+    "nach": "terminal-switch-werkstatt",
+    "ticket": [
+      "Svenja hält dir einen Zettel hin, beschriftet oben und unten: „Für die Werkstatt hat Petra uns 10.40.0.0/24 gegeben. Diagnose-WLAN braucht 50 Adressen, Büro 25, Kameras 12, Management 6.“",
+      "„Größtes Netz zuerst, lückenlos, der Rest bleibt für später. Die Maske bitte ausgeschrieben, das Gerät in der Werkhalle ist älter als Tim.“"
+    ],
+    "frage": "Fülle den IP-Plan mit variabler Subnetzmaske (VLSM) aus.",
+    "daten": {
+      "netz": "10.40.0.0/24",
+      "teilnetze": [
+        {"name": "VLAN 20 Diagnose-WLAN", "hosts": 50},
+        {"name": "VLAN 10 Büro", "hosts": 25},
+        {"name": "VLAN 30 Kameras", "hosts": 12},
+        {"name": "VLAN 99 Management", "hosts": 6}
+      ],
+      "vlsm": true
+    },
+    "felder": ["netz", "maske", "broadcast"],
+    "hilfe": [
+      "Je Netz die kleinste Blockgröße suchen, in die Hosts + 2 passen (Netzadresse und Broadcast).",
+      "Lückenlos vergeben: Die nächste Netzadresse ist die vorige plus deren Blockgröße, der Broadcast liegt eins davor."
+    ],
+    "erklaerung": [
+      "Blockgrößen: 50 → 64 (/26), 25 → 32 (/27), 12 → 16 (/28), 6 → 8 (/29).",
+      "Ergebnis: Diagnose-WLAN 10.40.0.0/26 (Maske 255.255.255.192, Broadcast 10.40.0.63), Büro 10.40.0.64/27 (Maske 255.255.255.224, Broadcast 10.40.0.95), Kameras 10.40.0.96/28 (Maske 255.255.255.240, Broadcast 10.40.0.111), Management 10.40.0.112/29 (Maske 255.255.255.248, Broadcast 10.40.0.119). Ab 10.40.0.120 bleibt Platz für später."
+    ],
+    "suchbegriffe": ["VLSM", "Subnetzmaske"]
+  },
+  {
+    "id": "diagnose-glasfaser-werkstatt",
+    "typ": "diagnose",
+    "titel": "Werkhalle offline: Glasfaser-Uplink tot",
+    "auftraggeber": "svenja",
+    "ort": "betriebswerkstatt",
+    "raum": "technik_werkstatt",
+    "stelle": [22.6, 3.4],
+    "prioritaet": "kritisch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 100, "reputation": 9},
+    "ab_tag": 33,
+    "ticket": [
+      "Marta ruft an: „In der Werkhalle geht nichts mehr. Kein WLAN, keine Kameras. Die Diagnose-Laptops zeigen nur einen drehenden Kreis. Triebwagen 3 wartet.“",
+      "Svenja ist schon im Technikraum: „Das Glasfasermodul am Uplink hat gestern jemand getauscht, weil es angeblich warm war. Es lag im Lager, Aufkleber ‚SFP 1G‘. Schauen wir mal, was genau.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "modul",
+        "text": "Das Modul in Port 48 am Switch auslesen",
+        "ergebnis": "SFP: 1000BASE-LX, 1310 nm, Singlemode. Link: down.",
+        "entscheidend": true
+      },
+      {
+        "id": "gegenseite",
+        "text": "Das Modul am Switch in der Werkhalle auslesen",
+        "ergebnis": "SFP: 1000BASE-SX, 850 nm, Multimode. Link: down.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "Den Aufdruck des Glasfaserkabels lesen",
+        "ergebnis": "Aquafarbener Mantel, Aufdruck „OM3 50/125 µm“, Stecker LC/LC, 140 m lang.",
+        "entscheidend": true
+      },
+      {
+        "id": "sauber",
+        "text": "Die LC-Stecker mit dem Reinigungsstift säubern",
+        "ergebnis": "Etwas Staub entfernt. Der Link bleibt trotzdem aus."
+      },
+      {
+        "id": "strom",
+        "text": "Stromversorgung beider Switches prüfen",
+        "ergebnis": "Beide Switches laufen, alle anderen Ports sind aktiv."
+      },
+      {
+        "id": "log",
+        "text": "Das Protokoll des Switches im Technikraum lesen",
+        "ergebnis": "„Port 48: transceiver inserted“ gestern 16:12, seitdem „link down“."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Im Technikraum steckt ein Singlemode-Modul (LX), Kabel und Gegenseite sind Multimode (SX).",
+      "Das Glasfaserkabel ist gebrochen.",
+      "Der Switch in der Werkhalle ist defekt.",
+      "Die VLAN-Konfiguration an Port 48 ist gelöscht."
+    ],
+    "ursache": "Im Technikraum steckt ein Singlemode-Modul (LX), Kabel und Gegenseite sind Multimode (SX).",
+    "massnahmen": [
+      "Das LX-Modul gegen ein 1000BASE-SX-Modul tauschen",
+      "Das Glasfaserkabel durch ein 140 m langes Kupferkabel ersetzen",
+      "In die offene Faser schauen, ob Licht ankommt",
+      "Den Switch in der Werkhalle austauschen"
+    ],
+    "massnahme": "Das LX-Modul gegen ein 1000BASE-SX-Modul tauschen",
+    "unsicher": ["In die offene Faser schauen, ob Licht ankommt"],
+    "austausch": {
+      "typ": "sfp",
+      "passt": {"standard": "1000BASE-SX", "stecker": "LC"},
+      "schritte": [
+        "Das LWL-Patchkabel abziehen und Schutzkappen auf die Stecker setzen",
+        "Das LX-Modul am Bügel entriegeln und herausziehen",
+        "Das SX-Modul in Port 48 schieben, bis es einrastet",
+        "Die Stecker reinigen und das Patchkabel wieder einstecken"
+      ],
+      "falsch": [
+        "Prüfen, ob Licht kommt, indem man direkt in das Modul schaut",
+        "Den Switch dafür ausschalten und die Werkhalle zwei Stunden warten lassen"
+      ],
+      "test": "Port 48: 1000BASE-SX, Link up, 1 Gbit/s. Die Werkhalle ist wieder online, Triebwagen 3 wird geprüft."
+    },
+    "hilfe": [
+      "Beide Enden und das Kabel müssen zusammenpassen: Multimode (OM3, aqua) mit SX, Singlemode (OS2, gelb) mit LX.",
+      "In eine aktive Faser schaut man nie hinein, das Laserlicht ist unsichtbar und kann das Auge schädigen.",
+      "Fehlt das passende Modul im Lager, bestelle es nach. Es kommt am nächsten Arbeitstag."
+    ],
+    "erklaerung": [
+      "Das Kabel ist OM3-Multimode, die Gegenseite sendet mit 850 nm (SX). Das eingesteckte LX-Modul arbeitet mit 1310 nm für Singlemode, die beiden Seiten verstehen sich nicht.",
+      "Passend ist nur ein 1000BASE-SX-Modul mit LC-Stecker. Kupfer wäre bei 140 m zu lang, Twisted Pair reicht nur bis 100 m. Svenja klebt ein neues Etikett aufs Lagerfach: „SX ≠ LX“."
+    ],
+    "suchbegriffe": ["SFP", "Multimode", "Glasfaser"]
+  },
+  {
+    "id": "abschreibung-laptops",
+    "typ": "auswahl",
+    "titel": "Was kosten die Laptops pro Jahr?",
+    "auftraggeber": "marta",
+    "raum": "werkstattbuero",
+    "prioritaet": "niedrig",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 6},
+    "ab_tag": 34,
+    "nach": "bestellung-diagnose-laptops",
+    "ticket": [
+      "Marta hat Post von der Talbahn-Buchhaltung: „Die wollen wissen, wie ich die Diagnose-Laptops abschreibe. Ich schreib Zugumläufe ab, keine Laptops.“",
+      "„Drei Stück zu je 829 € netto, die Kabel sind schon als geringwertig verbucht. Die Buchhaltung sagt: linear über 3 Jahre. Was steht dann jedes Jahr drin, und was sind sie nach dem ersten Jahr noch wert?“"
+    ],
+    "frage": "Wie hoch sind die jährliche Abschreibung und der Buchwert nach dem ersten Jahr?",
+    "optionen": [
+      "Je Jahr 829 €, Buchwert nach dem 1. Jahr 1.658 €",
+      "Je Jahr 2.487 €, Buchwert nach dem 1. Jahr 0 €",
+      "Je Jahr 276,33 €, Buchwert nach dem 1. Jahr 552,67 €",
+      "Je Jahr 837 €, Buchwert nach dem 1. Jahr 1.674 €"
+    ],
+    "antwort": "Je Jahr 829 €, Buchwert nach dem 1. Jahr 1.658 €",
+    "hilfe": [
+      "Lineare Abschreibung: Anschaffungskosten geteilt durch Nutzungsdauer. Abgeschrieben werden alle drei Laptops, aber ohne die Kabel."
+    ],
+    "erklaerung": [
+      "3 × 829 € = 2.487 € Anschaffungskosten. Geteilt durch 3 Jahre ergibt 829 € Abschreibung pro Jahr, nach dem ersten Jahr bleibt ein Buchwert von 1.658 €.",
+      "Ein Laptop kostet mehr als 800 € netto, deshalb ist er kein geringwertiges Wirtschaftsgut und wird über die Nutzungsdauer verteilt, die Kabel dagegen sofort."
+    ],
+    "suchbegriffe": ["Abschreibung", "Buchwert", "GWG"]
+  },
+  {
+    "id": "backup-strategie-teiledb",
+    "typ": "auswahl",
+    "titel": "Freitagmorgen, die Datenbank ist kaputt",
+    "auftraggeber": "marta",
+    "raum": "teilelager",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 50, "datenbanken": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 85, "reputation": 8},
+    "ab_tag": 35,
+    "nach": "terminal-teiledb-backup",
+    "ticket": [
+      "Freitag, 6 Uhr. Die Ersatzteil-Datenbank meldet nach einem Plattenfehler kaputte Tabellen. Marta steht schon im Teilelager: „Du hast doch gesichert. Welche Sicherungen brauchen wir jetzt?“",
+      "Ulla hat den Plan so eingerichtet: sonntags eine Vollsicherung, montags bis donnerstags jede Nacht eine differenzielle Sicherung."
+    ],
+    "frage": "Welche Sicherungen spielst du für den Stand von Donnerstagnacht zurück?",
+    "optionen": [
+      "Die Vollsicherung vom Sonntag und die differenzielle Sicherung von Donnerstag",
+      "Die Vollsicherung vom Sonntag und alle differenziellen Sicherungen von Montag bis Donnerstag",
+      "Nur die differenzielle Sicherung von Donnerstag",
+      "Nur die Vollsicherung vom Sonntag"
+    ],
+    "antwort": "Die Vollsicherung vom Sonntag und die differenzielle Sicherung von Donnerstag",
+    "hilfe": [
+      "Eine differenzielle Sicherung enthält alle Änderungen seit der letzten Vollsicherung, eine inkrementelle nur die seit der letzten Sicherung überhaupt."
+    ],
+    "erklaerung": [
+      "Jede differenzielle Sicherung enthält alles seit der letzten Vollsicherung. Also reichen die Vollsicherung vom Sonntag und die jüngste differenzielle vom Donnerstag.",
+      "Bei inkrementellen Sicherungen bräuchte man dagegen alle von Montag bis Donnerstag in der richtigen Reihenfolge. Nur die Vollsicherung würde vier Tage Buchungen verlieren."
+    ],
+    "suchbegriffe": ["differenziell", "Vollsicherung", "inkrementell"]
+  },
+  {
+    "id": "uebergabe-horst-wissen",
+    "typ": "zuordnung",
+    "titel": "Horsts Wissen gehört in die Doku",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 36,
+    "ticket": [
+      "Horst stellt einen Schuhkarton voller Zettel auf den Leitstand. „Petra sagt, ich soll vor der Rente alles aufschreiben, was ich weiß. 40 Jahre Bahn. Das hier ist Band eins.“",
+      "„Die Neue, Frau Demir, soll ja nicht jeden Abend bei mir anrufen. Obwohl, meine Frau würde sich freuen, wenn mal jemand anruft.“"
+    ],
+    "frage": "Ordne jedes Wissen aus Horsts Karton dem Dokument zu, in das es gehört.",
+    "paare": [
+      ["Was zu tun ist, wenn in der Leitstelle der Strom ausfällt", "Notfallhandbuch"],
+      ["Welches Kabel im Technikraum wohin führt", "Netzplan mit Kabelbeschriftung"],
+      ["Wie der Schichtwechsel am Leitstand abläuft", "Betriebshandbuch mit Arbeitsanweisungen"],
+      ["Wen man bei einer Stellwerksstörung wann anruft", "Eskalations- und Kontaktliste"],
+      ["Welches Gerät wann gekauft wurde und bis wann Garantie hat", "Inventarliste"]
+    ],
+    "hilfe": [
+      "Frag bei jedem Zettel: Brauche ich das im Notfall, im Alltag, beim Suchen eines Kabels, beim Anrufen oder beim Einkauf?",
+      "Ein Notfallhandbuch muss auch dann funktionieren, wenn gerade nichts funktioniert. Am besten liegt es zusätzlich ausgedruckt neben dem Leitstand."
+    ],
+    "erklaerung": [
+      "Wissen, das nur in einem Kopf steckt, geht mit diesem Kopf in Rente. Jede Art Wissen hat ihr eigenes Dokument: Notfall, Netz, Alltag, Eskalation und Inventar.",
+      "Horst liest die Liste zweimal und sagt: „Hätte ich das 1986 gewusst, hätte ich weniger Zettel gebraucht.“"
+    ],
+    "suchbegriffe": ["Dokumentation", "Notfallhandbuch", "Netzplan"]
+  },
+  {
+    "id": "horst-passwortkarte",
+    "typ": "auswahl",
+    "titel": "Horsts Karteikarte mit den Passwörtern",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 45},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 38,
+    "nach": "uebergabe-horst-wissen",
+    "ticket": [
+      "Horst zieht eine vergilbte Karteikarte aus der Schublade unter seinem Hebel. „Passwörter. Alle. Stellwerks-PCs, Funk, Kaffeemaschine. Die gebe ich Frau Demir an meinem letzten Tag persönlich. Mit Handschlag.“",
+      "„Jonas hat vorgeschlagen, sie einfach an die ganze Leitstelle zu mailen. Da habe ich sogar mal einem Computer recht gegeben: Nein.“"
+    ],
+    "frage": "Wie übergibt man Horsts Passwörter richtig?",
+    "optionen": [
+      "In einen Passwort-Tresor mit Rechten je Rolle übertragen, danach alle ändern und die Karte vernichten",
+      "Die Karteikarte Aylin übergeben, sie soll sie gut unter dem Hebel verstecken",
+      "Die Passwörter an alle in der Leitstelle mailen, damit keiner sie vergisst",
+      "Nichts ändern: Aylin meldet sich einfach weiter mit Horsts Konto an"
+    ],
+    "antwort": "In einen Passwort-Tresor mit Rechten je Rolle übertragen, danach alle ändern und die Karte vernichten",
+    "hilfe": [
+      "Wer kennt die Passwörter heute alles? Und wer soll sie nach Horsts letztem Tag noch kennen?",
+      "Gemeinsam genutzte Konten und Klartext-Passwörter machen es unmöglich nachzuvollziehen, wer was getan hat."
+    ],
+    "erklaerung": [
+      "Ein Passwort-Tresor speichert die Passwörter verschlüsselt und gibt sie nur den Rollen frei, die sie brauchen. Weil Horst (und wer weiß wer noch) sie kennt, werden alle nach der Übergabe geändert.",
+      "Horst zerreißt die Karte feierlich in vier Teile. „Das war die sicherste Karte der Talbahn. Dachte ich.“"
+    ],
+    "suchbegriffe": ["Passwortmanager", "Passwort"]
+  },
+  {
+    "id": "sql-stoerungsbuch",
+    "typ": "auswahl",
+    "titel": "Horsts Störungsbuch als Datenbank",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 40,
+    "ticket": [
+      "Petra hat Horsts handgeschriebenes Störungsbuch abgetippt: Tabelle stoerung mit den Spalten id, datum, stellwerk und dauer_min.",
+      "Horst tippt auf den Bildschirm: „Ich will Frau Demir zeigen, welches Stellwerk am häufigsten zickt. Das schlimmste zuerst. Ich weiß es natürlich auswendig, aber sie soll es ja schwarz auf weiß sehen.“"
+    ],
+    "frage": "Welche Abfrage zählt die Störungen je Stellwerk, die meisten zuerst?",
+    "optionen": [
+      "SELECT stellwerk, COUNT(*) AS anzahl FROM stoerung GROUP BY stellwerk ORDER BY anzahl DESC;",
+      "SELECT stellwerk, COUNT(*) FROM stoerung ORDER BY stellwerk;",
+      "SELECT COUNT(stellwerk) FROM stoerung GROUP BY anzahl DESC;",
+      "SELECT * FROM stoerung WHERE COUNT(*) > 1 GROUP BY stellwerk;"
+    ],
+    "antwort": "SELECT stellwerk, COUNT(*) AS anzahl FROM stoerung GROUP BY stellwerk ORDER BY anzahl DESC;",
+    "hilfe": [
+      "„Je Stellwerk“ heißt: Die Zeilen werden nach dem Stellwerk gruppiert. COUNT(*) zählt die Zeilen jeder Gruppe.",
+      "Sortiert wird mit ORDER BY, absteigend mit DESC. Bedingungen auf Gruppen stehen in HAVING, nicht in WHERE."
+    ],
+    "erklaerung": [
+      "GROUP BY stellwerk bildet je Stellwerk eine Gruppe, COUNT(*) zählt die Störungen darin, ORDER BY anzahl DESC stellt das häufigste nach oben.",
+      "Ohne GROUP BY gäbe es nur eine Gesamtzahl, und COUNT(*) im WHERE ist nicht erlaubt. Horst liest das Ergebnis: „Stellwerk Talheim Ost. Hab ich doch gesagt.“"
+    ],
+    "suchbegriffe": ["GROUP BY", "COUNT", "SQL"]
+  },
+  {
+    "id": "pc-leitstelle-aylin",
+    "typ": "bauteile",
+    "titel": "Dashboard-PC für die neue Leitstellenleiterin",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 7},
+    "ab_tag": 44,
+    "ticket": [
+      "Mehmet sortiert Schrauben für einen neuen PC. „Aylin Demir, die neue Leiterin der Leitstelle, will ein Dashboard auf drei Monitoren. Mit vielen Farben, hat sie gesagt. Horst hatte einen Monitor und einen Hebel.“",
+      "„Also: Grafikkarte, mindestens 32 GB RAM und 1 TB SSD. Budget 900 €. Und bitte das Netzteil nachrechnen, das kleine liegt nur zufällig da.“"
+    ],
+    "frage": "Baue einen PC, der alle Vorgaben erfüllt.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "gpu", "netzteil", "gehaeuse"],
+    "teile": [
+      "mb_b650_atx",
+      "mb_a620_matx",
+      "cpu_r5_7600",
+      "cpu_i5_13400",
+      "ram_ddr5_2x16",
+      "ram_ddr4_2x8",
+      "ssd_nvme_1000",
+      "gpu_4060",
+      "nt_300",
+      "nt_450",
+      "geh_matx"
+    ],
+    "vorgaben": {"ram_min": 32, "speicher_min": 1000, "grafikkarte": true, "budget": 900},
+    "hilfe": [
+      "Es liegt nur ein Mini-Tower da. Welches Mainboard passt hinein, und welche CPU passt auf dieses Mainboard?",
+      "Netzteil: (CPU + Grafikkarte + 60 W Grundlast) × 1,3. Mit Grafikkarte reichen 300 W nicht mehr."
+    ],
+    "erklaerung": [
+      "Richtig: A620M (Micro-ATX) + Ryzen 5 7600 + DDR5 32 GB + NVMe-SSD 1 TB + RTX 4060 + Netzteil 450 W + Mini-Tower, zusammen 869,00 €. Das ATX-Board passt nicht in den Mini-Tower, der Intel-Prozessor auf kein Board.",
+      "Netzteil: (65 W + 115 W + 60 W Grundlast) × 1,3 = 312 W. Das 300-W-Netzteil ist zu schwach, das 450-W-Netzteil reicht. Mehmet klebt ein Schild dran: „Nicht als Hebel benutzen.“"
+    ],
+    "suchbegriffe": ["Grafikkarte", "Netzteil", "Mainboard"]
+  },
+  {
+    "id": "wartung-leitstand-horst",
+    "typ": "wartung",
+    "titel": "Horsts letzte Wartung am Leitstand",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 46,
+    "ticket": [
+      "Horst hat sein Wartungsheft aufgeschlagen, das letzte Mal. „Einmal im Quartal wird der Leitstand geprüft. Seit 1998 habe ich keine Prüfung ausgelassen. Heute machst du sie, und ich gucke zu. Streng.“",
+      "„Der linke Monitor spinnt ein bisschen. Da klopfe ich immer drauf. Das zählt bestimmt nicht als Befund.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "monitor",
+        "text": "Leitstand-Monitore auf Bildfehler prüfen",
+        "ergebnis": "Der linke 32-Zoll-Monitor flackert alle paar Minuten und wird kurz dunkel. Laut Aufkleber läuft er seit sieben Jahren rund um die Uhr.",
+        "auffaellig": true
+      },
+      {
+        "id": "temperatur",
+        "text": "CPU-Temperatur der Leitstand-PCs ablesen (Grenzwert 80 °C)",
+        "ergebnis": "62 °C und 58 °C, die Lüfter laufen leise.",
+        "auffaellig": false
+      },
+      {
+        "id": "usv",
+        "text": "USV-Protokoll der Leitstelle lesen (Selbsttest monatlich)",
+        "ergebnis": "Letzter Selbsttest vor 9 Tagen, bestanden.",
+        "auffaellig": false
+      },
+      {
+        "id": "sicherung",
+        "text": "Sicherung der Leitstand-Konfiguration prüfen (täglich)",
+        "ergebnis": "Letzte Sicherung heute Nacht, Prüfsumme stimmt.",
+        "auffaellig": false
+      },
+      {
+        "id": "kabel",
+        "text": "Kabel unter dem Leitstand auf Knicke und Stolperfallen prüfen",
+        "ergebnis": "Alles im Kabelkanal und an beiden Enden beschriftet. Svenja war schon da.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Linker Monitor defekt: Folgeauftrag Monitortausch anlegen, sonst alles in Ordnung",
+      "Alles in Ordnung, Klopfen gehört zur Bedienung",
+      "Den ganzen Leitstand sofort abschalten, bis ein neuer Monitor da ist",
+      "Den Leitstand-PC neu installieren, dann hört das Flackern auf"
+    ],
+    "abschluss_antwort": "Linker Monitor defekt: Folgeauftrag Monitortausch anlegen, sonst alles in Ordnung",
+    "hilfe": [
+      "Jeder Punkt hat einen Sollwert in Klammern oder eine klare Erwartung. Ein Gerät, das nur mit Klopfen funktioniert, funktioniert nicht.",
+      "Die Leitstelle ist rund um die Uhr besetzt. Ein Befund bekommt einen Folgeauftrag, abgeschaltet wird nur, wenn es gefährlich ist."
+    ],
+    "erklaerung": [
+      "Nur der Monitor ist auffällig. Bildausfälle nach Jahren im Dauerbetrieb deuten auf ein verschlissenes Gerät, das gehört getauscht, nicht beklopft.",
+      "Horst unterschreibt sein letztes Protokoll mit Füller und sagt leise: „Ordentlich.“ Aus seinem Mund ist das ein Orden."
+    ],
+    "suchbegriffe": ["Wartung", "Monitor"]
+  },
+  {
+    "id": "beamer-abschiedsfeier",
+    "typ": "diagnose",
+    "titel": "Kein Bild für Horsts Abschiedsfeier",
+    "auftraggeber": "petra",
+    "raum": "service_center",
+    "stelle": [10.38, 3.12],
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 8},
+    "ab_tag": 47,
+    "nach": "wartung-leitstand-horst",
+    "ticket": [
+      "Im Service-Center hängen Wimpel, Sabine hat Kekse in Hebelform gebacken. Petra wedelt mit dem Notebook: „Um drei kommt Horst! Die Diashow ‚40 Jahre Horst‘ ist fertig, Horst 1986 mit Schnurrbart, Horst 1998 mit Hebel …“",
+      "„Aber der Beamer zeigt nur ‚Kein Signal‘. Tim hat vorhin ‚nur zum Testen‘ ein paar Knöpfe gedrückt. Bitte, bitte, bevor Horst reinkommt!“"
+    ],
+    "frage": "Finde heraus, warum der Beamer kein Bild zeigt, und wähle Ursache und Maßnahme.",
+    "pruefungen": [
+      {
+        "id": "quelle",
+        "text": "Eingangsquelle im Menü des Beamers ansehen",
+        "ergebnis": "Der Beamer steht auf „VGA“. Das Notebook steckt aber am HDMI-Eingang.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "HDMI-Kabel an beiden Enden prüfen",
+        "ergebnis": "Sitzt fest, das Kabel ist unbeschädigt."
+      },
+      {
+        "id": "notebook",
+        "text": "Anzeigeeinstellungen am Notebook prüfen",
+        "ergebnis": "„Duplizieren“ ist eingestellt, das Notebook erkennt einen zweiten Bildschirm mit 1920 × 1080.",
+        "entscheidend": true
+      },
+      {
+        "id": "lampe",
+        "text": "Lampenstunden im Menü des Beamers ablesen",
+        "ergebnis": "1.240 von 5.000 Stunden. Das Menü leuchtet hell an der Wand."
+      },
+      {
+        "id": "strom",
+        "text": "Steckdosenleiste und Netzschalter prüfen",
+        "ergebnis": "Alles an. Der Beamer brummt zufrieden."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Am Beamer ist die falsche Eingangsquelle gewählt.",
+      "Die Lampe des Beamers ist verbraucht.",
+      "Das HDMI-Kabel ist defekt.",
+      "Das Notebook kann kein zweites Bild ausgeben."
+    ],
+    "ursache": "Am Beamer ist die falsche Eingangsquelle gewählt.",
+    "massnahmen": [
+      "Am Beamer die Quelle auf HDMI stellen und die Diashow starten",
+      "Schnell einen neuen Beamer bestellen",
+      "Das Notebook neu installieren",
+      "Das Gehäuse öffnen und die heiße Lampe im Betrieb tauschen"
+    ],
+    "massnahme": "Am Beamer die Quelle auf HDMI stellen und die Diashow starten",
+    "unsicher": ["Das Gehäuse öffnen und die heiße Lampe im Betrieb tauschen"],
+    "hilfe": [
+      "Das Menü des Beamers erscheint an der Wand. Der Beamer selbst lebt also. Fehlt nur das Bild vom Notebook?",
+      "Prüfe beide Enden des Weges: Was schickt das Notebook, und auf welchem Eingang hört der Beamer zu?"
+    ],
+    "erklaerung": [
+      "Das Notebook sendet über HDMI, der Beamer lauscht aber auf VGA. Ein Druck auf „Source“ genügt. Lampe, Strom und Kabel sind in Ordnung.",
+      "Horst kommt herein, sieht sich 1986 mit Schnurrbart an der Wand und sagt: „Das war ein gutes Jahr. Für den Schnurrbart.“ Dann isst er einen Keks-Hebel."
+    ],
+    "suchbegriffe": ["Beamer", "HDMI"]
+  },
+  {
+    "id": "terminal-konten-uebergabe",
+    "typ": "terminal",
+    "system": "windows",
+    "prompt": "PS C:\\>",
+    "titel": "Konten übergeben: Aylin rein, Horst deaktivieren",
+    "auftraggeber": "petra",
+    "raum": "it_buero",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 50, "systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 48,
+    "ticket": [
+      "Heute ist Horsts letzter Arbeitstag. Petra hat die Active-Directory-Konsole offen: „Morgen fängt Aylin Demir an. Sie braucht das Konto ademir und die Rechte für die Leitstelle. Nur die, nicht mehr.“",
+      "„Horsts Konto hgrabowski machen wir heute Abend zu. Aber nicht löschen! Seine Dateien, sein Postfach und die Protokolle hängen daran.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Windows PowerShell (Administrator)", "Modul ActiveDirectory geladen"],
+    "schritte": [
+      {
+        "ziel": "Nachsehen, in welchen Gruppen Horsts Konto hgrabowski ist",
+        "befehle": [
+          {
+            "befehl": "whoami /groups",
+            "ausgabe": ["# Zeigt die Gruppen deines eigenen Kontos,", "# nicht die von Horst."],
+            "hinweis": "whoami zeigt immer das angemeldete Konto. Für ein anderes Konto fragst du das Active Directory."
+          },
+          {
+            "befehl": "Get-ADPrincipalGroupMembership hgrabowski | Select-Object Name",
+            "ausgabe": [
+              "Name",
+              "----",
+              "Domänen-Benutzer",
+              "GG_Leitstelle",
+              "GG_Stellwerk_Lesen",
+              "Domänen-Admins   # seit 2009, „wegen Drucker“"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "Get-ADGroup hgrabowski",
+            "ausgabe": ["Get-ADGroup : Cannot find an object with", "identity: 'hgrabowski'"],
+            "hinweis": "Get-ADGroup sucht Gruppen. hgrabowski ist ein Benutzerkonto."
+          }
+        ]
+      },
+      {
+        "ziel": "Konto ademir anlegen, das Startpasswort verdeckt eingeben",
+        "befehle": [
+          {
+            "befehl": "net user ademir Leitstelle1 /add",
+            "ausgabe": ["# Lokales Konto nur auf diesem PC,", "# Passwort im Klartext in der History."],
+            "hinweis": "net user ohne /domain legt ein lokales Konto an. Außerdem gehört ein Passwort nie in die Befehlszeile."
+          },
+          {
+            "befehl": "New-ADUser -Name \"Aylin Demir\" -SamAccountName ademir -AccountPassword (Read-Host -AsSecureString)",
+            "ausgabe": ["************"],
+            "richtig": true
+          },
+          {
+            "befehl": "New-ADUser -Name \"Aylin Demir\" -SamAccountName hgrabowski",
+            "ausgabe": ["New-ADUser : The specified account already", "exists"],
+            "hinweis": "Jede Person bekommt ein eigenes Konto. Horsts Kontoname ist vergeben, und geteilte Konten machen Protokolle wertlos."
+          }
+        ]
+      },
+      {
+        "ziel": "Konto aktivieren und beim ersten Anmelden Passwortwechsel erzwingen",
+        "befehle": [
+          {
+            "befehl": "Set-ADUser ademir -PasswordNeverExpires $true -Enabled $true",
+            "ausgabe": ["# Aktiv, aber Petras Startpasswort gilt", "# jetzt für immer."],
+            "hinweis": "Das Startpasswort kennt Petra. Aylin muss es beim ersten Anmelden durch ein eigenes ersetzen."
+          },
+          {
+            "befehl": "Set-ADUser ademir -ChangePasswordAtLogon $true -Enabled $true",
+            "ausgabe": [],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Aylin nur in die Gruppen aufnehmen, die sie für die Leitstelle braucht",
+        "befehle": [
+          {
+            "befehl": "Add-ADPrincipalGroupMembership ademir -MemberOf GG_Leitstelle,GG_Stellwerk_Lesen",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "Add-ADGroupMember \"Domänen-Admins\" -Members ademir",
+            "ausgabe": ["Petra zieht dir die Tastatur weg: „Admin für", "die ganze Domäne? Nein!“"],
+            "gefaehrlich": true,
+            "hinweis": "Least Privilege: Aylin leitet die Leitstelle, sie verwaltet nicht die Domäne. Admin-Rechte sind das Lieblingsziel von Angreifern."
+          },
+          {
+            "befehl": "Add-ADGroupMember GG_Leitstelle -Members hgrabowski",
+            "ausgabe": ["# Horst ist schon Mitglied. Aylin hat", "# immer noch keine Gruppe."],
+            "hinweis": "Aufgenommen werden soll das neue Konto ademir."
+          }
+        ]
+      },
+      {
+        "ziel": "Horsts Konto nach Feierabend sperren, aber behalten",
+        "befehle": [
+          {
+            "befehl": "Remove-ADUser hgrabowski",
+            "ausgabe": ["Petra: „Stopp! Dann verlieren seine Dateien", "und Protokolle ihren Besitzer.“"],
+            "gefaehrlich": true,
+            "hinweis": "Ein gelöschtes Konto ist weg, samt SID. Dateien, Postfach und Protokolle ließen sich nicht mehr zuordnen. Erst deaktivieren, gelöscht wird nach einer Frist."
+          },
+          {"befehl": "Disable-ADAccount hgrabowski", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "Set-ADAccountPassword hgrabowski -Reset",
+            "ausgabe": ["# Neues Passwort gesetzt. Das Konto ist", "# aber weiter aktiv."],
+            "hinweis": "Ein neues Passwort sperrt das Konto nicht. Laufende Anmeldungen und Dienste mit dem Konto gingen weiter."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Get-ADPrincipalGroupMembership zeigt die Gruppen eines Kontos. New-ADUser legt ein Konto an, Set-ADUser ändert es.",
+      "Least Privilege: nur die Gruppen, die für die Arbeit nötig sind. Ausgeschiedene Konten werden deaktiviert, nicht sofort gelöscht."
+    ],
+    "erklaerung": [
+      "Aylin bekommt ein eigenes Konto mit verdeckt eingegebenem Startpasswort, das sie beim ersten Anmelden ändern muss, und nur die zwei Leitstellen-Gruppen.",
+      "Horsts Konto wird deaktiviert: Niemand kann sich mehr damit anmelden, aber Dateien, Postfach und Protokolle bleiben zuordenbar. Seine alte Mitgliedschaft bei den Domänen-Admins notiert Petra für die nächste Rechteprüfung."
+    ],
+    "suchbegriffe": ["Active Directory", "Least Privilege", "Benutzerkonto"]
+  },
+  {
+    "id": "dashboard-snmp-aylin",
+    "typ": "auswahl",
+    "titel": "Aylins buntes Dashboard",
+    "auftraggeber": "aylin",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 49,
+    "nach": "pc-leitstelle-aylin",
+    "ticket": [
+      "Aylin Demir hat Horsts Hebel als Stifthalter auf den Leitstand gestellt. „Guten Morgen! Ich will auf dem neuen PC alle Switches und USVs der Bahnhöfe sehen. Grün, gelb, rot. Und bei Rot soll es sofort blinken.“",
+      "„Horst hat das früher gemacht, indem er alle Bahnhöfe angerufen hat. Jeden Morgen.“"
+    ],
+    "frage": "Womit bekommt das Dashboard die Zustände der Geräte?",
+    "optionen": [
+      "SNMP: Das Dashboard fragt die Geräte regelmäßig ab und empfängt Traps bei Störungen",
+      "SMTP: Jedes Gerät schickt jede Minute eine E-Mail mit seinem Zustand",
+      "DHCP: Der Server vergibt die Adressen und kennt dadurch den Zustand",
+      "FTP: Das Dashboard lädt einmal pro Stunde die Logdateien herunter"
+    ],
+    "antwort": "SNMP: Das Dashboard fragt die Geräte regelmäßig ab und empfängt Traps bei Störungen",
+    "hilfe": [
+      "Gesucht ist ein Protokoll, das extra für die Überwachung und Verwaltung von Netzwerkgeräten gemacht ist.",
+      "Es kann Werte abfragen (Polling) und Geräte können von sich aus Alarm schlagen."
+    ],
+    "erklaerung": [
+      "SNMP (Simple Network Management Protocol) ist das Standardprotokoll fürs Monitoring: Der Manager fragt Werte wie Portstatus oder Akkuladung ab, die Geräte senden bei Störungen einen Trap.",
+      "Aylin sieht zum ersten Mal alle Bahnhöfe auf einmal. Alles grün. „Schade“, sagt sie, „ich hatte mich auf das Blinken gefreut.“"
+    ],
+    "suchbegriffe": ["SNMP", "Monitoring"]
+  },
+  {
+    "id": "monitor-leitstand-tausch",
+    "typ": "diagnose",
+    "titel": "Der flackernde Monitor am Leitstand",
+    "auftraggeber": "aylin",
+    "raum": "leitstelle",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 95, "reputation": 8},
+    "ab_tag": 50,
+    "nach": "wartung-leitstand-horst",
+    "ticket": [
+      "Aylin zeigt auf den linken Monitor, der gerade wieder schwarz wird. „Das steht in Horsts letztem Wartungsprotokoll. Daneben hat er geschrieben: ‚Klopfen hilft.‘ Ich klopfe nicht. Ich lasse tauschen.“",
+      "„Aber bitte so, dass die Leitstelle dabei weiter alles sieht. Die Züge fahren auch, wenn wir Monitore tauschen.“"
+    ],
+    "frage": "Finde die Ursache, wähle die Maßnahme und tausche danach das passende Teil.",
+    "pruefungen": [
+      {
+        "id": "typenschild",
+        "text": "Typenschild des Monitors lesen",
+        "ergebnis": "32 Zoll, DisplayPort, 3840 × 2160, für Dauerbetrieb (24/7). Betriebsstunden laut Menü: 61.300.",
+        "entscheidend": true
+      },
+      {
+        "id": "tausch",
+        "text": "Den Monitor testweise an den Ausgang des rechten Monitors hängen",
+        "ergebnis": "Das Flackern wandert mit dem Monitor mit. Der rechte Monitor läuft am alten Ausgang einwandfrei.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "DisplayPort-Kabel gegen ein neues tauschen",
+        "ergebnis": "Mit neuem Kabel flackert es genauso."
+      },
+      {
+        "id": "treiber",
+        "text": "Grafiktreiber des Leitstand-PCs prüfen",
+        "ergebnis": "Aktuell, keine Fehler in der Ereignisanzeige."
+      },
+      {
+        "id": "strom",
+        "text": "Stromversorgung des Monitors prüfen",
+        "ergebnis": "Hängt an der USV, Spannung stabil."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Der Monitor ist nach Jahren im Dauerbetrieb verschlissen.",
+      "Der Grafiktreiber ist veraltet.",
+      "Das DisplayPort-Kabel ist defekt.",
+      "Die USV liefert zu wenig Spannung."
+    ],
+    "ursache": "Der Monitor ist nach Jahren im Dauerbetrieb verschlissen.",
+    "massnahmen": [
+      "Den Monitor gegen ein passendes 24/7-Modell tauschen",
+      "Den Grafiktreiber neu installieren",
+      "Weiter draufklopfen, wenn er dunkel wird",
+      "Den Monitor mit offenem Gehäuse im Betrieb reparieren"
+    ],
+    "massnahme": "Den Monitor gegen ein passendes 24/7-Modell tauschen",
+    "unsicher": ["Den Monitor mit offenem Gehäuse im Betrieb reparieren"],
+    "austausch": {
+      "typ": "monitor",
+      "passt": {"diagonale": 32, "anschluss": "DisplayPort", "aufloesung": "3840 × 2160"},
+      "schritte": [
+        "Die Leitstand-Ansicht vorübergehend auf die anderen Monitore legen",
+        "Den alten Monitor ausschalten und Strom- und DisplayPort-Kabel abziehen",
+        "Den neuen Monitor montieren und anschließen",
+        "Auflösung prüfen und die Ansicht zurück auf den linken Monitor legen"
+      ],
+      "falsch": [
+        "Den Leitstand-PC während des Zugbetriebs hart ausschalten",
+        "Den alten Monitor in den Restmüll werfen"
+      ],
+      "test": "Scharfes Bild in 3840 × 2160, kein Flackern nach 30 Minuten. Der alte Monitor geht zum Elektroschrott-Recycling."
+    },
+    "hilfe": [
+      "Wandert der Fehler mit dem Gerät oder bleibt er am Anschluss? Das trennt Monitor von PC.",
+      "Ein Leitstand läuft rund um die Uhr. Der Ersatz muss Größe, Anschluss und Auflösung erfüllen, sonst passt das Dashboard nicht. Fehlt er im Lager, bestelle ihn nach."
+    ],
+    "erklaerung": [
+      "Der Fehler wandert mit dem Monitor, Kabel, Treiber und Strom sind in Ordnung. Nach über 60.000 Stunden ist die Hintergrundbeleuchtung verschlissen.",
+      "Passend ist nur der 32-Zoll-Leitstand-Monitor mit DisplayPort und 3840 × 2160. Während des Tauschs läuft die Ansicht auf den anderen Monitoren weiter. Aylin steckt einen Stift in den Hebel: „So. Jetzt ist die Leitstelle wirklich meine.“"
+    ],
+    "suchbegriffe": ["Monitor", "DisplayPort"]
+  },
+  {
+    "id": "leasing-monitorwand",
+    "typ": "formular",
+    "art": "leasing",
+    "titel": "Neue Monitorwand: kaufen oder leasen?",
+    "auftraggeber": "aylin",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 51,
+    "nach": "dashboard-snmp-aylin",
+    "ticket": [
+      "Aylin hat zwei Angebote für eine neue Monitorwand in der Leitstelle auf den Hebel gespießt. „Mein Dashboard braucht mehr Platz. Kaufen, mit vier Jahren Wartung dazu, oder leasen, Wartung inklusive?“",
+      "„Petra will eine Zahl, keine Gefühle. Rechne mir bitte beides auf die ganze Laufzeit aus.“"
+    ],
+    "frage": "Berechne die Gesamtkosten beider Varianten und entscheide.",
+    "daten": {"kaufpreis": 11200, "rate": 199, "laufzeit": 48, "sonderzahlung": 0, "restwert": 390},
+    "hilfe": [
+      "Gesamtkosten Leasing = Sonderzahlung + Rate × Laufzeit + Übernahmepreis am Ende.",
+      "Der Kaufpreis enthält hier schon die Wartung für vier Jahre. So vergleichst du Gleiches mit Gleichem."
+    ],
+    "erklaerung": [
+      "Leasing: 48 × 199,00 € + 390,00 € Restwert = 9.942,00 €. Kauf mit Wartung: 11.200,00 €. Leasing ist um 1.258,00 € günstiger.",
+      "Dazu schont Leasing die Liquidität, weil nicht alles auf einmal bezahlt wird. Aylin malt die Zahl grün an."
+    ],
+    "suchbegriffe": ["Leasing"]
+  },
+  {
+    "id": "lindenau-vertrag",
+    "typ": "auswahl",
+    "titel": "Willkommen in Lindenau: Welcher Vertrag?",
+    "auftraggeber": "wendt",
+    "raum": "leitung_lindenau",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 45,
+    "ticket": [
+      "Dr. Holger Wendt, Verwaltungsleiter der Talbahn in Lindenau, begrüßt dich mit einem Vertragsentwurf, den er offensichtlich schon dreimal gelesen hat.",
+      "„Ab sofort betreut Bitweiche unsere Verwaltung: Rechner am Laufen halten, Störungen innerhalb von vier Stunden angehen, Pauschale pro Monat. Welcher Vertragstyp passt? Ich lese ihn dann noch ein viertes Mal.“"
+    ],
+    "frage": "Welcher Vertrag passt zur laufenden IT-Betreuung?",
+    "optionen": [
+      "Dienstvertrag mit SLA: Geschuldet ist die Betreuung, die Reaktionszeit von 4 h steht im SLA",
+      "Werkvertrag: Geschuldet ist ein fertiges Werk, das Lindenau einmal abnimmt",
+      "Kaufvertrag über die Betreuung mit zwei Jahren Gewährleistung",
+      "Mietvertrag über die Rechner, dann repariert der Vermieter sowieso alles"
+    ],
+    "antwort": "Dienstvertrag mit SLA: Geschuldet ist die Betreuung, die Reaktionszeit von 4 h steht im SLA",
+    "hilfe": [
+      "Wird hier ein einmaliges Ergebnis bestellt, zum Beispiel ein fertig verkabeltes Netz, oder eine laufende Tätigkeit?",
+      "Ein SLA (Service Level Agreement) legt messbar fest, wie schnell und wie verfügbar die Leistung sein muss."
+    ],
+    "erklaerung": [
+      "Bei einer laufenden Betreuung wird die Tätigkeit geschuldet, nicht ein abnahmefähiges Werk. Das ist ein Dienstvertrag. Reaktionszeiten und Verfügbarkeit regelt das SLA.",
+      "Ein Werkvertrag passt zu einem Projekt wie „Netz im Neubau installieren“. Dr. Wendt nickt, liest den Entwurf ein viertes Mal und unterschreibt."
+    ],
+    "suchbegriffe": ["Dienstvertrag", "Werkvertrag", "SLA"]
+  },
+  {
+    "id": "bestellung-drucker-lindenau",
+    "typ": "bestellung",
+    "titel": "Drucker für die Buchhaltung in Lindenau",
+    "auftraggeber": "wendt",
+    "raum": "buchhaltung_lindenau",
+    "stelle": [10.12, 2.88],
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 46,
+    "empfaenger": "wendt",
+    "ticket": [
+      "Dr. Wendt steht in der Buchhaltung neben einem Drucker, der Papier eher kaut als bedruckt. „Wir brauchen einen neuen: im Netzwerk, beidseitig, schwarzweiß. Farbe braucht in der Buchhaltung niemand, rot sind die Zahlen von allein.“",
+      "„Dazu zwei XL-Toner. Ich habe nachgerechnet: 1,4 Cent pro Seite statt 1,83. Budget 470 €, Lieferung in höchstens 3 Arbeitstagen.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {
+        "text": "Netzwerkdrucker mit Duplex, ohne Farbe",
+        "typ": "drucker",
+        "menge": 1,
+        "passt": {"netzwerk": "LAN", "duplex": "ja", "farbe": "nein"}
+      },
+      {
+        "text": "XL-Toner für den neuen Drucker",
+        "typ": "toner",
+        "menge": 2,
+        "passt": {"modell": "Druckwerk LX-420", "farbe": "schwarz (XL)"}
+      }
+    ],
+    "angebote": [
+      {
+        "id": "d1",
+        "teil": "drucker_lx400",
+        "haendler": "bitlager",
+        "preis": 199,
+        "lieferzeit": 1
+      },
+      {
+        "id": "d2",
+        "teil": "drucker_lx420",
+        "haendler": "serverhaus",
+        "preis": 279,
+        "lieferzeit": 4
+      },
+      {
+        "id": "d3",
+        "teil": "drucker_lx420",
+        "haendler": "kabelkoenig",
+        "preis": 299,
+        "lieferzeit": 2
+      },
+      {
+        "id": "d4",
+        "teil": "drucker_lx410",
+        "haendler": "bitlager",
+        "preis": 169,
+        "lieferzeit": 1
+      },
+      {
+        "id": "t1",
+        "teil": "toner_dw420_xl",
+        "haendler": "bitlager",
+        "preis": 84,
+        "lieferzeit": 2
+      },
+      {
+        "id": "t2",
+        "teil": "toner_dw420_xl",
+        "haendler": "serverhaus",
+        "preis": 92,
+        "lieferzeit": 1
+      },
+      {
+        "id": "t3",
+        "teil": "toner_dw420_s",
+        "haendler": "kabelkoenig",
+        "preis": 55,
+        "lieferzeit": 1
+      }
+    ],
+    "budget": 470,
+    "frist": 3,
+    "hilfe": [
+      "Prüfe jeden Drucker gegen alle drei Anforderungen: Netzwerk, Duplex, kein Farbdruck.",
+      "Das billigste passende Angebot nützt nichts, wenn es zu spät kommt. Rechne Drucker und beide Toner zusammen."
+    ],
+    "erklaerung": [
+      "Nur der LX-420 erfüllt alles. Der vom Serverhaus ist billiger, kommt aber erst in 4 Tagen. Also LX-420 von Kabelkönig für 299,00 €.",
+      "Zwei XL-Toner von Bitlager für je 84,00 €: zusammen 467,00 € bei 470,00 € Budget. Dr. Wendt rechnet zweimal nach und ist zufrieden."
+    ],
+    "suchbegriffe": ["Drucker", "Toner", "Angebot"]
+  },
+  {
+    "id": "schutzziele-personal-lindenau",
+    "typ": "zuordnung",
+    "titel": "Personalakten und die Schutzziele",
+    "auftraggeber": "karin",
+    "ort": "lindenau",
+    "raum": "personal_lindenau",
+    "stelle": [4.62, 11.12],
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 45},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 46,
+    "ticket": [
+      "Karin sitzt in der Personalabteilung von Lindenau zwischen zwei Aktenregalen. „Die Personalakten sollen digital werden. Gehälter, Zeugnisse, Atteste. Da schlägt mein Datenschutzherz schneller.“",
+      "„Für das Konzept brauche ich zu jeder geplanten Maßnahme das Schutzziel. Ich hätte dazu eine Anekdote aus dem Jahr 2011, aber die erzähle ich erst, wenn du fertig bist.“"
+    ],
+    "frage": "Ordne jede Maßnahme dem Schutzziel zu, das sie vor allem sichert.",
+    "paare": [
+      ["Personalakten sind nur für die Personalabteilung lesbar", "Vertraulichkeit"],
+      [
+        "Gehaltsänderungen werden protokolliert und von einer zweiten Person freigegeben",
+        "Integrität"
+      ],
+      [
+        "Die Personaldatenbank wird täglich an einen zweiten Standort gesichert",
+        "Verfügbarkeit"
+      ],
+      ["Anmeldung am Personalprogramm mit Chipkarte und PIN", "Authentizität"]
+    ],
+    "hilfe": [
+      "Vertraulichkeit: Nur Befugte sehen die Daten. Integrität: Die Daten sind vollständig und unverändert.",
+      "Verfügbarkeit: Die Daten sind da, wenn man sie braucht. Authentizität: Man weiß sicher, wer jemand ist."
+    ],
+    "erklaerung": [
+      "Leserechte schützen die Vertraulichkeit, Protokoll und Vier-Augen-Prinzip die Integrität, die Sicherung an einem zweiten Ort die Verfügbarkeit.",
+      "Chipkarte plus PIN (zwei Faktoren) stellt sicher, dass wirklich die berechtigte Person angemeldet ist. Karins Anekdote dauert elf Minuten."
+    ],
+    "suchbegriffe": ["Schutzbedarf", "Verschlüsselung", "DSGVO"]
+  },
+  {
+    "id": "drucker-einrichten-lindenau",
+    "typ": "formular",
+    "art": "drucker",
+    "titel": "Drucker in der Buchhaltung Lindenau einrichten",
+    "auftraggeber": "wendt",
+    "raum": "buchhaltung_lindenau",
+    "stelle": [10.12, 2.88],
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 47,
+    "nach": "bestellung-drucker-lindenau",
+    "ticket": [
+      "Der LX-420 steht ausgepackt in der Buchhaltung. Dr. Wendt hat die Bedienungsanleitung schon zweimal gelesen und hält dir die Netzdaten der Verwaltung hin.",
+      "„Unser Netz ist ein /25, das hat mal jemand so entschieden, der nicht mehr hier arbeitet. Drucker bekommen feste Adressen aus ihrem Bereich, das Gateway ist wie immer die erste Adresse.“"
+    ],
+    "frage": "Trage die Netzwerkeinstellungen des Druckers ein und wähle Treiber und Freigabe.",
+    "daten": {
+      "netz": "10.45.8.0/25",
+      "bereich": [90, 99],
+      "belegt": [90, 91, 93],
+      "treiber": ["PCL 6 (Druckwerk LX-420)", "PCL 6 (Druckwerk MX-560)", "Nur Text (generisch)"],
+      "treiber_richtig": "PCL 6 (Druckwerk LX-420)",
+      "freigaben": ["LIN-BUHA-DRUCKER-01", "Drucker Buchhaltung", "LIN_DRUCKER"],
+      "freigabe_richtig": "LIN-BUHA-DRUCKER-01",
+      "hinweise": [
+        "Namensschema der Talbahn: ORT-ABTEILUNG-DRUCKER-Nummer, mit Bindestrichen, ohne Leerzeichen",
+        "Einen DNS-Eintrag setzt Svenja später zentral"
+      ]
+    },
+    "hilfe": [
+      "Ein /25 umfasst nur 128 Adressen: Das Netz 10.45.8.0/25 endet mit dem Broadcast 10.45.8.127. Geh im Druckerbereich von der ersten Adresse aufwärts.",
+      "Ein /25 hat die Maske 255.255.255.128. Das Gateway ist die erste Host-Adresse des Netzes."
+    ],
+    "erklaerung": [
+      "Belegt sind die ersten Adressen des Bereichs, frei ist 10.45.8.92. Maske 255.255.255.128, Gateway 10.45.8.1.",
+      "Der Herstellertreiber passt zum Modell LX-420, der MX-560-Treiber gehört zum Farbdrucker. Die Freigabe folgt dem Namensschema: LIN-BUHA-DRUCKER-01."
+    ],
+    "suchbegriffe": ["Drucker", "Subnetzmaske", "Gateway"]
+  },
+  {
+    "id": "loeschkonzept-personal-lindenau",
+    "typ": "auswahl",
+    "titel": "Die Akte eines ehemaligen Mitarbeiters",
+    "auftraggeber": "karin",
+    "ort": "lindenau",
+    "raum": "personal_lindenau",
+    "stelle": [4.62, 11.12],
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 50},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 48,
+    "nach": "schutzziele-personal-lindenau",
+    "ticket": [
+      "Karin blättert im Löschkonzept für Lindenau. „Fall eins: Ein Stellwerker ist vor zwei Jahren ausgeschieden. Seine digitale Personalakte enthält Lohnabrechnungen, eine alte Bewerbung, Fotos vom Betriebsausflug und ein Arbeitszeugnis.“",
+      "„Die Personalabteilung sagt: ‚Für immer aufheben, man weiß ja nie.‘ Ich sage: Man weiß es. Es steht im Gesetz.“"
+    ],
+    "frage": "Was gehört für diese Akte ins Löschkonzept?",
+    "optionen": [
+      "Ohne Aufbewahrungspflicht jetzt löschen, den Rest sperren und nach Ablauf der Frist löschen",
+      "Alles sofort löschen, die DSGVO verlangt das bei jedem Ausscheiden",
+      "Alles unbegrenzt aufheben, falls er irgendwann zurückkommt",
+      "Die Akte in einen allgemeinen Archivordner schieben, dann stört sie nicht mehr"
+    ],
+    "antwort": "Ohne Aufbewahrungspflicht jetzt löschen, den Rest sperren und nach Ablauf der Frist löschen",
+    "hilfe": [
+      "Personenbezogene Daten werden gelöscht, wenn der Zweck entfällt. Es sei denn, ein Gesetz verlangt, sie noch aufzubewahren.",
+      "Lohnunterlagen müssen aus steuerlichen Gründen noch Jahre aufgehoben werden. Betriebsausflugsfotos nicht."
+    ],
+    "erklaerung": [
+      "Die DSGVO verlangt Löschung, sobald der Zweck entfällt. Gesetzliche Aufbewahrungsfristen gehen aber vor: Solche Unterlagen werden gesperrt, also nur noch für diesen Zweck zugänglich, und nach Fristablauf gelöscht.",
+      "Fotos und die alte Bewerbung haben keinen Zweck mehr und werden gelöscht. Karin zitiert Artikel 17 DSGVO auswendig und ohne Luft zu holen."
+    ],
+    "suchbegriffe": ["Löschkonzept", "Aufbewahrungsfrist", "DSGVO"]
+  },
+  {
+    "id": "ipplan-lindenau",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan für den Umzug der Buchhaltung",
+    "auftraggeber": "svenja",
+    "ort": "lindenau",
+    "raum": "technik_lindenau",
+    "stelle": [23.12, 3.12],
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 95, "reputation": 8},
+    "ab_tag": 49,
+    "nach": "lindenau-vertrag",
+    "ticket": [
+      "Svenja hat im Technikraum von Lindenau schon die ersten Kabel beschriftet, beidseitig. „Die Buchhaltung zieht ins Obergeschoss, und bei der Gelegenheit bekommt die ganze Verwaltung ein neues Netz: 10.45.16.0/24, aufgeteilt per VLSM.“",
+      "„Größtes Netz zuerst, lückenlos. Dr. Wendt will den Plan ausgedruckt. Zweimal.“"
+    ],
+    "frage": "Berechne für jedes Teilnetz Netzadresse, Präfix und Broadcast-Adresse.",
+    "daten": {
+      "netz": "10.45.16.0/24",
+      "vlsm": true,
+      "teilnetze": [
+        {"name": "Buchhaltung", "hosts": 40},
+        {"name": "Personal", "hosts": 25},
+        {"name": "Leitung und Empfang", "hosts": 12},
+        {"name": "Server und Drucker", "hosts": 10},
+        {"name": "Verbindung zum Router", "hosts": 2}
+      ]
+    },
+    "felder": ["netz", "praefix", "broadcast"],
+    "hilfe": [
+      "Für jedes Teilnetz: kleinste Zweierpotenz, die Hosts + 2 (Netz- und Broadcast-Adresse) fasst. 40 Hosts brauchen 64 Adressen, also /26.",
+      "Das nächste Netz beginnt direkt nach dem Broadcast des vorigen."
+    ],
+    "erklaerung": [
+      "Buchhaltung 10.45.16.0/26 · Personal 10.45.16.64/27 · Leitung und Empfang 10.45.16.96/28 · Server und Drucker 10.45.16.112/28 · Verbindung zum Router 10.45.16.128/30.",
+      "Ab 10.45.16.132 bleibt der Rest des /24 frei für später. Svenja klebt den Plan an die Tür des Technikraums, laminiert."
+    ],
+    "suchbegriffe": ["VLSM", "Subnetz", "Subnetzmaske"]
+  },
+  {
+    "id": "archiv-schluessel",
+    "typ": "zuordnung",
+    "titel": "Das Archiv wird eine Datenbank",
+    "auftraggeber": "wendt",
+    "raum": "archiv_lindenau",
+    "stelle": [21.88, 11.12],
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 50,
+    "nach": "lindenau-vertrag",
+    "ticket": [
+      "Im Archiv riecht es nach Papier aus drei Jahrzehnten. Dr. Wendt hat ein Datenmodell skizziert: Tabelle akte (akten_nr, titel, jahr, regal_id) und Tabelle regal (regal_id, raum).",
+      "„Ich habe die Begriffe dreimal nachgeschlagen und bin jetzt unsicherer als vorher. Erklären Sie mir bitte, was was ist, bevor wir 40.000 Akten scannen.“"
+    ],
+    "frage": "Ordne jedem Teil des Modells den richtigen Fachbegriff zu.",
+    "paare": [
+      ["akten_nr in der Tabelle akte", "Primärschlüssel: kennzeichnet jede Akte eindeutig"],
+      ["regal_id in der Tabelle akte", "Fremdschlüssel: verweist auf einen Eintrag in regal"],
+      ["Eine Zeile der Tabelle akte", "Datensatz"],
+      ["Die Spalte jahr", "Attribut"],
+      [
+        "Ein Regal enthält viele Akten, jede Akte liegt in genau einem Regal",
+        "Beziehung 1:n"
+      ]
+    ],
+    "hilfe": [
+      "Ein Schlüssel, der in der eigenen Tabelle eindeutig ist, heißt anders als einer, der auf eine andere Tabelle zeigt.",
+      "Spalten beschreiben Eigenschaften, Zeilen sind die einzelnen Einträge."
+    ],
+    "erklaerung": [
+      "akten_nr ist der Primärschlüssel von akte. regal_id steht in akte als Fremdschlüssel und zeigt auf den Primärschlüssel von regal. So entsteht die 1:n-Beziehung.",
+      "Jede Zeile ist ein Datensatz, jede Spalte ein Attribut. Dr. Wendt schreibt „1:n“ auf einen Klebezettel und klebt ihn an das erste Regal."
+    ],
+    "suchbegriffe": ["Primärschlüssel", "Fremdschlüssel", "Datensatz"]
+  },
+  {
+    "id": "angebot-umzug-lindenau",
+    "typ": "formular",
+    "art": "angebot",
+    "titel": "Angebot für den Umzug der Buchhaltung",
+    "auftraggeber": "lea",
+    "raum": "kundenberatung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 51,
+    "nach": "ipplan-lindenau",
+    "ticket": [
+      "Lea strahlt: „Dr. Wendt will für die umgezogene Buchhaltung 12 Dockingstationen, fertig montiert. Ich habe ihm schon ein tolles Angebot versprochen. Und eine Kaffeemaschine gratis. Die rechnen wir aber nicht mit ein!“",
+      "„Einkauf 148,50 € je Stück. Frank sagt: 20 % Handlungskosten, 12 % Gewinn, dann 19 % Umsatzsteuer. Dr. Wendt rechnet garantiert nach.“"
+    ],
+    "frage": "Kalkuliere das Angebot vom Einkaufspreis bis zum Bruttopreis.",
+    "daten": {
+      "menge": 12,
+      "artikel": "Dockingstation mit Montage",
+      "einkaufspreis": 148.5,
+      "handlungskosten": 20,
+      "gewinn": 12,
+      "ust": 19
+    },
+    "hilfe": [
+      "Reihenfolge: Einkaufspreis gesamt + Handlungskosten = Selbstkosten, + Gewinn = Nettoverkaufspreis, + Umsatzsteuer = Bruttoverkaufspreis.",
+      "Jeder Zuschlag wird auf den vorherigen Zwischenwert gerechnet, nicht auf den Einkauf."
+    ],
+    "erklaerung": [
+      "Einkauf 1.782,00 €, Selbstkosten 2.138,40 €, netto 2.395,01 €, brutto 2.850,06 €.",
+      "Der Gewinn wird auf die Selbstkosten gerechnet, die Umsatzsteuer auf den Nettopreis. Die Kaffeemaschine zahlt Lea aus der Portokasse. Frank weiß noch nichts davon."
+    ],
+    "suchbegriffe": ["Zuschlagskalkulation", "Handlungskosten", "Angebot"]
+  },
+  {
+    "id": "rack-lindenau",
+    "typ": "rack",
+    "titel": "Der Netzwerkschrank in Lindenau",
+    "auftraggeber": "svenja",
+    "ort": "lindenau",
+    "raum": "technik_lindenau",
+    "stelle": [23.12, 3.12],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 50, "systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 100, "reputation": 8},
+    "ab_tag": 52,
+    "nach": "ipplan-lindenau",
+    "ticket": [
+      "Svenja steht vor dem leeren 18-HE-Schrank im Technikraum Lindenau. Rundherum stapeln sich Geräte. „Rein müssen der Archivserver, das Storage für die Scans, ein Switch mit 48 Ports und ein Patchpanel. Dazu eine USV.“",
+      "„Dr. Wendt findet, der PoE-Switch sei besser, weil er teurer ist. Telefone mit PoE gibt es hier aber keine. Die Klima schafft 1000 W, und bitte ein paar HE für später freilassen.“"
+    ],
+    "frage": "Bestücke den Schrank so, dass Strom, Kühlung, Gewicht und Vorgaben passen.",
+    "schrank": {"he": 18, "traglast": 120, "kuehlung": 1000},
+    "geraete": [
+      "usv_1000",
+      "usv_1500",
+      "srv_2he",
+      "srv_4he",
+      "storage_2he",
+      "sw_48_poe",
+      "sw_48",
+      "pp_48",
+      "pp_24"
+    ],
+    "vorgaben": {
+      "mindestens": {"usv": 1, "server": 1, "storage": 1, "switch": 1, "patchpanel": 1},
+      "ports_min": 48,
+      "frei_min": 6
+    },
+    "hilfe": [
+      "Rechne die Leistung zusammen: Server, Storage und Switch. Jede USV darf nur zu 80 % ausgelastet werden.",
+      "Schwere Geräte ab 20 kg beginnen im unteren Drittel (bis HE 6), die USV ganz unten, Switch und Patchpanel direkt übereinander."
+    ],
+    "erklaerung": [
+      "Server 450 W + Storage 400 W + Switch 70 W = 920 W. Die USV 1000 W schafft mit Reserve nur 800 W, die USV 1500 W schafft 1200 W. Mit dem PoE-Switch wären es 1220 W, zu viel.",
+      "Unten USV, darauf Server und Storage (beide schwer, also im unteren Drittel), darüber Switch und 48er-Patchpanel. Gewicht 97 kg bei 120 kg Traglast. Der alte 4-HE-Server bleibt draußen."
+    ],
+    "suchbegriffe": ["Serverschrank", "USV", "Switch"]
+  },
+  {
+    "id": "archiv-sql-join",
+    "typ": "auswahl",
+    "titel": "Wo stehen die Akten von 1998?",
+    "auftraggeber": "wendt",
+    "raum": "archiv_lindenau",
+    "stelle": [21.88, 11.12],
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 52,
+    "nach": "archiv-schluessel",
+    "ticket": [
+      "Die ersten 3.000 Akten sind erfasst. Dr. Wendt sucht alle Akten aus dem Jahr 1998, und zu jeder den Raum, in dem ihr Regal steht. „Die Prüfer kommen morgen. Sie lesen auch alles dreimal.“",
+      "Er hat vier Abfragen aus einem Forum kopiert. „Eine davon ist richtig, sagt das Forum. Das Forum sagt aber auch, die Erde sei eine Scheibe.“"
+    ],
+    "frage": "Welche Abfrage liefert Titel und Raum aller Akten von 1998?",
+    "optionen": [
+      "SELECT a.titel, r.raum FROM akte a JOIN regal r ON a.regal_id = r.regal_id WHERE a.jahr = 1998;",
+      "SELECT titel, raum FROM akte, regal WHERE jahr = 1998;",
+      "SELECT a.titel, r.raum FROM akte a JOIN regal r ON a.akten_nr = r.regal_id WHERE a.jahr = 1998;",
+      "SELECT * FROM akte WHERE jahr = 1998 GROUP BY raum;"
+    ],
+    "antwort": "SELECT a.titel, r.raum FROM akte a JOIN regal r ON a.regal_id = r.regal_id WHERE a.jahr = 1998;",
+    "hilfe": [
+      "Die Verbindung zwischen den Tabellen läuft über den Fremdschlüssel: Welche Spalte in akte zeigt auf regal?",
+      "Zwei Tabellen ohne Join-Bedingung ergeben jede Akte mit jedem Regal (kartesisches Produkt)."
+    ],
+    "erklaerung": [
+      "Der JOIN verbindet akte.regal_id (Fremdschlüssel) mit regal.regal_id (Primärschlüssel). WHERE filtert das Jahr.",
+      "Ohne Bedingung entsteht ein kartesisches Produkt, akten_nr mit regal_id zu verbinden ergibt Unsinn, und raum steht gar nicht in akte. Dr. Wendt druckt das Ergebnis aus. Zweimal."
+    ],
+    "suchbegriffe": ["JOIN", "Fremdschlüssel", "SELECT"]
+  },
+  {
+    "id": "terminal-archiv-db",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "mysql>",
+    "titel": "Die Archiv-Datenbank auf dem Server anlegen",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50, "systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 53,
+    "nach": "archiv-sql-join",
+    "ticket": [
+      "Ulla hat sich auf den neuen Archivserver in Lindenau verbunden. „Der Server sagt, er sei bereit. Das sagen sie alle. Leg bitte die Datenbank archiv mit den Tabellen regal und akte an, so wie Dr. Wendt sie skizziert hat.“",
+      "„Das Konto scanner für das Scanprogramm gibt es schon. Es darf lesen und neue Akten einfügen. Mehr nicht, der Scanner ist kein Archivar.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
+    "start": ["Debian 12 · Archivserver Lindenau (MySQL 8.0)", "Angemeldet als root"],
+    "schritte": [
+      {
+        "ziel": "Die Datenbank archiv anlegen",
+        "befehle": [
+          {
+            "befehl": "CREATE TABLE archiv;",
+            "ausgabe": ["ERROR 1113 (42000): A table must have at", "least 1 column"],
+            "hinweis": "CREATE TABLE legt eine Tabelle an. Die Datenbank selbst entsteht mit CREATE DATABASE."
+          },
+          {
+            "befehl": "CREATE DATABASE archiv;",
+            "ausgabe": ["Query OK, 1 row affected"],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "In die Datenbank archiv wechseln",
+        "befehle": [
+          {
+            "befehl": "SELECT archiv;",
+            "ausgabe": ["ERROR 1054 (42S22): Unknown column 'archiv'"],
+            "hinweis": "SELECT liest Daten. Die Datenbank wählt man mit USE aus."
+          },
+          {"befehl": "USE archiv;", "ausgabe": ["Database changed"], "richtig": true},
+          {
+            "befehl": "DROP DATABASE archiv;",
+            "ausgabe": ["Ulla fängt deine Hand ab: „DROP löscht sie", "wieder. Samt allem.“"],
+            "gefaehrlich": true,
+            "hinweis": "DROP DATABASE löscht die Datenbank mit allen Tabellen und Daten. Nie ohne guten Grund und ohne Sicherung."
+          }
+        ]
+      },
+      {
+        "ziel": "Tabelle regal anlegen, regal_id ist Primärschlüssel",
+        "befehle": [
+          {
+            "befehl": "CREATE TABLE regal (regal_id INT, raum VARCHAR(40));",
+            "ausgabe": [
+              "Query OK, 0 rows affected",
+              "# Ohne Primärschlüssel. Doppelte Regale",
+              "# wären jetzt möglich."
+            ],
+            "hinweis": "Ohne PRIMARY KEY kann dieselbe regal_id mehrfach vorkommen, und ein Fremdschlüssel kann nicht sauber darauf zeigen."
+          },
+          {
+            "befehl": "CREATE TABLE regal (regal_id INT PRIMARY KEY, raum VARCHAR(40));",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Tabelle akte anlegen, akten_nr ist Primärschlüssel",
+        "befehle": [
+          {
+            "befehl": "CREATE TABLE akte (akten_nr INT PRIMARY KEY, titel VARCHAR(200), jahr INT, regal_id INT);",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "CREATE TABLE akte (akten_nr INT, titel INT, jahr VARCHAR(200));",
+            "ausgabe": [
+              "Query OK, 0 rows affected",
+              "# Titel als Zahl, kein Schlüssel, keine",
+              "# Spalte für das Regal."
+            ],
+            "hinweis": "Datentypen müssen zum Inhalt passen: Text als VARCHAR, Zahlen als INT. Und ohne regal_id weiß keine Akte, wo sie liegt."
+          }
+        ]
+      },
+      {
+        "ziel": "akte.regal_id als Fremdschlüssel auf regal festlegen",
+        "befehle": [
+          {
+            "befehl": "ALTER TABLE akte ADD FOREIGN KEY (regal_id) REFERENCES regal(regal_id);",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "ALTER TABLE akte ADD PRIMARY KEY (regal_id);",
+            "ausgabe": ["ERROR 1068 (42000): Multiple primary key", "defined"],
+            "hinweis": "akte hat schon einen Primärschlüssel. regal_id soll auf eine andere Tabelle zeigen, das ist ein FOREIGN KEY."
+          },
+          {
+            "befehl": "DELETE FROM regal;",
+            "ausgabe": [
+              "Query OK, 0 rows affected",
+              "# Die (noch leere) Tabelle wurde geleert.",
+              "# Ein Fremdschlüssel ist das nicht."
+            ],
+            "hinweis": "DELETE löscht Datensätze. Beziehungen zwischen Tabellen legt man mit ALTER TABLE … ADD FOREIGN KEY an."
+          }
+        ]
+      },
+      {
+        "ziel": "Dem Konto scanner Lesen und Einfügen erlauben, sonst nichts",
+        "befehle": [
+          {
+            "befehl": "GRANT ALL PRIVILEGES ON *.* TO 'scanner'@'%';",
+            "ausgabe": ["Ulla: „Alles auf allen Datenbanken, von", "überall? Der Scanner? Nein.“"],
+            "gefaehrlich": true,
+            "hinweis": "Least Privilege: Das Scanprogramm braucht nur SELECT und INSERT, und nur auf archiv. ALL auf *.* wäre ein Freifahrtschein."
+          },
+          {
+            "befehl": "GRANT SELECT, INSERT ON archiv.* TO 'scanner'@'10.45.16.%';",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "GRANT SELECT ON archiv.* TO 'scanner'@'10.45.16.%';",
+            "ausgabe": [
+              "Query OK, 0 rows affected",
+              "# Der Scanner darf lesen, aber keine",
+              "# neue Akte speichern."
+            ],
+            "hinweis": "Zum Einfügen neuer Akten braucht das Konto zusätzlich INSERT."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "CREATE DATABASE legt eine Datenbank an, USE wählt sie aus, CREATE TABLE legt Tabellen an. PRIMARY KEY und FOREIGN KEY verbinden sie.",
+      "Rechte vergibt GRANT: welche Befehle, auf welche Datenbank, für welches Konto. Nur so viel wie nötig."
+    ],
+    "erklaerung": [
+      "Richtig: CREATE DATABASE → USE → CREATE TABLE regal mit PRIMARY KEY → CREATE TABLE akte → ALTER TABLE … ADD FOREIGN KEY → GRANT SELECT, INSERT nur auf archiv.",
+      "Der Fremdschlüssel sorgt dafür, dass keine Akte auf ein Regal zeigt, das es nicht gibt (referenzielle Integrität). Ulla: „Der Server sagt, jetzt ist er wirklich bereit.“"
+    ],
+    "suchbegriffe": ["Fremdschlüssel", "GRANT", "CREATE TABLE"]
+  },
+  {
+    "id": "wartung-sicherheit-lindenau",
+    "typ": "wartung",
+    "titel": "Erster Sicherheits-Check in Lindenau",
+    "auftraggeber": "ulla",
+    "ort": "lindenau",
+    "raum": "technik_lindenau",
+    "stelle": [23.12, 3.12],
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 50, "systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 54,
+    "nach": "rack-lindenau",
+    "ticket": [
+      "Ulla ist zum ersten Mal in Lindenau und begrüßt den Archivserver per Handschlag aufs Gehäuse. „Nach dem Umzug machen wir den monatlichen Sicherheits-Check. Laut Vertrag. Dr. Wendt hat die Stelle im Vertrag markiert. Dreimal.“",
+      "„Schau dir jeden Punkt an und schreib ehrlich auf, was du findest. Ein geschöntes Protokoll ist schlimmer als keins.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "backup",
+        "text": "Protokoll der nächtlichen Datensicherung lesen (Soll: jede Nacht erfolgreich)",
+        "ergebnis": "Seit drei Nächten „Fehler: Sicherungsziel nicht erreichbar“. Die Sicherungsplatte wurde beim Umzug abgesteckt.",
+        "auffaellig": true
+      },
+      {
+        "id": "tuer",
+        "text": "Tür des Technikraums prüfen (Soll: verschlossen, Zutritt per Chipkarte)",
+        "ergebnis": "Verschlossen, das Zutrittsprotokoll ist vollständig.",
+        "auffaellig": false
+      },
+      {
+        "id": "updates",
+        "text": "Sicherheitsupdates des Archivservers prüfen (Soll: höchstens 30 Tage alt)",
+        "ergebnis": "Letzte Updates vor 6 Tagen eingespielt.",
+        "auffaellig": false
+      },
+      {
+        "id": "virenschutz",
+        "text": "Virenschutz-Signaturen der Buchhaltungs-PCs prüfen (Soll: höchstens 1 Tag alt)",
+        "ergebnis": "Stand von heute Morgen, auf allen Rechnern.",
+        "auffaellig": false
+      },
+      {
+        "id": "switch",
+        "text": "Anmeldung am neuen Switch prüfen (Soll: kein Standardpasswort)",
+        "ergebnis": "Die Anmeldung mit admin / admin klappt noch.",
+        "auffaellig": true
+      }
+    ],
+    "abschluss": [
+      "Sicherung wieder anschließen und testen, Switch-Passwort sofort ändern, beides ins Protokoll",
+      "Alles in Ordnung, nächster Check in einem Monat",
+      "Die Datensicherung abschalten, sie meldet ja nur Fehler",
+      "Den Switch vom Netz nehmen, bis ein neuer geliefert ist"
+    ],
+    "abschluss_antwort": "Sicherung wieder anschließen und testen, Switch-Passwort sofort ändern, beides ins Protokoll",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll in Klammern.",
+      "Ein Standardpasswort steht in jeder Anleitung im Internet. Und eine Sicherung, die nicht läuft, ist keine Sicherung."
+    ],
+    "erklaerung": [
+      "Auffällig sind die Sicherung (drei Nächte ohne Backup) und das Standardpasswort am Switch. Beides lässt sich sofort beheben: Platte anschließen, Sicherung testen, Passwort ändern.",
+      "Den Switch abzuschalten würde die ganze Verwaltung lahmlegen, die Sicherung abzuschalten wäre fahrlässig. Ulla tätschelt den Server: „Jetzt schläfst du ruhiger.“"
+    ],
+    "suchbegriffe": ["Backup", "Passwort", "Wartung"]
+  },
+  {
+    "id": "tim-erklaert-dhcp",
+    "typ": "auswahl",
+    "titel": "Tim erklärt Lina DHCP",
+    "auftraggeber": "tim",
+    "raum": "helpdesk",
+    "prioritaet": "niedrig",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 55,
+    "ticket": [
+      "Tim ist heute Pate. Er steht vor Lina, der neuen Azubi, wie ein Professor vor dem Hörsaal: „Also, DHCP. Das ist ganz einfach. Ich erkläre es dir in vier Sätzen.“",
+      "Lina schreibt alles in ihr Notizbuch mit dem Einhorn vorne drauf. Dann flüstert sie dir zu: „Stimmt davon eigentlich alles?“"
+    ],
+    "frage": "Welcher von Tims Sätzen stimmt?",
+    "optionen": [
+      "Der Client ruft per Broadcast nach einem Server (Discover), dann folgen Offer, Request und Acknowledge",
+      "Der DHCP-Server fragt jeden Morgen alle PCs, ob sie eine Adresse wollen",
+      "DHCP übersetzt Namen wie leitstelle.talbahn in IP-Adressen",
+      "Eine per DHCP vergebene Adresse gilt für immer, Lease ist nur ein anderes Wort dafür"
+    ],
+    "antwort": "Der Client ruft per Broadcast nach einem Server (Discover), dann folgen Offer, Request und Acknowledge",
+    "hilfe": [
+      "Wer fängt an: der Client, der noch keine Adresse hat, oder der Server? Und wie erreicht man jemanden, dessen Adresse man nicht kennt?",
+      "Namen in Adressen übersetzen ist die Aufgabe eines anderen Dienstes."
+    ],
+    "erklaerung": [
+      "DHCP läuft nach DORA ab: Discover (Broadcast vom Client), Offer, Request, Acknowledge. Die Adresse gilt nur für die Lease-Zeit und wird dann verlängert oder neu vergeben.",
+      "Namen übersetzt DNS. Tim nimmt es sportlich: „Drei von vier waren falsch, aber der vierte war richtig gut.“ Lina macht ein Einhorn neben den richtigen Satz."
+    ],
+    "suchbegriffe": ["DHCP", "DORA", "DNS"]
+  },
+  {
+    "id": "lina-sql-befehle",
+    "typ": "zuordnung",
+    "titel": "Linas Spickzettel für SQL",
+    "auftraggeber": "lina",
+    "raum": "helpdesk",
+    "prioritaet": "niedrig",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 65, "reputation": 6},
+    "ab_tag": 55,
+    "ticket": [
+      "Lina hält dir ihr Einhorn-Notizbuch hin. Tim hat ihr heute Morgen SQL erklärt, und sie hat mitgeschrieben. Jedes Wort.",
+      "„Tim hat gesagt, DELETE und DROP TABLE sind dasselbe, nur DROP klingt cooler. Ich wollte vorsichtshalber jemanden fragen, der nicht Tim ist.“"
+    ],
+    "frage": "Ordne jedem SQL-Befehl zu, was er tut.",
+    "paare": [
+      ["SELECT", "liest Datensätze aus einer Tabelle"],
+      ["INSERT INTO", "fügt neue Datensätze ein"],
+      ["UPDATE", "ändert vorhandene Datensätze"],
+      ["DELETE", "löscht Datensätze, die Tabelle bleibt bestehen"],
+      ["DROP TABLE", "löscht die ganze Tabelle samt Struktur"]
+    ],
+    "hilfe": [
+      "Vier Befehle arbeiten mit den Zeilen einer Tabelle, einer mit der Tabelle selbst.",
+      "Denk an ein Regal: Akten herausnehmen ist etwas anderes, als das Regal abzubauen."
+    ],
+    "erklaerung": [
+      "SELECT, INSERT, UPDATE und DELETE bearbeiten Datensätze (DML). DROP TABLE gehört zur Datendefinition (DDL) und entfernt die Tabelle mit ihrer Struktur.",
+      "Nach DELETE kann man wieder einfügen, nach DROP TABLE nicht. Lina malt ein großes rotes Ausrufezeichen neben DROP. Tim tut so, als hätte er das so gemeint."
+    ],
+    "suchbegriffe": ["SQL", "DML", "DDL"]
   }
 ]

@@ -198,7 +198,9 @@
     {"id": "drucker_lx400", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-400 (LAN, einseitig)", "preis": 229, "netzwerk": "LAN", "duplex": "nein", "farbe": "nein"},
     {"id": "drucker_lx410", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-410 (USB, Duplex)", "preis": 179, "netzwerk": "USB", "duplex": "ja", "farbe": "nein"},
     {"id": "drucker_lx420", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-420 (LAN, Duplex)", "preis": 289, "netzwerk": "LAN", "duplex": "ja", "farbe": "nein"},
-    {"id": "drucker_mx560", "typ": "drucker", "name": "Farblaserdrucker Druckwerk MX-560 (LAN, Duplex)", "preis": 549, "netzwerk": "LAN", "duplex": "ja", "farbe": "ja"}
+    {"id": "drucker_mx560", "typ": "drucker", "name": "Farblaserdrucker Druckwerk MX-560 (LAN, Duplex)", "preis": 549, "netzwerk": "LAN", "duplex": "ja", "farbe": "ja"},
+    {"id": "toner_dw560_m", "typ": "toner", "name": "Toner DW-560 magenta", "preis": 95, "modell": "Druckwerk MX-560", "farbe": "magenta"},
+    {"id": "toner_dw560_y", "typ": "toner", "name": "Toner DW-560 gelb", "preis": 92, "modell": "Druckwerk MX-560", "farbe": "gelb"}
   ],
   "grundbestand": {"akku_12v7_f2": 2, "akku_12v9_f2": 2, "pk_cat6a_2": 3, "pk_cat6a_5": 2, "fan_120_pwm": 2, "mon_24_dp": 1, "toner_dw420_s": 2},
   "nachbestellung": {"haendler": "kabelkoenig", "lieferzeit": 1}

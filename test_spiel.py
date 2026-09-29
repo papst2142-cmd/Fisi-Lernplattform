@@ -325,6 +325,8 @@ class GrundrissUndAvatarTest(unittest.TestCase):
         start = fg.start_position()
         self.assertTrue(fg.can_stand(*start))
         for person in fg.GAME["kollegen"]:
+            if any(o.get("nachfolger") == person["id"] for o in fg.GAME["kollegen"]):
+                continue    # sitzt spaeter am Platz der Vorgaengerin/des Vorgaengers
             route = fg.walk_path(start, person["platz"], reach=fg.REACH)
             self.assertTrue(route, person["id"])
             end = route[-1]
@@ -846,7 +848,7 @@ class TerminalTest(unittest.TestCase):
 
     def test_alle_terminal_auftraege(self):
         tasks = [t for t in fg.GAME["aufgaben"] if t["typ"] == "terminal"]
-        self.assertEqual(len(tasks), 6)
+        self.assertGreaterEqual(len(tasks), 6)
         self.assertEqual({t["system"] for t in tasks}, {"linux", "windows"})
         for task in tasks:
             self.assertTrue(fg.check_answer(task, fg.find_solution(task))[0], task["id"])
@@ -1163,6 +1165,19 @@ class WohnungTest(unittest.TestCase):
 
 
 class KundeTest(unittest.TestCase):
+    def test_alle_raeume_erreichbar(self):
+        # Jeder Raum jedes Kundenorts ist vom Eingang aus zu betreten
+        for place in fg.customer_places():
+            view = fg.site_content(place["id"])
+            start = view["gebaeude"]["flur"]["spieler"]
+            for item in view["gebaeude"]["raeume"]:
+                door = item["tuer"]
+                middle = (door["von"] + door["bis"]) / 2.0
+                inside = (middle, item["y"] + 0.6) if item["y"] >= start[1] \
+                    else (middle, item["y"] + item["h"] - 0.6)
+                self.assertTrue(fg.walk_path(start, inside, content=view),
+                                "%s/%s" % (place["id"], item["id"]))
+
     def test_petra_arbeitet_beim_kunden(self):
         state = fg.GameState([])
         office = [p["id"] for p in fg.people_at_site(fg.SITE_OFFICE, state)]
@@ -1584,7 +1599,7 @@ class VorlagenTest(unittest.TestCase):
                                                        "Tausch in C"])
         self.assertEqual([t["ab_tag"] for t in tasks], [10, 15, 99])
         self.assertEqual(tasks[1]["raum"], "x")
-        self.assertTrue(all(t["vorlage"] == "v" and t["art"] == "v" for t in tasks))
+        self.assertTrue(all(t["vorlage"] == "v" and t["gruppe"] == "v" for t in tasks))
         self.assertNotIn("varianten", tasks[0])
 
     def test_vergessene_platzhalter_fallen_auf(self):
@@ -1782,9 +1797,9 @@ class ZwischenfallVariantenTest(unittest.TestCase):
         self.kind = base["id"]
         extra = []
         for number in range(2, 6):
-            extra.append(dict(base, id="%s#%d" % (base["id"], number), art=base["id"],
+            extra.append(dict(base, id="%s#%d" % (base["id"], number), gruppe=base["id"],
                               ticket=base["ticket"] + " (%d)" % number))
-        base["art"] = base["id"]
+        base["gruppe"] = base["id"]
         self.content["zwischenfaelle"] += extra
 
     def test_abstand_zwischen_gleicher_art(self):
@@ -1795,7 +1810,7 @@ class ZwischenfallVariantenTest(unittest.TestCase):
             state = fg.GameState(events, self.content)
             incident = state.incident_today()
             if incident:
-                kind = incident.get("art", incident["id"])
+                kind = incident.get("gruppe", incident["id"])
                 if kind in seen:
                     self.assertGreaterEqual(day - seen[kind], gap)
                 seen[kind] = day
@@ -1805,7 +1820,7 @@ class ZwischenfallVariantenTest(unittest.TestCase):
             events.append(("u%03d" % day, fg.EV_DAY_END, {"tag": day}))
         state = fg.GameState(events, self.content)
         variants = [task for task in self.content["zwischenfaelle"]
-                    if task.get("art") == self.kind]
+                    if task.get("gruppe") == self.kind]
         self.assertGreater(len([t for t in variants if t["id"] in state.seen_incidents]), 1)
 
     def test_chance_gestaffelt(self):
