@@ -905,9 +905,14 @@ def gap_warning(gaps):
 #  VERWEISE ZURUECK INS LERNEN
 # ============================================================================
 
+_LEARN_CACHE = {}
+
+
 def learn_links_for_term(term, limit=6):
-    hits = [hit for hit in search_content(term)
-            if hit[0] in ("Karteikarte", "Quizfrage")]
+    hits = _LEARN_CACHE.get(term)
+    if hits is None:
+        hits = _LEARN_CACHE[term] = [hit for hit in search_content(term)
+                                     if hit[0] in ("Karteikarte", "Quizfrage")]
     return hits[:limit]
 
 
@@ -2555,10 +2560,16 @@ def check_answer(task, answer, available=None, content=None):
 def valid_carts(task, content=None):
     """Alle gueltigen Warenkoerbe einer Bestellung, guenstigster zuerst.
     Durchprobiert - die Aufgaben sind klein (wenige Angebote und Stueckzahlen)."""
-    most = max(need["menge"] for need in task["bedarf"])
     offers = [offer["id"] for offer in task["angebote"]]
+    # Ein Angebot, das keinen Bedarf deckt, ist in keinem gueltigen Korb;
+    # eines, das einen Bedarf deckt, hoechstens so oft wie dessen Menge.
+    ranges = []
+    for offer in task["angebote"]:
+        index = offer_need(offer, task, content)
+        ranges.append(range(1) if index is None else
+                      range(task["bedarf"][index]["menge"] + 1))
     result = []
-    for counts in itertools.product(range(most + 1), repeat=len(offers)):
+    for counts in itertools.product(*ranges):
         cart = {offer: count for offer, count in zip(offers, counts) if count}
         if cart and not order_problems(task, cart, content):
             result.append(cart)
