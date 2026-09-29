@@ -26,7 +26,7 @@ Update-Fenster des Programms.
   Gebäudeansicht stehen die Schilder der unteren Reihe abwechselnd oben
   und unten, damit alle lesbar bleiben.
 - **Android:** Die App wird nur noch für moderne 64-Bit-Handys gebaut
-  (z. B. Samsung S24 und neuer). Die APK ist dadurch rund 30 MB statt
+  (z. B. Samsung S24 und neuer). Die APK ist dadurch rund 58 MB statt
   143 MB groß.
 - Bitte PC und Handy beide auf 0.36 aktualisieren, damit der Abgleich der
   Sonderräume klappt.
