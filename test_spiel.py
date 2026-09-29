@@ -213,7 +213,7 @@ class SpielMitDatenbankTest(unittest.TestCase):
             game.set_profile("Test", {})
             for _day in range(30):
                 for task in game.state.open_tickets():
-                    game.solve(task["id"], _right_answer(task), used_help=False)
+                    game.solve(task["id"], _right_answer(task, game.state), used_help=False)
                 if game.state.all_done():
                     break
                 game.end_day()
@@ -339,10 +339,10 @@ class GrundrissUndAvatarTest(unittest.TestCase):
         self.assertTrue(any(hall["y"] <= y <= hall["y"] + hall["h"] for _x, y in route))
 
     def test_drehung_hin_und_zurueck(self):
-        for point in ((0, 0), (3.5, 12.25), (24, 16)):
+        for point in ((0, 0), (3.5, 12.25), (30, 16)):
             self.assertEqual(fg.from_view(*fg.to_view(*point, rotate=True), rotate=True),
                              point)
-        self.assertEqual(fg.plan_size(True), (16, 24))
+        self.assertEqual(fg.plan_size(True), (16, 30))
         shapes = fg.building_shapes(rotate=True)
         width, height = fg.plan_size(True)
         for shape in shapes:
@@ -380,16 +380,223 @@ class GrundrissUndAvatarTest(unittest.TestCase):
                     self.assertTrue(color.startswith("#"))
 
 
-def _right_answer(task):
-    if task["typ"] == "auswahl":
-        return task["antwort"]
-    return {left: right for left, right in task["paare"]}
+def _right_answer(task, state=None):
+    available = state.available_parts(task) if state is not None else None
+    return fg.find_solution(task, available)
 
 
 def _wrong_answer(task):
     if task["typ"] == "auswahl":
         return [o for o in task["optionen"] if o != task["antwort"]][0]
     return {}
+
+
+def _task(task_id):
+    return fg.task_by_id(task_id)
+
+
+def _solved_event(stamp, task, answer, day, state=None):
+    available = state.available_parts(task) if state is not None else None
+    stock = state.stock() if state is not None else None
+    payload = fg.evaluate(task, answer, False, levels(100), day, BALANCING, available,
+                          None, stock)
+    return (stamp, fg.EV_SOLVED, payload)
+
+
+def _day_ends(count):
+    return [("d%03d" % index, fg.EV_DAY_END, {"tag": index + 1, "gehalt": 0})
+            for index in range(count)]
+
+
+class BauteileTest(unittest.TestCase):
+    def parts(self, *ids):
+        return {fg.part(pid)["typ"]: fg.part(pid) for pid in ids}
+
+    def test_kompatibilitaet(self):
+        ok = self.parts("mb_a620_matx", "cpu_r5_7600", "ram_ddr5_2x8", "ssd_nvme_500",
+                        "nt_300", "geh_matx")
+        self.assertEqual(fg.compatibility_problems(ok), [])
+        cases = [
+            (("mb_a620_matx", "cpu_i5_13400"), "Sockel"),
+            (("mb_b760_matx", "ram_ddr5_2x8"), "DDR5"),
+            (("mb_a620_matx", "ram_ddr5_2x8"), None),
+            (("mb_h610_itx", "ram_ddr4_4x8"), "Steckplätze"),
+            (("mb_b650_atx", "geh_matx"), "Gehäuse"),
+            (("mb_h610_itx", "ssd_nvme_500"), "M.2"),
+            (("mb_h610_itx", "ssd_sata_500"), None),
+            (("cpu_r7_7700x", "gpu_4070", "nt_450"), "zu schwach"),
+            (("cpu_r7_7700x", "gpu_4070", "nt_650"), None),
+        ]
+        for ids, word in cases:
+            problems = fg.compatibility_problems(self.parts(*ids))
+            if word is None:
+                self.assertEqual(problems, [], ids)
+            else:
+                self.assertEqual(len(problems), 1, ids)
+                self.assertIn(word, problems[0], ids)
+
+    def test_netzteil_formel(self):
+        # (105 + 200 + 60) * 1,3 = 474,5 -> 475 W
+        self.assertEqual(fg.psu_needed(fg.part("cpu_r7_7700x"), fg.part("gpu_4070")), 475)
+        self.assertEqual(fg.psu_needed(fg.part("cpu_r5_7600")), 163)
+
+    def test_pc_bauen(self):
+        task = _task("pc-servicecenter")
+        right = fg.find_solution(task)
+        self.assertEqual(fg.check_answer(task, right), (True, 0))
+        wrong = dict(right, cpu="cpu_i5_13400f", gehaeuse="geh_itx")
+        problems = fg.build_problems(task, wrong)
+        self.assertTrue(any("Sockel" in text for text in problems))
+        self.assertTrue(any("Gehäuse" in text for text in problems))
+        # Leerer Steckplatz und Teil, das nicht bereitliegt
+        missing = dict(right)
+        del missing["netzteil"]
+        self.assertIn("Netzteil fehlt noch.", fg.build_problems(task, missing))
+        foreign = dict(right, ram="ram_ddr5_2x16")
+        self.assertIn("Arbeitsspeicher fehlt noch.", fg.build_problems(task, foreign))
+        payload = fg.evaluate(task, wrong, False, levels(100), 4)
+        self.assertFalse(payload["richtig"])
+        self.assertEqual(payload["fehler"], len(payload["probleme"]))
+        text = fg.result_text(task, payload)
+        self.assertIn("Probleme", text)
+        self.assertIn("Eine passende Zusammenstellung", text)
+
+    def test_kein_bild_ohne_grafik(self):
+        task = _task("pc-servicecenter")
+        answer = {"mainboard": "mb_b760_matx", "cpu": "cpu_i5_13400f"}
+        self.assertTrue(any("Kein Bild" in text for text in fg.build_problems(task, answer)))
+        # Mit Grafikkarte ist die CPU ohne Grafik in Ordnung
+        task = _task("grafik-arbeitsplatz")
+        answer = fg.find_solution(task, task["teile"] + ["nt_650"])
+        answer["cpu"] = "cpu_i5_13400f"
+        problems = fg.build_problems(task, answer, task["teile"] + ["nt_650"])
+        self.assertFalse(any("Kein Bild" in text for text in problems))
+
+    def test_bestellung(self):
+        task = _task("ram-leitstelle")
+        self.assertEqual(fg.valid_carts(task), [{"a3": 2}])
+        self.assertEqual(fg.check_answer(task, {"a3": 2}), (True, 0))
+        checks = [
+            ({}, "leer"),
+            ({"a1": 2}, "DDR5"),
+            ({"a4": 2}, "zu klein"),
+            ({"a2": 2}, "Zu spät"),
+            ({"a3": 1, "a5": 1}, "Budget"),
+            ({"a3": 3}, "Zu viel"),
+            ({"a3": 1}, "nicht gedeckt"),
+        ]
+        for cart, word in checks:
+            problems = fg.order_problems(task, cart)
+            self.assertTrue(any(word in text for text in problems), (cart, problems))
+        self.assertEqual(fg.cart_total(task, {"a3": 2, "a1": 0}), (110, 2))
+
+    def test_ersparnis_und_lieferung(self):
+        task = _task("ssd-automaten")
+        cheap = fg.evaluate(task, {"s2": 3}, True, levels(100), 6)
+        dear = fg.evaluate(task, {"s2": 1, "s3": 2}, True, levels(100), 6)
+        self.assertTrue(cheap["richtig"] and dear["richtig"])
+        self.assertGreater(cheap["ersparnis_bonus"], dear.get("ersparnis_bonus", 0))
+        self.assertEqual(cheap["geld"] - dear["geld"],
+                         cheap["ersparnis_bonus"] - dear.get("ersparnis_bonus", 0))
+        self.assertEqual(cheap["kosten"], 126)
+        self.assertEqual(cheap["lieferung"], [{"teil": "ssd_sata_500", "menge": 3,
+                                               "haendler": "kabelkoenig", "ankunft": 8}])
+        self.assertEqual({item["ankunft"] for item in dear["lieferung"]}, {7, 8})
+        self.assertIn("Arbeitstag 8", fg.result_text(task, cheap))
+        wrong = fg.evaluate(task, {"s1": 3}, True, levels(100), 6)
+        self.assertNotIn("lieferung", wrong)
+        self.assertLess(wrong["geld"], 0)
+        self.assertIn("So hätte es gepasst", fg.result_text(task, wrong))
+
+    def test_unloesbare_inhalte_werden_gefunden(self):
+        content = json.loads(json.dumps(fg.GAME))
+        order = next(t for t in content["aufgaben"] if t["id"] == "ram-leitstelle")
+        order["budget"] = 50
+        build = next(t for t in content["aufgaben"] if t["id"] == "pc-servicecenter")
+        build["teile"].remove("nt_300")
+        problems = fg.validate_game_content(content)
+        self.assertTrue(any("ram-leitstelle" in p and "keine gueltige" in p
+                            for p in problems), problems)
+        self.assertTrue(any("pc-servicecenter" in p and "nicht bauen" in p
+                            for p in problems), problems)
+        # Der Folgeauftrag haengt an der (jetzt unmoeglichen) Bestellung
+        self.assertTrue(any("leitstelle-pc" in p for p in problems), problems)
+
+
+class LagerTest(unittest.TestCase):
+    def test_folgeauftrag_wartet_auf_lieferung(self):
+        order = _task("ram-leitstelle")
+        events = _day_ends(3)                              # Arbeitstag 4
+        events.append(_solved_event("e1", order, {"a3": 2}, 4))
+        state = fg.GameState(events)
+        self.assertNotIn("leitstelle-pc", [t["id"] for t in state._pool()])
+        self.assertEqual([t["id"] for t in state.waiting_for_delivery()], ["leitstelle-pc"])
+        store = state.warehouse()
+        self.assertEqual(store["unterwegs"][0]["teil"], "ram_ddr4_2x8")
+        self.assertEqual(store["unterwegs"][0]["ankunft"], 6)
+        self.assertEqual(state.stock(), {})
+        self.assertIn("Arbeitstag 6", fg.warehouse_summary(state))
+
+        events += [("f%d" % i, fg.EV_DAY_END, {"tag": 4 + i, "gehalt": 0}) for i in range(2)]
+        state = fg.GameState(events)                       # Arbeitstag 6
+        self.assertEqual(state.day, 6)
+        self.assertTrue(state.arrived("ram-leitstelle"))
+        self.assertEqual(state.stock(), {"ram_ddr4_2x8": 2})
+        build = _task("leitstelle-pc")
+        self.assertIn(build["id"], [t["id"] for t in state._pool()])
+        self.assertIn("ram_ddr4_2x8", state.available_parts(build))
+        # Der Grafik-Arbeitsplatz darf den RAM nicht aus dem Lager nehmen
+        self.assertNotIn("ram_ddr4_2x8", state.available_parts(_task("grafik-arbeitsplatz")))
+
+        answer = fg.find_solution(build, state.available_parts(build))
+        events.append(_solved_event("g1", build, answer, 6, state))
+        state = fg.GameState(events)
+        self.assertEqual(state.stock(), {"ram_ddr4_2x8": 1})
+        self.assertEqual(state.warehouse()["bestand"], [("ram_ddr4_2x8", 1)])
+
+    def test_ware_mit_empfaenger_geht_nicht_ins_lager(self):
+        task = _task("notebook-chefin")
+        events = _day_ends(4) + [_solved_event("e1", task, {"b2": 1}, 5)]
+        events += [("x1", fg.EV_DAY_END, {"tag": 5, "gehalt": 0})]
+        state = fg.GameState(events)
+        self.assertEqual(state.stock(), {})
+        handed = state.warehouse()["ausgeliefert"]
+        self.assertEqual(handed[0]["empfaenger"], "sabine")
+
+    def test_tag_endet_auch_beim_warten(self):
+        # Alles erledigt ausser den Auftraegen, die auf Ware warten
+        events = []
+        for index, task in enumerate(fg.GAME["aufgaben"]):
+            if task.get("nach"):
+                continue
+            stamp, kind, payload = _solved_event("s%02d" % index, task,
+                                                 fg.find_solution(task), 1)
+            for item in payload.get("lieferung", []):
+                item["ankunft"] = 9
+            events.append((stamp, kind, payload))
+        events += [("z%d" % i, fg.EV_DAY_END, {"tag": i + 1, "gehalt": 0}) for i in range(4)]
+        state = fg.GameState(events)                       # Tag 5, Ware kommt Tag 9
+        self.assertEqual(state.open_tickets(), [])
+        self.assertFalse(state.handled)
+        self.assertTrue(state.waiting_for_delivery())
+        self.assertTrue(state.can_end_day())
+
+    def test_lagerist_zeigt_bestand(self):
+        rainer = fg.colleague("rainer")
+        state = fg.GameState([])
+        title, text = fg.office_message(rainer["platz"], rainer, {}, state=state)
+        self.assertIn("Lagerist", title)
+        self.assertIn("Lager ist leer", text)
+
+    def test_lager_nur_durch_die_tuer(self):
+        # Von der Verwaltung ins Lager fuehrt der Weg durch den Flur
+        hall = fg.GAME["gebaeude"]["flur"]
+        route = fg.walk_path((22.5, 3.0), (25.5, 5.3))
+        self.assertTrue(route)
+        self.assertTrue(any(hall["y"] <= y <= hall["y"] + hall["h"] for _x, y in route))
+        self.assertEqual(fg.door_side(fg.room("lager")), "w")
+        self.assertEqual(fg.door_side(fg.room("helpdesk")), "n")
+        self.assertEqual(fg.door_side(fg.room("chefbuero")), "s")
 
 
 if __name__ == "__main__":

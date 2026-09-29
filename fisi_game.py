@@ -15,15 +15,17 @@ beschrieben (building_shapes) und von beiden Oberflaechen nur gezeichnet.
 
 Spielstand als Ereignisprotokoll: In der Datenbank steht nur, was passiert
 ist (Profil gesetzt, Ticket erledigt, Ticket verschoben, Arbeitstag beendet).
-Geld, Reputation, Rang und der aktuelle Arbeitstag werden immer daraus
-berechnet. Nur so laesst sich der Stand von PC und Handy beim Abgleich
+Geld, Reputation, Rang, Lagerbestand und der aktuelle Arbeitstag werden immer
+daraus berechnet. Nur so laesst sich der Stand von PC und Handy beim Abgleich
 einfach vereinigen, ohne dass Zahlen doppelt zaehlen.
 
-Die Inhalte (Aufgaben, Kollegen, Raeume, Story, Stellschrauben) liegen als
-JSON in inhalte/spiel/.
+Die Inhalte (Aufgaben, Kollegen, Raeume, Story, Stellschrauben, Bauteile)
+liegen als JSON in inhalte/spiel/.
 """
 
+import itertools
 import json
+import math
 import os
 
 from fisi_core import (
@@ -48,7 +50,7 @@ AXES = [
 AXIS_KEYS = [key for key, _name in AXES]
 
 PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"]
-TASK_TYPES = ("auswahl", "zuordnung")
+TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung")
 
 # Ereignistypen im Protokoll
 EV_PROFILE = "profil_gesetzt"
@@ -207,6 +209,7 @@ def load_game_content(folder=None):
         "gebaeude": building,
         "story": {key: _lines(value) for key, value in story.items()},
         "balancing": read("balancing"),
+        "hardware": read("hardware"),
     }
 
 
@@ -252,7 +255,12 @@ def validate_game_content(content=None):
                 item["y"] + item["h"] > content["gebaeude"]["hoehe"]:
             problems.append("%s: liegt ausserhalb des Grundrisses" % where)
         door = item.get("tuer")
-        if door and not item["x"] <= door["von"] < door["bis"] <= item["x"] + item["w"]:
+        if door and door_side(item, content) in ("w", "o"):
+            hall = content["gebaeude"]["flur"]
+            if not max(item["y"], hall["y"]) <= door["von"] < door["bis"] <= \
+                    min(item["y"] + item["h"], hall["y"] + hall["h"]):
+                problems.append("%s: Seitentuer fuehrt nicht in den Flur" % where)
+        elif door and not item["x"] <= door["von"] < door["bis"] <= item["x"] + item["w"]:
             problems.append("%s: Tuer liegt nicht an der Raumwand" % where)
         for deco in item.get("deko", []):
             if deco.get("typ") not in DECO_TYPES:
@@ -278,6 +286,8 @@ def validate_game_content(content=None):
     for rank in balancing["raenge"]:
         if rank["name"] not in balancing["gehalt_pro_tag"]:
             problems.append("Spiel-Balancing: kein Gehalt fuer Rang '%s'" % rank["name"])
+
+    problems += _validate_hardware(content)
 
     seen = set()
     for number, task in enumerate(content["aufgaben"], start=1):
@@ -311,6 +321,14 @@ def validate_game_content(content=None):
             problems.append("%s: Tickettext laenger als %d Zeichen (Handy)"
                             % (where, MAX_TICKET_CHARS))
 
+        if task.get("nach") and not task_by_id(task["nach"], content):
+            problems.append("%s: Voraussetzung '%s' gibt es nicht" % (where, task["nach"]))
+        if task.get("empfaenger") and task["empfaenger"] not in people:
+            problems.append("%s: unbekannter Empfaenger '%s'" % (where, task["empfaenger"]))
+        if task.get("typ") in ("bauteile", "bestellung"):
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_hardware_task(task, content)]
+
         if task.get("typ") == "auswahl":
             options = task.get("optionen") or []
             if len(options) < 2 or len(set(options)) != len(options):
@@ -339,6 +357,109 @@ def validate_game_content(content=None):
             if not learn_links_for_term(term, limit=1):
                 problems.append("%s: Suchbegriff '%s' findet keine Karteikarte "
                                 "oder Quizfrage" % (where, term))
+    return problems
+
+
+def _validate_hardware(content):
+    """Bauteile und Haendler in hardware.json."""
+    problems, seen = [], set()
+    hardware = content["hardware"]
+    for item in hardware["teile"]:
+        where = "Spiel-Bauteil %s" % item.get("id")
+        if item.get("id") in seen:
+            problems.append("%s: Kennung doppelt vorhanden" % where)
+        seen.add(item.get("id"))
+        if item.get("typ") not in PART_FIELDS or item.get("typ") not in hardware["typen"]:
+            problems.append("%s: unbekannter Typ '%s'" % (where, item.get("typ")))
+            continue
+        if not item.get("name") or not item.get("preis", 0) > 0:
+            problems.append("%s: Name oder Preis fehlt" % where)
+        for field in PART_FIELDS[item["typ"]]:
+            if field not in item:
+                problems.append("%s: Feld '%s' fehlt" % (where, field))
+        for form in [item.get("formfaktor")] + list(item.get("formfaktoren") or []):
+            if form is not None and form not in hardware["formfaktoren"]:
+                problems.append("%s: unbekannter Formfaktor '%s'" % (where, form))
+    dealers = [item["id"] for item in hardware["haendler"]]
+    if len(set(dealers)) != len(dealers):
+        problems.append("Spiel-Haendler: Kennung doppelt vorhanden")
+    return problems
+
+
+def _validate_hardware_task(task, content):
+    """Bauteile- und Bestell-Auftraege: Aufbau pruefen und durch Ausprobieren
+    beweisen, dass es eine richtige Loesung gibt."""
+    problems = []
+    if task["typ"] == "bestellung":
+        offers = task.get("angebote") or []
+        needs = task.get("bedarf") or []
+        if not offers or not needs:
+            return ["Angebote oder Bedarf fehlen"]
+        if not task.get("budget", 0) > 0 or not task.get("frist", 0) >= 1:
+            problems.append("Budget oder Frist fehlt")
+        ids = [offer.get("id") for offer in offers]
+        if len(set(ids)) != len(ids):
+            problems.append("Angebots-Kennung doppelt vorhanden")
+        for need in needs:
+            if need.get("typ") not in content["hardware"]["typen"] or \
+                    not need.get("text") or not need.get("menge", 0) >= 1:
+                problems.append("Bedarf unvollstaendig: %s" % need.get("text"))
+            for other in need.get("fuer") or []:
+                if not part(other, content):
+                    problems.append("Bedarf verweist auf unbekanntes Teil '%s'" % other)
+        for offer in offers:
+            if not part(offer.get("teil"), content):
+                problems.append("Angebot %s: unbekanntes Teil" % offer.get("id"))
+            elif not dealer(offer.get("haendler"), content):
+                problems.append("Angebot %s: unbekannter Haendler" % offer.get("id"))
+            elif not offer.get("preis", 0) > 0 or not offer.get("lieferzeit", 0) >= 1:
+                problems.append("Angebot %s: Preis oder Lieferzeit fehlt" % offer.get("id"))
+            else:
+                item = part(offer["teil"], content)
+                matching = [need for need in needs if not _need_mismatch(item, need, content)]
+                if len(matching) > 1:
+                    problems.append("Angebot %s passt zu mehreren Bedarfen" % offer["id"])
+        if not problems and not valid_carts(task, content):
+            problems.append("keine gueltige Bestellung moeglich")
+        return problems
+
+    slots = task.get("slots") or []
+    if not slots or any(slot not in SLOT_ORDER for slot in slots):
+        return ["Steckplaetze fehlen oder sind unbekannt"]
+    for part_id in task.get("teile") or []:
+        if not part(part_id, content):
+            problems.append("unbekanntes Bauteil '%s'" % part_id)
+    for slot in (task.get("optional") or []) + (task.get("aus_lager") or []):
+        if slot not in slots:
+            problems.append("'%s' ist kein Steckplatz dieses Auftrags" % slot)
+    for key in task.get("vorgaben") or {}:
+        if key not in BUILD_RULES:
+            problems.append("unbekannte Vorgabe '%s'" % key)
+    if problems:
+        return problems
+    # Welche Teile koennen aus dem Lager dazukommen? Jede gueltige Bestellung
+    # des vorigen Auftrags muss zum Ziel fuehren.
+    extras = [[]]
+    if task.get("aus_lager"):
+        first = task_by_id(task.get("nach"), content)
+        if not first or first["typ"] != "bestellung":
+            return ["Teile aus dem Lager brauchen eine Bestellung als Voraussetzung"]
+        extras = []
+        if not valid_carts(first, content):
+            return ["die Bestellung davor ('%s') hat keine gueltige Loesung" % first["id"]]
+        for cart in valid_carts(first, content):
+            ids = [offer["teil"] for offer in first["angebote"] if cart.get(offer["id"])]
+            extras.append([pid for pid in ids if part(pid, content)["typ"] in task["aus_lager"]])
+        users = [other["id"] for other in content["aufgaben"]
+                 if other.get("nach") == first["id"] and other.get("aus_lager")]
+        if len(users) > 1:
+            problems.append("mehrere Auftraege holen Ware aus derselben Bestellung")
+    for extra in extras:
+        available = list(task.get("teile") or []) + [p for p in extra
+                                                     if p not in task.get("teile", [])]
+        if find_solution(task, available, content) is None:
+            problems.append("PC laesst sich mit den bereitliegenden Teilen nicht bauen")
+            break
     return problems
 
 
@@ -455,14 +576,226 @@ def learn_links(task, limit=6):
 
 
 # ============================================================================
-#  AUFGABEN PRUEFEN
+#  BAUTEILE UND BESTELLUNGEN
 # ============================================================================
+#
+# Die Bauteile stehen in inhalte/spiel/hardware.json. Die Pruefungen liefern
+# Saetze auf Deutsch, damit das Spiel nach dem Einreichen genau sagen kann,
+# was nicht passt - gleiche Texte auf PC und Handy.
 
-def check_answer(task, answer):
+# Steckplaetze eines PCs in der Reihenfolge, in der man ihn zusammenbaut
+SLOT_ORDER = ("mainboard", "cpu", "ram", "ssd", "gpu", "netzteil", "gehaeuse")
+# Pflichtwerte je Bauteil-Typ (fuer die Inhaltspruefung)
+PART_FIELDS = {
+    "mainboard": ("sockel", "ram_typ", "formfaktor", "ram_slots", "m2"),
+    "cpu": ("sockel", "tdp", "igpu"),
+    "ram": ("ram_typ", "groesse", "module"),
+    "ssd": ("anschluss", "groesse"),
+    "gpu": ("watt",),
+    "netzteil": ("watt",),
+    "gehaeuse": ("formfaktoren",),
+    "notebook": ("groesse",),
+}
+# Vorgaben eines PC-Auftrags
+BUILD_RULES = ("ram_min", "speicher_min", "grafikkarte", "budget")
+# Einheiten der Mindestwerte bei Bestellungen
+UNITS = {"groesse": "GB", "watt": "W"}
+
+
+def part(part_id, content=None):
+    for item in (content or GAME)["hardware"]["teile"]:
+        if item["id"] == part_id:
+            return item
+    return None
+
+
+def dealer(dealer_id, content=None):
+    for item in (content or GAME)["hardware"]["haendler"]:
+        if item["id"] == dealer_id:
+            return item
+    return None
+
+
+def slot_name(slot, content=None):
+    return (content or GAME)["hardware"]["typen"].get(slot, slot)
+
+
+def _form(value, content):
+    return (content or GAME)["hardware"]["formfaktoren"].get(value, value)
+
+
+def psu_needed(cpu, gpu=None, content=None):
+    """Noetige Netzteil-Leistung in Watt: (CPU + Grafikkarte + Grundlast)
+    mal Reserve, aufgerundet."""
+    rules = (content or GAME)["hardware"]["regeln"]
+    load = (cpu["tdp"] if cpu else 0) + (gpu["watt"] if gpu else 0) + rules["grundlast_watt"]
+    return int(math.ceil(load * rules["netzteil_reserve"] - 1e-9))
+
+
+def compatibility_problems(parts, content=None):
+    """Prueft Bauteile untereinander. parts = {typ: bauteil}. Geprueft wird
+    nur, was zusammen vorkommt - so passt die Funktion fuer den halben PC
+    (Bestellung: "passt dieser RAM zum Mainboard?") wie fuer den ganzen."""
+    board = parts.get("mainboard")
+    cpu = parts.get("cpu")
+    ram = parts.get("ram")
+    ssd = parts.get("ssd")
+    case = parts.get("gehaeuse")
+    psu = parts.get("netzteil")
+    problems = []
+    if board and cpu and cpu["sockel"] != board["sockel"]:
+        problems.append("Die CPU (Sockel %s) passt nicht auf das Mainboard (Sockel %s)."
+                        % (cpu["sockel"], board["sockel"]))
+    if board and ram:
+        if ram["ram_typ"] != board["ram_typ"]:
+            problems.append("Der Arbeitsspeicher ist %s, das Mainboard braucht %s."
+                            % (ram["ram_typ"], board["ram_typ"]))
+        elif ram["module"] > board["ram_slots"]:
+            problems.append("%d RAM-Module, aber das Mainboard hat nur %d Steckplätze."
+                            % (ram["module"], board["ram_slots"]))
+    if board and case and board["formfaktor"] not in case["formfaktoren"]:
+        problems.append("Das Mainboard (%s) passt nicht ins Gehäuse (%s)."
+                        % (_form(board["formfaktor"], content),
+                           ", ".join(_form(f, content) for f in case["formfaktoren"])))
+    if board and ssd and ssd["anschluss"] == "m2" and board["m2"] < 1:
+        problems.append("Die SSD braucht einen M.2-Steckplatz, das Mainboard hat keinen "
+                        "(nur SATA).")
+    if psu and cpu:
+        need = psu_needed(cpu, parts.get("gpu"), content)
+        if psu["watt"] < need:
+            problems.append("Das Netzteil ist zu schwach: %d W, gebraucht werden mindestens "
+                            "%d W." % (psu["watt"], need))
+    return problems
+
+
+def build_problems(task, answer, available=None, content=None):
+    """Alle Probleme eines zusammengebauten PCs (Aufgabentyp "bauteile").
+    answer = {steckplatz: bauteil_id}, available = erlaubte Bauteil-IDs."""
+    content = content or GAME
+    answer = answer or {}
+    available = task.get("teile", []) if available is None else available
+    optional = task.get("optional") or []
+    chosen, problems = {}, []
+    for slot in task["slots"]:
+        part_id = answer.get(slot)
+        item = part(part_id, content) if part_id else None
+        if item is None or item["typ"] != slot or part_id not in available:
+            if slot not in optional:
+                problems.append("%s fehlt noch." % slot_name(slot, content))
+            continue
+        chosen[slot] = item
+    problems += compatibility_problems(chosen, content)
+    cpu = chosen.get("cpu")
+    if cpu and not cpu["igpu"] and "gpu" not in chosen:
+        problems.append("Kein Bild: %s hat keine eingebaute Grafik und es steckt keine "
+                        "Grafikkarte im PC." % cpu["name"])
+    rules = task.get("vorgaben") or {}
+    ram = chosen.get("ram")
+    if ram and ram["groesse"] < rules.get("ram_min", 0):
+        problems.append("Zu wenig Arbeitsspeicher: %d GB, verlangt sind mindestens %d GB."
+                        % (ram["groesse"], rules["ram_min"]))
+    ssd = chosen.get("ssd")
+    if ssd and ssd["groesse"] < rules.get("speicher_min", 0):
+        problems.append("Zu wenig Speicherplatz: %d GB, verlangt sind mindestens %d GB."
+                        % (ssd["groesse"], rules["speicher_min"]))
+    if rules.get("grafikkarte") and "gpu" not in chosen:
+        problems.append("Der Auftrag verlangt eine Grafikkarte.")
+    price = sum(item["preis"] for item in chosen.values())
+    if rules.get("budget") and price > rules["budget"]:
+        problems.append("Zu teuer: %d € bei %d € Budget." % (price, rules["budget"]))
+    return problems
+
+
+def _need_mismatch(item, need, content=None):
+    """Warum passt ein Bauteil nicht zu einem Bedarf? Leerer Text = passt."""
+    if item["typ"] != need["typ"]:
+        return "wird nicht gebraucht"
+    for other_id in need.get("fuer") or []:
+        other = part(other_id, content)
+        problems = compatibility_problems({other["typ"]: other, item["typ"]: item}, content)
+        if problems:
+            return problems[0]
+    for key, value in (need.get("min") or {}).items():
+        if item.get(key, 0) < value:
+            unit = UNITS.get(key, "")
+            return "zu klein: %s %s, gebraucht werden mindestens %s %s" % (
+                item.get(key, 0), unit, value, unit)
+    return ""
+
+
+def offer_need(offer, task, content=None):
+    """Index des Bedarfs, den ein Angebot deckt, oder None."""
+    item = part(offer["teil"], content)
+    for index, need in enumerate(task["bedarf"]):
+        if not _need_mismatch(item, need, content):
+            return index
+    return None
+
+
+def cart_total(task, cart):
+    """Gesamtpreis und laengste Lieferzeit eines Warenkorbs {angebot: menge}."""
+    total, longest = 0, 0
+    for offer in task["angebote"]:
+        count = int(cart.get(offer["id"], 0) or 0)
+        if count > 0:
+            total += offer["preis"] * count
+            longest = max(longest, offer["lieferzeit"])
+    return total, longest
+
+
+def order_problems(task, cart, content=None):
+    """Alle Probleme eines Warenkorbs (Aufgabentyp "bestellung")."""
+    content = content or GAME
+    cart = {key: int(value) for key, value in (cart or {}).items() if int(value or 0) > 0}
+    if not cart:
+        return ["Der Warenkorb ist leer."]
+    problems = []
+    covered = [0] * len(task["bedarf"])
+    for offer in task["angebote"]:
+        count = cart.get(offer["id"], 0)
+        if not count:
+            continue
+        index = offer_need(offer, task, content)
+        if index is None:
+            item = part(offer["teil"], content)
+            reasons = [_need_mismatch(item, need, content) for need in task["bedarf"]
+                       if need["typ"] == item["typ"]]
+            problems.append("%s passt nicht: %s" % (
+                item["name"], (reasons[0] if reasons else "wird nicht gebraucht")))
+        else:
+            covered[index] += count
+    for need, count in zip(task["bedarf"], covered):
+        if count < need["menge"]:
+            problems.append("Bedarf nicht gedeckt: %s (%d von %d)."
+                            % (need["text"], count, need["menge"]))
+        elif count > need["menge"]:
+            problems.append("Zu viel bestellt: %s (%d statt %d)."
+                            % (need["text"], count, need["menge"]))
+    total, longest = cart_total(task, cart)
+    if total > task["budget"]:
+        problems.append("Budget überschritten: %d € bei %d € Budget." % (total, task["budget"]))
+    if longest > task["frist"]:
+        problems.append("Zu spät: Die Ware braucht %d Arbeitstage, die Frist ist %d."
+                        % (longest, task["frist"]))
+    return problems
+
+
+def answer_problems(task, answer, available=None, content=None):
+    """Probleme einer Loesung als Saetze (nur Bauteile und Bestellung)."""
+    if task["typ"] == "bauteile":
+        return build_problems(task, answer, available, content)
+    if task["typ"] == "bestellung":
+        return order_problems(task, answer, content)
+    return []
+
+
+def check_answer(task, answer, available=None, content=None):
     """Prueft eine Antwort. Rueckgabe: (richtig, anzahl_fehler).
 
-    auswahl:   answer ist der gewaehlte Antworttext
-    zuordnung: answer ist {links: rechts}
+    auswahl:    answer ist der gewaehlte Antworttext
+    zuordnung:  answer ist {links: rechts}
+    bauteile:   answer ist {steckplatz: bauteil_id}
+    bestellung: answer ist {angebot_id: menge}
     """
     if task["typ"] == "auswahl":
         right = answer == task["antwort"]
@@ -471,20 +804,161 @@ def check_answer(task, answer):
         answer = answer or {}
         errors = sum(1 for left, right in task["paare"] if answer.get(left) != right)
         return errors == 0, errors
+    if task["typ"] in ("bauteile", "bestellung"):
+        problems = answer_problems(task, answer, available, content)
+        return not problems, len(problems)
     raise ValueError("Unbekannter Aufgabentyp: %s" % task["typ"])
+
+
+def valid_carts(task, content=None):
+    """Alle gueltigen Warenkoerbe einer Bestellung, guenstigster zuerst.
+    Durchprobiert - die Aufgaben sind klein (wenige Angebote und Stueckzahlen)."""
+    most = max(need["menge"] for need in task["bedarf"])
+    offers = [offer["id"] for offer in task["angebote"]]
+    result = []
+    for counts in itertools.product(range(most + 1), repeat=len(offers)):
+        cart = {offer: count for offer, count in zip(offers, counts) if count}
+        if cart and not order_problems(task, cart, content):
+            result.append(cart)
+    result.sort(key=lambda cart: cart_total(task, cart))
+    return result
+
+
+def find_solution(task, available=None, content=None):
+    """Eine richtige Loesung (fuer die Inhaltspruefung, die Tests und die
+    Rueckmeldung "So waere es gegangen"). None, wenn es keine gibt."""
+    if task["typ"] == "auswahl":
+        return task["antwort"]
+    if task["typ"] == "zuordnung":
+        return dict(task["paare"])
+    if task["typ"] == "bestellung":
+        carts = valid_carts(task, content)
+        return carts[0] if carts else None
+    available = task.get("teile", []) if available is None else available
+    choices = []
+    for slot in task["slots"]:
+        options = [pid for pid in available if (part(pid, content) or {}).get("typ") == slot]
+        if slot in (task.get("optional") or []):
+            options = [None] + options
+        choices.append(options or [None])
+    best = None
+    for combo in itertools.product(*choices):
+        answer = {slot: pid for slot, pid in zip(task["slots"], combo) if pid}
+        if not build_problems(task, answer, available, content):
+            price = sum(part(pid, content)["preis"] for pid in answer.values())
+            if best is None or price < best[0]:
+                best = (price, answer)
+    return best[1] if best else None
+
+
+def cart_lines(task, cart, content=None):
+    """Warenkorb als lesbare Zeilen: "2 × DDR4 16 GB (2 × 8 GB) von Bitlager24"."""
+    lines = []
+    for offer in task["angebote"]:
+        count = int((cart or {}).get(offer["id"], 0) or 0)
+        if count:
+            lines.append("%d × %s von %s" % (count, part(offer["teil"], content)["name"],
+                                             dealer(offer["haendler"], content)["name"]))
+    return lines
+
+
+def part_specs(item, content=None):
+    """Kurze technische Beschreibung eines Bauteils fuer die Anzeige."""
+    kind = item["typ"]
+    if kind == "mainboard":
+        m2 = "%d × M.2" % item["m2"] if item["m2"] else "kein M.2"
+        return "Sockel %s · %s · %s · %d RAM-Plätze · %s" % (
+            item["sockel"], item["ram_typ"], _form(item["formfaktor"], content),
+            item["ram_slots"], m2)
+    if kind == "cpu":
+        return "Sockel %s · %d W · %s" % (item["sockel"], item["tdp"],
+                                          "mit Grafik" if item["igpu"] else "ohne Grafik")
+    if kind == "ram":
+        return "%s · %d GB · %d Modul%s" % (item["ram_typ"], item["groesse"], item["module"],
+                                           "" if item["module"] == 1 else "e")
+    if kind == "ssd":
+        size = item["groesse"]
+        return "%s · %s" % ("M.2 (NVMe)" if item["anschluss"] == "m2" else "SATA",
+                            "%d TB" % (size // 1000) if size % 1000 == 0 else "%d GB" % size)
+    if kind == "gpu":
+        return "braucht %d W" % item["watt"]
+    if kind == "netzteil":
+        return "liefert %d W" % item["watt"]
+    if kind == "gehaeuse":
+        return "für " + ", ".join(_form(f, content) for f in item["formfaktoren"])
+    if kind == "notebook":
+        return "%d GB RAM" % item["groesse"]
+    return ""
+
+
+def build_rules_text(task):
+    """Vorgaben eines PC-Auftrags in einer Zeile."""
+    rules = task.get("vorgaben") or {}
+    parts = []
+    if rules.get("ram_min"):
+        parts.append("mind. %d GB RAM" % rules["ram_min"])
+    if rules.get("speicher_min"):
+        size = rules["speicher_min"]
+        parts.append("mind. %s SSD" % ("%d TB" % (size // 1000) if size % 1000 == 0
+                                       else "%d GB" % size))
+    if rules.get("grafikkarte"):
+        parts.append("Grafikkarte nötig")
+    if rules.get("budget"):
+        parts.append("höchstens %d €" % rules["budget"])
+    return " · ".join(parts)
+
+
+def order_header(task):
+    """Bedarf, Budget und Frist einer Bestellung als Zeilen."""
+    lines = ["%d × %s" % (need["menge"], need["text"]) for need in task["bedarf"]]
+    days = task["frist"]
+    lines.append("Budget %d € · Frist %d Arbeitstag%s" % (task["budget"], days,
+                                                          "" if days == 1 else "e"))
+    return lines
+
+
+def cart_summary(task, cart):
+    """Live-Anzeige unter dem Warenkorb: (Text, zu_teuer, zu_spaet)."""
+    total, longest = cart_total(task, cart)
+    count = sum(int(value or 0) for value in (cart or {}).values())
+    if not count:
+        return "leer", False, False
+    text = "%d Artikel · %d € von %d € · Lieferung in %d Arbeitstag%s" % (
+        count, total, task["budget"], longest, "" if longest == 1 else "en")
+    return text, total > task["budget"], longest > task["frist"]
+
+
+def solution_text(task, available=None, content=None):
+    """Eine richtige Loesung als Text (fuer die Rueckmeldung nach Fehlern)."""
+    solution = find_solution(task, available, content)
+    if not solution:
+        return ""
+    if task["typ"] == "bestellung":
+        return "So hätte es gepasst: " + ", ".join(cart_lines(task, solution, content)) + "."
+    if task["typ"] == "bauteile":
+        names = [part(solution[slot], content)["name"] for slot in task["slots"]
+                 if solution.get(slot)]
+        return "Eine passende Zusammenstellung: " + ", ".join(names) + "."
+    return ""
 
 
 def _scaled(value, factor):
     return int(round(value * factor))
 
 
-def evaluate(task, answer, used_help, levels, day, balancing=None):
+def evaluate(task, answer, used_help, levels, day, balancing=None, available=None,
+             content=None, stock=None):
     """Bewertet eine bearbeitete Aufgabe und liefert die Nutzdaten fuer das
     Ereignis ticket_erledigt (Geld und Reputationsaenderung werden mit
     gespeichert, damit spaetere Balancing-Aenderungen den Stand nicht
-    rueckwirkend verschieben)."""
+    rueckwirkend verschieben).
+
+    available: Bauteile, die bei einem PC-Auftrag bereitliegen
+    stock:     aktueller Lagerbestand {bauteil: anzahl} - was davon verbaut
+               wird, zieht der Spielstand spaeter vom Lager ab"""
     balancing = balancing or GAME["balancing"]
-    right, errors = check_answer(task, answer)
+    problems = answer_problems(task, answer, available, content)
+    right, errors = check_answer(task, answer, available, content)
     gaps = requirement_gaps(task, levels)
     below = bool(gaps)
     axes = ["fachkompetenz"] + [a for a in task.get("achsen") or [] if a != "fachkompetenz"]
@@ -508,7 +982,7 @@ def evaluate(task, answer, used_help, levels, day, balancing=None):
         for axis in axes:
             delta[axis] -= _scaled(loss, factor)
 
-    return {
+    payload = {
         "aufgabe": task["id"],
         "tag": day,
         "richtig": right,
@@ -518,6 +992,33 @@ def evaluate(task, answer, used_help, levels, day, balancing=None):
         "geld": money,
         "reputation": {key: value for key, value in delta.items() if value},
     }
+    if problems:
+        payload["probleme"] = problems
+    if right and task["typ"] == "bestellung":
+        # Die Ware kommt je Angebot nach dessen Lieferzeit an
+        total, _longest = cart_total(task, answer)
+        payload["kosten"] = total
+        payload["lieferung"] = [
+            {"teil": offer["teil"], "menge": int(answer[offer["id"]]),
+             "haendler": offer["haendler"], "ankunft": day + offer["lieferzeit"]}
+            for offer in task["angebote"] if int(answer.get(offer["id"], 0) or 0) > 0]
+        if task.get("empfaenger"):
+            for item in payload["lieferung"]:
+                item["empfaenger"] = task["empfaenger"]
+        bonus = _scaled(max(0, task["budget"] - total), balancing["ersparnis_anteil"])
+        if bonus:
+            payload["ersparnis_bonus"] = bonus
+            payload["geld"] += bonus
+    if right and task["typ"] == "bauteile":
+        stock = dict(stock or {})
+        used = []
+        for part_id in answer.values():
+            if part_id and part_id not in task.get("teile", []) and stock.get(part_id, 0) > 0:
+                stock[part_id] -= 1
+                used.append(part_id)
+        payload["verbaut"] = [answer[slot] for slot in task["slots"] if answer.get(slot)]
+        payload["aus_lager"] = used
+    return payload
 
 
 def defer_payload(task, day, balancing=None):
@@ -556,6 +1057,8 @@ class GameState:
         self.handled = {}          # aufgabe -> Status am aktuellen Tag
         self.history = []          # (timestamp, typ, daten) chronologisch
         self.tickets_done = 0
+        self.deliveries = []       # Lieferungen aus richtigen Bestellungen
+        self.used = {}             # aus dem Lager verbaute Teile: id -> Anzahl
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -570,6 +1073,10 @@ class GameState:
                     self.tickets_done += 1
                     if data.get("richtig"):
                         self.solved.add(data.get("aufgabe"))
+                        for item in data.get("lieferung") or []:
+                            self.deliveries.append(dict(item, aufgabe=data.get("aufgabe")))
+                        for part_id in data.get("aus_lager") or []:
+                            self.used[part_id] = self.used.get(part_id, 0) + 1
             elif kind == EV_DAY_END:
                 self.days_done += 1
                 self.money += int(data.get("gehalt", 0))
@@ -614,13 +1121,76 @@ class GameState:
         reputation = min(1.0, self.mean_reputation / float(goal["mindest_reputation"]))
         return min(capital, reputation)
 
+    # -- Lager ------------------------------------------------------------
+
+    def arrived(self, task_id):
+        """Ist die Ware einer (richtig erledigten) Bestellung komplett da?"""
+        items = [item for item in self.deliveries if item["aufgabe"] == task_id]
+        return bool(items) and all(item["ankunft"] <= self.day for item in items)
+
+    def stock(self):
+        """Lagerbestand {bauteil_id: anzahl}: angekommen minus verbaut. Ware
+        mit Empfaenger (z.B. das Notebook fuer die Chefin) geht direkt weiter."""
+        result = {}
+        for item in self.deliveries:
+            if item["ankunft"] <= self.day and not item.get("empfaenger"):
+                result[item["teil"]] = result.get(item["teil"], 0) + item["menge"]
+        for part_id, count in self.used.items():
+            result[part_id] = result.get(part_id, 0) - count
+        return {key: value for key, value in result.items() if value > 0}
+
+    def warehouse(self):
+        """Uebersicht fuer die Lager-Ansicht:
+        {"unterwegs": [lieferung, ...], "bestand": [(bauteil_id, anzahl)],
+         "ausgeliefert": [lieferung, ...]}"""
+        on_way = [item for item in self.deliveries if item["ankunft"] > self.day]
+        on_way.sort(key=lambda item: item["ankunft"])
+        handed = [item for item in self.deliveries
+                  if item["ankunft"] <= self.day and item.get("empfaenger")]
+        stock = self.stock()
+        order = [item["id"] for item in self.content["hardware"]["teile"]]
+        rows = sorted(stock.items(), key=lambda row: order.index(row[0])
+                      if row[0] in order else len(order))
+        return {"unterwegs": on_way, "bestand": rows, "ausgeliefert": handed}
+
+    def available_parts(self, task):
+        """Bauteile, die bei einem PC-Auftrag bereitliegen: die Teile auf der
+        Werkbank plus passende Teile aus dem Lager (nur die Typen, die der
+        Auftrag aus dem Lager holen darf - so nimmt kein Auftrag einem
+        anderen die bestellte Ware weg)."""
+        parts = list(task.get("teile", []))
+        allowed = task.get("aus_lager") or []
+        for part_id in self.stock():
+            item = part(part_id, self.content)
+            if item and item["typ"] in allowed and part_id not in parts:
+                parts.append(part_id)
+        return parts
+
     # -- Tickets ------------------------------------------------------------
+
+    def _ready(self, task):
+        """Voraussetzung erfuellt? Ein Auftrag mit "nach" wartet, bis der
+        vorige Auftrag erledigt und - bei einer Bestellung - die Ware da ist."""
+        before = task.get("nach")
+        if not before:
+            return True
+        if before not in self.solved:
+            return False
+        first = task_by_id(before, self.content)
+        return first is None or first["typ"] != "bestellung" or self.arrived(before)
 
     def _pool(self):
         return [task for task in self.content["aufgaben"]
                 if task.get("ab_tag", 1) <= self.day
                 and task["id"] not in self.solved
-                and task["id"] not in self.handled]
+                and task["id"] not in self.handled
+                and self._ready(task)]
+
+    def waiting_for_delivery(self):
+        """Auftraege, die nur noch auf eine Lieferung warten."""
+        return [task for task in self.content["aufgaben"]
+                if task["id"] not in self.solved and task.get("nach") in self.solved
+                and not self._ready(task)]
 
     def open_tickets(self):
         per_day = self.content["balancing"]["tickets_pro_tag"]
@@ -652,7 +1222,9 @@ class GameState:
         return counts
 
     def can_end_day(self):
-        return bool(self.handled) and not self.open_tickets()
+        # Auch ohne bearbeitetes Ticket, wenn heute nur auf Lieferungen oder
+        # spaetere Auftraege gewartet wird - sonst saesse man fest.
+        return not self.open_tickets() and (bool(self.handled) or not self.all_done())
 
     def all_done(self):
         """Keine Aufgabe mehr offen - weder heute noch an spaeteren Tagen."""
@@ -705,7 +1277,8 @@ class Game:
         if task is None or not self.state.is_open(task_id):
             raise ValueError("Dieses Ticket ist heute nicht (mehr) offen.")
         payload = evaluate(task, answer, used_help, self.knowledge(), self.state.day,
-                           self.content["balancing"])
+                           self.content["balancing"], self.state.available_parts(task),
+                           self.content, self.state.stock())
         self._log(EV_SOLVED, payload)
         return payload
 
@@ -771,6 +1344,17 @@ CHAIR = "#3A2A5C"
 PAPER = "#F4F1FA"
 
 
+def door_side(item, content=None):
+    """Wand mit der Tuer: "s" (unten, Raeume oberhalb des Flurs), "n" (oben,
+    Raeume unterhalb) oder per "seite" gesetzt "w"/"o" (links/rechts, z.B.
+    der Lagerfluegel am Ende des Flurs). Bei "w"/"o" sind von/bis y-Werte."""
+    door = item.get("tuer") or {}
+    if door.get("seite"):
+        return door["seite"]
+    hall = (content or GAME)["gebaeude"]["flur"]
+    return "s" if item["y"] + item["h"] <= hall["y"] else "n"
+
+
 def _rect(x, y, w, h, fill, line="", lw=0.0, r=0.0):
     return {"k": "rect", "x": x, "y": y, "w": w, "h": h, "fill": fill,
             "line": line, "lw": lw, "r": r}
@@ -819,6 +1403,21 @@ def _floor(x, y, w, h, kind, color):
         while yy < y + h - 0.01:
             shapes.append(_line(x, yy, x + w, yy, seam, 0.03))
             yy += step
+    elif kind == "beton":
+        # Hallenboden: glatter Estrich mit Dehnungsfugen und leichten Flecken
+        xx = x + 2.0
+        while xx < x + w - 0.01:
+            shapes.append(_line(xx, y, xx, y + h, seam, 0.03))
+            xx += 2.0
+        yy = y + 2.0
+        while yy < y + h - 0.01:
+            shapes.append(_line(x, yy, x + w, yy, seam, 0.03))
+            yy += 2.0
+        spot = mix(color, "#FFFFFF", 0.05)
+        for index in range(int(w * h / 3)):
+            sx = x + ((index * 7.31) % w)
+            sy = y + ((index * 3.77) % h)
+            shapes.append(_oval(sx, sy, 0.16, 0.12, spot))
     else:  # teppichboden: dezentes Punktmuster
         dot = mix(color, "#FFFFFF", 0.06)
         yy = y + 0.6
@@ -839,7 +1438,8 @@ def _chair(cx, cy):
 DECO_TYPES = ("schreibtisch", "pflanze", "regal", "aktenregal", "sessel",
               "besprechungstisch", "kaffeemaschine", "rack", "usv", "klima",
               "werkbank", "tisch", "pc", "drucker", "kartons", "whiteboard",
-              "wasserspender", "feuerloescher", "teppich", "fussmatte", "bank")
+              "wasserspender", "feuerloescher", "teppich", "fussmatte", "bank",
+              "hochregal", "palette", "hubwagen", "markierung")
 
 
 def _inside(deco, area):
@@ -968,6 +1568,67 @@ def _deco(item):
         s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.04, 0.08))
         for index in range(1, 4):
             s.append(_line(x + w * index / 4.0, y, x + w * index / 4.0, y + h, WOOD_DARK, 0.03))
+    elif kind == "hochregal":
+        # Schwerlastregal von oben: blaue Stuetzen, orange Traversen, Kartons
+        s.append(_rect(x, y, w, h, "#2A2342"))
+        vertical = h >= w
+        length, depth = (h, w) if vertical else (w, h)
+        fields = max(1, int(round(length / 1.3)))
+        step = length / float(fields)
+        palette = (CARDBOARD, "#B7864F", CARDBOARD, "#60A5FA", CARDBOARD, "#D9B27C")
+        for index in range(fields):
+            for row in range(2 if depth >= 0.9 else 1):
+                size_a = step - 0.22
+                size_b = (depth - 0.22) / (2 if depth >= 0.9 else 1) - 0.06
+                a = 0.11 + index * step + 0.03
+                b = 0.11 + row * (size_b + 0.06)
+                color = palette[(index * 2 + row) % len(palette)]
+                bx, by, bw, bh = ((x + b, y + a, size_b, size_a - 0.06) if vertical else
+                                  (x + a, y + b, size_a - 0.06, size_b))
+                s.append(_rect(bx, by, bw, bh, color, mix(color, "#000000", 0.35), 0.03))
+                if vertical:
+                    s.append(_line(bx, by + bh / 2.0, bx + bw, by + bh / 2.0, "#E8D2A8", 0.05))
+                else:
+                    s.append(_line(bx + bw / 2.0, by, bx + bw / 2.0, by + bh, "#E8D2A8", 0.05))
+        beam = "#F97316"
+        if vertical:
+            s.append(_line(x + 0.05, y, x + 0.05, y + h, beam, 0.07))
+            s.append(_line(x + w - 0.05, y, x + w - 0.05, y + h, beam, 0.07))
+        else:
+            s.append(_line(x, y + 0.05, x + w, y + 0.05, beam, 0.07))
+            s.append(_line(x, y + h - 0.05, x + w, y + h - 0.05, beam, 0.07))
+        for index in range(fields + 1):
+            a = min(index * step, length - 0.14)
+            for b in (0, depth - 0.14):
+                px, py = (x + b, y + a) if vertical else (x + a, y + b)
+                s.append(_rect(px, py, 0.14, 0.14, "#3B82F6"))
+    elif kind == "palette":
+        # Europalette mit gestapelten Kartons und Stretchfolie
+        s.append(_rect(x, y, w, h, "#C8A06A", "#8A6A3E", 0.04))
+        for index in range(1, 4):
+            yy = y + h * index / 4.0
+            s.append(_line(x, yy, x + w, yy, "#8A6A3E", 0.04))
+        inset = 0.1
+        bw = (w - 2 * inset - 0.06) / 2.0
+        bh = (h - 2 * inset - 0.06) / 2.0
+        for col in range(2):
+            for row in range(2):
+                bx = x + inset + col * (bw + 0.06)
+                by = y + inset + row * (bh + 0.06)
+                s.append(_rect(bx, by, bw, bh, CARDBOARD, "#8E6A3E", 0.03))
+                s.append(_line(bx + bw / 2.0, by, bx + bw / 2.0, by + bh, "#E8D2A8", 0.05))
+        s.append(_rect(x + inset / 2.0, y + inset / 2.0, w - inset, h - inset, "",
+                       mix("#FFFFFF", CARDBOARD, 0.5), 0.03, 0.08))
+    elif kind == "markierung":
+        s.append(_rect(x, y, w, h, "#FBBF24"))
+    elif kind == "hubwagen":
+        # Handhubwagen: zwei Gabeln, gelber Aufbau, Deichsel
+        fork = h * 0.26
+        s.append(_rect(x + w * 0.3, y + h * 0.08, w * 0.7, fork, METAL, METAL_DARK, 0.03))
+        s.append(_rect(x + w * 0.3, y + h * 0.66, w * 0.7, fork, METAL, METAL_DARK, 0.03))
+        s.append(_rect(x + w * 0.14, y, w * 0.2, h, "#F59E0B", "#92400E", 0.04, 0.05))
+        s.append(_line(x + w * 0.14, y + h / 2.0, x, y + h / 2.0, METAL_DARK, 0.08))
+        s.append(_oval(x - 0.12, y + h / 2.0 - 0.14, 0.28, 0.28, "#1B1031"))
     return s
 
 
@@ -1111,6 +1772,17 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
     for x1, y1, x2, y2 in building.get("fenster", []):
         s.append(_line(x1, y1, x2, y2, WINDOW, 0.14))
         s.append(_line(x1, y1, x2, y2, mix(WINDOW, "#FFFFFF", 0.6), 0.04))
+    # Rolltor zur Laderampe: Metall mit gelb-schwarzer Warnmarkierung
+    for x1, y1, x2, y2 in building.get("rolltor", []):
+        s.append(_line(x1, y1, x2, y2, METAL_DARK, 0.34))
+        length = math.hypot(x2 - x1, y2 - y1)
+        parts = max(1, int(length / 0.3))
+        for index in range(parts):
+            if index % 2:
+                continue
+            a, b = index / float(parts), (index + 1) / float(parts)
+            s.append(_line(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a,
+                           x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, "#FBBF24", 0.14))
 
     # Tueren: Oeffnung in der Wand, Tuerblatt und Schwenkbogen zum Flur hin
     floor_hall = mix(C["card_alt"], "#FFFFFF", 0.05)
@@ -1118,16 +1790,28 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
         door = item.get("tuer")
         if not door:
             continue
-        top_row = item["y"] + item["h"] <= hall["y"]
-        wall_y = item["y"] + item["h"] if top_row else item["y"]
+        side = door_side(item, content)
         span = door["bis"] - door["von"]
+        hinge = door["von"]
+        arc_color = mix(WALL, C["card_alt"], 0.45)
+        if side in ("w", "o"):
+            # Seitentuer: schwenkt in den Flur (nach links bzw. rechts)
+            wall_x = item["x"] if side == "w" else item["x"] + item["w"]
+            swing = -span if side == "w" else span
+            s.append(_rect(wall_x - 0.16, door["von"], 0.32, span, floor_hall))
+            s.append(_line(wall_x, hinge, wall_x + swing * 0.9, hinge, WALL_OUTER, 0.07))
+            s.append({"k": "arc", "x": wall_x - span, "y": hinge - span, "w": span * 2,
+                      "h": span * 2, "start": 90 if side == "w" else 0, "extent": 90,
+                      "color": arc_color, "lw": 0.03})
+            continue
+        top_row = side == "s"
+        wall_y = item["y"] + item["h"] if top_row else item["y"]
         s.append(_rect(door["von"], wall_y - 0.16, span, 0.32, floor_hall))
         swing = span if top_row else -span
-        hinge = door["von"]
         s.append(_line(hinge, wall_y, hinge, wall_y + swing * 0.9, WALL_OUTER, 0.07))
         s.append({"k": "arc", "x": hinge - span, "y": wall_y - span, "w": span * 2,
                   "h": span * 2, "start": 0 if top_row else -90, "extent": 90,
-                  "color": mix(WALL, C["card_alt"], 0.45), "lw": 0.03})
+                  "color": arc_color, "lw": 0.03})
     entrance = hall["eingang"]
     s.append(_rect(-0.2, entrance["von"], 0.4, entrance["bis"] - entrance["von"], floor_hall))
     s.append(_line(0, entrance["von"], 0, entrance["bis"], mix(WINDOW, C["card"], 0.3), 0.06))
@@ -1181,14 +1865,13 @@ WALK_STEP = 0.25
 BODY_RADIUS = 0.3          # Abstand der Figur zu Waenden und Moebeln
 PERSON_RADIUS = 0.5        # Kollegen stehen im Weg
 REACH = 1.3                # so nah muss man an eine Person heran
-WALK_FREE = ("teppich", "fussmatte", "whiteboard")   # darueber laeuft man
+WALK_FREE = ("teppich", "fussmatte", "whiteboard", "markierung")   # darueber laeuft man
 _GRID_CACHE = {}
 
 
 def _segments(content):
     """Wandstuecke als Rechtecke (x1, y1, x2, y2) - Tueroeffnungen ausgespart."""
     building = content["gebaeude"]
-    hall = building["flur"]
     width, height = building["breite"], building["hoehe"]
     half = WALL_INNER / 2.0
     walls = []
@@ -1200,15 +1883,22 @@ def _segments(content):
         else:
             walls.append((x1, y - half, x2, y + half))
 
+    def vertical(x, y1, y2, gap=None):
+        if gap:
+            walls.append((x - half, y1, x + half, gap[0]))
+            walls.append((x - half, gap[1], x + half, y2))
+        else:
+            walls.append((x - half, y1, x + half, y2))
+
     for item in building["raeume"]:
         x, y, w, h = item["x"], item["y"], item["w"], item["h"]
         door = item.get("tuer")
         gap = (door["von"], door["bis"]) if door else None
-        top_row = y + h <= hall["y"]
-        horizontal(x, x + w, y, None if top_row else gap)
-        horizontal(x, x + w, y + h, gap if top_row else None)
-        walls.append((x - half, y, x + half, y + h))
-        walls.append((x + w - half, y, x + w + half, y + h))
+        side = door_side(item, content)
+        horizontal(x, x + w, y, gap if side == "n" else None)
+        horizontal(x, x + w, y + h, gap if side == "s" else None)
+        vertical(x, y, y + h, gap if side == "w" else None)
+        vertical(x + w, y, y + h, gap if side == "o" else None)
     # Aussenwand (der Eingang fuehrt nach draussen - dort ist Schluss)
     walls += [(0, -1, width, 0.15), (0, height - 0.15, width, height + 1),
               (-1, 0, 0.15, height), (width - 0.15, 0, width + 1, height)]
@@ -1366,7 +2056,22 @@ def person_near(x, y, content=None):
     return person_at(x, y, content, radius=REACH + 0.15)
 
 
-def office_message(position, person, quests, content=None):
+def warehouse_summary(state, content=None):
+    """Lagerstand in einem Satz (fuer den Lageristen im Buero)."""
+    content = content or GAME
+    store = state.warehouse()
+    parts = []
+    count = sum(amount for _part, amount in store["bestand"])
+    if count:
+        parts.append("Auf Lager: %d Teil%s." % (count, "" if count == 1 else "e"))
+    if store["unterwegs"]:
+        first = store["unterwegs"][0]
+        parts.append("Nächste Lieferung: %s an Arbeitstag %d." % (
+            part(first["teil"], content)["name"], first["ankunft"]))
+    return " ".join(parts) or "Das Lager ist leer, es ist nichts bestellt."
+
+
+def office_message(position, person, quests, content=None, state=None):
     """Text unter der Grossansicht: (Ueberschrift, Text) je nach Standort."""
     if person:
         first = person["name"].split()[0]
@@ -1376,6 +2081,9 @@ def office_message(position, person, quests, content=None):
             return ("%s hat einen Auftrag für dich" % first,
                     "„%s“ · Priorität %s%s" % (tasks[0]["titel"], tasks[0]["prioritaet"],
                                                more))
+        if person.get("lagerist") and state is not None:
+            return ("%s · %s" % (person["name"], person["rolle"]),
+                    "Gerade nichts für dich. " + warehouse_summary(state, content))
         return ("%s · %s" % (person["name"], person["rolle"]),
                 "Gerade nichts für dich. %s" % person.get("macke", ""))
     item = room_at(position[0], position[1], content)
@@ -1401,7 +2109,7 @@ def room_at(x, y, content=None):
     return None
 
 
-def result_text(task, payload):
+def result_text(task, payload, available=None, content=None):
     """Rueckmeldung nach dem Bearbeiten eines Tickets."""
     lines = []
     if payload["richtig"]:
@@ -1409,8 +2117,22 @@ def result_text(task, payload):
     elif task["typ"] == "zuordnung":
         lines.append("Leider nicht ganz: %d Zuordnung(en) stimmen nicht."
                      % payload["fehler"])
+    elif task["typ"] in ("bauteile", "bestellung"):
+        count = payload["fehler"]
+        lines.append("Leider nicht ganz: %s gefunden." % (
+            "1 Problem" if count == 1 else "%d Probleme" % count))
+        lines += ["• " + text for text in payload.get("probleme") or []]
+        hint = solution_text(task, available, content)
+        if hint:
+            lines.append(hint)
     else:
         lines.append("Leider falsch. Richtig wäre: %s" % task["antwort"])
+    if payload.get("lieferung"):
+        last = max(item["ankunft"] for item in payload["lieferung"])
+        lines.append("Bestellt für %d €. Die Ware kommt an Arbeitstag %d."
+                     % (payload.get("kosten", 0), last))
+    if payload.get("ersparnis_bonus"):
+        lines.append("Sparsam bestellt: +%d € Bonus." % payload["ersparnis_bonus"])
     money = payload["geld"]
     lines.append("%s%d € Spielgeld" % ("+" if money >= 0 else "", money))
     names = dict(AXES)

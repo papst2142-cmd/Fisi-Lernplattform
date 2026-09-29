@@ -367,6 +367,201 @@ class MatchBoard(ft.Column):
         self._paint()
 
 
+class SlotBoard(ft.Column):
+    """PC zusammensetzen zum Antippen: Steckplatz antippen, darunter klappen
+    die passenden Bauteile auf. Kein Ziehen noetig."""
+
+    def __init__(self, task, available, stock=None):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.available = list(available)
+        self.from_stock = {pid for pid in self.available if pid not in task.get("teile", [])
+                           and pid in (stock or {})}
+        self.answer = {}
+        self.current = task["slots"][0]
+        self.locked = False
+        self.success = False
+        self.slot_boxes = {}
+        for slot in task["slots"]:
+            box = ft.Container(border_radius=12, ink=True,
+                               padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+                               on_click=lambda _e, value=slot: self.pick_slot(value))
+            self.slot_boxes[slot] = box
+        rules = fg.build_rules_text(task)
+        self.controls = ([ui.text("Vorgaben: " + rules, size=13, color=C["cyan"],
+                                  weight=ft.FontWeight.BOLD)] if rules else []) + [
+            ui.label("Steckplatz antippen, dann das Bauteil"),
+            *self.slot_boxes.values()]
+        self._paint()
+
+    def pick_slot(self, slot):
+        if not self.locked:
+            self.current = None if slot == self.current else slot
+            self._paint()
+
+    def pick_part(self, part_id):
+        if self.locked or self.current is None:
+            return
+        self.answer[self.current] = part_id
+        missing = [slot for slot in self.task["slots"] if slot not in self.answer]
+        self.current = missing[0] if missing else None
+        self._paint()
+
+    def clear_slot(self, _event=None):
+        if not self.locked and self.current in self.answer:
+            del self.answer[self.current]
+            self._paint()
+
+    def complete(self):
+        return bool(self.answer)
+
+    def _part_row(self, part_id, chosen):
+        item = fg.part(part_id)
+        head = [ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD, expand=True)]
+        if part_id in self.from_stock:
+            head.append(ui.text("aus dem Lager", size=11, color=C["cyan"],
+                                weight=ft.FontWeight.BOLD))
+        return ft.Container(
+            content=ft.Column([
+                ft.Row(head, spacing=8),
+                ui.text("%s · %s" % (fg.part_specs(item), euro(item["preis"])), size=12,
+                        color=C["muted"]),
+            ], spacing=2, tight=True),
+            bgcolor=C["card_hi"] if chosen else C["card"],
+            border=ft.Border.all(2 if chosen else 1, C["purple"] if chosen else C["border"]),
+            border_radius=10, padding=ft.Padding.symmetric(horizontal=12, vertical=9),
+            ink=True, on_click=lambda _e, value=part_id: self.pick_part(value))
+
+    def _paint(self):
+        optional = self.task.get("optional") or []
+        for slot, box in self.slot_boxes.items():
+            part_id = self.answer.get(slot)
+            active = slot == self.current and not self.locked
+            name = fg.slot_name(slot) + (" (optional)" if slot in optional else "")
+            rows = [ui.text(name, size=15, weight=ft.FontWeight.BOLD),
+                    ui.text(("eingesetzt: " + fg.part(part_id)["name"]) if part_id else "leer",
+                            size=12, color=C["cyan"] if part_id else C["muted"])]
+            if active:
+                options = [pid for pid in self.available if fg.part(pid)["typ"] == slot]
+                if not options:
+                    rows.append(ui.text("Für diesen Steckplatz liegt nichts bereit.",
+                                        size=12, color=C["muted"]))
+                rows += [self._part_row(pid, pid == part_id) for pid in options]
+                if part_id:
+                    rows.append(ft.Row([ui.GradientButton(
+                        "Steckplatz leeren", self.clear_slot, kind="ghost", height=36)]))
+            box.content = ft.Column(rows, spacing=6, tight=True)
+            if self.locked:
+                color = C["green"] if self.success else C["red"]
+                box.bgcolor = mix(C["card"], color, 0.12)
+                box.border = ft.Border.all(2, color)
+            else:
+                box.bgcolor = C["card_hi"] if active else C["card_alt"]
+                box.border = ft.Border.all(2 if active else 1,
+                                           C["purple"] if active else C["border"])
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self.current = None
+        self._paint()
+
+
+class OrderBoard(ft.Column):
+    """Bestellung: Stueckzahl je Angebot mit Minus und Plus, darunter die
+    Summe und die laengste Lieferzeit."""
+
+    def __init__(self, task):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.cart = {}
+        self.locked = False
+        lines = fg.order_header(task)
+        need = ft.Container(
+            content=ft.Column([ui.label("Bedarf")] +
+                              [ui.text(line, size=14, weight=ft.FontWeight.BOLD)
+                               for line in lines[:-1]] +
+                              [ui.text(lines[-1], size=13, color=C["cyan"],
+                                       weight=ft.FontWeight.BOLD)],
+                              spacing=4, tight=True),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=14, vertical=10))
+        self.rows = {}
+        offers = []
+        for offer in task["angebote"]:
+            item = fg.part(offer["teil"])
+            count = ft.Text("0", size=16, weight=ft.FontWeight.BOLD, color=C["muted"],
+                            width=26, text_align=ft.TextAlign.CENTER)
+            days = offer["lieferzeit"]
+            row = ft.Container(
+                content=ft.Column([
+                    ft.Row([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD,
+                                    expand=True),
+                            ui.text(euro(offer["preis"]), size=14,
+                                    weight=ft.FontWeight.BOLD)], spacing=8),
+                    ui.text("%s · %s" % (fg.part_specs(item),
+                                         fg.dealer(offer["haendler"])["name"]),
+                            size=12, color=C["muted"]),
+                    ft.Row([
+                        ui.text("Lieferung %d Tag%s" % (days, "" if days == 1 else "e"),
+                                size=12, color=C["text_dim"], expand=True),
+                        self._step_button(ft.Icons.REMOVE, offer["id"], -1),
+                        count,
+                        self._step_button(ft.Icons.ADD, offer["id"], 1),
+                    ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                ], spacing=4, tight=True),
+                border_radius=12, padding=ft.Padding.symmetric(horizontal=14, vertical=10))
+            self.rows[offer["id"]] = (row, count)
+            offers.append(row)
+        self.summary = ui.text("", size=14, weight=ft.FontWeight.BOLD)
+        self.controls = [need, ui.label("Angebote"), *offers, self.summary]
+        self._paint()
+
+    def _step_button(self, icon, offer_id, step):
+        return ft.Container(
+            content=ft.Icon(icon, size=18, color=C["text"]), width=36, height=36,
+            border_radius=18, bgcolor=C["card"], ink=True,
+            border=ft.Border.all(1, C["border"]), alignment=ft.Alignment.CENTER,
+            on_click=lambda _e: self.change(offer_id, step))
+
+    def change(self, offer_id, step):
+        if self.locked:
+            return
+        value = max(0, min(9, self.cart.get(offer_id, 0) + step))
+        if value:
+            self.cart[offer_id] = value
+        else:
+            self.cart.pop(offer_id, None)
+        self._paint()
+
+    @property
+    def answer(self):
+        return dict(self.cart)
+
+    def complete(self):
+        return bool(self.cart)
+
+    def _paint(self, right=None):
+        for offer_id, (row, count) in self.rows.items():
+            value = self.cart.get(offer_id, 0)
+            count.value = str(value)
+            count.color = C["cyan"] if value else C["muted"]
+            border = C["purple"] if value else C["border"]
+            if right is not None and value:
+                border = C["green"] if right else C["red"]
+            row.bgcolor = C["card_hi"] if value else C["card_alt"]
+            row.border = ft.Border.all(2 if value else 1, border)
+        text, too_much, too_late = fg.cart_summary(self.task, self.cart)
+        self.summary.value = "Warenkorb: " + text
+        self.summary.color = C["yellow"] if too_much or too_late else C["text_soft"]
+
+    def reveal(self, right):
+        self.locked = True
+        self._paint(right)
+
+
 # ============================================================================
 #  SEITE "SPIEL"
 # ============================================================================
@@ -517,6 +712,9 @@ class GameScreen:
             item = fg.room(self.room)
             tickets = state.tickets_in_room(self.room)
             controls = [ui.text(item["text"], size=13, color=C["text_dim"])]
+            if any(person.get("lagerist") for person in fg.GAME["kollegen"]
+                   if person["raum"] == item["id"]):
+                controls.append(self._warehouse(state))
             for person in fg.GAME["kollegen"]:
                 if person["raum"] == item["id"]:
                     controls.append(ft.Column([
@@ -535,9 +733,12 @@ class GameScreen:
             subtitle = "%d von %d bearbeitet" % (len(state.handled), len(tickets))
 
         if not tickets:
+            waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if self.room else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
-                    "Heute stehen keine Tickets an.")
+                    "Heute stehen keine Tickets an. %s auf eine Lieferung."
+                    % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
+                    if waiting else "Heute stehen keine Tickets an.")
             controls.append(ui.text(text, size=14, color=C["text_soft"]))
         for task, status in tickets:
             controls.append(self._ticket_row(task, status))
@@ -547,6 +748,33 @@ class GameScreen:
             end.set_enabled(state.can_end_day())
             controls.append(ft.Row([end]))
         return ui.Card(title, controls, accent=accent, subtitle=subtitle)
+
+    def _warehouse(self, state):
+        """Lager: was unterwegs ist, was da ist und was ausgeliefert wurde."""
+        store = state.warehouse()
+        sections = [
+            ("Unterwegs", ["%d × %s · %s · kommt an Arbeitstag %d" % (
+                item["menge"], fg.part(item["teil"])["name"],
+                fg.dealer(item["haendler"])["name"], item["ankunft"])
+                for item in store["unterwegs"]]),
+            ("Auf Lager", ["%d × %s" % (count, fg.part(part_id)["name"])
+                           for part_id, count in store["bestand"]]),
+            ("Ausgeliefert", ["%d × %s an %s" % (
+                item["menge"], fg.part(item["teil"])["name"],
+                fg.colleague(item["empfaenger"])["name"]) for item in store["ausgeliefert"]]),
+        ]
+        rows = []
+        for title, lines in sections:
+            if lines:
+                rows.append(ui.label(title))
+                rows += [ui.text(line, size=13, color=C["text_soft"]) for line in lines]
+        if not rows:
+            rows = [ui.text("Das Lager ist leer. Bestellte Ware taucht hier auf, sobald sie "
+                            "unterwegs ist.", size=13, color=C["muted"])]
+        return ft.Container(content=ft.Column(rows, spacing=4, tight=True),
+                            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
+                            border_radius=12,
+                            padding=ft.Padding.symmetric(horizontal=14, vertical=10))
 
     def _ticket_row(self, task, status):
         person = fg.colleague(task["auftraggeber"])
@@ -622,11 +850,17 @@ class GameScreen:
                 bgcolor=mix(C["card"], C["yellow"], 0.12), border_radius=14, padding=14,
                 border=ft.Border.all(1, mix(C["yellow"], C["card"], 0.35))))
 
+        state = self.game.state
+        self.available = state.available_parts(task)
         if task["typ"] == "auswahl":
             self.options = ui.OptionList()
             options = list(task["optionen"])
             random.shuffle(options)
             self.options.set_options(options)
+        elif task["typ"] == "bauteile":
+            self.options = SlotBoard(task, self.available, state.stock())
+        elif task["typ"] == "bestellung":
+            self.options = OrderBoard(task)
         else:
             self.options = MatchBoard(task)
         self.help_box = ft.Column(spacing=10, tight=True)
@@ -671,6 +905,12 @@ class GameScreen:
             if not answer:
                 self.toast("Bitte wähle eine Antwort aus.", C["yellow"])
                 return
+        elif task["typ"] in ("bauteile", "bestellung"):
+            if not self.options.complete():
+                self.toast("Bitte setze zuerst Bauteile ein." if task["typ"] == "bauteile"
+                           else "Der Warenkorb ist noch leer.", C["yellow"])
+                return
+            answer = dict(self.options.answer)
         else:
             if not self.options.complete():
                 self.toast("Bitte ordne zuerst alle Begriffe zu.", C["yellow"])
@@ -684,6 +924,8 @@ class GameScreen:
         self.answered = True
         if task["typ"] == "auswahl":
             self.options.reveal(task["antwort"])
+        elif task["typ"] in ("bauteile", "bestellung"):
+            self.options.reveal(payload["richtig"])
         else:
             self.options.reveal()
         self.app.notify_progress()
@@ -691,7 +933,7 @@ class GameScreen:
         color = C["green"] if payload["richtig"] else C["red"]
         result = [ft.Container(
             content=ft.Column([
-                ui.text(fg.result_text(task, payload), size=14, color=color,
+                ui.text(fg.result_text(task, payload, self.available), size=14, color=color,
                         weight=ft.FontWeight.BOLD),
                 ui.text(task["erklaerung"], size=14, color=C["text_soft"]),
             ], spacing=8, tight=True),
@@ -771,7 +1013,7 @@ class GameScreen:
 
     def _office_text(self, position, person):
         quests = self.game.state.quests()
-        title, text = fg.office_message(position, person, quests)
+        title, text = fg.office_message(position, person, quests, state=self.game.state)
         controls = [ui.text(title, size=15, weight=ft.FontWeight.BOLD),
                     ui.text(text, size=13, color=C["text_soft"])]
         if person and quests.get(person["id"]):

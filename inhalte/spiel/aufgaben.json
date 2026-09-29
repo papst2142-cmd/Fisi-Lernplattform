@@ -319,5 +319,268 @@
       "3 Kopien, 2 Medientypen, 1 Kopie außer Haus. Viele ergänzen heute noch eine unveränderbare (offline oder immutable) Kopie gegen Ransomware."
     ],
     "suchbegriffe": ["3-2-1", "Backup"]
+  },
+  {
+    "id": "pc-servicecenter",
+    "typ": "bauteile",
+    "titel": "Arbeitsplatz-PC fürs Service-Center bauen",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 20},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 55, "reputation": 5},
+    "ab_tag": 4,
+    "ticket": [
+      "Mehmet hat die Teile für einen Kassen-PC des neuen Service-Centers auf die Werkbank gelegt. Leider aus zwei verschiedenen Kisten.",
+      "„Normaler Büro-PC: Bild über die Grafik im Prozessor, mindestens 16 GB RAM und 500 GB SSD. Und bitte nichts einbauen, was nicht passt. Die Schrauben habe ich schon sortiert.“"
+    ],
+    "frage": "Setze in jeden Steckplatz ein passendes Bauteil ein.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "netzteil", "gehaeuse"],
+    "teile": ["mb_a620_matx", "mb_b760_matx", "cpu_r5_7600", "cpu_i5_13400f", "ram_ddr5_2x8",
+              "ram_ddr4_1x8", "ssd_nvme_500", "nt_300", "geh_matx", "geh_itx"],
+    "vorgaben": {"ram_min": 16, "speicher_min": 500},
+    "hilfe": [
+      "Gehe vom Mainboard aus, es gibt alles vor:",
+      "1. Sockel: Die CPU muss zum Sockel des Mainboards passen (AM5 oder LGA1700).",
+      "2. Arbeitsspeicher: DDR4 und DDR5 sind nicht kompatibel. Der RAM-Typ muss zum Mainboard passen.",
+      "3. Bild: Intel-CPUs mit „F“ haben keine eingebaute Grafik. Ohne Grafikkarte bleibt der Bildschirm schwarz.",
+      "4. Gehäuse: Ein Micro-ATX-Mainboard passt in ein Micro-ATX- oder ATX-Gehäuse, aber nicht in ein Mini-ITX-Gehäuse.",
+      "5. Netzteil: (CPU-TDP + Grafikkarte + 60 W Grundlast) × 1,3 Reserve."
+    ],
+    "erklaerung": [
+      "Beim PC-Bau entscheidet das Mainboard: Sockel, RAM-Generation und Formfaktor müssen dazu passen. Für einen Büro-PC reicht die Grafik im Prozessor, dann muss die CPU aber auch eine haben. Das Intel-Board scheitert hier am 8-GB-Riegel und an der CPU ohne Grafik.",
+      "Richtig: A620M mit Ryzen 5 7600, DDR5 16 GB, NVMe-SSD und Mini-Tower. Der Ryzen braucht mit 65 W rund (65 + 60) × 1,3 ≈ 163 W, das 300-W-Netzteil reicht also."
+    ],
+    "suchbegriffe": ["Mainboard", "DDR5", "Formfaktor"]
+  },
+  {
+    "id": "ram-leitstelle",
+    "typ": "bestellung",
+    "titel": "Arbeitsspeicher für die Leitstelle bestellen",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 20},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 4,
+    "ticket": [
+      "Frank aus dem Einkauf hat eine Anfrage der Talbahn-Leitstelle auf dem Tisch: Zwei Leitstellen-PCs werden neu aufgebaut, es fehlt der Arbeitsspeicher.",
+      "„Die Mainboards sind B760M mit DDR4. Je PC mindestens 16 GB, also zwei Kits. Budget 130 €, und Mehmet braucht die Ware spätestens in zwei Arbeitstagen. Die Angebote habe ich dir rausgesucht, du entscheidest.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {"text": "RAM-Kit für einen Leitstellen-PC (mind. 16 GB)", "typ": "ram", "menge": 2,
+       "fuer": ["mb_b760_matx"], "min": {"groesse": 16}}
+    ],
+    "angebote": [
+      {"id": "a1", "teil": "ram_ddr5_2x8", "haendler": "kabelkoenig", "preis": 52, "lieferzeit": 1},
+      {"id": "a2", "teil": "ram_ddr4_2x8", "haendler": "kabelkoenig", "preis": 49, "lieferzeit": 4},
+      {"id": "a3", "teil": "ram_ddr4_2x8", "haendler": "bitlager", "preis": 55, "lieferzeit": 2},
+      {"id": "a4", "teil": "ram_ddr4_1x8", "haendler": "bitlager", "preis": 24, "lieferzeit": 1},
+      {"id": "a5", "teil": "ram_ddr4_4x8", "haendler": "serverhaus", "preis": 94, "lieferzeit": 2}
+    ],
+    "budget": 130,
+    "frist": 2,
+    "hilfe": [
+      "Prüfe jedes Angebot in drei Schritten:",
+      "1. Passt es technisch? Das Mainboard braucht DDR4, DDR5 passt nicht in DDR4-Steckplätze.",
+      "2. Reicht es? Gefordert sind mindestens 16 GB je PC.",
+      "3. Kommt es rechtzeitig und bleibt im Budget? Höchstens 2 Arbeitstage Lieferzeit, zusammen höchstens 130 €.",
+      "Das billigste Angebot ist nicht automatisch das beste."
+    ],
+    "erklaerung": [
+      "Beim Angebotsvergleich zählen neben dem Preis auch Lieferzeit und technische Eignung. Der DDR5-Riegel ist schnell und billig, passt aber nicht ins DDR4-Mainboard. Kabelkönig ist beim passenden Kit am günstigsten, liefert aber zu spät, und das 32-GB-Kit sprengt zu zweit das Budget.",
+      "Übrig bleiben zwei Kits DDR4 16 GB von Bitlager24 für 110 €."
+    ],
+    "suchbegriffe": ["DDR4", "Angebotsvergleich", "Lieferzeit"]
+  },
+  {
+    "id": "leitstelle-pc",
+    "typ": "bauteile",
+    "titel": "Leitstellen-PC zusammenbauen",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 25},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 60, "reputation": 5},
+    "ab_tag": 4,
+    "nach": "ram-leitstelle",
+    "aus_lager": ["ram"],
+    "ticket": [
+      "Die Lieferung von Bitlager24 ist da! Rainer hat den Arbeitsspeicher aus dem Lager in die Werkstatt gebracht.",
+      "Mehmet: „Der erste Leitstellen-PC. Er läuft rund um die Uhr, Bild über die Grafik im Prozessor, mindestens 16 GB RAM und 1 TB SSD für die Aufzeichnungen. Den zweiten baue ich morgen selbst.“"
+    ],
+    "frage": "Baue den PC mit dem bestellten Arbeitsspeicher zusammen.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "netzteil", "gehaeuse"],
+    "teile": ["mb_b760_matx", "mb_b650_atx", "cpu_i5_13400", "cpu_r7_7700x", "ssd_nvme_1000",
+              "ssd_sata_500", "nt_450", "geh_matx"],
+    "vorgaben": {"ram_min": 16, "speicher_min": 1000},
+    "hilfe": [
+      "Der Arbeitsspeicher ist schon da und gibt das Mainboard vor: Es muss DDR4 können.",
+      "Danach: CPU mit gleichem Sockel und eingebauter Grafik, SSD mit mindestens 1 TB, Gehäuse passend zum Formfaktor des Mainboards."
+    ],
+    "erklaerung": [
+      "Weil der RAM schon gekauft ist, bestimmt er das Mainboard: Nur das B760M kann DDR4. Dazu passt der Core i5-13400 (Sockel LGA1700, mit Grafik). Das ATX-Mainboard würde außerdem nicht in den Mini-Tower passen.",
+      "Netzteil: (65 + 60) × 1,3 ≈ 163 W, 450 W sind also reichlich."
+    ],
+    "suchbegriffe": ["DDR4", "Mainboard", "NVMe"]
+  },
+  {
+    "id": "netzteile-lager",
+    "typ": "bestellung",
+    "titel": "Netzteile nachbestellen",
+    "auftraggeber": "rainer",
+    "raum": "lager",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 25},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 5,
+    "ticket": [
+      "Rainer tippt auf seine handgeschriebene Inventurliste: „Netzteile: null. Meldebestand ist zwei. Da müssen wir nachbestellen.“",
+      "„Die nächsten Rechner sind Grafik-Arbeitsplätze für die Fahrplanung, also mindestens 650 Watt. Zwei Stück, Budget 180 €, und Mehmet will in zwei Tagen anfangen.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {"text": "Netzteil mit mindestens 650 W", "typ": "netzteil", "menge": 2,
+       "min": {"watt": 650}}
+    ],
+    "angebote": [
+      {"id": "n1", "teil": "nt_450", "haendler": "kabelkoenig", "preis": 49, "lieferzeit": 1},
+      {"id": "n2", "teil": "nt_650", "haendler": "kabelkoenig", "preis": 72, "lieferzeit": 3},
+      {"id": "n3", "teil": "nt_650", "haendler": "bitlager", "preis": 84, "lieferzeit": 1},
+      {"id": "n4", "teil": "nt_850", "haendler": "serverhaus", "preis": 119, "lieferzeit": 1}
+    ],
+    "budget": 180,
+    "frist": 2,
+    "hilfe": [
+      "Der Meldebestand ist die Menge, bei der nachbestellt wird. Hier werden zwei Netzteile gebraucht.",
+      "Prüfe: mindestens 650 W, höchstens 2 Arbeitstage Lieferzeit, zusammen höchstens 180 €. Mehr Leistung als nötig ist erlaubt, solange das Budget reicht."
+    ],
+    "erklaerung": [
+      "Das 450-W-Netzteil ist zu schwach, das günstige 650-W-Angebot von Kabelkönig kommt erst nach drei Tagen, und zwei 850-W-Netzteile sprengen das Budget. Richtig sind zwei 650-W-Netzteile von Bitlager24 für 168 €.",
+      "Beim Meldebestand wird rechtzeitig nachbestellt, damit der Bestand während der Lieferzeit nicht ausgeht."
+    ],
+    "suchbegriffe": ["Meldebestand", "Netzteil", "Lieferzeit"]
+  },
+  {
+    "id": "grafik-arbeitsplatz",
+    "typ": "bauteile",
+    "titel": "Grafik-Arbeitsplatz für die Fahrplanung",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 30},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 5,
+    "nach": "netzteile-lager",
+    "aus_lager": ["netzteil"],
+    "ticket": [
+      "Die Fahrplanung der Talbahn zeichnet ihre Streckenpläne in 3D und braucht dafür einen kräftigen Arbeitsplatz.",
+      "Mehmet: „Grafikkarte ist Pflicht, dazu 32 GB RAM und 1 TB SSD. Die neuen Netzteile sind da, eins davon ist für diesen PC. Rechne beim Netzteil lieber nach, die RTX 4070 zieht ordentlich Strom.“"
+    ],
+    "frage": "Baue den Grafik-Arbeitsplatz zusammen.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "gpu", "netzteil", "gehaeuse"],
+    "teile": ["mb_b650_atx", "mb_b760_matx", "cpu_r7_7700x", "cpu_i5_13400f", "ram_ddr5_2x16",
+              "ram_ddr4_4x8", "ssd_nvme_1000", "gpu_4070", "nt_450", "geh_atx", "geh_itx"],
+    "vorgaben": {"ram_min": 32, "speicher_min": 1000, "grafikkarte": true},
+    "hilfe": [
+      "Netzteil-Faustformel: (CPU-TDP + Grafikkarte + 60 W Grundlast) × 1,3 Reserve.",
+      "Beispiel Ryzen 7 7700X (105 W) mit RTX 4070 (200 W): (105 + 200 + 60) × 1,3 ≈ 475 W.",
+      "Außerdem: Keins der beiden Mainboards passt ins Mini-ITX-Gehäuse, und 32 GB RAM sind Pflicht."
+    ],
+    "erklaerung": [
+      "Mit Grafikkarte wird das Netzteil zum Knackpunkt: Ryzen 7 7700X und RTX 4070 brauchen rund 475 W. Das 450-W-Netzteil reicht dafür nicht, das neue 650-W-Netzteil schon.",
+      "Weil eine Grafikkarte steckt, darf die CPU auch ohne eigene Grafik sein. Mit dem Core i5-13400F (65 W) reichen sogar (65 + 200 + 60) × 1,3 ≈ 423 W. Das Mini-ITX-Gehäuse ist für beide Mainboards zu klein."
+    ],
+    "suchbegriffe": ["Netzteil", "Grafikkarte", "TDP"]
+  },
+  {
+    "id": "notebook-chefin",
+    "typ": "bestellung",
+    "titel": "Notebook für die Chefin, sofort!",
+    "auftraggeber": "sabine",
+    "raum": "chefbuero",
+    "prioritaet": "kritisch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 20},
+    "achsen": ["kundenzufriedenheit", "zuverlaessigkeit"],
+    "belohnung": {"geld": 50, "reputation": 5},
+    "ab_tag": 5,
+    "empfaenger": "sabine",
+    "ticket": [
+      "Sabine Kranich steht mit einer Keksdose in der Tür: „Mein altes Notebook ist heute Morgen einfach ausgegangen. Übermorgen präsentiere ich bei der Talbahn den Jahresbericht.“",
+      "„Ich brauche also sofort ein neues, spätestens morgen. 16 GB RAM, sonst ruckelt meine Präsentation. Mehr als 1.000 € gibt Frank nicht frei.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {"text": "Notebook mit mindestens 16 GB RAM", "typ": "notebook", "menge": 1,
+       "min": {"groesse": 16}}
+    ],
+    "angebote": [
+      {"id": "b1", "teil": "nb_14_16", "haendler": "kabelkoenig", "preis": 849, "lieferzeit": 3},
+      {"id": "b2", "teil": "nb_14_16", "haendler": "bitlager", "preis": 929, "lieferzeit": 1},
+      {"id": "b3", "teil": "nb_14_8", "haendler": "bitlager", "preis": 649, "lieferzeit": 1},
+      {"id": "b4", "teil": "nb_15_32", "haendler": "serverhaus", "preis": 1199, "lieferzeit": 1}
+    ],
+    "budget": 1000,
+    "frist": 1,
+    "hilfe": [
+      "Hier entscheidet die Frist: Die Ware muss in 1 Arbeitstag da sein.",
+      "Prüfe dann, ob mindestens 16 GB RAM drin sind und ob das Budget von 1.000 € reicht."
+    ],
+    "erklaerung": [
+      "Das günstigste passende Notebook kommt erst nach drei Tagen, zu spät für die Präsentation. Das 8-GB-Modell ist zu schwach, das 15-Zoll-Modell zu teuer.",
+      "Unter Zeitdruck ist das schnell lieferbare Angebot für 929 € die richtige Wahl. Auch die Lieferzeit gehört zum Angebotsvergleich."
+    ],
+    "suchbegriffe": ["Angebotsvergleich", "Lieferzeit", "Notebook"]
+  },
+  {
+    "id": "ssd-automaten",
+    "typ": "bestellung",
+    "titel": "Ersatz-SSDs für die Fahrkartenautomaten",
+    "auftraggeber": "rainer",
+    "raum": "lager",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 25},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 45, "reputation": 5},
+    "ab_tag": 6,
+    "ticket": [
+      "Petra Lindner hat angerufen: In drei Fahrkartenautomaten sind die SSDs ausgefallen. Rainer soll Ersatz ins Lager legen.",
+      "Rainer: „In den Automaten steckt das Industrie-Mainboard H610. Das hat kein M.2, nur SATA. Drei Stück, je mindestens 500 GB, Budget 140 €, Frist zwei Tage. Und such bitte das Günstigste raus, Frank schaut da genau hin.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {"text": "SSD für einen Fahrkartenautomaten (mind. 500 GB)", "typ": "ssd", "menge": 3,
+       "fuer": ["mb_h610_itx"], "min": {"groesse": 500}}
+    ],
+    "angebote": [
+      {"id": "s1", "teil": "ssd_nvme_500", "haendler": "kabelkoenig", "preis": 39, "lieferzeit": 1},
+      {"id": "s2", "teil": "ssd_sata_500", "haendler": "kabelkoenig", "preis": 42, "lieferzeit": 2},
+      {"id": "s3", "teil": "ssd_sata_500", "haendler": "serverhaus", "preis": 47, "lieferzeit": 1},
+      {"id": "s4", "teil": "ssd_sata_1000", "haendler": "bitlager", "preis": 65, "lieferzeit": 1}
+    ],
+    "budget": 140,
+    "frist": 2,
+    "hilfe": [
+      "Das Mainboard hat keinen M.2-Steckplatz, also kommen nur SATA-SSDs in Frage.",
+      "Danach: mindestens 500 GB, höchstens 2 Arbeitstage, höchstens 140 € für drei Stück. Es gibt mehrere Lösungen. Je günstiger, desto größer der Spar-Bonus."
+    ],
+    "erklaerung": [
+      "NVMe-SSDs brauchen einen M.2-Steckplatz, den das Industrie-Mainboard nicht hat. Drei SATA-SSDs mit 500 GB von Kabelkönig kosten 126 € und kommen in zwei Tagen. Das ist die günstigste passende Lösung.",
+      "Die 1-TB-SSD passt technisch, sprengt aber zusammen mit den anderen das Budget."
+    ],
+    "suchbegriffe": ["SATA", "NVMe", "M.2"]
   }
 ]

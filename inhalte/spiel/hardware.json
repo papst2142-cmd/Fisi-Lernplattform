@@ -1,0 +1,89 @@
+{
+  "_hinweis": [
+    "Bauteile fuer die Aufgabentypen 'bauteile' (PC zusammensetzen) und 'bestellung'.",
+    "Preise in Euro (Spielgeld). Die Pruefregeln stehen unter 'regeln'."
+  ],
+  "regeln": {
+    "grundlast_watt": 60,
+    "netzteil_reserve": 1.3
+  },
+  "typen": {
+    "mainboard": "Mainboard",
+    "cpu": "CPU",
+    "ram": "Arbeitsspeicher",
+    "ssd": "SSD",
+    "gpu": "Grafikkarte",
+    "netzteil": "Netzteil",
+    "gehaeuse": "Gehäuse",
+    "notebook": "Notebook"
+  },
+  "formfaktoren": {"ATX": "ATX", "mATX": "Micro-ATX", "ITX": "Mini-ITX"},
+  "haendler": [
+    {"id": "kabelkoenig", "name": "Kabelkönig Versand"},
+    {"id": "bitlager", "name": "Bitlager24"},
+    {"id": "serverhaus", "name": "Serverhaus Nord"}
+  ],
+  "teile": [
+    {"id": "mb_b650_atx", "typ": "mainboard", "name": "Mainboard B650 (ATX)", "preis": 159,
+     "sockel": "AM5", "ram_typ": "DDR5", "formfaktor": "ATX", "ram_slots": 4, "m2": 2},
+    {"id": "mb_a620_matx", "typ": "mainboard", "name": "Mainboard A620M (Micro-ATX)", "preis": 99,
+     "sockel": "AM5", "ram_typ": "DDR5", "formfaktor": "mATX", "ram_slots": 2, "m2": 1},
+    {"id": "mb_b760_matx", "typ": "mainboard", "name": "Mainboard B760M DDR4 (Micro-ATX)", "preis": 119,
+     "sockel": "LGA1700", "ram_typ": "DDR4", "formfaktor": "mATX", "ram_slots": 4, "m2": 1},
+    {"id": "mb_h610_itx", "typ": "mainboard", "name": "Industrie-Mainboard H610 (Mini-ITX, nur SATA)", "preis": 139,
+     "sockel": "LGA1700", "ram_typ": "DDR4", "formfaktor": "ITX", "ram_slots": 2, "m2": 0},
+
+    {"id": "cpu_r5_7600", "typ": "cpu", "name": "AMD Ryzen 5 7600", "preis": 199,
+     "sockel": "AM5", "tdp": 65, "igpu": true},
+    {"id": "cpu_r7_7700x", "typ": "cpu", "name": "AMD Ryzen 7 7700X", "preis": 299,
+     "sockel": "AM5", "tdp": 105, "igpu": true},
+    {"id": "cpu_i5_13400", "typ": "cpu", "name": "Intel Core i5-13400", "preis": 209,
+     "sockel": "LGA1700", "tdp": 65, "igpu": true},
+    {"id": "cpu_i5_13400f", "typ": "cpu", "name": "Intel Core i5-13400F (ohne Grafik)", "preis": 179,
+     "sockel": "LGA1700", "tdp": 65, "igpu": false},
+
+    {"id": "ram_ddr5_2x8", "typ": "ram", "name": "DDR5 16 GB (2 × 8 GB)", "preis": 59,
+     "ram_typ": "DDR5", "groesse": 16, "module": 2},
+    {"id": "ram_ddr5_2x16", "typ": "ram", "name": "DDR5 32 GB (2 × 16 GB)", "preis": 99,
+     "ram_typ": "DDR5", "groesse": 32, "module": 2},
+    {"id": "ram_ddr4_1x8", "typ": "ram", "name": "DDR4 8 GB (1 × 8 GB)", "preis": 24,
+     "ram_typ": "DDR4", "groesse": 8, "module": 1},
+    {"id": "ram_ddr4_2x8", "typ": "ram", "name": "DDR4 16 GB (2 × 8 GB)", "preis": 45,
+     "ram_typ": "DDR4", "groesse": 16, "module": 2},
+    {"id": "ram_ddr4_4x8", "typ": "ram", "name": "DDR4 32 GB (4 × 8 GB)", "preis": 89,
+     "ram_typ": "DDR4", "groesse": 32, "module": 4},
+
+    {"id": "ssd_nvme_500", "typ": "ssd", "name": "NVMe-SSD 500 GB (M.2)", "preis": 45,
+     "anschluss": "m2", "groesse": 500},
+    {"id": "ssd_nvme_1000", "typ": "ssd", "name": "NVMe-SSD 1 TB (M.2)", "preis": 69,
+     "anschluss": "m2", "groesse": 1000},
+    {"id": "ssd_sata_500", "typ": "ssd", "name": "SATA-SSD 500 GB (2,5 Zoll)", "preis": 42,
+     "anschluss": "sata", "groesse": 500},
+    {"id": "ssd_sata_1000", "typ": "ssd", "name": "SATA-SSD 1 TB (2,5 Zoll)", "preis": 65,
+     "anschluss": "sata", "groesse": 1000},
+
+    {"id": "gpu_4060", "typ": "gpu", "name": "Grafikkarte RTX 4060 (115 W)", "preis": 299,
+     "watt": 115},
+    {"id": "gpu_4070", "typ": "gpu", "name": "Grafikkarte RTX 4070 (200 W)", "preis": 579,
+     "watt": 200},
+
+    {"id": "nt_300", "typ": "netzteil", "name": "Netzteil 300 W", "preis": 39, "watt": 300},
+    {"id": "nt_450", "typ": "netzteil", "name": "Netzteil 450 W", "preis": 55, "watt": 450},
+    {"id": "nt_650", "typ": "netzteil", "name": "Netzteil 650 W", "preis": 79, "watt": 650},
+    {"id": "nt_850", "typ": "netzteil", "name": "Netzteil 850 W", "preis": 119, "watt": 850},
+
+    {"id": "geh_atx", "typ": "gehaeuse", "name": "Midi-Tower (ATX, Micro-ATX, Mini-ITX)", "preis": 69,
+     "formfaktoren": ["ATX", "mATX", "ITX"]},
+    {"id": "geh_matx", "typ": "gehaeuse", "name": "Mini-Tower (Micro-ATX, Mini-ITX)", "preis": 49,
+     "formfaktoren": ["mATX", "ITX"]},
+    {"id": "geh_itx", "typ": "gehaeuse", "name": "Mini-Gehäuse (nur Mini-ITX)", "preis": 59,
+     "formfaktoren": ["ITX"]},
+
+    {"id": "nb_14_8", "typ": "notebook", "name": "Notebook 14 Zoll, 8 GB RAM", "preis": 649,
+     "groesse": 8},
+    {"id": "nb_14_16", "typ": "notebook", "name": "Business-Notebook 14 Zoll, 16 GB RAM", "preis": 849,
+     "groesse": 16},
+    {"id": "nb_15_32", "typ": "notebook", "name": "Business-Notebook 15,6 Zoll, 32 GB RAM", "preis": 1199,
+     "groesse": 32}
+  ]
+}

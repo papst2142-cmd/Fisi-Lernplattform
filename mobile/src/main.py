@@ -1683,7 +1683,21 @@ def selftest():
         for task in fisi_game.GAME["aufgaben"]:
             game.open_ticket(task["id"])
             game._show_help()
+            # PC zusammenbauen und Warenkorb einmal bedienen
+            solution = fisi_game.find_solution(task, game.available)
+            if task["typ"] == "bauteile" and solution:
+                for slot in task["slots"]:
+                    game.options.pick_slot(slot)
+                    if solution.get(slot):
+                        game.options.pick_part(solution[slot])
+                game.options.reveal(True)
+            elif task["typ"] == "bestellung":
+                for offer_id, count in solution.items():
+                    for _step in range(count):
+                        game.options.change(offer_id, 1)
+                game.options.reveal(True)
         game._select_room("serverraum")
+        game._select_room("lager")
         # Bueroansicht (ohne reload, der Test-Spielstand steht nur im Speicher)
         game.office = ft.Column()
         game._fill_office()

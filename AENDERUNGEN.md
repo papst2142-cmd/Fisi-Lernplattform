@@ -4,6 +4,33 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.27
+
+- **Neu im Spiel: PC zusammenbauen.** In der IT-Werkstatt liegen Mainboard,
+  CPU, Arbeitsspeicher, SSD, Netzteil, Gehäuse und manchmal eine
+  Grafikkarte bereit – darunter auch Teile, die nicht passen. Steckplatz
+  antippen, Bauteil antippen, fertig. Beim Einreichen prüft das Spiel Sockel,
+  DDR4/DDR5, Anzahl der RAM-Module, Formfaktor, M.2, Netzteil-Leistung und
+  Bildausgabe und erklärt jedes Problem in einem Satz. Jede passende
+  Zusammenstellung zählt.
+- **Neu im Spiel: Bestellungen.** Angebote von drei Händlern mit Preis und
+  Lieferzeit, dazu Bedarf, Budget und Frist. Du stellst den Warenkorb
+  zusammen, Summe und Lieferzeit rechnet das Spiel mit. Wer sparsam richtig
+  bestellt, bekommt einen Bonus.
+- **Lieferzeit und Lager:** Bestellte Ware kommt erst nach ein paar
+  Arbeitstagen an. Aufträge, die die Ware brauchen (zum Beispiel der
+  Leitstellen-PC mit dem bestellten Arbeitsspeicher), erscheinen erst dann.
+  Wartest du nur noch auf Lieferungen, kannst du den Arbeitstag trotzdem
+  beenden.
+- **Neuer Lagerflügel mit neuem Kollegen:** Das Bürogebäude hat rechts ein
+  Lager mit Hochregalen, Paletten, Hubwagen und Rolltor zur Laderampe. Dort
+  arbeitet Rainer Voss, Lagerist. Ein Tipp auf das Lager zeigt, was
+  unterwegs ist, was auf Lager liegt und was ausgeliefert wurde.
+- **7 neue Aufträge** rund um PC-Bau und Beschaffung: Service-Center-PC,
+  Arbeitsspeicher und PC für die Leitstelle, Netzteile nach Meldebestand,
+  Grafik-Arbeitsplatz für die Fahrplanung, Notebook für die Chefin und
+  Ersatz-SSDs für die Fahrkartenautomaten.
+
 ## 0.26
 
 - **Neu: das Lernspiel.** Deine Spielfigur arbeitet bei der Bitweiche

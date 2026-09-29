@@ -422,6 +422,230 @@ class MatchBoard(ctk.CTkFrame):
         self._paint()
 
 
+def _pick_row(parent, title, detail, extra=None, extra_color=None):
+    """Anklickbare Zeile (Rahmen mit Titel und Detailzeile) fuer Steckplaetze
+    und Bauteile. Rueckgabe: (Rahmen, Titel, Detail, alle Widgets)."""
+    row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                       border_color=C["border"], cursor="hand2")
+    head = _frame(row)
+    head.pack(fill="x", padx=14, pady=(9, 0))
+    title_label = make_label(head, title, font=F["body_bold"], fg=C["text"], anchor="w",
+                             cursor="hand2")
+    title_label.pack(side="left")
+    widgets = [row, head, title_label]
+    if extra:
+        badge = make_label(head, extra, font=F["small_bold"], fg=extra_color or C["cyan"],
+                           cursor="hand2")
+        badge.pack(side="right")
+        widgets.append(badge)
+    detail_label = make_label(row, detail, font=F["small"], fg=C["muted"], anchor="w",
+                              cursor="hand2")
+    detail_label.pack(fill="x", padx=14, pady=(2, 9))
+    widgets.append(detail_label)
+    return row, title_label, detail_label, widgets
+
+
+class SlotBoard(ctk.CTkFrame):
+    """PC zusammensetzen: links einen Steckplatz waehlen, rechts ein Bauteil
+    einsetzen. Nur Klicks, kein Ziehen (wie im Konzept)."""
+
+    def __init__(self, parent, task, available, stock=None):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.available = list(available)
+        self.from_stock = {pid for pid in self.available if pid not in task.get("teile", [])
+                           and pid in (stock or {})}
+        self.answer = {}
+        self.current = task["slots"][0]
+        self.locked = False
+        self.columnconfigure(0, weight=2, uniform="slot")
+        self.columnconfigure(1, weight=3, uniform="slot")
+
+        rules = fg.build_rules_text(task)
+        if rules:
+            make_label(self, "Vorgaben: " + rules, font=F["small_bold"], fg=C["cyan"],
+                       anchor="w").grid(row=0, column=0, columnspan=2, sticky="w",
+                                        pady=(0, 10))
+        make_label(self, "1. STECKPLATZ WÄHLEN", font=F["label"], fg=C["muted"]).grid(
+            row=1, column=0, sticky="w", pady=(0, 6))
+        make_label(self, "2. BAUTEIL EINSETZEN", font=F["label"], fg=C["muted"]).grid(
+            row=1, column=1, sticky="w", pady=(0, 6), padx=(12, 0))
+        left = _frame(self)
+        left.grid(row=2, column=0, sticky="new")
+        self.slot_rows = {}
+        for slot in task["slots"]:
+            optional = slot in (task.get("optional") or [])
+            row, _title, detail, widgets = _pick_row(
+                left, fg.slot_name(slot), "leer", "optional" if optional else None,
+                C["muted"])
+            row.pack(fill="x", pady=3)
+            for widget in widgets:
+                widget.bind("<Button-1>", lambda _e, value=slot: self.pick_slot(value))
+            self.slot_rows[slot] = (row, detail)
+        self.parts_box = _frame(self)
+        self.parts_box.grid(row=2, column=1, sticky="new", padx=(12, 0))
+        self._paint()
+
+    def candidates(self, slot):
+        return [pid for pid in self.available if fg.part(pid)["typ"] == slot]
+
+    def pick_slot(self, slot):
+        if not self.locked:
+            self.current = slot
+            self._paint()
+
+    def pick_part(self, part_id):
+        if self.locked or self.current is None:
+            return
+        self.answer[self.current] = part_id
+        missing = [slot for slot in self.task["slots"] if slot not in self.answer]
+        self.current = missing[0] if missing else self.current
+        self._paint()
+
+    def clear_slot(self):
+        if not self.locked and self.current in self.answer:
+            del self.answer[self.current]
+            self._paint()
+
+    def complete(self):
+        return bool(self.answer)
+
+    def _paint(self):
+        for slot, (row, detail) in self.slot_rows.items():
+            part_id = self.answer.get(slot)
+            active = slot == self.current and not self.locked
+            border = C["purple"] if active else C["border"]
+            if self.locked:
+                border = C["green"] if self.success else C["red"]
+            row.configure(border_color=border, border_width=2 if active or self.locked else 1,
+                          fg_color=C["card_hi"] if active else C["card_alt"])
+            detail.configure(text=("→ " + fg.part(part_id)["name"]) if part_id else "leer",
+                             text_color=C["cyan"] if part_id else C["muted"])
+        for child in self.parts_box.winfo_children():
+            child.destroy()
+        if self.locked or self.current is None:
+            return
+        chosen = self.answer.get(self.current)
+        options = self.candidates(self.current)
+        if not options:
+            make_label(self.parts_box, "Für diesen Steckplatz liegt nichts bereit.",
+                       font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w")
+        for part_id in options:
+            item = fg.part(part_id)
+            extra = "aus dem Lager" if part_id in self.from_stock else None
+            row, _title, _detail, widgets = _pick_row(
+                self.parts_box, item["name"], "%s · %s" % (fg.part_specs(item),
+                                                          _euro(item["preis"])), extra)
+            row.pack(fill="x", pady=3)
+            if part_id == chosen:
+                row.configure(border_color=C["purple"], border_width=2, fg_color=C["card_hi"])
+            for widget in widgets:
+                widget.bind("<Button-1>", lambda _e, value=part_id: self.pick_part(value))
+        if chosen:
+            NeoButton(self.parts_box, "Steckplatz leeren", self.clear_slot, kind="ghost",
+                      height=30, font=F["small_bold"]).pack(anchor="w", pady=(6, 0))
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self.current = None
+        self._paint()
+
+
+class OrderBoard(ctk.CTkFrame):
+    """Bestellung: Stueckzahlen je Angebot in einen Warenkorb legen. Preis
+    und Lieferzeit rechnet die Anzeige mit."""
+
+    def __init__(self, parent, task):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.cart = {}
+        self.locked = False
+        need = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                            border_color=C["border"])
+        need.pack(fill="x")
+        make_label(need, "BEDARF", font=F["label"], fg=C["muted"]).pack(anchor="w", padx=14,
+                                                                        pady=(10, 2))
+        lines = fg.order_header(task)
+        for line in lines[:-1]:
+            make_label(need, line, font=F["body_bold"], fg=C["text"], anchor="w").pack(
+                anchor="w", padx=14)
+        make_label(need, lines[-1], font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+            anchor="w", padx=14, pady=(4, 10))
+
+        make_label(self, "ANGEBOTE", font=F["label"], fg=C["muted"]).pack(anchor="w",
+                                                                          pady=(14, 6))
+        self.counts = {}
+        self.minus = {}
+        for offer in task["angebote"]:
+            item = fg.part(offer["teil"])
+            row = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                               border_color=C["border"])
+            row.pack(fill="x", pady=3)
+            stepper = _frame(row)
+            stepper.pack(side="right", padx=(8, 12), pady=8)
+            minus = NeoButton(stepper, "−", lambda o=offer["id"]: self.change(o, -1),
+                              kind="ghost", width=34, height=32)
+            minus.pack(side="left")
+            count = make_label(stepper, "0", font=F["h3"], fg=C["text"], width=34)
+            count.pack(side="left", padx=4)
+            NeoButton(stepper, "+", lambda o=offer["id"]: self.change(o, 1), kind="ghost",
+                      width=34, height=32).pack(side="left")
+            days = offer["lieferzeit"]
+            price = _frame(row)
+            price.pack(side="right", padx=8)
+            make_label(price, _euro(offer["preis"]), font=F["body_bold"], fg=C["text"],
+                       anchor="e").pack(anchor="e")
+            make_label(price, "Lieferung %d Tag%s" % (days, "" if days == 1 else "e"),
+                       font=F["small"], fg=C["muted"], anchor="e").pack(anchor="e")
+            info = _frame(row)
+            info.pack(side="left", fill="x", expand=True, padx=14, pady=9)
+            make_label(info, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(info, "%s · %s" % (fg.part_specs(item), fg.dealer(offer["haendler"])["name"]),
+                       font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w")
+            self.counts[offer["id"]] = (row, count)
+            self.minus[offer["id"]] = minus
+        self.summary = make_label(self, "", font=F["body_bold"], fg=C["text_soft"], anchor="w")
+        self.summary.pack(anchor="w", pady=(10, 0))
+        self._paint()
+
+    def change(self, offer_id, step):
+        if self.locked:
+            return
+        value = max(0, min(9, self.cart.get(offer_id, 0) + step))
+        if value:
+            self.cart[offer_id] = value
+        else:
+            self.cart.pop(offer_id, None)
+        self._paint()
+
+    @property
+    def answer(self):
+        return dict(self.cart)
+
+    def complete(self):
+        return bool(self.cart)
+
+    def _paint(self):
+        for offer_id, (row, count) in self.counts.items():
+            value = self.cart.get(offer_id, 0)
+            count.configure(text=str(value), text_color=C["cyan"] if value else C["muted"])
+            row.configure(border_color=C["purple"] if value else C["border"],
+                          border_width=2 if value else 1,
+                          fg_color=C["card_hi"] if value else C["card_alt"])
+            self.minus[offer_id].set_enabled(bool(value) and not self.locked)
+        text, too_much, too_late = fg.cart_summary(self.task, self.cart)
+        self.summary.configure(text="Warenkorb: " + text,
+                               text_color=C["yellow"] if too_much or too_late else C["text_soft"])
+
+    def reveal(self, right):
+        self.locked = True
+        for offer_id, (row, _count) in self.counts.items():
+            if self.cart.get(offer_id):
+                row.configure(border_color=C["green"] if right else C["red"])
+
+
 class GameView(ScrollArea):
     """Ansicht "Lernspiel" in der PC-Version."""
 
@@ -631,6 +855,9 @@ class GameView(ScrollArea):
         if item:
             make_label(body, item["text"], font=F["small"], fg=C["text_dim"],
                        wraplength=980, justify="left", anchor="w").pack(anchor="w")
+            if any(person.get("lagerist") for person in fg.GAME["kollegen"]
+                   if person["raum"] == item["id"]):
+                self._build_warehouse(body, state)
             for person in fg.GAME["kollegen"]:
                 if person["raum"] == item["id"]:
                     make_label(body, "%s · %s" % (person["name"], person["rolle"]),
@@ -643,9 +870,12 @@ class GameView(ScrollArea):
                                                                           pady=(12, 4))
 
         if not tickets:
+            waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if item else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
-                    "Heute stehen keine Tickets an.")
+                    "Heute stehen keine Tickets an. %s auf eine Lieferung."
+                    % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
+                    if waiting else "Heute stehen keine Tickets an.")
             make_label(body, text, font=F["body"], fg=C["text_soft"], wraplength=980,
                        justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
@@ -658,10 +888,44 @@ class GameView(ScrollArea):
             button = NeoButton(footer, "Arbeitstag beenden", self._end_day, kind="accent")
             button.pack(side="left")
             button.set_enabled(state.can_end_day())
-            hint = ("Alle Tickets für heute sind bearbeitet." if state.can_end_day() else
-                    "Erst alle Tickets bearbeiten oder verschieben.")
+            hint = ("Erst alle Tickets bearbeiten oder verschieben." if not state.can_end_day()
+                    else "Alle Tickets für heute sind bearbeitet." if state.handled else
+                    "Heute ist nichts mehr zu tun.")
             make_label(footer, hint, font=F["small"], fg=C["muted"]).pack(side="left",
                                                                           padx=14)
+
+    def _build_warehouse(self, parent, state):
+        """Lager: was unterwegs ist, was da ist und was ausgeliefert wurde."""
+        store = state.warehouse()
+        box = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                           border_color=C["border"])
+        box.pack(fill="x", pady=(12, 0))
+        sections = [
+            ("UNTERWEGS", ["%d × %s · %s · kommt an Arbeitstag %d" % (
+                item["menge"], fg.part(item["teil"])["name"],
+                fg.dealer(item["haendler"])["name"], item["ankunft"])
+                for item in store["unterwegs"]]),
+            ("AUF LAGER", ["%d × %s" % (count, fg.part(part_id)["name"])
+                           for part_id, count in store["bestand"]]),
+            ("AUSGELIEFERT", ["%d × %s an %s" % (
+                item["menge"], fg.part(item["teil"])["name"],
+                fg.colleague(item["empfaenger"])["name"]) for item in store["ausgeliefert"]]),
+        ]
+        shown = False
+        for title, lines in sections:
+            if not lines:
+                continue
+            shown = True
+            make_label(box, title, font=F["label"], fg=C["muted"]).pack(anchor="w", padx=14,
+                                                                        pady=(10, 2))
+            for line in lines:
+                make_label(box, line, font=F["small"], fg=C["text_soft"], anchor="w").pack(
+                    anchor="w", padx=14)
+        if not shown:
+            make_label(box, "Das Lager ist leer. Bestellte Ware taucht hier auf, sobald sie "
+                       "unterwegs ist.", font=F["small"], fg=C["muted"], anchor="w").pack(
+                anchor="w", padx=14, pady=(10, 0))
+        _frame(box, height=10).pack()
 
     def _ticket_row(self, parent, task, status):
         person = fg.colleague(task["auftraggeber"])
@@ -769,11 +1033,19 @@ class GameView(ScrollArea):
 
         make_label(body, task["frage"], font=F["h3"], fg=C["text"], wraplength=980,
                    justify="left", anchor="w").pack(anchor="w", pady=(16, 8))
+        state = self.game.state
+        self.available = state.available_parts(task)
         if task["typ"] == "auswahl":
             self.options = OptionList(body, bg=C["card"])
             options = list(task["optionen"])
             random.shuffle(options)
             self.options.set_options(options)
+            self.options.pack(fill="x")
+        elif task["typ"] == "bauteile":
+            self.options = SlotBoard(body, task, self.available, state.stock())
+            self.options.pack(fill="x")
+        elif task["typ"] == "bestellung":
+            self.options = OrderBoard(body, task)
             self.options.pack(fill="x")
         else:
             self.options = MatchBoard(body, task)
@@ -823,6 +1095,13 @@ class GameView(ScrollArea):
             if not answer:
                 messagebox.showwarning("Hinweis", "Bitte wähle eine Antwort aus.")
                 return
+        elif task["typ"] in ("bauteile", "bestellung"):
+            if not self.options.complete():
+                messagebox.showwarning("Hinweis", "Bitte setze zuerst Bauteile ein."
+                                       if task["typ"] == "bauteile" else
+                                       "Der Warenkorb ist noch leer.")
+                return
+            answer = dict(self.options.answer)
         else:
             if not self.options.complete():
                 messagebox.showwarning("Hinweis", "Bitte ordne zuerst alle Begriffe zu.")
@@ -837,6 +1116,8 @@ class GameView(ScrollArea):
         self.answered = True
         if task["typ"] == "auswahl":
             self.options.reveal(task["antwort"])
+        elif task["typ"] in ("bauteile", "bestellung"):
+            self.options.reveal(payload["richtig"])
         else:
             self.options.reveal()
         self.app.notify_progress()
@@ -849,7 +1130,8 @@ class GameView(ScrollArea):
                            corner_radius=12, border_width=1,
                            border_color=mix(color, C["card"], 0.4))
         box.pack(fill="x", pady=(14, 0))
-        make_label(box, fg.result_text(task, payload), font=F["body_bold"], fg=color,
+        make_label(box, fg.result_text(task, payload, self.available), font=F["body_bold"],
+                   fg=color,
                    wraplength=940, justify="left", anchor="w").pack(anchor="w", padx=14,
                                                                     pady=(12, 4))
         make_label(box, task["erklaerung"], font=F["body"], fg=C["text_soft"],
@@ -953,7 +1235,7 @@ class OfficeView(ScrollArea):
             child.destroy()
         state = self.game_view.game.state
         quests = state.quests()
-        title, text = fg.office_message(position, person, quests)
+        title, text = fg.office_message(position, person, quests, state=state)
         make_label(self.info, title, font=F["body_bold"], fg=C["text"],
                    anchor="w").pack(anchor="w")
         make_label(self.info, text, font=F["small"], fg=C["text_soft"], anchor="w",
