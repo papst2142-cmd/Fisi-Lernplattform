@@ -11,6 +11,9 @@
 #          git tag v0.22
 #          git push origin v0.22
 #      Dann entsteht zusaetzlich ein GitHub-Release mit allen Installern.
+#    - automatisch ueber "Release automatisch" (release.yml), sobald auf
+#      main eine neue Version steht (python build.py --setze-version ...).
+#      Der Tag wird dort angelegt und dieser Ablauf aufgerufen.
 #    - von Hand im Reiter "Actions" -> "Installer bauen" -> "Run workflow".
 #      Die Installer liegen dann unten auf der Seite des Laufs unter
 #      "Artifacts" zum Herunterladen bereit.
@@ -22,6 +25,17 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Versions-Tag, fuer den gebaut und veroeffentlicht wird (z.B. v0.28)"
+        type: string
+        required: true
+
+# Tag des Laufs: beim Aufruf aus release.yml uebergeben, sonst der gepushte Tag
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+  IS_RELEASE: ${{ inputs.tag != '' || startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
   build:
@@ -43,18 +57,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.IS_RELEASE == 'true'
         shell: bash
         run: |
           VERSION=$(python -c "import build; print(build.app_version())")
-          if [ "v$VERSION" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} passt nicht zu APP_VERSION $VERSION in app_gui.py"
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "Tag $TAG passt nicht zu APP_VERSION $VERSION in app_gui.py"
             exit 1
           fi
           # Ohne Abschnitt in AENDERUNGEN.md gibt es keinen Release-Text
@@ -95,17 +111,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
       - name: Version pruefen (Tag muss zu APP_VERSION passen)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.IS_RELEASE == 'true'
         run: |
           VERSION=$(python -c "import build; print(build.app_version())")
-          if [ "v$VERSION" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} passt nicht zu APP_VERSION $VERSION in app_gui.py"
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "Tag $TAG passt nicht zu APP_VERSION $VERSION in app_gui.py"
             exit 1
           fi
           python -c "import build; build.check_versions('$VERSION')"
@@ -155,12 +173,14 @@ jobs:
   release:
     name: GitHub-Release
     needs: [build, android]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: inputs.tag != '' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Versionshinweise aus AENDERUNGEN.md
         run: python3 build.py --versionshinweise > versionshinweise.md
@@ -172,6 +192,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v3
         with:
-          name: FISI Lernplattform ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
+          name: FISI Lernplattform ${{ env.TAG }}
           body_path: versionshinweise.md
           files: installer/*

@@ -1,0 +1,75 @@
+# ============================================================================
+#  FISI Lernplattform - Release automatisch
+# ============================================================================
+#  Laeuft bei jedem Push auf main. Steht dort eine Version, fuer die es noch
+#  keinen Tag gibt (nach "python build.py --setze-version 0.xy" und dem
+#  Merge), legt dieser Ablauf den Tag v0.xy an und startet "Installer bauen"
+#  mit Release. So braucht es fuer ein Release keinen PC mehr.
+#
+#  Gibt es den Tag schon (z.B. von Hand gepusht), passiert nichts.
+#  Hinweis: Tags, die ein Ablauf mit GITHUB_TOKEN anlegt, starten keine
+#  weiteren Ablaeufe - deshalb wird build.yml hier direkt aufgerufen.
+# ============================================================================
+
+name: Release automatisch
+
+on:
+  push:
+    branches: [main]
+
+# Nie zwei Releases gleichzeitig
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Version pruefen und Tag anlegen
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Neue Version?
+        id: check
+        run: |
+          VERSION=$(python -c "import build; print(build.app_version())")
+          TAG="v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "Tag $TAG gibt es schon - nichts zu tun."
+            exit 0
+          fi
+          # Alle Stellen muessen dieselbe Version tragen (PC, Handy, Installer)
+          python -c "import build; build.check_versions('$VERSION')"
+          # Ohne Abschnitt in AENDERUNGEN.md kein Release
+          python build.py --versionshinweise > /dev/null
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Neue Version $VERSION - Tag $TAG wird angelegt."
+
+      - name: Tag anlegen
+        if: steps.check.outputs.tag != ''
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Version ${TAG#v}"
+          git push origin "$TAG"
+
+  release:
+    name: Installer bauen und veroeffentlichen
+    needs: tag
+    if: needs.tag.outputs.tag != ''
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+    secrets: inherit
