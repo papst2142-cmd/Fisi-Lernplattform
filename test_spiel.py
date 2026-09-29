@@ -2602,6 +2602,33 @@ class GebaeudeAusbauTest(unittest.TestCase):
             site = fg.site_content(fg.SITE_OFFICE, game.state, self.content)
             self.assertEqual(len(site["gebaeude"]["raeume"]), len(rooms))
 
+    def test_schilder_versetzt(self):
+        """Kleine Ansicht: untere Reihe von links abwechselnd oben, unten, oben ..."""
+        building = self.content["firma"]["gebaeude"]["stufen"][4]["gebaeude"]
+        self.assertEqual(fg._staggered_labels(building), {"besprechung", "buero4"})
+        names = {item["id"]: item["name"] for item in building["raeume"]}
+        self.assertEqual([names[key] for key in ("buero2", "buero3", "buero4", "buero5")],
+                         ["Büro 2", "Büro 3", "Büro 4", "Büro 5"])
+        content = dict(self.content, gebaeude=building, kollegen=[])
+        def label_y(stagger):
+            return {shape["text"]: shape["y"] for shape in
+                    fg.building_shapes(content=content, stagger=stagger)
+                    if shape["k"] == "text" and shape["role"] == "raum"}
+        flat, staggered = label_y(False), label_y(True)
+        self.assertEqual(flat["Lager"], flat["Besprechungsraum"])
+        self.assertGreater(staggered["Besprechungsraum"], staggered["Lager"])
+        self.assertGreater(staggered["Büro 4"], staggered["Büro 5"])
+        self.assertEqual(staggered["Büro 2"], flat["Büro 2"])
+        # Ein Name direkt ueber einem Schild unten faellt in der kleinen Ansicht weg
+        content["kollegen"] = [{"id": "leon", "name": "Leon", "platz": [24.5, 12.85]},
+                               {"id": "jan", "name": "Jan", "platz": [24.5, 9.95]}]
+        def people(stagger):
+            return [shape["text"] for shape in
+                    fg.building_shapes(content=content, stagger=stagger)
+                    if shape["k"] == "text" and shape["role"] == "person"]
+        self.assertEqual(len(people(False)), 2)
+        self.assertEqual(len(people(True)), 1)
+
     def test_nebenkosten(self):
         with TempDB() as db:
             game = self._stage(db, 3)

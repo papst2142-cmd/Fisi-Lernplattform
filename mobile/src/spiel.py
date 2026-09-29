@@ -102,8 +102,10 @@ class FloorPlan(ft.GestureDetector):
     MAX_HEIGHT = 300
     ROTATE = False
 
-    def __init__(self, state, selected, on_room, player_pos=None, site=fg.SITE_OFFICE):
+    def __init__(self, state, selected, on_room, player_pos=None, site=fg.SITE_OFFICE,
+                 stagger=False):
         self.state = state
+        self.stagger = stagger
         self.selected = selected
         self.on_room = on_room
         self.site = site
@@ -135,7 +137,8 @@ class FloorPlan(ft.GestureDetector):
         return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
                                   content=self.site_data,
                                   quests=set(self.state.quests(self.site)),
-                                  player_pos=self.player_pos, rotate=self.ROTATE)
+                                  player_pos=self.player_pos, rotate=self.ROTATE,
+                                  stagger=self.stagger)
 
     def _draw(self):
         scale, ox, oy = self._layout()
@@ -2489,7 +2492,7 @@ class GameScreen:
             ui.text("Stufe %d · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag"
                     % (stage["stufe"], state.capacity, euro(stage["nebenkosten"])),
                     size=12, color=C["text_dim"]),
-            FloorPlan(state, None, lambda _room: None),
+            FloorPlan(state, None, lambda _room: None, stagger=True),
             ft.Row([ui.GradientButton("Büro öffnen", lambda _e: self.open_site("buero"),
                                       kind="ghost", height=38)]),
         ], accent=C["green"])]

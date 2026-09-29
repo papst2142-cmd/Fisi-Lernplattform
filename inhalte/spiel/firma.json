@@ -473,7 +473,7 @@
             },
             {
               "id": "buero2",
-              "name": "Zweites Büro",
+              "name": "Büro 2",
               "kurz": "Büro 2",
               "cat": "systeme",
               "x": 0,
@@ -797,7 +797,7 @@
             },
             {
               "id": "buero2",
-              "name": "Zweites Büro",
+              "name": "Büro 2",
               "kurz": "Büro 2",
               "cat": "systeme",
               "x": 0,
@@ -860,7 +860,7 @@
             },
             {
               "id": "buero3",
-              "name": "Drittes Büro",
+              "name": "Büro 3",
               "kurz": "Büro 3",
               "cat": "datenbanken",
               "x": 16,
@@ -1270,7 +1270,7 @@
             },
             {
               "id": "buero2",
-              "name": "Zweites Büro",
+              "name": "Büro 2",
               "kurz": "Büro 2",
               "cat": "systeme",
               "x": 0,
@@ -1333,7 +1333,7 @@
             },
             {
               "id": "buero3",
-              "name": "Drittes Büro",
+              "name": "Büro 3",
               "kurz": "Büro 3",
               "cat": "datenbanken",
               "x": 16,
@@ -1512,7 +1512,7 @@
             },
             {
               "id": "buero4",
-              "name": "Viertes Büro",
+              "name": "Büro 4",
               "kurz": "Büro 4",
               "cat": "sicherheit",
               "x": 22,
@@ -1858,7 +1858,7 @@
             },
             {
               "id": "buero2",
-              "name": "Zweites Büro",
+              "name": "Büro 2",
               "kurz": "Büro 2",
               "cat": "systeme",
               "x": 0,
@@ -1921,7 +1921,7 @@
             },
             {
               "id": "buero3",
-              "name": "Drittes Büro",
+              "name": "Büro 3",
               "kurz": "Büro 3",
               "cat": "datenbanken",
               "x": 16,
@@ -2100,7 +2100,7 @@
             },
             {
               "id": "buero4",
-              "name": "Viertes Büro",
+              "name": "Büro 4",
               "kurz": "Büro 4",
               "cat": "sicherheit",
               "x": 22,
@@ -2187,7 +2187,7 @@
             },
             {
               "id": "buero5",
-              "name": "Fünftes Büro",
+              "name": "Büro 5",
               "kurz": "Büro 5",
               "cat": "systeme",
               "x": 26,

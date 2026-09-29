@@ -125,10 +125,12 @@ class FloorPlan(tk.Canvas):
 
     MAX_HEIGHT = 440
 
-    def __init__(self, parent, on_room, bg=None, max_height=None, site=fg.SITE_OFFICE):
+    def __init__(self, parent, on_room, bg=None, max_height=None, site=fg.SITE_OFFICE,
+                 stagger=False):
         self.bg = bg or C["card"]
         self.on_room = on_room
         self.site = site
+        self.stagger = stagger
         self.max_height = max_height or self.MAX_HEIGHT
         self.state = None
         self.selected = None
@@ -171,7 +173,7 @@ class FloorPlan(tk.Canvas):
         return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
                                   content=self.content(),
                                   quests=set(self.state.quests(self.site)),
-                                  player_pos=self.player_pos)
+                                  player_pos=self.player_pos, stagger=self.stagger)
 
     def draw(self):
         self.delete("all")
@@ -3239,7 +3241,7 @@ class FirmView(ScrollArea):
         make_label(card.body, "%s %s" % (rules["text"], stage["text"]), font=F["small"],
                    fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 8))
-        plan = FloorPlan(card.body, lambda _room: None, max_height=300)
+        plan = FloorPlan(card.body, lambda _room: None, max_height=300, stagger=True)
         plan.pack(fill="x")
         plan.set_state(state)
         NeoButton(card.body, "Büro öffnen", lambda: self.app.show_view("buero"), kind="ghost",

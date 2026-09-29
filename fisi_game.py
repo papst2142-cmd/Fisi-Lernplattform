@@ -6319,8 +6319,31 @@ def player_shapes(position, player, rotate=False, content=None):
     return shapes
 
 
+def _staggered_labels(building):
+    """Raeume der unteren Reihe, deren Schild unten steht: von links gezaehlt
+    jeder zweite (der erste oben, der zweite unten, der dritte oben ...)."""
+    hall = building["flur"]
+    lower = sorted((item for item in building["raeume"]
+                    if item["y"] >= hall["y"] + hall["h"] - 0.01),
+                   key=lambda item: item["x"])
+    return {item["id"] for index, item in enumerate(lower) if index % 2}
+
+
+def _covered_by_label(building, below):
+    """Prueft, ob ein Name unter einem nach unten versetzten Schild laege
+    (dann wird er in der kleinen Ansicht weggelassen)."""
+    rooms = [item for item in building["raeume"] if item["id"] in below]
+
+    def covered(spot):
+        x, y = spot[0], spot[1]
+        return any(item["x"] <= x <= item["x"] + item["w"]
+                   and item["y"] + item["h"] - 2.0 <= y <= item["y"] + item["h"]
+                   for item in rooms)
+    return covered
+
+
 def building_shapes(counts=None, selected=None, player=None, content=None,
-                    quests=None, player_pos=None, rotate=False):
+                    quests=None, player_pos=None, rotate=False, stagger=False):
     """Zeichenbefehle fuer das ganze Buerogebaeude.
 
     counts:     offene Tickets je Raum-ID (rosa Plakette)
@@ -6330,6 +6353,8 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
     quests:     IDs der Kollegen mit offenem Auftrag (gruenes "!" ueber dem Kopf)
     player_pos: Standort der Spielfigur, sonst ihr Platz im Flur
     rotate:     Gebaeude hochkant zeichnen (Handy-Grossansicht)
+    stagger:    Schilder der unteren Raumreihe abwechselnd oben und unten
+                (kleine Ansicht, damit sich schmale Raeume nicht verdecken)
     """
     content = content or GAME
     building = content["gebaeude"]
@@ -6430,12 +6455,14 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
 
     # Ab hier in Zeichnungs-Koordinaten, damit Schrift nie mitgedreht wird.
     # Beschriftung, Auswahl und Ticket-Plaketten zuletzt, damit sie oben liegen
+    below = _staggered_labels(building) if stagger and not rotate else set()
     for item in building["raeume"]:
         x, y, w, h = _view_rect(item, rotate, content)
         color = room_color(item)
         if item["id"] == selected:
             s.append(_rect(x + 0.14, y + 0.14, w - 0.28, h - 0.28, "", color, 0.12, 0.2))
-        label = _text(x + 0.55, y + 0.78, item["name"], "raum", C["text"],
+        label_y = y + h - 0.78 if item["id"] in below else y + 0.78
+        label = _text(x + 0.55, label_y, item["name"], "raum", C["text"],
                       maxw=w - 2.2, kurz=item.get("kurz"))
         label["bg"] = mix(C["card"], color, 0.1)
         label["border"] = mix(color, C["card"], 0.3)
@@ -6445,13 +6472,15 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
             s.append(_oval(x + w - 1.05, y + 0.38, 0.8, 0.8, C["pink"], C["card"], 0.06))
             s.append(_text(x + w - 0.65, y + 0.78, str(count), "badge", C["on_accent"],
                            anchor="c"))
+    covered = _covered_by_label(building, below)
     for person in content["kollegen"]:
         if not person.get("platz"):
             continue
         px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
 
-        s.append(_text(px_, py_ + 0.62, short_name(person), "person",
-                       C["text_soft"], anchor="c"))
+        if not covered(person["platz"]):
+            s.append(_text(px_, py_ + 0.62, short_name(person), "person",
+                           C["text_soft"], anchor="c"))
         if person["id"] in quests:
             s.append(_oval(px_ + 0.25, py_ - 1.15, 0.68, 0.68, C["green"], C["card"], 0.05))
             s.append(_text(px_ + 0.59, py_ - 0.81, "!", "badge", C["card"], anchor="c"))
