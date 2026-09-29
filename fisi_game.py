@@ -33,7 +33,7 @@ import uuid
 
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
-    TOPIC_ORDER, ipv4_values, raid_values, search_content, topic_totals,
+    TOPIC_ORDER, TOPIC_SHORT, ipv4_values, raid_values, search_content, topic_totals,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 

@@ -1598,8 +1598,8 @@ class GameScreen:
                 content=ft.Column([
                     ui.text(fg.gap_warning(gaps), size=13, color=C["yellow"]),
                     ft.Row([ui.GradientButton(
-                        "Karteikarten %s" % CATEGORY_SHORT[fg.CAT_NAME[key]],
-                        lambda _e: self._open_cards(fg.CAT_NAME[key]), kind="ghost",
+                        "Karteikarten zu %s" % fg.TOPIC_SHORT[key],
+                        lambda _e: self._open_cards(fg.TOPIC_CAT[key], key), kind="ghost",
                         height=38)]),
                 ], spacing=8, tight=True),
                 bgcolor=mix(C["card"], C["yellow"], 0.12), border_radius=14, padding=14,
@@ -2814,8 +2814,8 @@ class GameScreen:
                 ui.Card("Wohnung", homes, accent=C["orange"],
                         subtitle=fg.HOME_SUBTITLE[rent])]
 
-    def _open_cards(self, category):
-        self.app.screens["cards"].set_category(category)
+    def _open_cards(self, category, topic=None):
+        self.app.screens["cards"].set_category(category, topic)
         self.app.open("cards")
 
     def _open_learn(self, kind, title):

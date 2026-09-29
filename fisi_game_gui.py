@@ -1903,8 +1903,8 @@ class GameView(ScrollArea):
                        wraplength=940, justify="left", anchor="w").pack(anchor="w",
                                                                         padx=14, pady=10)
             key = gaps[0][0]
-            NeoButton(warn, "Karteikarten %s lernen" % CATEGORY_SHORT[fg.CAT_NAME[key]],
-                      lambda: self.app.open_cards(fg.CAT_NAME[key]), kind="ghost",
+            NeoButton(warn, "Karteikarten zu %s" % fg.TOPIC_SHORT[key],
+                      lambda: self.app.open_cards(fg.TOPIC_CAT[key], key), kind="ghost",
                       height=30, font=F["small_bold"]).pack(anchor="w", padx=14,
                                                             pady=(0, 10))
 

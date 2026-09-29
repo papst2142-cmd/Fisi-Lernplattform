@@ -1067,36 +1067,58 @@ def _smooth_curve(points, floor, ceiling, steps=12):
 # ============================================================================
 
 class Heatmap(tk.Canvas):
-    """Farbgitter: eine Zeile je Fachbereich, eine Spalte je Tag."""
+    """Farbgitter: eine Zeile je Fachbereich (oder Thema), eine Spalte je Tag.
 
-    def __init__(self, parent, height=200, parent_bg=None):
+    on_click(index) macht die Zeilen anklickbar (Reinzoom in die Themen);
+    die ausgewaehlte Zeile wird hervorgehoben."""
+
+    def __init__(self, parent, height=200, parent_bg=None, on_click=None, label_w=98):
         self.bg = parent_bg or _bg_of(parent)
         self._rows = []
         self._columns = 0
         self._photos = []
+        self._row_spans = []
+        self._selected = None
+        self._on_click = on_click
+        self._label_w = label_w
         super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
-                         highlightthickness=0, bd=0)
+                         highlightthickness=0, bd=0,
+                         cursor="hand2" if on_click else "")
         self.bind("<Configure>", lambda e: self._draw())
+        if on_click:
+            self.bind("<Button-1>", self._click)
 
-    def set_data(self, rows, columns):
-        """rows: Liste von (label, color, [werte])."""
+    def set_data(self, rows, columns, selected=None):
+        """rows: Liste von (label, color, [werte]); selected: hervorgehobene Zeile."""
         self._rows = rows
         self._columns = columns
+        self._selected = selected
         self._draw()
+
+    def _click(self, event):
+        for index, (top, bottom) in enumerate(self._row_spans):
+            if top - px(3) <= event.y <= bottom + px(3):
+                self._on_click(index)
+                return
 
     def _draw(self):
         self.delete("all")
         self._photos = []
+        self._row_spans = []
         width = self.winfo_width()
         height = self.winfo_height()
         if width <= 1 or height <= 1 or not self._rows or not self._columns:
             return
 
-        label_w = px(98)
+        label_w = px(self._label_w)
         grid_x = label_w
         grid_w = width - label_w - px(4)
         gap = px(4)
-        row_h = min(px(34), (height - px(16)) / max(1, len(self._rows)) - gap)
+        count = max(1, len(self._rows))
+        row_h = min(px(34), (height - px(16)) / count - gap)
+        if px(8) + count * (row_h + gap * 2) > height:
+            # Viele Zeilen (Themen): so eng setzen, dass die letzte noch passt
+            row_h = (height - px(8)) / count - gap * 2
         cell_w = grid_w / self._columns
         peak = 1
         for _label, _color, values in self._rows:
@@ -1105,8 +1127,11 @@ class Heatmap(tk.Canvas):
 
         for row_index, (label, color, values) in enumerate(self._rows):
             y = px(8) + row_index * (row_h + gap * 2)
+            self._row_spans.append((y, y + row_h))
+            chosen = row_index == self._selected
             self.create_text(0, y + row_h / 2, text=label, anchor="w",
-                             fill=C["text_dim"], font=tk_font(F["small"]))
+                             fill=color if chosen else C["text_dim"],
+                             font=tk_font(F["small_bold"] if chosen else F["small"]))
             for col in range(self._columns):
                 value = values[col] if col < len(values) else 0
                 intensity = 0.0 if peak == 0 else min(1.0, value / peak)
