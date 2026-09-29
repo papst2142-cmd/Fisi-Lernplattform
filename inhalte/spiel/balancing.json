@@ -1,16 +1,17 @@
 {
   "_hinweis": [
     "Alle Stellschrauben des Lernspiels. Werte hier aendern, nicht im Code.",
-    "Geld in Euro (Spielgeld), Reputation je Achse 0 bis 100."
+    "Geld in Euro (Spielgeld), Reputation je Achse 0 bis 100.",
+    "Ab 0.32: Befoerderung braucht Reputation (ab) UND Berufserfahrung (ab_tag = Arbeitstag). Tickets pro Tag richten sich nach dem Rang zu Tagesbeginn."
   ],
-  "tickets_pro_tag": 3,
+  "tickets_pro_tag": {"Azubi-Niveau": 3, "Junior": 4, "Fachkraft": 4, "Senior": 5},
   "reputation_start": 20,
   "gehalt_pro_tag": {"Azubi-Niveau": 90, "Junior": 140, "Fachkraft": 190, "Senior": 250},
   "raenge": [
-    {"name": "Azubi-Niveau", "ab": 0},
-    {"name": "Junior", "ab": 35},
-    {"name": "Fachkraft", "ab": 55},
-    {"name": "Senior", "ab": 75}
+    {"name": "Azubi-Niveau", "ab": 0, "ab_tag": 1},
+    {"name": "Junior", "ab": 35, "ab_tag": 10},
+    {"name": "Fachkraft", "ab": 55, "ab_tag": 30},
+    {"name": "Senior", "ab": 75, "ab_tag": 60}
   ],
   "bonus_ohne_hilfe": 0.25,
   "bonus_sicher_geloest": 0.10,
@@ -23,7 +24,9 @@
   "terminal_fehlgriffe_erlaubt": 1,
   "gefahr_verlust": 4,
   "systematik_bonus": 2,
-  "zwischenfaelle": {"chance": 0.4, "ab_tag": 2},
+  "zwischenfaelle": {"chance": 0.4, "ab_tag": 2,
+                     "staffel": [{"ab_tag": 30, "chance": 0.5}],
+                     "abstand_gleiche_art": 10},
   "prioritaet_faktor": {"niedrig": 0.5, "normal": 1, "hoch": 1.5, "kritisch": 2},
   "wissen": {
     "letzte_antworten": 200,

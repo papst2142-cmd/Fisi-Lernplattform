@@ -2,7 +2,8 @@
   "_hinweis": [
     "Bauteile fuer die Aufgabentypen 'bauteile' (PC zusammensetzen) und 'bestellung'.",
     "Preise in Euro (Spielgeld). Die Pruefregeln stehen unter 'regeln'.",
-    "Rack-Geraete fuer den Aufgabentyp 'rack' (Serverschrank): HE, Gewicht in kg, Leistungsaufnahme in W, USV mit 'leistung' in W, Switch und Patchpanel mit 'ports'. Grenzwerte unter 'rack_regeln'."
+    "Rack-Geraete fuer den Aufgabentyp 'rack' (Serverschrank): HE, Gewicht in kg, Leistungsaufnahme in W, USV mit 'leistung' in W, Switch und Patchpanel mit 'ports'. Grenzwerte unter 'rack_regeln'.",
+    "Ab 0.32: Ersatzteile fuer den Austausch-Schritt der Diagnose ('ersatzteile', Typen unter 'ersatz_typen', Merkmale [feld, Name, Einheit] unter 'ersatz_merkmale'). 'grundbestand' liegt von Anfang an in Rainers Ersatzteilregal. Fehlt ein Teil, wird es nachbestellt ('nachbestellung': Haendler und Lieferzeit in Arbeitstagen)."
   ],
   "regeln": {
     "grundlast_watt": 60,
@@ -146,5 +147,59 @@
       "Danach wird richtig nachbestellt. Einbauen, was nicht passt, gefährdet den Betrieb, und Wegwerfen oder Verstecken verschwendet Geld."
     ],
     "suchbegriffe": ["Beschaffung", "Reklamation"]
-  }
+  },
+  "ersatz_typen": {
+    "usv_akku": "USV-Akku",
+    "monitor": "Monitor",
+    "patchkabel": "Patchkabel",
+    "luefter": "Lüfter",
+    "toner": "Toner",
+    "sfp": "SFP-Modul",
+    "drucker": "Drucker"
+  },
+  "ersatz_merkmale": {
+    "usv_akku": [["spannung", "Spannung", "V"], ["kapazitaet", "Kapazität", "Ah"], ["anschluss", "Anschluss", ""]],
+    "monitor": [["diagonale", "Diagonale", "Zoll"], ["anschluss", "Anschluss", ""], ["aufloesung", "Auflösung", ""]],
+    "patchkabel": [["kategorie", "Kategorie", ""], ["laenge", "Länge", "m"]],
+    "luefter": [["groesse", "Größe", "mm"], ["anschluss", "Anschluss", ""]],
+    "toner": [["modell", "Passend für", ""], ["farbe", "Farbe", ""]],
+    "sfp": [["standard", "Standard", ""], ["stecker", "Stecker", ""]],
+    "drucker": [["netzwerk", "Anschluss", ""], ["duplex", "Duplex", ""], ["farbe", "Farbdruck", ""]]
+  },
+  "ersatzteile": [
+    {"id": "akku_12v7_f1", "typ": "usv_akku", "name": "USV-Akku 12 V 7 Ah (Steckkontakt F1)", "preis": 24, "spannung": 12, "kapazitaet": 7, "anschluss": "F1 (4,8 mm)"},
+    {"id": "akku_12v7_f2", "typ": "usv_akku", "name": "USV-Akku 12 V 7 Ah (Steckkontakt F2)", "preis": 25, "spannung": 12, "kapazitaet": 7, "anschluss": "F2 (6,3 mm)"},
+    {"id": "akku_12v9_f2", "typ": "usv_akku", "name": "USV-Akku 12 V 9 Ah (Steckkontakt F2)", "preis": 29, "spannung": 12, "kapazitaet": 9, "anschluss": "F2 (6,3 mm)"},
+    {"id": "akku_6v12_f2", "typ": "usv_akku", "name": "USV-Akku 6 V 12 Ah (Steckkontakt F2)", "preis": 27, "spannung": 6, "kapazitaet": 12, "anschluss": "F2 (6,3 mm)"},
+    {"id": "akkusatz_48v9", "typ": "usv_akku", "name": "Akkusatz für Rack-USV (4 × 12 V 9 Ah, Einschub)", "preis": 189, "spannung": 48, "kapazitaet": 9, "anschluss": "Einschub"},
+    {"id": "akkusatz_96v9", "typ": "usv_akku", "name": "Akkusatz für Rack-USV (8 × 12 V 9 Ah, Einschub)", "preis": 359, "spannung": 96, "kapazitaet": 9, "anschluss": "Einschub"},
+    {"id": "mon_22_vga", "typ": "monitor", "name": "Monitor 22 Zoll (VGA)", "preis": 99, "diagonale": 22, "anschluss": "VGA", "aufloesung": "1680 × 1050"},
+    {"id": "mon_24_hdmi", "typ": "monitor", "name": "Monitor 24 Zoll (HDMI)", "preis": 129, "diagonale": 24, "anschluss": "HDMI", "aufloesung": "1920 × 1080"},
+    {"id": "mon_24_dp", "typ": "monitor", "name": "Monitor 24 Zoll (DisplayPort)", "preis": 139, "diagonale": 24, "anschluss": "DisplayPort", "aufloesung": "1920 × 1080"},
+    {"id": "mon_27_dp", "typ": "monitor", "name": "Monitor 27 Zoll (DisplayPort, WQHD)", "preis": 249, "diagonale": 27, "anschluss": "DisplayPort", "aufloesung": "2560 × 1440"},
+    {"id": "mon_32_leit", "typ": "monitor", "name": "Leitstand-Monitor 32 Zoll (DisplayPort, 24/7)", "preis": 489, "diagonale": 32, "anschluss": "DisplayPort", "aufloesung": "3840 × 2160"},
+    {"id": "pk_cat5e_2", "typ": "patchkabel", "name": "Patchkabel Cat 5e, 2 m", "preis": 3, "kategorie": "Cat 5e", "laenge": 2},
+    {"id": "pk_cat6a_1", "typ": "patchkabel", "name": "Patchkabel Cat 6A, 1 m", "preis": 4, "kategorie": "Cat 6A", "laenge": 1},
+    {"id": "pk_cat6a_2", "typ": "patchkabel", "name": "Patchkabel Cat 6A, 2 m", "preis": 5, "kategorie": "Cat 6A", "laenge": 2},
+    {"id": "pk_cat6a_5", "typ": "patchkabel", "name": "Patchkabel Cat 6A, 5 m", "preis": 8, "kategorie": "Cat 6A", "laenge": 5},
+    {"id": "pk_cat6a_10", "typ": "patchkabel", "name": "Patchkabel Cat 6A, 10 m", "preis": 12, "kategorie": "Cat 6A", "laenge": 10},
+    {"id": "pk_lwl_om3_3", "typ": "patchkabel", "name": "LWL-Patchkabel OM3 LC/LC, 3 m", "preis": 14, "kategorie": "LWL OM3", "laenge": 3},
+    {"id": "fan_80_pwm", "typ": "luefter", "name": "Gehäuselüfter 80 mm (4-Pin PWM)", "preis": 9, "groesse": 80, "anschluss": "4-Pin PWM"},
+    {"id": "fan_92_pwm", "typ": "luefter", "name": "CPU-Lüfter 92 mm (4-Pin PWM)", "preis": 15, "groesse": 92, "anschluss": "4-Pin PWM"},
+    {"id": "fan_120_3pin", "typ": "luefter", "name": "Gehäuselüfter 120 mm (3-Pin)", "preis": 10, "groesse": 120, "anschluss": "3-Pin"},
+    {"id": "fan_120_pwm", "typ": "luefter", "name": "Gehäuselüfter 120 mm (4-Pin PWM)", "preis": 12, "groesse": 120, "anschluss": "4-Pin PWM"},
+    {"id": "toner_dw420_s", "typ": "toner", "name": "Toner DW-420 schwarz", "preis": 59, "modell": "Druckwerk LX-420", "farbe": "schwarz"},
+    {"id": "toner_dw420_xl", "typ": "toner", "name": "Toner DW-420 XL schwarz", "preis": 89, "modell": "Druckwerk LX-420", "farbe": "schwarz (XL)"},
+    {"id": "toner_dw560_s", "typ": "toner", "name": "Toner DW-560 schwarz", "preis": 79, "modell": "Druckwerk MX-560", "farbe": "schwarz"},
+    {"id": "toner_dw560_c", "typ": "toner", "name": "Toner DW-560 cyan", "preis": 95, "modell": "Druckwerk MX-560", "farbe": "cyan"},
+    {"id": "sfp_1g_sx", "typ": "sfp", "name": "SFP-Modul 1000BASE-SX (Multimode)", "preis": 29, "standard": "1000BASE-SX", "stecker": "LC"},
+    {"id": "sfp_1g_lx", "typ": "sfp", "name": "SFP-Modul 1000BASE-LX (Singlemode)", "preis": 39, "standard": "1000BASE-LX", "stecker": "LC"},
+    {"id": "sfp_10g_sr", "typ": "sfp", "name": "SFP+-Modul 10GBASE-SR (Multimode)", "preis": 59, "standard": "10GBASE-SR", "stecker": "LC"},
+    {"id": "drucker_lx400", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-400 (LAN, einseitig)", "preis": 229, "netzwerk": "LAN", "duplex": "nein", "farbe": "nein"},
+    {"id": "drucker_lx410", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-410 (USB, Duplex)", "preis": 179, "netzwerk": "USB", "duplex": "ja", "farbe": "nein"},
+    {"id": "drucker_lx420", "typ": "drucker", "name": "Laserdrucker Druckwerk LX-420 (LAN, Duplex)", "preis": 289, "netzwerk": "LAN", "duplex": "ja", "farbe": "nein"},
+    {"id": "drucker_mx560", "typ": "drucker", "name": "Farblaserdrucker Druckwerk MX-560 (LAN, Duplex)", "preis": 549, "netzwerk": "LAN", "duplex": "ja", "farbe": "ja"}
+  ],
+  "grundbestand": {"akku_12v7_f2": 2, "akku_12v9_f2": 2, "pk_cat6a_2": 3, "pk_cat6a_5": 2, "fan_120_pwm": 2, "mon_24_dp": 1, "toner_dw420_s": 2},
+  "nachbestellung": {"haendler": "kabelkoenig", "lieferzeit": 1}
 }

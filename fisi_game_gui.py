@@ -1391,6 +1391,9 @@ class GameView(ScrollArea):
                    anchor="w").pack(anchor="w")
         make_label(info, "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]),
                    font=F["body_bold"], fg=C["accent"], anchor="w").pack(anchor="w", pady=(2, 0))
+        hint = fg.rank_hint(state)
+        if hint:
+            make_label(info, hint, font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w")
         money = "Kontostand: %s   ·   Gehalt: %s pro Arbeitstag" % (
             _euro(state.money), _euro(state.salary))
         if state.rent:

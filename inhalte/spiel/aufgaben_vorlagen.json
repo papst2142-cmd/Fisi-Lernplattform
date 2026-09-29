@@ -1,0 +1,112 @@
+{
+  "_hinweis": [
+    "Auftrags-Vorlagen (ab 0.32): Jede Vorlage wird beim Laden zu mehreren festen Auftraegen.",
+    "Platzhalter {{name}} in den Texten werden je Variante durch deren 'werte' ersetzt. Weitere Felder einer Variante (z.B. ab_tag, raum, stelle, daten, pruefpunkte) ueberschreiben die Vorlage.",
+    "Die erste Variante behaelt die Kennung, die weiteren heissen <id>#2, <id>#3 ... 'wiederholen' {start, abstand} verteilt die Varianten auf feste Abstaende (Wartung).",
+    "Formular-Werte (IP-Plan, RAID, Angebot, Drucker) rechnet das Spiel selbst aus 'daten' - nie von Hand eintragen."
+  ],
+  "vorlagen": [
+    {
+      "id": "wartung-pc-reinigung",
+      "typ": "wartung",
+      "titel": "PC-Wartung {{ort_kurz}}: {{geraet}} reinigen und prüfen",
+      "auftraggeber": "mehmet",
+      "raum": "werkstatt",
+      "prioritaet": "niedrig",
+      "cat": "systeme",
+      "anforderungen": {"systeme": 40},
+      "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+      "belohnung": {"geld": 55, "reputation": 5},
+      "wiederholen": {"start": 18, "abstand": 12},
+      "ticket": [
+        "Mehmet stellt dir {{geraet}} aus {{ort}} auf die Werkbank: „Regelwartung, wie jedes Quartal. {{anlass}}“",
+        "„Miss alles durch, pinsel den Staub raus und trag ins Protokoll ein, was auffällt. Und bitte nicht den Staubsauger nehmen, der macht statische Ladung.“"
+      ],
+      "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+      "pruefpunkte": [
+        {
+          "id": "staub",
+          "text": "Gehäuse öffnen und Lüfter, Kühler und Netzteil auf Staub prüfen",
+          "ergebnis": "{{staub}}",
+          "auffaellig": false
+        },
+        {
+          "id": "temperatur",
+          "text": "CPU-Temperatur unter Last messen (Grenzwert 85 °C)",
+          "ergebnis": "{{temperatur}}",
+          "auffaellig": false
+        },
+        {
+          "id": "luefter",
+          "text": "Drehzahl der Lüfter im BIOS ablesen (Soll: gleichmäßig, kein Lüfter bei 0)",
+          "ergebnis": "{{luefter}}",
+          "auffaellig": false
+        },
+        {
+          "id": "smart",
+          "text": "S.M.A.R.T.-Werte der SSD auslesen",
+          "ergebnis": "{{smart}}",
+          "auffaellig": false
+        }
+      ],
+      "abschluss": [
+        "Alles in Ordnung, gereinigt, nächste Wartung in drei Monaten",
+        "Auffälligkeit notieren und Folgeauftrag in der Werkstatt anlegen",
+        "Den PC vorsorglich komplett neu aufsetzen",
+        "Den PC sofort ausmustern und einen neuen bestellen"
+      ],
+      "abschluss_antwort": "Alles in Ordnung, gereinigt, nächste Wartung in drei Monaten",
+      "hilfe": [
+        "Vergleiche jeden Messwert mit dem Grenzwert. Nur wenn er darüber liegt oder ein Bauteil ausfällt, ist der Punkt auffällig.",
+        "Staub wird bei der Wartung entfernt: Leichter Staub ist normal und kein Befund."
+      ],
+      "erklaerung": [
+        "Vorbeugende Wartung heißt: prüfen, reinigen, dokumentieren. {{fazit}}"
+      ],
+      "suchbegriffe": ["Wartung", "Lüfter"],
+      "varianten": [
+        {
+          "werte": {
+            "geraet": "den Kassen-PC 2",
+            "ort": "dem Service-Center",
+            "ort_kurz": "Service-Center",
+            "anlass": "Die Kassen laufen zwölf Stunden am Tag.",
+            "staub": "Leichte Staubschicht, mit dem Pinsel entfernt.",
+            "temperatur": "71 °C unter Last.",
+            "luefter": "Alle drei Lüfter drehen gleichmäßig (800 bis 1.200 U/min).",
+            "smart": "Zustand GOOD, keine ersetzten Sektoren.",
+            "fazit": "Hier war alles im grünen Bereich, die Reinigung reicht."
+          }
+        },
+        {
+          "werte": {
+            "geraet": "den Leitstand-PC 1",
+            "ort": "der Leitstelle",
+            "ort_kurz": "Leitstelle",
+            "anlass": "Horst sagt, er brummt lauter als sonst.",
+            "staub": "Kühler dicht mit Staub zugesetzt, gereinigt.",
+            "temperatur": "93 °C unter Last, der Takt sinkt.",
+            "luefter": "CPU-Lüfter dreht nur noch 300 U/min und schleift hörbar.",
+            "smart": "Zustand GOOD.",
+            "fazit": "Temperatur über dem Grenzwert und ein schleifender CPU-Lüfter: Das gehört ins Protokoll und in einen Folgeauftrag."
+          },
+          "abschluss_antwort": "Auffälligkeit notieren und Folgeauftrag in der Werkstatt anlegen",
+          "auffaellig": ["temperatur", "luefter"]
+        },
+        {
+          "werte": {
+            "geraet": "den Buchhaltungs-PC",
+            "ort": "der Verwaltung",
+            "ort_kurz": "Verwaltung",
+            "anlass": "Frank hat ihn persönlich vorbeigebracht, mit Zettel.",
+            "staub": "Kaum Staub, Frank putzt offenbar selbst.",
+            "temperatur": "64 °C unter Last.",
+            "luefter": "Beide Lüfter gleichmäßig bei 900 U/min.",
+            "smart": "Zustand GOOD, 12 % Lebensdauer verbraucht.",
+            "fazit": "Alles in Ordnung. Den Zettel von Frank („Bitte vorsichtig!“) legst du zurück ins Gehäuse. Nein, doch lieber daneben."
+          }
+        }
+      ]
+    }
+  ]
+}

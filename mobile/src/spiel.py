@@ -1150,6 +1150,8 @@ class GameScreen:
                 ft.Column([
                     ui.text(state.profile["name"], size=22, weight=ft.FontWeight.BOLD),
                     ui.text(state.rank, size=14, color=C["accent"], weight=ft.FontWeight.BOLD),
+                    ui.text(fg.rank_hint(state), size=12, color=C["muted"],
+                            visible=bool(fg.rank_hint(state))),
                     ui.text("Konto: %s · Gehalt: %s/Tag" % (euro(state.money),
                                                            euro(state.salary)),
                             size=12, color=C["text_dim"]),

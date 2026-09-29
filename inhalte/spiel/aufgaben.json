@@ -2657,5 +2657,302 @@
       "Horst unterschreibt, Sabine verteilt Kekse, die Wimpel gehen hoch. Talheim-Nord ist eröffnet!"
     ],
     "suchbegriffe": ["Abnahme", "Gewährleistung"]
+  },
+  {
+    "id": "wartung-usv-nord",
+    "typ": "wartung",
+    "titel": "Erste Wartung der USV in Talheim-Nord",
+    "auftraggeber": "ulla",
+    "ort": "talheim_nord",
+    "raum": "technik_nord",
+    "stelle": [11.2, 3.3],
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 16,
+    "ticket": [
+      "Ulla hält dir das Wartungsheft der neuen USV hin: „Talheim-Nord läuft, jetzt fängt die eigentliche Arbeit an. Einmal im Quartal wird die USV geprüft.“",
+      "„Die USV kommt übrigens gebraucht aus dem Keller, die Talbahn wollte sparen. Schau dir alles genau an und schreib ins Protokoll, was du findest.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "selbsttest",
+        "text": "USV-Selbsttest starten und die Laufzeit ablesen (Soll: mindestens 10 Minuten)",
+        "ergebnis": "Selbsttest bestanden, Laufzeit bei aktueller Last aber nur 4 Minuten.",
+        "auffaellig": true
+      },
+      {
+        "id": "last",
+        "text": "Ausgangslast ablesen (Grenzwert 80 %)",
+        "ergebnis": "Last 46 %: 690 W von 1.500 W.",
+        "auffaellig": false
+      },
+      {
+        "id": "akkudatum",
+        "text": "Einbaudatum der Akkus auf dem Aufkleber prüfen (Tausch spätestens nach 4 Jahren)",
+        "ergebnis": "Eingebaut vor 4 Jahren und 7 Monaten.",
+        "auffaellig": true
+      },
+      {
+        "id": "temperatur",
+        "text": "Raumtemperatur messen (Grenzwert 25 °C für die Akkus)",
+        "ergebnis": "22 °C, gleichmäßig.",
+        "auffaellig": false
+      },
+      {
+        "id": "lueftung",
+        "text": "Lüftungsschlitze der USV auf Staub prüfen",
+        "ergebnis": "Sauber, die Luft strömt frei.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Akkus überaltert, Laufzeit zu kurz: Folgeauftrag Akkutausch anlegen",
+      "Alles in Ordnung, nächste Wartung in drei Monaten",
+      "Die USV abschalten, bis neue Akkus da sind",
+      "Die Last erhöhen, damit sich die Akkus wieder erholen"
+    ],
+    "abschluss_antwort": "Akkus überaltert, Laufzeit zu kurz: Folgeauftrag Akkutausch anlegen",
+    "hilfe": [
+      "Vergleiche jeden Messwert mit dem Grenzwert in Klammern. Liegt er darüber (oder die Laufzeit darunter), ist der Punkt auffällig.",
+      "USV-Akkus altern auch ohne Stromausfall. Nach drei bis fünf Jahren sinkt ihre Kapazität deutlich."
+    ],
+    "erklaerung": [
+      "Die Laufzeit liegt weit unter dem Soll, und die Akkus sind älter als erlaubt. Beides zusammen heißt: Die Akkus sind verbraucht, die USV würde bei einem Stromausfall nur wenige Minuten halten.",
+      "Abschalten wäre die schlechteste Idee, dann gibt es gar keinen Schutz. Richtig ist ein Folgeauftrag für den Akkutausch."
+    ],
+    "suchbegriffe": ["USV", "Akku", "Wartung"]
+  },
+  {
+    "id": "usv-akkutausch-nord",
+    "typ": "diagnose",
+    "titel": "Akkus der USV in Talheim-Nord tauschen",
+    "auftraggeber": "ulla",
+    "ort": "talheim_nord",
+    "raum": "technik_nord",
+    "stelle": [11.2, 3.3],
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 17,
+    "nach": "wartung-usv-nord",
+    "ticket": [
+      "Dein Wartungsprotokoll hat Folgen: Ulla will die USV in Talheim-Nord heute wieder fit haben. „Vier Minuten Laufzeit reichen nicht mal, um die Server sauber herunterzufahren.“",
+      "Rainer ruft hinterher: „In meinem Regal liegen nur einzelne kleine Akkus. Ob die in so eine Rack-USV passen, schau lieber vorher nach.“"
+    ],
+    "frage": "Prüfe die USV, wähle Ursache und Maßnahme und tausche danach das passende Teil.",
+    "pruefungen": [
+      {
+        "id": "typenschild",
+        "text": "Typenschild der USV lesen",
+        "ergebnis": "Rack-USV 1.500 W, 2 HE. Akkus: ein Einschub mit 4 × 12 V / 9 Ah, zusammen 48 V.",
+        "entscheidend": true
+      },
+      {
+        "id": "spannung",
+        "text": "Spannung der Akkus im Selbsttest-Menü ablesen",
+        "ergebnis": "Unter Last fällt die Akkuspannung in Sekunden von 54 V auf 44 V. Die Akkus halten keine Ladung mehr.",
+        "entscheidend": true
+      },
+      {
+        "id": "netz",
+        "text": "Eingangsspannung am Stromnetz messen",
+        "ergebnis": "230 V, stabil."
+      },
+      {
+        "id": "last",
+        "text": "Angeschlossene Last ablesen",
+        "ergebnis": "690 W, wie bei der Wartung."
+      },
+      {
+        "id": "log",
+        "text": "Ereignisprotokoll der USV lesen",
+        "ergebnis": "„Battery needs replacement“ seit 41 Tagen, niemand hat es gelesen."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Der Akkusatz ist verbraucht und hält keine Ladung mehr.",
+      "Die angeschlossene Last ist zu hoch.",
+      "Das Stromnetz im Bahnhof liefert zu wenig Spannung.",
+      "Die USV ist falsch konfiguriert."
+    ],
+    "ursache": "Der Akkusatz ist verbraucht und hält keine Ladung mehr.",
+    "massnahmen": [
+      "Den Akkusatz im laufenden Betrieb gegen einen passenden neuen tauschen",
+      "Die Hälfte der Geräte von der USV abklemmen",
+      "Die USV durch eine Mehrfachsteckdose ersetzen",
+      "Die Warnmeldung im Protokoll abschalten"
+    ],
+    "massnahme": "Den Akkusatz im laufenden Betrieb gegen einen passenden neuen tauschen",
+    "unsicher": ["Die USV durch eine Mehrfachsteckdose ersetzen"],
+    "austausch": {
+      "typ": "usv_akku",
+      "passt": {"spannung": 48, "kapazitaet": 9, "anschluss": "Einschub"},
+      "schritte": [
+        "Die USV in den Bypass schalten, damit die Geräte weiterlaufen",
+        "Das Akkufach öffnen und den alten Akkusatz herausziehen",
+        "Den neuen Akkusatz einschieben und das Akkufach schließen",
+        "Den Bypass beenden und den Selbsttest der USV starten"
+      ],
+      "falsch": [
+        "Die alten Akkus zum Hausmüll geben",
+        "Den neuen Akkusatz vor dem Einbau vollständig entladen"
+      ],
+      "test": "Selbsttest bestanden. Laufzeit bei 46 % Last: 14 Minuten. Die alten Akkus gehen zum Recycling."
+    },
+    "hilfe": [
+      "Das Typenschild verrät, welche Akkus in die USV gehören. Einzelne 12-V-Akkus passen nicht in einen 48-V-Einschub.",
+      "Rack-USVs haben einen Bypass: Die Geräte laufen dann direkt am Netz weiter, während du die Akkus tauschst.",
+      "Fehlt das passende Teil im Lager, bestelle es nach. Es kommt am nächsten Arbeitstag."
+    ],
+    "erklaerung": [
+      "Die Spannung bricht unter Last sofort ein: Die Akkus sind verbraucht. Die USV selbst, das Netz und die Last sind in Ordnung.",
+      "Passend ist nur der Einschub mit 4 × 12 V / 9 Ah (48 V). Erst Bypass, dann tauschen, dann Selbsttest. Alte Akkus sind Sondermüll und gehen zum Recycling."
+    ],
+    "suchbegriffe": ["USV", "Akku"]
+  },
+  {
+    "id": "bestellung-drucker-verwaltung",
+    "typ": "bestellung",
+    "titel": "Neuer Netzwerkdrucker für die Verwaltung",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 16,
+    "empfaenger": "frank",
+    "ticket": [
+      "Frank legt dir eine ausgedruckte Tabelle hin, ausgedruckt am Nachbarplatz. „Unser alter Drucker hat nach dem Zeichensalat endgültig aufgegeben. Ich brauche einen neuen. Heute.“",
+      "„Er muss ins Netz, beidseitig drucken und bitte keine Farbe, die Tinte können wir uns nicht leisten. Dazu zwei Toner auf Vorrat. Budget 420 €, Lieferung in höchstens drei Arbeitstagen.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {
+        "text": "Netzwerkdrucker mit Duplex, ohne Farbe",
+        "typ": "drucker",
+        "menge": 1,
+        "passt": {"netzwerk": "LAN", "duplex": "ja", "farbe": "nein"}
+      },
+      {
+        "text": "Toner für den neuen Drucker",
+        "typ": "toner",
+        "menge": 2,
+        "passt": {"modell": "Druckwerk LX-420"}
+      }
+    ],
+    "angebote": [
+      {
+        "id": "d1",
+        "teil": "drucker_lx410",
+        "haendler": "bitlager",
+        "preis": 179,
+        "lieferzeit": 1
+      },
+      {
+        "id": "d2",
+        "teil": "drucker_lx420",
+        "haendler": "kabelkoenig",
+        "preis": 289,
+        "lieferzeit": 2
+      },
+      {
+        "id": "d3",
+        "teil": "drucker_lx420",
+        "haendler": "serverhaus",
+        "preis": 305,
+        "lieferzeit": 1
+      },
+      {
+        "id": "d4",
+        "teil": "drucker_mx560",
+        "haendler": "bitlager",
+        "preis": 549,
+        "lieferzeit": 2
+      },
+      {
+        "id": "t1",
+        "teil": "toner_dw420_s",
+        "haendler": "kabelkoenig",
+        "preis": 59,
+        "lieferzeit": 2
+      },
+      {
+        "id": "t2",
+        "teil": "toner_dw420_xl",
+        "haendler": "bitlager",
+        "preis": 89,
+        "lieferzeit": 4
+      },
+      {
+        "id": "t3",
+        "teil": "toner_dw560_s",
+        "haendler": "bitlager",
+        "preis": 79,
+        "lieferzeit": 1
+      }
+    ],
+    "budget": 420,
+    "frist": 3,
+    "hilfe": [
+      "Prüfe jede Anforderung einzeln: Netzwerk (LAN statt USB), Duplex (beidseitig) und kein Farbdruck.",
+      "Der Toner muss zum Druckermodell passen, und alles muss innerhalb der Frist ankommen."
+    ],
+    "erklaerung": [
+      "Nur der LX-420 erfüllt alles: LAN, Duplex, Schwarzweiß. Der LX-410 hängt nur per USB an einem PC, der MX-560 druckt in Farbe und sprengt das Budget.",
+      "Der XL-Toner wäre ergiebiger, kommt aber erst in vier Tagen. Zwei normale DW-420-Toner passen in Budget und Frist."
+    ],
+    "suchbegriffe": ["Drucker", "Toner"]
+  },
+  {
+    "id": "drucker-einrichten-verwaltung",
+    "typ": "formular",
+    "art": "drucker",
+    "titel": "Netzwerkdrucker in der Verwaltung einrichten",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 17,
+    "nach": "bestellung-drucker-verwaltung",
+    "ticket": [
+      "Der neue Drucker steht ausgepackt auf Franks Schreibtisch. Frank: „Ich habe schon mal den Stecker reingesteckt. Er leuchtet. Mehr traue ich mich nicht.“",
+      "Ulla hat dir die Netzdaten der Verwaltung dazugelegt: feste Adressen für Drucker, Gateway wie immer die erste Adresse, DNS macht der Router."
+    ],
+    "frage": "Trage die Netzwerkeinstellungen des Druckers ein und wähle Treiber und Freigabe.",
+    "daten": {
+      "netz": "192.168.20.0/24",
+      "bereich": [200, 219],
+      "belegt": [200, 201, 203],
+      "dns": "gateway",
+      "treiber": ["PCL 6 (Druckwerk LX-420)", "PostScript universal", "Nur Text (generisch)"],
+      "treiber_richtig": "PCL 6 (Druckwerk LX-420)",
+      "freigaben": ["VERW-DRUCKER-01", "Franks Drucker", "drucker neu"],
+      "freigabe_richtig": "VERW-DRUCKER-01",
+      "hinweise": [
+        "Namensschema der Freigaben: STANDORT-DRUCKER-Nummer, ohne Leerzeichen"
+      ]
+    },
+    "hilfe": [
+      "Die erste freie Adresse im Druckerbereich: Geh von der ersten Adresse aufwärts und überspringe die belegten.",
+      "Bei /24 lautet die Maske 255.255.255.0, das Gateway ist die erste Host-Adresse des Netzes.",
+      "Der passende Treiber ist der des Herstellers für genau dieses Modell. Der Freigabename folgt dem Namensschema."
+    ],
+    "erklaerung": [
+      ".200 und .201 sind belegt, .202 ist frei. Drucker bekommen feste Adressen, damit sie nach einem Neustart nicht plötzlich woanders stehen.",
+      "Der Herstellertreiber (PCL 6) kann Duplex und Fächer, der generische Nur-Text-Treiber hätte wieder Zeichensalat gebracht. Die Freigabe heißt nach Schema VERW-DRUCKER-01."
+    ],
+    "suchbegriffe": ["Drucker", "Gateway", "Subnetzmaske"]
   }
 ]

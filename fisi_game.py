@@ -54,9 +54,10 @@ AXIS_KEYS = [key for key, _name in AXES]
 
 PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"]
 TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung", "rack", "formular",
-              "terminal", "diagnose")
+              "terminal", "diagnose", "wartung")
 # Typen, deren Rueckmeldung eine Liste von Problemen ist
-PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular", "terminal", "diagnose")
+PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular", "terminal", "diagnose",
+                 "wartung")
 
 # Ereignistypen im Protokoll
 EV_PROFILE = "profil_gesetzt"
@@ -69,12 +70,15 @@ EV_MOVE = "umzug"
 EV_BUY = "moebel_gekauft"
 EV_SELL = "moebel_verkauft"
 EV_LAYOUT = "einrichtung_gesetzt"
+# Austausch (ab 0.32): Ersatzteil fehlt im Lager und wird nachbestellt
+EV_SPARE_ORDER = "ersatzteil_bestellt"
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
 ST_RIGHT = "richtig"
 ST_WRONG = "falsch"
 ST_DEFERRED = "verschoben"
+ST_WAITING = "wartet"          # Ersatzteil nachbestellt, kommt am naechsten Tag
 
 # Laengen-Grenzen, damit die Texte auch auf dem Handy gut lesbar bleiben
 MAX_TICKET_CHARS = 700
@@ -209,8 +213,11 @@ def load_game_content(folder=None):
         with open(os.path.join(folder, name + ".json"), encoding="utf-8") as handle:
             return json.load(handle)
 
-    tasks = read("aufgaben")
-    incidents = read("zwischenfaelle")
+    tasks = expand_variants(read("aufgaben"))
+    if os.path.exists(os.path.join(folder, "aufgaben_vorlagen.json")):
+        templates = read("aufgaben_vorlagen")
+        tasks += expand_variants(templates.get("vorlagen", []), template=True)
+    incidents = expand_variants(read("zwischenfaelle"))
     for task in tasks + incidents:
         for field in ("ticket", "hilfe", "erklaerung"):
             task[field] = _lines(task.get(field))
@@ -231,6 +238,83 @@ def load_game_content(folder=None):
     }
 
 
+# ============================================================================
+#  VORLAGEN: EIN AUFTRAG, VIELE VARIANTEN (ab 0.32)
+# ============================================================================
+#
+# Ein Eintrag mit "varianten" wird beim Laden zu mehreren festen Auftraegen:
+# Jede Variante ersetzt die Platzhalter {{name}} in allen Texten durch ihre
+# "werte" und darf einzelne Felder ueberschreiben (z.B. ab_tag, raum, daten).
+# Die erste Variante behaelt die Kennung, die weiteren heissen "<id>#2",
+# "<id>#3" ... So sehen PC und Handy dieselben Auftraege, jede Variante gibt
+# es genau einmal, und die Inhaltspruefung prueft jede wie einen
+# handgeschriebenen Auftrag.
+#   wiederholen  {"start": 18, "abstand": 12}: Variante i bekommt ab_tag
+#                start + i * abstand (wenn sie keinen eigenen hat)
+#   auffaellig   (in einer Variante einer Wartung) Kennungen der Pruefpunkte,
+#                die in dieser Variante auffaellig sind
+
+PLACEHOLDER_OPEN = "{{"
+VARIANT_MARK = "#"
+
+
+def _fill(value, values):
+    if isinstance(value, str):
+        for key, text in values.items():
+            value = value.replace("{{%s}}" % key, str(text))
+        return value
+    if isinstance(value, list):
+        return [_fill(item, values) for item in value]
+    if isinstance(value, dict):
+        return {key: _fill(item, values) for key, item in value.items()}
+    return value
+
+
+def expand_variants(items, template=False):
+    """Loest Eintraege mit "varianten" in einzelne Auftraege auf.
+    template=True markiert die Ergebnisse als Vorlagen-Auftraege."""
+    result = []
+    for item in items:
+        variants = item.get("varianten")
+        if not variants:
+            task = dict(item)
+            if template:
+                task["vorlage"] = item["id"]
+            result.append(task)
+            continue
+        base = {key: value for key, value in item.items()
+                if key not in ("varianten", "wiederholen")}
+        repeat = item.get("wiederholen") or {}
+        for number, variant in enumerate(variants):
+            task = _fill(copy.deepcopy(base), variant.get("werte") or {})
+            for key, value in variant.items():
+                if key not in ("werte", "auffaellig"):
+                    task[key] = copy.deepcopy(value)
+            if "auffaellig" in variant:
+                # Wartung: Liste der auffaelligen Pruefpunkte dieser Variante
+                for point in task.get("pruefpunkte") or []:
+                    point["auffaellig"] = point["id"] in variant["auffaellig"]
+            if "ab_tag" not in variant and repeat:
+                task["ab_tag"] = repeat.get("start", 1) + number * repeat.get("abstand", 1)
+            task["id"] = item["id"] if number == 0 else "%s%s%d" % (item["id"], VARIANT_MARK,
+                                                                     number + 1)
+            task["art"] = item["id"]
+            if template:
+                task["vorlage"] = item["id"]
+            result.append(task)
+    return result
+
+
+def _leftover_placeholder(value):
+    if isinstance(value, str):
+        return PLACEHOLDER_OPEN in value
+    if isinstance(value, list):
+        return any(_leftover_placeholder(item) for item in value)
+    if isinstance(value, dict):
+        return any(_leftover_placeholder(item) for item in value.values())
+    return False
+
+
 def _story_value(value):
     """Story-Texte: Liste von Zeilen (ein Text), Liste von Listen (mehrere
     Texte, die sich abwechseln) oder {tag: Zeilen} (Szenen je Arbeitstag)."""
@@ -245,6 +329,7 @@ GAME = load_game_content()
 
 
 WRONG_DELIVERY = "falschlieferung:"     # Kennung: falschlieferung:<bestellung>
+STOCK_BASE = "grundbestand"             # Ersatzteilregal im Lager (hardware.json)
 
 
 def task_by_id(task_id, content=None):
@@ -442,15 +527,23 @@ def validate_game_content(content=None):
     problems += _validate_homes(content)
     problems += _validate_rent(content)
 
+    per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
         if rank["name"] not in balancing["gehalt_pro_tag"]:
             problems.append("Spiel-Balancing: kein Gehalt fuer Rang '%s'" % rank["name"])
+        if isinstance(per_day, dict) and not per_day.get(rank["name"], 0) >= 1:
+            problems.append("Spiel-Balancing: keine Tickets pro Tag fuer Rang '%s'"
+                            % rank["name"])
+    days = [rank.get("ab_tag", 1) for rank in balancing["raenge"]]
+    if days != sorted(days) or days[0] != 1:
+        problems.append("Spiel-Balancing: ab_tag der Raenge muss bei 1 beginnen und steigen")
 
     problems += _validate_hardware(content)
     problems += _validate_rack_hardware(content)
     problems += _validate_wrong_delivery(content)
 
     seen = set()
+    tickets_seen = {}
     for number, task in enumerate(content["aufgaben"] + content.get("zwischenfaelle", []),
                                   start=1):
         where = "Spiel-Aufgabe Nr. %d (%s)" % (number, task.get("id"))
@@ -461,6 +554,12 @@ def validate_game_content(content=None):
                 problems.append("%s: Feld '%s' fehlt oder ist leer" % (where, field))
         if task.get("id") in seen:
             problems.append("%s: Kennung doppelt vorhanden" % where)
+        if _leftover_placeholder(task):
+            problems.append("%s: Platzhalter {{...}} ohne Wert" % where)
+        if task.get("ticket") in tickets_seen:
+            problems.append("%s: gleicher Tickettext wie '%s'"
+                            % (where, tickets_seen[task.get("ticket")]))
+        tickets_seen[task.get("ticket")] = task.get("id")
         seen.add(task.get("id"))
         if task.get("typ") not in TASK_TYPES:
             problems.append("%s: unbekannter Typ '%s'" % (where, task.get("typ")))
@@ -518,6 +617,9 @@ def validate_game_content(content=None):
         elif task.get("typ") == "diagnose":
             problems += ["%s: %s" % (where, text)
                          for text in _validate_diagnosis_task(task, content)]
+        elif task.get("typ") == "wartung":
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_maintenance_task(task, content)]
 
         if task.get("typ") == "auswahl":
             options = task.get("optionen") or []
@@ -598,6 +700,31 @@ def _validate_hardware(content):
     dealers = [item["id"] for item in hardware["haendler"]]
     if len(set(dealers)) != len(dealers):
         problems.append("Spiel-Haendler: Kennung doppelt vorhanden")
+    # Ersatzteile fuer Austausch-Auftraege (ab 0.32)
+    kinds = hardware.get("ersatz_typen", {})
+    for item in hardware.get("ersatzteile", []):
+        where = "Spiel-Ersatzteil %s" % item.get("id")
+        if item.get("id") in seen:
+            problems.append("%s: Kennung doppelt vorhanden" % where)
+        seen.add(item.get("id"))
+        if item.get("typ") not in kinds:
+            problems.append("%s: unbekannter Typ '%s'" % (where, item.get("typ")))
+            continue
+        if not item.get("name") or not item.get("preis", 0) > 0:
+            problems.append("%s: Name oder Preis fehlt" % where)
+        for key, _name, _unit in spare_features(item["typ"], content):
+            if key not in item:
+                problems.append("%s: Merkmal '%s' fehlt" % (where, key))
+    for kind in kinds:
+        if not spare_features(kind, content):
+            problems.append("Spiel-Ersatzteile: keine Merkmale fuer Typ '%s'" % kind)
+    for part_id, count in hardware.get("grundbestand", {}).items():
+        if part_id not in seen or not int(count) >= 1:
+            problems.append("Spiel-Grundbestand: unbekanntes Teil '%s'" % part_id)
+    if hardware.get("ersatzteile"):
+        extra = hardware.get("nachbestellung", {})
+        if extra.get("haendler") not in dealers or not extra.get("lieferzeit", 0) >= 1:
+            problems.append("Spiel-Nachbestellung: Haendler oder Lieferzeit fehlt")
     return problems
 
 
@@ -617,7 +744,8 @@ def _validate_hardware_task(task, content):
             problems.append("Angebots-Kennung doppelt vorhanden")
         for need in needs:
             if (need.get("typ") not in content["hardware"]["typen"] and
-                    need.get("typ") not in content["hardware"].get("rack_typen", {})) or \
+                    need.get("typ") not in content["hardware"].get("rack_typen", {}) and
+                    need.get("typ") not in content["hardware"].get("ersatz_typen", {})) or \
                     not need.get("text") or not need.get("menge", 0) >= 1:
                 problems.append("Bedarf unvollstaendig: %s" % need.get("text"))
             for other in need.get("fuer") or []:
@@ -818,7 +946,8 @@ UNITS = {"groesse": "GB", "watt": "W", "leistung": "W", "ports": "Ports"}
 def part(part_id, content=None):
     """Bauteil (PC) oder Rack-Geraet - beides laesst sich bestellen und liegt
     dann im Lager."""
-    for item in (content or GAME)["hardware"]["teile"]:
+    hardware = (content or GAME)["hardware"]
+    for item in hardware["teile"] + hardware.get("ersatzteile", []):
         if item["id"] == part_id:
             return item
     return rack_device(part_id, content)
@@ -930,6 +1059,13 @@ def _need_mismatch(item, need, content=None):
         problems = compatibility_problems({other["typ"]: other, item["typ"]: item}, content)
         if problems:
             return problems[0]
+    for key, value in (need.get("passt") or {}).items():
+        if item.get(key) != value:
+            labels = {name: (label, unit) for name, label, unit in
+                      spare_features(item["typ"], content)}
+            label, unit = labels.get(key, (key, ""))
+            return "passt nicht: %s %s statt %s" % (
+                label, _feature_value(item.get(key), unit), _feature_value(value, unit))
     for key, value in (need.get("min") or {}).items():
         if item.get(key, 0) < value:
             unit = UNITS.get(key, "")
@@ -1385,7 +1521,7 @@ def _validate_rack_hardware(content):
 #
 # Antwort: {feld_id: eingegebener_text}
 
-FORM_KINDS = ("ip_plan", "raid", "angebot", "leasing")
+FORM_KINDS = ("ip_plan", "raid", "angebot", "leasing", "drucker")
 
 IP_FIELDS = {
     "netz": "Netzadresse", "praefix": "Präfix", "maske": "Subnetzmaske",
@@ -1561,9 +1697,48 @@ def form_fields(task, content=None):
                 add(key, label, "wahl", value, options=["Kauf", "Leasing"])
             else:
                 add(key, label, "geld", value, unit="€", shown=_euro(value))
+    elif kind == "drucker":
+        values = printer_values(data)
+        add("ip", "IP-Adresse des Druckers", "ip", values["ip"])
+        add("maske", "Subnetzmaske", "praefix", values["praefix"], shown=values["maske"])
+        add("gateway", "Standardgateway", "ip", values["gateway"])
+        if data.get("dns") == "gateway":
+            add("dns", "DNS-Server", "ip", values["gateway"])
+        add("treiber", "Treiber", "wahl", data["treiber_richtig"],
+            options=list(data["treiber"]))
+        if data.get("freigaben"):
+            add("freigabe", "Freigabename", "wahl", data["freigabe_richtig"],
+                options=list(data["freigaben"]))
     else:
         raise FormError("unbekannte Formular-Art '%s'" % kind)
     return fields
+
+
+def printer_values(data):
+    """Drucker einrichten: erste freie Adresse im Druckerbereich (Hostteil
+    von-bis, belegte Hostnummern ausgenommen), Maske und Gateway (erste
+    Host-Adresse des Netzes)."""
+    import ipaddress
+    net = ipaddress.IPv4Network(data["netz"], strict=True)
+    low, high = data["bereich"]
+    taken = set(data.get("belegt") or [])
+    hosts = list(net.hosts())
+    free = [number for number in range(low, high + 1) if number not in taken]
+    if not free:
+        raise FormError("im Druckerbereich ist keine Adresse frei")
+    address = net.network_address + free[0]
+    if address not in net or address == net.broadcast_address or free[0] < 1:
+        raise FormError("Druckerbereich liegt nicht im Netz")
+    gateway = hosts[0]
+    if address == gateway:
+        raise FormError("Druckerbereich ueberschneidet das Gateway")
+    for key in ("treiber_richtig",):
+        if data[key] not in data["treiber"]:
+            raise FormError("richtiger Treiber steht nicht in der Auswahl")
+    if data.get("freigaben") and data.get("freigabe_richtig") not in data["freigaben"]:
+        raise FormError("richtige Freigabe steht nicht in der Auswahl")
+    return {"ip": str(address), "praefix": net.prefixlen, "maske": str(net.netmask),
+            "gateway": str(gateway)}
 
 
 def form_given(task, content=None):
@@ -1584,6 +1759,23 @@ def form_given(task, content=None):
                                                 _euro(data["einkaufspreis"])),
                 "Handlungskosten %s %% · Gewinn %s %% · Umsatzsteuer %s %%" % (
                     _num(data["handlungskosten"]), _num(data["gewinn"]), _num(data["ust"]))]
+    if kind == "drucker":
+        import ipaddress
+        net = ipaddress.IPv4Network(data["netz"], strict=True)
+        low, high = data["bereich"]
+
+        def host(number):
+            return str(net.network_address + number)
+        lines = ["Netz: %s · Gateway ist die erste Host-Adresse" % data["netz"],
+                 "Druckerbereich: %s bis %s, die erste freie Adresse nehmen"
+                 % (host(low), host(high))]
+        taken = sorted(data.get("belegt") or [])
+        if taken:
+            lines.append("Schon belegt: %s" % ", ".join(host(number) for number in taken))
+        if data.get("dns") == "gateway":
+            lines.append("DNS übernimmt ebenfalls der Router (Gateway)")
+        lines += list(data.get("hinweise") or [])
+        return lines
     if kind == "leasing":
         lines = ["Kaufpreis: %s" % _euro(data["kaufpreis"]),
                  "Leasing: %d Monate zu je %s" % (data["laufzeit"], _euro(data["rate"]))]
@@ -1837,9 +2029,10 @@ def diagnosis_key_checks(task):
     return [item["id"] for item in task["pruefungen"] if item.get("entscheidend")]
 
 
-def diagnosis_review(task, answer, content=None):
+def diagnosis_review(task, answer, content=None, available=None):
     """Auswertung einer Diagnose:
-    {"richtig", "pruefungen", "systematisch", "gefahr", "probleme"}."""
+    {"richtig", "pruefungen", "systematisch", "gefahr", "probleme"}.
+    available: Teile im Lager (fuer den Austausch-Schritt, None = nicht pruefen)."""
     answer = answer or {}
     done = diagnosis_done(task, answer)
     cause = answer.get("ursache") or ""
@@ -1860,6 +2053,7 @@ def diagnosis_review(task, answer, content=None):
                         "Sicherheitsbewusstsein." % measure)
     elif measure != task["massnahme"]:
         problems.append("Die Maßnahme „%s“ behebt den Fehler nicht." % measure)
+    problems += exchange_review(task, answer, available, content)
     right = not problems
     systematic = right and all(key in done for key in keys) and \
         len(done) <= task["ziel_pruefungen"]
@@ -1867,9 +2061,11 @@ def diagnosis_review(task, answer, content=None):
             "gefahr": 1 if unsafe else 0, "probleme": problems}
 
 
-def diagnosis_solution(task):
-    return {"pruefungen": diagnosis_key_checks(task), "ursache": task["ursache"],
-            "massnahme": task["massnahme"]}
+def diagnosis_solution(task, content=None, available=None):
+    result = {"pruefungen": diagnosis_key_checks(task), "ursache": task["ursache"],
+              "massnahme": task["massnahme"]}
+    result.update(exchange_solution(task, content, available))
+    return result
 
 
 def spare_part(task, stock, content=None):
@@ -1882,6 +2078,251 @@ def spare_part(task, stock, content=None):
         if item and item["typ"] in allowed and (stock or {}).get(part_id, 0) > 0:
             return part_id
     return None
+
+
+# ============================================================================
+#  AUSTAUSCH (DIAGNOSE MIT TEILETAUSCH) UND WARTUNG (ab 0.32)
+# ============================================================================
+#
+# Austausch: Eine Diagnose kann einen Austausch-Schritt haben. Nach Ursache und
+# Massnahme wird das Ersatzteil gewaehlt (aus dem Lager, sonst nachbestellen)
+# und der Ablauf in die richtige Reihenfolge gebracht: ausbauen, einbauen,
+# Funktionstest.
+#   austausch {"typ": Ersatzteil-Typ, "passt": {merkmal: wert},
+#              "schritte": [...richtige Reihenfolge...], "falsch": [...],
+#              "test": "Ergebnis des Funktionstests"}
+# Antwort zusaetzlich: {"teil": ersatzteil_id, "reihenfolge": [schritt, ...]}
+#
+# Wartung: Kein Fehler gemeldet, sondern vorbeugende Pruefung. Jeder
+# Pruefpunkt wird geprueft und als "in Ordnung" oder "auffaellig" bewertet,
+# danach wird der Abschluss gewaehlt (was ins Protokoll kommt).
+#   pruefpunkte [{"id", "text", "ergebnis", "auffaellig": true|false}]
+#   abschluss (Liste) / abschluss_antwort
+# Antwort: {"bewertung": {id: "ok"|"auffaellig"}, "abschluss": text}
+
+RATING_OK = "ok"
+RATING_ISSUE = "auffaellig"
+RATING_TEXT = {RATING_OK: "in Ordnung", RATING_ISSUE: "auffällig"}
+SPARE_STEPS = (3, 6)        # so viele Schritte hat ein Austausch
+
+
+def spare_kinds(content=None):
+    """Alle Teile-Typen, die ausgetauscht werden koennen: {typ: Name}."""
+    hardware = (content or GAME)["hardware"]
+    kinds = dict(hardware.get("typen", {}))
+    kinds.update(hardware.get("ersatz_typen", {}))
+    return kinds
+
+
+def spare_features(kind, content=None):
+    """Merkmale eines Ersatzteil-Typs fuer die Anzeige: [(feld, Name, Einheit)]."""
+    return [tuple(item) for item in
+            (content or GAME)["hardware"].get("ersatz_merkmale", {}).get(kind, [])]
+
+
+def spare_catalog(task, content=None):
+    """Alle Teile, die fuer einen Austausch infrage kommen (gleicher Typ)."""
+    exchange = task.get("austausch") or {}
+    hardware = (content or GAME)["hardware"]
+    return [item for item in hardware["teile"] + hardware.get("ersatzteile", [])
+            if item["typ"] == exchange.get("typ")]
+
+
+def spare_fits(task, part_id, content=None):
+    """Passt ein Ersatzteil? Liefert die Abweichungen als Saetze ([] = passt)."""
+    item = part(part_id, content)
+    exchange = task.get("austausch") or {}
+    if not item or item["typ"] != exchange.get("typ"):
+        return ["Das ist kein %s." % spare_kinds(content).get(exchange.get("typ"),
+                                                               "passendes Teil")]
+    labels = {key: (name, unit) for key, name, unit in
+              spare_features(exchange["typ"], content)}
+    problems = []
+    for key, wanted in (exchange.get("passt") or {}).items():
+        if item.get(key) != wanted:
+            name, unit = labels.get(key, (key, ""))
+            problems.append("%s %s statt %s" % (
+                name, _feature_value(item.get(key), unit), _feature_value(wanted, unit)))
+    return problems
+
+
+def _feature_value(value, unit):
+    if isinstance(value, float):
+        value = _num(value)
+    return ("%s %s" % (value, unit)).strip()
+
+
+def spare_specs(item, content=None):
+    """Merkmale eines Ersatzteils als kurze Zeile."""
+    parts = [_feature_value(item.get(key), unit)
+             for key, _name, unit in spare_features(item["typ"], content)
+             if item.get(key) is not None]
+    return " · ".join(parts)
+
+
+def exchange_steps(task):
+    """Alle Schritte zur Auswahl (richtige und falsche), fest gemischt."""
+    exchange = task.get("austausch") or {}
+    steps = list(exchange.get("schritte") or []) + list(exchange.get("falsch") or [])
+    return sorted(steps, key=lambda text: _dice(task["id"], 0, text))
+
+
+def exchange_review(task, answer, available=None, content=None):
+    """Probleme im Austausch-Schritt als Saetze ([] = alles richtig)."""
+    exchange = task.get("austausch")
+    if not exchange:
+        return []
+    answer = answer or {}
+    problems = []
+    chosen = answer.get("teil")
+    if not chosen:
+        problems.append("Es wurde kein Ersatzteil gewählt.")
+    else:
+        item = part(chosen, content)
+        fits = spare_fits(task, chosen, content)
+        if fits:
+            problems.append("„%s“ passt nicht: %s." % (
+                item["name"] if item else chosen, ", ".join(fits)))
+        elif available is not None and chosen not in available:
+            problems.append("„%s“ liegt nicht im Lager." % item["name"])
+    order = list(answer.get("reihenfolge") or [])
+    wrong = [text for text in order if text in (exchange.get("falsch") or [])]
+    for text in wrong:
+        problems.append("„%s“ gehört nicht zum Austausch." % text)
+    right = [text for text in order if text not in wrong]
+    if right != list(exchange["schritte"]):
+        problems.append("Der Ablauf stimmt nicht. Richtig: %s." % " → ".join(
+            "%d. %s" % (number, text.rstrip("."))
+            for number, text in enumerate(exchange["schritte"], start=1)))
+    return problems
+
+
+def exchange_solution(task, content=None, available=None):
+    """Richtige Antwort des Austausch-Schritts: ein passendes Teil (zuerst
+    eines, das im Lager liegt, sonst das guenstigste)."""
+    exchange = task.get("austausch")
+    if not exchange:
+        return {}
+    fitting = [item for item in spare_catalog(task, content)
+               if not spare_fits(task, item["id"], content)]
+    fitting.sort(key=lambda item: (item["id"] not in (available or []), item.get("preis", 0)))
+    return {"teil": fitting[0]["id"] if fitting else None,
+            "reihenfolge": list(exchange["schritte"])}
+
+
+def spare_delivery_days(content=None):
+    return int((content or GAME)["hardware"].get("nachbestellung", {}).get("lieferzeit", 1))
+
+
+def spare_dealer(content=None):
+    return (content or GAME)["hardware"].get("nachbestellung", {}).get("haendler", "")
+
+
+def _validate_exchange(task, content):
+    exchange = task.get("austausch")
+    problems = []
+    if task.get("zwischenfall"):
+        return ["Zwischenfaelle warten nicht - kein Austausch mit Nachbestellung"]
+    if exchange.get("typ") not in spare_kinds(content):
+        return ["Austausch: unbekannter Teile-Typ '%s'" % exchange.get("typ")]
+    catalog = spare_catalog(task, content)
+    fitting = [item for item in catalog if not spare_fits(task, item["id"], content)]
+    if not fitting:
+        problems.append("Austausch: kein passendes Ersatzteil im Katalog")
+    if len(fitting) == len(catalog):
+        problems.append("Austausch: jedes Teil passt - die Wahl waere egal")
+    labels = [key for key, _name, _unit in spare_features(exchange["typ"], content)]
+    for key in exchange.get("passt") or {}:
+        if key not in labels:
+            problems.append("Austausch: Merkmal '%s' hat keine Bezeichnung" % key)
+    steps = list(exchange.get("schritte") or [])
+    wrong = list(exchange.get("falsch") or [])
+    if not SPARE_STEPS[0] <= len(steps) <= SPARE_STEPS[1]:
+        problems.append("Austausch: braucht %d bis %d Schritte" % SPARE_STEPS)
+    if len(set(steps + wrong)) != len(steps + wrong):
+        problems.append("Austausch: Schritte doppelt")
+    for text in steps + wrong:
+        if len(text) > MAX_OPTION_CHARS:
+            problems.append("Austausch: Schritt zu lang (Handy): %s" % text[:40])
+    if not exchange.get("test"):
+        problems.append("Austausch: Ergebnis des Funktionstests fehlt")
+    elif len(exchange["test"]) > MAX_RESULT_CHARS:
+        problems.append("Austausch: Funktionstest-Text zu lang (Handy)")
+    return problems
+
+
+def maintenance_point(task, point_id):
+    for item in task.get("pruefpunkte") or []:
+        if item["id"] == point_id:
+            return item
+    return None
+
+
+def maintenance_review(task, answer, content=None):
+    """Auswertung einer Wartung: {"richtig", "probleme", "uebersehen"}."""
+    answer = answer or {}
+    ratings = answer.get("bewertung") or {}
+    problems, missed = [], 0
+    for item in task["pruefpunkte"]:
+        rating = ratings.get(item["id"])
+        wanted = RATING_ISSUE if item.get("auffaellig") else RATING_OK
+        if rating is None:
+            problems.append("„%s“ wurde nicht geprüft." % item["text"].rstrip("."))
+        elif rating != wanted:
+            if wanted == RATING_ISSUE:
+                missed += 1
+                problems.append("„%s“ ist auffällig: %s" % (item["text"].rstrip("."),
+                                                             item["ergebnis"]))
+            else:
+                problems.append("„%s“ ist in Ordnung: %s" % (item["text"].rstrip("."),
+                                                              item["ergebnis"]))
+    closing = answer.get("abschluss") or ""
+    if not closing:
+        problems.append("Es wurde kein Abschluss gewählt.")
+    elif closing != task["abschluss_antwort"]:
+        problems.append("Der Abschluss „%s“ passt nicht zum Ergebnis." % closing)
+    return {"richtig": not problems, "probleme": problems, "uebersehen": missed}
+
+
+def maintenance_solution(task):
+    return {"bewertung": {item["id"]: RATING_ISSUE if item.get("auffaellig") else RATING_OK
+                          for item in task["pruefpunkte"]},
+            "abschluss": task["abschluss_antwort"]}
+
+
+def maintenance_counter(task, ratings):
+    done = len([key for key in (ratings or {}) if maintenance_point(task, key)])
+    issues = len([value for value in (ratings or {}).values() if value == RATING_ISSUE])
+    return "%d von %d Prüfpunkten bewertet · %d auffällig" % (
+        done, len(task["pruefpunkte"]), issues)
+
+
+def _validate_maintenance_task(task, content):
+    problems = []
+    points = task.get("pruefpunkte") or []
+    ids = [item.get("id") for item in points]
+    if len(points) < 3 or len(set(ids)) != len(ids) or not all(ids):
+        return ["braucht mindestens 3 Pruefpunkte mit eindeutiger Kennung"]
+    for item in points:
+        if not item.get("text") or not item.get("ergebnis"):
+            problems.append("Pruefpunkt '%s': Text oder Ergebnis fehlt" % item["id"])
+        if not isinstance(item.get("auffaellig", False), bool):
+            problems.append("Pruefpunkt '%s': auffaellig muss true/false sein" % item["id"])
+        if len(item.get("text", "")) > MAX_OPTION_CHARS or \
+                len(item.get("ergebnis", "")) > MAX_RESULT_CHARS:
+            problems.append("Pruefpunkt '%s': Text zu lang (Handy)" % item["id"])
+    options = task.get("abschluss") or []
+    if len(options) < 3 or len(set(options)) != len(options):
+        problems.append("Abschluss: braucht mindestens 3 verschiedene Moeglichkeiten")
+    if task.get("abschluss_antwort") not in options:
+        problems.append("Abschluss: richtige Antwort steht nicht in der Auswahl")
+    for text in options:
+        if len(text) > MAX_OPTION_CHARS:
+            problems.append("Abschluss zu lang (Handy): %s" % text[:40])
+    if not problems and not maintenance_review(task, maintenance_solution(task),
+                                               content)["richtig"]:
+        problems.append("die eigene Loesung wird nicht als richtig erkannt")
+    return problems
 
 
 def terminal_step_label(task, step_index):
@@ -2028,7 +2469,10 @@ def _validate_diagnosis_task(task, content):
                 if kind not in types:
                     problems.append("'%s' wird in '%s' nicht bestellt" % (kind, first["id"]))
             problems += _stock_users_problems(first, content)
-    if not problems and not diagnosis_review(task, diagnosis_solution(task), content)["richtig"]:
+    if task.get("austausch"):
+        problems += _validate_exchange(task, content)
+    if not problems and not diagnosis_review(task, diagnosis_solution(task, content),
+                                             content)["richtig"]:
         problems.append("die eigene Loesung wird nicht als richtig erkannt")
     return problems
 
@@ -2059,7 +2503,9 @@ def answer_problems(task, answer, available=None, content=None):
     if task["typ"] == "terminal":
         return terminal_review(task, answer, content)["probleme"]
     if task["typ"] == "diagnose":
-        return diagnosis_review(task, answer, content)["probleme"]
+        return diagnosis_review(task, answer, content, available)["probleme"]
+    if task["typ"] == "wartung":
+        return maintenance_review(task, answer, content)["probleme"]
     return []
 
 
@@ -2122,7 +2568,9 @@ def find_solution(task, available=None, content=None):
     if task["typ"] == "terminal":
         return terminal_solution(task)
     if task["typ"] == "diagnose":
-        return diagnosis_solution(task)
+        return diagnosis_solution(task, content, available)
+    if task["typ"] == "wartung":
+        return maintenance_solution(task)
     if task["typ"] == "formular":
         result = {}
         for field in form_fields(task, content):
@@ -2190,6 +2638,8 @@ def part_specs(item, content=None):
         return "%d GB RAM" % item["groesse"]
     if kind in (content or GAME)["hardware"].get("rack_typen", {}):
         return rack_specs(item, content)
+    if kind in (content or GAME)["hardware"].get("ersatz_typen", {}):
+        return spare_specs(item, content)
     return ""
 
 
@@ -2246,8 +2696,17 @@ def solution_text(task, available=None, content=None):
     if task["typ"] == "terminal":
         return "Richtiger Ablauf: " + " → ".join(terminal_commands(task))
     if task["typ"] == "diagnose":
-        return "Richtig: Ursache – %s. Maßnahme – %s." % (
+        text = "Richtig: Ursache – %s. Maßnahme – %s." % (
             task["ursache"].rstrip("."), task["massnahme"].rstrip("."))
+        if solution.get("teil"):
+            text += " Ersatzteil – %s." % part(solution["teil"], content)["name"]
+        return text
+    if task["typ"] == "wartung":
+        issues = [item["text"].rstrip(".") for item in task["pruefpunkte"]
+                  if item.get("auffaellig")]
+        text = "Auffällig: %s." % ", ".join(issues) if issues else \
+            "Alle Prüfpunkte sind in Ordnung."
+        return "%s Abschluss – %s." % (text, task["abschluss_antwort"].rstrip("."))
     return ""
 
 
@@ -2279,7 +2738,7 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
     if task["typ"] == "terminal":
         review = terminal_review(task, answer, content)
     elif task["typ"] == "diagnose":
-        review = diagnosis_review(task, answer, content)
+        review = diagnosis_review(task, answer, content, available)
     if review.get("gefahr"):
         # Gefaehrlicher Befehl oder unsichere Massnahme
         delta["sicherheit"] -= balancing["gefahr_verlust"]
@@ -2322,6 +2781,8 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
         payload["systematisch"] = review["systematisch"]
         payload["gefahr"] = review["gefahr"]
         spare = spare_part(task, stock, content) if right else None
+        if right and task.get("austausch"):
+            spare = answer.get("teil")
         if spare:
             payload["verbaut"] = [spare]
             payload["aus_lager"] = [spare]
@@ -2408,13 +2869,87 @@ def defer_payload(task, day, balancing=None):
 #  SPIELSTAND AUS DEN EREIGNISSEN
 # ============================================================================
 
-def rank_for(value, balancing=None):
+def rank_for(value, balancing=None, day=None):
+    """Rang zur mittleren Reputation. Ab 0.32 braucht eine Befoerderung auch
+    Berufserfahrung: Mit day zaehlt ein Rang erst ab seinem Arbeitstag."""
     balancing = balancing or GAME["balancing"]
     name = balancing["raenge"][0]["name"]
     for rank in balancing["raenge"]:
-        if value >= rank["ab"]:
+        if value >= rank["ab"] and (day is None or day >= rank.get("ab_tag", 1)):
             name = rank["name"]
     return name
+
+
+def tickets_per_day(rank, balancing=None):
+    """Normale Tickets pro Arbeitstag fuer einen Rang (Zwischenfaelle zaehlen
+    nicht mit). Aeltere Inhalte hatten eine feste Zahl."""
+    value = (balancing or GAME["balancing"])["tickets_pro_tag"]
+    if isinstance(value, dict):
+        return int(value.get(rank, min(value.values())))
+    return int(value)
+
+
+def next_rank(value, day, balancing=None):
+    """Der naechste Rang und was dafuer fehlt: (name, fehlende_reputation,
+    fehlende_tage) oder None, wenn schon der hoechste Rang erreicht ist."""
+    balancing = balancing or GAME["balancing"]
+    current = rank_for(value, balancing, day)
+    names = [rank["name"] for rank in balancing["raenge"]]
+    index = names.index(current)
+    if index + 1 >= len(names):
+        return None
+    rank = balancing["raenge"][index + 1]
+    return (rank["name"], max(0, int(math.ceil(rank["ab"] - value))),
+            max(0, rank.get("ab_tag", 1) - day))
+
+
+def rank_hint(state):
+    """Kurzer Satz, was bis zur naechsten Befoerderung fehlt (oder "")."""
+    upcoming = state.next_rank()
+    if upcoming is None:
+        return ""
+    name, reputation, days = upcoming
+    missing = []
+    if days:
+        missing.append("noch %d Arbeitstag%s" % (days, "" if days == 1 else "e"))
+    if reputation:
+        missing.append("noch %d %% Ansehen" % reputation)
+    if not missing:
+        return "Nächster Rang: %s ab dem nächsten Arbeitstag" % name
+    return "Nächster Rang: %s, %s" % (name, " und ".join(missing))
+
+
+_MIX_CACHE = {}
+
+
+def _pool_order(index, task):
+    """Sortierschluessel der Tagesauswahl (siehe GameState._pool)."""
+    if not task.get("vorlage"):
+        return (0, task.get("ab_tag", 1), index)
+    value = _MIX_CACHE.get(task["id"])
+    if value is None:
+        value = _MIX_CACHE[task["id"]] = _dice("mischung", 0, task["id"])
+    return (1, task.get("ab_tag", 1), value)
+
+
+def active_person(person_id, day, content=None):
+    """Wer eine Rolle am Arbeitstag day ausfuellt: die Person selbst oder -
+    nach ihrem letzten Arbeitstag (bis_tag) - ihre Nachfolge."""
+    seen = set()
+    while person_id not in seen:
+        seen.add(person_id)
+        person = colleague(person_id, content)
+        if not person or person.get("bis_tag") is None or day <= person["bis_tag"] or \
+                not person.get("nachfolger"):
+            return person_id
+        person_id = person["nachfolger"]
+    return person_id
+
+
+def person_present(person, day):
+    """Ist die Person an diesem Arbeitstag da (eingestellt, nicht im Ruhestand)?"""
+    return person.get("ab_tag", 1) <= day and \
+        (person.get("bis_tag") is None or day <= person["bis_tag"])
 
 
 class GameState:
@@ -2432,11 +2967,18 @@ class GameState:
         self.handled = {}          # aufgabe -> Status am aktuellen Tag
         self.history = []          # (timestamp, typ, daten) chronologisch
         self.tickets_done = 0
-        self.deliveries = []       # Lieferungen aus richtigen Bestellungen
+        # Lieferungen aus richtigen Bestellungen - dazu Rainers Ersatzteilregal
+        # (Grundbestand, ab 0.32)
+        self.deliveries = [{"teil": part_id, "menge": int(count), "ankunft": 0,
+                            "aufgabe": STOCK_BASE, "haendler": ""}
+                           for part_id, count in
+                           self.content["hardware"].get("grundbestand", {}).items()]
         self.used = {}             # aus dem Lager verbaute Teile: id -> Anzahl
         self.wrong_orders = {}     # falsche Bestellung -> ihre (trotzdem) gelieferte Ware
         self.returned_orders = set()   # Bestellungen mit zurueckgeschickter Falschlieferung
         self.seen_incidents = set()   # schon bearbeitete oder verschobene Zwischenfaelle
+        self.incident_days = {}       # Art des Zwischenfalls -> letzter Arbeitstag
+        self.spare_orders = []        # nachbestellte Ersatzteile (Austausch)
         homes = self.content["wohnungen"]
         self.home_id = homes["start"]
         self.furniture = dict(homes.get("start_moebel", {}))   # stueck -> moebel
@@ -2444,6 +2986,7 @@ class GameState:
         self.rent = 0              # Miete pro Arbeitstag der jetzigen Wohnung (0 = gekauft)
         self.deposit = 0           # hinterlegte Kaution (kommt beim Auszug zurueck)
         self.first_event = None
+        self.start_reputation = start   # mittlere Reputation zu Beginn des Arbeitstags
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -2451,6 +2994,17 @@ class GameState:
                 self.first_event = str(timestamp)
             if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
                 self.seen_incidents.add(data.get("aufgabe"))
+                incident = task_by_id(data.get("aufgabe"), self.content) or {}
+                kind_id = incident.get("art", data.get("aufgabe"))
+                self.incident_days[kind_id] = max(self.incident_days.get(kind_id, 0),
+                                                  int(data.get("tag", 0) or 0))
+            if kind == EV_SPARE_ORDER:
+                self.money += int(data.get("geld", 0))
+                item = {"teil": data.get("teil"), "menge": 1, "ankunft": data.get("ankunft", 0),
+                        "aufgabe": data.get("aufgabe"), "haendler": data.get("haendler", ""),
+                        "nachbestellt": True}
+                self.deliveries.append(item)
+                self.spare_orders.append(dict(data))
             if kind == EV_MOVE:
                 self.money += int(data.get("geld", 0))
                 self.home_id = data.get("wohnung", self.home_id)
@@ -2493,12 +3047,16 @@ class GameState:
             elif kind == EV_DAY_END:
                 self.days_done += 1
                 self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
+                self.start_reputation = self.mean_reputation
 
         # Tickets des laufenden Tages (Tag steht in den Nutzdaten)
         for _timestamp, kind, data in self.history:
-            if kind in (EV_SOLVED, EV_DEFERRED) and data.get("tag") == self.day:
+            if kind in (EV_SOLVED, EV_DEFERRED, EV_SPARE_ORDER) and \
+                    data.get("tag") == self.day:
                 if kind == EV_DEFERRED:
                     status = ST_DEFERRED
+                elif kind == EV_SPARE_ORDER:
+                    status = ST_WAITING
                 else:
                     status = ST_RIGHT if data.get("richtig") else ST_WRONG
                 self.handled[data.get("aufgabe")] = status
@@ -2520,7 +3078,20 @@ class GameState:
 
     @property
     def rank(self):
-        return rank_for(self.mean_reputation, self.content["balancing"])
+        return rank_for(self.mean_reputation, self.content["balancing"], self.day)
+
+    @property
+    def day_rank(self):
+        """Rang zu Beginn des Arbeitstags - danach richtet sich die Zahl der
+        Tickets, damit sie sich nicht mitten am Tag aendert."""
+        return rank_for(self.start_reputation, self.content["balancing"], self.day)
+
+    @property
+    def tickets_today(self):
+        return tickets_per_day(self.day_rank, self.content["balancing"])
+
+    def next_rank(self):
+        return next_rank(self.mean_reputation, self.day, self.content["balancing"])
 
     @property
     def salary(self):
@@ -2561,7 +3132,8 @@ class GameState:
         handed = [item for item in self.deliveries
                   if item["ankunft"] <= self.day and item.get("empfaenger")]
         stock = self.stock()
-        order = [item["id"] for item in self.content["hardware"]["teile"]]
+        hardware = self.content["hardware"]
+        order = [item["id"] for item in hardware["teile"] + hardware.get("ersatzteile", [])]
         rows = sorted(stock.items(), key=lambda row: order.index(row[0])
                       if row[0] in order else len(order))
         return {"unterwegs": on_way, "bestand": rows, "ausgeliefert": handed}
@@ -2572,7 +3144,9 @@ class GameState:
         Auftrag aus dem Lager holen darf - so nimmt kein Auftrag einem
         anderen die bestellte Ware weg)."""
         parts = list(task.get("teile", []))
-        allowed = task.get("aus_lager") or []
+        allowed = list(task.get("aus_lager") or [])
+        if task.get("austausch"):
+            allowed.append(task["austausch"]["typ"])
         for part_id in self.stock():
             item = part(part_id, self.content)
             if item and item["typ"] in allowed and part_id not in parts:
@@ -2593,21 +3167,48 @@ class GameState:
         return first is None or first["typ"] != "bestellung" or self.arrived(before)
 
     def _pool(self):
-        return [task for task in self.content["aufgaben"]
-                if task.get("ab_tag", 1) <= self.day
-                and task["id"] not in self.solved
-                and task["id"] not in self.handled
-                and task["id"] not in self.wrong_orders
-                and self._ready(task)]
+        """Offene Auftraege, die heute drankommen koennen - in der Reihenfolge,
+        in der sie verteilt werden: zuerst die Story-Auftraege (nach Tag),
+        dann die Auftraege aus Vorlagen (nach Tag, am selben Tag gemischt)."""
+        tasks = [(_pool_order(index, task), task)
+                 for index, task in enumerate(self.content["aufgaben"])
+                 if task.get("ab_tag", 1) <= self.day
+                 and task["id"] not in self.solved
+                 and task["id"] not in self.handled
+                 and task["id"] not in self.wrong_orders
+                 and not self.waiting_for_spare(task["id"])
+                 and self._ready(task)]
+        tasks.sort(key=lambda pair: pair[0])
+        return [self.staffed(task) for _key, task in tasks]
+
+    def staffed(self, task):
+        """Auftrag einer Person im Ruhestand: Die Nachfolge uebernimmt ihn."""
+        if task is None:
+            return task
+        person = active_person(task["auftraggeber"], self.day, self.content)
+        if person == task["auftraggeber"]:
+            return task
+        return dict(task, auftraggeber=person)
+
+    def waiting_for_spare(self, task_id):
+        """Wartet der Auftrag auf ein nachbestelltes Ersatzteil?"""
+        return any(order.get("aufgabe") == task_id and order.get("ankunft", 0) > self.day
+                   for order in self.spare_orders)
+
+    def spare_order_for(self, task_id):
+        """Das juengste nachbestellte Ersatzteil eines Auftrags (oder None)."""
+        orders = [order for order in self.spare_orders if order.get("aufgabe") == task_id]
+        return orders[-1] if orders else None
 
     def waiting_for_delivery(self):
         """Auftraege, die nur noch auf eine Lieferung warten."""
         return [task for task in self.content["aufgaben"]
-                if task["id"] not in self.solved and task.get("nach") in self.solved
-                and not self._ready(task)]
+                if task["id"] not in self.solved and (
+                    (task.get("nach") in self.solved and not self._ready(task)) or
+                    self.waiting_for_spare(task["id"]))]
 
     def open_tickets(self):
-        per_day = self.content["balancing"]["tickets_pro_tag"]
+        per_day = self.tickets_today
         regular = [task_id for task_id in self.handled if not is_incident(task_id, self.content)]
         result = self._pool()[:max(0, per_day - len(regular))]
         incident = self.incident_today()
@@ -2639,19 +3240,22 @@ class GameState:
         nur einmal pro Spieldurchgang."""
         for task_id in self.handled:
             if is_incident(task_id, self.content) and not task_id.startswith(WRONG_DELIVERY):
-                return task_by_id(task_id, self.content)
+                return self.staffed(task_by_id(task_id, self.content))
         rules = self.content["balancing"].get("zwischenfaelle") or {}
         if self.profile is None or self.day < rules.get("ab_tag", 2):
             return None
         seed = self.first_event or ""
-        if _dice(seed, self.day, "chance") >= rules.get("chance", 0):
+        if _dice(seed, self.day, "chance") >= incident_chance(self.day, rules):
             return None
+        gap = rules.get("abstand_gleiche_art", 0)
         candidates = [task for task in self.content.get("zwischenfaelle", [])
                       if task["id"] not in self.seen_incidents
-                      and task.get("ab_tag", 1) <= self.day and self._ready(task)]
+                      and task.get("ab_tag", 1) <= self.day and self._ready(task)
+                      and self.day - self.incident_days.get(task.get("art", task["id"]),
+                                                            -gap) >= gap]
         if not candidates:
             return None
-        return candidates[int(_dice(seed, self.day, "wahl") * len(candidates))]
+        return self.staffed(candidates[int(_dice(seed, self.day, "wahl") * len(candidates))])
 
     # -- Rack mit Geraeten aus dem Lager -------------------------------------
 
@@ -2660,6 +3264,7 @@ class GameState:
         die passenden Geraete aus dem Lager (je Stueck ein Eintrag)."""
         if task is None:
             return task
+        task = self.staffed(task)
         if task.get("falschlieferung"):
             items = self.wrong_orders.get(task["falschlieferung"]) or []
             goods = ", ".join("%d × %s" % (item["menge"], part(item["teil"], self.content)["name"])
@@ -2681,7 +3286,7 @@ class GameState:
 
     def todays_tickets(self):
         """Tickets des aktuellen Arbeitstags: [(aufgabe, status)]."""
-        result = [(task_by_id(task_id, self.content), status)
+        result = [(self.staffed(task_by_id(task_id, self.content)), status)
                   for task_id, status in self.handled.items()]
         result = [(task, status) for task, status in result if task]
         result += [(task, ST_OPEN) for task in self.open_tickets()]
@@ -2774,6 +3379,23 @@ class Game:
                            self.content["balancing"], self.state.available_parts(task),
                            self.content, self.state.stock())
         self._log(EV_SOLVED, payload)
+        return payload
+
+    def order_spare(self, task_id, part_id):
+        """Austausch: Das passende Ersatzteil fehlt im Lager und wird
+        nachbestellt. Das Ticket wartet, bis es da ist."""
+        task = self.state.prepared_task(task_by_id(task_id, self.content))
+        if task is None or not self.state.is_open(task_id):
+            raise ValueError("Dieses Ticket ist heute nicht (mehr) offen.")
+        if not task.get("austausch") or task.get("zwischenfall"):
+            raise ValueError("Für dieses Ticket kann nichts nachbestellt werden.")
+        item = part(part_id, self.content)
+        if not item or item["typ"] != task["austausch"]["typ"]:
+            raise ValueError("Dieses Teil passt nicht zum Austausch.")
+        payload = {"aufgabe": task_id, "tag": self.state.day, "teil": part_id,
+                   "geld": -int(item["preis"]), "haendler": spare_dealer(self.content),
+                   "ankunft": self.state.day + spare_delivery_days(self.content)}
+        self._log(EV_SPARE_ORDER, payload)
         return payload
 
     def defer(self, task_id):
@@ -4032,6 +4654,15 @@ DOOR_CLEARANCE = 1.0          # vor und hinter Tueren bleibt so viel frei
 _SITE_CACHE = {}
 
 
+def incident_chance(day, rules):
+    """Chance auf einen Zwischenfall an diesem Arbeitstag (gestaffelt)."""
+    chance = rules.get("chance", 0)
+    for step in sorted(rules.get("staffel") or [], key=lambda item: item["ab_tag"]):
+        if day >= step["ab_tag"]:
+            chance = step["chance"]
+    return chance
+
+
 def _dice(seed, day, salt):
     """Fester "Wuerfel" zwischen 0 und 1 aus Text - auf allen Geraeten gleich."""
     digest = hashlib.sha256(("%s|%s|%s" % (seed, day, salt)).encode("utf-8")).hexdigest()
@@ -4131,7 +4762,7 @@ def people_at_site(site_id, state=None, content=None):
                 waiting[task["auftraggeber"]] = (task_site(task, content), task["stelle"])
     result = []
     for person in all_people(content):
-        if day is not None and person.get("ab_tag", 1) > day:
+        if day is not None and not person_present(person, day):
             continue
         where, spot = waiting.get(person["id"], (person.get("ort", SITE_OFFICE),
                                                   person.get("platz")))
@@ -4624,7 +5255,7 @@ def result_text(task, payload, available=None, content=None):
         else:
             lines.append("Leider nicht ganz: Nicht alle Schritte sind erledigt.")
         lines += ["• " + text for text in payload.get("probleme") or []]
-    elif task["typ"] == "diagnose":
+    elif task["typ"] in ("diagnose", "wartung"):
         lines.append("Leider nicht ganz.")
         lines += ["• " + text for text in payload.get("probleme") or []]
         lines.append(solution_text(task, available, content))
@@ -4656,6 +5287,19 @@ def result_text(task, payload, available=None, content=None):
     if payload["richtig"] and task["typ"] == "diagnose" and payload.get("aus_lager"):
         lines.append("Ersatzteil aus dem Lager eingebaut: %s."
                      % part(payload["aus_lager"][0], content)["name"])
+    if payload["richtig"] and task.get("austausch"):
+        lines.append("Funktionstest: %s" % task["austausch"]["test"])
+    if payload["richtig"] and task["typ"] == "wartung":
+        issues = sum(1 for item in task["pruefpunkte"] if item.get("auffaellig"))
+        follow = [other for other in (content or GAME)["aufgaben"]
+                  if other.get("nach") == task["id"]]
+        if not issues:
+            lines.append("Wartung dokumentiert: alles in Ordnung.")
+        else:
+            lines.append("Wartung dokumentiert: %s.%s" % (
+                "1 Auffälligkeit" if issues == 1 else "%d Auffälligkeiten" % issues,
+                " Folgeauftrag ab dem nächsten Arbeitstag: %s." % follow[0]["titel"]
+                if follow else ""))
     if payload.get("lieferung"):
         last = max(item["ankunft"] for item in payload["lieferung"])
         if payload.get("fehllieferung"):
