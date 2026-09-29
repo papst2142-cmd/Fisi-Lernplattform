@@ -4722,6 +4722,12 @@ def open_places(state, content=None):
     return [place for place in customer_places(content) if place.get("ab_tag", 1) <= day]
 
 
+def place_label(place, places):
+    """Beschriftung eines Kundenorts in der Auswahl: ab drei Orten die
+    Kurzform (sonst wird die Zeile auf dem Handy zu breit)."""
+    return place.get("kurz", place["name"]) if len(places) > 2 else place["name"]
+
+
 def site_name(site_id, content=None):
     content = content or GAME
     if site_id == SITE_OFFICE:

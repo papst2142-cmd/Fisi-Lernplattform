@@ -2202,7 +2202,7 @@ class CustomerView(SiteView):
         places = fg.open_places(state)
         counts = state.open_count_by_site()
         if len(places) > 1:
-            options = [(place["id"], "%s%s" % (place["name"], " (%d)" % counts[place["id"]]
+            options = [(place["id"], "%s%s" % (fg.place_label(place, places), " (%d)" % counts[place["id"]]
                                                if counts.get(place["id"]) else ""))
                        for place in places]
             ChoiceRow(self.content, options, self.site(), self._choose).pack(

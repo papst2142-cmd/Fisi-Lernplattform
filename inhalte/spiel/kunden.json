@@ -285,7 +285,8 @@
            "deko": [
              {"typ": "tresen", "x": 0.8, "y": 1.6, "w": 3.6, "h": 1.0},
              {"typ": "wasserspender", "x": 5.2, "y": 0.4, "w": 0.55, "h": 0.55},
-             {"typ": "pflanze", "x": 0.3, "y": 5.0, "w": 0.7, "h": 0.7}
+             {"typ": "pflanze", "x": 0.3, "y": 5.0, "w": 0.7, "h": 0.7},
+             {"typ": "drucker", "x": 4.8, "y": 1.8, "w": 0.9, "h": 0.75, "ab_aufgabe": "drucker-empfang-lindenau"}
            ]},
           {"id": "buchhaltung_lindenau", "name": "Buchhaltung", "cat": "wirtschaft",
            "x": 6, "y": 0, "w": 8, "h": 6,
@@ -389,7 +390,9 @@
              {"typ": "bank", "x": 0.6, "y": 0.4, "w": 2.6, "h": 0.5},
              {"typ": "anzeigetafel", "x": 3.8, "y": 0.3, "w": 2.2, "h": 0.6},
              {"typ": "automat", "x": 0.6, "y": 2.6, "w": 1.0, "h": 0.9},
-             {"typ": "pflanze", "x": 7.0, "y": 0.4, "w": 0.7, "h": 0.7}
+             {"typ": "pflanze", "x": 7.0, "y": 0.4, "w": 0.7, "h": 0.7},
+             {"typ": "pc", "x": 6.9, "y": 1.4, "w": 0.6, "h": 0.9, "ab_aufgabe": "anzeige-pc-birkenhain"},
+             {"typ": "wimpel", "x": 0.3, "y": 3.6, "w": 7.4, "h": 0.35, "ab_aufgabe": "poe-birkenhain", "bis_aufgabe": "abnahme-birkenhain"}
            ]},
           {"id": "technik_birkenhain", "name": "Technikhäuschen", "kurz": "Technik", "cat": "netzwerk",
            "x": 8, "y": 0, "w": 6, "h": 4.5,
@@ -399,7 +402,8 @@
            "deko": [
              {"typ": "rack", "x": 12.4, "y": 0.4, "w": 1.3, "h": 2.4},
              {"typ": "usv", "x": 10.6, "y": 0.4, "w": 1.2, "h": 1.0},
-             {"typ": "klima", "x": 12.4, "y": 3.3, "w": 1.3, "h": 0.8}
+             {"typ": "klima", "x": 12.4, "y": 3.3, "w": 1.3, "h": 0.8},
+             {"typ": "kartons", "x": 8.3, "y": 0.4, "w": 1.2, "h": 0.9, "bis_aufgabe": "rack-birkenhain"}
            ]},
           {"id": "parkplatz_birkenhain", "name": "Park-and-ride", "kurz": "Parkplatz", "cat": "sicherheit",
            "x": 14, "y": 0, "w": 10, "h": 4.5,
@@ -410,7 +414,8 @@
              {"typ": "markierung", "x": 14.6, "y": 1.2, "w": 8.8, "h": 0.1},
              {"typ": "markierung", "x": 14.6, "y": 3.0, "w": 8.8, "h": 0.1},
              {"typ": "kamera", "x": 23.2, "y": 0.3, "w": 0.4, "h": 0.4},
-             {"typ": "pflanze", "x": 14.3, "y": 0.3, "w": 0.7, "h": 0.7}
+             {"typ": "pflanze", "x": 14.3, "y": 0.3, "w": 0.7, "h": 0.7},
+             {"typ": "kamera", "x": 14.4, "y": 3.9, "w": 0.4, "h": 0.4, "ab_aufgabe": "nachtrag-angebot-birkenhain"}
            ]},
           {"id": "bahnsteig_birkenhain", "name": "Bahnsteig Birkenhain", "kurz": "Bahnsteig", "farbe": "#60A5FA",
            "x": 0, "y": 6.5, "w": 24, "h": 5.5,

@@ -5844,5 +5844,2941 @@
       "Nach DELETE kann man wieder einfügen, nach DROP TABLE nicht. Lina malt ein großes rotes Ausrufezeichen neben DROP. Tim tut so, als hätte er das so gemeint."
     ],
     "suchbegriffe": ["SQL", "DML", "DDL"]
+  },
+  {
+    "id": "buchhaltung-having",
+    "typ": "auswahl",
+    "titel": "Bei wem gibt Lindenau am meisten aus?",
+    "auftraggeber": "wendt",
+    "raum": "buchhaltung_lindenau",
+    "stelle": [10.12, 2.88],
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 56,
+    "ticket": [
+      "Dr. Wendt hat die Rechnungen der Buchhaltung in die neue Datenbank übernehmen lassen: Tabelle rechnung mit nr, lieferant, betrag und datum. Jede Rechnung hat er vorher zweimal gelesen.",
+      "„Ich möchte alle Lieferanten sehen, bei denen wir insgesamt mehr als 10.000 € ausgegeben haben. Mit Summe. Die Rahmenverträge verhandle ich nur mit den Großen.“"
+    ],
+    "frage": "Welche Abfrage liefert die Lieferanten mit mehr als 10.000 € Gesamtsumme?",
+    "optionen": [
+      "SELECT lieferant, SUM(betrag) FROM rechnung GROUP BY lieferant HAVING SUM(betrag) > 10000;",
+      "SELECT lieferant, SUM(betrag) FROM rechnung WHERE SUM(betrag) > 10000 GROUP BY lieferant;",
+      "SELECT lieferant, SUM(betrag) FROM rechnung WHERE betrag > 10000 GROUP BY lieferant;",
+      "SELECT lieferant, betrag FROM rechnung HAVING betrag > 10000 ORDER BY lieferant;"
+    ],
+    "antwort": "SELECT lieferant, SUM(betrag) FROM rechnung GROUP BY lieferant HAVING SUM(betrag) > 10000;",
+    "hilfe": [
+      "Die Bedingung bezieht sich nicht auf eine einzelne Rechnung, sondern auf die Summe je Lieferant.",
+      "WHERE filtert Zeilen, bevor gruppiert wird. Was filtert die fertigen Gruppen?"
+    ],
+    "erklaerung": [
+      "GROUP BY bildet je Lieferant eine Gruppe, SUM(betrag) addiert, und HAVING filtert die Gruppen nach der Summe. Aggregatfunktionen sind in WHERE nicht erlaubt.",
+      "WHERE betrag > 10000 würde nur einzelne große Rechnungen zählen, der Lieferant mit zwanzig kleinen fiele durch. Dr. Wendt liest das Ergebnis zweimal: „Drei Große. Die rufe ich an.“"
+    ],
+    "suchbegriffe": ["HAVING", "GROUP BY", "SUM"]
+  },
+  {
+    "id": "scanner-breakeven",
+    "typ": "auswahl",
+    "titel": "Eigener Scanner oder Scan-Dienst?",
+    "auftraggeber": "wendt",
+    "raum": "archiv_lindenau",
+    "stelle": [21.88, 11.12],
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 50},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 90, "reputation": 7},
+    "ab_tag": 57,
+    "nach": "buchhaltung-having",
+    "ticket": [
+      "Dr. Wendt steht zwischen den Aktenkisten, in jeder Hand ein Angebot. „Ein eigener Hochleistungsscanner kostet 4.800,00 € einmalig, danach 3 Cent pro Seite. Der Scan-Dienst nimmt 11 Cent pro Seite, ohne Anschaffung.“",
+      "„Ab wie vielen Seiten lohnt sich der eigene? Ich habe es zweimal gerechnet und zwei Ergebnisse bekommen. Das beunruhigt mich.“"
+    ],
+    "frage": "Ab welcher Seitenzahl sind beide Wege gleich teuer (Break-even)?",
+    "optionen": ["60.000 Seiten", "43.637 Seiten", "160.000 Seiten", "34.286 Seiten"],
+    "antwort": "60.000 Seiten",
+    "hilfe": [
+      "Setze beide Kosten gleich: Fixkosten + Seiten × eigene Kosten = Seiten × Kosten des Dienstes.",
+      "Pro Seite spart der eigene Scanner die Differenz der beiden Seitenpreise. Wie viele Seiten braucht es, bis die Anschaffung wieder drin ist?"
+    ],
+    "erklaerung": [
+      "4.800,00 € ÷ (0,11 € − 0,03 €) = 60.000 Seiten. Ab dieser Menge ist der eigene Scanner billiger.",
+      "Das Archiv hat rund 40.000 Akten mit je 25 Seiten, also 1.000.000 Seiten: eigener Scanner 34.800,00 €, Scan-Dienst 110.000,00 €. Dr. Wendt rechnet ein drittes Mal und lächelt: 75.200,00 € gespart."
+    ],
+    "suchbegriffe": ["Break-even", "Fixkosten", "Kostenvergleichsrechnung"]
+  },
+  {
+    "id": "auskunft-ehemaliger-lindenau",
+    "typ": "auswahl",
+    "titel": "Ein ehemaliger Stellwerker will wissen, was gespeichert ist",
+    "auftraggeber": "karin",
+    "ort": "lindenau",
+    "raum": "personal_lindenau",
+    "stelle": [4.62, 11.12],
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 55},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 57,
+    "nach": "loeschkonzept-personal-lindenau",
+    "ticket": [
+      "Karin wedelt in der Personalabteilung mit einem Brief. „Der Stellwerker aus unserem Löschkonzept! Er will wissen, welche Daten die Talbahn noch über ihn speichert. Mit Paragraf. Ich bin fast gerührt.“",
+      "„Die Personalabteilung will ihm antworten, er sei ja nicht mehr hier. Eine Anekdote dazu habe ich auch, aber erst machen wir es richtig.“"
+    ],
+    "frage": "Wie geht die Talbahn mit der Anfrage richtig um?",
+    "optionen": [
+      "Identität prüfen, dann binnen eines Monats kostenlos Kopie, Zwecke, Empfänger und Speicherdauer schicken",
+      "Ablehnen: Ehemalige Mitarbeiter haben keinen Anspruch mehr auf Auskunft",
+      "Auskunft nur gegen 25 € Bearbeitungsgebühr und frühestens in drei Monaten geben",
+      "Sofort die ganze Personalakte unverschlüsselt an die E-Mail-Adresse im Brief schicken"
+    ],
+    "antwort": "Identität prüfen, dann binnen eines Monats kostenlos Kopie, Zwecke, Empfänger und Speicherdauer schicken",
+    "hilfe": [
+      "Das Auskunftsrecht hängt nicht davon ab, ob jemand noch Kunde oder Mitarbeiter ist, sondern davon, ob noch Daten über ihn gespeichert sind.",
+      "Denk auch daran, wer den Brief eigentlich geschrieben hat. Eine Auskunft an die falsche Person wäre selbst eine Datenpanne."
+    ],
+    "erklaerung": [
+      "Art. 15 DSGVO: Jede betroffene Person darf erfahren, welche Daten zu welchem Zweck, an wen und wie lange gespeichert sind, und bekommt eine Kopie. Frist: ein Monat, die erste Kopie ist kostenlos.",
+      "Vorher wird die Identität geprüft, und verschickt wird auf sicherem Weg. Karins Anekdote handelt von einem Brief an den falschen Herrn Müller."
+    ],
+    "suchbegriffe": ["Auskunftsrecht", "Betroffenenrechte", "DSGVO"]
+  },
+  {
+    "id": "tim-erklaert-backup",
+    "typ": "zuordnung",
+    "titel": "Tim erklärt Lina die Datensicherung",
+    "auftraggeber": "tim",
+    "raum": "helpdesk",
+    "prioritaet": "niedrig",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 6},
+    "ab_tag": 58,
+    "nach": "tim-erklaert-dhcp",
+    "ticket": [
+      "Tim hat ans Whiteboard „BACKUP“ geschrieben und dreimal unterstrichen. „Lina, heute Datensicherung. Also: RAID 1 ist ein Backup, inkrementell und differenziell ist dasselbe, und außer Haus heißt: im Nebenraum.“",
+      "Lina schreibt mit, dann schiebt sie dir ihr Einhorn-Notizbuch hin: „Kannst du das bitte richtig zuordnen? Ich traue dem Unterstrich nicht.“"
+    ],
+    "frage": "Ordne jedem Begriff die richtige Erklärung zu.",
+    "paare": [
+      [
+        "Vollsicherung",
+        "Sichert jedes Mal alle Daten, die Wiederherstellung ist am einfachsten"
+      ],
+      [
+        "Inkrementelle Sicherung",
+        "Sichert nur, was sich seit der letzten Sicherung jeder Art geändert hat"
+      ],
+      [
+        "Differenzielle Sicherung",
+        "Sichert alles, was sich seit der letzten Vollsicherung geändert hat"
+      ],
+      [
+        "RAID 1",
+        "Spiegelt Platten gegen Plattenausfall, schützt aber nicht vor Löschen oder Viren"
+      ],
+      [
+        "3-2-1-Regel",
+        "Drei Kopien auf zwei Medienarten, eine davon an einem anderen Standort"
+      ]
+    ],
+    "hilfe": [
+      "Frag bei inkrementell und differenziell: seit welcher Sicherung wird gezählt?",
+      "Ein RAID schreibt jede Änderung sofort auf beide Platten. Auch ein versehentliches Löschen."
+    ],
+    "erklaerung": [
+      "Inkrementell braucht zur Wiederherstellung die Vollsicherung plus jede Teilsicherung, differenziell nur die Vollsicherung plus die letzte Differenz.",
+      "RAID ist Verfügbarkeit, kein Backup. Lina malt ein Einhorn neben die 3-2-1-Regel. Tim: „Der Nebenraum war ein Beispiel. Ein schlechtes.“"
+    ],
+    "suchbegriffe": ["Vollsicherung", "inkrementell", "3-2-1-Regel"]
+  },
+  {
+    "id": "begehung-archiv-lindenau",
+    "typ": "wartung",
+    "titel": "Datenschutz-Begehung im Archiv Lindenau",
+    "auftraggeber": "karin",
+    "ort": "lindenau",
+    "raum": "archiv_lindenau",
+    "stelle": [21.88, 11.12],
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 55},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 95, "reputation": 8},
+    "ab_tag": 59,
+    "nach": "terminal-archiv-db",
+    "ticket": [
+      "Im Archiv summt der Scan-Platz, die Kisten werden weniger. Karin hat ein Klemmbrett unter dem Arm: „Datenschutz-Begehung. Wo Personalakten gescannt werden, schaue ich persönlich nach. Paragraf und Anekdote habe ich dabei.“",
+      "„Du prüfst, ich schreibe mit. Und bitte ehrlich: Ein schönes Protokoll ohne Befund ist meistens ein falsches.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "tuer",
+        "text": "Tür zum Archiv prüfen (Soll: verschlossen, Schlüsselausgabe dokumentiert)",
+        "ergebnis": "Verschlossen, im Schlüsselbuch stehen nur die zwei Archivkräfte.",
+        "auffaellig": false
+      },
+      {
+        "id": "bildschirm",
+        "text": "Scan-PC prüfen (Soll: Bildschirmsperre nach spätestens 5 Minuten)",
+        "ergebnis": "Niemand da, der Bildschirm ist offen: Eine Gehaltsabrechnung von 2019 ist zu sehen. Die Mittagspause läuft seit 40 Minuten.",
+        "auffaellig": true
+      },
+      {
+        "id": "papier",
+        "text": "Papier nach dem Scannen prüfen (Soll: verschlossener Datenschutzbehälter)",
+        "ergebnis": "Gescannte Personalakten liegen in einem offenen Karton mit der Aufschrift „Altpapier“ neben der Tür.",
+        "auffaellig": true
+      },
+      {
+        "id": "rechte",
+        "text": "Rechte am Scan-Ordner prüfen (Soll: nur Gruppe GG_Archiv)",
+        "ergebnis": "Nur GG_Archiv hat Zugriff, Administratoren ausgenommen.",
+        "auffaellig": false
+      },
+      {
+        "id": "fristen",
+        "text": "Löschfristen in der Archiv-Datenbank prüfen (Soll: je Akte eingetragen)",
+        "ergebnis": "Jede erfasste Akte hat ein Löschdatum laut Löschkonzept.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Bildschirmsperre per Richtlinie erzwingen, Papier in Datenschutzbehälter, Vernichtung nach DIN 66399",
+      "Alles in Ordnung, die Mittagspause ist ja bald vorbei",
+      "Den Scan-Platz abbauen, bis alle Akten wieder in Papierform vorliegen",
+      "Den Karton „Altpapier“ gleich selbst zum Wertstoffhof fahren"
+    ],
+    "abschluss_antwort": "Bildschirmsperre per Richtlinie erzwingen, Papier in Datenschutzbehälter, Vernichtung nach DIN 66399",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll in Klammern.",
+      "Personalakten sind besonders schutzbedürftig, auch dann, wenn sie schon gescannt sind und nur noch als Papier herumliegen."
+    ],
+    "erklaerung": [
+      "Auffällig sind der offene Bildschirm und das Papier im offenen Karton. Eine per Gruppenrichtlinie erzwungene Sperre wirkt auch in langen Pausen, und Personalakten werden mit einem Aktenvernichter passender Sicherheitsstufe nach DIN 66399 vernichtet.",
+      "Karin unterschreibt und erzählt die Anekdote: 2011 flog in Talheim eine Gehaltsliste aus der Altpapiertonne über den Bahnsteig."
+    ],
+    "suchbegriffe": ["Bildschirmsperre", "DIN 66399", "Datenschutz"]
+  },
+  {
+    "id": "terminal-buchhaltung-transaktion",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "mysql>",
+    "titel": "Falsche Kostenstelle, sicher korrigiert",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 55, "systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 100, "reputation": 8},
+    "ab_tag": 61,
+    "nach": "buchhaltung-having",
+    "ticket": [
+      "Ulla hat eine Mail von Dr. Wendt ausgedruckt, dreifach gelesen erkennt man an den Knicken. Drei Rechnungen von Druckwerk stehen auf Kostenstelle 4711 statt 4712. „Das muss vor dem Monatsabschluss stimmen.“",
+      "„Die Tabelle rechnung hat über 18.342 Zeilen. Wir ändern genau drei. In einer Transaktion, damit wir zurück können. Sag ich auch dem Server, damit er keine Angst hat.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
+    "start": ["Buchhaltungsdatenbank Lindenau (MySQL 8.0)", "Database changed: buha"],
+    "schritte": [
+      {
+        "ziel": "Nachsehen, welche Rechnungen betroffen sind",
+        "befehle": [
+          {
+            "befehl": "SELECT nr, betrag FROM rechnung WHERE lieferant = 'Druckwerk' AND kostenstelle = 4711;",
+            "ausgabe": ["3 rows in set (0,01 sec)"],
+            "richtig": true
+          },
+          {
+            "befehl": "SELECT * FROM rechnung;",
+            "ausgabe": ["18.342 rows in set (1,92 sec)", "# Viel Text, keine Antwort."],
+            "hinweis": "Ohne WHERE kommen alle Rechnungen. Gesucht sind nur die von Druckwerk auf Kostenstelle 4711."
+          },
+          {
+            "befehl": "SHOW TABLES;",
+            "ausgabe": ["rechnung", "lieferant", "kostenstelle"],
+            "hinweis": "SHOW TABLES zeigt die Tabellen der Datenbank, aber keinen einzigen Datensatz."
+          }
+        ]
+      },
+      {
+        "ziel": "Eine Transaktion beginnen",
+        "befehle": [
+          {
+            "befehl": "COMMIT;",
+            "ausgabe": ["Query OK, 0 rows affected", "# Es gab nichts zu bestätigen."],
+            "hinweis": "COMMIT schließt eine Transaktion ab. Begonnen wird sie mit START TRANSACTION (oder BEGIN)."
+          },
+          {
+            "befehl": "START TRANSACTION;",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "SET autocommit = 1;",
+            "ausgabe": ["Query OK, 0 rows affected", "# Jede Änderung gilt jetzt sofort."],
+            "hinweis": "Mit autocommit = 1 wird jede Änderung sofort endgültig. Genau das wollen wir hier nicht."
+          }
+        ]
+      },
+      {
+        "ziel": "Nur die drei Rechnungen auf Kostenstelle 4712 umbuchen",
+        "befehle": [
+          {
+            "befehl": "UPDATE rechnung SET kostenstelle = 4712;",
+            "ausgabe": ["Ulla hält deine Hand fest: „Das wären alle", "18.342 Rechnungen!“"],
+            "gefaehrlich": true,
+            "hinweis": "UPDATE ohne WHERE ändert jede Zeile der Tabelle. Die Bedingung muss genau die drei Rechnungen treffen."
+          },
+          {
+            "befehl": "UPDATE rechnung SET kostenstelle = 4712 WHERE lieferant = 'Druckwerk' AND kostenstelle = 4711;",
+            "ausgabe": ["Query OK, 3 rows affected", "Rows matched: 3  Changed: 3"],
+            "richtig": true
+          },
+          {
+            "befehl": "UPDATE rechnung WHERE lieferant = 'Druckwerk' SET kostenstelle = 4712;",
+            "ausgabe": ["ERROR 1064 (42000): You have an error in", "your SQL syntax"],
+            "hinweis": "Reihenfolge: UPDATE tabelle SET spalte = wert WHERE bedingung."
+          }
+        ]
+      },
+      {
+        "ziel": "Vor dem Abschluss das Ergebnis kontrollieren",
+        "befehle": [
+          {
+            "befehl": "SELECT nr, kostenstelle FROM rechnung WHERE lieferant = 'Druckwerk';",
+            "ausgabe": ["3 rows in set: alle auf 4712"],
+            "richtig": true
+          },
+          {
+            "befehl": "DESCRIBE rechnung;",
+            "ausgabe": ["nr | lieferant | betrag | datum | kostenstelle"],
+            "hinweis": "DESCRIBE zeigt den Aufbau der Tabelle, nicht die geänderten Werte."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Änderung endgültig speichern",
+        "befehle": [
+          {
+            "befehl": "ROLLBACK;",
+            "ausgabe": ["Query OK, 0 rows affected", "# Alles zurück auf 4711."],
+            "hinweis": "ROLLBACK macht die ganze Transaktion rückgängig. Das wäre richtig, wenn die Kontrolle einen Fehler gezeigt hätte."
+          },
+          {"befehl": "COMMIT;", "ausgabe": ["Query OK, 0 rows affected"], "richtig": true},
+          {
+            "befehl": "EXIT;",
+            "ausgabe": ["Bye", "# Die offene Transaktion wurde verworfen."],
+            "hinweis": "Wer die Verbindung mit offener Transaktion trennt, verliert die Änderung. Erst COMMIT, dann gehen."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Erst schauen, dann ändern: SELECT mit genau der Bedingung, die später auch im UPDATE steht.",
+      "Eine Transaktion beginnt mit START TRANSACTION und endet mit COMMIT (übernehmen) oder ROLLBACK (verwerfen)."
+    ],
+    "erklaerung": [
+      "START TRANSACTION → UPDATE mit WHERE → Kontrolle per SELECT → COMMIT. Bis zum COMMIT hätte ein ROLLBACK alles zurückgeholt.",
+      "Transaktionen sind atomar (ACID): alles oder nichts. Ulla zum Server: „Siehst du, drei Zeilen. Kein Grund zur Panik.“"
+    ],
+    "suchbegriffe": ["Transaktion", "COMMIT", "ROLLBACK"]
+  },
+  {
+    "id": "lina-ip-konflikt",
+    "typ": "diagnose",
+    "titel": "Linas PC meldet einen Adresskonflikt",
+    "auftraggeber": "lina",
+    "raum": "helpdesk",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 95, "reputation": 7},
+    "ab_tag": 62,
+    "nach": "tim-erklaert-backup",
+    "ticket": [
+      "Lina hält das Einhorn-Notizbuch hoch wie ein Beweisstück. „Mein PC meldet seit heute früh einen IP-Adresskonflikt, dann ist das Netz weg. Tim hat gestern ‚was Schnelleres‘ eingestellt. Jetzt sagt er: Windows neu installieren.“",
+      "Tim, vom Nachbarplatz: „Neu installieren hilft immer!“ Lina flüstert: „Stimmt das?“"
+    ],
+    "frage": "Finde die Ursache des Konflikts und wähle die passende Maßnahme.",
+    "pruefungen": [
+      {
+        "id": "ipconfig",
+        "text": "ipconfig /all auf Linas PC ausführen",
+        "ergebnis": "DHCP aktiviert: Nein. IPv4-Adresse 10.10.20.50 manuell eingetragen, „(Duplikat)“ steht dahinter.",
+        "entscheidend": true
+      },
+      {
+        "id": "ereignis",
+        "text": "Ereignisanzeige nach Netzwerkmeldungen durchsuchen",
+        "ergebnis": "„Adresskonflikt mit dem Gerät mit der Hardwareadresse 00-1B-A9-3C-44-10.“",
+        "entscheidend": true
+      },
+      {
+        "id": "mac",
+        "text": "Die fremde MAC-Adresse in der ARP-Tabelle des Switches suchen",
+        "ergebnis": "Die MAC gehört dem Etikettendrucker im Lager. Laut Doku hat er seit Jahren fest die 10.10.20.50.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "Patchkabel und Switchport von Linas Platz prüfen",
+        "ergebnis": "Link mit 1 Gbit/s, Kabel in Ordnung."
+      },
+      {
+        "id": "dhcp",
+        "text": "DHCP-Bereich auf dem Server ansehen",
+        "ergebnis": "Bereich 10.10.20.100 bis .199, noch 61 Adressen frei. Feste Adressen liegen unterhalb von .100."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Linas PC hat fest eine Adresse, die der Etikettendrucker schon benutzt.",
+      "Der DHCP-Server hat keine freien Adressen mehr.",
+      "Das Patchkabel an Linas Platz ist defekt.",
+      "Windows auf Linas PC ist beschädigt."
+    ],
+    "ursache": "Linas PC hat fest eine Adresse, die der Etikettendrucker schon benutzt.",
+    "massnahmen": [
+      "Linas PC wieder auf „IP-Adresse automatisch beziehen“ (DHCP) stellen",
+      "Windows neu installieren, wie Tim es vorschlägt",
+      "Den Etikettendrucker dauerhaft vom Netz nehmen",
+      "Eine zweite Netzwerkkarte in Linas PC einbauen"
+    ],
+    "massnahme": "Linas PC wieder auf „IP-Adresse automatisch beziehen“ (DHCP) stellen",
+    "hilfe": [
+      "Eine IP-Adresse darf im Netz nur einmal vorkommen. Wer hat die Adresse außer Linas PC noch?",
+      "Über die MAC-Adresse aus der Fehlermeldung findest du das andere Gerät."
+    ],
+    "erklaerung": [
+      "Tim hat eine feste Adresse eingetragen, die der Etikettendrucker schon hat. ARP findet zur IP zwei MAC-Adressen, beide Geräte stören sich. Mit DHCP bekommt Linas PC wieder eine freie Adresse aus dem Bereich.",
+      "Eine Neuinstallation hätte nichts geändert. Lina schreibt: „Feste Adressen nur für Drucker und Server, und nur mit Doku.“ Tim: „Warum?“ Lina: „Darum.“"
+    ],
+    "suchbegriffe": ["Adresskonflikt", "ARP", "MAC-Adresse"]
+  },
+  {
+    "id": "lina-null-werte",
+    "typ": "auswahl",
+    "titel": "Wer hat keine Telefonnummer?",
+    "auftraggeber": "lina",
+    "raum": "helpdesk",
+    "prioritaet": "niedrig",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 55},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 7},
+    "ab_tag": 64,
+    "nach": "lina-sql-befehle",
+    "ticket": [
+      "Lina soll die Telefonliste aufräumen: Tabelle mitarbeiter mit name, abteilung und telefon. Bei manchen ist telefon leer, in der Datenbank steht dort NULL.",
+      "„Tim hat gesagt: WHERE telefon = NULL. Das Ergebnis ist leer. Tim sagt, dann haben eben alle ein Telefon. Frank hat aber keins, das weiß ich.“"
+    ],
+    "frage": "Wie findet Lina alle Mitarbeiter ohne Telefonnummer?",
+    "optionen": [
+      "SELECT name FROM mitarbeiter WHERE telefon IS NULL;",
+      "SELECT name FROM mitarbeiter WHERE telefon = NULL;",
+      "SELECT name FROM mitarbeiter WHERE telefon = 'NULL';",
+      "SELECT name FROM mitarbeiter WHERE telefon = 0;"
+    ],
+    "antwort": "SELECT name FROM mitarbeiter WHERE telefon IS NULL;",
+    "hilfe": [
+      "NULL ist kein Wert, sondern bedeutet „unbekannt“. Ist „unbekannt = unbekannt“ wahr?",
+      "Für NULL gibt es in SQL einen eigenen Vergleich."
+    ],
+    "erklaerung": [
+      "Jeder Vergleich mit = NULL ergibt „unbekannt“ und nie wahr, deshalb bleibt das Ergebnis leer. Richtig ist IS NULL (bzw. IS NOT NULL).",
+      "'NULL' in Anführungszeichen wäre der Text „NULL“, und 0 eine Zahl. Lina malt ein Einhorn, das ein Fragezeichen hält: NULL."
+    ],
+    "suchbegriffe": ["IS NULL", "NULL", "SQL"]
+  },
+  {
+    "id": "skonto-lindenau",
+    "typ": "auswahl",
+    "titel": "Skonto für die Lindenau-Rechnung",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 7},
+    "ab_tag": 65,
+    "ticket": [
+      "Frank hat eine Rechnung von Kabelkönig für die Technik in Lindenau vor sich: 7.200,00 € netto plus 19 % Umsatzsteuer, zusammen 8.568,00 €. „Zahlbar in 10 Tagen mit 2 % Skonto oder in 30 Tagen netto.“",
+      "„Ich überweise heute, am achten Tag. Ich habe zwei Tabellen und zwei Ergebnisse. Eine davon hat recht, und ich will wissen, welche.“"
+    ],
+    "frage": "Welcher Betrag wird mit Skonto überwiesen?",
+    "optionen": ["8.396,64 €", "8.424,00 €", "7.056,00 €", "8.568,00 €"],
+    "antwort": "8.396,64 €",
+    "hilfe": [
+      "Skonto wird vom Rechnungsbetrag abgezogen, den man tatsächlich zahlt. Und der enthält die Umsatzsteuer.",
+      "Wenn der Nettobetrag kleiner wird, wird auch die Umsatzsteuer darauf kleiner."
+    ],
+    "erklaerung": [
+      "8.568,00 € × (100 % − 2 %) = 8.396,64 €. Skonto mindert das Entgelt, die Umsatzsteuer sinkt mit.",
+      "Ersparnis 171,36 € für 20 Tage früheres Zahlen, aufs Jahr gerechnet rund 36,7 % Zins. Frank: „Zweimal gerechnet, einmal richtig. Das reicht.“"
+    ],
+    "suchbegriffe": ["Skonto", "Zahlungsbedingungen", "Umsatzsteuer"]
+  },
+  {
+    "id": "birkenhain-projektplan",
+    "typ": "auswahl",
+    "titel": "Birkenhain: Wie lange dauert das Projekt?",
+    "auftraggeber": "petra",
+    "ort": "birkenhain",
+    "raum": "wartehaus_birkenhain",
+    "stelle": [4.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 100, "reputation": 8},
+    "ab_tag": 66,
+    "ticket": [
+      "Petra steht im Wartehäuschen von Birkenhain und hat einen Plan an die Scheibe geklebt. „Der Haltepunkt bekommt Anzeige, Kameras, Richtfunk und einen neuen Schrank. Der Vorstand fragt nach dem frühesten Termin für die Abnahme.“",
+      "Vorgänge in Arbeitstagen: A Bestandsaufnahme vor Ort (2 T); B Richtfunkstrecke planen und montieren (3 T, nach A); C Kameras mit Datenschutzkonzept (5 T, nach A); D Technikhäuschen und Rack (3 T, nach B); E Fahrgastinformation (2 T, nach C); F Test und Abnahme (2 T, nach D+E)."
+    ],
+    "frage": "Wie lange dauert das Projekt mindestens, und welcher Weg ist kritisch?",
+    "optionen": [
+      "11 Arbeitstage, kritischer Weg A → C → E → F",
+      "10 Arbeitstage, kritischer Weg A → B → D → F",
+      "17 Arbeitstage, alle Vorgänge nacheinander",
+      "11 Arbeitstage, kritischer Weg A → B → D → F"
+    ],
+    "antwort": "11 Arbeitstage, kritischer Weg A → C → E → F",
+    "hilfe": [
+      "Rechne für jeden Weg vom Start bis F die Dauern zusammen. B und C können nach A gleichzeitig laufen.",
+      "Der längste Weg bestimmt die Projektdauer. Auf ihm hat kein Vorgang Puffer."
+    ],
+    "erklaerung": [
+      "A → C → E → F dauert 11 Tage, A → B → D → F nur 10. Der längere Weg ist kritisch: Jeder Tag Verzug dort verschiebt die Abnahme.",
+      "B und D haben je 1 Tag Puffer. Petra: „11 Tage. Ich plane 14, wir sind ja die Bahn.“"
+    ],
+    "suchbegriffe": ["Netzplan", "Projektmanagement", "Puffer"]
+  },
+  {
+    "id": "ipplan-birkenhain",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan für den Haltepunkt Birkenhain",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 66,
+    "ticket": [
+      "Svenja hat im Technikhäuschen die Spinne umgesiedelt und das erste Kabel beschriftet, an beiden Enden. „Birkenhain bekommt 10.66.40.0/25. Mehr gibt die Talbahn für einen Haltepunkt nicht her.“",
+      "„Fünf Netze, eins pro Aufgabe, per VLSM, größtes zuerst. Die Funkstrecke zum Stellwerk braucht nur zwei Adressen, eine an jedem Ende.“"
+    ],
+    "frage": "Berechne für jedes Teilnetz Netzadresse, Subnetzmaske und Broadcast-Adresse.",
+    "daten": {
+      "netz": "10.66.40.0/25",
+      "vlsm": true,
+      "teilnetze": [
+        {"name": "Kameras", "hosts": 20},
+        {"name": "Management", "hosts": 10},
+        {"name": "Fahrgastinformation", "hosts": 6},
+        {"name": "Fahrkartenautomat", "hosts": 3},
+        {"name": "Richtfunk zum Stellwerk", "hosts": 2}
+      ]
+    },
+    "felder": ["netz", "maske", "broadcast"],
+    "hilfe": [
+      "Hosts + 2 (Netz- und Broadcast-Adresse), dann die nächste Zweierpotenz: 20 Kameras brauchen 32 Adressen, also /27 = 255.255.255.224.",
+      "Das nächste Netz beginnt direkt nach dem Broadcast des vorigen. Zwei Hosts passen genau in ein /30."
+    ],
+    "erklaerung": [
+      "Kameras 10.66.40.0/27 · Management 10.66.40.32/28 · Fahrgastinformation 10.66.40.48/29 · Fahrkartenautomat 10.66.40.56/29 · Richtfunk zum Stellwerk 10.66.40.64/30.",
+      "Ab 10.66.40.68 bleibt der Rest frei für später. Svenja laminiert den Plan und hängt ihn neben die Spinne."
+    ],
+    "suchbegriffe": ["VLSM", "Subnetz", "Netzmaske"]
+  },
+  {
+    "id": "kamera-dsgvo-birkenhain",
+    "typ": "zuordnung",
+    "titel": "Kameras am Parkplatz, aber datenschutzgerecht",
+    "auftraggeber": "karin",
+    "ort": "birkenhain",
+    "raum": "parkplatz_birkenhain",
+    "stelle": [18.88, 2.38],
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 60},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 67,
+    "nach": "birkenhain-projektplan",
+    "ticket": [
+      "Karin steht unter dem Mast am Parkplatz und blickt zur Kamera hoch. „Letzten Monat wurden hier zwei Fahrräder zerlegt. Die Talbahn will Videoüberwachung. Darf sie, aber nur mit Konzept.“",
+      "„Die Nachbarn haben Gärten direkt hinter dem Zaun. Und Petra fragt, ob man mit den Bildern nicht auch die Reinigungsfirma kontrollieren könnte. Nein, Petra.“"
+    ],
+    "frage": "Ordne jede Maßnahme dem DSGVO-Grundsatz zu, den sie umsetzt.",
+    "paare": [
+      ["Schild am Eingang mit Verantwortlichem, Zweck und Kontakt", "Transparenz"],
+      [
+        "Die Gärten der Nachbarn werden im Bild als Privatzone geschwärzt",
+        "Datenminimierung"
+      ],
+      ["Aufnahmen werden nach 72 Stunden automatisch überschrieben", "Speicherbegrenzung"],
+      [
+        "Bilder nur zur Aufklärung von Vandalismus, nie zur Kontrolle von Personal",
+        "Zweckbindung"
+      ],
+      [
+        "Nur zwei benannte Personen sehen Aufnahmen, jeder Zugriff wird protokolliert",
+        "Integrität und Vertraulichkeit"
+      ]
+    ],
+    "hilfe": [
+      "Frag bei jeder Maßnahme: Geht es darum, wer Bescheid weiß, wie viel erfasst wird, wie lange, wofür oder wer rankommt?",
+      "Die Grundsätze stehen in Art. 5 DSGVO."
+    ],
+    "erklaerung": [
+      "Das Schild informiert (Transparenz), die Privatzone erfasst nur Nötiges (Datenminimierung), das Überschreiben begrenzt die Speicherdauer, der feste Zweck verbietet die Personalkontrolle, und Rechte plus Protokoll schützen die Aufnahmen.",
+      "Karins Anekdote: Eine Kamera in Talheim filmte 2014 aus Versehen ein Schlafzimmerfenster. Seitdem gibt es Privatzonen."
+    ],
+    "suchbegriffe": ["Videoüberwachung", "Datenminimierung", "Zweckbindung"]
+  },
+  {
+    "id": "richtfunk-birkenhain",
+    "typ": "auswahl",
+    "titel": "Richtfunk zum Stellwerk: Die Birken sind im Weg",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "parkplatz_birkenhain",
+    "stelle": [18.88, 2.38],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 68,
+    "nach": "birkenhain-projektplan",
+    "ticket": [
+      "Svenja schaut mit dem Fernglas vom Mast zum Stellwerk, 3,2 km entfernt. „Glasfaser gibt es hier nicht, also Richtfunk auf 18 GHz. Ich sehe das Stellwerk. Knapp. Über den Birken.“",
+      "„Die Antenne kommt an den Mast, Höhe noch offen. Tim meint, Sicht reicht, und wenn nicht, dreht man einfach die Sendeleistung auf.“"
+    ],
+    "frage": "Was muss für eine stabile Richtfunkstrecke gelten?",
+    "optionen": [
+      "Sichtlinie und der Raum um sie (Fresnelzone) müssen weitgehend frei sein, also Antenne höher montieren",
+      "Es reicht, wenn man das Stellwerk mit dem Fernglas gerade noch sehen kann",
+      "Mehr Sendeleistung, dann gehen die Funkwellen einfach durch die Birken hindurch",
+      "Die Antenne leicht nach unten neigen, damit das Signal unter den Birken durchgeht"
+    ],
+    "antwort": "Sichtlinie und der Raum um sie (Fresnelzone) müssen weitgehend frei sein, also Antenne höher montieren",
+    "hilfe": [
+      "Funk breitet sich nicht als dünner Strich aus, sondern als Ellipsoid um die Sichtlinie.",
+      "Blätter enthalten Wasser, und Wasser dämpft hohe Frequenzen stark. Im Sommer wachsen die Birken."
+    ],
+    "erklaerung": [
+      "Richtfunk braucht Sichtverbindung und eine freie Fresnelzone. Bei 3,2 km und 18 GHz hat sie in der Mitte einen Radius von etwa 3,7 m, davon sollen mindestens 60 % (rund 2,2 m) frei sein.",
+      "Mehr Leistung ist begrenzt und löst die Dämpfung durch Laub nicht. Die Antenne kommt an die Mastspitze. Svenja beschriftet sie trotzdem: „Oben“."
+    ],
+    "suchbegriffe": ["Richtfunk", "Richtfunkstrecke", "Dämpfung"]
+  },
+  {
+    "id": "terminal-richtfunk",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@bir-router:~#",
+    "titel": "Die Funkstrecke zum Stellwerk in Betrieb nehmen",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60, "systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 115, "reputation": 8},
+    "ab_tag": 69,
+    "nach": "richtfunk-birkenhain",
+    "ticket": [
+      "Die Antenne hängt an der Mastspitze, das Richtfunk-Modem im Technikhäuschen leuchtet grün. Svenja reicht dir die Konsole des kleinen Linux-Routers.",
+      "„eth0 ist das LAN, eth1 geht zum Modem. Transfernetz 10.66.40.64/30: Wir sind 10.66.40.65, das Stellwerk 10.66.40.66. Danach soll alles, was nicht lokal ist, über die Funkstrecke.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · Router Haltepunkt Birkenhain", "eth1 ist mit dem Richtfunk-Modem verbunden"],
+    "schritte": [
+      {
+        "ziel": "Die Netzwerkschnittstellen und ihren Zustand anzeigen",
+        "befehle": [
+          {
+            "befehl": "ip -br link",
+            "ausgabe": ["lo    UNKNOWN", "eth0  UP", "eth1  DOWN"],
+            "richtig": true
+          },
+          {
+            "befehl": "lsblk",
+            "ausgabe": ["sda    8:0  0  32G  0 disk", "└─sda1 8:1  0  32G  0 part /"],
+            "hinweis": "lsblk listet Laufwerke und Partitionen, keine Netzwerkschnittstellen."
+          },
+          {
+            "befehl": "ip route",
+            "ausgabe": ["10.66.40.32/28 dev eth0 proto kernel"],
+            "hinweis": "ip route zeigt die Routingtabelle, aber nicht, welche Schnittstelle oben oder unten ist."
+          }
+        ]
+      },
+      {
+        "ziel": "eth1 die Adresse im Transfernetz geben",
+        "befehle": [
+          {
+            "befehl": "ip addr add 10.66.40.65/24 dev eth1",
+            "ausgabe": ["# Adresse gesetzt, aber mit /24 statt /30."],
+            "hinweis": "Das Transfernetz ist ein /30. Mit /24 hielte der Router 256 Adressen für direkt erreichbar."
+          },
+          {"befehl": "ip addr add 10.66.40.65/30 dev eth1", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "ip addr flush dev eth0",
+            "ausgabe": ["Svenja: „Halt! Dann ist das ganze LAN hier", "ohne Router.“"],
+            "gefaehrlich": true,
+            "hinweis": "flush löscht alle Adressen von eth0. Kameras, Anzeige und Automat verlören ihr Gateway."
+          }
+        ]
+      },
+      {
+        "ziel": "eth1 einschalten",
+        "befehle": [
+          {
+            "befehl": "ip link set eth0 down",
+            "ausgabe": ["Svenja: „Falsche Schnittstelle! eth0 ist das", "LAN.“"],
+            "gefaehrlich": true,
+            "hinweis": "eth0 abzuschalten trennt den ganzen Haltepunkt. Eingeschaltet werden soll eth1."
+          },
+          {"befehl": "ip link set eth1 up", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "systemctl start eth1",
+            "ausgabe": ["Failed to start eth1.service: Unit", "eth1.service not found."],
+            "hinweis": "Eine Schnittstelle ist kein Dienst. Sie wird mit ip link set … up eingeschaltet."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Gegenstelle im Stellwerk anpingen",
+        "befehle": [
+          {
+            "befehl": "ping -c 4 10.66.40.66",
+            "ausgabe": ["4 packets transmitted, 4 received, 0% loss", "rtt avg 1.8 ms"],
+            "richtig": true
+          },
+          {
+            "befehl": "ping -c 4 10.66.40.65",
+            "ausgabe": ["4 packets transmitted, 4 received, 0% loss", "# Das war der Router selbst."],
+            "hinweis": "10.66.40.65 ist die eigene Adresse. Die Antwort kommt vom Router, nicht vom Stellwerk."
+          }
+        ]
+      },
+      {
+        "ziel": "Alles Nicht-Lokale über das Stellwerk leiten (Default Route)",
+        "befehle": [
+          {
+            "befehl": "ip route add default via 10.66.40.65",
+            "ausgabe": ["# Der Router schickt Pakete an sich selbst."],
+            "hinweis": "Das Gateway ist der nächste Router auf dem Weg, also die Gegenstelle 10.66.40.66, nicht die eigene Adresse."
+          },
+          {"befehl": "ip route add default via 10.66.40.66", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "ip route flush table main",
+            "ausgabe": ["Svenja zieht das Kabel: „Damit wären alle", "Routen weg!“"],
+            "gefaehrlich": true,
+            "hinweis": "flush table main löscht alle Routen, auch die zu den eigenen Netzen."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "ip link zeigt Schnittstellen, ip addr setzt Adressen, ip route setzt Routen. Die Maske des Transfernetzes steht im IP-Plan.",
+      "Die Default Route zeigt immer auf den nächsten Router, hier die Gegenstelle im Stellwerk."
+    ],
+    "erklaerung": [
+      "Adresse 10.66.40.65/30 auf eth1, Schnittstelle hoch, Ping zur Gegenstelle 10.66.40.66, dann die Default Route über das Stellwerk.",
+      "Weil Funk mitgehört werden kann, verschlüsselt das Modem die Strecke zusätzlich mit AES. Svenja klebt ein Etikett auf eth1: „Stellwerk, per Luft“."
+    ],
+    "suchbegriffe": ["Default Route", "Transfernetz", "ping"]
+  },
+  {
+    "id": "anzeige-pc-birkenhain",
+    "typ": "bauteile",
+    "titel": "Ein Mini-PC für die Abfahrtsanzeige",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 70,
+    "nach": "ipplan-birkenhain",
+    "ticket": [
+      "Mehmet hat ein winziges Gehäuse auf die Werkbank gestellt, die Schrauben schon nach Größe sortiert. „Für die Anzeige in Birkenhain. Hinter der Wandverkleidung ist nur Platz für Mini-ITX. Mehr nicht.“",
+      "„Die Software braucht 8 GB RAM und 500 GB Speicher. Budget 520 €. Und bitte keinen Prozessor ohne Grafik, sonst zeigt die Anzeige nur schwarz.“"
+    ],
+    "frage": "Baue einen PC, der ins Gehäuse passt und alle Vorgaben erfüllt.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "netzteil", "gehaeuse"],
+    "teile": [
+      "mb_h610_itx",
+      "mb_a620_matx",
+      "mb_b760_matx",
+      "cpu_i5_13400",
+      "cpu_i5_13400f",
+      "cpu_r5_7600",
+      "ram_ddr4_1x8",
+      "ram_ddr4_2x8",
+      "ram_ddr5_2x8",
+      "ssd_nvme_500",
+      "ssd_sata_500",
+      "nt_300",
+      "geh_itx"
+    ],
+    "vorgaben": {"ram_min": 8, "speicher_min": 500, "budget": 520},
+    "hilfe": [
+      "Das Gehäuse bestimmt das Mainboard, das Mainboard den Sockel, den RAM-Typ und die Anschlüsse für die SSD.",
+      "Ein Board ohne M.2-Steckplatz braucht eine SATA-SSD. Und das Budget ist knapp: Mehr RAM als verlangt passt nicht hinein."
+    ],
+    "erklaerung": [
+      "Nur das H610-Board ist Mini-ITX: Sockel LGA1700, DDR4, nur SATA. Also i5-13400 mit Grafik, DDR4 8 GB, SATA-SSD 500 GB, 300-W-Netzteil: zusammen 512,00 €.",
+      "Mit 16 GB RAM wären es 533,00 €, über dem Budget. Netzteil: 163 W reichen locker. Mehmet: „Klein, aber ordentlich sortiert.“"
+    ],
+    "suchbegriffe": ["Mainboard", "Formfaktor", "SSD"]
+  },
+  {
+    "id": "durchsagen-poe-birkenhain",
+    "typ": "diagnose",
+    "titel": "Abends schweigen die Lautsprecher",
+    "auftraggeber": "aylin",
+    "ort": "birkenhain",
+    "raum": "bahnsteig_birkenhain",
+    "stelle": [12.12, 8.88],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60, "systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 115, "reputation": 9},
+    "ab_tag": 71,
+    "nach": "kamera-dsgvo-birkenhain",
+    "ticket": [
+      "Aylin ist extra aus der Leitstelle gekommen, Horsts Hebel steckt in ihrer Jackentasche. „Tagsüber kommen meine Durchsagen in Birkenhain an. Ab etwa sieben Uhr abends: Stille. Morgens geht es wieder. Auf meinem Dashboard wird es dann rot.“",
+      "„Kameras und die zwei IP-Lautsprecher hängen am kleinen PoE-Switch im Technikhäuschen. Petra sagt, der sei ‚eigentlich groß genug‘.“"
+    ],
+    "frage": "Finde heraus, warum die Lautsprecher abends ausfallen, und wähle die Maßnahme.",
+    "pruefungen": [
+      {
+        "id": "log",
+        "text": "Protokoll des PoE-Switches lesen",
+        "ergebnis": "19:04 „PoE budget exceeded“, Port 7 und 8 (Lautsprecher) abgeschaltet. 06:52 Port 7 und 8 wieder eingeschaltet.",
+        "entscheidend": true
+      },
+      {
+        "id": "budget",
+        "text": "Datenblätter vergleichen: PoE-Budget und Verbrauch der Geräte",
+        "ergebnis": "Budget 110 W. 4 Kameras je 9 W, nachts mit Infrarot je 21 W. 2 Lautsprecher je 15 W.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "Kabel zu den Lautsprechern messen",
+        "ergebnis": "Beide Leitungen einwandfrei, 38 m und 41 m."
+      },
+      {
+        "id": "zeitplan",
+        "text": "Zeitsteuerung der Lautsprecher prüfen",
+        "ergebnis": "Kein Ruhemodus eingestellt, Durchsagen sind rund um die Uhr erlaubt."
+      },
+      {
+        "id": "vlan",
+        "text": "VLAN der Lautsprecher-Ports prüfen",
+        "ergebnis": "Beide im VLAN Fahrgastinformation, wie im IP-Plan."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Nachts schalten die Kameras Infrarot zu, dann reicht das PoE-Budget nicht mehr.",
+      "Die Lautsprecherkabel sind zu lang für PoE.",
+      "Die Lautsprecher sind auf Nachtruhe eingestellt.",
+      "Die Lautsprecher-Ports liegen im falschen VLAN."
+    ],
+    "ursache": "Nachts schalten die Kameras Infrarot zu, dann reicht das PoE-Budget nicht mehr.",
+    "massnahmen": [
+      "Einen Switch mit ausreichendem PoE-Budget einplanen, bis dahin Lautsprecher-Ports priorisieren",
+      "Die Infrarotstrahler der Kameras abkleben",
+      "Die Budgetgrenze im Switch abschalten, damit er alles versorgt",
+      "Die Lautsprecher jeden Abend von Hand neu starten"
+    ],
+    "massnahme": "Einen Switch mit ausreichendem PoE-Budget einplanen, bis dahin Lautsprecher-Ports priorisieren",
+    "unsicher": [
+      "Die Budgetgrenze im Switch abschalten, damit er alles versorgt"
+    ],
+    "hilfe": [
+      "Was ändert sich abends an den Kameras? Rechne den Verbrauch für Tag und Nacht aus.",
+      "Kabel bis 100 m sind für PoE kein Problem."
+    ],
+    "erklaerung": [
+      "Tagsüber 4 × 9 W + 2 × 15 W = 66 W, nachts 4 × 21 W + 2 × 15 W = 114 W bei 110 W Budget. Der Switch schaltet die Ports mit der niedrigsten Priorität ab.",
+      "Die Budgetgrenze schützt das Netzteil vor Überlast, sie bleibt an. Aylin freut sich: „Endlich blinkt mal was. Und jetzt weiß ich auch, warum.“"
+    ],
+    "suchbegriffe": ["PoE", "PoE-Budget", "Power over Ethernet"]
+  },
+  {
+    "id": "terminal-abfahrten-view",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "mysql>",
+    "titel": "Die Anzeige darf nur ihre Abfahrten lesen",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 60, "sicherheit": 50},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 71,
+    "nach": "anzeige-pc-birkenhain",
+    "ticket": [
+      "Ulla ist auf dem Fahrplanserver der Talbahn angemeldet und streichelt das Gehäuse. „Der neue Anzeige-PC in Birkenhain will Abfahrten lesen. Aber die Tabelle fahrplan enthält auch die Namen der Lokführer.“",
+      "„Also bekommt die Anzeige eine Sicht, einen View, nur mit dem, was sie zeigen soll. Und nur Leserechte, nur aus ihrem Netz 10.66.40.48/29.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
+    "start": ["Fahrplanserver Talbahn (MySQL 8.0)", "Database changed: fahrplan"],
+    "schritte": [
+      {
+        "ziel": "Den Aufbau der Tabelle fahrplan ansehen",
+        "befehle": [
+          {
+            "befehl": "DESCRIBE fahrplan;",
+            "ausgabe": ["zug | halt | abfahrt | ziel | gleis", "| lokfuehrer | dienstnr"],
+            "richtig": true
+          },
+          {
+            "befehl": "SHOW DATABASES;",
+            "ausgabe": ["fahrplan", "personal", "mysql"],
+            "hinweis": "SHOW DATABASES listet die Datenbanken, nicht die Spalten einer Tabelle."
+          }
+        ]
+      },
+      {
+        "ziel": "Einen View nur mit Abfahrten in Birkenhain anlegen, ohne Personaldaten",
+        "befehle": [
+          {
+            "befehl": "CREATE VIEW v_bir AS SELECT * FROM fahrplan WHERE halt = 'BIR';",
+            "ausgabe": ["Query OK, 0 rows affected", "# Mit lokfuehrer und dienstnr."],
+            "hinweis": "SELECT * übernimmt alle Spalten, auch die Namen der Lokführer. Die Anzeige braucht nur zug, ziel, abfahrt und gleis."
+          },
+          {
+            "befehl": "CREATE VIEW v_bir AS SELECT zug, ziel, abfahrt, gleis FROM fahrplan WHERE halt = 'BIR';",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "CREATE TABLE v_bir AS SELECT zug, ziel, abfahrt, gleis FROM fahrplan;",
+            "ausgabe": ["Query OK, 48211 rows affected", "# Eine Kopie. Von allen Halten."],
+            "hinweis": "CREATE TABLE … AS kopiert die Daten einmalig. Verspätungen kämen nie an, und es fehlt der Filter auf Birkenhain."
+          }
+        ]
+      },
+      {
+        "ziel": "Die nächsten drei Abfahrten testen",
+        "befehle": [
+          {
+            "befehl": "SELECT * FROM v_bir ORDER BY abfahrt DESC LIMIT 3;",
+            "ausgabe": ["# Die drei spätesten Züge des Tages."],
+            "hinweis": "DESC sortiert absteigend. Für die nächsten Abfahrten wird aufsteigend sortiert."
+          },
+          {
+            "befehl": "SELECT * FROM v_bir ORDER BY abfahrt LIMIT 3;",
+            "ausgabe": [
+              "RB 31 | Talheim  | 07:12 | 1",
+              "RB 31 | Lindenau | 07:41 | 1",
+              "RB 31 | Talheim  | 08:12 | 1"
+            ],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Dem Konto anzeige nur Leserecht auf den View geben",
+        "befehle": [
+          {
+            "befehl": "GRANT SELECT ON fahrplan.* TO 'anzeige'@'%';",
+            "ausgabe": ["Ulla: „Die ganze Datenbank, von überall?", "Nicht mit mir.“"],
+            "gefaehrlich": true,
+            "hinweis": "fahrplan.* umfasst auch die Tabelle mit den Lokführern, und '%' erlaubt jeden Rechner. Least Privilege heißt: nur der View, nur das eigene Netz."
+          },
+          {
+            "befehl": "GRANT SELECT ON fahrplan.v_bir TO 'anzeige'@'10.66.40.48/255.255.255.248';",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "GRANT INSERT ON fahrplan.v_bir TO 'anzeige'@'10.66.40.48/255.255.255.248';",
+            "ausgabe": ["Query OK, 0 rows affected", "# Die Anzeige dürfte jetzt Züge", "# erfinden."],
+            "hinweis": "Die Anzeige liest nur. INSERT würde ihr erlauben, Daten zu schreiben."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Ein View ist eine gespeicherte Abfrage: Er zeigt immer die aktuellen Daten, aber nur die ausgewählten Spalten und Zeilen.",
+      "GRANT legt fest: welches Recht, auf welches Objekt, für welches Konto von welchem Rechner."
+    ],
+    "erklaerung": [
+      "Der View v_bir zeigt nur zug, ziel, abfahrt und gleis von Birkenhain, immer aktuell. Das Konto anzeige darf ihn nur lesen und nur aus dem Netz 10.66.40.48/29.",
+      "So sieht die Anzeige keine Personaldaten (Datenminimierung) und kann nichts ändern. Ulla: „Der Server findet das auch besser. Hat er gesagt.“"
+    ],
+    "suchbegriffe": ["View", "CREATE VIEW", "GRANT"]
+  },
+  {
+    "id": "automat-firewall-birkenhain",
+    "typ": "auswahl",
+    "titel": "Der Fahrkartenautomat bekommt eine Firewall",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "wartehaus_birkenhain",
+    "stelle": [4.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 60, "netzwerk": 50},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 72,
+    "nach": "ipplan-birkenhain",
+    "ticket": [
+      "Der neue Automat im Wartehäuschen nimmt Karten und Handys. Svenja tippt auf den IP-Plan: „Er hat sein eigenes Netz, 10.66.40.56/29. Er muss nur zwei Ziele erreichen: den Zahlungsdienstleister und den Ticketserver der Talbahn, beide per HTTPS.“",
+      "„Der Hersteller will Fernwartung per RDP aus dem Internet. Tim will, dass einfach alles offen ist, damit nichts klemmt.“"
+    ],
+    "frage": "Welche Firewall-Regeln bekommt das Automaten-Netz?",
+    "optionen": [
+      "Nur TCP 443 zu Zahlungsdienstleister und Ticketserver erlauben, alles andere verbieten",
+      "Alles erlauben, der Automat hat ja einen eigenen Virenschutz",
+      "Alles verbieten außer RDP (TCP 3389) aus dem Internet für den Hersteller",
+      "Den Automaten ins Netz der Fahrgastinformation hängen, dann spart man sich die Regeln"
+    ],
+    "antwort": "Nur TCP 443 zu Zahlungsdienstleister und Ticketserver erlauben, alles andere verbieten",
+    "hilfe": [
+      "Ein Gerät, das Zahlungsdaten verarbeitet, soll genau das dürfen, was es braucht. Was passiert mit allem, was nicht ausdrücklich erlaubt ist?",
+      "RDP offen im Internet ist eines der beliebtesten Einfallstore für Angreifer."
+    ],
+    "erklaerung": [
+      "Least Privilege und Default Deny: nur die zwei Ziele per HTTPS, alles andere wird verworfen. Die Fernwartung läuft über ein VPN des Herstellers, nicht über offenes RDP.",
+      "Ein eigenes VLAN trennt den Automaten von Anzeige und Kameras. Svenja: „Tim, ‚alles offen‘ ist kein Sicherheitskonzept. Das ist eine Einladung.“"
+    ],
+    "suchbegriffe": ["Firewall", "Least Privilege", "Default Deny"]
+  },
+  {
+    "id": "usv-typ-birkenhain",
+    "typ": "auswahl",
+    "titel": "Wackliger Strom auf dem Land",
+    "auftraggeber": "mehmet",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 72,
+    "nach": "terminal-richtfunk",
+    "ticket": [
+      "Mehmet hat eine Woche lang ein Messgerät im Technikhäuschen laufen lassen. „Die Spannung schwankt zwischen 196 und 247 Volt. Und jedes Mal, wenn im Sägewerk nebenan die große Säge anläuft, gibt es einen kurzen Einbruch.“",
+      "„Dabei startet das Richtfunk-Modem neu, und Birkenhain ist zwei Minuten weg. Die alte Steckdosenleiste mit Überspannungsschutz hilft da nicht.“"
+    ],
+    "frage": "Welche USV-Bauart schützt das Technikhäuschen am besten?",
+    "optionen": [
+      "Online-USV (VFI): Die Geräte laufen immer über den Wechselrichter, Schwankungen kommen nie an",
+      "Offline-USV (VFD): Sie schaltet erst bei Ausfall um, das ist immer schnell genug",
+      "Gar keine USV, eine zweite Steckdosenleiste mit Überspannungsschutz genügt",
+      "Line-Interactive-USV (VI) ohne Akku, weil das Netz ja nie ganz ausfällt"
+    ],
+    "antwort": "Online-USV (VFI): Die Geräte laufen immer über den Wechselrichter, Schwankungen kommen nie an",
+    "hilfe": [
+      "Das Problem sind nicht lange Ausfälle, sondern ständige Schwankungen und kurze Einbrüche.",
+      "Welche Bauart hat keine Umschaltzeit, weil sie gar nicht umschalten muss?"
+    ],
+    "erklaerung": [
+      "Die Online-USV (Doppelwandler, VFI) richtet den Strom gleich und erzeugt ihn neu. Spannung und Frequenz am Ausgang sind unabhängig vom Netz, und es gibt keine Umschaltzeit.",
+      "Die Offline-USV schaltet erst nach einigen Millisekunden um, das kann für das Modem schon zu spät sein. Mehmet sortiert zur Feier des Tages die Sicherungen nach Farbe."
+    ],
+    "suchbegriffe": ["Online-USV", "VFI", "USV"]
+  },
+  {
+    "id": "bestellung-technik-birkenhain",
+    "typ": "bestellung",
+    "titel": "PoE-Switch und USV für Birkenhain bestellen",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 73,
+    "nach": "durchsagen-poe-birkenhain",
+    "ticket": [
+      "Frank hat eine Tabelle mit drei Händlern ausgedruckt und zweimal nachgerechnet. „Für Birkenhain: eine Rack-USV mit mindestens 1000 W und ein Switch mit 48 Ports und PoE, damit Aylins Lautsprecher abends nicht mehr schweigen.“",
+      "„Budget 1.110,00 €, Lieferung direkt nach Birkenhain an Petra in spätestens 2 Arbeitstagen, sonst verschiebt sich der Schrank. Ich rechne dann noch einmal nach. Zur Sicherheit.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen.",
+    "bedarf": [
+      {
+        "text": "Rack-USV mit mindestens 1000 W",
+        "typ": "usv",
+        "menge": 1,
+        "min": {"leistung": 1000}
+      },
+      {"text": "Switch mit 48 Ports und PoE", "typ": "switch", "menge": 1, "min": {"ports": 48}}
+    ],
+    "angebote": [
+      {"id": "u1", "teil": "usv_1000", "haendler": "serverhaus", "preis": 410, "lieferzeit": 1},
+      {"id": "u2", "teil": "usv_1000", "haendler": "bitlager", "preis": 375, "lieferzeit": 4},
+      {"id": "u3", "teil": "usv_1500", "haendler": "kabelkoenig", "preis": 560, "lieferzeit": 2},
+      {"id": "s1", "teil": "sw_48_poe", "haendler": "bitlager", "preis": 690, "lieferzeit": 2},
+      {"id": "s2", "teil": "sw_48_poe", "haendler": "serverhaus", "preis": 725, "lieferzeit": 1},
+      {"id": "s3", "teil": "sw_24", "haendler": "kabelkoenig", "preis": 160, "lieferzeit": 1}
+    ],
+    "budget": 1110,
+    "frist": 2,
+    "empfaenger": "petra",
+    "hilfe": [
+      "Prüfe jedes Angebot gegen Anforderung, Lieferzeit und am Ende gegen das Budget.",
+      "Ein Switch mit 24 Ports ist zwar billig, aber zu klein. Die größere USV wäre schön, sprengt aber zusammen mit dem Switch das Budget."
+    ],
+    "erklaerung": [
+      "USV 1000 W vom Serverhaus (410,00 €, 1 Tag), die billigere von Bitlager kommt zu spät. PoE-Switch von Bitlager (690,00 €, 2 Tage).",
+      "Zusammen 1.100,00 € bei 1.110,00 € Budget. Mit der 1500-W-USV oder dem Switch vom Serverhaus wäre es zu teuer. Frank rechnet nach: stimmt. Noch einmal: stimmt immer noch."
+    ],
+    "suchbegriffe": ["Angebot", "USV", "PoE"]
+  },
+  {
+    "id": "rack-birkenhain",
+    "typ": "rack",
+    "titel": "Der Schrank im Technikhäuschen Birkenhain",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60, "netzwerk": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 120, "reputation": 9},
+    "ab_tag": 74,
+    "nach": "durchsagen-poe-birkenhain",
+    "ticket": [
+      "Svenja steht vor dem 12-HE-Wandschrank im Technikhäuschen. Frank hat USV und PoE-Switch direkt hierher liefern lassen. Dazu liegen der alte 24er-Switch, zwei Server als Videorekorder zur Wahl und zwei Patchpanels bereit.",
+      "„Der Schrank hängt an der Wand und trägt nur 60 kg. Die kleine Klima schafft 800 W. Alle 48 Switchports sollen aufs Patchpanel, und 4 HE bleiben frei für das Material der Abnahme.“"
+    ],
+    "frage": "Bestücke den Schrank so, dass Strom, Kühlung, Gewicht und Vorgaben passen.",
+    "schrank": {"he": 12, "traglast": 60, "kuehlung": 800},
+    "geraete": ["usv_1000", "sw_48_poe", "sw_24", "srv_1he", "srv_2he", "pp_24", "pp_48"],
+    "vorgaben": {
+      "mindestens": {"usv": 1, "server": 1, "switch": 1, "patchpanel": 1},
+      "ports_min": 48,
+      "frei_min": 4
+    },
+    "hilfe": [
+      "Rechne Server und PoE-Switch zusammen. Die USV darf nur zu 80 % ausgelastet werden, und die Kühlung ist auch eine Grenze.",
+      "Wandschränke tragen wenig: Zähle auch das Gewicht zusammen. Die USV gehört nach unten, Switch und Patchpanel direkt übereinander."
+    ],
+    "erklaerung": [
+      "Kleiner Server 280 W + PoE-Switch 370 W = 650 W, die USV schafft 800 W. Mit dem 2-HE-Server wären es 820 W, zu viel für USV und Kühlung, und 61 kg statt 49 kg.",
+      "Unten USV, darüber Server, dann Switch und 48er-Patchpanel übereinander. Das 24er-Panel hätte zu wenige Ports. Svenja beschriftet jedes Kabel, die Spinne schaut zu."
+    ],
+    "suchbegriffe": ["Serverschrank", "USV", "PoE"]
+  },
+  {
+    "id": "automat-tarife-leftjoin",
+    "typ": "auswahl",
+    "titel": "Welche Fahrkarte kauft in Birkenhain niemand?",
+    "auftraggeber": "petra",
+    "ort": "birkenhain",
+    "raum": "wartehaus_birkenhain",
+    "stelle": [4.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 60},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 75,
+    "nach": "automat-firewall-birkenhain",
+    "ticket": [
+      "Petra hat den Verkaufsexport des neuen Automaten: Tabelle verkauf (id, tarif_id, datum, betrag), dazu die Tabelle tarif (id, name) mit allen 14 Fahrkarten der Talbahn.",
+      "„Das Menü am Automaten ist zu voll. Welche Tarife wurden hier noch nie verkauft? Die fliegen raus. Das Menü, nicht die Tarife.“"
+    ],
+    "frage": "Welche Abfrage liefert die Tarife ohne einen einzigen Verkauf?",
+    "optionen": [
+      "SELECT t.name FROM tarif t LEFT JOIN verkauf v ON v.tarif_id = t.id WHERE v.id IS NULL;",
+      "SELECT t.name FROM tarif t JOIN verkauf v ON v.tarif_id = t.id WHERE v.id IS NULL;",
+      "SELECT t.name FROM verkauf v LEFT JOIN tarif t ON v.tarif_id = t.id WHERE t.id IS NULL;",
+      "SELECT name FROM tarif GROUP BY name HAVING COUNT(*) = 0;"
+    ],
+    "antwort": "SELECT t.name FROM tarif t LEFT JOIN verkauf v ON v.tarif_id = t.id WHERE v.id IS NULL;",
+    "hilfe": [
+      "Ein normaler JOIN liefert nur Tarife, zu denen es einen Verkauf gibt. Du brauchst aber gerade die anderen.",
+      "Ein LEFT JOIN behält alle Zeilen der linken Tabelle. Wo kein Partner existiert, stehen rechts NULL-Werte."
+    ],
+    "erklaerung": [
+      "tarif steht links, der LEFT JOIN behält jeden Tarif. Tarife ohne Verkauf haben in v.id NULL, und genau die filtert WHERE v.id IS NULL.",
+      "Der INNER JOIN liefert nie NULL, das umgedrehte LEFT JOIN sucht Verkäufe ohne Tarif, und COUNT(*) ist je Name immer mindestens 1. Petra streicht vier Tarife aus dem Menü."
+    ],
+    "suchbegriffe": ["LEFT JOIN", "OUTER JOIN", "IS NULL"]
+  },
+  {
+    "id": "wartung-technik-birkenhain",
+    "typ": "wartung",
+    "titel": "Vorabnahme im Technikhäuschen",
+    "auftraggeber": "mehmet",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60, "sicherheit": 50},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 115, "reputation": 8},
+    "ab_tag": 75,
+    "nach": "rack-birkenhain",
+    "ticket": [
+      "Mehmet hat eine Checkliste mitgebracht, die Punkte nach Wichtigkeit sortiert. „Bevor Petra zur Abnahme lädt, prüfen wir selbst. Lieber finden wir die Fehler als der Prüfer der Talbahn.“",
+      "„Draußen war heute früh ein Gewitter. Die Spinne hat sich unter die USV verzogen. Kluges Tier.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "usv",
+        "text": "USV-Selbsttest ausführen (Soll: bestanden, Laufzeit mindestens 20 Minuten)",
+        "ergebnis": "Bestanden. Geschätzte Laufzeit bei aktueller Last: 31 Minuten.",
+        "auffaellig": false
+      },
+      {
+        "id": "temperatur",
+        "text": "Temperatur im Schrank ablesen (Soll: höchstens 35 °C)",
+        "ergebnis": "28 °C, die Klima läuft im Intervall.",
+        "auffaellig": false
+      },
+      {
+        "id": "ueberspannung",
+        "text": "Kabel vom Mast prüfen (Soll: Überspannungsschutz, geerdet)",
+        "ergebnis": "Antennen- und Kamerakabel laufen vom Mast direkt in den Schrank. Kein Überspannungsschutz, keine Erdung am Eintritt.",
+        "auffaellig": true
+      },
+      {
+        "id": "beschriftung",
+        "text": "Beschriftung und Doku prüfen (Soll: jedes Kabel beidseitig beschriftet)",
+        "ergebnis": "Jedes Kabel beidseitig beschriftet, der IP-Plan hängt laminiert an der Tür.",
+        "auffaellig": false
+      },
+      {
+        "id": "tuer",
+        "text": "Türkontakt prüfen (Soll: Meldung an die Leitstelle)",
+        "ergebnis": "Tür geöffnet: Aylins Dashboard meldet es nach zwei Sekunden. Rot, mit Blinken.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Überspannungsschutz und Erdung am Mast von einer Elektrofachkraft nachrüsten lassen, sonst in Ordnung",
+      "Alles in Ordnung, ein Blitz schlägt nie zweimal an derselben Stelle ein",
+      "Selbst einen Erdungsdraht vom Mast an den Schrank schrauben",
+      "Die Anlage bis zur Abnahme komplett abschalten"
+    ],
+    "abschluss_antwort": "Überspannungsschutz und Erdung am Mast von einer Elektrofachkraft nachrüsten lassen, sonst in Ordnung",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll in Klammern.",
+      "Ein Mast ist das höchste Ding weit und breit. Und Arbeiten an Erdung und Blitzschutz sind Sache von Fachleuten mit passender Ausbildung."
+    ],
+    "erklaerung": [
+      "Nur die Kabel vom Mast sind auffällig: Ohne Überspannungsschutz kann ein Einschlag in der Nähe über die Leitungen Switch, Modem und Rekorder zerstören.",
+      "Erdung und Blitzschutz gehören in die Hände einer Elektrofachkraft. Der Rest ist bereit für die Abnahme. Mehmet hakt ab, in der richtigen Reihenfolge."
+    ],
+    "suchbegriffe": ["Überspannungsschutz", "Erdung", "Elektrofachkraft"]
+  },
+  {
+    "id": "anzeige-firewall-birkenhain",
+    "typ": "diagnose",
+    "titel": "„Keine Daten“ auf der Abfahrtsanzeige",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "wartehaus_birkenhain",
+    "stelle": [4.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 60, "netzwerk": 55},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 120, "reputation": 9},
+    "ab_tag": 76,
+    "nach": "automat-firewall-birkenhain",
+    "ticket": [
+      "Seit gestern Abend steht auf der Anzeige im Wartehäuschen nur „Keine Daten“. Eine Fahrgästin hat Petra ein Foto davon geschickt, mit drei Ausrufezeichen.",
+      "Svenja: „Gestern haben wir die Firewall für ganz Birkenhain auf ‚alles verbieten, was nicht erlaubt ist‘ umgestellt. Das war richtig. Aber irgendwas fehlt jetzt.“"
+    ],
+    "frage": "Finde die Ursache und wähle die passende Maßnahme.",
+    "pruefungen": [
+      {
+        "id": "gateway",
+        "text": "Vom Anzeige-PC das Gateway 10.66.40.49 anpingen",
+        "ergebnis": "Antwort in 1 ms. Das lokale Netz funktioniert."
+      },
+      {
+        "id": "dns",
+        "text": "Den Namen fahrplan.talbahn auflösen",
+        "ergebnis": "fahrplan.talbahn → 10.20.1.15. DNS funktioniert."
+      },
+      {
+        "id": "anzeigelog",
+        "text": "Protokoll der Anzeige-Software lesen",
+        "ergebnis": "„Can't connect to MySQL server on '10.20.1.15:3306' (110: timeout)“",
+        "entscheidend": true
+      },
+      {
+        "id": "fwlog",
+        "text": "Protokoll der Firewall nach der Adresse der Anzeige durchsuchen",
+        "ergebnis": "DROP TCP 10.66.40.50 → 10.20.1.15:3306, alle 30 Sekunden. Eine Regel für dieses Ziel gibt es nicht.",
+        "entscheidend": true
+      },
+      {
+        "id": "strom",
+        "text": "Stromversorgung und Kabel der Anzeige prüfen",
+        "ergebnis": "Anzeige und PC laufen, der Link zum Switch steht mit 1 Gbit/s."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Die neue Firewall-Richtlinie hat keine Regel für die Datenbankabfrage der Anzeige.",
+      "Der DNS-Server kennt den Fahrplanserver nicht.",
+      "Das Kabel zur Anzeige ist beschädigt.",
+      "Der View v_bir auf dem Fahrplanserver ist leer."
+    ],
+    "ursache": "Die neue Firewall-Richtlinie hat keine Regel für die Datenbankabfrage der Anzeige.",
+    "massnahmen": [
+      "Eine Regel: nur Netz Fahrgastinformation → Fahrplanserver TCP 3306 erlauben und dokumentieren",
+      "Die Firewall für Birkenhain wieder abschalten",
+      "Eine Regel „alles erlauben“ für das Netz der Fahrgastinformation anlegen",
+      "Den Anzeige-PC neu installieren"
+    ],
+    "massnahme": "Eine Regel: nur Netz Fahrgastinformation → Fahrplanserver TCP 3306 erlauben und dokumentieren",
+    "unsicher": [
+      "Die Firewall für Birkenhain wieder abschalten",
+      "Eine Regel „alles erlauben“ für das Netz der Fahrgastinformation anlegen"
+    ],
+    "hilfe": [
+      "Arbeite dich von innen nach außen: lokales Netz, Namensauflösung, dann die Verbindung zum Dienst selbst.",
+      "Bei „Default Deny“ ist alles verboten, was keine Regel ausdrücklich erlaubt. Welche Verbindung braucht die Anzeige?"
+    ],
+    "erklaerung": [
+      "Gateway und DNS funktionieren, aber die Verbindung zu MySQL (TCP 3306) wird verworfen. Bei der Umstellung auf Default Deny wurde die Regel für die Anzeige vergessen.",
+      "Die Lösung ist eine einzelne, genau passende Regel, nicht das Abschalten. Nach zwei Minuten zeigt die Anzeige wieder Abfahrten. Svenja trägt die Regel in die Doku ein."
+    ],
+    "suchbegriffe": ["Firewall-Regel", "Default Deny", "Port"]
+  },
+  {
+    "id": "nachtrag-angebot-birkenhain",
+    "typ": "formular",
+    "art": "angebot",
+    "titel": "Lea hat zwei Kameras mehr versprochen",
+    "auftraggeber": "lea",
+    "raum": "kundenberatung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 115, "reputation": 8},
+    "ab_tag": 77,
+    "nach": "kamera-dsgvo-birkenhain",
+    "ticket": [
+      "Lea lächelt verdächtig freundlich. „Petra hat gefragt, ob wir am Fahrradständer in Birkenhain noch zwei Kameras dazunehmen können. Ich habe gesagt: selbstverständlich, bis zur Abnahme!“",
+      "„Jetzt brauche ich nur noch das Angebot dazu. Einkauf 389,00 € pro Kamera mit Montage, Handlungskosten 22 %, Gewinn 10 %. Karin will ihr Konzept auch erweitern, sagt sie.“"
+    ],
+    "frage": "Berechne das Nachtragsangebot mit der Zuschlagskalkulation bis zum Bruttopreis.",
+    "daten": {
+      "menge": 2,
+      "artikel": "Außenkamera mit Montage",
+      "einkaufspreis": 389.0,
+      "handlungskosten": 22,
+      "gewinn": 10,
+      "ust": 19
+    },
+    "hilfe": [
+      "Einkaufspreis gesamt + Handlungskosten = Selbstkosten. Der Gewinn wird auf die Selbstkosten gerechnet.",
+      "Die Umsatzsteuer kommt zum Schluss auf den Nettoverkaufspreis."
+    ],
+    "erklaerung": [
+      "778,00 € + 171,16 € Handlungskosten = 949,16 € Selbstkosten, + 94,92 € Gewinn = 1.044,08 € netto, brutto 1.242,46 €.",
+      "Weil es ein Nachtrag zum laufenden Auftrag ist, unterschreibt Petra ihn vor der Montage. Sabine zu Lea: „Das nächste Mal fragst du vorher. Keks?“"
+    ],
+    "suchbegriffe": ["Zuschlagskalkulation", "Angebot", "Handlungskosten"]
+  },
+  {
+    "id": "frank-tabellen-anomalien",
+    "typ": "zuordnung",
+    "titel": "Franks Einkaufstabelle erklärt sich selbst",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 100, "reputation": 7},
+    "ab_tag": 78,
+    "ticket": [
+      "Frank hat ein Übergabe-Handbuch angelegt. Als Tabelle, natürlich. „Noch drei Tage, dann bin ich Rentner. Mein Nachfolger soll die Einkaufstabelle verstehen. Sie hat 31 Spalten und 4.812 Zeilen, und ich liebe jede einzelne.“",
+      "„Ein paar Eigenheiten hat sie. Kleinigkeiten. Die schreibe ich dir auf, und du sagst mir, wie die Datenbankleute dazu sagen.“"
+    ],
+    "frage": "Ordne jede Eigenheit der Tabelle dem passenden Fachbegriff zu.",
+    "paare": [
+      ["Die Telefonnummer von Kabelkönig steht in 214 Zeilen", "Redundanz"],
+      [
+        "Kabelkönig hat eine neue Nummer, Frank ändert 211 der 214 Zeilen",
+        "Änderungsanomalie"
+      ],
+      [
+        "Ein neuer Händler lässt sich erst eintragen, wenn es eine Bestellung gibt",
+        "Einfügeanomalie"
+      ],
+      [
+        "Frank löscht die einzige Bestellung bei Serverhaus Nord, die Nummer ist mit weg",
+        "Löschanomalie"
+      ],
+      [
+        "In der Spalte Artikel steht „2 × Toner, 1 × Patchkabel“",
+        "Verstoß gegen die 1. Normalform"
+      ]
+    ],
+    "hilfe": [
+      "Anomalien entstehen, wenn dieselbe Information mehrfach gespeichert ist: beim Ändern, beim Einfügen und beim Löschen.",
+      "Die 1. Normalform verlangt atomare Werte: In jeder Zelle steht genau ein Wert."
+    ],
+    "erklaerung": [
+      "Weil die Händlerdaten in jeder Bestellzeile stehen, sind sie redundant. Daraus folgen die drei Anomalien: vergessene Änderungen, kein Händler ohne Bestellung, verlorene Daten beim Löschen. Mehrere Artikel in einer Zelle verletzen die 1. Normalform.",
+      "Frank rechnet nach: „211 von 214. Das sind 98,6 Prozent. Für mich eine glatte Sechs.“"
+    ],
+    "suchbegriffe": ["Normalisierung", "Redundanz", "Anomalie"]
+  },
+  {
+    "id": "frank-vier-augen-freigabe",
+    "typ": "auswahl",
+    "titel": "Wer darf ab Montag Geld überweisen?",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 55, "wirtschaft": 45},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 78,
+    "ticket": [
+      "Frank hält einen TAN-Generator hoch wie eine Reliquie. „Seit 1994 habe ich jede Rechnung bestellt, geprüft, gebucht und bezahlt. Alles allein, alles zweimal nachgerechnet. Nie ein Cent daneben.“",
+      "„Jetzt fragt Sabine, wie das mit dem Online-Banking wird, wenn Paul Adler kommt. Ich würde ihm einfach meinen Zettel mit der PIN geben. Der Zettel ist sehr ordentlich.“"
+    ],
+    "frage": "Wie wird der Zahlungsverkehr nach Franks Abschied richtig aufgestellt?",
+    "optionen": [
+      "Paul erfasst und prüft, Zahlungen ab 1.000 € gibt Sabine frei; jeder mit eigenem Zugang",
+      "Paul bekommt Franks Zugang und den PIN-Zettel, das hat 30 Jahre funktioniert",
+      "Frank behält seinen Zugang, damit er von zu Hause aus nachrechnen kann",
+      "Ein gemeinsamer Zugang „Buchhaltung“ für Paul, Sabine und Frank"
+    ],
+    "antwort": "Paul erfasst und prüft, Zahlungen ab 1.000 € gibt Sabine frei; jeder mit eigenem Zugang",
+    "hilfe": [
+      "Was passiert, wenn eine einzige Person bestellen, prüfen und bezahlen darf und sich einmal irrt? Oder von einer gefälschten Rechnung getäuscht wird?",
+      "Persönliche Zugänge machen nachvollziehbar, wer was getan hat. Ausgeschiedene Personen behalten keine Rechte."
+    ],
+    "erklaerung": [
+      "Vier-Augen-Prinzip und Funktionstrennung: Wer Rechnungen erfasst, gibt große Zahlungen nicht allein frei. Jeder arbeitet mit eigenem Zugang, Franks Zugang wird gesperrt.",
+      "Geteilte Zugänge und weitergegebene PINs machen jede Zahlung unzuordenbar. Frank übergibt den TAN-Generator an Sabine. Mit Handschuhen."
+    ],
+    "suchbegriffe": ["Vier-Augen-Prinzip", "Funktionstrennung", "Benutzerkonto"]
+  },
+  {
+    "id": "frank-alt-pc-loeschen",
+    "typ": "auswahl",
+    "titel": "Frank will seinen alten PC mitnehmen",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 55},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 100, "reputation": 7},
+    "ab_tag": 79,
+    "ticket": [
+      "Mehmet hat Franks Rechner von 2011 auf der Werkbank. „Paul bekommt einen neuen. Frank fragt, ob er den alten mit nach Hause nehmen darf. Für seine Garten-Tabellen. Er hat den Staubfilter selbst gehäkelt.“",
+      "„Auf der Festplatte sind 13 Jahre Buchhaltung: Rechnungen, Gehälter, Bankdaten. Tim meint, Formatieren reicht. Tim meint vieles.“"
+    ],
+    "frage": "Was passiert mit der Festplatte, bevor der PC das Haus verlässt?",
+    "optionen": [
+      "Daten sichern, dann die Platte mit einem Löschprogramm überschreiben und protokollieren",
+      "Schnellformatieren, danach ist die Platte leer",
+      "Die Dateien in den Papierkorb ziehen und ihn leeren",
+      "Nichts löschen, Frank kennt die Daten ja sowieso"
+    ],
+    "antwort": "Daten sichern, dann die Platte mit einem Löschprogramm überschreiben und protokollieren",
+    "hilfe": [
+      "Beim Formatieren und im Papierkorb verschwinden nur die Verweise auf die Daten. Mit einem Wiederherstellungsprogramm sind sie oft wieder da.",
+      "Personenbezogene Daten dürfen nur Befugte sehen. Nach dem Ruhestand gehört Frank nicht mehr dazu."
+    ],
+    "erklaerung": [
+      "Nur vollständiges Überschreiben (oder bei defekten Platten die physische Vernichtung nach DIN 66399) macht die Daten unlesbar. Das Löschprotokoll belegt es.",
+      "Frank bekommt einen leeren, aber sehr sauberen PC. Er ist gerührt: „So leer war der noch nie. Wie am ersten Tag.“"
+    ],
+    "suchbegriffe": ["Datenträger", "DIN 66399", "Formatieren"]
+  },
+  {
+    "id": "abschiedsgeschenk-frank",
+    "typ": "bestellung",
+    "titel": "Ein Geschenk für Frank, im Budget",
+    "auftraggeber": "lea",
+    "raum": "kundenberatung",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 55},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 110, "reputation": 8},
+    "ab_tag": 79,
+    "empfaenger": "lea",
+    "ticket": [
+      "Lea schließt die Tür und flüstert: „Morgen ist Franks Feier! 18 Leute haben je 35 € gegeben, Sabine legt 460 € drauf. Macht 1090 €. Ich habe allen gesagt, es wird perfekt.“",
+      "„Frank will seine Tabellen im Garten weiterführen: ein Convertible mit Stift, mindestens 16 GB, dazu ein 27-Zoll-Monitor mit DisplayPort fürs Gartenhaus. Es muss morgen früh da sein!“"
+    ],
+    "frage": "Stelle den Warenkorb für das Abschiedsgeschenk zusammen.",
+    "bedarf": [
+      {
+        "text": "Convertible mit Stift, mindestens 16 GB RAM",
+        "typ": "notebook",
+        "menge": 1,
+        "passt": {"bauform": "Convertible mit Stift"},
+        "min": {"groesse": 16}
+      },
+      {
+        "text": "Monitor 27 Zoll mit DisplayPort",
+        "typ": "monitor",
+        "menge": 1,
+        "passt": {"diagonale": 27, "anschluss": "DisplayPort"}
+      }
+    ],
+    "angebote": [
+      {
+        "id": "g1",
+        "teil": "nb_conv_13_16",
+        "haendler": "bitlager",
+        "preis": 819,
+        "lieferzeit": 3
+      },
+      {
+        "id": "g2",
+        "teil": "nb_conv_13_16",
+        "haendler": "kabelkoenig",
+        "preis": 845,
+        "lieferzeit": 1
+      },
+      {
+        "id": "g3",
+        "teil": "nb_conv_13_16",
+        "haendler": "serverhaus",
+        "preis": 869,
+        "lieferzeit": 1
+      },
+      {
+        "id": "g4",
+        "teil": "nb_conv_13_8",
+        "haendler": "bitlager",
+        "preis": 629,
+        "lieferzeit": 1
+      },
+      {
+        "id": "g5",
+        "teil": "nb_klapp_14_16",
+        "haendler": "kabelkoenig",
+        "preis": 749,
+        "lieferzeit": 1
+      },
+      {"id": "m1", "teil": "mon_27_dp", "haendler": "serverhaus", "preis": 249, "lieferzeit": 1},
+      {"id": "m2", "teil": "mon_27_dp", "haendler": "bitlager", "preis": 239, "lieferzeit": 1},
+      {
+        "id": "m3",
+        "teil": "mon_24_hdmi",
+        "haendler": "kabelkoenig",
+        "preis": 125,
+        "lieferzeit": 1
+      }
+    ],
+    "budget": 1090,
+    "frist": 1,
+    "hilfe": [
+      "Prüfe erst, was überhaupt passt: Bauform, Arbeitsspeicher, Diagonale, Anschluss. Dann die Lieferzeit: Die Feier ist morgen.",
+      "Rechne am Ende Notebook und Monitor zusammen und vergleiche mit der Sammelkasse. Auf 10 € kommt es an."
+    ],
+    "erklaerung": [
+      "Das günstigste 16-GB-Convertible kommt erst in 3 Tagen, das mit 8 GB ist zu klein, das Klapp-Notebook hat keinen Stift. Also das Convertible von Kabelkönig für 845,00 €.",
+      "Dazu der 27-Zoll-Monitor von Bitlager für 239,00 €: zusammen 1.084,00 € bei 1.090,00 € Budget. Mit dem Monitor vom Serverhaus wären es 1.094,00 €, zu viel. Lea verspricht allen: „Perfekt.“ Diesmal stimmt es."
+    ],
+    "suchbegriffe": ["Angebotsvergleich", "Budget", "Lieferzeit"]
+  },
+  {
+    "id": "feier-frank-statistik",
+    "typ": "auswahl",
+    "titel": "Franks Rekordjahre für die Abschiedsrede",
+    "auftraggeber": "sabine",
+    "raum": "chefbuero",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 55},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 105, "reputation": 8},
+    "ab_tag": 80,
+    "nach": "abschiedsgeschenk-frank",
+    "ticket": [
+      "Franks letzter Tag. In der Kundenberatung hängen Wimpel, das Geschenk ist verpackt, Sabine feilt an ihrer Rede. „Ulla hat Franks Belegliste in eine Datenbank geladen: Tabelle beleg mit id, jahr, betrag und geprueft_von.“",
+      "„Ich will sagen: ‚In diesen Jahren hat Frank mehr als 1.000 Belege geprüft.‘ Nur die Jahre, bitte. Und schnell, er kommt um drei!“"
+    ],
+    "frage": "Welche Abfrage liefert die Jahre, in denen Frank mehr als 1.000 Belege geprüft hat?",
+    "optionen": [
+      "SELECT jahr, COUNT(*) FROM beleg WHERE geprueft_von = 'frank' GROUP BY jahr HAVING COUNT(*) > 1000;",
+      "SELECT jahr, COUNT(*) FROM beleg WHERE COUNT(*) > 1000 GROUP BY jahr;",
+      "SELECT jahr FROM beleg WHERE geprueft_von = 'frank' AND id > 1000;",
+      "SELECT jahr, SUM(betrag) FROM beleg GROUP BY jahr HAVING SUM(betrag) > 1000;"
+    ],
+    "antwort": "SELECT jahr, COUNT(*) FROM beleg WHERE geprueft_von = 'frank' GROUP BY jahr HAVING COUNT(*) > 1000;",
+    "hilfe": [
+      "WHERE filtert einzelne Zeilen, bevor gruppiert wird. Eine Bedingung auf das Ergebnis einer Gruppe, etwa COUNT(*), gehört woanders hin.",
+      "Gezählt werden Belege, nicht Beträge addiert."
+    ],
+    "erklaerung": [
+      "WHERE nimmt nur Franks Belege, GROUP BY jahr bildet je Jahr eine Gruppe, HAVING COUNT(*) > 1000 behält nur die Gruppen mit mehr als 1.000 Belegen.",
+      "Aggregatfunktionen sind in WHERE nicht erlaubt, und id > 1000 zählt gar nichts. Sabine liest elf Jahreszahlen vor. Frank ruft: „Zwölf! 2009 war ein Schaltjahr!“ Es gibt Kuchen."
+    ],
+    "suchbegriffe": ["HAVING", "GROUP BY", "COUNT"]
+  },
+  {
+    "id": "pc-paul-arbeitsplatz",
+    "typ": "bauteile",
+    "titel": "Ein Arbeitsplatz für Paul Adler",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 55},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 110, "reputation": 7},
+    "ab_tag": 81,
+    "nach": "frank-alt-pc-loeschen",
+    "ticket": [
+      "Mehmet hat Franks Staubfilter-Häkelei eingerahmt. „Paul Adler fängt heute an. Er sagt, er arbeitet mit einer Datenbank, drei Tabellen gleichzeitig und 60 Browser-Tabs. Also: mindestens 32 GB RAM und 1 TB SSD.“",
+      "„Grafikkarte braucht er keine. Budget 560 €. Und bitte nichts durcheinanderbringen, die Teile liegen nach Farbe sortiert.“"
+    ],
+    "frage": "Baue einen PC, der alle Vorgaben erfüllt.",
+    "slots": ["mainboard", "cpu", "ram", "ssd", "netzteil", "gehaeuse"],
+    "teile": [
+      "mb_b760_matx",
+      "mb_a620_matx",
+      "cpu_i5_13400",
+      "cpu_i5_13400f",
+      "cpu_r5_7600",
+      "ram_ddr4_4x8",
+      "ram_ddr5_2x8",
+      "ram_ddr5_2x16",
+      "ssd_sata_1000",
+      "ssd_nvme_500",
+      "nt_300",
+      "geh_matx"
+    ],
+    "vorgaben": {"ram_min": 32, "speicher_min": 1000, "budget": 560},
+    "hilfe": [
+      "Ohne Grafikkarte braucht die CPU eine eingebaute Grafik. Welche CPU passt auf welches Mainboard, und welcher Speicher passt dazu?",
+      "Zähle die RAM-Module: Vier Module brauchen vier Steckplätze. Und prüfe, ob die SSD groß genug ist."
+    ],
+    "erklaerung": [
+      "Im Budget geht: Mainboard A620M (Micro-ATX), AMD Ryzen 5 7600, DDR5 32 GB (2 × 16 GB), SATA-SSD 1 TB (2,5 Zoll), Netzteil 300 W, Mini-Tower (Micro-ATX, Mini-ITX), zusammen 550,00 €. Der Intel-Weg mit B760, i5-13400 und 4 × 8 GB DDR4 kostet 570,00 €, zu viel. Die F-CPU hat keine eigene Grafik, 16 GB oder 500 GB sind zu wenig.",
+      "Das Netzteil muss (65 W CPU + 60 W Grundlast) × 1,3 = 163 W liefern, 300 W reichen. Paul startet als Erstes eine Datenbank. Mehmet ahnt, dass Frank davon nie erfahren darf."
+    ],
+    "suchbegriffe": ["Mainboard", "Arbeitsspeicher", "CPU"]
+  },
+  {
+    "id": "terminal-paul-migration",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "mysql>",
+    "titel": "Pauls heimliche Datenbank normalisieren",
+    "auftraggeber": "paul",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 60, "systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 115, "reputation": 8},
+    "ab_tag": 81,
+    "nach": "frank-tabellen-anomalien",
+    "ticket": [
+      "Paul Adler, erster Tag, Brille auf der Stirn: „Ich habe Franks Einkaufstabelle gestern Abend schon in eine Datenbank geladen. Eins zu eins, als Tabelle einkauf_alt. Frank muss das nicht wissen.“",
+      "„Jetzt stehen die Händler aber noch in jeder Zeile, mit Telefonnummer. Hilf mir, sie in eine eigene Tabelle auszulagern, bevor jemand eine Nummer ändert.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
+    "start": [
+      "MySQL 8.0 · Buchhaltungsserver",
+      "Datenbank: einkauf",
+      "Tabelle einkauf_alt(nr, datum, haendler,",
+      "  haendler_tel, artikel, preis)"
+    ],
+    "schritte": [
+      {
+        "ziel": "Tabelle haendler anlegen: eigener Schlüssel, jeder Name nur einmal",
+        "befehle": [
+          {
+            "befehl": "CREATE TABLE haendler (haendler_id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(80) UNIQUE, telefon VARCHAR(30));",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "CREATE TABLE haendler (name VARCHAR(80), telefon VARCHAR(30));",
+            "ausgabe": [
+              "Query OK, 0 rows affected",
+              "# Kein Schlüssel: Doppelte Händler wären",
+              "# erlaubt, nichts kann darauf verweisen."
+            ],
+            "hinweis": "Ohne Primärschlüssel kann keine andere Tabelle eindeutig auf einen Händler zeigen."
+          },
+          {
+            "befehl": "CREATE DATABASE haendler;",
+            "ausgabe": [
+              "Query OK, 1 row affected",
+              "# Eine ganze neue Datenbank. Gebraucht",
+              "# wird eine Tabelle."
+            ],
+            "hinweis": "CREATE DATABASE legt eine Datenbank an. Die Händler brauchen nur eine eigene Tabelle in der Datenbank einkauf."
+          }
+        ]
+      },
+      {
+        "ziel": "Jeden Händler aus der alten Tabelle genau einmal übernehmen",
+        "befehle": [
+          {
+            "befehl": "INSERT INTO haendler (name, telefon) SELECT haendler, haendler_tel FROM einkauf_alt;",
+            "ausgabe": ["ERROR 1062 (23000): Duplicate entry", "'Kabelkönig Versand' for key 'name'"],
+            "hinweis": "Jeder Händler steht in vielen Zeilen. Ohne DISTINCT würde er mehrfach eingefügt, UNIQUE verhindert das mit einem Fehler."
+          },
+          {
+            "befehl": "INSERT INTO haendler (name, telefon) SELECT DISTINCT haendler, haendler_tel FROM einkauf_alt;",
+            "ausgabe": ["Query OK, 3 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "UPDATE haendler SET name = 'Kabelkönig Versand';",
+            "ausgabe": ["Query OK, 0 rows affected", "# Die Tabelle ist noch leer."],
+            "hinweis": "UPDATE ändert vorhandene Zeilen. Neue Zeilen kommen mit INSERT hinein."
+          }
+        ]
+      },
+      {
+        "ziel": "In einkauf_alt eine Spalte für den Fremdschlüssel anlegen",
+        "befehle": [
+          {
+            "befehl": "ALTER TABLE einkauf_alt ADD haendler_id INT;",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "DROP TABLE einkauf_alt;",
+            "ausgabe": ["Paul reißt die Hände hoch: „Da sind alle", "Bestellungen seit 1994 drin!“"],
+            "gefaehrlich": true,
+            "hinweis": "DROP TABLE löscht die Tabelle mit allen Daten. Erst umbauen, dann prüfen, und nie ohne Sicherung."
+          }
+        ]
+      },
+      {
+        "ziel": "haendler_id in jeder Bestellung passend zum Namen füllen",
+        "befehle": [
+          {
+            "befehl": "UPDATE einkauf_alt SET haendler_id = 1;",
+            "ausgabe": ["Query OK, 4812 rows affected", "# Jetzt ist alles bei Händler 1 bestellt."],
+            "hinweis": "Ohne Bezug zum Namen bekommt jede Bestellung denselben Händler. Die Zuordnung braucht eine Verknüpfung über den Namen."
+          },
+          {
+            "befehl": "UPDATE einkauf_alt e JOIN haendler h ON e.haendler = h.name SET e.haendler_id = h.haendler_id;",
+            "ausgabe": ["Query OK, 4812 rows affected"],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die doppelten Händlerspalten aus einkauf_alt entfernen",
+        "befehle": [
+          {
+            "befehl": "DELETE FROM einkauf_alt WHERE haendler IS NOT NULL;",
+            "ausgabe": ["Paul: „Stopp! Das löscht jede Bestellung,", "nicht die Spalten!“"],
+            "gefaehrlich": true,
+            "hinweis": "DELETE löscht Zeilen, hier also alle Bestellungen. Spalten entfernt man mit ALTER TABLE … DROP COLUMN."
+          },
+          {
+            "befehl": "ALTER TABLE einkauf_alt DROP COLUMN haendler, DROP COLUMN haendler_tel;",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "ALTER TABLE einkauf_alt DROP COLUMN haendler_id;",
+            "ausgabe": ["Query OK, 0 rows affected", "# Der neue Fremdschlüssel ist wieder weg."],
+            "hinweis": "Entfernt werden die Spalten, die jetzt doppelt in haendler stehen. haendler_id ist die Verbindung, die bleibt."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Normalisieren heißt: Was mehrfach vorkommt, bekommt eine eigene Tabelle mit Primärschlüssel. Die alte Tabelle verweist per Fremdschlüssel darauf.",
+      "DISTINCT entfernt doppelte Zeilen aus einem SELECT. Mit UPDATE … JOIN lassen sich Werte aus einer zweiten Tabelle übernehmen."
+    ],
+    "erklaerung": [
+      "Die Händler stehen jetzt genau einmal in haendler, jede Bestellung zeigt über haendler_id darauf. Eine neue Telefonnummer wird an einer einzigen Stelle geändert.",
+      "Paul lehnt sich zurück: „Und Frank hat es nie gemerkt.“ Frank schickt am selben Abend eine Mail: „Ich habe es gemerkt. Gut gemacht.“"
+    ],
+    "suchbegriffe": ["Normalisierung", "Fremdschlüssel", "DISTINCT"]
+  },
+  {
+    "id": "poe-birkenhain",
+    "typ": "diagnose",
+    "titel": "Birkenhain startet neu, wenn es friert",
+    "auftraggeber": "svenja",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 120, "reputation": 8},
+    "ab_tag": 82,
+    "ticket": [
+      "Svenja steht mit Mütze im Technikhäuschen von Birkenhain. „Die Abnahme ist übermorgen. Tagsüber läuft alles. Aber seit es nachts friert, starten morgens die Abfahrtsanzeige und die Kameras abwechselnd neu.“",
+      "„Die Fahrgäste denken, die Anzeige tanzt. Petra sagt, das sieht nicht nach Abnahme aus. Alles hängt am kleinen PoE-Switch im Rack.“"
+    ],
+    "frage": "Finde die Ursache der Neustarts und wähle die richtige Maßnahme.",
+    "pruefungen": [
+      {
+        "id": "log",
+        "text": "Ereignisprotokoll des PoE-Switches lesen",
+        "ergebnis": "Jeden Morgen gegen 6 Uhr: „PoE budget exceeded, power denied on port 3“, danach abwechselnd Port 1, 2 und 3.",
+        "entscheidend": true
+      },
+      {
+        "id": "budget",
+        "text": "PoE-Budget und Verbraucher laut Datenblatt vergleichen",
+        "ergebnis": "Budget 90 W. Anzeige 51 W, Lautsprecher 15,4 W, zwei Kameras je 8 W, mit Heizung je 25,5 W.",
+        "entscheidend": true
+      },
+      {
+        "id": "kabel",
+        "text": "Patchkabel und Dosen mit dem Kabeltester prüfen",
+        "ergebnis": "Alle Adern in Ordnung, Länge höchstens 38 m."
+      },
+      {
+        "id": "richtfunk",
+        "text": "Richtfunkstrecke zum Stellwerk prüfen",
+        "ergebnis": "Pegel stabil, keine Paketverluste. Die Strecke hat mit dem Problem nichts zu tun."
+      },
+      {
+        "id": "strom",
+        "text": "USV und Stromversorgung des Racks prüfen",
+        "ergebnis": "Kein Netzausfall, die USV meldet keine Ereignisse."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Mit Kameraheizung übersteigt der Bedarf das PoE-Budget des Switches.",
+      "Die Richtfunkstrecke bricht bei Frost zusammen.",
+      "Die Patchkabel sind zu lang für PoE.",
+      "Die USV schaltet nachts ab."
+    ],
+    "ursache": "Mit Kameraheizung übersteigt der Bedarf das PoE-Budget des Switches.",
+    "massnahmen": [
+      "Einen PoE-Switch mit 240 W Budget einsetzen und die Anzeige priorisieren",
+      "Die Heizung der Kameras dauerhaft abschalten",
+      "Die Anzeige über ein zweites Kabel am selben Switch anschließen",
+      "Den Switch jeden Morgen per Zeitschaltuhr neu starten"
+    ],
+    "massnahme": "Einen PoE-Switch mit 240 W Budget einsetzen und die Anzeige priorisieren",
+    "hilfe": [
+      "Rechne den Bedarf zweimal aus: an einem milden Tag und in einer Frostnacht. Was ändert sich an den Kameras?",
+      "Ein PoE-Switch kann nur so viel Leistung verteilen, wie sein Budget hergibt. Was darüber liegt, bekommt keinen Strom."
+    ],
+    "erklaerung": [
+      "Normal: 51 W + 2 × 8 W + 15,4 W = 82,4 W, das passt in 90 W. Bei Frost heizen die Kameras: 51 W + 2 × 25,5 W + 15,4 W = 117,4 W, zu viel. Der Switch schaltet Ports ab.",
+      "Ein Switch mit 240 W Budget hat genug Reserve, und mit Port-Priorität bleibt die Anzeige im Zweifel an. Ohne Heizung beschlagen die Kameras. Svenja beschriftet den neuen Switch: „Winterfest.“"
+    ],
+    "suchbegriffe": ["PoE", "Switch"]
+  },
+  {
+    "id": "paul-abschreibung-servicewagen",
+    "typ": "auswahl",
+    "titel": "Der neue Servicewagen in Pauls Büchern",
+    "auftraggeber": "paul",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 110, "reputation": 7},
+    "ab_tag": 82,
+    "ticket": [
+      "Paul hat den Kaufvertrag für den neuen Servicewagen vor sich. Birkenhain liegt weit draußen, und Mehmets alter Kombi macht Geräusche wie ein Faxgerät.",
+      "„Anschaffungskosten 36.000 € netto, Nutzungsdauer laut AfA-Tabelle 6 Jahre, gekauft und zugelassen im September. Linear abschreiben. Frank hätte das im Kopf gerechnet. Ich will es richtig haben.“"
+    ],
+    "frage": "Wie hoch sind die Abschreibung im ersten Jahr und der Buchwert am 31.12.?",
+    "optionen": [
+      "Abschreibung 2.000 €, Buchwert 34.000 €",
+      "Abschreibung 6.000 €, Buchwert 30.000 €",
+      "Abschreibung 1.500 €, Buchwert 34.500 €",
+      "Abschreibung 2.400 €, Buchwert 33.600 €"
+    ],
+    "antwort": "Abschreibung 2.000 €, Buchwert 34.000 €",
+    "hilfe": [
+      "Lineare Abschreibung: Anschaffungskosten geteilt durch Nutzungsdauer ergibt den Jahresbetrag.",
+      "Im ersten Jahr wird monatsgenau abgeschrieben, der Kaufmonat zählt voll mit."
+    ],
+    "erklaerung": [
+      "36.000 € : 6 Jahre = 6.000 € pro Jahr. Von September bis Dezember sind es 4 Monate: 6.000 € × 4/12 = 2.000 €. Buchwert am 31.12.: 36.000 € − 2.000 € = 34.000 €.",
+      "Wer ein ganzes Jahr ansetzt oder den Kaufmonat vergisst, liegt daneben. Paul trägt den Wert in die Anlagendatenbank ein. Mit Kostenstelle."
+    ],
+    "suchbegriffe": ["Abschreibung", "Buchwert", "Nutzungsdauer"]
+  },
+  {
+    "id": "abnahme-birkenhain",
+    "typ": "auswahl",
+    "titel": "Abnahme in Birkenhain mit einem leisen Lautsprecher",
+    "auftraggeber": "petra",
+    "ort": "birkenhain",
+    "raum": "wartehaus_birkenhain",
+    "stelle": [4.12, 2.38],
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 125, "reputation": 9},
+    "ab_tag": 83,
+    "nach": "poe-birkenhain",
+    "ticket": [
+      "Petra hat das Abnahmeprotokoll für Birkenhain auf dem Klemmbrett und einen Kuchen in der anderen Hand. Anzeige, Kameras, Funkstrecke, Automat: alles läuft, auch nach der Frostnacht.",
+      "„Nur der Lautsprecher am Bahnsteigende ist etwas leise. Man hört die Durchsage, aber nur, wenn keiner hustet. Nehmen wir trotzdem ab? Oder warten wir, bis alles perfekt ist?“"
+    ],
+    "frage": "Wie geht es mit der Abnahme weiter?",
+    "optionen": [
+      "Abnehmen, den Mangel mit Frist ins Protokoll schreiben und die Rechte vorbehalten",
+      "Die Abnahme verweigern, bis auch die letzte Kleinigkeit behoben ist",
+      "Ohne Vermerk abnehmen und den Lautsprecher mündlich klären",
+      "Die Abnahme ein Jahr verschieben, damit die Gewährleistung später beginnt"
+    ],
+    "antwort": "Abnehmen, den Mangel mit Frist ins Protokoll schreiben und die Rechte vorbehalten",
+    "hilfe": [
+      "Beim Werkvertrag darf die Abnahme wegen eines unwesentlichen Mangels nicht verweigert werden.",
+      "Was nicht im Protokoll steht, ist später schwer nachzuweisen. Mit der Abnahme beginnt die Gewährleistung."
+    ],
+    "erklaerung": [
+      "Ein leiser Lautsprecher ist ein unwesentlicher Mangel. Die Talbahn nimmt ab, hält ihn mit Frist in der Mängelliste fest und behält sich ihre Rechte vor. Ab jetzt läuft die Gewährleistung, und die Schlussrechnung wird fällig.",
+      "Mündliche Absprachen sind nach drei Wochen vergessen. Petra unterschreibt, Svenja dreht den Lautsprecher lauter, und der Kuchen wird unter Zeugen angeschnitten."
+    ],
+    "suchbegriffe": ["Abnahme", "Werkvertrag", "Gewährleistung"]
+  },
+  {
+    "id": "paul-rechnung-pruefen",
+    "typ": "zuordnung",
+    "titel": "Die Rechnung für die Richtfunkantennen",
+    "auftraggeber": "paul",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 115, "reputation": 8},
+    "ab_tag": 84,
+    "nach": "abnahme-birkenhain",
+    "ticket": [
+      "Paul hat die Rechnung des Funktechnik-Lieferanten für Birkenhain auf dem Tisch: 3 Richtfunkantennen zu je 489 € netto, 19 % Umsatzsteuer, 2 % Skonto bei Zahlung innerhalb von 10 Tagen.",
+      "„Frank hat mir eine Checkliste mit vier Prüfungen hinterlassen. Handschriftlich. Ich weiß nur nicht, welcher Punkt zu welcher Prüfung gehört.“"
+    ],
+    "frage": "Ordne jeden Punkt der Checkliste der passenden Prüfung zu.",
+    "paare": [
+      [
+        "Stimmen Artikel und Menge mit Bestellung und Lieferschein überein?",
+        "Sachliche Prüfung"
+      ],
+      ["Stimmen 3 × 489 € = 1.467 € und die Umsatzsteuer darauf?", "Rechnerische Prüfung"],
+      [
+        "Stehen Steuernummer, Rechnungsnummer und Lieferdatum auf der Rechnung?",
+        "Formelle Prüfung der Pflichtangaben"
+      ],
+      [
+        "Bis wann muss überwiesen werden, damit der Abzug gilt?",
+        "Zahlung mit Skonto terminieren"
+      ]
+    ],
+    "hilfe": [
+      "Sachlich: Wurde geliefert, was bestellt war? Rechnerisch: Stimmen die Zahlen? Formell: Ist die Rechnung vollständig?",
+      "Skonto ist ein Preisnachlass für schnelle Zahlung. Er gilt nur innerhalb der Frist."
+    ],
+    "erklaerung": [
+      "Netto 1.467,00 €, dazu 19 % Umsatzsteuer 278,73 €, brutto 1.745,73 €. Mit 2 % Skonto überweist Paul 1.710,82 €, wenn er innerhalb von 10 Tagen zahlt.",
+      "Fehlen Pflichtangaben, darf die Vorsteuer nicht gezogen werden. Paul legt Franks Zettel ab. In einer Tabelle. In der Datenbank."
+    ],
+    "suchbegriffe": ["Rechnung", "Skonto", "Umsatzsteuer"]
+  },
+  {
+    "id": "terminal-monitoring-birkenhain",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "svenja@monitor:~$",
+    "titel": "Birkenhain ins Monitoring aufnehmen",
+    "auftraggeber": "svenja",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60, "systeme": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 120, "reputation": 8},
+    "ab_tag": 84,
+    "nach": "abnahme-birkenhain",
+    "ticket": [
+      "Svenja hat den Monitoring-Server geöffnet. „Birkenhain ist abgenommen, jetzt soll Aylin den Haltepunkt auf ihrem Dashboard sehen. Der neue Switch dort hat die Adresse 10.66.40.34, das Gateway ist 10.66.40.33.“",
+      "„Erst prüfen, ob wir ihn über die Funkstrecke erreichen, dann sicher per SNMP abfragen. Die Zugangsdaten für SNMPv3 stehen schon in der Konfigurationsdatei.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · Monitoring-Server Bitweiche", "Dienst: netzwacht (Monitoring)"],
+    "schritte": [
+      {
+        "ziel": "Den Switch in Birkenhain viermal anpingen",
+        "befehle": [
+          {
+            "befehl": "ping -c 4 10.66.40.34",
+            "ausgabe": ["4 packets transmitted, 4 received, 0% loss", "rtt min/avg/max = 3.1/3.4/3.9 ms"],
+            "richtig": true
+          },
+          {
+            "befehl": "ping 10.66.40.34",
+            "ausgabe": [
+              "64 bytes from 10.66.40.34: time=3.2 ms",
+              "64 bytes from 10.66.40.34: time=3.4 ms",
+              "… (läuft endlos weiter)"
+            ],
+            "hinweis": "Unter Linux pingt ping ohne -c endlos, bis man mit Strg+C abbricht. Mit -c legst du die Anzahl fest."
+          },
+          {
+            "befehl": "ipconfig /all",
+            "ausgabe": ["bash: ipconfig: command not found"],
+            "hinweis": "ipconfig ist ein Windows-Befehl und zeigt ohnehin nur die eigene Konfiguration, nicht die Erreichbarkeit eines anderen Geräts."
+          }
+        ]
+      },
+      {
+        "ziel": "Den Weg der Pakete bis Birkenhain anzeigen",
+        "befehle": [
+          {
+            "befehl": "traceroute 10.66.40.34",
+            "ausgabe": [
+              " 1  10.10.0.1    0.4 ms",
+              " 2  10.20.0.1    1.8 ms  (Stellwerk)",
+              " 3  10.66.40.33    3.1 ms  (Richtfunk)",
+              " 4  10.66.40.34   3.3 ms"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "ip route del default",
+            "ausgabe": ["Svenja hält deine Hand fest: „Dann ist der", "Server von allem abgeschnitten!“"],
+            "gefaehrlich": true,
+            "hinweis": "Das löscht die Standardroute. Der Monitoring-Server erreicht dann keinen Standort mehr, auch nicht Birkenhain."
+          },
+          {
+            "befehl": "nslookup 10.66.40.34",
+            "ausgabe": ["** server can't find 10.0.66.10.in-addr.arpa:", "NXDOMAIN"],
+            "hinweis": "nslookup fragt das DNS nach Namen. Den Weg durchs Netz zeigt traceroute."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Laufzeit des Switches verschlüsselt per SNMP abfragen",
+        "befehle": [
+          {
+            "befehl": "snmpget -v2c -c public 10.66.40.34 sysUpTime.0",
+            "ausgabe": ["Timeout: No Response from 10.66.40.34", "# Gut so: v2c ist dort abgeschaltet."],
+            "hinweis": "SNMPv2c überträgt die Community im Klartext, und „public“ kennt jeder. Der Switch spricht nur SNMPv3 mit Anmeldung und Verschlüsselung."
+          },
+          {
+            "befehl": "snmpget -v3 -l authPriv 10.66.40.34 sysUpTime.0",
+            "ausgabe": [
+              "DISMAN-EVENT-MIB::sysUpTimeInstance =",
+              "Timeticks: (15522000) 1 day, 19:07:00.00"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "snmpset -v2c -c private 10.66.40.34 sysName.0 s test",
+            "ausgabe": ["Svenja: „snmpset ändert die Konfiguration!", "Wir wollten nur lesen.“"],
+            "gefaehrlich": true,
+            "hinweis": "snmpset schreibt Werte auf das Gerät. Fürs Monitoring wird nur gelesen, und das verschlüsselt."
+          }
+        ]
+      },
+      {
+        "ziel": "Die neue Konfiguration laden, ohne das Monitoring anzuhalten",
+        "befehle": [
+          {
+            "befehl": "sudo systemctl stop netzwacht",
+            "ausgabe": ["# Das Monitoring aller Standorte ist aus.", "# Aylins Dashboard wird grau."],
+            "hinweis": "stop beendet den Dienst ganz. Während er steht, sieht niemand Störungen, an keinem Standort."
+          },
+          {
+            "befehl": "sudo systemctl reload netzwacht",
+            "ausgabe": ["# Konfiguration neu geladen, 6 Standorte aktiv"],
+            "richtig": true
+          },
+          {
+            "befehl": "sudo systemctl disable netzwacht",
+            "ausgabe": ["Removed /etc/systemd/system/multi-user", ".target.wants/netzwacht.service."],
+            "hinweis": "disable nimmt den Dienst aus dem Systemstart. Nach dem nächsten Neustart liefe gar kein Monitoring mehr."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "ping prüft die Erreichbarkeit, traceroute zeigt jeden Router auf dem Weg.",
+      "SNMPv3 mit authPriv meldet sich an und verschlüsselt. systemctl reload lädt die Konfiguration neu, ohne den Dienst zu beenden."
+    ],
+    "erklaerung": [
+      "Der Switch antwortet in rund 3 ms, der Weg führt über das Stellwerk und die Richtfunkstrecke. Die Abfrage läuft verschlüsselt über SNMPv3, der Dienst wird nur neu geladen.",
+      "Auf Aylins Dashboard erscheint ein sechster grüner Punkt. Sie ruft an: „Birkenhain ist grün! Kann es bitte einmal kurz gelb werden? Nur zum Testen?“"
+    ],
+    "suchbegriffe": ["SNMP", "Monitoring", "traceroute"]
+  },
+  {
+    "id": "angebot-haltepunkte",
+    "typ": "formular",
+    "art": "angebot",
+    "titel": "Angebot: zwei Haltepunkte wie Birkenhain",
+    "auftraggeber": "lea",
+    "raum": "kundenberatung",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 60},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 85,
+    "nach": "paul-rechnung-pruefen",
+    "ticket": [
+      "Lea strahlt: „Die Talbahn will zwei weitere Haltepunkte so ausstatten wie Birkenhain! Ich habe Petra gesagt, es kostet sicher unter 25.000 €. Sicher. Ziemlich sicher.“",
+      "„Paul hat den Einkaufspreis je Paket ermittelt: 7.850 €. Handlungskosten 15 %, Gewinn 10 %, Umsatzsteuer 19 %. Rechnest du das Angebot durch, bevor ich noch etwas verspreche?“"
+    ],
+    "frage": "Kalkuliere das Angebot vom Einkaufspreis bis zum Bruttopreis.",
+    "daten": {
+      "menge": 2,
+      "artikel": "Ausstattungspaket Haltepunkt (wie Birkenhain)",
+      "einkaufspreis": 7850,
+      "handlungskosten": 15,
+      "gewinn": 10,
+      "ust": 19
+    },
+    "hilfe": [
+      "Reihenfolge: Einkaufspreis gesamt, plus Handlungskosten ergibt die Selbstkosten, plus Gewinn ergibt den Nettoverkaufspreis, plus Umsatzsteuer den Bruttopreis.",
+      "Jeder Zuschlag wird auf die Summe der Stufe davor gerechnet, nicht auf den Einkaufspreis."
+    ],
+    "erklaerung": [
+      "Einkauf 15.700,00 €, Selbstkosten 18.055,00 €, netto 19.860,50 €, brutto 23.634,00 €.",
+      "Das liegt unter Leas 25.000 €. Lea atmet aus und sagt: „Siehst du. Ziemlich sicher.“"
+    ],
+    "suchbegriffe": ["Zuschlagskalkulation", "Handlungskosten", "Angebot"]
+  },
+  {
+    "id": "jahreswartung-buero",
+    "typ": "wartung",
+    "titel": "Jahreswartung im Büro: Konten, Sicherung, Updates",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 60, "systeme": 50},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 86,
+    "ticket": [
+      "Ulla hat eine Liste an jedes Rack geklebt. „Das Jahr ist fast rum. Einmal im Jahr prüfen wir alle Standorte gründlich. Wir fangen zu Hause an, sonst sagen die Server, wir messen mit zweierlei Maß.“",
+      "„Zuerst die Sicherheitsliste für den Serverraum. Und schau bei den Konten genau hin. Da war doch was mit einer Abschiedsfeier.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "backup",
+        "text": "Sicherungsprotokolle der letzten 30 Nächte (Soll: alle erfolgreich)",
+        "ergebnis": "30 von 30 erfolgreich, die Kopie außer Haus ist von gestern.",
+        "auffaellig": false
+      },
+      {
+        "id": "restore",
+        "text": "Letzten Wiederherstellungstest prüfen (Soll: höchstens 3 Monate alt)",
+        "ergebnis": "Vor 5 Wochen, eine Datei und eine ganze VM, beide erfolgreich.",
+        "auffaellig": false
+      },
+      {
+        "id": "updates",
+        "text": "Sicherheitsupdates der Server (Soll: höchstens 30 Tage alt)",
+        "ergebnis": "Alle Server auf dem Stand von letzter Woche.",
+        "auffaellig": false
+      },
+      {
+        "id": "konten",
+        "text": "Konten ausgeschiedener Personen (Soll: deaktiviert)",
+        "ergebnis": "Konto fheider (Frank Heider) ist aktiv. Letzte Anmeldung: Tag 80, 17:52 Uhr.",
+        "auffaellig": true
+      },
+      {
+        "id": "zertifikat",
+        "text": "Ablaufdatum des Webserver-Zertifikats (Soll: über 30 Tage)",
+        "ergebnis": "Gültig noch 214 Tage, automatische Verlängerung aktiv.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Franks Konto sofort deaktivieren, das Offboarding ergänzen, sonst alles in Ordnung",
+      "Alles in Ordnung, Frank kommt vielleicht noch mal vorbei",
+      "Franks Konto samt Postfach und Dateien sofort löschen",
+      "Alle Passwörter im ganzen Haus zurücksetzen und die Server herunterfahren"
+    ],
+    "abschluss_antwort": "Franks Konto sofort deaktivieren, das Offboarding ergänzen, sonst alles in Ordnung",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll in Klammern.",
+      "Ausgeschiedene Konten werden deaktiviert, nicht sofort gelöscht: Dateien, Postfach und Protokolle hängen daran."
+    ],
+    "erklaerung": [
+      "Nur das Konto fällt auf. Ein aktives Konto einer ausgeschiedenen Person ist ein offenes Tor, auch wenn sie es nicht mehr benutzt. Deaktivieren und die Checkliste fürs Ausscheiden um diesen Punkt ergänzen.",
+      "Die letzte Anmeldung war Franks Abschiedsmail. Ulla sagt dem Server: „Gut aufgepasst.“ Der Server brummt zufrieden."
+    ],
+    "suchbegriffe": ["Benutzerkonto", "Backup", "Zertifikat"]
+  },
+  {
+    "id": "jahreswartung-leitstelle",
+    "typ": "wartung",
+    "titel": "Jahreswartung in der Leitstelle Talheim",
+    "auftraggeber": "aylin",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 87,
+    "ticket": [
+      "Aylin hat Horsts altes Wartungsheft neben ihr Tablet gelegt. „Einmal im Jahr die große Prüfung, hat Horst geschrieben. Mit Füller. Ich mache sie digital, aber ich halte mich an seine Reihenfolge.“",
+      "„Das Dashboard ist übrigens seit drei Wochen durchgehend grün. Ich bin ein bisschen enttäuscht.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "monitore",
+        "text": "Monitorwand und Leitstand-Monitore auf Bildfehler prüfen",
+        "ergebnis": "Alle Bilder scharf, kein Flackern. Der getauschte Monitor läuft ohne Klopfen.",
+        "auffaellig": false
+      },
+      {
+        "id": "temperatur",
+        "text": "CPU-Temperatur der Leitstand-PCs (Grenzwert 80 °C)",
+        "ergebnis": "59 °C und 61 °C.",
+        "auffaellig": false
+      },
+      {
+        "id": "usv",
+        "text": "USV-Selbsttest der Leitstelle (Soll: monatlich bestanden)",
+        "ergebnis": "Zwölf Selbsttests in zwölf Monaten, alle bestanden.",
+        "auffaellig": false
+      },
+      {
+        "id": "notfall",
+        "text": "Kontaktliste im Notfallhandbuch (Soll: aktuell)",
+        "ergebnis": "Als Leiter der Leitstelle steht noch Horst Grabowski drin, mit der Nummer seines Schrebergartens.",
+        "auffaellig": true
+      },
+      {
+        "id": "sicherung",
+        "text": "Sicherung der Leitstand-Konfiguration (Soll: täglich)",
+        "ergebnis": "Letzte Sicherung heute Nacht, Prüfsumme stimmt.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Kontaktliste im Notfallhandbuch aktualisieren und neu ausdrucken, sonst alles in Ordnung",
+      "Alles in Ordnung, Horst geht im Notfall bestimmt trotzdem ran",
+      "Das Notfallhandbuch abschaffen, es steht ja alles im Dashboard",
+      "Die Leitstand-PCs vorsorglich neu installieren"
+    ],
+    "abschluss_antwort": "Kontaktliste im Notfallhandbuch aktualisieren und neu ausdrucken, sonst alles in Ordnung",
+    "hilfe": [
+      "Die Technik ist nur ein Teil der Wartung. Auch Dokumente haben ein Soll.",
+      "Ein Notfallhandbuch muss auch funktionieren, wenn der Strom und das Dashboard weg sind."
+    ],
+    "erklaerung": [
+      "Die Technik ist in Ordnung, aber im Notfall würde die Leitstelle einen Rentner anrufen. Die Kontaktliste wird aktualisiert und der Ausdruck neben dem Leitstand ersetzt.",
+      "Aylin ruft Horst trotzdem an, nur um Bescheid zu sagen. Horst: „Die Tomaten sind gut. Ruft mich nicht mehr an. Außer es ist wichtig.“"
+    ],
+    "suchbegriffe": ["Notfallhandbuch", "Wartung", "Dokumentation"]
+  },
+  {
+    "id": "jahreswartung-talheim-nord",
+    "typ": "wartung",
+    "titel": "Ein Jahr Talheim-Nord: die große Netzwerkprüfung",
+    "auftraggeber": "svenja",
+    "ort": "talheim_nord",
+    "raum": "technik_nord",
+    "stelle": [11.88, 2.38],
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 88,
+    "ticket": [
+      "Svenja öffnet den Netzwerkschrank in Talheim-Nord, den du am Anfang des Jahres eingerichtet hast. „Dein erster Schrank! Mal sehen, ob er ein Jahr Bahnhof überlebt hat.“",
+      "„Ich prüfe streng. Aber gerecht. Und wenn alles passt, schreibst du genau das ins Protokoll. Das ist auch ein Ergebnis.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "fehler",
+        "text": "Fehlerzähler der Switch-Ports (Soll: keine CRC-Fehler)",
+        "ergebnis": "0 CRC-Fehler auf allen belegten Ports.",
+        "auffaellig": false
+      },
+      {
+        "id": "stp",
+        "text": "Spanning Tree: Root-Bridge und blockierte Ports (Soll: wie im Netzplan)",
+        "ergebnis": "Root-Bridge ist der Core-Switch, genau ein Port blockiert, wie geplant.",
+        "auffaellig": false
+      },
+      {
+        "id": "uplink",
+        "text": "Geschwindigkeit des Glasfaser-Uplinks (Soll: 10 Gbit/s)",
+        "ergebnis": "10 Gbit/s, Vollduplex, Dämpfung im grünen Bereich.",
+        "auffaellig": false
+      },
+      {
+        "id": "beschriftung",
+        "text": "Kabelbeschriftung mit dem Netzplan vergleichen",
+        "ergebnis": "Jedes Kabel an beiden Enden beschriftet und im Netzplan eingetragen.",
+        "auffaellig": false
+      },
+      {
+        "id": "firmware",
+        "text": "Firmware der Switches (Soll: aktuelle freigegebene Version)",
+        "ergebnis": "Aktuelle Version, vor sechs Wochen eingespielt.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Alles in Ordnung: Protokoll ablegen, nächste Jahreswartung planen",
+      "Vorsorglich alle Patchkabel tauschen, die sind schon ein Jahr alt",
+      "Den Spanning Tree abschalten, damit kein Port mehr blockiert",
+      "Folgeauftrag anlegen, weil ein Port blockiert ist"
+    ],
+    "abschluss_antwort": "Alles in Ordnung: Protokoll ablegen, nächste Jahreswartung planen",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll. Nicht jede Wartung findet einen Fehler.",
+      "Ein blockierter Port im Spanning Tree ist gewollt: Er verhindert eine Schleife im redundanten Netz."
+    ],
+    "erklaerung": [
+      "Alle Werte entsprechen dem Soll. Der blockierte Port ist der geplante Ersatzweg, den Spanning Tree gegen Schleifen sperrt. Unnötige Arbeiten kosten nur Geld.",
+      "Svenja klebt einen Aufkleber in den Schrank: „Geprüft. Ein Jahr. Null Fehler.“ Dann beschriftet sie den Aufkleber."
+    ],
+    "suchbegriffe": ["Spanning Tree", "Glasfaser", "Wartung"]
+  },
+  {
+    "id": "jahreswartung-betriebswerkstatt",
+    "typ": "wartung",
+    "titel": "Jahreswartung in der Betriebswerkstatt: das WLAN",
+    "auftraggeber": "marta",
+    "raum": "werkhalle",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 89,
+    "ticket": [
+      "Marta steht in Sicherheitsschuhen in der Werkhalle, die Stoppuhr in der Hand. „Jahreswartung. Ihr habt zwei Zugumläufe. Wir haben seit dem Umbau der Gleise hinten einen vierten Access Point, den hat unser Elektriker aufgehängt.“",
+      "„Seitdem brechen die Diagnose-Laptops am Gleis 3 manchmal ab. Nicht oft. Aber ein Zug wartet nicht auf einen Laptop.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "kanaele",
+        "text": "Kanäle der Access Points im 2,4-GHz-Band (Soll: 1, 6, 11)",
+        "ergebnis": "AP 1 auf Kanal 1, AP 2 auf 6, AP 3 auf 11, der neue AP 4 an Gleis 3 auf Kanal 9.",
+        "auffaellig": true
+      },
+      {
+        "id": "verschluesselung",
+        "text": "Verschlüsselung des Werkstatt-WLANs (Soll: WPA3 oder WPA2-Enterprise)",
+        "ergebnis": "WPA2-Enterprise mit Zertifikaten, auf allen vier APs.",
+        "auffaellig": false
+      },
+      {
+        "id": "poe",
+        "text": "PoE-Auslastung des Switches (Soll: höchstens 80 % des Budgets)",
+        "ergebnis": "4 APs, zusammen 52 % des Budgets.",
+        "auffaellig": false
+      },
+      {
+        "id": "firmware",
+        "text": "Firmware der Access Points (Soll: aktuelle freigegebene Version)",
+        "ergebnis": "Alle vier auf derselben, aktuellen Version.",
+        "auffaellig": false
+      },
+      {
+        "id": "gast",
+        "text": "Gast-WLAN vom Werkstattnetz getrennt (Soll: eigenes VLAN)",
+        "ergebnis": "Eigenes VLAN, nur Internet, kein Zugriff aufs Werkstattnetz.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "AP 4 auf einen freien, nicht überlappenden Kanal umstellen, sonst alles in Ordnung",
+      "Alles in Ordnung, Kanal 9 ist ja auch frei",
+      "Das WLAN auf WEP umstellen, das ist kompatibler",
+      "Alle Access Points abschalten und Kabel zu jedem Gleis legen"
+    ],
+    "abschluss_antwort": "AP 4 auf einen freien, nicht überlappenden Kanal umstellen, sonst alles in Ordnung",
+    "hilfe": [
+      "Im 2,4-GHz-Band überlappen sich benachbarte Kanäle. Nur drei Kanäle stören sich gegenseitig nicht.",
+      "Welcher AP steht neben welchem? Kanal 9 liegt dicht bei Kanal 11."
+    ],
+    "erklaerung": [
+      "Kanal 9 überlappt mit Kanal 11 des Nachbar-APs, die beiden stören sich gegenseitig. Nicht überlappend sind nur 1, 6 und 11. AP 4 wird so eingestellt, dass er keinen Nachbarn auf gleichem oder benachbartem Kanal hat, besser noch ins 5-GHz-Band.",
+      "Marta stoppt die Uhr: „Anderthalb Zugumläufe.“ Das ist bei ihr ein Lob."
+    ],
+    "suchbegriffe": ["WLAN", "Access Point", "WPA3"]
+  },
+  {
+    "id": "jahreswartung-lindenau",
+    "typ": "wartung",
+    "titel": "Jahreswartung in Lindenau",
+    "auftraggeber": "ulla",
+    "ort": "lindenau",
+    "raum": "technik_lindenau",
+    "stelle": [23.12, 3.12],
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 90,
+    "ticket": [
+      "Ulla und Dr. Wendt gehen gemeinsam durch Lindenau. Er hat die Prüfliste schon zweimal gelesen und will sie ein drittes Mal lesen, wenn sie ausgefüllt ist.",
+      "„Beim letzten Mal war die Sicherungsplatte ab und das Switch-Passwort admin. Ich bin gespannt. Und am Empfang knirscht der Drucker, falls das zur IT gehört.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "backup",
+        "text": "Nächtliche Datensicherung (Soll: jede Nacht erfolgreich)",
+        "ergebnis": "Seit dem Umzug jede Nacht erfolgreich. Die Platte ist festgeschraubt.",
+        "auffaellig": false
+      },
+      {
+        "id": "switch",
+        "text": "Anmeldung am Switch (Soll: kein Standardpasswort)",
+        "ergebnis": "admin / admin wird abgelehnt. Eigenes Passwort im Passwort-Tresor.",
+        "auffaellig": false
+      },
+      {
+        "id": "raid",
+        "text": "RAID des Archivservers (Soll: alle Platten online)",
+        "ergebnis": "RAID 10, vier von vier Platten online, keine Fehler.",
+        "auffaellig": false
+      },
+      {
+        "id": "usv",
+        "text": "USV-Selbsttest (Soll: bestanden, Laufzeit über 10 Minuten)",
+        "ergebnis": "Bestanden, 17 Minuten Laufzeit bei aktueller Last.",
+        "auffaellig": false
+      },
+      {
+        "id": "drucker",
+        "text": "Seitenzähler des Empfangsdruckers (Soll: unter der Lebensdauer)",
+        "ergebnis": "412.000 Seiten bei 300.000 Seiten Lebensdauer. Meldung: „Fixiereinheit ersetzen“.",
+        "auffaellig": true
+      }
+    ],
+    "abschluss": [
+      "Empfangsdrucker verschlissen: Folgeauftrag Druckertausch anlegen, sonst alles in Ordnung",
+      "Alles in Ordnung, der Drucker knirscht schon immer",
+      "Das RAID vorsorglich neu aufbauen",
+      "Den Drucker sofort vom Netz nehmen und den Empfang schließen"
+    ],
+    "abschluss_antwort": "Empfangsdrucker verschlissen: Folgeauftrag Druckertausch anlegen, sonst alles in Ordnung",
+    "hilfe": [
+      "Vergleiche jedes Ergebnis mit dem Soll. Auch ein Drucker hat eine geplante Lebensdauer.",
+      "Ein Befund bekommt einen Folgeauftrag. Schließen muss niemand etwas."
+    ],
+    "erklaerung": [
+      "Die alten Befunde sind behoben. Nur der Empfangsdrucker hat seine Lebensdauer weit überschritten, die Fixiereinheit ist verbraucht. Das bekommt einen eigenen Auftrag.",
+      "Dr. Wendt liest das Protokoll dreimal und unterschreibt zweimal. Aus Versehen. Er ist trotzdem zufrieden."
+    ],
+    "suchbegriffe": ["Wartung", "Drucker", "USV"]
+  },
+  {
+    "id": "drucker-empfang-lindenau",
+    "typ": "diagnose",
+    "titel": "Der Drucker am Empfang knirscht zum letzten Mal",
+    "auftraggeber": "wendt",
+    "raum": "empfang_lindenau",
+    "stelle": [2.88, 3.12],
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 60, "wirtschaft": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 130, "reputation": 8},
+    "ab_tag": 91,
+    "nach": "jahreswartung-lindenau",
+    "ticket": [
+      "Dr. Wendt hält ein Blatt mit einem grauen Schleier und einem Knick hoch. „Besucherausweise, Aushänge in Farbe, doppelseitige Formulare: Das alles druckt der Empfang. Im Moment druckt er vor allem Knitter.“",
+      "„Der Hersteller will 289 € für die Fixiereinheit und 95 € für den Techniker. Ich habe das Angebot dreimal gelesen. Es wird beim Lesen nicht billiger.“"
+    ],
+    "frage": "Finde die Ursache, wähle die Maßnahme und tausche danach das passende Gerät.",
+    "pruefungen": [
+      {
+        "id": "zaehler",
+        "text": "Seitenzähler und Fehlerspeicher des Druckers lesen",
+        "ergebnis": "412.000 Seiten, Lebensdauer 300.000. Fehlerspeicher: „Fixiereinheit Temperatur zu niedrig“, 38-mal diesen Monat.",
+        "entscheidend": true
+      },
+      {
+        "id": "kosten",
+        "text": "Reparaturkosten mit einem neuen Gerät vergleichen",
+        "ergebnis": "Reparatur 384 €, ein neues Gerät mit LAN, Duplex und Farbe 549 €. Die Reparatur kostet 70 % eines neuen Geräts.",
+        "entscheidend": true
+      },
+      {"id": "toner", "text": "Tonerstand prüfen", "ergebnis": "Alle vier Farben über 40 %."},
+      {
+        "id": "papier",
+        "text": "Papier und Papierfach prüfen",
+        "ergebnis": "Trockenes Papier, richtiges Gewicht, Fach sauber eingestellt."
+      },
+      {
+        "id": "treiber",
+        "text": "Druckertreiber am Empfangs-PC prüfen",
+        "ergebnis": "Aktueller Herstellertreiber, Testseite aus dem Treiber hat denselben Schleier."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Der Drucker ist verschlissen, die Fixiereinheit am Ende.",
+      "Der Toner ist fast leer.",
+      "Das Papier ist feucht.",
+      "Der Treiber ist falsch."
+    ],
+    "ursache": "Der Drucker ist verschlissen, die Fixiereinheit am Ende.",
+    "massnahmen": [
+      "Den Drucker durch ein neues Gerät mit LAN, Duplex und Farbe ersetzen",
+      "Die Fixiereinheit für 384 € reparieren lassen",
+      "Den Treiber neu installieren",
+      "Die heiße Fixiereinheit im Betrieb ausbauen und reinigen"
+    ],
+    "massnahme": "Den Drucker durch ein neues Gerät mit LAN, Duplex und Farbe ersetzen",
+    "unsicher": ["Die heiße Fixiereinheit im Betrieb ausbauen und reinigen"],
+    "austausch": {
+      "typ": "drucker",
+      "passt": {"netzwerk": "LAN", "duplex": "ja", "farbe": "ja"},
+      "schritte": [
+        "Den neuen Drucker aufstellen und per LAN anschließen",
+        "Dem neuen Drucker die feste IP-Adresse des alten geben",
+        "Eine Testseite doppelseitig und in Farbe drucken",
+        "Den internen Speicher des alten Druckers löschen und ihn zum Recycling geben"
+      ],
+      "falsch": [
+        "Den alten Drucker mit gespeicherten Scans zum Sperrmüll stellen",
+        "Den neuen Drucker nur per USB an den Empfangs-PC hängen"
+      ],
+      "test": "Die Testseite ist scharf, farbig und beidseitig. Alle Empfangs-PCs drucken ohne neue Einrichtung, weil die IP-Adresse gleich geblieben ist."
+    },
+    "hilfe": [
+      "Ein Gerät weit über seiner Lebensdauer: Lohnt die Reparatur noch? Vergleiche die Kosten.",
+      "Der Ersatz muss alles können, was der Empfang braucht: Netzwerk, beidseitig und Farbe. Fehlt er im Lager, bestelle ihn nach."
+    ],
+    "erklaerung": [
+      "Toner, Papier und Treiber sind in Ordnung. Der Drucker hat seine Lebensdauer weit überschritten, und die Reparatur kostet 70 % eines neuen Geräts. Das lohnt nicht.",
+      "Nur der Farblaserdrucker MX-560 erfüllt LAN, Duplex und Farbe. Mit der alten IP-Adresse merken die PCs nichts vom Tausch. Dr. Wendt druckt einen Besucherausweis für sich selbst. Zur Probe."
+    ],
+    "suchbegriffe": ["Drucker", "Wirtschaftlichkeit"]
+  },
+  {
+    "id": "jahreswartung-birkenhain",
+    "typ": "wartung",
+    "titel": "Erste Wartung in Birkenhain",
+    "auftraggeber": "petra",
+    "ort": "birkenhain",
+    "raum": "technik_birkenhain",
+    "stelle": [11.12, 2.38],
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 60, "systeme": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 125, "reputation": 8},
+    "ab_tag": 92,
+    "nach": "terminal-monitoring-birkenhain",
+    "ticket": [
+      "Petra hat Gummistiefel an. „Birkenhain läuft erst ein paar Wochen, aber in die Jahreswartung gehört es trotzdem. Die Talbahn will alle Standorte im selben Protokoll sehen.“",
+      "„Im Technikhäuschen summt es übrigens. Ich hoffe, das ist der Switch.“"
+    ],
+    "frage": "Arbeite die Prüfpunkte ab, bewerte jeden und wähle den Abschluss für das Protokoll.",
+    "pruefpunkte": [
+      {
+        "id": "richtfunk",
+        "text": "Empfangspegel der Richtfunkstrecke (Soll: besser als −65 dBm)",
+        "ergebnis": "−58 dBm, seit der Inbetriebnahme stabil.",
+        "auffaellig": false
+      },
+      {
+        "id": "poe",
+        "text": "PoE-Auslastung des neuen Switches (Soll: höchstens 80 % des Budgets)",
+        "ergebnis": "Auch in der Frostnacht höchstens 117,4 W von 240 W.",
+        "auffaellig": false
+      },
+      {
+        "id": "temperatur",
+        "text": "Temperatur im Technikhäuschen (Soll: höchstens 35 °C)",
+        "ergebnis": "41 °C. Im Lüftungsgitter hängt ein Wespennest, daher das Summen.",
+        "auffaellig": true
+      },
+      {
+        "id": "kamera",
+        "text": "Löschfrist der Kameraaufnahmen (Soll: 72 Stunden)",
+        "ergebnis": "Ältestes Video 71 Stunden alt, automatische Löschung läuft.",
+        "auffaellig": false
+      },
+      {
+        "id": "usv",
+        "text": "USV-Selbsttest (Soll: bestanden)",
+        "ergebnis": "Bestanden, 22 Minuten Laufzeit.",
+        "auffaellig": false
+      }
+    ],
+    "abschluss": [
+      "Wespennest vom Fachbetrieb entfernen lassen, Lüftung freimachen, Temperatur überwachen",
+      "Alles in Ordnung, Wespen gehören zur Natur",
+      "Die Tür des Technikhäuschens dauerhaft offen lassen",
+      "Die Geräte abschalten, bis es draußen kühler ist"
+    ],
+    "abschluss_antwort": "Wespennest vom Fachbetrieb entfernen lassen, Lüftung freimachen, Temperatur überwachen",
+    "hilfe": [
+      "Geräte im Rack vertragen Wärme nur begrenzt. Woher kommt die Wärme, und was hält die Luft auf?",
+      "Eine offene Tür lässt nicht nur Luft herein."
+    ],
+    "erklaerung": [
+      "Nur die Temperatur fällt auf: Das Nest verstopft die Lüftung, die Wärme staut sich. Das Nest entfernt ein Fachbetrieb, danach wird die Temperatur per Monitoring überwacht.",
+      "Eine offene Tür wäre ein Einfallstor für Unbefugte, Regen und neue Wespen. Petra notiert: „Summen = Wespen. Nicht Switch.“"
+    ],
+    "suchbegriffe": ["Wartung", "Monitoring", "Klimatisierung"]
+  },
+  {
+    "id": "audit-tom-zuordnung",
+    "typ": "zuordnung",
+    "titel": "Karins Jahresaudit: Welche Kontrolle ist das?",
+    "auftraggeber": "karin",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 60},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 130, "reputation": 9},
+    "ab_tag": 93,
+    "ticket": [
+      "Karin hat einen Ordner mit der Aufschrift „Audit“ mitgebracht und einen zweiten mit der Aufschrift „Anekdoten zum Audit“. „Einmal im Jahr prüfe ich, ob unsere technischen und organisatorischen Maßnahmen noch stimmen.“",
+      "„Hier die neuen Maßnahmen dieses Jahres. Sag mir, welche Kontrolle jede erfüllt. Der zweite Ordner wartet so lange.“"
+    ],
+    "frage": "Ordne jede Maßnahme der Kontrolle zu, die sie vor allem erfüllt.",
+    "paare": [
+      [
+        "Pauls Datenbank protokolliert, wer welche Buchung wann geändert hat",
+        "Eingabekontrolle"
+      ],
+      [
+        "Mit dem Aktenvernichter gibt es einen Vertrag zur Auftragsverarbeitung",
+        "Auftragskontrolle"
+      ],
+      [
+        "Testdaten liegen in einer eigenen Datenbank, getrennt von den echten Buchungen",
+        "Trennungskontrolle"
+      ],
+      [
+        "Das Technikhäuschen in Birkenhain hat ein Sicherheitsschloss mit Zutrittsprotokoll",
+        "Zutrittskontrolle"
+      ],
+      [
+        "Rechnungen an die Talbahn gehen nur noch als verschlüsselte PDFs hinaus",
+        "Weitergabekontrolle"
+      ]
+    ],
+    "hilfe": [
+      "Zutritt: in den Raum. Eingabe: Wer hat was eingegeben oder geändert? Weitergabe: Schutz auf dem Transportweg.",
+      "Auftrag: Ein Dienstleister verarbeitet Daten für uns. Trennung: Daten für verschiedene Zwecke bleiben getrennt."
+    ],
+    "erklaerung": [
+      "Protokollierte Änderungen belegen die Eingabe, der AV-Vertrag regelt den Auftrag, getrennte Datenbanken trennen die Zwecke, das Schloss sichert den Zutritt und die Verschlüsselung die Weitergabe.",
+      "Karin nickt und öffnet den zweiten Ordner. Die Anekdote handelt von einem Aktenvernichter im Jahr 2008 und dauert eine Viertelstunde."
+    ],
+    "suchbegriffe": ["TOM", "Eingabekontrolle", "Auftragsverarbeitung"]
+  },
+  {
+    "id": "audit-schutzbedarf-server",
+    "typ": "auswahl",
+    "titel": "Welchen Schutzbedarf hat der Buchhaltungsserver?",
+    "auftraggeber": "karin",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 65},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 130, "reputation": 9},
+    "ab_tag": 94,
+    "nach": "audit-tom-zuordnung",
+    "ticket": [
+      "Karin tippt auf den Netzplan. „Auf dem Buchhaltungsserver laufen jetzt drei Dinge: der Kantinenplan (Schutzbedarf normal), Pauls Einkaufsdatenbank (normal) und seit Neuestem die Gehaltsabrechnung (hoch).“",
+      "„Paul meint, zwei von drei sind normal, also ist der Server normal. Mehrheit gewinnt. Ich hätte dazu einen Paragrafen.“"
+    ],
+    "frage": "Welchen Schutzbedarf hat der Server?",
+    "optionen": [
+      "Hoch: Der Server erbt den höchsten Schutzbedarf seiner Anwendungen",
+      "Normal: Die Mehrheit der Anwendungen ist normal",
+      "Mittel: Man bildet den Durchschnitt aus normal und hoch",
+      "Keinen: Server haben keinen Schutzbedarf, nur Daten"
+    ],
+    "antwort": "Hoch: Der Server erbt den höchsten Schutzbedarf seiner Anwendungen",
+    "hilfe": [
+      "Wenn der Server ausfällt oder angegriffen wird, trifft es alle Anwendungen darauf. Welche davon wäre am schlimmsten betroffen?",
+      "Im IT-Grundschutz heißt das zugehörige Prinzip wie der größte Wert."
+    ],
+    "erklaerung": [
+      "Nach dem Maximumprinzip übernimmt ein System den höchsten Schutzbedarf der Anwendungen, die darauf laufen. Die Gehaltsdaten machen den Server zu einem System mit hohem Schutzbedarf.",
+      "Mehrheiten gibt es bei Wahlen, nicht beim Schutzbedarf. Karin zitiert einen Paragrafen. Paul trägt ihn in die Datenbank ein."
+    ],
+    "suchbegriffe": ["Schutzbedarf", "Maximumprinzip"]
+  },
+  {
+    "id": "terminal-audit-datenbank",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "mysql>",
+    "titel": "Audit: Wer darf in die Buchhaltungsdatenbank?",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 60, "sicherheit": 55},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 135, "reputation": 9},
+    "ab_tag": 95,
+    "nach": "audit-schutzbedarf-server",
+    "ticket": [
+      "Ulla hat die Datenbankkonsole offen, Karin schaut über die Schulter. „Hoher Schutzbedarf heißt: Wir wissen genau, wer rein darf. Karin will eine Liste, und ich will keine Überraschungen.“",
+      "„Tim hat im Frühjahr ‚nur zum Testen‘ ein Konto angelegt. Tim hat viel getestet dieses Jahr.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
+    "start": ["MySQL 8.0 · Buchhaltungsserver", "Angemeldet als Administratorin ulla"],
+    "schritte": [
+      {
+        "ziel": "Alle Konten des Datenbankservers auflisten",
+        "befehle": [
+          {
+            "befehl": "SHOW DATABASES;",
+            "ausgabe": ["einkauf", "buchhaltung", "mysql", "# Datenbanken, keine Konten."],
+            "hinweis": "SHOW DATABASES zeigt die Datenbanken. Die Konten stehen in der Systemtabelle mysql.user."
+          },
+          {
+            "befehl": "SELECT user, host FROM mysql.user;",
+            "ausgabe": ["user   | host", "ulla   | localhost", "paul   | 10.10.1.%", "test   | %"],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die Rechte des Kontos test anzeigen",
+        "befehle": [
+          {
+            "befehl": "SELECT * FROM test;",
+            "ausgabe": ["ERROR 1146 (42S02): Table 'test' doesn't", "exist"],
+            "hinweis": "test ist ein Konto, keine Tabelle. Rechte zeigt SHOW GRANTS."
+          },
+          {
+            "befehl": "SHOW GRANTS FOR 'test'@'%';",
+            "ausgabe": ["GRANT ALL PRIVILEGES ON *.* TO 'test'@'%'", "# Alles, auf allem, von überall."],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Das vergessene Testkonto entfernen",
+        "befehle": [
+          {
+            "befehl": "REVOKE SELECT ON buchhaltung.* FROM 'test'@'%';",
+            "ausgabe": ["ERROR 1141 (42000): There is no such grant", "defined for user 'test'"],
+            "hinweis": "Das Konto hat ALL auf *.*, einzelne Rechte auf einer Datenbank lassen sich so nicht entziehen. Ein unnötiges Konto wird ganz entfernt."
+          },
+          {
+            "befehl": "DROP USER 'test'@'%';",
+            "ausgabe": ["Query OK, 0 rows affected"],
+            "richtig": true
+          },
+          {
+            "befehl": "DROP DATABASE buchhaltung;",
+            "ausgabe": ["Ulla und Karin gleichzeitig: „NEIN!“"],
+            "gefaehrlich": true,
+            "hinweis": "DROP DATABASE löscht die ganze Buchhaltung. Entfernt werden soll nur das Konto."
+          }
+        ]
+      },
+      {
+        "ziel": "Prüfen, dass Paul nur die Rechte hat, die er braucht",
+        "befehle": [
+          {
+            "befehl": "SHOW GRANTS FOR 'paul'@'10.10.1.%';",
+            "ausgabe": ["GRANT SELECT, INSERT, UPDATE ON", "`buchhaltung`.* TO 'paul'@'10.10.1.%'"],
+            "richtig": true
+          },
+          {
+            "befehl": "GRANT ALL PRIVILEGES ON *.* TO 'paul'@'%' WITH GRANT OPTION;",
+            "ausgabe": ["Karin klappt den Ordner zu: „Das schreibe", "ich jetzt aber auf.“"],
+            "gefaehrlich": true,
+            "hinweis": "Least Privilege: Paul bucht, er verwaltet nicht den Server. ALL auf *.* von überall, dazu das Recht, Rechte weiterzugeben, wäre das Gegenteil."
+          },
+          {
+            "befehl": "SELECT * FROM mysql.user WHERE user = 'paul' AND password = '';",
+            "ausgabe": ["ERROR 1054 (42S22): Unknown column", "'password' in 'where clause'"],
+            "hinweis": "Die Rechte eines Kontos zeigt SHOW GRANTS. Passwörter stehen ohnehin nur als Hash in der Datenbank."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Konten stehen in mysql.user, ihre Rechte zeigt SHOW GRANTS FOR 'name'@'host'.",
+      "Ein Konto, das niemand braucht, wird mit DROP USER entfernt. Jeder bekommt nur die Rechte, die er für seine Arbeit braucht."
+    ],
+    "erklaerung": [
+      "Das Testkonto hatte alle Rechte von überall und wird entfernt. Paul darf nur in der Buchhaltung lesen, einfügen und ändern, nur aus dem Büronetz. Das ist Least Privilege.",
+      "Karin schreibt ins Audit: „Keine Beanstandung mehr.“ Tim fragt, ob er ein neues Testkonto haben kann. Ulla antwortet nicht. Der Server auch nicht."
+    ],
+    "suchbegriffe": ["GRANT", "Least Privilege", "Benutzerkonto"]
+  },
+  {
+    "id": "rack-serverraum-neujahr",
+    "typ": "rack",
+    "titel": "Ein Schrank für das nächste Jahr",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 65, "netzwerk": 50},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 140, "reputation": 9},
+    "ab_tag": 96,
+    "nach": "jahreswartung-buero",
+    "ticket": [
+      "Ulla steht vor einem leeren 24-HE-Schrank. „Sabine sagt, nächstes Jahr kommen neue Kunden. Wir bauen vor: zwei Server, ein Storage, ein 48er-Switch mit Patchpanel. Und eine USV, die das auch trägt.“",
+      "„Der Schrank trägt 150 kg, die Klima schafft 2000 W. Und der alte 4-HE-Server aus dem Keller will auch mit. Er sagt, er fühlt sich noch jung.“"
+    ],
+    "frage": "Bestücke den Schrank so, dass Strom, Kühlung, Gewicht und Vorgaben passen.",
+    "schrank": {"he": 24, "traglast": 150, "kuehlung": 2000},
+    "geraete": [
+      "usv_3000",
+      "usv_1500",
+      "srv_2he",
+      "srv_2he",
+      "storage_2he",
+      "sw_48",
+      "sw_24",
+      "pp_48",
+      "srv_4he"
+    ],
+    "vorgaben": {
+      "mindestens": {"usv": 1, "server": 2, "storage": 1, "switch": 1, "patchpanel": 1},
+      "ports_min": 48,
+      "frei_min": 4
+    },
+    "hilfe": [
+      "Rechne die Last aller Geräte zusammen. Jede USV darf nur zu 80 % ausgelastet werden.",
+      "Schwere Geräte ab 20 kg beginnen im unteren Drittel (bis HE 8). Prüfe auch das Gewicht, bevor der alte Server einzieht."
+    ],
+    "erklaerung": [
+      "2 × 450 W + 400 W + 70 W = 1370 W. Die USV 1500 W schafft mit Reserve nur 1200 W, die USV 3000 W schafft 2400 W.",
+      "Unten die USV, darüber Server und Storage im unteren Drittel, oben Switch und 48er-Patchpanel übereinander: 144 kg. Mit dem alten 4-HE-Server wären es 182 kg, zu viel für 150 kg Traglast. Er bleibt im Keller und fühlt sich weiter jung."
+    ],
+    "suchbegriffe": ["Serverschrank", "USV", "Storage"]
+  },
+  {
+    "id": "rueckblick-tickets-standorte",
+    "typ": "auswahl",
+    "titel": "Rückblick: Tickets je Standort, auch Birkenhain",
+    "auftraggeber": "paul",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 65},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 135, "reputation": 9},
+    "ab_tag": 98,
+    "nach": "terminal-paul-migration",
+    "ticket": [
+      "Paul baut für Sabines Jahresrückblick eine Auswertung aus dem Ticketsystem: Tabelle standort (id, name) und Tabelle ticket (id, standort_id, datum).",
+      "„Jeder Standort soll in der Liste stehen, mit seiner Ticketzahl. Auch Birkenhain, obwohl es dort noch kein einziges Ticket gab. Da soll dann eine 0 stehen, keine Lücke.“"
+    ],
+    "frage": "Welche Abfrage liefert jeden Standort mit der richtigen Zahl seiner Tickets?",
+    "optionen": [
+      "SELECT s.name, COUNT(t.id) FROM standort s LEFT JOIN ticket t ON t.standort_id = s.id GROUP BY s.name;",
+      "SELECT s.name, COUNT(t.id) FROM standort s JOIN ticket t ON t.standort_id = s.id GROUP BY s.name;",
+      "SELECT s.name, COUNT(*) FROM standort s LEFT JOIN ticket t ON t.standort_id = s.id GROUP BY s.name;",
+      "SELECT s.name, COUNT(t.id) FROM standort s, ticket t GROUP BY s.name;"
+    ],
+    "antwort": "SELECT s.name, COUNT(t.id) FROM standort s LEFT JOIN ticket t ON t.standort_id = s.id GROUP BY s.name;",
+    "hilfe": [
+      "Ein normaler JOIN liefert nur Zeilen, die in beiden Tabellen einen Partner haben. Was passiert mit einem Standort ohne Ticket?",
+      "COUNT(*) zählt Zeilen, COUNT(spalte) nur Werte, die nicht NULL sind."
+    ],
+    "erklaerung": [
+      "Der LEFT JOIN behält jeden Standort, auch ohne Ticket; die Ticketspalten sind dann NULL. COUNT(t.id) zählt NULL nicht mit und liefert für Birkenhain 0. COUNT(*) würde die eine NULL-Zeile als 1 zählen.",
+      "Der innere JOIN ließe Birkenhain ganz weg, ohne ON entsteht ein Kreuzprodukt. Paul schickt Sabine die Liste. Birkenhain: 0. Svenja ist sehr stolz."
+    ],
+    "suchbegriffe": ["LEFT JOIN", "COUNT", "GROUP BY"]
+  },
+  {
+    "id": "sabine-jahresbilanz",
+    "typ": "auswahl",
+    "titel": "Sabines Jahreszahlen und ein Gedanke für später",
+    "auftraggeber": "sabine",
+    "raum": "chefbuero",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 65},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 150, "reputation": 10},
+    "ab_tag": 99,
+    "nach": "rueckblick-tickets-standorte",
+    "ticket": [
+      "Sabine hat Kekse auf den Schreibtisch gestellt und Pauls Liste daneben. „Ein Jahr. Ein neuer Bahnhof, eine Werkstatt, Lindenau, Birkenhain. Zwei Abschiede, drei neue Gesichter. Und du mittendrin.“",
+      "„Die Zahlen, bevor ich sie der Bank zeige: Umsatz 1.240.000 €, Kosten 1.103.600 €. Wie hoch ist unsere Umsatzrentabilität? Wer eine Firma führen will, muss das können.“"
+    ],
+    "frage": "Wie hoch ist die Umsatzrentabilität der Bitweiche?",
+    "optionen": ["11 %", "12,36 %", "89 %", "136.400 €"],
+    "antwort": "11 %",
+    "hilfe": [
+      "Zuerst den Gewinn ermitteln: Umsatz minus Kosten.",
+      "Die Umsatzrentabilität setzt den Gewinn ins Verhältnis zum Umsatz, nicht zu den Kosten."
+    ],
+    "erklaerung": [
+      "Gewinn = 1.240.000 € − 1.103.600 € = 136.400 €. Umsatzrentabilität = 136.400 € : 1.240.000 € × 100 = 11 %. Von jedem Euro Umsatz bleiben rund 11 Cent Gewinn.",
+      "Sabine schiebt dir den Keksteller zu. „Wer so rechnet, leitet vielleicht irgendwann seine eigene Firma. Ich sage nicht, wann. Ich sage nur: Behalte die Zahl im Kopf.“"
+    ],
+    "suchbegriffe": ["Rentabilität", "Kennzahl", "Gewinn"]
   }
 ]
