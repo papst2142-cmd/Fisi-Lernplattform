@@ -393,6 +393,31 @@ def _validate_homes(content):
     return problems
 
 
+def _validate_rent(content):
+    """Mietwerte (ab 0.31): jede Wohnung hat eine Miete, die Startwohnung
+    ist mietfrei, die Kaution ist ein Anteil des Kaufpreises."""
+    problems = []
+    rules = content["balancing"].get("miete")
+    if not isinstance(rules, dict):
+        return ["Spiel-Balancing: Abschnitt 'miete' fehlt"]
+    share = rules.get("kaution_anteil")
+    if not isinstance(share, (int, float)) or not 0 <= share <= 1:
+        problems.append("Spiel-Balancing: kaution_anteil muss zwischen 0 und 1 liegen")
+    per_day = rules.get("pro_tag") or {}
+    homes = content["wohnungen"]
+    for flat in homes["wohnungen"]:
+        value = per_day.get(flat["id"])
+        if not isinstance(value, int) or value < 0:
+            problems.append("Spiel-Balancing: keine gueltige Miete fuer Wohnung '%s'"
+                            % flat["id"])
+    if per_day.get(homes["start"]):
+        problems.append("Spiel-Balancing: die Startwohnung muss mietfrei sein")
+    for key in per_day:
+        if key not in {flat["id"] for flat in homes["wohnungen"]}:
+            problems.append("Spiel-Balancing: Miete fuer unbekannte Wohnung '%s'" % key)
+    return problems
+
+
 def validate_game_content(content=None):
     """Prueft die Spielinhalte auf formale Fehler. Leere Liste = in Ordnung.
     Wird von fisi_core.validate_content() mit aufgerufen."""
@@ -415,6 +440,7 @@ def validate_game_content(content=None):
         problems += _validate_building(place["gebaeude"], "Spiel-Kunde %s" % place["id"],
                                        place.get("personen", []))
     problems += _validate_homes(content)
+    problems += _validate_rent(content)
 
     for rank in balancing["raenge"]:
         if rank["name"] not in balancing["gehalt_pro_tag"]:
@@ -2415,6 +2441,8 @@ class GameState:
         self.home_id = homes["start"]
         self.furniture = dict(homes.get("start_moebel", {}))   # stueck -> moebel
         self.layouts = {}          # wohnung -> juengste Einrichtung
+        self.rent = 0              # Miete pro Arbeitstag der jetzigen Wohnung (0 = gekauft)
+        self.deposit = 0           # hinterlegte Kaution (kommt beim Auszug zurueck)
         self.first_event = None
 
         for timestamp, kind, data in events:
@@ -2426,6 +2454,8 @@ class GameState:
             if kind == EV_MOVE:
                 self.money += int(data.get("geld", 0))
                 self.home_id = data.get("wohnung", self.home_id)
+                self.rent = int(data.get("miete", 0))
+                self.deposit = int(data.get("kaution", 0))
             elif kind == EV_BUY:
                 self.money += int(data.get("geld", 0))
                 self.furniture[data.get("stueck")] = data.get("moebel")
@@ -2462,7 +2492,7 @@ class GameState:
                             self.used[part_id] = self.used.get(part_id, 0) + 1
             elif kind == EV_DAY_END:
                 self.days_done += 1
-                self.money += int(data.get("gehalt", 0))
+                self.money += int(data.get("gehalt", 0)) - int(data.get("miete", 0))
 
         # Tickets des laufenden Tages (Tag steht in den Nutzdaten)
         for _timestamp, kind, data in self.history:
@@ -2759,6 +2789,8 @@ class Game:
             raise ValueError("Es sind noch Tickets offen.")
         payload = {"tag": self.state.day, "gehalt": self.state.salary,
                    "rang": self.state.rank}
+        if self.state.rent:
+            payload["miete"] = self.state.rent
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -2819,15 +2851,28 @@ class Game:
         layout["boeden"][room_id] = [kind, color]
         self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
 
-    def move_home(self, home_id):
-        """Umzug in eine groessere Wohnung - alle Moebel kommen in Kartons."""
+    def move_home(self, home_id, rent=None):
+        """Umzug in eine groessere Wohnung - alle Moebel kommen in Kartons.
+        rent=True mietet (Kaution, danach Miete je Arbeitstag), rent=False
+        kauft (Einmalzahlung); None nimmt den Schalter aus den Optionen.
+        Der Mietvertrag steht im Ereignis, damit PC und Handy denselben
+        Kontostand berechnen - der Schalter selbst ist nur lokal."""
         target = apartment(home_id, self.content)
         if target is None or target not in moves_available(self.state, self.content):
             raise ValueError("In diese Wohnung kannst du nicht umziehen.")
-        if self.state.money < target["preis"]:
+        if rent is None:
+            rent = rent_mode()
+        offer = move_offer(self.state, target, rent, self.content)
+        if offer["fehlt"]:
             raise ValueError("Dafür reicht dein Geld noch nicht (%d € fehlen)."
-                             % (target["preis"] - max(0, self.state.money)))
-        self._log(EV_MOVE, {"wohnung": home_id, "geld": -target["preis"]})
+                             % offer["fehlt"])
+        payload = {"wohnung": home_id, "geld": offer["zurueck"] - offer["kosten"]}
+        if rent:
+            payload.update(miete=offer["miete"], kaution=offer["kosten"])
+        if offer["zurueck"]:
+            payload["kaution_zurueck"] = offer["zurueck"]
+        self._log(EV_MOVE, payload)
+        return payload
 
 
 # ============================================================================
@@ -4427,6 +4472,98 @@ def sleep_text(state, content=None):
     if isinstance(texts, str):
         return texts
     return texts[state.day % len(texts)]
+
+
+# ----------------------------------------------------------------------------
+#  Miete (ab 0.31)
+# ----------------------------------------------------------------------------
+#
+# Schalter in den Optionen: Einmalzahlung (Standard) oder Miete. Er liegt
+# lokal je Geraet in einstellungen.json und wirkt nur auf den naechsten
+# Umzug; ein laufender Mietvertrag gilt bis zum naechsten Umzug weiter.
+
+RENT_SETTING = "spiel_miete"
+# Auswahl in den Optionen und Untertitel der Karte "Wohnung"
+RENT_CHOICES = [("einmal", "Einmalzahlung"), ("miete", "Miete")]
+HOME_SUBTITLE = {False: "Größer wohnen kostet einmalig",
+                 True: "Größer wohnen: Kaution und Miete je Arbeitstag"}
+RENT_HELP = ("Gilt für den nächsten Umzug im Spiel. Einmalzahlung: Die Wohnung wird "
+             "gekauft. Miete: nur eine Kaution (%d %% des Kaufpreises), dafür geht "
+             "jeden Arbeitstag die Miete vom Spielgeld ab. Ein laufender Mietvertrag "
+             "gilt bis zum nächsten Umzug. Die Einstellung gilt nur für dieses Gerät.")
+
+
+def rent_mode():
+    """Ist in den Optionen dieses Geraets "Miete" gewaehlt?"""
+    import fisi_update
+    return bool(fisi_update.load_settings().get(RENT_SETTING, False))
+
+
+def set_rent_mode(flag):
+    import fisi_update
+    settings = fisi_update.load_settings()
+    settings[RENT_SETTING] = bool(flag)
+    return fisi_update.save_settings(settings)
+
+
+def rent_terms(home, content=None):
+    """(Miete pro Arbeitstag, Kaution) einer Wohnung laut balancing.json."""
+    rules = (content or GAME)["balancing"]["miete"]
+    rent = int(rules["pro_tag"].get(home["id"], 0))
+    deposit = int(round(home.get("preis", 0) * rules["kaution_anteil"]))
+    return rent, deposit
+
+
+def move_offer(state, home, rent, content=None):
+    """Was ein Umzug kostet: {"kosten" (Kaufpreis oder Kaution), "miete"
+    (pro Arbeitstag, 0 beim Kauf), "zurueck" (Kaution der alten Wohnung),
+    "fehlt" (0 = bezahlbar)}."""
+    if rent:
+        per_day, cost = rent_terms(home, content)
+    else:
+        per_day, cost = 0, int(home.get("preis", 0))
+    back = state.deposit
+    missing = max(0, cost - max(0, state.money + back))
+    return {"kosten": cost, "miete": per_day, "zurueck": back, "fehlt": missing}
+
+
+def _whole_euro(value):
+    return "%s €" % "{:,.0f}".format(value).replace(",", ".")
+
+
+def move_texts(state, home, rent, content=None):
+    """Anzeige fuer einen Umzug (PC und Handy gleich): (Preiszeile,
+    Rueckfrage vor dem Umzug)."""
+    offer = move_offer(state, home, rent, content)
+    if rent:
+        price = "Kaution %s · Miete %s/Tag" % (_whole_euro(offer["kosten"]),
+                                              _whole_euro(offer["miete"]))
+        question = ("In die Wohnung „%s“ ziehen? Kaution %s, danach %s Miete pro "
+                    "Arbeitstag." % (home["name"], _whole_euro(offer["kosten"]),
+                                     _whole_euro(offer["miete"])))
+    else:
+        price = _whole_euro(offer["kosten"])
+        question = "Für %s in die Wohnung „%s“ umziehen?" % (price, home["name"])
+    if offer["zurueck"]:
+        question += (" Die Kaution von %s für deine jetzige Wohnung bekommst du zurück."
+                     % _whole_euro(offer["zurueck"]))
+    return price, question + " Alle Möbel kommen dabei in Umzugskartons."
+
+
+def rent_text(state):
+    """Zeile zur jetzigen Wohnung: gemietet oder gekauft (leer = Startwohnung)."""
+    if state.rent:
+        return "Zur Miete: %s pro Arbeitstag, Kaution %s hinterlegt" % (
+            _whole_euro(state.rent), _whole_euro(state.deposit))
+    return ""
+
+
+def day_end_money_text(payload):
+    """ "Gehalt: +190 €." bzw. "Gehalt: +190 €. Miete: -140 €." """
+    text = "Gehalt: +%s." % _whole_euro(payload.get("gehalt", 0))
+    if payload.get("miete"):
+        text += " Miete: -%s." % _whole_euro(payload["miete"])
+    return text
 
 
 def moves_available(state, content=None):

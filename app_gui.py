@@ -46,8 +46,11 @@ from fisi_core import (  # noqa: E402
 import fisi_game  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
+import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
-from fisi_game_gui import CustomerView, GameView, HomeView, OfficeView  # noqa: E402
+from fisi_game_gui import (  # noqa: E402
+    ChoiceRow, CustomerView, GameView, HomeView, OfficeView,
+)
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
@@ -134,7 +137,7 @@ class EntryBox(ctk.CTkEntry):
                          text_color=C["text_soft"], font=font or F["body"])
         # Aeltere Aufrufer greifen ueber .entry auf das Eingabefeld zu
         self.entry = self
-        self._entry.configure(insertbackground=C["cyan"],
+        self._entry.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"], insertofftime=0)
         self.bind("<FocusIn>", lambda _e: self.configure(border_color=C["purple"]))
         self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["border"]))
@@ -440,7 +443,7 @@ class NavRow(ctk.CTkFrame):
     def _paint_chevron(self):
         if not self.chevron:
             return
-        color = C["cyan"] if self.active else C["muted"]
+        color = C["accent"] if self.active else C["muted"]
         self.chevron.paint(color, "chevron_up" if self._expanded else "chevron_down")
 
     def _widgets(self):
@@ -470,11 +473,11 @@ class NavRow(ctk.CTkFrame):
         self.active = flag
         if flag:
             self._apply_bg(C["card_hi"])
-            bar = rounded_gradient(4, 20, 2, C["cyan"], GRADIENTS["accent"][1],
+            bar = rounded_gradient(4, 20, 2, C["accent"], GRADIENTS["accent"][1],
                                    direction="v")
             self.indicator.configure(image=ctk_image(bar, 4, 20))
             self.text_label.configure(text_color=C["text"])
-            self.icon_canvas.paint(C["cyan"])
+            self.icon_canvas.paint(C["accent"])
         else:
             self._apply_bg(C["sidebar"])
             self.indicator.configure(image=ctk_image(BLANK_INDICATOR, 4, 20))
@@ -502,8 +505,8 @@ class Sidebar(ctk.CTkFrame):
         mark = tk.Canvas(logo, width=px(34), height=px(34), bg=C["sidebar"],
                          highlightthickness=0, bd=0)
         mark.pack(side="left")
-        ring = ring_image(34, 5, 1.0, C["cyan"], C["pink"], C["ring_bg"])
-        dot = circle_image(12, fill=C["pink"])
+        ring = ring_image(34, 5, 1.0, C["accent"], C["accent2"], C["ring_bg"])
+        dot = circle_image(12, fill=C["accent2"])
         self._logo_images = (tk_photo(ring, px(34), px(34)),
                              tk_photo(dot, px(12), px(12)))
         mark.create_image(px(17), px(17), image=self._logo_images[0])
@@ -555,8 +558,8 @@ class Sidebar(ctk.CTkFrame):
         self.streak_label = make_label(status, "", font=F["small_bold"],
                                        fg=C["text"], anchor="w")
         self.streak_label.pack(fill="x", padx=14, pady=(6, 0))
-        self.status_bar = GradientBar(status, "Inhalte bearbeitet", C["cyan"],
-                                      C["pink"], parent_bg=C["card"])
+        self.status_bar = GradientBar(status, "Inhalte bearbeitet", C["accent"],
+                                      C["accent2"], parent_bg=C["card"])
         self.status_bar.pack(fill="x", padx=14, pady=(6, 10))
 
     def _on_nav(self, key):
@@ -604,7 +607,7 @@ class Header(ctk.CTkFrame):
                                      fg=C["text"])
         self.crumb_main.pack(side="left")
         make_label(left, "/", font=F["label"], fg=C["muted"]).pack(side="left", padx=7)
-        self.crumb_sub = make_label(left, "HOME", font=F["label"], fg=C["cyan"])
+        self.crumb_sub = make_label(left, "HOME", font=F["label"], fg=C["accent"])
         self.crumb_sub.pack(side="left")
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
@@ -620,7 +623,7 @@ class Header(ctk.CTkFrame):
                                          placeholder_text_color=C["muted"],
                                          font=F["small"])
         self.search_entry.pack(side="left", padx=(6, 12), pady=2)
-        self.search_entry._entry.configure(insertbackground=C["cyan"],
+        self.search_entry._entry.configure(insertbackground=C["accent"],
                                            insertofftime=0)
         self.search_entry.bind("<Return>", lambda _e: self._search())
         self.search_entry.bind(
@@ -685,10 +688,10 @@ class DashboardView(View):
         self.ring_scen = self._ring_card(row1, 3, "AP2 Szenarien")
 
         quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
-                     accent=C["pink"])
+                     accent=C["accent2"])
         quote.grid(row=0, column=4, sticky="nsew")
         self.lbl_quote = make_label(quote.body, "0 %", font=F["display"],
-                                    fg=C["cyan"])
+                                    fg=C["accent"])
         self.lbl_quote.pack(anchor="w", pady=(10, 0))
         self.lbl_quote_sub = make_label(quote.body, "noch keine Antworten",
                                         font=F["small"], fg=C["muted"],
@@ -711,16 +714,16 @@ class DashboardView(View):
         cover = Card(row2, title="Abdeckung", subtitle="Material",
                      accent=C["purple"])
         cover.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
-        self.bar_cards = GradientBar(cover.body, "Karteikarten", C["cyan"],
+        self.bar_cards = GradientBar(cover.body, "Karteikarten", C["accent"],
                                      C["purple"], parent_bg=C["card"])
         self.bar_cards.pack(fill="x", pady=(4, 8))
         self.bar_quiz = GradientBar(cover.body, "Quizfragen", C["purple"],
-                                    C["pink"], parent_bg=C["card"])
+                                    C["accent2"], parent_bg=C["card"])
         self.bar_quiz.pack(fill="x", pady=8)
         self.bar_ap1 = GradientBar(cover.body, "AP1-Szenarien", C["blue"],
-                                   C["cyan"], parent_bg=C["card"])
+                                   C["accent"], parent_bg=C["card"])
         self.bar_ap1.pack(fill="x", pady=8)
-        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["pink"],
+        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["accent2"],
                                     C["orange"], parent_bg=C["card"])
         self.bar_scen.pack(fill="x", pady=8)
 
@@ -731,7 +734,7 @@ class DashboardView(View):
         row3.columnconfigure(1, weight=3, uniform="row3")
 
         heat_card = Card(row3, title="Aktivität je Fachbereich",
-                         subtitle="Intensität pro Tag", accent=C["pink"])
+                         subtitle="Intensität pro Tag", accent=C["accent2"])
         heat_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"])
         self.heatmap.pack(fill="both", expand=True)
@@ -787,7 +790,7 @@ class DashboardView(View):
         self.timeline_ap1.pack(fill="both", expand=True)
 
         theme_card = Card(row5, title="AP2 Prüfungsthemen",
-                          subtitle="bearbeitete Szenarien", accent=C["pink"])
+                          subtitle="bearbeitete Szenarien", accent=C["accent2"])
         theme_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         self.timeline = ThemeTimeline(theme_card.body, height=200,
                                       parent_bg=C["card"])
@@ -828,16 +831,16 @@ class DashboardView(View):
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             "Gesamtfortschritt")
 
-        self.ring_cards.set(learned_cards / max(1, total_cards), C["cyan"],
+        self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"],
                             C["purple"], str(learned_cards),
                             "von %d Karten" % total_cards)
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"],
-                           C["pink"], str(quiz_answered),
+                           C["accent2"], str(quiz_answered),
                            "%d von %d Fragen" % (quiz_distinct, total_quiz))
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"],
-                          C["cyan"], str(ap1_done),
+                          C["accent"], str(ap1_done),
                           "von %d Szenarien" % total_ap1)
-        self.ring_scen.set(scen_done / max(1, total_scen), C["pink"],
+        self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"],
                            C["orange"], str(scen_done),
                            "von %d Szenarien" % total_scen)
 
@@ -862,7 +865,7 @@ class DashboardView(View):
         labels = [day.strftime("%d.%m") for day, _count in daily]
         values = [count for _day, count in daily]
         self.chart.set_data(labels, [
-            {"name": "Aufgaben pro Tag", "values": values, "color": C["cyan"]},
+            {"name": "Aufgaben pro Tag", "values": values, "color": C["accent"]},
         ])
 
         # Heatmap
@@ -913,8 +916,8 @@ class DashboardView(View):
         row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
                            corner_radius=10)
         row.pack(fill="x", pady=3)
-        color = {"Karteikarte": C["cyan"], "Quizfrage": C["purple"],
-                 "AP1-Szenario": C["blue"], "AP2-Szenario": C["pink"],
+        color = {"Karteikarte": C["accent"], "Quizfrage": C["purple"],
+                 "AP1-Szenario": C["blue"], "AP2-Szenario": C["accent2"],
                  "Test-Session": C["green"]}.get(kind, C["muted"])
         ctk.CTkLabel(row, text="", width=9, height=9,
                      image=ctk_image(circle_image(9, fill=color), 9, 9)).pack(
@@ -959,7 +962,7 @@ class CardsView(View):
         self.mode_pills.pack(anchor="w", pady=(8, 0))
 
         # Frage
-        self.question_card = Card(self.content, title="Frage", accent=C["cyan"],
+        self.question_card = Card(self.content, title="Frage", accent=C["accent"],
                                   subtitle="")
         self.question_card.pack(fill="x", pady=(14, 0))
         self.lbl_question = make_label(self.question_card.body, "",
@@ -1132,7 +1135,7 @@ class CardsView(View):
             self.lbl_solution.configure(text=card["a_full"])
 
         else:
-            self.lbl_feedback.configure(text="Musterlösung", text_color=C["cyan"])
+            self.lbl_feedback.configure(text="Musterlösung", text_color=C["accent"])
             self.lbl_solution.configure(text=card["a_full"])
 
         key = (card["q"], self.mode)
@@ -1200,14 +1203,14 @@ class QuizView(View):
                                        fg=C["text_dim"])
         self.lbl_progress.pack(side="left")
         self.lbl_timer = make_label(status, "00:00", font=F["body_bold"],
-                                    fg=C["cyan"])
+                                    fg=C["accent"])
         self.lbl_timer.pack(side="right")
         self.lbl_score = make_label(status, "", font=F["small"], fg=C["muted"])
         self.lbl_score.pack(side="right", padx=16)
 
         # Frage
         self.question_card = Card(self.content, title="Prüfungsaufgabe",
-                                  accent=C["cyan"])
+                                  accent=C["accent"])
         self.question_card.pack(fill="both", expand=True, pady=(14, 0))
         self.lbl_question = make_label(
             self.question_card.body,
@@ -1436,7 +1439,7 @@ class ScenarioViewBase(View):
         detail = transparent_frame(layout)
         detail.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
 
-        self.task_card = Card(detail, title="Aufgabenstellung", accent=C["cyan"])
+        self.task_card = Card(detail, title="Aufgabenstellung", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
         self.lbl_title = make_label(self.task_card.body, "", font=F["h2"],
                                     fg=C["text"], wraplength=760, justify="left",
@@ -1574,7 +1577,7 @@ class ProjectView(View):
         self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
         self.meta_label.pack(anchor="w", pady=(2, 12))
 
-        self.task_card = Card(detail, title="Kundenauftrag", accent=C["cyan"])
+        self.task_card = Card(detail, title="Kundenauftrag", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
         self.txt_task = make_text(self.task_card.body, height=14, readonly=True)
         self.txt_task.pack(fill="both", expand=True)
@@ -1680,7 +1683,7 @@ class CalcView(View):
         layout.columnconfigure(1, weight=1, uniform="calc")
 
         # --- Subnetting ---------------------------------------------------
-        subnet = Card(layout, title="Subnetting / VLSM", accent=C["cyan"],
+        subnet = Card(layout, title="Subnetting / VLSM", accent=C["accent"],
                       subtitle="IPv4 und IPv6")
         subnet.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         make_label(subnet.body, "IP-Adresse mit Präfix (z.B. 192.168.1.50/24)",
@@ -1823,9 +1826,9 @@ class ProgressView(View):
     def build(self):
         row = transparent_frame(self.content)
         row.pack(fill="x")
-        self.stat_tests = self._stat_card(row, "Test-Sessions", C["cyan"])
+        self.stat_tests = self._stat_card(row, "Test-Sessions", C["accent"])
         self.stat_avg = self._stat_card(row, "Durchschnitt", C["purple"])
-        self.stat_best = self._stat_card(row, "Bestes Ergebnis", C["pink"])
+        self.stat_best = self._stat_card(row, "Bestes Ergebnis", C["accent2"])
         self.stat_streak = self._stat_card(row, "Lernserie", C["green"], last=True)
 
         chart_card = Card(self.content, title="Ergebnisse im Zeitverlauf",
@@ -1901,7 +1904,7 @@ class ProgressView(View):
         if not labels:
             labels, values = ["heute"], [0]
         self.chart.set_data(labels, [
-            {"name": "Erfolgsquote in %", "values": values, "color": C["pink"]},
+            {"name": "Erfolgsquote in %", "values": values, "color": C["accent2"]},
         ], y_max=100)
 
         for item in self.tree.get_children():
@@ -1929,9 +1932,33 @@ class ProgressView(View):
 #  EINSTELLUNGEN
 # ============================================================================
 
+class ColorTile(ctk.CTkFrame):
+    """Kachel einer Grundfarbe in den Optionen: Verlauf der Buttons, die
+    beiden Akzentfarben und der Name. Die gewaehlte Kachel ist umrandet."""
+
+    def __init__(self, parent, item, active, command):
+        super().__init__(parent, fg_color=C["card_hi"] if active else C["card_alt"],
+                         corner_radius=12, border_width=2,
+                         border_color=item["accent"] if active else C["border"],
+                         cursor="hand2")
+        bar = rounded_gradient(120, 14, 7, item["primary"][0], item["primary"][1])
+        strip = ctk.CTkLabel(self, text="", image=ctk_image(bar, 120, 14))
+        strip.pack(padx=12, pady=(12, 8))
+        dots = transparent_frame(self)
+        dots.pack()
+        for color in (item["accent"], item["accent2"]):
+            ctk.CTkLabel(dots, text="", image=ctk_image(circle_image(12, fill=color), 12, 12)
+                         ).pack(side="left", padx=3)
+        name = make_label(self, item["name"], font=F["small_bold"],
+                          fg=C["text"] if active else C["text_dim"])
+        name.pack(padx=10, pady=(6, 12))
+        for widget in (self, strip, dots, name) + tuple(dots.winfo_children()):
+            widget.bind("<Button-1>", lambda _e: command(item["id"]))
+
+
 class SettingsView(View):
     def build(self):
-        updates = Card(self.content, title="Updates", accent=C["pink"],
+        updates = Card(self.content, title="Updates", accent=C["accent2"],
                        subtitle="installierte Version %s" % APP_VERSION)
         updates.pack(fill="x")
         row = transparent_frame(updates.body)
@@ -1950,7 +1977,21 @@ class SettingsView(View):
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
 
-        sync = Card(self.content, title="Abgleich PC und Handy", accent=C["cyan"],
+        colors = Card(self.content, title="Grundfarbe", accent=C["accent"],
+                      subtitle="nur für dieses Gerät")
+        colors.pack(fill="x", pady=(14, 0))
+        tiles = transparent_frame(colors.body)
+        tiles.pack(anchor="w")
+        for index, item in enumerate(fisi_theme.PRESETS):
+            ColorTile(tiles, item, item["id"] == fisi_theme.current_preset,
+                      self._change_color).grid(row=0, column=index, padx=(0, 10))
+        make_label(colors.body,
+                   "Ändert Buttons, Ringe, Balken und Banner. Die Farben der "
+                   "Fachbereiche und von Erfolg, Fehler und Warnung bleiben immer gleich.",
+                   font=F["tiny"], fg=C["muted"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+
+        sync = Card(self.content, title="Abgleich PC und Handy", accent=C["accent"],
                     subtitle="über ein privates GitHub-Repository")
         sync.pack(fill="x", pady=(14, 0))
         settings = fisi_sync.sync_settings()
@@ -1991,7 +2032,7 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
         self.show_sync_status(None, None)
 
-        info = Card(self.content, title="Datenbank", accent=C["cyan"])
+        info = Card(self.content, title="Datenbank", accent=C["accent"])
         info.pack(fill="x", pady=(14, 0))
         make_label(info.body, "Speicherort der Lernfortschritte:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
@@ -2032,8 +2073,17 @@ class SettingsView(View):
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
-        game = Card(self.content, title="Spiel", accent=C["pink"])
+        game = Card(self.content, title="Spiel", accent=C["accent2"])
         game.pack(fill="x", pady=(14, 0))
+        make_label(game.body, "WOHNUNGEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        ChoiceRow(game.body, fisi_game.RENT_CHOICES,
+                  "miete" if fisi_game.rent_mode() else "einmal",
+                  lambda key: fisi_game.set_rent_mode(key == "miete")).pack(
+            anchor="w", pady=(6, 6))
+        make_label(game.body, fisi_game.RENT_HELP
+                   % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
+                   font=F["tiny"], fg=C["muted"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(0, 14))
         make_label(game.body,
                    "Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
                    "Reputation, Arbeitstage und erledigte Tickets. Der "
@@ -2058,6 +2108,11 @@ class SettingsView(View):
                    % (APP_TITLE, APP_VERSION),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
+
+    def _change_color(self, preset_id):
+        if preset_id != fisi_theme.current_preset:
+            # Nach dem aktuellen Klick neu aufbauen (die Kachel wird zerstoert)
+            self.after(10, lambda: self.app.change_color(preset_id))
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -2110,7 +2165,7 @@ class SettingsView(View):
                 text_color=C["green"])
         else:
             self.lbl_update.configure(text="Version %s ist verfügbar." % info.version,
-                                      text_color=C["cyan"])
+                                      text_color=C["accent"])
 
     def reset_game(self):
         if not messagebox.askyesno("Spielstand zurücksetzen",
@@ -2143,7 +2198,7 @@ class SettingsView(View):
 class SearchView(View):
     def build(self):
         self.header_card = Card(self.content, title="Suchergebnisse",
-                                accent=C["cyan"])
+                                accent=C["accent"])
         self.header_card.pack(fill="x")
         self.lbl_info = make_label(self.header_card.body, "", font=F["body"],
                                    fg=C["text_dim"])
@@ -2371,7 +2426,7 @@ class UpdateDialog(ctk.CTkToplevel):
         # Symbol - deshalb das Programm-Icon etwas verzoegert setzen.
         self.after(250, lambda: _apply_window_icon(self))
 
-        card = Card(self, title="Neue Version", accent=C["pink"],
+        card = Card(self, title="Neue Version", accent=C["accent2"],
                     subtitle="installiert: %s" % APP_VERSION)
         card.pack(fill="both", expand=True, padx=18, pady=18)
         make_label(card.body, "FISI Lernplattform %s ist verfügbar" % info.version,
@@ -2507,9 +2562,25 @@ class FISIApp:
         self._setup_ttk_style()
 
         self.db = DBManager(error_handler=self._db_error)
+        self.container = None
+        self._build_ui()
+        self.show_view("dashboard")
+        root.protocol("WM_DELETE_WINDOW", self.on_close)
+        root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
 
-        container = ctk.CTkFrame(root, fg_color=C["bg"], corner_radius=0)
+        self.updater = UpdateController(self)
+        self.sync = SyncController(self)
+        # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
+        if not os.environ.get("FISI_SELFTEST"):
+            root.after(1500, self.sync.auto_start)
+            root.after(3000, self.updater.auto_check)
+
+    def _build_ui(self):
+        """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
+        nach einem Wechsel der Grundfarbe)."""
+        container = ctk.CTkFrame(self.root, fg_color=C["bg"], corner_radius=0)
         container.pack(fill="both", expand=True)
+        self.container = container
 
         self.sidebar = Sidebar(container, self)
         self.sidebar.pack(side="left", fill="y")
@@ -2539,16 +2610,19 @@ class FISIApp:
             self.views[key] = view
 
         self.current = None
-        self.show_view("dashboard")
-        root.protocol("WM_DELETE_WINDOW", self.on_close)
-        root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
 
-        self.updater = UpdateController(self)
-        self.sync = SyncController(self)
-        # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
-        if not os.environ.get("FISI_SELFTEST"):
-            root.after(1500, self.sync.auto_start)
-            root.after(3000, self.updater.auto_check)
+    def change_color(self, preset_id):
+        """Neue Grundfarbe speichern und die Oberflaeche neu aufbauen - alle
+        Ansichten werden mit den neuen Akzentfarben neu gezeichnet."""
+        fisi_theme.save_preset(preset_id)
+        current = self.current or "settings"
+        old = self.container
+        # Erst ausblenden, damit die neue Oberflaeche gleich die volle Groesse
+        # bekommt (sonst teilen sich kurz alte und neue das Fenster)
+        old.pack_forget()
+        self._build_ui()
+        old.destroy()
+        self.show_view(current)
 
     # -- Infrastruktur ------------------------------------------------------
 
@@ -2685,6 +2759,12 @@ def _run_selftest(root, app, log_path):
     def step(keys):
         if not keys:
             try:
+                # Grundfarbe wechseln baut alle Ansichten neu auf
+                original = fisi_theme.current_preset
+                app.change_color("gruen_lime")
+                root.update()
+                app.change_color(original)
+                root.update()
                 dialog = UpdateDialog(app, fisi_update.UpdateInfo(
                     "9.9", "Starttest", fisi_update.RELEASES_PAGE))
                 root.update()

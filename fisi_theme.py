@@ -37,6 +37,11 @@ C = {
     "text_dim":  "#A794C6",
     "muted":     "#7D6B9C",
     "on_accent": "#FFFFFF",
+    # Akzentfarben (aktiver Menuepunkt, Ringe, Links, Kalender-Pfeile ...).
+    # Sie folgen der gewaehlten Grundfarbe (siehe PRESETS unten); "cyan" und
+    # "pink" bleiben fest, weil sie auch Fachbereichsfarben sind.
+    "accent":    "#22D3EE",
+    "accent2":   "#F472B6",
     "cyan":      "#22D3EE",
     "pink":      "#F472B6",
     "purple":    "#A78BFA",
@@ -57,6 +62,87 @@ GRADIENTS = {
     "success": ("#059669", "#22D3EE"),   # Gruen -> Tuerkis
     "hero":    ("#4C1D95", "#9D174D"),   # Banner im Dashboard
 }
+
+# ============================================================================
+#  GRUNDFARBE (ab 0.31)
+# ============================================================================
+#
+# Waehlbar unter "Optionen", gespeichert lokal je Geraet in einstellungen.json
+# (Schluessel "grundfarbe", wird nicht abgeglichen). Es wechseln nur die
+# Akzente: C["accent"], C["accent2"] und die Verlaeufe primary, accent und
+# hero. Hintergrund, Texte, Fachbereichs-, Themen- und Bedeutungsfarben
+# (Erfolg, Fehler, Warnung) bleiben fest.
+
+SETTING_KEY = "grundfarbe"
+DEFAULT_PRESET = "cyan_pink"
+PRESETS = [
+    {"id": "cyan_pink", "name": "Cyan/Pink",
+     "accent": "#22D3EE", "accent2": "#F472B6",
+     "primary": ("#7C3AED", "#DB2777"), "verlauf": ("#0891B2", "#6366F1"),
+     "hero": ("#4C1D95", "#9D174D")},
+    {"id": "lila_magenta", "name": "Lila/Magenta",
+     "accent": "#C084FC", "accent2": "#F0ABFC",
+     "primary": ("#7C3AED", "#C026D3"), "verlauf": ("#9333EA", "#DB2777"),
+     "hero": ("#4C1D95", "#86198F")},
+    {"id": "blau_tuerkis", "name": "Blau/Türkis",
+     "accent": "#60A5FA", "accent2": "#2DD4BF",
+     "primary": ("#2563EB", "#0D9488"), "verlauf": ("#1D4ED8", "#0891B2"),
+     "hero": ("#1E3A8A", "#115E59")},
+    {"id": "gruen_lime", "name": "Grün/Lime",
+     "accent": "#34D399", "accent2": "#A3E635",
+     "primary": ("#059669", "#65A30D"), "verlauf": ("#047857", "#84CC16"),
+     "hero": ("#064E3B", "#3F6212")},
+    {"id": "orange_gelb", "name": "Orange/Gelb",
+     "accent": "#FDBA74", "accent2": "#FDE047",
+     "primary": ("#EA580C", "#CA8A04"), "verlauf": ("#C2410C", "#EAB308"),
+     "hero": ("#7C2D12", "#713F12")},
+    {"id": "rot_pink", "name": "Rot/Pink",
+     "accent": "#FB7185", "accent2": "#F9A8D4",
+     "primary": ("#E11D48", "#DB2777"), "verlauf": ("#BE123C", "#C026D3"),
+     "hero": ("#7F1D1D", "#831843")},
+]
+PRESET_IDS = [item["id"] for item in PRESETS]
+current_preset = DEFAULT_PRESET
+
+
+def preset(preset_id):
+    """Das Preset zur Kennung (unbekannt -> Standard Cyan/Pink)."""
+    for item in PRESETS:
+        if item["id"] == preset_id:
+            return item
+    return PRESETS[0]
+
+
+def apply_preset(preset_id):
+    """Setzt die Akzentfarben in C und GRADIENTS (die Woerterbuecher werden
+    veraendert, nicht ersetzt - alle Module sehen so sofort die neuen Werte).
+    Bereits gezeichnete Oberflaechen muessen danach neu aufgebaut werden."""
+    global current_preset
+    item = preset(preset_id)
+    C["accent"], C["accent2"] = item["accent"], item["accent2"]
+    GRADIENTS["primary"] = item["primary"]
+    GRADIENTS["accent"] = item["verlauf"]
+    GRADIENTS["hero"] = item["hero"]
+    current_preset = item["id"]
+    return item
+
+
+def saved_preset():
+    """Die gespeicherte Grundfarbe dieses Geraets."""
+    import fisi_update
+    value = fisi_update.load_settings().get(SETTING_KEY, DEFAULT_PRESET)
+    return value if value in PRESET_IDS else DEFAULT_PRESET
+
+
+def save_preset(preset_id):
+    """Speichert die Grundfarbe (nur lokal) und wendet sie an."""
+    import fisi_update
+    item = apply_preset(preset_id)
+    settings = fisi_update.load_settings()
+    settings[SETTING_KEY] = item["id"]
+    fisi_update.save_settings(settings)
+    return item
+
 
 CATEGORY_COLOR = {
     CAT_NET: C["cyan"],
@@ -99,3 +185,11 @@ def lighten(color, amount=0.15):
 
 def darken(color, amount=0.15):
     return mix(color, "#000000", amount)
+
+
+# Gespeicherte Grundfarbe gleich beim Import anwenden, bevor irgendeine
+# Oberflaeche gebaut wird.
+try:
+    apply_preset(saved_preset())
+except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start verhindern
+    apply_preset(DEFAULT_PRESET)

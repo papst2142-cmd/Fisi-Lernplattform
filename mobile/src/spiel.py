@@ -381,7 +381,7 @@ class MatchBoard(ft.Column):
             row.border = ft.Border.all(2 if active else 1,
                                        C["purple"] if active else C["border"])
             target.value = ("passt zu: " + value) if value else "noch nicht zugeordnet"
-            target.color = C["cyan"] if value else C["muted"]
+            target.color = C["accent"] if value else C["muted"]
         used = set(self.answer.values())
         for right, pill in self.right_pills.items():
             active = right in used
@@ -418,7 +418,7 @@ class SlotBoard(ft.Column):
                                on_click=lambda _e, value=slot: self.pick_slot(value))
             self.slot_boxes[slot] = box
         rules = fg.build_rules_text(task)
-        self.controls = ([ui.text("Vorgaben: " + rules, size=13, color=C["cyan"],
+        self.controls = ([ui.text("Vorgaben: " + rules, size=13, color=C["accent"],
                                   weight=ft.FontWeight.BOLD)] if rules else []) + [
             ui.label("Steckplatz antippen, dann das Bauteil"),
             *self.slot_boxes.values()]
@@ -449,7 +449,7 @@ class SlotBoard(ft.Column):
         item = fg.part(part_id)
         head = [ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD, expand=True)]
         if part_id in self.from_stock:
-            head.append(ui.text("aus dem Lager", size=11, color=C["cyan"],
+            head.append(ui.text("aus dem Lager", size=11, color=C["accent"],
                                 weight=ft.FontWeight.BOLD))
         return ft.Container(
             content=ft.Column([
@@ -470,7 +470,7 @@ class SlotBoard(ft.Column):
             name = fg.slot_name(slot) + (" (optional)" if slot in optional else "")
             rows = [ui.text(name, size=15, weight=ft.FontWeight.BOLD),
                     ui.text(("eingesetzt: " + fg.part(part_id)["name"]) if part_id else "leer",
-                            size=12, color=C["cyan"] if part_id else C["muted"])]
+                            size=12, color=C["accent"] if part_id else C["muted"])]
             if active:
                 options = [pid for pid in self.available if fg.part(pid)["typ"] == slot]
                 if not options:
@@ -512,7 +512,7 @@ class OrderBoard(ft.Column):
             content=ft.Column([ui.label("Bedarf")] +
                               [ui.text(line, size=14, weight=ft.FontWeight.BOLD)
                                for line in lines[:-1]] +
-                              [ui.text(lines[-1], size=13, color=C["cyan"],
+                              [ui.text(lines[-1], size=13, color=C["accent"],
                                        weight=ft.FontWeight.BOLD)],
                               spacing=4, tight=True),
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
@@ -576,7 +576,7 @@ class OrderBoard(ft.Column):
         for offer_id, (row, count) in self.rows.items():
             value = self.cart.get(offer_id, 0)
             count.value = str(value)
-            count.color = C["cyan"] if value else C["muted"]
+            count.color = C["accent"] if value else C["muted"]
             border = C["purple"] if value else C["border"]
             if right is not None and value:
                 border = C["green"] if right else C["red"]
@@ -611,7 +611,7 @@ class RackBoard(ft.Column):
         head = ft.Container(
             content=ft.Column([ui.label("Schrank"),
                                ui.text(lines[0], size=14, weight=ft.FontWeight.BOLD)] +
-                              [ui.text(line, size=13, color=C["cyan"],
+                              [ui.text(line, size=13, color=C["accent"],
                                        weight=ft.FontWeight.BOLD) for line in lines[1:]],
                               spacing=4, tight=True),
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
@@ -671,7 +671,7 @@ class RackBoard(ft.Column):
                 ft.Row([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD,
                                 expand=True),
                         ui.text(where, size=12, weight=ft.FontWeight.BOLD,
-                                color=C["cyan"] if bottom else C["muted"])], spacing=8),
+                                color=C["accent"] if bottom else C["muted"])], spacing=8),
                 ui.text(fg.rack_specs(item), size=12, color=C["muted"]),
             ], spacing=2, tight=True, expand=True),
         ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
@@ -889,7 +889,7 @@ class TerminalBoard(ft.Column):
                 ft.TextSpan(self.task["prompt"] + " ",
                             ft.TextStyle(color=C["green"], font_family=ui.MONO, size=12)),
                 ft.TextSpan(value, ft.TextStyle(
-                    color=C["cyan"] if role == "cursor" else C["text"],
+                    color=C["accent"] if role == "cursor" else C["text"],
                     font_family=ui.MONO, size=12))])
         return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
 
@@ -948,7 +948,7 @@ class DiagnoseBoard(ft.Column):
         controls = []
         spare = fg.spare_parts_text(task, available)
         if spare:
-            controls.append(ui.text(spare, size=13, color=C["cyan"],
+            controls.append(ui.text(spare, size=13, color=C["accent"],
                                     weight=ft.FontWeight.BOLD))
         controls.append(ui.label("Prüfungen"))
         self.check_rows = {}
@@ -1013,7 +1013,7 @@ class DiagnoseBoard(ft.Column):
             item = fg.diagnosis_check(self.task, check_id)
             notes.append(ui.text("%d. %s" % (number, item["text"]), size=13,
                                  weight=ft.FontWeight.BOLD))
-            notes.append(ui.text(item["ergebnis"], size=13, color=C["cyan"]))
+            notes.append(ui.text(item["ergebnis"], size=13, color=C["accent"]))
         self.notes.controls = notes
         self.counter.value = fg.diagnosis_counter(self.task, self.done)
 
@@ -1114,8 +1114,8 @@ class GameScreen:
                 ui.text("%s · Kunde: %s" % (fg.GAME["gebaeude"]["firma"],
                                             fg.GAME["gebaeude"]["kunde"]),
                         size=11, color=C["muted"]),
-            ], accent=C["pink"]))
-        result += [ui.Card("Deine Spielfigur", controls, accent=C["cyan"]),
+            ], accent=C["accent2"]))
+        result += [ui.Card("Deine Spielfigur", controls, accent=C["accent"]),
                    ft.Row(buttons, spacing=10)]
         return result
 
@@ -1142,23 +1142,25 @@ class GameScreen:
     def _overview(self, state):
         levels = self.game.knowledge()
         goal = fg.GAME["balancing"]["gruendung"]
-        founding = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["cyan"])
+        founding = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["accent"])
         founding.set(state.founding_progress() * 100, "Ziel %s" % euro(goal["startkapital"]))
         profile = ui.Card("Spielfigur", [
             ft.Row([
                 avatar(state.profile["aussehen"], 84),
                 ft.Column([
                     ui.text(state.profile["name"], size=22, weight=ft.FontWeight.BOLD),
-                    ui.text(state.rank, size=14, color=C["cyan"], weight=ft.FontWeight.BOLD),
+                    ui.text(state.rank, size=14, color=C["accent"], weight=ft.FontWeight.BOLD),
                     ui.text("Konto: %s · Gehalt: %s/Tag" % (euro(state.money),
                                                            euro(state.salary)),
                             size=12, color=C["text_dim"]),
+                    ui.text("Miete: %s/Tag" % euro(state.rent), size=12,
+                            color=C["text_dim"], visible=bool(state.rent)),
                 ], spacing=3, tight=True, expand=True),
             ], spacing=14),
             founding,
             ft.Row([ui.GradientButton("Figur bearbeiten", self._edit_profile, kind="ghost",
                                       height=38)]),
-        ], accent=C["pink"], subtitle="Arbeitstag %d" % state.day)
+        ], accent=C["accent2"], subtitle="Arbeitstag %d" % state.day)
 
         reputation_bars = []
         for key, name in fg.AXES:
@@ -1184,7 +1186,7 @@ class GameScreen:
             plan_controls.append(ui.text("%s beim Kunden" % (
                 "1 Auftrag" if at_customer == 1 else "%d Aufträge" % at_customer),
                 size=12, color=C["muted"]))
-        plan = ui.Card("Grundriss", plan_controls, accent=C["cyan"])
+        plan = ui.Card("Grundriss", plan_controls, accent=C["accent"])
 
         knowledge_bars = []
         for key in fg.CAT_ORDER:
@@ -1229,7 +1231,7 @@ class GameScreen:
                                       spacing=4, tight=True),
                     bgcolor=mix(C["card"], C["purple"], 0.1), border_radius=12, padding=12,
                     border=ft.Border.all(1, mix(C["purple"], C["card"], 0.45))))
-            title, accent = "Tickets heute", C["pink"]
+            title, accent = "Tickets heute", C["accent2"]
             subtitle = "%d von %d bearbeitet" % (len(state.handled), len(tickets))
 
         if not tickets:
@@ -1371,7 +1373,7 @@ class GameScreen:
         controls.append(ui.Card("Aufgabe", [
             ui.text(task["frage"], size=16, weight=ft.FontWeight.BOLD),
             self.options, self.help_box, self.result_box,
-        ], accent=C["cyan"]))
+        ], accent=C["accent"]))
 
         self.btn_submit = ui.GradientButton("Lösung einreichen", self._submit, expand=True)
         self.btn_help = ui.GradientButton("Hilfe", self._show_help, kind="ghost")
@@ -1393,11 +1395,11 @@ class GameScreen:
         self.used_help = True
         self.btn_help.set_enabled(False)
         self.help_box.controls = [ft.Container(
-            content=ft.Column([ui.label("Hilfe", C["cyan"]),
+            content=ft.Column([ui.label("Hilfe", C["accent"]),
                                ui.text(self.task["hilfe"], size=14, color=C["text_soft"])],
                               spacing=6, tight=True),
-            bgcolor=mix(C["card"], C["cyan"], 0.08), border_radius=12, padding=14,
-            border=ft.Border.all(1, mix(C["cyan"], C["card"], 0.5)))]
+            bgcolor=mix(C["card"], C["accent"], 0.08), border_radius=12, padding=14,
+            border=ft.Border.all(1, mix(C["accent"], C["card"], 0.5)))]
 
     def _submit(self, _event=None):
         if self.answered:
@@ -1546,19 +1548,24 @@ class GameScreen:
             if place.get("text"):
                 controls.append(ui.text(place["text"], size=12, color=C["text_dim"]))
         if home:
+            money = [ui.text("Kontostand: %s" % euro(state.money), size=14,
+                             weight=ft.FontWeight.BOLD,
+                             color=C["text"] if state.money >= 0 else C["red"])]
+            if state.rent:
+                money.append(ui.text("Miete: %s pro Arbeitstag" % euro(state.rent), size=12,
+                                     color=C["text_dim"]))
             controls.append(ft.Row([
-                ui.text("Kontostand: %s" % euro(state.money), size=14,
-                        weight=ft.FontWeight.BOLD, expand=True),
+                ft.Column(money, spacing=2, tight=True, expand=True),
                 ui.GradientButton("Fertig" if self.editing else "Einrichten",
                                   self._toggle_edit, kind="primary" if self.editing
                                   else "ghost", height=38),
             ], vertical_alignment=ft.CrossAxisAlignment.CENTER))
-            title, accent = fg.apartment(state.home_id)["name"], C["pink"]
+            title, accent = fg.apartment(state.home_id)["name"], C["accent2"]
             subtitle = ("Möbel antippen, dann Stelle antippen" if self.editing
                         else "Tippe irgendwo hin")
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
-            accent = C["cyan"] if site == fg.SITE_OFFICE else C["blue"]
+            accent = C["accent"] if site == fg.SITE_OFFICE else C["blue"]
             subtitle = "Tippe auf eine Person oder einen Ort"
         controls.append(ui.Card(title, [self.office_plan, self.office_info], accent=accent,
                                 subtitle=subtitle))
@@ -1617,8 +1624,8 @@ class GameScreen:
             self.positions.pop(fg.SITE_OFFICE, None)
             self.notices[fg.SITE_HOME] = (
                 "Feierabend nach Arbeitstag %d" % payload["tag"],
-                "%s Gehalt: +%s." % (fg.day_end_text(payload["tag"]),
-                                     euro(payload["gehalt"])))
+                "%s %s" % (fg.day_end_text(payload["tag"]),
+                           fg.day_end_money_text(payload)))
             self.app.notify_progress()
             self.render()
             self.open_site("zuhause", replace=True)
@@ -1655,7 +1662,7 @@ class GameScreen:
             return []
         return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
                  "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
-                 "line": C["cyan"], "lw": 0.08, "r": 0.1}]
+                 "line": C["accent"], "lw": 0.08, "r": 0.1}]
 
     def _home_tap(self, x, y):
         if not self.editing:
@@ -1744,9 +1751,11 @@ class GameScreen:
         self._fill_site()
 
     def _move(self, home):
+        rent = fg.rent_mode()
+
         def confirmed():
             try:
-                self.game.move_home(home["id"])
+                self.game.move_home(home["id"], rent=rent)
             except ValueError as exc:
                 self.toast(str(exc), C["yellow"])
                 return
@@ -1755,9 +1764,8 @@ class GameScreen:
             self.app.notify_progress()
             self._fill_site()
 
-        self.app.confirm("Umziehen", "Für %s in die Wohnung „%s“ umziehen? Alle Möbel "
-                         "kommen dabei in Umzugskartons." % (euro(home["preis"]),
-                                                              home["name"]), confirmed)
+        self.app.confirm("Umziehen", fg.move_texts(self.game.state, home, rent)[1],
+                         confirmed)
 
     def _item_row(self, title, price, label, on_click, enabled=True, active=False,
                   detail=""):
@@ -1818,24 +1826,28 @@ class GameScreen:
                                     on_change=lambda c, r=room["id"]: self._floor(r, color=c))]
 
         flat = fg.apartment(state.home_id)
+        rent = fg.rent_mode()
         homes = [ui.text("Du wohnst in: %s" % flat["name"], size=14,
-                         weight=ft.FontWeight.BOLD),
-                 ui.text(flat.get("text", ""), size=12, color=C["text_dim"])]
+                         weight=ft.FontWeight.BOLD)]
+        if fg.rent_text(state):
+            homes.append(ui.text(fg.rent_text(state), size=12, color=C["orange"],
+                                 weight=ft.FontWeight.BOLD))
+        homes.append(ui.text(flat.get("text", ""), size=12, color=C["text_dim"]))
         moves = fg.moves_available(state)
         for home in moves:
-            homes.append(self._item_row(home["name"], euro(home["preis"]), "Umziehen",
-                                        lambda _e, h=home: self._move(h),
-                                        enabled=state.money >= home["preis"],
+            homes.append(self._item_row(home["name"], fg.move_texts(state, home, rent)[0],
+                                        "Umziehen", lambda _e, h=home: self._move(h),
+                                        enabled=not fg.move_offer(state, home, rent)["fehlt"],
                                         detail=home.get("text", "")))
         if not moves:
             homes.append(ui.text("Du wohnst schon in der größten Wohnung.", size=13,
                                  color=C["text_dim"]))
-        return [ui.Card("Deine Möbel", mine, accent=C["cyan"]),
+        return [ui.Card("Deine Möbel", mine, accent=C["accent"]),
                 ui.Card("Möbelhaus", shop, accent=C["purple"],
                         subtitle="Einmal bezahlen, für immer behalten"),
                 ui.Card("Böden", floors, accent=C["green"]),
                 ui.Card("Wohnung", homes, accent=C["orange"],
-                        subtitle="Größer wohnen kostet einmalig")]
+                        subtitle=fg.HOME_SUBTITLE[rent])]
 
     def _open_cards(self, category):
         self.app.screens["cards"].set_category(category)

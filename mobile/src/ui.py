@@ -54,7 +54,7 @@ class Card(ft.Container):
                                      text_align=ft.TextAlign.RIGHT)
         column = [self.body]
         if title:
-            accent = accent or C["cyan"]
+            accent = accent or C["accent"]
             header = ft.Row([
                 ft.Container(width=4, height=14, border_radius=2, bgcolor=accent),
                 ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD, color=accent,
@@ -292,7 +292,7 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
         max_lines=max_lines, keyboard_type=keyboard, on_change=on_change,
         bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
         border_color=C["border"], focused_border_color=C["purple"],
-        border_radius=12, color=C["text"], cursor_color=C["cyan"],
+        border_radius=12, color=C["text"], cursor_color=C["accent"],
         hint_style=ft.TextStyle(color=C["muted"]),
         text_style=ft.TextStyle(font_family=MONO if mono else None, size=14),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
@@ -339,9 +339,9 @@ class HeroPanel(ft.Container):
 
     def __init__(self):
         self.title = ft.Text("", size=22, weight=ft.FontWeight.BOLD, color=C["on_accent"])
-        self.sub = ft.Text("", size=13, color=mix(C["on_accent"], C["pink"], 0.25))
+        self.sub = ft.Text("", size=13, color=mix(C["on_accent"], C["accent2"], 0.25))
         self.big = ft.Text("", size=30, weight=ft.FontWeight.BOLD, color=C["on_accent"])
-        self.big_sub = ft.Text("", size=12, color=mix(C["on_accent"], C["pink"], 0.25))
+        self.big_sub = ft.Text("", size=12, color=mix(C["on_accent"], C["accent2"], 0.25))
         super().__init__(
             content=ft.Row([
                 ft.Column([self.title, self.sub], spacing=6, tight=True, expand=True),
@@ -456,7 +456,7 @@ class LineChart(cv.Canvas):
     def __init__(self, height=200):
         self._labels = []
         self._series = []
-        self._color = C["cyan"]
+        self._color = C["accent"]
         self._y_max = None
         self._width = 300
         super().__init__(height=height, expand=True, on_resize=self._resized,
@@ -585,7 +585,7 @@ class CalendarPanel(ft.Column):
             icon=icon, icon_size=18, width=34, height=34,
             style=ft.ButtonStyle(
                 icon_color={ft.ControlState.PRESSED: C["green"],
-                            ft.ControlState.DEFAULT: C["cyan"]},
+                            ft.ControlState.DEFAULT: C["accent"]},
                 bgcolor=C["card_alt"],
                 overlay_color=mix(C["card_alt"], C["green"], 0.18),
                 padding=0, shape=ft.CircleBorder()),
@@ -602,7 +602,7 @@ class CalendarPanel(ft.Column):
             self._arrow(ft.Icons.CHEVRON_RIGHT, 1),
         ])
         names = ft.Row([ft.Text(name, size=11, expand=True, text_align=ft.TextAlign.CENTER,
-                                color=C["pink"] if index > 4 else C["muted"])
+                                color=C["accent2"] if index > 4 else C["muted"])
                         for index, name in enumerate("MDMDFSS")])
         rows = [head, names]
         for week in calendar.Calendar().monthdayscalendar(self.year, self.month):
@@ -618,10 +618,10 @@ class CalendarPanel(ft.Column):
                         content=ft.Text(str(day), size=12, weight=ft.FontWeight.BOLD
                                         if learned else None,
                                         color=C["sidebar"] if learned else
-                                        (C["pink"] if index > 4 else C["text_dim"])),
+                                        (C["accent2"] if index > 4 else C["text_dim"])),
                         width=28, height=28, border_radius=14,
                         bgcolor=C["purple"] if learned else None,
-                        border=ft.Border.all(2, C["cyan"]) if is_today else None,
+                        border=ft.Border.all(2, C["accent"]) if is_today else None,
                         alignment=ft.Alignment.CENTER),
                     height=32, expand=True, alignment=ft.Alignment.CENTER))
             rows.append(ft.Row(cells, spacing=0))

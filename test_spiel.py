@@ -1114,8 +1114,8 @@ class WohnungTest(unittest.TestCase):
             self.assertEqual([w["id"] for w in fg.moves_available(game.state)],
                              ["zweizimmer", "altbau", "loft"])
             with self.assertRaises(ValueError):
-                game.move_home("loft")                # zu teuer
-            game.move_home("zweizimmer")
+                game.move_home("loft", rent=False)    # zu teuer
+            game.move_home("zweizimmer", rent=False)
             self.assertEqual(game.state.home_id, "zweizimmer")
             self.assertEqual(game.state.money, 3000 - 150 - 2500)
             # Alle Moebel kommen in Kartons und werden neu aufgestellt
@@ -1345,6 +1345,113 @@ class FalschlieferungTest(unittest.TestCase):
         self.assertTrue(task["zwischenfall"])
         self.assertEqual(fg.task_site(task), fg.SITE_OFFICE)
         self.assertIsNone(fg.task_by_id(fg.WRONG_DELIVERY + "gibt-es-nicht"))
+
+
+def _finish_day(game):
+    """Alle offenen Tickets verschieben und den Arbeitstag beenden."""
+    for task in game.state.open_tickets():
+        game.defer(task["id"])
+    return game.end_day()
+
+
+class MieteTest(unittest.TestCase):
+    """Ab 0.31: Schalter Einmalzahlung/Miete fuer Wohnungen."""
+
+    def test_mieten_kaution_und_tagesmiete(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            payload = game.move_home("zweizimmer", rent=True)
+            self.assertEqual(payload["kaution"], 375)       # 15 % von 2.500 €
+            self.assertEqual(payload["miete"], 60)
+            self.assertEqual(game.state.money, 1000 - 375)
+            self.assertEqual((game.state.rent, game.state.deposit), (60, 375))
+            before, salary = game.state.money, game.state.salary
+            day = _finish_day(game)
+            self.assertEqual(day["miete"], 60)
+            money_after = game.state.money
+            # Verschieben kostet kein Geld, nur Reputation
+            self.assertEqual(money_after, before + salary - 60)
+
+    def test_kaufen_kostet_keine_miete(self):
+        with TempDB() as db:
+            game = _rich_game(db, 3000)
+            game.move_home("zweizimmer", rent=False)
+            self.assertEqual(game.state.money, 500)
+            self.assertEqual(game.state.rent, 0)
+            day = _finish_day(game)
+            self.assertNotIn("miete", day)
+
+    def test_kaution_kommt_beim_naechsten_umzug_zurueck(self):
+        with TempDB() as db:
+            game = _rich_game(db, 6000)
+            game.move_home("zweizimmer", rent=True)          # 6000 - 375
+            game.move_home("altbau", rent=False)             # + 375 - 6000
+            self.assertEqual(game.state.money, 0)
+            self.assertEqual((game.state.rent, game.state.deposit), (0, 0))
+            day = _finish_day(game)
+            self.assertNotIn("miete", day)
+
+    def test_kaution_zaehlt_beim_umzug_mit(self):
+        with TempDB() as db:
+            game = _rich_game(db, 900)
+            game.move_home("zweizimmer", rent=True)          # bleiben 525 €
+            # Altbau-Kaution 900 €: 525 € + 375 € zurueck reichen genau
+            offer = fg.move_offer(game.state, fg.apartment("altbau"), True)
+            self.assertEqual(offer["fehlt"], 0)
+            with self.assertRaisesRegex(ValueError, "fehlen"):
+                game.move_home("loft", rent=True)            # 1.800 € Kaution
+            game.move_home("altbau", rent=True)
+            self.assertEqual((game.state.money, game.state.rent), (0, 140))
+
+    def test_schalter_wirkt_nicht_rueckwirkend(self):
+        folder = tempfile.mkdtemp()
+        old = os.environ.get("FISI_DB_PATH")
+        os.environ["FISI_DB_PATH"] = os.path.join(folder, "fisi.db")
+        try:
+            with TempDB() as db:
+                self.assertFalse(fg.rent_mode())             # Standard: Einmalzahlung
+                fg.set_rent_mode(True)
+                game = _rich_game(db, 1000)
+                game.move_home("zweizimmer")                 # nimmt den Schalter: Miete
+                self.assertEqual(game.state.rent, 60)
+                fg.set_rent_mode(False)
+                # Der Mietvertrag laeuft bis zum naechsten Umzug weiter
+                self.assertEqual(_finish_day(game)["miete"], 60)
+        finally:
+            if old is None:
+                os.environ.pop("FISI_DB_PATH", None)
+            else:
+                os.environ["FISI_DB_PATH"] = old
+            shutil.rmtree(folder, ignore_errors=True)
+
+    def test_pc_und_handy_rechnen_gleich(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = _rich_game(pc, 1000)
+            game.move_home("zweizimmer", rent=True)
+            _finish_day(game)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            state = fg.Game(handy, "Handy").state
+            self.assertEqual(state.money, game.state.money)
+            self.assertEqual((state.rent, state.deposit), (60, 375))
+
+    def test_texte(self):
+        state = fg.GameState([])
+        price, question = fg.move_texts(state, fg.apartment("altbau"), True)
+        self.assertEqual(price, "Kaution 900 € · Miete 140 €/Tag")
+        self.assertIn("140 € Miete pro Arbeitstag", question)
+        self.assertEqual(fg.move_texts(state, fg.apartment("loft"), False)[0], "12.000 €")
+        self.assertEqual(fg.day_end_money_text({"gehalt": 190, "miete": 140}),
+                         "Gehalt: +190 €. Miete: -140 €.")
+
+    def test_pruefung_der_mietwerte(self):
+        content = json.loads(json.dumps(fg.GAME))
+        del content["balancing"]["miete"]["pro_tag"]["loft"]
+        content["balancing"]["miete"]["pro_tag"]["apartment"] = 20
+        content["balancing"]["miete"]["kaution_anteil"] = 3
+        problems = fg.validate_game_content(content)
+        self.assertTrue(any("'loft'" in p for p in problems))
+        self.assertTrue(any("mietfrei" in p for p in problems))
+        self.assertTrue(any("kaution_anteil" in p for p in problems))
 
 
 if __name__ == "__main__":

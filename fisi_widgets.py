@@ -669,7 +669,7 @@ class IconButton(tk.Canvas):
         if self._pressed:
             icon_color = self.press_color
         elif self._hover:
-            icon_color = C["cyan"]
+            icon_color = C["accent"]
         else:
             icon_color = self.color
         draw_icon(self, self.icon, size / 2, size / 2, px(self.icon_size),
@@ -696,7 +696,7 @@ class Card(ctk.CTkFrame):
         self.title_label = None
         self.subtitle_label = None
         if title:
-            color = accent or C["cyan"]
+            color = accent or C["accent"]
             self.head = ctk.CTkFrame(self, fg_color="transparent")
             self.head.pack(fill="x", padx=pad, pady=(pad - 2, 0))
             tick = rounded_gradient(4, 14, 2, lighten(color, 0.2),
@@ -802,7 +802,7 @@ class RingStat(tk.Canvas):
         self.bg = parent_bg or _bg_of(parent)
         self.size = size
         self.thickness = thickness
-        self._data = (0.0, C["cyan"], C["pink"], "", "")
+        self._data = (0.0, C["accent"], C["accent2"], "", "")
         self._photo = None
         super().__init__(parent, width=px(size), height=px(size), bg=self.bg,
                          highlightthickness=0, bd=0)
@@ -810,7 +810,7 @@ class RingStat(tk.Canvas):
 
     def set(self, ratio, color_from=None, color_to=None, big="", small=""):
         self._data = (max(0.0, min(1.0, ratio)),
-                      color_from or C["cyan"], color_to or C["pink"],
+                      color_from or C["accent"], color_to or C["accent2"],
                       big, small)
         self._draw()
 
@@ -840,7 +840,7 @@ class MiniRing(tk.Canvas):
         self.size = size
         self.thickness = thickness
         self._pct = 0.0
-        self._color = C["cyan"]
+        self._color = C["accent"]
         self._photo = None
         super().__init__(parent, width=px(size), height=px(size), bg=self.bg,
                          highlightthickness=0, bd=0)
@@ -1148,12 +1148,12 @@ class CalendarPanel(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x")
         IconButton(header, "arrow_left", self._prev_month, parent_bg=self.bg,
-                   color=C["cyan"], press_color=C["green"]).pack(side="left")
+                   color=C["accent"], press_color=C["green"]).pack(side="left")
         self.lbl_month = ctk.CTkLabel(header, text="", text_color=C["text"],
                                       font=F["h3"], height=0)
         self.lbl_month.pack(side="left", expand=True)
         IconButton(header, "arrow_right", self._next_month, parent_bg=self.bg,
-                   color=C["cyan"], press_color=C["green"]).pack(side="right")
+                   color=C["accent"], press_color=C["green"]).pack(side="right")
 
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 height=px(190), width=px(160))
@@ -1215,7 +1215,7 @@ class CalendarPanel(ctk.CTkFrame):
         today = datetime.date.today()
 
         for index, day in enumerate(self.WEEKDAYS):
-            color = C["pink"] if index >= 5 else C["muted"]
+            color = C["accent2"] if index >= 5 else C["muted"]
             self.canvas.create_text(cell_w * index + cell_w / 2, px(8), text=day,
                                     fill=color, font=tk_font(F["tiny"]))
 
@@ -1235,11 +1235,11 @@ class CalendarPanel(ctk.CTkFrame):
                         diameter, fill=C["purple"]))
                 if is_today:
                     self.canvas.create_image(cx, cy, image=self._circle(
-                        diameter, outline=C["cyan"], outline_width=2))
+                        diameter, outline=C["accent"], outline_width=2))
                 if active:
                     color = "#12071F"
                 elif col >= 5:
-                    color = C["pink"]
+                    color = C["accent2"]
                 else:
                     color = C["text_dim"]
                 self.canvas.create_text(cx, cy, text=str(day), fill=color,
@@ -1558,7 +1558,7 @@ def make_text(parent, height=6, readonly=False, font=None):
                             scrollbar_button_color=C["scrollbar"],
                             scrollbar_button_hover_color=C["scrollbar_hi"],
                             padx=6, pady=6, insertofftime=0)
-    widget._textbox.configure(insertbackground=C["cyan"],
+    widget._textbox.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"],
                               selectforeground="#FFFFFF")
     if readonly:

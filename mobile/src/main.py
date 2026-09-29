@@ -41,6 +41,7 @@ from fisi_core import (  # noqa: E402
     filter_positions, group_values, ihk_note, page_slice, raid_report,
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
+import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR  # noqa: E402
 import fisi_game  # noqa: E402
 import spiel  # noqa: E402
@@ -51,9 +52,11 @@ APP_TITLE = "FISI Lernplattform"
 # "python build.py --setze-version <Version>" im Hauptordner.
 APP_VERSION = "0.30"
 
-KIND_COLOR = {"Karteikarte": C["cyan"], "Quizfrage": C["purple"],
-              "AP1-Szenario": C["blue"], "AP2-Szenario": C["pink"],
-              "Testprojekt": C["orange"], "Test-Session": C["green"]}
+def kind_color(kind):
+    """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
+    return {"Karteikarte": C["accent"], "Quizfrage": C["purple"],
+            "AP1-Szenario": C["blue"], "AP2-Szenario": C["accent2"],
+            "Testprojekt": C["orange"], "Test-Session": C["green"]}.get(kind, C["muted"])
 
 
 def german_time(timestamp):
@@ -117,14 +120,14 @@ class DashboardScreen(Screen):
             return ui.Card(title, [ft.Row([ring], alignment=ft.MainAxisAlignment.CENTER)],
                            expand=True, padding=14)
 
-        self.lbl_quote = ui.text("0 %", size=34, color=C["cyan"], weight=ft.FontWeight.BOLD)
+        self.lbl_quote = ui.text("0 %", size=34, color=C["accent"], weight=ft.FontWeight.BOLD)
         self.lbl_quote_sub = ui.text("", size=13, color=C["muted"])
 
         self.chart = ui.LineChart(height=200)
-        self.bar_cards = ui.GradientBar("Karteikarten", C["cyan"], C["purple"])
-        self.bar_quiz = ui.GradientBar("Quizfragen", C["purple"], C["pink"])
-        self.bar_ap1 = ui.GradientBar("AP1-Szenarien", C["blue"], C["cyan"])
-        self.bar_scen = ui.GradientBar("AP2-Szenarien", C["pink"], C["orange"])
+        self.bar_cards = ui.GradientBar("Karteikarten", C["accent"], C["purple"])
+        self.bar_quiz = ui.GradientBar("Quizfragen", C["purple"], C["accent2"])
+        self.bar_ap1 = ui.GradientBar("AP1-Szenarien", C["blue"], C["accent"])
+        self.bar_scen = ui.GradientBar("AP2-Szenarien", C["accent2"], C["orange"])
         self.heatmap = ui.Heatmap()
 
         self.fach = {}
@@ -151,12 +154,12 @@ class DashboardScreen(Screen):
             ft.Row([ring_card("AP1 Szenarien", self.ring_ap1),
                     ring_card("AP2 Szenarien", self.ring_scen)], spacing=12),
             ui.Card("Erfolgsquote", [self.lbl_quote, self.lbl_quote_sub],
-                    accent=C["pink"], subtitle="Quiz gesamt"),
+                    accent=C["accent2"], subtitle="Quiz gesamt"),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
             ui.Card("Abdeckung", [self.bar_cards, self.bar_quiz, self.bar_ap1,
                                   self.bar_scen], accent=C["purple"], subtitle="Material",
                     spacing=14),
-            ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["pink"],
+            ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["accent2"],
                     subtitle="Intensität pro Tag"),
             ui.Card("Fortschritt je Fachbereich",
                     [ft.Row(fach_cells[:3]), ft.Row(fach_cells[3:])],
@@ -166,7 +169,7 @@ class DashboardScreen(Screen):
                     subtitle="Monatsübersicht"),
             ui.Card("AP1 Prüfungsthemen", [self.timeline_ap1], accent=C["blue"],
                     subtitle="bearbeitete Grundlagenaufgaben"),
-            ui.Card("AP2 Prüfungsthemen", [self.timeline], accent=C["pink"],
+            ui.Card("AP2 Prüfungsthemen", [self.timeline], accent=C["accent2"],
                     subtitle="bearbeitete Szenarien"),
         ])
 
@@ -191,13 +194,13 @@ class DashboardScreen(Screen):
             % (db.streak(), learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             "Gesamt")
-        self.ring_cards.set(learned_cards / max(1, total_cards), C["cyan"], C["purple"],
+        self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"], C["purple"],
                             str(learned_cards), "von %d Karten" % total_cards)
-        self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"], C["pink"],
+        self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"], C["accent2"],
                            str(quiz_answered), "%d / %d Fragen" % (quiz_distinct, total_quiz))
-        self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"], C["cyan"],
+        self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"], C["accent"],
                           str(ap1_done), "von %d" % total_ap1)
-        self.ring_scen.set(scen_done / max(1, total_scen), C["pink"], C["orange"],
+        self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"], C["orange"],
                            str(scen_done), "von %d" % total_scen)
 
         self.lbl_quote.value = "%d %%" % round(rate)
@@ -214,7 +217,7 @@ class DashboardScreen(Screen):
 
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
-                            [count for _day, count in daily], C["cyan"])
+                            [count for _day, count in daily], C["accent"])
         matrix = db.category_daily(self.DAYS)
         self.heatmap.set_data([(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
                                for cat in CATEGORIES], self.DAYS)
@@ -241,7 +244,7 @@ class DashboardScreen(Screen):
         for timestamp, kind, detail, extra in activities:
             self.activity_box.controls.append(ft.Container(
                 content=ft.Row([
-                    ui.dot(KIND_COLOR.get(kind, C["muted"])),
+                    ui.dot(kind_color(kind)),
                     ft.Column([
                         ui.text("%s · %s" % (kind, detail), size=13, color=C["text_dim"],
                                 max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
@@ -314,7 +317,7 @@ class LearnScreen(Screen):
             *tiles,
             ui.Card("Karteikarten nach Fachbereich",
                     [ft.Row(chips, wrap=True, spacing=8, run_spacing=8)],
-                    accent=C["cyan"]),
+                    accent=C["accent"]),
         ], spacing=12)
 
 
@@ -338,7 +341,7 @@ class CardsScreen(Screen):
         self.mode_pills = ui.PillGroup(self.MODES, on_change=self._on_mode)
 
         self.lbl_question = ui.text("", size=18, weight=ft.FontWeight.BOLD)
-        self.question_card = ui.Card("Frage", [self.lbl_question], accent=C["cyan"])
+        self.question_card = ui.Card("Frage", [self.lbl_question], accent=C["accent"])
 
         self.free_hint = ui.text("Formuliere deine Antwort in eigenen Worten:", size=13,
                                  color=C["text_dim"])
@@ -456,7 +459,7 @@ class CardsScreen(Screen):
             self.lbl_solution.value = card["a_full"]
         else:
             self.lbl_feedback.value = "Musterlösung"
-            self.lbl_feedback.color = C["cyan"]
+            self.lbl_feedback.color = C["accent"]
             self.lbl_solution.value = card["a_full"]
 
         self.lbl_feedback.visible = self.lbl_solution.visible = True
@@ -504,7 +507,7 @@ class QuizScreen(Screen):
         self.lbl_progress = ui.text("Frage 0 / 0", size=14, color=C["text_dim"],
                                     weight=ft.FontWeight.BOLD)
         self.lbl_score = ui.text("", size=12, color=C["muted"])
-        self.lbl_timer = ui.text("00:00", size=14, color=C["cyan"], weight=ft.FontWeight.BOLD)
+        self.lbl_timer = ui.text("00:00", size=14, color=C["accent"], weight=ft.FontWeight.BOLD)
         status = ui.Card(None, [ft.Row([self.lbl_progress, ft.Container(expand=True),
                                         self.lbl_score, self.lbl_timer], spacing=12)],
                          padding=12)
@@ -515,7 +518,7 @@ class QuizScreen(Screen):
         self.lbl_explain = ui.text("", size=14, color=C["text_dim"], selectable=True)
         self.lbl_explain.visible = False
         question = ui.Card("Prüfungsaufgabe", [self.lbl_question, self.options,
-                                               self.lbl_explain], accent=C["cyan"])
+                                               self.lbl_explain], accent=C["accent"])
 
         self.btn_submit = ui.GradientButton("Antwort einreichen", self.submit_answer,
                                             expand=True)
@@ -698,10 +701,10 @@ class PagedListBox:
         self.rows = ft.Column(spacing=8, tight=True)
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         pager = ft.Row([
-            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["cyan"],
+            ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
                           on_click=lambda _e: self.turn(-1)),
             self.lbl_page,
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["cyan"],
+            ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
                           on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
@@ -787,7 +790,7 @@ class ScenarioScreen(Screen):
                                             expand=True)
         content = screen_list([
             ft.Column([self.lbl_title, self.lbl_theme], spacing=2, tight=True),
-            ui.Card("Aufgabenstellung", [self.task_box], accent=C["cyan"]),
+            ui.Card("Aufgabenstellung", [self.task_box], accent=C["accent"]),
             ui.Card("Deine Lösung", [
                 ui.text("Löse die Aufgabe hier schriftlich, bevor du die Musterlösung "
                         "aufdeckst.", size=13, color=C["text_dim"]), self.txt_own],
@@ -895,7 +898,7 @@ class ProjectScreen(Screen):
                                             expand=True)
         content = screen_list([
             ft.Column([self.lbl_title, self.lbl_meta], spacing=2, tight=True),
-            ui.Card("Kundenauftrag", [self.task_box], accent=C["cyan"]),
+            ui.Card("Kundenauftrag", [self.task_box], accent=C["accent"]),
             ui.Card("Lösungsansätze", [self.hint_box], accent=C["green"]),
             ft.Row([self.btn_toggle]),
             ft.Row([ui.GradientButton("Nächstes Projekt", self.next_item, kind="ghost",
@@ -953,7 +956,7 @@ class CalcScreen(Screen):
             self.entry_ip,
             ft.Row([ui.GradientButton("Berechnen", self.calc_subnet, kind="accent")]),
             self.out_subnet, *self._explain(CALC_EXPLAIN_SUBNET),
-        ], accent=C["cyan"], subtitle="IPv4 und IPv6")
+        ], accent=C["accent"], subtitle="IPv4 und IPv6")
 
         self.raid_pills = ui.PillGroup([(level, level) for level in RAID_LEVELS], initial=2)
         self.entry_disks = ui.entry("4", keyboard=ft.KeyboardType.NUMBER, expand=True)
@@ -1040,9 +1043,9 @@ class ProgressScreen(Screen):
         self.chart = ui.LineChart(height=200)
         self.history = ft.Column(spacing=8, tight=True)
         return screen_list([
-            ft.Row([stat("tests", "Sessions", C["cyan"]),
+            ft.Row([stat("tests", "Sessions", C["accent"]),
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
-            ft.Row([stat("best", "Bestes", C["pink"]),
+            ft.Row([stat("best", "Bestes", C["accent2"]),
                     stat("streak", "Lernserie", C["green"])], spacing=12),
             ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
                     subtitle="Erfolgsquote je Session"),
@@ -1068,7 +1071,7 @@ class ProgressScreen(Screen):
         ordered = list(reversed(results))[-20:]
         labels = [row[0][8:10] + "." + row[0][5:7] for row in ordered] or ["heute"]
         values = [row[3] for row in ordered] or [0]
-        self.chart.set_data(labels, values, C["pink"], y_max=100)
+        self.chart.set_data(labels, values, C["accent2"], y_max=100)
 
         self.history.controls = []
         if not results:
@@ -1084,7 +1087,7 @@ class ProgressScreen(Screen):
                                 size=12, color=C["muted"]),
                     ], spacing=2, tight=True, expand=True),
                     ft.Column([
-                        ui.text("%.1f %%" % percentage, size=15, color=C["cyan"],
+                        ui.text("%.1f %%" % percentage, size=15, color=C["accent"],
                                 weight=ft.FontWeight.BOLD),
                         ui.text(note, size=11, color=C["text_dim"]),
                     ], spacing=2, tight=True,
@@ -1124,7 +1127,7 @@ class SettingsScreen(Screen):
             ft.Row([self.btn_update]), self.lbl_update,
             self._switch("Beim Start automatisch nach Updates suchen", auto,
                          self._toggle_auto),
-        ], accent=C["pink"], subtitle="installierte Version %s" % APP_VERSION)
+        ], accent=C["accent2"], subtitle="installierte Version %s" % APP_VERSION)
 
         settings = fisi_sync.sync_settings()
         self.entry_repo = ui.entry(settings["sync_repo"], hint="Benutzer/fisi-lernstand")
@@ -1144,7 +1147,7 @@ class SettingsScreen(Screen):
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
                     "eintragen. Die Anleitung steht in LIESMICH.txt unter „Abgleich PC "
                     "und Handy“.", size=11, color=C["muted"]),
-        ], accent=C["cyan"], subtitle="privates GitHub-Repository")
+        ], accent=C["accent"], subtitle="privates GitHub-Repository")
         self.show_sync_status(None, None)
 
         totals = content_totals()
@@ -1155,8 +1158,16 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
+        colors = ui.Card("Grundfarbe", [
+            ft.Row([self._color_tile(item) for item in fisi_theme.PRESETS],
+                   wrap=True, spacing=10, run_spacing=10),
+            ui.text("Ändert Buttons, Ringe, Balken und Banner. Die Farben der Fachbereiche "
+                    "und von Erfolg, Fehler und Warnung bleiben immer gleich.",
+                    size=11, color=C["muted"]),
+        ], accent=C["accent"], subtitle="nur für dieses Gerät")
+
         return screen_list([
-            updates, sync,
+            updates, colors, sync,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Daten zurücksetzen", [
@@ -1169,13 +1180,20 @@ class SettingsScreen(Screen):
                                           kind="danger")]),
             ], accent=C["red"]),
             ui.Card("Spiel", [
+                ui.label("Wohnungen"),
+                ui.PillGroup(fisi_game.RENT_CHOICES, initial=1 if fisi_game.rent_mode() else 0,
+                             on_change=lambda key: fisi_game.set_rent_mode(key == "miete")),
+                ui.text(fisi_game.RENT_HELP
+                        % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
+                        size=11, color=C["muted"]),
+                ft.Container(height=6),
                 ui.text("Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
                         "Reputation, Arbeitstage und erledigte Tickets. Der Lernfortschritt "
                         "bleibt erhalten. Mit eingerichtetem Abgleich auch auf dem PC.",
                         size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
-            ], accent=C["pink"]),
+            ], accent=C["accent2"]),
             ui.Card("Über das Programm", [ui.text(
                 "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
                 "Systemintegration mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
@@ -1184,6 +1202,27 @@ class SettingsScreen(Screen):
                 % (APP_TITLE, APP_VERSION), size=14, color=C["text_dim"])],
                 accent=C["green"]),
         ])
+
+    def _color_tile(self, item):
+        """Kachel einer Grundfarbe (wie am PC): Verlauf, Akzentpunkte, Name."""
+        active = item["id"] == fisi_theme.current_preset
+        return ft.Container(
+            content=ft.Column([
+                ft.Container(height=12, width=84, border_radius=6,
+                             gradient=ui.gradient(item["primary"])),
+                ft.Row([ui.dot(item["accent"], 10), ui.dot(item["accent2"], 10)],
+                       spacing=6, alignment=ft.MainAxisAlignment.CENTER),
+                ui.text(item["name"], size=12, weight=ft.FontWeight.BOLD,
+                        color=C["text"] if active else C["text_dim"]),
+            ], spacing=8, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            width=104, padding=10, border_radius=12, ink=True,
+            bgcolor=C["card_hi"] if active else C["card_alt"],
+            border=ft.Border.all(2, item["accent"] if active else C["border"]),
+            on_click=lambda _e, key=item["id"]: self._change_color(key))
+
+    def _change_color(self, preset_id):
+        if preset_id != fisi_theme.current_preset:
+            self.app.change_color(preset_id)
 
     @staticmethod
     def _switch(caption, value, handler):
@@ -1246,7 +1285,7 @@ class SettingsScreen(Screen):
             self.lbl_update.color = C["green"]
         else:
             self.lbl_update.value = "Version %s ist verfügbar." % info.version
-            self.lbl_update.color = C["cyan"]
+            self.lbl_update.color = C["accent"]
 
     def reset_game(self, _event=None):
         def confirmed():
@@ -1421,27 +1460,36 @@ class FISIMobileApp:
         page.bgcolor = C["bg"]
         page.theme_mode = ft.ThemeMode.DARK
         page.padding = 0
+        self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
+        self.sync = SyncController(self)
+        self.update_dialog_open = False
+        self._build_ui()
+        page.on_view_pop = self._view_popped
+        page.on_app_lifecycle_state_change = self._lifecycle
+        self.show_tab("dashboard")
+
+    def _build_ui(self):
+        """Design, Seiten und Navigation (auch zum Neuaufbau nach einem
+        Wechsel der Grundfarbe)."""
+        page = self.page
         page.theme = page.dark_theme = ft.Theme(
             color_scheme=ft.ColorScheme(
-                primary=C["purple"], secondary=C["cyan"], surface=C["bg"],
+                primary=C["purple"], secondary=C["accent"], surface=C["bg"],
                 on_surface=C["text"], error=C["red"]),
             navigation_bar_theme=ft.NavigationBarTheme(
                 bgcolor=C["sidebar"], indicator_color=C["card_hi"],
                 label_text_style=ft.TextStyle(size=11, color=C["text_dim"])))
 
-        self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
-        self.sync = SyncController(self)
         self.screens = {key: cls(self) for key, cls in SCREEN_CLASSES.items()}
         self.tab = "dashboard"
-        self.update_dialog_open = False
 
         self.crumb_main = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["text"])
-        self.crumb_sub = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["cyan"])
+        self.crumb_sub = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["accent"])
         self.body = ft.Container(expand=True)
         self.nav = ft.NavigationBar(
             destinations=[ft.NavigationBarDestination(
                 icon=ft.Icon(icon, color=C["muted"]),
-                selected_icon=ft.Icon(selected, color=C["cyan"]), label=caption)
+                selected_icon=ft.Icon(selected, color=C["accent"]), label=caption)
                 for _key, icon, selected, caption in NAV],
             selected_index=0, on_change=self._nav_changed,
             bgcolor=C["sidebar"], indicator_color=C["card_hi"])
@@ -1450,9 +1498,12 @@ class FISIMobileApp:
         page.views.append(ft.View(
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
-        page.on_view_pop = self._view_popped
-        page.on_app_lifecycle_state_change = self._lifecycle
-        self.show_tab("dashboard")
+
+    def change_color(self, preset_id):
+        """Neue Grundfarbe speichern und alle Seiten neu aufbauen."""
+        fisi_theme.save_preset(preset_id)
+        self._build_ui()
+        self.show_tab("settings")
 
     # -- Kopfzeile und Navigation ------------------------------------------
 
@@ -1462,15 +1513,15 @@ class FISIMobileApp:
                                     color=C["text"]),
                             ft.Text("/", size=12, color=C["muted"]),
                             ft.Text(crumbs[1], size=12, weight=ft.FontWeight.BOLD,
-                                    color=C["cyan"])], spacing=7)
+                                    color=C["accent"])], spacing=7)
         else:
             title = ft.Row([self.crumb_main, ft.Text("/", size=12, color=C["muted"]),
                             self.crumb_sub], spacing=7)
         leading = None
         if root:
             logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1)
-            logo.set(1.0, C["cyan"], C["pink"])
-            logo.controls[1] = ft.Container(content=ui.dot(C["pink"], 10), width=30,
+            logo.set(1.0, C["accent"], C["accent2"])
+            logo.controls[1] = ft.Container(content=ui.dot(C["accent2"], 10), width=30,
                                             height=30, alignment=ft.Alignment.CENTER)
             leading = ft.Container(content=logo, padding=ft.Padding.only(left=16),
                                    alignment=ft.Alignment.CENTER_LEFT)
@@ -1628,7 +1679,7 @@ class FISIMobileApp:
                 ft.Text("installiert: %s" % APP_VERSION, size=12, color=C["muted"]),
                 ft.Text("NEUERUNGEN", size=11, weight=ft.FontWeight.BOLD, color=C["muted"]),
                 ft.Text(notes, size=13, color=C["text_dim"]),
-                ft.Text(hint, size=12, color=C["cyan"]),
+                ft.Text(hint, size=12, color=C["accent"]),
             ], tight=True, spacing=8, scroll=ft.ScrollMode.AUTO, height=320),
             actions=[ft.TextButton("Später", on_click=close),
                      ft.TextButton("Herunterladen", on_click=download)]))

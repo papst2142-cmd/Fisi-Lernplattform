@@ -439,7 +439,7 @@ class MatchBoard(ctk.CTkFrame):
                           border_width=2 if active else 1,
                           fg_color=C["card_hi"] if active else C["card_alt"])
             target.configure(text=("→ " + value) if value else "noch nicht zugeordnet",
-                             text_color=C["cyan"] if value else C["muted"])
+                             text_color=C["accent"] if value else C["muted"])
         used = set(self.answer.values())
         for right, button in self.right_buttons.items():
             button.set_active(right in used)
@@ -462,7 +462,7 @@ def _pick_row(parent, title, detail, extra=None, extra_color=None):
     title_label.pack(side="left")
     widgets = [row, head, title_label]
     if extra:
-        badge = make_label(head, extra, font=F["small_bold"], fg=extra_color or C["cyan"],
+        badge = make_label(head, extra, font=F["small_bold"], fg=extra_color or C["accent"],
                            cursor="hand2")
         badge.pack(side="right")
         widgets.append(badge)
@@ -491,7 +491,7 @@ class SlotBoard(ctk.CTkFrame):
 
         rules = fg.build_rules_text(task)
         if rules:
-            make_label(self, "Vorgaben: " + rules, font=F["small_bold"], fg=C["cyan"],
+            make_label(self, "Vorgaben: " + rules, font=F["small_bold"], fg=C["accent"],
                        anchor="w").grid(row=0, column=0, columnspan=2, sticky="w",
                                         pady=(0, 10))
         make_label(self, "1. STECKPLATZ WÄHLEN", font=F["label"], fg=C["muted"]).grid(
@@ -548,7 +548,7 @@ class SlotBoard(ctk.CTkFrame):
             row.configure(border_color=border, border_width=2 if active or self.locked else 1,
                           fg_color=C["card_hi"] if active else C["card_alt"])
             detail.configure(text=("→ " + fg.part(part_id)["name"]) if part_id else "leer",
-                             text_color=C["cyan"] if part_id else C["muted"])
+                             text_color=C["accent"] if part_id else C["muted"])
         for child in self.parts_box.winfo_children():
             child.destroy()
         if self.locked or self.current is None:
@@ -598,7 +598,7 @@ class OrderBoard(ctk.CTkFrame):
         for line in lines[:-1]:
             make_label(need, line, font=F["body_bold"], fg=C["text"], anchor="w").pack(
                 anchor="w", padx=14)
-        make_label(need, lines[-1], font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+        make_label(need, lines[-1], font=F["small_bold"], fg=C["accent"], anchor="w").pack(
             anchor="w", padx=14, pady=(4, 10))
 
         make_label(self, "ANGEBOTE", font=F["label"], fg=C["muted"]).pack(anchor="w",
@@ -658,7 +658,7 @@ class OrderBoard(ctk.CTkFrame):
     def _paint(self):
         for offer_id, (row, count) in self.counts.items():
             value = self.cart.get(offer_id, 0)
-            count.configure(text=str(value), text_color=C["cyan"] if value else C["muted"])
+            count.configure(text=str(value), text_color=C["accent"] if value else C["muted"])
             row.configure(border_color=C["purple"] if value else C["border"],
                           border_width=2 if value else 1,
                           fg_color=C["card_hi"] if value else C["card_alt"])
@@ -702,7 +702,7 @@ class RackBoard(ctk.CTkFrame):
         make_label(head, lines[0], font=F["body_bold"], fg=C["text"], anchor="w").pack(
             anchor="w", padx=14)
         for line in lines[1:]:
-            make_label(head, line, font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+            make_label(head, line, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
                 anchor="w", padx=14, pady=(4, 0))
         _frame(head, height=10).pack()
 
@@ -808,7 +808,7 @@ class RackBoard(ctk.CTkFrame):
             dot.configure(bg=C["card_hi"] if active else C["card_alt"])
             if bottom:
                 item = fg.rack_device(self.devices[index])
-                badge.configure(text=fg._he_text(bottom, item["he"]), text_color=C["cyan"])
+                badge.configure(text=fg._he_text(bottom, item["he"]), text_color=C["accent"])
             else:
                 badge.configure(text=fg.rack_source_text(self.task, index),
                                 text_color=C["muted"])
@@ -941,7 +941,7 @@ class FormBoard(ctk.CTkFrame):
                                  border_width=1, fg_color=C["card_alt"],
                                  border_color=C["border"], text_color=C["text_soft"],
                                  font=F["body"])
-            entry._entry.configure(insertbackground=C["cyan"], selectbackground=C["purple"])
+            entry._entry.configure(insertbackground=C["accent"], selectbackground=C["purple"])
             entry.bind("<FocusIn>", lambda _e, w=entry: w.configure(border_color=C["purple"]))
             entry.bind("<FocusOut>", lambda _e, w=entry: w.configure(border_color=C["border"]))
             entry.pack(side="left")
@@ -1033,7 +1033,7 @@ class TerminalBoard(ctk.CTkFrame):
             make_label(row, self.task["prompt"], font=F["mono_small"], fg=C["green"]).pack(
                 side="left", anchor="n")
             make_label(row, text, font=F["mono_small"],
-                       fg=C["cyan"] if role == "cursor" else C["text"], wraplength=820,
+                       fg=C["accent"] if role == "cursor" else C["text"], wraplength=820,
                        justify="left", anchor="w").pack(side="left", anchor="n", padx=(8, 0))
             return
         make_label(row, text, font=F["mono_small"], fg=TERMINAL_COLOR[role],
@@ -1102,7 +1102,7 @@ class DiagnoseBoard(ctk.CTkFrame):
         self.locked = False
         spare = fg.spare_parts_text(task, available)
         if spare:
-            make_label(self, spare, font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+            make_label(self, spare, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
                 anchor="w", pady=(0, 10))
         columns = _frame(self)
         columns.pack(fill="x")
@@ -1186,7 +1186,7 @@ class DiagnoseBoard(ctk.CTkFrame):
             make_label(self.notes, "%d. %s" % (number, item["text"]), font=F["small_bold"],
                        fg=C["text"], wraplength=420, justify="left", anchor="w").pack(
                 anchor="w", padx=14, pady=(10 if number == 1 else 6, 0))
-            make_label(self.notes, item["ergebnis"], font=F["small"], fg=C["cyan"],
+            make_label(self.notes, item["ergebnis"], font=F["small"], fg=C["accent"],
                        wraplength=420, justify="left", anchor="w").pack(anchor="w", padx=14)
         if self.done:
             _frame(self.notes, height=10).pack()
@@ -1265,7 +1265,7 @@ class GameView(ScrollArea):
         self.positions.pop(fg.SITE_OFFICE, None)
         self.notices[fg.SITE_HOME] = (
             "Feierabend nach Arbeitstag %d" % payload["tag"],
-            "%s Gehalt: +%s." % (fg.day_end_text(payload["tag"]), _euro(payload["gehalt"])))
+            "%s %s" % (fg.day_end_text(payload["tag"]), fg.day_end_money_text(payload)))
         self.app.notify_progress()
         self.render()
         self.app.show_view("zuhause")
@@ -1302,7 +1302,7 @@ class GameView(ScrollArea):
         self.draft["aussehen"] = look
 
         if state.profile is None:
-            intro = Card(self.content, title="Willkommen im Spiel", accent=C["pink"],
+            intro = Card(self.content, title="Willkommen im Spiel", accent=C["accent2"],
                          subtitle="%s · Kunde: %s" % (fg.GAME["gebaeude"]["firma"],
                                                       fg.GAME["gebaeude"]["kunde"]))
             intro.pack(fill="x")
@@ -1310,7 +1310,7 @@ class GameView(ScrollArea):
                        fg=C["text_soft"], wraplength=980, justify="left",
                        anchor="w").pack(anchor="w")
 
-        card = Card(self.content, title="Deine Spielfigur", accent=C["cyan"])
+        card = Card(self.content, title="Deine Spielfigur", accent=C["accent"])
         card.pack(fill="x", pady=(14, 0))
         body = _frame(card.body)
         body.pack(fill="x")
@@ -1377,7 +1377,7 @@ class GameView(ScrollArea):
         top.columnconfigure(1, weight=2, uniform="top")
 
         # Profil
-        profile = Card(top, title="Spielfigur", accent=C["pink"],
+        profile = Card(top, title="Spielfigur", accent=C["accent2"],
                        subtitle="Arbeitstag %d" % state.day)
         profile.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         row = _frame(profile.body)
@@ -1390,12 +1390,15 @@ class GameView(ScrollArea):
         make_label(info, state.profile["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
         make_label(info, "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]),
-                   font=F["body_bold"], fg=C["cyan"], anchor="w").pack(anchor="w", pady=(2, 0))
-        make_label(info, "Kontostand: %s   ·   Gehalt: %s pro Arbeitstag"
-                   % (_euro(state.money), _euro(state.salary)),
+                   font=F["body_bold"], fg=C["accent"], anchor="w").pack(anchor="w", pady=(2, 0))
+        money = "Kontostand: %s   ·   Gehalt: %s pro Arbeitstag" % (
+            _euro(state.money), _euro(state.salary))
+        if state.rent:
+            money += "   ·   Miete: %s pro Arbeitstag" % _euro(state.rent)
+        make_label(info, money,
                    font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w", pady=(8, 0))
         goal = fg.GAME["balancing"]["gruendung"]
-        bar = GradientBar(info, "Weg zum eigenen Unternehmen", C["green"], C["cyan"],
+        bar = GradientBar(info, "Weg zum eigenen Unternehmen", C["green"], C["accent"],
                           parent_bg=C["card"])
         bar.pack(fill="x", pady=(8, 0))
         bar.set(state.founding_progress() * 100,
@@ -1419,7 +1422,7 @@ class GameView(ScrollArea):
         middle.columnconfigure(0, weight=3, uniform="mid")
         middle.columnconfigure(1, weight=2, uniform="mid")
 
-        plan = Card(middle, title="Grundriss", accent=C["cyan"],
+        plan = Card(middle, title="Grundriss", accent=C["accent"],
                     subtitle="Raum anklicken, um die Tickets dort zu sehen")
         plan.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         self.floor = FloorPlan(plan.body, self._select_room)
@@ -1463,7 +1466,7 @@ class GameView(ScrollArea):
         else:
             item = None
             tickets = state.todays_tickets()
-            card = Card(self.content, title="Tickets heute", accent=C["pink"],
+            card = Card(self.content, title="Tickets heute", accent=C["accent2"],
                         subtitle="Arbeitstag %d · %d von %d bearbeitet"
                         % (state.day, len(state.handled), len(tickets)))
         card.pack(fill="x", pady=(14, 0))
@@ -1713,11 +1716,11 @@ class GameView(ScrollArea):
             return
         self.used_help = True
         self.btn_help.set_enabled(False)
-        box = ctk.CTkFrame(self.help_box, fg_color=mix(C["card"], C["cyan"], 0.08),
+        box = ctk.CTkFrame(self.help_box, fg_color=mix(C["card"], C["accent"], 0.08),
                            corner_radius=12, border_width=1,
-                           border_color=mix(C["cyan"], C["card"], 0.5))
+                           border_color=mix(C["accent"], C["card"], 0.5))
         box.pack(fill="x", pady=(14, 0))
-        make_label(box, "HILFE", font=F["label"], fg=C["cyan"]).pack(anchor="w", padx=14,
+        make_label(box, "HILFE", font=F["label"], fg=C["accent"]).pack(anchor="w", padx=14,
                                                                      pady=(10, 0))
         make_label(box, task["hilfe"], font=F["body"], fg=C["text_soft"], wraplength=940,
                    justify="left", anchor="w").pack(anchor="w", padx=14, pady=(4, 12))
@@ -1853,7 +1856,7 @@ class SiteView(ScrollArea):
             child.destroy()
         state = self.state
         if state.profile is None:
-            card = Card(self.content, title=self.TITLE, accent=C["cyan"])
+            card = Card(self.content, title=self.TITLE, accent=C["accent"])
             card.pack(fill="x")
             make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
                        font=F["body"], fg=C["text_soft"]).pack(anchor="w")
@@ -1883,7 +1886,7 @@ class SiteView(ScrollArea):
         return fg.site_name(self.site())
 
     def accent(self):
-        return C["cyan"]
+        return C["accent"]
 
     def _build_head(self, state):
         pass
@@ -1994,7 +1997,7 @@ class HomeView(SiteView):
         return fg.SITE_HOME
 
     def accent(self):
-        return C["pink"]
+        return C["accent2"]
 
     def card_title(self):
         return fg.apartment(self.state.home_id)["name"]
@@ -2008,8 +2011,11 @@ class HomeView(SiteView):
     def _build_head(self, state):
         row = _frame(self.content)
         row.pack(fill="x", pady=(0, 12))
-        make_label(row, "Kontostand: %s" % _euro(state.money), font=F["body_bold"],
-                   fg=C["text"]).pack(side="left")
+        money = "Kontostand: %s" % _euro(state.money)
+        if state.rent:
+            money += "   ·   Miete: %s pro Arbeitstag" % _euro(state.rent)
+        make_label(row, money, font=F["body_bold"],
+                   fg=C["text"] if state.money >= 0 else C["red"]).pack(side="left")
         NeoButton(row, "Fertig" if self.editing else "Einrichten", self._toggle_edit,
                   kind="primary" if self.editing else "ghost", height=32,
                   font=F["small_bold"]).pack(side="right")
@@ -2031,7 +2037,7 @@ class HomeView(SiteView):
             return []
         return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
                  "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
-                 "line": C["cyan"], "lw": 0.08, "r": 0.1}]
+                 "line": C["accent"], "lw": 0.08, "r": 0.1}]
 
     def plan_click(self, x, y):
         if not self.editing:
@@ -2121,12 +2127,12 @@ class HomeView(SiteView):
         self.render()
 
     def _move(self, home):
-        if not messagebox.askyesno(
-                "Umziehen", "Für %s in die Wohnung „%s“ umziehen? Alle Möbel kommen "
-                "dabei in Umzugskartons." % (_euro(home["preis"]), home["name"])):
+        rent = fg.rent_mode()
+        if not messagebox.askyesno("Umziehen",
+                                   fg.move_texts(self.state, home, rent)[1]):
             return
         try:
-            self.game_view.game.move_home(home["id"])
+            self.game_view.game.move_home(home["id"], rent=rent)
         except ValueError as exc:
             messagebox.showinfo("Hinweis", str(exc))
             return
@@ -2149,7 +2155,7 @@ class HomeView(SiteView):
         grid.columnconfigure(1, weight=1, uniform="home")
 
         # Auswahl und Kartons
-        mine = Card(grid, title="Deine Möbel", accent=C["cyan"],
+        mine = Card(grid, title="Deine Möbel", accent=C["accent"],
                     subtitle="Ausgewähltes Stück und Umzugskartons")
         mine.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         if self.selected and self.selected in state.furniture:
@@ -2206,24 +2212,31 @@ class HomeView(SiteView):
                                                                             pady=(4, 0))
 
         # Wohnungen
+        rent = fg.rent_mode()
         homes = Card(lower, title="Wohnung", accent=C["orange"],
-                     subtitle="Größer wohnen kostet einmalig")
+                     subtitle=fg.HOME_SUBTITLE[rent])
         homes.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         flat = fg.apartment(state.home_id)
         make_label(homes.body, "Du wohnst in: %s" % flat["name"], font=F["body_bold"],
                    fg=C["text"], anchor="w").pack(anchor="w")
+        if fg.rent_text(state):
+            make_label(homes.body, fg.rent_text(state), font=F["small_bold"],
+                       fg=C["orange"], anchor="w").pack(anchor="w", pady=(2, 0))
         make_label(homes.body, flat.get("text", ""), font=F["small"], fg=C["text_dim"],
                    wraplength=420, justify="left", anchor="w").pack(anchor="w", pady=(2, 8))
         for home in fg.moves_available(state):
-            self._item_row(homes.body, home["name"], _euro(home["preis"]), "Umziehen",
-                           lambda h=home: self._move(h), enabled=state.money >= home["preis"],
-                           detail=home.get("text", ""))
+            # Kaution und Miete sind zu lang fuer die Preisspalte - eigene Zeile
+            price = fg.move_texts(state, home, rent)[0]
+            self._item_row(homes.body, home["name"], "" if rent else price,
+                           "Umziehen", lambda h=home: self._move(h),
+                           enabled=not fg.move_offer(state, home, rent)["fehlt"],
+                           detail=home.get("text", ""), price_line=price if rent else "")
         if not fg.moves_available(state):
             make_label(homes.body, "Du wohnst schon in der größten Wohnung.",
                        font=F["small"], fg=C["text_dim"]).pack(anchor="w")
 
     def _item_row(self, parent, title, price, label, command, enabled=True, active=False,
-                  detail=""):
+                  detail="", price_line=""):
         row = ctk.CTkFrame(parent, fg_color=C["card_hi"] if active else C["card_alt"],
                            corner_radius=10, border_width=1, border_color=C["border"])
         row.pack(fill="x", pady=3)
@@ -2231,6 +2244,9 @@ class HomeView(SiteView):
         text.pack(side="left", fill="x", expand=True, padx=12, pady=7)
         make_label(text, title, font=F["small_bold"], fg=C["text"], anchor="w").pack(
             anchor="w")
+        if price_line:
+            make_label(text, price_line, font=F["small"], fg=C["text_dim"], anchor="w").pack(
+                anchor="w")
         if detail:
             make_label(text, detail, font=F["tiny"], fg=C["muted"], wraplength=300,
                        justify="left", anchor="w").pack(anchor="w")
