@@ -2600,6 +2600,7 @@ class FISIApp:
 
         self.db = DBManager(error_handler=self._db_error)
         self.container = None
+        self._recoloring = False
         self._build_ui()
         self.show_view("dashboard")
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -2612,11 +2613,13 @@ class FISIApp:
             root.after(1500, self.sync.auto_start)
             root.after(3000, self.updater.auto_check)
 
-    def _build_ui(self):
+    def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
-        nach einem Wechsel der Grundfarbe)."""
+        nach einem Wechsel der Grundfarbe). Mit show=False bleibt der
+        Rahmen unsichtbar, bis ihn der Aufrufer selbst einblendet."""
         container = ctk.CTkFrame(self.root, fg_color=C["bg"], corner_radius=0)
-        container.pack(fill="both", expand=True)
+        if show:
+            container.pack(fill="both", expand=True)
         self.container = container
 
         self.sidebar = Sidebar(container, self)
@@ -2652,6 +2655,16 @@ class FISIApp:
     def change_color(self, preset_id=None, background_id=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
         neu aufbauen - alle Ansichten werden mit den neuen Farben gezeichnet."""
+        if self._recoloring:
+            return  # Ein Klick waehrend des Umbaus wird ignoriert
+        self._recoloring = True
+        try:
+            self._recolor(preset_id, background_id)
+        finally:
+            self._recoloring = False
+            self.root.configure(cursor="")
+
+    def _recolor(self, preset_id, background_id):
         if preset_id:
             fisi_theme.save_preset(preset_id)
         if background_id:
@@ -2660,12 +2673,24 @@ class FISIApp:
             self._setup_ttk_style()
         current = self.current or "settings"
         old = self.container
-        # Erst ausblenden, damit die neue Oberflaeche gleich die volle Groesse
-        # bekommt (sonst teilen sich kurz alte und neue das Fenster)
-        old.pack_forget()
-        self._build_ui()
-        old.destroy()
+        # Die neue Oberflaeche wird unsichtbar aufgebaut und dann unter der
+        # alten gezeichnet; die alte bleibt bis zuletzt stehen. Sonst sieht
+        # man einige Sekunden lang jede Ansicht einzeln aufblitzen (Flackern).
+        # Der Aufbau dauert einige Sekunden - solange zeigt die Maus "bitte warten".
+        self.root.configure(cursor="watch")
+        self.root.update_idletasks()
+        self._build_ui(show=False)
         self.show_view(current)
+        self.container.place(x=0, y=0, relwidth=1, relheight=1)
+        old.lift()
+        self.root.update_idletasks()
+        self.root.update()
+        # Auf einen Schlag ausblenden, erst danach (unsichtbar) abbauen.
+        # Nach dem ersten Wechsel liegt die alte Oberflaeche per place.
+        old.pack_forget()
+        old.place_forget()
+        self.root.update()
+        old.destroy()
 
     # -- Infrastruktur ------------------------------------------------------
 
