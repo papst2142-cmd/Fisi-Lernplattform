@@ -667,6 +667,16 @@ class RackTest(unittest.TestCase):
         answer["5"] = answer.pop("4")
         self.assertEqual(fg.rack_problems(task, answer), [])
 
+    def test_einbauen_verdraengt_und_rutscht(self):
+        answer = fg.rack_place(self.task, {}, 5, 12)          # USV (2 HE) ganz oben
+        self.assertEqual(answer, {"5": 11})
+        answer = fg.rack_place(self.task, answer, 2, 9)        # Altserver HE 9-12
+        self.assertEqual(answer, {"2": 9})                     # USV ist wieder frei
+        answer = fg.rack_place(self.task, answer, 5, 1)
+        self.assertEqual(fg.rack_occupant(self.task, answer, 2), 5)
+        self.assertEqual(fg.rack_occupant(self.task, answer, 12), 2)
+        self.assertIsNone(fg.rack_occupant(self.task, answer, 5))
+
     def test_anzeige_und_loesungstext(self):
         text, over = fg.rack_summary(self.task, self.good)
         self.assertIn("6 von 12 HE", text)

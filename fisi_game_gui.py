@@ -29,6 +29,11 @@ PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"
 STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
                fg.ST_WRONG: ("mit Fehlern", C["red"]),
                fg.ST_DEFERRED: ("verschoben", C["yellow"])}
+# Hinweis, wenn beim Einreichen noch nichts eingegeben ist
+EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
+              "bestellung": "Der Warenkorb ist noch leer.",
+              "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
+              "formular": "Bitte fülle zuerst die Felder aus."}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -646,6 +651,311 @@ class OrderBoard(ctk.CTkFrame):
                 row.configure(border_color=C["green"] if right else C["red"])
 
 
+class RackBoard(ctk.CTkFrame):
+    """Serverschrank bestuecken: links ein Geraet waehlen, rechts im Schrank
+    die Hoeheneinheit anklicken, in der es unten sitzen soll. Ein Klick auf
+    ein eingebautes Geraet waehlt es aus (zum Versetzen oder Ausbauen)."""
+
+    UNIT = 26          # Hoehe einer HE in Pixeln (bei 100 % Skalierung)
+    NUMBERS = 40       # Spalte fuer die HE-Nummern
+
+    def __init__(self, parent, task):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.devices = task["geraete"]
+        self.size = task["schrank"]["he"]
+        self.answer = {}
+        self.current = 0
+        self.hover = None
+        self.locked = False
+        self.success = False
+
+        head = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                            border_color=C["border"])
+        head.pack(fill="x")
+        make_label(head, "SCHRANK", font=F["label"], fg=C["muted"]).pack(anchor="w", padx=14,
+                                                                         pady=(10, 2))
+        lines = fg.rack_header(task)
+        make_label(head, lines[0], font=F["body_bold"], fg=C["text"], anchor="w").pack(
+            anchor="w", padx=14)
+        for line in lines[1:]:
+            make_label(head, line, font=F["small_bold"], fg=C["cyan"], anchor="w").pack(
+                anchor="w", padx=14, pady=(4, 0))
+        _frame(head, height=10).pack()
+
+        grid = _frame(self)
+        grid.pack(fill="x", pady=(14, 0))
+        grid.columnconfigure(0, weight=3, uniform="rack")
+        grid.columnconfigure(1, weight=2, uniform="rack")
+        make_label(grid, "1. GERÄT WÄHLEN", font=F["label"], fg=C["muted"]).grid(
+            row=0, column=0, sticky="w", pady=(0, 6))
+        make_label(grid, "2. HÖHENEINHEIT ANKLICKEN", font=F["label"], fg=C["muted"]).grid(
+            row=0, column=1, sticky="w", pady=(0, 6), padx=(12, 0))
+        left = _frame(grid)
+        left.grid(row=1, column=0, sticky="new")
+        self.rows = []
+        for index, device_id in enumerate(self.devices):
+            item = fg.rack_device(device_id)
+            row, _title, detail, widgets = _pick_row(left, item["name"], fg.rack_specs(item),
+                                                    " ", C["muted"])
+            row.pack(fill="x", pady=3)
+            badge = widgets[3]
+            dot = tk.Canvas(row, width=px(6), height=px(6), bg=C["card_alt"],
+                            highlightthickness=0)
+            dot.place(x=px(5), y=px(15))
+            dot.create_oval(0, 0, px(6), px(6), fill=fg.RACK_COLORS[item["typ"]], outline="")
+            for widget in widgets:
+                widget.bind("<Button-1>", lambda _e, value=index: self.pick_device(value))
+            self.rows.append((row, badge, dot))
+        right = _frame(grid)
+        right.grid(row=1, column=1, sticky="new", padx=(12, 0))
+        self.unit = px(self.UNIT if self.size <= 14 else 20)
+        height = self.unit * self.size + px(16)
+        self.canvas = tk.Canvas(right, height=height, bg=C["card"], highlightthickness=0,
+                                cursor="hand2")
+        self.canvas.pack(fill="x")
+        self.canvas.bind("<Configure>", lambda _e: self._draw_rack())
+        self.canvas.bind("<Motion>", self._motion)
+        self.canvas.bind("<Leave>", lambda _e: self._set_hover(None))
+        self.canvas.bind("<Button-1>", self._click)
+        self.remove_button = NeoButton(right, "Gerät ausbauen", self.remove, kind="ghost",
+                                       height=30, font=F["small_bold"])
+        self.summary = make_label(self, "", font=F["body_bold"], fg=C["text_soft"], anchor="w")
+        self.summary.pack(anchor="w", pady=(10, 0))
+        self._paint()
+
+    # -- Bedienung ----------------------------------------------------------
+
+    def _unit_at(self, y):
+        top = px(8)
+        index = int((y - top) // self.unit)
+        if 0 <= index < self.size:
+            return self.size - index
+        return None
+
+    def pick_device(self, index):
+        if not self.locked:
+            self.current = index
+            self._paint()
+
+    def place(self, unit):
+        if self.locked or unit is None:
+            return
+        if self.current is None:
+            occupant = fg.rack_occupant(self.task, self.answer, unit)
+            if occupant is not None:
+                self.current = occupant
+                self._paint()
+            return
+        self.answer = fg.rack_place(self.task, self.answer, self.current, unit)
+        self.current = None
+        self._paint()
+
+    def remove(self):
+        if not self.locked and self.current is not None:
+            self.answer.pop(str(self.current), None)
+            self._paint()
+
+    def _click(self, event):
+        self.place(self._unit_at(event.y))
+
+    def _motion(self, event):
+        self._set_hover(self._unit_at(event.y))
+
+    def _set_hover(self, unit):
+        if unit != self.hover:
+            self.hover = unit
+            self._draw_rack()
+
+    def complete(self):
+        return bool(self.answer)
+
+    # -- Anzeige ------------------------------------------------------------
+
+    def _paint(self):
+        for index, (row, badge, dot) in enumerate(self.rows):
+            bottom = self.answer.get(str(index))
+            active = index == self.current and not self.locked
+            border = C["purple"] if active else C["border"]
+            if self.locked and bottom:
+                border = C["green"] if self.success else C["red"]
+            row.configure(border_color=border,
+                          border_width=2 if active or (self.locked and bottom) else 1,
+                          fg_color=C["card_hi"] if active else C["card_alt"])
+            dot.configure(bg=C["card_hi"] if active else C["card_alt"])
+            if bottom:
+                item = fg.rack_device(self.devices[index])
+                badge.configure(text=fg._he_text(bottom, item["he"]), text_color=C["cyan"])
+            else:
+                badge.configure(text="liegt bereit", text_color=C["muted"])
+        if self.current is not None and str(self.current) in self.answer and not self.locked:
+            self.remove_button.pack(anchor="w", pady=(8, 0))
+        else:
+            self.remove_button.pack_forget()
+        text, over = fg.rack_summary(self.task, self.answer)
+        self.summary.configure(text="Belegt: " + text,
+                               text_color=C["yellow"] if over else C["text_soft"])
+        self._draw_rack()
+
+    def _draw_rack(self):
+        canvas = self.canvas
+        canvas.delete("all")
+        width = max(canvas.winfo_width(), px(200))
+        unit, top = self.unit, px(8)
+        x1, x2 = self.NUMBERS * width / 400.0 + px(8), width - px(8)
+        rounded_rect(canvas, x1 - px(6), top - px(6), x2 + px(6),
+                     top + unit * self.size + px(6), px(8), fill="#1E1A30",
+                     outline="#5B5480", width=2)
+        small = tk_font(F["tiny"])
+        for index in range(self.size):
+            number = self.size - index
+            y = top + index * unit
+            canvas.create_rectangle(x1, y + 1, x2, y + unit - 1, fill="#2A2442", outline="")
+            canvas.create_text(x1 - px(12), y + unit / 2, text=str(number), fill=C["muted"],
+                               font=small, anchor="e")
+        # Vorschau: wo das gewaehlte Geraet landen wuerde
+        if self.hover and self.current is not None and not self.locked:
+            item = fg.rack_device(self.devices[self.current])
+            y_bottom = top + (self.size - self.hover + 1) * unit
+            y_top = y_bottom - item["he"] * unit
+            canvas.create_rectangle(x1 + 2, max(top, y_top) + 2, x2 - 2, y_bottom - 2,
+                                    outline=C["purple"], width=2, dash=(4, 3))
+        bold = tk_font(F["small_bold"])
+        for key, bottom in sorted(self.answer.items(), key=lambda row: row[1]):
+            index = int(key)
+            item = fg.rack_device(self.devices[index])
+            color = fg.RACK_COLORS[item["typ"]]
+            y_bottom = top + (self.size - bottom + 1) * unit
+            y_top = y_bottom - item["he"] * unit
+            if y_top < top:
+                y_top = top - px(4)
+                color = C["red"]
+            selected = index == self.current and not self.locked
+            rounded_rect(canvas, x1 + 3, y_top + 3, x2 - 3, y_bottom - 3, px(5),
+                         fill=mix(C["card"], color, 0.55 if selected else 0.35),
+                         outline=color, width=2 if selected else 1)
+            canvas.create_oval(x2 - px(18), y_top + unit / 2 - px(3), x2 - px(12),
+                               y_top + unit / 2 + px(3), fill=C["green"], outline="")
+            canvas.create_text(x1 + px(10), (y_top + y_bottom) / 2, text=item["name"],
+                               fill=C["text"], font=bold, anchor="w")
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self.current = None
+        self.canvas.configure(cursor="arrow")
+        self._paint()
+
+
+class FormBoard(ctk.CTkFrame):
+    """Formular: Eingabefelder mit Einheit. Teilnetze eines IP-Plans stehen
+    als Tabelle (eine Zeile je Netz), alles andere untereinander."""
+
+    def __init__(self, parent, task):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.fields = fg.form_fields(task)
+        self.entries = {}
+        self.choices = {}
+        self.marks = {}
+        self.locked = False
+
+        head = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                            border_color=C["border"])
+        head.pack(fill="x")
+        make_label(head, "AUSGANGSDATEN", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", padx=14, pady=(10, 2))
+        lines = fg.form_given(task)
+        for line in lines:
+            make_label(head, line, font=F["body_bold"], fg=C["text"], anchor="w").pack(
+                anchor="w", padx=14)
+        _frame(head, height=10).pack()
+
+        box = _frame(self)
+        box.pack(fill="x", pady=(14, 0))
+        single = [field for field in self.fields if not field["gruppe"]]
+        groups = []
+        for field in self.fields:
+            if field["gruppe"] and field["gruppe"] not in groups:
+                groups.append(field["gruppe"])
+        row = 0
+        for field in single:
+            make_label(box, field["label"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").grid(row=row, column=0, sticky="w", pady=4, padx=(0, 16))
+            self._input(box, field).grid(row=row, column=1, sticky="w", pady=4)
+            row += 1
+        if groups:
+            columns = [field for field in self.fields if field["gruppe"] == groups[0]]
+            if single:
+                _frame(box, height=10).grid(row=row, column=0)
+                row += 1
+            make_label(box, "TEILNETZ", font=F["label"], fg=C["muted"]).grid(
+                row=row, column=0, sticky="w", pady=(0, 4))
+            for col, field in enumerate(columns, start=1):
+                make_label(box, field["label"].upper(), font=F["label"], fg=C["muted"]).grid(
+                    row=row, column=col, sticky="w", pady=(0, 4), padx=(0, 10))
+            row += 1
+            for group in groups:
+                make_label(box, group, font=F["body_bold"], fg=C["text"], anchor="w").grid(
+                    row=row, column=0, sticky="w", pady=4, padx=(0, 16))
+                for col, field in enumerate([f for f in self.fields if f["gruppe"] == group],
+                                            start=1):
+                    self._input(box, field).grid(row=row, column=col, sticky="w", pady=4,
+                                                 padx=(0, 10))
+                row += 1
+
+    def _input(self, parent, field):
+        holder = _frame(parent)
+        if field["art"] == "wahl":
+            choice = ChoiceRow(holder, [(o, o) for o in field["optionen"]], None,
+                               lambda _v: None)
+            choice.pack(side="left")
+            self.choices[field["id"]] = choice
+        else:
+            wide = {"ip": 17, "praefix": 7, "zahl": 9, "prozent": 9, "geld": 12}[field["art"]]
+            entry = ctk.CTkEntry(holder, width=wide * 9 + 28, height=36, corner_radius=10,
+                                 border_width=1, fg_color=C["card_alt"],
+                                 border_color=C["border"], text_color=C["text_soft"],
+                                 font=F["body"])
+            entry._entry.configure(insertbackground=C["cyan"], selectbackground=C["purple"])
+            entry.bind("<FocusIn>", lambda _e, w=entry: w.configure(border_color=C["purple"]))
+            entry.bind("<FocusOut>", lambda _e, w=entry: w.configure(border_color=C["border"]))
+            entry.pack(side="left")
+            self.entries[field["id"]] = entry
+            if field["einheit"]:
+                make_label(holder, field["einheit"], font=F["small"], fg=C["muted"]).pack(
+                    side="left", padx=(6, 0))
+        mark = make_label(holder, "", font=F["small_bold"], fg=C["red"])
+        mark.pack(side="left", padx=(8, 0))
+        self.marks[field["id"]] = mark
+        return holder
+
+    @property
+    def answer(self):
+        result = {key: entry.get() for key, entry in self.entries.items()}
+        for key, choice in self.choices.items():
+            result[key] = choice.value or ""
+        return result
+
+    def complete(self):
+        return any((value or "").strip() for value in self.answer.values())
+
+    def reveal(self, right):
+        self.locked = True
+        check = fg.form_check(self.task, self.answer)
+        for field in self.fields:
+            ok = check[field["id"]]
+            color = C["green"] if ok else C["red"]
+            if field["id"] in self.entries:
+                entry = self.entries[field["id"]]
+                entry.configure(border_color=color, border_width=2, state="disabled")
+            else:
+                for button in self.choices[field["id"]].buttons.values():
+                    button.set_enabled(False)
+            self.marks[field["id"]].configure(
+                text="✓" if ok else "→ %s" % field["anzeige"], text_color=color)
+
+
 class GameView(ScrollArea):
     """Ansicht "Lernspiel" in der PC-Version."""
 
@@ -1047,6 +1357,12 @@ class GameView(ScrollArea):
         elif task["typ"] == "bestellung":
             self.options = OrderBoard(body, task)
             self.options.pack(fill="x")
+        elif task["typ"] == "rack":
+            self.options = RackBoard(body, task)
+            self.options.pack(fill="x")
+        elif task["typ"] == "formular":
+            self.options = FormBoard(body, task)
+            self.options.pack(fill="x")
         else:
             self.options = MatchBoard(body, task)
             self.options.pack(fill="x")
@@ -1095,11 +1411,9 @@ class GameView(ScrollArea):
             if not answer:
                 messagebox.showwarning("Hinweis", "Bitte wähle eine Antwort aus.")
                 return
-        elif task["typ"] in ("bauteile", "bestellung"):
+        elif task["typ"] in fg.PROBLEM_TYPES:
             if not self.options.complete():
-                messagebox.showwarning("Hinweis", "Bitte setze zuerst Bauteile ein."
-                                       if task["typ"] == "bauteile" else
-                                       "Der Warenkorb ist noch leer.")
+                messagebox.showwarning("Hinweis", EMPTY_HINT[task["typ"]])
                 return
             answer = dict(self.options.answer)
         else:
@@ -1116,7 +1430,7 @@ class GameView(ScrollArea):
         self.answered = True
         if task["typ"] == "auswahl":
             self.options.reveal(task["antwort"])
-        elif task["typ"] in ("bauteile", "bestellung"):
+        elif task["typ"] in fg.PROBLEM_TYPES:
             self.options.reveal(payload["richtig"])
         else:
             self.options.reveal()

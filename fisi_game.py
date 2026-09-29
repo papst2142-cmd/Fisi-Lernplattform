@@ -803,6 +803,9 @@ def order_problems(task, cart, content=None):
 # ab 1. Nicht eingebaute Geraete bleiben einfach liegen.
 
 RACK_FIELDS = ("typ", "name", "he", "gewicht", "watt")
+# Farbe der Geraete im Schrank (PC und Handy gleich, aus der Palette)
+RACK_COLORS = {"usv": C["yellow"], "server": C["cyan"], "storage": C["purple"],
+               "switch": C["green"], "patchpanel": C["pink"]}
 # Vorgaben eines Rack-Auftrags
 RACK_RULES = ("mindestens", "ports_min", "frei_min")
 
@@ -816,6 +819,13 @@ def rack_device(device_id, content=None):
 
 def rack_type_name(kind, content=None):
     return (content or GAME)["hardware"].get("rack_typen", {}).get(kind, kind)
+
+
+def _by_rack_type(counts, content=None):
+    """(typ, anzahl) in der Reihenfolge von rack_typen (USV zuerst ...)."""
+    order = list((content or GAME)["hardware"].get("rack_typen", {}))
+    return sorted((counts or {}).items(),
+                  key=lambda row: order.index(row[0]) if row[0] in order else len(order))
 
 
 def _he_text(bottom, height):
@@ -839,6 +849,38 @@ def rack_placed(task, answer, content=None):
                 placed.append((index, item, bottom))
     placed.sort(key=lambda row: (row[2], row[0]))
     return placed
+
+
+def rack_place(task, answer, index, bottom, content=None):
+    """Baut Geraet Nr. index ab HE bottom ein und liefert die neue Belegung.
+    Ragt es oben heraus, rutscht es nach unten, bis es passt. Geraete, die
+    im Weg sind, kommen zurueck auf den Stapel (wie beim echten Einbau: zwei
+    Geraete koennen nicht in derselben HE stecken). PC und Handy bedienen
+    den Schrank ueber diese Funktion."""
+    content = content or GAME
+    item = rack_device(task["geraete"][index], content)
+    size = task["schrank"]["he"]
+    bottom = max(1, min(int(bottom), size - item["he"] + 1))
+    top = bottom + item["he"] - 1
+    result = {}
+    for key, other_bottom in (answer or {}).items():
+        if int(key) == int(index):
+            continue
+        other = rack_device(task["geraete"][int(key)], content)
+        other_top = int(other_bottom) + other["he"] - 1
+        if other_top < bottom or int(other_bottom) > top:
+            result[str(key)] = int(other_bottom)
+    result[str(index)] = bottom
+    return result
+
+
+def rack_occupant(task, answer, unit, content=None):
+    """Nummer des Geraets, das in HE unit steckt, oder None."""
+    for key, bottom in (answer or {}).items():
+        item = rack_device(task["geraete"][int(key)], content)
+        if int(bottom) <= unit < int(bottom) + item["he"]:
+            return int(key)
+    return None
 
 
 def rack_power(placed):
@@ -928,7 +970,7 @@ def _load_problems(task, placed, content):
         problems.append("Die Kühlung führt höchstens %d W Abwärme ab, die Geräte erzeugen "
                         "%d W." % (cabinet["kuehlung"], power))
     rules = task.get("vorgaben") or {}
-    for kind, count in sorted((rules.get("mindestens") or {}).items()):
+    for kind, count in _by_rack_type(rules.get("mindestens"), content):
         have = sum(1 for _i, item, _b in placed if item["typ"] == kind)
         if have < count:
             problems.append("Der Auftrag verlangt %d × %s, eingebaut %s %d."
@@ -986,7 +1028,7 @@ def rack_header(task, content=None):
     lines = [first]
     rules = task.get("vorgaben") or {}
     wanted = ["%d × %s" % (count, rack_type_name(kind, content))
-              for kind, count in sorted((rules.get("mindestens") or {}).items())]
+              for kind, count in _by_rack_type(rules.get("mindestens"), content)]
     if rules.get("ports_min"):
         wanted.append("mind. %d Ports" % rules["ports_min"])
     if rules.get("frei_min"):
@@ -1001,8 +1043,10 @@ def rack_specs(item, content=None):
     parts = ["%d HE" % item["he"], "%d kg" % item["gewicht"]]
     if item["typ"] == "usv":
         parts.append("liefert %d W" % item["leistung"])
-    else:
+    elif item["watt"]:
         parts.append("%d W" % item["watt"])
+    else:
+        parts.append("passiv, kein Strom")
     if item.get("ports"):
         parts.append("%d Ports" % item["ports"])
     return " · ".join(parts)

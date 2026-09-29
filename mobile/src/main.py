@@ -1696,6 +1696,20 @@ def selftest():
                     for _step in range(count):
                         game.options.change(offer_id, 1)
                 game.options.reveal(True)
+            elif task["typ"] == "rack":
+                for key, bottom in solution.items():
+                    game.options.pick_device(int(key))
+                    game.options.tap_unit(bottom)
+                game.options.pick_device(0)
+                game.options.remove()
+                game.options.reveal(True)
+            elif task["typ"] == "formular":
+                for field_id, value in solution.items():
+                    if field_id in game.options.inputs:
+                        game.options.inputs[field_id].value = value
+                    else:
+                        game.options._choose(field_id, value)
+                game.options.reveal(True)
         game._select_room("serverraum")
         game._select_room("lager")
         # Bueroansicht (ohne reload, der Test-Spielstand steht nur im Speicher)

@@ -93,11 +93,11 @@
     "schwer_ab_kg": 20
   },
   "rack_typen": {
+    "usv": "USV",
     "server": "Server",
     "storage": "Storage",
     "switch": "Switch",
-    "patchpanel": "Patchpanel",
-    "usv": "USV"
+    "patchpanel": "Patchpanel"
   },
   "rack_geraete": [
     {"id": "srv_1he", "typ": "server", "name": "Server 1 HE (Leitstellenrechner)", "he": 1, "gewicht": 16, "watt": 280},

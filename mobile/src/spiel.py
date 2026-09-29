@@ -28,6 +28,11 @@ PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"
 STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
                fg.ST_WRONG: ("mit Fehlern", C["red"]),
                fg.ST_DEFERRED: ("verschoben", C["yellow"])}
+# Hinweis, wenn beim Einreichen noch nichts eingegeben ist (wie am PC)
+EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
+              "bestellung": "Der Warenkorb ist noch leer.",
+              "rack": "Bitte baue zuerst Geräte in den Schrank ein.",
+              "formular": "Bitte fülle zuerst die Felder aus."}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -562,6 +567,254 @@ class OrderBoard(ft.Column):
         self._paint(right)
 
 
+class RackBoard(ft.Column):
+    """Serverschrank bestuecken zum Antippen: Geraet antippen, dann die
+    Hoeheneinheit im Schrank. Ein eingebautes Geraet antippen waehlt es zum
+    Versetzen oder Ausbauen aus. Gleiche Regeln wie am PC (fg.rack_place)."""
+
+    def __init__(self, task):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.devices = task["geraete"]
+        self.size = task["schrank"]["he"]
+        self.unit = 30 if self.size <= 14 else 24
+        self.answer = {}
+        self.current = 0
+        self.locked = False
+        self.success = False
+        lines = fg.rack_header(task)
+        head = ft.Container(
+            content=ft.Column([ui.label("Schrank"),
+                               ui.text(lines[0], size=14, weight=ft.FontWeight.BOLD)] +
+                              [ui.text(line, size=13, color=C["cyan"],
+                                       weight=ft.FontWeight.BOLD) for line in lines[1:]],
+                              spacing=4, tight=True),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=14, vertical=10))
+        self.device_rows = []
+        for index, _device_id in enumerate(self.devices):
+            row = ft.Container(border_radius=12, ink=True,
+                               padding=ft.Padding.symmetric(horizontal=12, vertical=9),
+                               on_click=lambda _e, value=index: self.pick_device(value))
+            self.device_rows.append(row)
+        self.cabinet = ft.Column(spacing=0, tight=True)
+        self.remove_row = ft.Row([])
+        self.summary = ui.text("", size=14, weight=ft.FontWeight.BOLD)
+        self.controls = [head, ui.label("Gerät antippen"), *self.device_rows,
+                         ui.label("Dann die Höheneinheit (HE 1 ist unten)"),
+                         ft.Container(content=self.cabinet, bgcolor="#1E1A30",
+                                      border=ft.Border.all(2, "#5B5480"), border_radius=10,
+                                      padding=6),
+                         self.remove_row, self.summary]
+        self._paint()
+
+    def pick_device(self, index):
+        if not self.locked:
+            self.current = None if index == self.current else index
+            self._paint()
+
+    def tap_unit(self, unit):
+        if self.locked:
+            return
+        if self.current is None:
+            occupant = fg.rack_occupant(self.task, self.answer, unit)
+            if occupant is not None:
+                self.current = occupant
+                self._paint()
+            return
+        self.answer = fg.rack_place(self.task, self.answer, self.current, unit)
+        self.current = None
+        self._paint()
+
+    def remove(self, _event=None):
+        if not self.locked and self.current is not None:
+            self.answer.pop(str(self.current), None)
+            self._paint()
+
+    def complete(self):
+        return bool(self.answer)
+
+    def _device_content(self, index):
+        item = fg.rack_device(self.devices[index])
+        bottom = self.answer.get(str(index))
+        where = fg._he_text(bottom, item["he"]) if bottom else "liegt bereit"
+        return ft.Row([
+            ft.Container(width=4, height=34, border_radius=2,
+                         bgcolor=fg.RACK_COLORS[item["typ"]]),
+            ft.Column([
+                ft.Row([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD,
+                                expand=True),
+                        ui.text(where, size=12, weight=ft.FontWeight.BOLD,
+                                color=C["cyan"] if bottom else C["muted"])], spacing=8),
+                ui.text(fg.rack_specs(item), size=12, color=C["muted"]),
+            ], spacing=2, tight=True, expand=True),
+        ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+
+    def _unit_row(self, unit, height, content=None, fill=None, border=None, on_click=None):
+        return ft.Row([
+            ft.Container(content=ui.text(str(unit), size=11, color=C["muted"]), width=24,
+                         height=height, alignment=ft.Alignment.CENTER_RIGHT),
+            ft.Container(content=content, height=height - 4, expand=True, bgcolor=fill,
+                         border=border, border_radius=6, ink=on_click is not None,
+                         padding=ft.Padding.symmetric(horizontal=10),
+                         alignment=ft.Alignment.CENTER_LEFT, on_click=on_click),
+        ], spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+
+    def _paint(self):
+        for index, row in enumerate(self.device_rows):
+            bottom = self.answer.get(str(index))
+            active = index == self.current and not self.locked
+            row.content = self._device_content(index)
+            if self.locked and bottom:
+                color = C["green"] if self.success else C["red"]
+                row.bgcolor = mix(C["card"], color, 0.12)
+                row.border = ft.Border.all(2, color)
+            else:
+                row.bgcolor = C["card_hi"] if active else C["card_alt"]
+                row.border = ft.Border.all(2 if active else 1,
+                                           C["purple"] if active else C["border"])
+        rows = []
+        unit = self.size
+        while unit >= 1:
+            occupant = fg.rack_occupant(self.task, self.answer, unit)
+            if occupant is None:
+                rows.append(self._unit_row(unit, self.unit, fill="#2A2442",
+                                           on_click=lambda _e, u=unit: self.tap_unit(u)))
+                unit -= 1
+                continue
+            item = fg.rack_device(self.devices[occupant])
+            color = fg.RACK_COLORS[item["typ"]]
+            selected = occupant == self.current and not self.locked
+            bottom = self.answer[str(occupant)]
+            rows.append(self._unit_row(
+                unit if item["he"] == 1 else "%d–%d" % (bottom, unit), self.unit * item["he"],
+                content=ui.text(item["name"], size=13, weight=ft.FontWeight.BOLD),
+                fill=mix(C["card"], color, 0.55 if selected else 0.35),
+                border=ft.Border.all(2 if selected else 1, color),
+                on_click=lambda _e, u=unit: self.tap_unit(u)))
+            unit = bottom - 1
+        self.cabinet.controls = rows
+        placed = self.current is not None and str(self.current) in self.answer
+        self.remove_row.controls = [ui.GradientButton(
+            "Gerät ausbauen", self.remove, kind="ghost", height=36)] \
+            if placed and not self.locked else []
+        text, over = fg.rack_summary(self.task, self.answer)
+        self.summary.value = "Belegt: " + text
+        self.summary.color = C["yellow"] if over else C["text_soft"]
+
+    def reveal(self, right):
+        self.locked = True
+        self.success = right
+        self.current = None
+        self._paint()
+
+
+class FormBoard(ft.Column):
+    """Formular: Eingabefelder untereinander, bei IP-Plaenen ein Kasten je
+    Teilnetz. Nach dem Einreichen gruen/rot mit dem richtigen Wert."""
+
+    def __init__(self, task):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.fields = fg.form_fields(task)
+        self.inputs = {}
+        self.choices = {}
+        self.marks = {}
+        self.locked = False
+        head = ft.Container(
+            content=ft.Column([ui.label("Ausgangsdaten")] +
+                              [ui.text(line, size=14, weight=ft.FontWeight.BOLD)
+                               for line in fg.form_given(task)], spacing=4, tight=True),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=14, vertical=10))
+        controls = [head]
+        groups = []
+        for field in self.fields:
+            if not field["gruppe"]:
+                controls.append(self._input(field))
+            elif field["gruppe"] not in groups:
+                groups.append(field["gruppe"])
+        for group in groups:
+            controls.append(ft.Container(
+                content=ft.Column([ui.text(group, size=15, weight=ft.FontWeight.BOLD)] +
+                                  [self._input(field) for field in self.fields
+                                   if field["gruppe"] == group], spacing=8, tight=True,
+                                  horizontal_alignment=ft.CrossAxisAlignment.STRETCH),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
+                border_radius=12, padding=ft.Padding.symmetric(horizontal=12, vertical=10)))
+        self.controls = controls
+
+    def _input(self, field):
+        mark = ui.text("", size=12, weight=ft.FontWeight.BOLD)
+        self.marks[field["id"]] = mark
+        if field["art"] == "wahl":
+            pills = []
+            for option in field["optionen"]:
+                pill = ft.Container(
+                    content=ft.Text(option, size=13, weight=ft.FontWeight.BOLD),
+                    height=36, border_radius=18, alignment=ft.Alignment.CENTER,
+                    padding=ft.Padding.symmetric(horizontal=16), ink=True,
+                    on_click=lambda _e, f=field["id"], o=option: self._choose(f, o))
+                pills.append((option, pill))
+            self.choices[field["id"]] = {"value": "", "pills": pills}
+            self._paint_choice(field["id"])
+            return ft.Column([ui.text(field["label"], size=13, color=C["text_dim"]),
+                              ft.Row([pill for _o, pill in pills], spacing=8), mark],
+                             spacing=6, tight=True)
+        whole = field["art"] in ("zahl", "praefix") and float(field["soll"]).is_integer()
+        box = ui.entry(hint=field["einheit"] or None,
+                       keyboard=ft.KeyboardType.NUMBER if whole and field["art"] == "zahl"
+                       else ft.KeyboardType.TEXT)
+        if field["einheit"]:
+            box.suffix = ft.Text(field["einheit"], color=C["muted"])
+            box.hint_text = None
+        self.inputs[field["id"]] = box
+        return ft.Column([ui.text(field["label"], size=13, color=C["text_dim"]), box, mark],
+                         spacing=4, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+    def _choose(self, field_id, option):
+        if not self.locked:
+            self.choices[field_id]["value"] = option
+            self._paint_choice(field_id)
+
+    def _paint_choice(self, field_id):
+        choice = self.choices[field_id]
+        for option, pill in choice["pills"]:
+            active = option == choice["value"]
+            pill.gradient = ui.gradient("primary") if active else None
+            pill.bgcolor = None if active else C["card"]
+            pill.border = None if active else ft.Border.all(1, C["border"])
+            pill.content.color = C["on_accent"] if active else C["text_dim"]
+
+    @property
+    def answer(self):
+        result = {key: box.value or "" for key, box in self.inputs.items()}
+        for key, choice in self.choices.items():
+            result[key] = choice["value"]
+        return result
+
+    def complete(self):
+        return any((value or "").strip() for value in self.answer.values())
+
+    def reveal(self, right):
+        self.locked = True
+        check = fg.form_check(self.task, self.answer)
+        for field in self.fields:
+            ok = check[field["id"]]
+            color = C["green"] if ok else C["red"]
+            if field["id"] in self.inputs:
+                box = self.inputs[field["id"]]
+                box.border_color = color
+                box.focused_border_color = color
+                box.read_only = True
+            mark = self.marks[field["id"]]
+            mark.value = "richtig" if ok else "richtig wäre: %s" % field["anzeige"]
+            mark.color = color
+
+
 # ============================================================================
 #  SEITE "SPIEL"
 # ============================================================================
@@ -861,6 +1114,10 @@ class GameScreen:
             self.options = SlotBoard(task, self.available, state.stock())
         elif task["typ"] == "bestellung":
             self.options = OrderBoard(task)
+        elif task["typ"] == "rack":
+            self.options = RackBoard(task)
+        elif task["typ"] == "formular":
+            self.options = FormBoard(task)
         else:
             self.options = MatchBoard(task)
         self.help_box = ft.Column(spacing=10, tight=True)
@@ -905,10 +1162,9 @@ class GameScreen:
             if not answer:
                 self.toast("Bitte wähle eine Antwort aus.", C["yellow"])
                 return
-        elif task["typ"] in ("bauteile", "bestellung"):
+        elif task["typ"] in fg.PROBLEM_TYPES:
             if not self.options.complete():
-                self.toast("Bitte setze zuerst Bauteile ein." if task["typ"] == "bauteile"
-                           else "Der Warenkorb ist noch leer.", C["yellow"])
+                self.toast(EMPTY_HINT[task["typ"]], C["yellow"])
                 return
             answer = dict(self.options.answer)
         else:
@@ -924,7 +1180,7 @@ class GameScreen:
         self.answered = True
         if task["typ"] == "auswahl":
             self.options.reveal(task["antwort"])
-        elif task["typ"] in ("bauteile", "bestellung"):
+        elif task["typ"] in fg.PROBLEM_TYPES:
             self.options.reveal(payload["richtig"])
         else:
             self.options.reveal()

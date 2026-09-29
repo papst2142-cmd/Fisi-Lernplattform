@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.28
+
+- **Neu im Spiel: Serverschrank bestücken.** Der Schrank wird in
+  Höheneinheiten angezeigt, HE 1 ist unten. Gerät antippen, dann die
+  Höheneinheit – fertig. Beim Einreichen prüft das Spiel Platz, Gewicht
+  (schwere Geräte und die USV nach unten), Strom mit 20 % USV-Reserve,
+  Kühlung, ob jedes Patchpanel direkt am Switch sitzt und was der Auftrag
+  verlangt (zum Beispiel Ports oder freie HE). Jede passende Belegung zählt.
+- **Neu im Spiel: Formulare.** IP-Pläne (gleich große Netze und VLSM), RAID-
+  Kapazität, Angebotskalkulation bis zum Bruttopreis und Kauf gegen Leasing
+  werden in Eingabefelder eingetragen. Die richtigen Werte rechnen dieselben
+  Funktionen aus wie der Subnetz- und der RAID-Rechner. Die Eingabe ist
+  tolerant: „/26“ und „255.255.255.192“ gelten beide, Komma oder Punkt ist
+  egal. Nach dem Einreichen ist jedes Feld grün oder rot, bei Rot steht der
+  richtige Wert daneben.
+- **8 neue Aufträge** ab Arbeitstag 6: Netzwerkschrank für die Leitstelle,
+  Serverschrank im Serverraum erweitern, Netzwerkschrank fürs
+  Service-Center, zwei IP-Pläne für die Talbahn, RAID 6 für den Dateiserver,
+  Angebot für die Leitstellen-Arbeitsplätze und Kauf oder Leasing für die
+  neuen Server.
+
 ## 0.27
 
 - **Neu im Spiel: PC zusammenbauen.** In der IT-Werkstatt liegen Mainboard,
