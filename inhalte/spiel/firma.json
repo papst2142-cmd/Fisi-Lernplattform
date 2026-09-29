@@ -1788,9 +1788,9 @@
       "Projekt „{titel}“, Phase „{phase}“. Kaffee ist das Wichtigste."
     ],
     "texte": [
-      "Ausschreibung von {kunde}: {auftrag}",
-      "{kunde} sucht einen Dienstleister: {auftrag}",
-      "Neue Ausschreibung. {kunde} schreibt: {auftrag}"
+      "Neue Ausschreibung von „{kunde}“: {auftrag}",
+      "„{kunde}“ sucht einen IT-Dienstleister. Der Auftrag: {auftrag}",
+      "Ausschreibung, Kunde „{kunde}“: {auftrag}"
     ],
     "hilfe": [
       "Einzelkosten gesamt = Projektarbeit (Punkte × Satz) + Material und Lizenzen.",

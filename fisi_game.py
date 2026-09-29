@@ -4862,10 +4862,10 @@ def customer_short(branche):
     """Kurzer Kundenname aus der Branche des Testprojekts: der Name in
     Klammern ("ModeWelt GmbH") oder die Branche bis zum ersten Komma."""
     if "(" in branche and ")" in branche:
-        inner = branche[branche.index("(") + 1:branche.index(")")]
-        if inner and inner[0].isupper() and not inner[0].isdigit():
+        inner = branche[branche.index("(") + 1:branche.index(")")].split(",")[0].strip()
+        if inner and inner[0].isupper():
             return inner
-    return branche.split(",")[0].strip()
+    return branche.split(",")[0].split(" mit ")[0].strip()
 
 
 def project_for_slot(state, slot, content=None):
