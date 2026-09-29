@@ -2822,11 +2822,12 @@ class FirmView(ScrollArea):
         row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
                            border_color=C["border"])
         row.pack(fill="x", pady=5)
-        stripe = ctk.CTkFrame(row, width=6, height=8, fg_color=cat_color(ticket["cat"]),
-                              corner_radius=3)
-        stripe.pack(side="left", fill="y", padx=(8, 0), pady=10)
-        buttons = _frame(row)
-        buttons.pack(side="right", padx=12, pady=10, anchor="n")
+        stripe = tk.Frame(row, width=6, bg=cat_color(ticket["cat"]), highlightthickness=0)
+        stripe.pack(side="left", fill="y", padx=(10, 0), pady=12)
+        buttons = None
+        if not ticket.get("an"):
+            buttons = _frame(row)
+            buttons.pack(side="right", padx=12, pady=10, anchor="n")
         text = _frame(row)
         text.pack(side="left", fill="x", expand=True, padx=(12, 0), pady=10)
         make_label(text, ticket["titel"], font=F["body_bold"], fg=C["text"], anchor="w").pack(
