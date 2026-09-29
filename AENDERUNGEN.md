@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.34
+
+- **Angebote gegen Bitweiche:** Unter Firma gibt es vorne den neuen Reiter
+  „Aufträge“. Jeden Arbeitstag kommen 2 Kundenanfragen (Talbahn und neue
+  Kunden aus Talheim). Du wählst deinen Gewinnzuschlag (5 bis 30 %) und
+  rechnest die Zuschlagskalkulation wie in der Prüfung. Stimmt die Rechnung
+  und liegst du nicht über Bitweiche, gewinnst du den Auftrag und bekommst
+  den Gewinn. Bitweiche ist unberechenbar: Manchmal gibt es einen
+  Kampfpreis, manchmal sind sie ausgelastet und teuer. Nach jedem Angebot
+  siehst du Bitweiches Preis.
+- **Kundentickets verteilen:** Jeden Tag kommen Kundentickets aus fünf
+  Fachbereichen. Du gibst sie an deine Mitarbeiter oder übernimmst selbst
+  welche (mit deinem echten Wissensstand). Die Erfolgschance steht vorher
+  in Prozent da, das Ergebnis gibt es beim Feierabend.
+- Die Spielübersicht zeigt, was heute in der Firma noch offen ist.
+- Nach der Gründung gibt es eigene Feierabend-Texte (kein Bitweiche-Gehalt
+  mehr).
+- Finanzen: neue Einnahmen „Angebote“ und „Kundentickets“.
+- Bitte PC und Handy beide auf 0.34 aktualisieren, damit der Spielstand
+  überall gleich gerechnet wird.
+
 ## 0.33
 
 - **Eigenes Unternehmen (Grundgerüst):** Wer 25.000 € Spielgeld und 60
