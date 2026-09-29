@@ -45,6 +45,12 @@ Update-Fenster des Programms.
 - **Rack-Geräte aus dem Lager:** Bestellungen können jetzt auch USV, Switch
   und Patchpanel liefern. Im Serverschrank steht bei jedem Gerät, ob es
   bereitliegt oder aus dem Lager kommt.
+- **Falsche Bestellungen werden trotzdem geliefert.** Die falsche Ware kommt
+  ins Lager, und bei ihrer Ankunft meldet sich Rainer mit dem Zwischenfall
+  „Falsche Ware“. Er muss behoben werden und kommt jeden Tag wieder, bis
+  die Ware reklamiert und zurückgeschickt ist. Das kostet 40 €
+  Rücksendung, und die Bestellung, die danach wiederkommt, bringt keinen
+  Spar-Bonus mehr.
 
 ## 0.29
 

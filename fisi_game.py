@@ -244,12 +244,36 @@ def _story_value(value):
 GAME = load_game_content()
 
 
+WRONG_DELIVERY = "falschlieferung:"     # Kennung: falschlieferung:<bestellung>
+
+
 def task_by_id(task_id, content=None):
     content = content or GAME
+    if task_id and task_id.startswith(WRONG_DELIVERY):
+        return wrong_delivery_task(task_id[len(WRONG_DELIVERY):], content)
     for task in content["aufgaben"] + content.get("zwischenfaelle", []):
         if task["id"] == task_id:
             return task
     return None
+
+
+def wrong_delivery_task(order_id, content=None, goods=""):
+    """Zwischenfall nach einer falschen Bestellung: Die Ware ist trotzdem
+    gekommen und muss zurueck (Vorlage "falschlieferung" in hardware.json).
+    goods: Text, was geliefert wurde (setzt GameState.prepared_task ein)."""
+    content = content or GAME
+    order = next((task for task in content["aufgaben"] if task["id"] == order_id), None)
+    template = content["hardware"].get("falschlieferung")
+    if order is None or template is None:
+        return None
+    names = {"bestellung": order["titel"], "ware": goods or "die bestellte Ware"}
+    task = {key: value for key, value in template.items() if not key.startswith("_")}
+    task.update(id=WRONG_DELIVERY + order_id, typ="auswahl", zwischenfall=True,
+                falschlieferung=order_id, titel=template["titel"].format(**names),
+                ticket=_lines(template["ticket"]).format(**names),
+                hilfe=_lines(template.get("hilfe")),
+                erklaerung=_lines(template.get("erklaerung")))
+    return task
 
 
 def customer_people(content=None):
@@ -398,6 +422,7 @@ def validate_game_content(content=None):
 
     problems += _validate_hardware(content)
     problems += _validate_rack_hardware(content)
+    problems += _validate_wrong_delivery(content)
 
     seen = set()
     for number, task in enumerate(content["aufgaben"] + content.get("zwischenfaelle", []),
@@ -496,6 +521,31 @@ def validate_game_content(content=None):
             if not learn_links_for_term(term, limit=1):
                 problems.append("%s: Suchbegriff '%s' findet keine Karteikarte "
                                 "oder Quizfrage" % (where, term))
+    return problems
+
+
+def _validate_wrong_delivery(content):
+    """Vorlage "falschlieferung" in hardware.json (Zwischenfall nach einer
+    falschen Bestellung)."""
+    template = content["hardware"].get("falschlieferung")
+    if not template:
+        return ["hardware.json: Vorlage 'falschlieferung' fehlt"]
+    problems = []
+    for field in ("titel", "auftraggeber", "raum", "prioritaet", "cat", "ticket", "frage",
+                  "optionen", "antwort", "hilfe", "erklaerung", "belohnung"):
+        if not template.get(field):
+            problems.append("falschlieferung: Feld '%s' fehlt" % field)
+    if template.get("antwort") not in (template.get("optionen") or []):
+        problems.append("falschlieferung: Antwort steht nicht in den Optionen")
+    if colleague(template.get("auftraggeber"), content) is None:
+        problems.append("falschlieferung: unbekannter Auftraggeber")
+    if template.get("raum") not in [item["id"] for item in content["gebaeude"]["raeume"]]:
+        problems.append("falschlieferung: unbekannter Raum")
+    try:
+        _lines(template.get("ticket")).format(bestellung="x", ware="y")
+        template.get("titel", "").format(bestellung="x", ware="y")
+    except (KeyError, IndexError, ValueError):
+        problems.append("falschlieferung: nur {bestellung} und {ware} als Platzhalter")
     return problems
 
 
@@ -2264,6 +2314,37 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
         if bonus:
             payload["ersparnis_bonus"] = bonus
             payload["geld"] += bonus
+    if not right and task["typ"] == "bestellung":
+        # Falsch bestellt: Die Ware kommt trotzdem (ins Lager) - ein
+        # Zwischenfall "Falsche Ware" folgt, sobald sie da ist
+        total, _longest = cart_total(task, answer)
+        delivery = [{"teil": offer["teil"], "menge": int(answer[offer["id"]]),
+                     "haendler": offer["haendler"], "ankunft": day + offer["lieferzeit"]}
+                    for offer in task["angebote"]
+                    if int(answer.get(offer["id"], 0) or 0) > 0]
+        if delivery:
+            payload["kosten"] = total
+            payload["lieferung"] = delivery
+            payload["fehllieferung"] = True
+    if right and task["typ"] == "bestellung" and task.get("kein_sparbonus") and \
+            payload.get("ersparnis_bonus"):
+        # Nach einer Falschlieferung gibt es keinen Spar-Bonus mehr
+        payload["geld"] -= payload.pop("ersparnis_bonus")
+        payload["bonus_verloren"] = True
+    if task.get("falschlieferung"):
+        payload["falschlieferung"] = task["falschlieferung"]
+        if right:
+            # Zurueck geht, was von der falschen Ware noch im Lager liegt
+            stock = dict(stock or {})
+            back = {}
+            for part_id, count in task.get("falsche_ware") or []:
+                count = min(int(count), stock.get(part_id, 0))
+                if count > 0:
+                    stock[part_id] -= count
+                    back[part_id] = back.get(part_id, 0) + count
+            payload["ruecksendung"] = back
+            payload["ruecksendekosten"] = task.get("ruecksendekosten", 0)
+            payload["geld"] -= payload["ruecksendekosten"]
     if task.get("zwischenfall"):
         payload["zwischenfall"] = True
     if right and task["typ"] == "rack" and task.get("lager_ab") is not None:
@@ -2327,6 +2408,8 @@ class GameState:
         self.tickets_done = 0
         self.deliveries = []       # Lieferungen aus richtigen Bestellungen
         self.used = {}             # aus dem Lager verbaute Teile: id -> Anzahl
+        self.wrong_orders = {}     # falsche Bestellung -> ihre (trotzdem) gelieferte Ware
+        self.returned_orders = set()   # Bestellungen mit zurueckgeschickter Falschlieferung
         self.seen_incidents = set()   # schon bearbeitete oder verschobene Zwischenfaelle
         homes = self.content["wohnungen"]
         self.home_id = homes["start"]
@@ -2360,6 +2443,17 @@ class GameState:
                 self.money += int(data.get("geld", 0))
                 if kind == EV_SOLVED:
                     self.tickets_done += 1
+                    if data.get("fehllieferung"):
+                        # Falsch bestellt - die Ware kommt trotzdem ins Lager
+                        items = [dict(item, aufgabe=data.get("aufgabe"), falsch=True)
+                                 for item in data.get("lieferung") or []]
+                        self.deliveries += items
+                        self.wrong_orders[data.get("aufgabe")] = items
+                    for part_id, count in (data.get("ruecksendung") or {}).items():
+                        self.used[part_id] = self.used.get(part_id, 0) + int(count)
+                    if data.get("richtig") and data.get("falschlieferung"):
+                        self.wrong_orders.pop(data["falschlieferung"], None)
+                        self.returned_orders.add(data["falschlieferung"])
                     if data.get("richtig"):
                         self.solved.add(data.get("aufgabe"))
                         for item in data.get("lieferung") or []:
@@ -2473,6 +2567,7 @@ class GameState:
                 if task.get("ab_tag", 1) <= self.day
                 and task["id"] not in self.solved
                 and task["id"] not in self.handled
+                and task["id"] not in self.wrong_orders
                 and self._ready(task)]
 
     def waiting_for_delivery(self):
@@ -2488,6 +2583,20 @@ class GameState:
         incident = self.incident_today()
         if incident and incident["id"] not in self.handled:
             result.insert(0, incident)
+        return self.wrong_deliveries() + result
+
+    def wrong_deliveries(self):
+        """Offene Zwischenfaelle "Falsche Ware": Die Ware einer falschen
+        Bestellung ist da. Sie kommen jeden Tag wieder, bis sie behoben sind."""
+        result = []
+        for order_id, items in self.wrong_orders.items():
+            task_id = WRONG_DELIVERY + order_id
+            if task_id in self.handled or \
+                    any(item["ankunft"] > self.day for item in items):
+                continue
+            task = task_by_id(task_id, self.content)
+            if task:
+                result.append(task)
         return result
 
     # -- Zwischenfaelle -------------------------------------------------------
@@ -2499,7 +2608,7 @@ class GameState:
         muss zusaetzlich gespeichert werden. Hoechstens einer pro Tag, jeder
         nur einmal pro Spieldurchgang."""
         for task_id in self.handled:
-            if is_incident(task_id, self.content):
+            if is_incident(task_id, self.content) and not task_id.startswith(WRONG_DELIVERY):
                 return task_by_id(task_id, self.content)
         rules = self.content["balancing"].get("zwischenfaelle") or {}
         if self.profile is None or self.day < rules.get("ab_tag", 2):
@@ -2519,7 +2628,18 @@ class GameState:
     def prepared_task(self, task):
         """Rack-Auftrag mit "aus_lager": Zu den bereitliegenden Geraeten kommen
         die passenden Geraete aus dem Lager (je Stueck ein Eintrag)."""
-        if task is None or task["typ"] != "rack" or not task.get("aus_lager"):
+        if task is None:
+            return task
+        if task.get("falschlieferung"):
+            items = self.wrong_orders.get(task["falschlieferung"]) or []
+            goods = ", ".join("%d × %s" % (item["menge"], part(item["teil"], self.content)["name"])
+                              for item in items)
+            result = wrong_delivery_task(task["falschlieferung"], self.content, goods)
+            result["falsche_ware"] = [[item["teil"], item["menge"]] for item in items]
+            return result
+        if task["typ"] == "bestellung" and task["id"] in self.returned_orders:
+            return dict(task, kein_sparbonus=True)
+        if task["typ"] != "rack" or not task.get("aus_lager"):
             return task
         devices = list(task.get("geraete") or [])
         start = len(devices)
@@ -4337,7 +4457,7 @@ def day_end_text(day, content=None):
 def reaction_text(task, payload, content=None):
     """Kurzer Satz der Person, die den Auftrag gestellt hat."""
     person = colleague(task["auftraggeber"], content)
-    if not person:
+    if not person or task.get("falschlieferung"):
         return ""
     texts = (person.get("reaktionen") or {}).get("richtig" if payload["richtig"]
                                                   else "falsch") or []
@@ -4401,8 +4521,23 @@ def result_text(task, payload, available=None, content=None):
                      % part(payload["aus_lager"][0], content)["name"])
     if payload.get("lieferung"):
         last = max(item["ankunft"] for item in payload["lieferung"])
-        lines.append("Bestellt für %d €. Die Ware kommt an Arbeitstag %d."
-                     % (payload.get("kosten", 0), last))
+        if payload.get("fehllieferung"):
+            lines.append("Die Bestellung über %d € geht trotzdem raus und kommt an "
+                         "Arbeitstag %d. Dann meldet sich Rainer im Lager wegen der "
+                         "falschen Ware." % (payload.get("kosten", 0), last))
+        else:
+            lines.append("Bestellt für %d €. Die Ware kommt an Arbeitstag %d."
+                         % (payload.get("kosten", 0), last))
+    if payload.get("bonus_verloren"):
+        lines.append("Kein Spar-Bonus: Der ist durch die Falschlieferung verloren.")
+    if payload.get("falschlieferung") and payload["richtig"]:
+        back = payload.get("ruecksendung") or {}
+        if back:
+            lines.append("Zurückgeschickt: %s." % ", ".join(
+                "%d × %s" % (count, part(part_id, content)["name"])
+                for part_id, count in back.items()))
+        lines.append("Rücksendekosten: -%d €. Die Bestellung kommt jetzt wieder, dann "
+                     "ohne Spar-Bonus." % payload.get("ruecksendekosten", 0))
     if payload.get("ersparnis_bonus"):
         lines.append("Sparsam bestellt: +%d € Bonus." % payload["ersparnis_bonus"])
     if payload.get("aus_lager") and task["typ"] == "rack":

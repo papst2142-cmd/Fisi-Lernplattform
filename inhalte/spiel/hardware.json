@@ -114,5 +114,37 @@
     {"id": "usv_1000", "typ": "usv", "name": "USV 1000 W", "he": 2, "gewicht": 24, "watt": 0, "leistung": 1000},
     {"id": "usv_1500", "typ": "usv", "name": "USV 1500 W", "he": 2, "gewicht": 29, "watt": 0, "leistung": 1500},
     {"id": "usv_3000", "typ": "usv", "name": "USV 3000 W", "he": 3, "gewicht": 48, "watt": 0, "leistung": 3000}
-  ]
+  ],
+  "falschlieferung": {
+    "_hinweis": "Zwischenfall nach einer falschen Bestellung: Die Ware kommt trotzdem und muss zurueck. {bestellung} = Titel der Bestellung, {ware} = was geliefert wurde. Die Bestellung kommt erst danach wieder, dann ohne Spar-Bonus. Kosten der Ruecksendung unter 'ruecksendekosten'.",
+    "titel": "Falsche Ware für „{bestellung}“",
+    "auftraggeber": "rainer",
+    "raum": "lager",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "achsen": ["zuverlaessigkeit"],
+    "belohnung": {"geld": 0, "reputation": 2},
+    "ruecksendekosten": 40,
+    "ticket": [
+      "Rainer steht zwischen offenen Kartons: „Die Lieferung für ‚{bestellung}‘ ist da. Gekommen ist: {ware}. Das passt aber nicht zu dem, was gebraucht wird.“",
+      "„Zurückschicken kostet Porto, und der Spar-Bonus für die Bestellung ist damit auch weg. Aber so können wir das nicht einbauen.“"
+    ],
+    "frage": "Wie gehst du mit der falschen Lieferung um?",
+    "optionen": [
+      "Ware prüfen, beim Händler reklamieren, zurückschicken und danach richtig nachbestellen",
+      "Die Ware behalten und trotzdem einbauen, irgendwie wird es schon laufen",
+      "Die Kartons ungeöffnet in den Keller stellen und nichts sagen",
+      "Die Ware entsorgen, dann ist das Lager wieder frei"
+    ],
+    "antwort": "Ware prüfen, beim Händler reklamieren, zurückschicken und danach richtig nachbestellen",
+    "hilfe": [
+      "Falsche Ware gehört nicht ins Lager und schon gar nicht in den Einbau.",
+      "Händler nehmen Ware meist innerhalb einer Frist zurück, wenn sie unbenutzt und originalverpackt ist."
+    ],
+    "erklaerung": [
+      "Falsch bestellte Ware wird geprüft, reklamiert und innerhalb der Rückgabefrist zurückgeschickt. Unter Firmen gibt es kein gesetzliches Widerrufsrecht wie bei Privatkunden, es gelten die Bedingungen des Händlers.",
+      "Danach wird richtig nachbestellt. Einbauen, was nicht passt, gefährdet den Betrieb, und Wegwerfen oder Verstecken verschwendet Geld."
+    ],
+    "suchbegriffe": ["Beschaffung", "Reklamation"]
+  }
 }

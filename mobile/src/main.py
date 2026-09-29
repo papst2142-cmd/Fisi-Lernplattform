@@ -1680,7 +1680,8 @@ def selftest():
         game.game.state.profile = {"name": "Test",
                                    "aussehen": dict(fisi_game.DEFAULT_APPEARANCE)}
         game.render()
-        for task in fisi_game.GAME["aufgaben"] + fisi_game.GAME["zwischenfaelle"]:
+        wrong = [fisi_game.task_by_id(fisi_game.WRONG_DELIVERY + "ssd-automaten")]
+        for task in fisi_game.GAME["aufgaben"] + fisi_game.GAME["zwischenfaelle"] + wrong:
             game.open_ticket(task["id"])
             game._show_help()
             task = game.task

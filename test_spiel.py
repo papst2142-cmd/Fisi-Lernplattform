@@ -506,8 +506,12 @@ class BauteileTest(unittest.TestCase):
         self.assertEqual({item["ankunft"] for item in dear["lieferung"]}, {7, 8})
         self.assertIn("Arbeitstag 8", fg.result_text(task, cheap))
         wrong = fg.evaluate(task, {"s1": 3}, True, levels(100), 6)
-        self.assertNotIn("lieferung", wrong)
+        # Falsch bestellt: Die Ware kommt trotzdem (ohne Spar-Bonus)
+        self.assertTrue(wrong["fehllieferung"])
+        self.assertEqual(wrong["lieferung"][0]["menge"], 3)
+        self.assertNotIn("ersparnis_bonus", wrong)
         self.assertLess(wrong["geld"], 0)
+        self.assertIn("Rainer", fg.result_text(task, wrong))
         self.assertIn("So hätte es gepasst", fg.result_text(task, wrong))
 
     def test_unloesbare_inhalte_werden_gefunden(self):
@@ -1273,6 +1277,74 @@ class StoryTest(unittest.TestCase):
         self.assertNotIn("tim", early)
         self.assertIn("tim", late)
         self.assertIn("karin", late)
+
+
+class FalschlieferungTest(unittest.TestCase):
+    def _play_to_order(self, game, order_id):
+        """Spielt richtig, bis die Bestellung order_id offen ist."""
+        for _day in range(40):
+            for task in game.state.open_tickets():
+                if task["id"] == order_id:
+                    return task
+                game.solve(task["id"], _right_answer(task, game.state), False)
+            game.end_day()
+        self.fail("Bestellung kam nicht dran")
+
+    def test_falsche_bestellung_wird_geliefert_und_muss_zurueck(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            order = self._play_to_order(game, "ssd-automaten")
+            payload = game.solve(order["id"], {"s1": 3}, False)
+            self.assertFalse(payload["richtig"])
+            arrival = payload["lieferung"][0]["ankunft"]
+            task_id = fg.WRONG_DELIVERY + order["id"]
+            # Bis zur Ankunft: kein Zwischenfall, die Bestellung ist gesperrt
+            while game.state.day < arrival:
+                ids = [t["id"] for t in game.state.open_tickets()]
+                self.assertNotIn(task_id, ids)
+                self.assertNotIn(order["id"], ids)
+                for task in game.state.open_tickets():
+                    game.solve(task["id"], _right_answer(task, game.state), False)
+                game.end_day()
+            self.assertEqual(game.state.stock().get("ssd_nvme_500"), 3)
+            tickets = game.state.open_tickets()
+            self.assertEqual(tickets[0]["id"], task_id)
+            self.assertNotIn(order["id"], [t["id"] for t in tickets])
+            incident = game.state.prepared_task(fg.task_by_id(task_id))
+            self.assertIn("3 × NVMe-SSD 500 GB", incident["ticket"])
+            # Verschieben hilft nicht: Er kommt am naechsten Tag wieder
+            game.defer(task_id)
+            for task in game.state.open_tickets():
+                game.solve(task["id"], _right_answer(task, game.state), False)
+            game.end_day()
+            self.assertIn(task_id, [t["id"] for t in game.state.open_tickets()])
+            money = game.state.money
+            done = game.solve(task_id, incident["antwort"], False)
+            self.assertTrue(done["richtig"])
+            self.assertEqual(done["ruecksendung"], {"ssd_nvme_500": 3})
+            self.assertEqual(game.state.stock().get("ssd_nvme_500", 0), 0)
+            self.assertEqual(game.state.money, money + done["geld"])
+            self.assertLess(done["geld"], 0)
+            self.assertIn("Rücksendekosten", fg.result_text(incident, done))
+            # Die Bestellung kommt wieder, jetzt ohne Spar-Bonus
+            for task in game.state.open_tickets():
+                if task["id"] != order["id"]:
+                    game.solve(task["id"], _right_answer(task, game.state), False)
+            again = self._play_to_order(game, order["id"])
+            self.assertTrue(game.state.prepared_task(again).get("kein_sparbonus"))
+            payload = game.solve(order["id"], {"s2": 3}, False)
+            self.assertTrue(payload["richtig"])
+            self.assertTrue(payload["bonus_verloren"])
+            self.assertNotIn("ersparnis_bonus", payload)
+            self.assertIn("Spar-Bonus", fg.result_text(again, payload))
+
+    def test_vorlage_und_pc_handy_gleich(self):
+        task = fg.task_by_id(fg.WRONG_DELIVERY + "ssd-automaten")
+        self.assertIn(task["antwort"], task["optionen"])
+        self.assertTrue(task["zwischenfall"])
+        self.assertEqual(fg.task_site(task), fg.SITE_OFFICE)
+        self.assertIsNone(fg.task_by_id(fg.WRONG_DELIVERY + "gibt-es-nicht"))
 
 
 if __name__ == "__main__":
