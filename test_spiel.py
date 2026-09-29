@@ -1454,5 +1454,33 @@ class MieteTest(unittest.TestCase):
         self.assertTrue(any("kaution_anteil" in p for p in problems))
 
 
+class FarbenTest(unittest.TestCase):
+    """Ab 0.31: Grundfarbe und Hintergrund waehlbar, Fachbereiche fest."""
+
+    def test_presets_aendern_nur_akzente_und_flaechen(self):
+        import fisi_theme as th
+        before = dict(th.CATEGORY_COLOR), dict(th.THEME_COLOR), th.C["cyan"], th.C["green"]
+        try:
+            th.apply_preset("gruen_lime")
+            th.apply_background("anthrazit")
+            self.assertEqual(th.C["accent"], "#34D399")
+            self.assertEqual(th.C["bg"], "#141416")
+            self.assertEqual(th.GRADIENTS["primary"], ("#059669", "#65A30D"))
+            self.assertEqual((dict(th.CATEGORY_COLOR), dict(th.THEME_COLOR), th.C["cyan"],
+                              th.C["green"]), before)
+            # Unbekannte Kennung -> Standard
+            self.assertEqual(th.apply_background("gibt-es-nicht")["id"], "violett")
+        finally:
+            th.apply_preset(th.DEFAULT_PRESET)
+            th.apply_background(th.DEFAULT_BACKGROUND)
+
+    def test_alle_hintergruende_vollstaendig(self):
+        import fisi_theme as th
+        for item in th.BACKGROUNDS:
+            self.assertEqual(set(th.BACKGROUND_FIELDS) - set(item), set(), item["id"])
+        self.assertEqual(len(set(th.BACKGROUND_IDS)), len(th.BACKGROUNDS))
+        self.assertEqual(len(set(th.PRESET_IDS)), len(th.PRESETS))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

@@ -1158,11 +1158,16 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
-        colors = ui.Card("Grundfarbe", [
+        colors = ui.Card("Farben", [
+            ui.label("Grundfarbe"),
             ft.Row([self._color_tile(item) for item in fisi_theme.PRESETS],
                    wrap=True, spacing=10, run_spacing=10),
-            ui.text("Ändert Buttons, Ringe, Balken und Banner. Die Farben der Fachbereiche "
-                    "und von Erfolg, Fehler und Warnung bleiben immer gleich.",
+            ui.label("Hintergrund"),
+            ft.Row([self._background_tile(item) for item in fisi_theme.BACKGROUNDS],
+                   wrap=True, spacing=10, run_spacing=10),
+            ui.text("Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der Hintergrund "
+                    "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
+                    "Fehler und Warnung bleiben immer gleich.",
                     size=11, color=C["muted"]),
         ], accent=C["accent"], subtitle="nur für dieses Gerät")
 
@@ -1220,9 +1225,30 @@ class SettingsScreen(Screen):
             border=ft.Border.all(2, item["accent"] if active else C["border"]),
             on_click=lambda _e, key=item["id"]: self._change_color(key))
 
+    def _background_tile(self, item):
+        """Kachel eines Hintergrunds (wie am PC): Flaeche mit kleiner Karte."""
+        active = item["id"] == fisi_theme.current_background
+        return ft.Container(
+            content=ft.Column([
+                ft.Container(content=ui.dot(C["accent"], 10), width=84, height=28,
+                             bgcolor=item["card"], border_radius=8,
+                             border=ft.Border.all(1, item["border"]),
+                             padding=ft.Padding.only(left=10),
+                             alignment=ft.Alignment.CENTER_LEFT),
+                ft.Text(item["name"], size=12, weight=ft.FontWeight.BOLD,
+                        color=C["text"] if active else item["text_dim"]),
+            ], spacing=8, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            width=104, padding=10, border_radius=12, ink=True, bgcolor=item["bg"],
+            border=ft.Border.all(2, C["accent"] if active else item["border_hi"]),
+            on_click=lambda _e, key=item["id"]: self._change_background(key))
+
     def _change_color(self, preset_id):
         if preset_id != fisi_theme.current_preset:
-            self.app.change_color(preset_id)
+            self.app.change_color(preset_id=preset_id)
+
+    def _change_background(self, background_id):
+        if background_id != fisi_theme.current_background:
+            self.app.change_color(background_id=background_id)
 
     @staticmethod
     def _switch(caption, value, handler):
@@ -1457,7 +1483,6 @@ class FISIMobileApp:
     def __init__(self, page):
         self.page = page
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
-        page.bgcolor = C["bg"]
         page.theme_mode = ft.ThemeMode.DARK
         page.padding = 0
         self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
@@ -1472,6 +1497,7 @@ class FISIMobileApp:
         """Design, Seiten und Navigation (auch zum Neuaufbau nach einem
         Wechsel der Grundfarbe)."""
         page = self.page
+        page.bgcolor = C["bg"]
         page.theme = page.dark_theme = ft.Theme(
             color_scheme=ft.ColorScheme(
                 primary=C["purple"], secondary=C["accent"], surface=C["bg"],
@@ -1499,9 +1525,13 @@ class FISIMobileApp:
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
-    def change_color(self, preset_id):
-        """Neue Grundfarbe speichern und alle Seiten neu aufbauen."""
-        fisi_theme.save_preset(preset_id)
+    def change_color(self, preset_id=None, background_id=None):
+        """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
+        neu aufbauen."""
+        if preset_id:
+            fisi_theme.save_preset(preset_id)
+        if background_id:
+            fisi_theme.save_background(background_id)
         self._build_ui()
         self.show_tab("settings")
 

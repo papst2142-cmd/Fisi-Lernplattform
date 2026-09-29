@@ -1956,6 +1956,30 @@ class ColorTile(ctk.CTkFrame):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
 
 
+class BackgroundTile(ctk.CTkFrame):
+    """Kachel eines Hintergrunds: Flaeche mit einer kleinen Karte darauf,
+    ein Punkt in der Grundfarbe und der Name. Gewaehlt = umrandet."""
+
+    def __init__(self, parent, item, active, command):
+        super().__init__(parent, fg_color=item["bg"], corner_radius=12, border_width=2,
+                         border_color=C["accent"] if active else item["border_hi"],
+                         cursor="hand2")
+        card = ctk.CTkFrame(self, fg_color=item["card"], corner_radius=8, border_width=1,
+                            border_color=item["border"], width=120, height=34)
+        card.pack(padx=12, pady=(12, 8))
+        card.pack_propagate(False)
+        dot = ctk.CTkLabel(card, text="", image=ctk_image(circle_image(10, fill=C["accent"]),
+                                                          10, 10), fg_color=item["card"],
+                           width=10, height=10)
+        dot.place(x=12, rely=0.5, anchor="w")
+        name = ctk.CTkLabel(self, text=item["name"], font=F["small_bold"],
+                            text_color=C["text"] if active else item["text_dim"],
+                            fg_color=item["bg"])
+        name.pack(padx=10, pady=(0, 12))
+        for widget in (self, card, dot, name):
+            widget.bind("<Button-1>", lambda _e: command(item["id"]))
+
+
 class SettingsView(View):
     def build(self):
         updates = Card(self.content, title="Updates", accent=C["accent2"],
@@ -1977,17 +2001,25 @@ class SettingsView(View):
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
 
-        colors = Card(self.content, title="Grundfarbe", accent=C["accent"],
+        colors = Card(self.content, title="Farben", accent=C["accent"],
                       subtitle="nur für dieses Gerät")
         colors.pack(fill="x", pady=(14, 0))
+        make_label(colors.body, "GRUNDFARBE", font=F["label"], fg=C["muted"]).pack(anchor="w")
         tiles = transparent_frame(colors.body)
-        tiles.pack(anchor="w")
+        tiles.pack(anchor="w", pady=(6, 14))
         for index, item in enumerate(fisi_theme.PRESETS):
             ColorTile(tiles, item, item["id"] == fisi_theme.current_preset,
                       self._change_color).grid(row=0, column=index, padx=(0, 10))
+        make_label(colors.body, "HINTERGRUND", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        tiles = transparent_frame(colors.body)
+        tiles.pack(anchor="w", pady=(6, 0))
+        for index, item in enumerate(fisi_theme.BACKGROUNDS):
+            BackgroundTile(tiles, item, item["id"] == fisi_theme.current_background,
+                           self._change_background).grid(row=0, column=index, padx=(0, 10))
         make_label(colors.body,
-                   "Ändert Buttons, Ringe, Balken und Banner. Die Farben der "
-                   "Fachbereiche und von Erfolg, Fehler und Warnung bleiben immer gleich.",
+                   "Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der Hintergrund "
+                   "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
+                   "Fehler und Warnung bleiben immer gleich.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
@@ -2112,7 +2144,11 @@ class SettingsView(View):
     def _change_color(self, preset_id):
         if preset_id != fisi_theme.current_preset:
             # Nach dem aktuellen Klick neu aufbauen (die Kachel wird zerstoert)
-            self.after(10, lambda: self.app.change_color(preset_id))
+            self.after(10, lambda: self.app.change_color(preset_id=preset_id))
+
+    def _change_background(self, background_id):
+        if background_id != fisi_theme.current_background:
+            self.after(10, lambda: self.app.change_color(background_id=background_id))
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -2611,10 +2647,15 @@ class FISIApp:
 
         self.current = None
 
-    def change_color(self, preset_id):
-        """Neue Grundfarbe speichern und die Oberflaeche neu aufbauen - alle
-        Ansichten werden mit den neuen Akzentfarben neu gezeichnet."""
-        fisi_theme.save_preset(preset_id)
+    def change_color(self, preset_id=None, background_id=None):
+        """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
+        neu aufbauen - alle Ansichten werden mit den neuen Farben gezeichnet."""
+        if preset_id:
+            fisi_theme.save_preset(preset_id)
+        if background_id:
+            fisi_theme.save_background(background_id)
+            self.root.configure(fg_color=C["bg"])
+            self._setup_ttk_style()
         current = self.current or "settings"
         old = self.container
         # Erst ausblenden, damit die neue Oberflaeche gleich die volle Groesse
@@ -2764,6 +2805,11 @@ def _run_selftest(root, app, log_path):
                 app.change_color("gruen_lime")
                 root.update()
                 app.change_color(original)
+                root.update()
+                original = fisi_theme.current_background
+                app.change_color(background_id="anthrazit")
+                root.update()
+                app.change_color(background_id=original)
                 root.update()
                 dialog = UpdateDialog(app, fisi_update.UpdateInfo(
                     "9.9", "Starttest", fisi_update.RELEASES_PAGE))

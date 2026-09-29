@@ -104,6 +104,42 @@ PRESETS = [
 PRESET_IDS = [item["id"] for item in PRESETS]
 current_preset = DEFAULT_PRESET
 
+# Hintergrund (ab 0.31): Flaechen, Rahmen und die gedaempften Nebentexte.
+# Ueberschriften und Fliesstexte ("text", "text_soft") bleiben gleich, alle
+# Hintergruende sind dunkel genug dafuer. Lokal je Geraet ("hintergrund").
+BACKGROUND_KEY = "hintergrund"
+DEFAULT_BACKGROUND = "violett"
+BACKGROUND_FIELDS = ("bg", "sidebar", "card", "card_alt", "card_hi", "border",
+                     "border_hi", "ring_bg", "text_dim", "muted")
+BACKGROUNDS = [
+    {"id": "violett", "name": "Violett",
+     "bg": "#120A24", "sidebar": "#0C0619", "card": "#1B1031", "card_alt": "#241541",
+     "card_hi": "#301C57", "border": "#2F1D52", "border_hi": "#553289",
+     "ring_bg": "#2C1A4D", "text_dim": "#A794C6", "muted": "#7D6B9C"},
+    {"id": "nachtblau", "name": "Nachtblau",
+     "bg": "#0B1224", "sidebar": "#070C19", "card": "#111B33", "card_alt": "#172441",
+     "card_hi": "#1E2F57", "border": "#1F2E52", "border_hi": "#33518A",
+     "ring_bg": "#1A2848", "text_dim": "#94A3C6", "muted": "#6B7A9C"},
+    {"id": "tannengruen", "name": "Tannengrün",
+     "bg": "#0A1814", "sidebar": "#06100D", "card": "#10231D", "card_alt": "#152D26",
+     "card_hi": "#1C3A31", "border": "#1D3A31", "border_hi": "#2F5F50",
+     "ring_bg": "#183229", "text_dim": "#93BBAE", "muted": "#6A8F83"},
+    {"id": "aubergine", "name": "Aubergine",
+     "bg": "#1A0A14", "sidebar": "#11060D", "card": "#26101D", "card_alt": "#311527",
+     "card_hi": "#401C33", "border": "#3D1D31", "border_hi": "#6A3255",
+     "ring_bg": "#3A1A2E", "text_dim": "#C294B0", "muted": "#99708A"},
+    {"id": "anthrazit", "name": "Anthrazit",
+     "bg": "#141416", "sidebar": "#0D0D0F", "card": "#1C1C20", "card_alt": "#242429",
+     "card_hi": "#2E2E35", "border": "#2C2C33", "border_hi": "#4A4A55",
+     "ring_bg": "#2A2A31", "text_dim": "#A3A3B0", "muted": "#767684"},
+    {"id": "schwarz", "name": "Schwarz",
+     "bg": "#050507", "sidebar": "#000000", "card": "#111114", "card_alt": "#18181C",
+     "card_hi": "#222228", "border": "#25252B", "border_hi": "#3E3E48",
+     "ring_bg": "#1F1F25", "text_dim": "#A3A3B0", "muted": "#737380"},
+]
+BACKGROUND_IDS = [item["id"] for item in BACKGROUNDS]
+current_background = DEFAULT_BACKGROUND
+
 
 def preset(preset_id):
     """Das Preset zur Kennung (unbekannt -> Standard Cyan/Pink)."""
@@ -124,6 +160,40 @@ def apply_preset(preset_id):
     GRADIENTS["accent"] = item["verlauf"]
     GRADIENTS["hero"] = item["hero"]
     current_preset = item["id"]
+    return item
+
+
+def background(background_id):
+    """Der Hintergrund zur Kennung (unbekannt -> Standard Violett)."""
+    for item in BACKGROUNDS:
+        if item["id"] == background_id:
+            return item
+    return BACKGROUNDS[0]
+
+
+def apply_background(background_id):
+    """Setzt die Hintergrund-Farben in C (wie apply_preset)."""
+    global current_background
+    item = background(background_id)
+    for key in BACKGROUND_FIELDS:
+        C[key] = item[key]
+    current_background = item["id"]
+    return item
+
+
+def saved_background():
+    import fisi_update
+    value = fisi_update.load_settings().get(BACKGROUND_KEY, DEFAULT_BACKGROUND)
+    return value if value in BACKGROUND_IDS else DEFAULT_BACKGROUND
+
+
+def save_background(background_id):
+    """Speichert den Hintergrund (nur lokal) und wendet ihn an."""
+    import fisi_update
+    item = apply_background(background_id)
+    settings = fisi_update.load_settings()
+    settings[BACKGROUND_KEY] = item["id"]
+    fisi_update.save_settings(settings)
     return item
 
 
@@ -191,5 +261,7 @@ def darken(color, amount=0.15):
 # Oberflaeche gebaut wird.
 try:
     apply_preset(saved_preset())
+    apply_background(saved_background())
 except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start verhindern
     apply_preset(DEFAULT_PRESET)
+    apply_background(DEFAULT_BACKGROUND)
