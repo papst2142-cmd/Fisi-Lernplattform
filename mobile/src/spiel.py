@@ -2495,13 +2495,14 @@ class GameScreen:
         ], accent=C["green"])]
         following = state.next_stage()
         if following is None:
-            more = [ui.text("Mehr Ausbau gibt es in einem der nächsten Updates.", size=14,
-                            color=C["text_soft"])]
+            more = [ui.text("Der Gewerbehof ist fertig ausgebaut. Mehr Ausbau gibt es in "
+                            "einem der nächsten Updates.", size=14, color=C["text_soft"])]
         else:
             button = ui.GradientButton("Ausbauen", lambda _e: self._expand(following),
                                        expand=True)
             button.set_enabled(state.money >= following["preis"])
-            more = [ui.text("%s: %s" % (following["name"], following["text"]), size=14,
+            more = [ui.text("Stufe %d · %s: %s" % (following["stufe"], following["name"],
+                                                  following["text"]), size=14,
                             color=C["text_soft"]),
                     ui.text("Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
                             "Arbeitstag" % (euro(following["preis"]), len(following["plaetze"]),
@@ -2509,7 +2510,49 @@ class GameScreen:
                             size=12, color=C["text_dim"]),
                     ft.Row([button])]
         result.append(ui.Card("Ausbau", more, accent=C["accent"]))
+        rooms = self._firm_rooms(state)
+        if rooms:
+            result.append(rooms)
         return result
+
+    def _firm_rooms(self, state):
+        """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""
+        rooms = fg.room_status(state)
+        if not rooms:
+            return None
+        boxes = [ui.text("Frei wählbar, sobald die Ausbaustufe erreicht ist.", size=12,
+                         color=C["text_dim"])]
+        for item in rooms:
+            parts = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                     ui.text(item["vorteil"], size=13, color=C["text_soft"]),
+                     ui.text(fg.room_status_text(item), size=12,
+                             color=C["green"] if item["gebaut"] else C["text_dim"])]
+            if item["gebaut"]:
+                parts.append(ui.text("ausgebaut", size=13, weight=ft.FontWeight.BOLD,
+                                     color=C["green"]))
+            elif state.firm["stufe"] < item["ab_stufe"]:
+                parts.append(ui.text("ab Stufe %d" % item["ab_stufe"], size=13,
+                                     weight=ft.FontWeight.BOLD, color=C["muted"]))
+            else:
+                button = ui.GradientButton("Ausbauen", lambda _e, i=item: self._build_room(i),
+                                           height=38)
+                button.set_enabled(not item["problem"])
+                parts.append(ft.Row([button]))
+            boxes.append(self._person_box(parts))
+        return ui.Card("Sonderräume", boxes, accent=C["purple"])
+
+    def _build_room(self, item):
+        def confirmed():
+            try:
+                self.game.build_room(item["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Ausbauen", "„%s“ für %s ausbauen? Die Nebenkosten steigen um %s "
+                         "pro Arbeitstag." % (item["name"], euro(item["preis"]),
+                                              euro(item["nebenkosten"])), confirmed)
 
     def _expand(self, stage):
         def confirmed():

@@ -1873,6 +1873,14 @@ def selftest():
         game._fill_firm()
         game.firm_tab = "finanzen"
         game._fill_firm()
+        # Gebaeude (ab 0.36): Stufe 3 mit Leerstand, Stufe 5 mit Sonderraeumen
+        game.firm_tab = "gebaeude"
+        for number, rooms in ((3, []), (5, ["lager", "serverraum"])):
+            state.firm["stufe"] = number
+            state.rooms = {room_id: {"raum": room_id} for room_id in rooms}
+            game._fill_firm()
+            game.site_key = "buero"
+            game._fill_site()
         game.render()
         game.site_key = "buero"
         game._fill_site()
