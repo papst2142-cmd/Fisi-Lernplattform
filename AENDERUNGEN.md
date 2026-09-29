@@ -4,6 +4,32 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.35
+
+- **Kundenprojekte:** Unter Firma gibt es den neuen Reiter „Projekte“. Alle
+  drei Arbeitstage kommt eine Ausschreibung aus den 50 Testprojekten, sie
+  gilt fünf Tage. Du kalkulierst ein Angebot (Projektarbeit plus Material,
+  Gewinnzuschlag frei wählbar). Bei Zuschlag gibt es 30 % Anzahlung, den
+  Rest bei Abschluss.
+- **Team zusammenstellen:** Du teilst Mitarbeiter und dich selbst einem
+  Projekt zu. Das Projekt läuft über mehrere Tage mit Fortschrittsbalken und
+  Phasen (Erledigt, Jetzt, Danach). Es kann Rückschläge geben, und bei
+  Verspätung zieht der Kunde etwas ab. Wer im Projekt arbeitet, macht keine
+  Kundentickets und bringt keinen Routineumsatz.
+- **Lernbonus:** Hast du ein Testprojekt im Lernbereich schon bearbeitet,
+  arbeitet dein Team daran 20 % schneller.
+- **Fünf neue Mitbewerber:** Neben Bitweiche bieten jetzt auch NetzWerk
+  Kranich, Falkenstein IT-Security, Byteschmiede Hartmann & Söhne,
+  Talheimer Systemhaus und CloudKontor Nord mit, jede Firma mit eigenem
+  Preisstil. Das günstigste Angebot gewinnt. Unter Finanzen steht, gegen
+  wen du verloren hast.
+- Finanzen: neue Einnahmen „Projekte“ und Ausgaben „Projektmaterial“.
+- **Fehlerbehebung PC:** Beim Wechsel von Grundfarbe oder Hintergrund
+  flackert es nicht mehr. Die Oberfläche wird im Hintergrund neu aufgebaut
+  und dann in einem Schritt getauscht.
+- Bitte PC und Handy beide auf 0.35 aktualisieren, damit der Spielstand
+  überall gleich gerechnet wird.
+
 ## 0.34
 
 - **Angebote gegen Bitweiche:** Unter Firma gibt es vorne den neuen Reiter
