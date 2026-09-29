@@ -4373,7 +4373,7 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
             continue
         px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
 
-        s.append(_text(px_, py_ + 0.62, person["name"].split()[0], "person",
+        s.append(_text(px_, py_ + 0.62, short_name(person), "person",
                        C["text_soft"], anchor="c"))
         if person["id"] in quests:
             s.append(_oval(px_ + 0.25, py_ - 1.15, 0.68, 0.68, C["green"], C["card"], 0.05))
@@ -4628,10 +4628,19 @@ def warehouse_summary(state, content=None):
     return " ".join(parts) or "Das Lager ist leer, es ist nichts bestellt."
 
 
+def short_name(person):
+    """Kurzname im Grundriss und in Meldungen: der Vorname, bei einem Titel
+    wie "Dr." Titel und Nachname ("Dr. Wendt")."""
+    parts = person["name"].split()
+    if len(parts) > 2 and parts[0].endswith("."):
+        return "%s %s" % (parts[0], parts[-1])
+    return parts[0]
+
+
 def office_message(position, person, quests, content=None, state=None):
     """Text unter der Grossansicht: (Ueberschrift, Text) je nach Standort."""
     if person:
-        first = person["name"].split()[0]
+        first = short_name(person)
         tasks = quests.get(person["id"]) or []
         if tasks:
             more = " (und %d weitere)" % (len(tasks) - 1) if len(tasks) > 1 else ""
@@ -5269,7 +5278,7 @@ def reaction_text(task, payload, content=None):
     if not texts:
         return ""
     text = texts[int(_dice(task["id"], payload.get("tag", 0), "reaktion") * len(texts))]
-    return "%s: „%s“" % (person["name"].split()[0], text)
+    return "%s: „%s“" % (short_name(person), text)
 
 
 def result_text(task, payload, available=None, content=None):
