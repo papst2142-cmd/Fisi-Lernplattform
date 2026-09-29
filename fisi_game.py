@@ -4213,8 +4213,7 @@ def inquiries_for_day(state, day, content=None):
         low, high = article["preis"]
         price = int(round((low + _dice(seed, day, salt + "preis") * (high - low)) / 5.0) * 5)
         count = _between(seed, day, salt + "menge", *article["menge"])
-        kind = rules["arten"][customer["art"]]
-        market = _between(seed, day, salt + "markt", kind["von"], kind["bis"])
+        market, mood = _market_markup(rules, rules["arten"][customer["art"]], seed, day, salt)
         delivery = _between(seed, day, salt + "lieferzeit", rules["lieferzeit"]["von"],
                             rules["lieferzeit"]["bis"])
         text = _pick(rules["texte"], seed, day, salt + "text").format(
@@ -4223,10 +4222,30 @@ def inquiries_for_day(state, day, content=None):
         inquiry_id = "%s%d:%d" % (INQUIRY_PREFIX, day, number + 1)
         result.append({"id": inquiry_id, "tag": day, "kunde": customer,
                        "artikel": article["name"], "menge": count, "einkaufspreis": price,
-                       "lieferzeit": delivery, "markt": market,
+                       "lieferzeit": delivery, "markt": market, "laune": mood,
                        "text": "%s\n\n%s" % (text, customer["satz"]),
                        "ergebnis": state.offers.get(inquiry_id)})
     return result
+
+
+def _market_markup(rules, kind, seed, day, salt):
+    """Bitweiches Gewinnzuschlag fuer eine Anfrage: (prozent, laune).
+    Meist aus der Spanne der Kundenart (die Mitte ist wahrscheinlicher),
+    manchmal ein Kampfpreis oder ein teures Angebot, weil Bitweiche
+    ausgelastet ist - so ist kein Zuschlag sicher."""
+    low, high = kind["von"], kind["bis"]
+    middle = (_dice(seed, day, salt + "markt") + _dice(seed, day, salt + "markt2")) / 2.0
+    market = low + min(high - low, int(middle * (high - low + 1)))
+    moods = rules.get("laune") or {}
+    roll = _dice(seed, day, salt + "laune")
+    fight = moods.get("kampfpreis")
+    busy = moods.get("ausgelastet")
+    if fight and roll < fight["chance"]:
+        return _between(seed, day, salt + "kampf", fight["von"], fight["bis"]), "kampfpreis"
+    if busy and roll > 1 - busy["chance"]:
+        return market + _between(seed, day, salt + "teuer", busy["plus_von"],
+                                 busy["plus_bis"]), "ausgelastet"
+    return market, ""
 
 
 def inquiry_task(inquiry, markup, content=None):
@@ -4282,6 +4301,7 @@ def offer_result(state, inquiry, markup, answer, content=None):
                "antwort": dict(answer or {}), "richtig": right,
                "selbstkosten": numbers["selbstkosten"], "netto": numbers["netto"],
                "marktpreis": market, "markt_zuschlag": inquiry["markt"],
+               "laune": inquiry.get("laune", ""),
                "vorteil": advantage, "gewonnen": won,
                "grund": "" if won else ("rechenfehler" if not right else "preis"),
                "geld": int(round(numbers["gewinn"])) if won else 0,
@@ -4294,6 +4314,14 @@ def offer_result(state, inquiry, markup, answer, content=None):
 
 def offer_result_text(payload, content=None):
     """(Ueberschrift, Text) nach dem Abschicken eines Angebots."""
+    head, text = _offer_result_text(payload, content)
+    mood = (offer_rules(content).get("laune") or {}).get(payload.get("laune") or "")
+    if mood:
+        text += " " + mood["text"]
+    return head, text
+
+
+def _offer_result_text(payload, content=None):
     customer = firm_customer(payload.get("kunde"), content) or {"name": "Der Kunde"}
     own = _euro(payload["netto"])
     market = _euro(payload["marktpreis"])
@@ -4486,6 +4514,9 @@ def _validate_orders(rules):
     for key, kind in offers.get("arten", {}).items():
         if not 0 <= kind["von"] <= kind["bis"] <= 100:
             problems.append("Spiel-Firma: Spanne der Kundenart '%s' ungueltig" % key)
+    for key, mood in (offers.get("laune") or {}).items():
+        if not 0 <= mood.get("chance", 0) <= 0.5 or not mood.get("text"):
+            problems.append("Spiel-Firma: Laune '%s' ungueltig" % key)
     markups = offers.get("zuschlaege") or []
     if not markups or any(not 0 <= value <= 100 for value in markups):
         problems.append("Spiel-Firma: Gewinnzuschlaege fehlen oder sind ungueltig")

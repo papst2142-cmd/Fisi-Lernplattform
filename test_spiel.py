@@ -2073,19 +2073,47 @@ class AuftraegeTest(unittest.TestCase):
             self.assertEqual(first, game.reload().inquiries())
             self.assertNotEqual(first[0]["kunde"]["id"], first[1]["kunde"]["id"])
             for item in first:
-                kind = fg.GAME["firma"]["angebote"]["arten"][item["kunde"]["art"]]
-                self.assertTrue(kind["von"] <= item["markt"] <= kind["bis"])
                 self.assertIn(item["artikel"], item["text"])
             game.end_day()
             self.assertNotEqual([item["id"] for item in game.state.inquiries()],
                                 [item["id"] for item in first])
 
+    def test_bitweiche_zuschlag_unberechenbar(self):
+        """Meist aus der Spanne der Kundenart, manchmal Kampfpreis oder teuer:
+        kein Zuschlag gewinnt oder verliert immer."""
+        with TempDB() as db:
+            state = self._founded(db).state
+            rules = fg.GAME["firma"]["angebote"]
+            seen = {}
+            for day in range(state.day, state.day + 400):
+                for item in fg.inquiries_for_day(state, day, self.content):
+                    seen.setdefault(item["laune"], []).append(item["markt"])
+                    kind = rules["arten"][item["kunde"]["art"]]
+                    if not item["laune"]:
+                        self.assertTrue(kind["von"] <= item["markt"] <= kind["bis"])
+            self.assertEqual(set(seen), {"", "kampfpreis", "ausgelastet"})
+            fight = rules["laune"]["kampfpreis"]
+            self.assertTrue(all(fight["von"] <= value <= fight["bis"]
+                                for value in seen["kampfpreis"]))
+            markets = [value for values in seen.values() for value in values]
+            lowest, highest = min(rules["zuschlaege"]), max(rules["zuschlaege"])
+            self.assertTrue(any(value < lowest for value in markets))     # 5 % kann verlieren
+            self.assertTrue(any(value >= highest for value in markets))   # 30 % kann gewinnen
+            payload = {"netto": 100.0, "marktpreis": 90.0, "markt_zuschlag": 2,
+                       "zuschlag": 10, "gewonnen": False, "grund": "preis",
+                       "laune": "kampfpreis", "vorteil": 0}
+            self.assertIn("Kampfpreis", fg.offer_result_text(payload)[1])
+
     def test_angebot_gewonnen_und_verloren(self):
+        rules = self.content["firma"]["angebote"]
+        rules["laune"] = {}
+        for kind in rules["arten"].values():
+            kind["von"] = kind["bis"] = 15
         with TempDB() as db:
             game = self._founded(db)
             low, high = game.state.inquiries()
             money = game.state.money
-            # Kleinster Zuschlag liegt immer unter Bitweiche (ab 5 %)
+            # Bitweiche nimmt hier immer 15 %
             payload = game.send_offer(low["id"], 5, self._answer(low, 5))
             self.assertTrue(payload["gewonnen"])
             numbers = fg.offer_numbers(low, 5)
@@ -2094,7 +2122,7 @@ class AuftraegeTest(unittest.TestCase):
             self.assertTrue(game.state.inquiries()[0]["ergebnis"]["gewonnen"])
             with self.assertRaises(ValueError):
                 game.send_offer(low["id"], 5, self._answer(low, 5))
-            # 30 % ist immer teurer als Bitweiche (hoechstens 20 % + 3 %)
+            # 30 % ist teurer als Bitweiche (15 % + hoechstens 3 % Vorteil)
             payload = game.send_offer(high["id"], 30, self._answer(high, 30))
             self.assertFalse(payload["gewonnen"])
             self.assertEqual(payload["grund"], "preis")

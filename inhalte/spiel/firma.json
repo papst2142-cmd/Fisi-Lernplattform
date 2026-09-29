@@ -6,7 +6,7 @@
     "Umsatz eines Mitarbeiters pro Arbeitstag = basis + je_punkt * Summe seiner Werte (nicht waehrend einer Weiterbildung).",
     "Bewerber werden aus Firmenname, Gruendungstag und Bewerbungsrunde berechnet - auf PC und Handy gleich.",
     "Ab 0.34: 'kunden' sind die Kunden der eigenen Firma (Anfragen und Kundentickets). 'art' legt fest, wie knapp Bitweiche kalkuliert (angebote.arten).",
-    "Angebote: Bitweiche bietet Selbstkosten x (1 + Zuschlag), der Zuschlag wird je Anfrage aus der Spanne der Kundenart gewuerfelt (ganze Prozent). Gewonnen, wenn der eigene Nettopreis nicht hoeher ist; ab vorteil.ab_kundenzufriedenheit darf er vorteil.prozent darueber liegen.",
+    "Angebote: Bitweiche bietet Selbstkosten x (1 + Zuschlag). Der Zuschlag wird je Anfrage aus der Spanne der Kundenart gewuerfelt (Mitte wahrscheinlicher). Dazu die Laune von Bitweiche: mit laune.kampfpreis.chance ein Kampfpreis (von-bis), mit laune.ausgelastet.chance ein Aufschlag (plus_von-plus_bis). Gewonnen, wenn der eigene Nettopreis nicht hoeher ist; ab vorteil.ab_kundenzufriedenheit darf er vorteil.prozent darueber liegen.",
     "Kundentickets: Chance in Prozent = chance.basis + chance.je_punkt * (Wert - Anforderung), begrenzt auf chance.min bis chance.max. Anforderung und Honorar je Schwierigkeit in tickets.stufen."
   ],
   "gruendung": {
@@ -759,18 +759,18 @@
     "arten": {
       "preisbewusst": {
         "name": "preisbewusst",
-        "von": 5,
-        "bis": 12
+        "von": 3,
+        "bis": 16
       },
       "normal": {
         "name": "normal",
-        "von": 10,
-        "bis": 20
+        "von": 6,
+        "bis": 26
       },
       "talbahn": {
         "name": "Talbahn (Großkunde von Bitweiche)",
-        "von": 6,
-        "bis": 14
+        "von": 4,
+        "bis": 20
       }
     },
     "texte": [
@@ -1049,8 +1049,22 @@
       "Handlungskosten = Einkaufspreis gesamt × Handlungskostenzuschlag. Selbstkosten = Einkaufspreis gesamt + Handlungskosten.",
       "Gewinn = Selbstkosten × Gewinnzuschlag. Nettoverkaufspreis = Selbstkosten + Gewinn.",
       "Umsatzsteuer = Nettoverkaufspreis × 19 %. Bruttoverkaufspreis = Nettoverkaufspreis + Umsatzsteuer.",
-      "Bitweiche rechnet mit denselben Selbstkosten. Je knapper dein Gewinnzuschlag, desto eher bekommst du den Auftrag, desto weniger bleibt aber hängen."
-    ]
+      "Bitweiche rechnet mit denselben Selbstkosten, lässt sich aber nicht in die Karten schauen: Meist liegt ihr Zuschlag in der üblichen Spanne des Kunden, manchmal gibt es einen Kampfpreis, manchmal sind sie ausgelastet und teuer. Je knapper dein Zuschlag, desto eher bekommst du den Auftrag, desto weniger bleibt aber hängen."
+    ],
+    "laune": {
+      "kampfpreis": {
+        "chance": 0.12,
+        "von": 0,
+        "bis": 4,
+        "text": "Bitweiche wollte den Auftrag unbedingt und hat einen Kampfpreis gemacht."
+      },
+      "ausgelastet": {
+        "chance": 0.12,
+        "plus_von": 10,
+        "plus_bis": 20,
+        "text": "Bitweiche ist gerade ausgelastet und hat nur ein teures Angebot geschickt."
+      }
+    }
   },
   "tickets": {
     "grundzahl": 1,
