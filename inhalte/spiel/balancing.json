@@ -23,6 +23,7 @@
   "terminal_fehlgriffe_erlaubt": 1,
   "gefahr_verlust": 4,
   "systematik_bonus": 2,
+  "zwischenfaelle": {"chance": 0.4, "ab_tag": 2},
   "prioritaet_faktor": {"niedrig": 0.5, "normal": 1, "hoch": 1.5, "kritisch": 2},
   "wissen": {
     "letzte_antworten": 200,

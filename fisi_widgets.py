@@ -407,6 +407,29 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
                                         **fill_opts)
         canvas.create_line(x, bottom - size * 0.2, x, bottom, **opts)
 
+    elif name == "home":          # Zuhause (Haus mit Dach und Tuer)
+        roof = top + size * 0.42
+        canvas.create_line(left + size * 0.02, roof + size * 0.04, x, top + size * 0.04,
+                           right - size * 0.02, roof + size * 0.04, **opts)
+        canvas.create_rectangle(left + size * 0.16, roof, right - size * 0.16, bottom,
+                                fill="", **line_opts)
+        canvas.create_rectangle(x - size * 0.1, bottom - size * 0.3, x + size * 0.1,
+                                bottom, **fill_opts)
+
+    elif name == "station":       # Kunde (Zug von vorne)
+        canvas.create_rectangle(left + size * 0.16, top + size * 0.04, right - size * 0.16,
+                                bottom - size * 0.2, fill="", **line_opts)
+        canvas.create_rectangle(left + size * 0.3, top + size * 0.18, right - size * 0.3,
+                                top + size * 0.42, **fill_opts)
+        dot = size * 0.07
+        for dx in (0.34, 0.66):
+            px_, py_ = left + size * dx, bottom - size * 0.38
+            canvas.create_oval(px_ - dot, py_ - dot, px_ + dot, py_ + dot, **fill_opts)
+        canvas.create_line(left + size * 0.22, bottom, left + size * 0.34,
+                           bottom - size * 0.2, **opts)
+        canvas.create_line(right - size * 0.22, bottom, right - size * 0.34,
+                           bottom - size * 0.2, **opts)
+
     elif name == "game":          # Spiel (Gamepad)
         canvas.create_rectangle(left, top + size * 0.2, right, bottom - size * 0.16,
                                 fill="", **line_opts)

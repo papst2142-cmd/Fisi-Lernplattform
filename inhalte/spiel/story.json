@@ -8,8 +8,43 @@
     "Feierabend! Das Gehalt für den Tag ist auf deinem Konto.",
     "Sabine Kranich schaut kurz rein: „Danke für heute. Morgen geht es weiter.“"
   ],
+  "feierabend": [
+    ["Feierabend! Das Gehalt für den Tag ist auf deinem Konto.", "Sabine Kranich schaut kurz rein: „Danke für heute. Morgen geht es weiter.“ Du gehst nach Hause."],
+    ["Feierabend! Das Gehalt ist überwiesen.", "Jonas ruft dir hinterher: „Schönen Abend! Und nicht mehr an Tickets denken!“ Du denkst auf dem ganzen Heimweg an Tickets."],
+    ["Geschafft für heute. Das Gehalt ist da.", "Im Flur riecht es nach Mehmets Lötkolben. Draußen riecht es nach Feierabend. Du gehst nach Hause."],
+    ["Feierabend! Das Gehalt ist auf dem Konto.", "Ulla sagt den Servern gute Nacht. Du sagst Ulla gute Nacht und fährst mit der Talbahn nach Hause. Pünktlich, fast."],
+    ["Das war's für heute. Gehalt ist da.", "Frank hat schon nachgerechnet: Es stimmt auf den Cent. Du machst dich auf den Heimweg."]
+  ],
+  "schlafen": [
+    ["Du schläfst tief und fest und träumst von grünen Logs. Morgen früh geht es weiter."],
+    ["Gute Nacht! Irgendwo im Traum fragt Tim: „Warum?“ Du schläfst trotzdem gut."],
+    ["Du schläfst ein, noch bevor du bis zum dritten Subnetz gezählt hast."],
+    ["Draußen fährt die letzte Talbahn vorbei. Du bist schon eingeschlafen."]
+  ],
+  "tage": {
+    "12": [
+      "Sabine stellt zwei neue Gesichter vor: „Das ist Tim, unser neuer Azubi. Er fragt viel, also erklär ihm alles gut. Und Karin Albers ist ab jetzt unsere Datenschutzbeauftragte.“",
+      "Dann die große Nachricht: „Die Talbahn baut einen neuen Bahnhof, Talheim-Nord. Und wir statten ihn aus. Von der ersten Bestellung bis zur Eröffnung!“"
+    ],
+    "13": [
+      "Horst Grabowski von der Leitstelle hat angerufen: „Ich hab gehört, ihr macht jetzt Bahnhöfe. Dann will ich mal sehen, ob das mit den Computern da oben auch klappt.“",
+      "Er schickt dir seinen IP-Wunschzettel. Handschriftlich."
+    ],
+    "14": [
+      "Rainer meldet: Die Technik für Talheim-Nord ist im Lager. „Jeder Karton hat einen Namen. Der große heißt USV.“",
+      "Heute wird in Talheim-Nord der Netzwerkschrank eingerichtet. Tim wollte helfen und hat dafür schon mal ein paar Kabel umgesteckt."
+    ],
+    "15": [
+      "Heute ist Eröffnung in Talheim-Nord! Die Talbahn hat Wimpel bestellt, Sabine hat Kekse gebacken.",
+      "Vorher müssen noch der letzte Kassen-PC, die Fahrgastzahlen und die Übergabe fertig werden."
+    ],
+    "16": [
+      "Talheim-Nord läuft. Horst hat eine Postkarte geschickt: „Funktioniert. Hätte ich nicht gedacht.“",
+      "Sabine lächelt: „Wenn das so weitergeht, leitest du irgendwann deine eigene Firma.“"
+    ]
+  },
   "alle_erledigt": [
-    "Alle Tickets sind erledigt. Mit dem nächsten Update kommt Bewegung ins Haus: neue Kolleginnen und Kollegen, überraschende Zwischenfälle und mehr Geschichte rund um die Talbahn.",
-    "Bis dahin: weiterlernen, denn dein Wissensstand wirkt sich auf alle kommenden Aufträge aus."
+    "Alle Tickets sind erledigt. Talheim-Nord ist eröffnet, die Talbahn ist zufrieden, und Horst hat sogar gelächelt. Fast.",
+    "Mit einem der nächsten Updates wartet vielleicht dein eigenes Unternehmen. Bis dahin: weiterlernen, Geld zur Seite legen und die Wohnung gemütlich machen."
   ]
 }

@@ -36,6 +36,8 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "formular": "Bitte fülle zuerst die Felder aus.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
               "diagnose": "Bitte wähle Ursache und Maßnahme."}
+# Beschriftung "Zurueck ..." je nachdem, wo ein Auftrag angenommen wurde
+RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -114,14 +116,16 @@ class ChoiceRow(ctk.CTkFrame):
 
 
 class FloorPlan(tk.Canvas):
-    """Das Buerogebaeude von oben (Zeichnung aus fisi_game.building_shapes).
-    Raeume sind anklickbar (Treffer ueber die Raumflaechen mit room_at)."""
+    """Ein Ort von oben (Zeichnung aus fisi_game.building_shapes): das Buero,
+    ein Kundenort oder die Wohnung. Raeume sind anklickbar (Treffer ueber die
+    Raumflaechen mit room_at)."""
 
     MAX_HEIGHT = 440
 
-    def __init__(self, parent, on_room, bg=None, max_height=None):
+    def __init__(self, parent, on_room, bg=None, max_height=None, site=fg.SITE_OFFICE):
         self.bg = bg or C["card"]
         self.on_room = on_room
+        self.site = site
         self.max_height = max_height or self.MAX_HEIGHT
         self.state = None
         self.selected = None
@@ -140,9 +144,13 @@ class FloorPlan(tk.Canvas):
         self.player_pos = player_pos
         self.draw()
 
+    def content(self):
+        """Inhalte des Ortes (Grundriss und Personen, die gerade da sind)."""
+        return fg.site_content(self.site, self.state)
+
     def _layout(self):
         width = self.winfo_width()
-        building = fg.GAME["gebaeude"]
+        building = self.content()["gebaeude"]
         # Gleicher Massstab in beide Richtungen, damit das Gebaeude nicht
         # verzerrt; bei sehr breitem Fenster wird es mittig gesetzt.
         margin = fg.PLAN_MARGIN
@@ -158,7 +166,8 @@ class FloorPlan(tk.Canvas):
         profile = self.state.profile
         player = (profile["name"], profile["aussehen"]) if with_player else None
         return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
-                                  quests=set(self.state.quests()),
+                                  content=self.content(),
+                                  quests=set(self.state.quests(self.site)),
                                   player_pos=self.player_pos)
 
     def draw(self):
@@ -232,22 +241,27 @@ class FloorPlan(tk.Canvas):
     def _click(self, event):
         if self.scale <= 0:
             return
-        item = fg.room_at(*self.to_building(event))
+        item = fg.room_at(*self.to_building(event), content=self.content())
         if item:
             self.on_room(item["id"])
 
 
 class WalkPlan(FloorPlan):
-    """Grossansicht des Bueros: Die Spielfigur laeuft per Klick (oder mit den
+    """Grossansicht eines Ortes: Die Spielfigur laeuft per Klick (oder mit den
     Pfeiltasten) durch Flur und Tueren. Der Weg kommt aus fisi_game.walk_path,
-    genau wie auf dem Handy."""
+    genau wie auf dem Handy. on_click(x, y) darf einen Klick selbst behandeln
+    (True zurueckgeben), z.B. beim Einrichten der Wohnung."""
 
     SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
     TICK = 16              # Millisekunden pro Bild
 
-    def __init__(self, parent, on_arrive, max_height=640):
-        super().__init__(parent, on_room=lambda _room: None, max_height=max_height)
+    def __init__(self, parent, on_arrive, max_height=640, site=fg.SITE_OFFICE,
+                 on_click=None):
+        super().__init__(parent, on_room=lambda _room: None, max_height=max_height,
+                         site=site)
         self.on_arrive = on_arrive
+        self.on_click = on_click
+        self.overlay = []      # zusaetzliche Zeichenbefehle (z.B. Auswahlrahmen)
         self.route = []
         self.target = None
         self._job = None
@@ -261,13 +275,16 @@ class WalkPlan(FloorPlan):
         self._layout()
         for shape in self._building(with_player=False):
             self._shape(shape)
+        for shape in self.overlay:
+            self._shape(shape)
         self._draw_player()
 
     def _draw_player(self):
         self.delete("player")
         profile = self.state.profile
         for shape in fg.player_shapes(self.player_pos, (profile["name"],
-                                                        profile["aussehen"])):
+                                                        profile["aussehen"]),
+                                      content=self.content()):
             self._shape(shape, tags=("player",))
 
     def _click(self, event):
@@ -275,11 +292,15 @@ class WalkPlan(FloorPlan):
         if self.scale <= 0 or self.state is None:
             return
         x, y = self.to_building(event)
-        person = fg.person_at(x, y)
+        if self.on_click and self.on_click(x, y):
+            return
+        content = self.content()
+        person = fg.person_at(x, y, content)
         if person:
-            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH)
+            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH,
+                                 content=content)
         else:
-            route = fg.walk_path(self.player_pos, (x, y))
+            route = fg.walk_path(self.player_pos, (x, y), content=content)
         self.walk(route, person)
 
     def walk(self, route, person=None):
@@ -310,7 +331,7 @@ class WalkPlan(FloorPlan):
             self._arrived()
 
     def _arrived(self):
-        person = self.target or fg.person_near(*self.player_pos)
+        person = self.target or fg.person_near(*self.player_pos, content=self.content())
         self.target = None
         self.on_arrive(self.player_pos, person)
 
@@ -324,7 +345,7 @@ class WalkPlan(FloorPlan):
         self.route = []
         x = self.player_pos[0] + dx * fg.WALK_STEP
         y = self.player_pos[1] + dy * fg.WALK_STEP
-        if fg.can_stand(x, y):
+        if fg.can_stand(x, y, content=self.content()):
             self.player_pos = (x, y)
             self._draw_player()
             self._arrived()
@@ -789,7 +810,8 @@ class RackBoard(ctk.CTkFrame):
                 item = fg.rack_device(self.devices[index])
                 badge.configure(text=fg._he_text(bottom, item["he"]), text_color=C["cyan"])
             else:
-                badge.configure(text="liegt bereit", text_color=C["muted"])
+                badge.configure(text=fg.rack_source_text(self.task, index),
+                                text_color=C["muted"])
         if self.current is not None and str(self.current) in self.answer and not self.locked:
             self.remove_button.pack(anchor="w", pady=(8, 0))
         else:
@@ -1190,9 +1212,11 @@ class GameView(ScrollArea):
         self.room = None
         self.ticket = None
         self.draft = {}
-        # Standort der Figur im Buero (nur waehrend die App laeuft)
-        self.player_pos = fg.start_position()
-        self.return_to = None     # Ticket kam aus der Bueroansicht
+        # Standort der Figur je Ort (nur waehrend die App laeuft)
+        self.positions = {}
+        self.notices = {}         # Ort -> (Ueberschrift, Text), einmal anzeigen
+        self.place = None         # gewaehlter Kundenort
+        self.return_to = None     # Ticket kam aus einer Grossansicht (buero, kunde)
         self.render()
 
     # -- Aufbau -------------------------------------------------------------
@@ -1216,6 +1240,59 @@ class GameView(ScrollArea):
             self._build_overview(state)
         if not keep_scroll:
             self.to_top()
+
+    @property
+    def player_pos(self):
+        return self.position(fg.SITE_OFFICE)
+
+    def position(self, site):
+        if site not in self.positions:
+            self.positions[site] = fg.start_position(
+                fg.site_content(site, self.game.state))
+        return self.positions[site]
+
+    # -- Orte wechseln ------------------------------------------------------
+
+    def go_home(self):
+        """Feierabend: Arbeitstag beenden und nach Hause gehen."""
+        try:
+            payload = self.game.end_day()
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self.room = None
+        self.positions.pop(fg.SITE_HOME, None)
+        self.positions.pop(fg.SITE_OFFICE, None)
+        self.notices[fg.SITE_HOME] = (
+            "Feierabend nach Arbeitstag %d" % payload["tag"],
+            "%s Gehalt: +%s." % (fg.day_end_text(payload["tag"]), _euro(payload["gehalt"])))
+        self.app.notify_progress()
+        self.render()
+        self.app.show_view("zuhause")
+
+    def go_to_work(self):
+        """Von zu Hause (oder vom Kunden) ins Buero - morgens mit der Szene
+        des Tages, falls es eine gibt."""
+        state = self.game.state
+        scene = fg.morning_text(state.day)
+        self.positions.pop(fg.SITE_OFFICE, None)
+        if scene:
+            self.notices[fg.SITE_OFFICE] = ("Arbeitstag %d" % state.day, scene)
+        self.app.show_view("buero")
+
+    def run_action(self, action, view_key):
+        """Knoepfe unter den Grossansichten (siehe fisi_game.place_message)."""
+        if action.startswith("auftrag:"):
+            self.open_from_site(action.split(":", 1)[1], view_key)
+        elif action == "feierabend":
+            self.go_home()
+        elif action == "buero":
+            self.go_to_work()
+        elif action == "lernen":
+            self.app.show_view("cards")
+        elif action == "schlafen":
+            self.notices[fg.SITE_HOME] = ("Gute Nacht", fg.sleep_text(self.game.state))
+            self.app.views["zuhause"].render()
 
     # -- Spielfigur ---------------------------------------------------------
 
@@ -1348,9 +1425,18 @@ class GameView(ScrollArea):
         self.floor = FloorPlan(plan.body, self._select_room)
         self.floor.pack(fill="x")
         self.floor.set_state(state, self.room, self.player_pos)
-        NeoButton(plan.body, "Büro öffnen", lambda: self.app.show_view("buero"),
-                  kind="ghost", height=32, font=F["small_bold"]).pack(anchor="w",
-                                                                      pady=(10, 0))
+        places = _frame(plan.body)
+        places.pack(anchor="w", pady=(10, 0))
+        for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
+                           ("Zuhause öffnen", "zuhause")):
+            NeoButton(places, label, lambda k=key: self.app.show_view(k), kind="ghost",
+                      height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
+        away = state.open_count_by_site()
+        at_customer = sum(count for site, count in away.items() if site != fg.SITE_OFFICE)
+        if at_customer:
+            make_label(places, "%s beim Kunden" % ("1 Auftrag" if at_customer == 1 else
+                                                   "%d Aufträge" % at_customer),
+                       font=F["small"], fg=C["muted"]).pack(side="left", padx=6)
 
         wissen = Card(middle, title="Wissensstand", accent=C["green"],
                       subtitle="aus deinem Lernfortschritt")
@@ -1383,13 +1469,25 @@ class GameView(ScrollArea):
         card.pack(fill="x", pady=(14, 0))
         body = card.body
 
+        scene = fg.morning_text(state.day)
+        if scene and not item:
+            box = ctk.CTkFrame(body, fg_color=mix(C["card"], C["purple"], 0.1),
+                               corner_radius=12, border_width=1,
+                               border_color=mix(C["purple"], C["card"], 0.45))
+            box.pack(fill="x", pady=(0, 8))
+            make_label(box, "HEUTE", font=F["label"], fg=C["purple"]).pack(
+                anchor="w", padx=14, pady=(10, 0))
+            make_label(box, scene, font=F["small"], fg=C["text_soft"], wraplength=940,
+                       justify="left", anchor="w").pack(anchor="w", padx=14, pady=(2, 10))
+
         if item:
             make_label(body, item["text"], font=F["small"], fg=C["text_dim"],
                        wraplength=980, justify="left", anchor="w").pack(anchor="w")
-            if any(person.get("lagerist") for person in fg.GAME["kollegen"]
+            people = fg.people_at_site(fg.SITE_OFFICE, state)
+            if any(person.get("lagerist") for person in people
                    if person["raum"] == item["id"]):
                 self._build_warehouse(body, state)
-            for person in fg.GAME["kollegen"]:
+            for person in people:
                 if person["raum"] == item["id"]:
                     make_label(body, "%s · %s" % (person["name"], person["rolle"]),
                                font=F["body_bold"], fg=C["text"], anchor="w").pack(
@@ -1416,7 +1514,7 @@ class GameView(ScrollArea):
         if not item:
             footer = _frame(body)
             footer.pack(fill="x", pady=(12, 0))
-            button = NeoButton(footer, "Arbeitstag beenden", self._end_day, kind="accent")
+            button = NeoButton(footer, "Feierabend machen", self.go_home, kind="accent")
             button.pack(side="left")
             button.set_enabled(state.can_end_day())
             hint = ("Erst alle Tickets bearbeiten oder verschieben." if not state.can_end_day()
@@ -1460,6 +1558,9 @@ class GameView(ScrollArea):
 
     def _ticket_row(self, parent, task, status):
         person = fg.colleague(task["auftraggeber"])
+        where = fg.room(task["raum"])["name"]
+        if fg.task_site(task) != fg.SITE_OFFICE:
+            where = "beim Kunden · %s" % where
         status_text, status_color = STATUS_TEXT[status]
         row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
                            border_color=C["border"],
@@ -1470,12 +1571,15 @@ class GameView(ScrollArea):
         marker.pack(side="left", fill="y", padx=(10, 0), pady=11)
         inner = _frame(row)
         inner.pack(side="left", fill="x", expand=True, padx=(12, 12), pady=9)
+        if task.get("zwischenfall"):
+            make_label(inner, "ZWISCHENFALL", font=F["label"], fg=C["red"],
+                       anchor="w").pack(anchor="w")
         title = make_label(inner, task["titel"], font=F["body_bold"], fg=C["text"],
                            anchor="w")
         title.pack(anchor="w")
         detail = make_label(
             inner, "%s · %s · Priorität %s · %s" % (
-                person["name"], fg.room(task["raum"])["name"], task["prioritaet"],
+                person["name"], where, task["prioritaet"],
                 CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]),
             font=F["small"], fg=C["muted"], anchor="w")
         detail.pack(anchor="w")
@@ -1491,28 +1595,15 @@ class GameView(ScrollArea):
         self.room = None if room_id == self.room else room_id
         self.render(keep_scroll=True)
 
-    def _end_day(self):
-        try:
-            payload = self.game.end_day()
-        except ValueError as exc:
-            messagebox.showinfo("Hinweis", str(exc))
-            return
-        messagebox.showinfo("Arbeitstag %d beendet" % payload["tag"],
-                            "%s\n\nGehalt: %s" % (fg.GAME["story"]["tagesende"],
-                                                  _euro(payload["gehalt"])))
-        self.room = None
-        self.app.notify_progress()
-        self.render()
-
     # -- Ticket bearbeiten --------------------------------------------------
 
     def _open_ticket(self, task_id):
         self.ticket = task_id
         self.render()
 
-    def open_from_office(self, task_id):
-        """Auftrag direkt bei der Person im Buero angenommen."""
-        self.return_to = "buero"
+    def open_from_site(self, task_id, view_key="buero"):
+        """Auftrag direkt bei der Person im Buero oder beim Kunden angenommen."""
+        self.return_to = view_key
         self.ticket = task_id
         self.app.show_view("game")
 
@@ -1526,20 +1617,21 @@ class GameView(ScrollArea):
         self.render()
 
     def _build_ticket(self, task_id):
-        task = fg.task_by_id(task_id)
+        task = self.game.state.prepared_task(fg.task_by_id(task_id))
         person = fg.colleague(task["auftraggeber"])
         levels = self.game.knowledge()
         gaps = fg.requirement_gaps(task, levels)
         self.used_help = False
         self.answered = False
 
-        back = NeoButton(self.content, "Zurück ins Büro" if self.return_to else
-                         "Zurück zur Übersicht", self._close_ticket, kind="ghost", height=32, font=F["small_bold"], icon="arrow_left")
+        back = NeoButton(self.content, RETURN_LABEL.get(self.return_to,
+                                                        "Zurück zur Übersicht"), self._close_ticket, kind="ghost", height=32, font=F["small_bold"], icon="arrow_left")
         back.pack(anchor="w")
 
         card = Card(self.content, title=task["titel"],
                     accent=PRIORITY_COLOR[task["prioritaet"]],
-                    subtitle="Priorität %s · %s" % (
+                    subtitle="%sPriorität %s · %s" % (
+                        "Zwischenfall · " if task.get("zwischenfall") else "",
                         task["prioritaet"], CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]))
         card.pack(fill="x", pady=(12, 0))
         body = card.body
@@ -1698,8 +1790,8 @@ class GameView(ScrollArea):
 
         for child in self.controls.winfo_children():
             child.destroy()
-        NeoButton(self.controls, "Zurück ins Büro" if self.return_to else
-                  "Zurück zur Übersicht", self._close_ticket,
+        NeoButton(self.controls, RETURN_LABEL.get(self.return_to, "Zurück zur Übersicht"),
+                  self._close_ticket,
                   kind="primary").pack(side="left")
 
     def _open_learn(self, kind, title):
@@ -1721,10 +1813,14 @@ class GameView(ScrollArea):
         self._close_ticket()
 
 
-class OfficeView(ScrollArea):
-    """Unterpunkt "Buero": das Gebaeude in gross. Die Spielfigur laeuft per
-    Klick zu Kolleginnen und Kollegen; wer einen Auftrag hat, traegt ein
-    gruenes "!" - dort laesst sich das Ticket direkt annehmen."""
+class SiteView(ScrollArea):
+    """Grossansicht eines Ortes (Buero, Kunde, Zuhause): Die Spielfigur laeuft
+    per Klick; unter dem Grundriss stehen Text und Knoepfe aus
+    fisi_game.place_message - so verhalten sich PC und Handy gleich."""
+
+    KEY = "buero"
+    TITLE = "Büro"
+    SUBTITLE = "Klicke auf eine Person oder einen Ort · Pfeiltasten gehen auch"
 
     def __init__(self, parent, app):
         super().__init__(parent, bg=C["bg"])
@@ -1732,10 +1828,18 @@ class OfficeView(ScrollArea):
         self.content = _frame(self.inner)
         self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
         self.plan = None
+        self.info = None
 
     @property
     def game_view(self):
         return self.app.views["game"]
+
+    @property
+    def state(self):
+        return self.game_view.game.state
+
+    def site(self):
+        return fg.SITE_OFFICE
 
     def on_show(self):
         self.game_view.game.reload()
@@ -1747,45 +1851,396 @@ class OfficeView(ScrollArea):
     def render(self):
         for child in self.content.winfo_children():
             child.destroy()
-        state = self.game_view.game.state
+        state = self.state
         if state.profile is None:
-            card = Card(self.content, title="Büro", accent=C["cyan"])
+            card = Card(self.content, title=self.TITLE, accent=C["cyan"])
             card.pack(fill="x")
             make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
                        font=F["body"], fg=C["text_soft"]).pack(anchor="w")
             NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
                       kind="primary").pack(anchor="w", pady=(12, 0))
             return
-        card = Card(self.content, title="Büro", accent=C["cyan"],
-                    subtitle="Klicke auf eine Person oder einen Ort · Pfeiltasten gehen auch")
-        card.pack(fill="x")
-        self.plan = WalkPlan(card.body, self._arrived)
+        self._build_head(state)
+        card = Card(self.content, title=self.card_title(), accent=self.accent(),
+                    subtitle=self.SUBTITLE)
+        card.pack(fill="x", pady=(0, 0))
+        site = self.site()
+        self.plan = WalkPlan(card.body, self._arrived, site=site,
+                             on_click=self.plan_click)
         self.plan.pack(fill="x")
-        self.plan.set_state(state, None, self.game_view.player_pos)
+        position = self.game_view.position(site)
+        self.plan.overlay = self.overlay()
+        self.plan.set_state(state, None, position)
         self.info = _frame(card.body)
         self.info.pack(fill="x", pady=(12, 0))
-        self._show_info(self.game_view.player_pos, fg.person_near(*self.game_view.player_pos))
-        self.after(50, self.plan.focus_set)
+        self._show_info(position, fg.person_near(*position, content=self.plan.content()))
+        self._build_below(state)
+        plan = self.plan
+        self.after(50, lambda: plan.winfo_exists() and plan.focus_set())
+
+    # Hooks fuer die Unterklassen
+    def card_title(self):
+        return fg.site_name(self.site())
+
+    def accent(self):
+        return C["cyan"]
+
+    def _build_head(self, state):
+        pass
+
+    def _build_below(self, state):
+        pass
+
+    def overlay(self):
+        return []
+
+    def plan_click(self, _x, _y):
+        return False
 
     def _arrived(self, position, person):
-        self.game_view.player_pos = position
+        self.game_view.positions[self.site()] = position
         self._show_info(position, person)
 
     def _show_info(self, position, person):
         for child in self.info.winfo_children():
             child.destroy()
-        state = self.game_view.game.state
-        quests = state.quests()
-        title, text = fg.office_message(position, person, quests, state=state)
+        state = self.state
+        site = self.site()
+        notice = self.game_view.notices.pop(site, None)
+        if notice:
+            box = ctk.CTkFrame(self.info, fg_color=mix(C["card"], C["purple"], 0.1),
+                               corner_radius=12, border_width=1,
+                               border_color=mix(C["purple"], C["card"], 0.45))
+            box.pack(fill="x", pady=(0, 10))
+            make_label(box, notice[0], font=F["body_bold"], fg=C["text"], anchor="w").pack(
+                anchor="w", padx=14, pady=(10, 0))
+            make_label(box, notice[1], font=F["small"], fg=C["text_soft"], wraplength=900,
+                       justify="left", anchor="w").pack(anchor="w", padx=14, pady=(2, 10))
+        title, text, actions = fg.place_message(site, position, person, state,
+                                                self.plan.content())
         make_label(self.info, title, font=F["body_bold"], fg=C["text"],
                    anchor="w").pack(anchor="w")
         make_label(self.info, text, font=F["small"], fg=C["text_soft"], anchor="w",
                    wraplength=900, justify="left").pack(anchor="w", pady=(2, 0))
-        if person and quests.get(person["id"]):
-            task = quests[person["id"]][0]
-            NeoButton(self.info, "Auftrag annehmen",
-                      lambda: self.game_view.open_from_office(task["id"]),
-                      kind="primary").pack(anchor="w", pady=(10, 0))
+        if actions:
+            row = _frame(self.info)
+            row.pack(anchor="w", pady=(10, 0))
+            for action, label in actions:
+                NeoButton(row, label, lambda a=action: self.game_view.run_action(a, self.KEY),
+                          kind="primary").pack(side="left", padx=(0, 10))
+
+
+class OfficeView(SiteView):
+    """Unterpunkt "Buero": das Gebaeude in gross. Die Spielfigur laeuft per
+    Klick zu Kolleginnen und Kollegen; wer einen Auftrag hat, traegt ein
+    gruenes "!" - dort laesst sich das Ticket direkt annehmen. An der
+    Eingangstuer geht es in den Feierabend."""
+
+    def card_title(self):
+        return "Büro"
+
+
+class CustomerView(SiteView):
+    """Unterpunkt "Kunde": Bahnhof Talheim und (ab Tag 12) Talheim-Nord."""
+
+    KEY = "kunde"
+    TITLE = "Kunde"
+
+    def site(self):
+        places = [place["id"] for place in fg.open_places(self.state)]
+        if self.game_view.place not in places:
+            self.game_view.place = places[0]
+        return self.game_view.place
+
+    def accent(self):
+        return C["blue"]
+
+    def _build_head(self, state):
+        places = fg.open_places(state)
+        counts = state.open_count_by_site()
+        if len(places) > 1:
+            options = [(place["id"], "%s%s" % (place["name"], " (%d)" % counts[place["id"]]
+                                               if counts.get(place["id"]) else ""))
+                       for place in places]
+            ChoiceRow(self.content, options, self.site(), self._choose).pack(
+                anchor="w", pady=(0, 12))
+        place = fg.customer_place(self.site())
+        if place.get("text"):
+            make_label(self.content, place["text"], font=F["small"], fg=C["text_dim"],
+                       wraplength=980, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(0, 10))
+
+    def _choose(self, place_id):
+        self.game_view.place = place_id
+        self.render()
+
+
+class HomeView(SiteView):
+    """Unterpunkt "Zuhause": die eigene Wohnung. Im Modus "Einrichten" kauft
+    man Moebel, stellt sie per Klick auf, dreht, verschiebt oder verkauft sie,
+    waehlt Boeden und zieht in groessere Wohnungen um."""
+
+    KEY = "zuhause"
+    TITLE = "Zuhause"
+
+    def __init__(self, parent, app):
+        super().__init__(parent, app)
+        self.editing = False
+        self.selected = None      # Stueck, das gerade eingerichtet wird
+        self.turn = 0
+        self.problem = ""
+
+    def site(self):
+        return fg.SITE_HOME
+
+    def accent(self):
+        return C["pink"]
+
+    def card_title(self):
+        return fg.apartment(self.state.home_id)["name"]
+
+    @property
+    def SUBTITLE(self):
+        if self.editing:
+            return "Möbel anklicken zum Auswählen · freie Stelle anklicken zum Aufstellen"
+        return "Klicke irgendwo hin, um dorthin zu gehen · Pfeiltasten gehen auch"
+
+    def _build_head(self, state):
+        row = _frame(self.content)
+        row.pack(fill="x", pady=(0, 12))
+        make_label(row, "Kontostand: %s" % _euro(state.money), font=F["body_bold"],
+                   fg=C["text"]).pack(side="left")
+        NeoButton(row, "Fertig" if self.editing else "Einrichten", self._toggle_edit,
+                  kind="primary" if self.editing else "ghost", height=32,
+                  font=F["small_bold"]).pack(side="right")
+
+    def _toggle_edit(self):
+        self.editing = not self.editing
+        self.selected = None
+        self.problem = ""
+        self.render()
+
+    # -- Einrichten ---------------------------------------------------------
+
+    def overlay(self):
+        if not self.editing or not self.selected:
+            return []
+        item = next((i for i in fg.placed_furniture(self.state)
+                     if i["stueck"] == self.selected), None)
+        if item is None:
+            return []
+        return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
+                 "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
+                 "line": C["cyan"], "lw": 0.08, "r": 0.1}]
+
+    def plan_click(self, x, y):
+        if not self.editing:
+            return False
+        state = self.state
+        hit = fg.furniture_at(state, x, y)
+        if hit and hit["stueck"] != self.selected:
+            self.selected = hit["stueck"]
+            self.turn = hit["dreh"]
+            self.problem = ""
+            self.render()
+            return True
+        if not self.selected:
+            self.problem = "Wähle zuerst ein Möbelstück aus (im Grundriss oder im Karton)."
+            self.render()
+            return True
+        item = fg.furniture_item(state.furniture.get(self.selected))
+        w, h = fg.furniture_size(item, self.turn)
+        try:
+            self.game_view.game.place_furniture(self.selected, x - w / 2.0, y - h / 2.0,
+                                                self.turn)
+            self.problem = ""
+        except ValueError as exc:
+            self.problem = str(exc)
+        self.render()
+        return True
+
+    def _select(self, piece):
+        self.selected = piece
+        self.turn = fg.home_layout(self.state)["moebel"].get(piece, [0, 0, 0])[2]
+        self.problem = "Klicke im Grundriss auf die Stelle, wo es stehen soll."
+        self.render()
+
+    def _rotate(self):
+        self.turn = (self.turn + 1) % 4
+        placed = fg.home_layout(self.state)["moebel"].get(self.selected)
+        if placed:
+            item = fg.furniture_item(self.state.furniture[self.selected])
+            old_w, old_h = fg.furniture_size(item, placed[2])
+            new_w, new_h = fg.furniture_size(item, self.turn)
+            # um die Mitte drehen
+            x = placed[0] + old_w / 2.0 - new_w / 2.0
+            y = placed[1] + old_h / 2.0 - new_h / 2.0
+            try:
+                self.game_view.game.place_furniture(self.selected, x, y, self.turn)
+                self.problem = ""
+            except ValueError as exc:
+                self.turn = placed[2]
+                self.problem = str(exc)
+        self.render()
+
+    def _box(self):
+        self.game_view.game.box_furniture(self.selected)
+        self.selected = None
+        self.problem = ""
+        self.render()
+
+    def _sell(self):
+        item = fg.furniture_item(self.state.furniture.get(self.selected))
+        price = int(item["preis"] * fg.GAME["wohnungen"].get("rueckkauf", 0.5))
+        if not messagebox.askyesno("Verkaufen", "%s für %s verkaufen?"
+                                   % (item["name"], _euro(price))):
+            return
+        try:
+            self.game_view.game.sell_furniture(self.selected)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+        self.selected = None
+        self.problem = ""
+        self.render()
+
+    def _buy(self, item_id):
+        try:
+            piece = self.game_view.game.buy_furniture(item_id)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self.app.notify_progress()
+        self._select(piece)
+
+    def _floor(self, room_id, kind=None, color=None):
+        current = fg.home_layout(self.state)["boeden"].get(room_id)
+        building = fg.apartment(self.state.home_id)["gebaeude"]
+        base = next(r for r in building["raeume"] if r["id"] == room_id)
+        old_kind, old_color = current or [base.get("boden", "parkett"), None]
+        self.game_view.game.set_floor(room_id, kind or old_kind, color or old_color)
+        self.render()
+
+    def _move(self, home):
+        if not messagebox.askyesno(
+                "Umziehen", "Für %s in die Wohnung „%s“ umziehen? Alle Möbel kommen "
+                "dabei in Umzugskartons." % (_euro(home["preis"]), home["name"])):
+            return
+        try:
+            self.game_view.game.move_home(home["id"])
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self.game_view.positions.pop(fg.SITE_HOME, None)
+        self.selected = None
+        self.editing = True
+        self.app.notify_progress()
+        self.render()
+
+    def _build_below(self, state):
+        if not self.editing:
+            return
+        if self.problem:
+            make_label(self.info, self.problem, font=F["small_bold"], fg=C["yellow"],
+                       wraplength=900, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(10, 0))
+        grid = _frame(self.content)
+        grid.pack(fill="x", pady=(14, 0))
+        grid.columnconfigure(0, weight=1, uniform="home")
+        grid.columnconfigure(1, weight=1, uniform="home")
+
+        # Auswahl und Kartons
+        mine = Card(grid, title="Deine Möbel", accent=C["cyan"],
+                    subtitle="Ausgewähltes Stück und Umzugskartons")
+        mine.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        if self.selected and self.selected in state.furniture:
+            item = fg.furniture_item(state.furniture[self.selected])
+            make_label(mine.body, "AUSGEWÄHLT", font=F["label"], fg=C["muted"]).pack(
+                anchor="w")
+            make_label(mine.body, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w", pady=(2, 8))
+            row = _frame(mine.body)
+            row.pack(anchor="w")
+            for label, command in (("Drehen", self._rotate), ("In den Karton", self._box),
+                                   ("Verkaufen", self._sell)):
+                NeoButton(row, label, command, kind="ghost", height=32,
+                          font=F["small_bold"]).pack(side="left", padx=(0, 8))
+        boxed = fg.boxed_furniture(state)
+        make_label(mine.body, "IM KARTON", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(14, 4))
+        if not boxed:
+            make_label(mine.body, "Alles ist ausgepackt.", font=F["small"],
+                       fg=C["text_dim"]).pack(anchor="w")
+        for piece, item_id in boxed:
+            item = fg.furniture_item(item_id)
+            self._item_row(mine.body, item["name"], "", "Aufstellen",
+                           lambda p=piece: self._select(p), active=piece == self.selected)
+
+        # Moebelhaus
+        shop = Card(grid, title="Möbelhaus", accent=C["purple"],
+                    subtitle="Einmal bezahlen, für immer behalten")
+        shop.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        for item in fg.shop_items():
+            self._item_row(shop.body, item["name"], _euro(item["preis"]), "Kaufen",
+                           lambda i=item["id"]: self._buy(i),
+                           enabled=state.money >= item["preis"])
+
+        lower = _frame(self.content)
+        lower.pack(fill="x", pady=(14, 0))
+        lower.columnconfigure(0, weight=1, uniform="home2")
+        lower.columnconfigure(1, weight=1, uniform="home2")
+
+        # Boeden
+        floors = Card(lower, title="Böden", accent=C["green"],
+                      subtitle="Belag und Farbe je Raum")
+        floors.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        layout = fg.home_layout(state)
+        for item in fg.apartment(state.home_id)["gebaeude"]["raeume"]:
+            kind, color = layout["boeden"].get(item["id"], [item.get("boden", "parkett"),
+                                                            None])
+            make_label(floors.body, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w", pady=(8, 4))
+            ChoiceRow(floors.body, fg.FLOOR_KINDS, kind,
+                      lambda k, r=item["id"]: self._floor(r, kind=k)).pack(anchor="w")
+            ChoiceRow(floors.body, fg.FLOOR_COLORS, color,
+                      lambda c, r=item["id"]: self._floor(r, color=c)).pack(anchor="w",
+                                                                            pady=(4, 0))
+
+        # Wohnungen
+        homes = Card(lower, title="Wohnung", accent=C["orange"],
+                     subtitle="Größer wohnen kostet einmalig")
+        homes.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        flat = fg.apartment(state.home_id)
+        make_label(homes.body, "Du wohnst in: %s" % flat["name"], font=F["body_bold"],
+                   fg=C["text"], anchor="w").pack(anchor="w")
+        make_label(homes.body, flat.get("text", ""), font=F["small"], fg=C["text_dim"],
+                   wraplength=420, justify="left", anchor="w").pack(anchor="w", pady=(2, 8))
+        for home in fg.moves_available(state):
+            self._item_row(homes.body, home["name"], _euro(home["preis"]), "Umziehen",
+                           lambda h=home: self._move(h), enabled=state.money >= home["preis"],
+                           detail=home.get("text", ""))
+        if not fg.moves_available(state):
+            make_label(homes.body, "Du wohnst schon in der größten Wohnung.",
+                       font=F["small"], fg=C["text_dim"]).pack(anchor="w")
+
+    def _item_row(self, parent, title, price, label, command, enabled=True, active=False,
+                  detail=""):
+        row = ctk.CTkFrame(parent, fg_color=C["card_hi"] if active else C["card_alt"],
+                           corner_radius=10, border_width=1, border_color=C["border"])
+        row.pack(fill="x", pady=3)
+        text = _frame(row)
+        text.pack(side="left", fill="x", expand=True, padx=12, pady=7)
+        make_label(text, title, font=F["small_bold"], fg=C["text"], anchor="w").pack(
+            anchor="w")
+        if detail:
+            make_label(text, detail, font=F["tiny"], fg=C["muted"], wraplength=300,
+                       justify="left", anchor="w").pack(anchor="w")
+        button = NeoButton(row, label, command, kind="ghost", height=28,
+                           font=F["small_bold"])
+        button.pack(side="right", padx=10)
+        button.set_enabled(enabled)
+        if price:
+            make_label(row, price, font=F["small"], fg=C["text_dim"]).pack(side="right",
+                                                                           padx=4)
 
 
 def _euro(value):

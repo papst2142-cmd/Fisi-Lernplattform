@@ -1,0 +1,308 @@
+[
+  {
+    "id": "zf-drucker-zeichensalat", "typ": "diagnose",
+    "titel": "Der Drucker druckt Zeichensalat",
+    "auftraggeber": "frank", "raum": "verwaltung", "prioritaet": "hoch", "cat": "systeme",
+    "anforderungen": {"systeme": 20}, "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 40, "reputation": 4}, "ab_tag": 2,
+    "ticket": [
+      "Frank hält dir ein Blatt hin: „%!PS-Adobe-3.0 … und dann 40 Seiten davon. Ich wollte nur die Monatsabrechnung drucken!“",
+      "„Gestern ging es noch. Heute früh hat Windows irgendwas aktualisiert. Ich sage nichts, ich zeige nur auf die Seiten.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {"id": "selbsttest", "text": "Selbsttest-Seite direkt am Drucker ausdrucken", "ergebnis": "Die Testseite ist sauber. Der Drucker selbst funktioniert."},
+      {"id": "treiber", "text": "In der Druckverwaltung nachsehen, welcher Treiber eingestellt ist", "ergebnis": "Treiber: „Universal PostScript“. Laut Typenschild kann der Drucker nur PCL 6.", "entscheidend": true},
+      {"id": "update", "text": "Updateverlauf von Windows ansehen", "ergebnis": "Heute 7:12 Uhr: „Druckertreiber-Update (optional)“ installiert.", "entscheidend": true},
+      {"id": "toner", "text": "Tonerstand prüfen", "ergebnis": "Toner zu 64 % voll."},
+      {"id": "ping", "text": "Drucker im Netz anpingen", "ergebnis": "Antwort von 192.168.10.40: Zeit=2 ms."},
+      {"id": "kabel", "text": "Netzwerkkabel am Drucker kontrollieren", "ergebnis": "Kabel steckt, Link-LED leuchtet."}
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Nach dem Update ist ein falscher Druckertreiber (PostScript statt PCL) eingestellt.",
+      "Der Toner ist fast leer.",
+      "Die Netzwerkverbindung zum Drucker bricht ab.",
+      "Der Druckerspeicher ist defekt."
+    ],
+    "ursache": "Nach dem Update ist ein falscher Druckertreiber (PostScript statt PCL) eingestellt.",
+    "massnahmen": [
+      "Den passenden PCL-6-Treiber des Herstellers einstellen und eine Testseite drucken",
+      "Einen neuen Drucker bestellen",
+      "Einen Treiber von irgendeiner Download-Seite laden",
+      "Den Toner tauschen"
+    ],
+    "massnahme": "Den passenden PCL-6-Treiber des Herstellers einstellen und eine Testseite drucken",
+    "unsicher": ["Einen Treiber von irgendeiner Download-Seite laden"],
+    "hilfe": [
+      "Druckt der Drucker seine eigene Testseite sauber, ist die Hardware in Ordnung. Dann liegt es am Weg dorthin: Treiber oder Übertragung.",
+      "Seiten voller Befehle wie %!PS heißen: Der PC schickt eine Druckersprache, die der Drucker nicht versteht."
+    ],
+    "erklaerung": [
+      "Das optionale Update hat den PostScript-Treiber eingestellt, der Drucker versteht aber nur PCL 6. Er druckt die Befehle deshalb als Text aus.",
+      "Treiber holt man immer beim Hersteller oder aus der Windows-Treiberverwaltung, nie von fremden Download-Seiten: Dort lauert gern Schadsoftware."
+    ],
+    "suchbegriffe": ["Treiber", "Drucker"]
+  },
+  {
+    "id": "zf-erpresser-meldung", "typ": "auswahl",
+    "titel": "Erpresser-Meldung am Service-Center",
+    "auftraggeber": "jonas", "raum": "helpdesk", "prioritaet": "kritisch", "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 25}, "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 50, "reputation": 5}, "ab_tag": 3,
+    "ticket": [
+      "Jonas stürmt herein: „Am Info-PC im Service-Center steht rot auf schwarz: ‚Ihre Dateien wurden verschlüsselt. Zahlen Sie 0,5 Bitcoin.‘ Die Kollegin fragt, ob sie schnell zahlen soll, dann wäre es ja vorbei.“"
+    ],
+    "frage": "Was ist jetzt als Erstes richtig?",
+    "optionen": [
+      "Den PC sofort vom Netzwerk trennen, nicht ausschalten, den Vorfall melden und nicht zahlen",
+      "Schnell zahlen, damit die Dateien wieder da sind",
+      "Den PC neu starten und hoffen, dass die Meldung weg ist",
+      "Die Meldung wegklicken und normal weiterarbeiten"
+    ],
+    "antwort": "Den PC sofort vom Netzwerk trennen, nicht ausschalten, den Vorfall melden und nicht zahlen",
+    "hilfe": [
+      "Ransomware verschlüsselt Daten und versucht, sich im Netz weiter auszubreiten.",
+      "Das Wichtigste zuerst: Ausbreitung stoppen. Den Rechner eingeschaltet zu lassen hilft der Spurensicherung."
+    ],
+    "erklaerung": [
+      "Vom Netz trennen verhindert, dass die Schadsoftware weitere Rechner und Freigaben verschlüsselt. Ausgeschaltet gehen Spuren im Arbeitsspeicher verloren.",
+      "Zahlen ist keine Lösung: Niemand garantiert die Entschlüsselung, und es finanziert die nächsten Angriffe. Wiederhergestellt wird aus dem Backup."
+    ],
+    "suchbegriffe": ["Ransomware", "Schadsoftware"]
+  },
+  {
+    "id": "zf-notebook-sofort", "typ": "auswahl",
+    "titel": "„Ich brauche SOFORT ein Notebook!“",
+    "auftraggeber": "sabine", "raum": "chefbuero", "prioritaet": "hoch", "cat": "systeme",
+    "anforderungen": {"systeme": 20, "sicherheit": 20}, "achsen": ["kundenzufriedenheit", "sicherheit"],
+    "belohnung": {"geld": 40, "reputation": 4}, "ab_tag": 4,
+    "ticket": [
+      "Sabine ruft durchs Büro: „Mein Notebook will seit zehn Minuten Updates installieren und ich habe in fünf Minuten eine Präsentation beim Kunden. Ich brauche SOFORT ein anderes!“",
+      "Im Schrank liegt ein Leihgerät, das seit Wochen niemand benutzt hat."
+    ],
+    "frage": "Wie bereitest du das Leihgerät in der kurzen Zeit am besten vor?",
+    "optionen": [
+      "Mit ihrem eigenen Konto anmelden und die Präsentation aus der Firmen-Cloud laden",
+      "Mit dem Admin-Konto anmelden und ihr das Passwort auf einen Zettel schreiben",
+      "Ihr eigenes Notebook ausschalten, während die Updates laufen",
+      "Die Präsentation per privatem Mail-Konto an das Leihgerät schicken"
+    ],
+    "antwort": "Mit ihrem eigenen Konto anmelden und die Präsentation aus der Firmen-Cloud laden",
+    "hilfe": [
+      "Jeder arbeitet mit seinem eigenen Konto, Admin-Rechte bekommt niemand „mal eben“.",
+      "Firmendaten gehören nicht in private Postfächer. Ein ausgeschaltetes Update kann das System beschädigen."
+    ],
+    "erklaerung": [
+      "Mit dem eigenen Konto und der Firmen-Cloud ist Sabine in einer Minute startklar, ohne Rechte zu verschenken oder Daten nach außen zu geben.",
+      "Das Admin-Passwort auf einem Zettel oder ein privates Mail-Konto wären schneller, aber genau solche Abkürzungen sind klassische Sicherheitslücken."
+    ],
+    "suchbegriffe": ["Administrator", "Passwort"]
+  },
+  {
+    "id": "zf-stromausfall", "typ": "auswahl",
+    "titel": "Stromausfall, die USV piept",
+    "auftraggeber": "ulla", "raum": "serverraum", "prioritaet": "kritisch", "cat": "systeme",
+    "anforderungen": {"systeme": 25}, "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 45, "reputation": 5}, "ab_tag": 3,
+    "ticket": [
+      "Plötzlich ist es dunkel im Haus. Nur im Serverraum piept es. Ulla: „Stromausfall im ganzen Viertel. Die USV hält die Server laut Anzeige noch 12 Minuten. Der Netzbetreiber sagt: mindestens eine Stunde.“"
+    ],
+    "frage": "Was machst du jetzt?",
+    "optionen": [
+      "Die Server geordnet herunterfahren, solange die USV noch Strom liefert",
+      "Abwarten, vielleicht ist der Strom gleich wieder da",
+      "Die USV ausschalten, damit das Piepen aufhört",
+      "Alle Stecker ziehen, damit nichts kaputtgeht"
+    ],
+    "antwort": "Die Server geordnet herunterfahren, solange die USV noch Strom liefert",
+    "hilfe": [
+      "Eine USV überbrückt kurze Ausfälle. Dauert der Ausfall länger als der Akku reicht, gewinnt sie nur Zeit.",
+      "Diese Zeit nutzt man, um die Systeme sauber zu beenden."
+    ],
+    "erklaerung": [
+      "12 Minuten Akku reichen nicht für eine Stunde Ausfall. Wer die Server jetzt geordnet herunterfährt, verhindert beschädigte Dateisysteme und Datenbanken.",
+      "Gute USV-Anlagen können das per Signal sogar automatisch auslösen. Abschalten oder Stecker ziehen wäre ein harter Absturz."
+    ],
+    "suchbegriffe": ["USV"]
+  },
+  {
+    "id": "zf-falscher-support", "typ": "auswahl",
+    "titel": "Anruf vom „Microsoft-Support“",
+    "auftraggeber": "frank", "raum": "verwaltung", "prioritaet": "hoch", "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 20}, "achsen": ["sicherheit", "kundenzufriedenheit"],
+    "belohnung": {"geld": 40, "reputation": 4}, "ab_tag": 2,
+    "ticket": [
+      "Frank hält den Hörer zu: „Da ist ein freundlicher Herr vom Microsoft-Support. Mein PC hätte einen gefährlichen Virus. Ich soll nur schnell ein Fernwartungsprogramm installieren und ihm die Nummer sagen.“"
+    ],
+    "frage": "Was rätst du Frank?",
+    "optionen": [
+      "Auflegen, nichts installieren und den Anruf an die IT-Sicherheit melden",
+      "Das Programm installieren, aber genau zuschauen, was er macht",
+      "Nach seiner Mitarbeiternummer fragen und dann installieren",
+      "Den PC ausschalten und dem Anrufer sagen, er soll morgen wieder anrufen"
+    ],
+    "antwort": "Auflegen, nichts installieren und den Anruf an die IT-Sicherheit melden",
+    "hilfe": [
+      "Große Softwarehersteller rufen nicht ungefragt bei Firmen an, um Viren zu entfernen.",
+      "Wer Fernzugriff bekommt, kann alles auf dem PC tun, auch unbemerkt."
+    ],
+    "erklaerung": [
+      "Das ist Social Engineering: Der Anrufer baut Druck und Vertrauen auf, um Fernzugriff zu bekommen. Eine Mitarbeiternummer beweist gar nichts, die ist ausgedacht.",
+      "Richtig ist: auflegen und melden, damit auch Kolleginnen und Kollegen gewarnt werden."
+    ],
+    "suchbegriffe": ["Social Engineering"]
+  },
+  {
+    "id": "zf-kaffeemaschine-wlan", "typ": "zuordnung",
+    "titel": "Die Kaffeemaschine will ins Firmennetz",
+    "auftraggeber": "sabine", "raum": "chefbuero", "prioritaet": "normal", "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 25}, "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 40, "reputation": 4}, "ab_tag": 5,
+    "ticket": [
+      "Sabine strahlt: „Die neue Kaffeemaschine hat eine App! Ich habe sie gleich mit dem Firmen-WLAN verbunden. Jetzt will sie Updates.“",
+      "Ulla ist blass geworden. Ordne jedem Gerät das Netz zu, in das es gehört."
+    ],
+    "frage": "Ordne jedes Gerät dem passenden Netz (VLAN) zu.",
+    "paare": [
+      ["Kaffeemaschine mit App", "IoT-Netz, vom Firmennetz getrennt"],
+      ["Notebook eines Besuchers", "Gäste-WLAN, nur Internet"],
+      ["Arbeitsplatz-PC der Buchhaltung", "Firmennetz"],
+      ["Switch und Server", "Verwaltungsnetz der IT"]
+    ],
+    "hilfe": [
+      "Geräte, denen man wenig vertraut (Gäste, smarte Geräte), kommen in eigene Netze. So kommen sie nicht an Firmendaten heran.",
+      "Getrennt wird mit VLANs und Firewall-Regeln zwischen den Netzen."
+    ],
+    "erklaerung": [
+      "Smarte Geräte bekommen selten Sicherheitsupdates und sind ein beliebtes Einfallstor. Im eigenen IoT-Netz richten sie wenig Schaden an.",
+      "Gäste nur ins Internet, Arbeitsplätze ins Firmennetz, die Verwaltung der Netzwerktechnik in ein eigenes Netz. Das nennt man Netzsegmentierung."
+    ],
+    "suchbegriffe": ["VLAN", "WLAN"]
+  },
+  {
+    "id": "zf-datei-geloescht", "typ": "auswahl",
+    "titel": "Tim hat eine Datei gelöscht",
+    "auftraggeber": "tim", "raum": "helpdesk", "prioritaet": "hoch", "cat": "systeme",
+    "anforderungen": {"systeme": 25}, "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 40, "reputation": 4}, "ab_tag": 13,
+    "ticket": [
+      "Tim ist kreidebleich: „Ich wollte im Freigabeordner nur aufräumen. Jetzt ist die Einsatzplanung weg. Also, die ganze Datei. Aus dem Netzlaufwerk. Warum gibt es da keinen Papierkorb?“"
+    ],
+    "frage": "Wie holst du die Datei am schnellsten zurück?",
+    "optionen": [
+      "Über „Vorgängerversionen“ (Schattenkopie) oder aus der nächtlichen Sicherung wiederherstellen",
+      "Ein Datenrettungsprogramm auf dem Dateiserver installieren und laufen lassen",
+      "Die Datei aus dem Gedächtnis neu schreiben",
+      "Tim die Rechte am Freigabeordner entziehen, dann ist das Problem gelöst"
+    ],
+    "antwort": "Über „Vorgängerversionen“ (Schattenkopie) oder aus der nächtlichen Sicherung wiederherstellen",
+    "hilfe": [
+      "Auf Netzlaufwerken landen gelöschte Dateien nicht im Papierkorb des eigenen PCs.",
+      "Dafür gibt es Schattenkopien auf dem Server und natürlich die Datensicherung."
+    ],
+    "erklaerung": [
+      "Schattenkopien (Vorgängerversionen) oder das Backup bringen die Datei in Minuten zurück. Genau dafür macht man Sicherungen.",
+      "Ein Rettungsprogramm auf dem laufenden Server könnte die Daten sogar überschreiben. Und Tim braucht keine Strafe, sondern eine Erklärung."
+    ],
+    "suchbegriffe": ["Backup"]
+  },
+  {
+    "id": "zf-zertifikat-abgelaufen", "typ": "diagnose",
+    "titel": "Browser warnt vor der Fahrplanauskunft",
+    "auftraggeber": "petra", "raum": "it_buero", "prioritaet": "kritisch", "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 25, "netzwerk": 20}, "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 50, "reputation": 5}, "ab_tag": 6,
+    "ticket": [
+      "Petra zeigt auf ihren Bildschirm: „Seit heute früh warnt jeder Browser vor unserer Fahrplanauskunft: ‚Diese Verbindung ist nicht sicher.‘ Die Fahrgäste rufen schon an und fragen, ob wir gehackt wurden.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {"id": "zertifikat", "text": "Im Browser die Details des Zertifikats ansehen", "ergebnis": "Gültig bis: gestern, 23:59 Uhr. Aussteller und Name stimmen.", "entscheidend": true},
+      {"id": "ping", "text": "Den Webserver anpingen", "ergebnis": "Antwort in 3 ms. Der Server läuft."},
+      {"id": "dns", "text": "Mit nslookup die Adresse der Fahrplanauskunft auflösen", "ergebnis": "fahrplan.talbahn.example → 203.0.113.20, wie immer."},
+      {"id": "uhr", "text": "Uhrzeit am eigenen PC prüfen", "ergebnis": "Datum und Uhrzeit stimmen."},
+      {"id": "http", "text": "Die Seite ohne HTTPS aufrufen", "ergebnis": "Weiterleitung auf HTTPS, dann wieder die Warnung."},
+      {"id": "log", "text": "Das Protokoll des Webservers ansehen", "ergebnis": "Viele Zugriffe wie immer, keine Fehler, keine fremden Anmeldungen."}
+    ],
+    "ziel_pruefungen": 2,
+    "ursachen": [
+      "Das TLS-Zertifikat des Webservers ist abgelaufen.",
+      "Der Webserver wurde gehackt.",
+      "Der DNS-Eintrag zeigt auf einen falschen Server.",
+      "Die Uhr am PC der Fahrgäste geht falsch."
+    ],
+    "ursache": "Das TLS-Zertifikat des Webservers ist abgelaufen.",
+    "massnahmen": [
+      "Ein neues Zertifikat ausstellen lassen, einbinden und die Erneuerung automatisieren",
+      "Den Fahrgästen raten, die Warnung einfach wegzuklicken",
+      "Die Seite wieder nur über HTTP anbieten",
+      "Den Webserver neu installieren"
+    ],
+    "massnahme": "Ein neues Zertifikat ausstellen lassen, einbinden und die Erneuerung automatisieren",
+    "unsicher": ["Den Fahrgästen raten, die Warnung einfach wegzuklicken", "Die Seite wieder nur über HTTP anbieten"],
+    "hilfe": [
+      "Browser prüfen bei HTTPS das Zertifikat: Ist es abgelaufen, vom falschen Namen oder nicht vertrauenswürdig, gibt es eine Warnung.",
+      "Die Details des Zertifikats zeigen, wie lange es gültig ist."
+    ],
+    "erklaerung": [
+      "Das Zertifikat ist gestern abgelaufen, alles andere läuft normal. Ein neues Zertifikat behebt die Warnung, eine automatische Erneuerung verhindert die Wiederholung.",
+      "Warnungen wegklicken zu lassen oder auf HTTP zurückzugehen, würde Fahrgästen beibringen, Sicherheitswarnungen zu ignorieren."
+    ],
+    "suchbegriffe": ["Zertifikat", "HTTPS"]
+  },
+  {
+    "id": "zf-raid-platte", "typ": "auswahl",
+    "titel": "Eine Platte im RAID 5 meldet Fehler",
+    "auftraggeber": "ulla", "raum": "serverraum", "prioritaet": "hoch", "cat": "systeme",
+    "anforderungen": {"systeme": 30}, "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 45, "reputation": 5}, "ab_tag": 4,
+    "ticket": [
+      "Am Dateiserver leuchtet eine Platte orange. Ulla: „RAID 5 mit vier Platten, eine ist raus. Der Controller sagt ‚degraded‘. Die Kollegen merken noch nichts.“"
+    ],
+    "frage": "Was ist jetzt richtig?",
+    "optionen": [
+      "Zuerst prüfen, ob das Backup aktuell ist, dann die defekte Platte tauschen und den Rebuild abwarten",
+      "Nichts tun, RAID 5 verträgt doch einen Ausfall",
+      "Die restlichen Platten neu formatieren",
+      "Eine zweite Platte ziehen, um zu testen, ob es wirklich läuft"
+    ],
+    "antwort": "Zuerst prüfen, ob das Backup aktuell ist, dann die defekte Platte tauschen und den Rebuild abwarten",
+    "hilfe": [
+      "RAID 5 übersteht den Ausfall genau einer Platte. Solange sie fehlt, gibt es keine Reserve mehr.",
+      "Beim Rebuild werden alle anderen Platten stark belastet."
+    ],
+    "erklaerung": [
+      "Im Zustand „degraded“ führt ein zweiter Ausfall zum Datenverlust. Also zuerst sicherstellen, dass das Backup aktuell ist, dann schnell tauschen.",
+      "RAID ersetzt keine Datensicherung: Es schützt vor Plattenausfall, nicht vor Löschen, Schadsoftware oder Brand."
+    ],
+    "suchbegriffe": ["RAID 5"]
+  },
+  {
+    "id": "zf-doppelte-rechnung", "typ": "auswahl",
+    "titel": "Rechnungen doppelt bezahlt?",
+    "auftraggeber": "frank", "raum": "verwaltung", "prioritaet": "normal", "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 25}, "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 45, "reputation": 4}, "ab_tag": 6,
+    "ticket": [
+      "Frank hat es zweimal nachgerechnet: „Irgendwo haben wir eine Rechnung doppelt bezahlt. In der Tabelle zahlung stehen rechnung_nr, betrag und datum. Kannst du mir die doppelten Rechnungsnummern heraussuchen?“"
+    ],
+    "frage": "Welche Abfrage liefert die Rechnungsnummern, die mehr als einmal bezahlt wurden?",
+    "optionen": [
+      "SELECT rechnung_nr, COUNT(*) FROM zahlung GROUP BY rechnung_nr HAVING COUNT(*) > 1",
+      "SELECT rechnung_nr FROM zahlung WHERE COUNT(*) > 1",
+      "SELECT DISTINCT rechnung_nr FROM zahlung",
+      "SELECT rechnung_nr, SUM(betrag) FROM zahlung ORDER BY rechnung_nr"
+    ],
+    "antwort": "SELECT rechnung_nr, COUNT(*) FROM zahlung GROUP BY rechnung_nr HAVING COUNT(*) > 1",
+    "hilfe": [
+      "Mehrfach vorkommende Werte findet man, indem man nach dem Wert gruppiert und zählt.",
+      "Bedingungen auf Gruppen (wie COUNT) stehen in HAVING, nicht in WHERE."
+    ],
+    "erklaerung": [
+      "GROUP BY fasst alle Zahlungen je Rechnungsnummer zusammen, HAVING COUNT(*) > 1 lässt nur die mehrfach bezahlten übrig.",
+      "WHERE filtert einzelne Zeilen vor dem Gruppieren und kennt COUNT noch nicht. DISTINCT würde die Doppelten gerade verstecken."
+    ],
+    "suchbegriffe": ["HAVING", "GROUP BY"]
+  }
+]

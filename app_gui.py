@@ -47,7 +47,7 @@ import fisi_game  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
-from fisi_game_gui import GameView, OfficeView  # noqa: E402
+from fisi_game_gui import CustomerView, GameView, HomeView, OfficeView  # noqa: E402
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
@@ -82,7 +82,8 @@ NAV_ITEMS = [
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
     ("calc", "calc", "Rechner", None),
-    ("game", "game", "Spiel", [("buero", "office", "Büro")]),
+    ("game", "game", "Spiel", [("buero", "office", "Büro"), ("kunde", "station", "Kunde"),
+                                 ("zuhause", "home", "Zuhause")]),
     ("progress", "chart", "Fortschritt", None),
     ("settings", "gear", "Optionen", None),
 ]
@@ -106,6 +107,8 @@ VIEW_TITLES = {
     "calc": ("WERKZEUGE", "RECHNER"),
     "game": ("PRAXIS", "SPIEL"),
     "buero": ("SPIEL", "BÜRO"),
+    "kunde": ("SPIEL", "KUNDE"),
+    "zuhause": ("SPIEL", "ZUHAUSE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
     "search": ("SUCHE", "ERGEBNISSE"),
@@ -2528,6 +2531,7 @@ class FISIApp:
                          ("scenarios", ScenarioView),
                          ("testproject", ProjectView),
                          ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
+                         ("kunde", CustomerView), ("zuhause", HomeView),
                          ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)

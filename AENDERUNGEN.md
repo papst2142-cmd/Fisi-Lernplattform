@@ -4,6 +4,48 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.30
+
+- **Feierabend heißt jetzt nach Hause gehen.** Wer alle Tickets erledigt hat,
+  macht an der Eingangstür des Büros (oder über „Feierabend machen“)
+  Feierabend und steht dann in der eigenen Wohnung. Dort erscheinen das
+  Gehalt und ein kurzer Text zum Tag. An der Wohnungstür geht es „Zur
+  Arbeit“, am Schreibtisch zum Lernen, im Bett wird geschlafen.
+- **Eigene Wohnung (Spiel > Zuhause, am Handy „Zuhause öffnen“).** Man
+  startet im Einzimmer-Apartment mit Matratze und Umzugskartons. Unter
+  „Einrichten“ kauft man im Möbelhaus 23 Möbel mit Spielgeld, stellt sie
+  per Klick oder Tipp auf, dreht, verschiebt, packt sie in den Karton oder
+  verkauft sie zum halben Preis. Möbel dürfen nicht über Wände ragen, sich
+  nicht überlappen und keine Tür versperren, ein Teppich darf unter Möbeln
+  liegen. Je Raum lassen sich Bodenbelag und Bodenfarbe wählen. Später kann
+  man in eine Zweizimmer-Wohnung (2.500 €), einen Altbau (6.000 €) oder ein
+  Loft mit Dachterrasse (12.000 €) umziehen. Bezahlt wird einmalig, eine
+  Miete gibt es vorerst nicht.
+- **Kundenaufträge vor Ort (Spiel > Kunde, am Handy „Kunde öffnen“).** Der
+  Bahnhof Talheim ist begehbar, mit Bahnsteig und Zug, Service-Center,
+  Leitstelle, Technikraum und dem IT-Büro der Talbahn. Petra Lindner und
+  Horst Grabowski arbeiten dort, ihre Aufträge nimmt man vor Ort an, oft
+  direkt am kaputten Gerät. In der Ticketliste steht dazu „beim Kunden“.
+  Ab Arbeitstag 12 kommt der neue Bahnhof Talheim-Nord dazu: erst eine
+  Baustelle mit Absperrband, mit jedem erledigten Auftrag fertiger, zur
+  Eröffnung mit Wimpeln.
+- **Zwischenfälle:** Ab Arbeitstag 2 kann morgens ein Zwischenfall
+  dazukommen, zum Beispiel ein Anruf vom falschen „Microsoft-Support“, ein
+  Stromausfall mit piepender USV oder eine Kaffeemaschine, die ins
+  Firmennetz will. Höchstens einer pro Tag, er zählt nicht zu den normalen
+  Tickets, und jeder kommt nur einmal. PC und Handy zeigen denselben.
+- **Neue Gesichter:** Tim (Azubi im Helpdesk) und Karin Albers
+  (Datenschutzbeauftragte) im Büro, beim Kunden Horst Grabowski aus der
+  Leitstelle. Alle reagieren jetzt mit einem kurzen Satz auf gelöste
+  Aufträge.
+- **Geschichte um Talheim-Nord** (Arbeitstag 12 bis 16) mit einer Szene zu
+  jedem Morgen und 12 neuen Aufträgen: Technik bestellen, Netzwerkschrank
+  mit Geräten aus dem Lager bestücken, Kassen-PC, IP-Plan, Kamera-
+  Speicherdauer, SLA, SQL-Auswertung der Fahrgastzahlen und die Abnahme.
+- **Rack-Geräte aus dem Lager:** Bestellungen können jetzt auch USV, Switch
+  und Patchpanel liefern. Im Serverschrank steht bei jedem Gerät, ob es
+  bereitliegt oder aus dem Lager kommt.
+
 ## 0.29
 
 - **Neu im Spiel: Terminal.** Linux-Server und Windows-Arbeitsplätze werden

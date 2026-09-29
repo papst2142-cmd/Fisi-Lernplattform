@@ -23,10 +23,13 @@ Die Inhalte (Aufgaben, Kollegen, Raeume, Story, Stellschrauben, Bauteile)
 liegen als JSON in inhalte/spiel/.
 """
 
+import copy
+import hashlib
 import itertools
 import json
 import math
 import os
+import uuid
 
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, ipv4_values, raid_values, search_content,
@@ -60,6 +63,12 @@ EV_PROFILE = "profil_gesetzt"
 EV_SOLVED = "ticket_erledigt"
 EV_DEFERRED = "ticket_verschoben"
 EV_DAY_END = "tag_beendet"
+# Wohnung (ab 0.30): Umzug und Moebel kosten Geld, die Einrichtung selbst
+# ist ein Schnappschuss ("juengster Stand gewinnt", wie das Profil)
+EV_MOVE = "umzug"
+EV_BUY = "moebel_gekauft"
+EV_SELL = "moebel_verkauft"
+EV_LAYOUT = "einrichtung_gesetzt"
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -201,65 +210,98 @@ def load_game_content(folder=None):
             return json.load(handle)
 
     tasks = read("aufgaben")
-    for task in tasks:
+    incidents = read("zwischenfaelle")
+    for task in tasks + incidents:
         for field in ("ticket", "hilfe", "erklaerung"):
             task[field] = _lines(task.get(field))
+    for task in incidents:
+        task["zwischenfall"] = True
     building = read("gebaeude")
     story = read("story")
     return {
         "aufgaben": tasks,
+        "zwischenfaelle": incidents,
         "kollegen": read("kollegen"),
         "gebaeude": building,
-        "story": {key: _lines(value) for key, value in story.items()},
+        "kunden": read("kunden"),
+        "wohnungen": read("wohnungen"),
+        "story": {key: _story_value(value) for key, value in story.items()},
         "balancing": read("balancing"),
         "hardware": read("hardware"),
     }
+
+
+def _story_value(value):
+    """Story-Texte: Liste von Zeilen (ein Text), Liste von Listen (mehrere
+    Texte, die sich abwechseln) oder {tag: Zeilen} (Szenen je Arbeitstag)."""
+    if isinstance(value, dict):
+        return {key: _lines(item) for key, item in value.items()}
+    if isinstance(value, list) and value and isinstance(value[0], list):
+        return [_lines(item) for item in value]
+    return _lines(value)
 
 
 GAME = load_game_content()
 
 
 def task_by_id(task_id, content=None):
-    for task in (content or GAME)["aufgaben"]:
+    content = content or GAME
+    for task in content["aufgaben"] + content.get("zwischenfaelle", []):
         if task["id"] == task_id:
             return task
     return None
 
 
+def customer_people(content=None):
+    """Personen beim Kunden (stehen in kunden.json bei ihrem Ort)."""
+    return [dict(person, ort=place["id"])
+            for place in (content or GAME).get("kunden", {}).get("orte", [])
+            for person in place.get("personen", [])]
+
+
+def all_people(content=None):
+    """Alle Personen: Kollegen im Buero und Ansprechpartner beim Kunden."""
+    content = content or GAME
+    return list(content["kollegen"]) + customer_people(content)
+
+
 def colleague(colleague_id, content=None):
-    for person in (content or GAME)["kollegen"]:
+    for person in all_people(content):
         if person["id"] == colleague_id:
             return person
     return None
 
 
 def room(room_id, content=None):
-    for item in (content or GAME)["gebaeude"]["raeume"]:
-        if item["id"] == room_id:
-            return item
+    """Raum im Buero oder bei einem Kunden (Raum-IDs sind eindeutig)."""
+    content = content or GAME
+    buildings = [content["gebaeude"]] + [place["gebaeude"] for place in
+                                         content.get("kunden", {}).get("orte", [])]
+    for building in buildings:
+        for item in building["raeume"]:
+            if item["id"] == room_id:
+                return item
     return None
 
 
-def validate_game_content(content=None):
-    """Prueft die Spielinhalte auf formale Fehler. Leere Liste = in Ordnung.
-    Wird von fisi_core.validate_content() mit aufgerufen."""
-    content = content or GAME
+def _validate_building(building, label, people, cat_rooms=True):
+    """Raeume, Tueren und Einrichtung eines Grundrisses (Buero, Kunde,
+    Wohnung) und die Plaetze der Personen darin."""
     problems = []
-    rooms = {item["id"] for item in content["gebaeude"]["raeume"]}
-    people = {item["id"] for item in content["kollegen"]}
-    balancing = content["balancing"]
-
-    for item in content["gebaeude"]["raeume"]:
-        where = "Spiel-Raum %s" % item.get("id")
-        if item.get("cat") not in CATEGORY_KEYS:
+    view = {"gebaeude": building}
+    for item in building["raeume"]:
+        where = "%s-Raum %s" % (label, item.get("id"))
+        if cat_rooms and not item.get("farbe") and item.get("cat") not in CATEGORY_KEYS:
             problems.append("%s: unbekannter Fachbereich '%s'" % (where, item.get("cat")))
+        if not cat_rooms and not item.get("farbe"):
+            problems.append("%s: Farbe fehlt" % where)
         if item["x"] < 0 or item["y"] < 0 or \
-                item["x"] + item["w"] > content["gebaeude"]["breite"] or \
-                item["y"] + item["h"] > content["gebaeude"]["hoehe"]:
+                item["x"] + item["w"] > building["breite"] or \
+                item["y"] + item["h"] > building["hoehe"]:
             problems.append("%s: liegt ausserhalb des Grundrisses" % where)
         door = item.get("tuer")
-        if door and door_side(item, content) in ("w", "o"):
-            hall = content["gebaeude"]["flur"]
+        if door and door_side(item, view) in ("w", "o"):
+            hall = building["flur"]
             if not max(item["y"], hall["y"]) <= door["von"] < door["bis"] <= \
                     min(item["y"] + item["h"], hall["y"] + hall["h"]):
                 problems.append("%s: Seitentuer fuehrt nicht in den Flur" % where)
@@ -270,21 +312,85 @@ def validate_game_content(content=None):
                 problems.append("%s: unbekannte Einrichtung '%s'" % (where, deco.get("typ")))
             elif not _inside(deco, item):
                 problems.append("%s: Einrichtung '%s' ragt aus dem Raum" % (where, deco["typ"]))
-    hall = content["gebaeude"].get("flur", {})
-    hall_area = {"x": 0, "y": hall.get("y", 0), "w": content["gebaeude"]["breite"],
-                 "h": hall.get("h", 0)}
+    hall = building.get("flur", {})
+    hall_area = {"x": 0, "y": hall.get("y", 0), "w": building["breite"], "h": hall.get("h", 0)}
     for deco in hall.get("deko", []):
         if deco.get("typ") not in DECO_TYPES or not _inside(deco, hall_area):
-            problems.append("Spiel-Flur: Einrichtung '%s' unbekannt oder ausserhalb"
-                            % deco.get("typ"))
-    for person in content["kollegen"]:
-        where = "Spiel-Kollege %s" % person.get("id")
+            problems.append("%s-Flur: Einrichtung '%s' unbekannt oder ausserhalb"
+                            % (label, deco.get("typ")))
+    rooms = {item["id"]: item for item in building["raeume"]}
+    for person in people:
+        where = "Spiel-Person %s" % person.get("id")
         if person.get("raum") not in rooms:
             problems.append("%s: unbekannter Raum '%s'" % (where, person.get("raum")))
         elif person.get("platz"):
             x, y = person["platz"]
-            if room_at(x, y, content) is not room(person["raum"], content):
-                problems.append("%s: Sitzplatz liegt nicht im eigenen Raum" % where)
+            if room_at(x, y, view) is not rooms[person["raum"]]:
+                problems.append("%s: Platz liegt nicht im eigenen Raum" % where)
+    return problems
+
+
+def _validate_homes(content):
+    """Wohnungen, Moebel und die Start-Einrichtung."""
+    problems = []
+    homes = content["wohnungen"]
+    items = {item["id"]: item for item in homes["moebel"]}
+    for item in homes["moebel"]:
+        where = "Spiel-Moebel %s" % item.get("id")
+        if item.get("typ") not in DECO_TYPES:
+            problems.append("%s: unbekannter Typ '%s'" % (where, item.get("typ")))
+        if not (item.get("w", 0) > 0 and item.get("h", 0) > 0 and item.get("preis", -1) >= 0):
+            problems.append("%s: Groesse oder Preis fehlt" % where)
+        if item.get("aktion") not in (None, "lernen", "schlafen"):
+            problems.append("%s: unbekannte Aktion '%s'" % (where, item.get("aktion")))
+    for piece, item_id in homes.get("start_moebel", {}).items():
+        if item_id not in items:
+            problems.append("Spiel-Wohnung: Start-Moebel '%s' unbekannt" % item_id)
+    ids = [flat["id"] for flat in homes["wohnungen"]]
+    if homes["start"] not in ids or len(set(ids)) != len(ids):
+        problems.append("Spiel-Wohnung: Start-Wohnung fehlt oder Kennung doppelt")
+    for flat in homes["wohnungen"]:
+        label = "Spiel-Wohnung %s" % flat["id"]
+        building = flat["gebaeude"]
+        problems += _validate_building(building, label, [], cat_rooms=False)
+        x, y, w, h = flat["kartons"]
+        box = {"x": x, "y": y, "w": w, "h": h}
+        if not any(_inside(box, area) for area in _areas(building)):
+            problems.append("%s: Umzugskartons liegen ausserhalb" % label)
+        # Start-Einrichtung: jedes Moebel muss dort stehen duerfen
+        state = GameState([], content)
+        state.home_id = flat["id"]
+        state.furniture = dict(homes.get("start_moebel", {}))
+        for piece, (px_, py_, turn) in (flat.get("einrichtung") or {}).get("moebel", {}).items():
+            problem = placement_problem(state, piece, state.furniture.get(piece), px_, py_,
+                                        turn, {"moebel": {}, "boeden": {}}, content)
+            if problem:
+                problems.append("%s: Start-Einrichtung: %s" % (label, problem))
+    return problems
+
+
+def validate_game_content(content=None):
+    """Prueft die Spielinhalte auf formale Fehler. Leere Liste = in Ordnung.
+    Wird von fisi_core.validate_content() mit aufgerufen."""
+    content = content or GAME
+    problems = []
+    site_rooms = {SITE_OFFICE: {item["id"] for item in content["gebaeude"]["raeume"]}}
+    for place in customer_places(content):
+        site_rooms[place["id"]] = {item["id"] for item in place["gebaeude"]["raeume"]}
+    rooms = set().union(*site_rooms.values())
+    all_room_ids = [rid for ids in site_rooms.values() for rid in ids]
+    if len(all_room_ids) != len(set(all_room_ids)):
+        problems.append("Spiel: Raum-Kennungen sind nicht eindeutig")
+    people = {item["id"] for item in all_people(content)}
+    if len(people) != len(all_people(content)):
+        problems.append("Spiel: Personen-Kennungen sind nicht eindeutig")
+    balancing = content["balancing"]
+
+    problems += _validate_building(content["gebaeude"], "Spiel", content["kollegen"])
+    for place in customer_places(content):
+        problems += _validate_building(place["gebaeude"], "Spiel-Kunde %s" % place["id"],
+                                       place.get("personen", []))
+    problems += _validate_homes(content)
 
     for rank in balancing["raenge"]:
         if rank["name"] not in balancing["gehalt_pro_tag"]:
@@ -294,7 +400,8 @@ def validate_game_content(content=None):
     problems += _validate_rack_hardware(content)
 
     seen = set()
-    for number, task in enumerate(content["aufgaben"], start=1):
+    for number, task in enumerate(content["aufgaben"] + content.get("zwischenfaelle", []),
+                                  start=1):
         where = "Spiel-Aufgabe Nr. %d (%s)" % (number, task.get("id"))
         for field in ("id", "typ", "titel", "auftraggeber", "raum", "prioritaet",
                       "cat", "ticket", "frage", "hilfe", "erklaerung",
@@ -311,6 +418,22 @@ def validate_game_content(content=None):
         if task.get("auftraggeber") not in people:
             problems.append("%s: unbekannter Auftraggeber '%s'"
                             % (where, task.get("auftraggeber")))
+        else:
+            site = task_site(task, content)
+            if site not in site_rooms:
+                problems.append("%s: unbekannter Ort '%s'" % (where, site))
+            elif task.get("raum") not in site_rooms[site]:
+                problems.append("%s: Raum '%s' liegt nicht am Ort '%s'"
+                                % (where, task.get("raum"), site))
+            elif task.get("stelle"):
+                view = site_content(site, None, content)
+                x, y = task["stelle"]
+                spot_room = room_at(x, y, view)
+                if spot_room is None or spot_room["id"] != task["raum"]:
+                    problems.append("%s: Stelle liegt nicht im Raum '%s'"
+                                    % (where, task["raum"]))
+                elif _cell(x, y) not in _base_grid(view["gebaeude"]):
+                    problems.append("%s: an der Stelle kann niemand stehen" % where)
         if task.get("prioritaet") not in PRIORITIES:
             problems.append("%s: unbekannte Prioritaet" % where)
         if task.get("cat") not in CATEGORY_KEYS:
@@ -417,7 +540,8 @@ def _validate_hardware_task(task, content):
         if len(set(ids)) != len(ids):
             problems.append("Angebots-Kennung doppelt vorhanden")
         for need in needs:
-            if need.get("typ") not in content["hardware"]["typen"] or \
+            if (need.get("typ") not in content["hardware"]["typen"] and
+                    need.get("typ") not in content["hardware"].get("rack_typen", {})) or \
                     not need.get("text") or not need.get("menge", 0) >= 1:
                 problems.append("Bedarf unvollstaendig: %s" % need.get("text"))
             for other in need.get("fuer") or []:
@@ -612,14 +736,16 @@ PART_FIELDS = {
 # Vorgaben eines PC-Auftrags
 BUILD_RULES = ("ram_min", "speicher_min", "grafikkarte", "budget")
 # Einheiten der Mindestwerte bei Bestellungen
-UNITS = {"groesse": "GB", "watt": "W"}
+UNITS = {"groesse": "GB", "watt": "W", "leistung": "W", "ports": "Ports"}
 
 
 def part(part_id, content=None):
+    """Bauteil (PC) oder Rack-Geraet - beides laesst sich bestellen und liegt
+    dann im Lager."""
     for item in (content or GAME)["hardware"]["teile"]:
         if item["id"] == part_id:
             return item
-    return None
+    return rack_device(part_id, content)
 
 
 def dealer(dealer_id, content=None):
@@ -812,6 +938,12 @@ RACK_COLORS = {"usv": C["yellow"], "server": C["cyan"], "storage": C["purple"],
                "switch": C["green"], "patchpanel": C["pink"]}
 # Vorgaben eines Rack-Auftrags
 RACK_RULES = ("mindestens", "ports_min", "frei_min")
+
+
+def rack_source_text(task, index):
+    """Woher ein Geraet fuer den Rack-Auftrag kommt (noch nicht eingebaut)."""
+    return "aus dem Lager" if index >= task.get("lager_ab", len(task["geraete"])) \
+        else "liegt bereit"
 
 
 def rack_device(device_id, content=None):
@@ -1105,7 +1237,29 @@ def _validate_rack_task(task, content):
     for kind in (task.get("vorgaben") or {}).get("mindestens") or {}:
         if kind not in content["hardware"].get("rack_typen", {}):
             problems.append("unbekannter Geraetetyp '%s'" % kind)
-    if not problems and rack_solution(task, content) is None:
+    if problems:
+        return problems
+    if task.get("aus_lager"):
+        # Mit jeder richtigen Bestellung muss sich der Schrank bestuecken lassen
+        first = task_by_id(task.get("nach"), content)
+        if not first or first["typ"] != "bestellung":
+            return ["Geraete aus dem Lager brauchen eine Bestellung als Voraussetzung"]
+        carts = valid_carts(first, content)
+        if not carts:
+            return ["die Bestellung '%s' hat keine richtige Loesung" % first["id"]]
+        for cart in carts:
+            devices = list(task["geraete"])
+            for offer in first["angebote"]:
+                item = rack_device(offer["teil"], content)
+                if item and item["typ"] in task["aus_lager"]:
+                    devices += [offer["teil"]] * int(cart.get(offer["id"], 0) or 0)
+            trial = dict(task, geraete=devices, lager_ab=len(task["geraete"]))
+            if rack_solution(trial, content) is None:
+                problems.append("Schrank laesst sich mit der Lieferung %s nicht richtig "
+                                "bestuecken" % ", ".join(sorted(devices)))
+                break
+        return problems
+    if rack_solution(task, content) is None:
         problems.append("Schrank laesst sich mit den bereitliegenden Geraeten nicht "
                         "richtig bestuecken")
     return problems
@@ -1958,6 +2112,8 @@ def part_specs(item, content=None):
         return "für " + ", ".join(_form(f, content) for f in item["formfaktoren"])
     if kind == "notebook":
         return "%d GB RAM" % item["groesse"]
+    if kind in (content or GAME)["hardware"].get("rack_typen", {}):
+        return rack_specs(item, content)
     return ""
 
 
@@ -2108,6 +2264,15 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
         if bonus:
             payload["ersparnis_bonus"] = bonus
             payload["geld"] += bonus
+    if task.get("zwischenfall"):
+        payload["zwischenfall"] = True
+    if right and task["typ"] == "rack" and task.get("lager_ab") is not None:
+        # Geraete ab Platz lager_ab kamen aus dem Lager
+        used = [item["id"] for index, item, _bottom in rack_placed(task, answer, content)
+                if index >= task["lager_ab"]]
+        if used:
+            payload["verbaut"] = used
+            payload["aus_lager"] = used
     if right and task["typ"] == "bauteile":
         stock = dict(stock or {})
         used = []
@@ -2124,8 +2289,12 @@ def defer_payload(task, day, balancing=None):
     balancing = balancing or GAME["balancing"]
     factor = balancing["prioritaet_faktor"].get(task["prioritaet"], 1)
     loss = _scaled(balancing["verschieben_verlust"], factor)
-    return {"aufgabe": task["id"], "tag": day,
-            "reputation": {"zuverlaessigkeit": -loss}}
+    payload = {"aufgabe": task["id"], "tag": day,
+               "reputation": {"zuverlaessigkeit": -loss}}
+    if task.get("zwischenfall"):
+        # Zwischenfaelle warten nicht - er ist danach weg
+        payload["zwischenfall"] = True
+    return payload
 
 
 # ============================================================================
@@ -2158,9 +2327,30 @@ class GameState:
         self.tickets_done = 0
         self.deliveries = []       # Lieferungen aus richtigen Bestellungen
         self.used = {}             # aus dem Lager verbaute Teile: id -> Anzahl
+        self.seen_incidents = set()   # schon bearbeitete oder verschobene Zwischenfaelle
+        homes = self.content["wohnungen"]
+        self.home_id = homes["start"]
+        self.furniture = dict(homes.get("start_moebel", {}))   # stueck -> moebel
+        self.layouts = {}          # wohnung -> juengste Einrichtung
+        self.first_event = None
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
+            if self.first_event is None:
+                self.first_event = str(timestamp)
+            if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
+                self.seen_incidents.add(data.get("aufgabe"))
+            if kind == EV_MOVE:
+                self.money += int(data.get("geld", 0))
+                self.home_id = data.get("wohnung", self.home_id)
+            elif kind == EV_BUY:
+                self.money += int(data.get("geld", 0))
+                self.furniture[data.get("stueck")] = data.get("moebel")
+            elif kind == EV_SELL:
+                self.money += int(data.get("geld", 0))
+                self.furniture.pop(data.get("stueck"), None)
+            elif kind == EV_LAYOUT:
+                self.layouts[data.get("wohnung")] = data
             if kind == EV_PROFILE:
                 # Der juengste Eintrag gewinnt (Ereignisse sind sortiert)
                 self.profile = {"name": data.get("name", ""),
@@ -2293,7 +2483,51 @@ class GameState:
 
     def open_tickets(self):
         per_day = self.content["balancing"]["tickets_pro_tag"]
-        return self._pool()[:max(0, per_day - len(self.handled))]
+        regular = [task_id for task_id in self.handled if not is_incident(task_id, self.content)]
+        result = self._pool()[:max(0, per_day - len(regular))]
+        incident = self.incident_today()
+        if incident and incident["id"] not in self.handled:
+            result.insert(0, incident)
+        return result
+
+    # -- Zwischenfaelle -------------------------------------------------------
+
+    def incident_today(self):
+        """Der Zwischenfall des aktuellen Arbeitstags oder None. Kein Zufall
+        ueber die Uhr: Der "Wuerfel" ist ein Pruefwert aus Spielbeginn und
+        Arbeitstag. So zeigen PC und Handy denselben Zwischenfall, und nichts
+        muss zusaetzlich gespeichert werden. Hoechstens einer pro Tag, jeder
+        nur einmal pro Spieldurchgang."""
+        for task_id in self.handled:
+            if is_incident(task_id, self.content):
+                return task_by_id(task_id, self.content)
+        rules = self.content["balancing"].get("zwischenfaelle") or {}
+        if self.profile is None or self.day < rules.get("ab_tag", 2):
+            return None
+        seed = self.first_event or ""
+        if _dice(seed, self.day, "chance") >= rules.get("chance", 0):
+            return None
+        candidates = [task for task in self.content.get("zwischenfaelle", [])
+                      if task["id"] not in self.seen_incidents
+                      and task.get("ab_tag", 1) <= self.day and self._ready(task)]
+        if not candidates:
+            return None
+        return candidates[int(_dice(seed, self.day, "wahl") * len(candidates))]
+
+    # -- Rack mit Geraeten aus dem Lager -------------------------------------
+
+    def prepared_task(self, task):
+        """Rack-Auftrag mit "aus_lager": Zu den bereitliegenden Geraeten kommen
+        die passenden Geraete aus dem Lager (je Stueck ein Eintrag)."""
+        if task is None or task["typ"] != "rack" or not task.get("aus_lager"):
+            return task
+        devices = list(task.get("geraete") or [])
+        start = len(devices)
+        for part_id, count in self.stock().items():
+            item = rack_device(part_id, self.content)
+            if item and item["typ"] in task["aus_lager"]:
+                devices += [part_id] * count
+        return dict(task, geraete=devices, lager_ab=start)
 
     def todays_tickets(self):
         """Tickets des aktuellen Arbeitstags: [(aufgabe, status)]."""
@@ -2307,12 +2541,23 @@ class GameState:
         return [(task, status) for task, status in self.todays_tickets()
                 if task["raum"] == room_id]
 
-    def quests(self):
-        """Offene Tickets je Auftraggeber: {kollegen_id: [aufgabe, ...]}."""
+    def quests(self, site=None):
+        """Offene Tickets je Auftraggeber: {kollegen_id: [aufgabe, ...]} -
+        mit site nur die Auftraege, die an diesem Ort erledigt werden."""
         result = {}
         for task in self.open_tickets():
+            if site is not None and task_site(task, self.content) != site:
+                continue
             result.setdefault(task["auftraggeber"], []).append(task)
         return result
+
+    def open_count_by_site(self):
+        """Offene Tickets je Ort (fuer die Knoepfe "Kunde oeffnen" usw.)."""
+        counts = {}
+        for task in self.open_tickets():
+            site = task_site(task, self.content)
+            counts[site] = counts.get(site, 0) + 1
+        return counts
 
     def open_count_by_room(self):
         counts = {}
@@ -2372,7 +2617,7 @@ class Game:
     def solve(self, task_id, answer, used_help):
         """Wertet ein Ticket aus, speichert das Ereignis und liefert die
         Nutzdaten (richtig, Geld, Reputation ...) fuer die Anzeige."""
-        task = task_by_id(task_id, self.content)
+        task = self.state.prepared_task(task_by_id(task_id, self.content))
         if task is None or not self.state.is_open(task_id):
             raise ValueError("Dieses Ticket ist heute nicht (mehr) offen.")
         payload = evaluate(task, answer, used_help, self.knowledge(), self.state.day,
@@ -2401,6 +2646,68 @@ class Game:
         ok = self.db.reset_game()
         self.reload()
         return ok
+
+    # -- Wohnung --------------------------------------------------------------
+
+    def buy_furniture(self, item_id):
+        """Kauft ein Moebelstueck - es landet erst einmal im Karton."""
+        item = furniture_item(item_id, self.content)
+        if item is None or not item.get("laden", True):
+            raise ValueError("Dieses Möbelstück gibt es im Möbelhaus nicht.")
+        if self.state.money < item["preis"]:
+            raise ValueError("Dafür reicht dein Geld noch nicht (%d € fehlen)."
+                             % (item["preis"] - max(0, self.state.money)))
+        piece = "m" + uuid.uuid4().hex[:10]
+        self._log(EV_BUY, {"stueck": piece, "moebel": item_id, "geld": -item["preis"]})
+        return piece
+
+    def sell_furniture(self, piece):
+        """Verkauft ein Moebelstueck zum halben Preis."""
+        item = furniture_item(self.state.furniture.get(piece), self.content)
+        if item is None:
+            raise ValueError("Dieses Möbelstück gehört dir nicht.")
+        price = int(item["preis"] * self.content["wohnungen"].get("rueckkauf", 0.5))
+        layout = home_layout(self.state, self.content)
+        if piece in layout["moebel"]:
+            del layout["moebel"][piece]
+            self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+        self._log(EV_SELL, {"stueck": piece, "moebel": item["id"], "geld": price})
+        return price
+
+    def place_furniture(self, piece, x, y, turn=0):
+        """Stellt ein Moebelstueck auf (oder um). Fehler als ValueError."""
+        item_id = self.state.furniture.get(piece)
+        if item_id is None:
+            raise ValueError("Dieses Möbelstück gehört dir nicht.")
+        x, y = snap(x), snap(y)
+        problem = placement_problem(self.state, piece, item_id, x, y, turn,
+                                    content=self.content)
+        if problem:
+            raise ValueError(problem)
+        layout = home_layout(self.state, self.content)
+        layout["moebel"][piece] = [x, y, int(turn) % 4]
+        self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+
+    def box_furniture(self, piece):
+        """Packt ein Moebelstueck zurueck in den Karton."""
+        layout = home_layout(self.state, self.content)
+        if layout["moebel"].pop(piece, None) is not None:
+            self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+
+    def set_floor(self, room_id, kind, color):
+        layout = home_layout(self.state, self.content)
+        layout["boeden"][room_id] = [kind, color]
+        self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+
+    def move_home(self, home_id):
+        """Umzug in eine groessere Wohnung - alle Moebel kommen in Kartons."""
+        target = apartment(home_id, self.content)
+        if target is None or target not in moves_available(self.state, self.content):
+            raise ValueError("In diese Wohnung kannst du nicht umziehen.")
+        if self.state.money < target["preis"]:
+            raise ValueError("Dafür reicht dein Geld noch nicht (%d € fehlen)."
+                             % (target["preis"] - max(0, self.state.money)))
+        self._log(EV_MOVE, {"wohnung": home_id, "geld": -target["preis"]})
 
 
 # ============================================================================
@@ -2441,6 +2748,14 @@ POT = "#B7643A"
 CARDBOARD = "#C79A62"
 CHAIR = "#3A2A5C"
 PAPER = "#F4F1FA"
+
+
+def room_color(item):
+    """Farbe eines Raums: je Fachbereich ("cat") oder frei ("farbe", z.B. in
+    der Wohnung)."""
+    if item.get("farbe"):
+        return item["farbe"]
+    return CATEGORY_COLOR[CAT_NAME[item["cat"]]]
 
 
 def door_side(item, content=None):
@@ -2538,7 +2853,16 @@ DECO_TYPES = ("schreibtisch", "pflanze", "regal", "aktenregal", "sessel",
               "besprechungstisch", "kaffeemaschine", "rack", "usv", "klima",
               "werkbank", "tisch", "pc", "drucker", "kartons", "whiteboard",
               "wasserspender", "feuerloescher", "teppich", "fussmatte", "bank",
-              "hochregal", "palette", "hubwagen", "markierung")
+              "hochregal", "palette", "hubwagen", "markierung",
+              # Wohnung (ab 0.30)
+              "bett", "matratze", "sofa", "couchtisch", "fernseher", "esstisch",
+              "kuechenzeile", "kuehlschrank", "badewanne", "dusche", "wc",
+              "waschbecken", "kleiderschrank", "stehlampe", "aquarium",
+              "waschmaschine", "sitzsack", "kommode", "liegestuhl", "grill",
+              "sonnenschirm", "hochbeet", "spielkonsole", "bild",
+              # Beim Kunden (ab 0.30)
+              "automat", "gleis", "zug", "tresen", "monitorwand", "leitstand",
+              "absperrband", "wimpel", "anzeigetafel", "kamera", "bauzaun")
 
 
 def _inside(deco, area):
@@ -2547,7 +2871,33 @@ def _inside(deco, area):
 
 
 def _deco(item):
-    """Ein Einrichtungsgegenstand als Zeichenbefehle."""
+    """Ein Einrichtungsgegenstand als Zeichenbefehle. "dreh" (0 bis 3) dreht
+    ihn in Vierteldrehungen im Uhrzeigersinn - w und h sind dann schon die
+    gedrehten Masse (so, wie er im Raum Platz braucht)."""
+    turns = int(item.get("dreh", 0) or 0) % 4
+    if not turns:
+        return _deco_plain(item)
+    w, h = (item["h"], item["w"]) if turns % 2 else (item["w"], item["h"])
+    shapes = _deco_plain(dict(item, x=0.0, y=0.0, w=w, h=h, dreh=0))
+    frame_h = h
+    for _turn in range(turns):
+        shapes = [_rotate_shape(shape, frame_h) for shape in shapes]
+        frame_h = w if frame_h == h else h
+    return [_moved(shape, item["x"], item["y"]) for shape in shapes]
+
+
+def _moved(shape, dx, dy):
+    shape = dict(shape)
+    if shape["k"] == "line":
+        x1, y1, x2, y2 = shape["pts"]
+        shape["pts"] = [x1 + dx, y1 + dy, x2 + dx, y2 + dy]
+    else:
+        shape["x"] += dx
+        shape["y"] += dy
+    return shape
+
+
+def _deco_plain(item):
     kind = item["typ"]
     x, y, w, h = item["x"], item["y"], item["w"], item["h"]
     s = []
@@ -2728,6 +3078,259 @@ def _deco(item):
         s.append(_rect(x + w * 0.14, y, w * 0.2, h, "#F59E0B", "#92400E", 0.04, 0.05))
         s.append(_line(x + w * 0.14, y + h / 2.0, x, y + h / 2.0, METAL_DARK, 0.08))
         s.append(_oval(x - 0.12, y + h / 2.0 - 0.14, 0.28, 0.28, "#1B1031"))
+    else:
+        s += _deco_more(kind, item, x, y, w, h)
+    return s
+
+
+# Farben der Wohnungs- und Kunden-Einrichtung (aus der Palette abgeleitet)
+FABRIC = "#7C3AED"
+BLANKET = "#60A5FA"
+PILLOW = "#F4F1FA"
+TILE_WHITE = "#E6E1F0"
+WATER = "#7FE3F5"
+RAIL = "#8E8AA3"
+SLEEPER = "#6E4A2F"
+TRAIN = "#A78BFA"
+SIGN_RED = "#F87171"
+
+
+def _deco_more(kind, item, x, y, w, h):
+    """Einrichtung fuer Wohnung und Kundenstandorte. Grundausrichtung: die
+    "Rueckseite" (Kopfende, Lehne, Wand) liegt oben - gedreht wird ueber
+    "dreh" (siehe _deco)."""
+    s = []
+    dark = mix(C["card"], "#000000", 0.2)
+    if kind in ("bett", "matratze"):
+        if kind == "bett":
+            s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.08))
+            s.append(_rect(x, y, w, 0.3, WOOD_DARK, r=0.06))
+            inset = 0.14
+        else:
+            inset = 0.0
+        s.append(_rect(x + inset, y + inset + (0.2 if kind == "bett" else 0), w - 2 * inset,
+                       h - 2 * inset - (0.2 if kind == "bett" else 0), PAPER, METAL, 0.03, 0.12))
+        pillows = 2 if w >= 2.4 else 1
+        pw = (w - 2 * inset - 0.3 - 0.15 * (pillows - 1)) / pillows
+        for index in range(pillows):
+            s.append(_rect(x + inset + 0.15 + index * (pw + 0.15), y + inset + 0.35, pw, 0.55,
+                           PILLOW, METAL, 0.03, 0.15))
+        s.append(_rect(x + inset, y + h * 0.42, w - 2 * inset, h * 0.58 - inset,
+                       BLANKET, mix(BLANKET, "#000000", 0.3), 0.04, 0.12))
+        s.append(_line(x + inset + 0.1, y + h * 0.42 + 0.25, x + w - inset - 0.1,
+                       y + h * 0.42 + 0.25, mix(BLANKET, "#FFFFFF", 0.35), 0.06))
+    elif kind in ("sofa", "sitzsack"):
+        if kind == "sitzsack":
+            s.append(_oval(x, y, w, h, "#FB923C", mix("#FB923C", "#000000", 0.3), 0.04))
+            s.append(_oval(x + w * 0.25, y + h * 0.25, w * 0.5, h * 0.45,
+                           mix("#FB923C", "#FFFFFF", 0.2)))
+        else:
+            s.append(_rect(x, y, w, h, FABRIC, mix(FABRIC, "#000000", 0.3), 0.05, 0.2))
+            s.append(_rect(x, y, 0.35, h, mix(FABRIC, "#000000", 0.15), r=0.15))
+            s.append(_rect(x + w - 0.35, y, 0.35, h, mix(FABRIC, "#000000", 0.15), r=0.15))
+            seats = max(2, int(round((w - 0.7) / 1.1)))
+            sw = (w - 0.7) / seats
+            for index in range(seats):
+                s.append(_rect(x + 0.37 + index * sw, y + 0.4, sw - 0.06, h - 0.48,
+                               mix(FABRIC, "#FFFFFF", 0.18), r=0.12))
+    elif kind == "couchtisch":
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.12))
+        s.append(_oval(x + w * 0.2, y + h * 0.3, 0.3, 0.3, PAPER, METAL, 0.03))
+        s.append(_rect(x + w * 0.55, y + h * 0.25, 0.5, 0.35, "#F472B6", r=0.04))
+    elif kind in ("fernseher", "kommode"):
+        s.append(_rect(x, y, w, h, WOOD_DARK, mix(WOOD_DARK, "#000000", 0.3), 0.04, 0.05))
+        if kind == "fernseher":
+            s.append(_rect(x + 0.2, y + 0.05, w - 0.4, 0.18, SCREEN, "#6B5F9A", 0.03, 0.03))
+            s.append(_rect(x + w / 2.0 - 0.3, y + h - 0.3, 0.6, 0.18, METAL_DARK, r=0.04))
+        else:
+            for index in range(1, 3):
+                s.append(_line(x + w * index / 3.0, y + 0.08, x + w * index / 3.0,
+                               y + h - 0.08, mix(WOOD_DARK, "#000000", 0.3), 0.03))
+            s.append(_oval(x + w * 0.15, y + h * 0.25, 0.3, 0.3, "#FBBF24"))
+    elif kind == "spielkonsole":
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.03, 0.08))
+        s.append(_oval(x + w * 0.15, y + h * 0.3, w * 0.3, h * 0.4, "#22D3EE"))
+        s.append(_oval(x + w * 0.55, y + h * 0.3, w * 0.3, h * 0.4, "#F472B6"))
+    elif kind == "esstisch":
+        seats = max(1, int(round(w / 1.2)))
+        for index in range(seats):
+            cx = x + w * (index + 0.5) / seats
+            s += _chair(cx, y - 0.3)
+            s += _chair(cx, y + h + 0.3)
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.1))
+        s.append(_oval(x + w / 2.0 - 0.25, y + h / 2.0 - 0.25, 0.5, 0.5, PLANT, PLANT_DARK,
+                       0.03))
+    elif kind == "kuechenzeile":
+        s.append(_rect(x, y, w, h, "#CFCBDD", METAL, 0.05, 0.05))
+        s.append(_line(x, y + h - 0.12, x + w, y + h - 0.12, METAL, 0.04))
+        # Spuele links, Kochfeld rechts
+        s.append(_rect(x + 0.3, y + 0.15, 0.9, h - 0.4, METAL, METAL_DARK, 0.03, 0.08))
+        s.append(_oval(x + 0.65, y + 0.2, 0.18, 0.18, METAL_DARK))
+        hob = x + w - 1.4
+        s.append(_rect(hob, y + 0.12, 1.1, h - 0.34, "#1E1A30", r=0.05))
+        for dx, dy in ((0.28, 0.25), (0.8, 0.25)):
+            s.append(_oval(hob + dx - 0.2, y + dy, 0.4, 0.4, "", "#F87171", 0.04))
+        if w > 3.2:
+            s.append(_rect(x + 1.5, y + 0.2, 0.5, 0.35, METAL_DARK, r=0.05))
+    elif kind in ("kuehlschrank", "waschmaschine"):
+        base = PAPER if kind == "kuehlschrank" else "#DDE6F0"
+        s.append(_rect(x, y, w, h, base, METAL, 0.04, 0.08))
+        if kind == "kuehlschrank":
+            s.append(_line(x + 0.12, y + h - 0.2, x + w - 0.12, y + h - 0.2, METAL, 0.04))
+            s.append(_rect(x + w * 0.3, y + 0.15, w * 0.25, 0.2, "#F472B6", r=0.03))
+        else:
+            s.append(_oval(x + w * 0.2, y + h * 0.2, w * 0.6, h * 0.6, "#1E1A30", METAL, 0.04))
+            s.append(_oval(x + w * 0.32, y + h * 0.32, w * 0.36, h * 0.36, WATER))
+    elif kind == "badewanne":
+        s.append(_rect(x, y, w, h, TILE_WHITE, METAL, 0.05, 0.3))
+        s.append(_rect(x + 0.15, y + 0.15, w - 0.3, h - 0.3, WATER, mix(WATER, "#000000", 0.2),
+                       0.03, 0.25))
+        s.append(_oval(x + 0.3, y + h / 2.0 - 0.1, 0.2, 0.2, METAL))
+    elif kind == "dusche":
+        s.append(_rect(x, y, w, h, TILE_WHITE, METAL, 0.05, 0.05))
+        s.append(_line(x, y, x + w, y + h, mix(TILE_WHITE, METAL, 0.5), 0.03))
+        s.append(_line(x + w, y, x, y + h, mix(TILE_WHITE, METAL, 0.5), 0.03))
+        s.append(_oval(x + w / 2.0 - 0.14, y + h / 2.0 - 0.14, 0.28, 0.28, METAL_DARK))
+    elif kind == "wc":
+        s.append(_rect(x + w * 0.1, y, w * 0.8, h * 0.3, TILE_WHITE, METAL, 0.03, 0.05))
+        s.append(_oval(x + w * 0.15, y + h * 0.22, w * 0.7, h * 0.75, TILE_WHITE, METAL, 0.04))
+        s.append(_oval(x + w * 0.3, y + h * 0.38, w * 0.4, h * 0.45, mix(WATER, TILE_WHITE, 0.4)))
+    elif kind == "waschbecken":
+        s.append(_rect(x, y, w, h, TILE_WHITE, METAL, 0.04, 0.12))
+        s.append(_oval(x + w * 0.2, y + h * 0.25, w * 0.6, h * 0.6, mix(WATER, TILE_WHITE, 0.5)))
+        s.append(_rect(x + w / 2.0 - 0.05, y + 0.02, 0.1, 0.25, METAL))
+    elif kind == "kleiderschrank":
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.04))
+        doors = max(2, int(round(w / 0.9)))
+        for index in range(1, doors):
+            xx = x + w * index / doors
+            s.append(_line(xx, y + 0.05, xx, y + h - 0.05, WOOD_DARK, 0.04))
+        for index in range(doors):
+            xx = x + w * (index + 0.5) / doors
+            s.append(_rect(xx - 0.05, y + h - 0.3, 0.1, 0.18, METAL))
+    elif kind == "stehlampe":
+        s.append(_oval(x, y, w, h, mix("#FBBF24", C["card"], 0.55)))
+        s.append(_oval(x + w * 0.25, y + h * 0.25, w * 0.5, h * 0.5, "#FBBF24", "#B45309",
+                       0.03))
+    elif kind == "aquarium":
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.04, 0.04))
+        s.append(_rect(x + 0.1, y + 0.1, w - 0.2, h - 0.2, WATER, r=0.03))
+        for fx, fy, color in ((0.3, 0.35, "#FB923C"), (0.62, 0.55, "#F472B6"),
+                              (0.45, 0.25, "#FBBF24")):
+            s.append(_oval(x + w * fx, y + h * fy, 0.3, 0.16, color))
+        s.append(_oval(x + w * 0.15, y + h * 0.55, 0.22, 0.22, PLANT))
+    elif kind in ("liegestuhl",):
+        s.append(_rect(x, y, w, h, "#DDE6F0", METAL, 0.04, 0.1))
+        yy = y + 0.3
+        while yy < y + h - 0.1:
+            s.append(_line(x + 0.08, yy, x + w - 0.08, yy, "#22D3EE", 0.08))
+            yy += 0.3
+    elif kind == "grill":
+        s.append(_oval(x, y, w, h, METAL_DARK, METAL, 0.04))
+        for index in range(1, 4):
+            yy = y + h * index / 4.0
+            s.append(_line(x + 0.12, yy, x + w - 0.12, yy, METAL, 0.03))
+        s.append(_oval(x + w * 0.35, y + h * 0.35, w * 0.3, h * 0.3, "#F87171"))
+    elif kind == "sonnenschirm":
+        s.append(_oval(x, y, w, h, "#F472B6", mix("#F472B6", "#000000", 0.3), 0.04))
+        s.append(_line(x + w / 2.0, y, x + w / 2.0, y + h, PAPER, 0.04))
+        s.append(_line(x, y + h / 2.0, x + w, y + h / 2.0, PAPER, 0.04))
+        s.append(_oval(x + w / 2.0 - 0.08, y + h / 2.0 - 0.08, 0.16, 0.16, PAPER))
+    elif kind == "hochbeet":
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.05))
+        s.append(_rect(x + 0.12, y + 0.12, w - 0.24, h - 0.24, "#6B4226"))
+        for index in range(max(1, int(w / 0.6))):
+            s.append(_oval(x + 0.2 + index * 0.6, y + h / 2.0 - 0.2, 0.4, 0.4, PLANT,
+                           PLANT_DARK, 0.03))
+    elif kind == "bild":
+        s.append(_rect(x, y, w, h, WOOD_DARK, r=0.02))
+        s.append(_rect(x + 0.06, y + 0.04, w - 0.12, h - 0.08, "#22D3EE"))
+    # ---- beim Kunden -------------------------------------------------------
+    elif kind == "automat":
+        # Fahrkartenautomat: Gehaeuse, Bildschirm vorn (unten), Tasten
+        s.append(_rect(x, y, w, h, "#3B2466", "#A78BFA", 0.05, 0.08))
+        s.append(_rect(x + 0.15, y + h - 0.45, w - 0.3, 0.3, "#22D3EE", r=0.04))
+        s.append(_rect(x + 0.15, y + 0.15, w - 0.3, 0.18, "#F472B6", r=0.03))
+        if item.get("defekt"):
+            s.append(_rect(x + 0.15, y + h - 0.45, w - 0.3, 0.3, SCREEN, r=0.04))
+            s.append(_line(x + 0.25, y + h - 0.4, x + w - 0.25, y + h - 0.2, "#F87171", 0.05))
+    elif kind == "gleis":
+        s.append(_rect(x, y, w, h, "#3A3350"))
+        xx = x + 0.2
+        while xx < x + w:
+            s.append(_rect(xx, y + 0.12, 0.28, h - 0.24, SLEEPER))
+            xx += 0.7
+        for rail_y in (y + h * 0.3, y + h * 0.7):
+            s.append(_line(x, rail_y, x + w, rail_y, RAIL, 0.09))
+    elif kind == "zug":
+        s.append(_rect(x, y, w, h, TRAIN, mix(TRAIN, "#000000", 0.35), 0.06, 0.45))
+        s.append(_rect(x + 0.1, y + 0.18, w - 0.2, 0.2, mix(TRAIN, "#000000", 0.25), r=0.1))
+        xx = x + 0.7
+        while xx < x + w - 0.9:
+            s.append(_rect(xx, y + h - 0.42, 0.7, 0.24, WINDOW, r=0.05))
+            xx += 1.0
+        car = w / max(1, int(round(w / 8.0)))
+        xx = x + car
+        while xx < x + w - 0.5:
+            s.append(_line(xx, y, xx, y + h, mix(TRAIN, "#000000", 0.35), 0.05))
+            xx += car
+    elif kind == "tresen":
+        s.append(_rect(x, y, w, h, WOOD, WOOD_DARK, 0.05, 0.1))
+        places = max(1, int(round(w / 2.0)))
+        for index in range(places):
+            cx = x + w * (index + 0.5) / places
+            s.append(_rect(cx - 0.45, y + 0.1, 0.9, 0.2, SCREEN, "#6B5F9A", 0.03, 0.03))
+            s.append(_rect(cx - 0.3, y + h - 0.35, 0.6, 0.22, METAL, r=0.03))
+            s += _chair(cx, y - 0.35)
+    elif kind == "monitorwand":
+        s.append(_rect(x, y, w, h, "#1E1A30", "#5B5480", 0.04, 0.03))
+        count = max(2, int(w / 1.1))
+        mw = (w - 0.1) / count
+        for index in range(count):
+            color = ("#22D3EE", "#34D399", "#A78BFA", "#FBBF24")[index % 4]
+            s.append(_rect(x + 0.05 + index * mw + 0.04, y + 0.05, mw - 0.08, h - 0.1,
+                           mix(SCREEN, color, 0.35), color, 0.02, 0.02))
+    elif kind == "leitstand":
+        s += _chair(x + w / 2.0, y + h + 0.35)
+        s.append(_rect(x, y, w, h, METAL_DARK, METAL, 0.04, 0.12))
+        for index in range(3):
+            mx = x + w / 2.0 - 1.1 + index * 0.75
+            s.append(_rect(mx, y + 0.1, 0.65, 0.2, SCREEN, "#6B5F9A", 0.03, 0.03))
+        s.append(_rect(x + w / 2.0 - 0.4, y + h - 0.3, 0.8, 0.16, METAL, r=0.03))
+        s.append(_oval(x + w - 0.45, y + h - 0.4, 0.26, 0.26, "#F87171"))
+    elif kind in ("absperrband", "bauzaun"):
+        if kind == "bauzaun":
+            s.append(_rect(x, y, w, h, "", METAL, 0.04))
+            s.append(_line(x, y, x + w, y + h, METAL, 0.03))
+            s.append(_line(x + w, y, x, y + h, METAL, 0.03))
+        vertical = h > w
+        length = h if vertical else w
+        parts = max(1, int(length / 0.35))
+        for index in range(parts):
+            color = SIGN_RED if index % 2 == 0 else PAPER
+            a, b = length * index / parts, length * (index + 1) / parts
+            if vertical:
+                s.append(_line(x + w / 2.0, y + a, x + w / 2.0, y + b, color, 0.1))
+            else:
+                s.append(_line(x + a, y + h / 2.0, x + b, y + h / 2.0, color, 0.1))
+    elif kind == "wimpel":
+        s.append(_line(x, y + 0.05, x + w, y + 0.05, PAPER, 0.03))
+        count = max(2, int(w / 0.4))
+        for index in range(count):
+            color = ("#22D3EE", "#F472B6", "#34D399", "#FBBF24")[index % 4]
+            left = x + w * index / count
+            s.append(_rect(left + 0.05, y + 0.08, w / count - 0.1, h - 0.1, color, r=0.02))
+    elif kind == "anzeigetafel":
+        s.append(_rect(x, y, w, h, SCREEN, METAL, 0.04, 0.05))
+        rows = max(1, int((h - 0.1) / 0.22))
+        for index in range(rows):
+            yy = y + 0.1 + index * 0.22
+            s.append(_line(x + 0.12, yy + 0.06, x + w * 0.55, yy + 0.06, "#FBBF24", 0.06))
+            s.append(_line(x + w * 0.65, yy + 0.06, x + w - 0.12, yy + 0.06, "#34D399", 0.06))
+    elif kind == "kamera":
+        s.append(_oval(x, y, w, h, METAL_DARK, METAL, 0.03))
+        s.append(_oval(x + w * 0.3, y + h * 0.3, w * 0.4, h * 0.4, "#22D3EE"))
+        s.append(_oval(x + w * 0.7, y + h * 0.1, w * 0.2, h * 0.2, "#F87171"))
     return s
 
 
@@ -2842,9 +3445,12 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
     s = []
 
     # Boeden
-    s += _floor(0, hall["y"], width, hall["h"], "flur", mix(C["card_alt"], "#FFFFFF", 0.05))
+    s += _floor(0, hall["y"], width, hall["h"], hall.get("boden", "flur"),
+                hall.get("bodenfarbe") or mix(C["card_alt"], "#FFFFFF", 0.05))
     for item in building["raeume"]:
-        color = mix(C["card_alt"], CATEGORY_COLOR[CAT_NAME[item["cat"]]], 0.13)
+        color = mix(C["card_alt"], room_color(item), 0.13)
+        if item.get("bodenfarbe"):
+            color = item["bodenfarbe"]
         s += _floor(item["x"], item["y"], item["w"], item["h"],
                     item.get("boden", "teppichboden"), color)
 
@@ -2884,7 +3490,7 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
                            x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, "#FBBF24", 0.14))
 
     # Tueren: Oeffnung in der Wand, Tuerblatt und Schwenkbogen zum Flur hin
-    floor_hall = mix(C["card_alt"], "#FFFFFF", 0.05)
+    floor_hall = hall.get("bodenfarbe") or mix(C["card_alt"], "#FFFFFF", 0.05)
     for item in building["raeume"]:
         door = item.get("tuer")
         if not door:
@@ -2893,6 +3499,15 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
         span = door["bis"] - door["von"]
         hinge = door["von"]
         arc_color = mix(WALL, C["card_alt"], 0.45)
+        if door.get("offen"):
+            # Breite Oeffnung ohne Tuerblatt (z.B. zum Bahnsteig)
+            if side in ("w", "o"):
+                wall_x = item["x"] if side == "w" else item["x"] + item["w"]
+                s.append(_rect(wall_x - 0.16, door["von"], 0.32, span, floor_hall))
+            else:
+                wall_y = item["y"] + item["h"] if side == "s" else item["y"]
+                s.append(_rect(door["von"], wall_y - 0.16, span, 0.32, floor_hall))
+            continue
         if side in ("w", "o"):
             # Seitentuer: schwenkt in den Flur (nach links bzw. rechts)
             wall_x = item["x"] if side == "w" else item["x"] + item["w"]
@@ -2922,7 +3537,7 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
     # Beschriftung, Auswahl und Ticket-Plaketten zuletzt, damit sie oben liegen
     for item in building["raeume"]:
         x, y, w, h = _view_rect(item, rotate, content)
-        color = CATEGORY_COLOR[CAT_NAME[item["cat"]]]
+        color = room_color(item)
         if item["id"] == selected:
             s.append(_rect(x + 0.14, y + 0.14, w - 0.28, h - 0.28, "", color, 0.12, 0.2))
         label = _text(x + 0.55, y + 0.78, item["name"], "raum", C["text"],
@@ -2939,6 +3554,7 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
         if not person.get("platz"):
             continue
         px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
+
         s.append(_text(px_, py_ + 0.62, person["name"].split()[0], "person",
                        C["text_soft"], anchor="c"))
         if person["id"] in quests:
@@ -2964,8 +3580,10 @@ WALK_STEP = 0.25
 BODY_RADIUS = 0.3          # Abstand der Figur zu Waenden und Moebeln
 PERSON_RADIUS = 0.5        # Kollegen stehen im Weg
 REACH = 1.3                # so nah muss man an eine Person heran
-WALK_FREE = ("teppich", "fussmatte", "whiteboard", "markierung")   # darueber laeuft man
+WALK_FREE = ("teppich", "fussmatte", "whiteboard", "markierung", "bild", "wimpel",
+             "kamera")   # darueber laeuft man (oder es haengt an der Wand)
 _GRID_CACHE = {}
+_PEOPLE_CACHE = {}
 
 
 def _segments(content):
@@ -3016,17 +3634,18 @@ def _obstacles(content):
     return rects
 
 
-def _walk_grid(content=None):
-    """Begehbare Rasterzellen als Menge von (spalte, zeile)."""
-    content = content or GAME
-    key = id(content)
-    if key in _GRID_CACHE:
-        return _GRID_CACHE[key]
-    building = content["gebaeude"]
+def _base_grid(building):
+    """Begehbare Rasterzellen ohne Personen - haengt nur vom Grundriss ab und
+    wird je Grundriss einmal berechnet."""
+    key = id(building)
+    cached = _GRID_CACHE.get(key)
+    if cached and cached[0] is building:
+        return cached[1]
+    if len(_GRID_CACHE) > 40:
+        _GRID_CACHE.clear()
     cols = int(building["breite"] / WALK_STEP)
     rows = int(building["hoehe"] / WALK_STEP)
-    rects = _obstacles(content)
-    people = [p["platz"] for p in content["kollegen"] if p.get("platz")]
+    rects = _obstacles({"gebaeude": building})
     free = set()
     for col in range(cols):
         cx = (col + 0.5) * WALK_STEP
@@ -3040,13 +3659,34 @@ def _walk_grid(content=None):
                     blocked = True
                     break
             if not blocked:
-                for px_, py_ in people:
-                    if (px_ - cx) ** 2 + (py_ - cy) ** 2 < PERSON_RADIUS ** 2:
-                        blocked = True
-                        break
-            if not blocked:
                 free.add((col, row))
-    _GRID_CACHE[key] = free
+    _GRID_CACHE[key] = (building, free)
+    return free
+
+
+def _walk_grid(content=None):
+    """Begehbare Rasterzellen als Menge von (spalte, zeile). Personen stehen
+    im Weg - sie werden vom Grundriss-Raster abgezogen."""
+    content = content or GAME
+    base = _base_grid(content["gebaeude"])
+    people = tuple(tuple(p["platz"]) for p in content["kollegen"] if p.get("platz"))
+    key = (id(content["gebaeude"]), people)
+    cached = _PEOPLE_CACHE.get(key)
+    if cached and cached[0] is content["gebaeude"]:
+        return cached[1]
+    if len(_PEOPLE_CACHE) > 80:
+        _PEOPLE_CACHE.clear()
+    reach = int(PERSON_RADIUS / WALK_STEP) + 1
+    blocked = set()
+    for px_, py_ in people:
+        col0, row0 = _cell(px_, py_)
+        for col in range(col0 - reach, col0 + reach + 1):
+            for row in range(row0 - reach, row0 + reach + 1):
+                cx, cy = (col + 0.5) * WALK_STEP, (row + 0.5) * WALK_STEP
+                if (px_ - cx) ** 2 + (py_ - cy) ** 2 < PERSON_RADIUS ** 2:
+                    blocked.add((col, row))
+    free = base - blocked if blocked else base
+    _PEOPLE_CACHE[key] = (content["gebaeude"], free)
     return free
 
 
@@ -3208,9 +3848,509 @@ def room_at(x, y, content=None):
     return None
 
 
+# ============================================================================
+#  ORTE: BUERO, KUNDE, ZUHAUSE (ab 0.30)
+# ============================================================================
+#
+# Alle drei Orte benutzen dasselbe Zeichnen (building_shapes) und Laufen
+# (walk_path): site_content() baut dafuer ein "Inhalts-Woerterbuch" wie
+# GAME, nur mit dem Grundriss und den Personen des jeweiligen Ortes. Die
+# Ergebnisse werden zwischengespeichert, damit gleiche Orte dasselbe Objekt
+# bleiben (das Laufraster wird je Grundriss nur einmal berechnet).
+
+SITE_OFFICE = "buero"
+SITE_HOME = "zuhause"
+ENTRANCE_REACH = 1.4          # so nah an der Eingangstuer zaehlt als "an der Tuer"
+FURNITURE_REACH = 0.9         # so nah an einem Moebel kann man es benutzen
+GRID = 0.25                   # Moebel rasten auf diesem Raster ein
+DOOR_CLEARANCE = 1.0          # vor und hinter Tueren bleibt so viel frei
+_SITE_CACHE = {}
+
+
+def _dice(seed, day, salt):
+    """Fester "Wuerfel" zwischen 0 und 1 aus Text - auf allen Geraeten gleich."""
+    digest = hashlib.sha256(("%s|%s|%s" % (seed, day, salt)).encode("utf-8")).hexdigest()
+    return int(digest[:12], 16) / float(16 ** 12)
+
+
+def is_incident(task_id, content=None):
+    task = task_by_id(task_id, content)
+    return bool(task and task.get("zwischenfall"))
+
+
+def customer_places(content=None):
+    return (content or GAME).get("kunden", {}).get("orte", [])
+
+
+def customer_place(place_id, content=None):
+    for place in customer_places(content):
+        if place["id"] == place_id:
+            return place
+    return None
+
+
+def open_places(state, content=None):
+    """Kundenorte, die man schon besuchen kann (ab_tag erreicht)."""
+    day = state.day if state is not None else 1
+    return [place for place in customer_places(content) if place.get("ab_tag", 1) <= day]
+
+
+def site_name(site_id, content=None):
+    content = content or GAME
+    if site_id == SITE_OFFICE:
+        return content["gebaeude"]["firma"]
+    if site_id == SITE_HOME:
+        return "Zuhause"
+    place = customer_place(site_id, content)
+    return place["name"] if place else site_id
+
+
+def task_site(task, content=None):
+    """Wo ein Auftrag erledigt wird: "ort" des Auftrags oder der Ort der
+    Person, die ihn stellt."""
+    if task.get("ort"):
+        return task["ort"]
+    person = colleague(task["auftraggeber"], content)
+    return (person or {}).get("ort", SITE_OFFICE)
+
+
+def _deco_visible(deco, solved):
+    """Einrichtung, die erst nach (ab_aufgabe) oder nur bis zu (bis_aufgabe)
+    einem erledigten Auftrag da ist - so waechst z.B. der neue Bahnhof mit."""
+    if deco.get("ab_aufgabe") and deco["ab_aufgabe"] not in solved:
+        return False
+    if deco.get("bis_aufgabe") and deco["bis_aufgabe"] in solved:
+        return False
+    return True
+
+
+def _conditional_tasks(building):
+    tasks = set()
+    decos = [d for item in building["raeume"] for d in item.get("deko", [])]
+    decos += building.get("flur", {}).get("deko", [])
+    for deco in decos:
+        for key in ("ab_aufgabe", "bis_aufgabe"):
+            if deco.get(key):
+                tasks.add(deco[key])
+    return tasks
+
+
+def _visible_building(building, solved):
+    """Grundriss mit den gerade sichtbaren Einrichtungsgegenstaenden."""
+    relevant = _conditional_tasks(building)
+    if not relevant:
+        return building
+    key = ("sichtbar", id(building), frozenset(relevant & set(solved)))
+    cached = _SITE_CACHE.get(key)
+    if cached and cached[0] is building:
+        return cached[1]
+    result = copy.deepcopy(building)
+    for item in result["raeume"]:
+        item["deko"] = [d for d in item.get("deko", []) if _deco_visible(d, solved)]
+    hall = result.get("flur", {})
+    hall["deko"] = [d for d in hall.get("deko", []) if _deco_visible(d, solved)]
+    _SITE_CACHE[key] = (building, result)
+    return result
+
+
+def people_at_site(site_id, state=None, content=None):
+    """Personen an einem Ort mit ihrem aktuellen Platz. Wer einen offenen
+    Auftrag mit "stelle" hat, wartet dort (z.B. Petra neben dem kaputten
+    Automaten oder Ulla im Technikraum des neuen Bahnhofs)."""
+    content = content or GAME
+    day = state.day if state is not None else None
+    waiting = {}
+    if state is not None:
+        for task in state.open_tickets():
+            if task.get("stelle") and task["auftraggeber"] not in waiting:
+                waiting[task["auftraggeber"]] = (task_site(task, content), task["stelle"])
+    result = []
+    for person in all_people(content):
+        if day is not None and person.get("ab_tag", 1) > day:
+            continue
+        where, spot = waiting.get(person["id"], (person.get("ort", SITE_OFFICE),
+                                                  person.get("platz")))
+        if where == site_id and spot:
+            result.append(dict(person, platz=[float(spot[0]), float(spot[1])]))
+    return result
+
+
+def site_content(site_id, state=None, content=None):
+    """Inhalte (wie GAME) fuer einen Ort: Buero, Kundenort oder Zuhause."""
+    content = content or GAME
+    if site_id == SITE_HOME:
+        return home_content(state, content)
+    if site_id == SITE_OFFICE:
+        base = content["gebaeude"]
+    else:
+        place = customer_place(site_id, content)
+        if place is None:
+            raise ValueError("Unbekannter Ort: %s" % site_id)
+        base = place["gebaeude"]
+    solved = state.solved if state is not None else set()
+    building = _visible_building(base, solved)
+    people = people_at_site(site_id, state, content)
+    key = ("ort", site_id, id(content), id(building),
+           tuple((p["id"], tuple(p["platz"])) for p in people))
+    cached = _SITE_CACHE.get(key)
+    if cached and cached[0] is building:
+        return cached[1]
+    if len(_SITE_CACHE) > 60:
+        _SITE_CACHE.clear()
+    result = dict(content, gebaeude=building, kollegen=people, ort=site_id)
+    _SITE_CACHE[key] = (building, result)
+    return result
+
+
+def at_entrance(position, content=None):
+    """Steht die Figur an der Eingangstuer (links im Flur)?"""
+    hall = (content or GAME)["gebaeude"]["flur"]
+    entrance = hall["eingang"]
+    return position[0] <= ENTRANCE_REACH and \
+        entrance["von"] - 0.6 <= position[1] <= entrance["bis"] + 0.6
+
+
+def place_message(site_id, position, person, state, content=None):
+    """Text und Knoepfe unter der Grossansicht eines Ortes:
+    (Ueberschrift, Text, [(aktion, Beschriftung), ...]).
+
+    Aktionen: "auftrag:<id>", "feierabend", "buero", "zuhause", "kunde",
+    "lernen", "schlafen" - die Oberflaeche fuehrt sie aus."""
+    content = content or site_content(site_id, state)
+    if site_id == SITE_HOME:
+        return home_message(position, state, content)
+    quests = state.quests(site_id)
+    actions = []
+    if person:
+        title, text = office_message(position, person, quests, content, state)
+        tasks = quests.get(person["id"]) or []
+        if tasks:
+            actions.append(("auftrag:%s" % tasks[0]["id"], "Auftrag annehmen"))
+        return title, text, actions
+    if at_entrance(position, content):
+        if site_id == SITE_OFFICE:
+            if state.can_end_day():
+                return ("Eingangstür", "Für heute ist alles erledigt. Zeit für den "
+                        "Feierabend!", [("feierabend", "Feierabend machen")])
+            left = len(state.open_tickets())
+            return ("Eingangstür", "Noch nicht: %s offen." % (
+                "1 Ticket ist" if left == 1 else "%d Tickets sind" % left), [])
+        return ("Ausgang", "Hier geht es zurück ins Büro.", [("buero", "Zurück ins Büro")])
+    title, text = office_message(position, person, quests, content, state)
+    return title, text, actions
+
+
+# ----------------------------------------------------------------------------
+#  Wohnung
+# ----------------------------------------------------------------------------
+
+FLOOR_KINDS = [("parkett", "Parkett"), ("teppichboden", "Teppich"),
+               ("fliesen", "Fliesen"), ("beton", "Estrich")]
+FLOOR_COLORS = [("violett", "Violett"), ("cyan", "Cyan"), ("gruen", "Grün"),
+                ("orange", "Orange"), ("pink", "Pink"), ("grau", "Grau")]
+_FLOOR_ACCENT = {"violett": C["purple"], "cyan": C["cyan"], "gruen": C["green"],
+                 "orange": C["orange"], "pink": C["pink"], "grau": "#FFFFFF"}
+
+
+def floor_color(key):
+    """Bodenfarbe in der Wohnung - wie die Raeume im Buero aus der Palette
+    abgeleitet, damit alles zusammenpasst."""
+    accent = _FLOOR_ACCENT.get(key, C["purple"])
+    return mix(C["card_alt"], accent, 0.07 if key == "grau" else 0.16)
+
+
+def apartment(home_id, content=None):
+    for item in (content or GAME)["wohnungen"]["wohnungen"]:
+        if item["id"] == home_id:
+            return item
+    return None
+
+
+def furniture_item(item_id, content=None):
+    for item in (content or GAME)["wohnungen"]["moebel"]:
+        if item["id"] == item_id:
+            return item
+    return None
+
+
+def shop_items(content=None):
+    return [item for item in (content or GAME)["wohnungen"]["moebel"]
+            if item.get("laden", True)]
+
+
+def furniture_size(item, turn):
+    return (item["h"], item["w"]) if int(turn) % 2 else (item["w"], item["h"])
+
+
+def home_layout(state, content=None):
+    """Aktuelle Einrichtung der Wohnung: {"moebel": {stueck: [x, y, dreh]},
+    "boeden": {raum: [art, farbe]}}. Nur Moebel, die man noch besitzt."""
+    content = content or GAME
+    flat = apartment(state.home_id, content)
+    data = state.layouts.get(state.home_id)
+    if data is None:
+        data = flat.get("einrichtung") or {}
+    placed = {key: list(value) for key, value in (data.get("moebel") or {}).items()
+              if key in state.furniture}
+    floors = {key: list(value) for key, value in (data.get("boeden") or {}).items()}
+    return {"moebel": placed, "boeden": floors}
+
+
+def placed_furniture(state, layout=None, content=None):
+    """Aufgestellte Moebel als Liste von Einrichtungs-Eintraegen (wie deko)."""
+    content = content or GAME
+    layout = layout or home_layout(state, content)
+    result = []
+    for key, (x, y, turn) in sorted(layout["moebel"].items()):
+        item = furniture_item(state.furniture.get(key), content)
+        if not item:
+            continue
+        w, h = furniture_size(item, turn)
+        result.append({"typ": item["typ"], "x": float(x), "y": float(y), "w": w, "h": h,
+                       "dreh": int(turn), "stueck": key, "moebel": item["id"],
+                       "blick": item.get("blick", "s")})
+    return result
+
+
+def boxed_furniture(state, layout=None, content=None):
+    """Moebel im Umzugskarton (gekauft, aber nicht aufgestellt): [(stueck, moebel)]."""
+    layout = layout or home_layout(state, content)
+    return sorted(((key, item) for key, item in state.furniture.items()
+                   if key not in layout["moebel"]), key=lambda row: row[0])
+
+
+def _overlap(a, b):
+    return a["x"] < b["x"] + b["w"] - 1e-6 and b["x"] < a["x"] + a["w"] - 1e-6 and \
+        a["y"] < b["y"] + b["h"] - 1e-6 and b["y"] < a["y"] + a["h"] - 1e-6
+
+
+def _areas(building):
+    """Raeume und Flur als Flaechen (x, y, w, h, name)."""
+    hall = building["flur"]
+    areas = [dict(item) for item in building["raeume"]]
+    areas.append({"id": "flur", "name": hall.get("name", "Flur"), "x": 0, "y": hall["y"],
+                  "w": building["breite"], "h": hall["h"]})
+    return areas
+
+
+def _door_zones(building):
+    """Flaechen vor und hinter jeder Tuer, die frei bleiben muessen."""
+    zones = []
+    hall = building["flur"]
+    for item in building["raeume"]:
+        door = item.get("tuer")
+        if not door:
+            continue
+        side = door_side(item, {"gebaeude": building})
+        span_a, span_b = door["von"], door["bis"]
+        if side in ("s", "n"):
+            wall_y = item["y"] + item["h"] if side == "s" else item["y"]
+            zones.append({"x": span_a, "y": wall_y - DOOR_CLEARANCE, "w": span_b - span_a,
+                          "h": 2 * DOOR_CLEARANCE})
+        else:
+            wall_x = item["x"] if side == "w" else item["x"] + item["w"]
+            zones.append({"x": wall_x - DOOR_CLEARANCE, "y": span_a, "w": 2 * DOOR_CLEARANCE,
+                          "h": span_b - span_a})
+    entrance = hall["eingang"]
+    zones.append({"x": 0, "y": entrance["von"], "w": DOOR_CLEARANCE * 1.5,
+                  "h": entrance["bis"] - entrance["von"]})
+    return zones
+
+
+def snap(value):
+    return round(float(value) / GRID) * GRID
+
+
+def placement_problem(state, piece, item_id, x, y, turn, layout=None, content=None):
+    """Warum ein Moebel hier nicht stehen kann - leerer Text = passt."""
+    content = content or GAME
+    item = furniture_item(item_id, content)
+    if item is None:
+        return "Dieses Möbelstück gibt es nicht."
+    flat = apartment(state.home_id, content)
+    building = flat["gebaeude"]
+    w, h = furniture_size(item, turn)
+    box = {"x": float(x), "y": float(y), "w": w, "h": h}
+    if not any(_inside(box, area) for area in _areas(building)):
+        return "%s passt hier nicht hin: Es muss ganz in einem Raum stehen." % item["name"]
+    free_kind = item["typ"] in WALK_FREE
+    if not free_kind:
+        for zone in _door_zones(building):
+            if _overlap(box, zone):
+                return "%s würde eine Tür versperren." % item["name"]
+    others = [d for area in building["raeume"] for d in area.get("deko", [])]
+    others += building["flur"].get("deko", [])
+    layout = layout or home_layout(state, content)
+    for other in placed_furniture(state, layout, content):
+        if other["stueck"] != piece:
+            others.append(other)
+    for other in others:
+        other_free = other["typ"] in WALK_FREE
+        if free_kind != other_free and (free_kind or other_free):
+            continue       # Teppich unter Moebeln ist erlaubt
+        if _overlap(box, other):
+            name = furniture_item(other.get("moebel"), content)
+            return "%s stößt an %s." % (item["name"], name["name"] if name else
+                                       "die Einrichtung")
+    return ""
+
+
+def home_building(state, content=None):
+    """Grundriss der Wohnung mit Boeden und Moebeln aus der Einrichtung."""
+    content = content or GAME
+    flat = apartment(state.home_id, content)
+    layout = home_layout(state, content)
+    boxed = boxed_furniture(state, layout, content)
+    signature = json.dumps([state.home_id, layout, len(boxed)], sort_keys=True)
+    key = ("wohnung", id(content), signature)
+    cached = _SITE_CACHE.get(key)
+    if cached:
+        return cached[1]
+    building = copy.deepcopy(flat["gebaeude"])
+    for item in building["raeume"]:
+        kind, color = layout["boeden"].get(item["id"], [None, None])
+        if kind in dict(FLOOR_KINDS):
+            item["boden"] = kind
+        if color in _FLOOR_ACCENT:
+            item["bodenfarbe"] = floor_color(color)
+    areas = building["raeume"]
+    # Teppiche zuerst, damit sie unter den Moebeln liegen
+    for deco in sorted(placed_furniture(state, layout, content),
+                       key=lambda item: item["typ"] not in WALK_FREE):
+        target = next((area for area in areas if _inside(deco, area)), None)
+        if target is None:
+            building["flur"].setdefault("deko", []).append(deco)
+        else:
+            target.setdefault("deko", []).append(deco)
+    if boxed and flat.get("kartons"):
+        x, y, w, h = flat["kartons"]
+        target = next((area for area in areas if _inside(
+            {"x": x, "y": y, "w": w, "h": h}, area)), None)
+        pile = {"typ": "kartons", "x": x, "y": y, "w": w, "h": h, "umzug": True}
+        (target.setdefault("deko", []) if target else
+         building["flur"].setdefault("deko", [])).append(pile)
+    if len(_SITE_CACHE) > 60:
+        _SITE_CACHE.clear()
+    _SITE_CACHE[key] = (None, building)
+    return building
+
+
+def home_content(state, content=None):
+    content = content or GAME
+    building = home_building(state, content)
+    key = ("zuhause", id(building))
+    cached = _SITE_CACHE.get(key)
+    if cached and cached[0] is building:
+        return cached[1]
+    result = dict(content, gebaeude=building, kollegen=[], ort=SITE_HOME)
+    _SITE_CACHE[key] = (building, result)
+    return result
+
+
+def furniture_at(state, x, y, content=None):
+    """Aufgestelltes Moebel an der Stelle (x, y) oder None (oberstes zuerst,
+    ein Teppich zaehlt nur, wenn nichts darauf steht)."""
+    hits = [item for item in placed_furniture(state, content=content)
+            if item["x"] <= x <= item["x"] + item["w"] and
+            item["y"] <= y <= item["y"] + item["h"]]
+    hits.sort(key=lambda item: item["typ"] in WALK_FREE)
+    return hits[0] if hits else None
+
+
+def furniture_near(state, position, content=None):
+    """Benutzbares Moebel in Reichweite der Figur (Bett, Schreibtisch ...)."""
+    best, best_dist = None, None
+    for item in placed_furniture(state, content=content):
+        info = furniture_item(item["moebel"], content)
+        if not info or not (info.get("aktion") or info.get("texte")):
+            continue
+        dx = max(item["x"] - position[0], 0, position[0] - item["x"] - item["w"])
+        dy = max(item["y"] - position[1], 0, position[1] - item["y"] - item["h"])
+        dist = math.hypot(dx, dy)
+        if dist <= FURNITURE_REACH and (best_dist is None or dist < best_dist):
+            best, best_dist = item, dist
+    return best
+
+
+def home_message(position, state, content=None):
+    """Text und Knoepfe in der Wohnung (siehe place_message)."""
+    content = content or home_content(state)
+    flat = apartment(state.home_id)
+    if at_entrance(position, content):
+        return ("Wohnungstür", "Von hier geht es zur Arbeit.",
+                [("buero", "Zur Arbeit")])
+    item = furniture_near(state, position)
+    if item:
+        info = furniture_item(item["moebel"])
+        texts = info.get("texte") or []
+        text = texts[int(_dice(state.first_event or "", state.day, item["stueck"]) *
+                         len(texts))] if texts else ""
+        actions = []
+        if info.get("aktion") == "lernen":
+            actions.append(("lernen", "Lernen"))
+            text = text or "Hier lernt es sich in Ruhe."
+        elif info.get("aktion") == "schlafen":
+            actions.append(("schlafen", "Schlafen"))
+            text = text or "Ein gemütliches Plätzchen."
+        return info["name"], text, actions
+    area = next((a for a in _areas(content["gebaeude"])
+                 if a["x"] <= position[0] < a["x"] + a["w"] and
+                 a["y"] <= position[1] < a["y"] + a["h"]), None)
+    where = "Du bist im Raum %s." % area["name"] if area and area["id"] != "flur" else \
+        "Du bist in der Diele."
+    return flat["name"], where + " Geh zum Bett, zum Schreibtisch oder zur Wohnungstür.", []
+
+
+def sleep_text(state, content=None):
+    content = content or GAME
+    texts = content["story"].get("schlafen") or ["Gute Nacht!"]
+    if isinstance(texts, str):
+        return texts
+    return texts[state.day % len(texts)]
+
+
+def moves_available(state, content=None):
+    """Wohnungen, in die man umziehen kann (teurer als die jetzige)."""
+    content = content or GAME
+    current = apartment(state.home_id, content)
+    return [item for item in content["wohnungen"]["wohnungen"]
+            if item.get("preis", 0) > current.get("preis", 0)]
+
+
+# ----------------------------------------------------------------------------
+#  Story, Reaktionen
+# ----------------------------------------------------------------------------
+
+def morning_text(day, content=None):
+    """Szene zum Start eines Arbeitstags (oder leerer Text)."""
+    return ((content or GAME)["story"].get("tage") or {}).get(str(day), "")
+
+
+def day_end_text(day, content=None):
+    texts = (content or GAME)["story"].get("feierabend") or \
+        [(content or GAME)["story"]["tagesende"]]
+    if isinstance(texts, str):
+        return texts
+    return texts[(day - 1) % len(texts)]
+
+
+def reaction_text(task, payload, content=None):
+    """Kurzer Satz der Person, die den Auftrag gestellt hat."""
+    person = colleague(task["auftraggeber"], content)
+    if not person:
+        return ""
+    texts = (person.get("reaktionen") or {}).get("richtig" if payload["richtig"]
+                                                  else "falsch") or []
+    if not texts:
+        return ""
+    text = texts[int(_dice(task["id"], payload.get("tag", 0), "reaktion") * len(texts))]
+    return "%s: „%s“" % (person["name"].split()[0], text)
+
+
 def result_text(task, payload, available=None, content=None):
     """Rueckmeldung nach dem Bearbeiten eines Tickets."""
     lines = []
+    reaction = reaction_text(task, payload, content)
     if payload["richtig"]:
         lines.append("Richtig gelöst!")
     elif task["typ"] == "zuordnung":
@@ -3265,6 +4405,11 @@ def result_text(task, payload, available=None, content=None):
                      % (payload.get("kosten", 0), last))
     if payload.get("ersparnis_bonus"):
         lines.append("Sparsam bestellt: +%d € Bonus." % payload["ersparnis_bonus"])
+    if payload.get("aus_lager") and task["typ"] == "rack":
+        lines.append("Aus dem Lager eingebaut: %s." % ", ".join(
+            part(item, content)["name"] for item in payload["aus_lager"]))
+    if reaction:
+        lines.append(reaction)
     money = payload["geld"]
     lines.append("%s%d € Spielgeld" % ("+" if money >= 0 else "", money))
     names = dict(AXES)

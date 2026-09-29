@@ -32,7 +32,8 @@
     "typ": "auswahl",
     "titel": "Verdächtige Mail im Service-Center",
     "auftraggeber": "petra",
-    "raum": "kundenberatung",
+    "raum": "service_center",
+    "stelle": [10.4, 4.3],
     "prioritaet": "kritisch",
     "cat": "sicherheit",
     "anforderungen": {"sicherheit": 20},
@@ -130,7 +131,8 @@
     "typ": "auswahl",
     "titel": "USV für die Leitstelle",
     "auftraggeber": "petra",
-    "raum": "kundenberatung",
+    "raum": "leitstelle",
+    "stelle": [22.0, 4.4],
     "prioritaet": "hoch",
     "cat": "systeme",
     "anforderungen": {"systeme": 35},
@@ -759,7 +761,7 @@
     "art": "ip_plan",
     "titel": "IP-Plan nach Gerätezahl (VLSM)",
     "auftraggeber": "petra",
-    "raum": "kundenberatung",
+    "raum": "it_buero",
     "prioritaet": "normal",
     "cat": "netzwerk",
     "anforderungen": {"netzwerk": 45},
@@ -799,7 +801,8 @@
     "typ": "rack",
     "titel": "Netzwerkschrank fürs Service-Center",
     "auftraggeber": "petra",
-    "raum": "kundenberatung",
+    "raum": "technikraum",
+    "stelle": [26.8, 4.4],
     "prioritaet": "hoch",
     "cat": "netzwerk",
     "anforderungen": {"netzwerk": 40, "systeme": 30},
@@ -1256,7 +1259,8 @@
     "typ": "diagnose",
     "titel": "Fahrkartenautomat startet nicht",
     "auftraggeber": "petra",
-    "raum": "kundenberatung",
+    "raum": "bahnsteig",
+    "stelle": [4.9, 10.5],
     "prioritaet": "kritisch",
     "cat": "systeme",
     "anforderungen": {"systeme": 35},
@@ -1960,5 +1964,698 @@
       "Erst der Rücksicherungstest beweist, dass das Backup etwas taugt. Viele Firmen merken erst im Ernstfall, dass ihre Sicherungen leer oder kaputt waren."
     ],
     "suchbegriffe": ["mysqldump", "cron", "Rücksicherung"]
+  },
+  {
+    "id": "bestellung-talheim-nord",
+    "typ": "bestellung",
+    "titel": "Technik für Talheim-Nord bestellen",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 35, "netzwerk": 25},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 12,
+    "ticket": [
+      "Frank legt dir die Liste für den Technikraum in Talheim-Nord hin: „Eine USV mit mindestens 1000 W, ein Switch mit mindestens 24 Ports und ein passendes Patchpanel. Budget 700 Euro.“",
+      "„Übermorgen wird der Schrank eingebaut. Was bis dahin nicht da ist, hilft uns nichts. Und ja, ich rechne nach.“"
+    ],
+    "frage": "Stelle den Warenkorb zusammen: alles nötig, im Budget und rechtzeitig.",
+    "bedarf": [
+      {
+        "text": "USV mit mindestens 1000 W",
+        "typ": "usv",
+        "menge": 1,
+        "min": {
+          "leistung": 1000
+        }
+      },
+      {
+        "text": "Switch mit mindestens 24 Ports",
+        "typ": "switch",
+        "menge": 1,
+        "min": {
+          "ports": 24
+        }
+      },
+      {
+        "text": "Patchpanel mit mindestens 24 Ports",
+        "typ": "patchpanel",
+        "menge": 1,
+        "min": {
+          "ports": 24
+        }
+      }
+    ],
+    "angebote": [
+      {
+        "id": "u1",
+        "teil": "usv_1000",
+        "haendler": "serverhaus",
+        "preis": 390,
+        "lieferzeit": 1
+      },
+      {
+        "id": "u2",
+        "teil": "usv_1500",
+        "haendler": "serverhaus",
+        "preis": 540,
+        "lieferzeit": 1
+      },
+      {
+        "id": "u3",
+        "teil": "usv_3000",
+        "haendler": "bitlager",
+        "preis": 890,
+        "lieferzeit": 1
+      },
+      {
+        "id": "s1",
+        "teil": "sw_24",
+        "haendler": "kabelkoenig",
+        "preis": 160,
+        "lieferzeit": 1
+      },
+      {
+        "id": "s2",
+        "teil": "sw_24",
+        "haendler": "bitlager",
+        "preis": 145,
+        "lieferzeit": 3
+      },
+      {
+        "id": "s3",
+        "teil": "sw_48_poe",
+        "haendler": "bitlager",
+        "preis": 680,
+        "lieferzeit": 1
+      },
+      {
+        "id": "p1",
+        "teil": "pp_24",
+        "haendler": "kabelkoenig",
+        "preis": 45,
+        "lieferzeit": 1
+      },
+      {
+        "id": "p2",
+        "teil": "pp_48",
+        "haendler": "serverhaus",
+        "preis": 75,
+        "lieferzeit": 2
+      }
+    ],
+    "budget": 700,
+    "frist": 2,
+    "hilfe": [
+      "Geh die drei Positionen nacheinander durch: Was erfüllt die Mindestwerte, was kommt innerhalb von 2 Arbeitstagen?",
+      "Rechne dann die Summe: Die große USV sieht verlockend aus, sprengt aber mit dem Rest das Budget.",
+      "Günstiger ist nicht immer besser: Ein Angebot mit 3 Tagen Lieferzeit kommt zu spät."
+    ],
+    "erklaerung": [
+      "Richtig ist zum Beispiel: USV 1000 W (390 €) + Switch 24 Ports von Kabelkönig (160 €) + Patchpanel 24 Ports (45 €) = 595 €, alles in einem Tag da.",
+      "Der billigere Switch von Bitlager24 braucht 3 Tage und käme zu spät. USV 1500 W oder PoE-Switch überschreiten mit dem Rest das Budget. Das 48er-Patchpanel ginge auch, kostet aber mehr."
+    ],
+    "suchbegriffe": ["USV", "Switch"]
+  },
+  {
+    "id": "azubi-switch-router",
+    "typ": "auswahl",
+    "titel": "Tim fragt: Switch oder Router?",
+    "auftraggeber": "tim",
+    "raum": "helpdesk",
+    "prioritaet": "niedrig",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 30},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 55, "reputation": 6},
+    "ab_tag": 12,
+    "ticket": [
+      "Tim, der neue Azubi, sitzt mit großen Augen vor dem Netzwerkplan: „Warum stehen da ein Switch UND ein Router? Machen die nicht beide irgendwas mit Kabeln?“",
+      "Jonas grinst: „Erklär du es ihm. Wer etwas erklären kann, hat es verstanden.“"
+    ],
+    "frage": "Welche Erklärung gibst du Tim?",
+    "optionen": [
+      "Switch: verbindet Geräte im selben Netz (MAC-Adressen). Router: verbindet Netze (IP-Adressen).",
+      "Ein Switch ist nur ein großer Router mit mehr Anschlüssen.",
+      "Ein Router verbindet Geräte im selben Netz, ein Switch verbindet das Firmennetz mit dem Internet.",
+      "Beide machen dasselbe, der Router ist nur schneller."
+    ],
+    "antwort": "Switch: verbindet Geräte im selben Netz (MAC-Adressen). Router: verbindet Netze (IP-Adressen).",
+    "hilfe": [
+      "Denk an das OSI-Modell: Auf welcher Schicht arbeitet ein Switch, auf welcher ein Router?",
+      "Schicht 2 kennt MAC-Adressen, Schicht 3 kennt IP-Adressen und damit verschiedene Netze."
+    ],
+    "erklaerung": [
+      "Der Switch arbeitet auf Schicht 2: Er merkt sich, an welchem Port welche MAC-Adresse hängt, und leitet Rahmen gezielt weiter.",
+      "Der Router arbeitet auf Schicht 3: Er verbindet Netze, zum Beispiel das Firmennetz mit dem Internet, und entscheidet anhand der IP-Adresse über den Weg. Tim schreibt eifrig mit."
+    ],
+    "suchbegriffe": ["Switch", "Router", "MAC-Adresse"]
+  },
+  {
+    "id": "kamera-speicherdauer",
+    "typ": "auswahl",
+    "titel": "Videokamera am Bahnsteig: Wie lange speichern?",
+    "auftraggeber": "karin",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 35, "wirtschaft": 25},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 60, "reputation": 6},
+    "ab_tag": 12,
+    "ticket": [
+      "Karin Albers, die neue Datenschutzbeauftragte, blättert in ihrer Mappe: „In Talheim-Nord kommt eine Kamera an den Bahnsteig. Zweck: Vandalismus aufklären. Die Talbahn möchte die Aufnahmen am liebsten ein Jahr aufheben. Man weiß ja nie.“",
+      "„Ich hätte da einen Paragrafen. Aber sag du erst mal, wie du das siehst.“"
+    ],
+    "frage": "Was ist datenschutzrechtlich richtig?",
+    "optionen": [
+      "Nur so lange wie für den Zweck nötig, meist höchstens 72 Stunden, dann automatisch löschen",
+      "Ein Jahr speichern, weil die Talbahn das so wünscht",
+      "Unbegrenzt speichern, Speicherplatz ist ja billig",
+      "Gar nicht speichern, nur live ansehen, sonst ist es verboten"
+    ],
+    "antwort": "Nur so lange wie für den Zweck nötig, meist höchstens 72 Stunden, dann automatisch löschen",
+    "hilfe": [
+      "Die DSGVO kennt den Grundsatz der Speicherbegrenzung: Personenbezogene Daten nur so lange, wie der Zweck es verlangt.",
+      "Ein Schaden am Bahnsteig fällt normalerweise innerhalb von ein bis zwei Tagen auf."
+    ],
+    "erklaerung": [
+      "Videobilder sind personenbezogene Daten. Nach Art. 5 DSGVO gilt Speicherbegrenzung: So kurz wie möglich. Die Aufsichtsbehörden halten meist 48 bis 72 Stunden für angemessen.",
+      "Wichtig ist, dass das Löschen automatisch passiert. Genau das richtet Ulla gleich per Skript ein. Karin erzählt dazu eine Anekdote über einen Kiosk mit 14 Jahren Videoarchiv."
+    ],
+    "suchbegriffe": ["DSGVO", "Datenschutz"]
+  },
+  {
+    "id": "ipplan-talheim-nord",
+    "typ": "formular",
+    "art": "ip_plan",
+    "titel": "IP-Plan für Talheim-Nord",
+    "auftraggeber": "horst",
+    "ort": "talheim_nord",
+    "raum": "service_point_nord",
+    "stelle": [4.5, 3.9],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 85, "reputation": 8},
+    "ab_tag": 13,
+    "ticket": [
+      "Horst Grabowski steht im leeren Service-Point in Talheim-Nord und hält dir einen handgeschriebenen Zettel hin: „Netz 10.30.0.0/24. Gäste-WLAN für 60 Geräte, Kameras 20, Kassen 10, Automaten 5.“",
+      "„Das größte zuerst, keine Lücken. Und schreib es ordentlich auf, nicht so wie ich.“"
+    ],
+    "frage": "Fülle den IP-Plan mit variabler Subnetzmaske aus.",
+    "daten": {"netz": "10.30.0.0/24", "teilnetze": [{"name": "Gäste-WLAN", "hosts": 60}, {"name": "Kameras", "hosts": 20}, {"name": "Kassen", "hosts": 10}, {"name": "Automaten", "hosts": 5}], "vlsm": true},
+    "felder": [
+      "netz",
+      "praefix",
+      "broadcast"
+    ],
+    "hilfe": [
+      "Je Netz die kleinste Blockgröße suchen, in die Geräte + 2 passen: 60 → 64 (/26), 20 → 32 (/27), 10 → 16 (/28), 5 → 8 (/29).",
+      "Lückenlos vergeben, das größte zuerst. Die nächste Netzadresse ist die vorige plus deren Blockgröße, der Broadcast liegt eins davor."
+    ],
+    "erklaerung": [
+      "Gäste-WLAN 10.30.0.0/26 (Broadcast .63), Kameras 10.30.0.64/27 (.95), Kassen 10.30.0.96/28 (.111), Automaten 10.30.0.112/29 (.119).",
+      "Ab 10.30.0.120 bleibt Platz für später. Horst klebt den Ausdruck an die Innenseite des Netzwerkschranks. „Da findet ihn wenigstens jemand.“"
+    ],
+    "suchbegriffe": ["VLSM", "Subnetzmaske"]
+  },
+  {
+    "id": "tom-zuordnung",
+    "typ": "zuordnung",
+    "titel": "Technisch-organisatorische Maßnahmen für Talheim-Nord",
+    "auftraggeber": "karin",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 70, "reputation": 7},
+    "ab_tag": 13,
+    "ticket": [
+      "Karin legt ein leeres Formular auf den Tisch: „Für Talheim-Nord brauchen wir die technisch-organisatorischen Maßnahmen, kurz TOM. Ordne bitte jede geplante Maßnahme dem richtigen Schutzziel zu.“",
+      "„Und nein, ‚Wir passen schon auf‘ ist keine Maßnahme. Das hatte ich schon mal.“"
+    ],
+    "frage": "Ordne jede Kontrolle der passenden Maßnahme zu.",
+    "paare": [
+      [
+        "Zutrittskontrolle",
+        "Technikraum nur mit Chipkarte betreten"
+      ],
+      [
+        "Zugangskontrolle",
+        "Anmeldung am Kassen-PC mit eigenem Passwort"
+      ],
+      [
+        "Zugriffskontrolle",
+        "Nur die Leitstelle darf Kamerabilder ansehen"
+      ],
+      [
+        "Weitergabekontrolle",
+        "Aufnahmen nur verschlüsselt übertragen"
+      ],
+      [
+        "Verfügbarkeitskontrolle",
+        "USV und tägliche Datensicherung"
+      ]
+    ],
+    "hilfe": [
+      "Zutritt: in einen Raum hinein. Zugang: an ein System heran (Anmeldung). Zugriff: auf bestimmte Daten, je nach Berechtigung.",
+      "Weitergabe betrifft Daten unterwegs, Verfügbarkeit den Schutz vor Ausfall und Verlust."
+    ],
+    "erklaerung": [
+      "Die drei Z unterscheidet man am besten so: Zutritt zum Raum, Zugang zum System, Zugriff auf die Daten.",
+      "Verschlüsselte Übertragung schützt die Weitergabe, USV und Backup sichern die Verfügbarkeit. Karin nickt zufrieden und heftet das Formular ab."
+    ],
+    "suchbegriffe": ["Zutrittskontrolle", "Zugriffskontrolle"]
+  },
+  {
+    "id": "kamera-loeschfrist",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@kamera:~#",
+    "titel": "Kamera-Aufnahmen nach 72 Stunden löschen",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40, "sicherheit": 30},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 13,
+    "ticket": [
+      "Ulla hat sich per SSH auf den Aufnahmeserver in Talheim-Nord geschaltet: „Karin will, dass die Kamerabilder nach 72 Stunden automatisch verschwinden. Die Aufnahmen liegen als MP4 unter /srv/kamera.“",
+      "„Aber bitte nur die alten löschen. Die Aufnahme von gestern Nacht braucht die Polizei noch.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": [
+      "Debian 12 · Aufnahmeserver kamera (Talheim-Nord)"
+    ],
+    "schritte": [
+      {
+        "ziel": "Den Aufnahmeordner ansehen",
+        "befehle": [
+          {
+            "befehl": "ls -lh /srv/kamera",
+            "ausgabe": [
+              "-rw-r----- 1 kamera kamera 1,2G bahnsteig-0927.mp4",
+              "-rw-r----- 1 kamera kamera 1,1G bahnsteig-0928.mp4"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "rm -rf /srv/kamera",
+            "ausgabe": [
+              "Ulla hält deine Hand fest: „Nicht der ganze Ordner!",
+              "Die Polizei braucht die Aufnahme noch.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "rm -rf löscht den Ordner mit allen Aufnahmen, auch die, die noch gebraucht werden."
+          },
+          {
+            "befehl": "cat /srv/kamera",
+            "ausgabe": [
+              "cat: /srv/kamera: Ist ein Verzeichnis"
+            ],
+            "hinweis": "cat zeigt Dateiinhalte. Ordner listet man mit ls auf."
+          }
+        ]
+      },
+      {
+        "ziel": "Aufnahmen finden, die älter als 72 Stunden sind",
+        "befehle": [
+          {
+            "befehl": "find /srv/kamera -name '*.mp4' -mtime +72",
+            "ausgabe": [
+              "# Keine Treffer: -mtime zählt in Tagen, nicht in Stunden."
+            ],
+            "hinweis": "-mtime +72 heißt älter als 72 Tage. Für Stunden nimmt man -mmin mit Minuten: 72 × 60 = 4320."
+          },
+          {
+            "befehl": "find /srv/kamera -name '*.mp4' -mmin +4320",
+            "ausgabe": [
+              "/srv/kamera/bahnsteig-0925.mp4",
+              "/srv/kamera/bahnsteig-0924.mp4"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "find /srv/kamera -name '*.mp4' -mmin -4320",
+            "ausgabe": [
+              "/srv/kamera/bahnsteig-0928.mp4",
+              "/srv/kamera/bahnsteig-0927.mp4"
+            ],
+            "hinweis": "Das Minus heißt jünger als. Gesucht sind die älteren, also +4320."
+          }
+        ]
+      },
+      {
+        "ziel": "Die gefundenen alten Aufnahmen löschen",
+        "befehle": [
+          {
+            "befehl": "rm -f /srv/kamera/*.mp4",
+            "ausgabe": [
+              "Ulla: „Stopp! Das löscht auch die Aufnahme von gestern.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Der Stern trifft alle MP4-Dateien, auch die neuen."
+          },
+          {
+            "befehl": "find /srv/kamera -name '*.mp4' -mmin +4320 -print",
+            "ausgabe": [
+              "/srv/kamera/bahnsteig-0925.mp4",
+              "/srv/kamera/bahnsteig-0924.mp4",
+              "# Nur angezeigt, nichts gelöscht."
+            ],
+            "hinweis": "-print zeigt die Treffer nur an. Gelöscht wird mit -delete."
+          },
+          {
+            "befehl": "find /srv/kamera -name '*.mp4' -mmin +4320 -delete",
+            "ausgabe": [],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Das Löschen jede Stunde automatisch starten",
+        "befehle": [
+          {
+            "befehl": "echo \"0 * * * * root find /srv/kamera -name '*.mp4' -mmin +4320 -delete\" > /etc/cron.d/kamera",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "echo \"* 0 * * * root find /srv/kamera -name '*.mp4' -mmin +4320 -delete\" > /etc/cron.d/kamera",
+            "ausgabe": [
+              "# Läuft jetzt jede Minute zwischen 0:00 und 0:59 Uhr."
+            ],
+            "hinweis": "Das erste Feld ist die Minute. 0 * * * * heißt: zu jeder vollen Stunde."
+          },
+          {
+            "befehl": "echo \"0 0 1 * * root find /srv/kamera -name '*.mp4' -mmin +4320 -delete\" > /etc/cron.d/kamera",
+            "ausgabe": [
+              "# Läuft nur am 1. jedes Monats."
+            ],
+            "hinweis": "Einmal im Monat ist zu selten: Dazwischen lägen Aufnahmen bis zu 31 Tage herum."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "find sucht Dateien nach Eigenschaften: -name für den Namen, -mmin für das Alter in Minuten (+ heißt älter als), -delete löscht die Treffer.",
+      "cron-Zeilen: Minute, Stunde, Tag, Monat, Wochentag, Benutzer, Befehl. 0 * * * * läuft zu jeder vollen Stunde."
+    ],
+    "erklaerung": [
+      "Richtig: ls -lh /srv/kamera → find … -mmin +4320 → find … -mmin +4320 -delete → Eintrag 0 * * * * in /etc/cron.d/kamera.",
+      "So ist die Löschfrist aus dem Datenschutzkonzept technisch umgesetzt. Genau das verlangt die DSGVO: Datenschutz durch Technik, nicht nur auf dem Papier."
+    ],
+    "suchbegriffe": ["cron", "find"]
+  },
+  {
+    "id": "rack-talheim-nord",
+    "typ": "rack",
+    "titel": "Netzwerkschrank für Talheim-Nord",
+    "auftraggeber": "ulla",
+    "ort": "talheim_nord",
+    "raum": "technik_nord",
+    "stelle": [11.2, 3.3],
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 40, "systeme": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 90, "reputation": 8},
+    "ab_tag": 14,
+    "nach": "bestellung-talheim-nord",
+    "aus_lager": ["usv", "switch", "patchpanel"],
+    "ticket": [
+      "Ulla wartet im Technikraum von Talheim-Nord neben dem leeren 12-HE-Schrank. Die bestellte Technik ist aus dem Lager angekommen, dazu hat Horst zwei Server aus dem Keller der Leitstelle mitgeschickt.",
+      "„Horst will unbedingt seinen alten 4-HE-Server hier drin haben. Die kleine Klimaanlage schafft aber nur 600 W Abwärme. Und bitte 4 HE für später freilassen.“"
+    ],
+    "frage": "Bestücke den Schrank mit den Geräten aus dem Lager, sodass Strom, Kühlung und Gewicht passen.",
+    "schrank": {"he": 12, "traglast": 150, "kuehlung": 600},
+    "geraete": [
+      "srv_1he",
+      "srv_4he"
+    ],
+    "vorgaben": {"mindestens": {"usv": 1, "server": 1, "switch": 1, "patchpanel": 1}, "frei_min": 4},
+    "hilfe": [
+      "Die USV aus der Bestellung liefert 1000 W, mit 20 % Reserve bleiben 800 W. Die Kühlung schafft nur 600 W, sie ist hier die engere Grenze.",
+      "Der alte 4-HE-Server braucht allein 650 W. Der 1-HE-Server braucht 280 W.",
+      "Die USV gehört ganz nach unten, Switch und Patchpanel direkt übereinander."
+    ],
+    "erklaerung": [
+      "Richtig ist der 1-HE-Server: 280 W + 45 W (Switch) = 325 W, das schaffen USV und Kühlung. Der alte Server allein bräuchte schon 650 W und würde den Raum überhitzen.",
+      "Die USV steht unten (HE 1–2), darüber Server, Switch und Patchpanel. Die übrigen 7 HE bleiben frei. Horst murmelt: „Früher hat man so was einfach in den Keller gestellt.“"
+    ],
+    "suchbegriffe": ["USV", "Serverschrank", "Kühlung"]
+  },
+  {
+    "id": "diagnose-schleife",
+    "typ": "diagnose",
+    "titel": "Netz im Helpdesk steht still",
+    "auftraggeber": "jonas",
+    "raum": "helpdesk",
+    "prioritaet": "kritisch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 45},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 85, "reputation": 8},
+    "ab_tag": 14,
+    "ticket": [
+      "Jonas ruft: „Im ganzen Helpdesk geht nichts mehr! Kein Internet, kein Ticketsystem, das Telefon knackt nur noch.“",
+      "Tim sieht unschuldig aus. Etwas zu unschuldig."
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "leds",
+        "text": "Die LEDs am Etagen-Switch ansehen",
+        "ergebnis": "Alle Port-LEDs flackern im Dauerfeuer, auch an leeren Arbeitsplätzen.",
+        "entscheidend": true
+      },
+      {
+        "id": "log",
+        "text": "Das Protokoll des Switches aufrufen",
+        "ergebnis": "„Broadcast-Sturm erkannt“ und „MAC-Adresse wechselt ständig zwischen Port 7 und Port 8“.",
+        "entscheidend": true
+      },
+      {
+        "id": "tim",
+        "text": "Tim fragen, was er umgesteckt hat",
+        "ergebnis": "„Nur ein Kabel von Dose 7 in Dose 8. Das hing so lose herum, jetzt sieht es ordentlicher aus.“"
+      },
+      {
+        "id": "ping",
+        "text": "Den Router anpingen",
+        "ergebnis": "Zeitüberschreitung, dann 900 ms, dann wieder Zeitüberschreitung."
+      },
+      {
+        "id": "dhcp",
+        "text": "Den DHCP-Server prüfen",
+        "ergebnis": "Läuft, ist aber stark ausgelastet. Anfragen kommen vielfach doppelt an."
+      },
+      {
+        "id": "virus",
+        "text": "Einen Virenscan auf dem PC von Jonas starten",
+        "ergebnis": "Keine Funde. Der Scan dauert wegen des Netzes ewig."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Ein Patchkabel verbindet zwei Ports desselben Switches, es entsteht eine Netzwerkschleife ohne Spanning Tree.",
+      "Der DHCP-Server ist überlastet.",
+      "Ein Virus legt das Netz lahm.",
+      "Der Router ist defekt."
+    ],
+    "ursache": "Ein Patchkabel verbindet zwei Ports desselben Switches, es entsteht eine Netzwerkschleife ohne Spanning Tree.",
+    "massnahmen": [
+      "Das Kabel zwischen Dose 7 und 8 entfernen und Spanning Tree (RSTP) am Switch aktivieren",
+      "Den Router neu starten",
+      "Einen neuen DHCP-Server einrichten",
+      "Den Switch ausschalten und die Firewall am Router abschalten"
+    ],
+    "massnahme": "Das Kabel zwischen Dose 7 und 8 entfernen und Spanning Tree (RSTP) am Switch aktivieren",
+    "unsicher": [
+      "Den Switch ausschalten und die Firewall am Router abschalten"
+    ],
+    "hilfe": [
+      "Wenn alles gleichzeitig ausfällt, zuerst die gemeinsame Stelle ansehen: den Switch.",
+      "Broadcasts werden an alle Ports verteilt. Gibt es eine Schleife, kreisen sie endlos und vervielfachen sich."
+    ],
+    "erklaerung": [
+      "Das Kabel von Dose 7 nach Dose 8 verbindet den Switch mit sich selbst. Broadcasts laufen im Kreis, bis das Netz erstickt: ein Broadcast-Sturm.",
+      "Kabel ziehen löst das akute Problem. Spanning Tree (RSTP) erkennt solche Schleifen künftig selbst und schaltet einen Port ab. Tim schreibt „Warum Schleifen böse sind“ ins Berichtsheft."
+    ],
+    "suchbegriffe": ["Spanning Tree", "Broadcast"]
+  },
+  {
+    "id": "sla-verfuegbarkeit",
+    "typ": "auswahl",
+    "titel": "Wartungsvertrag: 99,5 % Verfügbarkeit",
+    "auftraggeber": "horst",
+    "raum": "leitstelle",
+    "prioritaet": "normal",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 14,
+    "ticket": [
+      "Horst tippt mit dem Finger auf den Entwurf des Wartungsvertrags für Talheim-Nord: „Da steht 99,5 % Verfügbarkeit im Monat. Klingt gut. Aber wie viele Stunden darf das Ding dann im Monat ausfallen? Rechne mit 30 Tagen.“"
+    ],
+    "frage": "Wie lange darf das System im Monat höchstens ausfallen?",
+    "optionen": [
+      "3,6 Stunden",
+      "36 Stunden",
+      "0,5 Stunden",
+      "7,2 Stunden"
+    ],
+    "antwort": "3,6 Stunden",
+    "hilfe": [
+      "Ein Monat mit 30 Tagen hat 30 × 24 = 720 Stunden.",
+      "Erlaubt ist der Rest bis 100 %: 100 % − 99,5 % = 0,5 %."
+    ],
+    "erklaerung": [
+      "0,5 % von 720 Stunden sind 3,6 Stunden, also etwa 3 Stunden und 36 Minuten Ausfall im Monat.",
+      "Solche Werte stehen im SLA (Service Level Agreement). Horst ist zufrieden: „3,6 Stunden. Das schafft unser alter Stellwerkshebel auch.“"
+    ],
+    "suchbegriffe": ["Verfügbarkeit", "SLA"]
+  },
+  {
+    "id": "pc-talheim-nord",
+    "typ": "bauteile",
+    "titel": "Kassen-PC für Talheim-Nord bauen",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 15,
+    "nach": "ssd-automaten",
+    "aus_lager": ["ssd"],
+    "ticket": [
+      "Mehmet hat die Teile für den Kassen-PC in Talheim-Nord auf die Werkbank gelegt. „Klein soll er sein, unter den Tresen passen. Eine SSD liegt nicht dabei, nimm eine von den Ersatz-SSDs aus dem Lager.“",
+      "„Mindestens 16 GB RAM und 500 GB Speicher. Bild über die Grafik im Prozessor. Heute ist Eröffnung, also bitte ohne Überraschungen.“"
+    ],
+    "frage": "Baue den PC mit der SSD aus dem Lager zusammen.",
+    "slots": [
+      "mainboard",
+      "cpu",
+      "ram",
+      "ssd",
+      "netzteil",
+      "gehaeuse"
+    ],
+    "teile": [
+      "mb_h610_itx",
+      "mb_a620_matx",
+      "cpu_i5_13400",
+      "cpu_i5_13400f",
+      "ram_ddr4_2x8",
+      "ram_ddr5_2x8",
+      "nt_300",
+      "geh_itx"
+    ],
+    "vorgaben": {"ram_min": 16, "speicher_min": 500},
+    "hilfe": [
+      "Es gibt nur Intel-Prozessoren (Sockel LGA1700). Also passt nur ein Mainboard.",
+      "Das F im Namen heißt: keine eingebaute Grafik. Ohne Grafikkarte bleibt der Bildschirm dann schwarz.",
+      "Das kleine Mainboard kann nur SATA. Die Ersatz-SSDs aus dem Lager sind SATA-SSDs, das passt."
+    ],
+    "erklaerung": [
+      "Richtig: H610 (Mini-ITX) + Core i5-13400 + DDR4 16 GB + SATA-SSD 500 GB aus dem Lager + Netzteil 300 W + Mini-Gehäuse.",
+      "Das Netzteil reicht: (65 W + 60 W Grundlast) × 1,3 = 163 W. Mehmet stellt den PC in den Transportkarton. Die Schrauben sind noch sortiert."
+    ],
+    "suchbegriffe": ["Mainboard", "SSD", "Netzteil"]
+  },
+  {
+    "id": "sql-fahrgastzaehlung",
+    "typ": "auswahl",
+    "titel": "Fahrgastzählung auswerten",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "normal",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 40},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 75, "reputation": 7},
+    "ab_tag": 15,
+    "ticket": [
+      "Frank hat die Probezählung der Talbahn bekommen: Tabelle zaehlung mit bahnhof, datum und fahrgaeste. „Für die Eröffnungsrede will Sabine wissen: Wie viele Fahrgäste hatte jeder Bahnhof insgesamt, der größte zuerst?“"
+    ],
+    "frage": "Welche Abfrage liefert das Ergebnis?",
+    "optionen": [
+      "SELECT bahnhof, SUM(fahrgaeste) AS s FROM zaehlung GROUP BY bahnhof ORDER BY s DESC",
+      "SELECT bahnhof, COUNT(fahrgaeste) FROM zaehlung GROUP BY bahnhof ORDER BY bahnhof",
+      "SELECT bahnhof, SUM(fahrgaeste) AS s FROM zaehlung ORDER BY s DESC GROUP BY bahnhof",
+      "SELECT bahnhof, fahrgaeste FROM zaehlung ORDER BY fahrgaeste ASC"
+    ],
+    "antwort": "SELECT bahnhof, SUM(fahrgaeste) AS s FROM zaehlung GROUP BY bahnhof ORDER BY s DESC",
+    "hilfe": [
+      "Reihenfolge der Klauseln: SELECT … FROM … WHERE … GROUP BY … HAVING … ORDER BY.",
+      "COUNT zählt Zeilen, SUM addiert Werte. DESC sortiert absteigend, also das Größte zuerst."
+    ],
+    "erklaerung": [
+      "GROUP BY fasst die Zähltage je Bahnhof zusammen, SUM addiert die Fahrgäste, ORDER BY s DESC setzt den größten Bahnhof nach oben (s ist nur ein Kurzname für die Summe).",
+      "ORDER BY vor GROUP BY ist ein Syntaxfehler, und COUNT würde nur die Zähltage zählen. Sabine hat ihre Zahl für die Rede: Talheim liegt vorn, Talheim-Nord holt auf."
+    ],
+    "suchbegriffe": ["GROUP BY", "ORDER BY"]
+  },
+  {
+    "id": "abnahme-talheim-nord",
+    "typ": "zuordnung",
+    "titel": "Übergabe an die Talbahn: das Abnahmeprotokoll",
+    "auftraggeber": "sabine",
+    "ort": "talheim_nord",
+    "raum": "warteraum_nord",
+    "stelle": [17.2, 3.4],
+    "prioritaet": "hoch",
+    "cat": "wirtschaft",
+    "anforderungen": {"wirtschaft": 45},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 110, "reputation": 9},
+    "ab_tag": 15,
+    "nach": "rack-talheim-nord",
+    "ticket": [
+      "Eröffnung in Talheim-Nord! Sabine steht mit einer Mappe und einer Dose Kekse im Warteraum: „Bevor die Wimpel aufgehängt werden, übergeben wir offiziell an die Talbahn. Horst unterschreibt nur, was er versteht.“",
+      "„Ordne bitte zu, was in welchen Teil der Übergabe gehört. Danach gibt es Kekse. Für alle.“"
+    ],
+    "frage": "Ordne jeden Begriff der richtigen Bedeutung zu.",
+    "paare": [
+      [
+        "Abnahmeprotokoll",
+        "Hält fest, dass der Kunde die Leistung als vertragsgemäß annimmt"
+      ],
+      [
+        "Mängelliste",
+        "Nennt offene Fehler und bis wann sie behoben werden"
+      ],
+      [
+        "Dokumentation",
+        "IP-Plan, Schrankbelegung und Betriebshandbuch für den Kunden"
+      ],
+      [
+        "Gewährleistung",
+        "Beginnt mit der Abnahme und läuft dann in der Regel zwei Jahre"
+      ],
+      [
+        "Schlussrechnung",
+        "Wird nach der Abnahme gestellt, dann ist die Vergütung fällig"
+      ]
+    ],
+    "hilfe": [
+      "Mit der Abnahme bestätigt der Kunde, dass das Werk im Wesentlichen vertragsgemäß ist. Kleine Mängel kommen auf eine Liste.",
+      "Ab der Abnahme laufen die Fristen der Gewährleistung, und die Vergütung wird fällig."
+    ],
+    "erklaerung": [
+      "Die Abnahme ist beim Werkvertrag der wichtigste Moment: Die Gefahr geht auf den Kunden über, die Gewährleistung beginnt, und die Rechnung wird fällig.",
+      "Horst unterschreibt, Sabine verteilt Kekse, die Wimpel gehen hoch. Talheim-Nord ist eröffnet!"
+    ],
+    "suchbegriffe": ["Abnahme", "Gewährleistung"]
   }
 ]

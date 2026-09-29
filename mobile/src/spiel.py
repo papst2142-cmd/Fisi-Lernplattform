@@ -35,6 +35,10 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "formular": "Bitte fülle zuerst die Felder aus.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
               "diagnose": "Bitte wähle Ursache und Maßnahme."}
+# Grossansichten der Orte: Kopfzeile und "Zurueck ..." nach einem Auftrag
+SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
+               "zuhause": ("SPIEL", "ZUHAUSE")}
+RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
                  "kundenzufriedenheit": ("#F59E0B", C["pink"]),
@@ -87,17 +91,20 @@ def avatar(appearance, size=96):
 
 
 class FloorPlan(ft.GestureDetector):
-    """Das Buerogebaeude von oben (Zeichnung aus fisi_game.building_shapes).
-    Treffer ueber die Raumflaechen (fisi_game.room_at), genau wie am PC."""
+    """Ein Ort von oben (Zeichnung aus fisi_game.building_shapes): Buero,
+    Kundenort oder Wohnung. Treffer ueber die Raumflaechen (fisi_game.room_at),
+    genau wie am PC."""
 
     MAX_HEIGHT = 300
     ROTATE = False
 
-    def __init__(self, state, selected, on_room, player_pos=None):
+    def __init__(self, state, selected, on_room, player_pos=None, site=fg.SITE_OFFICE):
         self.state = state
         self.selected = selected
         self.on_room = on_room
-        self.player_pos = player_pos or fg.start_position()
+        self.site = site
+        self.site_data = fg.site_content(site, state)
+        self.player_pos = player_pos or fg.start_position(self.site_data)
         self.width_px = 340
         self.canvas = cv.Canvas(expand=True, height=240, on_resize=self._resized,
                                 resize_interval=100)
@@ -111,7 +118,7 @@ class FloorPlan(ft.GestureDetector):
 
     def _layout(self):
         """Massstab und Verschiebung - gleicher Massstab in beide Richtungen."""
-        width, height = fg.plan_size(self.ROTATE)
+        width, height = fg.plan_size(self.ROTATE, self.site_data)
         margin = fg.PLAN_MARGIN
         scale = min(self.width_px / (width + 2 * margin),
                     self.MAX_HEIGHT / (height + 2 * margin))
@@ -122,12 +129,14 @@ class FloorPlan(ft.GestureDetector):
         profile = self.state.profile
         player = (profile["name"], profile["aussehen"]) if with_player else None
         return fg.building_shapes(self.state.open_count_by_room(), self.selected, player,
-                                  quests=set(self.state.quests()),
+                                  content=self.site_data,
+                                  quests=set(self.state.quests(self.site)),
                                   player_pos=self.player_pos, rotate=self.ROTATE)
 
     def _draw(self):
         scale, ox, oy = self._layout()
-        self.canvas.height = scale * (fg.plan_size(self.ROTATE)[1] + 2 * fg.PLAN_MARGIN)
+        self.canvas.height = scale * (fg.plan_size(self.ROTATE, self.site_data)[1] +
+                                      2 * fg.PLAN_MARGIN)
         shapes = []
         for shape in self._building():
             shapes += self._shape(shape, scale, ox, oy)
@@ -196,41 +205,50 @@ class FloorPlan(ft.GestureDetector):
         scale, ox, oy = self._layout()
         position = event.local_position
         return fg.from_view((position.x - ox) / scale, (position.y - oy) / scale,
-                            self.ROTATE)
+                            self.ROTATE, self.site_data)
 
     def _tapped(self, event):
-        item = fg.room_at(*self._to_building(event))
+        item = fg.room_at(*self._to_building(event), content=self.site_data)
         if item:
             self.on_room(item["id"])
 
 
 class WalkPlan(FloorPlan):
-    """Grossansicht des Bueros (hochkant): Die Spielfigur laeuft per Tipp
+    """Grossansicht eines Ortes (hochkant): Die Spielfigur laeuft per Tipp
     durch Flur und Tueren - Weg aus fisi_game.walk_path, genau wie am PC.
     Beim Laufen werden nur die Formen der Figur verschoben, nicht das ganze
-    Gebaeude neu gezeichnet."""
+    Gebaeude neu gezeichnet. on_tap(x, y) darf einen Tipp selbst behandeln
+    (True zurueckgeben), z.B. beim Einrichten der Wohnung."""
 
     MAX_HEIGHT = 900
     ROTATE = True
     SPEED = 7.0            # Grundriss-Einheiten pro Sekunde
     FRAME = 0.04           # Sekunden pro Bild
 
-    def __init__(self, state, player_pos, on_arrive):
+    def __init__(self, state, player_pos, on_arrive, site=fg.SITE_OFFICE, on_tap=None,
+                 overlay=None):
         self.on_arrive = on_arrive
+        self.tap_hook = on_tap
+        self.overlay = overlay or []
         self.player = []
         self.walk_id = 0
-        super().__init__(state, None, lambda _room: None, player_pos)
+        super().__init__(state, None, lambda _room: None, player_pos, site)
 
     def _draw(self):
         scale, ox, oy = self._layout()
-        self.canvas.height = scale * (fg.plan_size(True)[1] + 2 * fg.PLAN_MARGIN)
+        self.canvas.height = scale * (fg.plan_size(True, self.site_data)[1] +
+                                      2 * fg.PLAN_MARGIN)
         shapes = []
+        height = self.site_data["gebaeude"]["hoehe"]
         for shape in self._building(with_player=False):
             shapes += self._shape(shape, scale, ox, oy)
+        for shape in self.overlay:
+            shapes += self._shape(fg._rotate_shape(shape, height), scale, ox, oy)
         profile = self.state.profile
         self.player = []
         for shape in fg.player_shapes(self.player_pos, (profile["name"],
-                                                        profile["aussehen"]), True):
+                                                        profile["aussehen"]), True,
+                                      self.site_data):
             self.player += self._shape(shape, scale, ox, oy)
         self.canvas.shapes = shapes + self.player
 
@@ -247,11 +265,14 @@ class WalkPlan(FloorPlan):
 
     def _tapped(self, event):
         x, y = self._to_building(event)
-        person = fg.person_at(x, y)
+        if self.tap_hook and self.tap_hook(x, y):
+            return
+        person = fg.person_at(x, y, self.site_data)
         if person:
-            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH)
+            route = fg.walk_path(self.player_pos, person["platz"], reach=fg.REACH,
+                                 content=self.site_data)
         else:
-            route = fg.walk_path(self.player_pos, (x, y))
+            route = fg.walk_path(self.player_pos, (x, y), content=self.site_data)
         self.walk_id += 1
         self.page.run_task(self._walk, route, person, self.walk_id)
 
@@ -266,8 +287,8 @@ class WalkPlan(FloorPlan):
                     new = (tx, ty)
                 else:
                     new = (x + (tx - x) * step / dist, y + (ty - y) * step / dist)
-                old_v = fg.to_view(x, y, True)
-                new_v = fg.to_view(new[0], new[1], True)
+                old_v = fg.to_view(x, y, True, self.site_data)
+                new_v = fg.to_view(new[0], new[1], True, self.site_data)
                 self._shift((new_v[0] - old_v[0]) * scale, (new_v[1] - old_v[1]) * scale)
                 self.player_pos = new
                 self.canvas.update()
@@ -276,7 +297,8 @@ class WalkPlan(FloorPlan):
                     break
             if walk_id != self.walk_id:
                 return        # neuer Tipp - dieser Weg ist abgebrochen
-        self.on_arrive(self.player_pos, person or fg.person_near(*self.player_pos))
+        self.on_arrive(self.player_pos,
+                       person or fg.person_near(*self.player_pos, content=self.site_data))
 
 
 # ============================================================================
@@ -640,7 +662,8 @@ class RackBoard(ft.Column):
     def _device_content(self, index):
         item = fg.rack_device(self.devices[index])
         bottom = self.answer.get(str(index))
-        where = fg._he_text(bottom, item["he"]) if bottom else "liegt bereit"
+        where = fg._he_text(bottom, item["he"]) if bottom else \
+            fg.rack_source_text(self.task, index)
         return ft.Row([
             ft.Container(width=4, height=34, border_radius=2,
                          bgcolor=fg.RACK_COLORS[item["typ"]]),
@@ -1017,10 +1040,18 @@ class GameScreen:
         self.game = fg.Game(app.db, device="Handy")
         self.room = None
         self.draft = {}
-        # Standort der Figur im Buero (nur waehrend die App laeuft)
-        self.player_pos = fg.start_position()
-        self.from_office = False
+        # Standort der Figur je Ort (nur waehrend die App laeuft)
+        self.positions = {}
+        self.notices = {}          # Ort -> (Ueberschrift, Text), einmal anzeigen
+        self.place = None          # gewaehlter Kundenort
+        self.site_key = None       # offene Grossansicht: buero, kunde, zuhause
+        self.from_site = None      # Ticket kam aus einer Grossansicht
         self.office = None
+        # Einrichten der Wohnung
+        self.editing = False
+        self.selected = None
+        self.turn = 0
+        self.problem = ""
         self.root = screen_list([])
         self.render()
 
@@ -1037,6 +1068,16 @@ class GameScreen:
             self.root.controls = self._profile_editor(state)
         else:
             self.root.controls = self._overview(state)
+
+    @property
+    def player_pos(self):
+        return self.position(fg.SITE_OFFICE)
+
+    def position(self, site):
+        if site not in self.positions:
+            self.positions[site] = fg.start_position(
+                fg.site_content(site, self.game.state))
+        return self.positions[site]
 
     # -- Spielfigur ---------------------------------------------------------
 
@@ -1127,12 +1168,23 @@ class GameScreen:
         reputation = ui.Card("Reputation", reputation_bars, accent=C["purple"],
                              subtitle="Ansehen %d %%" % round(state.mean_reputation))
 
-        plan = ui.Card("Grundriss", [
+        away = state.open_count_by_site()
+        at_customer = sum(count for site, count in away.items() if site != fg.SITE_OFFICE)
+        plan_controls = [
             FloorPlan(state, self.room, self._select_room, self.player_pos),
             ui.text("Raum antippen, um zu sehen, wer dort etwas braucht.", size=11,
                     color=C["muted"]),
-            ui.GradientButton("Büro öffnen", self.open_office, kind="ghost", height=38),
-        ], accent=C["cyan"])
+            ft.Row([ui.GradientButton(label, lambda _e, k=key: self.open_site(k),
+                                      kind="ghost", height=38)
+                    for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
+                                       ("Zuhause öffnen", "zuhause"))],
+                   wrap=True, spacing=8, run_spacing=8),
+        ]
+        if at_customer:
+            plan_controls.append(ui.text("%s beim Kunden" % (
+                "1 Auftrag" if at_customer == 1 else "%d Aufträge" % at_customer),
+                size=12, color=C["muted"]))
+        plan = ui.Card("Grundriss", plan_controls, accent=C["cyan"])
 
         knowledge_bars = []
         for key in fg.CAT_ORDER:
@@ -1151,10 +1203,11 @@ class GameScreen:
             item = fg.room(self.room)
             tickets = state.tickets_in_room(self.room)
             controls = [ui.text(item["text"], size=13, color=C["text_dim"])]
-            if any(person.get("lagerist") for person in fg.GAME["kollegen"]
+            people = fg.people_at_site(fg.SITE_OFFICE, state)
+            if any(person.get("lagerist") for person in people
                    if person["raum"] == item["id"]):
                 controls.append(self._warehouse(state))
-            for person in fg.GAME["kollegen"]:
+            for person in people:
                 if person["raum"] == item["id"]:
                     controls.append(ft.Column([
                         ui.text("%s · %s" % (person["name"], person["rolle"]), size=14,
@@ -1168,6 +1221,14 @@ class GameScreen:
         else:
             tickets = state.todays_tickets()
             controls = []
+            scene = fg.morning_text(state.day)
+            if scene:
+                controls.append(ft.Container(
+                    content=ft.Column([ui.label("Heute", C["purple"]),
+                                       ui.text(scene, size=13, color=C["text_soft"])],
+                                      spacing=4, tight=True),
+                    bgcolor=mix(C["card"], C["purple"], 0.1), border_radius=12, padding=12,
+                    border=ft.Border.all(1, mix(C["purple"], C["card"], 0.45))))
             title, accent = "Tickets heute", C["pink"]
             subtitle = "%d von %d bearbeitet" % (len(state.handled), len(tickets))
 
@@ -1182,7 +1243,7 @@ class GameScreen:
         for task, status in tickets:
             controls.append(self._ticket_row(task, status))
         if not self.room:
-            end = ui.GradientButton("Arbeitstag beenden", self._end_day, kind="accent",
+            end = ui.GradientButton("Feierabend machen", self._end_day, kind="accent",
                                     expand=True)
             end.set_enabled(state.can_end_day())
             controls.append(ft.Row([end]))
@@ -1218,15 +1279,18 @@ class GameScreen:
     def _ticket_row(self, task, status):
         person = fg.colleague(task["auftraggeber"])
         status_text, status_color = STATUS_TEXT[status]
+        where = fg.room(task["raum"])["name"]
+        if fg.task_site(task) != fg.SITE_OFFICE:
+            where = "beim Kunden · %s" % where
+        lines = [ui.text(task["titel"], size=14, weight=ft.FontWeight.BOLD),
+                 ui.text("%s · %s" % (person["name"], where), size=12, color=C["muted"])]
+        if task.get("zwischenfall"):
+            lines.insert(0, ui.label("Zwischenfall", C["red"]))
         return ft.Container(
             content=ft.Row([
                 ft.Container(width=4, height=40, border_radius=2,
                              bgcolor=PRIORITY_COLOR[task["prioritaet"]]),
-                ft.Column([
-                    ui.text(task["titel"], size=14, weight=ft.FontWeight.BOLD),
-                    ui.text("%s · %s" % (person["name"], fg.room(task["raum"])["name"]),
-                            size=12, color=C["muted"]),
-                ], spacing=2, tight=True, expand=True),
+                ft.Column(lines, spacing=2, tight=True, expand=True),
                 ui.text(status_text, size=12, color=status_color, weight=ft.FontWeight.BOLD),
             ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
@@ -1240,23 +1304,14 @@ class GameScreen:
         self.render()
 
     def _end_day(self, _event=None):
-        try:
-            payload = self.game.end_day()
-        except ValueError as exc:
-            self.toast(str(exc), C["yellow"])
-            return
-        self.room = None
-        self.toast("Arbeitstag %d beendet. Gehalt: %s" % (payload["tag"],
-                                                          euro(payload["gehalt"])),
-                   C["green"])
-        self.app.notify_progress()
-        self.render()
+        """Feierabend: Arbeitstag beenden und nach Hause gehen."""
+        self.run_action("feierabend")
 
     # -- Ticket als eigene Seite -------------------------------------------
 
-    def open_ticket(self, task_id, from_office=False):
-        self.from_office = from_office
-        task = fg.task_by_id(task_id)
+    def open_ticket(self, task_id, from_site=None):
+        self.from_site = from_site
+        task = self.game.state.prepared_task(fg.task_by_id(task_id))
         person = fg.colleague(task["auftraggeber"])
         gaps = fg.requirement_gaps(task, self.game.knowledge())
         self.used_help = False
@@ -1265,8 +1320,9 @@ class GameScreen:
 
         controls = [
             ui.text(task["titel"], size=19, weight=ft.FontWeight.BOLD),
-            ui.text("Priorität %s · %s" % (task["prioritaet"],
-                                           CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]),
+            ui.text("%sPriorität %s · %s" % ("Zwischenfall · " if task.get("zwischenfall")
+                                             else "", task["prioritaet"],
+                                             CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]),
                     size=12, color=PRIORITY_COLOR[task["prioritaet"]]),
         ]
         ticket = ui.Card("Ticket", [
@@ -1397,7 +1453,7 @@ class GameScreen:
                     on_click=lambda _e, k=kind, t=title: self._open_learn(k, t)))
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
-            "Zurück ins Büro" if self.from_office else "Zurück zur Übersicht",
+            RETURN_LABEL.get(self.from_site, "Zurück zur Übersicht"),
             self._close, expand=True)])]
 
     def _defer(self, _event=None):
@@ -1418,14 +1474,14 @@ class GameScreen:
 
     def _close(self, _event=None):
         page = self.app.page
-        if self.from_office:
-            # zurueck in die Bueroansicht (die liegt direkt unter dem Ticket)
-            self.from_office = False
+        if self.from_site:
+            # zurueck in die Grossansicht (die liegt direkt unter dem Ticket)
+            self.from_site = None
             while len(page.views) > 2:
                 page.views.pop()
             self.game.reload()
             self.on_show()
-            self._fill_office()
+            self._fill_site()
             page.update()
             return
         while len(page.views) > 1:
@@ -1433,43 +1489,353 @@ class GameScreen:
         self.on_show()
         page.update()
 
-    # -- Buero (Grossansicht) ---------------------------------------------
+    # -- Grossansichten: Buero, Kunde, Zuhause -----------------------------
 
-    def open_office(self, _event=None):
+    def _site(self):
+        if self.site_key == "zuhause":
+            return fg.SITE_HOME
+        if self.site_key == "kunde":
+            places = [place["id"] for place in fg.open_places(self.game.state)]
+            if self.place not in places:
+                self.place = places[0]
+            return self.place
+        return fg.SITE_OFFICE
+
+    def open_site(self, key, replace=False):
+        """Oeffnet eine Grossansicht. replace: die offene Grossansicht ersetzen
+        (z.B. vom Buero direkt nach Hause)."""
         self.game.reload()
+        page = self.app.page
+        if replace:
+            while len(page.views) > 1:
+                page.views.pop()
+        self.site_key = key
+        self.editing = False
+        self.selected = None
+        self.problem = ""
         self.office = ft.Column(spacing=12, tight=True,
                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
-        self._fill_office()
-        self.app.push(("SPIEL", "BÜRO"), screen_list([self.office]))
+        self._fill_site()
+        self.app.push(SITE_CRUMBS[key], screen_list([self.office]))
 
-    def _fill_office(self):
+    def open_office(self, _event=None):
+        self.open_site("buero")
+
+    def _fill_site(self):
         state = self.game.state
+        site = self._site()
         self.office_info = ft.Column(spacing=6, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
-        self.office_plan = WalkPlan(state, self.player_pos, self._arrived)
-        self.office.controls = [ui.Card("Büro", [self.office_plan, self.office_info],
-                                        accent=C["cyan"],
-                                        subtitle="Tippe auf eine Person oder einen Ort")]
-        self._office_text(self.player_pos, fg.person_near(*self.player_pos))
+        home = site == fg.SITE_HOME
+        overlay = self._selection_overlay() if home else []
+        self.office_plan = WalkPlan(state, self.position(site), self._arrived, site,
+                                    on_tap=self._home_tap if home else None,
+                                    overlay=overlay)
+        controls = []
+        if self.site_key == "kunde":
+            places = fg.open_places(state)
+            counts = state.open_count_by_site()
+            if len(places) > 1:
+                options = [(place["id"], "%s%s" % (place["name"], " (%d)" % counts[place["id"]]
+                                                   if counts.get(place["id"]) else ""))
+                           for place in places]
+                keys = [key for key, _name in options]
+                controls.append(ui.PillGroup(options, on_change=self._choose_place,
+                                             initial=keys.index(site)))
+            place = fg.customer_place(site)
+            if place.get("text"):
+                controls.append(ui.text(place["text"], size=12, color=C["text_dim"]))
+        if home:
+            controls.append(ft.Row([
+                ui.text("Kontostand: %s" % euro(state.money), size=14,
+                        weight=ft.FontWeight.BOLD, expand=True),
+                ui.GradientButton("Fertig" if self.editing else "Einrichten",
+                                  self._toggle_edit, kind="primary" if self.editing
+                                  else "ghost", height=38),
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER))
+            title, accent = fg.apartment(state.home_id)["name"], C["pink"]
+            subtitle = ("Möbel antippen, dann Stelle antippen" if self.editing
+                        else "Tippe irgendwo hin")
+        else:
+            title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
+            accent = C["cyan"] if site == fg.SITE_OFFICE else C["blue"]
+            subtitle = "Tippe auf eine Person oder einen Ort"
+        controls.append(ui.Card(title, [self.office_plan, self.office_info], accent=accent,
+                                subtitle=subtitle))
+        if home and self.editing:
+            controls += self._home_editor(state)
+        self.office.controls = controls
+        position = self.position(site)
+        self._office_text(position, fg.person_near(*position,
+                                                   content=self.office_plan.site_data))
+
+    def _choose_place(self, place_id):
+        self.place = place_id
+        self._fill_site()
 
     def _arrived(self, position, person):
-        self.player_pos = position
+        self.positions[self._site()] = position
         self._office_text(position, person)
         self.office_info.update()
 
     def _office_text(self, position, person):
-        quests = self.game.state.quests()
-        title, text = fg.office_message(position, person, quests, state=self.game.state)
-        controls = [ui.text(title, size=15, weight=ft.FontWeight.BOLD),
-                    ui.text(text, size=13, color=C["text_soft"])]
-        if person and quests.get(person["id"]):
-            task = quests[person["id"]][0]
+        state = self.game.state
+        site = self._site()
+        controls = []
+        notice = self.notices.pop(site, None)
+        if notice:
+            controls.append(ft.Container(
+                content=ft.Column([ui.text(notice[0], size=14, weight=ft.FontWeight.BOLD),
+                                   ui.text(notice[1], size=13, color=C["text_soft"])],
+                                  spacing=4, tight=True),
+                bgcolor=mix(C["card"], C["purple"], 0.1), border_radius=12, padding=12,
+                border=ft.Border.all(1, mix(C["purple"], C["card"], 0.45))))
+        title, text, actions = fg.place_message(site, position, person, state,
+                                                self.office_plan.site_data)
+        controls += [ui.text(title, size=15, weight=ft.FontWeight.BOLD),
+                     ui.text(text, size=13, color=C["text_soft"])]
+        if self.problem and site == fg.SITE_HOME and self.editing:
+            controls.append(ui.text(self.problem, size=13, color=C["yellow"],
+                                    weight=ft.FontWeight.BOLD))
+        for action, label in actions:
             controls.append(ui.GradientButton(
-                "Auftrag annehmen", lambda _e: self._accept(task["id"]), height=42))
+                label, lambda _e, a=action: self.run_action(a), height=42))
         self.office_info.controls = controls
 
+    def run_action(self, action):
+        """Knoepfe unter den Grossansichten (siehe fisi_game.place_message)."""
+        if action.startswith("auftrag:"):
+            self.open_ticket(action.split(":", 1)[1], from_site=self.site_key)
+        elif action == "feierabend":
+            try:
+                payload = self.game.end_day()
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.room = None
+            self.positions.pop(fg.SITE_HOME, None)
+            self.positions.pop(fg.SITE_OFFICE, None)
+            self.notices[fg.SITE_HOME] = (
+                "Feierabend nach Arbeitstag %d" % payload["tag"],
+                "%s Gehalt: +%s." % (fg.day_end_text(payload["tag"]),
+                                     euro(payload["gehalt"])))
+            self.app.notify_progress()
+            self.render()
+            self.open_site("zuhause", replace=True)
+        elif action == "buero":
+            state = self.game.state
+            scene = fg.morning_text(state.day)
+            self.positions.pop(fg.SITE_OFFICE, None)
+            if scene:
+                self.notices[fg.SITE_OFFICE] = ("Arbeitstag %d" % state.day, scene)
+            self.open_site("buero", replace=True)
+        elif action == "lernen":
+            self.app.open("cards")
+        elif action == "schlafen":
+            self.notices[fg.SITE_HOME] = ("Gute Nacht", fg.sleep_text(self.game.state))
+            self._fill_site()
+
     def _accept(self, task_id):
-        self.open_ticket(task_id, from_office=True)
+        self.open_ticket(task_id, from_site=self.site_key or "buero")
+
+    # -- Wohnung einrichten -------------------------------------------------
+
+    def _toggle_edit(self, _event=None):
+        self.editing = not self.editing
+        self.selected = None
+        self.problem = ""
+        self._fill_site()
+
+    def _selection_overlay(self):
+        if not self.editing or not self.selected:
+            return []
+        item = next((i for i in fg.placed_furniture(self.game.state)
+                     if i["stueck"] == self.selected), None)
+        if item is None:
+            return []
+        return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
+                 "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
+                 "line": C["cyan"], "lw": 0.08, "r": 0.1}]
+
+    def _home_tap(self, x, y):
+        if not self.editing:
+            return False
+        state = self.game.state
+        hit = fg.furniture_at(state, x, y)
+        if hit and hit["stueck"] != self.selected:
+            self.selected = hit["stueck"]
+            self.turn = hit["dreh"]
+            self.problem = ""
+        elif not self.selected:
+            self.problem = "Wähle zuerst ein Möbelstück aus (im Grundriss oder im Karton)."
+        else:
+            item = fg.furniture_item(state.furniture.get(self.selected))
+            w, h = fg.furniture_size(item, self.turn)
+            try:
+                self.game.place_furniture(self.selected, x - w / 2.0, y - h / 2.0, self.turn)
+                self.problem = ""
+            except ValueError as exc:
+                self.problem = str(exc)
+        self._fill_site()
+        return True
+
+    def _select_piece(self, piece):
+        self.selected = piece
+        self.turn = fg.home_layout(self.game.state)["moebel"].get(piece, [0, 0, 0])[2]
+        self.problem = "Tippe im Grundriss auf die Stelle, wo es stehen soll."
+        self._fill_site()
+
+    def _rotate(self, _event=None):
+        state = self.game.state
+        self.turn = (self.turn + 1) % 4
+        placed = fg.home_layout(state)["moebel"].get(self.selected)
+        if placed:
+            item = fg.furniture_item(state.furniture[self.selected])
+            old_w, old_h = fg.furniture_size(item, placed[2])
+            new_w, new_h = fg.furniture_size(item, self.turn)
+            try:
+                self.game.place_furniture(self.selected, placed[0] + old_w / 2.0 - new_w / 2.0,
+                                          placed[1] + old_h / 2.0 - new_h / 2.0, self.turn)
+                self.problem = ""
+            except ValueError as exc:
+                self.turn = placed[2]
+                self.problem = str(exc)
+        self._fill_site()
+
+    def _box(self, _event=None):
+        self.game.box_furniture(self.selected)
+        self.selected = None
+        self.problem = ""
+        self._fill_site()
+
+    def _sell(self, _event=None):
+        item = fg.furniture_item(self.game.state.furniture.get(self.selected))
+        price = int(item["preis"] * fg.GAME["wohnungen"].get("rueckkauf", 0.5))
+
+        def confirmed():
+            try:
+                self.game.sell_furniture(self.selected)
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+            self.selected = None
+            self.problem = ""
+            self.app.notify_progress()
+            self._fill_site()
+
+        self.app.confirm("Verkaufen", "%s für %s verkaufen?" % (item["name"], euro(price)),
+                         confirmed)
+
+    def _buy(self, item_id):
+        try:
+            piece = self.game.buy_furniture(item_id)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.app.notify_progress()
+        self._select_piece(piece)
+
+    def _floor(self, room_id, kind=None, color=None):
+        state = self.game.state
+        current = fg.home_layout(state)["boeden"].get(room_id)
+        building = fg.apartment(state.home_id)["gebaeude"]
+        base = next(r for r in building["raeume"] if r["id"] == room_id)
+        old_kind, old_color = current or [base.get("boden", "parkett"), None]
+        self.game.set_floor(room_id, kind or old_kind, color or old_color)
+        self._fill_site()
+
+    def _move(self, home):
+        def confirmed():
+            try:
+                self.game.move_home(home["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.positions.pop(fg.SITE_HOME, None)
+            self.selected = None
+            self.app.notify_progress()
+            self._fill_site()
+
+        self.app.confirm("Umziehen", "Für %s in die Wohnung „%s“ umziehen? Alle Möbel "
+                         "kommen dabei in Umzugskartons." % (euro(home["preis"]),
+                                                              home["name"]), confirmed)
+
+    def _item_row(self, title, price, label, on_click, enabled=True, active=False,
+                  detail=""):
+        lines = [ui.text(title, size=14, weight=ft.FontWeight.BOLD)]
+        if detail:
+            lines.append(ui.text(detail, size=11, color=C["muted"]))
+        if price:
+            lines.append(ui.text(price, size=12, color=C["text_dim"]))
+        button = ui.GradientButton(label, on_click, kind="ghost", height=36)
+        button.set_enabled(enabled)
+        return ft.Container(
+            content=ft.Row([ft.Column(lines, spacing=2, tight=True, expand=True), button],
+                           spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            bgcolor=C["card_hi"] if active else C["card_alt"],
+            border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8))
+
+    def _home_editor(self, state):
+        mine = []
+        if self.selected and self.selected in state.furniture:
+            item = fg.furniture_item(state.furniture[self.selected])
+            mine += [ui.label("Ausgewählt"),
+                     ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                     ft.Row([ui.GradientButton("Drehen", self._rotate, kind="ghost",
+                                               height=38),
+                             ui.GradientButton("In den Karton", self._box, kind="ghost",
+                                               height=38),
+                             ui.GradientButton("Verkaufen", self._sell, kind="ghost",
+                                               height=38)],
+                            wrap=True, spacing=8, run_spacing=8)]
+        mine.append(ui.label("Im Karton"))
+        boxed = fg.boxed_furniture(state)
+        if not boxed:
+            mine.append(ui.text("Alles ist ausgepackt.", size=13, color=C["text_dim"]))
+        for piece, item_id in boxed:
+            mine.append(self._item_row(fg.furniture_item(item_id)["name"], "", "Aufstellen",
+                                       lambda _e, p=piece: self._select_piece(p),
+                                       active=piece == self.selected))
+
+        shop = [self._item_row(item["name"], euro(item["preis"]), "Kaufen",
+                               lambda _e, i=item["id"]: self._buy(i),
+                               enabled=state.money >= item["preis"])
+                for item in fg.shop_items()]
+
+        floors = []
+        layout = fg.home_layout(state)
+        for room in fg.apartment(state.home_id)["gebaeude"]["raeume"]:
+            kind, color = layout["boeden"].get(room["id"], [room.get("boden", "parkett"),
+                                                            None])
+            kinds = [key for key, _name in fg.FLOOR_KINDS]
+            colors = [key for key, _name in fg.FLOOR_COLORS]
+            floors += [ui.text(room["name"], size=14, weight=ft.FontWeight.BOLD),
+                       ui.PillGroup(fg.FLOOR_KINDS, initial=kinds.index(kind)
+                                    if kind in kinds else 0,
+                                    on_change=lambda k, r=room["id"]: self._floor(r, kind=k)),
+                       ui.PillGroup(fg.FLOOR_COLORS, initial=colors.index(color)
+                                    if color in colors else -1,
+                                    on_change=lambda c, r=room["id"]: self._floor(r, color=c))]
+
+        flat = fg.apartment(state.home_id)
+        homes = [ui.text("Du wohnst in: %s" % flat["name"], size=14,
+                         weight=ft.FontWeight.BOLD),
+                 ui.text(flat.get("text", ""), size=12, color=C["text_dim"])]
+        moves = fg.moves_available(state)
+        for home in moves:
+            homes.append(self._item_row(home["name"], euro(home["preis"]), "Umziehen",
+                                        lambda _e, h=home: self._move(h),
+                                        enabled=state.money >= home["preis"],
+                                        detail=home.get("text", "")))
+        if not moves:
+            homes.append(ui.text("Du wohnst schon in der größten Wohnung.", size=13,
+                                 color=C["text_dim"]))
+        return [ui.Card("Deine Möbel", mine, accent=C["cyan"]),
+                ui.Card("Möbelhaus", shop, accent=C["purple"],
+                        subtitle="Einmal bezahlen, für immer behalten"),
+                ui.Card("Böden", floors, accent=C["green"]),
+                ui.Card("Wohnung", homes, accent=C["orange"],
+                        subtitle="Größer wohnen kostet einmalig")]
 
     def _open_cards(self, category):
         self.app.screens["cards"].set_category(category)

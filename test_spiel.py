@@ -351,8 +351,8 @@ class GrundrissUndAvatarTest(unittest.TestCase):
 
     def test_auftraege_je_person(self):
         state = fg.GameState([])
-        quests = state.quests()
-        self.assertEqual(sum(len(tasks) for tasks in quests.values()),
+        quests = state.quests(fg.SITE_OFFICE)
+        self.assertEqual(sum(len(tasks) for tasks in state.quests().values()),
                          len(state.open_tickets()))
         person_id = next(iter(quests))
         person = fg.colleague(person_id)
@@ -381,6 +381,8 @@ class GrundrissUndAvatarTest(unittest.TestCase):
 
 
 def _right_answer(task, state=None):
+    if state is not None:
+        task = state.prepared_task(task)
     available = state.available_parts(task) if state is not None else None
     return fg.find_solution(task, available)
 
@@ -834,7 +836,7 @@ class TerminalTest(unittest.TestCase):
 
     def test_alle_terminal_auftraege(self):
         tasks = [t for t in fg.GAME["aufgaben"] if t["typ"] == "terminal"]
-        self.assertEqual(len(tasks), 5)
+        self.assertEqual(len(tasks), 6)
         self.assertEqual({t["system"] for t in tasks}, {"linux", "windows"})
         for task in tasks:
             self.assertTrue(fg.check_answer(task, fg.find_solution(task))[0], task["id"])
@@ -945,6 +947,332 @@ class DiagnoseTest(unittest.TestCase):
         self.assertTrue(any("unsichere Massnahme" in p for p in problems), problems)
         problems = fg._stock_users_problems(order, content)
         self.assertTrue(problems)
+
+
+def _play_through(game, days=40, on_ticket=None):
+    """Spielt Tag fuer Tag alles richtig durch. on_ticket(game, task) darf
+    True liefern, wenn der Test das Ticket selbst erledigt hat."""
+    for _day in range(days):
+        for task in game.state.open_tickets():
+            if on_ticket and on_ticket(game, task):
+                continue
+            game.solve(task["id"], _right_answer(task, game.state), used_help=False)
+        if game.state.all_done():
+            break
+        game.end_day()
+
+
+def _rich_game(db, money=20000):
+    game = fg.Game(db)
+    game.set_profile("Test", {})
+    game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": money})
+    return game
+
+
+class ZwischenfallTest(unittest.TestCase):
+    def test_auf_allen_geraeten_gleich(self):
+        events = [("2026-09-29 08:00:00", fg.EV_PROFILE, {"name": "A", "aussehen": {}})]
+        first, second = [], []
+        for day in range(1, 40):
+            state_a = fg.GameState(events + _day_ends(day - 1))
+            state_b = fg.GameState(list(events + _day_ends(day - 1)))
+            first.append((state_a.incident_today() or {}).get("id"))
+            second.append((state_b.incident_today() or {}).get("id"))
+        self.assertEqual(first, second)
+        self.assertIsNone(first[0])          # Tag 1: noch kein Zwischenfall
+        self.assertTrue(any(first))
+
+    def test_hoechstens_einer_am_tag_und_keiner_doppelt(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            per_day = BALANCING["tickets_pro_tag"]
+            seen = []
+
+            def check(game, task):
+                if task.get("zwischenfall"):
+                    seen.append(task["id"])
+                tickets = game.state.open_tickets()
+                self.assertLessEqual(sum(1 for t in tickets if t.get("zwischenfall")), 1)
+                self.assertLessEqual(sum(1 for t in tickets if not t.get("zwischenfall")),
+                                     per_day)
+                return False
+
+            _play_through(game, on_ticket=check)
+            self.assertTrue(game.state.all_done())
+            self.assertTrue(seen)
+            self.assertEqual(len(seen), len(set(seen)))
+            self.assertEqual(game.state.seen_incidents, set(seen))
+
+    def test_verschoben_kommt_nicht_wieder(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            deferred = []
+
+            def defer_incidents(game, task):
+                if task.get("zwischenfall"):
+                    game.defer(task["id"])
+                    deferred.append(task["id"])
+                    return True
+                return False
+
+            _play_through(game, on_ticket=defer_incidents)
+            self.assertTrue(deferred)
+            self.assertEqual(len(deferred), len(set(deferred)))
+            self.assertFalse(set(deferred) & game.state.solved)
+
+    def test_zwischenfall_zaehlt_nicht_zum_tageslimit(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            for _day in range(40):
+                if game.state.incident_today():
+                    break
+                _play_through(game, days=1)
+            incident = game.state.incident_today()
+            self.assertIsNotNone(incident)
+            regular = [t for t in game.state.open_tickets() if not t.get("zwischenfall")]
+            self.assertEqual(game.state.open_tickets()[0]["id"], incident["id"])
+            game.solve(incident["id"], _right_answer(incident, game.state), False)
+            self.assertEqual([t["id"] for t in game.state.open_tickets()],
+                             [t["id"] for t in regular])
+            self.assertIn(fg.task_by_id(incident["id"])["titel"],
+                          [t["titel"] for t, _s in game.state.todays_tickets()])
+
+
+class WohnungTest(unittest.TestCase):
+    def test_start_mit_matratze(self):
+        state = fg.GameState([])
+        self.assertEqual(state.home_id, "apartment")
+        placed = fg.placed_furniture(state)
+        self.assertEqual([item["moebel"] for item in placed], ["matratze"])
+        self.assertNotIn("matratze", [item["id"] for item in fg.shop_items()])
+        shapes = fg.building_shapes(content=fg.site_content(fg.SITE_HOME, state))
+        self.assertTrue(shapes)
+
+    def test_kaufen_und_geld(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            with self.assertRaises(ValueError):
+                game.buy_furniture("sofa")            # noch kein Geld
+            with self.assertRaises(ValueError):
+                game.buy_furniture("matratze")        # gibt es nicht im Laden
+            game._log(fg.EV_DAY_END, {"tag": 1, "gehalt": 1000})
+            piece = game.buy_furniture("sofa")
+            self.assertEqual(game.state.money, 1000 - 450)
+            self.assertIn(piece, dict(fg.boxed_furniture(game.state)))
+            # Der Kauf zaehlt auch auf dem anderen Geraet (gleiche Ereignisse)
+            self.assertEqual(fg.GameState(db.game_events()).furniture[piece], "sofa")
+
+    def test_aufstellen_und_regeln(self):
+        with TempDB() as db:
+            game = _rich_game(db)
+            sofa = game.buy_furniture("sofa")
+            game.place_furniture(sofa, 4.1, 0.3)
+            self.assertEqual(fg.boxed_furniture(game.state), [])
+            self.assertEqual(fg.home_layout(game.state)["moebel"][sofa], [4.0, 0.25, 0])
+            table = game.buy_furniture("couchtisch")
+            with self.assertRaisesRegex(ValueError, "stößt"):  # ueberlappt das Sofa
+                game.place_furniture(table, 4.5, 0.5)
+            with self.assertRaisesRegex(ValueError, "Raum"):  # ragt ueber die Wand
+                game.place_furniture(table, 8.5, 2.0)
+            with self.assertRaisesRegex(ValueError, "Tür"):   # versperrt die Tuer
+                game.place_furniture(table, 1.6, 4.25)
+            game.place_furniture(table, 4.5, 2.0)
+            carpet = game.buy_furniture("teppich")
+            game.place_furniture(carpet, 4.0, 1.5)    # Teppich darf unter Moebel
+            self.assertEqual(fg.furniture_at(game.state, 5.0, 2.4)["moebel"], "couchtisch")
+            # drehen: aus 3,6 x 1,4 wird 1,4 x 3,6
+            game.place_furniture(sofa, 7.0, 0.25, 1)
+            item = next(i for i in fg.placed_furniture(game.state) if i["stueck"] == sofa)
+            self.assertEqual((item["w"], item["h"]), (1.4, 3.6))
+            game.box_furniture(table)
+            self.assertIn(table, dict(fg.boxed_furniture(game.state)))
+
+    def test_verkaufen_zum_halben_preis(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            piece = game.buy_furniture("fernseher")
+            game.place_furniture(piece, 3.0, 0.25)
+            price = game.sell_furniture(piece)
+            self.assertEqual(price, 260)
+            self.assertEqual(game.state.money, 1000 - 520 + 260)
+            self.assertNotIn(piece, game.state.furniture)
+            self.assertNotIn(piece, fg.home_layout(game.state)["moebel"])
+
+    def test_umzug(self):
+        with TempDB() as db:
+            game = _rich_game(db, 3000)
+            bed = game.buy_furniture("bett_einzel")
+            game.place_furniture(bed, 7.0, 0.25)
+            self.assertEqual([w["id"] for w in fg.moves_available(game.state)],
+                             ["zweizimmer", "altbau", "loft"])
+            with self.assertRaises(ValueError):
+                game.move_home("loft")                # zu teuer
+            game.move_home("zweizimmer")
+            self.assertEqual(game.state.home_id, "zweizimmer")
+            self.assertEqual(game.state.money, 3000 - 150 - 2500)
+            # Alle Moebel kommen in Kartons und werden neu aufgestellt
+            self.assertEqual(fg.placed_furniture(game.state), [])
+            self.assertEqual(len(fg.boxed_furniture(game.state)), 2)
+            self.assertNotIn("zweizimmer", [w["id"] for w in fg.moves_available(game.state)])
+            with self.assertRaises(ValueError):
+                game.move_home("apartment")
+
+    def test_boden_waehlen(self):
+        with TempDB() as db:
+            game = _rich_game(db, 0)
+            game.set_floor("wohnraum", "teppichboden", "cyan")
+            building = fg.home_building(game.state)
+            room = next(r for r in building["raeume"] if r["id"] == "wohnraum")
+            self.assertEqual(room["boden"], "teppichboden")
+            self.assertEqual(room["bodenfarbe"], fg.floor_color("cyan"))
+
+    def test_bett_schreibtisch_und_tuer(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            desk = game.buy_furniture("schreibtisch")
+            game.place_furniture(desk, 5.0, 0.25)
+            state = game.state
+            content = fg.site_content(fg.SITE_HOME, state)
+            door = content["gebaeude"]["flur"]["spieler"]
+            _t, _x, actions = fg.place_message(fg.SITE_HOME, door, None, state, content)
+            self.assertEqual(actions, [("buero", "Zur Arbeit")])
+            _t, _x, actions = fg.place_message(fg.SITE_HOME, (2.2, 3.9), None, state, content)
+            self.assertEqual(actions, [("schlafen", "Schlafen")])
+            _t, _x, actions = fg.place_message(fg.SITE_HOME, (6.0, 1.6), None, state, content)
+            self.assertEqual(actions, [("lernen", "Lernen")])
+            self.assertTrue(fg.walk_path(door, (6.0, 1.8), content=content))
+            self.assertTrue(fg.sleep_text(state))
+
+
+class KundeTest(unittest.TestCase):
+    def test_petra_arbeitet_beim_kunden(self):
+        state = fg.GameState([])
+        office = [p["id"] for p in fg.people_at_site(fg.SITE_OFFICE, state)]
+        customer = [p["id"] for p in fg.people_at_site("talheim", state)]
+        self.assertNotIn("petra", office)
+        self.assertIn("petra", customer)
+        self.assertEqual(fg.task_site(fg.task_by_id("diagnose-automat-ssd")), "talheim")
+        self.assertEqual(fg.task_site(fg.task_by_id("rack-talheim-nord")), "talheim_nord")
+
+    def test_talheim_nord_ab_tag_12(self):
+        early = fg.GameState(_day_ends(3))
+        late = fg.GameState(_day_ends(11))
+        self.assertEqual([p["id"] for p in fg.open_places(early)], ["talheim"])
+        self.assertEqual([p["id"] for p in fg.open_places(late)], ["talheim", "talheim_nord"])
+
+    def test_bahnhof_waechst_mit(self):
+        building = fg.customer_place("talheim_nord")["gebaeude"]
+        before = fg._visible_building(building, set())
+        after = fg._visible_building(building, {"rack-talheim-nord", "pc-talheim-nord",
+                                                "abnahme-talheim-nord",
+                                                "kamera-loeschfrist"})
+
+        def kinds(item):
+            return [d["typ"] for r in item["raeume"] for d in r.get("deko", [])] + \
+                [d["typ"] for d in item["flur"].get("deko", [])]
+        self.assertIn("absperrband", kinds(before))
+        self.assertNotIn("wimpel", kinds(before))
+        self.assertIn("wimpel", kinds(after))
+        self.assertNotIn("absperrband", kinds(after))
+
+    def test_auftrag_vor_ort_und_ausgang(self):
+        state = fg.GameState([])
+        content = fg.site_content("talheim", state)
+        quests = state.quests("talheim")
+        self.assertTrue(quests)
+        for person_id, tasks in quests.items():
+            person = next(p for p in content["kollegen"] if p["id"] == person_id)
+            title, _text, actions = fg.place_message("talheim", person["platz"], person,
+                                                     state, content)
+            self.assertIn("Auftrag", title)
+            self.assertEqual(actions[0][0], "auftrag:" + tasks[0]["id"])
+        entrance = content["gebaeude"]["flur"]["spieler"]
+        _t, _x, actions = fg.place_message("talheim", entrance, None, state, content)
+        self.assertEqual(actions, [("buero", "Zurück ins Büro")])
+        texts = [s["text"] for s in fg.building_shapes(quests=set(quests), content=content)
+                 if s["k"] == "text"]
+        self.assertEqual(texts.count("!"), len(quests))
+
+    def test_wartet_an_der_stelle(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            found = []
+
+            def look(game, task):
+                if task["id"] == "diagnose-automat-ssd":
+                    petra = next(p for p in fg.people_at_site("talheim", game.state)
+                                 if p["id"] == "petra")
+                    found.append(petra["platz"])
+                return False
+
+            _play_through(game, on_ticket=look)
+            self.assertEqual(found[0], [4.9, 10.5])
+            petra = next(p for p in fg.people_at_site("talheim", game.state)
+                         if p["id"] == "petra")
+            self.assertEqual(petra["platz"], [2.3, 2.95])
+
+
+class RackAusLagerTest(unittest.TestCase):
+    def test_geraete_kommen_aus_dem_lager(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            seen = {}
+
+            def watch(game, task):
+                if task["id"] == "rack-talheim-nord":
+                    prepared = game.state.prepared_task(task)
+                    seen["stock"] = dict(game.state.stock())
+                    seen["lager_ab"] = prepared["lager_ab"]
+                    seen["geraete"] = prepared["geraete"]
+                    payload = game.solve(task["id"], _right_answer(task, game.state), False)
+                    seen["payload"] = payload
+                    seen["after"] = dict(game.state.stock())
+                    return True
+                return False
+
+            _play_through(game, on_ticket=watch)
+            self.assertTrue(seen, "Rack-Auftrag kam nicht dran")
+            self.assertEqual(seen["lager_ab"], 2)
+            self.assertGreater(len(seen["geraete"]), 2)
+            payload = seen["payload"]
+            self.assertTrue(payload["richtig"])
+            self.assertTrue(payload["aus_lager"])
+            for part_id in payload["aus_lager"]:
+                self.assertEqual(seen["after"].get(part_id, 0),
+                                 seen["stock"][part_id] - payload["aus_lager"].count(part_id))
+            self.assertIn("Aus dem Lager eingebaut",
+                          fg.result_text(fg.task_by_id("rack-talheim-nord"), payload))
+
+
+class StoryTest(unittest.TestCase):
+    def test_szenen_und_feierabend(self):
+        for day in range(12, 17):
+            self.assertTrue(fg.morning_text(day), day)
+        self.assertEqual(fg.morning_text(3), "")
+        texts = {fg.day_end_text(day) for day in range(1, 6)}
+        self.assertEqual(len(texts), 5)
+
+    def test_reaktionen(self):
+        task = fg.task_by_id("diagnose-automat-ssd")
+        payload = {"richtig": True, "tag": 4}
+        self.assertTrue(fg.reaction_text(task, payload).startswith("Petra: "))
+        for person in fg.all_people():
+            self.assertTrue((person.get("reaktionen") or {}).get("richtig"), person["id"])
+            self.assertTrue((person.get("reaktionen") or {}).get("falsch"), person["id"])
+
+    def test_neue_kollegen_ab_tag_12(self):
+        early = [p["id"] for p in fg.people_at_site(fg.SITE_OFFICE, fg.GameState([]))]
+        late = [p["id"] for p in fg.people_at_site(fg.SITE_OFFICE,
+                                                   fg.GameState(_day_ends(11)))]
+        self.assertNotIn("tim", early)
+        self.assertIn("tim", late)
+        self.assertIn("karin", late)
 
 
 if __name__ == "__main__":

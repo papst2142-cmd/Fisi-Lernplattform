@@ -1680,9 +1680,10 @@ def selftest():
         game.game.state.profile = {"name": "Test",
                                    "aussehen": dict(fisi_game.DEFAULT_APPEARANCE)}
         game.render()
-        for task in fisi_game.GAME["aufgaben"]:
+        for task in fisi_game.GAME["aufgaben"] + fisi_game.GAME["zwischenfaelle"]:
             game.open_ticket(task["id"])
             game._show_help()
+            task = game.task
             # PC zusammenbauen und Warenkorb einmal bedienen
             solution = fisi_game.find_solution(task, game.available)
             if task["typ"] == "bauteile" and solution:
@@ -1696,7 +1697,7 @@ def selftest():
                     for _step in range(count):
                         game.options.change(offer_id, 1)
                 game.options.reveal(True)
-            elif task["typ"] == "rack":
+            elif task["typ"] == "rack" and solution:
                 for key, bottom in solution.items():
                     game.options.pick_device(int(key))
                     game.options.tap_unit(bottom)
@@ -1723,11 +1724,22 @@ def selftest():
                 game.options.reveal(True)
         game._select_room("serverraum")
         game._select_room("lager")
-        # Bueroansicht (ohne reload, der Test-Spielstand steht nur im Speicher)
+        # Grossansichten (ohne reload, der Test-Spielstand steht nur im Speicher)
         game.office = ft.Column()
-        game._fill_office()
-        for person in fisi_game.GAME["kollegen"]:
-            game._office_text(tuple(person["platz"]), person)
+        for key in ("buero", "kunde", "zuhause"):
+            game.site_key = key
+            game._fill_site()
+            content = game.office_plan.site_data
+            for person in content["kollegen"]:
+                game._office_text(tuple(person["platz"]), person)
+        game.place = "talheim_nord"
+        game._fill_site()
+        game.site_key = "zuhause"
+        game.editing = True
+        game.selected = "start-matratze"
+        game._fill_site()
+        game._home_tap(3.0, 3.0)
+        game._office_text(fisi_game.start_position(game.office_plan.site_data), None)
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
