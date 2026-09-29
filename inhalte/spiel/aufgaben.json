@@ -856,5 +856,1109 @@
       "Leasing kann sich trotzdem lohnen: Es schont die Liquidität, weil nicht alles auf einmal bezahlt wird, und die Raten sind planbar."
     ],
     "suchbegriffe": ["Leasing", "Liquidität"]
+  },
+  {
+    "id": "diagnose-kassen-pc",
+    "typ": "diagnose",
+    "titel": "Kein Internet am Kassen-PC",
+    "auftraggeber": "jonas",
+    "raum": "helpdesk",
+    "prioritaet": "hoch",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 35},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 9,
+    "ticket": [
+      "Jonas legt den Hörer auf: „Kasse 3 im Service-Center kommt weder ins Internet noch auf den Kassenserver. Die anderen Kassen laufen. Die Kollegin hat schon zweimal neu gestartet.“",
+      "„Ich würde ja die Netzwerkkarte tauschen. Aber vielleicht schaust du erst mal nach, bevor ich wieder was kaufe, was wir nicht brauchen.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "kabel",
+        "text": "Netzwerkkabel und Link-LED an der Netzwerkkarte ansehen",
+        "ergebnis": "Das Kabel steckt fest, die Link-LED leuchtet grün und blinkt."
+      },
+      {
+        "id": "ipconfig",
+        "text": "ipconfig /all ausführen",
+        "ergebnis": "IPv4-Adresse 169.254.83.17, Maske 255.255.0.0, kein Standardgateway. DHCP aktiviert: Ja.",
+        "entscheidend": true
+      },
+      {
+        "id": "ping",
+        "text": "Standardgateway 192.168.20.1 anpingen",
+        "ergebnis": "„Allgemeiner Fehler“. Der PC liegt nicht im selben Netz wie das Gateway."
+      },
+      {
+        "id": "nslookup",
+        "text": "nslookup kassenserver ausführen",
+        "ergebnis": "„DNS request timed out“. Es ist kein DNS-Server erreichbar."
+      },
+      {
+        "id": "dhcp",
+        "text": "Status des DHCP-Dienstes auf dem Server ansehen",
+        "ergebnis": "DHCP-Server: „Beendet“ seit gestern 22:14 Uhr. Nach einem Update wurde er nicht wieder gestartet.",
+        "entscheidend": true
+      },
+      {
+        "id": "treiber",
+        "text": "Treiber der Netzwerkkarte neu installieren",
+        "ergebnis": "Treiber neu installiert. Nach dem Neustart wieder 169.254.83.17."
+      },
+      {
+        "id": "nachbar",
+        "text": "ipconfig an der Nachbarkasse ausführen",
+        "ergebnis": "Kasse 2 hat 192.168.20.32. Ihre Lease läuft aber morgen früh ab."
+      },
+      {
+        "id": "firewall",
+        "text": "Windows-Firewall am Kassen-PC prüfen",
+        "ergebnis": "Die Firewall ist aktiv, die Regeln sind dieselben wie bei den anderen Kassen."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Der DHCP-Dienst auf dem Server läuft nicht, der PC gibt sich selbst eine APIPA-Adresse.",
+      "Die Netzwerkkarte des Kassen-PCs ist defekt.",
+      "Der DNS-Server ist ausgefallen.",
+      "Das Netzwerkkabel ist beschädigt."
+    ],
+    "ursache": "Der DHCP-Dienst auf dem Server läuft nicht, der PC gibt sich selbst eine APIPA-Adresse.",
+    "massnahmen": [
+      "DHCP-Dienst starten, Autostart prüfen und am Kassen-PC ipconfig /renew ausführen",
+      "Am Kassen-PC dauerhaft eine feste IP-Adresse eintragen",
+      "Eine neue Netzwerkkarte bestellen und einbauen",
+      "Die Firewall am Kassen-PC abschalten"
+    ],
+    "massnahme": "DHCP-Dienst starten, Autostart prüfen und am Kassen-PC ipconfig /renew ausführen",
+    "unsicher": ["Die Firewall am Kassen-PC abschalten"],
+    "hilfe": [
+      "Geh das OSI-Modell von unten nach oben durch: Leuchtet die Link-LED, ist die Verkabelung (Schicht 1) in Ordnung.",
+      "Dann die IP-Konfiguration: Eine Adresse aus 169.254.0.0/16 heißt APIPA. Die vergibt sich Windows selbst, wenn kein DHCP-Server antwortet.",
+      "Also: Warum antwortet der DHCP-Server nicht? Treiber tauschen oder Firewall abschalten hilft dabei nicht."
+    ],
+    "erklaerung": [
+      "ipconfig zeigt 169.254.83.17: Der PC hat vom DHCP-Server keine Adresse bekommen. Der Dienst auf dem Server war nach einem Update nicht wieder gestartet worden.",
+      "Die anderen Kassen haben noch eine gültige Lease, wären aber morgen auch ausgefallen. Eine feste IP an nur einem PC wäre ein Pflaster, die Ursache bliebe. Nach dem Start des Dienstes holt sich die Kasse mit ipconfig /renew eine Adresse."
+    ],
+    "suchbegriffe": ["APIPA", "DHCP", "ipconfig"]
+  },
+  {
+    "id": "terminal-datenplatte",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@fahrplan:~#",
+    "titel": "Datenplatte für den Fahrplanserver",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 35},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 9,
+    "ticket": [
+      "Ulla klopft auf den Fahrplanserver: „Ich habe eine neue 2-TB-Platte eingebaut. Die Fahrplandaten sollen dauerhaft unter /daten liegen, auch nach jedem Neustart.“",
+      "„Partitionieren, formatieren, einhängen. Und fass bitte die Systemplatte nicht an, auf der läuft der ganze Server.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Ubuntu 24.04 LTS · Server fahrplan", "Letzte Anmeldung: heute 08:12 von 192.168.40.5"],
+    "schritte": [
+      {
+        "ziel": "Die neue Festplatte finden",
+        "befehle": [
+          {
+            "befehl": "df -h",
+            "ausgabe": ["Filesystem  Size  Used Avail Use% Mounted on", "/dev/sda1    63G   12G   48G  20% /"],
+            "hinweis": "df zeigt nur eingehängte Dateisysteme. Die neue, leere Platte fehlt dort, lsblk zeigt alle Laufwerke."
+          },
+          {
+            "befehl": "lsblk",
+            "ausgabe": [
+              "NAME    SIZE TYPE MOUNTPOINTS",
+              "sda      64G disk",
+              "└─sda1   64G part /",
+              "sdb       2T disk"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "mount /dev/sdb /daten",
+            "ausgabe": ["mount: /daten: mount point does not exist."],
+            "hinweis": "Einhängen kommt ganz zum Schluss. Erst die Platte finden, partitionieren und formatieren."
+          }
+        ]
+      },
+      {
+        "ziel": "Eine GPT-Partition über die ganze neue Platte anlegen",
+        "befehle": [
+          {
+            "befehl": "mkfs.ext4 /dev/sdb1",
+            "ausgabe": ["mke2fs 1.47.0 (5-Feb-2023)", "The file /dev/sdb1 does not exist."],
+            "hinweis": "Die Partition sdb1 gibt es erst, wenn sie angelegt ist."
+          },
+          {
+            "befehl": "parted /dev/sda mklabel gpt",
+            "ausgabe": [
+              "Ulla hält deine Hand fest: „Stopp! sda ist die",
+              "Systemplatte. Neue Partitionstabelle heißt: alles weg.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "/dev/sda ist die Systemplatte mit dem laufenden Betriebssystem. Eine neue Partitionstabelle würde sie unbrauchbar machen."
+          },
+          {
+            "befehl": "parted /dev/sdb mklabel gpt mkpart daten ext4 0% 100%",
+            "ausgabe": ["Information: You may need to update /etc/fstab."],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die Partition mit ext4 formatieren",
+        "befehle": [
+          {
+            "befehl": "mkfs.ext4 -L daten /dev/sdb1",
+            "ausgabe": [
+              "mke2fs 1.47.0 (5-Feb-2023)",
+              "Creating filesystem with 488378112 4k blocks",
+              "Writing superblocks and filesystem accounting",
+              "information: done"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "mkfs.ntfs /dev/sdb1",
+            "ausgabe": ["Command 'mkfs.ntfs' not found, but can be installed", "with: apt install ntfs-3g"],
+            "hinweis": "NTFS ist das Dateisystem von Windows. Für einen Linux-Server nimmt man ext4 (oder XFS)."
+          },
+          {
+            "befehl": "mount /dev/sdb1 /daten",
+            "ausgabe": ["mount: /daten: mount point does not exist."],
+            "hinweis": "Ohne Dateisystem gibt es nichts einzuhängen, und den Ordner /daten gibt es auch noch nicht."
+          }
+        ]
+      },
+      {
+        "ziel": "Den Ordner /daten anlegen und die Partition dort einhängen",
+        "befehle": [
+          {
+            "befehl": "mount /daten /dev/sdb1",
+            "ausgabe": ["mount: /dev/sdb1: special device /daten does not exist."],
+            "hinweis": "Bei mount steht zuerst das Gerät und dann der Einhängepunkt."
+          },
+          {
+            "befehl": "mount /dev/sdb /daten",
+            "ausgabe": ["mount: /daten: mount point does not exist."],
+            "hinweis": "Eingehängt wird die Partition sdb1, nicht die ganze Platte. Außerdem muss der Ordner /daten vorher angelegt werden."
+          },
+          {"befehl": "mkdir /daten && mount /dev/sdb1 /daten", "ausgabe": [], "richtig": true}
+        ]
+      },
+      {
+        "ziel": "Beim Neustart automatisch einhängen",
+        "befehle": [
+          {
+            "befehl": "echo 'LABEL=daten /daten ext4 defaults 0 2' > /etc/fstab",
+            "ausgabe": [
+              "Ulla reißt dir die Tastatur weg: „Ein > überschreibt",
+              "die ganze fstab. Dann startet der Server nie wieder!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Ein einfaches > überschreibt die Datei, >> hängt an. Ohne den Eintrag für / startet der Server nicht mehr."
+          },
+          {
+            "befehl": "echo 'LABEL=daten /daten ext4 defaults 0 2' >> /etc/fstab",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "reboot",
+            "ausgabe": [
+              "Ulla: „Neustarten ändert nichts. Solange /daten nicht",
+              "in der fstab steht, ist die Platte danach wieder weg.“"
+            ],
+            "hinweis": "Was beim Start eingehängt wird, steht in der Datei /etc/fstab."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "lsblk listet alle Laufwerke und Partitionen, auch leere. df -h zeigt nur, was schon eingehängt ist.",
+      "parted legt die Partitionstabelle (GPT) und die Partition an. Achte darauf, welche Platte du bearbeitest: sda ist das System, sdb die neue.",
+      "mkfs.ext4 -L daten erstellt das Dateisystem und gibt ihm das Label „daten“. mount GERÄT ORDNER hängt es ein, der Ordner muss existieren (mkdir).",
+      "/etc/fstab: Gerät, Einhängepunkt, Dateisystem, Optionen, dump, Prüfreihenfolge. Mit >> anhängen, nie mit > überschreiben."
+    ],
+    "erklaerung": [
+      "Richtig: lsblk → parted /dev/sdb … → mkfs.ext4 -L daten /dev/sdb1 → mkdir /daten && mount /dev/sdb1 /daten → Eintrag mit >> in die /etc/fstab.",
+      "Das Label in der fstab (LABEL=daten) ist robuster als /dev/sdb1, denn die Gerätenamen können sich ändern, wenn weitere Platten dazukommen."
+    ],
+    "suchbegriffe": ["fstab", "Partition", "ext4"]
+  },
+  {
+    "id": "terminal-benutzer-service",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@datei:~#",
+    "titel": "Benutzer und Rechte fürs Service-Center",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "normal",
+    "cat": "sicherheit",
+    "anforderungen": {"systeme": 30, "sicherheit": 30},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 75, "reputation": 6},
+    "ab_tag": 9,
+    "ticket": [
+      "Ulla: „Das Service-Center bekommt auf dem Dateiserver den Ordner /daten/service. Zugriff haben nur die Service-Mitarbeiterinnen, als Erste Aylin Kaya.“",
+      "„Leg eine Gruppe an, dann Aylins Konto mit Startpasswort, das sie gleich ändern muss. Jonas meint übrigens, chmod 777 ginge am schnellsten. Jonas meint viel.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · Dateiserver datei"],
+    "schritte": [
+      {
+        "ziel": "Die Gruppe servicecenter anlegen",
+        "befehle": [
+          {
+            "befehl": "chgrp servicecenter /daten/service",
+            "ausgabe": ["chgrp: invalid group: 'servicecenter'"],
+            "hinweis": "Die Gruppe gibt es noch nicht. Sie muss zuerst angelegt werden."
+          },
+          {"befehl": "groupadd servicecenter", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "useradd servicecenter",
+            "ausgabe": ["# Das war ein Benutzer namens servicecenter,", "# keine Gruppe."],
+            "hinweis": "useradd legt Benutzer an, groupadd legt Gruppen an. Rechte vergibt man sauber über Gruppen."
+          }
+        ]
+      },
+      {
+        "ziel": "Konto akaya mit Home-Verzeichnis anlegen, in der Gruppe servicecenter",
+        "befehle": [
+          {
+            "befehl": "useradd akaya",
+            "ausgabe": [
+              "# akaya ist angelegt, aber ohne Home-Verzeichnis",
+              "# und nicht in der Gruppe servicecenter."
+            ],
+            "hinweis": "-m legt das Home-Verzeichnis an, -G fügt das Konto einer weiteren Gruppe hinzu."
+          },
+          {
+            "befehl": "useradd -m -G sudo akaya",
+            "ausgabe": [
+              "Ulla schüttelt den Kopf: „sudo? Dann darf Aylin",
+              "den ganzen Server verwalten. Nein.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Die Gruppe sudo bedeutet Administratorrechte. Nach dem Prinzip der minimalen Rechte bekommt jede Person nur, was sie wirklich braucht."
+          },
+          {"befehl": "useradd -m -G servicecenter akaya", "ausgabe": [], "richtig": true}
+        ]
+      },
+      {
+        "ziel": "Ein Startpasswort setzen",
+        "befehle": [
+          {
+            "befehl": "passwd akaya",
+            "ausgabe": ["New password:", "Retype new password:", "passwd: password updated successfully"],
+            "richtig": true
+          },
+          {
+            "befehl": "echo 'akaya:Sommer2026' | chpasswd",
+            "ausgabe": [
+              "# Klappt, aber das Passwort steht jetzt im Klartext",
+              "# in der Shell-History. Und Sommer2026 ist schwach."
+            ],
+            "hinweis": "Passwörter gehören nicht in die Befehlszeile, denn dort landen sie in der History. passwd fragt sie verdeckt ab."
+          },
+          {
+            "befehl": "passwd -d akaya",
+            "ausgabe": [
+              "Ulla: „-d löscht das Passwort. Dann kommt jeder",
+              "ohne Passwort rein. Auf keinen Fall!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "passwd -d entfernt das Passwort. Das Konto wäre ohne Anmeldung nutzbar."
+          }
+        ]
+      },
+      {
+        "ziel": "Beim ersten Anmelden einen Passwortwechsel erzwingen",
+        "befehle": [
+          {
+            "befehl": "chage -M 99999 akaya",
+            "ausgabe": ["# Damit läuft das Passwort nie ab. Das Gegenteil", "# von dem, was du wolltest."],
+            "hinweis": "-M setzt die maximale Gültigkeit in Tagen. chage -d 0 setzt das Datum der letzten Änderung auf 0, dann muss sofort gewechselt werden."
+          },
+          {
+            "befehl": "usermod -L akaya",
+            "ausgabe": ["# Konto gesperrt. Aylin kommt gar nicht mehr rein."],
+            "hinweis": "usermod -L sperrt das Konto."
+          },
+          {"befehl": "chage -d 0 akaya", "ausgabe": [], "richtig": true}
+        ]
+      },
+      {
+        "ziel": "Den Ordner /daten/service der Gruppe übergeben",
+        "befehle": [
+          {"befehl": "chown root:servicecenter /daten/service", "ausgabe": [], "richtig": true},
+          {
+            "befehl": "chown akaya /daten/service",
+            "ausgabe": ["# Jetzt gehört der Ordner nur Aylin. Ihre", "# Kolleginnen kommen nicht dran."],
+            "hinweis": "Über die Gruppe bekommen alle Service-Mitarbeiterinnen Zugriff, auch wenn später jemand dazukommt oder geht."
+          },
+          {
+            "befehl": "chgrp -R servicecenter /daten",
+            "ausgabe": [
+              "# Jetzt gehört ganz /daten der Gruppe, auch die",
+              "# Fahrplandaten. Das ist zu viel."
+            ],
+            "hinweis": "Nur der Ordner /daten/service soll der Gruppe gehören, nicht alles unter /daten."
+          }
+        ]
+      },
+      {
+        "ziel": "Rechte: Gruppe darf lesen und schreiben, alle anderen nichts",
+        "befehle": [
+          {
+            "befehl": "chmod 750 /daten/service",
+            "ausgabe": ["# Die Gruppe darf jetzt lesen, aber nichts", "# speichern."],
+            "hinweis": "Die Ziffern stehen für Besitzer, Gruppe und Andere. r = 4, w = 2, x = 1. Mit 5 (r + x) darf die Gruppe nicht schreiben."
+          },
+          {
+            "befehl": "chmod 777 /daten/service",
+            "ausgabe": [
+              "Ulla hält deine Hand fest: „777 heißt: jeder",
+              "darf alles. Auch der Drucker im Flur.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "777 gibt allen Konten Lesen, Schreiben und Ausführen. Gefragt war das Gegenteil: Zugriff nur fürs Service-Center."
+          },
+          {"befehl": "chmod 770 /daten/service", "ausgabe": [], "richtig": true}
+        ]
+      }
+    ],
+    "hilfe": [
+      "groupadd GRUPPE legt eine Gruppe an. useradd -m -G GRUPPE NAME legt ein Konto mit Home-Verzeichnis an und nimmt es in die Gruppe auf.",
+      "passwd NAME fragt das neue Passwort verdeckt ab. chage -d 0 NAME zwingt beim nächsten Anmelden zum Wechsel.",
+      "chown BESITZER:GRUPPE ORDNER ändert Besitzer und Gruppe. chmod setzt die Rechte als drei Ziffern für Besitzer, Gruppe und Andere: r = 4, w = 2, x = 1. 7 = rwx, 5 = r-x, 0 = nichts.",
+      "Prinzip der minimalen Rechte: Jede Person bekommt nur, was sie braucht."
+    ],
+    "erklaerung": [
+      "Richtig: groupadd servicecenter → useradd -m -G servicecenter akaya → passwd akaya → chage -d 0 akaya → chown root:servicecenter /daten/service → chmod 770 /daten/service.",
+      "770 heißt: Besitzer und Gruppe dürfen alles (rwx), alle anderen nichts. Bei Ordnern braucht man x, um hineinzuwechseln. 777 oder sudo wären bequem, aber genau solche Abkürzungen nutzen Angreifer aus."
+    ],
+    "suchbegriffe": ["chmod", "Least Privilege", "Benutzer"]
+  },
+  {
+    "id": "diagnose-automat-ssd",
+    "typ": "diagnose",
+    "titel": "Fahrkartenautomat startet nicht",
+    "auftraggeber": "petra",
+    "raum": "kundenberatung",
+    "prioritaet": "kritisch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 35},
+    "achsen": ["fachkompetenz", "kundenzufriedenheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 10,
+    "nach": "ssd-automaten",
+    "aus_lager": ["ssd"],
+    "ticket": [
+      "Petra Lindner steht mit dem Rechner aus Automat 14 in der Tür: „Bahnhof Talheim. Seit heute Morgen nur ein schwarzer Bildschirm mit weißem Text. Die Fahrgäste kaufen jetzt beim Zugbegleiter, der ist begeistert.“",
+      "„Ihr habt doch Ersatzteile bestellt, oder? Hauptsache, er läuft heute wieder.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "strom",
+        "text": "Stromversorgung und Netzteil-LED prüfen",
+        "ergebnis": "Die Netzteil-LED leuchtet, die Lüfter laufen, ein kurzer Piepton: Der Selbsttest ist in Ordnung."
+      },
+      {
+        "id": "meldung",
+        "text": "Die Meldung auf dem Bildschirm lesen",
+        "ergebnis": "„No bootable device – insert boot disk and press any key“",
+        "entscheidend": true
+      },
+      {
+        "id": "bios",
+        "text": "Im BIOS nachsehen, welche Laufwerke erkannt werden",
+        "ergebnis": "Die SATA-SSD wird mal erkannt, mal nicht. Die Bootreihenfolge ist unverändert.",
+        "entscheidend": true
+      },
+      {
+        "id": "smart",
+        "text": "S.M.A.R.T.-Werte der SSD mit einem Live-USB-Stick auslesen",
+        "ergebnis": "Reallocated Sectors: 1.912, Zustand: FAILING. Die SSD ist am Ende.",
+        "entscheidend": true
+      },
+      {
+        "id": "ram",
+        "text": "Arbeitsspeicher mit einem Speichertest prüfen",
+        "ergebnis": "30 Minuten Test, keine Fehler gefunden."
+      },
+      {
+        "id": "netz",
+        "text": "Netzwerkverbindung zum Ticketserver prüfen",
+        "ergebnis": "Ohne gestartetes System lässt sich das Netz nicht prüfen."
+      },
+      {
+        "id": "kabel",
+        "text": "SATA-Kabel neu stecken",
+        "ergebnis": "Das Kabel sitzt fest. Nach dem Neustart wieder „No bootable device“."
+      }
+    ],
+    "ziel_pruefungen": 4,
+    "ursachen": [
+      "Die SSD ist defekt, S.M.A.R.T. meldet FAILING.",
+      "Die Bootreihenfolge im BIOS ist verstellt.",
+      "Der Arbeitsspeicher ist defekt.",
+      "Das Netzteil liefert zu wenig Strom."
+    ],
+    "ursache": "Die SSD ist defekt, S.M.A.R.T. meldet FAILING.",
+    "massnahmen": [
+      "Die SSD gegen eine Ersatz-SSD aus dem Lager tauschen und das Automaten-Image aufspielen",
+      "Die Bootreihenfolge im BIOS zurücksetzen",
+      "Den Automaten so oft neu starten, bis er wieder hochfährt",
+      "Beim Hersteller einen neuen Automaten bestellen"
+    ],
+    "massnahme": "Die SSD gegen eine Ersatz-SSD aus dem Lager tauschen und das Automaten-Image aufspielen",
+    "hilfe": [
+      "„No bootable device“ heißt: Das BIOS findet kein Laufwerk, von dem es starten kann.",
+      "Prüfe also, ob das Laufwerk überhaupt erkannt wird und wie es ihm geht. Die S.M.A.R.T.-Werte sind das Gesundheitszeugnis einer Festplatte oder SSD.",
+      "Netzwerk und Software kommen erst dran, wenn das System startet."
+    ],
+    "erklaerung": [
+      "Strom und Selbsttest sind in Ordnung, aber das BIOS findet kein Startlaufwerk. Die SSD wird nur manchmal erkannt, und S.M.A.R.T. meldet über tausend ersetzte Sektoren: Sie ist defekt.",
+      "Die Ersatz-SSDs aus der Bestellung von Tag 6 liegen im Lager. Einbauen, Image aufspielen, fertig. Neustarten würde die Daten auf der sterbenden SSD nur weiter gefährden."
+    ],
+    "suchbegriffe": ["SSD", "BIOS", "SMART"]
+  },
+  {
+    "id": "terminal-windows-ip",
+    "typ": "terminal",
+    "system": "windows",
+    "prompt": "PS C:\\>",
+    "titel": "Neuer Arbeitsplatz für die Leitstelle",
+    "auftraggeber": "jonas",
+    "raum": "helpdesk",
+    "prioritaet": "normal",
+    "cat": "netzwerk",
+    "anforderungen": {"netzwerk": 35, "systeme": 25},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 70, "reputation": 6},
+    "ab_tag": 10,
+    "ticket": [
+      "Jonas: „Der neue Fahrdienstleiter-PC für die Leitstelle braucht eine feste Adresse: 192.168.40.20/26, Gateway 192.168.40.1, DNS-Server 192.168.40.2. Das ist das Leitstellen-Netz aus Ullas IP-Plan.“",
+      "„Ich hab's mit der Maus versucht, aber das Fenster mag mich nicht. Kannst du das in der PowerShell machen?“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Windows PowerShell (Administrator)"],
+    "schritte": [
+      {
+        "ziel": "Den Namen des Netzwerkadapters herausfinden",
+        "befehle": [
+          {
+            "befehl": "Get-Service",
+            "ausgabe": [
+              "Status   Name        DisplayName",
+              "Running  Dhcp        DHCP-Client",
+              "Running  Dnscache    DNS-Client"
+            ],
+            "hinweis": "Get-Service listet Dienste, nicht die Netzwerkadapter."
+          },
+          {
+            "befehl": "Get-NetAdapter",
+            "ausgabe": [
+              "Name      InterfaceDescription        Status",
+              "----      --------------------        ------",
+              "Ethernet  Intel(R) Ethernet I219-LM   Up"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "ipconfig /release",
+            "ausgabe": ["Windows-IP-Konfiguration", "# Die DHCP-Adresse ist freigegeben, mehr nicht."],
+            "hinweis": "Das gibt nur die DHCP-Adresse frei. Den Namen des Adapters zeigt Get-NetAdapter."
+          }
+        ]
+      },
+      {
+        "ziel": "Feste IP-Adresse mit Präfix und Gateway setzen",
+        "befehle": [
+          {
+            "befehl": "New-NetIPAddress -InterfaceAlias Ethernet -IPAddress 192.168.40.20 -PrefixLength 24 -DefaultGateway 192.168.40.1",
+            "ausgabe": [
+              "IPAddress      : 192.168.40.20",
+              "PrefixLength   : 24",
+              "# Falsches Präfix: Der PC hält jetzt alle Adressen",
+              "# 192.168.40.x für sein eigenes Netz."
+            ],
+            "hinweis": "Das Netz der Leitstelle ist ein /26 (255.255.255.192). Mit /24 erreicht der PC die anderen Talbahn-Netze nicht über das Gateway."
+          },
+          {
+            "befehl": "New-NetIPAddress -InterfaceAlias Ethernet -IPAddress 192.168.40.20 -PrefixLength 26 -DefaultGateway 192.168.40.1",
+            "ausgabe": [
+              "IPAddress      : 192.168.40.20",
+              "InterfaceAlias : Ethernet",
+              "PrefixLength   : 26",
+              "PrefixOrigin   : Manual"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "Set-NetIPInterface -InterfaceAlias Ethernet -Dhcp Enabled",
+            "ausgabe": ["# Jetzt holt sich der PC seine Adresse wieder per DHCP."],
+            "hinweis": "Das schaltet DHCP ein. Gewünscht ist eine feste Adresse."
+          }
+        ]
+      },
+      {
+        "ziel": "Den DNS-Server eintragen",
+        "befehle": [
+          {
+            "befehl": "ipconfig /flushdns",
+            "ausgabe": ["Windows-IP-Konfiguration", "Der DNS-Auflösungscache wurde geleert."],
+            "hinweis": "Das leert nur den Zwischenspeicher, trägt aber keinen DNS-Server ein."
+          },
+          {
+            "befehl": "Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses 8.8.8.8",
+            "ausgabe": [
+              "# Jetzt fragt der PC einen öffentlichen DNS-Server.",
+              "# Interne Namen der Talbahn kennt der nicht."
+            ],
+            "hinweis": "Die Talbahn hat einen eigenen DNS-Server (192.168.40.2). Ein öffentlicher kennt die internen Namen nicht."
+          },
+          {
+            "befehl": "Set-DnsClientServerAddress -InterfaceAlias Ethernet -ServerAddresses 192.168.40.2",
+            "ausgabe": [],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Die Verbindung zum Leitstellen-Server testen",
+        "befehle": [
+          {
+            "befehl": "Test-NetConnection leitstelle.talbahn.intern -Port 443",
+            "ausgabe": [
+              "ComputerName     : leitstelle.talbahn.intern",
+              "RemoteAddress    : 192.168.40.10",
+              "RemotePort       : 443",
+              "TcpTestSucceeded : True"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "Set-NetFirewallProfile -Enabled False",
+            "ausgabe": ["Jonas ruft von hinten: „Ohne Firewall geht's bestimmt!“", "Ulla: „Jonas. Nein.“"],
+            "gefaehrlich": true,
+            "hinweis": "Die Firewall abzuschalten testet nichts, öffnet den PC aber für Angriffe."
+          },
+          {
+            "befehl": "ping 192.168.40.1 -t",
+            "ausgabe": [
+              "Antwort von 192.168.40.1: Bytes=32 Zeit<1ms TTL=64",
+              "Antwort von 192.168.40.1: Bytes=32 Zeit<1ms TTL=64",
+              "Antwort von 192.168.40.1: Bytes=32 Zeit<1ms TTL=64"
+            ],
+            "hinweis": "Das Gateway antwortet, aber das prüft weder den DNS-Namen noch den Dienst auf dem Server. Und -t pingt endlos."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "Get-NetAdapter zeigt die Netzwerkadapter mit Namen. Den Namen (hier „Ethernet“) brauchen die folgenden Befehle.",
+      "New-NetIPAddress setzt Adresse, Präfix und Gateway. /26 entspricht 255.255.255.192, das Leitstellen-Netz reicht von .0 bis .63.",
+      "Set-DnsClientServerAddress trägt den DNS-Server ein. Test-NetConnection NAME -Port 443 prüft Namensauflösung und Verbindung zum Dienst in einem Schritt."
+    ],
+    "erklaerung": [
+      "Richtig: Get-NetAdapter → New-NetIPAddress … -PrefixLength 26 … → Set-DnsClientServerAddress … 192.168.40.2 → Test-NetConnection leitstelle.talbahn.intern -Port 443.",
+      "TcpTestSucceeded : True heißt: Der Name wurde aufgelöst (DNS stimmt), das Netz passt, und der Dienst auf Port 443 antwortet."
+    ],
+    "suchbegriffe": ["PowerShell", "DNS", "Standardgateway"]
+  },
+  {
+    "id": "diagnose-verwaltung-malware",
+    "typ": "diagnose",
+    "titel": "Verwaltungs-PC plötzlich langsam",
+    "auftraggeber": "frank",
+    "raum": "verwaltung",
+    "prioritaet": "kritisch",
+    "cat": "sicherheit",
+    "anforderungen": {"sicherheit": 35},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 10,
+    "ticket": [
+      "Frank ruft quer durch den Flur: „Mein PC ist seit heute Mittag schneckenlangsam. Ständig geht ein Fenster auf: ‚Ihr PC ist gefährdet, rufen Sie sofort den Support an!‘“",
+      "„Ich habe heute nur eine Rechnung von einem neuen Lieferanten geöffnet. Und die Gehaltstabelle muss heute noch fertig werden. Ich habe dafür eine Tabelle, wann ich was mache.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "taskmgr",
+        "text": "Task-Manager öffnen und die Prozesse ansehen",
+        "ergebnis": "Ein Prozess „svch0st.exe“ (mit Null statt o) belegt 90 % der CPU.",
+        "entscheidend": true
+      },
+      {
+        "id": "mail",
+        "text": "Die geöffnete Rechnung im Mailprogramm ansehen",
+        "ergebnis": "Anhang „Rechnung_0925.pdf.exe“ von rechnung@lieferant-onl1ne.biz. Frank hat ihn geöffnet.",
+        "entscheidend": true
+      },
+      {
+        "id": "netstat",
+        "text": "Netzwerkverbindungen mit netstat -ano ansehen",
+        "ergebnis": "svch0st.exe hält eine Verbindung zu einer unbekannten Adresse im Ausland, Port 4444."
+      },
+      {
+        "id": "updates",
+        "text": "Windows-Updates prüfen",
+        "ergebnis": "Alle Updates sind installiert, der letzte Stand ist von gestern."
+      },
+      {
+        "id": "platte",
+        "text": "Freien Speicher auf Laufwerk C: prüfen",
+        "ergebnis": "C: hat noch 212 GB frei."
+      },
+      {
+        "id": "ram",
+        "text": "Auslastung des Arbeitsspeichers ansehen",
+        "ergebnis": "8 von 16 GB belegt, das ist normal."
+      },
+      {
+        "id": "anruf",
+        "text": "Die Nummer aus dem Warnfenster anrufen",
+        "ergebnis": "Ein angeblicher „Microsoft-Support“ will Fernzugriff und 299 € in Gutscheinen. Jonas legt schnell auf."
+      }
+    ],
+    "ziel_pruefungen": 3,
+    "ursachen": [
+      "Schadsoftware aus dem Mail-Anhang (eine getarnte .exe) läuft auf dem PC.",
+      "Der PC ist zu alt und braucht mehr Arbeitsspeicher.",
+      "Ein Windows-Update läuft im Hintergrund.",
+      "Die Festplatte ist voll."
+    ],
+    "ursache": "Schadsoftware aus dem Mail-Anhang (eine getarnte .exe) läuft auf dem PC.",
+    "massnahmen": [
+      "PC sofort vom Netz trennen, den Vorfall melden und den PC neu aufsetzen",
+      "Den Virenscanner laufen lassen und danach normal weiterarbeiten",
+      "Die Fenster wegklicken, die Gehaltstabelle fertig machen und sich morgen darum kümmern",
+      "Die Nummer aus dem Warnfenster anrufen und den Fernzugriff erlauben"
+    ],
+    "massnahme": "PC sofort vom Netz trennen, den Vorfall melden und den PC neu aufsetzen",
+    "unsicher": [
+      "Den Virenscanner laufen lassen und danach normal weiterarbeiten",
+      "Die Fenster wegklicken, die Gehaltstabelle fertig machen und sich morgen darum kümmern",
+      "Die Nummer aus dem Warnfenster anrufen und den Fernzugriff erlauben"
+    ],
+    "hilfe": [
+      "Wenn ein PC plötzlich langsam wird, schaut man zuerst, was ihn beschäftigt (Task-Manager), und was sich seit gestern geändert hat.",
+      "„Rechnung.pdf.exe“ ist ein Programm, das sich als PDF tarnt. Warnfenster mit Telefonnummer sind fast immer Betrug (Tech-Support-Scam).",
+      "Bei Schadsoftware gilt: nicht selbst herumprobieren, sondern den PC isolieren, damit nichts abfließt oder sich ausbreitet, und den Vorfall melden."
+    ],
+    "erklaerung": [
+      "Der Task-Manager zeigt einen gefälschten Systemprozess, und der Mail-Anhang war ein getarntes Programm: ein klassischer Schadsoftware-Befall über Phishing.",
+      "Richtig ist, den PC sofort vom Netz zu trennen und den Vorfall zu melden. Ein Virenscanner findet nicht alles, und auf diesem PC liegen Gehaltsdaten. Deshalb wird er neu aufgesetzt, statt ihn nur zu säubern."
+    ],
+    "suchbegriffe": ["Schadsoftware", "Phishing", "Incident"]
+  },
+  {
+    "id": "terminal-webserver",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@auskunft:~#",
+    "titel": "Webserver für die Fahrplanauskunft",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40, "sicherheit": 30},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 11,
+    "ticket": [
+      "Ulla: „Die Talbahn will eine Fahrplanauskunft im Netz. Der Server auskunft ist frisch installiert. Richte bitte den Webserver nginx ein, so dass er nach jedem Neustart von selbst läuft.“",
+      "„Von außen darf nur HTTPS rein. Und sperr dich beim Einschalten der Firewall nicht selbst aus, ich habe keine Lust, in den Keller zu laufen.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Ubuntu 24.04 LTS · Server auskunft", "Verbunden per SSH von 192.168.40.5"],
+    "schritte": [
+      {
+        "ziel": "Die Paketlisten aktualisieren",
+        "befehle": [
+          {
+            "befehl": "apt update",
+            "ausgabe": [
+              "Hit:1 http://archive.ubuntu.com/ubuntu noble InRelease",
+              "Reading package lists... Done",
+              "12 packages can be upgraded."
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "systemctl start nginx",
+            "ausgabe": ["Failed to start nginx.service: Unit nginx.service", "not found."],
+            "hinweis": "nginx ist noch gar nicht installiert. Zuerst die Paketlisten holen, dann installieren."
+          },
+          {
+            "befehl": "reboot",
+            "ausgabe": ["Ulla: „Neustarten ist keine Paketverwaltung.“"],
+            "hinweis": "apt update holt die aktuellen Paketlisten aus den Paketquellen."
+          }
+        ]
+      },
+      {
+        "ziel": "Den Webserver nginx installieren",
+        "befehle": [
+          {
+            "befehl": "curl http://nginx-schnell.biz/setup.sh | sh",
+            "ausgabe": [
+              "Ulla hält deine Hand fest: „Ein Skript von irgendeiner",
+              "Seite direkt ausführen? Auf einem Server? Nein.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Software kommt aus den vertrauenswürdigen Paketquellen. Ein Skript aus unbekannter Quelle direkt auszuführen, kann den Server kompromittieren."
+          },
+          {
+            "befehl": "apt search nginx",
+            "ausgabe": ["nginx/noble 1.24.0-2ubuntu7 amd64", "  small, powerful, scalable web/proxy server"],
+            "hinweis": "apt search sucht nur, installiert aber nichts."
+          },
+          {
+            "befehl": "apt install -y nginx",
+            "ausgabe": [
+              "Reading package lists... Done",
+              "Setting up nginx (1.24.0-2ubuntu7) ...",
+              "Processing triggers for ufw (0.36.2-6) ..."
+            ],
+            "richtig": true
+          }
+        ]
+      },
+      {
+        "ziel": "Den Dienst jetzt und bei jedem Neustart starten",
+        "befehle": [
+          {
+            "befehl": "systemctl start nginx",
+            "ausgabe": ["# Läuft. Aber nach dem nächsten Neustart nicht mehr."],
+            "hinweis": "start startet den Dienst nur jetzt, enable sorgt für den Autostart. enable --now macht beides."
+          },
+          {
+            "befehl": "systemctl enable --now nginx",
+            "ausgabe": [
+              "Synchronizing state of nginx.service with SysV service",
+              "script with /usr/lib/systemd/systemd-sysv-install.",
+              "Executing: systemd-sysv-install enable nginx"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "systemctl status nginx",
+            "ausgabe": ["○ nginx.service - A high performance web server", "     Active: inactive (dead)"],
+            "hinweis": "status zeigt nur den Zustand. Der Dienst läuft noch nicht."
+          }
+        ]
+      },
+      {
+        "ziel": "In der Firewall nur HTTPS (Port 443) freigeben",
+        "befehle": [
+          {
+            "befehl": "ufw allow 80/tcp",
+            "ausgabe": ["Rule added", "Rule added (v6)", "# Port 80 ist HTTP, unverschlüsselt."],
+            "hinweis": "Port 80 ist HTTP ohne Verschlüsselung. HTTPS läuft über Port 443."
+          },
+          {
+            "befehl": "ufw allow 443/tcp",
+            "ausgabe": ["Rule added", "Rule added (v6)"],
+            "richtig": true
+          },
+          {
+            "befehl": "ufw disable",
+            "ausgabe": [
+              "Ulla: „Firewall aus, damit die Seite erreichbar ist?",
+              "Dann ist auch alles andere erreichbar.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Ohne Firewall ist jeder Dienst des Servers von außen erreichbar. Man öffnet nur die Ports, die gebraucht werden."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Firewall einschalten, ohne dich auszusperren",
+        "befehle": [
+          {
+            "befehl": "ufw enable",
+            "ausgabe": [
+              "Command may disrupt existing ssh connections.",
+              "Proceed with operation (y|n)? y",
+              "Firewall is active and enabled on system startup",
+              "# Verbindung getrennt: SSH war nicht freigegeben."
+            ],
+            "hinweis": "Du bist per SSH verbunden. Ohne Regel für SSH sperrst du dich beim Einschalten selbst aus."
+          },
+          {
+            "befehl": "ufw default allow incoming",
+            "ausgabe": ["Ulla: „Standardmäßig alles erlauben? Dann", "brauchen wir die Firewall gar nicht.“"],
+            "gefaehrlich": true,
+            "hinweis": "Für eingehende Verbindungen gilt: standardmäßig verbieten und nur Nötiges einzeln erlauben."
+          },
+          {
+            "befehl": "ufw allow OpenSSH && ufw enable",
+            "ausgabe": ["Rule added", "Rule added (v6)", "Firewall is active and enabled on system startup"],
+            "richtig": true
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "apt update holt die Paketlisten, apt install -y PAKET installiert ohne Rückfrage. Software nur aus den Paketquellen installieren.",
+      "systemctl start startet einen Dienst, enable trägt ihn in den Autostart ein. enable --now macht beides.",
+      "ufw ist die Firewall unter Ubuntu. ufw allow 443/tcp gibt HTTPS frei. Bist du per SSH verbunden, gib vor ufw enable auch SSH frei."
+    ],
+    "erklaerung": [
+      "Richtig: apt update → apt install -y nginx → systemctl enable --now nginx → ufw allow 443/tcp → ufw allow OpenSSH && ufw enable.",
+      "Standardmäßig blockiert ufw alle eingehenden Verbindungen. Freigegeben sind danach nur HTTPS für die Fahrgäste und SSH für die Verwaltung."
+    ],
+    "suchbegriffe": ["systemctl", "Firewall", "Port 443"]
+  },
+  {
+    "id": "diagnose-leitstelle-netzteil",
+    "typ": "diagnose",
+    "titel": "Leitstellen-PC geht einfach aus",
+    "auftraggeber": "mehmet",
+    "raum": "werkstatt",
+    "prioritaet": "hoch",
+    "cat": "systeme",
+    "anforderungen": {"systeme": 40},
+    "achsen": ["fachkompetenz", "sicherheit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 11,
+    "nach": "netzteile-lager",
+    "aus_lager": ["netzteil"],
+    "ticket": [
+      "Mehmet stellt den Leitstellen-PC auf die Werkbank: „Der geht seit gestern immer wieder einfach aus. Kein Bluescreen, einfach schwarz. Die Leitstelle ist nicht amüsiert.“",
+      "„Ich auch nicht. Die Schrauben waren perfekt sortiert. Finde bitte raus, woran es liegt.“"
+    ],
+    "frage": "Grenze den Fehler ein: Prüfungen durchführen, dann Ursache und Maßnahme wählen.",
+    "pruefungen": [
+      {
+        "id": "ereignis",
+        "text": "Die Ereignisanzeige von Windows ansehen",
+        "ergebnis": "Kernel-Power, Ereignis 41: Das System wurde neu gestartet, ohne ordnungsgemäß herunterzufahren.",
+        "entscheidend": true
+      },
+      {
+        "id": "temperatur",
+        "text": "CPU-Temperatur unter Last beobachten",
+        "ergebnis": "Die CPU hat unter Last 64 °C. Das ist unauffällig."
+      },
+      {
+        "id": "luefter",
+        "text": "Das Netzteil von außen ansehen und anhören",
+        "ergebnis": "Der Lüfter des Netzteils steht still, das Netzteil ist sehr heiß.",
+        "entscheidend": true
+      },
+      {
+        "id": "tester",
+        "text": "Das Netzteil mit dem Netzteiltester messen",
+        "ergebnis": "Die 12-V-Schiene schwankt zwischen 10,9 und 12,3 V. Erlaubt sind 11,4 bis 12,6 V.",
+        "entscheidend": true
+      },
+      {
+        "id": "ram",
+        "text": "Einen Speichertest laufen lassen",
+        "ergebnis": "Keine Fehler nach zwei Durchläufen."
+      },
+      {
+        "id": "treiber",
+        "text": "Den Grafiktreiber aktualisieren",
+        "ergebnis": "Der Treiber ist aktuell. Nach 20 Minuten geht der PC trotzdem aus."
+      },
+      {
+        "id": "staub",
+        "text": "Das Gehäuse öffnen und auf Staub prüfen",
+        "ergebnis": "Kaum Staub, der PC ist ja neu."
+      }
+    ],
+    "ziel_pruefungen": 4,
+    "ursachen": [
+      "Das Netzteil ist defekt: Der Lüfter steht, die 12-V-Spannung schwankt.",
+      "Die CPU überhitzt.",
+      "Der Arbeitsspeicher ist defekt.",
+      "Der Grafiktreiber ist fehlerhaft."
+    ],
+    "ursache": "Das Netzteil ist defekt: Der Lüfter steht, die 12-V-Spannung schwankt.",
+    "massnahmen": [
+      "Das Netzteil gegen das Ersatz-Netzteil aus dem Lager tauschen",
+      "Das Netzteil aufschrauben und den Lüfter reparieren",
+      "Den Energiesparmodus abschalten",
+      "Windows neu installieren"
+    ],
+    "massnahme": "Das Netzteil gegen das Ersatz-Netzteil aus dem Lager tauschen",
+    "unsicher": ["Das Netzteil aufschrauben und den Lüfter reparieren"],
+    "hilfe": [
+      "Geht ein PC ohne Bluescreen einfach aus, ist oft die Stromversorgung schuld. Die Ereignisanzeige meldet das als Kernel-Power 41.",
+      "Ein Netzteiltester misst die Spannungen. Auf der 12-V-Schiene sind ±5 % erlaubt, also 11,4 bis 12,6 V.",
+      "Netzteile öffnet man nicht: Die Kondensatoren können auch ausgesteckt noch gefährliche Spannung haben."
+    ],
+    "erklaerung": [
+      "Kernel-Power 41 zeigt einen plötzlichen Stromverlust. Der Lüfter des Netzteils steht, es wird heiß und die 12-V-Spannung bricht ein: Das Netzteil schaltet sich zum Schutz ab.",
+      "Zum Glück liegt aus der Nachbestellung noch ein 650-W-Netzteil im Lager. Ein Netzteil aufzuschrauben ist lebensgefährlich und bei einem Leitstellen-PC auch keine verlässliche Reparatur."
+    ],
+    "suchbegriffe": ["Netzteil", "Spannung", "Ereignisanzeige"]
+  },
+  {
+    "id": "terminal-db-backup",
+    "typ": "terminal",
+    "system": "linux",
+    "prompt": "root@db:~#",
+    "titel": "Nächtliche Sicherung der Automaten-Datenbank",
+    "auftraggeber": "ulla",
+    "raum": "serverraum",
+    "prioritaet": "hoch",
+    "cat": "datenbanken",
+    "anforderungen": {"datenbanken": 30, "systeme": 30},
+    "achsen": ["fachkompetenz", "zuverlaessigkeit"],
+    "belohnung": {"geld": 80, "reputation": 7},
+    "ab_tag": 11,
+    "ticket": [
+      "Ulla: „Die Datenbank automaten hat kein Backup. Wenn die weg ist, weiß niemand mehr, welcher Automat wie viel Geld enthält. Das Skript db-backup.sh habe ich schon geschrieben.“",
+      "„Mach einmal eine Sicherung von Hand, plane sie für jede Nacht um 2:30 Uhr ein und teste, ob sie sich zurückspielen lässt. Ein Backup ohne Test ist nur eine Hoffnung.“"
+    ],
+    "frage": "Wähle in jedem Schritt den passenden Befehl.",
+    "start": ["Debian 12 · Datenbankserver db (MySQL 8.0)"],
+    "schritte": [
+      {
+        "ziel": "Die Datenbank automaten in eine Datei sichern",
+        "befehle": [
+          {
+            "befehl": "cp -r /var/lib/mysql /backup",
+            "ausgabe": [
+              "# Kopiert die Dateien der laufenden Datenbank.",
+              "# Das Ergebnis ist oft nicht zu gebrauchen."
+            ],
+            "hinweis": "Die Dateien einer laufenden Datenbank zu kopieren, ergibt oft ein inkonsistentes Backup. mysqldump erzeugt einen sauberen Stand."
+          },
+          {
+            "befehl": "mysqldump --single-transaction automaten > /backup/automaten.sql",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "mysql -e 'DROP DATABASE automaten'",
+            "ausgabe": [
+              "Ulla hält deine Hand fest: „DROP löscht die Datenbank.",
+              "Wir wollten sie sichern, nicht loswerden!“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "DROP DATABASE löscht die Datenbank mit allen Tabellen, unwiderruflich."
+          }
+        ]
+      },
+      {
+        "ziel": "Prüfen, ob die Sicherungsdatei Inhalt hat",
+        "befehle": [
+          {
+            "befehl": "ls /backup",
+            "ausgabe": ["automaten.sql"],
+            "hinweis": "ls zeigt nur, dass die Datei existiert, nicht ob etwas darin steht."
+          },
+          {
+            "befehl": "head -n 4 /backup/automaten.sql",
+            "ausgabe": [
+              "-- MySQL dump 10.13  Distrib 8.0.39",
+              "--",
+              "-- Host: localhost    Database: automaten",
+              "-- ------------------------------------------"
+            ],
+            "richtig": true
+          },
+          {
+            "befehl": "> /backup/automaten.sql",
+            "ausgabe": ["# Die Datei ist jetzt leer. Das war die Sicherung."],
+            "hinweis": "Ein > vor dem Dateinamen leert die Datei. Anschauen geht mit head oder less."
+          }
+        ]
+      },
+      {
+        "ziel": "Das Skript jede Nacht um 2:30 Uhr starten",
+        "befehle": [
+          {
+            "befehl": "echo '2 30 * * * root /usr/local/bin/db-backup.sh' > /etc/cron.d/db-backup",
+            "ausgabe": ["# Minute 2, Stunde 30? Die gibt es nicht.", "cron (db-backup): bad hour"],
+            "hinweis": "Reihenfolge bei cron: Minute, Stunde, Tag, Monat, Wochentag. 2:30 Uhr ist also 30 2 * * *."
+          },
+          {
+            "befehl": "echo '30 2 * * * root /usr/local/bin/db-backup.sh' > /etc/cron.d/db-backup",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "echo '30 2 * * 1 root /usr/local/bin/db-backup.sh' > /etc/cron.d/db-backup",
+            "ausgabe": ["# Läuft jetzt nur montags um 2:30 Uhr."],
+            "hinweis": "Das fünfte Feld ist der Wochentag. 1 heißt Montag, * heißt jeden Tag."
+          }
+        ]
+      },
+      {
+        "ziel": "Die Sicherung in eine Testdatenbank zurückspielen",
+        "befehle": [
+          {
+            "befehl": "mysql automaten < /backup/automaten.sql",
+            "ausgabe": [
+              "Ulla: „Nicht in die Live-Datenbank! Getestet wird auf",
+              "einer Kopie, sonst überschreibst du echte Umsätze.“"
+            ],
+            "gefaehrlich": true,
+            "hinweis": "Eine Rücksicherung testet man in einer eigenen Testdatenbank, nie im laufenden Betrieb."
+          },
+          {
+            "befehl": "mysql -e 'CREATE DATABASE test_restore' && mysql test_restore < /backup/automaten.sql",
+            "ausgabe": [],
+            "richtig": true
+          },
+          {
+            "befehl": "mysqldump test_restore < /backup/automaten.sql",
+            "ausgabe": ["# mysqldump sichert nur. Zurückgespielt wird mit mysql."],
+            "hinweis": "mysqldump schreibt eine Sicherung, mysql liest sie wieder ein."
+          }
+        ]
+      },
+      {
+        "ziel": "Prüfen, ob die Daten angekommen sind",
+        "befehle": [
+          {
+            "befehl": "mysql -e 'SHOW DATABASES'",
+            "ausgabe": ["+--------------+", "| Database     |", "| automaten    |", "| test_restore |"],
+            "hinweis": "Das zeigt nur, dass es die Datenbank gibt. Ob Daten darin stehen, zeigt eine Abfrage."
+          },
+          {
+            "befehl": "mysql test_restore -e 'SELECT COUNT(*) FROM automat'",
+            "ausgabe": ["+----------+", "| COUNT(*) |", "+----------+", "|      214 |", "+----------+"],
+            "richtig": true
+          },
+          {
+            "befehl": "mysql test_restore -e 'DELETE FROM automat'",
+            "ausgabe": ["Query OK, 214 rows affected", "# Jetzt ist die Testkopie leer."],
+            "hinweis": "DELETE löscht Zeilen. Prüfen heißt zählen: SELECT COUNT(*)."
+          }
+        ]
+      }
+    ],
+    "hilfe": [
+      "mysqldump DATENBANK > DATEI schreibt die Datenbank als SQL-Befehle in eine Datei. --single-transaction sorgt für einen einheitlichen Stand, ohne die Tabellen zu sperren.",
+      "cron-Zeilen: Minute, Stunde, Tag, Monat, Wochentag, (bei /etc/cron.d) Benutzer, Befehl. * heißt „jeder“.",
+      "mysql DATENBANK < DATEI spielt eine Sicherung zurück. Getestet wird in einer eigenen Testdatenbank, mit SELECT COUNT(*) prüft man, ob die Daten da sind."
+    ],
+    "erklaerung": [
+      "Richtig: mysqldump --single-transaction automaten > … → head -n 4 … → 30 2 * * * in /etc/cron.d/db-backup → Rücksicherung in test_restore → SELECT COUNT(*) zeigt 214 Automaten.",
+      "Erst der Rücksicherungstest beweist, dass das Backup etwas taugt. Viele Firmen merken erst im Ernstfall, dass ihre Sicherungen leer oder kaputt waren."
+    ],
+    "suchbegriffe": ["mysqldump", "cron", "Rücksicherung"]
   }
 ]

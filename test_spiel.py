@@ -780,5 +780,172 @@ class FormularTest(unittest.TestCase):
                             for p in problems), problems)
 
 
+class TerminalTest(unittest.TestCase):
+    def setUp(self):
+        self.task = _task("terminal-datenplatte")
+
+    def test_richtiger_ablauf(self):
+        answer = fg.find_solution(self.task)
+        review = fg.terminal_review(self.task, answer)
+        self.assertTrue(review["richtig"])
+        self.assertEqual((review["fehlgriffe"], review["gefahr"], review["offen"]), (0, 0, 0))
+        self.assertEqual(fg.check_answer(self.task, answer), (True, 0))
+        self.assertEqual(fg.terminal_commands(self.task)[0], "lsblk")
+
+    def test_ein_fehlgriff_ist_erlaubt(self):
+        answer = fg.find_solution(self.task)
+        answer["schritte"][0] = [0, 1]                  # erst df -h, dann lsblk
+        right, errors = fg.check_answer(self.task, answer)
+        self.assertEqual((right, errors), (True, 1))
+        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        self.assertTrue(payload["richtig"])
+        self.assertEqual(payload["fehlgriffe"], 1)
+        self.assertIn("Ein Fehlgriff war dabei", fg.result_text(self.task, payload))
+        answer["schritte"][3] = [0, 2]                  # zweiter Fehlgriff
+        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        self.assertFalse(payload["richtig"])
+        text = fg.result_text(self.task, payload)
+        self.assertIn("2 Fehlgriffe, erlaubt ist 1", text)
+        self.assertIn("Richtiger Ablauf: lsblk →", fg.solution_text(self.task))
+
+    def test_gefaehrlicher_befehl(self):
+        answer = fg.find_solution(self.task)
+        answer["schritte"][1] = [1, 2]                  # parted auf der Systemplatte
+        kind, command, output, hint = fg.terminal_try(self.task, 1, 1)
+        self.assertEqual(kind, fg.TRY_DANGER)
+        self.assertIn("Ulla", output[0])
+        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        self.assertFalse(payload["richtig"])
+        self.assertEqual(payload["gefahr"], 1)
+        # Fehler kostet Fachkompetenz, der gefaehrliche Befehl zusaetzlich Sicherheit
+        self.assertEqual(payload["reputation"]["sicherheit"], -BALANCING["gefahr_verlust"])
+        self.assertIn("gefährlicher Befehl", fg.result_text(self.task, payload))
+        self.assertTrue(any("ist gefährlich" in p for p in payload["probleme"]))
+
+    def test_unvollstaendig_und_unsinn(self):
+        review = fg.terminal_review(self.task, {"schritte": [[1], [9, "x"]]})
+        self.assertFalse(review["richtig"])
+        self.assertEqual(review["offen"], 4)
+        # Versuche nach dem richtigen Befehl zaehlen nicht mehr
+        answer = fg.find_solution(self.task)
+        answer["schritte"][0] = [1, 0, 0]
+        self.assertTrue(fg.terminal_review(self.task, answer)["richtig"])
+        self.assertEqual(fg.terminal_review(self.task, answer)["fehlgriffe"], 0)
+
+    def test_alle_terminal_auftraege(self):
+        tasks = [t for t in fg.GAME["aufgaben"] if t["typ"] == "terminal"]
+        self.assertEqual(len(tasks), 5)
+        self.assertEqual({t["system"] for t in tasks}, {"linux", "windows"})
+        for task in tasks:
+            self.assertTrue(fg.check_answer(task, fg.find_solution(task))[0], task["id"])
+            # Jeder Auftrag hat mindestens einen gefaehrlichen Befehl
+            self.assertTrue(any(c.get("gefaehrlich") for step in task["schritte"]
+                                for c in step["befehle"]), task["id"])
+
+    def test_kaputter_terminal_auftrag_wird_gefunden(self):
+        content = json.loads(json.dumps(fg.GAME))
+        task = next(t for t in content["aufgaben"] if t["id"] == "terminal-webserver")
+        for command in task["schritte"][0]["befehle"]:
+            command["richtig"] = True
+        task["schritte"][1]["befehle"][0]["ausgabe"] = ["x" * 80]
+        problems = fg.validate_game_content(content)
+        self.assertTrue(any("genau einen richtigen" in p for p in problems), problems)
+        self.assertTrue(any("laenger als 60" in p for p in problems), problems)
+
+
+class DiagnoseTest(unittest.TestCase):
+    def setUp(self):
+        self.task = _task("diagnose-kassen-pc")
+
+    def test_systematisch(self):
+        answer = fg.find_solution(self.task)
+        self.assertEqual(answer["pruefungen"], ["ipconfig", "dhcp"])
+        answer["pruefungen"] = ["kabel"] + answer["pruefungen"]
+        review = fg.diagnosis_review(self.task, answer)
+        self.assertTrue(review["richtig"])
+        self.assertTrue(review["systematisch"])
+        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        normal = fg.evaluate(self.task, dict(answer, pruefungen=["ipconfig", "dhcp", "kabel",
+                                                                 "treiber"]),
+                             False, levels(100), 9)
+        self.assertEqual(payload["reputation"]["zuverlaessigkeit"] -
+                         normal["reputation"].get("zuverlaessigkeit", 0),
+                         BALANCING["systematik_bonus"])
+        self.assertIn("Systematisch vorgegangen", fg.result_text(self.task, payload))
+        self.assertIn("3 hätten gereicht", fg.result_text(self.task, normal))
+
+    def test_geraten_ist_nicht_systematisch(self):
+        # Richtig geraten, ohne die entscheidenden Pruefungen: richtig, aber kein Bonus
+        answer = dict(fg.find_solution(self.task), pruefungen=[])
+        review = fg.diagnosis_review(self.task, answer)
+        self.assertTrue(review["richtig"])
+        self.assertFalse(review["systematisch"])
+
+    def test_falsche_ursache_und_unsichere_massnahme(self):
+        answer = {"pruefungen": ["kabel"], "ursache": self.task["ursachen"][1],
+                  "massnahme": "Die Firewall am Kassen-PC abschalten"}
+        payload = fg.evaluate(self.task, answer, False, levels(100), 9)
+        self.assertFalse(payload["richtig"])
+        self.assertEqual(payload["gefahr"], 1)
+        self.assertEqual(payload["reputation"]["sicherheit"], -BALANCING["gefahr_verlust"])
+        text = fg.result_text(self.task, payload)
+        self.assertIn("„ipconfig /all ausführen“", text)
+        self.assertIn("ist unsicher", text)
+        self.assertIn("Richtig: Ursache – Der DHCP-Dienst", text)
+        self.assertEqual(fg.check_answer(self.task, {})[0], False)
+
+    def test_ersatzteil_aus_dem_lager(self):
+        order = _task("ssd-automaten")
+        events = _day_ends(5)                                          # Tag 6
+        events.append(_solved_event("e1", order, fg.find_solution(order), 6))
+        events += [("x%d" % i, fg.EV_DAY_END, {"tag": 6 + i, "gehalt": 0}) for i in range(4)]
+        state = fg.GameState(events)                                   # Tag 10
+        self.assertEqual(state.stock(), {"ssd_sata_500": 3})
+        task = _task("diagnose-automat-ssd")
+        self.assertIn(task["id"], [t["id"] for t in state._pool()])
+        self.assertEqual(state.available_parts(task), ["ssd_sata_500"])
+        events.append(_solved_event("g1", task, fg.find_solution(task), 10, state))
+        payload = events[-1][2]
+        self.assertEqual(payload["aus_lager"], ["ssd_sata_500"])
+        self.assertIn("Ersatzteil aus dem Lager eingebaut: SATA-SSD 500 GB",
+                      fg.result_text(task, payload))
+        self.assertEqual(fg.GameState(events).stock(), {"ssd_sata_500": 2})
+
+    def test_wartet_auf_die_bestellung(self):
+        state = fg.GameState(_day_ends(9))                              # Tag 10
+        ids = [t["id"] for t in state._pool()]
+        self.assertNotIn("diagnose-automat-ssd", ids)
+        self.assertNotIn("diagnose-leitstelle-netzteil", ids)
+
+    def test_netzteil_reicht_fuer_zwei_auftraege(self):
+        # Zwei Netzteile bestellt: eins fuer den Grafik-Arbeitsplatz, eins als Ersatz
+        order = _task("netzteile-lager")
+        events = _day_ends(4) + [_solved_event("e1", order, fg.find_solution(order), 5)]
+        events += [("x%d" % i, fg.EV_DAY_END, {"tag": 5 + i, "gehalt": 0}) for i in range(6)]
+        state = fg.GameState(events)                                    # Tag 11
+        build = _task("grafik-arbeitsplatz")
+        answer = dict(_right_answer(build, state), netzteil="nt_650")
+        events.append(_solved_event("g1", build, answer, 11, state))
+        state = fg.GameState(events)
+        self.assertEqual(state.stock(), {"nt_650": 1})
+        task = _task("diagnose-leitstelle-netzteil")
+        events.append(_solved_event("g2", task, fg.find_solution(task), 11, state))
+        self.assertEqual(events[-1][2]["aus_lager"], ["nt_650"])
+        self.assertEqual(fg.GameState(events).stock(), {})
+
+    def test_zu_viele_abnehmer_werden_gefunden(self):
+        content = json.loads(json.dumps(fg.GAME))
+        order = next(t for t in content["aufgaben"] if t["id"] == "ssd-automaten")
+        order["bedarf"][0]["menge"] = 0
+        task = next(t for t in content["aufgaben"] if t["id"] == "diagnose-kassen-pc")
+        task["ziel_pruefungen"] = 1
+        task["unsicher"] = ["gibt es nicht"]
+        problems = fg._validate_diagnosis_task(task, content)
+        self.assertTrue(any("ziel_pruefungen" in p for p in problems), problems)
+        self.assertTrue(any("unsichere Massnahme" in p for p in problems), problems)
+        problems = fg._stock_users_problems(order, content)
+        self.assertTrue(problems)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

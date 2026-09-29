@@ -50,9 +50,10 @@ AXES = [
 AXIS_KEYS = [key for key, _name in AXES]
 
 PRIORITIES = ["niedrig", "normal", "hoch", "kritisch"]
-TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung", "rack", "formular")
+TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung", "rack", "formular",
+              "terminal", "diagnose")
 # Typen, deren Rueckmeldung eine Liste von Problemen ist
-PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular")
+PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular", "terminal", "diagnose")
 
 # Ereignistypen im Protokoll
 EV_PROFILE = "profil_gesetzt"
@@ -337,6 +338,12 @@ def validate_game_content(content=None):
         elif task.get("typ") == "formular":
             problems += ["%s: %s" % (where, text)
                          for text in _validate_form_task(task, content)]
+        elif task.get("typ") == "terminal":
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_terminal_task(task, content)]
+        elif task.get("typ") == "diagnose":
+            problems += ["%s: %s" % (where, text)
+                         for text in _validate_diagnosis_task(task, content)]
 
         if task.get("typ") == "auswahl":
             options = task.get("optionen") or []
@@ -459,10 +466,7 @@ def _validate_hardware_task(task, content):
         for cart in valid_carts(first, content):
             ids = [offer["teil"] for offer in first["angebote"] if cart.get(offer["id"])]
             extras.append([pid for pid in ids if part(pid, content)["typ"] in task["aus_lager"]])
-        users = [other["id"] for other in content["aufgaben"]
-                 if other.get("nach") == first["id"] and other.get("aus_lager")]
-        if len(users) > 1:
-            problems.append("mehrere Auftraege holen Ware aus derselben Bestellung")
+        problems += _stock_users_problems(first, content)
     for extra in extras:
         available = list(task.get("teile") or []) + [p for p in extra
                                                      if p not in task.get("teile", [])]
@@ -1466,6 +1470,352 @@ def _validate_form_task(task, content):
     return []
 
 
+# ============================================================================
+#  TERMINAL (SIMULIERT) UND DIAGNOSE
+# ============================================================================
+#
+# Terminal: Ein System wird Schritt fuer Schritt in einem nachgebauten
+# Terminal eingerichtet. Zu jedem Schritt gibt es 2 bis 4 Befehle zur Wahl,
+# genau einer ist richtig. Falsche Befehle liefern eine (nachgebaute)
+# Fehlermeldung, dann darf man es erneut versuchen; gefaehrliche Befehle
+# werden nicht "ausgefuehrt", kosten aber Sicherheitsbewusstsein.
+#   system   "linux" oder "windows"
+#   prompt   Eingabezeile, z.B. "root@fahrplan:~#"
+#   start    optionale Zeilen, die zu Beginn im Terminal stehen
+#   schritte [{"ziel": "...", "befehle": [{"befehl", "ausgabe" (Zeilen),
+#            "richtig" | "gefaehrlich", "hinweis"}]}]
+# Antwort: {"schritte": [[befehl_index, ...], ...]} - alle Versuche je Schritt
+# in der gewaehlten Reihenfolge; der letzte ist der richtige Befehl.
+#
+# Diagnose: Symptom im Ticket, dazu Pruefungen mit Ergebnis. Am Ende werden
+# Ursache und Massnahme gewaehlt (wie bei "auswahl" als Texte).
+#   pruefungen      [{"id", "text", "ergebnis", "entscheidend"}]
+#   ziel_pruefungen so viele Pruefungen reichen bei systematischem Vorgehen
+#   ursachen / ursache, massnahmen / massnahme, unsicher (Liste von Massnahmen)
+#   aus_lager       optional: Teiletyp, der als Ersatz aus dem Lager kommt
+# Antwort: {"pruefungen": [id, ...], "ursache": text, "massnahme": text}
+
+SYSTEMS = ("linux", "windows")
+# Breite einer Ausgabezeile im Terminal (feste Schriftbreite, muss aufs Handy
+# passen). Befehle selbst duerfen umbrechen.
+MAX_TERMINAL_CHARS = 60
+MAX_COMMAND_CHARS = 120
+MAX_RESULT_CHARS = 220
+
+TRY_RIGHT = "richtig"
+TRY_WRONG = "falsch"
+TRY_DANGER = "gefaehrlich"
+
+
+def _allowed_mistakes(task, content=None):
+    return task.get("fehlgriffe_erlaubt",
+                    (content or GAME)["balancing"]["terminal_fehlgriffe_erlaubt"])
+
+
+def terminal_right_index(step):
+    for index, command in enumerate(step["befehle"]):
+        if command.get("richtig"):
+            return index
+    return None
+
+
+def terminal_try(task, step_index, option_index):
+    """Ein Befehl im Terminal: (art, befehl, ausgabe_zeilen, hinweis).
+    art ist TRY_RIGHT, TRY_WRONG oder TRY_DANGER."""
+    command = task["schritte"][step_index]["befehle"][option_index]
+    if command.get("richtig"):
+        kind = TRY_RIGHT
+    elif command.get("gefaehrlich"):
+        kind = TRY_DANGER
+    else:
+        kind = TRY_WRONG
+    return kind, command["befehl"], list(command.get("ausgabe") or []), \
+        command.get("hinweis", "")
+
+
+def terminal_attempts(task, answer):
+    """Versuche je Schritt (Liste von Befehls-Indizes), bis zum richtigen."""
+    given = (answer or {}).get("schritte") or []
+    result = []
+    for index, step in enumerate(task["schritte"]):
+        right = terminal_right_index(step)
+        tries = []
+        for value in (given[index] if index < len(given) else []) or []:
+            try:
+                value = int(value)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= value < len(step["befehle"]):
+                tries.append(value)
+                if value == right:
+                    break
+        result.append(tries)
+    return result
+
+
+def terminal_review(task, answer, content=None):
+    """Auswertung eines Terminal-Auftrags:
+    {"richtig", "fehlgriffe", "gefahr", "offen", "probleme"}."""
+    mistakes, danger, missing, problems = 0, 0, 0, []
+    for number, (step, tries) in enumerate(
+            zip(task["schritte"], terminal_attempts(task, answer)), start=1):
+        where = "Schritt %d (%s)" % (number, step["ziel"])
+        for index in tries:
+            kind, command, _output, hint = terminal_try(task, number - 1, index)
+            if kind == TRY_DANGER:
+                danger += 1
+                problems.append("%s: „%s“ ist gefährlich. %s" % (where, command, hint))
+            elif kind == TRY_WRONG:
+                mistakes += 1
+                problems.append("%s: „%s“ war falsch. %s" % (where, command, hint))
+        if terminal_right_index(step) not in tries:
+            missing += 1
+            problems.append("%s wurde nicht abgeschlossen." % where)
+    problems = [text.strip() for text in problems]
+    right = not missing and not danger and mistakes <= _allowed_mistakes(task, content)
+    return {"richtig": right, "fehlgriffe": mistakes, "gefahr": danger,
+            "offen": missing, "probleme": problems}
+
+
+def terminal_solution(task):
+    return {"schritte": [[terminal_right_index(step)] for step in task["schritte"]]}
+
+
+def terminal_commands(task):
+    """Die richtigen Befehle der Reihe nach."""
+    return [step["befehle"][terminal_right_index(step)]["befehl"]
+            for step in task["schritte"]]
+
+
+def diagnosis_check(task, check_id):
+    for item in task["pruefungen"]:
+        if item["id"] == check_id:
+            return item
+    return None
+
+
+def diagnosis_done(task, answer):
+    """Durchgefuehrte Pruefungen (ohne doppelte, in der gewaehlten Reihenfolge)."""
+    done = []
+    for check_id in (answer or {}).get("pruefungen") or []:
+        if diagnosis_check(task, check_id) and check_id not in done:
+            done.append(check_id)
+    return done
+
+
+def diagnosis_key_checks(task):
+    return [item["id"] for item in task["pruefungen"] if item.get("entscheidend")]
+
+
+def diagnosis_review(task, answer, content=None):
+    """Auswertung einer Diagnose:
+    {"richtig", "pruefungen", "systematisch", "gefahr", "probleme"}."""
+    answer = answer or {}
+    done = diagnosis_done(task, answer)
+    cause = answer.get("ursache") or ""
+    measure = answer.get("massnahme") or ""
+    keys = diagnosis_key_checks(task)
+    hint = "Den entscheidenden Hinweis gibt: %s." % ", ".join(
+        "„%s“" % diagnosis_check(task, key)["text"] for key in keys)
+    problems = []
+    if not cause:
+        problems.append("Es wurde keine Ursache gewählt.")
+    elif cause != task["ursache"]:
+        problems.append("Die Ursache „%s“ stimmt nicht. %s" % (cause, hint))
+    unsafe = measure in (task.get("unsicher") or [])
+    if not measure:
+        problems.append("Es wurde keine Maßnahme gewählt.")
+    elif unsafe:
+        problems.append("Die Maßnahme „%s“ ist unsicher und kostet "
+                        "Sicherheitsbewusstsein." % measure)
+    elif measure != task["massnahme"]:
+        problems.append("Die Maßnahme „%s“ behebt den Fehler nicht." % measure)
+    right = not problems
+    systematic = right and all(key in done for key in keys) and \
+        len(done) <= task["ziel_pruefungen"]
+    return {"richtig": right, "pruefungen": len(done), "systematisch": systematic,
+            "gefahr": 1 if unsafe else 0, "probleme": problems}
+
+
+def diagnosis_solution(task):
+    return {"pruefungen": diagnosis_key_checks(task), "ursache": task["ursache"],
+            "massnahme": task["massnahme"]}
+
+
+def spare_part(task, stock, content=None):
+    """Ersatzteil aus dem Lager fuer eine Diagnose (oder None)."""
+    allowed = task.get("aus_lager") or []
+    order = [item["id"] for item in (content or GAME)["hardware"]["teile"]]
+    for part_id in sorted(stock or {}, key=lambda pid: order.index(pid)
+                          if pid in order else len(order)):
+        item = part(part_id, content)
+        if item and item["typ"] in allowed and (stock or {}).get(part_id, 0) > 0:
+            return part_id
+    return None
+
+
+def terminal_step_label(task, step_index):
+    """Kopfzeile ueber dem Terminal: "Schritt 2 von 5"."""
+    return "Schritt %d von %d" % (step_index + 1, len(task["schritte"]))
+
+
+def terminal_log(task, attempts):
+    """Alles, was im Terminal steht, als Zeilen (rolle, text) - fuer PC und
+    Handy gleich. attempts wie in der Antwort: Versuche je Schritt.
+    Rollen: "start", "eingabe" (Befehl nach der Eingabezeile), "ausgabe",
+    "fehler" (Ausgabe eines falschen Befehls), "gefahr" (Einspruch bei einem
+    gefaehrlichen Befehl), "kommentar" (Zeilen, die mit "# " beginnen)."""
+    lines = [("start", line) for line in task.get("start") or []]
+    for step_index, tries in enumerate(attempts):
+        for index in tries:
+            kind, command, output, _hint = terminal_try(task, step_index, index)
+            lines.append(("eingabe", command))
+            role = {TRY_RIGHT: "ausgabe", TRY_WRONG: "fehler", TRY_DANGER: "gefahr"}[kind]
+            for line in output:
+                lines.append(("kommentar" if line.startswith("# ") else role, line))
+    return lines
+
+
+def terminal_current_step(task, attempts):
+    """Index des Schritts, der gerade dran ist (None, wenn alle erledigt)."""
+    for index, step in enumerate(task["schritte"]):
+        tries = attempts[index] if index < len(attempts) else []
+        if terminal_right_index(step) not in tries:
+            return index
+    return None
+
+
+def diagnosis_counter(task, done):
+    count = len(done)
+    return "%d Prüfung%s durchgeführt · sinnvoll sind etwa %d" % (
+        count, "" if count == 1 else "en", task["ziel_pruefungen"])
+
+
+def spare_parts_text(task, available, content=None):
+    """Zeile "Im Lager bereit: ..." fuer Diagnosen mit Ersatzteil."""
+    if not task.get("aus_lager"):
+        return ""
+    names = []
+    for part_id in available or []:
+        item = part(part_id, content)
+        if item and item["typ"] in task["aus_lager"] and item["name"] not in names:
+            names.append(item["name"])
+    if not names:
+        return "Im Lager liegt gerade kein passendes Ersatzteil."
+    return "Im Lager bereit: " + ", ".join(names)
+
+
+def _validate_terminal_task(task, content):
+    problems = []
+    if task.get("system") not in SYSTEMS:
+        problems.append("unbekanntes System '%s'" % task.get("system"))
+    if not task.get("prompt"):
+        problems.append("Eingabezeile (prompt) fehlt")
+    steps = task.get("schritte") or []
+    if len(steps) < 2:
+        return problems + ["braucht mindestens 2 Schritte"]
+    lines = list(task.get("start") or [])
+    for number, step in enumerate(steps, start=1):
+        where = "Schritt %d" % number
+        commands = step.get("befehle") or []
+        if not step.get("ziel"):
+            problems.append("%s: Ziel fehlt" % where)
+        if not 2 <= len(commands) <= 4:
+            problems.append("%s: braucht 2 bis 4 Befehle" % where)
+            continue
+        texts = [command.get("befehl") for command in commands]
+        if not all(texts) or len(set(texts)) != len(texts):
+            problems.append("%s: Befehle fehlen oder sind doppelt" % where)
+        rights = [command for command in commands if command.get("richtig")]
+        if len(rights) != 1:
+            problems.append("%s: braucht genau einen richtigen Befehl" % where)
+        for command in commands:
+            if command.get("richtig") and command.get("gefaehrlich"):
+                problems.append("%s: richtiger Befehl ist als gefaehrlich markiert" % where)
+            if not command.get("richtig") and not (command.get("ausgabe") and
+                                                   command.get("hinweis")):
+                problems.append("%s: falscher Befehl '%s' braucht Ausgabe und Hinweis"
+                                % (where, command.get("befehl")))
+            # Befehle duerfen umbrechen (wie im echten Terminal), Ausgaben nicht
+            if len(command.get("befehl") or "") > MAX_COMMAND_CHARS:
+                problems.append("%s: Befehl laenger als %d Zeichen" % (where, MAX_COMMAND_CHARS))
+            lines += list(command.get("ausgabe") or [])
+            if len(command.get("hinweis", "")) > MAX_RESULT_CHARS:
+                problems.append("%s: Hinweis zu lang (Handy)" % where)
+    prompt = task.get("prompt", "")
+    for line in lines:
+        if len(line) > MAX_TERMINAL_CHARS:
+            problems.append("Terminalzeile laenger als %d Zeichen (Handy): %s"
+                            % (MAX_TERMINAL_CHARS, line[:40]))
+    if len(prompt) > 24:
+        problems.append("Eingabezeile zu lang")
+    if not problems and not terminal_review(task, terminal_solution(task), content)["richtig"]:
+        problems.append("die eigene Loesung wird nicht als richtig erkannt")
+    return problems
+
+
+def _validate_diagnosis_task(task, content):
+    problems = []
+    checks = task.get("pruefungen") or []
+    ids = [item.get("id") for item in checks]
+    if len(checks) < 4 or len(set(ids)) != len(ids) or not all(ids):
+        return ["braucht mindestens 4 Pruefungen mit eindeutiger Kennung"]
+    for item in checks:
+        if not item.get("text") or not item.get("ergebnis"):
+            problems.append("Pruefung '%s': Text oder Ergebnis fehlt" % item["id"])
+        if len(item.get("text", "")) > MAX_OPTION_CHARS or \
+                len(item.get("ergebnis", "")) > MAX_RESULT_CHARS:
+            problems.append("Pruefung '%s': Text zu lang (Handy)" % item["id"])
+    keys = [item["id"] for item in checks if item.get("entscheidend")]
+    if not keys:
+        problems.append("keine entscheidende Pruefung")
+    goal = task.get("ziel_pruefungen", 0)
+    if not len(keys) <= goal <= len(checks):
+        problems.append("ziel_pruefungen muss zwischen %d und %d liegen"
+                        % (len(keys), len(checks)))
+    for options, answer, name in ((task.get("ursachen"), task.get("ursache"), "Ursache"),
+                                  (task.get("massnahmen"), task.get("massnahme"),
+                                   "Massnahme")):
+        options = options or []
+        if len(options) < 3 or len(set(options)) != len(options):
+            problems.append("%s: braucht mindestens 3 verschiedene Moeglichkeiten" % name)
+        if answer not in options:
+            problems.append("%s: richtige Antwort steht nicht in der Auswahl" % name)
+        for text in options:
+            if len(text) > MAX_OPTION_CHARS:
+                problems.append("%s zu lang (Handy): %s" % (name, text[:40]))
+    for text in task.get("unsicher") or []:
+        if text not in (task.get("massnahmen") or []) or text == task.get("massnahme"):
+            problems.append("unsichere Massnahme passt nicht zur Auswahl: %s" % text[:40])
+    if task.get("aus_lager"):
+        first = task_by_id(task.get("nach"), content)
+        if not first or first["typ"] != "bestellung":
+            problems.append("Ersatzteile aus dem Lager brauchen eine Bestellung als "
+                            "Voraussetzung")
+        else:
+            types = {need["typ"] for need in first["bedarf"]}
+            for kind in task["aus_lager"]:
+                if kind not in types:
+                    problems.append("'%s' wird in '%s' nicht bestellt" % (kind, first["id"]))
+            problems += _stock_users_problems(first, content)
+    if not problems and not diagnosis_review(task, diagnosis_solution(task), content)["richtig"]:
+        problems.append("die eigene Loesung wird nicht als richtig erkannt")
+    return problems
+
+
+def _stock_users_problems(first, content):
+    """Holen mehr Auftraege Ware aus einer Bestellung, als sie liefert?"""
+    users = [other for other in content["aufgaben"]
+             if other.get("nach") == first["id"] and other.get("aus_lager")]
+    kinds = set()
+    for other in users:
+        kinds.update(other["aus_lager"])
+    supply = sum(need["menge"] for need in first["bedarf"] if need["typ"] in kinds)
+    if len(users) > supply:
+        return ["mehr Auftraege holen Ware aus '%s', als bestellt wird" % first["id"]]
+    return []
+
+
 def answer_problems(task, answer, available=None, content=None):
     """Probleme einer Loesung als Saetze (Bauteile, Bestellung, Rack, Formular)."""
     if task["typ"] == "bauteile":
@@ -1476,6 +1826,10 @@ def answer_problems(task, answer, available=None, content=None):
         return rack_problems(task, answer, content)
     if task["typ"] == "formular":
         return form_problems(task, answer, content)
+    if task["typ"] == "terminal":
+        return terminal_review(task, answer, content)["probleme"]
+    if task["typ"] == "diagnose":
+        return diagnosis_review(task, answer, content)["probleme"]
     return []
 
 
@@ -1488,6 +1842,9 @@ def check_answer(task, answer, available=None, content=None):
     bestellung: answer ist {angebot_id: menge}
     rack:       answer ist {platz: unterste_HE}
     formular:   answer ist {feld_id: eingegebener_text}
+    terminal:   answer ist {"schritte": [[befehl_index, ...], ...]}
+    diagnose:   answer ist {"pruefungen": [id, ...], "ursache": text,
+                            "massnahme": text}
     """
     if task["typ"] == "auswahl":
         right = answer == task["antwort"]
@@ -1496,6 +1853,10 @@ def check_answer(task, answer, available=None, content=None):
         answer = answer or {}
         errors = sum(1 for left, right in task["paare"] if answer.get(left) != right)
         return errors == 0, errors
+    if task["typ"] == "terminal":
+        # Ein Fehlgriff ist erlaubt - richtig heisst hier nicht "ohne Probleme"
+        review = terminal_review(task, answer, content)
+        return review["richtig"], len(review["probleme"])
     if task["typ"] in PROBLEM_TYPES:
         problems = answer_problems(task, answer, available, content)
         return not problems, len(problems)
@@ -1528,6 +1889,10 @@ def find_solution(task, available=None, content=None):
         return carts[0] if carts else None
     if task["typ"] == "rack":
         return rack_solution(task, content)
+    if task["typ"] == "terminal":
+        return terminal_solution(task)
+    if task["typ"] == "diagnose":
+        return diagnosis_solution(task)
     if task["typ"] == "formular":
         result = {}
         for field in form_fields(task, content):
@@ -1646,6 +2011,11 @@ def solution_text(task, available=None, content=None):
         return "Eine passende Zusammenstellung: " + ", ".join(names) + "."
     if task["typ"] == "rack":
         return "Eine passende Belegung: " + ", ".join(rack_lines(task, solution, content)) + "."
+    if task["typ"] == "terminal":
+        return "Richtiger Ablauf: " + " → ".join(terminal_commands(task))
+    if task["typ"] == "diagnose":
+        return "Richtig: Ursache – %s. Maßnahme – %s." % (
+            task["ursache"].rstrip("."), task["massnahme"].rstrip("."))
     return ""
 
 
@@ -1672,6 +2042,17 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
     reward = task["belohnung"]
     delta = {key: 0 for key in AXIS_KEYS}
     delta["zuverlaessigkeit"] += balancing["zuverlaessigkeit_pro_ticket"]
+
+    review = {}
+    if task["typ"] == "terminal":
+        review = terminal_review(task, answer, content)
+    elif task["typ"] == "diagnose":
+        review = diagnosis_review(task, answer, content)
+    if review.get("gefahr"):
+        # Gefaehrlicher Befehl oder unsichere Massnahme
+        delta["sicherheit"] -= balancing["gefahr_verlust"]
+    if review.get("systematisch"):
+        delta["zuverlaessigkeit"] += balancing["systematik_bonus"]
 
     if right:
         factor = 1.0
@@ -1701,6 +2082,17 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
     }
     if problems:
         payload["probleme"] = problems
+    if task["typ"] == "terminal":
+        payload["fehlgriffe"] = review["fehlgriffe"]
+        payload["gefahr"] = review["gefahr"]
+    if task["typ"] == "diagnose":
+        payload["pruefungen"] = review["pruefungen"]
+        payload["systematisch"] = review["systematisch"]
+        payload["gefahr"] = review["gefahr"]
+        spare = spare_part(task, stock, content) if right else None
+        if spare:
+            payload["verbaut"] = [spare]
+            payload["aus_lager"] = [spare]
     if right and task["typ"] == "bestellung":
         # Die Ware kommt je Angebot nach dessen Lieferzeit an
         total, _longest = cart_total(task, answer)
@@ -2824,6 +3216,21 @@ def result_text(task, payload, available=None, content=None):
     elif task["typ"] == "zuordnung":
         lines.append("Leider nicht ganz: %d Zuordnung(en) stimmen nicht."
                      % payload["fehler"])
+    elif task["typ"] == "terminal":
+        mistakes = payload.get("fehlgriffe", 0)
+        allowed = _allowed_mistakes(task, content)
+        if payload.get("gefahr"):
+            lines.append("Leider nicht ganz: Ein gefährlicher Befehl war dabei.")
+        elif mistakes > allowed:
+            lines.append("Leider nicht ganz: %d Fehlgriffe, erlaubt %s %d." % (
+                mistakes, "ist" if allowed == 1 else "sind", allowed))
+        else:
+            lines.append("Leider nicht ganz: Nicht alle Schritte sind erledigt.")
+        lines += ["• " + text for text in payload.get("probleme") or []]
+    elif task["typ"] == "diagnose":
+        lines.append("Leider nicht ganz.")
+        lines += ["• " + text for text in payload.get("probleme") or []]
+        lines.append(solution_text(task, available, content))
     elif task["typ"] == "formular":
         count = payload["fehler"]
         lines.append("Leider nicht ganz: %s." % (
@@ -2839,6 +3246,19 @@ def result_text(task, payload, available=None, content=None):
             lines.append(hint)
     else:
         lines.append("Leider falsch. Richtig wäre: %s" % task["antwort"])
+    if payload["richtig"] and task["typ"] == "terminal" and payload.get("fehlgriffe"):
+        lines.append("Ein Fehlgriff war dabei, das ist noch erlaubt.")
+    if payload["richtig"] and task["typ"] == "diagnose":
+        count = payload.get("pruefungen", 0)
+        if payload.get("systematisch"):
+            lines.append("Systematisch vorgegangen: Fehler mit %d Prüfung%s gefunden."
+                         % (count, "" if count == 1 else "en"))
+        else:
+            lines.append("Fehler gefunden mit %d Prüfung%s, %d hätten gereicht." % (
+                count, "" if count == 1 else "en", task["ziel_pruefungen"]))
+    if payload["richtig"] and task["typ"] == "diagnose" and payload.get("aus_lager"):
+        lines.append("Ersatzteil aus dem Lager eingebaut: %s."
+                     % part(payload["aus_lager"][0], content)["name"])
     if payload.get("lieferung"):
         last = max(item["ankunft"] for item in payload["lieferung"])
         lines.append("Bestellt für %d €. Die Ware kommt an Arbeitstag %d."
