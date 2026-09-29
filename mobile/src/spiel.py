@@ -41,6 +41,7 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
 # Grossansichten der Orte: Kopfzeile und "Zurueck ..." nach einem Auftrag
 SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
                "zuhause": ("SPIEL", "ZUHAUSE")}
+FIRM_CRUMBS = ("SPIEL", "FIRMA")
 RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
@@ -1269,6 +1270,10 @@ class GameScreen:
         self.selected = None
         self.turn = 0
         self.problem = ""
+        # Unterseite "Firma" (ab 0.33)
+        self.firm_box = None
+        self.firm_tab = "mitarbeiter"
+        self.training_for = None
         self.root = screen_list([])
         self.render()
 
@@ -1361,24 +1366,33 @@ class GameScreen:
         goal = fg.GAME["balancing"]["gruendung"]
         founding = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["accent"])
         founding.set(state.founding_progress() * 100, "Ziel %s" % euro(goal["startkapital"]))
+        founding.visible = not state.firm
+        job = "Geschäftsführung · %s" % state.firm["name"] if state.firm else state.rank
+        hint = "" if state.firm else fg.rank_hint(state)
+        money = ("Konto: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
+                 if not state.firm else "Konto: %s" % euro(state.money))
+        buttons = [ui.GradientButton("Figur bearbeiten", self._edit_profile, kind="ghost",
+                                     height=38)]
+        if state.firm or state.founding_ready():
+            buttons.append(ui.GradientButton(
+                "Firma öffnen" if state.firm else "Firma gründen", self.open_firm,
+                kind="ghost" if state.firm else "primary", height=38))
         profile = ui.Card("Spielfigur", [
             ft.Row([
                 avatar(state.profile["aussehen"], 84),
                 ft.Column([
                     ui.text(state.profile["name"], size=22, weight=ft.FontWeight.BOLD),
-                    ui.text(state.rank, size=14, color=C["accent"], weight=ft.FontWeight.BOLD),
-                    ui.text(fg.rank_hint(state), size=12, color=C["muted"],
-                            visible=bool(fg.rank_hint(state))),
-                    ui.text("Konto: %s · Gehalt: %s/Tag" % (euro(state.money),
-                                                           euro(state.salary)),
-                            size=12, color=C["text_dim"]),
+                    ui.text(job, size=14, color=C["accent"], weight=ft.FontWeight.BOLD),
+                    ui.text(hint, size=12, color=C["muted"], visible=bool(hint)),
+                    ui.text(money, size=12, color=C["text_dim"]),
+                    ui.text(fg.firm_summary(state) if state.firm else "", size=12,
+                            color=C["text_dim"], visible=bool(state.firm)),
                     ui.text("Miete: %s/Tag" % euro(state.rent), size=12,
                             color=C["text_dim"], visible=bool(state.rent)),
                 ], spacing=3, tight=True, expand=True),
             ], spacing=14),
             founding,
-            ft.Row([ui.GradientButton("Figur bearbeiten", self._edit_profile, kind="ghost",
-                                      height=38)]),
+            ft.Row(buttons, wrap=True, spacing=8, run_spacing=8),
         ], accent=C["accent2"], subtitle="Arbeitstag %d" % state.day)
 
         reputation_bars = []
@@ -1398,7 +1412,8 @@ class GameScreen:
             ft.Row([ui.GradientButton(label, lambda _e, k=key: self.open_site(k),
                                       kind="ghost", height=38)
                     for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
-                                       ("Zuhause öffnen", "zuhause"))],
+                                       ("Zuhause öffnen", "zuhause"))] +
+                   [ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38)],
                    wrap=True, spacing=8, run_spacing=8),
         ]
         if at_customer:
@@ -1442,7 +1457,7 @@ class GameScreen:
         else:
             tickets = state.todays_tickets()
             controls = []
-            scene = fg.morning_text(state.day)
+            scene = fg.morning_text(state.day, state=state)
             if scene:
                 controls.append(ft.Container(
                     content=ft.Column([ui.label("Heute", C["purple"]),
@@ -1456,11 +1471,17 @@ class GameScreen:
         if not tickets:
             waiting = len(state.waiting_for_delivery())
             text = ("In diesem Raum ist heute nichts zu tun." if self.room else
+                    fg.FIRM_IDLE_TEXT if state.firm else
                     fg.GAME["story"]["alle_erledigt"] if state.all_done() else
                     "Heute stehen keine Tickets an. %s auf eine Lieferung."
                     % ("1 Auftrag wartet" if waiting == 1 else "%d Aufträge warten" % waiting)
                     if waiting else "Heute stehen keine Tickets an.")
             controls.append(ui.text(text, size=14, color=C["text_soft"]))
+            if not self.room and state.founding_ready():
+                controls += [ui.text(fg.FOUNDING_TEASER, size=14, color=C["green"],
+                                     weight=ft.FontWeight.BOLD),
+                             ft.Row([ui.GradientButton("Firma gründen", self.open_firm,
+                                                       expand=True)])]
         for task, status in tickets:
             controls.append(self._ticket_row(task, status))
         if not self.room:
@@ -1875,7 +1896,7 @@ class GameScreen:
             self.open_site("zuhause", replace=True)
         elif action == "buero":
             state = self.game.state
-            scene = fg.morning_text(state.day)
+            scene = fg.morning_text(state.day, state=state)
             self.positions.pop(fg.SITE_OFFICE, None)
             if scene:
                 self.notices[fg.SITE_OFFICE] = ("Arbeitstag %d" % state.day, scene)
@@ -1888,6 +1909,293 @@ class GameScreen:
 
     def _accept(self, task_id):
         self.open_ticket(task_id, from_site=self.site_key or "buero")
+
+    # -- Firma (ab 0.33) ------------------------------------------------------
+
+    def open_firm(self, _event=None):
+        self.game.reload()
+        self.training_for = None
+        self.firm_box = ft.Column(spacing=12, tight=True,
+                                  horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._fill_firm()
+        self.app.push(FIRM_CRUMBS, screen_list([self.firm_box]))
+
+    def _fill_firm(self):
+        state = self.game.state
+        if state.firm:
+            controls = [self._firm_head(state)]
+        else:
+            controls = [self._firm_founding(state)]
+        tabs = fg.firm_tabs(state)
+        keys = [key for key, _name in tabs]
+        if self.firm_tab not in keys:
+            self.firm_tab = keys[0]
+        if len(tabs) > 1:
+            controls.append(ui.PillGroup(tabs, initial=keys.index(self.firm_tab),
+                                         on_change=self._firm_choose))
+        controls += getattr(self, "_firm_" + self.firm_tab)(state)
+        self.firm_box.controls = controls
+
+    def _firm_choose(self, tab):
+        self.firm_tab = tab
+        self.training_for = None
+        self._fill_firm()
+
+    def _firm_changed(self):
+        self.app.notify_progress()
+        self.render()
+        self._fill_firm()
+
+    def _firm_head(self, state):
+        stage = state.firm_stage()
+        return ui.Card("Eigene Firma", [
+            ui.text(state.firm["name"], size=22, weight=ft.FontWeight.BOLD),
+            ui.text("%s · %s" % (fg.firm_rules()["gebaeude"]["name"], stage["name"]),
+                    size=14, color=C["green"], weight=ft.FontWeight.BOLD),
+            ui.text("Konto: %s" % euro(state.money), size=13,
+                    color=C["text_dim"] if state.money >= 0 else C["red"]),
+            ui.text(fg.firm_summary(state), size=13, color=C["text_dim"]),
+        ], accent=C["green"], subtitle="seit Tag %d" % state.firm["tag"])
+
+    def _firm_founding(self, state):
+        missing = state.founding_missing()
+        if missing:
+            bar = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["accent"])
+            bar.set(state.founding_progress() * 100,
+                    "%d %%" % round(state.founding_progress() * 100))
+            return ui.Card("Eigenes Unternehmen", [
+                bar,
+                ui.text("Noch nicht so weit: %s." % ", ".join(missing), size=14,
+                        color=C["text_soft"]),
+                ui.text("Sobald alles erfüllt ist, kannst du hier als Konkurrenz zu "
+                        "Bitweiche deine eigene Firma gründen.", size=12, color=C["muted"]),
+            ], accent=C["green"])
+        name = ui.entry(fg.default_firm_name(state), hint="Wie heißt deine Firma?")
+        return ui.Card("Eigenes Unternehmen", [
+            ui.text(fg.founding_text(), size=14, color=C["text_soft"]),
+            ui.label("Firmenname"), name,
+            ft.Row([ui.GradientButton("Firma gründen", lambda _e: self._found(name.value),
+                                      expand=True)]),
+        ], accent=C["green"])
+
+    def _found(self, name):
+        cost = fg.firm_rules()["gruendung"]["kosten"]
+
+        def confirmed():
+            try:
+                payload = self.game.found_firm(name)
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.positions.pop(fg.SITE_OFFICE, None)
+            self.notices[fg.SITE_OFFICE] = ("Willkommen in deiner Firma",
+                                            fg.founded_text(payload["name"]))
+            self.firm_tab = "bewerbungen"
+            self._firm_changed()
+
+        self.app.confirm("Firma gründen", "„%s“ für %s gründen? Danach arbeitest du nicht "
+                         "mehr bei Bitweiche." % ((name or "").strip(), euro(cost)), confirmed)
+
+    def _person_card(self, state, item, applicant=False):
+        role = item["rolle"]
+        if item.get("herkunft") == "bitweiche" and "Bitweiche" not in role:
+            role += " · früher bei Bitweiche"
+        lines = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                 ui.text(role, size=12, weight=ft.FontWeight.BOLD,
+                         color=C["pink"] if item.get("herkunft") == "bitweiche"
+                         else C["accent"])]
+        extra = [ui.text(fg.values_text(item["werte"]), size=12, color=C["text_dim"]),
+                 ui.text(fg.staff_money_text(item), size=12, color=C["text_dim"])]
+        note = fg.training_text(state, item) if not applicant else \
+            "Bewerbung liegt vor bis Arbeitstag %d" % item["bis_tag"]
+        if note:
+            extra.append(ui.text(note, size=12, color=C["yellow"] if not applicant
+                                 else C["muted"]))
+        if item.get("macke"):
+            extra.append(ui.text(item["macke"], size=11, color=C["muted"]))
+        return [ft.Row([avatar(item["aussehen"], 56),
+                        ft.Column(lines, spacing=2, tight=True, expand=True)],
+                       spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER)] + extra
+
+    def _person_box(self, controls):
+        return ft.Container(
+            content=ft.Column(controls, spacing=6, tight=True,
+                              horizontal_alignment=ft.CrossAxisAlignment.STRETCH),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=12)
+
+    def _firm_mitarbeiter(self, state):
+        staff = state.staff_list()
+        controls = []
+        if not staff:
+            controls.append(ui.text("Noch arbeitest du allein. Unter „Bewerbungen“ findest "
+                                    "du Leute für deine Firma.", size=14,
+                                    color=C["text_soft"]))
+        else:
+            controls.append(ui.text("Heute: %s" % fg.firm_day_text(state.firm_day()),
+                                    size=12, color=C["text_dim"]))
+        for item in staff:
+            parts = self._person_card(state, item)
+            parts.append(ft.Row([
+                ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
+                                  kind="ghost", height=36, expand=True),
+                ui.GradientButton("Entlassen", lambda _e, i=item: self._fire(i), kind="ghost",
+                                  height=36, expand=True),
+            ], spacing=8))
+            if self.training_for == item["id"]:
+                parts += self._training_choice(state, item)
+            controls.append(self._person_box(parts))
+        return [ui.Card("Mitarbeiter", controls, accent=C["accent"],
+                        subtitle="%d von %d Plätzen" % (len(staff), state.capacity))]
+
+    def _training_choice(self, state, item):
+        rules = fg.firm_rules()["weiterbildung"]
+        controls = [ui.text("Weiterbildung in welchem Fachbereich?", size=13,
+                            weight=ft.FontWeight.BOLD)]
+        problems = []
+        for key in fg.CAT_ORDER:
+            offer = fg.training_offer(state, item["id"], key)
+            problems.append(offer["problem"])
+            button = ui.GradientButton("%s (%s)" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
+                                                    euro(offer["preis"])),
+                                       lambda _e, k=key: self._train(item["id"], k),
+                                       kind="ghost", height=36)
+            button.set_enabled(not offer["problem"])
+            controls.append(button)
+        controls.append(ui.text("+%d im Fachbereich (höchstens %d), dauert %d Arbeitstage "
+                                "ohne Umsatz." % (rules["plus"], rules["max"], rules["tage"]),
+                                size=11, color=C["muted"]))
+        if all(problems):
+            controls.append(ui.text(problems[0], size=12, color=C["yellow"]))
+        return controls
+
+    def _pick_training(self, staff_id):
+        self.training_for = None if self.training_for == staff_id else staff_id
+        self._fill_firm()
+
+    def _train(self, staff_id, cat):
+        try:
+            self.game.train(staff_id, cat)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.training_for = None
+        self._firm_changed()
+
+    def _fire(self, item):
+        def confirmed():
+            try:
+                self.game.fire(item["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Entlassen", "%s wirklich entlassen? Die Person bewirbt sich danach "
+                         "nicht erneut." % item["name"], confirmed)
+
+    def _firm_bewerbungen(self, state):
+        found = fg.applicants(state)
+        free = state.capacity - len(state.staff)
+        rules = fg.firm_rules()["bewerbung"]
+        controls = [ui.text("Freie Plätze: %d von %d. Gehalt und Umsatz richten sich nach den "
+                            "Werten je Fachbereich." % (max(0, free), state.capacity),
+                            size=12, color=C["text_dim"])]
+        if not found:
+            controls.append(ui.text("Gerade liegen keine Bewerbungen vor.", size=14,
+                                    color=C["text_soft"]))
+        for item in found:
+            parts = self._person_card(state, item, applicant=True)
+            button = ui.GradientButton("Einstellen", lambda _e, i=item["id"]: self._hire(i),
+                                       height=38, expand=True)
+            button.set_enabled(free > 0)
+            parts.append(ft.Row([button]))
+            controls.append(self._person_box(parts))
+        return [ui.Card("Bewerbungen", controls, accent=C["pink"],
+                        subtitle="alle %d Tage neue" % rules["abstand_tage"])]
+
+    def _hire(self, applicant_id):
+        try:
+            self.game.hire(applicant_id)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self._firm_changed()
+
+    def _firm_gebaeude(self, state):
+        stage = state.firm_stage()
+        rules = fg.firm_rules()["gebaeude"]
+        result = [ui.Card(rules["name"], [
+            ui.text("%s %s" % (rules["text"], stage["text"]), size=13, color=C["text_soft"]),
+            ui.text("Stufe %d · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag"
+                    % (stage["stufe"], state.capacity, euro(stage["nebenkosten"])),
+                    size=12, color=C["text_dim"]),
+            FloorPlan(state, None, lambda _room: None),
+            ft.Row([ui.GradientButton("Büro öffnen", lambda _e: self.open_site("buero"),
+                                      kind="ghost", height=38)]),
+        ], accent=C["green"])]
+        following = state.next_stage()
+        if following is None:
+            more = [ui.text("Mehr Ausbau gibt es in einem der nächsten Updates.", size=14,
+                            color=C["text_soft"])]
+        else:
+            button = ui.GradientButton("Ausbauen", lambda _e: self._expand(following),
+                                       expand=True)
+            button.set_enabled(state.money >= following["preis"])
+            more = [ui.text("%s: %s" % (following["name"], following["text"]), size=14,
+                            color=C["text_soft"]),
+                    ui.text("Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
+                            "Arbeitstag" % (euro(following["preis"]), len(following["plaetze"]),
+                                            euro(following["nebenkosten"])),
+                            size=12, color=C["text_dim"]),
+                    ft.Row([button])]
+        result.append(ui.Card("Ausbau", more, accent=C["accent"]))
+        return result
+
+    def _expand(self, stage):
+        def confirmed():
+            try:
+                self.game.expand()
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.positions.pop(fg.SITE_OFFICE, None)
+            self._firm_changed()
+
+        self.app.confirm("Ausbauen", "„%s“ für %s bauen?" % (stage["name"],
+                                                            euro(stage["preis"])), confirmed)
+
+    def _firm_finanzen(self, state):
+        labels, values = fg.balance_series(state)
+        chart = ui.LineChart(height=180)
+        chart.set_data(labels, [round(value / 1000.0, 1) for value in values], C["green"])
+        result = [ui.Card("Kontostand", [
+            ui.text(euro(state.money), size=24, weight=ft.FontWeight.BOLD,
+                    color=C["text"] if state.money >= 0 else C["red"]),
+            ui.text("Verlauf in Tausend Euro", size=11, color=C["muted"]),
+            chart,
+        ], accent=C["accent"])]
+        rows = []
+        for item in fg.finance_days(state):
+            detail = ["%s +%s" % (kind, euro(value)) for kind, value in item["ein"].items()]
+            detail += ["%s -%s" % (kind, euro(value)) for kind, value in item["aus"].items()]
+            rows.append(ft.Container(
+                content=ft.Column([
+                    ft.Row([ui.text("Arbeitstag %d" % item["tag"], size=14,
+                                    weight=ft.FontWeight.BOLD, expand=True),
+                            ui.text("%s%s" % ("+" if item["gewinn"] >= 0 else "-",
+                                              euro(abs(item["gewinn"]))), size=14,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=C["green"] if item["gewinn"] >= 0 else C["red"])]),
+                    ui.text(" · ".join(detail), size=11, color=C["text_dim"]),
+                ], spacing=2, tight=True),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
+        if not rows:
+            rows.append(ui.text("Noch nichts gebucht.", size=14, color=C["text_soft"]))
+        result.append(ui.Card("Einnahmen und Ausgaben", rows, accent=C["green"],
+                              subtitle="letzte 7 Arbeitstage"))
+        return result
 
     # -- Wohnung einrichten -------------------------------------------------
 

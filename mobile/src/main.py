@@ -1836,6 +1836,23 @@ def selftest():
         game._fill_site()
         game._home_tap(3.0, 3.0)
         game._office_text(fisi_game.start_position(game.office_plan.site_data), None)
+        # Firma (ab 0.33): vor und nach der Gruendung, mit Mitarbeitern
+        game.firm_box = ft.Column()
+        game._fill_firm()
+        state = game.game.state
+        state.firm = {"name": "Test IT", "tag": state.day, "stufe": 1}
+        for item in fisi_game.applicants(state)[:2]:
+            state.staff[item["id"]] = dict(item)
+            state.ever_hired.add(item["id"])
+        game.training_for = next(iter(state.staff))
+        for key, _name in fisi_game.firm_tabs(state):
+            game.firm_tab = key
+            game._fill_firm()
+        game.render()
+        game.site_key = "buero"
+        game._fill_site()
+        for person in game.office_plan.site_data["kollegen"]:
+            game._office_text(tuple(person["platz"]), person)
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
