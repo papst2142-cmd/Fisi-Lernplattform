@@ -50,7 +50,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.31"
+APP_VERSION = "0.32"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -1803,6 +1803,20 @@ def selftest():
                     game.options.check(check_id)
                 game.options.cause.select(task["ursache"])
                 game.options.measure.select(task["massnahme"])
+                if game.options.exchange:
+                    game.options.exchange.pick(solution["teil"])
+                    for text in solution["reihenfolge"]:
+                        game.options.exchange.step(text)
+                    game.options.exchange.reset()
+                    game.options.answer
+                game.options.reveal(True)
+            elif task["typ"] == "wartung":
+                for point_id, rating in solution["bewertung"].items():
+                    game.options.check(point_id)
+                    game.options.rate(point_id, rating)
+                game.options.closing.select(solution["abschluss"])
+                if not game.options.complete():
+                    failures.append("Wartung %s: nicht vollstaendig" % task["id"])
                 game.options.reveal(True)
         game._select_room("serverraum")
         game._select_room("lager")

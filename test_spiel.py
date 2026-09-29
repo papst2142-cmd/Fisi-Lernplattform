@@ -34,6 +34,16 @@ class TempDB:
         shutil.rmtree(self.folder, ignore_errors=True)
 
 
+def _ordered_stock(state):
+    """Lagerbestand ohne Rainers Ersatzteilregal (Grundbestand)."""
+    base = fg.GAME["hardware"].get("grundbestand", {})
+    stock = dict(state.stock())
+    for part_id, count in base.items():
+        if stock.get(part_id) == count:
+            del stock[part_id]
+    return stock
+
+
 def levels(value):
     return {key: value for key in fg.CAT_ORDER}
 
@@ -152,7 +162,7 @@ class SpielstandTest(unittest.TestCase):
         self.assertEqual(state.day, 1)
         self.assertEqual(state.money, 0)
         self.assertEqual(state.rank, "Azubi-Niveau")
-        self.assertEqual(len(state.todays_tickets()), BALANCING["tickets_pro_tag"])
+        self.assertEqual(len(state.todays_tickets()), fg.tickets_per_day("Azubi-Niveau"))
         self.assertFalse(state.can_end_day())
 
     def test_juengstes_profil_gewinnt(self):
@@ -211,12 +221,7 @@ class SpielMitDatenbankTest(unittest.TestCase):
         with TempDB() as db:
             game = fg.Game(db)
             game.set_profile("Test", {})
-            for _day in range(30):
-                for task in game.state.open_tickets():
-                    game.solve(task["id"], _right_answer(task, game.state), used_help=False)
-                if game.state.all_done():
-                    break
-                game.end_day()
+            _play_through(game, days=150)
             self.assertTrue(game.state.all_done())
             self.assertGreater(game.state.money, 0)
             self.assertNotEqual(game.state.rank, "Azubi-Niveau")
@@ -320,6 +325,8 @@ class GrundrissUndAvatarTest(unittest.TestCase):
         start = fg.start_position()
         self.assertTrue(fg.can_stand(*start))
         for person in fg.GAME["kollegen"]:
+            if any(o.get("nachfolger") == person["id"] for o in fg.GAME["kollegen"]):
+                continue    # sitzt spaeter am Platz der Vorgaengerin/des Vorgaengers
             route = fg.walk_path(start, person["platz"], reach=fg.REACH)
             self.assertTrue(route, person["id"])
             end = route[-1]
@@ -540,14 +547,14 @@ class LagerTest(unittest.TestCase):
         store = state.warehouse()
         self.assertEqual(store["unterwegs"][0]["teil"], "ram_ddr4_2x8")
         self.assertEqual(store["unterwegs"][0]["ankunft"], 6)
-        self.assertEqual(state.stock(), {})
+        self.assertEqual(_ordered_stock(state), {})
         self.assertIn("Arbeitstag 6", fg.warehouse_summary(state))
 
         events += [("f%d" % i, fg.EV_DAY_END, {"tag": 4 + i, "gehalt": 0}) for i in range(2)]
         state = fg.GameState(events)                       # Arbeitstag 6
         self.assertEqual(state.day, 6)
         self.assertTrue(state.arrived("ram-leitstelle"))
-        self.assertEqual(state.stock(), {"ram_ddr4_2x8": 2})
+        self.assertEqual(_ordered_stock(state), {"ram_ddr4_2x8": 2})
         build = _task("leitstelle-pc")
         self.assertIn(build["id"], [t["id"] for t in state._pool()])
         self.assertIn("ram_ddr4_2x8", state.available_parts(build))
@@ -557,15 +564,15 @@ class LagerTest(unittest.TestCase):
         answer = fg.find_solution(build, state.available_parts(build))
         events.append(_solved_event("g1", build, answer, 6, state))
         state = fg.GameState(events)
-        self.assertEqual(state.stock(), {"ram_ddr4_2x8": 1})
-        self.assertEqual(state.warehouse()["bestand"], [("ram_ddr4_2x8", 1)])
+        self.assertEqual(_ordered_stock(state), {"ram_ddr4_2x8": 1})
+        self.assertEqual(state.warehouse()["bestand"][0], ("ram_ddr4_2x8", 1))
 
     def test_ware_mit_empfaenger_geht_nicht_ins_lager(self):
         task = _task("notebook-chefin")
         events = _day_ends(4) + [_solved_event("e1", task, {"b2": 1}, 5)]
         events += [("x1", fg.EV_DAY_END, {"tag": 5, "gehalt": 0})]
         state = fg.GameState(events)
-        self.assertEqual(state.stock(), {})
+        self.assertEqual(_ordered_stock(state), {})
         handed = state.warehouse()["ausgeliefert"]
         self.assertEqual(handed[0]["empfaenger"], "sabine")
 
@@ -592,7 +599,8 @@ class LagerTest(unittest.TestCase):
         state = fg.GameState([])
         title, text = fg.office_message(rainer["platz"], rainer, {}, state=state)
         self.assertIn("Lagerist", title)
-        self.assertIn("Lager ist leer", text)
+        self.assertIn("Auf Lager: %d Teile" % sum(fg.GAME["hardware"]["grundbestand"].values()),
+                      text)
 
     def test_lager_nur_durch_die_tuer(self):
         # Von der Verwaltung ins Lager fuehrt der Weg durch den Flur
@@ -840,7 +848,7 @@ class TerminalTest(unittest.TestCase):
 
     def test_alle_terminal_auftraege(self):
         tasks = [t for t in fg.GAME["aufgaben"] if t["typ"] == "terminal"]
-        self.assertEqual(len(tasks), 6)
+        self.assertGreaterEqual(len(tasks), 6)
         self.assertEqual({t["system"] for t in tasks}, {"linux", "windows"})
         for task in tasks:
             self.assertTrue(fg.check_answer(task, fg.find_solution(task))[0], task["id"])
@@ -906,7 +914,7 @@ class DiagnoseTest(unittest.TestCase):
         events.append(_solved_event("e1", order, fg.find_solution(order), 6))
         events += [("x%d" % i, fg.EV_DAY_END, {"tag": 6 + i, "gehalt": 0}) for i in range(4)]
         state = fg.GameState(events)                                   # Tag 10
-        self.assertEqual(state.stock(), {"ssd_sata_500": 3})
+        self.assertEqual(_ordered_stock(state), {"ssd_sata_500": 3})
         task = _task("diagnose-automat-ssd")
         self.assertIn(task["id"], [t["id"] for t in state._pool()])
         self.assertEqual(state.available_parts(task), ["ssd_sata_500"])
@@ -915,7 +923,7 @@ class DiagnoseTest(unittest.TestCase):
         self.assertEqual(payload["aus_lager"], ["ssd_sata_500"])
         self.assertIn("Ersatzteil aus dem Lager eingebaut: SATA-SSD 500 GB",
                       fg.result_text(task, payload))
-        self.assertEqual(fg.GameState(events).stock(), {"ssd_sata_500": 2})
+        self.assertEqual(_ordered_stock(fg.GameState(events)), {"ssd_sata_500": 2})
 
     def test_wartet_auf_die_bestellung(self):
         state = fg.GameState(_day_ends(9))                              # Tag 10
@@ -933,11 +941,11 @@ class DiagnoseTest(unittest.TestCase):
         answer = dict(_right_answer(build, state), netzteil="nt_650")
         events.append(_solved_event("g1", build, answer, 11, state))
         state = fg.GameState(events)
-        self.assertEqual(state.stock(), {"nt_650": 1})
+        self.assertEqual(_ordered_stock(state), {"nt_650": 1})
         task = _task("diagnose-leitstelle-netzteil")
         events.append(_solved_event("g2", task, fg.find_solution(task), 11, state))
         self.assertEqual(events[-1][2]["aus_lager"], ["nt_650"])
-        self.assertEqual(fg.GameState(events).stock(), {})
+        self.assertEqual(_ordered_stock(fg.GameState(events)), {})
 
     def test_zu_viele_abnehmer_werden_gefunden(self):
         content = json.loads(json.dumps(fg.GAME))
@@ -953,14 +961,19 @@ class DiagnoseTest(unittest.TestCase):
         self.assertTrue(problems)
 
 
-def _play_through(game, days=40, on_ticket=None):
+def _play_through(game, days=150, on_ticket=None):
     """Spielt Tag fuer Tag alles richtig durch. on_ticket(game, task) darf
     True liefern, wenn der Test das Ticket selbst erledigt hat."""
     for _day in range(days):
         for task in game.state.open_tickets():
             if on_ticket and on_ticket(game, task):
                 continue
-            game.solve(task["id"], _right_answer(task, game.state), used_help=False)
+            answer = _right_answer(task, game.state)
+            if task.get("austausch") and \
+                    answer["teil"] not in game.state.available_parts(task):
+                game.order_spare(task["id"], answer["teil"])
+                continue
+            game.solve(task["id"], answer, used_help=False)
         if game.state.all_done():
             break
         game.end_day()
@@ -990,7 +1003,6 @@ class ZwischenfallTest(unittest.TestCase):
         with TempDB() as db:
             game = fg.Game(db)
             game.set_profile("Test", {})
-            per_day = BALANCING["tickets_pro_tag"]
             seen = []
 
             def check(game, task):
@@ -999,7 +1011,7 @@ class ZwischenfallTest(unittest.TestCase):
                 tickets = game.state.open_tickets()
                 self.assertLessEqual(sum(1 for t in tickets if t.get("zwischenfall")), 1)
                 self.assertLessEqual(sum(1 for t in tickets if not t.get("zwischenfall")),
-                                     per_day)
+                                     game.state.tickets_today)
                 return False
 
             _play_through(game, on_ticket=check)
@@ -1153,6 +1165,19 @@ class WohnungTest(unittest.TestCase):
 
 
 class KundeTest(unittest.TestCase):
+    def test_alle_raeume_erreichbar(self):
+        # Jeder Raum jedes Kundenorts ist vom Eingang aus zu betreten
+        for place in fg.customer_places():
+            view = fg.site_content(place["id"])
+            start = view["gebaeude"]["flur"]["spieler"]
+            for item in view["gebaeude"]["raeume"]:
+                door = item["tuer"]
+                middle = (door["von"] + door["bis"]) / 2.0
+                inside = (middle, item["y"] + 0.6) if item["y"] >= start[1] \
+                    else (middle, item["y"] + item["h"] - 0.6)
+                self.assertTrue(fg.walk_path(start, inside, content=view),
+                                "%s/%s" % (place["id"], item["id"]))
+
     def test_petra_arbeitet_beim_kunden(self):
         state = fg.GameState([])
         office = [p["id"] for p in fg.people_at_site(fg.SITE_OFFICE, state)]
@@ -1513,6 +1538,328 @@ class FarbenTest(unittest.TestCase):
                 for color in item[gradient]:
                     self.assertGreaterEqual(ratio("#FFFFFF", color), 4.5,
                                             (item["id"], gradient, color))
+
+
+# ============================================================================
+#  Ab 0.32: Raenge, Vorlagen, Wartung, Austausch, Drucker, Zwischenfall-
+#  Varianten, Ruhestand
+# ============================================================================
+
+def _content():
+    """Eine veraenderbare Kopie der Spielinhalte."""
+    return json.loads(json.dumps(fg.GAME))
+
+
+class RangTest(unittest.TestCase):
+    def test_befoerderung_braucht_arbeitstage(self):
+        self.assertEqual(fg.rank_for(100), "Senior")
+        self.assertEqual(fg.rank_for(100, day=1), "Azubi-Niveau")
+        self.assertEqual(fg.rank_for(100, day=10), "Junior")
+        self.assertEqual(fg.rank_for(100, day=30), "Fachkraft")
+        self.assertEqual(fg.rank_for(100, day=60), "Senior")
+        self.assertEqual(fg.rank_for(40, day=60), "Junior")
+
+    def test_tickets_je_rang(self):
+        values = [fg.tickets_per_day(rank["name"]) for rank in BALANCING["raenge"]]
+        self.assertEqual(values, sorted(values))
+        self.assertGreater(values[-1], values[0])
+        self.assertEqual(fg.tickets_per_day("Azubi-Niveau", {"tickets_pro_tag": 3}), 3)
+
+    def test_ticketzahl_richtet_sich_nach_dem_tagesbeginn(self):
+        events = [("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})] + _day_ends(14)
+        state = fg.GameState(events)
+        self.assertEqual(state.day_rank, "Azubi-Niveau")   # Reputation 20 zu Beginn
+        # Viel Reputation im Laufe des Tages: der Rang steigt, die Ticketzahl nicht
+        events.append(("z", fg.EV_SOLVED, {"aufgabe": "x", "tag": 15, "richtig": True,
+                                           "reputation": {key: 60 for key in fg.AXIS_KEYS}}))
+        state = fg.GameState(events)
+        self.assertEqual(state.rank, "Junior")
+        self.assertEqual(state.day_rank, "Azubi-Niveau")
+        self.assertEqual(state.tickets_today, fg.tickets_per_day("Azubi-Niveau"))
+        events.append(("zz", fg.EV_DAY_END, {"tag": 15, "gehalt": 0}))
+        state = fg.GameState(events)
+        self.assertEqual(state.tickets_today, fg.tickets_per_day("Junior"))
+
+    def test_hinweis_zum_naechsten_rang(self):
+        state = fg.GameState([("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})])
+        self.assertIn("Junior", fg.rank_hint(state))
+        self.assertIn("Arbeitstage", fg.rank_hint(state))
+
+
+class VorlagenTest(unittest.TestCase):
+    def test_varianten_werden_zu_auftraegen(self):
+        items = [{"id": "v", "titel": "Tausch in {{ort}}", "ticket": ["{{wer}} ruft an."],
+                  "ab_tag": 3, "wiederholen": {"start": 10, "abstand": 5},
+                  "varianten": [{"werte": {"ort": "A", "wer": "Petra"}},
+                                {"werte": {"ort": "B", "wer": "Horst"}, "raum": "x"},
+                                {"werte": {"ort": "C", "wer": "Ulla"}, "ab_tag": 99}]}]
+        tasks = fg.expand_variants(items, template=True)
+        self.assertEqual([t["id"] for t in tasks], ["v", "v#2", "v#3"])
+        self.assertEqual([t["titel"] for t in tasks], ["Tausch in A", "Tausch in B",
+                                                       "Tausch in C"])
+        self.assertEqual([t["ab_tag"] for t in tasks], [10, 15, 99])
+        self.assertEqual(tasks[1]["raum"], "x")
+        self.assertTrue(all(t["vorlage"] == "v" and t["gruppe"] == "v" for t in tasks))
+        self.assertNotIn("varianten", tasks[0])
+
+    def test_vergessene_platzhalter_fallen_auf(self):
+        content = _content()
+        content["aufgaben"][0]["titel"] = "Hallo {{name}}"
+        self.assertTrue(any("Platzhalter" in p for p in fg.validate_game_content(content)))
+
+    def test_kein_auftrag_doppelt(self):
+        tickets = [task["ticket"] for task in fg.GAME["aufgaben"] + fg.GAME["zwischenfaelle"]]
+        self.assertEqual(len(tickets), len(set(tickets)))
+        content = _content()
+        content["aufgaben"][1]["ticket"] = content["aufgaben"][0]["ticket"]
+        self.assertTrue(any("gleicher Tickettext" in p
+                            for p in fg.validate_game_content(content)))
+
+    def test_story_vor_vorlagen(self):
+        """Story-Auftraege kommen zuerst dran, Vorlagen fuellen auf."""
+        state = fg.GameState([("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})] +
+                             _day_ends(200))
+        pool = state._pool()
+        kinds = [bool(task.get("vorlage")) for task in pool]
+        self.assertEqual(kinds, sorted(kinds))
+
+
+class WartungTest(unittest.TestCase):
+    def setUp(self):
+        self.task = _task("wartung-usv-nord")
+
+    def test_eigene_loesung_richtig(self):
+        solution = fg.find_solution(self.task)
+        self.assertTrue(fg.check_answer(self.task, solution)[0])
+        self.assertEqual(solution["bewertung"]["selbsttest"], fg.RATING_ISSUE)
+        self.assertEqual(solution["bewertung"]["last"], fg.RATING_OK)
+
+    def test_uebersehene_auffaelligkeit(self):
+        answer = fg.find_solution(self.task)
+        answer["bewertung"]["akkudatum"] = fg.RATING_OK
+        review = fg.maintenance_review(self.task, answer)
+        self.assertFalse(review["richtig"])
+        self.assertEqual(review["uebersehen"], 1)
+        self.assertIn("auffällig", review["probleme"][0])
+
+    def test_ungeprueft_und_falscher_abschluss(self):
+        answer = {"bewertung": {"last": fg.RATING_OK},
+                  "abschluss": "Alles in Ordnung, nächste Wartung in drei Monaten"}
+        problems = fg.answer_problems(self.task, answer)
+        self.assertTrue(any("nicht geprüft" in p for p in problems))
+        self.assertTrue(any("Abschluss" in p for p in problems))
+
+    def test_folgeauftrag_nach_wartung(self):
+        follow = _task("usv-akkutausch-nord")
+        self.assertEqual(follow["nach"], self.task["id"])
+        events = [("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})] + _day_ends(16)
+        state = fg.GameState(events)
+        self.assertFalse(state._ready(follow))
+        events.append(_solved_event("w", self.task, fg.find_solution(self.task), 17, state))
+        state = fg.GameState(events)
+        self.assertTrue(state._ready(follow))
+        text = fg.result_text(self.task, events[-1][2])
+        self.assertIn(follow["titel"], text)
+
+    def test_vorlage_wiederholt_sich(self):
+        tasks = [task for task in fg.GAME["aufgaben"]
+                 if task.get("vorlage") == "wartung-pc-reinigung"]
+        self.assertGreaterEqual(len(tasks), 3)
+        days = [task["ab_tag"] for task in tasks]
+        self.assertEqual(days, sorted(set(days)))
+        right = [fg.find_solution(task)["abschluss"] for task in tasks]
+        self.assertGreater(len(set(right)), 1)     # mal alles gut, mal auffaellig
+
+
+class AustauschTest(unittest.TestCase):
+    def setUp(self):
+        self.task = _task("usv-akkutausch-nord")
+
+    def test_passendes_teil(self):
+        self.assertEqual(fg.spare_fits(self.task, "akkusatz_48v9"), [])
+        problems = fg.spare_fits(self.task, "akku_12v9_f2")
+        self.assertTrue(problems)
+        self.assertIn("Spannung 12 V statt 48 V", problems[0])
+
+    def test_reihenfolge_und_falsche_schritte(self):
+        answer = fg.find_solution(self.task, ["akkusatz_48v9"])
+        self.assertTrue(fg.check_answer(self.task, answer, ["akkusatz_48v9"])[0])
+        wrong = dict(answer, reihenfolge=list(reversed(answer["reihenfolge"])))
+        self.assertTrue(any("Ablauf" in p for p in
+                            fg.answer_problems(self.task, wrong, ["akkusatz_48v9"])))
+        extra = dict(answer, reihenfolge=answer["reihenfolge"] +
+                     [self.task["austausch"]["falsch"][0]])
+        self.assertTrue(any("gehört nicht" in p for p in
+                            fg.answer_problems(self.task, extra, ["akkusatz_48v9"])))
+        # Passt, liegt aber nicht im Lager
+        self.assertTrue(any("nicht im Lager" in p for p in
+                            fg.answer_problems(self.task, answer, [])))
+
+    def test_alle_schritte_zur_auswahl_gemischt(self):
+        steps = fg.exchange_steps(self.task)
+        exchange = self.task["austausch"]
+        self.assertEqual(sorted(steps), sorted(exchange["schritte"] + exchange["falsch"]))
+        self.assertEqual(steps, fg.exchange_steps(self.task))     # immer gleich
+
+    def test_nachbestellen_und_einbauen(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            task_id = self.task["id"]
+            # Alles andere ist schon erledigt, nur der Akkutausch ist offen
+            for other in fg.GAME["aufgaben"]:
+                if other["id"] != task_id:
+                    game._log(fg.EV_SOLVED, {"aufgabe": other["id"], "tag": 0,
+                                             "richtig": True})
+            for _day in range(16):
+                game._log(fg.EV_DAY_END, {"tag": game.state.day, "gehalt": 0})
+            self.assertTrue(game.state.is_open(task_id))
+            # Nur im Lager stehende Teile koennen verbaut werden
+            self.assertNotIn("akkusatz_48v9", game.state.available_parts(self.task))
+            money = game.state.money
+            payload = game.order_spare(task_id, "akkusatz_48v9")
+            self.assertEqual(game.state.money, money - fg.part("akkusatz_48v9")["preis"])
+            self.assertEqual(game.state.status_of(task_id), fg.ST_WAITING)
+            self.assertFalse(game.state.is_open(task_id))
+            self.assertIn(self.task, game.state.waiting_for_delivery())
+            for task in game.state.open_tickets():      # hoechstens ein Zwischenfall
+                self.assertTrue(task.get("zwischenfall"))
+                game.defer(task["id"])
+            self.assertTrue(game.state.can_end_day())
+            game.end_day()
+            self.assertEqual(game.state.day, payload["ankunft"])
+            self.assertTrue(game.state.is_open(task_id))
+            self.assertEqual(game.state.status_of(task_id), fg.ST_OPEN)
+            self.assertIn("akkusatz_48v9", game.state.available_parts(self.task))
+            answer = fg.find_solution(self.task, game.state.available_parts(self.task))
+            result = game.solve(task_id, answer, used_help=False)
+            self.assertTrue(result["richtig"])
+            self.assertEqual(result["aus_lager"], ["akkusatz_48v9"])
+            self.assertNotIn("akkusatz_48v9", game.state.stock())
+            self.assertIn("Funktionstest", fg.result_text(self.task, result))
+
+    def test_falsches_teil_nicht_bestellbar(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Test", {})
+            with self.assertRaises(ValueError):
+                game.order_spare(self.task["id"], "akkusatz_48v9")   # nicht offen
+            with self.assertRaises(ValueError):
+                game.order_spare("ports-serverraum", "akkusatz_48v9")
+
+    def test_grundbestand_im_lager(self):
+        state = fg.GameState([])
+        for part_id, count in fg.GAME["hardware"]["grundbestand"].items():
+            self.assertEqual(state.stock()[part_id], count)
+
+
+class DruckerTest(unittest.TestCase):
+    def test_erste_freie_adresse(self):
+        values = fg.printer_values({"netz": "192.168.20.0/24", "bereich": [200, 219],
+                                    "belegt": [200, 201, 203], "treiber": ["a"],
+                                    "treiber_richtig": "a"})
+        self.assertEqual(values["ip"], "192.168.20.202")
+        self.assertEqual(values["gateway"], "192.168.20.1")
+        self.assertEqual(values["maske"], "255.255.255.0")
+
+    def test_ohne_freie_adresse(self):
+        with self.assertRaises(fg.FormError):
+            fg.printer_values({"netz": "10.0.0.0/28", "bereich": [5, 6], "belegt": [5, 6],
+                               "treiber": ["a"], "treiber_richtig": "a"})
+
+    def test_formular_pruefen(self):
+        task = _task("drucker-einrichten-verwaltung")
+        answer = fg.find_solution(task)
+        self.assertEqual(answer["ip"], "192.168.20.202")
+        self.assertEqual(fg.form_problems(task, answer), [])
+        answer = dict(answer, ip="192.168.20.200", treiber="Nur Text (generisch)")
+        problems = fg.form_problems(task, answer)
+        self.assertEqual(len(problems), 2)
+        self.assertTrue(any("Schon belegt" in line for line in fg.form_given(task)))
+
+    def test_drucker_geht_an_frank(self):
+        order = _task("bestellung-drucker-verwaltung")
+        events = _day_ends(15) + [_solved_event("b", order, fg.find_solution(order), 16)]
+        state = fg.GameState(events)
+        self.assertFalse(state._ready(_task("drucker-einrichten-verwaltung")))
+        state = fg.GameState(events + [("x%d" % n, fg.EV_DAY_END, {"tag": 16 + n})
+                                       for n in range(3)])
+        self.assertTrue(state._ready(_task("drucker-einrichten-verwaltung")))
+        self.assertNotIn("drucker_lx420", state.stock())
+        self.assertTrue(any(item["teil"] == "drucker_lx420"
+                            for item in state.warehouse()["ausgeliefert"]))
+
+
+class ZwischenfallVariantenTest(unittest.TestCase):
+    def setUp(self):
+        self.content = _content()
+        base = self.content["zwischenfaelle"][0]
+        self.kind = base["id"]
+        extra = []
+        for number in range(2, 6):
+            extra.append(dict(base, id="%s#%d" % (base["id"], number), gruppe=base["id"],
+                              ticket=base["ticket"] + " (%d)" % number))
+        base["gruppe"] = base["id"]
+        self.content["zwischenfaelle"] += extra
+
+    def test_abstand_zwischen_gleicher_art(self):
+        events = [("2026-09-29 08:00:00", fg.EV_PROFILE, {"name": "A", "aussehen": {}})]
+        gap = BALANCING["zwischenfaelle"]["abstand_gleiche_art"]
+        seen = {}
+        for day in range(1, 150):
+            state = fg.GameState(events, self.content)
+            incident = state.incident_today()
+            if incident:
+                kind = incident.get("gruppe", incident["id"])
+                if kind in seen:
+                    self.assertGreaterEqual(day - seen[kind], gap)
+                seen[kind] = day
+                events.append(("t%03d" % day, fg.EV_SOLVED,
+                               {"aufgabe": incident["id"], "tag": day, "richtig": True,
+                                "zwischenfall": True}))
+            events.append(("u%03d" % day, fg.EV_DAY_END, {"tag": day}))
+        state = fg.GameState(events, self.content)
+        variants = [task for task in self.content["zwischenfaelle"]
+                    if task.get("gruppe") == self.kind]
+        self.assertGreater(len([t for t in variants if t["id"] in state.seen_incidents]), 1)
+
+    def test_chance_gestaffelt(self):
+        rules = {"chance": 0.4, "staffel": [{"ab_tag": 30, "chance": 0.5}]}
+        self.assertEqual(fg.incident_chance(29, rules), 0.4)
+        self.assertEqual(fg.incident_chance(30, rules), 0.5)
+
+
+class RuhestandTest(unittest.TestCase):
+    def setUp(self):
+        self.content = _content()
+        frank = next(p for p in self.content["kollegen"] if p["id"] == "frank")
+        frank["bis_tag"] = 3
+        frank["nachfolger"] = "paul"
+        self.content["kollegen"].append(dict(frank, id="paul", name="Paul Adler", ab_tag=4,
+                                             bis_tag=None, nachfolger=None))
+
+    def test_nachfolge_uebernimmt(self):
+        self.assertEqual(fg.active_person("frank", 3, self.content), "frank")
+        self.assertEqual(fg.active_person("frank", 4, self.content), "paul")
+        self.assertEqual(fg.active_person("ulla", 50, self.content), "ulla")
+
+    def test_im_ruhestand_nicht_mehr_im_buero(self):
+        events = [("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})]
+        ids = lambda state: {p["id"] for p in fg.people_at_site(fg.SITE_OFFICE, state,
+                                                                 self.content)}
+        self.assertIn("frank", ids(fg.GameState(events + _day_ends(2), self.content)))
+        later = ids(fg.GameState(events + _day_ends(5), self.content))
+        self.assertNotIn("frank", later)
+        self.assertIn("paul", later)
+
+    def test_offene_auftraege_gehen_an_die_nachfolge(self):
+        state = fg.GameState([("a", fg.EV_PROFILE, {"name": "A", "aussehen": {}})] +
+                             _day_ends(20), self.content)
+        frank_tasks = [task for task in state._pool()
+                       if fg.task_by_id(task["id"], self.content)["auftraggeber"] == "frank"]
+        self.assertTrue(frank_tasks)
+        self.assertTrue(all(task["auftraggeber"] == "paul" for task in frank_tasks))
+
 
 
 if __name__ == "__main__":
