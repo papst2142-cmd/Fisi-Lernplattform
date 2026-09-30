@@ -1095,9 +1095,19 @@ class LineChart(tk.Canvas):
 
         # x-Beschriftung ausduennen, damit nichts ueberlappt
         stride = max(1, int(count / max(1, plot_w / px(55))))
+        shown = [index for index in range(count) if index % stride == 0 or index == count - 1]
+        if len(shown) > 1:
+            # Die letzte Beschriftung endet am rechten Rand statt darueber; die
+            # davor faellt weg, wenn sie sonst ueberlappen wuerde
+            last_left = positions[-1] + px(6) - text_width(
+                str(self._labels[-1]), F["tiny"]) * _SCALE[0]
+            before = shown[-2]
+            before_right = positions[before] + text_width(
+                str(self._labels[before]), F["tiny"]) * _SCALE[0] / 2
+            if before_right + px(4) > last_left:
+                shown.remove(before)
         for index, label in enumerate(self._labels):
-            if index % stride == 0 or index == count - 1:
-                # Die letzte Beschriftung endet am rechten Rand statt darueber
+            if index in shown:
                 last = index == count - 1 and count > 1
                 self.create_text(positions[index] + (px(6) if last else 0),
                                  height - bottom + px(15), text=label,
