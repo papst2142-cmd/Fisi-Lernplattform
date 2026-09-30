@@ -305,7 +305,11 @@ class SpielMitDatenbankTest(unittest.TestCase):
             game.reset()
             self.assertIsNone(game.state.profile)
             self.assertEqual(db.count_quiz_answers(), 1)
-            self.assertTrue(db.get_meta("spiel_reset_at"))
+            # Ab 0.48: Der alte Durchgang ist als geloescht vermerkt, auf
+            # demselben Platz liegt ein neuer, leerer
+            deleted = [row for row in db.slot_rows() if row[4] == fg.SLOT_DELETED]
+            self.assertEqual(len(deleted), 1)
+            self.assertEqual(game.slot_of(), 1)
 
 
 class AbgleichTest(unittest.TestCase):
@@ -5406,6 +5410,187 @@ class SkillBalkenTest(unittest.TestCase):
         self.assertFalse(top["themen"][1]["grenze"])
         # Die genauen Werte stehen auch im Text wie bisher
         self.assertIn("80", fg.topics_text(topics, fg.CAT_ORDER[0]))
+
+
+class SpielstandPlaetzeTest(unittest.TestCase):
+    """Drei Spielstand-Plaetze (ab 0.48)."""
+
+    @staticmethod
+    def _sync(first, second):
+        fisi_sync.merge_into_local(second, fisi_sync.export_local(first))
+        fisi_sync.merge_into_local(first, fisi_sync.export_local(second))
+
+    def _play_day(self, game):
+        for task in game.state.open_tickets():
+            game.solve(task["id"], _right_answer(task, game.state), used_help=False)
+        game.end_day()
+
+    def test_alter_spielstand_wird_platz_1(self):
+        with TempDB() as db:
+            # Stand vor 0.48: Ereignisse ohne Durchgang
+            db.log_game_event(fg.EV_PROFILE, json.dumps({"name": "Alt", "aussehen": {}}),
+                              "PC", run=None)
+            db._execute("UPDATE spiel_ereignisse SET lauf = NULL", commit=True)
+            game = fg.Game(db, "PC")
+            self.assertEqual(game.run, fg.LEGACY_RUN)
+            self.assertEqual(game.state.profile["name"], "Alt")
+            slots = game.slots()
+            self.assertEqual([item["leer"] for item in slots], [False, True, True])
+            self.assertTrue(slots[0]["aktiv"])
+            self.assertEqual(slots[0]["spieler"], "Alt")
+            # Weiterspielen bleibt im alten Durchgang
+            self._play_day(game)
+            self.assertEqual(fg.Game(db, "PC").state.day, 2)
+            self.assertTrue(db.has_legacy_events())
+
+    def test_plaetze_getrennt_lernstand_gemeinsam(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC")
+            game.set_profile("Eins", {}, fg.DIFF_NORMAL)
+            self._play_day(game)
+            self.assertEqual(game.slot_of(), 1)
+            game.new_run(2)
+            self.assertIsNone(game.state.profile)
+            game.set_profile("Zwei", {}, fg.DIFF_EASY)
+            db.log_quiz_answer(CAT_NET, "Frage", True)
+            knowledge = game.topic_knowledge()
+            self.assertEqual(game.state.day, 1)
+            slots = game.slots()
+            self.assertEqual(slots[0]["spieler"], "Eins")
+            self.assertEqual(slots[0]["tag"], 2)
+            self.assertEqual(slots[1]["spieler"], "Zwei")
+            self.assertEqual(slots[1]["schwierigkeit"], fg.difficulty_name(fg.DIFF_EASY))
+            self.assertTrue(slots[2]["leer"])
+            game.select_run(slots[0]["lauf"])
+            self.assertEqual(game.state.profile["name"], "Eins")
+            self.assertEqual(game.state.level, fg.DIFF_NORMAL)
+            # Lernfortschritt gilt fuer alle Plaetze
+            self.assertEqual(game.topic_knowledge(), knowledge)
+            # Belegter Platz laesst sich nicht neu anlegen
+            with self.assertRaises(ValueError):
+                game.new_run(2)
+            # Der aktive Platz bleibt auf dem Geraet gemerkt
+            self.assertEqual(fg.Game(db, "PC").state.profile["name"], "Eins")
+
+    def test_zuruecksetzen_nur_aktiver_platz(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC")
+            game.set_profile("Eins", {})
+            game.new_run(2)
+            game.set_profile("Zwei", {})
+            game.reset()
+            self.assertEqual(game.slot_of(), 2)
+            self.assertIsNone(game.state.profile)
+            self.assertEqual(game.slots()[0]["spieler"], "Eins")
+
+    def test_loeschen_mit_abgleich_und_bestenliste(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = fg.Game(pc, "PC")
+            game.set_profile("Eins", {})
+            run = game.new_run(2)
+            game.set_profile("Zwei", {})
+            self._play_day(game)
+            self._sync(pc, handy)
+            other = fg.Game(handy, "Handy")
+            other.select_run(run)
+            self.assertEqual(other.state.profile["name"], "Zwei")
+            # Handy spielt offline weiter, der PC loescht den Platz derweil
+            self._play_day(other)
+            game.delete_run(run)
+            self.assertTrue(game.slots()[1]["leer"])
+            # Endstand des geloeschten Durchgangs steht in der Bestenliste
+            first = fg.GameState(handy.game_events(run)).first_event
+            self.assertTrue(any(row[1] == first for row in pc.records()))
+            self._sync(pc, handy)
+            self._sync(handy, pc)
+            for db, device in ((pc, "PC"), (handy, "Handy")):
+                check = fg.Game(db, device)
+                self.assertTrue(check.slots()[1]["leer"], device)
+                self.assertEqual(db.game_events(run), [], device)
+                self.assertNotEqual(check.run, run)
+                self.assertEqual(check.slots()[0]["spieler"], "Eins")
+            # Neuer Durchgang auf dem freien Platz ist ein ganz neuer
+            fresh = fg.Game(handy, "Handy")
+            new = fresh.new_run(2)
+            self.assertNotEqual(new, run)
+            self.assertIsNone(fresh.state.profile)
+
+    def test_alter_durchgang_loeschen_und_altes_geraet(self):
+        with TempDB() as pc, TempDB() as handy:
+            for db in (pc, handy):
+                db.log_game_event(fg.EV_PROFILE, json.dumps({"name": "Alt", "aussehen": {}}),
+                                  "X", run=None)
+            game = fg.Game(pc, "PC")
+            game.delete_run(fg.LEGACY_RUN)
+            self.assertFalse(pc.has_legacy_events())
+            # Ein Stand im alten Format (ohne Durchgang) belebt nichts wieder
+            old = fisi_sync.export_local(handy)
+            columns = old["columns"]["spiel_ereignisse"]
+            index = columns.index("lauf") + 1
+            old["columns"]["spiel_ereignisse"] = [c for c in columns if c != "lauf"]
+            old["tables"]["spiel_ereignisse"] = [row[:index] + row[index + 1:]
+                                                  for row in old["tables"]["spiel_ereignisse"]]
+            del old["tables"]["spiel_plaetze"]
+            old["format"] = 1
+            fisi_sync.merge_into_local(pc, old)
+            self.assertFalse(pc.has_legacy_events())
+            self.assertTrue(fg.Game(pc, "PC").slots()[0]["leer"])
+
+    def test_altes_geraet_lehnt_neues_format_ab(self):
+        self.assertGreaterEqual(fisi_sync.FORMAT, 2)
+
+    def test_gleichzeitig_angelegt_geht_nichts_verloren(self):
+        with TempDB() as pc, TempDB() as handy:
+            first = fg.Game(pc, "PC")
+            first.set_profile("PC-Figur", {})
+            self._sync(pc, handy)
+            second = fg.Game(handy, "Handy")
+            # Beide legen offline Platz 2 an
+            pc_run = first.new_run(2)
+            first.set_profile("PC zwei", {})
+            handy._execute("UPDATE sync_meta SET value = value", commit=True)
+            handy_run = second.new_run(2)
+            second.set_profile("Handy zwei", {})
+            self._sync(pc, handy)
+            layouts = [fg.Game(db, d).layout()["plaetze"] for db, d in
+                       ((pc, "PC"), (handy, "Handy"))]
+            self.assertEqual(layouts[0], layouts[1])
+            self.assertEqual({layouts[0][2], layouts[0][3]}, {pc_run, handy_run})
+
+    def test_umbenennen_wird_abgeglichen(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = fg.Game(pc, "PC")
+            game.set_profile("Eins", {})
+            game.rename_slot(1, "Hauptspiel")
+            self._sync(pc, handy)
+            other = fg.Game(handy, "Handy")
+            self.assertEqual(other.slots()[0]["name"], "Hauptspiel")
+            self.assertEqual(other.active_label(), "Platz 1 · Hauptspiel")
+            other.rename_slot(1, "")
+            self.assertEqual(other.slots()[0]["name"], "Platz 1")
+
+    def test_drei_grosse_plaetze(self):
+        """Belastung: drei lange Durchgaenge, Auswahl bleibt schnell."""
+        import time
+        with TempDB() as db:
+            game = fg.Game(db, "PC")
+            game.set_profile("Eins", {})
+            for slot in (1, 2, 3):
+                if slot > 1:
+                    game.new_run(slot)
+                    game.set_profile("Figur %d" % slot, {})
+                _play_through(game, days=40)
+            fresh = fg.Game(db, "PC")
+            started = time.monotonic()
+            slots = fresh.slots()
+            first = time.monotonic() - started
+            started = time.monotonic()
+            fresh.slots()
+            again = time.monotonic() - started
+            self.assertTrue(all(not item["leer"] for item in slots))
+            self.assertTrue(all(item["tag"] > 30 for item in slots))
+            self.assertLess(again, first)       # zwischengespeichert
+            self.assertLess(first, 20)
 
 
 if __name__ == "__main__":

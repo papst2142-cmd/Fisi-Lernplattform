@@ -711,6 +711,12 @@ class Header(ctk.CTkFrame):
         make_label(left, "/", font=F["label"], fg=C["muted"]).pack(side="left", padx=7)
         self.crumb_sub = make_label(left, "HOME", font=F["label"], fg=C["accent"])
         self.crumb_sub.pack(side="left")
+        # Ab 0.48: aktiver Spielstand-Platz in den Spielansichten
+        self.slot_box = transparent_frame(left)
+        self.slot_label = make_label(self.slot_box, "", font=F["small"], fg=C["muted"])
+        self.slot_label.pack(side="left", padx=(16, 8))
+        NeoButton(self.slot_box, "Platz wechseln", lambda: self.app.open_slot_picker(),
+                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
                                        border_width=1, border_color=C["border"])
@@ -741,6 +747,14 @@ class Header(ctk.CTkFrame):
     def set_crumbs(self, main, sub):
         self.crumb_main.configure(text=main)
         self.crumb_sub.configure(text=sub)
+
+    def set_slot(self, text):
+        """Platzanzeige (ab 0.48): leer = ausblenden."""
+        if text:
+            self.slot_label.configure(text="·   " + text)
+            self.slot_box.pack(side="left")
+        else:
+            self.slot_box.pack_forget()
 
 
 # ============================================================================
@@ -2789,13 +2803,9 @@ class SettingsView(View):
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(0, 14))
-        make_label(game.body,
-                   "Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
-                   "Reputation, Arbeitstage und erledigte Tickets. Der "
-                   "Lernfortschritt bleibt erhalten. Mit eingerichtetem Abgleich "
-                   "auch auf dem Handy.",
-                   font=F["small"], fg=C["text_dim"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w")
+        self.lbl_reset = make_label(game.body, "", font=F["small"], fg=C["text_dim"],
+                                    wraplength=800, justify="left", anchor="w")
+        self.lbl_reset.pack(anchor="w")
         NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
                   kind="danger").pack(anchor="w", pady=(12, 0))
         make_label(game.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
@@ -2885,18 +2895,20 @@ class SettingsView(View):
 
     def _show_difficulty(self):
         try:
-            state = self.app.views["game"].game.reload()
+            game = self.app.views["game"].game
+            game.reload()
         except (KeyError, AttributeError):
             return
-        self.lbl_difficulty.configure(text=fisi_game.difficulty_options_text(state))
+        self.lbl_difficulty.configure(text=fisi_game.slot_options_text(game))
+        self.lbl_reset.configure(text=fisi_game.reset_help(game))
 
     def reset_game(self):
+        game = self.app.views["game"].game
+        game.reload()
         if not messagebox.askyesno("Spielstand zurücksetzen",
-                                   "Wirklich den gesamten Spielstand des "
-                                   "Lernspiels löschen? Der Lernfortschritt "
-                                   "bleibt erhalten."):
+                                   fisi_game.reset_question(game)):
             return
-        if fisi_game.Game(self.db).reset():
+        if game.reset():
             messagebox.showinfo("Zurückgesetzt",
                                 "Der Spielstand wurde zurückgesetzt.")
             self.app.views["game"].ticket = None
@@ -3294,6 +3306,11 @@ def _apply_window_icon(root):
         pass
 
 
+# Ansichten des Spiels (ab 0.48 mit Platzanzeige im Kopf)
+GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "reise")
+GAME_VIEWS = ("game",) + GAME_SUBVIEWS
+
+
 class LazyViews(dict):
     """Die Ansichten des Hauptfensters (ab 0.48): Jede wird erst beim ersten
     Zugriff aufgebaut (views["quiz"], views.get("quiz")). built() liefert eine
@@ -3350,6 +3367,7 @@ class FISIApp:
         self.db = DBManager(error_handler=self._db_error)
         self.container = None
         self._recoloring = False
+        self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._build_ui()
         self.show_view("dashboard")
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -3546,6 +3564,10 @@ class FISIApp:
     # -- Navigation ---------------------------------------------------------
 
     def show_view(self, key):
+        # Ab 0.48: Beim ersten Oeffnen des Spiels nach dem Start erst den
+        # Spielstand waehlen (Auswahlbildschirm in der Spiel-Ansicht)
+        if key in GAME_SUBVIEWS and not self.slot_chosen:
+            key = "game"
         view = self.views.get(key)
         if view is None:
             return
@@ -3558,7 +3580,20 @@ class FISIApp:
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
         self.sidebar.set_active("game" if key == "filiale" else key)
         view.on_show()
+        self.update_slot_label()
         self.notify_progress(refresh_view=False)
+
+    def update_slot_label(self):
+        """Platzanzeige im Kopf der Spielansichten (ab 0.48)."""
+        text = ""
+        if self.current in GAME_VIEWS and self.slot_chosen:
+            game_view = self.views.built("game")
+            if game_view is not None and not game_view.picking:
+                text = game_view.game.active_label()
+        self.header.set_slot(text)
+
+    def open_slot_picker(self):
+        self.views["game"].open_picker()
 
     def open_cards(self, category, topic=None):
         self.views["cards"].set_category(category, topic)

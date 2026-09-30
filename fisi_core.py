@@ -221,14 +221,31 @@ OPTIONAL_COLUMNS = {
     "scenario_events": ("correct",),
     "project_events": ("correct",),
     "ap1_events": ("correct",),
+    # ab 0.48: Durchgang (Spielstand-Platz) eines Spielereignisses
+    "spiel_ereignisse": ("lauf",),
 }
+# Spalten mit Text statt Zahl (sonst INTEGER)
+TEXT_COLUMNS = ("lauf",)
 
 # Tabellen des Lernspiels (fisi_game.py). Bewusst getrennt von EVENT_TABLES:
 # "Alle Lerndaten loeschen" und "Historie loeschen" beruehren den Spielstand
 # nicht, dafuer gibt es "Spielstand zuruecksetzen" (Marker spiel_reset_at).
 GAME_TABLES = {
-    "spiel_ereignisse": ("timestamp", "typ", "daten", "geraet"),
+    "spiel_ereignisse": ("timestamp", "typ", "daten", "geraet", "lauf"),
 }
+
+# Spielstand-Plaetze (ab 0.48): Protokoll, welcher Durchgang ("lauf") auf
+# welchem der drei Plaetze liegt - Zeilen "angelegt", "geloescht" und
+# "umbenannt". Wird nie geloescht (auch nicht per Marke), damit ein
+# geloeschter Durchgang auf keinem Geraet wieder auftaucht.
+SLOT_TABLES = {
+    "spiel_plaetze": ("timestamp", "platz", "lauf", "aktion", "daten", "geraet"),
+}
+# Der Durchgang vor 0.48 (Ereignisse ohne lauf) - er liegt auf Platz 1
+LEGACY_RUN = "alt"
+# Aktiver Durchgang dieses Geraets (nur lokal, wird nicht abgeglichen)
+ACTIVE_RUN_KEY = "spiel_aktiver_lauf"
+_ACTIVE = object()
 
 # Bestenliste des Lernspiels (ab 0.46): Bestwerte und Abzeichen ueber alle
 # Spielstaende (Durchgaenge). Uebersteht "Spielstand zuruecksetzen" und
@@ -241,7 +258,20 @@ RECORD_TABLES = {
 # Alles, was zwischen den Geraeten abgeglichen wird
 SYNC_TABLES = dict(EVENT_TABLES)
 SYNC_TABLES.update(GAME_TABLES)
+SYNC_TABLES.update(SLOT_TABLES)
 SYNC_TABLES.update(RECORD_TABLES)
+
+
+def purge_deleted_runs(cur):
+    """Entfernt alle Ereignisse geloeschter Durchgaenge (ab 0.48). Der alte
+    Durchgang (LEGACY_RUN) sind die Ereignisse ohne lauf."""
+    runs = [row[0] for row in cur.execute(
+        "SELECT DISTINCT lauf FROM spiel_plaetze WHERE aktion = 'geloescht'")]
+    for run in runs:
+        if run == LEGACY_RUN:
+            cur.execute("DELETE FROM spiel_ereignisse WHERE lauf IS NULL OR lauf = ''")
+        else:
+            cur.execute("DELETE FROM spiel_ereignisse WHERE lauf = ?", (run,))
 
 
 class DBManager:
@@ -365,6 +395,19 @@ class DBManager:
                 typ TEXT NOT NULL,
                 daten TEXT NOT NULL,
                 geraet TEXT NOT NULL DEFAULT '',
+                uid TEXT,
+                lauf TEXT
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS spiel_plaetze (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                platz INTEGER NOT NULL,
+                lauf TEXT NOT NULL,
+                aktion TEXT NOT NULL,
+                daten TEXT NOT NULL DEFAULT '{}',
+                geraet TEXT NOT NULL DEFAULT '',
                 uid TEXT
             )
             """,
@@ -413,13 +456,23 @@ class DBManager:
             columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
             for column in extra:
                 if column not in columns:
-                    cur.execute("ALTER TABLE %s ADD COLUMN %s INTEGER" % (table, column))
+                    cur.execute("ALTER TABLE %s ADD COLUMN %s %s" % (
+                        table, column, "TEXT" if column in TEXT_COLUMNS else "INTEGER"))
         cur.execute("CREATE TABLE IF NOT EXISTS sync_meta ("
                     " key TEXT PRIMARY KEY, value TEXT)")
+        cur.execute("CREATE INDEX IF NOT EXISTS ix_spiel_ereignisse_lauf"
+                    " ON spiel_ereignisse (lauf)")
 
     @staticmethod
     def _now():
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    @staticmethod
+    def _now_fine():
+        """Wie _now, aber mit Mikrosekunden - fuer die Platz-Tabelle, deren
+        Reihenfolge (angelegt, umbenannt) auch innerhalb einer Sekunde zaehlt.
+        Sortiert sich trotzdem richtig zwischen sekundengenaue Zeitpunkte."""
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
     @staticmethod
     def _uid():
@@ -486,19 +539,33 @@ class DBManager:
             (self._now(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
-    def log_game_event(self, kind, data, device=""):
-        """Ein Ereignis des Lernspiels (data ist JSON-Text)."""
+    def _run(self, run):
+        """Durchgang fuer Lesen/Schreiben: ohne Angabe der aktive dieses
+        Geraets. Liefert None fuer den alten Durchgang (Spalte lauf leer)."""
+        if run is _ACTIVE:
+            run = self.get_meta(ACTIVE_RUN_KEY)
+        return None if not run or run == LEGACY_RUN else run
+
+    def log_game_event(self, kind, data, device="", run=_ACTIVE):
+        """Ein Ereignis des Lernspiels (data ist JSON-Text). run: Durchgang
+        (ab 0.48), ohne Angabe der aktive Durchgang dieses Geraets."""
         return bool(self._execute(
-            "INSERT INTO spiel_ereignisse (timestamp, typ, daten, geraet, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), kind, data, device or "", self._uid()),
+            "INSERT INTO spiel_ereignisse (timestamp, typ, daten, geraet, uid, lauf)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (self._now(), kind, data, device or "", self._uid(), self._run(run)),
             commit=True, default=False))
 
-    def game_events(self):
-        """Alle Spielereignisse chronologisch: [(timestamp, typ, daten-dict)]."""
+    def game_events(self, run=_ACTIVE):
+        """Die Spielereignisse eines Durchgangs chronologisch:
+        [(timestamp, typ, daten-dict)]. Ohne Angabe der aktive Durchgang."""
+        run = self._run(run)
+        if run is None:
+            where, params = "lauf IS NULL OR lauf = ''", ()
+        else:
+            where, params = "lauf = ?", (run,)
         rows = self._execute(
-            "SELECT timestamp, typ, daten FROM spiel_ereignisse"
-            " ORDER BY timestamp, id", fetch="all", default=[]) or []
+            "SELECT timestamp, typ, daten FROM spiel_ereignisse WHERE %s"
+            " ORDER BY timestamp, id" % where, params, fetch="all", default=[]) or []
         events = []
         for timestamp, kind, data in rows:
             try:
@@ -508,6 +575,65 @@ class DBManager:
             if isinstance(payload, dict):
                 events.append((timestamp, kind, payload))
         return events
+
+    def has_legacy_events(self):
+        """Gibt es Spielereignisse von vor 0.48 (ohne Durchgang)?"""
+        row = self._execute("SELECT 1 FROM spiel_ereignisse WHERE lauf IS NULL OR"
+                            " lauf = '' LIMIT 1", fetch="one", default=None)
+        return row is not None
+
+    def event_counts(self):
+        """Anzahl Spielereignisse je Durchgang (alter Durchgang = LEGACY_RUN)."""
+        rows = self._execute(
+            "SELECT COALESCE(NULLIF(lauf, ''), ?), COUNT(*) FROM spiel_ereignisse"
+            " GROUP BY 1", (LEGACY_RUN,), fetch="all", default=[]) or []
+        return {run: count for run, count in rows}
+
+    # -- Spielstand-Plaetze (ab 0.48) -----------------------------------------
+
+    def log_slot(self, slot, run, action, data="", device=""):
+        return bool(self._execute(
+            "INSERT INTO spiel_plaetze (timestamp, platz, lauf, aktion, daten, geraet, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (self._now_fine(), int(slot), run, action, data or "{}", device or "",
+             self._uid()), commit=True, default=False))
+
+    def slot_rows(self):
+        """Alle Zeilen der Platz-Tabelle: [(timestamp, uid, platz, lauf, aktion,
+        daten-dict)] chronologisch."""
+        rows = self._execute(
+            "SELECT timestamp, uid, platz, lauf, aktion, daten FROM spiel_plaetze"
+            " ORDER BY timestamp, uid", fetch="all", default=[]) or []
+        result = []
+        for timestamp, uid, slot, run, action, data in rows:
+            try:
+                payload = json.loads(data) if data else {}
+            except ValueError:
+                payload = {}
+            result.append((timestamp, uid, slot, run, action,
+                           payload if isinstance(payload, dict) else {}))
+        return result
+
+    def delete_run(self, slot, run, device=""):
+        """Loescht einen Durchgang endgueltig - auch auf den anderen Geraeten:
+        die Zeile "geloescht" bleibt stehen, und der Abgleich entfernt jedes
+        Ereignis dieses Durchgangs, egal wann und wo es entstand."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO spiel_plaetze (timestamp, platz, lauf, aktion, daten,"
+                        " geraet, uid) VALUES (?, ?, ?, 'geloescht', '{}', ?, ?)",
+                        (self._now_fine(), int(slot), run, device or "", self._uid()))
+            purge_deleted_runs(cur)
+            conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self._report("Spielstand loeschen fehlgeschlagen: %s" % exc)
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
 
     # -- Bestenliste des Lernspiels (ab 0.46) --------------------------------
 

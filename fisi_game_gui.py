@@ -1702,6 +1702,7 @@ class GameView(ScrollArea):
         self.notices = {}         # Ort -> (Ueberschrift, Text), einmal anzeigen
         self.place = None         # gewaehlter Kundenort
         self.return_to = None     # Ticket kam aus einer Grossansicht (buero, kunde)
+        self.picking = False      # Auswahlbildschirm der Spielstand-Plaetze offen (ab 0.48)
         self.render()
 
     # -- Aufbau -------------------------------------------------------------
@@ -1719,7 +1720,9 @@ class GameView(ScrollArea):
         for child in self.content.winfo_children():
             child.destroy()
         state = self.game.state
-        if state.profile is None or self.draft.get("edit"):
+        if self.picking or not getattr(self.app, "slot_chosen", True):
+            self._build_slot_picker()
+        elif state.profile is None or self.draft.get("edit"):
             self._build_profile_editor(state)
         elif self.ticket:
             self._build_ticket(self.ticket)
@@ -1727,6 +1730,148 @@ class GameView(ScrollArea):
             self._build_overview(state)
         if not keep_scroll:
             self.to_top()
+
+    # -- Spielstand-Plaetze (ab 0.48) ------------------------------------------
+
+    def open_picker(self):
+        """Auswahlbildschirm zeigen ("Platz wechseln")."""
+        self.picking = True
+        self.ticket = None
+        self.app.show_view("game")
+        self.render()
+        self.app.update_slot_label()
+
+    def _choose(self, run):
+        try:
+            self.game.select_run(run)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            self.render()
+            return
+        self._enter_slot()
+
+    def _new_slot(self, slot):
+        try:
+            self.game.new_run(slot)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            self.render()
+            return
+        self._enter_slot()
+
+    def _enter_slot(self):
+        """Nach der Wahl: alles, was am vorigen Platz hing, vergessen."""
+        self.app.slot_chosen = True
+        self.picking = False
+        self.room = self.ticket = self.place = self.return_to = None
+        self.draft = {}
+        self.positions = {}
+        self.notices = {}
+        self.game.check_knowledge()
+        self.app.notify_progress(refresh_view=False)
+        self.render()
+        self.app.update_slot_label()
+
+    def _delete_slot(self, item):
+        if not messagebox.askyesno("Spielstand löschen", fg.slot_delete_question(item)):
+            return
+        try:
+            self.game.delete_run(item["lauf"])
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+        self.game.unlocked = []
+        self.app.notify_progress()
+        self.render(keep_scroll=True)
+
+    def _rename_slot(self, item):
+        dialog = ctk.CTkInputDialog(
+            title="Platz umbenennen",
+            text="Neuer Name für Platz %d (leer lassen = „%s“):" % (
+                item["platz"], fg.slot_default_name(item["platz"])))
+        name = dialog.get_input()
+        if name is None:
+            return
+        self.game.rename_slot(item["platz"], name)
+        self.render(keep_scroll=True)
+
+    def _build_slot_picker(self):
+        head = _frame(self.content)
+        head.pack(fill="x", pady=(0, 12))
+        make_label(head, fg.SLOTS_TITLE, font=F["h1"], fg=C["text"],
+                   anchor="w").pack(anchor="w")
+        make_label(head, fg.SLOTS_HELP, font=F["small"], fg=C["text_dim"],
+                   anchor="w", wraplength=900, justify="left").pack(anchor="w", pady=(4, 0))
+        grid = _frame(self.content)
+        grid.pack(fill="x")
+        items = self.game.slots()
+        for column in range(fg.SLOT_COUNT):
+            grid.columnconfigure(column, weight=1, uniform="slots")
+        for index, item in enumerate(items):
+            if item["extra"]:
+                continue
+            self._slot_card(grid, item).grid(
+                row=0, column=index, sticky="nsew",
+                padx=(0 if index == 0 else 7, 0 if index == fg.SLOT_COUNT - 1 else 7))
+        extras = [item for item in items if item["extra"]]
+        for item in extras:
+            card = self._slot_card(self.content, item)
+            card.pack(fill="x", pady=(14, 0))
+
+    def _slot_card(self, parent, item):
+        active = item["aktiv"]
+        accent = C["accent"] if active else C["accent2"]
+        card = Card(parent, title=item["name"], accent=accent,
+                    subtitle="zuletzt gespielt" if active else "")
+        if active:
+            card.configure(border_color=C["accent"], border_width=2)
+        body = card.body
+        if item["extra"]:
+            make_label(body, fg.SLOT_EXTRA_HELP, font=F["small"], fg=C["text_dim"],
+                       wraplength=700, justify="left", anchor="w").pack(anchor="w")
+        if item["leer"]:
+            box = _frame(body)
+            box.pack(fill="x", pady=(18, 18))
+            make_label(box, fg.SLOT_EMPTY, font=F["h2"], fg=C["text_dim"]).pack()
+            make_label(box, "Spielfigur und Schwierigkeitsgrad wählst du beim Start.",
+                       font=F["small"], fg=C["muted"], wraplength=260,
+                       justify="center").pack(pady=(6, 0))
+        else:
+            row = _frame(body)
+            row.pack(fill="x")
+            avatar = AvatarCanvas(row, size=76)
+            avatar.pack(side="left", padx=(0, 14))
+            avatar.show(item["aussehen"])
+            info = _frame(row)
+            info.pack(side="left", fill="x", expand=True)
+            make_label(info, item["spieler"], font=F["h2"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(info, "%s · Tag %d" % (item["schwierigkeit"], item["tag"]),
+                       font=F["body_bold"], fg=C["accent"], anchor="w").pack(anchor="w")
+            make_label(info, ("Firma: " + item["firma"]) if item["firma"] else
+                       "noch angestellt",
+                       font=F["small"], fg=C["text_dim"], anchor="w", wraplength=240,
+                       justify="left").pack(anchor="w", pady=(2, 0))
+        buttons = _frame(body)
+        buttons.pack(anchor="w", pady=(14, 0))
+        if item["leer"] and not item["lauf"]:
+            NeoButton(buttons, "Starten", lambda slot=item["platz"]: self._new_slot(slot),
+                      height=34, font=F["small_bold"]).pack(side="left")
+        else:
+            NeoButton(buttons, "Starten" if item["leer"] else "Spielen",
+                      lambda run=item["lauf"]: self._choose(run),
+                      height=34, font=F["small_bold"]).pack(side="left")
+            if not item["leer"] or item["extra"]:
+                NeoButton(buttons, "Löschen", lambda it=item: self._delete_slot(it),
+                          kind="ghost", height=34, font=F["small_bold"]).pack(
+                    side="left", padx=(10, 0))
+        if not item["extra"]:
+            rename = make_label(body, "Umbenennen", font=F["small"], fg=C["muted"],
+                                cursor="hand2")
+            rename.pack(anchor="w", pady=(10, 0))
+            rename.bind("<Button-1>", lambda _e, it=item: self._rename_slot(it))
+            rename.bind("<Enter>", lambda _e, w=rename: w.configure(text_color=C["accent"]))
+            rename.bind("<Leave>", lambda _e, w=rename: w.configure(text_color=C["muted"]))
+        return card
 
     @property
     def player_pos(self):
