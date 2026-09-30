@@ -4892,5 +4892,235 @@ class FilialeTest(unittest.TestCase):
             self.assertEqual(fg.branch_nearness(state, others[0], self.content), 0)
 
 
+class ErfolgeTest(unittest.TestCase):
+    """Erfolge, Bestenliste und Meilenstein-Moment (ab 0.46)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    OLD = "2026-01-01 00:00:00"
+
+    @staticmethod
+    def _events(db, kind):
+        return [row[2] for row in db.game_events() if row[1] == kind]
+
+    def _age(self, db, game):
+        """Den laufenden Durchgang zeitlich zuruecklegen - Zeitstempel sind
+        sekundengenau, zwei Durchgaenge brauchen verschiedene Startzeiten."""
+        db._execute("UPDATE spiel_ereignisse SET timestamp = ?", (self.OLD,), commit=True)
+        db._execute("UPDATE spiel_bestenliste SET timestamp = ?, durchgang = ?",
+                    (self.OLD, self.OLD), commit=True)
+        return game.reload()
+
+    def _payday(self, db, game, money):
+        """Geld verdienen und Feierabend machen (der Kontostand zaehlt danach)."""
+        state = game.state
+        db.log_game_event(fg.EV_SOLVED, json.dumps(
+            {"aufgabe": "anderes", "tag": state.day, "richtig": True, "geld": money,
+             "reputation": {}}), "PC")
+        db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": state.day}), "PC")
+        game.reload()
+        return game.check_achievements(day_end=True)
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_achievements(fg.GAME), [])
+        rules = fg.achievement_rules()
+        stages = [stage for rule in rules["erfolge"] for stage in rule["stufen"]]
+        self.assertEqual(len(rules["erfolge"]), 32)
+        self.assertEqual(len(stages), 72)
+        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 25)
+        self.assertEqual(len(rules["bestwerte"]), 14)
+        for rule in rules["erfolge"]:
+            self.assertIn(rule["bild"], fg.BADGE_PICTURES)
+            self.assertIn(rule["wert"], fg.RUN_METRICS)
+        broken = copy.deepcopy(fg.GAME)
+        items = broken["erfolge"]["erfolge"]
+        items[1]["id"] = items[0]["id"]
+        items[2]["stufen"] = list(reversed(items[2]["stufen"]))
+        items[3]["wert"] = "gibt_es_nicht"
+        self.assertGreaterEqual(len(fg._validate_achievements(broken)), 3)
+
+    def test_freischaltung_mit_ereignis(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Nico", {})
+            self.assertIn(("erster_tag", 1), game.state.achievements)
+            logged = self._events(db, fg.EV_ACHIEVEMENT)
+            self.assertEqual([(item["erfolg"], item["stufe"]) for item in logged],
+                             [("erster_tag", 1)])
+            self.assertFalse(logged[0]["nachgetragen"])
+            infos = game.take_unlocks()
+            self.assertEqual([info["erfolg"] for info in infos], ["erster_tag"])
+            self.assertFalse(infos[0]["moment"])
+            self.assertEqual(infos[0]["hinweis"], "Abzeichen: Erster Arbeitstag · Bronze")
+            self.assertEqual(game.take_unlocks(), [])
+            # Nichts doppelt: erneutes Pruefen schreibt kein weiteres Ereignis
+            game.check_achievements()
+            self.assertEqual(len(self._events(db, fg.EV_ACHIEVEMENT)), 1)
+
+    def test_meilenstein_moment_bei_gruendung(self):
+        with TempDB() as db:
+            game = self._rich(db, money=30000)
+            game.take_unlocks()
+            game.found_firm("Nico IT-Service")
+            infos = game.take_unlocks()
+            self.assertTrue(infos[0]["moment"], "Momente kommen zuerst")
+            firm = [info for info in infos if info["erfolg"] == "eigene_firma"][0]
+            self.assertEqual(firm["tier"], "gold")
+            self.assertIn("Nico IT-Service ist gegründet", firm["text"])
+            self.assertEqual(firm["ort"], "gewerbehof")
+            # Ohne frueheren Durchgang kein "Zum ersten Mal" und kein Bestwert
+            self.assertFalse(firm["erstes_mal"])
+            self.assertEqual(firm["bestwert"], "")
+            shapes, width, height = fg.moment_shapes(firm, game.state)
+            self.assertTrue(shapes)
+            self.assertEqual((width, height), (12.0, 6.0))
+
+    def test_nur_hoechste_stufe_und_kleine_ohne_moment(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Nico", {})
+            game.take_unlocks()
+            self._payday(db, game, 150000)
+            infos = game.take_unlocks()
+            money = [info for info in infos if info["erfolg"] == "kontostand"]
+            self.assertEqual(len(money), 1, "je Abzeichen nur die hoechste neue Stufe")
+            self.assertEqual((money[0]["stufe"], money[0]["tier"]), (2, "silber"))
+            self.assertTrue(money[0]["moment"])
+            self.assertIn(("kontostand", 1), game.state.achievements)
+
+    def test_alter_spielstand_still_nachgetragen(self):
+        with TempDB() as db:
+            # Spielstand von vor 0.46: Ereignisse ohne jede Abzeichen-Pruefung
+            db.log_game_event(fg.EV_PROFILE, json.dumps({"name": "Nico", "aussehen": {}}),
+                              "PC")
+            db.log_game_event(fg.EV_SOLVED, json.dumps(
+                {"aufgabe": "anderes", "tag": 1, "richtig": True, "geld": 30000,
+                 "reputation": {}}), "PC")
+            db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": 1}), "PC")
+            game = fg.Game(db, "PC", self.content)
+            game.check_achievements()
+            logged = self._events(db, fg.EV_ACHIEVEMENT)
+            self.assertIn(("kontostand", 1), [(item["erfolg"], item["stufe"])
+                                              for item in logged])
+            self.assertTrue(all(item["nachgetragen"] for item in logged))
+            self.assertEqual(game.take_unlocks(), [], "nachgetragen = ohne Moment")
+            # Nachgetragene Momente stehen nicht im Tagebuch
+            self.assertFalse([entry for entry in fg.journey(game.state)
+                              if entry["titel"].startswith("Abzeichen")])
+
+    def test_bestwerte_ueber_zwei_durchgaenge(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Erster", {})
+            self._payday(db, game, 120000)
+            self._age(db, game)
+            game.reset()
+            self.assertIsNone(game.state.profile)
+            # Die Bestenliste uebersteht das Zuruecksetzen
+            self.assertEqual(fg.record_runs(game.records()), [self.OLD])
+            game.set_profile("Zweiter", {})
+            game.take_unlocks()
+            self._payday(db, game, 40000)
+            board = fg.record_board(game.records(), game.state)
+            self.assertEqual(board["durchgaenge"], 2)
+            money = [item for item in board["werte"] if item["id"] == "kontostand"][0]
+            self.assertEqual(money["wert"], 120000)
+            self.assertEqual(money["durchgang"], 1)
+            self.assertEqual(money["aktuell"], 40000)
+            self.assertFalse(money["rekord"])
+            self.assertIn("1. Durchgang", fg.record_detail(money, 2))
+            # Im zweiten Durchgang: Bronze wieder erreicht, aber nicht zum ersten Mal
+            game.unlocked = []
+            info = fg.unlock_info(game.state, fg.achievement_rule("kontostand"), 1,
+                                  game.records())
+            self.assertFalse(info["erstes_mal"])
+            # Die fruehere Stufe steht in der Uebersicht ("früher: Silber")
+            items = fg.achievement_overview(game.state, None, game.records())
+            item = [entry for entry in items if entry["id"] == "kontostand"][0]
+            self.assertIn("früher: Silber", fg.badge_status(item)[0])
+
+    def test_moment_in_jedem_durchgang_mit_neuem_bestwert(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Erster", {})
+            self._payday(db, game, 110000)
+            self._age(db, game)
+            game.reset()
+            game.set_profile("Zweiter", {})
+            game.take_unlocks()
+            self._payday(db, game, 130000)
+            infos = [info for info in game.take_unlocks() if info["erfolg"] == "kontostand"]
+            self.assertEqual(len(infos), 1)
+            self.assertTrue(infos[0]["moment"], "Moment auch im zweiten Durchgang")
+            self.assertFalse(infos[0]["erstes_mal"])
+            self.assertEqual(infos[0]["bestwert"], "Neuer Bestwert! Bisher: 110.000 €")
+
+    def test_bestwert_wird_gedrosselt_und_beim_reset_vollstaendig(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Nico", {})
+            self._payday(db, game, 30000)
+            first = [row for row in game.records()
+                     if row[2] == fg.REC_BEST and row[3] == "kontostand"]
+            self.assertEqual([row[4] for row in first], [30000])
+            # Besser, aber keine RECORD_EVERY Tage spaeter: noch keine neue Zeile
+            self._payday(db, game, 5000)
+            rows = [row for row in game.records()
+                    if row[2] == fg.REC_BEST and row[3] == "kontostand"]
+            self.assertEqual(len(rows), 1)
+            # Vor dem Zuruecksetzen wird der Endstand festgehalten
+            game.reset()
+            rows = [row[4] for row in game.records()
+                    if row[2] == fg.REC_BEST and row[3] == "kontostand"]
+            self.assertEqual(max(rows), 35000)
+
+    def test_bleibt_bei_lern_reset_und_loeschen_nur_per_knopf(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            game.set_profile("Nico", {})
+            self._payday(db, game, 30000)
+            before = len(game.records())
+            self.assertTrue(before)
+            db.reset_all()
+            self.assertEqual(len(game.records()), before)
+            game.reset()
+            self.assertGreaterEqual(len(game.records()), before)
+            self.assertTrue(game.reset_records())
+            self.assertEqual(game.records(), [], "ohne Spielfigur bleibt sie leer")
+            game.set_profile("Neu", {})
+            runs = fg.record_runs(game.records())
+            self.assertEqual(runs, [game.state.first_event])
+
+    def test_bestenliste_wird_abgeglichen(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = fg.Game(pc, "PC", self.content)
+            game.set_profile("Nico", {})
+            self._payday(pc, game, 30000)
+            rows = len(pc.records())
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertEqual(len(handy.records()), rows)
+            # Doppelter Abgleich zaehlt nichts doppelt
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertEqual(len(handy.records()), rows)
+            # Auch nach "Spielstand zuruecksetzen" am Handy bleibt sie auf beiden Seiten
+            for db in (pc, handy):
+                db._execute("UPDATE spiel_ereignisse SET timestamp = ?", (self.OLD,),
+                            commit=True)
+                db._execute("UPDATE spiel_bestenliste SET timestamp = ?", (self.OLD,),
+                            commit=True)
+            fg.Game(handy, "Handy", self.content).reset()
+            fisi_sync.merge_into_local(pc, fisi_sync.export_local(handy))
+            self.assertIsNone(fg.Game(pc, "PC", self.content).state.profile)
+            self.assertGreaterEqual(len(pc.records()), rows)
+            # "Bestenliste löschen" am Handy loescht sie beim Abgleich auch am PC
+            handy.reset_records()
+            fisi_sync.merge_into_local(pc, fisi_sync.export_local(handy))
+            self.assertEqual(pc.records(), [])
+            # ... und alte Zeilen vom PC kommen nicht zurueck
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertEqual(handy.records(), [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

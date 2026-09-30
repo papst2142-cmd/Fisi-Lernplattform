@@ -11213,11 +11213,12 @@ def badge_status(item):
         text = "%s · Tag %d" % (stage["name"], stage["erreicht"] or 1)
         if item["naechste"] and item["fortschritt"]:
             text += " · %s" % item["fortschritt"]
+        if item["je"] > item["stufe"]:
+            text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
         return text, item["tier"]
     text = item["fortschritt"] or "offen"
     if item["je"]:
-        text += " · früher: %s" % TIER_NAMES[
-            achievement_rule(item["id"])["stufen"][item["je"] - 1]["stufe"]]
+        text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
     return text, "muted"
 
 

@@ -1733,6 +1733,10 @@ class SettingsScreen(Screen):
                         size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
+                ft.Container(height=6),
+                ui.text(fisi_game.RECORDS_HELP, size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton("Bestenliste löschen", self.reset_records,
+                                          kind="danger")]),
             ], accent=C["accent2"]),
             ui.Card("Über das Programm", [ui.text(
                 "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
@@ -1858,6 +1862,14 @@ class SettingsScreen(Screen):
         self.app.confirm("Spielstand zurücksetzen",
                          "Wirklich den gesamten Spielstand des Lernspiels löschen? Der "
                          "Lernfortschritt bleibt erhalten.", confirmed)
+
+    def reset_records(self, _event=None):
+        def confirmed():
+            if self.app.screens["game"].game.reset_records():
+                self.toast("Die Bestenliste wurde gelöscht.", C["green"])
+                self.app.notify_progress()
+
+        self.app.confirm("Bestenliste löschen", fisi_game.RECORDS_ASK, confirmed)
 
     def reset_all(self, _event=None):
         def confirmed():
@@ -2197,8 +2209,78 @@ class FISIMobileApp:
             actions=[ft.TextButton("OK", on_click=close)]))
 
     def notify_progress(self):
-        """Nach jeder Lernaktivitaet: Abgleich vormerken."""
+        """Nach jeder Lernaktivitaet: Abgleich vormerken und neu erreichte
+        Abzeichen zeigen (ab 0.46)."""
         self.sync.schedule()
+        game = self.screens["game"].game
+        if game.unlocked:
+            # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
+            self.page.run_task(self._delayed_unlocks)
+
+    async def _delayed_unlocks(self):
+        await asyncio.sleep(0.4)
+        self.show_unlocks()
+
+    def show_unlocks(self):
+        """Neu erreichte Abzeichen (ab 0.46): grosse als Meilenstein-Moment,
+        kleinere als kurzer Hinweis unten - wie am PC."""
+        game = self.screens["game"].game
+        if not game.unlocked:
+            return
+        items = game.take_unlocks()
+        moments = [item for item in items if item["moment"]]
+        others = [item for item in items if not item["moment"]]
+        if others:
+            self.toast("  ·  ".join(item["hinweis"] for item in others[:3]) +
+                       ("  ·  +%d" % (len(others) - 3) if len(others) > 3 else ""),
+                       C["yellow"])
+        if moments:
+            dialog = getattr(self, "moment_dialog", None)
+            if dialog is not None and dialog.open:
+                self.moments += moments       # Dialog ist schon offen
+            else:
+                self.moments = moments
+                self._show_moment(0)
+        self.page.update()
+
+    def _show_moment(self, position):
+        state = self.screens["game"].game.state
+
+        def close(_event=None):
+            dialog.open = False
+            self.page.update()
+
+        def next_one(_event):
+            close()
+            if position + 1 < len(self.moments):
+                self._show_moment(position + 1)
+                self.page.update()
+
+        def open_list(_event):
+            close()
+            self.open_achievements()
+
+        info = self.moments[position]
+        dialog = ft.AlertDialog(
+            modal=False, bgcolor=C["card"], scrollable=True,
+            shape=ft.RoundedRectangleBorder(
+                radius=22, side=ft.BorderSide(width=2, color=spiel.tier_color(info["tier"]))),
+            inset_padding=ft.Padding.symmetric(horizontal=14, vertical=24),
+            content_padding=ft.Padding.symmetric(horizontal=20, vertical=22),
+            content=ft.Container(
+                content=spiel.moment_card(info, state, position, len(self.moments),
+                                          next_one, open_list), width=330))
+        self.moment_dialog = dialog
+        self.page.show_dialog(dialog)
+
+    def open_achievements(self):
+        """Spiel > Reise > Erfolge oeffnen (aus dem Meilenstein-Moment)."""
+        if self.tab != "game":
+            self.show_tab("game")
+        else:
+            while len(self.page.views) > 1:
+                self.page.views.pop()
+        self.screens["game"].open_journey(tab="erfolge")
 
     def refresh_after_sync(self):
         if len(self.page.views) == 1:
@@ -2498,6 +2580,19 @@ def selftest():
         game._fill_site()
         for person in game.office_plan.site_data["kollegen"]:
             game._office_text(tuple(person["platz"]), person)
+        # Reise mit Erfolgen (ab 0.46): Bestwerte, Abzeichen, jeder Meilenstein-Moment
+        game.journey_box = ft.Column()
+        for tab in ("rueckblick", "erfolge"):
+            game.journey_tab = tab
+            game._fill_journey()
+        for group, _name in fisi_game.achievement_groups():
+            game._badge_choose(group)
+        for rule in fisi_game.achievement_rules()["erfolge"]:
+            for level, stage in enumerate(rule["stufen"], 1):
+                spiel.badge_image(rule["bild"], rule.get("farbe"), stage["stufe"])
+                info = fisi_game.unlock_info(state, rule, level, [])
+                spiel.moment_card(info, state, 0, 2, None, None)
+        spiel.badge_image("stern", None, None)
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()

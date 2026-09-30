@@ -43,6 +43,7 @@ SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
                "zuhause": ("SPIEL", "ZUHAUSE"), "filiale": ("SPIEL", "FILIALE")}
 FIRM_CRUMBS = ("SPIEL", "FIRMA")
 JOURNEY_CRUMBS = ("SPIEL", "REISE")
+JOURNEY_TABS = [("rueckblick", "Rückblick"), ("erfolge", "Erfolge")]   # ab 0.46
 JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
                  fg.JOURNEY_FIRM: C["green"]}
 RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
@@ -393,6 +394,58 @@ def model_preview(place_id, state, width=92, height=58):
     for shape in shapes:
         result += FloorPlan._shape(shape, scale, ox, oy)
     return cv.Canvas(result, width=width, height=height)
+
+
+def shapes_canvas(shapes, w, h, width, height):
+    """Zeichenbefehle aus fisi_game (Breite w, Hoehe h) in ein Feld der
+    Groesse width x height einpassen (Abzeichen, Meilenstein-Szene, ab 0.46)."""
+    scale = min(width / w, height / h)
+    ox, oy = (width - scale * w) / 2.0, (height - scale * h) / 2.0
+    result = []
+    for shape in shapes:
+        result += FloorPlan._shape(shape, scale, ox, oy, clamp=width)
+    return cv.Canvas(result, width=width, height=height)
+
+
+def badge_image(picture, color, tier, size=56):
+    """Rundes Abzeichen (gesperrt mit Schloss, wenn tier None ist)."""
+    return shapes_canvas(fg.badge_shapes(picture, color, tier), fg.BADGE_SIZE,
+                         fg.BADGE_SIZE, size, size)
+
+
+def tier_color(key):
+    """Farbe einer Abzeichen-Stufe (oder "muted" fuer offen)."""
+    return fg.TIER_COLORS.get(key, C["muted"])
+
+
+def moment_card(info, state, position, total, on_next, on_open):
+    """Inhalt des Meilenstein-Moments (ab 0.46): Szene im Kartenstil, Orden,
+    Name und ein Satz - wie am PC."""
+    color = tier_color(info["tier"])
+    lines = [
+        ft.Container(content=shapes_canvas(*fg.moment_shapes(info, state), 300, 150),
+                     alignment=ft.Alignment.CENTER),
+        ft.Container(content=badge_image(info["bild"], info["farbe"], info["tier"], 84),
+                     alignment=ft.Alignment.CENTER, margin=ft.Margin.only(top=6)),
+        ui.text("MEILENSTEIN · %s" % info["tier_name"].upper(), size=11, color=color,
+                weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+        ui.text(info["name"], size=22, weight=ft.FontWeight.BOLD,
+                text_align=ft.TextAlign.CENTER),
+        ui.text(info["text"], size=14, color=C["text_dim"], text_align=ft.TextAlign.CENTER),
+    ]
+    if info["erstes_mal"]:
+        lines.append(ui.text("Zum ersten Mal erreicht!", size=14, color=C["accent"],
+                             weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER))
+    if info["bestwert"]:
+        lines.append(ui.text(info["bestwert"], size=14, color=C["green"],
+                             weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER))
+    more = position + 1 < total
+    lines.append(ft.Container(height=4))
+    lines.append(ui.GradientButton("Nächster (%d/%d)" % (position + 2, total) if more
+                                   else "Weiter", on_next))
+    lines.append(ui.GradientButton("Zu den Erfolgen", on_open, kind="ghost"))
+    return ft.Column(lines, spacing=6, tight=True,
+                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
 
 
 class MatchBoard(ft.Column):
@@ -1444,6 +1497,8 @@ class GameScreen:
         self.journey_box = None
         self.journey_group = "alle"
         self.journey_page = 0
+        self.journey_tab = "rueckblick"     # ab 0.46: "Rückblick" | "Erfolge"
+        self.badge_group = "alle"
         self.root = screen_list([])
         self.render()
 
@@ -1452,7 +1507,10 @@ class GameScreen:
 
     def on_show(self):
         self.game.reload()
+        # Wissen-Abzeichen haengen am Lernstand (ab 0.46)
+        self.game.check_knowledge()
         self.render()
+        self.app.show_unlocks()
 
     def render(self):
         state = self.game.state
@@ -2174,9 +2232,12 @@ class GameScreen:
 
     # -- Reise des Spielers (ab 0.39) -----------------------------------------
 
-    def open_journey(self, _event=None):
+    def open_journey(self, _event=None, tab=None):
         self.game.reload()
+        self.game.check_knowledge()
         self.journey_page = 0
+        if tab:
+            self.journey_tab = tab
         self.journey_box = ft.Column(spacing=12, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_journey()
@@ -2184,6 +2245,12 @@ class GameScreen:
 
     def _fill_journey(self):
         state = self.game.state
+        keys = [key for key, _name in JOURNEY_TABS]
+        tabs = ui.PillGroup(JOURNEY_TABS, initial=keys.index(self.journey_tab),
+                            on_change=self._journey_tab)
+        if self.journey_tab == "erfolge":
+            self.journey_box.controls = [tabs] + self._achievements(state)
+            return
         stats = fg.journey_stats(state)
         tiles = [
             ("Diensttage", str(stats["diensttage"]), "Arbeitstage"),
@@ -2199,7 +2266,7 @@ class GameScreen:
         for index in range(0, len(tiles), 2):
             grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
                                spacing=8))
-        controls = [ui.Card("Rückblick", grid, accent=C["accent2"],
+        controls = [tabs, ui.Card("Rückblick", grid, accent=C["accent2"],
                             subtitle="%s · Tag %d" % (state.profile["name"], state.day))]
         chart = ui.LineChart(height=160)
         chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
@@ -2272,6 +2339,81 @@ class GameScreen:
             ], spacing=1, tight=True),
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
             padding=ft.Padding.symmetric(horizontal=12, vertical=8), expand=True)
+
+    def _journey_tab(self, tab):
+        self.journey_tab = tab
+        self._fill_journey()
+
+    # -- Erfolge (ab 0.46) ------------------------------------------------------
+
+    def _achievements(self, state):
+        records = self.game.records()
+        board = fg.record_board(records, state)
+        tiles = []
+        for item in board["werte"]:
+            mark = item["rekord"] and board["durchgaenge"] > 1
+            tiles.append(ft.Container(
+                content=ft.Column([
+                    ui.text(item["name"].upper(), size=10, color=C["muted"],
+                            weight=ft.FontWeight.BOLD),
+                    ui.text(item["wert_text"], size=18, weight=ft.FontWeight.BOLD,
+                            color=C["text"] if item["wert"] is not None else C["muted"]),
+                    ui.text(fg.record_detail(item, board["durchgaenge"]), size=11,
+                            color=C["text_dim"]),
+                ], spacing=1, tight=True),
+                bgcolor=C["card_alt"], border_radius=12, expand=True,
+                border=ft.Border.all(1, C["yellow"] if mark else C["border"]),
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
+        grid = [ft.Row(tiles[index:index + 2], spacing=8,
+                       vertical_alignment=ft.CrossAxisAlignment.START)
+                for index in range(0, len(tiles), 2)]
+        controls = [ui.Card("Bestwerte", [ui.text(fg.record_subtitle(board), size=12,
+                                                  color=C["muted"])] + grid,
+                            accent=C["yellow"])]
+
+        items = fg.achievement_overview(state, self.game.topic_knowledge(), records)
+        reached, total, tiers = fg.achievement_counts(items)
+        groups = fg.achievement_groups()
+        keys = [key for key, _name in groups]
+        badges = [ui.PillGroup(groups, initial=keys.index(self.badge_group),
+                               on_change=self._badge_choose)]
+        for item in items:
+            if self.badge_group in ("alle", item["gruppe"]):
+                badges.append(self._badge_tile(item))
+        badges.insert(0, ui.text("%d von %d Stufen · Bronze %d · Silber %d · Gold %d"
+                                 % (reached, total, tiers["bronze"], tiers["silber"],
+                                    tiers["gold"]), size=12, color=C["muted"]))
+        controls.append(ui.Card("Abzeichen", badges, accent=C["purple"]))
+        return controls
+
+    @staticmethod
+    def _badge_tile(item):
+        tier = item["tier"]
+        status, color = fg.badge_status(item)
+        info = [ui.text("???" if item["geheim"] else item["name"], size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=C["text"] if tier else C["text_dim"]),
+                ui.text(status, size=12, color=tier_color(color), weight=ft.FontWeight.BOLD)]
+        if item["naechste"] and item["balken"] and not item["geheim"]:
+            info.append(ft.ProgressBar(value=item["anteil"], bar_height=6, border_radius=3,
+                                       bgcolor=C["border"],
+                                       color=tier_color(item["naechste"]["tier"])))
+        lines = [ft.Row([badge_image(item["bild"], item["farbe"], tier, 56),
+                         ft.Column(info, spacing=3, tight=True, expand=True)],
+                        spacing=12),
+                 ui.text("Noch nicht entdeckt." if item["geheim"] else item["text"],
+                         size=12, color=C["text_dim"])]
+        if len(item["stufen"]) > 1:
+            lines.append(ui.text(fg.badge_goals(item), size=11, color=C["muted"]))
+        return ft.Container(
+            content=ft.Column(lines, spacing=6, tight=True),
+            bgcolor=C["card_alt"], border_radius=12,
+            border=ft.Border.all(1, tier_color(tier) if tier else C["border"]),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=10))
+
+    def _badge_choose(self, group):
+        self.badge_group = group
+        self._fill_journey()
 
     def _journey_choose(self, group):
         self.journey_group = group
