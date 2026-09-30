@@ -4,6 +4,28 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.44
+
+- **Spiel, eigene Firma: Rückhol-Angebote.** Viele Bewerber waren vorher
+  bei einem Mitbewerber, das steht jetzt in der Bewerbung („bisher bei …“).
+  Nach einiger Zeit versucht der frühere Arbeitgeber, sie zurückzuholen,
+  bei schlechter Stimmung öfter. Du entscheidest: Gehalt erhöhen (+10 %),
+  Halteprämie zahlen (10 Tagesgehälter) oder ziehen lassen.
+- **Gegenwind:** Gewinnst du viele Angebote hintereinander, bieten alle
+  Mitbewerber mindestens 10 Arbeitstage lang gezielt 3 Punkte günstiger.
+  Solange zählt dein Preisvorteil (Ruf, Zertifizierungen, Werbung) nur
+  halb. Die Stärke ist fest und schaukelt sich nicht hoch.
+- **Konjunktur nach Tag 100:** Normale Lage, Aufschwung und Abschwung
+  wechseln sich ab. Sie ändern die Zahl der Anfragen, die Marktpreise und
+  den Umsatz deiner Mitarbeiter.
+- **Technologietrends:** Cloud-Boom, KI-Nachfrage, Cybersecurity-Welle,
+  Homeoffice, Glasfaser und Datenschutz bringen zeitweise zusätzliche
+  Trend-Aufträge mit gelbem Hinweis. Passende Zertifizierungen helfen
+  dabei, sind aber keine Pflicht.
+- **Neuer Kasten „Markt“** unter Firma > Aufträge zeigt Konjunktur, Trend
+  und Gegenwind. Alles steht auch im Morgentext und in der Reise des
+  Spielers.
+
 ## 0.43
 
 - **Spiel, eigene Firma: Mitarbeiter-Ereignisse.** Deine Mitarbeiter haben

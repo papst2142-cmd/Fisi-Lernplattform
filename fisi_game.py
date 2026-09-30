@@ -109,10 +109,13 @@ EV_CERT = "zertifizierung"
 EV_VACATION_OK = "urlaub_genehmigt"
 EV_VACATION_NO = "urlaub_abgelehnt"
 EV_CONFLICT = "konflikt_ereignis"
+# Rivalitaet (ab 0.44): Antwort auf ein Rueckhol-Angebot eines Mitbewerbers.
+# Konjunktur, Trends und Gegenwind rechnet der Spielstand selbst aus.
+EV_RECALL = "rueckhol_angebot"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
                EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
-               EV_CERT, EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT)
+               EV_CERT, EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT, EV_RECALL)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -3150,6 +3153,10 @@ class GameState:
         self.mediation_days = set()   # Arbeitstage, an denen du geschlichtet hast
         self.quit_staff = {}       # mitarbeiter-id -> Tag der eigenen Kuendigung
         self._live = False         # Feierabend mit den Regeln ab 0.43?
+        # Rivalitaet (ab 0.44)
+        self.leaving = {}          # mitarbeiter-id -> Tag, nach dessen Feierabend sie geht
+        self.returned_staff = {}   # mitarbeiter-id -> (Tag, Mitbewerber, Name) der Rueckkehr
+        self._pressure = {}        # Zwischenspeicher: Tag -> Gegenwind der Mitbewerber
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3249,6 +3256,14 @@ class GameState:
                 if self._live:
                     self._personal_day(today, firm.get("personal") or [])
                 self._live = False
+                # Ab 0.44: Wer ein Rueckhol-Angebot angenommen hat, geht nach
+                # diesem Feierabend zurueck zum Mitbewerber
+                for staff_id, until in list(self.leaving.items()):
+                    if until <= today and staff_id in self.staff:
+                        data = self.staff.pop(staff_id)
+                        self.returned_staff[staff_id] = (today, self.answers.get(
+                            "leaving:" + staff_id, {}).get("firma", ""), data.get("name", ""))
+                        self.leaving.pop(staff_id, None)
                 if self.firm:
                     # Ab 0.42: laufende Werbung, dann Kreditraten, dann Umsatzsteuer -
                     # geplatzte Zahlungen landen in derselben Mahnstufe
@@ -3303,7 +3318,7 @@ class GameState:
             self.mood[data["id"]] = float(personal_rules(self.content)["stimmung"]["start"])
         elif kind == EV_FIRED:
             self.staff.pop(data.get("id"), None)
-        elif kind in (EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT):
+        elif kind in (EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT, EV_RECALL):
             self._apply_decision(kind, data, day)
         elif kind == EV_TRAINING and data.get("id") in self.staff:
             self.trainings.append(dict(data))
@@ -3887,8 +3902,11 @@ class GameState:
     def staff_revenue_of(self, staff_id, values, day=None):
         """Routineumsatz pro Arbeitstag mit Macke und Stimmung (ab 0.43)."""
         base = staff_revenue(values, self.content)
+        # Ab 0.44: Die Konjunktur hebt oder senkt den Routineumsatz
+        boom = market_state(self, self.day if day is None else day,
+                            self.content)["phase_info"].get("umsatz", 0)
         factor = (1 + self.quirk_value(staff_id, "umsatz", day) / 100.0) * \
-            (1 - self.staff_form(staff_id, day)["leistung"] / 100.0)
+            (1 - self.staff_form(staff_id, day)["leistung"] / 100.0) * (1 + boom / 100.0)
         return int(round(max(0.0, base * factor)))
 
     def _mood_change(self, staff_id, delta):
@@ -3903,7 +3921,7 @@ class GameState:
     def _apply_decision(self, kind, data, day):
         """Antwort auf eine Urlaubsanfrage oder Entscheidung bei einem Konflikt.
         Doppelt (zwei Geraete) zaehlt nur die erste."""
-        key = data.get("anfrage") or data.get("konflikt")
+        key = data.get("anfrage") or data.get("konflikt") or data.get("rueckhol")
         if not key or key in self.answers:
             return
         rules = personal_rules(self.content)
@@ -3938,6 +3956,21 @@ class GameState:
                 for person in (first, second):
                     self._mood_change(person, rule["ignorieren"])
                     self.upset[person] = max(self.upset.get(person, 0), until)
+        elif kind == EV_RECALL and data.get("id") in self.staff:
+            rule = rivalry_rules(self.content).get("rueckhol") or {}
+            staff_id = data["id"]
+            choice = data.get("wahl")
+            if choice == RECALL_RAISE:
+                self.staff[staff_id]["gehalt"] = int(data.get("gehalt") or
+                                                     self.staff[staff_id].get("gehalt", 0))
+                self._mood_change(staff_id, rule.get("gehalt_stimmung", 0))
+            elif choice == RECALL_BONUS:
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_WAGES, data.get("geld", 0))
+                self._mood_change(staff_id, rule.get("bonus_stimmung", 0))
+            else:
+                self.leaving[staff_id] = int(data.get("tag", day))
+                self.answers["leaving:" + staff_id] = dict(data)
 
     def _personal_day(self, day, items):
         """Feierabend ab 0.43: Die Stimmung erholt sich ein Stueck, dazu die
@@ -4466,6 +4499,8 @@ class Game:
                                                    "schwerpunkt", "macke", "rolle")}
         if applicant.get("macke_id"):
             payload["macke_id"] = applicant["macke_id"]
+        if "vorher" in applicant:
+            payload["vorher"] = applicant["vorher"]
         payload["tag"] = self.state.day
         self._log(EV_HIRED, payload)
         return payload
@@ -4526,6 +4561,14 @@ class Game:
             payload = {"anfrage": item["id"], "id": item["person"], "name": item["name"],
                        "von": item["von"], "bis": item["bis"], "tag": self.state.day}
             self._log(EV_VACATION_OK if choice == VACATION_YES else EV_VACATION_NO, payload)
+        elif item["art"] == DECISION_RECALL:
+            payload = {"rueckhol": item["id"], "id": item["person"], "name": item["name"],
+                       "firma": item["firma"], "wahl": choice, "tag": self.state.day}
+            if choice == RECALL_RAISE:
+                payload["gehalt"] = item["gehalt_neu"]
+            elif choice == RECALL_BONUS:
+                payload["geld"] = -int(item["bonus"])
+            self._log(EV_RECALL, payload)
         else:
             payload = {"konflikt": item["id"], "a": item["a"], "b": item["b"],
                        "name_a": item["name_a"], "name_b": item["name_b"],
@@ -5085,7 +5128,13 @@ def _applicant(rules, seed, batch, number, content):
     quirk = _pick([item for item in rules["macken"] if not item.get("kollege")],
                   seed, batch, salt + "macke")
     staff_id = "bw%d-%d" % (batch, number)
+    # Ab 0.44: Manche kommen von einem Mitbewerber (der sie spaeter zurueckwill)
+    former = former_for(seed, staff_id, content)
+    role = staff_role(values)
+    if former:
+        role = "%s, bisher bei %s" % (role, competitor(former, content)["kurz"])
     return {"id": staff_id, "macke": quirk["text"], "macke_id": quirk["id"],
+            "vorher": former,
             "macke_info": quirk_state(staff_id, {"macke_id": quirk["id"]}, 0, 0, content),
             "name": "%s %s" % (_pick(names["vornamen"], seed, batch, salt + "vor"),
                                _pick(names["nachnamen"], seed, batch, salt + "nach")),
@@ -5093,7 +5142,7 @@ def _applicant(rules, seed, batch, number, content):
             "staerken": strongest_topics(topics),
             "gehalt": staff_salary(values, content), "herkunft": "bewerbung",
             "schwerpunkt": staff_focus(values),
-            "rolle": staff_role(values)}
+            "rolle": role}
 
 
 def switchers(state, content=None):
@@ -5236,6 +5285,11 @@ CONFLICT_MEDIATE = "schlichten"
 CONFLICT_SIDE_A = "a"
 CONFLICT_SIDE_B = "b"
 CONFLICT_IGNORE = "ignorieren"
+PERSONAL_RECALL = "rueckhol"       # ab 0.44: ein Mitbewerber will jemanden zurueck
+DECISION_RECALL = "rueckhol"
+RECALL_RAISE = "gehalt"
+RECALL_BONUS = "bonus"
+RECALL_LET = "gehen"
 HARDWARE_TOPICS = ("hardware", "storage", "verkabelung")
 DECISIONS_OPEN_TEXT = "Erst die offenen Entscheidungen zum Personal treffen."
 ACTION_PERSONAL = "personal"       # Knopf: zu den Entscheidungen (Firma > Mitarbeiter)
@@ -5602,6 +5656,12 @@ def personal_events(state, day, content=None):
                            "a": first, "b": second, "name_a": names[first],
                            "name_b": names[second],
                            "text": text.format(**_pair_names(names[first], names[second]))})
+    # Ab 0.44: Ein Mitbewerber will jemanden zurueck (nicht, wer schon mit
+    # Urlaub oder Streit beschaeftigt ist)
+    taken = {item.get("id") for item in result} | {item.get("a") for item in result} | \
+        {item.get("b") for item in result}
+    result += _recall_events(state, day, [staff_id for staff_id in present
+                                          if staff_id not in sick], taken, content)
     for staff_id in state.staff:
         if staff_id in leaving:
             continue
@@ -5650,6 +5710,11 @@ def personal_decisions(state, content=None):
                      "folge": "%s bleibt da, aber Stimmung %s%s." % (
                          first, _signed(rule["abgelehnt_wieder" if again else "abgelehnt"]),
                          " (schon das zweite Nein in Folge)" if again else "")}]})
+        elif art == PERSONAL_RECALL:
+            if item["rueckhol"] in state.answers or tag != state.day - 1 or \
+                    item["id"] not in state.staff:
+                continue
+            result.append(_recall_decision(state, item, content))
         elif art == PERSONAL_CONFLICT:
             key = item["konflikt"]
             if key in state.answers or tag != state.day - 1 or \
@@ -5721,6 +5786,12 @@ def personal_news(state, content=None):
         elif art == PERSONAL_WEAKER:
             lines.append("%s hat sich eingearbeitet: Die Macke „%s“ wirkt schwächer (jetzt "
                          "%s)." % (item["name"], item["macke"], item["stufe_name"]))
+        elif art == PERSONAL_RECALL:
+            lines.append("Abwerbeversuch: %s" % item["text"])
+    for day, rival, name in state.returned_staff.values():
+        if day == state.day - 1:
+            lines.append("%s arbeitet ab heute wieder bei %s. Der Platz ist frei." % (
+                name, competitor(rival or BITWEICHE, content)["kurz"]))
     for item in state.absences:
         if item["art"] == ABSENT_VACATION and item["von"] == state.day and \
                 item["id"] in state.staff:
@@ -6916,8 +6987,10 @@ def _gross_tender(state, entry, slot, start, content):
     low, high = level["material"]
     material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
                    * 10)
+    shift = market_shift(state, start, content)
     bids, absent = competitor_bids("projekt", "normal", entry["cat"], seed, start, salt,
-                                   content, extra=rules.get("mitbieter_extra", 0))
+                                   content, extra=rules.get("mitbieter_extra", 0),
+                                   shift=shift["shift"])
     cheapest = min(bids, key=lambda bid: bid["zuschlag"])
     project_id = "%s%d" % (GROSS_PREFIX, slot + 1)
     what = "Öffentliche Ausschreibung" if entry.get("oeffentlich") else "Großauftrag"
@@ -6938,6 +7011,7 @@ def _gross_tender(state, entry, slot, start, content):
             "rahmenbedingungen": list(entry.get("rahmenbedingungen") or []),
             "gross": True, "oeffentlich": bool(entry.get("oeffentlich")),
             "braucht": list(entry.get("braucht") or []), "zertifikate": names,
+            "gegenwind": shift["gegenwind"],
             "ergebnis": state.project_offers.get(project_id)}
 
 
@@ -7014,28 +7088,49 @@ def inquiries_for_day(state, day, content=None):
     # Ab 0.42: Werbung bringt mehr Anfragen (Menge) und groessere Bestellungen
     ads = marketing_effects(state, day, content)
     extra = _extra_count(ads["anfragen"], seed, day, "werbung-anfragen")
-    for number in range(int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus")) +
-                        extra):
+    # Ab 0.44: Konjunktur (mehr oder weniger Anfragen, Preisniveau), Trend-
+    # Anfragen und Gegenwind der Mitbewerber
+    shift = market_shift(state, day, content)
+    total = max(1, int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus")) + extra +
+                int(shift["markt"]["phase_info"].get("anfragen", 0)))
+    trend = shift["markt"]["trend"]
+    hype = (market_rules(content).get("trends") or {}) if trend else {}
+    with_trend = bool(trend) and _dice(seed, day, "trend-anfrage") * 100 < \
+        float(hype.get("chance", 0))
+    for number in range(total + (1 if with_trend else 0)):
         salt = "anfrage%d-" % number
+        is_trend = with_trend and number == total
         # Verschiedene Kunden am selben Tag
         customer = customers[(first + number * max(1, len(customers) // 2 - 1))
                              % len(customers)]
-        article = _pick(rules["artikel"], seed, day, salt + "artikel")
+        article = _pick(trend["artikel"] if is_trend else rules["artikel"], seed, day,
+                        salt + "artikel")
         low, high = article["preis"]
         price = int(round((low + _dice(seed, day, salt + "preis") * (high - low)) / 5.0) * 5)
         count = _between(seed, day, salt + "menge", *article["menge"])
         if ads["groesse"]:
             count = int(math.ceil(count * (1 + ads["groesse"] / 100.0)))
-        bids, absent = competitor_bids("anfrage", customer["art"], None, seed, day, salt,
-                                       content)
+        cat = trend.get("cat") if is_trend else None
+        move = shift["shift"] + (int(hype.get("zuschlag", 0)) if is_trend else 0)
+        bids, absent = competitor_bids("anfrage", customer["art"], cat, seed, day, salt,
+                                       content, shift=move, second=shift["zweiter"])
         cheapest = min(bids, key=lambda bid: bid["zuschlag"])
         delivery = _between(seed, day, salt + "lieferzeit", rules["lieferzeit"]["von"],
                             rules["lieferzeit"]["bis"])
         text = _pick(rules["texte"], seed, day, salt + "text").format(
             kontakt=customer["kontakt"], menge=count, artikel=article["name"],
             lieferzeit=delivery)
+        if is_trend and trend.get("satz"):
+            text = "%s „%s“" % (text, trend["satz"])
         inquiry_id = "%s%d:%d" % (INQUIRY_PREFIX, day, number + 1)
-        result.append({"id": inquiry_id, "tag": day, "kunde": customer,
+        extras = {}
+        if is_trend:
+            extras = {"trend": trend["id"], "trend_name": trend["name"], "cat": cat}
+        if shift["gegenwind"]:
+            extras["gegenwind"] = shift["gegenwind"]
+        if shift["konjunktur"]:
+            extras["konjunktur"] = shift["phase"]
+        result.append(dict(extras, **{"id": inquiry_id, "tag": day, "kunde": customer,
                        "artikel": article["name"], "menge": count,
                        # Mit eigenem Lager kauft man guenstiger ein als die Mitbewerber
                        "einkaufspreis": discounted(price, discount),
@@ -7044,7 +7139,7 @@ def inquiries_for_day(state, day, content=None):
                        "laune": cheapest["laune"], "konkurrent": cheapest["id"],
                        "bieter": bids, "ausgefallen": absent,
                        "text": "%s\n\n%s" % (text, customer["satz"]),
-                       "ergebnis": state.offers.get(inquiry_id)})
+                       "ergebnis": state.offers.get(inquiry_id)}))
     return result
 
 
@@ -7126,6 +7221,9 @@ def offer_result(state, inquiry, markup, answer, content=None):
     won = payload["gewonnen"]
     satisfaction = rules["kundenzufriedenheit_gewonnen"] + \
         int(state.room_effect("kundenzufriedenheit_plus"))
+    for key in ("trend", "trend_name", "gegenwind", "konjunktur"):
+        if inquiry.get(key):
+            payload[key] = inquiry[key]
     payload.update({"anfrage": inquiry["id"], "tag": inquiry["tag"],
                     "kunde": inquiry["kunde"]["id"], "artikel": inquiry["artikel"],
                     "menge": inquiry["menge"], "zuschlag": markup,
@@ -7148,7 +7246,11 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
     bids = [dict(bid, netto=_money(rival_cost * (1 + bid["zuschlag"] / 100.0)))
             for bid in offer.get("bieter") or []]
     market = _money(rival_cost * (1 + offer["markt"] / 100.0))
-    advantage = offer_advantage(state, content, offer.get("cat"))
+    advantage = full = offer_advantage(state, content, offer.get("cat"))
+    if offer.get("gegenwind"):
+        # Im Gegenwind zaehlt der Preisvorteil nur anteilig (ab 0.44, fester Faktor)
+        factor = (rivalry_rules(content).get("gegenwind") or {}).get("vorteil_faktor", 1)
+        advantage = int(advantage * factor)
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
     won = right and cheap
@@ -7162,6 +7264,10 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
                "vorteil_gruende": [reason for reason, _value in offer_advantage_parts(
                    state, offer.get("cat"), content)] if advantage else [],
                "grund": "" if won else ("rechenfehler" if not right else "preis")}
+    if offer.get("gegenwind"):
+        payload["gegenwind"] = offer["gegenwind"]
+        if advantage < full:
+            payload["vorteil_voll"] = full
     if problems:
         payload["probleme"] = problems
     return payload
@@ -7179,10 +7285,23 @@ def offer_result_text(payload, content=None):
         mood = competitor_mood(competitor(rival_id, content), "ausgelastet", content)
         if mood:
             text += " " + mood["text"]
+    if payload.get("gegenwind"):
+        text += (" Die Mitbewerber haben gezielt %d Punkte günstiger gegen dich geboten."
+                 % payload["gegenwind"])
+        if payload.get("vorteil_voll"):
+            text += (" Dein Preisvorteil zählte dabei nur %d statt %d %%."
+                     % (payload["vorteil"], payload["vorteil_voll"]))
     others = bidders_text(payload, content)
     if others:
         text += "\n\n" + others
     return head, text
+
+
+def inquiry_badge_text(inquiry):
+    """ "Trend-Auftrag: Cloud-Boom" (leer bei normalen Anfragen)."""
+    if inquiry.get("trend_name"):
+        return "Trend-Auftrag: %s" % inquiry["trend_name"]
+    return ""
 
 
 def bidders_text(payload, content=None):
@@ -7517,9 +7636,12 @@ def _rival_markup(rival, rules, art, cat, seed, day, salt):
     return max(0, markup), ""
 
 
-def competitor_bids(kind, art, cat, seed, day, salt, content=None, extra=0):
+def competitor_bids(kind, art, cat, seed, day, salt, content=None, extra=0, shift=0,
+                    second=0.0):
     """Wer mitbietet: ([{"id", "zuschlag", "laune"}], [ausgefallene ids]).
-    kind ist "anfrage" oder "projekt", extra zusaetzliche Bieter (Grossauftraege)."""
+    kind ist "anfrage" oder "projekt", extra zusaetzliche Bieter (Grossauftraege).
+    Ab 0.44: shift Punkte auf jeden Zuschlag (Konjunktur, Trend, Gegenwind),
+    second mehr Chance auf einen zweiten Bieter bei Anfragen (Gegenwind)."""
     content = content or GAME
     rules = offer_rules(content)
     setup = competitor_rules(content)
@@ -7528,7 +7650,7 @@ def competitor_bids(kind, art, cat, seed, day, salt, content=None, extra=0):
         span = setup.get("projekt_bieter") or {"von": 2, "bis": 3}
         count = _between(seed, day, salt + "bieterzahl", span["von"], span["bis"])
     else:
-        single = (setup.get("anfrage_bieter") or {}).get("eins", 1.0)
+        single = (setup.get("anfrage_bieter") or {}).get("eins", 1.0) - float(second)
         count = 1 if _dice(seed, day, salt + "bieterzahl") < single else 2
     count += int(extra)
     order = _weighted_order(rivals, [(item.get("gewicht") or {}).get(kind, 1)
@@ -7539,13 +7661,29 @@ def competitor_bids(kind, art, cat, seed, day, salt, content=None, extra=0):
         if result is None:
             absent.append(rival["id"])
             continue
-        bids.append({"id": rival["id"], "zuschlag": int(result[0]), "laune": result[1]})
+        bids.append({"id": rival["id"], "zuschlag": max(0, int(result[0]) + int(shift)),
+                     "laune": result[1]})
     if not bids:
         # Niemand da? Bitweiche bietet immer
         rival = competitor(BITWEICHE, content)
         markup, mood = _rival_markup(rival, rules, art, cat, seed, day, salt)
-        bids.append({"id": BITWEICHE, "zuschlag": int(markup), "laune": mood})
+        bids.append({"id": BITWEICHE, "zuschlag": max(0, int(markup) + int(shift)),
+                     "laune": mood})
     return bids, absent
+
+
+def market_shift(state, day, content=None, trend=False):
+    """Punkte auf die Zuschlaege der Mitbewerber an einem Tag (ab 0.44):
+    Konjunktur, bei Trend-Anfragen der Trend, minus Gegenwind. Dazu die
+    Einzelteile fuer die Anzeige."""
+    content = content or state.content
+    market = market_state(state, day, content)
+    pressure = rivalry_pressure(state, day, content)
+    boom = int(market["phase_info"].get("zuschlag", 0))
+    hype = int((market_rules(content).get("trends") or {}).get("zuschlag", 0)) if trend else 0
+    return {"shift": boom + hype - pressure["minus"], "konjunktur": boom, "trend": hype,
+            "gegenwind": pressure["minus"], "zweiter": pressure["zweiter"],
+            "phase": market["phase"], "markt": market}
 
 
 def lost_to(state, content=None):
@@ -7560,6 +7698,376 @@ def lost_to(state, content=None):
     return [(competitor(rival, content)["name"], number) for rival, number in
             sorted(counts.items(), key=lambda pair: (-pair[1], order.index(pair[0])
                                                     if pair[0] in order else 99))]
+
+
+# -- Rivalitaet und Markt (ab 0.44) -----------------------------------------
+#
+# Die Mitbewerber reagieren auf deinen Erfolg: Sie wollen abgeworbene Leute
+# zurueck und bieten gezielt guenstiger, wenn du zu oft gewinnst. Nach der
+# Story (ab markt.ab_tag) bewegt sich ausserdem der Markt: Konjunkturphasen
+# und befristete Technologietrends. Alles wird aus Firmenname, Gruendungstag
+# und den Ereignissen berechnet - auf PC und Handy gleich, ohne eigenen Zustand.
+
+def rivalry_rules(content=None):
+    return firm_rules(content).get("rivalitaet") or {}
+
+
+def market_rules(content=None):
+    return firm_rules(content).get("markt") or {}
+
+
+def former_for(seed, staff_id, content=None):
+    """Frueherer Arbeitgeber eines normalen Bewerbers (Mitbewerber-id oder
+    leer), fest gewuerfelt aus seed und id."""
+    rule = rivalry_rules(content).get("rueckhol") or {}
+    share = float(rule.get("vorher_anteil", 0))
+    if not share or _dice(seed, 0, "vorher|" + staff_id) * 100 >= share:
+        return ""
+    return _pick(competitors(content), seed, 0, "vorher-firma|" + staff_id)["id"]
+
+
+def former_employer(state, staff_id, data=None):
+    """Bei welchem Mitbewerber jemand vorher war (id oder leer). Aeltere
+    Spielstaende kennen "vorher" nicht - dann wie beim Bewerber gewuerfelt."""
+    data = data if data is not None else (state.staff.get(staff_id) or {})
+    if data.get("herkunft") == "bitweiche":
+        return BITWEICHE
+    if "vorher" in data:
+        return data.get("vorher") or ""
+    if data.get("herkunft") != "bewerbung":
+        return ""
+    return former_for(state.firm_seed, staff_id, state.content)
+
+
+def recall_factor(mood, rule):
+    """Wie viel wahrscheinlicher ein Rueckhol-Angebot bei dieser Stimmung
+    ist (zufriedene Leute sind seltener ansprechbar)."""
+    factor = 1 + (float(rule.get("stimmung_ziel", 70)) - mood) / \
+        float(rule.get("stimmung_teiler", 40) or 40)
+    return max(float(rule.get("faktor_min", 0.5)), min(float(rule.get("faktor_max", 2.0)),
+                                                       factor))
+
+
+def recall_raise(salary, rule):
+    """Neues Gehalt beim Gegenangebot (ganze Euro, mindestens +1)."""
+    return max(int(salary) + 1, int(round(int(salary) * (1 + rule.get("gehalt_plus", 10)
+                                                         / 100.0))))
+
+
+def recall_bonus(salary, rule):
+    return int(salary) * int(rule.get("bonus_tage", 10))
+
+
+def _recall_events(state, day, present, taken, content):
+    """Hoechstens ein Rueckhol-Angebot pro Feierabend (fest gewuerfelt)."""
+    rule = rivalry_rules(content).get("rueckhol")
+    if not rule:
+        return []
+    seed = state.firm_seed
+    last = max([tag for tag, item in state.personal_log
+                if item.get("art") == PERSONAL_RECALL] or [-1000])
+    if day - last < int(rule.get("abstand_firma", 0)):
+        return []
+    for staff_id in present:
+        data = state.staff[staff_id]
+        rival = former_employer(state, staff_id, data)
+        if not rival or staff_id in taken or staff_id in state.leaving:
+            continue
+        if day - int(data.get("tag", 0) or 0) < int(rule["ab_tagen"]):
+            continue
+        asked = [tag for tag, item in state.personal_log
+                 if item.get("art") == PERSONAL_RECALL and item.get("id") == staff_id]
+        if asked and day - asked[-1] < int(rule["abstand"]):
+            continue
+        chance = float(rule["chance"]) * recall_factor(state.mood_of(staff_id), rule)
+        if _dice(seed, day, "rueckhol|" + staff_id) * 100 >= chance:
+            continue
+        company = competitor(rival, content)
+        plus = _between(seed, day, "rueckhol-plus|" + staff_id, *rule["angebot_plus"])
+        texts = (rule.get("texte_bitweiche") if rival == BITWEICHE else None) or rule["texte"]
+        name = data.get("name", "")
+        text = _pick(texts, seed, day, "rueckhol-text|" + staff_id).format(
+            firma=company["kurz"], name=short_name({"name": name}), plus=plus)
+        return [{"art": PERSONAL_RECALL, "rueckhol": "rueckhol:%d:%s" % (day, staff_id),
+                 "id": staff_id, "name": name, "firma": rival, "plus": plus, "text": text}]
+    return []
+
+
+def _recall_decision(state, item, content):
+    rule = rivalry_rules(content).get("rueckhol") or {}
+    data = state.staff[item["id"]]
+    first = short_name(item)
+    salary = int(data.get("gehalt", 0))
+    raised = recall_raise(salary, rule)
+    bonus = recall_bonus(salary, rule)
+    company = competitor(item.get("firma") or BITWEICHE, content)["kurz"]
+    return {
+        "id": item["rueckhol"], "art": DECISION_RECALL, "person": item["id"],
+        "name": item["name"], "firma": item.get("firma") or BITWEICHE,
+        "gehalt_neu": raised, "bonus": bonus,
+        "titel": "%s will %s zurück" % (company, item["name"]),
+        "text": item["text"] + " Hältst du dagegen?",
+        "optionen": [
+            {"id": RECALL_RAISE, "label": "Gehalt erhöhen", "problem": "",
+             "folge": "%s bleibt. Gehalt dauerhaft +%d %% (%s statt %s pro Arbeitstag), "
+                      "Stimmung %s." % (first, rule.get("gehalt_plus", 10),
+                                        _whole_euro(raised), _whole_euro(salary),
+                                        _signed(rule.get("gehalt_stimmung", 0)))},
+            {"id": RECALL_BONUS, "label": "Halteprämie zahlen",
+             "folge": "%s bleibt. Einmalig %s (%d Tagesgehälter), Stimmung %s." % (
+                 first, _whole_euro(bonus), int(rule.get("bonus_tage", 10)),
+                 _signed(rule.get("bonus_stimmung", 0))),
+             "problem": "" if state.money >= bonus else
+             "Für die Halteprämie reicht dein Kontostand nicht."},
+            {"id": RECALL_LET, "label": "Ziehen lassen", "problem": "",
+             "folge": "%s arbeitet heute noch mit und geht nach dem Feierabend zurück zu "
+                      "%s. Der Platz wird frei." % (first, company)}]}
+
+
+def recall_choice_text(data, content=None):
+    """Wie du auf ein Rueckhol-Angebot reagiert hast."""
+    company = competitor(data.get("firma") or BITWEICHE, content)["kurz"]
+    choice = data.get("wahl")
+    if choice == RECALL_RAISE:
+        return "%s wollte %s zurück. Du hast das Gehalt auf %s erhöht." % (
+            company, short_name(data), _whole_euro(data.get("gehalt", 0)))
+    if choice == RECALL_BONUS:
+        return "%s wollte %s zurück. Du hast eine Halteprämie von %s gezahlt." % (
+            company, short_name(data), _whole_euro(-int(data.get("geld", 0))))
+    return "%s hat das Angebot von %s angenommen." % (short_name(data), company)
+
+
+def _decided_offers(state):
+    """Alle Angebote (Anfragen und Projekte) als [(tag, id, gewonnen)]."""
+    items = [(int(item.get("tag") or 0), str(item.get("anfrage") or item.get("projekt") or ""),
+              bool(item.get("gewonnen")))
+             for item in list(state.offers.values()) + list(state.project_offers.values())]
+    return sorted(items)
+
+
+def rivalry_pressure(state, day, content=None):
+    """Gegenwind der Mitbewerber an einem Arbeitstag, aus den Angeboten der
+    Tage davor: {"aktiv", "gewonnen", "angebote", "minus", "zweiter", "seit"}.
+    Er beginnt ab gegenwind.ab_quote Prozent Siegen und haelt dann mindestens
+    gegenwind.mindest_tage Arbeitstage. Die Staerke ist fest - wer noch oefter
+    gewinnt, bekommt nicht mehr ab."""
+    content = content or state.content
+    rule = rivalry_rules(content).get("gegenwind")
+    empty = {"aktiv": False, "gewonnen": 0, "angebote": 0, "minus": 0, "zweiter": 0.0,
+             "faktor": 1.0, "seit": 0}
+    if not rule or not state.firm:
+        return empty
+    stamp = len(state.offers) + len(state.project_offers)
+    cache = state._pressure
+    if cache.get("stand") != stamp:
+        cache.clear()
+        cache["stand"] = stamp
+        cache["angebote"] = _decided_offers(state)
+    if day in cache:
+        return cache[day]
+    offers = cache["angebote"]
+    founded = int(state.firm["tag"])
+    since = 0
+    known = [key for key in cache if isinstance(key, int) and key < day]
+    begin = max(known) + 1 if known else founded
+    if known:
+        since = cache[max(known)]["seit"]
+    result = empty
+    for current in range(begin, max(begin, day) + 1):
+        window = [item for item in offers if item[0] < current][-int(rule["fenster"]):]
+        won = sum(1 for item in window if item[2])
+        hot = len(window) >= int(rule["mindestens"]) and \
+            won * 100 >= float(rule["ab_quote"]) * len(window)
+        if hot and not since:
+            since = current
+        elif not hot and since and current - since >= int(rule.get("mindest_tage", 0)):
+            since = 0
+        active = bool(since)
+        result = {"aktiv": active, "gewonnen": won, "angebote": len(window),
+                  "minus": int(rule["zuschlag_minus"]) if active else 0,
+                  "zweiter": float(rule.get("zweiter_bieter", 0)) if active else 0.0,
+                  "faktor": float(rule.get("vorteil_faktor", 1)) if active else 1.0,
+                  "seit": since}
+        cache[current] = result
+    return cache.get(day, result)
+
+
+def pressure_text(pressure):
+    """ "Gegenwind: ..." fuer die Auftraege (leer ohne Gegenwind)."""
+    if not pressure.get("aktiv"):
+        return ""
+    text = ("Gegenwind: Du hast %d deiner letzten %d Angebote gewonnen. Alle Mitbewerber "
+            "bieten deshalb gezielt %d Punkte günstiger gegen dich." % (
+                pressure["gewonnen"], pressure["angebote"], pressure["minus"]))
+    if pressure.get("faktor", 1) < 1:
+        text += " Dein Preisvorteil zählt solange nur halb." if pressure["faktor"] == 0.5 \
+            else " Dein Preisvorteil zählt solange nur zu %d %%." % round(
+                pressure["faktor"] * 100)
+    return text
+
+
+def _phase_list(seed, until, content):
+    """Konjunkturphasen ab markt.ab_tag bis mindestens until:
+    [(von, bis ausschliesslich, phasen-id)]."""
+    rule = market_rules(content)
+    setup = rule.get("konjunktur") or {}
+    phases = setup.get("phasen") or {}
+    if not phases or "neutral" not in phases:
+        return []
+    day = int(rule.get("ab_tag", 101))
+    result = []
+    kind = "neutral"
+    number = 0
+    ups = [key for key in ("aufschwung", "abschwung") if key in phases]
+    swing = ""       # letzter Auf- oder Abschwung
+    while day <= until:
+        span = setup.get("start_tage") if number == 0 else phases[kind]["tage"]
+        length = max(1, _between(seed, number, "konjunktur-dauer", *span))
+        result.append((day, day + length, kind))
+        day += length
+        number += 1
+        if kind != "neutral":
+            swing = kind
+            kind = "neutral"
+        elif not ups:
+            break
+        elif swing and len(ups) == 2:
+            # Meist folgt auf einen Abschwung ein Aufschwung und umgekehrt
+            other = ups[1] if swing == ups[0] else ups[0]
+            kind = other if _dice(seed, number, "konjunktur-art") * 100 < \
+                float(setup.get("wechsel_chance", 50)) else swing
+        else:
+            kind = _pick(ups, seed, number, "konjunktur-art")
+    return result
+
+
+def _trend_list(seed, until, content):
+    """Technologietrends: [(von, bis ausschliesslich, trend)]."""
+    rule = market_rules(content)
+    setup = rule.get("trends") or {}
+    trends = setup.get("liste") or []
+    if not trends:
+        return []
+    day = int(rule.get("ab_tag", 101)) + _between(seed, 0, "trend-erster",
+                                                  *setup["erster_nach"])
+    result = []
+    last = None
+    number = 0
+    while day <= until:
+        options = [item for item in trends if item["id"] != last] or trends
+        trend = _pick(options, seed, number, "trend-art")
+        length = max(1, _between(seed, number, "trend-dauer", *setup["dauer"]))
+        result.append((day, day + length, trend))
+        last = trend["id"]
+        day += length + _between(seed, number, "trend-pause", *setup["pause"])
+        number += 1
+    return result
+
+
+_NO_PHASE = {"name": "", "anfragen": 0, "zuschlag": 0, "umsatz": 0}
+
+
+def market_state(state, day, content=None):
+    """Konjunktur und Trend an einem Arbeitstag: {"phase" (id oder ""),
+    "phase_info", "phase_von", "phase_bis", "trend" (oder None), "trend_von",
+    "trend_bis"}. Vor markt.ab_tag und ohne Firma bewegt sich nichts."""
+    content = content or state.content
+    result = {"phase": "", "phase_info": _NO_PHASE, "phase_von": 0, "phase_bis": 0,
+              "trend": None, "trend_von": 0, "trend_bis": 0}
+    rule = market_rules(content)
+    if not state.firm or not rule or day < int(rule.get("ab_tag", 101)):
+        return result
+    seed = state.firm_seed
+    for start, end, kind in _phase_list(seed, day, content):
+        if start <= day < end:
+            result.update(phase=kind, phase_info=rule["konjunktur"]["phasen"][kind],
+                          phase_von=start, phase_bis=end)
+    for start, end, trend in _trend_list(seed, day, content):
+        if start <= day < end:
+            result.update(trend=trend, trend_von=start, trend_bis=end)
+    return result
+
+
+def market_status(state, content=None):
+    """Kleine Anzeige im Firmenbereich (Auftraege): [(ueberschrift, text)]."""
+    content = content or state.content
+    now = market_state(state, state.day, content)
+    lines = []
+    if now["phase"]:
+        info = now["phase_info"]
+        effects = []
+        if info.get("anfragen"):
+            effects.append("%s Anfrage%s pro Tag" % (_signed(info["anfragen"]),
+                                                     "" if abs(info["anfragen"]) == 1 else "n"))
+        if info.get("zuschlag"):
+            effects.append("Marktpreise %s Punkte" % _signed(info["zuschlag"]))
+        if info.get("umsatz"):
+            effects.append("Routineumsatz %s" % _signed(info["umsatz"], " %"))
+        lines.append(("Konjunktur: %s" % info["name"],
+                      " · ".join(effects) if effects else "Anfragen und Preise normal"))
+    if now["trend"]:
+        trend = now["trend"]
+        lines.append(("Trend: %s" % trend["name"],
+                      "Noch %s · dazu Trend-Anfragen (%s)" % (
+                          _days_text(now["trend_bis"] - state.day),
+                          CAT_NAME.get(trend.get("cat"), trend.get("cat", "")))))
+    pressure = pressure_text(rivalry_pressure(state, state.day, content))
+    if pressure:
+        lines.append(("Gegenwind der Mitbewerber", pressure.split(": ", 1)[1]))
+    return lines
+
+
+def market_events(state, content=None):
+    """Was sich am Markt geaendert hat, Tag fuer Tag bis heute:
+    [(tag, art, titel, text)] mit art konjunktur_wechsel, trend_gestartet,
+    trend_beendet, wettbewerb_verschaerft, wettbewerb_entspannt."""
+    content = content or state.content
+    if not state.firm:
+        return []
+    rule = market_rules(content)
+    founded = int(state.firm["tag"])
+    result = []
+    if rule:
+        seed = state.firm_seed
+        start = int(rule.get("ab_tag", 101))
+        for day, _end, kind in _phase_list(seed, state.day, content):
+            if day <= founded or day == start and kind == "neutral":
+                continue
+            info = rule["konjunktur"]["phasen"][kind]
+            result.append((day, "konjunktur_wechsel", "Konjunktur: %s" % info["name"],
+                           info.get("text", "")))
+        for day, end, trend in _trend_list(seed, state.day, content):
+            if end <= founded:
+                continue
+            # Lief der Trend schon bei der Gruendung, steht er am Gruendungstag
+            result.append((max(day, founded), "trend_gestartet", "Trend: %s" % trend["name"],
+                           trend.get("start", "")))
+            if end <= state.day:
+                result.append((end, "trend_beendet", "Trend vorbei: %s" % trend["name"],
+                               trend.get("ende", "")))
+    wind = rivalry_rules(content).get("gegenwind")
+    if wind:
+        before = False
+        for day in range(founded + 1, state.day + 1):
+            now = rivalry_pressure(state, day, content)["aktiv"]
+            if now != before:
+                result.append((day, "wettbewerb_verschaerft" if now else "wettbewerb_entspannt",
+                               "Gegenwind der Mitbewerber" if now else "Gegenwind vorbei",
+                               wind.get("text_start" if now else "text_ende", "")))
+            before = now
+    return sorted(result, key=lambda item: item[0])
+
+
+def market_news(state, content=None):
+    """Story-Moment am Morgen: was sich heute am Markt geaendert hat."""
+    content = content or state.content
+    lines = [text for day, _kind, _title, text in market_events(state, content)
+             if day == state.day and text]
+    rule = market_rules(content)
+    if rule and state.day == int(rule.get("ab_tag", 101)) and \
+            int(state.firm["tag"]) < state.day and rule.get("start_text"):
+        lines.insert(0, rule["start_text"])
+    return "\n".join(lines)
 
 
 # -- Kundenprojekte (ab 0.35) -----------------------------------------------
@@ -7611,7 +8119,10 @@ def project_for_slot(state, slot, content=None):
     material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
                    * 10)
     cat = CAT_KEY.get(template["cat"], template["cat"])
-    bids, absent = competitor_bids("projekt", "normal", cat, seed, start, salt, content)
+    shift = market_shift(state, start, content)
+    move = shift["shift"]
+    bids, absent = competitor_bids("projekt", "normal", cat, seed, start, salt, content,
+                                   shift=move)
     cheapest = min(bids, key=lambda bid: bid["zuschlag"])
     project_id = "%s%d" % (PROJECT_PREFIX, slot + 1)
     customer = customer_short(template["branche"])
@@ -7632,6 +8143,7 @@ def project_for_slot(state, slot, content=None):
             "text": text, "ausgangssituation": template["ausgangssituation"],
             "auftrag": template["auftrag"],
             "rahmenbedingungen": list(template.get("rahmenbedingungen") or []),
+            "gegenwind": shift["gegenwind"],
             "ergebnis": state.project_offers.get(project_id)}
 
 
@@ -8298,6 +8810,72 @@ def _validate_personal(rules, colleagues):
     return problems
 
 
+def _validate_market(rules):
+    """firma.json ab 0.44: rivalitaet (Rueckhol-Angebote, Gegenwind) und
+    markt (Konjunktur, Trends)."""
+    problems = []
+    rivalry = rules.get("rivalitaet") or {}
+    recall = rivalry.get("rueckhol") or {}
+    for key in ("vorher_anteil", "ab_tagen", "chance", "abstand", "abstand_firma",
+                "gehalt_plus", "bonus_tage"):
+        if not isinstance(recall.get(key), (int, float)) or recall[key] < 0:
+            problems.append("Spiel-Firma: rivalitaet.rueckhol.%s fehlt oder ist ungueltig" % key)
+    span = recall.get("angebot_plus") or []
+    if len(span) != 2 or span[0] > span[1]:
+        problems.append("Spiel-Firma: rivalitaet.rueckhol.angebot_plus braucht [von, bis]")
+    texts = list(recall.get("texte") or []) + list(recall.get("texte_bitweiche") or [])
+    if len(recall.get("texte") or []) < 2:
+        problems.append("Spiel-Firma: zu wenige Rueckhol-Texte")
+    for text in texts:
+        try:
+            text.format(firma="F", name="N", plus=10)
+        except (KeyError, IndexError, ValueError):
+            problems.append("Spiel-Firma: Rueckhol-Text mit falschem Platzhalter: %s" % text[:40])
+    wind = rivalry.get("gegenwind") or {}
+    for key in ("fenster", "mindestens", "ab_quote", "zuschlag_minus"):
+        if not isinstance(wind.get(key), (int, float)) or wind[key] < 0:
+            problems.append("Spiel-Firma: rivalitaet.gegenwind.%s fehlt oder ist ungueltig" % key)
+    if "vorteil_faktor" in wind and (not isinstance(wind["vorteil_faktor"], (int, float))
+                                     or not 0 <= wind["vorteil_faktor"] <= 1):
+        problems.append("Spiel-Firma: rivalitaet.gegenwind.vorteil_faktor muss zwischen 0 und 1 "
+                        "liegen")
+    if isinstance(wind.get("mindestens"), int) and isinstance(wind.get("fenster"), int) and \
+            wind["mindestens"] > wind["fenster"]:
+        problems.append("Spiel-Firma: gegenwind.mindestens liegt ueber dem Fenster")
+    market = rules.get("markt") or {}
+    phases = (market.get("konjunktur") or {}).get("phasen") or {}
+    if set(phases) != {"neutral", "aufschwung", "abschwung"}:
+        problems.append("Spiel-Firma: markt.konjunktur.phasen braucht neutral, aufschwung "
+                        "und abschwung")
+    for key, phase in phases.items():
+        for field in ("name", "tage", "anfragen", "zuschlag", "umsatz"):
+            if field not in phase:
+                problems.append("Spiel-Firma: Konjunktur %s ohne '%s'" % (key, field))
+    trends = market.get("trends") or {}
+    for key in ("erster_nach", "dauer", "pause"):
+        span = trends.get(key) or []
+        if len(span) != 2 or span[0] > span[1] or span[0] < 1:
+            problems.append("Spiel-Firma: markt.trends.%s braucht [von, bis]" % key)
+    seen = set()
+    for trend in trends.get("liste") or []:
+        where = "Spiel-Firma Trend %s" % trend.get("id")
+        for field in ("id", "name", "cat", "start", "ende", "artikel"):
+            if not trend.get(field):
+                problems.append("%s: '%s' fehlt" % (where, field))
+        if trend.get("id") in seen:
+            problems.append("%s: Kennung doppelt" % where)
+        seen.add(trend.get("id"))
+        if trend.get("cat") and trend["cat"] not in CAT_ORDER:
+            problems.append("%s: unbekannter Fachbereich '%s'" % (where, trend["cat"]))
+        for article in trend.get("artikel") or []:
+            if len(article.get("preis") or []) != 2 or len(article.get("menge") or []) != 2 \
+                    or not article.get("name"):
+                problems.append("%s: Artikel unvollstaendig" % where)
+    if len(trends.get("liste") or []) < 2:
+        problems.append("Spiel-Firma: mindestens zwei Trends noetig")
+    return problems
+
+
 def _validate_firm(content):
     """firma.json: Gebaeudestufen mit Arbeitsplaetzen, Formeln, Wechsel."""
     problems = []
@@ -8353,6 +8931,7 @@ def _validate_firm(content):
                 problems.append("Spiel-Firma: Wechsel %s mit unbekannter Staerke '%s'"
                                 % (item.get("kollege"), topic))
     problems += _validate_personal(rules, ids)
+    problems += _validate_market(rules)
     learn = rules.get("lernen") or {}
     for key in ("ticket_erfolg", "projekt_fertig", "projekt_puenktlich", "routine_tage",
                 "routine_plus", "halb_ab", "deckel", "max", "alt_streuung"):
@@ -9670,6 +10249,15 @@ def journey(state, content=None):
             add(tag, JOURNEY_FIRM, kind, "Urlaub %s: %s" % (
                 "genehmigt" if ok else "abgelehnt", data.get("name", "")),
                 "Arbeitstag %s bis %s." % (data.get("von"), int(data.get("bis", 1)) - 1))
+        elif kind == EV_RECALL and data.get("rueckhol") and \
+                data["rueckhol"] not in answered:
+            answered.add(data["rueckhol"])
+            company = competitor(data.get("firma") or BITWEICHE, content)["kurz"]
+            add(tag, JOURNEY_FIRM, EV_RECALL,
+                ("Zurück zu %s: %s" % (company, data.get("name", "")))
+                if data.get("wahl") == RECALL_LET else
+                "Abwerbeversuch abgewehrt: %s" % data.get("name", ""),
+                recall_choice_text(data, content))
         elif kind == EV_CONFLICT and data.get("konflikt") and \
                 data["konflikt"] not in answered:
             answered.add(data["konflikt"])
@@ -9772,6 +10360,10 @@ def journey(state, content=None):
             step = dunning_step(data.get("stufe", 1), content) or {}
             add(tax_day, JOURNEY_FIRM, "steuer_ausfall", "Umsatzsteuer nicht bezahlt",
                 "Mahnstufe %d (%s)." % (data.get("stufe", 1), step.get("name", "")))
+    # Ab 0.44: Konjunktur und Trends (Story), Gegenwind der Mitbewerber (Firma)
+    for market_day, market_kind, title, text in market_events(state, content):
+        add(market_day, JOURNEY_FIRM if market_kind.startswith("wettbewerb") else
+            JOURNEY_STORY, market_kind, title, text)
     previous = 0
     for rank_day, rank in state.rank_log:
         level = names.index(rank) if rank in names else 0
@@ -10446,8 +11038,9 @@ def morning_text(day, content=None, state=None):
     text = ((content or GAME)["story"].get("tage") or {}).get(str(day), "")
     if state is not None and state.firm:
         news = switch_news(state, content)
+        market = market_news(state, content)
         staff = personal_news(state, content)
-        text = "\n\n".join(part for part in (text, news, staff) if part)
+        text = "\n\n".join(part for part in (text, news, market, staff) if part)
     return text
 
 
