@@ -2115,11 +2115,11 @@ class GameScreen:
                 "Zuweisen", lambda _e, i=ticket["id"]: self._pick_ticket(i), height=38,
                 expand=True)]))
             return self._person_box(parts)
-        parts.append(ui.label("Wer übernimmt?"))
+        parts.append(ui.label("Wer übernimmt? (Wert in %s)"
+                              % fg.TOPIC_SHORT.get(ticket.get("thema"), "")))
         for option in fg.ticket_candidates(state, ticket, levels):
-            button = ui.GradientButton("%s · %s %d · Chance %d %%" % (
-                option["name"], fg.TOPIC_SHORT.get(ticket.get("thema"), ""), option["wert"],
-                option["chance"]),
+            button = ui.GradientButton("%s · %d · Chance %d %%" % (
+                option["name"], option["wert"], option["chance"]),
                 lambda _e, a=option["an"]: self._delegate(ticket["id"], a), kind="ghost",
                 height=38)
             button.set_enabled(not option["problem"])
@@ -2243,9 +2243,8 @@ class GameScreen:
         if editing:
             parts.append(ui.label("Wer arbeitet mit? (antippen)"))
             for option in fg.project_candidates(state, project, levels):
-                button = ui.GradientButton("%s · %s %d · %s Punkte am Tag" % (
-                    option["name"], fg.TOPIC_SHORT.get(fg.project_topic(project), ""),
-                    option["wert"], fg._num(option["punkte"])),
+                button = ui.GradientButton("%s · %d · %s Punkte am Tag" % (
+                    option["name"], option["wert"], fg._num(option["punkte"])),
                     lambda _e, a=option["an"]: self._toggle_member(pid, a),
                     kind="success" if option["im_team"] else "ghost", height=38)
                 button.set_enabled(option["im_team"] or not option["problem"])

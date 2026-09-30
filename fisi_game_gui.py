@@ -2866,7 +2866,8 @@ class FirmView(ScrollArea):
             return
         NeoButton(buttons, "Abbrechen", lambda: self._pick_ticket(None), kind="ghost",
                   height=32, font=F["small_bold"]).pack()
-        make_label(text, "WER ÜBERNIMMT?", font=F["label"], fg=C["muted"]).pack(
+        caption = "Wer übernimmt? (Wert in %s)" % fg.TOPIC_SHORT.get(ticket.get("thema"), "")
+        make_label(text, caption.upper(), font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(10, 2))
         for option in fg.ticket_candidates(state, ticket, levels):
             line = _frame(text)
@@ -3120,14 +3121,13 @@ class FirmView(ScrollArea):
                    anchor="w").pack(anchor="w")
         if item["id"] in self.topics_for:
             for key in fg.CAT_ORDER:
-                line = _frame(text)
-                line.pack(anchor="w", pady=(2, 0))
-                make_label(line, "%s %d:" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
-                                             item["werte"][key]),
-                           font=F["small_bold"], fg=CATEGORY_COLOR[fg.CAT_NAME[key]]).pack(
-                    side="left")
-                make_label(line, fg.topics_text(item["themen"], key), font=F["small"],
-                           fg=C["text_dim"]).pack(side="left", padx=(6, 0))
+                make_label(text, "%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
+                                            item["werte"][key]),
+                           font=F["small_bold"], fg=CATEGORY_COLOR[fg.CAT_NAME[key]],
+                           anchor="w").pack(anchor="w", pady=(4, 0))
+                make_label(text, fg.topics_text(item["themen"], key), font=F["small"],
+                           fg=C["text_dim"], wraplength=640, justify="left",
+                           anchor="w").pack(anchor="w")
         make_label(text, fg.staff_money_text(item), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w")
         extra = fg.training_text(state, item) if not applicant else \
@@ -3210,7 +3210,8 @@ class FirmView(ScrollArea):
                    "Themen, dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz."
                    % (rules["plus"], offers[1]["tage"] if len(offers) > 1 else rules["tage"],
                       whole["plus"], offers[0]["tage"], rules["max"]),
-                   font=F["tiny"], fg=C["muted"], anchor="w").pack(anchor="w", pady=(4, 0))
+                   font=F["tiny"], fg=C["muted"], wraplength=680, justify="left",
+                   anchor="w").pack(anchor="w", pady=(4, 0))
         problems = [offer["problem"] for offer in offers]
         if all(problems):
             make_label(box, problems[0], font=F["tiny"], fg=C["yellow"], anchor="w").pack(
