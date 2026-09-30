@@ -3508,6 +3508,10 @@ class FirmView(ScrollArea):
                        wraplength=760, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
             make_label(text, offer["text"], font=F["small"], fg=C["text_soft"], wraplength=760,
                        justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            if offer["problem"] and check["ok"]:
+                make_label(text, offer["problem"], font=F["small"], fg=C["yellow"],
+                           wraplength=760, justify="left", anchor="w").pack(anchor="w",
+                                                                            pady=(2, 0))
             button = NeoButton(side, "Aufnehmen", lambda o=offer: self._take_loan(o),
                                kind="primary", height=32, font=F["small_bold"])
             button.pack()

@@ -2835,8 +2835,10 @@ class GameScreen:
             boxes.append(self._person_box([
                 ui.text(offer["name"], size=15, weight=ft.FontWeight.BOLD),
                 ui.text(fg.loan_offer_text(offer), size=12, color=C["text_dim"]),
-                ui.text(offer["text"], size=13, color=C["text_soft"]),
-                ft.Row([button])]))
+                ui.text(offer["text"], size=13, color=C["text_soft"])]
+                + ([ui.text(offer["problem"], size=12, color=C["yellow"])]
+                   if offer["problem"] and check["ok"] else [])
+                + [ft.Row([button])]))
         result.append(ui.Card("Kreditpakete", boxes, accent=C["green"],
                               subtitle="feste Angebote"))
 

@@ -3373,7 +3373,7 @@ class KrediteTest(unittest.TestCase):
             self._days(game, 20)
             state = game.state
             self.assertEqual([loan["name"] for loan in state.running_loans()],
-                             ["Freier Kredit"])
+                             ["Freier Kredit 10.000 €"])
             self.assertEqual(state.done_loans()[0]["name"], "Kurzkredit")
             self._days(game, 10)
             self.assertEqual(game.state.running_loans(), [])

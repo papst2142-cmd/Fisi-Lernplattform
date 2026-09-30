@@ -5176,7 +5176,7 @@ def loan_offer(state, amount, term, package=None, content=None, check=None):
                        _whole_euro(check["raten_max"]), _whole_euro(check["raten_belegt"])))
     offer["problem"] = problem
     offer["paket"] = package["id"] if package else FREE_LOAN
-    offer["name"] = package["name"] if package else "Freier Kredit"
+    offer["name"] = package["name"] if package else "Freier Kredit %s" % _whole_euro(amount)
     return offer
 
 
@@ -5225,11 +5225,13 @@ def loan_offer_text(offer):
 
 
 def loan_confirm_text(offer, content=None):
-    return ("„%s“ über %s bei der %s aufnehmen?\n\nLaufzeit %s, Zins %s p. a. Jeden "
+    what = ("Einen Kredit über %s" % _whole_euro(offer["summe"]) if offer["paket"] == FREE_LOAN
+            else "„%s“ über %s" % (offer["name"], _whole_euro(offer["summe"])))
+    return ("%s bei der %s aufnehmen?\n\nLaufzeit %s, Zins %s p. a. Jeden "
             "Feierabend werden automatisch %s abgebucht (Zins und Tilgung). Zurück zahlst du "
             "insgesamt %s, davon %s Zinsen.\n\nReicht das Konto beim Feierabend nicht, platzt "
             "die Rate: Mahnstufe, Gebühr und weniger Ansehen." % (
-                offer["name"], _whole_euro(offer["summe"]), loan_rules(content)["bank"],
+                what, loan_rules(content)["bank"],
                 term_text(offer["laufzeit"]), percent_text(offer["zins"]),
                 _whole_euro(offer["rate"]), _whole_euro(offer["gesamt"]),
                 _whole_euro(offer["zinsen_gesamt"])))
