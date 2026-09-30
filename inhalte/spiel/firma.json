@@ -2505,7 +2505,7 @@
     "coaching": {"preis": 800, "tage": 3},
     "macken": {
       "stufen": {"1": ["leicht", 30], "2": ["mittel", 60], "3": ["stark", 100]},
-      "abschwaechen_tage": 30
+      "abschwaechen_tage": 45
     }
   },
   "wechsel": [

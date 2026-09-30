@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.43
+
+- **Spiel, eigene Firma: Mitarbeiter-Ereignisse.** Deine Mitarbeiter haben
+  jetzt eine Stimmung (0 bis 100). Sie fragen ab und zu nach Urlaub: Du
+  genehmigst (sie fehlen ein paar Tage, die Stimmung steigt) oder lehnst ab
+  (die Stimmung sinkt, beim zweiten Mal in Folge deutlich). Ist die Stimmung
+  lange sehr schlecht, kommt erst eine Warnung, dann die Kündigung.
+- **Konflikte im Team:** Geraten zwei Mitarbeiter aneinander, entscheidest
+  du: schlichten (kostet dich heute einen Ticket-Platz), Partei für einen
+  der beiden ergreifen oder ignorieren (beide sind ein paar Tage verstimmt).
+- **Krankheit:** Selten fällt jemand für 2 bis 4 Tage aus.
+- **Offene Entscheidungen** stehen in der Übersicht unter „Heute“ und im
+  Reiter „Mitarbeiter“. Feierabend geht erst, wenn sie beantwortet sind.
+- **Macken mit Wirkung:** Jede Macke hat jetzt eine Stärke und eine
+  Schwäche (z. B. „Langsam, aber gründlich“: bessere Ticket-Chance, aber
+  weniger Umsatz). Die Ausprägung zeigen drei Balken (stark, mittel,
+  leicht), auch in den Bewerbungen. Zwei neue Macken: Nachteule und
+  Kundenflüsterer.
+- **Macken schwächen sich ab:** alle 45 Arbeitstage eine Stufe oder sofort
+  per Coaching (800 €, 3 Tage). Die Stärke bleibt immer voll.
+- **Reise des Spielers:** Krankheit, Urlaub, Konflikte, Kündigungen,
+  Coachings und schwächere Macken stehen mit drin.
+
 ## 0.42
 
 - **Spiel, eigene Firma: Umsatzsteuer.** Die Einnahmen der Firma enthalten
