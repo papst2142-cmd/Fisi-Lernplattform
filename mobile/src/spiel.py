@@ -2951,8 +2951,11 @@ class GameScreen:
             opened = self._cat_open(staff_id, row["cat"])
             rows.append(ft.Container(
                 content=ft.Row([
-                    ft.Container(ui.text(("▾ " if opened else "▸ ") + row["name"], size=12,
-                                         weight=ft.FontWeight.BOLD, color=color), width=104),
+                    ft.Container(ft.Row([
+                        ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
+                                size=16, color=color),
+                        ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
+                        spacing=2, tight=True), width=110),
                     ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
                     ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
                                          text_align=ft.TextAlign.RIGHT), width=30)],
@@ -2964,7 +2967,7 @@ class GameScreen:
             for topic in row["themen"]:
                 rows.append(ft.Container(ft.Row([
                     ft.Container(ui.text(topic["name"], size=11, color=C["text_dim"]),
-                                 width=86),
+                                 width=92),
                     ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
                                             6), expand=True),
                     ft.Container(ui.text(str(topic["wert"]), size=11,
