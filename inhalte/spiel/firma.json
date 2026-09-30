@@ -14,7 +14,9 @@
     "Ab 0.38: Mitarbeiter haben einen Wert je Thema (themen.json), der Fachbereichswert ist der Durchschnitt seiner Themen (Gehalt und Umsatz rechnen damit). Bewerber: Grundwert je Fachbereich wie bisher, je Thema fest gestreut um +-bewerbung.thema_streuung, dazu bewerbung.staerken Themen mit +staerke_plus. Mitarbeiter aus aelteren Spielstaenden: Themen = alter Fachbereichswert, gestreut um +-lernen.alt_streuung. wechsel.staerken sind die Staerken der Bitweiche-Kollegen.",
     "Ab 0.38 'lernen': Mitarbeiter lernen durch Arbeit - ticket_erfolg Punkte im Thema eines geschafften Kundentickets (Fehlschlag: nichts), projekt_fertig fuer jedes Teammitglied im Projektthema (projekt_puenktlich extra), alle routine_tage Arbeitstage ohne Weiterbildung und Projekt routine_plus im staerksten Thema. Ab halb_ab nur halb so viel, max ist die Obergrenze.",
     "Ab 0.40: 'lernen.deckel' ist die Grenze fuer das Lernen durch Arbeit je Thema - darueber (bis max) geht es nur noch mit Weiterbildung. Arbeit lernt langsamer (Ticket 1 Punkt, etwa ein Sechstel einer Themen-Weiterbildung), Weiterbildungen bringen weniger und dauern laenger.",
-    "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten)."
+    "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten).",
+    "Ab 0.43 'macken': jede Macke hat plus (Staerke, wirkt immer voll) und minus (Schwaeche, wirkt je nach Stufe mit personal.macken.stufen Prozent). Wirkungen: umsatz/projekt/lernen in Prozent, chance in Prozentpunkten (chance_netzwerk, chance_hardware, chance_talbahn nur bei passenden Tickets), team_projekt (Prozent fuers ganze Projektteam), team_lernen (Punkte fuer die anderen beim Projektabschluss), kz_erfolg/kz_fehlschlag (Kundenzufriedenheit), urlaub/krank/konflikt (Prozent haeufiger), weiterbildung_tage, stimmung_team (Erholung pro Tag fuer alle), stimmung_fehlschlag (Stimmung minus nach verpatztem Ticket). 'kollege' = nur fuer diesen Bitweiche-Wechsler.",
+    "Ab 0.43 'personal': Stimmung je Mitarbeiter (start, erholt sich um erholung pro Feierabend Richtung ziel; unter tief weniger Leistung, unter kritisch nach kuendigung_nach Feierabenden Kuendigung). krankheit.chance und urlaub.chance in Prozent je Mitarbeiter und Feierabend, konflikt.chance je Feierabend fuer die Firma. Macken schwaechen sich alle abschwaechen_tage Arbeitstage und per Coaching um eine Stufe ab (nie unter Stufe 1)."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -2343,17 +2345,168 @@
     ]
   },
   "macken": [
-    "Hat für jedes Kabel eine eigene Farbe und für jede Farbe eine Regel.",
-    "Trinkt nur Tee und erklärt gern, warum.",
-    "Schreibt Dokumentation, bevor jemand danach fragt.",
-    "Kennt jeden Bahnhof der Talbahn mit Gleisnummer.",
-    "Startet jeden Morgen mit einer Liste. Und endet mit einer längeren.",
-    "Hat immer einen Schraubendreher in der Jackentasche.",
-    "Testet alles zweimal, beim dritten Mal nur zur Sicherheit.",
-    "Summt beim Konfigurieren leise vor sich hin.",
-    "Hat ein Faible für alte Hardware und rettet jedes Netzteil.",
-    "Findet, dass jedes Problem mit einem Whiteboard kleiner wird."
+    {
+      "id": "pedantisch",
+      "name": "Pedantisch",
+      "text": "Hat für jedes Kabel eine eigene Farbe und für jede Farbe eine Regel.",
+      "plus": {"chance_netzwerk": 8},
+      "minus": {"umsatz": -10}
+    },
+    {
+      "id": "erklaerbaer",
+      "name": "Erklärbär",
+      "text": "Trinkt nur Tee und erklärt gern, warum.",
+      "plus": {"team_lernen": 1},
+      "minus": {"projekt": -15}
+    },
+    {
+      "id": "dokumentiert",
+      "name": "Dokumentiert alles",
+      "text": "Schreibt Dokumentation, bevor jemand danach fragt.",
+      "plus": {"kz_erfolg": 1, "kz_fehlschlag": 1},
+      "minus": {"projekt": -10}
+    },
+    {
+      "id": "talbahn",
+      "name": "Talbahn-Kenner",
+      "text": "Kennt jeden Bahnhof der Talbahn mit Gleisnummer.",
+      "plus": {"chance_talbahn": 10},
+      "minus": {"urlaub": 60}
+    },
+    {
+      "id": "listenmensch",
+      "name": "Listenmensch",
+      "text": "Startet jeden Morgen mit einer Liste. Und endet mit einer längeren.",
+      "plus": {"projekt": 15},
+      "minus": {"chance": -5}
+    },
+    {
+      "id": "vorbereitet",
+      "name": "Immer vorbereitet",
+      "text": "Hat immer einen Schraubendreher in der Jackentasche.",
+      "plus": {"umsatz": 10, "chance_hardware": 5},
+      "minus": {"weiterbildung_tage": 1}
+    },
+    {
+      "id": "gruendlich",
+      "name": "Langsam, aber gründlich",
+      "text": "Testet alles zweimal, beim dritten Mal nur zur Sicherheit.",
+      "plus": {"chance": 10},
+      "minus": {"umsatz": -15, "projekt": -10}
+    },
+    {
+      "id": "gute_laune",
+      "name": "Gute Laune",
+      "text": "Summt beim Konfigurieren leise vor sich hin.",
+      "plus": {"stimmung_team": 1, "umsatz": 5},
+      "minus": {"konflikt": 100}
+    },
+    {
+      "id": "sammler",
+      "name": "Sammler",
+      "text": "Hat ein Faible für alte Hardware und rettet jedes Netzteil.",
+      "plus": {"lernen_hardware": 100},
+      "minus": {"lernen_andere": -50}
+    },
+    {
+      "id": "whiteboard",
+      "name": "Whiteboard-Fan",
+      "text": "Findet, dass jedes Problem mit einem Whiteboard kleiner wird.",
+      "plus": {"team_projekt": 5},
+      "minus": {"chance": -5}
+    },
+    {
+      "id": "nachteule",
+      "name": "Nachteule",
+      "text": "Arbeitet am liebsten nachts und kommt dafür erst um zehn.",
+      "plus": {"projekt": 10},
+      "minus": {"krank": 50}
+    },
+    {
+      "id": "kundenfluesterer",
+      "name": "Kundenflüsterer",
+      "text": "Kann Kunden am Telefon jede Sorge nehmen, nur nicht die eigene.",
+      "plus": {"kz_erfolg": 1},
+      "minus": {"stimmung_fehlschlag": 3}
+    },
+    {
+      "id": "neugierig",
+      "name": "Neugierig",
+      "text": "Fragt zu allem „Warum?“. Steckt gern Kabel um, „nur zum Testen“.",
+      "plus": {"lernen": 50},
+      "minus": {"chance": -5},
+      "kollege": "tim"
+    },
+    {
+      "id": "ordnung_im_netz",
+      "name": "Ordnung im Netz",
+      "text": "Beschriftet jedes Kabel an beiden Enden. Auch das Ladekabel ihres Handys.",
+      "plus": {"chance_netzwerk": 8, "kz_erfolg": 1},
+      "minus": {"umsatz": -5},
+      "kollege": "svenja"
+    }
   ],
+  "personal": {
+    "stimmung": {
+      "start": 70,
+      "ziel": 70,
+      "erholung": 1,
+      "tief": 40,
+      "tief_leistung": 10,
+      "tief_chance": 5,
+      "kritisch": 20,
+      "kuendigung_nach": 3
+    },
+    "krankheit": {"chance": 1.5, "tage_min": 2, "tage_max": 4},
+    "urlaub": {
+      "ab_tagen": 15,
+      "chance": 4,
+      "abstand": 10,
+      "vorlauf": 5,
+      "tage_min": 3,
+      "tage_max": 5,
+      "genehmigt": 10,
+      "abgelehnt": -15,
+      "abgelehnt_wieder": -25,
+      "texte": [
+        "„Meine Schwester heiratet an der Küste. Das wäre wichtig.“",
+        "„Ich würde gern mal ein paar Tage raus, bevor ich anfange, mit den Servern zu reden.“",
+        "„Ich hab eine Hütte in den Bergen gefunden. Ohne WLAN. Mit Absicht.“",
+        "„Wir ziehen um, und die Kartons packen sich leider nicht von allein.“",
+        "„Meine Eltern feiern Goldene Hochzeit. Ich soll die Technik machen, natürlich.“",
+        "„Ich möchte endlich den Radweg an der Talbahn entlang fahren. Einmal ganz.“"
+      ],
+      "text_talbahn": "„Die Talbahn fährt eine Sonderfahrt mit der alten Dampflok. Die ganze Strecke! Da muss ich einfach mit.“"
+    },
+    "konflikt": {
+      "ab_mitarbeiter": 3,
+      "chance": 5,
+      "abstand": 8,
+      "schlichten": 5,
+      "partei_plus": 10,
+      "partei_minus": -10,
+      "ignorieren": -5,
+      "verstimmt_tage": 5,
+      "verstimmt_leistung": 10,
+      "verstimmt_chance": 5,
+      "texte": [
+        "{a} und {b} streiten, wer den Kaffee zuletzt leer gemacht hat. Inzwischen redet keiner mehr mit dem anderen.",
+        "{a} hat den Serverschrank umgeräumt, ohne {b} zu fragen. {b} findet jetzt nichts mehr und ist sauer.",
+        "{a} beschwert sich bei dir: {b} schiebt die unbeliebten Tickets immer rüber.",
+        "{b} hat im Kundengespräch {a_von} Lösung als eigene Idee verkauft. {a} kocht.",
+        "Streit um den Fensterplatz: {a} will frische Luft, {b} friert. Die Heizung läuft auf fünf.",
+        "{a} und {b} sind sich uneinig, ob das Netz neu verkabelt oder nur geflickt wird. Seit einer Stunde geht es hin und her.",
+        "{a} findet {b_von} Dokumentation „unlesbar“. {b} findet {a_von} Dokumentation „nicht vorhanden“.",
+        "{b} kam schon wieder zu spät zum Kundentermin. {a} musste allein hin und will das nicht noch einmal."
+      ],
+      "summen": "{a} summt seit dem Morgen vor sich hin. {b} hält es nicht mehr aus und bittet dich, etwas zu unternehmen."
+    },
+    "coaching": {"preis": 800, "tage": 3},
+    "macken": {
+      "stufen": {"1": ["leicht", 30], "2": ["mittel", 60], "3": ["stark", 100]},
+      "abschwaechen_tage": 30
+    }
+  },
   "wechsel": [
     {
       "kollege": "tim",

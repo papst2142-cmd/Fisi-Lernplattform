@@ -103,10 +103,16 @@ EV_LOAN_REPAID = "kredit_abgeloest"
 EV_ADS = "werbung_gebucht"
 EV_ADS_STOP = "werbung_beendet"
 EV_CERT = "zertifizierung"
+# Personal (ab 0.43): Antworten auf Urlaubsanfragen und Entscheidungen bei
+# Konflikten. Krankheit, Urlaubsanfragen, Konflikte und Kuendigungen stehen
+# im Feierabend (firma.personal), die Stimmung rechnet der Spielstand aus.
+EV_VACATION_OK = "urlaub_genehmigt"
+EV_VACATION_NO = "urlaub_abgelehnt"
+EV_CONFLICT = "konflikt_ereignis"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
                EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
-               EV_CERT)
+               EV_CERT, EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -3134,6 +3140,16 @@ class GameState:
         self.ads = []              # gebuchte Werbung (Ereignisdaten + "ende")
         self.ad_log = []           # (tag, werbung-id, kosten) laufende Werbekosten
         self.certs = {}            # zertifizierung -> Ereignisdaten (auch laufende)
+        # Personal (ab 0.43)
+        self.mood = {}             # mitarbeiter-id -> Stimmung (0 bis 100)
+        self.mood_low = {}         # mitarbeiter-id -> Feierabende in Folge unter "kritisch"
+        self.upset = {}            # mitarbeiter-id -> verstimmt bis (ausschliesslich) Tag
+        self.absences = []         # {"id", "art" (krank/urlaub), "von", "bis" (ausschl.)}
+        self.personal_log = []     # (feierabend-tag, eintrag aus firma.personal)
+        self.answers = {}          # urlaubsanfrage/konflikt -> Ereignisdaten der Antwort
+        self.mediation_days = set()   # Arbeitstage, an denen du geschlichtet hast
+        self.quit_staff = {}       # mitarbeiter-id -> Tag der eigenen Kuendigung
+        self._live = False         # Feierabend mit den Regeln ab 0.43?
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3205,6 +3221,9 @@ class GameState:
                 self._book(today, BOOK_SALARY, data.get("gehalt", 0))
                 self._book(today, BOOK_HOME, -int(data.get("miete", 0)))
                 firm = data.get("firma") or {}
+                # Ab 0.43 wirken Macken beim Lernen und die Stimmung aendert sich -
+                # nur bei Feierabenden mit firma.personal (alte Tage bleiben, wie sie waren)
+                self._live = "personal" in firm
                 # Wer heute im Projekt oder in der Weiterbildung war, macht keine Routine
                 busy = {person for item in self.running_projects() for person in item["team"]}
                 self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
@@ -3221,10 +3240,15 @@ class GameState:
                     self._apply_reputation(item.get("reputation") or {})
                     if item.get("erfolg"):
                         self._learn_from_ticket(item, today)
+                    elif self._live:
+                        self._mood_after_failure(item, today)
                 for item in firm.get("projekte") or []:
                     if self._apply_project_day(item, today) and item.get("fertig"):
                         self._learn_from_project(item, today)
                 self._learn_routine(busy, today)
+                if self._live:
+                    self._personal_day(today, firm.get("personal") or [])
+                self._live = False
                 if self.firm:
                     # Ab 0.42: laufende Werbung, dann Kreditraten, dann Umsatzsteuer -
                     # geplatzte Zahlungen landen in derselben Mahnstufe
@@ -3276,8 +3300,11 @@ class GameState:
         if kind == EV_HIRED and data.get("id") and data["id"] not in self.staff:
             self.staff[data["id"]] = dict(data)
             self.ever_hired.add(data["id"])
+            self.mood[data["id"]] = float(personal_rules(self.content)["stimmung"]["start"])
         elif kind == EV_FIRED:
             self.staff.pop(data.get("id"), None)
+        elif kind in (EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT):
+            self._apply_decision(kind, data, day)
         elif kind == EV_TRAINING and data.get("id") in self.staff:
             self.trainings.append(dict(data))
             self.money += int(data.get("geld", 0))
@@ -3592,9 +3619,16 @@ class GameState:
 
     def _learn(self, staff_id, topic, amount, day, reason):
         """Punkte durch Arbeit dazu - ab lernen.halb_ab nur halb so viele,
-        nie ueber lernen.deckel (ab 0.40: darueber nur per Weiterbildung)."""
+        nie ueber lernen.deckel (ab 0.40: darueber nur per Weiterbildung).
+        Ab 0.43 lernen manche Macken schneller oder langsamer."""
         if staff_id not in self.staff or topic not in TOPIC_CAT or amount <= 0:
             return
+        if self._live:
+            key = "lernen_hardware" if topic in HARDWARE_TOPICS else "lernen_andere"
+            amount *= max(0.0, 1 + (self.quirk_value(staff_id, "lernen", day) +
+                                    self.quirk_value(staff_id, key, day)) / 100.0)
+            if amount <= 0:
+                return
         rule = learn_rules(self.content)
         before = self.staff_topics(staff_id, day)[topic]
         if before >= rule["halb_ab"]:
@@ -3617,14 +3651,22 @@ class GameState:
         topic = project_topic(project, self.content)
         amount = rule["projekt_fertig"] + (0 if item.get("verzug") else
                                            rule["projekt_puenktlich"])
-        for share in item.get("beitraege") or []:
-            self._learn(share.get("an"), topic, amount, day, "projekt")
+        people = [share.get("an") for share in item.get("beitraege") or []]
+        for person in people:
+            self._learn(person, topic, amount, day, "projekt")
+        if self._live:
+            # Ab 0.43: Wer gern erklaert, bringt den anderen im Team etwas bei
+            for teacher in people:
+                extra = self.quirk_value(teacher, "team_lernen", day)
+                for person in people:
+                    if extra and person != teacher:
+                        self._learn(person, topic, extra, day, "erklaert")
 
     def _learn_routine(self, busy, day):
         rule = learn_rules(self.content)
         every = max(1, int(rule["routine_tage"]))
         for staff_id in list(self.staff):
-            if staff_id in busy or self.training_of(staff_id, day):
+            if staff_id in busy or self.absence_of(staff_id, day):
                 continue
             count = self.staff_routine.get(staff_id, 0) + 1
             self.staff_routine[staff_id] = count
@@ -3785,6 +3827,154 @@ class GameState:
     def trainings_of(self, staff_id):
         return [item for item in self.trainings if item.get("id") == staff_id]
 
+    # -- Personal (ab 0.43) -------------------------------------------------------
+
+    def absence_of(self, staff_id, day=None):
+        """Warum jemand am Tag fehlt: laufende Weiterbildung oder Coaching
+        (Ereignisdaten) oder {"art": "krank"/"urlaub", "von", "bis"} - sonst None."""
+        day = self.day if day is None else day
+        training = self.training_of(staff_id, day)
+        if training:
+            return training
+        for item in self.absences:
+            if item["id"] == staff_id and item["von"] <= day < item["bis"]:
+                return item
+        return None
+
+    def away_of(self, staff_id, day=None):
+        """Krank oder im Urlaub (ohne Weiterbildung) - sonst None."""
+        item = self.absence_of(staff_id, day)
+        return item if item and item.get("art") in (ABSENT_SICK, ABSENT_VACATION) else None
+
+    def quirk_of(self, staff_id, day=None):
+        """Die Macke eines Mitarbeiters mit Stufe am Tag (siehe quirk_state)."""
+        data = self.staff.get(staff_id)
+        if data is None:
+            return None
+        day = self.day if day is None else day
+        coached = sum(1 for item in self.trainings
+                      if item.get("id") == staff_id and item.get("art") == TRAINING_COACHING
+                      and item.get("bis_tag", 0) <= day)
+        return quirk_state(staff_id, data, day, coached, self.content)
+
+    def quirk_value(self, staff_id, key, day=None):
+        """Wirkung der Macke fuer einen Schluessel (Staerke voll, Schwaeche
+        nach Stufe) - 0 ohne Macke."""
+        item = self.quirk_of(staff_id, day)
+        return quirk_effect(item, key) if item else 0
+
+    def mood_of(self, staff_id):
+        return int(round(self.mood.get(staff_id, personal_rules(self.content)
+                                       ["stimmung"]["start"])))
+
+    def staff_form(self, staff_id, day=None):
+        """Abzug durch schlechte Stimmung oder einen ignorierten Konflikt:
+        {"leistung": Prozent weniger Umsatz/Projektleistung, "chance": Punkte
+        weniger Ticket-Chance, "gruende": [...]}."""
+        day = self.day if day is None else day
+        rules = personal_rules(self.content)
+        result = {"leistung": 0, "chance": 0, "gruende": []}
+        if self.mood.get(staff_id, 100) < rules["stimmung"]["tief"]:
+            result["leistung"] += rules["stimmung"]["tief_leistung"]
+            result["chance"] += rules["stimmung"]["tief_chance"]
+            result["gruende"].append("schlechte Stimmung")
+        if self.upset.get(staff_id, 0) > day:
+            result["leistung"] += rules["konflikt"]["verstimmt_leistung"]
+            result["chance"] += rules["konflikt"]["verstimmt_chance"]
+            result["gruende"].append("verstimmt nach dem Konflikt")
+        return result
+
+    def staff_revenue_of(self, staff_id, values, day=None):
+        """Routineumsatz pro Arbeitstag mit Macke und Stimmung (ab 0.43)."""
+        base = staff_revenue(values, self.content)
+        factor = (1 + self.quirk_value(staff_id, "umsatz", day) / 100.0) * \
+            (1 - self.staff_form(staff_id, day)["leistung"] / 100.0)
+        return int(round(max(0.0, base * factor)))
+
+    def _mood_change(self, staff_id, delta):
+        if staff_id in self.mood:
+            self.mood[staff_id] = max(0.0, min(100.0, self.mood[staff_id] + float(delta)))
+
+    def _mood_after_failure(self, item, day):
+        """Kundenfluesterer: ein verpatztes Kundenticket schlaegt aufs Gemuet."""
+        self._mood_change(item.get("an"), -self.quirk_value(item.get("an"),
+                                                           "stimmung_fehlschlag", day))
+
+    def _apply_decision(self, kind, data, day):
+        """Antwort auf eine Urlaubsanfrage oder Entscheidung bei einem Konflikt.
+        Doppelt (zwei Geraete) zaehlt nur die erste."""
+        key = data.get("anfrage") or data.get("konflikt")
+        if not key or key in self.answers:
+            return
+        rules = personal_rules(self.content)
+        self.answers[key] = dict(data, art=kind)
+        if kind == EV_VACATION_OK:
+            staff_id = data.get("id")
+            self.absences.append({"id": staff_id, "art": ABSENT_VACATION,
+                                  "von": int(data.get("von", 0)), "bis": int(data.get("bis", 0))})
+            self._mood_change(staff_id, rules["urlaub"]["genehmigt"])
+        elif kind == EV_VACATION_NO:
+            # Zweimal hintereinander abgelehnt: das sitzt tiefer
+            before = [item for item in self.answers.values()
+                      if item.get("id") == data.get("id") and item.get("anfrage") and
+                      item.get("anfrage") != key]
+            again = bool(before) and before[-1]["art"] == EV_VACATION_NO
+            self._mood_change(data.get("id"), rules["urlaub"]["abgelehnt_wieder" if again
+                                                            else "abgelehnt"])
+        elif kind == EV_CONFLICT:
+            rule = rules["konflikt"]
+            first, second = data.get("a"), data.get("b")
+            choice = data.get("wahl")
+            if choice == CONFLICT_MEDIATE:
+                self.mediation_days.add(int(data.get("tag", day)))
+                self._mood_change(first, rule["schlichten"])
+                self._mood_change(second, rule["schlichten"])
+            elif choice in (CONFLICT_SIDE_A, CONFLICT_SIDE_B):
+                winner, loser = (first, second) if choice == CONFLICT_SIDE_A else (second, first)
+                self._mood_change(winner, rule["partei_plus"])
+                self._mood_change(loser, rule["partei_minus"])
+            else:
+                until = int(data.get("tag", day)) + int(rule["verstimmt_tage"])
+                for person in (first, second):
+                    self._mood_change(person, rule["ignorieren"])
+                    self.upset[person] = max(self.upset.get(person, 0), until)
+
+    def _personal_day(self, day, items):
+        """Feierabend ab 0.43: Die Stimmung erholt sich ein Stueck, dazu die
+        Personal-Ereignisse aus dem Feierabend (Krankheit, Anfragen,
+        Konflikte, Kuendigungen)."""
+        rules = personal_rules(self.content)["stimmung"]
+        cheer = {staff_id: self.quirk_value(staff_id, "stimmung_team", day)
+                 for staff_id in self.staff}
+        for staff_id in list(self.staff):
+            step = float(rules["erholung"]) + sum(value for other, value in cheer.items()
+                                                  if other != staff_id)
+            value = self.mood.get(staff_id, float(rules["start"]))
+            goal = float(rules["ziel"])
+            if value < goal:
+                value = min(goal, value + step)
+            elif value > goal:
+                value = max(goal, value - float(rules["erholung"]))
+            self.mood[staff_id] = value
+            if value < rules["kritisch"]:
+                self.mood_low[staff_id] = self.mood_low.get(staff_id, 0) + 1
+            else:
+                self.mood_low[staff_id] = 0
+        for item in items:
+            self.personal_log.append((day, dict(item)))
+            art = item.get("art")
+            if art == PERSONAL_SICK and item.get("id") in self.staff:
+                self.absences.append({"id": item["id"], "art": ABSENT_SICK,
+                                      "von": int(item["von"]), "bis": int(item["bis"])})
+            elif art == PERSONAL_QUIT and item.get("id") in self.staff:
+                self.staff.pop(item["id"], None)
+                self.quit_staff[item["id"]] = day
+
+    def open_decisions(self):
+        """Offene Entscheidungen zum Personal (Urlaubsanfragen, Konflikte),
+        siehe personal_decisions."""
+        return personal_decisions(self, self.content) if self.firm else []
+
     def staff_list(self):
         """Mitarbeiter in der Reihenfolge der Einstellung, mit Arbeitsplatz."""
         places = self.firm_stage()["plaetze"] if self.firm else []
@@ -3794,10 +3984,14 @@ class GameState:
             item = dict(data, werte=cat_values(topics), themen=topics,
                         staerken=strongest_topics(topics))
             item["weiterbildung"] = self.training_of(staff_id)
+            item["abwesend"] = self.away_of(staff_id)
             item["projekt"] = self.project_of(staff_id)
+            item["macke_info"] = self.quirk_of(staff_id)
+            item["stimmung"] = self.mood_of(staff_id)
+            item["form"] = self.staff_form(staff_id)
             # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
-            item["umsatz"] = 0 if item["weiterbildung"] or item["projekt"] else \
-                staff_revenue(item["werte"], self.content)
+            item["umsatz"] = 0 if item["weiterbildung"] or item["abwesend"] or \
+                item["projekt"] else self.staff_revenue_of(staff_id, item["werte"])
             if index < len(places):
                 item["platz"] = places[index]
             result.append(item)
@@ -4094,7 +4288,8 @@ class GameState:
         # auch, wenn alles erledigt ist: Bis zur Gruendung wird weiter
         # gespart, danach laeuft die eigene Firma.
         if self.firm:
-            return True
+            # Ab 0.43: offene Entscheidungen zum Personal zuerst treffen
+            return not self.open_decisions()
         return not self.open_tickets()
 
     def all_done(self):
@@ -4190,6 +4385,8 @@ class Game:
 
     def end_day(self):
         if not self.state.can_end_day():
+            if self.state.firm:
+                raise ValueError(DECISIONS_OPEN_TEXT)
             raise ValueError("Es sind noch Tickets offen.")
         payload = {"tag": self.state.day, "gehalt": self.state.salary,
                    "rang": self.state.rank}
@@ -4207,9 +4404,15 @@ class Game:
             # Ab 0.42: Umsatzsteuer ab diesem Feierabend (aeltere Tage bleiben
             # steuerfrei, damit alte Spielstaende nicht nachtraeglich zahlen)
             payload["firma"]["ust"] = 1
+            # Ab 0.43: Macken und Stimmung wirken ab diesem Feierabend
+            payload["firma"]["personal"] = []
             # Einmal durchrechnen, was der Feierabend bringt (nur fuer die Anzeige)
             after = GameState(list(self.state.history) + [("", EV_DAY_END, payload)],
                               self.content)
+            # Personal fuer den naechsten Arbeitstag: Krankheit, Urlaubsanfragen,
+            # Konflikte, Kuendigungen (aus der Stimmung nach diesem Feierabend)
+            payload["firma"]["personal"] = personal_events(after, self.state.day,
+                                                           self.content)
             learned = learned_today(self.state, payload, self.content, after)
             if learned:
                 payload["firma"]["gelernt"] = learned
@@ -4261,6 +4464,8 @@ class Game:
         payload = {key: applicant[key] for key in ("id", "name", "aussehen", "werte",
                                                    "themen", "gehalt", "herkunft",
                                                    "schwerpunkt", "macke", "rolle")}
+        if applicant.get("macke_id"):
+            payload["macke_id"] = applicant["macke_id"]
         payload["tag"] = self.state.day
         self._log(EV_HIRED, payload)
         return payload
@@ -4287,6 +4492,45 @@ class Game:
         if offer["thema"]:
             payload["thema"] = offer["thema"]
         self._log(EV_TRAINING, payload)
+        return payload
+
+    def coach(self, staff_id):
+        """Coaching (ab 0.43): kostet Geld und Arbeitstage wie eine
+        Weiterbildung, danach wirkt die Schwaeche der Macke eine Stufe
+        schwaecher."""
+        self._firm_required()
+        offer = coaching_offer(self.state, staff_id, self.content)
+        if offer["problem"]:
+            raise ValueError(offer["problem"])
+        payload = {"id": staff_id, "art": TRAINING_COACHING, "cat": None,
+                   "geld": -offer["preis"], "tag": self.state.day,
+                   "bis_tag": self.state.day + offer["tage"], "plus": 0,
+                   "macke": offer["macke"]}
+        self._log(EV_TRAINING, payload)
+        return payload
+
+    def decide(self, decision_id, choice):
+        """Entscheidung zum Personal (ab 0.43): Urlaubsanfrage genehmigen
+        oder ablehnen, bei einem Konflikt eingreifen."""
+        self._firm_required()
+        item = next((entry for entry in self.state.open_decisions()
+                     if entry["id"] == decision_id), None)
+        if item is None:
+            raise ValueError("Diese Entscheidung steht nicht (mehr) an.")
+        option = next((entry for entry in item["optionen"] if entry["id"] == choice), None)
+        if option is None:
+            raise ValueError("Diese Möglichkeit gibt es hier nicht.")
+        if option.get("problem"):
+            raise ValueError(option["problem"])
+        if item["art"] == DECISION_VACATION:
+            payload = {"anfrage": item["id"], "id": item["person"], "name": item["name"],
+                       "von": item["von"], "bis": item["bis"], "tag": self.state.day}
+            self._log(EV_VACATION_OK if choice == VACATION_YES else EV_VACATION_NO, payload)
+        else:
+            payload = {"konflikt": item["id"], "a": item["a"], "b": item["b"],
+                       "name_a": item["name_a"], "name_b": item["name_b"],
+                       "wahl": choice, "tag": self.state.day}
+            self._log(EV_CONFLICT, payload)
         return payload
 
     def expand(self):
@@ -4652,8 +4896,11 @@ def training_text(state, item):
     """Zeile zur laufenden Weiterbildung (oder leer)."""
     training = item.get("weiterbildung")
     if not training:
-        return ""
+        return absence_text(item)
     left = training["bis_tag"] - state.day
+    if training.get("art") == TRAINING_COACHING:
+        return "Im Coaching (Macke „%s“) · noch %s" % (
+            (item.get("macke_info") or {}).get("name", ""), _days_text(left))
     what = "%s, +%d" % (TOPIC_SHORT[training["thema"]], training["plus"]) \
         if training.get("thema") else "%s, +%d je Thema" % (
             CATEGORY_SHORT[CAT_NAME[training["cat"]]], training["plus"])
@@ -4834,14 +5081,18 @@ def _applicant(rules, seed, batch, number, content):
     look = {part: _pick([key for key, _name in options], seed, batch, salt + part)
             for part, options in APPEARANCE.items() if part != "kreis"}
     look["kreis"] = "violett"
-    return {"id": "bw%d-%d" % (batch, number),
+    # Ab 0.43: Macken als Objekte, die Bitweiche-Wechsler haben ihre eigene
+    quirk = _pick([item for item in rules["macken"] if not item.get("kollege")],
+                  seed, batch, salt + "macke")
+    staff_id = "bw%d-%d" % (batch, number)
+    return {"id": staff_id, "macke": quirk["text"], "macke_id": quirk["id"],
+            "macke_info": quirk_state(staff_id, {"macke_id": quirk["id"]}, 0, 0, content),
             "name": "%s %s" % (_pick(names["vornamen"], seed, batch, salt + "vor"),
                                _pick(names["nachnamen"], seed, batch, salt + "nach")),
             "aussehen": normalize_appearance(look), "werte": values, "themen": topics,
             "staerken": strongest_topics(topics),
             "gehalt": staff_salary(values, content), "herkunft": "bewerbung",
             "schwerpunkt": staff_focus(values),
-            "macke": _pick(rules["macken"], seed, batch, salt + "macke"),
             "rolle": staff_role(values)}
 
 
@@ -4889,6 +5140,10 @@ def applicants(state, content=None):
                        "gehalt": staff_salary(values, content),
                        "herkunft": "bitweiche", "schwerpunkt": staff_focus(values),
                        "macke": person.get("macke", ""),
+                       "macke_id": (quirk_for_colleague(item["kollege"], content) or
+                                    {}).get("id"),
+                       "macke_info": quirk_state(staff_id, {"herkunft": "bitweiche"}, 0, 0,
+                                                 content),
                        "rolle": "bisher %s bei Bitweiche" % person["rolle"],
                        "bis_tag": last})
     for number in range(rules["bewerbung"]["anzahl"]):
@@ -4917,11 +5172,14 @@ def training_offer(state, staff_id, target, content=None):
     rules = firm_rules(content)["weiterbildung"]
     whole = target in CAT_ORDER
     rule = rules.get("fachbereich", rules) if whole else rules
-    done = len(state.trainings_of(staff_id))
+    done = len([item for item in state.trainings_of(staff_id)
+                if item.get("art") != TRAINING_COACHING])
     # Eigener Schulungsraum (ab 0.36): guenstiger und kuerzer
     price = discounted(int(rule["preis"] + rules["aufschlag"] * done),
                        state.room_effect("weiterbildung_rabatt"))
     days = max(1, int(rule["tage"]) - int(state.room_effect("weiterbildung_tage_minus")))
+    # Ab 0.43: Manche Macken lernen lieber mit den Haenden
+    days += int(round(state.quirk_value(staff_id, "weiterbildung_tage")))
     cat = target if whole else CAT_KEY.get(TOPIC_CAT.get(target))
     result = {"preis": price, "tage": days, "plus": 0, "problem": "",
               "art": "fachbereich" if whole else "thema", "cat": cat,
@@ -4941,6 +5199,9 @@ def training_offer(state, staff_id, target, content=None):
         result["plus"] = max(0, min(int(rule["plus"]), int(top - values.get(target, 0))))
     if state.training_of(staff_id):
         result["problem"] = "Die Person ist gerade schon in einer Weiterbildung."
+    elif state.away_of(staff_id):
+        result["problem"] = absent_problem(state.staff[staff_id].get("name", ""),
+                                           state.away_of(staff_id))
     elif not result["plus"]:
         result["problem"] = "%s ist das Maximum (%d) erreicht." % (
             "In allen Themen des Fachbereichs" if whole else "In diesem Thema", top)
@@ -4950,11 +5211,540 @@ def training_offer(state, staff_id, target, content=None):
     return result
 
 
+# -- Personal: Macken, Stimmung, Krankheit, Urlaub, Konflikte (ab 0.43) --------
+#
+# Macken haben eine Staerke (wirkt immer voll) und eine Schwaeche (wirkt je
+# nach Stufe). Die Stufe sinkt mit der Betriebszugehoerigkeit und durch
+# Coaching. Gespeichert wird nur, was beim Feierabend passiert ist
+# (firma.personal) und wie du entschieden hast - Stimmung, Ausfaelle und
+# Stufen rechnet der Spielstand selbst aus.
+
+TRAINING_COACHING = "coaching"
+ABSENT_SICK = "krank"
+ABSENT_VACATION = "urlaub"
+PERSONAL_SICK = "mitarbeiter_krank"
+PERSONAL_VACATION = "urlaub_angefragt"
+PERSONAL_CONFLICT = "konflikt"
+PERSONAL_QUIT = "kuendigung_selbst"
+PERSONAL_WARN = "unzufrieden"
+PERSONAL_WEAKER = "macke_abgeschwaecht"
+DECISION_VACATION = "urlaub"
+DECISION_CONFLICT = "konflikt"
+VACATION_YES = "ja"
+VACATION_NO = "nein"
+CONFLICT_MEDIATE = "schlichten"
+CONFLICT_SIDE_A = "a"
+CONFLICT_SIDE_B = "b"
+CONFLICT_IGNORE = "ignorieren"
+HARDWARE_TOPICS = ("hardware", "storage", "verkabelung")
+DECISIONS_OPEN_TEXT = "Erst die offenen Entscheidungen zum Personal treffen."
+ACTION_PERSONAL = "personal"       # Knopf: zu den Entscheidungen (Firma > Mitarbeiter)
+QUIRK_BAR_FULL = "■"
+QUIRK_BAR_EMPTY = "□"
+
+
+def personal_rules(content=None):
+    return firm_rules(content)["personal"]
+
+
+def quirk_by_id(quirk_id, content=None):
+    return next((item for item in firm_rules(content)["macken"]
+                 if isinstance(item, dict) and item["id"] == quirk_id), None)
+
+
+def quirk_for_colleague(colleague_id, content=None):
+    """Die Macke eines Bitweiche-Kollegen, der zu dir wechselt."""
+    return next((item for item in firm_rules(content)["macken"]
+                 if item.get("kollege") == colleague_id), None)
+
+
+def _quirk_for(staff_id, data, content=None):
+    """Macke aus den Einstellungsdaten - aeltere Spielstaende kennen nur
+    den Text, Bitweiche-Kollegen erkennt man an der Kennung."""
+    item = quirk_by_id(data.get("macke_id"), content) if data.get("macke_id") else None
+    if item is None and str(staff_id).startswith(STAFF_PREFIX):
+        item = quirk_for_colleague(str(staff_id)[len(STAFF_PREFIX):], content)
+    if item is None and data.get("macke"):
+        item = next((entry for entry in firm_rules(content)["macken"]
+                     if entry["text"] == data["macke"]), None)
+    return item
+
+
+def quirk_start_stage(staff_id, data):
+    """Ausgepraegt (3) oder mittel (2) - Bitweiche-Kollegen bringen
+    Berufserfahrung mit und starten bei mittel."""
+    if data.get("herkunft") == "bitweiche" or str(staff_id).startswith(STAFF_PREFIX):
+        return 2
+    return 3 if _dice(staff_id, 0, "macke-stufe") < 0.5 else 2
+
+
+def quirk_state(staff_id, data, day, coached=0, content=None):
+    """Macke mit Stufe am Tag: {"id", "name", "text", "plus", "minus",
+    "start", "stufe", "stufe_name", "faktor", "plus_texte", "minus_texte",
+    "naechste_in" (Arbeitstage bis zur naechsten Stufe durch Erfahrung oder
+    None)} - None ohne bekannte Macke."""
+    item = _quirk_for(staff_id, data, content)
+    if item is None:
+        return None
+    rules = personal_rules(content)["macken"]
+    every = max(1, int(rules["abschwaechen_tage"]))
+    start = quirk_start_stage(staff_id, data)
+    tenure = max(0, int(day) - int(data.get("tag", day) or day)) if data.get("tag") else 0
+    stage = max(1, start - tenure // every - int(coached))
+    name, percent = rules["stufen"][str(stage)]
+    result = {"id": item["id"], "name": item["name"], "text": item["text"],
+              "plus": dict(item.get("plus") or {}), "minus": dict(item.get("minus") or {}),
+              "start": start, "stufe": stage, "stufe_name": name,
+              "faktor": float(percent) / 100.0,
+              "naechste_in": every - tenure % every if stage > 1 else None}
+    result["plus_texte"] = [quirk_effect_text(key, value) for key, value in result["plus"].items()]
+    result["minus_texte"] = [quirk_effect_text(key, value * result["faktor"])
+                             for key, value in result["minus"].items()]
+    return result
+
+
+def quirk_effect(item, key):
+    """Wirkung einer Macke (quirk_state) fuer einen Schluessel."""
+    if not item:
+        return 0
+    return item["plus"].get(key, 0) + item["minus"].get(key, 0) * item["faktor"]
+
+
+def _signed(value, unit=""):
+    value = round(float(value), 1)
+    text = ("%d" % value if value == int(value) else ("%.1f" % value).replace(".", ","))
+    return ("+" + text if value > 0 else text) + unit
+
+
+def _training_days_text(value):
+    """Die Weiterbildung verlaengert sich um ganze Arbeitstage (gerundet)."""
+    days = int(round(float(value)))
+    if days <= 0:
+        return "Weiterbildung dauert nicht mehr länger"
+    return "Weiterbildung dauert %s länger" % _days_text(days)
+
+
+def quirk_effect_text(key, value):
+    """Eine Wirkung als kurzer Text: "Ticket-Chance +10 %"."""
+    plain = _signed(value).lstrip("+-")
+    texts = {
+        "umsatz": "Routineumsatz %s" % _signed(value, " %"),
+        "chance": "Ticket-Chance %s" % _signed(value, " %"),
+        "chance_netzwerk": "Ticket-Chance bei Netzwerk-Tickets %s" % _signed(value, " %"),
+        "chance_hardware": "Ticket-Chance bei Hardware-Tickets %s" % _signed(value, " %"),
+        "chance_talbahn": "Ticket-Chance bei Talbahn-Kunden %s" % _signed(value, " %"),
+        "projekt": "Projektleistung %s" % _signed(value, " %"),
+        "team_projekt": "Projektleistung des ganzen Teams %s" % _signed(value, " %"),
+        "team_lernen": "Kollegen im Projektteam lernen beim Abschluss %s" % _signed(value),
+        "kz_erfolg": "Kundenzufriedenheit bei geschafften Tickets %s" % _signed(value),
+        "kz_fehlschlag": "Verpatzte Tickets kosten %s Kundenzufriedenheit weniger" % plain,
+        "lernen": "Lernt durch Arbeit %s" % _signed(value, " %"),
+        "lernen_hardware": "Lernt in Hardware-Themen %s" % _signed(value, " %"),
+        "lernen_andere": "Lernt in allen anderen Themen %s" % _signed(value, " %"),
+        "urlaub": "Fragt %s %% öfter nach Urlaub" % plain,
+        "krank": "Wird %s %% öfter krank" % plain,
+        "konflikt": "Streit im Team %s %% häufiger" % plain,
+        "weiterbildung_tage": _training_days_text(value),
+        "stimmung_team": "Stimmung der Kollegen erholt sich schneller (%s pro Tag)"
+                         % _signed(value),
+        "stimmung_fehlschlag": "Stimmung -%s nach einem verpatzten Ticket" % plain,
+    }
+    return texts.get(key, "%s %s" % (key, _signed(value)))
+
+
+def quirk_bar(stage):
+    """Drei Kaestchen fuer die Stufe: "■■□" = mittel."""
+    stage = max(0, min(3, int(stage)))
+    return QUIRK_BAR_FULL * stage + QUIRK_BAR_EMPTY * (3 - stage)
+
+
+def quirk_hint(item):
+    """Hinweis zur Abschwaechung (oder leer)."""
+    if not item:
+        return ""
+    if item["stufe"] <= 1:
+        return "Schwächer wird die Macke nicht mehr."
+    days = item["naechste_in"]
+    return "Schwächt sich ab: nächste Stufe in %s (oder per Coaching)." % (
+        "1 Arbeitstag" if days == 1 else "%d Arbeitstagen" % days)
+
+
+def quirk_lines(item):
+    """Macke fuer die Anzeige (PC und Handy gleich): {"titel", "balken",
+    "stufe", "zitat", "plus", "minus", "hinweis"} - None ohne Macke."""
+    if not item:
+        return None
+    return {"titel": item["name"], "balken": quirk_bar(item["stufe"]),
+            "stufe": item["stufe_name"], "zitat": "„%s“" % item["text"],
+            "plus": " · ".join(item["plus_texte"]), "minus": " · ".join(item["minus_texte"]),
+            "hinweis": quirk_hint(item)}
+
+
+def mood_level(value):
+    """gut / okay / schlecht / kritisch - fuer die Farbe."""
+    rules = personal_rules()["stimmung"]
+    if value >= rules["ziel"]:
+        return "gut"
+    if value >= rules["tief"]:
+        return "okay"
+    if value >= rules["kritisch"]:
+        return "schlecht"
+    return "kritisch"
+
+
+def mood_name(value):
+    rules = personal_rules()["stimmung"]
+    if value >= rules["ziel"]:
+        return "gut"
+    if value >= rules["tief"]:
+        return "okay"
+    if value >= rules["kritisch"]:
+        return "schlecht"
+    return "denkt an Kündigung"
+
+
+def mood_text(item):
+    """ "Stimmung 70 (gut)" - dazu der Leistungsabzug, falls es einen gibt."""
+    text = "Stimmung %d (%s)" % (item["stimmung"], mood_name(item["stimmung"]))
+    form = item.get("form") or {}
+    if form.get("leistung"):
+        text += " · %d %% weniger Leistung (%s)" % (form["leistung"],
+                                                   ", ".join(form["gruende"]))
+    return text
+
+
+def absence_text(item):
+    """Zeile fuer Mitarbeiter, die krank oder im Urlaub sind (oder leer)."""
+    away = item.get("abwesend")
+    if not away:
+        return ""
+    return "%s bis einschließlich Arbeitstag %d" % (
+        "Krank" if away["art"] == ABSENT_SICK else "Im Urlaub", away["bis"] - 1)
+
+
+def _days_text(count):
+    return "1 Arbeitstag" if count == 1 else "%d Arbeitstage" % count
+
+
+def coaching_offer(state, staff_id, content=None):
+    """Was ein Coaching kostet: {"preis", "tage", "macke", "stufe",
+    "problem"} - danach wirkt die Schwaeche eine Stufe schwaecher."""
+    rules = personal_rules(content)["coaching"]
+    price = discounted(int(rules["preis"]), state.room_effect("weiterbildung_rabatt"))
+    days = max(1, int(rules["tage"]) - int(state.room_effect("weiterbildung_tage_minus")))
+    quirk = state.quirk_of(staff_id)
+    result = {"preis": price, "tage": days, "problem": "",
+              "macke": quirk["id"] if quirk else None, "stufe": quirk["stufe"] if quirk else 0}
+    name = (state.staff.get(staff_id) or {}).get("name", "")
+    absent = state.absence_of(staff_id)
+    if staff_id not in state.staff:
+        result["problem"] = "Diese Person arbeitet nicht bei dir."
+    elif quirk is None:
+        result["problem"] = "%s hat keine Macke, an der ein Coaching etwas ändert." % name
+    elif quirk["stufe"] <= 1:
+        result["problem"] = "Die Macke ist schon so schwach, wie sie werden kann."
+    elif absent:
+        result["problem"] = absent_problem(name, absent)
+    elif state.money < price:
+        result["problem"] = "Dafür reicht dein Geld noch nicht (%s fehlen)." % _whole_euro(
+            price - max(0, state.money))
+    return result
+
+
+def absent_problem(name, absent):
+    """Warum jemand heute nichts uebernehmen kann."""
+    if absent.get("art") == ABSENT_SICK:
+        return "%s ist krank." % name
+    if absent.get("art") == ABSENT_VACATION:
+        return "%s ist im Urlaub." % name
+    if absent.get("art") == TRAINING_COACHING:
+        return "%s ist gerade im Coaching." % name
+    return "%s ist gerade in einer Weiterbildung." % name
+
+
+def staff_ticket_chance(state, staff_id, ticket, value, content=None):
+    """Chance eines Mitarbeiters bei einem Kundenticket: Wert im Thema, dazu
+    ab 0.43 die Macke (auch nur bei passenden Tickets) und die Stimmung."""
+    bonus = state.quirk_value(staff_id, "chance")
+    if ticket.get("cat") == "netzwerk":
+        bonus += state.quirk_value(staff_id, "chance_netzwerk")
+    if ticket.get("thema") in HARDWARE_TOPICS:
+        bonus += state.quirk_value(staff_id, "chance_hardware")
+    if (ticket.get("kunde") or {}).get("art") == "talbahn":
+        bonus += state.quirk_value(staff_id, "chance_talbahn")
+    bonus -= state.staff_form(staff_id)["chance"]
+    return ticket_chance(value, ticket["anforderung"], content, bonus)
+
+
+def staff_project_points(state, person, value, content=None):
+    """Projektleistung am Tag: Grundwert aus dem Thema, bei Mitarbeitern ab
+    0.43 mit Macke und Stimmung."""
+    points = project_points(value, content)
+    if person == SELF or person not in state.staff:
+        return points
+    factor = (1 + state.quirk_value(person, "projekt") / 100.0) * \
+        (1 - state.staff_form(person)["leistung"] / 100.0)
+    return round(max(0.0, points * factor), 1)
+
+
+def team_factor(state, people):
+    """Ab 0.43: Wer das ganze Team mitzieht (Whiteboard), wirkt einmal."""
+    best = max([state.quirk_value(person, "team_projekt") for person in people
+                if person in state.staff and not state.absence_of(person)] or [0])
+    return 1 + best / 100.0
+
+
+def _vacation_line(item, content=None):
+    rules = personal_rules(content)["urlaub"]
+    texts = rules.get("texte") or []
+    if item.get("talbahn") and rules.get("text_talbahn"):
+        return rules["text_talbahn"]
+    return _pick(texts, item["anfrage"], 0, "text") if texts else ""
+
+
+def conflict_pair(state, people, seed, day, content=None):
+    """Wer sich streitet: [a, b] und der Text. Wer gern summt, geraet am
+    ehesten mit den Genauen aneinander."""
+    rule = personal_rules(content)["konflikt"]
+    humming = [person for person in people
+               if (state.quirk_of(person) or {}).get("id") == "gute_laune"]
+    strict = [person for person in people
+              if (state.quirk_of(person) or {}).get("id") in ("pedantisch", "gruendlich")]
+    if humming and strict and rule.get("summen") and \
+            _dice(seed, day, "konflikt-summen") < 0.5:
+        return [_pick(humming, seed, day, "summt"), _pick(strict, seed, day, "genervt")], \
+            rule["summen"]
+    order = sorted(people, key=lambda person: _dice(seed, day, "konflikt-paar|" + person))
+    return order[:2], _pick(rule["texte"], seed, day, "konflikt-text")
+
+
+def _genitive(name):
+    """ "Tims", aber "Jonas’" """
+    return name + ("’" if name[-1:].lower() in "sßxz" else "s")
+
+
+def _pair_names(first, second):
+    """Vornamen der beiden - bei gleichem Vornamen die ganzen Namen."""
+    if short_name({"name": first}) != short_name({"name": second}):
+        first, second = short_name({"name": first}), short_name({"name": second})
+    return {"a": first, "b": second, "a_von": _genitive(first), "b_von": _genitive(second)}
+
+
+def personal_events(state, day, content=None):
+    """Was beim Feierabend fuer den naechsten Arbeitstag feststeht (state =
+    Spielstand nach dem Feierabend): Kuendigungen und Warnungen aus der
+    Stimmung, Krankmeldungen, Urlaubsanfragen, Konflikte und schwaecher
+    werdende Macken. Fest gewuerfelt - auf allen Geraeten gleich."""
+    content = content or state.content
+    rules = personal_rules(content)
+    seed = state.firm_seed
+    tomorrow = day + 1
+    result = []
+    names = {staff_id: data.get("name", "") for staff_id, data in state.staff.items()}
+    for staff_id in list(state.staff):
+        low = state.mood_low.get(staff_id, 0)
+        if low >= int(rules["stimmung"]["kuendigung_nach"]):
+            result.append({"art": PERSONAL_QUIT, "id": staff_id, "name": names[staff_id]})
+        elif low == 1:
+            result.append({"art": PERSONAL_WARN, "id": staff_id, "name": names[staff_id]})
+    leaving = {item["id"] for item in result if item["art"] == PERSONAL_QUIT}
+    present = [staff_id for staff_id in state.staff
+               if staff_id not in leaving and not state.absence_of(staff_id, tomorrow)]
+    rule = rules["krankheit"]
+    for staff_id in present:
+        chance = float(rule["chance"]) * max(0.0, 1 + state.quirk_value(
+            staff_id, "krank", tomorrow) / 100.0)
+        if _dice(seed, day, "krank|" + staff_id) * 100 < chance:
+            days = _between(seed, day, "krank-tage|" + staff_id, int(rule["tage_min"]),
+                            int(rule["tage_max"]))
+            result.append({"art": PERSONAL_SICK, "id": staff_id, "name": names[staff_id],
+                           "von": tomorrow, "bis": tomorrow + days})
+    sick = {item["id"] for item in result if item["art"] == PERSONAL_SICK}
+    rule = rules["urlaub"]
+    for staff_id in present:
+        hired = int(state.staff[staff_id].get("tag", 0) or 0)
+        if staff_id in sick or day - hired < int(rule["ab_tagen"]):
+            continue
+        asked = [tag for tag, item in state.personal_log
+                 if item.get("art") == PERSONAL_VACATION and item.get("id") == staff_id]
+        if asked and day - asked[-1] < int(rule["abstand"]):
+            continue
+        if any(item["id"] == staff_id and item["art"] == ABSENT_VACATION and
+               item["bis"] > tomorrow for item in state.absences):
+            continue
+        chance = float(rule["chance"]) * max(0.0, 1 + state.quirk_value(
+            staff_id, "urlaub", tomorrow) / 100.0)
+        if _dice(seed, day, "urlaub|" + staff_id) * 100 < chance:
+            start = tomorrow + int(rule["vorlauf"])
+            days = _between(seed, day, "urlaub-tage|" + staff_id, int(rule["tage_min"]),
+                            int(rule["tage_max"]))
+            item = {"art": PERSONAL_VACATION, "anfrage": "urlaub:%d:%s" % (day, staff_id),
+                    "id": staff_id, "name": names[staff_id], "von": start, "bis": start + days}
+            if (state.quirk_of(staff_id, tomorrow) or {}).get("id") == "talbahn":
+                item["talbahn"] = True
+            result.append(item)
+    rule = rules["konflikt"]
+    people = [staff_id for staff_id in present if staff_id not in sick]
+    last = max([tag for tag, item in state.personal_log
+                if item.get("art") == PERSONAL_CONFLICT] or [-1000])
+    if len(people) >= int(rule["ab_mitarbeiter"]) and day - last >= int(rule["abstand"]):
+        boost = max(state.quirk_value(staff_id, "konflikt", tomorrow) for staff_id in people)
+        chance = float(rule["chance"]) * max(0.0, 1 + boost / 100.0)
+        if _dice(seed, day, "konflikt") * 100 < chance:
+            (first, second), text = conflict_pair(state, people, seed, day, content)
+            result.append({"art": PERSONAL_CONFLICT, "konflikt": "konflikt:%d" % day,
+                           "a": first, "b": second, "name_a": names[first],
+                           "name_b": names[second],
+                           "text": text.format(**_pair_names(names[first], names[second]))})
+    for staff_id in state.staff:
+        if staff_id in leaving:
+            continue
+        before, after = state.quirk_of(staff_id, day), state.quirk_of(staff_id, tomorrow)
+        if before and after and after["stufe"] < before["stufe"]:
+            result.append({"art": PERSONAL_WEAKER, "id": staff_id, "name": names[staff_id],
+                           "macke": after["name"], "stufe": after["stufe"],
+                           "stufe_name": after["stufe_name"]})
+    return result
+
+
+def personal_decisions(state, content=None):
+    """Offene Entscheidungen zum Personal: [{"id", "art" (urlaub/konflikt),
+    "titel", "text", "optionen": [{"id", "label", "folge", "problem"}], ...}].
+    Urlaubsanfragen bis zum Urlaubsbeginn, Konflikte nur am Tag danach."""
+    content = content or state.content
+    rules = personal_rules(content)
+    result = []
+    for tag, item in state.personal_log:
+        art = item.get("art")
+        if art == PERSONAL_VACATION:
+            key = item["anfrage"]
+            if key in state.answers or item["id"] not in state.staff or \
+                    item["von"] <= state.day:
+                continue
+            first = short_name(item)
+            rule = rules["urlaub"]
+            before = [entry for entry in state.answers.values()
+                      if entry.get("id") == item["id"] and entry.get("anfrage")]
+            again = bool(before) and before[-1]["art"] == EV_VACATION_NO
+            count = item["bis"] - item["von"]
+            text = "%s fragt, ob %s von Arbeitstag %d bis %d Urlaub nehmen darf (%s)." % (
+                item["name"], first, item["von"], item["bis"] - 1, _days_text(count))
+            line = _vacation_line(item, content)
+            if line:
+                text += " " + line
+            result.append({
+                "id": key, "art": DECISION_VACATION, "person": item["id"],
+                "name": item["name"], "von": item["von"], "bis": item["bis"],
+                "titel": "Urlaubsanfrage von %s" % item["name"], "text": text,
+                "optionen": [
+                    {"id": VACATION_YES, "label": "Genehmigen", "problem": "",
+                     "folge": "%s fehlt %s, dafür Stimmung %s." % (
+                         first, _days_text(count), _signed(rule["genehmigt"]))},
+                    {"id": VACATION_NO, "label": "Ablehnen", "problem": "",
+                     "folge": "%s bleibt da, aber Stimmung %s%s." % (
+                         first, _signed(rule["abgelehnt_wieder" if again else "abgelehnt"]),
+                         " (schon das zweite Nein in Folge)" if again else "")}]})
+        elif art == PERSONAL_CONFLICT:
+            key = item["konflikt"]
+            if key in state.answers or tag != state.day - 1 or \
+                    item["a"] not in state.staff or item["b"] not in state.staff:
+                continue
+            rule = rules["konflikt"]
+            names = _pair_names(item["name_a"], item["name_b"])
+            first, second = names["a"], names["b"]
+            limit = own_ticket_limit(state, content)
+            busy = len(state.delegated_to(SELF)) >= limit
+            result.append({
+                "id": key, "art": DECISION_CONFLICT, "a": item["a"], "b": item["b"],
+                "name_a": item["name_a"], "name_b": item["name_b"],
+                "titel": "Streit zwischen %s und %s" % (first, second),
+                "text": item["text"] + " Du musst eingreifen.",
+                "optionen": [
+                    {"id": CONFLICT_MEDIATE, "label": "Schlichten",
+                     "folge": "Ein Gespräch zu dritt kostet dich heute einen "
+                              "Kundenticket-Platz. Beide: Stimmung %s."
+                              % _signed(rule["schlichten"]),
+                     "problem": "Heute hast du keine Zeit mehr für ein Gespräch, deine "
+                                "Kundenticket-Plätze sind belegt." if busy else ""},
+                    {"id": CONFLICT_SIDE_A, "label": "%s recht geben" % first, "problem": "",
+                     "folge": "%s: Stimmung %s. %s: Stimmung %s." % (
+                         first, _signed(rule["partei_plus"]), second,
+                         _signed(rule["partei_minus"]))},
+                    {"id": CONFLICT_SIDE_B, "label": "%s recht geben" % second,
+                     "problem": "",
+                     "folge": "%s: Stimmung %s. %s: Stimmung %s." % (
+                         second, _signed(rule["partei_plus"]), first,
+                         _signed(rule["partei_minus"]))},
+                    {"id": CONFLICT_IGNORE, "label": "Ignorieren", "problem": "",
+                     "folge": "Beide: Stimmung %s und %s lang %d %% weniger Leistung." % (
+                         _signed(rule["ignorieren"]), _days_text(int(rule["verstimmt_tage"])),
+                         rule["verstimmt_leistung"])}]})
+    return result
+
+
+def decision_result_text(decision, choice):
+    """Kurze Bestaetigung nach einer Entscheidung."""
+    option = next((item for item in decision["optionen"] if item["id"] == choice), None)
+    label = option["label"] if option else choice
+    return "%s: %s. %s" % (decision["titel"], label, option["folge"] if option else "")
+
+
+def personal_news(state, content=None):
+    """Story-Moment am Morgen zum Personal: was beim letzten Feierabend
+    feststand, dazu Urlaube, die heute beginnen."""
+    lines = []
+    for tag, item in state.personal_log:
+        if tag != state.day - 1:
+            continue
+        art = item.get("art")
+        first = short_name({"name": item.get("name", "")}) if item.get("name") else ""
+        if art == PERSONAL_SICK:
+            lines.append("%s hat sich krankgemeldet und fällt %s aus (bis einschließlich "
+                         "Arbeitstag %d)." % (item["name"], _days_text(item["bis"] - item["von"]),
+                                             item["bis"] - 1))
+        elif art == PERSONAL_VACATION:
+            lines.append("%s möchte Urlaub nehmen und wartet auf deine Antwort." % item["name"])
+        elif art == PERSONAL_CONFLICT:
+            lines.append("Ärger im Team: %s" % item["text"])
+        elif art == PERSONAL_QUIT:
+            lines.append("%s hat gekündigt. Die Stimmung war zu lange im Keller, der Platz "
+                         "ist wieder frei." % item["name"])
+        elif art == PERSONAL_WARN:
+            lines.append("%s wirkt sehr unzufrieden. Wenn sich nichts bessert, kündigt %s "
+                         "bald." % (item["name"], first))
+        elif art == PERSONAL_WEAKER:
+            lines.append("%s hat sich eingearbeitet: Die Macke „%s“ wirkt schwächer (jetzt "
+                         "%s)." % (item["name"], item["macke"], item["stufe_name"]))
+    for item in state.absences:
+        if item["art"] == ABSENT_VACATION and item["von"] == state.day and \
+                item["id"] in state.staff:
+            lines.append("%s ist ab heute im Urlaub (bis einschließlich Arbeitstag %d)." % (
+                state.staff[item["id"]].get("name", ""), item["bis"] - 1))
+    if state.open_decisions():
+        lines.append("Unter Firma > Mitarbeiter wartet eine Entscheidung auf dich.")
+    return "\n".join(lines)
+
+
+def conflict_choice_text(data):
+    """Wie du dich bei einem Konflikt entschieden hast."""
+    names = _pair_names(data.get("name_a", ""), data.get("name_b", ""))
+    first, second = names["a"], names["b"]
+    choice = data.get("wahl")
+    if choice == CONFLICT_MEDIATE:
+        return "Du hast geschlichtet."
+    if choice == CONFLICT_SIDE_A:
+        return "Du hast %s recht gegeben." % first
+    if choice == CONFLICT_SIDE_B:
+        return "Du hast %s recht gegeben." % second
+    return "Du hast den Streit ignoriert."
+
+
 def firm_people(state, content=None):
     """Die Mitarbeiter als Personen im eigenen Gebaeude (wie die Kollegen)."""
     result = []
     for item in state.staff_list():
-        if not item.get("platz"):
+        # Wer krank oder im Urlaub ist, sitzt nicht im Buero (ab 0.43)
+        if not item.get("platz") or item.get("abwesend"):
             continue
         x, y, room_id = item["platz"]
         training = item.get("weiterbildung")
@@ -4968,7 +5758,9 @@ def firm_people(state, content=None):
                        "raum": room_id, "platz": [float(x), float(y)],
                        "aussehen": item.get("aussehen"), "macke": item.get("macke", ""),
                        "mitarbeiter": True, "umsatz": item["umsatz"],
-                       "in_weiterbildung": bool(training)})
+                       "in_weiterbildung": bool(training),
+                       "im_coaching": bool(training) and
+                       training.get("art") == TRAINING_COACHING})
     return result
 
 
@@ -6478,14 +7270,17 @@ def ticket_limit(person, content=None):
 
 def own_ticket_limit(state, content=None):
     """Kundentickets fuer die Spielfigur heute: einer weniger, wenn sie in
-    einem Projekt mitarbeitet."""
-    return max(1, ticket_limit(SELF, content) - (1 if state.project_of(SELF) else 0))
+    einem Projekt mitarbeitet - und ab 0.43 einer weniger nach einem
+    Schlichtungsgespraech."""
+    limit = max(1, ticket_limit(SELF, content) - (1 if state.project_of(SELF) else 0))
+    return limit - (1 if state.day in state.mediation_days else 0)
 
 
-def ticket_chance(value, need, content=None):
-    """Erfolgschance in Prozent (ganze Zahl)."""
+def ticket_chance(value, need, content=None, bonus=0):
+    """Erfolgschance in Prozent (ganze Zahl). bonus (ab 0.43): Punkte durch
+    Macke und Stimmung."""
     rule = ticket_rules(content)["chance"]
-    chance = rule["basis"] + rule["je_punkt"] * (float(value) - need)
+    chance = rule["basis"] + rule["je_punkt"] * (float(value) - need) + float(bonus)
     return int(round(max(rule["min"], min(rule["max"], chance))))
 
 
@@ -6539,26 +7334,33 @@ def ticket_candidates(state, ticket, levels, content=None):
     name = (state.profile or {}).get("name") or "Ich"
     limit = own_ticket_limit(state, content)
     problem = ""
-    if len(state.delegated_to(SELF)) >= limit:
+    if limit <= 0:
+        problem = "Heute hast du keine Zeit mehr für Kundentickets, das " \
+                  "Schlichtungsgespräch hat deinen Platz gekostet."
+    elif len(state.delegated_to(SELF)) >= limit:
         problem = "Du hast heute schon %s übernommen." % (
             "ein Kundenticket" if limit == 1 else "%d Kundentickets" % limit)
         if state.project_of(SELF):
             problem += " Mehr geht nicht, weil du im Projekt mitarbeitest."
+        if state.day in state.mediation_days:
+            problem += " Einen Platz hat heute das Schlichtungsgespräch gekostet."
     result.append({"an": SELF, "name": "Ich selbst (%s)" % name, "wert": own,
                    "chance": ticket_chance(own, ticket["anforderung"], content),
                    "problem": problem})
     for item in state.staff_list():
         value = int(item["themen"].get(topic, 0)) if topic else int(item["werte"].get(cat, 0))
         problem = ""
-        if item.get("weiterbildung"):
-            problem = "%s ist gerade in einer Weiterbildung." % item["name"]
+        if item.get("weiterbildung") or item.get("abwesend"):
+            problem = absent_problem(item["name"], item.get("weiterbildung") or
+                                     item["abwesend"])
         elif item.get("projekt"):
             problem = "%s arbeitet im Projekt „%s“ mit." % (
                 item["name"], state.projects[item["projekt"]]["titel"])
         elif len(state.delegated_to(item["id"])) >= ticket_limit(item["id"], content):
             problem = "%s hat heute schon ein Kundenticket." % item["name"]
         result.append({"an": item["id"], "name": item["name"], "wert": value,
-                       "chance": ticket_chance(value, ticket["anforderung"], content),
+                       "chance": staff_ticket_chance(state, item["id"], ticket, value,
+                                                     content),
                        "problem": problem})
     return result
 
@@ -6574,7 +7376,16 @@ def ticket_outcomes(state, content=None):
             continue
         roll = _dice(state.firm_seed, state.day, "erfolg|" + ticket["id"])
         success = roll * 100 < ticket["chance"]
-        rule = rules["erfolg"] if success else rules["fehlschlag"]
+        rule = dict(rules["erfolg"] if success else rules["fehlschlag"])
+        if ticket["an"] in state.staff:
+            # Ab 0.43: Macken, die Kunden besonders zufrieden machen
+            extra = state.quirk_value(ticket["an"], "kz_erfolg" if success else
+                                      "kz_fehlschlag")
+            if extra:
+                rule["kundenzufriedenheit"] = int(round(
+                    rule.get("kundenzufriedenheit", 0) + extra))
+                if not success:
+                    rule["kundenzufriedenheit"] = min(0, rule["kundenzufriedenheit"])
         result.append({"ticket": ticket["id"], "vorlage": ticket["vorlage"],
                        "titel": ticket["titel"], "kunde": ticket["kunde"]["name"],
                        "an": ticket["an"], "name": ticket["name"], "erfolg": success,
@@ -6933,15 +7744,16 @@ def project_candidates(state, project, levels, content=None):
     for item in state.staff_list():
         value = project_value(state, item["id"], project, levels, content)
         problem = ""
-        if item.get("weiterbildung"):
-            problem = "%s ist gerade in einer Weiterbildung." % item["name"]
+        if item.get("weiterbildung") or item.get("abwesend"):
+            problem = absent_problem(item["name"], item.get("weiterbildung") or
+                                     item["abwesend"])
         elif item.get("projekt") and item["projekt"] != project["projekt"]:
             problem = "%s arbeitet schon im Projekt „%s“ mit." % (
                 item["name"], state.projects[item["projekt"]]["titel"])
         elif item["id"] not in project["team"] and state.delegated_to(item["id"]):
             problem = "%s hat heute schon ein Kundenticket." % item["name"]
         result.append({"an": item["id"], "name": item["name"], "wert": value,
-                       "punkte": project_points(value, content),
+                       "punkte": staff_project_points(state, item["id"], value, content),
                        "im_team": item["id"] in project["team"], "problem": problem})
     return result
 
@@ -6950,11 +7762,11 @@ def project_team_points(state, project, levels, content=None):
     """Punkte, die das Team an einem Arbeitstag schafft (ohne Zufall)."""
     total = 0.0
     for person in project["team"]:
-        if person != SELF and (person not in state.staff or state.training_of(person)):
+        if person != SELF and (person not in state.staff or state.absence_of(person)):
             continue
-        total += project_points(project_value(state, person, project, levels, content),
-                                content)
-    return round(total, 1)
+        total += staff_project_points(state, person, project_value(
+            state, person, project, levels, content), content)
+    return round(total * team_factor(state, project["team"]), 1)
 
 
 def project_phases(project, content=None):
@@ -7028,15 +7840,16 @@ def project_outcomes(state, levels, learned, content=None):
         shares = []
         best = 0
         for person in project["team"]:
-            if person != SELF and (person not in state.staff or state.training_of(person)):
+            if person != SELF and (person not in state.staff or state.absence_of(person)):
                 continue
             value = project_value(state, person, project, levels, content)
             best = max(best, value)
             shares.append({"an": person, "name": person_name(state, person),
-                           "punkte": project_points(value, content)})
+                           "punkte": staff_project_points(state, person, value, content)})
         if not shares:
             continue
-        factor = 1.0
+        # Ab 0.43: wer das ganze Team mitzieht (Macke), wirkt einmal
+        factor = team_factor(state, project["team"])
         setback = ""
         bonus = project.get("vorlage") in (learned or set())
         if bonus:
@@ -7427,6 +8240,58 @@ def _validate_business(content):
     return problems
 
 
+QUIRK_KEYS = ("umsatz", "chance", "chance_netzwerk", "chance_hardware", "chance_talbahn",
+              "projekt", "team_projekt", "team_lernen", "kz_erfolg", "kz_fehlschlag", "lernen",
+              "lernen_hardware", "lernen_andere", "urlaub", "krank", "konflikt",
+              "weiterbildung_tage", "stimmung_team", "stimmung_fehlschlag")
+
+
+def _validate_personal(rules, colleagues):
+    """firma.json ab 0.43: Macken mit Staerke und Schwaeche, Abschnitt personal."""
+    problems = []
+    seen = set()
+    for item in rules.get("macken") or []:
+        if not isinstance(item, dict):
+            problems.append("Spiel-Firma: Macke ohne Kennung (ab 0.43 Objekte)")
+            continue
+        where = "Spiel-Firma Macke %s" % item.get("id")
+        for key in ("id", "name", "text"):
+            if not item.get(key):
+                problems.append("%s: '%s' fehlt" % (where, key))
+        if item.get("id") in seen:
+            problems.append("%s: Kennung doppelt" % where)
+        seen.add(item.get("id"))
+        if not item.get("plus") or not item.get("minus"):
+            problems.append("%s: braucht Staerke (plus) und Schwaeche (minus)" % where)
+        for side in ("plus", "minus"):
+            for key, value in (item.get(side) or {}).items():
+                if key not in QUIRK_KEYS or not isinstance(value, (int, float)):
+                    problems.append("%s: unbekannte Wirkung '%s'" % (where, key))
+        if item.get("kollege") and item["kollege"] not in colleagues:
+            problems.append("%s: unbekannte Person '%s'" % (where, item["kollege"]))
+    if len([item for item in rules.get("macken") or []
+            if isinstance(item, dict) and not item.get("kollege")]) < 5:
+        problems.append("Spiel-Firma: zu wenige Macken fuer Bewerber")
+    personal = rules.get("personal") or {}
+    for key in ("stimmung", "krankheit", "urlaub", "konflikt", "coaching", "macken"):
+        if key not in personal:
+            problems.append("Spiel-Firma: personal.%s fehlt" % key)
+    if problems:
+        return problems
+    stages = personal["macken"].get("stufen") or {}
+    if sorted(stages) != ["1", "2", "3"]:
+        problems.append("Spiel-Firma: personal.macken.stufen braucht die Stufen 1 bis 3")
+    if len(personal["konflikt"].get("texte") or []) < 3:
+        problems.append("Spiel-Firma: zu wenige Konflikt-Texte")
+    for text in (personal["konflikt"].get("texte") or []) + [personal["konflikt"].get("summen",
+                                                                                      "")]:
+        try:
+            text.format(a="A", b="B", a_von="As", b_von="Bs")
+        except (KeyError, IndexError, ValueError):
+            problems.append("Spiel-Firma: Konflikt-Text mit falschem Platzhalter: %s" % text[:40])
+    return problems
+
+
 def _validate_firm(content):
     """firma.json: Gebaeudestufen mit Arbeitsplaetzen, Formeln, Wechsel."""
     problems = []
@@ -7481,6 +8346,7 @@ def _validate_firm(content):
             if topic not in TOPIC_CAT:
                 problems.append("Spiel-Firma: Wechsel %s mit unbekannter Staerke '%s'"
                                 % (item.get("kollege"), topic))
+    problems += _validate_personal(rules, ids)
     learn = rules.get("lernen") or {}
     for key in ("ticket_erfolg", "projekt_fertig", "projekt_puenktlich", "routine_tage",
                 "routine_plus", "halb_ab", "deckel", "max", "alt_streuung"):
@@ -8657,7 +9523,8 @@ def office_message(position, person, quests, content=None, state=None):
                                                 _whole_euro(person.get("umsatz", 0))))
         if person.get("mitarbeiter"):
             return ("%s · %s" % (person["name"], person["rolle"]),
-                    "In der Weiterbildung, heute kein Umsatz." if person.get("in_weiterbildung")
+                    ("Im Coaching, heute kein Umsatz." if person.get("im_coaching") else
+                     "In der Weiterbildung, heute kein Umsatz.") if person.get("in_weiterbildung")
                     else "Kümmert sich um Routineaufträge: %s Umsatz pro Arbeitstag. %s"
                     % (_whole_euro(person.get("umsatz", 0)), person.get("macke", "")))
         if person.get("lagerist") and state is not None:
@@ -8742,6 +9609,7 @@ def journey(state, content=None):
     incidents = 0
     started = False
     hired = {}
+    answered = set()
     offers_won = 0
     for _timestamp, kind, data in state.history:
         tag = data.get("tag") if isinstance(data.get("tag"), int) and data.get("tag") else day
@@ -8784,6 +9652,24 @@ def journey(state, content=None):
                 data.get("rolle", ""))
         elif kind == EV_FIRED and data.get("id") in hired:
             add(tag, JOURNEY_FIRM, "kuendigung", "Gekündigt: %s" % hired[data["id"]])
+        elif kind == EV_TRAINING and data.get("art") == TRAINING_COACHING and \
+                data.get("id") in hired:
+            quirk = quirk_by_id(data.get("macke"), content) or {}
+            add(tag, JOURNEY_FIRM, "coaching", "Coaching: %s" % hired[data["id"]],
+                "Gegen die Macke „%s“." % quirk.get("name", ""))
+        elif kind in (EV_VACATION_OK, EV_VACATION_NO) and data.get("anfrage") and \
+                data["anfrage"] not in answered:
+            answered.add(data["anfrage"])
+            ok = kind == EV_VACATION_OK
+            add(tag, JOURNEY_FIRM, kind, "Urlaub %s: %s" % (
+                "genehmigt" if ok else "abgelehnt", data.get("name", "")),
+                "Arbeitstag %s bis %s." % (data.get("von"), int(data.get("bis", 1)) - 1))
+        elif kind == EV_CONFLICT and data.get("konflikt") and \
+                data["konflikt"] not in answered:
+            answered.add(data["konflikt"])
+            names = _pair_names(data.get("name_a", ""), data.get("name_b", ""))
+            add(tag, JOURNEY_FIRM, EV_CONFLICT, "Streit: %s und %s" % (names["a"], names["b"]),
+                conflict_choice_text(data))
         elif kind == EV_EXPAND:
             stages = (content.get("firma") or {}).get("gebaeude", {}).get("stufen") or []
             stage = next((item for item in stages
@@ -8817,6 +9703,18 @@ def journey(state, content=None):
                 "Projekt verloren: %s" % data.get("titel", ""), data.get("kunde", ""))
         elif kind == EV_DAY_END:
             day += 1
+            # Ab 0.43: Personal (Krankheit, Kuendigung, schwaecher werdende Macken)
+            for item in (data.get("firma") or {}).get("personal") or []:
+                art = item.get("art")
+                if art == PERSONAL_SICK:
+                    add(tag, JOURNEY_FIRM, art, "Krank: %s" % item.get("name", ""),
+                        "Fällt %s aus." % _days_text(int(item["bis"]) - int(item["von"])))
+                elif art == PERSONAL_QUIT:
+                    add(tag, JOURNEY_FIRM, art, "Selbst gekündigt: %s" % item.get("name", ""),
+                        "Die Stimmung war zu lange im Keller.")
+                elif art == PERSONAL_WEAKER:
+                    add(tag, JOURNEY_FIRM, art, "Macke schwächer: %s" % item.get("name", ""),
+                        "„%s“ jetzt %s." % (item.get("macke", ""), item.get("stufe_name", "")))
             for item in (data.get("firma") or {}).get("projekte") or []:
                 if item.get("fertig"):
                     project = state.projects.get(item.get("projekt")) or {}
@@ -9148,6 +10046,10 @@ def place_message(site_id, position, person, state, content=None):
             if state.can_end_day():
                 return ("Eingangstür", "Für heute ist alles erledigt. Zeit für den "
                         "Feierabend!", [("feierabend", "Feierabend machen")])
+            if state.firm:
+                # Ab 0.43: Urlaubsanfragen und Konflikte warten auf dich
+                return ("Eingangstür", DECISIONS_OPEN_TEXT,
+                        [(ACTION_PERSONAL, "Zu den Entscheidungen")])
             left = len(state.open_tickets())
             return ("Eingangstür", "Noch nicht: %s offen." % (
                 "1 Ticket ist" if left == 1 else "%d Tickets sind" % left), [])
@@ -9538,7 +10440,8 @@ def morning_text(day, content=None, state=None):
     text = ((content or GAME)["story"].get("tage") or {}).get(str(day), "")
     if state is not None and state.firm:
         news = switch_news(state, content)
-        text = "\n\n".join(part for part in (text, news) if part)
+        staff = personal_news(state, content)
+        text = "\n\n".join(part for part in (text, news, staff) if part)
     return text
 
 
