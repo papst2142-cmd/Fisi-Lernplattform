@@ -4,6 +4,32 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.39
+
+- **Lernstand je Frage:** Jede Frage in Karteikarten, Prüfungstrainer,
+  AP1, AP2 und Test Projekt hat jetzt einen Status: „Offen“ (grau), „Zu
+  üben“ (rot nach einem Fehler, gelb nach einmal richtig danach) oder
+  „Abgeschlossen“ (grün, zweimal hintereinander richtig). Ein Fehler
+  holt eine abgeschlossene Frage wieder zurück.
+- **Status-Reiter und Themenfilter** in allen Lernbereichen. Unbearbeitete
+  Fragen kommen bevorzugt dran, nach je vier neuen eine Wiederholung.
+- **Gewusst / Nicht gewusst:** Nach dem Aufdecken der Musterlösung (AP1,
+  AP2, Test Projekt, Karteikarten im Modus „Aufdecken“) schätzt du dich
+  selbst ein. Ohne Bewertung zählt es nur als angesehen.
+- **Neuer Menüpunkt „Notizblock“:** Alle Fragen, die du noch üben solltest,
+  mit Fortschritt je Bereich, Filtern nach Fachbereich, Bereich, Thema und
+  Status, ein- und ausblendbaren Musterantworten und „Jetzt üben“ für
+  eine gezielte Runde.
+- **Spiel: „Reise“:** Rückblick mit Kennzahlen, Verlauf der Tickets je
+  Arbeitstag und des Ansehens, gelöste Tickets je Fachbereich und ein
+  Tagebuch mit allen wichtigen Momenten (Story, Beförderungen, jeder
+  Zwischenfall, jedes Angebot, Projekte, Gründung, Ausbau, Mitarbeiter),
+  filterbar nach Story, Karriere und Firma.
+- **PC:** Die Seitenleiste zeigt jetzt dieselben Symbole wie die
+  Handy-App, auch für die Unterpunkte.
+- Der Abgleich zwischen PC und Handy nimmt die neuen Bewertungen mit.
+  Bitte beide Geräte auf 0.39 aktualisieren.
+
 ## 0.38
 
 - **Mitarbeiter mit Themenwissen:** Deine Mitarbeiter haben jetzt einen Wert
