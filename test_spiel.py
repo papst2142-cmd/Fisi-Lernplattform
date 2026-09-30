@@ -518,7 +518,12 @@ class SymbolSchriftTest(unittest.TestCase):
         self.assertTrue(font)
         import app_gui
         self.assertLessEqual(set(app_gui.NAV_SYMBOLS.values()), set(fw.SYMBOLS))
-        self.assertEqual(set(app_gui.NAV_SYMBOLS), {item[0] for item in app_gui.NAV_ITEMS})
+        keys = {item[0] for item in app_gui.NAV_ITEMS}
+        for item in app_gui.NAV_ITEMS:
+            keys |= {sub[0] for sub in item[3] or [] if isinstance(sub, tuple)}
+        self.assertEqual(set(app_gui.NAV_SYMBOLS), keys)
+        self.assertEqual(set(app_gui.CATEGORY_NAV_SYMBOL), set(app_gui.CATEGORIES))
+        self.assertLessEqual(set(app_gui.CATEGORY_NAV_SYMBOL.values()), set(fw.SYMBOLS))
 
 
 class GrundrissUndAvatarTest(unittest.TestCase):

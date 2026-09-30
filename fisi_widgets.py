@@ -528,6 +528,16 @@ SYMBOLS = {
     "sports_esports": 0xF01BC,
     "insights": 0xF820,
     "settings": 0xF0164,
+    "lan": 0xF034B,
+    "security": 0xF013E,
+    "dns": 0xF6C1,
+    "euro": 0xF716,
+    "storage": 0xF01DE,
+    "business": 0xF5F8,
+    "storefront": 0xF01E1,
+    "home": 0xF7F5,
+    "work": 0xF02C7,
+    "route": 0xF0377,
 }
 _SYMBOL_FONTS = {}
 
@@ -579,7 +589,9 @@ class IconCanvas(tk.Canvas):
             self.icon = icon
         self.delete("all")
         box = px(self.size)
-        image = symbol_image(self.symbol, box, color) if self.symbol else None
+        # Unterpunkte (kleinere icon_scale) bekommen entsprechend kleinere Symbole
+        image = symbol_image(self.symbol, int(round(box * min(1.0, self.icon_scale / 0.72))),
+                             color) if self.symbol else None
         if image is not None:
             self._photo = ImageTk.PhotoImage(image)
             self.create_image(box / 2, box / 2, image=self._photo)

@@ -104,6 +104,16 @@ NAV_SYMBOLS = {
     "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
     "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
     "progress": "insights", "settings": "settings",
+    # Unterpunkte: Spiel
+    "buero": "business", "kunde": "storefront", "zuhause": "home", "firma": "work",
+    "reise": "route",
+}
+CATEGORY_NAV_SYMBOL = {
+    CATEGORIES[0]: "lan",
+    CATEGORIES[1]: "security",
+    CATEGORIES[2]: "dns",
+    CATEGORIES[3]: "euro",
+    CATEGORIES[4]: "storage",
 }
 
 # Symbole der Fachbereiche im Untermenue der Seitenleiste
@@ -627,13 +637,13 @@ class Sidebar(ctk.CTkFrame):
                         sub_key, sub_icon, sub_text = item
                         sub_row = NavRow(container, sub_icon, sub_text,
                                          command=lambda k=sub_key: self.app.show_view(k),
-                                         sub=True)
+                                         sub=True, symbol=NAV_SYMBOLS.get(sub_key))
                         self.parents[sub_key] = key
                     else:
                         sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
                                          CATEGORY_SHORT.get(item, item),
                                          command=lambda c=item: self.app.open_cards(c),
-                                         sub=True)
+                                         sub=True, symbol=CATEGORY_NAV_SYMBOL.get(item))
                     sub_row.pack(fill="x", pady=1)
 
         self.footer = make_label(self, "Version %s" % APP_VERSION,
