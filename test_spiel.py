@@ -477,6 +477,25 @@ class ReiseTest(unittest.TestCase):
             self.assertNotIn("Firma gegründet: Doppelt", titles)
             self.assertTrue(any(title.startswith("Gebäude ausgebaut") for title in titles))
 
+    def test_alle_zwischenfaelle_und_angebote(self):
+        with TempDB() as db:
+            game = _rich_game(db, money=200000)
+            incident = fg.GAME["zwischenfaelle"][0]
+            for day, right in ((3, True), (5, False), (7, True)):
+                game._log(fg.EV_SOLVED, {"tag": day, "aufgabe": incident["id"],
+                                         "zwischenfall": True, "richtig": right})
+            customer = fg.firm_rules()["kunden"][0]["id"]
+            for day, kind in ((8, fg.EV_OFFER_WON), (9, fg.EV_OFFER_LOST), (10, fg.EV_OFFER_WON)):
+                game._log(kind, {"tag": day, "anfrage": "a%d" % day, "kunde": customer,
+                                 "artikel": "Switch", "menge": 2, "geld": 120,
+                                 "grund": "" if kind == fg.EV_OFFER_WON else "preis"})
+            titles = [entry["titel"] for entry in fg.journey(game.state)]
+            self.assertEqual([t for t in titles if "Zwischenfall" in t],
+                             ["Erster Zwischenfall gemeistert", "Zwischenfall nicht gemeistert",
+                              "Zwischenfall gemeistert"])
+            self.assertEqual([t for t in titles if "Angebot" in t],
+                             ["Erstes Angebot gewonnen", "Angebot verloren", "Angebot gewonnen"])
+
     def test_leerer_spielstand(self):
         state = fg.GameState([])
         self.assertEqual(fg.journey(state), [])

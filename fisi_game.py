@@ -7167,21 +7167,24 @@ def journey(state, content=None):
             add(tag, JOURNEY_CAREER, "start", "Erster Arbeitstag",
                 "%s fängt bei der %s an." % (data.get("name") or "Deine Figur",
                                               content["gebaeude"]["firma"]))
-        elif kind == EV_SOLVED and data.get("richtig"):
-            if data.get("zwischenfall"):
+        elif kind == EV_SOLVED and data.get("zwischenfall"):
+            # Jeder Zwischenfall steht im Tagebuch, gemeistert oder nicht
+            task = task_by_id(data.get("aufgabe"), content) or {}
+            if data.get("richtig"):
                 incidents += 1
-                if incidents == 1:
-                    task = task_by_id(data.get("aufgabe"), content) or {}
-                    add(tag, JOURNEY_CAREER, "zwischenfall", "Erster Zwischenfall gemeistert",
-                        task.get("titel", ""))
+                title = ("Erster Zwischenfall gemeistert" if incidents == 1 else
+                         "Zwischenfall gemeistert")
             else:
-                solved += 1
-                if solved in TICKET_MILESTONES:
-                    add(tag, JOURNEY_CAREER, "meilenstein",
-                        "Erstes Ticket gelöst" if solved == 1 else
-                        "%d Tickets gelöst" % solved,
-                        (task_by_id(data.get("aufgabe"), content) or {}).get("titel", "")
-                        if solved == 1 else "")
+                title = "Zwischenfall nicht gemeistert"
+            add(tag, JOURNEY_CAREER, "zwischenfall", title, task.get("titel", ""))
+        elif kind == EV_SOLVED and data.get("richtig"):
+            solved += 1
+            if solved in TICKET_MILESTONES:
+                add(tag, JOURNEY_CAREER, "meilenstein",
+                    "Erstes Ticket gelöst" if solved == 1 else
+                    "%d Tickets gelöst" % solved,
+                    (task_by_id(data.get("aufgabe"), content) or {}).get("titel", "")
+                    if solved == 1 else "")
         elif kind == EV_MOVE:
             home = apartment(data.get("wohnung"), content) or {}
             add(tag, JOURNEY_CAREER, "umzug", "Umzug: %s" % home.get("name", "neue Wohnung"),
@@ -7208,14 +7211,27 @@ def journey(state, content=None):
         elif kind == EV_ROOM:
             item = special_room(data.get("raum"), content) or {}
             add(tag, JOURNEY_FIRM, "raum", "Neuer Raum: %s" % item.get("name", data.get("raum")))
-        elif kind == EV_OFFER_WON:
-            offers_won += 1
-            if offers_won == 1:
-                add(tag, JOURNEY_FIRM, "angebot", "Erstes Angebot gewonnen",
-                    data.get("titel", ""))
+        elif kind in (EV_OFFER_WON, EV_OFFER_LOST):
+            # Jedes Angebot steht im Tagebuch, gewonnen oder verloren
+            customer = (firm_customer(data.get("kunde"), content) or {}).get("name", "einen Kunden")
+            what = "%s × %s" % (data.get("menge", 1), data.get("artikel", "Artikel"))
+            if kind == EV_OFFER_WON:
+                offers_won += 1
+                add(tag, JOURNEY_FIRM, "angebot",
+                    "Erstes Angebot gewonnen" if offers_won == 1 else "Angebot gewonnen",
+                    "%s für %s, Gewinn %s." % (what, customer, _whole_euro(data.get("geld", 0))))
+            else:
+                reason = ("Fehler in der Kalkulation" if data.get("grund") == "rechenfehler"
+                          else "%s war günstiger" % competitor(
+                              data.get("konkurrent") or BITWEICHE, content)["kurz"])
+                add(tag, JOURNEY_FIRM, "angebot_verloren", "Angebot verloren",
+                    "%s für %s: %s." % (what, customer, reason))
         elif kind == EV_PROJECT_WON:
             add(tag, JOURNEY_FIRM, "projekt", "Projekt gewonnen: %s" % data.get("titel", ""),
                 data.get("kunde", ""))
+        elif kind == EV_PROJECT_LOST:
+            add(tag, JOURNEY_FIRM, "projekt_verloren",
+                "Projekt verloren: %s" % data.get("titel", ""), data.get("kunde", ""))
         elif kind == EV_DAY_END:
             day += 1
             for item in (data.get("firma") or {}).get("projekte") or []:
