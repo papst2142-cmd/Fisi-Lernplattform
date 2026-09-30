@@ -54,7 +54,8 @@ import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
-    ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView, OfficeView,
+    BranchView, ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView,
+    OfficeView,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -71,7 +72,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.44"
+APP_VERSION = "0.45"
 
 
 def _resource_path(filename):
@@ -139,6 +140,7 @@ VIEW_TITLES = {
     "kunde": ("SPIEL", "KUNDE"),
     "zuhause": ("SPIEL", "ZUHAUSE"),
     "firma": ("SPIEL", "FIRMA"),
+    "filiale": ("SPIEL", "FILIALE"),
     "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
@@ -3323,7 +3325,8 @@ class FISIApp:
                          ("testproject", ProjectView), ("notebook", NotebookView),
                          ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
                          ("kunde", CustomerView), ("zuhause", HomeView),
-                         ("firma", FirmView), ("reise", JourneyView),
+                         ("firma", FirmView), ("filiale", BranchView),
+                         ("reise", JourneyView),
                          ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)
@@ -3437,7 +3440,8 @@ class FISIApp:
         main, sub = VIEW_TITLES.get(key, ("FISI", ""))
         self.header.set_crumbs(main, sub)
         # Die Suche hat keinen eigenen Menuepunkt - dann bleibt nichts markiert.
-        self.sidebar.set_active(key)
+        # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
+        self.sidebar.set_active("game" if key == "filiale" else key)
         view.on_show()
         self.notify_progress(refresh_view=False)
 

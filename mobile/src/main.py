@@ -55,7 +55,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.44"
+APP_VERSION = "0.45"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -2184,6 +2184,18 @@ class FISIMobileApp:
             actions=[ft.TextButton("Abbrechen", on_click=lambda _e: answer(False)),
                      ft.TextButton("Ja", on_click=lambda _e: answer(True))]))
 
+    def info(self, title, message):
+        """Hinweis mit nur einem Knopf (z.B. Mitbewerber auf der Weltkarte)."""
+        def close(_event):
+            self.page.pop_dialog()
+            self.page.update()
+
+        self.page.show_dialog(ft.AlertDialog(
+            modal=False, bgcolor=C["card"],
+            title=ft.Text(title, color=C["text"], size=18, weight=ft.FontWeight.BOLD),
+            content=ft.Text(message, color=C["text_dim"], size=14),
+            actions=[ft.TextButton("OK", on_click=close)]))
+
     def notify_progress(self):
         """Nach jeder Lernaktivitaet: Abgleich vormerken."""
         self.sync.schedule()
@@ -2457,6 +2469,29 @@ def selftest():
             state.rooms = {room_id: {"raum": room_id} for room_id in rooms}
             game._fill_firm()
             game.site_key = "buero"
+            game._fill_site()
+        # Weltkarte und Filiale (ab 0.45): Karte, Liste, Vorschauen, zweiter Standort
+        state.firm["stufe"] = 4
+        state.branch = {"name": "Test Filiale", "tag": state.day, "stufe": 1}
+        state.staff_site[next(iter(state.staff))] = fisi_game.SITE_BRANCH
+        for key in ("gebaeude", "mitarbeiter"):
+            game.firm_tab = key
+            game._fill_firm()
+        original = fisi_game.map_list_mode
+        try:
+            for flag in (False, True):
+                fisi_game.map_list_mode = lambda flag=flag: flag
+                game.render()
+        finally:
+            fisi_game.map_list_mode = original
+        world = spiel.WorldMap(state, lambda _item: None)
+        for item in fisi_game.map_places(state):
+            spiel.model_preview(item["id"], state)
+            x1, y1, x2, y2 = item["box"]
+            world.place_under((x1 + x2) / 2 * world._scale(), (y1 + y2) / 2 * world._scale())
+        game.open_place(fisi_game.place_by_id("bitweiche", state))
+        for key in ("filiale", "buero", "zuhause", "kunde"):
+            game.site_key = key
             game._fill_site()
         game.render()
         game.site_key = "buero"

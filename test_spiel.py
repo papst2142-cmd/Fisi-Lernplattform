@@ -4588,5 +4588,308 @@ class RivalitaetMarktTest(unittest.TestCase):
             self.assertEqual(fg.market_events(plain, plain.content), [])
 
 
+class WeltkarteTest(unittest.TestCase):
+    """Weltkarte als Startansicht des Spiels, Aussenmodelle (ab 0.45)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    @staticmethod
+    def _ids(state, content=None):
+        return [item["id"] for item in fg.map_places(state, content)]
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_world(fg.GAME), [])
+        broken = _content()
+        broken["orte"]["orte"][0]["modell"] = "gibtsnicht"
+        broken["orte"]["orte"][1]["ansicht"] = "irgendwo"
+        broken["orte"]["orte"][2]["frei"] = {"zauberei": True}
+        broken["orte"]["orte"][3]["x"] = 999
+        problems = "\n".join(fg._validate_world(broken))
+        for text in ("unbekanntes Modell 'gibtsnicht'", "unbekannte Ansicht 'irgendwo'",
+                     "unbekannte Freischaltung 'zauberei'", "ausserhalb der Karte"):
+            self.assertIn(text, problems)
+        # Jeder Kundenort muss auf der Karte stehen
+        broken = _content()
+        broken["orte"]["orte"] = [item for item in broken["orte"]["orte"]
+                                  if item["id"] != "birkenhain"]
+        self.assertTrue(any("birkenhain" in line for line in fg._validate_world(broken)))
+
+    def test_freischaltung_nach_tagen(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC")
+            game.set_profile("Nico", {})
+            ids = self._ids(game.state)
+            self.assertIn("zuhause", ids)
+            self.assertIn("bitweiche", ids)
+            self.assertNotIn("gewerbehof", ids)
+            self.assertNotIn("filiale", ids)
+            for item in fg.map_places(game.state):
+                if item["ansicht"].startswith("kunde:"):
+                    place = fg.customer_place(item["ansicht"].split(":", 1)[1])
+                    self.assertLessEqual(place.get("ab_tag", 1), game.state.day)
+            hidden = [place["id"] for place in fg.customer_places()
+                      if place["id"] not in ids]
+            self.assertTrue(hidden, "Mindestens ein Kundenort kommt erst spaeter")
+            last = max(int(place.get("ab_tag", 1)) for place in fg.customer_places())
+            for day in range(1, last):
+                db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": day}), "PC")
+            state = game.reload()
+            ids = self._ids(state)
+            for place in fg.customer_places():
+                self.assertIn(place["id"], ids)
+            new = [item["id"] for item in fg.map_places(state) if item["neu"]]
+            self.assertTrue(set(new) <= set(hidden))
+
+    def test_gruendung_aendert_karte(self):
+        with TempDB() as db:
+            game = self._rich(db)
+            places = {item["id"]: item for item in fg.map_places(game.state, self.content)}
+            self.assertEqual(places["gewerbehof"]["hinweis"], "Zu vermieten")
+            self.assertEqual(places["gewerbehof"]["ansicht"], "firma")
+            self.assertEqual(places["bitweiche"]["ansicht"], "buero")
+            game.found_firm("Nico IT-Service")
+            places = {item["id"]: item for item in fg.map_places(game.state, self.content)}
+            self.assertEqual(places["gewerbehof"]["name"], "Nico IT-Service")
+            self.assertEqual(places["gewerbehof"]["ansicht"], "buero")
+            self.assertEqual(places["gewerbehof"]["hinweis"], "")
+            self.assertEqual(places["bitweiche"]["rolle"], "mitbewerber")
+            self.assertTrue(places["bitweiche"]["ansicht"].startswith("mitbewerber:"))
+            title, text = fg.rival_info(game.state, "bitweiche", self.content)
+            self.assertIn("Bitweiche", title)
+            self.assertIn("noch kein Angebot", text)
+            self.assertEqual(fg.site_place_id(fg.SITE_OFFICE, game.state), "gewerbehof")
+            self.assertEqual(fg.site_place_id(fg.SITE_HOME, game.state), "zuhause")
+
+    def test_treffer_auf_gebaeude_und_schild(self):
+        with TempDB() as db:
+            game = self._founded(db, money=300000)
+            state = game.state
+            for item in fg.map_places(state, self.content):
+                cx, cy = item["schild"]
+                self.assertEqual(fg.place_at(cx, cy, state, self.content, scale=30)["id"],
+                                 item["id"])
+                x1, y1, x2, y2 = item["box"]
+                self.assertIsNotNone(fg.place_at((x1 + x2) / 2, (y1 + y2) / 2, state,
+                                                 self.content, scale=30))
+            self.assertIsNone(fg.place_at(-5, -5, state, self.content))
+
+    def test_zeichnung_und_vorschau(self):
+        with TempDB() as db:
+            game = self._founded(db, money=300000)
+            state = game.state
+            shapes = fg.world_shapes(state, self.content)
+            kinds = {shape["k"] for shape in shapes}
+            self.assertTrue({"rect", "poly", "text"} <= kinds)
+            names = [shape["text"] for shape in shapes if shape["k"] == "text"
+                     and shape["role"] == "ort"]
+            self.assertIn("Nico IT-Service", names)
+            for item in fg.map_places(state, self.content):
+                preview, width, height = fg.place_preview(item["id"], state, self.content)
+                self.assertTrue(preview)
+                self.assertGreater(width, 0)
+                self.assertGreater(height, 0)
+                xs = [shape["x"] for shape in preview if "x" in shape]
+                self.assertGreaterEqual(min(xs), -0.01)
+
+    def test_modelle_je_wohnung_und_stufe(self):
+        import types
+        base = {"firm": None, "branch": None, "rooms": {}, "solved": set()}
+        variants = set()
+        for home in fg.GAME["wohnungen"]["wohnungen"]:
+            state = types.SimpleNamespace(home_id=home["id"], **base)
+            parts = fg.model_parts("wohnung", state)
+            self.assertTrue(parts)
+            variants.add(json.dumps(parts, sort_keys=True))
+        self.assertEqual(len(variants), len(fg.GAME["wohnungen"]["wohnungen"]))
+        counts = []
+        for number in range(1, 6):
+            state = types.SimpleNamespace(home_id="x", firm={"stufe": number}, branch=None,
+                                          rooms={}, solved=set())
+            counts.append(len(fg.model_parts("gewerbehof", state)))
+        self.assertEqual(counts, sorted(counts))
+        self.assertLess(counts[0], counts[-1])
+        # Serverraum auf dem Dach nur, wenn gebaut
+        state = types.SimpleNamespace(home_id="x", firm={"stufe": 5}, branch=None,
+                                      rooms={"serverraum": {}}, solved=set())
+        self.assertGreater(len(fg.model_parts("gewerbehof", state)), counts[-1])
+
+    def test_liste_statt_karte_je_geraet(self):
+        import fisi_update
+        stored = {}
+        original = fisi_update.load_settings, fisi_update.save_settings
+        fisi_update.load_settings = lambda: dict(stored)
+        fisi_update.save_settings = lambda settings: stored.update(settings) or True
+        try:
+            self.assertFalse(fg.map_list_mode())
+            fg.set_map_list_mode(True)
+            self.assertTrue(fg.map_list_mode())
+            self.assertEqual(stored, {fg.MAP_LIST_SETTING: True})
+            fg.set_map_list_mode(False)
+            self.assertFalse(fg.map_list_mode())
+        finally:
+            fisi_update.load_settings, fisi_update.save_settings = original
+
+
+class FilialeTest(unittest.TestCase):
+    """Zweiter Standort: Filiale in Lindenau (ab 0.45)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    def _staff(self, db, game, count):
+        state = game.state
+        template = fg.applicants(state, self.content)[0]
+        for number in range(count):
+            data = {key: copy.deepcopy(template[key]) for key in
+                    ("name", "aussehen", "werte", "themen", "gehalt", "herkunft",
+                     "schwerpunkt", "rolle")}
+            data.update(id="test%d-%d" % (len(state.staff), number), tag=state.day,
+                        name="Person %d" % (len(state.staff) + number))
+            db.log_game_event(fg.EV_HIRED, json.dumps(data), "PC")
+        return game.reload()
+
+    def _ready(self, db, money=400000):
+        game = self._founded(db, money=money)
+        while game.state.firm["stufe"] < 4:
+            game.expand()
+        self._staff(db, game, 6)
+        start = game.state.day
+        for day in range(start, start + 40):
+            db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": day, "firma": {}}), "PC")
+        game.reload()
+        return game
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_branch(fg.GAME["firma"]), [])
+        rules = fg.branch_rules()
+        self.assertEqual([len(stage["plaetze"]) for stage in rules["stufen"]], [4, 7])
+        self.assertEqual(rules["voraussetzung"], {"stufe": 4, "mitarbeiter": 6,
+                                                  "firmentage": 40})
+        broken = copy.deepcopy(fg.GAME["firma"])
+        broken["filiale"]["naehe"]["orte"] = ["nirgendwo"]
+        broken["filiale"]["stufen"][1]["plaetze"] = broken["filiale"]["stufen"][0]["plaetze"]
+        self.assertEqual(len(fg._validate_branch(broken)), 2)
+
+    def test_voraussetzung(self):
+        with TempDB() as db:
+            game = self._founded(db, money=400000)
+            self.assertEqual(len(fg.branch_missing(game.state, self.content)), 3)
+            self.assertNotIn("filiale", [item["id"] for item in
+                                         fg.map_places(game.state, self.content)])
+            with self.assertRaises(ValueError):
+                game.open_branch("Filiale Lindenau")
+        with TempDB() as db:
+            game = self._ready(db)
+            self.assertEqual(fg.branch_missing(game.state, self.content), [])
+            place = fg.place_by_id("filiale", game.state, self.content)
+            self.assertEqual(place["hinweis"], "Zu vermieten")
+            self.assertEqual(place["ansicht"], "firma:gebaeude")
+            self.assertEqual(place["name"], "Filiale Lindenau")
+
+    def test_eroeffnen_mit_eigenem_namen(self):
+        with TempDB() as db:
+            game = self._ready(db)
+            state = game.state
+            money, costs, office = state.money, state.firm_costs(), state.capacity
+            with self.assertRaises(ValueError):
+                game.open_branch("   ")
+            payload = game.open_branch("  Meine   Filiale ")
+            self.assertEqual(payload["name"], "Meine Filiale")
+            state = game.state
+            stage = fg.branch_stage(1)
+            self.assertEqual(state.money, money - stage["preis"])
+            self.assertEqual(state.firm_costs(), costs + stage["nebenkosten"])
+            self.assertEqual(state.capacity, office + 4)
+            self.assertEqual(state.site_capacity(fg.SITE_BRANCH), 4)
+            place = fg.place_by_id("filiale", state, self.content)
+            self.assertEqual((place["name"], place["ansicht"], place["hinweis"]),
+                             ("Meine Filiale", "filiale", ""))
+            self.assertTrue(place["neu"])
+            self.assertEqual(fg.site_name(fg.SITE_BRANCH, state=state), "Meine Filiale")
+            with self.assertRaises(ValueError):
+                game.open_branch("Noch eine")
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertIn("filiale", kinds)
+
+    def test_einstellen_und_versetzen(self):
+        with TempDB() as db:
+            game = self._ready(db)
+            game.open_branch("Filiale Lindenau")
+            office = game.state.site_capacity(fg.SITE_OFFICE)
+            self._staff(db, game, office - len(game.state.staff))
+            self.assertEqual(game.state.site_free(fg.SITE_OFFICE), 0)
+            applicant = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(applicant)
+            state = game.state
+            self.assertEqual(state.site_of(applicant), fg.SITE_BRANCH)
+            self.assertEqual(len(state.site_staff(fg.SITE_BRANCH)), 1)
+            sites = {item["id"]: item["standort"] for item in state.staff_list()}
+            self.assertEqual(sites[applicant], fg.SITE_BRANCH)
+            with self.assertRaises(ValueError):
+                game.transfer(applicant, fg.SITE_OFFICE)      # Gewerbehof voll
+            with self.assertRaises(ValueError):
+                game.transfer(applicant, fg.SITE_BRANCH)      # schon dort
+            other = state.site_staff(fg.SITE_OFFICE)[0]
+            other = other if isinstance(other, str) else other["id"]
+            game.transfer(other, fg.SITE_BRANCH)
+            game.transfer(applicant, fg.SITE_OFFICE)
+            state = game.state
+            self.assertEqual(state.site_of(other), fg.SITE_BRANCH)
+            self.assertEqual(state.site_of(applicant), fg.SITE_OFFICE)
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertIn("versetzung", kinds)
+            site = fg.site_content(fg.SITE_BRANCH, state, self.content)
+            self.assertEqual([person["id"] for person in site["kollegen"]], [other])
+            game.fire(other)
+            self.assertEqual(game.state.site_staff(fg.SITE_BRANCH), [])
+
+    def test_ausbau(self):
+        with TempDB() as db:
+            game = self._ready(db)
+            with self.assertRaises(ValueError):
+                game.expand_branch()
+            game.open_branch("Filiale Lindenau")
+            game.expand_branch()
+            self.assertEqual(game.state.branch["stufe"], 2)
+            self.assertEqual(game.state.site_capacity(fg.SITE_BRANCH), 7)
+            self.assertIsNone(fg.branch_status(game.state, self.content)["naechste"])
+            with self.assertRaises(ValueError):
+                game.expand_branch()
+
+    def test_doppelt_zaehlt_einmal(self):
+        with TempDB() as pc, TempDB() as handy:
+            game = self._ready(pc)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            other = fg.Game(handy, "Handy", self.content)
+            money = game.state.money
+            game.open_branch("Vom PC")
+            other.open_branch("Vom Handy")
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            state = other.reload()
+            self.assertEqual(state.money, money - fg.branch_stage(1)["preis"])
+            self.assertEqual(state.branch["stufe"], 1)
+
+    def test_mehr_anfragen_und_naehe(self):
+        with TempDB() as db:
+            game = self._ready(db)
+            state = game.state
+            before = len(fg.inquiries_for_day(state, state.day, self.content))
+            near = [item["id"] for item in self.content["firma"]["kunden"]
+                    if item.get("ort") == "lindenau"]
+            self.assertTrue(near)
+            self.assertEqual(fg.branch_nearness(state, near[0], self.content), 0)
+            game.open_branch("Filiale Lindenau")
+            state = game.state
+            after = len(fg.inquiries_for_day(state, state.day, self.content))
+            self.assertEqual(after, before + 1)
+            self.assertEqual(fg.branch_nearness(state, near[0], self.content), 3)
+            others = [item["id"] for item in self.content["firma"]["kunden"]
+                      if item.get("ort") != "lindenau"]
+            self.assertEqual(fg.branch_nearness(state, others[0], self.content), 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
