@@ -4,6 +4,35 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.38
+
+- **Mitarbeiter mit Themenwissen:** Deine Mitarbeiter haben jetzt einen Wert
+  in jedem der 36 Themen. Der Wert je Fachbereich ist der Durchschnitt
+  seiner Themen, Gehalt und Umsatz rechnen wie bisher damit. Unter dem
+  Namen steht „Stark in: …“ mit den zwei besten Themen, der Knopf
+  „Themen“ klappt alle Werte auf.
+- **Bewerber mit Profil:** Jede Bewerbung bringt zwei Stärken mit. Tim ist
+  stark in Verkabelung und Hardware, Svenja in Routing und Windows & AD.
+- **Kundentickets und Projekte je Thema:** Jedes Kundenticket hat ein Thema
+  (z. B. „Netzwerk · WLAN“), die Erfolgschance hängt vom Wert in genau
+  diesem Thema ab. Für dich selbst zählt dein Wissensstand im Thema.
+  Projekte rechnen mit dem Thema ihrer Projektarbeit.
+- **Mitarbeiter lernen durch Arbeit:** +2 im Thema für jedes geschaffte
+  Kundenticket, +3 für ein fertiges Projekt (+1 extra, wenn es pünktlich
+  ist) und alle 10 Arbeitstage Routinearbeit +1 im stärksten Thema. Ab
+  Wert 70 geht es nur noch halb so schnell, 90 ist das Maximum. Der
+  Feierabend zeigt, wer dazugelernt hat.
+- **Zwei Arten Weiterbildung:** Zuerst den Fachbereich wählen, dann ein
+  Thema (+10) oder den ganzen Fachbereich (+5 auf alle seine Themen,
+  teurer und einen Tag länger).
+- Bestehende Spielstände verlieren nichts: Die Themen starten beim
+  bisherigen Fachbereichswert, frühere Weiterbildungen zählen weiter.
+- **Handy:** Die App sucht wieder von selbst nach Updates, kurz nach dem
+  Start und auch, wenn du sie aus dem Hintergrund zurückholst. Diese
+  Version musst du dir noch einmal selbst über „Nach Updates suchen“
+  holen, danach klappt es automatisch.
+- Bitte PC und Handy beide auf 0.38 aktualisieren.
+
 ## 0.37
 
 - **Themen je Fachbereich:** Die fünf Fachbereiche sind jetzt in 36 Themen
