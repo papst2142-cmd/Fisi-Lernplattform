@@ -98,9 +98,15 @@ EV_ROOM = "raum_ausgebaut"
 # werden beim Feierabend aus diesen Ereignissen berechnet, nicht gespeichert.
 EV_LOAN = "kredit_aufgenommen"
 EV_LOAN_REPAID = "kredit_abgeloest"
+# Werbung und Zertifizierungen (ab 0.42). Die Umsatzsteuer und die laufenden
+# Werbekosten rechnet der Spielstand beim Feierabend selbst aus.
+EV_ADS = "werbung_gebucht"
+EV_ADS_STOP = "werbung_beendet"
+EV_CERT = "zertifizierung"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
-               EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID)
+               EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
+               EV_CERT)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -566,6 +572,7 @@ def validate_game_content(content=None):
     problems += _validate_rent(content)
     problems += _validate_firm(content)
     problems += _validate_loans(content)
+    problems += _validate_business(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -3118,6 +3125,15 @@ class GameState:
         self.dunning = 0           # Mahnstufe (0 = alles in Ordnung)
         self.dunning_day = 0       # Arbeitstag der letzten Aenderung der Mahnstufe
         self.loan_log = []         # (tag, art, kredit-id, daten) je Feierabend
+        # Umsatzsteuer, Werbung und Zertifizierungen (ab 0.42)
+        self.tax_reserve = 0       # Steuerruecklage (nicht auf dem Konto)
+        self.tax_debt = 0          # nicht bezahlte Umsatzsteuer (mit Saeumnisgebuehren)
+        self.tax_period = new_tax_period()   # laufender Voranmeldungszeitraum
+        self.tax_days = 0          # Feierabende mit Umsatzsteuer
+        self.tax_log = []          # (tag, art, daten): ruecklage, voranmeldung, ausfall ...
+        self.ads = []              # gebuchte Werbung (Ereignisdaten + "ende")
+        self.ad_log = []           # (tag, werbung-id, kosten) laufende Werbekosten
+        self.certs = {}            # zertifizierung -> Ereignisdaten (auch laufende)
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3210,7 +3226,13 @@ class GameState:
                         self._learn_from_project(item, today)
                 self._learn_routine(busy, today)
                 if self.firm:
-                    self._loan_day(today)
+                    # Ab 0.42: laufende Werbung, dann Kreditraten, dann Umsatzsteuer -
+                    # geplatzte Zahlungen landen in derselben Mahnstufe
+                    self._ads_day(today)
+                    failed = self._loan_day(today)
+                    if firm.get("ust"):
+                        failed += self._tax_day(today)
+                    self._dunning_day(today, failed)
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
                 self.day_log.append((today, round(self.mean_reputation, 1)))
@@ -3323,6 +3345,22 @@ class GameState:
             loan["bezahlt_gebuehren"] += payoff["gebuehren"]
             loan.update(rest=0, zins_offen=0, gebuehren=0, ende=day, ende_art="abgeloest")
             self.loan_log.append((day, "abgeloest", loan["id"], payoff))
+        elif kind == EV_ADS and data.get("werbung"):
+            # Doppelt (zwei Geraete) oder schon aktiv: zaehlt nicht
+            if ad_form(data["werbung"], self.content) and \
+                    not self.ad_booking(data["werbung"], int(data.get("tag", day))):
+                self.ads.append(dict(data, ende=None))
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_MARKETING, data.get("geld", 0))
+        elif kind == EV_ADS_STOP:
+            booking = self.ad_booking(data.get("werbung"), int(data.get("tag", day)))
+            if booking and booking.get("art") == AD_RUNNING:
+                booking["ende"] = int(data.get("tag", day))
+        elif kind == EV_CERT and data.get("zert") and data["zert"] not in self.certs:
+            if certificate(data["zert"], self.content):
+                self.certs[data["zert"]] = dict(data)
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_CERT, data.get("geld", 0))
         elif kind == EV_PROJECT_TEAM and data.get("projekt") in self.projects:
             project = self.projects[data["projekt"]]
             if project["fertig"]:
@@ -3357,9 +3395,8 @@ class GameState:
 
     def _loan_day(self, day):
         """Feierabend: Fuer jeden laufenden Kredit fallen die Zinsen des Tages
-        an und die Rate wird abgebucht - reicht das Konto nicht, platzt sie:
-        Mahnstufe, Gebuehr auf die Restschuld, weniger Ansehen."""
-        rules = loan_rules(self.content)
+        an und die Rate wird abgebucht. Reicht das Konto nicht, platzt sie -
+        zurueck kommt die Liste der geplatzten Zahlungen fuer _dunning_day."""
         failed = []
         for loan in self.running_loans():
             if loan["tag"] > day:
@@ -3389,25 +3426,151 @@ class GameState:
                     loan.update(rest=0, ende=day, ende_art="zurueckgezahlt")
                     self.loan_log.append((day, "zurueckgezahlt", loan["id"], {}))
             else:
-                failed.append((loan, due))
+                failed.append(("kredit", loan, due))
+        return failed
+
+    def _dunning_day(self, day, failed):
+        """Die zentrale Mahnstufe (ab 0.41 fuer Kredite, ab 0.42 auch fuer die
+        Umsatzsteuer): Platzt beim Feierabend mindestens eine Zahlung, steigt
+        sie um 1 (hoechstens bis zur letzten Stufe), das Ansehen sinkt einmal,
+        jede geplatzte Zahlung bekommt die Gebuehr der Stufe. Ohne geplatzte
+        Zahlung sinkt sie nach abbau_tage Arbeitstagen wieder um 1."""
+        rules = loan_rules(self.content)
         steps = rules["mahnung"]["stufen"]
         if failed:
-            # Hoechstens eine Stufe pro Feierabend, auch wenn mehrere Raten platzen
+            # Hoechstens eine Stufe pro Feierabend, auch wenn mehreres platzt
             self.dunning = min(len(steps), self.dunning + 1)
             self.dunning_day = day
             step = steps[self.dunning - 1]
             self._apply_reputation(step.get("reputation") or {})
-            for number, (loan, due) in enumerate(failed):
-                loan["gebuehren"] += int(step.get("gebuehr", 0))
-                loan["ausfaelle"] += 1
-                # Das Ansehen sinkt einmal pro Feierabend (steht beim ersten Kredit)
-                self.loan_log.append((day, "ausfall", loan["id"], {
-                    "rate": due, "stufe": self.dunning, "gebuehr": int(step.get("gebuehr", 0)),
-                    "reputation": dict(step.get("reputation") or {}) if not number else {}}))
+            fee = int(step.get("gebuehr", 0))
+            for number, (kind, item, due) in enumerate(failed):
+                # Das Ansehen sinkt einmal pro Feierabend (steht beim ersten Posten)
+                reputation = dict(step.get("reputation") or {}) if not number else {}
+                if kind == "kredit":
+                    item["gebuehren"] += fee
+                    item["ausfaelle"] += 1
+                    self.loan_log.append((day, "ausfall", item["id"], {
+                        "rate": due, "stufe": self.dunning, "gebuehr": fee,
+                        "reputation": reputation}))
+                else:
+                    self.tax_debt += fee
+                    self.tax_log.append((day, "ausfall", {
+                        "betrag": due, "stufe": self.dunning, "gebuehr": fee,
+                        "reputation": reputation, "schuld": self.tax_debt}))
         elif self.dunning and day - self.dunning_day >= int(rules["mahnung"]["abbau_tage"]):
             self.dunning -= 1
             self.dunning_day = day
             self.loan_log.append((day, "mahnstufe", "", {"stufe": self.dunning}))
+
+    # -- Umsatzsteuer und Werbung (ab 0.42) ---------------------------------------
+
+    def _ads_day(self, day):
+        """Feierabend: laufende Werbung kostet ihren Tagessatz."""
+        for booking in self.ads:
+            if booking.get("art") == AD_RUNNING and ad_active(booking, day):
+                cost = int(booking.get("kosten", 0))
+                self.money -= cost
+                self._book(day, BOOK_MARKETING, -cost)
+                self.ad_log.append((day, booking["werbung"], cost))
+
+    def _tax_day(self, day):
+        """Feierabend: Umsatzsteuer und Vorsteuer des Tages in den laufenden
+        Zeitraum, Steuerruecklage auffuellen, alle faellig_tage die
+        Voranmeldung. Zurueck: geplatzte Zahlung (fuer _dunning_day) oder []."""
+        rules = tax_rules(self.content)
+        rate = float(rules["satz"])
+        entry = self.book.get(day) or {"ein": {}, "aus": {}}
+        gross_in = sum(entry["ein"].get(kind, 0) for kind in TAX_INCOME)
+        gross_out = sum(entry["aus"].get(kind, 0) for kind in TAX_INPUT)
+        period = self.tax_period
+        if period["start"] is None:
+            period["start"] = day
+        period["ust"] += gross_in * rate / (100.0 + rate)
+        period["vst"] += gross_out * rate / (100.0 + rate)
+        period["umsatz"] += gross_in
+        period["ausgaben"] += gross_out
+        period["tage"] += 1
+        self.tax_days += 1
+        due = tax_due_amount(period)
+        # Ruecklage: so viel, wie bisher an Zahllast aufgelaufen ist
+        target = max(0, int(round(due * float(rules.get("ruecklage_prozent", 100)) / 100.0)))
+        move = target - self.tax_reserve
+        if move > 0:
+            move = min(move, max(0, self.money))
+        if move:
+            self.money -= move
+            self.tax_reserve += move
+            self._book(day, BOOK_TAX, -move)
+            self.tax_log.append((day, "ruecklage", {"betrag": move,
+                                                    "ruecklage": self.tax_reserve}))
+        if self.tax_days % max(1, int(rules["faellig_tage"])) == 0:
+            data = {"von": period["start"], "bis": day, "ust": int(round(period["ust"])),
+                    "vorsteuer": int(round(period["vst"])), "zahllast": due,
+                    "umsatz": period["umsatz"], "ausgaben": period["ausgaben"]}
+            if due >= 0:
+                from_reserve = min(self.tax_reserve, due)
+                self.tax_reserve -= from_reserve
+                rest = due - from_reserve
+                data.update(aus_ruecklage=from_reserve, vom_konto=0)
+                if rest > 0:
+                    paid = min(rest, max(0, self.money))
+                    self.money -= paid
+                    self._book(day, BOOK_TAX, -paid)
+                    data["vom_konto"] = paid
+                    self.tax_debt += rest - paid
+                    data["offen"] = rest - paid
+            else:
+                self.money -= due
+                self._book(day, BOOK_TAX, -due)
+                data["erstattung"] = -due
+            if self.tax_reserve:
+                # Was in der Ruecklage uebrig ist, kommt aufs Konto zurueck
+                data["frei"] = self.tax_reserve
+                self.money += self.tax_reserve
+                self._book(day, BOOK_TAX, self.tax_reserve)
+                self.tax_reserve = 0
+            self.tax_log.append((day, "voranmeldung", data))
+            self.tax_period = new_tax_period()
+        if self.tax_debt:
+            paid = min(self.tax_debt, max(0, self.money))
+            if paid:
+                self.money -= paid
+                self.tax_debt -= paid
+                self._book(day, BOOK_TAX, -paid)
+                self.tax_log.append((day, "nachgezahlt", {"betrag": paid,
+                                                          "schuld": self.tax_debt}))
+            if self.tax_debt:
+                return [("steuer", None, self.tax_debt)]
+        return []
+
+    def ad_booking(self, ad_id, day):
+        """Die gebuchte Werbung dieser Form, die am Tag laeuft oder erst
+        beginnt (oder None)."""
+        for booking in self.ads:
+            if booking.get("werbung") == ad_id and ad_open(booking, day):
+                return booking
+        return None
+
+    def ads_active(self, day=None):
+        """Werbung, die am Tag wirkt."""
+        day = self.day if day is None else day
+        return [booking for booking in self.ads if ad_active(booking, day)]
+
+    def ad_costs(self, day=None):
+        """Laufende Werbekosten pro Arbeitstag."""
+        return sum(int(booking.get("kosten", 0)) for booking in self.ads_active(day)
+                   if booking.get("art") == AD_RUNNING)
+
+    def certs_held(self, day=None):
+        """Abgeschlossene Zertifizierungen am Tag."""
+        day = self.day if day is None else day
+        return {cert_id for cert_id, data in self.certs.items()
+                if int(data.get("bis_tag", 0)) <= day}
+
+    def cert_running(self, day=None):
+        day = self.day if day is None else day
+        return [data for data in self.certs.values() if int(data.get("bis_tag", 0)) > day]
 
     def running_loans(self):
         """Laufende Kredite in der Reihenfolge der Aufnahme."""
@@ -3698,7 +3861,8 @@ class GameState:
     def tenders(self):
         """Projektausschreibungen, die heute vorliegen (mit Ergebnis, falls
         schon ein Angebot abgegeben wurde)."""
-        return project_tenders(self, self.day, self.content)
+        return project_tenders(self, self.day, self.content) + \
+            gross_tenders(self, self.day, self.content)
 
     # -- Lager ------------------------------------------------------------
 
@@ -4040,15 +4204,25 @@ class Game:
                                     self.content)
             if days:
                 payload["firma"]["projekte"] = days
+            # Ab 0.42: Umsatzsteuer ab diesem Feierabend (aeltere Tage bleiben
+            # steuerfrei, damit alte Spielstaende nicht nachtraeglich zahlen)
+            payload["firma"]["ust"] = 1
             # Einmal durchrechnen, was der Feierabend bringt (nur fuer die Anzeige)
             after = GameState(list(self.state.history) + [("", EV_DAY_END, payload)],
                               self.content)
             learned = learned_today(self.state, payload, self.content, after)
             if learned:
                 payload["firma"]["gelernt"] = learned
+            # Mahnstufe: Kredite und Umsatzsteuer zusammen (steht bei den Krediten)
             loans = loans_today(after, self.state.day)
             if loans:
                 payload["firma"]["kredite"] = loans
+            taxes = taxes_today(after, self.state.day)
+            if taxes:
+                payload["firma"]["steuer"] = taxes
+            ads = sum(cost for day, _ad, cost in after.ad_log if day == self.state.day)
+            if ads:
+                payload["firma"]["werbung"] = ads
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -4214,6 +4388,46 @@ class Game:
                 payoff["gesamt"] - max(0, self.state.money)))
         payload = {"kredit": loan_id, "tag": self.state.day, "geld": -payoff["gesamt"]}
         self._log(EV_LOAN_REPAID, payload)
+        return payload
+
+    # -- Werbung und Zertifizierungen (ab 0.42) -----------------------------------
+
+    def book_ad(self, ad_id, mode):
+        """Bucht eine Werbeform laufend (AD_RUNNING, Kosten pro Arbeitstag)
+        oder einmalig (AD_ONCE, sofort bezahlt, befristet). Die Wirkung
+        beginnt am naechsten Arbeitstag."""
+        self._firm_required()
+        offer = ad_offer(self.state, ad_id, mode, self.content)
+        if offer["problem"]:
+            raise ValueError(offer["problem"])
+        day = self.state.day
+        payload = {"werbung": ad_id, "art": mode, "tag": day, "ab_tag": day + 1}
+        if mode == AD_ONCE:
+            payload.update(bis_tag=day + offer["tage"], geld=-offer["preis"])
+        else:
+            payload["kosten"] = offer["kosten"]
+        self._log(EV_ADS, payload)
+        return payload
+
+    def stop_ad(self, ad_id):
+        """Kuendigt laufende Werbung (heute kostet sie noch)."""
+        self._firm_required()
+        booking = self.state.ad_booking(ad_id, self.state.day)
+        if booking is None or booking.get("art") != AD_RUNNING:
+            raise ValueError("Diese Werbung läuft nicht dauerhaft.")
+        payload = {"werbung": ad_id, "tag": self.state.day}
+        self._log(EV_ADS_STOP, payload)
+        return payload
+
+    def start_cert(self, cert_id):
+        """Beginnt eine Zertifizierung: kostet sofort, gilt nach den Arbeitstagen."""
+        self._firm_required()
+        offer = cert_offer(self.state, cert_id, self.content)
+        if offer["problem"]:
+            raise ValueError(offer["problem"])
+        payload = {"zert": cert_id, "tag": self.state.day,
+                   "bis_tag": self.state.day + offer["tage"], "geld": -offer["preis"]}
+        self._log(EV_CERT, payload)
         return payload
 
     def learned_projects(self):
@@ -4383,6 +4597,14 @@ BOOK_LOAN = "Kredite"                 # ausgezahlte Kredite (ab 0.41)
 BOOK_LOAN_INTEREST = "Kreditzinsen"
 BOOK_LOAN_REPAY = "Kredittilgung"
 BOOK_LOAN_FEES = "Kreditgebühren"     # Mahngebuehren, Vorfaelligkeit
+BOOK_TAX = "Umsatzsteuer"               # Ruecklage, Nachzahlung, Erstattung (ab 0.42)
+BOOK_MARKETING = "Werbung"
+BOOK_CERT = "Zertifizierung"
+# Ab 0.42: In diesen Einnahmen steckt Umsatzsteuer, in diesen Ausgaben
+# Vorsteuer (Gehaelter, Zinsen, Gebuehren und die Gruendung haben keine)
+TAX_INCOME = (BOOK_REVENUE, BOOK_TICKETS, BOOK_OFFERS, BOOK_PROJECTS)
+TAX_INPUT = (BOOK_COSTS, BOOK_MATERIAL, BOOK_BUILDING, BOOK_TRAINING, BOOK_MARKETING,
+             BOOK_CERT)
 
 SELF = "ich"                       # Kundenticket uebernimmt die Spielfigur selbst
 INQUIRY_PREFIX = "anfrage:"        # anfrage:<tag>:<nummer>
@@ -4394,7 +4616,9 @@ PROJECT_PREFIX = "projekt:"        # projekt:<nummer der ausschreibung>
 FIRM_TABS = [("auftraege", "Aufträge"), ("projekte", "Projekte"),
              ("mitarbeiter", "Mitarbeiter"),
              ("bewerbungen", "Bewerbungen"),
-             ("gebaeude", "Gebäude"), ("finanzen", "Finanzen"), ("kredite", "Kredite")]
+             ("gebaeude", "Gebäude"), ("marketing", "Marketing"),
+             ("zertifizierungen", "Zertifizierungen"),
+             ("finanzen", "Finanzen"), ("kredite", "Kredite")]
 
 
 FIRM_IDLE_TEXT = ("Für heute ist alles verteilt und angeboten. Deine Leute kümmern sich "
@@ -4875,7 +5099,7 @@ def firm_summary(state):
     """Eine Zeile zur Firma (Uebersicht auf PC und Handy)."""
     numbers = state.firm_day()
     profit = numbers["umsatz"] - numbers["gehaelter"] - numbers["nebenkosten"] - \
-        state.loan_rates()
+        state.loan_rates() - state.ad_costs()
     return "%d von %d Plätzen besetzt · heute %s%s" % (
         len(state.staff), state.capacity, "+" if profit >= 0 else "-",
         _whole_euro(abs(profit)))
@@ -4892,6 +5116,13 @@ def firm_day_text(numbers):
     paid = sum(item["rate"] for item in loans if item["art"] == "rate")
     if paid:
         text += " Kreditraten: -%s." % _whole_euro(paid)
+    # Ab 0.42: Werbung und Umsatzsteuer
+    if numbers.get("werbung"):
+        text += " Werbung: -%s." % _whole_euro(numbers["werbung"])
+    taxes = numbers.get("steuer") or []
+    reserve = sum(item["betrag"] for item in taxes if item["art"] == "ruecklage")
+    if reserve > 0:
+        text += " Umsatzsteuer in die Rücklage: -%s." % _whole_euro(reserve)
     lines = [ticket_result_text(item) for item in numbers.get("tickets") or []]
     if lines:
         text += "\n\nKundentickets:\n" + "\n".join("• " + line for line in lines)
@@ -4901,6 +5132,9 @@ def firm_day_text(numbers):
     lines = loan_day_lines(loans)
     if lines:
         text += "\n\nKredite:\n" + "\n".join("• " + line for line in lines)
+    lines = tax_day_lines(taxes)
+    if lines:
+        text += "\n\nUmsatzsteuer:\n" + "\n".join("• " + line for line in lines)
     learned = numbers.get("gelernt") or []
     lines = [learned_text(item) for item in learned if not item.get("grenze")]
     if lines:
@@ -5054,13 +5288,15 @@ def firm_profit_recent(state, days, content=None):
     """Durchschnittlicher Gewinn pro Arbeitstag der letzten `days` Arbeitstage
     vor Kreditkosten: Umsatz minus Gehaelter, Nebenkosten und Material."""
     kinds_in = (BOOK_REVENUE, BOOK_TICKETS, BOOK_OFFERS, BOOK_PROJECTS)
-    kinds_out = (BOOK_WAGES, BOOK_COSTS, BOOK_MATERIAL)
+    # Ab 0.42 auch Werbung und die Umsatzsteuer (Ruecklage minus Erstattung)
+    kinds_out = (BOOK_WAGES, BOOK_COSTS, BOOK_MATERIAL, BOOK_MARKETING, BOOK_TAX)
     first = state.day - int(days)
     total = 0
     for day, entry in state.book.items():
         if first <= day < state.day:
             total += sum(value for kind, value in entry["ein"].items() if kind in kinds_in)
             total -= sum(value for kind, value in entry["aus"].items() if kind in kinds_out)
+            total += entry["ein"].get(BOOK_TAX, 0)
     return total / float(max(1, int(days)))
 
 
@@ -5308,12 +5544,13 @@ def dunning_text(state, content=None):
         return ""
     rules = loan_rules(content)["mahnung"]
     left = max(1, int(rules["abbau_tage"]) - (state.day - 1 - state.dunning_day))
-    effects = ["jede weitere geplatzte Rate kostet Gebühren und Ansehen"]
+    effects = ["jede weitere geplatzte Zahlung (Kreditrate oder Umsatzsteuer) kostet "
+               "Gebühren und Ansehen"]
     if step.get("zins_plus"):
         effects.append("Zinsaufschlag %s auf alle Kredite" % percent_text(step["zins_plus"]))
     effects.append("keine neuen Kredite" if not float(step.get("rahmen_faktor", 0)) else
                    "nur %d %% des Kreditrahmens" % round(100 * float(step["rahmen_faktor"])))
-    return ("Mahnstufe %d von %d: %s. Folgen: %s. Ohne geplatzte Rate sinkt die Stufe %s." % (
+    return ("Mahnstufe %d von %d: %s. Folgen: %s. Ohne geplatzte Zahlung sinkt die Stufe %s." % (
         state.dunning, len(rules["stufen"]), step["name"], ", ".join(effects),
         "beim nächsten Feierabend" if left == 1 else "nach %d Arbeitstagen" % left))
 
@@ -5366,9 +5603,575 @@ def fixed_costs_text(state):
              "Nebenkosten %s" % _whole_euro(numbers.get("nebenkosten", 0))]
     if state.running_loans():
         parts.append("Kreditraten %s" % _whole_euro(state.loan_rates()))
+    if state.ad_costs():
+        parts.append("Werbung %s" % _whole_euro(state.ad_costs()))
     if state.rent:
         parts.append("Miete %s" % _whole_euro(state.rent))
     return "Feste Kosten pro Arbeitstag: " + " · ".join(parts)
+
+
+# -- Umsatzsteuer (ab 0.42) --------------------------------------------------------
+#
+# Alle Einnahmen der Firma sind Bruttobetraege. Die darin steckende
+# Umsatzsteuer minus der Vorsteuer aus den Ausgaben (Zahllast) wandert jeden
+# Feierabend in die Steuerruecklage und wird alle faellig_tage Arbeitstage an
+# das Finanzamt gezahlt. Gespeichert wird nichts davon - der Spielstand rechnet
+# es aus dem Kassenbuch aus (nur Feierabende mit "ust" im Ereignis zaehlen).
+
+def tax_rules(content=None):
+    return (content or GAME)["balancing"]["steuern"]
+
+
+def new_tax_period():
+    """Ein leerer Voranmeldungszeitraum."""
+    return {"start": None, "ust": 0.0, "vst": 0.0, "umsatz": 0, "ausgaben": 0, "tage": 0}
+
+
+def tax_due_amount(period):
+    """Zahllast eines Zeitraums: Umsatzsteuer minus Vorsteuer (ganze Euro,
+    negativ = Erstattung)."""
+    return int(round(period["ust"] - period["vst"]))
+
+
+def tax_share(amount, content=None):
+    """Umsatzsteuer in einem Bruttobetrag (bei 19 %: 19/119 davon)."""
+    rate = float(tax_rules(content)["satz"])
+    return int(round(float(amount) * rate / (100.0 + rate)))
+
+
+def tax_next_due(state, content=None):
+    """Arbeitstag, an dessen Feierabend die naechste Voranmeldung faellig ist."""
+    every = max(1, int(tax_rules(content)["faellig_tage"]))
+    return state.day + every - (state.tax_days % every) - 1
+
+
+def tax_status(state, content=None):
+    """Anzeige fuer Finanzen: Ruecklage, laufender Zeitraum, naechste
+    Faelligkeit, offene Steuerschuld und die letzten Voranmeldungen."""
+    rules = tax_rules(content)
+    period = state.tax_period
+    filed = [data for _day, kind, data in state.tax_log if kind == "voranmeldung"]
+    return {"finanzamt": rules["finanzamt"], "satz": rules["satz"],
+            "ruecklage": state.tax_reserve, "schuld": state.tax_debt,
+            "ust": int(round(period["ust"])), "vorsteuer": int(round(period["vst"])),
+            "zahllast": tax_due_amount(period), "umsatz": period["umsatz"],
+            "ausgaben": period["ausgaben"], "tage": period["tage"],
+            "faellig_tage": int(rules["faellig_tage"]), "naechste": tax_next_due(state, content),
+            "letzte": filed[-4:][::-1], "anzahl": len(filed),
+            "gezahlt": sum(item.get("aus_ruecklage", 0) + item.get("vom_konto", 0)
+                           for item in filed) +
+                       sum(data["betrag"] for _day, kind, data in state.tax_log
+                           if kind == "nachgezahlt"),
+            "erstattet": sum(item.get("erstattung", 0) for item in filed)}
+
+
+def tax_status_lines(item):
+    """Zeilen zur Umsatzsteuer (PC und Handy gleich)."""
+    left = item["naechste"]
+    lines = ["Steuerrücklage %s · nächste Voranmeldung beim Feierabend von Arbeitstag %d" % (
+        _whole_euro(item["ruecklage"]), left),
+        "Dieser Zeitraum (%s): Umsatzsteuer %s aus %s Einnahmen, Vorsteuer %s aus %s "
+        "Ausgaben, Zahllast bisher %s" % (
+            "noch kein Feierabend" if not item["tage"] else
+            term_text(item["tage"]), _whole_euro(item["ust"]), _whole_euro(item["umsatz"]),
+            _whole_euro(item["vorsteuer"]), _whole_euro(item["ausgaben"]),
+            ("Erstattung " + _whole_euro(-item["zahllast"])) if item["zahllast"] < 0 else
+            _whole_euro(item["zahllast"]))]
+    if item["anzahl"]:
+        lines.append("Bisher %d Voranmeldungen · gezahlt %s%s" % (
+            item["anzahl"], _whole_euro(item["gezahlt"]),
+            " · erstattet %s" % _whole_euro(item["erstattet"]) if item["erstattet"] else ""))
+    return lines
+
+
+def tax_filing_text(data, unpaid=True):
+    """Eine Voranmeldung in einer Zeile (unpaid: mit nicht bezahltem Rest)."""
+    text = "Arbeitstag %d bis %d: Umsatzsteuer %s − Vorsteuer %s = " % (
+        data["von"], data["bis"], _whole_euro(data["ust"]), _whole_euro(data["vorsteuer"]))
+    if data.get("erstattung"):
+        return text + "Erstattung %s" % _whole_euro(data["erstattung"])
+    text += "Zahllast %s" % _whole_euro(data["zahllast"])
+    if data.get("offen") and unpaid:
+        text += " · %s konnten nicht bezahlt werden" % _whole_euro(data["offen"])
+    return text
+
+
+def tax_debt_text(state, content=None):
+    """Warnung bei offener Steuerschuld (leer, wenn alles bezahlt ist)."""
+    if not state.tax_debt:
+        return ""
+    return ("Offene Umsatzsteuer beim %s: %s. Sie wird beim nächsten Feierabend automatisch "
+            "bezahlt, sobald das Konto reicht. Bis dahin gilt jeder Feierabend als geplatzte "
+            "Zahlung (Mahnstufe wie bei Kreditraten)." % (tax_rules(content)["finanzamt"],
+                                                         _whole_euro(state.tax_debt)))
+
+
+def taxes_today(after, day):
+    """Was beim Feierabend mit der Umsatzsteuer passiert ist (nur Anzeige)."""
+    return [dict(data, art=kind) for tag, kind, data in after.tax_log if tag == day]
+
+
+def tax_day_lines(items, content=None):
+    """Zeilen fuer den Feierabend."""
+    lines = []
+    office = tax_rules(content)["finanzamt"]
+    for item in items:
+        if item["art"] == "ruecklage":
+            if item["betrag"] > 0:
+                lines.append("In die Steuerrücklage: %s (jetzt %s)" % (
+                    _whole_euro(item["betrag"]), _whole_euro(item["ruecklage"])))
+            else:
+                lines.append("Aus der Steuerrücklage zurück (Vorsteuer): %s" % _whole_euro(
+                    -item["betrag"]))
+        elif item["art"] == "voranmeldung":
+            text = "Umsatzsteuer-Voranmeldung ans %s: %s" % (office,
+                                                            tax_filing_text(item, False))
+            if item.get("aus_ruecklage"):
+                text += " · aus der Rücklage %s" % _whole_euro(item["aus_ruecklage"])
+            if item.get("vom_konto"):
+                text += " · vom Konto %s" % _whole_euro(item["vom_konto"])
+            if item.get("frei"):
+                text += " · Rest der Rücklage zurück aufs Konto: %s" % _whole_euro(item["frei"])
+            if item.get("offen"):
+                text += " · %s konnten nicht bezahlt werden" % _whole_euro(item["offen"])
+            lines.append(text)
+        elif item["art"] == "nachgezahlt":
+            lines.append("Offene Umsatzsteuer nachgezahlt: %s%s" % (
+                _whole_euro(item["betrag"]), " (noch offen %s)" % _whole_euro(item["schuld"])
+                if item["schuld"] else ""))
+        elif item["art"] == "ausfall":
+            text = ("Umsatzsteuer %s nicht bezahlt, das Konto hat nicht gereicht! Mahnstufe %d, "
+                    "Säumnisgebühr %s" % (_whole_euro(item["betrag"]), item["stufe"],
+                                          _whole_euro(item["gebuehr"])))
+            if item.get("reputation"):
+                text += ", Ansehen: %s" % ", ".join(
+                    "%s %d" % (dict(AXES)[key], value) for key, value in
+                    item["reputation"].items())
+            lines.append(text)
+    return lines
+
+
+# -- Werbung (ab 0.42) ---------------------------------------------------------------
+
+AD_RUNNING = "laufend"
+AD_ONCE = "einmalig"
+AD_MODES = ((AD_RUNNING, "Laufend"), (AD_ONCE, "Einmalig"))
+
+
+def marketing_rules(content=None):
+    return (content or GAME)["balancing"].get("marketing") or {"formen": []}
+
+
+def ad_forms(content=None):
+    return list(marketing_rules(content).get("formen") or [])
+
+
+def ad_form(ad_id, content=None):
+    return next((item for item in ad_forms(content) if item["id"] == ad_id), None)
+
+
+def ad_active(booking, day):
+    """Wirkt die gebuchte Werbung an diesem Arbeitstag?"""
+    if int(booking.get("ab_tag", 0)) > day:
+        return False
+    if booking.get("art") == AD_ONCE:
+        return day <= int(booking.get("bis_tag", 0))
+    return booking.get("ende") is None or day <= int(booking["ende"])
+
+
+def ad_open(booking, day):
+    """Laeuft die Buchung am Tag noch oder beginnt sie erst?"""
+    if booking.get("art") == AD_ONCE:
+        return day <= int(booking.get("bis_tag", 0))
+    return booking.get("ende") is None or day <= int(booking["ende"])
+
+
+def marketing_effects(state, day=None, content=None):
+    """Summe der Wirkung aller Werbung, die am Tag laeuft."""
+    day = state.day if day is None else day
+    result = {"anfragen": 0.0, "tickets": 0.0, "groesse": 0, "vorteil": 0}
+    for booking in state.ads_active(day):
+        form = ad_form(booking.get("werbung"), content or state.content) or {}
+        for key, value in (form.get("wirkung") or {}).items():
+            if key in result:
+                result[key] += value
+    return result
+
+
+def _extra_count(value, seed, day, salt):
+    """0,5 -> an etwa jedem zweiten Tag eins mehr (fest gewuerfelt)."""
+    whole = int(value)
+    return whole + (1 if _dice(seed, day, salt) < value - whole else 0)
+
+
+def _share_text(value):
+    return ("%.1f" % value).rstrip("0").rstrip(".").replace(".", ",")
+
+
+def effect_text(effects):
+    """ "+1 Anfrage pro Tag · 10 % größere Bestellungen · +2 % Preisvorteil" """
+    parts = []
+    if effects.get("anfragen"):
+        parts.append("+%s %s pro Tag" % (_share_text(effects["anfragen"]),
+                                         "Anfrage" if effects["anfragen"] == 1 else
+                                         "Anfragen"))
+    if effects.get("tickets"):
+        parts.append("+%s %s pro Tag" % (_share_text(effects["tickets"]),
+                                         "Kundenticket" if effects["tickets"] == 1 else
+                                         "Kundentickets"))
+    if effects.get("groesse"):
+        parts.append("%d %% größere Bestellungen" % effects["groesse"])
+    if effects.get("vorteil"):
+        parts.append("+%d %% Preisvorteil gegen Mitbewerber" % effects["vorteil"])
+    return " · ".join(parts)
+
+
+def ad_offer(state, ad_id, mode, content=None):
+    """Was eine Buchung kostet - mit "problem", falls es gerade nicht geht."""
+    form = ad_form(ad_id, content or state.content)
+    if form is None:
+        return {"problem": "Diese Werbeform gibt es nicht."}
+    result = {"id": ad_id, "name": form["name"], "art": mode, "kosten": 0, "preis": 0,
+              "tage": 0, "problem": ""}
+    if mode == AD_ONCE:
+        result.update(preis=int(form["einmalig"]["preis"]), tage=int(form["einmalig"]["tage"]))
+    elif mode == AD_RUNNING:
+        result["kosten"] = int(form["laufend"])
+    else:
+        result["problem"] = "Bitte wähle laufend oder einmalig."
+        return result
+    booking = state.ad_booking(ad_id, state.day)
+    if not state.firm:
+        result["problem"] = "Werbung gibt es nur für die eigene Firma."
+    elif booking is not None:
+        result["problem"] = ("„%s“ läuft schon." % form.get("kurz", form["name"]) if
+                             booking.get("art") == AD_RUNNING else
+                             "„%s“ läuft noch bis Arbeitstag %d." % (
+                                 form.get("kurz", form["name"]), booking["bis_tag"]))
+    elif mode == AD_ONCE and state.money < result["preis"]:
+        result["problem"] = "Dafür reicht dein Geld nicht (%s fehlen)." % _whole_euro(
+            result["preis"] - max(0, state.money))
+    elif mode == AD_RUNNING and state.money <= 0:
+        result["problem"] = "Mit leerem Konto kannst du keine Werbung buchen."
+    return result
+
+
+def ad_status(state, content=None):
+    """Alle Werbeformen mit Stand: [{"id", "name", "text", "wirkung", "laufend",
+    "einmalig" {preis, tage}, "buchung", "stand", "angebote" {art: ad_offer}}]"""
+    content = content or state.content
+    result = []
+    for form in ad_forms(content):
+        booking = state.ad_booking(form["id"], state.day)
+        status = ""
+        if booking is not None:
+            start = int(booking["ab_tag"])
+            if booking["art"] == AD_RUNNING:
+                status = "Läuft dauerhaft · %s pro Arbeitstag" % _whole_euro(booking["kosten"])
+                if booking.get("ende") is not None:
+                    status = "Gekündigt · heute zum letzten Mal"
+                elif start > state.day:
+                    status += " · wirkt ab dem nächsten Arbeitstag"
+                else:
+                    status += " · seit Arbeitstag %d" % start
+            else:
+                left = int(booking["bis_tag"]) - max(state.day, start - 1)
+                if start > state.day:
+                    status = "Einmalig gebucht · wirkt ab dem nächsten Arbeitstag für %s" % (
+                        term_text(left))
+                else:
+                    status = "Einmalig gebucht · wirkt noch %s (bis Arbeitstag %d)" % (
+                        "heute" if left <= 0 else term_text(left + 1), booking["bis_tag"])
+        result.append({"id": form["id"], "name": form["name"],
+                       "kurz": form.get("kurz", form["name"]), "text": form.get("text", ""),
+                       "wirkung": effect_text(form.get("wirkung") or {}),
+                       "laufend": int(form["laufend"]), "einmalig": dict(form["einmalig"]),
+                       "buchung": booking, "stand": status,
+                       "aktiv": booking is not None and ad_active(booking, state.day),
+                       "angebote": {mode: ad_offer(state, form["id"], mode, content)
+                                    for mode, _label in AD_MODES}})
+    return result
+
+
+def ad_price_text(item):
+    """ "Laufend 110 € pro Arbeitstag · Einmalig 900 € für 10 Arbeitstage" """
+    once = item["einmalig"]
+    return "Laufend %s pro Arbeitstag · einmalig %s für %s (%s pro Tag)" % (
+        _whole_euro(item["laufend"]), _whole_euro(once["preis"]), term_text(once["tage"]),
+        _whole_euro(int(round(once["preis"] / float(once["tage"])))))
+
+
+def ad_confirm_text(offer, content=None):
+    if offer["art"] == AD_ONCE:
+        return ("„%s“ einmalig buchen?\n\nDu zahlst sofort %s. Die Werbung wirkt ab dem "
+                "nächsten Arbeitstag %s lang und endet dann von selbst." % (
+                    offer["name"], _whole_euro(offer["preis"]), term_text(offer["tage"])))
+    return ("„%s“ dauerhaft buchen?\n\nJeden Feierabend werden automatisch %s abgebucht, "
+            "bis du kündigst. Die Werbung wirkt ab dem nächsten Arbeitstag." % (
+                offer["name"], _whole_euro(offer["kosten"])))
+
+
+def marketing_summary_text(state, content=None):
+    """Was die Werbung heute bewirkt (Kopf des Reiters Marketing)."""
+    effects = marketing_effects(state, content=content)
+    text = effect_text(effects)
+    costs = state.ad_costs()
+    if not text:
+        return "Gerade läuft keine Werbung. Ohne Werbung kommen nur die üblichen Anfragen."
+    return "Deine Werbung bringt heute: %s.%s" % (
+        text, " Laufende Kosten: %s pro Arbeitstag." % _whole_euro(costs) if costs else "")
+
+
+# -- Zertifizierungen (ab 0.42) ------------------------------------------------------
+
+GROSS_PREFIX = "gross:"            # gross:<nummer der ausschreibung>
+
+
+def cert_rules(content=None):
+    return (content or GAME)["balancing"].get("zertifizierungen") or {"liste": []}
+
+
+def certificates(content=None):
+    return list(cert_rules(content).get("liste") or [])
+
+
+def certificate(cert_id, content=None):
+    return next((item for item in certificates(content) if item["id"] == cert_id), None)
+
+
+def advantage_text(advantage):
+    """{"alle": 2, "sicherheit": 4} -> "+2 % bei allen Angeboten · +4 % bei
+    Sicherheits-Projekten" """
+    parts = []
+    for key, value in advantage.items():
+        if key == "alle":
+            parts.append("+%d %% bei allen Angeboten" % value)
+        else:
+            parts.append("+%d %% bei Projekten %s" % (value, CAT_NAME.get(key, key)))
+    return " · ".join(parts)
+
+
+def cert_advantage(state, cat=None, day=None, content=None):
+    """Preisvorteil aus allen abgeschlossenen Zertifizierungen."""
+    total = 0
+    for cert_id in state.certs_held(day):
+        advantage = (certificate(cert_id, content or state.content) or {}).get("vorteil") or {}
+        total += int(advantage.get("alle", 0))
+        if cat:
+            total += int(advantage.get(cat, 0))
+    return total
+
+
+def cert_offer(state, cert_id, content=None):
+    content = content or state.content
+    cert = certificate(cert_id, content)
+    if cert is None:
+        return {"problem": "Diese Zertifizierung gibt es nicht."}
+    result = {"id": cert_id, "name": cert["name"], "preis": int(cert["preis"]),
+              "tage": int(cert["tage"]), "problem": ""}
+    running = state.cert_running()
+    limit = int(cert_rules(content).get("gleichzeitig", 1))
+    if not state.firm:
+        result["problem"] = "Zertifizierungen gibt es nur für die eigene Firma."
+    elif cert_id in state.certs_held():
+        result["problem"] = "Deine Firma hat diese Zertifizierung schon."
+    elif cert_id in state.certs:
+        result["problem"] = "Läuft schon, fertig beim Feierabend von Arbeitstag %d." % (
+            int(state.certs[cert_id]["bis_tag"]) - 1)
+    elif len(running) >= limit:
+        other = certificate(running[0]["zert"], content) or {}
+        result["problem"] = ("Es läuft schon eine Zertifizierung (%s, bis Arbeitstag %d)."
+                             % (other.get("kurz", ""), int(running[0]["bis_tag"]) - 1))
+    elif state.money < result["preis"]:
+        result["problem"] = "Dafür reicht dein Geld nicht (%s fehlen)." % _whole_euro(
+            result["preis"] - max(0, state.money))
+    return result
+
+
+def cert_status(state, content=None):
+    """Alle Zertifizierungen mit Stand: [{"id", "name", "kurz", "art", "text",
+    "preis", "tage", "vorteil", "freischaltet" [titel], "stand" ("erworben",
+    "laeuft", "offen"), "stand_text", "angebot"}]"""
+    content = content or state.content
+    gross = gross_rules(content).get("liste") or []
+    held = state.certs_held()
+    result = []
+    for cert in certificates(content):
+        data = state.certs.get(cert["id"])
+        if cert["id"] in held:
+            stand, text = "erworben", "Erworben an Arbeitstag %d" % int(data["bis_tag"])
+        elif data:
+            stand = "laeuft"
+            left = int(data["bis_tag"]) - state.day
+            text = "Läuft · fertig %s" % ("beim heutigen Feierabend" if left <= 1 else
+                                          "in %d Arbeitstagen" % left)
+        else:
+            stand, text = "offen", ""
+        result.append({"id": cert["id"], "name": cert["name"],
+                       "kurz": cert.get("kurz", cert["name"]), "art": cert.get("art", "firma"),
+                       "text": cert.get("text", ""), "preis": int(cert["preis"]),
+                       "tage": int(cert["tage"]),
+                       "vorteil": advantage_text(cert.get("vorteil") or {}),
+                       "freischaltet": [item["titel"] for item in gross
+                                        if cert["id"] in item.get("braucht", [])],
+                       "stand": stand, "stand_text": text,
+                       "angebot": cert_offer(state, cert["id"], content)})
+    return result
+
+
+def cert_unlock_text(item, content=None):
+    """ "Schaltet frei: ... (zusammen mit DSGVO)" """
+    if not item["freischaltet"]:
+        return ""
+    return "Schaltet Großaufträge frei: " + "; ".join("„%s“" % title
+                                                      for title in item["freischaltet"])
+
+
+def cert_confirm_text(offer, content=None):
+    return ("„%s“ beginnen?\n\nKosten %s sofort. Audit, Schulungen und Prüfung dauern %s, "
+            "danach gilt die Zertifizierung dauerhaft. Deine Leute arbeiten in der Zeit "
+            "normal weiter." % (offer["name"], _whole_euro(offer["preis"]),
+                                term_text(offer["tage"])))
+
+
+def certs_summary_text(state, content=None):
+    held = state.certs_held()
+    if not held:
+        return ("Noch keine Zertifizierung. Mit Zertifizierungen bekommst du große und "
+                "öffentliche Aufträge und bessere Chancen gegen die Mitbewerber.")
+    names = [item.get("kurz", item["name"]) for item in certificates(content or state.content)
+             if item["id"] in held]
+    return "Deine Firma ist zertifiziert: %s." % ", ".join(names)
+
+
+def offer_advantage_parts(state, cat=None, content=None):
+    """Woraus sich der Preisvorteil zusammensetzt: [(grund, prozent)]."""
+    content = content or state.content
+    rule = offer_rules(content)["vorteil"]
+    parts = []
+    if state.reputation.get("kundenzufriedenheit", 0) >= rule["ab_kundenzufriedenheit"]:
+        parts.append(("guter Ruf", int(rule["prozent"])))
+    certs = cert_advantage(state, cat, content=content)
+    if certs:
+        parts.append(("Zertifizierungen", certs))
+    ads = int(marketing_effects(state, content=content)["vorteil"])
+    if ads:
+        parts.append(("Werbung", ads))
+    return parts
+
+
+# -- Grossauftraege (ab 0.42) --------------------------------------------------------
+
+def gross_rules(content=None):
+    return cert_rules(content).get("grossauftraege") or {}
+
+
+def gross_template(entry_id, content=None):
+    return next((item for item in gross_rules(content).get("liste") or []
+                 if item["id"] == entry_id), None)
+
+
+def gross_tenders(state, day, content=None):
+    """Grosse und oeffentliche Ausschreibungen, die am Tag vorliegen. Alle
+    abstand_tage Arbeitstage eine, wenn die Firma an deren erstem Tag die
+    noetigen Zertifizierungen hat - bevorzugt, was noch nicht dran war, und
+    nie zweimal hintereinander dieselbe und keine, die gerade als Projekt
+    laeuft (sonst faellt die Ausschreibung aus)."""
+    content = content or GAME
+    rules = gross_rules(content)
+    if not state.firm or not rules.get("liste") or not state.certs:
+        return []
+    gap, valid = int(rules["abstand_tage"]), int(rules["gilt_tage"])
+    first = int(state.firm["tag"]) + int(rules.get("versatz", 0))
+    seed = state.firm_seed
+    used = {}
+    result = []
+    slot = 0
+    last = None
+    while first + slot * gap <= day:
+        start = first + slot * gap
+        held = state.certs_held(start)
+        busy = {project.get("vorlage") for project in state.projects.values()
+                if int(project.get("tag", 0) or 0) < start and
+                (not project["fertig"] or project["fertig"] >= start)}
+        options = [item for item in rules["liste"] if held and item["id"] != last and
+                   GROSS_PREFIX + item["id"] not in busy and
+                   set(item.get("braucht") or []) <= held]
+        last = None
+        if options:
+            fewest = min(used.get(item["id"], 0) for item in options)
+            options = [item for item in options if used.get(item["id"], 0) == fewest]
+            entry = min(options, key=lambda item: _dice(seed, start, "gross|" + item["id"]))
+            used[entry["id"]] = used.get(entry["id"], 0) + 1
+            last = entry["id"]
+            if start + valid - 1 >= day:
+                result.append(_gross_tender(state, entry, slot, start, content))
+        slot += 1
+    return result
+
+
+def _gross_tender(state, entry, slot, start, content):
+    rules = gross_rules(content)
+    level = rules["stufe"]
+    salt = "gross%d-" % slot
+    seed = state.firm_seed
+    low, high = level["material"]
+    material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
+                   * 10)
+    bids, absent = competitor_bids("projekt", "normal", entry["cat"], seed, start, salt,
+                                   content)
+    cheapest = min(bids, key=lambda bid: bid["zuschlag"])
+    project_id = "%s%d" % (GROSS_PREFIX, slot + 1)
+    what = "Öffentliche Ausschreibung" if entry.get("oeffentlich") else "Großauftrag"
+    names = [(certificate(cert_id, content) or {}).get("kurz", cert_id)
+             for cert_id in entry.get("braucht") or []]
+    return {"id": project_id, "slot": slot, "vorlage": GROSS_PREFIX + entry["id"], "folge": 0,
+            "titel": entry["titel"], "kunde": entry["kunde"], "kunde_kurz": entry["kunde_kurz"],
+            "cat": entry["cat"], "thema": entry.get("thema"),
+            "schwierigkeit": level.get("name", "Großauftrag"),
+            "aufwand": int(level["aufwand"]), "anforderung": int(level["anforderung"]),
+            "material": discounted(material, state.room_effect("material_rabatt")),
+            "material_markt": material, "frist": int(level["frist"]), "von_tag": start,
+            "bis_tag": start + int(rules["gilt_tage"]) - 1,
+            "markt": cheapest["zuschlag"], "laune": cheapest["laune"],
+            "konkurrent": cheapest["id"], "bieter": bids, "ausgefallen": absent,
+            "text": "%s von „%s“: %s" % (what, entry["kunde"], entry["auftrag"]),
+            "ausgangssituation": entry["ausgangssituation"], "auftrag": entry["auftrag"],
+            "rahmenbedingungen": list(entry.get("rahmenbedingungen") or []),
+            "gross": True, "oeffentlich": bool(entry.get("oeffentlich")),
+            "braucht": list(entry.get("braucht") or []), "zertifikate": names,
+            "ergebnis": state.project_offers.get(project_id)}
+
+
+def gross_badge_text(project):
+    """ "Öffentlicher Großauftrag · nur mit ISO 27001" (leer bei normalen Projekten)"""
+    if not project.get("gross") and not str(project.get("vorlage", "")).startswith(
+            GROSS_PREFIX):
+        return ""
+    entry = gross_template(str(project.get("vorlage", ""))[len(GROSS_PREFIX):]) or {}
+    names = [(certificate(cert_id) or {}).get("kurz", cert_id)
+             for cert_id in entry.get("braucht") or project.get("braucht") or []]
+    return "%s · nur mit %s" % ("Öffentlicher Großauftrag" if entry.get("oeffentlich")
+                                else "Großauftrag", " und ".join(names))
+
+
+def project_details(project, content=None):
+    """Kunde, Ausgangssituation, Auftrag und Rahmenbedingungen eines Projekts
+    (Projektarbeit aus dem Lernbereich oder Grossauftrag): {"kunde",
+    "ausgangssituation", "auftrag", "rahmenbedingungen", "lernbar"}"""
+    content = content or GAME
+    template = str(project.get("vorlage", ""))
+    if template.startswith(GROSS_PREFIX):
+        entry = gross_template(template[len(GROSS_PREFIX):], content) or project
+        return {"kunde": entry.get("kunde", ""),
+                "ausgangssituation": entry.get("ausgangssituation", ""),
+                "auftrag": entry.get("auftrag", ""),
+                "rahmenbedingungen": list(entry.get("rahmenbedingungen") or []),
+                "lernbar": False}
+    item = (content.get("projektarbeiten") or [])[project["vorlage"]]
+    return {"kunde": item["branche"], "ausgangssituation": item["ausgangssituation"],
+            "auftrag": item["auftrag"],
+            "rahmenbedingungen": list(item.get("rahmenbedingungen") or []), "lernbar": True}
 
 
 # -- Angebote und Kundentickets (ab 0.34) ---------------------------------------
@@ -5410,7 +6213,11 @@ def inquiries_for_day(state, day, content=None):
     first = int(_dice(seed, day, "anfrage-kunde") * len(customers))
     result = []
     discount = state.room_effect("material_rabatt")
-    for number in range(int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus"))):
+    # Ab 0.42: Werbung bringt mehr Anfragen (Menge) und groessere Bestellungen
+    ads = marketing_effects(state, day, content)
+    extra = _extra_count(ads["anfragen"], seed, day, "werbung-anfragen")
+    for number in range(int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus")) +
+                        extra):
         salt = "anfrage%d-" % number
         # Verschiedene Kunden am selben Tag
         customer = customers[(first + number * max(1, len(customers) // 2 - 1))
@@ -5419,6 +6226,8 @@ def inquiries_for_day(state, day, content=None):
         low, high = article["preis"]
         price = int(round((low + _dice(seed, day, salt + "preis") * (high - low)) / 5.0) * 5)
         count = _between(seed, day, salt + "menge", *article["menge"])
+        if ads["groesse"]:
+            count = int(math.ceil(count * (1 + ads["groesse"] / 100.0)))
         bids, absent = competitor_bids("anfrage", customer["art"], None, seed, day, salt,
                                        content)
         cheapest = min(bids, key=lambda bid: bid["zuschlag"])
@@ -5497,11 +6306,13 @@ def market_price(inquiry, content=None):
     return _money(cost * (1 + inquiry["markt"] / 100.0))
 
 
-def offer_advantage(state, content=None):
-    """Wie viel Prozent man ueber Bitweiche liegen darf (guter Ruf)."""
-    rule = offer_rules(content)["vorteil"]
-    return rule["prozent"] if state.reputation.get("kundenzufriedenheit", 0) >= \
-        rule["ab_kundenzufriedenheit"] else 0
+def offer_advantage(state, content=None, cat=None):
+    """Wie viel Prozent man ueber dem guenstigsten Mitbewerber liegen darf:
+    guter Ruf, ab 0.42 dazu Zertifizierungen (bei Projekten je Fachbereich)
+    und Werbung - zusammen hoechstens zertifizierungen.vorteil_max."""
+    total = sum(value for _reason, value in offer_advantage_parts(state, cat, content))
+    top = cert_rules(content or state.content).get("vorteil_max")
+    return min(int(top), total) if top is not None else total
 
 
 def offer_result(state, inquiry, markup, answer, content=None):
@@ -5539,7 +6350,7 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
     bids = [dict(bid, netto=_money(rival_cost * (1 + bid["zuschlag"] / 100.0)))
             for bid in offer.get("bieter") or []]
     market = _money(rival_cost * (1 + offer["markt"] / 100.0))
-    advantage = offer_advantage(state, content)
+    advantage = offer_advantage(state, content, offer.get("cat"))
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
     won = right and cheap
@@ -5550,6 +6361,8 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
                "laune": offer.get("laune", ""), "konkurrent": offer.get("konkurrent", ""),
                "bieter": bids, "ausgefallen": list(offer.get("ausgefallen") or []),
                "vorteil": advantage, "gewonnen": won,
+               "vorteil_gruende": [reason for reason, _value in offer_advantage_parts(
+                   state, offer.get("cat"), content)] if advantage else [],
                "grund": "" if won else ("rechenfehler" if not right else "preis")}
     if problems:
         payload["probleme"] = problems
@@ -5609,8 +6422,8 @@ def _offer_result_text(payload, content=None):
                         customer["name"], own, rival, market, payload["markt_zuschlag"],
                         _whole_euro(payload["geld"])))
         if payload.get("vorteil") and payload["netto"] > payload["marktpreis"]:
-            text += (" Knapp über %s, aber dein guter Ruf bei den Kunden hat "
-                     "den Ausschlag gegeben." % rival)
+            text += (" Knapp über %s, aber %s hat den Ausschlag gegeben." % (
+                rival, _reasons_text(payload)))
         return won_head, text
     if payload.get("grund") == "rechenfehler":
         head = "%s verloren: Fehler im Angebot" % ("Projekt" if payload.get("projekt")
@@ -5625,9 +6438,20 @@ def _offer_result_text(payload, content=None):
             "gegen deine %s (Zuschlag %d %%)." % (rival, market, payload["markt_zuschlag"],
                                                   own, payload["zuschlag"]))
     if payload.get("vorteil"):
-        text += " Selbst mit dem Bonus für deinen guten Ruf (%d %%) hat es nicht gereicht." \
-            % payload["vorteil"]
+        text += " Selbst mit dem Bonus für %s (%d %%) hat es nicht gereicht." % (
+            _reasons_text(payload, short=True), payload["vorteil"])
     return head, text
+
+
+def _reasons_text(payload, short=False):
+    """Woher der Preisvorteil kam, als Text (aeltere Ergebnisse: guter Ruf)."""
+    reasons = payload.get("vorteil_gruende") or ["guter Ruf"]
+    words = {"guter Ruf": ("dein guter Ruf bei den Kunden", "deinen guten Ruf"),
+             "Zertifizierungen": ("deine Zertifizierungen", "deine Zertifizierungen"),
+             "Werbung": ("deine Werbung", "deine Werbung")}
+    names = [words.get(reason, (reason, reason))[1 if short else 0] for reason in reasons]
+    text = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " und " + names[-1]
+    return text
 
 
 def inquiry_status_text(inquiry):
@@ -5677,6 +6501,9 @@ def tickets_for_day(state, day, content=None):
     seed = state.firm_seed
     count = max(int(rules["mindestens"]),
                 int(rules["grundzahl"]) + int(rules["je_mitarbeiter"]) * len(state.staff))
+    # Ab 0.42: Werbung bringt mehr Kundentickets
+    count += _extra_count(marketing_effects(state, day, content)["tickets"], seed, day,
+                          "werbung-tickets")
     order = sorted(rules["vorlagen"], key=lambda item: _dice(seed, day, "kt|" + item["id"]))
     chosen = order[:count]
     # Schon verteilte Tickets bleiben, auch wenn inzwischen jemand gegangen ist
@@ -6527,6 +7354,75 @@ def _validate_loans(content):
             if key not in AXIS_KEYS:
                 problems.append("Spiel-Kredite: Mahnstufe %s mit unbekannter Achse '%s'"
                                 % (step.get("stufe"), key))
+    return problems
+
+
+def _validate_business(content):
+    """balancing.json "steuern", "marketing" und "zertifizierungen" (ab 0.42)."""
+    balancing = content.get("balancing") or {}
+    problems = []
+    tax = balancing.get("steuern")
+    if not tax:
+        problems.append("Spiel: balancing.steuern fehlt")
+    else:
+        for key in ("finanzamt", "satz", "faellig_tage", "ruecklage_prozent"):
+            if key not in tax:
+                problems.append("Spiel-Steuern: '%s' fehlt" % key)
+        if not 0 < float(tax.get("satz", 0)) < 100:
+            problems.append("Spiel-Steuern: Steuersatz ungueltig")
+        if int(tax.get("faellig_tage", 0)) < 1:
+            problems.append("Spiel-Steuern: faellig_tage muss mindestens 1 sein")
+    effects = ("anfragen", "tickets", "groesse", "vorteil")
+    ids = set()
+    for form in (balancing.get("marketing") or {}).get("formen") or []:
+        where = "Spiel-Werbung %s" % form.get("id")
+        if not form.get("id") or form["id"] in ids:
+            problems.append("%s: Kennung fehlt oder doppelt" % where)
+        ids.add(form.get("id"))
+        if int(form.get("laufend", 0)) <= 0:
+            problems.append("%s: laufende Kosten fehlen" % where)
+        once = form.get("einmalig") or {}
+        if int(once.get("preis", 0)) <= 0 or int(once.get("tage", 0)) <= 0:
+            problems.append("%s: einmalig braucht preis und tage" % where)
+        wirkung = form.get("wirkung") or {}
+        if not wirkung or any(key not in effects for key in wirkung):
+            problems.append("%s: unbekannte oder keine Wirkung" % where)
+    if not ids:
+        problems.append("Spiel: balancing.marketing ohne Werbeformen")
+    certs = balancing.get("zertifizierungen") or {}
+    cert_ids = set()
+    for cert in certs.get("liste") or []:
+        where = "Spiel-Zertifizierung %s" % cert.get("id")
+        if not cert.get("id") or cert["id"] in cert_ids:
+            problems.append("%s: Kennung fehlt oder doppelt" % where)
+        cert_ids.add(cert.get("id"))
+        if int(cert.get("preis", 0)) <= 0 or int(cert.get("tage", 0)) <= 0:
+            problems.append("%s: preis und tage fehlen" % where)
+        for key in cert.get("vorteil") or {}:
+            if key != "alle" and key not in CAT_ORDER:
+                problems.append("%s: unbekannter Fachbereich '%s'" % (where, key))
+    if not cert_ids:
+        problems.append("Spiel: balancing.zertifizierungen ohne Liste")
+    gross = certs.get("grossauftraege") or {}
+    for key in ("abstand_tage", "gilt_tage", "stufe", "liste"):
+        if key not in gross:
+            problems.append("Spiel-Grossauftraege: '%s' fehlt" % key)
+    gross_ids = set()
+    for item in gross.get("liste") or []:
+        where = "Spiel-Grossauftrag %s" % item.get("id")
+        if not item.get("id") or item["id"] in gross_ids:
+            problems.append("%s: Kennung fehlt oder doppelt" % where)
+        gross_ids.add(item.get("id"))
+        if item.get("cat") not in CAT_ORDER:
+            problems.append("%s: unbekannter Fachbereich" % where)
+        elif item.get("thema") not in CAT_TOPICS[item["cat"]]:
+            problems.append("%s: Thema passt nicht zum Fachbereich" % where)
+        needs = item.get("braucht") or []
+        if not needs or any(cert_id not in cert_ids for cert_id in needs):
+            problems.append("%s: braucht unbekannte oder keine Zertifizierung" % where)
+        for key in ("titel", "kunde", "kunde_kurz", "ausgangssituation", "auftrag"):
+            if not item.get(key):
+                problems.append("%s: '%s' fehlt" % (where, key))
     return problems
 
 
@@ -7946,6 +8842,31 @@ def journey(state, content=None):
             add(loan_day, JOURNEY_FIRM, "kredit_ausfall", "Kreditrate geplatzt",
                 "%s: Mahnstufe %d (%s)." % (loan.get("name", ""), data.get("stufe", 1),
                                             step.get("name", "")))
+    # Ab 0.42: Werbung, Zertifizierungen und Umsatzsteuer
+    for data in state.ads:
+        form = ad_form(data.get("werbung"), content) or {}
+        add(data.get("tag", 1), JOURNEY_FIRM, "werbung",
+            "Werbung gebucht: %s" % form.get("kurz", data.get("werbung")),
+            "Einmalig für %s." % _whole_euro(-int(data.get("geld", 0)))
+            if data.get("art") == AD_ONCE else
+            "Dauerhaft für %s pro Arbeitstag." % _whole_euro(data.get("kosten", 0)))
+    for cert_id, data in state.certs.items():
+        if int(data.get("bis_tag", 0)) <= state.day:
+            cert = certificate(cert_id, content) or {}
+            add(int(data["bis_tag"]) - 1, JOURNEY_FIRM, "zertifizierung",
+                "Zertifiziert: %s" % cert.get("name", cert_id),
+                advantage_text(cert.get("vorteil") or {}))
+    filed = 0
+    for tax_day, tax_kind, data in state.tax_log:
+        if tax_kind == "voranmeldung":
+            filed += 1
+            if filed == 1:
+                add(tax_day, JOURNEY_FIRM, "steuer", "Erste Umsatzsteuer-Voranmeldung",
+                    tax_filing_text(data) + ".")
+        elif tax_kind == "ausfall":
+            step = dunning_step(data.get("stufe", 1), content) or {}
+            add(tax_day, JOURNEY_FIRM, "steuer_ausfall", "Umsatzsteuer nicht bezahlt",
+                "Mahnstufe %d (%s)." % (data.get("stufe", 1), step.get("name", "")))
     previous = 0
     for rank_day, rank in state.rank_log:
         level = names.index(rank) if rank in names else 0
