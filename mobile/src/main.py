@@ -1561,6 +1561,8 @@ class FISIMobileApp:
         self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
         self.sync = SyncController(self)
         self.update_dialog_open = False
+        self.last_auto_check = 0
+        self.dismissed_version = None
         self._build_ui()
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
@@ -1731,29 +1733,60 @@ class FISIMobileApp:
         if event.state in (ft.AppLifecycleState.PAUSE, ft.AppLifecycleState.HIDE,
                            ft.AppLifecycleState.INACTIVE):
             self.sync.on_leave()
+        elif event.state in (ft.AppLifecycleState.RESUME, ft.AppLifecycleState.SHOW):
+            # Android beendet die App im Hintergrund oft nicht: Beim Zurueckholen
+            # laeuft main() nicht erneut, daher hier ebenfalls nachsehen.
+            self.auto_check()
 
     # -- Updates -------------------------------------------------------------
 
+    # Automatische Suche: kurz nach dem Start (wie am PC nach 3 Sekunden),
+    # beim Zurueckholen aus dem Hintergrund hoechstens alle 30 Minuten und
+    # nach einem Netzfehler (z.B. Netz beim Start noch nicht da) ein zweiter
+    # Versuch nach 30 Sekunden.
+    AUTO_DELAY = 3
+    AUTO_INTERVAL = 30 * 60
+    AUTO_RETRY = 30
+
     def check_updates(self, manual=False):
-        def work():
-            info, error = None, None
-            try:
-                info = fisi_update.check_for_update(APP_VERSION, kind="android")
-            except fisi_update.UpdateError as exc:
-                error = str(exc)
-            except Exception as exc:
-                error = "Unerwarteter Fehler: %s" % exc
-            if manual:
-                self.screens["settings"].show_update_status(info, error)
-            if info is not None:
-                self.show_update_dialog(info)
-            self.page.update()
+        self.page.run_task(self._check_updates, manual)
 
-        self.page.run_thread(work)
+    async def _check_updates(self, manual=False, delay=0, retry=False):
+        if delay:
+            await asyncio.sleep(delay)
+        info, error = None, None
+        try:
+            # Netzwerk im Hintergrund, Anzeige danach in der Ereignisschleife -
+            # so kommt sich die Suche nicht mit dem Abgleich beim Start in die Quere.
+            info = await asyncio.to_thread(
+                fisi_update.check_for_update, APP_VERSION, kind="android")
+        except fisi_update.UpdateError as exc:
+            error = str(exc)
+        except Exception as exc:
+            error = "Unerwarteter Fehler: %s" % exc
+        if manual:
+            self.screens["settings"].show_update_status(info, error)
+        elif error:
+            # erfolglos: beim naechsten Zurueckholen erneut versuchen
+            self.last_auto_check = 0
+            if retry:
+                self.page.run_task(self._check_updates, False, self.AUTO_RETRY, False)
+        else:
+            self.last_auto_check = time.monotonic()
+        # "Spaeter" gilt bis zum naechsten App-Start - nur die Suche von Hand
+        # zeigt dieselbe Version sofort wieder an.
+        if info is not None and (manual or info.version != self.dismissed_version):
+            self.show_update_dialog(info)
+        self.page.update()
 
-    def auto_check(self):
-        if fisi_update.load_settings().get("auto_check", True):
-            self.check_updates()
+    def auto_check(self, delay=0):
+        if not fisi_update.load_settings().get("auto_check", True):
+            return
+        now = time.monotonic()
+        if self.last_auto_check and now - self.last_auto_check < self.AUTO_INTERVAL:
+            return
+        self.last_auto_check = now
+        self.page.run_task(self._check_updates, False, delay, True)
 
     def show_update_dialog(self, info):
         if self.update_dialog_open:
@@ -1762,6 +1795,7 @@ class FISIMobileApp:
 
         def close(_event=None):
             self.update_dialog_open = False
+            self.dismissed_version = info.version
             self.page.pop_dialog()
 
         async def download(_event):
@@ -1794,7 +1828,7 @@ def main(page: ft.Page):
     if os.environ.get("FISI_SELFTEST"):
         return
     app.sync.auto_start()
-    app.auto_check()
+    app.auto_check(delay=app.AUTO_DELAY)
 
 
 def selftest():
