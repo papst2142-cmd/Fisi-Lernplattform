@@ -10,7 +10,10 @@
     "Kundentickets: Chance in Prozent = chance.basis + chance.je_punkt * (Wert - Anforderung), begrenzt auf chance.min bis chance.max. Anforderung und Honorar je Schwierigkeit in tickets.stufen.",
     "Ab 0.35: 'mitbewerber.firmen' bieten gegen dich. Pro Anfrage 1 Firma (Chance anfrage_bieter.eins) oder 2, pro Projekt projekt_bieter.von bis .bis Firmen, gezogen nach gewicht. Zuschlag aus von-bis (Mitte wahrscheinlicher, bei gleichmaessig alle gleich wahrscheinlich) plus fach[Fachbereich] bei Projekten; Bitweiche (kundenart) rechnet wie in 0.34. laune.ausgelastet.bietet_nicht: die Firma bietet dann gar nicht. Das guenstigste Angebot gewinnt.",
     "Projekte: alle abstand_tage eine Ausschreibung aus den 50 Testprojekten (projektarbeiten.json), gilt gilt_tage. Einzelkosten = aufwand * stundensatz + material. Laufende Projekte je Gebaeudestufe in 'laufend'. Tagesleistung je Person = leistung.basis + leistung.je_punkt * Wert im Fachbereich, mit lernbonus Prozent mehr, wenn das Testprojekt im Lernbereich bearbeitet wurde; rueckschlag.chance, wenn der beste Wert im Team unter der Anforderung liegt.",
-    "Ab 0.36: gebaeude.stufen 3 bis 5 (je 2 Arbeitsplaetze mehr). 'sonderraeume.raeume' baut man ab 'ab_stufe' auf der Flaeche 'raum' aus (bis dahin Leerstand). effekt: material_rabatt (Prozent auf Einkauf und Material), anfragen_plus, kundenzufriedenheit_plus (je gewonnenem Auftrag), projekte_plus, rueckschlag_faktor (mal die Rueckschlag-Chance), weiterbildung_rabatt (Prozent), weiterbildung_tage_minus. Nebenkosten des Raums kommen taeglich dazu."
+    "Ab 0.36: gebaeude.stufen 3 bis 5 (je 2 Arbeitsplaetze mehr). 'sonderraeume.raeume' baut man ab 'ab_stufe' auf der Flaeche 'raum' aus (bis dahin Leerstand). effekt: material_rabatt (Prozent auf Einkauf und Material), anfragen_plus, kundenzufriedenheit_plus (je gewonnenem Auftrag), projekte_plus, rueckschlag_faktor (mal die Rueckschlag-Chance), weiterbildung_rabatt (Prozent), weiterbildung_tage_minus. Nebenkosten des Raums kommen taeglich dazu.",
+    "Ab 0.38: Mitarbeiter haben einen Wert je Thema (themen.json), der Fachbereichswert ist der Durchschnitt seiner Themen (Gehalt und Umsatz rechnen damit). Bewerber: Grundwert je Fachbereich wie bisher, je Thema fest gestreut um +-bewerbung.thema_streuung, dazu bewerbung.staerken Themen mit +staerke_plus. Mitarbeiter aus aelteren Spielstaenden: Themen = alter Fachbereichswert, gestreut um +-lernen.alt_streuung. wechsel.staerken sind die Staerken der Bitweiche-Kollegen.",
+    "Ab 0.38 'lernen': Mitarbeiter lernen durch Arbeit - ticket_erfolg Punkte im Thema eines geschafften Kundentickets (Fehlschlag: nichts), projekt_fertig fuer jedes Teammitglied im Projektthema (projekt_puenktlich extra), alle routine_tage Arbeitstage ohne Weiterbildung und Projekt routine_plus im staerksten Thema. Ab halb_ab nur halb so viel, max ist die Obergrenze.",
+    "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten)."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -2236,7 +2239,10 @@
     "anzahl": 3,
     "werte_min": 10,
     "werte_max": 50,
-    "schwerpunkt_plus": 20
+    "schwerpunkt_plus": 20,
+    "thema_streuung": 10,
+    "staerken": 2,
+    "staerke_plus": 20
   },
   "gehalt": {
     "basis": 60,
@@ -2251,7 +2257,22 @@
     "aufschlag": 200,
     "tage": 3,
     "plus": 10,
-    "max": 90
+    "max": 90,
+    "fachbereich": {
+      "preis": 1400,
+      "tage": 4,
+      "plus": 5
+    }
+  },
+  "lernen": {
+    "ticket_erfolg": 2,
+    "projekt_fertig": 3,
+    "projekt_puenktlich": 1,
+    "routine_tage": 10,
+    "routine_plus": 1,
+    "halb_ab": 70,
+    "max": 90,
+    "alt_streuung": 5
   },
   "namen": {
     "vornamen": [
@@ -2334,6 +2355,7 @@
   "wechsel": [
     {
       "kollege": "tim",
+      "staerken": ["verkabelung", "hardware"],
       "nach_tagen": 5,
       "offen_tage": 15,
       "werte": {
@@ -2350,6 +2372,7 @@
     },
     {
       "kollege": "svenja",
+      "staerken": ["routing", "windows"],
       "nach_tagen": 15,
       "offen_tage": 15,
       "werte": {
@@ -2802,6 +2825,7 @@
         "titel": "Gäste-WLAN im Wartezimmer bricht ab",
         "kunde": "praxis_keller",
         "cat": "netzwerk",
+        "thema": "wlan",
         "stufe": "leicht",
         "text": "„Die Patienten beschweren sich, dass das WLAN im Wartezimmer alle paar Minuten weg ist.“"
       },
@@ -2810,6 +2834,7 @@
         "titel": "Kasse findet den Bondrucker nicht",
         "kunde": "baeckerei",
         "cat": "netzwerk",
+        "thema": "fehlersuche",
         "stufe": "leicht",
         "text": "„Seit dem Stromausfall druckt die Kasse in der Filiale am Markt keine Bons mehr.“"
       },
@@ -2818,6 +2843,7 @@
         "titel": "Neuen Router im Vereinsheim einrichten",
         "kunde": "verein",
         "cat": "netzwerk",
+        "thema": "dienste",
         "stufe": "leicht",
         "text": "„Der neue Router liegt noch im Karton. Das alte Passwort weiß keiner mehr.“"
       },
@@ -2826,6 +2852,7 @@
         "titel": "Netzwerkdose in Klasse 3 ist tot",
         "kunde": "schule",
         "cat": "netzwerk",
+        "thema": "verkabelung",
         "stufe": "leicht",
         "text": "„Das Smartboard in Klasse 3 hat kein Netz. An der Dose leuchtet nichts.“"
       },
@@ -2834,6 +2861,7 @@
         "titel": "VPN für zwei Anwälte im Homeoffice",
         "kunde": "kanzlei",
         "cat": "netzwerk",
+        "thema": "wan_vpn",
         "stufe": "mittel",
         "text": "„Zwei Kollegen sollen von zu Hause sicher auf die Akten zugreifen können.“"
       },
@@ -2842,6 +2870,7 @@
         "titel": "Werkstatt und Verkauf in getrennte VLANs",
         "kunde": "autohaus",
         "cat": "netzwerk",
+        "thema": "switching",
         "stufe": "mittel",
         "text": "„Die Werkstattrechner sollen nicht mehr im selben Netz hängen wie die Buchhaltung.“"
       },
@@ -2850,6 +2879,7 @@
         "titel": "Switch in der Betriebswerkstatt tauschen",
         "kunde": "talbahn_marta",
         "cat": "netzwerk",
+        "thema": "switching",
         "stufe": "mittel",
         "text": "„Der alte Switch in Halle 2 fällt immer wieder aus. Bitte tauschen und die Ports wie vorher einrichten.“"
       },
@@ -2858,6 +2888,7 @@
         "titel": "Fahrgast-WLAN am Bahnhof ausleuchten",
         "kunde": "talbahn_petra",
         "cat": "netzwerk",
+        "thema": "wlan",
         "stufe": "mittel",
         "text": "„Am Ende von Gleis 2 gibt es kein WLAN. Bitte messen, wo ein Access Point fehlt.“"
       },
@@ -2866,6 +2897,7 @@
         "titel": "Standortvernetzung Lindenau per VPN",
         "kunde": "talbahn_wendt",
         "cat": "netzwerk",
+        "thema": "wan_vpn",
         "stufe": "schwer",
         "text": "„Lindenau soll ohne Umweg über Bitweiche mit dem Bahnhof Talheim verbunden werden.“"
       },
@@ -2874,6 +2906,7 @@
         "titel": "Neues Subnetz mit DHCP-Relay",
         "kunde": "autohaus",
         "cat": "netzwerk",
+        "thema": "routing",
         "stufe": "schwer",
         "text": "„Die neue Waschstraße bekommt ein eigenes Netz, der DHCP-Server steht aber im Hauptgebäude.“"
       },
@@ -2882,6 +2915,7 @@
         "titel": "Passwörter der Vereinsrechner erneuern",
         "kunde": "verein",
         "cat": "sicherheit",
+        "thema": "zugriff",
         "stufe": "leicht",
         "text": "„Auf allen Rechnern im Vereinsbüro ist das Passwort seit Jahren TSV1911.“"
       },
@@ -2890,6 +2924,7 @@
         "titel": "Verdächtige Rechnungs-Mail prüfen",
         "kunde": "baeckerei",
         "cat": "sicherheit",
+        "thema": "angriffe",
         "stufe": "leicht",
         "text": "„Da kam eine Rechnung vom Mehllieferanten, aber mit einem ZIP-Anhang. Ist die echt?“"
       },
@@ -2898,6 +2933,7 @@
         "titel": "Bildschirmsperre an der Anmeldung",
         "kunde": "praxis_keller",
         "cat": "sicherheit",
+        "thema": "haertung",
         "stufe": "leicht",
         "text": "„Patienten können am Empfang auf die Bildschirme schauen, wenn niemand da ist.“"
       },
@@ -2906,6 +2942,7 @@
         "titel": "Virenschutz der Schülerrechner aktualisieren",
         "kunde": "schule",
         "cat": "sicherheit",
+        "thema": "haertung",
         "stufe": "leicht",
         "text": "„Auf den Rechnern im Computerraum meldet der Virenschutz, dass er veraltet ist.“"
       },
@@ -2914,6 +2951,7 @@
         "titel": "Notebooks verschlüsseln",
         "kunde": "kanzlei",
         "cat": "sicherheit",
+        "thema": "krypto",
         "stufe": "mittel",
         "text": "„Ein Notebook mit Mandantendaten darf nie wieder unverschlüsselt im Zug liegen bleiben.“"
       },
@@ -2922,6 +2960,7 @@
         "titel": "Zwei-Faktor-Anmeldung für die Praxissoftware",
         "kunde": "praxis_keller",
         "cat": "sicherheit",
+        "thema": "zugriff",
         "stufe": "mittel",
         "text": "„Die Kassenärztliche Vereinigung verlangt jetzt eine zweite Anmeldestufe.“"
       },
@@ -2930,6 +2969,7 @@
         "titel": "Firewall-Regeln für Werkstatt-Tablets",
         "kunde": "autohaus",
         "cat": "sicherheit",
+        "thema": "netzsicherheit",
         "stufe": "mittel",
         "text": "„Die Tablets in der Werkstatt sollen nur die Diagnose-Server erreichen, sonst nichts.“"
       },
@@ -2938,6 +2978,7 @@
         "titel": "Berechtigungen im Leitstellen-Laufwerk aufräumen",
         "kunde": "talbahn_petra",
         "cat": "sicherheit",
+        "thema": "zugriff",
         "stufe": "mittel",
         "text": "„Auf das Leitstellen-Laufwerk kommen gefühlt alle drauf, auch Leute, die längst woanders arbeiten.“"
       },
@@ -2946,6 +2987,7 @@
         "titel": "Einbruch ins Mailkonto untersuchen",
         "kunde": "kanzlei",
         "cat": "sicherheit",
+        "thema": "angriffe",
         "stufe": "schwer",
         "text": "„Mandanten haben Mails von uns bekommen, die wir nie geschrieben haben.“"
       },
@@ -2954,6 +2996,7 @@
         "titel": "Notfallplan für Ransomware",
         "kunde": "talbahn_wendt",
         "cat": "sicherheit",
+        "thema": "notfall",
         "stufe": "schwer",
         "text": "„Der Vorstand will wissen, was wir tun, wenn morgen alle Dateien verschlüsselt sind.“"
       },
@@ -2962,6 +3005,7 @@
         "titel": "Neuen Kassen-PC aufstellen",
         "kunde": "baeckerei",
         "cat": "systeme",
+        "thema": "hardware",
         "stufe": "leicht",
         "text": "„Der neue Kassen-PC für die Filiale am Markt ist da. Bitte anschließen und einrichten.“"
       },
@@ -2970,6 +3014,7 @@
         "titel": "Drucker im Vereinsbüro einrichten",
         "kunde": "verein",
         "cat": "systeme",
+        "thema": "windows",
         "stufe": "leicht",
         "text": "„Wir haben einen gebrauchten Drucker geschenkt bekommen. Er soll an beiden Rechnern gehen.“"
       },
@@ -2978,6 +3023,7 @@
         "titel": "Beamer im Lehrerzimmer anschließen",
         "kunde": "schule",
         "cat": "systeme",
+        "thema": "hardware",
         "stufe": "leicht",
         "text": "„Der Beamer zeigt nur Kein Signal an, egal welches Kabel wir nehmen.“"
       },
@@ -2986,6 +3032,7 @@
         "titel": "Scanner an der Anmeldung installieren",
         "kunde": "praxis_keller",
         "cat": "systeme",
+        "thema": "windows",
         "stufe": "leicht",
         "text": "„Versichertenkarten und Überweisungen sollen direkt in die Praxissoftware gescannt werden.“"
       },
@@ -2994,6 +3041,7 @@
         "titel": "Windows-Updates auf allen Arbeitsplätzen",
         "kunde": "kanzlei",
         "cat": "systeme",
+        "thema": "windows",
         "stufe": "mittel",
         "text": "„Seit Monaten klickt jeder die Updates weg. Bitte einmal alles auf Stand bringen.“"
       },
@@ -3002,6 +3050,7 @@
         "titel": "Zehn Notebooks mit einem Image betanken",
         "kunde": "autohaus",
         "cat": "systeme",
+        "thema": "it_betrieb",
         "stufe": "mittel",
         "text": "„Die neuen Verkäufer-Notebooks sollen alle gleich eingerichtet sein.“"
       },
@@ -3010,6 +3059,7 @@
         "titel": "Diagnose-PC der Werkstatt startet nicht",
         "kunde": "talbahn_marta",
         "cat": "systeme",
+        "thema": "hardware",
         "stufe": "mittel",
         "text": "„Der Diagnose-PC an Gleis 4 piept dreimal und bleibt schwarz.“"
       },
@@ -3018,6 +3068,7 @@
         "titel": "Schul-Tablets zentral verwalten",
         "kunde": "schule",
         "cat": "systeme",
+        "thema": "it_betrieb",
         "stufe": "mittel",
         "text": "„Wir haben 30 Tablets und richten jedes einzeln ein. Das muss einfacher gehen.“"
       },
@@ -3026,6 +3077,7 @@
         "titel": "Dateiserver auf neue Hardware umziehen",
         "kunde": "talbahn_wendt",
         "cat": "systeme",
+        "thema": "storage",
         "stufe": "schwer",
         "text": "„Der Dateiserver in Lindenau ist neun Jahre alt. Umzug bitte ohne Datenverlust und am Wochenende.“"
       },
@@ -3034,6 +3086,7 @@
         "titel": "Backup mit Rücksicherung testen",
         "kunde": "praxis_keller",
         "cat": "systeme",
+        "thema": "storage",
         "stufe": "schwer",
         "text": "„Wir sichern jeden Tag. Aber ob die Rücksicherung klappt, hat noch nie jemand ausprobiert.“"
       },
@@ -3042,6 +3095,7 @@
         "titel": "Angebote für Vereins-PCs vergleichen",
         "kunde": "verein",
         "cat": "wirtschaft",
+        "thema": "beschaffung",
         "stufe": "leicht",
         "text": "„Wir haben drei Angebote für neue PCs und verstehen die Unterschiede nicht.“"
       },
@@ -3050,6 +3104,7 @@
         "titel": "Lizenzen der Kassensoftware zählen",
         "kunde": "baeckerei",
         "cat": "wirtschaft",
+        "thema": "recht",
         "stufe": "leicht",
         "text": "„Der Hersteller will für fünf Kassen Lizenzen abrechnen, wir haben aber nur vier.“"
       },
@@ -3058,6 +3113,7 @@
         "titel": "Inventarliste der Schulgeräte aktualisieren",
         "kunde": "schule",
         "cat": "wirtschaft",
+        "thema": "service",
         "stufe": "leicht",
         "text": "„Die Inventarliste ist von 2019. Der Schulträger will eine aktuelle.“"
       },
@@ -3066,6 +3122,7 @@
         "titel": "Garantiefälle der Werkstatt-Tablets abwickeln",
         "kunde": "autohaus",
         "cat": "wirtschaft",
+        "thema": "recht",
         "stufe": "leicht",
         "text": "„Zwei Tablets haben gesprungene Displays. Zahlt das die Garantie oder wir?“"
       },
@@ -3074,6 +3131,7 @@
         "titel": "Kauf oder Leasing für neue Drucker",
         "kunde": "kanzlei",
         "cat": "wirtschaft",
+        "thema": "kalkulation",
         "stufe": "mittel",
         "text": "„Rechnen Sie uns bitte aus, ob sich Leasing für die neuen Drucker lohnt.“"
       },
@@ -3082,6 +3140,7 @@
         "titel": "Wartungsvertrag für die Praxis-IT",
         "kunde": "praxis_keller",
         "cat": "wirtschaft",
+        "thema": "service",
         "stufe": "mittel",
         "text": "„Wir hätten gern einen festen Wartungsvertrag mit Reaktionszeit. Was müsste da drinstehen?“"
       },
@@ -3090,6 +3149,7 @@
         "titel": "Ersatzteilbudget der Werkstatt planen",
         "kunde": "talbahn_marta",
         "cat": "wirtschaft",
+        "thema": "kalkulation",
         "stufe": "mittel",
         "text": "„Ich muss dem Vorstand sagen, wie viel wir nächstes Jahr für IT-Ersatzteile brauchen.“"
       },
@@ -3098,6 +3158,7 @@
         "titel": "Abschreibung der neuen Server berechnen",
         "kunde": "autohaus",
         "cat": "wirtschaft",
+        "thema": "kalkulation",
         "stufe": "mittel",
         "text": "„Der Steuerberater fragt nach der Abschreibung für die neuen Server.“"
       },
@@ -3106,6 +3167,7 @@
         "titel": "IT-Budget für das nächste Jahr",
         "kunde": "talbahn_wendt",
         "cat": "wirtschaft",
+        "thema": "kalkulation",
         "stufe": "schwer",
         "text": "„Ich brauche ein IT-Budget für alle Standorte, sauber begründet und mit Reserve.“"
       },
@@ -3114,6 +3176,7 @@
         "titel": "Ausschreibung für eine neue Telefonanlage",
         "kunde": "kanzlei",
         "cat": "wirtschaft",
+        "thema": "beschaffung",
         "stufe": "schwer",
         "text": "„Wir wollen die Telefonanlage ausschreiben. Bitte ein Lastenheft vorbereiten.“"
       },
@@ -3122,6 +3185,7 @@
         "titel": "Mitgliederliste in die Datenbank übertragen",
         "kunde": "verein",
         "cat": "datenbanken",
+        "thema": "modellierung",
         "stufe": "leicht",
         "text": "„Unsere 400 Mitglieder stehen in einer Excel-Datei mit fünf Tabellenblättern.“"
       },
@@ -3130,6 +3194,7 @@
         "titel": "Artikelpreise in der Kassendatenbank ändern",
         "kunde": "baeckerei",
         "cat": "datenbanken",
+        "thema": "sql",
         "stufe": "leicht",
         "text": "„Ab Montag kosten alle Brötchen zehn Cent mehr. Bitte in allen Kassen ändern.“"
       },
@@ -3138,6 +3203,7 @@
         "titel": "Doppelte Schülereinträge finden",
         "kunde": "schule",
         "cat": "datenbanken",
+        "thema": "sql",
         "stufe": "leicht",
         "text": "„In der Schülerverwaltung stehen manche Kinder zweimal, mit leicht anderem Namen.“"
       },
@@ -3146,6 +3212,7 @@
         "titel": "Terminliste als Bericht exportieren",
         "kunde": "praxis_keller",
         "cat": "datenbanken",
+        "thema": "sql",
         "stufe": "leicht",
         "text": "„Ich brauche jeden Freitag eine Liste aller Termine der nächsten Woche.“"
       },
@@ -3154,6 +3221,7 @@
         "titel": "Abfrage: Kunden mit fälliger Inspektion",
         "kunde": "autohaus",
         "cat": "datenbanken",
+        "thema": "sql",
         "stufe": "mittel",
         "text": "„Wir wollen alle Kunden anschreiben, deren Inspektion in den nächsten 30 Tagen fällig ist.“"
       },
@@ -3162,6 +3230,7 @@
         "titel": "Sicherung der Aktendatenbank einrichten",
         "kunde": "kanzlei",
         "cat": "datenbanken",
+        "thema": "db_betrieb",
         "stufe": "mittel",
         "text": "„Die Aktendatenbank wird nur gesichert, wenn jemand daran denkt.“"
       },
@@ -3170,6 +3239,7 @@
         "titel": "Störungsmeldungen nach Bahnhof auswerten",
         "kunde": "talbahn_petra",
         "cat": "datenbanken",
+        "thema": "sql",
         "stufe": "mittel",
         "text": "„Welche Bahnhöfe haben die meisten IT-Störungen? Die Daten liegen alle in der Datenbank.“"
       },
@@ -3178,6 +3248,7 @@
         "titel": "Ersatzteil-Datenbank aufräumen",
         "kunde": "talbahn_marta",
         "cat": "datenbanken",
+        "thema": "modellierung",
         "stufe": "mittel",
         "text": "„In unserer Teile-Datenbank steht der Lieferant bei jedem Teil neu, mit drei verschiedenen Schreibweisen.“"
       },
@@ -3186,6 +3257,7 @@
         "titel": "Fahrgastzahlen-Datenbank migrieren",
         "kunde": "talbahn_wendt",
         "cat": "datenbanken",
+        "thema": "db_betrieb",
         "stufe": "schwer",
         "text": "„Die Fahrgastzahlen seit 2005 sollen auf den neuen Datenbankserver, ohne dass Auswertungen ausfallen.“"
       },
@@ -3194,6 +3266,7 @@
         "titel": "Langsame Abfragen im Werkstattsystem",
         "kunde": "autohaus",
         "cat": "datenbanken",
+        "thema": "db_betrieb",
         "stufe": "schwer",
         "text": "„Wenn wir einen Kunden suchen, dauert das inzwischen eine halbe Minute.“"
       }

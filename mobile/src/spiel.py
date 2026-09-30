@@ -1284,6 +1284,8 @@ class GameScreen:
         self.team_for = None         # Projekt, dessen Team geaendert wird (ab 0.35)
         self.details_for = set()     # Projekte/Ausschreibungen mit aufgeklappten Details
         self.training_for = None
+        self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
+        self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
         self.root = screen_list([])
         self.render()
 
@@ -1932,7 +1934,7 @@ class GameScreen:
 
     def open_firm(self, _event=None):
         self.game.reload()
-        self.training_for = None
+        self.training_for = self.training_cat = None
         self.firm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_firm()
@@ -1956,7 +1958,7 @@ class GameScreen:
 
     def _firm_choose(self, tab):
         self.firm_tab = tab
-        self.training_for = None
+        self.training_for = self.training_cat = None
         self.offer_for = self.assign_for = self.team_for = None
         self._fill_firm()
 
@@ -1986,10 +1988,10 @@ class GameScreen:
         limits = fg.ticket_rules()
         rows = [ui.text("Verteile die Tickets an deine Leute oder übernimm selbst welche "
                         "(höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
-                        "%d Ticket pro Tag, die Chance hängt vom Wert im Fachbereich ab."
+                        "%d Ticket pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
                         % (limits["spieler_max"], limits["mitarbeiter_max"]), size=12,
                         color=C["text_dim"])]
-        levels = self.game.knowledge()
+        levels = self.game.firm_levels()
         for ticket in tickets:
             rows.append(self._customer_ticket_box(state, ticket, levels))
         return [ui.Card("Kundenanfragen", offers, accent=C["pink"],
@@ -2115,8 +2117,9 @@ class GameScreen:
             return self._person_box(parts)
         parts.append(ui.label("Wer übernimmt?"))
         for option in fg.ticket_candidates(state, ticket, levels):
-            button = ui.GradientButton("%s · %d · Chance %d %%" % (
-                option["name"], option["wert"], option["chance"]),
+            button = ui.GradientButton("%s · %s %d · Chance %d %%" % (
+                option["name"], fg.TOPIC_SHORT.get(ticket.get("thema"), ""), option["wert"],
+                option["chance"]),
                 lambda _e, a=option["an"]: self._delegate(ticket["id"], a), kind="ghost",
                 height=38)
             button.set_enabled(not option["problem"])
@@ -2144,7 +2147,7 @@ class GameScreen:
 
     def _firm_projekte(self, state):
         running = state.running_projects()
-        levels = self.game.knowledge()
+        levels = self.game.firm_levels()
         rows = []
         if not running:
             rows.append(ui.text("Gerade läuft kein Projekt. Gib unten ein Angebot für eine "
@@ -2240,8 +2243,9 @@ class GameScreen:
         if editing:
             parts.append(ui.label("Wer arbeitet mit? (antippen)"))
             for option in fg.project_candidates(state, project, levels):
-                button = ui.GradientButton("%s · %d · %s Punkte am Tag" % (
-                    option["name"], option["wert"], fg._num(option["punkte"])),
+                button = ui.GradientButton("%s · %s %d · %s Punkte am Tag" % (
+                    option["name"], fg.TOPIC_SHORT.get(fg.project_topic(project), ""),
+                    option["wert"], fg._num(option["punkte"])),
                     lambda _e, a=option["an"]: self._toggle_member(pid, a),
                     kind="success" if option["im_team"] else "ghost", height=38)
                 button.set_enabled(option["im_team"] or not option["problem"])
@@ -2367,7 +2371,16 @@ class GameScreen:
                          color=C["pink"] if item.get("herkunft") == "bitweiche"
                          else C["accent"])]
         extra = [ui.text(fg.values_text(item["werte"]), size=12, color=C["text_dim"]),
+                 ui.text(fg.strengths_text(item), size=12, color=C["text_dim"]),
                  ui.text(fg.staff_money_text(item), size=12, color=C["text_dim"])]
+        if item["id"] in self.topics_for:
+            for key in fg.CAT_ORDER:
+                extra.append(ft.Column([
+                    ui.text("%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]], item["werte"][key]),
+                            size=12, weight=ft.FontWeight.BOLD,
+                            color=CATEGORY_COLOR[fg.CAT_NAME[key]]),
+                    ui.text(fg.topics_text(item["themen"], key), size=11,
+                            color=C["text_dim"])], spacing=0, tight=True))
         note = fg.training_text(state, item) if not applicant else \
             "Bewerbung liegt vor bis Arbeitstag %d" % item["bis_tag"]
         if note:
@@ -2401,6 +2414,9 @@ class GameScreen:
             parts.append(ft.Row([
                 ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
                                   kind="ghost", height=36, expand=True),
+                ui.GradientButton("Themen", lambda _e, i=item["id"]: self._toggle_topics(i),
+                                  kind="success" if item["id"] in self.topics_for else "ghost",
+                                  height=36, expand=True),
                 ui.GradientButton("Entlassen", lambda _e, i=item: self._fire(i), kind="ghost",
                                   height=36, expand=True),
             ], spacing=8))
@@ -2411,37 +2427,72 @@ class GameScreen:
                         subtitle="%d von %d Plätzen" % (len(staff), state.capacity))]
 
     def _training_choice(self, state, item):
+        """Weiterbildung (ab 0.38): erst den Fachbereich waehlen, dann ein Thema
+        oder den ganzen Fachbereich."""
         rules = fg.firm_rules()["weiterbildung"]
-        controls = [ui.text("Weiterbildung in welchem Fachbereich?", size=13,
+        cat = self.training_cat
+        if cat is None:
+            controls = [ui.text("Weiterbildung in welchem Fachbereich?", size=13,
+                                weight=ft.FontWeight.BOLD)]
+            for key in fg.CAT_ORDER:
+                controls.append(ui.GradientButton(
+                    "%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]], item["werte"][key]),
+                    lambda _e, k=key: self._pick_training_cat(k), kind="ghost", height=36))
+            return controls
+        whole = rules["fachbereich"]
+        controls = [ui.text("Weiterbildung %s: ein Thema oder der ganze Fachbereich?"
+                            % CATEGORY_SHORT[fg.CAT_NAME[cat]], size=13,
                             weight=ft.FontWeight.BOLD)]
-        problems = []
-        for key in fg.CAT_ORDER:
-            offer = fg.training_offer(state, item["id"], key)
-            problems.append(offer["problem"])
-            button = ui.GradientButton("%s (%s)" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
-                                                    euro(offer["preis"])),
-                                       lambda _e, k=key: self._train(item["id"], k),
+        offers = [fg.training_offer(state, item["id"], cat)]
+        offers += [fg.training_offer(state, item["id"], topic) for topic in fg.CAT_TOPICS[cat]]
+        for offer in offers:
+            if offer["thema"]:
+                caption = "%s %d (%s)" % (fg.TOPIC_SHORT[offer["thema"]],
+                                          int(item["themen"][offer["thema"]]),
+                                          euro(offer["preis"]))
+            else:
+                caption = "Ganzer Fachbereich (%s)" % euro(offer["preis"])
+            target = offer["thema"] or cat
+            button = ui.GradientButton(caption, lambda _e, t=target: self._train(item["id"], t),
                                        kind="ghost", height=36)
             button.set_enabled(not offer["problem"])
             controls.append(button)
-        controls.append(ui.text("+%d im Fachbereich (höchstens %d), dauert %d Arbeitstage "
-                                "ohne Umsatz." % (rules["plus"], rules["max"], rules["tage"]),
-                                size=11, color=C["muted"]))
+        controls.append(ui.text(
+            "Thema: +%d, dauert %d Arbeitstage. Ganzer Fachbereich: +%d auf alle Themen, "
+            "dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz."
+            % (rules["plus"], offers[1]["tage"] if len(offers) > 1 else rules["tage"],
+               whole["plus"], offers[0]["tage"], rules["max"]), size=11, color=C["muted"]))
+        problems = [offer["problem"] for offer in offers]
         if all(problems):
             controls.append(ui.text(problems[0], size=12, color=C["yellow"]))
+        controls.append(ui.GradientButton("Anderer Fachbereich",
+                                          lambda _e: self._pick_training_cat(None),
+                                          kind="ghost", height=36))
         return controls
 
     def _pick_training(self, staff_id):
         self.training_for = None if self.training_for == staff_id else staff_id
+        self.training_cat = None
         self._fill_firm()
 
-    def _train(self, staff_id, cat):
+    def _pick_training_cat(self, cat):
+        self.training_cat = cat
+        self._fill_firm()
+
+    def _toggle_topics(self, staff_id):
+        if staff_id in self.topics_for:
+            self.topics_for.discard(staff_id)
+        else:
+            self.topics_for.add(staff_id)
+        self._fill_firm()
+
+    def _train(self, staff_id, target):
         try:
-            self.game.train(staff_id, cat)
+            self.game.train(staff_id, target)
         except ValueError as exc:
             self.toast(str(exc), C["yellow"])
             return
-        self.training_for = None
+        self.training_for = self.training_cat = None
         self._firm_changed()
 
     def _fire(self, item):
