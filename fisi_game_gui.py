@@ -1662,7 +1662,8 @@ class GameView(ScrollArea):
         places = _frame(plan.body)
         places.pack(anchor="w", pady=(10, 0))
         for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
-                           ("Zuhause öffnen", "zuhause"), ("Firma öffnen", "firma")):
+                           ("Zuhause öffnen", "zuhause"), ("Firma öffnen", "firma"),
+                           ("Reise öffnen", "reise")):
             NeoButton(places, label, lambda k=key: self.app.show_view(k), kind="ghost",
                       height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
         away = state.open_count_by_site()
@@ -3436,6 +3437,184 @@ class FirmView(ScrollArea):
             make_label(line, name, font=F["small_bold"], fg=C["text"]).pack(side="left")
             make_label(line, "1 Auftrag" if number == 1 else "%d Aufträge" % number,
                        font=F["small"], fg=C["text_dim"]).pack(side="right")
+
+
+# ============================================================================
+#  REISE DES SPIELERS (AB 0.39)
+# ============================================================================
+
+JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
+                 fg.JOURNEY_FIRM: C["green"]}
+JOURNEY_PAGE = 15
+
+
+class JourneyView(ScrollArea):
+    """Unterpunkt "Reise": Rueckblick-Statistik und Tagebuch der wichtigsten
+    Momente - nur aus dem Ereignisprotokoll berechnet."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=C["bg"])
+        self.app = app
+        self.content = _frame(self.inner)
+        self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
+        self.group = "alle"
+        self.page = 0
+
+    @property
+    def game(self):
+        return self.app.views["game"].game
+
+    def on_show(self):
+        self.game.reload()
+        self.page = 0
+        self.render()
+
+    def refresh(self):
+        self.on_show()
+
+    def render(self, keep_scroll=False):
+        for child in self.content.winfo_children():
+            child.destroy()
+        state = self.game.state
+        if state.profile is None:
+            card = Card(self.content, title="Reise", accent=C["accent"])
+            card.pack(fill="x")
+            make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
+                       font=F["body"], fg=C["text_soft"]).pack(anchor="w")
+            NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
+                      kind="primary").pack(anchor="w", pady=(12, 0))
+            return
+        stats = fg.journey_stats(state)
+        self._build_numbers(state, stats)
+        self._build_charts(stats)
+        self._build_diary(state)
+        if not keep_scroll:
+            self.to_top()
+
+    def _build_numbers(self, state, stats):
+        card = Card(self.content, title="Rückblick", accent=C["accent2"],
+                    subtitle="%s · Arbeitstag %d" % (state.profile["name"], state.day))
+        card.pack(fill="x")
+        grid = _frame(card.body)
+        grid.pack(fill="x")
+        tiles = [
+            ("Diensttage", str(stats["diensttage"]), "abgeschlossene Arbeitstage"),
+            ("Tickets gelöst", str(stats["richtig"]),
+             "von %d bearbeitet · %d %%" % (stats["tickets"], stats["quote"])),
+            ("Zwischenfälle", str(stats["zwischenfaelle"]),
+             "gemeistert von %d" % stats["zwischenfaelle_gesamt"]),
+            ("Kundenprojekte", str(stats["kundenprojekte"]),
+             "abgeschlossen" + (" · %d laufen" % stats["projekte_laufend"]
+                                if stats["projekte_laufend"] else "")),
+            ("Angebote", str(stats["angebote_gewonnen"]),
+             "gewonnen von %d" % stats["angebote"]),
+            ("Verdient", _euro(stats["verdient"]), "alle Einnahmen zusammen"),
+        ]
+        for column in range(3):
+            grid.columnconfigure(column, weight=1, uniform="rb")
+        for index, (title, value, detail) in enumerate(tiles):
+            tile = ctk.CTkFrame(grid, fg_color=C["card_alt"], corner_radius=12,
+                                border_width=1, border_color=C["border"])
+            tile.grid(row=index // 3, column=index % 3, sticky="nsew",
+                      padx=(0 if index % 3 == 0 else 6, 0), pady=(0 if index < 3 else 6, 0))
+            make_label(tile, title.upper(), font=F["label"], fg=C["muted"]).pack(
+                anchor="w", padx=14, pady=(10, 0))
+            make_label(tile, value, font=F["h1"], fg=C["text"]).pack(anchor="w", padx=14)
+            make_label(tile, detail, font=F["tiny"], fg=C["text_dim"]).pack(
+                anchor="w", padx=14, pady=(0, 10))
+
+    def _build_charts(self, stats):
+        row = _frame(self.content)
+        row.pack(fill="x", pady=(14, 0))
+        row.columnconfigure(0, weight=3, uniform="rc")
+        row.columnconfigure(1, weight=2, uniform="rc")
+        left = _frame(row)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        card = Card(left, title="Tickets je Arbeitstag", accent=C["accent"],
+                    subtitle="die letzten 30 Arbeitstage")
+        card.pack(fill="x")
+        chart = LineChart(card.body, height=190, parent_bg=C["card"])
+        chart.pack(fill="x")
+        chart.set_data(stats["tage"], [
+            {"name": "gelöst", "values": stats["tage_richtig"], "color": C["green"]},
+            {"name": "mit Fehlern", "values": stats["tage_falsch"], "color": C["red"]}])
+        card = Card(left, title="Ansehen im Verlauf", accent=C["purple"],
+                    subtitle="nach jedem Feierabend")
+        card.pack(fill="x", pady=(14, 0))
+        chart = LineChart(card.body, height=170, parent_bg=C["card"])
+        chart.pack(fill="x")
+        chart.set_data(stats["ansehen_tage"], [
+            {"name": "Ansehen", "values": stats["ansehen"], "color": C["purple"]}],
+            y_max=100)
+        card = Card(row, title="Gelöst je Fachbereich", accent=C["green"],
+                    subtitle="richtig erledigte Tickets")
+        card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        peak = max(stats["je_fachbereich"].values()) or 1
+        for key in fg.CAT_ORDER:
+            color = cat_color(key)
+            bar = GradientBar(card.body, CATEGORY_SHORT[fg.CAT_NAME[key]], color,
+                              lighten(color, 0.35), parent_bg=C["card"])
+            bar.pack(fill="x", pady=(0, 2))
+            value = stats["je_fachbereich"][key]
+            bar.set(100.0 * value / peak, str(value))
+        make_label(card.body, "Mitarbeiter eingestellt: %d" % stats["mitarbeiter"],
+                   font=F["small"], fg=C["text_dim"]).pack(anchor="w", pady=(10, 0))
+        make_label(card.body, "Tickets verschoben: %d" % stats["verschoben"],
+                   font=F["small"], fg=C["text_dim"]).pack(anchor="w")
+        make_label(card.body, "Kundentickets deiner Leute: %d" % stats["kundentickets"],
+                   font=F["small"], fg=C["text_dim"]).pack(anchor="w")
+
+    def _build_diary(self, state):
+        entries = fg.journey_filter(fg.journey(state), self.group)
+        entries.reverse()   # neueste zuerst
+        card = Card(self.content, title="Tagebuch", accent=C["purple"],
+                    subtitle="%d Einträge · neueste zuerst" % len(entries))
+        card.pack(fill="x", pady=(14, 0))
+        ChoiceRow(card.body, fg.JOURNEY_GROUPS, self.group, self._choose).pack(
+            anchor="w", pady=(0, 10))
+        pages = max(1, -(-len(entries) // JOURNEY_PAGE))
+        self.page = max(0, min(self.page, pages - 1))
+        visible = entries[self.page * JOURNEY_PAGE:(self.page + 1) * JOURNEY_PAGE]
+        if not visible:
+            make_label(card.body, "Noch keine Einträge - dein erster Arbeitstag wartet.",
+                       font=F["body"], fg=C["text_soft"]).pack(anchor="w")
+        for entry in visible:
+            color = JOURNEY_COLOR.get(entry["gruppe"], C["accent"])
+            row = _frame(card.body)
+            row.pack(fill="x", pady=3)
+            make_label(row, "Tag %d" % entry["tag"], font=F["small_bold"],
+                       fg=C["muted"], width=64, anchor="w").pack(side="left", anchor="n",
+                                                                 pady=(10, 0))
+            box = ctk.CTkFrame(row, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"])
+            box.pack(side="left", fill="x", expand=True)
+            ctk.CTkFrame(box, fg_color=color, width=4, height=12, corner_radius=2).pack(
+                side="left", fill="y", padx=(10, 0), pady=10)
+            inner = _frame(box)
+            inner.pack(side="left", fill="x", expand=True, padx=(10, 12), pady=8)
+            make_label(inner, entry["titel"], font=F["small_bold"], fg=C["text"],
+                       wraplength=820, justify="left", anchor="w").pack(anchor="w")
+            if entry["text"]:
+                make_label(inner, entry["text"], font=F["small"], fg=C["text_dim"],
+                           wraplength=820, justify="left", anchor="w").pack(anchor="w")
+        if pages > 1:
+            pager = _frame(card.body)
+            pager.pack(fill="x", pady=(10, 0))
+            NeoButton(pager, "Neuere", lambda: self._turn(-1), kind="ghost", height=32,
+                      font=F["small_bold"]).pack(side="left")
+            make_label(pager, "Seite %d / %d" % (self.page + 1, pages), font=F["small_bold"],
+                       fg=C["text_dim"]).pack(side="left", expand=True)
+            NeoButton(pager, "Ältere", lambda: self._turn(1), kind="ghost", height=32,
+                      font=F["small_bold"]).pack(side="right")
+
+    def _choose(self, group):
+        self.group = group
+        self.page = 0
+        self.render(keep_scroll=True)
+
+    def _turn(self, delta):
+        self.page += delta
+        self.render(keep_scroll=True)
 
 
 def _euro(value):

@@ -16,6 +16,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import fisi_core as core  # noqa: E402
 import fisi_game as fg  # noqa: E402
 import fisi_sync  # noqa: E402
 from fisi_core import (  # noqa: E402
@@ -340,6 +341,189 @@ class AbgleichTest(unittest.TestCase):
             handy.reset_all()
             fisi_sync.merge_into_local(pc, fisi_sync.export_local(handy))
             self.assertEqual(fg.Game(pc).state.profile["name"], "Nico")
+
+
+class LernstandJeFrageTest(unittest.TestCase):
+    """Notizblock (ab 0.39): Status je Frage aus den Antworten."""
+
+    def test_status_regeln(self):
+        qs = core.question_status
+        self.assertEqual(qs([]), (core.Q_OPEN, ""))
+        self.assertEqual(qs([True]), (core.Q_OPEN, ""))
+        self.assertEqual(qs([None, None]), (core.Q_OPEN, ""))
+        self.assertEqual(qs([False]), (core.Q_PRACTICE, core.LEVEL_RED))
+        self.assertEqual(qs([False, True]), (core.Q_PRACTICE, core.LEVEL_YELLOW))
+        self.assertEqual(qs([False, True, True]), (core.Q_DONE, ""))
+        self.assertEqual(qs([True, True]), (core.Q_DONE, ""))
+        # Faellt nach einem spaeteren Fehler zurueck
+        self.assertEqual(qs([True, True, False]), (core.Q_PRACTICE, core.LEVEL_RED))
+        self.assertEqual(qs([True, None, True]), (core.Q_DONE, ""))
+
+    def test_aus_der_datenbank_und_notizblock(self):
+        with TempDB() as db:
+            card, quiz = KARTEIKARTEN[0], QUIZ_QUESTIONS[0]
+            db.log_card(card["cat"], card["q"], "mc", False)
+            db.log_quiz_answer(quiz["cat"], quiz["q"], False)
+            db.log_quiz_answer(quiz["cat"], quiz["q"], True)
+            db.log_ap1(3, AP1_SZENARIEN[3]["title"], AP1_SZENARIEN[3]["theme"], True)
+            db.log_ap1(3, AP1_SZENARIEN[3]["title"], AP1_SZENARIEN[3]["theme"], True)
+            db.log_scenario(1, SZENARIEN[1]["title"], SZENARIEN[1]["theme"], None)
+            db.log_project(2, PROJEKTARBEITEN[2]["title"], PROJEKTARBEITEN[2]["cat"], False)
+            book = core.StatusBook(db)
+            self.assertEqual(book.status(core.SRC_CARD, card["q"]),
+                             (core.Q_PRACTICE, core.LEVEL_RED))
+            self.assertEqual(book.status(core.SRC_QUIZ, quiz["q"]),
+                             (core.Q_PRACTICE, core.LEVEL_YELLOW))
+            self.assertEqual(book.status(core.SRC_AP1, 3), (core.Q_DONE, ""))
+            self.assertEqual(book.status(core.SRC_AP2, 1), (core.Q_OPEN, ""))
+            self.assertTrue(book.touched(core.SRC_AP2, 1))
+            entries = core.notebook_entries(book)
+            self.assertEqual({(e["source"], e["key"]) for e in entries},
+                             {(core.SRC_CARD, card["q"]), (core.SRC_QUIZ, quiz["q"]),
+                              (core.SRC_PROJECT, 2)})
+            self.assertNotEqual(entries[-1]["level"], core.LEVEL_RED)   # rot vor gelb
+            only_net = core.notebook_entries(book, category=card["cat"],
+                                             sources=[core.SRC_CARD])
+            self.assertEqual(len(only_net), 1)
+            summary = core.notebook_summary(book)
+            self.assertEqual(summary[core.SRC_AP1][core.Q_DONE], 1)
+            self.assertEqual(sum(summary[core.SRC_CARD].values()), len(KARTEIKARTEN))
+            # Status-Filter der Listen
+            statuses = core.position_statuses(book, core.SRC_AP1)
+            self.assertEqual(core.filter_positions(AP1_SZENARIEN, status=core.STATUS_DONE,
+                                                   statuses=statuses), [3])
+            self.assertEqual(len(core.filter_positions(AP1_SZENARIEN, status=core.STATUS_OPEN,
+                                                       statuses=statuses)),
+                             len(AP1_SZENARIEN) - 1)
+
+    def test_unbearbeitete_zuerst(self):
+        results = {(core.SRC_CARD, "a"): [("1", False)], (core.SRC_CARD, "b"): [("1", True)],
+                   (core.SRC_CARD, "z"): [("1", True), ("2", True)]}
+        book = core.StatusBook(results=results)
+        keys = ["z", "b", "a", "c", "d", "e", "f", "g"]
+        order = book.preferred_order(core.SRC_CARD, keys)
+        self.assertEqual(order[:core.NEW_PER_REPEAT], ["c", "d", "e", "f"])
+        self.assertEqual(order[core.NEW_PER_REPEAT], "a")      # zu ueben zuerst
+        self.assertEqual(sorted(order), sorted(keys))
+        self.assertEqual(order[-1], "z")                       # abgeschlossen zuletzt
+
+    def test_abgleich_mit_alter_version(self):
+        """Eintraege ohne die neue Spalte correct werden weiter uebernommen."""
+        with TempDB() as pc, TempDB() as handy:
+            pc.log_ap1(0, AP1_SZENARIEN[0]["title"], AP1_SZENARIEN[0]["theme"], False)
+            data = fisi_sync.export_local(pc)
+            columns = data["columns"]["ap1_events"]
+            index = columns.index("correct") + 1       # +1 wegen uid vorne
+            data["columns"]["ap1_events"] = [c for c in columns if c != "correct"]
+            data["tables"]["ap1_events"] = [row[:index] + row[index + 1:]
+                                            for row in data["tables"]["ap1_events"]]
+            self.assertEqual(fisi_sync.merge_into_local(handy, data), 1)
+            self.assertEqual(core.StatusBook(handy).status(core.SRC_AP1, 0),
+                             (core.Q_OPEN, ""))
+            # Mit der neuen Spalte kommt auch die Bewertung mit
+            with TempDB() as other:
+                fisi_sync.merge_into_local(other, fisi_sync.export_local(pc))
+                self.assertEqual(core.StatusBook(other).status(core.SRC_AP1, 0)[0],
+                                 core.Q_PRACTICE)
+
+    def test_alte_datenbank_bekommt_spalte(self):
+        with TempDB() as db:
+            conn = db.get_connection()
+            conn.execute("DROP TABLE project_events")
+            conn.execute("CREATE TABLE project_events (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         " timestamp TEXT NOT NULL, project_index INTEGER NOT NULL,"
+                         " title TEXT NOT NULL, category TEXT NOT NULL, uid TEXT)")
+            conn.commit()
+            conn.close()
+            db.init_db()
+            db.log_project(0, "x", CAT_NET, True)
+            self.assertEqual(core.StatusBook(db).results[(core.SRC_PROJECT, 0)][0][1], True)
+
+
+class ReiseTest(unittest.TestCase):
+    """Reise des Spielers (ab 0.39): Tagebuch und Rueckblick aus dem Protokoll."""
+
+    def test_tagebuch_und_statistik(self):
+        with TempDB() as db:
+            game = fg.Game(db)
+            game.set_profile("Nico", {})
+            _play_through(game, days=12)
+            state = game.state
+            entries = fg.journey(state)
+            kinds = [entry["art"] for entry in entries]
+            self.assertEqual(kinds[0], "start")
+            self.assertIn("meilenstein", kinds)
+            self.assertIn("rang", kinds)                    # Junior ab Tag 10
+            self.assertIn("story", kinds)                   # Story ab Tag 12
+            days = [entry["tag"] for entry in entries]
+            self.assertEqual(days, sorted(days))
+            self.assertTrue(all(entry["tag"] <= state.day for entry in entries))
+            story = fg.journey_filter(entries, fg.JOURNEY_STORY)
+            self.assertTrue(story and all(e["gruppe"] == fg.JOURNEY_STORY for e in story))
+            stats = fg.journey_stats(state)
+            self.assertEqual(stats["diensttage"], state.days_done)
+            self.assertEqual(stats["richtig"] + stats["zwischenfaelle"], len(state.solved))
+            self.assertEqual(len(stats["ansehen"]), min(30, state.days_done))
+            self.assertEqual(sum(stats["je_fachbereich"].values()), stats["richtig"])
+
+    def test_firma_im_tagebuch(self):
+        with TempDB() as db:
+            game = _rich_game(db, money=200000)
+            game._log(fg.EV_FOUNDED, {"tag": 2, "name": "Nico IT", "geld": -1000})
+            game._log(fg.EV_FOUNDED, {"tag": 2, "name": "Doppelt", "geld": -1000})
+            game._log(fg.EV_EXPAND, {"tag": 2, "stufe": 2, "geld": -100})
+            titles = [entry["titel"] for entry in fg.journey(game.state)]
+            self.assertIn("Firma gegründet: Nico IT", titles)
+            self.assertNotIn("Firma gegründet: Doppelt", titles)
+            self.assertTrue(any(title.startswith("Gebäude ausgebaut") for title in titles))
+
+    def test_alle_zwischenfaelle_und_angebote(self):
+        with TempDB() as db:
+            game = _rich_game(db, money=200000)
+            incident = fg.GAME["zwischenfaelle"][0]
+            for day, right in ((3, True), (5, False), (7, True)):
+                game._log(fg.EV_SOLVED, {"tag": day, "aufgabe": incident["id"],
+                                         "zwischenfall": True, "richtig": right})
+            customer = fg.firm_rules()["kunden"][0]["id"]
+            for day, kind in ((8, fg.EV_OFFER_WON), (9, fg.EV_OFFER_LOST), (10, fg.EV_OFFER_WON)):
+                game._log(kind, {"tag": day, "anfrage": "a%d" % day, "kunde": customer,
+                                 "artikel": "Switch", "menge": 2, "geld": 120,
+                                 "grund": "" if kind == fg.EV_OFFER_WON else "preis"})
+            titles = [entry["titel"] for entry in fg.journey(game.state)]
+            self.assertEqual([t for t in titles if "Zwischenfall" in t],
+                             ["Erster Zwischenfall gemeistert", "Zwischenfall nicht gemeistert",
+                              "Zwischenfall gemeistert"])
+            self.assertEqual([t for t in titles if "Angebot" in t],
+                             ["Erstes Angebot gewonnen", "Angebot verloren", "Angebot gewonnen"])
+
+    def test_leerer_spielstand(self):
+        state = fg.GameState([])
+        self.assertEqual(fg.journey(state), [])
+        self.assertEqual(fg.journey_stats(state)["tickets"], 0)
+
+
+class SymbolSchriftTest(unittest.TestCase):
+    """Die Seitenleiste am PC nutzt ab 0.39 die Symbole der Handy-App."""
+
+    def test_alle_symbole_in_der_schrift(self):
+        try:
+            from PIL import ImageFont
+            import fisi_widgets as fw
+        except Exception as error:      # ohne Oberflaechen-Pakete
+            self.skipTest(str(error))
+        font = ImageFont.truetype(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                               fw.SYMBOL_FONT_FILE), 24)
+        for name in fw.SYMBOLS:
+            self.assertIsNotNone(fw.symbol_image(name, 24, "#FFFFFF").getbbox(), name)
+        self.assertTrue(font)
+        import app_gui
+        self.assertLessEqual(set(app_gui.NAV_SYMBOLS.values()), set(fw.SYMBOLS))
+        keys = {item[0] for item in app_gui.NAV_ITEMS}
+        for item in app_gui.NAV_ITEMS:
+            keys |= {sub[0] for sub in item[3] or [] if isinstance(sub, tuple)}
+        self.assertEqual(set(app_gui.NAV_SYMBOLS), keys)
+        self.assertEqual(set(app_gui.CATEGORY_NAV_SYMBOL), set(app_gui.CATEGORIES))
+        self.assertLessEqual(set(app_gui.CATEGORY_NAV_SYMBOL.values()), set(fw.SYMBOLS))
 
 
 class GrundrissUndAvatarTest(unittest.TestCase):

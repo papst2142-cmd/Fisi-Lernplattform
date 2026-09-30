@@ -3103,6 +3103,11 @@ class GameState:
         self.staff_routine = {}    # mitarbeiter-id -> Arbeitstage mit Routinearbeit
         self.learn_log = []        # (tag, mitarbeiter-id, thema, vorher, nachher, grund)
         self._topic_base = {}      # Zwischenspeicher: Grundwerte je Thema
+        # Reise des Spielers (ab 0.39): Ansehen nach jedem Feierabend und
+        # Rangwechsel (Rang ab dem folgenden Arbeitstag)
+        self.day_log = []          # (tag, mittleres Ansehen)
+        self.rank_log = []         # (ab tag, rang)
+        self._rank_seen = balancing["raenge"][0]["name"]
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3196,6 +3201,12 @@ class GameState:
                 self._learn_routine(busy, today)
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
+                self.day_log.append((today, round(self.mean_reputation, 1)))
+                if self.firm is None:
+                    rank = rank_for(self.mean_reputation, balancing, self.day)
+                    if rank != self._rank_seen:
+                        self.rank_log.append((self.day, rank))
+                        self._rank_seen = rank
 
         # Tickets des laufenden Tages (Tag steht in den Nutzdaten)
         for _timestamp, kind, data in self.history:
@@ -7099,6 +7110,215 @@ def room_at(x, y, content=None):
 
 # ============================================================================
 #  ORTE: BUERO, KUNDE, ZUHAUSE (ab 0.30)
+# ============================================================================
+#  REISE DES SPIELERS (AB 0.39)
+# ============================================================================
+#
+# Tagebuch und Rueckblick werden - wie der Spielstand - nur aus dem
+# Ereignisprotokoll berechnet. Es gibt dafuer keine eigenen Ereignisse.
+
+JOURNEY_STORY = "story"
+JOURNEY_CAREER = "karriere"
+JOURNEY_FIRM = "firma"
+JOURNEY_GROUPS = [("alle", "Alles"), (JOURNEY_STORY, "Story"),
+                  (JOURNEY_CAREER, "Karriere"), (JOURNEY_FIRM, "Firma")]
+# Erledigte Tickets, die im Tagebuch einen Eintrag bekommen
+TICKET_MILESTONES = (1, 10, 25, 50, 100, 150, 200, 300, 400, 500, 750, 1000)
+JOURNEY_TEXT_MAX = 220
+
+
+def _short(text, limit=JOURNEY_TEXT_MAX):
+    text = " ".join(str(text or "").split())
+    if len(text) <= limit:
+        return text
+    return text[:limit - 1].rsplit(" ", 1)[0] + " …"
+
+
+def _story_text(value):
+    """Erster Absatz eines Story-Textes (Liste von Zeilen oder Text)."""
+    if isinstance(value, list):
+        value = value[0] if value else ""
+        if isinstance(value, list):
+            value = value[0] if value else ""
+    return str(value or "").split("\n")[0]
+
+
+def journey(state, content=None):
+    """Das Ereignistagebuch: wichtige Momente chronologisch (aelteste zuerst).
+    Jeder Eintrag: {"tag", "gruppe", "art", "titel", "text"}."""
+    content = content or state.content
+    entries = []
+
+    def add(day, group, kind, title, text=""):
+        entries.append({"tag": int(day), "gruppe": group, "art": kind, "titel": title,
+                        "text": _short(text), "_nr": len(entries)})
+
+    names = [rank["name"] for rank in content["balancing"]["raenge"]]
+    day = 1
+    solved = 0
+    incidents = 0
+    started = False
+    hired = {}
+    offers_won = 0
+    for _timestamp, kind, data in state.history:
+        tag = data.get("tag") if isinstance(data.get("tag"), int) and data.get("tag") else day
+        if kind == EV_PROFILE and not started:
+            started = True
+            add(tag, JOURNEY_CAREER, "start", "Erster Arbeitstag",
+                "%s fängt bei der %s an." % (data.get("name") or "Deine Figur",
+                                              content["gebaeude"]["firma"]))
+        elif kind == EV_SOLVED and data.get("zwischenfall"):
+            # Jeder Zwischenfall steht im Tagebuch, gemeistert oder nicht
+            task = task_by_id(data.get("aufgabe"), content) or {}
+            if data.get("richtig"):
+                incidents += 1
+                title = ("Erster Zwischenfall gemeistert" if incidents == 1 else
+                         "Zwischenfall gemeistert")
+            else:
+                title = "Zwischenfall nicht gemeistert"
+            add(tag, JOURNEY_CAREER, "zwischenfall", title, task.get("titel", ""))
+        elif kind == EV_SOLVED and data.get("richtig"):
+            solved += 1
+            if solved in TICKET_MILESTONES:
+                add(tag, JOURNEY_CAREER, "meilenstein",
+                    "Erstes Ticket gelöst" if solved == 1 else
+                    "%d Tickets gelöst" % solved,
+                    (task_by_id(data.get("aufgabe"), content) or {}).get("titel", "")
+                    if solved == 1 else "")
+        elif kind == EV_MOVE:
+            home = apartment(data.get("wohnung"), content) or {}
+            add(tag, JOURNEY_CAREER, "umzug", "Umzug: %s" % home.get("name", "neue Wohnung"),
+                "Gemietet für %s pro Arbeitstag." % _whole_euro(data["miete"])
+                if data.get("miete") else "Gekauft.")
+        elif kind == EV_FOUNDED and data.get("name"):
+            if not any(entry["art"] == "gruendung" for entry in entries):
+                add(tag, JOURNEY_FIRM, "gruendung", "Firma gegründet: %s" % data["name"],
+                    "Abschied von der %s - ab jetzt bist du dein eigener Chef."
+                    % content["gebaeude"]["firma"])
+        elif kind == EV_HIRED and data.get("id") and data["id"] not in hired:
+            hired[data["id"]] = data.get("name", "")
+            add(tag, JOURNEY_FIRM, "einstellung", "Eingestellt: %s" % data.get("name", ""),
+                data.get("rolle", ""))
+        elif kind == EV_FIRED and data.get("id") in hired:
+            add(tag, JOURNEY_FIRM, "kuendigung", "Gekündigt: %s" % hired[data["id"]])
+        elif kind == EV_EXPAND:
+            stages = (content.get("firma") or {}).get("gebaeude", {}).get("stufen") or []
+            stage = next((item for item in stages
+                          if int(item.get("stufe", 0)) == int(data.get("stufe", 0))), {})
+            add(tag, JOURNEY_FIRM, "ausbau", "Gebäude ausgebaut: %s"
+                % stage.get("name", "Stufe %s" % data.get("stufe")),
+                "Ausbaustufe %s" % data.get("stufe"))
+        elif kind == EV_ROOM:
+            item = special_room(data.get("raum"), content) or {}
+            add(tag, JOURNEY_FIRM, "raum", "Neuer Raum: %s" % item.get("name", data.get("raum")))
+        elif kind in (EV_OFFER_WON, EV_OFFER_LOST):
+            # Jedes Angebot steht im Tagebuch, gewonnen oder verloren
+            customer = (firm_customer(data.get("kunde"), content) or {}).get("name", "einen Kunden")
+            what = "%s × %s" % (data.get("menge", 1), data.get("artikel", "Artikel"))
+            if kind == EV_OFFER_WON:
+                offers_won += 1
+                add(tag, JOURNEY_FIRM, "angebot",
+                    "Erstes Angebot gewonnen" if offers_won == 1 else "Angebot gewonnen",
+                    "%s für %s, Gewinn %s." % (what, customer, _whole_euro(data.get("geld", 0))))
+            else:
+                reason = ("Fehler in der Kalkulation" if data.get("grund") == "rechenfehler"
+                          else "%s war günstiger" % competitor(
+                              data.get("konkurrent") or BITWEICHE, content)["kurz"])
+                add(tag, JOURNEY_FIRM, "angebot_verloren", "Angebot verloren",
+                    "%s für %s: %s." % (what, customer, reason))
+        elif kind == EV_PROJECT_WON:
+            add(tag, JOURNEY_FIRM, "projekt", "Projekt gewonnen: %s" % data.get("titel", ""),
+                data.get("kunde", ""))
+        elif kind == EV_PROJECT_LOST:
+            add(tag, JOURNEY_FIRM, "projekt_verloren",
+                "Projekt verloren: %s" % data.get("titel", ""), data.get("kunde", ""))
+        elif kind == EV_DAY_END:
+            day += 1
+            for item in (data.get("firma") or {}).get("projekte") or []:
+                if item.get("fertig"):
+                    project = state.projects.get(item.get("projekt")) or {}
+                    if project.get("fertig") == int(item.get("tag", tag) or tag):
+                        add(tag, JOURNEY_FIRM, "projekt_fertig",
+                            "Projekt abgeschlossen: %s" % project.get("titel", ""),
+                            project.get("kunde", ""))
+
+    previous = 0
+    for rank_day, rank in state.rank_log:
+        level = names.index(rank) if rank in names else 0
+        add(rank_day, JOURNEY_CAREER, "rang", ("Befördert: %s" if level > previous else
+                                              "Zurückgestuft: %s") % rank)
+        previous = level
+    for key, value in (content["story"].get("tage") or {}).items():
+        if key.isdigit() and int(key) <= state.day and started:
+            add(int(key), JOURNEY_STORY, "story", "Arbeitstag %s" % key, _story_text(value))
+    # Story-Momente stehen am Morgen, also vor allem anderen des Tages
+    entries.sort(key=lambda entry: (entry["tag"], 0 if entry["art"] == "story" else 1,
+                                    entry["_nr"]))
+    for entry in entries:
+        entry.pop("_nr", None)
+    return entries
+
+
+def journey_filter(entries, group):
+    if group in (None, "alle"):
+        return list(entries)
+    return [entry for entry in entries if entry["gruppe"] == group]
+
+
+def journey_stats(state, content=None):
+    """Rueckblick-Statistik: Kennzahlen und Verlaeufe aus dem Protokoll."""
+    content = content or state.content
+    tickets = right = incidents = incidents_right = deferred = 0
+    by_cat = {key: 0 for key in CAT_ORDER}
+    per_day = {}
+    for _timestamp, kind, data in state.history:
+        if kind == EV_DEFERRED:
+            deferred += 1
+        if kind != EV_SOLVED:
+            continue
+        tag = data.get("tag") if isinstance(data.get("tag"), int) else 0
+        if data.get("zwischenfall"):
+            incidents += 1
+            incidents_right += 1 if data.get("richtig") else 0
+            continue
+        tickets += 1
+        bucket = per_day.setdefault(tag, [0, 0])
+        if data.get("richtig"):
+            right += 1
+            bucket[0] += 1
+            task = task_by_id(data.get("aufgabe"), content) or {}
+            if task.get("cat") in by_cat:
+                by_cat[task["cat"]] += 1
+        else:
+            bucket[1] += 1
+    customer = [item for item in state.ticket_results.values() if item.get("erfolg")]
+    offers = list(state.offers.values()) + list(state.project_offers.values())
+    earned = sum(sum(day["ein"].values()) for day in state.book.values())
+    days = sorted(day for day in per_day if day)[-30:]
+    return {
+        "diensttage": state.days_done,
+        "tickets": tickets,
+        "richtig": right,
+        "quote": round(100.0 * right / tickets) if tickets else 0,
+        "zwischenfaelle": incidents_right,
+        "zwischenfaelle_gesamt": incidents,
+        "verschoben": deferred,
+        "kundenprojekte": len(state.done_projects()),
+        "projekte_laufend": len(state.running_projects()),
+        "kundentickets": len(customer),
+        "angebote_gewonnen": sum(1 for item in offers if item.get("gewonnen")),
+        "angebote": len(offers),
+        "mitarbeiter": len(state.ever_hired),
+        "verdient": earned,
+        "je_fachbereich": by_cat,
+        "tage": ["T%d" % day for day in days],
+        "tage_richtig": [per_day[day][0] for day in days],
+        "tage_falsch": [per_day[day][1] for day in days],
+        "ansehen_tage": ["T%d" % day for day, _value in state.day_log[-30:]],
+        "ansehen": [value for _day, value in state.day_log[-30:]],
+    }
+
+
 # ============================================================================
 #
 # Alle drei Orte benutzen dasselbe Zeichnen (building_shapes) und Laufen

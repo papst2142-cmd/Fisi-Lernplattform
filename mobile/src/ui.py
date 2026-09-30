@@ -52,13 +52,16 @@ class Card(ft.Container):
                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self.subtitle_text = ft.Text(subtitle or "", size=11, color=C["muted"],
                                      text_align=ft.TextAlign.RIGHT)
+        self.title_text = None
+        self.tick = None
         column = [self.body]
         if title:
             accent = accent or C["accent"]
+            self.tick = ft.Container(width=4, height=14, border_radius=2, bgcolor=accent)
+            self.title_text = ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD,
+                                      color=accent, expand=True)
             header = ft.Row([
-                ft.Container(width=4, height=14, border_radius=2, bgcolor=accent),
-                ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD, color=accent,
-                        expand=True),
+                self.tick, self.title_text,
                 self.subtitle_text,
             ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             column = [header, self.body]
@@ -70,6 +73,13 @@ class Card(ft.Container):
     def set_subtitle(self, value, color=None):
         self.subtitle_text.value = value
         self.subtitle_text.color = color or C["muted"]
+
+    def set_title(self, value, color=None):
+        """Titel (und Farbe) zur Laufzeit aendern - nur bei Karten mit Titel."""
+        if self.title_text is not None:
+            self.title_text.value = value.upper()
+            if color:
+                self.title_text.color = self.tick.bgcolor = color
 
 
 # ============================================================================
@@ -308,7 +318,7 @@ def read_box(value="", mono=False):
         border=ft.Border.all(1, C["border"]))
 
 
-def list_row(title, subtitle, accent, on_click, active=False):
+def list_row(title, subtitle, accent, on_click, active=False, sub_color=None):
     """Antippbare Listenzeile mit farbiger Markierung links."""
     return ft.Container(
         content=ft.Row([
@@ -316,7 +326,7 @@ def list_row(title, subtitle, accent, on_click, active=False):
             ft.Column([
                 ft.Text(title, size=14, weight=ft.FontWeight.BOLD,
                         color=C["text"] if active else C["text_dim"]),
-                ft.Text(subtitle, size=12, color=C["muted"]),
+                ft.Text(subtitle, size=12, color=sub_color or C["muted"]),
             ], spacing=2, tight=True, expand=True),
             ft.Icon(ft.Icons.CHEVRON_RIGHT, size=20, color=C["muted"]),
         ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),

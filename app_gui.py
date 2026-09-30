@@ -40,6 +40,10 @@ from fisi_core import (  # noqa: E402
     LIST_PAGE_SIZE, PROJEKTARBEITEN, QUIZ_QUESTIONS, RAID_LEVELS,
     STATUS_FILTERS, SZENARIEN,
     TOPIC_NAME, TOPIC_SHORT, TOPICS,
+    LEVEL_RED, LEVEL_YELLOW, Q_DONE, Q_OPEN, Q_PRACTICE, Q_STATUS_NAME, Q_STATUS_TABS,
+    SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
+    SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_summary,
+    position_statuses, status_label,
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
@@ -50,7 +54,7 @@ import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
-    ChoiceRow, CustomerView, FirmView, GameView, HomeView, OfficeView,
+    ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView, OfficeView,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -67,7 +71,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.38"
+APP_VERSION = "0.39"
 
 
 def _resource_path(filename):
@@ -85,12 +89,32 @@ NAV_ITEMS = [
     ("ap1scenarios", "layers", "AP1 Szenarien", None),
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
+    ("notebook", "notebook", "Notizblock", None),
     ("calc", "calc", "Rechner", None),
     ("game", "game", "Spiel", [("buero", "office", "Büro"), ("kunde", "station", "Kunde"),
-                                 ("zuhause", "home", "Zuhause"), ("firma", "case", "Firma")]),
+                                 ("zuhause", "home", "Zuhause"), ("firma", "case", "Firma"),
+                                 ("reise", "journey", "Reise")]),
     ("progress", "chart", "Fortschritt", None),
     ("settings", "gear", "Optionen", None),
 ]
+
+# Dieselben Symbole wie in der Handy-App (ab 0.39), siehe fisi_widgets.SYMBOLS
+NAV_SYMBOLS = {
+    "dashboard": "dashboard", "cards": "style", "quiz": "track_changes",
+    "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
+    "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
+    "progress": "insights", "settings": "settings",
+    # Unterpunkte: Spiel
+    "buero": "business", "kunde": "storefront", "zuhause": "home", "firma": "work",
+    "reise": "route",
+}
+CATEGORY_NAV_SYMBOL = {
+    CATEGORIES[0]: "lan",
+    CATEGORIES[1]: "security",
+    CATEGORIES[2]: "dns",
+    CATEGORIES[3]: "euro",
+    CATEGORIES[4]: "storage",
+}
 
 # Symbole der Fachbereiche im Untermenue der Seitenleiste
 CATEGORY_NAV_ICON = {
@@ -108,12 +132,14 @@ VIEW_TITLES = {
     "ap1scenarios": ("LERNEN", "AP1 SZENARIEN"),
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
     "testproject": ("LERNEN", "TEST PROJEKT"),
+    "notebook": ("LERNEN", "NOTIZBLOCK"),
     "calc": ("WERKZEUGE", "RECHNER"),
     "game": ("PRAXIS", "SPIEL"),
     "buero": ("SPIEL", "BÜRO"),
     "kunde": ("SPIEL", "KUNDE"),
     "zuhause": ("SPIEL", "ZUHAUSE"),
     "firma": ("SPIEL", "FIRMA"),
+    "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
     "search": ("SUCHE", "ERGEBNISSE"),
@@ -236,6 +262,66 @@ def bind_click(widgets, callback):
         widget.bind("<Button-1>", callback)
 
 
+def option_menu(parent, values, command=None, width=None):
+    """Aufklappliste im Stil der Filter (z.B. Thema)."""
+    options = {} if width is None else {"width": width}
+    menu = ctk.CTkOptionMenu(
+        parent, values=values, command=command,
+        height=32, corner_radius=10, dynamic_resizing=False,
+        fg_color=C["card_alt"], button_color=C["card_alt"],
+        button_hover_color=C["card_hi"], text_color=C["text"],
+        dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
+        dropdown_text_color=C["text"], font=F["small"],
+        dropdown_font=F["small"], **options)
+    menu.set(values[0])
+    return menu
+
+
+def status_color(key):
+    """Farbe zum Lernstand einer Frage (Schluessel aus status_label)."""
+    return {LEVEL_RED: C["red"], LEVEL_YELLOW: C["yellow"], "fertig": C["green"],
+            Q_DONE: C["green"]}.get(key, C["muted"])
+
+
+class TopicMenu:
+    """Aufklappliste "Thema" passend zum gewaehlten Fachbereich."""
+
+    def __init__(self, parent, command):
+        self.command = command
+        self.names = {}
+        self.menu = option_menu(parent, [FILTER_ALL], command=lambda _v: command(),
+                                width=260)
+
+    def set_category(self, category, topic=None):
+        topics = [t for cat in CATEGORIES for t in TOPICS[cat]] \
+            if category in (None, FILTER_ALL) else TOPICS.get(category, [])
+        self.names = {TOPIC_NAME[t]: t for t in topics}
+        self.menu.configure(values=[FILTER_ALL] + list(self.names))
+        self.menu.set(TOPIC_NAME[topic] if topic in TOPIC_NAME and
+                      TOPIC_NAME[topic] in self.names else FILTER_ALL)
+
+    def get(self):
+        return self.names.get(self.menu.get(), FILTER_ALL)
+
+
+def count_text(counts):
+    return "Offen %d  ·  Zu üben %d  ·  Abgeschlossen %d" % (
+        counts[Q_OPEN], counts[Q_PRACTICE], counts[Q_DONE])
+
+
+def rate_box(parent, command):
+    """Zeile "Gewusst" / "Nicht gewusst" nach dem Aufdecken einer Loesung
+    (Selbsteinschaetzung ab 0.39). Wird erst beim Aufdecken eingeblendet."""
+    box = transparent_frame(parent)
+    make_label(box, "Wusstest du es?", font=F["small"],
+               fg=C["text_dim"]).pack(side="left", padx=(0, 12))
+    NeoButton(box, "Gewusst", lambda: command(True), kind="primary", height=34,
+              font=F["small_bold"]).pack(side="left")
+    NeoButton(box, "Nicht gewusst", lambda: command(False), kind="ghost", height=34,
+              font=F["small_bold"]).pack(side="left", padx=(8, 0))
+    return box
+
+
 class PagedList:
     """Liste mit Suchfeld, Filtern und Seiten fuer Szenarien und Testprojekte.
 
@@ -243,17 +329,18 @@ class PagedList:
     Filtern nur neu beschriftet. Die Zahl der Widgets bleibt dadurch gleich,
     egal wie viele Eintraege es gibt (lange Listen liessen das Programm frueher
     beim Aufbau abstuerzen). on_select erhaelt die Position in der
-    Gesamtliste, done_source liefert die Menge der bearbeiteten Positionen.
+    Gesamtliste, status_source liefert den Lernstand der bearbeiteten
+    Positionen {position: (status, stufe)} (ab 0.39, siehe position_statuses).
     """
 
-    def __init__(self, parent, items, on_select, subtitle, done_source,
+    def __init__(self, parent, items, on_select, subtitle, status_source,
                  category_filter=False, group_field=None, group_label="Thema"):
         self.items = items
         self.on_select = on_select
         self.subtitle = subtitle
-        self.done_source = done_source
+        self.status_source = status_source
         self.group_field = group_field
-        self.done = set()
+        self.statuses = {}
         self.filtered = list(range(len(items)))
         self.page = 0
         self.active = None
@@ -332,11 +419,11 @@ class PagedList:
         group = self.menus["group"].get() if "group" in self.menus else FILTER_ALL
         return {"query": self.search.get(), "category": category,
                 "group_field": self.group_field, "group": group,
-                "status": self.menus["status"].get(), "done": self.done}
+                "status": self.menus["status"].get(), "statuses": self.statuses}
 
     def refresh(self, keep_page=False):
         """Filter neu anwenden. Ohne keep_page springt die Liste auf Seite 1."""
-        self.done = self.done_source()
+        self.statuses = self.status_source()
         self.filtered = filter_positions(self.items, **self._criteria())
         if not keep_page:
             self.page = 0
@@ -352,11 +439,15 @@ class PagedList:
         for row, position in zip(self.rows, visible):
             item = self.items[position]
             active = position == self.active
-            mark = " ✓" if position in self.done else ""
+            status, level = self.statuses.get(position, (Q_OPEN, ""))
+            mark = " ✓" if status == Q_DONE else ""
             row["position"] = position
             row["title"].configure(text="%d. %s%s" % (position + 1, item["title"], mark),
                                    text_color=C["text"] if active else C["text_dim"])
-            row["sub"].configure(text=self.subtitle(item))
+            sub = self.subtitle(item)
+            if status != Q_OPEN:
+                sub += "  ·  " + Q_STATUS_NAME[status]
+            row["sub"].configure(text=sub, text_color=status_color(level or status))
             row["marker"].configure(fg_color=CATEGORY_COLOR[item["cat"]])
             row["frame"].configure(fg_color=C["card_hi"] if active else C["card_alt"],
                                    border_color=C["purple"] if active else C["border"])
@@ -379,7 +470,7 @@ class PagedList:
             self.search.delete(0, "end")
             for menu in self.menus.values():
                 menu.set(FILTER_ALL)
-            self.done = self.done_source()
+            self.statuses = self.status_source()
             self.filtered = filter_positions(self.items, **self._criteria())
         self.page = self.filtered.index(position) // LIST_PAGE_SIZE
         self._paint()
@@ -389,10 +480,15 @@ class PagedList:
         die erste). Ohne Treffer einfach der naechste Eintrag der Gesamtliste."""
         if not self.filtered:
             return (position + 1) % len(self.items)
-        for candidate in self.filtered:
-            if candidate > position:
-                return candidate
-        return self.filtered[0]
+        order = [p for p in self.filtered if p > position] + \
+            [p for p in self.filtered if p <= position]
+        # Ohne Status-Filter geht es bevorzugt mit Nicht-Abgeschlossenem weiter
+        if self.menus["status"].get() == FILTER_ALL:
+            for candidate in order:
+                if candidate != position and \
+                        self.statuses.get(candidate, (Q_OPEN, ""))[0] != Q_DONE:
+                    return candidate
+        return order[0]
 
 
 # ============================================================================
@@ -406,7 +502,8 @@ BLANK_INDICATOR = Image.new("RGBA", (16, 80), (0, 0, 0, 0))
 class NavRow(ctk.CTkFrame):
     """Eine abgerundete Zeile in der Seitenleiste."""
 
-    def __init__(self, parent, icon, text, command, sub=False, expandable=False):
+    def __init__(self, parent, icon, text, command, sub=False, expandable=False,
+                 symbol=None):
         super().__init__(parent, fg_color=C["sidebar"], corner_radius=10,
                          cursor="hand2")
         self.command = command
@@ -420,7 +517,8 @@ class NavRow(ctk.CTkFrame):
         pad_left = 20 if sub else 8
         self.icon_canvas = IconCanvas(self, icon, size=20 if sub else 22,
                                       icon_scale=0.62 if sub else 0.72,
-                                      parent_bg=C["sidebar"], cursor="hand2")
+                                      parent_bg=C["sidebar"], cursor="hand2",
+                                      symbol=symbol)
         self.icon_canvas.pack(side="left", padx=(pad_left, 10), pady=8 if sub else 9)
 
         self.text_label = ctk.CTkLabel(self, text=text, anchor="w", height=0,
@@ -526,7 +624,7 @@ class Sidebar(ctk.CTkFrame):
             expandable = bool(sub_items)
             row = NavRow(self, icon, text,
                          command=lambda k=key: self._on_nav(k),
-                         expandable=expandable)
+                         expandable=expandable, symbol=NAV_SYMBOLS.get(key))
             row.pack(fill="x", padx=12, pady=1)
             self.rows[key] = row
 
@@ -539,13 +637,13 @@ class Sidebar(ctk.CTkFrame):
                         sub_key, sub_icon, sub_text = item
                         sub_row = NavRow(container, sub_icon, sub_text,
                                          command=lambda k=sub_key: self.app.show_view(k),
-                                         sub=True)
+                                         sub=True, symbol=NAV_SYMBOLS.get(sub_key))
                         self.parents[sub_key] = key
                     else:
                         sub_row = NavRow(container, CATEGORY_NAV_ICON.get(item, "dot"),
                                          CATEGORY_SHORT.get(item, item),
                                          command=lambda c=item: self.app.open_cards(c),
-                                         sub=True)
+                                         sub=True, symbol=CATEGORY_NAV_SYMBOL.get(item))
                     sub_row.pack(fill="x", pady=1)
 
         self.footer = make_label(self, "Version %s" % APP_VERSION,
@@ -1025,10 +1123,15 @@ class CardsView(View):
 
     def build(self):
         self.cards = list(KARTEIKARTEN)
+        self.by_question = {card["q"]: card for card in self.cards}
         self.filtered = list(self.cards)
         self.index = 0
         self.mode = "freitext"
-        self.logged = set()
+        self.book = StatusBook(self.db)
+        # Je Anzeige einer Karte wird hoechstens einmal gespeichert; im Modus
+        # "Aufdecken" erst mit der Selbsteinschaetzung (ab 0.39)
+        self.logged = False
+        self.pending = None
 
         top = Card(self.content)
         top.pack(fill="x")
@@ -1040,6 +1143,23 @@ class CardsView(View):
         self.cat_pills = PillGroup(bar, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
 
+        filters = transparent_frame(bar)
+        filters.pack(fill="x", pady=(0, 14))
+        status_box = transparent_frame(filters)
+        status_box.pack(side="left")
+        make_label(status_box, "STATUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.status_pills = PillGroup(status_box, Q_STATUS_TABS,
+                                      on_change=lambda _v: self.apply_filter())
+        self.status_pills.pack(anchor="w", pady=(8, 0))
+        topic_box = transparent_frame(filters)
+        topic_box.pack(side="left", padx=(16, 0))
+        make_label(topic_box, "THEMA", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.topic_menu = TopicMenu(topic_box, self.apply_filter)
+        self.topic_menu.menu.pack(anchor="w", pady=(8, 0))
+        self.topic_menu.set_category(FILTER_ALL)
+        self.lbl_counts = make_label(bar, "", font=F["tiny"], fg=C["muted"])
+        self.lbl_counts.pack(anchor="w", pady=(0, 12))
+
         make_label(bar, "LERNMODUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
         self.mode_pills = PillGroup(bar, self.MODES, on_change=self._on_mode)
         self.mode_pills.pack(anchor="w", pady=(8, 0))
@@ -1048,6 +1168,9 @@ class CardsView(View):
         self.question_card = Card(self.content, title="Frage", accent=C["accent"],
                                   subtitle="")
         self.question_card.pack(fill="x", pady=(14, 0))
+        self.lbl_status = make_label(self.question_card.body, "", font=F["small_bold"],
+                                     fg=C["muted"], anchor="w")
+        self.lbl_status.pack(anchor="w")
         self.lbl_question = make_label(self.question_card.body, "",
                                        font=F["h2"], fg=C["text_soft"],
                                        wraplength=900, justify="left", anchor="w")
@@ -1086,6 +1209,8 @@ class CardsView(View):
                                        font=F["body"], fg=C["text_dim"],
                                        wraplength=900, justify="left", anchor="w")
         self.lbl_solution.pack(anchor="w", pady=(6, 0))
+        # Selbsteinschaetzung im Modus "Aufdecken" (ab 0.39)
+        self.rate_box = rate_box(self.answer_card.body, self.rate)
 
         # Steuerung
         controls = transparent_frame(self.content)
@@ -1103,26 +1228,62 @@ class CardsView(View):
                                       fg=C["text_dim"])
         self.lbl_counter.pack(side="right", pady=8)
 
-        self.update_ui()
+        self.apply_filter()
 
     # -- Steuerung ----------------------------------------------------------
+
+    def on_show(self):
+        # Neue Antworten (z.B. nach einem Abgleich) im Status beruecksichtigen
+        self.book = StatusBook(self.db)
+        self._show_status()
 
     def set_category(self, category, topic=None):
         """Fachbereich waehlen; mit topic nur die Karten dieses Themas (aus
         dem Spiel: "Karteikarten zu ...")."""
         self.cat_pills.select_value(category, notify=False)
-        self._on_category(category)
-        if topic:
-            self.filtered = [c for c in self.cards if c.get("thema") == topic]
-            self.update_ui()
+        self.topic_menu.set_category(category, topic)
+        self.apply_filter()
+
+    def practice(self, questions):
+        """Gezielte Uebungsrunde aus dem Notizblock: nur diese Karten."""
+        self.cat_pills.select_value("Alle", notify=False)
+        self.topic_menu.set_category(FILTER_ALL)
+        self.status_pills.select_value(FILTER_ALL, notify=False)
+        self._flush()
+        self.book = StatusBook(self.db)
+        self.filtered = [self.by_question[q] for q in questions if q in self.by_question]
+        self.index = 0
+        self._counts([card["q"] for card in self.filtered])
+        self.update_ui()
 
     def _on_category(self, category):
-        if category == "Alle":
-            self.filtered = list(self.cards)
+        self.topic_menu.set_category(category)
+        self.apply_filter()
+
+    def apply_filter(self):
+        """Fachbereich, Thema und Status anwenden. Ohne Status-Filter kommen
+        unbearbeitete Karten zuerst (mit gelegentlicher Wiederholung)."""
+        self._flush()
+        self.book = StatusBook(self.db)
+        category = self.cat_pills.get()
+        topic = self.topic_menu.get()
+        status = self.status_pills.get()
+        base = [card for card in self.cards
+                if (category == "Alle" or card["cat"] == category)
+                and (topic == FILTER_ALL or card.get("thema") == topic)]
+        keys = [card["q"] for card in base]
+        if status == FILTER_ALL:
+            keys = self.book.preferred_order(SRC_CARD, keys)
         else:
-            self.filtered = [c for c in self.cards if c["cat"] == category]
+            keys = [key for key in keys if self.book.status(SRC_CARD, key)[0] == status]
+        self.filtered = [self.by_question[key] for key in keys]
         self.index = 0
+        self._counts([card["q"] for card in base])
         self.update_ui()
+
+    def _counts(self, keys):
+        self.count_keys = keys
+        self.lbl_counts.configure(text=count_text(self.book.counts(SRC_CARD, keys)))
 
     def set_mode(self, mode):
         """Setzt den Lernmodus inklusive der Auswahlknoepfe."""
@@ -1130,35 +1291,58 @@ class CardsView(View):
         self._on_mode(mode)
 
     def _on_mode(self, mode):
+        self._flush()
         self.mode = mode
         self.update_ui()
 
     def jump_to_question(self, question_text):
         for position, card in enumerate(self.filtered):
             if card["q"] == question_text:
+                self._flush()
                 self.index = position
                 self.update_ui()
                 return
         # nicht im aktuellen Filter: Filter zuruecksetzen
         self.cat_pills.select(0, notify=False)
-        self.filtered = list(self.cards)
+        self.status_pills.select_value(FILTER_ALL, notify=False)
+        self.topic_menu.set_category(FILTER_ALL)
+        self.apply_filter()
         for position, card in enumerate(self.filtered):
             if card["q"] == question_text:
                 self.index = position
                 break
         self.update_ui()
 
+    def _flush(self):
+        """Aufgedeckt, aber nicht bewertet: als angesehen speichern."""
+        if self.pending is not None:
+            card, self.pending = self.pending, None
+            self.db.log_card(card["cat"], card["q"], "reveal", None)
+            self.app.notify_progress()
+
+    def _show_status(self):
+        if not self.filtered:
+            self.lbl_status.configure(text="")
+            return
+        card = self.filtered[self.index]
+        text, key = status_label(self.book, SRC_CARD, card["q"])
+        self.lbl_status.configure(text=text, text_color=status_color(key))
+
     def update_ui(self):
+        self._flush()
+        self.logged = False
         self.lbl_feedback.configure(text="")
         self.lbl_solution.configure(text="")
+        self.rate_box.pack_forget()
         self.frame_free.pack_forget()
         self.options.pack_forget()
         self.frame_reveal.pack_forget()
         self.options.clear()
 
         if not self.filtered:
-            self.lbl_question.configure(text="Für diesen Fachbereich sind keine "
-                                             "Karteikarten hinterlegt.")
+            self.lbl_question.configure(text="Für diese Auswahl gibt es keine "
+                                             "Karteikarten.")
+            self.lbl_status.configure(text="")
             self.lbl_counter.configure(text="0 / 0")
             self.btn_check.set_enabled(False)
             return
@@ -1166,6 +1350,7 @@ class CardsView(View):
         self.btn_check.set_enabled(True)
         card = self.filtered[self.index]
         self.lbl_question.configure(text=card["q"])
+        self._show_status()
         self.lbl_counter.configure(text="Karte %d / %d"
                                         % (self.index + 1, len(self.filtered)))
         self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
@@ -1226,20 +1411,40 @@ class CardsView(View):
         else:
             self.lbl_feedback.configure(text="Musterlösung", text_color=C["accent"])
             self.lbl_solution.configure(text=card["a_full"])
+            if not self.logged:
+                self.pending = card
+                self.rate_box.pack(anchor="w", pady=(12, 0))
+            return
 
-        key = (card["q"], self.mode)
-        if key not in self.logged:
-            self.logged.add(key)
-            self.db.log_card(card["cat"], card["q"], self.mode, correct)
-            self.app.notify_progress()
+        if not self.logged:
+            self.logged = True
+            self._save(card, correct)
+
+    def rate(self, correct):
+        """Selbsteinschaetzung nach dem Aufdecken."""
+        card, self.pending = self.pending, None
+        if card is None:
+            return
+        self.rate_box.pack_forget()
+        self.logged = True
+        self._save(card, correct)
+
+    def _save(self, card, correct):
+        self.db.log_card(card["cat"], card["q"], self.mode, correct)
+        self.book = StatusBook(self.db)
+        self._show_status()
+        self._counts(self.count_keys)
+        self.app.notify_progress()
 
     def next_card(self):
         if self.filtered:
+            self._flush()
             self.index = (self.index + 1) % len(self.filtered)
             self.update_ui()
 
     def prev_card(self):
         if self.filtered:
+            self._flush()
             self.index = (self.index - 1) % len(self.filtered)
             self.update_ui()
 
@@ -1270,6 +1475,21 @@ class QuizView(View):
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
         self.cat_pills = PillGroup(body, options, on_change=self._on_category)
         self.cat_pills.pack(anchor="w", pady=(8, 14))
+
+        filters = transparent_frame(body)
+        filters.pack(fill="x", pady=(0, 14))
+        status_box = transparent_frame(filters)
+        status_box.pack(side="left")
+        make_label(status_box, "STATUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.status_pills = PillGroup(status_box, Q_STATUS_TABS,
+                                      on_change=lambda _v: self._update_pool())
+        self.status_pills.pack(anchor="w", pady=(8, 0))
+        topic_box = transparent_frame(filters)
+        topic_box.pack(side="left", padx=(16, 0))
+        make_label(topic_box, "THEMA", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.topic_menu = TopicMenu(topic_box, self._update_pool)
+        self.topic_menu.menu.pack(anchor="w", pady=(8, 0))
+        self.topic_menu.set_category(FILTER_ALL)
 
         row = transparent_frame(body)
         row.pack(anchor="w", fill="x")
@@ -1331,22 +1551,63 @@ class QuizView(View):
     # -- Vorbereitung -------------------------------------------------------
 
     def _on_category(self, category):
-        if category == "Alle":
-            self.pool = list(self.questions)
-        else:
-            self.pool = [q for q in self.questions if q["cat"] == category]
+        self.topic_menu.set_category(category)
+        self._update_pool()
+
+    def on_show(self):
+        if not self.running:
+            self._update_pool()
+
+    def _update_pool(self):
+        """Fachbereich, Thema und Status (ab 0.39) anwenden."""
+        category = self.cat_pills.get()
+        topic = self.topic_menu.get()
+        status = self.status_pills.get()
+        self.book = StatusBook(self.db)
+        base = [q for q in self.questions
+                if (category == "Alle" or q["cat"] == category)
+                and (topic == FILTER_ALL or q.get("thema") == topic)]
+        self.pool = [q for q in base if self.book.matches(SRC_QUIZ, q["q"], status)]
         self.stepper.set_maximum(max(5, len(self.pool)))
-        self.lbl_pool.configure(text="%d Fragen verfügbar" % len(self.pool))
+        counts = self.book.counts(SRC_QUIZ, [q["q"] for q in base])
+        self.lbl_pool.configure(text="%d Fragen verfügbar  ·  %s"
+                                     % (len(self.pool), count_text(counts)))
 
     # -- Ablauf -------------------------------------------------------------
 
+    def practice(self, questions, keep_order=False):
+        """Gezielte Uebungsrunde aus dem Notizblock: nur diese Fragen
+        (hoechstens 50). keep_order: die erste Frage kommt zuerst."""
+        if self.running:
+            self.stop_timer()
+            self._reset_controls()
+        by_question = {q["q"]: q for q in self.questions}
+        session = [by_question[key] for key in questions if key in by_question]
+        if not session:
+            return
+        if not keep_order:
+            random.shuffle(session)
+        self.session = session[:50]
+        self.pool = list(self.session)
+        self._begin()
+
     def start_quiz(self):
         if not self.pool:
-            messagebox.showinfo("Hinweis", "Für diesen Fachbereich sind keine "
-                                           "Fragen hinterlegt.")
+            messagebox.showinfo("Hinweis", "Für diese Auswahl gibt es keine Fragen.")
             return
         count = min(self.stepper.get(), len(self.pool))
-        self.session = random.sample(self.pool, count)
+        if self.status_pills.get() == FILTER_ALL:
+            # Unbearbeitete Fragen zuerst, dazwischen Wiederholungen
+            keys = self.book.preferred_order(SRC_QUIZ, [q["q"] for q in self.pool],
+                                             rng=random.Random())
+            by_question = {q["q"]: q for q in self.pool}
+            self.session = [by_question[key] for key in keys[:count]]
+            random.shuffle(self.session)
+        else:
+            self.session = random.sample(self.pool, count)
+        self._begin()
+
+    def _begin(self):
         self.index = 0
         self.score = 0
         self.running = True
@@ -1470,6 +1731,7 @@ class QuizView(View):
         self.btn_submit.set_text("Antwort einreichen")
         self.lbl_progress.configure(text="Frage 0 / 0")
         self.lbl_timer.configure(text="00:00")
+        self._update_pool()
 
     def jump_to_question(self, question_text):
         for question in self.questions:
@@ -1501,10 +1763,13 @@ class ScenarioViewBase(View):
     DATA = SZENARIEN
     LIST_TITLE = "Szenarien"
     TABLE = "scenario_events"
+    SOURCE = SRC_AP2
 
     def build(self):
         self.index = 0
         self.solution_visible = False
+        # Aufgedeckt, aber noch nicht bewertet (Selbsteinschaetzung ab 0.39)
+        self.pending = None
         # Eigene Loesungstexte bleiben nur waehrend der laufenden Sitzung
         # erhalten (kein Datenbank-Feld), damit man beim Szenario-Wechsel
         # nicht jedes Mal von vorn anfangen muss.
@@ -1521,7 +1786,7 @@ class ScenarioViewBase(View):
         self.paged = PagedList(
             list_card.body, self.DATA, self.load_scenario,
             subtitle=lambda item: item["theme"],
-            done_source=lambda: self.db.completed_indices(self.TABLE),
+            status_source=lambda: position_statuses(StatusBook(self.db), self.SOURCE),
             group_field="theme", group_label="Thema")
         self.paged.refresh()
 
@@ -1530,6 +1795,9 @@ class ScenarioViewBase(View):
 
         self.task_card = Card(detail, title="Aufgabenstellung", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
+        self.lbl_status = make_label(self.task_card.body, "", font=F["small_bold"],
+                                     fg=C["muted"], anchor="w")
+        self.lbl_status.pack(anchor="w")
         self.lbl_title = make_label(self.task_card.body, "", font=F["h2"],
                                     fg=C["text"], wraplength=760, justify="left",
                                     anchor="w")
@@ -1553,6 +1821,7 @@ class ScenarioViewBase(View):
         self.sol_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_solution = make_text(self.sol_card.body, height=11, readonly=True)
         self.txt_solution.pack(fill="both", expand=True)
+        self.rate_box = rate_box(self.sol_card.body, self.rate)
 
         controls = transparent_frame(detail)
         controls.pack(fill="x", pady=(14, 0))
@@ -1568,12 +1837,37 @@ class ScenarioViewBase(View):
         self.own_answers[self.index] = self.txt_own.get("1.0", "end-1c")
 
     def on_show(self):
-        # Bearbeitet-Haken koennen sich durch einen Abgleich geaendert haben
+        # Der Lernstand kann sich durch einen Abgleich geaendert haben
         self.paged.refresh(keep_page=True)
+        self._show_status()
+
+    def _show_status(self):
+        text, key = status_label(StatusBook(self.db), self.SOURCE, self.index)
+        self.lbl_status.configure(text=text, text_color=status_color(key))
+
+    def _flush(self):
+        """Aufgedeckt, aber nicht bewertet: als angesehen speichern."""
+        if self.pending is not None:
+            position, self.pending = self.pending, None
+            self._log(self.DATA[position], position, None)
+            self.app.notify_progress()
+
+    def rate(self, correct):
+        """Selbsteinschaetzung "Gewusst" / "Nicht gewusst"."""
+        position, self.pending = self.pending, None
+        if position is None:
+            return
+        self.rate_box.pack_forget()
+        self._log(self.DATA[position], position, correct)
+        self.app.notify_progress()
+        self.paged.refresh(keep_page=True)
+        self._show_status()
 
     def load_scenario(self, position):
+        self._flush()
         self.index = position
         scenario = self.DATA[position]
+        self.rate_box.pack_forget()
         self.lbl_title.configure(text=scenario["title"])
         set_text(self.txt_task, scenario["text"])
         self.solution_visible = False
@@ -1583,7 +1877,9 @@ class ScenarioViewBase(View):
                  "anschließend auf.")
         self.btn_toggle.set_text("Musterlösung anzeigen")
         set_text(self.txt_own, self.own_answers.get(position, ""))
+        self.paged.refresh(keep_page=True)
         self.paged.show(position)
+        self._show_status()
 
     def toggle_solution(self):
         scenario = self.DATA[self.index]
@@ -1595,11 +1891,11 @@ class ScenarioViewBase(View):
             set_text(self.txt_solution, scenario["solution"])
             self.btn_toggle.set_text("Musterlösung ausblenden")
             self.solution_visible = True
-            self._log(scenario)
-            self.app.notify_progress()
-            self.paged.refresh(keep_page=True)
+            if self.pending is None:
+                self.pending = self.index
+                self.rate_box.pack(anchor="w", pady=(12, 0))
 
-    def _log(self, scenario):
+    def _log(self, scenario, position, correct):
         """In Unterklassen ueberschrieben - schreibt in die passende DB-Tabelle."""
         raise NotImplementedError
 
@@ -1613,8 +1909,8 @@ class ScenarioView(ScenarioViewBase):
     DATA = SZENARIEN
     LIST_TITLE = "AP2-Szenarien"
 
-    def _log(self, scenario):
-        self.db.log_scenario(self.index, scenario["title"], scenario["theme"])
+    def _log(self, scenario, position, correct):
+        self.db.log_scenario(position, scenario["title"], scenario["theme"], correct)
 
 
 class Ap1ScenarioView(ScenarioViewBase):
@@ -1623,9 +1919,10 @@ class Ap1ScenarioView(ScenarioViewBase):
     DATA = AP1_SZENARIEN
     LIST_TITLE = "AP1-Szenarien"
     TABLE = "ap1_events"
+    SOURCE = SRC_AP1
 
-    def _log(self, scenario):
-        self.db.log_ap1(self.index, scenario["title"], scenario["theme"])
+    def _log(self, scenario, position, correct):
+        self.db.log_ap1(position, scenario["title"], scenario["theme"], correct)
 
 
 # ============================================================================
@@ -1640,6 +1937,7 @@ class ProjectView(View):
     def build(self):
         self.index = 0
         self.hints_visible = False
+        self.pending = None
 
         layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
@@ -1653,7 +1951,8 @@ class ProjectView(View):
             list_card.body, PROJEKTARBEITEN, self.load_project,
             subtitle=lambda item: "%s · %s" % (item["schwierigkeit"],
                                                CATEGORY_SHORT[item["cat"]]),
-            done_source=self.db.completed_projects, category_filter=True,
+            status_source=lambda: position_statuses(StatusBook(self.db), SRC_PROJECT),
+            category_filter=True,
             group_field="schwierigkeit", group_label="Schwierigkeit")
         self.paged.refresh()
 
@@ -1664,7 +1963,10 @@ class ProjectView(View):
                                        wraplength=760, justify="left", anchor="w")
         self.header_label.pack(anchor="w")
         self.meta_label = make_label(detail, "", font=F["small"], fg=C["muted"])
-        self.meta_label.pack(anchor="w", pady=(2, 12))
+        self.meta_label.pack(anchor="w", pady=(2, 0))
+        self.lbl_status = make_label(detail, "", font=F["small_bold"], fg=C["muted"],
+                                     anchor="w")
+        self.lbl_status.pack(anchor="w", pady=(2, 12))
 
         self.task_card = Card(detail, title="Kundenauftrag", accent=C["accent"])
         self.task_card.pack(fill="both", expand=True)
@@ -1675,6 +1977,7 @@ class ProjectView(View):
         self.hint_card.pack(fill="both", expand=True, pady=(14, 0))
         self.txt_hints = make_text(self.hint_card.body, height=14, readonly=True)
         self.txt_hints.pack(fill="both", expand=True)
+        self.rate_box = rate_box(self.hint_card.body, self.rate)
 
         controls = transparent_frame(detail)
         controls.pack(fill="x", pady=(14, 0))
@@ -1690,8 +1993,29 @@ class ProjectView(View):
         self._highlight()
 
     def _highlight(self):
-        """Haken fuer bearbeitete Projekte auffrischen (auch nach einem Abgleich)."""
+        """Lernstand der Projekte auffrischen (auch nach einem Abgleich)."""
         self.paged.refresh(keep_page=True)
+        text, key = status_label(StatusBook(self.db), SRC_PROJECT, self.index)
+        self.lbl_status.configure(text=text, text_color=status_color(key))
+
+    def _flush(self):
+        """Aufgedeckt, aber nicht bewertet: als angesehen speichern."""
+        if self.pending is not None:
+            position, self.pending = self.pending, None
+            project = PROJEKTARBEITEN[position]
+            self.db.log_project(position, project["title"], project["cat"], None)
+            self.app.notify_progress()
+
+    def rate(self, correct):
+        """Selbsteinschaetzung "Gewusst" / "Nicht gewusst"."""
+        position, self.pending = self.pending, None
+        if position is None:
+            return
+        self.rate_box.pack_forget()
+        project = PROJEKTARBEITEN[position]
+        self.db.log_project(position, project["title"], project["cat"], correct)
+        self.app.notify_progress()
+        self._highlight()
 
     @staticmethod
     def _task_text(project):
@@ -1721,7 +2045,9 @@ class ProjectView(View):
         return "\n".join(lines).rstrip()
 
     def load_project(self, position):
+        self._flush()
         self.index = position
+        self.rate_box.pack_forget()
         project = PROJEKTARBEITEN[position]
         self.header_label.configure(text=project["title"])
         self.meta_label.configure(
@@ -1736,6 +2062,7 @@ class ProjectView(View):
                  "Konzept, Zeit- und Kostenplanung, Risiken - und decke die "
                  "Lösungsansätze anschließend zum Vergleich auf.")
         self.btn_toggle.set_text("Lösungsansätze anzeigen")
+        self._highlight()
         self.paged.show(position)
 
     def toggle_hints(self):
@@ -1748,12 +2075,263 @@ class ProjectView(View):
             set_text(self.txt_hints, self._hint_text(project))
             self.btn_toggle.set_text("Lösungsansätze ausblenden")
             self.hints_visible = True
-            self.db.log_project(self.index, project["title"], project["cat"])
-            self.app.notify_progress()
-            self._highlight()
+            if self.pending is None:
+                self.pending = self.index
+                self.rate_box.pack(anchor="w", pady=(12, 0))
 
     def next_project(self):
         self.load_project(self.paged.next_after(self.index))
+
+
+# ============================================================================
+#  NOTIZBLOCK (AB 0.39)
+# ============================================================================
+
+# Farbe je Bereich (wie in "Letzte Aktivitaeten")
+SOURCE_COLOR_KEY = {SRC_CARD: "accent", SRC_QUIZ: "purple", SRC_AP1: "blue",
+                    SRC_AP2: "accent2", SRC_PROJECT: "orange"}
+NOTEBOOK_PAGE = 12
+
+
+class NotebookView(View):
+    """Zentrale Uebersicht aller Fragen, die noch geuebt werden muessen (rot:
+    zuletzt falsch, gelb: danach erst einmal richtig) - ueber Karteikarten,
+    Pruefungstrainer, AP1, AP2 und Testprojekte hinweg."""
+
+    def build(self):
+        self.page = 0
+        self.entries = []
+        self.opened = set()          # Eintraege mit eingeblendeter Musterantwort
+        self.book = StatusBook(self.db)
+
+        # Ueberblick je Bereich
+        self.summary_card = Card(self.content, title="Lernstand je Bereich",
+                                 accent=C["accent"],
+                                 subtitle="Abgeschlossen = 2x hintereinander richtig")
+        self.summary_card.pack(fill="x")
+        self.summary_grid = transparent_frame(self.summary_card.body)
+        self.summary_grid.pack(fill="x")
+        for column in range(len(SOURCES)):
+            self.summary_grid.columnconfigure(column, weight=1, uniform="nb")
+
+        # Filter
+        filter_card = Card(self.content)
+        filter_card.pack(fill="x", pady=(14, 0))
+        body = filter_card.body
+        make_label(body, "FACHBEREICH", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        options = [(FILTER_ALL, "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
+        self.cat_pills = PillGroup(body, options, on_change=self._on_category)
+        self.cat_pills.pack(anchor="w", pady=(8, 14))
+        make_label(body, "BEREICH", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.source_pills = PillGroup(body, [(FILTER_ALL, "Alle")] +
+                                      [(src, SOURCE_PLURAL[src]) for src in SOURCES],
+                                      on_change=lambda _v: self.refresh())
+        self.source_pills.pack(anchor="w", pady=(8, 14))
+        row = transparent_frame(body)
+        row.pack(fill="x")
+        box = transparent_frame(row)
+        box.pack(side="left")
+        make_label(box, "THEMA", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.topic_menu = TopicMenu(box, self.refresh)
+        self.topic_menu.menu.pack(anchor="w", pady=(8, 0))
+        self.topic_menu.set_category(FILTER_ALL)
+        box = transparent_frame(row)
+        box.pack(side="left", padx=(16, 0))
+        box.pack(side="left")
+        make_label(box, "STATUS", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.status_pills = PillGroup(box, [(Q_PRACTICE, "Zu üben"), (Q_DONE, "Abgeschlossen"),
+                                            (Q_OPEN, "Offen")],
+                                      on_change=lambda _v: self.refresh())
+        self.status_pills.pack(anchor="w", pady=(8, 0))
+        row = transparent_frame(body)
+        row.pack(fill="x", pady=(14, 0))
+        box = transparent_frame(row)
+        box.pack(side="left")
+        make_label(box, "MUSTERANTWORTEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.answer_pills = PillGroup(box, [("aus", "Ausblenden"), ("an", "Einblenden")],
+                                      on_change=self._toggle_all)
+        self.answer_pills.pack(anchor="w", pady=(8, 0))
+
+        # Gezielt ueben
+        self.practice_bar = transparent_frame(self.content)
+        self.practice_bar.pack(fill="x", pady=(14, 0))
+
+        # Liste
+        self.list_card = Card(self.content, title="Zu üben", accent=C["red"])
+        self.list_card.pack(fill="x", pady=(14, 0))
+        self.rows_box = transparent_frame(self.list_card.body)
+        self.rows_box.pack(fill="x")
+        pager = transparent_frame(self.list_card.body)
+        pager.pack(fill="x", pady=(10, 0))
+        IconButton(pager, "arrow_left", lambda: self.turn(-1),
+                   parent_bg=C["card"]).pack(side="left")
+        self.lbl_page = make_label(pager, "", font=F["small_bold"], fg=C["text_dim"])
+        self.lbl_page.pack(side="left", expand=True)
+        IconButton(pager, "arrow_right", lambda: self.turn(1),
+                   parent_bg=C["card"]).pack(side="right")
+        self.refresh()
+
+    def on_show(self):
+        self.refresh(keep_page=True)
+
+    def _on_category(self, category):
+        self.topic_menu.set_category(category)
+        self.refresh()
+
+    def _toggle_all(self, value):
+        self.opened = {(e["source"], e["key"]) for e in self.entries} if value == "an" \
+            else set()
+        self._paint()
+
+    def refresh(self, keep_page=False):
+        self.book = StatusBook(self.db)
+        category = self.cat_pills.get()
+        topic = self.topic_menu.get()
+        source = self.source_pills.get()
+        status = self.status_pills.get()
+        self.entries = notebook_entries(
+            self.book, status=status, category=category, topic=topic,
+            sources=None if source == FILTER_ALL else [source])
+        if self.answer_pills.get() == "an":
+            self.opened = {(e["source"], e["key"]) for e in self.entries}
+        if not keep_page:
+            self.page = 0
+        self._paint_summary(category, topic)
+        self._paint_practice()
+        self._paint()
+
+    def _paint_summary(self, category, topic):
+        for child in self.summary_grid.winfo_children():
+            child.destroy()
+        summary = notebook_summary(self.book, category, topic)
+        for column, source in enumerate(SOURCES):
+            counts = summary[source]
+            total = sum(counts.values()) or 1
+            tile = ctk.CTkFrame(self.summary_grid, fg_color=C["card_alt"], corner_radius=12,
+                                border_width=1, border_color=C["border"])
+            tile.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 6, 0))
+            make_label(tile, SOURCE_PLURAL[source], font=F["small_bold"],
+                       fg=C[SOURCE_COLOR_KEY[source]]).pack(anchor="w", padx=12, pady=(10, 2))
+            make_label(tile, "%d zu üben" % counts[Q_PRACTICE], font=F["h2"],
+                       fg=C["red"] if counts[Q_PRACTICE] else C["text_dim"]).pack(
+                anchor="w", padx=12)
+            make_label(tile, "Abgeschlossen %d von %d" % (counts[Q_DONE], total),
+                       font=F["tiny"], fg=C["text_dim"]).pack(anchor="w", padx=12, pady=(4, 0))
+            bar = ctk.CTkProgressBar(tile, height=6, width=40, corner_radius=3,
+                                     fg_color=C["card_hi"], progress_color=C["green"])
+            bar.pack(fill="x", padx=12, pady=(4, 0))
+            bar.set(counts[Q_DONE] / float(total))
+            make_label(tile, "Offen %d" % counts[Q_OPEN], font=F["tiny"],
+                       fg=C["muted"]).pack(anchor="w", padx=12, pady=(4, 10))
+
+    def _practice_keys(self, source):
+        return [e["key"] for e in self.entries if e["source"] == source]
+
+    def _paint_practice(self):
+        for child in self.practice_bar.winfo_children():
+            child.destroy()
+        cards = self._practice_keys(SRC_CARD)
+        quiz = self._practice_keys(SRC_QUIZ)
+        label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
+            self.status_pills.get()]
+        NeoButton(self.practice_bar, "%d Karteikarten %s" % (len(cards), label),
+                  lambda: self.practice(SRC_CARD, cards), kind="primary").pack(side="left")
+        NeoButton(self.practice_bar, "%d Quizfragen %s" % (len(quiz), label),
+                  lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
+            side="left", padx=10)
+        make_label(self.practice_bar, "Startet eine Übungsrunde nur mit den Fragen der "
+                   "Liste (Quiz: höchstens 50).", font=F["small"], fg=C["muted"]).pack(
+            side="left", padx=6)
+
+    def practice(self, source, keys, first=None):
+        if not keys:
+            messagebox.showinfo("Notizblock", "In dieser Auswahl gibt es dazu keine Fragen.")
+            return
+        if first is not None:
+            keys = [first] + [key for key in keys if key != first]
+        if source == SRC_CARD:
+            self.app.show_view("cards")
+            self.app.views["cards"].practice(keys)
+        elif source == SRC_QUIZ:
+            self.app.show_view("quiz")
+            self.app.views["quiz"].practice(keys, keep_order=first is not None)
+        elif source == SRC_PROJECT:
+            self.app.show_view("testproject")
+            self.app.views["testproject"].load_project(keys[0])
+        else:
+            key = "ap1scenarios" if source == SRC_AP1 else "scenarios"
+            self.app.show_view(key)
+            self.app.views[key].load_scenario(keys[0])
+
+    def _paint(self):
+        for child in self.rows_box.winfo_children():
+            child.destroy()
+        status = self.status_pills.get()
+        self.list_card.title_label.configure(text=Q_STATUS_NAME[status].upper(),
+                                             text_color=status_color(status if status != Q_PRACTICE
+                                                                     else LEVEL_RED))
+        visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
+        self.list_card.set_subtitle("%d Fragen" % len(self.entries))
+        if not visible:
+            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+                    "automatisch hier." if status == Q_PRACTICE else
+                    "Keine Fragen in dieser Auswahl.")
+            make_label(self.rows_box, text, font=F["body"], fg=C["text_soft"],
+                       anchor="w").pack(anchor="w", pady=6)
+        for entry in visible:
+            self._row(entry)
+        self.lbl_page.configure(text="Seite %d / %d" % (self.page + 1, pages))
+
+    def _row(self, entry):
+        source, item = entry["source"], entry["item"]
+        color = status_color(entry["level"] or entry["status"])
+        row = ctk.CTkFrame(self.rows_box, fg_color=C["card_alt"], corner_radius=12,
+                           border_width=1, border_color=C["border"])
+        row.pack(fill="x", pady=4)
+        marker = ctk.CTkFrame(row, fg_color=color, width=4, height=12, corner_radius=2)
+        marker.pack(side="left", fill="y", padx=(10, 0), pady=11)
+        inner = transparent_frame(row)
+        inner.pack(side="left", fill="x", expand=True, padx=(10, 12), pady=10)
+        head = transparent_frame(inner)
+        head.pack(fill="x")
+        text, _key = status_label(self.book, source, entry["key"])
+        topic = TOPIC_SHORT.get(item.get("thema"), "")
+        make_label(head, "%s  ·  %s%s" % (SOURCE_NAME[source], CATEGORY_SHORT[item["cat"]],
+                                          "  ·  " + topic if topic else ""),
+                   font=F["tiny"], fg=C["muted"]).pack(side="left")
+        make_label(head, text, font=F["tiny"], fg=color).pack(side="right")
+        title = entry["title"]
+        if source in (SRC_AP1, SRC_AP2, SRC_PROJECT):
+            title = "%d. %s" % (entry["key"] + 1, title)
+        make_label(inner, title, font=F["small_bold"], fg=C["text"], wraplength=900,
+                   justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+        key = (source, entry["key"])
+        if key in self.opened:
+            answer = model_answer(source, item)
+            if len(answer) > 1200:
+                answer = answer[:1200].rsplit(" ", 1)[0] + " …"
+            make_label(inner, answer, font=F["small"], fg=C["text_dim"], wraplength=900,
+                       justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        buttons = transparent_frame(inner)
+        buttons.pack(anchor="w", pady=(8, 0))
+        NeoButton(buttons, "Musterantwort ausblenden" if key in self.opened else
+                  "Musterantwort zeigen", lambda k=key: self._toggle(k), kind="ghost",
+                  height=30, font=F["small_bold"]).pack(side="left")
+        NeoButton(buttons, "Jetzt üben", lambda e=entry: self.practice(
+            e["source"], self._practice_keys(e["source"]), first=e["key"]),
+                  kind="pill", height=30, font=F["small_bold"]).pack(side="left", padx=(8, 0))
+
+    def _toggle(self, key):
+        if key in self.opened:
+            self.opened.discard(key)
+        else:
+            self.opened.add(key)
+        self._paint()
+
+    def turn(self, delta):
+        self.page += delta
+        self._paint()
+        self.to_top()
 
 
 # ============================================================================
@@ -2742,10 +3320,10 @@ class FISIApp:
         for key, cls in (("dashboard", DashboardView), ("cards", CardsView),
                          ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
                          ("scenarios", ScenarioView),
-                         ("testproject", ProjectView),
+                         ("testproject", ProjectView), ("notebook", NotebookView),
                          ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
                          ("kunde", CustomerView), ("zuhause", HomeView),
-                         ("firma", FirmView),
+                         ("firma", FirmView), ("reise", JourneyView),
                          ("progress", ProgressView),
                          ("settings", SettingsView), ("search", SearchView)):
             view = cls(self.view_area, self)
@@ -2913,11 +3491,18 @@ class FISIApp:
             self.views["game"].refresh()
         elif self.current == "testproject":
             self.views["testproject"]._highlight()
+        elif self.current in ("notebook", "reise", "cards"):
+            self.views[self.current].on_show()
 
     def on_close(self, final_sync=True):
         quiz = self.views.get("quiz")
         if quiz is not None:
             quiz.stop_timer()
+        # Aufgedeckte, aber nicht bewertete Loesungen als angesehen speichern
+        for key in ("cards", "ap1scenarios", "scenarios", "testproject"):
+            view = self.views.get(key)
+            if view is not None:
+                view._flush()
         self.root.withdraw()
         # Nicht vor einem Update: Der Installer soll nicht warten muessen, der
         # Abgleich folgt dann beim naechsten Start.

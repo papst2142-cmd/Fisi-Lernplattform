@@ -241,6 +241,7 @@ def build_app(version):
         "--add-data", "icon.ico%s." % separator,
         "--add-data", "icon.png%s." % separator,
         "--add-data", "inhalte%sinhalte" % separator,
+        "--add-data", "fisi_symbole.otf%s." % separator,
     ]
     if sys.platform == "win32":
         command += ["--icon", "icon.ico",

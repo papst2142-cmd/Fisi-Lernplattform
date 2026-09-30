@@ -18,11 +18,13 @@ Tk-Widgets (Canvas) rechnet px() sie mit der Bildschirmskalierung um.
 import calendar as calmod
 import datetime
 import math
+import os
+import sys
 import tkinter as tk
 import tkinter.font as tkfont
 
 import customtkinter as ctk
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 from fisi_theme import C, GRADIENTS, lighten, mix
 
@@ -443,6 +445,28 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
             canvas.create_oval(px_ - dot, py_ - dot, px_ + dot, py_ + dot,
                                **fill_opts)
 
+    elif name == "notebook":      # Notizblock (Block mit Ringen und Zeilen)
+        canvas.create_rectangle(left + size * 0.12, top + size * 0.1, right - size * 0.12,
+                                bottom, fill="", **line_opts)
+        for dx in (0.32, 0.5, 0.68):
+            px_ = left + size * dx
+            canvas.create_line(px_, top, px_, top + size * 0.22, **opts)
+        for dy in (0.46, 0.64, 0.82):
+            py_ = top + size * dy
+            canvas.create_line(left + size * 0.3, py_, right - size * 0.3, py_, **opts)
+
+    elif name == "journey":       # Reise (Weg mit Start und Ziel)
+        dot = size * 0.1
+        canvas.create_oval(left + size * 0.08 - dot, bottom - size * 0.12 - dot,
+                           left + size * 0.08 + dot, bottom - size * 0.12 + dot, **fill_opts)
+        canvas.create_line(left + size * 0.08, bottom - size * 0.12, left + size * 0.5,
+                           bottom - size * 0.2, left + size * 0.3, y, left + size * 0.72,
+                           top + size * 0.34, smooth=True, **opts)
+        canvas.create_line(right - size * 0.2, top + size * 0.44, right - size * 0.2, top,
+                           **opts)
+        canvas.create_polygon(right - size * 0.2, top, right + size * 0.08, top + size * 0.1,
+                              right - size * 0.2, top + size * 0.22, **fill_opts)
+
     elif name == "search":
         radius = size * 0.32
         canvas.create_oval(x - radius - size * 0.1, y - radius - size * 0.1,
@@ -487,12 +511,72 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
                            **fill_opts)
 
 
+# Symbole der Handy-App (Material Icons, gerundet) fuer die Seitenleiste am
+# PC (ab 0.39). fisi_symbole.otf enthaelt nur diese Zeichen aus der Schrift
+# "Material Icons" von Google (Apache-Lizenz 2.0, siehe
+# fisi_symbole_LIZENZ.txt). Fehlt die Datei, zeichnet draw_icon() wie bisher.
+SYMBOL_FONT_FILE = "fisi_symbole.otf"
+SYMBOLS = {
+    "dashboard": 0xF68E,
+    "style": 0xF01E8,
+    "track_changes": 0xF0248,
+    "layers": 0xF847,
+    "diamond": 0xF0306,
+    "flag": 0xF768,
+    "edit_note": 0xF030F,
+    "calculate": 0xF5FD,
+    "sports_esports": 0xF01BC,
+    "insights": 0xF820,
+    "settings": 0xF0164,
+    "lan": 0xF034B,
+    "security": 0xF013E,
+    "dns": 0xF6C1,
+    "euro": 0xF716,
+    "storage": 0xF01DE,
+    "business": 0xF5F8,
+    "storefront": 0xF01E1,
+    "home": 0xF7F5,
+    "work": 0xF02C7,
+    "route": 0xF0377,
+}
+_SYMBOL_FONTS = {}
+
+
+def _symbol_font(size):
+    if size not in _SYMBOL_FONTS:
+        base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        try:
+            _SYMBOL_FONTS[size] = ImageFont.truetype(os.path.join(base, SYMBOL_FONT_FILE),
+                                                     size)
+        except (OSError, ValueError):
+            _SYMBOL_FONTS[size] = None
+    return _SYMBOL_FONTS[size]
+
+
+def symbol_image(name, size, color):
+    """Ein Symbol der Handy-App als Bild (oder None, wenn es fehlt)."""
+    key = ("symbol", name, size, color)
+    if key in _IMAGE_CACHE:
+        return _IMAGE_CACHE[key]
+    font = _symbol_font(size)
+    if font is None or name not in SYMBOLS:
+        return None
+    image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    ImageDraw.Draw(image).text((size / 2.0, size / 2.0), chr(SYMBOLS[name]), font=font,
+                               fill=color, anchor="mm")
+    _IMAGE_CACHE[key] = image
+    return image
+
+
 class IconCanvas(tk.Canvas):
-    """Kleine Flaeche fuer ein einzelnes Symbol aus draw_icon()."""
+    """Kleine Flaeche fuer ein einzelnes Symbol aus draw_icon() - oder, mit
+    symbol=..., fuer ein Symbol der Handy-App."""
 
     def __init__(self, parent, icon, size=20, color=None, icon_scale=0.72,
-                 parent_bg=None, cursor=""):
+                 parent_bg=None, cursor="", symbol=None):
         self.icon = icon
+        self.symbol = symbol
+        self._photo = None
         self.size = size
         self.icon_scale = icon_scale
         super().__init__(parent, width=px(size), height=px(size),
@@ -505,6 +589,13 @@ class IconCanvas(tk.Canvas):
             self.icon = icon
         self.delete("all")
         box = px(self.size)
+        # Unterpunkte (kleinere icon_scale) bekommen entsprechend kleinere Symbole
+        image = symbol_image(self.symbol, int(round(box * min(1.0, self.icon_scale / 0.72))),
+                             color) if self.symbol else None
+        if image is not None:
+            self._photo = ImageTk.PhotoImage(image)
+            self.create_image(box / 2, box / 2, image=self._photo)
+            return
         draw_icon(self, self.icon, box / 2, box / 2, box * self.icon_scale,
                   color, width=max(2, px(2)))
 

@@ -1,0 +1,13 @@
+fisi_symbole.otf
+================
+
+Enthaelt 21 Symbole aus der Schrift "Material Icons" (gerundete Variante),
+dieselben, die die Handy-App ueber Flet/Flutter verwendet.
+
+Copyright 2019 Google LLC.
+Lizenz: Apache License, Version 2.0
+https://www.apache.org/licenses/LICENSE-2.0
+Quelle: https://github.com/google/material-design-icons
+
+Die Datei ist eine Teilmenge der Originalschrift (nur die benoetigten
+Zeichen), sonst unveraendert.
