@@ -3866,5 +3866,381 @@ class ZertifizierungTest(unittest.TestCase):
                 self.assertFalse(before and before == after)
 
 
+class PersonalTest(unittest.TestCase):
+    """Personal ab 0.43: Macken mit Staerke/Schwaeche und Stufen, Coaching,
+    Stimmung, Krankheit, Urlaub, Konflikte."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _day_end = MitarbeiterThemenTest._day_end
+
+    def _hire(self, game, quirk_id, number=0, **extra):
+        """Stellt einen Bewerber mit einer bestimmten Macke ein."""
+        applicant = dict(fg.applicants(game.state, self.content)[0])
+        quirk = fg.quirk_by_id(quirk_id, self.content)
+        data = {key: applicant[key] for key in ("name", "aussehen", "werte", "themen",
+                                                "gehalt", "herkunft", "schwerpunkt", "rolle")}
+        data.update(id="test-%d" % number, macke=quirk["text"], macke_id=quirk_id,
+                    tag=game.state.day, name="Person%d Test" % number)
+        data.update(extra)
+        game.db.log_game_event(fg.EV_HIRED, json.dumps(data), "PC")
+        game.reload()
+        return data["id"]
+
+    def _live_day(self, game, personal=None, **firm):
+        """Feierabend mit den Regeln ab 0.43 (firma.personal vorhanden)."""
+        firm = dict(firm)
+        firm["personal"] = personal or []
+        return self._day_end(game, firm)
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_firm(fg.GAME), [])
+        quirks = fg.GAME["firma"]["macken"]
+        self.assertEqual(len([item for item in quirks if not item.get("kollege")]), 12)
+        self.assertEqual({item["kollege"] for item in quirks if item.get("kollege")},
+                         {item["kollege"] for item in fg.GAME["firma"]["wechsel"]})
+        for item in quirks:
+            self.assertTrue(item["plus"] and item["minus"], item["id"])
+            for key, value in list(item["plus"].items()) + list(item["minus"].items()):
+                # Jede Wirkung hat einen eigenen Text (kein Rueckfall auf den Schluessel)
+                self.assertNotEqual(fg.quirk_effect_text(key, value).split()[0], key)
+        broken = _content()
+        broken["firma"]["macken"][0]["minus"] = {"gibtsnicht": 1}
+        self.assertTrue(fg._validate_firm(broken))
+
+    def test_macke_bei_bewerbern_und_alten_spielstaenden(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            applicant = fg.applicants(game.state, self.content)[0]
+            self.assertTrue(applicant["macke_id"])
+            self.assertIn(applicant["macke_info"]["stufe"], (2, 3))
+            game.hire(applicant["id"])
+            self.assertEqual(game.state.staff[applicant["id"]]["macke_id"],
+                             applicant["macke_id"])
+            # Aeltere Spielstaende kennen nur den Text der Macke
+            quirk = fg.GAME["firma"]["macken"][6]
+            old = dict(game.state.staff[applicant["id"]], id="alt-1", macke=quirk["text"])
+            old.pop("macke_id")
+            db.log_game_event(fg.EV_HIRED, json.dumps(old), "PC")
+            game.reload()
+            self.assertEqual(game.state.quirk_of("alt-1")["id"], "gruendlich")
+            # Bitweiche-Kollegen bringen ihre eigene Macke mit (Stufe mittel)
+            tim = dict(old, id=fg.STAFF_PREFIX + "tim", herkunft="bitweiche",
+                       macke=fg.colleague("tim")["macke"])
+            db.log_game_event(fg.EV_HIRED, json.dumps(tim), "PC")
+            game.reload()
+            info = game.state.quirk_of(fg.STAFF_PREFIX + "tim")
+            self.assertEqual((info["id"], info["stufe"]), ("neugierig", 2))
+
+    def test_stufen_schwaechen_sich_ab(self):
+        rules = self.content["firma"]["personal"]["macken"]
+        every = rules["abschwaechen_tage"]
+        data = {"macke_id": "gruendlich", "tag": 10}
+        start = fg.quirk_start_stage("x", data)
+        for days, coached in ((0, 0), (every - 1, 0), (every, 0), (2 * every, 0),
+                              (5 * every, 0), (0, 1), (every, 1)):
+            item = fg.quirk_state("x", data, 10 + days, coached, self.content)
+            expected = max(1, start - days // every - coached)
+            self.assertEqual(item["stufe"], expected)
+            factor = rules["stufen"][str(expected)][1] / 100.0
+            # Die Schwaeche wird schwaecher, die Staerke bleibt
+            self.assertAlmostEqual(fg.quirk_effect(item, "umsatz"), -15 * factor)
+            self.assertEqual(fg.quirk_effect(item, "chance"), 10)
+            if expected > 1:
+                self.assertEqual(item["naechste_in"], every - days % every)
+            else:
+                self.assertIsNone(item["naechste_in"])
+                self.assertIn("nicht mehr", fg.quirk_hint(item))
+        self.assertEqual(fg.quirk_bar(2), "■■□")
+        lines = fg.quirk_lines(fg.quirk_state("x", data, 10, 0, self.content))
+        self.assertIn("Ticket-Chance +10 %", lines["plus"])
+        self.assertIn("Routineumsatz -", lines["minus"])
+
+    def test_wirkung_umsatz_chance_projekt(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            slow = self._hire(game, "gruendlich", 1)
+            state = game.state
+            info = state.quirk_of(slow)
+            item = next(entry for entry in state.staff_list() if entry["id"] == slow)
+            base = fg.staff_revenue(item["werte"], self.content)
+            self.assertEqual(item["umsatz"],
+                             int(round(base * (1 - 0.15 * info["faktor"]))))
+            ticket = state.customer_tickets()[0]
+            option = next(entry for entry in fg.ticket_candidates(
+                state, ticket, game.firm_levels(), self.content) if entry["an"] == slow)
+            plain = fg.ticket_chance(option["wert"], ticket["anforderung"], self.content)
+            self.assertEqual(option["chance"], min(95, plain + 10))
+            self.assertAlmostEqual(fg.staff_project_points(state, slow, 50, self.content),
+                                   round(fg.project_points(50, self.content) *
+                                         (1 - 0.10 * info["faktor"]), 1))
+            # Whiteboard-Fan zieht das ganze Team mit (einmal)
+            board = self._hire(game, "whiteboard", 2)
+            self.assertAlmostEqual(fg.team_factor(game.state, [slow, board]), 1.05)
+            self.assertAlmostEqual(fg.team_factor(game.state, [slow]), 1.0)
+
+    def test_macken_beim_lernen_und_kundenzufriedenheit(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            rule = self.content["firma"]["lernen"]
+            rule["halb_ab"] = 90
+            collector = self._hire(game, "sammler", 1)
+            template = next(item for item in self.content["firma"]["tickets"]["vorlagen"]
+                            if item["thema"] == "hardware")
+            other = next(item for item in self.content["firma"]["tickets"]["vorlagen"]
+                         if item["thema"] not in fg.HARDWARE_TOPICS)
+            before = game.state.staff_topics(collector)
+            done = {"ticket": "kt1:a", "vorlage": template["id"], "an": collector,
+                    "name": "X", "erfolg": True, "geld": 60}
+            state = self._live_day(game, tickets=[done])
+            self.assertAlmostEqual(state.staff_topics(collector)["hardware"],
+                                   min(70, before["hardware"] + 2 * rule["ticket_erfolg"]))
+            factor = state.quirk_of(collector)["faktor"]
+            before = state.staff_topics(collector)
+            state = self._live_day(game, tickets=[dict(done, ticket="kt2:a",
+                                                       vorlage=other["id"])])
+            self.assertAlmostEqual(state.staff_topics(collector)[other["thema"]],
+                                   min(70, before[other["thema"]] + rule["ticket_erfolg"] *
+                                       (1 - 0.5 * factor)))
+            # Vor 0.43 (ohne firma.personal) wirkt die Macke beim Lernen nicht
+            before = state.staff_topics(collector)
+            state = self._day_end(game, {"tickets": [dict(done, ticket="kt3:a")]})
+            self.assertAlmostEqual(state.staff_topics(collector)["hardware"],
+                                   min(70, before["hardware"] + rule["ticket_erfolg"]))
+            # Dokumentiert alles: Kunden zufriedener
+            writer = self._hire(game, "dokumentiert", 2)
+            state = game.state
+            for ticket in state.customer_tickets():
+                if not ticket.get("an"):
+                    game.delegate(ticket["id"], writer)
+                    break
+            outcome = fg.ticket_outcomes(game.state, self.content)[0]
+            self.assertEqual(outcome["reputation"]["kundenzufriedenheit"],
+                             2 if outcome["erfolg"] else -1)
+
+    def test_urlaub_genehmigen_und_ablehnen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "listenmensch", 1)
+            rules = self.content["firma"]["personal"]
+            day = game.state.day
+            ask = {"art": fg.PERSONAL_VACATION, "anfrage": "urlaub:%d:x" % day, "id": worker,
+                   "name": "Person1 Test", "von": day + 6, "bis": day + 9}
+            state = self._live_day(game, [ask])
+            decisions = state.open_decisions()
+            self.assertEqual([item["art"] for item in decisions], [fg.DECISION_VACATION])
+            self.assertEqual([option["id"] for option in decisions[0]["optionen"]],
+                             [fg.VACATION_YES, fg.VACATION_NO])
+            self.assertIn("Urlaub", fg.personal_news(state, self.content))
+            self.assertFalse(state.can_end_day())
+            with self.assertRaises(ValueError):
+                game.end_day()
+            mood = state.mood_of(worker)
+            game.decide(ask["anfrage"], fg.VACATION_YES)
+            state = game.state
+            self.assertEqual(state.mood_of(worker), min(100, mood + rules["urlaub"]["genehmigt"]))
+            self.assertEqual(state.open_decisions(), [])
+            self.assertTrue(state.can_end_day())
+            with self.assertRaises(ValueError):
+                game.decide(ask["anfrage"], fg.VACATION_NO)
+            # Im Urlaub: kein Umsatz, keine Tickets
+            self.assertIsNone(state.away_of(worker, day + 5))
+            self.assertEqual(state.away_of(worker, day + 6)["art"], fg.ABSENT_VACATION)
+            self.assertIsNone(state.away_of(worker, day + 9))
+            while game.state.day < day + 6:
+                game.end_day()
+                for decision in game.state.open_decisions():
+                    game.decide(decision["id"], decision["optionen"][-1]["id"])
+            state = game.state
+            item = next(entry for entry in state.staff_list() if entry["id"] == worker)
+            self.assertEqual(item["umsatz"], 0)
+            self.assertIn("Im Urlaub", fg.training_text(state, item))
+            self.assertNotIn(worker, [person["id"] for person in fg.firm_people(state)])
+            ticket = state.customer_tickets()[0]
+            option = next(entry for entry in fg.ticket_candidates(
+                state, ticket, game.firm_levels(), self.content) if entry["an"] == worker)
+            self.assertIn("im Urlaub", option["problem"])
+            # Zweimal hintereinander abgelehnt sitzt tiefer
+            for number, penalty in ((1, "abgelehnt"), (2, "abgelehnt_wieder")):
+                day = game.state.day
+                ask = dict(ask, anfrage="urlaub:%d:n%d" % (day, number), von=day + 6,
+                           bis=day + 8)
+                mood = self._live_day(game, [ask]).mood[worker]
+                game.decide(ask["anfrage"], fg.VACATION_NO)
+                self.assertAlmostEqual(game.state.mood[worker],
+                                       max(0, mood + rules["urlaub"][penalty]))
+            names = [entry["titel"] for entry in fg.journey(game.state, self.content)]
+            self.assertIn("Urlaub genehmigt: Person1 Test", names)
+            self.assertIn("Urlaub abgelehnt: Person1 Test", names)
+
+    def test_konflikt_optionen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            first = self._hire(game, "gute_laune", 1)
+            second = self._hire(game, "pedantisch", 2)
+            rules = self.content["firma"]["personal"]["konflikt"]
+
+            def conflict():
+                day = game.state.day
+                item = {"art": fg.PERSONAL_CONFLICT, "konflikt": "konflikt:%d" % day,
+                        "a": first, "b": second, "name_a": "Person1 Test",
+                        "name_b": "Person2 Test", "text": "Streit."}
+                state = self._live_day(game, [item])
+                return state, item["konflikt"]
+
+            state, key = conflict()
+            decision = state.open_decisions()[0]
+            self.assertEqual([option["id"] for option in decision["optionen"]],
+                             [fg.CONFLICT_MEDIATE, fg.CONFLICT_SIDE_A, fg.CONFLICT_SIDE_B,
+                              fg.CONFLICT_IGNORE])
+            self.assertEqual(decision["optionen"][1]["label"], "Person1 recht geben")
+            # Schlichten: beide besser gelaunt, dafuer ein Kundenticket weniger fuer dich
+            limit = fg.own_ticket_limit(state, self.content)
+            moods = (state.mood[first], state.mood[second])
+            game.decide(key, fg.CONFLICT_MEDIATE)
+            state = game.state
+            self.assertEqual(fg.own_ticket_limit(state, self.content), limit - 1)
+            self.assertEqual((state.mood[first], state.mood[second]),
+                             (min(100, moods[0] + rules["schlichten"]),
+                              min(100, moods[1] + rules["schlichten"])))
+            # Partei ergreifen
+            state, key = conflict()
+            moods = (state.mood[first], state.mood[second])
+            game.decide(key, fg.CONFLICT_SIDE_B)
+            self.assertEqual(game.state.mood[second], min(100, moods[1] + rules["partei_plus"]))
+            self.assertEqual(game.state.mood[first], moods[0] + rules["partei_minus"])
+            # Ignorieren: beide verstimmt und ein paar Tage schwaecher
+            state, key = conflict()
+            game.decide(key, fg.CONFLICT_IGNORE)
+            state = game.state
+            form = state.staff_form(first)
+            self.assertEqual(form["leistung"], rules["verstimmt_leistung"])
+            self.assertIsNotNone(state.upset.get(second))
+            self.assertEqual(state.staff_form(first, state.day + rules["verstimmt_tage"]),
+                             {"leistung": 0, "chance": 0, "gruende": []})
+            item = next(entry for entry in state.staff_list() if entry["id"] == first)
+            base = fg.staff_revenue(item["werte"], self.content) * \
+                (1 + state.quirk_value(first, "umsatz") / 100.0)
+            self.assertEqual(item["umsatz"], int(round(base * 0.9)))
+            # Ein Konflikt, der nicht am Folgetag entschieden wurde, verfaellt
+            state, key = conflict()
+            state = self._day_end(game, {})
+            self.assertEqual(state.open_decisions(), [])
+            titles = [entry["titel"] for entry in fg.journey(state, self.content)]
+            self.assertIn("Streit: Person1 und Person2", titles)
+
+    def test_krank_und_kuendigung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "nachteule", 1)
+            day = game.state.day
+            sick = {"art": fg.PERSONAL_SICK, "id": worker, "name": "Person1 Test",
+                    "von": day + 1, "bis": day + 3}
+            state = self._live_day(game, [sick])
+            self.assertEqual(state.away_of(worker)["art"], fg.ABSENT_SICK)
+            self.assertIn("krankgemeldet", fg.personal_news(state, self.content))
+            self.assertEqual(fg.coaching_offer(state, worker, self.content)["problem"],
+                             "Person1 Test ist krank.")
+            # Nach dem Ausfall wieder da
+            self.assertIsNone(state.away_of(worker, day + 3))
+            # Stimmung zu lange im Keller: Warnung, dann Kuendigung
+            state.mood[worker] = 5
+            state.mood_low[worker] = 1
+            events = fg.personal_events(state, state.day, self.content)
+            self.assertIn(fg.PERSONAL_WARN, [item["art"] for item in events])
+            state.mood_low[worker] = 3
+            events = fg.personal_events(state, state.day, self.content)
+            self.assertIn(fg.PERSONAL_QUIT, [item["art"] for item in events])
+            quit_item = next(item for item in events if item["art"] == fg.PERSONAL_QUIT)
+            state = self._live_day(game, [quit_item])
+            self.assertNotIn(worker, state.staff)
+            self.assertIn(worker, state.quit_staff)
+            titles = [entry["titel"] for entry in fg.journey(state, self.content)]
+            self.assertIn("Krank: Person1 Test", titles)
+            self.assertIn("Selbst gekündigt: Person1 Test", titles)
+
+    def test_stimmung_erholt_sich(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "listenmensch", 1)
+            rules = self.content["firma"]["personal"]["stimmung"]
+            day = game.state.day
+            ask = {"art": fg.PERSONAL_VACATION, "anfrage": "urlaub:%d:x" % day, "id": worker,
+                   "name": "Person1 Test", "von": day + 6, "bis": day + 8}
+            self._live_day(game, [ask])
+            game.decide(ask["anfrage"], fg.VACATION_NO)
+            low = game.state.mood[worker]
+            state = self._live_day(game)
+            self.assertEqual(state.mood[worker], low + rules["erholung"])
+            # Mit guter Laune im Team geht es schneller
+            self._hire(game, "gute_laune", 2)
+            state = self._live_day(game)
+            self.assertEqual(state.mood[worker], low + 3 * rules["erholung"])
+
+    def test_coaching(self):
+        with TempDB() as db:
+            game = self._founded(db, money=60000)
+            worker = self._hire(game, "gruendlich", 1)
+            state = game.state
+            info = state.quirk_of(worker)
+            offer = fg.coaching_offer(state, worker, self.content)
+            rules = self.content["firma"]["personal"]["coaching"]
+            if info["stufe"] == 1:
+                self.assertTrue(offer["problem"])
+                return
+            self.assertEqual((offer["preis"], offer["tage"], offer["problem"]),
+                             (rules["preis"], rules["tage"], ""))
+            money = state.money
+            game.coach(worker)
+            state = game.state
+            self.assertEqual(state.money, money - rules["preis"])
+            item = next(entry for entry in state.staff_list() if entry["id"] == worker)
+            self.assertEqual(item["umsatz"], 0)
+            self.assertIn("Im Coaching", fg.training_text(state, item))
+            self.assertTrue(fg.coaching_offer(state, worker, self.content)["problem"])
+            # Coaching zaehlt nicht als Weiterbildung (kein Preisaufschlag)
+            self.assertEqual(fg.training_offer(state, worker, "hardware", self.content)["preis"],
+                             self.content["firma"]["weiterbildung"]["preis"])
+            for _ in range(rules["tage"]):
+                game.end_day()
+            self.assertEqual(game.state.quirk_of(worker)["stufe"], info["stufe"] - 1)
+            titles = [entry["titel"] for entry in fg.journey(game.state, self.content)]
+            self.assertIn("Coaching: Person1 Test", titles)
+
+    def test_simulation_ueber_viele_arbeitstage(self):
+        """Ab 0.43 passieren Krankheit, Urlaub und Konflikte beim Spielen von
+        selbst - selten, und alle Entscheidungen lassen sich treffen."""
+        with TempDB() as db:
+            game = self._founded(db, money=400000)
+            game.expand()
+            for number, quirk in enumerate(("gute_laune", "pedantisch", "talbahn",
+                                            "nachteule", "listenmensch")):
+                self._hire(game, quirk, number)
+            seen = {}
+            for _ in range(150):
+                for decision in game.state.open_decisions():
+                    options = [item["id"] for item in decision["optionen"]
+                               if not item["problem"]]
+                    game.decide(decision["id"], options[game.state.day % len(options)])
+                payload = game.end_day()
+                for item in payload["firma"]["personal"]:
+                    seen[item["art"]] = seen.get(item["art"], 0) + 1
+            state = game.state
+            self.assertTrue(seen.get(fg.PERSONAL_SICK))
+            self.assertTrue(seen.get(fg.PERSONAL_VACATION))
+            self.assertTrue(seen.get(fg.PERSONAL_CONFLICT))
+            self.assertTrue(seen.get(fg.PERSONAL_WEAKER))
+            # Kleine Story-Elemente, kein Alltag: hoechstens alle paar Tage
+            self.assertLess(seen[fg.PERSONAL_CONFLICT], 150 / 8.0)
+            self.assertLess(sum(seen.values()), 150)
+            for staff_id in state.staff:
+                self.assertTrue(0 <= state.mood_of(staff_id) <= 100)
+            # PC und Handy rechnen dasselbe (gleicher Spielstand, gleiche Ereignisse)
+            again = fg.GameState(db.game_events(), self.content)
+            self.assertEqual(again.mood, state.mood)
+            self.assertEqual(again.absences, state.absences)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

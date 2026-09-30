@@ -51,6 +51,75 @@ def cat_color(key):
     return CATEGORY_COLOR[fg.CAT_NAME[key]]
 
 
+MOOD_COLOR = {"gut": "green", "okay": "text_dim", "schlecht": "yellow", "kritisch": "pink"}
+
+
+def stage_boxes(parent, stage, color=None):
+    """Drei Kaestchen fuer die Auspraegung einer Macke (ab 0.43)."""
+    row = _frame(parent)
+    for number in range(1, 4):
+        full = number <= stage
+        ctk.CTkFrame(row, width=16, height=9, corner_radius=3,
+                     fg_color=(color or C["purple"]) if full else C["card"],
+                     border_width=1, border_color=color or C["purple"]).pack(
+            side="left", padx=(0, 3))
+    return row
+
+
+def quirk_block(parent, info, wraplength=640):
+    """Macke mit Stufe, Staerke und Schwaeche (ab 0.43, wie am Handy)."""
+    lines = fg.quirk_lines(info)
+    if not lines:
+        return
+    head = _frame(parent)
+    head.pack(anchor="w", pady=(6, 0))
+    make_label(head, "Macke: %s" % lines["titel"], font=F["small_bold"], fg=C["text"],
+               anchor="w").pack(side="left")
+    stage_boxes(head, info["stufe"]).pack(side="left", padx=(10, 6))
+    make_label(head, lines["stufe"], font=F["small"], fg=C["purple"], anchor="w").pack(
+        side="left")
+    make_label(parent, lines["zitat"], font=F["tiny"], fg=C["muted"], wraplength=wraplength,
+               justify="left", anchor="w").pack(anchor="w")
+    if lines["plus"]:
+        make_label(parent, "+ " + lines["plus"], font=F["tiny"], fg=C["green"],
+                   wraplength=wraplength, justify="left", anchor="w").pack(anchor="w")
+    if lines["minus"]:
+        make_label(parent, "- " + lines["minus"], font=F["tiny"], fg=C["yellow"],
+                   wraplength=wraplength, justify="left", anchor="w").pack(anchor="w")
+    if lines["hinweis"]:
+        make_label(parent, lines["hinweis"], font=F["tiny"], fg=C["muted"],
+                   wraplength=wraplength, justify="left", anchor="w").pack(anchor="w")
+
+
+def decision_box(parent, decision, on_choose, wraplength=900):
+    """Entscheidung zum Personal (ab 0.43): Text und je Moeglichkeit ein
+    Knopf mit der Folge daneben."""
+    box = ctk.CTkFrame(parent, fg_color=mix(C["card"], C["pink"], 0.08), corner_radius=12,
+                       border_width=1, border_color=mix(C["pink"], C["card"], 0.45))
+    box.pack(fill="x", pady=(0, 8))
+    make_label(box, "ENTSCHEIDUNG", font=F["label"], fg=C["pink"], anchor="w").pack(
+        anchor="w", padx=14, pady=(10, 0))
+    make_label(box, decision["titel"], font=F["body_bold"], fg=C["text"], anchor="w").pack(
+        anchor="w", padx=14, pady=(2, 0))
+    make_label(box, decision["text"], font=F["small"], fg=C["text_soft"],
+               wraplength=wraplength, justify="left", anchor="w").pack(anchor="w", padx=14,
+                                                                        pady=(2, 4))
+    for option in decision["optionen"]:
+        row = _frame(box)
+        row.pack(fill="x", padx=14, pady=(4, 0))
+        button = NeoButton(row, option["label"],
+                           lambda o=option["id"]: on_choose(decision["id"], o), kind="pill",
+                           height=30, font=F["small_bold"], width=190)
+        button.pack(side="left")
+        button.set_enabled(not option["problem"])
+        make_label(row, option["problem"] or option["folge"], font=F["tiny"],
+                   fg=C["yellow"] if option["problem"] else C["text_dim"],
+                   wraplength=wraplength - 230, justify="left", anchor="w").pack(
+            side="left", padx=(12, 0))
+    _frame(box, height=10).pack()
+    return box
+
+
 def _frame(parent, **kwargs):
     return ctk.CTkFrame(parent, fg_color="transparent", corner_radius=0, **kwargs)
 
@@ -1474,6 +1543,16 @@ class GameView(ScrollArea):
 
     # -- Orte wechseln ------------------------------------------------------
 
+    def _decide(self, decision_id, choice):
+        """Entscheidung zum Personal aus der Uebersicht (ab 0.43)."""
+        try:
+            self.game.decide(decision_id, choice)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self.app.notify_progress()
+        self.render(keep_scroll=True)
+
     def go_home(self):
         """Feierabend: Arbeitstag beenden und nach Hause gehen."""
         try:
@@ -1508,6 +1587,8 @@ class GameView(ScrollArea):
             self.open_from_site(action.split(":", 1)[1], view_key)
         elif action == "feierabend":
             self.go_home()
+        elif action == fg.ACTION_PERSONAL:
+            self.app.views["firma"].open_tab("mitarbeiter")
         elif action == "buero":
             self.go_to_work()
         elif action == "lernen":
@@ -1720,6 +1801,10 @@ class GameView(ScrollArea):
                 anchor="w", padx=14, pady=(10, 0))
             make_label(box, scene, font=F["small"], fg=C["text_soft"], wraplength=940,
                        justify="left", anchor="w").pack(anchor="w", padx=14, pady=(2, 10))
+        if state.firm and not item:
+            # Ab 0.43: Entscheidungen zum Personal direkt hier
+            for decision in state.open_decisions():
+                decision_box(body, decision, self._decide, wraplength=940)
 
         if item:
             make_label(body, item["text"], font=F["small"], fg=C["text_dim"],
@@ -1776,7 +1861,8 @@ class GameView(ScrollArea):
             button = NeoButton(footer, "Feierabend machen", self.go_home, kind="accent")
             button.pack(side="left")
             button.set_enabled(state.can_end_day())
-            hint = ("Erst alle Tickets bearbeiten oder verschieben." if not state.can_end_day()
+            hint = (fg.DECISIONS_OPEN_TEXT if not state.can_end_day() and state.firm else
+                    "Erst alle Tickets bearbeiten oder verschieben." if not state.can_end_day()
                     else "Offene Anfragen und Tickets verfallen beim Feierabend."
                     if state.firm and state.firm_open_count() else
                     "Alle Tickets für heute sind bearbeitet." if state.handled else
@@ -3151,12 +3237,19 @@ class FirmView(ScrollArea):
                            justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
         make_label(text, fg.staff_money_text(item), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w")
+        if not applicant and "stimmung" in item:
+            # Ab 0.43: Stimmung (Farbe nach Lage)
+            make_label(text, fg.mood_text(item), font=F["small"],
+                       fg=C[MOOD_COLOR[fg.mood_level(item["stimmung"])]], anchor="w").pack(
+                anchor="w")
         extra = fg.training_text(state, item) if not applicant else \
             "Bewerbung liegt vor bis Arbeitstag %d" % item["bis_tag"]
         if extra:
             make_label(text, extra, font=F["small"], fg=C["yellow"] if not applicant else
                        C["muted"], anchor="w").pack(anchor="w")
-        if item.get("macke"):
+        if item.get("macke_info"):
+            quirk_block(text, item["macke_info"])
+        elif item.get("macke"):
             make_label(text, item["macke"], font=F["tiny"], fg=C["muted"], wraplength=640,
                        justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
         return text, buttons
@@ -3174,10 +3267,20 @@ class FirmView(ScrollArea):
         numbers = state.firm_day()
         make_label(card.body, "Heute: %s" % fg.firm_day_text(numbers), font=F["small"],
                    fg=C["text_dim"], anchor="w").pack(anchor="w", pady=(0, 6))
+        # Ab 0.43: Urlaubsanfragen und Konflikte zuerst
+        for decision in state.open_decisions():
+            decision_box(card.body, decision, self._decide, wraplength=940)
         for item in staff:
             text, buttons = self._person_row(card.body, item, state)
             NeoButton(buttons, "Weiterbilden", lambda i=item["id"]: self._pick_training(i),
                       kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
+            coaching = fg.coaching_offer(state, item["id"])
+            if coaching["macke"]:
+                button = NeoButton(buttons, "Coaching (%s)" % _euro(coaching["preis"]),
+                                   lambda i=item: self._coach(i),
+                                   kind="ghost", height=30, font=F["small_bold"])
+                button.pack(pady=(0, 6))
+                button.set_enabled(not coaching["problem"])
             NeoButton(buttons, "Themen ausblenden" if item["id"] in self.topics_for
                       else "Themen", lambda i=item["id"]: self._toggle_topics(i),
                       kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
@@ -3262,6 +3365,32 @@ class FirmView(ScrollArea):
             self._error(exc)
             return
         self.training_for = self.training_cat = None
+        self._changed()
+
+    def _decide(self, decision_id, choice):
+        try:
+            self.game.decide(decision_id, choice)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    def _coach(self, item):
+        offer = fg.coaching_offer(self.game.state, item["id"])
+        if offer["problem"]:
+            self._error(offer["problem"])
+            return
+        if not messagebox.askyesno(
+                "Coaching", "Coaching für %s: %s, %d Arbeitstage ohne Umsatz. Danach wirkt "
+                "die Schwäche der Macke „%s“ eine Stufe schwächer." % (
+                    item["name"], _euro(offer["preis"]), offer["tage"],
+                    item["macke_info"]["name"])):
+            return
+        try:
+            self.game.coach(item["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
         self._changed()
 
     def _fire(self, item):

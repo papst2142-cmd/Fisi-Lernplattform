@@ -1252,6 +1252,61 @@ class MaintenanceBoard(ft.Column):
 #  SEITE "SPIEL"
 # ============================================================================
 
+MOOD_COLOR = {"gut": "green", "okay": "text_dim", "schlecht": "yellow", "kritisch": "pink"}
+
+
+def stage_boxes(stage, color=None):
+    """Drei Kaestchen fuer die Auspraegung einer Macke (ab 0.43)."""
+    color = color or C["purple"]
+    return ft.Row([ft.Container(width=16, height=9, border_radius=3,
+                                bgcolor=color if number <= stage else C["card"],
+                                border=ft.Border.all(1, color))
+                   for number in range(1, 4)], spacing=3, tight=True)
+
+
+def quirk_block(info):
+    """Macke mit Stufe, Staerke und Schwaeche (ab 0.43, wie am PC)."""
+    lines = fg.quirk_lines(info)
+    if not lines:
+        return []
+    controls = [ft.Row([ui.text("Macke: %s" % lines["titel"], size=12,
+                                weight=ft.FontWeight.BOLD),
+                        stage_boxes(info["stufe"]),
+                        ui.text(lines["stufe"], size=12, color=C["purple"])],
+                       spacing=8, wrap=True,
+                       vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                ui.text(lines["zitat"], size=11, color=C["muted"])]
+    if lines["plus"]:
+        controls.append(ui.text("+ " + lines["plus"], size=11, color=C["green"]))
+    if lines["minus"]:
+        controls.append(ui.text("- " + lines["minus"], size=11, color=C["yellow"]))
+    if lines["hinweis"]:
+        controls.append(ui.text(lines["hinweis"], size=11, color=C["muted"]))
+    return [ft.Column(controls, spacing=2, tight=True)]
+
+
+def decision_box(decision, on_choose):
+    """Entscheidung zum Personal (ab 0.43): Text und je Moeglichkeit ein
+    Knopf mit der Folge darunter."""
+    controls = [ui.label("Entscheidung", C["pink"]),
+                ui.text(decision["titel"], size=15, weight=ft.FontWeight.BOLD),
+                ui.text(decision["text"], size=13, color=C["text_soft"])]
+    for option in decision["optionen"]:
+        button = ui.GradientButton(option["label"],
+                                   lambda _e, o=option["id"]: on_choose(decision["id"], o),
+                                   kind="ghost", height=38)
+        button.set_enabled(not option["problem"])
+        controls.append(ft.Column([
+            button, ui.text(option["problem"] or option["folge"], size=11,
+                            color=C["yellow"] if option["problem"] else C["text_dim"])],
+            spacing=4, tight=True, horizontal_alignment=ft.CrossAxisAlignment.STRETCH))
+    return ft.Container(
+        content=ft.Column(controls, spacing=6, tight=True,
+                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH),
+        bgcolor=mix(C["card"], C["pink"], 0.08), border_radius=12, padding=12,
+        border=ft.Border.all(1, mix(C["pink"], C["card"], 0.45)))
+
+
 class GameScreen:
     """Seite "Spiel" der Handy-App (gleiche Schnittstelle wie Screen in
     main.py: crumbs, root, on_show)."""
@@ -1489,6 +1544,10 @@ class GameScreen:
                                       spacing=4, tight=True),
                     bgcolor=mix(C["card"], C["purple"], 0.1), border_radius=12, padding=12,
                     border=ft.Border.all(1, mix(C["purple"], C["card"], 0.45))))
+            if state.firm:
+                # Ab 0.43: Entscheidungen zum Personal direkt hier
+                for decision in state.open_decisions():
+                    controls.append(decision_box(decision, self._decide_here))
             title, accent = "Tickets heute", C["accent2"]
             subtitle = "%d von %d bearbeitet" % (len(state.handled), len(tickets))
 
@@ -1580,6 +1639,16 @@ class GameScreen:
     def _end_day(self, _event=None):
         """Feierabend: Arbeitstag beenden und nach Hause gehen."""
         self.run_action("feierabend")
+
+    def _decide_here(self, decision_id, choice):
+        """Entscheidung zum Personal aus der Uebersicht (ab 0.43)."""
+        try:
+            self.game.decide(decision_id, choice)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.app.notify_progress()
+        self.render()
 
     # -- Ticket als eigene Seite -------------------------------------------
 
@@ -1910,6 +1979,9 @@ class GameScreen:
         """Knoepfe unter den Grossansichten (siehe fisi_game.place_message)."""
         if action.startswith("auftrag:"):
             self.open_ticket(action.split(":", 1)[1], from_site=self.site_key)
+        elif action == fg.ACTION_PERSONAL:
+            self.firm_tab = "mitarbeiter"
+            self.open_firm()
         elif action == "feierabend":
             try:
                 payload = self.game.end_day()
@@ -2498,6 +2570,10 @@ class GameScreen:
         extra = [ui.text(fg.values_text(item["werte"]), size=12, color=C["text_dim"]),
                  ui.text(fg.strengths_text(item), size=12, color=C["text_dim"]),
                  ui.text(fg.staff_money_text(item), size=12, color=C["text_dim"])]
+        if not applicant and "stimmung" in item:
+            # Ab 0.43: Stimmung (Farbe nach Lage)
+            extra.append(ui.text(fg.mood_text(item), size=12,
+                                 color=C[MOOD_COLOR[fg.mood_level(item["stimmung"])]]))
         if item["id"] in self.topics_for:
             for key in fg.CAT_ORDER:
                 extra.append(ft.Column([
@@ -2514,7 +2590,9 @@ class GameScreen:
         if note:
             extra.append(ui.text(note, size=12, color=C["yellow"] if not applicant
                                  else C["muted"]))
-        if item.get("macke"):
+        if item.get("macke_info"):
+            extra += quirk_block(item["macke_info"])
+        elif item.get("macke"):
             extra.append(ui.text(item["macke"], size=11, color=C["muted"]))
         return [ft.Row([avatar(item["aussehen"], 56),
                         ft.Column(lines, spacing=2, tight=True, expand=True)],
@@ -2537,6 +2615,9 @@ class GameScreen:
         else:
             controls.append(ui.text("Heute: %s" % fg.firm_day_text(state.firm_day()),
                                     size=12, color=C["text_dim"]))
+        # Ab 0.43: Urlaubsanfragen und Konflikte zuerst
+        for decision in state.open_decisions():
+            controls.append(decision_box(decision, self._decide))
         for item in staff:
             parts = self._person_card(state, item)
             parts.append(ft.Row([
@@ -2548,6 +2629,13 @@ class GameScreen:
                 ui.GradientButton("Entlassen", lambda _e, i=item: self._fire(i), kind="ghost",
                                   height=36, expand=True),
             ], spacing=8))
+            coaching = fg.coaching_offer(state, item["id"])
+            if coaching["macke"]:
+                button = ui.GradientButton("Coaching (%s)" % euro(coaching["preis"]),
+                                           lambda _e, i=item: self._coach(i), kind="ghost",
+                                           height=36, expand=True)
+                button.set_enabled(not coaching["problem"])
+                parts.append(ft.Row([button]))
             if self.training_for == item["id"]:
                 parts += self._training_choice(state, item)
             controls.append(self._person_box(parts))
@@ -2624,6 +2712,33 @@ class GameScreen:
             return
         self.training_for = self.training_cat = None
         self._firm_changed()
+
+    def _decide(self, decision_id, choice):
+        try:
+            self.game.decide(decision_id, choice)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self._firm_changed()
+
+    def _coach(self, item):
+        offer = fg.coaching_offer(self.game.state, item["id"])
+        if offer["problem"]:
+            self.toast(offer["problem"], C["yellow"])
+            return
+
+        def confirmed():
+            try:
+                self.game.coach(item["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Coaching", "Coaching für %s: %s, %d Arbeitstage ohne Umsatz. Danach "
+                         "wirkt die Schwäche der Macke „%s“ eine Stufe schwächer." % (
+                             item["name"], euro(offer["preis"]), offer["tage"],
+                             item["macke_info"]["name"]), confirmed)
 
     def _fire(self, item):
         def confirmed():
