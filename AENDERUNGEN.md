@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.41
+
+- **Spiel, eigene Firma: Kredite.** Neuer Reiter „Kredite“ unter Firma
+  (PC und Handy). Die Hausbank leiht dir Geld, sobald deine Firma
+  kreditwürdig ist: mindestens 10 Arbeitstage alt, 15.000 € Umsatz in den
+  letzten 10 Arbeitstagen und mindestens 60 % Ansehen. Vorher zeigt der
+  Reiter, was noch fehlt.
+- **Kreditpakete und freie Summe:** Kurzkredit, Investitionskredit und
+  Großkredit oder eine eigene Summe mit 20 bis 100 Arbeitstagen Laufzeit.
+  Lange Laufzeit und große Summe kosten mehr Zins. Der Kreditrahmen hängt
+  vom Umsatz und vom Ansehen ab, alle Raten zusammen dürfen höchstens die
+  Hälfte des Gewinns sein.
+- **Automatische Tilgung:** Die Rate (Zins und Tilgung) wird bei jedem
+  Feierabend abgebucht. Mehrere Kredite laufen parallel, jeder hat einen
+  Tilgungsplan und kann vorzeitig abgelöst werden.
+- **Zahlungsschwierigkeiten:** Reicht das Konto nicht, platzt die Rate.
+  Es gibt drei Mahnstufen mit Gebühren, weniger Ansehen, Zinsaufschlag und
+  Kreditsperre. Ohne geplatzte Rate sinkt die Stufe nach 10 Arbeitstagen.
+- **Finanzen:** Kreditzinsen, Tilgung und Gebühren stehen einzeln im
+  Kassenbuch, dazu die festen Kosten pro Arbeitstag mit den Kreditraten.
+
 ## 0.40
 
 - **Spiel, eigene Firma: Grenze fürs Lernen durch Arbeit.** Mitarbeiter

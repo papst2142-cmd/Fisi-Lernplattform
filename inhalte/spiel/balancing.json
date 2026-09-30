@@ -43,5 +43,40 @@
     "_hinweis": "Ab 0.31: Schalter Miete in den Optionen. Miete in Euro pro Arbeitstag, Kaution = Anteil am Kaufpreis (kommt beim naechsten Umzug zurueck).",
     "kaution_anteil": 0.15,
     "pro_tag": {"apartment": 0, "zweizimmer": 60, "altbau": 140, "loft": 220}
+  },
+  "kredite": {
+    "_hinweis": "Ab 0.41: Kredite fuer die eigene Firma. Zinsen in Prozent pro Jahr, ein Spieljahr hat tage_pro_jahr Arbeitstage. Rate = Annuitaet pro Arbeitstag (Zins + Tilgung), automatisch beim Feierabend. Bonitaet: Firma mindestens firmentage alt, Umsatz der letzten umsatz_tage Arbeitstage und mittleres Ansehen. Kreditrahmen = Umsatz dieser Tage x faktor_umsatz (x Ansehen-Bonus, x Mahnstufen-Faktor), hoechstens 'hoechstens', abzueglich laufender Restschuld.",
+    "bank": "Talheimer Kreditbank",
+    "tage_pro_jahr": 50,
+    "bonitaet": {"firmentage": 10, "umsatz_tage": 10, "mindest_umsatz": 15000,
+                 "mindest_reputation": 60},
+    "rahmen": {"faktor_umsatz": 1.5, "hoechstens": 100000, "runden": 1000,
+               "ansehen_bonus": [{"ab": 85, "faktor": 1.25}, {"ab": 75, "faktor": 1.1}],
+               "raten_anteil": 0.5,
+               "_raten_hinweis": "Kapitaldienstfaehigkeit: Alle Raten zusammen hoechstens dieser Anteil am durchschnittlichen Gewinn pro Arbeitstag der letzten umsatz_tage (Umsatz minus Gehaelter, Nebenkosten, Material)."},
+    "frei": {"min": 5000, "schritt": 1000, "start": 20000},
+    "zins": {"basis": {"20": 6.5, "30": 7.0, "50": 8.0, "75": 9.0, "100": 10.0},
+             "groesse_ab": 10000, "groesse_schritt": 20000, "groesse_plus": 0.5},
+    "pakete": [
+      {"id": "kurz", "name": "Kurzkredit", "summe": 10000, "laufzeit": 20,
+       "text": "Für einen schnellen Engpass: eine Weiterbildung oder ein Sonderraum etwas früher."},
+      {"id": "investition", "name": "Investitionskredit", "summe": 30000, "laufzeit": 50,
+       "text": "Für den nächsten Ausbauschritt, abbezahlt in einem Spieljahr."},
+      {"id": "gross", "name": "Großkredit", "summe": 60000, "laufzeit": 100,
+       "text": "Für den großen Sprung: mehrere Ausbauten auf einmal, lange Laufzeit."}
+    ],
+    "abloesen_prozent": 1.0,
+    "mahnung": {
+      "_hinweis": "Platzt eine Rate (Konto reicht beim Feierabend nicht), steigt die Mahnstufe um 1 (hoechstens 3). Die Rate wird nicht nachgeholt, die Laufzeit verlaengert sich. Gebuehr kommt auf die Restschuld, Ansehen sinkt, ab Stufe 2 steigt der Zins aller laufenden Kredite. Nach abbau_tage Arbeitstagen ohne geplatzte Rate sinkt die Stufe wieder um 1.",
+      "abbau_tage": 10,
+      "stufen": [
+        {"stufe": 1, "name": "Zahlungserinnerung", "gebuehr": 50, "zins_plus": 0,
+         "rahmen_faktor": 0.5, "reputation": {"zuverlaessigkeit": -2}},
+        {"stufe": 2, "name": "Mahnung", "gebuehr": 150, "zins_plus": 2.0,
+         "rahmen_faktor": 0, "reputation": {"zuverlaessigkeit": -3, "kundenzufriedenheit": -1}},
+        {"stufe": 3, "name": "Letzte Mahnung", "gebuehr": 300, "zins_plus": 4.0,
+         "rahmen_faktor": 0, "reputation": {"zuverlaessigkeit": -5, "kundenzufriedenheit": -2}}
+      ]
+    }
   }
 }
