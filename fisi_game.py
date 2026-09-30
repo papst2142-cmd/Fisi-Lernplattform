@@ -3317,14 +3317,14 @@ class GameState:
 
     def _learn(self, staff_id, topic, amount, day, reason):
         """Punkte durch Arbeit dazu - ab lernen.halb_ab nur halb so viele,
-        nie ueber lernen.max."""
+        nie ueber lernen.deckel (ab 0.40: darueber nur per Weiterbildung)."""
         if staff_id not in self.staff or topic not in TOPIC_CAT or amount <= 0:
             return
         rule = learn_rules(self.content)
         before = self.staff_topics(staff_id, day)[topic]
         if before >= rule["halb_ab"]:
             amount = amount / 2.0
-        after = min(float(rule["max"]), before + amount)
+        after = min(float(learn_cap(self.content)), before + amount)
         if after <= before:
             return
         gains = self.staff_gains.setdefault(staff_id, {})
@@ -4286,6 +4286,28 @@ def learn_rules(content=None):
     return firm_rules(content)["lernen"]
 
 
+def learn_cap(content=None):
+    """Grenze fuer das Lernen durch Arbeit je Thema (ab 0.40) - darueber
+    geht es nur noch mit Weiterbildung."""
+    rule = learn_rules(content)
+    return min(rule.get("deckel", rule["max"]), rule["max"])
+
+
+def topics_at_cap(topics, content=None):
+    """Themen, in denen die Person durch Arbeit nichts mehr dazulernt."""
+    cap = learn_cap(content)
+    return [topic for topic in TOPIC_ORDER if topics.get(topic, 0) >= cap]
+
+
+def cap_text(topics, content=None):
+    """ "Grenze erreicht: SQL · Routing - weiter nur mit Weiterbildung" (ab 0.40) """
+    reached = topics_at_cap(topics, content)
+    if not reached:
+        return ""
+    return "Grenze erreicht: %s – weiter nur mit Weiterbildung" % " · ".join(
+        TOPIC_SHORT[topic] for topic in reached)
+
+
 def cat_values(topics):
     """Werte je Thema -> Werte je Fachbereich (gerundeter Durchschnitt)."""
     result = {}
@@ -4706,9 +4728,15 @@ def firm_day_text(numbers):
     lines = [project_day_text(item) for item in numbers.get("projekte") or []]
     if lines:
         text += "\n\nProjekte:\n" + "\n".join("• " + line for line in lines)
-    lines = [learned_text(item) for item in numbers.get("gelernt") or []]
+    learned = numbers.get("gelernt") or []
+    lines = [learned_text(item) for item in learned if not item.get("grenze")]
     if lines:
         text += "\n\nDazugelernt:\n" + "\n".join("• " + line for line in lines)
+    # Ab 0.40: wer die Grenze fuers Lernen durch Arbeit erreicht, steht extra
+    lines = [learned_text(item) for item in learned if item.get("grenze")]
+    if lines:
+        text += "\n\nGrenze erreicht (weiter nur mit Weiterbildung):\n" + "\n".join(
+            "• " + line for line in lines)
     return text
 
 
@@ -4718,12 +4746,13 @@ def learned_today(state, payload, content=None):
     after = GameState(list(state.history) + [("", EV_DAY_END, payload)], content or
                       state.content)
     result = []
+    cap = learn_cap(content or state.content)
     for day, staff_id, topic, before, now, reason in after.learn_log:
         if day != state.day:
             continue
         result.append({"id": staff_id, "name": (after.staff.get(staff_id) or {}).get("name", ""),
                        "thema": topic, "vorher": int(before), "nachher": int(now),
-                       "grund": reason})
+                       "grund": reason, "grenze": now >= cap})
     # Nur zeigen, was sich in der ganzen Zahl bemerkbar macht
     return [item for item in result if item["nachher"] > item["vorher"]]
 
@@ -5903,9 +5932,12 @@ def _validate_firm(content):
                                 % (item.get("kollege"), topic))
     learn = rules.get("lernen") or {}
     for key in ("ticket_erfolg", "projekt_fertig", "projekt_puenktlich", "routine_tage",
-                "routine_plus", "halb_ab", "max", "alt_streuung"):
+                "routine_plus", "halb_ab", "deckel", "max", "alt_streuung"):
         if not isinstance(learn.get(key), (int, float)) or learn[key] < 0:
             problems.append("Spiel-Firma: lernen.%s fehlt oder ist ungueltig" % key)
+    if isinstance(learn.get("deckel"), (int, float)) and isinstance(learn.get("max"), (int, float)) \
+            and learn["deckel"] > learn["max"]:
+        problems.append("Spiel-Firma: lernen.deckel liegt ueber lernen.max")
     whole = (rules.get("weiterbildung") or {}).get("fachbereich") or {}
     for key in ("preis", "tage", "plus"):
         if not isinstance(whole.get(key), int) or whole[key] <= 0:

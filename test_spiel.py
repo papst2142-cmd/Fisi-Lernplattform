@@ -2591,7 +2591,7 @@ class MitarbeiterThemenTest(unittest.TestCase):
             rule = self.content["firma"]["lernen"]
             amount = rule["ticket_erfolg"] / (2.0 if before >= rule["halb_ab"] else 1.0)
             self.assertAlmostEqual(state.staff_topics(staff_id)[topic],
-                                   min(90, before + amount))
+                                   _work_learned(before, amount, self.content))
             self.assertEqual(len([item for item in state.learn_log
                                   if item[5] == "ticket"]), 1)   # Fehlschlag: nichts
 
@@ -2605,7 +2605,8 @@ class MitarbeiterThemenTest(unittest.TestCase):
             state = self._day_end(game, {"tickets": [
                 {"ticket": "kt1:a", "vorlage": template["id"], "an": staff_id,
                  "name": "X", "erfolg": True, "geld": 60}]})
-            self.assertAlmostEqual(state.staff_topics(staff_id)[topic], before + 1)
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic], _work_learned(
+                before, self.content["firma"]["lernen"]["ticket_erfolg"] / 2.0, self.content))
 
     def test_lernen_durch_routine(self):
         with TempDB() as db:
@@ -2618,7 +2619,7 @@ class MitarbeiterThemenTest(unittest.TestCase):
                 payload = game.end_day()
             after = game.state.staff_topics(staff_id)
             amount = rule["routine_plus"] / (2.0 if topics[best] >= rule["halb_ab"] else 1.0)
-            self.assertAlmostEqual(after[best], min(90, topics[best] + amount))
+            self.assertAlmostEqual(after[best], _work_learned(topics[best], amount, self.content))
             if int(after[best]) > int(topics[best]):
                 self.assertEqual(payload["firma"]["gelernt"][0]["thema"], best)
                 self.assertIn("Dazugelernt", fg.firm_day_text(payload["firma"]))
@@ -2653,7 +2654,66 @@ class MitarbeiterThemenTest(unittest.TestCase):
             amount = (rule["projekt_fertig"] + rule["projekt_puenktlich"]) / (
                 2.0 if before >= rule["halb_ab"] else 1.0)
             self.assertAlmostEqual(state.staff_topics(staff_id)[topic],
-                                   min(90, before + amount))
+                                   _work_learned(before, amount, self.content))
+
+    def _one_ticket(self, game, staff_id, template, number, success=True):
+        return self._day_end(game, {"tickets": [
+            {"ticket": "kt%d:a" % number, "vorlage": template["id"], "an": staff_id,
+             "name": "X", "erfolg": success, "geld": 60}]})
+
+    def test_lernen_durch_arbeit_endet_an_grenze(self):
+        """Ab 0.40: Arbeit bringt nur bis lernen.deckel, Weiterbildung darueber."""
+        with TempDB() as db:
+            rule = self.content["firma"]["lernen"]
+            rule["ticket_erfolg"], rule["halb_ab"], rule["deckel"] = 30, 90, 70
+            game, staff_id = self._hired(db)
+            template = self.content["firma"]["tickets"]["vorlagen"][0]
+            topic = template["thema"]
+            for number in range(1, 5):
+                state = self._one_ticket(game, staff_id, template, number)
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic], 70)
+            self.assertIn(topic, fg.topics_at_cap(state.staff_topics(staff_id), self.content))
+            self.assertIn("Grenze erreicht", fg.cap_text(state.staff_topics(staff_id),
+                                                        self.content))
+            # Weiterbildung geht ueber die Grenze hinaus
+            game.train(staff_id, topic)
+            for _ in range(10):
+                game.end_day()
+            self.assertGreater(game.state.staff_topics(staff_id)[topic], 70)
+            # ... und Arbeit bringt dort nichts mehr
+            before = game.state.staff_topics(staff_id)[topic]
+            state = self._one_ticket(game, staff_id, template, 9)
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic], before)
+
+    def test_grenze_erreicht_in_feierabend_meldung(self):
+        with TempDB() as db:
+            rule = self.content["firma"]["lernen"]
+            rule["ticket_erfolg"], rule["halb_ab"] = 90, 90
+            game, staff_id = self._hired(db)
+            template = self.content["firma"]["tickets"]["vorlagen"][0]
+            before = game.state.staff_topics(staff_id)[template["thema"]]
+            payload = {"tickets": [{"ticket": "kt1:a", "vorlage": template["id"],
+                                    "an": staff_id, "name": "X", "erfolg": True,
+                                    "geld": 60}]}
+            learned = fg.learned_today(game.state, {"firma": payload}, self.content)
+            if before < fg.learn_cap(self.content):
+                self.assertTrue(learned[0]["grenze"])
+                text = fg.firm_day_text({"gelernt": learned})
+                self.assertIn("Grenze erreicht", text)
+                self.assertNotIn("Dazugelernt", text)
+
+    def test_lernen_langsamer_als_weiterbildung(self):
+        """Ein geschafftes Ticket bringt hoechstens ein Fuenftel einer Weiterbildung."""
+        rules = self.content["firma"]
+        self.assertLessEqual(rules["lernen"]["ticket_erfolg"] * 5,
+                             rules["weiterbildung"]["plus"])
+        self.assertLess(rules["lernen"]["deckel"], rules["weiterbildung"]["max"])
+
+
+def _work_learned(before, amount, content):
+    """Erwarteter Wert nach Lernen durch Arbeit: nie ueber die Grenze (ab 0.40)."""
+    cap = fg.learn_cap(content)
+    return before if before >= cap else min(cap, before + amount)
 
 
 class ProjekteTest(unittest.TestCase):

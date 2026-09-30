@@ -4,6 +4,21 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.40
+
+- **Spiel, eigene Firma: Grenze fürs Lernen durch Arbeit.** Mitarbeiter
+  lernen durch Kundentickets, Projekte und Routinearbeit in jedem Thema
+  nur noch bis 70. Darüber (bis 90) geht es nur mit Weiterbildung.
+- **Langsamerer Fortschritt:** Ein geschafftes Ticket bringt +1, ein
+  fertiges Projekt +2 (pünktlich +1 extra), Routinearbeit alle 15
+  Arbeitstage +1, ab 50 zählt alles nur halb. Fehlgeschlagene Tickets
+  bringen weiterhin nichts.
+- **Weiterbildung neu balanciert:** Thema +6 in 4 Arbeitstagen,
+  ganzer Fachbereich +3 auf alle Themen in 5 Arbeitstagen (Preise gleich).
+- **„Grenze erreicht“:** Die Feierabend-Meldung nennt, wer die Grenze in
+  einem Thema erreicht hat. In den aufgeklappten Themen eines Mitarbeiters
+  steht, wo nur noch Weiterbildung weiterhilft (PC und Handy).
+
 ## 0.39
 
 - **Lernstand je Frage:** Jede Frage in Karteikarten, Prüfungstrainer,
