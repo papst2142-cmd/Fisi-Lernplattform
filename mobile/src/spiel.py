@@ -42,6 +42,9 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
 SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
                "zuhause": ("SPIEL", "ZUHAUSE")}
 FIRM_CRUMBS = ("SPIEL", "FIRMA")
+JOURNEY_CRUMBS = ("SPIEL", "REISE")
+JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
+                 fg.JOURNEY_FIRM: C["green"]}
 RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
                  "zuverlaessigkeit": GRADIENTS["success"],
@@ -1286,6 +1289,10 @@ class GameScreen:
         self.training_for = None
         self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
         self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
+        # Unterseite "Reise" (ab 0.39)
+        self.journey_box = None
+        self.journey_group = "alle"
+        self.journey_page = 0
         self.root = screen_list([])
         self.render()
 
@@ -1425,7 +1432,9 @@ class GameScreen:
                                       kind="ghost", height=38)
                     for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
                                        ("Zuhause öffnen", "zuhause"))] +
-                   [ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38)],
+                   [ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38),
+                    ui.GradientButton("Reise öffnen", self.open_journey, kind="ghost",
+                                      height=38)],
                    wrap=True, spacing=8, run_spacing=8),
         ]
         if at_customer:
@@ -1929,6 +1938,116 @@ class GameScreen:
 
     def _accept(self, task_id):
         self.open_ticket(task_id, from_site=self.site_key or "buero")
+
+    # -- Reise des Spielers (ab 0.39) -----------------------------------------
+
+    def open_journey(self, _event=None):
+        self.game.reload()
+        self.journey_page = 0
+        self.journey_box = ft.Column(spacing=12, tight=True,
+                                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._fill_journey()
+        self.app.push(JOURNEY_CRUMBS, screen_list([self.journey_box]))
+
+    def _fill_journey(self):
+        state = self.game.state
+        stats = fg.journey_stats(state)
+        tiles = [
+            ("Diensttage", str(stats["diensttage"]), "Arbeitstage"),
+            ("Tickets gelöst", str(stats["richtig"]),
+             "von %d · %d %%" % (stats["tickets"], stats["quote"])),
+            ("Zwischenfälle", str(stats["zwischenfaelle"]),
+             "gemeistert von %d" % stats["zwischenfaelle_gesamt"]),
+            ("Kundenprojekte", str(stats["kundenprojekte"]), "abgeschlossen"),
+            ("Angebote", str(stats["angebote_gewonnen"]), "gewonnen von %d" % stats["angebote"]),
+            ("Verdient", euro(stats["verdient"]), "alle Einnahmen"),
+        ]
+        grid = []
+        for index in range(0, len(tiles), 2):
+            grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
+                               spacing=8))
+        controls = [ui.Card("Rückblick", grid, accent=C["accent2"],
+                            subtitle="%s · Tag %d" % (state.profile["name"], state.day))]
+        chart = ui.LineChart(height=160)
+        chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
+        controls.append(ui.Card("Tickets je Arbeitstag", [
+            ui.text("Gelöste Tickets der letzten 30 Arbeitstage", size=11, color=C["muted"]),
+            chart], accent=C["accent"]))
+        chart = ui.LineChart(height=150)
+        chart.set_data(stats["ansehen_tage"], stats["ansehen"], C["purple"], y_max=100)
+        controls.append(ui.Card("Ansehen im Verlauf", [chart], accent=C["purple"],
+                                subtitle="nach jedem Feierabend"))
+        bars = []
+        peak = max(stats["je_fachbereich"].values()) or 1
+        for key in fg.CAT_ORDER:
+            color = cat_color(key)
+            bar = ui.GradientBar(CATEGORY_SHORT[fg.CAT_NAME[key]], color, lighten(color, 0.35))
+            value = stats["je_fachbereich"][key]
+            bar.set(100.0 * value / peak, str(value))
+            bars.append(bar)
+        bars.append(ui.text("Mitarbeiter eingestellt: %d · Tickets verschoben: %d · "
+                            "Kundentickets deiner Leute: %d"
+                            % (stats["mitarbeiter"], stats["verschoben"],
+                               stats["kundentickets"]), size=12, color=C["text_dim"]))
+        controls.append(ui.Card("Gelöst je Fachbereich", bars, accent=C["green"]))
+
+        entries = fg.journey_filter(fg.journey(state), self.journey_group)
+        entries.reverse()   # neueste zuerst
+        keys = [key for key, _name in fg.JOURNEY_GROUPS]
+        diary = [ui.PillGroup(fg.JOURNEY_GROUPS, initial=keys.index(self.journey_group),
+                              on_change=self._journey_choose)]
+        size = 12
+        pages = max(1, -(-len(entries) // size))
+        self.journey_page = max(0, min(self.journey_page, pages - 1))
+        for entry in entries[self.journey_page * size:(self.journey_page + 1) * size]:
+            color = JOURNEY_COLOR.get(entry["gruppe"], C["accent"])
+            lines = [ui.text("Tag %d" % entry["tag"], size=11, color=C["muted"],
+                             weight=ft.FontWeight.BOLD),
+                     ui.text(entry["titel"], size=14, weight=ft.FontWeight.BOLD)]
+            if entry["text"]:
+                lines.append(ui.text(entry["text"], size=12, color=C["text_dim"]))
+            diary.append(ft.Container(
+                content=ft.Row([
+                    ft.Container(width=4, height=40, border_radius=2, bgcolor=color),
+                    ft.Column(lines, spacing=2, tight=True, expand=True),
+                ], spacing=12),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
+        if not entries:
+            diary.append(ui.text("Noch keine Einträge - dein erster Arbeitstag wartet.",
+                                 size=14, color=C["text_soft"]))
+        if pages > 1:
+            diary.append(ft.Row([
+                ui.GradientButton("Neuere", lambda _e: self._journey_turn(-1), kind="ghost",
+                                  height=36),
+                ui.text("Seite %d / %d" % (self.journey_page + 1, pages), size=13,
+                        color=C["text_dim"]),
+                ui.GradientButton("Ältere", lambda _e: self._journey_turn(1), kind="ghost",
+                                  height=36),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN))
+        controls.append(ui.Card("Tagebuch", diary, accent=C["purple"],
+                                subtitle="%d Einträge · neueste zuerst" % len(entries)))
+        self.journey_box.controls = controls
+
+    @staticmethod
+    def _stat_tile(title, value, detail):
+        return ft.Container(
+            content=ft.Column([
+                ui.text(title.upper(), size=10, color=C["muted"], weight=ft.FontWeight.BOLD),
+                ui.text(value, size=20, weight=ft.FontWeight.BOLD),
+                ui.text(detail, size=11, color=C["text_dim"]),
+            ], spacing=1, tight=True),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8), expand=True)
+
+    def _journey_choose(self, group):
+        self.journey_group = group
+        self.journey_page = 0
+        self._fill_journey()
+
+    def _journey_turn(self, delta):
+        self.journey_page += delta
+        self._fill_journey()
 
     # -- Firma (ab 0.33) ------------------------------------------------------
 
