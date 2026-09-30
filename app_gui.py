@@ -49,6 +49,7 @@ from fisi_core import (  # noqa: E402
     theme_totals, validate_content,
 )
 import fisi_game  # noqa: E402
+import fisi_game_gui  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
@@ -3485,6 +3486,7 @@ class FISIApp:
             fisi_theme.save_background(background_id)
             self.root.configure(fg_color=C["bg"])
             self._setup_ttk_style()
+        fisi_game_gui.refresh_theme_tables()
         current = self.current or "settings"
         old = self.container
         # Die neue Oberflaeche wird unsichtbar aufgebaut und dann unter der

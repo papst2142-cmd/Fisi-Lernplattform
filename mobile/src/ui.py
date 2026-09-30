@@ -532,8 +532,11 @@ class LineChart(cv.Canvas):
         for index, (x, caption) in enumerate(zip(xs, self._labels)):
             last = index == count - 1
             if (index % every == 0 and (last or xs[-1] - x >= 40)) or last:
-                shapes.append(cv.Text(x, top + plot_h + 12, caption, style=axis_style,
-                                      alignment=ft.Alignment.CENTER))
+                # Die letzte Beschriftung endet am rechten Rand statt darueber
+                shapes.append(cv.Text(x + (4 if last and count > 1 else 0), top + plot_h + 12,
+                                      caption, style=axis_style,
+                                      alignment=ft.Alignment.CENTER_RIGHT if last and count > 1
+                                      else ft.Alignment.CENTER))
         self.shapes = shapes
 
 

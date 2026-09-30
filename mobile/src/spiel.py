@@ -324,7 +324,10 @@ class WalkPlan(FloorPlan):
                 new_v = fg.to_view(new[0], new[1], True, self.site_data)
                 self._shift((new_v[0] - old_v[0]) * scale, (new_v[1] - old_v[1]) * scale)
                 self.player_pos = new
-                self.canvas.update()
+                try:
+                    self.canvas.update()
+                except RuntimeError:
+                    return    # Ansicht wurde verlassen, bevor die Figur ankam
                 await asyncio.sleep(self.FRAME)
                 if new == (tx, ty):
                     break
@@ -2454,7 +2457,7 @@ class GameScreen:
         chart = ui.LineChart(height=160)
         chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
         controls.append(ui.Card("Tickets je Arbeitstag", [
-            ui.text("Gelöste Tickets der letzten 30 Arbeitstage", size=11, color=C["muted"]),
+            ui.text("Gelöste Tickets der letzten 30 Arbeitstage mit Tickets", size=11, color=C["muted"]),
             chart], accent=C["accent"]))
         chart = ui.LineChart(height=150)
         chart.set_data(stats["ansehen_tage"], stats["ansehen"], C["purple"], y_max=100)
@@ -4117,3 +4120,25 @@ class GameScreen:
 
     def _open_learn(self, kind, title):
         self.app.open_search_hit(kind, title)
+
+
+def refresh_theme_tables():
+    """Farbtabellen neu berechnen (ab 0.48): Sie werden beim Import aus C
+    kopiert und muessen nach einem Farbwechsel neu gebildet werden."""
+    global PRIORITY_COLOR, STATUS_TEXT, JOURNEY_COLOR, AXIS_GRADIENT, TERMINAL_BG, TERMINAL_COLOR
+    PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"],
+                      "kritisch": C["red"]}
+    STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
+                   fg.ST_WRONG: ("mit Fehlern", C["red"]),
+                   fg.ST_DEFERRED: ("verschoben", C["yellow"]),
+                   fg.ST_WAITING: ("wartet auf Teil", C["purple"])}
+    JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
+                     fg.JOURNEY_FIRM: C["green"]}
+    AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
+                     "zuverlaessigkeit": GRADIENTS["success"],
+                     "kundenzufriedenheit": ("#F59E0B", C["pink"]),
+                     "sicherheit": ("#DB2777", C["purple"])}
+    TERMINAL_BG = C["sidebar"]
+    TERMINAL_COLOR = {"start": C["muted"], "ausgabe": C["text_soft"], "fehler": C["red"],
+                      "gefahr": C["yellow"], "kommentar": C["muted"]}
+

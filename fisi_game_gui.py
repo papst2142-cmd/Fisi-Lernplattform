@@ -4914,7 +4914,7 @@ class JourneyView(ScrollArea):
         left = _frame(row)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
         card = Card(left, title="Tickets je Arbeitstag", accent=C["accent"],
-                    subtitle="die letzten 30 Arbeitstage")
+                    subtitle="die letzten 30 Arbeitstage mit Tickets")
         card.pack(fill="x")
         chart = LineChart(card.body, height=190, parent_bg=C["card"])
         chart.pack(fill="x")
@@ -5003,3 +5003,25 @@ class JourneyView(ScrollArea):
 def _euro(value):
     text = "{:,.0f}".format(value).replace(",", ".")
     return "%s €" % text
+
+
+def refresh_theme_tables():
+    """Farbtabellen neu berechnen (ab 0.48): Sie werden beim Import aus C
+    kopiert und muessen nach einem Farbwechsel neu gebildet werden."""
+    global PRIORITY_COLOR, STATUS_TEXT, AXIS_GRADIENT, TERMINAL_BG, TERMINAL_COLOR, JOURNEY_COLOR
+    PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"],
+                      "kritisch": C["red"]}
+    STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
+                   fg.ST_WRONG: ("mit Fehlern", C["red"]),
+                   fg.ST_DEFERRED: ("verschoben", C["yellow"]),
+                   fg.ST_WAITING: ("wartet auf Teil", C["purple"])}
+    AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
+                     "zuverlaessigkeit": GRADIENTS["success"],
+                     "kundenzufriedenheit": ("#F59E0B", C["pink"]),
+                     "sicherheit": ("#DB2777", C["purple"])}
+    TERMINAL_BG = C["sidebar"]
+    TERMINAL_COLOR = {"start": C["muted"], "ausgabe": C["text_soft"], "fehler": C["red"],
+                      "gefahr": C["yellow"], "kommentar": C["muted"]}
+    JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
+                     fg.JOURNEY_FIRM: C["green"]}
+

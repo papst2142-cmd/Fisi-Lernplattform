@@ -2115,6 +2115,12 @@ class FISIMobileApp:
                 fisi_theme.save_preset(preset_id)
             if background_id:
                 fisi_theme.save_background(background_id)
+            spiel.refresh_theme_tables()
+            # Eine laufende Pruefungssession endet mit dem Neuaufbau - ihr
+            # Zeitgeber soll nicht im Hintergrund weiterlaufen
+            quiz = self.screens.get("quiz")
+            if quiz is not None:
+                quiz.running = False
             self._build_ui()
             self.show_tab("settings")
             rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
