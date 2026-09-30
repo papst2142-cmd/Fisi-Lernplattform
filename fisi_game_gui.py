@@ -66,6 +66,59 @@ def stage_boxes(parent, stage, color=None):
     return row
 
 
+def _bar(parent, share, color, height, track=None):
+    """Schlichter Balken (Spur + Fuellung) - leichtgewichtig, auch fuer viele
+    Mitarbeiter auf einmal."""
+    lane = ctk.CTkFrame(parent, height=height, corner_radius=height // 2,
+                        fg_color=track or C["ring_bg"])
+    if share > 0:
+        ctk.CTkFrame(lane, height=height, corner_radius=height // 2, fg_color=color).place(
+            relx=0, rely=0, relwidth=max(0.03, min(1.0, share)), relheight=1.0)
+    return lane
+
+
+def _clickable(widget, command):
+    widget.bind("<Button-1>", lambda _e: command())
+    try:
+        widget.configure(cursor="hand2")
+    except (tk.TclError, ValueError):
+        pass
+    for child in widget.winfo_children():
+        _clickable(child, command)
+
+
+def skill_bar_block(parent, item, is_open, on_toggle):
+    """Ab 0.47: Fertigkeiten als Balken je Fachbereich. Ein Klick auf einen
+    Balken klappt die Themen des Fachbereichs mit den genauen Werten auf."""
+    box = _frame(parent)
+    box.pack(fill="x", pady=(6, 2))
+    for row in fg.skill_bars(item):
+        color = cat_color(row["cat"])
+        opened = is_open(row["cat"])
+        line = _frame(box)
+        line.pack(fill="x", pady=2)
+        make_label(line, ("▾ " if opened else "▸ ") + row["name"], font=F["small_bold"],
+                   fg=color, width=120, anchor="w").pack(side="left")
+        make_label(line, str(row["wert"]), font=F["small_bold"], fg=C["text"], width=34,
+                   anchor="e").pack(side="right")
+        _bar(line, row["anteil"], color, 10).pack(side="left", fill="x", expand=True,
+                                                  padx=(4, 8), pady=4)
+        _clickable(line, lambda key=row["cat"]: on_toggle(key))
+        if not opened:
+            continue
+        for topic in row["themen"]:
+            sub = _frame(box)
+            sub.pack(fill="x", padx=(22, 0), pady=1)
+            make_label(sub, topic["name"], font=F["small"], fg=C["text_dim"], width=98,
+                       anchor="w").pack(side="left")
+            make_label(sub, str(topic["wert"]), font=F["small"],
+                       fg=C["yellow"] if topic["grenze"] else C["text_soft"], width=34,
+                       anchor="e").pack(side="right")
+            _bar(sub, topic["anteil"], mix(color, C["card_alt"], 0.35), 6).pack(
+                side="left", fill="x", expand=True, padx=(4, 8), pady=5)
+    return box
+
+
 def quirk_block(parent, info, wraplength=640):
     """Macke mit Stufe, Staerke und Schwaeche (ab 0.43, wie am Handy)."""
     lines = fg.quirk_lines(info)
@@ -1788,6 +1841,8 @@ class GameView(ScrollArea):
             ChoiceRow(form, fg.APPEARANCE[part], look[part],
                       lambda value, p=part: changed(p, value)).pack(anchor="w", pady=(6, 10))
 
+        if state.profile is None and state.difficulty is None:
+            self._build_difficulty_choice(card.body)
         buttons = _frame(card.body)
         buttons.pack(fill="x", pady=(8, 0))
         NeoButton(buttons, "Los geht's" if state.profile is None else "Speichern",
@@ -1796,9 +1851,32 @@ class GameView(ScrollArea):
             NeoButton(buttons, "Abbrechen", self._cancel_edit, kind="ghost").pack(
                 side="left", padx=10)
 
+    def _build_difficulty_choice(self, parent):
+        """Ab 0.47: Schwierigkeitsgrad beim Spielstart (fest fuer den Durchgang)."""
+        levels = fg.difficulty_levels()
+        texts = {key: text for key, _name, text in levels}
+        chosen = self.draft.setdefault("schwierigkeit", fg.difficulty_default())
+        box = _frame(parent)
+        box.pack(fill="x", pady=(4, 0))
+        make_label(box, "SCHWIERIGKEITSGRAD", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        hint = make_label(box, texts.get(chosen, ""), font=F["small"], fg=C["text_soft"],
+                          wraplength=900, justify="left", anchor="w")
+
+        def picked(value):
+            self.draft["schwierigkeit"] = value
+            hint.configure(text=texts.get(value, ""))
+
+        ChoiceRow(box, [(key, name) for key, name, _text in levels], chosen,
+                  picked).pack(anchor="w", pady=(6, 6))
+        hint.pack(anchor="w")
+        make_label(box, "Gilt für den ganzen Spielstand. Ändern geht nur mit „Spielstand "
+                   "zurücksetzen“. Die Lernplattform ist davon nicht betroffen.",
+                   font=F["small"], fg=C["muted"], wraplength=900, justify="left",
+                   anchor="w").pack(anchor="w", pady=(2, 6))
+
     def _save_profile(self, name, look):
         try:
-            self.game.set_profile(name, look)
+            self.game.set_profile(name, look, self.draft.get("schwierigkeit"))
         except ValueError as exc:
             messagebox.showwarning("Hinweis", str(exc))
             return
@@ -1918,7 +1996,7 @@ class GameView(ScrollArea):
             self.world.set_state(state)
         row = _frame(card.body)
         row.pack(anchor="w", pady=(10, 0))
-        for label, key in (("Firma öffnen", "firma"), ("Reise öffnen", "reise")):
+        for label, key in (("Firma öffnen", "firma"), ("Meine Reise", "reise")):
             NeoButton(row, label, lambda k=key: self.app.show_view(k), kind="ghost",
                       height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
 
@@ -2884,6 +2962,7 @@ class FirmView(ScrollArea):
         self.training_for = None     # Mitarbeiter, fuer den gerade ein Fach gewaehlt wird
         self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
         self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
+        self.cats_open = set()       # (mitarbeiter, fachbereich) aufgeklappt (ab 0.47)
         self.name_entry = None
         self.offer_for = None        # Anfrage, die gerade kalkuliert wird
         self.markup = None           # gewaehlter Gewinnzuschlag
@@ -2956,7 +3035,8 @@ class FirmView(ScrollArea):
 
     def _build_head(self, state):
         card = Card(self.content, title="Eigene Firma", accent=C["green"],
-                    subtitle="gegründet an Arbeitstag %d" % state.firm["tag"])
+                    subtitle="gegründet an Arbeitstag %d · %s" % (
+                        state.firm["tag"], fg.difficulty_badge_text(state)))
         card.pack(fill="x")
         make_label(card.body, state.firm["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
@@ -3467,19 +3547,16 @@ class FirmView(ScrollArea):
             role += " · früher bei Bitweiche"
         make_label(text, role, font=F["small"], fg=C["pink"] if item.get("herkunft") ==
                    "bitweiche" else C["accent"], anchor="w").pack(anchor="w")
-        make_label(text, fg.values_text(item["werte"]), font=F["small"], fg=C["text_dim"],
-                   anchor="w").pack(anchor="w", pady=(4, 0))
+        # Ab 0.47: Balken je Fachbereich, Klick klappt die Themen auf
+        staff_id = item["id"]
+        skill_bar_block(text, item,
+                        lambda key: staff_id in self.topics_for or
+                        (staff_id, key) in self.cats_open,
+                        lambda key: self._toggle_cat(staff_id, key))
         make_label(text, fg.strengths_text(item), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w")
-        if item["id"] in self.topics_for:
-            for key in fg.CAT_ORDER:
-                make_label(text, "%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
-                                            item["werte"][key]),
-                           font=F["small_bold"], fg=CATEGORY_COLOR[fg.CAT_NAME[key]],
-                           anchor="w").pack(anchor="w", pady=(4, 0))
-                make_label(text, fg.topics_text(item["themen"], key), font=F["small"],
-                           fg=C["text_dim"], wraplength=640, justify="left",
-                           anchor="w").pack(anchor="w")
+        if staff_id in self.topics_for or any(person == staff_id
+                                              for person, _key in self.cats_open):
             limit = fg.cap_text(item["themen"]) if not applicant else ""
             if limit:
                 make_label(text, limit, font=F["small"], fg=C["yellow"], wraplength=640,
@@ -3616,8 +3693,21 @@ class FirmView(ScrollArea):
     def _toggle_topics(self, staff_id):
         if staff_id in self.topics_for:
             self.topics_for.discard(staff_id)
+            self.cats_open = {pair for pair in self.cats_open if pair[0] != staff_id}
         else:
             self.topics_for.add(staff_id)
+        self.render(keep_scroll=True)
+
+    def _toggle_cat(self, staff_id, key):
+        """Ab 0.47: Themen eines Fachbereichs auf- oder zuklappen."""
+        if staff_id in self.topics_for:
+            # Alles war offen: nur diesen Fachbereich zuklappen
+            self.topics_for.discard(staff_id)
+            self.cats_open |= {(staff_id, cat) for cat in fg.CAT_ORDER if cat != key}
+        elif (staff_id, key) in self.cats_open:
+            self.cats_open.discard((staff_id, key))
+        else:
+            self.cats_open.add((staff_id, key))
         self.render(keep_scroll=True)
 
     def _train(self, staff_id, target):
@@ -3967,7 +4057,7 @@ class FirmView(ScrollArea):
                        fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
                 anchor="w", pady=(8, 0))
 
-        if state.firm:
+        if fg.tax_active(state):
             self._build_tax(state)
 
         lost = fg.lost_to(state)
@@ -4640,7 +4730,8 @@ class JourneyView(ScrollArea):
 
     def _build_numbers(self, state, stats):
         card = Card(self.content, title="Rückblick", accent=C["accent2"],
-                    subtitle="%s · Arbeitstag %d" % (state.profile["name"], state.day))
+                    subtitle="%s · Arbeitstag %d · %s" % (state.profile["name"], state.day,
+                                                          fg.difficulty_badge_text(state)))
         card.pack(fill="x")
         grid = _frame(card.body)
         grid.pack(fill="x")

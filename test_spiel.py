@@ -317,8 +317,10 @@ class AbgleichTest(unittest.TestCase):
             self.assertEqual(state.profile["name"], "Nico")
             # Doppelter Abgleich zaehlt nichts doppelt
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
-            # Profil und (ab 0.46) das Abzeichen "Erster Arbeitstag"
-            self.assertEqual(len(handy.game_events()), 2)
+            # Profil, (ab 0.46) das Abzeichen "Erster Arbeitstag" und (ab 0.47)
+            # der Schwierigkeitsgrad
+            self.assertEqual(len(handy.game_events()), 3)
+            self.assertEqual(state.level, fg.DIFF_NORMAL)
 
     def test_zuruecksetzen_wird_abgeglichen(self):
         with TempDB() as pc, TempDB() as handy:
@@ -4926,9 +4928,10 @@ class ErfolgeTest(unittest.TestCase):
         self.assertEqual(fg._validate_achievements(fg.GAME), [])
         rules = fg.achievement_rules()
         stages = [stage for rule in rules["erfolge"] for stage in rule["stufen"]]
-        self.assertEqual(len(rules["erfolge"]), 32)
-        self.assertEqual(len(stages), 72)
-        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 25)
+        # Ab 0.47: zwei Story-Abzeichen dazu (je eine Stufe mit Moment)
+        self.assertEqual(len(rules["erfolge"]), 34)
+        self.assertEqual(len(stages), 74)
+        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 27)
         self.assertEqual(len(rules["bestwerte"]), 14)
         for rule in rules["erfolge"]:
             self.assertIn(rule["bild"], fg.BADGE_PICTURES)
@@ -5120,6 +5123,289 @@ class ErfolgeTest(unittest.TestCase):
             # ... und alte Zeilen vom PC kommen nicht zurueck
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
             self.assertEqual(handy.records(), [])
+
+
+class SchwierigkeitTest(unittest.TestCase):
+    """Schwierigkeitsgrad Einfach/Normal (ab 0.47): beim Spielstart gewaehlt,
+    fest fuer den Durchgang; Einfach macht die Wirtschaft verzeihender."""
+
+    setUp = FirmaTest.setUp
+    _day_end = MitarbeiterThemenTest._day_end
+    _hire = PersonalTest._hire
+    _live_day = PersonalTest._live_day
+    _days = KrediteTest._days
+    _spend = KrediteTest._spend
+    _offers = RivalitaetMarktTest._offers
+
+    def _rich(self, db, money=30000, done=True, level=fg.DIFF_EASY):
+        game = fg.Game(db, "PC", self.content)
+        game.set_profile("Nico", {}, level)
+        db.log_game_event(fg.EV_SOLVED, json.dumps(
+            {"aufgabe": self.task["id"] if done else "anderes", "tag": 1, "richtig": True,
+             "geld": money, "reputation": {key: 60 for key in fg.AXIS_KEYS}}), "PC")
+        game.reload()
+        return game
+
+    def _founded(self, db, money=30000, level=fg.DIFF_EASY):
+        game = self._rich(db, money, level=level)
+        game.found_firm("Nico IT-Service")
+        return game
+
+    def _levels(self, db):
+        return [row[2] for row in db.game_events() if row[1] == fg.EV_DIFFICULTY]
+
+    def test_inhalte(self):
+        rules = fg.difficulty_rules()
+        self.assertEqual([key for key, _name, _text in fg.difficulty_levels()],
+                         [fg.DIFF_EASY, fg.DIFF_NORMAL])
+        self.assertEqual(fg.difficulty_default(), fg.DIFF_NORMAL)
+        for key in ("umsatzsteuer", "mahnstufen", "abschwung", "gegenwind", "rueckhol",
+                    "kuendigung"):
+            self.assertIs(rules["einfach"][key], False)
+        # Normal: immer der Normal-Wert, egal was in "einfach" steht
+        self.assertEqual(fg.difficulty_rule(fg.DIFF_NORMAL, "krankheit_faktor"), 1.0)
+        self.assertEqual(fg.difficulty_rule(fg.DIFF_EASY, "krankheit_faktor"), 0.5)
+        self.assertTrue(fg.difficulty_rule(fg.DIFF_NORMAL, "umsatzsteuer", True))
+
+    def test_wahl_beim_start_und_fest(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC", self.content)
+            self.assertIn("beim Spielstart", fg.difficulty_options_text(game.state))
+            game.set_profile("Nico", {}, fg.DIFF_EASY)
+            self.assertTrue(game.state.easy)
+            self.assertEqual(game.state.level, fg.DIFF_EASY)
+            self.assertEqual(fg.difficulty_badge_text(game.state), "Schwierigkeitsgrad: Einfach")
+            self.assertIn("Spielstand zurücksetzen", fg.difficulty_options_text(game.state))
+            # Aussehen aendern aendert den Schwierigkeitsgrad nicht
+            game.set_profile("Nico", {"extra": "brille"}, fg.DIFF_NORMAL)
+            self.assertEqual(game.state.level, fg.DIFF_EASY)
+            self.assertEqual(len(self._levels(db)), 1)
+            # Nach dem Zuruecksetzen wird neu gewaehlt
+            game.reset()
+            self.assertIsNone(game.state.difficulty)
+            game.set_profile("Nico", {}, fg.DIFF_NORMAL)
+            self.assertEqual(game.state.level, fg.DIFF_NORMAL)
+            self.assertFalse(game.state.easy)
+
+    def test_alter_spielstand_ist_normal(self):
+        with TempDB() as db:
+            db.log_game_event(fg.EV_PROFILE, json.dumps({"name": "Nico", "aussehen": {}}), "PC")
+            game = fg.Game(db, "PC", self.content)
+            self.assertIsNone(game.state.difficulty)
+            self.assertEqual(game.state.level, fg.DIFF_NORMAL)
+            # Das Profil spaeter aendern legt keinen Schwierigkeitsgrad nach
+            game.set_profile("Nico", {}, fg.DIFF_EASY)
+            self.assertEqual(game.state.level, fg.DIFF_NORMAL)
+            self.assertEqual(self._levels(db), [])
+
+    def test_abgleich(self):
+        with TempDB() as pc, TempDB() as handy:
+            fg.Game(pc, "PC", self.content).set_profile("Nico", {}, fg.DIFF_EASY)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertTrue(fg.Game(handy, "Handy", self.content).state.easy)
+            # Auf beiden Geraeten gleichzeitig gewaehlt: das erste gilt
+            handy.log_game_event(fg.EV_DIFFICULTY, json.dumps({"stufe": fg.DIFF_NORMAL}),
+                                 "Handy")
+            self.assertTrue(fg.Game(handy, "Handy", self.content).state.easy)
+
+    def test_umsatzsteuer_entfaellt(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            easy = self._founded(easy_db)
+            normal = self._founded(normal_db, level=fg.DIFF_NORMAL)
+            self.assertNotIn("ust", easy.end_day()["firma"])
+            self.assertEqual(normal.end_day()["firma"]["ust"], 1)
+            self.assertFalse(fg.tax_active(easy.state))
+            self.assertTrue(fg.tax_active(normal.state))
+            # Einnahmen bleiben ganz auf dem Konto
+            before = easy.state.money
+            self._days(easy, 12, revenue=1190)
+            self.assertEqual(easy.state.money, before + 12 * 1190)
+            self.assertEqual(easy.state.tax_log, [])
+
+    def test_keine_mahnstufe(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self._days(game, 10)
+            game.take_loan(0, 0, "kurz")
+            reliability = game.state.reputation["zuverlaessigkeit"]
+            self._spend(game, game.state.money + 1000)       # Konto leer
+            end = game.end_day()
+            state = game.state
+            loan = state.running_loans()[0]
+            self.assertEqual(state.dunning, 0)
+            self.assertEqual(loan["raten"], 0)
+            self.assertEqual(loan["ausfaelle"], 1)
+            self.assertEqual(loan["gebuehren"], 0)
+            self.assertEqual(state.reputation["zuverlaessigkeit"], reliability)
+            text = fg.firm_day_text(end["firma"])
+            self.assertIn("ausgesetzt", text)
+            self.assertNotIn("Mahnstufe", text)
+            self.assertFalse(fg.dunning_text(state, self.content))
+            titles = [entry["titel"] for entry in fg.journey(state, self.content)]
+            self.assertIn("Kreditrate ausgesetzt", titles)
+            # Weitere geplatzte Raten: immer noch keine Mahnstufe, kein Zinsaufschlag
+            self._days(game, 2, revenue=0)
+            self.assertEqual(game.state.dunning, 0)
+            self.assertFalse(fg.credit_check(game.state, self.content)["sperre"])
+
+    def test_personal_verzeihender(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "listenmensch", 1, vorher="kranich")
+            state = self._live_day(game)
+            # Niemand kuendigt, auch bei dauerhaft schlechter Stimmung
+            state.mood[worker] = 5
+            state.mood_low[worker] = 5
+            arts = [item["art"] for item in fg.personal_events(state, state.day, self.content)]
+            self.assertNotIn(fg.PERSONAL_QUIT, arts)
+            self.assertNotIn(fg.PERSONAL_WARN, arts)
+            # Keine Rueckhol-Angebote, auch bei sicherer Chance
+            self.content["firma"]["rivalitaet"]["rueckhol"]["chance"] = 100
+            later = state.day + 100
+            self.assertEqual(fg._recall_events(state, later, list(state.staff), set(),
+                                               self.content), [])
+            # Urlaub abgelehnt kostet nur die Haelfte
+            rules = self.content["firma"]["personal"]
+            state.mood[worker] = 70
+            day = state.day
+            ask = {"art": fg.PERSONAL_VACATION, "anfrage": "urlaub:%d:x" % day, "id": worker,
+                   "name": "Person1 Test", "von": day + 6, "bis": day + 9}
+            state = self._live_day(game, [ask])
+            mood = state.mood_of(worker)
+            game.decide(ask["anfrage"], fg.VACATION_NO)
+            self.assertEqual(game.state.mood_of(worker),
+                             mood + round(rules["urlaub"]["abgelehnt"] * 0.5))
+
+    def test_krankheit_und_konflikte_seltener(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            counts = {}
+            for db, level in ((easy_db, fg.DIFF_EASY), (normal_db, fg.DIFF_NORMAL)):
+                game = self._founded(db, level=level)
+                for number in range(4):
+                    self._hire(game, "gruendlich", number)
+                state = game.state
+                sick = conflicts = 0
+                for day in range(state.day, state.day + 600):
+                    arts = [item["art"] for item in
+                            fg.personal_events(state, day, self.content)]
+                    sick += arts.count(fg.PERSONAL_SICK)
+                    conflicts += arts.count(fg.PERSONAL_CONFLICT)
+                counts[level] = (sick, conflicts)
+            self.assertLess(counts[fg.DIFF_EASY][0], counts[fg.DIFF_NORMAL][0])
+            self.assertLess(counts[fg.DIFF_EASY][1], counts[fg.DIFF_NORMAL][1])
+
+    def test_macken_schwaeche_halb(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            easy = self._founded(easy_db)
+            normal = self._founded(normal_db, level=fg.DIFF_NORMAL)
+            for game in (easy, normal):
+                self._hire(game, "pedantisch", 1)
+            key = "umsatz"
+            hard = normal.state.quirk_value("test-1", key)
+            soft = easy.state.quirk_value("test-1", key)
+            self.assertLess(hard, 0)
+            self.assertAlmostEqual(soft, hard * 0.5)
+            # Die Staerke bleibt voll
+            self.assertEqual(easy.state.quirk_value("test-1", "chance_netzwerk"),
+                             normal.state.quirk_value("test-1", "chance_netzwerk"))
+            # Auch bei Bewerbern steht die halbe Schwaeche
+            for item in fg.applicants(easy.state, self.content):
+                other = next(entry for entry in fg.applicants(normal.state, self.content)
+                             if entry["id"] == item["id"])
+                self.assertAlmostEqual(item["macke_info"]["faktor"],
+                                       other["macke_info"]["faktor"] * 0.5)
+
+    def test_kein_gegenwind_kein_abschwung(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            easy = self._founded(easy_db)
+            normal = self._founded(normal_db, level=fg.DIFF_NORMAL)
+            easy_state = self._offers(easy_db, easy, [True] * 10, first_day=20)
+            normal_state = self._offers(normal_db, normal, [True] * 10, first_day=20)
+            self.assertTrue(fg.rivalry_pressure(normal_state, 50, self.content)["aktiv"])
+            self.assertFalse(fg.rivalry_pressure(easy_state, 50, self.content)["aktiv"])
+            start = int(self.content["firma"]["markt"]["ab_tag"])
+            easy_phases = {fg.market_state(easy_state, day, self.content)["phase"]
+                           for day in range(start, start + 400)}
+            normal_phases = {fg.market_state(normal_state, day, self.content)["phase"]
+                             for day in range(start, start + 400)}
+            self.assertIn("abschwung", normal_phases)
+            self.assertNotIn("abschwung", easy_phases)
+            self.assertIn("aufschwung", easy_phases)
+
+    def test_falsches_ticket_kostet_die_haelfte(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            results = {}
+            for db, level in ((easy_db, fg.DIFF_EASY), (normal_db, fg.DIFF_NORMAL)):
+                game = fg.Game(db, "PC", self.content)
+                game.set_profile("Nico", {}, level)
+                task = game.state.open_tickets()[0]
+                results[level] = game.solve(task["id"], _wrong_answer(task), True)
+            hard, soft = results[fg.DIFF_NORMAL], results[fg.DIFF_EASY]
+            self.assertFalse(hard["richtig"] or soft["richtig"])
+            self.assertEqual(soft["geld"], int(round(hard["geld"] * 0.5)))
+            self.assertLess(sum(hard["reputation"].values()), sum(soft["reputation"].values()))
+            self.assertLess(sum(soft["reputation"].values()), 0)
+
+    def test_story_abzeichen(self):
+        with TempDB() as easy_db, TempDB() as normal_db:
+            easy = self._rich(easy_db)
+            normal = self._rich(normal_db, level=fg.DIFF_NORMAL)
+            for game in (easy, normal):
+                game.check_achievements()
+            self.assertIn(("story_einfach", 1), easy.state.achievements)
+            self.assertNotIn(("story_normal", 1), easy.state.achievements)
+            self.assertIn(("story_normal", 1), normal.state.achievements)
+            self.assertNotIn(("story_einfach", 1), normal.state.achievements)
+            # Mit Meilenstein-Moment
+            moments = [info["erfolg"] for info in easy.take_unlocks() if info["moment"]]
+            self.assertIn("story_einfach", moments)
+            # Drei Abzeichen gibt es auf Einfach nicht
+            items = {item["id"]: item for item in fg.achievement_overview(easy.state)}
+            for key in ("steuerehrlich", "zurueck_auf_kurs", "treue_mannschaft"):
+                self.assertTrue(items[key]["nur_normal"], key)
+                self.assertFalse(items[key]["balken"])
+            self.assertEqual(fg.badge_status(items["steuerehrlich"])[0], "nur auf Normal")
+            normal_items = {item["id"]: item for item in fg.achievement_overview(normal.state)}
+            self.assertFalse(normal_items["steuerehrlich"]["nur_normal"])
+
+    def test_alte_fertige_story_still_nachgetragen(self):
+        with TempDB() as db:
+            db.log_game_event(fg.EV_PROFILE, json.dumps({"name": "Nico", "aussehen": {}}), "PC")
+            db.log_game_event(fg.EV_ACHIEVEMENT, json.dumps(
+                {"erfolg": "erster_tag", "stufe": 1, "tag": 1}), "PC")
+            db.log_game_event(fg.EV_SOLVED, json.dumps(
+                {"aufgabe": self.task["id"], "tag": 1, "richtig": True, "geld": 0,
+                 "reputation": {}}), "PC")
+            db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": 1, "gehalt": 0}), "PC")
+            game = fg.Game(db, "PC", self.content)
+            game.check_achievements()
+            self.assertIn(("story_normal", 1), game.state.achievements)
+            self.assertTrue(game.state.achievements[("story_normal", 1)]["nachgetragen"])
+            self.assertEqual([info["erfolg"] for info in game.take_unlocks()
+                              if info["erfolg"] == "story_normal"], [])
+
+
+class SkillBalkenTest(unittest.TestCase):
+    """Skill-Balken der Mitarbeiter (ab 0.47)."""
+
+    def test_balken_je_fachbereich_und_thema(self):
+        topics = {topic: 40 for topic in fg.TOPIC_ORDER}
+        first = fg.CAT_TOPICS[fg.CAT_ORDER[0]][0]
+        topics[first] = 80
+        item = {"themen": topics, "werte": fg.cat_values(topics)}
+        rows = fg.skill_bars(item)
+        self.assertEqual([row["cat"] for row in rows], list(fg.CAT_ORDER))
+        self.assertEqual(sum(len(row["themen"]) for row in rows), len(fg.TOPIC_ORDER))
+        top = rows[0]
+        self.assertEqual(top["wert"], item["werte"][fg.CAT_ORDER[0]])
+        self.assertAlmostEqual(top["anteil"], top["wert"] / 100.0)
+        topic = top["themen"][0]
+        self.assertEqual((topic["thema"], topic["wert"], topic["anteil"]), (first, 80, 0.8))
+        # Ab der Lern-Grenze (70) ist der Wert markiert
+        self.assertTrue(topic["grenze"])
+        self.assertFalse(top["themen"][1]["grenze"])
+        # Die genauen Werte stehen auch im Text wie bisher
+        self.assertIn("80", fg.topics_text(topics, fg.CAT_ORDER[0]))
 
 
 if __name__ == "__main__":

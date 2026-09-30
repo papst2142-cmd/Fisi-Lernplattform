@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.47
+
+- **Spiel: Skill-Balken für Mitarbeiter.** Jede Person (auch bei den
+  Bewerbungen) zeigt ihr Können jetzt als fünf farbige Balken, einen je
+  Fachbereich. Ein Klick (am Handy ein Tipp) auf einen Balken klappt die
+  Themen dieses Fachbereichs mit eigenen Balken und genauen Werten auf.
+- **Schwierigkeitsgrad „Einfach“ oder „Normal“:** Beim Spielstart wählst
+  du neben Name und Aussehen den Schwierigkeitsgrad. Er gilt fest für den
+  ganzen Durchgang und lässt sich nur mit „Spielstand zurücksetzen“ neu
+  wählen. Auf „Einfach“ fallen Umsatzsteuer, Mahnstufen, Abschwung,
+  Gegenwind, Rückhol-Angebote und Kündigungen weg. Krankheit, Konflikte,
+  abgelehnter Urlaub, Macken-Schwächen sowie Fehlerkosten und
+  Ansehensverlust in der Bitweiche-Zeit sind halb so stark. Der Grad steht
+  im Firmenkopf, im Rückblick und unter Optionen > Spiel. Ältere
+  Spielstände zählen als „Normal“. Die Lernplattform bleibt unberührt.
+- **Zwei neue Abzeichen:** „Story abgeschlossen: Einfach“ (Silber) und
+  „Story abgeschlossen: Normal“ (Gold). Die Bestenliste bleibt ein
+  gemeinsamer Topf. Steuerehrlich, Zurück auf Kurs und Treue Mannschaft
+  gibt es nur auf „Normal“.
+- **„Meine Reise“:** Der Knopf „Reise öffnen“ heißt jetzt „Meine Reise“.
+- **Karte:** Die Gleise der Talbahn fahren nicht mehr durch Bahnhöfe,
+  Gebäude und Bäume, sondern sauber an den Bahnsteigen entlang.
+
 ## 0.46
 
 - **Spiel: Erfolge in der Reise.** Unter Spiel > Reise gibt es jetzt die

@@ -120,6 +120,11 @@ EV_TRANSFER = "mitarbeiter_versetzt"
 # Spielstand, das Ereignis haelt nur fest, wann (und dass der Meilenstein-
 # Moment schon gezeigt wurde - auch auf dem anderen Geraet)
 EV_ACHIEVEMENT = "erfolg_freigeschaltet"
+# Schwierigkeitsgrad (ab 0.47): beim Spielstart gewaehlt, das erste Ereignis
+# gilt fuer den ganzen Durchgang (fest bis "Spielstand zuruecksetzen")
+EV_DIFFICULTY = "schwierigkeit_gewaehlt"
+DIFF_EASY = "einfach"
+DIFF_NORMAL = "normal"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
                EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
@@ -2892,7 +2897,8 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
     else:
         factor = balancing["faktor_unter_niveau"] if below else 1
         money = -balancing["fehlerkosten"]
-        loss = task.get("verlust", balancing["reputation_verlust"])
+        loss = task.get("verlust", balancing["reputation_verlust"]) * \
+            balancing.get("verlust_faktor", 1)
         for axis in axes:
             delta[axis] -= _scaled(loss, factor)
 
@@ -3185,6 +3191,9 @@ class GameState:
         self.mood_log = []         # (tag, mittlere Stimmung) je Feierabend ab 3 Mitarbeitern
         self.dunning_peak = 0      # hoechste Mahnstufe seit der letzten 0
         self.dunning_over = []     # hoechste Mahnstufe je ueberstandenem Mahnverfahren
+        # Schwierigkeitsgrad (ab 0.47) - None = nie gewaehlt (Spielstand vor
+        # 0.47), zaehlt dann als Normal
+        self.difficulty = None
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3194,6 +3203,9 @@ class GameState:
             today = today or self.days_done + 1
             if kind in FIRM_EVENTS:
                 self._apply_firm(kind, data, today)
+            if kind == EV_DIFFICULTY and self.difficulty is None and \
+                    data.get("stufe") in (DIFF_EASY, DIFF_NORMAL):
+                self.difficulty = data["stufe"]
             if kind == EV_ACHIEVEMENT:
                 key = (data.get("erfolg"), int(data.get("stufe", 0) or 0))
                 if key[0] and key[1] and key not in self.achievements:
@@ -3537,6 +3549,16 @@ class GameState:
         Zahlung sinkt sie nach abbau_tage Arbeitstagen wieder um 1."""
         rules = loan_rules(self.content)
         steps = rules["mahnung"]["stufen"]
+        if failed and not self.ease("mahnstufen", True):
+            # Ab 0.47 auf "Einfach": keine Mahnstufe, keine Gebuehr, kein
+            # Ansehensverlust - die Rate haengt nur hinten an (Laufzeit + 1)
+            for kind, item, due in failed:
+                if kind == "kredit":
+                    item["ausfaelle"] += 1
+                    self.loan_log.append((day, "ausfall", item["id"], {
+                        "rate": due, "stufe": 0, "gebuehr": 0, "reputation": {},
+                        "einfach": True}))
+            return
         if failed:
             # Hoechstens eine Stufe pro Feierabend, auch wenn mehreres platzt
             self.dunning = min(len(steps), self.dunning + 1)
@@ -3777,6 +3799,22 @@ class GameState:
         Tickets, damit sie sich nicht mitten am Tag aendert."""
         return rank_for(self.start_reputation, self.content["balancing"], self.day)
 
+    # -- Schwierigkeitsgrad (ab 0.47) -------------------------------------------
+
+    @property
+    def level(self):
+        """ "einfach" oder "normal" (Spielstaende vor 0.47 zaehlen als Normal)."""
+        return self.difficulty or DIFF_NORMAL
+
+    @property
+    def easy(self):
+        return self.difficulty == DIFF_EASY
+
+    def ease(self, key, normal=1.0):
+        """Regel des Schwierigkeitsgrads: bei Normal immer der Normal-Wert,
+        bei Einfach der Wert aus balancing.json (schwierigkeit.einfach)."""
+        return difficulty_rule(self.level, key, normal, self.content)
+
     @property
     def tickets_today(self):
         return tickets_per_day(self.day_rank, self.content["balancing"])
@@ -3960,7 +3998,9 @@ class GameState:
         coached = sum(1 for item in self.trainings
                       if item.get("id") == staff_id and item.get("art") == TRAINING_COACHING
                       and item.get("bis_tag", 0) <= day)
-        return quirk_state(staff_id, data, day, coached, self.content)
+        # Ab 0.47 auf "Einfach": die Schwaeche wirkt nur halb so stark
+        return quirk_state(staff_id, data, day, coached, self.content,
+                           self.ease("macken_schwaeche_faktor"))
 
     def quirk_value(self, staff_id, key, day=None):
         """Wirkung der Macke fuer einen Schluessel (Staerke voll, Schwaeche
@@ -4027,8 +4067,9 @@ class GameState:
                       if item.get("id") == data.get("id") and item.get("anfrage") and
                       item.get("anfrage") != key]
             again = bool(before) and before[-1]["art"] == EV_VACATION_NO
-            self._mood_change(data.get("id"), rules["urlaub"]["abgelehnt_wieder" if again
-                                                            else "abgelehnt"])
+            self._mood_change(data.get("id"), round(
+                rules["urlaub"]["abgelehnt_wieder" if again else "abgelehnt"] *
+                self.ease("urlaub_abgelehnt_faktor")))
         elif kind == EV_CONFLICT:
             rule = rules["konflikt"]
             first, second = data.get("a"), data.get("b")
@@ -4493,15 +4534,19 @@ class Game:
             records = self.records()
             found = new_achievements(state, knowledge, self.content)
             silent = not state.achievements and state.days_done > 0
+            # Ab 0.47: Eine Story, die schon vor dem Update fertig war, wird
+            # still als "Normal" nachgetragen
+            old_story = state.difficulty is None and story_done_day(state) < state.day
             infos = []
             if found:
                 day = max(1, state.days_done if day_end else state.day)
                 for rule, level in found:
+                    quiet = silent or (old_story and rule["id"] in STORY_BADGES)
                     info = unlock_info(state, rule, level, records, self.content)
                     self.db.log_game_event(EV_ACHIEVEMENT, json.dumps(
                         {"erfolg": rule["id"], "stufe": level, "tag": day,
-                         "nachgetragen": silent}, ensure_ascii=False), self.device)
-                    if not silent:
+                         "nachgetragen": quiet}, ensure_ascii=False), self.device)
+                    if not quiet:
                         infos.append(info)
                 self.reload()
             if hasattr(self.db, "log_record"):
@@ -4534,10 +4579,17 @@ class Game:
         self.check_achievements()
         return ok
 
-    def set_profile(self, name, appearance):
+    def set_profile(self, name, appearance, difficulty=None):
+        """Name und Aussehen. Ab 0.47 beim allerersten Profil auch der
+        Schwierigkeitsgrad - danach bleibt er fuer den ganzen Durchgang."""
         name = (name or "").strip()[:30]
         if not name:
             raise ValueError("Bitte gib deiner Spielfigur einen Namen.")
+        new_run = self.state.profile is None and self.state.difficulty is None
+        if new_run:
+            level = difficulty if difficulty in (DIFF_EASY, DIFF_NORMAL) else \
+                difficulty_default(self.content)
+            self._log(EV_DIFFICULTY, {"stufe": level})
         self._log(EV_PROFILE, {"name": name,
                                "aussehen": normalize_appearance(appearance)})
 
@@ -4548,7 +4600,7 @@ class Game:
         if task is None or not self.state.is_open(task_id):
             raise ValueError("Dieses Ticket ist heute nicht (mehr) offen.")
         payload = evaluate(task, answer, used_help, self.topic_knowledge(), self.state.day,
-                           self.content["balancing"], self.state.available_parts(task),
+                           _eased_balancing(self.state), self.state.available_parts(task),
                            self.content, self.state.stock())
         self._log(EV_SOLVED, payload)
         return payload
@@ -4598,7 +4650,9 @@ class Game:
                 payload["firma"]["projekte"] = days
             # Ab 0.42: Umsatzsteuer ab diesem Feierabend (aeltere Tage bleiben
             # steuerfrei, damit alte Spielstaende nicht nachtraeglich zahlen)
-            payload["firma"]["ust"] = 1
+            # Ab 0.47: auf "Einfach" gibt es keine Umsatzsteuer
+            if self.state.ease("umsatzsteuer", True):
+                payload["firma"]["ust"] = 1
             # Ab 0.43: Macken und Stimmung wirken ab diesem Feierabend
             payload["firma"]["personal"] = []
             # Einmal durchrechnen, was der Feierabend bringt (nur fuer die Anzeige)
@@ -5180,6 +5234,63 @@ def firm_rules(content=None):
     return (content or GAME)["firma"]
 
 
+# -- Schwierigkeitsgrad (ab 0.47) ---------------------------------------------
+
+def difficulty_rules(content=None):
+    return (content or GAME)["balancing"].get("schwierigkeit") or {}
+
+
+def difficulty_levels(content=None):
+    """[(id, Name, Erklaerung)] in der Reihenfolge der Auswahl."""
+    stages = difficulty_rules(content).get("stufen") or [
+        {"id": DIFF_EASY, "name": "Einfach", "text": ""},
+        {"id": DIFF_NORMAL, "name": "Normal", "text": ""}]
+    return [(item["id"], item["name"], item.get("text", "")) for item in stages]
+
+
+def difficulty_name(level, content=None):
+    names = {key: name for key, name, _text in difficulty_levels(content)}
+    return names.get(level or DIFF_NORMAL, (level or DIFF_NORMAL).capitalize())
+
+
+def difficulty_default(content=None):
+    return difficulty_rules(content).get("voreinstellung", DIFF_NORMAL)
+
+
+def difficulty_rule(level, key, normal=1.0, content=None):
+    """Wert einer Einfach-Regel (sonst der Normal-Wert)."""
+    if level != DIFF_EASY:
+        return normal
+    value = (difficulty_rules(content).get(DIFF_EASY) or {}).get(key)
+    return normal if value is None else value
+
+
+def difficulty_badge_text(state, content=None):
+    """ "Schwierigkeitsgrad: Einfach" (Anzeige im Spiel)."""
+    return "Schwierigkeitsgrad: %s" % difficulty_name(state.level, content)
+
+
+def difficulty_options_text(state, content=None):
+    """Zeile in den Optionen (PC und Handy gleich)."""
+    if state.profile is None and state.difficulty is None:
+        return "Schwierigkeitsgrad: wird beim Spielstart gewählt"
+    return "%s · ändern nur durch „Spielstand zurücksetzen“" % difficulty_badge_text(
+        state, content)
+
+
+def _eased_balancing(state):
+    """balancing.json mit den Einfach-Faktoren fuer falsche Tickets."""
+    balancing = state.content["balancing"]
+    if not state.easy:
+        return balancing
+    result = dict(balancing)
+    result["fehlerkosten"] = int(round(balancing["fehlerkosten"] *
+                                       state.ease("fehlerkosten_faktor")))
+    # Faktor statt Wert, damit auch der eigene Verlust eines Auftrags gilt
+    result["verlust_faktor"] = state.ease("reputation_verlust_faktor")
+    return result
+
+
 def learn_rules(content=None):
     return firm_rules(content)["lernen"]
 
@@ -5289,6 +5400,32 @@ def topics_text(topics, cat):
     """ "Grundlagen 32 · IPv4 40 · ..." - die Themen eines Fachbereichs """
     return " · ".join("%s %d" % (TOPIC_SHORT[topic], int(topics.get(topic, 0)))
                       for topic in CAT_TOPICS[cat])
+
+
+# Skill-Balken der Mitarbeiter (ab 0.47): Balken von 0 bis SKILL_BAR_MAX
+SKILL_BAR_MAX = 100
+
+
+def skill_bars(item):
+    """Fachbereiche einer Person fuer die Balken (PC und Handy gleich):
+    [{"cat", "name", "wert", "anteil" (0 bis 1), "themen": [{"thema",
+    "name", "wert", "anteil", "grenze" (Lern-Grenze erreicht)}]}]"""
+    topics = item.get("themen") or {}
+    values = item.get("werte") or cat_values(topics)
+    cap = learn_cap()
+    result = []
+    for key in CAT_ORDER:
+        value = int(values.get(key, 0))
+        rows = []
+        for topic in CAT_TOPICS[key]:
+            number = int(topics.get(topic, 0))
+            rows.append({"thema": topic, "name": TOPIC_SHORT[topic], "wert": number,
+                         "anteil": max(0.0, min(1.0, number / float(SKILL_BAR_MAX))),
+                         "grenze": number >= cap})
+        result.append({"cat": key, "name": CATEGORY_SHORT[CAT_NAME[key]], "wert": value,
+                       "anteil": max(0.0, min(1.0, value / float(SKILL_BAR_MAX))),
+                       "themen": rows})
+    return result
 
 
 LEARN_REASONS = {"ticket": "Kundenticket", "projekt": "Projekt", "routine": "Routinearbeit"}
@@ -5425,6 +5562,15 @@ def applicants(state, content=None):
             continue
         item["bis_tag"] = start + (batch + 1) * step - 1
         result.append(item)
+    weaker = state.ease("macken_schwaeche_faktor")
+    if weaker != 1:
+        # Ab 0.47 auf "Einfach": die Schwaeche wirkt nur halb so stark
+        for item in result:
+            info = item.get("macke_info")
+            if info:
+                info["faktor"] *= float(weaker)
+                info["minus_texte"] = [quirk_effect_text(key, value * info["faktor"])
+                                       for key, value in info["minus"].items()]
     return result
 
 
@@ -5556,7 +5702,7 @@ def quirk_start_stage(staff_id, data):
     return 3 if _dice(staff_id, 0, "macke-stufe") < 0.5 else 2
 
 
-def quirk_state(staff_id, data, day, coached=0, content=None):
+def quirk_state(staff_id, data, day, coached=0, content=None, weaker=1.0):
     """Macke mit Stufe am Tag: {"id", "name", "text", "plus", "minus",
     "start", "stufe", "stufe_name", "faktor", "plus_texte", "minus_texte",
     "naechste_in" (Arbeitstage bis zur naechsten Stufe durch Erfahrung oder
@@ -5573,7 +5719,7 @@ def quirk_state(staff_id, data, day, coached=0, content=None):
     result = {"id": item["id"], "name": item["name"], "text": item["text"],
               "plus": dict(item.get("plus") or {}), "minus": dict(item.get("minus") or {}),
               "start": start, "stufe": stage, "stufe_name": name,
-              "faktor": float(percent) / 100.0,
+              "faktor": float(percent) / 100.0 * float(weaker),
               "naechste_in": every - tenure % every if stage > 1 else None}
     result["plus_texte"] = [quirk_effect_text(key, value) for key, value in result["plus"].items()]
     result["minus_texte"] = [quirk_effect_text(key, value * result["faktor"])
@@ -5819,8 +5965,10 @@ def personal_events(state, day, content=None):
     tomorrow = day + 1
     result = []
     names = {staff_id: data.get("name", "") for staff_id, data in state.staff.items()}
+    # Ab 0.47 auf "Einfach": niemand kuendigt (die Stimmung wirkt weiter)
+    quits = state.ease("kuendigung", True)
     for staff_id in list(state.staff):
-        low = state.mood_low.get(staff_id, 0)
+        low = state.mood_low.get(staff_id, 0) if quits else 0
         if low >= int(rules["stimmung"]["kuendigung_nach"]):
             result.append({"art": PERSONAL_QUIT, "id": staff_id, "name": names[staff_id]})
         elif low == 1:
@@ -5831,7 +5979,7 @@ def personal_events(state, day, content=None):
     rule = rules["krankheit"]
     for staff_id in present:
         chance = float(rule["chance"]) * max(0.0, 1 + state.quirk_value(
-            staff_id, "krank", tomorrow) / 100.0)
+            staff_id, "krank", tomorrow) / 100.0) * state.ease("krankheit_faktor")
         if _dice(seed, day, "krank|" + staff_id) * 100 < chance:
             days = _between(seed, day, "krank-tage|" + staff_id, int(rule["tage_min"]),
                             int(rule["tage_max"]))
@@ -5873,7 +6021,8 @@ def personal_events(state, day, content=None):
                 if item.get("art") == PERSONAL_CONFLICT] or [-1000])
     if len(people) >= int(rule["ab_mitarbeiter"]) and day - last >= int(rule["abstand"]):
         boost = max(state.quirk_value(staff_id, "konflikt", tomorrow) for staff_id in people)
-        chance = float(rule["chance"]) * max(0.0, 1 + boost / 100.0)
+        chance = float(rule["chance"]) * max(0.0, 1 + boost / 100.0) * \
+            state.ease("konflikt_faktor")
         if _dice(seed, day, "konflikt") * 100 < chance:
             (first, second), text = conflict_pair(state, people, seed, day, content)
             result.append({"art": PERSONAL_CONFLICT, "konflikt": "konflikt:%d" % day,
@@ -6791,6 +6940,11 @@ def loan_day_lines(items):
                 _whole_euro(item["tilgung"]),
                 ", Gebühren %s" % _whole_euro(item["gebuehren"]) if item.get("gebuehren")
                 else ""))
+        elif item["art"] == "ausfall" and item.get("einfach"):
+            # Ab 0.47 auf "Einfach": keine Mahnung, die Rate haengt hinten an
+            lines.append("%s: Rate %s diesmal ausgesetzt, das Konto hat nicht gereicht. "
+                         "Keine Mahnung, die Rate hängt hinten an." % (
+                             item["name"], _whole_euro(item["rate"])))
         elif item["art"] == "ausfall":
             step = item.get("stufe", 1)
             text = "%s: Rate %s geplatzt, das Konto hat nicht gereicht! Mahnstufe %d, " \
@@ -6856,6 +7010,11 @@ def tax_next_due(state, content=None):
     """Arbeitstag, an dessen Feierabend die naechste Voranmeldung faellig ist."""
     every = max(1, int(tax_rules(content)["faellig_tage"]))
     return state.day + every - (state.tax_days % every) - 1
+
+
+def tax_active(state):
+    """Umsatzsteuer im Spiel? Ab 0.47 auf "Einfach" nicht."""
+    return bool(state.firm) and bool(state.ease("umsatzsteuer", True))
 
 
 def tax_status(state, content=None):
@@ -8115,7 +8274,7 @@ def recall_bonus(salary, rule):
 def _recall_events(state, day, present, taken, content):
     """Hoechstens ein Rueckhol-Angebot pro Feierabend (fest gewuerfelt)."""
     rule = rivalry_rules(content).get("rueckhol")
-    if not rule:
+    if not rule or not state.ease("rueckhol", True):
         return []
     seed = state.firm_seed
     last = max([tag for tag, item in state.personal_log
@@ -8209,7 +8368,7 @@ def rivalry_pressure(state, day, content=None):
     rule = rivalry_rules(content).get("gegenwind")
     empty = {"aktiv": False, "gewonnen": 0, "angebote": 0, "minus": 0, "zweiter": 0.0,
              "faktor": 1.0, "seit": 0}
-    if not rule or not state.firm:
+    if not rule or not state.firm or not state.ease("gegenwind", True):
         return empty
     stamp = len(state.offers) + len(state.project_offers)
     cache = state._pressure
@@ -8260,9 +8419,10 @@ def pressure_text(pressure):
     return text
 
 
-def _phase_list(seed, until, content):
+def _phase_list(seed, until, content, calm=False):
     """Konjunkturphasen ab markt.ab_tag bis mindestens until:
-    [(von, bis ausschliesslich, phasen-id)]."""
+    [(von, bis ausschliesslich, phasen-id)]. calm (ab 0.47, "Einfach"):
+    ohne Abschwung - wo er waere, bleibt die normale Lage."""
     rule = market_rules(content)
     setup = rule.get("konjunktur") or {}
     phases = setup.get("phasen") or {}
@@ -8272,7 +8432,8 @@ def _phase_list(seed, until, content):
     result = []
     kind = "neutral"
     number = 0
-    ups = [key for key in ("aufschwung", "abschwung") if key in phases]
+    ups = [key for key in ("aufschwung", "abschwung") if key in phases and
+           not (calm and key == "abschwung")]
     swing = ""       # letzter Auf- oder Abschwung
     while day <= until:
         span = setup.get("start_tage") if number == 0 else phases[kind]["tage"]
@@ -8332,7 +8493,8 @@ def market_state(state, day, content=None):
     if not state.firm or not rule or day < int(rule.get("ab_tag", 101)):
         return result
     seed = state.firm_seed
-    for start, end, kind in _phase_list(seed, day, content):
+    for start, end, kind in _phase_list(seed, day, content,
+                                        not state.ease("abschwung", True)):
         if start <= day < end:
             result.update(phase=kind, phase_info=rule["konjunktur"]["phasen"][kind],
                           phase_von=start, phase_bis=end)
@@ -8384,7 +8546,8 @@ def market_events(state, content=None):
     if rule:
         seed = state.firm_seed
         start = int(rule.get("ab_tag", 101))
-        for day, _end, kind in _phase_list(seed, state.day, content):
+        for day, _end, kind in _phase_list(seed, state.day, content,
+                                           not state.ease("abschwung", True)):
             if day <= founded or day == start and kind == "neutral":
                 continue
             info = rule["konjunktur"]["phasen"][kind]
@@ -10755,6 +10918,10 @@ def journey(state, content=None):
                 ("Kredit abgelöst: %s" if loan_kind == "abgeloest" else
                  "Kredit zurückgezahlt: %s") % loan.get("name", ""),
                 "Zinsen insgesamt %s." % _whole_euro(loan.get("bezahlt_zins", 0)))
+        elif loan_kind == "ausfall" and data.get("einfach"):
+            add(loan_day, JOURNEY_FIRM, "kredit_ausfall", "Kreditrate ausgesetzt",
+                "%s: Das Konto hat nicht gereicht, die Rate hängt hinten an." %
+                loan.get("name", ""))
         elif loan_kind == "ausfall":
             step = dunning_step(data.get("stufe", 1), content) or {}
             add(loan_day, JOURNEY_FIRM, "kredit_ausfall", "Kreditrate geplatzt",
@@ -10915,7 +11082,10 @@ RUN_METRICS = (
     "steuer_serie", "stimmung_serie", "stimmung_max", "weiterbildungen", "experte",
     "geschlichtet", "abwerbung_abgewehrt", "macke_gezaehmt", "themen_70", "fachbereiche_70",
     "auftraege", "groesster_auftrag", "tage_gruendung", "tage_stufe5", "tage_filiale",
+    "story_einfach", "story_normal",
 )
+# Ab 0.47: Story-Abzeichen je Schwierigkeitsgrad
+STORY_BADGES = ("story_einfach", "story_normal")
 
 
 def achievement_rules(content=None):
@@ -10953,6 +11123,9 @@ def run_metrics(state, knowledge=None, content=None):
     m = {key: 0 for key in RUN_METRICS}
     m["_texte"] = {}
     m["profil"] = 1 if state.profile else 0
+    # Ab 0.47: Story abgeschlossen (alle Bitweiche-Auftraege) je Schwierigkeitsgrad
+    if state.profile and state.all_done():
+        m["story_" + state.level] = 1
     per_day = {}
     seen = set()
     offer_flags = []
@@ -11208,6 +11381,11 @@ def badge_status(item):
     erreichte Stufe mit Tag, sonst der Fortschritt."""
     if item["geheim"]:
         return "noch nicht entdeckt", "muted"
+    if item.get("nur_normal") and not item["tier"]:
+        text = "nur auf Normal"
+        if item["je"]:
+            text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
+        return text, "muted"
     if item["tier"]:
         stage = item["stufen"][item["stufe"] - 1]
         text = "%s · Tag %d" % (stage["name"], stage["erreicht"] or 1)
@@ -11295,8 +11473,11 @@ def achievement_overview(state, knowledge=None, records=None, content=None):
             "naechste": stages[level] if level < len(stages) else None,
             "fortschritt": progress, "anteil": share,
             "balken": bool(progress) and rule["wert"] not in LEVEL_METRICS and
-            not (value is None and rule.get("wissen")),
+            not (value is None and rule.get("wissen")) and
+            not (rule.get("nur_normal") and state.easy),
             "geheim": bool(rule.get("geheim")) and not ever,
+            # Ab 0.47: auf "Einfach" nicht erreichbar (Mechanik fehlt dort)
+            "nur_normal": bool(rule.get("nur_normal")) and state.easy,
             "je": ever, "durchgaenge": len(runs)})
     return result
 
@@ -11350,6 +11531,17 @@ def unlock_info(state, rule, level, records, content=None):
             "erstes_mal": first and bool(others), "bestwert": record,
             "bild": rule["bild"], "farbe": rule.get("farbe", ""), "ort": rule.get("ort"),
             "hinweis": "Abzeichen: %s · %s" % (rule["name"], TIER_NAMES[stage["stufe"]])}
+
+
+def story_done_day(state):
+    """Arbeitstag, an dem der letzte Bitweiche-Auftrag erledigt wurde
+    (sehr gross, solange noch einer offen ist)."""
+    if not state.all_done():
+        return 10 ** 9
+    days = [int(data.get("tag") or 0) for _stamp, kind, data in state.history
+            if kind == EV_SOLVED and data.get("richtig") and
+            isinstance(data.get("tag"), int)]
+    return max(days) if days else 0
 
 
 def new_achievements(state, knowledge=None, content=None):

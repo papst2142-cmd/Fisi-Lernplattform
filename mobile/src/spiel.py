@@ -1397,6 +1397,16 @@ def stage_boxes(stage, color=None):
                    for number in range(1, 4)], spacing=3, tight=True)
 
 
+def _skill_bar(share, color, height):
+    """Schlichter Balken (Spur + Fuellung) fuer die Skill-Balken (ab 0.47)."""
+    part = int(round(max(0.0, min(1.0, share)) * 1000))
+    fill = ft.Container(height=height, border_radius=height / 2, bgcolor=color,
+                        expand=max(1, part), visible=part > 0)
+    rest = ft.Container(height=height, expand=max(1, 1000 - part), visible=part < 1000)
+    return ft.Container(content=ft.Row([fill, rest], spacing=0), bgcolor=C["ring_bg"],
+                        border_radius=height / 2, height=height)
+
+
 def quirk_block(info):
     """Macke mit Stufe, Staerke und Schwaeche (ab 0.43, wie am PC)."""
     lines = fg.quirk_lines(info)
@@ -1493,6 +1503,7 @@ class GameScreen:
         self.training_for = None
         self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
         self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
+        self.cats_open = set()       # (mitarbeiter, fachbereich) aufgeklappt (ab 0.47)
         # Unterseite "Reise" (ab 0.39)
         self.journey_box = None
         self.journey_group = "alle"
@@ -1565,13 +1576,36 @@ class GameScreen:
                                             fg.GAME["gebaeude"]["kunde"]),
                         size=11, color=C["muted"]),
             ], accent=C["accent2"]))
-        result += [ui.Card("Deine Spielfigur", controls, accent=C["accent"]),
-                   ft.Row(buttons, spacing=10)]
+        result.append(ui.Card("Deine Spielfigur", controls, accent=C["accent"]))
+        if state.profile is None and state.difficulty is None:
+            result.append(self._difficulty_card())
+        result.append(ft.Row(buttons, spacing=10))
         return result
+
+    def _difficulty_card(self):
+        """Ab 0.47: Schwierigkeitsgrad beim Spielstart (fest fuer den Durchgang)."""
+        levels = fg.difficulty_levels()
+        texts = {key: text for key, _name, text in levels}
+        keys = [key for key, _name, _text in levels]
+        chosen = self.draft.setdefault("schwierigkeit", fg.difficulty_default())
+        hint = ui.text(texts.get(chosen, ""), size=13, color=C["text_soft"])
+
+        def picked(value):
+            self.draft["schwierigkeit"] = value
+            hint.value = texts.get(value, "")
+
+        return ui.Card("Schwierigkeitsgrad", [
+            ui.PillGroup([(key, name) for key, name, _text in levels],
+                         initial=keys.index(chosen) if chosen in keys else 0,
+                         on_change=picked),
+            hint,
+            ui.text("Gilt für den ganzen Spielstand. Ändern geht nur mit „Spielstand "
+                    "zurücksetzen“. Die Lernplattform ist davon nicht betroffen.",
+                    size=12, color=C["muted"])], accent=C["accent2"])
 
     def _save_profile(self, name, look):
         try:
-            self.game.set_profile(name, look)
+            self.game.set_profile(name, look, self.draft.get("schwierigkeit"))
         except ValueError as exc:
             self.toast(str(exc), C["yellow"])
             return
@@ -1662,7 +1696,7 @@ class GameScreen:
                                 "vergrößern.", size=11, color=C["muted"])]
         controls.append(ft.Row([
             ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38),
-            ui.GradientButton("Reise öffnen", self.open_journey, kind="ghost", height=38),
+            ui.GradientButton("Meine Reise", self.open_journey, kind="ghost", height=38),
         ], wrap=True, spacing=8, run_spacing=8))
         return ui.Card("Karte", controls, accent=C["accent"], action=toggle)
 
@@ -2267,7 +2301,9 @@ class GameScreen:
             grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
                                spacing=8))
         controls = [tabs, ui.Card("Rückblick", grid, accent=C["accent2"],
-                            subtitle="%s · Tag %d" % (state.profile["name"], state.day))]
+                            subtitle="%s · Tag %d · %s" % (
+                                state.profile["name"], state.day,
+                                fg.difficulty_badge_text(state)))]
         chart = ui.LineChart(height=160)
         chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
         controls.append(ui.Card("Tickets je Arbeitstag", [
@@ -2825,7 +2861,8 @@ class GameScreen:
             ui.text("Konto: %s" % euro(state.money), size=13,
                     color=C["text_dim"] if state.money >= 0 else C["red"]),
             ui.text(fg.firm_summary(state), size=13, color=C["text_dim"]),
-        ], accent=C["green"], subtitle="seit Tag %d" % state.firm["tag"])
+        ], accent=C["green"], subtitle="seit Tag %d · %s" % (
+            state.firm["tag"], fg.difficulty_badge_text(state)))
 
     def _firm_founding(self, state):
         missing = state.founding_missing()
@@ -2874,21 +2911,17 @@ class GameScreen:
                  ui.text(role, size=12, weight=ft.FontWeight.BOLD,
                          color=C["pink"] if item.get("herkunft") == "bitweiche"
                          else C["accent"])]
-        extra = [ui.text(fg.values_text(item["werte"]), size=12, color=C["text_dim"]),
+        # Ab 0.47: Balken je Fachbereich, Antippen klappt die Themen auf
+        staff_id = item["id"]
+        extra = [self._skill_bars(item),
                  ui.text(fg.strengths_text(item), size=12, color=C["text_dim"]),
                  ui.text(fg.staff_money_text(item), size=12, color=C["text_dim"])]
         if not applicant and "stimmung" in item:
             # Ab 0.43: Stimmung (Farbe nach Lage)
             extra.append(ui.text(fg.mood_text(item), size=12,
                                  color=C[MOOD_COLOR[fg.mood_level(item["stimmung"])]]))
-        if item["id"] in self.topics_for:
-            for key in fg.CAT_ORDER:
-                extra.append(ft.Column([
-                    ui.text("%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]], item["werte"][key]),
-                            size=12, weight=ft.FontWeight.BOLD,
-                            color=CATEGORY_COLOR[fg.CAT_NAME[key]]),
-                    ui.text(fg.topics_text(item["themen"], key), size=11,
-                            color=C["text_dim"])], spacing=0, tight=True))
+        if staff_id in self.topics_for or any(person == staff_id
+                                              for person, _key in self.cats_open):
             limit = fg.cap_text(item["themen"]) if not applicant else ""
             if limit:
                 extra.append(ui.text(limit, size=11, color=C["yellow"]))
@@ -2904,6 +2937,46 @@ class GameScreen:
         return [ft.Row([avatar(item["aussehen"], 56),
                         ft.Column(lines, spacing=2, tight=True, expand=True)],
                        spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER)] + extra
+
+    def _cat_open(self, staff_id, key):
+        return staff_id in self.topics_for or (staff_id, key) in self.cats_open
+
+    def _skill_bars(self, item):
+        """Ab 0.47: Fertigkeiten als Balken je Fachbereich (wie am PC). Antippen
+        klappt die Themen des Fachbereichs mit den genauen Werten auf."""
+        staff_id = item["id"]
+        rows = []
+        for row in fg.skill_bars(item):
+            color = CATEGORY_COLOR[fg.CAT_NAME[row["cat"]]]
+            opened = self._cat_open(staff_id, row["cat"])
+            rows.append(ft.Container(
+                content=ft.Row([
+                    ft.Container(ft.Row([
+                        ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
+                                size=16, color=color),
+                        ui.text(row["name"], size=12, weight=ft.FontWeight.BOLD, color=color)],
+                        spacing=2, tight=True), width=110),
+                    ft.Container(_skill_bar(row["anteil"], color, 10), expand=True),
+                    ft.Container(ui.text(str(row["wert"]), size=12, weight=ft.FontWeight.BOLD,
+                                         text_align=ft.TextAlign.RIGHT), width=30)],
+                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=ft.Padding.symmetric(vertical=3), ink=True,
+                on_click=lambda _e, key=row["cat"]: self._toggle_cat(staff_id, key)))
+            if not opened:
+                continue
+            for topic in row["themen"]:
+                rows.append(ft.Container(ft.Row([
+                    ft.Container(ui.text(topic["name"], size=11, color=C["text_dim"]),
+                                 width=92),
+                    ft.Container(_skill_bar(topic["anteil"], mix(color, C["card_alt"], 0.35),
+                                            6), expand=True),
+                    ft.Container(ui.text(str(topic["wert"]), size=11,
+                                         color=C["yellow"] if topic["grenze"]
+                                         else C["text_soft"],
+                                         text_align=ft.TextAlign.RIGHT), width=30)],
+                    spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    padding=ft.Padding.only(left=18)))
+        return ft.Column(rows, spacing=2, tight=True)
 
     def _person_box(self, controls):
         return ft.Container(
@@ -3019,8 +3092,20 @@ class GameScreen:
     def _toggle_topics(self, staff_id):
         if staff_id in self.topics_for:
             self.topics_for.discard(staff_id)
+            self.cats_open = {pair for pair in self.cats_open if pair[0] != staff_id}
         else:
             self.topics_for.add(staff_id)
+        self._fill_firm()
+
+    def _toggle_cat(self, staff_id, key):
+        """Ab 0.47: Themen eines Fachbereichs auf- oder zuklappen (wie am PC)."""
+        if staff_id in self.topics_for:
+            self.topics_for.discard(staff_id)
+            self.cats_open |= {(staff_id, cat) for cat in fg.CAT_ORDER if cat != key}
+        elif (staff_id, key) in self.cats_open:
+            self.cats_open.discard((staff_id, key))
+        else:
+            self.cats_open.add((staff_id, key))
         self._fill_firm()
 
     def _train(self, staff_id, target):
@@ -3336,7 +3421,7 @@ class GameScreen:
         if not lines:
             lines.append(ui.text("Bisher hast du keinen Auftrag an einen Mitbewerber verloren.",
                                  size=14, color=C["text_soft"]))
-        if state.firm:
+        if fg.tax_active(state):
             result.insert(2, self._tax_card(state))
         result.append(ui.Card("Gegen wen verloren", lines, accent=C["pink"],
                               subtitle="an Mitbewerber"))
