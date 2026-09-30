@@ -1665,7 +1665,7 @@ class GameScreen:
             buttons.append(ui.GradientButton(
                 "Starten" if item["leer"] else "Spielen",
                 lambda _e, run=item["lauf"]: self._choose_slot(run), height=38))
-            if not item["leer"] or item["extra"]:
+            if not item["leer"] or item["extra"] or item["lauf"] != fg.LEGACY_RUN:
                 buttons.append(ui.GradientButton(
                     "Löschen", lambda _e, it=item: self._delete_slot(it), kind="ghost",
                     height=38))
@@ -1717,6 +1717,9 @@ class GameScreen:
                                      expand=True)]
         if state.profile is not None:
             buttons.append(ui.GradientButton("Abbrechen", self._cancel_edit, kind="ghost"))
+        elif self.game.active_label():
+            # Neuer Durchgang: zurueck zur Auswahl, ohne eine Figur anzulegen
+            buttons.append(ui.GradientButton("Platz wechseln", self.open_picker, kind="ghost"))
 
         result = []
         if state.profile is None:
@@ -2349,7 +2352,10 @@ class GameScreen:
     def _arrived(self, position, person):
         self.positions[self._site()] = position
         self._office_text(position, person)
-        self.office_info.update()
+        try:
+            self.office_info.update()
+        except RuntimeError:
+            pass    # Ansicht wurde genau beim Ankommen verlassen
 
     def _office_text(self, position, person):
         state = self.game.state

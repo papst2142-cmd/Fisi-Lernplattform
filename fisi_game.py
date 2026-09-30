@@ -4490,8 +4490,9 @@ SLOT_RENAMED = "umbenannt"
 SLOT_NAME_MAX = 24
 # Texte (PC und Handy gleich)
 SLOTS_TITLE = "Spielstände"
-SLOTS_HELP = ("Drei Plätze für getrennte Durchgänge. Der Lernfortschritt, die "
-              "Bestenliste und die Abzeichen gelten für alle Plätze gemeinsam.")
+SLOTS_HELP = ("Drei Plätze für getrennte Durchgänge. Der Lernfortschritt und die "
+              "Bestenliste gelten für alle Plätze gemeinsam. Abzeichen verdienst du "
+              "in jedem Durchgang neu, erreichte Stufen bleiben in der Bestenliste.")
 SLOT_EMPTY = "Neuer Durchgang"
 SLOT_EXTRA_HELP = ("Zusätzlicher Durchgang: PC und Handy haben gleichzeitig einen neuen "
                    "Durchgang angelegt. Er rückt auf den nächsten frei werdenden Platz.")
@@ -4711,6 +4712,8 @@ class Game:
         """Neuen, leeren Durchgang auf einem freien Platz anlegen und waehlen.
         Danach wie bisher Spielfigur und Schwierigkeitsgrad festlegen."""
         layout = self.layout()
+        if self.run and layout["plaetze"].get(slot) == self.run and self.state.profile is None:
+            return self.run   # doppelt getippt: der Platz ist eben erst angelegt
         if slot in layout["plaetze"]:
             raise ValueError("%s ist schon belegt." % self.slot_name(slot, layout))
         if not 1 <= int(slot) <= SLOT_COUNT:

@@ -2103,6 +2103,7 @@ class FISIMobileApp:
         self._recoloring = True
         overlay = self._busy_overlay()
         self.page.overlay.append(overlay)
+        self._lock_bars(True)
         self.page.update()
         self.page.run_task(self._recolor, preset_id, background_id, overlay)
 
@@ -2129,8 +2130,17 @@ class FISIMobileApp:
         finally:
             if overlay in self.page.overlay:
                 self.page.overlay.remove(overlay)
+            self._lock_bars(False)
             self._recoloring = False
             self.page.update()
+
+    def _lock_bars(self, locked):
+        """Kopfzeile und Navigationsleiste liegen nicht unter der Abdeckung -
+        sie werden waehrend des Farbwechsels deshalb eigens gesperrt."""
+        for view in self.page.views:
+            for bar in (view.appbar, view.navigation_bar):
+                if bar is not None:
+                    bar.disabled = locked
 
     @staticmethod
     def _busy_overlay():
@@ -2217,7 +2227,13 @@ class FISIMobileApp:
         view = self.page.views[-1]
         content = view.controls[0] if view.controls else None
         if isinstance(content, ft.ListView):
-            content.scroll_to(offset=0, duration=200)
+            # scroll_to ist in flet 1.0 eine Coroutine
+            async def scroll():
+                try:
+                    await content.scroll_to(offset=0, duration=200)
+                except RuntimeError:
+                    pass
+            self.page.run_task(scroll)
 
     def open_cards(self, category, topic=None):
         self.screens["cards"].set_category(category, topic)
@@ -2340,6 +2356,9 @@ class FISIMobileApp:
 
     def open_achievements(self):
         """Spiel > Reise > Erfolge oeffnen (aus dem Meilenstein-Moment)."""
+        if not self.slot_chosen:
+            self.show_tab("game")   # erst einen Platz waehlen
+            return
         if self.tab != "game":
             self.show_tab("game")
         else:

@@ -5443,6 +5443,22 @@ class SpielstandPlaetzeTest(unittest.TestCase):
             self.assertEqual(fg.Game(db, "PC").state.day, 2)
             self.assertTrue(db.has_legacy_events())
 
+    def test_leerer_platz_doppelt_starten_und_loeschen(self):
+        with TempDB() as db:
+            game = fg.Game(db, "PC")
+            game.set_profile("Eins", {}, fg.DIFF_NORMAL)
+            run = game.new_run(2)
+            # Doppelt getippt: kein Fehler, derselbe Durchgang
+            self.assertEqual(game.new_run(2), run)
+            item = game.slots()[1]
+            self.assertTrue(item["leer"])
+            self.assertEqual(item["lauf"], run)
+            # Ein leer angelegter Durchgang laesst sich wieder loeschen
+            game.delete_run(run)
+            self.assertTrue(game.slots()[1]["leer"])
+            self.assertIsNone(game.slots()[1]["lauf"])
+            self.assertFalse(game.slots()[0]["leer"])
+
     def test_plaetze_getrennt_lernstand_gemeinsam(self):
         with TempDB() as db:
             game = fg.Game(db, "PC")

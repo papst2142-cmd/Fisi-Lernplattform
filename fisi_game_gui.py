@@ -1860,7 +1860,7 @@ class GameView(ScrollArea):
             NeoButton(buttons, "Starten" if item["leer"] else "Spielen",
                       lambda run=item["lauf"]: self._choose(run),
                       height=34, font=F["small_bold"]).pack(side="left")
-            if not item["leer"] or item["extra"]:
+            if not item["leer"] or item["extra"] or item["lauf"] != fg.LEGACY_RUN:
                 NeoButton(buttons, "Löschen", lambda it=item: self._delete_slot(it),
                           kind="ghost", height=34, font=F["small_bold"]).pack(
                     side="left", padx=(10, 0))
