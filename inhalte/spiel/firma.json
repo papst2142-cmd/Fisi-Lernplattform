@@ -2560,6 +2560,7 @@
       "name": "Talbahn-Verwaltung Lindenau",
       "kontakt": "Dr. Holger Wendt",
       "art": "talbahn",
+      "ort": "lindenau",
       "satz": "Dr. Wendt legt jedes Angebot neben den Rahmenvertrag von Bitweiche."
     },
     {
@@ -4014,5 +4015,96 @@
         }
       ]
     }
+  },
+  "filiale": {
+    "_hinweis": [
+      "Zweiter Standort (ab 0.45): eigenes Gebaeude in Lindenau, frei ab voraussetzung (Stufe des Gewerbehofs, Mitarbeiter, Firmentage).",
+      "Der Name ist frei waehlbar (name_vorschlag ist nur der Vorschlag). Stufe 1 eroeffnet die Filiale, jede weitere Stufe baut sie aus.",
+      "anfragen_plus: zusaetzliche Kundenanfragen pro Tag. naehe: Kunden mit diesem 'ort' (kunden[].ort) - dein Preisvorteil steigt um vorteil Prozentpunkte."
+    ],
+    "name_vorschlag": "Filiale Lindenau",
+    "name": "Altes Postamt Lindenau",
+    "text": "Das alte Postamt in Lindenau, zwei Straßen von der Talbahn-Verwaltung. Mitten im Revier von NetzWerk Kranich.",
+    "voraussetzung": {"stufe": 4, "mitarbeiter": 6, "firmentage": 40},
+    "anfragen_plus": 1,
+    "naehe": {"orte": ["lindenau"], "vorteil": 3, "text": "Filiale in Lindenau"},
+    "eroeffnet": "Die Schlüssel für %s liegen auf deinem Schreibtisch. Vier Arbeitsplätze, eine Beratungsecke und ein Schaufenster zur Straße. Unter Firma kannst du Leute nach Lindenau versetzen.",
+    "stufen": [
+      {
+        "stufe": 1,
+        "name": "Ladenlokal",
+        "preis": 30000,
+        "nebenkosten": 120,
+        "text": "Das Erdgeschoss mit Büro für vier Leute und einer Ecke für die Kundenberatung.",
+        "plaetze": [[1.35, 2.75, "filialbuero"], [3.5, 2.75, "filialbuero"], [5.65, 2.75, "filialbuero"], [7.8, 2.75, "filialbuero"]],
+        "gebaeude": {
+          "breite": 14, "hoehe": 7,
+          "flur": {"y": 5, "h": 2, "name": "Eingang", "eingang": {"von": 5.3, "bis": 6.7}, "spieler": [1.2, 6.0],
+                   "deko": [{"typ": "fussmatte", "x": 0.25, "y": 5.35, "w": 0.7, "h": 1.3},
+                            {"typ": "feuerloescher", "x": 12.2, "y": 6.45, "w": 0.4, "h": 0.4}]},
+          "fenster": [[0.8, 0, 2.8, 0], [3.8, 0, 5.8, 0], [6.8, 0, 8.4, 0], [10.0, 0, 12.8, 0], [0, 1.0, 0, 3.8], [14, 1.0, 14, 3.8]],
+          "raeume": [
+            {"id": "filialbuero", "name": "Büro", "cat": "systeme", "x": 0, "y": 0, "w": 9, "h": 5,
+             "tuer": {"von": 6.4, "bis": 7.6}, "boden": "teppichboden",
+             "text": "Das Büro der Filiale: vier Schreibtische und ein Blick auf die Straße.",
+             "deko": [{"typ": "schreibtisch", "x": 0.4, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 2.55, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 4.7, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 6.85, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "pflanze", "x": 0.3, "y": 4.0, "w": 0.75, "h": 0.75},
+                      {"typ": "drucker", "x": 4.2, "y": 4.05, "w": 0.9, "h": 0.75}]},
+            {"id": "filialberatung", "name": "Kundenberatung", "kurz": "Beratung", "cat": "wirtschaft",
+             "x": 9, "y": 0, "w": 5, "h": 5, "tuer": {"von": 10.2, "bis": 11.4}, "boden": "parkett",
+             "text": "Hier kommen Kunden aus Lindenau vorbei, ohne erst nach Talheim zu fahren.",
+             "deko": [{"typ": "besprechungstisch", "x": 9.6, "y": 1.3, "w": 3.0, "h": 1.3},
+                      {"typ": "kaffeemaschine", "x": 13.2, "y": 0.4, "w": 0.55, "h": 0.6},
+                      {"typ": "pflanze", "x": 13.0, "y": 4.0, "w": 0.75, "h": 0.75}]}
+          ]
+        }
+      },
+      {
+        "stufe": 2,
+        "name": "Obergeschoss",
+        "preis": 15000,
+        "nebenkosten": 180,
+        "text": "Das Obergeschoss dazu: drei weitere Arbeitsplätze und ein Regal für Ersatzgeräte.",
+        "plaetze": [[1.35, 2.75, "filialbuero"], [3.5, 2.75, "filialbuero"], [5.65, 2.75, "filialbuero"], [7.8, 2.75, "filialbuero"],
+                    [5.5, 10.05, "filialog"], [8.5, 10.05, "filialog"], [11.7, 10.05, "filialog"]],
+        "gebaeude": {
+          "breite": 14, "hoehe": 12,
+          "flur": {"y": 5, "h": 2, "name": "Eingang", "eingang": {"von": 5.3, "bis": 6.7}, "spieler": [1.2, 6.0],
+                   "deko": [{"typ": "fussmatte", "x": 0.25, "y": 5.35, "w": 0.7, "h": 1.3},
+                            {"typ": "feuerloescher", "x": 12.2, "y": 6.45, "w": 0.4, "h": 0.4}]},
+          "fenster": [[0.8, 0, 2.8, 0], [3.8, 0, 5.8, 0], [6.8, 0, 8.4, 0], [10.0, 0, 12.8, 0], [0, 1.0, 0, 3.8], [14, 1.0, 14, 3.8],
+                      [4.2, 12, 6.8, 12], [7.4, 12, 9.6, 12], [10.6, 12, 12.8, 12], [0, 8.0, 0, 10.8], [14, 8.0, 14, 10.8]],
+          "raeume": [
+            {"id": "filialbuero", "name": "Büro", "cat": "systeme", "x": 0, "y": 0, "w": 9, "h": 5,
+             "tuer": {"von": 6.4, "bis": 7.6}, "boden": "teppichboden",
+             "text": "Das Büro der Filiale: vier Schreibtische und ein Blick auf die Straße.",
+             "deko": [{"typ": "schreibtisch", "x": 0.4, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 2.55, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 4.7, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 6.85, "y": 1.1, "w": 1.9, "h": 1.0, "blick": "s"},
+                      {"typ": "pflanze", "x": 0.3, "y": 4.0, "w": 0.75, "h": 0.75},
+                      {"typ": "drucker", "x": 4.2, "y": 4.05, "w": 0.9, "h": 0.75}]},
+            {"id": "filialberatung", "name": "Kundenberatung", "kurz": "Beratung", "cat": "wirtschaft",
+             "x": 9, "y": 0, "w": 5, "h": 5, "tuer": {"von": 10.2, "bis": 11.4}, "boden": "parkett",
+             "text": "Hier kommen Kunden aus Lindenau vorbei, ohne erst nach Talheim zu fahren.",
+             "deko": [{"typ": "besprechungstisch", "x": 9.6, "y": 1.3, "w": 3.0, "h": 1.3},
+                      {"typ": "kaffeemaschine", "x": 13.2, "y": 0.4, "w": 0.55, "h": 0.6},
+                      {"typ": "pflanze", "x": 13.0, "y": 4.0, "w": 0.75, "h": 0.75}]},
+            {"id": "filialog", "name": "Obergeschoss", "kurz": "OG", "cat": "datenbanken",
+             "x": 0, "y": 7, "w": 14, "h": 5, "tuer": {"von": 2.0, "bis": 3.2}, "boden": "teppichboden",
+             "text": "Oben unter dem Dach: drei weitere Arbeitsplätze und ein Regal für Ersatzgeräte.",
+             "deko": [{"typ": "schreibtisch", "x": 4.4, "y": 8.4, "w": 2.2, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 7.4, "y": 8.4, "w": 2.2, "h": 1.0, "blick": "s"},
+                      {"typ": "schreibtisch", "x": 10.6, "y": 8.4, "w": 2.2, "h": 1.0, "blick": "s"},
+                      {"typ": "regal", "x": 0.3, "y": 11.2, "w": 2.4, "h": 0.5},
+                      {"typ": "kartons", "x": 12.5, "y": 10.9, "w": 1.2, "h": 0.8},
+                      {"typ": "pflanze", "x": 0.4, "y": 7.8, "w": 0.75, "h": 0.75}]}
+          ]
+        }
+      }
+    ]
   }
 }

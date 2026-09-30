@@ -112,10 +112,15 @@ EV_CONFLICT = "konflikt_ereignis"
 # Rivalitaet (ab 0.44): Antwort auf ein Rueckhol-Angebot eines Mitbewerbers.
 # Konjunktur, Trends und Gegenwind rechnet der Spielstand selbst aus.
 EV_RECALL = "rueckhol_angebot"
+# Zweiter Standort (ab 0.45): Eroeffnung (stufe 1, mit dem frei gewaehlten
+# Namen) und jeder weitere Ausbau der Filiale; Versetzen zwischen den Standorten
+EV_BRANCH = "filiale_ausgebaut"
+EV_TRANSFER = "mitarbeiter_versetzt"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
                EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
-               EV_CERT, EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT, EV_RECALL)
+               EV_CERT, EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT, EV_RECALL,
+               EV_BRANCH, EV_TRANSFER)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -280,6 +285,8 @@ def load_game_content(folder=None):
         "balancing": read("balancing"),
         "hardware": read("hardware"),
         "firma": read("firma") if os.path.exists(os.path.join(folder, "firma.json")) else {},
+        # Weltkarte mit Orten und Gebaeude-Aussenmodellen (ab 0.45)
+        "orte": read("orte") if os.path.exists(os.path.join(folder, "orte.json")) else {},
         # Die 50 Testprojekte aus dem Lernbereich (Kundenprojekte ab 0.35)
         "projektarbeiten": PROJEKTARBEITEN,
     }
@@ -562,6 +569,8 @@ def validate_game_content(content=None):
     site_rooms = {SITE_OFFICE: {item["id"] for item in content["gebaeude"]["raeume"]}}
     for stage in (content.get("firma") or {}).get("gebaeude", {}).get("stufen", [])[-1:]:
         site_rooms["firma"] = {item["id"] for item in stage["gebaeude"]["raeume"]}
+    for stage in ((content.get("firma") or {}).get("filiale") or {}).get("stufen", [])[-1:]:
+        site_rooms[SITE_BRANCH] = {item["id"] for item in stage["gebaeude"]["raeume"]}
     for place in customer_places(content):
         site_rooms[place["id"]] = {item["id"] for item in place["gebaeude"]["raeume"]}
     rooms = set().union(*site_rooms.values())
@@ -582,6 +591,7 @@ def validate_game_content(content=None):
     problems += _validate_firm(content)
     problems += _validate_loans(content)
     problems += _validate_business(content)
+    problems += _validate_world(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -3157,6 +3167,9 @@ class GameState:
         self.leaving = {}          # mitarbeiter-id -> Tag, nach dessen Feierabend sie geht
         self.returned_staff = {}   # mitarbeiter-id -> (Tag, Mitbewerber, Name) der Rueckkehr
         self._pressure = {}        # Zwischenspeicher: Tag -> Gegenwind der Mitbewerber
+        # Zweiter Standort (ab 0.45)
+        self.branch = None         # {"name", "tag", "stufe"} ab der Eroeffnung
+        self.staff_site = {}       # mitarbeiter-id -> SITE_BRANCH (sonst Hauptstandort)
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3316,8 +3329,29 @@ class GameState:
             self.staff[data["id"]] = dict(data)
             self.ever_hired.add(data["id"])
             self.mood[data["id"]] = float(personal_rules(self.content)["stimmung"]["start"])
+            if data.get("standort") == SITE_BRANCH:
+                self.staff_site[data["id"]] = SITE_BRANCH
         elif kind == EV_FIRED:
             self.staff.pop(data.get("id"), None)
+            self.staff_site.pop(data.get("id"), None)
+        elif kind == EV_BRANCH:
+            number = int(data.get("stufe", 0))
+            current = self.branch["stufe"] if self.branch else 0
+            # Doppelt (zwei Geraete) oder uebersprungene Stufe: zaehlt nicht
+            if number == current + 1 and branch_stage(number, self.content):
+                if self.branch is None:
+                    self.branch = {"name": data.get("name") or branch_rules(
+                        self.content).get("name_vorschlag", "Filiale"),
+                        "tag": int(data.get("tag", day)), "stufe": 1}
+                else:
+                    self.branch["stufe"] = number
+                self.money += int(data.get("geld", 0))
+                self._book(day, BOOK_BUILDING, data.get("geld", 0))
+        elif kind == EV_TRANSFER and data.get("id") in self.staff:
+            if data.get("standort") == SITE_BRANCH:
+                self.staff_site[data["id"]] = SITE_BRANCH
+            else:
+                self.staff_site.pop(data["id"], None)
         elif kind in (EV_VACATION_OK, EV_VACATION_NO, EV_CONFLICT, EV_RECALL):
             self._apply_decision(kind, data, day)
         elif kind == EV_TRAINING and data.get("id") in self.staff:
@@ -3773,7 +3807,34 @@ class GameState:
 
     @property
     def capacity(self):
-        return len(self.firm_stage()["plaetze"]) if self.firm else 0
+        """Alle Arbeitsplaetze: Gewerbehof plus (ab 0.45) Filiale."""
+        return self.site_capacity(SITE_OFFICE) + self.site_capacity(SITE_BRANCH)
+
+    def site_capacity(self, site):
+        if not self.firm:
+            return 0
+        if site == SITE_BRANCH:
+            stage = self.branch_stage()
+            return len(stage["plaetze"]) if stage else 0
+        return len(self.firm_stage()["plaetze"])
+
+    def branch_stage(self):
+        """Die Ausbaustufe der Filiale (aus firma.json) oder None."""
+        return branch_stage(self.branch["stufe"], self.content) if self.branch else None
+
+    def next_branch_stage(self):
+        return branch_stage((self.branch["stufe"] if self.branch else 0) + 1, self.content)
+
+    def site_of(self, staff_id):
+        """Standort eines Mitarbeiters: SITE_OFFICE (Gewerbehof) oder SITE_BRANCH."""
+        return self.staff_site.get(staff_id, SITE_OFFICE)
+
+    def site_staff(self, site):
+        return [staff_id for staff_id in self.staff if self.site_of(staff_id) == site]
+
+    def site_free(self, site):
+        """Freie Arbeitsplaetze an einem Standort."""
+        return self.site_capacity(site) - len(self.site_staff(site))
 
     def has_room(self, room_id):
         """Ist der Sonderraum (lager, besprechung, ...) ausgebaut?"""
@@ -3800,7 +3861,8 @@ class GameState:
             return 0
         rooms = sum(int((special_room(room_id, self.content) or {}).get("nebenkosten", 0))
                     for room_id in self.rooms)
-        return int(self.firm_stage().get("nebenkosten", 0)) + rooms
+        branch = int((self.branch_stage() or {}).get("nebenkosten", 0))
+        return int(self.firm_stage().get("nebenkosten", 0)) + rooms + branch
 
     def training_of(self, staff_id, day=None):
         """Laufende Weiterbildung eines Mitarbeiters am Tag (oder None)."""
@@ -4009,10 +4071,13 @@ class GameState:
         return personal_decisions(self, self.content) if self.firm else []
 
     def staff_list(self):
-        """Mitarbeiter in der Reihenfolge der Einstellung, mit Arbeitsplatz."""
-        places = self.firm_stage()["plaetze"] if self.firm else []
+        """Mitarbeiter in der Reihenfolge der Einstellung, mit Arbeitsplatz.
+        Ab 0.45 je Standort: Wer in der Filiale arbeitet, sitzt dort."""
+        places = {SITE_OFFICE: self.firm_stage()["plaetze"] if self.firm else [],
+                  SITE_BRANCH: (self.branch_stage() or {}).get("plaetze") or []}
+        seated = {SITE_OFFICE: 0, SITE_BRANCH: 0}
         result = []
-        for index, (staff_id, data) in enumerate(self.staff.items()):
+        for staff_id, data in self.staff.items():
             topics = self.staff_topics(staff_id)
             item = dict(data, werte=cat_values(topics), themen=topics,
                         staerken=strongest_topics(topics))
@@ -4025,8 +4090,12 @@ class GameState:
             # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
             item["umsatz"] = 0 if item["weiterbildung"] or item["abwesend"] or \
                 item["projekt"] else self.staff_revenue_of(staff_id, item["werte"])
-            if index < len(places):
-                item["platz"] = places[index]
+            site = self.site_of(staff_id)
+            item["standort"] = site
+            index = seated[site]
+            seated[site] += 1
+            if index < len(places[site]):
+                item["platz"] = places[site][index]
             result.append(item)
         return result
 
@@ -4502,6 +4571,9 @@ class Game:
         if "vorher" in applicant:
             payload["vorher"] = applicant["vorher"]
         payload["tag"] = self.state.day
+        # Ab 0.45: Ist der Gewerbehof voll, faengt die Person in der Filiale an
+        if self.state.site_free(SITE_OFFICE) <= 0 and self.state.site_free(SITE_BRANCH) > 0:
+            payload["standort"] = SITE_BRANCH
         self._log(EV_HIRED, payload)
         return payload
 
@@ -4600,6 +4672,62 @@ class Game:
             raise ValueError(status["problem"])
         payload = {"raum": room_id, "geld": -int(status["preis"]), "tag": self.state.day}
         self._log(EV_ROOM, payload)
+        return payload
+
+    # -- Zweiter Standort (ab 0.45) ---------------------------------------------
+
+    def open_branch(self, name):
+        """Eroeffnet die Filiale (Stufe 1) mit frei gewaehltem Namen."""
+        self._firm_required()
+        name = " ".join((name or "").split())[:FIRM_NAME_MAX]
+        if not name:
+            raise ValueError("Bitte gib deiner Filiale einen Namen.")
+        if self.state.branch:
+            raise ValueError("Die Filiale ist schon eröffnet.")
+        missing = branch_missing(self.state, self.content)
+        if missing:
+            raise ValueError("Für die Filiale fehlt noch: %s." % ", ".join(missing))
+        stage = branch_stage(1, self.content)
+        if self.state.money < stage["preis"]:
+            raise ValueError("Dafür reicht dein Geld noch nicht (%s fehlen)."
+                             % _whole_euro(stage["preis"] - max(0, self.state.money)))
+        payload = {"stufe": 1, "name": name, "geld": -int(stage["preis"]),
+                   "tag": self.state.day}
+        self._log(EV_BRANCH, payload)
+        return payload
+
+    def expand_branch(self):
+        """Baut die Filiale eine Stufe weiter aus."""
+        self._firm_required()
+        if not self.state.branch:
+            raise ValueError("Eröffne zuerst die Filiale.")
+        stage = self.state.next_branch_stage()
+        if stage is None:
+            raise ValueError("Die Filiale ist fertig ausgebaut.")
+        if self.state.money < stage["preis"]:
+            raise ValueError("Dafür reicht dein Geld noch nicht (%s fehlen)."
+                             % _whole_euro(stage["preis"] - max(0, self.state.money)))
+        payload = {"stufe": stage["stufe"], "geld": -int(stage["preis"]),
+                   "tag": self.state.day}
+        self._log(EV_BRANCH, payload)
+        return payload
+
+    def transfer(self, staff_id, site):
+        """Versetzt einen Mitarbeiter an den anderen Standort."""
+        self._firm_required()
+        if staff_id not in self.state.staff:
+            raise ValueError("Diese Person arbeitet nicht bei dir.")
+        if site not in (SITE_OFFICE, SITE_BRANCH):
+            raise ValueError("Unbekannter Standort.")
+        if site == SITE_BRANCH and not self.state.branch:
+            raise ValueError("Eröffne zuerst die Filiale.")
+        if self.state.site_of(staff_id) == site:
+            raise ValueError("Die Person arbeitet schon dort.")
+        if self.state.site_free(site) <= 0:
+            raise ValueError("Dort ist kein Arbeitsplatz mehr frei.")
+        payload = {"id": staff_id, "name": self.state.staff[staff_id].get("name", ""),
+                   "standort": site, "tag": self.state.day}
+        self._log(EV_TRANSFER, payload)
         return payload
 
     def send_offer(self, inquiry_id, markup, answer):
@@ -5816,12 +5944,14 @@ def conflict_choice_text(data):
     return "Du hast den Streit ignoriert."
 
 
-def firm_people(state, content=None):
-    """Die Mitarbeiter als Personen im eigenen Gebaeude (wie die Kollegen)."""
+def firm_people(state, content=None, site=None):
+    """Die Mitarbeiter als Personen im eigenen Gebaeude (wie die Kollegen) -
+    ab 0.45 je Standort (Gewerbehof oder Filiale)."""
+    site = site or SITE_OFFICE
     result = []
     for item in state.staff_list():
         # Wer krank oder im Urlaub ist, sitzt nicht im Buero (ab 0.43)
-        if not item.get("platz") or item.get("abwesend"):
+        if not item.get("platz") or item.get("abwesend") or item.get("standort") != site:
             continue
         x, y, room_id = item["platz"]
         training = item.get("weiterbildung")
@@ -5912,6 +6042,124 @@ def firm_building(state, content=None):
                      + " " + rule["vorteil"]})
     _SITE_CACHE[key] = (building, result)
     return result
+
+
+# ----------------------------------------------------------------------------
+#  Zweiter Standort: Filiale (ab 0.45)
+# ----------------------------------------------------------------------------
+#
+# Alle Zahlen stehen in firma.json unter "filiale". Die Filiale ist ein
+# eigenes Gebaeude (eigener Grundriss je Stufe, eigene Arbeitsplaetze); wer
+# dort arbeitet, steht im Ereignis (Einstellung mit "standort" oder
+# mitarbeiter_versetzt), alles andere rechnet der Spielstand aus.
+
+def branch_rules(content=None):
+    return firm_rules(content).get("filiale") or {}
+
+
+def branch_stage(number, content=None):
+    """Stufe der Filiale (1 = Eroeffnung) oder None."""
+    for stage in branch_rules(content).get("stufen") or []:
+        if int(stage.get("stufe", 0)) == int(number or 0):
+            return stage
+    return None
+
+
+def branch_missing(state, content=None):
+    """Was fuer die Eroeffnung der Filiale noch fehlt (leer = moeglich,
+    ohne das Geld - das zeigt der Knopf)."""
+    rules = branch_rules(content or state.content)
+    need = rules.get("voraussetzung") or {}
+    if not rules or not state.firm:
+        return ["eine eigene Firma"]
+    missing = []
+    if state.firm["stufe"] < int(need.get("stufe", 0)):
+        stage = next((item for item in firm_rules(content or state.content)["gebaeude"]["stufen"]
+                      if item["stufe"] == int(need["stufe"])), {})
+        missing.append("Gewerbehof mindestens Stufe %d (%s)" % (need["stufe"],
+                                                               stage.get("name", "")))
+    if len(state.staff) < int(need.get("mitarbeiter", 0)):
+        missing.append("mindestens %d Mitarbeiter (jetzt %d)" % (need["mitarbeiter"],
+                                                                 len(state.staff)))
+    age = state.day - int(state.firm["tag"])
+    if age < int(need.get("firmentage", 0)):
+        missing.append("Firma mindestens %d Arbeitstage alt (jetzt %d)"
+                       % (need["firmentage"], age))
+    return missing
+
+
+def branch_possible(state, content=None):
+    """Steht die Filiale auf der Karte? Ab erfuellter Voraussetzung (dann
+    "zu vermieten") und natuerlich, sobald sie eroeffnet ist."""
+    if state is None or not state.firm:
+        return False
+    return bool(state.branch) or not branch_missing(state, content)
+
+
+def branch_inquiries(state, content=None):
+    """Zusaetzliche Kundenanfragen pro Tag durch die Filiale."""
+    if not state.branch:
+        return 0
+    return int(branch_rules(content or state.content).get("anfragen_plus", 0))
+
+
+def branch_nearness(state, customer_id, content=None):
+    """Preisvorteil in Prozentpunkten bei Kunden in der Naehe der Filiale."""
+    if not state.branch or not customer_id:
+        return 0
+    rule = branch_rules(content or state.content).get("naehe") or {}
+    customer = firm_customer(customer_id, content or state.content) or {}
+    if customer.get("ort") and customer["ort"] in (rule.get("orte") or []):
+        return int(rule.get("vorteil", 0))
+    return 0
+
+
+def branch_building(state, content=None):
+    stage = state.branch_stage()
+    return stage["gebaeude"] if stage else None
+
+
+def branch_status(state, content=None):
+    """Die Filiale fuer die Oberflaeche: {"offen" (eroeffnet), "name",
+    "stufe", "plaetze", "belegt", "nebenkosten", "fehlt" [..],
+    "naechste" (Stufe oder None), "problem" (warum der Knopf nicht geht)}."""
+    content = content or state.content
+    rules = branch_rules(content)
+    stage = state.branch_stage()
+    following = state.next_branch_stage()
+    item = {"offen": bool(state.branch),
+            "name": state.branch["name"] if state.branch else rules.get("name_vorschlag", ""),
+            "stufe": stage, "plaetze": state.site_capacity(SITE_BRANCH),
+            "belegt": len(state.site_staff(SITE_BRANCH)),
+            "fehlt": [] if state.branch else branch_missing(state, content),
+            "naechste": following, "problem": ""}
+    if item["fehlt"]:
+        item["problem"] = "Noch nicht so weit: %s." % ", ".join(item["fehlt"])
+    elif following is None:
+        item["problem"] = "Die Filiale ist fertig ausgebaut."
+    elif state.money < int(following["preis"]):
+        item["problem"] = "Dafür reicht dein Geld noch nicht (%s fehlen)." % _whole_euro(
+            int(following["preis"]) - max(0, state.money))
+    return item
+
+
+def branch_effect_text(content=None):
+    """Kurzer Satz zu den Vorteilen der Filiale."""
+    rules = branch_rules(content)
+    near = rules.get("naehe") or {}
+    parts = []
+    if rules.get("anfragen_plus"):
+        parts.append("+%d Kundenanfrage pro Tag" % rules["anfragen_plus"])
+    if near.get("vorteil"):
+        names = [item["name"] for item in firm_rules(content).get("kunden", [])
+                 if item.get("ort") in (near.get("orte") or [])]
+        parts.append("+%d %% Preisvorteil bei %s" % (near["vorteil"],
+                                                     " und ".join(names) or "Kunden vor Ort"))
+    return ", ".join(parts)
+
+
+def branch_opened_text(name, content=None):
+    return (branch_rules(content).get("eroeffnet") or "%s ist eröffnet.").replace("%s", name)
 
 
 def founding_text(content=None):
@@ -7092,7 +7340,8 @@ def inquiries_for_day(state, day, content=None):
     # Anfragen und Gegenwind der Mitbewerber
     shift = market_shift(state, day, content)
     total = max(1, int(rules["pro_tag"]) + int(state.room_effect("anfragen_plus")) + extra +
-                int(shift["markt"]["phase_info"].get("anfragen", 0)))
+                int(shift["markt"]["phase_info"].get("anfragen", 0)) +
+                branch_inquiries(state, content))
     trend = shift["markt"]["trend"]
     hype = (market_rules(content).get("trends") or {}) if trend else {}
     with_trend = bool(trend) and _dice(seed, day, "trend-anfrage") * 100 < \
@@ -7251,6 +7500,11 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
         # Im Gegenwind zaehlt der Preisvorteil nur anteilig (ab 0.44, fester Faktor)
         factor = (rivalry_rules(content).get("gegenwind") or {}).get("vorteil_faktor", 1)
         advantage = int(advantage * factor)
+    # Ab 0.45: Naehe zum Kunden durch die Filiale (zaehlt immer voll)
+    near = branch_nearness(state, (offer.get("kunde") or {}).get("id")
+                           if isinstance(offer.get("kunde"), dict) else offer.get("kunde"),
+                           content)
+    advantage += near
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
     won = right and cheap
@@ -7261,13 +7515,17 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
                "laune": offer.get("laune", ""), "konkurrent": offer.get("konkurrent", ""),
                "bieter": bids, "ausgefallen": list(offer.get("ausgefallen") or []),
                "vorteil": advantage, "gewonnen": won,
-               "vorteil_gruende": [reason for reason, _value in offer_advantage_parts(
-                   state, offer.get("cat"), content)] if advantage else [],
+               "vorteil_gruende": ([reason for reason, _value in offer_advantage_parts(
+                   state, offer.get("cat"), content)] + (
+                   [branch_rules(content)["naehe"].get("text", "Filiale")] if near else []))
+               if advantage else [],
                "grund": "" if won else ("rechenfehler" if not right else "preis")}
+    if near:
+        payload["naehe"] = near
     if offer.get("gegenwind"):
         payload["gegenwind"] = offer["gegenwind"]
-        if advantage < full:
-            payload["vorteil_voll"] = full
+        if advantage - near < full:
+            payload["vorteil_voll"] = full + near
     if problems:
         payload["probleme"] = problems
     return payload
@@ -8932,6 +9190,7 @@ def _validate_firm(content):
                                 % (item.get("kollege"), topic))
     problems += _validate_personal(rules, ids)
     problems += _validate_market(rules)
+    problems += _validate_branch(rules)
     learn = rules.get("lernen") or {}
     for key in ("ticket_erfolg", "projekt_fertig", "projekt_puenktlich", "routine_tage",
                 "routine_plus", "halb_ab", "deckel", "max", "alt_streuung"):
@@ -8944,6 +9203,49 @@ def _validate_firm(content):
     for key in ("preis", "tage", "plus"):
         if not isinstance(whole.get(key), int) or whole[key] <= 0:
             problems.append("Spiel-Firma: weiterbildung.fachbereich.%s ungueltig" % key)
+    return problems
+
+
+def _validate_branch(rules):
+    """firma.json "filiale" (ab 0.45): Voraussetzung, Stufen mit Grundriss und
+    Arbeitsplaetzen, Naehe zu Kunden."""
+    branch = rules.get("filiale")
+    if not branch:
+        return []
+    problems = []
+    need = branch.get("voraussetzung") or {}
+    for key in ("stufe", "mitarbeiter", "firmentage"):
+        if not isinstance(need.get(key), int) or need[key] < 0:
+            problems.append("Spiel-Filiale: voraussetzung.%s fehlt oder ist ungueltig" % key)
+    if need.get("stufe", 0) > len(rules["gebaeude"].get("stufen") or []):
+        problems.append("Spiel-Filiale: voraussetzung.stufe gibt es nicht")
+    if not branch.get("name_vorschlag"):
+        problems.append("Spiel-Filiale: name_vorschlag fehlt")
+    capacity = 0
+    for number, stage in enumerate(branch.get("stufen") or [], 1):
+        where = "Spiel-Filiale Stufe %d" % number
+        if stage.get("stufe") != number:
+            problems.append("%s: falsche Nummer" % where)
+        if not isinstance(stage.get("preis"), int) or stage["preis"] <= 0:
+            problems.append("%s: Preis fehlt" % where)
+        places = stage.get("plaetze") or []
+        if len(places) <= capacity:
+            problems.append("%s: bringt keine zusaetzlichen Arbeitsplaetze" % where)
+        capacity = len(places)
+        people = [{"id": "filiale%d" % index, "raum": room_id, "platz": [x, y]}
+                  for index, (x, y, room_id) in enumerate(places)]
+        problems += _validate_building(stage["gebaeude"], where, people)
+        free = _base_grid(stage["gebaeude"])
+        for x, y, _room in places:
+            if _cell(x, y) not in free:
+                problems.append("%s: Arbeitsplatz %.1f/%.1f ist verstellt" % (where, x, y))
+    if not branch.get("stufen"):
+        problems.append("Spiel-Filiale: keine Stufen")
+    near = branch.get("naehe") or {}
+    towns = {item.get("ort") for item in rules.get("kunden", []) if item.get("ort")}
+    for town in near.get("orte") or []:
+        if town not in towns:
+            problems.append("Spiel-Filiale: kein Kunde mit ort '%s'" % town)
     return problems
 
 
@@ -10274,6 +10576,20 @@ def journey(state, content=None):
         elif kind == EV_ROOM:
             item = special_room(data.get("raum"), content) or {}
             add(tag, JOURNEY_FIRM, "raum", "Neuer Raum: %s" % item.get("name", data.get("raum")))
+        elif kind == EV_BRANCH:
+            stage = branch_stage(data.get("stufe"), content) or {}
+            if int(data.get("stufe", 0)) == 1 and data.get("name"):
+                if not any(entry["art"] == "filiale" for entry in entries):
+                    add(tag, JOURNEY_FIRM, "filiale", "Filiale eröffnet: %s" % data["name"],
+                        "Zweiter Standort: %s." % branch_rules(content).get("name", "Lindenau"))
+            else:
+                add(tag, JOURNEY_FIRM, "ausbau", "Filiale ausgebaut: %s"
+                    % stage.get("name", "Stufe %s" % data.get("stufe")),
+                    "Ausbaustufe %s" % data.get("stufe"))
+        elif kind == EV_TRANSFER and data.get("id") in hired:
+            add(tag, JOURNEY_FIRM, "versetzung", "Versetzt: %s" % hired[data["id"]],
+                "Arbeitet jetzt %s." % ("in der Filiale" if data.get("standort") == SITE_BRANCH
+                                        else "im Gewerbehof am Stellwerk"))
         elif kind in (EV_OFFER_WON, EV_OFFER_LOST):
             # Jedes Angebot steht im Tagebuch, gewonnen oder verloren
             customer = (firm_customer(data.get("kunde"), content) or {}).get("name", "einen Kunden")
@@ -10451,6 +10767,7 @@ def journey_stats(state, content=None):
 
 SITE_OFFICE = "buero"
 SITE_HOME = "zuhause"
+SITE_BRANCH = "filiale"       # zweiter Standort der eigenen Firma (ab 0.45)
 ENTRANCE_REACH = 1.4          # so nah an der Eingangstuer zaehlt als "an der Tuer"
 FURNITURE_REACH = 0.9         # so nah an einem Moebel kann man es benutzen
 GRID = 0.25                   # Moebel rasten auf diesem Raster ein
@@ -10509,6 +10826,8 @@ def site_name(site_id, content=None, state=None):
         return content["gebaeude"]["firma"]
     if site_id == SITE_HOME:
         return "Zuhause"
+    if site_id == SITE_BRANCH:
+        return state.branch["name"] if state is not None and state.branch else "Filiale"
     place = customer_place(site_id, content)
     return place["name"] if place else site_id
 
@@ -10568,6 +10887,8 @@ def people_at_site(site_id, state=None, content=None):
     content = content or GAME
     if site_id == SITE_OFFICE and state is not None and state.firm:
         return firm_people(state, content)
+    if site_id == SITE_BRANCH:
+        return firm_people(state, content, SITE_BRANCH) if state is not None else []
     day = state.day if state is not None else None
     waiting = {}
     if state is not None:
@@ -10594,6 +10915,10 @@ def site_content(site_id, state=None, content=None):
         base = firm_building(state, content)
     elif site_id == SITE_OFFICE:
         base = content["gebaeude"]
+    elif site_id == SITE_BRANCH:
+        base = branch_building(state, content) if state is not None else None
+        if base is None:
+            raise ValueError("Die Filiale ist noch nicht eröffnet.")
     else:
         place = customer_place(site_id, content)
         if place is None:
@@ -10651,6 +10976,9 @@ def place_message(site_id, position, person, state, content=None):
             left = len(state.open_tickets())
             return ("Eingangstür", "Noch nicht: %s offen." % (
                 "1 Ticket ist" if left == 1 else "%d Tickets sind" % left), [])
+        if site_id == SITE_BRANCH:
+            return ("Ausgang", "Von hier geht es zurück zum Gewerbehof am Stellwerk.",
+                    [("buero", "Zum Gewerbehof")])
         return ("Ausgang", "Hier geht es zurück ins Büro.", [("buero", "Zurück ins Büro")])
     title, text = office_message(position, person, quests, content, state)
     return title, text, actions
@@ -11171,3 +11499,690 @@ def result_text(task, payload, available=None, content=None):
     if payload["unter_niveau"] and not payload["richtig"]:
         lines.append("Doppelter Reputationsverlust, weil dir hier noch Wissen fehlt.")
     return "\n".join(lines)
+
+
+# ============================================================================
+#  WELTKARTE (ab 0.45)
+# ============================================================================
+#
+# Die Karte ist die Startansicht des Spiels: Landschaft (Strassen, Bahn,
+# Fluss, Parks) und alle Orte als Gebaeude in 3/4-Vogelperspektive (Dach
+# oben, darunter die Vorderwand). Alles steht in inhalte/spiel/orte.json -
+# ein neuer Ort ist ein neuer Eintrag dort. Gezeichnet wird wie beim
+# Grundriss ueber Zeichenbefehle (dazu "poly" fuer Dachschraegen), die PC und
+# Handy nur noch skalieren. Welche Orte zu sehen sind, folgt aus dem
+# Spielstand (Tag, Gruendung, Ausbaustufe, Filiale) - ohne eigenen Zustand.
+#
+#   poly  pts [x1, y1, x2, y2, ...], fill, line, lw   (geschlossenes Vieleck)
+
+MAP_ROLES = ("bitweiche", "kunde", "firma", "zuhause", "filiale", "mitbewerber")
+MAP_VIEWS = ("buero", "zuhause", "firma", "filiale")
+MAP_VIEW_PREFIXES = ("kunde:", "firma:", "mitbewerber:")
+MAP_UNLOCKS = ("immer", "ab_tag", "kundenort", "aufgabe", "gruendung_moeglich", "gegruendet",
+               "stufe_min", "filiale_moeglich", "filiale_gebaut")
+MAP_PARTS = ("block", "flaeche", "schild", "kreis", "mast", "tor", "baum", "geruest")
+MAP_PART_CONDITIONS = ("ab_stufe", "bis_stufe", "ab_filiale", "bis_filiale", "raum", "wohnung",
+                       "erledigt", "offen", "gegruendet")
+MAP_ROOFS = ("flach", "sattel", "shed")
+MAP_LANDSCAPE = ("park", "fluss", "strasse", "bahn", "baum", "ortsname", "beschriftung",
+                 "gebaeude")
+MAP_NEW_DAYS = 1              # so viele Arbeitstage nach der Freischaltung steht "Neu" dran
+MAP_LIST_SETTING = "spiel_karte_liste"    # Liste statt Karte (je Geraet, einstellungen.json)
+MAP_LABEL_MAXW = 5.2          # breiter (in Karteneinheiten) -> Kurzname auf dem Schild
+MAP_CHAR_PX = 7.2             # grobe Breite eines Zeichens auf dem Schild (Pixel)
+
+
+def map_rules(content=None):
+    return (content or GAME).get("orte") or {}
+
+
+def map_size(content=None):
+    world = map_rules(content).get("welt") or {}
+    return world.get("breite", 32), world.get("hoehe", 24)
+
+
+def map_palette():
+    """Farben der Karte - aus dem Farbschema abgeleitet, damit sie zur
+    gewaehlten Grundfarbe passen."""
+    ground = mix(C["bg"], C["card"], 0.55)
+    return {
+        "boden": ground,
+        "park": mix(ground, C["green"], 0.10),
+        "wasser": mix(ground, C["blue"], 0.22),
+        "wasser_hell": mix(ground, C["blue"], 0.40),
+        "strasse": mix(ground, C["border_hi"], 0.32),
+        "strasse_mitte": mix(ground, C["border_hi"], 0.62),
+        "gleis": mix(C["border_hi"], C["purple"], 0.45),
+        "schwelle": mix(ground, C["border_hi"], 0.55),
+        "baum": mix(ground, C["green"], 0.24),
+        "baum_hell": mix(ground, C["green"], 0.42),
+        "schatten": mix(ground, "#000000", 0.35),
+        "licht": mix(C["yellow"], "#FFFFFF", 0.45),
+        "fenster": mix(C["card_alt"], C["border_hi"], 0.35),
+        "schrift": mix(C["muted"], ground, 0.25),
+        "schild": C["sidebar"],
+    }
+
+
+def map_role_color(role):
+    return {"bitweiche": C["cyan"], "kunde": C["blue"], "firma": C["green"],
+            "zuhause": C["pink"], "filiale": C["purple"]}.get(role, "#8B93A1")
+
+
+def _poly(points, fill, line="", lw=0.0):
+    flat = []
+    for x, y in points:
+        flat += [x, y]
+    return {"k": "poly", "pts": flat, "fill": fill, "line": line, "lw": lw}
+
+
+def _polyline(points, color, lw):
+    return [_line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1], color, lw)
+            for i in range(len(points) - 1)]
+
+
+def _along(points, step):
+    """Punkte im Abstand step entlang einer Linie: [(x, y, dx, dy)] mit
+    Richtung (Einheitsvektor)."""
+    result = []
+    rest = 0.0
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        length = math.hypot(x2 - x1, y2 - y1)
+        if length <= 0:
+            continue
+        dx, dy = (x2 - x1) / length, (y2 - y1) / length
+        pos = rest
+        while pos <= length:
+            result.append((x1 + dx * pos, y1 + dy * pos, dx, dy))
+            pos += step
+        rest = pos - length
+    return result
+
+
+def _dashes(points, color, lw, dash, gap):
+    """Gestrichelte Linie als einzelne Striche."""
+    shapes = []
+    for x, y, dx, dy in _along(points, dash + gap):
+        shapes.append(_line(x, y, x + dx * dash, y + dy * dash, color, lw))
+    return shapes
+
+
+def _map_tree(x, y, r, colors):
+    return [_oval(x - r + 0.1, y - r + 0.12, 2 * r, 2 * r, colors["schatten"]),
+            _oval(x - r, y - r, 2 * r, 2 * r, colors["baum"]),
+            _oval(x - r * 0.75, y - r * 0.75, r * 0.9, r * 0.9, colors["baum_hell"])]
+
+
+def landscape_shapes(content=None):
+    """Boden, Parks, Fluss, Strassen, Bahn, Baeume und Beschriftungen."""
+    colors = map_palette()
+    width, height = map_size(content)
+    items = (map_rules(content).get("welt") or {}).get("landschaft") or []
+    s = [_rect(0, 0, width, height, colors["boden"])]
+    order = ("park", "fluss", "strasse", "bahn")
+    for kind in order:
+        for item in items:
+            if item["typ"] != kind:
+                continue
+            if kind == "park":
+                s.append(_rect(item["x"], item["y"], item["w"], item["h"], colors["park"],
+                               r=1.1))
+            elif kind == "fluss":
+                s += _polyline(item["punkte"], colors["wasser"], 0.65)
+                s += _dashes(item["punkte"], colors["wasser_hell"], 0.07, 0.25, 0.35)
+            elif kind == "strasse":
+                s += _polyline(item["punkte"], colors["strasse"], 0.72)
+            elif kind == "bahn":
+                for x, y, dx, dy in _along(item["punkte"], 0.17):
+                    s.append(_line(x - dy * 0.15, y + dx * 0.15, x + dy * 0.15, y - dx * 0.15,
+                                   colors["schwelle"], 0.05))
+                s += _polyline(item["punkte"], colors["gleis"], 0.06)
+    for item in items:
+        if item["typ"] == "strasse":
+            s += _dashes(item["punkte"], colors["strasse_mitte"], 0.04, 0.2, 0.25)
+    for item in items:
+        if item["typ"] == "baum":
+            for x, y in item["punkte"]:
+                s += _map_tree(x, y, item.get("r", 0.45), colors)
+        elif item["typ"] == "ortsname":
+            s.append(_text(item["x"], item["y"], item["text"], "ortsname", colors["schrift"],
+                           anchor="c"))
+        elif item["typ"] == "beschriftung":
+            s.append(_text(item["x"], item["y"], item["text"], "person", colors["schrift"]))
+    return s
+
+
+def _map_context(state, content=None):
+    """Was die Gebaeudemodelle vom Spielstand wissen muessen."""
+    if state is None:
+        return {"stufe": 0, "gegruendet": False, "filiale": 0, "raeume": set(),
+                "wohnung": (content or GAME)["wohnungen"]["start"], "solved": set()}
+    return {"stufe": state.firm["stufe"] if state.firm else 0,
+            "gegruendet": bool(state.firm),
+            "filiale": state.branch["stufe"] if state.branch else 0,
+            "raeume": set(state.rooms), "wohnung": state.home_id, "solved": state.solved}
+
+
+def _part_visible(part, ctx):
+    if "ab_stufe" in part and ctx["stufe"] < part["ab_stufe"]:
+        return False
+    if "bis_stufe" in part and ctx["stufe"] > part["bis_stufe"]:
+        return False
+    if "ab_filiale" in part and ctx["filiale"] < part["ab_filiale"]:
+        return False
+    if "bis_filiale" in part and ctx["filiale"] > part["bis_filiale"]:
+        return False
+    if "raum" in part and part["raum"] not in ctx["raeume"]:
+        return False
+    if "wohnung" in part and ctx["wohnung"] not in part["wohnung"]:
+        return False
+    if "erledigt" in part and part["erledigt"] not in ctx["solved"]:
+        return False
+    if "offen" in part and part["offen"] in ctx["solved"]:
+        return False
+    if "gegruendet" in part and bool(part["gegruendet"]) != ctx["gegruendet"]:
+        return False
+    return True
+
+
+def model_parts(model_id, state=None, content=None):
+    """Die sichtbaren Teile eines Gebaeudemodells (je nach Spielstand)."""
+    ctx = _map_context(state, content)
+    return [part for part in map_rules(content).get("modelle", {}).get(model_id, [])
+            if _part_visible(part, ctx)]
+
+
+def _lit(seed, index, share):
+    """Fester "Wuerfel": brennt in diesem Fenster Licht?"""
+    digest = hashlib.sha256(("%s|%d" % (seed, index)).encode("utf-8")).hexdigest()
+    return int(digest[:6], 16) / float(16 ** 6) < share
+
+
+def _part_fill(name, accent, colors):
+    return {"bahnsteig": mix(C["blue"], C["card"], 0.55),
+            "glas": mix(C["cyan"], C["card"], 0.62),
+            "holz": WOOD_DARK, "technik": METAL,
+            "akzent": accent}.get(name, name or accent)
+
+
+def model_part_shapes(part, ox, oy, accent, colors, seed):
+    """Zeichenbefehle fuer ein Teil eines Gebaeudemodells an (ox, oy)."""
+    kind = part["art"]
+    x, y = ox + part.get("x", 0), oy + part.get("y", 0)
+    s = []
+    if kind == "block":
+        w, t, h = part["w"], part["t"], part["h"]
+        tone = accent if part.get("farbe") in (None, "akzent") else part["farbe"]
+        wall = mix(C["card_alt"], tone, 0.12)
+        roof = mix(C["card"], tone, 0.30)
+        edge = mix(wall, "#000000", 0.35)
+        # Schatten nach rechts oben (Licht von links)
+        s.append(_poly([(x + w, y + t), (x + w + h * 0.35, y + t - h * 0.2),
+                        (x + w + h * 0.35, y - h * 0.2 + 0.2), (x + w, y - h + 0.2)],
+                       colors["schatten"]))
+        s.append(_rect(x, y + t - h, w, h, wall, edge, 0.03))
+        if part.get("fenster", True):
+            rows = max(1, int(h / 0.7))
+            cols = max(1, int(w / 0.8))
+            cell_w, cell_h = (w - 0.3) / cols, (h - 0.2) / rows
+            for row in range(rows):
+                for col in range(cols):
+                    lit = _lit(seed, row * cols + col, part.get("licht", 0.5))
+                    s.append(_rect(x + 0.25 + col * cell_w, y + t - h + 0.2 + row * cell_h,
+                                   cell_w - 0.25, cell_h - 0.3,
+                                   colors["licht"] if lit else colors["fenster"]))
+        top = y - h
+        roof_edge = mix(roof, "#000000", 0.3)
+        if part.get("dach") == "sattel":
+            s.append(_poly([(x, top + t), (x, top + t * 0.5), (x + w, top + t * 0.5),
+                            (x + w, top + t)], roof, roof_edge, 0.03))
+            s.append(_poly([(x, top + t * 0.5), (x, top), (x + w, top), (x + w, top + t * 0.5)],
+                           mix(roof, "#FFFFFF", 0.12), roof_edge, 0.03))
+            s.append(_line(x, top + t * 0.5, x + w, top + t * 0.5, mix(tone, "#FFFFFF", 0.2),
+                           0.04))
+        elif part.get("dach") == "shed":
+            s.append(_rect(x, top, w, t, roof, roof_edge, 0.03))
+            count = max(2, int(w / 1.0))
+            for number in range(count):
+                left = x + number * w / count
+                s.append(_poly([(left, top + t), (left, top), (left + 0.35 * w / count, top)],
+                               mix(tone, C["card"], 0.55)))
+        else:
+            s.append(_rect(x, top, w, t, roof, roof_edge, 0.03))
+            s.append(_rect(x + 0.15, top + 0.15, w - 0.3, t - 0.3, mix(roof, "#FFFFFF", 0.05)))
+    elif kind == "flaeche":
+        s.append(_rect(x, y, part["w"], part["h"], _part_fill(part.get("farbe"), accent, colors),
+                       r=0.05))
+    elif kind == "schild":
+        s.append(_rect(x, y, part["w"], 0.28, accent, r=0.08))
+    elif kind == "tor":
+        s.append(_rect(x, y, part["w"], part["h"], mix(C["card"], accent, 0.18),
+                       mix(accent, "#000000", 0.4), 0.03))
+    elif kind == "kreis":
+        r = part["r"]
+        s.append(_oval(x - r, y - r, 2 * r, 2 * r, _part_fill(part.get("farbe"), accent,
+                                                               colors)))
+    elif kind == "mast":
+        s.append(_line(x, y, x, y - part["h"], METAL, 0.1))
+        s.append(_oval(x - 0.12, y - part["h"] - 0.12, 0.24, 0.24, C["red"]))
+    elif kind == "baum":
+        s += _map_tree(x, y, part.get("r", 0.4), colors)
+    elif kind == "geruest":
+        w, h = part["w"], part["h"]
+        steps = max(2, int(w / 0.7))
+        for number in range(steps + 1):
+            left = x + number * w / steps
+            s.append(_line(left, y, left, y + h, METAL, 0.05))
+        for number in range(int(h / 0.8) + 1):
+            s.append(_line(x, y + number * 0.8, x + w, y + number * 0.8, METAL, 0.05))
+        s.append(_line(x, y, x + w, y + h, METAL, 0.03))
+    return s
+
+
+def _part_box(part, ox, oy):
+    """Umriss eines Teils (x1, y1, x2, y2) in Karteneinheiten."""
+    x, y = ox + part.get("x", 0), oy + part.get("y", 0)
+    kind = part["art"]
+    if kind == "block":
+        return x, y - part["h"], x + part["w"] + part["h"] * 0.35, y + part["t"]
+    if kind in ("kreis", "baum"):
+        r = part.get("r", 0.4)
+        return x - r, y - r, x + r, y + r
+    if kind == "mast":
+        return x - 0.12, y - part["h"] - 0.12, x + 0.12, y
+    if kind == "schild":
+        return x, y, x + part["w"], y + 0.28
+    return x, y, x + part["w"], y + part["h"]
+
+
+def model_shapes(model_id, ox, oy, accent, state=None, content=None, seed=""):
+    """(Zeichenbefehle, Umriss) eines Gebaeudemodells an (ox, oy)."""
+    colors = map_palette()
+    shapes = []
+    box = None
+    for part in model_parts(model_id, state, content):
+        shapes += model_part_shapes(part, ox, oy, accent, colors, "%s|%s" % (seed, len(shapes)))
+        if part["art"] == "baum":
+            continue
+        x1, y1, x2, y2 = _part_box(part, ox, oy)
+        box = (x1, y1, x2, y2) if box is None else (min(box[0], x1), min(box[1], y1),
+                                                    max(box[2], x2), max(box[3], y2))
+    return shapes, box or (ox, oy, ox + 1, oy + 1)
+
+
+def place_unlocked(rule, state, content=None):
+    """Ist der Ort laut "frei" schon zu sehen? (alle Bedingungen muessen gelten)"""
+    content = content or GAME
+    need = rule.get("frei") or {}
+    day = state.day if state is not None else 1
+    if "ab_tag" in need and day < int(need["ab_tag"]):
+        return False
+    if "kundenort" in need:
+        place = customer_place(need["kundenort"], content)
+        if place is None or day < int(place.get("ab_tag", 1)):
+            return False
+    if "aufgabe" in need and (state is None or need["aufgabe"] not in state.solved):
+        return False
+    if need.get("gruendung_moeglich") and (state is None or not (state.firm or
+                                                                  state.founding_ready())):
+        return False
+    if need.get("gegruendet") and (state is None or not state.firm):
+        return False
+    if "stufe_min" in need and (state is None or not state.firm or
+                                state.firm["stufe"] < int(need["stufe_min"])):
+        return False
+    if need.get("filiale_moeglich") and not branch_possible(state, content):
+        return False
+    if need.get("filiale_gebaut") and (state is None or not state.branch):
+        return False
+    return True
+
+
+def _place_since(rule, state, content):
+    """Arbeitstag, an dem der Ort auf die Karte kam (fuer "Neu"), sonst None."""
+    need = rule.get("frei") or {}
+    if "kundenort" in need:
+        place = customer_place(need["kundenort"], content) or {}
+        return int(place.get("ab_tag", 1))
+    if "ab_tag" in need:
+        return int(need["ab_tag"])
+    if (need.get("filiale_gebaut") or need.get("filiale_moeglich")) and state is not None \
+            and state.branch:
+        return int(state.branch["tag"])
+    return None
+
+
+def map_places(state, content=None):
+    """Die sichtbaren Orte mit allem, was Karte und Liste brauchen:
+    [{"id", "name", "kurz", "rolle", "farbe", "ansicht", "hinweis", "zahl"
+      (offene Tickets/Anfragen), "neu", "text", "x", "y", "schild", "modell",
+      "box" (Umriss des Gebaeudes)}]"""
+    content = content or GAME
+    counts = state.open_count_by_site() if state is not None else {}
+    result = []
+    for rule in map_rules(content).get("orte") or []:
+        if not place_unlocked(rule, state, content):
+            continue
+        item = {key: rule.get(key) for key in ("id", "name", "kurz", "rolle", "ansicht",
+                                               "x", "y", "schild", "modell")}
+        item["kurz"] = item["kurz"] or item["name"]
+        item["hinweis"] = ""
+        founded = state is not None and state.firm
+        if founded and rule.get("nach_gruendung"):
+            item.update(rule["nach_gruendung"])
+        if not founded and rule.get("vor_gruendung"):
+            item.update(rule["vor_gruendung"])
+        if rule.get("vor_filiale") and not (state is not None and state.branch):
+            item.update(rule["vor_filiale"])
+        if rule.get("name_firma") and founded:
+            item["name"] = state.firm["name"]
+        if rule.get("name_filiale"):
+            item["name"] = state.branch["name"] if state is not None and state.branch else \
+                branch_rules(content).get("name_vorschlag", item["name"])
+        item["farbe"] = map_role_color(item["rolle"])
+        view = item["ansicht"] or ""
+        number = 0
+        if state is not None:
+            if view == "buero" and founded:
+                number = state.firm_open_count() + len(state.open_decisions())
+            elif view == "buero":
+                number = counts.get(SITE_OFFICE, 0)
+            elif view.startswith("kunde:"):
+                number = counts.get(view.split(":", 1)[1], 0)
+        item["zahl"] = number
+        since = _place_since(rule, state, content)
+        day = state.day if state is not None else 1
+        item["neu"] = since is not None and since > 1 and 0 <= day - since <= MAP_NEW_DAYS
+        item["text"] = _place_text(item, rule, state, content)
+        _shapes, item["box"] = model_shapes(item["modell"], item["x"], item["y"], item["farbe"],
+                                            state, content, item["id"])
+        result.append(item)
+    return result
+
+
+def _place_text(item, rule, state, content):
+    """Eine Zeile zum Ort fuer die Liste."""
+    view = item["ansicht"] or ""
+    if view.startswith("kunde:"):
+        place = customer_place(view.split(":", 1)[1], content) or {}
+        return place.get("text", "")
+    if view == "zuhause":
+        home = apartment(state.home_id if state is not None else
+                         content["wohnungen"]["start"], content) or {}
+        return home.get("name", "")
+    if view.startswith("mitbewerber:"):
+        return "Dein alter Arbeitgeber, jetzt Mitbewerber."
+    if rule["id"] == "bitweiche":
+        return "Dein Arbeitgeber: Tickets, Kollegen und das Lager."
+    if item["hinweis"] and rule.get("vor_filiale") and state is not None and not state.branch:
+        return "%s. Eröffnen unter Firma > Gebäude." % item["hinweis"]
+    if item["hinweis"]:
+        return "%s: Hier kann deine Firma einziehen." % item["hinweis"]
+    if view == "filiale" and state is not None and state.branch:
+        stage = state.branch_stage() or {}
+        return "Filiale · %s · %d Arbeitsplätze" % (stage.get("name", ""),
+                                                  state.site_capacity(SITE_BRANCH))
+    if view == "buero" and state is not None and state.firm:
+        return "%s · %s" % (firm_rules(content)["gebaeude"]["name"],
+                            state.firm_stage()["name"])
+    return ""
+
+
+def world_shapes(state, content=None, places=None):
+    """Zeichenbefehle fuer die ganze Weltkarte (Landschaft, Gebaeude, Schilder)."""
+    content = content or GAME
+    places = map_places(state, content) if places is None else places
+    colors = map_palette()
+    shapes = landscape_shapes(content)
+    buildings = []
+    for item in (map_rules(content).get("welt") or {}).get("landschaft") or []:
+        if item["typ"] == "gebaeude":
+            model, box = model_shapes(item["modell"], item["x"], item["y"],
+                                      item.get("farbe", "#8B93A1"), state, content,
+                                      item["modell"])
+            buildings.append((box[3], model))
+    for item in places:
+        model, _box = model_shapes(item["modell"], item["x"], item["y"], item["farbe"], state,
+                                   content, item["id"])
+        buildings.append((item["box"][3], model))
+    # Von hinten nach vorn: was weiter unten steht, verdeckt das Dahinter
+    for _bottom, model in sorted(buildings, key=lambda entry: entry[0]):
+        shapes += model
+    for item in places:
+        cx, cy = item["schild"]
+        label = _text(cx, cy, item["name"], "ort", C["text"], anchor="c", maxw=MAP_LABEL_MAXW,
+                      kurz=item["kurz"])
+        label["bg"] = colors["schild"]
+        label["border"] = item["farbe"]
+        shapes.append(label)
+        if item["hinweis"]:
+            shapes.append(_text(cx, cy + 0.62, item["hinweis"], "person", C["yellow"],
+                                anchor="c"))
+        x1, y1, x2, _y2 = item["box"]
+        if item["zahl"]:
+            # Als Schild mit Hintergrund: waechst mit der Schrift (auch am Handy lesbar)
+            count = _text(x2 - 0.35, y1 + 0.2, str(item["zahl"]), "badge", C["on_accent"],
+                          anchor="c")
+            count["bg"] = C["pink"]
+            shapes.append(count)
+        if item["neu"]:
+            new = _text(x1 + 0.3, y1 + 0.1, "Neu", "badge", C["card"], anchor="c")
+            new["bg"] = C["green"]
+            shapes.append(new)
+    return shapes
+
+
+def place_at(x, y, state, content=None, scale=30.0, places=None):
+    """Der Ort unter einem Klick/Tipp (Karteneinheiten) oder None. scale
+    (Pixel je Einheit) schaetzt die Groesse der Schilder."""
+    places = map_places(state, content) if places is None else places
+    scale = max(1.0, float(scale))
+    for item in reversed(places):
+        cx, cy = item["schild"]
+        text = item["name"] if len(item["name"]) * MAP_CHAR_PX <= MAP_LABEL_MAXW * scale \
+            else item["kurz"]
+        half_w = (len(text) * MAP_CHAR_PX + 20) / 2.0 / scale
+        half_h = 13.0 / scale
+        if abs(x - cx) <= half_w and abs(y - cy) <= half_h:
+            return item
+    for item in reversed(places):
+        x1, y1, x2, y2 = item["box"]
+        if x1 - 0.3 <= x <= x2 + 0.3 and y1 - 0.3 <= y <= y2 + 0.3:
+            return item
+    return None
+
+
+def place_by_id(place_id, state, content=None):
+    return next((item for item in map_places(state, content) if item["id"] == place_id), None)
+
+
+def place_preview(place_id, state, content=None):
+    """Kleines Vorschaubild eines Ortes: (Zeichenbefehle, Breite, Hoehe) in
+    Karteneinheiten, mit Rand, links oben bei (0, 0)."""
+    content = content or GAME
+    rule = next((item for item in map_rules(content).get("orte") or []
+                 if item["id"] == place_id), None)
+    if rule is None:
+        return [], 1, 1
+    item = next((entry for entry in map_places(state, content) if entry["id"] == place_id),
+                None)
+    color = item["farbe"] if item else map_role_color(rule.get("rolle"))
+    shapes, box = model_shapes(rule["modell"], 0, 0, color, state, content, place_id)
+    # Baeume zaehlen fuer Klicks nicht zum Umriss, im Vorschaubild sollen sie ganz drauf
+    for part in model_parts(rule["modell"], state, content):
+        if part["art"] == "baum":
+            x1, y1, x2, y2 = _part_box(part, 0, 0)
+            box = (min(box[0], x1), min(box[1], y1), max(box[2], x2 + 0.1),
+                   max(box[3], y2 + 0.12))
+    margin = 0.3
+    dx, dy = margin - box[0], margin - box[1]
+    moved = [_shift_shape(shape, dx, dy) for shape in shapes]
+    return moved, box[2] - box[0] + 2 * margin, box[3] - box[1] + 2 * margin
+
+
+def _shift_shape(shape, dx, dy):
+    shape = dict(shape)
+    if shape["k"] in ("rect", "oval", "arc", "text"):
+        shape["x"] += dx
+        shape["y"] += dy
+    elif shape["k"] in ("line", "poly"):
+        shape["pts"] = [value + (dx if index % 2 == 0 else dy)
+                        for index, value in enumerate(shape["pts"])]
+    return shape
+
+
+def site_place_id(site, state=None):
+    """Welcher Ort der Karte gehoert zu einer Grossansicht (fuer das Vorschaubild)?"""
+    if site == SITE_HOME:
+        return "zuhause"
+    if site == SITE_BRANCH:
+        return "filiale"
+    if site == SITE_OFFICE:
+        return "gewerbehof" if state is not None and state.firm else "bitweiche"
+    return site
+
+
+def rival_record(state, rival_id):
+    """(gewonnen, verloren) aller Angebote, bei denen dieser Mitbewerber der
+    guenstigste war."""
+    won = lost = 0
+    for item in list(state.offers.values()) + list(state.project_offers.values()):
+        if (item.get("konkurrent") or BITWEICHE) != rival_id:
+            continue
+        if item.get("gewonnen"):
+            won += 1
+        else:
+            lost += 1
+    return won, lost
+
+
+def rival_info(state, rival_id, content=None):
+    """(Ueberschrift, Text) fuer einen Mitbewerber auf der Karte."""
+    rival = competitor(rival_id, content)
+    won, lost = rival_record(state, rival_id)
+    text = rival.get("text") or ""
+    if won or lost:
+        text += " Deine Bilanz gegen %s: %d gewonnen, %d verloren." % (rival["kurz"], won,
+                                                                        lost)
+    else:
+        text += " Bisher hast du noch kein Angebot gegen %s abgegeben." % rival["kurz"]
+    return rival["name"], text.strip()
+
+
+def map_list_mode():
+    """Liste statt Karte (je Geraet in den Einstellungen gemerkt)?"""
+    import fisi_update
+    try:
+        return bool(fisi_update.load_settings().get(MAP_LIST_SETTING, False))
+    except Exception:
+        return False
+
+
+def set_map_list_mode(flag):
+    import fisi_update
+    try:
+        settings = fisi_update.load_settings()
+        settings[MAP_LIST_SETTING] = bool(flag)
+        return fisi_update.save_settings(settings)
+    except Exception:
+        return False
+
+
+def _validate_world(content):
+    """orte.json: Landschaft, Orte (Ansicht, Freischaltung, Modell) und Modelle."""
+    rules = content.get("orte") or {}
+    if not rules:
+        return ["Spiel: orte.json fehlt"]
+    problems = []
+    world = rules.get("welt") or {}
+    width, height = world.get("breite", 0), world.get("hoehe", 0)
+    if width <= 0 or height <= 0:
+        problems.append("Spiel-Karte: Breite/Hoehe fehlt")
+    models = rules.get("modelle") or {}
+    for item in world.get("landschaft") or []:
+        if item.get("typ") not in MAP_LANDSCAPE:
+            problems.append("Spiel-Karte: unbekannte Landschaft '%s'" % item.get("typ"))
+        if item.get("typ") == "gebaeude" and item.get("modell") not in models:
+            problems.append("Spiel-Karte: unbekanntes Modell '%s'" % item.get("modell"))
+    places = {item["id"] for item in customer_places(content)}
+    tasks = {task["id"] for task in content["aufgaben"]}
+    rooms = {item["id"] for item in special_rooms(content)}
+    homes = {item["id"] for item in content["wohnungen"]["wohnungen"]}
+    seen = set()
+    for item in rules.get("orte") or []:
+        where = "Spiel-Ort %s" % item.get("id")
+        if not item.get("id") or item["id"] in seen:
+            problems.append("%s: Kennung fehlt oder doppelt" % where)
+        seen.add(item.get("id"))
+        if not item.get("name"):
+            problems.append("%s: Name fehlt" % where)
+        if item.get("modell") not in models:
+            problems.append("%s: unbekanntes Modell '%s'" % (where, item.get("modell")))
+        if not (0 <= item.get("x", -1) <= width and 0 <= item.get("y", -1) <= height):
+            problems.append("%s: liegt ausserhalb der Karte" % where)
+        sign = item.get("schild") or []
+        if len(sign) != 2 or not (0 <= sign[0] <= width and 0 <= sign[1] <= height):
+            problems.append("%s: Schild fehlt oder liegt ausserhalb" % where)
+        for variant in [item] + [item[key] for key in ("nach_gruendung", "vor_gruendung",
+                                                       "vor_filiale") if key in item]:
+            if "rolle" in variant and variant["rolle"] not in MAP_ROLES:
+                problems.append("%s: unbekannte Rolle '%s'" % (where, variant["rolle"]))
+            view = variant.get("ansicht")
+            if view is None and variant is not item:
+                continue
+            if view not in MAP_VIEWS and not any(str(view).startswith(prefix)
+                                                 for prefix in MAP_VIEW_PREFIXES):
+                problems.append("%s: unbekannte Ansicht '%s'" % (where, view))
+            elif str(view).startswith("kunde:") and view.split(":", 1)[1] not in places:
+                problems.append("%s: unbekannter Kundenort in '%s'" % (where, view))
+        need = item.get("frei") or {}
+        if not need:
+            problems.append("%s: Freischaltung ('frei') fehlt" % where)
+        for key in need:
+            if key not in MAP_UNLOCKS:
+                problems.append("%s: unbekannte Freischaltung '%s'" % (where, key))
+        if "kundenort" in need and need["kundenort"] not in places:
+            problems.append("%s: unbekannter Kundenort '%s'" % (where, need["kundenort"]))
+        if "aufgabe" in need and need["aufgabe"] not in tasks:
+            problems.append("%s: unbekannte Aufgabe '%s'" % (where, need["aufgabe"]))
+    for customer_id in places:
+        if not any((item.get("frei") or {}).get("kundenort") == customer_id
+                   for item in rules.get("orte") or []):
+            problems.append("Spiel-Karte: Kundenort '%s' fehlt auf der Karte" % customer_id)
+    for model_id, parts in models.items():
+        where = "Spiel-Modell %s" % model_id
+        if not parts:
+            problems.append("%s: keine Teile" % where)
+        for part in parts:
+            if part.get("art") not in MAP_PARTS:
+                problems.append("%s: unbekanntes Teil '%s'" % (where, part.get("art")))
+                continue
+            if part["art"] == "block":
+                if not all(isinstance(part.get(key), (int, float)) and part[key] > 0
+                           for key in ("w", "t", "h")):
+                    problems.append("%s: Block ohne Groesse" % where)
+                if part.get("dach", "flach") not in MAP_ROOFS:
+                    problems.append("%s: unbekanntes Dach '%s'" % (where, part.get("dach")))
+            for key in part:
+                if key in ("art", "x", "y", "w", "t", "h", "r", "dach", "fenster", "licht",
+                           "farbe"):
+                    continue
+                if key not in MAP_PART_CONDITIONS:
+                    problems.append("%s: unbekannte Angabe '%s'" % (where, key))
+            if "raum" in part and part["raum"] not in rooms:
+                problems.append("%s: unbekannter Sonderraum '%s'" % (where, part["raum"]))
+            for home in part.get("wohnung") or []:
+                if home not in homes:
+                    problems.append("%s: unbekannte Wohnung '%s'" % (where, home))
+            for key in ("erledigt", "offen"):
+                if key in part and part[key] not in tasks:
+                    problems.append("%s: unbekannte Aufgabe '%s'" % (where, part[key]))
+    # Jede Wohnung und jede Ausbaustufe braucht ein sichtbares Aussenmodell
+    for rule in rules.get("orte") or []:
+        if rule.get("ansicht") == "zuhause":
+            for home in homes:
+                ctx = dict(_map_context(None, content), wohnung=home)
+                if not any(part["art"] == "block" and _part_visible(part, ctx)
+                           for part in models.get(rule.get("modell"), [])):
+                    problems.append("Spiel-Karte: kein Gebaeude fuer Wohnung '%s'" % home)
+    return problems

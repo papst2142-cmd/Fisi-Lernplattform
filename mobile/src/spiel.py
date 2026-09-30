@@ -40,7 +40,7 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss."}
 # Grossansichten der Orte: Kopfzeile und "Zurueck ..." nach einem Auftrag
 SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
-               "zuhause": ("SPIEL", "ZUHAUSE")}
+               "zuhause": ("SPIEL", "ZUHAUSE"), "filiale": ("SPIEL", "FILIALE")}
 FIRM_CRUMBS = ("SPIEL", "FIRMA")
 JOURNEY_CRUMBS = ("SPIEL", "REISE")
 JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
@@ -153,7 +153,9 @@ class FloorPlan(ft.GestureDetector):
         self.canvas.shapes = shapes
 
     @staticmethod
-    def _shape(shape, scale, ox, oy):
+    def _shape(shape, scale, ox, oy, clamp=None):
+        """clamp: Breite in Pixeln, in der Schriften ganz sichtbar bleiben
+        (Weltkarte, ab 0.45)."""
         kind = shape["k"]
 
         def stroke(color, width):
@@ -182,18 +184,38 @@ class FloorPlan(ft.GestureDetector):
                            shape["w"] * scale, shape["h"] * scale,
                            math.radians(shape["start"]), math.radians(shape["extent"]),
                            paint=stroke(shape["color"], shape["lw"]))]
+        if kind == "poly":
+            # Vieleck (ab 0.45, Dachschraegen und Schatten auf der Weltkarte)
+            values = shape["pts"]
+            points = [(ox + values[i] * scale, oy + values[i + 1] * scale)
+                      for i in range(0, len(values), 2)]
+            elements = [cv.Path.MoveTo(*points[0])] + \
+                [cv.Path.LineTo(*point) for point in points[1:]] + [cv.Path.Close()]
+            paints = []
+            if shape["fill"]:
+                paints.append(ft.Paint(color=shape["fill"]))
+            if shape["line"]:
+                paints.append(stroke(shape["line"], shape["lw"]))
+            return [cv.Path(elements, paint=paint) for paint in paints]
         # Text: Namen der Kollegen nur, wenn genug Platz ist (Grossansicht)
         role = shape["role"]
         if role == "person" and scale < 18:
             return []
-        size = 11 if role in ("raum", "badge", "player") else 9
+        size = 11 if role in ("raum", "badge", "player", "ort") else 9
+        if role == "ortsname":
+            size = 15
         text = shape["text"]
         # Ohne Textmessung: Breite grob ueber die Zeichenzahl schaetzen
         if shape.get("maxw") and len(text) * size * 0.56 > shape["maxw"] * scale:
             text = shape["kurz"]
         x, y = ox + shape["x"] * scale, oy + shape["y"] * scale
+        if clamp and shape["anchor"] != "w":
+            half = (len(text) * size * 0.56 + (12 if shape.get("bg") else 0)) / 2.0
+            x = max(half + 2, min(x, clamp - half - 2))
+            y = max(size / 2.0 + 5, y)
         style = ft.TextStyle(size=size, color=shape["color"],
-                             weight=ft.FontWeight.BOLD if role != "person" else None)
+                             weight=ft.FontWeight.BOLD if role not in ("person", "ortsname")
+                             else None)
         result = []
         if shape.get("bg"):
             width = len(text) * size * 0.56 + 12
@@ -314,6 +336,64 @@ class WalkPlan(FloorPlan):
 # ============================================================================
 #  ZUORDNUNG
 # ============================================================================
+
+class WorldMap(ft.GestureDetector):
+    """Die Weltkarte (ab 0.45): alle freigeschalteten Orte als Gebaeude in
+    Vogelperspektive (fisi_game.world_shapes), Treffer ueber
+    fisi_game.place_at - genau wie am PC. Ein Tipp ruft on_place(ort) auf."""
+
+    def __init__(self, state, on_place):
+        self.state = state
+        self.on_place = on_place
+        self.places = fg.map_places(state)
+        self.width_px = 340
+        self.canvas = cv.Canvas(expand=True, height=255, on_resize=self._resized,
+                                resize_interval=100)
+        super().__init__(content=self.canvas, on_tap_down=self._tapped)
+        self._draw()
+
+    def _resized(self, event):
+        self.width_px = event.width
+        self._draw()
+        self.canvas.update()
+
+    def _scale(self):
+        return self.width_px / float(fg.map_size()[0])
+
+    def _draw(self):
+        scale = self._scale()
+        self.canvas.height = scale * fg.map_size()[1]
+        shapes = []
+        for shape in fg.world_shapes(self.state, places=self.places):
+            shapes += FloorPlan._shape(shape, scale, 0.0, 0.0, clamp=self.width_px)
+        self.canvas.shapes = shapes
+
+    def place_under(self, x, y):
+        scale = self._scale()
+        return fg.place_at(x / scale, y / scale, self.state, scale=scale, places=self.places)
+
+    def _tapped(self, event):
+        item = self.place_under(event.local_position.x, event.local_position.y)
+        if item:
+            self.on_place(item)
+
+
+def zoomable(control):
+    """Mit zwei Fingern vergroessern (Karte auf dem kleinen Bildschirm)."""
+    return ft.InteractiveViewer(content=control, min_scale=1.0, max_scale=3.0,
+                                boundary_margin=0)
+
+
+def model_preview(place_id, state, width=92, height=58):
+    """Kleines Vorschaubild eines Ortes (Aussenmodell der Weltkarte, ab 0.45)."""
+    shapes, w, h = fg.place_preview(place_id, state)
+    scale = min(width / w, height / h)
+    ox, oy = (width - scale * w) / 2.0, (height - scale * h) / 2.0
+    result = []
+    for shape in shapes:
+        result += FloorPlan._shape(shape, scale, ox, oy)
+    return cv.Canvas(result, width=width, height=height)
+
 
 class MatchBoard(ft.Column):
     """Zuordnung zum Antippen: erst den Begriff, dann das Gegenstueck."""
@@ -1493,26 +1573,7 @@ class GameScreen:
         reputation = ui.Card("Reputation", reputation_bars, accent=C["purple"],
                              subtitle="Ansehen %d %%" % round(state.mean_reputation))
 
-        away = state.open_count_by_site()
-        at_customer = sum(count for site, count in away.items() if site != fg.SITE_OFFICE)
-        plan_controls = [
-            FloorPlan(state, self.room, self._select_room, self.player_pos),
-            ui.text("Raum antippen, um zu sehen, wer dort etwas braucht.", size=11,
-                    color=C["muted"]),
-            ft.Row([ui.GradientButton(label, lambda _e, k=key: self.open_site(k),
-                                      kind="ghost", height=38)
-                    for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
-                                       ("Zuhause öffnen", "zuhause"))] +
-                   [ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38),
-                    ui.GradientButton("Reise öffnen", self.open_journey, kind="ghost",
-                                      height=38)],
-                   wrap=True, spacing=8, run_spacing=8),
-        ]
-        if at_customer:
-            plan_controls.append(ui.text("%s beim Kunden" % (
-                "1 Auftrag" if at_customer == 1 else "%d Aufträge" % at_customer),
-                size=12, color=C["muted"]))
-        plan = ui.Card("Grundriss", plan_controls, accent=C["accent"])
+        world = self._map_card(state)
 
         knowledge_bars = []
         for key in fg.CAT_ORDER:
@@ -1524,7 +1585,87 @@ class GameScreen:
                                       "schwierigere Tickets.", size=11, color=C["muted"]))
         wissen = ui.Card("Wissensstand", knowledge_bars, accent=C["green"])
 
-        return [profile, self._ticket_card(state), plan, reputation, wissen]
+        return [world, profile, self._ticket_card(state), reputation, wissen]
+
+    # -- Weltkarte (ab 0.45) ------------------------------------------------
+
+    def _map_card(self, state):
+        """Die Weltkarte als Startansicht; "Liste" schaltet auf eine kompakte
+        Liste der Orte um (je Geraet gemerkt, wie am PC)."""
+        as_list = fg.map_list_mode()
+        toggle = ui.GradientButton("Karte" if as_list else "Liste",
+                                   lambda _e: self._toggle_map_list(not as_list),
+                                   kind="ghost", height=30)
+        if as_list:
+            controls = self._place_list(state)
+        else:
+            controls = [zoomable(WorldMap(state, self.open_place)),
+                        ui.text("Ort antippen, um hinzugehen. Mit zwei Fingern "
+                                "vergrößern.", size=11, color=C["muted"])]
+        controls.append(ft.Row([
+            ui.GradientButton("Firma öffnen", self.open_firm, kind="ghost", height=38),
+            ui.GradientButton("Reise öffnen", self.open_journey, kind="ghost", height=38),
+        ], wrap=True, spacing=8, run_spacing=8))
+        return ui.Card("Karte", controls, accent=C["accent"], action=toggle)
+
+    def _place_list(self, state):
+        rows = []
+        for item in fg.map_places(state):
+            lines = [ui.text(item["name"] + ("  · Neu" if item["neu"] else ""), size=14,
+                             weight=ft.FontWeight.BOLD)]
+            if item["text"]:
+                lines.append(ui.text(item["text"], size=11, color=C["text_dim"]))
+            if item["hinweis"]:
+                lines.append(ui.text(item["hinweis"], size=11, color=C["yellow"],
+                                     weight=ft.FontWeight.BOLD))
+            if item["zahl"]:
+                lines.append(ui.text("%d offen" % item["zahl"], size=12, color=C["pink"],
+                                     weight=ft.FontWeight.BOLD))
+            rows.append(ft.Container(
+                content=ft.Row([model_preview(item["id"], state, 76, 50),
+                                ft.Column(lines, spacing=2, tight=True, expand=True),
+                                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=C["muted"], size=20)],
+                               spacing=10,
+                               vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                bgcolor=C["card_alt"], border_radius=12, padding=10,
+                border=ft.Border.all(1, mix(item["farbe"], C["card"], 0.55)),
+                on_click=lambda _e, i=item: self.open_place(i)))
+        return rows
+
+    def _toggle_map_list(self, flag):
+        fg.set_map_list_mode(flag)
+        self.render()
+
+    def open_place(self, item):
+        """Ort auf der Karte oder in der Liste angetippt: passende Ansicht oeffnen."""
+        view = item["ansicht"] or ""
+        if view.startswith("kunde:"):
+            self.place = view.split(":", 1)[1]
+            self.open_site("kunde")
+        elif view.startswith("firma:"):
+            self.firm_tab = view.split(":", 1)[1]
+            self.open_firm()
+        elif view.startswith("mitbewerber:"):
+            title, text = fg.rival_info(self.game.state, view.split(":", 1)[1])
+            self.app.info(title, text)
+        elif view == "firma":
+            self.open_firm()
+        elif view in SITE_CRUMBS:
+            self.open_site(view)
+
+    def _site_preview(self, state, site):
+        """Kopf einer Grossansicht mit dem Aussenmodell von der Weltkarte."""
+        place_id = fg.site_place_id(site, state)
+        item = fg.place_by_id(place_id, state)
+        if item is None:
+            return None
+        lines = [ui.text(item["name"], size=16, weight=ft.FontWeight.BOLD,
+                         color=item["farbe"])]
+        if item["text"]:
+            lines.append(ui.text(item["text"], size=12, color=C["text_dim"]))
+        return ft.Row([model_preview(place_id, state, 96, 62),
+                       ft.Column(lines, spacing=2, tight=True, expand=True)],
+                      spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
     def _ticket_card(self, state):
         if self.room:
@@ -1875,6 +2016,8 @@ class GameScreen:
     def _site(self):
         if self.site_key == "zuhause":
             return fg.SITE_HOME
+        if self.site_key == "filiale":
+            return fg.SITE_BRANCH
         if self.site_key == "kunde":
             places = [place["id"] for place in fg.open_places(self.game.state)]
             if self.place not in places:
@@ -1923,9 +2066,9 @@ class GameScreen:
                 keys = [key for key, _name in options]
                 controls.append(ui.PillGroup(options, on_change=self._choose_place,
                                              initial=keys.index(site)))
-            place = fg.customer_place(site)
-            if place.get("text"):
-                controls.append(ui.text(place["text"], size=12, color=C["text_dim"]))
+        preview = self._site_preview(state, site)
+        if preview is not None:
+            controls.append(preview)
         if home:
             money = [ui.text("Kontostand: %s" % euro(state.money), size=14,
                              weight=ft.FontWeight.BOLD,
@@ -1945,6 +2088,8 @@ class GameScreen:
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
             accent = C["accent"] if site == fg.SITE_OFFICE else C["blue"]
+            if site == fg.SITE_BRANCH:
+                title, accent = "Filiale", C["purple"]
             subtitle = "Tippe auf eine Person oder einen Ort"
         controls.append(ui.Card(title, [self.office_plan, self.office_info], accent=accent,
                                 subtitle=subtitle))
@@ -2640,6 +2785,18 @@ class GameScreen:
             controls.append(decision_box(decision, self._decide))
         for item in staff:
             parts = self._person_card(state, item)
+            if state.branch:
+                # Ab 0.45: Standort und Versetzen zwischen Gewerbehof und Filiale
+                there = item.get("standort") == fg.SITE_BRANCH
+                target = fg.SITE_OFFICE if there else fg.SITE_BRANCH
+                move = ui.GradientButton("Zum Gewerbehof" if there else "In die Filiale",
+                                         lambda _e, i=item, t=target: self._transfer(i, t),
+                                         kind="ghost", height=36, expand=True)
+                move.set_enabled(state.site_free(target) > 0)
+                parts += [ui.text("Arbeitsplatz: %s" % (
+                    state.branch["name"] if there else fg.firm_rules()["gebaeude"]["name"]),
+                    size=12, color=C["purple"] if there else C["green"]),
+                    ft.Row([move])]
             parts.append(ft.Row([
                 ui.GradientButton("Weiterbilden", lambda _e, i=item["id"]: self._pick_training(i),
                                   kind="ghost", height=36, expand=True),
@@ -2806,7 +2963,8 @@ class GameScreen:
         result = [ui.Card(rules["name"], [
             ui.text("%s %s" % (rules["text"], stage["text"]), size=13, color=C["text_soft"]),
             ui.text("Stufe %d · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag"
-                    % (stage["stufe"], state.capacity, euro(stage["nebenkosten"])),
+                    % (stage["stufe"], state.site_capacity(fg.SITE_OFFICE),
+                       euro(stage["nebenkosten"])),
                     size=12, color=C["text_dim"]),
             FloorPlan(state, None, lambda _room: None, stagger=True),
             ft.Row([ui.GradientButton("Büro öffnen", lambda _e: self.open_site("buero"),
@@ -2832,7 +2990,117 @@ class GameScreen:
         rooms = self._firm_rooms(state)
         if rooms:
             result.append(rooms)
+        branch = self._firm_branch(state)
+        if branch:
+            result.append(branch)
         return result
+
+    def _firm_branch(self, state):
+        """Zweiter Standort (ab 0.45): Voraussetzung und Eroeffnung mit
+        eigenem Namen, danach Grundriss und Ausbau der Filiale (wie am PC)."""
+        rules = fg.branch_rules()
+        if not rules:
+            return None
+        status = fg.branch_status(state)
+        stage = status["stufe"]
+        following = status["naechste"]
+        subtitle = ("Stufe %d · %d von %d Plätzen" % (stage["stufe"], status["belegt"],
+                                                     status["plaetze"])
+                    if status["offen"] else "zweiter Standort")
+        controls = [ft.Row([
+            model_preview("filiale", state, 96, 62),
+            ft.Column([ui.text(status["name"] if status["offen"] else rules.get("name", ""),
+                               size=16, weight=ft.FontWeight.BOLD, color=C["purple"]),
+                       ui.text(rules.get("text", ""), size=12, color=C["text_soft"])],
+                      spacing=2, tight=True, expand=True),
+        ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            ui.text("Vorteile: %s." % fg.branch_effect_text(), size=12, color=C["text_dim"])]
+        if not status["offen"]:
+            controls.append(ui.text(
+                "Eröffnung: %s · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag" % (
+                    euro(following["preis"]), len(following["plaetze"]),
+                    euro(following["nebenkosten"])), size=12, color=C["text_dim"]))
+            if status["fehlt"]:
+                controls.append(ui.text("Noch nicht so weit:", size=14, color=C["yellow"],
+                                        weight=ft.FontWeight.BOLD))
+                controls += [ui.text("·  " + line, size=13, color=C["text_soft"])
+                             for line in status["fehlt"]]
+            else:
+                name = ui.entry(rules.get("name_vorschlag", ""),
+                                hint="Wie heißt deine Filiale?")
+                button = ui.GradientButton("Filiale eröffnen",
+                                           lambda _e: self._open_branch(name.value),
+                                           expand=True)
+                button.set_enabled(not status["problem"])
+                controls += [ui.label("Filialname"), name, ft.Row([button])]
+                if status["problem"]:
+                    controls.append(ui.text(status["problem"], size=12, color=C["muted"]))
+            return ui.Card("Filiale", controls, accent=C["purple"], subtitle=subtitle)
+        controls += [
+            ui.text("Nebenkosten %s pro Arbeitstag" % euro(stage["nebenkosten"]), size=12,
+                    color=C["text_dim"]),
+            FloorPlan(state, None, lambda _room: None, site=fg.SITE_BRANCH, stagger=True),
+            ft.Row([ui.GradientButton("Filiale öffnen", lambda _e: self.open_site("filiale"),
+                                      kind="ghost", height=38)])]
+        if following is None:
+            controls.append(ui.text("Die Filiale ist fertig ausgebaut.", size=13,
+                                    color=C["text_dim"]))
+        else:
+            button = ui.GradientButton("Filiale ausbauen",
+                                       lambda _e: self._expand_branch(following), expand=True)
+            button.set_enabled(not status["problem"])
+            controls += [
+                ui.text("Stufe %d · %s: %s" % (following["stufe"], following["name"],
+                                              following["text"]), size=14,
+                        color=C["text_soft"]),
+                ui.text("Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
+                        "Arbeitstag" % (euro(following["preis"]), len(following["plaetze"]),
+                                        euro(following["nebenkosten"])),
+                        size=12, color=C["text_dim"]),
+                ft.Row([button])]
+        return ui.Card("Filiale", controls, accent=C["purple"], subtitle=subtitle)
+
+    def _open_branch(self, name):
+        stage = fg.branch_stage(1)
+
+        def confirmed():
+            try:
+                payload = self.game.open_branch(name)
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.positions.pop(fg.SITE_BRANCH, None)
+            self.notices[fg.SITE_BRANCH] = ("Willkommen in Lindenau",
+                                            fg.branch_opened_text(payload["name"]))
+            self._firm_changed()
+
+        self.app.confirm("Filiale eröffnen", "„%s“ für %s eröffnen? Die Nebenkosten steigen "
+                         "um %s pro Arbeitstag." % (" ".join((name or "").split()),
+                                                    euro(stage["preis"]),
+                                                    euro(stage["nebenkosten"])), confirmed)
+
+    def _expand_branch(self, stage):
+        def confirmed():
+            try:
+                self.game.expand_branch()
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self.positions.pop(fg.SITE_BRANCH, None)
+            self._firm_changed()
+
+        self.app.confirm("Filiale ausbauen", "„%s“ für %s bauen?" % (
+            stage["name"], euro(stage["preis"])), confirmed)
+
+    def _transfer(self, item, site):
+        try:
+            self.game.transfer(item["id"], site)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        for key in (fg.SITE_OFFICE, fg.SITE_BRANCH):
+            self.positions.pop(key, None)
+        self._firm_changed()
 
     def _firm_rooms(self, state):
         """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""

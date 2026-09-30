@@ -308,13 +308,24 @@ class FloorPlan(tk.Canvas):
             self.create_arc(x1, y1, x2, y2, start=-(shape["start"] + shape["extent"]),
                             extent=shape["extent"], style="arc", outline=shape["color"],
                             width=self._stroke(shape["lw"]), tags=tags)
+        elif kind == "poly":
+            # Vieleck (ab 0.45, Dachschraegen und Schatten auf der Weltkarte)
+            points = []
+            values = shape["pts"]
+            for index in range(0, len(values), 2):
+                points += self._xy(values[index], values[index + 1])
+            width = self._stroke(shape["lw"]) if shape["line"] else 0
+            self.create_polygon(*points, fill=shape["fill"], outline=shape["line"],
+                                width=width, tags=tags)
         elif kind == "text":
             self._text(shape, tags)
 
     def _text(self, shape, tags=()):
         role = shape["role"]
-        bold = role in ("raum", "badge", "player")
+        bold = role in ("raum", "badge", "player", "ort")
         font = tk_font(F["small_bold"] if bold else F["tiny"])
+        if role == "ortsname":
+            font = tk_font(F["h3"])
         x, y = self._xy(shape["x"], shape["y"])
         text = shape["text"]
         if shape.get("maxw") and tkfont.Font(font=font).measure(text) > \
@@ -453,6 +464,86 @@ class WalkPlan(FloorPlan):
             self.after_cancel(self._job)
             self._job = None
         super().destroy()
+
+
+class WorldMap(FloorPlan):
+    """Die Weltkarte (ab 0.45): alle freigeschalteten Orte als Gebaeude in
+    Vogelperspektive (Zeichnung aus fisi_game.world_shapes). Ein Klick auf
+    ein Gebaeude oder sein Schild ruft on_place(ort) auf."""
+
+    MAX_HEIGHT = 620
+
+    def __init__(self, parent, on_place, bg=None, max_height=None):
+        super().__init__(parent, lambda _room: None, bg=bg, max_height=max_height)
+        self.on_place = on_place
+        self.places = []
+        self.bind("<Motion>", self._motion)
+
+    def set_state(self, state, selected=None, player_pos=None):
+        self.state = state
+        self.places = fg.map_places(state)
+        self.draw()
+
+    def _layout(self):
+        width = self.winfo_width()
+        map_w, map_h = fg.map_size()
+        self.scale = min(width / map_w, px(self.max_height) / map_h)
+        self.offset = (width - self.scale * map_w) / 2.0
+        self.offset_y = 0.0
+        height = int(round(self.scale * map_h))
+        if abs(int(self.cget("height")) - height) > 2:
+            self.configure(height=height)
+
+    def draw(self):
+        self.delete("all")
+        if self.winfo_width() <= 1 or self.state is None:
+            return
+        self._layout()
+        for shape in fg.world_shapes(self.state, places=self.places):
+            self._shape(shape)
+
+    def place_under(self, event):
+        if self.scale <= 0 or self.state is None:
+            return None
+        x, y = self.to_building(event)
+        return fg.place_at(x, y, self.state, scale=self.scale / px(1), places=self.places)
+
+    def _click(self, event):
+        item = self.place_under(event)
+        if item:
+            self.on_place(item)
+
+    def _motion(self, event):
+        self.configure(cursor="hand2" if self.place_under(event) else "")
+
+
+class ModelPreview(FloorPlan):
+    """Kleines Vorschaubild eines Ortes (Aussenmodell der Weltkarte, ab 0.45)."""
+
+    def __init__(self, parent, place_id, state, width=150, height=96, bg=None):
+        super().__init__(parent, lambda _room: None, bg=bg, max_height=height)
+        self.place_id = place_id
+        self.state = state
+        self.configure(width=px(width), height=px(height), cursor="")
+        self.box_w = width
+
+    def _layout(self):
+        pass
+
+    def draw(self):
+        self.delete("all")
+        if self.state is None:
+            return
+        shapes, width, height = fg.place_preview(self.place_id, self.state)
+        box_w, box_h = int(self.cget("width")), int(self.cget("height"))
+        self.scale = min(box_w / width, box_h / height)
+        self.offset = (box_w - self.scale * width) / 2.0
+        self.offset_y = (box_h - self.scale * height) / 2.0
+        for shape in shapes:
+            self._shape(shape)
+
+    def _click(self, event):
+        pass
 
 
 class MatchBoard(ctk.CTkFrame):
@@ -1691,8 +1782,9 @@ class GameView(ScrollArea):
 
     def _build_overview(self, state):
         levels = self.game.knowledge()
+        self._build_map(state)
         top = _frame(self.content)
-        top.pack(fill="x")
+        top.pack(fill="x", pady=(14, 0))
         top.columnconfigure(0, weight=3, uniform="top")
         top.columnconfigure(1, weight=2, uniform="top")
 
@@ -1752,34 +1844,9 @@ class GameView(ScrollArea):
             bar.pack(fill="x", pady=(0, 2))
             bar.set(state.reputation[key], "%d / 100" % state.reputation[key])
 
-        middle = _frame(self.content)
-        middle.pack(fill="x", pady=(14, 0))
-        middle.columnconfigure(0, weight=3, uniform="mid")
-        middle.columnconfigure(1, weight=2, uniform="mid")
-
-        plan = Card(middle, title="Grundriss", accent=C["accent"],
-                    subtitle="Raum anklicken, um die Tickets dort zu sehen")
-        plan.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
-        self.floor = FloorPlan(plan.body, self._select_room)
-        self.floor.pack(fill="x")
-        self.floor.set_state(state, self.room, self.player_pos)
-        places = _frame(plan.body)
-        places.pack(anchor="w", pady=(10, 0))
-        for label, key in (("Büro öffnen", "buero"), ("Kunde öffnen", "kunde"),
-                           ("Zuhause öffnen", "zuhause"), ("Firma öffnen", "firma"),
-                           ("Reise öffnen", "reise")):
-            NeoButton(places, label, lambda k=key: self.app.show_view(k), kind="ghost",
-                      height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
-        away = state.open_count_by_site()
-        at_customer = sum(count for site, count in away.items() if site != fg.SITE_OFFICE)
-        if at_customer:
-            make_label(places, "%s beim Kunden" % ("1 Auftrag" if at_customer == 1 else
-                                                   "%d Aufträge" % at_customer),
-                       font=F["small"], fg=C["muted"]).pack(side="left", padx=6)
-
-        wissen = Card(middle, title="Wissensstand", accent=C["green"],
+        wissen = Card(self.content, title="Wissensstand", accent=C["green"],
                       subtitle="aus deinem Lernfortschritt")
-        wissen.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        wissen.pack(fill="x", pady=(14, 0))
         for key in fg.CAT_ORDER:
             color = cat_color(key)
             bar = GradientBar(wissen.body, CATEGORY_SHORT[fg.CAT_NAME[key]], color,
@@ -1788,10 +1855,82 @@ class GameView(ScrollArea):
             bar.set(levels[key], "%d %%" % levels[key])
         make_label(wissen.body, "Wer lernt, schafft schwierigere Tickets. Berechnet aus "
                    "den letzten Antworten und dem Anteil bearbeiteter Inhalte.",
-                   font=F["tiny"], fg=C["muted"], wraplength=380, justify="left",
+                   font=F["tiny"], fg=C["muted"], wraplength=900, justify="left",
                    anchor="w").pack(anchor="w", pady=(8, 0))
 
         self._build_ticket_list(state)
+
+    # -- Weltkarte (ab 0.45) -------------------------------------------------
+
+    def _build_map(self, state):
+        """Die Weltkarte als Startansicht; "Liste" schaltet auf eine kompakte
+        Liste der Orte um (je Geraet gemerkt)."""
+        as_list = fg.map_list_mode()
+        card = Card(self.content, title="Karte", accent=C["accent"],
+                    subtitle="Ort anklicken, um hinzugehen")
+        card.pack(fill="x")
+        if card.head is not None:
+            NeoButton(card.head, "Karte" if as_list else "Liste",
+                      lambda: self._toggle_map_list(not as_list), kind="ghost", height=28,
+                      font=F["small_bold"]).pack(side="right", padx=(10, 0))
+        if as_list:
+            self._build_place_list(card.body, state)
+            self.world = None
+        else:
+            self.world = WorldMap(card.body, self.open_place)
+            self.world.pack(fill="x")
+            self.world.set_state(state)
+        row = _frame(card.body)
+        row.pack(anchor="w", pady=(10, 0))
+        for label, key in (("Firma öffnen", "firma"), ("Reise öffnen", "reise")):
+            NeoButton(row, label, lambda k=key: self.app.show_view(k), kind="ghost",
+                      height=32, font=F["small_bold"]).pack(side="left", padx=(0, 8))
+
+    def _build_place_list(self, parent, state):
+        for item in fg.map_places(state):
+            row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=mix(item["farbe"], C["card"], 0.55))
+            row.pack(fill="x", pady=4)
+            preview = ModelPreview(row, item["id"], state, width=92, height=58,
+                                   bg=C["card_alt"])
+            preview.pack(side="left", padx=(10, 12), pady=6)
+            preview.draw()
+            side = _frame(row)
+            side.pack(side="right", padx=12)
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, pady=8)
+            title = item["name"] + ("   · Neu" if item["neu"] else "")
+            make_label(text, title, font=F["body_bold"], fg=C["text"], anchor="w").pack(
+                anchor="w")
+            if item["text"]:
+                make_label(text, item["text"], font=F["small"], fg=C["text_dim"], anchor="w",
+                           wraplength=640, justify="left").pack(anchor="w")
+            if item["hinweis"]:
+                make_label(text, item["hinweis"], font=F["small_bold"], fg=C["yellow"],
+                           anchor="w").pack(anchor="w")
+            if item["zahl"]:
+                make_label(side, "%d offen" % item["zahl"], font=F["small_bold"],
+                           fg=C["pink"]).pack(side="left", padx=(0, 10))
+            NeoButton(side, "Öffnen", lambda i=item: self.open_place(i), kind="ghost",
+                      height=30, font=F["small_bold"]).pack(side="left")
+            preview.bind("<Button-1>", lambda _e, i=item: self.open_place(i))
+
+    def _toggle_map_list(self, flag):
+        fg.set_map_list_mode(flag)
+        self.render(keep_scroll=True)
+
+    def open_place(self, item):
+        """Ort auf der Karte oder in der Liste angeklickt: passende Ansicht oeffnen."""
+        view = item["ansicht"] or ""
+        if view.startswith("kunde:"):
+            self.place = view.split(":", 1)[1]
+            self.app.show_view("kunde")
+        elif view.startswith("firma:"):
+            self.app.views["firma"].open_tab(view.split(":", 1)[1])
+        elif view.startswith("mitbewerber:"):
+            messagebox.showinfo(*fg.rival_info(self.game.state, view.split(":", 1)[1]))
+        elif view in ("buero", "zuhause", "firma", "filiale"):
+            self.app.show_view(view)
 
     def _build_ticket_list(self, state):
         if self.room:
@@ -2249,6 +2388,7 @@ class SiteView(ScrollArea):
                       kind="primary").pack(anchor="w", pady=(12, 0))
             return
         self._build_head(state)
+        self._build_preview(state)
         card = Card(self.content, title=self.card_title(), accent=self.accent(),
                     subtitle=self.SUBTITLE)
         card.pack(fill="x", pady=(0, 0))
@@ -2275,6 +2415,26 @@ class SiteView(ScrollArea):
 
     def _build_head(self, state):
         pass
+
+    def _build_preview(self, state):
+        """Kopf mit dem Aussenmodell des Ortes von der Weltkarte (ab 0.45)."""
+        place_id = fg.site_place_id(self.site(), state)
+        item = fg.place_by_id(place_id, state)
+        if item is None:
+            return
+        row = _frame(self.content)
+        row.pack(fill="x", pady=(0, 12))
+        preview = ModelPreview(row, place_id, state, width=132, height=84, bg=C["bg"])
+        preview.pack(side="left", padx=(0, 14))
+        preview.draw()
+        text = _frame(row)
+        text.pack(side="left", fill="x", expand=True)
+        make_label(text, item["name"], font=F["h3"], fg=item["farbe"], anchor="w").pack(
+            anchor="w")
+        if item["text"]:
+            make_label(text, item["text"], font=F["small"], fg=C["text_dim"],
+                       wraplength=820, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(2, 0))
 
     def _build_below(self, state):
         pass
@@ -2352,15 +2512,43 @@ class CustomerView(SiteView):
                        for place in places]
             ChoiceRow(self.content, options, self.site(), self._choose).pack(
                 anchor="w", pady=(0, 12))
-        place = fg.customer_place(self.site())
-        if place.get("text"):
-            make_label(self.content, place["text"], font=F["small"], fg=C["text_dim"],
-                       wraplength=980, justify="left", anchor="w").pack(anchor="w",
-                                                                        pady=(0, 10))
 
     def _choose(self, place_id):
         self.game_view.place = place_id
         self.render()
+
+
+class BranchView(SiteView):
+    """Die Filiale (ab 0.45): zweiter Standort mit eigenem Grundriss. Hier
+    sitzen die Mitarbeiter, die dorthin versetzt wurden."""
+
+    KEY = "filiale"
+    TITLE = "Filiale"
+
+    def site(self):
+        return fg.SITE_BRANCH
+
+    def accent(self):
+        return C["purple"]
+
+    def card_title(self):
+        return "Filiale"
+
+    def render(self):
+        if not self.state.branch:
+            for child in self.content.winfo_children():
+                child.destroy()
+            card = Card(self.content, title="Filiale", accent=C["purple"])
+            card.pack(fill="x")
+            make_label(card.body, "Die Filiale ist noch nicht eröffnet. Unter Firma > "
+                       "Gebäude siehst du, was dafür noch fehlt.", font=F["body"],
+                       fg=C["text_soft"], wraplength=900, justify="left",
+                       anchor="w").pack(anchor="w")
+            NeoButton(card.body, "Zu Firma > Gebäude",
+                      lambda: self.app.views["firma"].open_tab("gebaeude"),
+                      kind="primary").pack(anchor="w", pady=(12, 0))
+            return
+        super().render()
 
 
 class HomeView(SiteView):
@@ -3297,6 +3485,19 @@ class FirmView(ScrollArea):
             decision_box(card.body, decision, self._decide, wraplength=940)
         for item in staff:
             text, buttons = self._person_row(card.body, item, state)
+            if state.branch:
+                # Ab 0.45: Standort und Versetzen zwischen Gewerbehof und Filiale
+                there = item.get("standort") == fg.SITE_BRANCH
+                make_label(text, "Arbeitsplatz: %s" % (state.branch["name"] if there else
+                                                       fg.firm_rules()["gebaeude"]["name"]),
+                           font=F["small"], fg=C["purple"] if there else C["green"],
+                           anchor="w").pack(anchor="w")
+                target = fg.SITE_OFFICE if there else fg.SITE_BRANCH
+                button = NeoButton(buttons, "Zum Gewerbehof" if there else "In die Filiale",
+                                   lambda i=item, t=target: self._transfer(i, t),
+                                   kind="ghost", height=30, font=F["small_bold"])
+                button.pack(pady=(0, 6))
+                button.set_enabled(state.site_free(target) > 0)
             NeoButton(buttons, "Weiterbilden", lambda i=item["id"]: self._pick_training(i),
                       kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
             coaching = fg.coaching_offer(state, item["id"])
@@ -3467,7 +3668,7 @@ class FirmView(ScrollArea):
         rules = fg.firm_rules()["gebaeude"]
         card = Card(self.content, title=rules["name"], accent=C["green"],
                     subtitle="Stufe %d · %d Arbeitsplätze · Nebenkosten %s pro Arbeitstag"
-                    % (stage["stufe"], state.capacity, _euro(stage["nebenkosten"])))
+                    % (stage["stufe"], state.site_capacity(fg.SITE_OFFICE), _euro(stage["nebenkosten"])))
         card.pack(fill="x", pady=(14, 0))
         make_label(card.body, "%s %s" % (rules["text"], stage["text"]), font=F["small"],
                    fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
@@ -3499,6 +3700,7 @@ class FirmView(ScrollArea):
             button.pack(anchor="w")
             button.set_enabled(state.money >= following["preis"])
         self._build_rooms(state)
+        self._build_branch(state)
 
     def _build_rooms(self, state):
         """Sonderraeume (ab 0.36): je Raum Vorteil, Preis und Zustand."""
@@ -3533,6 +3735,131 @@ class FirmView(ScrollArea):
                                    kind="primary", height=32, font=F["small_bold"])
                 button.pack()
                 button.set_enabled(not item["problem"])
+
+    def _build_branch(self, state):
+        """Zweiter Standort (ab 0.45): Voraussetzung und Eroeffnung mit
+        eigenem Namen, danach Grundriss und Ausbau der Filiale."""
+        rules = fg.branch_rules()
+        if not rules:
+            return
+        status = fg.branch_status(state)
+        stage = status["stufe"]
+        subtitle = ("Stufe %d · %d von %d Plätzen besetzt · Nebenkosten %s pro Arbeitstag"
+                    % (stage["stufe"], status["belegt"], status["plaetze"],
+                       _euro(stage["nebenkosten"])) if status["offen"] else
+                    "zweiter Standort in Lindenau")
+        card = Card(self.content, title="Filiale", accent=C["purple"], subtitle=subtitle)
+        card.pack(fill="x", pady=(14, 0))
+        head = _frame(card.body)
+        head.pack(fill="x")
+        preview = ModelPreview(head, "filiale", state, width=132, height=84, bg=C["card"])
+        preview.pack(side="left", padx=(0, 14))
+        preview.draw()
+        text = _frame(head)
+        text.pack(side="left", fill="x", expand=True)
+        make_label(text, status["name"] if status["offen"] else rules.get("name", ""),
+                   font=F["h3"], fg=C["purple"], anchor="w").pack(anchor="w")
+        make_label(text, rules.get("text", ""), font=F["small"], fg=C["text_soft"],
+                   wraplength=780, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+        make_label(text, "Vorteile: %s." % fg.branch_effect_text(), font=F["small"],
+                   fg=C["text_dim"], wraplength=780, justify="left", anchor="w").pack(
+            anchor="w", pady=(2, 0))
+        following = status["naechste"]
+        if not status["offen"]:
+            make_label(card.body, "Eröffnung: %s · %d Arbeitsplätze · Nebenkosten %s pro "
+                       "Arbeitstag" % (_euro(following["preis"]), len(following["plaetze"]),
+                                       _euro(following["nebenkosten"])),
+                       font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                           pady=(12, 0))
+            if status["fehlt"]:
+                make_label(card.body, "Noch nicht so weit:", font=F["body_bold"],
+                           fg=C["yellow"], anchor="w").pack(anchor="w", pady=(8, 0))
+                for line in status["fehlt"]:
+                    make_label(card.body, "·  " + line, font=F["small"], fg=C["text_soft"],
+                               anchor="w").pack(anchor="w")
+                return
+            make_label(card.body, "FILIALNAME", font=F["label"], fg=C["muted"]).pack(
+                anchor="w", pady=(12, 0))
+            entry = ctk.CTkEntry(card.body, width=360, height=38, corner_radius=10,
+                                 border_width=1, fg_color=C["card_alt"],
+                                 border_color=C["border"], text_color=C["text_soft"],
+                                 font=F["body"], placeholder_text="Wie heißt deine Filiale?",
+                                 placeholder_text_color=C["muted"])
+            entry.pack(anchor="w", pady=(6, 12))
+            entry.insert(0, rules.get("name_vorschlag", ""))
+            button = NeoButton(card.body, "Filiale eröffnen",
+                               lambda: self._open_branch(entry.get()), kind="primary")
+            button.pack(anchor="w")
+            button.set_enabled(not status["problem"])
+            if status["problem"]:
+                make_label(card.body, status["problem"], font=F["small"], fg=C["muted"],
+                           anchor="w").pack(anchor="w", pady=(6, 0))
+            return
+        plan = FloorPlan(card.body, lambda _room: None, max_height=260, site=fg.SITE_BRANCH,
+                         stagger=True)
+        plan.pack(fill="x", pady=(12, 0))
+        plan.set_state(state)
+        NeoButton(card.body, "Filiale öffnen", lambda: self.app.show_view("filiale"),
+                  kind="ghost", height=32, font=F["small_bold"]).pack(anchor="w",
+                                                                      pady=(10, 0))
+        if following is None:
+            make_label(card.body, "Die Filiale ist fertig ausgebaut.", font=F["small"],
+                       fg=C["text_dim"], anchor="w").pack(anchor="w", pady=(10, 0))
+            return
+        make_label(card.body, "Stufe %d · %s: %s" % (following["stufe"], following["name"],
+                                                    following["text"]),
+                   font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w", pady=(12, 0))
+        make_label(card.body, "Kosten %s · danach %d Arbeitsplätze · Nebenkosten %s pro "
+                   "Arbeitstag" % (_euro(following["preis"]), len(following["plaetze"]),
+                                   _euro(following["nebenkosten"])),
+                   font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                       pady=(4, 10))
+        button = NeoButton(card.body, "Filiale ausbauen",
+                           lambda: self._expand_branch(following), kind="primary")
+        button.pack(anchor="w")
+        button.set_enabled(not status["problem"])
+
+    def _open_branch(self, name):
+        stage = fg.branch_stage(1)
+        if not messagebox.askyesno("Filiale eröffnen", "„%s“ für %s eröffnen? Die Nebenkosten "
+                                   "steigen um %s pro Arbeitstag." % (
+                                       " ".join(name.split()), _euro(stage["preis"]),
+                                       _euro(stage["nebenkosten"]))):
+            return
+        try:
+            payload = self.game.open_branch(name)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        game_view = self.app.views["game"]
+        game_view.positions.pop(fg.SITE_BRANCH, None)
+        game_view.notices[fg.SITE_BRANCH] = ("Willkommen in Lindenau",
+                                             fg.branch_opened_text(payload["name"]))
+        self._changed()
+
+    def _expand_branch(self, stage):
+        if not messagebox.askyesno("Filiale ausbauen", "„%s“ für %s bauen?" % (
+                stage["name"], _euro(stage["preis"]))):
+            return
+        try:
+            self.game.expand_branch()
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self.app.views["game"].positions.pop(fg.SITE_BRANCH, None)
+        self._changed()
+
+    def _transfer(self, item, site):
+        try:
+            self.game.transfer(item["id"], site)
+        except ValueError as exc:
+            self._error(exc)
+            return
+        game_view = self.app.views["game"]
+        for key in (fg.SITE_OFFICE, fg.SITE_BRANCH):
+            game_view.positions.pop(key, None)
+        self._changed()
 
     def _build_room(self, item):
         if not messagebox.askyesno("Ausbauen", "„%s“ für %s ausbauen? Die Nebenkosten "

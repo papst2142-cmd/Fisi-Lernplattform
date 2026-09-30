@@ -47,7 +47,7 @@ class Card(ft.Container):
     """Abgerundete Karte mit farbigem Strich und Titel in Grossbuchstaben."""
 
     def __init__(self, title=None, controls=None, accent=None, subtitle=None,
-                 padding=16, spacing=10, expand=None):
+                 padding=16, spacing=10, expand=None, action=None):
         self.body = ft.Column(controls or [], spacing=spacing, tight=True,
                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self.subtitle_text = ft.Text(subtitle or "", size=11, color=C["muted"],
@@ -63,7 +63,8 @@ class Card(ft.Container):
             header = ft.Row([
                 self.tick, self.title_text,
                 self.subtitle_text,
-            ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+            ] + ([action] if action is not None else []),
+                spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             column = [header, self.body]
         super().__init__(
             content=ft.Column(column, spacing=12, tight=True),
