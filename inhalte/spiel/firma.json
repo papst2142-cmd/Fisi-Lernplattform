@@ -16,7 +16,10 @@
     "Ab 0.40: 'lernen.deckel' ist die Grenze fuer das Lernen durch Arbeit je Thema - darueber (bis max) geht es nur noch mit Weiterbildung. Arbeit lernt langsamer (Ticket 1 Punkt, etwa ein Sechstel einer Themen-Weiterbildung), Weiterbildungen bringen weniger und dauern laenger.",
     "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten).",
     "Ab 0.43 'macken': jede Macke hat plus (Staerke, wirkt immer voll) und minus (Schwaeche, wirkt je nach Stufe mit personal.macken.stufen Prozent). Wirkungen: umsatz/projekt/lernen in Prozent, chance in Prozentpunkten (chance_netzwerk, chance_hardware, chance_talbahn nur bei passenden Tickets), team_projekt (Prozent fuers ganze Projektteam), team_lernen (Punkte fuer die anderen beim Projektabschluss), kz_erfolg/kz_fehlschlag (Kundenzufriedenheit), urlaub/krank/konflikt (Prozent haeufiger), weiterbildung_tage, stimmung_team (Erholung pro Tag fuer alle), stimmung_fehlschlag (Stimmung minus nach verpatztem Ticket). 'kollege' = nur fuer diesen Bitweiche-Wechsler.",
-    "Ab 0.43 'personal': Stimmung je Mitarbeiter (start, erholt sich um erholung pro Feierabend Richtung ziel; unter tief weniger Leistung, unter kritisch nach kuendigung_nach Feierabenden Kuendigung). krankheit.chance und urlaub.chance in Prozent je Mitarbeiter und Feierabend, konflikt.chance je Feierabend fuer die Firma. Macken schwaechen sich alle abschwaechen_tage Arbeitstage und per Coaching um eine Stufe ab (nie unter Stufe 1). urlaub.abstand_firma: so viele Arbeitstage mindestens zwischen zwei Urlaubsanfragen in der ganzen Firma (hoechstens eine pro Feierabend)."
+    "Ab 0.43 'personal': Stimmung je Mitarbeiter (start, erholt sich um erholung pro Feierabend Richtung ziel; unter tief weniger Leistung, unter kritisch nach kuendigung_nach Feierabenden Kuendigung). krankheit.chance und urlaub.chance in Prozent je Mitarbeiter und Feierabend, konflikt.chance je Feierabend fuer die Firma. Macken schwaechen sich alle abschwaechen_tage Arbeitstage und per Coaching um eine Stufe ab (nie unter Stufe 1). urlaub.abstand_firma: so viele Arbeitstage mindestens zwischen zwei Urlaubsanfragen in der ganzen Firma (hoechstens eine pro Feierabend).",
+    "Ab 0.44 'rivalitaet': Mitbewerber reagieren auf deinen Erfolg. rueckhol: Wer vorher bei einem Mitbewerber war (Bitweiche-Wechsler, dazu vorher_anteil Prozent der Bewerber), bekommt ab ab_tagen Arbeitstagen in der Firma gelegentlich ein Rueckhol-Angebot (chance in Prozent je Feierabend, mal Stimmungsfaktor: 1 + (stimmung_ziel - Stimmung) / stimmung_teiler, begrenzt auf faktor_min bis faktor_max). Hoechstens eines pro Feierabend, abstand_firma Tage Ruhe in der Firma, abstand Tage je Person. Gegenhalten: Gehalt +gehalt_plus Prozent (dauerhaft) oder Halteprämie von bonus_tage Tagesgehaeltern; sonst geht die Person beim naechsten Feierabend zurueck.",
+    "gegenwind: Hast du von den letzten fenster Angeboten (Anfragen und Projekte, mindestens mindestens Stueck) ab_quote Prozent gewonnen, bieten alle Mitbewerber zuschlag_minus Punkte guenstiger gegen dich (mindestens mindest_tage Arbeitstage lang, danach bis die Quote wieder darunter liegt), und bei Anfragen bietet mit zweiter_bieter mehr Chance eine zweite Firma mit. Die Staerke ist fest (kein Hochschaukeln).",
+    "Ab 0.44 'markt' (ab Arbeitstag ab_tag, nach der Story): konjunktur.phasen wechseln zufaellig (normale Lage, dann Auf- oder Abschwung, dann wieder normal ...; mit wechsel_chance Prozent folgt auf einen Abschwung ein Aufschwung und umgekehrt), Dauer aus tage. start_text steht am Morgen von ab_tag. Wirkung: anfragen mehr/weniger pro Tag, zuschlag Punkte auf alle Mitbewerber-Zuschlaege (hoehere Marktpreise = mehr Spielraum), umsatz Prozent auf den Routineumsatz. trends: nach erster_nach Tagen der erste Trend, er dauert dauer Tage, dann pause Tage bis zum naechsten (nie zweimal derselbe hintereinander). Waehrend eines Trends kommt mit chance Prozent je Tag eine Trend-Anfrage dazu (Artikel aus dem Trend, Mitbewerber mit zuschlag Punkten mehr, Zertifizierungen des Fachbereichs cat geben ihren Vorteil wie bei Projekten)."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -3784,5 +3787,231 @@
         "vorteil": "Weiterbildungen 30 % günstiger und einen Tag kürzer."
       }
     ]
+  },
+  "rivalitaet": {
+    "rueckhol": {
+      "vorher_anteil": 50,
+      "ab_tagen": 20,
+      "chance": 1.5,
+      "abstand": 30,
+      "abstand_firma": 6,
+      "stimmung_ziel": 70,
+      "stimmung_teiler": 40,
+      "faktor_min": 0.5,
+      "faktor_max": 2.0,
+      "angebot_plus": [12, 20],
+      "gehalt_plus": 10,
+      "gehalt_stimmung": 10,
+      "bonus_tage": 10,
+      "bonus_stimmung": 5,
+      "texte": [
+        "{firma} hat {name} angerufen: {plus} % mehr Gehalt, wenn {name} zurückkommt. „Wir vermissen dich“, heißt es.",
+        "Beim Mittagessen erzählt {name}, dass {firma} ein Angebot geschickt hat: der alte Platz und {plus} % mehr Geld.",
+        "{name} hat Post von {firma} bekommen. Man würde sich über eine Rückkehr freuen, mit {plus} % mehr Gehalt.",
+        "Ein Headhunter im Auftrag von {firma} hat {name} angesprochen: zurück zum alten Team, {plus} % mehr Gehalt."
+      ],
+      "texte_bitweiche": [
+        "Sabine von Bitweiche hat {name} zum Kaffee eingeladen: „Komm zurück. {plus} % mehr, und keine Tabellen mehr für Paul.“",
+        "Bitweiche will {name} zurück, mit {plus} % mehr Gehalt. Sabine will dir zeigen, dass sie noch mitspielt."
+      ]
+    },
+    "gegenwind": {
+      "fenster": 10,
+      "mindestens": 8,
+      "mindest_tage": 10,
+      "ab_quote": 60,
+      "zuschlag_minus": 3,
+      "zweiter_bieter": 0.2,
+      "text_start": "Die Mitbewerber haben gemerkt, wie oft du gewinnst. Ab jetzt bieten sie gezielt günstiger gegen dich.",
+      "text_ende": "Die Mitbewerber lassen wieder locker und kalkulieren normal."
+    }
+  },
+  "markt": {
+    "ab_tag": 101,
+    "start_text": "Die Geschichte mit Bitweiche ist erzählt, aber der Markt schläft nicht: Ab jetzt wechseln sich gute und schlechte Zeiten ab, und ab und zu sorgt ein Technologietrend für besondere Anfragen.",
+    "konjunktur": {
+      "start_tage": [4, 10],
+    "wechsel_chance": 70,
+      "phasen": {
+        "neutral": {
+          "name": "Normale Lage",
+          "tage": [8, 18],
+          "anfragen": 0,
+          "zuschlag": 0,
+          "umsatz": 0,
+          "text": "Die Wirtschaft hat sich wieder beruhigt. Anfragen und Preise sind normal."
+        },
+        "aufschwung": {
+          "name": "Aufschwung",
+          "tage": [10, 20],
+          "anfragen": 1,
+          "zuschlag": 3,
+          "umsatz": 5,
+          "text": "Aufschwung! Die Firmen in Talheim investieren wieder. Es kommen mehr Anfragen, und die Kunden zahlen besser."
+        },
+        "abschwung": {
+          "name": "Abschwung",
+          "tage": [10, 18],
+          "anfragen": -1,
+          "zuschlag": -3,
+          "umsatz": -5,
+          "text": "Die Wirtschaft schwächelt. Viele Kunden sparen: weniger Anfragen, und alle kalkulieren knapper."
+        }
+      }
+    },
+    "trends": {
+      "erster_nach": [5, 15],
+      "dauer": [10, 15],
+      "pause": [12, 28],
+      "chance": 70,
+      "zuschlag": 4,
+      "liste": [
+        {
+          "id": "cloud",
+          "name": "Cloud-Boom",
+          "cat": "systeme",
+          "start": "In Talheim wollen plötzlich alle in die Cloud. Für eine Weile kommen Anfragen zu Cloud-Umstellungen dazu.",
+          "ende": "Der Cloud-Boom ebbt ab. Die meisten Firmen sind umgezogen.",
+          "satz": "Alle reden von der Cloud, wir wollen nicht die Letzten sein.",
+          "artikel": [
+            {
+              "name": "Microsoft-365-Umstellung (je Nutzer)",
+              "preis": [45, 80],
+              "menge": [10, 30]
+            },
+            {
+              "name": "Hybrid-Cloud-Gateway",
+              "preis": [1400, 2400],
+              "menge": [1, 2]
+            },
+            {
+              "name": "Cloud-Backup-Paket (1 Jahr)",
+              "preis": [300, 600],
+              "menge": [1, 4]
+            }
+          ]
+        },
+        {
+          "id": "ki",
+          "name": "KI-Nachfrage",
+          "cat": "wirtschaft",
+          "start": "KI ist in aller Munde. Kunden fragen nach Rechnern und Lizenzen für KI-Anwendungen.",
+          "ende": "Die erste KI-Welle ist vorbei, die Nachfrage normalisiert sich.",
+          "satz": "Wir wollen KI endlich selbst ausprobieren, aber datenschutzkonform.",
+          "artikel": [
+            {
+              "name": "KI-Workstation mit Grafikkarte",
+              "preis": [2200, 3600],
+              "menge": [1, 3]
+            },
+            {
+              "name": "KI-Assistent Lizenz (1 Jahr, je Nutzer)",
+              "preis": [180, 320],
+              "menge": [5, 20]
+            },
+            {
+              "name": "Edge-Server für lokale KI",
+              "preis": [3500, 5800],
+              "menge": [1, 1]
+            }
+          ]
+        },
+        {
+          "id": "security",
+          "name": "Cybersecurity-Welle",
+          "cat": "sicherheit",
+          "start": "Nach mehreren Hackerangriffen in der Region rüsten viele Firmen bei der Sicherheit nach.",
+          "ende": "Die Cybersecurity-Welle flacht ab. Die meisten haben nachgerüstet.",
+          "satz": "Nach dem Angriff auf die Nachbarfirma wollen wir nichts riskieren.",
+          "artikel": [
+            {
+              "name": "Next-Generation-Firewall",
+              "preis": [1600, 2800],
+              "menge": [1, 2]
+            },
+            {
+              "name": "Endpoint-Schutz (1 Jahr, je Gerät)",
+              "preis": [35, 70],
+              "menge": [10, 40]
+            },
+            {
+              "name": "Hardware-Token für MFA",
+              "preis": [40, 70],
+              "menge": [10, 30]
+            }
+          ]
+        },
+        {
+          "id": "homeoffice",
+          "name": "Homeoffice-Welle",
+          "cat": "netzwerk",
+          "start": "Viele Firmen schicken ihre Leute ins Homeoffice und brauchen dafür Technik und sichere Zugänge.",
+          "ende": "Die Homeoffice-Welle ist durch, die Arbeitsplätze zu Hause stehen.",
+          "satz": "Unser Team arbeitet jetzt öfter von zu Hause und braucht die passende Ausstattung.",
+          "artikel": [
+            {
+              "name": "Homeoffice-Paket (Notebook, Headset, Dock)",
+              "preis": [1000, 1500],
+              "menge": [3, 10]
+            },
+            {
+              "name": "VPN-Router für Außenstellen",
+              "preis": [250, 450],
+              "menge": [2, 8]
+            }
+          ]
+        },
+        {
+          "id": "glasfaser",
+          "name": "Glasfaser-Ausbau",
+          "cat": "netzwerk",
+          "start": "Die Stadtwerke verlegen Glasfaser im Gewerbegebiet. Jetzt wollen alle schnellere Netze im Haus.",
+          "ende": "Der Glasfaser-Ausbau ist abgeschlossen, die Netze sind umgerüstet.",
+          "satz": "Jetzt, wo die Glasfaser liegt, soll auch unser Netz im Haus mithalten.",
+          "artikel": [
+            {
+              "name": "Glasfaser-Switch mit SFP+-Ports",
+              "preis": [900, 1600],
+              "menge": [1, 4]
+            },
+            {
+              "name": "SFP+-Modul (10 GBit)",
+              "preis": [45, 90],
+              "menge": [4, 16]
+            },
+            {
+              "name": "WLAN-6-Access-Point",
+              "preis": [180, 320],
+              "menge": [4, 12]
+            }
+          ]
+        },
+        {
+          "id": "datenschutz",
+          "name": "Datenschutz-Prüfwelle",
+          "cat": "datenbanken",
+          "start": "Die Datenschutzbehörde kündigt Prüfungen an. Viele Firmen wollen ihre Daten jetzt besser schützen.",
+          "ende": "Die Prüfwelle ist vorbei, die meisten Firmen sind gut aufgestellt.",
+          "satz": "Bevor die Prüfer kommen, wollen wir unsere Daten sauber verschlüsselt haben.",
+          "artikel": [
+            {
+              "name": "Verschlüsseltes NAS mit Backup",
+              "preis": [1200, 2000],
+              "menge": [1, 2]
+            },
+            {
+              "name": "Datenbank-Verschlüsselung (Lizenz)",
+              "preis": [600, 1100],
+              "menge": [1, 3]
+            },
+            {
+              "name": "Verschlüsselter USB-Stick",
+              "preis": [40, 80],
+              "menge": [10, 30]
+            }
+          ]
+        }
+      ]
+    }
   }
 }

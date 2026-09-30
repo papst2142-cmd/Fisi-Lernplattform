@@ -2362,6 +2362,8 @@ class AuftraegeTest(unittest.TestCase):
             seen = {}
             for day in range(state.day, state.day + 400):
                 for item in fg.inquiries_for_day(state, day, self.content):
+                    if item.get("konjunktur") or item.get("trend"):
+                        continue    # ab 0.44: Markt verschiebt die Zuschlaege (eigener Test)
                     kind = rules["arten"][item["kunde"]["art"]]
                     for bid in item["bieter"]:
                         if bid["id"] != fg.BITWEICHE:
@@ -4240,6 +4242,325 @@ class PersonalTest(unittest.TestCase):
             again = fg.GameState(db.game_events(), self.content)
             self.assertEqual(again.mood, state.mood)
             self.assertEqual(again.absences, state.absences)
+
+
+class RivalitaetMarktTest(unittest.TestCase):
+    """Ab 0.44: Rueckhol-Angebote, Gegenwind der Mitbewerber, Konjunktur und
+    Technologietrends nach der Story."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _day_end = MitarbeiterThemenTest._day_end
+    _hire = PersonalTest._hire
+    _live_day = PersonalTest._live_day
+
+    def _without_market(self):
+        content = json.loads(json.dumps(self.content))
+        content["firma"].pop("markt")
+        content["firma"].pop("rivalitaet")
+        return content
+
+    def _day_in(self, state, phase=None, trend=False, after=0):
+        """Erster Tag (ab after) in dieser Konjunkturphase bzw. mit Trend."""
+        start = int(self.content["firma"]["markt"]["ab_tag"])
+        for day in range(max(start, after), start + 400):
+            now = fg.market_state(state, day, self.content)
+            if (phase is None or now["phase"] == phase) and (not trend or now["trend"]):
+                return day
+        self.fail("keinen passenden Tag gefunden")
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_firm(fg.GAME), [])
+        rules = fg.GAME["firma"]
+        self.assertGreaterEqual(len(rules["markt"]["trends"]["liste"]), 5)
+        broken = _content()
+        broken["firma"]["rivalitaet"]["rueckhol"]["texte"][0] = "{gibtsnicht}"
+        broken["firma"]["markt"]["trends"]["liste"][0]["cat"] = "quatsch"
+        broken["firma"]["markt"]["konjunktur"]["phasen"].pop("abschwung")
+        self.assertEqual(len(fg._validate_firm(broken)), 3)
+
+    def test_frueherer_arbeitgeber(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            seen = []
+            for batch in range(6):
+                for number in range(3):
+                    item = fg._applicant(self.content["firma"], game.state.firm_seed, batch,
+                                         number, self.content)
+                    seen.append(item)
+                    if item["vorher"]:
+                        self.assertIn("bisher bei %s" % fg.competitor(item["vorher"])["kurz"],
+                                      item["rolle"])
+            former = {item["vorher"] for item in seen}
+            self.assertIn("", former)            # nicht alle kommen von der Konkurrenz
+            self.assertGreaterEqual(len(former), 3)
+            applicant = next(item for item in fg.applicants(game.state, self.content)
+                             if item["herkunft"] == "bewerbung")
+            game.hire(applicant["id"])
+            self.assertEqual(game.state.staff[applicant["id"]]["vorher"], applicant["vorher"])
+            # Aeltere Spielstaende ohne "vorher": gleich gewuerfelt wie beim Bewerber
+            old = dict(game.state.staff[applicant["id"]], id="bw0-0")
+            old.pop("vorher")
+            self.assertEqual(fg.former_employer(game.state, "bw0-0", old),
+                             fg.former_for(game.state.firm_seed, "bw0-0", self.content))
+            self.assertEqual(fg.former_employer(game.state, "x", {"herkunft": "bitweiche"}),
+                             fg.BITWEICHE)
+
+    def _recall(self, game, staff_id, rival="kranich"):
+        day = game.state.day
+        item = {"art": fg.PERSONAL_RECALL, "rueckhol": "rueckhol:%d:%s" % (day, staff_id),
+                "id": staff_id, "name": "Person1 Test", "firma": rival, "plus": 15,
+                "text": "NetzWerk Kranich will Person1 zurück."}
+        return item, self._live_day(game, [item])
+
+    def test_rueckhol_gehalt_erhoehen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "listenmensch", 1, vorher="kranich")
+            salary = game.state.staff[worker]["gehalt"]
+            item, state = self._recall(game, worker)
+            decisions = state.open_decisions()
+            self.assertEqual([entry["art"] for entry in decisions], [fg.DECISION_RECALL])
+            self.assertEqual([option["id"] for option in decisions[0]["optionen"]],
+                             [fg.RECALL_RAISE, fg.RECALL_BONUS, fg.RECALL_LET])
+            self.assertIn("NetzWerk Kranich", decisions[0]["titel"])
+            self.assertIn("Abwerbeversuch", fg.personal_news(state, self.content))
+            self.assertFalse(state.can_end_day())
+            mood = state.mood_of(worker)
+            game.decide(item["rueckhol"], fg.RECALL_RAISE)
+            state = game.state
+            rule = self.content["firma"]["rivalitaet"]["rueckhol"]
+            self.assertEqual(state.staff[worker]["gehalt"], fg.recall_raise(salary, rule))
+            self.assertEqual(state.staff[worker]["gehalt"], int(round(salary * 1.1)))
+            self.assertEqual(state.mood_of(worker), min(100, mood + rule["gehalt_stimmung"]))
+            self.assertEqual(state.open_decisions(), [])
+            # Doppelt (zweites Geraet) zaehlt nicht
+            with self.assertRaises(ValueError):
+                game.decide(item["rueckhol"], fg.RECALL_RAISE)
+            self.assertEqual(state.firm_day()["gehaelter"],
+                             sum(int(entry["gehalt"]) for entry in state.staff.values()))
+            entry = [line for line in fg.journey(state, self.content)
+                     if line["art"] == fg.EV_RECALL]
+            self.assertEqual(entry[0]["titel"], "Abwerbeversuch abgewehrt: Person1 Test")
+
+    def test_rueckhol_praemie_und_ziehen_lassen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            worker = self._hire(game, "listenmensch", 1, vorher="cloudkontor")
+            other = self._hire(game, "gruendlich", 2, vorher="byteschmiede")
+            rule = self.content["firma"]["rivalitaet"]["rueckhol"]
+            item, state = self._recall(game, worker, "cloudkontor")
+            money = state.money
+            salary = state.staff[worker]["gehalt"]
+            game.decide(item["rueckhol"], fg.RECALL_BONUS)
+            state = game.state
+            self.assertEqual(state.money, money - salary * rule["bonus_tage"])
+            self.assertEqual(state.staff[worker]["gehalt"], salary)
+            # Ohne Geld geht keine Praemie
+            item, state = self._recall(game, other, "byteschmiede")
+            decision = state.open_decisions()[0]
+            self.assertEqual(decision["person"], other)
+            game.decide(item["rueckhol"], fg.RECALL_LET)
+            state = game.state
+            # Arbeitet heute noch mit, nach dem Feierabend ist der Platz frei
+            self.assertIn(other, state.staff)
+            state = self._live_day(game)
+            self.assertNotIn(other, state.staff)
+            self.assertIn(other, state.ever_hired)
+            self.assertNotIn(other, [entry["id"] for entry in fg.applicants(state, self.content)])
+            self.assertIn("wieder bei Byteschmiede", fg.personal_news(state, self.content))
+            titles = [line["titel"] for line in fg.journey(state, self.content)]
+            self.assertIn("Zurück zu Byteschmiede: Person1 Test", titles)
+
+    def test_rueckhol_wuerfel_und_grenzen(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            content = self.content
+            rule = content["firma"]["rivalitaet"]["rueckhol"]
+            self.assertEqual(fg.recall_factor(70, rule), 1.0)
+            self.assertEqual(fg.recall_factor(100, rule), 0.5)
+            self.assertEqual(fg.recall_factor(10, rule), 2.0)
+            day = game.state.day
+            fresh = self._hire(game, "listenmensch", 1, vorher="kranich")
+            none = self._hire(game, "gruendlich", 2, vorher="")
+            rule["chance"] = 100
+            state = game.state
+            # Zu frisch eingestellt: noch kein Angebot
+            self.assertEqual(fg._recall_events(state, day, list(state.staff), set(), content), [])
+            later = day + rule["ab_tagen"]
+            events = fg._recall_events(state, later, list(state.staff), set(), content)
+            self.assertEqual([(item["id"], item["firma"]) for item in events],
+                             [(fresh, "kranich")])
+            self.assertIn("NetzWerk Kranich", events[0]["text"])
+            self.assertEqual(fg._recall_events(state, later, list(state.staff), {fresh},
+                                               content), [])
+            self.assertNotEqual(fg.former_employer(state, none), "kranich")
+            rule["chance"] = 0
+            self.assertEqual(fg._recall_events(state, later, list(state.staff), set(), content),
+                             [])
+
+    def _offers(self, db, game, results, first_day=1):
+        for number, won in enumerate(results):
+            db.log_game_event(fg.EV_OFFER_WON if won else fg.EV_OFFER_LOST, json.dumps(
+                {"anfrage": "anfrage:%d:1" % (first_day + number), "tag": first_day + number,
+                 "gewonnen": won, "geld": 0}), "PC")
+        return game.reload()
+
+    def test_gegenwind_fest_und_gedeckelt(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            rule = self.content["firma"]["rivalitaet"]["gegenwind"]
+            state = self._offers(db, game, [True] * 5 + [False] * 5)
+            self.assertFalse(fg.rivalry_pressure(state, 50, self.content)["aktiv"])
+            state = self._offers(db, game, [True] * 10, first_day=20)
+            pressure = fg.rivalry_pressure(state, 50, self.content)
+            self.assertTrue(pressure["aktiv"])
+            self.assertEqual((pressure["gewonnen"], pressure["angebote"], pressure["minus"]),
+                             (10, 10, rule["zuschlag_minus"]))
+            # Angebote vom Tag selbst zaehlen noch nicht (Preise stehen morgens fest)
+            self.assertFalse(fg.rivalry_pressure(state, 20, self.content)["aktiv"])
+            # Auch 30 Siege in Folge machen es nicht staerker
+            state = self._offers(db, game, [True] * 20, first_day=40)
+            self.assertEqual(fg.rivalry_pressure(state, 70, self.content)["minus"],
+                             rule["zuschlag_minus"])
+            plain = fg.GameState(db.game_events(), self._without_market())
+            for day in (70, 71, 72):
+                hard = fg.inquiries_for_day(state, day, self.content)
+                soft = fg.inquiries_for_day(plain, day, plain.content)
+                self.assertTrue(all(item["gegenwind"] == 3 for item in hard))
+                for mine, other in zip(hard, soft):
+                    common = {bid["id"]: bid["zuschlag"] for bid in other["bieter"]}
+                    for bid in mine["bieter"]:
+                        if bid["id"] in common:
+                            self.assertEqual(bid["zuschlag"],
+                                             max(0, common[bid["id"]] - 3))
+            self.assertIn("gezielt 3 Punkte", fg.pressure_text(
+                fg.rivalry_pressure(state, 70, self.content)))
+            for number in range(state.day, 72):
+                db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": number}), "PC")
+            state = game.reload()
+            events = [item[:2] for item in fg.market_events(state, self.content)]
+            # Tag 9: 5 von 8 gewonnen (ab 60 %). Ab Tag 10 nur noch 5 von 9, aber der
+            # Gegenwind haelt mindestens 10 Arbeitstage
+            self.assertEqual(events[:2], [(9, "wettbewerb_verschaerft"),
+                                          (19, "wettbewerb_entspannt")])
+            self.assertTrue(fg.rivalry_pressure(state, 18, self.content)["aktiv"])
+            _head, text = fg.offer_result_text(dict(
+                fg.offer_result(state, hard[0], 10, {}, self.content)), self.content)
+            self.assertIn("gezielt 3 Punkte günstiger", text)
+
+    def test_konjunktur_wirkung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            state = game.state
+            rules = self.content["firma"]
+            plain = fg.GameState(db.game_events(), self._without_market())
+            start = rules["markt"]["ab_tag"]
+            self.assertEqual(fg.market_state(state, start - 1, self.content)["phase"], "")
+            for phase, sign in (("aufschwung", 1), ("abschwung", -1)):
+                day = self._day_in(state, phase)
+                info = rules["markt"]["konjunktur"]["phasen"][phase]
+                items = [item for item in fg.inquiries_for_day(state, day, self.content)
+                         if not item.get("trend")]
+                self.assertEqual(len(items), rules["angebote"]["pro_tag"] + info["anfragen"])
+                self.assertEqual(info["anfragen"] * sign, 1)
+                other = fg.inquiries_for_day(plain, day, plain.content)
+                for mine, theirs in zip(items, other):
+                    self.assertEqual(mine["konjunktur"], phase)
+                    common = {bid["id"]: bid["zuschlag"] for bid in theirs["bieter"]}
+                    for bid in mine["bieter"]:
+                        if bid["id"] in common and common[bid["id"]] > 3:
+                            self.assertEqual(bid["zuschlag"],
+                                             common[bid["id"]] + info["zuschlag"])
+            # Routineumsatz: +5 % im Aufschwung
+            worker = self._hire(game, "gruendlich", 1)
+            state = game.state
+            values = state.staff_values(worker)
+            day = self._day_in(state, "aufschwung")
+            normal = self._day_in(state, "neutral", after=day)
+            ratio = state.staff_revenue_of(worker, values, day) / float(
+                state.staff_revenue_of(worker, values, normal))
+            self.assertAlmostEqual(ratio, 1.05, delta=0.02)
+            # Die Phasen wechseln sich ab und haben die richtigen Laengen
+            phases = fg._phase_list(state.firm_seed, 600, self.content)
+            kinds = [kind for _von, _bis, kind in phases]
+            self.assertEqual(kinds[0], "neutral")
+            self.assertTrue(all(kinds[index] == "neutral" for index in range(0, len(kinds), 2)))
+            self.assertIn("aufschwung", kinds)
+            self.assertIn("abschwung", kinds)
+            for von, bis, kind in phases[1:]:
+                low, high = rules["markt"]["konjunktur"]["phasen"][kind]["tage"]
+                self.assertTrue(low <= bis - von <= high)
+
+    def test_trend_lebenszyklus(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self.content["firma"]["markt"]["trends"]["chance"] = 100
+            state = game.state
+            day = self._day_in(state, trend=True)
+            now = fg.market_state(state, day, self.content)
+            trend = now["trend"]
+            names = [item["name"] for item in trend["artikel"]]
+            for current in range(now["trend_von"], now["trend_bis"]):
+                items = fg.inquiries_for_day(state, current, self.content)
+                special = [item for item in items if item.get("trend")]
+                self.assertEqual(len(special), 1)
+                self.assertIn(special[0]["artikel"], names)
+                self.assertEqual(special[0]["cat"], trend["cat"])
+                self.assertEqual(fg.inquiry_badge_text(special[0]),
+                                 "Trend-Auftrag: %s" % trend["name"])
+                self.assertIn(trend["satz"], special[0]["text"])
+            after = fg.inquiries_for_day(state, now["trend_bis"], self.content)
+            self.assertFalse(any(item.get("trend") for item in after))
+            # Mitbewerber verlangen mehr (hohe Nachfrage)
+            self.assertEqual(fg.market_shift(state, day, self.content, trend=True)["trend"], 4)
+            # Tagebuch und Anzeige
+            db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": 2}), "PC")
+            for number in range(3, now["trend_bis"] + 1):
+                db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": number}), "PC")
+            state = game.reload()
+            kinds = [(item[1], item[0]) for item in fg.market_events(state, self.content)]
+            self.assertIn(("trend_gestartet", now["trend_von"]), kinds)
+            self.assertIn(("trend_beendet", now["trend_bis"]), kinds)
+            story = [line for line in fg.journey(state, self.content)
+                     if line["art"] == "trend_gestartet"]
+            self.assertEqual(story[-1]["gruppe"], fg.JOURNEY_STORY)
+            self.assertEqual(story[-1]["titel"], "Trend: %s" % trend["name"])
+
+    def test_zertifikat_hilft_bei_trend_auftrag(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self.content["firma"]["markt"]["trends"]["chance"] = 100
+            state = game.state
+            day = next(current for current in range(101, 600)
+                       if (fg.market_state(state, current, self.content)["trend"] or {})
+                       .get("cat") == "systeme")
+            inquiry = next(item for item in fg.inquiries_for_day(state, day, self.content)
+                           if item.get("trend"))
+            before = fg.offer_advantage(state, self.content, inquiry["cat"])
+            db.log_game_event(fg.EV_CERT, json.dumps(
+                {"zert": "windows", "tag": 1, "bis_tag": 1, "geld": 0}), "PC")
+            state = game.reload()
+            self.assertEqual(fg.offer_advantage(state, self.content, inquiry["cat"]), before + 3)
+            self.assertEqual(fg.offer_advantage(state, self.content, None), before)
+
+    def test_morgen_und_anzeige(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            start = self.content["firma"]["markt"]["ab_tag"]
+            for number in range(game.state.day, start):
+                db.log_game_event(fg.EV_DAY_END, json.dumps({"tag": number}), "PC")
+            state = game.reload()
+            self.assertEqual(state.day, start)
+            self.assertIn(self.content["firma"]["markt"]["start_text"],
+                          fg.morning_text(state.day, self.content, state))
+            lines = fg.market_status(state, self.content)
+            self.assertEqual(lines[0][0], "Konjunktur: Normale Lage")
+            # Ohne 0.44-Inhalte bleibt alles wie vorher
+            plain = fg.GameState(db.game_events(), self._without_market())
+            self.assertEqual(fg.market_status(plain, plain.content), [])
+            self.assertEqual(fg.market_events(plain, plain.content), [])
 
 
 if __name__ == "__main__":

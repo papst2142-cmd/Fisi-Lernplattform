@@ -1307,6 +1307,19 @@ def decision_box(decision, on_choose):
         border=ft.Border.all(1, mix(C["pink"], C["card"], 0.45)))
 
 
+def market_box(lines):
+    """Lage am Markt (ab 0.44): Konjunktur, Trend und Gegenwind."""
+    controls = [ui.label("Markt", C["accent"])]
+    for title, text in lines:
+        controls += [ui.text(title, size=13, weight=ft.FontWeight.BOLD),
+                     ui.text(text, size=11, color=C["text_dim"])]
+    return ft.Container(
+        content=ft.Column(controls, spacing=3, tight=True,
+                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH),
+        bgcolor=mix(C["card"], C["accent"], 0.08), border_radius=12, padding=12,
+        border=ft.Border.all(1, mix(C["accent"], C["card"], 0.45)))
+
+
 class GameScreen:
     """Seite "Spiel" der Handy-App (gleiche Schnittstelle wie Screen in
     main.py: crumbs, root, on_show)."""
@@ -2175,6 +2188,10 @@ class GameScreen:
                           "im Ergebnis. Bist du am günstigsten und stimmt die Rechnung, "
                           "bekommst du den Auftrag. Offene Anfragen verfallen beim Feierabend.",
                           size=12, color=C["text_dim"])]
+        # Ab 0.44: Konjunktur, Trend und Gegenwind der Mitbewerber
+        lines = fg.market_status(state)
+        if lines:
+            offers.append(market_box(lines))
         for inquiry in state.inquiries():
             offers.append(self._inquiry_box(inquiry))
         tickets = state.customer_tickets()
@@ -2198,11 +2215,14 @@ class GameScreen:
         result = inquiry.get("ergebnis")
         parts = [ui.text(inquiry["kunde"]["name"], size=15, weight=ft.FontWeight.BOLD),
                  ui.text("%d × %s" % (inquiry["menge"], inquiry["artikel"]), size=13,
-                         weight=ft.FontWeight.BOLD, color=C["pink"]),
-                 ui.text(inquiry["text"], size=13, color=C["text_soft"]),
-                 ui.text(fg.inquiry_status_text(inquiry), size=12,
-                         color=C["text_dim"] if not result else
-                         C["green"] if result.get("gewonnen") else C["red"])]
+                         weight=ft.FontWeight.BOLD, color=C["pink"])]
+        badge = fg.inquiry_badge_text(inquiry)
+        if badge:
+            parts.append(ui.text(badge, size=12, weight=ft.FontWeight.BOLD, color=C["yellow"]))
+        parts += [ui.text(inquiry["text"], size=13, color=C["text_soft"]),
+                  ui.text(fg.inquiry_status_text(inquiry), size=12,
+                          color=C["text_dim"] if not result else
+                          C["green"] if result.get("gewonnen") else C["red"])]
         if result:
             _head, text = fg.offer_result_text(result)
             parts.append(ui.text(text, size=12, color=C["text_soft"]))

@@ -120,6 +120,23 @@ def decision_box(parent, decision, on_choose, wraplength=900):
     return box
 
 
+def market_box(parent, lines, wraplength=900):
+    """Lage am Markt (ab 0.44): Konjunktur, Trend und Gegenwind der
+    Mitbewerber als kleine Anzeige."""
+    box = ctk.CTkFrame(parent, fg_color=mix(C["card"], C["accent"], 0.08), corner_radius=12,
+                       border_width=1, border_color=mix(C["accent"], C["card"], 0.45))
+    box.pack(fill="x", pady=(0, 8))
+    make_label(box, "MARKT", font=F["label"], fg=C["accent"], anchor="w").pack(
+        anchor="w", padx=14, pady=(10, 0))
+    for title, text in lines:
+        make_label(box, title, font=F["small_bold"], fg=C["text"], anchor="w").pack(
+            anchor="w", padx=14, pady=(4, 0))
+        make_label(box, text, font=F["tiny"], fg=C["text_dim"], wraplength=wraplength,
+                   justify="left", anchor="w").pack(anchor="w", padx=14)
+    _frame(box, height=10).pack()
+    return box
+
+
 def _frame(parent, **kwargs):
     return ctk.CTkFrame(parent, fg_color="transparent", corner_radius=0, **kwargs)
 
@@ -2796,6 +2813,10 @@ class FirmView(ScrollArea):
                    "den Auftrag. Offene Anfragen verfallen beim Feierabend.", font=F["small"],
                    fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 6))
+        # Ab 0.44: Konjunktur, Trend und Gegenwind der Mitbewerber
+        lines = fg.market_status(state)
+        if lines:
+            market_box(card.body, lines, wraplength=940)
         for inquiry in state.inquiries():
             self._inquiry_row(card.body, state, inquiry)
 
@@ -2830,6 +2851,10 @@ class FirmView(ScrollArea):
                    anchor="w").pack(anchor="w")
         make_label(head, "%d × %s" % (inquiry["menge"], inquiry["artikel"]),
                    font=F["small_bold"], fg=C["pink"], anchor="w").pack(anchor="w")
+        badge = fg.inquiry_badge_text(inquiry)
+        if badge:
+            make_label(head, badge, font=F["small_bold"], fg=C["yellow"], anchor="w").pack(
+                anchor="w")
         make_label(row, inquiry["text"], font=F["small"], fg=C["text_soft"], wraplength=960,
                    justify="left", anchor="w").pack(anchor="w", padx=14, pady=(4, 0))
         make_label(row, fg.inquiry_status_text(inquiry), font=F["small"],
