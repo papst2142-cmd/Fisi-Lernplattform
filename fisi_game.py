@@ -6987,9 +6987,10 @@ def _gross_tender(state, entry, slot, start, content):
     low, high = level["material"]
     material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
                    * 10)
+    shift = market_shift(state, start, content)
     bids, absent = competitor_bids("projekt", "normal", entry["cat"], seed, start, salt,
                                    content, extra=rules.get("mitbieter_extra", 0),
-                                   shift=market_shift(state, start, content)["shift"])
+                                   shift=shift["shift"])
     cheapest = min(bids, key=lambda bid: bid["zuschlag"])
     project_id = "%s%d" % (GROSS_PREFIX, slot + 1)
     what = "Öffentliche Ausschreibung" if entry.get("oeffentlich") else "Großauftrag"
@@ -7010,6 +7011,7 @@ def _gross_tender(state, entry, slot, start, content):
             "rahmenbedingungen": list(entry.get("rahmenbedingungen") or []),
             "gross": True, "oeffentlich": bool(entry.get("oeffentlich")),
             "braucht": list(entry.get("braucht") or []), "zertifikate": names,
+            "gegenwind": shift["gegenwind"],
             "ergebnis": state.project_offers.get(project_id)}
 
 
@@ -7244,7 +7246,11 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
     bids = [dict(bid, netto=_money(rival_cost * (1 + bid["zuschlag"] / 100.0)))
             for bid in offer.get("bieter") or []]
     market = _money(rival_cost * (1 + offer["markt"] / 100.0))
-    advantage = offer_advantage(state, content, offer.get("cat"))
+    advantage = full = offer_advantage(state, content, offer.get("cat"))
+    if offer.get("gegenwind"):
+        # Im Gegenwind zaehlt der Preisvorteil nur anteilig (ab 0.44, fester Faktor)
+        factor = (rivalry_rules(content).get("gegenwind") or {}).get("vorteil_faktor", 1)
+        advantage = int(advantage * factor)
     right = not problems
     cheap = numbers["netto"] <= _money(market * (1 + advantage / 100.0)) + 0.001
     won = right and cheap
@@ -7258,6 +7264,10 @@ def _judge_offer(state, task, offer, answer, content=None, market_task=None):
                "vorteil_gruende": [reason for reason, _value in offer_advantage_parts(
                    state, offer.get("cat"), content)] if advantage else [],
                "grund": "" if won else ("rechenfehler" if not right else "preis")}
+    if offer.get("gegenwind"):
+        payload["gegenwind"] = offer["gegenwind"]
+        if advantage < full:
+            payload["vorteil_voll"] = full
     if problems:
         payload["probleme"] = problems
     return payload
@@ -7278,6 +7288,9 @@ def offer_result_text(payload, content=None):
     if payload.get("gegenwind"):
         text += (" Die Mitbewerber haben gezielt %d Punkte günstiger gegen dich geboten."
                  % payload["gegenwind"])
+        if payload.get("vorteil_voll"):
+            text += (" Dein Preisvorteil zählte dabei nur %d statt %d %%."
+                     % (payload["vorteil"], payload["vorteil_voll"]))
     others = bidders_text(payload, content)
     if others:
         text += "\n\n" + others
@@ -7841,7 +7854,7 @@ def rivalry_pressure(state, day, content=None):
     content = content or state.content
     rule = rivalry_rules(content).get("gegenwind")
     empty = {"aktiv": False, "gewonnen": 0, "angebote": 0, "minus": 0, "zweiter": 0.0,
-             "seit": 0}
+             "faktor": 1.0, "seit": 0}
     if not rule or not state.firm:
         return empty
     stamp = len(state.offers) + len(state.project_offers)
@@ -7873,6 +7886,7 @@ def rivalry_pressure(state, day, content=None):
         result = {"aktiv": active, "gewonnen": won, "angebote": len(window),
                   "minus": int(rule["zuschlag_minus"]) if active else 0,
                   "zweiter": float(rule.get("zweiter_bieter", 0)) if active else 0.0,
+                  "faktor": float(rule.get("vorteil_faktor", 1)) if active else 1.0,
                   "seit": since}
         cache[current] = result
     return cache.get(day, result)
@@ -7882,9 +7896,14 @@ def pressure_text(pressure):
     """ "Gegenwind: ..." fuer die Auftraege (leer ohne Gegenwind)."""
     if not pressure.get("aktiv"):
         return ""
-    return ("Gegenwind: Du hast %d deiner letzten %d Angebote gewonnen. Alle Mitbewerber "
+    text = ("Gegenwind: Du hast %d deiner letzten %d Angebote gewonnen. Alle Mitbewerber "
             "bieten deshalb gezielt %d Punkte günstiger gegen dich." % (
                 pressure["gewonnen"], pressure["angebote"], pressure["minus"]))
+    if pressure.get("faktor", 1) < 1:
+        text += " Dein Preisvorteil zählt solange nur halb." if pressure["faktor"] == 0.5 \
+            else " Dein Preisvorteil zählt solange nur zu %d %%." % round(
+                pressure["faktor"] * 100)
+    return text
 
 
 def _phase_list(seed, until, content):
@@ -8100,7 +8119,8 @@ def project_for_slot(state, slot, content=None):
     material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
                    * 10)
     cat = CAT_KEY.get(template["cat"], template["cat"])
-    move = market_shift(state, start, content)["shift"]
+    shift = market_shift(state, start, content)
+    move = shift["shift"]
     bids, absent = competitor_bids("projekt", "normal", cat, seed, start, salt, content,
                                    shift=move)
     cheapest = min(bids, key=lambda bid: bid["zuschlag"])
@@ -8123,6 +8143,7 @@ def project_for_slot(state, slot, content=None):
             "text": text, "ausgangssituation": template["ausgangssituation"],
             "auftrag": template["auftrag"],
             "rahmenbedingungen": list(template.get("rahmenbedingungen") or []),
+            "gegenwind": shift["gegenwind"],
             "ergebnis": state.project_offers.get(project_id)}
 
 
@@ -8814,6 +8835,10 @@ def _validate_market(rules):
     for key in ("fenster", "mindestens", "ab_quote", "zuschlag_minus"):
         if not isinstance(wind.get(key), (int, float)) or wind[key] < 0:
             problems.append("Spiel-Firma: rivalitaet.gegenwind.%s fehlt oder ist ungueltig" % key)
+    if "vorteil_faktor" in wind and (not isinstance(wind["vorteil_faktor"], (int, float))
+                                     or not 0 <= wind["vorteil_faktor"] <= 1):
+        problems.append("Spiel-Firma: rivalitaet.gegenwind.vorteil_faktor muss zwischen 0 und 1 "
+                        "liegen")
     if isinstance(wind.get("mindestens"), int) and isinstance(wind.get("fenster"), int) and \
             wind["mindestens"] > wind["fenster"]:
         problems.append("Spiel-Firma: gegenwind.mindestens liegt ueber dem Fenster")

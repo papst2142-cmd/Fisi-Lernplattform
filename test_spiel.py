@@ -4450,6 +4450,31 @@ class RivalitaetMarktTest(unittest.TestCase):
                 fg.offer_result(state, hard[0], 10, {}, self.content)), self.content)
             self.assertIn("gezielt 3 Punkte günstiger", text)
 
+    def test_gegenwind_halbiert_preisvorteil(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            state = self._offers(db, game, [True] * 20, first_day=40)
+            state.reputation["kundenzufriedenheit"] = 100
+            inquiry = fg.inquiries_for_day(state, 70, self.content)[0]
+            self.assertEqual(inquiry["gegenwind"], 3)
+            full = fg.offer_advantage(state, self.content, inquiry.get("cat"))
+            self.assertGreater(full, 1)
+            factor = self.content["firma"]["rivalitaet"]["gegenwind"]["vorteil_faktor"]
+            self.assertEqual(factor, 0.5)
+            result = fg.offer_result(state, inquiry, 10, {}, self.content)
+            self.assertEqual(result["vorteil"], int(full * factor))
+            self.assertEqual(result["vorteil_voll"], full)
+            calm = dict(inquiry)
+            calm.pop("gegenwind")
+            self.assertEqual(fg.offer_result(state, calm, 10, {}, self.content)["vorteil"], full)
+            _head, text = fg.offer_result_text(result, self.content)
+            self.assertIn("nur %d statt %d %%" % (int(full * factor), full), text)
+            self.assertIn("nur halb", fg.pressure_text(
+                fg.rivalry_pressure(state, 70, self.content)))
+            # Projekte und Grossauftraege tragen den Gegenwind ihres Starttags
+            for project in fg.project_tenders(state, 70, self.content):
+                self.assertIn("gegenwind", project)
+
     def test_konjunktur_wirkung(self):
         with TempDB() as db:
             game = self._founded(db)
