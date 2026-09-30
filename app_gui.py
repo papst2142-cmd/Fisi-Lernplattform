@@ -52,7 +52,7 @@ import fisi_game  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
-from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, lighten, mix  # noqa: E402
+from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
     ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView, OfficeView,
 )
