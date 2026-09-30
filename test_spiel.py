@@ -3848,6 +3848,15 @@ class ZertifizierungTest(unittest.TestCase):
                      for day in range(state.day, state.day + 60, 5)
                      if fg.gross_tenders(state, day, self.content)}
             self.assertEqual(names, {"Windows 11 für 60 Arbeitsplätze im Rathaus"})
+            # Bei Grossauftraegen bietet ein Mitbewerber mehr mit als bei Projekten
+            extra = fg.gross_rules(self.content)["mitbieter_extra"]
+            self.assertEqual(extra, 1)
+            for day in range(1, 30):
+                normal = fg.competitor_bids("projekt", "normal", "systeme", 7, day, "x",
+                                            self.content)
+                more = fg.competitor_bids("projekt", "normal", "systeme", 7, day, "x",
+                                          self.content, extra=extra)
+                self.assertEqual(sum(map(len, more)), sum(map(len, normal)) + 1)
             # Derselbe Grossauftrag nie zweimal hintereinander
             slots = [[item["vorlage"] for item in fg.gross_tenders(state, day, self.content)
                       if item["slot"] == slot]

@@ -135,10 +135,11 @@
        "preis": 5000, "tage": 7, "vorteil": {"wirtschaft": 3, "datenbanken": 2}}
     ],
     "grossauftraege": {
-      "_hinweis": "Große und öffentliche Ausschreibungen. Alle abstand_tage Arbeitstage (ab der ersten Zertifizierung) kommt eine, sie gilt gilt_tage Tage. Es kommen nur Großaufträge, deren 'braucht' die Firma am ersten Tag der Ausschreibung komplett hat. Rechnen wie Projekte (stundensatz, anzahlung aus firma.json 'projekte').",
+      "_hinweis": "Große und öffentliche Ausschreibungen. Alle abstand_tage Arbeitstage (ab der ersten Zertifizierung) kommt eine, sie gilt gilt_tage Tage. Es kommen nur Großaufträge, deren 'braucht' die Firma am ersten Tag der Ausschreibung komplett hat. Rechnen wie Projekte (stundensatz, anzahlung aus firma.json 'projekte'). mitbieter_extra: so viele Mitbewerber bieten zusaetzlich zu einem normalen Projekt mit.",
       "abstand_tage": 5,
       "versatz": 2,
       "gilt_tage": 5,
+      "mitbieter_extra": 1,
       "stufe": {"name": "Großauftrag", "aufwand": 100, "anforderung": 55, "material": [2500, 4500], "frist": 10},
       "liste": [
         {"id": "rathaus-windows", "titel": "Windows 11 für 60 Arbeitsplätze im Rathaus", "kunde": "Stadtverwaltung Talheim", "kunde_kurz": "Stadt Talheim",

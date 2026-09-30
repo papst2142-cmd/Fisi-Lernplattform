@@ -6119,7 +6119,7 @@ def _gross_tender(state, entry, slot, start, content):
     material = int(round((low + _dice(seed, start, salt + "material") * (high - low)) / 10.0)
                    * 10)
     bids, absent = competitor_bids("projekt", "normal", entry["cat"], seed, start, salt,
-                                   content)
+                                   content, extra=rules.get("mitbieter_extra", 0))
     cheapest = min(bids, key=lambda bid: bid["zuschlag"])
     project_id = "%s%d" % (GROSS_PREFIX, slot + 1)
     what = "Öffentliche Ausschreibung" if entry.get("oeffentlich") else "Großauftrag"
@@ -6700,9 +6700,9 @@ def _rival_markup(rival, rules, art, cat, seed, day, salt):
     return max(0, markup), ""
 
 
-def competitor_bids(kind, art, cat, seed, day, salt, content=None):
+def competitor_bids(kind, art, cat, seed, day, salt, content=None, extra=0):
     """Wer mitbietet: ([{"id", "zuschlag", "laune"}], [ausgefallene ids]).
-    kind ist "anfrage" oder "projekt"."""
+    kind ist "anfrage" oder "projekt", extra zusaetzliche Bieter (Grossauftraege)."""
     content = content or GAME
     rules = offer_rules(content)
     setup = competitor_rules(content)
@@ -6713,6 +6713,7 @@ def competitor_bids(kind, art, cat, seed, day, salt, content=None):
     else:
         single = (setup.get("anfrage_bieter") or {}).get("eins", 1.0)
         count = 1 if _dice(seed, day, salt + "bieterzahl") < single else 2
+    count += int(extra)
     order = _weighted_order(rivals, [(item.get("gewicht") or {}).get(kind, 1)
                                      for item in rivals], seed, day, salt + "bieter")
     bids, absent = [], []
