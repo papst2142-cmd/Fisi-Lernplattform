@@ -667,6 +667,84 @@ class DBManager:
                 matrix[category][index] = count
         return matrix
 
+    # -- Themen (ab 0.37) ----------------------------------------------------
+    # Das Thema einer Antwort steht nicht in der Datenbank, sondern ergibt
+    # sich aus der Frage (event_topic). source: 1 = Karteikarte, 0 = Quiz.
+
+    def topic_answers(self, window):
+        """Die neuesten Antworten je Thema: {thema: [True/False, ...]},
+        neueste zuerst, hoechstens window je Thema."""
+        rows = self._execute(
+            "SELECT src, question, correct FROM ("
+            "  SELECT timestamp, id, 0 AS src, question, correct FROM quiz_answers"
+            "  UNION ALL"
+            "  SELECT timestamp, id, 1 AS src, question, correct FROM card_events"
+            "  WHERE correct IS NOT NULL"
+            ") ORDER BY timestamp DESC, id DESC", fetch="all", default=[]) or []
+        answers = {}
+        for source, question, correct in rows:
+            topic = event_topic(source, question)
+            if topic is None:
+                continue
+            bucket = answers.setdefault(topic, [])
+            if len(bucket) < window:
+                bucket.append(bool(correct))
+        return answers
+
+    def topic_stats(self):
+        """Antworten und Treffer je Thema, ueber Karten und Quiz hinweg."""
+        stats = {topic: {"answered": 0, "correct": 0} for topic in TOPIC_ORDER}
+        rows = self._execute(
+            "SELECT src, question, COUNT(*), SUM(correct) FROM ("
+            "  SELECT 0 AS src, question, correct FROM quiz_answers"
+            "  UNION ALL"
+            "  SELECT 1 AS src, question, correct FROM card_events WHERE correct IS NOT NULL"
+            ") GROUP BY src, question", fetch="all", default=[]) or []
+        for source, question, answered, correct in rows:
+            topic = event_topic(source, question)
+            if topic in stats:
+                stats[topic]["answered"] += answered or 0
+                stats[topic]["correct"] += correct or 0
+        return stats
+
+    def topic_coverage(self, totals):
+        """Anteil der je Thema bereits angefassten Inhalte in Prozent."""
+        rows = self._execute(
+            "SELECT DISTINCT 0, question FROM quiz_answers"
+            " UNION SELECT DISTINCT 1, question FROM card_events",
+            fetch="all", default=[]) or []
+        seen = {}
+        for source, question in rows:
+            topic = event_topic(source, question)
+            if topic is not None:
+                seen[topic] = seen.get(topic, 0) + 1
+        return {topic: min(100.0, seen.get(topic, 0) / float(max(1, totals.get(topic, 1)))
+                           * 100.0) for topic in TOPIC_ORDER}
+
+    def topic_daily(self, category, days=14):
+        """Aktivitaeten je Thema eines Fachbereichs und Tag (Heatmap-Reinzoom)."""
+        today = datetime.date.today()
+        start = today - datetime.timedelta(days=days - 1)
+        rows = self._execute(
+            "SELECT src, question, substr(timestamp, 1, 10) AS tag, COUNT(*) FROM ("
+            "  SELECT 1 AS src, question, category, timestamp FROM card_events"
+            "  UNION ALL SELECT 0, question, category, timestamp FROM quiz_answers"
+            ") WHERE category = ? AND substr(timestamp, 1, 10) >= ?"
+            " GROUP BY src, question, tag",
+            (category, start.isoformat()), fetch="all", default=[]) or []
+        matrix = {topic: [0] * days for topic in TOPICS.get(category, [])}
+        for source, question, tag, count in rows:
+            topic = event_topic(source, question)
+            if topic not in matrix:
+                continue
+            try:
+                index = (datetime.date.fromisoformat(tag) - start).days
+            except ValueError:
+                continue
+            if 0 <= index < days:
+                matrix[topic][index] += count
+        return matrix
+
     def month_activity(self, year, month):
         """Alle Tage eines Monats, an denen gelernt wurde."""
         prefix = "%04d-%02d" % (year, month)
@@ -828,7 +906,7 @@ def build_quiz_database():
         mask_distractors = [m for m in all_masks if m != mask]
         mask_wrong = random.Random(mask).sample(mask_distractors, 3)
         db.append({
-            "cat": CAT_NET,
+            "cat": CAT_NET, "thema": "ipv4",
             "q": "Wie lautet die Subnetzmaske für die CIDR-Notation /%d?" % prefix,
             "options": [mask] + mask_wrong,
             "a": mask,
@@ -837,7 +915,7 @@ def build_quiz_database():
         host_distractors = sorted({h for h in all_hosts if h != hosts})
         host_wrong = random.Random(str(hosts)).sample(host_distractors, min(3, len(host_distractors)))
         db.append({
-            "cat": CAT_NET,
+            "cat": CAT_NET, "thema": "ipv4",
             "q": "Wie viele nutzbare Host-IP-Adressen bietet ein Subnetz mit /%d?" % prefix,
             "options": [str(hosts)] + [str(h) for h in host_wrong],
             "a": str(hosts),
@@ -855,7 +933,7 @@ def build_quiz_database():
         distractors = [s for _p, s in ports if s != service]
         wrong = random.Random(port).sample(distractors, 3)
         db.append({
-            "cat": CAT_NET,
+            "cat": CAT_NET, "thema": "dienste",
             "q": "Welcher Standard-Dienst verwendet primär den Port %s?" % port,
             "options": [service] + wrong,
             "a": service,
@@ -869,11 +947,14 @@ def build_quiz_database():
         ("WAF", "Web Application Firewall"), ("DLP", "Data Loss Prevention"),
         ("CERT", "Computer Emergency Response Team"), ("SOC", "Security Operations Center"),
     ]
+    sec_topic = {"VPN": "netzsicherheit", "IDS": "netzsicherheit", "IPS": "netzsicherheit",
+                 "MFA": "zugriff", "WAF": "netzsicherheit", "DLP": "datenschutz",
+                 "CERT": "notfall", "SOC": "haertung"}
     for abbr, meaning in sec_abbr:
         distractors = [m for _a, m in sec_abbr if m != meaning]
         wrong = random.Random(abbr).sample(distractors, 3)
         db.append({
-            "cat": CAT_SEC,
+            "cat": CAT_SEC, "thema": sec_topic[abbr],
             "q": "Wofür steht die Abkürzung %s im Sicherheitskontext?" % abbr,
             "options": [meaning] + wrong,
             "a": meaning,
@@ -892,7 +973,7 @@ def build_quiz_database():
         desc_distractors = [d for _l, d, _m in raid_levels if d != description]
         desc_wrong = random.Random(level + "d").sample(desc_distractors, 3)
         db.append({
-            "cat": CAT_SYS,
+            "cat": CAT_SYS, "thema": "storage",
             "q": "Welche Eigenschaft beschreibt %s am besten?" % level,
             "options": [description] + desc_wrong,
             "a": description,
@@ -903,7 +984,7 @@ def build_quiz_database():
         while len(disk_wrong) < 3:
             disk_wrong.append(str(min_disks + len(disk_wrong) + 1))
         db.append({
-            "cat": CAT_SYS,
+            "cat": CAT_SYS, "thema": "storage",
             "q": "Wie viele Festplatten werden für %s mindestens benötigt?" % level,
             "options": [str(min_disks)] + disk_wrong,
             "a": str(min_disks),
@@ -917,11 +998,14 @@ def build_quiz_database():
         ("AGB", "Allgemeine Geschäftsbedingungen"), ("WBS", "Work Breakdown Structure"),
         ("MVP", "Minimum Viable Product"), ("JIT", "Just in Time"),
     ]
+    biz_topic = {"EBIT": "kalkulation", "USt.": "kalkulation", "BGB": "recht",
+                 "HGB": "recht", "AGB": "recht", "WBS": "projekt", "MVP": "projekt",
+                 "JIT": "beschaffung"}
     for abbr, meaning in biz_abbr:
         distractors = [m for _a, m in biz_abbr if m != meaning]
         wrong = random.Random(abbr).sample(distractors, 3)
         db.append({
-            "cat": CAT_BIZ,
+            "cat": CAT_BIZ, "thema": biz_topic[abbr],
             "q": "Wofür steht die Abkürzung %s im wirtschaftlichen Kontext?" % abbr,
             "options": [meaning] + wrong,
             "a": meaning,
@@ -978,6 +1062,45 @@ PROJEKTARBEITEN = load_content("projektarbeiten")
 
 
 # ============================================================================
+#  THEMEN JE FACHBEREICH (AB 0.37)
+# ============================================================================
+#
+# Jeder Fachbereich ist in Themen unterteilt (inhalte/themen.json). Jeder
+# Lerninhalt traegt im Feld "thema" die Kennung seines Themas. Der
+# Wissensstand je Thema wird - wie der je Fachbereich - aus den vorhandenen
+# Antworten berechnet: gespeichert wird weiterhin nur die Frage, ihr Thema
+# ergibt sich ueber CARD_TOPIC/QUIZ_TOPIC. So zaehlen auch alle Antworten aus
+# der Zeit vor 0.37 sofort je Thema.
+
+def _load_topics():
+    with open(os.path.join(CONTENT_DIR, "themen.json"), encoding="utf-8") as handle:
+        data = json.load(handle)["themen"]
+    return {CATEGORY_KEYS[key]: entries for key, entries in data.items()}
+
+
+_TOPIC_DATA = _load_topics()
+
+# Fachbereich (voller Name) -> Themenkennungen in fester Reihenfolge
+TOPICS = {cat: [entry["id"] for entry in _TOPIC_DATA.get(cat, [])] for cat in CATEGORIES}
+TOPIC_NAME = {entry["id"]: entry["name"] for entries in _TOPIC_DATA.values()
+              for entry in entries}
+TOPIC_SHORT = {entry["id"]: entry["kurz"] for entries in _TOPIC_DATA.values()
+               for entry in entries}
+TOPIC_CAT = {topic: cat for cat, topics in TOPICS.items() for topic in topics}
+TOPIC_ORDER = [topic for cat in CATEGORIES for topic in TOPICS[cat]]
+
+# Frage -> Thema, getrennt nach Karteikarten und Quizfragen (so werden die
+# Antworten in card_events und quiz_answers zugeordnet)
+CARD_TOPIC = {card["q"]: card.get("thema") for card in KARTEIKARTEN}
+QUIZ_TOPIC = {question["q"]: question.get("thema") for question in QUIZ_QUESTIONS}
+
+
+def event_topic(source, question):
+    """Thema einer gespeicherten Antwort (source 1 = Karteikarte, 0 = Quiz)."""
+    return (CARD_TOPIC if source else QUIZ_TOPIC).get(question)
+
+
+# ============================================================================
 #  ABGELEITETE KENNZAHLEN
 # ============================================================================
 
@@ -1013,6 +1136,15 @@ def validate_content():
           ("cat", "title", "branche", "schwierigkeit", "ausgangssituation", "auftrag",
            "rahmenbedingungen", "aufgaben", "hinweise"))
 
+    for label, items in (("Karteikarte", KARTEIKARTEN), ("Quizfrage", QUIZ_QUESTIONS),
+                         ("AP2-Szenario", SZENARIEN), ("AP1-Szenario", AP1_SZENARIEN),
+                         ("Testprojekt", PROJEKTARBEITEN)):
+        for number, item in enumerate(items, start=1):
+            if item.get("thema") not in TOPICS.get(item.get("cat"), ()):
+                problems.append("%s Nr. %d: Thema '%s' fehlt oder gehoert nicht zum "
+                                "Fachbereich (inhalte/themen.json)"
+                                % (label, number, item.get("thema")))
+
     for number, scenario in enumerate(SZENARIEN, start=1):
         if theme_block(scenario.get("theme")) not in AP2_THEMES:
             problems.append("AP2-Szenario Nr. %d: unbekanntes Thema '%s' (AP2_THEMES "
@@ -1039,6 +1171,15 @@ def content_totals():
         totals[card["cat"]] = totals.get(card["cat"], 0) + 1
     for question in QUIZ_QUESTIONS:
         totals[question["cat"]] = totals.get(question["cat"], 0) + 1
+    return totals
+
+
+def topic_totals():
+    """Anzahl verfuegbarer Inhalte je Thema (Karten + Quizfragen)."""
+    totals = {topic: 0 for topic in TOPIC_ORDER}
+    for item in KARTEIKARTEN + QUIZ_QUESTIONS:
+        if item.get("thema") in totals:
+            totals[item["thema"]] += 1
     return totals
 
 

@@ -39,6 +39,7 @@ from fisi_core import (  # noqa: E402
     COLOR_DEPTHS, DBManager, FILTER_ALL, InputError, KARTEIKARTEN,
     LIST_PAGE_SIZE, PROJEKTARBEITEN, QUIZ_QUESTIONS, RAID_LEVELS,
     STATUS_FILTERS, SZENARIEN,
+    TOPIC_NAME, TOPIC_SHORT, TOPICS,
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
@@ -66,7 +67,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.36"
+APP_VERSION = "0.37"
 
 
 def _resource_path(filename):
@@ -729,19 +730,20 @@ class DashboardView(View):
         self.bar_scen.pack(fill="x", pady=8)
 
         # --- Reihe 3: Heatmap und Fachbereiche ---------------------------
-        row3 = transparent_frame(self.content)
+        row3 = self.row3 = transparent_frame(self.content)
         row3.pack(fill="x", pady=(14, 0))
         row3.columnconfigure(0, weight=2, uniform="row3")
         row3.columnconfigure(1, weight=3, uniform="row3")
 
         heat_card = Card(row3, title="Aktivität je Fachbereich",
-                         subtitle="Intensität pro Tag", accent=C["accent2"])
+                         subtitle="Auswahl zeigt die Themen", accent=C["accent2"])
         heat_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
-        self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"])
+        self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"],
+                               on_click=lambda index: self._toggle_zoom(CATEGORIES[index]))
         self.heatmap.pack(fill="both", expand=True)
 
         fach_card = Card(row3, title="Fortschritt je Fachbereich",
-                         subtitle="Abdeckung und Erfolgsquote", accent=C["green"])
+                         subtitle="Auswahl zeigt die Themen", accent=C["green"])
         fach_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         holder = transparent_frame(fach_card.body)
         holder.pack(fill="x")
@@ -751,12 +753,22 @@ class DashboardView(View):
             column.pack(side="left", fill="both", expand=True)
             ring = MiniRing(column, size=88, thickness=8, parent_bg=C["card"])
             ring.pack()
-            make_label(column, CATEGORY_SHORT[category], font=F["small_bold"],
-                       fg=C["text"]).pack(pady=(8, 0))
+            name = make_label(column, CATEGORY_SHORT[category], font=F["small_bold"],
+                              fg=C["text"])
+            name.pack(pady=(8, 0))
             detail = make_label(column, "", font=F["tiny"], fg=C["muted"],
                                 justify="center")
             detail.pack()
-            self.fach_rings[category] = (ring, detail)
+            for widget in (column, ring, name, detail):
+                widget.configure(cursor="hand2")
+                widget.bind("<Button-1>",
+                            lambda _e, cat=category: self._toggle_zoom(cat))
+            self.fach_rings[category] = (ring, detail, name)
+
+        # --- Reinzoom: Themen eines Fachbereichs (ab 0.37) ----------------
+        # Erscheint unter Reihe 3, sobald ein Fachbereich angeklickt wird.
+        self.zoom_category = None
+        self.zoom_card = None
 
         # --- Reihe 4: Aktivitaeten, Kalender -------------------------------
         row4 = transparent_frame(self.content)
@@ -873,13 +885,16 @@ class DashboardView(View):
         matrix = self.db.category_daily(self.DAYS)
         rows = [(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
                 for cat in CATEGORIES]
-        self.heatmap.set_data(rows, self.DAYS)
+        self.heatmap.set_data(rows, self.DAYS, selected=CATEGORIES.index(self.zoom_category)
+                              if self.zoom_category else None)
 
         # Fachbereiche
         coverage = self.db.category_coverage(self.totals)
         stats = self.db.category_stats()
         for category in CATEGORIES:
-            ring, detail = self.fach_rings[category]
+            ring, detail, name = self.fach_rings[category]
+            name.configure(text_color=CATEGORY_COLOR[category]
+                           if category == self.zoom_category else C["text"])
             ring.set(coverage.get(category, 0.0), CATEGORY_COLOR[category])
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
@@ -903,6 +918,7 @@ class DashboardView(View):
                 self._activity_row(timestamp, kind, detail, extra)
 
         self.calendar.refresh()
+        self._refresh_zoom()
 
         progress = self.db.theme_progress(theme_totals())
         self.timeline.set_data([(name, progress.get(name, 0.0), THEME_COLOR[name])
@@ -912,6 +928,72 @@ class DashboardView(View):
                                               table="ap1_events")
         self.timeline_ap1.set_data([(name, progress_ap1.get(name, 0.0),
                                      THEME_COLOR[name]) for name in AP1_THEMES])
+
+    # -- Reinzoom in die Themen eines Fachbereichs ---------------------------
+
+    def _toggle_zoom(self, category):
+        """Klick auf einen Fachbereich: dessen Themen zeigen, erneuter Klick
+        (oder Schliessen) blendet sie wieder aus."""
+        self.zoom_category = None if category == self.zoom_category else category
+        if self.zoom_card is not None:
+            self.zoom_card.destroy()
+            self.zoom_card = None
+        if self.zoom_category:
+            self._build_zoom(self.zoom_category)
+        self.refresh()
+
+    def _build_zoom(self, category):
+        color = CATEGORY_COLOR[category]
+        topics = TOPICS[category]
+        card = self.zoom_card = Card(self.content, title="Themen · %s" % category,
+                                     subtitle="Aktivität und Wissen",
+                                     accent=color)
+        card.pack(fill="x", pady=(14, 0), after=self.row3)
+        NeoButton(card.head, "Schließen", lambda: self._toggle_zoom(category), kind="ghost",
+                  height=28, font=F["small_bold"], parent_bg=C["card"]).pack(
+                      side="right", padx=(12, 0))
+        body = transparent_frame(card.body)
+        body.pack(fill="x")
+        body.columnconfigure(0, weight=2, uniform="zoom")
+        body.columnconfigure(1, weight=3, uniform="zoom")
+
+        left = transparent_frame(body)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 14))
+        make_label(left, "Aktivität je Thema (letzte %d Tage)" % self.DAYS,
+                   font=F["tiny"], fg=C["muted"]).pack(anchor="w")
+        self.zoom_heatmap = Heatmap(left, height=12 + 34 * len(topics), parent_bg=C["card"],
+                                    label_w=118)
+        self.zoom_heatmap.pack(fill="x", pady=(6, 0))
+
+        right = transparent_frame(body)
+        right.grid(row=0, column=1, sticky="nsew", padx=(14, 0))
+        make_label(right, "Wissensstand je Thema (zählt für die Aufträge im Spiel)",
+                   font=F["tiny"], fg=C["muted"]).pack(anchor="w")
+        self.zoom_bars = {}
+        for index, topic in enumerate(topics):
+            shade = mix(color, C["card"], 0.12 * (index % 3))
+            bar = GradientBar(right, TOPIC_NAME[topic], mix(shade, C["card"], 0.4), shade,
+                              height=40, parent_bg=C["card"])
+            bar.pack(fill="x", pady=(4, 0))
+            self.zoom_bars[topic] = bar
+
+    def _refresh_zoom(self):
+        category = self.zoom_category
+        if not category or self.zoom_card is None:
+            return
+        color = CATEGORY_COLOR[category]
+        matrix = self.db.topic_daily(category, self.DAYS)
+        self.zoom_heatmap.set_data([(TOPIC_SHORT[topic], color, matrix[topic])
+                                    for topic in TOPICS[category]], self.DAYS)
+        levels = fisi_game.topic_knowledge(self.db)
+        stats = self.db.topic_stats()
+        for topic, bar in self.zoom_bars.items():
+            answered = stats[topic]["answered"]
+            if answered:
+                note = "Wissen %d %%  ·  %d Antworten" % (levels[topic], answered)
+            else:
+                note = "noch nicht bearbeitet"
+            bar.set(levels[topic], note)
 
     def _activity_row(self, timestamp, kind, detail, extra):
         row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
@@ -1025,9 +1107,14 @@ class CardsView(View):
 
     # -- Steuerung ----------------------------------------------------------
 
-    def set_category(self, category):
+    def set_category(self, category, topic=None):
+        """Fachbereich waehlen; mit topic nur die Karten dieses Themas (aus
+        dem Spiel: "Karteikarten zu ...")."""
         self.cat_pills.select_value(category, notify=False)
         self._on_category(category)
+        if topic:
+            self.filtered = [c for c in self.cards if c.get("thema") == topic]
+            self.update_ui()
 
     def _on_category(self, category):
         if category == "Alle":
@@ -1081,7 +1168,8 @@ class CardsView(View):
         self.lbl_question.configure(text=card["q"])
         self.lbl_counter.configure(text="Karte %d / %d"
                                         % (self.index + 1, len(self.filtered)))
-        self.question_card.set_subtitle(CATEGORY_SHORT[card["cat"]],
+        self.question_card.set_subtitle("%s · %s" % (CATEGORY_SHORT[card["cat"]],
+                                                     TOPIC_SHORT[card["thema"]]),
                                         CATEGORY_COLOR[card["cat"]])
 
         if self.mode == "freitext":
@@ -2775,8 +2863,8 @@ class FISIApp:
         view.on_show()
         self.notify_progress(refresh_view=False)
 
-    def open_cards(self, category):
-        self.views["cards"].set_category(category)
+    def open_cards(self, category, topic=None):
+        self.views["cards"].set_category(category, topic)
         self.show_view("cards")
 
     def do_search(self, query):
@@ -2855,6 +2943,13 @@ def _run_selftest(root, app, log_path):
     def step(keys):
         if not keys:
             try:
+                # Reinzoom in die Themen eines Fachbereichs (ab 0.37); bleibt
+                # fuer den Farbwechsel offen
+                app.show_view("dashboard")
+                for category in (CATEGORIES[0], CATEGORIES[-1], CATEGORIES[-1],
+                                 CATEGORIES[1]):
+                    app.views["dashboard"]._toggle_zoom(category)
+                    root.update()
                 # Grundfarbe wechseln baut alle Ansichten neu auf
                 original = fisi_theme.current_preset
                 app.change_color("gruen_lime")

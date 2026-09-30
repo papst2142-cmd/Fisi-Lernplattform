@@ -14,7 +14,7 @@
       "raum": "werkstatt",
       "prioritaet": "niedrig",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"hardware": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 55, "reputation": 5},
       "wiederholen": {"start": 18, "abstand": 12},
@@ -132,7 +132,7 @@
         "172.16.45.130 gehört zum Netz 172.16.45.128/27 (Hosts 172.16.45.129 bis 172.16.45.158). Die letzte Adresse, 172.16.45.159, ist die Broadcast-Adresse."
       ],
       "suchbegriffe": ["Broadcast", "Subnetzmaske"],
-      "anforderungen": {"netzwerk": 30},
+      "anforderungen": {"ipv4": 30},
       "belohnung": {"geld": 60, "reputation": 5},
       "varianten": [
         {
@@ -155,7 +155,7 @@
             "172.16.45.130 gehört zum Netz 172.16.45.128/27 (Hosts 172.16.45.129 bis 172.16.45.158). Die letzte Adresse, 172.16.45.159, ist die Broadcast-Adresse."
           ],
           "suchbegriffe": ["Broadcast", "Subnetzmaske"],
-          "anforderungen": {"netzwerk": 30},
+          "anforderungen": {"ipv4": 30},
           "belohnung": {"geld": 60, "reputation": 5}
         },
         {
@@ -179,7 +179,7 @@
             "118 Geräte brauchen ein /25 mit 126 nutzbaren Adressen. Ein /26 hätte nur 62 und reicht nicht."
           ],
           "suchbegriffe": ["Subnetz", "CIDR"],
-          "anforderungen": {"netzwerk": 35},
+          "anforderungen": {"ipv4": 35},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -207,7 +207,7 @@
             "2 hoch 3 = 8 Teilnetze reichen für 6. Aus dem /24 wird ein /27 mit 32 Adressen, davon 30 nutzbar. Zwei Teilnetze bleiben als Reserve."
           ],
           "suchbegriffe": ["Subnetz", "Subnetzmaske"],
-          "anforderungen": {"netzwerk": 47},
+          "anforderungen": {"ipv4": 47},
           "belohnung": {"geld": 75, "reputation": 6}
         }
       ]
@@ -241,7 +241,7 @@
         "Die Domain endet auf .co statt auf die echte Firmendomain, dazu kommt künstlicher Zeitdruck: klassisches Phishing. Melden hilft der IT, den Absender zu sperren. Weiterleiten verteilt den gefährlichen Link nur weiter."
       ],
       "suchbegriffe": ["Phishing"],
-      "anforderungen": {"sicherheit": 31},
+      "anforderungen": {"angriffe": 31},
       "belohnung": {"geld": 60, "reputation": 5},
       "varianten": [
         {
@@ -269,7 +269,7 @@
             "Die Domain endet auf .co statt auf die echte Firmendomain, dazu kommt künstlicher Zeitdruck: klassisches Phishing. Melden hilft der IT, den Absender zu sperren. Weiterleiten verteilt den gefährlichen Link nur weiter."
           ],
           "suchbegriffe": ["Phishing"],
-          "anforderungen": {"sicherheit": 31},
+          "anforderungen": {"angriffe": 31},
           "belohnung": {"geld": 60, "reputation": 5}
         },
         {
@@ -297,7 +297,7 @@
             "Das ist Social Engineering per Telefon. Mit dem Fernwartungscode hätte der Anrufer die Laptops übernommen. Ob ein Anruf echt ist, klärt man nur über eine selbst herausgesuchte, bekannte Nummer."
           ],
           "suchbegriffe": ["Social Engineering"],
-          "anforderungen": {"sicherheit": 41},
+          "anforderungen": {"angriffe": 41},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -325,7 +325,7 @@
             "Das ist CEO-Fraud, eine Form von Social Engineering. Rückfragen nur über einen zweiten, bekannten Kanal. Eine Antwort-Mail würde der Betrüger selbst „bestätigen“."
           ],
           "suchbegriffe": ["Social Engineering", "Phishing"],
-          "anforderungen": {"sicherheit": 52},
+          "anforderungen": {"angriffe": 52},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -359,7 +359,7 @@
         "Bei inkrementellen Sicherungen braucht man die letzte Vollsicherung und jede Teilsicherung danach, lückenlos: Voll Sonntag + Inkr. Montag + Inkr. Dienstag + Inkr. Mittwoch."
       ],
       "suchbegriffe": ["Backup", "inkrementell"],
-      "anforderungen": {"sicherheit": 33},
+      "anforderungen": {"notfall": 33},
       "belohnung": {"geld": 65, "reputation": 5},
       "varianten": [
         {
@@ -387,7 +387,7 @@
             "Bei inkrementellen Sicherungen braucht man die letzte Vollsicherung und jede Teilsicherung danach, lückenlos: Voll Sonntag + Inkr. Montag + Inkr. Dienstag + Inkr. Mittwoch."
           ],
           "suchbegriffe": ["Backup", "inkrementell"],
-          "anforderungen": {"sicherheit": 33},
+          "anforderungen": {"notfall": 33},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -415,7 +415,7 @@
             "Bei differenziellen Sicherungen reichen zwei Sätze: die Vollsicherung und die neueste differenzielle (Voll Sonntag + Diff. Donnerstag). Dafür werden die differenziellen Sicherungen im Lauf der Woche immer größer."
           ],
           "suchbegriffe": ["Backup", "differenziell"],
-          "anforderungen": {"sicherheit": 42},
+          "anforderungen": {"notfall": 42},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -443,7 +443,7 @@
             "Original plus NAS plus externe Kopie sind drei Kopien auf zwei Medienarten, eine davon an einem anderen Ort. Alles in einem Schrank verbrennt oder verschwindet gemeinsam."
           ],
           "suchbegriffe": ["3-2-1", "Backup"],
-          "anforderungen": {"sicherheit": 49},
+          "anforderungen": {"notfall": 49},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -472,7 +472,7 @@
         "RAID 5 mit 4 Platten zu je 4 TB ergibt 12 TB nutzbar. Der Rest der Rohkapazität von 16 TB steckt in der Redundanz."
       ],
       "suchbegriffe": ["RAID", "RAID 5"],
-      "anforderungen": {"systeme": 32},
+      "anforderungen": {"storage": 32},
       "belohnung": {"geld": 60, "reputation": 5},
       "varianten": [
         {
@@ -495,7 +495,7 @@
             "RAID 5 mit 4 Platten zu je 4 TB ergibt 12 TB nutzbar. Der Rest der Rohkapazität von 16 TB steckt in der Redundanz."
           ],
           "suchbegriffe": ["RAID", "RAID 5"],
-          "anforderungen": {"systeme": 32},
+          "anforderungen": {"storage": 32},
           "belohnung": {"geld": 60, "reputation": 5}
         },
         {
@@ -518,7 +518,7 @@
             "RAID 6 mit 6 Platten zu je 2 TB ergibt 8 TB nutzbar. Der Rest der Rohkapazität von 12 TB steckt in der Redundanz."
           ],
           "suchbegriffe": ["RAID", "Redundanz"],
-          "anforderungen": {"systeme": 39},
+          "anforderungen": {"storage": 39},
           "belohnung": {"geld": 65, "reputation": 6}
         },
         {
@@ -542,7 +542,7 @@
           ],
           "suchbegriffe": ["RAID", "RAID 10"],
           "ort": "lindenau",
-          "anforderungen": {"systeme": 49},
+          "anforderungen": {"storage": 49},
           "belohnung": {"geld": 75, "reputation": 6}
         }
       ]
@@ -576,7 +576,7 @@
         "WHERE filtert jede Zeile, der Vergleich bestand < mindestbestand nutzt die beiden Spalten. In Anführungszeichen wäre 'mindestbestand' nur ein Text, und das UPDATE würde die Bestände verfälschen."
       ],
       "suchbegriffe": ["SQL", "WHERE"],
-      "anforderungen": {"datenbanken": 34},
+      "anforderungen": {"sql": 34},
       "belohnung": {"geld": 65, "reputation": 5},
       "varianten": [
         {
@@ -604,7 +604,7 @@
             "WHERE filtert jede Zeile, der Vergleich bestand < mindestbestand nutzt die beiden Spalten. In Anführungszeichen wäre 'mindestbestand' nur ein Text, und das UPDATE würde die Bestände verfälschen."
           ],
           "suchbegriffe": ["SQL", "WHERE"],
-          "anforderungen": {"datenbanken": 34},
+          "anforderungen": {"sql": 34},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -632,7 +632,7 @@
             "GROUP BY bahnhof fasst alle Störungen eines Bahnhofs zu einer Zeile zusammen, COUNT(*) zählt sie. Ohne GROUP BY gäbe es nur eine Gesamtzahl, und SUM(id) addiert sinnlos die Kennungen."
           ],
           "suchbegriffe": ["GROUP BY", "SQL"],
-          "anforderungen": {"datenbanken": 42},
+          "anforderungen": {"sql": 42},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -660,7 +660,7 @@
             "Der JOIN verbindet über den Fremdschlüssel abt_id. Ohne ON-Bedingung entsteht ein kartesisches Produkt (jeder mit jeder Abteilung), und UNION hängt nur Listen untereinander."
           ],
           "suchbegriffe": ["JOIN", "Fremdschlüssel"],
-          "anforderungen": {"datenbanken": 51},
+          "anforderungen": {"sql": 51},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -686,7 +686,7 @@
         "Die Spalte teile enthält mehrere Werte in einem Feld, die Werte sind nicht atomar. Das verletzt die 1. Normalform. Lösung: eine eigene Tabelle mit einer Zeile je Auftrag und Teil."
       ],
       "suchbegriffe": ["Normalform", "1. Normalform"],
-      "anforderungen": {"datenbanken": 36},
+      "anforderungen": {"modellierung": 36},
       "belohnung": {"geld": 65, "reputation": 6},
       "varianten": [
         {
@@ -711,7 +711,7 @@
             "Die Spalte teile enthält mehrere Werte in einem Feld, die Werte sind nicht atomar. Das verletzt die 1. Normalform. Lösung: eine eigene Tabelle mit einer Zeile je Auftrag und Teil."
           ],
           "suchbegriffe": ["Normalform", "1. Normalform"],
-          "anforderungen": {"datenbanken": 36},
+          "anforderungen": {"modellierung": 36},
           "belohnung": {"geld": 65, "reputation": 6}
         },
         {
@@ -738,7 +738,7 @@
             "automat_standort hängt von automat_nr ab und nur über diese vom Schlüssel verkauf_nr: eine transitive Abhängigkeit. Das verletzt die 3. Normalform. Die Standorte gehören in eine eigene Tabelle automat."
           ],
           "suchbegriffe": ["Normalform", "3. Normalform"],
-          "anforderungen": {"datenbanken": 44},
+          "anforderungen": {"modellierung": 44},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -765,7 +765,7 @@
             "mitarbeiter_name hängt nur von pers_nr ab, also von einem Teil des zusammengesetzten Schlüssels. Das verletzt die 2. Normalform. Der Name gehört in die Tabelle mitarbeiter."
           ],
           "suchbegriffe": ["Normalform", "2. Normalform"],
-          "anforderungen": {"datenbanken": 54},
+          "anforderungen": {"modellierung": 54},
           "belohnung": {"geld": 80, "reputation": 7}
         }
       ]
@@ -793,7 +793,7 @@
         "12 × 189,00 € = 2.268,00 €, minus 8 % Rabatt = 2.086,56 € netto, plus 19 % USt = 2.483,01 € brutto."
       ],
       "suchbegriffe": ["Rabatt", "Umsatzsteuer"],
-      "anforderungen": {"wirtschaft": 31},
+      "anforderungen": {"kalkulation": 31},
       "belohnung": {"geld": 60, "reputation": 5},
       "varianten": [
         {
@@ -815,7 +815,7 @@
             "12 × 189,00 € = 2.268,00 €, minus 8 % Rabatt = 2.086,56 € netto, plus 19 % USt = 2.483,01 € brutto."
           ],
           "suchbegriffe": ["Rabatt", "Umsatzsteuer"],
-          "anforderungen": {"wirtschaft": 31},
+          "anforderungen": {"kalkulation": 31},
           "belohnung": {"geld": 60, "reputation": 5}
         },
         {
@@ -837,7 +837,7 @@
             "14 × 72,00 € + 45,00 € = 1.053,00 € netto, mal 1,19 = 1.253,07 € brutto."
           ],
           "suchbegriffe": ["Umsatzsteuer", "Kalkulation"],
-          "anforderungen": {"wirtschaft": 37},
+          "anforderungen": {"kalkulation": 37},
           "belohnung": {"geld": 65, "reputation": 6}
         },
         {
@@ -859,7 +859,7 @@
             "2 % von 2.380,00 € sind 47,60 €. Überwiesen werden 2.332,40 €. Skonto lohnt sich fast immer: aufs Jahr gerechnet ist das ein hoher Zins."
           ],
           "suchbegriffe": ["Skonto"],
-          "anforderungen": {"wirtschaft": 43},
+          "anforderungen": {"kalkulation": 43},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -886,7 +886,7 @@
             "Einstandspreise: Netzfalke 1.466,50 €, Kabelkönig 1.444,00 €, Druckwerk 1.510,00 €. Der niedrigste Listenpreis allein sagt nichts."
           ],
           "suchbegriffe": ["Angebotsvergleich", "Rabatt"],
-          "anforderungen": {"wirtschaft": 48},
+          "anforderungen": {"beschaffung": 48},
           "belohnung": {"geld": 75, "reputation": 6}
         },
         {
@@ -908,7 +908,7 @@
             "800,00 € + 25 % Handlungskosten = 1.000,00 € Selbstkosten, + 10 % Gewinn = 1.100,00 € netto. Die Zuschläge nacheinander, nicht zusammen aufschlagen."
           ],
           "suchbegriffe": ["Zuschlagskalkulation", "Kalkulation"],
-          "anforderungen": {"wirtschaft": 54},
+          "anforderungen": {"kalkulation": 54},
           "belohnung": {"geld": 80, "reputation": 7}
         }
       ]
@@ -942,7 +942,7 @@
         "Nutzwerte: Helpdesk Nord 7,20, Ticketfix 6,85, Supportbox 6,50. Helpdesk Nord gewinnt, obwohl Ticketfix beim Preis vorne liegt."
       ],
       "suchbegriffe": ["Nutzwertanalyse"],
-      "anforderungen": {"wirtschaft": 33},
+      "anforderungen": {"beschaffung": 33},
       "belohnung": {"geld": 60, "reputation": 5},
       "varianten": [
         {
@@ -970,7 +970,7 @@
             "Nutzwerte: Helpdesk Nord 7,20, Ticketfix 6,85, Supportbox 6,50. Helpdesk Nord gewinnt, obwohl Ticketfix beim Preis vorne liegt."
           ],
           "suchbegriffe": ["Nutzwertanalyse"],
-          "anforderungen": {"wirtschaft": 33},
+          "anforderungen": {"beschaffung": 33},
           "belohnung": {"geld": 60, "reputation": 5}
         },
         {
@@ -998,7 +998,7 @@
             "Nutzwerte: Kabelkönig K28 7,30, Portwerk 24P 7,05, Netzfalke S24 6,70. Kabelkönig K28 gewinnt, obwohl Portwerk 24P beim Preis vorne liegt."
           ],
           "suchbegriffe": ["Nutzwertanalyse"],
-          "anforderungen": {"wirtschaft": 40},
+          "anforderungen": {"beschaffung": 40},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -1026,7 +1026,7 @@
             "Nutzwerte: Feldbook R5 7,40, Tragwerk T3 7,10, Werkmobil 14 6,80. Feldbook R5 gewinnt, obwohl Tragwerk T3 beim Preis vorne liegt."
           ],
           "suchbegriffe": ["Nutzwertanalyse"],
-          "anforderungen": {"wirtschaft": 46},
+          "anforderungen": {"beschaffung": 46},
           "belohnung": {"geld": 75, "reputation": 6}
         },
         {
@@ -1054,7 +1054,7 @@
             "Nutzwerte: Scanfix Pro 7,05, Papierfalke 6,75, Blattwerk 60 6,65. Scanfix Pro gewinnt, obwohl Blattwerk 60 beim Preis vorne liegt."
           ],
           "suchbegriffe": ["Nutzwertanalyse"],
-          "anforderungen": {"wirtschaft": 52},
+          "anforderungen": {"beschaffung": 52},
           "belohnung": {"geld": 80, "reputation": 7}
         }
       ]
@@ -1088,7 +1088,7 @@
         "Nach Art. 33 DSGVO ist eine Datenpanne unverzüglich, möglichst binnen 72 Stunden, zu melden. Weil der Stick unverschlüsselt war, liegt ein Risiko vor. Verschlüsselung hätte das deutlich entschärft."
       ],
       "suchbegriffe": ["DSGVO", "Datenpanne"],
-      "anforderungen": {"sicherheit": 36},
+      "anforderungen": {"datenschutz": 36},
       "belohnung": {"geld": 65, "reputation": 5},
       "varianten": [
         {
@@ -1116,7 +1116,7 @@
             "Nach Art. 33 DSGVO ist eine Datenpanne unverzüglich, möglichst binnen 72 Stunden, zu melden. Weil der Stick unverschlüsselt war, liegt ein Risiko vor. Verschlüsselung hätte das deutlich entschärft."
           ],
           "suchbegriffe": ["DSGVO", "Datenpanne"],
-          "anforderungen": {"sicherheit": 36},
+          "anforderungen": {"datenschutz": 36},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -1143,7 +1143,7 @@
             "Art. 15 DSGVO gibt ein Auskunftsrecht, Art. 12 verlangt eine Antwort innerhalb eines Monats. Bei komplexen Anfragen kann die Frist um zwei Monate verlängert werden, das muss man aber begründen. Die 72 Stunden gelten für Datenpannen."
           ],
           "suchbegriffe": ["Auskunftsrecht", "DSGVO"],
-          "anforderungen": {"sicherheit": 45},
+          "anforderungen": {"datenschutz": 45},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -1170,7 +1170,7 @@
             "Wer Daten im Auftrag verarbeitet, braucht einen Vertrag nach Art. 28 DSGVO mit Weisungen, TOM und Kontrollrechten. Die Talbahn bleibt verantwortlich und muss die Firma sorgfältig auswählen."
           ],
           "suchbegriffe": ["Auftragsverarbeitung", "DSGVO"],
-          "anforderungen": {"sicherheit": 50},
+          "anforderungen": {"datenschutz": 50},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -1203,7 +1203,7 @@
         "25 = SMTP zwischen Servern, 587 = Einlieferung mit Anmeldung, 993 = IMAPS, 995 = POP3S. Für die Postfächer genügt meist IMAPS."
       ],
       "suchbegriffe": ["SMTP", "IMAP"],
-      "anforderungen": {"netzwerk": 34},
+      "anforderungen": {"dienste": 34},
       "belohnung": {"geld": 65, "reputation": 5},
       "varianten": [
         {
@@ -1230,7 +1230,7 @@
             "25 = SMTP zwischen Servern, 587 = Einlieferung mit Anmeldung, 993 = IMAPS, 995 = POP3S. Für die Postfächer genügt meist IMAPS."
           ],
           "suchbegriffe": ["SMTP", "IMAP"],
-          "anforderungen": {"netzwerk": 34},
+          "anforderungen": {"dienste": 34},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -1256,7 +1256,7 @@
             "DHCP nutzt 67 (Server) und 68 (Client), NTP 123, SNMP 161 und Syslog 514. Ohne NTP stimmen die Zeitstempel in den Protokollen nicht."
           ],
           "suchbegriffe": ["DHCP", "Port"],
-          "anforderungen": {"netzwerk": 40},
+          "anforderungen": {"dienste": 40},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -1284,7 +1284,7 @@
             "21 FTP, 23 Telnet, 389 LDAP, 445 SMB, 3389 RDP. FTP und Telnet übertragen Passwörter im Klartext und sollten durch SFTP bzw. SSH ersetzt werden."
           ],
           "suchbegriffe": ["Well-Known Ports", "RDP"],
-          "anforderungen": {"netzwerk": 51},
+          "anforderungen": {"dienste": 51},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -1316,7 +1316,7 @@
         "Ein Repeater verstärkt nur Signale, ein Switch arbeitet mit MAC-Adressen, ein Router mit IP-Adressen. Ein Proxy versteht das Anwendungsprotokoll selbst."
       ],
       "suchbegriffe": ["OSI-Modell", "Switch"],
-      "anforderungen": {"netzwerk": 38},
+      "anforderungen": {"grundlagen": 38},
       "belohnung": {"geld": 65, "reputation": 6},
       "varianten": [
         {
@@ -1342,7 +1342,7 @@
             "Ein Repeater verstärkt nur Signale, ein Switch arbeitet mit MAC-Adressen, ein Router mit IP-Adressen. Ein Proxy versteht das Anwendungsprotokoll selbst."
           ],
           "suchbegriffe": ["OSI-Modell", "Switch"],
-          "anforderungen": {"netzwerk": 38},
+          "anforderungen": {"grundlagen": 38},
           "belohnung": {"geld": 65, "reputation": 6}
         },
         {
@@ -1369,7 +1369,7 @@
             "Kabel und Signale sind Schicht 1, Ethernet mit MAC-Adressen Schicht 2, IP Schicht 3, TCP Schicht 4 und HTTP Schicht 7."
           ],
           "suchbegriffe": ["OSI-Modell", "TCP"],
-          "anforderungen": {"netzwerk": 45},
+          "anforderungen": {"grundlagen": 45},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -1393,7 +1393,7 @@
             "Bits auf Schicht 1, Frames auf Schicht 2, Pakete auf Schicht 3 und Segmente (TCP) auf Schicht 4. Tim hat also nur für Schicht 3 recht."
           ],
           "suchbegriffe": ["OSI-Modell", "Vermittlungsschicht"],
-          "anforderungen": {"netzwerk": 55},
+          "anforderungen": {"grundlagen": 55},
           "belohnung": {"geld": 80, "reputation": 7}
         }
       ]
@@ -1428,7 +1428,7 @@
         "Kauf = Eigentum gegen Geld, Werkvertrag = geschuldeter Erfolg, Dienstvertrag = geschuldete Tätigkeit, Miete = Gebrauch auf Zeit gegen Entgelt."
       ],
       "suchbegriffe": ["Werkvertrag", "Dienstvertrag"],
-      "anforderungen": {"wirtschaft": 38},
+      "anforderungen": {"recht": 38},
       "belohnung": {"geld": 65, "reputation": 6},
       "varianten": [
         {
@@ -1457,7 +1457,7 @@
             "Kauf = Eigentum gegen Geld, Werkvertrag = geschuldeter Erfolg, Dienstvertrag = geschuldete Tätigkeit, Miete = Gebrauch auf Zeit gegen Entgelt."
           ],
           "suchbegriffe": ["Werkvertrag", "Dienstvertrag"],
-          "anforderungen": {"wirtschaft": 38},
+          "anforderungen": {"recht": 38},
           "belohnung": {"geld": 65, "reputation": 6}
         },
         {
@@ -1484,7 +1484,7 @@
             "Reaktionszeit = Beginn der Bearbeitung, Wiederherstellungszeit = Dienst läuft wieder, Verfügbarkeit in Prozent, Servicezeit = wann überhaupt gearbeitet wird. „Rund um die Uhr“ wäre eine Servicezeit 24/7 und kostet entsprechend."
           ],
           "suchbegriffe": ["SLA"],
-          "anforderungen": {"wirtschaft": 47},
+          "anforderungen": {"service": 47},
           "belohnung": {"geld": 75, "reputation": 6}
         },
         {
@@ -1511,7 +1511,7 @@
             "Verkäufer: mangelhafte Lieferung oder Lieferungsverzug. Käufer: Zahlungs- oder Annahmeverzug. Bei Mängeln greift die gesetzliche Gewährleistung."
           ],
           "suchbegriffe": ["Kaufvertrag", "Gewährleistung"],
-          "anforderungen": {"wirtschaft": 52},
+          "anforderungen": {"recht": 52},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -1544,7 +1544,7 @@
         "CREATE TABLE und ALTER TABLE gehören zur Datendefinition, INSERT, UPDATE und DELETE zur Datenmanipulation. UPDATE und DELETE ohne WHERE treffen alle Zeilen: Das ist der fehlende Schlüsselschalter."
       ],
       "suchbegriffe": ["DML", "DDL"],
-      "anforderungen": {"datenbanken": 35},
+      "anforderungen": {"sql": 35},
       "belohnung": {"geld": 65, "reputation": 5},
       "varianten": [
         {
@@ -1571,7 +1571,7 @@
             "CREATE TABLE und ALTER TABLE gehören zur Datendefinition, INSERT, UPDATE und DELETE zur Datenmanipulation. UPDATE und DELETE ohne WHERE treffen alle Zeilen: Das ist der fehlende Schlüsselschalter."
           ],
           "suchbegriffe": ["DML", "DDL"],
-          "anforderungen": {"datenbanken": 35},
+          "anforderungen": {"sql": 35},
           "belohnung": {"geld": 65, "reputation": 5}
         },
         {
@@ -1595,7 +1595,7 @@
             "Der Primärschlüssel macht jeden Datensatz eindeutig, der Fremdschlüssel verknüpft Tabellen. Entitäten sind die Objekte, Attribute ihre Eigenschaften."
           ],
           "suchbegriffe": ["Primärschlüssel", "Fremdschlüssel"],
-          "anforderungen": {"datenbanken": 43},
+          "anforderungen": {"modellierung": 43},
           "belohnung": {"geld": 70, "reputation": 6}
         },
         {
@@ -1627,7 +1627,7 @@
             "1:1, 1:n und n:m. Eine n:m-Beziehung wird in der Datenbank über eine eigene Zwischentabelle (z. B. halt) aufgelöst."
           ],
           "suchbegriffe": ["Kardinalität", "ER-Modell"],
-          "anforderungen": {"datenbanken": 51},
+          "anforderungen": {"modellierung": 51},
           "belohnung": {"geld": 75, "reputation": 7}
         }
       ]
@@ -1728,7 +1728,7 @@
           ]
         }
       ],
-      "anforderungen": {"systeme": 33, "sicherheit": 30},
+      "anforderungen": {"linux": 33, "zugriff": 30},
       "belohnung": {"geld": 95, "reputation": 6},
       "varianten": [
         {
@@ -1827,7 +1827,7 @@
             "Richtig: useradd -m -G technik svenja → passwd svenja → chage -d 0 svenja → id svenja. Nur die nötigen Rechte vergeben: kein sudo."
           ],
           "suchbegriffe": ["Linux", "Benutzerkonto"],
-          "anforderungen": {"systeme": 33, "sicherheit": 30},
+          "anforderungen": {"linux": 33, "zugriff": 30},
           "belohnung": {"geld": 95, "reputation": 6}
         },
         {
@@ -1932,7 +1932,7 @@
             "Richtig: chown -R root:werkstatt → chmod -R 770 → setfacl -R -m g:azubis:rx → getfacl. So gilt das Prinzip der minimalen Rechte (Least Privilege)."
           ],
           "suchbegriffe": ["chmod", "chown"],
-          "anforderungen": {"systeme": 41, "sicherheit": 31},
+          "anforderungen": {"linux": 41, "zugriff": 31},
           "belohnung": {"geld": 105, "reputation": 7}
         },
         {
@@ -2028,7 +2028,7 @@
             "Richtig: groupadd personal → usermod -aG personal kbrandt → chgrp -R personal … && chmod -R 770 … → ls -ld. Personalakten haben hohen Schutzbedarf, der Zugriff muss auf die Berechtigten beschränkt sein."
           ],
           "suchbegriffe": ["chmod", "Zugriffsrechte"],
-          "anforderungen": {"systeme": 50, "sicherheit": 40},
+          "anforderungen": {"linux": 50, "zugriff": 40},
           "belohnung": {"geld": 115, "reputation": 8}
         }
       ]
@@ -2125,7 +2125,7 @@
           ]
         }
       ],
-      "anforderungen": {"sicherheit": 34, "systeme": 30},
+      "anforderungen": {"zugriff": 34, "windows": 30},
       "belohnung": {"geld": 95, "reputation": 6},
       "varianten": [
         {
@@ -2216,7 +2216,7 @@
             "Richtig: New-LocalUser mit sicher abgefragtem Passwort → Add-LocalGroupMember -Group Benutzer → Set-LocalUser -AccountExpires. Minimale Rechte und ein Ablaufdatum verhindern vergessene Konten."
           ],
           "suchbegriffe": ["PowerShell", "Benutzerkonto"],
-          "anforderungen": {"sicherheit": 34, "systeme": 30},
+          "anforderungen": {"zugriff": 34, "windows": 30},
           "belohnung": {"geld": 95, "reputation": 6}
         },
         {
@@ -2307,7 +2307,7 @@
             "Richtig: net share → net share Aushaenge=D:\\Aushaenge /GRANT:TALBAHN\\ServiceCenter,READ → Get-SmbShareAccess. Nur Lesen für die Gruppe, die es braucht."
           ],
           "suchbegriffe": ["Freigabe", "NTFS"],
-          "anforderungen": {"sicherheit": 44, "systeme": 34},
+          "anforderungen": {"zugriff": 44, "windows": 34},
           "belohnung": {"geld": 105, "reputation": 7}
         },
         {
@@ -2385,7 +2385,7 @@
             "Richtig: Get-LocalUser → Disable-LocalUser → Remove-LocalGroupMember -Group Administratoren. Konten Ausgeschiedener werden sofort gesperrt und Rechte entzogen, Daten bleiben für die Aufbewahrungsfrist erhalten."
           ],
           "suchbegriffe": ["PowerShell", "Least Privilege"],
-          "anforderungen": {"sicherheit": 54, "systeme": 44},
+          "anforderungen": {"zugriff": 54, "windows": 44},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -2495,7 +2495,7 @@
           ]
         }
       ],
-      "anforderungen": {"systeme": 31},
+      "anforderungen": {"linux": 31},
       "belohnung": {"geld": 90, "reputation": 6},
       "varianten": [
         {
@@ -2599,7 +2599,7 @@
             "Richtig: systemctl status nginx → journalctl -u nginx -n 20 → nginx -t → systemctl restart nginx. Erst die Ursache lesen, dann gezielt beheben und testen."
           ],
           "suchbegriffe": ["systemctl", "journalctl"],
-          "anforderungen": {"systeme": 31},
+          "anforderungen": {"linux": 31},
           "belohnung": {"geld": 90, "reputation": 6}
         },
         {
@@ -2697,7 +2697,7 @@
             "Richtig: Get-Service Spooler → Get-EventLog (Ursache lesen) → Start-Service Spooler → Get-Service Spooler. Die Ereignisanzeige hilft, ob das öfter passiert."
           ],
           "suchbegriffe": ["Get-Service", "Ereignisanzeige"],
-          "anforderungen": {"systeme": 42},
+          "anforderungen": {"windows": 42},
           "belohnung": {"geld": 105, "reputation": 7}
         },
         {
@@ -2797,7 +2797,7 @@
             "Richtig: timedatectl → systemctl enable --now systemd-timesyncd → journalctl -u systemd-timesyncd → timedatectl. NTP über UDP 123 hält die Uhr dauerhaft richtig, wichtig für Protokolle und Fahrzeiten."
           ],
           "suchbegriffe": ["systemctl", "journalctl"],
-          "anforderungen": {"systeme": 52},
+          "anforderungen": {"linux": 52},
           "belohnung": {"geld": 115, "reputation": 8}
         }
       ]
@@ -2903,7 +2903,7 @@
           ]
         }
       ],
-      "anforderungen": {"netzwerk": 31},
+      "anforderungen": {"fehlersuche": 31},
       "belohnung": {"geld": 90, "reputation": 6},
       "varianten": [
         {
@@ -3003,7 +3003,7 @@
             "Richtig: ipconfig /all → nslookup → Set-DnsClientServerAddress … 192.168.10.2 → Test-NetConnection. Internet geht, Intranet nicht: typisch für einen falschen DNS-Server."
           ],
           "suchbegriffe": ["nslookup", "DNS"],
-          "anforderungen": {"netzwerk": 31},
+          "anforderungen": {"fehlersuche": 31},
           "belohnung": {"geld": 90, "reputation": 6}
         },
         {
@@ -3088,7 +3088,7 @@
             "Richtig: Test-NetConnection → tracert → Befund melden. Der erste Router antwortet, danach nichts mehr: Das Problem liegt hinter dem Gateway, nicht am Kassen-PC."
           ],
           "suchbegriffe": ["tracert", "Test-NetConnection"],
-          "anforderungen": {"netzwerk": 38},
+          "anforderungen": {"fehlersuche": 38},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -3176,7 +3176,7 @@
             "Richtig: Get-NetIPConfiguration → ipconfig /renew → ping Gateway. Die APIPA-Adresse 169.254.x.x zeigte, dass der DHCP-Server beim ersten Versuch nicht geantwortet hatte."
           ],
           "suchbegriffe": ["DHCP", "ping"],
-          "anforderungen": {"netzwerk": 48},
+          "anforderungen": {"fehlersuche": 48},
           "belohnung": {"geld": 110, "reputation": 7}
         }
       ]
@@ -3277,7 +3277,7 @@
           ]
         }
       ],
-      "anforderungen": {"systeme": 36},
+      "anforderungen": {"linux": 36},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -3372,7 +3372,7 @@
             "Richtig: df -h → du -sh /var/* | sort -h → journalctl --vacuum-size=1G → df -h /. Dauerhaft hilft eine Grenze in journald.conf (SystemMaxUse)."
           ],
           "suchbegriffe": ["Linux", "Speicherplatz"],
-          "anforderungen": {"systeme": 36},
+          "anforderungen": {"linux": 36},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -3477,7 +3477,7 @@
             "Richtig: apt update → apt list --upgradable → apt upgrade -y → cat /var/run/reboot-required. Regelmäßiges Patchen schließt Sicherheitslücken, der Neustart wird mit dem Kunden abgestimmt."
           ],
           "suchbegriffe": ["apt", "Patch"],
-          "anforderungen": {"systeme": 46},
+          "anforderungen": {"linux": 46},
           "belohnung": {"geld": 110, "reputation": 7}
         },
         {
@@ -3571,7 +3571,7 @@
             "Richtig: top → kill 4711 → ps -p 4711 → journalctl -u backup-sync. Ursache war ein voller Zielspeicher: Das kommt als Folgeauftrag auf den Zettel."
           ],
           "suchbegriffe": ["Prozess", "kill"],
-          "anforderungen": {"systeme": 55},
+          "anforderungen": {"linux": 55},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -3659,7 +3659,7 @@
           ]
         }
       ],
-      "anforderungen": {"datenbanken": 36},
+      "anforderungen": {"sql": 36},
       "belohnung": {"geld": 95, "reputation": 6},
       "varianten": [
         {
@@ -3741,7 +3741,7 @@
             "Richtig: DESCRIBE teil → UPDATE … WHERE teil_nr = 'BK-220' → SELECT zur Kontrolle. Ein UPDATE ohne WHERE hätte 1.418 Bestände überschrieben."
           ],
           "suchbegriffe": ["UPDATE", "WHERE"],
-          "anforderungen": {"datenbanken": 36},
+          "anforderungen": {"sql": 36},
           "belohnung": {"geld": 95, "reputation": 6}
         },
         {
@@ -3822,7 +3822,7 @@
             "Richtig: CREATE USER … @'192.168.40.%' → GRANT SELECT ON fahrgast.* → SHOW GRANTS. Das Prinzip der minimalen Rechte gilt auch in Datenbanken."
           ],
           "suchbegriffe": ["SQL", "Least Privilege"],
-          "anforderungen": {"datenbanken": 45},
+          "anforderungen": {"db_betrieb": 45},
           "belohnung": {"geld": 110, "reputation": 7}
         },
         {
@@ -3905,7 +3905,7 @@
             "Richtig: SHOW TABLES → SELECT linie, COUNT(*) … WHERE minuten > 5 GROUP BY linie → CREATE INDEX. Soll nach der Anzahl gefiltert werden, braucht man HAVING."
           ],
           "suchbegriffe": ["GROUP BY", "SQL"],
-          "anforderungen": {"datenbanken": 53},
+          "anforderungen": {"sql": 53},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -3918,7 +3918,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"it_betrieb": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "wiederholen": {"start": 21, "abstand": 12},
@@ -4035,7 +4035,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"it_betrieb": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 65, "reputation": 6},
       "wiederholen": {"start": 24, "abstand": 13},
@@ -4132,7 +4132,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 40},
+      "anforderungen": {"verkabelung": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "wiederholen": {"start": 30, "abstand": 13},
@@ -4214,7 +4214,7 @@
             "erkl2": "Folgeauftrag: Gerät an Port 17 identifizieren, Kabel an Port 5 prüfen und tauschen, Doku nachziehen. Zähler zurücksetzen ohne Ursache wäre Kosmetik."
           },
           "cat": "sicherheit",
-          "anforderungen": {"netzwerk": 40, "sicherheit": 35},
+          "anforderungen": {"verkabelung": 40, "isms": 35},
           "auffaellig": ["beschriftung", "doku", "crc"],
           "abschluss_antwort": "Befunde protokollieren und Folgeauftrag anlegen",
           "ort": "talheim_nord",
@@ -4231,7 +4231,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 40},
+      "anforderungen": {"db_betrieb": 40},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 75, "reputation": 7},
       "wiederholen": {"start": 19, "abstand": 14},
@@ -4298,7 +4298,7 @@
             "erkl2": "Das ist ein Befund: Die Wechselplatte muss wieder regelmäßig außer Haus. Die Sicherung abzuschalten wäre das Gegenteil von Sicherheit."
           },
           "cat": "sicherheit",
-          "anforderungen": {"sicherheit": 40, "datenbanken": 30},
+          "anforderungen": {"notfall": 40, "db_betrieb": 30},
           "auffaellig": ["kopien"],
           "abschluss_antwort": "Befund protokollieren und Folgeauftrag anlegen"
         },
@@ -4350,7 +4350,7 @@
       "raum": "technikraum",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 40},
+      "anforderungen": {"isms": 40},
       "achsen": ["sicherheit", "zuverlaessigkeit"],
       "belohnung": {"geld": 65, "reputation": 6},
       "wiederholen": {"start": 26, "abstand": 12},
@@ -4450,7 +4450,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 40, "netzwerk": 35},
+      "anforderungen": {"haertung": 40, "switching": 35},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 75, "reputation": 7},
       "wiederholen": {"start": 35, "abstand": 13},
@@ -4547,7 +4547,7 @@
       "raum": "bahnsteig",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 40},
+      "anforderungen": {"haertung": 40},
       "achsen": ["sicherheit", "kundenzufriedenheit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "wiederholen": {"start": 28, "abstand": 14},
@@ -4648,7 +4648,7 @@
       "raum": "service_point_nord",
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"hardware": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ticket": [
@@ -4734,7 +4734,7 @@
           "auftraggeber": "aylin",
           "raum": "leitstelle",
           "prioritaet": "kritisch",
-          "anforderungen": {"systeme": 45},
+          "anforderungen": {"hardware": 45},
           "belohnung": {"geld": 95, "reputation": 8},
           "ab_tag": 50,
           "ticket": [
@@ -4821,7 +4821,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 40},
+      "anforderungen": {"verkabelung": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 75, "reputation": 6},
       "ticket": [
@@ -4908,7 +4908,7 @@
       "stelle": [11.1, 2.1],
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"hardware": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ticket": [
@@ -4995,7 +4995,7 @@
       "raum": "verwaltung",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 35},
+      "anforderungen": {"hardware": 35},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 65, "reputation": 5},
       "ticket": [
@@ -5078,7 +5078,7 @@
           "auftraggeber": "wendt",
           "raum": "buchhaltung_lindenau",
           "stelle": [10.1, 2.9],
-          "anforderungen": {"systeme": 40},
+          "anforderungen": {"hardware": 40},
           "belohnung": {"geld": 75, "reputation": 6},
           "ab_tag": 49,
           "ticket": [
@@ -5164,7 +5164,7 @@
       "stelle": [24.4, 2.6],
       "prioritaet": "kritisch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"verkabelung": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 8},
       "ticket": [
@@ -5249,7 +5249,7 @@
           "raum": "technik_lindenau",
           "stelle": [23.1, 3.1],
           "prioritaet": "hoch",
-          "anforderungen": {"netzwerk": 50},
+          "anforderungen": {"verkabelung": 50},
           "ab_tag": 53,
           "ticket": [
             "Svenja hat einen Zettel dabei: „Die Glasfaser von der Verwaltung Lindenau zum Archivgebäude ist 2,4 km lang, Singlemode. Gestern hat eine Fremdfirma dort ein Modul getauscht. Seitdem: nichts.“",
@@ -5333,7 +5333,7 @@
       "raum": "werkstattbuero",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"it_betrieb": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 75, "reputation": 6},
       "ticket": [
@@ -5420,7 +5420,7 @@
       "raum": "helpdesk",
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"dienste": 45},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ticket": [
@@ -5493,7 +5493,7 @@
       "stelle": [13.9, 10.6],
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"dienste": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 7},
       "ticket": [
@@ -5566,7 +5566,7 @@
       "stelle": [10.1, 2.9],
       "prioritaet": "normal",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 45},
+      "anforderungen": {"db_betrieb": 45},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 85, "reputation": 7},
       "ticket": [
@@ -5642,7 +5642,7 @@
       "stelle": [24.4, 2.6],
       "prioritaet": "kritisch",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 40, "systeme": 35},
+      "anforderungen": {"db_betrieb": 40, "storage": 35},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 8},
       "ticket": [
@@ -5715,7 +5715,7 @@
       "stelle": [4.6, 11.1],
       "prioritaet": "hoch",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 45},
+      "anforderungen": {"zugriff": 45},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ticket": [
@@ -5791,7 +5791,7 @@
       "raum": "lager",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 40},
+      "anforderungen": {"beschaffung": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 65, "reputation": 6},
       "ticket": [
@@ -5879,7 +5879,7 @@
         {"ab_tag": 21},
         {
           "titel": "Ersatzteilregal: Toner, SFP, Monitor",
-          "anforderungen": {"wirtschaft": 45},
+          "anforderungen": {"beschaffung": 45},
           "belohnung": {"geld": 75, "reputation": 6},
           "ab_tag": 43,
           "bedarf": [
@@ -5986,7 +5986,7 @@
       "raum": "it_buero",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 35},
+      "anforderungen": {"beschaffung": 35},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 60, "reputation": 5},
       "ticket": [
@@ -6070,7 +6070,7 @@
           "titel": "Farbtoner für die Buchhaltung Lindenau",
           "auftraggeber": "wendt",
           "raum": "leitung_lindenau",
-          "anforderungen": {"wirtschaft": 40},
+          "anforderungen": {"beschaffung": 40},
           "belohnung": {"geld": 70, "reputation": 6},
           "ab_tag": 51,
           "bedarf": [
@@ -6169,7 +6169,7 @@
       "raum": "werkstattbuero",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 35},
+      "anforderungen": {"beschaffung": 35},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "ticket": [
@@ -6229,7 +6229,7 @@
           "titel": "Leitstand-Monitore auf Vorrat",
           "auftraggeber": "aylin",
           "raum": "leitstelle",
-          "anforderungen": {"wirtschaft": 40},
+          "anforderungen": {"beschaffung": 40},
           "belohnung": {"geld": 75, "reputation": 6},
           "ab_tag": 52,
           "bedarf": [
@@ -6295,7 +6295,7 @@
       "raum": "werkstatt",
       "prioritaet": "niedrig",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 30},
+      "anforderungen": {"beschaffung": 30},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 60, "reputation": 5},
       "ticket": [
@@ -6360,7 +6360,7 @@
           "auftraggeber": "svenja",
           "raum": "serverraum",
           "prioritaet": "normal",
-          "anforderungen": {"wirtschaft": 35, "netzwerk": 35},
+          "anforderungen": {"beschaffung": 35, "verkabelung": 35},
           "belohnung": {"geld": 70, "reputation": 6},
           "ab_tag": 36,
           "bedarf": [
@@ -6441,7 +6441,7 @@
           "auftraggeber": "marta",
           "raum": "werkstattbuero",
           "prioritaet": "normal",
-          "anforderungen": {"wirtschaft": 35},
+          "anforderungen": {"beschaffung": 35},
           "belohnung": {"geld": 65, "reputation": 6},
           "ab_tag": 40,
           "bedarf": [
@@ -6527,7 +6527,7 @@
       "raum": "werkstatt",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"hardware": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ticket": [
@@ -6564,7 +6564,7 @@
         {
           "titel": "Günstiger PC für die Kundenberatung",
           "cat": "wirtschaft",
-          "anforderungen": {"wirtschaft": 35, "systeme": 30},
+          "anforderungen": {"beschaffung": 35, "hardware": 30},
           "belohnung": {"geld": 70, "reputation": 6},
           "ab_tag": 29,
           "ticket": [
@@ -6597,7 +6597,7 @@
         },
         {
           "titel": "3D-Arbeitsplatz für Fahrzeugzeichnungen",
-          "anforderungen": {"systeme": 45},
+          "anforderungen": {"hardware": 45},
           "belohnung": {"geld": 90, "reputation": 7},
           "ab_tag": 38,
           "ticket": [
@@ -6663,7 +6663,7 @@
         {
           "titel": "Arbeitsplatz für die neue Auszubildende",
           "cat": "wirtschaft",
-          "anforderungen": {"wirtschaft": 40, "systeme": 30},
+          "anforderungen": {"beschaffung": 40, "hardware": 30},
           "belohnung": {"geld": 75, "reputation": 6},
           "ab_tag": 50,
           "ticket": [
@@ -6698,7 +6698,7 @@
         {
           "titel": "Dashboard-PC für die Leitstelle",
           "cat": "wirtschaft",
-          "anforderungen": {"wirtschaft": 40, "systeme": 40},
+          "anforderungen": {"beschaffung": 40, "hardware": 40},
           "belohnung": {"geld": 90, "reputation": 7},
           "ab_tag": 54,
           "ticket": [
@@ -6740,7 +6740,7 @@
       "raum": "technik_werkstatt",
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 45, "netzwerk": 35},
+      "anforderungen": {"it_betrieb": 45, "verkabelung": 35},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 8},
       "ticket": [
@@ -6768,7 +6768,7 @@
           "raum": "serverraum",
           "prioritaet": "normal",
           "cat": "netzwerk",
-          "anforderungen": {"netzwerk": 45, "systeme": 35},
+          "anforderungen": {"verkabelung": 45, "it_betrieb": 35},
           "belohnung": {"geld": 90, "reputation": 7},
           "ab_tag": 39,
           "ticket": [
@@ -6798,7 +6798,7 @@
           "raum": "technik_lindenau",
           "stelle": [23.1, 3.1],
           "prioritaet": "normal",
-          "anforderungen": {"systeme": 45},
+          "anforderungen": {"it_betrieb": 45},
           "belohnung": {"geld": 90, "reputation": 7},
           "ab_tag": 46,
           "ticket": [
@@ -6829,7 +6829,7 @@
           "stelle": [27.1, 3.6],
           "prioritaet": "normal",
           "cat": "netzwerk",
-          "anforderungen": {"netzwerk": 45, "sicherheit": 30},
+          "anforderungen": {"verkabelung": 45, "isms": 30},
           "ab_tag": 52,
           "ticket": [
             "Svenja stellt im Technikraum Talheim einen 12-HE-Schrank für die neue Videoüberwachung auf: „48 Kameras am Bahnsteig, alle über PoE. Dazu ein Videoserver und ein Storage für die Aufzeichnungen.“",
@@ -6862,7 +6862,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"ipv4": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ab_tag": 23,
@@ -6901,7 +6901,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"ipv4": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 7},
       "ab_tag": 47,
@@ -6943,7 +6943,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 40},
+      "anforderungen": {"storage": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 65, "reputation": 6},
       "ab_tag": 22,
@@ -6973,7 +6973,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 40, "systeme": 35},
+      "anforderungen": {"db_betrieb": 40, "storage": 35},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 75, "reputation": 7},
       "ab_tag": 41,
@@ -7002,7 +7002,7 @@
       "raum": "kundenberatung",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 40},
+      "anforderungen": {"kalkulation": 40},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "ab_tag": 32,
@@ -7038,7 +7038,7 @@
       "raum": "leitung_lindenau",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 45},
+      "anforderungen": {"kalkulation": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 75, "reputation": 7},
       "ab_tag": 52,
@@ -7067,7 +7067,7 @@
       "raum": "werkstattbuero",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 40},
+      "anforderungen": {"dienste": 40},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 70, "reputation": 6},
       "ab_tag": 26,
@@ -7111,7 +7111,7 @@
       "stelle": [4.6, 2.4],
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"dienste": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 75, "reputation": 6},
       "ab_tag": 37,
@@ -7170,7 +7170,7 @@
         "Adressen aus fe80::/10 sind Link-Local-Adressen. Jede IPv6-Schnittstelle erzeugt sich automatisch eine; Router leiten sie nicht weiter. Global Unicast beginnt mit 2 oder 3, Unique Local mit fc/fd, Multicast mit ff."
       ],
       "suchbegriffe": ["IPv6", "Link-Local"],
-      "anforderungen": {"netzwerk": 46},
+      "anforderungen": {"ipv6": 46},
       "belohnung": {"geld": 80, "reputation": 6},
       "varianten": [
         {
@@ -7197,7 +7197,7 @@
             "Adressen aus fe80::/10 sind Link-Local-Adressen. Jede IPv6-Schnittstelle erzeugt sich automatisch eine; Router leiten sie nicht weiter. Global Unicast beginnt mit 2 oder 3, Unique Local mit fc/fd, Multicast mit ff."
           ],
           "suchbegriffe": ["IPv6", "Link-Local"],
-          "anforderungen": {"netzwerk": 46},
+          "anforderungen": {"ipv6": 46},
           "belohnung": {"geld": 80, "reputation": 6}
         },
         {
@@ -7227,7 +7227,7 @@
           ],
           "suchbegriffe": ["IPv6"],
           "stelle": [11.12, 2.38],
-          "anforderungen": {"netzwerk": 53},
+          "anforderungen": {"ipv6": 53},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -7247,7 +7247,7 @@
             "Von /56 bis /64 sind es 8 Bits, also 2 hoch 8 = 256 Netze. Das erste ist 2001:db8:4b00::/64."
           ],
           "suchbegriffe": ["IPv6", "Präfix"],
-          "anforderungen": {"netzwerk": 61},
+          "anforderungen": {"ipv6": 61},
           "belohnung": {"geld": 125, "reputation": 9}
         }
       ]
@@ -7275,7 +7275,7 @@
         "Kanal 1 liegt bei 2412 MHz, Kanal 6 bei 2437 MHz, Kanal 11 bei 2462 MHz. Nur mit je 25 MHz Abstand überlappen sich die 20 MHz breiten Kanäle nicht."
       ],
       "suchbegriffe": ["WLAN", "2,4 GHz"],
-      "anforderungen": {"netzwerk": 47},
+      "anforderungen": {"wlan": 47},
       "belohnung": {"geld": 85, "reputation": 6},
       "varianten": [
         {
@@ -7299,7 +7299,7 @@
           ],
           "suchbegriffe": ["WLAN", "2,4 GHz"],
           "stelle": [13.38, 12.12],
-          "anforderungen": {"netzwerk": 47},
+          "anforderungen": {"wlan": 47},
           "belohnung": {"geld": 85, "reputation": 6}
         },
         {
@@ -7323,7 +7323,7 @@
           ],
           "suchbegriffe": ["WLAN", "802.11ax"],
           "stelle": [4.12, 2.38],
-          "anforderungen": {"netzwerk": 56},
+          "anforderungen": {"wlan": 56},
           "belohnung": {"geld": 110, "reputation": 8}
         }
       ]
@@ -7356,7 +7356,7 @@
         "Die Geräte brauchen zusammen 128,0 W, mit 20 % Reserve 153,6 W. Der kleinste Switch darüber hat 185 W."
       ],
       "suchbegriffe": ["PoE", "Power over Ethernet"],
-      "anforderungen": {"netzwerk": 51},
+      "anforderungen": {"verkabelung": 51},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -7380,7 +7380,7 @@
           ],
           "suchbegriffe": ["PoE"],
           "stelle": [11.88, 2.38],
-          "anforderungen": {"netzwerk": 61},
+          "anforderungen": {"verkabelung": 61},
           "belohnung": {"geld": 125, "reputation": 9}
         }
       ]
@@ -7413,7 +7413,7 @@
         "10.20.100.7 liegt in 10.20.96.0/20. Das ist die passende Route mit dem längsten Präfix (Longest Prefix Match), also geht das Paket an 10.0.0.4."
       ],
       "suchbegriffe": ["Routing", "Routingtabelle"],
-      "anforderungen": {"netzwerk": 49},
+      "anforderungen": {"routing": 49},
       "belohnung": {"geld": 90, "reputation": 7},
       "varianten": [
         {
@@ -7440,7 +7440,7 @@
             "10.20.100.7 liegt in 10.20.96.0/20. Das ist die passende Route mit dem längsten Präfix (Longest Prefix Match), also geht das Paket an 10.0.0.4."
           ],
           "suchbegriffe": ["Routing", "Routingtabelle"],
-          "anforderungen": {"netzwerk": 49},
+          "anforderungen": {"routing": 49},
           "belohnung": {"geld": 90, "reputation": 7}
         },
         {
@@ -7469,7 +7469,7 @@
           ],
           "suchbegriffe": ["statische Route", "Routing"],
           "stelle": [11.12, 2.38],
-          "anforderungen": {"netzwerk": 58},
+          "anforderungen": {"routing": 58},
           "belohnung": {"geld": 115, "reputation": 8}
         },
         {
@@ -7496,7 +7496,7 @@
             "Eingehende Verbindungen auf TCP 198.51.100.23:8443 übersetzt der Router auf 192.168.70.20:443. Karin würde ergänzen: nur für die Adressen des Wachdienstes freigeben."
           ],
           "suchbegriffe": ["NAT", "Port"],
-          "anforderungen": {"netzwerk": 66},
+          "anforderungen": {"routing": 66},
           "belohnung": {"geld": 140, "reputation": 9}
         }
       ]
@@ -7529,7 +7529,7 @@
         "A und AAAA lösen Namen in IPv4- bzw. IPv6-Adressen auf, CNAME verweist auf einen anderen Namen, MX nennt den Mailserver, PTR löst eine Adresse rückwärts in einen Namen auf."
       ],
       "suchbegriffe": ["DNS", "CNAME"],
-      "anforderungen": {"netzwerk": 47},
+      "anforderungen": {"dienste": 47},
       "belohnung": {"geld": 85, "reputation": 6},
       "varianten": [
         {
@@ -7556,7 +7556,7 @@
             "A und AAAA lösen Namen in IPv4- bzw. IPv6-Adressen auf, CNAME verweist auf einen anderen Namen, MX nennt den Mailserver, PTR löst eine Adresse rückwärts in einen Namen auf."
           ],
           "suchbegriffe": ["DNS", "CNAME"],
-          "anforderungen": {"netzwerk": 47},
+          "anforderungen": {"dienste": 47},
           "belohnung": {"geld": 85, "reputation": 6}
         },
         {
@@ -7583,7 +7583,7 @@
             "NS nennt die zuständigen Nameserver, SOA die Verwaltungsdaten der Zone, TXT freie Texte wie SPF, SRV Dienste mit Port und Zielhost, PTR die Rückwärtsauflösung."
           ],
           "suchbegriffe": ["DNS", "MX"],
-          "anforderungen": {"netzwerk": 63},
+          "anforderungen": {"dienste": 63},
           "belohnung": {"geld": 130, "reputation": 9}
         }
       ]
@@ -7615,7 +7615,7 @@
         "Singlemode überbrückt Kilometer, Multimode einige Hundert Meter, Twisted Pair nach Norm 100 m und liefert PoE, Richtfunk braucht freie Sicht zwischen den Antennen."
       ],
       "suchbegriffe": ["Glasfaser", "Twisted Pair"],
-      "anforderungen": {"netzwerk": 55},
+      "anforderungen": {"verkabelung": 55},
       "belohnung": {"geld": 105, "reputation": 8},
       "varianten": [
         {
@@ -7641,7 +7641,7 @@
             "Singlemode überbrückt Kilometer, Multimode einige Hundert Meter, Twisted Pair nach Norm 100 m und liefert PoE, Richtfunk braucht freie Sicht zwischen den Antennen."
           ],
           "suchbegriffe": ["Glasfaser", "Twisted Pair"],
-          "anforderungen": {"netzwerk": 55},
+          "anforderungen": {"verkabelung": 55},
           "belohnung": {"geld": 105, "reputation": 8}
         }
       ]
@@ -7674,7 +7674,7 @@
         "Verschlüsselt wird mit dem öffentlichen Schlüssel des Empfängers. Nur Dr. Wendt besitzt den passenden privaten Schlüssel und kann die Mail entschlüsseln."
       ],
       "suchbegriffe": ["asymmetrisch", "Verschlüsselung"],
-      "anforderungen": {"sicherheit": 46},
+      "anforderungen": {"krypto": 46},
       "belohnung": {"geld": 85, "reputation": 6},
       "varianten": [
         {
@@ -7701,7 +7701,7 @@
             "Verschlüsselt wird mit dem öffentlichen Schlüssel des Empfängers. Nur Dr. Wendt besitzt den passenden privaten Schlüssel und kann die Mail entschlüsseln."
           ],
           "suchbegriffe": ["asymmetrisch", "Verschlüsselung"],
-          "anforderungen": {"sicherheit": 46},
+          "anforderungen": {"krypto": 46},
           "belohnung": {"geld": 85, "reputation": 6}
         },
         {
@@ -7729,7 +7729,7 @@
             "Nur modem-fw-4.2.1-mirror.bin hat dieselbe SHA-256-Prüfsumme wie vom Hersteller angegeben, ist also unverändert. Die anderen Dateien weichen ab, auch wenn sie ähnlich heißen."
           ],
           "suchbegriffe": ["Hash", "SHA-256"],
-          "anforderungen": {"sicherheit": 54},
+          "anforderungen": {"krypto": 54},
           "belohnung": {"geld": 105, "reputation": 7}
         },
         {
@@ -7756,7 +7756,7 @@
             "Der Absender bildet einen Hashwert und signiert ihn mit seinem privaten Schlüssel. Der Empfänger prüft mit dem öffentlichen Schlüssel: Passt es, ist die Rechnung echt und unverändert (Authentizität und Integrität)."
           ],
           "suchbegriffe": ["digitale Signatur"],
-          "anforderungen": {"sicherheit": 63},
+          "anforderungen": {"krypto": 63},
           "belohnung": {"geld": 130, "reputation": 9}
         }
       ]
@@ -7789,7 +7789,7 @@
         "Regel 1 passt nicht (Port 443). Regel 2 passt: Quelle im Netz der Buchhaltung, Port 3389. Das Paket wird verworfen, Regel 3 kommt gar nicht mehr dran."
       ],
       "suchbegriffe": ["Firewall", "Paketfilter"],
-      "anforderungen": {"sicherheit": 48},
+      "anforderungen": {"netzsicherheit": 48},
       "belohnung": {"geld": 90, "reputation": 7},
       "varianten": [
         {
@@ -7818,7 +7818,7 @@
           ],
           "suchbegriffe": ["Firewall", "Paketfilter"],
           "stelle": [23.12, 3.12],
-          "anforderungen": {"sicherheit": 48},
+          "anforderungen": {"netzsicherheit": 48},
           "belohnung": {"geld": 90, "reputation": 7}
         },
         {
@@ -7847,7 +7847,7 @@
           ],
           "suchbegriffe": ["Firewall"],
           "stelle": [18.88, 2.38],
-          "anforderungen": {"sicherheit": 55},
+          "anforderungen": {"netzsicherheit": 55},
           "belohnung": {"geld": 110, "reputation": 8}
         },
         {
@@ -7869,7 +7869,7 @@
             "Nur ein Paket passt auf Regel 1. Alles andere trifft auf Regel 2 „alles verwerfen“, die Regeln 3 und 4 werden nie erreicht. Die Verwerfen-Regel gehört ans Ende."
           ],
           "suchbegriffe": ["Firewall", "ACL"],
-          "anforderungen": {"sicherheit": 64},
+          "anforderungen": {"netzsicherheit": 64},
           "belohnung": {"geld": 135, "reputation": 9}
         }
       ]
@@ -7902,7 +7902,7 @@
         "Nach dem Maximumprinzip erbt der Server je Schutzziel den höchsten Wert seiner Anwendungen: Vertraulichkeit hoch, Integrität hoch, Verfügbarkeit hoch."
       ],
       "suchbegriffe": ["Schutzbedarf", "IT-Grundschutz"],
-      "anforderungen": {"sicherheit": 52},
+      "anforderungen": {"isms": 52},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -7931,7 +7931,7 @@
           ],
           "suchbegriffe": ["Schutzbedarf", "IT-Grundschutz"],
           "stelle": [18.88, 2.38],
-          "anforderungen": {"sicherheit": 52},
+          "anforderungen": {"isms": 52},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -7960,7 +7960,7 @@
           ],
           "suchbegriffe": ["Schutzbedarf", "BSI"],
           "stelle": [23.12, 3.12],
-          "anforderungen": {"sicherheit": 60},
+          "anforderungen": {"isms": 60},
           "belohnung": {"geld": 125, "reputation": 8}
         }
       ]
@@ -7995,7 +7995,7 @@
         "AES ist symmetrisch und schnell, RSA asymmetrisch. SHA-256 bildet nur einen Hashwert. TLS kombiniert beides: Schlüsselaustausch asymmetrisch, Nutzdaten symmetrisch."
       ],
       "suchbegriffe": ["AES", "Hashfunktion"],
-      "anforderungen": {"sicherheit": 50},
+      "anforderungen": {"krypto": 50},
       "belohnung": {"geld": 95, "reputation": 7},
       "varianten": [
         {
@@ -8024,7 +8024,7 @@
             "AES ist symmetrisch und schnell, RSA asymmetrisch. SHA-256 bildet nur einen Hashwert. TLS kombiniert beides: Schlüsselaustausch asymmetrisch, Nutzdaten symmetrisch."
           ],
           "suchbegriffe": ["AES", "Hashfunktion"],
-          "anforderungen": {"sicherheit": 50},
+          "anforderungen": {"krypto": 50},
           "belohnung": {"geld": 95, "reputation": 7}
         },
         {
@@ -8051,7 +8051,7 @@
             "Die CA signiert Zertifikate. Ein Zertifikat enthält den öffentlichen Schlüssel und Angaben zum Inhaber. Der private Schlüssel bleibt geheim. Über Sperrlisten (oder OCSP) prüft der Browser, ob ein Zertifikat widerrufen wurde."
           ],
           "suchbegriffe": ["Zertifikat", "PKI"],
-          "anforderungen": {"sicherheit": 59},
+          "anforderungen": {"krypto": 59},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -8087,7 +8087,7 @@
         "Die Talbahn bestimmt Zweck und Mittel und ist Verantwortliche. Bitweiche verarbeitet im Auftrag (Vertrag nach Art. 28). Die Datenschutzbeauftragte berät und überwacht, die Aufsichtsbehörde kontrolliert von außen."
       ],
       "suchbegriffe": ["Auftragsverarbeitung", "Datenschutzbeauftragter"],
-      "anforderungen": {"sicherheit": 48},
+      "anforderungen": {"datenschutz": 48},
       "belohnung": {"geld": 90, "reputation": 6},
       "varianten": [
         {
@@ -8119,7 +8119,7 @@
           ],
           "suchbegriffe": ["Auftragsverarbeitung", "Datenschutzbeauftragter"],
           "stelle": [4.62, 11.12],
-          "anforderungen": {"sicherheit": 48},
+          "anforderungen": {"datenschutz": 48},
           "belohnung": {"geld": 90, "reputation": 6}
         },
         {
@@ -8159,7 +8159,7 @@
           ],
           "suchbegriffe": ["Auskunftsrecht", "Videoüberwachung"],
           "stelle": [18.88, 2.38],
-          "anforderungen": {"sicherheit": 57},
+          "anforderungen": {"datenschutz": 57},
           "belohnung": {"geld": 115, "reputation": 8}
         }
       ]
@@ -8192,7 +8192,7 @@
         "Ein Typ-1-Hypervisor (Bare Metal) läuft direkt auf der Hardware und ist für Server gedacht. Typ 2 läuft als Programm auf einem Host-Betriebssystem und eignet sich für Test-PCs."
       ],
       "suchbegriffe": ["Hypervisor", "Virtualisierung"],
-      "anforderungen": {"systeme": 45},
+      "anforderungen": {"virtualisierung": 45},
       "belohnung": {"geld": 80, "reputation": 6},
       "varianten": [
         {
@@ -8219,7 +8219,7 @@
             "Ein Typ-1-Hypervisor (Bare Metal) läuft direkt auf der Hardware und ist für Server gedacht. Typ 2 läuft als Programm auf einem Host-Betriebssystem und eignet sich für Test-PCs."
           ],
           "suchbegriffe": ["Hypervisor", "Virtualisierung"],
-          "anforderungen": {"systeme": 45},
+          "anforderungen": {"virtualisierung": 45},
           "belohnung": {"geld": 80, "reputation": 6}
         },
         {
@@ -8246,7 +8246,7 @@
             "Ein Snapshot hält den Zustand einer VM fest, etwa vor einem Update. Er liegt aber auf demselben Speicher, wächst mit jeder Änderung und ist daher kein Backup."
           ],
           "suchbegriffe": ["Snapshot", "Backup"],
-          "anforderungen": {"systeme": 56},
+          "anforderungen": {"virtualisierung": 56},
           "belohnung": {"geld": 110, "reputation": 8}
         },
         {
@@ -8273,7 +8273,7 @@
             "Container teilen sich den Kernel des Hosts, starten in Sekunden und brauchen wenig Speicher. VMs bringen jeweils ein ganzes Betriebssystem mit und sind hier unnötig schwer."
           ],
           "suchbegriffe": ["Container", "Virtualisierung"],
-          "anforderungen": {"systeme": 65},
+          "anforderungen": {"virtualisierung": 65},
           "belohnung": {"geld": 135, "reputation": 9}
         }
       ]
@@ -8301,7 +8301,7 @@
         "85 % von 4.000 GB sind 3.400 GB. Bis dahin fehlen 540 GB, bei 12 GB pro Tag also 45 Tage."
       ],
       "suchbegriffe": ["Monitoring", "Schwellwert"],
-      "anforderungen": {"systeme": 50},
+      "anforderungen": {"it_betrieb": 50},
       "belohnung": {"geld": 95, "reputation": 7},
       "varianten": [
         {
@@ -8323,7 +8323,7 @@
             "85 % von 4.000 GB sind 3.400 GB. Bis dahin fehlen 540 GB, bei 12 GB pro Tag also 45 Tage."
           ],
           "suchbegriffe": ["Monitoring", "Schwellwert"],
-          "anforderungen": {"systeme": 50},
+          "anforderungen": {"it_betrieb": 50},
           "belohnung": {"geld": 95, "reputation": 7}
         },
         {
@@ -8343,7 +8343,7 @@
             "Der Mittelwert ist 78,0 %. Das liegt über 70 und unter 90 Prozent, also „Warnung“. Die einzelne Spitze von 91 % löst keinen roten Alarm aus."
           ],
           "suchbegriffe": ["Monitoring", "Schwellwert"],
-          "anforderungen": {"systeme": 59},
+          "anforderungen": {"it_betrieb": 59},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -8371,7 +8371,7 @@
         "6 Mbit/s sind 0,75 MB/s. Mal 259.200 Sekunden (72 h) mal 2 Kameras ergibt 388,8 GB."
       ],
       "suchbegriffe": ["Videoüberwachung", "Bitrate"],
-      "anforderungen": {"systeme": 51},
+      "anforderungen": {"zahlen": 51},
       "belohnung": {"geld": 95, "reputation": 7},
       "varianten": [
         {
@@ -8395,7 +8395,7 @@
           ],
           "suchbegriffe": ["Videoüberwachung", "Bitrate"],
           "stelle": [18.88, 2.38],
-          "anforderungen": {"systeme": 51},
+          "anforderungen": {"zahlen": 51},
           "belohnung": {"geld": 95, "reputation": 7}
         },
         {
@@ -8419,7 +8419,7 @@
           ],
           "suchbegriffe": ["Farbtiefe", "Auflösung"],
           "stelle": [21.88, 11.12],
-          "anforderungen": {"systeme": 57},
+          "anforderungen": {"zahlen": 57},
           "belohnung": {"geld": 115, "reputation": 8}
         },
         {
@@ -8441,7 +8441,7 @@
             "180 GB sind 1.440 Gbit. Nutzbar sind 80 Mbit/s. 1.440 Gbit geteilt durch 80 Mbit/s sind 18.000 Sekunden, also 5 h 00 min. Start 22 Uhr, fertig gegen 3 Uhr."
           ],
           "suchbegriffe": ["Bandbreite", "VPN"],
-          "anforderungen": {"systeme": 64},
+          "anforderungen": {"zahlen": 64},
           "belohnung": {"geld": 130, "reputation": 9}
         }
       ]
@@ -8473,7 +8473,7 @@
         "Ein Incident ist eine Störung, die schnell behoben werden soll. Ein Service Request ist ein Standardwunsch. Ein Problem ist die unbekannte Ursache wiederkehrender Incidents. Ein Change ist eine geplante Änderung."
       ],
       "suchbegriffe": ["ITIL", "Incident"],
-      "anforderungen": {"systeme": 52},
+      "anforderungen": {"it_betrieb": 52},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -8499,7 +8499,7 @@
             "Ein Incident ist eine Störung, die schnell behoben werden soll. Ein Service Request ist ein Standardwunsch. Ein Problem ist die unbekannte Ursache wiederkehrender Incidents. Ein Change ist eine geplante Änderung."
           ],
           "suchbegriffe": ["ITIL", "Incident"],
-          "anforderungen": {"systeme": 52},
+          "anforderungen": {"it_betrieb": 52},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -8523,7 +8523,7 @@
             "Ein Workaround umgeht eine Störung vorläufig. Ist die Ursache eines Problems bekannt, ist es ein Known Error. Die CMDB speichert Konfigurationselemente, das CAB bewertet und genehmigt Changes."
           ],
           "suchbegriffe": ["ITIL", "CMDB"],
-          "anforderungen": {"systeme": 62},
+          "anforderungen": {"it_betrieb": 62},
           "belohnung": {"geld": 130, "reputation": 9}
         }
       ]
@@ -8555,7 +8555,7 @@
         "DAS hängt direkt am Server. Ein NAS stellt Dateien im Netz bereit. Ein SAN liefert Blockspeicher über ein eigenes Netz, iSCSI transportiert diesen Blockzugriff über Ethernet."
       ],
       "suchbegriffe": ["NAS", "SAN"],
-      "anforderungen": {"systeme": 67},
+      "anforderungen": {"storage": 67},
       "belohnung": {"geld": 140, "reputation": 10},
       "varianten": [
         {
@@ -8581,7 +8581,7 @@
             "DAS hängt direkt am Server. Ein NAS stellt Dateien im Netz bereit. Ein SAN liefert Blockspeicher über ein eigenes Netz, iSCSI transportiert diesen Blockzugriff über Ethernet."
           ],
           "suchbegriffe": ["NAS", "SAN"],
-          "anforderungen": {"systeme": 67},
+          "anforderungen": {"storage": 67},
           "belohnung": {"geld": 140, "reputation": 10}
         }
       ]
@@ -8609,7 +8609,7 @@
         "Deckungsbeitrag je Automat: 95,00 € − 25,00 € = 70,00 €. 4.200,00 € ÷ 70,00 € = 60,0, also ab 60 Automaten."
       ],
       "suchbegriffe": ["Break-even", "Deckungsbeitrag"],
-      "anforderungen": {"wirtschaft": 46},
+      "anforderungen": {"kalkulation": 46},
       "belohnung": {"geld": 80, "reputation": 6},
       "varianten": [
         {
@@ -8631,7 +8631,7 @@
             "Deckungsbeitrag je Automat: 95,00 € − 25,00 € = 70,00 €. 4.200,00 € ÷ 70,00 € = 60,0, also ab 60 Automaten."
           ],
           "suchbegriffe": ["Break-even", "Deckungsbeitrag"],
-          "anforderungen": {"wirtschaft": 46},
+          "anforderungen": {"kalkulation": 46},
           "belohnung": {"geld": 80, "reputation": 6}
         },
         {
@@ -8653,7 +8653,7 @@
             "1.290,00 € − 12 % = 1.135,20 €. Minus 940,00 € variable Kosten ergibt 195,20 € Deckungsbeitrag je Terminal."
           ],
           "suchbegriffe": ["Deckungsbeitrag"],
-          "anforderungen": {"wirtschaft": 55},
+          "anforderungen": {"kalkulation": 55},
           "belohnung": {"geld": 105, "reputation": 8}
         },
         {
@@ -8673,7 +8673,7 @@
             "(340,00 € − 115,00 €) × 52 = 11.700,00 € Deckungsbeitrag. Minus 9.600,00 € Fixkosten ergibt 2.100,00 € Gewinn."
           ],
           "suchbegriffe": ["Deckungsbeitrag", "Fixkosten"],
-          "anforderungen": {"wirtschaft": 60},
+          "anforderungen": {"kalkulation": 60},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -8706,7 +8706,7 @@
         "Rückfluss pro Jahr: 5.750,00 € − 150,00 € = 5.600,00 €. 18.400,00 € ÷ 5.600,00 € = 3,29 Jahre."
       ],
       "suchbegriffe": ["Amortisation"],
-      "anforderungen": {"wirtschaft": 54},
+      "anforderungen": {"kalkulation": 54},
       "belohnung": {"geld": 105, "reputation": 7},
       "varianten": [
         {
@@ -8733,7 +8733,7 @@
             "Rückfluss pro Jahr: 5.750,00 € − 150,00 € = 5.600,00 €. 18.400,00 € ÷ 5.600,00 € = 3,29 Jahre."
           ],
           "suchbegriffe": ["Amortisation"],
-          "anforderungen": {"wirtschaft": 54},
+          "anforderungen": {"kalkulation": 54},
           "belohnung": {"geld": 105, "reputation": 7}
         },
         {
@@ -8758,7 +8758,7 @@
             "Rückfluss: 11.500,00 € − 3.500,00 € = 8.000,00 € pro Jahr. 32.000,00 € ÷ 8.000,00 € = 4,0 Jahre, das liegt vor den 5 Jahren Nutzungsdauer."
           ],
           "suchbegriffe": ["Amortisation", "Amortisationsrechnung"],
-          "anforderungen": {"wirtschaft": 67},
+          "anforderungen": {"kalkulation": 67},
           "belohnung": {"geld": 140, "reputation": 9}
         }
       ]
@@ -8786,7 +8786,7 @@
         "Der längste Weg ist A–B–D–E mit 10 Tagen: der kritische Pfad. Richtfunk (C) läuft parallel und hat 4 Tage Puffer."
       ],
       "suchbegriffe": ["Netzplan", "Puffer"],
-      "anforderungen": {"wirtschaft": 52},
+      "anforderungen": {"projekt": 52},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -8806,7 +8806,7 @@
             "A–C–E–F dauert 10 Tage und ist damit der längste Weg. Jede Verzögerung dort verschiebt den Bericht an Karin."
           ],
           "suchbegriffe": ["Netzplan", "Projektmanagement"],
-          "anforderungen": {"wirtschaft": 68},
+          "anforderungen": {"projekt": 68},
           "belohnung": {"geld": 145, "reputation": 10}
         }
       ]
@@ -8838,7 +8838,7 @@
         "Das Lastenheft beschreibt die Anforderungen des Auftraggebers, das Pflichtenheft die Umsetzung. Ein Gantt-Diagramm zeigt Vorgänge als Balken, ein Meilenstein ist ein Zeitpunkt ohne Dauer."
       ],
       "suchbegriffe": ["Lastenheft", "Meilenstein"],
-      "anforderungen": {"wirtschaft": 48},
+      "anforderungen": {"projekt": 48},
       "belohnung": {"geld": 90, "reputation": 7},
       "varianten": [
         {
@@ -8864,7 +8864,7 @@
             "Das Lastenheft beschreibt die Anforderungen des Auftraggebers, das Pflichtenheft die Umsetzung. Ein Gantt-Diagramm zeigt Vorgänge als Balken, ein Meilenstein ist ein Zeitpunkt ohne Dauer."
           ],
           "suchbegriffe": ["Lastenheft", "Meilenstein"],
-          "anforderungen": {"wirtschaft": 48},
+          "anforderungen": {"projekt": 48},
           "belohnung": {"geld": 90, "reputation": 7}
         },
         {
@@ -8891,7 +8891,7 @@
             "Das Projekt beginnt mit dem Auftrag (Initialisierung), dann folgen Planung und Durchführung, begleitet vom Controlling. Abnahme und Lessons Learned gehören zum Abschluss."
           ],
           "suchbegriffe": ["Projektmanagement", "Lessons Learned"],
-          "anforderungen": {"wirtschaft": 65},
+          "anforderungen": {"projekt": 65},
           "belohnung": {"geld": 135, "reputation": 9}
         }
       ]
@@ -8924,7 +8924,7 @@
         "OEM-Lizenzen gehören zur Hardware. Volumenlizenzen decken viele Plätze ab. Eine Subscription läuft nur mit Zahlung. Die GPL verlangt, dass Änderungen offen bleiben, Freeware ist nur kostenlos."
       ],
       "suchbegriffe": ["Lizenz", "Open Source"],
-      "anforderungen": {"wirtschaft": 50},
+      "anforderungen": {"recht": 50},
       "belohnung": {"geld": 95, "reputation": 7},
       "varianten": [
         {
@@ -8954,7 +8954,7 @@
             "OEM-Lizenzen gehören zur Hardware. Volumenlizenzen decken viele Plätze ab. Eine Subscription läuft nur mit Zahlung. Die GPL verlangt, dass Änderungen offen bleiben, Freeware ist nur kostenlos."
           ],
           "suchbegriffe": ["Lizenz", "Open Source"],
-          "anforderungen": {"wirtschaft": 50},
+          "anforderungen": {"recht": 50},
           "belohnung": {"geld": 95, "reputation": 7}
         },
         {
@@ -8980,7 +8980,7 @@
             "Named-User-Lizenzen zählen Personen, Device-Lizenzen Geräte, Concurrent-Lizenzen gleichzeitige Sitzungen, eine Standortlizenz deckt einen ganzen Standort ab."
           ],
           "suchbegriffe": ["Lizenz"],
-          "anforderungen": {"wirtschaft": 62},
+          "anforderungen": {"recht": 62},
           "belohnung": {"geld": 130, "reputation": 9}
         }
       ]
@@ -9013,7 +9013,7 @@
         "INSERT INTO tabelle (spalten) VALUES (werte) legt einen neuen Datensatz an. UPDATE ohne WHERE würde dagegen alle vorhandenen Zeilen überschreiben, auch Tim."
       ],
       "suchbegriffe": ["INSERT", "SQL"],
-      "anforderungen": {"datenbanken": 45},
+      "anforderungen": {"sql": 45},
       "belohnung": {"geld": 80, "reputation": 6},
       "varianten": [
         {
@@ -9040,7 +9040,7 @@
             "INSERT INTO tabelle (spalten) VALUES (werte) legt einen neuen Datensatz an. UPDATE ohne WHERE würde dagegen alle vorhandenen Zeilen überschreiben, auch Tim."
           ],
           "suchbegriffe": ["INSERT", "SQL"],
-          "anforderungen": {"datenbanken": 45},
+          "anforderungen": {"sql": 45},
           "belohnung": {"geld": 80, "reputation": 6}
         },
         {
@@ -9067,7 +9067,7 @@
             "SET preis = preis * 1.05 erhöht den bisherigen Preis um 5 %, WHERE kategorie = 'Wartung' beschränkt es auf die Wartungsverträge. Ohne WHERE träfe es alle Verträge."
           ],
           "suchbegriffe": ["UPDATE", "WHERE"],
-          "anforderungen": {"datenbanken": 53},
+          "anforderungen": {"sql": 53},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -9094,7 +9094,7 @@
             "DELETE FROM beleg WHERE jahr < 2015 löscht nur ältere Belege. <= würde auch 2015 treffen, DROP TABLE die ganze Tabelle, und DELETE * ist kein gültiges SQL."
           ],
           "suchbegriffe": ["DELETE", "Löschkonzept"],
-          "anforderungen": {"datenbanken": 69},
+          "anforderungen": {"sql": 69},
           "belohnung": {"geld": 150, "reputation": 10}
         }
       ]
@@ -9127,7 +9127,7 @@
         "Der LEFT JOIN liefert alle Laptops, auch ohne Ausleihe; dort ist a.laptop_id NULL. Mit IS NULL bleiben genau diese übrig. Ein INNER JOIN hätte sie gar nicht erst geliefert."
       ],
       "suchbegriffe": ["LEFT JOIN", "NULL"],
-      "anforderungen": {"datenbanken": 47},
+      "anforderungen": {"sql": 47},
       "belohnung": {"geld": 85, "reputation": 6},
       "varianten": [
         {
@@ -9154,7 +9154,7 @@
             "Der LEFT JOIN liefert alle Laptops, auch ohne Ausleihe; dort ist a.laptop_id NULL. Mit IS NULL bleiben genau diese übrig. Ein INNER JOIN hätte sie gar nicht erst geliefert."
           ],
           "suchbegriffe": ["LEFT JOIN", "NULL"],
-          "anforderungen": {"datenbanken": 47},
+          "anforderungen": {"sql": 47},
           "belohnung": {"geld": 85, "reputation": 6}
         },
         {
@@ -9176,7 +9176,7 @@
             "Die 6 Störungen ergeben 6 Zeilen. Der LEFT JOIN fügt RB 22 und RB 31 ohne Störung mit NULL hinzu: 8 Zeilen. Ein INNER JOIN hätte nur 6 geliefert."
           ],
           "suchbegriffe": ["LEFT JOIN", "JOIN"],
-          "anforderungen": {"datenbanken": 58},
+          "anforderungen": {"sql": 58},
           "belohnung": {"geld": 115, "reputation": 8}
         }
       ]
@@ -9209,7 +9209,7 @@
         "Die Unterabfrage liefert den Durchschnitt 46,63 €. Teurer sind nur: Akku USV, Switch 8 Port, Toner schwarz."
       ],
       "suchbegriffe": ["Unterabfrage", "AVG"],
-      "anforderungen": {"datenbanken": 52},
+      "anforderungen": {"sql": 52},
       "belohnung": {"geld": 100, "reputation": 7},
       "varianten": [
         {
@@ -9236,7 +9236,7 @@
             "Die Unterabfrage liefert den Durchschnitt 46,63 €. Teurer sind nur: Akku USV, Switch 8 Port, Toner schwarz."
           ],
           "suchbegriffe": ["Unterabfrage", "AVG"],
-          "anforderungen": {"datenbanken": 52},
+          "anforderungen": {"sql": 52},
           "belohnung": {"geld": 100, "reputation": 7}
         },
         {
@@ -9263,7 +9263,7 @@
             "Die Unterabfrage liefert die Kunden 1 und 4. Übrig bleiben alle anderen: Stadtwerke Talheim, Bäckerei Korn, Kita Sonnenwinkel."
           ],
           "suchbegriffe": ["Unterabfrage", "SQL"],
-          "anforderungen": {"datenbanken": 69},
+          "anforderungen": {"sql": 69},
           "belohnung": {"geld": 145, "reputation": 10}
         }
       ]
@@ -9291,7 +9291,7 @@
         "Für RB 17 bleiben 4, 11, 0 und 7: Summe 22, geteilt durch 4 ergibt 5,50 Minuten."
       ],
       "suchbegriffe": ["AVG", "Aggregatfunktion"],
-      "anforderungen": {"datenbanken": 50},
+      "anforderungen": {"sql": 50},
       "belohnung": {"geld": 95, "reputation": 7},
       "varianten": [
         {
@@ -9313,7 +9313,7 @@
             "Für RB 17 bleiben 4, 11, 0 und 7: Summe 22, geteilt durch 4 ergibt 5,50 Minuten."
           ],
           "suchbegriffe": ["AVG", "Aggregatfunktion"],
-          "anforderungen": {"datenbanken": 50},
+          "anforderungen": {"sql": 50},
           "belohnung": {"geld": 95, "reputation": 7}
         },
         {
@@ -9340,7 +9340,7 @@
             "Summen: Birkenhain 6.100,00 €, Lindenau 5.400,00 €, Talheim 5.300,00 €, Werkstatt 4.950,00 €. Über 5.000 € liegen: Birkenhain, Lindenau, Talheim."
           ],
           "suchbegriffe": ["HAVING", "GROUP BY"],
-          "anforderungen": {"datenbanken": 60},
+          "anforderungen": {"sql": 60},
           "belohnung": {"geld": 120, "reputation": 8}
         }
       ]
@@ -9370,7 +9370,7 @@
         "ACID steht für Atomarität, Konsistenz, Isolation und Dauerhaftigkeit. Wegen der Atomarität wurde die halbe Umbuchung beim Neustart zurückgerollt."
       ],
       "suchbegriffe": ["ACID", "Transaktion"],
-      "anforderungen": {"datenbanken": 55},
+      "anforderungen": {"db_betrieb": 55},
       "belohnung": {"geld": 110, "reputation": 8},
       "varianten": [
         {
@@ -9394,7 +9394,7 @@
             "ACID steht für Atomarität, Konsistenz, Isolation und Dauerhaftigkeit. Wegen der Atomarität wurde die halbe Umbuchung beim Neustart zurückgerollt."
           ],
           "suchbegriffe": ["ACID", "Transaktion"],
-          "anforderungen": {"datenbanken": 55},
+          "anforderungen": {"db_betrieb": 55},
           "belohnung": {"geld": 110, "reputation": 8}
         },
         {
@@ -9418,7 +9418,7 @@
             "START TRANSACTION beginnt, COMMIT bestätigt, ROLLBACK verwirft alles seit dem Start (oder seit einem SAVEPOINT). So bleibt die Umbuchung atomar."
           ],
           "suchbegriffe": ["Transaktion", "COMMIT"],
-          "anforderungen": {"datenbanken": 68},
+          "anforderungen": {"db_betrieb": 68},
           "belohnung": {"geld": 145, "reputation": 10}
         }
       ]
@@ -9451,7 +9451,7 @@
         "Ganze Nummern als INTEGER, Geld exakt als DECIMAL(10,2), Daten als DATE, Namen als VARCHAR und Ja/Nein als BOOLEAN. So kann die Datenbank sortieren, rechnen und prüfen."
       ],
       "suchbegriffe": ["Datentyp", "SQL"],
-      "anforderungen": {"datenbanken": 70},
+      "anforderungen": {"modellierung": 70},
       "belohnung": {"geld": 150, "reputation": 10},
       "varianten": [
         {
@@ -9478,7 +9478,7 @@
             "Ganze Nummern als INTEGER, Geld exakt als DECIMAL(10,2), Daten als DATE, Namen als VARCHAR und Ja/Nein als BOOLEAN. So kann die Datenbank sortieren, rechnen und prüfen."
           ],
           "suchbegriffe": ["Datentyp", "SQL"],
-          "anforderungen": {"datenbanken": 70},
+          "anforderungen": {"modellierung": 70},
           "belohnung": {"geld": 150, "reputation": 10}
         }
       ]
@@ -9491,7 +9491,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 46, "systeme": 45},
+      "anforderungen": {"zugriff": 46, "linux": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 80, "reputation": 6},
       "system": "linux",
@@ -9626,7 +9626,7 @@
           "auftraggeber": "karin",
           "raum": "verwaltung",
           "prioritaet": "hoch",
-          "anforderungen": {"sicherheit": 63, "systeme": 53},
+          "anforderungen": {"zugriff": 63, "linux": 53},
           "belohnung": {"geld": 130, "reputation": 9},
           "ab_tag": 88,
           "prompt": "root@auskunft:~#",
@@ -9740,7 +9740,7 @@
       "raum": "technik_lindenau",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 47, "systeme": 45},
+      "anforderungen": {"notfall": 47, "linux": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "system": "linux",
@@ -9831,7 +9831,7 @@
           "titel": "Sicherung: Spiegel auf das NAS mit rsync",
           "auftraggeber": "ulla",
           "raum": "serverraum",
-          "anforderungen": {"sicherheit": 52, "systeme": 45},
+          "anforderungen": {"notfall": 52, "linux": 45},
           "belohnung": {"geld": 100, "reputation": 7},
           "ab_tag": 68,
           "prompt": "root@datei:~#",
@@ -9931,7 +9931,7 @@
       "raum": "technik_werkstatt",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 48, "datenbanken": 45},
+      "anforderungen": {"linux": 48, "db_betrieb": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 6},
       "system": "linux",
@@ -10047,7 +10047,7 @@
           "ort": "birkenhain",
           "raum": "technik_birkenhain",
           "stelle": [11.1, 2.4],
-          "anforderungen": {"systeme": 58, "netzwerk": 48},
+          "anforderungen": {"linux": 58, "fehlersuche": 48},
           "belohnung": {"geld": 115, "reputation": 8},
           "ab_tag": 79,
           "prompt": "root@bh-gw:~#",
@@ -10137,7 +10137,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 49, "netzwerk": 45},
+      "anforderungen": {"netzsicherheit": 49, "routing": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "system": "linux",
@@ -10252,7 +10252,7 @@
           "titel": "Firewall: Dashboard nur für die Leitstelle",
           "auftraggeber": "aylin",
           "raum": "leitstelle",
-          "anforderungen": {"sicherheit": 55, "netzwerk": 45},
+          "anforderungen": {"netzsicherheit": 55, "routing": 45},
           "belohnung": {"geld": 110, "reputation": 8},
           "ab_tag": 74,
           "system": "windows",
@@ -10348,7 +10348,7 @@
       "raum": "technik_lindenau",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 46, "systeme": 45},
+      "anforderungen": {"fehlersuche": 46, "linux": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "system": "linux",
@@ -10447,7 +10447,7 @@
           "titel": "Netzwerk: Feste Adresse für den Info-PC am Service-Point",
           "auftraggeber": "lina",
           "raum": "helpdesk",
-          "anforderungen": {"netzwerk": 59, "systeme": 49},
+          "anforderungen": {"fehlersuche": 59, "windows": 49},
           "belohnung": {"geld": 120, "reputation": 8},
           "ab_tag": 80,
           "system": "windows",
@@ -10557,7 +10557,7 @@
       "raum": "buchhaltung_lindenau",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 47, "systeme": 45},
+      "anforderungen": {"zugriff": 47, "windows": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "system": "windows",
@@ -10668,7 +10668,7 @@
           "titel": "NTFS-Rechte: Schichtpläne der Leitstelle",
           "auftraggeber": "aylin",
           "raum": "leitstelle",
-          "anforderungen": {"sicherheit": 57, "systeme": 47},
+          "anforderungen": {"zugriff": 57, "windows": 47},
           "belohnung": {"geld": 115, "reputation": 8},
           "ab_tag": 78,
           "start": [
@@ -10779,7 +10779,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 48, "sicherheit": 45},
+      "anforderungen": {"windows": 48, "zugriff": 45},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "system": "windows",
@@ -10870,7 +10870,7 @@
           "titel": "Active Directory: Pauls erster Tag",
           "auftraggeber": "paul",
           "raum": "verwaltung",
-          "anforderungen": {"systeme": 60, "sicherheit": 50},
+          "anforderungen": {"windows": 60, "zugriff": 50},
           "achsen": ["fachkompetenz", "sicherheit"],
           "belohnung": {"geld": 120, "reputation": 8},
           "ab_tag": 82,
@@ -10961,7 +10961,7 @@
           "auftraggeber": "karin",
           "raum": "verwaltung",
           "prioritaet": "hoch",
-          "anforderungen": {"systeme": 67, "sicherheit": 57},
+          "anforderungen": {"windows": 67, "zugriff": 57},
           "achsen": ["sicherheit", "fachkompetenz"],
           "belohnung": {"geld": 140, "reputation": 9},
           "ab_tag": 94,
@@ -11058,7 +11058,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 50, "netzwerk": 45},
+      "anforderungen": {"krypto": 50, "dienste": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 95, "reputation": 7},
       "system": "linux",
@@ -11167,7 +11167,7 @@
           "titel": "Zertifikat: Alle Laufzeiten fürs Audit",
           "auftraggeber": "karin",
           "raum": "verwaltung",
-          "anforderungen": {"sicherheit": 68, "netzwerk": 58},
+          "anforderungen": {"krypto": 68, "dienste": 58},
           "belohnung": {"geld": 145, "reputation": 10},
           "ab_tag": 96,
           "prompt": "root@pki:~#",
@@ -11272,7 +11272,7 @@
       "raum": "diagnoseplatz",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 50, "datenbanken": 45},
+      "anforderungen": {"linux": 50, "db_betrieb": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 7},
       "system": "linux",
@@ -11378,7 +11378,7 @@
           "titel": "Logdatei: Wer klopft am SSH-Port?",
           "auftraggeber": "karin",
           "raum": "verwaltung",
-          "anforderungen": {"systeme": 65, "sicherheit": 55},
+          "anforderungen": {"linux": 65, "haertung": 55},
           "achsen": ["sicherheit", "fachkompetenz"],
           "belohnung": {"geld": 135, "reputation": 9},
           "ab_tag": 92,
@@ -11469,7 +11469,7 @@
       "raum": "serverraum",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 51, "systeme": 45},
+      "anforderungen": {"fehlersuche": 51, "linux": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "system": "linux",
@@ -11575,7 +11575,7 @@
           "ort": "talheim",
           "raum": "it_buero",
           "stelle": [3.1, 2.9],
-          "anforderungen": {"netzwerk": 57, "systeme": 47},
+          "anforderungen": {"fehlersuche": 57, "linux": 47},
           "belohnung": {"geld": 115, "reputation": 8},
           "ab_tag": 77,
           "system": "windows",
@@ -11689,7 +11689,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 52, "sicherheit": 45},
+      "anforderungen": {"windows": 52, "haertung": 45},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "system": "windows",
@@ -11783,7 +11783,7 @@
           "titel": "Software: Updates ohne die Datenbank",
           "auftraggeber": "ulla",
           "raum": "serverraum",
-          "anforderungen": {"systeme": 61, "datenbanken": 51},
+          "anforderungen": {"linux": 61, "db_betrieb": 51},
           "achsen": ["fachkompetenz", "zuverlaessigkeit"],
           "belohnung": {"geld": 125, "reputation": 9},
           "ab_tag": 85,
@@ -11902,7 +11902,7 @@
       "raum": "technik_birkenhain",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 55, "netzwerk": 45},
+      "anforderungen": {"virtualisierung": 55, "fehlersuche": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 105, "reputation": 8},
       "system": "linux",
@@ -12006,7 +12006,7 @@
           "titel": "Docker: Nach dem Stromausfall bleibt die Teile-API aus",
           "auftraggeber": "marta",
           "raum": "technik_werkstatt",
-          "anforderungen": {"systeme": 63, "datenbanken": 53},
+          "anforderungen": {"virtualisierung": 63, "db_betrieb": 53},
           "belohnung": {"geld": 130, "reputation": 9},
           "ab_tag": 87,
           "prompt": "root@teiledb:~#",
@@ -12111,7 +12111,7 @@
       "raum": "buchhaltung_lindenau",
       "prioritaet": "normal",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 56, "wirtschaft": 46},
+      "anforderungen": {"sql": 56, "kalkulation": 46},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 110, "reputation": 8},
       "system": "linux",
@@ -12220,7 +12220,7 @@
           "titel": "Datenbank: Aus der Tabelle wird eine Datenbank",
           "auftraggeber": "paul",
           "raum": "verwaltung",
-          "anforderungen": {"datenbanken": 64, "wirtschaft": 54},
+          "anforderungen": {"modellierung": 64, "kalkulation": 54},
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "belohnung": {"geld": 135, "reputation": 9},
           "ab_tag": 90,
@@ -12335,7 +12335,7 @@
           "auftraggeber": "karin",
           "raum": "verwaltung",
           "prioritaet": "hoch",
-          "anforderungen": {"datenbanken": 69, "sicherheit": 59},
+          "anforderungen": {"sql": 69, "datenschutz": 59},
           "achsen": ["sicherheit", "fachkompetenz"],
           "belohnung": {"geld": 145, "reputation": 10},
           "ab_tag": 98,
@@ -12437,7 +12437,7 @@
       "stelle": [21.9, 11.1],
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 45},
+      "anforderungen": {"ipv4": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 6},
       "ticket": [
@@ -12473,7 +12473,7 @@
           "ort": "talheim_nord",
           "raum": "technik_nord",
           "stelle": [11.9, 2.4],
-          "anforderungen": {"netzwerk": 64},
+          "anforderungen": {"ipv4": 64},
           "belohnung": {"geld": 130, "reputation": 9},
           "ab_tag": 89,
           "ticket": [
@@ -12513,7 +12513,7 @@
       "raum": "technik_lindenau",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 48},
+      "anforderungen": {"storage": 48},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 6},
       "ticket": [
@@ -12537,7 +12537,7 @@
           "titel": "RAID: Ein eigener Server für Pauls Datenbank",
           "raum": "serverraum",
           "cat": "datenbanken",
-          "anforderungen": {"datenbanken": 66, "systeme": 56},
+          "anforderungen": {"db_betrieb": 66, "storage": 56},
           "belohnung": {"geld": 140, "reputation": 9},
           "ab_tag": 93,
           "ticket": [
@@ -12566,7 +12566,7 @@
       "raum": "kundenberatung",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 49},
+      "anforderungen": {"kalkulation": 49},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "ticket": [
@@ -12594,7 +12594,7 @@
         {"ab_tag": 63},
         {
           "titel": "Angebot: Kameras für den Parkplatz",
-          "anforderungen": {"wirtschaft": 59},
+          "anforderungen": {"kalkulation": 59},
           "belohnung": {"geld": 120, "reputation": 8},
           "ab_tag": 81,
           "ticket": [
@@ -12621,7 +12621,7 @@
         },
         {
           "titel": "Angebot: Jahreswartung aller Standorte",
-          "anforderungen": {"wirtschaft": 67},
+          "anforderungen": {"kalkulation": 67},
           "belohnung": {"geld": 140, "reputation": 10},
           "ab_tag": 95,
           "ticket": [
@@ -12657,7 +12657,7 @@
       "raum": "archiv_lindenau",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 53},
+      "anforderungen": {"kalkulation": 53},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "ticket": [
@@ -12681,7 +12681,7 @@
           "titel": "Kauf oder Leasing: Notebooks für den Einkauf",
           "auftraggeber": "paul",
           "raum": "verwaltung",
-          "anforderungen": {"wirtschaft": 61},
+          "anforderungen": {"kalkulation": 61},
           "belohnung": {"geld": 125, "reputation": 9},
           "ab_tag": 84,
           "ticket": [
@@ -12703,7 +12703,7 @@
           "titel": "Kauf oder Leasing: Ein Servicewagen",
           "auftraggeber": "sabine",
           "raum": "chefbuero",
-          "anforderungen": {"wirtschaft": 69},
+          "anforderungen": {"kalkulation": 69},
           "belohnung": {"geld": 145, "reputation": 10},
           "ab_tag": 98,
           "ticket": [
@@ -12737,7 +12737,7 @@
       "raum": "archiv_lindenau",
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 46},
+      "anforderungen": {"dienste": 46},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 6},
       "ticket": [
@@ -12774,7 +12774,7 @@
           "titel": "Drucker: Farbdrucker für die Leitstelle",
           "auftraggeber": "aylin",
           "raum": "leitstelle",
-          "anforderungen": {"netzwerk": 54},
+          "anforderungen": {"dienste": 54},
           "belohnung": {"geld": 105, "reputation": 7},
           "ab_tag": 72,
           "ticket": [
@@ -12809,7 +12809,7 @@
           "titel": "Drucker: Ein eigener Drucker für den Einkauf",
           "auftraggeber": "paul",
           "raum": "verwaltung",
-          "anforderungen": {"netzwerk": 65},
+          "anforderungen": {"dienste": 65},
           "belohnung": {"geld": 135, "reputation": 9},
           "ab_tag": 91,
           "ticket": [
@@ -12848,7 +12848,7 @@
       "raum": "werkstatt",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 46},
+      "anforderungen": {"hardware": 46},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 80, "reputation": 6},
       "ticket": [
@@ -12884,7 +12884,7 @@
         {"ab_tag": 57},
         {
           "titel": "Mini-PC für die Anzeige in Birkenhain",
-          "anforderungen": {"systeme": 52},
+          "anforderungen": {"hardware": 52},
           "belohnung": {"geld": 100, "reputation": 7},
           "ab_tag": 69,
           "ticket": [
@@ -12916,7 +12916,7 @@
         {
           "titel": "Auswerte-PC für die Kamerabilder",
           "cat": "sicherheit",
-          "anforderungen": {"sicherheit": 59, "systeme": 49},
+          "anforderungen": {"isms": 59, "hardware": 49},
           "belohnung": {"geld": 120, "reputation": 8},
           "ab_tag": 80,
           "ticket": [
@@ -12949,7 +12949,7 @@
           "titel": "Messplatz-PC für die Werkhalle",
           "auftraggeber": "marta",
           "raum": "werkstattbuero",
-          "anforderungen": {"systeme": 65},
+          "anforderungen": {"hardware": 65},
           "belohnung": {"geld": 135, "reputation": 9},
           "ab_tag": 92,
           "ticket": [
@@ -12987,7 +12987,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 48, "systeme": 45},
+      "anforderungen": {"beschaffung": 48, "hardware": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "ticket": [
@@ -13027,7 +13027,7 @@
           "auftraggeber": "aylin",
           "raum": "leitstelle",
           "cat": "systeme",
-          "anforderungen": {"systeme": 55},
+          "anforderungen": {"hardware": 55},
           "belohnung": {"geld": 110, "reputation": 8},
           "ab_tag": 74,
           "ticket": [
@@ -13065,7 +13065,7 @@
           "auftraggeber": "paul",
           "raum": "verwaltung",
           "cat": "datenbanken",
-          "anforderungen": {"datenbanken": 62, "systeme": 52},
+          "anforderungen": {"db_betrieb": 62, "hardware": 52},
           "belohnung": {"geld": 130, "reputation": 9},
           "ab_tag": 86,
           "ticket": [
@@ -13100,7 +13100,7 @@
           "titel": "Ein Rechner für deinen Schreibtisch",
           "auftraggeber": "sabine",
           "raum": "chefbuero",
-          "anforderungen": {"wirtschaft": 69, "systeme": 59},
+          "anforderungen": {"beschaffung": 69, "hardware": 59},
           "belohnung": {"geld": 150, "reputation": 10},
           "ab_tag": 99,
           "ticket": [
@@ -13144,7 +13144,7 @@
       "raum": "technik_lindenau",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 46, "sicherheit": 45},
+      "anforderungen": {"it_betrieb": 46, "isms": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "ticket": [
@@ -13183,7 +13183,7 @@
           "raum": "technik_nord",
           "stelle": [11.9, 2.4],
           "cat": "netzwerk",
-          "anforderungen": {"netzwerk": 56, "systeme": 46},
+          "anforderungen": {"verkabelung": 56, "it_betrieb": 46},
           "belohnung": {"geld": 110, "reputation": 8},
           "ab_tag": 76,
           "ticket": [
@@ -13212,7 +13212,7 @@
           "ort": "betriebswerkstatt",
           "raum": "technik_werkstatt",
           "stelle": [24.4, 2.6],
-          "anforderungen": {"systeme": 61, "datenbanken": 51},
+          "anforderungen": {"it_betrieb": 61, "db_betrieb": 51},
           "belohnung": {"geld": 125, "reputation": 9},
           "ab_tag": 84,
           "ticket": [
@@ -13247,7 +13247,7 @@
         {
           "titel": "Jahreswartung: Den Serverschrank neu ordnen",
           "raum": "serverraum",
-          "anforderungen": {"systeme": 65, "netzwerk": 55},
+          "anforderungen": {"it_betrieb": 65, "verkabelung": 55},
           "belohnung": {"geld": 135, "reputation": 9},
           "ab_tag": 92,
           "ticket": [
@@ -13286,7 +13286,7 @@
           "auftraggeber": "aylin",
           "raum": "technikraum",
           "prioritaet": "hoch",
-          "anforderungen": {"systeme": 70, "sicherheit": 60},
+          "anforderungen": {"it_betrieb": 70, "isms": 60},
           "belohnung": {"geld": 150, "reputation": 10},
           "ab_tag": 100,
           "ticket": [
@@ -13319,7 +13319,7 @@
       "stelle": [18.9, 2.4],
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 52},
+      "anforderungen": {"wlan": 52},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 7},
       "wiederholen": {"start": 72, "abstand": 17},
@@ -13382,7 +13382,7 @@
           "belohnung": {"geld": 115, "reputation": 8},
           "titel": "Richtfunk Birkenhain: erste Wartung nach dem Umbau",
           "auftraggeber": "petra",
-          "anforderungen": {"netzwerk": 59},
+          "anforderungen": {"wlan": 59},
           "ticket": [
             "Petra Lindner hält die Thermoskanne wie ein Protokollbuch: „Die neue Funkstrecke läuft jetzt ein paar Wochen. Das Stellwerk ist zufrieden, aber zufrieden steht in keinem Wartungsheft.“",
             "„Einmal alles messen wie beim letzten Mal, damit wir vorher und nachher vergleichen können. Die Birken grüßen übrigens, sie sind jetzt etwas kürzer.“"
@@ -13436,7 +13436,7 @@
           "raum": "technik_birkenhain",
           "stelle": [11.1, 2.4],
           "cat": "sicherheit",
-          "anforderungen": {"sicherheit": 66, "netzwerk": 56},
+          "anforderungen": {"haertung": 66, "wlan": 56},
           "achsen": ["sicherheit", "fachkompetenz"],
           "ticket": [
             "Svenja kommt mit einem ausgedruckten Changelog zurück, auf dem sie drei Zeilen gelb markiert hat: „Der Hersteller der Funkmodems hat ein Update verteilt. In der letzten Zeile steht klein: ‚Einstellungen können zurückgesetzt werden‘.“",
@@ -13495,7 +13495,7 @@
       "stelle": [18.9, 2.4],
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 53},
+      "anforderungen": {"datenschutz": 53},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 100, "reputation": 7},
       "wiederholen": {"start": 75, "abstand": 17},
@@ -13560,7 +13560,7 @@
           "auftraggeber": "petra",
           "raum": "bahnsteig",
           "stelle": [14.9, 12.1],
-          "anforderungen": {"sicherheit": 60},
+          "anforderungen": {"datenschutz": 60},
           "achsen": ["sicherheit", "kundenzufriedenheit"],
           "ticket": [
             "Petra Lindner steht am Bahnsteig in Talheim und schaut in eine Kamera, die zurückschaut: „Nach dem Check in Birkenhain will Karin denselben Check hier. Ich habe gesagt, bei uns ist alles gut. Sie hat gesagt: ‚Beweisen Sie es.‘“",
@@ -13615,7 +13615,7 @@
           "auftraggeber": "marta",
           "raum": "werkhalle",
           "stelle": [13.9, 10.6],
-          "anforderungen": {"sicherheit": 67},
+          "anforderungen": {"datenschutz": 67},
           "ticket": [
             "Marta Kowalczyk hat Karins Checkliste ausgedruckt und mit Sicherheitsschuhen beschwert: „Die Kameras in der Werkhalle sollen die Rolltore und das Teilelager sichern. Das war der Plan. Ob der Plan noch stimmt, weiß ich nach zwei Jahren nicht mehr.“",
             "„Einmal gründlich, bitte. Karin kommt nächste Woche, und ich möchte vorher wissen, was sie findet.“"
@@ -13674,7 +13674,7 @@
       "stelle": [11.1, 9.4],
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 50, "netzwerk": 40},
+      "anforderungen": {"hardware": 50, "fehlersuche": 40},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "wiederholen": {"start": 68, "abstand": 22},
@@ -13740,7 +13740,7 @@
           "ort": "birkenhain",
           "raum": "wartehaus_birkenhain",
           "stelle": [4.1, 2.4],
-          "anforderungen": {"systeme": 59},
+          "anforderungen": {"hardware": 59},
           "ticket": [
             "Petra Lindner sitzt auf der Bank im Wartehäuschen und schaut auf die neue Anzeige, als wäre sie ein Fernseher: „Sie zeigt Züge. Sie zeigt die richtigen Züge. Ich bin fast gerührt.“",
             "„Trotzdem gehört die erste Wartung ins Heft. Du machst alles wie bei der Anzeige in Talheim-Nord, ich halte die Stellung auf der Bank.“"
@@ -13795,7 +13795,7 @@
           "ort": "birkenhain",
           "raum": "wartehaus_birkenhain",
           "stelle": [4.1, 2.4],
-          "anforderungen": {"systeme": 69},
+          "anforderungen": {"hardware": 69},
           "achsen": ["fachkompetenz", "zuverlaessigkeit"],
           "ticket": [
             "Mehmet hat seinen Werkzeugkoffer nach Farben sortiert, bevor er losfährt: „Birkenhain, Fahrgastanzeige, Halbjahreswartung. Petra sagt, man kann die Anzeige mittags kaum lesen. Das kann an der Sonne liegen. Oder an der Anzeige.“",
@@ -13854,7 +13854,7 @@
       "stelle": [11.1, 2.4],
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 51},
+      "anforderungen": {"it_betrieb": 51},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 7},
       "wiederholen": {"start": 70, "abstand": 17},
@@ -13919,7 +13919,7 @@
           "auftraggeber": "petra",
           "raum": "technikraum",
           "stelle": [27.1, 3.6],
-          "anforderungen": {"systeme": 58},
+          "anforderungen": {"it_betrieb": 58},
           "ticket": [
             "Petra Lindner hält einen Zettel mit einer Uhrzeit hoch: „Heute um 14 Uhr darf die USV im Technikraum so tun, als wäre der Strom weg. Aylin weiß Bescheid, die Leitstelle arbeitet so lange auf dem Notsystem.“",
             "„Ich will sehen, dass alles tut, was im Konzept steht: Laufzeit, Abschaltung, Alarm. Auf die Minute.“"
@@ -13972,7 +13972,7 @@
           "titel": "USV im Technikhäuschen Birkenhain: Halbjahreswartung",
           "auftraggeber": "ulla",
           "ort": "birkenhain",
-          "anforderungen": {"systeme": 65},
+          "anforderungen": {"it_betrieb": 65},
           "ticket": [
             "Ulla klopft dem Technikhäuschen in Birkenhain aufs Dach wie einem Pferd: „Neue USV, neue Akkus, neuer Lüfter. Ein halbes Jahr später schauen wir, ob sie noch so brav ist wie am ersten Tag.“",
             "„Und letzte Woche war hier ein Gewitter. Die Anzeige läuft, aber das heißt bei Technik bekanntlich wenig.“"
@@ -14029,7 +14029,7 @@
       "raum": "technik_lindenau",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 46},
+      "anforderungen": {"zugriff": 46},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 80, "reputation": 6},
       "wiederholen": {"start": 58, "abstand": 25},
@@ -14093,7 +14093,7 @@
           "titel": "Konten-Check nach dem Wechsel im Einkauf",
           "auftraggeber": "ulla",
           "raum": "serverraum",
-          "anforderungen": {"sicherheit": 56},
+          "anforderungen": {"zugriff": 56},
           "achsen": ["sicherheit", "zuverlaessigkeit"],
           "ticket": [
             "Ulla dreht ihren Bildschirm so, dass nur du ihn siehst: „Im Einkauf hat gewechselt, wer da sitzt. Das ist der Moment, in dem Rechte gern ‚vorübergehend‘ vergeben werden und dann für immer bleiben.“",
@@ -14147,7 +14147,7 @@
           "auftraggeber": "marta",
           "raum": "technik_werkstatt",
           "stelle": [24.4, 2.6],
-          "anforderungen": {"sicherheit": 67},
+          "anforderungen": {"zugriff": 67},
           "ticket": [
             "Marta hat gehört, dass in Lindenau drei Konten von Leuten aktiv waren, die gar nicht mehr da sind: „Bei uns wechselt ständig jemand die Schicht, aber gekündigt hat seit einem Jahr keiner. Trotzdem: Ich will es wissen.“",
             "„Mach bitte denselben Check wie in Lindenau. Ich habe einen ganzen Zugumlauf Zeit eingeplant.“"
@@ -14205,7 +14205,7 @@
       "raum": "technik_werkstatt",
       "prioritaet": "normal",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 48},
+      "anforderungen": {"db_betrieb": 48},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "wiederholen": {"start": 62, "abstand": 24},
@@ -14269,7 +14269,7 @@
           "titel": "Datenbankpflege: Pauls Einkaufsdatenbank",
           "auftraggeber": "paul",
           "raum": "verwaltung",
-          "anforderungen": {"datenbanken": 58},
+          "anforderungen": {"db_betrieb": 58},
           "achsen": ["fachkompetenz", "sicherheit"],
           "ticket": [
             "Paul Adler zeigt stolz auf seinen Bildschirm: „Die alten Einkaufstabellen sind jetzt eine richtige Datenbank. Drei Abende Arbeit. Ulla meinte, bevor sie offiziell wird, sollte jemand eine Datenbankpflege machen.“",
@@ -14323,7 +14323,7 @@
           "auftraggeber": "wendt",
           "raum": "archiv_lindenau",
           "stelle": [21.9, 11.1],
-          "anforderungen": {"datenbanken": 68},
+          "anforderungen": {"db_betrieb": 68},
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "ticket": [
             "Dr. Wendt steht im Archiv zwischen leeren Regalen, auf denen früher Ordner standen: „Alles ist jetzt digital. Die Suche war anfangs sehr schnell. Jetzt ist sie nur noch schnell. Ich habe es gemessen, zweimal.“",
@@ -14381,7 +14381,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 47, "systeme": 37},
+      "anforderungen": {"haertung": 47, "windows": 37},
       "achsen": ["sicherheit", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "wiederholen": {"start": 60, "abstand": 27},
@@ -14446,7 +14446,7 @@
           "auftraggeber": "wendt",
           "raum": "buchhaltung_lindenau",
           "stelle": [10.1, 2.9],
-          "anforderungen": {"sicherheit": 58, "systeme": 48},
+          "anforderungen": {"haertung": 58, "windows": 48},
           "achsen": ["sicherheit", "fachkompetenz"],
           "ticket": [
             "Dr. Wendt legt dir einen Zeitungsartikel über einen Verschlüsselungstrojaner in einer Stadtverwaltung hin: „Ich habe ihn dreimal gelesen. Beim dritten Mal habe ich angefangen, mir Fragen über unsere eigenen Rechner zu stellen.“",
@@ -14500,7 +14500,7 @@
           "titel": "Patch-Check in der Leitstelle",
           "auftraggeber": "aylin",
           "raum": "leitstelle",
-          "anforderungen": {"sicherheit": 70, "systeme": 60},
+          "anforderungen": {"haertung": 70, "windows": 60},
           "ticket": [
             "Aylin Demir hat das Neustart-Fenster für die Leitstand-PCs in den Dienstplan geschrieben, mit Textmarker: „Die Leitstelle läuft rund um die Uhr, deshalb wird hier ungern neu gestartet. Ungern ist aber kein Sicherheitskonzept.“",
             "„Bitte den vollen Patch-Check, bevor das Jahr um ist. Ich will wissen, was wir uns in den letzten Monaten angewöhnt haben.“"
@@ -14559,7 +14559,7 @@
       "stelle": [13.9, 10.6],
       "prioritaet": "normal",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 49, "sicherheit": 39},
+      "anforderungen": {"wlan": 49, "netzsicherheit": 39},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "wiederholen": {"start": 66, "abstand": 36},
@@ -14624,7 +14624,7 @@
           "auftraggeber": "wendt",
           "raum": "besprechung_lindenau",
           "stelle": [13.4, 12.1],
-          "anforderungen": {"netzwerk": 64, "sicherheit": 54},
+          "anforderungen": {"wlan": 64, "netzsicherheit": 54},
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "ticket": [
             "Dr. Wendt hat von der Geschichte mit dem fremden Access Point in der Werkhalle gehört: „So etwas möchte ich in Lindenau nicht erleben. Vermutlich ist bei uns alles in Ordnung. Vermutlich ist allerdings kein Messwert.“",
@@ -14684,7 +14684,7 @@
       "stelle": [2.9, 3.1],
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 46},
+      "anforderungen": {"hardware": 46},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 6},
       "ticket": [
@@ -14770,7 +14770,7 @@
           "ort": "birkenhain",
           "raum": "wartehaus_birkenhain",
           "stelle": [4.1, 2.4],
-          "anforderungen": {"systeme": 57},
+          "anforderungen": {"hardware": 57},
           "ab_tag": 84,
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "ticket": [
@@ -14859,7 +14859,7 @@
       "raum": "parkplatz_birkenhain",
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 54},
+      "anforderungen": {"verkabelung": 54},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 110, "reputation": 7},
       "ticket": [
@@ -14943,7 +14943,7 @@
           "auftraggeber": "paul",
           "raum": "verwaltung",
           "prioritaet": "normal",
-          "anforderungen": {"netzwerk": 59},
+          "anforderungen": {"verkabelung": 59},
           "ab_tag": 88,
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "ticket": [
@@ -15031,7 +15031,7 @@
       "stelle": [21.9, 11.1],
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 48},
+      "anforderungen": {"hardware": 48},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "ticket": [
@@ -15116,7 +15116,7 @@
           "ort": "birkenhain",
           "raum": "technik_birkenhain",
           "stelle": [11.1, 2.4],
-          "anforderungen": {"systeme": 61},
+          "anforderungen": {"it_betrieb": 61},
           "ab_tag": 94,
           "ticket": [
             "Mehmet hat im Monitoring eine rote Kurve gefunden und sie ausgedruckt, weil er Papier mag: „Schaltschrank Birkenhain, 46 °C innen. Vor zwei Wochen waren es 31. Der Switch darin mag das nicht, und ich auch nicht.“",
@@ -15204,7 +15204,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 45},
+      "anforderungen": {"hardware": 45},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 6},
       "ticket": [
@@ -15287,7 +15287,7 @@
           "titel": "Schaltpläne der Werkstatt ohne Rot",
           "auftraggeber": "marta",
           "raum": "werkstattbuero",
-          "anforderungen": {"systeme": 62},
+          "anforderungen": {"hardware": 62},
           "ab_tag": 97,
           "ticket": [
             "Marta legt zwei Schaltpläne nebeneinander: „Links: alt, die Warnleitungen sind rot. Rechts: heute, die Warnleitungen sind blassblau. Meine Leute sind klug, aber sie sind keine Hellseher.“",
@@ -15374,7 +15374,7 @@
       "stelle": [11.1, 2.4],
       "prioritaet": "kritisch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 55},
+      "anforderungen": {"verkabelung": 55},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 115, "reputation": 8},
       "ticket": [
@@ -15459,7 +15459,7 @@
           "ort": "talheim",
           "raum": "technikraum",
           "stelle": [27.1, 3.6],
-          "anforderungen": {"netzwerk": 64},
+          "anforderungen": {"verkabelung": 64},
           "ab_tag": 100,
           "ticket": [
             "Svenja schaut mit gerunzelter Stirn auf das Monitoring: „Der 10-Gigabit-Uplink zwischen Technikraum und Leitstellen-Switch hat seit gestern tausende Fehler. Aylin sagt, das Gleisbild ruckelt manchmal. Ruckeln ist in einer Leitstelle kein schönes Wort.“",
@@ -15547,7 +15547,7 @@
       "raum": "serverraum",
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 50},
+      "anforderungen": {"it_betrieb": 50},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "ticket": [
@@ -15628,7 +15628,7 @@
           "ort": "birkenhain",
           "raum": "technik_birkenhain",
           "stelle": [11.1, 2.4],
-          "anforderungen": {"systeme": 52},
+          "anforderungen": {"it_betrieb": 52},
           "ab_tag": 73,
           "ticket": [
             "Mehmet hält die Tür des Technikhäuschens auf und zeigt auf die kleine USV unter dem Richtfunk-Modem: „Das Gehäuse wölbt sich. So sieht keine gesunde USV aus. So sieht ein Kissen aus.“",
@@ -15717,7 +15717,7 @@
       "raum": "empfang_lindenau",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 48, "systeme": 38},
+      "anforderungen": {"kalkulation": 48, "hardware": 38},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 95, "reputation": 6},
       "ticket": [
@@ -15800,7 +15800,7 @@
           "titel": "Farbdrucker der Betriebswerkstatt: Totalschaden?",
           "auftraggeber": "marta",
           "raum": "werkstattbuero",
-          "anforderungen": {"wirtschaft": 66, "systeme": 56},
+          "anforderungen": {"kalkulation": 66, "hardware": 56},
           "ab_tag": 105,
           "ticket": [
             "Marta hat den Farbdrucker im Werkstattbüro mit einem Warnband umwickelt: „Er druckt nur noch farbige Wolken. Der Servicepartner war da und hat ein Angebot hinterlassen. Ich kann Züge reparieren, aber keine Angebote lesen.“",
@@ -15887,7 +15887,7 @@
       "stelle": [4.6, 2.4],
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 47},
+      "anforderungen": {"switching": 47},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 6},
       "ticket": [
@@ -15961,7 +15961,7 @@
       "stelle": [11.1, 2.4],
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 53, "sicherheit": 43},
+      "anforderungen": {"switching": 53, "netzsicherheit": 43},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 105, "reputation": 7},
       "ticket": [
@@ -16033,7 +16033,7 @@
       "raum": "leitung_lindenau",
       "prioritaet": "hoch",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 49},
+      "anforderungen": {"krypto": 49},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 95, "reputation": 7},
       "ticket": [
@@ -16107,7 +16107,7 @@
           "raum": "werkhalle",
           "stelle": [13.9, 10.6],
           "prioritaet": "kritisch",
-          "anforderungen": {"sicherheit": 68, "netzwerk": 58},
+          "anforderungen": {"krypto": 68, "wlan": 58},
           "ab_tag": 111,
           "ticket": [
             "Marta steht mit fünf Diagnose-Laptops unter dem Arm in der Halle: „Seit heute Morgen kommt keiner mehr ins Werkstatt-WLAN. Alle gleichzeitig. Gestern ging es noch. Die Laptops haben sich nicht abgesprochen, das habe ich gefragt.“",
@@ -16181,7 +16181,7 @@
       "raum": "leitstelle",
       "prioritaet": "hoch",
       "cat": "netzwerk",
-      "anforderungen": {"netzwerk": 51},
+      "anforderungen": {"dienste": 51},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "ticket": [
@@ -16252,7 +16252,7 @@
       "raum": "leitung_lindenau",
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 51},
+      "anforderungen": {"windows": 51},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 100, "reputation": 7},
       "ticket": [
@@ -16324,7 +16324,7 @@
       "stelle": [11.1, 2.1],
       "prioritaet": "hoch",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 54, "systeme": 44},
+      "anforderungen": {"zugriff": 54, "windows": 44},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 105, "reputation": 7},
       "ticket": [
@@ -16398,7 +16398,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 45},
+      "anforderungen": {"windows": 45},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "ticket": [
@@ -16470,7 +16470,7 @@
       "stelle": [11.1, 2.1],
       "prioritaet": "hoch",
       "cat": "systeme",
-      "anforderungen": {"systeme": 60, "netzwerk": 50},
+      "anforderungen": {"hardware": 60, "fehlersuche": 50},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 120, "reputation": 8},
       "ticket": [
@@ -16544,7 +16544,7 @@
       "stelle": [11.1, 2.4],
       "prioritaet": "hoch",
       "cat": "sicherheit",
-      "anforderungen": {"sicherheit": 56},
+      "anforderungen": {"isms": 56},
       "achsen": ["sicherheit", "fachkompetenz"],
       "belohnung": {"geld": 110, "reputation": 8},
       "ticket": [
@@ -16617,7 +16617,7 @@
       "raum": "verwaltung",
       "prioritaet": "hoch",
       "cat": "datenbanken",
-      "anforderungen": {"datenbanken": 62},
+      "anforderungen": {"db_betrieb": 62},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 125, "reputation": 9},
       "ticket": [
@@ -16686,7 +16686,7 @@
       "stelle": [4.6, 11.1],
       "prioritaet": "normal",
       "cat": "systeme",
-      "anforderungen": {"systeme": 65, "sicherheit": 55},
+      "anforderungen": {"windows": 65, "zugriff": 55},
       "achsen": ["fachkompetenz", "sicherheit"],
       "belohnung": {"geld": 135, "reputation": 9},
       "ticket": [
@@ -16757,7 +16757,7 @@
       "raum": "lager",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 47},
+      "anforderungen": {"beschaffung": 47},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 85, "reputation": 6},
       "ticket": [
@@ -16923,7 +16923,7 @@
           ],
           "suchbegriffe": ["Beschaffung", "SFP"],
           "belohnung": {"geld": 115, "reputation": 8},
-          "anforderungen": {"wirtschaft": 59},
+          "anforderungen": {"beschaffung": 59},
           "budget": 147,
           "ticket": [
             "Rainer hat eine Kiste mit der Aufschrift „Birkenhain“ angelegt, noch leer: „Wenn da draußen etwas kaputtgeht, will ich nicht erst bestellen müssen. Zwei Outdoor-Kabel mit 15 m, ein Kupfer-SFP mit RJ45 und ein Akku 12 V 18 Ah mit M5-Schrauben.“",
@@ -17014,7 +17014,7 @@
           ],
           "suchbegriffe": ["Angebotsvergleich", "USV"],
           "belohnung": {"geld": 130, "reputation": 9},
-          "anforderungen": {"wirtschaft": 67},
+          "anforderungen": {"beschaffung": 67},
           "budget": 332,
           "ticket": [
             "Rainer hat eine Zeile im Wartungsplan rot markiert: „Die Rack-USV im Serverraum hat letztes Mal einen neuen Akkueinschub bekommen. Ich will einen auf Vorrat. Dazu zwei 10-Gigabit-Module SR und drei Patchkabel Cat 6A mit 2 m.“",
@@ -17035,7 +17035,7 @@
       "raum": "helpdesk",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 48},
+      "anforderungen": {"beschaffung": 48},
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "ticket": [
@@ -17189,7 +17189,7 @@
           ],
           "suchbegriffe": ["Toner", "Lieferzeit"],
           "belohnung": {"geld": 105, "reputation": 8},
-          "anforderungen": {"wirtschaft": 56},
+          "anforderungen": {"beschaffung": 56},
           "budget": 316,
           "ticket": [
             "Paul Adler hat seine erste Bestellung vorbereitet, als Datenbankabfrage: „Zwei schwarze und ein Cyan-Toner für den Farbdrucker in Lindenau, und ein Standard-Toner für unsere LX-420. Meine Datenbank sagt, das reicht bis Monatsende.“",
@@ -17270,7 +17270,7 @@
           ],
           "suchbegriffe": ["Monitor", "HDMI"],
           "belohnung": {"geld": 125, "reputation": 9},
-          "anforderungen": {"wirtschaft": 63},
+          "anforderungen": {"beschaffung": 63},
           "budget": 282,
           "ticket": [
             "Dr. Wendt hat eine Liste mit zwei Spalten und einer Summe, dreimal nachgerechnet: „Empfang und Besprechungsraum bekommen je einen 24-Zoll-Monitor mit HDMI, wie der, der neulich getauscht wurde. Dazu zwei Patchkabel Cat 6A mit 5 m.“",
@@ -17291,7 +17291,7 @@
       "raum": "it_buero",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 50},
+      "anforderungen": {"beschaffung": 50},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 90, "reputation": 7},
       "ticket": [
@@ -17369,7 +17369,7 @@
           "auftraggeber": "svenja",
           "raum": "serverraum",
           "ab_tag": 71,
-          "anforderungen": {"wirtschaft": 51, "netzwerk": 41},
+          "anforderungen": {"beschaffung": 51, "verkabelung": 41},
           "bedarf": [
             {
               "text": "SFP-Modul 1000BASE-T mit RJ45",
@@ -17516,7 +17516,7 @@
           ],
           "suchbegriffe": ["Lüfter", "Akku"],
           "belohnung": {"geld": 100, "reputation": 7},
-          "anforderungen": {"wirtschaft": 53},
+          "anforderungen": {"beschaffung": 53},
           "budget": 155,
           "ticket": [
             "Mehmet hat seine Notizen aus dem Technikhäuschen in Birkenhain nach Farben sortiert: „Der Schaltschrank bekommt zwei Filterlüfter, 150 mm, 230 V, einen für die Tür, einen als Ersatz. Und die kleine USV braucht einen Akku 12 V 18 Ah mit M5-Schrauben.“",
@@ -17624,7 +17624,7 @@
           ],
           "suchbegriffe": ["Beschaffung", "Angebotsvergleich"],
           "belohnung": {"geld": 110, "reputation": 8},
-          "anforderungen": {"wirtschaft": 57},
+          "anforderungen": {"beschaffung": 57},
           "budget": 190,
           "ticket": [
             "Ulla packt in Gedanken schon eine Notfallkiste für Birkenhain: „Keiner ist dort, wenn etwas ausfällt. Also soll alles Wichtige griffbereit im Technikhäuschen liegen: ein Akku 12 V 18 Ah mit M5, ein Kupfer-SFP, zwei Outdoor-Kabel mit 15 m und ein Filterlüfter 150 mm mit 230 V.“",
@@ -17645,7 +17645,7 @@
       "raum": "leitstelle",
       "prioritaet": "normal",
       "cat": "wirtschaft",
-      "anforderungen": {"wirtschaft": 62},
+      "anforderungen": {"beschaffung": 62},
       "achsen": ["fachkompetenz", "kundenzufriedenheit"],
       "belohnung": {"geld": 120, "reputation": 9},
       "ticket": [
@@ -17795,7 +17795,7 @@
           ],
           "suchbegriffe": ["Drucker", "Angebotsvergleich"],
           "belohnung": {"geld": 140, "reputation": 10},
-          "anforderungen": {"wirtschaft": 69},
+          "anforderungen": {"beschaffung": 69},
           "budget": 717,
           "ticket": [
             "Marta hat für den zweiten Diagnoseplatz einen eigenen Farbdrucker beantragt: „Mit Netzwerk, beidseitig, in Farbe. Und zwei schwarze Toner dazu, weil unsere Leute gern viel drucken.“",

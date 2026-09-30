@@ -538,20 +538,28 @@ def _fmt(value):
 
 
 class Heatmap(ft.Column):
-    """Aktivitaet je Fachbereich und Tag als Kaestchen-Raster."""
+    """Aktivitaet je Fachbereich (oder Thema) und Tag als Kaestchen-Raster.
+    on_click(index) macht die Zeilen antippbar (Reinzoom in die Themen)."""
 
-    def set_data(self, rows, days):
+    def set_data(self, rows, days, on_click=None, selected=None, label_width=78):
         peak = max([max(values) for _name, _color, values in rows] + [1])
         self.controls = []
-        for name, color, values in rows:
+        for index, (name, color, values) in enumerate(rows):
             cells = [ft.Container(
                 height=18, expand=True, border_radius=4,
                 bgcolor=mix(C["card_alt"], color, 0.18 + 0.82 * value / peak)
                 if value else C["card_alt"])
                 for value in values[-days:]]
-            self.controls.append(ft.Row([
-                ft.Text(name, size=12, color=C["text_dim"], width=78)] + cells,
-                spacing=3))
+            chosen = index == selected
+            row = ft.Row([
+                ft.Text(name, size=12, width=label_width,
+                        color=color if chosen else C["text_dim"],
+                        weight=ft.FontWeight.BOLD if chosen else None)] + cells,
+                spacing=3)
+            if on_click:
+                row = ft.Container(content=row, border_radius=6,
+                                   on_click=lambda _e, i=index: on_click(i))
+            self.controls.append(row)
         self.spacing = 8
         self.tight = True
 

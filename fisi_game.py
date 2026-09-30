@@ -32,8 +32,8 @@ import os
 import uuid
 
 from fisi_core import (
-    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, ipv4_values, raid_values,
-    search_content,
+    CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
+    TOPIC_ORDER, TOPIC_SHORT, ipv4_values, raid_values, search_content, topic_totals,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 
@@ -635,8 +635,9 @@ def validate_game_content(content=None):
         if task.get("cat") not in CATEGORY_KEYS:
             problems.append("%s: unbekannter Fachbereich '%s'" % (where, task.get("cat")))
         for key, value in (task.get("anforderungen") or {}).items():
-            if key not in CATEGORY_KEYS or not 0 <= value <= 100:
-                problems.append("%s: ungueltige Anforderung %s: %s" % (where, key, value))
+            if key not in TOPIC_CAT or not 0 <= value <= 100:
+                problems.append("%s: ungueltige Anforderung %s: %s (erwartet wird ein "
+                                "Thema aus inhalte/themen.json)" % (where, key, value))
         for axis in task.get("achsen") or []:
             if axis not in AXIS_KEYS:
                 problems.append("%s: unbekannte Reputations-Achse '%s'" % (where, axis))
@@ -854,11 +855,12 @@ def _validate_hardware_task(task, content):
 #  WISSENSSTAND (AUS DEM LERNFORTSCHRITT)
 # ============================================================================
 
-def knowledge_from_answers(answers, coverage, params=None):
-    """Wissensstand 0-100 je Fachbereich (Kurzname).
+def knowledge_from_answers(answers, coverage, params=None, keys=None):
+    """Wissensstand 0-100 je Fachbereich (Kurzname) oder - mit
+    keys=TOPIC_ORDER - je Thema.
 
-    answers:  {kurzname: [True/False, ...]} - neueste Antwort zuerst
-    coverage: {kurzname: Prozent der bereits bearbeiteten Inhalte}
+    answers:  {schluessel: [True/False, ...]} - neueste Antwort zuerst
+    coverage: {schluessel: Prozent der bereits bearbeiteten Inhalte}
 
     Erfolgsquote: gewichteter Anteil richtiger Antworten, neuere zaehlen
     staerker (lineare Gewichtung). Bei wenigen Antworten wird die Quote
@@ -874,7 +876,7 @@ def knowledge_from_answers(answers, coverage, params=None):
     exponent = float(params["abdeckung_exponent"])
 
     result = {}
-    for key in CAT_ORDER:
+    for key in keys or CAT_ORDER:
         recent = list(answers.get(key) or [])[:window]
         if recent:
             weights = [len(recent) - index for index in range(len(recent))]
@@ -910,9 +912,29 @@ def knowledge(db, params=None):
     return knowledge_from_answers(answers, coverage, params)
 
 
+def topic_params(balancing=None):
+    """Parameter fuer den Wissensstand je Thema: 'wissen' mit den
+    Abweichungen aus 'wissen_thema'."""
+    balancing = balancing or GAME["balancing"]
+    params = dict(balancing["wissen"])
+    params.update({key: value for key, value in (balancing.get("wissen_thema") or {}).items()
+                   if not key.startswith("_")})
+    return params
+
+
+def topic_knowledge(db, params=None):
+    """Wissensstand je Thema (ab 0.37) - gleiche Formel wie je Fachbereich,
+    nur auf die Antworten und Inhalte eines Themas bezogen."""
+    params = params or topic_params()
+    answers = db.topic_answers(int(params["letzte_antworten"]))
+    coverage = db.topic_coverage(topic_totals())
+    return knowledge_from_answers(answers, coverage, params, keys=TOPIC_ORDER)
+
+
 def requirement_gaps(task, levels):
-    """Fachbereiche, in denen der Wissensstand unter der Anforderung liegt.
-    Rueckgabe: Liste von (kurzname, benoetigt, vorhanden)."""
+    """Themen, in denen der Wissensstand unter der Anforderung liegt.
+    levels: Wissensstand je Thema (topic_knowledge).
+    Rueckgabe: Liste von (thema, benoetigt, vorhanden)."""
     gaps = []
     for key, need in (task.get("anforderungen") or {}).items():
         have = levels.get(key, 0.0)
@@ -925,13 +947,13 @@ def gap_warning(gaps):
     """Warnhinweis der weichen Sperre als Text (leer, wenn nichts fehlt)."""
     if not gaps:
         return ""
-    parts = ["%s (%d %% nötig, du hast %d %%)" % (CATEGORY_SHORT[CAT_NAME[key]], need,
-                                                   int(have))
+    parts = ["%s: %s (%d %% nötig, du hast %d %%)"
+             % (CATEGORY_SHORT[TOPIC_CAT[key]], TOPIC_NAME[key], need, int(have))
              for key, need, have in gaps]
     return ("Dafür fehlt dir noch Wissen: %s. Du kannst das Ticket trotzdem "
             "bearbeiten, ein Fehler kostet dann aber doppelt Reputation. Tipp: "
-            "Vorher ein paar Karteikarten in diesem Bereich lernen."
-            % ", ".join(parts))
+            "Vorher ein paar Karteikarten %s lernen."
+            % ("; ".join(parts), "zu diesem Thema" if len(gaps) == 1 else "zu diesen Themen"))
 
 
 # ============================================================================
@@ -3742,6 +3764,9 @@ class Game:
     def knowledge(self):
         return knowledge(self.db, self.content["balancing"]["wissen"])
 
+    def topic_knowledge(self):
+        return topic_knowledge(self.db, topic_params(self.content["balancing"]))
+
     def _log(self, kind, data):
         self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device)
         self.reload()
@@ -3759,7 +3784,7 @@ class Game:
         task = self.state.prepared_task(task_by_id(task_id, self.content))
         if task is None or not self.state.is_open(task_id):
             raise ValueError("Dieses Ticket ist heute nicht (mehr) offen.")
-        payload = evaluate(task, answer, used_help, self.knowledge(), self.state.day,
+        payload = evaluate(task, answer, used_help, self.topic_knowledge(), self.state.day,
                            self.content["balancing"], self.state.available_parts(task),
                            self.content, self.state.stock())
         self._log(EV_SOLVED, payload)

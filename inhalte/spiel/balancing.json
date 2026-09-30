@@ -34,6 +34,10 @@
     "volle_abdeckung_prozent": 50,
     "abdeckung_exponent": 0.5
   },
+  "wissen_thema": {
+    "_hinweis": "Ab 0.37: Abweichende Werte fuer den Wissensstand je Thema (sonst gilt 'wissen'). Ein Thema ist viel kleiner als ein Fachbereich, deshalb reichen weniger Antworten fuer die volle Erfolgsquote.",
+    "mindest_antworten": 10
+  },
   "gruendung": {"startkapital": 25000, "mindest_reputation": 60, "alle_erledigt": true},
   "miete": {
     "_hinweis": "Ab 0.31: Schalter Miete in den Optionen. Miete in Euro pro Arbeitstag, Kaution = Anteil am Kaufpreis (kommt beim naechsten Umzug zurueck).",

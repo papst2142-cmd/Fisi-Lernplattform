@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.37
+
+- **Themen je Fachbereich:** Die fünf Fachbereiche sind jetzt in 36 Themen
+  unterteilt (Netzwerk 10, Sicherheit 8, Systeme 8, Wirtschaft 7,
+  Datenbanken & SQL 3), zum Beispiel IPv4, Routing, Kryptografie, Linux
+  oder SQL. Alle 4.000 Karteikarten, Quizfragen, Prüfungsszenarien und
+  Projektarbeiten sind einem Thema zugeordnet.
+- **Wissensstand je Thema:** Neben dem Wert je Fachbereich wird jetzt auch
+  dein Wissensstand in jedem einzelnen Thema berechnet. Deine bisherigen
+  Antworten zählen dabei automatisch mit.
+- **Aufträge im Spiel verlangen Themen:** Alle 442 Aufträge und die
+  Zwischenfälle setzen jetzt Wissen in einem bestimmten Thema voraus statt
+  im ganzen Fachbereich. Fehlt Wissen, nennt das Ticket das Thema, und der
+  Knopf „Karteikarten zu …“ öffnet genau die Karten dieses Themas.
+- **Reinzoomen im Dashboard:** Ein Klick auf eine Zeile der Heatmap oder
+  auf einen Ring bei „Fortschritt je Fachbereich“ öffnet die Karte
+  „Themen · <Fachbereich>“ mit Aktivität und Wissensstand je Thema. Ein
+  zweiter Klick oder „Schließen“ blendet sie wieder aus. Auf PC und Handy
+  gleich.
+- Die eigene Firma rechnet vorerst weiter mit den Fachbereichen; Mitarbeiter
+  mit Themenwissen folgen in 0.38.
+- Bitte PC und Handy beide auf 0.37 aktualisieren.
+
 ## 0.36
 
 - **Drei neue Ausbaustufen** für deinen Gewerbehof unter Firma > Gebäude:
