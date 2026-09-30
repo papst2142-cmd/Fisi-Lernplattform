@@ -2499,6 +2499,9 @@ class GameScreen:
                             color=CATEGORY_COLOR[fg.CAT_NAME[key]]),
                     ui.text(fg.topics_text(item["themen"], key), size=11,
                             color=C["text_dim"])], spacing=0, tight=True))
+            limit = fg.cap_text(item["themen"]) if not applicant else ""
+            if limit:
+                extra.append(ui.text(limit, size=11, color=C["yellow"]))
         note = fg.training_text(state, item) if not applicant else \
             "Bewerbung liegt vor bis Arbeitstag %d" % item["bis_tag"]
         if note:
@@ -2577,9 +2580,11 @@ class GameScreen:
             controls.append(button)
         controls.append(ui.text(
             "Thema: +%d, dauert %d Arbeitstage. Ganzer Fachbereich: +%d auf alle Themen, "
-            "dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz."
+            "dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz. Durch Arbeit "
+            "allein geht es nur bis %d."
             % (rules["plus"], offers[1]["tage"] if len(offers) > 1 else rules["tage"],
-               whole["plus"], offers[0]["tage"], rules["max"]), size=11, color=C["muted"]))
+               whole["plus"], offers[0]["tage"], rules["max"], fg.learn_cap()), size=11,
+            color=C["muted"]))
         problems = [offer["problem"] for offer in offers]
         if all(problems):
             controls.append(ui.text(problems[0], size=12, color=C["yellow"]))

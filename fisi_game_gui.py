@@ -3129,6 +3129,10 @@ class FirmView(ScrollArea):
                 make_label(text, fg.topics_text(item["themen"], key), font=F["small"],
                            fg=C["text_dim"], wraplength=640, justify="left",
                            anchor="w").pack(anchor="w")
+            limit = fg.cap_text(item["themen"]) if not applicant else ""
+            if limit:
+                make_label(text, limit, font=F["small"], fg=C["yellow"], wraplength=640,
+                           justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
         make_label(text, fg.staff_money_text(item), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w")
         extra = fg.training_text(state, item) if not applicant else \
@@ -3208,9 +3212,10 @@ class FirmView(ScrollArea):
             button.pack(side="left", padx=(0, 6))
             button.set_enabled(not offer["problem"])
         make_label(box, "Thema: +%d, dauert %d Arbeitstage. Ganzer Fachbereich: +%d auf alle "
-                   "Themen, dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz."
+                   "Themen, dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz. Durch "
+                   "Arbeit allein geht es nur bis %d."
                    % (rules["plus"], offers[1]["tage"] if len(offers) > 1 else rules["tage"],
-                      whole["plus"], offers[0]["tage"], rules["max"]),
+                      whole["plus"], offers[0]["tage"], rules["max"], fg.learn_cap()),
                    font=F["tiny"], fg=C["muted"], wraplength=680, justify="left",
                    anchor="w").pack(anchor="w", pady=(4, 0))
         problems = [offer["problem"] for offer in offers]

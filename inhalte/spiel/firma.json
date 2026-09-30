@@ -13,6 +13,7 @@
     "Ab 0.36: gebaeude.stufen 3 bis 5 (je 2 Arbeitsplaetze mehr). 'sonderraeume.raeume' baut man ab 'ab_stufe' auf der Flaeche 'raum' aus (bis dahin Leerstand). effekt: material_rabatt (Prozent auf Einkauf und Material), anfragen_plus, kundenzufriedenheit_plus (je gewonnenem Auftrag), projekte_plus, rueckschlag_faktor (mal die Rueckschlag-Chance), weiterbildung_rabatt (Prozent), weiterbildung_tage_minus. Nebenkosten des Raums kommen taeglich dazu.",
     "Ab 0.38: Mitarbeiter haben einen Wert je Thema (themen.json), der Fachbereichswert ist der Durchschnitt seiner Themen (Gehalt und Umsatz rechnen damit). Bewerber: Grundwert je Fachbereich wie bisher, je Thema fest gestreut um +-bewerbung.thema_streuung, dazu bewerbung.staerken Themen mit +staerke_plus. Mitarbeiter aus aelteren Spielstaenden: Themen = alter Fachbereichswert, gestreut um +-lernen.alt_streuung. wechsel.staerken sind die Staerken der Bitweiche-Kollegen.",
     "Ab 0.38 'lernen': Mitarbeiter lernen durch Arbeit - ticket_erfolg Punkte im Thema eines geschafften Kundentickets (Fehlschlag: nichts), projekt_fertig fuer jedes Teammitglied im Projektthema (projekt_puenktlich extra), alle routine_tage Arbeitstage ohne Weiterbildung und Projekt routine_plus im staerksten Thema. Ab halb_ab nur halb so viel, max ist die Obergrenze.",
+    "Ab 0.40: 'lernen.deckel' ist die Grenze fuer das Lernen durch Arbeit je Thema - darueber (bis max) geht es nur noch mit Weiterbildung. Arbeit lernt langsamer (Ticket 1 Punkt, etwa ein Sechstel einer Themen-Weiterbildung), Weiterbildungen bringen weniger und dauern laenger.",
     "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten)."
   ],
   "gruendung": {
@@ -2255,22 +2256,23 @@
   "weiterbildung": {
     "preis": 600,
     "aufschlag": 200,
-    "tage": 3,
-    "plus": 10,
+    "tage": 4,
+    "plus": 6,
     "max": 90,
     "fachbereich": {
       "preis": 1400,
-      "tage": 4,
-      "plus": 5
+      "tage": 5,
+      "plus": 3
     }
   },
   "lernen": {
-    "ticket_erfolg": 2,
-    "projekt_fertig": 3,
+    "ticket_erfolg": 1,
+    "projekt_fertig": 2,
     "projekt_puenktlich": 1,
-    "routine_tage": 10,
+    "routine_tage": 15,
     "routine_plus": 1,
-    "halb_ab": 70,
+    "halb_ab": 50,
+    "deckel": 70,
     "max": 90,
     "alt_streuung": 5
   },
