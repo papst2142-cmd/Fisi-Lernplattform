@@ -33,7 +33,7 @@ import uuid
 
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
-    TOPIC_ORDER, TOPIC_SHORT, ipv4_values, raid_values, search_content, topic_totals,
+    TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_values, search_content, topic_totals,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 
@@ -43,6 +43,8 @@ GAME_DIR = os.path.join(CONTENT_DIR, "spiel")
 CAT_NAME = dict(CATEGORY_KEYS)
 CAT_KEY = {name: key for key, name in CATEGORY_KEYS.items()}
 CAT_ORDER = list(CATEGORY_KEYS)
+# Themen je Fachbereich (Kurzname -> Themen-Kennungen, ab 0.37)
+CAT_TOPICS = {key: list(TOPICS.get(name, [])) for key, name in CATEGORY_KEYS.items()}
 
 # Die vier Achsen der Reputation (Schluessel, Anzeigename)
 AXES = [
@@ -3096,6 +3098,11 @@ class GameState:
         self.projects = {}         # projekt -> gewonnenes Projekt mit Stand und Team
         self.project_days = set()  # (projekt, tag) schon verbuchter Projekttage
         self.rooms = {}            # sonderraum -> Ereignisdaten des Ausbaus (ab 0.36)
+        # Lernen der Mitarbeiter durch Arbeit (ab 0.38)
+        self.staff_gains = {}      # mitarbeiter-id -> {thema: dazugelernte Punkte}
+        self.staff_routine = {}    # mitarbeiter-id -> Arbeitstage mit Routinearbeit
+        self.learn_log = []        # (tag, mitarbeiter-id, thema, vorher, nachher, grund)
+        self._topic_base = {}      # Zwischenspeicher: Grundwerte je Thema
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3167,6 +3174,8 @@ class GameState:
                 self._book(today, BOOK_SALARY, data.get("gehalt", 0))
                 self._book(today, BOOK_HOME, -int(data.get("miete", 0)))
                 firm = data.get("firma") or {}
+                # Wer heute im Projekt oder in der Weiterbildung war, macht keine Routine
+                busy = {person for item in self.running_projects() for person in item["team"]}
                 self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
                     - int(firm.get("nebenkosten", 0))
                 self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
@@ -3179,8 +3188,12 @@ class GameState:
                     self.money += int(item.get("geld", 0))
                     self._book(today, BOOK_TICKETS, item.get("geld", 0))
                     self._apply_reputation(item.get("reputation") or {})
+                    if item.get("erfolg"):
+                        self._learn_from_ticket(item, today)
                 for item in firm.get("projekte") or []:
-                    self._apply_project_day(item, today)
+                    if self._apply_project_day(item, today) and item.get("fertig"):
+                        self._learn_from_project(item, today)
+                self._learn_routine(busy, today)
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
 
@@ -3276,7 +3289,7 @@ class GameState:
         key = (item.get("projekt"), int(item.get("tag", day) or day))
         project = self.projects.get(item.get("projekt"))
         if project is None or key in self.project_days or project["fertig"]:
-            return
+            return False
         self.project_days.add(key)
         project["stand"] = min(float(project["aufwand"]),
                                project["stand"] + float(item.get("punkte", 0)))
@@ -3287,6 +3300,52 @@ class GameState:
             self.money += int(item.get("geld", 0))
             self._book(day, BOOK_PROJECTS, item.get("geld", 0))
             self._apply_reputation(item.get("reputation") or {})
+        return True
+
+    # -- Lernen der Mitarbeiter (ab 0.38) ---------------------------------------
+
+    def _learn(self, staff_id, topic, amount, day, reason):
+        """Punkte durch Arbeit dazu - ab lernen.halb_ab nur halb so viele,
+        nie ueber lernen.max."""
+        if staff_id not in self.staff or topic not in TOPIC_CAT or amount <= 0:
+            return
+        rule = learn_rules(self.content)
+        before = self.staff_topics(staff_id, day)[topic]
+        if before >= rule["halb_ab"]:
+            amount = amount / 2.0
+        after = min(float(rule["max"]), before + amount)
+        if after <= before:
+            return
+        gains = self.staff_gains.setdefault(staff_id, {})
+        gains[topic] = gains.get(topic, 0.0) + after - before
+        self.learn_log.append((day, staff_id, topic, before, after, reason))
+
+    def _learn_from_ticket(self, item, day):
+        topic = ticket_topic(item.get("vorlage"), self.content)
+        self._learn(item.get("an"), topic, learn_rules(self.content)["ticket_erfolg"], day,
+                    "ticket")
+
+    def _learn_from_project(self, item, day):
+        rule = learn_rules(self.content)
+        project = self.projects.get(item.get("projekt")) or {}
+        topic = project_topic(project, self.content)
+        amount = rule["projekt_fertig"] + (0 if item.get("verzug") else
+                                           rule["projekt_puenktlich"])
+        for share in item.get("beitraege") or []:
+            self._learn(share.get("an"), topic, amount, day, "projekt")
+
+    def _learn_routine(self, busy, day):
+        rule = learn_rules(self.content)
+        every = max(1, int(rule["routine_tage"]))
+        for staff_id in list(self.staff):
+            if staff_id in busy or self.training_of(staff_id, day):
+                continue
+            count = self.staff_routine.get(staff_id, 0) + 1
+            self.staff_routine[staff_id] = count
+            if count % every == 0:
+                topics = self.staff_topics(staff_id, day)
+                best = max(TOPIC_ORDER, key=lambda key: (topics[key], -TOPIC_ORDER.index(key)))
+                self._learn(staff_id, best, rule["routine_plus"], day, "routine")
 
     def _apply_reputation(self, delta):
         for key, value in delta.items():
@@ -3408,16 +3467,34 @@ class GameState:
                 return item
         return None
 
-    def staff_values(self, staff_id, day=None, pending=False):
-        """Werte je Fachbereich: Einstellung plus abgeschlossene
-        Weiterbildungen (pending=True: auch die laufende)."""
+    def staff_topics(self, staff_id, day=None, pending=False):
+        """Werte je Thema (ab 0.38): Einstellung plus abgeschlossene
+        Weiterbildungen (pending=True: auch die laufende) plus das durch
+        Arbeit Dazugelernte. Kommazahlen, angezeigt wird abgerundet."""
         day = self.day if day is None else day
-        values = dict((self.staff.get(staff_id) or {}).get("werte") or {})
+        data = self.staff.get(staff_id) or {}
+        if staff_id not in self._topic_base:
+            self._topic_base[staff_id] = staff_base_topics(staff_id, data, self.content)
+        values = dict(self._topic_base[staff_id])
         for item in self.trainings:
             if item.get("id") == staff_id and (pending or item.get("bis_tag", 0) <= day):
-                cat = item.get("cat")
-                values[cat] = values.get(cat, 0) + int(item.get("plus", 0))
-        return values
+                plus = int(item.get("plus", 0))
+                # Vor 0.38 gab es nur Weiterbildungen je Fachbereich (ohne "thema")
+                for topic in ([item["thema"]] if item.get("thema") else
+                              CAT_TOPICS.get(item.get("cat"), [])):
+                    if topic in values:
+                        values[topic] += plus
+        for topic, plus in (self.staff_gains.get(staff_id) or {}).items():
+            values[topic] = values.get(topic, 0) + plus
+        top = float(learn_rules(self.content)["max"])
+        return {topic: max(0.0, min(top, float(value))) for topic, value in values.items()}
+
+    def staff_topic_value(self, staff_id, topic, day=None):
+        return int(self.staff_topics(staff_id, day).get(topic, 0))
+
+    def staff_values(self, staff_id, day=None, pending=False):
+        """Werte je Fachbereich = Durchschnitt seiner Themen (ab 0.38)."""
+        return cat_values(self.staff_topics(staff_id, day, pending))
 
     def trainings_of(self, staff_id):
         return [item for item in self.trainings if item.get("id") == staff_id]
@@ -3427,7 +3504,9 @@ class GameState:
         places = self.firm_stage()["plaetze"] if self.firm else []
         result = []
         for index, (staff_id, data) in enumerate(self.staff.items()):
-            item = dict(data, werte=self.staff_values(staff_id))
+            topics = self.staff_topics(staff_id)
+            item = dict(data, werte=cat_values(topics), themen=topics,
+                        staerken=strongest_topics(topics))
             item["weiterbildung"] = self.training_of(staff_id)
             item["projekt"] = self.project_of(staff_id)
             # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
@@ -3767,6 +3846,13 @@ class Game:
     def topic_knowledge(self):
         return topic_knowledge(self.db, topic_params(self.content["balancing"]))
 
+    def firm_levels(self):
+        """Wissensstand je Fachbereich und je Thema zusammen (ab 0.38 fuer die
+        Firma: Kundentickets und Projekte rechnen mit dem Thema)."""
+        levels = dict(self.knowledge())
+        levels.update(self.topic_knowledge())
+        return levels
+
     def _log(self, kind, data):
         self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device)
         self.reload()
@@ -3827,10 +3913,13 @@ class Game:
             outcomes = ticket_outcomes(self.state, self.content)
             if outcomes:
                 payload["firma"]["tickets"] = outcomes
-            days = project_outcomes(self.state, self.knowledge(), self.learned_projects(),
+            days = project_outcomes(self.state, self.firm_levels(), self.learned_projects(),
                                     self.content)
             if days:
                 payload["firma"]["projekte"] = days
+            learned = learned_today(self.state, payload, self.content)
+            if learned:
+                payload["firma"]["gelernt"] = learned
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -3867,8 +3956,8 @@ class Game:
         if self.state.money <= 0:
             raise ValueError("Mit leerem Konto kannst du niemanden einstellen.")
         payload = {key: applicant[key] for key in ("id", "name", "aussehen", "werte",
-                                                   "gehalt", "herkunft", "schwerpunkt",
-                                                   "macke", "rolle")}
+                                                   "themen", "gehalt", "herkunft",
+                                                   "schwerpunkt", "macke", "rolle")}
         payload["tag"] = self.state.day
         self._log(EV_HIRED, payload)
         return payload
@@ -3881,15 +3970,19 @@ class Game:
         self._log(EV_FIRED, payload)
         return payload
 
-    def train(self, staff_id, cat):
+    def train(self, staff_id, target):
         """Abstrakte Weiterbildung: kostet Geld und Arbeitstage ohne Umsatz,
-        danach steigt der Wert im Fachbereich."""
+        danach steigt der Wert im Thema bzw. in allen Themen des
+        Fachbereichs (target = Thema oder Fachbereich)."""
         self._firm_required()
-        offer = training_offer(self.state, staff_id, cat, self.content)
+        offer = training_offer(self.state, staff_id, target, self.content)
         if offer["problem"]:
             raise ValueError(offer["problem"])
-        payload = {"id": staff_id, "cat": cat, "geld": -offer["preis"], "tag": self.state.day,
+        payload = {"id": staff_id, "cat": offer["cat"], "art": offer["art"],
+                   "geld": -offer["preis"], "tag": self.state.day,
                    "bis_tag": self.state.day + offer["tage"], "plus": offer["plus"]}
+        if offer["thema"]:
+            payload["thema"] = offer["thema"]
         self._log(EV_TRAINING, payload)
         return payload
 
@@ -3945,7 +4038,7 @@ class Game:
         if ticket.get("an"):
             raise ValueError("Dieses Kundenticket ist schon verteilt.")
         option = next((item for item in ticket_candidates(self.state, ticket,
-                                                          self.knowledge(), self.content)
+                                                          self.firm_levels(), self.content)
                        if item["an"] == person), None)
         if option is None:
             raise ValueError("Diese Person arbeitet nicht bei dir.")
@@ -3989,7 +4082,7 @@ class Game:
             raise ValueError("Dieses Projekt läuft nicht (mehr).")
         team = [person for index, person in enumerate(team or []) if person not in team[:index]]
         options = {item["an"]: item for item in project_candidates(
-            self.state, project, self.knowledge(), self.content)}
+            self.state, project, self.firm_levels(), self.content)}
         for person in team:
             if person not in options:
                 raise ValueError("Diese Person arbeitet nicht bei dir.")
@@ -4166,13 +4259,116 @@ def training_text(state, item):
     if not training:
         return ""
     left = training["bis_tag"] - state.day
-    return "In Weiterbildung (%s, +%d) · noch %s" % (
-        CATEGORY_SHORT[CAT_NAME[training["cat"]]], training["plus"],
+    what = "%s, +%d" % (TOPIC_SHORT[training["thema"]], training["plus"]) \
+        if training.get("thema") else "%s, +%d je Thema" % (
+            CATEGORY_SHORT[CAT_NAME[training["cat"]]], training["plus"])
+    return "In Weiterbildung (%s) · noch %s" % (
+        what,
         "1 Arbeitstag" if left == 1 else "%d Arbeitstage" % left)
 
 
 def firm_rules(content=None):
     return (content or GAME)["firma"]
+
+
+def learn_rules(content=None):
+    return firm_rules(content)["lernen"]
+
+
+def cat_values(topics):
+    """Werte je Thema -> Werte je Fachbereich (gerundeter Durchschnitt)."""
+    result = {}
+    for key in CAT_ORDER:
+        values = [topics.get(topic, 0) for topic in CAT_TOPICS[key]]
+        result[key] = int(round(sum(values) / float(len(values)))) if values else 0
+    return result
+
+
+def strongest_topics(topics, count=2):
+    """Die staerksten Themen (bei Gleichstand in der Reihenfolge der Themen)."""
+    return sorted(TOPIC_ORDER, key=lambda key: (-topics.get(key, 0),
+                                                TOPIC_ORDER.index(key)))[:count]
+
+
+def spread_topics(values, seed, spread):
+    """Werte je Fachbereich -> Werte je Thema: jedes Thema fest gestreut um
+    +-spread, der Durchschnitt je Fachbereich bleibt (vor dem Runden) gleich."""
+    result = {}
+    for key in CAT_ORDER:
+        topics = CAT_TOPICS[key]
+        offsets = [(_dice(seed, 0, "thema|" + topic) * 2 - 1) * spread for topic in topics]
+        mean = sum(offsets) / float(len(offsets)) if offsets else 0
+        for topic, offset in zip(topics, offsets):
+            result[topic] = max(0, min(90, int(round(values.get(key, 0) + offset - mean))))
+    return result
+
+
+def add_strengths(topics, strengths, plus):
+    result = dict(topics)
+    for topic in strengths:
+        if topic in result:
+            result[topic] = min(90, result[topic] + int(plus))
+    return result
+
+
+def staff_base_topics(staff_id, data, content=None):
+    """Werte je Thema bei der Einstellung. Mitarbeiter aus Spielstaenden vor
+    0.38 haben nur Werte je Fachbereich: dann fest gestreut um den alten Wert."""
+    if data.get("themen"):
+        return {topic: float(data["themen"].get(topic, 0)) for topic in TOPIC_ORDER}
+    spread = learn_rules(content).get("alt_streuung", 5)
+    topics = spread_topics(data.get("werte") or {}, "alt|%s" % staff_id, spread)
+    return {topic: float(value) for topic, value in topics.items()}
+
+
+def ticket_topic(template_id, content=None):
+    """Thema einer Kundenticket-Vorlage (ab 0.38)."""
+    item = next((item for item in ticket_rules(content)["vorlagen"]
+                 if item["id"] == template_id), None)
+    return (item or {}).get("thema")
+
+
+def project_topic(project, content=None):
+    """Thema eines Projekts - Projekte aus aelteren Spielstaenden holen es
+    aus der Projektarbeit (Vorlage)."""
+    if project.get("thema"):
+        return project["thema"]
+    templates = (content or GAME).get("projektarbeiten") or []
+    index = project.get("vorlage")
+    if isinstance(index, int) and 0 <= index < len(templates):
+        return templates[index].get("thema")
+    return None
+
+
+def topic_level(levels, topic, cat):
+    """Wissensstand der Spielfigur im Thema (sonst im Fachbereich)."""
+    levels = levels or {}
+    return int(round(levels.get(topic, levels.get(cat, 0)) if topic else levels.get(cat, 0)))
+
+
+def strengths_text(item):
+    """ "Stark in: IPv4 62 · Linux 55" """
+    topics = item.get("themen") or {}
+    names = item.get("staerken") or strongest_topics(topics)
+    return "Stark in: " + " · ".join("%s %d" % (TOPIC_SHORT[topic], int(topics.get(topic, 0)))
+                                     for topic in names)
+
+
+def topics_text(topics, cat):
+    """ "Grundlagen 32 · IPv4 40 · ..." - die Themen eines Fachbereichs """
+    return " · ".join("%s %d" % (TOPIC_SHORT[topic], int(topics.get(topic, 0)))
+                      for topic in CAT_TOPICS[cat])
+
+
+LEARN_REASONS = {"ticket": "Kundenticket", "projekt": "Projekt", "routine": "Routinearbeit"}
+
+
+def learned_text(item):
+    """ "Tim: Verkabelung 38 → 40 (Kundenticket)" """
+    return "%s: %s %d → %d (%s)" % (short_name({"name": item.get("name", "")}),
+                                     TOPIC_SHORT.get(item.get("thema"), item.get("thema")),
+                                     int(item.get("vorher", 0)), int(item.get("nachher", 0)),
+                                     LEARN_REASONS.get(item.get("grund"), ""))
 
 
 def staff_salary(values, content=None):
@@ -4208,6 +4404,15 @@ def _applicant(rules, seed, batch, number, content):
         values[key] = int(round(raw / 5.0) * 5)
     focus = _pick(CAT_ORDER, seed, batch, salt + "schwerpunkt")
     values[focus] = min(90, values[focus] + rules["bewerbung"]["schwerpunkt_plus"])
+    # Ab 0.38: Werte je Thema, dazu Staerken (die erste im Schwerpunkt)
+    rule = rules["bewerbung"]
+    topics = spread_topics(values, "%s|%s" % (seed, salt), rule.get("thema_streuung", 10))
+    strengths = [_pick(CAT_TOPICS[focus], seed, batch, salt + "staerke0")]
+    for extra in range(1, int(rule.get("staerken", 2))):
+        rest = [topic for topic in TOPIC_ORDER if topic not in strengths]
+        strengths.append(_pick(rest, seed, batch, salt + "staerke%d" % extra))
+    topics = add_strengths(topics, strengths, rule.get("staerke_plus", 20))
+    values = cat_values(topics)
     names = rules["namen"]
     look = {part: _pick([key for key, _name in options], seed, batch, salt + part)
             for part, options in APPEARANCE.items() if part != "kreis"}
@@ -4215,7 +4420,8 @@ def _applicant(rules, seed, batch, number, content):
     return {"id": "bw%d-%d" % (batch, number),
             "name": "%s %s" % (_pick(names["vornamen"], seed, batch, salt + "vor"),
                                _pick(names["nachnamen"], seed, batch, salt + "nach")),
-            "aussehen": normalize_appearance(look), "werte": values,
+            "aussehen": normalize_appearance(look), "werte": values, "themen": topics,
+            "staerken": strongest_topics(topics),
             "gehalt": staff_salary(values, content), "herkunft": "bewerbung",
             "schwerpunkt": staff_focus(values),
             "macke": _pick(rules["macken"], seed, batch, salt + "macke"),
@@ -4254,10 +4460,16 @@ def applicants(state, content=None):
         person = colleague(item["kollege"], content)
         if person is None or staff_id in state.ever_hired or not first <= state.day <= last:
             continue
-        values = dict(item["werte"])
+        topics = add_strengths(
+            spread_topics(item["werte"], "wechsel|" + item["kollege"],
+                          rules["bewerbung"].get("thema_streuung", 10)),
+            item.get("staerken") or [], rules["bewerbung"].get("staerke_plus", 20))
+        values = cat_values(topics)
         result.append({"id": staff_id, "name": person["name"],
                        "aussehen": normalize_appearance(person.get("aussehen")),
-                       "werte": values, "gehalt": staff_salary(values, content),
+                       "werte": values, "themen": topics,
+                       "staerken": strongest_topics(topics),
+                       "gehalt": staff_salary(values, content),
                        "herkunft": "bitweiche", "schwerpunkt": staff_focus(values),
                        "macke": person.get("macke", ""),
                        "rolle": "bisher %s bei Bitweiche" % person["rolle"],
@@ -4280,28 +4492,41 @@ def switch_news(state, content=None):
     return "\n\n".join(texts)
 
 
-def training_offer(state, staff_id, cat, content=None):
+def training_offer(state, staff_id, target, content=None):
     """Was eine Weiterbildung kostet und bringt: {"preis", "tage", "plus",
-    "problem" (leer = moeglich)}."""
+    "art", "cat", "thema", "problem" (leer = moeglich)}. target ist ein
+    Thema (+plus in diesem Thema) oder ein Fachbereich (ab 0.38: +plus auf
+    alle seine Themen, teurer und laenger)."""
     rules = firm_rules(content)["weiterbildung"]
+    whole = target in CAT_ORDER
+    rule = rules.get("fachbereich", rules) if whole else rules
     done = len(state.trainings_of(staff_id))
     # Eigener Schulungsraum (ab 0.36): guenstiger und kuerzer
-    price = discounted(int(rules["preis"] + rules["aufschlag"] * done),
+    price = discounted(int(rule["preis"] + rules["aufschlag"] * done),
                        state.room_effect("weiterbildung_rabatt"))
-    days = max(1, int(rules["tage"]) - int(state.room_effect("weiterbildung_tage_minus")))
-    result = {"preis": price, "tage": days, "plus": 0, "problem": ""}
+    days = max(1, int(rule["tage"]) - int(state.room_effect("weiterbildung_tage_minus")))
+    cat = target if whole else CAT_KEY.get(TOPIC_CAT.get(target))
+    result = {"preis": price, "tage": days, "plus": 0, "problem": "",
+              "art": "fachbereich" if whole else "thema", "cat": cat,
+              "thema": None if whole else target}
     if staff_id not in state.staff:
         result["problem"] = "Diese Person arbeitet nicht bei dir."
         return result
-    if cat not in CAT_ORDER:
-        result["problem"] = "Unbekannter Fachbereich."
+    if cat is None:
+        result["problem"] = "Unbekanntes Thema."
         return result
-    value = state.staff_values(staff_id, pending=True).get(cat, 0)
-    result["plus"] = max(0, min(int(rules["plus"]), int(rules["max"]) - value))
+    top = int(rules["max"])
+    values = state.staff_topics(staff_id, pending=True)
+    if whole:
+        room = max(top - values.get(topic, 0) for topic in CAT_TOPICS[cat])
+        result["plus"] = int(rule["plus"]) if room > 0 else 0
+    else:
+        result["plus"] = max(0, min(int(rule["plus"]), int(top - values.get(target, 0))))
     if state.training_of(staff_id):
         result["problem"] = "Die Person ist gerade schon in einer Weiterbildung."
     elif not result["plus"]:
-        result["problem"] = "In diesem Fachbereich ist das Maximum (%d) erreicht." % rules["max"]
+        result["problem"] = "%s ist das Maximum (%d) erreicht." % (
+            "In allen Themen des Fachbereichs" if whole else "In diesem Thema", top)
     elif state.money < result["preis"]:
         result["problem"] = "Dafür reicht dein Geld noch nicht (%s fehlen)." % _whole_euro(
             result["preis"] - max(0, state.money))
@@ -4470,7 +4695,26 @@ def firm_day_text(numbers):
     lines = [project_day_text(item) for item in numbers.get("projekte") or []]
     if lines:
         text += "\n\nProjekte:\n" + "\n".join("• " + line for line in lines)
+    lines = [learned_text(item) for item in numbers.get("gelernt") or []]
+    if lines:
+        text += "\n\nDazugelernt:\n" + "\n".join("• " + line for line in lines)
     return text
+
+
+def learned_today(state, payload, content=None):
+    """Was die Mitarbeiter mit diesem Feierabend dazulernen - nur fuer die
+    Anzeige; der Spielstand rechnet es selbst aus den Ergebnissen aus."""
+    after = GameState(list(state.history) + [("", EV_DAY_END, payload)], content or
+                      state.content)
+    result = []
+    for day, staff_id, topic, before, now, reason in after.learn_log:
+        if day != state.day:
+            continue
+        result.append({"id": staff_id, "name": (after.staff.get(staff_id) or {}).get("name", ""),
+                       "thema": topic, "vorher": int(before), "nachher": int(now),
+                       "grund": reason})
+    # Nur zeigen, was sich in der ganzen Zahl bemerkbar macht
+    return [item for item in result if item["nachher"] > item["vorher"]]
 
 
 # -- Angebote und Kundentickets (ab 0.34) ---------------------------------------
@@ -4792,7 +5036,8 @@ def tickets_for_day(state, day, content=None):
         given = state.delegations.get(ticket_id) or {}
         result.append({"id": ticket_id, "vorlage": item["id"], "titel": item["titel"],
                        "text": item["text"], "kunde": firm_customer(item["kunde"], content),
-                       "cat": item["cat"], "stufe": level["name"],
+                       "cat": item["cat"], "thema": item.get("thema"),
+                       "stufe": level["name"],
                        "anforderung": level["anforderung"], "geld": level["geld"],
                        "an": given.get("an"), "name": given.get("name"),
                        "chance": given.get("chance"),
@@ -4806,8 +5051,10 @@ def ticket_candidates(state, ticket, levels, content=None):
     Mitarbeiter. problem ist leer, wenn die Person frei ist."""
     content = content or GAME
     cat = ticket["cat"]
+    topic = ticket.get("thema")
     result = []
-    own = int(round((levels or {}).get(cat, 0)))
+    # Ab 0.38 zaehlt der Wert im Thema des Tickets (Spielfigur: Wissensstand)
+    own = topic_level(levels, topic, cat)
     name = (state.profile or {}).get("name") or "Ich"
     limit = own_ticket_limit(state, content)
     problem = ""
@@ -4820,7 +5067,7 @@ def ticket_candidates(state, ticket, levels, content=None):
                    "chance": ticket_chance(own, ticket["anforderung"], content),
                    "problem": problem})
     for item in state.staff_list():
-        value = int(item["werte"].get(cat, 0))
+        value = int(item["themen"].get(topic, 0)) if topic else int(item["werte"].get(cat, 0))
         problem = ""
         if item.get("weiterbildung"):
             problem = "%s ist gerade in einer Weiterbildung." % item["name"]
@@ -4855,6 +5102,12 @@ def ticket_outcomes(state, content=None):
     return result
 
 
+def subject_text(cat, topic=None):
+    """ "Netzwerk · WLAN" (ohne Thema nur der Fachbereich)"""
+    text = CATEGORY_SHORT[CAT_NAME[cat]]
+    return "%s · %s" % (text, TOPIC_SHORT[topic]) if topic in TOPIC_SHORT else text
+
+
 def ticket_result_text(item):
     """ "Mira Kessler: Scanner an der Anmeldung installieren (Praxis Dr. Keller)
     erledigt, +60 €" """
@@ -4867,9 +5120,9 @@ def ticket_result_text(item):
 
 
 def ticket_line(ticket):
-    """Zeile unter einem Kundenticket: Fachbereich, Schwierigkeit, Honorar."""
-    text = "%s · %s · %s" % (CATEGORY_SHORT[CAT_NAME[ticket["cat"]]], ticket["stufe"],
-                              _whole_euro(ticket["geld"]))
+    """Zeile unter einem Kundenticket: Fachbereich, Thema, Schwierigkeit, Honorar."""
+    text = "%s · %s · %s" % (subject_text(ticket["cat"], ticket.get("thema")),
+                              ticket["stufe"], _whole_euro(ticket["geld"]))
     if ticket.get("an"):
         who = "dir" if ticket["an"] == SELF else short_name({"name": ticket["name"]})
         text += " · übernommen von %s (Chance %d %%)" % (who, ticket["chance"])
@@ -5067,7 +5320,7 @@ def project_for_slot(state, slot, content=None):
         kunde=customer, auftrag=template["auftrag"])
     return {"id": project_id, "slot": slot, "vorlage": index, "folge": slot // len(order),
             "titel": template["title"], "kunde": template["branche"],
-            "kunde_kurz": customer, "cat": cat,
+            "kunde_kurz": customer, "cat": cat, "thema": template.get("thema"),
             "schwierigkeit": template["schwierigkeit"], "aufwand": int(level["aufwand"]),
             "anforderung": int(level["anforderung"]),
             # Mit eigenem Lager ist das Material guenstiger (ab 0.36)
@@ -5162,11 +5415,15 @@ def project_points(value, content=None):
     return round(rule["basis"] + rule["je_punkt"] * float(value), 1)
 
 
-def project_value(state, person, cat, levels):
-    """Wert einer Person im Fachbereich (Spielfigur: echter Wissensstand)."""
+def project_value(state, person, project, levels, content=None):
+    """Wert einer Person im Thema des Projekts (ab 0.38; Spielfigur: echter
+    Wissensstand). Ohne Thema zaehlt der Fachbereich."""
+    topic = project_topic(project, content or state.content)
     if person == SELF:
-        return int(round((levels or {}).get(cat, 0)))
-    return int(state.staff_values(person).get(cat, 0))
+        return topic_level(levels, topic, project["cat"])
+    if topic:
+        return state.staff_topic_value(person, topic)
+    return int(state.staff_values(person).get(project["cat"], 0))
 
 
 def person_name(state, person):
@@ -5179,7 +5436,6 @@ def project_candidates(state, project, levels, content=None):
     """Wer im Projektteam mitarbeiten kann: [{"an", "name", "wert", "punkte",
     "im_team", "problem"}] - zuerst die Spielfigur, dann die Mitarbeiter."""
     content = content or GAME
-    cat = project["cat"]
     result = []
     own_tickets = len(state.delegated_to(SELF))
     elsewhere = state.project_of(SELF)
@@ -5188,12 +5444,12 @@ def project_candidates(state, project, levels, content=None):
         problem = "Du arbeitest schon im Projekt „%s“ mit." % state.projects[elsewhere]["titel"]
     elif SELF not in project["team"] and own_tickets >= ticket_limit(SELF, content):
         problem = "Du hast heute schon %d Kundentickets übernommen." % own_tickets
-    value = project_value(state, SELF, cat, levels)
+    value = project_value(state, SELF, project, levels, content)
     result.append({"an": SELF, "name": person_name(state, SELF), "wert": value,
                    "punkte": project_points(value, content),
                    "im_team": SELF in project["team"], "problem": problem})
     for item in state.staff_list():
-        value = int(item["werte"].get(cat, 0))
+        value = project_value(state, item["id"], project, levels, content)
         problem = ""
         if item.get("weiterbildung"):
             problem = "%s ist gerade in einer Weiterbildung." % item["name"]
@@ -5214,7 +5470,8 @@ def project_team_points(state, project, levels, content=None):
     for person in project["team"]:
         if person != SELF and (person not in state.staff or state.training_of(person)):
             continue
-        total += project_points(project_value(state, person, project["cat"], levels), content)
+        total += project_points(project_value(state, person, project, levels, content),
+                                content)
     return round(total, 1)
 
 
@@ -5291,7 +5548,7 @@ def project_outcomes(state, levels, learned, content=None):
         for person in project["team"]:
             if person != SELF and (person not in state.staff or state.training_of(person)):
                 continue
-            value = project_value(state, person, project["cat"], levels)
+            value = project_value(state, person, project, levels, content)
             best = max(best, value)
             shares.append({"an": person, "name": person_name(state, person),
                            "punkte": project_points(value, content)})
@@ -5358,7 +5615,7 @@ def project_day_text(item):
 def tender_line(project):
     """Zeile unter einer Ausschreibung."""
     return "%s · %s · %d Punkte Aufwand · Frist %d Arbeitstage" % (
-        CATEGORY_SHORT[CAT_NAME[project["cat"]]], project["schwierigkeit"],
+        subject_text(project["cat"], project_topic(project)), project["schwierigkeit"],
         project["aufwand"], project["frist"])
 
 
@@ -5455,6 +5712,8 @@ def _validate_orders(rules):
         seen.add(item.get("id"))
         if item.get("cat") not in CAT_ORDER:
             problems.append("%s: unbekannter Fachbereich" % where)
+        elif item.get("thema") not in CAT_TOPICS[item["cat"]]:
+            problems.append("%s: Thema fehlt oder passt nicht zum Fachbereich" % where)
         if item.get("stufe") not in tickets.get("stufen", {}):
             problems.append("%s: unbekannte Schwierigkeit" % where)
         if item.get("kunde") not in customers:
@@ -5627,6 +5886,19 @@ def _validate_firm(content):
         if set(item.get("werte", {})) != set(CAT_ORDER):
             problems.append("Spiel-Firma: Wechsel %s braucht Werte fuer alle Fachbereiche"
                             % item.get("kollege"))
+        for topic in item.get("staerken") or []:
+            if topic not in TOPIC_CAT:
+                problems.append("Spiel-Firma: Wechsel %s mit unbekannter Staerke '%s'"
+                                % (item.get("kollege"), topic))
+    learn = rules.get("lernen") or {}
+    for key in ("ticket_erfolg", "projekt_fertig", "projekt_puenktlich", "routine_tage",
+                "routine_plus", "halb_ab", "max", "alt_streuung"):
+        if not isinstance(learn.get(key), (int, float)) or learn[key] < 0:
+            problems.append("Spiel-Firma: lernen.%s fehlt oder ist ungueltig" % key)
+    whole = (rules.get("weiterbildung") or {}).get("fachbereich") or {}
+    for key in ("preis", "tage", "plus"):
+        if not isinstance(whole.get(key), int) or whole[key] <= 0:
+            problems.append("Spiel-Firma: weiterbildung.fachbereich.%s ungueltig" % key)
     return problems
 
 

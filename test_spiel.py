@@ -2061,15 +2061,17 @@ class FirmaTest(unittest.TestCase):
             self.assertEqual(values[-1], game.state.money)
 
     def test_weiterbildung(self):
+        """Ab 0.38: Weiterbildung je Thema (+10 im Thema)."""
         with TempDB() as db:
             game = self._founded(db)
             staff_id = fg.applicants(game.state, self.content)[0]["id"]
             game.hire(staff_id)
-            cat = "wirtschaft"
-            value = game.state.staff_values(staff_id)[cat]
+            topic = "kalkulation"
+            value = game.state.staff_topic_value(staff_id, topic)
             rules = fg.GAME["firma"]["weiterbildung"]
             money = game.state.money
-            payload = game.train(staff_id, cat)
+            payload = game.train(staff_id, topic)
+            self.assertEqual((payload["thema"], payload["cat"]), (topic, "wirtschaft"))
             self.assertEqual(game.state.money, money - rules["preis"])
             self.assertEqual(game.state.firm_day()["umsatz"], 0)
             with self.assertRaises(ValueError):
@@ -2077,11 +2079,33 @@ class FirmaTest(unittest.TestCase):
             for _ in range(rules["tage"]):
                 game.end_day()
             self.assertEqual(game.state.day, payload["bis_tag"])
-            self.assertEqual(game.state.staff_values(staff_id)[cat],
+            self.assertEqual(game.state.staff_topic_value(staff_id, topic),
                              min(rules["max"], value + rules["plus"]))
             self.assertGreater(game.state.firm_day()["umsatz"], 0)
-            offer = fg.training_offer(game.state, staff_id, cat, self.content)
+            offer = fg.training_offer(game.state, staff_id, topic, self.content)
             self.assertEqual(offer["preis"], rules["preis"] + rules["aufschlag"])
+
+    def test_weiterbildung_fachbereich(self):
+        """Ab 0.38: Weiterbildung je Fachbereich (+plus auf alle Themen)."""
+        with TempDB() as db:
+            game = self._founded(db)
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            before = game.state.staff_topics(staff_id)
+            rules = fg.GAME["firma"]["weiterbildung"]
+            whole = rules["fachbereich"]
+            money = game.state.money
+            payload = game.train(staff_id, "netzwerk")
+            self.assertEqual(payload["art"], "fachbereich")
+            self.assertNotIn("thema", payload)
+            self.assertEqual(game.state.money, money - whole["preis"])
+            for _ in range(whole["tage"]):
+                game.end_day()
+            after = game.state.staff_topics(staff_id)
+            for topic in fg.CAT_TOPICS["netzwerk"]:
+                self.assertAlmostEqual(after[topic], min(90, before[topic] + whole["plus"]))
+            for topic in fg.CAT_TOPICS["systeme"]:
+                self.assertEqual(after[topic], before[topic])
 
     def test_ausbau(self):
         with TempDB() as db:
@@ -2307,6 +2331,145 @@ class AuftraegeTest(unittest.TestCase):
             game.end_day()
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
             self.assertEqual(other.reload().ticket_results, game.state.ticket_results)
+
+
+class MitarbeiterThemenTest(unittest.TestCase):
+    """Mitarbeiter mit Werten je Thema und Lernen durch Arbeit (ab 0.38)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    def _hired(self, db):
+        game = self._founded(db)
+        applicant = fg.applicants(game.state, self.content)[0]
+        game.hire(applicant["id"])
+        return game, applicant["id"]
+
+    def _day_end(self, game, firm):
+        game.db.log_game_event(fg.EV_DAY_END, json.dumps(
+            {"tag": game.state.day, "gehalt": 0, "firma": firm}), "PC")
+        return game.reload()
+
+    def test_werte_je_thema_und_staerken(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            for item in fg.applicants(game.state, self.content):
+                self.assertEqual(set(item["themen"]), set(fg.TOPIC_ORDER))
+                self.assertEqual(item["werte"], fg.cat_values(item["themen"]))
+                self.assertEqual(item["gehalt"], fg.staff_salary(item["werte"]))
+                best = max(item["themen"].values())
+                self.assertEqual(item["themen"][item["staerken"][0]], best)
+                self.assertIn("Stark in: ", fg.strengths_text(item))
+            switch = self.content["firma"]["wechsel"][0]
+            staff_id = fg.applicants(game.state, self.content)[0]["id"]
+            game.hire(staff_id)
+            item = game.state.staff_list()[0]
+            self.assertEqual(item["themen"], {key: float(value) for key, value in
+                                              game.state.staff[staff_id]["themen"].items()})
+            self.assertEqual(len(item["staerken"]), 2)
+            self.assertEqual(len(switch["staerken"]), 2)
+
+    def test_alter_spielstand_ohne_themen(self):
+        """Mitarbeiter aus 0.37: Themen gestreut um den alten Fachbereichswert."""
+        with TempDB() as db:
+            game = self._founded(db)
+            old = {"netzwerk": 40, "sicherheit": 20, "systeme": 60, "wirtschaft": 10,
+                   "datenbanken": 30}
+            db.log_game_event(fg.EV_HIRED, json.dumps(
+                {"id": "alt1", "name": "Alte Hasen", "aussehen": {}, "werte": old,
+                 "gehalt": 200, "herkunft": "bewerbung", "tag": game.state.day}), "PC")
+            db.log_game_event(fg.EV_TRAINING, json.dumps(
+                {"id": "alt1", "cat": "wirtschaft", "plus": 10, "geld": -600,
+                 "tag": game.state.day, "bis_tag": game.state.day}), "PC")
+            state = game.reload()
+            topics = state.staff_topics("alt1")
+            spread = self.content["firma"]["lernen"]["alt_streuung"]
+            for key, value in old.items():
+                plus = 10 if key == "wirtschaft" else 0
+                for topic in fg.CAT_TOPICS[key]:
+                    self.assertLessEqual(abs(topics[topic] - value - plus), spread + 1)
+                self.assertLessEqual(abs(state.staff_values("alt1")[key] - value - plus), 1)
+            self.assertEqual(topics, fg.GameState(state.history, self.content)
+                             .staff_topics("alt1"))
+
+    def test_lernen_durch_kundentickets(self):
+        with TempDB() as db:
+            game, staff_id = self._hired(db)
+            template = self.content["firma"]["tickets"]["vorlagen"][0]
+            topic = template["thema"]
+            before = game.state.staff_topics(staff_id)[topic]
+            state = self._day_end(game, {"tickets": [
+                {"ticket": "kt1:a", "vorlage": template["id"], "an": staff_id,
+                 "name": "X", "erfolg": True, "geld": 60},
+                {"ticket": "kt1:b", "vorlage": template["id"], "an": staff_id,
+                 "name": "X", "erfolg": False, "geld": 0}]})
+            rule = self.content["firma"]["lernen"]
+            amount = rule["ticket_erfolg"] / (2.0 if before >= rule["halb_ab"] else 1.0)
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic],
+                                   min(90, before + amount))
+            self.assertEqual(len([item for item in state.learn_log
+                                  if item[5] == "ticket"]), 1)   # Fehlschlag: nichts
+
+    def test_lernen_ab_schwelle_halb(self):
+        with TempDB() as db:
+            self.content["firma"]["lernen"]["halb_ab"] = 0
+            game, staff_id = self._hired(db)
+            template = self.content["firma"]["tickets"]["vorlagen"][0]
+            topic = template["thema"]
+            before = game.state.staff_topics(staff_id)[topic]
+            state = self._day_end(game, {"tickets": [
+                {"ticket": "kt1:a", "vorlage": template["id"], "an": staff_id,
+                 "name": "X", "erfolg": True, "geld": 60}]})
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic], before + 1)
+
+    def test_lernen_durch_routine(self):
+        with TempDB() as db:
+            game, staff_id = self._hired(db)
+            rule = self.content["firma"]["lernen"]
+            topics = game.state.staff_topics(staff_id)
+            best = fg.strongest_topics(topics, 1)[0]
+            payload = None
+            for _ in range(rule["routine_tage"]):
+                payload = game.end_day()
+            after = game.state.staff_topics(staff_id)
+            amount = rule["routine_plus"] / (2.0 if topics[best] >= rule["halb_ab"] else 1.0)
+            self.assertAlmostEqual(after[best], min(90, topics[best] + amount))
+            if int(after[best]) > int(topics[best]):
+                self.assertEqual(payload["firma"]["gelernt"][0]["thema"], best)
+                self.assertIn("Dazugelernt", fg.firm_day_text(payload["firma"]))
+
+    def test_ticket_chance_rechnet_mit_thema(self):
+        with TempDB() as db:
+            game, staff_id = self._hired(db)
+            ticket = game.state.customer_tickets()[0]
+            topic = ticket["thema"]
+            self.assertIn(topic, fg.CAT_TOPICS[ticket["cat"]])
+            levels = {ticket["cat"]: 10, topic: 80}
+            options = fg.ticket_candidates(game.state, ticket, levels, self.content)
+            self.assertEqual(options[0]["wert"], 80)
+            self.assertEqual(options[1]["wert"],
+                             game.state.staff_topic_value(staff_id, topic))
+            self.assertIn(fg.TOPIC_SHORT[topic], fg.ticket_line(ticket))
+
+    def test_lernen_durch_projekt(self):
+        with TempDB() as db:
+            helper = ProjekteTest()
+            helper.content, helper.task = self.content, self.task
+            game, project = ProjekteTest._won(helper, db)
+            staff_id = next(iter(game.state.staff))
+            topic = fg.project_topic(project, self.content)
+            self.assertIn(topic, fg.CAT_TOPICS[project["cat"]])
+            before = game.state.staff_topics(staff_id)[topic]
+            state = self._day_end(game, {"projekte": [
+                {"projekt": project["projekt"], "tag": game.state.day, "punkte": 999,
+                 "fertig": True, "verzug": 0, "geld": 0,
+                 "beitraege": [{"an": staff_id, "name": "X", "punkte": 3}]}]})
+            rule = self.content["firma"]["lernen"]
+            amount = (rule["projekt_fertig"] + rule["projekt_puenktlich"]) / (
+                2.0 if before >= rule["halb_ab"] else 1.0)
+            self.assertAlmostEqual(state.staff_topics(staff_id)[topic],
+                                   min(90, before + amount))
 
 
 class ProjekteTest(unittest.TestCase):
@@ -2755,10 +2918,10 @@ class GebaeudeAusbauTest(unittest.TestCase):
             staff_id = fg.applicants(game.state, self.content)[0]["id"]
             game.hire(staff_id)
             rules = self.content["firma"]["weiterbildung"]
-            offer = fg.training_offer(game.state, staff_id, "netzwerk", self.content)
+            offer = fg.training_offer(game.state, staff_id, "ipv4", self.content)
             self.assertEqual((offer["preis"], offer["tage"]), (rules["preis"], rules["tage"]))
             game.build_room("schulung")
-            offer = fg.training_offer(game.state, staff_id, "netzwerk", self.content)
+            offer = fg.training_offer(game.state, staff_id, "ipv4", self.content)
             self.assertEqual(offer["preis"], fg.discounted(rules["preis"], 30))
             self.assertEqual(offer["tage"], rules["tage"] - 1)
 

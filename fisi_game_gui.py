@@ -2548,6 +2548,8 @@ class FirmView(ScrollArea):
         self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
         self.tab = "auftraege"
         self.training_for = None     # Mitarbeiter, fuer den gerade ein Fach gewaehlt wird
+        self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
+        self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
         self.name_entry = None
         self.offer_for = None        # Anfrage, die gerade kalkuliert wird
         self.markup = None           # gewaehlter Gewinnzuschlag
@@ -2597,7 +2599,7 @@ class FirmView(ScrollArea):
 
     def _choose(self, tab):
         self.tab = tab
-        self.training_for = None
+        self.training_for = self.training_cat = None
         self.offer_for = self.assign_for = self.team_for = None
         self.render()
 
@@ -2710,11 +2712,11 @@ class FirmView(ScrollArea):
         limits = fg.ticket_rules()
         make_label(box.body, "Verteile die Tickets an deine Leute oder übernimm selbst "
                    "welche (höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
-                   "%d Ticket pro Tag, die Chance hängt vom Wert im Fachbereich ab."
+                   "%d Ticket pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
                    % (limits["spieler_max"], limits["mitarbeiter_max"]), font=F["small"],
                    fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 6))
-        levels = self.game.knowledge()
+        levels = self.game.firm_levels()
         for ticket in tickets:
             self._ticket_row(box.body, state, ticket, levels)
 
@@ -2864,13 +2866,14 @@ class FirmView(ScrollArea):
             return
         NeoButton(buttons, "Abbrechen", lambda: self._pick_ticket(None), kind="ghost",
                   height=32, font=F["small_bold"]).pack()
-        make_label(text, "WER ÜBERNIMMT?", font=F["label"], fg=C["muted"]).pack(
+        caption = "Wer übernimmt? (Wert in %s)" % fg.TOPIC_SHORT.get(ticket.get("thema"), "")
+        make_label(text, caption.upper(), font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(10, 2))
         for option in fg.ticket_candidates(state, ticket, levels):
             line = _frame(text)
             line.pack(anchor="w", pady=2)
             button = NeoButton(line, "%s · %s %d · Chance %d %%" % (
-                option["name"], CATEGORY_SHORT[fg.CAT_NAME[ticket["cat"]]], option["wert"],
+                option["name"], fg.TOPIC_SHORT.get(ticket.get("thema"), ""), option["wert"],
                 option["chance"]), lambda a=option["an"]: self._delegate(ticket["id"], a),
                 kind="pill", height=30, font=F["small_bold"])
             button.pack(side="left")
@@ -2905,7 +2908,7 @@ class FirmView(ScrollArea):
                        "Ausschreibung ab. Gewinnst du, stellst du hier das Team zusammen.",
                        font=F["body"], fg=C["text_soft"], wraplength=980, justify="left",
                        anchor="w").pack(anchor="w")
-        levels = self.game.knowledge()
+        levels = self.game.firm_levels()
         for project in running:
             self._project_row(card.body, state, project, levels)
 
@@ -3016,7 +3019,7 @@ class FirmView(ScrollArea):
                 line = _frame(text)
                 line.pack(anchor="w", pady=2)
                 button = NeoButton(line, "%s · %s %d · %s Punkte am Tag" % (
-                    option["name"], CATEGORY_SHORT[fg.CAT_NAME[project["cat"]]],
+                    option["name"], fg.TOPIC_SHORT.get(fg.project_topic(project), ""),
                     option["wert"], fg._num(option["punkte"])),
                     lambda a=option["an"]: self._toggle_member(pid, a),
                     kind="pill", height=30, font=F["small_bold"])
@@ -3114,6 +3117,17 @@ class FirmView(ScrollArea):
                    "bitweiche" else C["accent"], anchor="w").pack(anchor="w")
         make_label(text, fg.values_text(item["werte"]), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w", pady=(4, 0))
+        make_label(text, fg.strengths_text(item), font=F["small"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w")
+        if item["id"] in self.topics_for:
+            for key in fg.CAT_ORDER:
+                make_label(text, "%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
+                                            item["werte"][key]),
+                           font=F["small_bold"], fg=CATEGORY_COLOR[fg.CAT_NAME[key]],
+                           anchor="w").pack(anchor="w", pady=(4, 0))
+                make_label(text, fg.topics_text(item["themen"], key), font=F["small"],
+                           fg=C["text_dim"], wraplength=640, justify="left",
+                           anchor="w").pack(anchor="w")
         make_label(text, fg.staff_money_text(item), font=F["small"], fg=C["text_dim"],
                    anchor="w").pack(anchor="w")
         extra = fg.training_text(state, item) if not applicant else \
@@ -3143,48 +3157,89 @@ class FirmView(ScrollArea):
             text, buttons = self._person_row(card.body, item, state)
             NeoButton(buttons, "Weiterbilden", lambda i=item["id"]: self._pick_training(i),
                       kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
+            NeoButton(buttons, "Themen ausblenden" if item["id"] in self.topics_for
+                      else "Themen", lambda i=item["id"]: self._toggle_topics(i),
+                      kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))
             NeoButton(buttons, "Entlassen", lambda i=item: self._fire(i), kind="ghost",
                       height=30, font=F["small_bold"]).pack()
             if self.training_for == item["id"]:
                 self._training_choice(text, state, item)
 
     def _training_choice(self, parent, state, item):
+        """Weiterbildung (ab 0.38): erst den Fachbereich waehlen, dann ein Thema
+        oder den ganzen Fachbereich."""
         box = _frame(parent)
         box.pack(anchor="w", pady=(8, 0))
-        make_label(box, "Weiterbildung in welchem Fachbereich?", font=F["small_bold"],
-                   fg=C["text"], anchor="w").pack(anchor="w")
+        rules = fg.firm_rules()["weiterbildung"]
+        cat = self.training_cat
+        make_label(box, "Weiterbildung in welchem Fachbereich?" if cat is None else
+                   "Weiterbildung %s: ein Thema oder der ganze Fachbereich?"
+                   % CATEGORY_SHORT[fg.CAT_NAME[cat]], font=F["small_bold"], fg=C["text"],
+                   anchor="w").pack(anchor="w")
         row = _frame(box)
         row.pack(anchor="w", pady=(4, 0))
         for key in fg.CAT_ORDER:
-            offer = fg.training_offer(state, item["id"], key)
-            button = NeoButton(row, "%s (%s)" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
-                                                 _euro(offer["preis"])),
-                               lambda k=key: self._train(item["id"], k), kind="pill",
+            button = NeoButton(row, "%s %d" % (CATEGORY_SHORT[fg.CAT_NAME[key]],
+                                               item["werte"][key]),
+                               lambda k=key: self._pick_training_cat(k), kind="pill",
                                height=30, font=F["small_bold"])
             button.pack(side="left", padx=(0, 6))
+            button.set_active(key == cat)
+        if cat is None:
+            return
+        whole = rules["fachbereich"]
+        offers = [fg.training_offer(state, item["id"], cat)]
+        offers += [fg.training_offer(state, item["id"], topic) for topic in fg.CAT_TOPICS[cat]]
+        row = None
+        for index, offer in enumerate(offers):
+            if index % 4 == 0:
+                row = _frame(box)
+                row.pack(anchor="w", pady=(6 if index == 0 else 4, 0))
+            if offer["thema"]:
+                caption = "%s %d (%s)" % (fg.TOPIC_SHORT[offer["thema"]],
+                                          int(item["themen"][offer["thema"]]),
+                                          _euro(offer["preis"]))
+            else:
+                caption = "Ganzer Fachbereich (%s)" % _euro(offer["preis"])
+            target = offer["thema"] or cat
+            button = NeoButton(row, caption, lambda t=target: self._train(item["id"], t),
+                               kind="pill", height=30, font=F["small_bold"])
+            button.pack(side="left", padx=(0, 6))
             button.set_enabled(not offer["problem"])
-        rules = fg.firm_rules()["weiterbildung"]
-        make_label(box, "+%d im Fachbereich (höchstens %d), dauert %d Arbeitstage ohne "
-                   "Umsatz." % (rules["plus"], rules["max"], rules["tage"]),
-                   font=F["tiny"], fg=C["muted"], anchor="w").pack(anchor="w", pady=(4, 0))
-        problem = next((fg.training_offer(state, item["id"], key)["problem"]
-                        for key in fg.CAT_ORDER), "")
-        if problem and all(fg.training_offer(state, item["id"], key)["problem"]
-                           for key in fg.CAT_ORDER):
-            make_label(box, problem, font=F["tiny"], fg=C["yellow"], anchor="w").pack(
+        make_label(box, "Thema: +%d, dauert %d Arbeitstage. Ganzer Fachbereich: +%d auf alle "
+                   "Themen, dauert %d Arbeitstage. Höchstens %d, in der Zeit kein Umsatz."
+                   % (rules["plus"], offers[1]["tage"] if len(offers) > 1 else rules["tage"],
+                      whole["plus"], offers[0]["tage"], rules["max"]),
+                   font=F["tiny"], fg=C["muted"], wraplength=680, justify="left",
+                   anchor="w").pack(anchor="w", pady=(4, 0))
+        problems = [offer["problem"] for offer in offers]
+        if all(problems):
+            make_label(box, problems[0], font=F["tiny"], fg=C["yellow"], anchor="w").pack(
                 anchor="w")
 
     def _pick_training(self, staff_id):
         self.training_for = None if self.training_for == staff_id else staff_id
+        self.training_cat = None
         self.render(keep_scroll=True)
 
-    def _train(self, staff_id, cat):
+    def _pick_training_cat(self, cat):
+        self.training_cat = None if self.training_cat == cat else cat
+        self.render(keep_scroll=True)
+
+    def _toggle_topics(self, staff_id):
+        if staff_id in self.topics_for:
+            self.topics_for.discard(staff_id)
+        else:
+            self.topics_for.add(staff_id)
+        self.render(keep_scroll=True)
+
+    def _train(self, staff_id, target):
         try:
-            self.game.train(staff_id, cat)
+            self.game.train(staff_id, target)
         except ValueError as exc:
             self._error(exc)
             return
-        self.training_for = None
+        self.training_for = self.training_cat = None
         self._changed()
 
     def _fire(self, item):
