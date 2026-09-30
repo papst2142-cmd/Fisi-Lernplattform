@@ -16,7 +16,7 @@
     "Ab 0.40: 'lernen.deckel' ist die Grenze fuer das Lernen durch Arbeit je Thema - darueber (bis max) geht es nur noch mit Weiterbildung. Arbeit lernt langsamer (Ticket 1 Punkt, etwa ein Sechstel einer Themen-Weiterbildung), Weiterbildungen bringen weniger und dauern laenger.",
     "Ab 0.38 'weiterbildung': preis/tage/plus gelten fuer ein Thema, 'fachbereich' fuer alle Themen eines Fachbereichs (plus je Thema). aufschlag kommt je bisheriger Weiterbildung der Person dazu (beide Arten).",
     "Ab 0.43 'macken': jede Macke hat plus (Staerke, wirkt immer voll) und minus (Schwaeche, wirkt je nach Stufe mit personal.macken.stufen Prozent). Wirkungen: umsatz/projekt/lernen in Prozent, chance in Prozentpunkten (chance_netzwerk, chance_hardware, chance_talbahn nur bei passenden Tickets), team_projekt (Prozent fuers ganze Projektteam), team_lernen (Punkte fuer die anderen beim Projektabschluss), kz_erfolg/kz_fehlschlag (Kundenzufriedenheit), urlaub/krank/konflikt (Prozent haeufiger), weiterbildung_tage, stimmung_team (Erholung pro Tag fuer alle), stimmung_fehlschlag (Stimmung minus nach verpatztem Ticket). 'kollege' = nur fuer diesen Bitweiche-Wechsler.",
-    "Ab 0.43 'personal': Stimmung je Mitarbeiter (start, erholt sich um erholung pro Feierabend Richtung ziel; unter tief weniger Leistung, unter kritisch nach kuendigung_nach Feierabenden Kuendigung). krankheit.chance und urlaub.chance in Prozent je Mitarbeiter und Feierabend, konflikt.chance je Feierabend fuer die Firma. Macken schwaechen sich alle abschwaechen_tage Arbeitstage und per Coaching um eine Stufe ab (nie unter Stufe 1)."
+    "Ab 0.43 'personal': Stimmung je Mitarbeiter (start, erholt sich um erholung pro Feierabend Richtung ziel; unter tief weniger Leistung, unter kritisch nach kuendigung_nach Feierabenden Kuendigung). krankheit.chance und urlaub.chance in Prozent je Mitarbeiter und Feierabend, konflikt.chance je Feierabend fuer die Firma. Macken schwaechen sich alle abschwaechen_tage Arbeitstage und per Coaching um eine Stufe ab (nie unter Stufe 1). urlaub.abstand_firma: so viele Arbeitstage mindestens zwischen zwei Urlaubsanfragen in der ganzen Firma (hoechstens eine pro Feierabend)."
   ],
   "gruendung": {
     "kosten": 15000,
@@ -2457,11 +2457,12 @@
       "kritisch": 20,
       "kuendigung_nach": 3
     },
-    "krankheit": {"chance": 1.5, "tage_min": 2, "tage_max": 4},
+    "krankheit": {"chance": 1, "tage_min": 2, "tage_max": 4},
     "urlaub": {
       "ab_tagen": 15,
-      "chance": 4,
+      "chance": 2,
       "abstand": 10,
+      "abstand_firma": 4,
       "vorlauf": 5,
       "tage_min": 3,
       "tage_max": 5,

@@ -5561,9 +5561,15 @@ def personal_events(state, day, content=None):
                            "von": tomorrow, "bis": tomorrow + days})
     sick = {item["id"] for item in result if item["art"] == PERSONAL_SICK}
     rule = rules["urlaub"]
+    # Kleine Story-Elemente: in der ganzen Firma hoechstens eine Anfrage pro
+    # Feierabend und dazwischen ein paar Arbeitstage Ruhe
+    last = max([tag for tag, item in state.personal_log
+                if item.get("art") == PERSONAL_VACATION] or [-1000])
     for staff_id in present:
         hired = int(state.staff[staff_id].get("tag", 0) or 0)
-        if staff_id in sick or day - hired < int(rule["ab_tagen"]):
+        if staff_id in sick or day - hired < int(rule["ab_tagen"]) or \
+                day - last < int(rule.get("abstand_firma", 0)) or \
+                any(item["art"] == PERSONAL_VACATION for item in result):
             continue
         asked = [tag for tag, item in state.personal_log
                  if item.get("art") == PERSONAL_VACATION and item.get("id") == staff_id]
