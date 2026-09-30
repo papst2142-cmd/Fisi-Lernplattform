@@ -3294,6 +3294,47 @@ def _apply_window_icon(root):
         pass
 
 
+class LazyViews(dict):
+    """Die Ansichten des Hauptfensters (ab 0.48): Jede wird erst beim ersten
+    Zugriff aufgebaut (views["quiz"], views.get("quiz")). built() liefert eine
+    Ansicht nur, wenn es sie schon gibt. Die Schluessel sind immer alle
+    Ansichten, auch die noch nicht aufgebauten."""
+
+    def __init__(self, parent, app, classes):
+        super().__init__()
+        self._parent = parent
+        self._app = app
+        self._classes = dict(classes)
+
+    def __missing__(self, key):
+        cls = self._classes[key]      # KeyError bei unbekannter Ansicht
+        view = cls(self._parent, self._app)
+        view.grid(row=0, column=0, sticky="nsew")
+        dict.__setitem__(self, key, view)
+        return view
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def built(self, key):
+        return dict.get(self, key)
+
+    def __iter__(self):
+        return iter(self._classes)
+
+    def keys(self):
+        return self._classes.keys()
+
+    def __contains__(self, key):
+        return key in self._classes
+
+    def __len__(self):
+        return len(self._classes)
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -3344,20 +3385,20 @@ class FISIApp:
         self.view_area.rowconfigure(0, weight=1)
         self.view_area.columnconfigure(0, weight=1)
 
-        self.views = {}
-        for key, cls in (("dashboard", DashboardView), ("cards", CardsView),
-                         ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
-                         ("scenarios", ScenarioView),
-                         ("testproject", ProjectView), ("notebook", NotebookView),
-                         ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
-                         ("kunde", CustomerView), ("zuhause", HomeView),
-                         ("firma", FirmView), ("filiale", BranchView),
-                         ("reise", JourneyView),
-                         ("progress", ProgressView),
-                         ("settings", SettingsView), ("search", SearchView)):
-            view = cls(self.view_area, self)
-            view.grid(row=0, column=0, sticky="nsew")
-            self.views[key] = view
+        # Ab 0.48 wird eine Ansicht erst beim ersten Oeffnen aufgebaut. Das
+        # beschleunigt den Start und vor allem den Farbwechsel, bei dem sonst
+        # alle Ansichten auf einmal neu gezeichnet werden muessten.
+        self.views = LazyViews(self.view_area, self, (
+            ("dashboard", DashboardView), ("cards", CardsView),
+            ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
+            ("scenarios", ScenarioView),
+            ("testproject", ProjectView), ("notebook", NotebookView),
+            ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
+            ("kunde", CustomerView), ("zuhause", HomeView),
+            ("firma", FirmView), ("filiale", BranchView),
+            ("reise", JourneyView),
+            ("progress", ProgressView),
+            ("settings", SettingsView), ("search", SearchView)))
 
         self.current = None
 
@@ -3367,13 +3408,59 @@ class FISIApp:
         if self._recoloring:
             return  # Ein Klick waehrend des Umbaus wird ignoriert
         self._recoloring = True
+        started = time.monotonic()
+        overlay = self._show_busy()
         try:
-            self._recolor(preset_id, background_id)
+            self._recolor(preset_id, background_id, overlay)
         finally:
+            # Die Meldung bleibt mindestens kurz stehen, damit sie nicht nur
+            # aufblitzt, und verschwindet erst, wenn alles neu gezeichnet ist.
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                time.sleep(rest)
+            self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
 
-    def _recolor(self, preset_id, background_id):
+    def _show_busy(self):
+        """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
+        deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
+        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
+        overlay = tk.Frame(self.root, bg=C["bg"], cursor="watch")
+        overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        card = ctk.CTkFrame(overlay, fg_color=C["card"], corner_radius=px(18),
+                            border_width=1, border_color=C["border_hi"])
+        card.place(relx=0.5, rely=0.45, anchor="center")
+        ring = tk.Canvas(card, width=px(56), height=px(56), bg=C["card"],
+                         highlightthickness=0, bd=0)
+        ring._photo = tk_photo(ring_image(56, 6, 0.7, mix(C["accent"], C["card"], 0.35),
+                                          C["accent"], C["ring_bg"]), px(56), px(56))
+        ring.create_image(px(28), px(28), image=ring._photo)
+        ring.pack(pady=(px(26), px(10)))
+        make_label(card, fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+                   bg=C["card"]).pack(padx=px(40))
+        make_label(card, fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"], bg=C["card"],
+                   wraplength=px(440), justify="center").pack(padx=px(40),
+                                                               pady=(px(6), px(26)))
+        overlay.lift()
+        try:
+            overlay.grab_set()
+        except tk.TclError:
+            pass  # Ohne sichtbares Fenster (Starttest) gibt es keinen grab
+        self.root.update_idletasks()
+        self.root.update()
+        return overlay
+
+    def _hide_busy(self, overlay):
+        try:
+            overlay.grab_release()
+            overlay.destroy()
+        except tk.TclError:
+            pass
+        self.root.update_idletasks()
+        self._cancel_orphaned_timers()
+
+    def _recolor(self, preset_id, background_id, overlay=None):
         if preset_id:
             fisi_theme.save_preset(preset_id)
         if background_id:
@@ -3392,6 +3479,8 @@ class FISIApp:
         self.show_view(current)
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
         old.lift()
+        if overlay is not None:
+            overlay.lift()   # die Meldung bleibt ganz oben
         self.root.update_idletasks()
         self.root.update()
         # Auf einen Schlag ausblenden, erst danach (unsichtbar) abbauen.
@@ -3502,7 +3591,7 @@ class FISIApp:
     def show_unlocks(self):
         """Neu erreichte Abzeichen zeigen (ab 0.46): grosse als Meilenstein-
         Moment ueber dem Fenster, kleinere als kurzer Hinweis unten."""
-        view = self.views.get("game") if hasattr(self, "views") else None
+        view = self.views.built("game") if hasattr(self, "views") else None
         game = getattr(view, "game", None)
         if game is None or not game.unlocked:
             return
@@ -3552,12 +3641,12 @@ class FISIApp:
             self.views[self.current].on_show()
 
     def on_close(self, final_sync=True):
-        quiz = self.views.get("quiz")
+        quiz = self.views.built("quiz")
         if quiz is not None:
             quiz.stop_timer()
         # Aufgedeckte, aber nicht bewertete Loesungen als angesehen speichern
         for key in ("cards", "ap1scenarios", "scenarios", "testproject"):
-            view = self.views.get(key)
+            view = self.views.built(key)
             if view is not None:
                 view._flush()
         self.root.withdraw()

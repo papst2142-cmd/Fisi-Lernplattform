@@ -2092,13 +2092,54 @@ class FISIMobileApp:
 
     def change_color(self, preset_id=None, background_id=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
-        neu aufbauen."""
-        if preset_id:
-            fisi_theme.save_preset(preset_id)
-        if background_id:
-            fisi_theme.save_background(background_id)
-        self._build_ui()
-        self.show_tab("settings")
+        neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
+        angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
+        doppelten Wechsel und keine halb umgefaerbten Seiten."""
+        if getattr(self, "_recoloring", False):
+            return  # Ein Tippen waehrend des Umbaus wird ignoriert
+        self._recoloring = True
+        overlay = self._busy_overlay()
+        self.page.overlay.append(overlay)
+        self.page.update()
+        self.page.run_task(self._recolor, preset_id, background_id, overlay)
+
+    async def _recolor(self, preset_id, background_id, overlay):
+        started = time.monotonic()
+        try:
+            # Kurz warten, damit die Meldung sicher gezeichnet ist
+            await asyncio.sleep(0.05)
+            if preset_id:
+                fisi_theme.save_preset(preset_id)
+            if background_id:
+                fisi_theme.save_background(background_id)
+            self._build_ui()
+            self.show_tab("settings")
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                await asyncio.sleep(rest)
+        finally:
+            if overlay in self.page.overlay:
+                self.page.overlay.remove(overlay)
+            self._recoloring = False
+            self.page.update()
+
+    @staticmethod
+    def _busy_overlay():
+        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
+        card = ft.Container(
+            content=ft.Column([
+                ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
+                                bgcolor=C["ring_bg"]),
+                ft.Text(fisi_theme.BUSY_TITLE, size=18, weight=ft.FontWeight.BOLD,
+                        color=C["text"], text_align=ft.TextAlign.CENTER),
+                ft.Text(fisi_theme.BUSY_TEXT, size=13, color=C["text_dim"],
+                        text_align=ft.TextAlign.CENTER),
+            ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
+            bgcolor=C["card"], border_radius=18, border=ft.Border.all(1, C["border_hi"]))
+        return ft.Container(content=card, left=0, top=0, right=0, bottom=0,
+                            alignment=ft.Alignment.CENTER, bgcolor=C["bg"],
+                            on_click=lambda _e: None)
 
     # -- Kopfzeile und Navigation ------------------------------------------
 

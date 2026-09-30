@@ -102,6 +102,11 @@ PRESETS = [
      "hero": ("#7F1D1D", "#831843")},
 ]
 PRESET_IDS = [item["id"] for item in PRESETS]
+
+# Meldung waehrend des Farbwechsels (ab 0.48, PC und Handy gleich)
+BUSY_TITLE = "Farben werden angewendet"
+BUSY_TEXT = "Bitte warten, die Oberfläche wird mit den neuen Farben aufgebaut …"
+BUSY_MIN_SECONDS = 0.6
 current_preset = DEFAULT_PRESET
 
 # Lesbarkeit (WCAG-Kontrast, geprueft in test_spiel.FarbenTest): Texte und
