@@ -18,7 +18,7 @@
 
 #define MyAppName "FISI Lernplattform"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.36"
+  #define MyAppVersion "0.37"
 #endif
 #define MyAppExeName "FISI-Lernplattform.exe"
 
