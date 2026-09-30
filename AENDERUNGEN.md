@@ -4,6 +4,29 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.45
+
+- **Spiel: Weltkarte als Startansicht.** Das Spiel beginnt jetzt mit einer
+  Karte der Stadt aus der Vogelperspektive. Alle freigeschalteten Orte
+  stehen darauf als Gebäude. Ein Klick (am Handy ein Tipp) auf ein Gebäude
+  oder sein Schild öffnet den Ort. Neue Orte tragen ein „Neu“, offene
+  Tickets stehen als Zahl am Gebäude. Am Handy kannst du mit zwei Fingern
+  vergrößern.
+- **„Liste“ statt Karte:** Ein Knopf schaltet auf eine kompakte Liste der
+  Orte mit Vorschaubildern um. Jedes Gerät merkt sich deine Wahl.
+- **Außenansichten:** Jedes Gebäude hat ein eigenes Modell, auch als
+  Vorschaubild in den Ansichten. Dein Gewerbehof wächst mit jeder
+  Ausbaustufe und zeigt Serverraum und Lager, deine Wohnung sieht je nach
+  Wohnungstyp anders aus.
+- **Zweiter Standort: Filiale in Lindenau.** Ab Gewerbehof-Stufe 4,
+  6 Mitarbeitern und 40 Firmentagen kannst du unter Firma > Gebäude eine
+  Filiale mit eigenem Namen eröffnen (30.000 €, 4 Plätze) und später
+  ausbauen (15.000 €, 7 Plätze). Sie bringt eine Kundenanfrage mehr pro
+  Tag und 3 % Preisvorteil bei der Talbahn-Verwaltung. Unter Mitarbeiter
+  versetzt du Leute zwischen Gewerbehof und Filiale.
+- **Bitweiche als Mitbewerber:** Nach der Gründung ist Bitweiche auf der
+  Karte grau markiert. Ein Klick zeigt deine Bilanz gegen sie.
+
 ## 0.44
 
 - **Spiel, eigene Firma: Rückhol-Angebote.** Viele Bewerber waren vorher
