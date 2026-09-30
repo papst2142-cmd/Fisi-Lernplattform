@@ -5402,6 +5402,32 @@ def topics_text(topics, cat):
                       for topic in CAT_TOPICS[cat])
 
 
+# Skill-Balken der Mitarbeiter (ab 0.47): Balken von 0 bis SKILL_BAR_MAX
+SKILL_BAR_MAX = 100
+
+
+def skill_bars(item):
+    """Fachbereiche einer Person fuer die Balken (PC und Handy gleich):
+    [{"cat", "name", "wert", "anteil" (0 bis 1), "themen": [{"thema",
+    "name", "wert", "anteil", "grenze" (Lern-Grenze erreicht)}]}]"""
+    topics = item.get("themen") or {}
+    values = item.get("werte") or cat_values(topics)
+    cap = learn_cap()
+    result = []
+    for key in CAT_ORDER:
+        value = int(values.get(key, 0))
+        rows = []
+        for topic in CAT_TOPICS[key]:
+            number = int(topics.get(topic, 0))
+            rows.append({"thema": topic, "name": TOPIC_SHORT[topic], "wert": number,
+                         "anteil": max(0.0, min(1.0, number / float(SKILL_BAR_MAX))),
+                         "grenze": number >= cap})
+        result.append({"cat": key, "name": CATEGORY_SHORT[CAT_NAME[key]], "wert": value,
+                       "anteil": max(0.0, min(1.0, value / float(SKILL_BAR_MAX))),
+                       "themen": rows})
+    return result
+
+
 LEARN_REASONS = {"ticket": "Kundenticket", "projekt": "Projekt", "routine": "Routinearbeit"}
 
 
