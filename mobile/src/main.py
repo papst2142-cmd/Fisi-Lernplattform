@@ -1654,6 +1654,9 @@ class SettingsScreen(Screen):
     crumbs = ("SYSTEM", "OPTIONEN")
 
     def build(self):
+        # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
+        self.lbl_difficulty = ui.text("", size=14, color=C["text_soft"],
+                                      weight=ft.FontWeight.BOLD)
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
         self.lbl_update = ui.text("", size=13, color=C["text_dim"])
         self.lbl_update.visible = False
@@ -1720,6 +1723,7 @@ class SettingsScreen(Screen):
                                           kind="danger")]),
             ], accent=C["red"]),
             ui.Card("Spiel", [
+                self.lbl_difficulty,
                 ui.label("Wohnungen"),
                 ui.PillGroup(fisi_game.RENT_CHOICES, initial=1 if fisi_game.rent_mode() else 0,
                              on_change=lambda key: fisi_game.set_rent_mode(key == "miete")),
@@ -1852,12 +1856,23 @@ class SettingsScreen(Screen):
             self.lbl_update.value = "Version %s ist verfügbar." % info.version
             self.lbl_update.color = C["accent"]
 
+    def on_show(self):
+        self._show_difficulty()
+
+    def _show_difficulty(self):
+        try:
+            state = self.app.screens["game"].game.reload()
+        except (KeyError, AttributeError):
+            return
+        self.lbl_difficulty.value = fisi_game.difficulty_options_text(state)
+
     def reset_game(self, _event=None):
         def confirmed():
             if fisi_game.Game(self.db).reset():
                 self.toast("Der Spielstand wurde zurückgesetzt.", C["green"])
                 self.app.screens["game"].room = None
                 self.app.notify_progress()
+                self._show_difficulty()
 
         self.app.confirm("Spielstand zurücksetzen",
                          "Wirklich den gesamten Spielstand des Lernspiels löschen? Der "

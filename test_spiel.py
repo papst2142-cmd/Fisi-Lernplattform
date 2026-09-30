@@ -317,8 +317,10 @@ class AbgleichTest(unittest.TestCase):
             self.assertEqual(state.profile["name"], "Nico")
             # Doppelter Abgleich zaehlt nichts doppelt
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
-            # Profil und (ab 0.46) das Abzeichen "Erster Arbeitstag"
-            self.assertEqual(len(handy.game_events()), 2)
+            # Profil, (ab 0.46) das Abzeichen "Erster Arbeitstag" und (ab 0.47)
+            # der Schwierigkeitsgrad
+            self.assertEqual(len(handy.game_events()), 3)
+            self.assertEqual(state.level, fg.DIFF_NORMAL)
 
     def test_zuruecksetzen_wird_abgeglichen(self):
         with TempDB() as pc, TempDB() as handy:
@@ -4926,9 +4928,10 @@ class ErfolgeTest(unittest.TestCase):
         self.assertEqual(fg._validate_achievements(fg.GAME), [])
         rules = fg.achievement_rules()
         stages = [stage for rule in rules["erfolge"] for stage in rule["stufen"]]
-        self.assertEqual(len(rules["erfolge"]), 32)
-        self.assertEqual(len(stages), 72)
-        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 25)
+        # Ab 0.47: zwei Story-Abzeichen dazu (je eine Stufe mit Moment)
+        self.assertEqual(len(rules["erfolge"]), 34)
+        self.assertEqual(len(stages), 74)
+        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 27)
         self.assertEqual(len(rules["bestwerte"]), 14)
         for rule in rules["erfolge"]:
             self.assertIn(rule["bild"], fg.BADGE_PICTURES)

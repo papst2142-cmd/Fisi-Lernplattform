@@ -1788,6 +1788,8 @@ class GameView(ScrollArea):
             ChoiceRow(form, fg.APPEARANCE[part], look[part],
                       lambda value, p=part: changed(p, value)).pack(anchor="w", pady=(6, 10))
 
+        if state.profile is None and state.difficulty is None:
+            self._build_difficulty_choice(card.body)
         buttons = _frame(card.body)
         buttons.pack(fill="x", pady=(8, 0))
         NeoButton(buttons, "Los geht's" if state.profile is None else "Speichern",
@@ -1796,9 +1798,32 @@ class GameView(ScrollArea):
             NeoButton(buttons, "Abbrechen", self._cancel_edit, kind="ghost").pack(
                 side="left", padx=10)
 
+    def _build_difficulty_choice(self, parent):
+        """Ab 0.47: Schwierigkeitsgrad beim Spielstart (fest fuer den Durchgang)."""
+        levels = fg.difficulty_levels()
+        texts = {key: text for key, _name, text in levels}
+        chosen = self.draft.setdefault("schwierigkeit", fg.difficulty_default())
+        box = _frame(parent)
+        box.pack(fill="x", pady=(4, 0))
+        make_label(box, "SCHWIERIGKEITSGRAD", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        hint = make_label(box, texts.get(chosen, ""), font=F["small"], fg=C["text_soft"],
+                          wraplength=900, justify="left", anchor="w")
+
+        def picked(value):
+            self.draft["schwierigkeit"] = value
+            hint.configure(text=texts.get(value, ""))
+
+        ChoiceRow(box, [(key, name) for key, name, _text in levels], chosen,
+                  picked).pack(anchor="w", pady=(6, 6))
+        hint.pack(anchor="w")
+        make_label(box, "Gilt für den ganzen Spielstand. Ändern geht nur mit „Spielstand "
+                   "zurücksetzen“. Die Lernplattform ist davon nicht betroffen.",
+                   font=F["small"], fg=C["muted"], wraplength=900, justify="left",
+                   anchor="w").pack(anchor="w", pady=(2, 6))
+
     def _save_profile(self, name, look):
         try:
-            self.game.set_profile(name, look)
+            self.game.set_profile(name, look, self.draft.get("schwierigkeit"))
         except ValueError as exc:
             messagebox.showwarning("Hinweis", str(exc))
             return
@@ -2956,7 +2981,8 @@ class FirmView(ScrollArea):
 
     def _build_head(self, state):
         card = Card(self.content, title="Eigene Firma", accent=C["green"],
-                    subtitle="gegründet an Arbeitstag %d" % state.firm["tag"])
+                    subtitle="gegründet an Arbeitstag %d · %s" % (
+                        state.firm["tag"], fg.difficulty_badge_text(state)))
         card.pack(fill="x")
         make_label(card.body, state.firm["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
@@ -3967,7 +3993,7 @@ class FirmView(ScrollArea):
                        fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
                 anchor="w", pady=(8, 0))
 
-        if state.firm:
+        if fg.tax_active(state):
             self._build_tax(state)
 
         lost = fg.lost_to(state)
@@ -4640,7 +4666,8 @@ class JourneyView(ScrollArea):
 
     def _build_numbers(self, state, stats):
         card = Card(self.content, title="Rückblick", accent=C["accent2"],
-                    subtitle="%s · Arbeitstag %d" % (state.profile["name"], state.day))
+                    subtitle="%s · Arbeitstag %d · %s" % (state.profile["name"], state.day,
+                                                          fg.difficulty_badge_text(state)))
         card.pack(fill="x")
         grid = _frame(card.body)
         grid.pack(fill="x")

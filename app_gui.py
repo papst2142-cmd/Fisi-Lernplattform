@@ -2775,6 +2775,10 @@ class SettingsView(View):
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
         game = Card(self.content, title="Spiel", accent=C["accent2"])
+        # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
+        self.lbl_difficulty = make_label(game.body, "", font=F["body_bold"],
+                                         fg=C["text_soft"], anchor="w")
+        self.lbl_difficulty.pack(anchor="w", pady=(0, 10))
         game.pack(fill="x", pady=(14, 0))
         make_label(game.body, "WOHNUNGEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
         ChoiceRow(game.body, fisi_game.RENT_CHOICES,
@@ -2876,6 +2880,16 @@ class SettingsView(View):
             self.lbl_update.configure(text="Version %s ist verfügbar." % info.version,
                                       text_color=C["accent"])
 
+    def on_show(self):
+        self._show_difficulty()
+
+    def _show_difficulty(self):
+        try:
+            state = self.app.views["game"].game.reload()
+        except (KeyError, AttributeError):
+            return
+        self.lbl_difficulty.configure(text=fisi_game.difficulty_options_text(state))
+
     def reset_game(self):
         if not messagebox.askyesno("Spielstand zurücksetzen",
                                    "Wirklich den gesamten Spielstand des "
@@ -2888,6 +2902,7 @@ class SettingsView(View):
             self.app.views["game"].ticket = None
             self.app.views["game"].room = None
             self.app.notify_progress()
+            self._show_difficulty()
 
     def reset_records(self):
         if not messagebox.askyesno("Bestenliste löschen", fisi_game.RECORDS_ASK):

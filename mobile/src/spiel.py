@@ -1565,13 +1565,36 @@ class GameScreen:
                                             fg.GAME["gebaeude"]["kunde"]),
                         size=11, color=C["muted"]),
             ], accent=C["accent2"]))
-        result += [ui.Card("Deine Spielfigur", controls, accent=C["accent"]),
-                   ft.Row(buttons, spacing=10)]
+        result.append(ui.Card("Deine Spielfigur", controls, accent=C["accent"]))
+        if state.profile is None and state.difficulty is None:
+            result.append(self._difficulty_card())
+        result.append(ft.Row(buttons, spacing=10))
         return result
+
+    def _difficulty_card(self):
+        """Ab 0.47: Schwierigkeitsgrad beim Spielstart (fest fuer den Durchgang)."""
+        levels = fg.difficulty_levels()
+        texts = {key: text for key, _name, text in levels}
+        keys = [key for key, _name, _text in levels]
+        chosen = self.draft.setdefault("schwierigkeit", fg.difficulty_default())
+        hint = ui.text(texts.get(chosen, ""), size=13, color=C["text_soft"])
+
+        def picked(value):
+            self.draft["schwierigkeit"] = value
+            hint.value = texts.get(value, "")
+
+        return ui.Card("Schwierigkeitsgrad", [
+            ui.PillGroup([(key, name) for key, name, _text in levels],
+                         initial=keys.index(chosen) if chosen in keys else 0,
+                         on_change=picked),
+            hint,
+            ui.text("Gilt für den ganzen Spielstand. Ändern geht nur mit „Spielstand "
+                    "zurücksetzen“. Die Lernplattform ist davon nicht betroffen.",
+                    size=12, color=C["muted"])], accent=C["accent2"])
 
     def _save_profile(self, name, look):
         try:
-            self.game.set_profile(name, look)
+            self.game.set_profile(name, look, self.draft.get("schwierigkeit"))
         except ValueError as exc:
             self.toast(str(exc), C["yellow"])
             return
@@ -2267,7 +2290,9 @@ class GameScreen:
             grid.append(ft.Row([self._stat_tile(*tile) for tile in tiles[index:index + 2]],
                                spacing=8))
         controls = [tabs, ui.Card("Rückblick", grid, accent=C["accent2"],
-                            subtitle="%s · Tag %d" % (state.profile["name"], state.day))]
+                            subtitle="%s · Tag %d · %s" % (
+                                state.profile["name"], state.day,
+                                fg.difficulty_badge_text(state)))]
         chart = ui.LineChart(height=160)
         chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
         controls.append(ui.Card("Tickets je Arbeitstag", [
@@ -2825,7 +2850,8 @@ class GameScreen:
             ui.text("Konto: %s" % euro(state.money), size=13,
                     color=C["text_dim"] if state.money >= 0 else C["red"]),
             ui.text(fg.firm_summary(state), size=13, color=C["text_dim"]),
-        ], accent=C["green"], subtitle="seit Tag %d" % state.firm["tag"])
+        ], accent=C["green"], subtitle="seit Tag %d · %s" % (
+            state.firm["tag"], fg.difficulty_badge_text(state)))
 
     def _firm_founding(self, state):
         missing = state.founding_missing()
@@ -3336,7 +3362,7 @@ class GameScreen:
         if not lines:
             lines.append(ui.text("Bisher hast du keinen Auftrag an einen Mitbewerber verloren.",
                                  size=14, color=C["text_soft"]))
-        if state.firm:
+        if fg.tax_active(state):
             result.insert(2, self._tax_card(state))
         result.append(ui.Card("Gegen wen verloren", lines, accent=C["pink"],
                               subtitle="an Mitbewerber"))

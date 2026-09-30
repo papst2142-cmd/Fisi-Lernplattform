@@ -199,5 +199,27 @@
          "rahmenbedingungen": ["Bankenaufsicht: ISO 27001 Pflicht", "Microsoft-Partner für die Windows-Server", "Keine Ausfälle zu Geschäftszeiten"]}
       ]
     }
+  },
+  "schwierigkeit": {
+    "_hinweis": "Ab 0.47: Schwierigkeitsgrad je Durchgang, gewaehlt beim Spielstart (Ereignis schwierigkeit_gewaehlt, fest bis zum Zuruecksetzen). Normal = alle Regeln wie beschrieben. Bei Einfach gilt, was hier steht: true/false schaltet eine Mechanik ab, Zahlen sind Faktoren auf die Normal-Werte. Lernplattform, Wissensstand, Aufgaben und Miete sind nie betroffen.",
+    "voreinstellung": "normal",
+    "stufen": [
+      {"id": "einfach", "name": "Einfach", "text": "Die Wirtschaft verzeiht mehr: keine Umsatzsteuer, keine Mahnungen, keine Kündigungen, kein Abschwung. Ideal, wenn das Lernen im Vordergrund steht."},
+      {"id": "normal", "name": "Normal", "text": "Die volle Wirtschaftssimulation mit Umsatzsteuer, Mahnstufen, Konjunktur, Gegenwind und allem, was im Personal passieren kann."}
+    ],
+    "einfach": {
+      "umsatzsteuer": false,
+      "mahnstufen": false,
+      "abschwung": false,
+      "gegenwind": false,
+      "rueckhol": false,
+      "kuendigung": false,
+      "krankheit_faktor": 0.5,
+      "konflikt_faktor": 0.5,
+      "urlaub_abgelehnt_faktor": 0.5,
+      "macken_schwaeche_faktor": 0.5,
+      "fehlerkosten_faktor": 0.5,
+      "reputation_verlust_faktor": 0.5
+    }
   }
 }
