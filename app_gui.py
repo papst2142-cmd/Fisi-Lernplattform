@@ -98,6 +98,14 @@ NAV_ITEMS = [
     ("settings", "gear", "Optionen", None),
 ]
 
+# Dieselben Symbole wie in der Handy-App (ab 0.39), siehe fisi_widgets.SYMBOLS
+NAV_SYMBOLS = {
+    "dashboard": "dashboard", "cards": "style", "quiz": "track_changes",
+    "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
+    "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
+    "progress": "insights", "settings": "settings",
+}
+
 # Symbole der Fachbereiche im Untermenue der Seitenleiste
 CATEGORY_NAV_ICON = {
     CATEGORIES[0]: "node",
@@ -484,7 +492,8 @@ BLANK_INDICATOR = Image.new("RGBA", (16, 80), (0, 0, 0, 0))
 class NavRow(ctk.CTkFrame):
     """Eine abgerundete Zeile in der Seitenleiste."""
 
-    def __init__(self, parent, icon, text, command, sub=False, expandable=False):
+    def __init__(self, parent, icon, text, command, sub=False, expandable=False,
+                 symbol=None):
         super().__init__(parent, fg_color=C["sidebar"], corner_radius=10,
                          cursor="hand2")
         self.command = command
@@ -498,7 +507,8 @@ class NavRow(ctk.CTkFrame):
         pad_left = 20 if sub else 8
         self.icon_canvas = IconCanvas(self, icon, size=20 if sub else 22,
                                       icon_scale=0.62 if sub else 0.72,
-                                      parent_bg=C["sidebar"], cursor="hand2")
+                                      parent_bg=C["sidebar"], cursor="hand2",
+                                      symbol=symbol)
         self.icon_canvas.pack(side="left", padx=(pad_left, 10), pady=8 if sub else 9)
 
         self.text_label = ctk.CTkLabel(self, text=text, anchor="w", height=0,
@@ -604,7 +614,7 @@ class Sidebar(ctk.CTkFrame):
             expandable = bool(sub_items)
             row = NavRow(self, icon, text,
                          command=lambda k=key: self._on_nav(k),
-                         expandable=expandable)
+                         expandable=expandable, symbol=NAV_SYMBOLS.get(key))
             row.pack(fill="x", padx=12, pady=1)
             self.rows[key] = row
 

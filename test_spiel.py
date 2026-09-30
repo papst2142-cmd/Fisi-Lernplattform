@@ -502,6 +502,25 @@ class ReiseTest(unittest.TestCase):
         self.assertEqual(fg.journey_stats(state)["tickets"], 0)
 
 
+class SymbolSchriftTest(unittest.TestCase):
+    """Die Seitenleiste am PC nutzt ab 0.39 die Symbole der Handy-App."""
+
+    def test_alle_symbole_in_der_schrift(self):
+        try:
+            from PIL import ImageFont
+            import fisi_widgets as fw
+        except Exception as error:      # ohne Oberflaechen-Pakete
+            self.skipTest(str(error))
+        font = ImageFont.truetype(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                               fw.SYMBOL_FONT_FILE), 24)
+        for name in fw.SYMBOLS:
+            self.assertIsNotNone(fw.symbol_image(name, 24, "#FFFFFF").getbbox(), name)
+        self.assertTrue(font)
+        import app_gui
+        self.assertLessEqual(set(app_gui.NAV_SYMBOLS.values()), set(fw.SYMBOLS))
+        self.assertEqual(set(app_gui.NAV_SYMBOLS), {item[0] for item in app_gui.NAV_ITEMS})
+
+
 class GrundrissUndAvatarTest(unittest.TestCase):
     def test_raum_treffer(self):
         for item in fg.GAME["gebaeude"]["raeume"]:
