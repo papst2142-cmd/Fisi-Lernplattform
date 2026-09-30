@@ -144,9 +144,12 @@ def theme_block(theme):
 
 LIST_PAGE_SIZE = 15
 FILTER_ALL = "Alle"
+# Status-Filter der Listen - seit 0.39 die drei Zustaende je Aufgabe (siehe
+# "Lernstand je Frage" weiter unten)
 STATUS_OPEN = "Offen"
-STATUS_DONE = "Bearbeitet"
-STATUS_FILTERS = [FILTER_ALL, STATUS_OPEN, STATUS_DONE]
+STATUS_PRACTICE = "Zu üben"
+STATUS_DONE = "Abgeschlossen"
+STATUS_FILTERS = [FILTER_ALL, STATUS_OPEN, STATUS_PRACTICE, STATUS_DONE]
 
 
 def group_values(items, field):
@@ -160,22 +163,23 @@ def group_values(items, field):
 
 
 def filter_positions(items, query="", category=FILTER_ALL, group_field=None,
-                     group=FILTER_ALL, status=FILTER_ALL, done=()):
+                     group=FILTER_ALL, status=FILTER_ALL, statuses=None):
     """Positionen der Eintraege, die zu Suchtext und Filtern passen.
 
     query durchsucht Titel und das Gruppenfeld, category ist ein Fachbereich
     (CAT_...), group ein Wert von group_field (z.B. ein Thema), status einer
-    aus STATUS_FILTERS und done die Menge der bearbeiteten Positionen."""
+    aus STATUS_FILTERS und statuses {position: (status, stufe)} der Lernstand
+    der bereits bearbeiteten Positionen (fehlend = offen)."""
     needle = (query or "").strip().lower()
+    statuses = statuses or {}
     positions = []
     for position, item in enumerate(items):
         if category != FILTER_ALL and item.get("cat") != category:
             continue
         if group_field and group != FILTER_ALL and item.get(group_field) != group:
             continue
-        if status == STATUS_OPEN and position in done:
-            continue
-        if status == STATUS_DONE and position not in done:
+        if status != FILTER_ALL and \
+                Q_STATUS_NAME[statuses.get(position, (Q_OPEN, ""))[0]] != status:
             continue
         if needle:
             haystack = " ".join(str(item.get(key, "")) for key in
@@ -204,9 +208,19 @@ EVENT_TABLES = {
                      "duration_seconds"),
     "card_events": ("timestamp", "category", "question", "mode", "correct"),
     "quiz_answers": ("timestamp", "category", "question", "correct"),
-    "scenario_events": ("timestamp", "scenario_index", "title", "theme"),
-    "project_events": ("timestamp", "project_index", "title", "category"),
-    "ap1_events": ("timestamp", "scenario_index", "title", "theme"),
+    "scenario_events": ("timestamp", "scenario_index", "title", "theme", "correct"),
+    "project_events": ("timestamp", "project_index", "title", "category", "correct"),
+    "ap1_events": ("timestamp", "scenario_index", "title", "theme", "correct"),
+}
+
+# Spalten, die erst spaeter dazukamen (ab 0.39: Selbsteinschaetzung
+# "Gewusst"/"Nicht gewusst" bei AP1, AP2 und Testprojekten). Eintraege von
+# Geraeten mit aelterer Version haben sie nicht - sie gelten dann als leer
+# (NULL = angesehen, aber nicht bewertet).
+OPTIONAL_COLUMNS = {
+    "scenario_events": ("correct",),
+    "project_events": ("correct",),
+    "ap1_events": ("correct",),
 }
 
 # Tabellen des Lernspiels (fisi_game.py). Bewusst getrennt von EVENT_TABLES:
@@ -311,7 +325,8 @@ class DBManager:
                 timestamp TEXT NOT NULL,
                 scenario_index INTEGER NOT NULL,
                 title TEXT NOT NULL,
-                theme TEXT NOT NULL
+                theme TEXT NOT NULL,
+                correct INTEGER
             )
             """,
             """
@@ -320,7 +335,8 @@ class DBManager:
                 timestamp TEXT NOT NULL,
                 project_index INTEGER NOT NULL,
                 title TEXT NOT NULL,
-                category TEXT NOT NULL
+                category TEXT NOT NULL,
+                correct INTEGER
             )
             """,
             """
@@ -329,7 +345,8 @@ class DBManager:
                 timestamp TEXT NOT NULL,
                 scenario_index INTEGER NOT NULL,
                 title TEXT NOT NULL,
-                theme TEXT NOT NULL
+                theme TEXT NOT NULL,
+                correct INTEGER
             )
             """,
             """
@@ -371,6 +388,11 @@ class DBManager:
                         "WHERE uid IS NULL" % table)
             cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s_uid ON %s (uid)"
                         % (table, table))
+        for table, extra in OPTIONAL_COLUMNS.items():
+            columns = [row[1] for row in cur.execute("PRAGMA table_info(%s)" % table)]
+            for column in extra:
+                if column not in columns:
+                    cur.execute("ALTER TABLE %s ADD COLUMN %s INTEGER" % (table, column))
         cur.execute("CREATE TABLE IF NOT EXISTS sync_meta ("
                     " key TEXT PRIMARY KEY, value TEXT)")
 
@@ -416,25 +438,31 @@ class DBManager:
             (self._now(), category, question, 1 if correct else 0, self._uid()),
             commit=True, default=False)
 
-    def log_scenario(self, index, title, theme):
+    @staticmethod
+    def _flag(correct):
+        return None if correct is None else (1 if correct else 0)
+
+    def log_scenario(self, index, title, theme, correct=None):
+        """correct: Selbsteinschaetzung nach dem Aufdecken (ab 0.39), None =
+        nur angesehen."""
         self._execute(
-            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._uid()),
+            "INSERT INTO scenario_events (timestamp, scenario_index, title, theme, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?)",
+            (self._now(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
-    def log_project(self, index, title, category):
+    def log_project(self, index, title, category, correct=None):
         self._execute(
-            "INSERT INTO project_events (timestamp, project_index, title, category, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), index, title, category, self._uid()),
+            "INSERT INTO project_events (timestamp, project_index, title, category, correct,"
+            " uid) VALUES (?, ?, ?, ?, ?, ?)",
+            (self._now(), index, title, category, self._flag(correct), self._uid()),
             commit=True, default=False)
 
-    def log_ap1(self, index, title, theme):
+    def log_ap1(self, index, title, theme, correct=None):
         self._execute(
-            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme, uid)"
-            " VALUES (?, ?, ?, ?, ?)",
-            (self._now(), index, title, theme, self._uid()),
+            "INSERT INTO ap1_events (timestamp, scenario_index, title, theme, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (self._now(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
     def log_game_event(self, kind, data, device=""):
@@ -583,6 +611,28 @@ class DBManager:
         rows = self._execute(
             "SELECT DISTINCT %s FROM %s" % (column, table), fetch="all", default=[]) or []
         return {row[0] for row in rows}
+
+    def question_results(self):
+        """Alle Antworten je Frage bzw. Aufgabe, aelteste zuerst (ab 0.39):
+        {(quelle, schluessel): [(timestamp, True/False/None), ...]}.
+        quelle ist eine aus SOURCES, schluessel der Fragetext (Karteikarte,
+        Quiz) bzw. die Position in der Liste (AP1, AP2, Testprojekt).
+        None heisst angesehen, aber nicht bewertet."""
+        queries = [
+            (SRC_CARD, "SELECT timestamp, question, correct FROM card_events"),
+            (SRC_QUIZ, "SELECT timestamp, question, correct FROM quiz_answers"),
+            (SRC_AP1, "SELECT timestamp, scenario_index, correct FROM ap1_events"),
+            (SRC_AP2, "SELECT timestamp, scenario_index, correct FROM scenario_events"),
+            (SRC_PROJECT, "SELECT timestamp, project_index, correct FROM project_events"),
+        ]
+        results = {}
+        for source, sql in queries:
+            rows = self._execute(sql + " ORDER BY timestamp, id", fetch="all",
+                                 default=[]) or []
+            for timestamp, key, correct in rows:
+                value = None if correct is None else bool(correct)
+                results.setdefault((source, key), []).append((timestamp, value))
+        return results
 
     def quiz_success_rate(self):
         """Erfolgsquote ueber alle je beantworteten Quizfragen in Prozent."""
@@ -1199,6 +1249,225 @@ def ap1_theme_totals():
         block = theme_block(scenario["theme"])
         totals[block] = totals.get(block, 0) + 1
     return totals
+
+
+# ============================================================================
+#  LERNSTAND JE FRAGE (AB 0.39)
+# ============================================================================
+#
+# Jede Frage bzw. Aufgabe des Fragenpools hat genau einen von drei Zustaenden.
+# Er wird - wie der Wissensstand - bei Bedarf aus den gespeicherten Antworten
+# berechnet und nie selbst gespeichert. Damit gilt er nach einem Abgleich
+# automatisch auch auf dem anderen Geraet.
+#
+#   Offen          noch nie bewertet (oder erst einmal richtig, ohne Fehler)
+#   Zu ueben       zuletzt falsch (rot) oder nach einem Fehler erst einmal
+#                  richtig (gelb)
+#   Abgeschlossen  die letzten DONE_STREAK Antworten richtig; ein spaeterer
+#                  Fehler setzt die Frage wieder auf "Zu ueben"
+
+SRC_CARD = "karte"
+SRC_QUIZ = "quiz"
+SRC_AP1 = "ap1"
+SRC_AP2 = "ap2"
+SRC_PROJECT = "projekt"
+SOURCES = [SRC_CARD, SRC_QUIZ, SRC_AP1, SRC_AP2, SRC_PROJECT]
+SOURCE_NAME = {SRC_CARD: "Karteikarte", SRC_QUIZ: "Quizfrage", SRC_AP1: "AP1-Szenario",
+               SRC_AP2: "AP2-Szenario", SRC_PROJECT: "Testprojekt"}
+SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1 Szenarien",
+                 SRC_AP2: "AP2 Szenarien", SRC_PROJECT: "Testprojekte"}
+
+Q_OPEN = "offen"
+Q_PRACTICE = "ueben"
+Q_DONE = "fertig"
+LEVEL_RED = "rot"
+LEVEL_YELLOW = "gelb"
+Q_STATUS_NAME = {Q_OPEN: "Offen", Q_PRACTICE: "Zu üben", Q_DONE: "Abgeschlossen"}
+# Auswahl der Status-Reiter: (Wert, Anzeige)
+Q_STATUS_TABS = [(FILTER_ALL, "Alle"), (Q_OPEN, "Offen"), (Q_PRACTICE, "Zu üben"),
+                 (Q_DONE, "Abgeschlossen")]
+DONE_STREAK = 2
+# Beim normalen Weiterlernen: auf NEW_PER_REPEAT unbearbeitete Fragen folgt
+# eine Wiederholung (zuerst "Zu ueben", dann angefangene, dann abgeschlossene)
+NEW_PER_REPEAT = 4
+
+
+def question_status(results):
+    """(status, stufe) aus den Antworten einer Frage, aelteste zuerst.
+    results: True/False/None oder (timestamp, wert). stufe ist bei "Zu ueben"
+    LEVEL_RED oder LEVEL_YELLOW, sonst ""."""
+    values = [item[1] if isinstance(item, tuple) else item for item in results]
+    values = [bool(value) for value in values if value is not None]
+    if len(values) >= DONE_STREAK and all(values[-DONE_STREAK:]):
+        return Q_DONE, ""
+    if values and not values[-1]:
+        return Q_PRACTICE, LEVEL_RED
+    if False in values:
+        return Q_PRACTICE, LEVEL_YELLOW
+    return Q_OPEN, ""
+
+
+class StatusBook:
+    """Lernstand aller Fragen, einmal aus der Datenbank berechnet.
+    Nach neuen Antworten einfach neu anlegen (StatusBook(db))."""
+
+    def __init__(self, db=None, results=None):
+        self.results = results if results is not None else \
+            (db.question_results() if db is not None else {})
+        self._cache = {}
+
+    def status(self, source, key):
+        """(status, stufe) einer Frage."""
+        value = self._cache.get((source, key))
+        if value is None:
+            value = self._cache[(source, key)] = question_status(
+                self.results.get((source, key), ()))
+        return value
+
+    def touched(self, source, key):
+        """Wurde die Frage schon einmal bearbeitet (auch nur angesehen)?"""
+        return bool(self.results.get((source, key)))
+
+    def last_time(self, source, key):
+        entries = self.results.get((source, key))
+        return entries[-1][0] if entries else ""
+
+    def streak(self, source, key):
+        """Richtige Antworten in Folge (zuletzt)."""
+        count = 0
+        for _timestamp, value in reversed(self.results.get((source, key), ())):
+            if value is None:
+                continue
+            if not value:
+                break
+            count += 1
+        return count
+
+    def counts(self, source, keys):
+        """{status: Anzahl} fuer die Fragen keys."""
+        result = {Q_OPEN: 0, Q_PRACTICE: 0, Q_DONE: 0}
+        for key in keys:
+            result[self.status(source, key)[0]] += 1
+        return result
+
+    def matches(self, source, key, status):
+        return status in (None, FILTER_ALL) or self.status(source, key)[0] == status
+
+    def preferred_order(self, source, keys, rng=None):
+        """Reihenfolge fuers normale Weiterlernen: unbearbeitete Fragen
+        zuerst, nach je NEW_PER_REPEAT davon eine Wiederholung zur Festigung.
+        Wiederholt wird zuerst, was zu ueben ist (rot vor gelb), dann
+        Angefangenes, zuletzt Abgeschlossenes. Mit rng werden die Gruppen
+        gemischt (Pruefungstrainer), sonst bleibt die Reihenfolge von keys."""
+        fresh, repeat = [], []
+        for key in keys:
+            if not self.touched(source, key):
+                fresh.append(key)
+            else:
+                status, level = self.status(source, key)
+                rank = {(Q_PRACTICE, LEVEL_RED): 0, (Q_PRACTICE, LEVEL_YELLOW): 1,
+                        (Q_OPEN, ""): 2}.get((status, level), 3)
+                repeat.append((rank, key))
+        if rng is not None:
+            rng.shuffle(fresh)
+            rng.shuffle(repeat)
+        repeat = [key for _rank, key in sorted(repeat, key=lambda item: item[0])]
+        ordered = []
+        while fresh or repeat:
+            ordered += fresh[:NEW_PER_REPEAT]
+            fresh = fresh[NEW_PER_REPEAT:]
+            if repeat:
+                ordered.append(repeat.pop(0))
+            if not fresh:
+                ordered += repeat
+                repeat = []
+        return ordered
+
+
+def position_statuses(book, source):
+    """{position: (status, stufe)} der bearbeiteten AP1-/AP2-Szenarien bzw.
+    Testprojekte (fuer filter_positions)."""
+    return {key: book.status(src, key) for (src, key) in book.results if src == source}
+
+
+def status_label(book, source, key):
+    """(Text, Farbschluessel) fuer die Anzeige an einer Frage. Farbschluessel:
+    "offen", LEVEL_RED, LEVEL_YELLOW oder "fertig"."""
+    status, level = book.status(source, key)
+    streak = book.streak(source, key)
+    if status == Q_DONE:
+        return "Abgeschlossen · %dx in Folge richtig" % streak, "fertig"
+    if status == Q_PRACTICE:
+        if level == LEVEL_RED:
+            return "Zu üben · zuletzt falsch", LEVEL_RED
+        return "Zu üben · %d von %d richtig" % (streak, DONE_STREAK), LEVEL_YELLOW
+    if streak:
+        return "Offen · %d von %d richtig" % (streak, DONE_STREAK), "offen"
+    if book.touched(source, key):
+        return "Offen · angesehen, noch nicht bewertet", "offen"
+    return "Offen · noch nicht bearbeitet", "offen"
+
+
+def source_items(source):
+    """[(schluessel, eintrag)] aller Fragen einer Quelle."""
+    if source == SRC_CARD:
+        return [(card["q"], card) for card in KARTEIKARTEN]
+    if source == SRC_QUIZ:
+        return [(question["q"], question) for question in QUIZ_QUESTIONS]
+    data = {SRC_AP1: AP1_SZENARIEN, SRC_AP2: SZENARIEN, SRC_PROJECT: PROJEKTARBEITEN}[source]
+    return list(enumerate(data))
+
+
+def item_title(source, item):
+    return item["q"] if source in (SRC_CARD, SRC_QUIZ) else item["title"]
+
+
+def model_answer(source, item):
+    """Musterantwort zum Nachlesen im Notizblock."""
+    if source == SRC_CARD:
+        return item["a_full"]
+    if source == SRC_QUIZ:
+        return "Richtig: %s\n%s" % (item["a"], item.get("exp", ""))
+    if source == SRC_PROJECT:
+        return "\n".join("%d. %s\n   Lösungsansatz: %s" % (number, task, hint)
+                         for number, (task, hint) in
+                         enumerate(zip(item["aufgaben"], item["hinweise"]), start=1))
+    return item["solution"]
+
+
+def notebook_entries(book, status=Q_PRACTICE, category=FILTER_ALL, topic=FILTER_ALL,
+                     sources=None):
+    """Eintraege des Notizblocks: alle Fragen mit dem Status status (Standard
+    "Zu ueben"), gefiltert nach Fachbereich und Thema. Rot vor gelb, darin
+    die zuletzt bearbeiteten zuerst. Jeder Eintrag ist ein dict mit source,
+    key, item, title, level, time."""
+    entries = []
+    for source in sources or SOURCES:
+        for key, item in source_items(source):
+            if category != FILTER_ALL and item.get("cat") != category:
+                continue
+            if topic != FILTER_ALL and item.get("thema") != topic:
+                continue
+            value, level = book.status(source, key)
+            if status not in (None, FILTER_ALL) and value != status:
+                continue
+            entries.append({"source": source, "key": key, "item": item,
+                            "title": item_title(source, item), "status": value,
+                            "level": level, "time": book.last_time(source, key)})
+    entries.sort(key=lambda entry: entry["time"], reverse=True)
+    entries.sort(key=lambda entry: 0 if entry["level"] == LEVEL_RED else 1)
+    return entries
+
+
+def notebook_summary(book, category=FILTER_ALL, topic=FILTER_ALL):
+    """{quelle: {status: Anzahl}} ueber den ganzen Fragenpool."""
+    summary = {}
+    for source in SOURCES:
+        keys = [key for key, item in source_items(source)
+                if (category == FILTER_ALL or item.get("cat") == category)
+                and (topic == FILTER_ALL or item.get("thema") == topic)]
+        summary[source] = book.counts(source, keys)
+    return summary
 
 
 def ihk_note(percentage):

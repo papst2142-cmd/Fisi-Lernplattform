@@ -30,7 +30,7 @@ import sqlite3
 import urllib.error
 import urllib.request
 
-from fisi_core import GAME_TABLES, SYNC_TABLES
+from fisi_core import GAME_TABLES, OPTIONAL_COLUMNS, SYNC_TABLES
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
@@ -273,8 +273,13 @@ def merge_into_local(db, remote):
             names = ["uid"] + list(remote_columns.get(table) or columns)
             sql = "INSERT OR IGNORE INTO %s (uid, %s) VALUES (%s)" % (
                 table, ", ".join(columns), ", ".join("?" * (len(columns) + 1)))
+            optional = OPTIONAL_COLUMNS.get(table, ())
             for row in remote_tables.get(table) or []:
                 record = dict(zip(names, row))
+                # Eintraege aelterer Versionen haben spaeter dazugekommene
+                # Spalten noch nicht - die bleiben dann leer
+                for column in optional:
+                    record.setdefault(column, None)
                 if not record.get("uid") or any(c not in record for c in columns):
                     continue
                 if cutoff and str(record["timestamp"]) <= cutoff:

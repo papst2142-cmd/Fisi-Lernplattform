@@ -443,6 +443,28 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
             canvas.create_oval(px_ - dot, py_ - dot, px_ + dot, py_ + dot,
                                **fill_opts)
 
+    elif name == "notebook":      # Notizblock (Block mit Ringen und Zeilen)
+        canvas.create_rectangle(left + size * 0.12, top + size * 0.1, right - size * 0.12,
+                                bottom, fill="", **line_opts)
+        for dx in (0.32, 0.5, 0.68):
+            px_ = left + size * dx
+            canvas.create_line(px_, top, px_, top + size * 0.22, **opts)
+        for dy in (0.46, 0.64, 0.82):
+            py_ = top + size * dy
+            canvas.create_line(left + size * 0.3, py_, right - size * 0.3, py_, **opts)
+
+    elif name == "journey":       # Reise (Weg mit Start und Ziel)
+        dot = size * 0.1
+        canvas.create_oval(left + size * 0.08 - dot, bottom - size * 0.12 - dot,
+                           left + size * 0.08 + dot, bottom - size * 0.12 + dot, **fill_opts)
+        canvas.create_line(left + size * 0.08, bottom - size * 0.12, left + size * 0.5,
+                           bottom - size * 0.2, left + size * 0.3, y, left + size * 0.72,
+                           top + size * 0.34, smooth=True, **opts)
+        canvas.create_line(right - size * 0.2, top + size * 0.44, right - size * 0.2, top,
+                           **opts)
+        canvas.create_polygon(right - size * 0.2, top, right + size * 0.08, top + size * 0.1,
+                              right - size * 0.2, top + size * 0.22, **fill_opts)
+
     elif name == "search":
         radius = size * 0.32
         canvas.create_oval(x - radius - size * 0.1, y - radius - size * 0.1,
