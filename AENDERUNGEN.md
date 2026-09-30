@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.46
+
+- **Spiel: Erfolge in der Reise.** Unter Spiel > Reise gibt es jetzt die
+  Reiter „Rückblick“ und „Erfolge“. Unter „Erfolge“ stehen 14 Bestwerte,
+  die über alle deine Spielstände zählen (z. B. höchster Kontostand,
+  größter Auftrag, meiste Mitarbeiter, Firma gegründet an Tag X), jeweils
+  mit dem Durchgang, in dem du sie erreicht hast.
+- **Abzeichen:** 32 Abzeichen mit Bronze-, Silber- und Goldstufen in den
+  Gruppen Karriere, Firma, Geld, Personal und Wissen. Offene Abzeichen
+  zeigen deinen Fortschritt und was du in früheren Durchgängen erreicht
+  hast. Ein Abzeichen bleibt geheim, bis du es entdeckst.
+- **Meilenstein-Moment:** Große Erfolge wie die Firmengründung, die
+  Filiale oder 100.000 € auf dem Konto werden mit einer eigenen Karte
+  gefeiert, samt „Zum ersten Mal erreicht!“ oder „Neuer Bestwert!“.
+  Kleinere Abzeichen erscheinen als kurzer Hinweis.
+- **Bestenliste bleibt erhalten:** Sie übersteht „Spielstand
+  zurücksetzen“ und „Alle Lerndaten löschen“ und wird zwischen PC und
+  Handy abgeglichen. Unter Optionen > Spiel kannst du sie mit „Bestenliste
+  löschen“ gezielt leeren. Ältere Spielstände bekommen ihre Abzeichen
+  beim ersten Öffnen still nachgetragen.
+
 ## 0.45
 
 - **Spiel: Weltkarte als Startansicht.** Das Spiel beginnt jetzt mit einer

@@ -116,6 +116,10 @@ EV_RECALL = "rueckhol_angebot"
 # Namen) und jeder weitere Ausbau der Filiale; Versetzen zwischen den Standorten
 EV_BRANCH = "filiale_ausgebaut"
 EV_TRANSFER = "mitarbeiter_versetzt"
+# Erfolge (ab 0.46): Abzeichen-Stufe erreicht. Berechnet wird alles aus dem
+# Spielstand, das Ereignis haelt nur fest, wann (und dass der Meilenstein-
+# Moment schon gezeigt wurde - auch auf dem anderen Geraet)
+EV_ACHIEVEMENT = "erfolg_freigeschaltet"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
                EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID, EV_ADS, EV_ADS_STOP,
@@ -287,6 +291,9 @@ def load_game_content(folder=None):
         "firma": read("firma") if os.path.exists(os.path.join(folder, "firma.json")) else {},
         # Weltkarte mit Orten und Gebaeude-Aussenmodellen (ab 0.45)
         "orte": read("orte") if os.path.exists(os.path.join(folder, "orte.json")) else {},
+        # Erfolge und Bestwerte (ab 0.46)
+        "erfolge": read("erfolge") if os.path.exists(os.path.join(folder, "erfolge.json"))
+        else {},
         # Die 50 Testprojekte aus dem Lernbereich (Kundenprojekte ab 0.35)
         "projektarbeiten": PROJEKTARBEITEN,
     }
@@ -592,6 +599,7 @@ def validate_game_content(content=None):
     problems += _validate_loans(content)
     problems += _validate_business(content)
     problems += _validate_world(content)
+    problems += _validate_achievements(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -3170,6 +3178,13 @@ class GameState:
         # Zweiter Standort (ab 0.45)
         self.branch = None         # {"name", "tag", "stufe"} ab der Eroeffnung
         self.staff_site = {}       # mitarbeiter-id -> SITE_BRANCH (sonst Hauptstandort)
+        # Erfolge (ab 0.46)
+        self.achievements = {}     # (erfolg, stufe) -> Ereignisdaten (fruehestes zaehlt)
+        self.staff_peak = 0        # meiste Mitarbeiter gleichzeitig
+        self.expand_days = {}      # Gebaeudestufe -> Arbeitstag des Ausbaus
+        self.mood_log = []         # (tag, mittlere Stimmung) je Feierabend ab 3 Mitarbeitern
+        self.dunning_peak = 0      # hoechste Mahnstufe seit der letzten 0
+        self.dunning_over = []     # hoechste Mahnstufe je ueberstandenem Mahnverfahren
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3179,6 +3194,10 @@ class GameState:
             today = today or self.days_done + 1
             if kind in FIRM_EVENTS:
                 self._apply_firm(kind, data, today)
+            if kind == EV_ACHIEVEMENT:
+                key = (data.get("erfolg"), int(data.get("stufe", 0) or 0))
+                if key[0] and key[1] and key not in self.achievements:
+                    self.achievements[key] = dict(data)
             if kind in (EV_SOLVED, EV_DEFERRED) and data.get("zwischenfall"):
                 self.seen_incidents.add(data.get("aufgabe"))
                 incident = task_by_id(data.get("aufgabe"), self.content) or {}
@@ -3269,6 +3288,9 @@ class GameState:
                 if self._live:
                     self._personal_day(today, firm.get("personal") or [])
                 self._live = False
+                if self.firm and len(self.staff) >= 3:
+                    self.mood_log.append((today, sum(self.mood_of(staff_id) for staff_id in
+                                                     self.staff) / float(len(self.staff))))
                 # Ab 0.44: Wer ein Rueckhol-Angebot angenommen hat, geht nach
                 # diesem Feierabend zurueck zum Mitbewerber
                 for staff_id, until in list(self.leaving.items()):
@@ -3328,6 +3350,7 @@ class GameState:
         if kind == EV_HIRED and data.get("id") and data["id"] not in self.staff:
             self.staff[data["id"]] = dict(data)
             self.ever_hired.add(data["id"])
+            self.staff_peak = max(self.staff_peak, len(self.staff))
             self.mood[data["id"]] = float(personal_rules(self.content)["stimmung"]["start"])
             if data.get("standort") == SITE_BRANCH:
                 self.staff_site[data["id"]] = SITE_BRANCH
@@ -3360,6 +3383,7 @@ class GameState:
             self._book(day, BOOK_TRAINING, data.get("geld", 0))
         elif kind == EV_EXPAND and int(data.get("stufe", 0)) == self.firm["stufe"] + 1:
             self.firm["stufe"] += 1
+            self.expand_days[self.firm["stufe"]] = day
             self.money += int(data.get("geld", 0))
             self._book(day, BOOK_BUILDING, data.get("geld", 0))
         elif kind == EV_ROOM and data.get("raum") not in self.rooms:
@@ -3517,6 +3541,7 @@ class GameState:
             # Hoechstens eine Stufe pro Feierabend, auch wenn mehreres platzt
             self.dunning = min(len(steps), self.dunning + 1)
             self.dunning_day = day
+            self.dunning_peak = max(self.dunning_peak, self.dunning)
             step = steps[self.dunning - 1]
             self._apply_reputation(step.get("reputation") or {})
             fee = int(step.get("gebuehr", 0))
@@ -3538,6 +3563,9 @@ class GameState:
             self.dunning -= 1
             self.dunning_day = day
             self.loan_log.append((day, "mahnstufe", "", {"stufe": self.dunning}))
+            if not self.dunning:
+                self.dunning_over.append(self.dunning_peak)
+                self.dunning_peak = 0
 
     # -- Umsatzsteuer und Werbung (ab 0.42) ---------------------------------------
 
@@ -4418,6 +4446,8 @@ class Game:
         self.device = device
         self.content = content or GAME
         self.state = None
+        self.unlocked = []         # neu erreichte Abzeichen-Stufen fuer die Anzeige (ab 0.46)
+        self._checking = False
         self.reload()
 
     def reload(self):
@@ -4440,6 +4470,69 @@ class Game:
     def _log(self, kind, data):
         self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device)
         self.reload()
+        if kind != EV_ACHIEVEMENT:
+            self.check_achievements(day_end=kind == EV_DAY_END)
+
+    # -- Erfolge und Bestenliste (ab 0.46) --------------------------------------
+
+    def records(self):
+        """Alle Zeilen der Bestenliste (ueber alle Spielstaende)."""
+        return self.db.records() if hasattr(self.db, "records") else []
+
+    def check_achievements(self, knowledge=None, day_end=False, force=False):
+        """Haelt neu erreichte Abzeichen-Stufen fest und schreibt die Bestenliste
+        fort. knowledge: Wissensstand je Thema (nur dann zaehlen die Wissen-
+        Abzeichen). Ein aelterer Spielstand, der noch gar keine Abzeichen hat,
+        bekommt sie still nachgetragen (ohne Meilenstein-Moment). Zurueck: neue
+        Stufen (unlock_info), die auch in self.unlocked landen."""
+        state = self.state
+        if self._checking or state is None or state.profile is None or not state.first_event:
+            return []
+        self._checking = True
+        try:
+            records = self.records()
+            found = new_achievements(state, knowledge, self.content)
+            silent = not state.achievements and state.days_done > 0
+            infos = []
+            if found:
+                day = max(1, state.days_done if day_end else state.day)
+                for rule, level in found:
+                    info = unlock_info(state, rule, level, records, self.content)
+                    self.db.log_game_event(EV_ACHIEVEMENT, json.dumps(
+                        {"erfolg": rule["id"], "stufe": level, "tag": day,
+                         "nachgetragen": silent}, ensure_ascii=False), self.device)
+                    if not silent:
+                        infos.append(info)
+                self.reload()
+            if hasattr(self.db, "log_record"):
+                for kind, key, value, data in record_rows(self.state, records, self.content,
+                                                          force):
+                    self.db.log_record(self.state.first_event, kind, key, value,
+                                       json.dumps(data, ensure_ascii=False))
+            self.unlocked += infos
+            return infos
+        finally:
+            self._checking = False
+
+    def check_knowledge(self):
+        """Wie check_achievements, dazu die Wissen-Abzeichen (Lernplattform)."""
+        return self.check_achievements(self.topic_knowledge())
+
+    def take_unlocks(self):
+        """Neue Stufen fuer die Anzeige abholen: je Abzeichen nur die hoechste,
+        Meilenstein-Momente zuerst."""
+        best = {}
+        for info in self.unlocked:
+            if info["erfolg"] not in best or info["stufe"] > best[info["erfolg"]]["stufe"]:
+                best[info["erfolg"]] = info
+        self.unlocked = []
+        return sorted(best.values(), key=lambda info: not info["moment"])
+
+    def reset_records(self):
+        """Bestenliste loeschen. Der laufende Spielstand traegt sich gleich neu ein."""
+        ok = self.db.reset_records()
+        self.check_achievements()
+        return ok
 
     def set_profile(self, name, appearance):
         name = (name or "").strip()[:30]
@@ -4901,7 +4994,10 @@ class Game:
         return self.set_project_team(project_id, team)
 
     def reset(self):
+        # Der Durchgang endet: seine Bestwerte vollstaendig in die Bestenliste
+        self.check_achievements(force=True)
         ok = self.db.reset_game()
+        self.unlocked = []
         self.reload()
         return ok
 
@@ -10586,6 +10682,19 @@ def journey(state, content=None):
                 add(tag, JOURNEY_FIRM, "ausbau", "Filiale ausgebaut: %s"
                     % stage.get("name", "Stufe %s" % data.get("stufe")),
                     "Ausbaustufe %s" % data.get("stufe"))
+        elif kind == EV_ACHIEVEMENT and not data.get("nachgetragen"):
+            # Ab 0.46: grosse Abzeichen (mit Meilenstein-Moment) stehen im Tagebuch
+            rule = achievement_rule(data.get("erfolg"), content)
+            level = int(data.get("stufe", 0) or 0)
+            if rule and 0 < level <= len(rule["stufen"]) and \
+                    rule["stufen"][level - 1].get("moment") and \
+                    (data.get("erfolg"), level) not in answered:
+                answered.add((data.get("erfolg"), level))
+                tier = rule["stufen"][level - 1]["stufe"]
+                add(tag, JOURNEY_CAREER if rule["gruppe"] in ("karriere", "wissen") else
+                    JOURNEY_FIRM, "erfolg", "Abzeichen: %s · %s" % (rule["name"],
+                                                                     TIER_NAMES[tier]),
+                    rule["text"])
         elif kind == EV_TRANSFER and data.get("id") in hired:
             add(tag, JOURNEY_FIRM, "versetzung", "Versetzt: %s" % hired[data["id"]],
                 "Arbeitet jetzt %s." % ("in der Filiale" if data.get("standort") == SITE_BRANCH
@@ -10755,6 +10864,886 @@ def journey_stats(state, content=None):
         "ansehen_tage": ["T%d" % day for day, _value in state.day_log[-30:]],
         "ansehen": [value for _day, value in state.day_log[-30:]],
     }
+
+
+# ============================================================================
+#  ERFOLGE UND BESTENLISTE (AB 0.46)
+# ============================================================================
+#
+# Abzeichen und Bestwerte werden - wie alles andere - aus dem Spielstand
+# berechnet (run_metrics). Das Ereignis erfolg_freigeschaltet haelt nur fest,
+# wann eine Stufe erreicht wurde. Die Bestenliste (Tabelle spiel_bestenliste)
+# gilt ueber alle Spielstaende ("Durchgaenge") und uebersteht das
+# Zuruecksetzen: Game schreibt dort nur hinein, wenn ein Wert im laufenden
+# Durchgang besser wird oder eine Stufe dazukommt.
+
+TIER_NAMES = {"bronze": "Bronze", "silber": "Silber", "gold": "Gold"}
+TIER_COLORS = {"bronze": "#D08A4E", "silber": "#D5DCE8", "gold": "#FACC15"}
+TIER_ORDER = ("bronze", "silber", "gold")
+# Kennzahlen, die Geld sind (fuer die Anzeige)
+EURO_METRICS = ("kontostand", "tagesumsatz", "groesster_auftrag")
+# Einnahmen der Firma an einem Arbeitstag (Bestwert und "Umsatzstark")
+FIRM_INCOME = (BOOK_REVENUE, BOOK_OFFERS, BOOK_TICKETS, BOOK_PROJECTS)
+# Summen ueber alle Durchgaenge (nicht als Bestwert angezeigt)
+RECORD_SUMS = ("diensttage",)
+REC_RUN = "durchgang"
+REC_BEST = "bestwert"
+REC_BADGE = "erfolg"
+# Die Anzeige rechnet den laufenden Durchgang immer live aus dem Spielstand.
+# In die Bestenliste kommt ein besserer Wert darum nur alle RECORD_EVERY
+# Arbeitstage (und vor dem Zuruecksetzen alles), damit sie klein bleibt.
+RECORD_EVERY = 20
+# Texte fuer die Optionen (PC und Handy gleich)
+RECORDS_HELP = ("Die Bestenliste unter Spiel > Reise > Erfolge sammelt Bestwerte und "
+                "Abzeichen über alle Spielstände. Sie bleibt beim Zurücksetzen des "
+                "Spielstands und beim Löschen der Lerndaten erhalten.")
+RECORDS_ASK = ("Wirklich die Bestenliste löschen? Bestwerte und Abzeichen früherer "
+               "Spielstände sind danach weg. Der laufende Spielstand trägt sich gleich "
+               "wieder ein.")
+KNOWLEDGE_GOAL = 70           # ab diesem Wissensstand gilt ein Thema als gekonnt
+MOOD_GOOD = 70                # "Guter Arbeitgeber": mittlere Stimmung ab diesem Wert
+# Kennzahlen, die Stufen zaehlen (Rang, Gebaeude): Fortschritt als Name der Stufe
+LEVEL_METRICS = ("rang", "gebaeude")
+FLAWLESS_MIN = 3              # "Fehlerfrei": so viele richtige Tickets am Tag mindestens
+
+# Alle Kennzahlen, die erfolge.json unter "wert" nennen darf
+RUN_METRICS = (
+    "profil", "tickets", "zwischenfaelle", "fehlerfrei_serie", "rang", "ansehen",
+    "wohnung_gekauft", "diensttage", "gegruendet", "mitarbeiter", "gebaeude", "filiale",
+    "zertifikate", "grossauftraege", "projekte", "angebote_serie", "mitbewerber_besiegt",
+    "kontostand", "tagesumsatz", "kredit_getilgt", "mahnung_vorbei", "mahnung_hoch_vorbei",
+    "steuer_serie", "stimmung_serie", "stimmung_max", "weiterbildungen", "experte",
+    "geschlichtet", "abwerbung_abgewehrt", "macke_gezaehmt", "themen_70", "fachbereiche_70",
+    "auftraege", "groesster_auftrag", "tage_gruendung", "tage_stufe5", "tage_filiale",
+)
+
+
+def achievement_rules(content=None):
+    return (content or GAME).get("erfolge") or {}
+
+
+def achievement_rule(achievement_id, content=None):
+    for rule in achievement_rules(content).get("erfolge") or []:
+        if rule["id"] == achievement_id:
+            return rule
+    return None
+
+
+def record_rule(key, content=None):
+    for rule in achievement_rules(content).get("bestwerte") or []:
+        if rule["id"] == key:
+            return rule
+    return None
+
+
+def _longest(flags):
+    """Laengste Serie von True in einer Folge."""
+    best = run = 0
+    for flag in flags:
+        run = run + 1 if flag else 0
+        best = max(best, run)
+    return best
+
+
+def run_metrics(state, knowledge=None, content=None):
+    """Alle Kennzahlen des laufenden Durchgangs (siehe RUN_METRICS). None =
+    (noch) nicht zu berechnen, z.B. ohne Firma oder ohne Wissensstand.
+    Unter "_texte" stehen Erklaerungen zu einzelnen Werten (groesster Auftrag)."""
+    content = content or state.content
+    m = {key: 0 for key in RUN_METRICS}
+    m["_texte"] = {}
+    m["profil"] = 1 if state.profile else 0
+    per_day = {}
+    seen = set()
+    offer_flags = []
+    for _timestamp, kind, data in state.history:
+        if kind == EV_SOLVED:
+            day = data.get("tag") if isinstance(data.get("tag"), int) else 0
+            bucket = per_day.setdefault(day, [0, 0])
+            bucket[0 if data.get("richtig") else 1] += 1
+            if data.get("zwischenfall"):
+                m["zwischenfaelle"] += 1 if data.get("richtig") else 0
+            elif data.get("richtig"):
+                m["tickets"] += 1
+        elif kind == EV_MOVE and data.get("wohnung") and not data.get("miete"):
+            m["wohnung_gekauft"] = 1
+        elif kind in (EV_OFFER_WON, EV_OFFER_LOST, EV_PROJECT_WON, EV_PROJECT_LOST):
+            key = data.get("anfrage") or data.get("projekt")
+            if key and key not in seen and state.firm:
+                seen.add(key)
+                offer_flags.append(kind in (EV_OFFER_WON, EV_PROJECT_WON))
+    # Fehlerfrei: jeder abgeschlossene Arbeitstag mit genug richtigen und keinem falschen
+    m["fehlerfrei_serie"] = _longest(
+        per_day.get(day, [0, 0])[0] >= FLAWLESS_MIN and not per_day.get(day, [0, 0])[1]
+        for day in range(1, state.days_done + 1))
+    names = [rank["name"] for rank in content["balancing"]["raenge"]]
+    m["rang"] = max([names.index(rank) for _day, rank in state.rank_log if rank in names] + [0])
+    m["ansehen"] = int(round(max([value for _day, value in state.day_log] +
+                                 [state.mean_reputation])))
+    m["diensttage"] = state.days_done
+    m["kontostand"] = max([money for _day, money in state.balances] + [0])
+    # Firma
+    firm = state.firm
+    m["gegruendet"] = 1 if firm else 0
+    m["mitarbeiter"] = state.staff_peak
+    stage = firm["stufe"] if firm else 0
+    rooms = (firm_rules(content).get("sonderraeume") or {}).get("raeume") or []
+    m["gebaeude"] = (0 if stage < 3 else 1 if stage < 5 else
+                     3 if all(item["id"] in state.rooms for item in rooms) else 2)
+    m["filiale"] = state.branch["stufe"] if state.branch else 0
+    m["zertifikate"] = sum(1 for data in state.certs.values()
+                           if int(data.get("bis_tag", 0)) <= state.day)
+    won = [item for item in list(state.offers.values()) + list(state.project_offers.values())
+           if item.get("gewonnen")]
+    m["grossauftraege"] = sum(1 for item in state.project_offers.values()
+                              if item.get("gewonnen") and
+                              str(item.get("vorlage", "")).startswith(GROSS_PREFIX))
+    m["projekte"] = len(state.done_projects())
+    m["angebote_serie"] = _longest(offer_flags)
+    m["mitbewerber_besiegt"] = len({item.get("konkurrent") or BITWEICHE for item in won})
+    biggest = max(won, key=lambda item: float(item.get("netto", 0) or 0), default=None)
+    m["groesster_auftrag"] = int(round(float(biggest.get("netto", 0) or 0))) if biggest else None
+    if biggest:
+        m["_texte"]["groesster_auftrag"] = biggest.get("titel") or "%s × %s" % (
+            biggest.get("menge", 1), biggest.get("artikel", "Artikel"))
+    days = [day for day in state.book if firm and day >= firm["tag"]]
+    m["tagesumsatz"] = max([sum(state.book[day]["ein"].get(kind, 0) for kind in FIRM_INCOME)
+                            for day in days] + [0])
+    customer = sum(1 for item in state.ticket_results.values() if item.get("erfolg"))
+    m["auftraege"] = m["tickets"] + customer + m["projekte"]
+    m["tage_gruendung"] = int(firm["tag"]) if firm else None
+    m["tage_stufe5"] = (int(state.expand_days[5]) - int(firm["tag"])
+                        if firm and 5 in state.expand_days else None)
+    m["tage_filiale"] = (int(state.branch["tag"]) - int(firm["tag"])
+                         if firm and state.branch else None)
+    # Geld
+    m["kredit_getilgt"] = sum(1 for _day, kind, _id, _data in state.loan_log
+                              if kind in ("zurueckgezahlt", "abgeloest"))
+    m["mahnung_vorbei"] = len(state.dunning_over)
+    m["mahnung_hoch_vorbei"] = sum(1 for peak in state.dunning_over if peak >= 2)
+    tax_flags = []
+    for _day, kind, data in state.tax_log:
+        if kind == "voranmeldung":
+            tax_flags.append(not data.get("offen"))
+        elif kind == "ausfall":
+            tax_flags.append(False)
+    m["steuer_serie"] = _longest(tax_flags)
+    # Personal
+    streak = best = 0
+    previous = None
+    for day, value in state.mood_log:
+        if value >= MOOD_GOOD and previous is not None and day == previous + 1:
+            streak += 1
+        else:
+            streak = 1 if value >= MOOD_GOOD else 0
+        previous = day
+        best = max(best, streak)
+    m["stimmung_serie"] = best
+    m["stimmung_max"] = int(round(max(value for _day, value in state.mood_log))) \
+        if state.mood_log else None
+    m["weiterbildungen"] = sum(1 for item in state.trainings
+                               if item.get("art") != TRAINING_COACHING)
+    m["experte"] = int(max([max(list(state.staff_topics(staff_id).values()) + [0])
+                            for staff_id in state.staff] + [0]))
+    answers = list(state.answers.values())
+    m["geschlichtet"] = sum(1 for item in answers if item.get("art") == EV_CONFLICT and
+                            item.get("wahl") == CONFLICT_MEDIATE)
+    m["abwerbung_abgewehrt"] = sum(1 for item in answers if item.get("art") == EV_RECALL and
+                                   item.get("wahl") and item.get("wahl") != RECALL_LET)
+    m["macke_gezaehmt"] = 0
+    for staff_id in state.staff:
+        item = state.quirk_of(staff_id)
+        if item and item["start"] > 1 and item["stufe"] == 1:
+            m["macke_gezaehmt"] = 1
+            break
+    # Wissen aus der Lernplattform (nur mit Wissensstand je Thema)
+    if knowledge is None:
+        m["themen_70"] = m["fachbereiche_70"] = None
+    else:
+        m["themen_70"] = sum(1 for topic in TOPIC_ORDER
+                             if knowledge.get(topic, 0) >= KNOWLEDGE_GOAL)
+        m["fachbereiche_70"] = sum(1 for topics in CAT_TOPICS.values() if topics and all(
+            knowledge.get(topic, 0) >= KNOWLEDGE_GOAL for topic in topics))
+    if not firm:
+        for key in ("mitarbeiter", "tagesumsatz", "stimmung_max"):
+            m[key] = m[key] or None
+    return m
+
+
+def achievement_level(rule, value):
+    """Wie viele Stufen eines Abzeichens mit diesem Wert erreicht sind."""
+    if value is None:
+        return 0
+    level = 0
+    for stage in rule["stufen"]:
+        if value >= stage.get("ab", 1):
+            level += 1
+        else:
+            break
+    return level
+
+
+def metric_text(key, value):
+    """Wert einer Kennzahl fuer die Anzeige."""
+    if value is None:
+        return "–"
+    if key in EURO_METRICS:
+        return _whole_euro(value)
+    return "{:,.0f}".format(value).replace(",", ".")
+
+
+def stage_goal_text(rule, index):
+    """Was fuer eine Stufe noetig ist, z.B. "500" oder "Senior"."""
+    stage = rule["stufen"][index]
+    if stage.get("text"):
+        return stage["text"]
+    if "ab" in stage and (stage["ab"] != 1 or len(rule["stufen"]) > 1):
+        return metric_text(rule["wert"], stage["ab"])
+    return ""
+
+
+def record_value_text(rule, value):
+    """Bestwert fuer die Anzeige (mit Einheit)."""
+    if value is None:
+        return "–"
+    unit = rule.get("einheit")
+    if unit == "euro":
+        return _whole_euro(value)
+    if unit == "tag":
+        return "Tag %d" % value
+    if unit == "tage":
+        return _days_text(int(value))
+    return metric_text(rule["id"], value)
+
+
+def _better(rule, value, other):
+    if other is None:
+        return value is not None
+    if value is None:
+        return False
+    return value < other if rule.get("besser") == "weniger" else value > other
+
+
+def record_runs(records):
+    """Kennungen aller Durchgaenge in der Bestenliste, aelteste zuerst."""
+    return sorted({run for _stamp, run, _kind, _key, _value, _data in records if run})
+
+
+def record_best(records, key, rule, runs=None, exclude=None):
+    """(Wert, Daten, Durchgang) des besten Eintrags zu einem Bestwert."""
+    best = (None, {}, None)
+    for _stamp, run, kind, rec_key, value, data in records:
+        if kind != REC_BEST or rec_key != key or run == exclude or value is None:
+            continue
+        if runs is not None and run not in runs:
+            continue
+        if _better(rule, value, best[0]):
+            best = (value, data, run)
+    return best
+
+
+def record_board(records, state=None, content=None):
+    """Die Bestenliste fuer die Anzeige: {"durchgaenge", "diensttage",
+    "werte": [{"id", "name", "text", "wert", "wert_text", "durchgang" (Nummer),
+    "tag", "extra", "aktuell", "aktuell_text", "rekord" (laufender Durchgang
+    haelt ihn)}]}"""
+    content = content or GAME
+    runs = record_runs(records)
+    current = state.first_event if state is not None and state.profile else None
+    if current and current not in runs:
+        runs.append(current)
+        runs.sort()
+    number = {run: index + 1 for index, run in enumerate(runs)}
+    metrics = run_metrics(state, None, content) if current else {}
+    total_days = {}
+    for _stamp, run, kind, key, value, _data in records:
+        if kind == REC_BEST and key == "diensttage" and value is not None:
+            total_days[run] = max(total_days.get(run, 0), int(value))
+    if current:
+        total_days[current] = max(total_days.get(current, 0), metrics.get("diensttage") or 0)
+    values = []
+    for rule in achievement_rules(content).get("bestwerte") or []:
+        value, data, run = record_best(records, rule["id"], rule)
+        mine = metrics.get(rule["id"]) if current else None
+        if rule.get("besser") != "weniger" and not mine:
+            mine = None         # 0 ist (noch) kein Bestwert
+        if current and _better(rule, mine, value):
+            value, data, run = mine, {"tag": state.days_done,
+                                      "text": metrics["_texte"].get(rule["id"], "")}, current
+        values.append({"id": rule["id"], "name": rule["name"], "text": rule.get("text", ""),
+                       "wert": value, "wert_text": record_value_text(rule, value),
+                       "durchgang": number.get(run), "tag": (data or {}).get("tag"),
+                       "extra": (data or {}).get("text", ""),
+                       "aktuell": mine, "aktuell_text": record_value_text(rule, mine),
+                       "rekord": bool(current) and run == current and value is not None})
+    return {"durchgaenge": len(runs), "diensttage": sum(total_days.values()),
+            "werte": values, "aktuell": number.get(current)}
+
+
+def record_detail(item, runs):
+    """Zweite Zeile unter einem Bestwert (PC und Handy gleich)."""
+    if item["wert"] is None:
+        return item["text"] or "noch nicht erreicht"
+    parts = []
+    if runs > 1:
+        if item["rekord"]:
+            parts.append("in diesem Durchgang")
+        else:
+            parts.append("%d. Durchgang" % item["durchgang"] if item["durchgang"] else "")
+            if item["aktuell"] is not None:
+                parts.append("jetzt %s" % item["aktuell_text"])
+    parts.append(item["extra"] or item["text"])
+    return " · ".join(part for part in parts if part)
+
+
+def record_subtitle(board):
+    runs = board["durchgaenge"]
+    if runs <= 1:
+        return "über alle Spielstände · dein erster Durchgang"
+    return "über alle Spielstände · %d Durchgänge · %d Diensttage" % (runs, board["diensttage"])
+
+
+def badge_status(item):
+    """(Zeile unter dem Namen, Farbe-Schluessel) fuer ein Abzeichen:
+    erreichte Stufe mit Tag, sonst der Fortschritt."""
+    if item["geheim"]:
+        return "noch nicht entdeckt", "muted"
+    if item["tier"]:
+        stage = item["stufen"][item["stufe"] - 1]
+        text = "%s · Tag %d" % (stage["name"], stage["erreicht"] or 1)
+        if item["naechste"] and item["fortschritt"]:
+            text += " · %s" % item["fortschritt"]
+        if item["je"] > item["stufe"]:
+            text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
+        return text, item["tier"]
+    text = item["fortschritt"] or "offen"
+    if item["je"]:
+        text += " · früher: %s" % item["stufen"][item["je"] - 1]["name"]
+    return text, "muted"
+
+
+def badge_goals(item):
+    """Die Ziele aller Stufen in einer Zeile, z.B. "Bronze 50 · Silber 200 · Gold 500"."""
+    if item["geheim"]:
+        return ""
+    parts = []
+    for stage in item["stufen"]:
+        parts.append(("%s %s" % (stage["name"], stage["ziel"])).strip())
+    return " · ".join(parts)
+
+
+def badge_history(records):
+    """(erfolg, stufe) -> Menge der Durchgaenge, in denen die Stufe erreicht wurde."""
+    result = {}
+    for _stamp, run, kind, key, value, _data in records:
+        if kind == REC_BADGE and ":" in str(key):
+            achievement_id, stage = str(key).rsplit(":", 1)
+            if stage.isdigit():
+                result.setdefault((achievement_id, int(stage)), set()).add(run)
+    return result
+
+
+def achievement_overview(state, knowledge=None, records=None, content=None):
+    """Alle Abzeichen fuer die Anzeige, in der Reihenfolge von erfolge.json:
+    [{"id", "name", "gruppe", "text", "bild", "farbe", "stufe" (erreicht im
+    laufenden Durchgang), "tier" (hoechste erreichte oder None), "stufen":
+    [{"tier", "name", "ziel", "erreicht" (Tag oder None), "moment"}],
+    "naechste" (Ziel der naechsten Stufe), "fortschritt" (Text), "anteil"
+    (0 bis 1), "geheim" (noch nie erreicht und geheim), "je" (hoechste Stufe
+    ueber alle Durchgaenge), "durchgaenge" (in wie vielen erreicht)}]"""
+    content = content or state.content
+    metrics = run_metrics(state, knowledge, content)
+    history = badge_history(records or [])
+    result = []
+    for rule in achievement_rules(content).get("erfolge") or []:
+        stages = []
+        level = 0
+        for index, stage in enumerate(rule["stufen"]):
+            reached = state.achievements.get((rule["id"], index + 1))
+            if reached:
+                level = index + 1
+            stages.append({"tier": stage["stufe"], "name": TIER_NAMES[stage["stufe"]],
+                           "ziel": stage_goal_text(rule, index),
+                           "erreicht": int(reached.get("tag") or 0) if reached else None,
+                           "moment": bool(stage.get("moment"))})
+        ever = max([number for (achievement_id, number), runs in history.items()
+                    if achievement_id == rule["id"] and runs] + [level])
+        runs = set()
+        for (achievement_id, _number), found in history.items():
+            if achievement_id == rule["id"]:
+                runs |= found
+        value = metrics.get(rule["wert"])
+        following = rule["stufen"][level] if level < len(rule["stufen"]) else None
+        progress, share = "", 1.0
+        if following is not None:
+            goal = following.get("ab", 1)
+            have = value or 0
+            share = max(0.0, min(1.0, float(have) / goal)) if goal else 0.0
+            if value is None and rule.get("wissen"):
+                progress = "Wissensstand wird geladen"
+            elif rule["wert"] in LEVEL_METRICS and following.get("text"):
+                progress = "nächstes Ziel: %s" % following["text"]
+            elif goal > 1:
+                progress = "%s / %s" % (metric_text(rule["wert"], min(have, goal)),
+                                        metric_text(rule["wert"], goal))
+        result.append({
+            "id": rule["id"], "name": rule["name"], "gruppe": rule["gruppe"],
+            "text": rule["text"], "bild": rule["bild"], "farbe": rule.get("farbe", ""),
+            "ort": rule.get("ort"), "stufe": level,
+            "tier": rule["stufen"][level - 1]["stufe"] if level else None,
+            "stufen": stages,
+            "naechste": stages[level] if level < len(stages) else None,
+            "fortschritt": progress, "anteil": share,
+            "balken": bool(progress) and rule["wert"] not in LEVEL_METRICS and
+            not (value is None and rule.get("wissen")),
+            "geheim": bool(rule.get("geheim")) and not ever,
+            "je": ever, "durchgaenge": len(runs)})
+    return result
+
+
+def achievement_counts(items):
+    """(erreichte Stufen, alle Stufen, {tier: Anzahl}) fuer die Ueberschrift."""
+    tiers = {tier: 0 for tier in TIER_ORDER}
+    reached = total = 0
+    for item in items:
+        total += len(item["stufen"])
+        for stage in item["stufen"]:
+            if stage["erreicht"] is not None:
+                reached += 1
+                tiers[stage["tier"]] += 1
+    return reached, total, tiers
+
+
+def achievement_groups(content=None):
+    return [("alle", "Alle")] + [tuple(item) for item in
+                                  achievement_rules(content).get("gruppen") or []]
+
+
+def unlock_info(state, rule, level, records, content=None):
+    """Was der Meilenstein-Moment (oder der kurze Hinweis) zu einer neu
+    erreichten Stufe zeigt."""
+    content = content or state.content
+    stage = rule["stufen"][level - 1]
+    runs = badge_history(records).get((rule["id"], level), set())
+    others = [run for run in record_runs(records) if run != state.first_event]
+    first = not (runs - {state.first_event})
+    goal = stage_goal_text(rule, level - 1)
+    text = rule["text"]
+    if goal:
+        text = "%s: %s" % (text.rstrip("."), goal)
+    if stage.get("moment") and rule.get("moment_text"):
+        text = rule["moment_text"].format(
+            ziel=goal, tag=state.day, spieler=(state.profile or {}).get("name", ""),
+            firma=state.firm["name"] if state.firm else "Deine Firma",
+            filiale=state.branch["name"] if state.branch else "Die Filiale")
+    record = ""
+    key = rule.get("bestwert")
+    if key and others:
+        best_rule = record_rule(key, content)
+        mine = run_metrics(state, None, content).get(key)
+        value, _data, _run = record_best(records, key, best_rule, exclude=state.first_event)
+        if value is not None and _better(best_rule, mine, value):
+            record = "Neuer Bestwert! Bisher: %s" % record_value_text(best_rule, value)
+    return {"erfolg": rule["id"], "stufe": level, "name": rule["name"],
+            "tier": stage["stufe"], "tier_name": TIER_NAMES[stage["stufe"]],
+            "text": text, "moment": bool(stage.get("moment")),
+            "erstes_mal": first and bool(others), "bestwert": record,
+            "bild": rule["bild"], "farbe": rule.get("farbe", ""), "ort": rule.get("ort"),
+            "hinweis": "Abzeichen: %s · %s" % (rule["name"], TIER_NAMES[stage["stufe"]])}
+
+
+def new_achievements(state, knowledge=None, content=None):
+    """Stufen, die laut Spielstand erreicht, aber noch nicht als Ereignis
+    festgehalten sind: [(regel, stufe)]."""
+    content = content or state.content
+    metrics = run_metrics(state, knowledge, content)
+    result = []
+    for rule in achievement_rules(content).get("erfolge") or []:
+        if rule.get("wissen") and knowledge is None:
+            continue
+        for level in range(1, achievement_level(rule, metrics.get(rule["wert"])) + 1):
+            if (rule["id"], level) not in state.achievements:
+                result.append((rule, level))
+    return result
+
+
+def record_rows(state, records, content=None, force=False):
+    """Zeilen, die fuer den laufenden Durchgang neu in die Bestenliste
+    gehoeren: [(art, schluessel, wert, daten)]. Ein besserer Wert kommt nur
+    hinein, wenn es fuer ihn noch keinen Eintrag gibt, der letzte RECORD_EVERY
+    Arbeitstage her ist oder force (vor dem Zuruecksetzen)."""
+    content = content or state.content
+    run = state.first_event
+    if not run or state.profile is None:
+        return []
+    mine = [row for row in records if row[1] == run]
+    rows = []
+    if not any(row[2] == REC_RUN for row in mine):
+        rows.append((REC_RUN, "start", None, {"name": state.profile["name"]}))
+    metrics = run_metrics(state, None, content)
+    rules = list(achievement_rules(content).get("bestwerte") or []) + \
+        [{"id": key, "besser": "mehr"} for key in RECORD_SUMS]
+    for rule in rules:
+        value = metrics.get(rule["id"])
+        if value is None or (rule.get("besser") != "weniger" and not value):
+            continue
+        best, data, _run = record_best(mine, rule["id"], rule)
+        last = max([int((row[5] or {}).get("tag") or 0) for row in mine
+                    if row[2] == REC_BEST and row[3] == rule["id"]] + [-RECORD_EVERY])
+        due = force or best is None or state.days_done - last >= RECORD_EVERY
+        if due and _better(rule, value, best):
+            rows.append((REC_BEST, rule["id"], value,
+                         {"tag": state.days_done, "text": metrics["_texte"].get(rule["id"], "")}))
+    have = {row[3] for row in mine if row[2] == REC_BADGE}
+    for (achievement_id, level), data in sorted(state.achievements.items()):
+        key = "%s:%d" % (achievement_id, level)
+        if key not in have:
+            rows.append((REC_BADGE, key, level, {"tag": data.get("tag")}))
+    return rows
+
+
+# -- Abzeichen als Bild (Orden mit kleinem Bild im Kartenstil) -----------------
+
+BADGE_SIZE = 2.4              # Kantenlaenge eines Abzeichens in Zeicheneinheiten
+
+
+def badge_color(name):
+    """Farbe des Bildes: Rolle der Weltkarte (firma, filiale ...) oder Farbname."""
+    if name in ("bitweiche", "kunde", "firma", "zuhause", "filiale"):
+        return map_role_color(name)
+    return C.get(name, C["accent"])
+
+
+def _pic_house(cx, cy, k, color, dim):
+    wall = mix(C["card_alt"], color, 0.12) if not dim else color
+    s = [_rect(cx - 0.62 * k, cy - 0.5 * k, 1.24 * k, 0.55 * k, color, r=0.08 * k),
+         _rect(cx - 0.62 * k, cy + 0.05 * k, 1.24 * k, 0.42 * k, wall)]
+    for number in range(3):
+        s.append(_rect(cx - 0.47 * k + number * 0.36 * k, cy + 0.14 * k, 0.2 * k, 0.2 * k,
+                       C["card"] if dim else mix(C["yellow"], "#FFFFFF", 0.45)))
+    return s
+
+
+def _pic_star(cx, cy, k, color, _dim):
+    points = []
+    for index in range(10):
+        radius = 0.68 * k if index % 2 == 0 else 0.29 * k
+        angle = math.pi / 5 * index - math.pi / 2
+        points.append((cx + radius * math.cos(angle), cy + 0.06 * k + radius * math.sin(angle)))
+    return [_poly(points, color)]
+
+
+def _pic_ticket(cx, cy, k, color, dim):
+    s = [_rect(cx - 0.5 * k, cy - 0.6 * k, 1.0 * k, 1.2 * k, color, r=0.08 * k)]
+    for number in range(4):
+        s.append(_rect(cx - 0.32 * k, cy - 0.38 * k + number * 0.24 * k,
+                       (0.64 if number < 3 else 0.36) * k, 0.08 * k, C["card"]))
+    return s
+
+
+def _pic_lightning(cx, cy, k, color, _dim):
+    return [_poly([(cx + 0.12 * k, cy - 0.7 * k), (cx - 0.42 * k, cy + 0.1 * k),
+                   (cx - 0.02 * k, cy + 0.1 * k), (cx - 0.16 * k, cy + 0.7 * k),
+                   (cx + 0.42 * k, cy - 0.12 * k), (cx + 0.02 * k, cy - 0.12 * k)], color)]
+
+
+def _pic_check(cx, cy, k, color, _dim):
+    return [_line(cx - 0.5 * k, cy + 0.02 * k, cx - 0.14 * k, cy + 0.4 * k, color, 0.2 * k),
+            _line(cx - 0.14 * k, cy + 0.4 * k, cx + 0.55 * k, cy - 0.42 * k, color, 0.2 * k)]
+
+
+def _pic_shield(cx, cy, k, color, dim):
+    return [_poly([(cx - 0.55 * k, cy - 0.55 * k), (cx + 0.55 * k, cy - 0.55 * k),
+                   (cx + 0.5 * k, cy + 0.1 * k), (cx, cy + 0.68 * k),
+                   (cx - 0.5 * k, cy + 0.1 * k)], color),
+            _poly([(cx - 0.32 * k, cy - 0.36 * k), (cx, cy - 0.36 * k), (cx, cy + 0.42 * k),
+                   (cx - 0.3 * k, cy + 0.02 * k)], mix(color, "#FFFFFF", 0.3) if not dim
+                  else color)]
+
+
+def _pic_key(cx, cy, k, color, _dim):
+    return [_oval(cx - 0.62 * k, cy - 0.34 * k, 0.56 * k, 0.56 * k, "", color, 0.16 * k),
+            _line(cx - 0.08 * k, cy - 0.06 * k, cx + 0.62 * k, cy - 0.06 * k, color, 0.16 * k),
+            _line(cx + 0.36 * k, cy - 0.06 * k, cx + 0.36 * k, cy + 0.26 * k, color, 0.14 * k),
+            _line(cx + 0.56 * k, cy - 0.06 * k, cx + 0.56 * k, cy + 0.2 * k, color, 0.14 * k)]
+
+
+def _pic_rails(cx, cy, k, color, _dim):
+    s = []
+    for number in range(5):
+        y = cy - 0.56 * k + number * 0.28 * k
+        s.append(_rect(cx - 0.55 * k, y, 1.1 * k, 0.1 * k, mix(color, C["card"], 0.55)))
+    for dx in (-0.28, 0.28):
+        s.append(_line(cx + dx * k, cy - 0.7 * k, cx + dx * k, cy + 0.7 * k, color, 0.12 * k))
+    return s
+
+
+def _pic_people(cx, cy, k, color, _dim):
+    s = []
+    for dx in (-0.42, 0.42, 0.0):
+        tone = color if dx == 0 else mix(color, C["card"], 0.3)
+        s.append(_oval(cx + (dx - 0.17) * k, cy - 0.45 * k, 0.34 * k, 0.34 * k, tone))
+        s.append(_rect(cx + (dx - 0.24) * k, cy - 0.05 * k, 0.48 * k, 0.5 * k, tone,
+                       r=0.2 * k))
+    return s
+
+
+def _pic_paper(cx, cy, k, color, dim):
+    paper = C["text"] if not dim else color
+    s = [_rect(cx - 0.48 * k, cy - 0.62 * k, 0.96 * k, 1.2 * k, paper, r=0.06 * k)]
+    for number in range(3):
+        s.append(_rect(cx - 0.3 * k, cy - 0.42 * k + number * 0.22 * k, 0.6 * k, 0.07 * k,
+                       C["muted"] if not dim else C["card"]))
+    s.append(_oval(cx + 0.06 * k, cy + 0.12 * k, 0.4 * k, 0.4 * k, color if not dim else
+                   C["card"]))
+    return s
+
+
+def _pic_form(cx, cy, k, color, dim):
+    paper = C["text"] if not dim else color
+    s = [_rect(cx - 0.48 * k, cy - 0.62 * k, 0.96 * k, 1.2 * k, paper, r=0.06 * k)]
+    for number in range(3):
+        y = cy - 0.4 * k + number * 0.34 * k
+        s.append(_rect(cx - 0.32 * k, y, 0.16 * k, 0.16 * k, color if not dim else C["card"]))
+        s.append(_rect(cx - 0.06 * k, y + 0.04 * k, 0.38 * k, 0.07 * k,
+                       C["muted"] if not dim else C["card"]))
+    return s
+
+
+def _pic_crane(cx, cy, k, color, _dim):
+    return [_line(cx - 0.3 * k, cy + 0.66 * k, cx - 0.3 * k, cy - 0.62 * k, color, 0.14 * k),
+            _line(cx - 0.6 * k, cy - 0.55 * k, cx + 0.62 * k, cy - 0.55 * k, color, 0.12 * k),
+            _line(cx + 0.42 * k, cy - 0.55 * k, cx + 0.42 * k, cy + 0.02 * k,
+                  mix(color, C["card"], 0.3), 0.05 * k),
+            _rect(cx + 0.24 * k, cy + 0.02 * k, 0.36 * k, 0.3 * k, color, r=0.04 * k),
+            _rect(cx - 0.62 * k, cy + 0.56 * k, 0.64 * k, 0.14 * k, mix(color, C["card"], 0.3))]
+
+
+def _pic_chart(cx, cy, k, color, _dim):
+    s = []
+    for number, height in enumerate((0.45, 0.75, 1.1)):
+        s.append(_rect(cx - 0.55 * k + number * 0.4 * k, cy + 0.6 * k - height * k, 0.28 * k,
+                       height * k, mix(color, C["card"], 0.35 - number * 0.15), r=0.04 * k))
+    return s
+
+
+def _pic_arrow(cx, cy, k, color, _dim):
+    return [_line(cx - 0.6 * k, cy + 0.42 * k, cx - 0.18 * k, cy, color, 0.16 * k),
+            _line(cx - 0.18 * k, cy, cx + 0.08 * k, cy + 0.22 * k, color, 0.16 * k),
+            _line(cx + 0.08 * k, cy + 0.22 * k, cx + 0.46 * k, cy - 0.28 * k, color, 0.16 * k),
+            _poly([(cx + 0.64 * k, cy - 0.56 * k), (cx + 0.66 * k, cy - 0.06 * k),
+                   (cx + 0.22 * k, cy - 0.38 * k)], color)]
+
+
+def _pic_cup(cx, cy, k, color, _dim):
+    return [_oval(cx - 0.66 * k, cy - 0.5 * k, 0.4 * k, 0.44 * k, "", color, 0.1 * k),
+            _oval(cx + 0.26 * k, cy - 0.5 * k, 0.4 * k, 0.44 * k, "", color, 0.1 * k),
+            _poly([(cx - 0.45 * k, cy - 0.62 * k), (cx + 0.45 * k, cy - 0.62 * k),
+                   (cx + 0.3 * k, cy + 0.02 * k), (cx - 0.3 * k, cy + 0.02 * k)], color),
+            _rect(cx - 0.08 * k, cy, 0.16 * k, 0.36 * k, color),
+            _rect(cx - 0.36 * k, cy + 0.36 * k, 0.72 * k, 0.2 * k, color, r=0.04 * k)]
+
+
+def _pic_coins(cx, cy, k, color, _dim):
+    s = []
+    for number in range(4):
+        y = cy + 0.34 * k - number * 0.26 * k
+        s.append(_oval(cx - 0.52 * k, y - 0.2 * k, 1.04 * k, 0.4 * k, color,
+                       mix(color, "#000000", 0.45), 0.04 * k))
+    return s
+
+
+def _pic_anchor(cx, cy, k, color, _dim):
+    return [_oval(cx - 0.14 * k, cy - 0.72 * k, 0.28 * k, 0.28 * k, "", color, 0.08 * k),
+            _line(cx, cy - 0.44 * k, cx, cy + 0.6 * k, color, 0.14 * k),
+            _line(cx - 0.3 * k, cy - 0.26 * k, cx + 0.3 * k, cy - 0.26 * k, color, 0.12 * k),
+            _line(cx, cy + 0.6 * k, cx - 0.52 * k, cy + 0.24 * k, color, 0.12 * k),
+            _line(cx, cy + 0.6 * k, cx + 0.52 * k, cy + 0.24 * k, color, 0.12 * k)]
+
+
+def _pic_heart(cx, cy, k, color, _dim):
+    return [_oval(cx - 0.6 * k, cy - 0.5 * k, 0.66 * k, 0.62 * k, color),
+            _oval(cx - 0.06 * k, cy - 0.5 * k, 0.66 * k, 0.62 * k, color),
+            _poly([(cx - 0.56 * k, cy - 0.04 * k), (cx + 0.56 * k, cy - 0.04 * k),
+                   (cx, cy + 0.62 * k)], color)]
+
+
+def _pic_hat(cx, cy, k, color, _dim):
+    return [_poly([(cx - 0.72 * k, cy - 0.2 * k), (cx, cy - 0.54 * k), (cx + 0.72 * k, cy - 0.2 * k),
+                   (cx, cy + 0.14 * k)], color),
+            _poly([(cx - 0.4 * k, cy - 0.02 * k), (cx + 0.4 * k, cy - 0.02 * k),
+                   (cx + 0.4 * k, cy + 0.32 * k), (cx - 0.4 * k, cy + 0.32 * k)],
+                  mix(color, C["card"], 0.3)),
+            _line(cx + 0.6 * k, cy - 0.22 * k, cx + 0.6 * k, cy + 0.34 * k, color, 0.06 * k)]
+
+
+def _pic_bubble(cx, cy, k, color, _dim):
+    other = mix(color, C["card"], 0.35)
+    return [_rect(cx - 0.68 * k, cy - 0.6 * k, 0.86 * k, 0.6 * k, other, r=0.2 * k),
+            _poly([(cx - 0.52 * k, cy - 0.04 * k), (cx - 0.3 * k, cy - 0.04 * k),
+                   (cx - 0.56 * k, cy + 0.2 * k)], other),
+            _rect(cx - 0.18 * k, cy - 0.16 * k, 0.86 * k, 0.6 * k, color, r=0.2 * k),
+            _poly([(cx + 0.3 * k, cy + 0.4 * k), (cx + 0.52 * k, cy + 0.4 * k),
+                   (cx + 0.56 * k, cy + 0.64 * k)], color)]
+
+
+def _pic_magnet(cx, cy, k, color, _dim):
+    return [_line(cx - 0.36 * k, cy - 0.5 * k, cx - 0.36 * k, cy + 0.2 * k, color, 0.26 * k),
+            _line(cx + 0.36 * k, cy - 0.5 * k, cx + 0.36 * k, cy + 0.2 * k, color, 0.26 * k),
+            _oval(cx - 0.49 * k, cy - 0.16 * k, 0.98 * k, 0.8 * k, "", color, 0.26 * k),
+            _rect(cx - 0.5 * k, cy - 0.66 * k, 0.28 * k, 0.2 * k, C["text"]),
+            _rect(cx + 0.22 * k, cy - 0.66 * k, 0.28 * k, 0.2 * k, C["text"])]
+
+
+def _pic_screwdriver(cx, cy, k, color, _dim):
+    return [_line(cx - 0.52 * k, cy + 0.52 * k, cx - 0.12 * k, cy + 0.12 * k, color, 0.3 * k),
+            _line(cx - 0.12 * k, cy + 0.12 * k, cx + 0.55 * k, cy - 0.55 * k, METAL, 0.1 * k)]
+
+
+def _pic_book(cx, cy, k, color, _dim):
+    return [_poly([(cx - 0.7 * k, cy - 0.45 * k), (cx - 0.04 * k, cy - 0.32 * k),
+                   (cx - 0.04 * k, cy + 0.56 * k), (cx - 0.7 * k, cy + 0.42 * k)], color),
+            _poly([(cx + 0.04 * k, cy - 0.32 * k), (cx + 0.7 * k, cy - 0.45 * k),
+                   (cx + 0.7 * k, cy + 0.42 * k), (cx + 0.04 * k, cy + 0.56 * k)],
+                  mix(color, C["card"], 0.25))]
+
+
+BADGE_PICTURES = {
+    "haus": _pic_house, "stern": _pic_star, "ticket": _pic_ticket, "blitz": _pic_lightning,
+    "haken": _pic_check, "schild": _pic_shield, "schluessel": _pic_key, "gleise": _pic_rails,
+    "personen": _pic_people, "urkunde": _pic_paper, "formular": _pic_form, "kran": _pic_crane,
+    "diagramm": _pic_chart, "pfeil": _pic_arrow, "pokal": _pic_cup, "muenzen": _pic_coins,
+    "anker": _pic_anchor, "herz": _pic_heart, "hut": _pic_hat, "sprechblase": _pic_bubble,
+    "magnet": _pic_magnet, "schraube": _pic_screwdriver, "buch": _pic_book,
+}
+
+
+def badge_shapes(picture, color, tier=None, ox=0.0, oy=0.0, size=BADGE_SIZE):
+    """Zeichenbefehle fuer ein Abzeichen (runder Orden) links oben bei (ox, oy).
+    tier None = noch nicht erreicht (dunkel, mit Schloss)."""
+    k = size / BADGE_SIZE
+    cx, cy = ox + size / 2.0, oy + size / 2.0
+    radius = 1.0 * k
+    locked = tier is None
+    ring = C["border_hi"] if locked else TIER_COLORS[tier]
+    dark = C["card_alt"] if locked else mix(ring, "#000000", 0.55)
+    s = [_oval(cx - radius - 0.12 * k, cy - radius - 0.12 * k, 2 * (radius + 0.12 * k),
+               2 * (radius + 0.12 * k), dark),
+         _oval(cx - radius, cy - radius, 2 * radius, 2 * radius, mix(C["bg"], "#000000", 0.2),
+               ring, 0.13 * k)]
+    tone = mix(C["muted"], C["bg"], 0.45) if locked else badge_color(color)
+    draw = BADGE_PICTURES.get(picture, _pic_star)
+    s += draw(cx, cy + (0.05 if not locked else -0.08) * k, 0.72 * k, tone, locked)
+    if locked:
+        lock = C["muted"]
+        s.append(_oval(cx - 0.14 * k, cy + 0.34 * k, 0.28 * k, 0.3 * k, "", lock, 0.06 * k))
+        s.append(_rect(cx - 0.2 * k, cy + 0.48 * k, 0.4 * k, 0.3 * k, lock, r=0.05 * k))
+    return s
+
+
+def moment_shapes(info, state, content=None):
+    """Szene fuer den Meilenstein-Moment: der Ort im Kartenstil mit
+    Strahlen in der Farbe der Stufe. (Zeichenbefehle, Breite, Hoehe)."""
+    content = content or GAME
+    width, height = 12.0, 6.0
+    colors = map_palette()
+    s = [_rect(0, 0, width, height, colors["boden"], r=0.4),
+         _rect(0, height - 1.3, width, 0.8, colors["strasse"]),
+         _rect(0, height - 0.94, width, 0.08, colors["strasse_mitte"])]
+    for x, y, r in ((0.9, 1.4, 0.45), (1.8, 2.8, 0.4), (10.9, 1.2, 0.42), (11.2, 3.1, 0.45),
+                    (0.8, 4.0, 0.38)):
+        s += _map_tree(x, y, r, colors)
+    ray = TIER_COLORS.get(info.get("tier"), C["yellow"])
+    cx, cy = width / 2.0, height / 2.0 - 0.1
+    for index in range(16):
+        angle = math.pi / 8 * index
+        s.append(_line(cx + 2.9 * math.cos(angle), cy + 2.0 * math.sin(angle),
+                       cx + 3.9 * math.cos(angle), cy + 2.7 * math.sin(angle),
+                       mix(ray, colors["boden"], 0.4), 0.09))
+    place = info.get("ort")
+    shapes, w, h = place_preview(place, state, content) if place else ([], 0, 0)
+    if shapes:
+        scale = min(4.6 / w, 3.4 / h)
+        dx, dy = cx - w * scale / 2.0, cy - h * scale / 2.0 + 0.2
+        for shape in shapes:
+            s.append(_scale_shape(shape, scale, dx, dy))
+        item = next((entry for entry in map_places(state, content) if entry["id"] == place),
+                    None)
+        if item:
+            label = _text(cx, dy - 0.05, item["name"], "ort", C["text"], anchor="c")
+            label["bg"] = colors["schild"]
+            label["border"] = item["farbe"]
+            s.append(label)
+    else:
+        s += badge_shapes(info.get("bild"), info.get("farbe"), info.get("tier"),
+                          cx - 1.6, cy - 1.6, 3.2)
+    return s, width, height
+
+
+def _scale_shape(shape, scale, dx, dy):
+    shape = dict(shape)
+    if shape["k"] in ("rect", "oval", "arc", "text"):
+        shape["x"] = shape["x"] * scale + dx
+        shape["y"] = shape["y"] * scale + dy
+        for key in ("w", "h"):
+            if key in shape:
+                shape[key] = shape[key] * scale
+    elif shape["k"] in ("line", "poly"):
+        shape["pts"] = [value * scale + (dx if index % 2 == 0 else dy)
+                        for index, value in enumerate(shape["pts"])]
+    for key in ("lw", "r"):
+        if shape.get(key):
+            shape[key] = shape[key] * scale
+    return shape
+
+
+def _validate_achievements(content):
+    """erfolge.json: Kennzahlen, Stufen, Bilder und Bestwerte."""
+    rules = achievement_rules(content)
+    if not rules:
+        return ["Spiel: erfolge.json fehlt"]
+    problems = []
+    groups = {item[0] for item in rules.get("gruppen") or []}
+    places = {item["id"] for item in map_rules(content).get("orte") or []}
+    ids = set()
+    for rule in rules.get("erfolge") or []:
+        where = "Spiel-Erfolg %s" % rule.get("id")
+        if rule.get("id") in ids:
+            problems.append("%s: Kennung doppelt" % where)
+        ids.add(rule.get("id"))
+        if rule.get("gruppe") not in groups:
+            problems.append("%s: unbekannte Gruppe '%s'" % (where, rule.get("gruppe")))
+        if rule.get("wert") not in RUN_METRICS:
+            problems.append("%s: unbekannter Wert '%s'" % (where, rule.get("wert")))
+        if rule.get("bild") not in BADGE_PICTURES:
+            problems.append("%s: unbekanntes Bild '%s'" % (where, rule.get("bild")))
+        if rule.get("ort") and rule["ort"] not in places:
+            problems.append("%s: unbekannter Ort '%s'" % (where, rule["ort"]))
+        if rule.get("bestwert") and not record_rule(rule["bestwert"], content):
+            problems.append("%s: unbekannter Bestwert '%s'" % (where, rule["bestwert"]))
+        if rule.get("moment_text"):
+            try:
+                rule["moment_text"].format(ziel="", tag=1, spieler="", firma="", filiale="")
+            except (KeyError, IndexError, ValueError):
+                problems.append("%s: unbekannter Platzhalter im moment_text" % where)
+        stages = rule.get("stufen") or []
+        if not stages or len(stages) > 3:
+            problems.append("%s: 1 bis 3 Stufen noetig" % where)
+        tiers = [stage.get("stufe") for stage in stages]
+        if any(tier not in TIER_ORDER for tier in tiers) or \
+                [TIER_ORDER.index(tier) for tier in tiers if tier in TIER_ORDER] != \
+                sorted(TIER_ORDER.index(tier) for tier in tiers if tier in TIER_ORDER):
+            problems.append("%s: Stufen muessen Bronze, Silber, Gold sein (aufsteigend)" % where)
+        goals = [stage.get("ab", 1) for stage in stages]
+        if goals != sorted(goals) or len(set(goals)) != len(goals):
+            problems.append("%s: Stufen-Werte muessen steigen" % where)
+    for rule in rules.get("bestwerte") or []:
+        if rule.get("id") not in RUN_METRICS:
+            problems.append("Spiel-Bestwert %s: unbekannter Wert" % rule.get("id"))
+        if rule.get("besser") not in ("mehr", "weniger"):
+            problems.append("Spiel-Bestwert %s: besser muss mehr oder weniger sein"
+                            % rule.get("id"))
+    return problems
 
 
 # ============================================================================

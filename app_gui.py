@@ -55,7 +55,7 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
     BranchView, ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView,
-    OfficeView,
+    MilestoneMoment, OfficeView, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -72,7 +72,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.45"
+APP_VERSION = "0.46"
 
 
 def _resource_path(filename):
@@ -2794,6 +2794,10 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w")
         NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
                   kind="danger").pack(anchor="w", pady=(12, 0))
+        make_label(game.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(16, 0))
+        NeoButton(game.body, "Bestenliste löschen", self.reset_records,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
 
         about = Card(self.content, title="Über das Programm", accent=C["green"])
         about.pack(fill="x", pady=(14, 0))
@@ -2883,6 +2887,13 @@ class SettingsView(View):
                                 "Der Spielstand wurde zurückgesetzt.")
             self.app.views["game"].ticket = None
             self.app.views["game"].room = None
+            self.app.notify_progress()
+
+    def reset_records(self):
+        if not messagebox.askyesno("Bestenliste löschen", fisi_game.RECORDS_ASK):
+            return
+        if self.app.views["game"].game.reset_records():
+            messagebox.showinfo("Gelöscht", "Die Bestenliste wurde gelöscht.")
             self.app.notify_progress()
 
     def reset_all(self):
@@ -3473,6 +3484,31 @@ class FISIApp:
                     self.views["scenarios"].load_scenario(position)
                     break
 
+    def show_unlocks(self):
+        """Neu erreichte Abzeichen zeigen (ab 0.46): grosse als Meilenstein-
+        Moment ueber dem Fenster, kleinere als kurzer Hinweis unten."""
+        view = self.views.get("game") if hasattr(self, "views") else None
+        game = getattr(view, "game", None)
+        if game is None or not game.unlocked:
+            return
+        items = game.take_unlocks()
+        moments = [item for item in items if item["moment"]]
+        others = [item for item in items if not item["moment"]]
+        if others:
+            show_badge_toast(self.root, "   ·   ".join(item["hinweis"] for item in others[:3]) +
+                             ("   ·   +%d" % (len(others) - 3) if len(others) > 3 else ""))
+        if moments:
+            current = getattr(self, "_moment", None)
+            if current is not None and current.winfo_exists():
+                current.add(moments)
+            else:
+                self._moment = MilestoneMoment(self.root, moments, game.state,
+                                               on_open=self.open_achievements)
+
+    def open_achievements(self):
+        self.views["reise"].tab = "erfolge"
+        self.show_view("reise")
+
     def notify_progress(self, refresh_view=True):
         """Aktualisiert die Statusanzeige der Seitenleiste."""
         totals = content_totals()
@@ -3485,6 +3521,8 @@ class FISIApp:
                 self.sync.schedule()
             if self.current == "dashboard":
                 self.views["dashboard"].refresh()
+        # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
+        self.root.after(400, self.show_unlocks)
 
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""
