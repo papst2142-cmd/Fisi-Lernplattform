@@ -4,6 +4,35 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.42
+
+- **Spiel, eigene Firma: Umsatzsteuer.** Die Einnahmen der Firma enthalten
+  19 % Umsatzsteuer, die Vorsteuer aus Nebenkosten, Material, Ausbau,
+  Weiterbildung, Werbung und Zertifizierungen wird abgezogen. Alles läuft
+  automatisch: Die Firma legt die Steuer bei jedem Feierabend in eine
+  Rücklage, alle 12 Arbeitstage kommt die Voranmeldung ans Finanzamt
+  Talheim. Ist die Vorsteuer höher, gibt es eine Erstattung.
+- **Steuer nicht bezahlt:** Reicht das Geld nicht, bleibt eine Steuerschuld
+  offen. Dann greifen dieselben Mahnstufen wie bei den Krediten, die Schuld
+  wird automatisch nachgezahlt, sobald wieder Geld da ist.
+- **Neuer Reiter „Marketing“ (PC und Handy):** Zeitungsanzeige,
+  Online-Werbung, Buswerbung und Fachmesse. Jede Form läuft dauerhaft
+  (kündbar) oder einmalig für eine feste Zeit. Werbung bringt mehr Anfragen
+  und Kundentickets, größere Bestellungen oder einen Preisvorteil.
+- **Neuer Reiter „Zertifizierungen“ (PC und Handy):** ISO 9001, ISO 27001,
+  Datenschutz (DSGVO), Microsoft-Partner, Linux (LPIC), Cisco-Partner und
+  KI-Kompetenz. Sie kosten Geld und dauern einige Arbeitstage, geben einen
+  Preisvorteil gegen Bitweiche und die anderen Mitbewerber (zusammen mit
+  Ruf und Werbung höchstens 10 %) und schalten Großaufträge frei.
+- **Großaufträge und öffentliche Ausschreibungen:** elf große Projekte
+  (z. B. Windows 11 im Rathaus, WLAN für alle Grundschulen,
+  Informationssicherheit im Kreisklinikum) mit 100 Punkten Aufwand. Hier
+  bietet ein Mitbewerber mehr mit.
+- **Finanzen:** neue Karte „Umsatzsteuer“ mit Rücklage, nächster
+  Voranmeldung und den letzten Voranmeldungen. Feierabend und Reise zeigen
+  Steuer, Werbung und Zertifizierungen. Am PC stehen die Firmenreiter jetzt
+  in zwei Zeilen.
+
 ## 0.41
 
 - **Spiel, eigene Firma: Kredite.** Neuer Reiter „Kredite“ unter Firma

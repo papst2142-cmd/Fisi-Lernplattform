@@ -8,6 +8,7 @@ Start:  python test_spiel.py
 
 import copy
 import json
+import math
 import os
 import shutil
 import sys
@@ -2232,8 +2233,13 @@ class FirmaTest(unittest.TestCase):
             self.assertEqual(numbers["umsatz"], fg.staff_revenue(first[0]["werte"]))
             payload = game.end_day()
             self.assertEqual(payload["gehalt"], 0)
-            self.assertEqual(payload["firma"], numbers)
-            self.assertEqual(game.state.money, before + numbers["umsatz"] -
+            self.assertEqual({key: payload["firma"][key] for key in numbers}, numbers)
+            # Ab 0.42 wandert die Umsatzsteuer (Zahllast) in die Ruecklage
+            self.assertEqual(payload["firma"]["ust"], 1)
+            reserve = game.state.tax_reserve
+            self.assertEqual(reserve, round((numbers["umsatz"] - numbers["nebenkosten"])
+                                            * 19 / 119.0))
+            self.assertEqual(game.state.money + reserve, before + numbers["umsatz"] -
                              numbers["gehaelter"] - numbers["nebenkosten"])
             self.assertIn("Umsatz Mitarbeiter", fg.day_end_money_text(payload))
             days = fg.finance_days(game.state)
@@ -2474,7 +2480,8 @@ class AuftraegeTest(unittest.TestCase):
             self.assertEqual(payload["firma"]["tickets"], outcomes)
             self.assertEqual(len(outcomes), 2)
             gained = sum(item["geld"] for item in outcomes)
-            self.assertEqual(game.state.money, money + gained + numbers["umsatz"] -
+            self.assertEqual(game.state.money + game.state.tax_reserve,
+                             money + gained + numbers["umsatz"] -
                              numbers["gehaelter"] - numbers["nebenkosten"])
             for item in outcomes:
                 self.assertEqual(item["geld"] > 0, item["erfolg"])
@@ -3498,6 +3505,365 @@ class KrediteTest(unittest.TestCase):
             self.assertNotIn("Kredit", fg.firm_day_text(end["firma"]))
             self.assertNotIn("Kreditraten", fg.fixed_costs_text(game.state))
             self.assertEqual(game.state.loan_rates(), 0)
+
+
+class SteuernTest(unittest.TestCase):
+    """Umsatzsteuer der eigenen Firma (ab 0.42)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _spend = KrediteTest._spend
+
+    def _days(self, game, count, revenue=1190, costs=0, wages=0, tax=True):
+        """Feierabende mit festem (Brutto-)Umsatz, ab 0.42 mit Umsatzsteuer."""
+        for _ in range(count):
+            payload = {"tag": game.state.day, "gehalt": 0,
+                       "firma": {"umsatz": revenue, "gehaelter": wages, "nebenkosten": costs}}
+            if tax:
+                payload["firma"]["ust"] = 1
+            game._log(fg.EV_DAY_END, payload)
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_business(fg.GAME), [])
+        broken = copy.deepcopy(fg.GAME)
+        broken["balancing"]["steuern"]["faellig_tage"] = 0
+        broken["balancing"]["marketing"]["formen"][1]["id"] = "anzeige"
+        broken["balancing"]["marketing"]["formen"][2]["wirkung"] = {"gibtsnicht": 1}
+        broken["balancing"]["zertifizierungen"]["liste"][0]["vorteil"] = {"kochen": 2}
+        broken["balancing"]["zertifizierungen"]["grossauftraege"]["liste"][0]["braucht"] = \
+            ["gibtsnicht"]
+        broken["balancing"]["zertifizierungen"]["grossauftraege"]["liste"][1]["thema"] = "wlan"
+        self.assertEqual(len(fg._validate_business(broken)), 6)
+
+    def test_ruecklage_und_voranmeldung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            start = game.state.money
+            self.assertEqual(fg.tax_next_due(game.state, self.content), game.state.day + 11)
+            # 1.190 brutto Umsatz = 190 Umsatzsteuer, 119 Nebenkosten = 19 Vorsteuer
+            self._days(game, 11, revenue=1190, costs=119)
+            state = game.state
+            self.assertEqual(state.tax_reserve, 11 * 171)
+            self.assertEqual(state.money, start + 11 * (1190 - 119 - 171))
+            days = fg.finance_days(state)
+            self.assertEqual(days[0]["aus"][fg.BOOK_TAX], 171)
+            self.assertEqual(days[0]["gewinn"], 1190 - 119 - 171)
+            status = fg.tax_status(state, self.content)
+            self.assertEqual((status["ust"], status["vorsteuer"], status["zahllast"]),
+                             (11 * 190, 11 * 19, 11 * 171))
+            self.assertTrue(fg.tax_status_lines(status))
+            # Zwoelfter Feierabend: Voranmeldung, bezahlt aus der Ruecklage
+            self._days(game, 1, revenue=1190, costs=119)
+            state = game.state
+            self.assertEqual(state.tax_reserve, 0)
+            self.assertEqual(state.money, start + 12 * (1190 - 119 - 171))
+            kind, data = state.tax_log[-1][1], state.tax_log[-1][2]
+            self.assertEqual(kind, "voranmeldung")
+            self.assertEqual((data["ust"], data["vorsteuer"], data["zahllast"],
+                              data["aus_ruecklage"]), (2280, 228, 2052, 2052))
+            self.assertIn("Zahllast 2.052 €", fg.tax_filing_text(data))
+            self.assertEqual(state.dunning, 0)
+            self.assertEqual(fg.tax_status(state, self.content)["tage"], 0)
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertIn("steuer", kinds)
+
+    def test_vorsteuer_erstattung(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            start = game.state.money
+            # Mehr Ausgaben mit Vorsteuer als Einnahmen: das Finanzamt zahlt zurueck
+            self._days(game, 12, revenue=0, costs=1190)
+            state = game.state
+            data = state.tax_log[-1][2]
+            self.assertEqual(data["erstattung"], 12 * 190)
+            self.assertEqual(state.money, start - 12 * 1190 + 12 * 190)
+            self.assertEqual(state.book[state.day - 1]["ein"][fg.BOOK_TAX], 12 * 190)
+            self.assertIn("Erstattung", fg.tax_filing_text(data))
+
+    def test_alte_feierabende_ohne_steuer(self):
+        """Feierabende aus 0.41 (ohne "ust") bleiben steuerfrei."""
+        with TempDB() as db:
+            game = self._founded(db)
+            start = game.state.money
+            self._days(game, 15, tax=False)
+            state = game.state
+            self.assertEqual((state.tax_days, state.tax_reserve), (0, 0))
+            self.assertEqual(state.money, start + 15 * 1190)
+            # Der erste echte Feierabend in 0.42 startet den Zeitraum
+            end = game.end_day()
+            self.assertEqual(end["firma"]["ust"], 1)
+            self.assertEqual(game.state.tax_days, 1)
+            self.assertEqual(game.state.tax_period["start"], state.day)
+
+    def test_engpass_mahnstufe_wie_bei_krediten(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self._spend(game, game.state.money)          # Konto leer
+            reliability = game.state.reputation["zuverlaessigkeit"]
+            # Umsatz und Gehaelter gleich: kein Geld fuer die Ruecklage
+            self._days(game, 12, revenue=1190, wages=1190)
+            state = game.state
+            steps = fg.loan_rules()["mahnung"]["stufen"]
+            self.assertEqual(state.dunning, 1)
+            self.assertEqual(state.tax_debt, 12 * 190 + steps[0]["gebuehr"])
+            self.assertEqual(state.reputation["zuverlaessigkeit"], reliability - 2)
+            self.assertIn("Umsatzsteuer", fg.tax_debt_text(state, self.content))
+            self.assertIn("Kreditrate oder Umsatzsteuer", fg.dunning_text(state, self.content))
+            # Dieselbe Stufe sperrt auch neue Kredite (halber Rahmen bei Stufe 1)
+            self.assertIn("Zahlungserinnerung", fg.dunning_text(state, self.content))
+            # Noch ein Feierabend ohne Geld: Stufe 2
+            self._days(game, 1, revenue=0)
+            self.assertEqual(game.state.dunning, 2)
+            self.assertTrue(fg.credit_check(game.state, self.content)["sperre"])
+            # Wieder Geld: Schuld wird nachgezahlt, Stufe sinkt spaeter wieder
+            self._days(game, 1, revenue=11900)
+            state = game.state
+            self.assertEqual(state.tax_debt, 0)
+            self.assertEqual(state.dunning, 2)
+            # Gezahlt zaehlt nur, was wirklich ans Finanzamt ging (samt Gebuehren)
+            status = fg.tax_status(state, self.content)
+            self.assertEqual(status["gezahlt"], 12 * 190 + sum(s["gebuehr"] for s in steps[:2]))
+            self.assertEqual([kind for _day, kind, _data in state.tax_log].count("ausfall"), 2)
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertEqual(kinds.count("steuer_ausfall"), 2)
+            self._days(game, 20, revenue=11900)
+            self.assertEqual(game.state.dunning, 0)
+
+    def test_kredit_und_steuer_nur_eine_stufe(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self._spend(game, game.state.money)
+            # Umsatz geht komplett fuer Gehaelter drauf: Ruecklage bleibt leer
+            self._days(game, 11, revenue=1900, wages=1900)
+            self.assertEqual(game.state.tax_reserve, 0)
+            # Kredit direkt als Ereignis (die Bank prueft sonst den Gewinn)
+            offer = fg.loan_offer_numbers(10000, 20, self.content)
+            game._log(fg.EV_LOAN, {"kredit": "kredit:%d:1" % game.state.day,
+                                   "tag": game.state.day, "name": "Kurzkredit",
+                                   "paket": "kurz", "summe": 10000, "laufzeit": 20,
+                                   "zins": offer["zins"], "rate": offer["rate"]})
+            self._spend(game, game.state.money)
+            # Rate und Voranmeldung platzen am selben Feierabend: nur eine Stufe
+            self._days(game, 1, revenue=0)
+            state = game.state
+            self.assertEqual(state.dunning, 1)
+            self.assertEqual(state.running_loans()[0]["ausfaelle"], 1)
+            steps = fg.loan_rules()["mahnung"]["stufen"]
+            self.assertEqual(state.tax_debt, round(11 * 1900 * 19 / 119.0) + steps[0]["gebuehr"])
+            items = fg.taxes_today(state, state.day - 1)
+            self.assertEqual([item["art"] for item in items], ["voranmeldung", "ausfall"])
+            # Das Ansehen sinkt nur einmal (steht beim Kredit)
+            self.assertEqual(items[1]["reputation"], {})
+            self.assertTrue(fg.tax_day_lines(items, self.content))
+
+    def test_feierabend_text(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            game.hire(fg.applicants(game.state, self.content)[0]["id"])
+            end = game.end_day()
+            self.assertEqual(end["firma"]["steuer"][0]["art"], "ruecklage")
+            self.assertIn("Umsatzsteuer in die Rücklage", fg.firm_day_text(end["firma"]))
+
+
+class MarketingTest(unittest.TestCase):
+    """Werbung der eigenen Firma (ab 0.42)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _days = SteuernTest._days
+
+    def test_laufend(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            day = game.state.day
+            today = game.state.inquiries()
+            before = fg.GameState(list(game.state.history), self.content)
+            payload = game.book_ad("online", fg.AD_RUNNING)
+            self.assertEqual((payload["ab_tag"], payload["kosten"]), (day + 1, 110))
+            state = game.state
+            # Heute aendert sich nichts, erst ab dem naechsten Arbeitstag
+            self.assertEqual(state.inquiries(), today)
+            self.assertEqual(state.ads_active(), [])
+            with self.assertRaises(ValueError):
+                game.book_ad("online", fg.AD_ONCE)        # laeuft schon
+            money = state.money
+            self._days(game, 1, revenue=0, tax=False)
+            self.assertEqual(game.state.money, money)      # heute noch keine Kosten
+            state = game.state
+            plain = fg.inquiries_for_day(before, state.day, self.content)
+            more = state.inquiries()
+            self.assertEqual(len(more), len(plain) + 1)
+            for old, new in zip(plain, more):
+                self.assertEqual(new["menge"], math.ceil(old["menge"] * 1.1))
+            self.assertIn("+1 Anfrage pro Tag", fg.marketing_summary_text(state, self.content))
+            self.assertIn("Werbung 110 €", fg.fixed_costs_text(state))
+            money = state.money
+            self._days(game, 1, revenue=0, tax=False)
+            self.assertEqual(game.state.money, money - 110)
+            self.assertEqual(game.state.book[state.day]["aus"][fg.BOOK_MARKETING], 110)
+            # Kuendigen: heute kostet es noch, morgen nicht mehr
+            game.stop_ad("online")
+            money = game.state.money
+            self._days(game, 1, revenue=0, tax=False)
+            self.assertEqual(game.state.money, money - 110)
+            self.assertEqual(game.state.ads_active(), [])
+            money = game.state.money
+            self._days(game, 1, revenue=0, tax=False)
+            self.assertEqual(game.state.money, money)
+            with self.assertRaises(ValueError):
+                game.stop_ad("online")
+            # Danach wieder buchbar
+            game.book_ad("online", fg.AD_ONCE)
+
+    def test_einmalig_und_tickets(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            money = game.state.money
+            tickets = len(game.state.customer_tickets())
+            game.book_ad("bus", fg.AD_ONCE)
+            form = fg.ad_form("bus")
+            self.assertEqual(game.state.money, money - form["einmalig"]["preis"])
+            status = {item["id"]: item for item in fg.ad_status(game.state, self.content)}
+            self.assertIn("nächsten Arbeitstag", status["bus"]["stand"])
+            self._days(game, 1, revenue=0, tax=False)
+            state = game.state
+            self.assertEqual(len(state.customer_tickets()), tickets + 1)
+            # Guter Ruf (Kundenzufriedenheit 80) plus Werbung
+            self.assertEqual(fg.offer_advantage_parts(state, None, self.content),
+                             [("guter Ruf", 3), ("Werbung", 1)])
+            self.assertEqual(fg.offer_advantage(state, self.content), 4)
+            # Wirkt genau "tage" Arbeitstage, danach laeuft es von selbst aus
+            self._days(game, form["einmalig"]["tage"] - 1, revenue=0, tax=False)
+            self.assertEqual(len(game.state.ads_active()), 1)
+            self._days(game, 1, revenue=0, tax=False)
+            self.assertEqual(game.state.ads_active(), [])
+            self.assertEqual(fg.offer_advantage(game.state, self.content), 3)
+            game.book_ad("bus", fg.AD_ONCE)
+            kinds = [entry["art"] for entry in fg.journey(game.state, self.content)]
+            self.assertEqual(kinds.count("werbung"), 2)
+
+    def test_geld_und_zwei_geraete(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            KrediteTest._spend(self, game, game.state.money - 1000)
+            offer = fg.ad_offer(game.state, "messe", fg.AD_ONCE, self.content)
+            self.assertIn("reicht dein Geld nicht", offer["problem"])
+            with self.assertRaises(ValueError):
+                game.book_ad("messe", fg.AD_ONCE)
+            with self.assertRaises(ValueError):
+                game.book_ad("gibtsnicht", fg.AD_RUNNING)
+            payload = game.book_ad("anzeige", fg.AD_RUNNING)
+            db.log_game_event(fg.EV_ADS, json.dumps(payload), "Handy")
+            game.reload()
+            self.assertEqual(len(game.state.ads), 1)
+            self._days(game, 2, revenue=0, tax=False)
+            other = fg.Game(db, "Handy", self.content)
+            self.assertEqual(other.state.money, game.state.money)
+
+
+class ZertifizierungTest(unittest.TestCase):
+    """Zertifizierungen und Grossauftraege (ab 0.42)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+    _days = SteuernTest._days
+
+    def test_erwerb_und_vorteil(self):
+        with TempDB() as db:
+            game = self._founded(db, money=60000)
+            money = game.state.money
+            cert = fg.certificate("iso27001")
+            payload = game.start_cert("iso27001")
+            self.assertEqual(payload["bis_tag"], game.state.day + cert["tage"])
+            self.assertEqual(game.state.money, money - cert["preis"])
+            self.assertEqual(game.state.book[game.state.day]["aus"][fg.BOOK_CERT],
+                             cert["preis"])
+            # Nur eine gleichzeitig, keine doppelt
+            self.assertIn("läuft schon", fg.cert_offer(game.state, "windows",
+                                                        self.content)["problem"])
+            with self.assertRaises(ValueError):
+                game.start_cert("iso27001")
+            self.assertEqual(game.state.certs_held(), set())
+            self.assertEqual(fg.cert_advantage(game.state, "sicherheit"), 0)
+            self._days(game, cert["tage"] - 1, revenue=0, tax=False)
+            self.assertEqual(game.state.certs_held(), set())
+            self._days(game, 1, revenue=0, tax=False)
+            state = game.state
+            self.assertEqual(state.certs_held(), {"iso27001"})
+            self.assertEqual(fg.cert_advantage(state, "sicherheit"), 4)
+            self.assertEqual(fg.cert_advantage(state, "netzwerk"), 1)
+            self.assertEqual(fg.cert_advantage(state, None), 0)
+            status = {item["id"]: item for item in fg.cert_status(state, self.content)}
+            self.assertEqual(status["iso27001"]["stand"], "erworben")
+            self.assertIn("Kreisklinikum", fg.cert_unlock_text(status["iso27001"]))
+            self.assertIn("schon", status["iso27001"]["angebot"]["problem"])
+            self.assertEqual(status["windows"]["angebot"]["problem"], "")
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertIn("zertifizierung", kinds)
+            # Obergrenze aller Vorteile
+            content = copy.deepcopy(self.content)
+            content["balancing"]["zertifizierungen"]["vorteil_max"] = 3
+            self.assertEqual(fg.offer_advantage(state, content, "sicherheit"), 3)
+
+    def test_grossauftraege(self):
+        with TempDB() as db:
+            game = self._founded(db, money=60000)
+            self.assertEqual(fg.gross_tenders(game.state, game.state.day + 30,
+                                              self.content), [])
+            game.start_cert("windows")
+            self._days(game, 7, revenue=0, tax=False)
+            for _ in range(10):
+                tenders = [item for item in game.state.tenders() if item.get("gross")]
+                if tenders:
+                    break
+                self._days(game, 1, revenue=0, tax=False)
+            state = game.state
+            self.assertEqual(len(tenders), 1)
+            tender = tenders[0]
+            self.assertEqual(tender["vorlage"], "gross:rathaus-windows")
+            self.assertTrue(tender["id"].startswith(fg.GROSS_PREFIX))
+            self.assertEqual(tender["aufwand"], 100)
+            self.assertIn("nur mit Microsoft-Partner", fg.gross_badge_text(tender))
+            details = fg.project_details(tender, self.content)
+            self.assertFalse(details["lernbar"])
+            self.assertIn("Windows 11", details["auftrag"])
+            # Angebot mit Kampfpreis gewinnen: laeuft wie ein normales Projekt
+            markup = min(fg.offer_rules()["zuschlaege"])
+            answer = fg.find_solution(fg.project_task(tender, markup))
+            result = game.send_project_offer(tender["id"], markup, answer)
+            state = game.state
+            self.assertEqual(result["vorteil"], fg.offer_advantage(state, self.content,
+                                                                   "systeme"))
+            self.assertIn("Zertifizierungen", result["vorteil_gruende"])
+            if result["gewonnen"]:
+                project = state.projects[tender["id"]]
+                self.assertEqual(fg.project_details(project, self.content)["kunde"],
+                                 "Stadtverwaltung Talheim")
+                self.assertTrue(fg.gross_badge_text(project))
+            # Grossauftraege mit zwei Zertifizierungen erst, wenn beide da sind
+            names = {fg.gross_tenders(state, day, self.content)[0]["titel"]
+                     for day in range(state.day, state.day + 60, 5)
+                     if fg.gross_tenders(state, day, self.content)}
+            self.assertEqual(names, {"Windows 11 für 60 Arbeitsplätze im Rathaus"})
+            # Bei Grossauftraegen bietet ein Mitbewerber mehr mit als bei Projekten
+            extra = fg.gross_rules(self.content)["mitbieter_extra"]
+            self.assertEqual(extra, 1)
+            for day in range(1, 30):
+                normal = fg.competitor_bids("projekt", "normal", "systeme", 7, day, "x",
+                                            self.content)
+                more = fg.competitor_bids("projekt", "normal", "systeme", 7, day, "x",
+                                          self.content, extra=extra)
+                self.assertEqual(sum(map(len, more)), sum(map(len, normal)) + 1)
+            # Derselbe Grossauftrag nie zweimal hintereinander
+            slots = [[item["vorlage"] for item in fg.gross_tenders(state, day, self.content)
+                      if item["slot"] == slot]
+                     for slot, day in enumerate(range(state.firm["tag"] + 2,
+                                                      state.day + 60, 5))]
+            for before, after in zip(slots, slots[1:]):
+                self.assertFalse(before and before == after)
 
 
 if __name__ == "__main__":

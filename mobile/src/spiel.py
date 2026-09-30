@@ -2310,31 +2310,35 @@ class GameScreen:
         return result
 
     def _project_title(self, project):
+        lines = [ui.text(project["titel"], size=15, weight=ft.FontWeight.BOLD),
+                 ui.text(project["kunde_kurz"], size=12, weight=ft.FontWeight.BOLD,
+                         color=cat_color(project["cat"]))]
+        badge = fg.gross_badge_text(project)
+        if badge:
+            lines.append(ui.text(badge, size=12, weight=ft.FontWeight.BOLD, color=C["yellow"]))
         return ft.Row([ft.Container(width=6, height=38, border_radius=3,
                                     bgcolor=cat_color(project["cat"])),
-                       ft.Column([ui.text(project["titel"], size=15, weight=ft.FontWeight.BOLD),
-                                  ui.text(project["kunde_kurz"], size=12,
-                                          weight=ft.FontWeight.BOLD,
-                                          color=cat_color(project["cat"]))],
-                                 spacing=2, tight=True, expand=True)], spacing=10)
+                       ft.Column(lines, spacing=2, tight=True, expand=True)], spacing=10)
 
     def _project_details(self, project):
         key = project.get("projekt") or project["id"]
         if key not in self.details_for:
             return []
-        template = fg.GAME["projektarbeiten"][project["vorlage"]]
+        template = fg.project_details(project)
         lines = []
-        for head, body in (("Kunde", template["branche"]),
+        for head, body in (("Kunde", template["kunde"]),
                            ("Ausgangssituation", template["ausgangssituation"]),
                            ("Auftrag", template["auftrag"])):
             lines += [ui.label(head), ui.text(body, size=12, color=C["text_soft"])]
         lines.append(ui.label("Rahmenbedingungen"))
         lines += [ui.text("• " + line, size=12, color=C["text_soft"])
-                  for line in template.get("rahmenbedingungen") or []]
-        lines.append(ui.text("Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses "
-                             "Projekt durcharbeiten. Dann arbeitet dein Team %d %% schneller."
-                             % fg.project_rules().get("lernbonus", 0), size=11,
-                             color=C["muted"]))
+                  for line in template["rahmenbedingungen"]]
+        if template["lernbar"]:
+            lines.append(ui.text("Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses "
+                                 "Projekt durcharbeiten. Dann arbeitet dein Team %d %% "
+                                 "schneller."
+                                 % fg.project_rules().get("lernbonus", 0), size=11,
+                                 color=C["muted"]))
         return [ft.Container(content=ft.Column(lines, spacing=4, tight=True),
                              bgcolor=mix(C["card_alt"], C["accent"], 0.08), border_radius=10,
                              padding=10)]
@@ -2787,9 +2791,162 @@ class GameScreen:
         if not lines:
             lines.append(ui.text("Bisher hast du keinen Auftrag an einen Mitbewerber verloren.",
                                  size=14, color=C["text_soft"]))
+        if state.firm:
+            result.insert(2, self._tax_card(state))
         result.append(ui.Card("Gegen wen verloren", lines, accent=C["pink"],
                               subtitle="an Mitbewerber"))
         return result
+
+    # -- Umsatzsteuer, Marketing, Zertifizierungen (ab 0.42) --------------------
+
+    def _tax_card(self, state):
+        item = fg.tax_status(state)
+        parts = [ui.text("%s · %d %% · Voranmeldung alle %d Arbeitstage" % (
+                     item["finanzamt"], item["satz"], item["faellig_tage"]), size=12,
+                     color=C["text_dim"]),
+                 ui.text("Steuerrücklage %s" % euro(item["ruecklage"]), size=20,
+                         weight=ft.FontWeight.BOLD),
+                 ui.text("Deine Einnahmen enthalten %d %% Umsatzsteuer. Die Vorsteuer aus "
+                         "Nebenkosten, Material, Ausbau, Weiterbildung, Werbung und "
+                         "Zertifizierungen wird abgezogen. Die Zahllast legt die Firma jeden "
+                         "Feierabend automatisch zurück, sie gehört dem Finanzamt."
+                         % item["satz"], size=13, color=C["text_soft"])]
+        parts += [ui.text(line, size=12, color=C["text_dim"])
+                  for line in fg.tax_status_lines(item)]
+        for warning in (fg.tax_debt_text(state), fg.dunning_text(state)):
+            if warning:
+                parts.append(ui.text(warning, size=13, color=C["red"],
+                                     weight=ft.FontWeight.BOLD))
+        if item["letzte"]:
+            parts.append(ui.label("Letzte Voranmeldungen"))
+            parts += [ui.text("• " + fg.tax_filing_text(data), size=12, color=C["text_soft"])
+                      for data in item["letzte"]]
+        return ui.Card("Umsatzsteuer", parts, accent=C["orange"])
+
+    def _firm_marketing(self, state):
+        result = [ui.Card("Werbung", [
+            ui.text(fg.marketing_summary_text(state), size=14, color=C["text_soft"]),
+            ui.text("Jede Werbeform kannst du laufend buchen (Kosten pro Arbeitstag, "
+                    "jederzeit kündbar) oder einmalig (sofort bezahlt, wirkt eine feste Zahl "
+                    "von Arbeitstagen). Die Wirkung beginnt am nächsten Arbeitstag.", size=12,
+                    color=C["text_dim"])], accent=C["pink"])]
+        boxes = []
+        for item in fg.ad_status(state):
+            parts = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                     ui.text(item["text"], size=13, color=C["text_soft"]),
+                     ui.text("Wirkung: " + item["wirkung"], size=12, color=C["text_soft"],
+                             weight=ft.FontWeight.BOLD),
+                     ui.text(fg.ad_price_text(item), size=12, color=C["text_dim"])]
+            if item["stand"]:
+                parts.append(ui.text(item["stand"], size=13, color=C["green"],
+                                     weight=ft.FontWeight.BOLD))
+            booking = item["buchung"]
+            if booking and booking["art"] == fg.AD_RUNNING and booking.get("ende") is None:
+                parts.append(ft.Row([ui.GradientButton(
+                    "Kündigen", lambda _e, i=item: self._stop_ad(i), kind="ghost", height=38,
+                    expand=True)]))
+            elif not booking:
+                buttons = []
+                for mode, label in fg.AD_MODES:
+                    offer = item["angebote"][mode]
+                    button = ui.GradientButton(label, lambda _e, o=offer: self._book_ad(o),
+                                               kind="primary" if mode == fg.AD_RUNNING
+                                               else "ghost", height=38, expand=True)
+                    button.set_enabled(not offer["problem"])
+                    buttons.append(button)
+                parts.append(ft.Row(buttons, spacing=8))
+                problem = item["angebote"][fg.AD_ONCE]["problem"] or \
+                    item["angebote"][fg.AD_RUNNING]["problem"]
+                if problem:
+                    parts.append(ui.text(problem, size=12, color=C["yellow"]))
+            box = self._person_box(parts)
+            if booking:
+                box.border = ft.Border.all(1, C["green"])
+            boxes.append(box)
+        result.append(ui.Card("Werbeformen", boxes, accent=C["accent"]))
+        return result
+
+    def _book_ad(self, offer):
+        def confirmed():
+            try:
+                self.game.book_ad(offer["id"], offer["art"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Werbung buchen", fg.ad_confirm_text(offer), confirmed)
+
+    def _stop_ad(self, item):
+        def confirmed():
+            try:
+                self.game.stop_ad(item["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Werbung kündigen", "„%s“ kündigen? Heute kostet sie noch, ab dem "
+                         "nächsten Arbeitstag nicht mehr." % item["kurz"], confirmed)
+
+    def _firm_zertifizierungen(self, state):
+        rules = fg.cert_rules()
+        result = [ui.Card("Zertifizierungen", [
+            ui.text(fg.certs_summary_text(state), size=14, color=C["text_soft"]),
+            ui.text("Zertifizierungen schalten große und öffentliche Aufträge frei (sie "
+                    "erscheinen unter „Projekte“) und geben dir einen Preisvorteil gegen "
+                    "Bitweiche und die anderen Mitbewerber. Alle Vorteile zusammen (Ruf, "
+                    "Zertifizierungen, Werbung) höchstens %d %%. Es läuft immer nur eine "
+                    "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10), size=12,
+                    color=C["text_dim"])], accent=C["yellow"])]
+        items = fg.cert_status(state)
+        for kind, title, color in (("firma", "Qualität, Sicherheit und Datenschutz",
+                                    C["cyan"]),
+                                   ("fach", "Fachliche Zertifizierungen", C["green"])):
+            boxes = []
+            for item in [entry for entry in items if entry["art"] == kind]:
+                parts = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                         ui.text(item["text"], size=13, color=C["text_soft"]),
+                         ui.text("Kosten %s · Dauer %s" % (euro(item["preis"]),
+                                                           fg.term_text(item["tage"])),
+                                 size=12, color=C["text_dim"]),
+                         ui.text("Vorteil: " + item["vorteil"], size=12,
+                                 color=C["text_soft"], weight=ft.FontWeight.BOLD)]
+                unlock = fg.cert_unlock_text(item)
+                if unlock:
+                    parts.append(ui.text(unlock, size=12, color=C["text_dim"]))
+                if item["stand"] == "erworben":
+                    parts.append(ui.text(item["stand_text"], size=13, color=C["green"],
+                                         weight=ft.FontWeight.BOLD))
+                elif item["stand"] == "laeuft":
+                    parts.append(ui.text(item["stand_text"], size=13, color=C["cyan"],
+                                         weight=ft.FontWeight.BOLD))
+                else:
+                    offer = item["angebot"]
+                    button = ui.GradientButton("Beginnen",
+                                               lambda _e, o=offer: self._start_cert(o),
+                                               height=38)
+                    button.set_enabled(not offer["problem"])
+                    parts.append(ft.Row([button]))
+                    if offer["problem"]:
+                        parts.append(ui.text(offer["problem"], size=12, color=C["yellow"]))
+                box = self._person_box(parts)
+                if item["stand"] == "erworben":
+                    box.border = ft.Border.all(1, C["green"])
+                boxes.append(box)
+            result.append(ui.Card(title, boxes, accent=color))
+        return result
+
+    def _start_cert(self, offer):
+        def confirmed():
+            try:
+                self.game.start_cert(offer["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Zertifizierung", fg.cert_confirm_text(offer), confirmed)
 
     # -- Kredite (ab 0.41) ----------------------------------------------------
 

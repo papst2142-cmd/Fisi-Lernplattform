@@ -96,12 +96,18 @@ class AvatarCanvas(tk.Canvas):
 class ChoiceRow(ctk.CTkFrame):
     """Reihe sich gegenseitig ausschliessender Auswahlknoepfe (Pills)."""
 
-    def __init__(self, parent, options, value, on_change):
+    def __init__(self, parent, options, value, on_change, per_row=None):
         super().__init__(parent, fg_color="transparent")
         self.on_change = on_change
         self.buttons = {}
-        for key, label in options:
-            button = NeoButton(self, label, kind="pill", height=32, font=F["small_bold"],
+        # per_row: hoechstens so viele Knoepfe pro Zeile (ab 0.42 fuer die
+        # Reiter der Firma, sonst passen sie nicht mehr in eine Zeile)
+        line = self
+        for index, (key, label) in enumerate(options):
+            if per_row and index % per_row == 0:
+                line = ctk.CTkFrame(self, fg_color="transparent")
+                line.pack(anchor="w", pady=(0 if index == 0 else 6, 0))
+            button = NeoButton(line, label, kind="pill", height=32, font=F["small_bold"],
                                command=lambda k=key: self.select(k))
             button.pack(side="left", padx=(0, 6))
             self.buttons[key] = button
@@ -2595,8 +2601,8 @@ class FirmView(ScrollArea):
         if self.tab not in dict(tabs):
             self.tab = tabs[0][0]
         if len(tabs) > 1:
-            ChoiceRow(self.content, tabs, self.tab, self._choose).pack(anchor="w",
-                                                                       pady=(14, 0))
+            ChoiceRow(self.content, tabs, self.tab, self._choose,
+                      per_row=5 if len(tabs) > 7 else None).pack(anchor="w", pady=(14, 0))
         getattr(self, "_build_" + self.tab)(state)
         if not keep_scroll:
             self.to_top()
@@ -2959,17 +2965,21 @@ class FirmView(ScrollArea):
                    wraplength=760, justify="left", anchor="w").pack(anchor="w")
         make_label(text, project["kunde_kurz"], font=F["small_bold"],
                    fg=cat_color(project["cat"]), anchor="w").pack(anchor="w")
+        badge = fg.gross_badge_text(project)
+        if badge:
+            make_label(text, badge, font=F["small_bold"], fg=C["yellow"], anchor="w").pack(
+                anchor="w")
         return text
 
     def _project_details(self, parent, project):
         key = project.get("projekt") or project["id"]
         if key not in self.details_for:
             return
-        template = fg.GAME["projektarbeiten"][project["vorlage"]]
+        template = fg.project_details(project)
         tip = ctk.CTkFrame(parent, fg_color=mix(C["card_alt"], C["accent"], 0.08),
                            corner_radius=10)
         tip.pack(fill="x", pady=(8, 0))
-        for head, body in (("Kunde", template["branche"]),
+        for head, body in (("Kunde", template["kunde"]),
                            ("Ausgangssituation", template["ausgangssituation"]),
                            ("Auftrag", template["auftrag"])):
             make_label(tip, head.upper(), font=F["label"], fg=C["muted"]).pack(
@@ -2978,9 +2988,12 @@ class FirmView(ScrollArea):
                        justify="left", anchor="w").pack(anchor="w", padx=12)
         make_label(tip, "RAHMENBEDINGUNGEN", font=F["label"], fg=C["muted"]).pack(
             anchor="w", padx=12, pady=(8, 0))
-        for line in template.get("rahmenbedingungen") or []:
+        for line in template["rahmenbedingungen"]:
             make_label(tip, "• " + line, font=F["small"], fg=C["text_soft"], wraplength=740,
                        justify="left", anchor="w").pack(anchor="w", padx=12)
+        if not template["lernbar"]:
+            ctk.CTkFrame(tip, height=8, fg_color="transparent").pack()
+            return
         make_label(tip, "Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses Projekt "
                    "durcharbeiten. Dann arbeitet dein Team %d %% schneller."
                    % fg.project_rules().get("lernbonus", 0), font=F["tiny"], fg=C["muted"],
@@ -3437,6 +3450,9 @@ class FirmView(ScrollArea):
                        fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
                 anchor="w", pady=(8, 0))
 
+        if state.firm:
+            self._build_tax(state)
+
         lost = fg.lost_to(state)
         rivals = Card(self.content, title="Gegen wen verloren", accent=C["pink"],
                       subtitle="Anfragen und Projekte, die an Mitbewerber gingen")
@@ -3452,6 +3468,196 @@ class FirmView(ScrollArea):
             make_label(line, "1 Auftrag" if number == 1 else "%d Aufträge" % number,
                        font=F["small"], fg=C["text_dim"]).pack(side="right")
 
+
+    # -- Umsatzsteuer, Marketing, Zertifizierungen (ab 0.42) ----------------------
+
+    def _build_tax(self, state):
+        item = fg.tax_status(state)
+        card = Card(self.content, title="Umsatzsteuer", accent=C["orange"],
+                    subtitle="%s · %d %% · automatisch, Voranmeldung alle %d Arbeitstage" % (
+                        item["finanzamt"], item["satz"], item["faellig_tage"]))
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, "Steuerrücklage %s" % _euro(item["ruecklage"]), font=F["h2"],
+                   fg=C["text"], anchor="w").pack(anchor="w")
+        make_label(card.body, "Deine Einnahmen enthalten %d %% Umsatzsteuer. Die Vorsteuer "
+                   "aus Nebenkosten, Material, Ausbau, Weiterbildung, Werbung und "
+                   "Zertifizierungen wird abgezogen. Die Zahllast legt die Firma jeden "
+                   "Feierabend automatisch zurück, sie gehört dem Finanzamt." % item["satz"],
+                   font=F["small"], fg=C["text_soft"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w", pady=(4, 4))
+        for line in fg.tax_status_lines(item):
+            make_label(card.body, line, font=F["small"], fg=C["text_dim"], wraplength=980,
+                       justify="left", anchor="w").pack(anchor="w", pady=1)
+        warning = fg.tax_debt_text(state) or ""
+        if warning:
+            make_label(card.body, warning, font=F["small_bold"], fg=C["red"], wraplength=980,
+                       justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        dunning = fg.dunning_text(state)
+        if dunning:
+            make_label(card.body, dunning, font=F["small_bold"], fg=C["red"], wraplength=980,
+                       justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        if item["letzte"]:
+            make_label(card.body, "LETZTE VORANMELDUNGEN", font=F["label"],
+                       fg=C["muted"]).pack(anchor="w", pady=(8, 2))
+            for data in item["letzte"]:
+                make_label(card.body, "• " + fg.tax_filing_text(data), font=F["small"],
+                           fg=C["text_soft"], wraplength=980, justify="left",
+                           anchor="w").pack(anchor="w", pady=1)
+
+    def _build_marketing(self, state):
+        head = Card(self.content, title="Werbung", accent=C["pink"],
+                    subtitle="mehr Anfragen und größere Aufträge · wirkt ab dem nächsten "
+                    "Arbeitstag")
+        head.pack(fill="x", pady=(14, 0))
+        make_label(head.body, fg.marketing_summary_text(state), font=F["body"],
+                   fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+            anchor="w")
+        make_label(head.body, "Jede Werbeform kannst du laufend buchen (Kosten pro "
+                   "Arbeitstag, jederzeit kündbar) oder einmalig (sofort bezahlt, wirkt eine "
+                   "feste Zahl von Arbeitstagen). Mehrere Werbeformen wirken zusammen.",
+                   font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w", pady=(6, 0))
+        card = Card(self.content, title="Werbeformen", accent=C["accent"])
+        card.pack(fill="x", pady=(14, 0))
+        for item in fg.ad_status(state):
+            row = ctk.CTkFrame(card.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["green"] if item["buchung"]
+                               else C["border"])
+            row.pack(fill="x", pady=5)
+            side = _frame(row)
+            side.pack(side="right", padx=14, pady=10, anchor="n")
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(text, item["text"], font=F["small"], fg=C["text_soft"],
+                       wraplength=740, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            make_label(text, "Wirkung: " + item["wirkung"], font=F["small_bold"],
+                       fg=C["text_soft"], wraplength=740, justify="left", anchor="w").pack(
+                anchor="w", pady=(2, 0))
+            make_label(text, fg.ad_price_text(item), font=F["small"], fg=C["text_dim"],
+                       wraplength=740, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            if item["stand"]:
+                make_label(text, item["stand"], font=F["small_bold"], fg=C["green"],
+                           wraplength=740, justify="left", anchor="w").pack(anchor="w",
+                                                                            pady=(4, 0))
+            booking = item["buchung"]
+            if booking and booking["art"] == fg.AD_RUNNING and booking.get("ende") is None:
+                NeoButton(side, "Kündigen", lambda i=item: self._stop_ad(i), kind="ghost",
+                          height=32, font=F["small_bold"]).pack()
+            elif booking:
+                make_label(side, "gebucht", font=F["small_bold"], fg=C["green"]).pack()
+            else:
+                for mode, label in fg.AD_MODES:
+                    offer = item["angebote"][mode]
+                    button = NeoButton(side, label, lambda o=offer: self._book_ad(o),
+                                       kind="primary" if mode == fg.AD_RUNNING else "ghost",
+                                       height=32, width=110, font=F["small_bold"])
+                    button.pack(pady=(0, 6))
+                    button.set_enabled(not offer["problem"])
+                problem = item["angebote"][fg.AD_ONCE]["problem"] or \
+                    item["angebote"][fg.AD_RUNNING]["problem"]
+                if problem:
+                    make_label(text, problem, font=F["small"], fg=C["yellow"],
+                               wraplength=740, justify="left", anchor="w").pack(anchor="w",
+                                                                                pady=(4, 0))
+
+    def _book_ad(self, offer):
+        if not messagebox.askyesno("Werbung buchen", fg.ad_confirm_text(offer)):
+            return
+        try:
+            self.game.book_ad(offer["id"], offer["art"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    def _stop_ad(self, item):
+        if not messagebox.askyesno("Werbung kündigen", "„%s“ kündigen? Heute kostet sie "
+                                   "noch, ab dem nächsten Arbeitstag nicht mehr." % item["kurz"]):
+            return
+        try:
+            self.game.stop_ad(item["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    def _build_zertifizierungen(self, state):
+        rules = fg.cert_rules()
+        head = Card(self.content, title="Zertifizierungen", accent=C["yellow"],
+                    subtitle="Geld und Arbeitstage investieren · gilt danach dauerhaft")
+        head.pack(fill="x", pady=(14, 0))
+        make_label(head.body, fg.certs_summary_text(state), font=F["body"],
+                   fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+            anchor="w")
+        make_label(head.body, "Zertifizierungen schalten große und öffentliche Aufträge frei "
+                   "(sie erscheinen unter „Projekte“) und geben dir einen Preisvorteil gegen "
+                   "Bitweiche und die anderen Mitbewerber. Alle Vorteile zusammen (Ruf, "
+                   "Zertifizierungen, Werbung) höchstens %d %%. Es läuft immer nur eine "
+                   "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10),
+                   font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
+                   anchor="w").pack(anchor="w", pady=(6, 0))
+        groups = (("firma", "Qualität, Sicherheit und Datenschutz", C["cyan"]),
+                  ("fach", "Fachliche Zertifizierungen", C["green"]))
+        items = fg.cert_status(state)
+        for kind, title, color in groups:
+            card = Card(self.content, title=title, accent=color)
+            card.pack(fill="x", pady=(14, 0))
+            for item in [entry for entry in items if entry["art"] == kind]:
+                row = ctk.CTkFrame(card.body, fg_color=C["card_alt"], corner_radius=12,
+                                   border_width=1, border_color=C["green"] if item["stand"] ==
+                                   "erworben" else C["border"])
+                row.pack(fill="x", pady=5)
+                side = _frame(row)
+                side.pack(side="right", padx=14, pady=10, anchor="n")
+                text = _frame(row)
+                text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+                make_label(text, item["name"], font=F["body_bold"], fg=C["text"],
+                           anchor="w").pack(anchor="w")
+                make_label(text, item["text"], font=F["small"], fg=C["text_soft"],
+                           wraplength=740, justify="left", anchor="w").pack(anchor="w",
+                                                                            pady=(2, 0))
+                make_label(text, "Kosten %s · Dauer %s" % (_euro(item["preis"]),
+                                                           fg.term_text(item["tage"])),
+                           font=F["small"], fg=C["text_dim"], anchor="w").pack(anchor="w",
+                                                                              pady=(2, 0))
+                make_label(text, "Vorteil: " + item["vorteil"], font=F["small_bold"],
+                           fg=C["text_soft"], wraplength=740, justify="left",
+                           anchor="w").pack(anchor="w", pady=(2, 0))
+                unlock = fg.cert_unlock_text(item)
+                if unlock:
+                    make_label(text, unlock, font=F["small"], fg=C["text_dim"],
+                               wraplength=740, justify="left", anchor="w").pack(anchor="w",
+                                                                                pady=(2, 0))
+                if item["stand"] == "erworben":
+                    make_label(side, "erworben", font=F["small_bold"], fg=C["green"]).pack()
+                    make_label(text, item["stand_text"], font=F["small"], fg=C["green"],
+                               anchor="w").pack(anchor="w", pady=(4, 0))
+                elif item["stand"] == "laeuft":
+                    make_label(side, "läuft", font=F["small_bold"], fg=C["cyan"]).pack()
+                    make_label(text, item["stand_text"], font=F["small_bold"], fg=C["cyan"],
+                               anchor="w").pack(anchor="w", pady=(4, 0))
+                else:
+                    offer = item["angebot"]
+                    button = NeoButton(side, "Beginnen", lambda o=offer: self._start_cert(o),
+                                       kind="primary", height=32, font=F["small_bold"])
+                    button.pack()
+                    button.set_enabled(not offer["problem"])
+                    if offer["problem"]:
+                        make_label(text, offer["problem"], font=F["small"], fg=C["yellow"],
+                                   wraplength=740, justify="left", anchor="w").pack(
+                            anchor="w", pady=(4, 0))
+
+    def _start_cert(self, offer):
+        if not messagebox.askyesno("Zertifizierung", fg.cert_confirm_text(offer)):
+            return
+        try:
+            self.game.start_cert(offer["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
 
     # -- Kredite (ab 0.41) ------------------------------------------------------
 
