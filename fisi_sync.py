@@ -16,7 +16,9 @@ die Vereinigung beider Seiten. Nur Loeschen braucht eine Regel: Der Zeitpunkt
 von "Alle Lerndaten loeschen" (reset_at) bzw. "Historie loeschen"
 (history_cleared_at) wird mit abgeglichen, und alles davor faellt auf allen
 Geraeten weg. Der Spielstand des Lernspiels hat einen eigenen Zeitpunkt
-(spiel_reset_at) und bleibt von den beiden anderen unberuehrt.
+(spiel_reset_at) und bleibt von den beiden anderen unberuehrt. Die
+Bestenliste (ab 0.46) uebersteht alle drei, sie hat ihren eigenen Zeitpunkt
+(bestenliste_reset_at).
 
 Ablauf:
   ergebnis = sync(db, einstellungen, geraet="PC")   -> SyncResult
@@ -30,13 +32,13 @@ import sqlite3
 import urllib.error
 import urllib.request
 
-from fisi_core import GAME_TABLES, OPTIONAL_COLUMNS, SYNC_TABLES
+from fisi_core import GAME_TABLES, OPTIONAL_COLUMNS, RECORD_TABLES, SYNC_TABLES
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
 REMOTE_FILE = "lernstand.json.gz"
 FORMAT = 1
-MARKERS = ("reset_at", "history_cleared_at", "spiel_reset_at")
+MARKERS = ("reset_at", "history_cleared_at", "spiel_reset_at", "bestenliste_reset_at")
 TIMEOUT = 15
 
 SETTING_DEFAULTS = {"sync_repo": "", "sync_token": "", "sync_auto": True,
@@ -264,6 +266,8 @@ def merge_into_local(db, remote):
         for table, columns in SYNC_TABLES.items():
             if table in GAME_TABLES:
                 cutoff = game_reset
+            elif table in RECORD_TABLES:
+                cutoff = markers.get("bestenliste_reset_at")
             elif table == "test_results":
                 cutoff = cleared
             else:

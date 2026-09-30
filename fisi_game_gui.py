@@ -546,6 +546,40 @@ class ModelPreview(FloorPlan):
         pass
 
 
+class ShapeCanvas(FloorPlan):
+    """Kleine Zeichnung aus Zeichenbefehlen (ab 0.46: Abzeichen und die Szene
+    im Meilenstein-Moment). provider() liefert (Zeichenbefehle, Breite, Hoehe)."""
+
+    def __init__(self, parent, provider, width, height, bg=None, on_click=None):
+        super().__init__(parent, lambda _room: None, bg=bg, max_height=height)
+        self.provider = provider
+        self.on_click = on_click
+        self.configure(width=px(width), height=px(height),
+                       cursor="hand2" if on_click else "")
+
+    def _layout(self):
+        pass
+
+    def draw(self):
+        self.delete("all")
+        shapes, width, height = self.provider()
+        box_w, box_h = int(self.cget("width")), int(self.cget("height"))
+        self.scale = min(box_w / width, box_h / height)
+        self.offset = (box_w - self.scale * width) / 2.0
+        self.offset_y = (box_h - self.scale * height) / 2.0
+        for shape in shapes:
+            self._shape(shape)
+
+    def _click(self, event):
+        if self.on_click:
+            self.on_click()
+
+
+def badge_canvas(parent, picture, color, tier, size=64, bg=None, on_click=None):
+    return ShapeCanvas(parent, lambda: (fg.badge_shapes(picture, color, tier), fg.BADGE_SIZE,
+                                        fg.BADGE_SIZE), size, size, bg=bg, on_click=on_click)
+
+
 class MatchBoard(ctk.CTkFrame):
     """Zuordnungsaufgabe: erst links einen Begriff waehlen, dann rechts das
     passende Gegenstueck. Funktioniert mit Klicks, ohne Ziehen."""
@@ -1621,6 +1655,8 @@ class GameView(ScrollArea):
 
     def on_show(self):
         self.game.reload()
+        # Ab 0.46: Wissen-Abzeichen haengen am Lernstand (Karteikarten, Quiz ...)
+        self.game.check_knowledge()
         self.render()
 
     def refresh(self):
@@ -4359,9 +4395,109 @@ JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
 JOURNEY_PAGE = 15
 
 
+class MilestoneMoment(tk.Frame):
+    """Meilenstein-Moment (ab 0.46): legt sich ueber das ganze Fenster und
+    feiert ein grosses Abzeichen - Szene im Kartenstil, Orden, Name, ein Satz.
+    Mehrere Momente kommen nacheinander ("Nächster"). Schliesst mit dem Knopf,
+    Esc oder einem Klick neben die Karte."""
+
+    def __init__(self, root, infos, state, on_open=None):
+        super().__init__(root, bg=mix(C["bg"], "#000000", 0.45), cursor="")
+        self.root_window = root
+        self.infos = list(infos)
+        self.state = state
+        self.on_open = on_open
+        self.index = 0
+        self.card = None
+        self.place(x=0, y=0, relwidth=1, relheight=1)
+        self.lift()
+        self.bind("<Button-1>", lambda _e: self.close())
+        root.bind("<Escape>", lambda _e: self.close())
+        self._show()
+
+    def add(self, infos):
+        self.infos += list(infos)
+        self._show()
+
+    def _show(self):
+        if self.card is not None:
+            self.card.destroy()
+        info = self.infos[self.index]
+        color = tier_color(info["tier"])
+        self.card = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=22, border_width=2,
+                                 border_color=color, width=px(560))
+        self.card.place(relx=0.5, rely=0.5, anchor="center")
+        body = _frame(self.card)
+        body.pack(padx=24, pady=22)
+        ShapeCanvas(body, lambda: fg.moment_shapes(info, self.state), 510, 250,
+                    bg=C["card"]).pack()
+        badge_canvas(body, info["bild"], info["farbe"], info["tier"], size=104,
+                     bg=C["card"]).pack(pady=(10, 4))
+        make_label(body, "MEILENSTEIN · %s" % info["tier_name"].upper(), font=F["label"],
+                   fg=color).pack()
+        make_label(body, info["name"], font=F["h1"], fg=C["text"]).pack(pady=(2, 0))
+        make_label(body, info["text"], font=F["body"], fg=C["text_dim"], wraplength=px(480),
+                   justify="center").pack(pady=(4, 0))
+        if info["erstes_mal"]:
+            make_label(body, "Zum ersten Mal erreicht!", font=F["body_bold"],
+                       fg=C["accent"]).pack(pady=(6, 0))
+        if info["bestwert"]:
+            make_label(body, info["bestwert"], font=F["body_bold"], fg=C["green"]).pack(
+                pady=(4, 0))
+        buttons = _frame(body)
+        buttons.pack(pady=(16, 0))
+        more = self.index + 1 < len(self.infos)
+        NeoButton(buttons, "Nächster (%d/%d)" % (self.index + 2, len(self.infos)) if more
+                  else "Weiter", self._next, kind="accent", height=42).pack(side="left")
+        if self.on_open:
+            NeoButton(buttons, "Zu den Erfolgen", self._open, kind="ghost",
+                      height=42).pack(side="left", padx=(10, 0))
+        make_label(body, "Schließt mit Klick daneben oder Esc", font=F["tiny"],
+                   fg=C["muted"]).pack(pady=(10, 0))
+
+    def _next(self):
+        if self.index + 1 < len(self.infos):
+            self.index += 1
+            self._show()
+        else:
+            self.close()
+
+    def _open(self):
+        self.close()
+        self.on_open()
+
+    def close(self):
+        try:
+            self.root_window.unbind("<Escape>")
+        except tk.TclError:
+            pass
+        self.destroy()
+
+
+def show_badge_toast(root, text, delay=4500):
+    """Kurzer Hinweis unten fuer kleinere Abzeichen (ab 0.46)."""
+    toast = ctk.CTkFrame(root, fg_color=C["card_hi"], corner_radius=18, border_width=1,
+                         border_color=C["yellow"])
+    make_label(toast, text, font=F["small_bold"], fg=C["text"]).pack(padx=18, pady=10)
+    toast.place(relx=0.5, rely=1.0, y=-px(24), anchor="s")
+    toast.lift()
+    toast.after(delay, toast.destroy)
+    return toast
+
+
+JOURNEY_TABS = [("rueckblick", "Rückblick"), ("erfolge", "Erfolge")]
+BADGE_COLUMNS = 3
+
+
+def tier_color(key):
+    """Farbe einer Abzeichen-Stufe (oder "muted" fuer offen)."""
+    return fg.TIER_COLORS.get(key, C["muted"])
+
+
 class JourneyView(ScrollArea):
-    """Unterpunkt "Reise": Rueckblick-Statistik und Tagebuch der wichtigsten
-    Momente - nur aus dem Ereignisprotokoll berechnet."""
+    """Unterpunkt "Reise": Reiter "Rueckblick" (Statistik und Tagebuch der
+    wichtigsten Momente) und ab 0.46 "Erfolge" (Bestwerte ueber alle
+    Spielstaende und Abzeichen) - alles aus dem Ereignisprotokoll berechnet."""
 
     def __init__(self, parent, app):
         super().__init__(parent, bg=C["bg"])
@@ -4370,6 +4506,8 @@ class JourneyView(ScrollArea):
         self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
         self.group = "alle"
         self.page = 0
+        self.tab = "rueckblick"
+        self.badge_group = "alle"
 
     @property
     def game(self):
@@ -4377,7 +4515,14 @@ class JourneyView(ScrollArea):
 
     def on_show(self):
         self.game.reload()
+        # Wissen-Abzeichen haengen am Lernstand - beim Oeffnen nachsehen
+        self.game.check_knowledge()
         self.page = 0
+        self.render()
+        self.app.show_unlocks()
+
+    def open_tab(self, tab):
+        self.tab = tab
         self.render()
 
     def refresh(self):
@@ -4395,12 +4540,103 @@ class JourneyView(ScrollArea):
             NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
                       kind="primary").pack(anchor="w", pady=(12, 0))
             return
-        stats = fg.journey_stats(state)
-        self._build_numbers(state, stats)
-        self._build_charts(stats)
-        self._build_diary(state)
+        ChoiceRow(self.content, JOURNEY_TABS, self.tab, self._choose_tab).pack(
+            anchor="w", pady=(0, 12))
+        if self.tab == "erfolge":
+            self._build_records(state)
+            self._build_badges(state)
+        else:
+            stats = fg.journey_stats(state)
+            self._build_numbers(state, stats)
+            self._build_charts(stats)
+            self._build_diary(state)
         if not keep_scroll:
             self.to_top()
+
+    def _choose_tab(self, tab):
+        self.tab = tab
+        self.render()
+
+    # -- Erfolge (ab 0.46) ----------------------------------------------------
+
+    def _build_records(self, state):
+        board = fg.record_board(self.game.records(), state)
+        card = Card(self.content, title="Bestwerte", accent=C["yellow"],
+                    subtitle=fg.record_subtitle(board))
+        card.pack(fill="x")
+        grid = _frame(card.body)
+        grid.pack(fill="x")
+        for column in range(3):
+            grid.columnconfigure(column, weight=1, uniform="bw")
+        for index, item in enumerate(board["werte"]):
+            tile = ctk.CTkFrame(grid, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                                border_color=C["yellow"] if item["rekord"] and
+                                board["durchgaenge"] > 1 else C["border"])
+            tile.grid(row=index // 3, column=index % 3, sticky="nsew",
+                      padx=(0 if index % 3 == 0 else 6, 0), pady=(0 if index < 3 else 6, 0))
+            make_label(tile, item["name"].upper(), font=F["label"], fg=C["muted"]).pack(
+                anchor="w", padx=14, pady=(10, 0))
+            make_label(tile, item["wert_text"], font=F["h2"],
+                       fg=C["text"] if item["wert"] is not None else C["muted"]).pack(
+                anchor="w", padx=14)
+            make_label(tile, fg.record_detail(item, board["durchgaenge"]), font=F["tiny"],
+                       fg=C["text_dim"], wraplength=300, justify="left").pack(
+                anchor="w", padx=14, pady=(0, 10))
+
+    def _build_badges(self, state):
+        items = fg.achievement_overview(state, self.game.topic_knowledge(), self.game.records())
+        reached, total, tiers = fg.achievement_counts(items)
+        card = Card(self.content, title="Abzeichen", accent=C["purple"],
+                    subtitle="%d von %d Stufen · Bronze %d · Silber %d · Gold %d"
+                    % (reached, total, tiers["bronze"], tiers["silber"], tiers["gold"]))
+        card.pack(fill="x", pady=(14, 0))
+        ChoiceRow(card.body, fg.achievement_groups(), self.badge_group,
+                  self._choose_badges).pack(anchor="w", pady=(0, 10))
+        grid = _frame(card.body)
+        grid.pack(fill="x")
+        for column in range(BADGE_COLUMNS):
+            grid.columnconfigure(column, weight=1, uniform="ab")
+        visible = [item for item in items
+                   if self.badge_group in ("alle", item["gruppe"])]
+        for index, item in enumerate(visible):
+            self._badge_tile(grid, item).grid(
+                row=index // BADGE_COLUMNS, column=index % BADGE_COLUMNS, sticky="nsew",
+                padx=(0 if index % BADGE_COLUMNS == 0 else 6, 0),
+                pady=(0 if index < BADGE_COLUMNS else 6, 0))
+
+    def _badge_tile(self, parent, item):
+        tier = item["tier"]
+        tile = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                            border_color=tier_color(tier) if tier else C["border"])
+        top = _frame(tile)
+        top.pack(fill="x", padx=12, pady=(12, 0))
+        badge_canvas(top, item["bild"], item["farbe"], tier, size=64,
+                     bg=C["card_alt"]).pack(side="left")
+        info = _frame(top)
+        info.pack(side="left", fill="x", expand=True, padx=(12, 0))
+        make_label(info, "???" if item["geheim"] else item["name"], font=F["body_bold"],
+                   fg=C["text"] if tier else C["text_dim"], anchor="w").pack(anchor="w")
+        status, color = fg.badge_status(item)
+        make_label(info, status, font=F["small_bold"], fg=tier_color(color),
+                   wraplength=200, justify="left", anchor="w").pack(anchor="w")
+        if item["naechste"] and item["balken"] and not item["geheim"]:
+            bar = ctk.CTkProgressBar(info, height=6, corner_radius=3, fg_color=C["border"],
+                                     progress_color=tier_color(item["naechste"]["tier"]))
+            bar.pack(fill="x", pady=(5, 0))
+            bar.set(item["anteil"])
+        text = "Noch nicht entdeckt." if item["geheim"] else item["text"]
+        goals = fg.badge_goals(item) if len(item["stufen"]) > 1 else ""
+        make_label(tile, text, font=F["small"], fg=C["text_dim"], wraplength=300,
+                   justify="left", anchor="w").pack(anchor="w", padx=12,
+                                                    pady=(8, 0 if goals else 12))
+        if goals:
+            make_label(tile, goals, font=F["tiny"], fg=C["muted"], wraplength=300,
+                       justify="left", anchor="w").pack(anchor="w", padx=12, pady=(0, 12))
+        return tile
+
+    def _choose_badges(self, group):
+        self.badge_group = group
+        self.render(keep_scroll=True)
 
     def _build_numbers(self, state, stats):
         card = Card(self.content, title="Rückblick", accent=C["accent2"],

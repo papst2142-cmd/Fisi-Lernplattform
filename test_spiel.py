@@ -317,7 +317,8 @@ class AbgleichTest(unittest.TestCase):
             self.assertEqual(state.profile["name"], "Nico")
             # Doppelter Abgleich zaehlt nichts doppelt
             fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
-            self.assertEqual(len(handy.game_events()), 1)
+            # Profil und (ab 0.46) das Abzeichen "Erster Arbeitstag"
+            self.assertEqual(len(handy.game_events()), 2)
 
     def test_zuruecksetzen_wird_abgeglichen(self):
         with TempDB() as pc, TempDB() as handy:

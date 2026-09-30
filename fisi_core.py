@@ -230,9 +230,18 @@ GAME_TABLES = {
     "spiel_ereignisse": ("timestamp", "typ", "daten", "geraet"),
 }
 
+# Bestenliste des Lernspiels (ab 0.46): Bestwerte und Abzeichen ueber alle
+# Spielstaende (Durchgaenge). Uebersteht "Spielstand zuruecksetzen" und
+# "Alle Lerndaten loeschen", nur "Bestenliste loeschen" (Marker
+# bestenliste_reset_at) leert sie.
+RECORD_TABLES = {
+    "spiel_bestenliste": ("timestamp", "durchgang", "art", "schluessel", "wert", "daten"),
+}
+
 # Alles, was zwischen den Geraeten abgeglichen wird
 SYNC_TABLES = dict(EVENT_TABLES)
 SYNC_TABLES.update(GAME_TABLES)
+SYNC_TABLES.update(RECORD_TABLES)
 
 
 class DBManager:
@@ -356,6 +365,18 @@ class DBManager:
                 typ TEXT NOT NULL,
                 daten TEXT NOT NULL,
                 geraet TEXT NOT NULL DEFAULT '',
+                uid TEXT
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS spiel_bestenliste (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                durchgang TEXT NOT NULL,
+                art TEXT NOT NULL,
+                schluessel TEXT NOT NULL,
+                wert REAL,
+                daten TEXT NOT NULL DEFAULT '{}',
                 uid TEXT
             )
             """,
@@ -487,6 +508,51 @@ class DBManager:
             if isinstance(payload, dict):
                 events.append((timestamp, kind, payload))
         return events
+
+    # -- Bestenliste des Lernspiels (ab 0.46) --------------------------------
+
+    def log_record(self, run, kind, key, value, data=""):
+        """Eine Zeile der Bestenliste (data ist JSON-Text)."""
+        return bool(self._execute(
+            "INSERT INTO spiel_bestenliste (timestamp, durchgang, art, schluessel, wert,"
+            " daten, uid) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (self._now(), run or "", kind, key, value, data or "{}", self._uid()),
+            commit=True, default=False))
+
+    def records(self):
+        """Alle Zeilen der Bestenliste: [(timestamp, durchgang, art, schluessel,
+        wert, daten-dict)] chronologisch."""
+        rows = self._execute(
+            "SELECT timestamp, durchgang, art, schluessel, wert, daten FROM spiel_bestenliste"
+            " ORDER BY timestamp, id", fetch="all", default=[]) or []
+        result = []
+        for timestamp, run, kind, key, value, data in rows:
+            try:
+                payload = json.loads(data) if data else {}
+            except ValueError:
+                payload = {}
+            result.append((timestamp, run, kind, key, value,
+                           payload if isinstance(payload, dict) else {}))
+        return result
+
+    def reset_records(self):
+        """Bestenliste loeschen (auch auf den anderen Geraeten beim Abgleich)."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            for table in RECORD_TABLES:
+                cur.execute("DELETE FROM " + table)
+            cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                        ("bestenliste_reset_at", self._now()))
+            conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self._report("Bestenliste loeschen fehlgeschlagen: %s" % exc)
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
 
     # -- Loeschen -----------------------------------------------------------
 
