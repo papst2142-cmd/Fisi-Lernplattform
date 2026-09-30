@@ -94,9 +94,13 @@ EV_PROJECT_LOST = "projekt_verloren"
 EV_PROJECT_TEAM = "projekt_team"
 # Sonderraeume im eigenen Gebaeude (ab 0.36): Lager, Besprechungsraum ...
 EV_ROOM = "raum_ausgebaut"
+# Kredite der eigenen Firma (ab 0.41). Raten, geplatzte Raten und Mahnstufen
+# werden beim Feierabend aus diesen Ereignissen berechnet, nicht gespeichert.
+EV_LOAN = "kredit_aufgenommen"
+EV_LOAN_REPAID = "kredit_abgeloest"
 FIRM_EVENTS = (EV_FOUNDED, EV_HIRED, EV_FIRED, EV_TRAINING, EV_EXPAND, EV_OFFER_WON,
                EV_OFFER_LOST, EV_DELEGATED, EV_PROJECT_WON, EV_PROJECT_LOST,
-               EV_PROJECT_TEAM, EV_ROOM)
+               EV_PROJECT_TEAM, EV_ROOM, EV_LOAN, EV_LOAN_REPAID)
 
 # Status eines Tickets am aktuellen Arbeitstag
 ST_OPEN = "offen"
@@ -561,6 +565,7 @@ def validate_game_content(content=None):
     problems += _validate_homes(content)
     problems += _validate_rent(content)
     problems += _validate_firm(content)
+    problems += _validate_loans(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -3108,6 +3113,11 @@ class GameState:
         self.day_log = []          # (tag, mittleres Ansehen)
         self.rank_log = []         # (ab tag, rang)
         self._rank_seen = balancing["raenge"][0]["name"]
+        # Kredite der Firma (ab 0.41)
+        self.loans = {}            # kredit-id -> Kredit mit Restschuld und Zahlungen
+        self.dunning = 0           # Mahnstufe (0 = alles in Ordnung)
+        self.dunning_day = 0       # Arbeitstag der letzten Aenderung der Mahnstufe
+        self.loan_log = []         # (tag, art, kredit-id, daten) je Feierabend
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3199,6 +3209,8 @@ class GameState:
                     if self._apply_project_day(item, today) and item.get("fertig"):
                         self._learn_from_project(item, today)
                 self._learn_routine(busy, today)
+                if self.firm:
+                    self._loan_day(today)
                 self.balances.append((today, self.money))
                 self.start_reputation = self.mean_reputation
                 self.day_log.append((today, round(self.mean_reputation, 1)))
@@ -3283,6 +3295,34 @@ class GameState:
                 self.money += int(data.get("anzahlung", 0)) - int(data.get("material", 0))
                 self._book(day, BOOK_PROJECTS, data.get("anzahlung", 0))
                 self._book(day, BOOK_MATERIAL, -int(data.get("material", 0)))
+        elif kind == EV_LOAN and data.get("kredit") and data["kredit"] not in self.loans:
+            # Doppelt (zwei Geraete gleichzeitig) zaehlt nur einmal
+            amount = int(data.get("summe", 0))
+            self.loans[data["kredit"]] = {
+                "id": data["kredit"], "name": data.get("name") or "Kredit",
+                "paket": data.get("paket", ""), "summe": amount,
+                "laufzeit": int(data.get("laufzeit", 0)), "zins": float(data.get("zins", 0)),
+                "rate": int(data.get("rate", 0)), "tag": int(data.get("tag", day)),
+                "rest": amount, "zins_offen": 0, "gebuehren": 0, "raten": 0,
+                "ausfaelle": 0, "bezahlt_zins": 0, "bezahlt_tilgung": 0,
+                "bezahlt_gebuehren": 0, "ende": None, "ende_art": ""}
+            self.money += amount
+            self._book(day, BOOK_LOAN, amount)
+            self.loan_log.append((day, "aufgenommen", data["kredit"], dict(data)))
+        elif kind == EV_LOAN_REPAID and data.get("kredit") in self.loans:
+            loan = self.loans[data["kredit"]]
+            if loan["ende"] is not None:
+                return
+            payoff = loan_payoff(loan, self.content)
+            self.money -= payoff["gesamt"]
+            self._book(day, BOOK_LOAN_REPAY, -payoff["tilgung"])
+            self._book(day, BOOK_LOAN_INTEREST, -payoff["zinsen"])
+            self._book(day, BOOK_LOAN_FEES, -payoff["gebuehren"])
+            loan["bezahlt_tilgung"] += payoff["tilgung"]
+            loan["bezahlt_zins"] += payoff["zinsen"]
+            loan["bezahlt_gebuehren"] += payoff["gebuehren"]
+            loan.update(rest=0, zins_offen=0, gebuehren=0, ende=day, ende_art="abgeloest")
+            self.loan_log.append((day, "abgeloest", loan["id"], payoff))
         elif kind == EV_PROJECT_TEAM and data.get("projekt") in self.projects:
             project = self.projects[data["projekt"]]
             if project["fertig"]:
@@ -3312,6 +3352,78 @@ class GameState:
             self._book(day, BOOK_PROJECTS, item.get("geld", 0))
             self._apply_reputation(item.get("reputation") or {})
         return True
+
+    # -- Kredite (ab 0.41) -------------------------------------------------------
+
+    def _loan_day(self, day):
+        """Feierabend: Fuer jeden laufenden Kredit fallen die Zinsen des Tages
+        an und die Rate wird abgebucht - reicht das Konto nicht, platzt sie:
+        Mahnstufe, Gebuehr auf die Restschuld, weniger Ansehen."""
+        rules = loan_rules(self.content)
+        failed = []
+        for loan in self.running_loans():
+            if loan["tag"] > day:
+                continue
+            loan["zins_offen"] += int(round(loan["rest"] * day_interest(
+                loan_interest(loan, self.dunning, self.content), self.content)))
+            due = min(loan["rate"], loan["rest"] + loan["zins_offen"] + loan["gebuehren"])
+            if self.money >= due:
+                fees = min(due, loan["gebuehren"])
+                interest = min(due - fees, loan["zins_offen"])
+                repay = due - fees - interest
+                loan["gebuehren"] -= fees
+                loan["zins_offen"] -= interest
+                loan["rest"] -= repay
+                loan["raten"] += 1
+                loan["bezahlt_gebuehren"] += fees
+                loan["bezahlt_zins"] += interest
+                loan["bezahlt_tilgung"] += repay
+                self.money -= due
+                self._book(day, BOOK_LOAN_FEES, -fees)
+                self._book(day, BOOK_LOAN_INTEREST, -interest)
+                self._book(day, BOOK_LOAN_REPAY, -repay)
+                self.loan_log.append((day, "rate", loan["id"], {
+                    "rate": due, "zinsen": interest, "tilgung": repay, "gebuehren": fees,
+                    "rest": loan["rest"]}))
+                if loan["rest"] <= 0 and loan["zins_offen"] <= 0 and loan["gebuehren"] <= 0:
+                    loan.update(rest=0, ende=day, ende_art="zurueckgezahlt")
+                    self.loan_log.append((day, "zurueckgezahlt", loan["id"], {}))
+            else:
+                failed.append((loan, due))
+        steps = rules["mahnung"]["stufen"]
+        if failed:
+            # Hoechstens eine Stufe pro Feierabend, auch wenn mehrere Raten platzen
+            self.dunning = min(len(steps), self.dunning + 1)
+            self.dunning_day = day
+            step = steps[self.dunning - 1]
+            self._apply_reputation(step.get("reputation") or {})
+            for number, (loan, due) in enumerate(failed):
+                loan["gebuehren"] += int(step.get("gebuehr", 0))
+                loan["ausfaelle"] += 1
+                # Das Ansehen sinkt einmal pro Feierabend (steht beim ersten Kredit)
+                self.loan_log.append((day, "ausfall", loan["id"], {
+                    "rate": due, "stufe": self.dunning, "gebuehr": int(step.get("gebuehr", 0)),
+                    "reputation": dict(step.get("reputation") or {}) if not number else {}}))
+        elif self.dunning and day - self.dunning_day >= int(rules["mahnung"]["abbau_tage"]):
+            self.dunning -= 1
+            self.dunning_day = day
+            self.loan_log.append((day, "mahnstufe", "", {"stufe": self.dunning}))
+
+    def running_loans(self):
+        """Laufende Kredite in der Reihenfolge der Aufnahme."""
+        return [loan for loan in self.loans.values() if loan["ende"] is None]
+
+    def done_loans(self):
+        return [loan for loan in self.loans.values() if loan["ende"] is not None]
+
+    def loan_debt(self):
+        """Restschuld aller laufenden Kredite (mit offenen Zinsen/Gebuehren)."""
+        return sum(loan["rest"] + loan["zins_offen"] + loan["gebuehren"]
+                   for loan in self.running_loans())
+
+    def loan_rates(self):
+        """Faellige Raten beim naechsten Feierabend (Summe)."""
+        return sum(loan_due(loan, self.dunning, self.content) for loan in self.running_loans())
 
     # -- Lernen der Mitarbeiter (ab 0.38) ---------------------------------------
 
@@ -3928,9 +4040,15 @@ class Game:
                                     self.content)
             if days:
                 payload["firma"]["projekte"] = days
-            learned = learned_today(self.state, payload, self.content)
+            # Einmal durchrechnen, was der Feierabend bringt (nur fuer die Anzeige)
+            after = GameState(list(self.state.history) + [("", EV_DAY_END, payload)],
+                              self.content)
+            learned = learned_today(self.state, payload, self.content, after)
             if learned:
                 payload["firma"]["gelernt"] = learned
+            loans = loans_today(after, self.state.day)
+            if loans:
+                payload["firma"]["kredite"] = loans
         self._log(EV_DAY_END, payload)
         return payload
 
@@ -4058,6 +4176,44 @@ class Game:
         payload = {"ticket": ticket_id, "vorlage": ticket["vorlage"], "tag": self.state.day,
                    "an": person, "name": option["name"], "chance": option["chance"]}
         self._log(EV_DELEGATED, payload)
+        return payload
+
+    # -- Kredite (ab 0.41) -------------------------------------------------------
+
+    def take_loan(self, amount, term, package_id=None):
+        """Nimmt einen Kredit auf: festes Paket (package_id) oder freie Summe
+        und Laufzeit. Das Geld ist sofort auf dem Konto."""
+        self._firm_required()
+        package = None
+        if package_id and package_id != FREE_LOAN:
+            package = next((item for item in loan_rules(self.content)["pakete"]
+                            if item["id"] == package_id), None)
+            if package is None:
+                raise ValueError("Dieses Kreditpaket gibt es nicht.")
+            amount, term = package["summe"], package["laufzeit"]
+        offer = loan_offer(self.state, amount, term, package, self.content)
+        if offer["problem"]:
+            raise ValueError(offer["problem"])
+        payload = {"kredit": "%s%d:%d" % (LOAN_PREFIX, self.state.day,
+                                          len(self.state.loans) + 1),
+                   "tag": self.state.day, "name": offer["name"], "paket": offer["paket"],
+                   "summe": offer["summe"], "laufzeit": offer["laufzeit"],
+                   "zins": offer["zins"], "rate": offer["rate"]}
+        self._log(EV_LOAN, payload)
+        return payload
+
+    def repay_loan(self, loan_id):
+        """Loest einen laufenden Kredit vorzeitig ab (mit Vorfaelligkeit)."""
+        self._firm_required()
+        loan = self.state.loans.get(loan_id)
+        if loan is None or loan["ende"] is not None:
+            raise ValueError("Dieser Kredit läuft nicht (mehr).")
+        payoff = loan_payoff(loan, self.content)
+        if self.state.money < payoff["gesamt"]:
+            raise ValueError("Zum Ablösen fehlen dir noch %s." % _whole_euro(
+                payoff["gesamt"] - max(0, self.state.money)))
+        payload = {"kredit": loan_id, "tag": self.state.day, "geld": -payoff["gesamt"]}
+        self._log(EV_LOAN_REPAID, payload)
         return payload
 
     def learned_projects(self):
@@ -4223,6 +4379,10 @@ BOOK_OFFERS = "Angebote"
 BOOK_TICKETS = "Kundentickets"
 BOOK_PROJECTS = "Projekte"
 BOOK_MATERIAL = "Projektmaterial"
+BOOK_LOAN = "Kredite"                 # ausgezahlte Kredite (ab 0.41)
+BOOK_LOAN_INTEREST = "Kreditzinsen"
+BOOK_LOAN_REPAY = "Kredittilgung"
+BOOK_LOAN_FEES = "Kreditgebühren"     # Mahngebuehren, Vorfaelligkeit
 
 SELF = "ich"                       # Kundenticket uebernimmt die Spielfigur selbst
 INQUIRY_PREFIX = "anfrage:"        # anfrage:<tag>:<nummer>
@@ -4234,7 +4394,7 @@ PROJECT_PREFIX = "projekt:"        # projekt:<nummer der ausschreibung>
 FIRM_TABS = [("auftraege", "Aufträge"), ("projekte", "Projekte"),
              ("mitarbeiter", "Mitarbeiter"),
              ("bewerbungen", "Bewerbungen"),
-             ("gebaeude", "Gebäude"), ("finanzen", "Finanzen")]
+             ("gebaeude", "Gebäude"), ("finanzen", "Finanzen"), ("kredite", "Kredite")]
 
 
 FIRM_IDLE_TEXT = ("Für heute ist alles verteilt und angeboten. Deine Leute kümmern sich "
@@ -4685,8 +4845,12 @@ def finance_days(state, count=7):
         entry = state.book[day]
         income = sum(entry["ein"].values())
         costs = sum(entry["aus"].values())
+        # Ab 0.41: Ein Kredit ist kein Gewinn und die Tilgung kein Verlust
+        # (nur die Zinsen und Gebuehren kosten) - "gewinn" ohne beides
+        loan = entry["ein"].get(BOOK_LOAN, 0) - entry["aus"].get(BOOK_LOAN_REPAY, 0)
         result.append({"tag": day, "ein": dict(entry["ein"]), "aus": dict(entry["aus"]),
-                       "einnahmen": income, "ausgaben": costs, "gewinn": income - costs})
+                       "einnahmen": income, "ausgaben": costs,
+                       "gewinn": income - costs - loan})
     return result
 
 
@@ -4710,7 +4874,8 @@ def balance_series(state, limit=30):
 def firm_summary(state):
     """Eine Zeile zur Firma (Uebersicht auf PC und Handy)."""
     numbers = state.firm_day()
-    profit = numbers["umsatz"] - numbers["gehaelter"] - numbers["nebenkosten"]
+    profit = numbers["umsatz"] - numbers["gehaelter"] - numbers["nebenkosten"] - \
+        state.loan_rates()
     return "%d von %d Plätzen besetzt · heute %s%s" % (
         len(state.staff), state.capacity, "+" if profit >= 0 else "-",
         _whole_euro(abs(profit)))
@@ -4722,12 +4887,20 @@ def firm_day_text(numbers):
     text = "Umsatz Mitarbeiter: +%s. Gehälter: -%s. Nebenkosten: -%s." % (
         _whole_euro(numbers.get("umsatz", 0)), _whole_euro(numbers.get("gehaelter", 0)),
         _whole_euro(numbers.get("nebenkosten", 0)))
+    # Ab 0.41: Kreditraten wie Gehaelter und Nebenkosten
+    loans = numbers.get("kredite") or []
+    paid = sum(item["rate"] for item in loans if item["art"] == "rate")
+    if paid:
+        text += " Kreditraten: -%s." % _whole_euro(paid)
     lines = [ticket_result_text(item) for item in numbers.get("tickets") or []]
     if lines:
         text += "\n\nKundentickets:\n" + "\n".join("• " + line for line in lines)
     lines = [project_day_text(item) for item in numbers.get("projekte") or []]
     if lines:
         text += "\n\nProjekte:\n" + "\n".join("• " + line for line in lines)
+    lines = loan_day_lines(loans)
+    if lines:
+        text += "\n\nKredite:\n" + "\n".join("• " + line for line in lines)
     learned = numbers.get("gelernt") or []
     lines = [learned_text(item) for item in learned if not item.get("grenze")]
     if lines:
@@ -4740,11 +4913,12 @@ def firm_day_text(numbers):
     return text
 
 
-def learned_today(state, payload, content=None):
+def learned_today(state, payload, content=None, after=None):
     """Was die Mitarbeiter mit diesem Feierabend dazulernen - nur fuer die
     Anzeige; der Spielstand rechnet es selbst aus den Ergebnissen aus."""
-    after = GameState(list(state.history) + [("", EV_DAY_END, payload)], content or
-                      state.content)
+    if after is None:
+        after = GameState(list(state.history) + [("", EV_DAY_END, payload)], content or
+                          state.content)
     result = []
     cap = learn_cap(content or state.content)
     for day, staff_id, topic, before, now, reason in after.learn_log:
@@ -4755,6 +4929,444 @@ def learned_today(state, payload, content=None):
                        "grund": reason, "grenze": now >= cap})
     # Nur zeigen, was sich in der ganzen Zahl bemerkbar macht
     return [item for item in result if item["nachher"] > item["vorher"]]
+
+
+# -- Kredite (ab 0.41) -------------------------------------------------------------
+#
+# Die Hausbank leiht der Firma Geld, sobald sie kreditwuerdig ist (Alter,
+# Umsatz der letzten Arbeitstage, Ansehen). Gespeichert wird nur, wann welcher
+# Kredit aufgenommen oder abgeloest wurde - Raten, geplatzte Raten und
+# Mahnstufen rechnet GameState beim Feierabend selbst aus.
+
+LOAN_PREFIX = "kredit:"            # kredit:<tag>:<nummer>
+FREE_LOAN = "frei"                 # kein Paket, frei gewaehlte Summe
+
+
+def loan_rules(content=None):
+    return (content or GAME)["balancing"]["kredite"]
+
+
+def loan_terms(content=None):
+    """Erlaubte Laufzeiten in Arbeitstagen (aufsteigend)."""
+    return sorted(int(key) for key in loan_rules(content)["zins"]["basis"])
+
+
+def loan_rate_pa(amount, term, content=None):
+    """Zinssatz pro Jahr: Grundzins nach Laufzeit plus Aufschlag fuer grosse
+    Summen (lang und gross = teurer, kurz und klein = guenstiger)."""
+    rule = loan_rules(content)["zins"]
+    base = float(rule["basis"][str(int(term))])
+    steps = max(0, int(amount) - int(rule["groesse_ab"])) // int(rule["groesse_schritt"])
+    return round(base + steps * float(rule["groesse_plus"]), 2)
+
+
+def day_interest(rate_pa, content=None):
+    """Zinssatz pro Arbeitstag als Bruchteil (8 % p. a. bei 50 Tagen = 0,0016)."""
+    return float(rate_pa) / 100.0 / float(loan_rules(content)["tage_pro_jahr"])
+
+
+def annuity(amount, rate_pa, term, content=None):
+    """Gleichbleibende Rate pro Arbeitstag (Zins + Tilgung), aufgerundet."""
+    rate = day_interest(rate_pa, content)
+    if rate <= 0:
+        return int(math.ceil(float(amount) / term))
+    return int(math.ceil(amount * rate / (1.0 - (1.0 + rate) ** (-int(term)))))
+
+
+def dunning_step(stage, content=None):
+    """Regeln der Mahnstufe (1 bis 3) oder None bei Stufe 0."""
+    steps = loan_rules(content)["mahnung"]["stufen"]
+    return steps[min(stage, len(steps)) - 1] if stage > 0 else None
+
+
+def loan_interest(loan, dunning=0, content=None):
+    """Aktueller Zinssatz eines Kredits: vereinbart plus Mahnaufschlag."""
+    step = dunning_step(dunning, content)
+    return round(float(loan["zins"]) + (float(step.get("zins_plus", 0)) if step else 0), 2)
+
+
+def loan_due(loan, dunning=0, content=None):
+    """Rate beim naechsten Feierabend (die letzte ist meist kleiner)."""
+    interest = int(round(loan["rest"] * day_interest(loan_interest(loan, dunning, content),
+                                                      content)))
+    return min(loan["rate"], loan["rest"] + loan["zins_offen"] + loan["gebuehren"] + interest)
+
+
+def loan_payoff(loan, content=None):
+    """Vorzeitig abloesen: Restschuld, offene Zinsen und Gebuehren plus
+    Vorfaelligkeitsentschaedigung (Prozent der Restschuld)."""
+    fee = int(math.ceil(loan["rest"] * float(loan_rules(content)["abloesen_prozent"]) / 100.0))
+    result = {"tilgung": loan["rest"], "zinsen": loan["zins_offen"],
+              "gebuehren": loan["gebuehren"] + fee, "vorfaelligkeit": fee}
+    result["gesamt"] = result["tilgung"] + result["zinsen"] + result["gebuehren"]
+    return result
+
+
+def loan_schedule(loan, start_day, dunning=0, content=None, limit=1000):
+    """Tilgungsplan ab start_day, wenn jede Rate klappt: [{"tag", "rate",
+    "zinsen", "tilgung", "gebuehren", "rest"}]."""
+    rest, interest_open, fees = loan["rest"], loan["zins_offen"], loan["gebuehren"]
+    rate_day = day_interest(loan_interest(loan, dunning, content), content)
+    rows = []
+    day = start_day
+    while (rest > 0 or interest_open > 0 or fees > 0) and len(rows) < limit:
+        interest_open += int(round(rest * rate_day))
+        due = min(loan["rate"], rest + interest_open + fees)
+        paid_fees = min(due, fees)
+        paid_interest = min(due - paid_fees, interest_open)
+        repay = due - paid_fees - paid_interest
+        fees -= paid_fees
+        interest_open -= paid_interest
+        rest -= repay
+        rows.append({"tag": day, "rate": due, "zinsen": paid_interest, "tilgung": repay,
+                     "gebuehren": paid_fees, "rest": max(0, rest)})
+        if due <= 0:
+            break
+        day += 1
+    return rows
+
+
+def loan_offer_numbers(amount, term, content=None):
+    """Zins, Rate und Kosten eines neuen Kredits (ohne Bonitaetspruefung)."""
+    rate_pa = loan_rate_pa(amount, term, content)
+    rate = annuity(amount, rate_pa, term, content)
+    loan = {"rest": int(amount), "zins_offen": 0, "gebuehren": 0, "rate": rate,
+            "zins": rate_pa}
+    rows = loan_schedule(loan, 1, 0, content)
+    interest = sum(row["zinsen"] for row in rows)
+    return {"summe": int(amount), "laufzeit": int(term), "zins": rate_pa, "rate": rate,
+            "zinsen_gesamt": interest, "gesamt": int(amount) + interest}
+
+
+def firm_income_recent(state, days, content=None):
+    """Umsatz der Firma in den letzten `days` abgeschlossenen Arbeitstagen
+    (Mitarbeiter, Kundentickets, Angebote, Projekte - ohne Kredite)."""
+    kinds = (BOOK_REVENUE, BOOK_TICKETS, BOOK_OFFERS, BOOK_PROJECTS)
+    first = state.day - int(days)
+    total = 0
+    for day, entry in state.book.items():
+        if first <= day < state.day:
+            total += sum(value for kind, value in entry["ein"].items() if kind in kinds)
+    return total
+
+
+def firm_profit_recent(state, days, content=None):
+    """Durchschnittlicher Gewinn pro Arbeitstag der letzten `days` Arbeitstage
+    vor Kreditkosten: Umsatz minus Gehaelter, Nebenkosten und Material."""
+    kinds_in = (BOOK_REVENUE, BOOK_TICKETS, BOOK_OFFERS, BOOK_PROJECTS)
+    kinds_out = (BOOK_WAGES, BOOK_COSTS, BOOK_MATERIAL)
+    first = state.day - int(days)
+    total = 0
+    for day, entry in state.book.items():
+        if first <= day < state.day:
+            total += sum(value for kind, value in entry["ein"].items() if kind in kinds_in)
+            total -= sum(value for kind, value in entry["aus"].items() if kind in kinds_out)
+    return total / float(max(1, int(days)))
+
+
+def rate_limit(state, content=None):
+    """(hoechstens tragbare Raten pro Arbeitstag, davon schon belegt) - die
+    Bank prueft die Kapitaldienstfaehigkeit (ab 0.41)."""
+    rules = loan_rules(content)
+    profit = firm_profit_recent(state, rules["bonitaet"]["umsatz_tage"], content)
+    top = max(0, int(profit * float(rules["rahmen"].get("raten_anteil", 1.0))))
+    used = sum(loan["rate"] for loan in state.running_loans())
+    return top, used
+
+
+def credit_check(state, content=None):
+    """Bonitaet der Firma: {"ok", "punkte" [{"text", "ok"}], "umsatz",
+    "rahmen", "frei", "ab_tag", "sperre"} - "frei" ist, was vom Kreditrahmen
+    noch nicht durch laufende Kredite belegt ist."""
+    rules = loan_rules(content)
+    rule = rules["bonitaet"]
+    result = {"ok": False, "punkte": [], "umsatz": 0, "rahmen": 0, "frei": 0, "ab_tag": 0,
+              "sperre": "", "raten_max": 0, "raten_belegt": 0}
+    if not state.firm:
+        result["punkte"].append({"text": "Eigene Firma gegründet", "ok": False})
+        return result
+    since = state.day - int(state.firm["tag"])
+    result["ab_tag"] = int(state.firm["tag"]) + int(rule["firmentage"])
+    income = firm_income_recent(state, rule["umsatz_tage"], content)
+    result["umsatz"] = income
+    points = [
+        {"text": "Firma seit mindestens %d Arbeitstagen (jetzt %d)"
+                 % (rule["firmentage"], since), "ok": since >= int(rule["firmentage"])},
+        {"text": "Umsatz der letzten %d Arbeitstage mindestens %s (jetzt %s)"
+                 % (rule["umsatz_tage"], _whole_euro(rule["mindest_umsatz"]),
+                    _whole_euro(income)), "ok": income >= int(rule["mindest_umsatz"])},
+        {"text": "Ansehen mindestens %d %% (jetzt %d %%)"
+                 % (rule["mindest_reputation"], round(state.mean_reputation)),
+         "ok": state.mean_reputation >= float(rule["mindest_reputation"])},
+    ]
+    step = dunning_step(state.dunning, content)
+    if step is not None:
+        factor = float(step.get("rahmen_faktor", 0))
+        points.append({"text": "Keine Mahnstufe, die neue Kredite sperrt (jetzt: %s%s)" % (
+            step["name"], ", nur %d %% des Rahmens" % round(100 * factor) if factor else ""),
+            "ok": factor > 0})
+    result["punkte"] = points
+    result["ok"] = all(point["ok"] for point in points)
+    frame = rules["rahmen"]
+    factor = float(frame["faktor_umsatz"])
+    for bonus in sorted(frame.get("ansehen_bonus") or [], key=lambda item: -item["ab"]):
+        if state.mean_reputation >= bonus["ab"]:
+            factor *= float(bonus["faktor"])
+            break
+    if step is not None:
+        factor *= float(step.get("rahmen_faktor", 0))
+        if not float(step.get("rahmen_faktor", 0)):
+            result["sperre"] = ("Bei „%s“ gibt dir die Bank keinen neuen Kredit. Die Stufe "
+                                "sinkt nach %d Arbeitstagen ohne geplatzte Rate."
+                                % (step["name"], rules["mahnung"]["abbau_tage"]))
+    step_size = int(frame["runden"])
+    limit = min(int(frame["hoechstens"]), int(income * factor) // step_size * step_size)
+    result["rahmen"] = limit if result["ok"] else 0
+    result["frei"] = max(0, result["rahmen"] - sum(loan["rest"]
+                                                   for loan in state.running_loans()))
+    result["raten_max"], result["raten_belegt"] = rate_limit(state, content)
+    return result
+
+
+def credit_frame_text(check):
+    """ "Tragbare Raten: ..." unter dem Kreditrahmen."""
+    return ("Tragbare Raten: höchstens %s pro Arbeitstag (die Hälfte des Gewinns der letzten "
+            "Arbeitstage), davon belegt %s." % (_whole_euro(check["raten_max"]),
+                                               _whole_euro(check["raten_belegt"])))
+
+
+def credit_wait_text(state, check):
+    """Hinweis, solange die Firma noch keinen Kredit bekommt."""
+    if check["sperre"]:
+        return "Gerade gibt dir die Bank keinen neuen Kredit. Die Bank prüft:"
+    if state.firm and state.day < check["ab_tag"]:
+        return ("Noch bekommt deine Firma keinen Kredit. Frühestens ab Arbeitstag %d, wenn dann "
+                "auch Umsatz und Ansehen reichen. Die Bank prüft:" % check["ab_tag"])
+    return "Noch bekommt deine Firma keinen Kredit. Die Bank prüft:"
+
+
+def loan_offer(state, amount, term, package=None, content=None, check=None):
+    """Angebot der Bank fuer Summe und Laufzeit - mit "problem", falls es
+    (gerade) nicht geht."""
+    rules = loan_rules(content)
+    amount, term = int(amount), int(term)
+    problem = ""
+    if term not in loan_terms(content):
+        return {"summe": amount, "laufzeit": term, "problem": "Diese Laufzeit bietet die "
+                "Bank nicht an."}
+    offer = loan_offer_numbers(amount, term, content)
+    check = check or credit_check(state, content)
+    free = rules["frei"]
+    if not state.firm:
+        problem = "Kredite gibt es nur für die eigene Firma."
+    elif check["sperre"]:
+        problem = check["sperre"]
+    elif not check["ok"]:
+        problem = "Deine Firma ist noch nicht kreditwürdig."
+    elif package is None and (amount < int(free["min"]) or amount % int(free["schritt"])):
+        problem = "Die Bank leiht mindestens %s, in Schritten von %s." % (
+            _whole_euro(free["min"]), _whole_euro(free["schritt"]))
+    elif amount > check["frei"]:
+        problem = "Dein Kreditrahmen reicht dafür nicht (frei: %s)." % _whole_euro(
+            check["frei"])
+    elif offer["rate"] + check["raten_belegt"] > check["raten_max"]:
+        problem = ("Die Rate ist zu hoch: Alle Raten zusammen dürfen höchstens %s pro "
+                   "Arbeitstag sein (die Hälfte deines Gewinns), %s sind schon belegt. Eine "
+                   "längere Laufzeit senkt die Rate." % (
+                       _whole_euro(check["raten_max"]), _whole_euro(check["raten_belegt"])))
+    offer["problem"] = problem
+    offer["paket"] = package["id"] if package else FREE_LOAN
+    offer["name"] = package["name"] if package else "Freier Kredit"
+    return offer
+
+
+def loan_packages(state, content=None):
+    """Die festen Kreditpakete mit Zins, Rate und ob sie gerade gehen."""
+    check = credit_check(state, content)
+    result = []
+    for package in loan_rules(content)["pakete"]:
+        offer = loan_offer(state, package["summe"], package["laufzeit"], package, content,
+                           check)
+        offer["text"] = package.get("text", "")
+        result.append(offer)
+    return result
+
+
+def free_loan_limits(state, content=None):
+    """(kleinste, groesste, Schritt) fuer die frei waehlbare Summe."""
+    rule = loan_rules(content)["frei"]
+    check = credit_check(state, content)
+    step = int(rule["schritt"])
+    top = check["frei"] // step * step
+    return int(rule["min"]), max(int(rule["min"]), top), step
+
+
+def clamp_loan_amount(state, amount, content=None):
+    low, high, step = free_loan_limits(state, content)
+    amount = int(amount) // step * step
+    return max(low, min(high, amount))
+
+
+def percent_text(value):
+    """8.5 -> "8,5 %", 10.0 -> "10 %" """
+    text = ("%.2f" % float(value)).rstrip("0").rstrip(".")
+    return "%s %%" % text.replace(".", ",")
+
+
+def term_text(term):
+    return "1 Arbeitstag" if int(term) == 1 else "%d Arbeitstage" % int(term)
+
+
+def loan_offer_text(offer):
+    """Eine Zeile zu einem Angebot (PC und Handy gleich)."""
+    return "%s über %s · %s p. a. · Rate %s pro Arbeitstag · Zinsen gesamt %s" % (
+        _whole_euro(offer["summe"]), term_text(offer["laufzeit"]), percent_text(offer["zins"]),
+        _whole_euro(offer["rate"]), _whole_euro(offer["zinsen_gesamt"]))
+
+
+def loan_confirm_text(offer, content=None):
+    return ("„%s“ über %s bei der %s aufnehmen?\n\nLaufzeit %s, Zins %s p. a. Jeden "
+            "Feierabend werden automatisch %s abgebucht (Zins und Tilgung). Zurück zahlst du "
+            "insgesamt %s, davon %s Zinsen.\n\nReicht das Konto beim Feierabend nicht, platzt "
+            "die Rate: Mahnstufe, Gebühr und weniger Ansehen." % (
+                offer["name"], _whole_euro(offer["summe"]), loan_rules(content)["bank"],
+                term_text(offer["laufzeit"]), percent_text(offer["zins"]),
+                _whole_euro(offer["rate"]), _whole_euro(offer["gesamt"]),
+                _whole_euro(offer["zinsen_gesamt"])))
+
+
+def loan_status(state, loan, content=None):
+    """Anzeige eines laufenden Kredits: Restschuld, Zins, Rate, restliche
+    Raten, bisher bezahlt, Tilgungsplan (ab dem laufenden Arbeitstag)."""
+    rows = loan_schedule(loan, state.day, state.dunning, content)
+    payoff = loan_payoff(loan, content)
+    return {"id": loan["id"], "name": loan["name"], "summe": loan["summe"],
+            "tag": loan["tag"], "rest": loan["rest"] + loan["zins_offen"] + loan["gebuehren"],
+            "tilgung_offen": loan["rest"], "zins": loan_interest(loan, state.dunning, content),
+            "zins_vereinbart": loan["zins"], "rate": loan["rate"],
+            "naechste_rate": rows[0]["rate"] if rows else 0,
+            "raten_bezahlt": loan["raten"], "raten_offen": len(rows),
+            "ausfaelle": loan["ausfaelle"], "gebuehren": loan["gebuehren"],
+            "bezahlt_zins": loan["bezahlt_zins"], "bezahlt_tilgung": loan["bezahlt_tilgung"],
+            "bezahlt_gebuehren": loan["bezahlt_gebuehren"],
+            "zinsen_noch": sum(row["zinsen"] for row in rows),
+            "letzter_tag": rows[-1]["tag"] if rows else state.day,
+            "plan": rows, "abloesen": payoff}
+
+
+def loan_status_lines(item):
+    """Zeilen zu einem laufenden Kredit (PC und Handy gleich)."""
+    lines = ["Restschuld %s von %s · Zins %s p. a.%s" % (
+        _whole_euro(item["rest"]), _whole_euro(item["summe"]), percent_text(item["zins"]),
+        " (mit Mahnaufschlag)" if item["zins"] > item["zins_vereinbart"] else ""),
+        "Rate %s pro Arbeitstag · %d von %d Raten bezahlt · noch %s (bis Arbeitstag %d)" % (
+            _whole_euro(item["rate"]), item["raten_bezahlt"],
+            item["raten_bezahlt"] + item["raten_offen"], term_text(item["raten_offen"]),
+            item["letzter_tag"]),
+        "Bisher bezahlt: Zinsen %s · Tilgung %s%s" % (
+            _whole_euro(item["bezahlt_zins"]), _whole_euro(item["bezahlt_tilgung"]),
+            " · Gebühren %s" % _whole_euro(item["bezahlt_gebuehren"])
+            if item["bezahlt_gebuehren"] else "")]
+    if item["ausfaelle"]:
+        lines.append("Geplatzte Raten: %d%s" % (
+            item["ausfaelle"], " · offene Gebühren %s" % _whole_euro(item["gebuehren"])
+            if item["gebuehren"] else ""))
+    return lines
+
+
+def loan_plan_rows(item, count=8):
+    """Die naechsten Zeilen des Tilgungsplans plus (falls mehr) die letzte:
+    [(tag, rate, zinsen, tilgung, rest)], dazu die Zahl ausgelassener Zeilen."""
+    rows = item["plan"]
+    shown = rows[:count]
+    skipped = 0
+    if len(rows) > count:
+        skipped = len(rows) - count - 1
+        shown = shown + [rows[-1]]
+    return [(row["tag"], row["rate"], row["zinsen"], row["tilgung"] + row["gebuehren"],
+             row["rest"]) for row in shown], skipped
+
+
+def loan_payoff_text(item, content=None):
+    payoff = item["abloesen"]
+    return ("„%s“ jetzt ablösen? Du zahlst %s: Restschuld %s%s und %s "
+            "Vorfälligkeitsentschädigung (%s der Restschuld)." % (
+                item["name"], _whole_euro(payoff["gesamt"]), _whole_euro(payoff["tilgung"]),
+                (", offene Zinsen und Gebühren %s" % _whole_euro(
+                    payoff["zinsen"] + payoff["gebuehren"] - payoff["vorfaelligkeit"]))
+                if payoff["zinsen"] + payoff["gebuehren"] - payoff["vorfaelligkeit"] else "",
+                _whole_euro(payoff["vorfaelligkeit"]),
+                percent_text(loan_rules(content)["abloesen_prozent"])))
+
+
+def dunning_text(state, content=None):
+    """Hinweis zur Mahnstufe (leer bei Stufe 0)."""
+    step = dunning_step(state.dunning, content)
+    if step is None:
+        return ""
+    rules = loan_rules(content)["mahnung"]
+    left = max(1, int(rules["abbau_tage"]) - (state.day - 1 - state.dunning_day))
+    effects = ["jede weitere geplatzte Rate kostet Gebühren und Ansehen"]
+    if step.get("zins_plus"):
+        effects.append("Zinsaufschlag %s auf alle Kredite" % percent_text(step["zins_plus"]))
+    effects.append("keine neuen Kredite" if not float(step.get("rahmen_faktor", 0)) else
+                   "nur %d %% des Kreditrahmens" % round(100 * float(step["rahmen_faktor"])))
+    return ("Mahnstufe %d von %d: %s. Folgen: %s. Ohne geplatzte Rate sinkt die Stufe %s." % (
+        state.dunning, len(rules["stufen"]), step["name"], ", ".join(effects),
+        "beim nächsten Feierabend" if left == 1 else "nach %d Arbeitstagen" % left))
+
+
+def loans_today(after, day):
+    """Was beim Feierabend mit den Krediten passiert ist (nur Anzeige):
+    [{"art", "kredit", "name", ...}] aus dem Spielstand nach dem Feierabend."""
+    result = []
+    for tag, kind, loan_id, data in after.loan_log:
+        if tag != day or kind == "aufgenommen" or kind == "abgeloest":
+            continue
+        item = dict(data, art=kind, kredit=loan_id,
+                    name=(after.loans.get(loan_id) or {}).get("name", ""))
+        result.append(item)
+    return result
+
+
+def loan_day_lines(items):
+    """Zeilen fuer den Feierabend."""
+    lines = []
+    for item in items:
+        if item["art"] == "rate":
+            lines.append("%s: Rate %s (Zinsen %s, Tilgung %s%s)" % (
+                item["name"], _whole_euro(item["rate"]), _whole_euro(item["zinsen"]),
+                _whole_euro(item["tilgung"]),
+                ", Gebühren %s" % _whole_euro(item["gebuehren"]) if item.get("gebuehren")
+                else ""))
+        elif item["art"] == "ausfall":
+            step = item.get("stufe", 1)
+            text = "%s: Rate %s geplatzt, das Konto hat nicht gereicht! Mahnstufe %d, " \
+                "Gebühr %s auf die Restschuld" % (item["name"], _whole_euro(item["rate"]), step,
+                                                   _whole_euro(item.get("gebuehr", 0)))
+            if item.get("reputation"):
+                text += ", Ansehen: %s" % ", ".join(
+                    "%s %d" % (dict(AXES)[key], value) for key, value in
+                    item["reputation"].items())
+            lines.append(text)
+        elif item["art"] == "zurueckgezahlt":
+            lines.append("%s ist vollständig zurückgezahlt." % item["name"])
+        elif item["art"] == "mahnstufe":
+            lines.append("Pünktlich bezahlt: Die Mahnstufe sinkt auf %d." % item["stufe"])
+    return lines
+
+
+def fixed_costs_text(state):
+    """Laufende Kosten pro Arbeitstag (Finanzen): Gehaelter, Nebenkosten,
+    Kreditraten und Miete."""
+    numbers = state.firm_day()
+    parts = ["Gehälter %s" % _whole_euro(numbers.get("gehaelter", 0)),
+             "Nebenkosten %s" % _whole_euro(numbers.get("nebenkosten", 0))]
+    if state.running_loans():
+        parts.append("Kreditraten %s" % _whole_euro(state.loan_rates()))
+    if state.rent:
+        parts.append("Miete %s" % _whole_euro(state.rent))
+    return "Feste Kosten pro Arbeitstag: " + " · ".join(parts)
 
 
 # -- Angebote und Kundentickets (ab 0.34) ---------------------------------------
@@ -5873,6 +6485,46 @@ def _validate_rooms(rules):
                 problems.append("%s: unbekannter Vorteil '%s'" % (where, key))
         if not item.get("effekt"):
             problems.append("%s: kein Vorteil" % where)
+    return problems
+
+
+def _validate_loans(content):
+    """balancing.json "kredite" (ab 0.41)."""
+    rules = (content.get("balancing") or {}).get("kredite")
+    if not rules:
+        return ["Spiel: balancing.kredite fehlt"]
+    problems = []
+    for key in ("bank", "tage_pro_jahr", "bonitaet", "rahmen", "frei", "zins", "pakete",
+                "abloesen_prozent", "mahnung"):
+        if key not in rules:
+            problems.append("Spiel-Kredite: '%s' fehlt" % key)
+    if problems:
+        return problems
+    terms = [key for key in rules["zins"]["basis"]]
+    if not terms or not all(key.isdigit() and int(key) > 0 for key in terms):
+        problems.append("Spiel-Kredite: Laufzeiten in zins.basis ungueltig")
+        return problems
+    rates = [float(rules["zins"]["basis"][str(term)]) for term in sorted(int(k) for k in terms)]
+    if rates != sorted(rates):
+        problems.append("Spiel-Kredite: laengere Laufzeit muss mindestens so teuer sein")
+    ids = set()
+    for package in rules["pakete"]:
+        if package.get("id") in ids or package.get("id") == FREE_LOAN:
+            problems.append("Spiel-Kredite: Paket-Kennung '%s' doppelt oder reserviert"
+                            % package.get("id"))
+        ids.add(package.get("id"))
+        if str(package.get("laufzeit")) not in rules["zins"]["basis"]:
+            problems.append("Spiel-Kredite: Paket %s mit unbekannter Laufzeit" % package["id"])
+        if not isinstance(package.get("summe"), int) or package["summe"] <= 0:
+            problems.append("Spiel-Kredite: Paket %s ohne gueltige Summe" % package["id"])
+    steps = rules["mahnung"].get("stufen") or []
+    if [step.get("stufe") for step in steps] != list(range(1, len(steps) + 1)) or not steps:
+        problems.append("Spiel-Kredite: Mahnstufen muessen 1, 2, 3 ... heissen")
+    for step in steps:
+        for key in (step.get("reputation") or {}):
+            if key not in AXIS_KEYS:
+                problems.append("Spiel-Kredite: Mahnstufe %s mit unbekannter Achse '%s'"
+                                % (step.get("stufe"), key))
     return problems
 
 
@@ -7274,6 +7926,24 @@ def journey(state, content=None):
                             "Projekt abgeschlossen: %s" % project.get("titel", ""),
                             project.get("kunde", ""))
 
+    # Kredite (ab 0.41): aufgenommen, zurueckgezahlt, geplatzte Raten
+    for loan_day, loan_kind, loan_id, data in state.loan_log:
+        loan = state.loans.get(loan_id) or {}
+        if loan_kind == "aufgenommen":
+            add(loan_day, JOURNEY_FIRM, "kredit", "Kredit aufgenommen: %s" % loan.get("name", ""),
+                "%s über %s, %s p. a." % (_whole_euro(loan.get("summe", 0)),
+                                          term_text(loan.get("laufzeit", 0)),
+                                          percent_text(loan.get("zins", 0))))
+        elif loan_kind in ("zurueckgezahlt", "abgeloest"):
+            add(loan_day, JOURNEY_FIRM, "kredit_ende",
+                ("Kredit abgelöst: %s" if loan_kind == "abgeloest" else
+                 "Kredit zurückgezahlt: %s") % loan.get("name", ""),
+                "Zinsen insgesamt %s." % _whole_euro(loan.get("bezahlt_zins", 0)))
+        elif loan_kind == "ausfall":
+            step = dunning_step(data.get("stufe", 1), content) or {}
+            add(loan_day, JOURNEY_FIRM, "kredit_ausfall", "Kreditrate geplatzt",
+                "%s: Mahnstufe %d (%s)." % (loan.get("name", ""), data.get("stufe", 1),
+                                            step.get("name", "")))
     previous = 0
     for rank_day, rank in state.rank_log:
         level = names.index(rank) if rank in names else 0

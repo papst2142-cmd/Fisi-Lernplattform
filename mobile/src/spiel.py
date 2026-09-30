@@ -1286,6 +1286,9 @@ class GameScreen:
         self.assign_for = None       # Kundenticket, fuer das jemand gewaehlt wird
         self.team_for = None         # Projekt, dessen Team geaendert wird (ab 0.35)
         self.details_for = set()     # Projekte/Ausschreibungen mit aufgeklappten Details
+        self.loan_amount = None      # frei gewaehlte Kreditsumme (ab 0.41)
+        self.loan_term = 50          # gewaehlte Laufzeit
+        self.plans_for = set()       # Kredite mit aufgeklapptem Tilgungsplan
         self.training_for = None
         self.training_cat = None     # gewaehlter Fachbereich der Weiterbildung (ab 0.38)
         self.topics_for = set()      # Mitarbeiter mit aufgeklappten Themen (ab 0.38)
@@ -2752,7 +2755,8 @@ class GameScreen:
                     color=C["text"] if state.money >= 0 else C["red"]),
             ui.text("Verlauf in Tausend Euro", size=11, color=C["muted"]),
             chart,
-        ], accent=C["accent"])]
+        ] + ([ui.text(fg.fixed_costs_text(state), size=12, color=C["text_dim"])]
+             if state.firm else []), accent=C["accent"])]
         rows = []
         for item in fg.finance_days(state):
             detail = ["%s +%s" % (kind, euro(value)) for kind, value in item["ein"].items()]
@@ -2771,6 +2775,9 @@ class GameScreen:
                 padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
         if not rows:
             rows.append(ui.text("Noch nichts gebucht.", size=14, color=C["text_soft"]))
+        if state.loans:
+            rows.insert(0, ui.text("Gewinn je Tag ohne Kredit und Tilgung, die Zinsen zählen "
+                                   "als Kosten.", size=12, color=C["text_dim"]))
         result.append(ui.Card("Einnahmen und Ausgaben", rows, accent=C["green"],
                               subtitle="letzte 7 Arbeitstage"))
         lost = fg.lost_to(state)
@@ -2783,6 +2790,186 @@ class GameScreen:
         result.append(ui.Card("Gegen wen verloren", lines, accent=C["pink"],
                               subtitle="an Mitbewerber"))
         return result
+
+    # -- Kredite (ab 0.41) ----------------------------------------------------
+
+    def _firm_kredite(self, state):
+        rules = fg.loan_rules()
+        check = fg.credit_check(state)
+        bank = [ui.text("Deine Hausbank. Zinsen pro Jahr, ein Spieljahr hat %d Arbeitstage."
+                        % rules["tage_pro_jahr"], size=12, color=C["text_dim"])]
+        if check["ok"]:
+            bank += [ui.text("Kreditrahmen %s" % euro(check["rahmen"]), size=20,
+                             weight=ft.FontWeight.BOLD),
+                     ui.text("davon frei %s" % euro(check["frei"]), size=14,
+                             color=C["green"], weight=ft.FontWeight.BOLD),
+                     ui.text("Der Rahmen richtet sich nach dem Umsatz der letzten %d "
+                             "Arbeitstage und deinem Ansehen. Das Geld ist frei verwendbar, "
+                             "die Raten werden jeden Feierabend automatisch abgebucht."
+                             % rules["bonitaet"]["umsatz_tage"], size=13,
+                             color=C["text_soft"]),
+                     ui.text(fg.credit_frame_text(check), size=13, color=C["text_soft"],
+                             weight=ft.FontWeight.BOLD)]
+        else:
+            bank.append(ui.text(fg.credit_wait_text(state, check), size=14,
+                                color=C["text_soft"]))
+        for point in check["punkte"]:
+            color = C["green"] if point["ok"] else C["yellow"]
+            bank.append(ft.Row([
+                ft.Icon(ft.Icons.CHECK_CIRCLE if point["ok"] else ft.Icons.CANCEL, size=16,
+                        color=color),
+                ui.text(point["text"], size=13, color=color, expand=True,
+                        weight=None if point["ok"] else ft.FontWeight.BOLD)],
+                spacing=8, vertical_alignment=ft.CrossAxisAlignment.START))
+        warning = fg.dunning_text(state)
+        if warning:
+            bank.append(ui.text(warning, size=13, color=C["red"], weight=ft.FontWeight.BOLD))
+        result = [ui.Card(rules["bank"], bank, accent=C["cyan"]),
+                  self._running_loans(state)]
+
+        boxes = []
+        for offer in fg.loan_packages(state):
+            button = ui.GradientButton("Aufnehmen", lambda _e, o=offer: self._take_loan(o),
+                                       height=38)
+            button.set_enabled(not offer["problem"])
+            boxes.append(self._person_box([
+                ui.text(offer["name"], size=15, weight=ft.FontWeight.BOLD),
+                ui.text(fg.loan_offer_text(offer), size=12, color=C["text_dim"]),
+                ui.text(offer["text"], size=13, color=C["text_soft"]),
+                ft.Row([button])]))
+        result.append(ui.Card("Kreditpakete", boxes, accent=C["green"],
+                              subtitle="feste Angebote"))
+
+        _low, _high, step = fg.free_loan_limits(state)
+        if self.loan_amount is None:
+            self.loan_amount = rules["frei"]["start"]
+        amount = fg.clamp_loan_amount(state, self.loan_amount)
+        terms = [(str(term), "%d Tage" % term) for term in fg.loan_terms()]
+        keys = [key for key, _name in terms]
+        offer = fg.loan_offer(state, amount, self.loan_term, check=check)
+        button = ui.GradientButton("Aufnehmen", lambda _e: self._take_loan(offer),
+                                   expand=True)
+        button.set_enabled(not offer["problem"])
+        free = [ui.text("Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen.",
+                        size=12, color=C["text_dim"]),
+                ui.text(euro(amount), size=22, weight=ft.FontWeight.BOLD),
+                ft.Row([ui.GradientButton(label, lambda _e, d=delta: self._loan_step(d),
+                                          kind="ghost", height=38, expand=True)
+                        for label, delta in (("−5.000", -5 * step), ("−1.000", -step),
+                                             ("+1.000", step), ("+5.000", 5 * step))],
+                       spacing=6),
+                ui.label("Laufzeit"),
+                ui.PillGroup(terms, initial=keys.index(str(self.loan_term))
+                             if str(self.loan_term) in keys else 0,
+                             on_change=self._loan_choose_term),
+                ui.text(fg.loan_offer_text(offer), size=14, color=C["text_soft"])]
+        if offer["problem"]:
+            free.append(ui.text(offer["problem"], size=13, color=C["yellow"]))
+        free.append(ft.Row([button]))
+        result.append(ui.Card("Freie Kredithöhe", free, accent=C["accent"]))
+
+        done = state.done_loans()
+        if done:
+            result.append(ui.Card("Abgeschlossene Kredite", [
+                ui.text("%s über %s · %s an Arbeitstag %d · Zinsen %s" % (
+                    loan["name"], euro(loan["summe"]),
+                    "abgelöst" if loan["ende_art"] == "abgeloest" else "zurückgezahlt",
+                    loan["ende"], euro(loan["bezahlt_zins"])), size=12, color=C["text_dim"])
+                for loan in done], accent=C["muted"]))
+        return result
+
+    def _running_loans(self, state):
+        loans = [fg.loan_status(state, loan) for loan in state.running_loans()]
+        if not loans:
+            return ui.Card("Laufende Kredite", [ui.text("Du hast gerade keinen Kredit.",
+                                                        size=14, color=C["text_soft"])],
+                           accent=C["orange"])
+        boxes = [ui.text("Restschuld %s · Raten %s pro Arbeitstag" % (
+            euro(sum(item["rest"] for item in loans)), euro(state.loan_rates())), size=13,
+            color=C["text_soft"], weight=ft.FontWeight.BOLD)]
+        for item in loans:
+            parts = [ui.text(item["name"], size=15, weight=ft.FontWeight.BOLD),
+                     ui.text("aufgenommen an Arbeitstag %d" % item["tag"], size=12,
+                             color=C["muted"])]
+            parts += [ui.text(line, size=12, color=C["red"] if line.startswith("Geplatzte")
+                              else C["text_dim"]) for line in fg.loan_status_lines(item)]
+            opened = item["id"] in self.plans_for
+            if opened:
+                parts.append(self._loan_plan(item))
+            repay = ui.GradientButton("Ablösen", lambda _e, i=item: self._repay_loan(i),
+                                      kind="ghost", height=38, expand=True)
+            repay.set_enabled(state.money >= item["abloesen"]["gesamt"])
+            parts.append(ft.Row([
+                ui.GradientButton("Plan ausblenden" if opened else "Tilgungsplan",
+                                  lambda _e, i=item["id"]: self._toggle_plan(i), kind="ghost",
+                                  height=38, expand=True), repay], spacing=8))
+            box = self._person_box(parts)
+            if item["ausfaelle"]:
+                box.border = ft.Border.all(1, C["red"])
+            boxes.append(box)
+        return ui.Card("Laufende Kredite", boxes, accent=C["orange"])
+
+    def _loan_plan(self, item):
+        rows, skipped = fg.loan_plan_rows(item)
+
+        def line(values, color, weight=None):
+            return ft.Row([ui.text(value, size=11, color=color, weight=weight, expand=True,
+                                   text_align=ft.TextAlign.RIGHT) for value in values],
+                          spacing=4)
+
+        lines = [line(("Tag", "Rate", "Zinsen", "Tilgung", "Rest"), C["muted"],
+                      ft.FontWeight.BOLD)]
+        for number, row in enumerate(rows):
+            if skipped and number == len(rows) - 1:
+                lines.append(ui.text("… %d weitere Raten …" % skipped, size=11,
+                                     color=C["muted"]))
+            lines.append(line(["%d" % row[0]] + [euro(value) for value in row[1:]],
+                              C["text_soft"]))
+        lines.append(ui.text("Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
+                             % euro(item["zinsen_noch"]), size=12, color=C["text_dim"]))
+        return ft.Column(lines, spacing=3, tight=True)
+
+    def _toggle_plan(self, loan_id):
+        if loan_id in self.plans_for:
+            self.plans_for.discard(loan_id)
+        else:
+            self.plans_for.add(loan_id)
+        self._fill_firm()
+
+    def _loan_step(self, delta):
+        state = self.game.state
+        self.loan_amount = fg.clamp_loan_amount(state, fg.clamp_loan_amount(
+            state, self.loan_amount or 0) + delta)
+        self._fill_firm()
+
+    def _loan_choose_term(self, term):
+        self.loan_term = int(term)
+        self._fill_firm()
+
+    def _take_loan(self, offer):
+        def confirmed():
+            try:
+                if offer["paket"] == fg.FREE_LOAN:
+                    self.game.take_loan(offer["summe"], offer["laufzeit"])
+                else:
+                    self.game.take_loan(0, 0, offer["paket"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Kredit aufnehmen", fg.loan_confirm_text(offer), confirmed)
+
+    def _repay_loan(self, item):
+        def confirmed():
+            try:
+                self.game.repay_loan(item["id"])
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._firm_changed()
+
+        self.app.confirm("Kredit ablösen", fg.loan_payoff_text(item), confirmed)
 
     # -- Wohnung einrichten -------------------------------------------------
 

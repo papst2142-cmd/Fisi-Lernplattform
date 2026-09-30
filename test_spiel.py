@@ -3180,5 +3180,325 @@ class GebaeudeAusbauTest(unittest.TestCase):
             self.assertIs(building, game.state.firm_stage()["gebaeude"])
 
 
+class KrediteTest(unittest.TestCase):
+    """Kredite fuer die eigene Firma (ab 0.41)."""
+
+    setUp = FirmaTest.setUp
+    _rich = FirmaTest._rich
+    _founded = FirmaTest._founded
+
+    def _days(self, game, count, revenue=2000, costs=0):
+        """Feierabende mit festem Umsatz (ohne Mitarbeiter)."""
+        payloads = []
+        for _ in range(count):
+            payload = {"tag": game.state.day, "gehalt": 0,
+                       "firma": {"umsatz": revenue, "gehaelter": 0, "nebenkosten": costs}}
+            game._log(fg.EV_DAY_END, payload)
+            payloads.append(payload)
+        return payloads
+
+    def _worthy(self, db, money=30000):
+        game = self._founded(db, money)
+        self._days(game, 10)
+        return game
+
+    def _spend(self, game, amount):
+        game._log(fg.EV_SOLVED, {"aufgabe": "ausgabe", "tag": game.state.day, "richtig": False,
+                                 "geld": -int(amount)})
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_loans(fg.GAME), [])
+        broken = copy.deepcopy(fg.GAME)
+        rules = broken["balancing"]["kredite"]
+        rules["pakete"][1]["id"] = "kurz"
+        rules["pakete"][2]["laufzeit"] = 33
+        rules["mahnung"]["stufen"][0]["reputation"] = {"gibtsnicht": -1}
+        self.assertEqual(len(fg._validate_loans(broken)), 3)
+        del broken["balancing"]["kredite"]
+        self.assertEqual(len(fg._validate_loans(broken)), 1)
+
+    def test_zinsstaffel(self):
+        # Kurz und klein guenstiger, lang und gross teurer
+        packages = [fg.loan_offer_numbers(item["summe"], item["laufzeit"])
+                    for item in fg.loan_rules()["pakete"]]
+        rates = [item["zins"] for item in packages]
+        self.assertEqual(rates, sorted(rates))
+        self.assertLess(rates[0], rates[-1])
+        by_term = [fg.loan_rate_pa(20000, term) for term in fg.loan_terms()]
+        self.assertEqual(by_term, sorted(by_term))
+        self.assertLess(fg.loan_rate_pa(10000, 50), fg.loan_rate_pa(90000, 50))
+        # Annuitaet: nach genau "laufzeit" Raten ist alles bezahlt
+        for item in packages:
+            loan = {"rest": item["summe"], "zins_offen": 0, "gebuehren": 0,
+                    "rate": item["rate"], "zins": item["zins"]}
+            rows = fg.loan_schedule(loan, 1)
+            self.assertEqual(len(rows), item["laufzeit"])
+            self.assertEqual(sum(row["tilgung"] for row in rows), item["summe"])
+            self.assertEqual(rows[-1]["rest"], 0)
+            self.assertLessEqual(rows[-1]["rate"], item["rate"])
+            self.assertEqual(sum(row["rate"] for row in rows), item["gesamt"])
+            # Zinsanteil sinkt, Tilgungsanteil steigt
+            self.assertGreater(rows[0]["zinsen"], rows[-2]["zinsen"])
+            self.assertLess(rows[0]["tilgung"], rows[-2]["tilgung"])
+
+    def test_bonitaet(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            self.assertIn(("kredite", "Kredite"), fg.firm_tabs(game.state))
+            check = fg.credit_check(game.state, self.content)
+            self.assertFalse(check["ok"])
+            self.assertEqual([point["ok"] for point in check["punkte"]], [False, False, True])
+            self.assertEqual(check["ab_tag"], game.state.firm["tag"] + 10)
+            self.assertEqual(check["rahmen"], 0)
+            with self.assertRaises(ValueError):
+                game.take_loan(0, 0, "kurz")
+            # 9 Tage reichen nicht, der zehnte schon (2.000 EUR Umsatz pro Tag)
+            self._days(game, 9)
+            self.assertFalse(fg.credit_check(game.state, self.content)["ok"])
+            self._days(game, 1)
+            check = fg.credit_check(game.state, self.content)
+            self.assertTrue(check["ok"])
+            self.assertEqual(check["umsatz"], 20000)
+            self.assertEqual(check["rahmen"], 33000)   # 1,5 x Umsatz x 1,1 (Ansehen 80)
+            packages = {item["paket"]: item for item in fg.loan_packages(game.state,
+                                                                         self.content)}
+            self.assertEqual(packages["kurz"]["problem"], "")
+            self.assertEqual(packages["investition"]["problem"], "")
+            self.assertIn("Kreditrahmen", packages["gross"]["problem"])
+            # Freie Summe: Mindestbetrag und Schritte
+            self.assertTrue(fg.loan_offer(game.state, 4000, 50, content=self.content)["problem"])
+            self.assertTrue(fg.loan_offer(game.state, 10500, 50,
+                                          content=self.content)["problem"])
+            self.assertTrue(fg.loan_offer(game.state, 10000, 44,
+                                          content=self.content)["problem"])
+            self.assertEqual(fg.loan_offer(game.state, 33000, 50,
+                                           content=self.content)["problem"], "")
+            self.assertTrue(fg.loan_offer(game.state, 34000, 50,
+                                          content=self.content)["problem"])
+            self.assertEqual(fg.free_loan_limits(game.state, self.content), (5000, 33000, 1000))
+            self.assertEqual(fg.clamp_loan_amount(game.state, 99999, self.content), 33000)
+            # Umsatz bricht ein: keine Bonitaet mehr
+            self._days(game, 10, revenue=500)
+            self.assertFalse(fg.credit_check(game.state, self.content)["ok"])
+
+    def test_raten_muessen_tragbar_sein(self):
+        """Kapitaldienstfaehigkeit: alle Raten hoechstens die Haelfte des Gewinns."""
+        with TempDB() as db:
+            game = self._founded(db)
+            self._days(game, 10, revenue=2500, costs=500)     # Gewinn 2.000 pro Tag
+            check = fg.credit_check(game.state, self.content)
+            self.assertEqual((check["raten_max"], check["raten_belegt"]), (1000, 0))
+            short = fg.loan_offer(game.state, 30000, 20, content=self.content)
+            self.assertIn("Rate ist zu hoch", short["problem"])
+            self.assertEqual(fg.loan_offer(game.state, 30000, 50,
+                                           content=self.content)["problem"], "")
+            game.take_loan(30000, 50)
+            check = fg.credit_check(game.state, self.content)
+            self.assertEqual(check["raten_belegt"], game.state.loan_rates())
+            self.assertIn("Tragbare Raten", fg.credit_frame_text(check))
+            with self.assertRaises(ValueError):
+                game.take_loan(10000, 20)
+
+    def test_ansehen_zaehlt(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            game._log(fg.EV_SOLVED, {"aufgabe": "x", "tag": game.state.day, "richtig": False,
+                                     "geld": 0, "reputation": {key: -25 for key in
+                                                               fg.AXIS_KEYS}})
+            check = fg.credit_check(game.state, self.content)
+            self.assertFalse(check["ok"])
+            self.assertFalse(check["punkte"][2]["ok"])
+        with TempDB() as db:
+            game = self._worthy(db)
+            game._log(fg.EV_SOLVED, {"aufgabe": "x", "tag": game.state.day, "richtig": True,
+                                     "geld": 0, "reputation": {key: 30 for key in
+                                                               fg.AXIS_KEYS}})
+            # Ansehen 100: Rahmen x 1,25
+            self.assertEqual(fg.credit_check(game.state, self.content)["rahmen"], 37000)
+
+    def test_aufnahme_und_tilgung(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            before = game.state.money
+            payload = game.take_loan(0, 0, "investition")
+            offer = fg.loan_offer_numbers(30000, 50, self.content)
+            self.assertEqual((payload["summe"], payload["laufzeit"], payload["rate"]),
+                             (30000, 50, offer["rate"]))
+            state = game.state
+            self.assertEqual(state.money, before + 30000)
+            self.assertEqual(state.book[state.day]["ein"][fg.BOOK_LOAN], 30000)
+            self.assertEqual(fg.credit_check(state, self.content)["frei"], 3000)
+            self.assertEqual(state.loan_rates(), offer["rate"])
+            self.assertIn("Kreditraten", fg.fixed_costs_text(state))
+            # Erster Feierabend: Rate automatisch, Zins und Tilgung getrennt gebucht
+            day = state.day
+            end = game.end_day()
+            self.assertEqual(end["firma"]["kredite"][0]["art"], "rate")
+            self.assertIn("Kreditraten: -", fg.firm_day_text(end["firma"]))
+            state = game.state
+            loan = state.running_loans()[0]
+            first = fg.loan_schedule({"rest": 30000, "zins_offen": 0, "gebuehren": 0,
+                                      "rate": offer["rate"], "zins": offer["zins"]}, 1)[0]
+            self.assertEqual(state.book[day]["aus"][fg.BOOK_LOAN_INTEREST], first["zinsen"])
+            self.assertEqual(state.book[day]["aus"][fg.BOOK_LOAN_REPAY], first["tilgung"])
+            self.assertEqual(loan["rest"], 30000 - first["tilgung"])
+            status = fg.loan_status(state, loan, self.content)
+            self.assertEqual(status["raten_offen"], 49)
+            self.assertTrue(fg.loan_status_lines(status))
+            # Alle 50 Raten: vollstaendig zurueckgezahlt, Zinsen wie angeboten
+            self._days(game, 49)
+            state = game.state
+            self.assertEqual(state.running_loans(), [])
+            loan = state.done_loans()[0]
+            self.assertEqual((loan["ende_art"], loan["bezahlt_tilgung"]), ("zurueckgezahlt",
+                                                                           30000))
+            self.assertEqual(loan["bezahlt_zins"], offer["zinsen_gesamt"])
+            self.assertEqual(state.dunning, 0)
+            kinds = [entry["art"] for entry in fg.journey(state, self.content)]
+            self.assertIn("kredit", kinds)
+            self.assertIn("kredit_ende", kinds)
+
+    def test_mehrere_kredite_parallel(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            game.take_loan(0, 0, "kurz")
+            game.take_loan(10000, 30)
+            state = game.state
+            self.assertEqual(len(state.running_loans()), 2)
+            self.assertEqual(len({loan["id"] for loan in state.running_loans()}), 2)
+            self.assertEqual(fg.credit_check(state, self.content)["frei"], 13000)
+            short = fg.loan_offer_numbers(10000, 20, self.content)
+            free = fg.loan_offer_numbers(10000, 30, self.content)
+            self.assertEqual(state.loan_rates(), short["rate"] + free["rate"])
+            self._days(game, 20)
+            state = game.state
+            self.assertEqual([loan["name"] for loan in state.running_loans()],
+                             ["Freier Kredit"])
+            self.assertEqual(state.done_loans()[0]["name"], "Kurzkredit")
+            self._days(game, 10)
+            self.assertEqual(game.state.running_loans(), [])
+            self.assertEqual(game.state.loan_debt(), 0)
+
+    def test_geplatzte_rate_und_mahnstufen(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            game.take_loan(0, 0, "kurz")
+            steps = fg.loan_rules()["mahnung"]["stufen"]
+            reliability = game.state.reputation["zuverlaessigkeit"]
+            self._spend(game, game.state.money + 1000)       # Konto leer
+            end = game.end_day()
+            state = game.state
+            loan = state.running_loans()[0]
+            self.assertEqual(state.dunning, 1)
+            self.assertEqual(loan["raten"], 0)
+            self.assertEqual(loan["ausfaelle"], 1)
+            self.assertEqual(loan["gebuehren"], steps[0]["gebuehr"])
+            self.assertEqual(state.reputation["zuverlaessigkeit"], reliability - 2)
+            self.assertIn("geplatzt", fg.firm_day_text(end["firma"]))
+            self.assertIn("Zahlungserinnerung", fg.dunning_text(state, self.content))
+            # Stufe 1: nur halber Rahmen (18.000 Umsatz x 1,5 x 1,1 / 2, auf 1.000 abgerundet)
+            check = fg.credit_check(state, self.content)
+            self.assertEqual(check["umsatz"], 18000)
+            self.assertEqual(check["rahmen"], 14000)
+            # Zweite geplatzte Rate: Mahnung, Zinsaufschlag, keine neuen Kredite
+            self._days(game, 1, revenue=0)
+            state = game.state
+            self.assertEqual(state.dunning, 2)
+            loan = state.running_loans()[0]
+            self.assertEqual(fg.loan_interest(loan, state.dunning, self.content),
+                             loan["zins"] + steps[1]["zins_plus"])
+            self.assertTrue(fg.credit_check(state, self.content)["sperre"])
+            with self.assertRaises(ValueError):
+                game.take_loan(0, 0, "kurz")
+            # Hoechstens Stufe 3, auch wenn weiter Raten platzen
+            self._days(game, 3, revenue=0)
+            self.assertEqual(game.state.dunning, 3)
+            self.assertEqual(game.state.running_loans()[0]["ausfaelle"], 5)
+            kinds = [entry["art"] for entry in fg.journey(game.state, self.content)]
+            self.assertEqual(kinds.count("kredit_ausfall"), 5)
+            # Wieder Geld: Raten laufen, die Stufe sinkt alle 10 Arbeitstage um 1
+            self._days(game, 9, revenue=5000)
+            self.assertEqual(game.state.dunning, 3)
+            self._days(game, 1, revenue=5000)
+            self.assertEqual(game.state.dunning, 2)
+            self._days(game, 20, revenue=5000)
+            state = game.state
+            self.assertEqual(state.dunning, 0)
+            # Geplatzte Raten verlaengern die Laufzeit, Gebuehren sind bezahlt
+            loan = state.loans[next(iter(state.loans))]
+            self.assertEqual(loan["ende_art"], "zurueckgezahlt")
+            self.assertGreater(loan["raten"], 20)
+            self.assertEqual(loan["bezahlt_gebuehren"],
+                             steps[0]["gebuehr"] + steps[1]["gebuehr"] + 3 * steps[2]["gebuehr"])
+            self.assertGreater(loan["bezahlt_zins"],
+                               fg.loan_offer_numbers(10000, 20, self.content)["zinsen_gesamt"])
+
+    def test_mehrere_geplatzte_raten_eine_stufe(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            game.take_loan(0, 0, "kurz")
+            game.take_loan(20000, 50)
+            self._spend(game, game.state.money)
+            self._days(game, 1, revenue=0)
+            state = game.state
+            self.assertEqual(state.dunning, 1)
+            self.assertEqual([loan["ausfaelle"] for loan in state.running_loans()], [1, 1])
+
+    def test_abloesen(self):
+        with TempDB() as db:
+            game = self._worthy(db)
+            game.take_loan(0, 0, "investition")
+            self._days(game, 5)
+            state = game.state
+            loan = state.running_loans()[0]
+            payoff = fg.loan_payoff(loan, self.content)
+            self.assertEqual(payoff["vorfaelligkeit"], -(-loan["rest"] // 100))
+            status = fg.loan_status(state, loan, self.content)
+            self.assertIn("Vorfälligkeitsentschädigung", fg.loan_payoff_text(status,
+                                                                              self.content))
+            before = state.money
+            game.repay_loan(loan["id"])
+            state = game.state
+            self.assertEqual(state.money, before - payoff["gesamt"])
+            self.assertEqual(state.running_loans(), [])
+            self.assertEqual(state.done_loans()[0]["ende_art"], "abgeloest")
+            self.assertEqual(state.book[state.day]["aus"][fg.BOOK_LOAN_FEES],
+                             payoff["vorfaelligkeit"])
+            with self.assertRaises(ValueError):
+                game.repay_loan(loan["id"])
+            self._days(game, 1)
+            self.assertEqual(game.state.loan_log[-1][1], "abgeloest")
+        with TempDB() as db:
+            game = self._worthy(db)
+            game.take_loan(0, 0, "kurz")
+            self._spend(game, game.state.money)
+            with self.assertRaises(ValueError):
+                game.repay_loan(game.state.running_loans()[0]["id"])
+
+    def test_abgleich_zwei_geraete(self):
+        """Dasselbe Kredit-Ereignis doppelt (zwei Geraete) zaehlt einmal, und
+        ein zweites Geraet rechnet aus den Ereignissen denselben Stand."""
+        with TempDB() as db:
+            game = self._worthy(db)
+            payload = game.take_loan(0, 0, "kurz")
+            db.log_game_event(fg.EV_LOAN, json.dumps(payload), "Handy")
+            game.reload()
+            self.assertEqual(len(game.state.loans), 1)
+            self._days(game, 3)
+            other = fg.Game(db, "Handy", self.content)
+            self.assertEqual(other.state.money, game.state.money)
+            self.assertEqual(other.state.running_loans()[0]["rest"],
+                             game.state.running_loans()[0]["rest"])
+
+    def test_ohne_kredit_alles_wie_bisher(self):
+        with TempDB() as db:
+            game = self._founded(db)
+            end = game.end_day()
+            self.assertNotIn("kredite", end["firma"])
+            self.assertNotIn("Kredit", fg.firm_day_text(end["firma"]))
+            self.assertNotIn("Kreditraten", fg.fixed_costs_text(game.state))
+            self.assertEqual(game.state.loan_rates(), 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

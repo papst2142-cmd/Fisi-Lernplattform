@@ -2560,6 +2560,9 @@ class FirmView(ScrollArea):
         self.assign_for = None       # Kundenticket, fuer das gerade jemand gewaehlt wird
         self.team_for = None         # Projekt, dessen Team gerade geaendert wird
         self.details_for = set()     # Projekte/Ausschreibungen mit aufgeklappten Details
+        self.loan_amount = None      # frei gewaehlte Kreditsumme (ab 0.41)
+        self.loan_term = 50          # gewaehlte Laufzeit
+        self.plans_for = set()       # Kredite mit aufgeklapptem Tilgungsplan
 
     @property
     def game(self):
@@ -3404,7 +3407,8 @@ class FirmView(ScrollArea):
                                  "color": C["green"]}])
 
         days = Card(self.content, title="Einnahmen und Ausgaben", accent=C["green"],
-                    subtitle="die letzten 7 Arbeitstage")
+                    subtitle="die letzten 7 Arbeitstage · Gewinn ohne Kredit und Tilgung"
+                    if state.loans else "die letzten 7 Arbeitstage")
         days.pack(fill="x", pady=(14, 0))
         rows = fg.finance_days(state)
         if not rows:
@@ -3428,6 +3432,11 @@ class FirmView(ScrollArea):
                        wraplength=960, justify="left", anchor="w").pack(anchor="w", padx=12,
                                                                         pady=(2, 7))
 
+        if state.firm:
+            make_label(card.body, fg.fixed_costs_text(state), font=F["small"],
+                       fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(8, 0))
+
         lost = fg.lost_to(state)
         rivals = Card(self.content, title="Gegen wen verloren", accent=C["pink"],
                       subtitle="Anfragen und Projekte, die an Mitbewerber gingen")
@@ -3442,6 +3451,212 @@ class FirmView(ScrollArea):
             make_label(line, name, font=F["small_bold"], fg=C["text"]).pack(side="left")
             make_label(line, "1 Auftrag" if number == 1 else "%d Aufträge" % number,
                        font=F["small"], fg=C["text_dim"]).pack(side="right")
+
+
+    # -- Kredite (ab 0.41) ------------------------------------------------------
+
+    def _build_kredite(self, state):
+        rules = fg.loan_rules()
+        check = fg.credit_check(state)
+        bank = Card(self.content, title=rules["bank"], accent=C["cyan"],
+                    subtitle="deine Hausbank · Zinsen pro Jahr, ein Spieljahr hat %d "
+                    "Arbeitstage" % rules["tage_pro_jahr"])
+        bank.pack(fill="x", pady=(14, 0))
+        if check["ok"]:
+            make_label(bank.body, "Kreditrahmen %s · davon frei %s" % (
+                _euro(check["rahmen"]), _euro(check["frei"])), font=F["h2"], fg=C["text"],
+                anchor="w").pack(anchor="w")
+            make_label(bank.body, "Der Rahmen richtet sich nach dem Umsatz der letzten %d "
+                       "Arbeitstage und deinem Ansehen. Das Geld ist frei verwendbar, die Raten "
+                       "werden jeden Feierabend automatisch abgebucht."
+                       % rules["bonitaet"]["umsatz_tage"], font=F["small"],
+                       fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(4, 0))
+            make_label(bank.body, fg.credit_frame_text(check), font=F["small_bold"],
+                       fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(2, 6))
+        else:
+            make_label(bank.body, fg.credit_wait_text(state, check), font=F["body"],
+                       fg=C["text_soft"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(0, 6))
+        for point in check["punkte"]:
+            make_label(bank.body, "%s  %s" % ("✓" if point["ok"] else "✗", point["text"]),
+                       font=F["small_bold"] if not point["ok"] else F["small"],
+                       fg=C["green"] if point["ok"] else C["yellow"], anchor="w").pack(
+                anchor="w", pady=1)
+        warning = fg.dunning_text(state)
+        if warning:
+            make_label(bank.body, warning, font=F["small_bold"], fg=C["red"], wraplength=980,
+                       justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
+
+        self._build_running_loans(state)
+
+        packages = Card(self.content, title="Kreditpakete", accent=C["green"],
+                        subtitle="feste Angebote zur schnellen Auswahl")
+        packages.pack(fill="x", pady=(14, 0))
+        for offer in fg.loan_packages(state):
+            row = ctk.CTkFrame(packages.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"])
+            row.pack(fill="x", pady=5)
+            side = _frame(row)
+            side.pack(side="right", padx=14)
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, offer["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(text, fg.loan_offer_text(offer), font=F["small"], fg=C["text_dim"],
+                       wraplength=760, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            make_label(text, offer["text"], font=F["small"], fg=C["text_soft"], wraplength=760,
+                       justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            button = NeoButton(side, "Aufnehmen", lambda o=offer: self._take_loan(o),
+                               kind="primary", height=32, font=F["small_bold"])
+            button.pack()
+            button.set_enabled(not offer["problem"])
+
+        low, high, step = fg.free_loan_limits(state)
+        if self.loan_amount is None:
+            self.loan_amount = rules["frei"]["start"]
+        amount = fg.clamp_loan_amount(state, self.loan_amount)
+        free = Card(self.content, title="Freie Kredithöhe", accent=C["accent"],
+                    subtitle="Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen")
+        free.pack(fill="x", pady=(14, 0))
+        amount_row = _frame(free.body)
+        amount_row.pack(anchor="w")
+        for label, delta in (("−5.000", -5 * step), ("−1.000", -step)):
+            NeoButton(amount_row, label, lambda d=delta: self._loan_step(d), kind="ghost",
+                      height=32, width=80, font=F["small_bold"]).pack(side="left", padx=(0, 6))
+        make_label(amount_row, _euro(amount), font=F["h2"], fg=C["text"],
+                   width=150).pack(side="left", padx=10)
+        for label, delta in (("+1.000", step), ("+5.000", 5 * step)):
+            NeoButton(amount_row, label, lambda d=delta: self._loan_step(d), kind="ghost",
+                      height=32, width=80, font=F["small_bold"]).pack(side="left", padx=(6, 0))
+        make_label(free.body, "Laufzeit", font=F["small_bold"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w", pady=(12, 4))
+        terms = [(str(term), "%d Tage" % term) for term in fg.loan_terms()]
+        ChoiceRow(free.body, terms, str(self.loan_term), self._loan_choose_term).pack(
+            anchor="w")
+        offer = fg.loan_offer(state, amount, self.loan_term, check=check)
+        make_label(free.body, fg.loan_offer_text(offer), font=F["body"], fg=C["text_soft"],
+                   wraplength=980, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+        if offer["problem"]:
+            make_label(free.body, offer["problem"], font=F["small"], fg=C["yellow"],
+                       wraplength=980, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(4, 0))
+        button = NeoButton(free.body, "Aufnehmen", lambda: self._take_loan(offer),
+                           kind="primary")
+        button.pack(anchor="w", pady=(10, 0))
+        button.set_enabled(not offer["problem"])
+
+        done = state.done_loans()
+        if done:
+            old = Card(self.content, title="Abgeschlossene Kredite", accent=C["muted"])
+            old.pack(fill="x", pady=(14, 0))
+            for loan in done:
+                make_label(old.body, "%s über %s · %s an Arbeitstag %d · Zinsen %s" % (
+                    loan["name"], _euro(loan["summe"]),
+                    "abgelöst" if loan["ende_art"] == "abgeloest" else "zurückgezahlt",
+                    loan["ende"], _euro(loan["bezahlt_zins"])), font=F["small"],
+                    fg=C["text_dim"], anchor="w").pack(anchor="w", pady=1)
+
+    def _build_running_loans(self, state):
+        loans = [fg.loan_status(state, loan) for loan in state.running_loans()]
+        card = Card(self.content, title="Laufende Kredite", accent=C["orange"],
+                    subtitle="Restschuld %s · Raten %s pro Arbeitstag" % (
+                        _euro(sum(item["rest"] for item in loans)),
+                        _euro(state.loan_rates())) if loans else "keine")
+        card.pack(fill="x", pady=(14, 0))
+        if not loans:
+            make_label(card.body, "Du hast gerade keinen Kredit.", font=F["body"],
+                       fg=C["text_soft"], anchor="w").pack(anchor="w")
+        for item in loans:
+            row = ctk.CTkFrame(card.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["red"] if item["ausfaelle"]
+                               else C["border"])
+            row.pack(fill="x", pady=5)
+            side = _frame(row)
+            side.pack(side="right", padx=14, pady=10, anchor="n")
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, "%s · aufgenommen an Arbeitstag %d" % (item["name"], item["tag"]),
+                       font=F["body_bold"], fg=C["text"], anchor="w").pack(anchor="w")
+            for line in fg.loan_status_lines(item):
+                make_label(text, line, font=F["small"], fg=C["red"] if line.startswith(
+                    "Geplatzte") else C["text_dim"], wraplength=760, justify="left",
+                           anchor="w").pack(anchor="w", pady=(2, 0))
+            opened = item["id"] in self.plans_for
+            NeoButton(side, "Plan ausblenden" if opened else "Tilgungsplan",
+                      lambda i=item["id"]: self._toggle_plan(i), kind="ghost", height=30,
+                      font=F["small_bold"]).pack(pady=(0, 6))
+            button = NeoButton(side, "Ablösen", lambda i=item: self._repay_loan(i),
+                               kind="ghost", height=30, font=F["small_bold"])
+            button.pack()
+            button.set_enabled(state.money >= item["abloesen"]["gesamt"])
+            if opened:
+                self._loan_plan(text, item)
+
+    def _loan_plan(self, parent, item):
+        rows, skipped = fg.loan_plan_rows(item)
+        table = _frame(parent)
+        table.pack(anchor="w", pady=(8, 0))
+        heads = ("Arbeitstag", "Rate", "Zinsen", "Tilgung", "Restschuld")
+        for column, head in enumerate(heads):
+            make_label(table, head, font=F["tiny"], fg=C["muted"], anchor="e").grid(
+                row=0, column=column, sticky="e", padx=(0, 18))
+        lines = [["%d" % row[0]] + [_euro(value) for value in row[1:]] for row in rows]
+        if skipped:
+            lines.insert(len(lines) - 1, None)
+        for number, values in enumerate(lines, 1):
+            if values is None:
+                make_label(table, "… %d weitere Raten …" % skipped, font=F["tiny"],
+                           fg=C["muted"], anchor="w").grid(row=number, column=0, columnspan=5,
+                                                           sticky="w")
+                continue
+            for column, value in enumerate(values):
+                make_label(table, value, font=F["small"], fg=C["text_soft"], anchor="e").grid(
+                    row=number, column=column, sticky="e", padx=(0, 18))
+        make_label(parent, "Noch zu zahlende Zinsen, wenn jede Rate klappt: %s"
+                   % _euro(item["zinsen_noch"]), font=F["small"], fg=C["text_dim"],
+                   anchor="w").pack(anchor="w", pady=(6, 0))
+
+    def _toggle_plan(self, loan_id):
+        if loan_id in self.plans_for:
+            self.plans_for.discard(loan_id)
+        else:
+            self.plans_for.add(loan_id)
+        self.render(keep_scroll=True)
+
+    def _loan_step(self, delta):
+        state = self.game.state
+        self.loan_amount = fg.clamp_loan_amount(state, fg.clamp_loan_amount(
+            state, self.loan_amount or 0) + delta)
+        self.render(keep_scroll=True)
+
+    def _loan_choose_term(self, term):
+        self.loan_term = int(term)
+        self.render(keep_scroll=True)
+
+    def _take_loan(self, offer):
+        if not messagebox.askyesno("Kredit aufnehmen", fg.loan_confirm_text(offer)):
+            return
+        try:
+            if offer["paket"] == fg.FREE_LOAN:
+                self.game.take_loan(offer["summe"], offer["laufzeit"])
+            else:
+                self.game.take_loan(0, 0, offer["paket"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
+
+    def _repay_loan(self, item):
+        if not messagebox.askyesno("Kredit ablösen", fg.loan_payoff_text(item)):
+            return
+        try:
+            self.game.repay_loan(item["id"])
+        except ValueError as exc:
+            self._error(exc)
+            return
+        self._changed()
 
 
 # ============================================================================
