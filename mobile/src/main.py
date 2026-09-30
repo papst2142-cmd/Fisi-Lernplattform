@@ -1657,6 +1657,7 @@ class SettingsScreen(Screen):
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = ui.text("", size=14, color=C["text_soft"],
                                       weight=ft.FontWeight.BOLD)
+        self.lbl_reset = ui.text("", size=13, color=C["text_dim"])
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
         self.lbl_update = ui.text("", size=13, color=C["text_dim"])
         self.lbl_update.visible = False
@@ -1731,10 +1732,7 @@ class SettingsScreen(Screen):
                         % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                         size=11, color=C["muted"]),
                 ft.Container(height=6),
-                ui.text("Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
-                        "Reputation, Arbeitstage und erledigte Tickets. Der Lernfortschritt "
-                        "bleibt erhalten. Mit eingerichtetem Abgleich auch auf dem PC.",
-                        size=13, color=C["text_dim"]),
+                self.lbl_reset,
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
                 ft.Container(height=6),
@@ -1861,22 +1859,26 @@ class SettingsScreen(Screen):
 
     def _show_difficulty(self):
         try:
-            state = self.app.screens["game"].game.reload()
+            game = self.app.screens["game"].game
+            game.reload()
         except (KeyError, AttributeError):
             return
-        self.lbl_difficulty.value = fisi_game.difficulty_options_text(state)
+        self.lbl_difficulty.value = fisi_game.slot_options_text(game)
+        self.lbl_reset.value = fisi_game.reset_help(game)
 
     def reset_game(self, _event=None):
+        game = self.app.screens["game"].game
+        game.reload()
+
         def confirmed():
-            if fisi_game.Game(self.db).reset():
+            if game.reset():
                 self.toast("Der Spielstand wurde zurückgesetzt.", C["green"])
                 self.app.screens["game"].room = None
                 self.app.notify_progress()
                 self._show_difficulty()
 
-        self.app.confirm("Spielstand zurücksetzen",
-                         "Wirklich den gesamten Spielstand des Lernspiels löschen? Der "
-                         "Lernfortschritt bleibt erhalten.", confirmed)
+        self.app.confirm("Spielstand zurücksetzen", fisi_game.reset_question(game),
+                         confirmed)
 
     def reset_records(self, _event=None):
         def confirmed():
@@ -2053,6 +2055,7 @@ class FISIMobileApp:
         self.update_dialog_open = False
         self.last_auto_check = 0
         self.dismissed_version = None
+        self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._build_ui()
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
@@ -2649,6 +2652,13 @@ def selftest():
                 info = fisi_game.unlock_info(state, rule, level, [])
                 spiel.moment_card(info, state, 0, 2, None, None)
         spiel.badge_image("stern", None, None)
+        # Spielstand-Plaetze (ab 0.48): Auswahl mit belegten und leeren Plaetzen
+        game.picking = True
+        game.render()
+        for item in game.game.slots() + [dict(game.game.slots()[0], extra=True)]:
+            game._slot_card(item)
+        game.picking = False
+        game.slot_bar()
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
