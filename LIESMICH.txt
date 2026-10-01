@@ -13,8 +13,8 @@ Neue Version setzen (traegt sie an allen Stellen gleich ein):
 
 WAS IST DAS?
 ---------------------------------------------------------------------------
-Ein Lernprogramm mit dunkler, moderner Dashboard-Oberflaeche (abgerundete
-Kacheln, Farbverlaeufe):
+Ein Lernprogramm mit moderner Dashboard-Oberflaeche (dunkel oder hell,
+abgerundete Kacheln, Farbverlaeufe):
 
   Dashboard          Alle Kennzahlen auf einen Blick: Gesamtfortschritt,
                      gelernte Karteikarten, beantwortete Quizfragen,
@@ -26,31 +26,51 @@ Kacheln, Farbverlaeufe):
   Karteikarten       1.400 Karten in drei Lernmodi: Freitext, Multiple Choice
                      und Aufdecken. Filterbar nach Fachbereich.
 
-  Pruefungstrainer   2.000 Fragen, Test-Sessions mit frei waehlbarer Laenge,
-                     Zeitmessung, Erklaerung zu jeder Antwort und
-                     Bewertung nach IHK-Notenschluessel.
+  Pruefungstrainer   2.000 Fragen, davon 54 automatisch erzeugte
+                     Subnetting-Aufgaben. Uebung: Test-Sessions mit frei
+                     waehlbarer Laenge, Zeitmessung, Erklaerung zu jeder
+                     Antwort und Bewertung nach IHK-Notenschluessel.
+                     Pruefung: Klausursimulationen nach dem Aufbau von
+                     AP1 und AP2.
 
-  AP1 Szenarien      250 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
+  AP1-Szenarien      250 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
                      automatisch mitwachsendem Loesungsfeld zum
                      schriftlichen Bearbeiten und anschliessender
                      Musterloesung.
 
-  AP2 Szenarien      300 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
+  AP2-Szenarien      300 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
                      Loesungsfeld und Musterloesung.
 
-  Test Projekt       50 vollstaendige Projekt-Szenarien zum Ueben der
+  Testprojekt        50 vollstaendige Projekt-Szenarien zum Ueben der
                      IHK-Projektarbeit (Ausgangssituation, Auftrag,
                      Rahmenbedingungen, Aufgaben und Loesungshinweise).
 
-  Praxis-Rechner     Subnetting (IPv4 und IPv6), RAID-Kapazitaet (Netto,
+  Abschlussprojekt   Arbeitsbereich fuer das eigene IHK-Abschlussprojekt:
+                     Texte, Zeitplan, Kosten, Dokumentation, Fachgespraech
+                     und Checklisten.
+
+  Notizblock         Sammelt, was noch geuebt werden muss, aus allen
+                     Bereichen.
+
+  Rechner            Subnetting (IPv4 und IPv6), RAID-Kapazitaet (Netto,
                      Paritaet, Effizienz, Ausfalltoleranz) und
                      Bildschirm-Datenvolumen (Datenmenge und Datenrate),
-                     jeweils mit aufklappbarem Rechenweg.
+                     jeweils mit aufklappbarem Rechenweg, dazu ein
+                     Subnetting-Trainer mit Zufallsaufgaben.
 
-  Lernfortschritt    Historie aller Test-Sessions mit Diagramm.
+  Spiel              Lernspiel: Als Mitarbeiter eines IT-Dienstleisters
+                     Tickets und Auftraege bearbeiten. Was die Spielfigur
+                     kann, haengt vom echten Lernfortschritt ab.
+
+  Fortschritt        Historie aller Test-Sessions und Klausursimulationen
+                     mit Diagramm.
+
+  Optionen           Updates, Farben (dunkel oder hell), Tagesziel, Abgleich
+                     PC und Handy, Sicherung des Lernstands als Datei und
+                     Zuruecksetzen der Daten.
 
 Die fuenf Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
-Datenschutz, Systeme/RAID & Hardware, Wirtschaft & Prozesse sowie
+Datenschutz, Systeme, RAID & Hardware, Wirtschaft & Prozesse sowie
 Datenbanken & SQL. Die Szenario- und Projektlisten lassen sich durchsuchen
 und nach Thema, Fachbereich, Schwierigkeit und Status filtern.
 
@@ -100,7 +120,7 @@ mit den Neuerungen und dem Knopf "Jetzt aktualisieren":
              "FISI-Lernplattform" wie bei der Installation in "Programme"
              ziehen und die alte Version ersetzen.
 
-Unter Einstellungen -> Updates gibt es den Knopf "Nach Updates suchen" und
+Unter Optionen -> Updates gibt es den Knopf "Nach Updates suchen" und
 den Schalter, mit dem die automatische Suche beim Start abgeschaltet wird.
 Die Lernfortschritte bleiben bei jedem Update erhalten. Welche Neuerungen
 jede Version bringt, steht in AENDERUNGEN.md.
@@ -122,9 +142,9 @@ Installieren:
      aus dem Play Store und ist dort deshalb nicht bekannt).
 
 Die App hat dieselben Bereiche wie am PC: Dashboard ("Start"), Lernen
-(Karteikarten, Pruefungstrainer, AP1/AP2-Szenarien, Test Projekt),
-Rechner, Fortschritt und Einstellungen - unten ueber die Leiste
-erreichbar, die Suche oben rechts. Zurueck geht es mit dem Pfeil oben links
+(Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekt,
+Abschlussprojekt, Notizblock), Rechner, Spiel, Fortschritt und Optionen -
+unten ueber die Leiste erreichbar, die Suche oben rechts. Zurueck geht es mit dem Pfeil oben links
 oder der Zurueck-Geste.
 
 Updates: Die App sucht beim Start nach einer neuen Version. Gibt es eine,
@@ -162,7 +182,7 @@ Einmalig einrichten:
      github.com erzeugen - dann muss der lange Schluessel nicht vom PC
      uebertragen werden.
 
-  3. In der App: Einstellungen -> "Abgleich PC und Handy"
+  3. In der App: Optionen -> "Abgleich PC und Handy"
        Repository:        papst2142-cmd/fisi-lernstand
        Zugangsschluessel: den kopierten Token einfuegen
      Dann "Speichern und abgleichen". Auf dem anderen Geraet genauso.
@@ -248,35 +268,64 @@ FISI_DB_PATH festlegen, etwa fuer ein Netzlaufwerk:
   Linux   :  export FISI_DB_PATH=/mnt/nas/fisi.db
   Windows :  set FISI_DB_PATH=N:\fisi.db
 
-Zum Sichern genuegt es, diese eine Datei zu kopieren.
+Zum Sichern genuegt es, diese eine Datei zu kopieren. Bequemer geht es
+unter Optionen -> Sicherung (PC und Handy): "Sicherung erstellen" schreibt
+den ganzen Lernstand samt Pruefungen, Abschlussprojekt und Spielstaenden
+in eine Datei *.fisisicherung, "Sicherung einspielen" holt ihn zurueck.
 
 
 DATEIEN IM PAKET
 ---------------------------------------------------------------------------
+Programmdateien (PC):
   start.py              Startprogramm, prueft die Voraussetzungen
   app_gui.py            Oberflaeche: Navigation und alle Ansichten
   fisi_widgets.py       Bausteine des Designs (Karten, Buttons, Diagramme)
   fisi_theme.py         Farbwelt: Palette, Farbverlaeufe, Kategoriefarben
   fisi_core.py          Datenbank, Lerninhalte, Rechner und Suche - ohne
                         Oberflaeche, laesst sich auch allein verwenden
+  fisi_lernen.py        Wiederholungssystem, Tagesziel, Lernserie und
+                        Subnetting-Trainer
+  fisi_pruefung.py      Klausursimulationen des Pruefungstrainers
+  fisi_projekt.py       Arbeitsbereich Abschlussprojekt
+  fisi_pdf.py           Einfacher PDF-Export
+  fisi_game.py          Lernspiel: Spiellogik (ohne Oberflaeche)
+  fisi_game_gui.py      Lernspiel: Oberflaeche der PC-Version
   fisi_update.py        Updater: sucht, laedt und installiert neue Versionen
   fisi_sync.py          Abgleich des Lernstands zwischen PC und Handy
-  mobile/               Handy-App (Android): Oberflaeche mit Flet, nutzt
-                        fisi_core.py, fisi_sync.py und inhalte/ mit
-  inhalte/              Lerninhalte als JSON-Dateien (siehe unten)
+  fisi_sicherung.py     Sicherung und Wiederherstellung als Datei
+
+Weitere Dateien:
+  fisi_symbole.otf      Symbolschrift der Oberflaeche (Lizenz in
+                        fisi_symbole_LIZENZ.txt)
+  icon.ico, icon.png    Programmsymbol
+  inhalte/              Lerninhalte und Spielinhalte als JSON-Dateien
+                        (siehe unten)
+  mobile/               Handy-App (Android): Oberflaeche mit Flet
+                        (mobile/src/main.py, spiel.py, ui.py). Die
+                        gemeinsamen Programmdateien und inhalte/ kopiert
+                        mobile/vorbereiten.py vor dem Bauen hinein.
   requirements.txt      Bibliotheken fuer den Start aus dem Quellcode
   requirements-build.txt  zusaetzlich PyInstaller zum Bauen
   build.py              Baut Anwendung und Installer fuers eigene System
   build_windows.bat     Windows-Komfortaufruf fuer build.py
   build_linux.sh        Linux-Komfortaufruf fuer build.py
   FISI-Lernplattform.iss  Inno-Setup-Skript fuer den Windows-Installer
-  .github/workflows/build.yml  Baut alle Installer per GitHub Actions
+  .github/workflows/    Baut alle Installer per GitHub Actions (build.yml),
+                        release.yml startet das bei einer neuen Version
+  test_spiel.py         Tests fuer Spiel, Inhalte und Hilfsfunktionen
+  test_sicherung.py     Tests fuer Sicherung und Wiederherstellung
+  test_texte.py         Prueft Schreibweisen und Fragetexte der Inhalte
+                        gegen pruefung/wortliste.txt
+  test_grosse_datenmengen.py  Belastungstest der PC-Oberflaeche
+  pruefung/wortliste.txt  Bekannte Fachbegriffe und verbotene Schreibweisen
   AENDERUNGEN.md        Neuerungen jeder Version (Text der Releases)
+  INSTALLER-ANLEITUNG.txt  Anleitung zu den Installern
+  GIT-ANLEITUNG.txt     Kurzanleitung fuer Git
   LIESMICH.txt          Diese Datei
 
-Die sieben .py-Programmdateien (start.py, app_gui.py, fisi_widgets.py,
-fisi_theme.py, fisi_core.py, fisi_update.py, fisi_sync.py) muessen im
-selben Ordner liegen.
+Alle Programmdateien (start.py, app_gui.py und alle fisi_*.py) muessen im
+selben Ordner liegen; der Ordner inhalte und fisi_symbole.otf gehoeren
+daneben.
 
 
 EIGENE LERNINHALTE ERGAENZEN
@@ -289,10 +338,16 @@ sich mit jedem Texteditor erweitern (Datei als UTF-8 speichern):
   szenarien_ap1.json     AP1-Szenarien
   szenarien_ap2.json     AP2-Szenarien
   projektarbeiten.json   Testprojekte
+  fachgespraech.json     Fragen zum Fachgespraech (Abschlussprojekt)
+  themen.json            Themen je Fachbereich (Feld "thema")
+  umbenennungen.json     Alte -> neue Fragetexte, damit der Lernstand
+                         erhalten bleibt (siehe unten)
+  spiel/                 Inhalte des Lernspiels
 
 Neue Karteikarte (in karteikarten.json in die Liste einfuegen):
 
   {"cat": "netzwerk",
+   "thema": "ipv4",
    "q": "Deine Frage?",
    "a": "Kurzantwort",
    "a_full": "Ausfuehrliche Musterloesung.",
@@ -301,13 +356,15 @@ Neue Karteikarte (in karteikarten.json in die Liste einfuegen):
 Neue Quizfrage (in quizfragen.json):
 
   {"cat": "sicherheit",
+   "thema": "krypto",
    "q": "Deine Frage?",
    "options": ["Richtig", "Falsch 1", "Falsch 2", "Falsch 3"],
    "a": "Richtig",
    "exp": "Erklaerung, warum das richtig ist."},
 
-Als Fachbereich ("cat") stehen netzwerk, sicherheit, systeme und wirtschaft
-zur Wahl. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
+Als Fachbereich ("cat") stehen netzwerk, sicherheit, systeme, wirtschaft
+und datenbanken zur Wahl, als "thema" eine Kennung dieses Fachbereichs aus
+themen.json. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
 als Liste von Zeilen geschrieben werden. Die Kennzahlen im Dashboard passen
 sich automatisch an.
 
@@ -320,6 +377,12 @@ Pruefung nach dem Ergaenzen:
 Sie meldet z.B. fehlende Felder, weniger als 4 Antworten, eine richtige
 Antwort, die nicht unter den Optionen steht, doppelte Fragen oder
 unbekannte Themen. build.py baut bei Fehlern keine Installer.
+
+Fragetexte ("q") von Karteikarten und Quizfragen sind der Schluessel fuer
+den Lernstand. Wer einen vorhandenen Fragetext aendert, traegt in
+umbenennungen.json alten und neuen Text ein (unter "karte" bzw. "quiz",
+nur anhaengen). Schreibweisen und Fragetexte prueft zusaetzlich:
+  python -m unittest test_texte
 
 
 TASTENKUERZEL
@@ -370,7 +433,7 @@ Die Oberflaeche wirkt gedraengt
 
 Abgleich meldet "Zugangsschluessel ist ungueltig oder abgelaufen"
     Auf github.com einen neuen Token erzeugen (siehe ABGLEICH PC UND HANDY)
-    und in den Einstellungen eintragen.
+    und unter Optionen eintragen.
 
 Abgleich meldet "Repository nicht gefunden"
     Schreibweise pruefen (Benutzer/Name, z.B. papst2142-cmd/fisi-lernstand)
