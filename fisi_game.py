@@ -4606,18 +4606,43 @@ class Game:
         self._checking = False
         self.run = None            # aktiver Durchgang (ab 0.48, siehe Spielstand-Plaetze)
         self._summaries = {}       # lauf -> (Ereignisanzahl, Kurzinfo)
+        self._stamp = None         # (lauf, Stempel) des berechneten Spielstands (ab 0.50)
         self._resolve_run()
         self.reload()
 
     def reload(self):
+        """Spielstand aus dem Ereignisprotokoll berechnen. Ab 0.50 nur dann
+        wirklich neu, wenn sich das Protokoll seit dem letzten Mal geaendert
+        hat (Stempel der Datenbank) - jeder Wechsel zwischen den Spielansichten
+        rief das sonst mit allen Ereignissen auf. Das Ergebnis ist dasselbe,
+        nur die Rechenzeit entfaellt."""
+        stamp = self._event_stamp()
+        if (stamp and stamp[0] and self.state is not None
+                and self._stamp == (self.run, stamp)):
+            return self.state
         events = self.db.game_events(self.run) if self.run else []
         # Ohne Ereignisse pruefen, ob der Durchgang noch besteht (z.B. auf dem
         # anderen Geraet geloescht) - sonst waehlt _resolve_run einen anderen
         if not events and (self.run is None or self.run not in self._known_runs()):
             self._resolve_run()
             events = self.db.game_events(self.run) if self.run else []
+            stamp = self._event_stamp()
         self.state = GameState(events, self.content)
+        self._stamp = (self.run, stamp) if stamp is not None else None
         return self.state
+
+    def _event_stamp(self):
+        """Stempel des Ereignisprotokolls (siehe DBManager.game_event_stamp);
+        None, wenn die Datenbank keinen liefert - dann wird immer neu gerechnet."""
+        if not self.run or not hasattr(self.db, "game_event_stamp"):
+            return None
+        stamp = self.db.game_event_stamp(self.run)
+        return tuple(stamp) if stamp else None
+
+    def invalidate(self):
+        """Naechstes reload rechnet sicher neu (z.B. nach Aenderungen am
+        Spielstand, die nicht ueber das Ereignisprotokoll gehen)."""
+        self._stamp = None
 
     # -- Spielstand-Plaetze (ab 0.48) --------------------------------------------
 

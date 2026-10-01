@@ -1684,7 +1684,76 @@ class MaintenanceBoard(ctk.CTkFrame):
         self._paint(solution=True)
 
 
-class GameView(ScrollArea):
+
+# ============================================================================
+#  WIEDERVERWENDUNG GEZEICHNETER ANSICHTEN (ab 0.50)
+# ============================================================================
+#
+# Jeder Wechsel zwischen den Spielansichten riss bisher die ganze Ansicht ab
+# und baute sie neu (mehrere hundert Widgets) - das war das Ruckeln am PC.
+# Jetzt merkt sich jede Ansicht, womit sie zuletzt gezeichnet wurde: Stempel
+# der Datenbank (change_stamp), gewaehlter Durchgang, Platzwahl und alle
+# einfachen Felder der Ansicht (Reiter, Auswahlen, Entwuerfe, Figur-Standorte
+# ...). Ist beim naechsten Anzeigen alles gleich, bleibt die Ansicht stehen.
+# Sobald sich irgendetwas davon unterscheidet, wird wie bisher neu gezeichnet.
+# Die Spiellogik und die Werte bleiben davon unberuehrt.
+
+_SIMPLE_TYPES = (type(None), bool, int, float, str, tuple, list, dict, set, frozenset)
+
+
+def _snapshot(obj):
+    """Alle einfachen Felder eines Objekts (keine Widgets, keine Spielobjekte)
+    als vergleichbarer Wert. Mengen werden sortiert, damit die Reihenfolge
+    keine Rolle spielt."""
+    items = []
+    for name, value in sorted(vars(obj).items()):
+        # Tkinter-Verwaltung (_tclCommands, _w, _name ...) und die eigenen
+        # Merkfelder gehoeren nicht zum Inhalt
+        if name.startswith("_"):
+            continue
+        if isinstance(value, (set, frozenset)):
+            items.append((name, tuple(sorted(repr(item) for item in value))))
+        elif isinstance(value, _SIMPLE_TYPES):
+            items.append((name, repr(value)))
+    return tuple(items)
+
+
+class ReusableView:
+    """Mixin fuer Ansichten, die beim Anzeigen nicht neu gezeichnet werden
+    muessen, solange sich nichts geaendert hat. Benutzt self.app, self.game
+    und self.content."""
+
+    def _render_key(self):
+        db = self.app.db
+        stamp = db.change_stamp() if hasattr(db, "change_stamp") else None
+        if stamp is None:
+            return None
+        game_view = self.app.views.built("game")
+        game = game_view.game if game_view is not None else None
+        return (stamp, game.run if game is not None else None,
+                getattr(self.app, "slot_chosen", True),
+                _snapshot(self),
+                _snapshot(game_view) if game_view is not None and game_view is not self
+                else None)
+
+    def _unchanged(self):
+        """Steht die Ansicht noch genau so da, wie sie jetzt aussehen muesste?"""
+        rendered = getattr(self, "_rendered", None)
+        if rendered is None or getattr(self, "_notice_shown", False):
+            return False
+        if not self.content.winfo_children():
+            return False
+        return rendered == self._render_key()
+
+    def _mark_rendered(self):
+        self._notice_shown = False
+        self._rendered = self._render_key()
+
+    def _mark_stale(self):
+        """Beim naechsten Anzeigen sicher neu zeichnen."""
+        self._rendered = None
+
+class GameView(ReusableView, ScrollArea):
     """Ansicht "Lernspiel" in der PC-Version."""
 
     def __init__(self, parent, app):
@@ -1711,7 +1780,11 @@ class GameView(ScrollArea):
         self.game.reload()
         # Ab 0.46: Wissen-Abzeichen haengen am Lernstand (Karteikarten, Quiz ...)
         self.game.check_knowledge()
+        if self._unchanged():
+            self.to_top()
+            return
         self.render()
+        self._mark_rendered()
 
     def refresh(self):
         self.on_show()
@@ -2599,7 +2672,7 @@ class GameView(ScrollArea):
         self._close_ticket()
 
 
-class SiteView(ScrollArea):
+class SiteView(ReusableView, ScrollArea):
     """Grossansicht eines Ortes (Buero, Kunde, Zuhause): Die Spielfigur laeuft
     per Klick; unter dem Grundriss stehen Text und Knoepfe aus
     fisi_game.place_message - so verhalten sich PC und Handy gleich."""
@@ -2629,7 +2702,11 @@ class SiteView(ScrollArea):
 
     def on_show(self):
         self.game_view.game.reload()
+        if self._unchanged():
+            self.to_top()
+            return
         self.render()
+        self._mark_rendered()
 
     def refresh(self):
         self.on_show()
@@ -2715,6 +2792,7 @@ class SiteView(ScrollArea):
         site = self.site()
         notice = self.game_view.notices.pop(site, None)
         if notice:
+            self._notice_shown = True   # einmaliger Hinweis: naechstes Mal neu zeichnen
             box = ctk.CTkFrame(self.info, fg_color=mix(C["card"], C["purple"], 0.1),
                                corner_radius=12, border_width=1,
                                border_color=mix(C["purple"], C["card"], 0.45))
@@ -3095,7 +3173,7 @@ class HomeView(SiteView):
                                                                            padx=4)
 
 
-class FirmView(ScrollArea):
+class FirmView(ReusableView, ScrollArea):
     """Unterpunkt "Firma" (ab 0.33): Gruendung, Mitarbeiter, Bewerbungen,
     Gebaeude und Finanzen. Vor der Gruendung nur die Finanzen und was fuer
     die Gruendung noch fehlt."""
@@ -3131,7 +3209,11 @@ class FirmView(ScrollArea):
 
     def on_show(self):
         self.game.reload()
+        if self._unchanged():
+            self.to_top()
+            return
         self.render()
+        self._mark_rendered()
 
     def refresh(self):
         self.on_show()
@@ -4737,7 +4819,7 @@ def tier_color(key):
     return fg.TIER_COLORS.get(key, C["muted"])
 
 
-class JourneyView(ScrollArea):
+class JourneyView(ReusableView, ScrollArea):
     """Unterpunkt "Reise": Reiter "Rueckblick" (Statistik und Tagebuch der
     wichtigsten Momente) und ab 0.46 "Erfolge" (Bestwerte ueber alle
     Spielstaende und Abzeichen) - alles aus dem Ereignisprotokoll berechnet."""
@@ -4761,7 +4843,11 @@ class JourneyView(ScrollArea):
         # Wissen-Abzeichen haengen am Lernstand - beim Oeffnen nachsehen
         self.game.check_knowledge()
         self.page = 0
-        self.render()
+        if self._unchanged():
+            self.to_top()
+        else:
+            self.render()
+            self._mark_rendered()
         self.app.show_unlocks()
 
     def open_tab(self, tab):
