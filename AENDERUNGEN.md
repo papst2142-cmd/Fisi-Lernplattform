@@ -4,6 +4,39 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.48
+
+- **Spiel: Drei Spielstand-Plätze.** Beim ersten Öffnen von „Spiel“ nach
+  dem Start wählst du einen von drei Plätzen. Jeder Platz ist ein eigener
+  Durchgang mit Figur, Schwierigkeitsgrad, Firma und Reise. Ein belegter
+  Platz zeigt Figur, Name, Schwierigkeit, Spieltag und Firma, ein leerer
+  „Neuer Durchgang“. Plätze lassen sich umbenennen und einzeln löschen;
+  vorher kommt der Endstand in die Bestenliste. Über „Platz wechseln“
+  wechselst du jederzeit. Dein bisheriger Spielstand ist Platz 1.
+  Lernfortschritt, Wissensstand und Bestenliste gelten für alle Plätze
+  gemeinsam. „Spielstand zurücksetzen“ in den Optionen betrifft nur den
+  aktiven Platz.
+- **Abgleich:** PC und Handy haben dieselben Plätze, auch Anlegen und
+  Löschen werden abgeglichen; ein gelöschter Platz kommt nicht zurück.
+  **Wichtig:** Ein Gerät mit 0.47 gleicht erst wieder ab, wenn es auch auf
+  0.48 aktualisiert ist. Der Lernstand geht dabei nicht verloren.
+- **Farbwechsel:** Beim Wechsel von Grundfarbe oder Hintergrund erscheint
+  „Farben werden angewendet – Bitte warten“, Eingaben sind solange
+  gesperrt. Am PC ist der Wechsel deutlich schneller (etwa 2,6 statt
+  12,8 Sekunden).
+- **PC: Seitenleiste scrollt,** wenn ausgeklappte Menüpunkte nicht mehr
+  ins Fenster passen. Der Schieberegler erscheint nur bei Bedarf.
+- **Handy: Pillenreihen** (z. B. die Firma-Reiter) laufen rechts aus und
+  zeigen einen Pfeil, wenn es weitergeht. Der gewählte Reiter wird ins
+  Bild gerückt.
+- **Weltkarte:** Stadtteilnamen werden nicht mehr von Gebäuden verdeckt,
+  „Neu“ steht unten am Gebäude statt auf dem Ortsschild.
+- **Kleinere Verbesserungen aus dem Systemtest:** Diagramme mit runden
+  Achsenschritten und vollständiger letzter Beschriftung, Hinweis bei
+  leerer Filiale, Grund am gesperrten Coaching-Knopf, Farben im Tagebuch
+  und Terminal nach einem Farbwechsel, Beschriftungen für Screenreader,
+  nach oben scrollen am Handy sowie mehrere Fehler im Hintergrund behoben.
+
 ## 0.47
 
 - **Spiel: Skill-Balken für Mitarbeiter.** Jede Person (auch bei den
