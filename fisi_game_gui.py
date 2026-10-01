@@ -17,7 +17,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 import fisi_game as fg
-from fisi_core import CATEGORY_SHORT
+from fisi_core import CATEGORY_SHORT, TOAST_MS
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 from fisi_widgets import (
     Card, GradientBar, LineChart, NeoButton, OptionList, ScrollArea, F,
@@ -5632,14 +5632,35 @@ class MilestoneMoment(tk.Frame):
         self.destroy()
 
 
-def show_badge_toast(root, text, delay=4500):
-    """Kurzer Hinweis unten fuer kleinere Abzeichen (ab 0.46)."""
+_TOASTS = []   # offene Hinweise (ab 0.53)
+
+
+def close_badge_toasts():
+    """Offene Hinweise schliessen (ab 0.53: beim Ansichtswechsel und bevor
+    ein neuer Hinweis erscheint - sonst lagen sie uebereinander bzw. standen
+    auf fremden Ansichten)."""
+    while _TOASTS:
+        toast, job = _TOASTS.pop()
+        try:
+            toast.after_cancel(job)
+            toast.destroy()
+        except tk.TclError:
+            pass
+
+
+def show_badge_toast(root, text, delay=TOAST_MS):
+    """Kurzer Hinweis unten fuer kleinere Abzeichen (ab 0.46). Ab 0.53 ersetzt
+    ein neuer Hinweis den alten, ein Klick schliesst ihn, Dauer wie am Handy."""
+    close_badge_toasts()
     toast = ctk.CTkFrame(root, fg_color=C["card_hi"], corner_radius=18, border_width=1,
                          border_color=C["yellow"])
-    make_label(toast, text, font=F["small_bold"], fg=C["text"]).pack(padx=18, pady=10)
+    label = make_label(toast, text, font=F["small_bold"], fg=C["text"])
+    label.pack(padx=18, pady=10)
     toast.place(relx=0.5, rely=1.0, y=-px(24), anchor="s")
     toast.lift()
-    toast.after(delay, toast.destroy)
+    _TOASTS.append((toast, toast.after(delay, close_badge_toasts)))
+    for widget in (toast, label):
+        widget.bind("<Button-1>", lambda _e: close_badge_toasts(), add=True)
     return toast
 
 

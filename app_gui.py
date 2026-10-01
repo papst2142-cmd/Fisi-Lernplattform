@@ -45,6 +45,7 @@ from fisi_core import (  # noqa: E402
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
     SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_summary,
     position_statuses, status_label,
+    REMINDER_TOAST_MS, plural,
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
@@ -67,7 +68,7 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
     BranchView, ChoiceRow, CustomerView, FarmView, FirmView, GameView, HomeView, JourneyView,
-    MilestoneMoment, OfficeView, show_badge_toast,
+    MilestoneMoment, OfficeView, close_badge_toasts, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
@@ -717,7 +718,7 @@ class Sidebar(ctk.CTkFrame):
             row.set_active(name == key)
 
     def update_status(self, streak, learned, total):
-        self.streak_label.configure(text="Lernserie: %d Tag(e)" % streak)
+        self.streak_label.configure(text="Lernserie: %s" % plural(streak, "Tag", "Tage"))
         self.status_bar.set(learned / max(1, total) * 100,
                             "%d / %d" % (learned, total))
 
@@ -1042,7 +1043,7 @@ class DashboardView(View):
         rate, correct, answered = self.db.quiz_success_rate()
         learned = learned_cards + quiz_distinct
         self._refresh_today()
-        streak = ("Lernserie: %d Tag(e)   ·   " % self.db.streak()
+        streak = ("Lernserie: %s   ·   " % plural(self.db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             "Dein Lernstand",
@@ -1068,7 +1069,8 @@ class DashboardView(View):
         self.lbl_quote.configure(text="%d %%" % round(rate))
         if answered:
             self.lbl_quote_sub.configure(
-                text="%d von %d Fragen richtig beantwortet" % (correct, answered))
+                text="%d von %s richtig beantwortet"
+                % (correct, plural(answered, "Frage", "Fragen")))
         else:
             self.lbl_quote_sub.configure(text="noch keine Antworten erfasst")
 
@@ -1107,8 +1109,9 @@ class DashboardView(View):
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
                 quota = data["correct"] / data["answered"] * 100
-                detail.configure(text="%d Antworten\n%d%% richtig"
-                                      % (data["answered"], round(quota)))
+                detail.configure(text="%s\n%d%% richtig"
+                                      % (plural(data["answered"], "Antwort", "Antworten"),
+                                         round(quota)))
             else:
                 detail.configure(text="noch nicht\nbearbeitet")
 
@@ -1198,7 +1201,8 @@ class DashboardView(View):
         for topic, bar in self.zoom_bars.items():
             answered = stats[topic]["answered"]
             if answered:
-                note = "Wissen %d %%  ·  %d Antworten" % (levels[topic], answered)
+                note = "Wissen %d %%  ·  %s" % (levels[topic],
+                                                 plural(answered, "Antwort", "Antworten"))
             else:
                 note = "noch nicht bearbeitet"
             bar.set(levels[topic], note)
@@ -1712,8 +1716,9 @@ class QuizView(View):
         self.pool = [q for q in base if self.book.matches(SRC_QUIZ, q["q"], status)]
         self.stepper.set_maximum(max(5, len(self.pool)))
         counts = self.book.counts(SRC_QUIZ, [q["q"] for q in base])
-        self.lbl_pool.configure(text="%d Fragen verfügbar  ·  %s"
-                                     % (len(self.pool), count_text(counts)))
+        self.lbl_pool.configure(text="%s verfügbar  ·  %s"
+                                     % (plural(len(self.pool), "Frage", "Fragen"),
+                                        count_text(counts)))
 
     # -- Ablauf -------------------------------------------------------------
 
@@ -1950,6 +1955,8 @@ class ExamPanel(ctk.CTkFrame):
             self.show_grading()
 
     def hide(self):
+        if self.save_job is not None:   # ab 0.53: geplantes Speichern jetzt erledigen
+            self.app.root.after_cancel(self.save_job)
         self._flush_answers()
         self._stop_timer()
 
@@ -2890,7 +2897,8 @@ class FinalProjectView(View):
         self._flush()
         count = fpj.apply_template(self.db, self.project, position)
         self._load_project(self.project)
-        show_badge_toast(self.app.root, "%d Felder aus dem Testprojekt übernommen" % count
+        show_badge_toast(self.app.root, "%s aus dem Testprojekt übernommen"
+                         % plural(count, "Feld", "Felder")
                          if count else "Alle passenden Felder waren schon ausgefüllt")
 
     # -- Speichern ----------------------------------------------------------
@@ -3418,9 +3426,11 @@ class NotebookView(View):
         quiz = self._practice_keys(SRC_QUIZ)
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
             self.status_pills.get()]
-        NeoButton(self.practice_bar, "%d Karteikarten %s" % (len(cards), label),
+        NeoButton(self.practice_bar,
+                  "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
                   lambda: self.practice(SRC_CARD, cards), kind="primary").pack(side="left")
-        NeoButton(self.practice_bar, "%d Quizfragen %s" % (len(quiz), label),
+        NeoButton(self.practice_bar,
+                  "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
                   lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
             side="left", padx=10)
         make_label(self.practice_bar, "Startet eine Übungsrunde nur mit den Fragen der "
@@ -3455,7 +3465,7 @@ class NotebookView(View):
                                              text_color=status_color(status if status != Q_PRACTICE
                                                                      else LEVEL_RED))
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
-        self.list_card.set_subtitle("%d Fragen" % len(self.entries))
+        self.list_card.set_subtitle(plural(len(self.entries), "Frage", "Fragen"))
         if not visible:
             text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
@@ -3582,7 +3592,8 @@ class TrainerPanel(ctk.CTkFrame):
         stats = self.db.trainer_stats()
         count = sum(total for total, _right in stats.values())
         right = sum(right for _total, right in stats.values())
-        self.lbl_stats.configure(text="bisher %d Aufgaben, %d richtig" % (count, right)
+        self.lbl_stats.configure(text="bisher %s, %d richtig"
+                                 % (plural(count, "Aufgabe", "Aufgaben"), right)
                                  if count else "")
 
     def start_round(self):
@@ -5049,6 +5060,14 @@ class FISIApp:
         # Der Aufbau dauert einige Sekunden - solange zeigt die Maus "bitte warten".
         self.root.configure(cursor="watch")
         self.root.update_idletasks()
+        # Ab 0.53 wie am Handy: Uebungs- und Pruefungsuhr der alten Oberflaeche
+        # anhalten (sie laufen ueber root.after und fassten sonst zerstoerte
+        # Widgets an) und offene Eingaben vor dem Umbau speichern
+        quiz = self.views.built("quiz")
+        if quiz is not None:
+            quiz.stop_timer()
+            quiz.exam.hide()
+        self.flush_inputs(revealed=False)
         self._build_ui(show=False)
         self.show_view(current)
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
@@ -5127,6 +5146,7 @@ class FISIApp:
         view = self.views.get(key)
         if view is None:
             return
+        close_badge_toasts()   # ab 0.53: Hinweise gehoeren zur alten Ansicht
         view.tkraise()
         # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
         # (sie springen nur beim Neuzeichnen nach oben)
@@ -5253,12 +5273,23 @@ class FISIApp:
         """Erinnerung ans Tagesziel (ab 0.51): als Hinweis, solange das
         Programm laeuft - beim Start und danach alle 5 Minuten."""
         try:
+            # Ab 0.53: nach Mitternacht Kachel "Heute" und Seitenleiste auffrischen
+            today = datetime.date.today()
+            if getattr(self, "_reminder_day", today) != today:
+                self.notify_progress(refresh_view=False)
+                if self.current == "dashboard":
+                    self.views["dashboard"].refresh()
+            self._reminder_day = today
             settings = fisi_update.load_settings()
             values = learning_settings()
             goal = DailyGoal.from_db(self.db, values["ziel_anzahl"])
             if reminder_due(settings, goal, shown_on=settings.get("erinnerung_gezeigt", "")):
                 save_learning_settings(erinnerung_gezeigt=datetime.date.today().isoformat())
-                show_badge_toast(self.root, reminder_text(goal), delay=9000)
+                show_badge_toast(self.root, reminder_text(goal), delay=REMINDER_TOAST_MS)
+        except Exception:
+            # Ab 0.53 abgefangen (z.B. Datenbank gesperrt): beim naechsten Mal neu
+            if sys.stderr is not None:
+                traceback.print_exc()
         finally:
             self.root.after(5 * 60 * 1000, self.check_reminder)
 

@@ -14,6 +14,7 @@ APK-Bau keinen Zusatzbaustein braucht. Schrift ist die eingebaute Helvetica
 """
 
 import datetime
+import unicodedata
 import zlib
 
 PAGE_W, PAGE_H = 595.28, 841.89
@@ -69,12 +70,56 @@ STYLES = {
 
 _REPLACE = {"\u2192": "->", "\u2190": "<-", "\u2264": "<=", "\u2265": ">=",
             "\u2713": "x", "\u2717": "-", "\u2022": "\u2022", "\u00a0": " ",
-            "\u2011": "-", "\u202f": " ", "\u2212": "-", "\u221a": "Wurzel "}
+            "\u2011": "-", "\u202f": " ", "\u2212": "-", "\u221a": "Wurzel ",
+            # Ab 0.53: weitere Zeichen ausserhalb von WinAnsi sinnvoll ersetzen
+            # statt sie als "?" auszugeben
+            "\u2248": "~", "\u21d2": "=>", "\u21d0": "<=", "\u21d4": "<=>",
+            "\u2194": "<->", "\u27f6": "->", "\u27f5": "<-", "\u2260": "!=",
+            "\u2714": "OK", "\u2705": "OK", "\u2718": "-", "\u274c": "-",
+            "\u0394": "Delta", "\u03a9": "Ohm", "\u2126": "Ohm", "\u03bc": "\u00b5",
+            "\u03c0": "pi", "\u221e": "unendlich", "\u2044": "/", "\u2032": "'",
+            "\u2033": "\"", "\u2009": " ", "\u2002": " ", "\u2003": " ",
+            "\u2007": " ", "\u2008": " ", "\u200a": " ", "\u200b": "", "\ufeff": "",
+            "\u0141": "L", "\u0142": "l"}
+
+# Ohne Ersatz entfallen: Emoji und Symbole, Steuer- und Kombinationszeichen
+_DROP_CATEGORIES = ("So", "Sk", "Cf", "Cs", "Co", "Mn", "Me")
+
+
+def _fallback(char):
+    """Zeichen ausserhalb von WinAnsi (ab 0.53): Emoji und Symbole entfallen,
+    sonst die Grundform (Ligatur "fi" -> "fi", "n" mit Akut -> "n"), zuletzt "?"."""
+    if ord(char) > 0xFFFF or unicodedata.category(char) in _DROP_CATEGORIES:
+        return ""
+    base = "".join(part for part in unicodedata.normalize("NFKD", char)
+                   if not unicodedata.combining(part))
+    try:
+        base.encode("cp1252")
+    except UnicodeEncodeError:
+        return "?"
+    return base or "?"
+
+
+def _clean(text):
+    out = []
+    for char in unicodedata.normalize("NFC", str(text)):
+        char = _REPLACE.get(char, char)
+        try:
+            char.encode("cp1252")
+        except UnicodeEncodeError:
+            char = _fallback(char)
+        out.append(char)
+    return "".join(out)
 
 
 def _encode(text):
-    text = "".join(_REPLACE.get(ch, ch) for ch in str(text))
-    return text.encode("cp1252", errors="replace")
+    return _clean(text).encode("cp1252", errors="replace")
+
+
+def _info_string(text):
+    """Text fuer Titel und Autor im Dokument-Info (ab 0.53 als UTF-16 mit
+    Kennung - als WinAnsi-Bytes zeigten Betrachter dort z.B. "Œ" statt "–")."""
+    return b"<FEFF" + str(text).encode("utf-16-be").hex().upper().encode("ascii") + b">"
 
 
 def text_width(text, font, size):
@@ -191,8 +236,8 @@ def build_pdf(blocks, title="", author=""):
     objects[catalog - 1] = b"<< /Type /Catalog /Pages %d 0 R >>" % pages_id
     objects[pages_id - 1] = b"<< /Type /Pages /Kids [%s] /Count %d >>" % (
         b" ".join(b"%d 0 R" % kid for kid in kids), len(kids))
-    info = add(b"<< /Title (%s) /Author (%s) /Producer (FISI Lernplattform) >>" % (
-        _escape(_encode(title)), _escape(_encode(author))))
+    info = add(b"<< /Title %s /Author %s /Producer (FISI Lernplattform) >>" % (
+        _info_string(title), _info_string(author)))
 
     out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
     offsets = []

@@ -36,7 +36,7 @@ import urllib.request
 
 from fisi_core import (GAME_TABLES, HISTORY_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
                        RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, purge_deleted_runs,
-                       purge_superseded_project_rows, apply_question_renames)
+                       apply_question_renames, plural, purge_superseded_project_rows)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
@@ -76,9 +76,10 @@ class SyncResult:
             return "Alles auf dem neuesten Stand."
         parts = []
         if self.received:
-            parts.append("%d Einträge von anderen Geräten übernommen" % self.received)
+            parts.append("%s von anderen Geräten übernommen"
+                         % plural(self.received, "Eintrag", "Einträge"))
         if self.sent:
-            parts.append("%d Einträge hochgeladen" % self.sent)
+            parts.append("%s hochgeladen" % plural(self.sent, "Eintrag", "Einträge"))
         return ", ".join(parts) + "."
 
 
@@ -175,7 +176,10 @@ def fetch_remote(repo, token):
         raise SyncError(_http_error(error.code, repo))
     except (OSError, ValueError, TypeError):
         raise SyncError("Die Datei %s im Repository ist beschädigt." % REMOTE_FILE)
-    if not isinstance(data, dict) or data.get("format", 0) > FORMAT:
+    # Ab 0.53: Eine Datei ohne lesbaren Inhalt ist beschaedigt - nicht "neuer"
+    if not isinstance(data, dict) or not isinstance(data.get("format", 0), int):
+        raise SyncError("Die Datei %s im Repository ist beschädigt." % REMOTE_FILE)
+    if data.get("format", 0) > FORMAT:
         raise SyncError("Der Lernstand im Repository stammt von einer neueren "
                         "Programmversion. Bitte zuerst aktualisieren.")
     return meta.get("sha"), data

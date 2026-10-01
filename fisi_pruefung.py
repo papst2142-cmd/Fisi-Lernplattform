@@ -27,8 +27,9 @@ in der Tabelle pruefungen (wird abgeglichen).
 import datetime
 import random
 import re
+import time
 
-from fisi_core import (AP1_SZENARIEN, QUIZ_QUESTIONS, SZENARIEN, ihk_note)
+from fisi_core import (AP1_SZENARIEN, QUIZ_QUESTIONS, SZENARIEN, ihk_note, plural)
 
 TASK_POINTS = 25
 WISO_COUNT = 30
@@ -184,8 +185,11 @@ def new_exam(art, history=(), seed=None, now=None):
     exam = EXAM[art]
     rng = random.Random(seed)
     used = used_items(history, art)
-    now = now or datetime.datetime.now()
+    now = (now or datetime.datetime.now()).replace(microsecond=0)
+    # "start_utc" (ab 0.53): Sekunden seit 1970 (UTC), unabhaengig von
+    # Sommer-/Winterzeit; "start" bleibt fuer Anzeige und aeltere Versionen
     state = {"art": art, "start": now.strftime("%Y-%m-%d %H:%M:%S"),
+             "start_utc": int(now.timestamp()),
              "minuten": exam["minuten"], "phase": "laeuft", "antworten": {},
              "punkte": {}, "kriterien": {}}
     if art == WISO:
@@ -238,9 +242,25 @@ def deadline(state):
     return start + datetime.timedelta(minutes=state["minuten"])
 
 
+def _timestamp(moment):
+    """Zeitpunkt (datetime, auch naive Ortszeit) als Sekunden seit 1970."""
+    return moment.timestamp() if moment is not None else time.time()
+
+
+def elapsed_seconds(state, now=None):
+    """Seit dem Start vergangene Sekunden (ab 0.53 ueber UTC, damit die
+    Zeitumstellung keine Stunde schenkt oder wegnimmt). Aeltere gespeicherte
+    Pruefungen haben nur "start" (Ortszeit) - die wird mit der Zeitzone des
+    Geraets umgerechnet. Nie negativ (Uhr zurueckgestellt)."""
+    start = state.get("start_utc")
+    if not isinstance(start, (int, float)):
+        start = datetime.datetime.strptime(state["start"], "%Y-%m-%d %H:%M:%S").timestamp()
+    return max(0.0, _timestamp(now) - start)
+
+
 def seconds_left(state, now=None):
-    now = now or datetime.datetime.now()
-    return max(0, int((deadline(state) - now).total_seconds()))
+    total = state["minuten"] * 60
+    return max(0, min(total, int(total - elapsed_seconds(state, now))))
 
 
 def time_text(seconds):
@@ -250,10 +270,7 @@ def time_text(seconds):
 
 def submit(state, now=None):
     """Abgeben: Zeit festhalten, bei WiSo gleich auswerten."""
-    now = now or datetime.datetime.now()
-    end = min(now, deadline(state))
-    start = datetime.datetime.strptime(state["start"], "%Y-%m-%d %H:%M:%S")
-    state["dauer"] = int((end - start).total_seconds())
+    state["dauer"] = min(state["minuten"] * 60, int(elapsed_seconds(state, now)))
     state["phase"] = "bewertung"
     return state
 
@@ -398,8 +415,9 @@ def _supplement_hint(scores):
         return ("Eine mündliche Ergänzungsprüfung würde hier nicht reichen (nur in "
                 "Konzeption, Netzwerke oder WiSo möglich, Gewichtung 2:1).")
     oral, name = min(options)
-    return ("Eine mündliche Ergänzungsprüfung in %s könnte reichen: dafür wären dort "
-            "mindestens %d Punkte nötig (alt zu mündlich 2:1)." % (name, oral))
+    return ("Eine mündliche Ergänzungsprüfung in %s könnte reichen: Dafür wären dort "
+            "mindestens %s nötig (alt zu mündlich 2:1)."
+            % (name, plural(oral, "Punkt", "Punkte")))
 
 
 # ============================================================================

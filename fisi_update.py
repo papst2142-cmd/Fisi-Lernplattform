@@ -20,6 +20,7 @@ import json
 import os
 import platform
 import re
+import shutil
 import ssl
 import subprocess
 import sys
@@ -157,10 +158,10 @@ def check_for_update(current_version, timeout=10, kind=None):
             release = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         raise UpdateError("GitHub hat die Anfrage abgelehnt (HTTP %d). "
-                          "Bitte spaeter erneut versuchen." % error.code)
+                          "Bitte später erneut versuchen." % error.code)
     except (urllib.error.URLError, OSError, ValueError):
         raise UpdateError("Keine Verbindung zu GitHub. Bitte die "
-                          "Internetverbindung pruefen.")
+                          "Internetverbindung prüfen.")
 
     tag = release.get("tag_name", "")
     if not is_newer(tag, current_version):
@@ -201,7 +202,7 @@ def download(info, progress=None, timeout=30):
     """Laedt den Installer in einen Temp-Ordner. progress(geladen, gesamt)
     wird waehrenddessen aufgerufen. Liefert den Pfad der Datei."""
     if not info.asset_url:
-        raise UpdateError("Fuer dieses System gibt es keinen passenden Installer.")
+        raise UpdateError("Für dieses System gibt es keinen passenden Installer.")
     folder = os.path.join(tempfile.gettempdir(), "FISI-Lernplattform-Update")
     os.makedirs(folder, exist_ok=True)
     target = os.path.join(folder, info.asset_name)
@@ -222,7 +223,7 @@ def download(info, progress=None, timeout=30):
         raise UpdateError("Der Download ist fehlgeschlagen: %s" % error)
     if info.asset_size and os.path.getsize(partial) != info.asset_size:
         os.remove(partial)
-        raise UpdateError("Der Download ist unvollstaendig. Bitte erneut versuchen.")
+        raise UpdateError("Der Download ist unvollständig. Bitte erneut versuchen.")
     os.replace(partial, target)
     return target
 
@@ -257,20 +258,20 @@ def install(path, kind=None):
             if result.returncode != 0:
                 subprocess.Popen(["xdg-open", path])
                 return False, ("Die automatische Installation wurde abgebrochen. "
-                               "Das Paket wurde zum manuellen Installieren geoeffnet.")
+                               "Das Paket wurde zum manuellen Installieren geöffnet.")
             return False, ("Das Update ist installiert. Bitte das Programm "
-                           "schliessen und neu starten.")
+                           "schließen und neu starten.")
 
         if kind == "macos":
             subprocess.Popen(["open", path])
-            return False, ('Das Update wurde geoeffnet. Bitte das Programm '
-                           'schliessen und "FISI-Lernplattform" im geoeffneten '
-                           'Fenster auf "Programme" ziehen (vorhandene Version '
-                           'ersetzen).')
+            return False, ("Das Update wurde geöffnet. Bitte das Programm "
+                           "schließen und „FISI-Lernplattform“ im geöffneten "
+                           "Fenster auf „Programme“ ziehen (vorhandene Version "
+                           "ersetzen).")
     except (OSError, KeyError) as error:
         raise UpdateError("Die Installation konnte nicht gestartet werden: %s" % error)
     raise UpdateError("Automatische Updates sind nur in der installierten "
-                      "Anwendung moeglich.")
+                      "Anwendung möglich.")
 
 
 # ============================================================================
@@ -281,21 +282,46 @@ def _settings_path():
     return os.path.join(os.path.dirname(resolve_db_path()), "einstellungen.json")
 
 
+BROKEN_SETTINGS = "einstellungen.defekt.json"
+
+
 def load_settings():
-    """Liefert die gespeicherten Update-Einstellungen (mit Vorgabewerten)."""
+    """Liefert die gespeicherten Update-Einstellungen (mit Vorgabewerten).
+    Ab 0.53 wird eine beschaedigte Datei vor dem naechsten Speichern als
+    einstellungen.defekt.json aufgehoben (sonst still ueberschrieben)."""
     settings = {"auto_check": True}
+    path = _settings_path()
     try:
-        with open(_settings_path(), encoding="utf-8") as handle:
-            settings.update(json.load(handle))
-    except (OSError, ValueError):
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+        if not isinstance(data, dict):
+            raise ValueError("einstellungen.json enthaelt kein Objekt")
+        settings.update(data)
+    except OSError:
         pass
+    except ValueError:
+        try:
+            shutil.copyfile(path, os.path.join(os.path.dirname(path), BROKEN_SETTINGS))
+        except OSError:
+            pass
     return settings
 
 
 def save_settings(settings):
+    """Ab 0.53 atomar: erst in eine Hilfsdatei schreiben, dann ersetzen - ein
+    Absturz mitten im Schreiben hinterlaesst keine halbe Datei mehr."""
+    path = _settings_path()
+    temp = path + ".tmp"
     try:
-        with open(_settings_path(), "w", encoding="utf-8") as handle:
+        with open(temp, "w", encoding="utf-8") as handle:
             json.dump(settings, handle, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, path)
         return True
     except OSError:
+        try:
+            os.remove(temp)
+        except OSError:
+            pass
         return False
