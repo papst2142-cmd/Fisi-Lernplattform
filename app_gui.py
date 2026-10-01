@@ -50,6 +50,12 @@ from fisi_core import (  # noqa: E402
     theme_totals, validate_content,
 )
 import fisi_game  # noqa: E402
+from fisi_lernen import (  # noqa: E402
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, due_text, learning_settings,
+    parse_time, reminder_due, reminder_text, save_learning_settings, trainer_round,
+    trainer_summary,
+)
 import fisi_game_gui  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -184,8 +190,10 @@ class EntryBox(ctk.CTkEntry):
 class NumberStepper(ctk.CTkFrame):
     """Zahlenfeld mit Plus- und Minus-Knopf."""
 
-    def __init__(self, parent, value=10, minimum=1, maximum=100, step=5, bg=None):
+    def __init__(self, parent, value=10, minimum=1, maximum=100, step=5, bg=None,
+                 on_change=None):
         super().__init__(parent, fg_color="transparent")
+        self.on_change = on_change
         self.value = value
         self.minimum = minimum
         self.maximum = maximum
@@ -203,6 +211,8 @@ class NumberStepper(ctk.CTkFrame):
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
         self.label.configure(text=str(self.value))
+        if self.on_change:
+            self.on_change(self.value)
 
     def get(self):
         return self.value
@@ -802,6 +812,29 @@ class DashboardView(View):
         self.hero = GradientPanel(self.content, height=118)
         self.hero.pack(fill="x")
 
+        # --- Heute (ab 0.51): Tagesziel, Lernserie, Wiederholungen --------
+        self.today_card = Card(self.content, title="Heute",
+                               subtitle="Tagesziel und Wiederholung", accent=C["green"])
+        self.today_card.pack(fill="x", pady=(16, 0))
+        today = transparent_frame(self.today_card.body)
+        today.pack(fill="x")
+        self.goal_box = transparent_frame(today)
+        self.goal_ring = MiniRing(self.goal_box, size=74, thickness=7, parent_bg=C["card"])
+        self.goal_ring.pack(side="left")
+        goal_text = transparent_frame(self.goal_box)
+        goal_text.pack(side="left", padx=(12, 0))
+        self.lbl_goal = make_label(goal_text, "", font=F["body_bold"], fg=C["text"])
+        self.lbl_goal.pack(anchor="w")
+        self.lbl_streak = make_label(goal_text, "", font=F["small"], fg=C["text_soft"])
+        self.lbl_streak.pack(anchor="w", pady=(4, 0))
+        self.review_box = transparent_frame(today)
+        self.review_box.pack(side="right")
+        self.lbl_due = make_label(self.review_box, "", font=F["body_bold"], fg=C["text"])
+        self.lbl_due.pack(side="left", padx=(0, 14))
+        self.btn_review = NeoButton(self.review_box, "Jetzt wiederholen",
+                                    self.app.start_review, kind="primary")
+        self.btn_review.pack(side="left")
+
         # --- Reihe 1: Kennzahlen (fuenf gleich breite Kacheln) -----------
         row1 = transparent_frame(self.content)
         row1.pack(fill="x", pady=(16, 0))
@@ -956,7 +989,35 @@ class DashboardView(View):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
         if stamp is None:
             return None
-        return (stamp, datetime.date.today(), self.zoom_category)
+        return (stamp, datetime.date.today(), self.zoom_category,
+                tuple(sorted(learning_settings().items())))
+
+    def _refresh_today(self):
+        """Kachel "Heute" (ab 0.51)."""
+        settings = learning_settings()
+        goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
+        show_goal, show_streak = settings["ziel_an"], settings["serie_an"]
+        if show_goal or show_streak:
+            self.goal_box.pack(side="left")
+        else:
+            self.goal_box.pack_forget()
+        if show_goal:
+            self.goal_ring.pack(side="left")
+            self.goal_ring.set(goal.fraction * 100,
+                               C["green"] if goal.reached else C["accent"])
+            self.lbl_goal.configure(text=goal.text())
+            self.lbl_goal.pack(anchor="w")
+        else:
+            self.goal_ring.pack_forget()
+            self.lbl_goal.pack_forget()
+        if show_streak:
+            self.lbl_streak.configure(text=goal.streak_text())
+            self.lbl_streak.pack(anchor="w", pady=(4, 0))
+        else:
+            self.lbl_streak.pack_forget()
+        plan = ReviewPlan.from_db(self.db)
+        self.lbl_due.configure(text=due_text(plan))
+        self.btn_review.set_enabled(plan.count() > 0)
 
     def refresh(self):
         total_cards = len(KARTEIKARTEN)
@@ -972,11 +1033,14 @@ class DashboardView(View):
 
         rate, correct, answered = self.db.quiz_success_rate()
         learned = learned_cards + quiz_distinct
+        self._refresh_today()
+        streak = ("Lernserie: %d Tag(e)   ·   " % self.db.streak()
+                  if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             "Dein Lernstand",
-            "Lernserie: %d Tag(e)   ·   %d von %d Inhalten bearbeitet   ·   "
+            "%s%d von %d Inhalten bearbeitet   ·   "
             "Quiz-Erfolgsquote %d %%"
-            % (self.db.streak(), learned, self.total_content, round(rate)),
+            % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             "Gesamtfortschritt")
 
@@ -2389,13 +2453,162 @@ class NotebookView(View):
 #  PRAXIS-RECHNER
 # ============================================================================
 
+class TrainerPanel(ctk.CTkFrame):
+    """Subnetting-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
+    Eingabefeldern, automatischer Pruefung und Rechenweg."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
+        self.db = app.db
+        self.tasks = []
+        self.index = 0
+        self.results = []
+        self.checked = False
+
+        setup = Card(self, title="Subnetting-Trainer", accent=C["accent"],
+                     subtitle="Zufallsaufgaben mit Selbstkontrolle")
+        setup.pack(fill="x")
+        make_label(setup.body, "AUFGABENART", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.kind_pills = PillGroup(setup.body, TRAINER_KINDS)
+        self.kind_pills.pack(anchor="w", pady=(8, 14))
+        make_label(setup.body, "SCHWIERIGKEIT", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        row = transparent_frame(setup.body)
+        row.pack(fill="x", pady=(8, 0))
+        self.level_pills = PillGroup(row, TRAINER_LEVELS)
+        self.level_pills.pack(side="left")
+        self.btn_start = NeoButton(row, "Runde starten", self.start_round, kind="primary")
+        self.btn_start.pack(side="left", padx=(16, 0))
+        self.lbl_stats = make_label(row, "", font=F["small"], fg=C["muted"])
+        self.lbl_stats.pack(side="left", padx=(16, 0))
+
+        self.task_card = Card(self, title="Aufgabe", accent=C["purple"])
+        self.task_card.pack(fill="x", pady=(14, 0))
+        self.lbl_task = make_label(self.task_card.body,
+                                   "Wähle Aufgabenart und Schwierigkeit und starte eine "
+                                   "Runde mit %d Aufgaben." % TRAINER_ROUND,
+                                   font=F["h2"], fg=C["text_soft"], wraplength=900,
+                                   justify="left", anchor="w")
+        self.lbl_task.pack(anchor="w", pady=(4, 12))
+        self.fields_box = transparent_frame(self.task_card.body)
+        self.fields_box.pack(fill="x")
+        self.lbl_feedback = make_label(self.task_card.body, "", font=F["body_bold"],
+                                       fg=C["text"], anchor="w")
+        self.lbl_feedback.pack(anchor="w", pady=(12, 0))
+        self.txt_steps = make_autogrow_text(self.task_card.body, min_height=3,
+                                            max_height=18, font=F["mono_small"])
+        self.txt_steps.configure(state="disabled")
+        controls = transparent_frame(self)
+        controls.pack(fill="x", pady=(14, 0))
+        self.btn_check = NeoButton(controls, "Prüfen", self.check, kind="primary")
+        self.btn_check.pack(side="left")
+        self.btn_check.set_enabled(False)
+        self.lbl_counter = make_label(controls, "", font=F["small"], fg=C["muted"])
+        self.lbl_counter.pack(side="left", padx=16)
+        self.entries = {}
+        self.marks = {}
+        self.show_stats()
+
+    def show_stats(self):
+        stats = self.db.trainer_stats()
+        count = sum(total for total, _right in stats.values())
+        right = sum(right for _total, right in stats.values())
+        self.lbl_stats.configure(text="bisher %d Aufgaben, %d richtig" % (count, right)
+                                 if count else "")
+
+    def start_round(self):
+        self.tasks = trainer_round(self.kind_pills.get(), self.level_pills.get(),
+                                   random.randrange(1 << 30))
+        self.index = 0
+        self.results = []
+        self.load_task()
+
+    def load_task(self):
+        task = self.tasks[self.index]
+        self.checked = False
+        self.task_card.set_subtitle("%s · %s" % (TRAINER_KIND_NAME[task.kind],
+                                                 TRAINER_LEVEL_NAME[task.level]))
+        self.lbl_task.configure(text=task.text)
+        for child in self.fields_box.winfo_children():
+            child.destroy()
+        self.entries, self.marks = {}, {}
+        for row, (key, label) in enumerate(task.fields):
+            make_label(self.fields_box, label, font=F["small"],
+                       fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+            entry = EntryBox(self.fields_box, width=26)
+            entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+            entry.bind("<Return>", lambda _e: self.check())
+            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"])
+            mark.grid(row=row, column=2, sticky="w")
+            self.entries[key], self.marks[key] = entry, mark
+        if task.fields:
+            self.entries[task.fields[0][0]].focus_set()
+        self.lbl_feedback.configure(text="")
+        self.txt_steps.pack_forget()
+        self.btn_check.set_text("Prüfen")
+        self.btn_check.set_enabled(True)
+        self.lbl_counter.configure(text="Aufgabe %d / %d" % (self.index + 1, len(self.tasks)))
+
+    def check(self):
+        if not self.tasks:
+            return
+        if self.checked:
+            self.advance()
+            return
+        task = self.tasks[self.index]
+        answers = {key: entry.get() for key, entry in self.entries.items()}
+        result = task.check(answers)
+        for key, ok in result.items():
+            self.marks[key].configure(
+                text="richtig" if ok else "richtig wäre: %s" % task.solution[key],
+                text_color=C["green"] if ok else C["red"])
+        correct = all(result.values())
+        self.results.append(correct)
+        self.db.log_trainer(task.kind, task.level, correct)
+        self.app.notify_progress(refresh_view=False)
+        self.lbl_feedback.configure(text="Alles richtig." if correct else
+                                    "Noch nicht ganz - hier der Rechenweg:",
+                                    text_color=C["green"] if correct else C["yellow"])
+        set_text(self.txt_steps, "\n".join(task.steps))
+        self.txt_steps.pack(fill="x", pady=(10, 0))
+        self.checked = True
+        last = self.index >= len(self.tasks) - 1
+        self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
+
+    def advance(self):
+        if self.index < len(self.tasks) - 1:
+            self.index += 1
+            self.load_task()
+            return
+        summary = trainer_summary(self.results)
+        self.tasks = []
+        for child in self.fields_box.winfo_children():
+            child.destroy()
+        self.txt_steps.pack_forget()
+        self.lbl_task.configure(text="Runde beendet: %s." % summary)
+        self.lbl_feedback.configure(text="Starte eine neue Runde oder wähle eine andere "
+                                         "Aufgabenart.", text_color=C["text_dim"])
+        self.btn_check.set_text("Prüfen")
+        self.btn_check.set_enabled(False)
+        self.lbl_counter.configure(text="")
+        self.show_stats()
+
+
+CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
+
+
 class CalcView(View):
     def build(self):
         self.info_visible = {"subnet": False, "raid": False, "screen": False}
         self.info_frames = {}
         self.info_buttons = {}
 
-        layout = transparent_frame(self.content)
+        # Ab 0.51: Umschalter Rechner / Trainer
+        self.tab_pills = PillGroup(self.content, CALC_TABS, on_change=self._on_tab)
+        self.tab_pills.pack(anchor="w", pady=(0, 14))
+        self.trainer = TrainerPanel(self.content, self.app)
+
+        layout = self.calc_layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
@@ -2481,6 +2694,14 @@ class CalcView(View):
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+    def _on_tab(self, value):
+        if value == "trainer":
+            self.calc_layout.pack_forget()
+            self.trainer.pack(fill="both", expand=True)
+        else:
+            self.trainer.pack_forget()
+            self.calc_layout.pack(fill="both", expand=True)
 
     def _build_info_toggle(self, parent, key, explanation):
         """Baut den 'Rechenweg anzeigen'-Knopf samt (zunaechst
@@ -2748,6 +2969,44 @@ class SettingsView(View):
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
+        # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
+        goal = Card(self.content, title="Tagesziel", accent=C["green"],
+                    subtitle="nur für dieses Gerät")
+        goal.pack(fill="x", pady=(14, 0))
+        values = learning_settings()
+        self.goal_vars = {}
+        for key, text in (("ziel_an", "Tagesziel anzeigen"),
+                          ("serie_an", "Lernserie anzeigen"),
+                          ("erinnerung_an", "An das Tagesziel erinnern")):
+            var = self.goal_vars[key] = tk.BooleanVar(value=values[key])
+            ctk.CTkSwitch(goal.body, text=text, variable=var,
+                          command=lambda k=key: self._save_goal(k),
+                          font=F["small"], text_color=C["text_dim"],
+                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          button_color=C["text"], button_hover_color="#FFFFFF"
+                          ).pack(anchor="w", pady=(0, 10))
+        row = transparent_frame(goal.body)
+        row.pack(anchor="w", pady=(4, 0))
+        make_label(row, "Aufgaben pro Tag", font=F["small"],
+                   fg=C["text_dim"]).pack(side="left", padx=(0, 10))
+        self.goal_stepper = NumberStepper(row, value=values["ziel_anzahl"],
+                                          minimum=GOAL_MIN, maximum=GOAL_MAX,
+                                          step=GOAL_STEP, bg=C["card"],
+                                          on_change=lambda _v: self._save_goal("ziel_anzahl"))
+        self.goal_stepper.pack(side="left")
+        make_label(row, "Erinnerung um", font=F["small"],
+                   fg=C["text_dim"]).pack(side="left", padx=(28, 10))
+        self.entry_reminder = EntryBox(row, width=7, value=values["erinnerung_zeit"])
+        self.entry_reminder.pack(side="left")
+        self.entry_reminder.bind("<FocusOut>", lambda _e: self._save_goal("erinnerung_zeit"))
+        self.entry_reminder.bind("<Return>", lambda _e: self._save_goal("erinnerung_zeit"))
+        make_label(goal.body,
+                   "Gezählt werden bewertete Karteikarten, Prüfungstrainer-Fragen, "
+                   "Szenarien, Testprojekte und Trainer-Aufgaben. Die Erinnerung "
+                   "erscheint als Hinweis, solange das Programm geöffnet ist.",
+                   font=F["tiny"], fg=C["muted"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+
         sync = Card(self.content, title="Abgleich PC und Handy", accent=C["accent"],
                     subtitle="über ein privates GitHub-Repository")
         sync.pack(fill="x", pady=(14, 0))
@@ -2882,6 +3141,19 @@ class SettingsView(View):
     def _change_mode(self, mode):
         if mode != fisi_theme.current_mode:
             self.after(10, lambda: self.app.change_color(mode=mode))
+
+    def _save_goal(self, key):
+        """Tagesziel-Einstellung speichern (ab 0.51)."""
+        if key == "ziel_anzahl":
+            save_learning_settings(ziel_anzahl=self.goal_stepper.get())
+        elif key == "erinnerung_zeit":
+            value = parse_time(self.entry_reminder.get())
+            if value is None:
+                value = learning_settings()["erinnerung_zeit"]
+            self.entry_reminder.set(value)
+            save_learning_settings(erinnerung_zeit=value)
+        else:
+            save_learning_settings(**{key: bool(self.goal_vars[key].get())})
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -3430,6 +3702,8 @@ class FISIApp:
         if not os.environ.get("FISI_SELFTEST"):
             root.after(1500, self.sync.auto_start)
             root.after(3000, self.updater.auto_check)
+            # Erinnerung ans Tagesziel (ab 0.51), nach dem Abgleich
+            root.after(8000, self.check_reminder)
 
     def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
@@ -3726,6 +4000,31 @@ class FISIApp:
                 self.views["dashboard"].refresh()
         # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
         self.root.after(400, self.show_unlocks)
+
+    def start_review(self):
+        """"Jetzt wiederholen" (ab 0.51): erst die faelligen Karteikarten,
+        dann die faelligen Pruefungstrainer-Fragen."""
+        plan = ReviewPlan.from_db(self.db)
+        source = plan.first_source()
+        if source is None:
+            messagebox.showinfo("Wiederholung", "Heute ist nichts mehr fällig.")
+            return
+        key = "cards" if source == SRC_CARD else "quiz"
+        self.show_view(key)
+        self.views[key].practice(plan.session(source))
+
+    def check_reminder(self):
+        """Erinnerung ans Tagesziel (ab 0.51): als Hinweis, solange das
+        Programm laeuft - beim Start und danach alle 5 Minuten."""
+        try:
+            settings = fisi_update.load_settings()
+            values = learning_settings()
+            goal = DailyGoal.from_db(self.db, values["ziel_anzahl"])
+            if reminder_due(settings, goal, shown_on=settings.get("erinnerung_gezeigt", "")):
+                save_learning_settings(erinnerung_gezeigt=datetime.date.today().isoformat())
+                show_badge_toast(self.root, reminder_text(goal), delay=9000)
+        finally:
+            self.root.after(5 * 60 * 1000, self.check_reminder)
 
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""

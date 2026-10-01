@@ -26,5 +26,6 @@ mobile/src/fisi_theme.py
 mobile/src/fisi_update.py
 mobile/src/fisi_sync.py
 mobile/src/fisi_game.py
+mobile/src/fisi_lernen.py
 mobile/src/inhalte/
 mobile/build/

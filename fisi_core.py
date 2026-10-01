@@ -211,7 +211,15 @@ EVENT_TABLES = {
     "scenario_events": ("timestamp", "scenario_index", "title", "theme", "correct"),
     "project_events": ("timestamp", "project_index", "title", "category", "correct"),
     "ap1_events": ("timestamp", "scenario_index", "title", "theme", "correct"),
+    # ab 0.51: Aufgaben des Subnetting-Trainers (art z.B. "ipv4", stufe 1-3)
+    "trainer_aufgaben": ("timestamp", "art", "stufe", "correct"),
+    # ab 0.51: Klausursimulationen (art = Pruefungsbereich, daten = JSON mit
+    # Aufgaben, Punkten je Teilaufgabe und Themen)
+    "pruefungen": ("timestamp", "art", "punkte", "note", "dauer", "daten"),
 }
+
+# Ab 0.51: Tabellen, die "Historie loeschen" mit leert (wie test_results)
+HISTORY_TABLES = ("test_results", "pruefungen")
 
 # Spalten, die erst spaeter dazukamen (ab 0.39: Selbsteinschaetzung
 # "Gewusst"/"Nicht gewusst" bei AP1, AP2 und Testprojekten). Eintraege von
@@ -226,6 +234,15 @@ OPTIONAL_COLUMNS = {
 }
 # Spalten mit Text statt Zahl (sonst INTEGER)
 TEXT_COLUMNS = ("lauf",)
+
+# Abschlussprojekt (ab 0.51): jede Aenderung eines Feldes ist eine Zeile,
+# es gilt die neueste je (projekt, feld). Bleibt bei "Alle Lerndaten
+# loeschen" erhalten - es sind eigene Texte, keine Lernstaende. Aeltere
+# Fassungen raeumt purge_superseded_project_rows auf allen Geraeten gleich
+# auf, damit die Abgleich-Datei klein bleibt.
+PROJECT_TABLES = {
+    "abschlussprojekt": ("timestamp", "projekt", "feld", "wert"),
+}
 
 # Tabellen des Lernspiels (fisi_game.py). Bewusst getrennt von EVENT_TABLES:
 # "Alle Lerndaten loeschen" und "Historie loeschen" beruehren den Spielstand
@@ -260,6 +277,7 @@ SYNC_TABLES = dict(EVENT_TABLES)
 SYNC_TABLES.update(GAME_TABLES)
 SYNC_TABLES.update(SLOT_TABLES)
 SYNC_TABLES.update(RECORD_TABLES)
+SYNC_TABLES.update(PROJECT_TABLES)
 
 
 def purge_deleted_runs(cur):
@@ -272,6 +290,20 @@ def purge_deleted_runs(cur):
             cur.execute("DELETE FROM spiel_ereignisse WHERE lauf IS NULL OR lauf = ''")
         else:
             cur.execute("DELETE FROM spiel_ereignisse WHERE lauf = ?", (run,))
+
+
+def purge_superseded_project_rows(cur):
+    """Loescht im Abschlussprojekt alle Zeilen, die eine neuere Fassung
+    desselben Feldes haben (ab 0.51). Gleiche Zeit: die groessere uid gilt,
+    damit alle Geraete dieselbe Zeile behalten."""
+    cur.execute(
+        "DELETE FROM abschlussprojekt WHERE EXISTS ("
+        " SELECT 1 FROM abschlussprojekt AS neu"
+        " WHERE neu.projekt = abschlussprojekt.projekt"
+        " AND neu.feld = abschlussprojekt.feld"
+        " AND (neu.timestamp > abschlussprojekt.timestamp"
+        "  OR (neu.timestamp = abschlussprojekt.timestamp"
+        "      AND neu.uid > abschlussprojekt.uid)))")
 
 
 class DBManager:
@@ -386,6 +418,35 @@ class DBManager:
                 title TEXT NOT NULL,
                 theme TEXT NOT NULL,
                 correct INTEGER
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS trainer_aufgaben (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                art TEXT NOT NULL,
+                stufe INTEGER NOT NULL,
+                correct INTEGER NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS pruefungen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                art TEXT NOT NULL,
+                punkte REAL NOT NULL,
+                note TEXT NOT NULL,
+                dauer INTEGER NOT NULL,
+                daten TEXT NOT NULL DEFAULT '{}'
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS abschlussprojekt (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                projekt TEXT NOT NULL,
+                feld TEXT NOT NULL,
+                wert TEXT NOT NULL DEFAULT ''
             )
             """,
             """
@@ -539,6 +600,90 @@ class DBManager:
             (self._now(), index, title, theme, self._flag(correct), self._uid()),
             commit=True, default=False)
 
+    # -- Ab 0.51: Trainer, Pruefungen, Abschlussprojekt ----------------------
+
+    def log_trainer(self, kind, level, correct):
+        """Eine geloeste Aufgabe des Subnetting-Trainers."""
+        return bool(self._execute(
+            "INSERT INTO trainer_aufgaben (timestamp, art, stufe, correct, uid)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (self._now(), kind, int(level), 1 if correct else 0, self._uid()),
+            commit=True, default=False))
+
+    def trainer_stats(self):
+        """{art: (geloest, richtig)} ueber alle Trainer-Aufgaben."""
+        rows = self._execute("SELECT art, COUNT(*), SUM(correct) FROM trainer_aufgaben"
+                             " GROUP BY art", fetch="all", default=[]) or []
+        return {kind: (count or 0, right or 0) for kind, count, right in rows}
+
+    def save_exam(self, kind, points, note, duration, data):
+        """Ergebnis einer Klausursimulation (data: dict, als JSON gespeichert)."""
+        return bool(self._execute(
+            "INSERT INTO pruefungen (timestamp, art, punkte, note, dauer, daten, uid)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (self._now(), kind, float(points), note, int(duration),
+             json.dumps(data, ensure_ascii=False), self._uid()),
+            commit=True, default=False))
+
+    def exams(self):
+        """Alle Klausursimulationen, neueste zuerst: [dict]."""
+        rows = self._execute("SELECT timestamp, art, punkte, note, dauer, daten, uid"
+                             " FROM pruefungen ORDER BY timestamp DESC, id DESC",
+                             fetch="all", default=[]) or []
+        result = []
+        for timestamp, kind, points, note, duration, data, uid in rows:
+            try:
+                details = json.loads(data or "{}")
+            except ValueError:
+                details = {}
+            result.append({"timestamp": timestamp, "art": kind, "punkte": points,
+                           "note": note, "dauer": duration, "daten": details,
+                           "uid": uid})
+        return result
+
+    def save_project_field(self, project, field, value):
+        """Speichert ein Feld des Abschlussprojekts (neueste Fassung gilt) und
+        raeumt die aeltere Fassung gleich auf."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO abschlussprojekt (timestamp, projekt, feld, wert, uid)"
+                        " VALUES (?, ?, ?, ?, ?)",
+                        (self._now_fine(), project, field, value, self._uid()))
+            purge_superseded_project_rows(cur)
+            conn.commit()
+            return True
+        except sqlite3.Error as exc:
+            self._report("Abschlussprojekt speichern fehlgeschlagen: %s" % exc)
+            return False
+        finally:
+            if conn is not None:
+                conn.close()
+
+    def project_fields(self):
+        """{projekt: {feld: wert}} - jeweils die neueste Fassung."""
+        rows = self._execute("SELECT projekt, feld, wert FROM abschlussprojekt"
+                             " ORDER BY timestamp, uid", fetch="all", default=[]) or []
+        projects = {}
+        for project, field, value in rows:
+            projects.setdefault(project, {})[field] = value
+        return projects
+
+    def activity_days(self):
+        """{tag: Anzahl bewerteter Aufgaben} (ab 0.51, fuers Tagesziel):
+        Karteikarten und Szenarien nur mit Bewertung, Quiz und Trainer immer."""
+        rows = self._execute(
+            "SELECT substr(timestamp, 1, 10) AS tag, COUNT(*) FROM ("
+            "  SELECT timestamp FROM card_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp FROM quiz_answers"
+            "  UNION ALL SELECT timestamp FROM scenario_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp FROM project_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp FROM ap1_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp FROM trainer_aufgaben"
+            ") GROUP BY tag", fetch="all", default=[]) or []
+        return {day: count for day, count in rows}
+
     def _run(self, run):
         """Durchgang fuer Lesen/Schreiben: ohne Angabe der aktive dieses
         Geraets. Liefert None fuer den alten Durchgang (Spalte lauf leer)."""
@@ -594,7 +739,8 @@ class DBManager:
     # Tabellen, deren Inhalt in den Ansichten sichtbar ist (fuer change_stamp)
     STAMP_TABLES = ("card_events", "quiz_answers", "test_results", "scenario_events",
                     "project_events", "ap1_events", "spiel_ereignisse", "spiel_plaetze",
-                    "spiel_bestenliste")
+                    "spiel_bestenliste", "trainer_aufgaben", "pruefungen",
+                    "abschlussprojekt")
 
     def change_stamp(self):
         """Ab 0.50: Stempel ueber alle Lern- und Spieltabellen (Anzahl und
@@ -722,7 +868,8 @@ class DBManager:
         try:
             conn = self.get_connection()
             cur = conn.cursor()
-            cur.execute("DELETE FROM test_results")
+            for table in HISTORY_TABLES:
+                cur.execute("DELETE FROM " + table)
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         ("history_cleared_at", self._now()))
             conn.commit()
@@ -909,6 +1056,7 @@ class DBManager:
             "  UNION ALL SELECT timestamp FROM scenario_events"
             "  UNION ALL SELECT timestamp FROM project_events"
             "  UNION ALL SELECT timestamp FROM ap1_events"
+            "  UNION ALL SELECT timestamp FROM trainer_aufgaben"
             ") WHERE substr(timestamp, 1, 10) >= ? GROUP BY tag",
             (start.isoformat(),), fetch="all", default=[]) or []
         lookup = {row[0]: row[1] for row in rows}
@@ -1095,6 +1243,7 @@ class DBManager:
             "  UNION ALL SELECT timestamp FROM scenario_events"
             "  UNION ALL SELECT timestamp FROM project_events"
             "  UNION ALL SELECT timestamp FROM ap1_events"
+            "  UNION ALL SELECT timestamp FROM trainer_aufgaben"
             ") ORDER BY 1 DESC", fetch="all", default=[]) or []
         days = []
         for (value,) in rows:
@@ -1692,6 +1841,16 @@ def notebook_summary(book, category=FILTER_ALL, topic=FILTER_ALL):
                 and (topic == FILTER_ALL or item.get("thema") == topic)]
         summary[source] = book.counts(source, keys)
     return summary
+
+
+NUMBER_WORDS = ["null", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben",
+                "acht", "neun", "zehn", "elf", "zwölf"]
+
+
+def count_word(number):
+    """Zahl als Wort fuer Fliesstexte ("fuenf Fachbereiche"), ab 13 als Ziffern.
+    Ab 0.51, damit Anzahlen nie mehr von Hand im Text stehen."""
+    return NUMBER_WORDS[number] if 0 <= number < len(NUMBER_WORDS) else str(number)
 
 
 def ihk_note(percentage):
