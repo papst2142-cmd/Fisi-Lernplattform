@@ -42,13 +42,13 @@
     "cat": "netzwerk",
     "thema": "ipv6",
     "q": "Wie viele Bits umfasst eine IPv6-Adresse?",
-    "a": "128 Bits",
-    "a_full": "Eine IPv6-Adresse ist 128 Bits lang.",
+    "a": "128 Bit",
+    "a_full": "Eine IPv6-Adresse ist 128 Bit lang.",
     "options": [
-      "32 Bits",
-      "64 Bits",
-      "128 Bits",
-      "256 Bits"
+      "32 Bit",
+      "64 Bit",
+      "128 Bit",
+      "256 Bit"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "thema": "ipv4",
     "q": "Wie viele nutzbare Hosts bietet ein /30-Subnetz?",
     "a": "2",
-    "a_full": "/30 hat 4 Gesamtadressen, minus Network- und Broadcast-Adresse bleiben 2 nutzbare Hosts (typisch für Punkt-zu-Punkt-Verbindungen).",
+    "a_full": "/30 hat 4 Gesamtadressen, minus Netz- und Broadcast-Adresse bleiben 2 nutzbare Hosts (typisch für Punkt-zu-Punkt-Verbindungen).",
     "options": [
       "2",
       "4",
@@ -173,7 +173,7 @@
     "thema": "notfall",
     "q": "Was bedeutet die '1' in der bekannten 3-2-1-Backup-Regel?",
     "a": "1 Kopie an einem externen Ort",
-    "a_full": "1 Kopie muss an einem physikalisch getrennten Ort aufbewahrt werden.",
+    "a_full": "1 Kopie muss an einem physisch getrennten Ort aufbewahrt werden.",
     "options": [
       "1 Backup pro Tag",
       "1 Kopie an einem externen Ort",
@@ -2422,7 +2422,7 @@
     "thema": "krypto",
     "q": "Was ist ein selbstsigniertes Zertifikat?",
     "a": "Ein Zertifikat, das nicht von einer vertrauenswürdigen CA, sondern vom Inhaber selbst unterschrieben ist",
-    "a_full": "Browser warnen bei selbstsignierten Zertifikaten, weil niemand Drittes die Identität bestätigt hat. Intern kann man eine eigene CA verteilen.",
+    "a_full": "Browser warnen bei selbstsignierten Zertifikaten, weil kein Dritter die Identität bestätigt hat. Intern kann man eine eigene CA verteilen.",
     "options": [
       "Ein Zertifikat, das nicht von einer vertrauenswürdigen CA, sondern vom Inhaber selbst unterschrieben ist",
       "Ein Zertifikat ohne Ablaufdatum",
@@ -3461,10 +3461,10 @@
     "cat": "systeme",
     "thema": "virtualisierung",
     "q": "Was bedeutet Overcommitment bei Virtualisierung?",
-    "a": "Den VMs wird insgesamt mehr Ressource zugewiesen als physisch vorhanden ist",
+    "a": "Den VMs werden insgesamt mehr Ressourcen zugewiesen, als physisch vorhanden sind",
     "a_full": "Weil nicht alle VMs gleichzeitig ihre volle Leistung brauchen, ist moderates Overcommitment (z.B. bei CPU) üblich. Zu viel führt zu Engpässen.",
     "options": [
-      "Den VMs wird insgesamt mehr Ressource zugewiesen als physisch vorhanden ist",
+      "Den VMs werden insgesamt mehr Ressourcen zugewiesen, als physisch vorhanden sind",
       "Eine VM erhält gar keine Ressourcen",
       "Der Host wird übertaktet",
       "Die VMs laufen ohne Betriebssystem"
@@ -4099,7 +4099,7 @@
     "thema": "projekt",
     "q": "Was ist ein Arbeitspaket im Projekt?",
     "a": "Die kleinste Einheit im Projektstrukturplan, die einer verantwortlichen Person zugeordnet wird",
-    "a_full": "Arbeitspakete haben ein klares Ergebnis, Aufwand, Dauer und Verantwortlichen und lassen sich gut überwachen.",
+    "a_full": "Arbeitspakete haben ein klares Ergebnis, Aufwand, Dauer und einen Verantwortlichen und lassen sich gut überwachen.",
     "options": [
       "Die kleinste Einheit im Projektstrukturplan, die einer verantwortlichen Person zugeordnet wird",
       "Ein Paket mit Hardware für das Projekt",
@@ -4905,7 +4905,7 @@
     "thema": "fehlersuche",
     "q": "Was ist ein Duplex-Mismatch?",
     "a": "Eine Seite arbeitet mit Vollduplex, die andere mit Halbduplex",
-    "a_full": "Stimmen die Duplex-Einstellungen der beiden Seiten nicht überein, entstehen Kollisionen und späte Fehler. Die Verbindung funktioniert, ist aber sehr langsam. Beide Seiten sollten auf Autonegotiation stehen.",
+    "a_full": "Stimmen die Duplex-Einstellungen der beiden Seiten nicht überein, entstehen Kollisionen und Late Collisions (späte Kollisionen). Die Verbindung funktioniert, ist aber sehr langsam. Beide Seiten sollten auf Autonegotiation stehen.",
     "options": [
       "Eine Seite arbeitet mit Vollduplex, die andere mit Halbduplex",
       "Zwei Geräte haben dieselbe IP-Adresse",
@@ -6309,7 +6309,7 @@
     "thema": "recht",
     "q": "Was bedeutet Compliance im Unternehmen?",
     "a": "Die Einhaltung von Gesetzen, Vorschriften und internen Richtlinien",
-    "a_full": "Compliance umfasst z.B. Datenschutz, Steuerrecht, Lizenzbedingungen und interne Regeln. Verstöße können Bußgelder, Schadenersatz und Imageschäden nach sich ziehen.",
+    "a_full": "Compliance umfasst z.B. Datenschutz, Steuerrecht, Lizenzbedingungen und interne Regeln. Verstöße können Bußgelder, Schadensersatz und Imageschäden nach sich ziehen.",
     "options": [
       "Die Einhaltung von Gesetzen, Vorschriften und internen Richtlinien",
       "Die Zufriedenheit der Kunden",
@@ -7193,7 +7193,7 @@
     "thema": "linux",
     "q": "Was unterscheidet einen symbolischen Link von einem Hardlink?",
     "a": "Der Symlink verweist auf einen Pfad, der Hardlink auf dieselben Daten (Inode)",
-    "a_full": "ln -s ziel link erzeugt einen Verweis auf einen Pfad, er wird ungültig, wenn das Ziel gelöscht wird, und darf auf Ordner und andere Dateisysteme zeigen. Ein Hardlink (ln ziel link) ist ein zweiter Name für dieselbe Inode im selben Dateisystem.",
+    "a_full": "ln -s ziel link erzeugt einen Verweis auf einen Pfad; er wird ungültig, wenn das Ziel gelöscht wird, und darf auf Ordner und andere Dateisysteme zeigen. Ein Hardlink (ln ziel link) ist ein zweiter Name für dieselbe Inode im selben Dateisystem.",
     "options": [
       "Der Symlink verweist auf einen Pfad, der Hardlink auf dieselben Daten (Inode)",
       "Ein Hardlink ist eine Kopie der Datei",
@@ -8922,7 +8922,7 @@
     "thema": "isms",
     "q": "Welche Schäden deckt eine Cyberversicherung typischerweise ab?",
     "a": "Eigenschäden wie Betriebsunterbrechung und Forensik sowie Ansprüche Dritter",
-    "a_full": "Eigenschäden sind z.B. Umsatzausfall, Kosten für Forensiker, Datenwiederherstellung und Krisenkommunikation. Drittschäden sind Schadenersatzansprüche von Kunden oder Partnern, etwa nach einem Datenleck. Viele Versicherer bieten zusätzlich eine Notfall-Hotline mit Experten an.",
+    "a_full": "Eigenschäden sind z.B. Umsatzausfall, Kosten für Forensiker, Datenwiederherstellung und Krisenkommunikation. Drittschäden sind Schadensersatzansprüche von Kunden oder Partnern, etwa nach einem Datenleck. Viele Versicherer bieten zusätzlich eine Notfall-Hotline mit Experten an.",
     "options": [
       "Eigenschäden wie Betriebsunterbrechung und Forensik sowie Ansprüche Dritter",
       "Nur den Kaufpreis gestohlener Hardware wie Laptops und Handys",
@@ -9832,7 +9832,7 @@
     "thema": "kalkulation",
     "q": "Was unterscheidet direkte von indirekten Steuern?",
     "a": "Bei direkten Steuern sind Steuerschuldner und Steuerträger dieselbe Person",
-    "a_full": "Die Einkommensteuer, auch als Lohnsteuer, trägt der Steuerpflichtige selbst. Bei indirekten Steuern wie der Umsatzsteuer führt das Unternehmen die Steuer ab, wirtschaftlich trägt sie aber der Endverbraucher über den Preis.",
+    "a_full": "Die Einkommensteuer (bei Arbeitnehmern als Lohnsteuer erhoben) trägt der Steuerpflichtige selbst. Bei indirekten Steuern wie der Umsatzsteuer führt das Unternehmen die Steuer ab, wirtschaftlich trägt sie aber der Endverbraucher über den Preis.",
     "options": [
       "Bei direkten Steuern sind Steuerschuldner und Steuerträger dieselbe Person",
       "Direkte Steuern zahlt nur der Staat, indirekte nur Firmen",
@@ -9857,10 +9857,10 @@
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
     "q": "Was kennzeichnet die soziale Marktwirtschaft?",
-    "a": "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialen Ausgleich",
+    "a": "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialem Ausgleich",
     "a_full": "Preise und Produktion bilden sich grundsätzlich über Angebot und Nachfrage. Der Staat schützt den Wettbewerb, z.B. durch das Kartellrecht, und sorgt für sozialen Ausgleich über Sozialversicherung, Steuern und Arbeitnehmerschutz. Sie ist die Wirtschaftsordnung der Bundesrepublik.",
     "options": [
-      "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialen Ausgleich",
+      "Freier Wettbewerb am Markt, verbunden mit staatlichem sozialem Ausgleich",
       "Der Staat plant zentral, was und wie viel produziert wird",
       "Der Markt regelt alles, der Staat greift nie ein",
       "Nur staatliche Unternehmen dürfen Güter herstellen"
@@ -10690,7 +10690,7 @@
     "thema": "verkabelung",
     "q": "Zwei Gebäude auf einem Werksgelände sollen verkabelt verbunden werden. Welches Medium passt und warum?",
     "a": "Glasfaser, wegen Reichweite und galvanischer Trennung",
-    "a_full": "Zwischen Gebäuden können Potentialunterschiede auftreten, die über Kupferleitungen Ausgleichsströme und Schäden verursachen. Glasfaser überträgt Licht und trennt die Gebäude elektrisch. Außerdem sind Strecken weit über 100 m möglich.",
+    "a_full": "Zwischen Gebäuden können Potenzialunterschiede auftreten, die über Kupferleitungen Ausgleichsströme und Schäden verursachen. Glasfaser überträgt Licht und trennt die Gebäude elektrisch. Außerdem sind Strecken weit über 100 m möglich.",
     "options": [
       "Glasfaser, wegen Reichweite und galvanischer Trennung",
       "Cat-7-Kupferkabel, weil es am besten geschirmt ist",
@@ -10745,7 +10745,7 @@
     "a_full": "Ein Layer-3-Switch routet zwischen VLANs in Hardware mit voller Portgeschwindigkeit und bietet viele Ports. WAN-Funktionen wie PPPoE oder umfangreiches NAT braucht er dafür nicht, die übernimmt die Firewall. Router on a Stick wäre hier ein Engpass.",
     "options": [
       "Ein Layer-3-Switch im Core",
-      "Ein unmanaged Switch mit Uplink",
+      "Ein Unmanaged Switch mit Uplink",
       "Ein WLAN-Controller mit VLANs",
       "Ein DSL-Router mit NAT-Funktion"
     ]
@@ -10924,7 +10924,7 @@
     "thema": "datenschutz",
     "q": "Ein Außendienstmitarbeiter meldet, dass er sein unverschlüsseltes Notebook mit Kundendaten im Zug liegen gelassen hat. Was ist der erste Schritt der IT?",
     "a": "Zugänge des Geräts sperren und den Datenschutzbeauftragten informieren",
-    "a_full": "VPN-Zugang, Zertifikate und Kennwörter werden gesperrt oder geändert, falls möglich wird eine Fernlöschung ausgelöst. Parallel bewertet das Unternehmen mit dem DSB das Risiko, denn ohne Verschlüsselung ist meist eine Meldung an die Aufsichtsbehörde binnen 72 Stunden nötig. Alles wird dokumentiert.",
+    "a_full": "VPN-Zugang, Zertifikate und Kennwörter werden gesperrt oder geändert; falls möglich, wird eine Fernlöschung ausgelöst. Parallel bewertet das Unternehmen mit dem DSB das Risiko, denn ohne Verschlüsselung ist meist eine Meldung an die Aufsichtsbehörde binnen 72 Stunden nötig. Alles wird dokumentiert.",
     "options": [
       "Zugänge des Geräts sperren und den Datenschutzbeauftragten informieren",
       "Eine Woche abwarten, ob das Notebook beim Fundbüro abgegeben wird",
@@ -11353,7 +11353,7 @@
     "thema": "windows",
     "q": "Nach einem Update des Grafiktreibers startet Windows nur noch bis zu einem Bluescreen. Wie beheben Sie das?",
     "a": "Im abgesicherten Modus starten und den vorherigen Treiber wiederherstellen",
-    "a_full": "Im abgesicherten Modus lädt Windows nur Basistreiber, der fehlerhafte Grafiktreiber bleibt außen vor. Im Geräte-Manager setzt man den Treiber über Vorheriger Treiber zurück oder deinstalliert ihn. Den abgesicherten Modus erreicht man über die Windows-Wiederherstellungsumgebung, die nach mehreren fehlgeschlagenen Starts automatisch erscheint.",
+    "a_full": "Im abgesicherten Modus lädt Windows nur Basistreiber, der fehlerhafte Grafiktreiber bleibt außen vor. Im Geräte-Manager setzt man den Treiber über „Vorheriger Treiber“ zurück oder deinstalliert ihn. Den abgesicherten Modus erreicht man über die Windows-Wiederherstellungsumgebung, die nach mehreren fehlgeschlagenen Starts automatisch erscheint.",
     "options": [
       "Im abgesicherten Modus starten und den vorherigen Treiber wiederherstellen",
       "Den Arbeitsspeicher tauschen und danach das Update wiederholen",
@@ -11691,7 +11691,7 @@
     "thema": "storage",
     "q": "Ein Kollege will eine langsame SSD wie früher die Festplatte defragmentieren. Was ist stattdessen richtig?",
     "a": "TRIM nutzen, damit die SSD freie Blöcke kennt",
-    "a_full": "Bei SSDs spielt die Lage der Daten für die Zugriffszeit keine Rolle, Defragmentieren erzeugt nur unnötige Schreibvorgänge. Mit TRIM meldet das Betriebssystem gelöschte Blöcke, sodass die SSD sie vorab leeren kann. Windows erledigt das über Laufwerke optimieren automatisch.",
+    "a_full": "Bei SSDs spielt die Lage der Daten für die Zugriffszeit keine Rolle, Defragmentieren erzeugt nur unnötige Schreibvorgänge. Mit TRIM meldet das Betriebssystem gelöschte Blöcke, sodass die SSD sie vorab leeren kann. Windows erledigt das über „Laufwerke optimieren“ automatisch.",
     "options": [
       "TRIM nutzen, damit die SSD freie Blöcke kennt",
       "Die SSD vollständig formatieren und neu befüllen",
@@ -13483,7 +13483,7 @@
   {
     "cat": "systeme",
     "thema": "hardware",
-    "q": "Beim Installieren von Windows erscheint: Der ausgewählte Datenträger hat den GPT-Partitionsstil. Der PC unterstützt UEFI. Was ist die Ursache?",
+    "q": "Beim Installieren von Windows erscheint: „Der ausgewählte Datenträger hat den GPT-Partitionsstil.“ Der PC unterstützt UEFI. Was ist die Ursache?",
     "a": "Der Installationsstick wurde im Legacy- bzw. CSM-Modus gestartet",
     "a_full": "Im Legacy-Modus kann Windows nur auf MBR-Datenträger installiert werden. Startet man den Stick im Bootmenü über den Eintrag mit dem Zusatz UEFI, läuft die Installation auf GPT durch. Am besten schaltet man CSM im UEFI ganz ab.",
     "options": [
@@ -14186,10 +14186,10 @@
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
     "q": "Ein 16-Jähriger soll am 1. August seine Ausbildung beginnen. Welche Bescheinigung muss er dem Betrieb vorher vorlegen?",
-    "a": "Eine ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
+    "a": "Eine Bescheinigung über die ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
     "a_full": "Jugendliche dürfen nach § 32 JArbSchG nur beschäftigt werden, wenn sie in den letzten 14 Monaten vor Beginn ärztlich untersucht wurden und eine Bescheinigung vorliegt. Nach einem Jahr ist eine Nachuntersuchung vorzulegen. Die Untersuchung ist für den Jugendlichen kostenlos.",
     "options": [
-      "Eine ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
+      "Eine Bescheinigung über die ärztliche Erstuntersuchung nach dem Jugendarbeitsschutzgesetz",
       "Ein polizeiliches Führungszeugnis für Beschäftigte im IT-Bereich",
       "Eine Bescheinigung über einen bestandenen IT-Einstellungstest",
       "Eine schriftliche Erlaubnis der Berufsschule zur Beschäftigung"

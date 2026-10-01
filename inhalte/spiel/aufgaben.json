@@ -238,7 +238,7 @@
     "belohnung": {"geld": 40, "reputation": 4},
     "ab_tag": 3,
     "ticket": [
-      "Die Talbahn möchte 12 Notebooks für die Zugbegleiter. Der Einkaufspreis steht fest: 899,00 Euro netto pro Stück.",
+      "Die Talbahn möchte 12 Notebooks für die Zugbegleiter. Der Einkaufspreis steht fest: 899,00 € netto pro Stück.",
       "Frank: „Ich habe das schon zweimal gerechnet und zwei verschiedene Ergebnisse. Rechnest du bitte das dritte Mal, dann haben wir eine Mehrheit? Gesucht ist der Bruttobetrag inklusive 19 % Umsatzsteuer.“"
     ],
     "frage": "Wie hoch ist der Bruttobetrag für alle 12 Notebooks?",
@@ -1978,7 +1978,7 @@
     "belohnung": {"geld": 80, "reputation": 7},
     "ab_tag": 12,
     "ticket": [
-      "Frank legt dir die Liste für den Technikraum in Talheim-Nord hin: „Eine USV mit mindestens 1000 W, ein Switch mit mindestens 24 Ports und ein passendes Patchpanel. Budget 700 Euro.“",
+      "Frank legt dir die Liste für den Technikraum in Talheim-Nord hin: „Eine USV mit mindestens 1000 W, ein Switch mit mindestens 24 Ports und ein passendes Patchpanel. Budget 700 €.“",
       "„Übermorgen wird der Schrank eingebaut. Was bis dahin nicht da ist, hilft uns nichts. Und ja, ich rechne nach.“"
     ],
     "frage": "Stelle den Warenkorb zusammen: alles nötig, im Budget und rechtzeitig.",
@@ -2569,7 +2569,7 @@
     ],
     "erklaerung": [
       "Richtig: H610 (Mini-ITX) + Core i5-13400 + DDR4 16 GB + SATA-SSD 500 GB aus dem Lager + Netzteil 300 W + Mini-Gehäuse.",
-      "Das Netzteil reicht: (65 W + 60 W Grundlast) × 1,3 = 163 W. Mehmet stellt den PC in den Transportkarton. Die Schrauben sind noch sortiert."
+      "Das Netzteil reicht: (65 W + 60 W Grundlast) × 1,3 ≈ 163 W. Mehmet stellt den PC in den Transportkarton. Die Schrauben sind noch sortiert."
     ],
     "suchbegriffe": ["Mainboard", "SSD", "Netzteil"]
   },
@@ -3625,7 +3625,7 @@
     ],
     "erklaerung": [
       "Rename-Computer setzt den Namen, manage-bde -on C: -RecoveryPassword verschlüsselt das ganze Laufwerk, -protectors -get zeigt den Wiederherstellungsschlüssel für die sichere Ablage, net user … /add legt das Standardkonto an, -status prüft.",
-      "Ohne abgelegten Wiederherstellungsschlüssel ist ein vergessener PIN ein verlorener Laptop. Marta klebt keinen Zettel dran. Sie hat es dir versprochen."
+      "Ohne abgelegten Wiederherstellungsschlüssel ist eine vergessene PIN ein verlorener Laptop. Marta klebt keinen Zettel dran. Sie hat es dir versprochen."
     ],
     "suchbegriffe": ["BitLocker", "Wiederherstellungsschlüssel", "Standardbenutzer"]
   },
@@ -4051,7 +4051,7 @@
     ],
     "erklaerung": [
       "Der hintere Lüfter steht, deshalb staut sich die warme Luft und die CPU erreicht 91 °C statt höchstens 80 °C. Sie drosselt sich, daher ist der PC langsam.",
-      "Ein offenes Gehäuse saugt noch mehr Bremsstaub an, verschrotten wäre bei einem 12-€-Teil übertrieben. Richtig ist der Folgeauftrag für den Lüftertausch."
+      "Ein offenes Gehäuse saugt noch mehr Bremsstaub an. Verschrotten wäre bei einem 12-€-Teil übertrieben. Richtig ist der Folgeauftrag für den Lüftertausch."
     ],
     "suchbegriffe": ["Wartung", "Lüfter", "Staub"]
   },
@@ -4196,7 +4196,7 @@
     "ab_tag": 31,
     "nach": "vlan-plan-werkstatt",
     "ticket": [
-      "Svenja hat ihr Laptop per Konsolenkabel an den 48er-Switch im Technikraum der Werkstatt gehängt. Das Kabel ist natürlich an beiden Enden beschriftet.",
+      "Svenja hat ihren Laptop per Konsolenkabel an den 48er-Switch im Technikraum der Werkstatt gehängt. Das Kabel ist natürlich an beiden Enden beschriftet.",
       "„Du tippst, ich schau zu. VLAN 20 für die Diagnose-Laptops, Port 5 ist die Ladestation am Diagnoseplatz, Port 48 die Glasfaser zur Werkhalle. Und wir machen das Netz schleifenfest, bevor Tim hier jemals ein Kabel umsteckt.“"
     ],
     "frage": "Wähle in jedem Schritt den passenden Befehl.",
@@ -6083,8 +6083,8 @@
     "ab_tag": 61,
     "nach": "buchhaltung-having",
     "ticket": [
-      "Ulla hat eine Mail von Dr. Wendt ausgedruckt, dreifach gelesen erkennt man an den Knicken. Drei Rechnungen von Druckwerk stehen auf Kostenstelle 4711 statt 4712. „Das muss vor dem Monatsabschluss stimmen.“",
-      "„Die Tabelle rechnung hat über 18.342 Zeilen. Wir ändern genau drei. In einer Transaktion, damit wir zurück können. Sag ich auch dem Server, damit er keine Angst hat.“"
+      "Ulla hat eine Mail von Dr. Wendt ausgedruckt; dass sie dreifach gelesen wurde, erkennt man an den Knicken. Drei Rechnungen von Druckwerk stehen auf Kostenstelle 4711 statt 4712. „Das muss vor dem Monatsabschluss stimmen.“",
+      "„Die Tabelle rechnung hat 18.342 Zeilen. Wir ändern genau drei. In einer Transaktion, damit wir zurück können. Sag ich auch dem Server, damit er keine Angst hat.“"
     ],
     "frage": "Wähle in jedem Schritt den passenden SQL-Befehl.",
     "start": ["Buchhaltungsdatenbank Lindenau (MySQL 8.0)", "Database changed: buha"],
@@ -7501,7 +7501,7 @@
     ],
     "erklaerung": [
       "Im Budget geht: Mainboard A620M (Micro-ATX), AMD Ryzen 5 7600, DDR5 32 GB (2 × 16 GB), SATA-SSD 1 TB (2,5 Zoll), Netzteil 300 W, Mini-Tower (Micro-ATX, Mini-ITX), zusammen 550,00 €. Der Intel-Weg mit B760, i5-13400 und 4 × 8 GB DDR4 kostet 570,00 €, zu viel. Die F-CPU hat keine eigene Grafik, 16 GB oder 500 GB sind zu wenig.",
-      "Das Netzteil muss (65 W CPU + 60 W Grundlast) × 1,3 = 163 W liefern, 300 W reichen. Paul startet als Erstes eine Datenbank. Mehmet ahnt, dass Frank davon nie erfahren darf."
+      "Das Netzteil muss (65 W CPU + 60 W Grundlast) × 1,3 ≈ 163 W liefern, 300 W reichen. Paul startet als Erstes eine Datenbank. Mehmet ahnt, dass Frank davon nie erfahren darf."
     ],
     "suchbegriffe": ["Mainboard", "Arbeitsspeicher", "CPU"]
   },

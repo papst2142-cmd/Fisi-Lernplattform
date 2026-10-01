@@ -459,7 +459,7 @@
       "achsen": ["fachkompetenz", "zuverlaessigkeit"],
       "ticket": [
         "Mehmet hat vier gleiche Festplatten nach Seriennummer sortiert auf die Werkbank gelegt: „Je 4 TB, für das neue Backup-NAS. Es soll RAID 5 werden, eine Platte darf ausfallen.“",
-        "„Die Buchhaltung will wissen, wie viel Platz am Ende nutzbar ist. Nicht wie viel draufsteht, das kann er selbst lesen.“"
+        "„Die Buchhaltung will wissen, wie viel Platz am Ende nutzbar ist. Nicht wie viel draufsteht, das kann sie selbst lesen.“"
       ],
       "frage": "Wie viel Speicher ist bei RAID 5 mit 4 × 4 TB nutzbar?",
       "optionen": ["16 TB", "12 TB", "8 TB", "4 TB"],
@@ -482,7 +482,7 @@
           "raum": "werkstatt",
           "ticket": [
             "Mehmet hat vier gleiche Festplatten nach Seriennummer sortiert auf die Werkbank gelegt: „Je 4 TB, für das neue Backup-NAS. Es soll RAID 5 werden, eine Platte darf ausfallen.“",
-            "„Die Buchhaltung will wissen, wie viel Platz am Ende nutzbar ist. Nicht wie viel draufsteht, das kann er selbst lesen.“"
+            "„Die Buchhaltung will wissen, wie viel Platz am Ende nutzbar ist. Nicht wie viel draufsteht, das kann sie selbst lesen.“"
           ],
           "frage": "Wie viel Speicher ist bei RAID 5 mit 4 × 4 TB nutzbar?",
           "optionen": ["16 TB", "12 TB", "8 TB", "4 TB"],
@@ -1604,7 +1604,7 @@
           "auftraggeber": "aylin",
           "raum": "leitstelle",
           "ticket": [
-            "Aylin, erster Tag als Leiterin der Leitstelle, im alten Stellhebel ihres Vorgängers stecken Stifte: „Ich will ein Dashboard mit allen Fahrten. Dafür brauche ich zuerst ein sauberes Datenmodell.“",
+            "Aylin, erster Tag als Leiterin der Leitstelle. Im alten Stellhebel ihres Vorgängers stecken Stifte: „Ich will ein Dashboard mit allen Fahrten. Dafür brauche ich zuerst ein sauberes Datenmodell.“",
             "„Welche Beziehung hat was? Dann male ich die Linien in drei Farben.“"
           ],
           "frage": "Ordne jeder Beziehung die passende Kardinalität zu.",
@@ -5315,7 +5315,7 @@
           },
           "hilfe": [
             "Vergleiche das eingesetzte Modul mit der Dokumentation der Strecke. Multimode und Singlemode sind nicht austauschbar.",
-            "SX-Module mit 850 nm schaffen nur einige hundert Meter, und das auf Multimode-Faser."
+            "SX-Module mit 850 nm schaffen nur einige Hundert Meter, und das auf Multimode-Faser."
           ],
           "erklaerung": [
             "Die Strecke ist Singlemode und 2,4 km lang, eingesetzt wurde aber ein Multimode-SX-Modul. Sein Licht kommt am Archiv nicht an, deshalb gibt es keinen Link.",
@@ -9521,7 +9521,7 @@
             {
               "befehl": "ssh-keygen -t rsa -b 512",
               "ausgabe": ["Invalid RSA key length: minimum is 1024 bits"],
-              "hinweis": "512 Bit RSA sind viel zu kurz und werden abgelehnt. Ed25519 ist kurz, schnell und sicher."
+              "hinweis": "512-Bit-RSA-Schlüssel sind viel zu kurz und werden abgelehnt. Ed25519 ist kurz, schnell und sicher."
             },
             {
               "befehl": "cat ~/.ssh/id_ed25519",
@@ -11385,7 +11385,7 @@
           "prompt": "root@gw-talheim:~#",
           "start": ["Debian 12 · Gateway gw-talheim", "Log: /var/log/auth.log (letzte 7 Tage)"],
           "ticket": [
-            "Karin hat im Audit-Ordner ein Kapitel „Protokollierung“ und einen Klebezettel darauf: „Nicht nur sammeln, auch lesen!“. „Das Gateway in Talheim schreibt jede fehlgeschlagene SSH-Anmeldung mit. Ich will die drei Adressen mit den meisten Fehlversuchen.“",
+            "Karin hat im Audit-Ordner ein Kapitel „Protokollierung“ und einen Klebezettel darauf: „Nicht nur sammeln, auch lesen!“ „Das Gateway in Talheim schreibt jede fehlgeschlagene SSH-Anmeldung mit. Ich will die drei Adressen mit den meisten Fehlversuchen.“",
             "„Und die Frage, ob eine davon es doch geschafft hat. Das ist der Teil, bei dem ich schlecht schlafe.“"
           ],
           "schritte": [
@@ -14947,7 +14947,7 @@
           "ab_tag": 88,
           "achsen": ["fachkompetenz", "kundenzufriedenheit"],
           "ticket": [
-            "Paul Adler lehnt sich demonstrativ in seinem Bürostuhl zurück, und auf dem Bildschirm erscheint „Netzwerkkabel wurde entfernt“: „Sehen Sie? Nach vorne: Netz. Nach hinten: kein Netz. Ich habe es in meiner Datenbank protokolliert, 23 Mal.“",
+            "Paul Adler lehnt sich demonstrativ in seinem Bürostuhl zurück, und auf dem Bildschirm erscheint „Netzwerkkabel wurde entfernt“: „Siehst du? Nach vorne: Netz. Nach hinten: kein Netz. Ich habe es in meiner Datenbank protokolliert, 23 Mal.“",
             "„Ich habe den Stuhl schon im Verdacht. Er war beim Vorgänger dabei.“"
           ],
           "pruefungen": [

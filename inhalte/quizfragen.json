@@ -280,7 +280,7 @@
       "3 Kopien, 2 verschiedene Medien, 1 Kopie außer Haus",
       "3 Backups pro Tag, 2 Wochen Aufbewahrung, 1 Jahresarchiv",
       "3 Cloud-Anbieter, 2 lokale Server, 1 Bandlaufwerk",
-      "3 Vollbackups, 2 inkrementelle, 1 differentielles"
+      "3 Vollbackups, 2 inkrementelle, 1 differenzielles"
     ],
     "a": "3 Kopien, 2 verschiedene Medien, 1 Kopie außer Haus",
     "exp": "3-2-1-Regel: Mindestens 3 Datenkopien, 2 unterschiedliche Medientypen, 1 extern gelagert."
@@ -381,13 +381,13 @@
     "thema": "datenschutz",
     "q": "Wie hoch kann ein DSGVO-Bußgeld maximal ausfallen?",
     "options": [
-      "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
+      "Bis zu 20 Mio. Euro oder 4 % des weltweiten Jahresumsatzes",
       "Maximal 1.000 Euro pro Verstoß",
       "Maximal 500.000 Euro pauschal",
       "Es drohen keine Bußgelder, nur Verwarnungen"
     ],
-    "a": "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
-    "exp": "Art. 83 DSGVO sieht Bußgelder bis 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes vor, je nachdem, was höher ist."
+    "a": "Bis zu 20 Mio. Euro oder 4 % des weltweiten Jahresumsatzes",
+    "exp": "Art. 83 DSGVO sieht Bußgelder bis 20 Mio. Euro oder 4 % des weltweiten Jahresumsatzes vor, je nachdem, was höher ist."
   },
   {
     "cat": "sicherheit",
@@ -660,7 +660,7 @@
       "Höhere Kapazitätseffizienz"
     ],
     "a": "Deutlich bessere Schreibperformance und schnellerer Rebuild bei Ausfall",
-    "exp": "RAID 10 (Striping + Mirroring) bietet sehr gute Schreib-/Leseperformance und einen schnellen, unkomplizierten Rebuild, kostet aber 50% Kapazität."
+    "exp": "RAID 10 (Striping + Mirroring) bietet sehr gute Schreib-/Leseperformance und einen schnellen, unkomplizierten Rebuild, kostet aber 50 % Kapazität."
   },
   {
     "cat": "systeme",
@@ -834,15 +834,15 @@
   {
     "cat": "systeme",
     "thema": "storage",
-    "q": "Was unterscheidet eine differentielle Sicherung von einer inkrementellen Sicherung?",
+    "q": "Was unterscheidet eine differenzielle Sicherung von einer inkrementellen Sicherung?",
     "options": [
-      "Differentiell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
+      "Differenziell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
       "Beide Verfahren sind identisch",
-      "Differentiell sichert nur einmal im Monat",
+      "Differenziell sichert nur einmal im Monat",
       "Inkrementell sichert immer den kompletten Datenbestand"
     ],
-    "a": "Differentiell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
-    "exp": "Differentielle Backups wachsen mit der Zeit an (bis zur nächsten Vollsicherung), inkrementelle Backups bleiben klein, benötigen bei der Wiederherstellung aber alle Zwischenschritte."
+    "a": "Differenziell sichert alle Änderungen seit der letzten Vollsicherung, inkrementell nur seit der letzten Sicherung jeder Art",
+    "exp": "Differenzielle Backups wachsen mit der Zeit an (bis zur nächsten Vollsicherung), inkrementelle Backups bleiben klein, benötigen bei der Wiederherstellung aber alle Zwischenschritte."
   },
   {
     "cat": "systeme",
@@ -1050,7 +1050,7 @@
       "Der Bruttopreis gilt nur für Geschäftskunden"
     ],
     "a": "Der Bruttopreis enthält die Umsatzsteuer, der Nettopreis nicht",
-    "exp": "Nettopreis + Umsatzsteuer (i.d.R. 19% oder 7%) ergibt den Bruttopreis, den Endkunden zahlen."
+    "exp": "Nettopreis + Umsatzsteuer (i.d.R. 19 % oder 7 %) ergibt den Bruttopreis, den Endkunden zahlen."
   },
   {
     "cat": "wirtschaft",
@@ -4370,7 +4370,7 @@
   {
     "cat": "systeme",
     "thema": "virtualisierung",
-    "q": "Was beschreibt eine Dockerfile?",
+    "q": "Was beschreibt ein Dockerfile?",
     "options": [
       "Die Bauanleitung für ein Container-Image",
       "Die Liste laufender Container",
@@ -4378,7 +4378,7 @@
       "Die Netzwerkkonfiguration des Hosts"
     ],
     "a": "Die Bauanleitung für ein Container-Image",
-    "exp": "In der Dockerfile stehen Basis-Image, zu kopierende Dateien, Befehle und der Startbefehl."
+    "exp": "Im Dockerfile stehen Basis-Image, zu kopierende Dateien, Befehle und der Startbefehl."
   },
   {
     "cat": "systeme",
@@ -7674,12 +7674,12 @@
     "thema": "netzsicherheit",
     "q": "Warum sollte RDP (Port 3389) nicht direkt aus dem Internet erreichbar sein?",
     "options": [
-      "Er ist ein häufiges Ziel für Passwortangriffe und Exploits",
+      "RDP ist ein häufiges Ziel für Passwortangriffe und Exploits",
       "Weil RDP im Internet zu langsam ist",
       "Weil RDP nur im WLAN funktioniert",
       "Weil Port 3389 für DNS reserviert ist"
     ],
-    "a": "Er ist ein häufiges Ziel für Passwortangriffe und Exploits",
+    "a": "RDP ist ein häufiges Ziel für Passwortangriffe und Exploits",
     "exp": "Offene RDP-Zugänge werden ständig automatisiert angegriffen und sind ein häufiger Einstieg für Ransomware. Remotezugriff gehört hinter ein VPN oder ein RDP-Gateway mit MFA."
   },
   {
@@ -11762,7 +11762,7 @@
       "ca. 96,2 %"
     ],
     "a": "ca. 97,5 %",
-    "exp": "1500 Byte Nutzlast / 1.538 Byte auf der Leitung = 97,5 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
+    "exp": "1.500 Byte Nutzlast / 1.538 Byte auf der Leitung = 97,5 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
   },
   {
     "cat": "netzwerk",
@@ -11775,7 +11775,7 @@
       "ca. 92,2 %"
     ],
     "a": "ca. 94,9 %",
-    "exp": "1460 Byte Nutzlast / 1.538 Byte auf der Leitung = 94,9 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
+    "exp": "1.460 Byte Nutzlast / 1.538 Byte auf der Leitung = 94,9 %. Der Rest geht für Header, Prüfsumme, Präambel und Pause drauf."
   },
   {
     "cat": "netzwerk",
@@ -12706,7 +12706,7 @@
     "q": "Wer erlässt die Standardvertragsklauseln für Datenübermittlungen in Drittländer?",
     "options": [
       "Die Europäische Kommission",
-      "Das Bundesamt für Sicherheit (BSI)",
+      "Das Bundesamt für Sicherheit in der Informationstechnik (BSI)",
       "Jeder Cloud-Anbieter selbst",
       "Der Europäische Gerichtshof"
     ],
@@ -12770,12 +12770,12 @@
     "thema": "datenschutz",
     "q": "Ein Unternehmen führt kein Verzeichnis von Verarbeitungstätigkeiten. Welcher Bußgeldrahmen gilt dafür?",
     "options": [
-      "Bis zu 10 Mio. Euro oder 2% des weltweiten Jahresumsatzes",
-      "Bis zu 20 Mio. Euro oder 4% des weltweiten Jahresumsatzes",
+      "Bis zu 10 Mio. Euro oder 2 % des weltweiten Jahresumsatzes",
+      "Bis zu 20 Mio. Euro oder 4 % des weltweiten Jahresumsatzes",
       "Bis zu 50.000 Euro, unabhängig vom Jahresumsatz",
-      "Bis zu 1 Mio. Euro oder 1% des weltweiten Jahresumsatzes"
+      "Bis zu 1 Mio. Euro oder 1 % des weltweiten Jahresumsatzes"
     ],
-    "a": "Bis zu 10 Mio. Euro oder 2% des weltweiten Jahresumsatzes",
+    "a": "Bis zu 10 Mio. Euro oder 2 % des weltweiten Jahresumsatzes",
     "exp": "Verstöße gegen organisatorische Pflichten wie VVT, TOM oder Meldepflichten fallen unter Art. 83 Abs. 4. Der höhere Rahmen gilt z.B. für Verstöße gegen die Grundsätze, Rechtsgrundlagen oder Betroffenenrechte."
   },
   {
@@ -13212,12 +13212,12 @@
     "thema": "it_betrieb",
     "q": "Was versteht man unter freier Kühlung (Free Cooling) im Rechenzentrum?",
     "options": [
-      "Die Kühlung mit kalter Außenluft oder -wasser ohne Kältemaschine",
+      "Die Kühlung mit kalter Außenluft oder kaltem Wasser ohne Kältemaschine",
       "Eine Kühlung, die der Energieversorger kostenlos stellt",
       "Das Abschalten der Klimaanlage an Wochenenden",
       "Das Öffnen der Rackschränke zur besseren Belüftung"
     ],
-    "a": "Die Kühlung mit kalter Außenluft oder -wasser ohne Kältemaschine",
+    "a": "Die Kühlung mit kalter Außenluft oder kaltem Wasser ohne Kältemaschine",
     "exp": "Solange es draußen kühl genug ist, reicht die Außenluft oder ein Kühlturm. Die stromintensive Kältemaschine läuft dann nicht. Das senkt den Energieverbrauch und verbessert den PUE-Wert."
   },
   {
@@ -13907,7 +13907,7 @@
       "Parallele Vorgänge gleichen die Verzögerung automatisch aus"
     ],
     "a": "Das Projektende verschiebt sich um zwei Tage",
-    "exp": "Vorgänge auf dem kritischen Pfad haben keinen Puffer. Jede Verzögerung wirkt sich direkt auf den Endtermin aus, wenn man z.B. nicht mehr Personal einsetzt."
+    "exp": "Vorgänge auf dem kritischen Pfad haben keinen Puffer. Jede Verzögerung wirkt sich direkt auf den Endtermin aus, wenn man z.B. nicht zusätzliches Personal einsetzt."
   },
   {
     "cat": "wirtschaft",
@@ -15532,7 +15532,7 @@
       "VMs dürfen laut Lizenz nie auf einem Client-PC laufen"
     ],
     "a": "Für Produktivbetrieb gehört ein Typ-1-Hypervisor direkt auf die Hardware",
-    "exp": "Ein Typ-2-Hypervisor läuft als Programm auf einem Gastgeber-Betriebssystem. Updates, Neustarts und Fehler dieses Systems treffen alle VMs. Typ-1-Hypervisoren wie Hyper-V Server, ESXi oder Proxmox VE sind schlanker und für den Dauerbetrieb gebaut."
+    "exp": "Ein Typ-2-Hypervisor läuft als Programm auf einem Host-Betriebssystem. Updates, Neustarts und Fehler dieses Systems treffen alle VMs. Typ-1-Hypervisoren wie Hyper-V Server, ESXi oder Proxmox VE sind schlanker und für den Dauerbetrieb gebaut."
   },
   {
     "cat": "systeme",
@@ -15662,7 +15662,7 @@
       "Das manuelle Löschen des Ordners C:\\Windows\\WinSxS"
     ],
     "a": "Die Datenträgerbereinigung mit der Option Systemdateien bereinigen",
-    "exp": "Die Datenträgerbereinigung (cleanmgr) findet temporäre Dateien, Reste alter Updates und frühere Windows-Installationen. Erst mit Systemdateien bereinigen werden auch die Update-Reste angeboten. Den Komponentenspeicher WinSxS darf man nie von Hand löschen, sonst lässt sich Windows nicht mehr aktualisieren."
+    "exp": "Die Datenträgerbereinigung (cleanmgr) findet temporäre Dateien, Reste alter Updates und frühere Windows-Installationen. Erst mit „Systemdateien bereinigen“ werden auch die Update-Reste angeboten. Den Komponentenspeicher WinSxS darf man nie von Hand löschen, sonst lässt sich Windows nicht mehr aktualisieren."
   },
   {
     "cat": "systeme",
@@ -18405,7 +18405,7 @@
       "wenn NICHT stammkunde UND bestellwert > 500"
     ],
     "a": "wenn stammkunde = wahr ODER bestellwert > 500",
-    "exp": "Der Rabatt gilt, sobald eine der beiden Bedingungen erfüllt ist, das ist ein logisches ODER. Mit UND bekämen nur Stammkunden mit großer Bestellung Rabatt. Die Sprachregel oder aus der Anforderung wird so direkt in die Logik übersetzt."
+    "exp": "Der Rabatt gilt, sobald eine der beiden Bedingungen erfüllt ist, das ist ein logisches ODER. Mit UND bekämen nur Stammkunden mit großer Bestellung Rabatt. Die Sprachregel „oder“ aus der Anforderung wird so direkt in die Logik übersetzt."
   },
   {
     "cat": "systeme",
@@ -18441,7 +18441,7 @@
       "Die binäre Suche funktioniert nur, wenn die Liste sortiert ist",
       "Die binäre Suche funktioniert nur mit Zahlen, nie mit Text",
       "Die binäre Suche ist langsamer als die lineare Suche",
-      "Die binäre Suche braucht eine Liste mit genau 2er-Potenz Elementen"
+      "Die binäre Suche braucht eine Liste mit einer Zweierpotenz an Elementen"
     ],
     "a": "Die binäre Suche funktioniert nur, wenn die Liste sortiert ist",
     "exp": "Die binäre Suche vergleicht mit dem mittleren Element und entscheidet, in welcher Hälfte weitergesucht wird. Das setzt eine Sortierung voraus. Bei unsortierten Daten bleibt die lineare Suche oder man sortiert zuerst."
@@ -20706,7 +20706,7 @@
       "Der Eintrag endet mit -all statt mit ~all"
     ],
     "a": "Die Grenze von zehn DNS-Abfragen pro SPF-Prüfung ist überschritten",
-    "exp": "Jedes include, a, mx und redirect kostet mindestens eine DNS-Abfrage, verschachtelte Einträge zählen mit. Ab der elften Abfrage bricht die Prüfung mit Permerror ab. Man entfernt ungenutzte Dienste oder ersetzt Einträge durch feste IP-Bereiche."
+    "exp": "Jedes include, a, mx und redirect kostet mindestens eine DNS-Abfrage, verschachtelte Einträge zählen mit. Ab der elften Abfrage bricht die Prüfung mit \"permerror\" ab. Man entfernt ungenutzte Dienste oder ersetzt Einträge durch feste IP-Bereiche."
   },
   {
     "cat": "sicherheit",
@@ -21283,10 +21283,10 @@
   {
     "cat": "wirtschaft",
     "thema": "recht",
-    "q": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?",
+    "q": "Ein Projektleiter will die Datenschutz-Folgenabschätzung für ein neues Videoanalyse-System erst nach dem Go-Live erstellen, weil dann die echten Abläufe bekannt sind. Was ist richtig?",
     "options": [
       "Die DSFA muss vor Beginn der Verarbeitung durchgeführt werden",
-      "Die DSFA ist nach Go-live richtig, weil erst dann Daten anfallen",
+      "Die DSFA ist nach Go-Live richtig, weil erst dann Daten anfallen",
       "Die DSFA reicht innerhalb von 72 Stunden nach Inbetriebnahme",
       "Die DSFA wird nur auf Anforderung der Aufsichtsbehörde erstellt"
     ],
@@ -24359,7 +24359,7 @@
       "ca. 32,0 s"
     ],
     "a": "ca. 34,4 s",
-    "exp": "Der Zähler fasst 2^32 = 4.294.967.296 Byte = 34.359.738.368 Bit. Bei 10^9 bit/s: 34.359.738.368 / 10^9 = 34,4 s. Deshalb nutzt man bei schnellen Schnittstellen die 64-Bit-Zähler (ifHCInOctets)."
+    "exp": "Der Zähler fasst 2^32 = 4.294.967.296 Byte = 34.359.738.368 Bit. Bei 10^9 Bit/s: 34.359.738.368 / 10^9 = 34,4 s. Deshalb nutzt man bei schnellen Schnittstellen die 64-Bit-Zähler (ifHCInOctets)."
   },
   {
     "cat": "netzwerk",
@@ -24411,7 +24411,7 @@
       "Shift-Wert 7 (Faktor 128)"
     ],
     "a": "Shift-Wert 6 (Faktor 64)",
-    "exp": "Bandbreite-Verzögerungs-Produkt: 10^9 bit/s * 0,032 s / 8 = 4.000.000 Byte. 4.000.000 / 65.535 = 61,0, also Faktor 2^6 = 64 (2^5 = 32 reicht nicht)."
+    "exp": "Bandbreite-Verzögerungs-Produkt: 10^9 Bit/s * 0,032 s / 8 = 4.000.000 Byte. 4.000.000 / 65.535 = 61,0, also Faktor 2^6 = 64 (2^5 = 32 reicht nicht)."
   },
   {
     "cat": "netzwerk",
@@ -24489,7 +24489,7 @@
       "ca. 0,81 Mio. Pakete/s"
     ],
     "a": "ca. 14,88 Mio. Pakete/s",
-    "exp": "Je Frame belegt die Leitung 64 + 8 + 12 = 84 Byte = 672 Bit. 10^10 bit/s / 672 Bit = ca. 14,88 Mio. Pakete/s."
+    "exp": "Je Frame belegt die Leitung 64 + 8 + 12 = 84 Byte = 672 Bit. 10^10 Bit/s / 672 Bit = ca. 14,88 Mio. Pakete/s."
   },
   {
     "cat": "netzwerk",
