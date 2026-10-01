@@ -1,0 +1,19 @@
+{
+  "_hinweis": [
+    "Alte Fragetexte -> neue Fragetexte (ab 0.53), damit der Lernstand erhalten bleibt. Nur anhaengen."
+  ],
+  "karte": {
+    "Was ist ein Hot Aisle / Cold Aisle Konzept im Rechenzentrum?": "Was ist ein Hot-Aisle-/Cold-Aisle-Konzept im Rechenzentrum?",
+    "Was ist eine Business Impact Analyse (BIA)?": "Was ist eine Business-Impact-Analyse (BIA)?",
+    "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als erstes formal erledigen?": "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als Erstes formal erledigen?",
+    "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als erstes ein ClientHello. Was teilt der Client darin mit?": "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als Erstes ein ClientHello. Was teilt der Client darin mit?"
+  },
+  "quiz": {
+    "Was ist ein Floating Static Route?": "Was ist eine Floating Static Route?",
+    "Wie lassen sich Server Core-Maschinen grafisch aus der Ferne verwalten?": "Wie lassen sich Server-Core-Maschinen grafisch aus der Ferne verwalten?",
+    "Der Lagerbestand an Tonern wird 12,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?": "Der Lagerbestand an Tonern wird 12,0-mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "Der Lagerbestand an Tonern wird 15,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?": "Der Lagerbestand an Tonern wird 15,0-mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 5-Tage-Woche?": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 5-Tage-Woche?",
+    "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?"
+  }
+}

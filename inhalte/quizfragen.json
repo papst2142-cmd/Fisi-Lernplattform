@@ -2823,7 +2823,7 @@
   {
     "cat": "netzwerk",
     "thema": "routing",
-    "q": "Was ist ein Floating Static Route?",
+    "q": "Was ist eine Floating Static Route?",
     "options": [
       "Eine statische Backup-Route mit höherer administrativer Distanz",
       "Eine Route, die sich automatisch jede Stunde ändert",
@@ -8140,7 +8140,7 @@
   {
     "cat": "systeme",
     "thema": "windows",
-    "q": "Wie lassen sich Server Core-Maschinen grafisch aus der Ferne verwalten?",
+    "q": "Wie lassen sich Server-Core-Maschinen grafisch aus der Ferne verwalten?",
     "options": [
       "Mit Windows Admin Center oder den RSAT-Werkzeugen",
       "Gar nicht, nur direkt an der Konsole",
@@ -14380,7 +14380,7 @@
   {
     "cat": "wirtschaft",
     "thema": "beschaffung",
-    "q": "Der Lagerbestand an Tonern wird 12,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "q": "Der Lagerbestand an Tonern wird 12,0-mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
     "options": [
       "30,0 Tage",
       "43,8 Tage",
@@ -14406,7 +14406,7 @@
   {
     "cat": "wirtschaft",
     "thema": "beschaffung",
-    "q": "Der Lagerbestand an Tonern wird 15,0 mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
+    "q": "Der Lagerbestand an Tonern wird 15,0-mal im Jahr umgeschlagen. Wie lange liegt ein Toner durchschnittlich im Lager (360 Tage)?",
     "options": [
       "24,0 Tage",
       "54,8 Tage",
@@ -14510,7 +14510,7 @@
   {
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
-    "q": "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 5-Tage-Woche?",
+    "q": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 5-Tage-Woche?",
     "options": [
       "20 Arbeitstage",
       "24 Arbeitstage",
@@ -14523,7 +14523,7 @@
   {
     "cat": "wirtschaft",
     "thema": "arbeitswelt",
-    "q": "Nach dem Bundesurlaubsgesetz stehen mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?",
+    "q": "Nach dem Bundesurlaubsgesetz stehen Arbeitnehmern mindestens 24 Werktage (6-Tage-Woche) zu. Wie viele Urlaubstage sind das bei einer 3-Tage-Woche?",
     "options": [
       "12 Arbeitstage",
       "24 Arbeitstage",

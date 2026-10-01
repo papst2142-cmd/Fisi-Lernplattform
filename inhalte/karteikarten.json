@@ -3421,7 +3421,7 @@
   {
     "cat": "systeme",
     "thema": "it_betrieb",
-    "q": "Was ist ein Hot Aisle / Cold Aisle Konzept im Rechenzentrum?",
+    "q": "Was ist ein Hot-Aisle-/Cold-Aisle-Konzept im Rechenzentrum?",
     "a": "Warm- und Kaltgänge trennen die Zuluft und Abluft der Server",
     "a_full": "Die Racks werden so aufgestellt, dass die Server kalte Luft aus dem Kaltgang ansaugen und warme Luft in den Warmgang abgeben. Das verbessert die Kühlung.",
     "options": [
@@ -6190,7 +6190,7 @@
   {
     "cat": "wirtschaft",
     "thema": "service",
-    "q": "Was ist eine Business Impact Analyse (BIA)?",
+    "q": "Was ist eine Business-Impact-Analyse (BIA)?",
     "a": "Die Ermittlung, wie stark der Ausfall einzelner Prozesse dem Unternehmen schadet",
     "a_full": "Die BIA bewertet für jeden Geschäftsprozess die Folgen eines Ausfalls über die Zeit und leitet daraus die maximal tolerierbare Ausfallzeit, RTO und RPO ab. Sie ist Grundlage des Notfallmanagements.",
     "options": [
@@ -15264,7 +15264,7 @@
   {
     "cat": "sicherheit",
     "thema": "isms",
-    "q": "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als erstes formal erledigen?",
+    "q": "Ein Maschinenbauer stellt fest, dass er als wichtige Einrichtung unter die neuen NIS2-Regeln im BSI-Gesetz fällt. Was muss er als Erstes formal erledigen?",
     "a": "Sich beim BSI registrieren und eine Kontaktstelle für Meldungen benennen",
     "a_full": "Betroffene Einrichtungen müssen sich selbst beim BSI registrieren, das BSI schreibt sie nicht an. Dabei werden unter anderem Sektor, Kontaktdaten und IP-Bereiche angegeben. Danach laufen Meldepflichten und Risikomanagementmaßnahmen, die Leitung muss sie billigen und überwachen.",
     "options": [
@@ -16694,7 +16694,7 @@
   {
     "cat": "sicherheit",
     "thema": "krypto",
-    "q": "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als erstes ein ClientHello. Was teilt der Client darin mit?",
+    "q": "Im Wireshark-Mitschnitt einer HTTPS-Verbindung sehen Sie nach dem TCP-Aufbau als Erstes ein ClientHello. Was teilt der Client darin mit?",
     "a": "Unterstützte TLS-Versionen, Cipher Suites und einen Zufallswert",
     "a_full": "Mit dem ClientHello beginnt der TLS-Handshake. Der Server wählt im ServerHello eine Version und eine Cipher Suite aus und schickt sein Zertifikat. Danach tauschen beide Seiten Schlüsselmaterial aus und leiten die symmetrischen Sitzungsschlüssel ab.",
     "options": [
