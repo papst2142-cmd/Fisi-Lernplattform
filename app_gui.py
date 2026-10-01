@@ -2884,7 +2884,9 @@ class FinalProjectView(View):
             if extension == "pdf":
                 data = fpj.export_pdf(self.fields)
             else:
-                data = fpj.export_text(self.fields).encode("utf-8")
+                # ab 0.53: mit BOM und Windows-Zeilenenden, damit auch aeltere
+                # Windows-Editoren die Umlaute richtig zeigen
+                data = fpj.export_text(self.fields).replace("\n", "\r\n").encode("utf-8-sig")
             with open(path, "wb") as handle:
                 handle.write(data)
         except OSError as error:
