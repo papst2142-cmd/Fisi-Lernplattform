@@ -230,6 +230,7 @@
       "Angebot: Zuschlag über zuschlag_max verhandelt die Kundin einmal auf zuschlag_max herunter (der Auftrag geht nie verloren). anzahlung in Prozent vom Nettopreis, der Rest kommt bei der Abnahme.",
       "fehler: Folgen einer falsch gelösten Aufgabe (unter_niveau_faktor, wenn das Wissen unter der Anforderung lag). nachbestellung: falsche Bestellung oder Bestückung, der Aufschlag gilt auf die richtige Ware.",
       "verzug: Würfel beim Ende der Planung [Anteil, Tage]. kabelfehler: je Rack ein Würfel am Ende des Einbaus, Chance sinkt mit dem Verkabelungswert des Teams (je_punkt) bis min.",
+      "team_umsatz: So viel Prozent ihres Routineumsatzes bringen Leute im Serverfarm-Team nebenbei weiter (sie betreuen Stammkunden mit).",
       "strafe: Vertragsstrafe nach Tag 'tage'. Einfach: Geld mal fehlerkosten_faktor, Ansehen mal reputation_verlust_faktor, Tage (Verzug, Nachlieferung) mal serverfarm_verzug_faktor (aufgerundet)."
     ],
     "freischaltung": {"stufe": 4, "raum": "serverraum", "zertifizierungen": ["iso27001", "netzwerk"]},
@@ -237,6 +238,7 @@
     "aufgaben_pro_tag": 3,
     "team_max": 5,
     "team_empfohlen": 3,
+    "team_umsatz": 50,
     "zuschlag_max": 20,
     "anzahlung": 30,
     "richtig": {"fachkompetenz": 1},

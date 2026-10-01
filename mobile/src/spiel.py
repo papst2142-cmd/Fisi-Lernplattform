@@ -4567,9 +4567,7 @@ class GameScreen:
                     note = option["problem"] or option["fehlt"]
                     if note:
                         parts.append(ui.text(note, size=11, color=C["muted"]))
-                parts.append(ui.text("Wer an der Serverfarm mitarbeitet, macht keine "
-                                     "Kundentickets, keine Projekte und keine "
-                                     "Routineaufträge.", size=11, color=C["muted"]))
+                parts.append(ui.text(fg.farm_team_note(), size=11, color=C["muted"]))
         parts.insert(1, ui.text("Empfohlen %d, höchstens %d" % (
             fg.farm_rules().get("team_empfohlen", 2), fg.farm_rules().get("team_max", 5)),
             size=12, color=C["muted"]))

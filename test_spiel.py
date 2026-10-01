@@ -6662,8 +6662,12 @@ class ServerfarmTest(unittest.TestCase):
             self.assertEqual(state.farm_team(), staff[:2])
             listed = {item["id"]: item for item in state.staff_list()}
             self.assertTrue(listed[staff[0]]["serverfarm"])
-            self.assertEqual(listed[staff[0]]["umsatz"], 0)
+            # Im Team laeuft die Haelfte des Routineumsatzes weiter (team_umsatz 50)
+            full = state.staff_revenue_of(staff[0], listed[staff[0]]["werte"])
+            self.assertGreater(full, 0)
+            self.assertEqual(listed[staff[0]]["umsatz"], int(round(full * 0.5)))
             self.assertGreater(listed[staff[2]]["umsatz"], 0)
+            self.assertIn("zur Hälfte", fg.farm_team_note(self.content))
             tickets = state.customer_tickets()
             if tickets:
                 options = {item["an"]: item for item in

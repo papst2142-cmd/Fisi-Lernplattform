@@ -3427,8 +3427,7 @@ class FarmView(ReusableView, ScrollArea):
             if note:
                 make_label(line, note, font=F["tiny"], fg=C["muted"]).pack(side="left",
                                                                            padx=(8, 0))
-        make_label(body, "Wer an der Serverfarm mitarbeitet, macht keine Kundentickets, "
-                   "keine Projekte und keine Routineaufträge.", font=F["tiny"], fg=C["muted"],
+        make_label(body, fg.farm_team_note(), font=F["tiny"], fg=C["muted"],
                    wraplength=900, justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
 
     def _toggle_edit(self):

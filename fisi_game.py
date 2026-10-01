@@ -4276,10 +4276,13 @@ class GameState:
             item["macke_info"] = self.quirk_of(staff_id)
             item["stimmung"] = self.mood_of(staff_id)
             item["form"] = self.staff_form(staff_id)
-            # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
+            # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege.
+            # Ab 0.52: Im Serverfarm-Team laeuft ein Teil davon nebenbei weiter.
             item["umsatz"] = 0 if item["weiterbildung"] or item["abwesend"] or \
-                item["projekt"] or item["serverfarm"] else \
-                self.staff_revenue_of(staff_id, item["werte"])
+                item["projekt"] else self.staff_revenue_of(staff_id, item["werte"])
+            if item["serverfarm"] and item["umsatz"]:
+                item["umsatz"] = int(round(item["umsatz"] * farm_team_revenue(self.content)
+                                           / 100.0))
             site = self.site_of(staff_id)
             item["standort"] = site
             index = seated[site]
@@ -14519,6 +14522,24 @@ def farm_content(content=None):
 
 def farm_rules(content=None):
     return (content or GAME)["balancing"].get("serverfarm") or {}
+
+
+def farm_team_revenue(content=None):
+    """Prozent des Routineumsatzes, die Leute im Serverfarm-Team weiter bringen."""
+    return max(0, min(100, int(farm_rules(content).get("team_umsatz", 0))))
+
+
+def farm_team_note(content=None):
+    """Hinweis unter dem Serverfarm-Team (PC und Handy gleich)."""
+    share = farm_team_revenue(content)
+    text = "Wer an der Serverfarm mitarbeitet, macht keine Kundentickets und keine Projekte."
+    if share >= 100:
+        return text + " Die Routineaufträge laufen nebenbei voll weiter."
+    if share == 50:
+        return text + " Die Routineaufträge laufen nebenbei zur Hälfte weiter."
+    if share > 0:
+        return text + " Die Routineaufträge laufen nebenbei zu %d %% weiter." % share
+    return text + " Auch keine Routineaufträge."
 
 
 def farm_phases(content=None):
