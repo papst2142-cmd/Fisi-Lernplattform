@@ -100,9 +100,9 @@ NAV_ITEMS = [
     ("dashboard", "grid", "Dashboard", None),
     ("cards", "cards", "Karteikarten", CATEGORIES),
     ("quiz", "target", "Prüfungstrainer", None),
-    ("ap1scenarios", "layers", "AP1 Szenarien", None),
-    ("scenarios", "diamond", "AP2 Szenarien", None),
-    ("testproject", "flag", "Test Projekt", None),
+    ("ap1scenarios", "layers", "AP1-Szenarien", None),
+    ("scenarios", "diamond", "AP2-Szenarien", None),
+    ("testproject", "flag", "Testprojekt", None),
     ("abschluss", "case", "Abschlussprojekt", None),
     ("notebook", "notebook", "Notizblock", None),
     ("calc", "calc", "Rechner", None),
@@ -145,9 +145,9 @@ VIEW_TITLES = {
     "dashboard": ("DASHBOARD", "HOME"),
     "cards": ("LERNEN", "KARTEIKARTEN"),
     "quiz": ("LERNEN", "PRÜFUNGSTRAINER"),
-    "ap1scenarios": ("LERNEN", "AP1 SZENARIEN"),
-    "scenarios": ("LERNEN", "AP2 SZENARIEN"),
-    "testproject": ("LERNEN", "TEST PROJEKT"),
+    "ap1scenarios": ("LERNEN", "AP1-SZENARIEN"),
+    "scenarios": ("LERNEN", "AP2-SZENARIEN"),
+    "testproject": ("LERNEN", "TESTPROJEKT"),
     "abschluss": ("LERNEN", "ABSCHLUSSPROJEKT"),
     "notebook": ("LERNEN", "NOTIZBLOCK"),
     "calc": ("WERKZEUGE", "RECHNER"),
@@ -852,8 +852,8 @@ class DashboardView(View):
 
         self.ring_cards = self._ring_card(row1, 0, "Karteikarten")
         self.ring_quiz = self._ring_card(row1, 1, "Quizfragen")
-        self.ring_ap1 = self._ring_card(row1, 2, "AP1 Szenarien")
-        self.ring_scen = self._ring_card(row1, 3, "AP2 Szenarien")
+        self.ring_ap1 = self._ring_card(row1, 2, "AP1-Szenarien")
+        self.ring_scen = self._ring_card(row1, 3, "AP2-Szenarien")
 
         quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
                      accent=C["accent2"])
@@ -2411,7 +2411,7 @@ def overall_card(parent, db):
 
 
 # ============================================================================
-#  AP2 SZENARIEN
+#  AP2-SZENARIEN
 # ============================================================================
 
 class ScenarioViewBase(View):
@@ -2590,7 +2590,7 @@ class Ap1ScenarioView(ScenarioViewBase):
 
 
 # ============================================================================
-#  TEST PROJEKT
+#  TESTPROJEKT
 # ============================================================================
 
 class ProjectView(View):
@@ -2893,7 +2893,7 @@ class FinalProjectView(View):
         show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
 
     def use_template(self, position):
-        """Testprojekt als Vorlage uebernehmen (aus der Ansicht "Test Projekt")."""
+        """Testprojekt als Vorlage uebernehmen (aus der Ansicht "Testprojekt")."""
         self._flush()
         count = fpj.apply_template(self.db, self.project, position)
         self._load_project(self.project)

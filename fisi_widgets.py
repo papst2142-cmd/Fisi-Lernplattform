@@ -323,7 +323,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         canvas.create_oval(left + inset, top + inset, right - inset,
                            bottom - inset, fill="", **line_opts)
 
-    elif name == "diamond":       # AP2 Szenarien
+    elif name == "diamond":       # AP2-Szenarien
         canvas.create_polygon(x, top, right, y, x, bottom, left, y,
                               fill=color, outline="",
                               **({"tags": tags} if tags else {}))
@@ -382,7 +382,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
             canvas.create_rectangle(left, ty, right, ty + height,
                                     fill="", **line_opts)
 
-    elif name == "flag":           # Test Projekt
+    elif name == "flag":           # Testprojekt
         canvas.create_line(left + size * 0.14, top, left + size * 0.14, bottom,
                            **opts)
         canvas.create_polygon(left + size * 0.14, top,
@@ -391,7 +391,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
                               fill=color, outline="",
                               **({"tags": tags} if tags else {}))
 
-    elif name == "layers":         # AP1 Szenarien (Grundlagen)
+    elif name == "layers":         # AP1-Szenarien (Grundlagen)
         step = size * 0.22
         for i in range(3):
             oy = top + size * 0.18 + i * step

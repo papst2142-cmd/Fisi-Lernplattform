@@ -309,8 +309,8 @@ class DashboardScreen(Screen):
             self.today_card,
             ft.Row([ring_card("Karteikarten", self.ring_cards),
                     ring_card("Quizfragen", self.ring_quiz)], spacing=12),
-            ft.Row([ring_card("AP1 Szenarien", self.ring_ap1),
-                    ring_card("AP2 Szenarien", self.ring_scen)], spacing=12),
+            ft.Row([ring_card("AP1-Szenarien", self.ring_ap1),
+                    ring_card("AP2-Szenarien", self.ring_scen)], spacing=12),
             ui.Card("Erfolgsquote", [self.lbl_quote, self.lbl_quote_sub],
                     accent=C["accent2"], subtitle="Quiz gesamt"),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
@@ -452,11 +452,11 @@ class LearnScreen(Screen):
          "accent"),
         ("quiz", ft.Icons.TRACK_CHANGES_ROUNDED, "Prüfungstrainer",
          "%d Aufgaben, mit IHK-Note" % len(QUIZ_QUESTIONS), "primary"),
-        ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1 Szenarien",
+        ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1-Szenarien",
          "%d Aufgaben der Grundlagenprüfung" % len(AP1_SZENARIEN), ("#2563EB", "#22D3EE")),
-        ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2 Szenarien",
+        ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2-Szenarien",
          "%d Aufgaben der Abschlussprüfung" % len(SZENARIEN), ("#DB2777", "#FB923C")),
-        ("testproject", ft.Icons.FLAG_ROUNDED, "Test Projekt",
+        ("testproject", ft.Icons.FLAG_ROUNDED, "Testprojekt",
          "%d Kundenaufträge zum Üben" % len(PROJEKTARBEITEN), "success"),
         ("abschluss", ft.Icons.WORKSPACE_PREMIUM_ROUNDED, "Abschlussprojekt",
          "Dein IHK-Projekt vom Antrag bis zum Fachgespräch", ("#7C3AED", "#22D3EE")),
@@ -1581,7 +1581,7 @@ class PagedListBox:
 class ScenarioScreen(Screen):
     """AP2-Szenarien: Liste, ein Tipp oeffnet die Aufgabe als eigene Seite."""
 
-    crumbs = ("LERNEN", "AP2 SZENARIEN")
+    crumbs = ("LERNEN", "AP2-SZENARIEN")
     DATA = SZENARIEN
     LIST_TITLE = "AP2-Szenarien"
 
@@ -1698,7 +1698,7 @@ class ScenarioScreen(Screen):
 
 
 class Ap1ScenarioScreen(ScenarioScreen):
-    crumbs = ("LERNEN", "AP1 SZENARIEN")
+    crumbs = ("LERNEN", "AP1-SZENARIEN")
     DATA = AP1_SZENARIEN
     LIST_TITLE = "AP1-Szenarien"
     TABLE = "ap1_events"
@@ -1709,7 +1709,7 @@ class Ap1ScenarioScreen(ScenarioScreen):
 
 
 class ProjectScreen(Screen):
-    crumbs = ("LERNEN", "TEST PROJEKT")
+    crumbs = ("LERNEN", "TESTPROJEKT")
 
     def build(self):
         self.index = 0

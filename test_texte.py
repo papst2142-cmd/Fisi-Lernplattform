@@ -30,23 +30,7 @@ WORTLISTE = os.path.join(HIER, "pruefung", "wortliste.txt")
 # Eintraege hier einfach streichen; neue Funde ausserhalb dieser Menge lassen
 # den Test fehlschlagen.
 noch_offen_py = {
-    ("app_gui.py", "AP1 Szenarien"),        # Menue und Fortschrittsringe
-    ("app_gui.py", "AP2 Szenarien"),
-    ("app_gui.py", "Test Projekt"),         # Menuepunkt
-    ("app_gui.py", "AP1 SZENARIEN"),        # Brotkrumen-Titel
-    ("app_gui.py", "AP2 SZENARIEN"),
-    ("app_gui.py", "TEST PROJEKT"),
-    ("app_gui.py", "Tag(e)"),               # "Lernserie: %d Tag(e)"
-    ("fisi_core.py", "AP1 Szenarien"),      # SOURCE_PLURAL
-    ("fisi_core.py", "AP2 Szenarien"),
     ("fisi_game_gui.py", "irgendwo hin"),   # Hinweis in der Spielansicht
-    ("mobile/src/main.py", "AP1 Szenarien"),
-    ("mobile/src/main.py", "AP2 Szenarien"),
-    ("mobile/src/main.py", "Test Projekt"),
-    ("mobile/src/main.py", "AP1 SZENARIEN"),
-    ("mobile/src/main.py", "AP2 SZENARIEN"),
-    ("mobile/src/main.py", "TEST PROJEKT"),
-    ("mobile/src/main.py", "Tag(e)"),
     ("mobile/src/spiel.py", "irgendwo hin"),  # "Tippe irgendwo hin"
 }
 

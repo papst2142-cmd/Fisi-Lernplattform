@@ -1543,7 +1543,7 @@ SZENARIEN = load_content("szenarien_ap2")
 
 
 # ============================================================================
-#  LERNINHALTE: AP1 SZENARIEN (GRUNDLAGENPRUEFUNG)
+#  LERNINHALTE: AP1-SZENARIEN (GRUNDLAGENPRUEFUNG)
 # ============================================================================
 #
 # Die AP1 (gestreckte Abschlusspruefung, Teil 1) prueft die Grundlagen aus
@@ -1733,8 +1733,8 @@ SRC_PROJECT = "projekt"
 SOURCES = [SRC_CARD, SRC_QUIZ, SRC_AP1, SRC_AP2, SRC_PROJECT]
 SOURCE_NAME = {SRC_CARD: "Karteikarte", SRC_QUIZ: "Quizfrage", SRC_AP1: "AP1-Szenario",
                SRC_AP2: "AP2-Szenario", SRC_PROJECT: "Testprojekt"}
-SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1 Szenarien",
-                 SRC_AP2: "AP2 Szenarien", SRC_PROJECT: "Testprojekte"}
+SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1-Szenarien",
+                 SRC_AP2: "AP2-Szenarien", SRC_PROJECT: "Testprojekte"}
 
 Q_OPEN = "offen"
 Q_PRACTICE = "ueben"
