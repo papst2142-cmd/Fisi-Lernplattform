@@ -1471,8 +1471,8 @@
           ],
           "frage": "Ordne jedem SLA-Begriff die passende Beschreibung zu.",
           "paare": [
-            ["Reaktionszeit", "Zeit bis ein Techniker mit der Bearbeitung beginnt"],
-            ["Wiederherstellungszeit", "Zeit bis der Dienst wieder läuft"],
+            ["Reaktionszeit", "Zeit, bis ein Techniker mit der Bearbeitung beginnt"],
+            ["Wiederherstellungszeit", "Zeit, bis der Dienst wieder läuft"],
             ["Verfügbarkeit", "Anteil der Zeit, in der der Dienst nutzbar ist, in Prozent"],
             [
               "Servicezeit",
@@ -12921,7 +12921,7 @@
           "ab_tag": 80,
           "ticket": [
             "Mehmet hat einen Zettel von Karin an den Karton geklebt: „Kamerabilder nur an einem eigenen PC im abgeschlossenen Raum, ohne Internet. Paragraf 4 BDSG, Anekdote folgt.“ Darunter Mehmet: „32 GB RAM, 1 TB, keine Grafikkarte.“",
-            "„Budget 578 €. Ich habe noch das Industrie-Board aus Birkenhain übrig. Das vier-Riegel-Kit auch.“"
+            "„Budget 578 €. Ich habe noch das Industrie-Board aus Birkenhain übrig. Das Vier-Riegel-Kit auch.“"
           ],
           "teile": [
             "mb_h610_itx",

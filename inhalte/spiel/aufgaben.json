@@ -1561,7 +1561,7 @@
       "Die Nummer aus dem Warnfenster anrufen und den Fernzugriff erlauben"
     ],
     "hilfe": [
-      "Wenn ein PC plötzlich langsam wird, schaut man zuerst, was ihn beschäftigt (Task-Manager), und was sich seit gestern geändert hat.",
+      "Wenn ein PC plötzlich langsam wird, schaut man zuerst, was ihn beschäftigt (Task-Manager) und was sich seit gestern geändert hat.",
       "„Rechnung.pdf.exe“ ist ein Programm, das sich als PDF tarnt. Warnfenster mit Telefonnummer sind fast immer Betrug (Tech-Support-Scam).",
       "Bei Schadsoftware gilt: nicht selbst herumprobieren, sondern den PC isolieren, damit nichts abfließt oder sich ausbreitet, und den Vorfall melden."
     ],
@@ -3067,7 +3067,7 @@
     ],
     "erklaerung": [
       "Eine günstige Lösung: Mainboard B760M DDR4 (Micro-ATX), Intel Core i5-13400, DDR4 16 GB (2 × 8 GB), NVMe-SSD 500 GB (M.2), Netzteil 300 W, Mini-Tower (Micro-ATX, Mini-ITX), zusammen 506 €. Der i5-13400F liefert kein Bild ohne Grafikkarte, 8 GB RAM sind zu wenig.",
-      "Das 300-W-Netzteil reicht: Für den i5-13400 braucht es mindestens 163 W, selbst der Ryzen 7 käme mit 215 W aus. Den sprengt dann aber das Budget."
+      "Das 300-W-Netzteil reicht: Für den i5-13400 braucht es mindestens 163 W, selbst der Ryzen 7 käme mit 215 W aus. Der sprengt dann aber das Budget."
     ],
     "suchbegriffe": ["Mainboard", "Arbeitsspeicher", "Netzteil"]
   },
