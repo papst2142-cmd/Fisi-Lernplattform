@@ -4,6 +4,21 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.49
+
+- **Neu: Hellmodus.** Unter Optionen > Farben gibt es die Zeile
+  „Darstellung“ mit **Dunkel** und **Hell**. Die Wahl gilt sofort, wird je
+  Gerät gespeichert und lässt sich mit jeder Grundfarbe und jedem
+  Hintergrund kombinieren. Standard bleibt Dunkel.
+- Im Hellmodus hat jeder der sechs Hintergründe eine helle Fassung im
+  selben Farbton (Lavendel, Blaugrau, Salbei, Rosé, Grau, Weiß). Grund- und
+  Fachbereichsfarben werden als Schrift automatisch etwas dunkler, damit sie
+  auf hellen Flächen gut lesbar sind.
+- **Spiel:** Weltkarte und Grundrisse werden im Hellmodus ebenfalls hell.
+  Figuren, Möbel und Gebäude behalten ihre Farben.
+- Gleiche Version auf PC und Handy; enthält die Reparatur des Handy-Baus
+  aus 0.48.1.
+
 ## 0.48.1
 
 - **Fehlerbehebung Handy-Bau:** Ein Baustein, den die Handy-App beim Bauen
