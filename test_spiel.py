@@ -1793,6 +1793,41 @@ class FarbenTest(unittest.TestCase):
                     self.assertGreaterEqual(ratio("#FFFFFF", color), 4.5,
                                             (item["id"], gradient, color))
 
+    def test_hellmodus_lesbar_und_umschaltbar(self):
+        """Ab 0.49: Hellmodus - Texte, Akzente und Bedeutungsfarben 4,5:1 auf
+        allen hellen Flaechen, in jeder Kombination; Dunkel unveraendert."""
+        import fisi_theme as th
+        dark = dict(th.C)
+        try:
+            for back in th.BACKGROUNDS:
+                for item in th.PRESETS:
+                    th.apply_mode(th.MODE_LIGHT)
+                    th.apply_background(back["id"])
+                    th.apply_preset(item["id"])
+                    self.assertTrue(th.light)
+                    light = th.light_background(back["id"])
+                    self.assertEqual(th.C["bg"], light["bg"])
+                    for surface in th.LIGHT_SURFACES:
+                        for key in ("text", "text_soft", "text_dim", "muted", "accent",
+                                    "accent2", "cyan", "pink", "purple", "green", "yellow",
+                                    "orange", "blue", "red"):
+                            self.assertGreaterEqual(
+                                th.contrast(th.C[key], light[surface]), 4.5,
+                                (back["id"], item["id"], key, surface))
+                    # Fachbereichsfarben folgen
+                    self.assertIn(th.C["cyan"], th.CATEGORY_COLOR.values())
+            th.apply_mode(th.MODE_DARK)
+            th.apply_background(th.DEFAULT_BACKGROUND)
+            th.apply_preset(th.DEFAULT_PRESET)
+            self.assertEqual(dict(th.C), dark)
+            self.assertFalse(th.light)
+            self.assertEqual(th.apply_mode("gibt-es-nicht"), th.MODE_DARK)
+            self.assertEqual(set(th.LIGHT_BACKGROUNDS), set(th.BACKGROUND_IDS))
+        finally:
+            th.apply_mode(th.MODE_DARK)
+            th.apply_preset(th.DEFAULT_PRESET)
+            th.apply_background(th.DEFAULT_BACKGROUND)
+
 
 # ============================================================================
 #  Ab 0.32: Raenge, Vorlagen, Wartung, Austausch, Drucker, Zwischenfall-

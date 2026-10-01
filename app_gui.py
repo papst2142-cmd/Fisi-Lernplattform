@@ -2653,6 +2653,8 @@ class BackgroundTile(ctk.CTkFrame):
     ein Punkt in der Grundfarbe und der Name. Gewaehlt = umrandet."""
 
     def __init__(self, parent, item, active, command):
+        if fisi_theme.light:
+            item = fisi_theme.light_background(item["id"])   # ab 0.49
         super().__init__(parent, fg_color=item["bg"], corner_radius=12, border_width=2,
                          border_color=C["accent"] if active else item["border_hi"],
                          cursor="hand2")
@@ -2696,6 +2698,10 @@ class SettingsView(View):
         colors = Card(self.content, title="Farben", accent=C["accent"],
                       subtitle="nur für dieses Gerät")
         colors.pack(fill="x", pady=(14, 0))
+        # Ab 0.49: Darstellung Dunkel / Hell
+        make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        fisi_game_gui.ChoiceRow(colors.body, fisi_theme.MODES, fisi_theme.current_mode,
+                                self._change_mode).pack(anchor="w", pady=(6, 14))
         make_label(colors.body, "GRUNDFARBE", font=F["label"], fg=C["muted"]).pack(anchor="w")
         tiles = transparent_frame(colors.body)
         tiles.pack(anchor="w", pady=(6, 14))
@@ -2711,7 +2717,8 @@ class SettingsView(View):
         make_label(colors.body,
                    "Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der Hintergrund "
                    "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
-                   "Fehler und Warnung bleiben immer gleich.",
+                   "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
+                   "dunkler, damit sie gut lesbar sind).",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
@@ -2845,6 +2852,10 @@ class SettingsView(View):
     def _change_background(self, background_id):
         if background_id != fisi_theme.current_background:
             self.after(10, lambda: self.app.change_color(background_id=background_id))
+
+    def _change_mode(self, mode):
+        if mode != fisi_theme.current_mode:
+            self.after(10, lambda: self.app.change_color(mode=mode))
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -3429,7 +3440,7 @@ class FISIApp:
 
         self.current = None
 
-    def change_color(self, preset_id=None, background_id=None):
+    def change_color(self, preset_id=None, background_id=None, mode=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
         neu aufbauen - alle Ansichten werden mit den neuen Farben gezeichnet."""
         if self._recoloring:
@@ -3438,7 +3449,7 @@ class FISIApp:
         started = time.monotonic()
         overlay = self._show_busy()
         try:
-            self._recolor(preset_id, background_id, overlay)
+            self._recolor(preset_id, background_id, overlay, mode)
         finally:
             # Die Meldung bleibt mindestens kurz stehen, damit sie nicht nur
             # aufblitzt, und verschwindet erst, wenn alles neu gezeichnet ist.
@@ -3487,11 +3498,15 @@ class FISIApp:
         self.root.update_idletasks()
         self._cancel_orphaned_timers()
 
-    def _recolor(self, preset_id, background_id, overlay=None):
+    def _recolor(self, preset_id, background_id, overlay=None, mode=None):
         if preset_id:
             fisi_theme.save_preset(preset_id)
-        if background_id:
-            fisi_theme.save_background(background_id)
+        if mode:
+            fisi_theme.save_mode(mode)
+            apply_appearance()
+        if background_id or mode:
+            if background_id:
+                fisi_theme.save_background(background_id)
             self.root.configure(fg_color=C["bg"])
             self._setup_ttk_style()
         fisi_game_gui.refresh_theme_tables()
@@ -3736,6 +3751,12 @@ def _run_selftest(root, app, log_path):
                 app.change_color(background_id="anthrazit")
                 root.update()
                 app.change_color(background_id=original)
+                root.update()
+                # Ab 0.49: Darstellung hell und zurueck
+                original = fisi_theme.current_mode
+                app.change_color(mode=fisi_theme.MODE_LIGHT)
+                root.update()
+                app.change_color(mode=original)
                 if _orphaned_timers(root):
                     failures.append("Nach dem Farbwechsel stehen noch %d verwaiste "
                                     "Zeitgeber aus." % len(_orphaned_timers(root)))
@@ -3763,8 +3784,14 @@ def _run_selftest(root, app, log_path):
     return failures
 
 
+def apply_appearance():
+    """Ab 0.49: Darstellung (Dunkel/Hell) auf customtkinter und die
+    Fensterleiste uebertragen."""
+    ctk.set_appearance_mode("light" if fisi_theme.light else "dark")
+
+
 def main():
-    ctk.set_appearance_mode("dark")
+    apply_appearance()
     root = ctk.CTk()
     app = FISIApp(root)
     selftest_log = os.environ.get("FISI_SELFTEST")

@@ -169,6 +169,7 @@ def apply_preset(preset_id):
     GRADIENTS["accent"] = item["verlauf"]
     GRADIENTS["hero"] = item["hero"]
     current_preset = item["id"]
+    _apply_mode_colors()
     return item
 
 
@@ -184,9 +185,8 @@ def apply_background(background_id):
     """Setzt die Hintergrund-Farben in C (wie apply_preset)."""
     global current_background
     item = background(background_id)
-    for key in BACKGROUND_FIELDS:
-        C[key] = item[key]
     current_background = item["id"]
+    _apply_mode_colors()
     return item
 
 
@@ -223,18 +223,20 @@ def save_preset(preset_id):
     return item
 
 
-CATEGORY_COLOR = {
-    CAT_NET: C["cyan"],
-    CAT_SEC: C["pink"],
-    CAT_SYS: C["purple"],
-    CAT_BIZ: C["green"],
-    CAT_DB: C["orange"],
-}
-
+CATEGORY_COLOR = {}
+THEME_COLOR = {}
+_CATEGORY_KEYS = {CAT_NET: "cyan", CAT_SEC: "pink", CAT_SYS: "purple", CAT_BIZ: "green",
+                  CAT_DB: "orange"}
 # Farbe je Themenblock der AP1/AP2 (gleiche Reihenfolge wie in fisi_core)
-_THEME_ORDER = [C["cyan"], C["pink"], C["purple"], C["blue"], C["green"]]
-THEME_COLOR = dict(zip(AP2_THEMES, _THEME_ORDER))
-THEME_COLOR.update(zip(AP1_THEMES, _THEME_ORDER))
+_THEME_KEYS = ["cyan", "pink", "purple", "blue", "green"]
+
+
+def _refresh_tables():
+    """Fachbereichs- und Themenfarben aus C (Woerterbuecher bleiben dieselben)."""
+    CATEGORY_COLOR.update({cat: C[key] for cat, key in _CATEGORY_KEYS.items()})
+    order = [C[key] for key in _THEME_KEYS]
+    THEME_COLOR.update(zip(AP2_THEMES, order))
+    THEME_COLOR.update(zip(AP1_THEMES, order))
 
 
 # ============================================================================
@@ -266,11 +268,150 @@ def darken(color, amount=0.15):
     return mix(color, "#000000", amount)
 
 
+# ============================================================================
+#  DARSTELLUNG DUNKEL / HELL (ab 0.49)
+# ============================================================================
+#
+# Lokal je Geraet ("darstellung"): "dunkel" (Standard) oder "hell", waehlbar
+# unter Optionen > Farben. Im Hellmodus bekommt jeder Hintergrund eine
+# helle Fassung im selben Farbton; Texte werden dunkel, und alle Farben, die
+# auch als Schrift dienen (Akzente, Fachbereiche, Erfolg/Fehler/Warnung),
+# werden so weit abgedunkelt, dass sie auf jeder Flaeche 4,5:1 erreichen.
+
+MODE_KEY = "darstellung"
+MODE_DARK, MODE_LIGHT = "dunkel", "hell"
+DEFAULT_MODE = MODE_DARK
+MODES = [(MODE_DARK, "Dunkel"), (MODE_LIGHT, "Hell")]
+MODE_IDS = [key for key, _name in MODES]
+current_mode = DEFAULT_MODE
+light = False               # aktuell hell?
+
+# Die dunklen Grundwerte (so wie oben in C festgelegt)
+_DARK_FIXED = {key: C[key] for key in (
+    "text", "text_soft", "scrollbar", "scrollbar_hi", "cyan", "pink", "purple", "violet",
+    "green", "yellow", "orange", "blue", "red")}
+# Farben, die im Hellen als Schrift lesbar sein muessen
+_LIGHT_SHADED = ("cyan", "pink", "purple", "violet", "green", "yellow", "orange",
+                 "blue", "red")
+
+LIGHT_TEXT = {"text": "#1B1628", "text_soft": "#2F2940",
+              "scrollbar": "#C9C9D1", "scrollbar_hi": "#A9A9B5"}
+
+# Helle Fassungen der Hintergruende (gleicher Farbton wie die dunklen)
+LIGHT_BACKGROUNDS = {
+    "violett": {"bg": "#F4F0FB", "sidebar": "#EAE3F7", "card": "#FFFFFF",
+                "card_alt": "#F3EEFB", "card_hi": "#E8DFF7", "border": "#DCD1EF",
+                "border_hi": "#B7A3DD", "ring_bg": "#E3D9F3", "text_dim": "#5A4979",
+                "muted": "#685889"},
+    "nachtblau": {"bg": "#EFF3FA", "sidebar": "#E2E9F5", "card": "#FFFFFF",
+                  "card_alt": "#EEF2FA", "card_hi": "#DFE7F5", "border": "#D0DAEC",
+                  "border_hi": "#9FB2D6", "ring_bg": "#DAE3F2", "text_dim": "#45557A",
+                  "muted": "#56658A"},
+    "tannengruen": {"bg": "#EFF6F3", "sidebar": "#E1EEE8", "card": "#FFFFFF",
+                    "card_alt": "#EDF5F1", "card_hi": "#DCEBE4", "border": "#CCE0D7",
+                    "border_hi": "#93BBAA", "ring_bg": "#D6E8DF", "text_dim": "#3E5E53",
+                    "muted": "#4D6C61"},
+    "aubergine": {"bg": "#FAF0F5", "sidebar": "#F3E2EC", "card": "#FFFFFF",
+                  "card_alt": "#F9EEF4", "card_hi": "#F0DCE7", "border": "#E6CCDA",
+                  "border_hi": "#CE9BB7", "ring_bg": "#EDD6E3", "text_dim": "#6E4560",
+                  "muted": "#7B536D"},
+    "anthrazit": {"bg": "#F3F3F5", "sidebar": "#E7E7EB", "card": "#FFFFFF",
+                  "card_alt": "#F1F1F4", "card_hi": "#E4E4E9", "border": "#D6D6DD",
+                  "border_hi": "#ABABB7", "ring_bg": "#DFDFE5", "text_dim": "#4E4E5B",
+                  "muted": "#5C5C69"},
+    "schwarz": {"bg": "#FFFFFF", "sidebar": "#F2F2F4", "card": "#FFFFFF",
+                "card_alt": "#F5F5F7", "card_hi": "#EBEBEF", "border": "#DDDDE3",
+                "border_hi": "#B0B0BC", "ring_bg": "#E6E6EB", "text_dim": "#4A4A55",
+                "muted": "#585864"},
+}
+LIGHT_SURFACES = ("bg", "sidebar", "card", "card_alt", "card_hi")
+MIN_CONTRAST = 4.6
+
+
+def luminance(color):
+    def part(value):
+        value /= 255.0
+        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+    r, g, b = hex_to_rgb(color)
+    return 0.2126 * part(r) + 0.7152 * part(g) + 0.0722 * part(b)
+
+
+def contrast(color_a, color_b):
+    high, low = sorted((luminance(color_a), luminance(color_b)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def readable_on(color, surfaces, minimum=MIN_CONTRAST):
+    """Dunkelt eine Farbe schrittweise ab, bis sie auf allen Flaechen als
+    Schrift lesbar ist (Farbton bleibt erhalten)."""
+    shade = color
+    for step in range(1, 41):
+        if all(contrast(shade, surface) >= minimum for surface in surfaces):
+            return shade
+        shade = mix(color, "#000000", step * 0.025)
+    return shade
+
+
+def light_background(background_id):
+    """Die helle Fassung eines Hintergrunds (Werte wie BACKGROUNDS)."""
+    item = background(background_id)
+    return dict(LIGHT_BACKGROUNDS.get(item["id"], LIGHT_BACKGROUNDS["violett"]),
+                id=item["id"], name=item["name"])
+
+
+def _apply_mode_colors():
+    """Setzt Flaechen, Texte und Schriftfarben passend zu Hintergrund,
+    Grundfarbe und Darstellung (alles in C, in place)."""
+    global light
+    light = current_mode == MODE_LIGHT
+    item = light_background(current_background) if light else background(current_background)
+    for key in BACKGROUND_FIELDS:
+        C[key] = item[key]
+    for key, value in _DARK_FIXED.items():
+        C[key] = value
+    accent = preset(current_preset)
+    C["accent"], C["accent2"] = accent["accent"], accent["accent2"]
+    if light:
+        C.update(LIGHT_TEXT)
+        surfaces = [item[key] for key in LIGHT_SURFACES]
+        for key in _LIGHT_SHADED + ("accent", "accent2"):
+            C[key] = readable_on(C[key], surfaces)
+        for key in ("text_dim", "muted"):
+            C[key] = readable_on(C[key], surfaces)
+    _refresh_tables()
+
+
+def apply_mode(mode):
+    """Setzt die Darstellung (dunkel/hell) und alle Farben."""
+    global current_mode
+    current_mode = mode if mode in MODE_IDS else DEFAULT_MODE
+    _apply_mode_colors()
+    return current_mode
+
+
+def saved_mode():
+    import fisi_update
+    value = fisi_update.load_settings().get(MODE_KEY, DEFAULT_MODE)
+    return value if value in MODE_IDS else DEFAULT_MODE
+
+
+def save_mode(mode):
+    """Speichert die Darstellung (nur lokal) und wendet sie an."""
+    import fisi_update
+    value = apply_mode(mode)
+    settings = fisi_update.load_settings()
+    settings[MODE_KEY] = value
+    fisi_update.save_settings(settings)
+    return value
+
+
 # Gespeicherte Grundfarbe gleich beim Import anwenden, bevor irgendeine
 # Oberflaeche gebaut wird.
 try:
+    current_mode = saved_mode()
     apply_preset(saved_preset())
     apply_background(saved_background())
 except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start verhindern
+    current_mode = DEFAULT_MODE
     apply_preset(DEFAULT_PRESET)
     apply_background(DEFAULT_BACKGROUND)
