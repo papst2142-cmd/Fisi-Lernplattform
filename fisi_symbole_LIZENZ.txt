@@ -1,7 +1,7 @@
 fisi_symbole.otf
 ================
 
-Enthaelt 21 Symbole aus der Schrift "Material Icons" (gerundete Variante),
+Enthaelt 22 Symbole aus der Schrift "Material Icons" (gerundete Variante),
 dieselben, die die Handy-App ueber Flet/Flutter verwendet.
 
 Copyright 2019 Google LLC.

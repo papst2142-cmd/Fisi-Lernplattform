@@ -27,5 +27,8 @@ mobile/src/fisi_update.py
 mobile/src/fisi_sync.py
 mobile/src/fisi_game.py
 mobile/src/fisi_lernen.py
+mobile/src/fisi_pruefung.py
+mobile/src/fisi_projekt.py
+mobile/src/fisi_pdf.py
 mobile/src/inhalte/
 mobile/build/

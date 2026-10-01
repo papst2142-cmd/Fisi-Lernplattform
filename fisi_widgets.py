@@ -560,6 +560,7 @@ SYMBOLS = {
     "home": 0xF7F5,
     "work": 0xF02C7,
     "route": 0xF0377,
+    "workspace_premium": 0xE7AF,
 }
 _SYMBOL_FONTS = {}
 
@@ -1731,6 +1732,37 @@ def make_label(parent, text, font=None, fg=None, bg=None, **kwargs):
     return ctk.CTkLabel(parent, text=text, text_color=fg or C["text"],
                         fg_color=bg or "transparent", font=font or F["body"],
                         **kwargs)
+
+
+# Ab 0.51: CTkTextbox plant alle 100 ms eine Pruefung seiner Scrollbalken
+# (after mit lambda) und bricht sie beim Zerstoeren nicht ab. Werden
+# Textfelder neu aufgebaut (Pruefungsmodus, Abschlussprojekt), meldet Tk
+# danach "invalid command name ...<lambda>". Deshalb merkt sich jedes
+# Textfeld seine letzten Zeitgeber und bricht sie in destroy() ab.
+_textbox_after = ctk.CTkTextbox.after
+_textbox_destroy = ctk.CTkTextbox.destroy
+
+
+def _tracked_after(self, ms, func=None, *args):
+    job = _textbox_after(self, ms, func, *args)
+    if func is not None:
+        jobs = self.__dict__.setdefault("_fisi_jobs", [])
+        jobs.append(job)
+        del jobs[:-4]
+    return job
+
+
+def _quiet_destroy(self):
+    for job in self.__dict__.pop("_fisi_jobs", []):
+        try:
+            self.after_cancel(job)
+        except (tk.TclError, ValueError):
+            pass
+    _textbox_destroy(self)
+
+
+ctk.CTkTextbox.after = _tracked_after
+ctk.CTkTextbox.destroy = _quiet_destroy
 
 
 def make_text(parent, height=6, readonly=False, font=None):

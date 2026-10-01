@@ -16,7 +16,8 @@ MOBILE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(MOBILE)
 SRC = os.path.join(MOBILE, "src")
 SHARED_FILES = ["fisi_core.py", "fisi_theme.py", "fisi_update.py", "fisi_sync.py",
-                "fisi_game.py", "fisi_lernen.py"]
+                "fisi_game.py", "fisi_lernen.py", "fisi_pruefung.py", "fisi_projekt.py",
+                "fisi_pdf.py"]
 SHARED_DIRS = ["inhalte"]
 
 
