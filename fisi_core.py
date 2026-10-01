@@ -292,6 +292,16 @@ def purge_deleted_runs(cur):
             cur.execute("DELETE FROM spiel_ereignisse WHERE lauf = ?", (run,))
 
 
+def apply_question_renames(cur):
+    """Schreibt alte Fragetexte im Lernstand auf die neuen um (ab 0.53,
+    siehe load_question_renames). Kennung (uid) und Zeitpunkt bleiben, der
+    Abgleich zaehlt die Eintraege also nicht doppelt."""
+    for table, renames in QUESTION_RENAMES.items():
+        for old, new in renames.items():
+            cur.execute("UPDATE %s SET question = ? WHERE question = ?" % table,
+                        (new, old))
+
+
 def purge_superseded_project_rows(cur):
     """Loescht im Abschlussprojekt alle Zeilen, die eine neuere Fassung
     desselben Feldes haben (ab 0.51). Gleiche Zeit: die groessere uid gilt,
@@ -523,6 +533,8 @@ class DBManager:
                     " key TEXT PRIMARY KEY, value TEXT)")
         cur.execute("CREATE INDEX IF NOT EXISTS ix_spiel_ereignisse_lauf"
                     " ON spiel_ereignisse (lauf)")
+        # ab 0.53: korrigierte Fragetexte im Lernstand nachziehen
+        apply_question_renames(cur)
 
     @staticmethod
     def _now():
@@ -1447,6 +1459,26 @@ def build_quiz_database():
 
 
 QUIZ_QUESTIONS = build_quiz_database()
+
+
+def load_question_renames():
+    """Alte -> neue Fragetexte aus inhalte/umbenennungen.json (ab 0.53).
+
+    Karteikarten und Quizfragen werden im Lernstand ueber ihren Fragetext
+    gefuehrt. Wird ein Fragetext korrigiert, uebertraegt diese Liste die
+    vorhandenen Antworten auf den neuen Text - auch Antworten, die spaeter
+    noch per Abgleich von einem Geraet mit aelterer Version kommen."""
+    try:
+        with open(os.path.join(CONTENT_DIR, "umbenennungen.json"),
+                  encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    return {"card_events": dict(data.get("karte") or {}),
+            "quiz_answers": dict(data.get("quiz") or {})}
+
+
+QUESTION_RENAMES = load_question_renames()
 
 
 # ============================================================================

@@ -145,7 +145,10 @@ def py_dateien():
     dateien = [d for d in sorted(glob.glob(os.path.join(HIER, "*.py")))
                if not os.path.basename(d).startswith("test_")]
     dateien += sorted(glob.glob(os.path.join(HIER, "mobile", "*.py")))
-    dateien += sorted(glob.glob(os.path.join(HIER, "mobile", "src", "*.py")))
+    # Kopien der gemeinsamen Dateien (mobile/vorbereiten.py) nicht doppelt pruefen
+    geteilt = {os.path.basename(d) for d in dateien}
+    dateien += [d for d in sorted(glob.glob(os.path.join(HIER, "mobile", "src", "*.py")))
+                if os.path.basename(d) not in geteilt]
     return dateien
 
 
@@ -253,6 +256,62 @@ class UmbenennungenTest(unittest.TestCase):
                 self.assertNotIn(alt, fragen, "%s: alter Text noch vorhanden: %r" % (datei, alt[:100]))
                 self.assertNotIn(neu, zuordnung, "%s: Kette alt -> neu -> neuer: %r" % (datei, neu[:100]))
                 self.assertNotEqual(alt, neu)
+
+
+class LernstandUmbenennungTest(unittest.TestCase):
+    """Antworten zu alten Fragetexten zaehlen nach der Korrektur beim neuen
+    Text - beim Start (Datenbank-Migration) und nach dem Abgleich mit einem
+    Geraet, das noch die alte Version hat."""
+
+    def setUp(self):
+        import tempfile
+        import fisi_core
+        self.core = fisi_core
+        self.ordner = tempfile.mkdtemp()
+        self.karte_alt, self.karte_neu = next(iter(fisi_core.QUESTION_RENAMES["card_events"].items()))
+        self.quiz_alt, self.quiz_neu = next(iter(fisi_core.QUESTION_RENAMES["quiz_answers"].items()))
+
+    def tearDown(self):
+        shutil.rmtree(self.ordner, ignore_errors=True)
+
+    def _db(self, name):
+        return self.core.DBManager(os.path.join(self.ordner, name))
+
+    def _fragen(self, db, tabelle):
+        conn = db.get_connection()
+        try:
+            return sorted(r[0] for r in conn.execute("SELECT question FROM %s" % tabelle))
+        finally:
+            conn.close()
+
+    def test_migration_beim_start(self):
+        db = self._db("a.db")
+        db.log_card("Netzwerk", self.karte_alt, "learn", 1)
+        db.log_quiz_answer("Netzwerk", self.quiz_alt, 1)
+        db.log_quiz_answer("Netzwerk", "unveraendert", 0)
+        db = self._db("a.db")          # neuer Start = init_db
+        self.assertEqual(self._fragen(db, "card_events"), [self.karte_neu])
+        self.assertEqual(self._fragen(db, "quiz_answers"), sorted([self.quiz_neu, "unveraendert"]))
+        status = db.question_results()
+        self.assertIn(self.quiz_neu, str(status))
+        self.assertNotIn(self.quiz_alt, str(status))
+
+    def test_abgleich_mit_alter_version(self):
+        import fisi_sync
+        alt = self._db("alt.db")
+        alt.log_quiz_answer("Netzwerk", self.quiz_alt, 1)
+        conn = alt.get_connection()        # Geraet mit 0.52: alter Text bleibt
+        conn.execute("UPDATE quiz_answers SET question = ?", (self.quiz_alt,))
+        conn.commit()
+        conn.close()
+        daten = fisi_sync.export_local(alt)
+        self.assertEqual(daten["tables"]["quiz_answers"][0][3], self.quiz_alt)
+        neu = self._db("neu.db")
+        self.assertEqual(fisi_sync.merge_into_local(neu, daten), 1)
+        self.assertEqual(self._fragen(neu, "quiz_answers"), [self.quiz_neu])
+        # erneuter Abgleich zaehlt nichts doppelt (gleiche uid)
+        self.assertEqual(fisi_sync.merge_into_local(neu, daten), 0)
+        self.assertEqual(len(self._fragen(neu, "quiz_answers")), 1)
 
 
 class RechtschreibungTest(unittest.TestCase):

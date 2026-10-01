@@ -36,7 +36,7 @@ import urllib.request
 
 from fisi_core import (GAME_TABLES, HISTORY_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
                        RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, purge_deleted_runs,
-                       purge_superseded_project_rows)
+                       purge_superseded_project_rows, apply_question_renames)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
@@ -308,6 +308,9 @@ def merge_into_local(db, remote):
         purge_deleted_runs(cur)
         # Abschlussprojekt (ab 0.51): nur die neueste Fassung je Feld behalten
         purge_superseded_project_rows(cur)
+        # Ab 0.53: Antworten von Geraeten mit aelterer Version koennen noch
+        # alte Fragetexte tragen - sie zaehlen beim neuen Text
+        apply_question_renames(cur)
         conn.commit()
     finally:
         conn.close()
