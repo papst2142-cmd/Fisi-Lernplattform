@@ -29,10 +29,7 @@ WORTLISTE = os.path.join(HIER, "pruefung", "wortliste.txt")
 # werden getrennt bearbeitet). Paare (Datei, verbotene Form). Behobene
 # Eintraege hier einfach streichen; neue Funde ausserhalb dieser Menge lassen
 # den Test fehlschlagen.
-noch_offen_py = {
-    ("fisi_game_gui.py", "irgendwo hin"),   # Hinweis in der Spielansicht
-    ("mobile/src/spiel.py", "irgendwo hin"),  # "Tippe irgendwo hin"
-}
+noch_offen_py = set()
 
 # Schluessel, deren Werte keine Lesetexte sind (IDs, Kategorien, Symbole).
 ID_KEYS = {"cat", "thema", "theme", "typ", "raum", "ort", "id", "auftraggeber", "empfaenger", "haendler",

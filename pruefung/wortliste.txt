@@ -57,6 +57,13 @@ re:\bBuchst\. -> lit.
 re:\b[Nn]icht-persistent -> nicht persistent
 re:\b[Nn]icht-monet -> nicht monetaer
 re:\bCat\. ?\d -> Cat 6 / Cat-6A-Kabel
+Team-Arbeit -> Teamarbeit
+Gewerbehof am Stellwerk -> Gewerbehof Am Stellwerk
+re:\d+x hintereinander -> zweimal hintereinander
+re:%dx\b -> %d-mal
+Network-ID -> Netzwerk-Adresse
+Festplatte(n) -> Festplatte/Festplatten passend zur Zahl
+Zuordnung(en) -> Zuordnung/Zuordnungen passend zur Zahl
 
 [ausnahmen]
 # Eigenname eines (erfundenen) Produkts in Karteikarte [31]

@@ -2066,8 +2066,8 @@ class GameScreen:
         founding.visible = not state.firm
         job = "Geschäftsführung · %s" % state.firm["name"] if state.firm else state.rank
         hint = "" if state.firm else fg.rank_hint(state)
-        money = ("Konto: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
-                 if not state.firm else "Konto: %s" % euro(state.money))
+        money = ("Kontostand: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
+                 if not state.firm else "Kontostand: %s" % euro(state.money))
         buttons = [ui.GradientButton("Figur bearbeiten", self._edit_profile, kind="ghost",
                                      height=38)]
         if state.firm or state.founding_ready():
@@ -3145,7 +3145,7 @@ class GameScreen:
         rules = fg.project_rules()
         tenders = [ui.text("Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte × %s) "
                            "plus Material, dazu Handlungskosten und dein Zuschlag. Bei "
-                           "Projekten bieten meist zwei oder drei Firmen mit. Gewonnen gibt es "
+                           "Projekten bieten meist zwei oder drei Firmen mit. Bei Gewinn gibt es "
                            "%d %% Anzahlung, den Rest bei Fertigstellung."
                            % (euro(rules["stundensatz"]), rules["anzahlung"]), size=12,
                            color=C["text_dim"])]
@@ -3200,7 +3200,7 @@ class GameScreen:
         lines += [ui.text("• " + line, size=12, color=C["text_soft"])
                   for line in template["rahmenbedingungen"]]
         if template["lernbar"]:
-            lines.append(ui.text("Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses "
+            lines.append(ui.text("Tipp: Unter „Testprojekt“ im Lernbereich kannst du dieses "
                                  "Projekt durcharbeiten. Dann arbeitet dein Team %d %% "
                                  "schneller."
                                  % fg.project_rules().get("lernbonus", 0), size=11,
@@ -3309,7 +3309,7 @@ class GameScreen:
             ui.text(state.firm["name"], size=22, weight=ft.FontWeight.BOLD),
             ui.text("%s · %s" % (fg.firm_rules()["gebaeude"]["name"], stage["name"]),
                     size=14, color=C["green"], weight=ft.FontWeight.BOLD),
-            ui.text("Konto: %s" % euro(state.money), size=13,
+            ui.text("Kontostand: %s" % euro(state.money), size=13,
                     color=C["text_dim"] if state.money >= 0 else C["red"]),
             ui.text(fg.firm_summary(state), size=13, color=C["text_dim"]),
         ], accent=C["green"], subtitle="seit Tag %d · %s" % (
@@ -4527,7 +4527,7 @@ class GameScreen:
                 weight=ft.FontWeight.BOLD))
         if phase.get("team_punkte"):
             current = next(item for item in info["phasen"] if item["id"] == phase["id"])
-            parts.append(ui.text("Team-Arbeit: %s von %d Punkten%s." % (
+            parts.append(ui.text("Teamarbeit: %s von %d Punkten%s." % (
                 fg._num(current["punkte"]), phase["team_punkte"],
                 " · heute etwa +%s" % fg._num(info["team_heute"])
                 if info.get("team_heute") else " · noch niemand im Team"),

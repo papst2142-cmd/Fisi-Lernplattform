@@ -3436,7 +3436,7 @@ class FarmView(ReusableView, ScrollArea):
                          (info["nacharbeit_bis"] - start + 1))
         if phase.get("team_punkte"):
             current = next(item for item in info["phasen"] if item["id"] == phase["id"])
-            notes.append("Team-Arbeit: %s von %d Punkten%s." % (
+            notes.append("Teamarbeit: %s von %d Punkten%s." % (
                 fg._num(current["punkte"]), phase["team_punkte"],
                 " · heute etwa +%s" % fg._num(info["team_heute"])
                 if info.get("team_heute") else " · noch niemand im Team"))
@@ -3491,7 +3491,7 @@ class FarmView(ReusableView, ScrollArea):
                   height=32, font=F["small_bold"]).pack(anchor="w", pady=(8, 0))
         if not self.team_edit:
             return
-        make_label(body, "WER ARBEITET MIT? (antippen zum Aufnehmen oder Herausnehmen)",
+        make_label(body, "WER ARBEITET MIT? (anklicken zum Aufnehmen oder Herausnehmen)",
                    font=F["label"], fg=C["muted"]).pack(anchor="w", pady=(10, 2))
         for option in fg.farm_candidates(state, levels):
             line = _frame(body)
@@ -4492,7 +4492,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         box.pack(fill="x", pady=(14, 0))
         make_label(box.body, "Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte "
                    "× %s) plus Material, dazu Handlungskosten und dein Zuschlag. Bei Projekten "
-                   "bieten meist zwei oder drei Firmen mit. Gewonnen gibt es %d %% Anzahlung, "
+                   "bieten meist zwei oder drei Firmen mit. Bei Gewinn gibt es %d %% Anzahlung, "
                    "den Rest bei Fertigstellung." % (_euro(rules["stundensatz"]),
                                                      rules["anzahlung"]),
                    font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
@@ -4557,7 +4557,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         if not template["lernbar"]:
             ctk.CTkFrame(tip, height=8, fg_color="transparent").pack()
             return
-        make_label(tip, "Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses Projekt "
+        make_label(tip, "Tipp: Unter „Testprojekt“ im Lernbereich kannst du dieses Projekt "
                    "durcharbeiten. Dann arbeitet dein Team %d %% schneller."
                    % fg.project_rules().get("lernbonus", 0), font=F["tiny"], fg=C["muted"],
                    wraplength=740, justify="left", anchor="w").pack(anchor="w", padx=12,
@@ -4593,7 +4593,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
                   lambda: self._toggle_details(pid), kind="ghost", height=32,
                   font=F["small_bold"]).pack(side="left", padx=(10, 0))
         if editing:
-            make_label(text, "WER ARBEITET MIT? (antippen zum Aufnehmen oder Herausnehmen)",
+            make_label(text, "WER ARBEITET MIT? (anklicken zum Aufnehmen oder Herausnehmen)",
                        font=F["label"], fg=C["muted"]).pack(anchor="w", pady=(10, 2))
             for option in fg.project_candidates(state, project, levels):
                 line = _frame(text)

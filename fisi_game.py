@@ -4697,7 +4697,7 @@ def reset_help(game):
     return ("Setzt nur den aktiven Spielstand zurück (%s): Spielfigur, Spielgeld, "
             "Reputation, Arbeitstage und erledigte Tickets. Auf dem Platz beginnt danach "
             "ein neuer Durchgang. Die anderen Plätze und der Lernfortschritt bleiben "
-            "erhalten. Mit eingerichtetem Abgleich auf PC und Handy." % label)
+            "erhalten. Mit eingerichtetem Abgleich gilt das auf PC und Handy." % label)
 
 
 def reset_question(game):
@@ -11418,7 +11418,7 @@ def journey(state, content=None):
         elif kind == EV_TRANSFER and data.get("id") in hired:
             add(tag, JOURNEY_FIRM, "versetzung", "Versetzt: %s" % hired[data["id"]],
                 "Arbeitet jetzt %s." % ("in der Filiale" if data.get("standort") == SITE_BRANCH
-                                        else "im Gewerbehof am Stellwerk"))
+                                        else "im Gewerbehof Am Stellwerk"))
         elif kind in (EV_OFFER_WON, EV_OFFER_LOST):
             # Jedes Angebot steht im Tagebuch, gewonnen oder verloren
             customer = (firm_customer(data.get("kunde"), content) or {}).get("name", "einen Kunden")
@@ -12762,7 +12762,7 @@ def place_message(site_id, position, person, state, content=None):
             return ("Eingangstür", "Noch nicht: %s offen." % (
                 "1 Ticket ist" if left == 1 else "%d Tickets sind" % left), [])
         if site_id == SITE_BRANCH:
-            return ("Ausgang", "Von hier geht es zurück zum Gewerbehof am Stellwerk.",
+            return ("Ausgang", "Von hier geht es zurück zum Gewerbehof Am Stellwerk.",
                     [("buero", "Zum Gewerbehof")])
         return ("Ausgang", "Hier geht es zurück ins Büro.", [("buero", "Zurück ins Büro")])
     title, text = office_message(position, person, quests, content, state)
