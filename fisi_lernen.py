@@ -42,7 +42,7 @@ from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIO
 
 SR_INTERVALS = (1, 3, 7, 14, 30)
 SR_START = "2026-10-01"
-SR_LEGACY_PER_DAY = 30
+SR_LEGACY_PER_DAY = 20
 SR_SOURCES = (SRC_CARD, SRC_QUIZ)
 # Hoechstens so viele Fragen in einer Wiederholungs-Sitzung
 SR_SESSION_MAX = 50

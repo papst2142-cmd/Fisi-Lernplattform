@@ -4,6 +4,44 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.51
+
+Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorbereitung.
+
+- **Neu: Wiederholung nach Plan.** Karteikarten und Fragen aus dem
+  Prüfungstrainer kommen nach 1, 3, 7, 14 und 30 Tagen wieder. Nach einem
+  Fehler beginnt die Karte wieder von vorn. Dashboard (PC) und Start
+  (Handy) zeigen „Heute fällig“ und den Knopf „Jetzt wiederholen“.
+  Was vor dem 01.10.2026 bearbeitet wurde, wird gestaffelt freigegeben,
+  höchstens 20 Stück pro Tag. Rote Karten kommen zuerst.
+- **Neu: Prüfungsmodus im Prüfungstrainer.** Die IHK-Prüfung wird nach der
+  Ausbildungsverordnung von 2020 nachgestellt: AP1, Konzeption und
+  Administration, Netzwerke sowie WiSo.
+  - Die Zeit läuft fest und ohne Pause, wie in der echten Prüfung.
+  - Offene Aufgaben bewertest du selbst anhand von Kriterien zum Abhaken.
+    Daraus entsteht ein Punktevorschlag, den du anpassen kannst.
+  - Es gilt der IHK-Notenschlüssel.
+  - Das Gesamtergebnis wird nach § 24 berechnet. Bei „nicht bestanden“
+    zeigt die App, ob eine mündliche Ergänzungsprüfung reichen würde.
+- **Neu: Abschlussprojekt.** Am PC ist es ein eigener Menüpunkt, am Handy
+  eine Kachel unter „Lernen“.
+  - Sechs Reiter: Übersicht, Antrag, Zeitplan, Kosten, Dokumentation und
+    Fachgespräch (mit 60 Übungsfragen).
+  - Du kannst mehrere Projekte anlegen und Testprojekte als Vorlage nutzen.
+  - Export als PDF oder als Text.
+  - Alles wird zwischen den Geräten abgeglichen.
+- **Neu: Subnetting-Trainer** im Rechner. Er übt IPv4-Subnetze, VLSM,
+  Binär, Hex und Dezimal sowie IPv6, jeweils in drei Stufen. Jedes Feld
+  wird einzeln geprüft, danach erscheint der Rechenweg.
+- **Neu: Tagesziel, Lernserie und Erinnerung** unter Optionen →
+  „Tagesziel“. Die Erinnerung erscheint als Hinweis beim Start oder beim
+  Zurückkehren in die App. Sie ist standardmäßig um 18:00 Uhr
+  eingeschaltet.
+- Korrektur: Am Handy stand „vier Fachbereiche“. Anzahlen werden jetzt
+  überall aus den Daten berechnet.
+- Abgleich: Wiederholung, Prüfungen und Abschlussprojekt werden
+  synchronisiert. Am besten bringst du PC und Handy beide auf 0.51.
+
 ## 0.50
 
 - **Fehlerbehebung PC: Optionen bleiben nach dem Farbwechsel sichtbar.**
