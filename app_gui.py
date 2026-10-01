@@ -49,6 +49,7 @@ from fisi_core import (  # noqa: E402
     theme_totals, validate_content,
 )
 import fisi_game  # noqa: E402
+import fisi_game_gui  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
@@ -72,7 +73,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.47"
+APP_VERSION = "0.48"
 
 
 def _resource_path(filename):
@@ -619,19 +620,30 @@ class Sidebar(ctk.CTkFrame):
                      font=F["tiny"], height=0).pack(side="left", padx=(7, 0),
                                                     pady=(7, 0))
 
-        make_label(self, "MENÜ", font=F["label"], fg=C["muted"],
+        self.footer = make_label(self, "Version %s" % APP_VERSION,
+                                 font=F["tiny"], fg=C["muted"])
+        self.footer.pack(side="bottom", pady=(8, 14))
+        self._build_status()
+
+        # Ab 0.48: Das Menue scrollt, wenn ausgeklappte Reiter nicht mehr in
+        # das Fenster passen. Der Schieberegler erscheint nur bei Bedarf.
+        self.menu_area = ScrollArea(self, bg=C["sidebar"], hide_vbar=True)
+        self.menu_area.pack(fill="both", expand=True, pady=(0, 8))
+        menu = self.menu_area.inner
+
+        make_label(menu, "MENÜ", font=F["label"], fg=C["muted"],
                    anchor="w").pack(fill="x", padx=24, pady=(0, 6))
 
         for key, icon, text, sub_items in NAV_ITEMS:
             expandable = bool(sub_items)
-            row = NavRow(self, icon, text,
+            row = NavRow(menu, icon, text,
                          command=lambda k=key: self._on_nav(k),
                          expandable=expandable, symbol=NAV_SYMBOLS.get(key))
             row.pack(fill="x", padx=12, pady=1)
             self.rows[key] = row
 
             if sub_items:
-                container = transparent_frame(self)
+                container = transparent_frame(menu)
                 self.sub_frames[key] = container
                 for item in sub_items:
                     if isinstance(item, tuple):
@@ -648,10 +660,7 @@ class Sidebar(ctk.CTkFrame):
                                          sub=True, symbol=CATEGORY_NAV_SYMBOL.get(item))
                     sub_row.pack(fill="x", pady=1)
 
-        self.footer = make_label(self, "Version %s" % APP_VERSION,
-                                 font=F["tiny"], fg=C["muted"])
-        self.footer.pack(side="bottom", pady=(8, 14))
-
+    def _build_status(self):
         status = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=14,
                               border_width=1, border_color=C["border"])
         status.pack(side="bottom", fill="x", padx=14)
@@ -711,6 +720,12 @@ class Header(ctk.CTkFrame):
         make_label(left, "/", font=F["label"], fg=C["muted"]).pack(side="left", padx=7)
         self.crumb_sub = make_label(left, "HOME", font=F["label"], fg=C["accent"])
         self.crumb_sub.pack(side="left")
+        # Ab 0.48: aktiver Spielstand-Platz in den Spielansichten
+        self.slot_box = transparent_frame(left)
+        self.slot_label = make_label(self.slot_box, "", font=F["small"], fg=C["muted"])
+        self.slot_label.pack(side="left", padx=(16, 8))
+        NeoButton(self.slot_box, "Platz wechseln", lambda: self.app.open_slot_picker(),
+                  kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
                                        border_width=1, border_color=C["border"])
@@ -741,6 +756,14 @@ class Header(ctk.CTkFrame):
     def set_crumbs(self, main, sub):
         self.crumb_main.configure(text=main)
         self.crumb_sub.configure(text=sub)
+
+    def set_slot(self, text):
+        """Platzanzeige (ab 0.48): leer = ausblenden."""
+        if text:
+            self.slot_label.configure(text="·   " + text)
+            self.slot_box.pack(side="left")
+        else:
+            self.slot_box.pack_forget()
 
 
 # ============================================================================
@@ -2789,13 +2812,9 @@ class SettingsView(View):
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(0, 14))
-        make_label(game.body,
-                   "Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
-                   "Reputation, Arbeitstage und erledigte Tickets. Der "
-                   "Lernfortschritt bleibt erhalten. Mit eingerichtetem Abgleich "
-                   "auch auf dem Handy.",
-                   font=F["small"], fg=C["text_dim"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w")
+        self.lbl_reset = make_label(game.body, "", font=F["small"], fg=C["text_dim"],
+                                    wraplength=800, justify="left", anchor="w")
+        self.lbl_reset.pack(anchor="w")
         NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
                   kind="danger").pack(anchor="w", pady=(12, 0))
         make_label(game.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
@@ -2885,18 +2904,20 @@ class SettingsView(View):
 
     def _show_difficulty(self):
         try:
-            state = self.app.views["game"].game.reload()
+            game = self.app.views["game"].game
+            game.reload()
         except (KeyError, AttributeError):
             return
-        self.lbl_difficulty.configure(text=fisi_game.difficulty_options_text(state))
+        self.lbl_difficulty.configure(text=fisi_game.slot_options_text(game))
+        self.lbl_reset.configure(text=fisi_game.reset_help(game))
 
     def reset_game(self):
+        game = self.app.views["game"].game
+        game.reload()
         if not messagebox.askyesno("Spielstand zurücksetzen",
-                                   "Wirklich den gesamten Spielstand des "
-                                   "Lernspiels löschen? Der Lernfortschritt "
-                                   "bleibt erhalten."):
+                                   fisi_game.reset_question(game)):
             return
-        if fisi_game.Game(self.db).reset():
+        if game.reset():
             messagebox.showinfo("Zurückgesetzt",
                                 "Der Spielstand wurde zurückgesetzt.")
             self.app.views["game"].ticket = None
@@ -3294,6 +3315,52 @@ def _apply_window_icon(root):
         pass
 
 
+# Ansichten des Spiels (ab 0.48 mit Platzanzeige im Kopf)
+GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "reise")
+GAME_VIEWS = ("game",) + GAME_SUBVIEWS
+
+
+class LazyViews(dict):
+    """Die Ansichten des Hauptfensters (ab 0.48): Jede wird erst beim ersten
+    Zugriff aufgebaut (views["quiz"], views.get("quiz")). built() liefert eine
+    Ansicht nur, wenn es sie schon gibt. Die Schluessel sind immer alle
+    Ansichten, auch die noch nicht aufgebauten."""
+
+    def __init__(self, parent, app, classes):
+        super().__init__()
+        self._parent = parent
+        self._app = app
+        self._classes = dict(classes)
+
+    def __missing__(self, key):
+        cls = self._classes[key]      # KeyError bei unbekannter Ansicht
+        view = cls(self._parent, self._app)
+        view.grid(row=0, column=0, sticky="nsew")
+        dict.__setitem__(self, key, view)
+        return view
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def built(self, key):
+        return dict.get(self, key)
+
+    def __iter__(self):
+        return iter(self._classes)
+
+    def keys(self):
+        return self._classes.keys()
+
+    def __contains__(self, key):
+        return key in self._classes
+
+    def __len__(self):
+        return len(self._classes)
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -3309,6 +3376,7 @@ class FISIApp:
         self.db = DBManager(error_handler=self._db_error)
         self.container = None
         self._recoloring = False
+        self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._build_ui()
         self.show_view("dashboard")
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -3344,20 +3412,20 @@ class FISIApp:
         self.view_area.rowconfigure(0, weight=1)
         self.view_area.columnconfigure(0, weight=1)
 
-        self.views = {}
-        for key, cls in (("dashboard", DashboardView), ("cards", CardsView),
-                         ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
-                         ("scenarios", ScenarioView),
-                         ("testproject", ProjectView), ("notebook", NotebookView),
-                         ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
-                         ("kunde", CustomerView), ("zuhause", HomeView),
-                         ("firma", FirmView), ("filiale", BranchView),
-                         ("reise", JourneyView),
-                         ("progress", ProgressView),
-                         ("settings", SettingsView), ("search", SearchView)):
-            view = cls(self.view_area, self)
-            view.grid(row=0, column=0, sticky="nsew")
-            self.views[key] = view
+        # Ab 0.48 wird eine Ansicht erst beim ersten Oeffnen aufgebaut. Das
+        # beschleunigt den Start und vor allem den Farbwechsel, bei dem sonst
+        # alle Ansichten auf einmal neu gezeichnet werden muessten.
+        self.views = LazyViews(self.view_area, self, (
+            ("dashboard", DashboardView), ("cards", CardsView),
+            ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
+            ("scenarios", ScenarioView),
+            ("testproject", ProjectView), ("notebook", NotebookView),
+            ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
+            ("kunde", CustomerView), ("zuhause", HomeView),
+            ("firma", FirmView), ("filiale", BranchView),
+            ("reise", JourneyView),
+            ("progress", ProgressView),
+            ("settings", SettingsView), ("search", SearchView)))
 
         self.current = None
 
@@ -3367,19 +3435,66 @@ class FISIApp:
         if self._recoloring:
             return  # Ein Klick waehrend des Umbaus wird ignoriert
         self._recoloring = True
+        started = time.monotonic()
+        overlay = self._show_busy()
         try:
-            self._recolor(preset_id, background_id)
+            self._recolor(preset_id, background_id, overlay)
         finally:
+            # Die Meldung bleibt mindestens kurz stehen, damit sie nicht nur
+            # aufblitzt, und verschwindet erst, wenn alles neu gezeichnet ist.
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                time.sleep(rest)
+            self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
 
-    def _recolor(self, preset_id, background_id):
+    def _show_busy(self):
+        """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
+        deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
+        (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
+        overlay = tk.Frame(self.root, bg=C["bg"], cursor="watch")
+        overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        card = ctk.CTkFrame(overlay, fg_color=C["card"], corner_radius=px(18),
+                            border_width=1, border_color=C["border_hi"])
+        card.place(relx=0.5, rely=0.45, anchor="center")
+        ring = tk.Canvas(card, width=px(56), height=px(56), bg=C["card"],
+                         highlightthickness=0, bd=0)
+        ring._photo = tk_photo(ring_image(56, 6, 0.7, mix(C["accent"], C["card"], 0.35),
+                                          C["accent"], C["ring_bg"]), px(56), px(56))
+        ring.create_image(px(28), px(28), image=ring._photo)
+        ring.pack(pady=(px(26), px(10)))
+        make_label(card, fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+                   bg=C["card"]).pack(padx=px(40))
+        make_label(card, fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"], bg=C["card"],
+                   wraplength=px(440), justify="center").pack(padx=px(40),
+                                                               pady=(px(6), px(26)))
+        overlay.lift()
+        try:
+            overlay.grab_set()
+        except tk.TclError:
+            pass  # Ohne sichtbares Fenster (Starttest) gibt es keinen grab
+        self.root.update_idletasks()
+        self.root.update()
+        return overlay
+
+    def _hide_busy(self, overlay):
+        try:
+            overlay.grab_release()
+            overlay.destroy()
+        except tk.TclError:
+            pass
+        self.root.update_idletasks()
+        self._cancel_orphaned_timers()
+
+    def _recolor(self, preset_id, background_id, overlay=None):
         if preset_id:
             fisi_theme.save_preset(preset_id)
         if background_id:
             fisi_theme.save_background(background_id)
             self.root.configure(fg_color=C["bg"])
             self._setup_ttk_style()
+        fisi_game_gui.refresh_theme_tables()
         current = self.current or "settings"
         old = self.container
         # Die neue Oberflaeche wird unsichtbar aufgebaut und dann unter der
@@ -3392,6 +3507,8 @@ class FISIApp:
         self.show_view(current)
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
         old.lift()
+        if overlay is not None:
+            overlay.lift()   # die Meldung bleibt ganz oben
         self.root.update_idletasks()
         self.root.update()
         # Auf einen Schlag ausblenden, erst danach (unsichtbar) abbauen.
@@ -3457,6 +3574,10 @@ class FISIApp:
     # -- Navigation ---------------------------------------------------------
 
     def show_view(self, key):
+        # Ab 0.48: Beim ersten Oeffnen des Spiels nach dem Start erst den
+        # Spielstand waehlen (Auswahlbildschirm in der Spiel-Ansicht)
+        if key in GAME_SUBVIEWS and not self.slot_chosen:
+            key = "game"
         view = self.views.get(key)
         if view is None:
             return
@@ -3469,7 +3590,20 @@ class FISIApp:
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
         self.sidebar.set_active("game" if key == "filiale" else key)
         view.on_show()
+        self.update_slot_label()
         self.notify_progress(refresh_view=False)
+
+    def update_slot_label(self):
+        """Platzanzeige im Kopf der Spielansichten (ab 0.48)."""
+        text = ""
+        if self.current in GAME_VIEWS and self.slot_chosen:
+            game_view = self.views.built("game")
+            if game_view is not None and not game_view.picking:
+                text = game_view.game.active_label()
+        self.header.set_slot(text)
+
+    def open_slot_picker(self):
+        self.views["game"].open_picker()
 
     def open_cards(self, category, topic=None):
         self.views["cards"].set_category(category, topic)
@@ -3502,7 +3636,7 @@ class FISIApp:
     def show_unlocks(self):
         """Neu erreichte Abzeichen zeigen (ab 0.46): grosse als Meilenstein-
         Moment ueber dem Fenster, kleinere als kurzer Hinweis unten."""
-        view = self.views.get("game") if hasattr(self, "views") else None
+        view = self.views.built("game") if hasattr(self, "views") else None
         game = getattr(view, "game", None)
         if game is None or not game.unlocked:
             return
@@ -3552,12 +3686,12 @@ class FISIApp:
             self.views[self.current].on_show()
 
     def on_close(self, final_sync=True):
-        quiz = self.views.get("quiz")
+        quiz = self.views.built("quiz")
         if quiz is not None:
             quiz.stop_timer()
         # Aufgedeckte, aber nicht bewertete Loesungen als angesehen speichern
         for key in ("cards", "ap1scenarios", "scenarios", "testproject"):
-            view = self.views.get(key)
+            view = self.views.built(key)
             if view is not None:
                 view._flush()
         self.root.withdraw()

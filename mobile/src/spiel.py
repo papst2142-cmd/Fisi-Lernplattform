@@ -324,7 +324,10 @@ class WalkPlan(FloorPlan):
                 new_v = fg.to_view(new[0], new[1], True, self.site_data)
                 self._shift((new_v[0] - old_v[0]) * scale, (new_v[1] - old_v[1]) * scale)
                 self.player_pos = new
-                self.canvas.update()
+                try:
+                    self.canvas.update()
+                except RuntimeError:
+                    return    # Ansicht wurde verlassen, bevor die Figur ankam
                 await asyncio.sleep(self.FRAME)
                 if new == (tx, ty):
                     break
@@ -1510,6 +1513,7 @@ class GameScreen:
         self.journey_page = 0
         self.journey_tab = "rueckblick"     # ab 0.46: "Rückblick" | "Erfolge"
         self.badge_group = "alle"
+        self.picking = False         # Auswahlbildschirm der Spielstand-Plaetze (ab 0.48)
         self.root = screen_list([])
         self.render()
 
@@ -1525,10 +1529,156 @@ class GameScreen:
 
     def render(self):
         state = self.game.state
-        if state.profile is None or self.draft.get("edit"):
+        if self.picking or not getattr(self.app, "slot_chosen", True):
+            self.root.controls = self._slot_picker()
+        elif state.profile is None or self.draft.get("edit"):
             self.root.controls = self._profile_editor(state)
         else:
             self.root.controls = self._overview(state)
+
+    # -- Spielstand-Plaetze (ab 0.48) ------------------------------------------
+
+    def open_picker(self, _event=None):
+        """Auswahlbildschirm zeigen ("Platz wechseln")."""
+        page = self.app.page
+        while len(page.views) > 1:
+            page.views.pop()
+        self.picking = True
+        self.render()
+        self.app.show_tab("game")
+
+    def slot_bar(self):
+        """Kleine Platzanzeige oben in den Spielseiten (wie am PC im Kopf)."""
+        label = self.game.active_label()
+        return ft.Row([
+            ft.Icon(ft.Icons.SAVE_OUTLINED, size=15, color=C["muted"]),
+            ui.text(label, size=12, color=C["muted"], expand=True),
+            ui.GradientButton("Platz wechseln", self.open_picker, kind="ghost", height=30),
+        ], spacing=6, visible=bool(label))
+
+    def _choose_slot(self, run):
+        try:
+            self.game.select_run(run)
+        except ValueError as exc:
+            self.toast(str(exc), C["red"])
+            self.render()
+            self.app.page.update()
+            return
+        self._enter_slot()
+
+    def _new_slot(self, slot):
+        try:
+            self.game.new_run(slot)
+        except ValueError as exc:
+            self.toast(str(exc), C["red"])
+            self.render()
+            self.app.page.update()
+            return
+        self._enter_slot()
+
+    def _enter_slot(self):
+        self.app.slot_chosen = True
+        self.picking = False
+        self.room = self.place = self.site_key = self.from_site = None
+        self.draft = {}
+        self.positions = {}
+        self.notices = {}
+        self.game.check_knowledge()
+        self.render()
+        self.app.page.update()
+        self.app.show_unlocks()
+
+    def _delete_slot(self, item):
+        def confirmed():
+            try:
+                self.game.delete_run(item["lauf"])
+            except ValueError as exc:
+                self.toast(str(exc), C["red"])
+            self.game.unlocked = []
+            self.app.notify_progress()
+            self.render()
+
+        self.app.confirm("Spielstand löschen", fg.slot_delete_question(item), confirmed)
+
+    def _rename_slot(self, item):
+        field = ui.entry(item["name"] if item["name"] != fg.slot_default_name(item["platz"])
+                         else "", hint=fg.slot_default_name(item["platz"]))
+        field.max_length = fg.SLOT_NAME_MAX
+        page = self.app.page
+
+        def answer(save):
+            page.pop_dialog()
+            if save:
+                self.game.rename_slot(item["platz"], field.value)
+                self.render()
+            page.update()
+
+        page.show_dialog(ft.AlertDialog(
+            modal=True, bgcolor=C["card"],
+            title=ft.Text("Platz umbenennen", color=C["text"], size=18,
+                          weight=ft.FontWeight.BOLD),
+            content=ft.Column([
+                ft.Text("Neuer Name für Platz %d (leer lassen = „%s“):" % (
+                    item["platz"], fg.slot_default_name(item["platz"])),
+                    color=C["text_dim"], size=14),
+                field], tight=True, spacing=10),
+            actions=[ft.TextButton("Abbrechen", on_click=lambda _e: answer(False)),
+                     ft.TextButton("Speichern", on_click=lambda _e: answer(True))]))
+
+    def _slot_picker(self):
+        controls = [
+            ui.text(fg.SLOTS_TITLE, size=24, weight=ft.FontWeight.BOLD),
+            ui.text(fg.SLOTS_HELP, size=13, color=C["text_dim"]),
+        ]
+        for item in self.game.slots():
+            controls.append(self._slot_card(item))
+        return controls
+
+    def _slot_card(self, item):
+        active = item["aktiv"]
+        body = []
+        if item["extra"]:
+            body.append(ui.text(fg.SLOT_EXTRA_HELP, size=12, color=C["text_dim"]))
+        if item["leer"]:
+            body.append(ft.Column([
+                ui.text(fg.SLOT_EMPTY, size=18, weight=ft.FontWeight.BOLD,
+                        color=C["text_dim"]),
+                ui.text("Spielfigur und Schwierigkeitsgrad wählst du beim Start.", size=12,
+                        color=C["muted"]),
+            ], spacing=4, tight=True))
+        else:
+            body.append(ft.Row([
+                avatar(item["aussehen"], 64),
+                ft.Column([
+                    ui.text(item["spieler"], size=18, weight=ft.FontWeight.BOLD),
+                    ui.text("%s · Tag %d" % (item["schwierigkeit"], item["tag"]), size=13,
+                            color=C["accent"], weight=ft.FontWeight.BOLD),
+                    ui.text(("Firma: " + item["firma"]) if item["firma"] else
+                            "noch angestellt", size=12, color=C["text_dim"]),
+                ], spacing=2, tight=True, expand=True),
+            ], spacing=12))
+        buttons = []
+        if item["leer"] and not item["lauf"]:
+            buttons.append(ui.GradientButton(
+                "Starten", lambda _e, slot=item["platz"]: self._new_slot(slot), height=38))
+        else:
+            buttons.append(ui.GradientButton(
+                "Starten" if item["leer"] else "Spielen",
+                lambda _e, run=item["lauf"]: self._choose_slot(run), height=38))
+            if not item["leer"] or item["extra"] or item["lauf"] != fg.LEGACY_RUN:
+                buttons.append(ui.GradientButton(
+                    "Löschen", lambda _e, it=item: self._delete_slot(it), kind="ghost",
+                    height=38))
+        if not item["extra"]:
+            buttons.append(ui.GradientButton(
+                "Umbenennen", lambda _e, it=item: self._rename_slot(it), kind="ghost",
+                height=38))
+        body.append(ft.Row(buttons, wrap=True, spacing=8, run_spacing=8))
+        card = ui.Card(item["name"], body, accent=C["accent"] if active else C["accent2"],
+                       subtitle="zuletzt gespielt" if active else None)
+        if active:
+            card.border = ft.Border.all(2, C["accent"])
+        return card
 
     @property
     def player_pos(self):
@@ -1567,6 +1717,9 @@ class GameScreen:
                                      expand=True)]
         if state.profile is not None:
             buttons.append(ui.GradientButton("Abbrechen", self._cancel_edit, kind="ghost"))
+        elif self.game.active_label():
+            # Neuer Durchgang: zurueck zur Auswahl, ohne eine Figur anzulegen
+            buttons.append(ui.GradientButton("Platz wechseln", self.open_picker, kind="ghost"))
 
         result = []
         if state.profile is None:
@@ -1677,7 +1830,7 @@ class GameScreen:
                                       "schwierigere Tickets.", size=11, color=C["muted"]))
         wissen = ui.Card("Wissensstand", knowledge_bars, accent=C["green"])
 
-        return [world, profile, self._ticket_card(state), reputation, wissen]
+        return [self.slot_bar(), world, profile, self._ticket_card(state), reputation, wissen]
 
     # -- Weltkarte (ab 0.45) ------------------------------------------------
 
@@ -2132,7 +2285,7 @@ class GameScreen:
         self.office = ft.Column(spacing=12, tight=True,
                                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_site()
-        self.app.push(SITE_CRUMBS[key], screen_list([self.office]))
+        self.app.push(SITE_CRUMBS[key], screen_list([self.slot_bar(), self.office]))
 
     def open_office(self, _event=None):
         self.open_site("buero")
@@ -2180,9 +2333,10 @@ class GameScreen:
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
             accent = C["accent"] if site == fg.SITE_OFFICE else C["blue"]
+            subtitle = "Tippe auf eine Person oder einen Ort"
             if site == fg.SITE_BRANCH:
                 title, accent = "Filiale", C["purple"]
-            subtitle = "Tippe auf eine Person oder einen Ort"
+                subtitle = fg.branch_empty_hint(state) or subtitle
         controls.append(ui.Card(title, [self.office_plan, self.office_info], accent=accent,
                                 subtitle=subtitle))
         if home and self.editing:
@@ -2199,7 +2353,10 @@ class GameScreen:
     def _arrived(self, position, person):
         self.positions[self._site()] = position
         self._office_text(position, person)
-        self.office_info.update()
+        try:
+            self.office_info.update()
+        except RuntimeError:
+            pass    # Ansicht wurde genau beim Ankommen verlassen
 
     def _office_text(self, position, person):
         state = self.game.state
@@ -2275,7 +2432,7 @@ class GameScreen:
         self.journey_box = ft.Column(spacing=12, tight=True,
                                      horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_journey()
-        self.app.push(JOURNEY_CRUMBS, screen_list([self.journey_box]))
+        self.app.push(JOURNEY_CRUMBS, screen_list([self.slot_bar(), self.journey_box]))
 
     def _fill_journey(self):
         state = self.game.state
@@ -2307,7 +2464,7 @@ class GameScreen:
         chart = ui.LineChart(height=160)
         chart.set_data(stats["tage"], stats["tage_richtig"], C["green"])
         controls.append(ui.Card("Tickets je Arbeitstag", [
-            ui.text("Gelöste Tickets der letzten 30 Arbeitstage", size=11, color=C["muted"]),
+            ui.text("Gelöste Tickets der letzten 30 Arbeitstage mit Tickets", size=11, color=C["muted"]),
             chart], accent=C["accent"]))
         chart = ui.LineChart(height=150)
         chart.set_data(stats["ansehen_tage"], stats["ansehen"], C["purple"], y_max=100)
@@ -2468,7 +2625,7 @@ class GameScreen:
         self.firm_box = ft.Column(spacing=12, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
         self._fill_firm()
-        self.app.push(FIRM_CRUMBS, screen_list([self.firm_box]))
+        self.app.push(FIRM_CRUMBS, screen_list([self.slot_bar(), self.firm_box]))
 
     def _fill_firm(self):
         state = self.game.state
@@ -3028,6 +3185,9 @@ class GameScreen:
                                            height=36, expand=True)
                 button.set_enabled(not coaching["problem"])
                 parts.append(ft.Row([button]))
+                if coaching["problem"]:
+                    # Ab 0.48: Grund direkt am gesperrten Knopf
+                    parts.append(ui.text(coaching["problem"], size=12, color=C["muted"]))
             if self.training_for == item["id"]:
                 parts += self._training_choice(state, item)
             controls.append(self._person_box(parts))
@@ -3970,3 +4130,25 @@ class GameScreen:
 
     def _open_learn(self, kind, title):
         self.app.open_search_hit(kind, title)
+
+
+def refresh_theme_tables():
+    """Farbtabellen neu berechnen (ab 0.48): Sie werden beim Import aus C
+    kopiert und muessen nach einem Farbwechsel neu gebildet werden."""
+    global PRIORITY_COLOR, STATUS_TEXT, JOURNEY_COLOR, AXIS_GRADIENT, TERMINAL_BG, TERMINAL_COLOR
+    PRIORITY_COLOR = {"niedrig": C["muted"], "normal": C["cyan"], "hoch": C["yellow"],
+                      "kritisch": C["red"]}
+    STATUS_TEXT = {fg.ST_OPEN: ("offen", C["cyan"]), fg.ST_RIGHT: ("erledigt", C["green"]),
+                   fg.ST_WRONG: ("mit Fehlern", C["red"]),
+                   fg.ST_DEFERRED: ("verschoben", C["yellow"]),
+                   fg.ST_WAITING: ("wartet auf Teil", C["purple"])}
+    JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
+                     fg.JOURNEY_FIRM: C["green"]}
+    AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
+                     "zuverlaessigkeit": GRADIENTS["success"],
+                     "kundenzufriedenheit": ("#F59E0B", C["pink"]),
+                     "sicherheit": ("#DB2777", C["purple"])}
+    TERMINAL_BG = C["sidebar"]
+    TERMINAL_COLOR = {"start": C["muted"], "ausgabe": C["text_soft"], "fehler": C["red"],
+                      "gefahr": C["yellow"], "kommentar": C["muted"]}
+

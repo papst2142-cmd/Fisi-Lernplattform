@@ -55,7 +55,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.47"
+APP_VERSION = "0.48"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -1657,6 +1657,7 @@ class SettingsScreen(Screen):
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = ui.text("", size=14, color=C["text_soft"],
                                       weight=ft.FontWeight.BOLD)
+        self.lbl_reset = ui.text("", size=13, color=C["text_dim"])
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
         self.lbl_update = ui.text("", size=13, color=C["text_dim"])
         self.lbl_update.visible = False
@@ -1731,10 +1732,7 @@ class SettingsScreen(Screen):
                         % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                         size=11, color=C["muted"]),
                 ft.Container(height=6),
-                ui.text("Setzt nur den Spielstand zurück: Spielfigur, Spielgeld, "
-                        "Reputation, Arbeitstage und erledigte Tickets. Der Lernfortschritt "
-                        "bleibt erhalten. Mit eingerichtetem Abgleich auch auf dem PC.",
-                        size=13, color=C["text_dim"]),
+                self.lbl_reset,
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
                 ft.Container(height=6),
@@ -1795,10 +1793,12 @@ class SettingsScreen(Screen):
 
     @staticmethod
     def _switch(caption, value, handler):
+        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter")
         return ft.Row([
-            ft.Switch(value=value, on_change=handler, active_color=C["text"],
-                      active_track_color=C["violet"], inactive_track_color=C["card_alt"],
-                      inactive_thumb_color=C["muted"]),
+            ft.Semantics(label=caption, content=ft.Switch(
+                value=value, on_change=handler, active_color=C["text"],
+                active_track_color=C["violet"], inactive_track_color=C["card_alt"],
+                inactive_thumb_color=C["muted"])),
             ui.text(caption, size=13, color=C["text_dim"], expand=True),
         ], spacing=8)
 
@@ -1861,22 +1861,26 @@ class SettingsScreen(Screen):
 
     def _show_difficulty(self):
         try:
-            state = self.app.screens["game"].game.reload()
+            game = self.app.screens["game"].game
+            game.reload()
         except (KeyError, AttributeError):
             return
-        self.lbl_difficulty.value = fisi_game.difficulty_options_text(state)
+        self.lbl_difficulty.value = fisi_game.slot_options_text(game)
+        self.lbl_reset.value = fisi_game.reset_help(game)
 
     def reset_game(self, _event=None):
+        game = self.app.screens["game"].game
+        game.reload()
+
         def confirmed():
-            if fisi_game.Game(self.db).reset():
+            if game.reset():
                 self.toast("Der Spielstand wurde zurückgesetzt.", C["green"])
                 self.app.screens["game"].room = None
                 self.app.notify_progress()
                 self._show_difficulty()
 
-        self.app.confirm("Spielstand zurücksetzen",
-                         "Wirklich den gesamten Spielstand des Lernspiels löschen? Der "
-                         "Lernfortschritt bleibt erhalten.", confirmed)
+        self.app.confirm("Spielstand zurücksetzen", fisi_game.reset_question(game),
+                         confirmed)
 
     def reset_records(self, _event=None):
         def confirmed():
@@ -2053,6 +2057,7 @@ class FISIMobileApp:
         self.update_dialog_open = False
         self.last_auto_check = 0
         self.dismissed_version = None
+        self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._build_ui()
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
@@ -2092,13 +2097,70 @@ class FISIMobileApp:
 
     def change_color(self, preset_id=None, background_id=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
-        neu aufbauen."""
-        if preset_id:
-            fisi_theme.save_preset(preset_id)
-        if background_id:
-            fisi_theme.save_background(background_id)
-        self._build_ui()
-        self.show_tab("settings")
+        neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
+        angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
+        doppelten Wechsel und keine halb umgefaerbten Seiten."""
+        if getattr(self, "_recoloring", False):
+            return  # Ein Tippen waehrend des Umbaus wird ignoriert
+        self._recoloring = True
+        overlay = self._busy_overlay()
+        self.page.overlay.append(overlay)
+        self._lock_bars(True)
+        self.page.update()
+        self.page.run_task(self._recolor, preset_id, background_id, overlay)
+
+    async def _recolor(self, preset_id, background_id, overlay):
+        started = time.monotonic()
+        try:
+            # Kurz warten, damit die Meldung sicher gezeichnet ist
+            await asyncio.sleep(0.05)
+            if preset_id:
+                fisi_theme.save_preset(preset_id)
+            if background_id:
+                fisi_theme.save_background(background_id)
+            spiel.refresh_theme_tables()
+            # Eine laufende Pruefungssession endet mit dem Neuaufbau - ihr
+            # Zeitgeber soll nicht im Hintergrund weiterlaufen
+            quiz = self.screens.get("quiz")
+            if quiz is not None:
+                quiz.running = False
+            self._build_ui()
+            self.show_tab("settings")
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                await asyncio.sleep(rest)
+        finally:
+            if overlay in self.page.overlay:
+                self.page.overlay.remove(overlay)
+            self._lock_bars(False)
+            self._recoloring = False
+            self.page.update()
+
+    def _lock_bars(self, locked):
+        """Kopfzeile und Navigationsleiste liegen nicht unter der Abdeckung -
+        sie werden waehrend des Farbwechsels deshalb eigens gesperrt."""
+        for view in self.page.views:
+            for bar in (view.appbar, view.navigation_bar):
+                if bar is not None:
+                    bar.disabled = locked
+
+    @staticmethod
+    def _busy_overlay():
+        """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
+        card = ft.Container(
+            content=ft.Column([
+                ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
+                                bgcolor=C["ring_bg"]),
+                ft.Text(fisi_theme.BUSY_TITLE, size=18, weight=ft.FontWeight.BOLD,
+                        color=C["text"], text_align=ft.TextAlign.CENTER),
+                ft.Text(fisi_theme.BUSY_TEXT, size=13, color=C["text_dim"],
+                        text_align=ft.TextAlign.CENTER),
+            ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
+            bgcolor=C["card"], border_radius=18, border=ft.Border.all(1, C["border_hi"]))
+        return ft.Container(content=card, left=0, top=0, right=0, bottom=0,
+                            alignment=ft.Alignment.CENTER, bgcolor=C["bg"],
+                            on_click=lambda _e: None)
 
     # -- Kopfzeile und Navigation ------------------------------------------
 
@@ -2167,7 +2229,13 @@ class FISIMobileApp:
         view = self.page.views[-1]
         content = view.controls[0] if view.controls else None
         if isinstance(content, ft.ListView):
-            content.scroll_to(offset=0, duration=200)
+            # scroll_to ist in flet 1.0 eine Coroutine
+            async def scroll():
+                try:
+                    await content.scroll_to(offset=0, duration=200)
+                except RuntimeError:
+                    pass
+            self.page.run_task(scroll)
 
     def open_cards(self, category, topic=None):
         self.screens["cards"].set_category(category, topic)
@@ -2290,6 +2358,9 @@ class FISIMobileApp:
 
     def open_achievements(self):
         """Spiel > Reise > Erfolge oeffnen (aus dem Meilenstein-Moment)."""
+        if not self.slot_chosen:
+            self.show_tab("game")   # erst einen Platz waehlen
+            return
         if self.tab != "game":
             self.show_tab("game")
         else:
@@ -2608,6 +2679,13 @@ def selftest():
                 info = fisi_game.unlock_info(state, rule, level, [])
                 spiel.moment_card(info, state, 0, 2, None, None)
         spiel.badge_image("stern", None, None)
+        # Spielstand-Plaetze (ab 0.48): Auswahl mit belegten und leeren Plaetzen
+        game.picking = True
+        game.render()
+        for item in game.game.slots() + [dict(game.game.slots()[0], extra=True)]:
+            game._slot_card(item)
+        game.picking = False
+        game.slot_bar()
         app.screens["search"].search("raid")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()

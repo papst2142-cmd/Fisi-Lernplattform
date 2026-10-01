@@ -1005,6 +1005,25 @@ class GradientBar(tk.Canvas):
 #  LINIENDIAGRAMM
 # ============================================================================
 
+def _nice_step(raw):
+    """Glatte Schrittweite fuer eine Achse, mindestens 1."""
+    if raw <= 1:
+        return 1
+    power = 10 ** math.floor(math.log10(raw))
+    for factor in (1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10):
+        step = factor * power
+        if raw <= step and step == int(step):
+            return int(step)
+    return int(10 * power)
+
+
+def _axis_text(value):
+    """Achsenbeschriftung mit Tausenderpunkt (12.500 statt 12500)."""
+    if value == int(value):
+        return "{:,}".format(int(value)).replace(",", ".")
+    return ("%g" % value).replace(".", ",")
+
+
 class LineChart(tk.Canvas):
     """Liniendiagramm mit gefuellter Flaeche und Gitternetz."""
 
@@ -1036,12 +1055,6 @@ class LineChart(tk.Canvas):
         if width <= 1 or height <= 1 or not self._labels:
             return
 
-        left, right, top, bottom = px(42), px(14), px(22), px(30)
-        plot_w = width - left - right
-        plot_h = height - top - bottom
-        if plot_w <= 10 or plot_h <= 10:
-            return
-
         if self._y_max:
             peak = float(self._y_max)
             step = peak / 4.0
@@ -1051,16 +1064,27 @@ class LineChart(tk.Canvas):
                 if item["values"]:
                     peak = max(peak, max(item["values"]))
             peak = max(5, peak)
-            # auf eine glatte Zahl aufrunden
-            step = max(1, int(peak / 4) + 1)
+            # auf eine glatte Zahl aufrunden (1, 2, 2,5 oder 5 mal Zehnerpotenz)
+            step = _nice_step(peak / 4.0)
             peak = step * 4
+        y_texts = [_axis_text(step * line) for line in range(5)]
+
+        # Der linke Rand richtet sich nach der breitesten y-Beschriftung, damit
+        # auch sechsstellige Betraege (Kontostand) nicht abgeschnitten werden
+        widest = max(text_width(text, F["tiny"]) for text in y_texts)
+        left = max(px(42), int(widest * _SCALE[0]) + px(16))
+        right, top, bottom = px(14), px(22), px(30)
+        plot_w = width - left - right
+        plot_h = height - top - bottom
+        if plot_w <= 10 or plot_h <= 10:
+            return
 
         # Gitternetz und y-Achse
         for line in range(5):
             y = top + plot_h - (plot_h * line / 4)
             self.create_line(left, y, width - right, y, fill=C["border"],
                              dash=(2, 4) if line else ())
-            self.create_text(left - px(8), y, text="%g" % (step * line), anchor="e",
+            self.create_text(left - px(8), y, text=y_texts[line], anchor="e",
                              fill=C["muted"], font=tk_font(F["tiny"]))
 
         count = len(self._labels)
@@ -1071,10 +1095,23 @@ class LineChart(tk.Canvas):
 
         # x-Beschriftung ausduennen, damit nichts ueberlappt
         stride = max(1, int(count / max(1, plot_w / px(55))))
+        shown = [index for index in range(count) if index % stride == 0 or index == count - 1]
+        if len(shown) > 1:
+            # Die letzte Beschriftung endet am rechten Rand statt darueber; die
+            # davor faellt weg, wenn sie sonst ueberlappen wuerde
+            last_left = positions[-1] + px(6) - text_width(
+                str(self._labels[-1]), F["tiny"]) * _SCALE[0]
+            before = shown[-2]
+            before_right = positions[before] + text_width(
+                str(self._labels[before]), F["tiny"]) * _SCALE[0] / 2
+            if before_right + px(4) > last_left:
+                shown.remove(before)
         for index, label in enumerate(self._labels):
-            if index % stride == 0 or index == count - 1:
-                self.create_text(positions[index], height - bottom + px(15),
-                                 text=label, fill=C["muted"],
+            if index in shown:
+                last = index == count - 1 and count > 1
+                self.create_text(positions[index] + (px(6) if last else 0),
+                                 height - bottom + px(15), text=label,
+                                 anchor="e" if last else "center", fill=C["muted"],
                                  font=tk_font(F["tiny"]))
 
         self._photos = []
@@ -1567,8 +1604,9 @@ class ScrollArea(tk.Frame):
     verschieben (bzw. mit gedrueckter Umschalttaste + Mausrad). Der untere
     Schieberegler erscheint nur, wenn er gebraucht wird."""
 
-    def __init__(self, parent, bg=None):
+    def __init__(self, parent, bg=None, hide_vbar=False):
         self.bg = bg or C["bg"]
+        self.hide_vbar = hide_vbar   # senkrechter Balken nur bei Bedarf (ab 0.48)
         super().__init__(parent, bg=self.bg)
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 yscrollincrement=px(24), xscrollincrement=px(24))
@@ -1580,7 +1618,7 @@ class ScrollArea(tk.Frame):
             self, orientation="horizontal", command=self.canvas.xview,
             fg_color=self.bg, button_color=C["scrollbar"],
             button_hover_color=C["scrollbar_hi"])
-        self.canvas.configure(yscrollcommand=self.scrollbar.set,
+        self.canvas.configure(yscrollcommand=self._set_vscroll,
                               xscrollcommand=self._set_hscroll)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 2))
@@ -1596,6 +1634,15 @@ class ScrollArea(tk.Frame):
         self.canvas.bind("<Configure>", self._on_canvas_configure)
         self.bind("<Enter>", lambda e: self._bind_wheel(True))
         self.bind("<Leave>", lambda e: self._bind_wheel(False))
+
+    def _set_vscroll(self, first, last):
+        self.scrollbar.set(first, last)
+        if not self.hide_vbar:
+            return
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            self.scrollbar.grid_remove()
+        else:
+            self.scrollbar.grid()
 
     def _set_hscroll(self, first, last):
         self.hscrollbar.set(first, last)

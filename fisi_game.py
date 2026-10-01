@@ -34,6 +34,7 @@ import uuid
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
     TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_values, search_content, topic_totals,
+    ACTIVE_RUN_KEY, LEGACY_RUN,
 )
 from fisi_theme import C, CATEGORY_COLOR, mix
 
@@ -4475,6 +4476,120 @@ class GameState:
 
 
 # ============================================================================
+#  SPIELSTAND-PLAETZE (ab 0.48)
+# ============================================================================
+# Drei feste Plaetze. Jeder Durchgang ("lauf") hat eine eigene Kennung; die
+# Tabelle spiel_plaetze haelt fest, wann welcher Durchgang auf welchem Platz
+# angelegt oder geloescht wurde. Die Belegung wird daraus jedes Mal neu
+# berechnet - so kommen PC und Handy nach dem Abgleich immer zum selben Bild.
+
+SLOT_COUNT = 3
+SLOT_CREATED = "angelegt"
+SLOT_DELETED = "geloescht"
+SLOT_RENAMED = "umbenannt"
+SLOT_NAME_MAX = 24
+# Texte (PC und Handy gleich)
+SLOTS_TITLE = "Spielstände"
+SLOTS_HELP = ("Drei Plätze für getrennte Durchgänge. Der Lernfortschritt und die "
+              "Bestenliste gelten für alle Plätze gemeinsam. Abzeichen verdienst du "
+              "in jedem Durchgang neu, erreichte Stufen bleiben in der Bestenliste.")
+SLOT_EMPTY = "Neuer Durchgang"
+SLOT_EXTRA_HELP = ("Zusätzlicher Durchgang: PC und Handy haben gleichzeitig einen neuen "
+                   "Durchgang angelegt. Er rückt auf den nächsten frei werdenden Platz.")
+
+
+def slot_default_name(slot):
+    return "Platz %d" % slot
+
+
+def slot_layout(rows, legacy=False):
+    """Belegung der Plaetze aus den Zeilen der Platz-Tabelle (db.slot_rows()).
+    legacy: es gibt noch Ereignisse von vor 0.48 - sie sind der Durchgang auf
+    Platz 1. Zurueck: {"plaetze": {platz: lauf}, "namen": {platz: name},
+    "extra": [lauf, ...], "geloescht": set(lauf)}.
+    Legen zwei Geraete offline denselben Platz an, bekommt ihn der zuerst
+    angelegte Durchgang, der andere rueckt auf einen freien Platz (oder wartet
+    als "extra", bis einer frei wird). So geht nichts verloren."""
+    deleted = {run for _t, _u, _s, run, action, _d in rows if action == SLOT_DELETED}
+    created = []
+    seen = set()
+    if legacy:
+        created.append(("", "", 1, LEGACY_RUN))
+        seen.add(LEGACY_RUN)
+    names = {}
+    for timestamp, uid, slot, run, action, data in rows:
+        if action == SLOT_CREATED and run and run not in seen:
+            seen.add(run)
+            created.append((timestamp, uid, int(slot or 0), run))
+        elif action == SLOT_RENAMED and 1 <= int(slot or 0) <= SLOT_COUNT:
+            name = str(data.get("name") or "").strip()[:SLOT_NAME_MAX]
+            names[int(slot)] = name
+    created.sort(key=lambda item: (item[0], item[1]))
+    slots, extra = {}, []
+    for _timestamp, _uid, slot, run in created:
+        if run in deleted:
+            continue
+        if 1 <= slot <= SLOT_COUNT and slot not in slots:
+            slots[slot] = run
+            continue
+        free = [number for number in range(1, SLOT_COUNT + 1) if number not in slots]
+        if free:
+            slots[free[0]] = run
+        else:
+            extra.append(run)
+    return {"plaetze": slots, "namen": {k: v for k, v in names.items() if v},
+            "extra": extra, "geloescht": deleted}
+
+
+def slot_summary(state):
+    """Kurzinfo eines Durchgangs fuer den Auswahlbildschirm."""
+    if state is None or state.profile is None:
+        return {"leer": True}
+    return {"leer": False, "spieler": state.profile.get("name", ""),
+            "aussehen": state.profile.get("aussehen") or dict(DEFAULT_APPEARANCE),
+            "schwierigkeit": difficulty_name(state.level), "tag": state.day,
+            "firma": (state.firm or {}).get("name") or ""}
+
+
+def slot_line(item):
+    """Eine Zeile Text zu einem Platz (z.B. fuer die Loeschabfrage)."""
+    if item.get("leer", True):
+        return "%s (%s)" % (item["name"], SLOT_EMPTY)
+    parts = [item["spieler"], item["schwierigkeit"], "Tag %d" % item["tag"]]
+    parts.append(("Firma " + item["firma"]) if item["firma"] else "noch angestellt")
+    return "%s (%s)" % (item["name"], ", ".join(parts))
+
+
+def reset_help(game):
+    """Text zu "Spielstand zuruecksetzen" in den Optionen (PC und Handy gleich)."""
+    label = game.active_label() or "noch kein Platz gewählt"
+    return ("Setzt nur den aktiven Spielstand zurück (%s): Spielfigur, Spielgeld, "
+            "Reputation, Arbeitstage und erledigte Tickets. Auf dem Platz beginnt danach "
+            "ein neuer Durchgang. Die anderen Plätze und der Lernfortschritt bleiben "
+            "erhalten. Mit eingerichtetem Abgleich auf PC und Handy." % label)
+
+
+def reset_question(game):
+    label = game.active_label() or "den Spielstand"
+    return ("Wirklich %s zurücksetzen? Der Spielstand dieses Platzes ist danach weg, "
+            "Bestwerte und Abzeichen bleiben in der Bestenliste. Die anderen Plätze und "
+            "der Lernfortschritt bleiben erhalten." % label)
+
+
+def slot_options_text(game):
+    """Zeile zum Schwierigkeitsgrad in den Optionen, mit dem aktiven Platz."""
+    label = game.active_label()
+    text = difficulty_options_text(game.state, game.content)
+    return "%s · %s" % (label, text) if label else text
+
+
+def slot_delete_question(item):
+    return ("%s wirklich löschen?\n\nDer Spielstand ist danach auf PC und Handy weg "
+            "und lässt sich nicht wiederherstellen. Bestwerte und Abzeichen bleiben "
+            "in der Bestenliste." % slot_line(item))
+
+
+# ============================================================================
 #  SPIEL MIT DATENBANK
 # ============================================================================
 
@@ -4489,11 +4604,167 @@ class Game:
         self.state = None
         self.unlocked = []         # neu erreichte Abzeichen-Stufen fuer die Anzeige (ab 0.46)
         self._checking = False
+        self.run = None            # aktiver Durchgang (ab 0.48, siehe Spielstand-Plaetze)
+        self._summaries = {}       # lauf -> (Ereignisanzahl, Kurzinfo)
+        self._resolve_run()
         self.reload()
 
     def reload(self):
-        self.state = GameState(self.db.game_events(), self.content)
+        events = self.db.game_events(self.run) if self.run else []
+        # Ohne Ereignisse pruefen, ob der Durchgang noch besteht (z.B. auf dem
+        # anderen Geraet geloescht) - sonst waehlt _resolve_run einen anderen
+        if not events and (self.run is None or self.run not in self._known_runs()):
+            self._resolve_run()
+            events = self.db.game_events(self.run) if self.run else []
+        self.state = GameState(events, self.content)
         return self.state
+
+    # -- Spielstand-Plaetze (ab 0.48) --------------------------------------------
+
+    def layout(self):
+        if not hasattr(self.db, "slot_rows"):
+            return slot_layout([], False)
+        return slot_layout(self.db.slot_rows(), self.db.has_legacy_events())
+
+    def _known_runs(self, layout=None):
+        layout = layout or self.layout()
+        return set(layout["plaetze"].values()) | set(layout["extra"])
+
+    def _resolve_run(self):
+        """Aktiven Durchgang bestimmen: der zuletzt auf diesem Geraet gewaehlte,
+        sonst der auf dem kleinsten belegten Platz."""
+        if not hasattr(self.db, "get_meta"):
+            self.run = None
+            return
+        layout = self.layout()
+        stored = self.db.get_meta(ACTIVE_RUN_KEY) or None
+        if stored in self._known_runs(layout):
+            run = stored
+        else:
+            slots = layout["plaetze"]
+            run = slots[min(slots)] if slots else None
+        self.run = run
+        if (run or "") != (stored or ""):
+            self.db.set_meta(ACTIVE_RUN_KEY, run or "")
+
+    def slot_of(self, run=None):
+        run = run or self.run
+        for slot, item in self.layout()["plaetze"].items():
+            if item == run:
+                return slot
+        return None
+
+    def slot_name(self, slot, layout=None):
+        layout = layout or self.layout()
+        return layout["namen"].get(slot) or slot_default_name(slot)
+
+    def active_label(self):
+        """Kurze Platzanzeige fuer den Kopf der Spielansichten."""
+        slot = self.slot_of()
+        if slot is None:
+            return ""
+        name = self.slot_name(slot)
+        return name if name == slot_default_name(slot) else \
+            "%s · %s" % (slot_default_name(slot), name)
+
+    def _summary(self, run, counts):
+        count = counts.get(run, 0)
+        cached = self._summaries.get(run)
+        if cached and cached[0] == count:
+            return cached[1]
+        if run == self.run and self.state is not None:
+            state = self.state
+        else:
+            state = GameState(self.db.game_events(run), self.content) if count else None
+        summary = slot_summary(state)
+        self._summaries[run] = (count, summary)
+        return summary
+
+    def slots(self):
+        """Die drei Plaetze fuer den Auswahlbildschirm (dazu seltene Extras):
+        [{"platz", "name", "lauf", "aktiv", "leer", "spieler", ...}]."""
+        layout = self.layout()
+        counts = self.db.event_counts() if hasattr(self.db, "event_counts") else {}
+        result = []
+        for slot in range(1, SLOT_COUNT + 1):
+            run = layout["plaetze"].get(slot)
+            item = {"platz": slot, "name": self.slot_name(slot, layout), "lauf": run,
+                    "aktiv": run is not None and run == self.run, "extra": False}
+            item.update(self._summary(run, counts) if run else {"leer": True})
+            result.append(item)
+        for run in layout["extra"]:
+            item = {"platz": 0, "name": "Zusätzlicher Durchgang", "lauf": run,
+                    "aktiv": run == self.run, "extra": True}
+            item.update(self._summary(run, counts))
+            result.append(item)
+        return result
+
+    def select_run(self, run):
+        """Einen Durchgang spielen (Platz waehlen)."""
+        if run not in self._known_runs():
+            raise ValueError("Diesen Spielstand gibt es nicht mehr.")
+        self.run = run
+        self.db.set_meta(ACTIVE_RUN_KEY, run)
+        self.unlocked = []
+        return self.reload()
+
+    def new_run(self, slot):
+        """Neuen, leeren Durchgang auf einem freien Platz anlegen und waehlen.
+        Danach wie bisher Spielfigur und Schwierigkeitsgrad festlegen."""
+        layout = self.layout()
+        if self.run and layout["plaetze"].get(slot) == self.run and self.state.profile is None:
+            return self.run   # doppelt getippt: der Platz ist eben erst angelegt
+        if slot in layout["plaetze"]:
+            raise ValueError("%s ist schon belegt." % self.slot_name(slot, layout))
+        if not 1 <= int(slot) <= SLOT_COUNT:
+            raise ValueError("Diesen Platz gibt es nicht.")
+        run = "l" + uuid.uuid4().hex[:16]
+        self.db.log_slot(slot, run, SLOT_CREATED, "{}", self.device)
+        self.select_run(run)
+        return run
+
+    def _ensure_run(self):
+        """Ein Durchgang zum Schreiben: ohne gewaehlten Platz der erste freie."""
+        if self.run is not None:
+            return
+        self._resolve_run()
+        if self.run is not None:
+            return
+        layout = self.layout()
+        free = [n for n in range(1, SLOT_COUNT + 1) if n not in layout["plaetze"]]
+        if not free:
+            raise ValueError("Bitte zuerst einen Spielstand wählen.")
+        self.new_run(free[0])
+
+    def rename_slot(self, slot, name):
+        name = (name or "").strip()[:SLOT_NAME_MAX]
+        self.db.log_slot(slot, "", SLOT_RENAMED, json.dumps({"name": name},
+                                                            ensure_ascii=False), self.device)
+
+    def delete_run(self, run, keep_name=False):
+        """Loescht einen Durchgang (Platz wird frei). Vorher kommt sein Endstand
+        vollstaendig in die Bestenliste - wie beim Zuruecksetzen. Ein eigener
+        Name des Platzes faellt dabei weg (ausser beim Zuruecksetzen)."""
+        layout = self.layout()
+        slot = next((n for n, item in layout["plaetze"].items() if item == run), 0)
+        if run not in self._known_runs(layout):
+            raise ValueError("Diesen Spielstand gibt es nicht mehr.")
+        previous = self.run
+        if run != previous:
+            self.select_run(run)
+        self.check_achievements(force=True)
+        ok = self.db.delete_run(slot, run, self.device)
+        if slot and not keep_name and slot in layout["namen"]:
+            self.rename_slot(slot, "")
+        self._summaries.pop(run, None)
+        self.unlocked = []
+        if run != previous and previous in self._known_runs():
+            self.select_run(previous)
+        else:
+            self.run = None
+            self.db.set_meta(ACTIVE_RUN_KEY, "")
+            self.state = GameState([], self.content)
+        return ok
 
     def knowledge(self):
         return knowledge(self.db, self.content["balancing"]["wissen"])
@@ -4509,7 +4780,9 @@ class Game:
         return levels
 
     def _log(self, kind, data):
-        self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device)
+        self._ensure_run()
+        self.db.log_game_event(kind, json.dumps(data, ensure_ascii=False), self.device,
+                               self.run)
         self.reload()
         if kind != EV_ACHIEVEMENT:
             self.check_achievements(day_end=kind == EV_DAY_END)
@@ -4545,7 +4818,8 @@ class Game:
                     info = unlock_info(state, rule, level, records, self.content)
                     self.db.log_game_event(EV_ACHIEVEMENT, json.dumps(
                         {"erfolg": rule["id"], "stufe": level, "tag": day,
-                         "nachgetragen": quiet}, ensure_ascii=False), self.device)
+                         "nachgetragen": quiet}, ensure_ascii=False), self.device,
+                        self.run)
                     if not quiet:
                         infos.append(info)
                 self.reload()
@@ -5048,11 +5322,18 @@ class Game:
         return self.set_project_team(project_id, team)
 
     def reset(self):
-        # Der Durchgang endet: seine Bestwerte vollstaendig in die Bestenliste
-        self.check_achievements(force=True)
-        ok = self.db.reset_game()
-        self.unlocked = []
-        self.reload()
+        """Spielstand zuruecksetzen (ab 0.48: nur der aktive Platz). Der
+        Durchgang endet - seine Bestwerte kommen vollstaendig in die
+        Bestenliste - und auf demselben Platz beginnt ein neuer."""
+        if self.run is None:
+            self.reload()
+            return True
+        slot = self.slot_of() or 1
+        ok = self.delete_run(self.run, keep_name=True)
+        if slot not in self.layout()["plaetze"]:
+            self.new_run(slot)
+        else:
+            self.reload()
         return ok
 
     # -- Wohnung --------------------------------------------------------------
@@ -12087,6 +12368,16 @@ def people_at_site(site_id, state=None, content=None):
     return result
 
 
+def branch_empty_hint(state, content=None):
+    """Ab 0.48: Text, wenn heute niemand in der Filiale ist (sonst "")."""
+    if state is None or not state.branch or people_at_site(SITE_BRANCH, state, content):
+        return ""
+    staff = state.site_staff(SITE_BRANCH)
+    if not staff:
+        return "Noch niemand versetzt"
+    return "Heute niemand da (%d abwesend)" % len(staff)
+
+
 def site_content(site_id, state=None, content=None):
     """Inhalte (wie GAME) fuer einen Ort: Buero, Kundenort oder Zuhause."""
     content = content or GAME
@@ -12794,8 +13085,9 @@ def _map_tree(x, y, r, colors):
             _oval(x - r * 0.75, y - r * 0.75, r * 0.9, r * 0.9, colors["baum_hell"])]
 
 
-def landscape_shapes(content=None):
-    """Boden, Parks, Fluss, Strassen, Bahn, Baeume und Beschriftungen."""
+def landscape_shapes(content=None, labels=True):
+    """Boden, Parks, Fluss, Strassen, Bahn, Baeume und Beschriftungen
+    (labels=False: ohne Beschriftungen, die kommen dann ueber die Gebaeude)."""
     colors = map_palette()
     width, height = map_size(content)
     items = (map_rules(content).get("welt") or {}).get("landschaft") or []
@@ -12825,7 +13117,17 @@ def landscape_shapes(content=None):
         if item["typ"] == "baum":
             for x, y in item["punkte"]:
                 s += _map_tree(x, y, item.get("r", 0.45), colors)
-        elif item["typ"] == "ortsname":
+    if labels:
+        s += landscape_labels(content)
+    return s
+
+
+def landscape_labels(content=None):
+    """Stadtteilnamen und Beschriftungen der Landschaft."""
+    colors = map_palette()
+    s = []
+    for item in (map_rules(content).get("welt") or {}).get("landschaft") or []:
+        if item["typ"] == "ortsname":
             s.append(_text(item["x"], item["y"], item["text"], "ortsname", colors["schrift"],
                            anchor="c"))
         elif item["typ"] == "beschriftung":
@@ -13114,7 +13416,7 @@ def world_shapes(state, content=None, places=None):
     content = content or GAME
     places = map_places(state, content) if places is None else places
     colors = map_palette()
-    shapes = landscape_shapes(content)
+    shapes = landscape_shapes(content, labels=False)
     buildings = []
     for item in (map_rules(content).get("welt") or {}).get("landschaft") or []:
         if item["typ"] == "gebaeude":
@@ -13129,6 +13431,9 @@ def world_shapes(state, content=None, places=None):
     # Von hinten nach vorn: was weiter unten steht, verdeckt das Dahinter
     for _bottom, model in sorted(buildings, key=lambda entry: entry[0]):
         shapes += model
+    # Ab 0.48: Stadtteilnamen ueber den Gebaeuden (sonst verdeckt z.B. die
+    # Filiale das "L" von LINDENAU)
+    shapes += landscape_labels(content)
     for item in places:
         cx, cy = item["schild"]
         label = _text(cx, cy, item["name"], "ort", C["text"], anchor="c", maxw=MAP_LABEL_MAXW,
@@ -13139,7 +13444,7 @@ def world_shapes(state, content=None, places=None):
         if item["hinweis"]:
             shapes.append(_text(cx, cy + 0.62, item["hinweis"], "person", C["yellow"],
                                 anchor="c"))
-        x1, y1, x2, _y2 = item["box"]
+        x1, y1, x2, y2 = item["box"]
         if item["zahl"]:
             # Als Schild mit Hintergrund: waechst mit der Schrift (auch am Handy lesbar)
             count = _text(x2 - 0.35, y1 + 0.2, str(item["zahl"]), "badge", C["on_accent"],
@@ -13147,7 +13452,8 @@ def world_shapes(state, content=None, places=None):
             count["bg"] = C["pink"]
             shapes.append(count)
         if item["neu"]:
-            new = _text(x1 + 0.3, y1 + 0.1, "Neu", "badge", C["card"], anchor="c")
+            # Unten am Gebaeude - oben steht das Ortsschild (ab 0.48)
+            new = _text(x1 + 0.3, y2 - 0.15, "Neu", "badge", C["card"], anchor="c")
             new["bg"] = C["green"]
             shapes.append(new)
     return shapes
