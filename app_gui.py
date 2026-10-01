@@ -50,6 +50,14 @@ from fisi_core import (  # noqa: E402
     theme_totals, validate_content,
 )
 import fisi_game  # noqa: E402
+import fisi_projekt as fpj  # noqa: E402
+import fisi_pruefung as fp  # noqa: E402
+from fisi_lernen import (  # noqa: E402
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, due_text, learning_settings,
+    parse_time, reminder_due, reminder_text, save_learning_settings, trainer_round,
+    trainer_summary,
+)
 import fisi_game_gui  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -74,7 +82,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.50"
+APP_VERSION = "0.51"
 
 
 def _resource_path(filename):
@@ -92,6 +100,7 @@ NAV_ITEMS = [
     ("ap1scenarios", "layers", "AP1 Szenarien", None),
     ("scenarios", "diamond", "AP2 Szenarien", None),
     ("testproject", "flag", "Test Projekt", None),
+    ("abschluss", "case", "Abschlussprojekt", None),
     ("notebook", "notebook", "Notizblock", None),
     ("calc", "calc", "Rechner", None),
     ("game", "game", "Spiel", [("buero", "office", "Büro"), ("kunde", "station", "Kunde"),
@@ -105,6 +114,7 @@ NAV_ITEMS = [
 NAV_SYMBOLS = {
     "dashboard": "dashboard", "cards": "style", "quiz": "track_changes",
     "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
+    "abschluss": "workspace_premium",
     "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
     "progress": "insights", "settings": "settings",
     # Unterpunkte: Spiel
@@ -135,6 +145,7 @@ VIEW_TITLES = {
     "ap1scenarios": ("LERNEN", "AP1 SZENARIEN"),
     "scenarios": ("LERNEN", "AP2 SZENARIEN"),
     "testproject": ("LERNEN", "TEST PROJEKT"),
+    "abschluss": ("LERNEN", "ABSCHLUSSPROJEKT"),
     "notebook": ("LERNEN", "NOTIZBLOCK"),
     "calc": ("WERKZEUGE", "RECHNER"),
     "game": ("PRAXIS", "SPIEL"),
@@ -184,8 +195,10 @@ class EntryBox(ctk.CTkEntry):
 class NumberStepper(ctk.CTkFrame):
     """Zahlenfeld mit Plus- und Minus-Knopf."""
 
-    def __init__(self, parent, value=10, minimum=1, maximum=100, step=5, bg=None):
+    def __init__(self, parent, value=10, minimum=1, maximum=100, step=5, bg=None,
+                 on_change=None):
         super().__init__(parent, fg_color="transparent")
+        self.on_change = on_change
         self.value = value
         self.minimum = minimum
         self.maximum = maximum
@@ -203,6 +216,8 @@ class NumberStepper(ctk.CTkFrame):
     def _change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
         self.label.configure(text=str(self.value))
+        if self.on_change:
+            self.on_change(self.value)
 
     def get(self):
         return self.value
@@ -802,6 +817,29 @@ class DashboardView(View):
         self.hero = GradientPanel(self.content, height=118)
         self.hero.pack(fill="x")
 
+        # --- Heute (ab 0.51): Tagesziel, Lernserie, Wiederholungen --------
+        self.today_card = Card(self.content, title="Heute",
+                               subtitle="Tagesziel und Wiederholung", accent=C["green"])
+        self.today_card.pack(fill="x", pady=(16, 0))
+        today = transparent_frame(self.today_card.body)
+        today.pack(fill="x")
+        self.goal_box = transparent_frame(today)
+        self.goal_ring = MiniRing(self.goal_box, size=74, thickness=7, parent_bg=C["card"])
+        self.goal_ring.pack(side="left")
+        goal_text = transparent_frame(self.goal_box)
+        goal_text.pack(side="left", padx=(12, 0))
+        self.lbl_goal = make_label(goal_text, "", font=F["body_bold"], fg=C["text"])
+        self.lbl_goal.pack(anchor="w")
+        self.lbl_streak = make_label(goal_text, "", font=F["small"], fg=C["text_soft"])
+        self.lbl_streak.pack(anchor="w", pady=(4, 0))
+        self.review_box = transparent_frame(today)
+        self.review_box.pack(side="right")
+        self.lbl_due = make_label(self.review_box, "", font=F["body_bold"], fg=C["text"])
+        self.lbl_due.pack(side="left", padx=(0, 14))
+        self.btn_review = NeoButton(self.review_box, "Jetzt wiederholen",
+                                    self.app.start_review, kind="primary")
+        self.btn_review.pack(side="left")
+
         # --- Reihe 1: Kennzahlen (fuenf gleich breite Kacheln) -----------
         row1 = transparent_frame(self.content)
         row1.pack(fill="x", pady=(16, 0))
@@ -956,7 +994,35 @@ class DashboardView(View):
         stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
         if stamp is None:
             return None
-        return (stamp, datetime.date.today(), self.zoom_category)
+        return (stamp, datetime.date.today(), self.zoom_category,
+                tuple(sorted(learning_settings().items())))
+
+    def _refresh_today(self):
+        """Kachel "Heute" (ab 0.51)."""
+        settings = learning_settings()
+        goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
+        show_goal, show_streak = settings["ziel_an"], settings["serie_an"]
+        if show_goal or show_streak:
+            self.goal_box.pack(side="left")
+        else:
+            self.goal_box.pack_forget()
+        if show_goal:
+            self.goal_ring.pack(side="left")
+            self.goal_ring.set(goal.fraction * 100,
+                               C["green"] if goal.reached else C["accent"])
+            self.lbl_goal.configure(text=goal.text())
+            self.lbl_goal.pack(anchor="w")
+        else:
+            self.goal_ring.pack_forget()
+            self.lbl_goal.pack_forget()
+        if show_streak:
+            self.lbl_streak.configure(text=goal.streak_text())
+            self.lbl_streak.pack(anchor="w", pady=(4, 0))
+        else:
+            self.lbl_streak.pack_forget()
+        plan = ReviewPlan.from_db(self.db)
+        self.lbl_due.configure(text=due_text(plan))
+        self.btn_review.set_enabled(plan.count() > 0)
 
     def refresh(self):
         total_cards = len(KARTEIKARTEN)
@@ -972,11 +1038,14 @@ class DashboardView(View):
 
         rate, correct, answered = self.db.quiz_success_rate()
         learned = learned_cards + quiz_distinct
+        self._refresh_today()
+        streak = ("Lernserie: %d Tag(e)   ·   " % self.db.streak()
+                  if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             "Dein Lernstand",
-            "Lernserie: %d Tag(e)   ·   %d von %d Inhalten bearbeitet   ·   "
+            "%s%d von %d Inhalten bearbeitet   ·   "
             "Quiz-Erfolgsquote %d %%"
-            % (self.db.streak(), learned, self.total_content, round(rate)),
+            % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
             "Gesamtfortschritt")
 
@@ -1493,6 +1562,32 @@ class CardsView(View):
 
 class QuizView(View):
     def build(self):
+        # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
+        outer = self.content
+        self.mode_pills = PillGroup(outer, QUIZ_MODES, on_change=self._on_mode)
+        self.mode_pills.pack(anchor="w", pady=(0, 14))
+        self.practice_box = transparent_frame(outer)
+        self.practice_box.pack(fill="both", expand=True)
+        self.exam = ExamPanel(outer, self.app)
+        self.content = self.practice_box
+        self._build_practice()
+        self.content = outer
+
+    def _on_mode(self, mode):
+        if mode == "pruefung":
+            if self.running:
+                self.stop_timer()
+                self._reset_controls()
+            self.practice_box.pack_forget()
+            self.exam.pack(fill="both", expand=True)
+            self.exam.show()
+        else:
+            self.exam.hide()
+            self.exam.pack_forget()
+            self.practice_box.pack(fill="both", expand=True)
+        self.to_top()
+
+    def _build_practice(self):
         self.questions = list(QUIZ_QUESTIONS)
         self.pool = list(self.questions)
         self.session = []
@@ -1593,7 +1688,13 @@ class QuizView(View):
         self._update_pool()
 
     def on_show(self):
-        if not self.running:
+        # Ab 0.51: eine laufende Pruefung geht vor
+        if fp.load_running() is not None and self.mode_pills.get() != "pruefung":
+            self.mode_pills.select_value("pruefung")
+            return
+        if self.mode_pills.get() == "pruefung":
+            self.exam.show()
+        elif not self.running:
             self._update_pool()
 
     def _update_pool(self):
@@ -1616,6 +1717,12 @@ class QuizView(View):
     def practice(self, questions, keep_order=False):
         """Gezielte Uebungsrunde aus dem Notizblock: nur diese Fragen
         (hoechstens 50). keep_order: die erste Frage kommt zuerst."""
+        if self.mode_pills.get() != "uebung":
+            if fp.load_running() is not None:
+                messagebox.showinfo("Prüfung läuft", "Es läuft gerade eine Prüfung. "
+                                                     "Gib sie zuerst ab oder brich sie ab.")
+                return
+            self.mode_pills.select_value("uebung")
         if self.running:
             self.stop_timer()
             self._reset_controls()
@@ -1772,6 +1879,8 @@ class QuizView(View):
         self._update_pool()
 
     def jump_to_question(self, question_text):
+        if self.mode_pills.get() != "uebung" and fp.load_running() is None:
+            self.mode_pills.select_value("uebung")
         for question in self.questions:
             if question["q"] == question_text:
                 self.stop_timer()
@@ -1782,6 +1891,513 @@ class QuizView(View):
                 self.lbl_explain.configure(text=question["exp"],
                                            text_color=C["text_dim"])
                 return
+
+
+# ============================================================================
+#  KLAUSURSIMULATION (ab 0.51)
+# ============================================================================
+
+QUIZ_MODES = [("uebung", "Übung"), ("pruefung", "Prüfung")]
+WISO_PAGE = 5
+
+
+class ExamPanel(ctk.CTkFrame):
+    """Pruefungsmodus im Pruefungstrainer: Auswahl, laufende Pruefung mit
+    Countdown (ohne Pause), Selbstbewertung mit Kriterien, Ergebnis."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
+        self.db = app.db
+        self.state = None
+        self.task_no = 0
+        self.wiso_page = 0
+        self.timer_job = None
+        self.save_job = None
+        self.result = None
+        self.body = transparent_frame(self)
+        self.body.pack(fill="both", expand=True)
+
+    # -- Allgemein ----------------------------------------------------------
+
+    def _clear(self):
+        self._stop_timer()
+        for child in self.body.winfo_children():
+            child.destroy()
+
+    def _stop_timer(self):
+        if self.timer_job is not None:
+            try:
+                self.app.root.after_cancel(self.timer_job)
+            except tk.TclError:
+                pass
+            self.timer_job = None
+
+    def show(self):
+        """Beim Anzeigen: laufende Pruefung fortsetzen oder Auswahl zeigen."""
+        self.state = fp.load_running()
+        if self.state is None:
+            self.show_choice()
+        elif self.state["phase"] == "laeuft":
+            if fp.seconds_left(self.state) <= 0:
+                self._submit(auto=True)
+            else:
+                self.show_running()
+        else:
+            self.show_grading()
+
+    def hide(self):
+        self._flush_answers()
+        self._stop_timer()
+
+    # -- Auswahl ------------------------------------------------------------
+
+    def show_choice(self):
+        self._clear()
+        intro = Card(self.body, title="Prüfung nach IHK-Vorbild", accent=C["accent"],
+                     subtitle="Aufbau nach der Ausbildungsverordnung 2020")
+        intro.pack(fill="x")
+        make_label(intro.body,
+                   "Wie in der echten Prüfung: feste Zeit ohne Pause, alle Aufgaben sind "
+                   "Pflicht, keine Musterlösung während der Prüfung. Offene Aufgaben "
+                   "bewertest du nach der Abgabe selbst anhand der Musterlösung, WiSo wird "
+                   "automatisch ausgewertet. Notenschlüssel der IHK: ab 92 Punkten sehr gut, "
+                   "ab 81 gut, ab 67 befriedigend, ab 50 ausreichend, ab 30 mangelhaft.",
+                   font=F["small"], fg=C["text_soft"], wraplength=900, justify="left",
+                   anchor="w").pack(anchor="w")
+        for exam in fp.EXAMS:
+            row = ctk.CTkFrame(intro.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=1, border_color=C["border"])
+            row.pack(fill="x", pady=(10, 0))
+            text = transparent_frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, exam["name"], font=F["body_bold"], fg=C["text"]).pack(anchor="w")
+            detail = ("%d Minuten · %d Auswahlfragen · 100 Punkte" % (exam["minuten"],
+                                                                      fp.WISO_COUNT)
+                      if exam["art"] == fp.WISO else
+                      "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
+            make_label(text, detail, font=F["small"], fg=C["muted"]).pack(anchor="w")
+            NeoButton(row, "Starten", lambda a=exam["art"]: self.start(a),
+                      kind="primary").pack(side="right", padx=14)
+        self._results_cards(self.body)
+
+    def _results_cards(self, parent):
+        history = self.db.exams()
+        card = Card(parent, title="Letzte Prüfungen", accent=C["purple"],
+                    subtitle="%d insgesamt" % len(history))
+        card.pack(fill="x", pady=(14, 0))
+        if not history:
+            make_label(card.body, "Noch keine Prüfung abgelegt.", font=F["small"],
+                       fg=C["muted"]).pack(anchor="w")
+        for entry in history[:8]:
+            exam = fp.EXAM.get(entry["art"])
+            row = transparent_frame(card.body)
+            row.pack(fill="x", pady=2)
+            make_label(row, _german_time(entry["timestamp"]), font=F["small"],
+                       fg=C["muted"], width=150, anchor="w").pack(side="left")
+            make_label(row, exam["kurz"] if exam else entry["art"], font=F["small_bold"],
+                       fg=C["text"], width=110, anchor="w").pack(side="left")
+            make_label(row, "%s Punkte" % _points(entry["punkte"]), font=F["small"],
+                       fg=C["text_soft"], width=110, anchor="w").pack(side="left")
+            make_label(row, entry["note"], font=F["small_bold"],
+                       fg=_note_color(entry["punkte"])).pack(side="left")
+        overall_card(parent, self.db)
+
+    def start(self, art):
+        exam = fp.EXAM[art]
+        if not messagebox.askyesno(
+                "Prüfung starten",
+                "%s\n\nDie Zeit (%d Minuten) läuft sofort und lässt sich nicht anhalten - "
+                "auch nicht, wenn du das Programm schließt. Jetzt starten?"
+                % (exam["name"], exam["minuten"])):
+            return
+        self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
+        fp.save_running(self.state)
+        self.task_no = 0
+        self.wiso_page = 0
+        self.show_running()
+
+    # -- Laufende Pruefung --------------------------------------------------
+
+    def show_running(self):
+        self._clear()
+        state = self.state
+        exam = fp.EXAM[state["art"]]
+        head = Card(self.body, title=exam["kurz"], accent=C["accent"], subtitle=exam["name"])
+        head.pack(fill="x")
+        row = transparent_frame(head.body)
+        row.pack(fill="x")
+        self.lbl_clock = make_label(row, "", font=F["display"], fg=C["accent"])
+        self.lbl_clock.pack(side="left")
+        make_label(row, "verbleibend", font=F["small"], fg=C["muted"]).pack(
+            side="left", padx=(10, 0), pady=(14, 0))
+        NeoButton(row, "Abbrechen", self.cancel, kind="ghost").pack(side="right")
+        NeoButton(row, "Abgeben", lambda: self._submit(), kind="primary").pack(
+            side="right", padx=10)
+        self.lbl_progress = make_label(head.body, "", font=F["small"], fg=C["muted"])
+        self.lbl_progress.pack(anchor="w", pady=(6, 0))
+        self.task_box = transparent_frame(self.body)
+        self.task_box.pack(fill="both", expand=True, pady=(14, 0))
+        if state["art"] == fp.WISO:
+            self._paint_wiso()
+        else:
+            options = [(number, "Aufgabe %d" % (number + 1))
+                       for number in range(len(state["aufgaben"]))]
+            self.task_pills = PillGroup(self.body, options, on_change=self._switch_task,
+                                        initial=self.task_no)
+            self.task_pills.pack(anchor="w", pady=(14, 0), before=self.task_box)
+            self._paint_task()
+        self._tick()
+
+    def _tick(self):
+        left = fp.seconds_left(self.state)
+        self.lbl_clock.configure(text=fp.time_text(left),
+                                 text_color=C["red"] if left < 300 else C["accent"])
+        if left <= 0:
+            self.timer_job = None
+            self._submit(auto=True)
+            return
+        self.timer_job = self.app.root.after(1000, self._tick)
+
+    def _progress(self):
+        answers = self.state["antworten"]
+        if self.state["art"] == fp.WISO:
+            done = sum(1 for q in self.state["fragen"] if answers.get(q))
+            return "%d von %d Fragen beantwortet" % (done, len(self.state["fragen"]))
+        total = sum(len(fp.task_details(self.state, n)["teile"])
+                    for n in range(len(self.state["aufgaben"])))
+        done = sum(1 for value in answers.values() if value.strip())
+        return "%d von %d Teilaufgaben bearbeitet" % (done, total)
+
+    def _switch_task(self, number):
+        self._flush_answers()
+        self.task_no = number
+        self._paint_task()
+
+    def _paint_task(self):
+        for child in self.task_box.winfo_children():
+            child.destroy()
+        details = fp.task_details(self.state, self.task_no)
+        card = Card(self.task_box, title="Aufgabe %d" % (self.task_no + 1),
+                    accent=C["purple"], subtitle="%s · 25 Punkte" % details["titel"])
+        card.pack(fill="x")
+        if details["einleitung"]:
+            make_label(card.body, details["einleitung"], font=F["body"], fg=C["text_soft"],
+                       wraplength=900, justify="left", anchor="w").pack(anchor="w")
+        self.answer_boxes = {}
+        for part_no, part in enumerate(details["teile"]):
+            key = fp.answer_key(self.task_no, part_no)
+            make_label(card.body, "%s) %s  (%d Punkte)" % (chr(97 + part_no), part["text"],
+                                                          part["punkte"]),
+                       font=F["body_bold"], fg=C["text"], wraplength=900, justify="left",
+                       anchor="w").pack(anchor="w", pady=(14, 6))
+            box = make_autogrow_text(card.body, min_height=4, max_height=16)
+            box.pack(fill="x")
+            set_text(box, self.state["antworten"].get(key, ""))
+            box.bind("<KeyRelease>", lambda _e: self._schedule_save(), add="+")
+            self.answer_boxes[key] = box
+        self.lbl_progress.configure(text=self._progress())
+
+    def _paint_wiso(self):
+        for child in self.task_box.winfo_children():
+            child.destroy()
+        questions = self.state["fragen"]
+        pages = (len(questions) + WISO_PAGE - 1) // WISO_PAGE
+        card = Card(self.task_box, title="Wirtschafts- und Sozialkunde", accent=C["purple"],
+                    subtitle="Seite %d von %d" % (self.wiso_page + 1, pages))
+        card.pack(fill="x")
+        by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
+        start = self.wiso_page * WISO_PAGE
+        for number, question in enumerate(questions[start:start + WISO_PAGE], start=start):
+            make_label(card.body, "%d. %s" % (number + 1, question), font=F["body_bold"],
+                       fg=C["text"], wraplength=900, justify="left",
+                       anchor="w").pack(anchor="w", pady=(12, 4))
+            options = OptionList(card.body, bg=C["card"],
+                                 on_change=lambda value, q=question: self._choose(q, value))
+            options.pack(fill="x")
+            options.set_options(self.state["optionen"].get(question) or
+                                by_question[question]["options"])
+            chosen = self.state["antworten"].get(question)
+            if chosen:
+                options._selected = chosen
+                for row in options._rows:
+                    row["state"] = "selected" if row["text"] == chosen else "idle"
+                    options._paint(row)
+        nav = transparent_frame(self.task_box)
+        nav.pack(fill="x", pady=(14, 0))
+        back = NeoButton(nav, "Zurück", lambda: self._wiso_turn(-1), kind="ghost")
+        back.pack(side="left")
+        back.set_enabled(self.wiso_page > 0)
+        forward = NeoButton(nav, "Weiter", lambda: self._wiso_turn(1), kind="ghost")
+        forward.pack(side="left", padx=10)
+        forward.set_enabled(self.wiso_page < pages - 1)
+        self.lbl_progress.configure(text=self._progress())
+
+    def _wiso_turn(self, delta):
+        self.wiso_page += delta
+        self._paint_wiso()
+        self.app.views["quiz"].to_top()
+
+    def _choose(self, question, value):
+        self.state["antworten"][question] = value
+        fp.save_running(self.state)
+        self.lbl_progress.configure(text=self._progress())
+
+    def _schedule_save(self):
+        if self.save_job is not None:
+            self.app.root.after_cancel(self.save_job)
+        self.save_job = self.app.root.after(1200, self._flush_answers)
+
+    def _flush_answers(self):
+        self.save_job = None
+        if not self.state or self.state.get("phase") != "laeuft" or \
+                self.state["art"] == fp.WISO:
+            return
+        boxes = getattr(self, "answer_boxes", {})
+        changed = False
+        for key, box in boxes.items():
+            try:
+                value = box.get("1.0", "end").rstrip("\n")
+            except tk.TclError:
+                continue
+            if self.state["antworten"].get(key, "") != value:
+                self.state["antworten"][key] = value
+                changed = True
+        if changed:
+            fp.save_running(self.state)
+            try:
+                self.lbl_progress.configure(text=self._progress())
+            except tk.TclError:
+                pass
+
+    def cancel(self):
+        if not messagebox.askyesno("Prüfung abbrechen",
+                                   "Die Prüfung wirklich abbrechen? Deine Antworten werden "
+                                   "verworfen und es gibt kein Ergebnis."):
+            return
+        fp.clear_running()
+        self.state = None
+        self.show_choice()
+
+    def _submit(self, auto=False):
+        if not auto and not messagebox.askyesno(
+                "Abgeben", "Prüfung jetzt abgeben? Danach kannst du nichts mehr ändern."):
+            return
+        self._flush_answers()
+        self._stop_timer()
+        fp.submit(self.state)
+        if self.state["art"] == fp.WISO:
+            self._finish()
+            return
+        fp.save_running(self.state)
+        if auto:
+            messagebox.showinfo("Zeit abgelaufen", "Die Zeit ist um, die Prüfung wurde "
+                                                   "abgegeben. Jetzt folgt die Bewertung.")
+        self.task_no = 0
+        self.show_grading()
+
+    # -- Bewertung ----------------------------------------------------------
+
+    def show_grading(self):
+        self._clear()
+        state = self.state
+        exam = fp.EXAM[state["art"]]
+        head = Card(self.body, title="Bewertung", accent=C["green"], subtitle=exam["name"])
+        head.pack(fill="x")
+        make_label(head.body,
+                   "Vergleiche deine Antwort mit der Musterlösung und hake ab, was du "
+                   "hattest. Die Punkte werden vorgeschlagen, du kannst sie wie ein Prüfer "
+                   "anpassen.", font=F["small"], fg=C["text_soft"], wraplength=900,
+                   justify="left", anchor="w").pack(anchor="w")
+        row = transparent_frame(head.body)
+        row.pack(fill="x", pady=(10, 0))
+        self.lbl_sum = make_label(row, "", font=F["body_bold"], fg=C["text"])
+        self.lbl_sum.pack(side="left")
+        NeoButton(row, "Bewertung abschließen", self._finish, kind="primary").pack(
+            side="right")
+        options = [(number, "Aufgabe %d" % (number + 1))
+                   for number in range(len(state["aufgaben"]))]
+        PillGroup(self.body, options, on_change=self._grade_task,
+                  initial=self.task_no).pack(anchor="w", pady=(14, 0))
+        self.task_box = transparent_frame(self.body)
+        self.task_box.pack(fill="both", expand=True, pady=(14, 0))
+        self._paint_grading()
+
+    def _grade_task(self, number):
+        self.task_no = number
+        self._paint_grading()
+        self.app.views["quiz"].to_top()
+
+    def _sum_text(self):
+        total = 0
+        for number in range(len(self.state["aufgaben"])):
+            for part_no, _part in enumerate(fp.task_details(self.state, number)["teile"]):
+                total += int(self.state["punkte"].get(fp.answer_key(number, part_no), 0))
+        return "Zwischenstand: %d von 100 Punkten" % total
+
+    def _paint_grading(self):
+        for child in self.task_box.winfo_children():
+            child.destroy()
+        details = fp.task_details(self.state, self.task_no)
+        card = Card(self.task_box, title="Aufgabe %d" % (self.task_no + 1),
+                    accent=C["purple"], subtitle="%s · %s" % (details["titel"],
+                                                             details["thema"]))
+        card.pack(fill="x")
+        for part_no, part in enumerate(details["teile"]):
+            key = fp.answer_key(self.task_no, part_no)
+            make_label(card.body, "%s) %s  (%d Punkte)" % (chr(97 + part_no), part["text"],
+                                                          part["punkte"]),
+                       font=F["body_bold"], fg=C["text"], wraplength=900, justify="left",
+                       anchor="w").pack(anchor="w", pady=(14, 6))
+            make_label(card.body, "DEINE ANTWORT", font=F["label"],
+                       fg=C["muted"]).pack(anchor="w")
+            own = make_autogrow_text(card.body, min_height=2, max_height=12)
+            own.pack(fill="x", pady=(4, 8))
+            set_text(own, self.state["antworten"].get(key, "") or "(keine Antwort)")
+            own.configure(state="disabled")
+            make_label(card.body, "MUSTERLÖSUNG · KRITERIEN", font=F["label"],
+                       fg=C["muted"]).pack(anchor="w")
+            marks = self.state["kriterien"].setdefault(key, [False] * len(part["kriterien"]))
+            stepper_holder = {}
+
+            def toggled(index, var, key=key, part=part, marks=marks, holder=stepper_holder):
+                marks[index] = bool(var.get())
+                points = fp.suggested_points(part["punkte"], marks)
+                self.state["punkte"][key] = points
+                holder["stepper"].value = points
+                holder["stepper"]._change(0)
+                fp.save_running(self.state)
+
+            for index, criterion in enumerate(part["kriterien"]):
+                var = tk.BooleanVar(value=marks[index] if index < len(marks) else False)
+                ctk.CTkCheckBox(card.body, text=criterion, variable=var,
+                                command=lambda i=index, v=var, t=toggled: t(i, v),
+                                font=F["small"], text_color=C["text_soft"],
+                                fg_color=C["green"], border_color=C["border_hi"],
+                                hover_color=C["card_hi"]).pack(anchor="w", pady=2)
+            row = transparent_frame(card.body)
+            row.pack(anchor="w", pady=(8, 0))
+            make_label(row, "Punkte", font=F["small"], fg=C["text_dim"]).pack(
+                side="left", padx=(0, 10))
+
+            def changed(value, key=key):
+                self.state["punkte"][key] = value
+                fp.save_running(self.state)
+                self.lbl_sum.configure(text=self._sum_text())
+
+            stepper = NumberStepper(row, value=int(self.state["punkte"].get(key, 0)),
+                                    minimum=0, maximum=part["punkte"], step=1, bg=C["card"],
+                                    on_change=changed)
+            stepper.pack(side="left")
+            make_label(row, "von %d" % part["punkte"], font=F["small"],
+                       fg=C["muted"]).pack(side="left", padx=(10, 0))
+            stepper_holder["stepper"] = stepper
+        self.lbl_sum.configure(text=self._sum_text())
+
+    def _finish(self):
+        if self.state["art"] != fp.WISO and not messagebox.askyesno(
+                "Bewertung abschließen", "Bewertung abschließen und das Ergebnis "
+                                         "speichern?"):
+            return
+        self.result = fp.finish(self.db, self.state)
+        art = self.state["art"]
+        self.state = None
+        self.app.notify_progress()
+        self.show_result(art)
+
+    # -- Ergebnis -----------------------------------------------------------
+
+    def show_result(self, art):
+        self._clear()
+        result = self.result
+        exam = fp.EXAM[art]
+        card = Card(self.body, title="Ergebnis", accent=C["green"], subtitle=exam["name"])
+        card.pack(fill="x")
+        row = transparent_frame(card.body)
+        row.pack(fill="x")
+        make_label(row, "%s Punkte" % _points(result["punkte"]), font=F["display"],
+                   fg=_note_color(result["punkte"])).pack(side="left")
+        make_label(row, "IHK-Note %s  ·  Dauer %s" % (result["note"],
+                                                     fp.time_text(result["dauer"])),
+                   font=F["body_bold"], fg=C["text"]).pack(side="left", padx=(18, 0),
+                                                            pady=(12, 0))
+        details = result["daten"]
+        if art == fp.WISO:
+            make_label(card.body, "%d von %d Fragen richtig" % (
+                details["richtig"], len(details["fragen"])), font=F["body"],
+                fg=C["text_soft"]).pack(anchor="w", pady=(10, 0))
+        else:
+            for number, task in enumerate(details["aufgaben"], start=1):
+                make_label(card.body, "Aufgabe %d · %s: %d von %d Punkten" % (
+                    number, task["titel"], task["punkte"], task["max"]),
+                    font=F["body"], fg=C["text_soft"], anchor="w").pack(anchor="w",
+                                                                        pady=(6, 0))
+        themes = Card(self.body, title="Nach Themen", accent=C["purple"],
+                      subtitle="Schwachstellen rot")
+        themes.pack(fill="x", pady=(14, 0))
+        for name, (reached, maximum) in sorted(details["themen"].items()):
+            share = reached / maximum * 100 if maximum else 0
+            bar = GradientBar(themes.body, name, C["red"] if share < 50 else C["green"],
+                              C["orange"] if share < 50 else C["accent"],
+                              parent_bg=C["card"])
+            bar.pack(fill="x", pady=4)
+            bar.set(share, "%s von %s" % (_points(reached), _points(maximum)))
+        weak = fp.weak_topics(result)
+        if weak:
+            make_label(themes.body, "Üben: " + ", ".join(weak), font=F["small_bold"],
+                       fg=C["red"], wraplength=900, justify="left",
+                       anchor="w").pack(anchor="w", pady=(8, 0))
+        NeoButton(self.body, "Zur Prüfungsauswahl", self.show_choice,
+                  kind="ghost").pack(anchor="w", pady=(14, 0))
+
+
+def _points(value):
+    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+
+
+def _note_color(points):
+    return C["green"] if points >= 67 else C["yellow"] if points >= 50 else C["red"]
+
+
+def overall_card(parent, db):
+    """Kachel "Gesamtergebnis" (ab 0.51): letzte Simulation je Bereich plus
+    geschaetzte Projektnote, Gewichtung und Bestehensregeln nach § 24."""
+    scores = fp.latest_results(db.exams())
+    project = fpj.projects(db)
+    active = fpj.active_project(db, fisi_update.load_settings()) if project else None
+    estimate = fpj.estimate(project.get(active, {})) if active else None
+    if estimate is not None:
+        scores["projekt"] = estimate
+    card = Card(parent, title="Gesamtergebnis", accent=C["green"],
+                subtitle="Gewichtung 20 / 50 / 10 / 10 / 10 %")
+    card.pack(fill="x", pady=(14, 0))
+    lines = []
+    for area in fp.WEIGHTS:
+        value = scores.get(area)
+        lines.append("%s (%d %%): %s" % (fp.AREA_NAME[area], fp.WEIGHTS[area],
+                                         "%s Punkte" % _points(value) if value is not None
+                                         else "noch offen"))
+    make_label(card.body, "\n".join(lines), font=F["small"], fg=C["text_soft"],
+               justify="left", anchor="w").pack(anchor="w")
+    result = fp.overall(scores)
+    if not result["complete"]:
+        hint = "Für das Gesamtergebnis fehlt noch: %s." % ", ".join(result["fehlend"])
+        if "Projekt" in result["fehlend"]:
+            hint += " Die Projektnote schätzt du im Abschlussprojekt unter „Übersicht“."
+        make_label(card.body, hint, font=F["small"], fg=C["muted"], wraplength=900,
+                   justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
+        return
+    make_label(card.body, "Gesamt %s Punkte · Note %s · %s" % (
+        _points(result["gesamt"]), result["note"],
+        "bestanden" if result["bestanden"] else "nicht bestanden"),
+        font=F["body_bold"], fg=C["green"] if result["bestanden"] else C["red"]).pack(
+            anchor="w", pady=(10, 4))
+    for text, ok in result["regeln"]:
+        make_label(card.body, ("erfüllt:  " if ok else "offen:  ") + text, font=F["small"],
+                   fg=C["green"] if ok else C["red"], anchor="w").pack(anchor="w")
+    if result["ergaenzung"]:
+        make_label(card.body, result["ergaenzung"], font=F["small"], fg=C["yellow"],
+                   wraplength=900, justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
 
 # ============================================================================
@@ -2024,6 +2640,9 @@ class ProjectView(View):
         self.btn_toggle.pack(side="left")
         NeoButton(controls, "Nächstes Projekt", self.next_project,
                   kind="ghost", icon="arrow_right").pack(side="left", padx=10)
+        # Ab 0.51: als Vorlage fuers eigene Abschlussprojekt
+        NeoButton(controls, "Als Vorlage fürs Abschlussprojekt", self.use_as_template,
+                  kind="ghost").pack(side="right")
 
         self.load_project(0)
 
@@ -2119,6 +2738,517 @@ class ProjectView(View):
 
     def next_project(self):
         self.load_project(self.paged.next_after(self.index))
+
+    def use_as_template(self):
+        self.app.show_view("abschluss")
+        self.app.views["abschluss"].use_template(self.index)
+
+
+# ============================================================================
+#  ABSCHLUSSPROJEKT (AB 0.51)
+# ============================================================================
+
+PROJECT_SAVE_DELAY = 800      # ms nach dem letzten Tastendruck
+NO_CATEGORY = "Kein Fachbereich"
+
+
+class FinalProjectView(View):
+    """Arbeitsbereich fuers eigene IHK-Abschlussprojekt: Uebersicht, Antrag,
+    Zeitplan, Kosten, Dokumentation und Fachgespraech. Jede Eingabe wird
+    kurz nach dem Tippen gespeichert (Tabelle abschlussprojekt) und mit dem
+    Handy abgeglichen. Die Reiter werden erst beim ersten Oeffnen aufgebaut
+    und danach wiederverwendet (wie die Ansichten seit 0.48/0.50)."""
+
+    def build(self):
+        self.project = None
+        self.fields = {}
+        self.inputs = {}         # feld -> Funktion, die den Eingabewert liefert
+        self.pending = set()
+        self.save_job = None
+        self.derived = {}        # reiter -> Funktion, die berechnete Werte auffrischt
+        self.tab_frames = {}
+        self.tab = fpj.TABS[0][0]
+        self.fg_index = 0
+        self.fg_hint = False
+        self.stamp = None
+        self.project_ids = []
+
+        top = transparent_frame(self.content)
+        top.pack(fill="x")
+        make_label(top, "Projekt", font=F["small"], fg=C["text_dim"]).pack(
+            side="left", padx=(0, 10))
+        self.menu_project = option_menu(top, ["-"], command=self._choose_project, width=320)
+        self.menu_project.pack(side="left")
+        NeoButton(top, "Neues Projekt", self._new_project, kind="ghost", height=34,
+                  font=F["small_bold"]).pack(side="left", padx=(10, 0))
+        NeoButton(top, "Löschen", self._delete_project, kind="ghost", height=34,
+                  font=F["small_bold"]).pack(side="left", padx=(8, 0))
+        NeoButton(top, "Als Text", lambda: self._export("txt"), kind="ghost", height=34,
+                  font=F["small_bold"]).pack(side="right")
+        NeoButton(top, "Als PDF", lambda: self._export("pdf"), kind="primary", height=34,
+                  font=F["small_bold"]).pack(side="right", padx=(0, 8))
+
+        self.tab_pills = PillGroup(self.content, fpj.TABS, on_change=self._on_tab)
+        self.tab_pills.pack(anchor="w", pady=(14, 14))
+        self.tab_area = transparent_frame(self.content)
+        self.tab_area.pack(fill="both", expand=True)
+        self._load_project()
+
+    # -- Projekte -----------------------------------------------------------
+
+    def _load_project(self, project=None):
+        """Projekt laden (ohne Angabe: das aktive dieses Geraets) und die
+        Reiter neu aufbauen."""
+        self._flush()
+        settings = fisi_update.load_settings()
+        self.project = project or fpj.active_project(self.db, settings)
+        if settings.get(fpj.ACTIVE_KEY) != self.project:
+            settings[fpj.ACTIVE_KEY] = self.project
+            fisi_update.save_settings(settings)
+        self.fields = dict(fpj.projects(self.db).get(self.project, {}))
+        self.stamp = self.db.change_stamp()
+        self.fg_index = 0
+        self._fill_project_menu()
+        for frame in self.tab_frames.values():
+            frame.destroy()
+        self.tab_frames = {}
+        self.inputs = {}
+        self.derived = {}
+        self._on_tab(self.tab)
+
+    def _fill_project_menu(self):
+        existing = fpj.projects(self.db)
+        if self.project not in existing:
+            existing[self.project] = self.fields
+        self.project_ids = sorted(existing, key=lambda key: fpj.project_title(
+            existing[key]).lower())
+        labels = []
+        for key in self.project_ids:
+            label = fpj.project_title(self.fields if key == self.project else existing[key])
+            while label in labels:
+                label += " "
+            labels.append(label)
+        self.menu_project.configure(values=labels)
+        self.menu_project.set(labels[self.project_ids.index(self.project)])
+        self.project_labels = labels
+
+    def _choose_project(self, label):
+        if label in self.project_labels:
+            key = self.project_ids[self.project_labels.index(label)]
+            if key != self.project:
+                self._load_project(key)
+
+    def _new_project(self):
+        self._flush()
+        self._load_project(fpj.create_project(self.db))
+        self.app.notify_progress(refresh_view=False)
+
+    def _delete_project(self):
+        if not messagebox.askyesno(
+                "Projekt löschen",
+                "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig machen "
+                "und gilt nach dem Abgleich auch auf dem Handy."
+                % fpj.project_title(self.fields)):
+            return
+        self.pending.clear()
+        fpj.delete_project(self.db, self.project)
+        settings = fisi_update.load_settings()
+        settings.pop(fpj.ACTIVE_KEY, None)
+        fisi_update.save_settings(settings)
+        self.project = None
+        self._load_project()
+        self.app.notify_progress(refresh_view=False)
+
+    def _export(self, extension):
+        self._flush()
+        from tkinter import filedialog
+        path = filedialog.asksaveasfilename(
+            parent=self.app.root, title="Abschlussprojekt speichern",
+            initialfile=fpj.export_name(self.fields, extension),
+            defaultextension="." + extension,
+            filetypes=[("PDF-Dokument", "*.pdf")] if extension == "pdf"
+            else [("Textdatei", "*.txt")])
+        if not path:
+            return
+        try:
+            if extension == "pdf":
+                data = fpj.export_pdf(self.fields)
+            else:
+                data = fpj.export_text(self.fields).encode("utf-8")
+            with open(path, "wb") as handle:
+                handle.write(data)
+        except OSError as error:
+            messagebox.showerror("Speichern fehlgeschlagen", str(error))
+            return
+        show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
+
+    def use_template(self, position):
+        """Testprojekt als Vorlage uebernehmen (aus der Ansicht "Test Projekt")."""
+        self._flush()
+        count = fpj.apply_template(self.db, self.project, position)
+        self._load_project(self.project)
+        show_badge_toast(self.app.root, "%d Felder aus dem Testprojekt übernommen" % count
+                         if count else "Alle passenden Felder waren schon ausgefüllt")
+
+    # -- Speichern ----------------------------------------------------------
+
+    def _changed(self, field):
+        self.pending.add(field)
+        if self.save_job is not None:
+            try:
+                self.app.root.after_cancel(self.save_job)
+            except tk.TclError:
+                pass
+        self.save_job = self.app.root.after(PROJECT_SAVE_DELAY, self._flush)
+
+    def _flush(self):
+        """Geaenderte Felder speichern (auch beim Verlassen und Beenden)."""
+        self.save_job = None
+        if not self.pending or self.project is None:
+            self.pending.clear()
+            return
+        fields, self.pending = self.pending, set()
+        changed = False
+        title_changed = False
+        for field in fields:
+            getter = self.inputs.get(field)
+            if getter is None:
+                continue
+            value = getter()
+            if value != self.fields.get(field, ""):
+                self.db.save_project_field(self.project, field, value)
+                self.fields[field] = value
+                changed = True
+                title_changed = title_changed or field == fpj.TITLE_FIELD
+        if changed:
+            self.stamp = self.db.change_stamp()
+            if title_changed:
+                self._fill_project_menu()
+            self._refresh_derived()
+
+    def _set(self, field, value):
+        """Sofort speichern (Haken, Auswahl, Bewertung)."""
+        if self.fields.get(field, "") != value:
+            self.db.save_project_field(self.project, field, value)
+            self.fields[field] = value
+            self.stamp = self.db.change_stamp()
+            self._refresh_derived()
+
+    def _refresh_derived(self):
+        for refresh in self.derived.values():
+            refresh()
+
+    def on_show(self):
+        # Nach einem Abgleich koennen neue Eingaben vom Handy da sein
+        if self.pending:
+            return
+        if self.db.change_stamp() != self.stamp:
+            fields = fpj.projects(self.db)
+            if self.project not in fields or fields[self.project] != self.fields:
+                self._load_project(self.project if self.project in fields else None)
+            else:
+                self.stamp = self.db.change_stamp()
+
+    # -- Bausteine ----------------------------------------------------------
+
+    def _entry(self, parent, field, default="", width=30):
+        box = EntryBox(parent, width=width, value=self.fields.get(field, default))
+        box.bind("<KeyRelease>", lambda _e: self._changed(field), add="+")
+        box.bind("<FocusOut>", lambda _e: self._flush(), add="+")
+        self.inputs[field] = lambda: box.get().strip()
+        return box
+
+    def _textarea(self, parent, field, min_height=3, max_height=14):
+        box = make_autogrow_text(parent, min_height=min_height, max_height=max_height)
+        set_text(box, self.fields.get(field, ""))
+        box.autogrow_resize()
+        box.bind("<KeyRelease>", lambda _e: self._changed(field), add="+")
+        box.bind("<FocusOut>", lambda _e: self._flush(), add="+")
+        self.inputs[field] = lambda: box.get("1.0", "end-1c").rstrip()
+        return box
+
+    def _checklist(self, parent, items):
+        for key, text in items:
+            var = tk.BooleanVar(value=fpj.checked(self.fields, key))
+            ctk.CTkCheckBox(parent, text=text, variable=var,
+                            command=lambda k=key, v=var: self._set(
+                                "check_" + k, "1" if v.get() else "0"),
+                            font=F["small"], text_color=C["text_soft"],
+                            fg_color=C["green"], border_color=C["border_hi"],
+                            hover_color=C["card_hi"]).pack(anchor="w", pady=2)
+
+    @staticmethod
+    def _hint(parent, text):
+        make_label(parent, text, font=F["small"], fg=C["muted"], wraplength=860,
+                   justify="left", anchor="w").pack(anchor="w", pady=(0, 6))
+
+    @staticmethod
+    def _form_row(parent, label):
+        row = transparent_frame(parent)
+        row.pack(fill="x", pady=4)
+        make_label(row, label, font=F["small"], fg=C["text_dim"], width=340,
+                   anchor="w").pack(side="left")
+        return row
+
+    # -- Reiter -------------------------------------------------------------
+
+    def _on_tab(self, tab):
+        self._flush()
+        self.tab = tab
+        for frame in self.tab_frames.values():
+            frame.pack_forget()
+        frame = self.tab_frames.get(tab)
+        if frame is None:
+            frame = self.tab_frames[tab] = transparent_frame(self.tab_area)
+            getattr(self, "_build_" + tab)(frame)
+        frame.pack(fill="both", expand=True)
+        self.tab_pills.select_value(tab, notify=False)
+        self._refresh_derived()
+
+    def _build_uebersicht(self, frame):
+        card = Card(frame, title="Eckdaten", accent=C["accent"],
+                    subtitle="Fristen und Seitenzahl legt deine IHK fest")
+        card.pack(fill="x")
+        for field, label, _multi in fpj.OVERVIEW_FIELDS:
+            self._entry(self._form_row(card.body, label), field, width=48).pack(
+                side="left", fill="x", expand=True)
+        row = self._form_row(card.body, "Fachbereich (für das Fachgespräch)")
+        values = [NO_CATEGORY] + list(CATEGORIES)
+        menu = option_menu(row, values, command=self._set_category, width=320)
+        menu.set(self.fields.get("fachbereich") or NO_CATEGORY)
+        menu.pack(side="left")
+
+        state = Card(frame, title="Stand", accent=C["green"],
+                     subtitle="Vom Antrag bis zum Fachgespräch")
+        state.pack(fill="x", pady=(14, 0))
+        lbl_progress = make_label(state.body, "", font=F["body_bold"], fg=C["text"])
+        lbl_progress.pack(anchor="w", pady=(0, 8))
+        self._checklist(state.body, fpj.CHECKLIST_OVERVIEW)
+        lbl_missing = make_label(state.body, "", font=F["small"], fg=C["muted"],
+                                 wraplength=860, justify="left", anchor="w")
+        lbl_missing.pack(anchor="w", pady=(10, 0))
+
+        grade = Card(frame, title="Geschätzte Projektnote", accent=C["purple"],
+                     subtitle="Fließt ins Gesamtergebnis unter Prüfungstrainer ein")
+        grade.pack(fill="x", pady=(14, 0))
+        self._hint(grade.body, "Die Projektarbeit zählt 50 % der Abschlussprüfung. Trage "
+                               "hier ein, wie viele Punkte (0 bis 100) du für Dokumentation, "
+                               "Präsentation und Fachgespräch zusammen erwartest.")
+        row = self._form_row(grade.body, "Erwartete Punkte (0-100)")
+        self._entry(row, fpj.ESTIMATE_FIELD, width=8).pack(side="left")
+
+        template = Card(frame, title="Testprojekt als Vorlage", accent=C["orange"],
+                        subtitle="Füllt nur leere Felder")
+        template.pack(fill="x", pady=(14, 0))
+        self._hint(template.body, "Übernimmt Titel, Ausgangssituation, Auftrag und "
+                                  "Rahmenbedingungen eines Testprojekts als Anregung. "
+                                  "Bereits ausgefüllte Felder bleiben unverändert.")
+        row = transparent_frame(template.body)
+        row.pack(fill="x")
+        titles = [p["title"] for p in PROJEKTARBEITEN]
+        category_menu = option_menu(row, list(CATEGORIES), width=230)
+        category_menu.pack(side="left")
+        project_menu = option_menu(row, ["-"], width=420)
+        project_menu.pack(side="left", padx=(8, 0))
+
+        def fill(category):
+            names = [p["title"] for p in PROJEKTARBEITEN if p["cat"] == category]
+            project_menu.configure(values=names)
+            project_menu.set(names[0])
+
+        category_menu.configure(command=fill)
+        fill(CATEGORIES[0])
+        NeoButton(row, "Übernehmen",
+                  lambda: self.use_template(titles.index(project_menu.get())),
+                  kind="ghost", height=34, font=F["small_bold"]).pack(side="left",
+                                                                     padx=(8, 0))
+
+        def refresh():
+            done, total = fpj.overview_progress(self.fields)
+            lbl_progress.configure(text="%d von %d Schritten erledigt" % (done, total))
+            missing = fpj.proposal_missing(self.fields)
+            lbl_missing.configure(text="Im Antrag noch offen: %s" % ", ".join(missing)
+                                  if missing else "Alle Felder des Antrags sind ausgefüllt.")
+        self.derived["uebersicht"] = refresh
+
+    def _set_category(self, value):
+        self._set("fachbereich", "" if value == NO_CATEGORY else value)
+        self.fg_index = 0
+        frame = self.tab_frames.pop("fachgespraech", None)
+        if frame is not None:
+            frame.destroy()
+            self.derived.pop("fachgespraech", None)
+
+    def _build_antrag(self, frame):
+        card = Card(frame, title="Projektantrag", accent=C["accent"],
+                    subtitle="Gliederung wie bei den IHK-Vorlagen")
+        card.pack(fill="x")
+        for field, name, hint in fpj.PROPOSAL_FIELDS:
+            make_label(card.body, name, font=F["body_bold"], fg=C["text"]).pack(
+                anchor="w", pady=(12, 2))
+            self._hint(card.body, hint)
+            self._textarea(card.body, field).pack(fill="x")
+        check = Card(frame, title="Prüfe vor dem Einreichen", accent=C["green"])
+        check.pack(fill="x", pady=(14, 0))
+        self._checklist(check.body, fpj.CHECKLIST_PROPOSAL)
+
+    def _build_zeitplan(self, frame):
+        card = Card(frame, title="Zeitplanung", accent=C["accent"],
+                    subtitle="Höchstens %d Stunden inklusive Dokumentation" % fpj.MAX_HOURS)
+        card.pack(fill="x")
+        for key, name, default in fpj.PHASES:
+            row = transparent_frame(card.body)
+            row.pack(fill="x", pady=4)
+            if key.startswith("frei"):
+                self._entry(row, "phase_name_" + key, width=40).pack(side="left")
+                make_label(row, "  (weitere Phase, frei benennbar)", font=F["small"],
+                           fg=C["muted"]).pack(side="left")
+            else:
+                make_label(row, name, font=F["small"], fg=C["text_dim"], width=420,
+                           anchor="w").pack(side="left")
+            self._entry(row, "phase_" + key, str(default) if default else "",
+                        width=6).pack(side="right")
+        lbl_sum = make_label(card.body, "", font=F["body_bold"], fg=C["text"])
+        lbl_sum.pack(anchor="w", pady=(12, 0))
+        lbl_warn = make_label(card.body, "", font=F["small"], fg=C["yellow"],
+                              wraplength=860, justify="left", anchor="w")
+        lbl_warn.pack(anchor="w", pady=(4, 0))
+
+        def refresh():
+            _rows, total = fpj.schedule(self.fields)
+            lbl_sum.configure(text="Summe: %s von %d Stunden" % (fpj.hours_text(total),
+                                                               fpj.MAX_HOURS),
+                              text_color=C["red"] if total > fpj.MAX_HOURS else C["text"])
+            lbl_warn.configure(text="\n".join(fpj.schedule_warnings(self.fields)))
+        self.derived["zeitplan"] = refresh
+
+    def _build_kosten(self, frame):
+        card = Card(frame, title="Kostenrechnung", accent=C["accent"],
+                    subtitle="Stunden kommen aus der Zeitplanung")
+        card.pack(fill="x")
+        for key, label, default in fpj.COST_FIELDS:
+            self._entry(self._form_row(card.body, label), "kosten_" + key, default,
+                        width=10).pack(side="left")
+        material = Card(frame, title="Sachkosten", accent=C["orange"],
+                        subtitle="Hardware, Lizenzen, Material")
+        material.pack(fill="x", pady=(14, 0))
+        head = transparent_frame(material.body)
+        head.pack(fill="x")
+        make_label(head, "BEZEICHNUNG", font=F["label"], fg=C["muted"], width=388,
+                   anchor="w").pack(side="left")
+        make_label(head, "BETRAG", font=F["label"], fg=C["muted"]).pack(side="left",
+                                                                      padx=(8, 0))
+        for number in range(fpj.MATERIAL_ROWS):
+            row = transparent_frame(material.body)
+            row.pack(fill="x", pady=3)
+            self._entry(row, "material_name_%d" % number, width=40).pack(side="left")
+            self._entry(row, "material_betrag_%d" % number, width=10).pack(
+                side="left", padx=(8, 0))
+            make_label(row, "€", font=F["small"], fg=C["muted"]).pack(side="left",
+                                                                    padx=(6, 0))
+        result = Card(frame, title="Ergebnis", accent=C["green"])
+        result.pack(fill="x", pady=(14, 0))
+        lbl_result = make_label(result.body, "", font=F["body"], fg=C["text_soft"],
+                                justify="left", anchor="w")
+        lbl_result.pack(anchor="w")
+
+        def refresh():
+            lbl_result.configure(text="\n".join(fpj.cost_lines(self.fields)))
+        self.derived["kosten"] = refresh
+
+    def _build_doku(self, frame):
+        card = Card(frame, title="Dokumentation", accent=C["accent"],
+                    subtitle="Kapitelgerüst nach üblicher IHK-Gliederung")
+        card.pack(fill="x")
+        row = self._form_row(card.body, "Seitenvorgabe deiner IHK")
+        self._entry(row, fpj.PAGES_FIELD, str(fpj.DEFAULT_PAGES), width=6).pack(side="left")
+        lbl_pages = make_label(card.body, "", font=F["body_bold"], fg=C["text"])
+        lbl_pages.pack(anchor="w", pady=(8, 0))
+        self._hint(card.body, "Grobe Schätzung: etwa %d Zeichen pro Seite (11 pt, "
+                              "1,5-zeilig). Deckblatt, Verzeichnisse und Anhang zählen "
+                              "meist nicht mit." % fpj.CHARS_PER_PAGE)
+        for key, title, hint in fpj.CHAPTERS:
+            make_label(card.body, title, font=F["body_bold"], fg=C["text"]).pack(
+                anchor="w", pady=(12, 2))
+            self._hint(card.body, hint)
+            self._textarea(card.body, "kapitel_" + key, min_height=4,
+                           max_height=18).pack(fill="x")
+
+        def refresh():
+            pages, target = fpj.page_estimate(self.fields)
+            lbl_pages.configure(
+                text="Etwa %s von %d Seiten" % (("%.1f" % pages).replace(".", ","), target),
+                text_color=C["red"] if pages > target else C["text"])
+        self.derived["doku"] = refresh
+
+    def _build_fachgespraech(self, frame):
+        presentation = Card(frame, title="Präsentation", accent=C["accent"],
+                            subtitle="Höchstens 15 Minuten, danach das Fachgespräch")
+        presentation.pack(fill="x")
+        self._checklist(presentation.body, fpj.CHECKLIST_PRESENTATION)
+
+        questions = fpj.questions_for(self.fields)
+        card = Card(frame, title="Fachgespräch üben", accent=C["purple"],
+                    subtitle="%d Fragen · allgemeine plus die deines Fachbereichs"
+                    % len(questions))
+        card.pack(fill="x", pady=(14, 0))
+        lbl_stats = make_label(card.body, "", font=F["small"], fg=C["text_dim"])
+        lbl_stats.pack(anchor="w")
+        lbl_question = make_label(card.body, "", font=F["h3"], fg=C["text"],
+                                  wraplength=860, justify="left", anchor="w")
+        lbl_question.pack(anchor="w", pady=(10, 4))
+        lbl_status = make_label(card.body, "", font=F["small_bold"], fg=C["muted"])
+        lbl_status.pack(anchor="w")
+        lbl_hint = make_label(card.body, "", font=F["body"], fg=C["text_soft"],
+                              wraplength=860, justify="left", anchor="w")
+        lbl_hint.pack(anchor="w", pady=(8, 0))
+        controls = transparent_frame(card.body)
+        controls.pack(fill="x", pady=(12, 0))
+        btn_hint = NeoButton(controls, "Hinweis zeigen", lambda: toggle(), kind="primary",
+                             height=34, font=F["small_bold"])
+        btn_hint.pack(side="left")
+        NeoButton(controls, "Nächste Frage", lambda: turn(1), kind="ghost", height=34,
+                  font=F["small_bold"], icon="arrow_right").pack(side="left", padx=(8, 0))
+        rating = rate_box(card.body, lambda known: rate(known))
+        if not questions:
+            return
+
+        def paint():
+            question = questions[self.fg_index % len(questions)]
+            lbl_question.configure(text=question["q"])
+            value = fpj.question_rating(self.fields, question["id"])
+            lbl_status.configure(text={True: "Gewusst", False: "Nicht gewusst"}.get(
+                value, "Noch nicht bewertet"), text_color={True: C["green"],
+                                                           False: C["red"]}.get(value,
+                                                                                C["muted"]))
+            lbl_hint.configure(text=question["hinweis"] if self.fg_hint else "")
+            btn_hint.set_text("Hinweis ausblenden" if self.fg_hint else "Hinweis zeigen")
+            if self.fg_hint:
+                rating.pack(anchor="w", pady=(12, 0))
+            else:
+                rating.pack_forget()
+            ratings = [fpj.question_rating(self.fields, q["id"]) for q in questions]
+            lbl_stats.configure(text="Frage %d von %d · %d gewusst · %d nicht gewusst · "
+                                     "%d offen" % (self.fg_index % len(questions) + 1,
+                                                   len(questions), ratings.count(True),
+                                                   ratings.count(False),
+                                                   ratings.count(None)))
+
+        def toggle():
+            self.fg_hint = not self.fg_hint
+            paint()
+
+        def turn(delta):
+            self.fg_index = (self.fg_index + delta) % len(questions)
+            self.fg_hint = False
+            paint()
+
+        def rate(known):
+            question = questions[self.fg_index % len(questions)]
+            self._set("fg_" + question["id"], "1" if known else "0")
+            turn(1)
+
+        self.derived["fachgespraech"] = paint
 
 
 # ============================================================================
@@ -2389,13 +3519,162 @@ class NotebookView(View):
 #  PRAXIS-RECHNER
 # ============================================================================
 
+class TrainerPanel(ctk.CTkFrame):
+    """Subnetting-Trainer im Rechner (ab 0.51): Zufallsaufgaben mit
+    Eingabefeldern, automatischer Pruefung und Rechenweg."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, fg_color="transparent")
+        self.app = app
+        self.db = app.db
+        self.tasks = []
+        self.index = 0
+        self.results = []
+        self.checked = False
+
+        setup = Card(self, title="Subnetting-Trainer", accent=C["accent"],
+                     subtitle="Zufallsaufgaben mit Selbstkontrolle")
+        setup.pack(fill="x")
+        make_label(setup.body, "AUFGABENART", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.kind_pills = PillGroup(setup.body, TRAINER_KINDS)
+        self.kind_pills.pack(anchor="w", pady=(8, 14))
+        make_label(setup.body, "SCHWIERIGKEIT", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        row = transparent_frame(setup.body)
+        row.pack(fill="x", pady=(8, 0))
+        self.level_pills = PillGroup(row, TRAINER_LEVELS)
+        self.level_pills.pack(side="left")
+        self.btn_start = NeoButton(row, "Runde starten", self.start_round, kind="primary")
+        self.btn_start.pack(side="left", padx=(16, 0))
+        self.lbl_stats = make_label(row, "", font=F["small"], fg=C["muted"])
+        self.lbl_stats.pack(side="left", padx=(16, 0))
+
+        self.task_card = Card(self, title="Aufgabe", accent=C["purple"])
+        self.task_card.pack(fill="x", pady=(14, 0))
+        self.lbl_task = make_label(self.task_card.body,
+                                   "Wähle Aufgabenart und Schwierigkeit und starte eine "
+                                   "Runde mit %d Aufgaben." % TRAINER_ROUND,
+                                   font=F["h2"], fg=C["text_soft"], wraplength=900,
+                                   justify="left", anchor="w")
+        self.lbl_task.pack(anchor="w", pady=(4, 12))
+        self.fields_box = transparent_frame(self.task_card.body)
+        self.fields_box.pack(fill="x")
+        self.lbl_feedback = make_label(self.task_card.body, "", font=F["body_bold"],
+                                       fg=C["text"], anchor="w")
+        self.lbl_feedback.pack(anchor="w", pady=(12, 0))
+        self.txt_steps = make_autogrow_text(self.task_card.body, min_height=3,
+                                            max_height=18, font=F["mono_small"])
+        self.txt_steps.configure(state="disabled")
+        controls = transparent_frame(self)
+        controls.pack(fill="x", pady=(14, 0))
+        self.btn_check = NeoButton(controls, "Prüfen", self.check, kind="primary")
+        self.btn_check.pack(side="left")
+        self.btn_check.set_enabled(False)
+        self.lbl_counter = make_label(controls, "", font=F["small"], fg=C["muted"])
+        self.lbl_counter.pack(side="left", padx=16)
+        self.entries = {}
+        self.marks = {}
+        self.show_stats()
+
+    def show_stats(self):
+        stats = self.db.trainer_stats()
+        count = sum(total for total, _right in stats.values())
+        right = sum(right for _total, right in stats.values())
+        self.lbl_stats.configure(text="bisher %d Aufgaben, %d richtig" % (count, right)
+                                 if count else "")
+
+    def start_round(self):
+        self.tasks = trainer_round(self.kind_pills.get(), self.level_pills.get(),
+                                   random.randrange(1 << 30))
+        self.index = 0
+        self.results = []
+        self.load_task()
+
+    def load_task(self):
+        task = self.tasks[self.index]
+        self.checked = False
+        self.task_card.set_subtitle("%s · %s" % (TRAINER_KIND_NAME[task.kind],
+                                                 TRAINER_LEVEL_NAME[task.level]))
+        self.lbl_task.configure(text=task.text)
+        for child in self.fields_box.winfo_children():
+            child.destroy()
+        self.entries, self.marks = {}, {}
+        for row, (key, label) in enumerate(task.fields):
+            make_label(self.fields_box, label, font=F["small"],
+                       fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+            entry = EntryBox(self.fields_box, width=26)
+            entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+            entry.bind("<Return>", lambda _e: self.check())
+            mark = make_label(self.fields_box, "", font=F["small_bold"], fg=C["muted"])
+            mark.grid(row=row, column=2, sticky="w")
+            self.entries[key], self.marks[key] = entry, mark
+        if task.fields:
+            self.entries[task.fields[0][0]].focus_set()
+        self.lbl_feedback.configure(text="")
+        self.txt_steps.pack_forget()
+        self.btn_check.set_text("Prüfen")
+        self.btn_check.set_enabled(True)
+        self.lbl_counter.configure(text="Aufgabe %d / %d" % (self.index + 1, len(self.tasks)))
+
+    def check(self):
+        if not self.tasks:
+            return
+        if self.checked:
+            self.advance()
+            return
+        task = self.tasks[self.index]
+        answers = {key: entry.get() for key, entry in self.entries.items()}
+        result = task.check(answers)
+        for key, ok in result.items():
+            self.marks[key].configure(
+                text="richtig" if ok else "richtig wäre: %s" % task.solution[key],
+                text_color=C["green"] if ok else C["red"])
+        correct = all(result.values())
+        self.results.append(correct)
+        self.db.log_trainer(task.kind, task.level, correct)
+        self.app.notify_progress(refresh_view=False)
+        self.lbl_feedback.configure(text="Alles richtig." if correct else
+                                    "Noch nicht ganz - hier der Rechenweg:",
+                                    text_color=C["green"] if correct else C["yellow"])
+        set_text(self.txt_steps, "\n".join(task.steps))
+        self.txt_steps.pack(fill="x", pady=(10, 0))
+        self.checked = True
+        last = self.index >= len(self.tasks) - 1
+        self.btn_check.set_text("Auswertung" if last else "Nächste Aufgabe")
+
+    def advance(self):
+        if self.index < len(self.tasks) - 1:
+            self.index += 1
+            self.load_task()
+            return
+        summary = trainer_summary(self.results)
+        self.tasks = []
+        for child in self.fields_box.winfo_children():
+            child.destroy()
+        self.txt_steps.pack_forget()
+        self.lbl_task.configure(text="Runde beendet: %s." % summary)
+        self.lbl_feedback.configure(text="Starte eine neue Runde oder wähle eine andere "
+                                         "Aufgabenart.", text_color=C["text_dim"])
+        self.btn_check.set_text("Prüfen")
+        self.btn_check.set_enabled(False)
+        self.lbl_counter.configure(text="")
+        self.show_stats()
+
+
+CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
+
+
 class CalcView(View):
     def build(self):
         self.info_visible = {"subnet": False, "raid": False, "screen": False}
         self.info_frames = {}
         self.info_buttons = {}
 
-        layout = transparent_frame(self.content)
+        # Ab 0.51: Umschalter Rechner / Trainer
+        self.tab_pills = PillGroup(self.content, CALC_TABS, on_change=self._on_tab)
+        self.tab_pills.pack(anchor="w", pady=(0, 14))
+        self.trainer = TrainerPanel(self.content, self.app)
+
+        layout = self.calc_layout = transparent_frame(self.content)
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=1, uniform="calc")
         layout.columnconfigure(1, weight=1, uniform="calc")
@@ -2481,6 +3760,14 @@ class CalcView(View):
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+    def _on_tab(self, value):
+        if value == "trainer":
+            self.calc_layout.pack_forget()
+            self.trainer.pack(fill="both", expand=True)
+        else:
+            self.trainer.pack_forget()
+            self.calc_layout.pack(fill="both", expand=True)
 
     def _build_info_toggle(self, parent, key, explanation):
         """Baut den 'Rechenweg anzeigen'-Knopf samt (zunaechst
@@ -2575,6 +3862,20 @@ class ProgressView(View):
         self.tree.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y", padx=(6, 0))
 
+        # Ab 0.51: Klausursimulationen
+        exam_card = Card(self.content, title="Prüfungen (Klausursimulation)",
+                         accent=C["green"], subtitle="aus dem Prüfungstrainer")
+        exam_card.pack(fill="x", pady=(14, 0))
+        columns = ("datum", "pruefung", "punkte", "note", "dauer")
+        self.exam_tree = ttk.Treeview(exam_card.body, columns=columns, show="headings",
+                                      height=6, style="Dash.Treeview")
+        for key, text, width in [("datum", "Datum & Uhrzeit", 170),
+                                 ("pruefung", "Prüfung", 300), ("punkte", "Punkte", 90),
+                                 ("note", "IHK-Note", 150), ("dauer", "Dauer", 90)]:
+            self.exam_tree.heading(key, text=text)
+            self.exam_tree.column(key, width=px(width), anchor="center")
+        self.exam_tree.pack(fill="x")
+
         controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
         NeoButton(controls, "Aktualisieren", self.refresh,
@@ -2635,11 +3936,19 @@ class ProgressView(View):
                 note,
                 "%02d:%02d min" % (duration // 60, duration % 60),
             ))
+        for item in self.exam_tree.get_children():
+            self.exam_tree.delete(item)
+        for entry in self.db.exams():
+            exam = fp.EXAM.get(entry["art"])
+            self.exam_tree.insert("", "end", values=(
+                entry["timestamp"], exam["name"] if exam else entry["art"],
+                _points(entry["punkte"]), entry["note"],
+                "%02d:%02d min" % (entry["dauer"] // 60, entry["dauer"] % 60)))
 
     def clear_history(self):
         if messagebox.askyesno("Historie löschen",
-                               "Wirklich alle gespeicherten Testergebnisse "
-                               "löschen?\n\nDie Lern-Ereignisse für das "
+                               "Wirklich alle gespeicherten Testergebnisse und "
+                               "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
                                "Dashboard bleiben erhalten."):
             if self.db.clear_history():
                 self.refresh()
@@ -2745,6 +4054,44 @@ class SettingsView(View):
                    "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
                    "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
                    "dunkler, damit sie gut lesbar sind).",
+                   font=F["tiny"], fg=C["muted"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+
+        # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
+        goal = Card(self.content, title="Tagesziel", accent=C["green"],
+                    subtitle="nur für dieses Gerät")
+        goal.pack(fill="x", pady=(14, 0))
+        values = learning_settings()
+        self.goal_vars = {}
+        for key, text in (("ziel_an", "Tagesziel anzeigen"),
+                          ("serie_an", "Lernserie anzeigen"),
+                          ("erinnerung_an", "An das Tagesziel erinnern")):
+            var = self.goal_vars[key] = tk.BooleanVar(value=values[key])
+            ctk.CTkSwitch(goal.body, text=text, variable=var,
+                          command=lambda k=key: self._save_goal(k),
+                          font=F["small"], text_color=C["text_dim"],
+                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          button_color=C["text"], button_hover_color="#FFFFFF"
+                          ).pack(anchor="w", pady=(0, 10))
+        row = transparent_frame(goal.body)
+        row.pack(anchor="w", pady=(4, 0))
+        make_label(row, "Aufgaben pro Tag", font=F["small"],
+                   fg=C["text_dim"]).pack(side="left", padx=(0, 10))
+        self.goal_stepper = NumberStepper(row, value=values["ziel_anzahl"],
+                                          minimum=GOAL_MIN, maximum=GOAL_MAX,
+                                          step=GOAL_STEP, bg=C["card"],
+                                          on_change=lambda _v: self._save_goal("ziel_anzahl"))
+        self.goal_stepper.pack(side="left")
+        make_label(row, "Erinnerung um", font=F["small"],
+                   fg=C["text_dim"]).pack(side="left", padx=(28, 10))
+        self.entry_reminder = EntryBox(row, width=7, value=values["erinnerung_zeit"])
+        self.entry_reminder.pack(side="left")
+        self.entry_reminder.bind("<FocusOut>", lambda _e: self._save_goal("erinnerung_zeit"))
+        self.entry_reminder.bind("<Return>", lambda _e: self._save_goal("erinnerung_zeit"))
+        make_label(goal.body,
+                   "Gezählt werden bewertete Karteikarten, Prüfungstrainer-Fragen, "
+                   "Szenarien, Testprojekte und Trainer-Aufgaben. Die Erinnerung "
+                   "erscheint als Hinweis, solange das Programm geöffnet ist.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
@@ -2882,6 +4229,19 @@ class SettingsView(View):
     def _change_mode(self, mode):
         if mode != fisi_theme.current_mode:
             self.after(10, lambda: self.app.change_color(mode=mode))
+
+    def _save_goal(self, key):
+        """Tagesziel-Einstellung speichern (ab 0.51)."""
+        if key == "ziel_anzahl":
+            save_learning_settings(ziel_anzahl=self.goal_stepper.get())
+        elif key == "erinnerung_zeit":
+            value = parse_time(self.entry_reminder.get())
+            if value is None:
+                value = learning_settings()["erinnerung_zeit"]
+            self.entry_reminder.set(value)
+            save_learning_settings(erinnerung_zeit=value)
+        else:
+            save_learning_settings(**{key: bool(self.goal_vars[key].get())})
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -3430,6 +4790,8 @@ class FISIApp:
         if not os.environ.get("FISI_SELFTEST"):
             root.after(1500, self.sync.auto_start)
             root.after(3000, self.updater.auto_check)
+            # Erinnerung ans Tagesziel (ab 0.51), nach dem Abgleich
+            root.after(8000, self.check_reminder)
 
     def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
@@ -3461,7 +4823,8 @@ class FISIApp:
             ("dashboard", DashboardView), ("cards", CardsView),
             ("quiz", QuizView), ("ap1scenarios", Ap1ScenarioView),
             ("scenarios", ScenarioView),
-            ("testproject", ProjectView), ("notebook", NotebookView),
+            ("testproject", ProjectView), ("abschluss", FinalProjectView),
+            ("notebook", NotebookView),
             ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
             ("kunde", CustomerView), ("zuhause", HomeView),
             ("firma", FirmView), ("filiale", BranchView),
@@ -3727,6 +5090,31 @@ class FISIApp:
         # Kurz warten, damit erst die neue Ansicht (z.B. der Feierabend) steht
         self.root.after(400, self.show_unlocks)
 
+    def start_review(self):
+        """"Jetzt wiederholen" (ab 0.51): erst die faelligen Karteikarten,
+        dann die faelligen Pruefungstrainer-Fragen."""
+        plan = ReviewPlan.from_db(self.db)
+        source = plan.first_source()
+        if source is None:
+            messagebox.showinfo("Wiederholung", "Heute ist nichts mehr fällig.")
+            return
+        key = "cards" if source == SRC_CARD else "quiz"
+        self.show_view(key)
+        self.views[key].practice(plan.session(source))
+
+    def check_reminder(self):
+        """Erinnerung ans Tagesziel (ab 0.51): als Hinweis, solange das
+        Programm laeuft - beim Start und danach alle 5 Minuten."""
+        try:
+            settings = fisi_update.load_settings()
+            values = learning_settings()
+            goal = DailyGoal.from_db(self.db, values["ziel_anzahl"])
+            if reminder_due(settings, goal, shown_on=settings.get("erinnerung_gezeigt", "")):
+                save_learning_settings(erinnerung_gezeigt=datetime.date.today().isoformat())
+                show_badge_toast(self.root, reminder_text(goal), delay=9000)
+        finally:
+            self.root.after(5 * 60 * 1000, self.check_reminder)
+
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""
         self.notify_progress(refresh_view=False)
@@ -3744,10 +5132,12 @@ class FISIApp:
         if quiz is not None:
             quiz.stop_timer()
         # Aufgedeckte, aber nicht bewertete Loesungen als angesehen speichern
-        for key in ("cards", "ap1scenarios", "scenarios", "testproject"):
+        for key in ("cards", "ap1scenarios", "scenarios", "testproject", "abschluss"):
             view = self.views.built(key)
             if view is not None:
                 view._flush()
+        if quiz is not None:
+            quiz.exam._flush_answers()   # Antworten einer laufenden Pruefung (ab 0.51)
         self.root.withdraw()
         # Nicht vor einem Update: Der Installer soll nicht warten muessen, der
         # Abgleich folgt dann beim naechsten Start.

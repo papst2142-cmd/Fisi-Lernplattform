@@ -34,12 +34,17 @@ import sqlite3
 import urllib.error
 import urllib.request
 
-from fisi_core import (GAME_TABLES, OPTIONAL_COLUMNS, RECORD_TABLES, SLOT_TABLES,
-                       SYNC_TABLES, purge_deleted_runs)
+from fisi_core import (GAME_TABLES, HISTORY_TABLES, OPTIONAL_COLUMNS, PROJECT_TABLES,
+                       RECORD_TABLES, SLOT_TABLES, SYNC_TABLES, purge_deleted_runs,
+                       purge_superseded_project_rows)
 from fisi_update import USER_AGENT, _ssl_context, load_settings, save_settings
 
 API = "https://api.github.com"
 REMOTE_FILE = "lernstand.json.gz"
+# Ab 0.51 kommen neue Tabellen hinzu (Trainer, Pruefungen, Abschlussprojekt) -
+# ohne neues Format: Aeltere Versionen (ab 0.48.1) uebergehen unbekannte
+# Tabellen einfach, ein Geraet mit 0.51 laedt sie beim naechsten Abgleich
+# wieder hoch. So wird niemand ausgesperrt.
 # Format 2 (ab 0.48): Spielstand-Plaetze. Aeltere Versionen wuerden die
 # Ereignisse aller drei Plaetze in einen Spielstand mischen - sie lehnen eine
 # Datei mit hoeherem Format ab ("Bitte zuerst aktualisieren").
@@ -270,13 +275,13 @@ def merge_into_local(db, remote):
             cur.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
                         (key, value))
         for table, columns in SYNC_TABLES.items():
-            if table in SLOT_TABLES:
-                cutoff = None     # Platz-Zeilen bleiben immer erhalten
+            if table in SLOT_TABLES or table in PROJECT_TABLES:
+                cutoff = None     # Platz-Zeilen und Abschlussprojekt bleiben
             elif table in GAME_TABLES:
                 cutoff = game_reset
             elif table in RECORD_TABLES:
                 cutoff = markers.get("bestenliste_reset_at")
-            elif table == "test_results":
+            elif table in HISTORY_TABLES:
                 cutoff = cleared
             else:
                 cutoff = reset
@@ -301,6 +306,8 @@ def merge_into_local(db, remote):
         # Geloeschte Durchgaenge (ab 0.48) verschwinden, auch wenn ihre
         # Ereignisse gerade erst von einem anderen Geraet kamen
         purge_deleted_runs(cur)
+        # Abschlussprojekt (ab 0.51): nur die neueste Fassung je Feld behalten
+        purge_superseded_project_rows(cur)
         conn.commit()
     finally:
         conn.close()
