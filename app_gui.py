@@ -1109,7 +1109,7 @@ class DashboardView(View):
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
                 quota = data["correct"] / data["answered"] * 100
-                detail.configure(text="%s\n%d%% richtig"
+                detail.configure(text="%s\n%d %% richtig"
                                       % (plural(data["answered"], "Antwort", "Antworten"),
                                          round(quota)))
             else:
@@ -3286,7 +3286,7 @@ class NotebookView(View):
         # Ueberblick je Bereich
         self.summary_card = Card(self.content, title="Lernstand je Bereich",
                                  accent=C["accent"],
-                                 subtitle="Abgeschlossen = 2x hintereinander richtig")
+                                 subtitle="Abgeschlossen = zweimal hintereinander richtig")
         self.summary_card.pack(fill="x")
         self.summary_grid = transparent_frame(self.summary_card.body)
         self.summary_grid.pack(fill="x")
@@ -4472,7 +4472,7 @@ class SearchView(View):
             child.destroy()
 
         hits = search_content(query)
-        self.lbl_info.configure(text='%d Treffer für "%s"' % (len(hits), query))
+        self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
                        "Keine Treffer. Versuche einen anderen Suchbegriff.",

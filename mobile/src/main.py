@@ -413,7 +413,7 @@ class DashboardScreen(Screen):
             ring.set(share / 100.0, CATEGORY_COLOR[category], None, "%d%%" % round(share))
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
-                detail.value = "%s\n%d%% richtig" % (
+                detail.value = "%s\n%d %% richtig" % (
                     plural(data["answered"], "Antwort", "Antworten"),
                     round(data["correct"] / data["answered"] * 100))
             else:
@@ -2310,7 +2310,7 @@ class NotebookScreen(Screen):
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
-                    subtitle="Abgeschlossen = 2x hintereinander richtig"),
+                    subtitle="Abgeschlossen = zweimal hintereinander richtig"),
             ui.Card(None, [ui.label("Fachbereich"), self.cat_pills,
                            ui.label("Bereich"), self.source_pills,
                            ui.label("Thema"), self.topic_pills.root,
@@ -2903,7 +2903,7 @@ class SettingsScreen(Screen):
                 ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
                         "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
                         "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                        "Abgleich auch auf dem PC. Dieser Schritt lässt sich nicht "
+                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
                         "rückgängig machen.", size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                           kind="danger")]),
@@ -3253,7 +3253,7 @@ class SearchScreen(Screen):
         if not query:
             return
         hits = search_content(query)
-        self.lbl_info.value = '%d Treffer für "%s"' % (len(hits), query)
+        self.lbl_info.value = '%d Treffer für „%s“' % (len(hits), query)
         self.results.controls = []
         if not hits:
             self.results.controls.append(ui.text(

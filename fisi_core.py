@@ -1408,7 +1408,7 @@ def build_quiz_database():
             "q": "Wie viele nutzbare Host-IP-Adressen bietet ein Subnetz mit /%d?" % prefix,
             "options": [str(hosts)] + [str(h) for h in host_wrong],
             "a": str(hosts),
-            "exp": "2^(32 - %d) minus 2 (Network-ID und Broadcast) = %d Hosts." % (prefix, hosts),
+            "exp": "2^(32 - %d) minus 2 (Netzwerk-Adresse und Broadcast) = %d Hosts." % (prefix, hosts),
         })
 
     # Automatisch erzeugte Port-Aufgaben
@@ -1855,7 +1855,7 @@ def status_label(book, source, key):
     status, level = book.status(source, key)
     streak = book.streak(source, key)
     if status == Q_DONE:
-        return "Abgeschlossen · %dx in Folge richtig" % streak, "fertig"
+        return "Abgeschlossen · %d-mal in Folge richtig" % streak, "fertig"
     if status == Q_PRACTICE:
         if level == LEVEL_RED:
             return "Zu üben · zuletzt falsch", LEVEL_RED

@@ -144,7 +144,7 @@ Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorb
   **Wichtig:** Ein Gerät mit 0.47 gleicht erst wieder ab, wenn es auch auf
   0.48 aktualisiert ist. Der Lernstand geht dabei nicht verloren.
 - **Farbwechsel:** Beim Wechsel von Grundfarbe oder Hintergrund erscheint
-  „Farben werden angewendet – Bitte warten“, Eingaben sind solange
+  „Farben werden angewendet – Bitte warten“, Eingaben sind so lange
   gesperrt. Am PC ist der Wechsel deutlich schneller (etwa 2,6 statt
   12,8 Sekunden).
 - **PC: Seitenleiste scrollt,** wenn ausgeklappte Menüpunkte nicht mehr
@@ -177,7 +177,7 @@ Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorb
   Spielstände zählen als „Normal“. Die Lernplattform bleibt unberührt.
 - **Zwei neue Abzeichen:** „Story abgeschlossen: Einfach“ (Silber) und
   „Story abgeschlossen: Normal“ (Gold). Die Bestenliste bleibt ein
-  gemeinsamer Topf. Steuerehrlich, Zurück auf Kurs und Treue Mannschaft
+  gemeinsamer Topf. „Steuerehrlich“, „Zurück auf Kurs“ und „Treue Mannschaft“
   gibt es nur auf „Normal“.
 - **„Meine Reise“:** Der Knopf „Reise öffnen“ heißt jetzt „Meine Reise“.
 - **Karte:** Die Gleise der Talbahn fahren nicht mehr durch Bahnhöfe,
