@@ -3015,6 +3015,9 @@ class FinalProjectView(View):
             frame = self.tab_frames[tab] = transparent_frame(self.tab_area)
             getattr(self, "_build_" + tab)(frame)
         frame.pack(fill="both", expand=True)
+        # ab 0.53: neuer Reiter beginnt oben (sonst blieb die Seite leer, wenn
+        # vorher ganz nach unten gescrollt war)
+        self.to_top()
         self.tab_pills.select_value(tab, notify=False)
         self._refresh_derived()
 
@@ -3784,6 +3787,7 @@ class CalcView(View):
         else:
             self.trainer.pack_forget()
             self.calc_layout.pack(fill="both", expand=True)
+        self.to_top()     # ab 0.53, wie im Abschlussprojekt
 
     def _build_info_toggle(self, parent, key, explanation):
         """Baut den 'Rechenweg anzeigen'-Knopf samt (zunaechst
