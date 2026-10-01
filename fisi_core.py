@@ -1853,6 +1853,15 @@ def count_word(number):
     return NUMBER_WORDS[number] if 0 <= number < len(NUMBER_WORDS) else str(number)
 
 
+def plural(number, singular, plural_form, word=False):
+    """Anzahl mit passender Einzahl/Mehrzahl ("1 Tag", "2 Tage") - ab 0.53,
+    damit Platzhalter-Saetze nie mehr "1 Tage" oder "Tag(e)" zeigen.
+    word=True schreibt kleine Zahlen als Wort (count_word)."""
+    noun = singular if number == 1 else plural_form
+    shown = count_word(number) if word else "{:,}".format(number).replace(",", ".")
+    return "%s %s" % (shown, noun)
+
+
 def ihk_note(percentage):
     """IHK-Notenschluessel."""
     if percentage >= 92:
