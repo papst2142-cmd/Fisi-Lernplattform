@@ -4968,11 +4968,12 @@ class ErfolgeTest(unittest.TestCase):
         self.assertEqual(fg._validate_achievements(fg.GAME), [])
         rules = fg.achievement_rules()
         stages = [stage for rule in rules["erfolge"] for stage in rule["stufen"]]
-        # Ab 0.47: zwei Story-Abzeichen dazu (je eine Stufe mit Moment)
-        self.assertEqual(len(rules["erfolge"]), 34)
-        self.assertEqual(len(stages), 74)
-        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 27)
-        self.assertEqual(len(rules["bestwerte"]), 14)
+        # Ab 0.47: zwei Story-Abzeichen dazu (je eine Stufe mit Moment), ab 0.52
+        # vier zur Serverfarm (zwei davon mit Moment) und ein Bestwert
+        self.assertEqual(len(rules["erfolge"]), 38)
+        self.assertEqual(len(stages), 78)
+        self.assertEqual(len([stage for stage in stages if stage.get("moment")]), 29)
+        self.assertEqual(len(rules["bestwerte"]), 15)
         for rule in rules["erfolge"]:
             self.assertIn(rule["bild"], fg.BADGE_PICTURES)
             self.assertIn(rule["wert"], fg.RUN_METRICS)

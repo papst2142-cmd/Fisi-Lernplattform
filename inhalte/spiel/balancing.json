@@ -219,7 +219,34 @@
       "urlaub_abgelehnt_faktor": 0.5,
       "macken_schwaeche_faktor": 0.5,
       "fehlerkosten_faktor": 0.5,
-      "reputation_verlust_faktor": 0.5
+      "reputation_verlust_faktor": 0.5,
+      "serverfarm_verzug_faktor": 0.5
     }
+  },
+  "serverfarm": {
+    "_hinweis": [
+      "Ab 0.52: Kampagne 2 'Großauftrag Serverfarm' (Inhalte in serverfarm.json). Freischaltung beim ersten Feierabend, an dem alles erfüllt ist: Gebäudestufe, Sonderraum und alle Zertifizierungen.",
+      "tage: Arbeitstage bis zur Abnahme (ab dem Öffnen der Ausschreibung). aufgaben_pro_tag: so viele Serverfarm-Aufgaben am Tag höchstens. team_max: Leute im Serverfarm-Team.",
+      "Angebot: Zuschlag über zuschlag_max verhandelt die Kundin einmal auf zuschlag_max herunter (der Auftrag geht nie verloren). anzahlung in Prozent vom Nettopreis, der Rest kommt bei der Abnahme.",
+      "fehler: Folgen einer falsch gelösten Aufgabe (unter_niveau_faktor, wenn das Wissen unter der Anforderung lag). nachbestellung: falsche Bestellung oder Bestückung, der Aufschlag gilt auf die richtige Ware.",
+      "verzug: Würfel beim Ende der Planung [Anteil, Tage]. kabelfehler: je Rack ein Würfel am Ende des Einbaus, Chance sinkt mit dem Verkabelungswert des Teams (je_punkt) bis min.",
+      "strafe: Vertragsstrafe nach Tag 'tage'. Einfach: Geld mal fehlerkosten_faktor, Ansehen mal reputation_verlust_faktor, Tage (Verzug, Nachlieferung) mal serverfarm_verzug_faktor (aufgerundet)."
+    ],
+    "freischaltung": {"stufe": 4, "raum": "serverraum", "zertifizierungen": ["iso27001", "netzwerk"]},
+    "tage": 25,
+    "aufgaben_pro_tag": 3,
+    "team_max": 5,
+    "team_empfohlen": 2,
+    "zuschlag_max": 20,
+    "anzahlung": 30,
+    "richtig": {"fachkompetenz": 1},
+    "fehler": {"geld": 600, "kundenzufriedenheit": -2, "unter_niveau_faktor": 2},
+    "nachbestellung": {"aufschlag": 15, "tage": 2},
+    "verzug": [[0.6, 0], [0.3, 2], [0.1, 4]],
+    "kabelfehler": {"chance": 0.25, "min": 0.05, "je_punkt": 0.002, "geld": 400, "tage": 1},
+    "strafe": {"prozent_je_tag": 1, "max_prozent": 10, "kundenzufriedenheit_je_tag": -3},
+    "bonus": 5000,
+    "abschluss": {"kundenzufriedenheit": 5, "fachkompetenz": 3},
+    "lernen_phase": 2
   }
 }
