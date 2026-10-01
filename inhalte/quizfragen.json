@@ -121,12 +121,12 @@
     "thema": "dienste",
     "q": "Was ist der Unterschied zwischen IMAP und POP3?",
     "options": [
-      "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist lokal ab",
+      "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist auf dem Server",
       "POP3 ist verschlüsselt, IMAP nicht",
       "IMAP funktioniert nur mit Exchange-Servern",
       "Es gibt funktional keinen Unterschied"
     ],
-    "a": "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist lokal ab",
+    "a": "IMAP synchronisiert Mails auf dem Server, POP3 lädt sie herunter und löscht sie meist auf dem Server",
     "exp": "IMAP hält den Postfach-Zustand auf dem Server synchron (mehrere Geräte), POP3 lädt Mails in der Regel lokal herunter."
   },
   {

@@ -7457,7 +7457,7 @@
     ],
     "erklaerung": [
       "WHERE nimmt nur Franks Belege, GROUP BY jahr bildet je Jahr eine Gruppe, HAVING COUNT(*) > 1000 behält nur die Gruppen mit mehr als 1.000 Belegen.",
-      "Aggregatfunktionen sind in WHERE nicht erlaubt, und id > 1000 zählt gar nichts. Sabine liest elf Jahreszahlen vor. Frank ruft: „Zwölf! 2009 war ein Schaltjahr!“ Es gibt Kuchen."
+      "Aggregatfunktionen sind in WHERE nicht erlaubt, und id > 1000 zählt gar nichts. Sabine liest elf Jahreszahlen vor. Frank ruft: „Zwölf! 2008 war ein Schaltjahr!“ Es gibt Kuchen."
     ],
     "suchbegriffe": ["HAVING", "GROUP BY", "COUNT"]
   },
@@ -7897,7 +7897,7 @@
           },
           {
             "befehl": "nslookup 10.66.40.34",
-            "ausgabe": ["** server can't find 10.0.66.10.in-addr.arpa:", "NXDOMAIN"],
+            "ausgabe": ["** server can't find 34.40.66.10.in-addr.arpa:", "NXDOMAIN"],
             "hinweis": "nslookup fragt das DNS nach Namen. Den Weg durchs Netz zeigt traceroute."
           }
         ]

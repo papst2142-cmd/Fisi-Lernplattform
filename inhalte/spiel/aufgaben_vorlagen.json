@@ -9725,7 +9725,7 @@
             "Ein gesperrtes Passwort hält einen Schlüssel nicht auf."
           ],
           "erklaerung": [
-            "Der alte Schlüssel stand in 2 von 6 Schlüsseln, bei deploy und svenja. Richtig: grep -H → sed -i '/wartung@altfirma/d' → grep -c → sshd -T.",
+            "Der alte Schlüssel stand in 2 von 4 authorized_keys-Dateien, bei deploy und svenja. Richtig: grep -H → sed -i '/wartung@altfirma/d' → grep -c → sshd -T.",
             "Zugänge ausgeschiedener Dienstleister gehören sofort entfernt. Das ist Teil der Zugriffskontrolle in den TOM."
           ],
           "suchbegriffe": ["SSH", "Zugriffskontrolle"]
@@ -9747,7 +9747,7 @@
       "prompt": "root@verwaltung:~#",
       "start": [
         "Debian 12 · Dateiserver verwaltung (Lindenau)",
-        "/srv/archiv: gescannte Akten, 12 Ordner"
+        "/srv/archiv: gescannte Akten, 15 Ordner"
       ],
       "ticket": [
         "Dr. Wendt steht mit einer Checkliste im Technikraum, die er sichtlich dreimal abgehakt hat: „Morgen zieht das Archiv auf das neue Storage um. Vorher will ich eine vollständige, gepackte Sicherung von /srv/archiv unter /backup, mit Datum im Namen.“",
@@ -13868,7 +13868,7 @@
         "An einem Standort ohne Personal ist eine Alarmmeldung, die nie ankommt, besonders gefährlich."
       ],
       "erklaerung": [
-        "432 Wh × 45 % × 0,9 ÷ 620 W ergeben nur rund 16 Minuten, zu wenig für 20 Minuten. Die Hitze von 38 °C altert die Akkus zusätzlich, und der Alarm erreicht niemanden.",
+        "432 Wh × 45 % × 0,9 ÷ 620 W ergeben nur knapp 17 Minuten, zu wenig für 20 Minuten. Die Hitze von 38 °C altert die Akkus zusätzlich, und der Alarm erreicht niemanden.",
         "Drei Befunde: Akkus tauschen, Häuschen belüften oder beschatten, USV-Karte anschließen. Mehr Verbraucher würden die Laufzeit weiter verkürzen."
       ],
       "suchbegriffe": ["USV", "Akku"],
@@ -16045,7 +16045,7 @@
         {
           "id": "details",
           "text": "Zertifikatsdetails im Browser ansehen",
-          "ergebnis": "Gültig bis 23.03.2025. Heute ist der 25.03.2025.",
+          "ergebnis": "Gültig bis 23.03.2026. Heute ist der 25.03.2026.",
           "entscheidend": true
         },
         {
@@ -16128,7 +16128,7 @@
             {
               "id": "zert",
               "text": "Serverzertifikat des RADIUS-Servers prüfen",
-              "ergebnis": "Gültig bis 30.07.2025. Heute ist der 01.08.2025.",
+              "ergebnis": "Gültig bis 30.07.2026. Heute ist der 01.08.2026.",
               "entscheidend": true
             },
             {
