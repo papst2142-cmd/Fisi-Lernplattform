@@ -1208,7 +1208,7 @@
       "3. Wie regeln Sie die Nutzung von USB-Datenträgern?"
     ],
     "solution": [
-      "1. Mit BitLocker (Windows) für das ganze Laufwerk, zentral per Gruppenrichtlinie oder MDM ausgerollt. Das TPM speichert den Schlüssel und gibt ihn nur frei, wenn der Startvorgang unverändert ist. Zusätzlich eine Pre-Boot-PIN (TPM + PIN) schützt, wenn das Gerät gestohlen wird.",
+      "1. Mit BitLocker (Windows) für das ganze Laufwerk, zentral per Gruppenrichtlinie oder MDM ausgerollt. Das TPM speichert den Schlüssel und gibt ihn nur frei, wenn der Startvorgang unverändert ist. Zusätzlich schützt eine Pre-Boot-PIN (TPM + PIN), wenn das Gerät gestohlen wird.",
       "",
       "2. Automatisch im Active Directory bzw. Entra ID oder im MDM. Nur berechtigte Supportmitarbeiter können ihn nach Identitätsprüfung abrufen.",
       "",
@@ -5321,7 +5321,7 @@
     "solution": [
       "1. Gemeinsame Schichten werden nur einmal gespeichert: 780 + 320 = 1.100 MB. Anwendungsschichten: 14 * 10 * 60 = 8.400 MB. Zusammen 9.500 MB = 9,5 GB. Ohne gemeinsame Schichten: 140 Images * 1.160 MB = 162.400 MB = 162,4 GB, also etwa das 17-Fache.",
       "",
-      "2. Heute je Knoten: 780 + 320 + 14 * 60 = 1.940 MB, im Cluster 12 * 1.940 = 23.280 MB. Schlank je Knoten: 80 + 120 + 840 = 1.040 MB, im Cluster 12 * 1.040 = 12.480 MB. Das spart 10.800 MB pro Monat. Weitere Vorteile: kleinere Angriffsfläche (142 statt 9 Befunde, keine kritischen), weniger Patchaufwand, schnellerer Start neuer Knoten und Container. Werkzeuge, die im Image fehlen (z.B. Shell, Paketmanager), helfen auch einem Angreifer nicht.",
+      "2. Heute je Knoten: 780 + 320 + 14 * 60 = 1.940 MB, im Cluster 12 * 1.940 = 23.280 MB. Schlank je Knoten: 80 + 120 + 840 = 1.040 MB, im Cluster 12 * 1.040 = 12.480 MB. Das spart 10.800 MB pro Monat. Weitere Vorteile: kleinere Angriffsfläche (9 statt 142 Befunde, keine kritischen), weniger Patchaufwand, schnellerer Start neuer Knoten und Container. Werkzeuge, die im Image fehlen (z.B. Shell, Paketmanager), helfen auch einem Angreifer nicht.",
       "",
       "3. Root: Bricht ein Angreifer aus der Anwendung aus, hat er im Container volle Rechte und bessere Chancen auf den Host. Abhilfe: eigener Benutzer im Dockerfile (USER), Rechte im Deployment einschränken, Dateisystem möglichst nur lesbar. Passwort im Dockerfile: Es steckt in jeder Imageschicht und ist für jeden mit Zugriff auf die Registry lesbar. Abhilfe: Passwort sofort ändern, als Secret zur Laufzeit übergeben, alte Images löschen. Tag latest: Es ist nicht nachvollziehbar, welche Version läuft, und ein Neustart kann ungeplant eine neue Version laden. Abhilfe: feste Versionsnummern oder Digest verwenden und Versionen über die Pipeline freigeben."
     ]

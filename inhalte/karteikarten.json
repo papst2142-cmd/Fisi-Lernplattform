@@ -277,7 +277,7 @@
     "thema": "zugriff",
     "q": "Was regelt eine Passwort-Richtlinie nach aktuellen BSI-Empfehlungen primär?",
     "a": "Mindestlänge, Komplexität und Umgang mit Passwörtern (z.B. kein Wechselzwang ohne Anlass)",
-    "a_full": "Das BSI empfiehlt heute lange, individuelle Passwörter (z.B. Passphrasen) statt starrem, regelmäßigem Passwortwechsel, sowie 2FA wo möglich.",
+    "a_full": "Das BSI empfiehlt heute lange, individuelle Passwörter (z.B. Passphrasen) statt starrem, regelmäßigem Passwortwechsel sowie 2FA, wo möglich.",
     "options": [
       "Mindestlänge, Komplexität und Umgang mit Passwörtern (z.B. kein Wechselzwang ohne Anlass)",
       "Passwörter müssen monatlich gewechselt werden",
@@ -1915,7 +1915,7 @@
     "thema": "verkabelung",
     "q": "Was ist ein SFP-Modul?",
     "a": "Ein steckbares Transceiver-Modul für Switch-Ports",
-    "a_full": "SFP (Small Form-factor Pluggable) Module werden in Switches gesteckt und ermöglichen je nach Modul Glasfaser- oder Kupferverbindungen, SFP+ z.B. 10 Gbit/s.",
+    "a_full": "SFP-Module (Small Form-factor Pluggable) werden in Switches gesteckt und ermöglichen je nach Modul Glasfaser- oder Kupferverbindungen, SFP+ z.B. 10 Gbit/s.",
     "options": [
       "Ein steckbares Transceiver-Modul für Switch-Ports",
       "Ein Netzteil für Access Points",
@@ -2890,7 +2890,7 @@
     "thema": "hardware",
     "q": "Was ist ECC-Arbeitsspeicher?",
     "a": "Arbeitsspeicher, der Bitfehler erkennen und einzelne korrigieren kann",
-    "a_full": "ECC (Error Correction Code) RAM wird in Servern eingesetzt, weil unbemerkte Speicherfehler dort zu Datenfehlern oder Abstürzen führen können.",
+    "a_full": "ECC-RAM (Error Correction Code) wird in Servern eingesetzt, weil unbemerkte Speicherfehler dort zu Datenfehlern oder Abstürzen führen können.",
     "options": [
       "Arbeitsspeicher, der Bitfehler erkennen und einzelne korrigieren kann",
       "Besonders energiesparender Speicher",
@@ -8116,7 +8116,7 @@
     "thema": "service",
     "q": "Was ist IT Service Continuity Management (ITSCM)?",
     "a": "Die Vorsorge, damit IT-Services nach einem Katastrophenfall wieder anlaufen",
-    "a_full": "ITSCM unterstützt das Business Continuity Management des Unternehmens. Es erstellt Notfallpläne, legt Ausweichstandorte und Wiederanlaufzeiten fest und testet diese regelmäßig. Grundlage sind die Ergebnisse der Business Impact Analyse.",
+    "a_full": "ITSCM unterstützt das Business Continuity Management des Unternehmens. Es erstellt Notfallpläne, legt Ausweichstandorte und Wiederanlaufzeiten fest und testet diese regelmäßig. Grundlage sind die Ergebnisse der Business-Impact-Analyse.",
     "options": [
       "Die Vorsorge, damit IT-Services nach einem Katastrophenfall wieder anlaufen",
       "Die tägliche Überwachung der Serverlast im Normalbetrieb",
@@ -10391,7 +10391,7 @@
     "thema": "ipv4",
     "q": "Ein Client hat 10.1.1.20 mit Maske /16 statt /24. Der Server 10.1.2.5 in einem anderen /24-Subnetz ist nicht erreichbar. Warum?",
     "a": "Der Client hält den Server für lokal und sucht ihn per ARP",
-    "a_full": "Mit /16 liegt 10.1.2.5 aus Sicht des Clients im eigenen Netz. Er sendet deshalb eine ARP-Anfrage statt das Paket an das Gateway zu schicken. Da der Server in einem anderen VLAN steht, antwortet niemand und die Verbindung scheitert.",
+    "a_full": "Mit /16 liegt 10.1.2.5 aus Sicht des Clients im eigenen Netz. Er sendet deshalb eine ARP-Anfrage, statt das Paket an das Gateway zu schicken. Da der Server in einem anderen VLAN steht, antwortet niemand und die Verbindung scheitert.",
     "options": [
       "Der Client hält den Server für lokal und sucht ihn per ARP",
       "Der Client sendet alle Pakete doppelt an das Gateway",
@@ -10404,7 +10404,7 @@
     "thema": "routing",
     "q": "Ein Server hat zwei Netzwerkkarten in zwei Subnetzen und auf beiden ein Standardgateway eingetragen. Antworten gehen teils über die falsche Karte. Was ist richtig?",
     "a": "Nur eine Karte erhält ein Gateway, für das andere Netz setzt man statische Routen",
-    "a_full": "Ein Rechner sollte genau ein Standardgateway haben. Bei zwei Einträgen entscheidet die Metrik, und Antworten können über die andere Karte gehen als die Anfrage kam. Firewalls verwerfen solche asymmetrischen Pakete oft. Netze hinter der zweiten Karte erreicht man über gezielte statische Routen.",
+    "a_full": "Ein Rechner sollte genau ein Standardgateway haben. Bei zwei Einträgen entscheidet die Metrik, und Antworten können über die andere Karte gehen, als die Anfrage kam. Firewalls verwerfen solche asymmetrischen Pakete oft. Netze hinter der zweiten Karte erreicht man über gezielte statische Routen.",
     "options": [
       "Nur eine Karte erhält ein Gateway, für das andere Netz setzt man statische Routen",
       "Beide Karten brauchen dasselbe Gateway aus einem der beiden Netze",
@@ -11899,7 +11899,7 @@
     "thema": "beratung",
     "q": "Ein Kunde wird am Telefon persönlich beleidigend. Wie verhalten Sie sich professionell?",
     "a": "Sachlich bleiben, mit einer Ich-Botschaft Grenzen setzen und zum Anliegen lenken",
-    "a_full": "Eine Ich-Botschaft wie „Ich möchte Ihnen helfen, dafür brauche ich einen sachlichen Ton“ greift den Kunden nicht an. Man nimmt die Beleidigung nicht persönlich und lenkt auf das Anliegen zurück. Hört es nicht auf, darf man das Gespräch ankündigen zu beenden und den Vorgesetzten informieren.",
+    "a_full": "Eine Ich-Botschaft wie „Ich möchte Ihnen helfen, dafür brauche ich einen sachlichen Ton“ greift den Kunden nicht an. Man nimmt die Beleidigung nicht persönlich und lenkt auf das Anliegen zurück. Hört es nicht auf, darf man ankündigen, das Gespräch zu beenden und den Vorgesetzten informieren.",
     "options": [
       "Sachlich bleiben, mit einer Ich-Botschaft Grenzen setzen und zum Anliegen lenken",
       "Im gleichen Ton antworten, damit der Kunde merkt, wie seine Worte wirken",
@@ -12302,7 +12302,7 @@
     "thema": "arbeitswelt",
     "q": "Die Firma führt ein Ticketsystem ein, das Bearbeitungszeiten je Mitarbeiter auswerten kann. Die Leitung sagt, sie wolle niemanden überwachen. Muss der Betriebsrat zustimmen?",
     "a": "Ja, es reicht, dass die Software zur Überwachung geeignet ist",
-    "a_full": "Nach § 87 Abs. 1 Nr. 6 BetrVG hat der Betriebsrat bei technischen Einrichtungen mit, die Leistung oder Verhalten überwachen können. Es kommt nicht auf die Absicht des Arbeitgebers an, sondern auf die objektive Eignung. Ohne Einigung kann der Betriebsrat verlangen, dass der Einsatz unterbleibt.",
+    "a_full": "Nach § 87 Abs. 1 Nr. 6 BetrVG bestimmt der Betriebsrat bei technischen Einrichtungen mit, die Leistung oder Verhalten überwachen können. Es kommt nicht auf die Absicht des Arbeitgebers an, sondern auf die objektive Eignung. Ohne Einigung kann der Betriebsrat verlangen, dass der Einsatz unterbleibt.",
     "options": [
       "Ja, es reicht, dass die Software zur Überwachung geeignet ist",
       "Nein, weil keine Überwachung beabsichtigt ist",
@@ -16735,7 +16735,7 @@
     "thema": "zugriff",
     "q": "Eine Mitarbeiterin wurde in die Gruppe \"Einkauf\" aufgenommen. Auf die Freigabe des Einkaufs kommt sie trotzdem noch nicht. Was ist die wahrscheinliche Ursache?",
     "a": "Ihr Kerberos-Ticket enthält noch die alten Gruppenmitgliedschaften",
-    "a_full": "Die Gruppen stehen im Ticket, das sie bei der Anmeldung bekommen hat. Neue Mitgliedschaften wirken erst mit einem neuen Ticket. Ab- und wieder Anmelden oder klist purge mit anschließendem erneuten Zugriff löst das Problem.",
+    "a_full": "Die Gruppen stehen im Ticket, das sie bei der Anmeldung bekommen hat. Neue Mitgliedschaften wirken erst mit einem neuen Ticket. Ab- und Wiederanmelden oder klist purge mit anschließendem erneuten Zugriff löst das Problem.",
     "options": [
       "Ihr Kerberos-Ticket enthält noch die alten Gruppenmitgliedschaften",
       "Neue Gruppen werden grundsätzlich erst nach 24 Stunden repliziert",
@@ -17021,7 +17021,7 @@
     "thema": "storage",
     "q": "Ein logisches Volume mit XFS-Dateisystem ist zu groß angelegt worden. Ein Kollege will es mit lvreduce und einem Werkzeug zum Verkleinern des Dateisystems schrumpfen. Was sagen Sie ihm?",
     "a": "XFS lässt sich nicht verkleinern, nur sichern, neu anlegen und zurückspielen",
-    "a_full": "XFS unterstützt das Vergrößern im laufenden Betrieb mit xfs_growfs, aber kein Verkleinern. Wer das Volume trotzdem lvreduce unterzieht, zerstört Daten. Der Weg ist: Daten sichern, ein kleineres Volume mit neuem XFS anlegen und die Daten zurückspielen. ext4 kann dagegen im ausgehängten Zustand verkleinert werden.",
+    "a_full": "XFS unterstützt das Vergrößern im laufenden Betrieb mit xfs_growfs, aber kein Verkleinern. Wer das Volume trotzdem einem lvreduce unterzieht, zerstört Daten. Der Weg ist: Daten sichern, ein kleineres Volume mit neuem XFS anlegen und die Daten zurückspielen. ext4 kann dagegen im ausgehängten Zustand verkleinert werden.",
     "options": [
       "XFS lässt sich nicht verkleinern, nur sichern, neu anlegen und zurückspielen",
       "XFS lässt sich nur im eingehängten Zustand mit xfs_repair verkleinern",

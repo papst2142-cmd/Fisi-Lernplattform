@@ -621,7 +621,7 @@
       "Wird ausschließlich in Webbrowsern ausgeführt"
     ],
     "a": "Läuft direkt auf der Hardware ohne zugrunde liegendes Host-Betriebssystem",
-    "exp": "Typ-1-Hypervisoren (z.B. VMware ESXi, Proxmox VE) installieren direkt auf der nackten Hardware."
+    "exp": "Typ-1-Hypervisoren (z.B. VMware ESXi, Proxmox VE) werden direkt auf der nackten Hardware installiert."
   },
   {
     "cat": "systeme",
@@ -6354,7 +6354,7 @@
       "MED"
     ],
     "a": "AS_PATH",
-    "exp": "AS_PATH enthält die AS-Nummern auf dem Weg. Er dient der Schleifenvermeidung (sieht ein Router seine eigene AS, verwirft er die Route) und bei sonst gleichen Routen gewinnt der kürzere Pfad."
+    "exp": "AS_PATH enthält die AS-Nummern auf dem Weg. Er dient der Schleifenvermeidung (sieht ein Router sein eigenes AS, verwirft er die Route) und bei sonst gleichen Routen gewinnt der kürzere Pfad."
   },
   {
     "cat": "netzwerk",
@@ -6601,7 +6601,7 @@
       "arp"
     ],
     "a": "dig",
-    "exp": "dig www.beispiel.de A zeigt Antwort, TTL, verwendeten Server und Flags. nslookup kann ähnliches, dig ist aber ausführlicher und in Skripten beliebt."
+    "exp": "dig www.beispiel.de A zeigt Antwort, TTL, verwendeten Server und Flags. nslookup kann Ähnliches, dig ist aber ausführlicher und in Skripten beliebt."
   },
   {
     "cat": "netzwerk",
@@ -11411,7 +11411,7 @@
       "755 (rwxr-xr-x)"
     ],
     "a": "700 (rwx------)",
-    "exp": "Ausgangsrechte für eine Verzeichnis sind 777. Die umask nimmt Bits weg: 777 ohne 077 = 700."
+    "exp": "Ausgangsrechte für ein Verzeichnis sind 777. Die umask nimmt Bits weg: 777 ohne 077 = 700."
   },
   {
     "cat": "systeme",
@@ -11736,7 +11736,7 @@
       "3,2 GB/s"
     ],
     "a": "25,6 GB/s",
-    "exp": "3200 MT/s * 8 Byte (64 Bit) = 25,6 GB/s je Kanal, * 1 Kanal/Kanäle = 25,6 GB/s."
+    "exp": "3200 MT/s * 8 Byte (64 Bit) = 25,6 GB/s je Kanal, * 1 Kanal = 25,6 GB/s."
   },
   {
     "cat": "systeme",
@@ -11749,7 +11749,7 @@
       "9,6 GB/s"
     ],
     "a": "76,8 GB/s",
-    "exp": "4800 MT/s * 8 Byte (64 Bit) = 38,4 GB/s je Kanal, * 2 Kanal/Kanäle = 76,8 GB/s."
+    "exp": "4800 MT/s * 8 Byte (64 Bit) = 38,4 GB/s je Kanal, * 2 Kanäle = 76,8 GB/s."
   },
   {
     "cat": "netzwerk",
@@ -14369,12 +14369,12 @@
     "thema": "beschaffung",
     "q": "Ein Lager hat am Jahresanfang 60 und am Jahresende 100 Toner. Im Jahr wurden 960 Toner verbraucht. Wie oft wurde der Lagerbestand umgeschlagen?",
     "options": [
-      "12,0 mal",
-      "16,0 mal",
-      "6,0 mal",
-      "8,3 mal"
+      "12,0-mal",
+      "16,0-mal",
+      "6,0-mal",
+      "8,3-mal"
     ],
-    "a": "12,0 mal",
+    "a": "12,0-mal",
     "exp": "Durchschnittlicher Bestand: (60 + 100) / 2 = 80. Umschlagshäufigkeit: 960 / 80 = 12,0."
   },
   {
@@ -14395,12 +14395,12 @@
     "thema": "beschaffung",
     "q": "Ein Lager hat am Jahresanfang 140 und am Jahresende 60 Toner. Im Jahr wurden 1.500 Toner verbraucht. Wie oft wurde der Lagerbestand umgeschlagen?",
     "options": [
-      "15,0 mal",
-      "10,7 mal",
-      "7,5 mal",
-      "6,7 mal"
+      "15,0-mal",
+      "10,7-mal",
+      "7,5-mal",
+      "6,7-mal"
     ],
-    "a": "15,0 mal",
+    "a": "15,0-mal",
     "exp": "Durchschnittlicher Bestand: (140 + 60) / 2 = 100. Umschlagshäufigkeit: 1.500 / 100 = 15,0."
   },
   {
@@ -15571,7 +15571,7 @@
       "rm löscht Dateien erst beim nächsten Neustart endgültig"
     ],
     "a": "Ein laufender Prozess hält die gelöschte Datei noch offen",
-    "exp": "Der Speicher wird erst frei, wenn kein Prozess die Datei mehr geöffnet hat. lsof +L1 zeigt solche gelöschten, noch offenen Dateien. Ein Neustart oder Neuladen des Dienstes gibt den Platz frei. Besser leert man eine offene Logdatei mit truncate statt sie zu löschen."
+    "exp": "Der Speicher wird erst frei, wenn kein Prozess die Datei mehr geöffnet hat. lsof +L1 zeigt solche gelöschten, noch offenen Dateien. Ein Neustart oder Neuladen des Dienstes gibt den Platz frei. Besser leert man eine offene Logdatei mit truncate, statt sie zu löschen."
   },
   {
     "cat": "systeme",
@@ -16621,7 +16621,7 @@
       "0 Tage, kritisch",
       "0 Tage, nicht kritisch",
       "24 Tage, nicht kritisch",
-      "1 Tage, kritisch"
+      "1 Tag, kritisch"
     ],
     "a": "0 Tage, kritisch",
     "exp": "GP = SAZ - FAZ = 12 - 12 = 0. Vorgänge mit Gesamtpuffer 0 liegen auf dem kritischen Pfad."
@@ -18115,7 +18115,7 @@
     "options": [
       "Die Kopie wird nach Abschluss des Auftrags gelöscht",
       "Die Kopie darf zwei Jahre ohne Rückfrage aufbewahrt werden",
-      "Die Kopie darf bleiben, wenn der NAS verschlüsselt ist",
+      "Die Kopie darf bleiben, wenn das NAS verschlüsselt ist",
       "Die Kopie darf bleiben, solange der Kunde nicht widerspricht"
     ],
     "a": "Die Kopie wird nach Abschluss des Auftrags gelöscht",
@@ -20667,7 +20667,7 @@
       "Die Backupsoftware jedes Jahr gegen ein neues Produkt tauschen"
     ],
     "a": "Regelmäßige Wiederherstellungstests mit Zeitmessung und Protokoll",
-    "exp": "Ein erfolgreicher Sicherungsjob sagt nichts darüber, ob sich Daten tatsächlich und rechtzeitig zurückholen lassen. Nur ein Test zeigt, ob Datenträger, Schlüssel und Anleitung stimmen und ob die RTO erreichbar ist. Ergebnisse fließen ins Notfallhandbuch ein."
+    "exp": "Ein erfolgreicher Sicherungsjob sagt nichts darüber, ob sich Daten tatsächlich und rechtzeitig zurückholen lassen. Nur ein Test zeigt, ob Datenträger, Schlüssel und Anleitung stimmen und ob das RTO erreichbar ist. Ergebnisse fließen ins Notfallhandbuch ein."
   },
   {
     "cat": "sicherheit",

@@ -32,7 +32,7 @@
     "solution": [
       "1. CPU-Sockel (nimmt den Prozessor auf), RAM-Steckplätze (Arbeitsspeicher), Chipsatz (steuert Datenfluss zwischen Komponenten), Erweiterungssteckplätze z.B. PCIe (für Grafikkarte, Netzwerkkarte usw.).",
       "2. Der Power-On-Self-Test prüft beim Start die grundlegende Funktion von CPU, RAM und angeschlossener Hardware, bevor das Betriebssystem geladen wird.",
-      "3. Sichtprüfung auf lose Stecker/Kabel, Arbeitsspeicher neu setzen bzw. einzeln testen, sowie Kontrolle der Signaltöne/LEDs zur Fehlereingrenzung."
+      "3. Sichtprüfung auf lose Stecker/Kabel, Arbeitsspeicher neu setzen bzw. einzeln testen sowie Kontrolle der Signaltöne/LEDs zur Fehlereingrenzung."
     ]
   },
   {
@@ -102,7 +102,7 @@
       "3. Was ist der Unterschied zwischen Datenschutz und Datensicherheit?"
     ],
     "solution": [
-      "1. Ausreichende Länge (mindestens 12 Zeichen empfohlen), Mischung aus Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen, sowie Einzigartigkeit (kein wiederverwendetes Passwort aus einem anderen Dienst).",
+      "1. Ausreichende Länge (mindestens 12 Zeichen empfohlen), Mischung aus Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen sowie Einzigartigkeit (kein wiederverwendetes Passwort aus einem anderen Dienst).",
       "2. Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z.B. Name, Anschrift oder E-Mail-Adresse.",
       "3. Datenschutz regelt den rechtlich zulässigen Umgang mit personenbezogenen Daten (das \"Ob\" und \"Wie\"), Datensicherheit umfasst die technischen Maßnahmen zum Schutz aller Daten vor Verlust und unbefugtem Zugriff (das technische \"Wie\")."
     ]
@@ -139,7 +139,7 @@
     ],
     "solution": [
       "1. Es stellt den zeitlichen Ablauf eines Projekts grafisch als Balkendiagramm dar, bei dem jeder Balken einen Vorgang mit Start- und Endzeitpunkt repräsentiert.",
-      "2. Dauer und zeitliche Lage einzelner Vorgänge, Abhängigkeiten und Überschneidungen zwischen Vorgängen, sowie der aktuelle Projektfortschritt.",
+      "2. Dauer und zeitliche Lage einzelner Vorgänge, Abhängigkeiten und Überschneidungen zwischen Vorgängen sowie der aktuelle Projektfortschritt.",
       "3. Es macht zeitliche Abhängigkeiten und Engpässe sofort sichtbar, während eine reine Liste keine Aussage über Parallelität, Dauer oder Reihenfolge der Aufgaben zulässt."
     ]
   },
@@ -342,7 +342,7 @@
       "",
       "2. Zum Beispiel 192.168.50.0/24: Router 192.168.50.1, feste Adressen für Drucker, NAS und Access Point im Bereich .2 bis .49, DHCP-Bereich .100 bis .199 für PCs und Laptops. Der Rest bleibt Reserve.",
       "",
-      "3. Cat 6A (oder Cat 7-Verlegekabel mit Cat-6A-Komponenten): Damit sind 10 Gbit/s auf bis zu 100 m möglich, die Verkabelung bleibt viele Jahre zukunftssicher. Der Mehrpreis gegenüber Cat 6 ist bei Neuinstallation gering."
+      "3. Cat 6A (oder Cat-7-Verlegekabel mit Cat-6A-Komponenten): Damit sind 10 Gbit/s auf bis zu 100 m möglich, die Verkabelung bleibt viele Jahre zukunftssicher. Der Mehrpreis gegenüber Cat 6 ist bei Neuinstallation gering."
     ]
   },
   {
@@ -2245,7 +2245,7 @@
       "",
       "2. Summe: 9.208 + 2.640 + 7.000 = 18.848 Euro. Risikoreserve 10 %: 1.884,80 Euro. Gesamt: 20.732,80 Euro. Das Budget wird um 732,80 Euro überschritten.",
       "",
-      "3. Die Scanner erst in einer zweiten Stufe beschaffen: 20.732,80 - 1.300 = 19.432,80 Euro, das passt ins Budget. Oder bei der Geschäftsleitung ein höheres Budget beantragen, mit Begründung. Weitere Möglichkeit: Arbeitspakete des Beraters intern übernehmen. Die Wartung (4.500 x 20 % = 900 Euro pro Jahr) sind laufende Betriebskosten. Sie gehören nicht ins Projektbudget, müssen aber im IT-Budget der Folgejahre eingeplant werden."
+      "3. Die Scanner erst in einer zweiten Stufe beschaffen: 20.732,80 - 1.300 = 19.432,80 Euro, das passt ins Budget. Oder bei der Geschäftsleitung ein höheres Budget beantragen, mit Begründung. Weitere Möglichkeit: Arbeitspakete des Beraters intern übernehmen. Die Wartungskosten (4.500 x 20 % = 900 Euro pro Jahr) sind laufende Betriebskosten. Sie gehören nicht ins Projektbudget, müssen aber im IT-Budget der Folgejahre eingeplant werden."
     ]
   },
   {
@@ -3643,7 +3643,7 @@
       "Eine Bäckereifiliale hat zwei Cloud-Kassen und ein Kartenterminal. Letzten Monat fiel der DSL-Anschluss zwei Tage aus. Die Kassen konnten nur eingeschränkt arbeiten, Kartenzahlung ging gar nicht. Jetzt soll ein LTE-Router als Ausweichverbindung dazukommen, mit einem Tarif von 1 GB im Monat (1 GB = 1.000 MB, 1 MB = 1.000 KB).",
       "Datenmengen pro Tag: 700 Kassenbons mit je 8 KB. 60 % der Bons werden mit Karte bezahlt, jede Kartenzahlung braucht zusätzlich 4 KB. Abgleich von Artikeln, Preisen und Kassenberichten: 40 MB. Im Verkaufsraum läuft außerdem 12 Stunden Musik über einen Streamingdienst mit 128 kbit/s.",
       "",
-      "1. Berechnen Sie die Datenmenge der Kassen und des Kartenterminals pro Tag und für einen Ausfall von 3 Tagen. Welchen Anteil des Tarifs ist das? Was passiert, wenn auch die Musik über LTE läuft?",
+      "1. Berechnen Sie die Datenmenge der Kassen und des Kartenterminals pro Tag und für einen Ausfall von 3 Tagen. Welcher Anteil des Tarifs ist das? Was passiert, wenn auch die Musik über LTE läuft?",
       "2. Wie richten Sie das automatische Umschalten ein, und welche Geräte dürfen die Ausweichverbindung nutzen?",
       "3. Beschreiben Sie einen Test der Ausweichverbindung vor der Übergabe an die Filialleitung."
     ],
@@ -3709,7 +3709,7 @@
       "Neu geplant: ein NAS im Büro mit 2 TB nutzbarem Speicher. Freitags läuft eine Vollsicherung, montags bis donnerstags eine differenzielle Sicherung. Pro Tag kommen im Mittel 3 GB neue oder geänderte Daten dazu, jeden Tag andere. Die Sicherungen der letzten 4 Wochen werden aufbewahrt. Zusätzlich wird freitags auf eine von zwei USB-Festplatten gesichert, die im Wechsel außer Haus gelagert werden. Das Netz liefert real 90 MB/s.",
       "",
       "1. Nennen Sie vier Schwachstellen der bisherigen Lösung.",
-      "2. Wie groß sind die differenziellen Sicherungen von Montag bis Donnerstag? Wie viel Speicher braucht eine Woche und wie viel brauchen 4 Wochen? Welchen Anteil des NAS ist das? Wie lange dauert die Wiederherstellung, wenn der PC am Freitagmorgen ausfällt? Welchen Vorteil hat die differenzielle Sicherung dabei gegenüber der inkrementellen?",
+      "2. Wie groß sind die differenziellen Sicherungen von Montag bis Donnerstag? Wie viel Speicher braucht eine Woche und wie viel brauchen 4 Wochen? Welcher Anteil des NAS ist das? Wie lange dauert die Wiederherstellung, wenn der PC am Freitagmorgen ausfällt? Welchen Vorteil hat die differenzielle Sicherung dabei gegenüber der inkrementellen?",
       "3. Beschreiben Sie in Schritten einen Wiederherstellungstest, den die Praxis einmal im Quartal durchführen soll."
     ],
     "solution": [
