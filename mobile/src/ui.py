@@ -385,6 +385,27 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
     return field
 
 
+def check_row(caption, value=False, on_change=None):
+    """Haken mit mehrzeiliger Beschriftung (ab 0.51): ft.Checkbox bricht
+    lange Texte nicht um. Auch das Tippen auf den Text setzt den Haken.
+    on_change erhaelt den neuen Wert (True/False)."""
+    box = ft.Checkbox(value=value, active_color=C["green"], check_color=C["on_accent"])
+
+    def changed(_event=None):
+        if on_change:
+            on_change(bool(box.value))
+
+    def toggle(_event):
+        box.value = not box.value
+        changed()
+
+    box.on_change = changed
+    return ft.Row([box, ft.Container(content=ft.Text(caption, size=13, color=C["text_soft"]),
+                                     expand=True, on_click=toggle,
+                                     padding=ft.Padding.symmetric(vertical=6))],
+                  spacing=4, vertical_alignment=ft.CrossAxisAlignment.START)
+
+
 def read_box(value="", mono=False):
     """Mehrzeiliger Text zum Lesen (Aufgaben, Loesungen, Rechenergebnisse)."""
     return ft.Container(

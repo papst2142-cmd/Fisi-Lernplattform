@@ -8,6 +8,7 @@ Start:  python test_spiel.py
 
 import copy
 import json
+import re
 import math
 import os
 import shutil
@@ -5717,6 +5718,481 @@ class SpielstandCacheTest(unittest.TestCase):
             self.assertNotEqual(db.change_stamp(), stamp)
 
 
+# ============================================================================
+#  AB 0.51: LERN-SCHWERPUNKT
+# ============================================================================
+
+class _Einstellungen:
+    """Eigener Ordner fuer einstellungen.json (liegt neben der Datenbank)."""
+
+    def setUp(self):
+        self._folder = tempfile.mkdtemp()
+        self._old_db = os.environ.get("FISI_DB_PATH")
+        os.environ["FISI_DB_PATH"] = os.path.join(self._folder, "x.db")
+
+    def tearDown(self):
+        if self._old_db is None:
+            os.environ.pop("FISI_DB_PATH", None)
+        else:
+            os.environ["FISI_DB_PATH"] = self._old_db
+        shutil.rmtree(self._folder, ignore_errors=True)
+
+
+class Zahlentext051Test(unittest.TestCase):
+    """Punkt 0: Anzahlen in Texten stimmen mit den Daten ueberein."""
+
+    ASCII = {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}
+
+    def _ascii(self, text):
+        for umlaut, plain in self.ASCII.items():
+            text = text.replace(umlaut, plain)
+        return text
+
+    def test_liesmich(self):
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "LIESMICH.txt")
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+
+        def number(value):
+            return "{:,}".format(value).replace(",", ".")
+        for value, word in ((len(KARTEIKARTEN), "Karten"), (len(QUIZ_QUESTIONS), "Fragen"),
+                            (len(AP1_SZENARIEN), "Grundlagenaufgaben"),
+                            (len(SZENARIEN), "praxisnahe"),
+                            (len(PROJEKTARBEITEN), "vollstaendige")):
+            self.assertIn("%s %s" % (number(value), word), text)
+        self.assertIn("Die %s Fachbereiche" % self._ascii(core.count_word(
+            len(core.CATEGORIES))), text)
+
+    def test_handy_und_pc_ohne_feste_anzahlen(self):
+        """Keine von Hand geschriebenen Anzahlen der Fachbereiche mehr."""
+        base = os.path.dirname(os.path.abspath(__file__))
+        for name in ("app_gui.py", os.path.join("mobile", "src", "main.py")):
+            with open(os.path.join(base, name), encoding="utf-8") as handle:
+                source = handle.read()
+            for word in core.NUMBER_WORDS[2:]:
+                self.assertIsNone(re.search(r"\b%s Fachbereich" % word, source), name)
+        self.assertEqual(core.count_word(5), "fünf")
+        self.assertEqual(core.count_word(20), "20")
+
+
+class Wiederholung051Test(unittest.TestCase):
+    """Punkt 1: Intervalle 1/3/7/14/30 Tage, Fehler setzt zurueck, Altbestand
+    wird gestaffelt freigegeben."""
+
+    import fisi_lernen as fl
+
+    def test_intervalle(self):
+        fl = self.fl
+        self.assertEqual(fl.SR_INTERVALS, (1, 3, 7, 14, 30))
+        self.assertEqual(fl.review_state([]), (0, None))
+        days = ["2026-10-01", "2026-10-02", "2026-10-05", "2026-10-12", "2026-10-26",
+                "2026-11-25"]
+        expected = ["2026-10-02", "2026-10-05", "2026-10-12", "2026-10-26", "2026-11-25",
+                    "2026-12-25"]
+        entries = []
+        for number, (day, due) in enumerate(zip(days, expected)):
+            entries.append((day + " 10:00:00", True))
+            stage, date = fl.review_state(entries)
+            self.assertEqual(stage, min(number + 1, 5))
+            self.assertEqual(date.isoformat(), due)
+
+    def test_zu_frueh_wiederholt_zaehlt_nicht(self):
+        fl = self.fl
+        stage, due = fl.review_state([("2026-10-01 10:00:00", True),
+                                      ("2026-10-01 18:00:00", True)])
+        self.assertEqual((stage, due.isoformat()), (1, "2026-10-02"))
+
+    def test_fehler_setzt_zurueck(self):
+        fl = self.fl
+        entries = [("2026-10-01 10:00:00", True), ("2026-10-02 10:00:00", True),
+                   ("2026-10-05 10:00:00", False)]
+        stage, due = fl.review_state(entries)
+        self.assertEqual((stage, due.isoformat()), (0, "2026-10-06"))
+        book = core.StatusBook(results={(core.SRC_QUIZ, "x"): entries})
+        self.assertEqual(book.status(core.SRC_QUIZ, "x")[0], core.Q_PRACTICE)
+
+    def _plan(self, results, day):
+        valid = {core.SRC_CARD: {key for (_s, key) in results},
+                 core.SRC_QUIZ: {key for (_s, key) in results}}
+        return self.fl.ReviewPlan(core.StatusBook(results=results),
+                                  today=__import__("datetime").date.fromisoformat(day),
+                                  valid=valid)
+
+    def test_altbestand_wird_gestaffelt(self):
+        fl = self.fl
+        results = {(core.SRC_CARD, "k%03d" % n): [("2026-09-20 10:00:00", n % 3 != 0)]
+                   for n in range(100)}
+        plan = self._plan(dict(results), fl.SR_START)
+        self.assertEqual(plan.count(), fl.SR_LEGACY_PER_DAY)
+        self.assertEqual(plan.legacy_waiting, 100 - fl.SR_LEGACY_PER_DAY)
+        # Zu Uebende (falsch beantwortete) kommen zuerst
+        first = plan.session(core.SRC_CARD, 30)
+        self.assertTrue(all(int(key[1:]) % 3 == 0 for key in first[:30]))
+        # Heute schon 10 Altkarten wiederholt: sie zaehlen auf das Tageskontingent
+        for key in first[:10]:
+            results[(core.SRC_CARD, key)] = results[(core.SRC_CARD, key)] + [
+                (fl.SR_START + " 12:00:00", True)]
+        plan = self._plan(dict(results), fl.SR_START)
+        self.assertEqual(plan.count(), fl.SR_LEGACY_PER_DAY - 10)
+        # Vor dem Start der Wiederholung ist nichts faellig
+        self.assertEqual(self._plan(dict(results), "2026-09-30").count(), 0)
+
+    def test_neue_fragen_nach_intervall_faellig(self):
+        results = {(core.SRC_QUIZ, "q"): [("2026-10-02 09:00:00", True)]}
+        self.assertEqual(self._plan(results, "2026-10-02").count(), 0)
+        plan = self._plan(results, "2026-10-03")
+        self.assertEqual(plan.session(core.SRC_QUIZ), ["q"])
+        self.assertEqual(plan.first_source(), core.SRC_QUIZ)
+        self.assertIn("1 Prüfungsfrage", self.fl.due_text(plan))
+
+    def test_aus_der_datenbank(self):
+        with TempDB() as db:
+            card = KARTEIKARTEN[0]
+            db.log_card(card["cat"], card["q"], "mc", False)
+            plan = self.fl.ReviewPlan.from_db(db)
+            self.assertEqual(plan.count(), 0)   # erst morgen faellig
+            tomorrow = __import__("datetime").date.today() + \
+                __import__("datetime").timedelta(days=1)
+            plan = self.fl.ReviewPlan.from_db(db, today=tomorrow)
+            self.assertEqual(plan.session(core.SRC_CARD), [card["q"]])
+
+
+class Tagesziel051Test(_Einstellungen, unittest.TestCase):
+    """Punkt 5: Tagesziel, Lernserie, Erinnerung - alles abschaltbar."""
+
+    import fisi_lernen as fl
+
+    def test_serie(self):
+        import datetime
+        today = datetime.date(2026, 10, 10)
+        days = {"2026-10-08", "2026-10-09"}
+        self.assertEqual(self.fl.learning_streak(days, today), 2)
+        self.assertEqual(self.fl.learning_streak(days | {"2026-10-10"}, today), 3)
+        self.assertEqual(self.fl.learning_streak({"2026-10-07"}, today), 0)
+
+    def test_ziel_und_erinnerung(self):
+        import datetime
+        today = datetime.date(2026, 10, 10)
+        goal = self.fl.DailyGoal({"2026-10-10": 12, "2026-10-09": 3}, 20, today)
+        self.assertFalse(goal.reached)
+        self.assertEqual(goal.text(), "Tagesziel: 12 von 20 Aufgaben")
+        self.assertEqual(goal.streak_text(), "Lernserie: 2 Tage")
+        settings = self.fl.learning_settings()
+        evening = datetime.datetime(2026, 10, 10, 18, 30)
+        morning = datetime.datetime(2026, 10, 10, 9, 0)
+        self.assertTrue(self.fl.reminder_due(settings, goal, evening))
+        self.assertFalse(self.fl.reminder_due(settings, goal, morning))
+        self.assertFalse(self.fl.reminder_due(settings, goal, evening, "2026-10-10"))
+        self.fl.save_learning_settings(erinnerung_an=False)
+        self.assertFalse(self.fl.reminder_due(self.fl.learning_settings(), goal, evening))
+        done = self.fl.DailyGoal({"2026-10-10": 25}, 20, today)
+        self.assertTrue(done.reached)
+        self.assertFalse(self.fl.reminder_due(settings, done, evening))
+
+    def test_einstellungen_werden_begrenzt(self):
+        fl = self.fl
+        values = fl.learning_settings()
+        self.assertEqual(values["ziel_anzahl"], fl.GOAL_DEFAULT)
+        fl.save_learning_settings(ziel_anzahl=500, erinnerung_zeit="25:99")
+        values = fl.learning_settings()
+        self.assertLessEqual(values["ziel_anzahl"], fl.GOAL_MAX)
+        self.assertEqual(fl.parse_time(values["erinnerung_zeit"]) is not None, True)
+
+    def test_trainer_zaehlt_fuers_tagesziel(self):
+        import datetime
+        with TempDB() as db:
+            db.log_trainer("ipv4", 1, True)
+            db.log_trainer("ipv4", 2, False)
+            db.log_quiz_answer(QUIZ_QUESTIONS[0]["cat"], QUIZ_QUESTIONS[0]["q"], True)
+            today = datetime.date.today().isoformat()
+            self.assertEqual(db.activity_days()[today], 3)
+            self.assertEqual(db.trainer_stats(), {"ipv4": (2, 1)})
+            self.assertEqual(db.streak(), 1)
+
+
+class Trainer051Test(unittest.TestCase):
+    """Punkt 4: Aufgaben per Startwert, Loesungen vom Programm berechnet und
+    gegen ipaddress bzw. den Subnetz-Rechner geprueft."""
+
+    import fisi_lernen as fl
+    SEEDS = range(40)
+
+    def test_musterloesung_wird_angenommen(self):
+        for kind, _name in self.fl.TRAINER_KINDS:
+            for level, _label in self.fl.TRAINER_LEVELS:
+                for seed in self.SEEDS:
+                    task = self.fl.trainer_task(kind, level, seed)
+                    self.assertTrue(task.all_correct(task.solution), task.text)
+                    wrong = {key: "1.2.3.4/33" for key, _l in task.fields}
+                    self.assertFalse(any(task.check(wrong).values()), task.text)
+                    self.assertTrue(task.steps)
+
+    def test_fester_startwert(self):
+        first = self.fl.trainer_round("vlsm", 2, 1234)
+        second = self.fl.trainer_round("vlsm", 2, 1234)
+        self.assertEqual([t.text for t in first], [t.text for t in second])
+        self.assertEqual(len(first), self.fl.TRAINER_ROUND)
+        self.assertEqual(len({t.text for t in first}), len(first))
+
+    def test_ipv4_wie_der_rechner(self):
+        import ipaddress
+        import re
+        for level in (1, 2, 3):
+            for seed in self.SEEDS:
+                task = self.fl.trainer_task("ipv4", level, seed)
+                address, prefix = re.search(r"(\d+\.\d+\.\d+\.\d+)/(\d+)", task.text).groups()
+                network = ipaddress.ip_network("%s/%s" % (address, prefix), strict=False)
+                self.assertEqual(task.solution["netz"], str(network.network_address))
+                self.assertEqual(task.solution["broadcast"], str(network.broadcast_address))
+                self.assertEqual(task.solution["maske"], str(network.netmask))
+                self.assertEqual(int(task.solution["hosts"]), network.num_addresses - 2)
+                if network.prefixlen >= 16:
+                    values = core.ipv4_values(network)
+                    self.assertEqual(task.solution["erste"], str(values["erste"]))
+                    self.assertEqual(task.solution["letzte"], str(values["letzte"]))
+
+    def test_vlsm_luekenlos_und_gross_genug(self):
+        import ipaddress
+        import re
+        for level in (1, 2, 3):
+            for seed in self.SEEDS:
+                task = self.fl.trainer_task("vlsm", level, seed)
+                base = ipaddress.ip_network(re.search(r"Netz (\S+) nach", task.text).group(1))
+                nets = []
+                for key, label in task.fields:
+                    net = ipaddress.ip_network(task.solution[key])
+                    hosts = int(re.search(r"\((\d+) Hosts\)", label).group(1))
+                    self.assertTrue(net.subnet_of(base))
+                    self.assertGreaterEqual(net.num_addresses - 2, hosts)
+                    # kleinstmoeglicher Block
+                    self.assertLess(net.num_addresses // 2 - 2, hosts)
+                    nets.append(net)
+                nets.sort(key=lambda n: (-n.num_addresses, int(n.network_address)))
+                self.assertEqual(nets[0].network_address, base.network_address)
+                for before, after in zip(nets, nets[1:]):
+                    self.assertEqual(int(before.broadcast_address) + 1,
+                                     int(after.network_address))
+
+    def test_zahlen_und_ipv6(self):
+        import ipaddress
+        for level in (1, 2, 3):
+            for seed in self.SEEDS:
+                task = self.fl.trainer_task("zahlen", level, seed)
+                values = {int(task.solution.get("dez", "0") or 0)} if "dez" in task.solution \
+                    else set()
+                if "bin" in task.solution:
+                    values.add(int(task.solution["bin"], 2))
+                if "hex" in task.solution:
+                    values.add(int(task.solution["hex"], 16))
+                self.assertEqual(len(values), 1, task.text)
+                self.assertTrue(task.check({"hex": "0x" + task.solution.get("hex", ""),
+                                            "bin": task.solution.get("bin", ""),
+                                            "dez": task.solution.get("dez", "")})
+                                .get("hex", True))
+                task = self.fl.trainer_task("ipv6", level, seed)
+                for key, value in task.solution.items():
+                    address = ipaddress.IPv6Address(value)
+                    self.assertEqual(value, address.compressed if key == "kurz"
+                                     else address.exploded)
+
+
+class Pruefung051Test(_Einstellungen, unittest.TestCase):
+    """Punkt 2: Klausursimulation nach FIAusbV 2020."""
+
+    import fisi_pruefung as fp
+
+    def test_aufbau(self):
+        fp = self.fp
+        self.assertEqual([e["minuten"] for e in fp.EXAMS], [90, 90, 90, 60])
+        self.assertEqual(sum(fp.WEIGHTS.values()), 100)
+        for exam in fp.EXAMS:
+            state = fp.new_exam(exam["art"], [], seed=3)
+            self.assertEqual(state, fp.new_exam(exam["art"], [], seed=3))
+            if exam["art"] == fp.WISO:
+                self.assertEqual(len(state["fragen"]), fp.WISO_COUNT)
+                self.assertEqual(len(set(state["fragen"])), fp.WISO_COUNT)
+                continue
+            self.assertEqual(len(state["aufgaben"]), 4)
+            keys = {(t["quelle"], t["index"]) for t in state["aufgaben"]}
+            self.assertEqual(len(keys), 4)
+            total = 0
+            for number in range(4):
+                details = fp.task_details(state, number)
+                self.assertGreaterEqual(len(details["teile"]), 2)
+                total += sum(part["punkte"] for part in details["teile"])
+                for part in details["teile"]:
+                    self.assertTrue(part["kriterien"])
+            self.assertEqual(total, 100)
+
+    def test_neue_aufgaben_bevorzugt(self):
+        fp = self.fp
+        first = fp.new_exam(fp.NETZWERKE, [], seed=1)
+        history = [{"art": fp.NETZWERKE, "daten": {"aufgaben": first["aufgaben"]}}]
+        second = fp.new_exam(fp.NETZWERKE, history, seed=1)
+        old = {(t["quelle"], t["index"]) for t in first["aufgaben"]}
+        new = {(t["quelle"], t["index"]) for t in second["aufgaben"]}
+        self.assertFalse(old & new)
+
+    def test_zeit_ohne_pause(self):
+        import datetime
+        fp = self.fp
+        start = datetime.datetime(2026, 10, 1, 10, 0, 0)
+        state = fp.new_exam(fp.WISO, [], seed=1, now=start)
+        self.assertEqual(fp.seconds_left(state, start + datetime.timedelta(minutes=10)),
+                         50 * 60)
+        self.assertEqual(fp.seconds_left(state, start + datetime.timedelta(hours=3)), 0)
+        fp.submit(state, now=start + datetime.timedelta(hours=3))
+        self.assertEqual(state["dauer"], 60 * 60)   # hoechstens die Pruefungszeit
+
+    def test_bewertung_und_notenschluessel(self):
+        fp = self.fp
+        state = fp.new_exam(fp.KONZEPTION, [], seed=5)
+        fp.submit(state)
+        for number in range(4):
+            for part_no, part in enumerate(fp.task_details(state, number)["teile"]):
+                state["punkte"][fp.answer_key(number, part_no)] = part["punkte"]
+        self.assertEqual(fp.evaluate(state)["punkte"], 100)
+        self.assertEqual(fp.suggested_points(9, [True, False, True]), 6)
+        self.assertEqual(fp.suggested_points(8, []), 0)
+        for points, note in ((92, "1"), (91.9, "2"), (81, "2"), (67, "3"), (50, "4"),
+                             (49.9, "5"), (30, "5"), (29.9, "6")):
+            self.assertTrue(core.ihk_note(points).startswith(note), points)
+
+    def test_wiso_automatisch(self):
+        fp = self.fp
+        state = fp.new_exam(fp.WISO, [], seed=2)
+        by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
+        for number, question in enumerate(state["fragen"]):
+            if number % 2 == 0:
+                state["antworten"][question] = by_question[question]["a"]
+        fp.submit(state)
+        result = fp.evaluate(state)
+        self.assertEqual(result["punkte"], 50.0)
+        self.assertEqual(result["daten"]["richtig"], 15)
+
+    def test_bestehensregeln(self):
+        fp = self.fp
+        good = {"ap1": 70, "projekt": 70, "konzeption": 60, "netzwerke": 55, "wiso": 80}
+        result = fp.overall(good)
+        self.assertTrue(result["complete"] and result["bestanden"])
+        self.assertEqual(result["gesamt"], 68.5)
+        # Ein Bereich unter 30: durchgefallen, Ergaenzungspruefung moeglich?
+        bad = dict(good, netzwerke=25)
+        result = fp.overall(bad)
+        self.assertFalse(result["bestanden"])
+        self.assertIn("Netzwerke", result["ergaenzung"])
+        # Zwei Bereiche unter 50
+        result = fp.overall(dict(good, konzeption=45, wiso=40))
+        self.assertFalse(result["bestanden"])
+        self.assertFalse(fp.overall({"ap1": 80})["complete"])
+
+    def test_laufende_pruefung_und_abschluss(self):
+        fp = self.fp
+        state = fp.new_exam(fp.AP1, [], seed=4)
+        fp.save_running(state)
+        self.assertEqual(fp.load_running()["aufgaben"], state["aufgaben"])
+        fp.submit(state)
+        with TempDB() as db:
+            result = fp.finish(db, state)
+            self.assertIsNone(fp.load_running())
+            saved = db.exams()
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0]["art"], fp.AP1)
+            self.assertEqual(saved[0]["punkte"], result["punkte"])
+            self.assertEqual(fp.latest_results(saved), {fp.AP1: 0.0})
+            # Historie loeschen nimmt auch die Pruefungen mit
+            db.clear_history()
+            self.assertEqual(db.exams(), [])
+
+    def test_pruefungen_werden_abgeglichen(self):
+        with TempDB() as pc, TempDB() as handy:
+            pc.save_exam("wiso", 70.0, "3 (Befriedigend)", 1800, {"themen": {}})
+            pc.log_trainer("vlsm", 2, True)
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            self.assertEqual(len(handy.exams()), 1)
+            self.assertEqual(handy.trainer_stats(), {"vlsm": (1, 1)})
+
+
+class Abschlussprojekt051Test(_Einstellungen, unittest.TestCase):
+    """Punkt 3: Arbeitsbereich Abschlussprojekt."""
+
+    import fisi_projekt as fpj
+
+    def test_felder_neueste_fassung(self):
+        fpj = self.fpj
+        with TempDB() as db:
+            # Oeffnen allein legt nichts an
+            project = fpj.active_project(db, {})
+            self.assertEqual(fpj.projects(db), {})
+            db.save_project_field(project, "titel", "Erster Titel")
+            db.save_project_field(project, "titel", "Neuer Titel")
+            self.assertEqual(fpj.project_title(fpj.projects(db)[project]), "Neuer Titel")
+            rows = db._execute("SELECT COUNT(*) FROM abschlussprojekt", fetch="one")[0]
+            self.assertEqual(rows, 1)
+            self.assertEqual(fpj.active_project(db, {}), project)
+            fpj.delete_project(db, project)
+            self.assertEqual(fpj.projects(db), {})
+
+    def test_abgleich_neueste_gewinnt(self):
+        fpj = self.fpj
+        with TempDB() as pc, TempDB() as handy:
+            pc.save_project_field("p1", "titel", "Vom PC")
+            pc.save_project_field("p1", "ziel", "Ziel PC")
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            handy.save_project_field("p1", "ziel", "Ziel Handy")
+            fisi_sync.merge_into_local(pc, fisi_sync.export_local(handy))
+            fisi_sync.merge_into_local(handy, fisi_sync.export_local(pc))
+            for db in (pc, handy):
+                self.assertEqual(db.project_fields()["p1"],
+                                 {"titel": "Vom PC", "ziel": "Ziel Handy"})
+                rows = db._execute("SELECT COUNT(*) FROM abschlussprojekt", fetch="one")[0]
+                self.assertEqual(rows, 2)
+
+    def test_berechnungen(self):
+        fpj = self.fpj
+        self.assertEqual(fpj.to_number("1.234,50"), 1234.5)
+        self.assertEqual(fpj.to_number("25,5"), 25.5)
+        self.assertEqual(fpj.to_number("abc", 7), 7)
+        self.assertEqual(fpj.euro(1234.5), "1.234,50 €")
+        rows, total = fpj.schedule({})
+        self.assertEqual(total, fpj.MAX_HOURS)
+        self.assertEqual(fpj.schedule_warnings({}), [])
+        fields = {"phase_durchfuehrung": "30"}
+        self.assertTrue(fpj.schedule_warnings(fields))
+        fields = {"material_name_0": "Switch", "material_betrag_0": "500",
+                  "kosten_einsparung": "300", "kosten_laufend": "50"}
+        data = fpj.costs(fields)
+        self.assertEqual(data["personal"], 40 * 25 + 4 * 60)
+        self.assertEqual(data["gesamt"], 40 * 25 + 4 * 60 + 500)
+        self.assertAlmostEqual(data["amortisation"], (1240 + 500) / 250.0)
+        pages, target = fpj.page_estimate({"kapitel_einleitung": "x" * 5600})
+        self.assertEqual((pages, target), (2.0, fpj.DEFAULT_PAGES))
+
+    def test_vorlage_und_export(self):
+        fpj = self.fpj
+        with TempDB() as db:
+            project = fpj.create_project(db)
+            db.save_project_field(project, "ziel", "Eigenes Ziel")
+            count = fpj.apply_template(db, project, 0)
+            fields = fpj.projects(db)[project]
+            self.assertGreater(count, 0)
+            self.assertEqual(fields["ziel"], "Eigenes Ziel")
+            self.assertEqual(fields["titel"], PROJEKTARBEITEN[0]["title"])
+            self.assertEqual(fpj.apply_template(db, project, 0), 0)
+            text = fpj.export_text(fields)
+            self.assertIn("Eigenes Ziel", text)
+            self.assertIn("Zeitplanung", text)
+            pdf = fpj.export_pdf(fields)
+            self.assertTrue(pdf.startswith(b"%PDF-"))
+            self.assertTrue(pdf.rstrip().endswith(b"%%EOF"))
+            self.assertTrue(fpj.export_name(fields, "pdf").endswith(".pdf"))
+            questions = fpj.questions_for(fields)
+            self.assertTrue(all(q["cat"] in (None, PROJEKTARBEITEN[0]["cat"])
+                                for q in questions))
+            self.assertGreater(len(questions), 30)
+
+
 def _display_available():
     try:
         import tkinter
@@ -5791,6 +6267,48 @@ class OberflaecheTest(unittest.TestCase):
             self.assertEqual(app.current, "settings", kwargs)
             self.assertEqual(self.top_view(), "settings", kwargs)
             self.assertEqual(self.app_gui._orphaned_timers(self.root), [])
+
+    def test_pruefung_und_abschlussprojekt(self):
+        """Ab 0.51: Pruefungsmodus und Abschlussprojekt am PC ohne Fehler und
+        ohne verwaiste Zeitgeber; Eingaben werden gespeichert."""
+        import fisi_pruefung as fp
+        import fisi_projekt as fpj
+        app = self.app
+        app.show_view("abschluss")
+        self.pump()
+        view = app.views["abschluss"]
+        for tab, _caption in fpj.TABS:
+            view._on_tab(tab)
+            self.pump()
+        view._on_tab("uebersicht")
+        view.inputs["titel"] = lambda: "Mein Projekt"
+        view._changed("titel")
+        view._flush()
+        self.assertEqual(fpj.projects(app.db)[view.project]["titel"], "Mein Projekt")
+        app.show_view("quiz")
+        quiz = app.views["quiz"]
+        quiz.mode_pills.select_value("pruefung")
+        self.pump()
+        exam = quiz.exam
+        exam.state = fp.new_exam(fp.NETZWERKE, [], seed=1)
+        fp.save_running(exam.state)
+        exam.show_running()
+        self.pump()
+        shown = []
+        original = self.app_gui.messagebox.showinfo
+        self.app_gui.messagebox.showinfo = lambda *args, **kwargs: shown.append(args)
+        try:
+            exam._submit(auto=True)      # Zeit abgelaufen: ohne Nachfrage abgeben
+        finally:
+            self.app_gui.messagebox.showinfo = original
+        self.pump()
+        self.assertEqual(shown[0][0], "Zeit abgelaufen")
+        exam.show_choice()
+        self.pump()
+        fp.clear_running()
+        quiz.mode_pills.select_value("uebung")
+        self.pump()
+        self.assertEqual(self.app_gui._orphaned_timers(self.root), [])
 
     def test_ansichten_werden_wiederverwendet(self):
         app = self.app

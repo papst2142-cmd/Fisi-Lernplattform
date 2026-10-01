@@ -56,6 +56,8 @@ from fisi_lernen import (  # noqa: E402
     parse_time, reminder_due, reminder_text, save_learning_settings, trainer_round,
     trainer_summary,
 )
+import fisi_projekt as fpj  # noqa: E402
+import fisi_pruefung as fp  # noqa: E402
 import spiel  # noqa: E402
 import ui  # noqa: E402
 
@@ -439,6 +441,8 @@ class LearnScreen(Screen):
          "%d Aufgaben der Abschlussprüfung" % len(SZENARIEN), ("#DB2777", "#FB923C")),
         ("testproject", ft.Icons.FLAG_ROUNDED, "Test Projekt",
          "%d Kundenaufträge zum Üben" % len(PROJEKTARBEITEN), "success"),
+        ("abschluss", ft.Icons.WORKSPACE_PREMIUM_ROUNDED, "Abschlussprojekt",
+         "Dein IHK-Projekt vom Antrag bis zum Fachgespräch", ("#7C3AED", "#22D3EE")),
         ("notebook", ft.Icons.EDIT_NOTE_ROUNDED, "Notizblock",
          "Was du noch üben musst, aus allen Bereichen", ("#DC2626", "#FBBF24")),
     ]
@@ -792,15 +796,37 @@ class QuizScreen(Screen):
         self.btn_cancel.set_enabled(False)
 
         self._on_category("Alle")
-        return screen_list([self.setup_card, status, question,
-                            ft.Row([self.btn_submit, self.btn_cancel], spacing=10)])
+        # Ab 0.51: Umschalter Uebung / Pruefung (Klausursimulation)
+        self.practice_box = ft.Column([self.setup_card, status, question,
+                                       ft.Row([self.btn_submit, self.btn_cancel],
+                                              spacing=10)], spacing=14, tight=True)
+        self.exam = ExamPanel(self.app)
+        self.exam.visible = False
+        self.mode_pills = ui.PillGroup(QUIZ_MODES, on_change=self._on_mode)
+        return screen_list([self.mode_pills, self.practice_box, self.exam])
+
+    def _on_mode(self, mode):
+        if mode == "pruefung":
+            if self.running:
+                self._reset_controls()
+            self.exam.show()
+        else:
+            self.exam.hide()
+        self.exam.visible = mode == "pruefung"
+        self.practice_box.visible = not self.exam.visible
 
     def _on_category(self, category):
         self.topic_pills.set_category(category)
         self._update_pool()
 
     def on_show(self):
-        if not self.running:
+        # Ab 0.51: eine laufende Pruefung geht vor
+        if fp.load_running() is not None and self.mode_pills.get() != "pruefung":
+            self.mode_pills.select_value("pruefung")
+            return
+        if self.mode_pills.get() == "pruefung":
+            self.exam.show()
+        elif not self.running:
             self._update_pool()
 
     def _update_pool(self):
@@ -820,6 +846,12 @@ class QuizScreen(Screen):
     def practice(self, questions, keep_order=False):
         """Gezielte Uebungsrunde aus dem Notizblock: nur diese Fragen
         (hoechstens 50). keep_order: die erste Frage kommt zuerst."""
+        if self.mode_pills.get() != "uebung":
+            if fp.load_running() is not None:
+                self.toast("Es läuft gerade eine Prüfung. Gib sie zuerst ab oder brich "
+                           "sie ab.", C["yellow"])
+                return
+            self.mode_pills.select_value("uebung")
         if self.running:
             self._reset_controls()
         by_question = {q["q"]: q for q in self.questions}
@@ -957,6 +989,8 @@ class QuizScreen(Screen):
         self._update_pool()
 
     def jump_to_question(self, question_text):
+        if self.mode_pills.get() != "uebung" and fp.load_running() is None:
+            self.mode_pills.select_value("uebung")
         for question in self.questions:
             if question["q"] == question_text:
                 self._reset_controls()
@@ -967,6 +1001,459 @@ class QuizScreen(Screen):
                 self.lbl_explain.visible = True
                 self.lbl_explain.color = C["text_dim"]
                 return
+
+
+# ============================================================================
+#  KLAUSURSIMULATION (ab 0.51, wie am PC)
+# ============================================================================
+
+QUIZ_MODES = [("uebung", "Übung"), ("pruefung", "Prüfung")]
+WISO_PAGE = 5
+
+
+def points_text(value):
+    return ("%.1f" % value).replace(".", ",").replace(",0", "")
+
+
+def note_color(points):
+    return C["green"] if points >= 67 else C["yellow"] if points >= 50 else C["red"]
+
+
+def overall_controls(db):
+    """Inhalt der Kachel "Gesamtergebnis" (wie overall_card am PC)."""
+    scores = fp.latest_results(db.exams())
+    projects = fpj.projects(db)
+    active = fpj.active_project(db, fisi_update.load_settings()) if projects else None
+    estimate = fpj.estimate(projects.get(active, {})) if active else None
+    if estimate is not None:
+        scores["projekt"] = estimate
+    lines = ["%s (%d %%): %s" % (fp.AREA_NAME[area], fp.WEIGHTS[area],
+                                 "%s Punkte" % points_text(scores[area]) if area in scores
+                                 else "noch offen") for area in fp.WEIGHTS]
+    controls = [ui.text("\n".join(lines), size=13, color=C["text_soft"])]
+    result = fp.overall(scores)
+    if not result["complete"]:
+        hint = "Für das Gesamtergebnis fehlt noch: %s." % ", ".join(result["fehlend"])
+        if "Projekt" in result["fehlend"]:
+            hint += " Die Projektnote schätzt du im Abschlussprojekt unter „Übersicht“."
+        controls.append(ui.text(hint, size=12, color=C["muted"]))
+        return controls
+    controls.append(ui.text("Gesamt %s Punkte · Note %s · %s" % (
+        points_text(result["gesamt"]), result["note"],
+        "bestanden" if result["bestanden"] else "nicht bestanden"), size=15,
+        weight=ft.FontWeight.BOLD, color=C["green"] if result["bestanden"] else C["red"]))
+    for text, ok in result["regeln"]:
+        controls.append(ui.text(("erfüllt:  " if ok else "offen:  ") + text, size=12,
+                                color=C["green"] if ok else C["red"]))
+    if result["ergaenzung"]:
+        controls.append(ui.text(result["ergaenzung"], size=12, color=C["yellow"]))
+    return controls
+
+
+class ExamPanel(ft.Column):
+    """Pruefungsmodus im Pruefungstrainer: Auswahl, laufende Pruefung mit
+    Countdown (ohne Pause), Selbstbewertung mit Kriterien, Ergebnis."""
+
+    def __init__(self, app):
+        super().__init__(spacing=14, tight=True)
+        self.app = app
+        self.db = app.db
+        self.state = None
+        self.task_no = 0
+        self.wiso_page = 0
+        self.result = None
+        self.timer_token = 0
+        self.dirty = False
+
+    # -- Allgemein ----------------------------------------------------------
+
+    def _stop_timer(self):
+        self.timer_token += 1
+
+    def show(self):
+        """Beim Anzeigen: laufende Pruefung fortsetzen oder Auswahl zeigen."""
+        self.state = fp.load_running()
+        if self.state is None:
+            self.show_choice()
+        elif self.state["phase"] == "laeuft":
+            if fp.seconds_left(self.state) <= 0:
+                self._submit_now(auto=True)
+            else:
+                self.show_running()
+        else:
+            self.show_grading()
+
+    def hide(self):
+        self.save_answers()
+        self._stop_timer()
+
+    def save_answers(self):
+        if self.dirty and self.state and self.state.get("phase") == "laeuft":
+            fp.save_running(self.state)
+        self.dirty = False
+
+    # -- Auswahl ------------------------------------------------------------
+
+    def show_choice(self):
+        self._stop_timer()
+        rows = []
+        for exam in fp.EXAMS:
+            detail = ("%d Minuten · %d Auswahlfragen · 100 Punkte" % (exam["minuten"],
+                                                                      fp.WISO_COUNT)
+                      if exam["art"] == fp.WISO else
+                      "%d Minuten · 4 Aufgaben zu je 25 Punkten" % exam["minuten"])
+            rows.append(ft.Container(
+                content=ft.Column([
+                    ui.text(exam["name"], size=15, weight=ft.FontWeight.BOLD),
+                    ui.text(detail, size=12, color=C["muted"]),
+                    ft.Row([ui.GradientButton("Starten",
+                                              lambda _e, a=exam["art"]: self.start(a),
+                                              height=40)]),
+                ], spacing=6, tight=True),
+                bgcolor=C["card_alt"], border_radius=12, border=ft.Border.all(1, C["border"]),
+                padding=12))
+        history = self.db.exams()
+        past = []
+        for entry in history[:8]:
+            exam = fp.EXAM.get(entry["art"])
+            past.append(ft.Row([
+                ft.Column([ui.text(exam["kurz"] if exam else entry["art"], size=13,
+                                   weight=ft.FontWeight.BOLD),
+                           ui.text(german_time(entry["timestamp"]), size=11,
+                                   color=C["muted"])], spacing=2, tight=True, expand=True),
+                ft.Column([ui.text("%s Punkte" % points_text(entry["punkte"]), size=14,
+                                   weight=ft.FontWeight.BOLD,
+                                   color=note_color(entry["punkte"])),
+                           ui.text(entry["note"], size=11, color=C["text_dim"])],
+                          spacing=2, tight=True,
+                          horizontal_alignment=ft.CrossAxisAlignment.END)]))
+        if not past:
+            past = [ui.text("Noch keine Prüfung abgelegt.", size=13, color=C["muted"])]
+        self.controls = [
+            ui.Card("Prüfung nach IHK-Vorbild", [
+                ui.text("Wie in der echten Prüfung: feste Zeit ohne Pause, alle Aufgaben "
+                        "sind Pflicht, keine Musterlösung während der Prüfung. Offene "
+                        "Aufgaben bewertest du nach der Abgabe selbst anhand der "
+                        "Musterlösung, WiSo wird automatisch ausgewertet. Notenschlüssel "
+                        "der IHK: ab 92 Punkten sehr gut, ab 81 gut, ab 67 befriedigend, "
+                        "ab 50 ausreichend, ab 30 mangelhaft.", size=13,
+                        color=C["text_soft"]),
+                *rows], accent=C["accent"], subtitle="Verordnung 2020"),
+            ui.Card("Letzte Prüfungen", past, accent=C["purple"],
+                    subtitle="%d insgesamt" % len(history)),
+            ui.Card("Gesamtergebnis", overall_controls(self.db), accent=C["green"],
+                    subtitle="Gewichtung 20 / 50 / 10 / 10 / 10 %"),
+        ]
+
+    def start(self, art):
+        exam = fp.EXAM[art]
+
+        def go():
+            self.state = fp.new_exam(art, self.db.exams(), seed=random.randrange(1 << 30))
+            fp.save_running(self.state)
+            self.task_no = 0
+            self.wiso_page = 0
+            self.show_running()
+
+        self.app.confirm("Prüfung starten",
+                         "%s\n\nDie Zeit (%d Minuten) läuft sofort und lässt sich nicht "
+                         "anhalten - auch nicht, wenn du die App schließt. Jetzt starten?"
+                         % (exam["name"], exam["minuten"]), go)
+
+    # -- Laufende Pruefung --------------------------------------------------
+
+    def show_running(self):
+        state = self.state
+        exam = fp.EXAM[state["art"]]
+        self.lbl_clock = ui.text("", size=34, weight=ft.FontWeight.BOLD, color=C["accent"])
+        self.lbl_progress = ui.text("", size=12, color=C["muted"])
+        head = ui.Card(exam["kurz"], [
+            ft.Row([self.lbl_clock, ui.text("verbleibend", size=12, color=C["muted"])],
+                   vertical_alignment=ft.CrossAxisAlignment.END),
+            self.lbl_progress,
+            ui.text(exam["name"], size=12, color=C["muted"]),
+            ft.Row([ui.GradientButton("Abgeben", lambda _e: self._submit(), expand=True),
+                    ui.GradientButton("Abbrechen", lambda _e: self.cancel(), kind="ghost",
+                                      expand=True)], spacing=10),
+        ], accent=C["accent"])
+        self.task_box = ft.Column(spacing=14, tight=True)
+        controls = [head]
+        if state["art"] != fp.WISO:
+            options = [(number, "Aufgabe %d" % (number + 1))
+                       for number in range(len(state["aufgaben"]))]
+            controls.append(ui.PillGroup(options, on_change=self._switch_task,
+                                         initial=self.task_no))
+        controls.append(self.task_box)
+        self.controls = controls
+        if state["art"] == fp.WISO:
+            self._paint_wiso()
+        else:
+            self._paint_task()
+        self._show_clock()
+        self.timer_token += 1
+        self.app.page.run_task(self._tick, self.timer_token)
+
+    def _show_clock(self):
+        left = fp.seconds_left(self.state)
+        self.lbl_clock.value = fp.time_text(left)
+        self.lbl_clock.color = C["red"] if left < 300 else C["accent"]
+        return left
+
+    async def _tick(self, token):
+        while token == self.timer_token and self.state and \
+                self.state.get("phase") == "laeuft":
+            left = self._show_clock()
+            if left <= 0:
+                self._submit_now(auto=True)
+                self.app.page.update()
+                return
+            self.save_answers()
+            try:
+                self.lbl_clock.update()
+            except RuntimeError:
+                pass   # Seite gerade nicht sichtbar - die Zeit laeuft weiter
+            await asyncio.sleep(1)
+
+    def _progress(self):
+        answers = self.state["antworten"]
+        if self.state["art"] == fp.WISO:
+            done = sum(1 for q in self.state["fragen"] if answers.get(q))
+            return "%d von %d Fragen beantwortet" % (done, len(self.state["fragen"]))
+        total = sum(len(fp.task_details(self.state, n)["teile"])
+                    for n in range(len(self.state["aufgaben"])))
+        done = sum(1 for value in answers.values() if value.strip())
+        return "%d von %d Teilaufgaben bearbeitet" % (done, total)
+
+    def _switch_task(self, number):
+        self.save_answers()
+        self.task_no = number
+        self._paint_task()
+
+    def _paint_task(self):
+        details = fp.task_details(self.state, self.task_no)
+        controls = []
+        if details["einleitung"]:
+            controls.append(ui.text(details["einleitung"], size=14, color=C["text_soft"]))
+        for part_no, part in enumerate(details["teile"]):
+            key = fp.answer_key(self.task_no, part_no)
+            controls.append(ui.text("%s) %s  (%d Punkte)" % (chr(97 + part_no), part["text"],
+                                                             part["punkte"]),
+                                    size=14, weight=ft.FontWeight.BOLD))
+            controls.append(ui.entry(self.state["antworten"].get(key, ""),
+                                     hint="Deine Antwort", multiline=True, min_lines=3,
+                                     on_change=lambda e, k=key: self._answer(k, e)))
+        # Lange Titel stehen im Inhalt - als Untertitel wuerden sie die
+        # Ueberschrift der Karte zusammendruecken
+        controls.insert(0, ui.text("%s · 25 Punkte" % details["titel"], size=12,
+                                   color=C["muted"]))
+        self.task_box.controls = [ui.Card("Aufgabe %d" % (self.task_no + 1), controls,
+                                          accent=C["purple"])]
+        self.lbl_progress.value = self._progress()
+
+    def _answer(self, key, event):
+        self.state["antworten"][key] = event.control.value or ""
+        self.dirty = True   # gespeichert wird im Sekundentakt (siehe _tick)
+
+    def _paint_wiso(self):
+        questions = self.state["fragen"]
+        pages = (len(questions) + WISO_PAGE - 1) // WISO_PAGE
+        by_question = {q["q"]: q for q in QUIZ_QUESTIONS}
+        start = self.wiso_page * WISO_PAGE
+        controls = []
+        for number, question in enumerate(questions[start:start + WISO_PAGE], start=start):
+            controls.append(ui.text("%d. %s" % (number + 1, question), size=14,
+                                    weight=ft.FontWeight.BOLD))
+            options = ui.OptionList()
+            options.set_options(self.state["optionen"].get(question) or
+                                by_question[question]["options"])
+            chosen = self.state["antworten"].get(question)
+            if chosen:
+                options.select(chosen)
+            original = options.select
+
+            def choose(value, q=question, select=original):
+                select(value)
+                self.state["antworten"][q] = value
+                fp.save_running(self.state)
+                self.lbl_progress.value = self._progress()
+            options.select = choose
+            controls.append(options)
+        back = ui.GradientButton("Zurück", lambda _e: self._wiso_turn(-1), kind="ghost",
+                                 expand=True)
+        back.set_enabled(self.wiso_page > 0)
+        forward = ui.GradientButton("Weiter", lambda _e: self._wiso_turn(1), kind="ghost",
+                                    expand=True)
+        forward.set_enabled(self.wiso_page < pages - 1)
+        self.task_box.controls = [
+            ui.Card("Wirtschafts- und Sozialkunde", controls, accent=C["purple"],
+                    subtitle="Seite %d von %d" % (self.wiso_page + 1, pages)),
+            ft.Row([back, forward], spacing=10)]
+        self.lbl_progress.value = self._progress()
+
+    def _wiso_turn(self, delta):
+        self.wiso_page += delta
+        self._paint_wiso()
+        self.app.scroll_top()
+
+    def cancel(self):
+        def confirmed():
+            self._stop_timer()
+            fp.clear_running()
+            self.state = None
+            self.show_choice()
+
+        self.app.confirm("Prüfung abbrechen", "Die Prüfung wirklich abbrechen? Deine "
+                                              "Antworten werden verworfen und es gibt kein "
+                                              "Ergebnis.", confirmed)
+
+    def _submit(self):
+        self.app.confirm("Abgeben", "Prüfung jetzt abgeben? Danach kannst du nichts mehr "
+                                    "ändern.", self._submit_now)
+
+    def _submit_now(self, auto=False):
+        self._stop_timer()
+        self.dirty = False
+        fp.submit(self.state)
+        if self.state["art"] == fp.WISO:
+            self._finish_now()
+            return
+        fp.save_running(self.state)
+        if auto:
+            self.app.toast("Die Zeit ist um, die Prüfung wurde abgegeben. Jetzt folgt die "
+                           "Bewertung.")
+        self.task_no = 0
+        self.show_grading()
+
+    # -- Bewertung ----------------------------------------------------------
+
+    def show_grading(self):
+        state = self.state
+        exam = fp.EXAM[state["art"]]
+        self.lbl_sum = ui.text("", size=15, weight=ft.FontWeight.BOLD)
+        options = [(number, "Aufgabe %d" % (number + 1))
+                   for number in range(len(state["aufgaben"]))]
+        self.task_box = ft.Column(spacing=14, tight=True)
+        self.controls = [
+            ui.Card("Bewertung", [
+                ui.text(exam["name"], size=12, color=C["muted"]),
+                ui.text("Vergleiche deine Antwort mit der Musterlösung und hake ab, was du "
+                        "hattest. Die Punkte werden vorgeschlagen, du kannst sie wie ein "
+                        "Prüfer anpassen.", size=13, color=C["text_soft"]),
+                self.lbl_sum,
+                ft.Row([ui.GradientButton("Bewertung abschließen", lambda _e: self._finish(),
+                                          expand=True)]),
+            ], accent=C["green"]),
+            ui.PillGroup(options, on_change=self._grade_task, initial=self.task_no),
+            self.task_box,
+        ]
+        self._paint_grading()
+
+    def _grade_task(self, number):
+        self.task_no = number
+        self._paint_grading()
+
+    def _sum_text(self):
+        total = 0
+        for number in range(len(self.state["aufgaben"])):
+            for part_no, _part in enumerate(fp.task_details(self.state, number)["teile"]):
+                total += int(self.state["punkte"].get(fp.answer_key(number, part_no), 0))
+        return "Zwischenstand: %d von 100 Punkten" % total
+
+    def _paint_grading(self):
+        details = fp.task_details(self.state, self.task_no)
+        controls = []
+        for part_no, part in enumerate(details["teile"]):
+            key = fp.answer_key(self.task_no, part_no)
+            controls.append(ui.text("%s) %s  (%d Punkte)" % (chr(97 + part_no), part["text"],
+                                                             part["punkte"]),
+                                    size=14, weight=ft.FontWeight.BOLD))
+            controls.append(ui.label("Deine Antwort"))
+            controls.append(ui.read_box(self.state["antworten"].get(key, "") or
+                                        "(keine Antwort)"))
+            controls.append(ui.label("Musterlösung · Kriterien"))
+            marks = self.state["kriterien"].setdefault(key, [False] * len(part["kriterien"]))
+            stepper = ui.Stepper(int(self.state["punkte"].get(key, 0)), 0, part["punkte"], 1)
+            original = stepper.change
+
+            def stepped(delta, key=key, change=original, stepper=stepper):
+                change(delta)
+                self.state["punkte"][key] = stepper.get()
+                fp.save_running(self.state)
+                self.lbl_sum.value = self._sum_text()
+            stepper.change = stepped
+
+            def toggled(value, index, key=key, part=part, marks=marks, stepper=stepper):
+                marks[index] = value
+                points = fp.suggested_points(part["punkte"], marks)
+                self.state["punkte"][key] = points
+                stepper.value = points
+                stepper.label.content.value = str(points)
+                fp.save_running(self.state)
+                self.lbl_sum.value = self._sum_text()
+
+            for index, criterion in enumerate(part["kriterien"]):
+                controls.append(ui.check_row(
+                    criterion, marks[index] if index < len(marks) else False,
+                    lambda value, i=index, t=toggled: t(value, i)))
+            controls.append(ft.Row([ui.text("Punkte", size=13, color=C["text_dim"]), stepper,
+                                    ui.text("von %d" % part["punkte"], size=13,
+                                            color=C["muted"])], spacing=10,
+                                   vertical_alignment=ft.CrossAxisAlignment.CENTER))
+        controls.insert(0, ui.text("%s · %s" % (details["titel"], details["thema"]),
+                                   size=12, color=C["muted"]))
+        self.task_box.controls = [ui.Card("Aufgabe %d" % (self.task_no + 1), controls,
+                                          accent=C["purple"])]
+        self.lbl_sum.value = self._sum_text()
+
+    def _finish(self):
+        self.app.confirm("Bewertung abschließen", "Bewertung abschließen und das Ergebnis "
+                                                  "speichern?", self._finish_now)
+
+    def _finish_now(self):
+        self.result = fp.finish(self.db, self.state)
+        art = self.state["art"]
+        self.state = None
+        self.app.notify_progress()
+        self.show_result(art)
+
+    # -- Ergebnis -----------------------------------------------------------
+
+    def show_result(self, art):
+        result = self.result
+        exam = fp.EXAM[art]
+        details = result["daten"]
+        lines = [ft.Row([ui.text("%s Punkte" % points_text(result["punkte"]), size=30,
+                                 weight=ft.FontWeight.BOLD,
+                                 color=note_color(result["punkte"]))]),
+                 ui.text("IHK-Note %s  ·  Dauer %s" % (result["note"],
+                                                      fp.time_text(result["dauer"])),
+                         size=14, weight=ft.FontWeight.BOLD)]
+        if art == fp.WISO:
+            lines.append(ui.text("%d von %d Fragen richtig" % (
+                details["richtig"], len(details["fragen"])), size=14, color=C["text_soft"]))
+        else:
+            for number, task in enumerate(details["aufgaben"], start=1):
+                lines.append(ui.text("Aufgabe %d · %s: %d von %d Punkten" % (
+                    number, task["titel"], task["punkte"], task["max"]), size=13,
+                    color=C["text_soft"]))
+        bars = []
+        for name, (reached, maximum) in sorted(details["themen"].items()):
+            share = reached / maximum * 100 if maximum else 0
+            bar = ui.GradientBar(name, C["red"] if share < 50 else C["green"],
+                                 C["orange"] if share < 50 else C["accent"])
+            bar.set(share, "%s von %s" % (points_text(reached), points_text(maximum)))
+            bars.append(bar)
+        weak = fp.weak_topics(result)
+        if weak:
+            bars.append(ui.text("Üben: " + ", ".join(weak), size=13, color=C["red"],
+                                weight=ft.FontWeight.BOLD))
+        self.controls = [
+            ui.Card("Ergebnis", [ui.text(exam["name"], size=12, color=C["muted"])] + lines,
+                    accent=C["green"]),
+            ui.Card("Nach Themen", bars, accent=C["purple"], subtitle="Schwachstellen rot"),
+            ft.Row([ui.GradientButton("Zur Prüfungsauswahl", lambda _e: self.show_choice(),
+                                      kind="ghost", expand=True)]),
+        ]
 
 
 # ============================================================================
@@ -1260,6 +1747,9 @@ class ProjectScreen(Screen):
             ft.Row([self.btn_toggle]),
             ft.Row([ui.GradientButton("Nächstes Projekt", self.next_item, kind="ghost",
                                       icon=ft.Icons.ARROW_FORWARD_ROUNDED, expand=True)]),
+            # Ab 0.51: als Vorlage fuers eigene Abschlussprojekt
+            ft.Row([ui.GradientButton("Als Vorlage fürs Abschlussprojekt",
+                                      self.use_as_template, kind="ghost", expand=True)]),
         ])
         self._load()
         self.app.push(self.crumbs, content)
@@ -1323,6 +1813,454 @@ class ProjectScreen(Screen):
         self.index = self.paged.next_after(self.index)
         self._load()
         self.app.scroll_top()
+
+    def use_as_template(self, _event=None):
+        self.app.screens["abschluss"].use_template(self.index)
+        self.app.open("abschluss")
+
+
+# ============================================================================
+#  ABSCHLUSSPROJEKT (AB 0.51, wie am PC)
+# ============================================================================
+
+PROJECT_SAVE_DELAY = 0.8      # Sekunden nach dem letzten Tippen
+NO_CATEGORY = "Kein Fachbereich"
+
+
+class FinalProjectScreen(Screen):
+    """Arbeitsbereich fuers eigene IHK-Abschlussprojekt mit denselben Reitern
+    wie am PC. Eingaben werden kurz nach dem Tippen gespeichert und mit dem
+    PC abgeglichen. Die Reiter werden beim ersten Oeffnen aufgebaut und
+    danach wiederverwendet."""
+
+    crumbs = ("LERNEN", "ABSCHLUSSPROJEKT")
+
+    def build(self):
+        self.project = None
+        self.fields = {}
+        self.inputs = {}
+        self.pending = set()
+        self.save_round = 0
+        self.derived = {}
+        self.tab_boxes = {}
+        self.tab = fpj.TABS[0][0]
+        self.fg_index = 0
+        self.fg_hint = False
+        self.stamp = None
+        self.project_ids = []
+        self.menu_project = ft.Dropdown(
+            options=[], expand=True, on_select=self._choose_project,
+            bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
+            border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
+            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]))
+        self.tab_pills = ui.PillGroup(fpj.TABS, on_change=self._on_tab)
+        self.tab_area = ft.Column(spacing=14, tight=True)
+        self._load_project()
+        return screen_list([
+            ui.Card("Projekt", [
+                self.menu_project,
+                ft.Row([ui.GradientButton("Neues Projekt", lambda _e: self._new_project(),
+                                          kind="ghost", expand=True, height=40),
+                        ui.GradientButton("Löschen", lambda _e: self._delete_project(),
+                                          kind="ghost", expand=True, height=40)],
+                       spacing=10),
+                ft.Row([ui.GradientButton("Als PDF", lambda _e: self._export("pdf"),
+                                          expand=True, height=40),
+                        ui.GradientButton("Als Text", lambda _e: self._export("txt"),
+                                          kind="ghost", expand=True, height=40)],
+                       spacing=10),
+            ], accent=C["accent"], subtitle="Dein IHK-Projekt vom Antrag bis zum "
+                                            "Fachgespräch"),
+            self.tab_pills, self.tab_area])
+
+    # -- Projekte -----------------------------------------------------------
+
+    def _load_project(self, project=None):
+        self.flush()
+        settings = fisi_update.load_settings()
+        self.project = project or fpj.active_project(self.db, settings)
+        if settings.get(fpj.ACTIVE_KEY) != self.project:
+            settings[fpj.ACTIVE_KEY] = self.project
+            fisi_update.save_settings(settings)
+        self.fields = dict(fpj.projects(self.db).get(self.project, {}))
+        self.stamp = self.db.change_stamp()
+        self.fg_index = 0
+        self._fill_project_menu()
+        self.tab_boxes, self.inputs, self.derived = {}, {}, {}
+        self._on_tab(self.tab)
+
+    def _fill_project_menu(self):
+        existing = fpj.projects(self.db)
+        existing[self.project] = self.fields
+        self.project_ids = sorted(existing, key=lambda key: fpj.project_title(
+            existing[key]).lower())
+        self.menu_project.options = [ft.dropdown.Option(key=key,
+                                                        text=fpj.project_title(existing[key]))
+                                     for key in self.project_ids]
+        self.menu_project.value = self.project
+
+    def _choose_project(self, event):
+        key = event.control.value
+        if key and key != self.project:
+            self._load_project(key)
+
+    def _new_project(self):
+        self.flush()
+        self._load_project(fpj.create_project(self.db))
+        self.app.sync.schedule()
+
+    def _delete_project(self):
+        def confirmed():
+            self.pending.clear()
+            fpj.delete_project(self.db, self.project)
+            settings = fisi_update.load_settings()
+            settings.pop(fpj.ACTIVE_KEY, None)
+            fisi_update.save_settings(settings)
+            self.project = None
+            self._load_project()
+            self.app.sync.schedule()
+
+        self.app.confirm("Projekt löschen",
+                         "„%s“ mit allen Eingaben löschen? Das lässt sich nicht rückgängig "
+                         "machen und gilt nach dem Abgleich auch am PC."
+                         % fpj.project_title(self.fields), confirmed)
+
+    def _export(self, extension):
+        self.flush()
+        if extension == "pdf":
+            data, mime = fpj.export_pdf(self.fields), "application/pdf"
+        else:
+            data, mime = fpj.export_text(self.fields).encode("utf-8"), "text/plain"
+        self.app.page.run_task(self._save_file, fpj.export_name(self.fields, extension),
+                               data, mime)
+
+    async def _save_file(self, name, data, mime):
+        """Speichern ueber den Dateidialog des Handys; klappt das nicht,
+        bietet "Teilen" die Datei an (z.B. fuer Drive oder E-Mail)."""
+        try:
+            path = await ft.FilePicker().save_file(file_name=name, src_bytes=data)
+            if path and not os.path.exists(path):
+                # Am PC (Testlauf) schreibt der Dialog die Datei nicht selbst
+                with open(path, "wb") as handle:
+                    handle.write(data)
+            if path:
+                self.toast("Gespeichert: %s" % name)
+            return
+        except Exception:
+            pass
+        try:
+            await ft.Share().share_files([ft.ShareFile.from_bytes(data, mime_type=mime,
+                                                                  name=name)])
+        except Exception as error:
+            self.toast("Speichern nicht möglich: %s" % error, C["red"])
+
+    def use_template(self, position):
+        self.flush()
+        count = fpj.apply_template(self.db, self.project, position)
+        self._load_project(self.project)
+        self.toast("%d Felder aus dem Testprojekt übernommen" % count if count
+                   else "Alle passenden Felder waren schon ausgefüllt")
+
+    # -- Speichern ----------------------------------------------------------
+
+    def _changed(self, field):
+        self.pending.add(field)
+        self.save_round += 1
+        self.app.page.run_task(self._save_later, self.save_round)
+
+    async def _save_later(self, round_no):
+        await asyncio.sleep(PROJECT_SAVE_DELAY)
+        if round_no == self.save_round:
+            self.flush()
+            try:
+                self.app.page.update()
+            except RuntimeError:
+                pass
+
+    def flush(self):
+        """Geaenderte Felder speichern (auch beim Verlassen der App)."""
+        if not self.pending or self.project is None:
+            self.pending.clear()
+            return
+        fields, self.pending = self.pending, set()
+        changed = title = False
+        for field in fields:
+            getter = self.inputs.get(field)
+            if getter is None:
+                continue
+            value = getter()
+            if value != self.fields.get(field, ""):
+                self.db.save_project_field(self.project, field, value)
+                self.fields[field] = value
+                changed = True
+                title = title or field == fpj.TITLE_FIELD
+        if changed:
+            self.stamp = self.db.change_stamp()
+            if title:
+                self._fill_project_menu()
+            self._refresh_derived()
+            self.app.sync.schedule()
+
+    def _set(self, field, value):
+        if self.fields.get(field, "") != value:
+            self.db.save_project_field(self.project, field, value)
+            self.fields[field] = value
+            self.stamp = self.db.change_stamp()
+            self._refresh_derived()
+            self.app.sync.schedule()
+
+    def _refresh_derived(self):
+        for refresh in self.derived.values():
+            refresh()
+
+    def on_show(self):
+        if self.pending:
+            return
+        if self.db.change_stamp() != self.stamp:
+            fields = fpj.projects(self.db)
+            if self.project not in fields or fields[self.project] != self.fields:
+                self._load_project(self.project if self.project in fields else None)
+            else:
+                self.stamp = self.db.change_stamp()
+
+    # -- Bausteine ----------------------------------------------------------
+
+    def _entry(self, field, default="", hint=None, multiline=False, keyboard=None):
+        box = ui.entry(self.fields.get(field, default), hint=hint, multiline=multiline,
+                       min_lines=3 if multiline else 1, keyboard=keyboard,
+                       on_change=lambda _e: self._changed(field))
+        box.on_blur = lambda _e: self.flush()
+        self.inputs[field] = lambda: (box.value or "").strip() if not multiline \
+            else (box.value or "").rstrip()
+        return box
+
+    def _checklist(self, items):
+        return [ui.check_row(text, fpj.checked(self.fields, key),
+                             lambda value, k=key: self._set("check_" + k,
+                                                            "1" if value else "0"))
+                for key, text in items]
+
+    @staticmethod
+    def _field(caption, control):
+        return ft.Column([ui.text(caption, size=13, color=C["text_dim"]), control],
+                         spacing=4, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+
+    # -- Reiter -------------------------------------------------------------
+
+    def _on_tab(self, tab):
+        self.flush()
+        self.tab = tab
+        box = self.tab_boxes.get(tab)
+        if box is None:
+            box = self.tab_boxes[tab] = ft.Column(getattr(self, "_build_" + tab)(),
+                                                  spacing=14, tight=True)
+        self.tab_area.controls = [box]
+        self.tab_pills.select_value(tab, notify=False)
+        self._refresh_derived()
+
+    def _build_uebersicht(self):
+        rows = [self._field(label, self._entry(field)) for field, label, _m in
+                fpj.OVERVIEW_FIELDS]
+        category = ft.Dropdown(
+            options=[ft.dropdown.Option(key=NO_CATEGORY, text=NO_CATEGORY)] +
+            [ft.dropdown.Option(key=c, text=CATEGORY_SHORT[c]) for c in CATEGORIES],
+            value=self.fields.get("fachbereich") or NO_CATEGORY, expand=True,
+            on_select=lambda e: self._set_category(e.control.value),
+            bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
+            border_color=C["border"], border_radius=12, color=C["text"],
+            text_style=ft.TextStyle(size=14, color=C["text"]))
+        rows.append(self._field("Fachbereich (für das Fachgespräch)", ft.Row([category])))
+        lbl_progress = ui.text("", size=15, weight=ft.FontWeight.BOLD)
+        lbl_missing = ui.text("", size=12, color=C["muted"])
+
+        template_cat = ui.PillGroup([(c, CATEGORY_SHORT[c]) for c in CATEGORIES],
+                                    on_change=lambda c: fill(c))
+        template_list = ft.Column(spacing=8, tight=True)
+
+        def fill(category):
+            template_list.controls = [
+                ui.list_row(p["title"], "%s · %s" % (p["schwierigkeit"],
+                                                     CATEGORY_SHORT[p["cat"]]),
+                            CATEGORY_COLOR[p["cat"]],
+                            lambda _e, pos=pos: self.use_template(pos))
+                for pos, p in enumerate(PROJEKTARBEITEN) if p["cat"] == category]
+        fill(CATEGORIES[0])
+
+        def refresh():
+            done, total = fpj.overview_progress(self.fields)
+            lbl_progress.value = "%d von %d Schritten erledigt" % (done, total)
+            missing = fpj.proposal_missing(self.fields)
+            lbl_missing.value = ("Im Antrag noch offen: %s" % ", ".join(missing) if missing
+                                 else "Alle Felder des Antrags sind ausgefüllt.")
+        self.derived["uebersicht"] = refresh
+        return [
+            ui.Card("Eckdaten", rows, accent=C["accent"],
+                    subtitle="Fristen und Seitenzahl legt deine IHK fest"),
+            ui.Card("Stand", [lbl_progress, *self._checklist(fpj.CHECKLIST_OVERVIEW),
+                              lbl_missing], accent=C["green"]),
+            ui.Card("Geschätzte Projektnote", [
+                ui.text("Die Projektarbeit zählt 50 % der Abschlussprüfung. Trage hier "
+                        "ein, wie viele Punkte (0 bis 100) du für Dokumentation, "
+                        "Präsentation und Fachgespräch zusammen erwartest.", size=12,
+                        color=C["muted"]),
+                self._field("Erwartete Punkte (0-100)",
+                            self._entry(fpj.ESTIMATE_FIELD,
+                                        keyboard=ft.KeyboardType.NUMBER)),
+            ], accent=C["purple"], subtitle="Fließt ins Gesamtergebnis ein"),
+            ui.Card("Testprojekt als Vorlage", [
+                ui.text("Tippe ein Testprojekt an: Titel, Ausgangssituation, Auftrag und "
+                        "Rahmenbedingungen werden übernommen. Ausgefüllte Felder bleiben "
+                        "unverändert.", size=12, color=C["muted"]),
+                template_cat, template_list,
+            ], accent=C["orange"], subtitle="Füllt nur leere Felder"),
+        ]
+
+    def _set_category(self, value):
+        self._set("fachbereich", "" if value == NO_CATEGORY else value)
+        self.fg_index = 0
+        self.tab_boxes.pop("fachgespraech", None)
+        self.derived.pop("fachgespraech", None)
+
+    def _build_antrag(self):
+        controls = []
+        for field, name, hint in fpj.PROPOSAL_FIELDS:
+            controls += [ui.text(name, size=15, weight=ft.FontWeight.BOLD),
+                         ui.text(hint, size=12, color=C["muted"]),
+                         self._entry(field, multiline=True)]
+        return [ui.Card("Projektantrag", controls, accent=C["accent"],
+                        subtitle="Gliederung wie bei den IHK-Vorlagen"),
+                ui.Card("Prüfe vor dem Einreichen", self._checklist(fpj.CHECKLIST_PROPOSAL),
+                        accent=C["green"])]
+
+    def _build_zeitplan(self):
+        rows = []
+        for key, name, default in fpj.PHASES:
+            hours = self._entry("phase_" + key, str(default) if default else "",
+                                keyboard=ft.KeyboardType.NUMBER)
+            hours.width = 90
+            if key.startswith("frei"):
+                caption = self._entry("phase_name_" + key, hint="Weitere Phase")
+                caption.expand = True
+            else:
+                caption = ui.text(name, size=13, color=C["text_dim"], expand=True)
+            rows.append(ft.Row([caption, hours], spacing=10,
+                               vertical_alignment=ft.CrossAxisAlignment.CENTER))
+        lbl_sum = ui.text("", size=15, weight=ft.FontWeight.BOLD)
+        lbl_warn = ui.text("", size=12, color=C["yellow"])
+
+        def refresh():
+            _rows, total = fpj.schedule(self.fields)
+            lbl_sum.value = "Summe: %s von %d Stunden" % (fpj.hours_text(total),
+                                                        fpj.MAX_HOURS)
+            lbl_sum.color = C["red"] if total > fpj.MAX_HOURS else C["text"]
+            lbl_warn.value = "\n".join(fpj.schedule_warnings(self.fields))
+            lbl_warn.visible = bool(lbl_warn.value)
+        self.derived["zeitplan"] = refresh
+        return [ui.Card("Zeitplanung", rows + [lbl_sum, lbl_warn], accent=C["accent"],
+                        subtitle="Höchstens %d Stunden inkl. Dokumentation" % fpj.MAX_HOURS)]
+
+    def _build_kosten(self):
+        rates = [self._field(label, self._entry("kosten_" + key, default,
+                                                keyboard=ft.KeyboardType.NUMBER))
+                 for key, label, default in fpj.COST_FIELDS]
+        material = []
+        for number in range(fpj.MATERIAL_ROWS):
+            name = self._entry("material_name_%d" % number, hint="Bezeichnung")
+            name.expand = True
+            amount = self._entry("material_betrag_%d" % number, hint="€",
+                                 keyboard=ft.KeyboardType.NUMBER)
+            amount.width = 100
+            material.append(ft.Row([name, amount], spacing=10))
+        result = ui.read_box("")
+
+        def refresh():
+            result.content.value = "\n".join(fpj.cost_lines(self.fields))
+        self.derived["kosten"] = refresh
+        return [ui.Card("Kostenrechnung", rates, accent=C["accent"],
+                        subtitle="Stunden kommen aus der Zeitplanung"),
+                ui.Card("Sachkosten", material, accent=C["orange"],
+                        subtitle="Hardware, Lizenzen, Material"),
+                ui.Card("Ergebnis", [result], accent=C["green"])]
+
+    def _build_doku(self):
+        lbl_pages = ui.text("", size=15, weight=ft.FontWeight.BOLD)
+        controls = [self._field("Seitenvorgabe deiner IHK",
+                                self._entry(fpj.PAGES_FIELD, str(fpj.DEFAULT_PAGES),
+                                            keyboard=ft.KeyboardType.NUMBER)),
+                    lbl_pages,
+                    ui.text("Grobe Schätzung: etwa %d Zeichen pro Seite (11 pt, "
+                            "1,5-zeilig). Deckblatt, Verzeichnisse und Anhang zählen meist "
+                            "nicht mit." % fpj.CHARS_PER_PAGE, size=12, color=C["muted"])]
+        for key, title, hint in fpj.CHAPTERS:
+            controls += [ui.text(title, size=15, weight=ft.FontWeight.BOLD),
+                         ui.text(hint, size=12, color=C["muted"]),
+                         self._entry("kapitel_" + key, multiline=True)]
+
+        def refresh():
+            pages, target = fpj.page_estimate(self.fields)
+            lbl_pages.value = "Etwa %s von %d Seiten" % (("%.1f" % pages).replace(".", ","),
+                                                         target)
+            lbl_pages.color = C["red"] if pages > target else C["text"]
+        self.derived["doku"] = refresh
+        return [ui.Card("Dokumentation", controls, accent=C["accent"],
+                        subtitle="Kapitelgerüst nach üblicher IHK-Gliederung")]
+
+    def _build_fachgespraech(self):
+        questions = fpj.questions_for(self.fields)
+        lbl_stats = ui.text("", size=12, color=C["text_dim"])
+        lbl_question = ui.text("", size=17, weight=ft.FontWeight.BOLD)
+        lbl_status = ui.text("", size=13, weight=ft.FontWeight.BOLD)
+        lbl_hint = ui.text("", size=14, color=C["text_soft"])
+        btn_hint = ui.GradientButton("Hinweis zeigen", lambda _e: toggle(), expand=True)
+        rating = rate_row(lambda known: rate(known))
+
+        def paint():
+            if not questions:
+                return
+            question = questions[self.fg_index % len(questions)]
+            lbl_question.value = question["q"]
+            value = fpj.question_rating(self.fields, question["id"])
+            lbl_status.value = {True: "Gewusst", False: "Nicht gewusst"}.get(
+                value, "Noch nicht bewertet")
+            lbl_status.color = {True: C["green"], False: C["red"]}.get(value, C["muted"])
+            lbl_hint.value = question["hinweis"] if self.fg_hint else ""
+            lbl_hint.visible = self.fg_hint
+            btn_hint.set_text("Hinweis ausblenden" if self.fg_hint else "Hinweis zeigen")
+            rating.visible = self.fg_hint
+            ratings = [fpj.question_rating(self.fields, q["id"]) for q in questions]
+            lbl_stats.value = ("Frage %d von %d · %d gewusst · %d nicht gewusst · %d offen"
+                               % (self.fg_index % len(questions) + 1, len(questions),
+                                  ratings.count(True), ratings.count(False),
+                                  ratings.count(None)))
+
+        def toggle():
+            self.fg_hint = not self.fg_hint
+            paint()
+
+        def turn(delta):
+            self.fg_index = (self.fg_index + delta) % max(1, len(questions))
+            self.fg_hint = False
+            paint()
+
+        def rate(known):
+            question = questions[self.fg_index % len(questions)]
+            self._set("fg_" + question["id"], "1" if known else "0")
+            turn(1)
+
+        self.derived["fachgespraech"] = paint
+        return [
+            ui.Card("Präsentation", self._checklist(fpj.CHECKLIST_PRESENTATION),
+                    accent=C["accent"], subtitle="höchstens 15 Minuten"),
+            ui.Card("Fachgespräch üben", [
+                lbl_stats, lbl_question, lbl_status, lbl_hint,
+                ft.Row([btn_hint]),
+                ft.Row([ui.GradientButton("Nächste Frage", lambda _e: turn(1), kind="ghost",
+                                          icon=ft.Icons.ARROW_FORWARD_ROUNDED,
+                                          expand=True)]),
+                rating,
+            ], accent=C["purple"], subtitle="%d Fragen" % len(questions)),
+        ]
 
 
 # ============================================================================
@@ -1745,6 +2683,7 @@ class ProgressScreen(Screen):
 
         self.chart = ui.LineChart(height=200)
         self.history = ft.Column(spacing=8, tight=True)
+        self.exam_list = ft.Column(spacing=8, tight=True)
         return screen_list([
             ft.Row([stat("tests", "Sessions", C["accent"]),
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
@@ -1753,6 +2692,7 @@ class ProgressScreen(Screen):
             ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
                     subtitle="Erfolgsquote je Session"),
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
+            ui.Card("Prüfungen (Klausursimulation)", [self.exam_list], accent=C["green"]),
             ft.Row([ui.GradientButton("Aktualisieren", lambda _e: self.on_show(),
                                       kind="ghost", expand=True),
                     ui.GradientButton("Historie löschen", self.clear_history,
@@ -1799,6 +2739,30 @@ class ProgressScreen(Screen):
                 bgcolor=C["card_alt"], border_radius=10,
                 padding=ft.Padding.symmetric(horizontal=12, vertical=10)))
 
+        # Ab 0.51: Pruefungen aus dem Pruefungsmodus
+        exams = self.db.exams()
+        self.exam_list.controls = [ft.Container(
+            content=ft.Row([
+                ft.Column([
+                    ui.text(fp.EXAM[entry["art"]]["kurz"] if entry["art"] in fp.EXAM
+                            else entry["art"], size=13, weight=ft.FontWeight.BOLD),
+                    ui.text("%s  ·  %s min" % (german_time(entry["timestamp"]),
+                                               entry["dauer"] // 60),
+                            size=12, color=C["muted"]),
+                ], spacing=2, tight=True, expand=True),
+                ft.Column([
+                    ui.text("%s Punkte" % points_text(entry["punkte"]), size=15,
+                            color=note_color(entry["punkte"]), weight=ft.FontWeight.BOLD),
+                    ui.text(entry["note"], size=11, color=C["text_dim"]),
+                ], spacing=2, tight=True, horizontal_alignment=ft.CrossAxisAlignment.END),
+            ]),
+            bgcolor=C["card_alt"], border_radius=10,
+            padding=ft.Padding.symmetric(horizontal=12, vertical=10))
+            for entry in exams[:50]] or [ui.text("Noch keine Prüfung abgelegt. Den "
+                                                 "Prüfungsmodus findest du im "
+                                                 "Prüfungstrainer.", size=13,
+                                                 color=C["muted"])]
+
     def _stat(self, key, value, sub):
         self.stats[key][0].value = value
         self.stats[key][1].value = sub
@@ -1810,8 +2774,8 @@ class ProgressScreen(Screen):
                 self.app.notify_progress()
 
         self.app.confirm("Historie löschen",
-                         "Wirklich alle gespeicherten Testergebnisse löschen? Die "
-                         "Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
+                         "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
+                         "löschen? Die Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
 
 
 # ============================================================================
@@ -2254,7 +3218,8 @@ SCREEN_CLASSES = {
     "dashboard": DashboardScreen, "learn": LearnScreen, "cards": CardsScreen,
     "game": spiel.GameScreen,
     "quiz": QuizScreen, "ap1scenarios": Ap1ScenarioScreen, "scenarios": ScenarioScreen,
-    "testproject": ProjectScreen, "notebook": NotebookScreen, "calc": CalcScreen,
+    "testproject": ProjectScreen, "abschluss": FinalProjectScreen,
+    "notebook": NotebookScreen, "calc": CalcScreen,
     "progress": ProgressScreen,
     "settings": SettingsScreen, "search": SearchScreen,
 }
@@ -2340,6 +3305,7 @@ class FISIMobileApp:
             quiz = self.screens.get("quiz")
             if quiz is not None:
                 quiz.running = False
+                quiz.exam.hide()   # Pruefung (ab 0.51): Antworten sichern, Uhr anhalten
             self._build_ui()
             self.show_tab("settings")
             rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
@@ -2591,6 +3557,9 @@ class FISIMobileApp:
     def _lifecycle(self, event):
         if event.state in (ft.AppLifecycleState.PAUSE, ft.AppLifecycleState.HIDE,
                            ft.AppLifecycleState.INACTIVE):
+            # Ab 0.51: Eingaben in Pruefung und Abschlussprojekt sichern
+            self.screens["quiz"].exam.save_answers()
+            self.screens["abschluss"].flush()
             self.sync.on_leave()
         elif event.state in (ft.AppLifecycleState.RESUME, ft.AppLifecycleState.SHOW):
             # Android beendet die App im Hintergrund oft nicht: Beim Zurueckholen
@@ -2786,6 +3755,33 @@ def selftest():
         app.check_reminder()
     except Exception:
         failures.append("Trainer/Wiederholung: %s" % traceback.format_exc())
+    try:
+        # Ab 0.51: jede Pruefungsart einmal aufbauen, bewerten und auswerten
+        # (ohne Ergebnis zu speichern), alle Reiter des Abschlussprojekts
+        quiz = app.screens["quiz"]
+        quiz.mode_pills.select_value("pruefung")
+        exam = quiz.exam
+        for kind in fp.EXAMS:
+            exam.state = fp.new_exam(kind["art"], [], seed=1)
+            exam.task_no = exam.wiso_page = 0
+            exam.show_running()
+            fp.submit(exam.state)
+            if kind["art"] != fp.WISO:
+                exam.show_grading()
+                for number in range(len(exam.state["aufgaben"])):
+                    exam._grade_task(number)
+            exam.result = fp.evaluate(exam.state)
+            exam.show_result(kind["art"])
+        exam.state = None
+        quiz.mode_pills.select_value("uebung")
+        project = app.screens["abschluss"]
+        for tab, _caption in fpj.TABS:
+            project._on_tab(tab)
+        if not fpj.export_pdf(project.fields).startswith(b"%PDF") or \
+                not fpj.export_text(project.fields):
+            failures.append("Abschlussprojekt: Export leer")
+    except Exception:
+        failures.append("Pruefung/Abschlussprojekt: %s" % traceback.format_exc())
     try:
         # Lernspiel: Uebersicht und ein Ticket aufbauen, ohne etwas zu speichern
         game = app.screens["game"]

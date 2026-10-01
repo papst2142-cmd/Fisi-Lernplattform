@@ -179,15 +179,17 @@ def delete_project(db, project):
 
 
 def active_project(db, settings):
-    """Aktives Projekt dieses Geraets; gibt es keins, das zuletzt angelegte
-    bzw. ein neues."""
+    """Aktives Projekt dieses Geraets; sonst das erste vorhandene. Gibt es
+    noch keins, eine neue Kennung - gespeichert wird das Projekt erst mit
+    der ersten Eingabe (sonst laege nach jedem Start ein leeres Projekt im
+    Abgleich)."""
     existing = projects(db)
     active = settings.get(ACTIVE_KEY)
     if active in existing:
         return active
     if existing:
         return sorted(existing)[0]
-    return create_project(db)
+    return new_project_id()
 
 
 def apply_template(db, project, position):

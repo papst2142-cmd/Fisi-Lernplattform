@@ -181,7 +181,7 @@ GOAL_SETTINGS = {
     "ziel_an": True,
     "ziel_anzahl": GOAL_DEFAULT,
     "serie_an": True,
-    "erinnerung_an": False,
+    "erinnerung_an": True,
     "erinnerung_zeit": REMINDER_DEFAULT,
 }
 
