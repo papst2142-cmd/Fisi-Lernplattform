@@ -55,7 +55,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.48.1"
+APP_VERSION = "0.49"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -1698,6 +1698,9 @@ class SettingsScreen(Screen):
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
         colors = ui.Card("Farben", [
+            ui.label("Darstellung"),
+            ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
+                fisi_theme.current_mode), on_change=self._change_mode),
             ui.label("Grundfarbe"),
             ft.Row([self._color_tile(item) for item in fisi_theme.PRESETS],
                    wrap=True, spacing=10, run_spacing=10),
@@ -1706,7 +1709,8 @@ class SettingsScreen(Screen):
                    wrap=True, spacing=10, run_spacing=10),
             ui.text("Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der Hintergrund "
                     "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
-                    "Fehler und Warnung bleiben immer gleich.",
+                    "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
+                    "dunkler, damit sie gut lesbar sind).",
                     size=11, color=C["muted"]),
         ], accent=C["accent"], subtitle="nur für dieses Gerät")
 
@@ -1769,6 +1773,8 @@ class SettingsScreen(Screen):
     def _background_tile(self, item):
         """Kachel eines Hintergrunds (wie am PC): Flaeche mit kleiner Karte."""
         active = item["id"] == fisi_theme.current_background
+        if fisi_theme.light:
+            item = fisi_theme.light_background(item["id"])   # ab 0.49
         return ft.Container(
             content=ft.Column([
                 ft.Container(content=ui.dot(C["accent"], 10), width=84, height=28,
@@ -1791,12 +1797,16 @@ class SettingsScreen(Screen):
         if background_id != fisi_theme.current_background:
             self.app.change_color(background_id=background_id)
 
+    def _change_mode(self, mode):
+        if mode != fisi_theme.current_mode:
+            self.app.change_color(mode=mode)
+
     @staticmethod
     def _switch(caption, value, handler):
         # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter")
         return ft.Row([
             ft.Semantics(label=caption, content=ft.Switch(
-                value=value, on_change=handler, active_color=C["text"],
+                value=value, on_change=handler, active_color=C["knob"],
                 active_track_color=C["violet"], inactive_track_color=C["card_alt"],
                 inactive_thumb_color=C["muted"])),
             ui.text(caption, size=13, color=C["text_dim"], expand=True),
@@ -2050,7 +2060,6 @@ class FISIMobileApp:
     def __init__(self, page):
         self.page = page
         page.title = "%s %s" % (APP_TITLE, APP_VERSION)
-        page.theme_mode = ft.ThemeMode.DARK
         page.padding = 0
         self.db = DBManager(error_handler=lambda message: self.toast(message, C["red"]))
         self.sync = SyncController(self)
@@ -2067,6 +2076,7 @@ class FISIMobileApp:
         """Design, Seiten und Navigation (auch zum Neuaufbau nach einem
         Wechsel der Grundfarbe)."""
         page = self.page
+        page.theme_mode = ft.ThemeMode.LIGHT if fisi_theme.light else ft.ThemeMode.DARK
         page.bgcolor = C["bg"]
         page.theme = page.dark_theme = ft.Theme(
             color_scheme=ft.ColorScheme(
@@ -2095,7 +2105,7 @@ class FISIMobileApp:
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
-    def change_color(self, preset_id=None, background_id=None):
+    def change_color(self, preset_id=None, background_id=None, mode=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
         neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
         angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
@@ -2107,9 +2117,9 @@ class FISIMobileApp:
         self.page.overlay.append(overlay)
         self._lock_bars(True)
         self.page.update()
-        self.page.run_task(self._recolor, preset_id, background_id, overlay)
+        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode)
 
-    async def _recolor(self, preset_id, background_id, overlay):
+    async def _recolor(self, preset_id, background_id, overlay, mode=None):
         started = time.monotonic()
         try:
             # Kurz warten, damit die Meldung sicher gezeichnet ist
@@ -2118,6 +2128,8 @@ class FISIMobileApp:
                 fisi_theme.save_preset(preset_id)
             if background_id:
                 fisi_theme.save_background(background_id)
+            if mode:
+                fisi_theme.save_mode(mode)
             spiel.refresh_theme_tables()
             # Eine laufende Pruefungssession endet mit dem Neuaufbau - ihr
             # Zeitgeber soll nicht im Hintergrund weiterlaufen
