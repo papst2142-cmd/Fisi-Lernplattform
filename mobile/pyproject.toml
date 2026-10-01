@@ -9,7 +9,7 @@
 
 [project]
 name = "fisi-lernplattform"
-version = "0.48"
+version = "0.48.1"
 description = "Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration"
 requires-python = ">=3.10"
 dependencies = [
@@ -21,7 +21,7 @@ dependencies = [
 product = "FISI Lernplattform"
 org = "io.github.papst2142cmd"
 company = "FISI Lernplattform Projekt"
-build_number = 4800
+build_number = 4801
 icon_background = "#120A24"
 
 [tool.flet.app]
@@ -40,3 +40,9 @@ target_arch = ["arm64-v8a"]
 
 [tool.flet.android.permission]
 "android.permission.INTERNET" = true
+
+# Ab 0.48.1: jni_flutter 1.0.4 (veroeffentlicht am 01.10.2026) verlangt jni 1.1,
+# die Flet-Vorlage legt aber jni 1.0 fest - der APK-Bau bricht dann ab.
+# Bis Flet das selbst regelt, bleibt jni_flutter auf der letzten passenden Version.
+[tool.flet.flutter.pubspec.dependency_overrides]
+jni_flutter = "1.0.3"

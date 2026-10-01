@@ -4,6 +4,17 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.48.1
+
+- **Fehlerbehebung Handy-Bau:** Ein Baustein, den die Handy-App beim Bauen
+  aus dem Internet lädt, ist in der Nacht in einer fehlerhaften Fassung
+  erschienen. Der Bau der Android-App ist daran gescheitert, deshalb gab es
+  kein Release 0.48. Die App nutzt jetzt die letzte funktionierende Fassung.
+- Inhaltlich ist alles wie in 0.48 (drei Spielstand-Plätze, Meldung beim
+  Farbwechsel, scrollende Seitenleiste, Pfeile an den Pillenreihen,
+  Weltkarte und Kleinigkeiten aus dem Systemtest). **Wichtig:** PC und
+  Handy gleichen erst wieder ab, wenn beide mindestens auf 0.48.1 sind.
+
 ## 0.48
 
 - **Spiel: Drei Spielstand-Plätze.** Beim ersten Öffnen von „Spiel“ nach
