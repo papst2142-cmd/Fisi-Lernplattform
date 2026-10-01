@@ -3824,6 +3824,9 @@ class FISIMobileApp:
 
 
 def main(page: ft.Page):
+    # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
+    from fisi_core import install_error_log
+    install_error_log(APP_VERSION)
     app = FISIMobileApp(page)
     page.data = app
     if os.environ.get("FISI_SELFTEST"):

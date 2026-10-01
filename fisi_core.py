@@ -68,6 +68,83 @@ def resolve_db_path():
 
 
 # ============================================================================
+#  FEHLERPROTOKOLL (ab 0.53)
+# ============================================================================
+#
+# Unerwartete Fehler landen zusaetzlich in "fehler.log" im Datenordner (neben
+# der Datenbank). Sichtbar aendert sich dadurch nichts - die Datei hilft nur
+# bei der Fehlersuche. Sie bleibt klein: ueber ERROR_LOG_MAX Bytes wird die
+# aeltere Haelfte verworfen.
+
+ERROR_LOG_NAME = "fehler.log"
+ERROR_LOG_MAX = 256 * 1024
+_error_log_version = ""
+
+
+def error_log_path():
+    return os.path.join(os.path.dirname(resolve_db_path()), ERROR_LOG_NAME)
+
+
+def write_error_log(text):
+    """Haengt einen Fehler mit Zeitpunkt und Version an fehler.log an. Darf
+    selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...)."""
+    try:
+        path = error_log_path()
+        if os.path.exists(path) and os.path.getsize(path) > ERROR_LOG_MAX:
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                rest = handle.read()[-ERROR_LOG_MAX // 2:]
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(rest)
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("=== %s | Version %s | %s ===\n%s\n" % (
+                stamp, _error_log_version or "?", sys.platform, text.rstrip()))
+    except Exception:
+        pass
+
+
+def log_exception(exc_type, exc_value, exc_tb):
+    import traceback
+    write_error_log("".join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+
+
+def install_error_log(version=""):
+    """Leitet unbehandelte Fehler (Hauptprogramm, Threads und die Meldungen
+    des Flet-Loggers am Handy) zusaetzlich nach fehler.log. Das bisherige
+    Verhalten (Ausgabe im Terminal) bleibt."""
+    import logging
+    import threading
+    global _error_log_version
+    _error_log_version = version
+    if getattr(sys.excepthook, "fisi_error_log", False):
+        return    # schon eingerichtet (Handy: main() je Sitzung)
+    previous = sys.excepthook
+
+    def excepthook(exc_type, exc_value, exc_tb):
+        log_exception(exc_type, exc_value, exc_tb)
+        previous(exc_type, exc_value, exc_tb)
+    excepthook.fisi_error_log = True
+    sys.excepthook = excepthook
+
+    previous_thread = threading.excepthook
+
+    def thread_hook(args):
+        if args.exc_type is not SystemExit:
+            log_exception(args.exc_type, args.exc_value, args.exc_traceback)
+        previous_thread(args)
+    threading.excepthook = thread_hook
+
+    class _Handler(logging.Handler):
+        def emit(self, record):
+            text = record.getMessage()
+            if record.exc_info:
+                import traceback
+                text += "\n" + "".join(traceback.format_exception(*record.exc_info))
+            write_error_log(text)
+    logging.getLogger("flet").addHandler(_Handler(logging.ERROR))
+
+
+# ============================================================================
 #  KATEGORIEN UND FARBEN
 # ============================================================================
 

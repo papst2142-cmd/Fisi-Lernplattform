@@ -49,6 +49,7 @@ from fisi_core import (  # noqa: E402
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
 )
+from fisi_core import install_error_log, log_exception  # noqa: E402
 import fisi_game  # noqa: E402
 import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
@@ -5373,8 +5374,16 @@ def apply_appearance():
 
 
 def main():
+    # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
+    install_error_log(APP_VERSION)
     apply_appearance()
     root = ctk.CTk()
+    show_error = root.report_callback_exception
+
+    def report_error(*exc_info):
+        log_exception(*exc_info)
+        show_error(*exc_info)
+    root.report_callback_exception = report_error
     app = FISIApp(root)
     selftest_log = os.environ.get("FISI_SELFTEST")
     failures = _run_selftest(root, app, selftest_log) if selftest_log else None
