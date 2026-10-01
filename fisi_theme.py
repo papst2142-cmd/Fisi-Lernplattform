@@ -37,6 +37,9 @@ C = {
     "text_dim":  "#A794C6",
     "muted":     "#9986B8",
     "on_accent": "#FFFFFF",
+    # Knopf der Schalter am Handy (sitzt in der farbigen Spur); im Hellen reines Weiss.
+    # Am PC ragt der Knopf ueber die Spur hinaus und bleibt deshalb "text" (dunkel im Hellen).
+    "knob":      "#ECE6F8",
     # Akzentfarben (aktiver Menuepunkt, Ringe, Links, Kalender-Pfeile ...).
     # Sie folgen der gewaehlten Grundfarbe (siehe PRESETS unten); "cyan" und
     # "pink" bleiben fest, weil sie auch Fachbereichsfarben sind.
@@ -288,13 +291,13 @@ light = False               # aktuell hell?
 
 # Die dunklen Grundwerte (so wie oben in C festgelegt)
 _DARK_FIXED = {key: C[key] for key in (
-    "text", "text_soft", "scrollbar", "scrollbar_hi", "cyan", "pink", "purple", "violet",
+    "text", "text_soft", "knob", "scrollbar", "scrollbar_hi", "cyan", "pink", "purple", "violet",
     "green", "yellow", "orange", "blue", "red")}
 # Farben, die im Hellen als Schrift lesbar sein muessen
 _LIGHT_SHADED = ("cyan", "pink", "purple", "violet", "green", "yellow", "orange",
                  "blue", "red")
 
-LIGHT_TEXT = {"text": "#1B1628", "text_soft": "#2F2940",
+LIGHT_TEXT = {"text": "#1B1628", "text_soft": "#2F2940", "knob": "#FFFFFF",
               "scrollbar": "#C9C9D1", "scrollbar_hi": "#A9A9B5"}
 
 # Helle Fassungen der Hintergruende (gleicher Farbton wie die dunklen)
