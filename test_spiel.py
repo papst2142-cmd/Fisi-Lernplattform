@@ -6709,5 +6709,195 @@ class ServerfarmTest(unittest.TestCase):
             self.assertIn("in Betrieb", fg.farm_place_text(state))
             self.assertEqual(place["zahl"], 0)
 
+
+class Plattform053Test(unittest.TestCase):
+    """0.53: Einzahl/Mehrzahl, Pruefungszeit ueber die Zeitumstellung, eine
+    Lernserie fuer Kopfzeile und Kachel "Heute", PDF-Ersatzzeichen und
+    atomares Speichern der Einstellungen."""
+
+    # -- Einzahl/Mehrzahl ---------------------------------------------------
+
+    def test_plural_und_platzhalter_saetze(self):
+        from fisi_core import plural, raid_report
+        from fisi_sicherung import merge_message
+        self.assertEqual(plural(1, "Tag", "Tage"), "1 Tag")
+        self.assertEqual(plural(0, "Tag", "Tage"), "0 Tage")
+        self.assertEqual(plural(1200, "Eintrag", "Einträge"), "1.200 Einträge")
+        self.assertEqual(fisi_sync.SyncResult(1, 1).message,
+                         "1 Eintrag von anderen Geräten übernommen, 1 Eintrag hochgeladen.")
+        self.assertEqual(fisi_sync.SyncResult(3, 0).message,
+                         "3 Einträge von anderen Geräten übernommen.")
+        self.assertEqual(merge_message(1), "Sicherung eingespielt: 1 Eintrag übernommen.")
+        self.assertIn("1.500 Einträge übernommen", merge_message(1500))
+        self.assertIn(": 1 Festplatte", raid_report("RAID 5", "3", "1000"))
+        self.assertIn(": 2 Festplatten", raid_report("RAID 6", "4", "1000"))
+        # Klammerplural kommt in den sichtbaren Texten nicht mehr vor
+        here = os.path.dirname(os.path.abspath(__file__))
+        for name in ("app_gui.py", "fisi_core.py", os.path.join("mobile", "src", "main.py")):
+            with open(os.path.join(here, name), encoding="utf-8") as handle:
+                source = handle.read()
+            for pattern in ("%d Tag(e)", "%d Festplatte(n)", '"%d Felder', '"%d Antworten',
+                            'set_subtitle("%d Fragen"', "bisher %d Aufgaben"):
+                self.assertNotIn(pattern, source, "%s in %s" % (pattern, name))
+
+    # -- Pruefungszeit --------------------------------------------------------
+
+    def _berlin(self):
+        import time
+        if not hasattr(time, "tzset"):
+            self.skipTest("Zeitzone laesst sich hier nicht umstellen")
+        old = os.environ.get("TZ")
+
+        def restore():
+            if old is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = old
+            time.tzset()
+        self.addCleanup(restore)
+        os.environ["TZ"] = "Europe/Berlin"
+        time.tzset()
+
+    def test_pruefungszeit_ueber_die_zeitumstellung(self):
+        import datetime
+        import fisi_pruefung as fp
+        self._berlin()
+
+        def clock(start, minutes):
+            # Wanduhr nach echten Minuten (wie datetime.now(), mit fold)
+            return datetime.datetime.fromtimestamp(start.timestamp() + minutes * 60)
+
+        # Herbst: 25.10.2026 01:30 Sommerzeit, AP1 = 90 Minuten
+        start = datetime.datetime(2026, 10, 25, 1, 30)
+        state = fp.new_exam(fp.AP1, seed=1, now=start)
+        self.assertEqual(fp.seconds_left(state, clock(start, 60)), 30 * 60)
+        self.assertEqual(fp.seconds_left(state, clock(start, 90)), 0)
+        fp.submit(state, now=clock(start, 60))
+        self.assertEqual(state["dauer"], 60 * 60)
+        # Fruehjahr: 29.03.2026 01:30 Winterzeit
+        start = datetime.datetime(2026, 3, 29, 1, 30)
+        state = fp.new_exam(fp.AP1, seed=1, now=start)
+        self.assertEqual(fp.seconds_left(state, clock(start, 30)), 60 * 60)
+        # Uhr zurueckgestellt: Restzeit gedeckelt, Dauer nie negativ
+        start = datetime.datetime(2026, 10, 1, 10, 0)
+        state = fp.new_exam(fp.NETZWERKE, seed=1, now=start)
+        earlier = start - datetime.timedelta(minutes=30)
+        self.assertEqual(fp.seconds_left(state, earlier), state["minuten"] * 60)
+        fp.submit(state, now=earlier)
+        self.assertEqual(state["dauer"], 0)
+
+    def test_alte_gespeicherte_pruefung_bleibt_lesbar(self):
+        import datetime
+        import fisi_pruefung as fp
+        old = {"art": fp.WISO, "start": "2026-10-01 10:00:00", "minuten": 60,
+               "phase": "laeuft", "antworten": {}}
+        now = datetime.datetime(2026, 10, 1, 10, 10)
+        self.assertEqual(fp.seconds_left(old, now), 50 * 60)
+        fp.submit(old, now=now)
+        self.assertEqual(old["dauer"], 10 * 60)
+        new = fp.new_exam(fp.WISO, seed=1, now=datetime.datetime(2026, 10, 1, 10, 0))
+        self.assertIsInstance(new["start_utc"], int)
+        self.assertEqual(new["start"], "2026-10-01 10:00:00")
+
+    # -- Lernserie -------------------------------------------------------------
+
+    def test_eine_lernserie_fuer_kopf_und_kachel(self):
+        import datetime
+        import fisi_lernen as fl
+        today = datetime.date.today()
+
+        def day(offset):
+            return (today + datetime.timedelta(days=offset)).isoformat() + " 12:00:00"
+
+        with TempDB() as db:
+            question = QUIZ_QUESTIONS[0]
+            # nur angesehene Karteikarten (ohne Bewertung) zaehlen nicht
+            for offset in (-2, -1):
+                db._execute("INSERT INTO card_events (timestamp, category, question, mode,"
+                            " correct, uid) VALUES (?, 'netzwerk', 'x', 'flip', NULL, ?)",
+                            (day(offset), "c%d" % offset), commit=True)
+            db._execute("INSERT INTO quiz_answers (timestamp, category, question, correct, uid)"
+                        " VALUES (?, ?, ?, 1, 'q0')", (day(0), question["cat"], question["q"]),
+                        commit=True)
+            goal = fl.DailyGoal.from_db(db, 20)
+            self.assertEqual(db.streak(), 1)
+            self.assertEqual(db.streak(), goal.streak)
+            # bewertete Karte gestern verlaengert die Serie
+            db._execute("INSERT INTO card_events (timestamp, category, question, mode,"
+                        " correct, uid) VALUES (?, 'netzwerk', 'x', 'flip', 1, 'c9')",
+                        (day(-1),), commit=True)
+            self.assertEqual(db.streak(), 2)
+            # ein Eintrag mit spaeterem Datum (andere Zeitzone) setzt sie nicht auf 0
+            db._execute("INSERT INTO quiz_answers (timestamp, category, question, correct, uid)"
+                        " VALUES (?, ?, ?, 1, 'q1')", (day(1), question["cat"], question["q"]),
+                        commit=True)
+            self.assertEqual(db.streak(), 2)
+            self.assertEqual(db.streak(), fl.DailyGoal.from_db(db, 20).streak)
+            self.assertEqual(fl.DailyGoal.from_db(db, 20).streak_text(), "Lernserie: 2 Tage")
+
+    # -- PDF ---------------------------------------------------------------------
+
+    def test_pdf_ersetzt_zeichen_ausserhalb_winansi(self):
+        import zlib
+        import fisi_pdf
+        self.assertEqual(fisi_pdf._clean("≈ ⇒ → ✔ Δ Ω ≤ ≥ ≠ ﬁ"),
+                         "~ => -> OK Delta Ohm <= >= != fi")
+        self.assertEqual(fisi_pdf._clean("Emoji 😀👍🏽 weg"), "Emoji  weg")
+        same = "2 × 3 ÷ 1 € „ä“ – …"   # liegt in WinAnsi, bleibt
+        self.assertEqual(fisi_pdf._clean(same), same)
+        title = "Migration „Exchange“ – 1.200 €"
+        data = fisi_pdf.build_pdf([("h1", title), ("p", "Größe ≈ 5 TB, Δ 3, ✔ ⇒ 😀")],
+                                  title=title, author="Nico")
+        # Titel als UTF-16 mit Kennung im Dokument-Info
+        self.assertIn(b"/Title <FEFF" + title.encode("utf-16-be").hex().upper().encode(), data)
+        # Seiteninhalt mit Pythons eigenem Werkzeug entpacken
+        text = b"".join(zlib.decompress(chunk) for chunk in re.findall(
+            rb"/FlateDecode >>\nstream\n(.*?)\nendstream", data, re.S))
+        self.assertIn("Größe ~ 5 TB, Delta 3, OK => ".encode("cp1252"), text)
+        self.assertNotIn(b"?", text)
+
+    # -- Einstellungen --------------------------------------------------------------
+
+    def test_einstellungen_atomar_und_defekte_datei_gesichert(self):
+        from unittest import mock
+        import fisi_update
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder, True)
+        path = os.path.join(folder, "einstellungen.json")
+        with mock.patch.object(fisi_update, "_settings_path", lambda: path):
+            self.assertTrue(fisi_update.save_settings({"sync_repo": "nico/lernstand"}))
+            self.assertEqual(os.listdir(folder), ["einstellungen.json"])
+            # Schreiben bricht ab: die alte Datei bleibt vollstaendig
+            with mock.patch.object(fisi_update.os, "replace", side_effect=OSError("voll")):
+                self.assertFalse(fisi_update.save_settings({"sync_repo": "neu"}))
+            self.assertEqual(fisi_update.load_settings()["sync_repo"], "nico/lernstand")
+            self.assertEqual(os.listdir(folder), ["einstellungen.json"])
+            # Beschaedigte Datei: Vorgaben, aber Kopie als einstellungen.defekt.json
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write('{"sync_repo": "nico/ler')
+            self.assertEqual(fisi_update.load_settings(), {"auto_check": True})
+            with open(os.path.join(folder, fisi_update.BROKEN_SETTINGS), encoding="utf-8") as h:
+                self.assertEqual(h.read(), '{"sync_repo": "nico/ler')
+
+    def test_kaputte_abgleich_datei_meldet_beschaedigt(self):
+        import base64
+        import gzip
+        from unittest import mock
+        for payload in (b"[1, 2]", b'{"format": "zwei"}'):
+            meta = {"encoding": "base64", "sha": "x",
+                    "content": base64.b64encode(gzip.compress(payload)).decode()}
+            with mock.patch.object(fisi_sync, "_request",
+                                   lambda *a, **k: json.dumps(meta).encode()):
+                with self.assertRaises(fisi_sync.SyncError) as caught:
+                    fisi_sync.fetch_remote("nico/lernstand", "token")
+            self.assertIn("beschädigt", str(caught.exception))
+        meta = {"encoding": "base64", "sha": "x",
+                "content": base64.b64encode(gzip.compress(b'{"format": 99}')).decode()}
+        with mock.patch.object(fisi_sync, "_request", lambda *a, **k: json.dumps(meta).encode()):
+            with self.assertRaises(fisi_sync.SyncError) as caught:
+                fisi_sync.fetch_remote("nico/lernstand", "token")
+        self.assertIn("neueren Programmversion", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
