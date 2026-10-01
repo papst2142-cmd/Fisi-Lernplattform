@@ -65,7 +65,7 @@ import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
-    BranchView, ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView,
+    BranchView, ChoiceRow, CustomerView, FarmView, FirmView, GameView, HomeView, JourneyView,
     MilestoneMoment, OfficeView, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
@@ -155,6 +155,7 @@ VIEW_TITLES = {
     "zuhause": ("SPIEL", "ZUHAUSE"),
     "firma": ("SPIEL", "FIRMA"),
     "filiale": ("SPIEL", "FILIALE"),
+    "serverfarm": ("SPIEL", "SERVERFARM"),
     "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
@@ -4848,7 +4849,7 @@ def _apply_window_icon(root):
 
 
 # Ansichten des Spiels (ab 0.48 mit Platzanzeige im Kopf)
-GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "reise")
+GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "serverfarm", "reise")
 GAME_VIEWS = ("game",) + GAME_SUBVIEWS
 
 
@@ -4962,7 +4963,7 @@ class FISIApp:
             ("notebook", NotebookView),
             ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
             ("kunde", CustomerView), ("zuhause", HomeView),
-            ("firma", FirmView), ("filiale", BranchView),
+            ("firma", FirmView), ("filiale", BranchView), ("serverfarm", FarmView),
             ("reise", JourneyView),
             ("progress", ProgressView),
             ("settings", SettingsView), ("search", SearchView)))
@@ -5135,7 +5136,8 @@ class FISIApp:
         self.header.set_crumbs(main, sub)
         # Die Suche hat keinen eigenen Menuepunkt - dann bleibt nichts markiert.
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
-        self.sidebar.set_active("game" if key == "filiale" else key)
+        # Ebenso die Serverfarm (ab 0.52, Lokschuppen auf der Karte).
+        self.sidebar.set_active("game" if key in ("filiale", "serverfarm") else key)
         view.on_show()
         # Ab 0.50: on_show kann weitere Ansichten aufbauen - die gewaehlte
         # bleibt trotzdem oben (siehe LazyViews), sofern on_show nicht selbst
@@ -5164,6 +5166,15 @@ class FISIApp:
     def do_search(self, query):
         self.views["search"].search(query)
         self.show_view("search")
+
+    def open_raid_calc(self, level, disks, size):
+        """RAID-Rechner mit den Werten aus der Server-Bestueckung (ab 0.52)."""
+        view = self.views["calc"]
+        view.raid_pills.select_value(level, notify=False)
+        view.entry_disks.set(str(disks))
+        view.entry_size.set(str(size))
+        view.calc_raid()
+        self.show_view("calc")
 
     def open_search_hit(self, kind, title):
         if kind == "Karteikarte":

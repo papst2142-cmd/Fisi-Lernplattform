@@ -236,7 +236,7 @@
     "tage": 25,
     "aufgaben_pro_tag": 3,
     "team_max": 5,
-    "team_empfohlen": 2,
+    "team_empfohlen": 3,
     "zuschlag_max": 20,
     "anzahlung": 30,
     "richtig": {"fachkompetenz": 1},

@@ -4093,6 +4093,28 @@ def selftest():
                 info = fisi_game.unlock_info(state, rule, level, [])
                 spiel.moment_card(info, state, 0, 2, None, None)
         spiel.badge_image("stern", None, None)
+        # Serverfarm (ab 0.52): Seite in allen Zustaenden, jede Aufgabe einmal
+        game.farm_box = ft.Column()
+        state.farm_unlocked, state.farm = None, None
+        game._fill_farm()
+        state.farm_unlocked = state.day
+        game._fill_farm()
+        state.farm = fisi_game.new_farm(state.day)
+        game._fill_farm()
+        game._farm_toggle_edit()
+        game._farm_toggle_edit()
+        for task in fisi_game.farm_tasks():
+            game.open_farm_task(task["id"])
+            game._show_help()
+            if task["typ"] == "bestueckung":
+                game.options.answer = fisi_game.fit_solution(task)
+                game.options._build_middle()
+                game.options._paint()
+                game.options.reveal(True)
+        state.farm["abnahme"] = fisi_game.farm_acceptance(state, state.day)
+        state.farm["fertig"] = state.day
+        game._fill_farm()
+        state.farm_unlocked, state.farm = None, None
         # Spielstand-Plaetze (ab 0.48): Auswahl mit belegten und leeren Plaetzen
         game.picking = True
         game.render()

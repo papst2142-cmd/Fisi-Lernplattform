@@ -1534,6 +1534,8 @@ def rack_specs(item, content=None):
         parts.append("passiv, kein Strom")
     if item.get("ports"):
         parts.append("%d Ports" % item["ports"])
+    if item.get("schaechte"):
+        parts.append("%d Schächte" % item["schaechte"])
     return " · ".join(parts)
 
 
@@ -14407,6 +14409,47 @@ def fit_lines(task, answer, content=None):
         lines.append("%d × %s: %s" % (template.get("anzahl", 1), template["name"],
                                       ", ".join(parts)))
     return lines
+
+
+def fit_view(task, answer, current, content=None):
+    """Anzeige der Bestueckung fuer PC und Handy: Zeilen zur gewaehlten
+    Vorlage (RAID, je Server, Summe) und die Vorgaben mit Haken - erst die der
+    gewaehlten Vorlage, dann je andere Vorlage eine Sammelzeile, dann Budget,
+    USV und Kuehlung."""
+    values = fit_values(task, answer, content)
+    server = next(item for item in values["server"] if item["vorlage"]["id"] == current)
+    werte = server["werte"]
+    raid = werte["raid_werte"]
+    if raid:
+        tolerance = raid["toleranz"]
+        raid_text = "%s: %s nutzbar von %s · Effizienz %s %% · %s" % (
+            werte["raid"], _tb(raid["netto"]), _tb(raid["brutto"]),
+            _num(round(raid["effizienz"], 1)),
+            "übersteht keinen Plattenausfall" if tolerance == 0 else
+            "übersteht 1 Plattenausfall" if tolerance == 1 else
+            "übersteht %d Plattenausfälle" % tolerance)
+        raid_ok = True
+    elif werte["raid"] and werte["laufwerk"]:
+        raid_text, raid_ok = "%s geht mit %d Laufwerken nicht." % (
+            werte["raid"], werte["laufwerke"]), False
+    else:
+        raid_text, raid_ok = "Laufwerke und RAID-Level wählen.", None
+    template = server["vorlage"]
+    checks = list(server["checks"])
+    for other in values["server"]:
+        if other is server:
+            continue
+        missing = sum(1 for item in other["checks"] if not item["ok"])
+        checks.append({"text": "%s: %s" % (other["vorlage"]["name"], (
+            "alle Vorgaben erfüllt" if not missing else
+            "1 Vorgabe offen" if missing == 1 else "%d Vorgaben offen" % missing)),
+            "ok": not missing})
+    checks += values["checks"]
+    return {"raid_text": raid_text, "raid_ok": raid_ok,
+            "server_text": "Je Server: %s W, %s · %d Stück zusammen %s W, %s" % (
+                _num(werte["watt"]), _euro(werte["kosten"]), template.get("anzahl", 1),
+                _num(server["watt"]), _euro(server["kosten"])),
+            "checks": checks, "werte": werte}
 
 
 def _validate_fit_task(task, content):

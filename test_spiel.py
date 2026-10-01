@@ -6353,5 +6353,357 @@ class OberflaecheTest(unittest.TestCase):
         self.assertEqual(self.top_view(), "firma")
 
 
+
+def _farm_end_day(game):
+    for decision in game.state.open_decisions():
+        option = next(item for item in decision["optionen"] if not item.get("problem"))
+        game.decide(decision["id"], option["id"])
+    return game.end_day()
+
+
+def _farm_answer(task, markup=15, wrong=False):
+    if task["typ"] == fg.FARM_OFFER_TYPE:
+        answer = fg.find_solution(fg.farm_offer_task(markup))
+    else:
+        answer = fg.farm_solution(task)
+    if not wrong:
+        return answer
+    if task["typ"] == "auswahl":
+        return next(option for option in task["optionen"] if option != task["antwort"])
+    if task["typ"] == "bestueckung":
+        answer[next(iter(answer))]["raid"] = "RAID 0"
+        return answer
+    return {}
+
+
+class ServerfarmTest(unittest.TestCase):
+    """Kampagne 2: Grossauftrag Serverfarm und neue Rack-Ansicht (ab 0.52)."""
+
+    def setUp(self):
+        self.content = _content()
+        self.task = self.content["aufgaben"][0]
+        self.content["aufgaben"] = [self.task]
+        self.content["zwischenfaelle"] = []
+
+    def _ready(self, db, level="normal", certs=("iso27001", "netzwerk"), staff=3):
+        """Firma mit Stufe 4, Serverraum, Zertifikaten und Mitarbeitern."""
+        game = fg.Game(db, "PC", self.content)
+        game.set_profile("Nico", {}, difficulty=level)
+        db.log_game_event(fg.EV_SOLVED, json.dumps(
+            {"aufgabe": self.task["id"], "tag": 1, "richtig": True, "geld": 400000,
+             "reputation": {key: 60 for key in fg.AXIS_KEYS}}), "PC", game.run)
+        game.reload()
+        game.found_firm("Nico IT")
+        while game.state.firm["stufe"] < 4:
+            game.expand()
+        game.build_room("serverraum")
+        for cert in certs:
+            db.log_game_event(fg.EV_CERT, json.dumps({"zert": cert, "tag": game.state.day,
+                                                      "bis_tag": game.state.day, "geld": 0}),
+                              "PC", game.run)
+        game.reload()
+        for _ in range(staff):
+            game.hire(fg.applicants(game.state, self.content)[0]["id"])
+        return game
+
+    def _play(self, game, wrong=(), markup=15, team=3):
+        _farm_end_day(game)
+        game.farm_start()
+        staff = [item["id"] for item in game.state.staff_list()]
+        game.farm_set_team(staff[:team])
+        results = {}
+        for _day in range(80):
+            if game.state.farm["fertig"]:
+                break
+            for task in fg.farm_open_tasks(game.state):
+                if fg.farm_task_problem(game.state, task["id"]):
+                    break
+                results[task["id"]] = game.farm_solve(
+                    task["id"], _farm_answer(task, markup, task["id"] in wrong), False,
+                    markup if task["typ"] == fg.FARM_OFFER_TYPE else None)
+            _farm_end_day(game)
+        return results
+
+    # -- Inhalte und neue Rack-Ansicht -----------------------------------------
+
+    def test_inhalte(self):
+        self.assertEqual(fg._validate_farm(fg.GAME), [])
+        self.assertEqual(fg.validate_game_content(), [])
+        self.assertEqual(len(fg.farm_tasks()), 18)
+        self.assertEqual([phase["id"] for phase in fg.farm_phases()],
+                         ["angebot", "planung", "lieferung", "einbau", "konfiguration",
+                          "abnahme"])
+        broken = _content()
+        broken["balancing"]["serverfarm"]["freischaltung"]["zertifizierungen"] = ["gibtsnicht"]
+        broken["balancing"]["serverfarm"]["verzug"] = [[0.5, 0]]
+        problems = "\n".join(fg._validate_farm(broken))
+        self.assertIn("unbekannte Zertifizierung 'gibtsnicht'", problems)
+        self.assertIn("Lieferverzugs ergeben nicht 1", problems)
+        for task in fg.farm_tasks():
+            self.assertIsNotNone(fg.farm_solution(task), task["id"])
+            check = fg.farm_check_task(task)
+            if task["typ"] == "bestueckung":
+                self.assertEqual(fg.fit_problems(task, fg.farm_solution(task)), [])
+            elif task["typ"] != "auswahl":
+                self.assertEqual(fg.check_answer(check, fg.farm_solution(task))[0], True,
+                                 task["id"])
+
+    def test_rack_haken_passen_zu_den_regeln(self):
+        """Neue Rack-Ansicht: alle Haken gruen genau dann, wenn die Belegung
+        richtig ist - fuer jede Rack-Aufgabe im Spiel und in der Serverfarm."""
+        tasks = [task for task in fg.GAME["aufgaben"] + fg.GAME["zwischenfaelle"] +
+                 fg.farm_tasks() if task["typ"] == "rack"]
+        self.assertGreaterEqual(len(tasks), 5)
+        for task in tasks:
+            solution = fg.rack_solution(task)
+            if solution is None:      # Rack aus dem Lager: haengt am Lagerbestand
+                self.assertTrue(task.get("aus_lager"), task["id"])
+                continue
+            answers = [solution, {}, {key: value for key, value in list(solution.items())[1:]}]
+            first = next(iter(solution))
+            answers.append(dict(solution, **{first: task["schrank"]["he"]}))
+            for answer in answers:
+                checks = fg.rack_checks(task, answer)
+                self.assertTrue(checks)
+                self.assertEqual(all(item["ok"] for item in checks),
+                                 not fg.rack_problems(task, answer), (task["id"], answer))
+            bars = {bar["id"]: bar for bar in fg.rack_bars(task, solution)}
+            self.assertEqual(set(bars), {"he", "strom", "kuehlung", "gewicht"})
+            self.assertFalse(any(bar["zu_viel"] for bar in bars.values()))
+
+    def test_bestueckung_raid_wie_rechner(self):
+        task = fg.farm_task("sf-bestueckung")
+        for template in fg.fit_templates(task):
+            drive = fg.fit_options(template, "laufwerk")[0][0]
+            for level in fg.RAID_LEVELS:
+                for count in (2, 3, 4, 6, 8):
+                    if count > template["schaechte"]:
+                        continue
+                    values = fg.fit_server(template, {"laufwerk": drive, "laufwerke": count,
+                                                      "raid": level})
+                    expected = core.raid_values(level, count, values["laufwerk"]["groesse"])
+                    self.assertEqual(values["raid_werte"], expected, (level, count))
+
+    def test_bestueckung_richtig_und_falsch(self):
+        task = fg.farm_task("sf-bestueckung")
+        good = fg.fit_solution(task)
+        self.assertEqual(fg.fit_problems(task, good), [])
+        view = fg.fit_view(task, good, fg.fit_templates(task)[0]["id"])
+        self.assertTrue(all(item["ok"] for item in view["checks"]))
+        wrong = copy.deepcopy(good)
+        host = fg.fit_templates(task)[0]["id"]
+        wrong[host]["raid"] = "RAID 0"
+        problems = fg.fit_problems(task, wrong)
+        self.assertTrue(any("RAID" in line for line in problems), problems)
+        self.assertIn("übersteht keinen Plattenausfall",
+                      fg.fit_view(task, wrong, host)["raid_text"])
+        empty = fg.fit_problems(task, {})
+        self.assertTrue(empty)
+        # Zu teuer: die groessten Platten in alle Schaechte
+        costly = copy.deepcopy(good)
+        template = fg.fit_templates(task)[0]
+        options = fg.fit_options(template, "laufwerk")
+        costly[host]["laufwerk"] = max(options, key=lambda item: fg.fit_part(item[0])["preis"])[0]
+        costly[host]["laufwerke"] = template["schaechte"]
+        self.assertTrue(any("Budget" in line for line in fg.fit_problems(task, costly)))
+
+    # -- Freischaltung und Start ------------------------------------------------
+
+    def test_freischaltung_braucht_beide_zertifikate(self):
+        with TempDB() as db:
+            game = self._ready(db, certs=("iso27001",))
+            missing = fg.farm_unlock_missing(game.state)
+            self.assertEqual(len(missing), 1)
+            self.assertIn("Cisco", missing[0])
+            payload = _farm_end_day(game)
+            self.assertNotIn("serverfarm_frei", payload["firma"])
+            self.assertIsNone(game.state.farm_unlocked)
+            self.assertNotIn(fg.FARM_PLACE, [item["id"] for item in fg.map_places(game.state)])
+            with self.assertRaises(ValueError):
+                game.farm_start()
+        with TempDB() as db:
+            game = self._ready(db)
+            self.assertEqual(fg.farm_unlock_missing(game.state), [])
+            payload = _farm_end_day(game)
+            self.assertEqual(payload["firma"]["serverfarm_frei"], 1)
+            state = game.state
+            self.assertEqual(state.farm_unlocked, payload["tag"])
+            self.assertIsNone(state.farm)       # startet erst mit der Ausschreibung
+            place = next(item for item in fg.map_places(state) if item["id"] == fg.FARM_PLACE)
+            self.assertEqual(place["zahl"], 1)
+            self.assertTrue(place["neu"])
+            # Weitere Feierabende aendern nichts, die Kampagne wartet
+            for _ in range(3):
+                payload = _farm_end_day(game)
+                self.assertNotIn("serverfarm", payload["firma"])
+            self.assertIsNone(game.state.farm)
+            with self.assertRaises(ValueError):
+                game.farm_solve(fg.FARM_OFFER, {}, False, 15)
+            game.farm_start()
+            self.assertEqual(game.state.farm["start"], game.state.day)
+            with self.assertRaises(ValueError):
+                game.farm_start()
+
+    # -- Durchlauf ----------------------------------------------------------------
+
+    def test_durchlauf_normal_ist_wiederholbar(self):
+        runs = []
+        for _ in range(2):
+            with TempDB() as db:
+                game = self._ready(db)
+                money = game.state.money
+                results = self._play(game)
+                state = game.state
+                self.assertTrue(state.farm["fertig"])
+                data = state.farm["abnahme"]
+                self.assertTrue(data["fehlerfrei"])
+                self.assertEqual(data["bonus"], fg.farm_rules()["bonus"])
+                self.assertEqual(data["richtig"], 18)
+                self.assertTrue(all(item["richtig"] for item in results.values()))
+                # Nach dem Neuladen (Ereignisse abspielen) steht alles genauso da
+                reloaded = game.reload()
+                self.assertEqual(reloaded.farm["abnahme"], data)
+                self.assertEqual(reloaded.money, state.money)
+                badges = sorted(key[0] for key in state.achievements
+                                if key[0].startswith("serverfarm"))
+                self.assertIn("serverfarm_normal", badges)
+                self.assertIn("serverfarm_fehlerfrei", badges)
+                self.assertNotIn("serverfarm_einfach", badges)
+                kinds = [entry[1] for entry in fg.farm_journey(state)]
+                for kind in ("serverfarm_frei", "serverfarm_auftrag", "serverfarm_phase",
+                             "serverfarm_abnahme"):
+                    self.assertIn(kind, kinds)
+                journey = [entry for entry in fg.journey(state)
+                           if "Serverfarm" in str(entry)]
+                self.assertTrue(journey)
+                self.assertEqual(fg.farm_badge_count(state), 0)
+                farm = state.farm
+                profit = sum(int(item.get("geld", 0)) for item in farm["aufgaben"].values()) \
+                    + data["geld"] - sum(int(item.get("nacharbeit_geld", 0))
+                                         for item in farm["tage"])
+                runs.append((data, state.money - money, profit,
+                             [item.get("verzug") for item in farm["tage"]]))
+        self.assertEqual(runs[0], runs[1])
+        # Der Grossauftrag lohnt sich (Nicos Vorgabe: etwa 25.000-30.000 EUR + Bonus)
+        self.assertGreater(runs[0][2], 20000)
+
+    def test_einfach_halbiert_die_risiken(self):
+        with TempDB() as db:
+            game = self._ready(db, level="einfach")
+            self.assertEqual(game.state.ease("serverfarm_verzug_faktor"), 0.5)
+            results = self._play(game, wrong=("sf-bestellung", "sf-vlan"))
+            state = game.state
+            self.assertTrue(state.farm["fertig"])
+            badges = [key[0] for key in state.achievements]
+            self.assertIn("serverfarm_einfach", badges)
+            self.assertNotIn("serverfarm_normal", badges)
+            self.assertNotIn("serverfarm_fehlerfrei", badges)
+            normal = fg.farm_rules()["fehler"]["geld"]
+            factor = fg.farm_rules()["fehler"]["unter_niveau_faktor"] if fg.requirement_gaps(
+                fg.farm_task("sf-vlan"), game.topic_knowledge()) else 1
+            self.assertTrue(results["sf-vlan"]["unter_niveau"])
+            self.assertEqual(results["sf-vlan"]["strafe"], round(normal * factor * 0.5))
+            order = results["sf-bestellung"]
+            self.assertTrue(order["nachbestellt"])
+        with TempDB() as db:
+            game = self._ready(db)
+            results = self._play(game, wrong=("sf-vlan",))
+            self.assertEqual(results["sf-vlan"]["strafe"], round(normal * factor))
+
+    def test_falsche_bestellung_kostet_aufschlag(self):
+        task = fg.farm_task(fg.FARM_ORDER)
+        with TempDB() as db:
+            game = self._ready(db)
+            _farm_end_day(game)
+            game.farm_start()
+            state = game.state
+            right = fg.farm_evaluate(state, task, fg.farm_solution(task), False, {})
+            wrong = fg.farm_evaluate(state, task, {}, False, {})
+            cheapest = fg.cart_total(task, fg.valid_carts(task)[0])
+            self.assertTrue(wrong["nachbestellt"])
+            self.assertEqual(wrong["kosten"], round(cheapest[0] * 1.15))
+            self.assertEqual(wrong["lieferzeit"], cheapest[1] + 2)
+            self.assertLessEqual(right["kosten"], wrong["kosten"])
+
+    def test_zuschlag_ueber_20_wird_verhandelt(self):
+        task = fg.farm_task(fg.FARM_OFFER)
+        with TempDB() as db:
+            game = self._ready(db)
+            _farm_end_day(game)
+            game.farm_start()
+            state = game.state
+            high = max(fg.farm_markups())
+            self.assertGreater(high, 20)
+            answer = fg.find_solution(fg.farm_offer_task(high))
+            payload = fg.farm_evaluate(state, task, answer, False, {}, high)
+            self.assertTrue(payload["richtig"])
+            self.assertTrue(payload["verhandelt"])
+            self.assertEqual(payload["vereinbart"], 20)
+            fair = fg.farm_evaluate(state, task, fg.find_solution(fg.farm_offer_task(20)),
+                                    False, {}, 20)
+            self.assertEqual(payload["netto"], fair["netto"])
+            self.assertIn("verhandelt", fg.farm_result_text(state, payload)[1])
+            with self.assertRaises(ValueError):
+                game.farm_solve(fg.FARM_OFFER, answer, False, 17)
+            # Hoechstens 3 Aufgaben am Tag
+            for item in fg.farm_tasks("angebot"):
+                game.farm_solve(item["id"], _farm_answer(item), False,
+                                15 if item["typ"] == fg.FARM_OFFER_TYPE else None)
+            self.assertEqual(fg.farm_today_count(game.state), 3)
+
+    def test_team_ist_exklusiv(self):
+        with TempDB() as db:
+            game = self._ready(db)
+            _farm_end_day(game)
+            game.farm_start()
+            staff = [item["id"] for item in game.state.staff_list()]
+            game.farm_set_team(staff[:2])
+            state = game.state
+            self.assertEqual(state.farm_team(), staff[:2])
+            listed = {item["id"]: item for item in state.staff_list()}
+            self.assertTrue(listed[staff[0]]["serverfarm"])
+            self.assertEqual(listed[staff[0]]["umsatz"], 0)
+            self.assertGreater(listed[staff[2]]["umsatz"], 0)
+            tickets = state.customer_tickets()
+            if tickets:
+                options = {item["an"]: item for item in
+                           fg.ticket_candidates(state, tickets[0], game.knowledge())}
+                self.assertEqual(options[staff[0]]["problem"],
+                                 fg.FARM_BUSY_TEXT % listed[staff[0]]["name"])
+            with self.assertRaises(ValueError):
+                game.farm_set_team(staff * 2 + ["x"])
+            game.farm_toggle_member(staff[0])
+            self.assertEqual(game.state.farm_team(), [staff[1]])
+
+    def test_alte_spielstaende_bleiben_gleich(self):
+        """Ohne die Serverfarm-Inhalte (Stand 0.51) ergibt derselbe Spielstand
+        dasselbe Ergebnis - solange die Bedingungen nicht erfuellt sind."""
+        old = copy.deepcopy(self.content)
+        del old["serverfarm"]
+        del old["balancing"]["serverfarm"]
+        with TempDB() as db:
+            game = self._ready(db, certs=("iso27001",))
+            for _ in range(5):
+                _farm_end_day(game)
+            new_state = fg.Game(db, "PC", self.content).state
+            old_state = fg.Game(db, "PC", old).state
+            self.assertEqual(_state_snapshot(new_state), _state_snapshot(old_state))
+            self.assertIsNone(new_state.farm_unlocked)
+
+    def test_meilenstein_und_karte(self):
+        rule = fg.achievement_rule("serverfarm_normal")
+        self.assertEqual(rule["stufen"][0].get("moment", rule.get("moment")) is not None,
+                         True)
+        with TempDB() as db:
+            game = self._ready(db)
+            self._play(game)
+            state = game.state
+            info = fg.unlock_info(state, rule, 1, [])
+            shapes, width, height = fg.moment_shapes(info, state)
+            self.assertTrue(shapes)
+            place = next(item for item in fg.map_places(state) if item["id"] == fg.FARM_PLACE)
+            self.assertIn("in Betrieb", fg.farm_place_text(state))
+            self.assertEqual(place["zahl"], 0)
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
