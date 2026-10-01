@@ -3139,7 +3139,8 @@ class GebaeudeAusbauTest(unittest.TestCase):
         self.assertGreater(staggered["Besprechungsraum"], staggered["Lager"])
         self.assertGreater(staggered["Büro 4"], staggered["Büro 5"])
         self.assertEqual(staggered["Büro 2"], flat["Büro 2"])
-        # Ein Name direkt ueber einem Schild unten faellt in der kleinen Ansicht weg
+        # Ein Name direkt ueber einem Schild unten steht in der kleinen Ansicht
+        # ueber der Figur (bis 0.52 fiel er weg, siehe Spiel053Test)
         content["kollegen"] = [{"id": "leon", "name": "Leon", "platz": [24.5, 12.85]},
                                {"id": "jan", "name": "Jan", "platz": [24.5, 9.95]}]
         def people(stagger):
@@ -3147,7 +3148,7 @@ class GebaeudeAusbauTest(unittest.TestCase):
                     fg.building_shapes(content=content, stagger=stagger)
                     if shape["k"] == "text" and shape["role"] == "person"]
         self.assertEqual(len(people(False)), 2)
-        self.assertEqual(len(people(True)), 1)
+        self.assertEqual(len(people(True)), 2)
 
     def test_nebenkosten(self):
         with TempDB() as db:
@@ -6708,6 +6709,203 @@ class ServerfarmTest(unittest.TestCase):
             place = next(item for item in fg.map_places(state) if item["id"] == fg.FARM_PLACE)
             self.assertIn("in Betrieb", fg.farm_place_text(state))
             self.assertEqual(place["zahl"], 0)
+
+
+class Spiel053Test(unittest.TestCase):
+    """Behebungen 0.53 im Spiel: Hellmodus-Schriftfarben, Namen in der kleinen
+    Gebaeude-Ansicht, Einzahl/Mehrzahl, geschuetztes Leerzeichen vor dem Euro."""
+
+    def setUp(self):
+        import fisi_theme
+        self.theme = fisi_theme
+        self.old_mode = fisi_theme.current_mode
+
+    def tearDown(self):
+        self.theme.apply_mode(self.old_mode)
+
+    def _surfaces(self):
+        return [self.theme.C[key] for key in self.theme.LIGHT_SURFACES]
+
+    def test_hellmodus_name_der_figur_lesbar(self):
+        self.theme.apply_mode(self.theme.MODE_DARK)
+        for key, ring in fg.RING_COLORS.items():
+            shapes = fg.player_shapes(fg.start_position(), ("Nico", {"kreis": key}))
+            self.assertEqual(shapes[-1]["color"], ring)     # Dunkel unveraendert
+        self.theme.apply_mode(self.theme.MODE_LIGHT)
+        for content in (None, fg.site_content(fg.SITE_HOME, fg.GameState([]))):
+            floors = fg._floor_colors(content)
+            for key, ring in fg.RING_COLORS.items():
+                shapes = fg.player_shapes(fg.start_position(), ("Nico", {"kreis": key}),
+                                          content=content)
+                self.assertEqual(shapes[0]["line"], ring)    # Kreis bleibt
+                color = shapes[-1]["color"]
+                for surface in self._surfaces() + floors:
+                    self.assertGreaterEqual(self.theme.contrast(color, surface), 4.5,
+                                            (key, color, surface))
+
+    def test_hellmodus_stufenfarben_als_schrift(self):
+        self.theme.apply_mode(self.theme.MODE_DARK)
+        for key, color in fg.TIER_COLORS.items():
+            self.assertEqual(fg.tier_text_color(key), color)
+        self.assertEqual(fg.tier_text_color(None), self.theme.C["muted"])
+        self.theme.apply_mode(self.theme.MODE_LIGHT)
+        for key in fg.TIER_COLORS:
+            color = fg.tier_text_color(key)
+            for surface in self._surfaces():
+                self.assertGreaterEqual(self.theme.contrast(color, surface), 4.5,
+                                        (key, color, surface))
+        self.assertEqual(fg.TIER_COLORS["silber"], "#D5DCE8")   # Ring/Rahmen bleiben
+
+    def test_name_unter_versetztem_schild_steht_ueber_der_figur(self):
+        content = _content()
+        building = content["firma"]["gebaeude"]["stufen"][4]["gebaeude"]
+        content = dict(content, gebaeude=building,
+                       kollegen=[{"id": "leon", "name": "Leon Abel", "platz": [24.5, 12.85]},
+                                 {"id": "jan", "name": "Jan Bach", "platz": [24.5, 9.95]}])
+
+        def names(quests=None):
+            return {shape["text"]: shape["y"] for shape in
+                    fg.building_shapes(content=content, stagger=True, quests=quests)
+                    if shape["k"] == "text" and shape["role"] == "person"}
+        shown = names()
+        self.assertEqual(len(shown), 2)
+        leon = fg.short_name(content["kollegen"][0])
+        jan = fg.short_name(content["kollegen"][1])
+        self.assertLess(shown[leon], 12.85)            # ueber der Figur
+        self.assertGreater(shown[jan], 9.95)           # sonst wie bisher darunter
+        # mit offenem Auftrag noch ueber dem "!"
+        self.assertLess(names({"leon"})[leon], 12.85 - 1.15)
+
+    def test_einzahl_und_mehrzahl(self):
+        self.assertIn("Lieferung in 1 Arbeitstag",
+                      fg.inquiry_status_text({"menge": 2, "einkaufspreis": 100,
+                                              "lieferzeit": 1}))
+        self.assertIn("Lieferung in 3 Arbeitstagen",
+                      fg.inquiry_status_text({"menge": 2, "einkaufspreis": 100,
+                                              "lieferzeit": 3}))
+        task = copy.deepcopy(_task("ram-leitstelle"))
+        for offer in task["angebote"]:
+            offer["lieferzeit"] = 1
+        task["frist"] = 0
+        problems = fg.order_problems(task, {"a3": 2})
+        self.assertIn("Zu spät: Die Ware braucht 1 Arbeitstag, die Frist ist 0.", problems)
+        task = next(t for t in fg.GAME["aufgaben"] if t["typ"] == "zuordnung")
+        answer = dict(fg.find_solution(task))
+        del answer[next(iter(answer))]
+        payload = fg.evaluate(task, answer, False, topic_levels(100), 7)
+        self.assertIn("1 Zuordnung stimmt nicht.", fg.result_text(task, payload))
+        payload["fehler"] = 2
+        self.assertIn("2 Zuordnungen stimmen nicht.", fg.result_text(task, payload))
+        content = _content()
+        content["firma"]["filiale"]["anfragen_plus"] = 2
+        self.assertIn("+2 Kundenanfragen pro Tag", fg.branch_effect_text(content))
+        content["firma"]["filiale"]["anfragen_plus"] = 1
+        self.assertIn("+1 Kundenanfrage pro Tag", fg.branch_effect_text(content))
+
+    def test_so_lange(self):
+        text = fg.pressure_text({"aktiv": True, "gewonnen": 3, "angebote": 4, "minus": 2,
+                                 "faktor": 0.5})
+        self.assertIn("zählt so lange nur halb", text)
+
+    def test_euro_in_ausgangsdaten_nicht_allein_umbrechen(self):
+        self.assertEqual(fg._euro(48000), "48.000,00 €")          # unveraendert
+        lines = fg.form_given(fg.farm_offer_task(15))
+        self.assertTrue(any(" €" in line for line in lines), lines)
+        self.assertFalse(any(" €" in line for line in lines), lines)
+
+    def test_cpu_beschriftung_kurz(self):
+        for item in fg.fit_parts("cpu"):
+            text = fg.fit_part_text(item)
+            self.assertTrue(text.startswith("CPU %d Kerne · " % item["kerne"]), text)
+            self.assertLessEqual(len(text), 26, text)
+
+
+@unittest.skipUnless(_display_available(), "braucht ein Tk-Fenster (Bildschirm)")
+class Spiel053OberflaecheTest(unittest.TestCase):
+    """Reiter in Firma und Reise (ab 0.53): Ein schon gebauter Reiter wird beim
+    Zurueckwechseln wieder eingeblendet, solange sich nichts geaendert hat."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = tempfile.mkdtemp()
+        os.environ["FISI_DB_PATH"] = os.path.join(cls.folder, "test.db")
+        os.environ["FISI_SELFTEST"] = os.path.join(cls.folder, "log.txt")
+        os.environ["HOME"] = cls.folder
+        import customtkinter as ctk
+        import app_gui
+        import fisi_widgets
+        # Bilder einer frueheren Tk-Wurzel (andere GUI-Testklasse) nicht wiederverwenden
+        fisi_widgets._PHOTO_CACHE.clear()
+        fisi_widgets._IMAGE_CACHE.clear()
+        app_gui.apply_appearance()
+        cls.root = ctk.CTk()
+        cls.app = app_gui.FISIApp(cls.root)
+        cls.root.geometry("1360x900+0+0")
+        cls.pump()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except Exception:
+            pass
+        import fisi_widgets
+        fisi_widgets._PHOTO_CACHE.clear()
+        fisi_widgets._IMAGE_CACHE.clear()
+        shutil.rmtree(cls.folder, ignore_errors=True)
+
+    @classmethod
+    def pump(cls, times=8):
+        for _ in range(times):
+            cls.root.update_idletasks()
+            cls.root.update()
+
+    @staticmethod
+    def texts(widget):
+        """Alle sichtbaren Beschriftungen unter widget (in Baumreihenfolge)."""
+        out, stack = [], [widget]
+        while stack:
+            item = stack.pop(0)
+            try:
+                text = item.cget("text")
+                if isinstance(text, str) and text:
+                    out.append(text)
+            except Exception:
+                pass
+            stack.extend(child for child in item.winfo_children() if child.winfo_manager())
+        return out
+
+    def test_reise_reiter_wiederverwendet(self):
+        app = self.app
+        app.show_view("game")
+        self.pump()
+        game = app.views["game"].game
+        if game.state.profile is None:
+            game.set_profile("Test", {})
+        app.show_view("reise")
+        self.pump()
+        view = app.views["reise"]
+        view.open_tab("rueckblick")
+        self.pump()
+        first = view._tab_body
+        fresh = self.texts(view.content)
+        view.open_tab("erfolge")
+        self.pump()
+        self.assertIsNot(view._tab_body, first)
+        self.assertEqual(view._tab_row.value, "erfolge")
+        view.open_tab("rueckblick")
+        self.pump()
+        self.assertIs(view._tab_body, first)               # wieder eingeblendet
+        self.assertEqual(self.texts(view.content), fresh)  # sieht gleich aus
+        self.assertEqual(view._tab_row.value, "rueckblick")
+        # Kommt ein Ereignis dazu, wird der Reiter neu gebaut
+        game._log(fg.EV_DAY_END, {"tag": game.state.day, "gehalt": 0})
+        game.reload()
+        view.open_tab("erfolge")
+        view.open_tab("rueckblick")
+        self.pump()
+        self.assertIsNot(view._tab_body, first)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

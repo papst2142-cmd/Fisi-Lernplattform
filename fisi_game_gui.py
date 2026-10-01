@@ -17,7 +17,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 import fisi_game as fg
-from fisi_core import CATEGORY_SHORT
+from fisi_core import CATEGORY_SHORT, plural
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 from fisi_widgets import (
     Card, GradientBar, LineChart, NeoButton, OptionList, ScrollArea, F,
@@ -170,7 +170,7 @@ def decision_box(parent, decision, on_choose, wraplength=900):
                    fg=C["yellow"] if option["problem"] else C["text_dim"],
                    wraplength=wraplength - 230, justify="left", anchor="w").pack(
             side="left", padx=(12, 0))
-    _frame(box, height=10).pack()
+    _frame(box, height=8).pack(pady=(0, 2))
     return box
 
 
@@ -187,7 +187,7 @@ def market_box(parent, lines, wraplength=900):
             anchor="w", padx=14, pady=(4, 0))
         make_label(box, text, font=F["tiny"], fg=C["text_dim"], wraplength=wraplength,
                    justify="left", anchor="w").pack(anchor="w", padx=14)
-    _frame(box, height=10).pack()
+    _frame(box, height=8).pack(pady=(0, 2))
     return box
 
 
@@ -1121,7 +1121,7 @@ class RackBoard(ctk.CTkFrame):
         for line in lines[1:]:
             make_label(head, line, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
                 anchor="w", padx=14, pady=(4, 0))
-        _frame(head, height=10).pack()
+        _frame(head, height=8).pack(pady=(0, 2))
 
         grid = _frame(self)
         grid.pack(fill="x", pady=(14, 0))
@@ -1467,7 +1467,7 @@ class FormBoard(ctk.CTkFrame):
         for line in lines:
             make_label(head, line, font=F["body_bold"], fg=C["text"], anchor="w").pack(
                 anchor="w", padx=14)
-        _frame(head, height=10).pack()
+        _frame(head, height=8).pack(pady=(0, 2))
 
         box = _frame(self)
         box.pack(fill="x", pady=(14, 0))
@@ -1803,7 +1803,7 @@ class ExchangePanel(ctk.CTkFrame):
         kind = fg.spare_kinds().get(exchange["typ"], "Ersatzteil")
         make_label(self, "AUSTAUSCH: %s" % kind.upper(), font=F["label"],
                    fg=C["muted"]).pack(anchor="w", pady=(16, 2))
-        make_label(self, "Wähle ein Teil aus dem Lager. Fehlt das passende, bestelle es "
+        make_label(self, "Wähle ein Teil aus dem Lager. Fehlt das Passende, bestelle es "
                    "nach: Es kommt am nächsten Arbeitstag, bis dahin wartet das Ticket.",
                    font=F["small"], fg=C["text_dim"], wraplength=940, justify="left",
                    anchor="w").pack(anchor="w", pady=(0, 6))
@@ -2054,6 +2054,84 @@ class ReusableView:
     def _mark_stale(self):
         """Beim naechsten Anzeigen sicher neu zeichnen."""
         self._rendered = None
+
+
+def _has_input(widget):
+    """Enthaelt der Rahmen ein Eingabefeld (Text koennte halb getippt sein)?"""
+    stack = [widget]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, (tk.Entry, tk.Text, ctk.CTkEntry, ctk.CTkTextbox)):
+            return True
+        stack.extend(item.winfo_children())
+    return False
+
+
+def _base_key(key):
+    """Teil des Render-Schluessels ohne die Felder der Ansicht selbst."""
+    return None if key is None else (key[0], key[1], key[2], key[4])
+
+
+class TabCache:
+    """Ab 0.53 fuer Ansichten mit Reitern (Firma, Reise): Jeder Reiter-Inhalt
+    liegt in einem eigenen Rahmen. Beim Reiterwechsel wird ein schon gebauter
+    Rahmen nur wieder eingeblendet, solange er noch genau so aussehen muesste
+    (gleicher Stempel und gleiche Felder wie bei ReusableView), sonst wird nur
+    der Reiter neu gebaut. Inhalte mit Eingabefeldern werden beim Verlassen
+    verworfen, damit halb Getipptes wie bisher verschwindet. Optik und
+    Verhalten bleiben gleich, der Wechsel geht nur schneller."""
+
+    def _tabs_reset(self):
+        self._tab_frames = {}       # Reiter -> (Render-Schluessel, Rahmen)
+        self._tab_body = None
+        self._tab_row = None
+        self._tab_base = None
+
+    def _tab_build(self, build):
+        outer = self.content
+        body = _frame(outer)
+        body.pack(fill="x")
+        self.content = body
+        try:
+            build()
+        finally:
+            self.content = outer
+        self._tab_body = body
+        self._tab_frames[self.tab] = (self._render_key(), body)
+
+    def _tabs_done(self):
+        self._tab_base = _base_key(self._render_key())
+
+    def _tab_switch(self, build):
+        """Wechselt auf self.tab ohne kompletten Neuaufbau. False, wenn das
+        nicht geht (dann baut der Aufrufer wie bisher alles neu)."""
+        body = getattr(self, "_tab_body", None)
+        base = getattr(self, "_tab_base", None)
+        if body is None or base is None or self._tab_row is None or not body.winfo_exists():
+            return False
+        key = self._render_key()
+        if key is None or _base_key(key) != base:
+            return False
+        body.pack_forget()
+        if _has_input(body):
+            for tab, (_key, frame) in list(self._tab_frames.items()):
+                if frame is body:
+                    del self._tab_frames[tab]
+            body.destroy()
+        cached = self._tab_frames.get(self.tab)
+        if cached is not None and cached[0] == key and cached[1].winfo_exists():
+            cached[1].pack(fill="x")
+            self._tab_body = cached[1]
+        else:
+            if cached is not None:
+                cached[1].destroy()
+            self._tab_build(build)
+        if self._tab_row.value != self.tab:
+            self._tab_row.value = self.tab
+            self._tab_row._paint()
+        self.to_top()
+        return True
+
 
 class GameView(ReusableView, ScrollArea):
     """Ansicht "Lernspiel" in der PC-Version."""
@@ -2574,8 +2652,10 @@ class GameView(ReusableView, ScrollArea):
         else:
             item = None
             tickets = state.todays_tickets()
+            # ab 0.53: mit Firma und ohne Tickets kein "0 von 0 bearbeitet"
             card = Card(self.content, title="Tickets heute", accent=C["accent2"],
-                        subtitle="Arbeitstag %d · %d von %d bearbeitet"
+                        subtitle="Arbeitstag %d" % state.day if state.firm and not tickets
+                        else "Arbeitstag %d · %d von %d bearbeitet"
                         % (state.day, len(state.handled), len(tickets)))
         card.pack(fill="x", pady=(14, 0))
         body = card.body
@@ -2690,7 +2770,7 @@ class GameView(ReusableView, ScrollArea):
             make_label(box, "Das Lager ist leer. Bestellte Ware taucht hier auf, sobald sie "
                        "unterwegs ist.", font=F["small"], fg=C["muted"], anchor="w").pack(
                 anchor="w", padx=14, pady=(10, 0))
-        _frame(box, height=10).pack()
+        _frame(box, height=8).pack(pady=(0, 2))
 
     def _ticket_row(self, parent, task, status):
         person = fg.colleague(task["auftraggeber"])
@@ -3490,8 +3570,9 @@ class FarmView(ReusableView, ScrollArea):
     def _build_acceptance(self, state, info):
         data = info["abnahme"] or {}
         card = Card(self.content, title="Abnahme bestanden", accent=C["green"],
-                    subtitle="Arbeitstag %d · nach %d Arbeitstagen" % (
-                        data.get("tag", 0), data.get("dauer", 0)))
+                    subtitle="Arbeitstag %d · nach %s" % (
+                        data.get("tag", 0), plural(data.get("dauer", 0), "Arbeitstag",
+                                                   "Arbeitstagen")))
         card.pack(fill="x", pady=(14, 0))
         offer = info.get("angebot") or {}
         rows = [("Auftragswert netto", fg._euro(offer.get("netto", 0))),
@@ -3694,7 +3775,7 @@ class FarmView(ReusableView, ScrollArea):
                     make_label(box, line, font=F["small"], fg=C["text_soft"],
                                wraplength=920, justify="left", anchor="w").pack(
                         anchor="w", padx=14)
-        _frame(box, height=12).pack()
+        _frame(box, height=10).pack(pady=(0, 2))
         links = fg.learn_links(task, limit=5)
         if links:
             learn = Card(self.result_box, title="Passend dazu lernen", accent=C["purple"],
@@ -3749,7 +3830,7 @@ class HomeView(SiteView):
     def SUBTITLE(self):
         if self.editing:
             return "Möbel anklicken zum Auswählen · freie Stelle anklicken zum Aufstellen"
-        return "Klicke irgendwo hin, um dorthin zu gehen · Pfeiltasten gehen auch"
+        return "Klicke irgendwohin, um dorthin zu gehen · Pfeiltasten gehen auch"
 
     def _build_head(self, state):
         row = _frame(self.content)
@@ -4002,7 +4083,7 @@ class HomeView(SiteView):
                                                                            padx=4)
 
 
-class FirmView(ReusableView, ScrollArea):
+class FirmView(TabCache, ReusableView, ScrollArea):
     """Unterpunkt "Firma" (ab 0.33): Gruendung, Mitarbeiter, Bewerbungen,
     Gebaeude und Finanzen. Vor der Gruendung nur die Finanzen und was fuer
     die Gruendung noch fehlt."""
@@ -4049,6 +4130,7 @@ class FirmView(ReusableView, ScrollArea):
     def render(self, keep_scroll=False):
         for child in self.content.winfo_children():
             child.destroy()
+        self._tabs_reset()
         state = self.game.state
         if state.profile is None:
             card = Card(self.content, title="Firma", accent=C["accent"])
@@ -4066,17 +4148,23 @@ class FirmView(ReusableView, ScrollArea):
         if self.tab not in dict(tabs):
             self.tab = tabs[0][0]
         if len(tabs) > 1:
-            ChoiceRow(self.content, tabs, self.tab, self._choose,
-                      per_row=5 if len(tabs) > 7 else None).pack(anchor="w", pady=(14, 0))
-        getattr(self, "_build_" + self.tab)(state)
+            self._tab_row = ChoiceRow(self.content, tabs, self.tab, self._choose,
+                                      per_row=5 if len(tabs) > 7 else None)
+            self._tab_row.pack(anchor="w", pady=(14, 0))
+        self._tab_build(self._build_tab)
+        self._tabs_done()
         if not keep_scroll:
             self.to_top()
+
+    def _build_tab(self):
+        getattr(self, "_build_" + self.tab)(self.game.state)
 
     def _choose(self, tab):
         self.tab = tab
         self.training_for = self.training_cat = None
         self.offer_for = self.assign_for = self.team_for = None
-        self.render()
+        if not self._tab_switch(self._build_tab):
+            self.render()
 
     def open_tab(self, tab):
         """Von aussen (Spieluebersicht) direkt einen Reiter oeffnen."""
@@ -4192,8 +4280,9 @@ class FirmView(ReusableView, ScrollArea):
         limits = fg.ticket_rules()
         make_label(box.body, "Verteile die Tickets an deine Leute oder übernimm selbst "
                    "welche (höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
-                   "%d Ticket pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
-                   % (limits["spieler_max"], limits["mitarbeiter_max"]), font=F["small"],
+                   "%s pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
+                   % (limits["spieler_max"],
+                      plural(limits["mitarbeiter_max"], "Ticket", "Tickets")), font=F["small"],
                    fg=C["text_dim"], wraplength=980, justify="left", anchor="w").pack(
             anchor="w", pady=(0, 6))
         levels = self.game.firm_levels()
@@ -4233,7 +4322,7 @@ class FirmView(ReusableView, ScrollArea):
                            justify="left", anchor="w").pack(anchor="w", padx=14)
         elif self.offer_for == inquiry["id"]:
             self._build_calc(row, inquiry)
-        _frame(row, height=10).pack()
+        _frame(row, height=8).pack(pady=(0, 2))
 
     def _build_calc(self, parent, inquiry, project=False):
         rules = fg.offer_rules()
@@ -4398,8 +4487,8 @@ class FirmView(ReusableView, ScrollArea):
 
         rules = fg.project_rules()
         box = Card(self.content, title="Ausschreibungen", accent=C["pink"],
-                   subtitle="Angebote gegen die Mitbewerber · alle %d Arbeitstage eine neue"
-                   % rules["abstand_tage"])
+                   subtitle="Angebote gegen die Mitbewerber · alle %s eine neue"
+                   % plural(rules["abstand_tage"], "Arbeitstag", "Arbeitstage"))
         box.pack(fill="x", pady=(14, 0))
         make_label(box.body, "Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte "
                    "× %s) plus Material, dazu Handlungskosten und dein Zuschlag. Bei Projekten "
@@ -4826,7 +4915,8 @@ class FirmView(ReusableView, ScrollArea):
         free = state.capacity - len(state.staff)
         rules = fg.firm_rules()["bewerbung"]
         card = Card(self.content, title="Bewerbungen", accent=C["pink"],
-                    subtitle="alle %d Arbeitstage neue Bewerbungen" % rules["abstand_tage"])
+                    subtitle="alle %s neue Bewerbungen" % plural(
+                        rules["abstand_tage"], "Arbeitstag", "Arbeitstage"))
         card.pack(fill="x", pady=(14, 0))
         make_label(card.body, "Freie Plätze: %d von %d. Gehalt und Umsatz richten sich nach "
                    "den Werten je Fachbereich." % (max(0, free), state.capacity),
@@ -5592,7 +5682,7 @@ class MilestoneMoment(tk.Frame):
         badge_canvas(body, info["bild"], info["farbe"], info["tier"], size=104,
                      bg=C["card"]).pack(pady=(10, 4))
         make_label(body, "MEILENSTEIN · %s" % info["tier_name"].upper(), font=F["label"],
-                   fg=color).pack()
+                   fg=fg.tier_text_color(info["tier"])).pack()
         make_label(body, info["name"], font=F["h1"], fg=C["text"]).pack(pady=(2, 0))
         make_label(body, info["text"], font=F["body"], fg=C["text_dim"], wraplength=px(480),
                    justify="center").pack(pady=(4, 0))
@@ -5643,6 +5733,13 @@ def show_badge_toast(root, text, delay=4500):
     return toast
 
 
+def _wrap_to(label, width):
+    """Umbruchbreite eines Labels an die tatsaechliche Breite anpassen (ab 0.53)."""
+    wrap = max(1, int(width / label._get_widget_scaling()))
+    if label.cget("wraplength") != wrap:
+        label.configure(wraplength=wrap)
+
+
 JOURNEY_TABS = [("rueckblick", "Rückblick"), ("erfolge", "Erfolge")]
 BADGE_COLUMNS = 3
 
@@ -5652,7 +5749,7 @@ def tier_color(key):
     return fg.TIER_COLORS.get(key, C["muted"])
 
 
-class JourneyView(ReusableView, ScrollArea):
+class JourneyView(TabCache, ReusableView, ScrollArea):
     """Unterpunkt "Reise": Reiter "Rueckblick" (Statistik und Tagebuch der
     wichtigsten Momente) und ab 0.46 "Erfolge" (Bestwerte ueber alle
     Spielstaende und Abzeichen) - alles aus dem Ereignisprotokoll berechnet."""
@@ -5683,7 +5780,8 @@ class JourneyView(ReusableView, ScrollArea):
 
     def open_tab(self, tab):
         self.tab = tab
-        self.render()
+        if not self._tab_switch(self._build_tab):
+            self.render()
 
     def refresh(self):
         self.on_show()
@@ -5691,6 +5789,7 @@ class JourneyView(ReusableView, ScrollArea):
     def render(self, keep_scroll=False):
         for child in self.content.winfo_children():
             child.destroy()
+        self._tabs_reset()
         state = self.game.state
         if state.profile is None:
             card = Card(self.content, title="Reise", accent=C["accent"])
@@ -5700,8 +5799,15 @@ class JourneyView(ReusableView, ScrollArea):
             NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
                       kind="primary").pack(anchor="w", pady=(12, 0))
             return
-        ChoiceRow(self.content, JOURNEY_TABS, self.tab, self._choose_tab).pack(
-            anchor="w", pady=(0, 12))
+        self._tab_row = ChoiceRow(self.content, JOURNEY_TABS, self.tab, self._choose_tab)
+        self._tab_row.pack(anchor="w", pady=(0, 12))
+        self._tab_build(self._build_tab)
+        self._tabs_done()
+        if not keep_scroll:
+            self.to_top()
+
+    def _build_tab(self):
+        state = self.game.state
         if self.tab == "erfolge":
             self._build_records(state)
             self._build_badges(state)
@@ -5710,12 +5816,9 @@ class JourneyView(ReusableView, ScrollArea):
             self._build_numbers(state, stats)
             self._build_charts(stats)
             self._build_diary(state)
-        if not keep_scroll:
-            self.to_top()
 
     def _choose_tab(self, tab):
-        self.tab = tab
-        self.render()
+        self.open_tab(tab)
 
     # -- Erfolge (ab 0.46) ----------------------------------------------------
 
@@ -5774,10 +5877,15 @@ class JourneyView(ReusableView, ScrollArea):
                      bg=C["card_alt"]).pack(side="left")
         info = _frame(top)
         info.pack(side="left", fill="x", expand=True, padx=(12, 0))
-        make_label(info, "???" if item["geheim"] else item["name"], font=F["body_bold"],
-                   fg=C["text"] if tier else C["text_dim"], anchor="w").pack(anchor="w")
+        name = make_label(info, "???" if item["geheim"] else item["name"], font=F["body_bold"],
+                          fg=C["text"] if tier else C["text_dim"], wraplength=200,
+                          justify="left", anchor="w")
+        name.pack(anchor="w")
+        # ab 0.53: lange Namen in schmalen Kacheln umbrechen statt abschneiden
+        info.bind("<Configure>", lambda event, label=name: _wrap_to(label, event.width),
+                  add="+")
         status, color = fg.badge_status(item)
-        make_label(info, status, font=F["small_bold"], fg=tier_color(color),
+        make_label(info, status, font=F["small_bold"], fg=fg.tier_text_color(color),
                    wraplength=200, justify="left", anchor="w").pack(anchor="w")
         if item["naechste"] and item["balken"] and not item["geheim"]:
             bar = ctk.CTkProgressBar(info, height=6, corner_radius=3, fg_color=C["border"],
