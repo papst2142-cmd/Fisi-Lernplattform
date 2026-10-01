@@ -38,7 +38,8 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
               "diagnose": "Bitte wähle Ursache und Maßnahme.",
               "austausch": "Bitte wähle Ursache, Maßnahme, Ersatzteil und Ablauf.",
-              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss."}
+              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss.",
+              "bestueckung": "Bitte wähle für jeden Server alle Teile und das RAID-Level."}
 # Beschriftung "Zurueck ..." je nachdem, wo ein Auftrag angenommen wurde
 RETURN_LABEL = {"buero": "Zurück ins Büro", "kunde": "Zurück zum Kunden"}
 AXIS_GRADIENT = {"fachkompetenz": (C["cyan"], "#6366F1"),
@@ -949,13 +950,156 @@ class OrderBoard(ctk.CTkFrame):
                 row.configure(border_color=C["green"] if right else C["red"])
 
 
-class RackBoard(ctk.CTkFrame):
-    """Serverschrank bestuecken: links ein Geraet waehlen, rechts im Schrank
-    die Hoeheneinheit anklicken, in der es unten sitzen soll. Ein Klick auf
-    ein eingebautes Geraet waehlt es aus (zum Versetzen oder Ausbauen)."""
+_FONT_CACHE = {}
 
-    UNIT = 26          # Hoehe einer HE in Pixeln (bei 100 % Skalierung)
-    NUMBERS = 40       # Spalte fuer die HE-Nummern
+
+def _elide(text, font, width):
+    """Text auf eine Breite kuerzen (mit …), damit er in einer Zeile bleibt."""
+    if font not in _FONT_CACHE:
+        _FONT_CACHE[font] = tkfont.Font(font=font)
+    measure = _FONT_CACHE[font].measure
+    if measure(text) <= width:
+        return text
+    while text and measure(text + "…") > width:
+        text = text[:-1]
+    return text.rstrip() + "…"
+
+
+def rack_unit_px(size):
+    """Hoehe einer HE in Pixeln: kleine Schraenke gross, 42 HE kompakt."""
+    if size <= 14:
+        return px(26)
+    if size <= 24:
+        return px(20)
+    return px(15)
+
+
+def draw_rack(canvas, task, answer, unit, current=None, hover=None, locked=False,
+              marked=None):
+    """Zeichnet einen Serverschrank (gemeinsam fuer Rack-Auftraege und die
+    Bestueckung). marked: Plaetze, die hervorgehoben werden (Bestueckung)."""
+    canvas.delete("all")
+    size = task["schrank"]["he"]
+    devices = task["geraete"]
+    width = max(canvas.winfo_width(), px(180))
+    top = px(8)
+    x1, x2 = px(34), width - px(8)
+    rounded_rect(canvas, x1 - px(6), top - px(6), x2 + px(6), top + unit * size + px(6),
+                 px(8), fill="#1E1A30", outline="#5B5480", width=2)
+    small = tk_font(F["tiny"])
+    for index in range(size):
+        number = size - index
+        y = top + index * unit
+        canvas.create_rectangle(x1, y + 1, x2, y + unit - 1, fill="#2A2442", outline="")
+        if size <= 24 or number % 2 == 1:
+            canvas.create_text(x1 - px(10), y + unit / 2, text=str(number), fill=C["muted"],
+                               font=small, anchor="e")
+    # Vorschau: wo das gewaehlte Geraet landen wuerde
+    if hover and current is not None and not locked:
+        item = fg.rack_device(devices[current])
+        y_bottom = top + (size - hover + 1) * unit
+        y_top = y_bottom - item["he"] * unit
+        canvas.create_rectangle(x1 + 2, max(top, y_top) + 2, x2 - 2, y_bottom - 2,
+                                outline=C["purple"], width=2, dash=(4, 3))
+    font = tk_font(F["small_bold"] if unit >= px(18) else F["tiny"])
+    for key, bottom in sorted((answer or {}).items(), key=lambda row: row[1]):
+        index = int(key)
+        item = fg.rack_device(devices[index])
+        color = fg.RACK_COLORS[item["typ"]]
+        y_bottom = top + (size - int(bottom) + 1) * unit
+        y_top = y_bottom - item["he"] * unit
+        if y_top < top:
+            y_top = top - px(4)
+            color = C["red"]
+        selected = (index == current and not locked) or (marked and index in marked)
+        rounded_rect(canvas, x1 + 3, y_top + 2, x2 - 3, y_bottom - 2, px(4),
+                     fill=mix(C["card"], color, 0.55 if selected else 0.35),
+                     outline=color, width=2 if selected else 1)
+        canvas.create_oval(x2 - px(16), (y_top + y_bottom) / 2 - px(3), x2 - px(10),
+                           (y_top + y_bottom) / 2 + px(3), fill=C["green"], outline="")
+        canvas.create_text(x1 + px(8), (y_top + y_bottom) / 2,
+                           text=_elide(item["name"], font, x2 - x1 - px(30)),
+                           fill=C["text"], font=font, anchor="w")
+
+
+def rack_unit_at(task, unit, y):
+    size = task["schrank"]["he"]
+    index = int((y - px(8)) // unit)
+    if 0 <= index < size:
+        return size - index
+    return None
+
+
+class RackValues(ctk.CTkFrame):
+    """Rechte Spalte der Rack-Ansicht (ab 0.52): Balken (HE, Strom, Kuehlung,
+    Gewicht, Kosten) und Vorgaben mit Haken. Die Zahlen kommen aus
+    fisi_game (rack_bars/rack_checks, fit_bars/fit_values)."""
+
+    def __init__(self, parent, title="VORGABEN"):
+        super().__init__(parent, fg_color="transparent")
+        make_label(self, "WERTE", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.bar_box = _frame(self)
+        self.bar_box.pack(fill="x", pady=(4, 0))
+        make_label(self, title, font=F["label"], fg=C["muted"]).pack(anchor="w", pady=(12, 0))
+        self.check_box = _frame(self)
+        self.check_box.pack(fill="x", pady=(4, 0))
+        self._bars = {}
+        self._checks = None
+
+    def update_values(self, bars, checks):
+        seen = set()
+        for bar in bars:
+            seen.add(bar["id"])
+            color = C["red"] if bar["zu_viel"] else (
+                C["yellow"] if bar["anteil"] >= 0.9 else C["green"])
+            widgets = self._bars.get(bar["id"])
+            if widgets is None:
+                row = _frame(self.bar_box)
+                row.pack(fill="x", pady=(4, 0))
+                head = _frame(row)
+                head.pack(fill="x")
+                name = make_label(head, bar["name"], font=F["small"], fg=C["text_dim"],
+                                  anchor="w")
+                name.pack(side="left")
+                note = make_label(head, "", font=F["small_bold"], fg=C["text"], anchor="e")
+                note.pack(side="right")
+                lane = ctk.CTkFrame(row, height=8, corner_radius=4, fg_color=C["ring_bg"])
+                lane.pack(fill="x", pady=(3, 0))
+                fill = ctk.CTkFrame(lane, height=8, corner_radius=4, fg_color=color)
+                widgets = self._bars[bar["id"]] = (row, note, lane, fill)
+            _row, note, _lane, fill = widgets
+            note.configure(text=bar["text"], text_color=C["red"] if bar["zu_viel"] else C["text"])
+            fill.configure(fg_color=color)
+            if bar["anteil"] > 0:
+                fill.place(relx=0, rely=0, relwidth=max(0.03, min(1.0, bar["anteil"])),
+                           relheight=1.0)
+            else:
+                fill.place_forget()
+        for key in list(self._bars):
+            if key not in seen:
+                self._bars.pop(key)[0].destroy()
+        signature = [(item["text"], item["ok"]) for item in checks]
+        if signature == self._checks:
+            return
+        self._checks = signature
+        for child in self.check_box.winfo_children():
+            child.destroy()
+        for text, ok in signature:
+            row = _frame(self.check_box)
+            row.pack(fill="x", pady=1)
+            make_label(row, "✓" if ok else "✗", font=F["body_bold"],
+                       fg=C["green"] if ok else C["red"], width=18).pack(side="left",
+                                                                         anchor="n")
+            make_label(row, text, font=F["small"], fg=C["text_soft"] if ok else C["text"],
+                       anchor="w", justify="left", wraplength=330).pack(side="left", fill="x",
+                                                                        padx=(4, 0))
+
+
+class RackBoard(ctk.CTkFrame):
+    """Rack-Ansicht (ab 0.52, ersetzt die bisherige): links der Schrank, in
+    der Mitte die Geraete, rechts Werte und Vorgaben mit Haken. Geraet waehlen,
+    dann im Schrank die Hoeheneinheit anklicken, in der es unten sitzen soll.
+    Ein Klick auf ein eingebautes Geraet waehlt es aus (Versetzen, Ausbauen)."""
 
     def __init__(self, parent, task):
         super().__init__(parent, fg_color="transparent")
@@ -971,11 +1115,9 @@ class RackBoard(ctk.CTkFrame):
         head = ctk.CTkFrame(self, fg_color=C["card_alt"], corner_radius=12, border_width=1,
                             border_color=C["border"])
         head.pack(fill="x")
-        make_label(head, "SCHRANK", font=F["label"], fg=C["muted"]).pack(anchor="w", padx=14,
-                                                                         pady=(10, 2))
         lines = fg.rack_header(task)
         make_label(head, lines[0], font=F["body_bold"], fg=C["text"], anchor="w").pack(
-            anchor="w", padx=14)
+            anchor="w", padx=14, pady=(10, 0))
         for line in lines[1:]:
             make_label(head, line, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
                 anchor="w", padx=14, pady=(4, 0))
@@ -983,19 +1125,30 @@ class RackBoard(ctk.CTkFrame):
 
         grid = _frame(self)
         grid.pack(fill="x", pady=(14, 0))
-        grid.columnconfigure(0, weight=3, uniform="rack")
-        grid.columnconfigure(1, weight=2, uniform="rack")
-        make_label(grid, "1. GERÄT WÄHLEN", font=F["label"], fg=C["muted"]).grid(
+        for column, weight in enumerate((4, 5, 5)):
+            grid.columnconfigure(column, weight=weight, uniform="rack")
+        make_label(grid, "SCHRANK · HE ANKLICKEN", font=F["label"], fg=C["muted"]).grid(
             row=0, column=0, sticky="w", pady=(0, 6))
-        make_label(grid, "2. HÖHENEINHEIT ANKLICKEN", font=F["label"], fg=C["muted"]).grid(
+        make_label(grid, "GERÄTE · ERST WÄHLEN", font=F["label"], fg=C["muted"]).grid(
             row=0, column=1, sticky="w", pady=(0, 6), padx=(12, 0))
         left = _frame(grid)
         left.grid(row=1, column=0, sticky="new")
+        self.unit = rack_unit_px(self.size)
+        self.canvas = tk.Canvas(left, height=self.unit * self.size + px(16), bg=C["card"],
+                                highlightthickness=0, cursor="hand2")
+        self.canvas.pack(fill="x")
+        self.canvas.bind("<Configure>", lambda _e: self._draw_rack())
+        self.canvas.bind("<Motion>", self._motion)
+        self.canvas.bind("<Leave>", lambda _e: self._set_hover(None))
+        self.canvas.bind("<Button-1>", self._click)
+
+        middle = _frame(grid)
+        middle.grid(row=1, column=1, sticky="new", padx=(12, 0))
         self.rows = []
         for index, device_id in enumerate(self.devices):
             item = fg.rack_device(device_id)
-            row, _title, detail, widgets = _pick_row(left, item["name"], fg.rack_specs(item),
-                                                    " ", C["muted"])
+            row, _title, _detail, widgets = _pick_row(middle, item["name"],
+                                                      fg.rack_specs(item), " ", C["muted"])
             row.pack(fill="x", pady=3)
             badge = widgets[3]
             dot = tk.Canvas(row, width=px(6), height=px(6), bg=C["card_alt"],
@@ -1005,31 +1158,13 @@ class RackBoard(ctk.CTkFrame):
             for widget in widgets:
                 widget.bind("<Button-1>", lambda _e, value=index: self.pick_device(value))
             self.rows.append((row, badge, dot))
-        right = _frame(grid)
-        right.grid(row=1, column=1, sticky="new", padx=(12, 0))
-        self.unit = px(self.UNIT if self.size <= 14 else 20)
-        height = self.unit * self.size + px(16)
-        self.canvas = tk.Canvas(right, height=height, bg=C["card"], highlightthickness=0,
-                                cursor="hand2")
-        self.canvas.pack(fill="x")
-        self.canvas.bind("<Configure>", lambda _e: self._draw_rack())
-        self.canvas.bind("<Motion>", self._motion)
-        self.canvas.bind("<Leave>", lambda _e: self._set_hover(None))
-        self.canvas.bind("<Button-1>", self._click)
-        self.remove_button = NeoButton(right, "Gerät ausbauen", self.remove, kind="ghost",
+        self.remove_button = NeoButton(middle, "Gerät ausbauen", self.remove, kind="ghost",
                                        height=30, font=F["small_bold"])
-        self.summary = make_label(self, "", font=F["body_bold"], fg=C["text_soft"], anchor="w")
-        self.summary.pack(anchor="w", pady=(10, 0))
+        self.values = RackValues(grid)
+        self.values.grid(row=0, column=2, rowspan=2, sticky="new", padx=(14, 0))
         self._paint()
 
     # -- Bedienung ----------------------------------------------------------
-
-    def _unit_at(self, y):
-        top = px(8)
-        index = int((y - top) // self.unit)
-        if 0 <= index < self.size:
-            return self.size - index
-        return None
 
     def pick_device(self, index):
         if not self.locked:
@@ -1055,10 +1190,10 @@ class RackBoard(ctk.CTkFrame):
             self._paint()
 
     def _click(self, event):
-        self.place(self._unit_at(event.y))
+        self.place(rack_unit_at(self.task, self.unit, event.y))
 
     def _motion(self, event):
-        self._set_hover(self._unit_at(event.y))
+        self._set_hover(rack_unit_at(self.task, self.unit, event.y))
 
     def _set_hover(self, unit):
         if unit != self.hover:
@@ -1091,58 +1226,222 @@ class RackBoard(ctk.CTkFrame):
             self.remove_button.pack(anchor="w", pady=(8, 0))
         else:
             self.remove_button.pack_forget()
-        text, over = fg.rack_summary(self.task, self.answer)
-        self.summary.configure(text="Belegt: " + text,
-                               text_color=C["yellow"] if over else C["text_soft"])
+        self.values.update_values(fg.rack_bars(self.task, self.answer),
+                                  fg.rack_checks(self.task, self.answer))
         self._draw_rack()
 
     def _draw_rack(self):
-        canvas = self.canvas
-        canvas.delete("all")
-        width = max(canvas.winfo_width(), px(200))
-        unit, top = self.unit, px(8)
-        x1, x2 = self.NUMBERS * width / 400.0 + px(8), width - px(8)
-        rounded_rect(canvas, x1 - px(6), top - px(6), x2 + px(6),
-                     top + unit * self.size + px(6), px(8), fill="#1E1A30",
-                     outline="#5B5480", width=2)
-        small = tk_font(F["tiny"])
-        for index in range(self.size):
-            number = self.size - index
-            y = top + index * unit
-            canvas.create_rectangle(x1, y + 1, x2, y + unit - 1, fill="#2A2442", outline="")
-            canvas.create_text(x1 - px(12), y + unit / 2, text=str(number), fill=C["muted"],
-                               font=small, anchor="e")
-        # Vorschau: wo das gewaehlte Geraet landen wuerde
-        if self.hover and self.current is not None and not self.locked:
-            item = fg.rack_device(self.devices[self.current])
-            y_bottom = top + (self.size - self.hover + 1) * unit
-            y_top = y_bottom - item["he"] * unit
-            canvas.create_rectangle(x1 + 2, max(top, y_top) + 2, x2 - 2, y_bottom - 2,
-                                    outline=C["purple"], width=2, dash=(4, 3))
-        bold = tk_font(F["small_bold"])
-        for key, bottom in sorted(self.answer.items(), key=lambda row: row[1]):
-            index = int(key)
-            item = fg.rack_device(self.devices[index])
-            color = fg.RACK_COLORS[item["typ"]]
-            y_bottom = top + (self.size - bottom + 1) * unit
-            y_top = y_bottom - item["he"] * unit
-            if y_top < top:
-                y_top = top - px(4)
-                color = C["red"]
-            selected = index == self.current and not self.locked
-            rounded_rect(canvas, x1 + 3, y_top + 3, x2 - 3, y_bottom - 3, px(5),
-                         fill=mix(C["card"], color, 0.55 if selected else 0.35),
-                         outline=color, width=2 if selected else 1)
-            canvas.create_oval(x2 - px(18), y_top + unit / 2 - px(3), x2 - px(12),
-                               y_top + unit / 2 + px(3), fill=C["green"], outline="")
-            canvas.create_text(x1 + px(10), (y_top + y_bottom) / 2, text=item["name"],
-                               fill=C["text"], font=bold, anchor="w")
+        draw_rack(self.canvas, self.task, self.answer, self.unit, self.current, self.hover,
+                  self.locked)
 
     def reveal(self, right):
         self.locked = True
         self.success = right
         self.current = None
         self.canvas.configure(cursor="arrow")
+        self._paint()
+
+
+FIT_EMPTY = "– bitte wählen –"
+
+
+class FitBoard(ctk.CTkFrame):
+    """Server bestuecken (Serverfarm, ab 0.52): links der Schrank mit den
+    Servern, in der Mitte das Innenleben der gewaehlten Vorlage
+    (Auswahllisten), rechts Kosten, Strom, Kuehlung und das Lastenheft."""
+
+    hint_key = "bestueckung"
+
+    def __init__(self, parent, task, rack_answer=None, on_raid=None):
+        super().__init__(parent, fg_color="transparent")
+        self.task = task
+        self.rack = fg.farm_rack_task(task["bestueckung"].get("rack"))
+        self.rack_answer = dict(rack_answer or {})
+        if self.rack and not self.rack_answer:
+            self.rack_answer = fg.rack_solution(self.rack) or {}
+        self.templates = fg.fit_templates(task)
+        self.current = self.templates[0]["id"]
+        self.answer = {item["id"]: {} for item in self.templates}
+        self.on_raid = on_raid
+        self.locked = False
+        self.menus = []
+
+        grid = _frame(self)
+        grid.pack(fill="x")
+        for column, weight in enumerate((3, 6, 5)):
+            grid.columnconfigure(column, weight=weight, uniform="fit")
+        make_label(grid, "RACK B · SERVER ANKLICKEN", font=F["label"], fg=C["muted"]).grid(
+            row=0, column=0, sticky="w", pady=(0, 6))
+        left = _frame(grid)
+        left.grid(row=1, column=0, sticky="new")
+        self.unit = rack_unit_px(self.rack["schrank"]["he"]) if self.rack else px(15)
+        if self.rack:
+            # Nur der belegte Teil des Schranks ist interessant (unten)
+            self.canvas = tk.Canvas(left, height=self.unit * self.rack["schrank"]["he"] +
+                                    px(16), bg=C["card"], highlightthickness=0,
+                                    cursor="hand2")
+            self.canvas.pack(fill="x")
+            self.canvas.bind("<Configure>", lambda _e: self._draw_rack())
+            self.canvas.bind("<Button-1>", self._click)
+        self.middle = _frame(grid)
+        self.middle.grid(row=0, column=1, rowspan=2, sticky="new", padx=(12, 0))
+        self.values = RackValues(grid, title="LASTENHEFT")
+        self.values.grid(row=0, column=2, rowspan=2, sticky="new", padx=(14, 0))
+        self._build_middle()
+        self._paint()
+
+    def _template(self, template_id=None):
+        return next(item for item in self.templates
+                    if item["id"] == (template_id or self.current))
+
+    def _click(self, event):
+        unit = rack_unit_at(self.rack, self.unit, event.y)
+        index = fg.rack_occupant(self.rack, self.rack_answer, unit) if unit else None
+        if index is None:
+            return
+        device = self.rack["geraete"][index]
+        for template in self.templates:
+            if template.get("geraet") == device and template["id"] != self.current:
+                self.select(template["id"])
+
+    def select(self, template_id):
+        self.current = template_id
+        self._build_middle()
+        self._paint()
+
+    def _build_middle(self):
+        for child in self.middle.winfo_children():
+            child.destroy()
+        self.menus = []
+        ChoiceRow(self.middle, [(item["id"], "%d × %s" % (item["anzahl"], item["name"]))
+                                for item in self.templates], self.current,
+                  self.select).pack(anchor="w")
+        template = self._template()
+        config = self.answer[template["id"]]
+        make_label(self.middle, "%d Laufwerksschächte · %s · %d Netzteilplätze" % (
+            template["schaechte"], "%d RAM-Bänke · %d Sockel" % (
+                template["ram_baenke"], template["sockel"]) if template.get("sockel")
+            else "Controller eingebaut", template["netzteil_plaetze"]),
+            font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w", pady=(8, 4))
+        for kind in fg.fit_kinds(template):
+            row = _frame(self.middle)
+            row.pack(fill="x", pady=3)
+            make_label(row, fg.FIT_KIND_NAMES[kind], font=F["small_bold"], fg=C["text_dim"],
+                       width=110, anchor="w").pack(side="left")
+            options = fg.fit_options(template, kind)
+            texts = [FIT_EMPTY] + [text for _id, text in options]
+            menu = self._menu(row, texts, lambda value, k=kind, o=options:
+                              self._set_part(k, value, o), width=220)
+            chosen = next((text for part_id, text in options if part_id == config.get(kind)),
+                          FIT_EMPTY)
+            menu.set(chosen)
+            menu.pack(side="left", padx=(6, 0))
+            count_key = fg.FIT_COUNT_KEYS.get(kind)
+            if count_key:
+                counts = [str(number) for number in fg.fit_count_range(template, kind)]
+                if len(counts) > 1:
+                    count = self._menu(row, counts, lambda value, c=count_key:
+                                       self._set_count(c, value), width=66)
+                    count.set(str(config.get(count_key, 1)))
+                    count.pack(side="left", padx=(6, 0))
+                    make_label(row, "Stück", font=F["small"], fg=C["muted"]).pack(
+                        side="left", padx=(4, 0))
+            if kind == "laufwerk":
+                raid_row = _frame(self.middle)
+                raid_row.pack(fill="x", pady=3)
+                make_label(raid_row, "RAID-Level", font=F["small_bold"], fg=C["text_dim"],
+                           width=110, anchor="w").pack(side="left")
+                raid = self._menu(raid_row, [FIT_EMPTY] + list(fg.RAID_LEVELS),
+                                  self._set_raid, width=220)
+                raid.set(config.get("raid") or FIT_EMPTY)
+                raid.pack(side="left", padx=(6, 0))
+                self.raid_line = make_label(self.middle, "", font=F["small_bold"],
+                                            fg=C["accent"], anchor="w", justify="left",
+                                            wraplength=420)
+                self.raid_line.pack(anchor="w", pady=(2, 2))
+                if self.on_raid:
+                    NeoButton(self.middle, "RAID-Rechner öffnen", self._open_raid,
+                              kind="ghost", height=28, font=F["small_bold"]).pack(
+                        anchor="w", pady=(0, 4))
+        self.server_line = make_label(self.middle, "", font=F["small"], fg=C["text_soft"],
+                                      anchor="w", justify="left", wraplength=420)
+        self.server_line.pack(anchor="w", pady=(8, 0))
+
+    def _menu(self, parent, values, command, width):
+        menu = ctk.CTkOptionMenu(
+            parent, values=values, command=command, width=width,
+            height=30, corner_radius=8, dynamic_resizing=False,
+            fg_color=C["card_alt"], button_color=C["card_alt"],
+            button_hover_color=C["card_hi"], text_color=C["text"],
+            dropdown_fg_color=C["card"], dropdown_hover_color=C["card_hi"],
+            dropdown_text_color=C["text"], font=F["small"], dropdown_font=F["small"])
+        if self.locked:
+            menu.configure(state="disabled")
+        self.menus.append(menu)
+        return menu
+
+    def _set_part(self, kind, value, options):
+        config = self.answer[self.current]
+        part_id = next((pid for pid, text in options if text == value), None)
+        if part_id:
+            config[kind] = part_id
+            key = fg.FIT_COUNT_KEYS.get(kind)
+            if key and key not in config:
+                config[key] = 1
+        else:
+            config.pop(kind, None)
+        self._paint()
+
+    def _set_count(self, key, value):
+        self.answer[self.current][key] = int(value)
+        self._paint()
+
+    def _set_raid(self, value):
+        config = self.answer[self.current]
+        if value in fg.RAID_LEVELS:
+            config["raid"] = value
+        else:
+            config.pop("raid", None)
+        self._paint()
+
+    def _open_raid(self):
+        values = fg.fit_server(self._template(), self.answer[self.current])
+        if self.on_raid and values["laufwerk"]:
+            self.on_raid(values["raid"] or "RAID 5", values["laufwerke"],
+                         values["laufwerk"]["groesse"])
+        elif self.on_raid:
+            self.on_raid("RAID 5", 4, 1000)
+
+    def complete(self):
+        return all(not fg.fit_server(template, self.answer[template["id"]])["fehlt"]
+                   and self.answer[template["id"]].get("raid") for template in self.templates)
+
+    def _paint(self):
+        view = fg.fit_view(self.task, self.answer, self.current)
+        if hasattr(self, "raid_line"):
+            self.raid_line.configure(text=view["raid_text"], text_color=(
+                C["muted"] if view["raid_ok"] is None else
+                C["accent"] if view["raid_ok"] else C["red"]))
+        self.server_line.configure(text=view["server_text"])
+        self.values.update_values(fg.fit_bars(self.task, self.answer), view["checks"])
+        self._draw_rack()
+
+    def _draw_rack(self):
+        if not self.rack:
+            return
+        device = self._template().get("geraet")
+        marked = {index for index, device_id in enumerate(self.rack["geraete"])
+                  if device_id == device}
+        draw_rack(self.canvas, self.rack, self.rack_answer, self.unit, locked=True,
+                  marked=marked)
+
+    def reveal(self, right):
+        self.locked = True
+        for menu in self.menus:
+            try:
+                menu.configure(state="disabled")
+            except tk.TclError:
+                pass
         self._paint()
 
 
@@ -2263,7 +2562,7 @@ class GameView(ReusableView, ScrollArea):
             self.app.views["firma"].open_tab(view.split(":", 1)[1])
         elif view.startswith("mitbewerber:"):
             messagebox.showinfo(*fg.rival_info(self.game.state, view.split(":", 1)[1]))
-        elif view in ("buero", "zuhause", "firma", "filiale"):
+        elif view in ("buero", "zuhause", "firma", "filiale", fg.FARM_VIEW):
             self.app.show_view(view)
 
     def _build_ticket_list(self, state):
@@ -2892,6 +3191,534 @@ class BranchView(SiteView):
                       kind="primary").pack(anchor="w", pady=(12, 0))
             return
         super().render()
+
+
+FARM_PHASE_COLOR = {"fertig": C["green"], "jetzt": C["accent"], "spaeter": C["muted"]}
+
+
+class FarmView(ReusableView, ScrollArea):
+    """Grossauftrag Serverfarm (ab 0.52): Ausschreibung, Phasen mit Aufgaben,
+    Team und Abnahme beim Rechenzentrum Lokschuppen. Die Aufgaben nutzen
+    dieselben Ansichten wie die Tickets (Rack, Formular, Terminal ...)."""
+
+    KEY = "serverfarm"
+
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=C["bg"])
+        self.app = app
+        self.content = _frame(self.inner)
+        self.content.pack(fill="both", expand=True, padx=28, pady=(2, 28))
+        self.task = None          # gerade geoeffnete Aufgabe
+        self.markup = None        # gewaehlter Gewinnzuschlag beim Angebot
+        self.team_edit = False
+        self.answered = False
+        self.used_help = False
+
+    @property
+    def game(self):
+        return self.app.views["game"].game
+
+    def on_show(self):
+        self.game.reload()
+        if self._unchanged():
+            return
+        self.render()
+        self._mark_rendered()
+
+    def refresh(self):
+        self.on_show()
+
+    def _changed(self):
+        self.app.notify_progress()
+        self.render(keep_scroll=True)
+
+    def render(self, keep_scroll=False):
+        for child in self.content.winfo_children():
+            child.destroy()
+        state = self.game.state
+        if state.profile is None:
+            card = Card(self.content, title="Serverfarm", accent=C["accent"])
+            card.pack(fill="x")
+            make_label(card.body, "Lege zuerst unter „Spiel“ deine Spielfigur an.",
+                       font=F["body"], fg=C["text_soft"]).pack(anchor="w")
+            NeoButton(card.body, "Zum Spiel", lambda: self.app.show_view("game"),
+                      kind="primary").pack(anchor="w", pady=(12, 0))
+            return
+        levels = self.game.topic_knowledge()
+        info = fg.farm_status(state, levels)
+        if self.task and (not info["gestartet"] or info["fertig"] and not self.answered):
+            self.task = None
+        if self.task:
+            self._build_task(state, fg.farm_task(self.task), levels)
+        else:
+            self._build_head(info)
+            if not info["frei"]:
+                self._build_locked(info)
+            elif not info["gestartet"]:
+                self._build_tender(info)
+            else:
+                if info["fertig"]:
+                    self._build_acceptance(state, info)
+                else:
+                    self._build_today(state, info)
+                    self._build_team(state, levels)
+                self._build_phases(info, state.farm["start"])
+                self._build_events(state)
+        if not keep_scroll:
+            self.to_top()
+
+    # -- Kopf ---------------------------------------------------------------
+
+    def _build_head(self, info):
+        customer = info["kunde"]
+        card = Card(self.content, title=fg.FARM_TITLE, accent=C["cyan"],
+                    subtitle="%s · Rechenzentrum Lokschuppen" % customer.get("name", ""))
+        card.pack(fill="x")
+        make_label(card.body, customer.get("text", ""), font=F["body"], fg=C["text_soft"],
+                   wraplength=960, justify="left", anchor="w").pack(anchor="w")
+        people = _frame(card.body)
+        people.pack(anchor="w", pady=(12, 0))
+        for person in fg.farm_content().get("personen") or []:
+            box = _frame(people)
+            box.pack(side="left", padx=(0, 22))
+            avatar = AvatarCanvas(box, size=44, bg=C["card"])
+            avatar.pack(side="left")
+            avatar.show(person.get("aussehen") or {})
+            text = _frame(box)
+            text.pack(side="left", padx=(8, 0))
+            make_label(text, person["name"], font=F["small_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(text, person["rolle"], font=F["tiny"], fg=C["muted"],
+                       anchor="w").pack(anchor="w")
+
+    def _build_locked(self, info):
+        card = Card(self.content, title="Noch nicht freigeschaltet", accent=C["muted"])
+        card.pack(fill="x", pady=(14, 0))
+        make_label(card.body, fg.farm_unlock_text(self.game.state), font=F["body"],
+                   fg=C["text_soft"], wraplength=960, justify="left",
+                   anchor="w").pack(anchor="w")
+        NeoButton(card.body, "Zur Firma", lambda: self.app.show_view("firma"),
+                  kind="primary").pack(anchor="w", pady=(12, 0))
+
+    def _build_tender(self, info):
+        rules = fg.farm_rules()
+        card = Card(self.content, title="Ausschreibung", accent=C["yellow"],
+                    subtitle="Ein Auftrag, einmal pro Durchgang")
+        card.pack(fill="x", pady=(14, 0))
+        lines = [
+            "Die Datenhafen Talheim GmbH sucht einen IT-Partner, der im alten Lokschuppen "
+            "zwei Serverracks plant, einbaut, bestückt und dem Kunden übergibt.",
+            "Vertragslaufzeit: %d Arbeitstage ab dem Öffnen der Ausschreibung. Jeder Tag "
+            "darüber kostet %s %% Vertragsstrafe (höchstens %s %%)." % (
+                info["tage"], fg._num(rules["strafe"]["prozent_je_tag"]),
+                fg._num(rules["strafe"]["max_prozent"])),
+            "Sechs Phasen: %s." % ", ".join(phase["kurz"] for phase in fg.farm_phases()),
+            "Du bearbeitest höchstens %d Serverfarm-Aufgaben am Tag. Dein Team arbeitet "
+            "jeden Feierabend an den Phasen weiter." % rules["aufgaben_pro_tag"],
+            "Bei fehlerfreier Abnahme gibt es %s Bonus." % fg._euro(rules["bonus"]),
+        ]
+        for line in lines:
+            make_label(card.body, "• " + line, font=F["body"], fg=C["text_soft"],
+                       wraplength=960, justify="left", anchor="w").pack(anchor="w", pady=2)
+        NeoButton(card.body, "Ausschreibung ansehen", self._start, kind="primary").pack(
+            anchor="w", pady=(14, 0))
+
+    def _start(self):
+        if not messagebox.askyesno(
+                "Ausschreibung ansehen",
+                "Ab heute laufen die %d Arbeitstage des Großauftrags. Jetzt starten?"
+                % fg.farm_rules().get("tage", 25)):
+            return
+        try:
+            self.game.farm_start()
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self._changed()
+
+    # -- Laufender Auftrag ------------------------------------------------------
+
+    def _build_today(self, state, info):
+        phase = info["phase"] or {}
+        card = Card(self.content, title="Heute · Phase %s" % phase.get("kurz", ""),
+                    accent=C["accent"],
+                    subtitle="Tag %d von %d (Arbeitstag %d) · heute %d von %d Aufgaben "
+                             "bearbeitet" % (info["tag"], info["tage"], state.day,
+                                             info["heute"], info["limit"]))
+        card.pack(fill="x", pady=(14, 0))
+        body = card.body
+        start = state.farm["start"]
+        notes = []
+        if phase.get("id") == fg.FARM_DELIVERY and info["liefertag"]:
+            notes.append("Die Ware kommt an Tag %d." % (info["liefertag"] - start + 1))
+        if info["nacharbeit_bis"] and state.day < info["nacharbeit_bis"]:
+            notes.append("Nacharbeit nach dem Kabeltest bis Tag %d." %
+                         (info["nacharbeit_bis"] - start + 1))
+        if phase.get("team_punkte"):
+            current = next(item for item in info["phasen"] if item["id"] == phase["id"])
+            notes.append("Team-Arbeit: %s von %d Punkten%s." % (
+                fg._num(current["punkte"]), phase["team_punkte"],
+                " · heute etwa +%s" % fg._num(info["team_heute"])
+                if info.get("team_heute") else " · noch niemand im Team"))
+        for note in notes:
+            make_label(body, note, font=F["small_bold"], fg=C["accent"], anchor="w").pack(
+                anchor="w", pady=(0, 4))
+        if not info["offen"]:
+            make_label(body, "Alle Aufgaben dieser Phase sind erledigt. Sie endet am Feierabend, "
+                       "sobald das Team fertig ist." if phase.get("team_punkte") else
+                       "Alle Aufgaben dieser Phase sind erledigt.", font=F["body"],
+                       fg=C["text_soft"], wraplength=960, justify="left",
+                       anchor="w").pack(anchor="w", pady=(4, 0))
+        for task in info["offen"]:
+            problem = fg.farm_task_problem(state, task["id"])
+            person = fg.farm_person(task["person"]) or {}
+            row = ctk.CTkFrame(body, fg_color=C["card_alt"], corner_radius=12, border_width=1,
+                               border_color=C["border"])
+            row.pack(fill="x", pady=4)
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=14, pady=10)
+            make_label(text, task["titel"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            make_label(text, "%s · %s" % (person.get("name", ""), person.get("rolle", "")),
+                       font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w")
+            if problem:
+                make_label(text, problem, font=F["tiny"], fg=C["muted"], wraplength=700,
+                           justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
+            button = NeoButton(row, "Bearbeiten", lambda i=task["id"]: self._open(i),
+                               kind="primary", height=32, font=F["small_bold"])
+            button.pack(side="right", padx=14)
+            button.set_enabled(not problem)
+
+    def _build_team(self, state, levels):
+        team = state.farm_team()
+        card = Card(self.content, title="Team", accent=C["purple"],
+                    subtitle="%d im Team · empfohlen %d, höchstens %d" % (
+                        len(team), fg.farm_rules().get("team_empfohlen", 2),
+                        fg.farm_rules().get("team_max", 5)))
+        card.pack(fill="x", pady=(14, 0))
+        body = card.body
+        names = [fg.person_name(state, person) for person in team]
+        make_label(body, "Im Team: " + (", ".join(names) if names else "noch niemand"),
+                   font=F["body_bold"], fg=C["green"] if names else C["orange"],
+                   anchor="w").pack(anchor="w")
+        if not state.staff:
+            make_label(body, "Stelle Mitarbeiter ein, damit die Phasen vorankommen.",
+                       font=F["small"], fg=C["muted"], anchor="w").pack(anchor="w",
+                                                                       pady=(4, 0))
+            return
+        NeoButton(body, "Team fertig" if self.team_edit else "Team ändern",
+                  self._toggle_edit, kind="ghost" if self.team_edit else "primary",
+                  height=32, font=F["small_bold"]).pack(anchor="w", pady=(8, 0))
+        if not self.team_edit:
+            return
+        make_label(body, "WER ARBEITET MIT? (antippen zum Aufnehmen oder Herausnehmen)",
+                   font=F["label"], fg=C["muted"]).pack(anchor="w", pady=(10, 2))
+        for option in fg.farm_candidates(state, levels):
+            line = _frame(body)
+            line.pack(anchor="w", pady=2)
+            button = NeoButton(line, "%s · %s %d · %s Punkte am Tag" % (
+                option["name"], option["phase"], option["wert"], fg._num(option["punkte"])),
+                lambda a=option["an"]: self._toggle_member(a), kind="pill", height=30,
+                font=F["small_bold"])
+            button.pack(side="left")
+            button.set_active(option["im_team"])
+            button.set_enabled(option["im_team"] or not option["problem"])
+            note = option["problem"] or option["fehlt"]
+            if note:
+                make_label(line, note, font=F["tiny"], fg=C["muted"]).pack(side="left",
+                                                                           padx=(8, 0))
+        make_label(body, fg.farm_team_note(), font=F["tiny"], fg=C["muted"],
+                   wraplength=900, justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
+
+    def _toggle_edit(self):
+        self.team_edit = not self.team_edit
+        self.render(keep_scroll=True)
+
+    def _toggle_member(self, person):
+        try:
+            self.game.farm_toggle_member(person)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            return
+        self._changed()
+
+    def _build_phases(self, info, start):
+        card = Card(self.content, title="Phasen", accent=C["cyan"],
+                    subtitle="Zeitplan: %d Arbeitstage" % info["tage"])
+        card.pack(fill="x", pady=(14, 0))
+        for item in info["phasen"]:
+            color = FARM_PHASE_COLOR[item["status"]]
+            row = ctk.CTkFrame(card.body, fg_color=C["card_alt"], corner_radius=12,
+                               border_width=2 if item["status"] == "jetzt" else 1,
+                               border_color=color if item["status"] != "spaeter"
+                               else C["border"])
+            row.pack(fill="x", pady=3)
+            dot = tk.Canvas(row, width=px(12), height=px(12), bg=C["card_alt"],
+                            highlightthickness=0)
+            dot.pack(side="left", padx=(14, 0))
+            dot.create_oval(1, 1, px(11), px(11), fill=color, outline="")
+            text = _frame(row)
+            text.pack(side="left", fill="x", expand=True, padx=10, pady=8)
+            make_label(text, item["name"], font=F["body_bold"], fg=C["text"],
+                       anchor="w").pack(anchor="w")
+            parts = ["Soll bis Tag %d" % item["soll_tag"],
+                     "%d von %d Aufgaben" % (item["erledigt"], item["aufgaben"])]
+            if item["team_punkte"]:
+                parts.append("Team %s von %d Punkten" % (fg._num(item["punkte"]),
+                                                         item["team_punkte"]))
+            if item["ende"] is not None:
+                parts.append("fertig an Tag %d" % (item["ende"] - start + 1))
+            make_label(text, " · ".join(parts), font=F["small"], fg=C["text_dim"],
+                       anchor="w").pack(anchor="w")
+            label = {"fertig": "fertig", "jetzt": "läuft", "spaeter": "später"}[item["status"]]
+            make_label(row, label, font=F["small_bold"], fg=color).pack(side="right",
+                                                                        padx=14)
+
+    def _build_events(self, state):
+        entries = sorted(fg.farm_journey(state), key=lambda row: row[0])
+        if not entries:
+            return
+        card = Card(self.content, title="Verlauf", accent=C["purple"],
+                    subtitle="Steht auch unter Reise")
+        card.pack(fill="x", pady=(14, 0))
+        for day, _kind, title, text in entries:
+            make_label(card.body, "Tag %d · %s" % (day, title), font=F["small_bold"],
+                       fg=C["text"], anchor="w").pack(anchor="w", pady=(4, 0))
+            make_label(card.body, text, font=F["small"], fg=C["text_soft"], wraplength=940,
+                       justify="left", anchor="w").pack(anchor="w")
+
+    def _build_acceptance(self, state, info):
+        data = info["abnahme"] or {}
+        card = Card(self.content, title="Abnahme bestanden", accent=C["green"],
+                    subtitle="Arbeitstag %d · nach %d Arbeitstagen" % (
+                        data.get("tag", 0), data.get("dauer", 0)))
+        card.pack(fill="x", pady=(14, 0))
+        offer = info.get("angebot") or {}
+        rows = [("Auftragswert netto", fg._euro(offer.get("netto", 0))),
+                ("Anzahlung", fg._euro(offer.get("anzahlung", 0))),
+                ("Restzahlung", fg._euro(data.get("rest", 0))),
+                ("Vertragsstrafe", fg._euro(data.get("strafe", 0)) if data.get("strafe")
+                 else "keine"),
+                ("Bonus fehlerfreie Abnahme", fg._euro(data.get("bonus", 0))
+                 if data.get("bonus") else "–"),
+                ("Aufgaben richtig", "%d von %d" % (data.get("richtig", 0),
+                                                    data.get("aufgaben", 0))),
+                ("Termin", "pünktlich" if data.get("puenktlich") else "%d Tag%s zu spät" % (
+                    data.get("verzug", 0), "" if data.get("verzug") == 1 else "e"))]
+        grid = _frame(card.body)
+        grid.pack(fill="x")
+        for index, (label, value) in enumerate(rows):
+            make_label(grid, label, font=F["small"], fg=C["text_dim"], anchor="w").grid(
+                row=index, column=0, sticky="w", pady=2)
+            make_label(grid, value, font=F["body_bold"], fg=C["text"], anchor="w").grid(
+                row=index, column=1, sticky="w", padx=(24, 0), pady=2)
+        make_label(card.body, "Das Rechenzentrum läuft. Die Datenhafen Talheim GmbH nennt "
+                   "deine Firma ab jetzt als Referenz.", font=F["body"], fg=C["text_soft"],
+                   wraplength=960, justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
+
+    # -- Aufgabe ------------------------------------------------------------------
+
+    def _open(self, task_id):
+        self.task = task_id
+        self.answered = False
+        self.used_help = False
+        self.markup = None
+        self.render()
+
+    def _close(self):
+        self.task = None
+        self.answered = False
+        self.render()
+
+    def _build_task(self, state, task, levels):
+        person = fg.farm_person(task["person"]) or {}
+        gaps = fg.requirement_gaps(task, levels)
+        NeoButton(self.content, "Zurück zur Serverfarm", self._close, kind="ghost",
+                  height=32, font=F["small_bold"], icon="arrow_left").pack(anchor="w")
+        phase = fg.farm_phase_rule(task["phase"]) or {}
+        card = Card(self.content, title=task["titel"], accent=C["cyan"],
+                    subtitle="%s · Phase %s · %s" % (fg.FARM_TITLE, phase.get("kurz", ""),
+                                                     CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]))
+        card.pack(fill="x", pady=(12, 0))
+        body = card.body
+        make_label(body, "%s · %s" % (person.get("name", ""), person.get("rolle", "")),
+                   font=F["body_bold"], fg=C["text"], anchor="w").pack(anchor="w")
+        if task.get("ticket"):
+            make_label(body, task["ticket"], font=F["body"], fg=C["text_soft"],
+                       wraplength=980, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(8, 0))
+        if gaps:
+            warn = ctk.CTkFrame(body, fg_color=mix(C["card"], C["yellow"], 0.12),
+                                corner_radius=12, border_width=1,
+                                border_color=mix(C["yellow"], C["card"], 0.35))
+            warn.pack(fill="x", pady=(12, 0))
+            make_label(warn, fg.gap_warning(gaps), font=F["small"], fg=C["yellow"],
+                       wraplength=940, justify="left", anchor="w").pack(anchor="w",
+                                                                        padx=14, pady=10)
+        if task.get("frage"):
+            make_label(body, task["frage"], font=F["h3"], fg=C["text"], wraplength=980,
+                       justify="left", anchor="w").pack(anchor="w", pady=(16, 8))
+        self.board_box = _frame(body)
+        self.board_box.pack(fill="x", pady=(8, 0) if not task.get("frage") else 0)
+        self._build_board(state, task)
+        self.help_box = _frame(body, height=1)
+        self.help_box.pack(fill="x")
+        self.result_box = _frame(body, height=1)
+        self.result_box.pack(fill="x")
+        self.controls = _frame(self.content)
+        self.controls.pack(fill="x", pady=(14, 0))
+        NeoButton(self.controls, "Lösung einreichen", lambda: self._submit(task),
+                  kind="primary").pack(side="left")
+        self.btn_help = NeoButton(self.controls, "Hilfe anzeigen",
+                                  lambda: self._show_help(task), kind="ghost")
+        self.btn_help.pack(side="left", padx=10)
+
+    def _build_board(self, state, task):
+        box = self.board_box
+        for child in box.winfo_children():
+            child.destroy()
+        kind = task["typ"]
+        if kind == fg.FARM_OFFER_TYPE:
+            if self.markup is None:
+                self.markup = fg.farm_markups()[0]
+            make_label(box, "GEWINNZUSCHLAG", font=F["label"], fg=C["muted"]).pack(
+                anchor="w", pady=(0, 4))
+            ChoiceRow(box, [(value, "%d %%" % value) for value in fg.farm_markups()],
+                      self.markup, lambda value: self._set_markup(state, task, value)).pack(
+                anchor="w", pady=(0, 4))
+            make_label(box, "Mehr als %d %% akzeptiert die Kundin nicht, sie verhandelt "
+                       "dann herunter." % fg.farm_rules().get("zuschlag_max", 20),
+                       font=F["tiny"], fg=C["muted"], anchor="w").pack(anchor="w",
+                                                                      pady=(0, 10))
+            self.options = FormBoard(box, fg.farm_offer_task(self.markup))
+        elif kind == "auswahl":
+            self.options = OptionList(box, bg=C["card"])
+            options = list(task["optionen"])
+            random.Random(task["id"]).shuffle(options)
+            self.options.set_options(options)
+        elif kind == "bestellung":
+            self.options = OrderBoard(box, task)
+        elif kind == "rack":
+            self.options = RackBoard(box, task)
+        elif kind == "formular":
+            self.options = FormBoard(box, task)
+        elif kind == "terminal":
+            self.options = TerminalBoard(box, task)
+        elif kind == "diagnose":
+            self.options = DiagnoseBoard(box, task, [], {})
+        elif kind == "bestueckung":
+            rack = (state.farm["aufgaben"].get("sf-rack-b") or {}) if state.farm else {}
+            self.options = FitBoard(box, task, rack.get("antwort") if rack.get("richtig")
+                                    else None, self.app.open_raid_calc)
+        else:
+            self.options = MatchBoard(box, task)
+        self.options.pack(fill="x")
+
+    def _set_markup(self, state, task, value):
+        self.markup = value
+        self._build_board(state, task)
+
+    def _show_help(self, task):
+        if self.used_help or self.answered:
+            return
+        self.used_help = True
+        self.btn_help.set_enabled(False)
+        box = ctk.CTkFrame(self.help_box, fg_color=mix(C["card"], C["accent"], 0.08),
+                           corner_radius=12, border_width=1,
+                           border_color=mix(C["accent"], C["card"], 0.5))
+        box.pack(fill="x", pady=(14, 0))
+        make_label(box, "HILFE", font=F["label"], fg=C["accent"]).pack(anchor="w", padx=14,
+                                                                     pady=(10, 0))
+        make_label(box, task["hilfe"], font=F["body"], fg=C["text_soft"], wraplength=940,
+                   justify="left", anchor="w").pack(anchor="w", padx=14, pady=(4, 12))
+
+    def _submit(self, task):
+        if self.answered:
+            return
+        kind = task["typ"]
+        if kind == "auswahl":
+            answer = self.options.get()
+            if not answer:
+                messagebox.showwarning("Hinweis", "Bitte wähle eine Antwort aus.")
+                return
+        else:
+            check = "formular" if kind == fg.FARM_OFFER_TYPE else kind
+            if not self.options.complete():
+                messagebox.showwarning("Hinweis", EMPTY_HINT.get(getattr(
+                    self.options, "hint_key", check), "Bitte ordne zuerst alle Begriffe zu."))
+                return
+            answer = dict(self.options.answer)
+        try:
+            payload = self.game.farm_solve(task["id"], answer, self.used_help,
+                                           self.markup if kind == fg.FARM_OFFER_TYPE
+                                           else None)
+        except ValueError as exc:
+            messagebox.showinfo("Hinweis", str(exc))
+            self._close()
+            return
+        self.answered = True
+        if kind == "auswahl":
+            self.options.reveal(task["antwort"])
+        elif kind in fg.PROBLEM_TYPES or kind == fg.FARM_OFFER_TYPE:
+            self.options.reveal(payload["richtig"])
+        else:
+            self.options.reveal()
+        self.app.notify_progress(refresh_view=False)
+        self._show_result(task, payload)
+
+    def _show_result(self, task, payload):
+        right = payload["richtig"]
+        color = C["green"] if right else C["red"]
+        head, text = fg.farm_result_text(self.game.state, payload)
+        box = ctk.CTkFrame(self.result_box, fg_color=mix(C["card"], color, 0.1),
+                           corner_radius=12, border_width=1,
+                           border_color=mix(color, C["card"], 0.4))
+        box.pack(fill="x", pady=(14, 0))
+        make_label(box, head, font=F["body_bold"], fg=color, anchor="w").pack(
+            anchor="w", padx=14, pady=(12, 0))
+        if text:
+            make_label(box, text, font=F["body"], fg=C["text"], wraplength=940,
+                       justify="left", anchor="w").pack(anchor="w", padx=14, pady=(4, 0))
+        for line in payload.get("probleme") or []:
+            make_label(box, "• " + line, font=F["small"], fg=C["red"], wraplength=920,
+                       justify="left", anchor="w").pack(anchor="w", padx=14)
+        make_label(box, task["erklaerung"], font=F["body"], fg=C["text_soft"],
+                   wraplength=940, justify="left", anchor="w").pack(anchor="w", padx=14,
+                                                                    pady=(6, 0))
+        if not right:
+            lines = fg.farm_solution_lines(task)
+            if lines:
+                make_label(box, "SO WÄRE ES RICHTIG", font=F["label"], fg=C["muted"]).pack(
+                    anchor="w", padx=14, pady=(8, 0))
+                for line in lines:
+                    make_label(box, line, font=F["small"], fg=C["text_soft"],
+                               wraplength=920, justify="left", anchor="w").pack(
+                        anchor="w", padx=14)
+        _frame(box, height=12).pack()
+        links = fg.learn_links(task, limit=5)
+        if links:
+            learn = Card(self.result_box, title="Passend dazu lernen", accent=C["purple"],
+                         subtitle="Karteikarten und Fragen zum Thema", bg=C["card_alt"])
+            learn.pack(fill="x", pady=(14, 0))
+            for kind, _category, title, _detail in links:
+                row = ctk.CTkFrame(learn.body, fg_color=C["card"], corner_radius=10,
+                                   cursor="hand2")
+                row.pack(fill="x", pady=3)
+                label = make_label(row, "%s · %s" % (kind, title), font=F["small"],
+                                   fg=C["text_soft"], wraplength=900, justify="left",
+                                   anchor="w", cursor="hand2")
+                label.pack(anchor="w", padx=12, pady=8)
+                for widget in (row, label):
+                    widget.bind("<Button-1>",
+                                lambda _e, k=kind, t=title: self._open_learn(k, t))
+        for child in self.controls.winfo_children():
+            child.destroy()
+        NeoButton(self.controls, "Zurück zur Serverfarm", self._close,
+                  kind="primary").pack(side="left")
+
+    def _open_learn(self, kind, title):
+        self.task = None
+        self.app.open_search_hit(kind, title)
 
 
 class HomeView(SiteView):
@@ -4441,6 +5268,11 @@ class FirmView(ReusableView, ScrollArea):
                    "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10),
                    font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
                    anchor="w").pack(anchor="w", pady=(6, 0))
+        if state.farm_unlocked is None:
+            # Ab 0.52: was fuer den Grossauftrag Serverfarm noch fehlt
+            make_label(head.body, fg.farm_unlock_text(state), font=F["small_bold"],
+                       fg=C["cyan"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(6, 0))
         groups = (("firma", "Qualität, Sicherheit und Datenschutz", C["cyan"]),
                   ("fach", "Fachliche Zertifizierungen", C["green"]))
         items = fg.cert_status(state)

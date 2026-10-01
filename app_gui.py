@@ -59,12 +59,13 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_game_gui  # noqa: E402
+import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, THEME_COLOR, mix  # noqa: E402
 from fisi_game_gui import (  # noqa: E402
-    BranchView, ChoiceRow, CustomerView, FirmView, GameView, HomeView, JourneyView,
+    BranchView, ChoiceRow, CustomerView, FarmView, FirmView, GameView, HomeView, JourneyView,
     MilestoneMoment, OfficeView, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
@@ -82,7 +83,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.51"
+APP_VERSION = "0.52"
 
 
 def _resource_path(filename):
@@ -154,6 +155,7 @@ VIEW_TITLES = {
     "zuhause": ("SPIEL", "ZUHAUSE"),
     "firma": ("SPIEL", "FIRMA"),
     "filiale": ("SPIEL", "FILIALE"),
+    "serverfarm": ("SPIEL", "SERVERFARM"),
     "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
@@ -4136,6 +4138,18 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
         self.show_sync_status(None, None)
 
+        # Sicherung als Datei (fisi_sicherung.py), Texte wie auf dem Handy
+        backup = Card(self.content, title=fsi.TITLE, accent=C["accent2"],
+                      subtitle=fsi.SUBTITLE)
+        backup.pack(fill="x", pady=(14, 0))
+        make_label(backup.body, fsi.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        row = transparent_frame(backup.body)
+        row.pack(anchor="w", pady=(12, 0))
+        NeoButton(row, fsi.BTN_CREATE, self.create_backup, kind="primary").pack(side="left")
+        NeoButton(row, fsi.BTN_RESTORE, self.restore_backup,
+                  kind="ghost").pack(side="left", padx=10)
+
         info = Card(self.content, title="Datenbank", accent=C["accent"])
         info.pack(fill="x", pady=(14, 0))
         make_label(info.body, "Speicherort der Lernfortschritte:",
@@ -4328,6 +4342,91 @@ class SettingsView(View):
         if self.app.views["game"].game.reset_records():
             messagebox.showinfo("Gelöscht", "Die Bestenliste wurde gelöscht.")
             self.app.notify_progress()
+
+    # -- Sicherung ------------------------------------------------------------
+
+    def create_backup(self):
+        from tkinter import filedialog
+        self.app.flush_inputs(revealed=False)
+        path = filedialog.asksaveasfilename(
+            parent=self.app.root, title=fsi.BTN_CREATE, initialfile=fsi.default_name(),
+            defaultextension=fsi.BACKUP_EXT,
+            filetypes=[(fsi.FILE_TYPE, "*" + fsi.BACKUP_EXT)])
+        if not path:
+            return
+        try:
+            data = fsi.create_backup(self.db, APP_VERSION, SyncController.device())
+            with open(path, "wb") as handle:
+                handle.write(data)
+        except OSError as error:
+            messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
+            return
+        show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
+
+    def restore_backup(self):
+        from tkinter import filedialog
+        path = filedialog.askopenfilename(
+            parent=self.app.root, title=fsi.BTN_RESTORE,
+            filetypes=[(fsi.FILE_TYPE, "*" + fsi.BACKUP_EXT), ("Alle Dateien", "*")])
+        if not path:
+            return
+        try:
+            with open(path, "rb") as handle:
+                backup = fsi.read_backup(handle.read())
+        except (OSError, fsi.BackupError) as error:
+            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+            return
+        self.app.flush_inputs(revealed=False)
+        BackupDialog(self.app, backup, self._merge_backup, self._replace_backup)
+
+    def _merge_backup(self, backup):
+        runs = fsi.deleted_runs(self.db, backup)
+        if runs and not messagebox.askyesno(fsi.DELETED_TITLE, fsi.deleted_question(runs)):
+            runs = []
+        try:
+            count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in runs],
+                                     SyncController.device())
+        except fsi.BackupError as error:
+            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+            return
+        self._after_restore()
+        messagebox.showinfo(fsi.ERROR_TITLE,
+                            fsi.merge_message(count, [item["name"] for item in runs]))
+
+    def _replace_backup(self, backup):
+        if not messagebox.askyesno(fsi.REPLACE_TITLE, fsi.replace_question(backup),
+                                   icon="warning"):
+            return
+        if not messagebox.askyesno(fsi.REPLACE_CONFIRM_TITLE, fsi.REPLACE_CONFIRM,
+                                   icon="warning", default="no"):
+            return
+        try:
+            path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
+                                   APP_VERSION, SyncController.device())
+        except fsi.BackupError as error:
+            messagebox.showerror(fsi.ERROR_TITLE, str(error))
+            return
+        self._after_restore()
+        messagebox.showinfo(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
+
+    def _after_restore(self):
+        """Nach dem Einspielen alles neu anzeigen (wie nach dem Zuruecksetzen)."""
+        game_view = self.app.views.built("game")
+        if game_view is not None:
+            game_view.game.invalidate()
+            game_view.game._summaries.clear()   # Kurzinfos der Plaetze neu rechnen
+            game_view.game.reload()
+            game_view.ticket = None
+            game_view.room = None
+        values = learning_settings()
+        for key, var in self.goal_vars.items():
+            var.set(values[key])
+        self.goal_stepper.value = values["ziel_anzahl"]
+        self.goal_stepper.label.configure(text=str(values["ziel_anzahl"]))
+        self.entry_reminder.set(values["erinnerung_zeit"])
+        self.app.notify_progress()
+        self.app.refresh_after_sync()
+        self._show_difficulty()
 
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
@@ -4559,6 +4658,43 @@ def _quietly(function, *args, **kwargs):
         pass
 
 
+class BackupDialog(ctk.CTkToplevel):
+    """Vorschau einer Sicherung mit der Wahl Zusammenfuehren / Alles ersetzen."""
+
+    def __init__(self, app, backup, on_merge, on_replace):
+        super().__init__(app.root, fg_color=C["bg"])
+        self.title(fsi.ERROR_TITLE)
+        self.geometry("560x390")
+        self.resizable(False, False)
+        self.transient(app.root)
+        self.after(250, lambda: _apply_window_icon(self))
+
+        card = Card(self, title=fsi.ERROR_TITLE, accent=C["accent2"])
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        make_label(card.body, "\n".join(fsi.backup_summary(backup)["zeilen"]),
+                   font=F["body"], fg=C["text_soft"], justify="left",
+                   anchor="w").pack(anchor="w")
+        make_label(card.body, fsi.PREVIEW_HINT, font=F["small"], fg=C["text_dim"],
+                   justify="left", anchor="w", wraplength=480).pack(anchor="w", pady=(14, 0))
+
+        def choose(action):
+            self.destroy()
+            action(backup)
+
+        buttons = transparent_frame(card.body)
+        buttons.pack(fill="x", side="bottom", pady=(12, 0))
+        NeoButton(buttons, fsi.BTN_MERGE, lambda: choose(on_merge),
+                  kind="primary").pack(side="left")
+        NeoButton(buttons, fsi.BTN_REPLACE, lambda: choose(on_replace),
+                  kind="danger").pack(side="left", padx=10)
+        NeoButton(buttons, fsi.BTN_CANCEL, self.destroy, kind="ghost").pack(side="left")
+        self.after(100, self._focus)
+
+    def _focus(self):
+        self.lift()
+        self.focus_force()
+
+
 class UpdateDialog(ctk.CTkToplevel):
     """Zeigt ein verfuegbares Update und fuehrt durch Download und Installation."""
 
@@ -4713,7 +4849,7 @@ def _apply_window_icon(root):
 
 
 # Ansichten des Spiels (ab 0.48 mit Platzanzeige im Kopf)
-GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "reise")
+GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "serverfarm", "reise")
 GAME_VIEWS = ("game",) + GAME_SUBVIEWS
 
 
@@ -4827,7 +4963,7 @@ class FISIApp:
             ("notebook", NotebookView),
             ("calc", CalcView), ("game", GameView), ("buero", OfficeView),
             ("kunde", CustomerView), ("zuhause", HomeView),
-            ("firma", FirmView), ("filiale", BranchView),
+            ("firma", FirmView), ("filiale", BranchView), ("serverfarm", FarmView),
             ("reise", JourneyView),
             ("progress", ProgressView),
             ("settings", SettingsView), ("search", SearchView)))
@@ -5000,7 +5136,8 @@ class FISIApp:
         self.header.set_crumbs(main, sub)
         # Die Suche hat keinen eigenen Menuepunkt - dann bleibt nichts markiert.
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
-        self.sidebar.set_active("game" if key == "filiale" else key)
+        # Ebenso die Serverfarm (ab 0.52, Lokschuppen auf der Karte).
+        self.sidebar.set_active("game" if key in ("filiale", "serverfarm") else key)
         view.on_show()
         # Ab 0.50: on_show kann weitere Ansichten aufbauen - die gewaehlte
         # bleibt trotzdem oben (siehe LazyViews), sofern on_show nicht selbst
@@ -5029,6 +5166,15 @@ class FISIApp:
     def do_search(self, query):
         self.views["search"].search(query)
         self.show_view("search")
+
+    def open_raid_calc(self, level, disks, size):
+        """RAID-Rechner mit den Werten aus der Server-Bestueckung (ab 0.52)."""
+        view = self.views["calc"]
+        view.raid_pills.select_value(level, notify=False)
+        view.entry_disks.set(str(disks))
+        view.entry_size.set(str(size))
+        view.calc_raid()
+        self.show_view("calc")
 
     def open_search_hit(self, kind, title):
         if kind == "Karteikarte":
@@ -5127,17 +5273,24 @@ class FISIApp:
         elif self.current in ("notebook", "reise", "cards"):
             self.views[self.current].on_show()
 
+    def flush_inputs(self, revealed=True):
+        """Offene Eingaben speichern (beim Beenden und vor einer Sicherung).
+        revealed: auch aufgedeckte, aber nicht bewertete Loesungen als
+        angesehen speichern (nur beim Beenden)."""
+        keys = ("cards", "ap1scenarios", "scenarios", "testproject") if revealed else ()
+        for key in keys + ("abschluss",):
+            view = self.views.built(key)
+            if view is not None:
+                view._flush()
+        quiz = self.views.built("quiz")
+        if quiz is not None:
+            quiz.exam._flush_answers()   # Antworten einer laufenden Pruefung (ab 0.51)
+
     def on_close(self, final_sync=True):
         quiz = self.views.built("quiz")
         if quiz is not None:
             quiz.stop_timer()
-        # Aufgedeckte, aber nicht bewertete Loesungen als angesehen speichern
-        for key in ("cards", "ap1scenarios", "scenarios", "testproject", "abschluss"):
-            view = self.views.built(key)
-            if view is not None:
-                view._flush()
-        if quiz is not None:
-            quiz.exam._flush_answers()   # Antworten einer laufenden Pruefung (ab 0.51)
+        self.flush_inputs()
         self.root.withdraw()
         # Nicht vor einem Update: Der Installer soll nicht warten muessen, der
         # Abgleich folgt dann beim naechsten Start.

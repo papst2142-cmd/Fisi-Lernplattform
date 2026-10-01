@@ -125,7 +125,13 @@
     {"id": "usv_3000", "typ": "usv", "name": "USV 3000 W", "he": 3, "gewicht": 48, "watt": 0, "leistung": 3000},
     {"id": "usv_700", "typ": "usv", "name": "USV 700 W (kompakt)", "he": 1, "gewicht": 13, "watt": 0, "leistung": 700},
     {"id": "sw_24_poe", "typ": "switch", "name": "Switch 24 Ports mit PoE", "he": 1, "gewicht": 5, "watt": 250, "ports": 24},
-    {"id": "nvr_2he", "typ": "storage", "name": "Videorekorder (NVR) mit 8 Platten", "he": 2, "gewicht": 18, "watt": 160}
+    {"id": "nvr_2he", "typ": "storage", "name": "Videorekorder (NVR) mit 8 Platten", "he": 2, "gewicht": 18, "watt": 160},
+
+    {"id": "host_2he", "typ": "server", "name": "Virtualisierungs-Host", "he": 2, "gewicht": 30, "watt": 650, "schaechte": 12},
+    {"id": "storage_2he_24", "typ": "storage", "name": "Storage-System", "he": 2, "gewicht": 34, "watt": 500, "schaechte": 24},
+    {"id": "sw_48_25g", "typ": "switch", "name": "Switch 48 × 25 GbE", "he": 1, "gewicht": 9, "watt": 350, "ports": 48, "gbit": 25},
+    {"id": "pp_48_lwl", "typ": "patchpanel", "name": "LWL-Patchpanel 48 Fasern", "he": 1, "gewicht": 3, "watt": 0, "ports": 48, "fasern": 48},
+    {"id": "usv_5000", "typ": "usv", "name": "USV 5000 W", "he": 4, "gewicht": 62, "watt": 0, "leistung": 5000}
   ],
   "falschlieferung": {
     "_hinweis": "Zwischenfall nach einer falschen Bestellung: Die Ware kommt trotzdem und muss zurueck. {bestellung} = Titel der Bestellung, {ware} = was geliefert wurde. Die Bestellung kommt erst danach wieder, dann ohne Spar-Bonus. Kosten der Ruecksendung unter 'ruecksendekosten'.",

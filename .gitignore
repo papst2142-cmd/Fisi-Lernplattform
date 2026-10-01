@@ -30,5 +30,6 @@ mobile/src/fisi_lernen.py
 mobile/src/fisi_pruefung.py
 mobile/src/fisi_projekt.py
 mobile/src/fisi_pdf.py
+mobile/src/fisi_sicherung.py
 mobile/src/inhalte/
 mobile/build/

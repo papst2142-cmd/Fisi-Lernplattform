@@ -31,6 +31,7 @@ if os.environ.get("FLET_APP_STORAGE_DATA") and not os.environ.get("FISI_DB_PATH"
 
 import flet as ft  # noqa: E402
 
+import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
@@ -64,7 +65,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.51"
+APP_VERSION = "0.52"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -1931,28 +1932,8 @@ class FinalProjectScreen(Screen):
             data, mime = fpj.export_pdf(self.fields), "application/pdf"
         else:
             data, mime = fpj.export_text(self.fields).encode("utf-8"), "text/plain"
-        self.app.page.run_task(self._save_file, fpj.export_name(self.fields, extension),
+        self.app.page.run_task(self.app.save_file, fpj.export_name(self.fields, extension),
                                data, mime)
-
-    async def _save_file(self, name, data, mime):
-        """Speichern ueber den Dateidialog des Handys; klappt das nicht,
-        bietet "Teilen" die Datei an (z.B. fuer Drive oder E-Mail)."""
-        try:
-            path = await ft.FilePicker().save_file(file_name=name, src_bytes=data)
-            if path and not os.path.exists(path):
-                # Am PC (Testlauf) schreibt der Dialog die Datei nicht selbst
-                with open(path, "wb") as handle:
-                    handle.write(data)
-            if path:
-                self.toast("Gespeichert: %s" % name)
-            return
-        except Exception:
-            pass
-        try:
-            await ft.Share().share_files([ft.ShareFile.from_bytes(data, mime_type=mime,
-                                                                  name=name)])
-        except Exception as error:
-            self.toast("Speichern nicht möglich: %s" % error, C["red"])
 
     def use_template(self, position):
         self.flush()
@@ -2821,6 +2802,13 @@ class SettingsScreen(Screen):
         ], accent=C["accent"], subtitle="privates GitHub-Repository")
         self.show_sync_status(None, None)
 
+        # Sicherung als Datei (fisi_sicherung.py), Texte wie am PC
+        backup = ui.Card(fsi.TITLE, [
+            ui.text(fsi.HELP, size=13, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fsi.BTN_CREATE, self.create_backup)]),
+            ft.Row([ui.GradientButton(fsi.BTN_RESTORE, self.restore_backup, kind="ghost")]),
+        ], accent=C["accent2"], subtitle=fsi.SUBTITLE)
+
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
                  "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
@@ -2858,14 +2846,21 @@ class SettingsScreen(Screen):
         self.entry_reminder = ui.entry(values["erinnerung_zeit"], hint="18:00",
                                        keyboard=ft.KeyboardType.DATETIME,
                                        on_change=self._reminder_changed)
+        self.goal_rows = {
+            "ziel_an": self._switch("Tagesziel anzeigen", values["ziel_an"],
+                                    lambda e: save_learning_settings(
+                                        ziel_an=bool(e.control.value))),
+            "serie_an": self._switch("Lernserie anzeigen", values["serie_an"],
+                                     lambda e: save_learning_settings(
+                                         serie_an=bool(e.control.value))),
+            "erinnerung_an": self._switch("An das Tagesziel erinnern",
+                                          values["erinnerung_an"],
+                                          lambda e: save_learning_settings(
+                                              erinnerung_an=bool(e.control.value))),
+        }
         goal = ui.Card("Tagesziel", [
-            self._switch("Tagesziel anzeigen", values["ziel_an"],
-                         lambda e: save_learning_settings(ziel_an=bool(e.control.value))),
-            self._switch("Lernserie anzeigen", values["serie_an"],
-                         lambda e: save_learning_settings(serie_an=bool(e.control.value))),
-            self._switch("An das Tagesziel erinnern", values["erinnerung_an"],
-                         lambda e: save_learning_settings(
-                             erinnerung_an=bool(e.control.value))),
+            self.goal_rows["ziel_an"], self.goal_rows["serie_an"],
+            self.goal_rows["erinnerung_an"],
             ft.Row([ui.text("Aufgaben pro Tag", size=13, color=C["text_dim"], expand=True),
                     self.goal_stepper]),
             ft.Row([ui.text("Erinnerung um", size=13, color=C["text_dim"], expand=True),
@@ -2877,7 +2872,7 @@ class SettingsScreen(Screen):
         ], accent=C["green"], subtitle="nur für dieses Gerät")
 
         return screen_list([
-            updates, colors, goal, sync,
+            updates, colors, goal, sync, backup,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Daten zurücksetzen", [
@@ -3067,6 +3062,135 @@ class SettingsScreen(Screen):
                 self.app.notify_progress()
 
         self.app.confirm("Bestenliste löschen", fisi_game.RECORDS_ASK, confirmed)
+
+    # -- Sicherung ------------------------------------------------------------
+
+    def _flush_inputs(self):
+        """Offene Eingaben (Pruefung, Abschlussprojekt) vorher speichern."""
+        self.app.screens["quiz"].exam.save_answers()
+        self.app.screens["abschluss"].flush()
+
+    def create_backup(self, _event=None):
+        self._flush_inputs()
+        data = fsi.create_backup(self.db, APP_VERSION, "Handy")
+        self.app.page.run_task(self.app.save_file, fsi.default_name(), data,
+                               "application/octet-stream")
+
+    def restore_backup(self, _event=None):
+        self.app.page.run_task(self._pick_backup)
+
+    async def _pick_backup(self):
+        try:
+            files = await ft.FilePicker().pick_files(dialog_title=fsi.BTN_RESTORE,
+                                                     with_data=True)
+        except Exception as error:
+            self.toast("Öffnen nicht möglich: %s" % error, C["red"])
+            return
+        if not files:
+            return
+        item = files[0]
+        try:
+            raw = item.bytes
+            if raw is None and item.path:
+                # Am PC (Testlauf) kommen die Daten nicht mit
+                with open(item.path, "rb") as handle:
+                    raw = handle.read()
+            backup = fsi.read_backup(raw or b"")
+        except (OSError, fsi.BackupError) as error:
+            self.app.info(fsi.ERROR_TITLE, str(error))
+            self.app.page.update()
+            return
+        self._flush_inputs()
+        self._show_backup(backup)
+        self.app.page.update()
+
+    def _show_backup(self, backup):
+        """Vorschau mit der Wahl Zusammenfuehren / Alles ersetzen (wie am PC)."""
+        def choose(action):
+            self.app.page.pop_dialog()
+            if action:
+                action(backup)
+            self.app.page.update()
+
+        self.app.page.show_dialog(ft.AlertDialog(
+            modal=True, bgcolor=C["card"],
+            title=ft.Text(fsi.ERROR_TITLE, color=C["text"], size=18,
+                          weight=ft.FontWeight.BOLD),
+            content=ft.Column([
+                ft.Text("\n".join(fsi.backup_summary(backup)["zeilen"]),
+                        color=C["text_soft"], size=14),
+                ft.Text(fsi.PREVIEW_HINT, color=C["text_dim"], size=13),
+            ], tight=True, spacing=12),
+            actions=[ft.TextButton(fsi.BTN_CANCEL, on_click=lambda _e: choose(None)),
+                     ft.TextButton(content=ft.Text(fsi.BTN_REPLACE, color=C["red"]),
+                                   on_click=lambda _e: choose(self._replace_backup)),
+                     ft.TextButton(fsi.BTN_MERGE,
+                                   on_click=lambda _e: choose(self._merge_backup))]))
+
+    def _ask(self, title, message, on_answer):
+        """Frage mit Ja und Nein - beide Antworten gehen weiter."""
+        def answer(yes):
+            self.app.page.pop_dialog()
+            on_answer(yes)
+            self.app.page.update()
+
+        self.app.page.show_dialog(ft.AlertDialog(
+            modal=True, bgcolor=C["card"],
+            title=ft.Text(title, color=C["text"], size=18, weight=ft.FontWeight.BOLD),
+            content=ft.Text(message, color=C["text_dim"], size=14),
+            actions=[ft.TextButton("Nein", on_click=lambda _e: answer(False)),
+                     ft.TextButton("Ja", on_click=lambda _e: answer(True))]))
+
+    def _merge_backup(self, backup):
+        runs = fsi.deleted_runs(self.db, backup)
+
+        def merge(restore):
+            chosen = runs if restore else []
+            try:
+                count = fsi.merge_backup(self.db, backup, [item["lauf"] for item in chosen],
+                                         "Handy")
+            except fsi.BackupError as error:
+                self.app.info(fsi.ERROR_TITLE, str(error))
+                return
+            self._after_restore()
+            self.app.info(fsi.ERROR_TITLE,
+                          fsi.merge_message(count, [item["name"] for item in chosen]))
+
+        if runs:
+            self._ask(fsi.DELETED_TITLE, fsi.deleted_question(runs), merge)
+        else:
+            merge(False)
+
+    def _replace_backup(self, backup):
+        def replace():
+            try:
+                path = fsi.replace_all(self.db, backup, os.path.dirname(self.db.db_path),
+                                       APP_VERSION, "Handy")
+            except fsi.BackupError as error:
+                self.app.info(fsi.ERROR_TITLE, str(error))
+                return
+            self._after_restore()
+            self.app.info(fsi.ERROR_TITLE, fsi.replace_message(backup, path))
+
+        self.app.confirm(fsi.REPLACE_TITLE, fsi.replace_question(backup),
+                         lambda: self.app.confirm(fsi.REPLACE_CONFIRM_TITLE,
+                                                  fsi.REPLACE_CONFIRM, replace))
+
+    def _after_restore(self):
+        """Nach dem Einspielen alles neu anzeigen (wie nach dem Zuruecksetzen)."""
+        game = self.app.screens["game"].game
+        game.invalidate()
+        game._summaries.clear()   # Kurzinfos der Plaetze neu rechnen
+        game.reload()
+        self.app.screens["game"].room = None
+        values = learning_settings()
+        for key, row in self.goal_rows.items():
+            row.controls[0].content.value = values[key]
+        self.goal_stepper.value = values["ziel_anzahl"]
+        self.goal_stepper.set_maximum(self.goal_stepper.maximum)
+        self.entry_reminder.value = values["erinnerung_zeit"]
+        self.app.notify_progress()
+        self.app.refresh_after_sync()
 
     def reset_all(self, _event=None):
         def confirmed():
@@ -3472,6 +3596,26 @@ class FISIMobileApp:
             title=ft.Text(title, color=C["text"], size=18, weight=ft.FontWeight.BOLD),
             content=ft.Text(message, color=C["text_dim"], size=14),
             actions=[ft.TextButton("OK", on_click=close)]))
+
+    async def save_file(self, name, data, mime):
+        """Speichern ueber den Dateidialog des Handys; klappt das nicht,
+        bietet "Teilen" die Datei an (z.B. fuer Drive oder E-Mail)."""
+        try:
+            path = await ft.FilePicker().save_file(file_name=name, src_bytes=data)
+            if path and not os.path.exists(path):
+                # Am PC (Testlauf) schreibt der Dialog die Datei nicht selbst
+                with open(path, "wb") as handle:
+                    handle.write(data)
+            if path:
+                self.toast("Gespeichert: %s" % name)
+            return
+        except Exception:
+            pass
+        try:
+            await ft.Share().share_files([ft.ShareFile.from_bytes(data, mime_type=mime,
+                                                                  name=name)])
+        except Exception as error:
+            self.toast("Speichern nicht möglich: %s" % error, C["red"])
 
     def notify_progress(self):
         """Nach jeder Lernaktivitaet: Abgleich vormerken und neu erreichte
@@ -3949,6 +4093,28 @@ def selftest():
                 info = fisi_game.unlock_info(state, rule, level, [])
                 spiel.moment_card(info, state, 0, 2, None, None)
         spiel.badge_image("stern", None, None)
+        # Serverfarm (ab 0.52): Seite in allen Zustaenden, jede Aufgabe einmal
+        game.farm_box = ft.Column()
+        state.farm_unlocked, state.farm = None, None
+        game._fill_farm()
+        state.farm_unlocked = state.day
+        game._fill_farm()
+        state.farm = fisi_game.new_farm(state.day)
+        game._fill_farm()
+        game._farm_toggle_edit()
+        game._farm_toggle_edit()
+        for task in fisi_game.farm_tasks():
+            game.open_farm_task(task["id"])
+            game._show_help()
+            if task["typ"] == "bestueckung":
+                game.options.answer = fisi_game.fit_solution(task)
+                game.options._build_middle()
+                game.options._paint()
+                game.options.reveal(True)
+        state.farm["abnahme"] = fisi_game.farm_acceptance(state, state.day)
+        state.farm["fertig"] = state.day
+        game._fill_farm()
+        state.farm_unlocked, state.farm = None, None
         # Spielstand-Plaetze (ab 0.48): Auswahl mit belegten und leeren Plaetzen
         game.picking = True
         game.render()

@@ -61,7 +61,7 @@ TASK_TYPES = ("auswahl", "zuordnung", "bauteile", "bestellung", "rack", "formula
               "terminal", "diagnose", "wartung")
 # Typen, deren Rueckmeldung eine Liste von Problemen ist
 PROBLEM_TYPES = ("bauteile", "bestellung", "rack", "formular", "terminal", "diagnose",
-                 "wartung")
+                 "wartung", "bestueckung")
 
 # Ereignistypen im Protokoll
 EV_PROFILE = "profil_gesetzt"
@@ -302,7 +302,23 @@ def load_game_content(folder=None):
         else {},
         # Die 50 Testprojekte aus dem Lernbereich (Kundenprojekte ab 0.35)
         "projektarbeiten": PROJEKTARBEITEN,
+        # Kampagne 2: Grossauftrag Serverfarm (ab 0.52)
+        "serverfarm": _farm_file(read, folder),
     }
+
+
+def _farm_file(read, folder):
+    if not os.path.exists(os.path.join(folder, "serverfarm.json")):
+        return {}
+    data = read("serverfarm")
+    # Teile stehen je Art in der Datei - im Spiel als eine Liste mit "typ"
+    if isinstance(data.get("teile"), dict):
+        data["teile"] = [dict(item, typ=kind) for kind, items in data["teile"].items()
+                         if not kind.startswith("_") for item in items]
+    for task in data.get("aufgaben") or []:
+        for field in ("ticket", "hilfe", "erklaerung"):
+            task[field] = _lines(task.get(field))
+    return data
 
 
 # ============================================================================
@@ -606,6 +622,7 @@ def validate_game_content(content=None):
     problems += _validate_business(content)
     problems += _validate_world(content)
     problems += _validate_achievements(content)
+    problems += _validate_farm(content)
 
     per_day = balancing["tickets_pro_tag"]
     for rank in balancing["raenge"]:
@@ -1517,6 +1534,8 @@ def rack_specs(item, content=None):
         parts.append("passiv, kein Strom")
     if item.get("ports"):
         parts.append("%d Ports" % item["ports"])
+    if item.get("schaechte"):
+        parts.append("%d Schächte" % item["schaechte"])
     return " · ".join(parts)
 
 
@@ -2641,6 +2660,8 @@ def answer_problems(task, answer, available=None, content=None):
         return diagnosis_review(task, answer, content, available)["probleme"]
     if task["typ"] == "wartung":
         return maintenance_review(task, answer, content)["probleme"]
+    if task["typ"] == "bestueckung":
+        return fit_problems(task, answer, content)
     return []
 
 
@@ -2706,6 +2727,8 @@ def find_solution(task, available=None, content=None):
         return carts[0] if carts else None
     if task["typ"] == "rack":
         return rack_solution(task, content)
+    if task["typ"] == "bestueckung":
+        return fit_solution(task, content)
     if task["typ"] == "terminal":
         return terminal_solution(task)
     if task["typ"] == "diagnose":
@@ -3195,6 +3218,9 @@ class GameState:
         # Schwierigkeitsgrad (ab 0.47) - None = nie gewaehlt (Spielstand vor
         # 0.47), zaehlt dann als Normal
         self.difficulty = None
+        # Grossauftrag Serverfarm (ab 0.52)
+        self.farm_unlocked = None  # Arbeitstag des Feierabends, an dem der Lokschuppen frei wurde
+        self.farm = None           # Kampagne ab dem Oeffnen der Ausschreibung (siehe new_farm)
 
         for timestamp, kind, data in events:
             self.history.append((timestamp, kind, data))
@@ -3204,6 +3230,8 @@ class GameState:
             today = today or self.days_done + 1
             if kind in FIRM_EVENTS:
                 self._apply_firm(kind, data, today)
+            if kind in FARM_EVENTS:
+                self._apply_farm(kind, data, today)
             if kind == EV_DIFFICULTY and self.difficulty is None and \
                     data.get("stufe") in (DIFF_EASY, DIFF_NORMAL):
                 self.difficulty = data["stufe"]
@@ -3278,6 +3306,7 @@ class GameState:
                 self._live = "personal" in firm
                 # Wer heute im Projekt oder in der Weiterbildung war, macht keine Routine
                 busy = {person for item in self.running_projects() for person in item["team"]}
+                busy |= set(self.farm_team())
                 self.money += int(firm.get("umsatz", 0)) - int(firm.get("gehaelter", 0)) \
                     - int(firm.get("nebenkosten", 0))
                 self._book(today, BOOK_REVENUE, firm.get("umsatz", 0))
@@ -3297,6 +3326,11 @@ class GameState:
                 for item in firm.get("projekte") or []:
                     if self._apply_project_day(item, today) and item.get("fertig"):
                         self._learn_from_project(item, today)
+                # Ab 0.52: Serverfarm (Freischaltung, Team-Punkte, Phasen, Abnahme)
+                if firm.get("serverfarm_frei") and self.farm_unlocked is None and self.firm:
+                    self.farm_unlocked = today
+                if firm.get("serverfarm"):
+                    self._apply_farm_day(firm["serverfarm"], today)
                 self._learn_routine(busy, today)
                 if self._live:
                     self._personal_day(today, firm.get("personal") or [])
@@ -3479,10 +3513,13 @@ class GameState:
             if project["fertig"]:
                 return
             team = [person for person in data.get("team") or [] if person]
-            # Jede Person arbeitet nur in einem Projekt mit
+            # Jede Person arbeitet nur in einem Projekt mit (ab 0.52 auch nicht
+            # gleichzeitig an der Serverfarm)
             for other in self.projects.values():
                 if other is not project:
                     other["team"] = [person for person in other["team"] if person not in team]
+            if self.farm is not None:
+                self.farm["team"] = [person for person in self.farm["team"] if person not in team]
             project["team"] = team
 
     def _apply_project_day(self, item, day):
@@ -3503,6 +3540,87 @@ class GameState:
             self._book(day, BOOK_PROJECTS, item.get("geld", 0))
             self._apply_reputation(item.get("reputation") or {})
         return True
+
+    # -- Grossauftrag Serverfarm (ab 0.52) --------------------------------------
+
+    def _apply_farm(self, kind, data, day):
+        """Ereignisse der Serverfarm. Doppelte (zwei Geraete) zaehlen einmal."""
+        if kind == EV_FARM_START:
+            if self.farm is None and self.farm_unlocked is not None and self.firm:
+                self.farm = new_farm(int(data.get("tag", day) or day))
+            return
+        farm = self.farm
+        if farm is None or farm["fertig"]:
+            return
+        if kind == EV_FARM_TASK:
+            task_id = data.get("aufgabe")
+            if not task_id or task_id in farm["aufgaben"] or not farm_task(task_id, self.content):
+                return
+            farm["aufgaben"][task_id] = dict(data)
+            self.money += int(data.get("geld", 0))
+            self._book(day, BOOK_PROJECTS, data.get("anzahlung", 0))
+            self._book(day, BOOK_MATERIAL, -int(data.get("kosten", 0)))
+            self._book(day, BOOK_REWORK, -int(data.get("strafe", 0)))
+            self._apply_reputation(data.get("reputation") or {})
+        elif kind == EV_FARM_TEAM:
+            team = []
+            for person in data.get("team") or []:
+                if person and person in self.staff and person not in team:
+                    team.append(person)
+            limit = int(farm_rules(self.content).get("team_max", 5))
+            team = team[:limit]
+            for project in self.projects.values():
+                project["team"] = [person for person in project["team"] if person not in team]
+            farm["team"] = team
+
+    def _apply_farm_day(self, item, day):
+        """Feierabend der Serverfarm: Team-Punkte, Wuerfel, Phasenende, Abnahme."""
+        farm = self.farm
+        key = int(item.get("tag", day) or day)
+        if farm is None or farm["fertig"] or key in farm["tag_set"]:
+            return
+        farm["tag_set"].add(key)
+        farm["tage"].append(dict(item))
+        phase_id = item.get("phase")
+        if item.get("punkte"):
+            farm["punkte"][phase_id] = farm["punkte"].get(phase_id, 0.0) + float(item["punkte"])
+        for share in item.get("beitraege") or []:
+            person = share.get("an")
+            farm["beitraege"][person] = farm["beitraege"].get(person, 0.0) + \
+                float(share.get("punkte", 0))
+        if "kabelfehler" in item:
+            farm["kabelfehler"] = list(item.get("kabelfehler") or [])
+            farm["nacharbeit_bis"] = item.get("nacharbeit_bis")
+        if item.get("nacharbeit_geld"):
+            self.money -= int(item["nacharbeit_geld"])
+            self._book(day, BOOK_REWORK, -int(item["nacharbeit_geld"]))
+        if "verzug" in item:
+            farm["verzug"] = int(item["verzug"])
+            farm["liefertag"] = int(item.get("liefertag") or day + 1)
+        if item.get("fertig"):
+            farm["fertig_phasen"][phase_id] = key
+            phase = farm_phase_rule(phase_id, self.content) or {}
+            amount = float(farm_rules(self.content).get("lernen_phase", 0))
+            for person in self.farm_team():
+                for topic in (phase.get("themen") or [])[:1]:
+                    self._learn(person, topic, amount, day, "projekt")
+        if item.get("abnahme"):
+            data = item["abnahme"]
+            farm["abnahme"] = dict(data)
+            farm["fertig"] = key
+            farm["team"] = []
+            self.money += int(data.get("geld", 0))
+            self._book(day, BOOK_PROJECTS, data.get("geld", 0))
+            self._apply_reputation(data.get("reputation") or {})
+
+    def farm_team(self):
+        """Wer gerade im Serverfarm-Team ist (leer, wenn sie nicht laeuft)."""
+        if self.farm is None or self.farm["fertig"]:
+            return []
+        return [person for person in self.farm["team"] if person in self.staff]
+
+    def farm_running(self):
+        return self.farm is not None and not self.farm["fertig"]
 
     # -- Kredite (ab 0.41) -------------------------------------------------------
 
@@ -4154,12 +4272,17 @@ class GameState:
             item["weiterbildung"] = self.training_of(staff_id)
             item["abwesend"] = self.away_of(staff_id)
             item["projekt"] = self.project_of(staff_id)
+            item["serverfarm"] = staff_id in self.farm_team()
             item["macke_info"] = self.quirk_of(staff_id)
             item["stimmung"] = self.mood_of(staff_id)
             item["form"] = self.staff_form(staff_id)
-            # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege
+            # Wer in einem Projekt mitarbeitet, macht keine Routineauftraege.
+            # Ab 0.52: Im Serverfarm-Team laeuft ein Teil davon nebenbei weiter.
             item["umsatz"] = 0 if item["weiterbildung"] or item["abwesend"] or \
                 item["projekt"] else self.staff_revenue_of(staff_id, item["werte"])
+            if item["serverfarm"] and item["umsatz"]:
+                item["umsatz"] = int(round(item["umsatz"] * farm_team_revenue(self.content)
+                                           / 100.0))
             site = self.site_of(staff_id)
             item["standort"] = site
             index = seated[site]
@@ -4947,6 +5070,13 @@ class Game:
                                     self.content)
             if days:
                 payload["firma"]["projekte"] = days
+            # Ab 0.52: Serverfarm - Freischaltung und der Arbeitstag der Kampagne
+            if self.state.farm_unlocked is None and not farm_unlock_missing(self.state,
+                                                                            self.content):
+                payload["firma"]["serverfarm_frei"] = 1
+            farm = farm_day(self.state, self.topic_knowledge(), self.content)
+            if farm:
+                payload["firma"]["serverfarm"] = farm
             # Ab 0.42: Umsatzsteuer ab diesem Feierabend (aeltere Tage bleiben
             # steuerfrei, damit alte Spielstaende nicht nachtraeglich zahlen)
             # Ab 0.47: auf "Einfach" gibt es keine Umsatzsteuer
@@ -5290,6 +5420,66 @@ class Game:
                    "bis_tag": self.state.day + offer["tage"], "geld": -offer["preis"]}
         self._log(EV_CERT, payload)
         return payload
+
+    # -- Grossauftrag Serverfarm (ab 0.52) --------------------------------------
+
+    def farm_start(self):
+        """Ausschreibung oeffnen: Ab heute laufen die Arbeitstage der Kampagne."""
+        self._firm_required()
+        if self.state.farm_unlocked is None:
+            raise ValueError(farm_unlock_text(self.state, self.content))
+        if self.state.farm is not None:
+            raise ValueError("Die Serverfarm läuft schon.")
+        payload = {"tag": self.state.day}
+        self._log(EV_FARM_START, payload)
+        return payload
+
+    def farm_solve(self, task_id, answer, used_help, markup=None):
+        """Wertet eine Serverfarm-Aufgabe aus (beim Angebot mit Gewinnzuschlag)."""
+        self._firm_required()
+        task = farm_task(task_id, self.content)
+        problem = farm_task_problem(self.state, task_id, self.content) if task else \
+            "Diese Aufgabe gibt es nicht."
+        if problem:
+            raise ValueError(problem)
+        if task["typ"] == FARM_OFFER_TYPE and markup not in farm_markups(self.content):
+            raise ValueError("Bitte wähle einen Gewinnzuschlag.")
+        payload = farm_evaluate(self.state, task, answer, used_help, self.topic_knowledge(),
+                                markup, self.content)
+        self._log(EV_FARM_TASK, payload)
+        return payload
+
+    def farm_set_team(self, team):
+        """Stellt das Serverfarm-Team neu zusammen."""
+        self._firm_required()
+        if not self.state.farm_running():
+            raise ValueError("Die Serverfarm läuft nicht (mehr).")
+        team = [person for index, person in enumerate(team or []) if person not in team[:index]]
+        options = {item["an"]: item for item in farm_candidates(
+            self.state, self.topic_knowledge(), self.content)}
+        current = self.state.farm["team"]
+        limit = int(farm_rules(self.content).get("team_max", 5))
+        if len(team) > limit:
+            raise ValueError("Ins Serverfarm-Team passen höchstens %d Leute." % limit)
+        for person in team:
+            if person not in options:
+                raise ValueError("Diese Person arbeitet nicht bei dir.")
+            if person not in current and options[person]["problem"] and \
+                    not options[person]["problem"].startswith("Das Team ist voll"):
+                raise ValueError(options[person]["problem"])
+        payload = {"tag": self.state.day, "team": team}
+        self._log(EV_FARM_TEAM, payload)
+        return payload
+
+    def farm_toggle_member(self, person):
+        if not self.state.farm_running():
+            raise ValueError("Die Serverfarm läuft nicht (mehr).")
+        team = list(self.state.farm["team"])
+        if person in team:
+            team.remove(person)
+        else:
+            team.append(person)
+        return self.farm_set_team(team)
 
     def learned_projects(self):
         """Nummern der Testprojekte, die im Lernbereich bearbeitet wurden."""
@@ -6797,6 +6987,12 @@ def firm_day_text(numbers):
     lines = [project_day_text(item) for item in numbers.get("projekte") or []]
     if lines:
         text += "\n\nProjekte:\n" + "\n".join("• " + line for line in lines)
+    # Ab 0.52: Grossauftrag Serverfarm
+    lines = farm_day_text(None, numbers["serverfarm"]) if numbers.get("serverfarm") else []
+    if numbers.get("serverfarm_frei"):
+        lines.insert(0, farm_unlocked_text())
+    if lines:
+        text += "\n\n%s:\n" % FARM_TITLE + "\n".join("• " + line for line in lines)
     lines = loan_day_lines(loans)
     if lines:
         text += "\n\nKredite:\n" + "\n".join("• " + line for line in lines)
@@ -8300,6 +8496,8 @@ def ticket_candidates(state, ticket, levels, content=None):
         elif item.get("projekt"):
             problem = "%s arbeitet im Projekt „%s“ mit." % (
                 item["name"], state.projects[item["projekt"]]["titel"])
+        elif item.get("serverfarm"):
+            problem = FARM_BUSY_TEXT % item["name"]
         elif len(state.delegated_to(item["id"])) >= ticket_limit(item["id"], content):
             problem = "%s hat heute schon ein Kundenticket." % item["name"]
         result.append({"an": item["id"], "name": item["name"], "wert": value,
@@ -9091,6 +9289,8 @@ def project_candidates(state, project, levels, content=None):
         elif item.get("projekt") and item["projekt"] != project["projekt"]:
             problem = "%s arbeitet schon im Projekt „%s“ mit." % (
                 item["name"], state.projects[item["projekt"]]["titel"])
+        elif item.get("serverfarm"):
+            problem = FARM_BUSY_TEXT % item["name"]
         elif item["id"] not in project["team"] and state.delegated_to(item["id"]):
             problem = "%s hat heute schon ein Kundenticket." % item["name"]
         result.append({"an": item["id"], "name": item["name"], "wert": value,
@@ -11262,6 +11462,9 @@ def journey(state, content=None):
     for market_day, market_kind, title, text in market_events(state, content):
         add(market_day, JOURNEY_FIRM if market_kind.startswith("wettbewerb") else
             JOURNEY_STORY, market_kind, title, text)
+    # Ab 0.52: Grossauftrag Serverfarm
+    for farm_tag, farm_kind, title, text in farm_journey(state, content):
+        add(farm_tag, JOURNEY_FIRM, farm_kind, title, text)
     previous = 0
     for rank_day, rank in state.rank_log:
         level = names.index(rank) if rank in names else 0
@@ -11389,6 +11592,8 @@ RUN_METRICS = (
     "geschlichtet", "abwerbung_abgewehrt", "macke_gezaehmt", "themen_70", "fachbereiche_70",
     "auftraege", "groesster_auftrag", "tage_gruendung", "tage_stufe5", "tage_filiale",
     "story_einfach", "story_normal",
+    "serverfarm_einfach", "serverfarm_normal", "serverfarm_fehlerfrei", "serverfarm_puenktlich",
+    "serverfarm_tage",
 )
 # Ab 0.47: Story-Abzeichen je Schwierigkeitsgrad
 STORY_BADGES = ("story_einfach", "story_normal")
@@ -11432,6 +11637,14 @@ def run_metrics(state, knowledge=None, content=None):
     # Ab 0.47: Story abgeschlossen (alle Bitweiche-Auftraege) je Schwierigkeitsgrad
     if state.profile and state.all_done():
         m["story_" + state.level] = 1
+    # Ab 0.52: Grossauftrag Serverfarm abgenommen (je Schwierigkeitsgrad der Abnahme)
+    accepted = (state.farm or {}).get("abnahme")
+    m["serverfarm_tage"] = None
+    if accepted:
+        m["serverfarm_" + accepted.get("stufe", state.level)] = 1
+        m["serverfarm_fehlerfrei"] = 1 if accepted.get("fehlerfrei") else 0
+        m["serverfarm_puenktlich"] = 1 if accepted.get("puenktlich") else 0
+        m["serverfarm_tage"] = int(accepted.get("dauer", 0)) or None
     per_day = {}
     seen = set()
     offer_flags = []
@@ -12098,6 +12311,19 @@ def _pic_screwdriver(cx, cy, k, color, _dim):
             _line(cx - 0.12 * k, cy + 0.12 * k, cx + 0.55 * k, cy - 0.55 * k, METAL, 0.1 * k)]
 
 
+def _pic_server(cx, cy, k, color, dim):
+    """Ein Serverschrank mit drei Einschueben und Leuchtdioden (ab 0.52)."""
+    frame = C["text"] if not dim else color
+    s = [_rect(cx - 0.46 * k, cy - 0.66 * k, 0.92 * k, 1.32 * k, frame, r=0.06 * k)]
+    for number in range(3):
+        y = cy - 0.5 * k + number * 0.36 * k
+        s.append(_rect(cx - 0.34 * k, y, 0.68 * k, 0.26 * k, color if not dim else C["card"],
+                       r=0.03 * k))
+        s.append(_oval(cx + 0.16 * k, y + 0.08 * k, 0.1 * k, 0.1 * k,
+                       C["green"] if not dim else frame))
+    return s
+
+
 def _pic_book(cx, cy, k, color, _dim):
     return [_poly([(cx - 0.7 * k, cy - 0.45 * k), (cx - 0.04 * k, cy - 0.32 * k),
                    (cx - 0.04 * k, cy + 0.56 * k), (cx - 0.7 * k, cy + 0.42 * k)], color),
@@ -12113,6 +12339,7 @@ BADGE_PICTURES = {
     "diagramm": _pic_chart, "pfeil": _pic_arrow, "pokal": _pic_cup, "muenzen": _pic_coins,
     "anker": _pic_anchor, "herz": _pic_heart, "hut": _pic_hat, "sprechblase": _pic_bubble,
     "magnet": _pic_magnet, "schraube": _pic_screwdriver, "buch": _pic_book,
+    "server": _pic_server,
 }
 
 
@@ -13013,13 +13240,13 @@ def result_text(task, payload, available=None, content=None):
 #   poly  pts [x1, y1, x2, y2, ...], fill, line, lw   (geschlossenes Vieleck)
 
 MAP_ROLES = ("bitweiche", "kunde", "firma", "zuhause", "filiale", "mitbewerber")
-MAP_VIEWS = ("buero", "zuhause", "firma", "filiale")
+MAP_VIEWS = ("buero", "zuhause", "firma", "filiale", "serverfarm")
 MAP_VIEW_PREFIXES = ("kunde:", "firma:", "mitbewerber:")
 MAP_UNLOCKS = ("immer", "ab_tag", "kundenort", "aufgabe", "gruendung_moeglich", "gegruendet",
-               "stufe_min", "filiale_moeglich", "filiale_gebaut")
+               "stufe_min", "filiale_moeglich", "filiale_gebaut", "serverfarm")
 MAP_PARTS = ("block", "flaeche", "schild", "kreis", "mast", "tor", "baum", "geruest")
 MAP_PART_CONDITIONS = ("ab_stufe", "bis_stufe", "ab_filiale", "bis_filiale", "raum", "wohnung",
-                       "erledigt", "offen", "gegruendet")
+                       "erledigt", "offen", "gegruendet", "serverfarm_fertig")
 MAP_ROOFS = ("flach", "sattel", "shed")
 MAP_LANDSCAPE = ("park", "fluss", "strasse", "bahn", "baum", "ortsname", "beschriftung",
                  "gebaeude")
@@ -13164,11 +13391,13 @@ def _map_context(state, content=None):
     """Was die Gebaeudemodelle vom Spielstand wissen muessen."""
     if state is None:
         return {"stufe": 0, "gegruendet": False, "filiale": 0, "raeume": set(),
-                "wohnung": (content or GAME)["wohnungen"]["start"], "solved": set()}
+                "wohnung": (content or GAME)["wohnungen"]["start"], "solved": set(),
+                "serverfarm_fertig": False}
     return {"stufe": state.firm["stufe"] if state.firm else 0,
             "gegruendet": bool(state.firm),
             "filiale": state.branch["stufe"] if state.branch else 0,
-            "raeume": set(state.rooms), "wohnung": state.home_id, "solved": state.solved}
+            "raeume": set(state.rooms), "wohnung": state.home_id, "solved": state.solved,
+            "serverfarm_fertig": bool(getattr(state, "farm", None) and state.farm["fertig"])}
 
 
 def _part_visible(part, ctx):
@@ -13189,6 +13418,9 @@ def _part_visible(part, ctx):
     if "offen" in part and part["offen"] in ctx["solved"]:
         return False
     if "gegruendet" in part and bool(part["gegruendet"]) != ctx["gegruendet"]:
+        return False
+    if "serverfarm_fertig" in part and \
+            bool(part["serverfarm_fertig"]) != ctx.get("serverfarm_fertig", False):
         return False
     return True
 
@@ -13238,7 +13470,8 @@ def model_part_shapes(part, ox, oy, accent, colors, seed):
                     lit = _lit(seed, row * cols + col, part.get("licht", 0.5))
                     s.append(_rect(x + 0.25 + col * cell_w, y + t - h + 0.2 + row * cell_h,
                                    cell_w - 0.25, cell_h - 0.3,
-                                   colors["licht"] if lit else colors["fenster"]))
+                                   (part.get("lichtfarbe") or colors["licht"]) if lit
+                                   else colors["fenster"]))
         top = y - h
         roof_edge = mix(roof, "#000000", 0.3)
         if part.get("dach") == "sattel":
@@ -13343,6 +13576,8 @@ def place_unlocked(rule, state, content=None):
         return False
     if need.get("filiale_gebaut") and (state is None or not state.branch):
         return False
+    if need.get("serverfarm") and (state is None or state.farm_unlocked is None):
+        return False
     return True
 
 
@@ -13357,6 +13592,8 @@ def _place_since(rule, state, content):
     if (need.get("filiale_gebaut") or need.get("filiale_moeglich")) and state is not None \
             and state.branch:
         return int(state.branch["tag"])
+    if need.get("serverfarm") and state is not None and state.farm_unlocked is not None:
+        return state.farm_unlocked + 1
     return None
 
 
@@ -13397,6 +13634,8 @@ def map_places(state, content=None):
                 number = counts.get(SITE_OFFICE, 0)
             elif view.startswith("kunde:"):
                 number = counts.get(view.split(":", 1)[1], 0)
+            elif view == FARM_VIEW:
+                number = farm_badge_count(state, content)
         item["zahl"] = number
         since = _place_since(rule, state, content)
         day = state.day if state is not None else 1
@@ -13414,6 +13653,8 @@ def _place_text(item, rule, state, content):
     if view.startswith("kunde:"):
         place = customer_place(view.split(":", 1)[1], content) or {}
         return place.get("text", "")
+    if view == FARM_VIEW:
+        return farm_place_text(state, content)
     if view == "zuhause":
         home = apartment(state.home_id if state is not None else
                          content["wohnungen"]["start"], content) or {}
@@ -13677,7 +13918,7 @@ def _validate_world(content):
                     problems.append("%s: unbekanntes Dach '%s'" % (where, part.get("dach")))
             for key in part:
                 if key in ("art", "x", "y", "w", "t", "h", "r", "dach", "fenster", "licht",
-                           "farbe"):
+                           "farbe", "lichtfarbe"):
                     continue
                 if key not in MAP_PART_CONDITIONS:
                     problems.append("%s: unbekannte Angabe '%s'" % (where, key))
@@ -13697,4 +13938,1353 @@ def _validate_world(content):
                 if not any(part["art"] == "block" and _part_visible(part, ctx)
                            for part in models.get(rule.get("modell"), [])):
                     problems.append("Spiel-Karte: kein Gebaeude fuer Wohnung '%s'" % home)
+    return problems
+
+
+# ============================================================================
+#  NEUE RACK-ANSICHT: WERTE UND VORGABEN (ab 0.52)
+# ============================================================================
+#
+# Die Rack-Ansicht von PC und Handy zeigt neben dem Schrank Balken (HE, Strom
+# gegen die USV mit Reserve, Kuehlung, Gewicht, bei der Bestueckung die
+# Kosten) und die Vorgaben des Auftrags mit Haken. Gerechnet wird nur hier,
+# mit denselben Regeln wie rack_problems - die Oberflaechen zeichnen nur.
+
+def rack_bars(task, answer, content=None, watt=None):
+    """Balken der Rack-Ansicht: [{"id", "name", "wert", "grenze", "text",
+    "anteil" (0..1), "zu_viel"}]. watt: Leistungsaufnahme aus einer
+    Bestueckung (sonst die Typenschild-Werte der eingebauten Geraete)."""
+    content = content or GAME
+    placed = rack_placed(task, answer, content)
+    cabinet = task["schrank"]
+    used = sum(item["he"] for _i, item, _b in placed)
+    weight = sum(item["gewicht"] for _i, item, _b in placed)
+    power = rack_power(placed) if watt is None else int(watt)
+    capacity = ups_capacity(task, placed, content)
+    reserve = int(round(content["hardware"]["rack_regeln"]["strom_reserve"] * 100))
+    bars = []
+
+    def add(key, name, value, limit, text):
+        share = min(1.0, value / float(limit)) if limit else (1.0 if value else 0.0)
+        bars.append({"id": key, "name": name, "wert": value, "grenze": limit, "text": text,
+                     "anteil": share, "zu_viel": bool(limit) and value > limit})
+
+    add("he", "Höheneinheiten", used, cabinet["he"],
+        "%d von %d HE belegt" % (used, cabinet["he"]))
+    if capacity:
+        add("strom", "Strom (USV, %d %% Reserve)" % reserve, power, capacity,
+            "%s W von %s W" % (_num(power), _num(capacity)))
+    else:
+        bars.append({"id": "strom", "name": "Strom (USV)", "wert": power, "grenze": 0,
+                     "text": "%s W, noch keine USV" % _num(power), "anteil": 1.0 if power else 0,
+                     "zu_viel": False})
+    if cabinet.get("kuehlung"):
+        add("kuehlung", "Kühlung (Abwärme)", power, cabinet["kuehlung"],
+            "%s W von %s W" % (_num(power), _num(cabinet["kuehlung"])))
+    add("gewicht", "Gewicht (Traglast)", weight, cabinet["traglast"],
+        "%d kg von %d kg" % (weight, cabinet["traglast"]))
+    return bars
+
+
+def rack_checks(task, answer, content=None, watt=None):
+    """Vorgaben und Einbauregeln mit Haken: [{"text", "ok"}]. Alles ok genau
+    dann, wenn rack_problems leer ist (bei watt=None)."""
+    content = content or GAME
+    rules = content["hardware"]["rack_regeln"]
+    placed = rack_placed(task, answer, content)
+    cabinet = task["schrank"]
+    checks = []
+
+    def add(text, ok):
+        checks.append({"text": text, "ok": bool(ok)})
+
+    if not placed:
+        add("Mindestens ein Gerät eingebaut", False)
+    wanted = task.get("vorgaben") or {}
+    for kind, count in _by_rack_type(wanted.get("mindestens"), content):
+        have = sum(1 for _i, item, _b in placed if item["typ"] == kind)
+        add("%d × %s eingebaut (jetzt %d)" % (count, rack_type_name(kind, content), have),
+            have >= count)
+    if wanted.get("ports_min"):
+        for kind in ("switch", "patchpanel"):
+            ports = sum(item.get("ports", 0) for _i, item, _b in placed if item["typ"] == kind)
+            add("mind. %d Ports %s (jetzt %d)" % (wanted["ports_min"],
+                                                  rack_type_name(kind, content), ports),
+                ports >= wanted["ports_min"])
+    if wanted.get("frei_min"):
+        free = cabinet["he"] - sum(item["he"] for _i, item, _b in placed)
+        add("%d HE frei für später (jetzt %d)" % (wanted["frei_min"], max(0, free)),
+            free >= wanted["frei_min"])
+    # Einbauregeln (gleiche Pruefung wie _position_problems)
+    size = cabinet["he"]
+    used, overlap, outside = set(), False, False
+    for _index, item, bottom in placed:
+        top = bottom + item["he"] - 1
+        if top > size:
+            outside = True
+            continue
+        units = set(range(bottom, top + 1))
+        overlap = overlap or bool(units & used)
+        used |= units
+    add("Alles im Schrank, nichts überlappt", not overlap and not outside)
+    limit = lower_third(task)
+    heavy = [row for row in placed if row[1]["gewicht"] >= rules["schwer_ab_kg"]]
+    if heavy:
+        add("Schwere Geräte (ab %d kg) unten, Beginn bis HE %d" % (rules["schwer_ab_kg"], limit),
+            all(bottom <= limit for _i, _item, bottom in heavy))
+    ups = [row for row in placed if row[1]["typ"] == "usv"]
+    others = [row for row in placed if row[1]["typ"] != "usv"]
+    if ups:
+        add("USV ganz unten", not others or max(b for _i, _it, b in ups) <=
+            min(b for _i, _it, b in others))
+    if any(row[1]["typ"] in ("switch", "patchpanel") for row in placed):
+        add("Patchpanel direkt neben einem Switch",
+            not any("direkt darüber oder darunter" in text
+                    for text in _position_problems(task, placed, content)))
+    weight = sum(item["gewicht"] for _i, item, _b in placed)
+    add("Traglast %d kg (jetzt %d kg)" % (cabinet["traglast"], weight),
+        weight <= cabinet["traglast"])
+    power = rack_power(placed) if watt is None else int(watt)
+    capacity = ups_capacity(task, placed, content)
+    if capacity is not None:
+        add("USV reicht mit %d %% Reserve" % int(round(rules["strom_reserve"] * 100)),
+            power <= capacity)
+    if cabinet.get("kuehlung"):
+        add("Kühlung schafft die Abwärme", power <= cabinet["kuehlung"])
+    return checks
+
+
+# ============================================================================
+#  SERVER BESTUECKEN (Aufgabentyp "bestueckung", ab 0.52)
+# ============================================================================
+#
+# Die Serverfarm-Aufgabe "Server bestuecken": Fuer jede Vorlage (z.B. vier
+# gleiche Virtualisierungs-Hosts und ein Storage) waehlt man Laufwerke mit
+# RAID-Level, RAM, Prozessoren, Netzwerkkarte und Netzteile aus den Teilen
+# in serverfarm.json. Kapazitaet und Ausfalltoleranz kommen aus
+# fisi_core.raid_values - derselben Funktion wie im RAID-Rechner.
+#
+# Antwort: {vorlage_id: {"laufwerk", "laufwerke", "raid", "ram", "ram_anzahl",
+#                        "cpu", "cpu_anzahl", "nic", "netzteil", "netzteile"}}
+
+FIT_KINDS = ("laufwerk", "ram", "cpu", "nic", "netzteil")
+FIT_KIND_NAMES = {"laufwerk": "Laufwerke", "ram": "Arbeitsspeicher", "cpu": "Prozessoren",
+                  "nic": "Netzwerkkarte", "netzteil": "Netzteile"}
+FIT_COUNT_KEYS = {"laufwerk": "laufwerke", "ram": "ram_anzahl", "cpu": "cpu_anzahl",
+                  "netzteil": "netzteile"}
+RAID_LEVELS = ("RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10")
+
+
+def fit_part(part_id, content=None):
+    for item in farm_content(content).get("teile") or []:
+        if item["id"] == part_id:
+            return item
+    return None
+
+
+def fit_parts(kind, content=None):
+    """Teile einer Art, guenstigstes zuerst."""
+    return sorted([item for item in farm_content(content).get("teile") or []
+                   if item["typ"] == kind], key=lambda item: (item["preis"], item["id"]))
+
+
+def fit_templates(task):
+    return (task.get("bestueckung") or {}).get("vorlagen") or []
+
+
+def _tb(gb):
+    """Groesse in GB als lesbarer Text (TB ab 1000 GB)."""
+    gb = float(gb)
+    if gb >= 1000:
+        return "%s TB" % _num(round(gb / 1000.0, 2))
+    return "%s GB" % _num(round(gb, 1))
+
+
+def fit_part_text(item):
+    """ "SSD 1,92 TB · 290 €" """
+    kind = item["typ"]
+    if kind == "laufwerk":
+        spec = "%s %s" % (item.get("art", "").upper(), _tb(item["groesse"]))
+    elif kind == "ram":
+        spec = "%d GB" % item["groesse"]
+    elif kind == "cpu":
+        spec = "%d Kerne" % item["kerne"]
+    elif kind == "nic":
+        spec = "2 × %d GbE" % item["gbit"]
+    else:
+        spec = "%d W" % item["leistung"]
+    return "%s · %s" % (item.get("name") or spec, _euro(item["preis"]))
+
+
+def fit_options(template, kind, content=None):
+    """Auswahl fuer eine Art: [(teil_id, text)]."""
+    return [(item["id"], fit_part_text(item)) for item in fit_parts(kind, content)]
+
+
+def fit_count_range(template, kind):
+    """Moegliche Stueckzahlen je Art (fuer Auswahllisten)."""
+    if kind == "laufwerk":
+        return list(range(1, int(template.get("schaechte", 0)) + 1))
+    if kind == "ram":
+        return list(range(1, int(template.get("ram_baenke", 0)) + 1))
+    if kind == "cpu":
+        return list(range(1, int(template.get("sockel", 0)) + 1))
+    if kind == "netzteil":
+        return list(range(1, int(template.get("netzteil_plaetze", 1)) + 1))
+    return [1]
+
+
+def fit_kinds(template):
+    """Welche Arten eine Vorlage hat (ein Storage hat keine CPU/RAM-Wahl)."""
+    kinds = ["laufwerk"]
+    if template.get("ram_baenke"):
+        kinds.append("ram")
+    if template.get("sockel"):
+        kinds.append("cpu")
+    return kinds + ["nic", "netzteil"]
+
+
+def _int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def fit_server(template, config, content=None):
+    """Werte eines bestueckten Servers: {"laufwerk", "laufwerke", "raid",
+    "raid_werte" (raid_values oder None), "ram", "kerne", "gbit", "watt",
+    "netzteil", "netzteile", "kosten", "fehlt" (Arten ohne Auswahl)}."""
+    content = content or GAME
+    config = config or {}
+    values = {"fehlt": [], "kosten": 0, "watt": int(template.get("grundlast", 0)),
+              "ram": 0, "kerne": 0, "gbit": 0, "laufwerke": 0, "raid": config.get("raid"),
+              "raid_werte": None, "laufwerk": None, "netzteil": None, "netzteile": 0}
+    for kind in fit_kinds(template):
+        item = fit_part(config.get(kind), content)
+        if item is None or item["typ"] != kind:
+            values["fehlt"].append(kind)
+            continue
+        count = _int(config.get(FIT_COUNT_KEYS[kind]), 1) if kind in FIT_COUNT_KEYS else 1
+        count = max(0, count)
+        values["kosten"] += item["preis"] * count
+        values["watt"] += item.get("watt", 0) * count
+        if kind == "laufwerk":
+            values["laufwerk"] = item
+            values["laufwerke"] = count
+            if config.get("raid") in RAID_LEVELS:
+                values["raid_werte"] = raid_values(config["raid"], count, item["groesse"])
+        elif kind == "ram":
+            values["ram"] = item["groesse"] * count
+            values["ram_anzahl"] = count
+        elif kind == "cpu":
+            values["kerne"] = item["kerne"] * count
+            values["cpu_anzahl"] = count
+        elif kind == "nic":
+            values["gbit"] = item["gbit"]
+        elif kind == "netzteil":
+            values["netzteil"] = item
+            values["netzteile"] = count
+    return values
+
+
+def fit_psu_needed(watt, content=None):
+    """So viel muss ein Netzteil allein schaffen (mit Reserve wie beim PC)."""
+    reserve = (content or GAME)["hardware"].get("regeln", {}).get("netzteil_reserve", 1.3)
+    return int(math.ceil(watt * reserve))
+
+
+def fit_server_checks(template, values, content=None):
+    """Lastenheft einer Vorlage mit Haken: [{"text", "ok"}]."""
+    content = content or GAME
+    soll = template.get("soll") or {}
+    checks = []
+
+    def add(text, ok):
+        checks.append({"text": text, "ok": bool(ok)})
+
+    for kind in values["fehlt"]:
+        add("%s ausgewählt" % FIT_KIND_NAMES[kind], False)
+    drive = values["laufwerk"]
+    if drive:
+        add("höchstens %d Laufwerke (Schächte)" % template["schaechte"],
+            values["laufwerke"] <= template["schaechte"])
+        if soll.get("art"):
+            add("Laufwerke: %s" % soll["art"].upper(), drive.get("art") == soll["art"])
+        raid = values["raid_werte"]
+        if values["raid"] not in RAID_LEVELS:
+            add("RAID-Level gewählt", False)
+        else:
+            add("%s mit %d Laufwerken möglich" % (values["raid"], values["laufwerke"]),
+                raid is not None)
+            if soll.get("raid"):
+                add("RAID-Level %s" % " oder ".join(soll["raid"]), values["raid"] in soll["raid"])
+        if soll.get("netto_min"):
+            add("mind. %s nutzbar (jetzt %s)" % (_tb(soll["netto_min"]),
+                                                 _tb(raid["netto"] if raid else 0)),
+                raid is not None and raid["netto"] >= soll["netto_min"])
+        if soll.get("toleranz_min"):
+            add("übersteht %d Plattenausfall%s" % (soll["toleranz_min"],
+                                                   "" if soll["toleranz_min"] == 1 else "e"),
+                raid is not None and raid["toleranz"] >= soll["toleranz_min"])
+    if "ram" in fit_kinds(template) and "ram" not in values["fehlt"]:
+        add("höchstens %d RAM-Bänke" % template["ram_baenke"],
+            values.get("ram_anzahl", 0) <= template["ram_baenke"])
+        if soll.get("ram_min"):
+            add("mind. %d GB RAM (jetzt %d GB)" % (soll["ram_min"], values["ram"]),
+                values["ram"] >= soll["ram_min"])
+    if "cpu" in fit_kinds(template) and "cpu" not in values["fehlt"]:
+        add("höchstens %d Prozessoren (Sockel)" % template["sockel"],
+            values.get("cpu_anzahl", 0) <= template["sockel"])
+        if soll.get("kerne_min"):
+            add("mind. %d Kerne (jetzt %d)" % (soll["kerne_min"], values["kerne"]),
+                values["kerne"] >= soll["kerne_min"])
+    if soll.get("gbit_min") and "nic" not in values["fehlt"]:
+        add("Netzwerk mind. %d GbE" % soll["gbit_min"], values["gbit"] >= soll["gbit_min"])
+    psu = values["netzteil"]
+    if psu:
+        add("höchstens %d Netzteile" % template.get("netzteil_plaetze", 1),
+            values["netzteile"] <= template.get("netzteil_plaetze", 1))
+        if soll.get("redundant"):
+            add("Netzteile redundant (2 Stück)", values["netzteile"] >= 2)
+        need = fit_psu_needed(values["watt"], content)
+        add("ein Netzteil trägt den Server allein (%d W nötig)" % need,
+            psu["leistung"] >= need)
+    return checks
+
+
+def fit_values(task, answer, content=None):
+    """Alles fuer die Anzeige der Bestueckung: {"server": [{"vorlage", "werte",
+    "checks", "kosten", "watt"}], "kosten", "budget", "watt", "checks"}."""
+    content = content or GAME
+    spec = task.get("bestueckung") or {}
+    servers = []
+    total_cost = total_watt = 0
+    for template in fit_templates(task):
+        values = fit_server(template, (answer or {}).get(template["id"]), content)
+        count = int(template.get("anzahl", 1))
+        servers.append({"vorlage": template, "werte": values,
+                        "checks": fit_server_checks(template, values, content),
+                        "kosten": values["kosten"] * count, "watt": values["watt"] * count})
+        total_cost += values["kosten"] * count
+        total_watt += values["watt"] * count
+    checks = []
+    budget = int(spec.get("budget", 0))
+    if budget:
+        checks.append({"text": "Hardware im Budget von %s (jetzt %s)" % (
+            _euro(budget), _euro(total_cost)), "ok": total_cost <= budget})
+    rack = farm_rack_task(spec.get("rack"), content)
+    if rack:
+        devices = [rack_device(device_id, content) for device_id in rack["geraete"]]
+        ups = sum(item.get("leistung", 0) for item in devices if item["typ"] == "usv")
+        capacity = int(ups * (1 - content["hardware"]["rack_regeln"]["strom_reserve"]))
+        if capacity:
+            checks.append({"text": "USV im Rack schafft %s W (jetzt %s W)" % (
+                _num(capacity), _num(total_watt)), "ok": total_watt <= capacity})
+        if rack["schrank"].get("kuehlung"):
+            checks.append({"text": "Kühlung schafft %s W (jetzt %s W)" % (
+                _num(rack["schrank"]["kuehlung"]), _num(total_watt)),
+                "ok": total_watt <= rack["schrank"]["kuehlung"]})
+    return {"server": servers, "kosten": total_cost, "budget": budget, "watt": total_watt,
+            "checks": checks}
+
+
+def fit_bars(task, answer, content=None):
+    """Balken der Bestueckung (Kosten gegen Budget, Strom, Kuehlung)."""
+    content = content or GAME
+    values = fit_values(task, answer, content)
+    spec = task.get("bestueckung") or {}
+    bars = []
+    rack = farm_rack_task(spec.get("rack"), content)
+    if rack:
+        bars = [bar for bar in rack_bars(rack, rack_solution(rack, content) or {}, content,
+                                         watt=values["watt"]) if bar["id"] != "he"]
+    budget = values["budget"]
+    if budget:
+        bars.insert(0, {"id": "kosten", "name": "Hardwarekosten", "wert": values["kosten"],
+                        "grenze": budget, "text": "%s von %s" % (_euro(values["kosten"]),
+                                                                 _euro(budget)),
+                        "anteil": min(1.0, values["kosten"] / float(budget)),
+                        "zu_viel": values["kosten"] > budget})
+    return bars
+
+
+def fit_problems(task, answer, content=None):
+    """Probleme der Bestueckung als Saetze (leer = richtig)."""
+    values = fit_values(task, answer, content)
+    problems = []
+    for server in values["server"]:
+        name = server["vorlage"]["name"]
+        for check in server["checks"]:
+            if not check["ok"]:
+                problems.append("%s: %s fehlt." % (name, check["text"]) if
+                                check["text"].endswith("ausgewählt") or
+                                check["text"] == "RAID-Level gewählt"
+                                else "%s: nicht erfüllt: %s." % (name, check["text"]))
+    for check in values["checks"]:
+        if not check["ok"]:
+            problems.append("Nicht erfüllt: %s." % check["text"])
+    return problems
+
+
+def _fit_cheapest(template, content):
+    """Guenstigste gueltige Bestueckung einer Vorlage (Arten unabhaengig,
+    das Netzteil richtet sich nach der Leistung der uebrigen Teile)."""
+    soll = template.get("soll") or {}
+    config = {}
+    best = None
+    for drive in fit_parts("laufwerk", content):
+        if soll.get("art") and drive.get("art") != soll["art"]:
+            continue
+        for count in fit_count_range(template, "laufwerk"):
+            for level in soll.get("raid") or RAID_LEVELS:
+                raid = raid_values(level, count, drive["groesse"])
+                if raid is None or raid["netto"] < soll.get("netto_min", 0) or \
+                        raid["toleranz"] < soll.get("toleranz_min", 0):
+                    continue
+                key = (drive["preis"] * count, drive.get("watt", 0) * count)
+                if best is None or key < best[0]:
+                    best = (key, {"laufwerk": drive["id"], "laufwerke": count, "raid": level})
+    if best is None:
+        return None
+    config.update(best[1])
+    for kind, need_key, field in (("ram", "ram_min", "groesse"), ("cpu", "kerne_min", "kerne")):
+        if kind not in fit_kinds(template):
+            continue
+        best = None
+        for item in fit_parts(kind, content):
+            for count in fit_count_range(template, kind):
+                if item[field] * count >= soll.get(need_key, 0):
+                    key = (item["preis"] * count, item.get("watt", 0) * count)
+                    if best is None or key < best[0]:
+                        best = (key, item["id"], count)
+                    break
+        if best is None:
+            return None
+        config[kind] = best[1]
+        config[FIT_COUNT_KEYS[kind]] = best[2]
+    nics = [item for item in fit_parts("nic", content) if item["gbit"] >= soll.get("gbit_min", 0)]
+    if not nics:
+        return None
+    config["nic"] = nics[0]["id"]
+    count = 2 if soll.get("redundant") else 1
+    config["netzteile"] = count
+    for psu in fit_parts("netzteil", content):
+        config["netzteil"] = psu["id"]
+        values = fit_server(template, config, content)
+        if psu["leistung"] >= fit_psu_needed(values["watt"], content):
+            return config
+    return None
+
+
+def fit_solution(task, content=None):
+    """Eine richtige (guenstige) Bestueckung oder None."""
+    answer = {}
+    for template in fit_templates(task):
+        config = _fit_cheapest(template, content)
+        if config is None:
+            return None
+        answer[template["id"]] = config
+    return answer if not fit_problems(task, answer, content) else None
+
+
+def fit_lines(task, answer, content=None):
+    """Bestueckung als lesbare Zeilen (fuer "So waere es gegangen")."""
+    lines = []
+    for server in fit_values(task, answer, content)["server"]:
+        values = server["werte"]
+        template = server["vorlage"]
+        parts = []
+        if values["laufwerk"]:
+            raid = values["raid_werte"]
+            parts.append("%d × %s als %s (%s nutzbar)" % (
+                values["laufwerke"], fit_part_text(values["laufwerk"]).split(" · ")[0],
+                values["raid"], _tb(raid["netto"]) if raid else "?"))
+        if values.get("ram"):
+            parts.append("%d GB RAM" % values["ram"])
+        if values.get("kerne"):
+            parts.append("%d Kerne" % values["kerne"])
+        if values.get("gbit"):
+            parts.append("%d GbE" % values["gbit"])
+        if values["netzteil"]:
+            parts.append("%d × %d-W-Netzteil" % (values["netzteile"],
+                                                 values["netzteil"]["leistung"]))
+        lines.append("%d × %s: %s" % (template.get("anzahl", 1), template["name"],
+                                      ", ".join(parts)))
+    return lines
+
+
+def fit_view(task, answer, current, content=None):
+    """Anzeige der Bestueckung fuer PC und Handy: Zeilen zur gewaehlten
+    Vorlage (RAID, je Server, Summe) und die Vorgaben mit Haken - erst die der
+    gewaehlten Vorlage, dann je andere Vorlage eine Sammelzeile, dann Budget,
+    USV und Kuehlung."""
+    values = fit_values(task, answer, content)
+    server = next(item for item in values["server"] if item["vorlage"]["id"] == current)
+    werte = server["werte"]
+    raid = werte["raid_werte"]
+    if raid:
+        tolerance = raid["toleranz"]
+        raid_text = "%s: %s nutzbar von %s · Effizienz %s %% · %s" % (
+            werte["raid"], _tb(raid["netto"]), _tb(raid["brutto"]),
+            _num(round(raid["effizienz"], 1)),
+            "übersteht keinen Plattenausfall" if tolerance == 0 else
+            "übersteht 1 Plattenausfall" if tolerance == 1 else
+            "übersteht %d Plattenausfälle" % tolerance)
+        raid_ok = True
+    elif werte["raid"] and werte["laufwerk"]:
+        raid_text, raid_ok = "%s geht mit %d Laufwerken nicht." % (
+            werte["raid"], werte["laufwerke"]), False
+    else:
+        raid_text, raid_ok = "Laufwerke und RAID-Level wählen.", None
+    template = server["vorlage"]
+    checks = list(server["checks"])
+    for other in values["server"]:
+        if other is server:
+            continue
+        missing = sum(1 for item in other["checks"] if not item["ok"])
+        checks.append({"text": "%s: %s" % (other["vorlage"]["name"], (
+            "alle Vorgaben erfüllt" if not missing else
+            "1 Vorgabe offen" if missing == 1 else "%d Vorgaben offen" % missing)),
+            "ok": not missing})
+    checks += values["checks"]
+    return {"raid_text": raid_text, "raid_ok": raid_ok,
+            "server_text": "Je Server: %s W, %s · %d Stück zusammen %s W, %s" % (
+                _num(werte["watt"]), _euro(werte["kosten"]), template.get("anzahl", 1),
+                _num(server["watt"]), _euro(server["kosten"])),
+            "checks": checks, "werte": werte}
+
+
+def _validate_fit_task(task, content):
+    problems = []
+    spec = task.get("bestueckung") or {}
+    if not fit_templates(task):
+        return ["Bestueckung ohne Vorlagen"]
+    if spec.get("rack") and not farm_rack_task(spec["rack"], content):
+        problems.append("unbekanntes Rack '%s'" % spec["rack"])
+    for template in fit_templates(task):
+        for key in ("id", "name", "anzahl", "schaechte", "netzteil_plaetze", "soll"):
+            if key not in template:
+                problems.append("Vorlage %s: Feld '%s' fehlt" % (template.get("id"), key))
+        if template.get("geraet") and not rack_device(template["geraet"], content):
+            problems.append("Vorlage %s: unbekanntes Geraet" % template.get("id"))
+        for level in (template.get("soll") or {}).get("raid") or []:
+            if level not in RAID_LEVELS:
+                problems.append("Vorlage %s: unbekanntes RAID '%s'" % (template.get("id"), level))
+    if not problems and fit_solution(task, content) is None:
+        problems.append("Bestueckung hat keine richtige Loesung")
+    return problems
+
+
+# ============================================================================
+#  KAMPAGNE 2: GROSSAUFTRAG SERVERFARM (ab 0.52)
+# ============================================================================
+#
+# Ab Gebaeudestufe 4 mit Serverraum, ISO 27001 und Cisco-Partner wird beim
+# Feierabend der Lokschuppen freigeschaltet (steht im Feierabend unter
+# firma.serverfarm_frei). Die Kampagne beginnt erst, wenn man die
+# Ausschreibung oeffnet (serverfarm_gestartet), und laeuft dann durch sechs
+# Phasen: Eine Phase ist fertig, wenn ihre Aufgaben bearbeitet sind und das
+# Team seine Arbeitspunkte erreicht hat - geprueft wird beim Feierabend, die
+# naechste Phase beginnt am naechsten Tag.
+#
+# Ereignisse (je Platz und Durchgang, nur angehaengt):
+#   serverfarm_gestartet  {tag}
+#   serverfarm_aufgabe    {aufgabe, tag, phase, richtig, fehler, geld, anzahlung,
+#                          kosten, strafe, reputation, antwort, ...}
+#   serverfarm_team       {tag, team}
+# Was der Feierabend bringt (Team-Punkte, Phasenende, Wuerfel fuer Lieferverzug
+# und Kabelfehler, Abnahme), steht in dessen Nutzdaten unter
+# firma.serverfarm - so rechnen PC und Handy immer gleich, und spaetere
+# Aenderungen an den Regeln verschieben keinen alten Spielstand.
+
+EV_FARM_START = "serverfarm_gestartet"
+EV_FARM_TASK = "serverfarm_aufgabe"
+EV_FARM_TEAM = "serverfarm_team"
+FARM_EVENTS = (EV_FARM_START, EV_FARM_TASK, EV_FARM_TEAM)
+FARM_PLACE = "lokschuppen"
+FARM_VIEW = "serverfarm"
+FARM_OFFER_TYPE = "angebot"
+FARM_TYPES = TASK_TYPES + ("angebot", "bestueckung")
+FARM_DELIVERY = "lieferung"        # Phase, die auf die Ware wartet
+FARM_CABLING = "einbau"            # Phase mit dem Kabelfehler-Wuerfel
+FARM_PLANNING = "planung"          # an ihrem Ende wird der Lieferverzug gewuerfelt
+FARM_ORDER = "sf-bestellung"
+FARM_OFFER = "sf-angebot"
+BOOK_REWORK = "Nacharbeit"         # Fehlerfolgen der Serverfarm (ab 0.52)
+FARM_TITLE = "Großauftrag Serverfarm"
+FARM_BUSY_TEXT = "%s arbeitet an der Serverfarm mit."
+
+
+def farm_content(content=None):
+    return (content or GAME).get("serverfarm") or {}
+
+
+def farm_rules(content=None):
+    return (content or GAME)["balancing"].get("serverfarm") or {}
+
+
+def farm_team_revenue(content=None):
+    """Prozent des Routineumsatzes, die Leute im Serverfarm-Team weiter bringen."""
+    return max(0, min(100, int(farm_rules(content).get("team_umsatz", 0))))
+
+
+def farm_team_note(content=None):
+    """Hinweis unter dem Serverfarm-Team (PC und Handy gleich)."""
+    share = farm_team_revenue(content)
+    text = "Wer an der Serverfarm mitarbeitet, macht keine Kundentickets und keine Projekte."
+    if share >= 100:
+        return text + " Die Routineaufträge laufen nebenbei voll weiter."
+    if share == 50:
+        return text + " Die Routineaufträge laufen nebenbei zur Hälfte weiter."
+    if share > 0:
+        return text + " Die Routineaufträge laufen nebenbei zu %d %% weiter." % share
+    return text + " Auch keine Routineaufträge."
+
+
+def farm_phases(content=None):
+    return farm_content(content).get("phasen") or []
+
+
+def farm_phase_rule(phase_id, content=None):
+    for phase in farm_phases(content):
+        if phase["id"] == phase_id:
+            return phase
+    return None
+
+
+def farm_tasks(phase_id=None, content=None):
+    return [task for task in farm_content(content).get("aufgaben") or []
+            if phase_id is None or task["phase"] == phase_id]
+
+
+def farm_task(task_id, content=None):
+    for task in farm_content(content).get("aufgaben") or []:
+        if task["id"] == task_id:
+            return task
+    return None
+
+
+def farm_rack_task(task_id, content=None):
+    task = farm_task(task_id, content)
+    return task if task and task["typ"] == "rack" else None
+
+
+def farm_person(person_id, content=None):
+    for person in farm_content(content).get("personen") or []:
+        if person["id"] == person_id:
+            return person
+    return None
+
+
+def farm_customer(content=None):
+    return farm_content(content).get("kunde") or {}
+
+
+def _eased_days(state, days):
+    """Tage auf Einfach mal serverfarm_verzug_faktor (aufgerundet)."""
+    return int(math.ceil(days * state.ease("serverfarm_verzug_faktor")))
+
+
+def farm_unlock_missing(state, content=None):
+    """Was fuer den Lokschuppen noch fehlt (leere Liste = alles da)."""
+    content = content or state.content
+    rule = farm_rules(content).get("freischaltung") or {}
+    if not state.firm:
+        return ["eine eigene Firma"]
+    missing = []
+    stage = int(rule.get("stufe", 4))
+    if state.firm["stufe"] < stage:
+        stages = firm_rules(content)["gebaeude"]["stufen"]
+        name = stages[stage - 1]["name"] if stage <= len(stages) else str(stage)
+        missing.append("Gebäudestufe %d (%s)" % (stage, name))
+    if rule.get("raum") and not state.has_room(rule["raum"]):
+        missing.append((special_room(rule["raum"], content) or {}).get("name", rule["raum"]))
+    held = state.certs_held()
+    for cert_id in rule.get("zertifizierungen") or []:
+        if cert_id not in held:
+            missing.append((certificate(cert_id, content) or {}).get("name", cert_id))
+    return missing
+
+
+def farm_unlock_text(state, content=None):
+    """Hinweis in der Firma, solange der Lokschuppen noch nicht frei ist."""
+    missing = farm_unlock_missing(state, content)
+    if not missing:
+        return "Alles erfüllt: Nach dem nächsten Feierabend meldet sich ein neuer Großkunde."
+    return "Ein Großauftrag wartet, sobald deine Firma so weit ist. Es fehlt noch: %s." % \
+        ", ".join(missing)
+
+
+def new_farm(start):
+    return {"start": int(start), "aufgaben": {}, "team": [], "punkte": {},
+            "fertig_phasen": {}, "tage": [], "tag_set": set(), "liefertag": None,
+            "verzug": None, "kabelfehler": None, "nacharbeit_bis": None,
+            "fertig": None, "abnahme": None, "beitraege": {}, "lernen": []}
+
+
+def farm_deadline(farm, content=None):
+    return farm["start"] + int(farm_rules(content).get("tage", 25)) - 1
+
+
+def farm_current_phase(farm, content=None):
+    """Die laufende Phase (Regel aus serverfarm.json) oder None, wenn fertig."""
+    if farm is None or farm["fertig"]:
+        return None
+    for phase in farm_phases(content):
+        if phase["id"] not in farm["fertig_phasen"]:
+            return phase
+    return None
+
+
+def farm_phase_start(farm, phase_id, content=None):
+    """Erster Arbeitstag einer Phase (oder None, wenn sie noch nicht dran ist)."""
+    previous = None
+    for phase in farm_phases(content):
+        if phase["id"] == phase_id:
+            if previous is None:
+                return farm["start"]
+            done = farm["fertig_phasen"].get(previous)
+            return done + 1 if done is not None else None
+        previous = phase["id"]
+    return None
+
+
+def farm_phase_list(state, content=None):
+    """[{"id", "name", "kurz", "soll_tag", "status" (fertig/jetzt/spaeter),
+    "start", "ende", "punkte", "team_punkte", "aufgaben", "erledigt"}]."""
+    content = content or state.content
+    farm = state.farm
+    current = farm_current_phase(farm, content)
+    result = []
+    for phase in farm_phases(content):
+        tasks = farm_tasks(phase["id"], content)
+        done = farm["fertig_phasen"].get(phase["id"]) if farm else None
+        status = "fertig" if done is not None else (
+            "jetzt" if current and current["id"] == phase["id"] else "spaeter")
+        result.append({"id": phase["id"], "name": phase["name"], "kurz": phase["kurz"],
+                       "soll_tag": phase["soll_tag"], "status": status,
+                       "start": farm_phase_start(farm, phase["id"], content) if farm else None,
+                       "ende": done,
+                       "punkte": round((farm or {}).get("punkte", {}).get(phase["id"], 0.0), 1),
+                       "team_punkte": phase["team_punkte"],
+                       "aufgaben": len(tasks),
+                       "erledigt": sum(1 for task in tasks
+                                       if farm and task["id"] in farm["aufgaben"])})
+    return result
+
+
+def farm_offer_task(markup, content=None):
+    """Das Angebot als Formular (Zuschlagskalkulation mit den Positionen aus
+    serverfarm.json), damit PC und Handy die Formular-Ansicht nutzen."""
+    content = content or GAME
+    task = farm_task(FARM_OFFER, content) or {}
+    offers = offer_rules(content)
+    data = farm_content(content).get("angebot") or {}
+    return {"id": FARM_OFFER, "typ": "formular", "art": "angebot",
+            "titel": task.get("titel", "Angebot"), "ticket": task.get("ticket", ""),
+            "frage": task.get("frage", ""),
+            "daten": {"positionen": [dict(item) for item in data.get("positionen") or []],
+                      "einkauf_name": data.get("einkauf_name") or "Einzelkosten gesamt",
+                      "handlungskosten": offers["handlungskosten"], "gewinn": markup,
+                      "ust": offers["ust"]},
+            "hilfe": task.get("hilfe", ""), "erklaerung": task.get("erklaerung", "")}
+
+
+def farm_markups(content=None):
+    return list(offer_rules(content)["zuschlaege"])
+
+
+def farm_check_task(task, markup=None, content=None):
+    """Die Aufgabe so, wie sie geprueft wird (das Angebot als Formular)."""
+    if task["typ"] == FARM_OFFER_TYPE:
+        return farm_offer_task(markup if markup is not None else
+                               farm_rules(content).get("zuschlag_max", 20), content)
+    return task
+
+
+def farm_solution(task, content=None):
+    """Eine richtige Antwort (fuer Tests, Pruefung und "So waere es gegangen")."""
+    if task["typ"] == "bestueckung":
+        return fit_solution(task, content)
+    return find_solution(farm_check_task(task, content=content), content=content)
+
+
+def farm_evaluate(state, task, answer, used_help, levels, markup=None, content=None):
+    """Bewertet eine Serverfarm-Aufgabe: Nutzdaten fuer serverfarm_aufgabe."""
+    content = content or state.content
+    rules = farm_rules(content)
+    check = farm_check_task(task, markup, content)
+    if task["typ"] == "bestueckung":
+        problems = fit_problems(task, answer, content)
+        right, errors = not problems, len(problems)
+    else:
+        problems = answer_problems(check, answer, None, content)
+        right, errors = check_answer(check, answer, None, content)
+    gaps = requirement_gaps(task, levels)
+    payload = {"aufgabe": task["id"], "tag": state.day, "phase": task["phase"],
+               "richtig": bool(right), "fehler": errors, "hilfe": bool(used_help),
+               "unter_niveau": bool(gaps), "antwort": copy.deepcopy(answer),
+               "anzahlung": 0, "kosten": 0, "strafe": 0, "reputation": {}}
+    if problems:
+        payload["probleme"] = problems
+    if right:
+        payload["reputation"] = {key: int(value) for key, value in
+                                 (rules.get("richtig") or {}).items() if value}
+    else:
+        rule = rules.get("fehler") or {}
+        factor = float(rule.get("unter_niveau_faktor", 1)) if gaps else 1.0
+        payload["strafe"] = int(round(rule.get("geld", 0) * factor *
+                                      state.ease("fehlerkosten_faktor")))
+        loss = int(round(rule.get("kundenzufriedenheit", 0) * factor *
+                         state.ease("reputation_verlust_faktor")))
+        if loss:
+            payload["reputation"] = {"kundenzufriedenheit": loss}
+    if task["typ"] == FARM_OFFER_TYPE:
+        top = int(rules.get("zuschlag_max", 20))
+        agreed = min(int(markup), top)
+        numbers = {key: value for key, _label, value in
+                   offer_values(farm_offer_task(agreed, content)["daten"])}
+        payload.update({"zuschlag": int(markup), "vereinbart": agreed,
+                        "verhandelt": int(markup) > top, "netto": numbers["netto"],
+                        "selbstkosten": numbers["selbstkosten"],
+                        "anzahlung": int(round(numbers["netto"] *
+                                               rules.get("anzahlung", 30) / 100.0))})
+    surcharge = 1 + rules.get("nachbestellung", {}).get("aufschlag", 15) / 100.0 * \
+        state.ease("fehlerkosten_faktor")
+    if task["typ"] == "bestellung":
+        if right:
+            total, longest = cart_total(task, answer)
+        else:
+            carts = valid_carts(task, content)
+            total, longest = cart_total(task, carts[0])
+            total = int(round(total * surcharge))
+            longest += _eased_days(state, rules.get("nachbestellung", {}).get("tage", 2))
+            payload["nachbestellt"] = True
+        payload["kosten"] = int(total)
+        payload["lieferzeit"] = int(longest)
+    if task["typ"] == "bestueckung":
+        if right:
+            cost = fit_values(task, answer, content)["kosten"]
+        else:
+            cost = int(round(fit_values(task, fit_solution(task, content), content)["kosten"] *
+                             surcharge))
+            payload["nachbestellt"] = True
+        payload["kosten"] = int(cost)
+    payload["geld"] = payload["anzahlung"] - payload["kosten"] - payload["strafe"]
+    return payload
+
+
+def farm_team_value(state, person, phase, levels=None, content=None):
+    """Wert einer Person fuer eine Phase: Mittel ihrer Themen der Phase."""
+    topics = phase.get("themen") or []
+    if not topics:
+        return 0
+    if person == SELF:
+        values = [float((levels or {}).get(topic, 0)) for topic in topics]
+    else:
+        values = [state.staff_topic_value(person, topic) for topic in topics]
+    return int(round(sum(values) / len(values)))
+
+
+def farm_candidates(state, levels=None, content=None):
+    """Wer ins Serverfarm-Team kann: [{"an", "name", "wert", "punkte",
+    "im_team", "problem"}] (Wert fuer die laufende oder naechste Phase)."""
+    content = content or state.content
+    farm = state.farm
+    phase = farm_current_phase(farm, content) or (farm_phases(content) or [{}])[0]
+    if not phase.get("themen"):
+        phase = next((item for item in farm_phases(content) if item.get("themen") and (
+            farm is None or item["id"] not in farm["fertig_phasen"])), phase)
+    team = farm["team"] if farm else []
+    result = []
+    for item in state.staff_list():
+        value = farm_team_value(state, item["id"], phase, levels, content)
+        problem = ""
+        if item.get("projekt"):
+            problem = "%s arbeitet im Projekt „%s“ mit." % (
+                item["name"], state.projects[item["projekt"]]["titel"])
+        elif item["id"] not in team and len(team) >= int(farm_rules(content).get("team_max", 5)):
+            problem = "Das Team ist voll (höchstens %d)." % int(
+                farm_rules(content).get("team_max", 5))
+        elif item["id"] not in team and state.delegated_to(item["id"]):
+            problem = "%s hat heute schon ein Kundenticket." % item["name"]
+        away = item.get("weiterbildung") or item.get("abwesend")
+        result.append({"an": item["id"], "name": item["name"], "wert": value,
+                       "punkte": staff_project_points(state, item["id"], value, content),
+                       "im_team": item["id"] in team, "problem": problem,
+                       "fehlt": absent_problem(item["name"], away) if away else "",
+                       "phase": phase.get("kurz", "")})
+    return result
+
+
+def farm_team_points(state, phase, levels=None, content=None):
+    """(Punkte heute, Beitraege) des Teams in einer Phase (ohne Zufall)."""
+    farm = state.farm
+    shares = []
+    for person in farm["team"]:
+        if person not in state.staff or state.absence_of(person):
+            continue
+        value = farm_team_value(state, person, phase, levels, content)
+        shares.append({"an": person, "name": person_name(state, person), "wert": value,
+                       "punkte": staff_project_points(state, person, value, content)})
+    total = round(sum(item["punkte"] for item in shares) * team_factor(state, farm["team"]), 1)
+    return total, shares
+
+
+def farm_today_count(state):
+    """Heute schon bearbeitete Serverfarm-Aufgaben."""
+    farm = state.farm
+    if not farm:
+        return 0
+    return sum(1 for item in farm["aufgaben"].values() if int(item.get("tag", 0)) == state.day)
+
+
+def farm_open_tasks(state, content=None):
+    """Aufgaben der laufenden Phase, die noch offen sind (Reihenfolge wie in
+    serverfarm.json)."""
+    content = content or state.content
+    phase = farm_current_phase(state.farm, content)
+    if phase is None:
+        return []
+    return [task for task in farm_tasks(phase["id"], content)
+            if task["id"] not in state.farm["aufgaben"]]
+
+
+def farm_task_problem(state, task_id, content=None):
+    """Warum eine Aufgabe gerade nicht geht (leer = geht)."""
+    content = content or state.content
+    farm = state.farm
+    if farm is None:
+        return "Die Serverfarm läuft noch nicht."
+    if farm["fertig"]:
+        return "Die Serverfarm ist schon abgenommen."
+    if task_id in farm["aufgaben"]:
+        return "Diese Aufgabe ist schon erledigt."
+    if task_id not in [task["id"] for task in farm_open_tasks(state, content)]:
+        return "Diese Aufgabe kommt erst in einer späteren Phase."
+    limit = int(farm_rules(content).get("aufgaben_pro_tag", 3))
+    if farm_today_count(state) >= limit:
+        return "Heute hast du schon %d Serverfarm-Aufgaben bearbeitet, die nächste gibt es " \
+               "morgen." % limit
+    return ""
+
+
+def _farm_roll_delay(state, day, content):
+    """Lieferverzug in Tagen (Wuerfel mit festem Seed, Einfach halbiert)."""
+    roll = _dice(state.firm_seed, day, "serverfarm|verzug")
+    rows = farm_rules(content).get("verzug") or [[1, 0]]
+    total = 0.0
+    days = rows[-1][1]
+    for share, value in rows:
+        total += share
+        if roll < total:
+            days = value
+            break
+    return _eased_days(state, days)
+
+
+def farm_cable_chance(state, levels=None, content=None):
+    """Chance auf einen Kabelfehler je Rack: sinkt mit dem besten
+    Verkabelungswert im Team."""
+    rule = farm_rules(content).get("kabelfehler") or {}
+    team = [person for person in state.farm["team"] if person in state.staff]
+    best = max([state.staff_topic_value(person, "verkabelung") for person in team] or [0])
+    return max(float(rule.get("min", 0.05)),
+               float(rule.get("chance", 0.25)) - best * float(rule.get("je_punkt", 0)))
+
+
+def farm_acceptance(state, day, content=None):
+    """Abnahme beim letzten Feierabend: Restzahlung, Strafe, Bonus, Ansehen."""
+    content = content or state.content
+    rules = farm_rules(content)
+    farm = state.farm
+    late = max(0, day - farm_deadline(farm, content))
+    rule = rules.get("strafe") or {}
+    percent = min(float(rule.get("max_prozent", 10)),
+                  late * float(rule.get("prozent_je_tag", 1))) * state.ease("fehlerkosten_faktor")
+    offer = farm["aufgaben"].get(FARM_OFFER) or {}
+    net = float(offer.get("netto", 0))
+    penalty = int(round(net * percent / 100.0))
+    rest = int(round(net - int(offer.get("anzahlung", 0)) - penalty))
+    tasks = farm_tasks(content=content)
+    right = sum(1 for task in tasks if (farm["aufgaben"].get(task["id"]) or {}).get("richtig"))
+    flawless = right == len(tasks)
+    bonus = int(rules.get("bonus", 0)) if flawless else 0
+    reputation = {key: int(value) for key, value in (rules.get("abschluss") or {}).items()}
+    if late:
+        reputation["kundenzufriedenheit"] = reputation.get("kundenzufriedenheit", 0) + int(round(
+            late * float(rule.get("kundenzufriedenheit_je_tag", -3)) *
+            state.ease("reputation_verlust_faktor")))
+    return {"tag": day, "dauer": day - farm["start"] + 1, "verzug": late,
+            "strafe_prozent": round(percent, 1), "strafe": penalty, "rest": rest,
+            "bonus": bonus, "fehlerfrei": flawless, "puenktlich": late == 0,
+            "richtig": right, "aufgaben": len(tasks), "geld": rest + bonus,
+            "reputation": {key: value for key, value in reputation.items() if value},
+            "stufe": state.level}
+
+
+def farm_day(state, levels=None, content=None):
+    """Was der Feierabend fuer die Serverfarm bringt (Nutzdaten unter
+    firma.serverfarm) oder None."""
+    content = content or state.content
+    farm = state.farm
+    if farm is None or farm["fertig"] or state.day in farm["tag_set"]:
+        return None
+    phase = farm_current_phase(farm, content)
+    if phase is None:
+        return None
+    rules = farm_rules(content)
+    day = state.day
+    item = {"tag": day, "phase": phase["id"], "punkte": 0.0, "beitraege": []}
+    need = float(phase.get("team_punkte", 0))
+    have = float(farm["punkte"].get(phase["id"], 0.0))
+    if need and have < need and farm["team"]:
+        points, shares = farm_team_points(state, phase, levels, content)
+        item["punkte"] = points
+        item["beitraege"] = shares
+        have = min(need, have + points)
+    item["stand"] = round(have, 1)
+    ready = all(task["id"] in farm["aufgaben"] for task in farm_tasks(phase["id"], content)) \
+        and have >= need - 0.001
+    if phase["id"] == FARM_DELIVERY:
+        ready = ready and farm["liefertag"] is not None and day >= farm["liefertag"]
+    if phase["id"] == FARM_CABLING and ready:
+        if farm["kabelfehler"] is None:
+            chance = farm_cable_chance(state, levels, content)
+            rule = rules.get("kabelfehler") or {}
+            failed = [task["id"] for task in farm_tasks(phase["id"], content)
+                      if task["typ"] == "rack" and
+                      _dice(state.firm_seed, day, "serverfarm|kabel|" + task["id"]) < chance]
+            item["kabelfehler"] = failed
+            item["kabel_chance"] = round(chance, 3)
+            if failed:
+                item["nacharbeit_geld"] = int(round(len(failed) * rule.get("geld", 400) *
+                                                    state.ease("fehlerkosten_faktor")))
+                item["nacharbeit_bis"] = day + len(failed) * int(rule.get("tage", 1))
+                ready = False
+        elif farm["nacharbeit_bis"] is not None and day < farm["nacharbeit_bis"]:
+            ready = False
+    if ready:
+        item["fertig"] = True
+        if phase["id"] == FARM_PLANNING:
+            order = farm["aufgaben"].get(FARM_ORDER) or {}
+            delay = _farm_roll_delay(state, day, content)
+            arrival = int(order.get("tag", day)) + int(order.get("lieferzeit", 0)) + delay
+            item["verzug"] = delay
+            item["liefertag"] = max(day + 1, arrival)
+        if phase is farm_phases(content)[-1]:
+            item["abnahme"] = farm_acceptance(state, day, content)
+    return item
+
+
+def farm_status(state, levels=None, content=None):
+    """Alles fuer die Serverfarm-Ansicht in einem Woerterbuch."""
+    content = content or state.content
+    farm = state.farm
+    customer = farm_customer(content)
+    info = {"frei": state.farm_unlocked is not None, "gestartet": farm is not None,
+            "fertig": bool(farm and farm["fertig"]), "kunde": customer,
+            "fehlt": farm_unlock_missing(state, content), "tage": farm_rules(content).get(
+                "tage", 25)}
+    if farm is None:
+        return info
+    phase = farm_current_phase(farm, content)
+    info.update({
+        "tag": state.day - farm["start"] + 1, "frist_tag": farm_deadline(farm, content),
+        "phase": phase, "phasen": farm_phase_list(state, content),
+        "offen": farm_open_tasks(state, content), "heute": farm_today_count(state),
+        "limit": int(farm_rules(content).get("aufgaben_pro_tag", 3)),
+        "team": [person_name(state, person) for person in farm["team"]],
+        "angebot": farm["aufgaben"].get(FARM_OFFER), "abnahme": farm["abnahme"],
+        "liefertag": farm["liefertag"], "verzug": farm["verzug"],
+        "kabelfehler": farm["kabelfehler"], "nacharbeit_bis": farm["nacharbeit_bis"]})
+    if phase and phase.get("team_punkte") and farm["team"]:
+        info["team_heute"] = farm_team_points(state, phase, levels, content)[0]
+    return info
+
+
+def farm_badge_count(state, content=None):
+    """Zahl am Lokschuppen auf der Karte: offene Aufgaben, die heute gehen
+    (vor dem Start 1 fuer die Ausschreibung)."""
+    if state is None or state.farm_unlocked is None:
+        return 0
+    if state.farm is None:
+        return 1
+    if state.farm["fertig"]:
+        return 0
+    left = int(farm_rules(content).get("aufgaben_pro_tag", 3)) - farm_today_count(state)
+    return max(0, min(left, len(farm_open_tasks(state, content))))
+
+
+def farm_place_text(state, content=None):
+    """Eine Zeile zum Lokschuppen fuer die Kartenliste."""
+    if state is None or state.farm is None:
+        return "%s: Ausschreibung für ein Rechenzentrum." % farm_customer(content).get("name", "")
+    if state.farm["fertig"]:
+        return "Rechenzentrum in Betrieb, von deiner Firma gebaut."
+    phase = farm_current_phase(state.farm, content) or {}
+    return "Serverfarm: Tag %d von %d · Phase %s" % (
+        state.day - state.farm["start"] + 1, int(farm_rules(content).get("tage", 25)),
+        phase.get("kurz", ""))
+
+
+def farm_unlocked_text(content=None):
+    customer = farm_customer(content)
+    return "Neuer Großkunde: Die %s baut den alten Lokschuppen zum Rechenzentrum um und sucht " \
+        "einen IT-Partner. Der Lokschuppen steht jetzt auf der Karte." % customer.get("name", "")
+
+
+def farm_day_text(state, item, content=None):
+    """Zeile(n) fuer die Feierabend-Anzeige zur Serverfarm."""
+    content = content or (state.content if state is not None else GAME)
+    phase = farm_phase_rule(item.get("phase"), content) or {}
+    lines = []
+    if item.get("punkte"):
+        lines.append("Serverfarm (%s): Team +%s Punkte, jetzt %s von %d." % (
+            phase.get("kurz", ""), _num(item["punkte"]), _num(item.get("stand", 0)),
+            phase.get("team_punkte", 0)))
+    if item.get("kabelfehler"):
+        lines.append("Kabeltest: Fehler in %s. Die Nacharbeit kostet %s und %d Tag%s." % (
+            " und ".join((farm_task(task_id, content) or {}).get("titel", task_id).split(":")[0]
+                         for task_id in item["kabelfehler"]),
+            _euro(item.get("nacharbeit_geld", 0)),
+            item["nacharbeit_bis"] - item["tag"], "" if item["nacharbeit_bis"] -
+            item["tag"] == 1 else "e"))
+    elif item.get("kabelfehler") == [] and phase.get("id") == FARM_CABLING:
+        lines.append("Kabeltest bestanden: Beide Racks sind sauber verkabelt.")
+    if item.get("fertig"):
+        lines.append("Serverfarm: Phase „%s“ abgeschlossen." % phase.get("name", ""))
+    if "verzug" in item:
+        lines.append("Die Ware kommt am Arbeitstag %d%s." % (
+            item["liefertag"], " (Lieferverzug %d Tag%s)" % (
+                item["verzug"], "" if item["verzug"] == 1 else "e") if item["verzug"] else ""))
+    if item.get("abnahme"):
+        data = item["abnahme"]
+        text = "Abnahme bestanden! Restzahlung %s" % _euro(data["rest"])
+        if data["strafe"]:
+            text += " nach Vertragsstrafe %s (%d Tag%s zu spät)" % (
+                _euro(data["strafe"]), data["verzug"], "" if data["verzug"] == 1 else "e")
+        if data["bonus"]:
+            text += ", dazu %s Bonus für die fehlerfreie Abnahme" % _euro(data["bonus"])
+        lines.append(text + ".")
+    return lines
+
+
+def farm_result_text(state, payload, content=None):
+    """(Ueberschrift, Text) nach dem Abschicken einer Serverfarm-Aufgabe."""
+    content = content or state.content
+    task = farm_task(payload["aufgabe"], content) or {}
+    parts = []
+    if payload["richtig"]:
+        head = "Richtig gelöst"
+    else:
+        head = "Nicht ganz richtig"
+        if payload.get("strafe"):
+            parts.append("Die Nacharbeit kostet %s." % _euro(payload["strafe"]))
+    if task.get("typ") == FARM_OFFER_TYPE:
+        if payload.get("verhandelt"):
+            parts.append("Dr. Arendt verhandelt: %d %% Gewinnzuschlag sind ihr zu viel, "
+                         "sie bietet %d %%. Ihr werdet euch einig." % (
+                             payload["zuschlag"], payload["vereinbart"]))
+        parts.append("Auftrag erteilt: %s netto, die Anzahlung von %s ist da." % (
+            _euro(payload["netto"]), _euro(payload["anzahlung"])))
+    if payload.get("kosten"):
+        parts.append("%s %s." % ("Express-Nachbestellung der richtigen Ware:" if
+                                 payload.get("nachbestellt") else "Hardware bezahlt:",
+                                 _euro(payload["kosten"])))
+    if payload.get("lieferzeit"):
+        parts.append("Längste Lieferzeit: %d Arbeitstage." % payload["lieferzeit"])
+    return head, " ".join(parts)
+
+
+def farm_solution_lines(task, content=None):
+    """ "So waere es gegangen" als Zeilen."""
+    solution = farm_solution(task, content)
+    if solution is None:
+        return []
+    if task["typ"] == "bestueckung":
+        return fit_lines(task, solution, content)
+    if task["typ"] == FARM_OFFER_TYPE:
+        top = farm_rules(content).get("zuschlag_max", 20)
+        return ["%s: %s" % (label, _euro(value)) for _key, label, value in
+                offer_values(farm_offer_task(top, content)["daten"])]
+    return [line for line in solution_text(task, None, content).splitlines() if line] \
+        if task["typ"] != "auswahl" else [task["antwort"]]
+
+
+def farm_journey(state, content=None):
+    """Eintraege fuer "Meine Reise": [(tag, art, titel, text)]."""
+    content = content or state.content
+    entries = []
+    customer = farm_customer(content)
+    if state.farm_unlocked is not None:
+        entries.append((state.farm_unlocked, "serverfarm_frei", "Neuer Großkunde: %s" %
+                        customer.get("kurz", ""),
+                        "%s meldet sich: Der Lokschuppen wird zum Rechenzentrum." %
+                        customer.get("name", "")))
+    farm = state.farm
+    if farm is None:
+        return entries
+    offer = farm["aufgaben"].get(FARM_OFFER)
+    if offer:
+        entries.append((offer["tag"], "serverfarm_auftrag", "Serverfarm: Auftrag erhalten",
+                        "Angebot über %s netto angenommen%s." % (
+                            _euro(offer["netto"]), ", nach Verhandlung auf %d %%" %
+                            offer["vereinbart"] if offer.get("verhandelt") else "")))
+    for phase in farm_phases(content):
+        done = farm["fertig_phasen"].get(phase["id"])
+        if done is not None and phase is not farm_phases(content)[-1]:
+            entries.append((done, "serverfarm_phase", "Serverfarm: %s fertig" % phase["kurz"],
+                            "Phase „%s“ abgeschlossen." % phase["name"]))
+    if farm["verzug"]:
+        entries.append((farm_phase_start(farm, FARM_DELIVERY, content) or farm["start"],
+                        "serverfarm_verzug", "Serverfarm: Lieferverzug",
+                        "Die Hardware kommt %d Tag%s später." % (
+                            farm["verzug"], "" if farm["verzug"] == 1 else "e")))
+    if farm["kabelfehler"]:
+        day = farm["nacharbeit_bis"] - 1 if farm["nacharbeit_bis"] else farm["start"]
+        entries.append((day, "serverfarm_kabel", "Serverfarm: Kabelfehler",
+                        "Nacharbeit an %d Rack%s." % (len(farm["kabelfehler"]), "" if len(
+                            farm["kabelfehler"]) == 1 else "s")))
+    if farm["abnahme"]:
+        data = farm["abnahme"]
+        entries.append((data["tag"], "serverfarm_abnahme", "Serverfarm abgenommen",
+                        "Nach %d Arbeitstagen%s, %d von %d Aufgaben richtig%s." % (
+                            data["dauer"], " (pünktlich)" if data["puenktlich"] else
+                            " (%d Tag%s zu spät)" % (data["verzug"], "" if data["verzug"] == 1
+                                                     else "e"),
+                            data["richtig"], data["aufgaben"],
+                            ", fehlerfreie Abnahme" if data["fehlerfrei"] else "")))
+    return entries
+
+
+def _validate_farm(content):
+    """serverfarm.json und balancing.serverfarm."""
+    data = content.get("serverfarm") or {}
+    if not data:
+        return []
+    problems = []
+    rules = farm_rules(content)
+    for key in ("freischaltung", "tage", "zuschlag_max", "anzahlung", "fehler", "verzug",
+                "kabelfehler", "strafe", "bonus"):
+        if key not in rules:
+            problems.append("Spiel-Balancing serverfarm: '%s' fehlt" % key)
+    unlock = rules.get("freischaltung") or {}
+    if unlock.get("raum") and not special_room(unlock["raum"], content):
+        problems.append("Spiel-Serverfarm: unbekannter Sonderraum '%s'" % unlock["raum"])
+    for cert_id in unlock.get("zertifizierungen") or []:
+        if not certificate(cert_id, content):
+            problems.append("Spiel-Serverfarm: unbekannte Zertifizierung '%s'" % cert_id)
+    if abs(sum(row[0] for row in rules.get("verzug") or []) - 1.0) > 0.001:
+        problems.append("Spiel-Serverfarm: Anteile des Lieferverzugs ergeben nicht 1")
+    people = {person["id"] for person in data.get("personen") or []}
+    for person in data.get("personen") or []:
+        for part, value in (person.get("aussehen") or {}).items():
+            if part not in APPEARANCE or value not in [key for key, _n in APPEARANCE[part]]:
+                problems.append("Spiel-Serverfarm: %s hat ungueltiges Aussehen %s=%s"
+                                % (person["id"], part, value))
+    phases = [phase["id"] for phase in data.get("phasen") or []]
+    if len(set(phases)) != len(phases) or not phases:
+        problems.append("Spiel-Serverfarm: Phasen fehlen oder sind doppelt")
+    for key in (FARM_PLANNING, FARM_DELIVERY, FARM_CABLING):
+        if key not in phases:
+            problems.append("Spiel-Serverfarm: Phase '%s' fehlt" % key)
+    days = [phase.get("soll_tag", 0) for phase in data.get("phasen") or []]
+    if days != sorted(days) or (days and days[-1] != rules.get("tage")):
+        problems.append("Spiel-Serverfarm: soll_tag muss steigen und mit 'tage' enden")
+    for phase in data.get("phasen") or []:
+        for topic in phase.get("themen") or []:
+            if topic not in TOPIC_CAT:
+                problems.append("Spiel-Serverfarm: Phase %s: unbekanntes Thema '%s'"
+                                % (phase["id"], topic))
+        if phase.get("team_punkte") and not phase.get("themen"):
+            problems.append("Spiel-Serverfarm: Phase %s hat Team-Punkte ohne Themen"
+                            % phase["id"])
+        if not farm_tasks(phase["id"], content):
+            problems.append("Spiel-Serverfarm: Phase %s ohne Aufgaben" % phase["id"])
+    seen = set()
+    for kind in FIT_KINDS:
+        if not fit_parts(kind, content):
+            problems.append("Spiel-Serverfarm: keine Teile der Art '%s'" % kind)
+    for item in data.get("teile") or []:
+        if item.get("typ") not in FIT_KINDS or item.get("id") in seen or \
+                not item.get("preis", 0) > 0:
+            problems.append("Spiel-Serverfarm: Teil %s ungueltig" % item.get("id"))
+        seen.add(item.get("id"))
+    seen = set()
+    for task in data.get("aufgaben") or []:
+        where = "Spiel-Serverfarm-Aufgabe %s" % task.get("id")
+        for field in ("id", "typ", "phase", "person", "cat", "titel", "hilfe", "erklaerung",
+                      "suchbegriffe"):
+            if not task.get(field):
+                problems.append("%s: Feld '%s' fehlt" % (where, field))
+        if task.get("typ") != "terminal" and not task.get("ticket"):
+            problems.append("%s: Feld 'ticket' fehlt" % where)
+        if task.get("id") in seen:
+            problems.append("%s: Kennung doppelt" % where)
+        seen.add(task.get("id"))
+        if task.get("typ") not in FARM_TYPES:
+            problems.append("%s: unbekannter Typ '%s'" % (where, task.get("typ")))
+            continue
+        if task.get("phase") not in phases:
+            problems.append("%s: unbekannte Phase" % where)
+        if task.get("person") not in people:
+            problems.append("%s: unbekannte Person '%s'" % (where, task.get("person")))
+        if task.get("cat") not in CATEGORY_KEYS:
+            problems.append("%s: unbekannter Fachbereich" % where)
+        for key, value in (task.get("anforderungen") or {}).items():
+            if key not in TOPIC_CAT or not 0 <= value <= 100:
+                problems.append("%s: ungueltige Anforderung %s" % (where, key))
+        if len(task.get("ticket", "")) > MAX_TICKET_CHARS:
+            problems.append("%s: Tickettext zu lang" % where)
+        kind = task["typ"]
+        texts = []
+        if kind in ("bauteile", "bestellung"):
+            problems += ["%s: %s" % (where, text) for text in _validate_hardware_task(task,
+                                                                                      content)]
+        elif kind == "rack":
+            problems += ["%s: %s" % (where, text) for text in _validate_rack_task(task,
+                                                                                  content)]
+        elif kind == "formular":
+            problems += ["%s: %s" % (where, text) for text in _validate_form_task(task,
+                                                                                  content)]
+        elif kind == "terminal":
+            problems += ["%s: %s" % (where, text) for text in _validate_terminal_task(task,
+                                                                                      content)]
+        elif kind == "diagnose":
+            problems += ["%s: %s" % (where, text) for text in _validate_diagnosis_task(task,
+                                                                                       content)]
+        elif kind == "bestueckung":
+            problems += ["%s: %s" % (where, text) for text in _validate_fit_task(task, content)]
+        elif kind == "auswahl":
+            options = task.get("optionen") or []
+            if len(options) < 2 or len(set(options)) != len(options) or \
+                    task.get("antwort") not in options:
+                problems.append("%s: Antworten ungueltig" % where)
+            texts = options
+        elif kind == "zuordnung":
+            pairs = task.get("paare") or []
+            if len(pairs) < 2 or len({p[0] for p in pairs}) != len(pairs) or \
+                    len({p[1] for p in pairs}) != len(pairs):
+                problems.append("%s: braucht mindestens 2 eindeutige Paare" % where)
+            texts = [p[0] for p in pairs] + [p[1] for p in pairs]
+        for text in texts:
+            if len(text) > MAX_OPTION_CHARS:
+                problems.append("%s: Antwort zu lang (Handy): %s" % (where, text[:40]))
+        if kind == FARM_OFFER_TYPE and (not data.get("angebot") or
+                                        not (data["angebot"].get("positionen"))):
+            problems.append("%s: Angebot ohne Positionen" % where)
+        for term in task.get("suchbegriffe") or []:
+            if not learn_links_for_term(term, limit=1):
+                problems.append("%s: Suchbegriff '%s' findet nichts" % (where, term))
+    for template_task in farm_tasks(content=content):
+        if template_task["typ"] == "bestueckung":
+            for template in fit_templates(template_task):
+                rack = farm_rack_task((template_task.get("bestueckung") or {}).get("rack"),
+                                      content)
+                if rack and template.get("geraet") and \
+                        rack["geraete"].count(template["geraet"]) < template.get("anzahl", 1):
+                    problems.append("Spiel-Serverfarm: Rack hat zu wenige '%s' fuer die "
+                                    "Bestueckung" % template["geraet"])
     return problems

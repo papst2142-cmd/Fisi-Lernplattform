@@ -37,11 +37,13 @@ EMPTY_HINT = {"bauteile": "Bitte setze zuerst Bauteile ein.",
               "terminal": "Bitte führe zuerst alle Schritte im Terminal aus.",
               "diagnose": "Bitte wähle Ursache und Maßnahme.",
               "austausch": "Bitte wähle Ursache, Maßnahme, Ersatzteil und Ablauf.",
-              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss."}
+              "wartung": "Bitte prüfe und bewerte alle Prüfpunkte und wähle den Abschluss.",
+              "bestueckung": "Bitte wähle für jeden Server alle Teile und das RAID-Level."}
 # Grossansichten der Orte: Kopfzeile und "Zurueck ..." nach einem Auftrag
 SITE_CRUMBS = {"buero": ("SPIEL", "BÜRO"), "kunde": ("SPIEL", "KUNDE"),
                "zuhause": ("SPIEL", "ZUHAUSE"), "filiale": ("SPIEL", "FILIALE")}
 FIRM_CRUMBS = ("SPIEL", "FIRMA")
+FARM_CRUMBS = ("SPIEL", "SERVERFARM")   # ab 0.52
 JOURNEY_CRUMBS = ("SPIEL", "REISE")
 JOURNEY_TABS = [("rueckblick", "Rückblick"), ("erfolge", "Erfolge")]   # ab 0.46
 JOURNEY_COLOR = {fg.JOURNEY_STORY: C["purple"], fg.JOURNEY_CAREER: C["accent"],
@@ -737,10 +739,133 @@ class OrderBoard(ft.Column):
         self._paint(right)
 
 
+RACK_BG, RACK_EMPTY, RACK_BORDER = "#1E1A30", "#2A2442", "#5B5480"
+
+
+def dropdown(options, value, on_select, expand=True, width=None):
+    """Auswahlliste (ab 0.52 fuer Rack und Bestueckung). options: [(key, text)]."""
+    return ft.Dropdown(
+        options=[ft.dropdown.Option(key=key, text=text) for key, text in options],
+        value=value, expand=expand, width=width, on_select=on_select,
+        bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
+        border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
+        color=C["text"], text_style=ft.TextStyle(size=13, color=C["text"]),
+        content_padding=ft.Padding.symmetric(horizontal=12, vertical=6))
+
+
+class Fold(ft.Column):
+    """Aufklappbarer Abschnitt (ab 0.52): Kopfzeile antippen klappt auf/zu."""
+
+    def __init__(self, title, opened=True):
+        super().__init__(spacing=6, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.opened = opened
+        self.title = ui.label(title)
+        self.summary = ui.text("", size=12, color=C["muted"])
+        self.icon = ft.Icon(ft.Icons.EXPAND_LESS if opened else ft.Icons.EXPAND_MORE,
+                            size=20, color=C["muted"])
+        self.head = ft.Container(
+            content=ft.Row([self.title, ft.Container(expand=True), self.summary, self.icon],
+                           spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            bgcolor=C["card_alt"], border_radius=10, ink=True,
+            border=ft.Border.all(1, C["border"]),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8), on_click=self.toggle)
+        self.body = ft.Column(spacing=6, tight=True, visible=opened,
+                              horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.controls = [self.head, self.body]
+
+    def toggle(self, _event=None):
+        self.opened = not self.opened
+        self.body.visible = self.opened
+        self.icon.icon = ft.Icons.EXPAND_LESS if self.opened else ft.Icons.EXPAND_MORE
+
+    def set(self, controls, summary="", summary_color=None):
+        self.body.controls = controls
+        self.summary.value = summary
+        self.summary.color = summary_color or C["muted"]
+
+
+def value_rows(bars):
+    """Balken der Rack-Ansicht (HE, Strom, Kuehlung, Gewicht, Kosten)."""
+    rows = []
+    for bar in bars:
+        color = C["red"] if bar["zu_viel"] else (
+            C["yellow"] if bar["anteil"] >= 0.9 else C["green"])
+        rows.append(ft.Column([
+            ft.Row([ui.text(bar["name"], size=12, color=C["text_dim"], expand=True),
+                    ui.text(bar["text"], size=12, weight=ft.FontWeight.BOLD,
+                            color=C["red"] if bar["zu_viel"] else C["text"])], spacing=6),
+            _skill_bar(bar["anteil"], color, 7),
+        ], spacing=3, tight=True))
+    return rows
+
+
+def check_rows(checks):
+    """Vorgaben mit Haken (gleiche Texte wie am PC)."""
+    return [ft.Row([
+        ft.Icon(ft.Icons.CHECK if item["ok"] else ft.Icons.CLOSE, size=16,
+                color=C["green"] if item["ok"] else C["red"]),
+        ui.text(item["text"], size=13, color=C["text_soft"] if item["ok"] else C["text"],
+                expand=True)], spacing=6, vertical_alignment=ft.CrossAxisAlignment.START)
+        for item in checks]
+
+
+def checks_summary(checks):
+    missing = sum(1 for item in checks if not item["ok"])
+    if not missing:
+        return "alles erfüllt", C["green"]
+    return ("1 offen" if missing == 1 else "%d offen" % missing), C["red"]
+
+
+def cabinet_rows(task, answer, unit_h, on_tap=None, current=None, locked=False,
+                 marked=None, top=None):
+    """Schrank als Zeilen von oben (top, sonst ganz oben) bis HE 1."""
+    devices = task["geraete"]
+    rows = []
+    unit = top or task["schrank"]["he"]
+
+    def row(label, height, content=None, fill=None, border=None, tap_unit=None):
+        click = (lambda _e, u=tap_unit: on_tap(u)) if on_tap and tap_unit else None
+        return ft.Row([
+            ft.Container(content=ui.text(str(label), size=10, color=C["muted"]), width=26,
+                         height=height, alignment=ft.Alignment.CENTER_RIGHT),
+            ft.Container(content=content, height=height - 3, expand=True, bgcolor=fill,
+                         border=border, border_radius=5, ink=click is not None,
+                         padding=ft.Padding.symmetric(horizontal=8),
+                         alignment=ft.Alignment.CENTER_LEFT, on_click=click),
+        ], spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+
+    while unit >= 1:
+        occupant = fg.rack_occupant(task, answer, unit)
+        if occupant is None:
+            rows.append(row(unit, unit_h, fill=RACK_EMPTY, tap_unit=unit))
+            unit -= 1
+            continue
+        item = fg.rack_device(devices[occupant])
+        color = fg.RACK_COLORS[item["typ"]]
+        selected = (occupant == current and not locked) or (marked and occupant in marked)
+        bottom = int(answer[str(occupant)])
+        rows.append(row(unit if item["he"] == 1 else "%d–%d" % (bottom, unit),
+                        unit_h * item["he"],
+                        content=ui.text(item["name"], size=12 if unit_h < 24 else 13,
+                                        weight=ft.FontWeight.BOLD, no_wrap=True,
+                                        overflow=ft.TextOverflow.ELLIPSIS),
+                        fill=mix(C["card"], color, 0.55 if selected else 0.35),
+                        border=ft.Border.all(2 if selected else 1, color), tap_unit=unit))
+        unit = bottom - 1
+    return rows
+
+
+def cabinet_box(rows):
+    return ft.Container(content=ft.Column(rows, spacing=0, tight=True), bgcolor=RACK_BG,
+                        border=ft.Border.all(2, RACK_BORDER), border_radius=10, padding=6)
+
+
 class RackBoard(ft.Column):
-    """Serverschrank bestuecken zum Antippen: Geraet antippen, dann die
-    Hoeheneinheit im Schrank. Ein eingebautes Geraet antippen waehlt es zum
-    Versetzen oder Ausbauen aus. Gleiche Regeln wie am PC (fg.rack_place)."""
+    """Rack-Ansicht (ab 0.52, ersetzt die bisherige, gleiche Werte wie am PC):
+    oben das Geraet per Auswahlliste, darunter der Schrank zum Antippen, dann
+    aufklappbar Geraete, Werte und Vorgaben. Ein eingebautes Geraet antippen
+    waehlt es zum Versetzen oder Ausbauen aus."""
 
     def __init__(self, task):
         super().__init__(spacing=8, tight=True,
@@ -748,40 +873,43 @@ class RackBoard(ft.Column):
         self.task = task
         self.devices = task["geraete"]
         self.size = task["schrank"]["he"]
-        self.unit = 30 if self.size <= 14 else 24
+        self.unit = 30 if self.size <= 14 else 24 if self.size <= 24 else 20
         self.answer = {}
         self.current = 0
         self.locked = False
         self.success = False
         lines = fg.rack_header(task)
         head = ft.Container(
-            content=ft.Column([ui.label("Schrank"),
-                               ui.text(lines[0], size=14, weight=ft.FontWeight.BOLD)] +
+            content=ft.Column([ui.text(lines[0], size=14, weight=ft.FontWeight.BOLD)] +
                               [ui.text(line, size=13, color=C["accent"],
                                        weight=ft.FontWeight.BOLD) for line in lines[1:]],
                               spacing=4, tight=True),
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
             padding=ft.Padding.symmetric(horizontal=14, vertical=10))
-        self.device_rows = []
-        for index, _device_id in enumerate(self.devices):
-            row = ft.Container(border_radius=12, ink=True,
-                               padding=ft.Padding.symmetric(horizontal=12, vertical=9),
-                               on_click=lambda _e, value=index: self.pick_device(value))
-            self.device_rows.append(row)
+        self.picker = ft.Row([])
         self.cabinet = ft.Column(spacing=0, tight=True)
         self.remove_row = ft.Row([])
-        self.summary = ui.text("", size=14, weight=ft.FontWeight.BOLD)
-        self.controls = [head, ui.label("Gerät antippen"), *self.device_rows,
-                         ui.label("Dann die Höheneinheit (HE 1 ist unten)"),
-                         ft.Container(content=self.cabinet, bgcolor="#1E1A30",
-                                      border=ft.Border.all(2, "#5B5480"), border_radius=10,
-                                      padding=6),
-                         self.remove_row, self.summary]
+        self.device_fold = Fold("Geräte", opened=False)
+        self.value_fold = Fold("Werte")
+        self.check_fold = Fold("Vorgaben")
+        self.controls = [head, ui.label("Gerät wählen, dann HE antippen (HE 1 ist unten)"),
+                         self.picker, cabinet_box([self.cabinet]), self.remove_row,
+                         self.device_fold, self.value_fold, self.check_fold]
         self._paint()
+
+    def _where(self, index):
+        item = fg.rack_device(self.devices[index])
+        bottom = self.answer.get(str(index))
+        return fg._he_text(bottom, item["he"]) if bottom else \
+            fg.rack_source_text(self.task, index)
+
+    def _picked(self, event):
+        value = event.control.value
+        self.pick_device(int(value) if value not in (None, "") else None)
 
     def pick_device(self, index):
         if not self.locked:
-            self.current = None if index == self.current else index
+            self.current = index
             self._paint()
 
     def tap_unit(self, unit):
@@ -805,79 +933,225 @@ class RackBoard(ft.Column):
     def complete(self):
         return bool(self.answer)
 
-    def _device_content(self, index):
-        item = fg.rack_device(self.devices[index])
-        bottom = self.answer.get(str(index))
-        where = fg._he_text(bottom, item["he"]) if bottom else \
-            fg.rack_source_text(self.task, index)
-        return ft.Row([
-            ft.Container(width=4, height=34, border_radius=2,
-                         bgcolor=fg.RACK_COLORS[item["typ"]]),
-            ft.Column([
-                ft.Row([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD,
-                                expand=True),
-                        ui.text(where, size=12, weight=ft.FontWeight.BOLD,
-                                color=C["accent"] if bottom else C["muted"])], spacing=8),
-                ui.text(fg.rack_specs(item), size=12, color=C["muted"]),
-            ], spacing=2, tight=True, expand=True),
-        ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER)
-
-    def _unit_row(self, unit, height, content=None, fill=None, border=None, on_click=None):
-        return ft.Row([
-            ft.Container(content=ui.text(str(unit), size=11, color=C["muted"]), width=24,
-                         height=height, alignment=ft.Alignment.CENTER_RIGHT),
-            ft.Container(content=content, height=height - 4, expand=True, bgcolor=fill,
-                         border=border, border_radius=6, ink=on_click is not None,
-                         padding=ft.Padding.symmetric(horizontal=10),
-                         alignment=ft.Alignment.CENTER_LEFT, on_click=on_click),
-        ], spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER)
-
     def _paint(self):
-        for index, row in enumerate(self.device_rows):
-            bottom = self.answer.get(str(index))
-            active = index == self.current and not self.locked
-            row.content = self._device_content(index)
-            if self.locked and bottom:
-                color = C["green"] if self.success else C["red"]
-                row.bgcolor = mix(C["card"], color, 0.12)
-                row.border = ft.Border.all(2, color)
-            else:
-                row.bgcolor = C["card_hi"] if active else C["card_alt"]
-                row.border = ft.Border.all(2 if active else 1,
-                                           C["purple"] if active else C["border"])
-        rows = []
-        unit = self.size
-        while unit >= 1:
-            occupant = fg.rack_occupant(self.task, self.answer, unit)
-            if occupant is None:
-                rows.append(self._unit_row(unit, self.unit, fill="#2A2442",
-                                           on_click=lambda _e, u=unit: self.tap_unit(u)))
-                unit -= 1
-                continue
-            item = fg.rack_device(self.devices[occupant])
-            color = fg.RACK_COLORS[item["typ"]]
-            selected = occupant == self.current and not self.locked
-            bottom = self.answer[str(occupant)]
-            rows.append(self._unit_row(
-                unit if item["he"] == 1 else "%d–%d" % (bottom, unit), self.unit * item["he"],
-                content=ui.text(item["name"], size=13, weight=ft.FontWeight.BOLD),
-                fill=mix(C["card"], color, 0.55 if selected else 0.35),
-                border=ft.Border.all(2 if selected else 1, color),
-                on_click=lambda _e, u=unit: self.tap_unit(u)))
-            unit = bottom - 1
-        self.cabinet.controls = rows
+        options = [(str(index), "%s · %s" % (fg.rack_device(device_id)["name"],
+                                              self._where(index)))
+                   for index, device_id in enumerate(self.devices)]
+        menu = dropdown(options, str(self.current) if self.current is not None else None,
+                        self._picked)
+        menu.hint_text = "Gerät wählen"
+        menu.disabled = self.locked
+        self.picker.controls = [menu]
+        self.cabinet.controls = cabinet_rows(self.task, self.answer, self.unit, self.tap_unit,
+                                             self.current, self.locked)
         placed = self.current is not None and str(self.current) in self.answer
         self.remove_row.controls = [ui.GradientButton(
             "Gerät ausbauen", self.remove, kind="ghost", height=36)] \
             if placed and not self.locked else []
-        text, over = fg.rack_summary(self.task, self.answer)
-        self.summary.value = "Belegt: " + text
-        self.summary.color = C["yellow"] if over else C["text_soft"]
+        rows = []
+        for index, device_id in enumerate(self.devices):
+            item = fg.rack_device(device_id)
+            bottom = self.answer.get(str(index))
+            color = C["border"]
+            if self.locked and bottom:
+                color = C["green"] if self.success else C["red"]
+            rows.append(ft.Container(
+                content=ft.Row([
+                    ft.Container(width=4, height=30, border_radius=2,
+                                 bgcolor=fg.RACK_COLORS[item["typ"]]),
+                    ft.Column([
+                        ft.Row([ui.text(item["name"], size=13, weight=ft.FontWeight.BOLD,
+                                        expand=True),
+                                ui.text(self._where(index), size=12, weight=ft.FontWeight.BOLD,
+                                        color=C["accent"] if bottom else C["muted"])],
+                               spacing=8),
+                        ui.text(fg.rack_specs(item), size=11, color=C["muted"]),
+                    ], spacing=2, tight=True, expand=True)],
+                    spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, color), border_radius=10,
+                ink=not self.locked, padding=ft.Padding.symmetric(horizontal=10, vertical=7),
+                on_click=lambda _e, value=index: self.pick_device(value)))
+        self.device_fold.set(rows, "%d von %d eingebaut" % (len(self.answer),
+                                                            len(self.devices)))
+        bars = fg.rack_bars(self.task, self.answer)
+        over = any(bar["zu_viel"] for bar in bars)
+        self.value_fold.set(value_rows(bars), "zu viel" if over else "",
+                            C["red"] if over else None)
+        checks = fg.rack_checks(self.task, self.answer)
+        self.check_fold.set(check_rows(checks), *checks_summary(checks))
 
     def reveal(self, right):
         self.locked = True
         self.success = right
         self.current = None
+        self._paint()
+
+
+FIT_EMPTY = "– bitte wählen –"
+
+
+class FitBoard(ft.Column):
+    """Server bestuecken (Serverfarm, ab 0.52) mit Auswahllisten: oben der
+    belegte Teil von Rack B, darunter die Vorlage, die Teile, RAID-Level und
+    aufklappbar Werte und Lastenheft. Gleiche Regeln wie am PC (fg.fit_*)."""
+
+    hint_key = "bestueckung"
+
+    def __init__(self, task, rack_answer=None, on_raid=None):
+        super().__init__(spacing=8, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.task = task
+        self.rack = fg.farm_rack_task(task["bestueckung"].get("rack"))
+        self.rack_answer = dict(rack_answer or {})
+        if self.rack and not self.rack_answer:
+            self.rack_answer = fg.rack_solution(self.rack) or {}
+        self.templates = fg.fit_templates(task)
+        self.current = self.templates[0]["id"]
+        self.answer = {item["id"]: {} for item in self.templates}
+        self.on_raid = on_raid
+        self.locked = False
+        self.cabinet = ft.Column(spacing=0, tight=True)
+        self.middle = ft.Column(spacing=8, tight=True,
+                                horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self.value_fold = Fold("Werte")
+        self.check_fold = Fold("Lastenheft")
+        self.raid_line = ui.text("", size=13, weight=ft.FontWeight.BOLD)
+        self.server_line = ui.text("", size=12, color=C["text_soft"])
+        controls = []
+        if self.rack:
+            controls += [ui.label("Rack B · Server antippen"), cabinet_box([self.cabinet])]
+        controls += [self.middle, self.value_fold, self.check_fold]
+        self.controls = controls
+        self._build_middle()
+        self._paint()
+
+    def _template(self):
+        return next(item for item in self.templates if item["id"] == self.current)
+
+    def _tap(self, unit):
+        index = fg.rack_occupant(self.rack, self.rack_answer, unit)
+        if index is None:
+            return
+        device = self.rack["geraete"][index]
+        for template in self.templates:
+            if template.get("geraet") == device and template["id"] != self.current:
+                self.select(template["id"])
+
+    def select(self, template_id):
+        self.current = template_id
+        self._build_middle()
+        self._paint()
+
+    def _build_middle(self):
+        template = self._template()
+        config = self.answer[template["id"]]
+        keys = [item["id"] for item in self.templates]
+        controls = [ui.PillGroup([(item["id"], "%d × %s" % (item["anzahl"], item["name"]))
+                                  for item in self.templates],
+                                 on_change=self.select, initial=keys.index(self.current)),
+                    ui.text("%d Laufwerksschächte · %s · %d Netzteilplätze" % (
+                        template["schaechte"], "%d RAM-Bänke · %d Sockel" % (
+                            template["ram_baenke"], template["sockel"])
+                        if template.get("sockel") else "Controller eingebaut",
+                        template["netzteil_plaetze"]), size=12, color=C["muted"])]
+        for kind in fg.fit_kinds(template):
+            options = fg.fit_options(template, kind)
+            part = dropdown([(FIT_EMPTY, FIT_EMPTY)] + list(options),
+                            config.get(kind) or FIT_EMPTY,
+                            lambda e, k=kind: self._set_part(k, e.control.value))
+            part.disabled = self.locked
+            row = [part]
+            count_key = fg.FIT_COUNT_KEYS.get(kind)
+            if count_key:
+                counts = [str(number) for number in fg.fit_count_range(template, kind)]
+                if len(counts) > 1:
+                    count = dropdown([(value, value + " ×") for value in counts],
+                                     str(config.get(count_key, 1)),
+                                     lambda e, c=count_key: self._set_count(c, e.control.value),
+                                     expand=False, width=86)
+                    count.disabled = self.locked
+                    row.append(count)
+            controls += [ui.text(fg.FIT_KIND_NAMES[kind], size=13, color=C["text_dim"],
+                                 weight=ft.FontWeight.BOLD), ft.Row(row, spacing=8)]
+            if kind == "laufwerk":
+                raid = dropdown([(FIT_EMPTY, FIT_EMPTY)] + [(level, level)
+                                                            for level in fg.RAID_LEVELS],
+                                config.get("raid") or FIT_EMPTY,
+                                lambda e: self._set_raid(e.control.value))
+                raid.disabled = self.locked
+                controls += [ui.text("RAID-Level", size=13, color=C["text_dim"],
+                                     weight=ft.FontWeight.BOLD), ft.Row([raid]),
+                             self.raid_line]
+                if self.on_raid:
+                    controls.append(ft.Row([ui.GradientButton(
+                        "RAID-Rechner öffnen", self._open_raid, kind="ghost", height=36)]))
+        controls.append(self.server_line)
+        self.middle.controls = controls
+
+    def _set_part(self, kind, value):
+        if self.locked:
+            return
+        config = self.answer[self.current]
+        if value and value != FIT_EMPTY:
+            config[kind] = value
+            key = fg.FIT_COUNT_KEYS.get(kind)
+            if key and key not in config:
+                config[key] = 1
+        else:
+            config.pop(kind, None)
+        self._paint()
+
+    def _set_count(self, key, value):
+        if not self.locked:
+            self.answer[self.current][key] = int(value)
+            self._paint()
+
+    def _set_raid(self, value):
+        if self.locked:
+            return
+        config = self.answer[self.current]
+        if value in fg.RAID_LEVELS:
+            config["raid"] = value
+        else:
+            config.pop("raid", None)
+        self._paint()
+
+    def _open_raid(self, _event=None):
+        values = fg.fit_server(self._template(), self.answer[self.current])
+        if values["laufwerk"]:
+            self.on_raid(values["raid"] or "RAID 5", values["laufwerke"],
+                         values["laufwerk"]["groesse"])
+        else:
+            self.on_raid("RAID 5", 4, 1000)
+
+    def complete(self):
+        return all(not fg.fit_server(template, self.answer[template["id"]])["fehlt"]
+                   and self.answer[template["id"]].get("raid") for template in self.templates)
+
+    def _paint(self):
+        view = fg.fit_view(self.task, self.answer, self.current)
+        self.raid_line.value = view["raid_text"]
+        self.raid_line.color = C["muted"] if view["raid_ok"] is None else \
+            C["accent"] if view["raid_ok"] else C["red"]
+        self.server_line.value = view["server_text"]
+        bars = fg.fit_bars(self.task, self.answer)
+        over = any(bar["zu_viel"] for bar in bars)
+        self.value_fold.set(value_rows(bars), "zu viel" if over else "",
+                            C["red"] if over else None)
+        self.check_fold.set(check_rows(view["checks"]), *checks_summary(view["checks"]))
+        if self.rack:
+            device = self._template().get("geraet")
+            marked = {index for index, device_id in enumerate(self.rack["geraete"])
+                      if device_id == device}
+            used = [int(bottom) + fg.rack_device(self.rack["geraete"][int(key)])["he"] - 1
+                    for key, bottom in self.rack_answer.items()]
+            top = min(self.rack["schrank"]["he"], max(used or [1]) + 1)
+            self.cabinet.controls = cabinet_rows(self.rack, self.rack_answer, 22, self._tap,
+                                                 locked=True, marked=marked, top=top)
+
+    def reveal(self, right):
+        self.locked = True
+        self._build_middle()
         self._paint()
 
 
@@ -1514,6 +1788,10 @@ class GameScreen:
         self.journey_tab = "rueckblick"     # ab 0.46: "Rückblick" | "Erfolge"
         self.badge_group = "alle"
         self.picking = False         # Auswahlbildschirm der Spielstand-Plaetze (ab 0.48)
+        # Unterseite "Serverfarm" (ab 0.52)
+        self.farm_box = None
+        self.farm_team_edit = False
+        self.farm_markup = None
         self.root = screen_list([])
         self.render()
 
@@ -1895,6 +2173,8 @@ class GameScreen:
             self.app.info(title, text)
         elif view == "firma":
             self.open_firm()
+        elif view == fg.FARM_VIEW:
+            self.open_farm()
         elif view in SITE_CRUMBS:
             self.open_site(view)
 
@@ -3689,6 +3969,10 @@ class GameScreen:
                     "Zertifizierungen, Werbung) höchstens %d %%. Es läuft immer nur eine "
                     "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10), size=12,
                     color=C["text_dim"])], accent=C["yellow"])]
+        if state.farm_unlocked is None:
+            # Ab 0.52: was fuer den Grossauftrag Serverfarm noch fehlt
+            result[0].body.controls.append(ui.text(fg.farm_unlock_text(state), size=13,
+                                                   color=C["cyan"], weight=ft.FontWeight.BOLD))
         items = fg.cert_status(state)
         for kind, title, color in (("firma", "Qualität, Sicherheit und Datenschutz",
                                     C["cyan"]),
@@ -4123,6 +4407,398 @@ class GameScreen:
                 ui.Card("Böden", floors, accent=C["green"]),
                 ui.Card("Wohnung", homes, accent=C["orange"],
                         subtitle=fg.HOME_SUBTITLE[rent])]
+
+    # -- Grossauftrag Serverfarm (ab 0.52) ------------------------------------
+
+    def open_farm(self, _event=None):
+        self.game.reload()
+        self.farm_box = ft.Column(spacing=12, tight=True,
+                                  horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._fill_farm()
+        self.app.push(FARM_CRUMBS, screen_list([self.slot_bar(), self.farm_box]))
+
+    def _fill_farm(self):
+        state = self.game.state
+        levels = self.game.topic_knowledge()
+        info = fg.farm_status(state, levels)
+        controls = [self._farm_head(info)]
+        if not info["frei"]:
+            controls.append(ui.Card("Noch nicht freigeschaltet", [
+                ui.text(fg.farm_unlock_text(state), size=14, color=C["text_soft"]),
+                ft.Row([ui.GradientButton("Zur Firma", self.open_firm, height=40)])],
+                accent=C["muted"]))
+        elif not info["gestartet"]:
+            controls.append(self._farm_tender(info))
+        else:
+            start = state.farm["start"]
+            if info["fertig"]:
+                controls.append(self._farm_acceptance(info))
+            else:
+                controls.append(self._farm_today(state, info, start))
+                controls.append(self._farm_team(state, levels))
+            controls.append(self._farm_phases(info, start))
+            entries = sorted(fg.farm_journey(state), key=lambda row: row[0])
+            if entries:
+                rows = []
+                for day, _kind, title, text in entries:
+                    rows += [ui.text("Tag %d · %s" % (day, title), size=13,
+                                     weight=ft.FontWeight.BOLD),
+                             ui.text(text, size=13, color=C["text_soft"])]
+                controls.append(ui.Card("Verlauf", rows, accent=C["purple"],
+                                        subtitle="Steht auch unter Reise"))
+        self.farm_box.controls = controls
+
+    def _farm_changed(self):
+        self.app.notify_progress()
+        self.game.reload()
+        self._fill_farm()
+
+    def _farm_head(self, info):
+        customer = info["kunde"]
+        people = []
+        for person in fg.farm_content().get("personen") or []:
+            people.append(ft.Row([
+                ft.Container(content=avatar(person.get("aussehen") or {}, 40), width=40,
+                             height=40, border_radius=20, bgcolor=C["card_hi"]),
+                ft.Column([ui.text(person["name"], size=13, weight=ft.FontWeight.BOLD),
+                           ui.text(person["rolle"], size=11, color=C["muted"])],
+                          spacing=0, tight=True)], spacing=10))
+        return ui.Card(fg.FARM_TITLE, [
+            ui.text(customer.get("text", ""), size=14, color=C["text_soft"]), *people],
+            accent=C["cyan"], subtitle="Lokschuppen")
+
+    def _farm_tender(self, info):
+        rules = fg.farm_rules()
+        lines = [
+            "Die Datenhafen Talheim GmbH sucht einen IT-Partner, der im alten Lokschuppen "
+            "zwei Serverracks plant, einbaut, bestückt und dem Kunden übergibt.",
+            "Vertragslaufzeit: %d Arbeitstage ab dem Öffnen der Ausschreibung. Jeder Tag "
+            "darüber kostet %s %% Vertragsstrafe (höchstens %s %%)." % (
+                info["tage"], fg._num(rules["strafe"]["prozent_je_tag"]),
+                fg._num(rules["strafe"]["max_prozent"])),
+            "Sechs Phasen: %s." % ", ".join(phase["kurz"] for phase in fg.farm_phases()),
+            "Du bearbeitest höchstens %d Serverfarm-Aufgaben am Tag. Dein Team arbeitet "
+            "jeden Feierabend an den Phasen weiter." % rules["aufgaben_pro_tag"],
+            "Bei fehlerfreier Abnahme gibt es %s Bonus." % fg._euro(rules["bonus"]),
+        ]
+        return ui.Card("Ausschreibung", [ui.text("• " + line, size=14, color=C["text_soft"])
+                                         for line in lines] +
+                       [ft.Row([ui.GradientButton("Ausschreibung ansehen", self._farm_start,
+                                                  expand=True)])],
+                       accent=C["yellow"], subtitle="Ein Auftrag, einmal pro Durchgang")
+
+    def _farm_start(self, _event=None):
+        def confirmed():
+            try:
+                self.game.farm_start()
+            except ValueError as exc:
+                self.toast(str(exc), C["yellow"])
+                return
+            self._farm_changed()
+
+        self.app.confirm("Ausschreibung ansehen",
+                         "Ab heute laufen die %d Arbeitstage des Großauftrags. Jetzt starten?"
+                         % fg.farm_rules().get("tage", 25), confirmed)
+
+    def _farm_today(self, state, info, start):
+        phase = info["phase"] or {}
+        parts = []
+        if phase.get("id") == fg.FARM_DELIVERY and info["liefertag"]:
+            parts.append(ui.text("Die Ware kommt an Tag %d." % (info["liefertag"] - start + 1),
+                                 size=13, color=C["accent"], weight=ft.FontWeight.BOLD))
+        if info["nacharbeit_bis"] and state.day < info["nacharbeit_bis"]:
+            parts.append(ui.text("Nacharbeit nach dem Kabeltest bis Tag %d." % (
+                info["nacharbeit_bis"] - start + 1), size=13, color=C["accent"],
+                weight=ft.FontWeight.BOLD))
+        if phase.get("team_punkte"):
+            current = next(item for item in info["phasen"] if item["id"] == phase["id"])
+            parts.append(ui.text("Team-Arbeit: %s von %d Punkten%s." % (
+                fg._num(current["punkte"]), phase["team_punkte"],
+                " · heute etwa +%s" % fg._num(info["team_heute"])
+                if info.get("team_heute") else " · noch niemand im Team"),
+                size=13, color=C["accent"], weight=ft.FontWeight.BOLD))
+        if not info["offen"]:
+            parts.append(ui.text(
+                "Alle Aufgaben dieser Phase sind erledigt. Sie endet am Feierabend, sobald "
+                "das Team fertig ist." if phase.get("team_punkte") else
+                "Alle Aufgaben dieser Phase sind erledigt.", size=14, color=C["text_soft"]))
+        for task in info["offen"]:
+            problem = fg.farm_task_problem(state, task["id"])
+            person = fg.farm_person(task["person"]) or {}
+            button = ui.GradientButton("Bearbeiten", lambda _e, i=task["id"]:
+                                       self.open_farm_task(i), height=38)
+            button.set_enabled(not problem)
+            box = [ui.text(task["titel"], size=14, weight=ft.FontWeight.BOLD),
+                   ui.text("%s · %s" % (person.get("name", ""), person.get("rolle", "")),
+                           size=12, color=C["muted"])]
+            if problem:
+                box.append(ui.text(problem, size=11, color=C["muted"]))
+            box.append(ft.Row([button]))
+            parts.append(self._person_box(box))
+        parts.insert(0, ui.text("Arbeitstag %d · heute %d von %d Aufgaben bearbeitet" % (
+            state.day, info["heute"], info["limit"]), size=12, color=C["muted"]))
+        return ui.Card("Heute · %s" % phase.get("kurz", ""), parts, accent=C["accent"],
+                       subtitle="Tag %d von %d" % (info["tag"], info["tage"]))
+
+    def _farm_team(self, state, levels):
+        team = state.farm_team()
+        names = [fg.person_name(state, person) for person in team]
+        parts = [ui.text("Im Team: " + (", ".join(names) if names else "noch niemand"),
+                         size=13, weight=ft.FontWeight.BOLD,
+                         color=C["green"] if names else C["orange"])]
+        if not state.staff:
+            parts.append(ui.text("Stelle Mitarbeiter ein, damit die Phasen vorankommen.",
+                                 size=12, color=C["muted"]))
+        else:
+            editing = self.farm_team_edit
+            parts.append(ft.Row([ui.GradientButton(
+                "Team fertig" if editing else "Team ändern", self._farm_toggle_edit,
+                kind="ghost" if editing else "primary", height=38, expand=True)]))
+            if editing:
+                parts.append(ui.label("Wer arbeitet mit? (antippen)"))
+                for option in fg.farm_candidates(state, levels):
+                    button = ui.GradientButton("%s · %s %d · %s Punkte am Tag" % (
+                        option["name"], option["phase"], option["wert"],
+                        fg._num(option["punkte"])),
+                        lambda _e, a=option["an"]: self._farm_toggle_member(a),
+                        kind="success" if option["im_team"] else "ghost", height=38)
+                    button.set_enabled(option["im_team"] or not option["problem"])
+                    parts.append(button)
+                    note = option["problem"] or option["fehlt"]
+                    if note:
+                        parts.append(ui.text(note, size=11, color=C["muted"]))
+                parts.append(ui.text(fg.farm_team_note(), size=11, color=C["muted"]))
+        parts.insert(1, ui.text("Empfohlen %d, höchstens %d" % (
+            fg.farm_rules().get("team_empfohlen", 2), fg.farm_rules().get("team_max", 5)),
+            size=12, color=C["muted"]))
+        return ui.Card("Team", parts, accent=C["purple"], subtitle="%d im Team" % len(team))
+
+    def _farm_toggle_edit(self, _event=None):
+        self.farm_team_edit = not self.farm_team_edit
+        self._fill_farm()
+
+    def _farm_toggle_member(self, person):
+        try:
+            self.game.farm_toggle_member(person)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self._farm_changed()
+
+    def _farm_phases(self, info, start):
+        colors = {"fertig": C["green"], "jetzt": C["accent"], "spaeter": C["muted"]}
+        rows = []
+        for item in info["phasen"]:
+            color = colors[item["status"]]
+            parts = ["Soll bis Tag %d" % item["soll_tag"],
+                     "%d von %d Aufgaben" % (item["erledigt"], item["aufgaben"])]
+            if item["team_punkte"]:
+                parts.append("Team %s von %d Punkten" % (fg._num(item["punkte"]),
+                                                         item["team_punkte"]))
+            if item["ende"] is not None:
+                parts.append("fertig an Tag %d" % (item["ende"] - start + 1))
+            rows.append(ft.Container(
+                content=ft.Row([
+                    ui.dot(color, 10),
+                    ft.Column([ui.text(item["name"], size=14, weight=ft.FontWeight.BOLD),
+                               ui.text(" · ".join(parts), size=12, color=C["text_dim"])],
+                              spacing=2, tight=True, expand=True),
+                    ui.text({"fertig": "fertig", "jetzt": "läuft",
+                             "spaeter": "später"}[item["status"]], size=12,
+                            weight=ft.FontWeight.BOLD, color=color)],
+                    spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                bgcolor=C["card_alt"], border_radius=12,
+                border=ft.Border.all(2 if item["status"] == "jetzt" else 1,
+                                     color if item["status"] != "spaeter" else C["border"]),
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
+        return ui.Card("Phasen", rows, accent=C["cyan"],
+                       subtitle="%d Arbeitstage" % info["tage"])
+
+    def _farm_acceptance(self, info):
+        data = info["abnahme"] or {}
+        offer = info.get("angebot") or {}
+        rows = [("Auftragswert netto", fg._euro(offer.get("netto", 0))),
+                ("Anzahlung", fg._euro(offer.get("anzahlung", 0))),
+                ("Restzahlung", fg._euro(data.get("rest", 0))),
+                ("Vertragsstrafe", fg._euro(data.get("strafe", 0)) if data.get("strafe")
+                 else "keine"),
+                ("Bonus fehlerfreie Abnahme", fg._euro(data.get("bonus", 0))
+                 if data.get("bonus") else "–"),
+                ("Aufgaben richtig", "%d von %d" % (data.get("richtig", 0),
+                                                    data.get("aufgaben", 0))),
+                ("Termin", "pünktlich" if data.get("puenktlich") else "%d Tag%s zu spät" % (
+                    data.get("verzug", 0), "" if data.get("verzug") == 1 else "e"))]
+        return ui.Card("Abnahme bestanden", [
+            ft.Row([ui.text(label, size=13, color=C["text_dim"], expand=True),
+                    ui.text(value, size=13, weight=ft.FontWeight.BOLD)]) for label, value in rows
+        ] + [ui.text("Das Rechenzentrum läuft. Die Datenhafen Talheim GmbH nennt deine Firma "
+                     "ab jetzt als Referenz.", size=14, color=C["text_soft"])],
+            accent=C["green"], subtitle="nach %d Tagen" % data.get("dauer", 0))
+
+    def open_farm_task(self, task_id):
+        task = fg.farm_task(task_id)
+        person = fg.farm_person(task["person"]) or {}
+        gaps = fg.requirement_gaps(task, self.game.topic_knowledge())
+        self.used_help = False
+        self.answered = False
+        self.task = task
+        self.farm_markup = None
+        phase = fg.farm_phase_rule(task["phase"]) or {}
+        controls = [
+            ui.text(task["titel"], size=19, weight=ft.FontWeight.BOLD),
+            ui.text("%s · Phase %s · %s" % (fg.FARM_TITLE, phase.get("kurz", ""),
+                                            CATEGORY_SHORT[fg.CAT_NAME[task["cat"]]]),
+                    size=12, color=C["cyan"]),
+            ui.Card("Auftrag", [
+                ui.text("%s · %s" % (person.get("name", ""), person.get("rolle", "")),
+                        size=14, weight=ft.FontWeight.BOLD)] +
+                ([ui.text(task["ticket"], size=14, color=C["text_soft"])]
+                 if task.get("ticket") else []), accent=C["cyan"]),
+        ]
+        if gaps:
+            controls.append(ft.Container(
+                content=ui.text(fg.gap_warning(gaps), size=13, color=C["yellow"]),
+                bgcolor=mix(C["card"], C["yellow"], 0.12), border_radius=14, padding=14,
+                border=ft.Border.all(1, mix(C["yellow"], C["card"], 0.35))))
+        self.farm_board = ft.Column(spacing=8, tight=True,
+                                    horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._farm_board(task)
+        self.help_box = ft.Column(spacing=10, tight=True)
+        self.result_box = ft.Column(spacing=10, tight=True)
+        controls.append(ui.Card("Aufgabe", ([ui.text(task["frage"], size=16,
+                                                     weight=ft.FontWeight.BOLD)]
+                                            if task.get("frage") else []) +
+                                [self.farm_board, self.help_box, self.result_box],
+                                accent=C["accent"]))
+        self.btn_help = ui.GradientButton("Hilfe", self._show_help, kind="ghost")
+        self.buttons = ft.Column([ft.Row([
+            ui.GradientButton("Lösung einreichen", self._farm_submit, expand=True),
+            self.btn_help], spacing=10)], spacing=10, tight=True)
+        controls.append(self.buttons)
+        self.app.push(FARM_CRUMBS, screen_list(controls))
+
+    def _farm_board(self, task):
+        kind = task["typ"]
+        state = self.game.state
+        head = []
+        if kind == fg.FARM_OFFER_TYPE:
+            if self.farm_markup is None:
+                self.farm_markup = fg.farm_markups()[0]
+            markups = fg.farm_markups()
+            head = [ui.label("Gewinnzuschlag"),
+                    ui.PillGroup([(value, "%d %%" % value) for value in markups],
+                                 on_change=self._farm_set_markup,
+                                 initial=markups.index(self.farm_markup)),
+                    ui.text("Mehr als %d %% akzeptiert die Kundin nicht, sie verhandelt dann "
+                            "herunter." % fg.farm_rules().get("zuschlag_max", 20), size=11,
+                            color=C["muted"])]
+            self.options = FormBoard(fg.farm_offer_task(self.farm_markup))
+        elif kind == "auswahl":
+            self.options = ui.OptionList()
+            options = list(task["optionen"])
+            random.Random(task["id"]).shuffle(options)
+            self.options.set_options(options)
+        elif kind == "bestellung":
+            self.options = OrderBoard(task)
+        elif kind == "rack":
+            self.options = RackBoard(task)
+        elif kind == "formular":
+            self.options = FormBoard(task)
+        elif kind == "terminal":
+            self.options = TerminalBoard(task)
+        elif kind == "diagnose":
+            self.options = DiagnoseBoard(task, [], {}, None)
+        elif kind == "bestueckung":
+            rack = (state.farm["aufgaben"].get("sf-rack-b") or {}) if state.farm else {}
+            self.options = FitBoard(task, rack.get("antwort") if rack.get("richtig")
+                                    else None, self._open_raid)
+        else:
+            self.options = MatchBoard(task)
+        self.farm_board.controls = head + [self.options]
+
+    def _farm_set_markup(self, value):
+        if self.answered:
+            return
+        self.farm_markup = value
+        self._farm_board(self.task)
+
+    def _open_raid(self, level, disks, size):
+        calc = self.app.screens["calc"]
+        calc.raid_pills.select_value(level, notify=False)
+        calc.entry_disks.value = str(disks)
+        calc.entry_size.value = str(size)
+        calc.calc_raid()
+        self.app.open("calc")
+
+    def _farm_submit(self, _event=None):
+        if self.answered:
+            return
+        task = self.task
+        kind = task["typ"]
+        if kind == "auswahl":
+            answer = self.options.get()
+            if not answer:
+                self.toast("Bitte wähle eine Antwort aus.", C["yellow"])
+                return
+        else:
+            if not self.options.complete():
+                check = "formular" if kind == fg.FARM_OFFER_TYPE else kind
+                self.toast(EMPTY_HINT.get(getattr(self.options, "hint_key", check),
+                                          "Bitte ordne zuerst alle Begriffe zu."), C["yellow"])
+                return
+            answer = dict(self.options.answer)
+        try:
+            payload = self.game.farm_solve(task["id"], answer, self.used_help,
+                                           self.farm_markup if kind == fg.FARM_OFFER_TYPE
+                                           else None)
+        except ValueError as exc:
+            self.toast(str(exc), C["yellow"])
+            return
+        self.answered = True
+        if kind == "auswahl":
+            self.options.reveal(task["antwort"])
+        elif kind in fg.PROBLEM_TYPES or kind == fg.FARM_OFFER_TYPE:
+            self.options.reveal(payload["richtig"])
+        else:
+            self.options.reveal()
+        self.app.notify_progress()
+        color = C["green"] if payload["richtig"] else C["red"]
+        head, text = fg.farm_result_text(self.game.state, payload)
+        box = [ui.text(head, size=14, color=color, weight=ft.FontWeight.BOLD)]
+        if text:
+            box.append(ui.text(text, size=14))
+        box += [ui.text("• " + line, size=13, color=C["red"])
+                for line in payload.get("probleme") or []]
+        box.append(ui.text(task["erklaerung"], size=14, color=C["text_soft"]))
+        if not payload["richtig"]:
+            lines = fg.farm_solution_lines(task)
+            if lines:
+                box.append(ui.label("So wäre es richtig"))
+                box += [ui.text(line, size=13, color=C["text_soft"]) for line in lines]
+        result = [ft.Container(content=ft.Column(box, spacing=8, tight=True),
+                               bgcolor=mix(C["card"], color, 0.1), border_radius=12,
+                               padding=14, border=ft.Border.all(1, mix(color, C["card"], 0.4)))]
+        links = fg.learn_links(task, limit=5)
+        if links:
+            result.append(ui.label("Passend dazu lernen", C["purple"]))
+            for learn_kind, _category, title, _detail in links:
+                result.append(ft.Container(
+                    content=ui.text("%s · %s" % (learn_kind, title), size=13,
+                                    color=C["text_soft"]),
+                    bgcolor=C["card_alt"], border_radius=10,
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=10), ink=True,
+                    on_click=lambda _e, k=learn_kind, t=title: self._open_learn(k, t)))
+        self.result_box.controls = result
+        self.buttons.controls = [ft.Row([ui.GradientButton(
+            "Zurück zur Serverfarm", self._farm_close, expand=True)])]
+
+    def _farm_close(self, _event=None):
+        page = self.app.page
+        if len(page.views) > 1:
+            page.views.pop()
+        self.game.reload()
+        self._fill_farm()
+        page.update()
 
     def _open_cards(self, category, topic=None):
         self.app.screens["cards"].set_category(category, topic)

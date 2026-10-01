@@ -39,7 +39,9 @@
     {"id": "mahnung_vorbei", "name": "Mahnverfahren überstanden", "einheit": "zahl", "besser": "mehr",
      "text": "Mahnstufe wieder auf 0"},
     {"id": "auftraege", "name": "Aufträge insgesamt", "einheit": "zahl", "besser": "mehr",
-     "text": "Tickets, Kundentickets und Projekte"}
+     "text": "Tickets, Kundentickets und Projekte"},
+    {"id": "serverfarm_tage", "name": "Serverfarm: schnellste Fertigstellung", "einheit": "tage", "besser": "weniger",
+     "text": "Arbeitstage von der Ausschreibung bis zur Abnahme"}
   ],
   "erfolge": [
     {"id": "erster_tag", "name": "Erster Arbeitstag", "gruppe": "karriere", "wert": "profil",
@@ -136,6 +138,22 @@
      "bild": "pokal", "farbe": "firma", "ort": "gewerbehof",
      "text": "Gegen jeden der 6 Mitbewerber mindestens ein Angebot gewonnen.",
      "stufen": [{"stufe": "silber", "ab": 6}]},
+    {"id": "serverfarm_einfach", "moment_text": "Der Lokschuppen ist ein Rechenzentrum. Die Serverfarm läuft, abgenommen an Arbeitstag {tag}.", "name": "Serverfarm abgeschlossen: Einfach", "gruppe": "firma",
+     "wert": "serverfarm_einfach", "bild": "server", "farbe": "kunde", "ort": "lokschuppen", "bestwert": "serverfarm_tage",
+     "text": "Den Großauftrag Serverfarm abgeschlossen, auf dem Schwierigkeitsgrad „Einfach“.",
+     "stufen": [{"stufe": "silber", "moment": true}]},
+    {"id": "serverfarm_normal", "moment_text": "Der Lokschuppen ist ein Rechenzentrum. Die Serverfarm läuft, abgenommen an Arbeitstag {tag}.", "name": "Serverfarm abgeschlossen: Normal", "gruppe": "firma",
+     "wert": "serverfarm_normal", "bild": "server", "farbe": "kunde", "ort": "lokschuppen", "bestwert": "serverfarm_tage",
+     "text": "Den Großauftrag Serverfarm abgeschlossen, auf dem Schwierigkeitsgrad „Normal“.",
+     "stufen": [{"stufe": "gold", "moment": true}]},
+    {"id": "serverfarm_fehlerfrei", "name": "Fehlerfreie Abnahme", "gruppe": "firma",
+     "wert": "serverfarm_fehlerfrei", "bild": "haken", "farbe": "green", "ort": "lokschuppen",
+     "text": "Bei der Serverfarm alle 18 Aufgaben richtig gelöst.",
+     "stufen": [{"stufe": "gold"}]},
+    {"id": "serverfarm_puenktlich", "name": "Pünktlich geliefert", "gruppe": "firma",
+     "wert": "serverfarm_puenktlich", "bild": "blitz", "farbe": "kunde", "ort": "lokschuppen",
+     "text": "Die Serverfarm bis zum 25. Arbeitstag abgenommen.",
+     "stufen": [{"stufe": "silber"}]},
 
     {"id": "kontostand", "name": "Kontostand", "moment_text": "{ziel} auf dem Konto.", "gruppe": "geld", "wert": "kontostand",
      "bild": "muenzen", "farbe": "yellow", "ort": "gewerbehof", "bestwert": "kontostand",

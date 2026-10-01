@@ -2,10 +2,10 @@
   "_hinweis": [
     "Weltkarte (ab 0.45): Landschaft, Orte und Gebaeude-Aussenmodelle in Karteneinheiten.",
     "Ein neuer Ort braucht nur einen Eintrag unter 'orte' (Position, Modell, Ansicht, Freischaltung) - die Kartenlogik bleibt gleich.",
-    "frei: immer | ab_tag | kundenort (ab_tag aus kunden.json) | aufgabe (erledigt) | gruendung_moeglich | gegruendet | stufe_min | filiale_moeglich | filiale_gebaut.",
-    "ansicht: buero | zuhause | kunde:<ort> | firma | firma:<reiter> | filiale | mitbewerber:<id>.",
+    "frei: immer | ab_tag | kundenort (ab_tag aus kunden.json) | aufgabe (erledigt) | gruendung_moeglich | gegruendet | stufe_min | filiale_moeglich | filiale_gebaut | serverfarm (ab 0.52: Lokschuppen freigeschaltet).",
+    "ansicht: buero | zuhause | kunde:<ort> | firma | firma:<reiter> | filiale | mitbewerber:<id> | serverfarm.",
     "Modell-Teile (relativ zum Ort): block (Grundflaeche x/y/w/t, Hoehe h, dach flach/sattel/shed), flaeche, schild, kreis, mast, tor, baum, geruest.",
-    "Bedingungen an Teilen: ab_stufe/bis_stufe (Firmengebaeude), ab_filiale/bis_filiale, raum (Sonderraum gebaut), wohnung [ids], erledigt/offen (Aufgabe), gegruendet (true/false)."
+    "Bedingungen an Teilen: ab_stufe/bis_stufe (Firmengebaeude), ab_filiale/bis_filiale, raum (Sonderraum gebaut), wohnung [ids], erledigt/offen (Aufgabe), gegruendet (true/false), serverfarm_fertig (true/false). Block mit lichtfarbe: Farbe der beleuchteten Fenster."
   ],
   "welt": {
     "breite": 32,
@@ -61,7 +61,10 @@
     {"id": "filiale", "name": "Filiale Lindenau", "kurz": "Filiale", "x": 1.6, "y": 2.9,
      "schild": [3.1, 5.0], "modell": "filiale", "rolle": "filiale", "ansicht": "filiale",
      "name_filiale": true, "frei": {"filiale_moeglich": true},
-     "vor_filiale": {"ansicht": "firma:gebaeude", "hinweis": "Zu vermieten"}}
+     "vor_filiale": {"ansicht": "firma:gebaeude", "hinweis": "Zu vermieten"}},
+    {"id": "lokschuppen", "name": "Rechenzentrum Lokschuppen", "kurz": "Lokschuppen", "x": 9.4, "y": 1.9,
+     "schild": [12.4, 0.45], "modell": "lokschuppen", "rolle": "kunde", "ansicht": "serverfarm",
+     "frei": {"serverfarm": true}}
   ],
   "modelle": {
     "stellwerk": [
@@ -132,6 +135,17 @@
       {"art": "block", "x": 0, "y": 0, "w": 3.0, "t": 1.7, "h": 1.9, "dach": "sattel", "licht": 0.7, "ab_filiale": 1, "bis_filiale": 1},
       {"art": "block", "x": 0, "y": 0, "w": 3.0, "t": 1.7, "h": 2.8, "dach": "sattel", "licht": 0.7, "ab_filiale": 2},
       {"art": "schild", "x": 0.5, "y": 1.0, "w": 2.0, "ab_filiale": 1}
+    ],
+    "lokschuppen": [
+      {"art": "block", "x": 0, "y": 0, "w": 5.8, "t": 2.3, "h": 1.3, "dach": "sattel", "farbe": "#B4553C", "licht": 0.15, "serverfarm_fertig": false},
+      {"art": "block", "x": 0, "y": 0, "w": 5.8, "t": 2.3, "h": 1.3, "dach": "sattel", "farbe": "#B4553C", "licht": 0.9, "lichtfarbe": "#22D3EE", "serverfarm_fertig": true},
+      {"art": "tor", "x": 0.45, "y": 1.35, "w": 1.35, "h": 0.95},
+      {"art": "tor", "x": 2.22, "y": 1.35, "w": 1.35, "h": 0.95},
+      {"art": "tor", "x": 4.0, "y": 1.35, "w": 1.35, "h": 0.95},
+      {"art": "kreis", "x": 1.3, "y": -0.45, "r": 0.24, "farbe": "technik"},
+      {"art": "kreis", "x": 2.9, "y": -0.45, "r": 0.24, "farbe": "technik"},
+      {"art": "kreis", "x": 4.5, "y": -0.45, "r": 0.24, "farbe": "technik"},
+      {"art": "block", "x": 6.3, "y": 1.1, "w": 1.4, "t": 1.0, "h": 0.7, "farbe": "#4F7A5A", "fenster": false}
     ]
   }
 }

@@ -4,6 +4,47 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.52
+
+Großauftrag Serverfarm und Sicherung: Diese Version bringt die zweite große Kampagne im Spiel und eine Sicherung des Lernstands als Datei.
+
+- **Neu: Kampagne 2 „Großauftrag Serverfarm“.** Die Datenhafen Talheim GmbH
+  baut im Rechenzentrum Lokschuppen eine Serverfarm.
+  - Freigeschaltet wird sie mit Gebäudestufe 4, Serverraum, ISO 27001 und
+    Cisco-Partner. Solange etwas fehlt, steht unter Firma → Zertifizierungen,
+    was noch fehlt.
+  - Der Lokschuppen erscheint mit „Neu“ auf der Karte. Die Kampagne startet
+    erst, wenn du die Ausschreibung öffnest.
+  - 6 Phasen, 18 Aufgaben, 25 Arbeitstage: Angebot, Planung und Bestellung,
+    Lieferung, Einbau, Server bestücken und konfigurieren, Abnahme.
+  - Du stellst ein eigenes Team zusammen. Es macht in dieser Zeit keine
+    Kundentickets und keine Projekte. Die Routineaufträge laufen nebenbei
+    zur Hälfte weiter.
+  - Der Auftrag geht nie verloren. Einen Zuschlag über 20 % handelt die
+    Kundin auf 20 % herunter.
+  - Lieferverzug, Kabelfehler und Vertragsstrafen sind möglich. Auf „Einfach“
+    sind die Folgen halbiert.
+  - Bei einer fehlerfreien Abnahme gibt es 5.000 € Bonus.
+  - Es gibt vier neue Abzeichen, den Bestwert „schnellste Fertigstellung“,
+    einen Meilenstein-Moment und Einträge in „Meine Reise“.
+- **Neu: Rack-Ansicht.** Sie ersetzt die alte Ansicht überall, auch bei den
+  Rack-Tickets.
+  - Am PC hat sie drei Spalten: Schrank, Geräte sowie Werte und Vorgaben.
+  - Am Handy wählst du das Gerät aus einer Liste und tippst die Höheneinheit
+    an. Werte und Vorgaben lassen sich aufklappen.
+- **Neu: Aufgabe „Server bestücken“.** Du wählst CPU, RAM, Platten und das
+  RAID-Level. Das RAID rechnet genauso wie der RAID-Rechner, und ein Knopf
+  öffnet den Rechner mit deinen Werten.
+- **Neu: Sicherung und Wiederherstellung** unter Optionen → „Sicherung“.
+  - Der ganze Lernstand kommt in eine Datei `.fisisicherung`: Lernfortschritt,
+    Prüfungen, Abschlussprojekt, Spielstände, Bestenliste und Tagesziel.
+    Zugangsschlüssel und Farben kommen nicht mit.
+  - Beim Einspielen wählst du „Zusammenführen“ (es kommt nur hinzu, was
+    fehlt) oder „Alles ersetzen“. Vorher wird eine Sicherheitskopie
+    angelegt.
+  - Gelöschte Spielstände aus der Sicherung lassen sich als neuer Platz
+    wiederherstellen.
+
 ## 0.51
 
 Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorbereitung.
