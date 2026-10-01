@@ -803,8 +803,8 @@ def value_rows(bars):
 def check_rows(checks):
     """Vorgaben mit Haken (gleiche Texte wie am PC)."""
     return [ft.Row([
-        ui.text("✓" if item["ok"] else "✗", size=14, weight=ft.FontWeight.BOLD,
-                color=C["green"] if item["ok"] else C["red"], width=16),
+        ft.Icon(ft.Icons.CHECK if item["ok"] else ft.Icons.CLOSE, size=16,
+                color=C["green"] if item["ok"] else C["red"]),
         ui.text(item["text"], size=13, color=C["text_soft"] if item["ok"] else C["text"],
                 expand=True)], spacing=6, vertical_alignment=ft.CrossAxisAlignment.START)
         for item in checks]
@@ -3969,6 +3969,10 @@ class GameScreen:
                     "Zertifizierungen, Werbung) höchstens %d %%. Es läuft immer nur eine "
                     "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10), size=12,
                     color=C["text_dim"])], accent=C["yellow"])]
+        if state.farm_unlocked is None:
+            # Ab 0.52: was fuer den Grossauftrag Serverfarm noch fehlt
+            result[0].body.controls.append(ui.text(fg.farm_unlock_text(state), size=13,
+                                                   color=C["cyan"], weight=ft.FontWeight.BOLD))
         items = fg.cert_status(state)
         for kind, title, color in (("firma", "Qualität, Sicherheit und Datenschutz",
                                     C["cyan"]),

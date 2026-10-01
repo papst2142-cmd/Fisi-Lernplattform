@@ -5269,6 +5269,11 @@ class FirmView(ReusableView, ScrollArea):
                    "Zertifizierung gleichzeitig." % rules.get("vorteil_max", 10),
                    font=F["small"], fg=C["text_dim"], wraplength=980, justify="left",
                    anchor="w").pack(anchor="w", pady=(6, 0))
+        if state.farm_unlocked is None:
+            # Ab 0.52: was fuer den Grossauftrag Serverfarm noch fehlt
+            make_label(head.body, fg.farm_unlock_text(state), font=F["small_bold"],
+                       fg=C["cyan"], wraplength=980, justify="left", anchor="w").pack(
+                anchor="w", pady=(6, 0))
         groups = (("firma", "Qualität, Sicherheit und Datenschutz", C["cyan"]),
                   ("fach", "Fachliche Zertifizierungen", C["green"]))
         items = fg.cert_status(state)
