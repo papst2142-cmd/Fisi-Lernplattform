@@ -3628,7 +3628,10 @@ class FISIApp:
         if view is None:
             return
         view.tkraise()
-        view.to_top()
+        # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
+        # (sie springen nur beim Neuzeichnen nach oben)
+        if not getattr(view, "keeps_scroll", False):
+            view.to_top()
         self.current = key
         main, sub = VIEW_TITLES.get(key, ("FISI", ""))
         self.header.set_crumbs(main, sub)

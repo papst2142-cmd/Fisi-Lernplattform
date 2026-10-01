@@ -1694,7 +1694,8 @@ class MaintenanceBoard(ctk.CTkFrame):
 # Jetzt merkt sich jede Ansicht, womit sie zuletzt gezeichnet wurde: Stempel
 # der Datenbank (change_stamp), gewaehlter Durchgang, Platzwahl und alle
 # einfachen Felder der Ansicht (Reiter, Auswahlen, Entwuerfe, Figur-Standorte
-# ...). Ist beim naechsten Anzeigen alles gleich, bleibt die Ansicht stehen.
+# ...). Ist beim naechsten Anzeigen alles gleich, bleibt die Ansicht stehen -
+# samt Scroll-Position und Spielfigur an ihrem Platz (Nicos Wunsch, 0.50).
 # Sobald sich irgendetwas davon unterscheidet, wird wie bisher neu gezeichnet.
 # Die Spiellogik und die Werte bleiben davon unberuehrt.
 
@@ -1722,6 +1723,8 @@ class ReusableView:
     """Mixin fuer Ansichten, die beim Anzeigen nicht neu gezeichnet werden
     muessen, solange sich nichts geaendert hat. Benutzt self.app, self.game
     und self.content."""
+
+    keeps_scroll = True     # show_view setzt die Scroll-Position nicht zurueck
 
     def _render_key(self):
         db = self.app.db
@@ -1781,8 +1784,7 @@ class GameView(ReusableView, ScrollArea):
         # Ab 0.46: Wissen-Abzeichen haengen am Lernstand (Karteikarten, Quiz ...)
         self.game.check_knowledge()
         if self._unchanged():
-            self.to_top()
-            return
+            return   # steht noch da - mit Scroll-Position und Figur am Platz
         self.render()
         self._mark_rendered()
 
@@ -2703,9 +2705,9 @@ class SiteView(ReusableView, ScrollArea):
     def on_show(self):
         self.game_view.game.reload()
         if self._unchanged():
-            self.to_top()
-            return
+            return   # steht noch da - mit Scroll-Position und Figur am Platz
         self.render()
+        self.to_top()
         self._mark_rendered()
 
     def refresh(self):
@@ -3210,8 +3212,7 @@ class FirmView(ReusableView, ScrollArea):
     def on_show(self):
         self.game.reload()
         if self._unchanged():
-            self.to_top()
-            return
+            return   # steht noch da - mit Scroll-Position und Figur am Platz
         self.render()
         self._mark_rendered()
 
@@ -4843,9 +4844,7 @@ class JourneyView(ReusableView, ScrollArea):
         # Wissen-Abzeichen haengen am Lernstand - beim Oeffnen nachsehen
         self.game.check_knowledge()
         self.page = 0
-        if self._unchanged():
-            self.to_top()
-        else:
+        if not self._unchanged():   # sonst bleibt sie samt Scroll-Position stehen
             self.render()
             self._mark_rendered()
         self.app.show_unlocks()

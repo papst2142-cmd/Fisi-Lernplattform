@@ -5809,6 +5809,21 @@ class OberflaecheTest(unittest.TestCase):
         self.pump()
         # Nichts passiert: dieselben Widgets stehen noch
         self.assertEqual(firm.content.winfo_children(), children)
+        # ... und die Scroll-Position bleibt erhalten (Nicos Wunsch, 0.50)
+        self.root.minsize(400, 100)
+        self.root.geometry("1360x140")   # Fenster so klein, dass gescrollt werden kann
+        self.pump()
+        firm.canvas.yview_moveto(0.5)
+        self.pump()
+        position = firm.canvas.yview()[0]
+        self.assertGreater(position, 0.0)
+        app.show_view("calc")
+        app.show_view("firma")
+        self.pump()
+        self.assertEqual(firm.canvas.yview()[0], position)
+        self.root.minsize(1120, 720)
+        self.root.geometry("1360x900")
+        self.pump()
         # Ein Spielereignis: beim naechsten Anzeigen wird neu gezeichnet
         ticket = view.game.state.open_tickets()[0]
         view.game.solve(ticket["id"], _right_answer(ticket), used_help=False)
