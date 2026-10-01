@@ -138,7 +138,7 @@
     "text": [
       "Nach einem Ransomware-Vorfall soll ein neues, widerstandsfähigeres Backup-Konzept für einen Fileserver mit 2 TB Nutzdaten entworfen werden.",
       "",
-      "1. Welches Sicherungsverfahren (voll/differentiell/inkrementell) empfehlen Sie für die tägliche Sicherung und warum?",
+      "1. Welches Sicherungsverfahren (voll/differenziell/inkrementell) empfehlen Sie für die tägliche Sicherung und warum?",
       "2. Welche Rolle spielt ein 'Air Gap' in diesem Konzept?",
       "3. Wie lässt sich die 3-2-1-Regel konkret auf dieses Szenario anwenden?"
     ],
