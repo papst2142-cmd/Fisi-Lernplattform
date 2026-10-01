@@ -110,7 +110,7 @@ CHECKLIST_OVERVIEW = [
     ("antrag_eingereicht", "Antrag bei der IHK eingereicht"),
     ("antrag_genehmigt", "Antrag genehmigt"),
     ("durchgefuehrt", "Projekt durchgeführt"),
-    ("doku_fertig", "Dokumentation fertig und Korrektur gelesen"),
+    ("doku_fertig", "Dokumentation fertig und korrekturgelesen"),
     ("doku_abgegeben", "Dokumentation abgegeben"),
     ("praesentation", "Präsentation erstellt (höchstens 15 Minuten)"),
     ("geprobt", "Präsentation mit Zeitmessung geprobt"),
