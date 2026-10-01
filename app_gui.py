@@ -16,6 +16,7 @@ werden. Alle Lernaktivitaeten werden in einer lokalen SQLite-Datenbank
 protokolliert und im Dashboard ausgewertet.
 """
 
+import datetime
 import os
 import platform
 import queue
@@ -73,7 +74,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.49"
+APP_VERSION = "0.50"
 
 
 def _resource_path(filename):
@@ -943,7 +944,19 @@ class DashboardView(View):
 
     def on_show(self):
         self.calendar.to_current_month()
+        # Ab 0.50: nur neu rechnen und zeichnen, wenn sich seit dem letzten
+        # Mal etwas getan hat (Datenbank-Stempel, Tag, Reinzoomen)
+        key = self._refresh_key()
+        if key is not None and key == getattr(self, "_refreshed", None):
+            return
         self.refresh()
+        self._refreshed = key
+
+    def _refresh_key(self):
+        stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
+        if stamp is None:
+            return None
+        return (stamp, datetime.date.today(), self.zoom_category)
 
     def refresh(self):
         total_cards = len(KARTEIKARTEN)
@@ -2197,7 +2210,20 @@ class NotebookView(View):
         self.refresh()
 
     def on_show(self):
+        # Ab 0.50: steht der Notizblock noch genau so da (gleicher Datenbank-
+        # Stempel, gleiche Filter), wird er nicht neu aufgebaut
+        key = self._refresh_key()
+        if key is not None and key == getattr(self, "_refreshed", None):
+            return
         self.refresh(keep_page=True)
+        self._refreshed = key
+
+    def _refresh_key(self):
+        stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
+        if stamp is None:
+            return None
+        return (stamp, self.cat_pills.get(), self.topic_menu.get(), self.source_pills.get(),
+                self.status_pills.get(), self.answer_pills.get(), self.page)
 
     def _on_category(self, category):
         self.topic_menu.set_category(category)
@@ -3347,6 +3373,11 @@ class LazyViews(dict):
         cls = self._classes[key]      # KeyError bei unbekannter Ansicht
         view = cls(self._parent, self._app)
         view.grid(row=0, column=0, sticky="nsew")
+        # Ab 0.50: Eine nebenbei aufgebaute Ansicht (z.B. das Spiel, das die
+        # Optionen fuer den Schwierigkeitsgrad brauchen) legt Tk zuoberst -
+        # sie wuerde die gerade gezeigte Ansicht verdecken. Deshalb nach ganz
+        # unten; show_view hebt die gewuenschte Ansicht selbst nach oben.
+        view.lower()
         dict.__setitem__(self, key, view)
         return view
 
@@ -3597,7 +3628,10 @@ class FISIApp:
         if view is None:
             return
         view.tkraise()
-        view.to_top()
+        # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
+        # (sie springen nur beim Neuzeichnen nach oben)
+        if not getattr(view, "keeps_scroll", False):
+            view.to_top()
         self.current = key
         main, sub = VIEW_TITLES.get(key, ("FISI", ""))
         self.header.set_crumbs(main, sub)
@@ -3605,6 +3639,11 @@ class FISIApp:
         # Die Filiale (ab 0.45) erreicht man ueber Karte und Liste unter "Spiel".
         self.sidebar.set_active("game" if key == "filiale" else key)
         view.on_show()
+        # Ab 0.50: on_show kann weitere Ansichten aufbauen - die gewaehlte
+        # bleibt trotzdem oben (siehe LazyViews), sofern on_show nicht selbst
+        # schon zu einer anderen Ansicht gewechselt hat.
+        if self.current == key:
+            view.tkraise()
         self.update_slot_label()
         self.notify_progress(refresh_view=False)
 

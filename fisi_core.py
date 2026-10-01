@@ -576,6 +576,38 @@ class DBManager:
                 events.append((timestamp, kind, payload))
         return events
 
+    def game_event_stamp(self, run=_ACTIVE):
+        """Ab 0.50: billiger Stempel des Ereignisprotokolls eines Durchgangs
+        (Anzahl, hoechste Nummer, juengster Zeitstempel). Aendert sich bei
+        jedem neuen, geloeschten oder per Abgleich eingetroffenen Ereignis -
+        der Spielstand muss nur dann neu berechnet werden."""
+        run = self._run(run)
+        if run is None:
+            where, params = "lauf IS NULL OR lauf = ''", ()
+        else:
+            where, params = "lauf = ?", (run,)
+        row = self._execute(
+            "SELECT COUNT(*), MAX(id), MAX(timestamp) FROM spiel_ereignisse WHERE %s"
+            % where, params, fetch="one", default=None)
+        return tuple(row) if row else None
+
+    # Tabellen, deren Inhalt in den Ansichten sichtbar ist (fuer change_stamp)
+    STAMP_TABLES = ("card_events", "quiz_answers", "test_results", "scenario_events",
+                    "project_events", "ap1_events", "spiel_ereignisse", "spiel_plaetze",
+                    "spiel_bestenliste")
+
+    def change_stamp(self):
+        """Ab 0.50: Stempel ueber alle Lern- und Spieltabellen (Anzahl und
+        hoechste Nummer je Tabelle) in einer einzigen, billigen Abfrage.
+        Ist er unveraendert, hat sich seit dem letzten Mal nichts getan, was
+        eine Ansicht anders aussehen liesse - sie muss dann beim Wechsel
+        nicht neu aufgebaut werden. None, wenn die Abfrage scheitert."""
+        sql = "SELECT " + ", ".join(
+            "(SELECT COUNT(*) FROM %s), (SELECT MAX(rowid) FROM %s)" % (table, table)
+            for table in self.STAMP_TABLES)
+        row = self._execute(sql, fetch="one", default=None)
+        return tuple(row) if row else None
+
     def has_legacy_events(self):
         """Gibt es Spielereignisse von vor 0.48 (ohne Durchgang)?"""
         row = self._execute("SELECT 1 FROM spiel_ereignisse WHERE lauf IS NULL OR"

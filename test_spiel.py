@@ -5644,5 +5644,195 @@ class SpielstandPlaetzeTest(unittest.TestCase):
             self.assertLess(first, 20)
 
 
+def _plain(value):
+    """Beliebige Werte in eine eindeutig vergleichbare Form bringen."""
+    if isinstance(value, dict):
+        return sorted((repr(k), _plain(v)) for k, v in value.items())
+    if isinstance(value, (set, frozenset)):
+        return sorted(repr(v) for v in value)
+    if isinstance(value, (list, tuple)):
+        return [_plain(v) for v in value]
+    return repr(value)
+
+
+def _state_snapshot(state):
+    """Alle Werte eines Spielstands als vergleichbarer Text (bit-gleich)."""
+    return repr(_plain({key: value for key, value in vars(state).items()
+                        if key != "content"}))
+
+
+class SpielstandCacheTest(unittest.TestCase):
+    """Ab 0.50: reload() rechnet nur neu, wenn sich das Ereignisprotokoll
+    geaendert hat - und liefert dann genau dasselbe wie eine frische Berechnung."""
+
+    def test_reload_ohne_aenderung_bleibt_gleich(self):
+        with TempDB() as db:
+            game = fg.Game(db, device="Test")
+            game.set_profile("Nico", {})
+            _play_through(game, days=5)
+            first = game.state
+            self.assertIs(game.reload(), first)      # unveraendert: kein Neuaufbau
+            fresh = fg.GameState(db.game_events(game.run))
+            self.assertEqual(_state_snapshot(first), _state_snapshot(fresh))
+
+    def test_reload_nach_ereignis_rechnet_neu(self):
+        with TempDB() as db:
+            game = fg.Game(db, device="Test")
+            game.set_profile("Nico", {})
+            before = game.state
+            ticket = game.state.open_tickets()[0]
+            game.solve(ticket["id"], _right_answer(ticket), used_help=False)
+            self.assertIsNot(game.state, before)
+            self.assertEqual(game.state.status_of(ticket["id"]), fg.ST_RIGHT)
+            # Ereignis von "aussen" (z.B. Abgleich): Stempel aendert sich, reload sieht es
+            stamp = db.game_event_stamp(game.run)
+            db.log_game_event(fg.EV_DAY_END, "{}", "Handy", game.run)
+            self.assertNotEqual(db.game_event_stamp(game.run), stamp)
+            self.assertEqual(game.reload().day, 2)
+
+    def test_platzwechsel_und_loeschen(self):
+        with TempDB() as db:
+            game = fg.Game(db, device="Test")
+            game.set_profile("Nico", {})
+            first_run = game.run
+            game.new_run(2)
+            game.set_profile("Lena", {})
+            self.assertEqual(game.state.profile["name"], "Lena")
+            game.select_run(first_run)
+            self.assertEqual(game.state.profile["name"], "Nico")
+            # Loeschen eines anderen Platzes: Stempel des eigenen bleibt, Zustand auch
+            second_run = game.layout()["plaetze"][2]
+            game.delete_run(second_run)
+            self.assertEqual(game.reload().profile["name"], "Nico")
+
+    def test_aenderungsstempel(self):
+        with TempDB() as db:
+            stamp = db.change_stamp()
+            self.assertEqual(db.change_stamp(), stamp)
+            db.log_quiz_answer(CAT_NET, "Frage", True)
+            self.assertNotEqual(db.change_stamp(), stamp)
+            stamp = db.change_stamp()
+            game = fg.Game(db, device="Test")
+            game.set_profile("Nico", {})
+            self.assertNotEqual(db.change_stamp(), stamp)
+
+
+def _display_available():
+    try:
+        import tkinter
+        root = tkinter.Tk()
+        root.destroy()
+        return True
+    except Exception:
+        return False
+
+
+@unittest.skipUnless(_display_available(), "braucht ein Tk-Fenster (Bildschirm)")
+class OberflaecheTest(unittest.TestCase):
+    """PC-Oberflaeche (ab 0.50): Ansicht bleibt nach dem Farbwechsel oben,
+    Ansichten werden beim Wechsel wiederverwendet."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = tempfile.mkdtemp()
+        os.environ["FISI_DB_PATH"] = os.path.join(cls.folder, "test.db")
+        os.environ["FISI_SELFTEST"] = os.path.join(cls.folder, "log.txt")
+        os.environ["HOME"] = cls.folder     # Farben nicht im echten Profil speichern
+        import customtkinter as ctk
+        import app_gui
+        cls.app_gui = app_gui
+        app_gui.apply_appearance()
+        cls.root = ctk.CTk()
+        cls.app = app_gui.FISIApp(cls.root)
+        cls.root.geometry("1360x900+0+0")
+        cls.pump()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except Exception:
+            pass
+        shutil.rmtree(cls.folder, ignore_errors=True)
+
+    @classmethod
+    def pump(cls, times=8):
+        for _ in range(times):
+            cls.root.update_idletasks()
+            cls.root.update()
+
+    def top_view(self):
+        """Schluessel der Ansicht, die in der Mitte des Inhaltsbereichs oben liegt."""
+        area = self.app.view_area
+        widget = self.root.winfo_containing(area.winfo_rootx() + area.winfo_width() // 2,
+                                            area.winfo_rooty() + area.winfo_height() // 2)
+        while widget is not None and widget is not area:
+            for key in self.app.views.keys():
+                if self.app.views.built(key) is widget:
+                    return key
+            widget = widget.master
+        return None
+
+    def test_optionen_bleiben_oben(self):
+        app = self.app
+        # Frisch gestartet: die Optionen bauen das Spiel nebenbei auf (Schwierigkeitsgrad)
+        app.show_view("settings")
+        self.pump()
+        self.assertEqual(app.current, "settings")
+        self.assertEqual(self.top_view(), "settings")
+        # Farbwechsel baut alles neu - die Optionen bleiben die sichtbare Ansicht
+        import fisi_theme
+        for kwargs in ({"preset_id": "gruen_lime"}, {"background_id": "anthrazit"},
+                       {"mode": fisi_theme.MODE_LIGHT}, {"mode": fisi_theme.MODE_DARK},
+                       {"preset_id": fisi_theme.DEFAULT_PRESET},
+                       {"background_id": fisi_theme.DEFAULT_BACKGROUND}):
+            app.change_color(**kwargs)
+            self.pump()
+            self.assertEqual(app.current, "settings", kwargs)
+            self.assertEqual(self.top_view(), "settings", kwargs)
+            self.assertEqual(self.app_gui._orphaned_timers(self.root), [])
+
+    def test_ansichten_werden_wiederverwendet(self):
+        app = self.app
+        app.show_view("game")
+        self.pump()
+        view = app.views["game"]
+        view._new_slot(1)
+        self.pump()
+        app.show_view("firma")
+        self.pump()
+        firm = app.views["firma"]
+        children = firm.content.winfo_children()
+        self.assertTrue(children)
+        app.show_view("calc")
+        app.show_view("firma")
+        self.pump()
+        # Nichts passiert: dieselben Widgets stehen noch
+        self.assertEqual(firm.content.winfo_children(), children)
+        # ... und die Scroll-Position bleibt erhalten (Nicos Wunsch, 0.50)
+        self.root.minsize(400, 100)
+        self.root.geometry("1360x140")   # Fenster so klein, dass gescrollt werden kann
+        self.pump()
+        firm.canvas.yview_moveto(0.5)
+        self.pump()
+        position = firm.canvas.yview()[0]
+        self.assertGreater(position, 0.0)
+        app.show_view("calc")
+        app.show_view("firma")
+        self.pump()
+        self.assertEqual(firm.canvas.yview()[0], position)
+        self.root.minsize(1120, 720)
+        self.root.geometry("1360x900")
+        self.pump()
+        # Ein Spielereignis: beim naechsten Anzeigen wird neu gezeichnet
+        ticket = view.game.state.open_tickets()[0]
+        view.game.solve(ticket["id"], _right_answer(ticket), used_help=False)
+        app.show_view("calc")
+        app.show_view("firma")
+        self.pump()
+        self.assertNotEqual(firm.content.winfo_children(), children)
+        self.assertEqual(self.top_view(), "firma")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

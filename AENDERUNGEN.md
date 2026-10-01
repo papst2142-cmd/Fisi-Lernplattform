@@ -4,6 +4,24 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.50
+
+- **Fehlerbehebung PC: Optionen bleiben nach dem Farbwechsel sichtbar.**
+  Nach dem Wechsel von Grundfarbe, Hintergrund oder Darstellung (und beim
+  ersten Klick auf „Optionen“ direkt nach dem Start) lag bisher die
+  Spiel-Ansicht mit den Spielständen über der Optionen-Seite. Ursache war
+  der Aufbau der Ansichten im Hintergrund seit 0.48; neu gebaute Ansichten
+  landen jetzt unter der angezeigten.
+- **PC: Reiter wechseln ohne Ruckeln.** Der Spielstand wird nur noch neu
+  aus dem Ereignisprotokoll berechnet, wenn sich dort etwas geändert hat,
+  Bilder werden nicht mehr bei jedem Wechsel neu skaliert, und Spiel-,
+  Dashboard- und Notizblock-Ansichten bleiben beim Wechsel stehen, solange
+  sich nichts geändert hat. Die Spielansichten wechseln damit in rund 30
+  bis 60 ms statt 200 bis 700 ms; Aussehen und Spielwerte sind unverändert.
+- Kehrt man in eine unveränderte Spielansicht zurück, bleibt die
+  Scroll-Position erhalten und die Spielfigur steht an ihrem Platz.
+- Handy: Die Spiel-Seite profitiert ebenfalls vom Spielstand-Cache.
+
 ## 0.49
 
 - **Neu: Hellmodus.** Unter Optionen > Farben gibt es die Zeile

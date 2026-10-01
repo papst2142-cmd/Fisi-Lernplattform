@@ -248,11 +248,33 @@ def ctk_image(image, width, height):
     return cached
 
 
+_PHOTO_CACHE = {}        # (id(bild), breite, hoehe) -> (bild, PhotoImage)
+_PHOTO_CACHE_MAX = 800
+
+
 def tk_photo(image, width, height):
     """Rechnet ein Pillow-Bild auf echte Bildschirmpixel herunter und liefert
-    ein PhotoImage fuer Tk-Canvas. Die Referenz muss der Aufrufer halten."""
-    return ImageTk.PhotoImage(image.resize((max(1, int(width)), max(1, int(height))),
-                                           Image.LANCZOS))
+    ein PhotoImage fuer Tk-Canvas. Die Referenz muss der Aufrufer halten.
+    Ab 0.50 mit Zwischenspeicher: Dasselbe Bild in derselben Groesse wird
+    nicht bei jedem Neuaufbau einer Ansicht erneut skaliert. Der Eintrag
+    haelt das Quellbild fest, damit seine Kennung (id) nicht an ein anderes
+    Bild vergeben werden kann."""
+    width, height = max(1, int(width)), max(1, int(height))
+    key = (id(image), width, height)
+    cached = _PHOTO_CACHE.get(key)
+    if cached is not None and cached[0] is image:
+        return cached[1]
+    if len(_PHOTO_CACHE) >= _PHOTO_CACHE_MAX:
+        _PHOTO_CACHE.clear()
+    photo = ImageTk.PhotoImage(image.resize((width, height), Image.LANCZOS))
+    _PHOTO_CACHE[key] = (image, photo)
+    return photo
+
+
+def forget_photos():
+    """Zwischengespeicherte PhotoImages verwerfen (z.B. wenn das Hauptfenster
+    neu entsteht - ein PhotoImage gehoert zu seinem Tk-Fenster)."""
+    _PHOTO_CACHE.clear()
 
 
 # ============================================================================
@@ -593,7 +615,7 @@ class IconCanvas(tk.Canvas):
         image = symbol_image(self.symbol, int(round(box * min(1.0, self.icon_scale / 0.72))),
                              color) if self.symbol else None
         if image is not None:
-            self._photo = ImageTk.PhotoImage(image)
+            self._photo = tk_photo(image, image.width, image.height)
             self.create_image(box / 2, box / 2, image=self._photo)
             return
         draw_icon(self, self.icon, box / 2, box / 2, box * self.icon_scale,
