@@ -1604,8 +1604,9 @@ class ScrollArea(tk.Frame):
     verschieben (bzw. mit gedrueckter Umschalttaste + Mausrad). Der untere
     Schieberegler erscheint nur, wenn er gebraucht wird."""
 
-    def __init__(self, parent, bg=None):
+    def __init__(self, parent, bg=None, hide_vbar=False):
         self.bg = bg or C["bg"]
+        self.hide_vbar = hide_vbar   # senkrechter Balken nur bei Bedarf (ab 0.48)
         super().__init__(parent, bg=self.bg)
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 yscrollincrement=px(24), xscrollincrement=px(24))
@@ -1617,7 +1618,7 @@ class ScrollArea(tk.Frame):
             self, orientation="horizontal", command=self.canvas.xview,
             fg_color=self.bg, button_color=C["scrollbar"],
             button_hover_color=C["scrollbar_hi"])
-        self.canvas.configure(yscrollcommand=self.scrollbar.set,
+        self.canvas.configure(yscrollcommand=self._set_vscroll,
                               xscrollcommand=self._set_hscroll)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 2))
@@ -1633,6 +1634,15 @@ class ScrollArea(tk.Frame):
         self.canvas.bind("<Configure>", self._on_canvas_configure)
         self.bind("<Enter>", lambda e: self._bind_wheel(True))
         self.bind("<Leave>", lambda e: self._bind_wheel(False))
+
+    def _set_vscroll(self, first, last):
+        self.scrollbar.set(first, last)
+        if not self.hide_vbar:
+            return
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            self.scrollbar.grid_remove()
+        else:
+            self.scrollbar.grid()
 
     def _set_hscroll(self, first, last):
         self.hscrollbar.set(first, last)

@@ -620,19 +620,30 @@ class Sidebar(ctk.CTkFrame):
                      font=F["tiny"], height=0).pack(side="left", padx=(7, 0),
                                                     pady=(7, 0))
 
-        make_label(self, "MENÜ", font=F["label"], fg=C["muted"],
+        self.footer = make_label(self, "Version %s" % APP_VERSION,
+                                 font=F["tiny"], fg=C["muted"])
+        self.footer.pack(side="bottom", pady=(8, 14))
+        self._build_status()
+
+        # Ab 0.48: Das Menue scrollt, wenn ausgeklappte Reiter nicht mehr in
+        # das Fenster passen. Der Schieberegler erscheint nur bei Bedarf.
+        self.menu_area = ScrollArea(self, bg=C["sidebar"], hide_vbar=True)
+        self.menu_area.pack(fill="both", expand=True, pady=(0, 8))
+        menu = self.menu_area.inner
+
+        make_label(menu, "MENÜ", font=F["label"], fg=C["muted"],
                    anchor="w").pack(fill="x", padx=24, pady=(0, 6))
 
         for key, icon, text, sub_items in NAV_ITEMS:
             expandable = bool(sub_items)
-            row = NavRow(self, icon, text,
+            row = NavRow(menu, icon, text,
                          command=lambda k=key: self._on_nav(k),
                          expandable=expandable, symbol=NAV_SYMBOLS.get(key))
             row.pack(fill="x", padx=12, pady=1)
             self.rows[key] = row
 
             if sub_items:
-                container = transparent_frame(self)
+                container = transparent_frame(menu)
                 self.sub_frames[key] = container
                 for item in sub_items:
                     if isinstance(item, tuple):
@@ -649,10 +660,7 @@ class Sidebar(ctk.CTkFrame):
                                          sub=True, symbol=CATEGORY_NAV_SYMBOL.get(item))
                     sub_row.pack(fill="x", pady=1)
 
-        self.footer = make_label(self, "Version %s" % APP_VERSION,
-                                 font=F["tiny"], fg=C["muted"])
-        self.footer.pack(side="bottom", pady=(8, 14))
-
+    def _build_status(self):
         status = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=14,
                               border_width=1, border_color=C["border"])
         status.pack(side="bottom", fill="x", padx=14)

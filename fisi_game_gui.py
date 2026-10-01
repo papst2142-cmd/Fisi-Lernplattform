@@ -2793,6 +2793,10 @@ class BranchView(SiteView):
     def card_title(self):
         return "Filiale"
 
+    @property
+    def SUBTITLE(self):
+        return fg.branch_empty_hint(self.state) or SiteView.SUBTITLE
+
     def render(self):
         if not self.state.branch:
             for child in self.content.winfo_children():
@@ -3765,6 +3769,10 @@ class FirmView(ScrollArea):
                                    kind="ghost", height=30, font=F["small_bold"])
                 button.pack(pady=(0, 6))
                 button.set_enabled(not coaching["problem"])
+                if coaching["problem"]:
+                    # Ab 0.48: Grund direkt am gesperrten Knopf
+                    make_label(buttons, coaching["problem"], font=F["tiny"], fg=C["muted"],
+                               wraplength=170, justify="left").pack(pady=(0, 6))
             NeoButton(buttons, "Themen ausblenden" if item["id"] in self.topics_for
                       else "Themen", lambda i=item["id"]: self._toggle_topics(i),
                       kind="ghost", height=30, font=F["small_bold"]).pack(pady=(0, 6))

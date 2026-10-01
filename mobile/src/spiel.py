@@ -2333,9 +2333,10 @@ class GameScreen:
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
             accent = C["accent"] if site == fg.SITE_OFFICE else C["blue"]
+            subtitle = "Tippe auf eine Person oder einen Ort"
             if site == fg.SITE_BRANCH:
                 title, accent = "Filiale", C["purple"]
-            subtitle = "Tippe auf eine Person oder einen Ort"
+                subtitle = fg.branch_empty_hint(state) or subtitle
         controls.append(ui.Card(title, [self.office_plan, self.office_info], accent=accent,
                                 subtitle=subtitle))
         if home and self.editing:
@@ -3184,6 +3185,9 @@ class GameScreen:
                                            height=36, expand=True)
                 button.set_enabled(not coaching["problem"])
                 parts.append(ft.Row([button]))
+                if coaching["problem"]:
+                    # Ab 0.48: Grund direkt am gesperrten Knopf
+                    parts.append(ui.text(coaching["problem"], size=12, color=C["muted"]))
             if self.training_for == item["id"]:
                 parts += self._training_choice(state, item)
             controls.append(self._person_box(parts))

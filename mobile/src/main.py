@@ -1793,10 +1793,12 @@ class SettingsScreen(Screen):
 
     @staticmethod
     def _switch(caption, value, handler):
+        # Ab 0.48 mit Beschriftung fuer Screenreader (sonst nur "Schalter")
         return ft.Row([
-            ft.Switch(value=value, on_change=handler, active_color=C["text"],
-                      active_track_color=C["violet"], inactive_track_color=C["card_alt"],
-                      inactive_thumb_color=C["muted"]),
+            ft.Semantics(label=caption, content=ft.Switch(
+                value=value, on_change=handler, active_color=C["text"],
+                active_track_color=C["violet"], inactive_track_color=C["card_alt"],
+                inactive_thumb_color=C["muted"])),
             ui.text(caption, size=13, color=C["text_dim"], expand=True),
         ], spacing=8)
 

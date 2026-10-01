@@ -132,12 +132,16 @@ class GradientButton(ft.Container):
         self.caption.value = value
 
 
-class PillGroup(ft.Row):
+class PillGroup(ft.Stack):
     """Sich gegenseitig ausschliessende Auswahl-Pillen, seitlich scrollbar.
+    Ab 0.48: Passt die Reihe nicht auf den Bildschirm, laeuft sie rechts
+    weich aus und ein Pfeil zeigt, dass es weitergeht (Tippen scrollt).
 
     Hinweis fuer alle Bausteine: In Ereignissen (Tippen) nie selbst update()
     aufrufen - sonst uebernimmt Flet danach die uebrigen Aenderungen der
     Seite nicht automatisch."""
+
+    HINT_WIDTH = 34
 
     def __init__(self, options, on_change=None, initial=0):
         self.values = [value for value, _caption in options]
@@ -151,8 +155,69 @@ class PillGroup(ft.Row):
                 padding=ft.Padding.symmetric(horizontal=16), ink=True,
                 on_click=lambda _e, i=index: self.select(i))
             self.pills.append(pill)
-        super().__init__(self.pills, spacing=8, scroll=ft.ScrollMode.HIDDEN)
+        # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
+        self._widths = [32 + 7.6 * len(str(caption)) for _v, caption in options]
+        self._estimate = sum(self._widths) + 8 * max(0, len(options) - 1)
+        self._placed = False
+        self.row = ft.Row(self.pills, spacing=8, scroll=ft.ScrollMode.HIDDEN,
+                          on_scroll=self._scrolled, scroll_interval=50)
+        self.mask = ft.ShaderMask(
+            content=self.row, blend_mode=ft.BlendMode.DST_IN,
+            shader=ft.LinearGradient(begin=ft.Alignment.CENTER_LEFT,
+                                     end=ft.Alignment.CENTER_RIGHT,
+                                     colors=[ft.Colors.WHITE, ft.Colors.WHITE,
+                                             ft.Colors.TRANSPARENT],
+                                     stops=[0.0, 0.86, 1.0]))
+        self.hint = ft.Container(
+            content=ft.Icon(ft.Icons.CHEVRON_RIGHT, size=20, color=C["text_dim"]),
+            width=self.HINT_WIDTH, height=36, right=0, top=0,
+            alignment=ft.Alignment.CENTER_RIGHT, on_click=self._step,
+            tooltip="Weitere Einträge")
+        super().__init__([self.mask, self.hint], height=36,
+                         on_size_change=self._sized, size_change_interval=100)
+        self._more = None
+        self._overflow(False)
         self._paint()
+
+    def _overflow(self, flag):
+        """Rechten Auslauf und Pfeil zeigen, solange es rechts weitergeht."""
+        self._more = flag
+        self.hint.visible = flag
+        self.mask.shader.colors = [ft.Colors.WHITE, ft.Colors.WHITE,
+                                   ft.Colors.TRANSPARENT if flag else ft.Colors.WHITE]
+
+    def _sized(self, event):
+        # Erste Schaetzung, bevor der Nutzer scrollt
+        width = getattr(event, "width", 0) or 0
+        if width and self._estimate > width - 4:
+            if not self._more:
+                self._overflow(True)
+                self.update()
+            # Liegt die gewaehlte Pille ausserhalb (z.B. Firma > Zertifizierungen),
+            # einmal dorthin scrollen
+            start = sum(self._widths[:self.current]) + 8 * self.current
+            if not self._placed and start + self._widths[self.current] > width - self.HINT_WIDTH:
+                self._placed = True
+                self.page.run_task(self._scroll_to, max(0, start - 16))
+        self._placed = True
+
+    async def _scroll_to(self, offset):
+        try:
+            await self.row.scroll_to(offset=offset, duration=0)
+        except Exception:
+            pass
+
+    def _scrolled(self, event):
+        more = (getattr(event, "extent_after", 0) or 0) > 4
+        if more != self._more:
+            self._overflow(more)
+            self.update()
+
+    async def _step(self, _event):
+        try:
+            await self.row.scroll_to(delta=160, duration=250)
+        except Exception:
+            pass
 
     def _paint(self):
         for index, pill in enumerate(self.pills):
@@ -296,10 +361,11 @@ class Stepper(ft.Row):
 
 def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
           max_lines=None, mono=False, keyboard=None, on_change=None, expand=None):
-    """Dunkles, abgerundetes Eingabefeld."""
-    return ft.TextField(
+    """Dunkles, abgerundetes Eingabefeld. Bei password=True gibt es ab 0.48
+    einen eigenen Augen-Knopf mit Beschriftung (auch fuer Screenreader)."""
+    field = ft.TextField(
         value=value, hint_text=hint, password=password,
-        can_reveal_password=password, multiline=multiline, min_lines=min_lines,
+        multiline=multiline, min_lines=min_lines,
         max_lines=max_lines, keyboard_type=keyboard, on_change=on_change,
         bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
         border_color=C["border"], focused_border_color=C["purple"],
@@ -308,6 +374,15 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
         text_style=ft.TextStyle(font_family=MONO if mono else None, size=14),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
         expand=expand)
+    if password:
+        def toggle(_event):
+            field.password = not field.password
+            eye.icon = ft.Icons.VISIBILITY_OFF if not field.password else ft.Icons.VISIBILITY
+            eye.tooltip = "Verbergen" if not field.password else "Anzeigen"
+        eye = ft.IconButton(icon=ft.Icons.VISIBILITY, icon_color=C["muted"],
+                            tooltip="Anzeigen", on_click=toggle)
+        field.suffix_icon = eye
+    return field
 
 
 def read_box(value="", mono=False):

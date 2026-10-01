@@ -12368,6 +12368,16 @@ def people_at_site(site_id, state=None, content=None):
     return result
 
 
+def branch_empty_hint(state, content=None):
+    """Ab 0.48: Text, wenn heute niemand in der Filiale ist (sonst "")."""
+    if state is None or not state.branch or people_at_site(SITE_BRANCH, state, content):
+        return ""
+    staff = state.site_staff(SITE_BRANCH)
+    if not staff:
+        return "Noch niemand versetzt"
+    return "Heute niemand da (%d abwesend)" % len(staff)
+
+
 def site_content(site_id, state=None, content=None):
     """Inhalte (wie GAME) fuer einen Ort: Buero, Kundenort oder Zuhause."""
     content = content or GAME
@@ -13075,8 +13085,9 @@ def _map_tree(x, y, r, colors):
             _oval(x - r * 0.75, y - r * 0.75, r * 0.9, r * 0.9, colors["baum_hell"])]
 
 
-def landscape_shapes(content=None):
-    """Boden, Parks, Fluss, Strassen, Bahn, Baeume und Beschriftungen."""
+def landscape_shapes(content=None, labels=True):
+    """Boden, Parks, Fluss, Strassen, Bahn, Baeume und Beschriftungen
+    (labels=False: ohne Beschriftungen, die kommen dann ueber die Gebaeude)."""
     colors = map_palette()
     width, height = map_size(content)
     items = (map_rules(content).get("welt") or {}).get("landschaft") or []
@@ -13106,7 +13117,17 @@ def landscape_shapes(content=None):
         if item["typ"] == "baum":
             for x, y in item["punkte"]:
                 s += _map_tree(x, y, item.get("r", 0.45), colors)
-        elif item["typ"] == "ortsname":
+    if labels:
+        s += landscape_labels(content)
+    return s
+
+
+def landscape_labels(content=None):
+    """Stadtteilnamen und Beschriftungen der Landschaft."""
+    colors = map_palette()
+    s = []
+    for item in (map_rules(content).get("welt") or {}).get("landschaft") or []:
+        if item["typ"] == "ortsname":
             s.append(_text(item["x"], item["y"], item["text"], "ortsname", colors["schrift"],
                            anchor="c"))
         elif item["typ"] == "beschriftung":
@@ -13395,7 +13416,7 @@ def world_shapes(state, content=None, places=None):
     content = content or GAME
     places = map_places(state, content) if places is None else places
     colors = map_palette()
-    shapes = landscape_shapes(content)
+    shapes = landscape_shapes(content, labels=False)
     buildings = []
     for item in (map_rules(content).get("welt") or {}).get("landschaft") or []:
         if item["typ"] == "gebaeude":
@@ -13410,6 +13431,9 @@ def world_shapes(state, content=None, places=None):
     # Von hinten nach vorn: was weiter unten steht, verdeckt das Dahinter
     for _bottom, model in sorted(buildings, key=lambda entry: entry[0]):
         shapes += model
+    # Ab 0.48: Stadtteilnamen ueber den Gebaeuden (sonst verdeckt z.B. die
+    # Filiale das "L" von LINDENAU)
+    shapes += landscape_labels(content)
     for item in places:
         cx, cy = item["schild"]
         label = _text(cx, cy, item["name"], "ort", C["text"], anchor="c", maxw=MAP_LABEL_MAXW,
@@ -13420,7 +13444,7 @@ def world_shapes(state, content=None, places=None):
         if item["hinweis"]:
             shapes.append(_text(cx, cy + 0.62, item["hinweis"], "person", C["yellow"],
                                 anchor="c"))
-        x1, y1, x2, _y2 = item["box"]
+        x1, y1, x2, y2 = item["box"]
         if item["zahl"]:
             # Als Schild mit Hintergrund: waechst mit der Schrift (auch am Handy lesbar)
             count = _text(x2 - 0.35, y1 + 0.2, str(item["zahl"]), "badge", C["on_accent"],
@@ -13428,7 +13452,8 @@ def world_shapes(state, content=None, places=None):
             count["bg"] = C["pink"]
             shapes.append(count)
         if item["neu"]:
-            new = _text(x1 + 0.3, y1 + 0.1, "Neu", "badge", C["card"], anchor="c")
+            # Unten am Gebaeude - oben steht das Ortsschild (ab 0.48)
+            new = _text(x1 + 0.3, y2 - 0.15, "Neu", "badge", C["card"], anchor="c")
             new["bg"] = C["green"]
             shapes.append(new)
     return shapes
