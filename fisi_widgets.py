@@ -1065,20 +1065,32 @@ class LineChart(tk.Canvas):
         self._labels = []
         self._series = []
         self._y_max = None
+        self._goal = None
         self._photos = []
+        self._size = None
         super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
                          highlightthickness=0, bd=0)
-        self.bind("<Configure>", lambda e: self._draw())
+        self.bind("<Configure>", self._resized)
 
-    def set_data(self, labels, series, y_max=None):
+    def _resized(self, event):
+        # Ab 0.54: nur bei echter Groessenaenderung neu zeichnen (beim Aufbau
+        # einer Seite kommen sonst mehrere gleiche Configure-Ereignisse)
+        if (event.width, event.height) != self._size:
+            self._size = (event.width, event.height)
+            self._draw()
+
+    def set_data(self, labels, series, y_max=None, goal=None):
         """series: Liste von dicts mit name, values, color.
 
         y_max legt die Obergrenze der y-Achse fest (z.B. 100 bei
         Prozentwerten). Ohne Angabe wird sie aus den Daten bestimmt.
+        goal (ab 0.54): (wert, text, farbe) zeichnet eine gestrichelte
+        Ziellinie (z.B. das Tagesziel).
         """
         self._labels = labels
         self._series = series
         self._y_max = y_max
+        self._goal = goal
         self._draw()
 
     def _draw(self):
@@ -1096,6 +1108,8 @@ class LineChart(tk.Canvas):
             for item in self._series:
                 if item["values"]:
                     peak = max(peak, max(item["values"]))
+            if self._goal:
+                peak = max(peak, self._goal[0] * 1.1)
             peak = max(5, peak)
             # auf eine glatte Zahl aufrunden (1, 2, 2,5 oder 5 mal Zehnerpotenz)
             step = _nice_step(peak / 4.0)
@@ -1168,6 +1182,15 @@ class LineChart(tk.Canvas):
                 if values[index] > 0:
                     self.create_oval(x - dot, y - dot, x + dot, y + dot,
                                      fill=color, outline=self.bg, width=px(2))
+
+        # Ziellinie (ab 0.54) mit Beschriftung am rechten Rand
+        if self._goal and 0 < self._goal[0] <= peak:
+            value, caption, color = self._goal
+            y = top + plot_h - (plot_h * (value / peak))
+            self.create_line(left, y, width - right, y, fill=color, width=max(1, px(1.5)),
+                             dash=(6, 4))
+            self.create_text(width - right, y - px(8), text=caption, anchor="e",
+                             fill=color, font=tk_font(F["tiny"]))
 
         # Legende
         legend_x = left + px(4)

@@ -574,6 +574,7 @@ class LineChart(cv.Canvas):
         self._series = []
         self._color = C["accent"]
         self._y_max = None
+        self._goal = None
         self._width = 300
         super().__init__(height=height, expand=True, on_resize=self._resized,
                          resize_interval=100)
@@ -583,11 +584,14 @@ class LineChart(cv.Canvas):
         self._draw()
         self.update()
 
-    def set_data(self, labels, values, color, y_max=None):
+    def set_data(self, labels, values, color, y_max=None, goal=None):
+        """goal (ab 0.54): (wert, text, farbe) zeichnet eine gestrichelte
+        Ziellinie (z.B. das Tagesziel), wie am PC."""
         self._labels = list(labels)
         self._series = list(values)
         self._color = color
         self._y_max = y_max
+        self._goal = goal
         self._draw()
 
     def _draw(self):
@@ -596,7 +600,7 @@ class LineChart(cv.Canvas):
         plot_w = max(10, width - left - right)
         plot_h = max(10, height - top - bottom)
         values = self._series or [0]
-        peak = self._y_max or max(4, max(values))
+        peak = self._y_max or max(4, max(values), self._goal[0] * 1.1 if self._goal else 0)
         step = _nice_step(peak)
         peak = step * math.ceil(peak / step)
 
@@ -631,6 +635,14 @@ class LineChart(cv.Canvas):
                 stroke_cap=ft.StrokeCap.ROUND, stroke_join=ft.StrokeJoin.ROUND)))
         for x, y in points:
             shapes.append(cv.Circle(x, y, 3, ft.Paint(color=self._color)))
+        if self._goal and 0 < self._goal[0] <= peak:
+            value, caption, color = self._goal
+            y = top + plot_h - value / peak * plot_h
+            shapes.append(cv.Line(left, y, left + plot_w, y, ft.Paint(
+                color=color, stroke_width=1.5, stroke_dash_pattern=[6, 4])))
+            shapes.append(cv.Text(left + plot_w, y - 9, caption,
+                                  style=ft.TextStyle(size=10, color=color),
+                                  alignment=ft.Alignment.CENTER_RIGHT))
 
         # Beschriftung der x-Achse: hoechstens ca. alle 45 Pixel eine
         every = max(1, math.ceil(count / max(1, plot_w / 45)))
