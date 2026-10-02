@@ -7095,6 +7095,47 @@ class Spiel053OberflaecheTest(unittest.TestCase):
         self.pump()
         self.assertIsNot(view._tab_body, first)
 
+    def test_firma_reiter_ab_dem_zweiten_besuch_gemerkt(self):
+        """Ab 0.54: Schon beim zweiten Besuch wird kein Reiter neu gebaut (bisher
+        setzte "Kredite" beim Bauen ein Feld und machte alle anderen ungueltig),
+        und zurueck aus einer anderen Ansicht bleibt die Firma stehen."""
+        app = self.app
+        app.show_view("game")
+        self.pump()
+        game = app.views["game"].game
+        if game.state.profile is None:
+            game.set_profile("Test", {})
+        if not game.state.firm:
+            game._log(fg.EV_FOUNDED, {"tag": game.state.day, "name": "Nico IT",
+                                      "geld": -1000})
+            game.reload()
+        if not app.slot_chosen:
+            app.views["game"]._enter_slot()
+        app.show_view("firma")
+        self.pump()
+        view = app.views["firma"]
+        tabs = [key for key, _name in fg.firm_tabs(game.state)]
+        self.assertGreater(len(tabs), 3)
+        bodies = {}
+        for tab in tabs:
+            view._tab_row.select(tab)
+            self.pump(2)
+            bodies[tab] = view._tab_body
+        before = dict(vars(view))
+        for tab in tabs:
+            view._tab_row.select(tab)
+            self.pump(2)
+            self.assertIs(view._tab_body, bodies[tab], tab)
+        self.assertEqual(view.loan_amount, before["loan_amount"])
+        view._tab_row.select("mitarbeiter")
+        self.pump(2)
+        app.show_view("game")
+        self.pump(2)
+        app.show_view("firma")
+        self.pump(2)
+        self.assertIs(view._tab_body, bodies["mitarbeiter"])
+        self.assertEqual(view._tab_row.value, "mitarbeiter")
+
 
 class NamenInSaetzenTest(unittest.TestCase):
     """Ab 0.54: Frei waehlbare Namen (Firma, Filiale, Spieler, Mitarbeiter, Kunden,

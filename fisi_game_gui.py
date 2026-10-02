@@ -2129,6 +2129,11 @@ class TabCache:
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()
+        # Ab 0.54: Die Ansicht steht jetzt genau so da, wie sie mit dem neuen
+        # Reiter aussehen muss - beim naechsten Anzeigen (zurueck aus einer
+        # anderen Ansicht) also nicht alles neu zeichnen
+        if getattr(self, "_rendered", None) is not None:
+            self._rendered = self._render_key()
         self.to_top()
         return True
 
@@ -5489,9 +5494,10 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             button.set_enabled(not offer["problem"])
 
         low, high, step = fg.free_loan_limits(state)
-        if self.loan_amount is None:
-            self.loan_amount = rules["frei"]["start"]
-        amount = fg.clamp_loan_amount(state, self.loan_amount)
+        # Ab 0.54 ohne self.loan_amount zu setzen: Ein Reiter darf beim Bauen
+        # keine Felder der Ansicht aendern, sonst passen die gemerkten anderen
+        # Reiter nicht mehr zum Render-Schluessel und werden neu gebaut
+        amount = fg.clamp_loan_amount(state, self._loan_amount())
         free = Card(self.content, title="Freie Kredithöhe", accent=C["accent"],
                     subtitle="Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen")
         free.pack(fill="x", pady=(14, 0))
@@ -5600,10 +5606,16 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             self.plans_for.add(loan_id)
         self.render(keep_scroll=True)
 
+    def _loan_amount(self):
+        """Gewaehlte freie Kreditsumme (vor der ersten Wahl der Startwert)."""
+        if self.loan_amount is None:
+            return fg.loan_rules()["frei"]["start"]
+        return self.loan_amount
+
     def _loan_step(self, delta):
         state = self.game.state
         self.loan_amount = fg.clamp_loan_amount(state, fg.clamp_loan_amount(
-            state, self.loan_amount or 0) + delta)
+            state, self._loan_amount()) + delta)
         self.render(keep_scroll=True)
 
     def _loan_choose_term(self, term):
