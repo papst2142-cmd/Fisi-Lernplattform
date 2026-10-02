@@ -68,6 +68,83 @@ def resolve_db_path():
 
 
 # ============================================================================
+#  FEHLERPROTOKOLL (ab 0.53)
+# ============================================================================
+#
+# Unerwartete Fehler landen zusaetzlich in "fehler.log" im Datenordner (neben
+# der Datenbank). Sichtbar aendert sich dadurch nichts - die Datei hilft nur
+# bei der Fehlersuche. Sie bleibt klein: ueber ERROR_LOG_MAX Bytes wird die
+# aeltere Haelfte verworfen.
+
+ERROR_LOG_NAME = "fehler.log"
+ERROR_LOG_MAX = 256 * 1024
+_error_log_version = ""
+
+
+def error_log_path():
+    return os.path.join(os.path.dirname(resolve_db_path()), ERROR_LOG_NAME)
+
+
+def write_error_log(text):
+    """Haengt einen Fehler mit Zeitpunkt und Version an fehler.log an. Darf
+    selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...)."""
+    try:
+        path = error_log_path()
+        if os.path.exists(path) and os.path.getsize(path) > ERROR_LOG_MAX:
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                rest = handle.read()[-ERROR_LOG_MAX // 2:]
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(rest)
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("=== %s | Version %s | %s ===\n%s\n" % (
+                stamp, _error_log_version or "?", sys.platform, text.rstrip()))
+    except Exception:
+        pass
+
+
+def log_exception(exc_type, exc_value, exc_tb):
+    import traceback
+    write_error_log("".join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+
+
+def install_error_log(version=""):
+    """Leitet unbehandelte Fehler (Hauptprogramm, Threads und die Meldungen
+    des Flet-Loggers am Handy) zusaetzlich nach fehler.log. Das bisherige
+    Verhalten (Ausgabe im Terminal) bleibt."""
+    import logging
+    import threading
+    global _error_log_version
+    _error_log_version = version
+    if getattr(sys.excepthook, "fisi_error_log", False):
+        return    # schon eingerichtet (Handy: main() je Sitzung)
+    previous = sys.excepthook
+
+    def excepthook(exc_type, exc_value, exc_tb):
+        log_exception(exc_type, exc_value, exc_tb)
+        previous(exc_type, exc_value, exc_tb)
+    excepthook.fisi_error_log = True
+    sys.excepthook = excepthook
+
+    previous_thread = threading.excepthook
+
+    def thread_hook(args):
+        if args.exc_type is not SystemExit:
+            log_exception(args.exc_type, args.exc_value, args.exc_traceback)
+        previous_thread(args)
+    threading.excepthook = thread_hook
+
+    class _Handler(logging.Handler):
+        def emit(self, record):
+            text = record.getMessage()
+            if record.exc_info:
+                import traceback
+                text += "\n" + "".join(traceback.format_exception(*record.exc_info))
+            write_error_log(text)
+    logging.getLogger("flet").addHandler(_Handler(logging.ERROR))
+
+
+# ============================================================================
 #  KATEGORIEN UND FARBEN
 # ============================================================================
 
@@ -290,6 +367,16 @@ def purge_deleted_runs(cur):
             cur.execute("DELETE FROM spiel_ereignisse WHERE lauf IS NULL OR lauf = ''")
         else:
             cur.execute("DELETE FROM spiel_ereignisse WHERE lauf = ?", (run,))
+
+
+def apply_question_renames(cur):
+    """Schreibt alte Fragetexte im Lernstand auf die neuen um (ab 0.53,
+    siehe load_question_renames). Kennung (uid) und Zeitpunkt bleiben, der
+    Abgleich zaehlt die Eintraege also nicht doppelt."""
+    for table, renames in QUESTION_RENAMES.items():
+        for old, new in renames.items():
+            cur.execute("UPDATE %s SET question = ? WHERE question = ?" % table,
+                        (new, old))
 
 
 def purge_superseded_project_rows(cur):
@@ -523,6 +610,8 @@ class DBManager:
                     " key TEXT PRIMARY KEY, value TEXT)")
         cur.execute("CREATE INDEX IF NOT EXISTS ix_spiel_ereignisse_lauf"
                     " ON spiel_ereignisse (lauf)")
+        # ab 0.53: korrigierte Fragetexte im Lernstand nachziehen
+        apply_question_renames(cur)
 
     @staticmethod
     def _now():
@@ -1234,35 +1323,12 @@ class DBManager:
             progress[theme] = min(100.0, (done.get(theme, 0) / total) * 100.0)
         return progress
 
-    def streak(self):
-        """Anzahl der aufeinanderfolgenden Tage mit Lernaktivitaet."""
-        rows = self._execute(
-            "SELECT DISTINCT substr(timestamp, 1, 10) FROM ("
-            "  SELECT timestamp FROM card_events"
-            "  UNION ALL SELECT timestamp FROM quiz_answers"
-            "  UNION ALL SELECT timestamp FROM scenario_events"
-            "  UNION ALL SELECT timestamp FROM project_events"
-            "  UNION ALL SELECT timestamp FROM ap1_events"
-            "  UNION ALL SELECT timestamp FROM trainer_aufgaben"
-            ") ORDER BY 1 DESC", fetch="all", default=[]) or []
-        days = []
-        for (value,) in rows:
-            try:
-                days.append(datetime.date.fromisoformat(value))
-            except ValueError:
-                pass
-        if not days:
-            return 0
-        today = datetime.date.today()
-        if days[0] not in (today, today - datetime.timedelta(days=1)):
-            return 0
-        count = 1
-        for previous, current in zip(days, days[1:]):
-            if (previous - current).days == 1:
-                count += 1
-            else:
-                break
-        return count
+    def streak(self, today=None):
+        """Anzahl der aufeinanderfolgenden Tage mit Lernaktivitaet. Ab 0.53
+        dieselbe Zaehlung wie die Kachel "Heute" (Tagesziel): nur bewertete
+        Aufgaben (activity_days), Eintraege mit spaeterem Datum zaehlen nicht."""
+        return learning_streak({day for day, count in self.activity_days().items() if count},
+                               today)
 
 
 # ============================================================================
@@ -1342,7 +1408,7 @@ def build_quiz_database():
             "q": "Wie viele nutzbare Host-IP-Adressen bietet ein Subnetz mit /%d?" % prefix,
             "options": [str(hosts)] + [str(h) for h in host_wrong],
             "a": str(hosts),
-            "exp": "2^(32 - %d) minus 2 (Network-ID und Broadcast) = %d Hosts." % (prefix, hosts),
+            "exp": "2^(32 - %d) minus 2 (Netzwerk-Adresse und Broadcast) = %d Hosts." % (prefix, hosts),
         })
 
     # Automatisch erzeugte Port-Aufgaben
@@ -1449,6 +1515,26 @@ def build_quiz_database():
 QUIZ_QUESTIONS = build_quiz_database()
 
 
+def load_question_renames():
+    """Alte -> neue Fragetexte aus inhalte/umbenennungen.json (ab 0.53).
+
+    Karteikarten und Quizfragen werden im Lernstand ueber ihren Fragetext
+    gefuehrt. Wird ein Fragetext korrigiert, uebertraegt diese Liste die
+    vorhandenen Antworten auf den neuen Text - auch Antworten, die spaeter
+    noch per Abgleich von einem Geraet mit aelterer Version kommen."""
+    try:
+        with open(os.path.join(CONTENT_DIR, "umbenennungen.json"),
+                  encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    return {"card_events": dict(data.get("karte") or {}),
+            "quiz_answers": dict(data.get("quiz") or {})}
+
+
+QUESTION_RENAMES = load_question_renames()
+
+
 # ============================================================================
 #  LERNINHALTE: AP2-SZENARIEN
 # ============================================================================
@@ -1457,7 +1543,7 @@ SZENARIEN = load_content("szenarien_ap2")
 
 
 # ============================================================================
-#  LERNINHALTE: AP1 SZENARIEN (GRUNDLAGENPRUEFUNG)
+#  LERNINHALTE: AP1-SZENARIEN (GRUNDLAGENPRUEFUNG)
 # ============================================================================
 #
 # Die AP1 (gestreckte Abschlusspruefung, Teil 1) prueft die Grundlagen aus
@@ -1647,8 +1733,8 @@ SRC_PROJECT = "projekt"
 SOURCES = [SRC_CARD, SRC_QUIZ, SRC_AP1, SRC_AP2, SRC_PROJECT]
 SOURCE_NAME = {SRC_CARD: "Karteikarte", SRC_QUIZ: "Quizfrage", SRC_AP1: "AP1-Szenario",
                SRC_AP2: "AP2-Szenario", SRC_PROJECT: "Testprojekt"}
-SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1 Szenarien",
-                 SRC_AP2: "AP2 Szenarien", SRC_PROJECT: "Testprojekte"}
+SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1-Szenarien",
+                 SRC_AP2: "AP2-Szenarien", SRC_PROJECT: "Testprojekte"}
 
 Q_OPEN = "offen"
 Q_PRACTICE = "ueben"
@@ -1769,7 +1855,7 @@ def status_label(book, source, key):
     status, level = book.status(source, key)
     streak = book.streak(source, key)
     if status == Q_DONE:
-        return "Abgeschlossen · %dx in Folge richtig" % streak, "fertig"
+        return "Abgeschlossen · %d-mal in Folge richtig" % streak, "fertig"
     if status == Q_PRACTICE:
         if level == LEVEL_RED:
             return "Zu üben · zuletzt falsch", LEVEL_RED
@@ -1851,6 +1937,33 @@ def count_word(number):
     """Zahl als Wort fuer Fliesstexte ("fuenf Fachbereiche"), ab 13 als Ziffern.
     Ab 0.51, damit Anzahlen nie mehr von Hand im Text stehen."""
     return NUMBER_WORDS[number] if 0 <= number < len(NUMBER_WORDS) else str(number)
+
+
+def plural(number, singular, plural_form, word=False):
+    """Anzahl mit passender Einzahl/Mehrzahl ("1 Tag", "2 Tage") - ab 0.53,
+    damit Platzhalter-Saetze nie mehr "1 Tage" oder "Tag(e)" zeigen.
+    word=True schreibt kleine Zahlen als Wort (count_word)."""
+    noun = singular if number == 1 else plural_form
+    shown = count_word(number) if word else "{:,}".format(number).replace(",", ".")
+    return "%s %s" % (shown, noun)
+
+
+def learning_streak(days, today=None):
+    """Lerntage in Folge bis heute (heute ohne Aktivitaet zaehlt noch nicht
+    als Unterbrechung, solange gestern gelernt wurde). days: Menge von
+    "JJJJ-MM-TT" mit Aktivitaet. (Bis 0.52 in fisi_lernen.)"""
+    today = today or datetime.date.today()
+    day = today if today.isoformat() in days else today - datetime.timedelta(days=1)
+    count = 0
+    while day.isoformat() in days:
+        count += 1
+        day -= datetime.timedelta(days=1)
+    return count
+
+
+# Anzeigedauer kurzer Hinweise (Toast/SnackBar) - ab 0.53 auf PC und Handy gleich
+TOAST_MS = 4000
+REMINDER_TOAST_MS = 9000   # Erinnerung ans Tagesziel
 
 
 def ihk_note(percentage):
@@ -1985,7 +2098,7 @@ def raid_report(level, disks_text, size_text):
         "Nutzkapazität         : %.2f GB" % values["netto"],
         "Parität / Verlust     : %.2f GB" % values["verlust"],
         "Speichereffizienz     : %.1f %%" % values["effizienz"],
-        "Ausfalltoleranz       : %d Festplatte(n)" % values["toleranz"],
+        "Ausfalltoleranz       : %s" % plural(values["toleranz"], "Festplatte", "Festplatten"),
     ])
 
 
@@ -2039,8 +2152,8 @@ def screen_report(width_text, height_text, depth, fps_text):
 CALC_EXPLAIN_SUBNET = (
     "RECHENWEG SUBNETTING\n"
     "Am Beispiel 192.168.1.50/24\n\n"
-    "SCHRITT 1: Praefix in Subnetzmaske umwandeln\n"
-    "   Das Praefix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
+    "SCHRITT 1: Präfix in Subnetzmaske umwandeln\n"
+    "   Das Präfix (die Zahl nach dem /) gibt an, wie viele Bits von\n"
     "   links auf 1 gesetzt sind. /24 bedeutet: die ersten 24 Bits der\n"
     "   32-Bit-Adresse sind 1, der Rest ist 0.\n"
     "   /24 = 11111111.11111111.11111111.00000000\n"
@@ -2048,8 +2161,8 @@ CALC_EXPLAIN_SUBNET = (
     "   -> Subnetzmaske: 255.255.255.0\n\n"
     "SCHRITT 2: Netzwerk-Adresse berechnen\n"
     "   Netzwerk-Adresse = IP-Adresse AND Subnetzmaske\n"
-    "   (bitweise UND-Verknuepfung: nur wenn IP UND Maske an der\n"
-    "   selben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
+    "   (bitweise UND-Verknüpfung: nur wenn IP UND Maske an\n"
+    "   derselben Stelle eine 1 haben, bleibt dort eine 1 stehen)\n"
     "     192.168.1.50   = 11000000.10101000.00000001.00110010\n"
     "   AND 255.255.255.0 = 11111111.11111111.11111111.00000000\n"
     "   -------------------------------------------------------\n"
@@ -2061,88 +2174,88 @@ CALC_EXPLAIN_SUBNET = (
     "   Broadcast-Adresse = Netzwerk-Adresse OR Wildcard-Maske\n"
     "   (alle Host-Bits werden auf 1 gesetzt)\n"
     "   -> Broadcast-Adresse: 192.168.1.255\n\n"
-    "SCHRITT 4: Nutzbare Host-Adressen zaehlen\n"
-    "   Anzahl aller Adressen im Netz = 2^(32 - Praefixlaenge)\n"
+    "SCHRITT 4: Nutzbare Host-Adressen zählen\n"
+    "   Anzahl aller Adressen im Netz = 2^(32 - Präfixlänge)\n"
     "   Bei /24: 2^(32-24) = 2^8 = 256 Adressen\n"
     "   Davon sind die Netzwerk-Adresse (192.168.1.0) und die\n"
     "   Broadcast-Adresse (192.168.1.255) nicht als Host vergebbar,\n"
     "   deshalb -2:\n"
-    "   Nutzbare Hosts = 2^(32 - Praefixlaenge) - 2 = 256 - 2 = 254\n"
+    "   Nutzbare Hosts = 2^(32 - Präfixlänge) - 2 = 256 - 2 = 254\n"
     "   -> erste nutzbare Adresse: 192.168.1.1\n"
     "   -> letzte nutzbare Adresse: 192.168.1.254\n\n"
     "HINWEIS ZU IPv6\n"
-    "   IPv6 kennt keine Broadcast-Adresse, daher entfaellt dort der\n"
+    "   IPv6 kennt keine Broadcast-Adresse, daher entfällt dort der\n"
     "   Abzug der -2 und alle Adressen im Netz gelten als nutzbar."
 )
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
-    "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazitaet 4000 GB)\n\n"
+    "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
     "RAID 0 - Striping (min. 1 Platte)\n"
     "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
-    "   Formel:  Netto = Anzahl x Kapazitaet\n"
+    "   Formel:  Netto = Anzahl x Kapazität\n"
     "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
-    "   Ausfalltoleranz: 0 Platten (faellt eine aus, sind alle Daten weg)\n\n"
+    "   Ausfalltoleranz: 0 Platten (fällt eine aus, sind alle Daten weg)\n\n"
     "RAID 1 - Mirroring (min. 2 Platten)\n"
     "   Die Daten werden 1:1 auf eine zweite Platte gespiegelt.\n"
-    "   Formel:  Netto = 1 x Kapazitaet\n"
+    "   Formel:  Netto = 1 x Kapazität\n"
     "   Beispiel: 1000 GB nutzbar (bei 4 Platten stehen nur 1000 GB\n"
-    "   Nutzkapazitaet zur Verfuegung, der Rest ist Spiegelung)\n"
+    "   Nutzkapazität zur Verfügung, der Rest ist Spiegelung)\n"
     "   Ausfalltoleranz: n-1 Platten\n\n"
-    "RAID 5 - Parity, verteilte Paritaet (min. 3 Platten)\n"
-    "   Eine Platte Kapazitaet wird rechnerisch fuer Paritaetsdaten\n"
-    "   verwendet (die Paritaet selbst liegt verteilt auf allen Platten).\n"
-    "   Formel:  Netto = (Anzahl - 1) x Kapazitaet\n"
+    "RAID 5 - Parity, verteilte Parität (min. 3 Platten)\n"
+    "   Eine Platte Kapazität wird rechnerisch für Paritätsdaten\n"
+    "   verwendet (die Parität selbst liegt verteilt auf allen Platten).\n"
+    "   Formel:  Netto = (Anzahl - 1) x Kapazität\n"
     "   Beispiel: (4 - 1) x 1000 GB = 3000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Platte\n\n"
     "RAID 6 - Double Parity (min. 4 Platten)\n"
-    "   Wie RAID 5, aber mit doppelter Paritaet fuer mehr Sicherheit.\n"
-    "   Formel:  Netto = (Anzahl - 2) x Kapazitaet\n"
+    "   Wie RAID 5, aber mit doppelter Parität für mehr Sicherheit.\n"
+    "   Formel:  Netto = (Anzahl - 2) x Kapazität\n"
     "   Beispiel: (4 - 2) x 1000 GB = 2000 GB nutzbar\n"
     "   Ausfalltoleranz: 2 Platten\n\n"
     "RAID 10 - Spiegelung + Striping (min. 4 Platten, gerade Anzahl)\n"
     "   Je zwei Platten werden gespiegelt (RAID 1), diese Spiegel-\n"
-    "   Paare werden anschliessend im Striping-Verfahren (RAID 0)\n"
+    "   Paare werden anschließend im Striping-Verfahren (RAID 0)\n"
     "   zusammengefasst.\n"
-    "   Formel:  Netto = (Anzahl / 2) x Kapazitaet\n"
+    "   Formel:  Netto = (Anzahl / 2) x Kapazität\n"
     "   Beispiel: (4 / 2) x 1000 GB = 2000 GB nutzbar\n"
     "   Ausfalltoleranz: 1 Platte je Spiegel-Paar\n\n"
     "SPEICHEREFFIZIENZ\n"
-    "   Effizienz = Nettokapazitaet / Bruttokapazitaet x 100\n"
+    "   Effizienz = Nettokapazität / Bruttokapazität x 100\n"
     "   Beispiel RAID 5: 3000 GB / 4000 GB x 100 = 75 %"
 )
 CALC_EXPLAIN_SCREEN = (
     "RECHENWEG BILDSCHIRM-DATENVOLUMEN\n"
     "Am Beispiel 1920 x 1080 Pixel, 24 Bit Farbtiefe\n\n"
     "SCHRITT 1: Pixel gesamt ermitteln\n"
-    "   Pixel gesamt = Breite x Hoehe\n"
+    "   Pixel gesamt = Breite x Höhe\n"
     "   Beispiel: 1920 x 1080 = 2.073.600 Pixel\n\n"
     "SCHRITT 2: Datenmenge pro Bild in Bit berechnen\n"
-    "   Jedes Pixel benoetigt fuer seine Farbe eine feste Anzahl Bit,\n"
+    "   Jedes Pixel benötigt für seine Farbe eine feste Anzahl Bit,\n"
     "   die sogenannte Farbtiefe (z.B. 8 Bit = 256 Farben, 24 Bit =\n"
-    "   True Color mit rund 16,7 Mio. Farben: je 8 Bit fuer Rot,\n"
-    "   Gruen und Blau).\n"
+    "   True Color mit rund 16,7 Mio. Farben: je 8 Bit für Rot,\n"
+    "   Grün und Blau).\n"
     "   Datenmenge (Bit) = Pixel gesamt x Farbtiefe\n"
     "   Beispiel: 2.073.600 x 24 Bit = 49.766.400 Bit\n\n"
     "SCHRITT 3: In Byte, KB und MB umrechnen\n"
     "   Da 1 Byte = 8 Bit sind, wird durch 8 geteilt; danach wird\n"
-    "   jeweils durch 1024 geteilt, um die naechstgroessere Einheit\n"
+    "   jeweils durch 1024 geteilt, um die nächstgrößere Einheit\n"
     "   zu erhalten (Byte -> KB -> MB).\n"
     "   Byte = Bit / 8            -> 49.766.400 / 8 = 6.220.800 Byte\n"
     "   KB   = Byte / 1024        -> 6.220.800 / 1024 = 6.075,00 KB\n"
     "   MB   = KB / 1024          -> 6.075,00 / 1024 = 5,93 MB\n"
-    "   -> Ein einzelnes Bild in dieser Aufloesung und Farbtiefe\n"
-    "      benoetigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
+    "   -> Ein einzelnes Bild in dieser Auflösung und Farbtiefe\n"
+    "      benötigt also rund 5,93 MB unkomprimierten Speicher.\n\n"
     "SCHRITT 4: Datenrate bei bewegten Bildern (Video)\n"
     "   Bei Videos wird nicht nur ein Bild, sondern mehrere Bilder\n"
     "   pro Sekunde angezeigt (Bildwiederholrate, engl. frames per\n"
-    "   second, fps). Die Datenrate gibt an, wie viele Daten dafuer\n"
+    "   second, fps). Die Datenrate gibt an, wie viele Daten dafür\n"
     "   pro Sekunde anfallen.\n"
     "   Datenrate = Datenmenge pro Bild x Bildwiederholrate (fps)\n"
     "   Beispiel bei 30 fps: 6.220.800 Byte x 30 = 186.624.000 Byte/s\n"
     "   -> das sind rund 177,98 MB/s bzw. 1.492,99 Mbit/s bzw.\n"
     "      rund 10,43 GB/Minute.\n"
     "   Dieser enorme Wert zeigt, warum Videos in der Praxis fast\n"
-    "   immer komprimiert (z.B. per H.264/H.265) uebertragen werden."
+    "   immer komprimiert (z.B. per H.264/H.265) übertragen werden."
 )
 
 

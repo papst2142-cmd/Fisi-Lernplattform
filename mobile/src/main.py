@@ -37,7 +37,7 @@ import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
-    count_word,
+    REMINDER_TOAST_MS, TOAST_MS, count_word, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
     RAID_LEVELS, STATUS_FILTERS, SZENARIEN, TOPIC_NAME, TOPIC_SHORT, TOPICS,
     LEVEL_RED, LEVEL_YELLOW, Q_DONE, Q_OPEN, Q_PRACTICE, Q_STATUS_NAME, Q_STATUS_TABS,
@@ -65,7 +65,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.52"
+APP_VERSION = "0.53"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -165,6 +165,7 @@ class Screen:
 class DashboardScreen(Screen):
     crumbs = ("DASHBOARD", "HOME")
     DAYS = 14
+    ACTIVITIES = 7
 
     # -- Reinzoom in die Themen eines Fachbereichs --------------------------
 
@@ -212,7 +213,8 @@ class DashboardScreen(Screen):
         stats = self.db.topic_stats()
         for topic, bar in self.zoom_bars.items():
             answered = stats[topic]["answered"]
-            bar.set(levels[topic], "Wissen %d %%  ·  %d Antworten" % (levels[topic], answered)
+            bar.set(levels[topic], "Wissen %d %%  ·  %s"
+                    % (levels[topic], plural(answered, "Antwort", "Antworten"))
                     if answered else "noch nicht bearbeitet")
 
     def build(self):
@@ -275,7 +277,29 @@ class DashboardScreen(Screen):
                                             ft.Row([self.btn_review])],
                                   accent=C["green"], subtitle="Tagesziel und Wiederholung")
 
-        self.activity_box = ft.Column(spacing=6, tight=True)
+        # Ab 0.53 feste Struktur: Hinweis + 7 Zeilen, die nur befuellt und
+        # ein-/ausgeblendet werden (Ersetzen der Liste liess den Flet-Client nach
+        # "Alles ersetzen"/"Alle Lerndaten loeschen" mit IndexError abbrechen)
+        self.activity_hint = ui.text(
+            "Noch keine Aktivitäten. Starte mit den Karteikarten oder dem "
+            "Prüfungstrainer.", size=13, color=C["muted"])
+        self.activity_rows = []
+        for _index in range(self.ACTIVITIES):
+            dot = ui.dot(C["muted"])
+            line1 = ui.text("", size=13, color=C["text_dim"], max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS)
+            line2 = ui.text("", size=11, color=C["muted"])
+            row = ft.Container(
+                content=ft.Row([
+                    dot,
+                    ft.Column([line1, line2], spacing=1, tight=True, expand=True),
+                ], spacing=10),
+                bgcolor=C["card_alt"], border_radius=10, visible=False,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8))
+            self.activity_rows.append((row, dot, line1, line2))
+        self.activity_box = ft.Column([self.activity_hint]
+                                      + [row for row, *_rest in self.activity_rows],
+                                      spacing=6, tight=True)
         self.calendar = ui.CalendarPanel(self.db.month_activity)
         self.timeline_ap1 = ui.ThemeProgress()
         self.timeline = ui.ThemeProgress()
@@ -285,8 +309,8 @@ class DashboardScreen(Screen):
             self.today_card,
             ft.Row([ring_card("Karteikarten", self.ring_cards),
                     ring_card("Quizfragen", self.ring_quiz)], spacing=12),
-            ft.Row([ring_card("AP1 Szenarien", self.ring_ap1),
-                    ring_card("AP2 Szenarien", self.ring_scen)], spacing=12),
+            ft.Row([ring_card("AP1-Szenarien", self.ring_ap1),
+                    ring_card("AP2-Szenarien", self.ring_scen)], spacing=12),
             ui.Card("Erfolgsquote", [self.lbl_quote, self.lbl_quote_sub],
                     accent=C["accent2"], subtitle="Quiz gesamt"),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
@@ -338,7 +362,7 @@ class DashboardScreen(Screen):
         learned = learned_cards + quiz_distinct
 
         self._refresh_today()
-        streak = ("Lernserie: %d Tag(e)  ·  " % db.streak()
+        streak = ("Lernserie: %s  ·  " % plural(db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             "Dein Lernstand",
@@ -356,7 +380,8 @@ class DashboardScreen(Screen):
                            str(scen_done), "von %d" % total_scen)
 
         self.lbl_quote.value = "%d %%" % round(rate)
-        self.lbl_quote_sub.value = ("%d von %d Fragen richtig beantwortet" % (correct, answered)
+        self.lbl_quote_sub.value = ("%d von %s richtig beantwortet"
+                                    % (correct, plural(answered, "Frage", "Fragen"))
                                     if answered else "noch keine Antworten erfasst")
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
@@ -388,30 +413,21 @@ class DashboardScreen(Screen):
             ring.set(share / 100.0, CATEGORY_COLOR[category], None, "%d%%" % round(share))
             data = stats.get(category, {"answered": 0, "correct": 0})
             if data["answered"]:
-                detail.value = "%d Antworten\n%d%% richtig" % (
-                    data["answered"], round(data["correct"] / data["answered"] * 100))
+                detail.value = "%s\n%d %% richtig" % (
+                    plural(data["answered"], "Antwort", "Antworten"),
+                    round(data["correct"] / data["answered"] * 100))
             else:
                 detail.value = "noch nicht\nbearbeitet"
 
-        self.activity_box.controls = []
-        activities = db.recent_activities(7)
-        if not activities:
-            self.activity_box.controls.append(ui.text(
-                "Noch keine Aktivitäten. Starte mit den Karteikarten oder dem "
-                "Prüfungstrainer.", size=13, color=C["muted"]))
-        for timestamp, kind, detail, extra in activities:
-            self.activity_box.controls.append(ft.Container(
-                content=ft.Row([
-                    ui.dot(kind_color(kind)),
-                    ft.Column([
-                        ui.text("%s · %s" % (kind, detail), size=13, color=C["text_dim"],
-                                max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
-                        ui.text("%s  ·  %s" % (german_time(timestamp), extra), size=11,
-                                color=C["muted"]),
-                    ], spacing=1, tight=True, expand=True),
-                ], spacing=10),
-                bgcolor=C["card_alt"], border_radius=10,
-                padding=ft.Padding.symmetric(horizontal=12, vertical=8)))
+        activities = db.recent_activities(self.ACTIVITIES)
+        self.activity_hint.visible = not activities
+        for index, (row, dot, line1, line2) in enumerate(self.activity_rows):
+            row.visible = index < len(activities)
+            if row.visible:
+                timestamp, kind, detail, extra = activities[index]
+                dot.bgcolor = kind_color(kind)
+                line1.value = "%s · %s" % (kind, detail)
+                line2.value = "%s  ·  %s" % (german_time(timestamp), extra)
 
         self.calendar.refresh()
         progress = db.theme_progress(theme_totals())
@@ -436,11 +452,11 @@ class LearnScreen(Screen):
          "accent"),
         ("quiz", ft.Icons.TRACK_CHANGES_ROUNDED, "Prüfungstrainer",
          "%d Aufgaben, mit IHK-Note" % len(QUIZ_QUESTIONS), "primary"),
-        ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1 Szenarien",
+        ("ap1scenarios", ft.Icons.LAYERS_ROUNDED, "AP1-Szenarien",
          "%d Aufgaben der Grundlagenprüfung" % len(AP1_SZENARIEN), ("#2563EB", "#22D3EE")),
-        ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2 Szenarien",
+        ("scenarios", ft.Icons.DIAMOND_ROUNDED, "AP2-Szenarien",
          "%d Aufgaben der Abschlussprüfung" % len(SZENARIEN), ("#DB2777", "#FB923C")),
-        ("testproject", ft.Icons.FLAG_ROUNDED, "Test Projekt",
+        ("testproject", ft.Icons.FLAG_ROUNDED, "Testprojekt",
          "%d Kundenaufträge zum Üben" % len(PROJEKTARBEITEN), "success"),
         ("abschluss", ft.Icons.WORKSPACE_PREMIUM_ROUNDED, "Abschlussprojekt",
          "Dein IHK-Projekt vom Antrag bis zum Fachgespräch", ("#7C3AED", "#22D3EE")),
@@ -842,7 +858,8 @@ class QuizScreen(Screen):
         self.pool = [q for q in base if self.book.matches(SRC_QUIZ, q["q"], status)]
         self.stepper.set_maximum(max(5, len(self.pool)))
         counts = self.book.counts(SRC_QUIZ, [q["q"] for q in base])
-        self.lbl_pool.value = "%d Fragen verfügbar\n%s" % (len(self.pool), count_text(counts))
+        self.lbl_pool.value = "%s verfügbar\n%s" % (plural(len(self.pool), "Frage", "Fragen"),
+                                                      count_text(counts))
 
     def practice(self, questions, keep_order=False):
         """Gezielte Uebungsrunde aus dem Notizblock: nur diese Fragen
@@ -1564,7 +1581,7 @@ class PagedListBox:
 class ScenarioScreen(Screen):
     """AP2-Szenarien: Liste, ein Tipp oeffnet die Aufgabe als eigene Seite."""
 
-    crumbs = ("LERNEN", "AP2 SZENARIEN")
+    crumbs = ("LERNEN", "AP2-SZENARIEN")
     DATA = SZENARIEN
     LIST_TITLE = "AP2-Szenarien"
 
@@ -1681,7 +1698,7 @@ class ScenarioScreen(Screen):
 
 
 class Ap1ScenarioScreen(ScenarioScreen):
-    crumbs = ("LERNEN", "AP1 SZENARIEN")
+    crumbs = ("LERNEN", "AP1-SZENARIEN")
     DATA = AP1_SZENARIEN
     LIST_TITLE = "AP1-Szenarien"
     TABLE = "ap1_events"
@@ -1692,7 +1709,7 @@ class Ap1ScenarioScreen(ScenarioScreen):
 
 
 class ProjectScreen(Screen):
-    crumbs = ("LERNEN", "TEST PROJEKT")
+    crumbs = ("LERNEN", "TESTPROJEKT")
 
     def build(self):
         self.index = 0
@@ -1816,8 +1833,11 @@ class ProjectScreen(Screen):
         self.app.scroll_top()
 
     def use_as_template(self, _event=None):
-        self.app.screens["abschluss"].use_template(self.index)
+        # Ab 0.53 wie am PC erst die Seite oeffnen, dann uebernehmen - sonst
+        # schloss der Seitenwechsel den Hinweis gleich wieder
         self.app.open("abschluss")
+        self.app.screens["abschluss"].use_template(self.index)
+        self.app.page.update()
 
 
 # ============================================================================
@@ -1939,7 +1959,8 @@ class FinalProjectScreen(Screen):
         self.flush()
         count = fpj.apply_template(self.db, self.project, position)
         self._load_project(self.project)
-        self.toast("%d Felder aus dem Testprojekt übernommen" % count if count
+        self.toast("%s aus dem Testprojekt übernommen" % plural(count, "Feld", "Felder")
+                   if count
                    else "Alle passenden Felder waren schon ausgefüllt")
 
     # -- Speichern ----------------------------------------------------------
@@ -2289,7 +2310,7 @@ class NotebookScreen(Screen):
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
-                    subtitle="Abgeschlossen = 2x hintereinander richtig"),
+                    subtitle="Abgeschlossen = zweimal hintereinander richtig"),
             ui.Card(None, [ui.label("Fachbereich"), self.cat_pills,
                            ui.label("Bereich"), self.source_pills,
                            ui.label("Thema"), self.topic_pills.root,
@@ -2339,9 +2360,11 @@ class NotebookScreen(Screen):
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
             self.status_pills.get()]
         self.practice_row.controls = [
-            ft.Row([ui.GradientButton("%d Karteikarten %s" % (len(cards), label),
+            ft.Row([ui.GradientButton("%s %s" % (plural(len(cards), "Karteikarte",
+                                                        "Karteikarten"), label),
                                       lambda _e: self.practice(SRC_CARD, cards), expand=True)]),
-            ft.Row([ui.GradientButton("%d Quizfragen %s" % (len(quiz), label),
+            ft.Row([ui.GradientButton("%s %s" % (plural(len(quiz), "Quizfrage",
+                                                        "Quizfragen"), label),
                                       lambda _e: self.practice(SRC_QUIZ, quiz), kind="accent",
                                       expand=True)]),
             ui.text("Startet eine Übungsrunde nur mit den Fragen der Liste (Quiz: höchstens "
@@ -2374,7 +2397,7 @@ class NotebookScreen(Screen):
         status = self.status_pills.get()
         self.list_card.set_title(Q_STATUS_NAME[status],
                                  status_color(LEVEL_RED if status == Q_PRACTICE else status))
-        self.list_card.set_subtitle("%d Fragen" % len(self.entries))
+        self.list_card.set_subtitle(plural(len(self.entries), "Frage", "Fragen"))
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         rows = [self._row(entry) for entry in visible]
         if not rows:
@@ -2480,7 +2503,8 @@ class TrainerPanel(ft.Column):
         stats = self.db.trainer_stats()
         count = sum(total for total, _right in stats.values())
         right = sum(right for _total, right in stats.values())
-        self.lbl_stats.value = ("bisher %d Aufgaben, %d richtig" % (count, right)
+        self.lbl_stats.value = ("bisher %s, %d richtig"
+                                % (plural(count, "Aufgabe", "Aufgaben"), right)
                                 if count else "")
 
     def start_round(self):
@@ -2879,7 +2903,7 @@ class SettingsScreen(Screen):
                 ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
                         "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
                         "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                        "Abgleich auch auf dem PC. Dieser Schritt lässt sich nicht "
+                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
                         "rückgängig machen.", size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
                                           kind="danger")]),
@@ -3229,7 +3253,7 @@ class SearchScreen(Screen):
         if not query:
             return
         hits = search_content(query)
-        self.lbl_info.value = '%d Treffer für "%s"' % (len(hits), query)
+        self.lbl_info.value = '%d Treffer für „%s“' % (len(hits), query)
         self.results.controls = []
         if not hits:
             self.results.controls.append(ui.text(
@@ -3499,6 +3523,7 @@ class FISIMobileApp:
         self.show_tab(NAV[event.control.selected_index][0])
 
     def show_tab(self, key):
+        self.close_toast()
         while len(self.page.views) > 1:
             self.page.views.pop()
         self.tab = key
@@ -3517,12 +3542,14 @@ class FISIMobileApp:
         self.push(screen.crumbs, screen.root)
 
     def push(self, crumbs, content):
+        self.close_toast()
         self.page.views.append(ft.View(
             route="/%d" % len(self.page.views), controls=[content],
             appbar=self._appbar(root=False, crumbs=crumbs), bgcolor=C["bg"], padding=0))
         self.page.update()
 
     def _view_popped(self, event):
+        self.close_toast()
         if len(self.page.views) > 1:
             self.page.views.pop()
         top = self.page.views[-1]
@@ -3564,12 +3591,22 @@ class FISIMobileApp:
 
     # -- Rueckmeldungen ------------------------------------------------------
 
-    def toast(self, message, color=None):
-        self.page.show_dialog(ft.SnackBar(
+    def toast(self, message, color=None, duration=TOAST_MS):
+        # Ab 0.53 wie am PC: ein neuer Hinweis ersetzt den alten, gleiche Dauer
+        self.close_toast()
+        self._toast = ft.SnackBar(
             ft.Text(message, color=C["text"]), bgcolor=C["card_hi"],
             behavior=ft.SnackBarBehavior.FLOATING,
-            shape=ft.RoundedRectangleBorder(radius=12),
-            show_close_icon=True, close_icon_color=color or C["text_dim"]))
+            shape=ft.RoundedRectangleBorder(radius=12), duration=duration,
+            show_close_icon=True, close_icon_color=color or C["text_dim"])
+        self.page.show_dialog(self._toast)
+
+    def close_toast(self):
+        """Offenen Hinweis schliessen (ab 0.53: beim Seitenwechsel und vor
+        einem neuen Hinweis). Die Seite wird danach vom Aufrufer gezeichnet."""
+        snack, self._toast = getattr(self, "_toast", None), None
+        if snack is not None and snack.open:
+            snack.open = False
 
     def confirm(self, title, message, on_yes):
         def answer(yes):
@@ -3728,13 +3765,20 @@ class FISIMobileApp:
         Zurueckholen der App - eine Benachrichtigung bei geschlossener App
         bietet Flet 1.0.1 nicht."""
         try:
+            # Ab 0.53: nach Mitternacht die Kachel "Heute" der Startseite auffrischen
+            import datetime
+            today = datetime.date.today()
+            if getattr(self, "_reminder_day", today) != today and self.tab == "dashboard" \
+                    and len(self.page.views) == 1:
+                self.screens["dashboard"].refresh()
+                self.page.update()
+            self._reminder_day = today
             settings = fisi_update.load_settings()
             values = learning_settings()
             goal = DailyGoal.from_db(self.db, values["ziel_anzahl"])
             if reminder_due(settings, goal, shown_on=settings.get("erinnerung_gezeigt", "")):
-                import datetime
                 save_learning_settings(erinnerung_gezeigt=datetime.date.today().isoformat())
-                self.toast(reminder_text(goal), C["green"])
+                self.toast(reminder_text(goal), C["green"], duration=REMINDER_TOAST_MS)
                 self.page.update()
         except Exception:
             traceback.print_exc()
@@ -3809,8 +3853,10 @@ class FISIMobileApp:
                 "öffnen und „Installieren“ tippen - dein Lernstand bleibt erhalten."
                 if info.asset_url else
                 "Für Android ist in diesem Release keine App-Datei dabei.")
+        # Ab 0.53 ohne feste Hoehe: Der Dialog richtet sich nach dem Text und
+        # scrollt erst, wenn er nicht mehr auf den Bildschirm passt
         self.page.show_dialog(ft.AlertDialog(
-            modal=True, bgcolor=C["card"],
+            modal=True, bgcolor=C["card"], scrollable=True,
             title=ft.Text("FISI Lernplattform %s ist verfügbar" % info.version,
                           color=C["text"], size=18, weight=ft.FontWeight.BOLD),
             content=ft.Column([
@@ -3818,12 +3864,15 @@ class FISIMobileApp:
                 ft.Text("NEUERUNGEN", size=11, weight=ft.FontWeight.BOLD, color=C["muted"]),
                 ft.Text(notes, size=13, color=C["text_dim"]),
                 ft.Text(hint, size=12, color=C["accent"]),
-            ], tight=True, spacing=8, scroll=ft.ScrollMode.AUTO, height=320),
+            ], tight=True, spacing=8),
             actions=[ft.TextButton("Später", on_click=close),
                      ft.TextButton("Herunterladen", on_click=download)]))
 
 
 def main(page: ft.Page):
+    # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
+    from fisi_core import install_error_log
+    install_error_log(APP_VERSION)
     app = FISIMobileApp(page)
     page.data = app
     if os.environ.get("FISI_SELFTEST"):

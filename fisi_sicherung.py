@@ -37,7 +37,7 @@ import uuid
 import zlib
 
 from fisi_core import (EVENT_TABLES, LEGACY_RUN, OPTIONAL_COLUMNS, SYNC_TABLES,
-                       purge_deleted_runs)
+                       plural, purge_deleted_runs)
 from fisi_lernen import GOAL_SETTINGS, goal_settings
 from fisi_sync import FORMAT as SYNC_FORMAT, MARKERS, export_local, merge_into_local
 from fisi_update import load_settings, save_settings
@@ -427,7 +427,7 @@ def merge_backup(db, backup, restore_runs=(), device=""):
 def merge_message(count, restored=()):
     """Rueckmeldung nach dem Zusammenfuehren (PC und Handy gleich)."""
     if count:
-        text = "Sicherung eingespielt: %s Einträge übernommen." % _german_number(count)
+        text = "Sicherung eingespielt: %s übernommen." % plural(count, "Eintrag", "Einträge")
     else:
         text = "Sicherung eingespielt: Es fehlte nichts, alles war schon da."
     for name in restored:

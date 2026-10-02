@@ -32,7 +32,7 @@
     "solution": [
       "1. CPU-Sockel (nimmt den Prozessor auf), RAM-Steckplätze (Arbeitsspeicher), Chipsatz (steuert Datenfluss zwischen Komponenten), Erweiterungssteckplätze z.B. PCIe (für Grafikkarte, Netzwerkkarte usw.).",
       "2. Der Power-On-Self-Test prüft beim Start die grundlegende Funktion von CPU, RAM und angeschlossener Hardware, bevor das Betriebssystem geladen wird.",
-      "3. Sichtprüfung auf lose Stecker/Kabel, Arbeitsspeicher neu setzen bzw. einzeln testen, sowie Kontrolle der Signaltöne/LEDs zur Fehlereingrenzung."
+      "3. Sichtprüfung auf lose Stecker/Kabel, Arbeitsspeicher neu setzen bzw. einzeln testen sowie Kontrolle der Signaltöne/LEDs zur Fehlereingrenzung."
     ]
   },
   {
@@ -102,7 +102,7 @@
       "3. Was ist der Unterschied zwischen Datenschutz und Datensicherheit?"
     ],
     "solution": [
-      "1. Ausreichende Länge (mindestens 12 Zeichen empfohlen), Mischung aus Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen, sowie Einzigartigkeit (kein wiederverwendetes Passwort aus einem anderen Dienst).",
+      "1. Ausreichende Länge (mindestens 12 Zeichen empfohlen), Mischung aus Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen sowie Einzigartigkeit (kein wiederverwendetes Passwort aus einem anderen Dienst).",
       "2. Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z.B. Name, Anschrift oder E-Mail-Adresse.",
       "3. Datenschutz regelt den rechtlich zulässigen Umgang mit personenbezogenen Daten (das \"Ob\" und \"Wie\"), Datensicherheit umfasst die technischen Maßnahmen zum Schutz aller Daten vor Verlust und unbefugtem Zugriff (das technische \"Wie\")."
     ]
@@ -139,7 +139,7 @@
     ],
     "solution": [
       "1. Es stellt den zeitlichen Ablauf eines Projekts grafisch als Balkendiagramm dar, bei dem jeder Balken einen Vorgang mit Start- und Endzeitpunkt repräsentiert.",
-      "2. Dauer und zeitliche Lage einzelner Vorgänge, Abhängigkeiten und Überschneidungen zwischen Vorgängen, sowie der aktuelle Projektfortschritt.",
+      "2. Dauer und zeitliche Lage einzelner Vorgänge, Abhängigkeiten und Überschneidungen zwischen Vorgängen sowie der aktuelle Projektfortschritt.",
       "3. Es macht zeitliche Abhängigkeiten und Engpässe sofort sichtbar, während eine reine Liste keine Aussage über Parallelität, Dauer oder Reihenfolge der Aufgaben zulässt."
     ]
   },
@@ -342,7 +342,7 @@
       "",
       "2. Zum Beispiel 192.168.50.0/24: Router 192.168.50.1, feste Adressen für Drucker, NAS und Access Point im Bereich .2 bis .49, DHCP-Bereich .100 bis .199 für PCs und Laptops. Der Rest bleibt Reserve.",
       "",
-      "3. Cat 6A (oder Cat 7-Verlegekabel mit Cat-6A-Komponenten): Damit sind 10 Gbit/s auf bis zu 100 m möglich, die Verkabelung bleibt viele Jahre zukunftssicher. Der Mehrpreis gegenüber Cat 6 ist bei Neuinstallation gering."
+      "3. Cat 6A (oder Cat-7-Verlegekabel mit Cat-6A-Komponenten): Damit sind 10 Gbit/s auf bis zu 100 m möglich, die Verkabelung bleibt viele Jahre zukunftssicher. Der Mehrpreis gegenüber Cat 6 ist bei Neuinstallation gering."
     ]
   },
   {
@@ -1226,7 +1226,7 @@
       "",
       "2. Nacherfüllung: nach Wahl des Käufers Nachbesserung (Reparatur) oder Ersatzlieferung. In der Praxis werden defekte Switches meist ausgetauscht.",
       "",
-      "3. Nach erfolglosem Fristablauf bzw. Fehlschlagen: Rücktritt vom Vertrag oder Minderung des Kaufpreises, bei Verschulden zusätzlich Schadenersatz, ggf. Ersatz vergeblicher Aufwendungen."
+      "3. Nach erfolglosem Fristablauf bzw. Fehlschlagen: Rücktritt vom Vertrag oder Minderung des Kaufpreises, bei Verschulden zusätzlich Schadensersatz, ggf. Ersatz vergeblicher Aufwendungen."
     ]
   },
   {
@@ -1555,7 +1555,7 @@
     "solution": [
       "1. 192.168.178.23 ist eine private Adresse im Heimnetz, die im Internet nicht geroutet wird. Der Router übersetzt per NAT (genauer PAT) alle privaten Adressen auf seine eine öffentliche Adresse 203.0.113.45. Anhand der Portnummern ordnet er Antworten wieder dem richtigen Gerät zu.",
       "",
-      "2. Privat sind 10.0.0.0/8, 172.16.0.0/12 (172.16.0.0 bis 172.31.255.255) und 192.168.0.0/16. Also: 10.4.2.1 ja, 172.15.0.1 nein (liegt vor 172.16), 172.31.200.9 ja, 192.168.0.5 ja. 169.254.1.1 ist eine Link-Local-Adresse (APIPA), keine private Adresse nach RFC 1918.",
+      "2. Privat sind 10.0.0.0/8, 172.16.0.0/12 (172.16.0.0 bis 172.31.255.255) und 192.168.0.0/16. Also: 10.4.2.1 ja, 172.15.0.1 nein (liegt vor 172.16), 172.31.200.9 ja, 192.168.0.5 ja. 169.254.1.1 ist eine link-lokale Adresse (APIPA), keine private Adresse nach RFC 1918.",
       "",
       "3. Der Laptop hält 192.168.178.0/24 für sein lokales Netz. Pakete an Firmenserver in diesem Netz schickt er ins Heimnetz statt in den VPN-Tunnel. Firmen wählen deshalb seltene Bereiche, z.B. aus 10.0.0.0/8 oder 172.16.0.0/12, und nicht die typischen Standardnetze von Heimroutern."
     ]
@@ -1641,7 +1641,7 @@
       "",
       "2. Am einfachsten sind Rechenzentren in der EU bzw. im EWR. Bei einem Drittland (z.B. USA) braucht es eine zusätzliche Grundlage: einen Angemessenheitsbeschluss (z.B. Zertifizierung nach dem EU-US Data Privacy Framework) oder Standardvertragsklauseln. Auch Unterauftragnehmer und Support-Zugriffe aus Drittländern prüfen.",
       "",
-      "3. Anmeldung mit Mehr-Faktor-Authentifizierung. Rollen und Freigaben nach dem Need-to-know-Prinzip. Sensible Ordner vor dem Hochladen verschlüsseln. Eine eigene Datensicherung außerhalb der Cloud, denn Synchronisation ist kein Backup."
+      "3. Anmeldung mit Mehrfaktor-Authentifizierung. Rollen und Freigaben nach dem Need-to-know-Prinzip. Sensible Ordner vor dem Hochladen verschlüsseln. Eine eigene Datensicherung außerhalb der Cloud, denn Synchronisation ist kein Backup."
     ]
   },
   {
@@ -2245,7 +2245,7 @@
       "",
       "2. Summe: 9.208 + 2.640 + 7.000 = 18.848 Euro. Risikoreserve 10 %: 1.884,80 Euro. Gesamt: 20.732,80 Euro. Das Budget wird um 732,80 Euro überschritten.",
       "",
-      "3. Die Scanner erst in einer zweiten Stufe beschaffen: 20.732,80 - 1.300 = 19.432,80 Euro, das passt ins Budget. Oder bei der Geschäftsleitung ein höheres Budget beantragen, mit Begründung. Weitere Möglichkeit: Arbeitspakete des Beraters intern übernehmen. Die Wartung (4.500 x 20 % = 900 Euro pro Jahr) sind laufende Betriebskosten. Sie gehören nicht ins Projektbudget, müssen aber im IT-Budget der Folgejahre eingeplant werden."
+      "3. Die Scanner erst in einer zweiten Stufe beschaffen: 20.732,80 - 1.300 = 19.432,80 Euro, das passt ins Budget. Oder bei der Geschäftsleitung ein höheres Budget beantragen, mit Begründung. Weitere Möglichkeit: Arbeitspakete des Beraters intern übernehmen. Die Wartungskosten (4.500 x 20 % = 900 Euro pro Jahr) sind laufende Betriebskosten. Sie gehören nicht ins Projektbudget, müssen aber im IT-Budget der Folgejahre eingeplant werden."
     ]
   },
   {
@@ -2524,7 +2524,7 @@
       "3. Aus Sicht der IT-Sicherheit: Welches Risiko entsteht durch eine vollständige Teamseite? Wie kann man es verringern?"
     ],
     "solution": [
-      "1. Für Fotos auf der Webseite braucht man in der Regel eine Einwilligung (Art. 6 Abs. 1 a und Art. 7 DSGVO). Zusätzlich schützt das Kunsturhebergesetz das Recht am eigenen Bild. Die Einwilligung muss freiwillig sein, was im Arbeitsverhältnis besonders zu beachten ist: Wer nicht zustimmt, darf keine Nachteile haben. Sie muss informiert sein (Zweck, Umfang, Dauer), nachweisbar (am besten schriftlich oder elektronisch dokumentiert) und jederzeit widerrufbar.",
+      "1. Für Fotos auf der Webseite braucht man in der Regel eine Einwilligung (Art. 6 Abs. 1 lit. a und Art. 7 DSGVO). Zusätzlich schützt das Kunsturhebergesetz das Recht am eigenen Bild. Die Einwilligung muss freiwillig sein, was im Arbeitsverhältnis besonders zu beachten ist: Wer nicht zustimmt, darf keine Nachteile haben. Sie muss informiert sein (Zweck, Umfang, Dauer), nachweisbar (am besten schriftlich oder elektronisch dokumentiert) und jederzeit widerrufbar.",
       "",
       "2. Widerruf: Das Foto und die Daten müssen unverzüglich von der Webseite entfernt werden. Der Widerruf gilt für die Zukunft, die bisherige Veröffentlichung bleibt rechtmäßig. Auch Kopien z.B. in Social-Media-Beiträgen prüfen und die Löschung aus Suchmaschinen beantragen. Austritt: Mit dem Ende des Arbeitsverhältnisses entfällt der Zweck. Foto und Daten werden entfernt, die E-Mail-Adresse wird deaktiviert oder weitergeleitet.",
       "",
@@ -2722,7 +2722,7 @@
     "solution": [
       "1. A: 27 Zoll x 2,54 = 68,58 cm Diagonale. Breite = Diagonale x 16 / Wurzel(16² + 9²) = 68,58 x 16 / 18,36 = ca. 59,77 cm. Mit Rand 61,77 cm, zwei Geräte zusammen ca. 123,55 cm. B: 49 x 2,54 = 124,46 cm Diagonale. Breite = 124,46 x 32 / Wurzel(32² + 9²) = 124,46 x 32 / 33,24 = ca. 119,81 cm, mit Rand ca. 121,81 cm. Beide passen auf 140 cm. Pixel: A = 2 x 2.560 x 1.440 = 7.372.800, B = 5.120 x 1.440 = 7.372.800. B ist also praktisch zwei 27-Zoll-Monitore ohne Rand in der Mitte.",
       "",
-      "2. 5.120 x 1.440 x 60 x 24 bit = 10.616.832.000 bit/s = ca. 10,6 Gbit/s. Das ist weniger als 14,4 Gbit/s, HDMI 2.0 reicht. Mit Austastlücken wird es etwas mehr, DisplayPort 1.4 hätte mehr Reserve. A: Vorteil: Fällt ein Monitor aus, kann mit dem anderen weitergearbeitet werden. Nachteil: Der Rand in der Mitte stört bei breiten Tabellen. B: Vorteil: durchgehende Fläche und nur ein Kabel. Nachteil: teurer und bei einem Defekt ist der ganze Arbeitsplatz betroffen.",
+      "2. 5.120 x 1.440 x 60 x 24 Bit = 10.616.832.000 Bit/s = ca. 10,6 Gbit/s. Das ist weniger als 14,4 Gbit/s, HDMI 2.0 reicht. Mit Austastlücken wird es etwas mehr, DisplayPort 1.4 hätte mehr Reserve. A: Vorteil: Fällt ein Monitor aus, kann mit dem anderen weitergearbeitet werden. Nachteil: Der Rand in der Mitte stört bei breiten Tabellen. B: Vorteil: durchgehende Fläche und nur ein Kabel. Nachteil: teurer und bei einem Defekt ist der ganze Arbeitsplatz betroffen.",
       "",
       "3. Nach der Arbeitsstättenverordnung (Anhang Nr. 6): Bildschirm frei dreh- und neigbar und blendfrei aufstellen, Fenster seitlich. Oberkante des Bildschirms auf oder leicht unter Augenhöhe. Ausreichender Sehabstand, bei großen Monitoren eher mehr als 50 cm, die Tischtiefe muss das zulassen. Die Bildschirmarbeit wird durch Pausen oder andere Tätigkeiten unterbrochen. Der Arbeitgeber muss eine Gefährdungsbeurteilung machen und eine Vorsorge für die Augen anbieten. Ist eine spezielle Bildschirmarbeitsbrille nötig, zahlt er sie."
     ]
@@ -2761,7 +2761,7 @@
       "3. Was ist bei der geplanten Auswertung der Verbindungsdaten zu beachten?"
     ],
     "solution": [
-      "1. 1 s / 20 ms = 50 Pakete pro Sekunde. Sprachdaten je Paket: 64.000 bit/s x 0,02 s = 1.280 bit = 160 Byte. IP-Paket: 160 + 12 + 8 + 20 = 200 Byte. Datenrate: 200 Byte x 8 x 50 = 80.000 bit/s = 80 kbit/s je Richtung. Mit Ethernet-Header und Prüfsumme (18 Byte) wären es 87,2 kbit/s.",
+      "1. 1 s / 20 ms = 50 Pakete pro Sekunde. Sprachdaten je Paket: 64.000 Bit/s x 0,02 s = 1.280 Bit = 160 Byte. IP-Paket: 160 + 12 + 8 + 20 = 200 Byte. Datenrate: 200 Byte x 8 x 50 = 80.000 Bit/s = 80 kbit/s je Richtung. Mit Ethernet-Header und Prüfsumme (18 Byte) wären es 87,2 kbit/s.",
       "",
       "2. 8 x 80 kbit/s = 640 kbit/s. 640 / 10.000 = 6,4 % des Uploads. 20 % sind 2.000 kbit/s, 2.000 / 80 = 25 Gespräche. Problem: Ein großer Upload füllt die Leitung. Die Sprachpakete warten in der Warteschlange des Routers. Es entstehen Verzögerung, schwankende Laufzeiten (Jitter) und Paketverluste. Abhilfe: QoS im Router, Sprachpakete bevorzugen (DSCP EF), im LAN ein eigenes Voice-VLAN. Uploads begrenzen oder in die Nacht legen.",
       "",
@@ -2774,7 +2774,7 @@
     "thema": "dienste",
     "theme": "Rechnernetze Grundlagen",
     "text": [
-      "Eine Fahrschule hat ein Büro mit Schulungsraum. Es gibt nur ein WLAN für Mitarbeiter und Fahrschüler, das Passwort hängt im Schulungsraum aus. Router und DHCP-Server ist eine Internet-Box mit dem Netz 192.168.10.0/24. Der DHCP-Bereich reicht von 192.168.10.100 bis 192.168.10.150, die Lease-Zeit beträgt 7 Tage.",
+      "Eine Fahrschule hat ein Büro mit Schulungsraum. Es gibt nur ein WLAN für Mitarbeiter und Fahrschüler, das Passwort hängt im Schulungsraum aus. Als Router und DHCP-Server dient eine Internet-Box mit dem Netz 192.168.10.0/24. Der DHCP-Bereich reicht von 192.168.10.100 bis 192.168.10.150, die Lease-Zeit beträgt 7 Tage.",
       "Dauerhaft im Netz sind 18 Geräte der Fahrschule mit dynamischer Adresse. An jedem Öffnungstag (Montag bis Samstag) verbinden sich im Schnitt 9 neue Smartphones von Fahrschülern. Der Router wurde am Montagmorgen neu gestartet. Am Donnerstag meldet die Inhaberin: \"Das neue Notebook zeigt 169.254.12.7 und kommt nicht ins Internet.\"",
       "",
       "1. Wie viele Adressen hat der DHCP-Bereich? Erklären Sie die Störung. An welchem Öffnungstag ist der Bereich rechnerisch voll?",
@@ -2795,7 +2795,7 @@
     "thema": "verkabelung",
     "theme": "Rechnernetze Grundlagen",
     "text": [
-      "Ein Elektrobetrieb hat im Anbau eines Architekturbüros 8 Doppeldosen (16 Anschlüsse) mit Cat.-7-Verlegekabel und Cat.-6A-Anschlusstechnik installiert. Vereinbart war ein Festpreis von 4.284 Euro brutto für eine betriebsbereite, normgerecht gemessene Verkabelung. Bei der Abnahme messen Sie mit einem Kabeltester nach:",
+      "Ein Elektrobetrieb hat im Anbau eines Architekturbüros 8 Doppeldosen (16 Anschlüsse) mit Cat-7-Verlegekabel und Cat-6A-Anschlusstechnik installiert. Vereinbart war ein Festpreis von 4.284 Euro brutto für eine betriebsbereite, normgerecht gemessene Verkabelung. Bei der Abnahme messen Sie mit einem Kabeltester nach:",
       "  - Dose 3 links: Die Paare an den Pins 1/2 und 3/6 sind an einem Ende getauscht, sonst alles in Ordnung.",
       "  - Dose 5 rechts: Länge 96 m, alle Adern in Ordnung.",
       "  - Dose 7 links: Ader 8 unterbrochen.",
@@ -3643,7 +3643,7 @@
       "Eine Bäckereifiliale hat zwei Cloud-Kassen und ein Kartenterminal. Letzten Monat fiel der DSL-Anschluss zwei Tage aus. Die Kassen konnten nur eingeschränkt arbeiten, Kartenzahlung ging gar nicht. Jetzt soll ein LTE-Router als Ausweichverbindung dazukommen, mit einem Tarif von 1 GB im Monat (1 GB = 1.000 MB, 1 MB = 1.000 KB).",
       "Datenmengen pro Tag: 700 Kassenbons mit je 8 KB. 60 % der Bons werden mit Karte bezahlt, jede Kartenzahlung braucht zusätzlich 4 KB. Abgleich von Artikeln, Preisen und Kassenberichten: 40 MB. Im Verkaufsraum läuft außerdem 12 Stunden Musik über einen Streamingdienst mit 128 kbit/s.",
       "",
-      "1. Berechnen Sie die Datenmenge der Kassen und des Kartenterminals pro Tag und für einen Ausfall von 3 Tagen. Welchen Anteil des Tarifs ist das? Was passiert, wenn auch die Musik über LTE läuft?",
+      "1. Berechnen Sie die Datenmenge der Kassen und des Kartenterminals pro Tag und für einen Ausfall von 3 Tagen. Welcher Anteil des Tarifs ist das? Was passiert, wenn auch die Musik über LTE läuft?",
       "2. Wie richten Sie das automatische Umschalten ein, und welche Geräte dürfen die Ausweichverbindung nutzen?",
       "3. Beschreiben Sie einen Test der Ausweichverbindung vor der Übergabe an die Filialleitung."
     ],
@@ -3709,7 +3709,7 @@
       "Neu geplant: ein NAS im Büro mit 2 TB nutzbarem Speicher. Freitags läuft eine Vollsicherung, montags bis donnerstags eine differenzielle Sicherung. Pro Tag kommen im Mittel 3 GB neue oder geänderte Daten dazu, jeden Tag andere. Die Sicherungen der letzten 4 Wochen werden aufbewahrt. Zusätzlich wird freitags auf eine von zwei USB-Festplatten gesichert, die im Wechsel außer Haus gelagert werden. Das Netz liefert real 90 MB/s.",
       "",
       "1. Nennen Sie vier Schwachstellen der bisherigen Lösung.",
-      "2. Wie groß sind die differenziellen Sicherungen von Montag bis Donnerstag? Wie viel Speicher braucht eine Woche und wie viel brauchen 4 Wochen? Welchen Anteil des NAS ist das? Wie lange dauert die Wiederherstellung, wenn der PC am Freitagmorgen ausfällt? Welchen Vorteil hat die differenzielle Sicherung dabei gegenüber der inkrementellen?",
+      "2. Wie groß sind die differenziellen Sicherungen von Montag bis Donnerstag? Wie viel Speicher braucht eine Woche und wie viel brauchen 4 Wochen? Welcher Anteil des NAS ist das? Wie lange dauert die Wiederherstellung, wenn der PC am Freitagmorgen ausfällt? Welchen Vorteil hat die differenzielle Sicherung dabei gegenüber der inkrementellen?",
       "3. Beschreiben Sie in Schritten einen Wiederherstellungstest, den die Praxis einmal im Quartal durchführen soll."
     ],
     "solution": [
@@ -3790,7 +3790,7 @@
     "thema": "zugriff",
     "theme": "Datenschutz & Sicherheit",
     "text": [
-      "Eine Spedition mit 45 Beschäftigten nutzt E-Mail, Dateiablage und Tourenplanung in der Cloud. Nach einem Phishing-Angriff auf ein Nachbarunternehmen soll für alle Konten eine Mehr-Faktor-Authentifizierung (MFA) eingeführt werden. 18 Beschäftigte haben ein Diensthandy, die anderen 27 nicht. Der Geschäftsführer schlägt vor: \"Die Leute sollen einfach ihr privates Handy nehmen, SMS-Codes reichen doch.\"",
+      "Eine Spedition mit 45 Beschäftigten nutzt E-Mail, Dateiablage und Tourenplanung in der Cloud. Nach einem Phishing-Angriff auf ein Nachbarunternehmen soll für alle Konten eine Mehrfaktor-Authentifizierung (MFA) eingeführt werden. 18 Beschäftigte haben ein Diensthandy, die anderen 27 nicht. Der Geschäftsführer schlägt vor: \"Die Leute sollen einfach ihr privates Handy nehmen, SMS-Codes reichen doch.\"",
       "Ein FIDO2-Sicherheitsschlüssel (USB und NFC) kostet 29 Euro. Die Einrichtung dauert je Person 10 Minuten, eine IT-Stunde kostet 65 Euro. Variante A: Authenticator-App auf dem Diensthandy und ein Ersatzschlüssel für diese 18 Personen, für die übrigen 27 je zwei Schlüssel (Hauptschlüssel und Ersatz). Variante B: Alle 45 erhalten zwei Schlüssel.",
       "",
       "1. Welche drei Faktorarten gibt es? Prüfen Sie, ob \"Passwort und Sicherheitsfrage\" und \"Passwort und Sicherheitsschlüssel\" eine echte MFA sind. Was spricht gegen SMS-Codes und gegen die Pflicht zum privaten Handy?",
@@ -4351,7 +4351,7 @@
     "theme": "Rechnernetze Grundlagen",
     "text": [
       "Ein Tierheim hat ein Verwaltungsgebäude und 170 m entfernt ein neues Hundehaus mit Quarantänestation. Dort sollen 10 Netzwerkkameras (je 4 Mbit/s Dauerstrom zum Rekorder in der Verwaltung), ein PC in der Futterküche und ein IP-Telefon angeschlossen werden. Zurzeit gibt es nur einen WLAN-Repeater am Fenster, der real 20 bis 30 Mbit/s schafft und oft abbricht. Zwischen den Gebäuden liegt ein leeres Leerrohr, der Kabelweg einschließlich Reserve beträgt 180 m.",
-      "Ein Kollege schlägt ein Netzwerkkabel Cat. 7 durch das Leerrohr vor. Sie planen eine Multimode-Glasfaser OM3 mit 1000BASE-SX. Angaben (vereinfacht): Faserdämpfung bei 850 nm 3,5 dB/km, je Steckverbindung 0,75 dB, je Spleiß 0,3 dB. Die Strecke hat 2 Steckverbindungen und 2 Spleiße. Das Dämpfungsbudget der SFP-Module beträgt 7,5 dB, es sollen 3 dB Reserve bleiben.",
+      "Ein Kollege schlägt ein Netzwerkkabel Cat 7 durch das Leerrohr vor. Sie planen eine Multimode-Glasfaser OM3 mit 1000BASE-SX. Angaben (vereinfacht): Faserdämpfung bei 850 nm 3,5 dB/km, je Steckverbindung 0,75 dB, je Spleiß 0,3 dB. Die Strecke hat 2 Steckverbindungen und 2 Spleiße. Das Dämpfungsbudget der SFP-Module beträgt 7,5 dB, es sollen 3 dB Reserve bleiben.",
       "Kosten Glasfaser: Kabel 2,80 Euro/m, Spleißen und Messen pauschal 450 Euro, 2 SFP-Module je 45 Euro, 1 PoE-Switch mit SFP-Port im Hundehaus 280 Euro. Alternative: Richtfunkbrücke mit 2 Antennen je 190 Euro und Montage für 150 Euro, 250 Mbit/s nutzbar, der PoE-Switch wird ebenfalls gebraucht. Richtfunk braucht freie Sicht, zwischen den Gebäuden stehen hohe Laubbäume.",
       "",
       "1. Welche Datenrate wird im Hundehaus mindestens gebraucht? Warum scheiden der Repeater und das Kupferkabel aus? Nennen Sie für das Kupferkabel zwei Gründe.",
@@ -4436,7 +4436,7 @@
       "",
       "2. EG: 31 x 38 = 1.178 m. 1. OG: 39 x 52 = 2.028 m. 2. OG: 23 x 41 = 943 m. Summe 4.149 m, mit 10 % Verschnitt 4.563,9 m. 4.563,9 / 500 = 9,13, also 10 Trommeln. Probebühne: Die fest verlegte Strecke (Permanent Link) darf höchstens 90 m lang sein, der ganze Übertragungskanal mit Patchkabeln höchstens 100 m. 97 m verletzen die Norm, es drohen Übertragungsfehler und langsame Verbindungen. Lösungen: einen kürzeren Kabelweg suchen, den Etagenverteiler zentraler setzen oder nahe der Probebühne einen kleinen Verteiler mit Switch aufbauen und per Glasfaser anbinden.",
       "",
-      "3. Primärverkabelung (zwischen Gebäuden, z.B. zu Werkstätten und Bühnenhaus): Glasfaser, bei großen Entfernungen Singlemode. Sekundärverkabelung (Steigbereich vom Gebäudeverteiler zu den Etagenverteilern): Glasfaser Multimode OM3 oder OM4, unempfindlich gegen Störungen, hohe Datenraten. Tertiärverkabelung (Etagenverteiler bis zur Dose): Twisted Pair mindestens Cat. 6A, 10 Gbit/s bis 100 m und PoE für Access Points. Beschriftung und Dokumentation: Jede Dose und jeder Patchfeldport erhält eine eindeutige Bezeichnung (z.B. 1OG-PF1-12), dazu ein Plan mit Räumen und die Messprotokolle der Abnahme. Das beschleunigt die Fehlersuche, Umzüge und Erweiterungen und ist Grundlage für die Gewährleistung."
+      "3. Primärverkabelung (zwischen Gebäuden, z.B. zu Werkstätten und Bühnenhaus): Glasfaser, bei großen Entfernungen Singlemode. Sekundärverkabelung (Steigbereich vom Gebäudeverteiler zu den Etagenverteilern): Glasfaser Multimode OM3 oder OM4, unempfindlich gegen Störungen, hohe Datenraten. Tertiärverkabelung (Etagenverteiler bis zur Dose): Twisted Pair mindestens Cat 6A, 10 Gbit/s bis 100 m und PoE für Access Points. Beschriftung und Dokumentation: Jede Dose und jeder Patchfeldport erhält eine eindeutige Bezeichnung (z.B. 1OG-PF1-12), dazu ein Plan mit Räumen und die Messprotokolle der Abnahme. Das beschleunigt die Fehlersuche, Umzüge und Erweiterungen und ist Grundlage für die Gewährleistung."
     ]
   },
   {
@@ -4875,7 +4875,7 @@
       "",
       "2. Kanal 1: 2.407 + 5 x 1 = 2.412 MHz, belegt 2.402 bis 2.422 MHz. Kanal 3: 2.422 MHz, belegt 2.412 bis 2.432 MHz. Kanal 6: 2.437 MHz, belegt 2.427 bis 2.447 MHz. Kanal 11: 2.462 MHz, belegt 2.452 bis 2.472 MHz. Zwischen Kanal 1 und 6 liegen 2.437 - 2.412 = 25 MHz, das ist mehr als die Kanalbreite von 20 MHz, sie überlappen also nicht. Dasselbe gilt für 6 und 11. Kanal 3 überlappt mit 1 und 6 (nur 10 MHz bzw. 15 MHz Abstand). Für drei benachbarte Access Points wählen Sie 1, 6 und 11. So stören sich die Zellen nicht gegenseitig. Im 5-GHz-Band gibt es deutlich mehr überlappungsfreie Kanäle.",
       "",
-      "3. Gastronomie: Powerline mit 180 Mbit/s oder besser ein LAN-Kabel zu einem Access Point, falls ein Leerrohr vorhanden ist. Pro-Shop: 100 Mbit/s reichen für Tablet und Kartenterminal zwar, zwei Funkstrecken hintereinander sind aber störanfällig. Für die Kasse empfiehlt sich eine feste Verbindung: Erdkabel (Glasfaser zwischen Gebäuden wegen Potentialtrennung) oder eine Richtfunkstrecke als Punkt-zu-Punkt-Verbindung, dahinter ein Access Point. Alternativ ein Tri-Band-Mesh mit eigenem Funkband nur für den Backhaul. Gäste-WLAN: eigene SSID in einem eigenen VLAN, nur Internetzugang, Client-Isolation, Bandbreitenbegrenzung und ein Vorschaltportal mit Nutzungsbedingungen. Die Kasse bekommt eine eigene SSID mit WPA3 und einem starken Schlüssel, der Gästen nicht bekannt ist."
+      "3. Gastronomie: Powerline mit 180 Mbit/s oder besser ein LAN-Kabel zu einem Access Point, falls ein Leerrohr vorhanden ist. Pro-Shop: 100 Mbit/s reichen für Tablet und Kartenterminal zwar, zwei Funkstrecken hintereinander sind aber störanfällig. Für die Kasse empfiehlt sich eine feste Verbindung: Erdkabel (Glasfaser zwischen Gebäuden wegen Potenzialtrennung) oder eine Richtfunkstrecke als Punkt-zu-Punkt-Verbindung, dahinter ein Access Point. Alternativ ein Tri-Band-Mesh mit eigenem Funkband nur für den Backhaul. Gäste-WLAN: eigene SSID in einem eigenen VLAN, nur Internetzugang, Client-Isolation, Bandbreitenbegrenzung und ein Vorschaltportal mit Nutzungsbedingungen. Die Kasse bekommt eine eigene SSID mit WPA3 und einem starken Schlüssel, der Gästen nicht bekannt ist."
     ]
   },
   {
@@ -5123,7 +5123,7 @@
       "3. Reicht TPM allein aus? Wie schützt sie außerdem die Datensicherung? Die Dokumentation muss mehrere Jahre aufbewahrt werden. Die Datenmenge wächst um vereinfacht 12 GB pro Jahr. Welche Größe brauchen die Sicherungsmedien für 10 Jahre mindestens?"
     ],
     "solution": [
-      "1. Es sind Gesundheitsdaten, also besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO, dazu Daten von Neugeborenen. Bei einem Diebstahl ist die Vertraulichkeit verletzt: Die SSD kann ausgebaut und an einem anderen Rechner gelesen werden, die Windows-PIN schützt davor nicht. Folge: Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden (Art. 33) und wegen des hohen Risikos Benachrichtigung aller betroffenen Frauen (Art. 34), dazu möglicherweise Bußgeld und Schadensersatz. Außerdem droht eine Verletzung der Schweigepflicht. Ist die Festplatte nach dem Stand der Technik verschlüsselt und der Schlüssel nicht mitgestohlen, sind die Daten für den Dieb unlesbar. Die Benachrichtigung der Betroffenen entfällt dann in der Regel (Art. 34 Abs. 3 Buchst. a). Der Vorfall wird trotzdem dokumentiert und geprüft.",
+      "1. Es sind Gesundheitsdaten, also besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO, dazu Daten von Neugeborenen. Bei einem Diebstahl ist die Vertraulichkeit verletzt: Die SSD kann ausgebaut und an einem anderen Rechner gelesen werden, die Windows-PIN schützt davor nicht. Folge: Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden (Art. 33) und wegen des hohen Risikos Benachrichtigung aller betroffenen Frauen (Art. 34), dazu möglicherweise Bußgeld und Schadensersatz. Außerdem droht eine Verletzung der Schweigepflicht. Ist die Festplatte nach dem Stand der Technik verschlüsselt und der Schlüssel nicht mitgestohlen, sind die Daten für den Dieb unlesbar. Die Benachrichtigung der Betroffenen entfällt dann in der Regel (Art. 34 Abs. 3 lit. a). Der Vorfall wird trotzdem dokumentiert und geprüft.",
       "",
       "2. Nur belegter Speicher: 380 GB = 380.000 MB / 250 MB/s = 1.520 s = ca. 25 Minuten. Ganze SSD: 1.000.000 MB / 250 = 4.000 s = ca. 67 Minuten. Bei einem neuen Notebook reicht \"nur belegten Speicher\", neue Daten werden automatisch verschlüsselt. Bei einem lange genutzten Notebook die ganze Festplatte verschlüsseln, weil in freien Bereichen noch Reste gelöschter Dateien liegen können. Wiederherstellungsschlüssel: 10^48 Kombinationen, praktisch nicht zu erraten. Er wird nicht auf dem Notebook gespeichert, sondern ausgedruckt und verschlossen aufbewahrt (z.B. im Tresor in der Praxis) oder in einem gesicherten Konto bzw. Passwortmanager hinterlegt.",
       "",
@@ -5147,7 +5147,7 @@
       "",
       "2. 3 IP-Adressen x 5 Versuche = 15 Versuche pro Minute. 1.800 / 15 = 120 Minuten = 2 Stunden statt 10 Minuten. Das bremst, verhindert den Angriff aber nicht. Angreifer nutzen oft Hunderte IP-Adressen (Botnetze) und verteilen die Versuche. Weitere Maßnahmen: Zwei-Faktor-Anmeldung anbieten oder verlangen, neue Passwörter gegen Listen bekannter geleakter Passwörter prüfen, Captcha nach auffälligen Fehlversuchen, Benachrichtigung der Mitglieder bei Anmeldung von einem neuen Gerät, automatische Alarmierung bei vielen Fehlversuchen und Sperren auffälliger IP-Bereiche.",
       "",
-      "3. Bei den 7 Konten hatte ein Unbefugter Zugriff auf Namen, Adressen, Buchungen und Rechnungen. Das ist eine Verletzung des Schutzes personenbezogener Daten. Zu tun: die 7 Konten sofort sperren und die Passwörter zurücksetzen, prüfen, was dort geändert oder abgerufen wurde (z.B. geänderte Adresse oder Bankverbindung), die Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden nach Bekanntwerden (Art. 33 DSGVO), sofern ein Risiko nicht ausgeschlossen ist, die Betroffenen informieren und zum Passwortwechsel auch bei anderen Diensten auffordern, alles dokumentieren. IP-Adressen sind personenbezogene Daten. Die Speicherung zur Abwehr von Angriffen ist auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 Buchst. f DSGVO) zulässig, aber nur so lange wie nötig, üblich sind wenige Tage bis Wochen (z.B. 14 Tage). Die Protokolle werden in der Datenschutzerklärung genannt. Zugriff haben nur Administratoren."
+      "3. Bei den 7 Konten hatte ein Unbefugter Zugriff auf Namen, Adressen, Buchungen und Rechnungen. Das ist eine Verletzung des Schutzes personenbezogener Daten. Zu tun: die 7 Konten sofort sperren und die Passwörter zurücksetzen, prüfen, was dort geändert oder abgerufen wurde (z.B. geänderte Adresse oder Bankverbindung), die Meldung an die Aufsichtsbehörde innerhalb von 72 Stunden nach Bekanntwerden (Art. 33 DSGVO), sofern ein Risiko nicht ausgeschlossen ist, die Betroffenen informieren und zum Passwortwechsel auch bei anderen Diensten auffordern, alles dokumentieren. IP-Adressen sind personenbezogene Daten. Die Speicherung zur Abwehr von Angriffen ist auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO) zulässig, aber nur so lange wie nötig, üblich sind wenige Tage bis Wochen (z.B. 14 Tage). Die Protokolle werden in der Datenschutzerklärung genannt. Zugriff haben nur Administratoren."
     ]
   },
   {
@@ -5163,7 +5163,7 @@
       "3. Die Geräte kosten 180 Euro je Lkw, eine Speicherkarte 25 Euro. Berechnen Sie die Anschaffungskosten. Entwerfen Sie drei Regeln für den Umgang mit den Aufnahmen."
     ],
     "solution": [
-      "1. Eine anlasslose Daueraufzeichnung des Straßenverkehrs ist nach DSGVO unzulässig, weil sie viele Unbeteiligte erfasst. Nach einem Urteil des BGH (2018) kann eine solche Aufnahme vor Gericht trotzdem als Beweis verwertet werden, das macht sie aber nicht datenschutzkonform. Zulässig ist eine kurze, anlassbezogene Aufzeichnung (Ringspeicher mit Speicherung nur bei einem Unfall) auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 Buchst. f). Eine Aufbewahrung von einem Jahr ohne Anlass ist nicht erforderlich. Die Kamera im Fahrerhaus überwacht dauerhaft die Beschäftigten. Das ist ein schwerer Eingriff in ihr Persönlichkeitsrecht und in der Regel unverhältnismäßig. Transportschäden lassen sich besser mit Fotos beim Be- und Entladen belegen. Der Betriebsrat hat ein Mitbestimmungsrecht bei technischen Einrichtungen, die Verhalten oder Leistung der Beschäftigten überwachen können (§ 87 Abs. 1 Nr. 6 BetrVG). Ohne Betriebsvereinbarung dürfen die Kameras nicht in Betrieb gehen.",
+      "1. Eine anlasslose Daueraufzeichnung des Straßenverkehrs ist nach DSGVO unzulässig, weil sie viele Unbeteiligte erfasst. Nach einem Urteil des BGH (2018) kann eine solche Aufnahme vor Gericht trotzdem als Beweis verwertet werden, das macht sie aber nicht datenschutzkonform. Zulässig ist eine kurze, anlassbezogene Aufzeichnung (Ringspeicher mit Speicherung nur bei einem Unfall) auf Grundlage des berechtigten Interesses (Art. 6 Abs. 1 lit. f). Eine Aufbewahrung von einem Jahr ohne Anlass ist nicht erforderlich. Die Kamera im Fahrerhaus überwacht dauerhaft die Beschäftigten. Das ist ein schwerer Eingriff in ihr Persönlichkeitsrecht und in der Regel unverhältnismäßig. Transportschäden lassen sich besser mit Fotos beim Be- und Entladen belegen. Der Betriebsrat hat ein Mitbestimmungsrecht bei technischen Einrichtungen, die Verhalten oder Leistung der Beschäftigten überwachen können (§ 87 Abs. 1 Nr. 6 BetrVG). Ohne Betriebsvereinbarung dürfen die Kameras nicht in Betrieb gehen.",
       "",
       "2. 12 Mbit/s / 8 = 1,5 MB/s. Pro Stunde 1,5 x 3.600 = 5.400 MB = 5,4 GB. 64 / 5,4 = ca. 11,9 Stunden Daueraufnahme. Ringspeicher: 3 Minuten = 180 s x 1,5 MB/s = 270 MB. Ereignisclip: 60 s x 1,5 = 90 MB. Pro Jahr: 8 Lkw x 6 x 12 = 576 Clips x 90 MB = 51.840 MB = ca. 51,8 GB. Das ist viel weniger Speicher und vor allem viel weniger personenbezogene Daten.",
       "",

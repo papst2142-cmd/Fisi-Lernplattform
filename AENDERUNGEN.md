@@ -4,6 +4,39 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.53
+
+Prüfung und Fehlerbehebung: Diese Version bringt keine neuen Funktionen, sondern eine gründliche Prüfung von PC und Handy sowie aller Texte.
+
+- **Lernstand bleibt erhalten:** 14 Fragetexte (5 Karteikarten, 9 Quizfragen)
+  wurden korrigiert. Deine bisherigen Antworten zählen automatisch beim neuen
+  Text, auch wenn sie per Abgleich von einem Gerät mit älterer Version kommen.
+- **Texte:** Rund 200 Rechtschreib-, Grammatik- und Sachfehler in Karteikarten,
+  Prüfungstrainer, Szenarien, Testprojekten und Spiel korrigiert, darunter
+  POP3, Schaltjahr, Reverse-Lookup und vertauschte Zahlen in einem
+  AP2-Szenario. Einzahl/Mehrzahl stimmt jetzt überall („1 Tag“, „2 Tage“).
+- **Menünamen:** „Testprojekt“, „AP1-Szenarien“ und „AP2-Szenarien“ auf PC
+  und Handy.
+- **Hellmodus:** Spielername, Silber/Gold/Bronze und die HE-Nummern im Rack
+  sind gut lesbar.
+- **Handy:** Nach „Sicherung einspielen → Alles ersetzen“ oder „Alle
+  Lerndaten löschen“ ist die Startseite wieder vollständig. Pillen-Leiste,
+  Update-Fenster und Spielfigur-Laufwege korrigiert.
+- **Prüfung:** Die Prüfungszeit stimmt auch bei der Umstellung auf
+  Sommer- oder Winterzeit. Ein Farbwechsel während der Prüfung stoppt die
+  alte Uhr sauber.
+- **Lernserie:** Kopfzeile und Kachel „Heute“ zeigen dieselbe Zahl, nach
+  Mitternacht frischt sich die Kachel auf.
+- **Schneller:** Die Reiter in Firma und Reise wechseln deutlich schneller.
+- **Kleinigkeiten:** Toasts liegen nicht mehr übereinander, Abzeichen-Namen
+  werden nicht mehr abgeschnitten, in der kleinen Gebäude-Ansicht fehlt kein
+  Name mehr, kein leerer Rollbalken, keine leere Seite im Abschlussprojekt.
+- **Sicherer:** Einstellungen werden absturzsicher gespeichert, eine
+  beschädigte Abgleich-Datei wird als solche gemeldet, der PDF-Export ersetzt
+  Sonderzeichen sauber, der Textexport öffnet sich auch in älteren
+  Windows-Editoren richtig. Unerwartete Fehler landen in „fehler.log“ im
+  Datenordner.
+
 ## 0.52
 
 Großauftrag Serverfarm und Sicherung: Diese Version bringt die zweite große Kampagne im Spiel und eine Sicherung des Lernstands als Datei.
@@ -144,7 +177,7 @@ Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorb
   **Wichtig:** Ein Gerät mit 0.47 gleicht erst wieder ab, wenn es auch auf
   0.48 aktualisiert ist. Der Lernstand geht dabei nicht verloren.
 - **Farbwechsel:** Beim Wechsel von Grundfarbe oder Hintergrund erscheint
-  „Farben werden angewendet – Bitte warten“, Eingaben sind solange
+  „Farben werden angewendet – Bitte warten“, Eingaben sind so lange
   gesperrt. Am PC ist der Wechsel deutlich schneller (etwa 2,6 statt
   12,8 Sekunden).
 - **PC: Seitenleiste scrollt,** wenn ausgeklappte Menüpunkte nicht mehr
@@ -177,7 +210,7 @@ Lern-Schwerpunkt: Diese Version bringt neue Lernwerkzeuge für die Prüfungsvorb
   Spielstände zählen als „Normal“. Die Lernplattform bleibt unberührt.
 - **Zwei neue Abzeichen:** „Story abgeschlossen: Einfach“ (Silber) und
   „Story abgeschlossen: Normal“ (Gold). Die Bestenliste bleibt ein
-  gemeinsamer Topf. Steuerehrlich, Zurück auf Kurs und Treue Mannschaft
+  gemeinsamer Topf. „Steuerehrlich“, „Zurück auf Kurs“ und „Treue Mannschaft“
   gibt es nur auf „Normal“.
 - **„Meine Reise“:** Der Knopf „Reise öffnen“ heißt jetzt „Meine Reise“.
 - **Karte:** Die Gleise der Talbahn fahren nicht mehr durch Bahnhöfe,

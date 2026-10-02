@@ -138,7 +138,7 @@
     "text": [
       "Nach einem Ransomware-Vorfall soll ein neues, widerstandsfähigeres Backup-Konzept für einen Fileserver mit 2 TB Nutzdaten entworfen werden.",
       "",
-      "1. Welches Sicherungsverfahren (voll/differentiell/inkrementell) empfehlen Sie für die tägliche Sicherung und warum?",
+      "1. Welches Sicherungsverfahren (voll/differenziell/inkrementell) empfehlen Sie für die tägliche Sicherung und warum?",
       "2. Welche Rolle spielt ein 'Air Gap' in diesem Konzept?",
       "3. Wie lässt sich die 3-2-1-Regel konkret auf dieses Szenario anwenden?"
     ],
@@ -190,7 +190,7 @@
     "thema": "storage",
     "theme": "Storage & RAID",
     "text": [
-      "Eine Datenbank mit hoher Schreiblast soll auf einem neuen Server mit 8 Festplatten gleicher Größe betrieben werden. Höchste Ausfallsicherheit und gute Performance sind gefordert, das Budget erlaubt den Verlust von 50% Kapazität für Redundanz.",
+      "Eine Datenbank mit hoher Schreiblast soll auf einem neuen Server mit 8 Festplatten gleicher Größe betrieben werden. Höchste Ausfallsicherheit und gute Performance sind gefordert, das Budget erlaubt den Verlust von 50 % Kapazität für Redundanz.",
       "",
       "1. Welches RAID-Level empfehlen Sie und warum?",
       "2. Welche Nutzkapazität ergibt sich bei 8 Platten à 4 TB?",
@@ -233,7 +233,7 @@
       "3. Wie könnte die Ausfallzeit künftig weiter reduziert werden?"
     ],
     "solution": [
-      "1. Die RPO gibt vor, wie viele Daten seit dem letzten Backup maximal verloren gehen dürfen (hier: bis zu 24 Stunden), die RTO die maximal tolerierbare Zeit bis zur Wiederherstellung des Dienstes.",
+      "1. Das RPO gibt vor, wie viele Daten seit dem letzten Backup maximal verloren gehen dürfen (hier: bis zu 24 Stunden), das RTO die maximal tolerierbare Zeit bis zur Wiederherstellung des Dienstes.",
       "2. Das letzte Backup auf den Ersatzserver einspielen, Netzwerk- und Dienstkonfiguration prüfen, Funktionstest durchführen und den Dienst wieder freigeben.",
       "3. Aufbau eines Clusters mit automatischem Failover oder eines Hot-Standby-Systems, sodass bei einem Hardwaredefekt kein manueller Eingriff mehr nötig ist."
     ]
@@ -550,7 +550,7 @@
       "3. Wie gehen Sie mit dem Fall um, dass ein Mitarbeiter sein Smartphone verliert?"
     ],
     "solution": [
-      "1. SMS: einfach, aber anfällig für SIM-Swapping und Abfangen. TOTP-App: deutlich besser, Codes lokal erzeugt, aber per Echtzeit-Phishing abgreifbar. FIDO2: sehr sicher und phishing-resistent, weil der Schlüssel an die echte Domain gebunden ist.",
+      "1. SMS: einfach, aber anfällig für SIM-Swapping und Abfangen. TOTP-App: deutlich besser, Codes lokal erzeugt, aber per Echtzeit-Phishing abgreifbar. FIDO2: sehr sicher und phishingresistent, weil der Schlüssel an die echte Domain gebunden ist.",
       "",
       "2. FIDO2-Sicherheitsschlüssel (oder Passkeys auf verwalteten Geräten), weil Administratorkonten besonders wertvoll sind und Phishing-Resistenz den größten Schutz bietet. Ein zweiter Schlüssel dient als Ersatz.",
       "",
@@ -563,7 +563,7 @@
     "thema": "haertung",
     "theme": "IT-Sicherheit",
     "text": [
-      "Das BSI warnt vor einer kritischen Schwachstelle (CVSS 9.8) in einer VPN-Appliance, die auch in Ihrem Unternehmen läuft. Ein Patch ist verfügbar, Angriffe werden bereits beobachtet.",
+      "Das BSI warnt vor einer kritischen Schwachstelle (CVSS 9,8) in einer VPN-Appliance, die auch in Ihrem Unternehmen läuft. Ein Patch ist verfügbar, Angriffe werden bereits beobachtet.",
       "",
       "1. Beschreiben Sie Ihr Vorgehen in der richtigen Reihenfolge.",
       "2. Was tun Sie, wenn der Patch erst in zwei Tagen eingespielt werden kann?",
@@ -674,7 +674,7 @@
       "",
       "2. Mitarbeiter: WPA2/WPA3-Enterprise mit 802.1X und RADIUS, also persönliche Zugangsdaten. Gäste: Captive Portal mit Tagescode oder WPA3-Personal (bzw. OWE für offene Netze), das Kennwort regelmäßig ändern.",
       "",
-      "3. Client Isolation (Gäste sehen sich untereinander nicht), Bandbreitenbegrenzung je Gast, Nutzungsbedingungen im Portal, Inhaltsfilter, Protokollierung nach rechtlichen Vorgaben."
+      "3. Client-Isolation (Gäste sehen sich untereinander nicht), Bandbreitenbegrenzung je Gast, Nutzungsbedingungen im Portal, Inhaltsfilter, Protokollierung nach rechtlichen Vorgaben."
     ]
   },
   {
@@ -709,7 +709,7 @@
       "",
       "1. Berechnen Sie die Gesamtkosten beider Lösungen für 3 Jahre.",
       "2. Welche Lösung ist günstiger und um wie viel?",
-      "3. Nennen Sie zwei nicht-monetäre Kriterien, die in die Entscheidung einfließen sollten."
+      "3. Nennen Sie zwei nicht monetäre Kriterien, die in die Entscheidung einfließen sollten."
     ],
     "solution": [
       "1. Eigener Server: 7.500 + 1.200 + 3 * 900 = 11.400 Euro.",
@@ -812,7 +812,7 @@
     "thema": "routing",
     "theme": "Subnetting & Routing",
     "text": [
-      "Ein neues Labor-Netz 10.50.0.0/24 wurde an einen zweiten internen Router (10.0.0.254) angeschlossen. Clients im Labor erreichen ihr Gateway, aber keine Server im Netz 10.0.0.0/24. Der Standardgateway der Server ist die Firewall 10.0.0.1.",
+      "Ein neues Labor-Netz 10.50.0.0/24 wurde an einen zweiten internen Router (10.0.0.254) angeschlossen. Clients im Labor erreichen ihr Gateway, aber keine Server im Netz 10.0.0.0/24. Das Standardgateway der Server ist die Firewall 10.0.0.1.",
       "",
       "1. Was ist die wahrscheinlichste Ursache?",
       "2. Nennen Sie zwei Möglichkeiten, das Problem zu beheben.",
@@ -1048,7 +1048,7 @@
     "solution": [
       "1. Der Zugang ist ein Einfallstor: Wird der Dienstleister gehackt oder das Passwort gestohlen, gelangt der Angreifer direkt ins Produktionsnetz. Ohne Kontrolle weiß niemand, wann und was getan wird.",
       "",
-      "2. Zugang nur über VPN mit MFA auf einen gehärteten Jump Host in einer eigenen Zone. Von dort nur zum Steuerungsrechner und nur die nötigen Ports. Zugang standardmäßig gesperrt, Freischaltung nur auf Anfrage und zeitlich begrenzt. Sitzungen werden protokolliert oder aufgezeichnet, persönliche Konten statt Sammelkonten.",
+      "2. Zugang nur über VPN mit MFA auf einen gehärteten Jump-Host in einer eigenen Zone. Von dort nur zum Steuerungsrechner und nur die nötigen Ports. Zugang standardmäßig gesperrt, Freischaltung nur auf Anfrage und zeitlich begrenzt. Sitzungen werden protokolliert oder aufgezeichnet, persönliche Konten statt Sammelkonten.",
       "",
       "3. Vertrag mit Sicherheitsanforderungen und Meldepflichten bei Vorfällen, AV-Vertrag falls personenbezogene Daten erreichbar sind, festgelegter Freigabeprozess, Ansprechpartner, regelmäßige Überprüfung der Zugänge."
     ]
@@ -1208,7 +1208,7 @@
       "3. Wie regeln Sie die Nutzung von USB-Datenträgern?"
     ],
     "solution": [
-      "1. Mit BitLocker (Windows) für das ganze Laufwerk, zentral per Gruppenrichtlinie oder MDM ausgerollt. Das TPM speichert den Schlüssel und gibt ihn nur frei, wenn der Startvorgang unverändert ist. Zusätzlich eine Pre-Boot-PIN (TPM + PIN) schützt, wenn das Gerät gestohlen wird.",
+      "1. Mit BitLocker (Windows) für das ganze Laufwerk, zentral per Gruppenrichtlinie oder MDM ausgerollt. Das TPM speichert den Schlüssel und gibt ihn nur frei, wenn der Startvorgang unverändert ist. Zusätzlich schützt eine Pre-Boot-PIN (TPM + PIN), wenn das Gerät gestohlen wird.",
       "",
       "2. Automatisch im Active Directory bzw. Entra ID oder im MDM. Nur berechtigte Supportmitarbeiter können ihn nach Identitätsprüfung abrufen.",
       "",
@@ -1446,7 +1446,7 @@
       "",
       "1. Wie bringen Sie mehrere VLANs über wenige physische Ports zu den VMs?",
       "2. Schlagen Sie eine Aufteilung der vier Ports vor.",
-      "3. Warum darf die DMZ-VM trotz gleichem Host keinen direkten Weg ins Server-VLAN haben, und wie stellen Sie das sicher?"
+      "3. Warum darf die DMZ-VM trotz gleichen Hosts keinen direkten Weg ins Server-VLAN haben, und wie stellen Sie das sicher?"
     ],
     "solution": [
       "1. Die Switchports zum Host werden als Trunk (802.1Q) konfiguriert. Im virtuellen Switch erhält jede VM-Netzwerkkarte bzw. Portgruppe ihre VLAN-ID. Der virtuelle Switch taggt den Verkehr.",
@@ -2272,9 +2272,9 @@
       "3. Nennen Sie Maßnahmen, die die Übertragung beschleunigen."
     ],
     "solution": [
-      "1. TCP darf höchstens ein Fenster unbestätigter Daten pro RTT senden: 65.535 Byte * 8 = 524.280 bit, geteilt durch 0,04 s ergibt 13.107.000 bit/s, also etwa 13,1 Mbit/s. Das erklärt den Messwert.",
+      "1. TCP darf höchstens ein Fenster unbestätigter Daten pro RTT senden: 65.535 Byte * 8 = 524.280 Bit, geteilt durch 0,04 s ergibt 13.107.000 Bit/s, also etwa 13,1 Mbit/s. Das erklärt den Messwert.",
       "",
-      "2. 100.000.000 bit/s * 0,04 s = 4.000.000 bit = 500.000 Byte. Das Fenster muss also etwa 500 KB groß sein, um die Leitung auszulasten.",
+      "2. 100.000.000 Bit/s * 0,04 s = 4.000.000 Bit = 500.000 Byte. Das Fenster muss also etwa 500 KB groß sein, um die Leitung auszulasten.",
       "",
       "3. TCP Window Scaling nutzen, also ein aktuelles Programm bzw. Betriebssystem verwenden, das große Fenster aushandelt. Mehrere parallele Übertragungen (z.B. robocopy mit /MT). Paketverluste prüfen, da sie TCP zusätzlich bremsen. Häufig genutzte Dateien in der Außenstelle zwischenspeichern oder replizieren. Den Weg prüfen, ob die RTT durch ungünstiges Routing unnötig hoch ist."
     ]
@@ -2761,7 +2761,7 @@
       "",
       "2. 31 * 0,84 = 26,04, also etwa 26 Story Points. In der Reihenfolge des Backlogs: A (8) + B (5) + C (13) = 26 Punkte. D würde die Grenze überschreiten und bleibt im Backlog. Die Prognose ist ein Richtwert, keine Zusage.",
       "",
-      "3. Der Product Owner ordnet das Backlog, die Entwickler entscheiden selbst, wie viel sie im Sprint schaffen können, und formulieren mit ihm ein Sprintziel. Ist C zu groß oder unklar, wird die Story vor dem Sprint verfeinert und in kleinere Stories geteilt, die jeweils einen Nutzen liefern. Erfüllt sie die vereinbarte Definition of Ready nicht, kommt sie noch nicht in den Sprint, stattdessen rücken D und E nach."
+      "3. Der Product Owner ordnet das Backlog, die Entwickler entscheiden selbst, wie viel sie im Sprint schaffen können, und formulieren mit ihm ein Sprint-Ziel. Ist C zu groß oder unklar, wird die Story vor dem Sprint verfeinert und in kleinere Stories geteilt, die jeweils einen Nutzen liefern. Erfüllt sie die vereinbarte Definition of Ready nicht, kommt sie noch nicht in den Sprint, stattdessen rücken D und E nach."
     ]
   },
   {
@@ -3582,7 +3582,7 @@
       "",
       "2. Pro Trommel: 500 / 51 = 9,8, also 9 ganze Strecken. 64 / 9 = 7,1, also 8 Trommeln. Kosten: 8 * 380 = 3.040 Euro. Einfach 64 * 51 = 3.264 m durch 500 m zu teilen (6,5, also 7 Trommeln) wäre zu knapp, weil die Reststücke der Trommeln nicht nutzbar sind.",
       "",
-      "3. Maschinen, Frequenzumrichter und Schweißgeräte erzeugen starke Störungen. Deshalb geschirmtes Kabel (z.B. S/FTP Kategorie 6A oder höher) mit sauberer Erdung und Potentialausgleich verwenden, für stark gestörte Bereiche Glasfaser. Abstand zu Starkstromleitungen einhalten. Dosen und Stecker mit hoher Schutzart (z.B. IP67) gegen Staub, Öl und Wasser, Kabel mechanisch schützen. Abnahme: jede Strecke mit einem Kabelmessgerät als Permanent Link messen (z.B. Klasse EA), Messprotokolle und Beschriftung in die Dokumentation aufnehmen."
+      "3. Maschinen, Frequenzumrichter und Schweißgeräte erzeugen starke Störungen. Deshalb geschirmtes Kabel (z.B. S/FTP Kategorie 6A oder höher) mit sauberer Erdung und Potenzialausgleich verwenden, für stark gestörte Bereiche Glasfaser. Abstand zu Starkstromleitungen einhalten. Dosen und Stecker mit hoher Schutzart (z.B. IP67) gegen Staub, Öl und Wasser, Kabel mechanisch schützen. Abnahme: jede Strecke mit einem Kabelmessgerät als Permanent Link messen (z.B. Klasse EA), Messprotokolle und Beschriftung in die Dokumentation aufnehmen."
     ]
   },
   {
@@ -5090,15 +5090,15 @@
       "Beide Pfade haben 10 Gbit/s. Pro Ethernet-Rahmen kommen 38 Byte auf der Leitung dazu (Ethernet-Header, Prüfsumme, Präambel und Pause). IP- und TCP-Header haben je 20 Byte.",
       "",
       "1. Werten Sie die Tests aus. Wie ergeben sich die Werte 8.972 und 1.472? Warum hängt die Datenbank, statt nur langsamer zu werden?",
-      "2. Berechnen Sie für MTU 1.500 und MTU 9.000 den Anteil der TCP-Nutzdaten auf der Leitung und die Anzahl Rahmen pro Sekunde bei voller Auslastung von 10 Gbit/s. Lohnen sich Jumbo-Frames?",
+      "2. Berechnen Sie für MTU 1.500 und MTU 9.000 den Anteil der TCP-Nutzdaten auf der Leitung und die Anzahl Rahmen pro Sekunde bei voller Auslastung von 10 Gbit/s. Lohnen sich Jumbo Frames?",
       "3. Wie beheben Sie den Fehler, und wie ist ein iSCSI-Netz grundsätzlich aufzubauen? Warum nutzt man hier MPIO statt Link Aggregation?"
     ],
     "solution": [
       "1. Pfad A überträgt große Rahmen, Pfad B nur Standardrahmen. Der neue Switch B arbeitet mit der Standard-MTU von 1.500 Byte und verwirft größere Rahmen ohne Meldung. -f setzt das Don't-Fragment-Bit, -l gibt die Nutzdaten an: 8.972 = 9.000 - 20 (IP) - 8 (ICMP), 1.472 = 1.500 - 20 - 8. Anmeldung und kleine Pakete funktionieren, deshalb hält MPIO den Pfad B für gesund. Große Datenpakete gehen verloren, bis Zeitüberschreitungen und Wiederholungen greifen. Da Round Robin abwechselnd auch Pfad B nutzt, hängt die Datenbank immer wieder.",
       "",
-      "2. MTU 1.500: Nutzdaten 1.500 - 40 = 1.460 Byte, auf der Leitung 1.500 + 38 = 1.538 Byte. Anteil: 1.460 / 1.538 = ca. 94,9 %. Rahmen: 10 * 10^9 / (1.538 * 8) = ca. 812.744 pro Sekunde. MTU 9.000: 8.960 / 9.038 = ca. 99,1 %. Rahmen: 10 * 10^9 / (9.038 * 8) = ca. 138.305 pro Sekunde. Der Durchsatz steigt nur um gut 4 Prozentpunkte, aber Server und SAN verarbeiten fast 6 Mal weniger Rahmen. Das senkt die CPU-Last. Jumbo-Frames lohnen sich, wenn sie durchgängig auf allen Geräten eines Pfades eingestellt sind.",
+      "2. MTU 1.500: Nutzdaten 1.500 - 40 = 1.460 Byte, auf der Leitung 1.500 + 38 = 1.538 Byte. Anteil: 1.460 / 1.538 = ca. 94,9 %. Rahmen: 10 * 10^9 / (1.538 * 8) = ca. 812.744 pro Sekunde. MTU 9.000: 8.960 / 9.038 = ca. 99,1 %. Rahmen: 10 * 10^9 / (9.038 * 8) = ca. 138.305 pro Sekunde. Der Durchsatz steigt nur um gut 4 Prozentpunkte, aber Server und SAN verarbeiten fast 6 Mal weniger Rahmen. Das senkt die CPU-Last. Jumbo Frames lohnen sich, wenn sie durchgängig auf allen Geräten eines Pfades eingestellt sind.",
       "",
-      "3. Sofort Pfad B in MPIO deaktivieren, dann an Switch B für die iSCSI-Ports Jumbo-Frames einstellen (zum Beispiel MTU 9.216) und mit ping -f -l 8972 von beiden Seiten testen. Danach Pfad B wieder zuschalten. Switch-Konfigurationen werden gesichert, damit ein Ersatzgerät gleich eingerichtet ist. Aufbau: pro Pfad ein eigenes, nicht geroutetes Netz oder VLAN, getrennte Switches, Flusskontrolle nach Herstellerempfehlung, CHAP-Authentifizierung und keine anderen Geräte im Speichernetz. Link Aggregation verteilt pro Verbindung, eine iSCSI-Sitzung nutzt also nur eine Leitung, und beide Leitungen müssen am selben Switch bzw. Stack enden. MPIO nutzt mehrere Sitzungen über getrennte Netze, erkennt Pfadausfälle auf Speicherebene und funktioniert mit zwei unabhängigen Switches."
+      "3. Sofort Pfad B in MPIO deaktivieren, dann an Switch B für die iSCSI-Ports Jumbo Frames einstellen (zum Beispiel MTU 9.216) und mit ping -f -l 8972 von beiden Seiten testen. Danach Pfad B wieder zuschalten. Switch-Konfigurationen werden gesichert, damit ein Ersatzgerät gleich eingerichtet ist. Aufbau: pro Pfad ein eigenes, nicht geroutetes Netz oder VLAN, getrennte Switches, Flusskontrolle nach Herstellerempfehlung, CHAP-Authentifizierung und keine anderen Geräte im Speichernetz. Link Aggregation verteilt pro Verbindung, eine iSCSI-Sitzung nutzt also nur eine Leitung, und beide Leitungen müssen am selben Switch bzw. Stack enden. MPIO nutzt mehrere Sitzungen über getrennte Netze, erkennt Pfadausfälle auf Speicherebene und funktioniert mit zwei unabhängigen Switches."
     ]
   },
   {
@@ -5263,21 +5263,21 @@
     "thema": "virtualisierung",
     "theme": "Virtualisierung",
     "text": [
-      "Ein Rehazentrum stellt Pflege- und Therapiepersonal 150 nicht-persistente virtuelle Desktops bereit. Nach der Abmeldung wird jeder Desktop auf den Stand des Masterimages zurückgesetzt. Die Benutzereinstellungen liegen in Profilcontainern auf einem Dateiserver.",
+      "Ein Rehazentrum stellt Pflege- und Therapiepersonal 150 nicht persistente virtuelle Desktops bereit. Nach der Abmeldung wird jeder Desktop auf den Stand des Masterimages zurückgesetzt. Die Benutzereinstellungen liegen in Profilcontainern auf einem Dateiserver.",
       "Das Speichersystem schafft vereinfacht 6.000 IOPS. Ein Desktop erzeugt im Betrieb 12 IOPS. Während einer Anmeldung erzeugt er 90 Sekunden lang 80 IOPS. Ein Neustart erzeugt 2 Minuten lang 200 IOPS.",
       "Beim Schichtwechsel um 6 Uhr melden sich 110 Personen innerhalb von 3 Minuten an. Rechnen Sie mit gleichmäßig verteilten Anmeldungen.",
       "Das Masterimage hat 60 GB. Jeder verknüpfte Klon braucht höchstens 8 GB zusätzlich. Das Zentrum hat 260 Beschäftigte mit Profilcontainern von je 5 GB.",
       "",
       "1. Wie viele Desktops sind beim Schichtwechsel gleichzeitig in der Anmeldung? Welche Last entsteht insgesamt, und reicht das Speichersystem?",
       "2. Nach einem Update des Masterimages müssen nachts 120 Desktops neu starten, 30 sind durch die Nachtschicht belegt. Das Speichersystem soll höchstens zu 80 % ausgelastet werden. Wie viele Desktops dürfen gleichzeitig starten, und wie lange dauert der Neustart aller 120?",
-      "3. Vergleichen Sie den Speicherbedarf von vollständigen und verknüpften Klonen. Wie viel Platz brauchen die Profilcontainer? Warum passen nicht-persistente Desktops hier gut?"
+      "3. Vergleichen Sie den Speicherbedarf von vollständigen und verknüpften Klonen. Wie viel Platz brauchen die Profilcontainer? Warum passen nicht persistente Desktops hier gut?"
     ],
     "solution": [
       "1. Anmeldungen pro Sekunde: 110 / 180. Jede dauert 90 Sekunden. Gleichzeitig in der Anmeldung: 110 / 180 * 90 = 55 Desktops. Last: 55 * 80 = 4.400 IOPS plus die übrigen 150 - 55 = 95 Desktops mit je 12 IOPS = 1.140 IOPS. Zusammen 5.540 IOPS. Das reicht knapp, die Reserve beträgt nur 460 IOPS (ca. 7,7 %). Abhilfe: Desktops vorab starten, Anmeldeskripte und Profile schlank halten, einen Lese-Cache auf dem Host für das Masterimage nutzen.",
       "",
       "2. Grenze: 6.000 * 0,8 = 4.800 IOPS. Die Nachtschicht belegt 30 * 12 = 360 IOPS. Frei für Neustarts: 4.800 - 360 = 4.440 IOPS. 4.440 / 200 = 22,2, also 22 Desktops gleichzeitig. 120 / 22 = 5,45, also 6 Durchgänge zu je 2 Minuten = 12 Minuten. Die Verwaltungssoftware der VDI begrenzt dazu die Zahl paralleler Starts. Ein Update beginnt nie direkt vor dem Schichtwechsel.",
       "",
-      "3. Vollständige Klone: 150 * 60 GB = 9.000 GB. Verknüpfte Klone: 60 GB + 150 * 8 GB = 1.260 GB. Ersparnis: 7.740 GB, also 86 %. Profilcontainer: 260 * 5 GB = 1.300 GB auf dem Dateiserver, der gesichert werden muss. Nicht-persistente Desktops passen, weil das Personal an wechselnden Geräten und Stationen arbeitet. Alle bekommen denselben geprüften Stand. Fehler oder Schadsoftware verschwinden bei der Abmeldung. Updates werden einmal im Masterimage eingespielt statt auf 150 Desktops."
+      "3. Vollständige Klone: 150 * 60 GB = 9.000 GB. Verknüpfte Klone: 60 GB + 150 * 8 GB = 1.260 GB. Ersparnis: 7.740 GB, also 86 %. Profilcontainer: 260 * 5 GB = 1.300 GB auf dem Dateiserver, der gesichert werden muss. Nicht persistente Desktops passen, weil das Personal an wechselnden Geräten und Stationen arbeitet. Alle bekommen denselben geprüften Stand. Fehler oder Schadsoftware verschwinden bei der Abmeldung. Updates werden einmal im Masterimage eingespielt statt auf 150 Desktops."
     ]
   },
   {
@@ -5321,7 +5321,7 @@
     "solution": [
       "1. Gemeinsame Schichten werden nur einmal gespeichert: 780 + 320 = 1.100 MB. Anwendungsschichten: 14 * 10 * 60 = 8.400 MB. Zusammen 9.500 MB = 9,5 GB. Ohne gemeinsame Schichten: 140 Images * 1.160 MB = 162.400 MB = 162,4 GB, also etwa das 17-Fache.",
       "",
-      "2. Heute je Knoten: 780 + 320 + 14 * 60 = 1.940 MB, im Cluster 12 * 1.940 = 23.280 MB. Schlank je Knoten: 80 + 120 + 840 = 1.040 MB, im Cluster 12 * 1.040 = 12.480 MB. Das spart 10.800 MB pro Monat. Weitere Vorteile: kleinere Angriffsfläche (142 statt 9 Befunde, keine kritischen), weniger Patchaufwand, schnellerer Start neuer Knoten und Container. Werkzeuge, die im Image fehlen (z.B. Shell, Paketmanager), helfen auch einem Angreifer nicht.",
+      "2. Heute je Knoten: 780 + 320 + 14 * 60 = 1.940 MB, im Cluster 12 * 1.940 = 23.280 MB. Schlank je Knoten: 80 + 120 + 840 = 1.040 MB, im Cluster 12 * 1.040 = 12.480 MB. Das spart 10.800 MB pro Monat. Weitere Vorteile: kleinere Angriffsfläche (9 statt 142 Befunde, keine kritischen), weniger Patchaufwand, schnellerer Start neuer Knoten und Container. Werkzeuge, die im Image fehlen (z.B. Shell, Paketmanager), helfen auch einem Angreifer nicht.",
       "",
       "3. Root: Bricht ein Angreifer aus der Anwendung aus, hat er im Container volle Rechte und bessere Chancen auf den Host. Abhilfe: eigener Benutzer im Dockerfile (USER), Rechte im Deployment einschränken, Dateisystem möglichst nur lesbar. Passwort im Dockerfile: Es steckt in jeder Imageschicht und ist für jeden mit Zugriff auf die Registry lesbar. Abhilfe: Passwort sofort ändern, als Secret zur Laufzeit übergeben, alte Images löschen. Tag latest: Es ist nicht nachvollziehbar, welche Version läuft, und ein Neustart kann ungeplant eine neue Version laden. Abhilfe: feste Versionsnummern oder Digest verwenden und Versionen über die Pipeline freigeben."
     ]
@@ -5608,7 +5608,7 @@
     "thema": "service",
     "theme": "Projektmanagement",
     "text": [
-      "Ihr Systemhaus hat in 8 Bowlingcentern ein neues Kassen- und Bahnreservierungssystem eingeführt. Der Go-live ist erfolgt. Vereinbart ist eine Hypercare-Phase von 4 Wochen: Das Projektteam betreut die Center in dieser Zeit selbst, an allen 7 Tagen der Woche.",
+      "Ihr Systemhaus hat in 8 Bowlingcentern ein neues Kassen- und Bahnreservierungssystem eingeführt. Der Go-Live ist erfolgt. Vereinbart ist eine Hypercare-Phase von 4 Wochen: Das Projektteam betreut die Center in dieser Zeit selbst, an allen 7 Tagen der Woche.",
       "Danach übernimmt der reguläre Support. Übergabekriterien: weniger als 10 neue Tickets pro Woche und kein offenes Ticket der Priorität 1.",
       "In Woche 1 gehen 64 Tickets ein. Vereinfacht halbiert sich die Zahl jede Woche. Ein Ticket kostet im Mittel 25 Minuten. Samstags, am stärksten Tag der Center, fallen 40 % der Tickets einer Woche an. Kalkuliert waren für die Hypercare 4 Personentage (PT) zu 8 Stunden, interner Kostensatz 720 Euro je PT. Ein Techniker kann an einem Tag 8 Stunden Tickets bearbeiten.",
       "",
@@ -5975,7 +5975,7 @@
       "",
       "2. Abonnement-Lizenzen gelten je Nutzer. Ein Konto gemeinsam zu nutzen verstößt gegen die Lizenzbedingungen. Außerdem ist nicht mehr nachvollziehbar, wer was getan hat, und das Passwort ist mehreren Personen bekannt. Die 2 Fachkräfte brauchen eine eigene Business-Lizenz. Neu: 7 * 12,50 + 11 * 4,00 = 87,50 + 44,00 = 131,50 Euro pro Monat. 36 Monate: 4.734 Euro, mit Einrichtung 6.174 Euro. Mehrkosten gegenüber der ersten Rechnung: 612 Euro. A bleibt günstiger als B.",
       "",
-      "3. Open-Source-Software kostet keine Lizenzgebühr. Kosten entstehen trotzdem für Einrichtung, Umstellung, Schulung, Betrieb und Support. Die Subskription bezahlt Support und gepflegte Updates, nicht das Nutzungsrecht. Lizenzen wie die GPL erlauben Nutzung und Änderung. Wer geänderte Software weitergibt, muss den Quellcode unter derselben Lizenz offenlegen (Copyleft). Für die reine Nutzung in der Frühförderstelle spielt das keine Rolle. Datenschutz: Die Dokumente enthalten Gesundheitsdaten von Kindern, also besondere Kategorien nach Art. 9 DSGVO. Nötig sind ein Vertrag zur Auftragsverarbeitung, Speicherort und Übermittlungen prüfen, Verschlüsselung und Mehr-Faktor-Anmeldung. Ein deutscher Hoster erleichtert das. Empfehlung: Variante A, weil sie günstiger ist und die Arbeitsweise kaum ändert. Förderberichte und Diagnosen bleiben möglichst in der Fachsoftware und nicht in allgemeinen Office-Dateien. Die Datenschutzprüfung ist Voraussetzung, bevor der Vertrag unterschrieben wird."
+      "3. Open-Source-Software kostet keine Lizenzgebühr. Kosten entstehen trotzdem für Einrichtung, Umstellung, Schulung, Betrieb und Support. Die Subskription bezahlt Support und gepflegte Updates, nicht das Nutzungsrecht. Lizenzen wie die GPL erlauben Nutzung und Änderung. Wer geänderte Software weitergibt, muss den Quellcode unter derselben Lizenz offenlegen (Copyleft). Für die reine Nutzung in der Frühförderstelle spielt das keine Rolle. Datenschutz: Die Dokumente enthalten Gesundheitsdaten von Kindern, also besondere Kategorien nach Art. 9 DSGVO. Nötig sind ein Vertrag zur Auftragsverarbeitung, Speicherort und Übermittlungen prüfen, Verschlüsselung und Mehrfaktor-Anmeldung. Ein deutscher Hoster erleichtert das. Empfehlung: Variante A, weil sie günstiger ist und die Arbeitsweise kaum ändert. Förderberichte und Diagnosen bleiben möglichst in der Fachsoftware und nicht in allgemeinen Office-Dateien. Die Datenschutzprüfung ist Voraussetzung, bevor der Vertrag unterschrieben wird."
     ]
   },
   {

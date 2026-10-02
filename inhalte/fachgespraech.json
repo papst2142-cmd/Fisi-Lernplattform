@@ -236,7 +236,7 @@
    "id": "sic03",
    "cat": "sicherheit",
    "q": "Wie ist die Anmeldung abgesichert?",
-   "hinweis": "Starke Kennwörter, Mehr-Faktor-Authentifizierung, Sperre nach Fehlversuchen, zentrale Verwaltung."
+   "hinweis": "Starke Kennwörter, Mehrfaktor-Authentifizierung, Sperre nach Fehlversuchen, zentrale Verwaltung."
   },
   {
    "id": "sic04",

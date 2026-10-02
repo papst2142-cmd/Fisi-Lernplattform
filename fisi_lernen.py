@@ -20,7 +20,7 @@ import ipaddress
 import random
 
 from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
-                       SRC_CARD, SRC_QUIZ, StatusBook)
+                       SRC_CARD, SRC_QUIZ, StatusBook, learning_streak, plural)
 
 
 # ============================================================================
@@ -230,19 +230,6 @@ def parse_time(text):
     return "%02d:%02d" % (hours, minutes)
 
 
-def learning_streak(days, today=None):
-    """Lerntage in Folge bis heute (heute ohne Aktivitaet zaehlt noch nicht
-    als Unterbrechung, solange gestern gelernt wurde). days: Menge von
-    "JJJJ-MM-TT" mit Aktivitaet."""
-    today = today or datetime.date.today()
-    day = today if today.isoformat() in days else today - datetime.timedelta(days=1)
-    count = 0
-    while day.isoformat() in days:
-        count += 1
-        day -= datetime.timedelta(days=1)
-    return count
-
-
 class DailyGoal:
     """Stand des Tagesziels, aus den Lernaktivitaeten berechnet."""
 
@@ -271,9 +258,7 @@ class DailyGoal:
         return "Tagesziel: %d von %d Aufgaben" % (self.done, self.target)
 
     def streak_text(self):
-        if self.streak == 1:
-            return "Lernserie: 1 Tag"
-        return "Lernserie: %d Tage" % self.streak
+        return "Lernserie: %s" % plural(self.streak, "Tag", "Tage")
 
 
 def reminder_due(settings, goal, now=None, shown_on=""):

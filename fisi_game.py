@@ -34,8 +34,9 @@ import uuid
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
     TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_values, search_content, topic_totals,
-    ACTIVE_RUN_KEY, LEGACY_RUN,
+    ACTIVE_RUN_KEY, LEGACY_RUN, plural,
 )
+import fisi_theme
 from fisi_theme import C, CATEGORY_COLOR, mix
 
 GAME_DIR = os.path.join(CONTENT_DIR, "spiel")
@@ -1263,8 +1264,8 @@ def order_problems(task, cart, content=None):
     if total > task["budget"]:
         problems.append("Budget überschritten: %d € bei %d € Budget." % (total, task["budget"]))
     if longest > task["frist"]:
-        problems.append("Zu spät: Die Ware braucht %d Arbeitstage, die Frist ist %d."
-                        % (longest, task["frist"]))
+        problems.append("Zu spät: Die Ware braucht %s, die Frist ist %d."
+                        % (plural(longest, "Arbeitstag", "Arbeitstage"), task["frist"]))
     return problems
 
 
@@ -1779,6 +1780,13 @@ def _euro(value):
                      .replace("X", "."))
 
 
+def _euro_given(value):
+    """Wie _euro, aber mit geschuetztem Leerzeichen vor dem Euro-Zeichen (ab 0.53):
+    nur fuer die angezeigten Ausgangsdaten (form_given), damit "€" nicht allein in
+    die naechste Zeile rutscht. _euro selbst bleibt unveraendert (Rueckmeldetexte)."""
+    return _euro(value).replace(" €", "\u00a0€")
+
+
 def form_fields(task, content=None):
     """Die Felder eines Formulars mit Sollwert:
     [{"id", "gruppe", "label", "einheit", "art", "soll", "anzeige", "optionen"}]
@@ -1900,17 +1908,17 @@ def form_given(task, content=None):
         lines = []
         for item in data["positionen"]:
             if item["menge"] == 1 and not item.get("einheit"):
-                lines.append("%s: %s" % (item["text"], _euro(item["preis"])))
+                lines.append("%s: %s" % (item["text"], _euro_given(item["preis"])))
             else:
                 lines.append("%s: %d %s × %s" % (item["text"], item["menge"],
                                                   item.get("einheit", "Stück"),
-                                                  _euro(item["preis"])))
+                                                  _euro_given(item["preis"])))
         lines.append("Handlungskosten %s %% · Gewinn %s %% · Umsatzsteuer %s %%" % (
             _num(data["handlungskosten"]), _num(data["gewinn"]), _num(data["ust"])))
         return lines
     if kind == "angebot":
         return ["%d × %s zu je %s (Einkauf)" % (data["menge"], data.get("artikel", "Artikel"),
-                                                _euro(data["einkaufspreis"])),
+                                                _euro_given(data["einkaufspreis"])),
                 "Handlungskosten %s %% · Gewinn %s %% · Umsatzsteuer %s %%" % (
                     _num(data["handlungskosten"]), _num(data["gewinn"]), _num(data["ust"]))]
     if kind == "drucker":
@@ -4689,7 +4697,7 @@ def reset_help(game):
     return ("Setzt nur den aktiven Spielstand zurück (%s): Spielfigur, Spielgeld, "
             "Reputation, Arbeitstage und erledigte Tickets. Auf dem Platz beginnt danach "
             "ein neuer Durchgang. Die anderen Plätze und der Lernfortschritt bleiben "
-            "erhalten. Mit eingerichtetem Abgleich auf PC und Handy." % label)
+            "erhalten. Mit eingerichtetem Abgleich gilt das auf PC und Handy." % label)
 
 
 def reset_question(game):
@@ -6890,7 +6898,8 @@ def branch_effect_text(content=None):
     near = rules.get("naehe") or {}
     parts = []
     if rules.get("anfragen_plus"):
-        parts.append("+%d Kundenanfrage pro Tag" % rules["anfragen_plus"])
+        parts.append("+%s pro Tag" % plural(rules["anfragen_plus"], "Kundenanfrage",
+                                             "Kundenanfragen"))
     if near.get("vorteil"):
         names = [item["name"] for item in firm_rules(content).get("kunden", [])
                  if item.get("ort") in (near.get("orte") or [])]
@@ -8390,8 +8399,9 @@ def inquiry_status_text(inquiry):
     """Kurze Zeile zum Stand einer Anfrage."""
     result = inquiry.get("ergebnis")
     if not result:
-        text = "Einkauf %s × %s · Lieferung in %d Arbeitstagen" % (
-            inquiry["menge"], _euro(inquiry["einkaufspreis"]), inquiry["lieferzeit"])
+        text = "Einkauf %s × %s · Lieferung in %s" % (
+            inquiry["menge"], _euro(inquiry["einkaufspreis"]),
+            plural(inquiry["lieferzeit"], "Arbeitstag", "Arbeitstagen"))
         listed = inquiry.get("listenpreis", inquiry["einkaufspreis"])
         if listed > inquiry["einkaufspreis"]:
             text += " · Lager-Rabatt (sonst %s)" % _euro(listed)
@@ -8917,8 +8927,8 @@ def pressure_text(pressure):
             "bieten deshalb gezielt %d Punkte günstiger gegen dich." % (
                 pressure["gewonnen"], pressure["angebote"], pressure["minus"]))
     if pressure.get("faktor", 1) < 1:
-        text += " Dein Preisvorteil zählt solange nur halb." if pressure["faktor"] == 0.5 \
-            else " Dein Preisvorteil zählt solange nur zu %d %%." % round(
+        text += " Dein Preisvorteil zählt so lange nur halb." if pressure["faktor"] == 0.5 \
+            else " Dein Preisvorteil zählt so lange nur zu %d %%." % round(
                 pressure["faktor"] * 100)
     return text
 
@@ -9275,7 +9285,8 @@ def project_candidates(state, project, levels, content=None):
     if elsewhere and elsewhere != project["projekt"]:
         problem = "Du arbeitest schon im Projekt „%s“ mit." % state.projects[elsewhere]["titel"]
     elif SELF not in project["team"] and own_tickets >= ticket_limit(SELF, content):
-        problem = "Du hast heute schon %d Kundentickets übernommen." % own_tickets
+        problem = "Du hast heute schon %s übernommen." % plural(own_tickets, "Kundenticket",
+                                                                  "Kundentickets")
     value = project_value(state, SELF, project, levels, content)
     result.append({"an": SELF, "name": person_name(state, SELF), "wert": value,
                    "punkte": project_points(value, content),
@@ -10717,14 +10728,46 @@ def _view_rect(item, rotate, content):
     return x, y, w, h
 
 
+def light_text(color, extra=()):
+    """Ab 0.53: Eine feste Farbe (Kreis der Figur, Abzeichen-Stufe), die als
+    Schrift dient, im Hellmodus so weit abdunkeln, dass sie auf den hellen
+    Flaechen (und extra) mind. 4,6:1 erreicht - wie fisi_theme es mit den
+    Akzentfarben macht. Im Dunkelmodus bleibt sie unveraendert."""
+    if not fisi_theme.light:
+        return color
+    return _light_text(color, tuple(C[key] for key in fisi_theme.LIGHT_SURFACES) + tuple(extra))
+
+
+_LIGHT_TEXT_CACHE = {}
+
+
+def _light_text(color, surfaces):
+    key = (color, surfaces)
+    if key not in _LIGHT_TEXT_CACHE:
+        _LIGHT_TEXT_CACHE[key] = fisi_theme.readable_on(color, surfaces)
+    return _LIGHT_TEXT_CACHE[key]
+
+
+def _floor_colors(content):
+    """Bodenfarben von Flur und Raeumen (wie in building_shapes)."""
+    building = (content or GAME)["gebaeude"]
+    hall = building["flur"]
+    colors = [hall.get("bodenfarbe") or mix(C["card_alt"], "#FFFFFF", 0.05)]
+    for item in building["raeume"]:
+        colors.append(item.get("bodenfarbe") or mix(C["card_alt"], room_color(item), 0.13))
+    return colors
+
+
 def player_shapes(position, player, rotate=False, content=None):
     """Die Spielfigur (Kreis in der gewaehlten Farbe, Name daneben) an position
     im Gebaeude."""
     x, y = to_view(position[0], position[1], rotate, content)
     ring = RING_COLORS[normalize_appearance(player[1])["kreis"]]
     shapes = person_shapes(x, y, player[1], ring=ring)
-    # Name unter der Figur (wie bei den Kollegen), so verdeckt er kein "!"
-    shapes.append(_text(x, y + 0.8, player[0] or "Du", "player", ring, anchor="c"))
+    # Name unter der Figur (wie bei den Kollegen), so verdeckt er kein "!".
+    # Im Hellmodus (ab 0.53) in abgedunkelter Kreisfarbe, sonst kaum lesbar.
+    name_color = light_text(ring, _floor_colors(content)) if fisi_theme.light else ring
+    shapes.append(_text(x, y + 0.8, player[0] or "Du", "player", name_color, anchor="c"))
     return shapes
 
 
@@ -10740,7 +10783,7 @@ def _staggered_labels(building):
 
 def _covered_by_label(building, below):
     """Prueft, ob ein Name unter einem nach unten versetzten Schild laege
-    (dann wird er in der kleinen Ansicht weggelassen)."""
+    (dann steht er in der kleinen Ansicht ueber der Figur, ab 0.53)."""
     rooms = [item for item in building["raeume"] if item["id"] in below]
 
     def covered(spot):
@@ -10887,9 +10930,17 @@ def building_shapes(counts=None, selected=None, player=None, content=None,
             continue
         px_, py_ = to_view(person["platz"][0], person["platz"][1], rotate, content)
 
+        # Liegt der Name unter einem nach unten versetzten Schild, steht er ab
+        # 0.53 ueber der Figur (vorher fiel er weg), mit Hintergrund, weil dort
+        # der Schreibtisch steht; mit "!" noch darueber
         if not covered(person["platz"]):
             s.append(_text(px_, py_ + 0.62, short_name(person), "person",
                            C["text_soft"], anchor="c"))
+        else:
+            name = _text(px_, py_ - (1.75 if person["id"] in quests else 1.0),
+                         short_name(person), "person", C["text_soft"], anchor="c")
+            name["bg"] = C["card"]
+            s.append(name)
         if person["id"] in quests:
             s.append(_oval(px_ + 0.25, py_ - 1.15, 0.68, 0.68, C["green"], C["card"], 0.05))
             s.append(_text(px_ + 0.59, py_ - 0.81, "!", "badge", C["card"], anchor="c"))
@@ -11367,7 +11418,7 @@ def journey(state, content=None):
         elif kind == EV_TRANSFER and data.get("id") in hired:
             add(tag, JOURNEY_FIRM, "versetzung", "Versetzt: %s" % hired[data["id"]],
                 "Arbeitet jetzt %s." % ("in der Filiale" if data.get("standort") == SITE_BRANCH
-                                        else "im Gewerbehof am Stellwerk"))
+                                        else "im Gewerbehof Am Stellwerk"))
         elif kind in (EV_OFFER_WON, EV_OFFER_LOST):
             # Jedes Angebot steht im Tagebuch, gewonnen oder verloren
             customer = (firm_customer(data.get("kunde"), content) or {}).get("name", "einen Kunden")
@@ -11558,6 +11609,16 @@ TIER_COLORS = {"bronze": "#D08A4E", "silber": "#D5DCE8", "gold": "#FACC15"}
 TIER_ORDER = ("bronze", "silber", "gold")
 # Kennzahlen, die Geld sind (fuer die Anzeige)
 EURO_METRICS = ("kontostand", "tagesumsatz", "groesster_auftrag")
+
+
+def tier_text_color(key, fallback=None):
+    """Stufenfarbe als Schrift (ab 0.53): im Hellmodus abgedunkelt (light_text),
+    Ring und Rahmen behalten TIER_COLORS. Ohne Stufe fallback bzw. "muted"."""
+    if key not in TIER_COLORS:
+        return fallback or C["muted"]
+    return light_text(TIER_COLORS[key])
+
+
 # Einnahmen der Firma an einem Arbeitstag (Bestwert und "Umsatzstark")
 FIRM_INCOME = (BOOK_REVENUE, BOOK_OFFERS, BOOK_TICKETS, BOOK_PROJECTS)
 # Summen ueber alle Durchgaenge (nicht als Bestwert angezeigt)
@@ -12701,7 +12762,7 @@ def place_message(site_id, position, person, state, content=None):
             return ("Eingangstür", "Noch nicht: %s offen." % (
                 "1 Ticket ist" if left == 1 else "%d Tickets sind" % left), [])
         if site_id == SITE_BRANCH:
-            return ("Ausgang", "Von hier geht es zurück zum Gewerbehof am Stellwerk.",
+            return ("Ausgang", "Von hier geht es zurück zum Gewerbehof Am Stellwerk.",
                     [("buero", "Zum Gewerbehof")])
         return ("Ausgang", "Hier geht es zurück ins Büro.", [("buero", "Zurück ins Büro")])
     title, text = office_message(position, person, quests, content, state)
@@ -13129,8 +13190,9 @@ def result_text(task, payload, available=None, content=None):
     if payload["richtig"]:
         lines.append("Richtig gelöst!")
     elif task["typ"] == "zuordnung":
-        lines.append("Leider nicht ganz: %d Zuordnung(en) stimmen nicht."
-                     % payload["fehler"])
+        lines.append("Leider nicht ganz: %s %s nicht." % (
+            plural(payload["fehler"], "Zuordnung", "Zuordnungen"),
+            "stimmt" if payload["fehler"] == 1 else "stimmen"))
     elif task["typ"] == "terminal":
         mistakes = payload.get("fehlgriffe", 0)
         allowed = _allowed_mistakes(task, content)
@@ -14108,7 +14170,9 @@ def fit_part_text(item):
     elif kind == "ram":
         spec = "%d GB" % item["groesse"]
     elif kind == "cpu":
-        spec = "%d Kerne" % item["kerne"]
+        # ab 0.53 kurz (PC und Handy gleich): "Prozessor mit 24 Kernen · 1.400,00 €"
+        # passte am Handy nicht ins Auswahlfeld, der Preis war abgeschnitten
+        return "CPU %d Kerne · %s" % (item["kerne"], _euro(item["preis"]))
     elif kind == "nic":
         spec = "2 × %d GbE" % item["gbit"]
     else:
@@ -15094,7 +15158,8 @@ def farm_result_text(state, payload, content=None):
                                  payload.get("nachbestellt") else "Hardware bezahlt:",
                                  _euro(payload["kosten"])))
     if payload.get("lieferzeit"):
-        parts.append("Längste Lieferzeit: %d Arbeitstage." % payload["lieferzeit"])
+        parts.append("Längste Lieferzeit: %s." % plural(payload["lieferzeit"], "Arbeitstag",
+                                                         "Arbeitstage"))
     return head, " ".join(parts)
 
 
@@ -15150,8 +15215,9 @@ def farm_journey(state, content=None):
     if farm["abnahme"]:
         data = farm["abnahme"]
         entries.append((data["tag"], "serverfarm_abnahme", "Serverfarm abgenommen",
-                        "Nach %d Arbeitstagen%s, %d von %d Aufgaben richtig%s." % (
-                            data["dauer"], " (pünktlich)" if data["puenktlich"] else
+                        "Nach %s%s, %d von %d Aufgaben richtig%s." % (
+                            plural(data["dauer"], "Arbeitstag", "Arbeitstagen"),
+                            " (pünktlich)" if data["puenktlich"] else
                             " (%d Tag%s zu spät)" % (data["verzug"], "" if data["verzug"] == 1
                                                      else "e"),
                             data["richtig"], data["aufgaben"],

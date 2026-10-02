@@ -323,7 +323,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         canvas.create_oval(left + inset, top + inset, right - inset,
                            bottom - inset, fill="", **line_opts)
 
-    elif name == "diamond":       # AP2 Szenarien
+    elif name == "diamond":       # AP2-Szenarien
         canvas.create_polygon(x, top, right, y, x, bottom, left, y,
                               fill=color, outline="",
                               **({"tags": tags} if tags else {}))
@@ -382,7 +382,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
             canvas.create_rectangle(left, ty, right, ty + height,
                                     fill="", **line_opts)
 
-    elif name == "flag":           # Test Projekt
+    elif name == "flag":           # Testprojekt
         canvas.create_line(left + size * 0.14, top, left + size * 0.14, bottom,
                            **opts)
         canvas.create_polygon(left + size * 0.14, top,
@@ -391,7 +391,7 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
                               fill=color, outline="",
                               **({"tags": tags} if tags else {}))
 
-    elif name == "layers":         # AP1 Szenarien (Grundlagen)
+    elif name == "layers":         # AP1-Szenarien (Grundlagen)
         step = size * 0.22
         for i in range(3):
             oy = top + size * 0.18 + i * step
@@ -856,6 +856,16 @@ class GradientPanel(tk.Canvas):
         super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
                          highlightthickness=0, bd=0)
         self.bind("<Configure>", self._schedule)
+
+    def destroy(self):
+        # Ab 0.53: geplantes Neuzeichnen abbrechen (sonst verwaister Zeitgeber)
+        if self._job is not None:
+            try:
+                self.after_cancel(self._job)
+            except tk.TclError:
+                pass
+            self._job = None
+        super().destroy()
 
     def set_data(self, title, subtitle, big="", big_sub=""):
         self._texts = (title, subtitle, big, big_sub)
@@ -1647,6 +1657,7 @@ class ScrollArea(tk.Frame):
         self.scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 2))
         self.hscrollbar.grid(row=1, column=0, sticky="ew")
         self.hscrollbar.grid_remove()
+        tk.Misc.bind(self.hscrollbar, "<Map>", self._hbar_mapped, "+")
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
@@ -1674,8 +1685,32 @@ class ScrollArea(tk.Frame):
         else:
             self.hscrollbar.grid()
 
+    def _hbar_mapped(self, _event=None):
+        # Ab 0.53: Nach schnellem Ein-/Ausblenden liess Tk den Balken manchmal
+        # ohne Verwaltung (grid) sichtbar stehen - ein Balken ohne Funktion.
+        # Dann einmal wieder einordnen und sauber ausblenden.
+        if not self.hscrollbar.winfo_manager():
+            self.after_idle(self._hide_stray_hbar)
+
+    def _hide_stray_hbar(self):
+        try:
+            if not self.hscrollbar.winfo_manager() and self.hscrollbar.winfo_ismapped():
+                self.hscrollbar.grid()
+                self.hscrollbar.grid_remove()
+        except tk.TclError:
+            pass
+
     def _on_inner_configure(self, _event=None):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _sync_hscroll(self):
+        """Ab 0.53: Tk meldet die neue Breite nicht immer ueber xscrollcommand -
+        dann blieb ein waagerechter Balken ohne Funktion stehen, obwohl alles
+        passt. Deshalb nach jeder Groessenaenderung selbst nachsehen."""
+        try:
+            self._set_hscroll(*self.canvas.xview())
+        except tk.TclError:
+            pass
 
     def _on_canvas_configure(self, event):
         # Der Inhalt wird nur bis zur Fensterbreite gestreckt, wenn er von
@@ -1685,6 +1720,7 @@ class ScrollArea(tk.Frame):
         # statt zusammengequetscht zu werden.
         needed = self.inner.winfo_reqwidth()
         self.canvas.itemconfigure(self._window, width=max(event.width, needed))
+        self.after_idle(self._sync_hscroll)
 
     def _bind_wheel(self, flag):
         if flag:

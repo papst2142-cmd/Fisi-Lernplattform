@@ -19,7 +19,8 @@ import flet as ft
 import flet.canvas as cv
 
 import fisi_game as fg
-from fisi_core import CATEGORY_SHORT
+from fisi_core import CATEGORY_SHORT, plural
+import fisi_theme
 from fisi_theme import C, CATEGORY_COLOR, GRADIENTS, lighten, mix
 import ui
 
@@ -426,13 +427,13 @@ def tier_color(key):
 def moment_card(info, state, position, total, on_next, on_open):
     """Inhalt des Meilenstein-Moments (ab 0.46): Szene im Kartenstil, Orden,
     Name und ein Satz - wie am PC."""
-    color = tier_color(info["tier"])
     lines = [
         ft.Container(content=shapes_canvas(*fg.moment_shapes(info, state), 300, 150),
                      alignment=ft.Alignment.CENTER),
         ft.Container(content=badge_image(info["bild"], info["farbe"], info["tier"], 84),
                      alignment=ft.Alignment.CENTER, margin=ft.Margin.only(top=6)),
-        ui.text("MEILENSTEIN · %s" % info["tier_name"].upper(), size=11, color=color,
+        ui.text("MEILENSTEIN · %s" % info["tier_name"].upper(), size=11,
+                color=fg.tier_text_color(info["tier"]),
                 weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
         ui.text(info["name"], size=22, weight=ft.FontWeight.BOLD,
                 text_align=ft.TextAlign.CENTER),
@@ -740,6 +741,7 @@ class OrderBoard(ft.Column):
 
 
 RACK_BG, RACK_EMPTY, RACK_BORDER = "#1E1A30", "#2A2442", "#5B5480"
+RACK_LABEL_LIGHT = "#A79FC4"   # HE-Nummern im dunklen Schrank im Hellmodus (ab 0.53)
 
 
 def dropdown(options, value, on_select, expand=True, width=None):
@@ -827,7 +829,9 @@ def cabinet_rows(task, answer, unit_h, on_tap=None, current=None, locked=False,
     def row(label, height, content=None, fill=None, border=None, tap_unit=None):
         click = (lambda _e, u=tap_unit: on_tap(u)) if on_tap and tap_unit else None
         return ft.Row([
-            ft.Container(content=ui.text(str(label), size=10, color=C["muted"]), width=26,
+            ft.Container(content=ui.text(str(label), size=10,
+                                         color=RACK_LABEL_LIGHT if fisi_theme.light
+                                         else C["muted"]), width=34,
                          height=height, alignment=ft.Alignment.CENTER_RIGHT),
             ft.Container(content=content, height=height - 3, expand=True, bgcolor=fill,
                          border=border, border_radius=5, ink=click is not None,
@@ -1488,7 +1492,7 @@ class ExchangePanel(ft.Column):
         self.solution = False
         kind = fg.spare_kinds().get(task["austausch"]["typ"], "Ersatzteil")
         controls = [ui.label("Austausch: %s" % kind),
-                    ui.text("Wähle ein Teil aus dem Lager. Fehlt das passende, bestelle es "
+                    ui.text("Wähle ein Teil aus dem Lager. Fehlt das Passende, bestelle es "
                             "nach: Es kommt am nächsten Arbeitstag, bis dahin wartet das "
                             "Ticket.", size=12, color=C["text_dim"])]
         self.part_boxes = {}
@@ -2062,8 +2066,8 @@ class GameScreen:
         founding.visible = not state.firm
         job = "Geschäftsführung · %s" % state.firm["name"] if state.firm else state.rank
         hint = "" if state.firm else fg.rank_hint(state)
-        money = ("Konto: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
-                 if not state.firm else "Konto: %s" % euro(state.money))
+        money = ("Kontostand: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
+                 if not state.firm else "Kontostand: %s" % euro(state.money))
         buttons = [ui.GradientButton("Figur bearbeiten", self._edit_profile, kind="ghost",
                                      height=38)]
         if state.firm or state.founding_ready():
@@ -2228,7 +2232,9 @@ class GameScreen:
                 for decision in state.open_decisions():
                     controls.append(decision_box(decision, self._decide_here))
             title, accent = "Tickets heute", C["accent2"]
-            subtitle = "%d von %d bearbeitet" % (len(state.handled), len(tickets))
+            # ab 0.53: mit Firma und ohne Tickets kein "0 von 0 bearbeitet"
+            subtitle = ("" if state.firm and not tickets else
+                        "%d von %d bearbeitet" % (len(state.handled), len(tickets)))
 
         if not tickets:
             waiting = len(state.waiting_for_delivery())
@@ -2571,6 +2577,11 @@ class GameScreen:
         self.open_site("buero")
 
     def _fill_site(self):
+        # ab 0.53: Laeuft die Figur noch im bisherigen Grundriss (z.B. darunter
+        # liegende Seite), ihren Weg beenden - sonst meldet sie ihre Ankunft
+        # spaeter in die neue Ansicht.
+        if getattr(self, "office_plan", None) is not None:
+            self.office_plan.walk_id += 1
         state = self.game.state
         site = self._site()
         self.office_info = ft.Column(spacing=6, tight=True,
@@ -2609,7 +2620,7 @@ class GameScreen:
             ], vertical_alignment=ft.CrossAxisAlignment.CENTER))
             title, accent = fg.apartment(state.home_id)["name"], C["accent2"]
             subtitle = ("Möbel antippen, dann Stelle antippen" if self.editing
-                        else "Tippe irgendwo hin")
+                        else "Tippe irgendwohin")
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
             accent = C["accent"] if site == fg.SITE_OFFICE else C["blue"]
@@ -2866,7 +2877,8 @@ class GameScreen:
         info = [ui.text("???" if item["geheim"] else item["name"], size=14,
                         weight=ft.FontWeight.BOLD,
                         color=C["text"] if tier else C["text_dim"]),
-                ui.text(status, size=12, color=tier_color(color), weight=ft.FontWeight.BOLD)]
+                ui.text(status, size=12, color=fg.tier_text_color(color),
+                        weight=ft.FontWeight.BOLD)]
         if item["naechste"] and item["balken"] and not item["geheim"]:
             info.append(ft.ProgressBar(value=item["anteil"], bar_height=6, border_radius=3,
                                        bgcolor=C["border"],
@@ -2959,8 +2971,9 @@ class GameScreen:
         limits = fg.ticket_rules()
         rows = [ui.text("Verteile die Tickets an deine Leute oder übernimm selbst welche "
                         "(höchstens %d, mit deinem Wissensstand). Jeder Mitarbeiter schafft "
-                        "%d Ticket pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
-                        % (limits["spieler_max"], limits["mitarbeiter_max"]), size=12,
+                        "%s pro Tag, die Chance hängt vom Wert im Thema des Tickets ab."
+                        % (limits["spieler_max"],
+                           plural(limits["mitarbeiter_max"], "Ticket", "Tickets")), size=12,
                         color=C["text_dim"])]
         levels = self.game.firm_levels()
         for ticket in tickets:
@@ -3132,7 +3145,7 @@ class GameScreen:
         rules = fg.project_rules()
         tenders = [ui.text("Rechne das Angebot wie bei den Anfragen: Projektarbeit (Punkte × %s) "
                            "plus Material, dazu Handlungskosten und dein Zuschlag. Bei "
-                           "Projekten bieten meist zwei oder drei Firmen mit. Gewonnen gibt es "
+                           "Projekten bieten meist zwei oder drei Firmen mit. Bei Gewinn gibt es "
                            "%d %% Anzahlung, den Rest bei Fertigstellung."
                            % (euro(rules["stundensatz"]), rules["anzahlung"]), size=12,
                            color=C["text_dim"])]
@@ -3146,7 +3159,8 @@ class GameScreen:
         result = [ui.Card("Laufende Projekte", rows, accent=C["green"],
                           subtitle="%d von %d" % (len(running), state.project_limit())),
                   ui.Card("Ausschreibungen", tenders, accent=C["pink"],
-                          subtitle="alle %d Arbeitstage eine neue" % rules["abstand_tage"])]
+                          subtitle="alle %s eine neue" % plural(
+                              rules["abstand_tage"], "Arbeitstag", "Arbeitstage"))]
         done = state.done_projects()
         if done:
             lines = []
@@ -3186,7 +3200,7 @@ class GameScreen:
         lines += [ui.text("• " + line, size=12, color=C["text_soft"])
                   for line in template["rahmenbedingungen"]]
         if template["lernbar"]:
-            lines.append(ui.text("Tipp: Unter „Projektarbeit“ im Lernbereich kannst du dieses "
+            lines.append(ui.text("Tipp: Unter „Testprojekt“ im Lernbereich kannst du dieses "
                                  "Projekt durcharbeiten. Dann arbeitet dein Team %d %% "
                                  "schneller."
                                  % fg.project_rules().get("lernbonus", 0), size=11,
@@ -3295,7 +3309,7 @@ class GameScreen:
             ui.text(state.firm["name"], size=22, weight=ft.FontWeight.BOLD),
             ui.text("%s · %s" % (fg.firm_rules()["gebaeude"]["name"], stage["name"]),
                     size=14, color=C["green"], weight=ft.FontWeight.BOLD),
-            ui.text("Konto: %s" % euro(state.money), size=13,
+            ui.text("Kontostand: %s" % euro(state.money), size=13,
                     color=C["text_dim"] if state.money >= 0 else C["red"]),
             ui.text(fg.firm_summary(state), size=13, color=C["text_dim"]),
         ], accent=C["green"], subtitle="seit Tag %d · %s" % (
@@ -3614,7 +3628,8 @@ class GameScreen:
             parts.append(ft.Row([button]))
             controls.append(self._person_box(parts))
         return [ui.Card("Bewerbungen", controls, accent=C["pink"],
-                        subtitle="alle %d Tage neue" % rules["abstand_tage"])]
+                        subtitle="alle %s neue" % plural(rules["abstand_tage"], "Tag",
+                                                         "Tage"))]
 
     def _hire(self, applicant_id):
         try:
@@ -4512,7 +4527,7 @@ class GameScreen:
                 weight=ft.FontWeight.BOLD))
         if phase.get("team_punkte"):
             current = next(item for item in info["phasen"] if item["id"] == phase["id"])
-            parts.append(ui.text("Team-Arbeit: %s von %d Punkten%s." % (
+            parts.append(ui.text("Teamarbeit: %s von %d Punkten%s." % (
                 fg._num(current["punkte"]), phase["team_punkte"],
                 " · heute etwa +%s" % fg._num(info["team_heute"])
                 if info.get("team_heute") else " · noch niemand im Team"),
@@ -4633,7 +4648,7 @@ class GameScreen:
                     ui.text(value, size=13, weight=ft.FontWeight.BOLD)]) for label, value in rows
         ] + [ui.text("Das Rechenzentrum läuft. Die Datenhafen Talheim GmbH nennt deine Firma "
                      "ab jetzt als Referenz.", size=14, color=C["text_soft"])],
-            accent=C["green"], subtitle="nach %d Tagen" % data.get("dauer", 0))
+            accent=C["green"], subtitle="nach %s" % plural(data.get("dauer", 0), "Tag", "Tagen"))
 
     def open_farm_task(self, task_id):
         task = fg.farm_task(task_id)

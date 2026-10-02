@@ -157,6 +157,7 @@ class PillGroup(ft.Stack):
             self.pills.append(pill)
         # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
         self._widths = [32 + 7.6 * len(str(caption)) for _v, caption in options]
+        self._captions = [caption for _v, caption in options]
         self._estimate = sum(self._widths) + 8 * max(0, len(options) - 1)
         self._placed = False
         self.row = ft.Row(self.pills, spacing=8, scroll=ft.ScrollMode.HIDDEN,
@@ -198,7 +199,11 @@ class PillGroup(ft.Stack):
             start = sum(self._widths[:self.current]) + 8 * self.current
             if not self._placed and start + self._widths[self.current] > width - self.HINT_WIDTH:
                 self._placed = True
-                self.page.run_task(self._scroll_to, max(0, start - 16))
+                # Ab 0.53 Zielposition knapper geschaetzt (etwa 7 px je Zeichen)
+                # und mit mehr Rand, damit die Pille links nicht angeschnitten ist
+                left = sum(32 + 7.0 * len(str(caption))
+                           for caption in self._captions[:self.current])
+                self.page.run_task(self._scroll_to, max(0, left + 8 * self.current - 24))
         self._placed = True
 
     async def _scroll_to(self, offset):
@@ -491,18 +496,22 @@ class Ring(ft.Stack):
         shapes = [cv.Circle(self.size / 2, self.size / 2, box / 2, ft.Paint(
             color=C["ring_bg"], stroke_width=self.thickness,
             style=ft.PaintingStyle.STROKE))]
-        if fraction > 0:
-            sweep = max(0.02, fraction) * 2 * math.pi
-            shapes.append(cv.Arc(
-                half, half, box, box, start_angle=-math.pi / 2, sweep_angle=sweep,
-                paint=ft.Paint(
-                    stroke_width=self.thickness, style=ft.PaintingStyle.STROKE,
-                    stroke_cap=ft.StrokeCap.ROUND,
-                    gradient=ft.PaintSweepGradient(
-                        center=ft.Offset(self.size / 2, self.size / 2),
-                        colors=[color_a, color_b, color_a if fraction >= 0.999 else color_b],
-                        color_stops=[0.0, max(0.01, fraction), 1.0],
-                        rotation=-math.pi / 2))))
+        # Ab 0.53 immer zwei Formen (Bogen bei 0 unsichtbar): Faellt ein Ring
+        # auf 0, liess das Weglassen des Bogens den Flet-Client mit IndexError
+        # abbrechen (z.B. Startseite nach "Sicherung einspielen > Alles ersetzen")
+        if fraction <= 0:
+            color_a = color_b = ft.Colors.TRANSPARENT
+        sweep = max(0.02, fraction) * 2 * math.pi
+        shapes.append(cv.Arc(
+            half, half, box, box, start_angle=-math.pi / 2, sweep_angle=sweep,
+            paint=ft.Paint(
+                stroke_width=self.thickness, style=ft.PaintingStyle.STROKE,
+                stroke_cap=ft.StrokeCap.ROUND,
+                gradient=ft.PaintSweepGradient(
+                    center=ft.Offset(self.size / 2, self.size / 2),
+                    colors=[color_a, color_b, color_a if fraction >= 0.999 else color_b],
+                    color_stops=[0.0, max(0.01, fraction), 1.0],
+                    rotation=-math.pi / 2))))
         self.canvas.shapes = shapes
         self.big.value = big
         self.small.value = small
