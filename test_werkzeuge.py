@@ -261,6 +261,23 @@ class TopicPracticeTest(unittest.TestCase):
         _source, keys = fl.topic_practice(book, ["ipv4"], rng=random.Random(3))
         self.assertEqual(keys[0], quiz[5])
 
+    def test_letzte_pruefung_im_fortschritt(self):
+        import fisi_pruefung as fp
+        self.assertEqual(fp.latest_weak([]), (None, []))
+        exams = [{"timestamp": "2026-10-02 10:00:00", "art": fp.NETZWERKE, "daten": {
+                     "themen": {"IT-Sicherheit": [5, 25], "Netzwerkdesign": [20, 25],
+                                "Subnetting & Routing": [10, 50]}}},
+                 {"timestamp": "2026-09-01 10:00:00", "art": fp.AP1, "daten": {
+                     "themen": {"Projektplanung": [0, 25]}}}]
+        title, weak = fp.latest_weak(exams)
+        self.assertEqual(weak, ["IT-Sicherheit", "Subnetting & Routing"])
+        self.assertEqual(title, "Üben (letzte Prüfung: Netzwerke, 02.10.2026)")
+        # nur die juengste Pruefung zaehlt
+        exams[0]["daten"]["themen"] = {"IT-Sicherheit": [25, 25]}
+        self.assertEqual(fp.latest_weak(exams), (None, []))
+        self.assertEqual(fp.latest_weak([{"timestamp": "", "art": "x", "daten": {}}]),
+                         (None, []))
+
 
 # ============================================================================
 #  SUCHE IM NOTIZBLOCK
