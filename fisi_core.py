@@ -22,6 +22,7 @@ import sys
 import random
 import sqlite3
 import datetime
+import unicodedata
 import uuid
 
 # ============================================================================
@@ -842,6 +843,15 @@ class DBManager:
             for table in self.STAMP_TABLES)
         row = self._execute(sql, fetch="one", default=None)
         return tuple(row) if row else None
+
+    def table_counts(self, tables):
+        """{tabelle: Anzahl Zeilen} (ab 0.54, fuer "Problem melden")."""
+        counts = {}
+        for table in tables:
+            row = self._execute("SELECT COUNT(*) FROM %s" % table, fetch="one",
+                                default=None)
+            counts[table] = row[0] if row else 0
+        return counts
 
     def has_legacy_events(self):
         """Gibt es Spielereignisse von vor 0.48 (ohne Durchgang)?"""
@@ -1916,6 +1926,46 @@ def notebook_entries(book, status=Q_PRACTICE, category=FILTER_ALL, topic=FILTER_
     entries.sort(key=lambda entry: entry["time"], reverse=True)
     entries.sort(key=lambda entry: 0 if entry["level"] == LEVEL_RED else 1)
     return entries
+
+
+# Suche im Notizblock (ab 0.54): Frage, Antwort, Thema und Fachbereich. Die
+# Inhalte aendern sich zur Laufzeit nicht, darum wird der Suchtext je Frage
+# nur einmal gebaut (sonst kostete jeder Tastendruck tausende model_answer).
+NOTEBOOK_SEARCH_HINT = "Stichwort suchen (Frage, Antwort, Thema)"
+NOTEBOOK_NO_HITS = ("Keine Treffer für „%s“. Versuch ein anderes Stichwort oder setze "
+                    "die Filter zurück.")
+_SEARCH_TEXT = {}
+
+
+def search_key(text):
+    """Vergleichsform fuer die Suche: Unicode vereinheitlicht (Umlaute als
+    ein Zeichen), ohne Gross/klein (casefold, also auch ß = ss), Leerraum
+    an den Raendern entfernt."""
+    return unicodedata.normalize("NFC", str(text or "")).casefold().strip()
+
+
+def _entry_search_text(entry):
+    key = (entry["source"], entry["key"])
+    text = _SEARCH_TEXT.get(key)
+    if text is None:
+        item = entry["item"]
+        category = item.get("cat", "")
+        topic = item.get("thema")
+        parts = [entry["title"], model_answer(entry["source"], item), category,
+                 CATEGORY_SHORT.get(category, ""), TOPIC_NAME.get(topic, ""),
+                 TOPIC_SHORT.get(topic, ""), str(item.get("theme", ""))]
+        text = _SEARCH_TEXT[key] = search_key(" ".join(parts))
+    return text
+
+
+def notebook_search(entries, query):
+    """Eintraege des Notizblocks, die das Stichwort query enthalten
+    (zusaetzlich zu den Filtern von notebook_entries). Leeres Stichwort =
+    alle. Die Reihenfolge bleibt."""
+    needle = search_key(query)
+    if not needle:
+        return list(entries)
+    return [entry for entry in entries if needle in _entry_search_text(entry)]
 
 
 def notebook_summary(book, category=FILTER_ALL, topic=FILTER_ALL):

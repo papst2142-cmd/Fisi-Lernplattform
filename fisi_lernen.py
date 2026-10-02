@@ -8,7 +8,8 @@ Gemeinsam fuer PC und Handy:
   * Wiederholungssystem (Spaced Repetition) fuer Karteikarten und
     Pruefungstrainer-Fragen - berechnet nur aus den Antworten, die ohnehin
     abgeglichen werden. PC und Handy rechnen deshalb immer gleich.
-  * Tagesziel und Lernserie
+  * Tagesziel und Lernserie, ab 0.54 auch "Aufgaben pro Tag" (Fortschritt)
+  * ab 0.54: Uebungsrunde zu einem schwachen Thema ("Jetzt ueben")
   * Subnetting-Trainer (Zufallsaufgaben, Pruefung der Eingaben, Rechenweg)
 
 Die Oberflaechen (app_gui.py, mobile/src/main.py) zeichnen nur.
@@ -20,7 +21,8 @@ import ipaddress
 import random
 
 from fisi_core import (KARTEIKARTEN, LEVEL_RED, Q_DONE, Q_PRACTICE, QUIZ_QUESTIONS,
-                       SRC_CARD, SRC_QUIZ, StatusBook, learning_streak, plural)
+                       SRC_CARD, SRC_QUIZ, TOPIC_NAME, StatusBook, learning_streak,
+                       plural)
 
 
 # ============================================================================
@@ -278,6 +280,140 @@ def reminder_text(goal):
     rest = max(0, goal.target - goal.done)
     return ("Dein Tagesziel ist noch offen: %d von %d Aufgaben, es fehlen noch %d."
             % (goal.done, goal.target, rest))
+
+
+# ============================================================================
+#  AUFGABEN PRO TAG (ab 0.54)
+# ============================================================================
+#
+# Diagramm im Fortschritt. Gezaehlt wird genau wie beim Tagesziel und der
+# Lernserie (DBManager.activity_days: bewertete Aufgaben je Kalendertag in
+# Ortszeit, die Zeitstempel stehen schon in Ortszeit in der Datenbank). Ein
+# neuer Tag beginnt um Mitternacht, Tage ohne Aufgaben zaehlen 0.
+
+DAY_CHART_TITLE = "Aufgaben pro Tag"
+DAY_CHART_SUBTITLE = "bewertete Aufgaben, Tagesziel als Linie"
+DAY_CHART_RANGES = [(7, "7 Tage"), (30, "30 Tage")]
+DAY_CHART_SERIES = "Aufgaben"
+WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+
+
+def daily_series(activity, days, today=None):
+    """[(datum, anzahl)] der letzten days Tage bis einschliesslich heute,
+    aelteste zuerst. activity: {"JJJJ-MM-TT": anzahl} wie activity_days."""
+    today = today or datetime.date.today()
+    start = today - datetime.timedelta(days=days - 1)
+    return [(day, int(activity.get(day.isoformat(), 0) or 0))
+            for day in (start + datetime.timedelta(days=offset) for offset in range(days))]
+
+
+def day_labels(series):
+    """Beschriftung der x-Achse: bei einer Woche der Wochentag, sonst TT.MM."""
+    if len(series) <= 7:
+        return [WEEKDAYS[day.weekday()] for day, _count in series]
+    return [day.strftime("%d.%m") for day, _count in series]
+
+
+def goal_line_text(target):
+    return "Tagesziel %d" % target
+
+
+def daily_summary(series, target=None):
+    """Kurztext unter dem Diagramm, z.B. "7 Tage: 85 Aufgaben · Tagesziel an
+    3 von 7 Tagen erreicht"."""
+    total = sum(count for _day, count in series)
+    text = "%s: %s" % (plural(len(series), "Tag", "Tage"),
+                       plural(total, "Aufgabe", "Aufgaben"))
+    if target:
+        reached = sum(1 for _day, count in series if count >= target)
+        text += " · Tagesziel an %d von %s erreicht" % (
+            reached, plural(len(series), "Tag", "Tagen"))
+    return text
+
+
+# ============================================================================
+#  SCHWAECHEN DIREKT UEBEN (ab 0.54)
+# ============================================================================
+#
+# "Jetzt ueben" neben einem schwachen Thema (Auswertung der Pruefungs-
+# simulation, Fortschritt) startet eine normale Uebungsrunde - die Antworten
+# laufen ueber die ueblichen Speicherwege und zaehlen fuer Tagesziel,
+# Lernserie und Wiederholungssystem. Die Themen der Pruefung (Szenario-
+# Themen bzw. WiSo-Bereiche) haben eigene Namen; EXAM_THEME_TOPICS ordnet
+# ihnen die passenden Themen der Karteikarten und Quizfragen zu.
+
+PRACTICE_ROUND = 10     # wie die vorgegebene Fragenanzahl im Pruefungstrainer
+PRACTICE_BUTTON = "Jetzt üben"
+PRACTICE_NONE = "Zu diesem Thema gibt es keine Übungsfragen."
+
+EXAM_THEME_TOPICS = {
+    # AP2 (Szenario-Themen)
+    "Subnetting & Routing": ["ipv4", "ipv6", "routing"],
+    "IT-Sicherheit": ["isms", "krypto", "zugriff", "angriffe", "netzsicherheit", "haertung"],
+    "Storage & RAID": ["storage", "notfall"],
+    "Netzwerkdesign": ["switching", "wlan", "verkabelung", "wan_vpn", "grundlagen"],
+    "Wirtschaft & Beratung": ["kalkulation", "beschaffung", "beratung", "service"],
+    "Virtualisierung": ["virtualisierung"],
+    "Projektmanagement": ["projekt"],
+    # AP1
+    "Rechnertechnik & Zahlensysteme": ["hardware", "zahlen"],
+    "Rechnernetze Grundlagen": ["grundlagen", "ipv4", "dienste", "verkabelung"],
+    "Datenschutz & Sicherheit": ["datenschutz", "zugriff", "angriffe"],
+    "Projektplanung": ["projekt"],
+    "Wirtschafts- und Sozialkunde": ["recht", "arbeitswelt"],
+    # WiSo (fisi_pruefung.evaluate)
+    "Recht & Verträge": ["recht"],
+    "Arbeitswelt": ["arbeitswelt"],
+}
+
+
+def practice_topics(name):
+    """Themen-IDs (fisi_core.TOPICS) zu einem Pruefungsthema, einer
+    Themen-ID oder einem Themennamen. Unbekannt = leere Liste."""
+    if name in EXAM_THEME_TOPICS:
+        return list(EXAM_THEME_TOPICS[name])
+    if name in TOPIC_NAME:
+        return [name]
+    return [topic for topic, title in TOPIC_NAME.items() if title == name]
+
+
+def _practice_rank(book, source, key):
+    """Reihenfolge in der Runde: rot, gelb, unbearbeitet, angefangen,
+    abgeschlossen."""
+    if not book.touched(source, key):
+        return 2
+    status, level = book.status(source, key)
+    if status == Q_PRACTICE:
+        return 0 if level == LEVEL_RED else 1
+    return 4 if status == Q_DONE else 3
+
+
+def topic_practice(book, topics, size=PRACTICE_ROUND, rng=None):
+    """Uebungsrunde zu den Themen topics: (quelle, schluessel) mit hoechstens
+    size Fragen, Ungewusstes (rot, dann gelb) zuerst. Gewaehlt wird der
+    Bereich mit mehr zu uebenden Fragen - bei Gleichstand der
+    Pruefungstrainer, ohne Quizfragen die Karteikarten. Ohne passende Fragen
+    (None, [])."""
+    wanted = set(topics)
+    pools = {SRC_QUIZ: [q["q"] for q in QUIZ_QUESTIONS if q.get("thema") in wanted],
+             SRC_CARD: [c["q"] for c in KARTEIKARTEN if c.get("thema") in wanted]}
+    ranked, weak = {}, {}
+    for source, keys in pools.items():
+        keys = list(keys)
+        if rng is not None:
+            rng.shuffle(keys)
+        ranks = {key: _practice_rank(book, source, key) for key in keys}
+        ranked[source] = sorted(keys, key=lambda key: ranks[key])
+        weak[source] = sum(1 for rank in ranks.values() if rank <= 1)
+    if not ranked[SRC_QUIZ] and not ranked[SRC_CARD]:
+        return None, []
+    if not ranked[SRC_QUIZ]:
+        source = SRC_CARD
+    elif not ranked[SRC_CARD]:
+        source = SRC_QUIZ
+    else:
+        source = SRC_CARD if weak[SRC_CARD] > weak[SRC_QUIZ] else SRC_QUIZ
+    return source, ranked[source][:size]
 
 
 # ============================================================================
