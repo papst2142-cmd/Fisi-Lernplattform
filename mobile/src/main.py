@@ -31,20 +31,21 @@ if os.environ.get("FLET_APP_STORAGE_DATA") and not os.environ.get("FISI_DB_PATH"
 
 import flet as ft  # noqa: E402
 
+import fisi_diagnose as fdg  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
-    REMINDER_TOAST_MS, TOAST_MS, count_word, plural,
+    REMINDER_TOAST_MS, TOAST_MS, count_word, learning_streak, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
     RAID_LEVELS, STATUS_FILTERS, SZENARIEN, TOPIC_NAME, TOPIC_SHORT, TOPICS,
     LEVEL_RED, LEVEL_YELLOW, Q_DONE, Q_OPEN, Q_PRACTICE, Q_STATUS_NAME, Q_STATUS_TABS,
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
-    SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_summary,
-    position_statuses, status_label,
-    ap1_theme_totals, content_totals,
+    SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_search, notebook_summary,
+    NOTEBOOK_NO_HITS, NOTEBOOK_SEARCH_HINT, position_statuses, status_label,
+    ap1_theme_totals, content_totals, error_log_path,
     filter_positions, group_values, ihk_note, page_slice, raid_report,
     screen_report, search_content, subnet_report, theme_totals, validate_content,
 )
@@ -52,9 +53,12 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
-    GOAL_MAX, GOAL_MIN, GOAL_STEP, TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
-    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, due_text, learning_settings,
-    parse_time, reminder_due, reminder_text, save_learning_settings, trainer_round,
+    DAY_CHART_RANGES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NONE, TRAINER_KIND_NAME,
+    TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
+    day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
+    reminder_due, reminder_text, save_learning_settings, topic_practice, trainer_round,
     trainer_summary,
 )
 import fisi_projekt as fpj  # noqa: E402
@@ -1068,6 +1072,19 @@ def overall_controls(db):
     return controls
 
 
+def weak_topic_rows(names, on_practice):
+    """Je schwaches Thema eine Zeile mit "Jetzt ueben" (ab 0.54, wie am PC)."""
+    return [ft.Container(
+        content=ft.Row([
+            ft.Container(width=4, height=28, border_radius=2, bgcolor=C["red"]),
+            ui.text(name, size=13, weight=ft.FontWeight.BOLD, expand=True),
+            ui.GradientButton(PRACTICE_BUTTON, lambda _e, n=name: on_practice(n),
+                              kind="accent", height=34),
+        ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+        bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=10,
+        padding=ft.Padding.symmetric(horizontal=10, vertical=6)) for name in names]
+
+
 class ExamPanel(ft.Column):
     """Pruefungsmodus im Pruefungstrainer: Auswahl, laufende Pruefung mit
     Countdown (ohne Pause), Selbstbewertung mit Kriterien, Ergebnis."""
@@ -1463,8 +1480,8 @@ class ExamPanel(ft.Column):
             bars.append(bar)
         weak = fp.weak_topics(result)
         if weak:
-            bars.append(ui.text("Üben: " + ", ".join(weak), size=13, color=C["red"],
-                                weight=ft.FontWeight.BOLD))
+            bars.append(ui.text("Üben:", size=13, color=C["red"], weight=ft.FontWeight.BOLD))
+            bars += weak_topic_rows(weak, self.app.practice_topic)
         self.controls = [
             ui.Card("Ergebnis", [ui.text(exam["name"], size=12, color=C["muted"])] + lines,
                     accent=C["green"]),
@@ -2297,6 +2314,10 @@ class NotebookScreen(Screen):
                                          on_change=lambda _v: self.refresh())
         self.answer_pills = ui.PillGroup([("aus", "Ausblenden"), ("an", "Einblenden")],
                                          on_change=self._toggle_all)
+        # Ab 0.54: Stichwortsuche zusaetzlich zu den Filtern (wie am PC)
+        self.query = ""
+        self.all_entries = []
+        self.search = ui.entry(hint=NOTEBOOK_SEARCH_HINT, on_change=self._search)
         self.practice_row = ft.Column(spacing=8, tight=True)
         self.rows = ft.Column(spacing=8, tight=True)
         self.list_card = ui.Card("Zu üben", [self.rows], accent=C["red"])
@@ -2311,7 +2332,8 @@ class NotebookScreen(Screen):
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
                     subtitle="Abgeschlossen = zweimal hintereinander richtig"),
-            ui.Card(None, [ui.label("Fachbereich"), self.cat_pills,
+            ui.Card(None, [ui.label("Suche"), self.search,
+                           ui.label("Fachbereich"), self.cat_pills,
                            ui.label("Bereich"), self.source_pills,
                            ui.label("Thema"), self.topic_pills.root,
                            ui.label("Status"), self.status_pills,
@@ -2333,14 +2355,29 @@ class NotebookScreen(Screen):
             else set()
         self._paint()
 
+    def _search(self, event):
+        """Nur die Stichwortsuche neu anwenden (ohne Datenbank)."""
+        query = event.control.value or ""
+        if query.strip() == self.query.strip():
+            self.query = query
+            return
+        self.query = query
+        self.entries = notebook_search(self.all_entries, query)
+        if self.answer_pills.get() == "an":
+            self.opened = {(e["source"], e["key"]) for e in self.entries}
+        self.page = 0
+        self._paint_practice()
+        self._paint()
+
     def refresh(self, keep_page=False):
         self.book = StatusBook(self.db)
         category = self.cat_pills.get()
         topic = self.topic_pills.get()
         source = self.source_pills.get()
-        self.entries = notebook_entries(
+        self.all_entries = notebook_entries(
             self.book, status=self.status_pills.get(), category=category, topic=topic,
             sources=None if source == FILTER_ALL else [source])
+        self.entries = notebook_search(self.all_entries, self.query)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         if not keep_page:
@@ -2355,6 +2392,10 @@ class NotebookScreen(Screen):
             bar.set(100.0 * counts[Q_DONE] / total, "%d / %d" % (counts[Q_DONE], total))
             bars.append(bar)
         self.summary.controls = bars
+        self._paint_practice()
+        self._paint()
+
+    def _paint_practice(self):
         cards = self._practice_keys(SRC_CARD)
         quiz = self._practice_keys(SRC_QUIZ)
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
@@ -2370,7 +2411,6 @@ class NotebookScreen(Screen):
             ui.text("Startet eine Übungsrunde nur mit den Fragen der Liste (Quiz: höchstens "
                     "50).", size=12, color=C["muted"]),
         ]
-        self._paint()
 
     def _practice_keys(self, source):
         return [e["key"] for e in self.entries if e["source"] == source]
@@ -2401,10 +2441,12 @@ class NotebookScreen(Screen):
         visible, self.page, pages = page_slice(self.entries, self.page, NOTEBOOK_PAGE)
         rows = [self._row(entry) for entry in visible]
         if not rows:
-            rows = [ui.text("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
-                            "automatisch hier." if status == Q_PRACTICE else
-                            "Keine Fragen in dieser Auswahl.", size=14,
-                            color=C["text_soft"])]
+            text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
+                    "automatisch hier." if status == Q_PRACTICE else
+                    "Keine Fragen in dieser Auswahl.")
+            if self.query.strip() and self.all_entries:
+                text = NOTEBOOK_NO_HITS % self.query.strip()
+            rows = [ui.text(text, size=14, color=C["text_soft"])]
         self.rows.controls = rows
         self.lbl_page.value = "Seite %d / %d" % (self.page + 1, pages)
 
@@ -2689,15 +2731,25 @@ class ProgressScreen(Screen):
         self.chart = ui.LineChart(height=200)
         self.history = ft.Column(spacing=8, tight=True)
         self.exam_list = ft.Column(spacing=8, tight=True)
+        # Ab 0.54: Aufgaben pro Tag (wie Tagesziel und Lernserie gezaehlt) und
+        # schwache Themen der letzten Pruefung mit "Jetzt ueben"
+        self.activity = {}
+        self.day_pills = ui.PillGroup(DAY_CHART_RANGES, on_change=lambda _v: self._paint_days())
+        self.day_chart = ui.LineChart(height=180)
+        self.lbl_days = ui.text("", size=12, color=C["text_dim"])
+        self.weak_box = ft.Column(spacing=6, tight=True)
         return screen_list([
             ft.Row([stat("tests", "Sessions", C["accent"]),
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
             ft.Row([stat("best", "Bestes", C["accent2"]),
                     stat("streak", "Lernserie", C["green"])], spacing=12),
+            ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days],
+                    accent=C["green"], subtitle=DAY_CHART_SUBTITLE),
             ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
                     subtitle="Erfolgsquote je Session"),
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
-            ui.Card("Prüfungen (Klausursimulation)", [self.exam_list], accent=C["green"]),
+            ui.Card("Prüfungen (Klausursimulation)", [self.exam_list, self.weak_box],
+                    accent=C["green"]),
             ft.Row([ui.GradientButton("Aktualisieren", lambda _e: self.on_show(),
                                       kind="ghost", expand=True),
                     ui.GradientButton("Historie löschen", self.clear_history,
@@ -2714,7 +2766,11 @@ class ProgressScreen(Screen):
             self._stat("best", "%.1f %%" % best, ihk_note(best))
         else:
             self._stat("best", "-", "noch keine Session")
-        self._stat("streak", str(self.db.streak()), "Tage in Folge")
+        # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
+        self.activity = self.db.activity_days()
+        streak = learning_streak({day for day, count in self.activity.items() if count})
+        self._stat("streak", str(streak), "Tage in Folge")
+        self._paint_days()
 
         ordered = list(reversed(results))[-20:]
         labels = [row[0][8:10] + "." + row[0][5:7] for row in ordered] or ["heute"]
@@ -2767,6 +2823,21 @@ class ProgressScreen(Screen):
                                                  "Prüfungsmodus findest du im "
                                                  "Prüfungstrainer.", size=13,
                                                  color=C["muted"])]
+        title, weak = fp.latest_weak(exams)
+        self.weak_box.controls = ([ui.text(title, size=13, color=C["red"],
+                                           weight=ft.FontWeight.BOLD)] +
+                                  weak_topic_rows(weak, self.app.practice_topic)) if weak else []
+
+    def _paint_days(self):
+        """Diagramm "Aufgaben pro Tag" aus den schon geladenen Tageswerten."""
+        series = daily_series(self.activity, self.day_pills.get())
+        goal = learning_settings()
+        target = goal["ziel_anzahl"] if goal["ziel_an"] else None
+        self.day_chart.set_data(day_labels(series), [count for _day, count in series],
+                                C["accent"],
+                                goal=(target, goal_line_text(target), C["green"])
+                                if target else None)
+        self.lbl_days.value = daily_summary(series, target)
 
     def _stat(self, key, value, sub):
         self.stats[key][0].value = value
@@ -2833,6 +2904,22 @@ class SettingsScreen(Screen):
             ft.Row([ui.GradientButton(fsi.BTN_RESTORE, self.restore_backup, kind="ghost")]),
         ], accent=C["accent2"], subtitle=fsi.SUBTITLE)
 
+        # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie am PC. Der
+        # Bericht wird erst beim Anzeigen der Seite eingetragen (on_show).
+        self.report_text = ui.text("", size=11, color=C["text_dim"], font_family=ui.MONO,
+                                   selectable=True)
+        self._report_key = None
+        report = ui.Card(fdg.TITLE, [
+            ui.text(fdg.HELP, size=13, color=C["text_dim"]),
+            ft.Container(content=ft.Column([self.report_text], scroll=ft.ScrollMode.AUTO,
+                                           tight=True),
+                         height=240, bgcolor=C["card_alt"], border_radius=12, padding=12,
+                         border=ft.Border.all(1, C["border"])),
+            ft.Row([ui.GradientButton(fdg.BTN_COPY, self.copy_report, expand=True)]),
+            ft.Row([ui.GradientButton(fdg.BTN_SAVE, self.save_report, kind="ghost",
+                                      expand=True)]),
+        ], accent=C["orange"], subtitle=fdg.SUBTITLE)
+
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
                  "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
@@ -2896,7 +2983,7 @@ class SettingsScreen(Screen):
         ], accent=C["green"], subtitle="nur für dieses Gerät")
 
         return screen_list([
-            updates, colors, goal, sync, backup,
+            updates, colors, goal, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Daten zurücksetzen", [
@@ -3055,6 +3142,41 @@ class SettingsScreen(Screen):
 
     def on_show(self):
         self._show_difficulty()
+        self._show_report()
+
+    # -- Problem melden (ab 0.54) ---------------------------------------------
+
+    def _report_text(self):
+        return fdg.build_report(self.db, APP_VERSION, "Handy")
+
+    def _show_report(self):
+        """Bericht nur neu eintragen, wenn sich fehler.log oder die Datenbank
+        geaendert hat."""
+        try:
+            log = os.stat(error_log_path())
+            log_key = (log.st_size, log.st_mtime)
+        except OSError:
+            log_key = None
+        key = (log_key, self.db.change_stamp())
+        if key != self._report_key:
+            self._report_key = key
+            self.report_text.value = self._report_text()
+
+    def copy_report(self, _event=None):
+        text = self._report_text()
+
+        async def copy():
+            try:
+                await ft.Clipboard().set(text)
+            except Exception as error:
+                self.toast("Kopieren nicht möglich: %s" % error, C["red"])
+                return
+            self.toast(fdg.MSG_COPIED)
+        self.app.page.run_task(copy)
+
+    def save_report(self, _event=None):
+        data = (self._report_text() + "\n").encode("utf-8")
+        self.app.page.run_task(self.app.save_file, fdg.default_name(), data, "text/plain")
 
     def _show_difficulty(self):
         try:
@@ -3760,6 +3882,31 @@ class FISIMobileApp:
         self.screens[key].practice(plan.session(source))
         self.open(key)
 
+    def practice_topic(self, name):
+        """"Jetzt ueben" neben einem schwachen Thema (ab 0.54, wie am PC):
+        normale Uebungsrunde mit den Fragen dieses Themas, Ungewusstes zuerst
+        (fisi_lernen.topic_practice)."""
+        source, keys = topic_practice(StatusBook(self.db), practice_topics(name),
+                                      rng=random.Random())
+        if not keys:
+            self.toast(PRACTICE_NONE)
+            return
+        key = "cards" if source == SRC_CARD else "quiz"
+        screen = self.screens[key]
+        if key == "cards":
+            screen.practice(keys)
+        else:
+            screen.practice(keys, keep_order=True)
+        views = self.page.views
+        on_top = bool(views) and bool(views[-1].controls) and \
+            views[-1].controls[0] is screen.root
+        if on_top or (len(views) == 1 and self.body.content is screen.root):
+            # Die Seite ist schon offen (Auswertung im Pruefungstrainer)
+            self.scroll_top()
+            self.page.update()
+        else:
+            self.open(key)
+
     def check_reminder(self):
         """Erinnerung ans Tagesziel (ab 0.51) als Hinweis beim Oeffnen bzw.
         Zurueckholen der App - eine Benachrichtigung bei geschlossener App
@@ -3967,6 +4114,20 @@ def selftest():
             exam.show_result(kind["art"])
         exam.state = None
         quiz.mode_pills.select_value("uebung")
+        # Ab 0.54: Jetzt ueben, Notizblock-Suche, Problem melden, Aufgaben pro Tag
+        for name in fp.weak_topics(exam.result) + ["Subnetting & Routing", "gibt es nicht"]:
+            app.practice_topic(name)
+        quiz.mode_pills.select_value("uebung")
+        notebook = app.screens["notebook"]
+        for query in ("raid", "PRÜF", "xyzzy-nichts", ""):
+            notebook._search(type("E", (), {"control": type("C", (), {"value": query})()})())
+        settings_screen = app.screens["settings"]
+        settings_screen._show_report()
+        if "Programmversion: %s" % APP_VERSION not in settings_screen.report_text.value:
+            failures.append("Problem melden: Bericht leer")
+        progress = app.screens["progress"]
+        for days, _caption in DAY_CHART_RANGES:
+            progress.day_pills.select_value(days)
         project = app.screens["abschluss"]
         for tab, _caption in fpj.TABS:
             project._on_tab(tab)
