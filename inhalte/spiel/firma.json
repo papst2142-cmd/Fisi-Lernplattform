@@ -29,7 +29,7 @@
       "Die Gründung kostet %s: Miete für den Gewerbehof, Einrichtung, Anmeldung. Bitweiche zahlt dir danach kein Gehalt mehr, dein Geld verdient ab dann deine Firma."
     ],
     "gegruendet": [
-      "Der Schlüssel zum Gewerbehof Am Stellwerk hängt an deinem Bund. Drei Schreibtische, ein leeres Whiteboard und ein Firmenschild mit dem Namen %s.",
+      "Der Schlüssel zum Gewerbehof Am Stellwerk hängt an deinem Bund. Drei Schreibtische, ein leeres Whiteboard und ein Firmenschild mit dem Namen „%s“.",
       "Noch arbeitest du allein. Unter Firma kannst du Bewerbungen ansehen und die ersten Leute einstellen."
     ]
   },
@@ -2497,10 +2497,10 @@
         "{a} und {b} streiten, wer den Kaffee zuletzt leer gemacht hat. Inzwischen redet keiner mehr mit dem anderen.",
         "{a} hat den Serverschrank umgeräumt, ohne {b} zu fragen. {b} findet jetzt nichts mehr und ist sauer.",
         "{a} beschwert sich bei dir: {b} schiebt die unbeliebten Tickets immer rüber.",
-        "{b} hat im Kundengespräch {a_von} Lösung als eigene Idee verkauft. {a} kocht.",
+        "{b} hat im Kundengespräch die Lösung von {a} als eigene Idee verkauft. {a} kocht.",
         "Streit um den Fensterplatz: {a} will frische Luft, {b} friert. Die Heizung läuft auf fünf.",
         "{a} und {b} sind sich uneinig, ob das Netz neu verkabelt oder nur geflickt wird. Seit einer Stunde geht es hin und her.",
-        "{a} findet {b_von} Dokumentation „unlesbar“. {b} findet {a_von} Dokumentation „nicht vorhanden“.",
+        "{a} findet die Dokumentation von {b} „unlesbar“. {b} findet die von {a} „nicht vorhanden“.",
         "{b} kam schon wieder zu spät zum Kundentermin. {a} musste allein hin und will das nicht noch einmal."
       ],
       "summen": "{a} summt seit dem Morgen vor sich hin. {b} hält es nicht mehr aus und bittet dich, etwas zu unternehmen."
@@ -3733,7 +3733,7 @@
       "kurz": "Frei",
       "farbe": "#8B93A1",
       "boden": "beton",
-      "text": "Noch leer, nur Estrich und nackte Wände. Hier kann ein %s entstehen."
+      "text": "Noch leer, nur Estrich und nackte Wände. Hier ist Platz für den Sonderraum „%s“."
     },
     "raeume": [
       {
@@ -4028,7 +4028,7 @@
     "voraussetzung": {"stufe": 4, "mitarbeiter": 6, "firmentage": 40},
     "anfragen_plus": 1,
     "naehe": {"orte": ["lindenau"], "vorteil": 3, "text": "Filiale in Lindenau"},
-    "eroeffnet": "Die Schlüssel für %s liegen auf deinem Schreibtisch. Vier Arbeitsplätze, eine Beratungsecke und ein Schaufenster zur Straße. Unter Firma kannst du Leute nach Lindenau versetzen.",
+    "eroeffnet": "Die Schlüssel für „%s“ liegen auf deinem Schreibtisch. Vier Arbeitsplätze, eine Beratungsecke und ein Schaufenster zur Straße. Unter Firma kannst du Leute nach Lindenau versetzen.",
     "stufen": [
       {
         "stufe": 1,

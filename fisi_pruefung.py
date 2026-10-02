@@ -344,6 +344,27 @@ def weak_topics(result):
     return [name for share, name in sorted(rows) if share < 0.5]
 
 
+
+def latest_weak(exams):
+    """Schwache Themen der juengsten Pruefung (ab 0.54, "Jetzt ueben" im
+    Fortschritt): (Ueberschrift, [themen]) oder (None, []), wenn die letzte
+    Pruefung keine Schwaechen hatte. exams wie DBManager.exams (neueste
+    zuerst)."""
+    if not exams:
+        return None, []
+    entry = exams[0]
+    try:
+        weak = weak_topics({"daten": {"themen": entry["daten"].get("themen") or {}}})
+    except (AttributeError, TypeError, ValueError, ZeroDivisionError):
+        return None, []
+    if not weak:
+        return None, []
+    exam = EXAM.get(entry["art"])
+    stamp = str(entry.get("timestamp", ""))
+    day = "%s.%s.%s" % (stamp[8:10], stamp[5:7], stamp[:4]) if len(stamp) >= 10 else ""
+    return ("Üben (letzte Prüfung: %s%s)" % (exam["kurz"] if exam else entry["art"],
+                                             ", " + day if day else ""), weak)
+
 # ============================================================================
 #  GESAMTERGEBNIS (§ 24, § 25 FIAusbV)
 # ============================================================================

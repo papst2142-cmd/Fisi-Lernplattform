@@ -43,23 +43,29 @@ from fisi_core import (  # noqa: E402
     TOPIC_NAME, TOPIC_SHORT, TOPICS,
     LEVEL_RED, LEVEL_YELLOW, Q_DONE, Q_OPEN, Q_PRACTICE, Q_STATUS_NAME, Q_STATUS_TABS,
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
-    SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_summary,
-    position_statuses, status_label,
-    REMINDER_TOAST_MS, plural,
+    SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_search, notebook_summary,
+    NOTEBOOK_NO_HITS, NOTEBOOK_SEARCH_HINT, position_statuses, status_label,
+    REMINDER_TOAST_MS, learning_streak, plural,
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
 )
-from fisi_core import install_error_log, log_exception  # noqa: E402
+from fisi_core import error_log_path, install_error_log, log_exception  # noqa: E402
 import fisi_game  # noqa: E402
 import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
-    GOAL_MAX, GOAL_MIN, GOAL_STEP, TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
-    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, due_text, learning_settings,
-    parse_time, reminder_due, reminder_text, save_learning_settings, trainer_round,
+    DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
+    TRAINER_KIND_NAME,
+    TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
+    day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
+    practice_next_text, reminder_due, reminder_text, save_learning_settings,
+    topic_practice_parts, trainer_round,
     trainer_summary,
 )
+import fisi_diagnose as fdg  # noqa: E402
 import fisi_game_gui  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
@@ -85,7 +91,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.53"
+APP_VERSION = "0.54"
 
 
 def _resource_path(filename):
@@ -1604,6 +1610,7 @@ class QuizView(View):
         self.answered = False
         self.start_time = 0
         self.timer_job = None
+        self.follow_up = None    # "Jetzt ueben": zweiter Teil nach der Runde (ab 0.54)
 
         # Setup
         self.setup_card = Card(self.content, title="Test-Session",
@@ -1745,6 +1752,7 @@ class QuizView(View):
         self._begin()
 
     def start_quiz(self):
+        self.follow_up = None
         if not self.pool:
             messagebox.showinfo("Hinweis", "Für diese Auswahl gibt es keine Fragen.")
             return
@@ -1846,6 +1854,7 @@ class QuizView(View):
                                    "Bereits beantwortete Fragen bleiben in der "
                                    "Statistik erhalten."):
             return
+        self.follow_up = None
         self.stop_timer()
         self._reset_controls()
         self.lbl_question.configure(text="Session abgebrochen. Du kannst jederzeit "
@@ -1875,6 +1884,9 @@ class QuizView(View):
                  % (self.score, total, percentage, note,
                     elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
+        follow_up, self.follow_up = self.follow_up, None
+        if follow_up is not None:
+            self.after(300, follow_up)
 
     def _reset_controls(self):
         self.running = False
@@ -2354,11 +2366,25 @@ class ExamPanel(ctk.CTkFrame):
             bar.set(share, "%s von %s" % (_points(reached), _points(maximum)))
         weak = fp.weak_topics(result)
         if weak:
-            make_label(themes.body, "Üben: " + ", ".join(weak), font=F["small_bold"],
-                       fg=C["red"], wraplength=900, justify="left",
+            make_label(themes.body, "Üben:", font=F["small_bold"], fg=C["red"],
                        anchor="w").pack(anchor="w", pady=(8, 0))
+            weak_topic_rows(themes.body, weak, self.app.practice_topic)
         NeoButton(self.body, "Zur Prüfungsauswahl", self.show_choice,
                   kind="ghost").pack(anchor="w", pady=(14, 0))
+
+
+def weak_topic_rows(parent, names, on_practice):
+    """Je schwaches Thema eine Zeile mit "Jetzt ueben" (ab 0.54)."""
+    for name in names:
+        row = ctk.CTkFrame(parent, fg_color=C["card_alt"], corner_radius=10,
+                           border_width=1, border_color=C["border"])
+        row.pack(fill="x", pady=(6, 0))
+        marker = ctk.CTkFrame(row, fg_color=C["red"], width=4, height=12, corner_radius=2)
+        marker.pack(side="left", fill="y", padx=(10, 0), pady=9)
+        make_label(row, name, font=F["small_bold"], fg=C["text"]).pack(
+            side="left", padx=(10, 0))
+        NeoButton(row, PRACTICE_BUTTON, lambda n=name: on_practice(n), kind="pill",
+                  height=30, font=F["small_bold"]).pack(side="right", padx=10, pady=6)
 
 
 def _points(value):
@@ -3302,6 +3328,16 @@ class NotebookView(View):
         filter_card = Card(self.content)
         filter_card.pack(fill="x", pady=(14, 0))
         body = filter_card.body
+        # Ab 0.54: Stichwortsuche zusaetzlich zu den Filtern (fisi_core.notebook_search)
+        self.query = ""
+        self.all_entries = []
+        self._search_job = None
+        make_label(body, "SUCHE", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        self.search = EntryBox(body, width=40, font=F["small"])
+        self.search.configure(placeholder_text=NOTEBOOK_SEARCH_HINT,
+                              placeholder_text_color=C["muted"], height=34)
+        self.search.pack(anchor="w", pady=(8, 14))
+        self.search.bind("<KeyRelease>", self._search_later, add="+")
         make_label(body, "FACHBEREICH", font=F["label"], fg=C["muted"]).pack(anchor="w")
         options = [(FILTER_ALL, "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
         self.cat_pills = PillGroup(body, options, on_change=self._on_category)
@@ -3369,7 +3405,7 @@ class NotebookView(View):
         if stamp is None:
             return None
         return (stamp, self.cat_pills.get(), self.topic_menu.get(), self.source_pills.get(),
-                self.status_pills.get(), self.answer_pills.get(), self.page)
+                self.status_pills.get(), self.answer_pills.get(), self.page, self.query)
 
     def _on_category(self, category):
         self.topic_menu.set_category(category)
@@ -3380,15 +3416,38 @@ class NotebookView(View):
             else set()
         self._paint()
 
+    def _search_later(self, _event=None):
+        """Suche kurz nach dem letzten Tastendruck (nicht bei jedem Zeichen)."""
+        if self._search_job is not None:
+            self.after_cancel(self._search_job)
+        self._search_job = self.after(180, self._apply_search)
+
+    def _apply_search(self):
+        """Nur die Stichwortsuche neu anwenden - ohne Datenbank, die Eintraege
+        nach den Filtern liegen schon in all_entries."""
+        self._search_job = None
+        query = self.search.get()
+        if query.strip() == self.query.strip():
+            self.query = query
+            return
+        self.query = query
+        self.entries = notebook_search(self.all_entries, query)
+        if self.answer_pills.get() == "an":
+            self.opened = {(e["source"], e["key"]) for e in self.entries}
+        self.page = 0
+        self._paint_practice()
+        self._paint()
+
     def refresh(self, keep_page=False):
         self.book = StatusBook(self.db)
         category = self.cat_pills.get()
         topic = self.topic_menu.get()
         source = self.source_pills.get()
         status = self.status_pills.get()
-        self.entries = notebook_entries(
+        self.all_entries = notebook_entries(
             self.book, status=status, category=category, topic=topic,
             sources=None if source == FILTER_ALL else [source])
+        self.entries = notebook_search(self.all_entries, self.query)
         if self.answer_pills.get() == "an":
             self.opened = {(e["source"], e["key"]) for e in self.entries}
         if not keep_page:
@@ -3431,13 +3490,22 @@ class NotebookView(View):
         quiz = self._practice_keys(SRC_QUIZ)
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
             self.status_pills.get()]
-        NeoButton(self.practice_bar,
-                  "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
-                  lambda: self.practice(SRC_CARD, cards), kind="primary").pack(side="left")
-        NeoButton(self.practice_bar,
-                  "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
-                  lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
-            side="left", padx=10)
+        # Ab 0.54: Knoepfe ohne Fragen ausblenden, ohne beide die ganze Leiste
+        if not cards and not quiz:
+            self.practice_bar.pack_forget()
+            return
+        if not self.practice_bar.winfo_manager():
+            self.practice_bar.pack(fill="x", pady=(14, 0), before=self.list_card)
+        if cards:
+            NeoButton(self.practice_bar,
+                      "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
+                      lambda: self.practice(SRC_CARD, cards), kind="primary").pack(
+                side="left", padx=(0, 10))
+        if quiz:
+            NeoButton(self.practice_bar,
+                      "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
+                      lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
+                side="left", padx=(0, 10))
         make_label(self.practice_bar, "Startet eine Übungsrunde nur mit den Fragen der "
                    "Liste (Quiz: höchstens 50).", font=F["small"], fg=C["muted"]).pack(
             side="left", padx=6)
@@ -3475,6 +3543,8 @@ class NotebookView(View):
             text = ("Nichts zu üben - sehr gut! Falsch beantwortete Fragen landen "
                     "automatisch hier." if status == Q_PRACTICE else
                     "Keine Fragen in dieser Auswahl.")
+            if self.query.strip() and self.all_entries:
+                text = NOTEBOOK_NO_HITS % self.query.strip()
             make_label(self.rows_box, text, font=F["body"], fg=C["text_soft"],
                        anchor="w").pack(anchor="w", pady=6)
         for entry in visible:
@@ -3856,6 +3926,19 @@ class ProgressView(View):
         self.stat_best = self._stat_card(row, "Bestes Ergebnis", C["accent2"])
         self.stat_streak = self._stat_card(row, "Lernserie", C["green"], last=True)
 
+        # Ab 0.54: Aufgaben pro Tag (wie Tagesziel und Lernserie gezaehlt)
+        self.activity = {}
+        day_card = Card(self.content, title=DAY_CHART_TITLE, accent=C["green"],
+                        subtitle=DAY_CHART_SUBTITLE)
+        day_card.pack(fill="x", pady=(14, 0))
+        self.day_pills = PillGroup(day_card.body, DAY_CHART_RANGES,
+                                   on_change=lambda _v: self._paint_days())
+        self.day_pills.pack(anchor="w")
+        self.day_chart = LineChart(day_card.body, height=200, parent_bg=C["card"])
+        self.day_chart.pack(fill="both", expand=True, pady=(8, 0))
+        self.lbl_days = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
+        self.lbl_days.pack(anchor="w", pady=(6, 0))
+
         chart_card = Card(self.content, title="Ergebnisse im Zeitverlauf",
                           subtitle="Erfolgsquote je Session")
         chart_card.pack(fill="x", pady=(14, 0))
@@ -3895,6 +3978,9 @@ class ProgressView(View):
             self.exam_tree.heading(key, text=text)
             self.exam_tree.column(key, width=px(width), anchor="center")
         self.exam_tree.pack(fill="x")
+        # Ab 0.54: schwache Themen der letzten Pruefung mit "Jetzt ueben"
+        self.weak_box = transparent_frame(exam_card.body)
+        self.weak_box.pack(fill="x")
 
         controls = transparent_frame(self.content)
         controls.pack(fill="x", pady=(14, 0))
@@ -3914,7 +4000,20 @@ class ProgressView(View):
         return label, sub
 
     def on_show(self):
+        # Ab 0.54 wie beim Notizblock: hat sich nichts geaendert (Datenbank-
+        # Stempel, Tag, Tagesziel), bleibt die Seite stehen
+        key = self._refresh_key()
+        if key is not None and key == getattr(self, "_refreshed", None):
+            return
         self.refresh()
+        self._refreshed = key
+
+    def _refresh_key(self):
+        stamp = self.db.change_stamp() if hasattr(self.db, "change_stamp") else None
+        if stamp is None:
+            return None
+        goal = learning_settings()
+        return (stamp, datetime.date.today(), goal["ziel_an"], goal["ziel_anzahl"])
 
     def refresh(self):
         results = self.db.get_all_results()
@@ -3933,7 +4032,9 @@ class ProgressView(View):
             self.stat_best[0].configure(text="-")
             self.stat_best[1].configure(text="noch keine Session")
 
-        streak = self.db.streak()
+        # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
+        self.activity = self.db.activity_days()
+        streak = learning_streak({day for day, count in self.activity.items() if count})
         self.stat_streak[0].configure(text="%d" % streak)
         self.stat_streak[1].configure(text="Tage in Folge")
 
@@ -3958,12 +4059,33 @@ class ProgressView(View):
             ))
         for item in self.exam_tree.get_children():
             self.exam_tree.delete(item)
-        for entry in self.db.exams():
+        exams = self.db.exams()
+        for entry in exams:
             exam = fp.EXAM.get(entry["art"])
             self.exam_tree.insert("", "end", values=(
                 entry["timestamp"], exam["name"] if exam else entry["art"],
                 _points(entry["punkte"]), entry["note"],
                 "%02d:%02d min" % (entry["dauer"] // 60, entry["dauer"] % 60)))
+        for child in self.weak_box.winfo_children():
+            child.destroy()
+        title, weak = fp.latest_weak(exams)
+        if weak:
+            make_label(self.weak_box, title, font=F["small_bold"], fg=C["red"],
+                       anchor="w").pack(anchor="w", pady=(12, 0))
+            weak_topic_rows(self.weak_box, weak, self.app.practice_topic)
+        self._paint_days()
+
+    def _paint_days(self):
+        """Diagramm "Aufgaben pro Tag" aus den schon geladenen Tageswerten."""
+        series = daily_series(self.activity, self.day_pills.get())
+        goal = learning_settings()
+        target = goal["ziel_anzahl"] if goal["ziel_an"] else None
+        self.day_chart.set_data(
+            day_labels(series),
+            [{"name": DAY_CHART_SERIES, "values": [count for _day, count in series],
+              "color": C["accent"]}],
+            goal=(target, goal_line_text(target), C["green"]) if target else None)
+        self.lbl_days.configure(text=daily_summary(series, target))
 
     def clear_history(self):
         if messagebox.askyesno("Historie löschen",
@@ -4183,6 +4305,25 @@ class SettingsView(View):
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
+        # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie auf dem Handy.
+        # Der Bericht wird erst nach dem Anzeigen der Seite eingetragen.
+        report = Card(self.content, title=fdg.TITLE, accent=C["orange"],
+                      subtitle=fdg.SUBTITLE)
+        report.pack(fill="x", pady=(14, 0))
+        make_label(report.body, fdg.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        self.report_box = make_text(report.body, height=10, font=F["mono_small"])
+        self.report_box.pack(fill="x", pady=(10, 0))
+        self.report_box.configure(state="disabled")
+        self._report_key = None
+        row = transparent_frame(report.body)
+        row.pack(anchor="w", pady=(12, 0))
+        NeoButton(row, fdg.BTN_COPY, self.copy_report, kind="primary").pack(side="left")
+        NeoButton(row, fdg.BTN_SAVE, self.save_report, kind="ghost").pack(side="left",
+                                                                          padx=10)
+        NeoButton(row, fdg.BTN_FOLDER, self.open_data_folder,
+                  kind="ghost").pack(side="left")
+
         content = Card(self.content, title="Lerninhalte", accent=C["purple"])
         content.pack(fill="x", pady=(14, 0))
         totals = content_totals()
@@ -4330,6 +4471,60 @@ class SettingsView(View):
 
     def on_show(self):
         self._show_difficulty()
+        self.after_idle(self._show_report)
+
+    # -- Problem melden (ab 0.54) ---------------------------------------------
+
+    def _report_text(self):
+        return fdg.build_report(self.db, APP_VERSION, "PC")
+
+    def _show_report(self):
+        """Bericht nur neu eintragen, wenn sich fehler.log oder die Datenbank
+        geaendert hat - der Wechsel in die Optionen bleibt so schnell."""
+        try:
+            log = os.stat(error_log_path())
+            log_key = (log.st_size, log.st_mtime)
+        except OSError:
+            log_key = None
+        key = (log_key, self.db.change_stamp())
+        if key == self._report_key or not self.report_box.winfo_exists():
+            return
+        self._report_key = key
+        set_text(self.report_box, self._report_text())
+
+    def copy_report(self):
+        root = self.app.root
+        root.clipboard_clear()
+        root.clipboard_append(self._report_text())
+        show_badge_toast(root, fdg.MSG_COPIED)
+
+    def save_report(self):
+        from tkinter import filedialog
+        path = filedialog.asksaveasfilename(
+            parent=self.app.root, title=fdg.BTN_SAVE, initialfile=fdg.default_name(),
+            defaultextension=fdg.FILE_EXT,
+            filetypes=[(fdg.FILE_TYPE, "*" + fdg.FILE_EXT)])
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(self._report_text() + "\n")
+        except OSError as error:
+            messagebox.showerror(fsi.SAVE_ERROR_TITLE, str(error))
+            return
+        show_badge_toast(self.app.root, "Gespeichert: %s" % os.path.basename(path))
+
+    def open_data_folder(self):
+        folder = os.path.dirname(os.path.abspath(self.db.db_path))
+        try:
+            if sys.platform == "win32":
+                os.startfile(folder)
+            else:
+                import subprocess
+                subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open",
+                                  folder])
+        except (OSError, AttributeError) as error:
+            messagebox.showerror(fdg.BTN_FOLDER, fdg.MSG_FOLDER_ERROR % error)
 
     def _show_difficulty(self):
         try:
@@ -5275,6 +5470,37 @@ class FISIApp:
         self.show_view(key)
         self.views[key].practice(plan.session(source))
 
+    def practice_topic(self, name):
+        """"Jetzt ueben" neben einem schwachen Thema (ab 0.54): Quizfragen und
+        Karteikarten dieses Themas, Ungewusstes zuerst
+        (fisi_lernen.topic_practice_parts)."""
+        parts = topic_practice_parts(StatusBook(self.db), practice_topics(name),
+                                     rng=random.Random())
+        if not parts:
+            messagebox.showinfo(PRACTICE_BUTTON, PRACTICE_NONE)
+            return
+        self._practice_part(parts)
+
+    def _practice_part(self, parts):
+        """Gemischte Runde (ab 0.54): erst die Quizfragen, nach ihrem Ergebnis
+        auf Rueckfrage die Karteikarten zum selben Thema."""
+        source, keys = parts[0]
+        rest = parts[1:]
+        if source == SRC_CARD:
+            self.show_view("cards")
+            self.views["cards"].practice(keys)
+            return
+        self.show_view("quiz")
+        quiz = self.views["quiz"]
+        quiz.practice(keys, keep_order=True)
+        if rest and quiz.running:
+            def ask():
+                next_source, next_keys = rest[0]
+                if messagebox.askyesno(PRACTICE_NEXT_TITLE,
+                                       practice_next_text(next_source, len(next_keys))):
+                    self._practice_part(rest)
+            quiz.follow_up = ask
+
     def check_reminder(self):
         """Erinnerung ans Tagesziel (ab 0.51): als Hinweis, solange das
         Programm laeuft - beim Start und danach alle 5 Minuten."""
@@ -5334,6 +5560,15 @@ class FISIApp:
         # Abgleich folgt dann beim naechsten Start.
         if final_sync:
             self.sync.run_before_exit()
+        # Ab 0.54: noch geplante after-Zeitgeber (auch die von customtkinter,
+        # z. B. update und check_dpi_scaling) abbrechen. Beim echten Schliessen
+        # ueber mainloop laufen sie ohnehin nicht mehr; ein Skript, das danach
+        # noch root.update() aufruft, bekommt so kein "invalid command name".
+        try:
+            for job in self.root.tk.splitlist(self.root.tk.call("after", "info")):
+                self.root.after_cancel(job)
+        except tk.TclError:
+            pass
         self.root.destroy()
 
 
@@ -5361,6 +5596,47 @@ def _run_selftest(root, app, log_path):
                                  CATEGORIES[1]):
                     app.views["dashboard"]._toggle_zoom(category)
                     root.update()
+                # Ab 0.54: Notizblock-Suche, Jetzt ueben, Aufgaben pro Tag,
+                # Problem melden
+                app.show_view("notebook")
+                notebook = app.views["notebook"]
+                for query in ("raid", "PRÜF", "xyzzy-nichts", ""):
+                    notebook.search.delete(0, "end")
+                    notebook.search.insert(0, query)
+                    notebook._apply_search()
+                    root.update()
+                for name in ("Subnetting & Routing", "Arbeitswelt"):
+                    app.practice_topic(name)
+                    root.update()
+                quiz = app.views["quiz"]
+                # Gemischte Runde: nach den Quizfragen die Karteikarten
+                follow_up = quiz.follow_up
+                if follow_up is None:
+                    failures.append("Jetzt üben: keine Karteikarten nach dem Quiz")
+                else:
+                    ask = messagebox.askyesno
+                    messagebox.askyesno = lambda *_a, **_k: True
+                    try:
+                        follow_up()
+                    finally:
+                        messagebox.askyesno = ask
+                    root.update()
+                    if app.current != "cards" or not app.views["cards"].filtered:
+                        failures.append("Jetzt üben: Karteikarten nicht gestartet")
+                if quiz.running:
+                    quiz.stop_timer()
+                    quiz._reset_controls()
+                app.show_view("progress")
+                for days, _caption in DAY_CHART_RANGES:
+                    app.views["progress"].day_pills.select_value(days)
+                    root.update()
+                app.show_view("settings")
+                root.update()
+                settings_view = app.views["settings"]
+                settings_view._show_report()
+                if "Programmversion: %s" % APP_VERSION not in \
+                        settings_view.report_box.get("1.0", "end"):
+                    failures.append("Problem melden: Bericht fehlt")
                 # Grundfarbe wechseln baut alle Ansichten neu auf
                 original = fisi_theme.current_preset
                 app.change_color("gruen_lime")

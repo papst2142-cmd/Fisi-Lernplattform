@@ -12,6 +12,7 @@ Flet uebernimmt die Aenderungen danach selbst.
 """
 
 import asyncio
+import copy
 import math
 import random
 
@@ -1768,6 +1769,7 @@ class GameScreen:
         self.selected = None
         self.turn = 0
         self.problem = ""
+        self.undo = []             # fruehere Einrichtungen dieser Einrichtungsrunde (ab 0.54)
         # Unterseite "Firma" (ab 0.33)
         self.firm_box = None
         self.firm_tab = "auftraege"
@@ -2064,7 +2066,8 @@ class GameScreen:
         founding = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["accent"])
         founding.set(state.founding_progress() * 100, "Ziel %s" % euro(goal["startkapital"]))
         founding.visible = not state.firm
-        job = "Geschäftsführung · %s" % state.firm["name"] if state.firm else state.rank
+        job = ("Geschäftsführung · %s" % state.firm["name"] if state.firm else
+               "%s · %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
         hint = "" if state.firm else fg.rank_hint(state)
         money = ("Kontostand: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
                  if not state.firm else "Kontostand: %s" % euro(state.money))
@@ -2612,14 +2615,23 @@ class GameScreen:
             if state.rent:
                 money.append(ui.text("Miete: %s pro Arbeitstag" % euro(state.rent), size=12,
                                      color=C["text_dim"]))
+            buttons = [ui.GradientButton("Fertig" if self.editing else "Einrichten",
+                                         self._toggle_edit, kind="primary" if self.editing
+                                         else "ghost", height=38)]
+            if self.editing:
+                undo = ui.GradientButton("Rückgängig", self._undo, kind="ghost", height=38)
+                undo.set_enabled(bool(self.undo))
+                buttons.insert(0, undo)
             controls.append(ft.Row([
                 ft.Column(money, spacing=2, tight=True, expand=True),
-                ui.GradientButton("Fertig" if self.editing else "Einrichten",
-                                  self._toggle_edit, kind="primary" if self.editing
-                                  else "ghost", height=38),
+                ft.Row(buttons, spacing=8, tight=True),
             ], vertical_alignment=ft.CrossAxisAlignment.CENTER))
+            warning = fg.path_warning(fg.path_check(state))
+            if warning:
+                controls.append(ui.text(warning, size=13, color=C["yellow"],
+                                        weight=ft.FontWeight.BOLD))
             title, accent = fg.apartment(state.home_id)["name"], C["accent2"]
-            subtitle = ("Möbel antippen, dann Stelle antippen" if self.editing
+            subtitle = ("Möbel antippen, dann Zielfeld antippen" if self.editing
                         else "Tippe irgendwohin")
         else:
             title = "Büro" if site == fg.SITE_OFFICE else fg.site_name(site)
@@ -4222,21 +4234,40 @@ class GameScreen:
     # -- Wohnung einrichten -------------------------------------------------
 
     def _toggle_edit(self, _event=None):
-        self.editing = not self.editing
-        self.selected = None
-        self.problem = ""
-        self._fill_site()
+        def toggle():
+            self.editing = not self.editing
+            self.selected = None
+            self.problem = ""
+            self.undo = []
+            self._fill_site()
+
+        blocked = fg.path_check(self.game.state) if self.editing else []
+        if blocked:
+            self.app.confirm("Weg versperrt", fg.path_warning(blocked) + "\n\nTrotzdem fertig?",
+                             toggle)
+            return
+        toggle()
 
     def _selection_overlay(self):
-        if not self.editing or not self.selected:
-            return []
-        item = next((i for i in fg.placed_furniture(self.game.state)
-                     if i["stueck"] == self.selected), None)
-        if item is None:
-            return []
-        return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
-                 "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
-                 "line": C["accent"], "lw": 0.08, "r": 0.1}]
+        """Raster, Auswahlrahmen und Wegwarnung (ab 0.54, wie am PC)."""
+        state = self.game.state
+        blocked = fg.path_check(state)
+        if not self.editing:
+            return fg.edit_overlay(state, blocked=blocked, grid=False) if blocked else []
+        return fg.edit_overlay(state, self.selected, None, blocked)
+
+    def _layout_change(self, change):
+        """Fuehrt eine Aenderung der Einrichtung aus und merkt sich vorher den
+        alten Stand fuer "Rückgängig". Fehler landen als Hinweis im Text."""
+        state = self.game.state
+        before = (state.home_id, copy.deepcopy(fg.home_layout(state)))
+        try:
+            change()
+            self.undo.append(before)
+            del self.undo[:-50]
+            self.problem = ""
+        except ValueError as exc:
+            self.problem = str(exc)
 
     def _home_tap(self, x, y):
         if not self.editing:
@@ -4249,42 +4280,49 @@ class GameScreen:
             self.problem = ""
         elif not self.selected:
             self.problem = "Wähle zuerst ein Möbelstück aus (im Grundriss oder im Karton)."
+        elif hit:
+            self.problem = ""
         else:
-            item = fg.furniture_item(state.furniture.get(self.selected))
-            w, h = fg.furniture_size(item, self.turn)
-            try:
-                self.game.place_furniture(self.selected, x - w / 2.0, y - h / 2.0, self.turn)
-                self.problem = ""
-            except ValueError as exc:
-                self.problem = str(exc)
+            self._layout_change(lambda: self.game.place_furniture_at(self.selected, x, y,
+                                                                     self.turn))
         self._fill_site()
         return True
 
     def _select_piece(self, piece):
         self.selected = piece
         self.turn = fg.home_layout(self.game.state)["moebel"].get(piece, [0, 0, 0])[2]
-        self.problem = "Tippe im Grundriss auf die Stelle, wo es stehen soll."
+        self.problem = "Tippe im Grundriss auf das Zielfeld."
         self._fill_site()
 
     def _rotate(self, _event=None):
         state = self.game.state
-        self.turn = (self.turn + 1) % 4
-        placed = fg.home_layout(state)["moebel"].get(self.selected)
-        if placed:
-            item = fg.furniture_item(state.furniture[self.selected])
-            old_w, old_h = fg.furniture_size(item, placed[2])
-            new_w, new_h = fg.furniture_size(item, self.turn)
-            try:
-                self.game.place_furniture(self.selected, placed[0] + old_w / 2.0 - new_w / 2.0,
-                                          placed[1] + old_h / 2.0 - new_h / 2.0, self.turn)
-                self.problem = ""
-            except ValueError as exc:
-                self.turn = placed[2]
-                self.problem = str(exc)
+        if fg.home_layout(state)["moebel"].get(self.selected) is None:
+            self.turn = (self.turn + 1) % 4
+        else:
+            def turn():
+                self.turn = self.game.rotate_furniture(self.selected)
+            self._layout_change(turn)
+        self._fill_site()
+
+    def _nudge(self, dx, dy):
+        """Schiebe-Pfeile: um ein Rasterfeld (dx, dy im Grundriss)."""
+        self._layout_change(lambda: self.game.nudge_furniture(self.selected, dx, dy))
+        self._fill_site()
+
+    def _undo(self, _event=None):
+        state = self.game.state
+        while self.undo:
+            home_id, layout = self.undo.pop()
+            if home_id == state.home_id:
+                self.game.restore_layout(layout)
+                break
+        if self.selected not in self.game.state.furniture:
+            self.selected = None
+        self.problem = ""
         self._fill_site()
 
     def _box(self, _event=None):
-        self.game.box_furniture(self.selected)
+        self._layout_change(lambda: self.game.box_furniture(self.selected))
         self.selected = None
         self.problem = ""
         self._fill_site()
@@ -4335,6 +4373,7 @@ class GameScreen:
                 return
             self.positions.pop(fg.SITE_HOME, None)
             self.selected = None
+            self.undo = []
             self.app.notify_progress()
             self._fill_site()
 
@@ -4370,6 +4409,18 @@ class GameScreen:
                              ui.GradientButton("Verkaufen", self._sell, kind="ghost",
                                                height=38)],
                             wrap=True, spacing=8, run_spacing=8)]
+            if self.selected in fg.home_layout(state)["moebel"]:
+                # Der Grundriss steht am Handy hochkant: rechts im Bild ist im
+                # Grundriss oben (y kleiner), unten im Bild ist rechts (x groesser)
+                arrows = []
+                for icon, dx, dy in ((ft.Icons.ARROW_BACK, 0, 1), (ft.Icons.ARROW_UPWARD, -1, 0),
+                                     (ft.Icons.ARROW_DOWNWARD, 1, 0),
+                                     (ft.Icons.ARROW_FORWARD, 0, -1)):
+                    arrows.append(ft.IconButton(icon, icon_color=C["text"],
+                                                bgcolor=C["card_alt"], icon_size=20,
+                                                tooltip="Schieben",
+                                                on_click=lambda _e, a=dx, b=dy: self._nudge(a, b)))
+                mine += [ui.label("Schieben"), ft.Row(arrows, spacing=8)]
         mine.append(ui.label("Im Karton"))
         boxed = fg.boxed_furniture(state)
         if not boxed:

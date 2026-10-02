@@ -9,6 +9,7 @@ fisi_game.py, hier wird nur angezeigt und bedient. Gebaut aus den Bausteinen
 von fisi_widgets.py und in der Farbwelt aus fisi_theme.py.
 """
 
+import copy
 import random
 import tkinter as tk
 from tkinter import font as tkfont
@@ -427,8 +428,36 @@ class WalkPlan(FloorPlan):
         self.route = []
         self.target = None
         self._job = None
+        # Einrichten der Wohnung (ab 0.54): Vorschau an der Maus, Ziehen,
+        # Rechtsklick und Tasten - on_pointer(art, x, y) gibt True zurueck,
+        # wenn das Ereignis behandelt ist (art: "move", "drag", "release",
+        # "right"), on_keypress(event) genauso fuer Tasten
+        self.on_pointer = None
+        self.on_keypress = None
         for key in ("<Left>", "<Right>", "<Up>", "<Down>", "a", "d", "w", "s"):
             self.bind(key, self._key)
+        self.bind("<Motion>", lambda event: self._pointer("move", event))
+        self.bind("<B1-Motion>", lambda event: self._pointer("drag", event))
+        self.bind("<ButtonRelease-1>", lambda event: self._pointer("release", event))
+        self.bind("<Button-3>", lambda event: self._pointer("right", event))
+        self.bind("<KeyPress>", self._keypress, add="+")
+
+    def _pointer(self, kind, event):
+        if self.on_pointer is None or self.scale <= 0 or self.state is None:
+            return None
+        x, y = self.to_building(event)
+        return "break" if self.on_pointer(kind, x, y) else None
+
+    def _keypress(self, event):
+        if self.on_keypress is not None and self.on_keypress(event):
+            return "break"
+        return None
+
+    def redraw_overlay(self, shapes):
+        """Nur die Zusatz-Zeichnung tauschen (Vorschau beim Ziehen), ohne den
+        Rest der Ansicht neu aufzubauen."""
+        self.overlay = shapes
+        self.draw()
 
     def draw(self):
         self.delete("all")
@@ -2001,15 +2030,15 @@ class MaintenanceBoard(ctk.CTkFrame):
 _SIMPLE_TYPES = (type(None), bool, int, float, str, tuple, list, dict, set, frozenset)
 
 
-def _snapshot(obj):
+def _snapshot(obj, skip=()):
     """Alle einfachen Felder eines Objekts (keine Widgets, keine Spielobjekte)
     als vergleichbarer Wert. Mengen werden sortiert, damit die Reihenfolge
-    keine Rolle spielt."""
+    keine Rolle spielt. skip: Felder, die nicht dazugehoeren."""
     items = []
     for name, value in sorted(vars(obj).items()):
         # Tkinter-Verwaltung (_tclCommands, _w, _name ...) und die eigenen
         # Merkfelder gehoeren nicht zum Inhalt
-        if name.startswith("_"):
+        if name.startswith("_") or name in skip:
             continue
         if isinstance(value, (set, frozenset)):
             items.append((name, tuple(sorted(repr(item) for item in value))))
@@ -2024,6 +2053,10 @@ class ReusableView:
     und self.content."""
 
     keeps_scroll = True     # show_view setzt die Scroll-Position nicht zurueck
+    # Ab 0.54: Wo die Figur in Buero/Zuhause/Filiale steht (GameView.positions),
+    # zaehlt nur fuer die Grossansicht des jeweiligen Ortes. Sonst baute jeder
+    # Schritt der Figur Firma, Reise und Spiel beim naechsten Besuch neu auf.
+    uses_positions = False
 
     def _render_key(self):
         db = self.app.db
@@ -2032,10 +2065,14 @@ class ReusableView:
             return None
         game_view = self.app.views.built("game")
         game = game_view.game if game_view is not None else None
+        skip = ("positions",)
+        own = None
+        if self.uses_positions and game_view is not None:
+            own = repr(game_view.positions.get(self.site()))
         return (stamp, game.run if game is not None else None,
                 getattr(self.app, "slot_chosen", True),
-                _snapshot(self),
-                _snapshot(game_view) if game_view is not None and game_view is not self
+                _snapshot(self, skip) + (("figur", own),),
+                _snapshot(game_view, skip) if game_view is not None and game_view is not self
                 else None)
 
     def _unchanged(self):
@@ -2129,6 +2166,11 @@ class TabCache:
         if self._tab_row.value != self.tab:
             self._tab_row.value = self.tab
             self._tab_row._paint()
+        # Ab 0.54: Die Ansicht steht jetzt genau so da, wie sie mit dem neuen
+        # Reiter aussehen muss - beim naechsten Anzeigen (zurueck aus einer
+        # anderen Ansicht) also nicht alles neu zeichnen
+        if getattr(self, "_rendered", None) is not None:
+            self._rendered = self._render_key()
         self.to_top()
         return True
 
@@ -2513,7 +2555,7 @@ class GameView(ReusableView, ScrollArea):
         make_label(info, state.profile["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
         job = ("Geschäftsführung · %s" % state.firm["name"] if state.firm else
-               "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
+               "%s · %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
         make_label(info, job, font=F["body_bold"], fg=C["accent"], anchor="w").pack(
             anchor="w", pady=(2, 0))
         hint = "" if state.firm else fg.rank_hint(state)
@@ -3058,6 +3100,8 @@ class SiteView(ReusableView, ScrollArea):
     per Klick; unter dem Grundriss stehen Text und Knoepfe aus
     fisi_game.place_message - so verhalten sich PC und Handy gleich."""
 
+    uses_positions = True
+
     KEY = "buero"
     TITLE = "Büro"
     SUBTITLE = "Klicke auf eine Person oder einen Ort · Pfeiltasten gehen auch"
@@ -3165,6 +3209,9 @@ class SiteView(ReusableView, ScrollArea):
     def _arrived(self, position, person):
         self.game_view.positions[self.site()] = position
         self._show_info(position, person)
+        if getattr(self, "_rendered", None) is not None:
+            # Die Ansicht ist mit der Figur am neuen Platz aktuell (ab 0.54)
+            self._rendered = self._render_key()
 
     def _show_info(self, position, person):
         for child in self.info.winfo_children():
@@ -3802,10 +3849,16 @@ class FarmView(ReusableView, ScrollArea):
         self.app.open_search_hit(kind, title)
 
 
+HOME_EDIT_HINT = ("Möbel ziehen oder anklicken · freie Stelle anklicken zum Aufstellen · "
+                  "R oder Rechtsklick dreht · Strg+Z macht rückgängig")
+
+
 class HomeView(SiteView):
     """Unterpunkt "Zuhause": die eigene Wohnung. Im Modus "Einrichten" kauft
-    man Moebel, stellt sie per Klick auf, dreht, verschiebt oder verkauft sie,
-    waehlt Boeden und zieht in groessere Wohnungen um."""
+    man Moebel, stellt sie auf (ab 0.54 per Ziehen oder Klick, mit Raster,
+    Vorschau und Andocken an die Wand), dreht, verschiebt oder verkauft sie,
+    waehlt Boeden und zieht in groessere Wohnungen um. Versperrt ein Moebel
+    der Figur den Weg, gibt es eine Warnung (aber kein Verbot)."""
 
     KEY = "zuhause"
     TITLE = "Zuhause"
@@ -3816,6 +3869,9 @@ class HomeView(SiteView):
         self.selected = None      # Stueck, das gerade eingerichtet wird
         self.turn = 0
         self.problem = ""
+        self.preview = None       # Vorschau (fg.placement_preview) an der Maus
+        self.dragging = None      # (stueck, versatz_x, versatz_y, bewegt)
+        self.undo = []            # fruehere Einrichtungen dieser Einrichtungsrunde
 
     def site(self):
         return fg.SITE_HOME
@@ -3829,8 +3885,16 @@ class HomeView(SiteView):
     @property
     def SUBTITLE(self):
         if self.editing:
-            return "Möbel anklicken zum Auswählen · freie Stelle anklicken zum Aufstellen"
+            return HOME_EDIT_HINT
         return "Klicke irgendwohin, um dorthin zu gehen · Pfeiltasten gehen auch"
+
+    def render(self):
+        self.preview = None
+        self.dragging = None
+        super().render()
+        if self.plan is not None:
+            self.plan.on_pointer = self._pointer
+            self.plan.on_keypress = self._keypress
 
     def _build_head(self, state):
         row = _frame(self.content)
@@ -3843,77 +3907,178 @@ class HomeView(SiteView):
         NeoButton(row, "Fertig" if self.editing else "Einrichten", self._toggle_edit,
                   kind="primary" if self.editing else "ghost", height=32,
                   font=F["small_bold"]).pack(side="right")
+        if self.editing:
+            undo = NeoButton(row, "Rückgängig", self._undo, kind="ghost", height=32,
+                             font=F["small_bold"])
+            undo.pack(side="right", padx=(0, 8))
+            undo.set_enabled(bool(self.undo))
+        warning = fg.path_warning(fg.path_check(state))
+        if warning:
+            make_label(self.content, warning, font=F["small_bold"], fg=C["yellow"],
+                       wraplength=900, justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(0, 10))
 
     def _toggle_edit(self):
+        if self.editing:
+            blocked = fg.path_check(self.state)
+            if blocked and not messagebox.askyesno(
+                    "Weg versperrt", fg.path_warning(blocked) + "\n\nTrotzdem fertig?"):
+                return
         self.editing = not self.editing
         self.selected = None
         self.problem = ""
+        self.undo = []
         self.render()
 
     # -- Einrichten ---------------------------------------------------------
 
     def overlay(self):
-        if not self.editing or not self.selected:
-            return []
-        item = next((i for i in fg.placed_furniture(self.state)
-                     if i["stueck"] == self.selected), None)
-        if item is None:
-            return []
-        return [{"k": "rect", "x": item["x"] - 0.08, "y": item["y"] - 0.08,
-                 "w": item["w"] + 0.16, "h": item["h"] + 0.16, "fill": "",
-                 "line": C["accent"], "lw": 0.08, "r": 0.1}]
+        blocked = fg.path_check(self.state)
+        if not self.editing:
+            return fg.edit_overlay(self.state, blocked=blocked, grid=False) if blocked else []
+        return fg.edit_overlay(self.state, self.selected, self.preview,
+                               None if self.preview else blocked)
+
+    def _remember(self):
+        """Einrichtung vor einer Aenderung merken (fuer Rueckgaengig)."""
+        self.undo.append((self.state.home_id, copy.deepcopy(fg.home_layout(self.state))))
+        del self.undo[:-50]
+
+    def _undo(self):
+        while self.undo:
+            home_id, layout = self.undo.pop()
+            if home_id == self.state.home_id:
+                self.game_view.game.restore_layout(layout)
+                break
+        if self.selected not in self.state.furniture:
+            self.selected = None
+        self.problem = ""
+        self.render()
+
+    def _place(self, x, y):
+        """Gewaehltes Stueck mit der Mitte bei (x, y) aufstellen."""
+        before = copy.deepcopy(fg.home_layout(self.state))
+        try:
+            self.game_view.game.place_furniture_at(self.selected, x, y, self.turn)
+            self.undo.append((self.state.home_id, before))
+            self.problem = ""
+        except ValueError as exc:
+            self.problem = str(exc)
+        self.render()
 
     def plan_click(self, x, y):
         if not self.editing:
             return False
         state = self.state
         hit = fg.furniture_at(state, x, y)
-        if hit and hit["stueck"] != self.selected:
-            self.selected = hit["stueck"]
-            self.turn = hit["dreh"]
-            self.problem = ""
-            self.render()
+        if hit:
+            # anfassen: beim Ziehen wandert das Stueck mit, ein Klick waehlt nur aus
+            if hit["stueck"] != self.selected:
+                self.selected = hit["stueck"]
+                self.turn = hit["dreh"]
+                self.problem = ""
+            self.dragging = (hit["stueck"], hit["x"] + hit["w"] / 2.0 - x,
+                             hit["y"] + hit["h"] / 2.0 - y, False)
+            self.preview = None
+            self.plan.redraw_overlay(self.overlay())
             return True
         if not self.selected:
             self.problem = "Wähle zuerst ein Möbelstück aus (im Grundriss oder im Karton)."
             self.render()
             return True
-        item = fg.furniture_item(state.furniture.get(self.selected))
-        w, h = fg.furniture_size(item, self.turn)
-        try:
-            self.game_view.game.place_furniture(self.selected, x - w / 2.0, y - h / 2.0,
-                                                self.turn)
-            self.problem = ""
-        except ValueError as exc:
-            self.problem = str(exc)
-        self.render()
+        self._place(x, y)
         return True
+
+    def _pointer(self, kind, x, y):
+        if not self.editing:
+            return False
+        if kind == "right":
+            self._rotate()
+            return True
+        if kind == "drag" and self.dragging:
+            piece, off_x, off_y, _moved = self.dragging
+            self.dragging = (piece, off_x, off_y, True)
+            self._show_preview(x + off_x, y + off_y)
+            return True
+        if kind == "release" and self.dragging:
+            piece, off_x, off_y, moved = self.dragging
+            self.dragging = None
+            if moved:
+                self._place(x + off_x, y + off_y)
+            else:
+                self.render()
+            return True
+        if kind == "move" and self.selected and not self.dragging:
+            hit = fg.furniture_at(self.state, x, y)
+            if hit:
+                if self.preview is not None:
+                    self.preview = None
+                    self.plan.redraw_overlay(self.overlay())
+                self.plan.configure(cursor="hand2")
+                return True
+            self.plan.configure(cursor="crosshair")
+            self._show_preview(x, y)
+            return True
+        return False
+
+    def _show_preview(self, x, y):
+        preview = fg.placement_preview(self.state, self.selected, x, y, self.turn)
+        old = self.preview
+        self.preview = preview
+        if old is None or (old["x"], old["y"], old["dreh"]) != \
+                (preview["x"], preview["y"], preview["dreh"]):
+            self.plan.redraw_overlay(self.overlay())
+            self._set_hint(fg.preview_text(preview))
+
+    def _set_hint(self, text):
+        """Zeile unter dem Grundriss: was beim Aufstellen hier passieren wuerde."""
+        label = getattr(self, "hint", None)
+        if label is not None and label.winfo_exists():
+            color = C["red"] if text[1] == "rot" else C["yellow"] if text[1] == "gelb" \
+                else C["green"]
+            label.configure(text=text[0], text_color=color)
+
+    def _keypress(self, event):
+        if not self.editing:
+            return False
+        if event.keysym in ("r", "R") and not event.state & 0x4:
+            self._rotate()
+            return True
+        if event.keysym in ("z", "Z") and event.state & 0x4:
+            self._undo()
+            return True
+        return False
 
     def _select(self, piece):
         self.selected = piece
         self.turn = fg.home_layout(self.state)["moebel"].get(piece, [0, 0, 0])[2]
-        self.problem = "Klicke im Grundriss auf die Stelle, wo es stehen soll."
+        self.problem = ""
         self.render()
 
     def _rotate(self):
-        self.turn = (self.turn + 1) % 4
+        if not self.selected:
+            return
         placed = fg.home_layout(self.state)["moebel"].get(self.selected)
-        if placed:
-            item = fg.furniture_item(self.state.furniture[self.selected])
-            old_w, old_h = fg.furniture_size(item, placed[2])
-            new_w, new_h = fg.furniture_size(item, self.turn)
-            # um die Mitte drehen
-            x = placed[0] + old_w / 2.0 - new_w / 2.0
-            y = placed[1] + old_h / 2.0 - new_h / 2.0
-            try:
-                self.game_view.game.place_furniture(self.selected, x, y, self.turn)
-                self.problem = ""
-            except ValueError as exc:
-                self.turn = placed[2]
-                self.problem = str(exc)
+        if self.preview is not None or not placed:
+            # Vorschau an der Maus: nur die Drehung fuer das Aufstellen merken
+            self.turn = (self.turn + 1) % 4
+            if self.preview is not None:
+                center = (self.preview["x"] + self.preview["w"] / 2.0,
+                          self.preview["y"] + self.preview["h"] / 2.0)
+                self.preview = None
+                self._show_preview(*center)
+            return
+        before = copy.deepcopy(fg.home_layout(self.state))
+        try:
+            self.turn = self.game_view.game.rotate_furniture(self.selected)
+            self.undo.append((self.state.home_id, before))
+            self.problem = ""
+        except ValueError as exc:
+            self.problem = str(exc)
         self.render()
 
     def _box(self):
+        self._remember()
         self.game_view.game.box_furniture(self.selected)
         self.selected = None
         self.problem = ""
@@ -3962,17 +4127,22 @@ class HomeView(SiteView):
             return
         self.game_view.positions.pop(fg.SITE_HOME, None)
         self.selected = None
+        self.undo = []
         self.editing = True
         self.app.notify_progress()
         self.render()
 
     def _build_below(self, state):
+        self.hint = None
         if not self.editing:
             return
-        if self.problem:
-            make_label(self.info, self.problem, font=F["small_bold"], fg=C["yellow"],
-                       wraplength=900, justify="left", anchor="w").pack(anchor="w",
-                                                                        pady=(10, 0))
+        text = self.problem or ("Fahre mit der Maus über den Grundriss: Die Vorschau zeigt, "
+                                "wo das Stück stehen würde." if self.selected else
+                                "Wähle ein Möbelstück im Grundriss oder im Karton.")
+        self.hint = make_label(self.info.master, text, font=F["small_bold"],
+                               fg=C["yellow"] if self.problem else C["text_dim"],
+                               wraplength=900, justify="left", anchor="w")
+        self.hint.pack(anchor="w", pady=(10, 0))
         grid = _frame(self.content)
         grid.pack(fill="x", pady=(14, 0))
         grid.columnconfigure(0, weight=1, uniform="home")
@@ -5489,9 +5659,10 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             button.set_enabled(not offer["problem"])
 
         low, high, step = fg.free_loan_limits(state)
-        if self.loan_amount is None:
-            self.loan_amount = rules["frei"]["start"]
-        amount = fg.clamp_loan_amount(state, self.loan_amount)
+        # Ab 0.54 ohne self.loan_amount zu setzen: Ein Reiter darf beim Bauen
+        # keine Felder der Ansicht aendern, sonst passen die gemerkten anderen
+        # Reiter nicht mehr zum Render-Schluessel und werden neu gebaut
+        amount = fg.clamp_loan_amount(state, self._loan_amount())
         free = Card(self.content, title="Freie Kredithöhe", accent=C["accent"],
                     subtitle="Summe und Laufzeit selbst wählen, bis zum freien Kreditrahmen")
         free.pack(fill="x", pady=(14, 0))
@@ -5600,10 +5771,16 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             self.plans_for.add(loan_id)
         self.render(keep_scroll=True)
 
+    def _loan_amount(self):
+        """Gewaehlte freie Kreditsumme (vor der ersten Wahl der Startwert)."""
+        if self.loan_amount is None:
+            return fg.loan_rules()["frei"]["start"]
+        return self.loan_amount
+
     def _loan_step(self, delta):
         state = self.game.state
         self.loan_amount = fg.clamp_loan_amount(state, fg.clamp_loan_amount(
-            state, self.loan_amount or 0) + delta)
+            state, self._loan_amount()) + delta)
         self.render(keep_scroll=True)
 
     def _loan_choose_term(self, term):

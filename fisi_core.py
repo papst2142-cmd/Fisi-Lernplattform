@@ -22,6 +22,7 @@ import sys
 import random
 import sqlite3
 import datetime
+import unicodedata
 import uuid
 
 # ============================================================================
@@ -842,6 +843,15 @@ class DBManager:
             for table in self.STAMP_TABLES)
         row = self._execute(sql, fetch="one", default=None)
         return tuple(row) if row else None
+
+    def table_counts(self, tables):
+        """{tabelle: Anzahl Zeilen} (ab 0.54, fuer "Problem melden")."""
+        counts = {}
+        for table in tables:
+            row = self._execute("SELECT COUNT(*) FROM %s" % table, fetch="one",
+                                default=None)
+            counts[table] = row[0] if row else 0
+        return counts
 
     def has_legacy_events(self):
         """Gibt es Spielereignisse von vor 0.48 (ohne Durchgang)?"""
@@ -1918,6 +1928,47 @@ def notebook_entries(book, status=Q_PRACTICE, category=FILTER_ALL, topic=FILTER_
     return entries
 
 
+# Suche im Notizblock (ab 0.54): Frage, Antwort, Thema und Fachbereich. Die
+# Inhalte aendern sich zur Laufzeit nicht, darum wird der Suchtext je Frage
+# nur einmal gebaut (sonst kostete jeder Tastendruck tausende model_answer).
+NOTEBOOK_SEARCH_HINT = "Stichwort suchen (Frage, Antwort, Thema)"
+NOTEBOOK_NO_HITS = ("Keine Treffer für „%s“. Versuch ein anderes Stichwort oder setze "
+                    "die Filter zurück.")
+_SEARCH_TEXT = {}
+
+
+def search_key(text):
+    """Vergleichsform fuer die Suche: Unicode vereinheitlicht (Umlaute als
+    ein Zeichen), ohne Gross/klein (casefold, also auch ß = ss), Leerraum
+    an den Raendern entfernt."""
+    return unicodedata.normalize("NFC", str(text or "")).casefold().strip()
+
+
+def _entry_search_text(entry):
+    key = (entry["source"], entry["key"])
+    text = _SEARCH_TEXT.get(key)
+    if text is None:
+        item = entry["item"]
+        topic = item.get("thema")
+        # Ohne Fachbereich (ab 0.54 nach Abnahme): der kommt ueber die Filter,
+        # sonst faende "raid" den ganzen Bereich "Systeme, RAID & Hardware"
+        parts = [entry["title"], model_answer(entry["source"], item),
+                 TOPIC_NAME.get(topic, ""), TOPIC_SHORT.get(topic, ""),
+                 str(item.get("theme", ""))]
+        text = _SEARCH_TEXT[key] = search_key(" ".join(parts))
+    return text
+
+
+def notebook_search(entries, query):
+    """Eintraege des Notizblocks, die das Stichwort query enthalten
+    (zusaetzlich zu den Filtern von notebook_entries). Leeres Stichwort =
+    alle. Die Reihenfolge bleibt."""
+    needle = search_key(query)
+    if not needle:
+        return list(entries)
+    return [entry for entry in entries if needle in _entry_search_text(entry)]
+
+
 def notebook_summary(book, category=FILTER_ALL, topic=FILTER_ALL):
     """{quelle: {status: Anzahl}} ueber den ganzen Fragenpool."""
     summary = {}
@@ -1999,6 +2050,10 @@ RAID_RULES = {
     "RAID 6": (4, lambda n, s: ((n - 2) * s, 2)),
     "RAID 10": (4, lambda n, s: ((n / 2) * s, 1)),
 }
+# Ab 0.54: Bei der Eingabe (RAID-Rechner, Server bestuecken im Spiel) braucht
+# RAID 0 mindestens 2 Platten - so ist es fachlich richtig. RAID_RULES bleibt
+# unveraendert, damit gespeicherte Spielstaende rueckwirkend gleich rechnen.
+RAID_INPUT_MIN = {"RAID 0": 2}
 
 COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
                 ("24", "24 Bit (True Color)"),
@@ -2073,6 +2128,27 @@ def raid_values(level, disks, size):
             "toleranz": tolerance}
 
 
+def raid_min_disks(level):
+    """Mindestanzahl Platten fuer eine neue Eingabe (Rechner und Spiel)."""
+    return max(RAID_RULES[level][0], RAID_INPUT_MIN.get(level, 0))
+
+
+def raid_input_problem(level, disks):
+    """Meldung, wenn eine neue Eingabe die Mindestanzahl unterschreitet, die
+    nur fuer die Eingabe gilt (RAID 0 mit 1 Platte), sonst leerer Text."""
+    minimum = RAID_INPUT_MIN.get(level, 0)
+    if disks < minimum:
+        return "%s braucht mindestens %d Platten." % (level, minimum)
+    return ""
+
+
+def raid_input_values(level, disks, size):
+    """Wie raid_values, aber mit den Mindestwerten fuer neue Eingaben."""
+    if raid_input_problem(level, disks):
+        return None
+    return raid_values(level, disks, size)
+
+
 def raid_report(level, disks_text, size_text):
     """Berechnet Nettokapazitaet, Paritaetsverlust und Effizienz eines RAID."""
     try:
@@ -2084,9 +2160,9 @@ def raid_report(level, disks_text, size_text):
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
 
-    values = raid_values(level, disks, size)
+    values = raid_input_values(level, disks, size)
     if values is None:
-        minimum = RAID_RULES[level][0]
+        minimum = raid_min_disks(level)
         extra = " und eine gerade Anzahl" if level == "RAID 10" else ""
         return ("Ungültige Konfiguration für %s.\n\n"
                 "Benötigt werden mindestens %d Festplatten%s."
@@ -2190,7 +2266,7 @@ CALC_EXPLAIN_SUBNET = (
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
     "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
-    "RAID 0 - Striping (min. 1 Platte)\n"
+    "RAID 0 - Striping (min. 2 Platten)\n"
     "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
     "   Formel:  Netto = Anzahl x Kapazität\n"
     "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"
