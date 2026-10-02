@@ -7096,5 +7096,80 @@ class Spiel053OberflaecheTest(unittest.TestCase):
         self.assertIsNot(view._tab_body, first)
 
 
+class NamenInSaetzenTest(unittest.TestCase):
+    """Ab 0.54: Frei waehlbare Namen (Firma, Filiale, Spieler, Mitarbeiter, Kunden,
+    Mitbewerber, Bank) stehen ohne Artikel und ohne angehaengtes Genitiv-s im Satz."""
+
+    NAMEN = ["Nico IT", "Müller & Söhne GmbH", "Data Systems", "Hans", "Lisa", "Kraus"]
+    ARTIKEL = r"\b(der|die|das|dem|den|des|beim|zum|zur|vom|im|ein|eine|einer|einem|kein)\s+"
+
+    def pruefe(self, text, name):
+        self.assertIn(name, text)
+        self.assertIsNone(re.search(self.ARTIKEL + re.escape(name), text, re.IGNORECASE),
+                          text)
+        self.assertNotIn(name + "s ", text)
+        self.assertNotIn(name + "’", text)
+
+    def inhalt(self, name):
+        content = copy.deepcopy(fg.GAME)
+        content["gebaeude"]["firma"] = name
+        content["balancing"]["kredite"]["bank"] = name
+        content["serverfarm"]["kunde"]["name"] = name
+        return content
+
+    def test_saetze_aus_dem_code(self):
+        for name in self.NAMEN:
+            with self.subTest(name=name):
+                content = self.inhalt(name)
+                offer = {"paket": fg.FREE_LOAN, "name": "", "summe": 5000, "laufzeit": 20,
+                         "zins": 0.05, "rate": 263, "gesamt": 5260, "zinsen_gesamt": 260}
+                self.pruefe(fg.loan_confirm_text(offer, content), name)
+                self.pruefe(fg.farm_unlocked_text(content), name)
+                self.pruefe(fg.founded_text(name), name)
+                self.pruefe(fg.branch_opened_text(name), name)
+                state = fg.GameState([
+                    ("a", fg.EV_PROFILE, {"name": name, "aussehen": {}}),
+                    ("b", fg.EV_FOUNDED, {"tag": 2, "name": name, "geld": -1000})], content)
+                texts = [entry["titel"] + " " + entry["text"]
+                         for entry in fg.journey(state, content)]
+                self.pruefe(texts[0], name)
+                self.assertTrue(any(name in text and "Abschied" in text for text in texts))
+                for text in texts:
+                    if name in text:
+                        self.pruefe(text, name)
+
+    def test_saetze_aus_den_inhalten(self):
+        firm = fg.firm_rules()
+        conflicts = firm["personal"]["konflikt"]
+        recall = firm["rivalitaet"]["rueckhol"]
+        moments = [rule["moment_text"] for rule in fg.GAME["erfolge"]["erfolge"]
+                   if rule.get("moment_text")]
+        for name in self.NAMEN:
+            other = "Kraus" if name != "Kraus" else "Lisa"
+            with self.subTest(name=name):
+                for text in conflicts["texte"] + [conflicts["summen"]]:
+                    for a, b in ((name, other), (other, name)):
+                        line = text.format(**fg._pair_names(a, b))
+                        if name in line:
+                            self.pruefe(line, name)
+                for text in recall["texte"] + recall["texte_bitweiche"]:
+                    line = text.format(firma=name, name=other, plus=10)
+                    if "{firma}" in text:
+                        self.pruefe(line, name)
+                    self.pruefe(text.format(firma="Data Systems", name=name, plus=10), name)
+                for text in moments:
+                    line = text.format(ziel="", tag=1, spieler=name, firma=name, filiale=name)
+                    if name in line:
+                        self.pruefe(line, name)
+
+    def test_falsches_ersatzteil(self):
+        task = _task("usv-akkutausch-nord")
+        other = next(item for item in fg.GAME["hardware"]["teile"]
+                     if item["typ"] != task["austausch"]["typ"])
+        problems = fg.spare_fits(task, other["id"])
+        self.assertEqual(problems, ["Das ist kein Teil vom Typ „%s“." %
+                                    fg.spare_kinds()[task["austausch"]["typ"]]])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

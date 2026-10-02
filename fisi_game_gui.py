@@ -2513,7 +2513,7 @@ class GameView(ReusableView, ScrollArea):
         make_label(info, state.profile["name"], font=F["h1"], fg=C["text"],
                    anchor="w").pack(anchor="w")
         job = ("Geschäftsführung · %s" % state.firm["name"] if state.firm else
-               "%s bei der %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
+               "%s · %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
         make_label(info, job, font=F["body_bold"], fg=C["accent"], anchor="w").pack(
             anchor="w", pady=(2, 0))
         hint = "" if state.firm else fg.rank_hint(state)
