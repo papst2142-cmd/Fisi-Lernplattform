@@ -1999,6 +1999,10 @@ RAID_RULES = {
     "RAID 6": (4, lambda n, s: ((n - 2) * s, 2)),
     "RAID 10": (4, lambda n, s: ((n / 2) * s, 1)),
 }
+# Ab 0.54: Bei der Eingabe (RAID-Rechner, Server bestuecken im Spiel) braucht
+# RAID 0 mindestens 2 Platten - so ist es fachlich richtig. RAID_RULES bleibt
+# unveraendert, damit gespeicherte Spielstaende rueckwirkend gleich rechnen.
+RAID_INPUT_MIN = {"RAID 0": 2}
 
 COLOR_DEPTHS = [("8", "8 Bit (256 Farben)"), ("16", "16 Bit (High Color)"),
                 ("24", "24 Bit (True Color)"),
@@ -2073,6 +2077,27 @@ def raid_values(level, disks, size):
             "toleranz": tolerance}
 
 
+def raid_min_disks(level):
+    """Mindestanzahl Platten fuer eine neue Eingabe (Rechner und Spiel)."""
+    return max(RAID_RULES[level][0], RAID_INPUT_MIN.get(level, 0))
+
+
+def raid_input_problem(level, disks):
+    """Meldung, wenn eine neue Eingabe die Mindestanzahl unterschreitet, die
+    nur fuer die Eingabe gilt (RAID 0 mit 1 Platte), sonst leerer Text."""
+    minimum = RAID_INPUT_MIN.get(level, 0)
+    if disks < minimum:
+        return "%s braucht mindestens %d Platten." % (level, minimum)
+    return ""
+
+
+def raid_input_values(level, disks, size):
+    """Wie raid_values, aber mit den Mindestwerten fuer neue Eingaben."""
+    if raid_input_problem(level, disks):
+        return None
+    return raid_values(level, disks, size)
+
+
 def raid_report(level, disks_text, size_text):
     """Berechnet Nettokapazitaet, Paritaetsverlust und Effizienz eines RAID."""
     try:
@@ -2084,9 +2109,9 @@ def raid_report(level, disks_text, size_text):
     if disks <= 0 or size <= 0:
         raise InputError("Anzahl und Kapazität müssen größer als 0 sein.")
 
-    values = raid_values(level, disks, size)
+    values = raid_input_values(level, disks, size)
     if values is None:
-        minimum = RAID_RULES[level][0]
+        minimum = raid_min_disks(level)
         extra = " und eine gerade Anzahl" if level == "RAID 10" else ""
         return ("Ungültige Konfiguration für %s.\n\n"
                 "Benötigt werden mindestens %d Festplatten%s."
@@ -2190,7 +2215,7 @@ CALC_EXPLAIN_SUBNET = (
 CALC_EXPLAIN_RAID = (
     "RECHENWEG RAID\n"
     "Am Beispiel 4 Festplatten x 1000 GB (Bruttokapazität 4000 GB)\n\n"
-    "RAID 0 - Striping (min. 1 Platte)\n"
+    "RAID 0 - Striping (min. 2 Platten)\n"
     "   Die Daten werden ohne Redundanz auf alle Platten verteilt.\n"
     "   Formel:  Netto = Anzahl x Kapazität\n"
     "   Beispiel: 4 x 1000 GB = 4000 GB nutzbar\n"

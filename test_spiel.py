@@ -1419,6 +1419,168 @@ class WohnungTest(unittest.TestCase):
             self.assertTrue(fg.sleep_text(state))
 
 
+class EinrichtenRasterTest(unittest.TestCase):
+    """Ab 0.54: Andocken an Wand und Ecke, Drehen an der Wand, Wegpruefung,
+    Rueckgaengig - Ereignis und alte Einrichtungen bleiben unveraendert."""
+
+    def test_klick_an_der_wand_dockt_an(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            bed = game.buy_furniture("bett_einzel")
+            # bis 0.53 abgelehnt ("muss ganz in einem Raum stehen")
+            self.assertIn("Raum", fg.placement_problem(game.state, bed, "bett_einzel",
+                                                       fg.snap(8.7 - 0.9), fg.snap(0.3 - 1.7), 0))
+            game.place_furniture_at(bed, 8.7, 0.3)          # Ecke oben rechts im Wohnraum
+            self.assertEqual(fg.home_layout(game.state)["moebel"][bed], [7.2, 0, 0])
+            game.place_furniture_at(bed, 6.0, 0.1)          # obere Wand, mitten im Raum
+            x, y, _turn = fg.home_layout(game.state)["moebel"][bed]
+            self.assertEqual((x, y), (5.0, 0))
+
+    def test_andocken_in_allen_wohnungen(self):
+        state = fg.GameState([])
+        state.furniture = {"b": "bett_einzel"}
+        for flat in fg.GAME["wohnungen"]["wohnungen"]:
+            state.home_id = flat["id"]
+            state.layouts = {flat["id"]: {"moebel": {}, "boeden": {}}}
+            for area in flat["gebaeude"]["raeume"]:
+                for turn in range(4):
+                    w, h = fg.furniture_size(fg.furniture_item("bett_einzel"), turn)
+                    if w > area["w"] or h > area["h"]:
+                        continue
+                    for cx, cy in ((area["x"] + 0.1, area["y"] + 0.1),
+                                   (area["x"] + area["w"] - 0.1, area["y"] + area["h"] - 0.1)):
+                        x, y = fg.dock_position(state, "bett_einzel", cx, cy, turn)
+                        box = {"x": x, "y": y, "w": w, "h": h}
+                        self.assertTrue(fg._inside(box, area), (flat["id"], area["id"], turn))
+                        # wirklich an der Wand: eine Ecke liegt auf der Raumecke
+                        self.assertTrue(abs(x - area["x"]) < 1e-6 or
+                                        abs(x + w - area["x"] - area["w"]) < 1e-6)
+
+    def test_drehen_bleibt_an_der_wand(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            bed = game.buy_furniture("bett_einzel")
+            game.place_furniture_at(bed, 8.7, 0.3)
+            seen = []
+            for _step in range(4):
+                turn = game.rotate_furniture(bed)
+                x, y, saved = fg.home_layout(game.state)["moebel"][bed]
+                w, h = fg.furniture_size(fg.furniture_item("bett_einzel"), saved)
+                self.assertEqual(saved, turn)
+                self.assertEqual(y, 0)                         # oben an der Wand
+                self.assertAlmostEqual(x + w, 9.0)             # rechts an der Wand
+                seen.append(turn)
+            self.assertEqual(seen, [1, 2, 3, 0])
+
+    def test_schieben_und_regeln_bleiben(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            sofa = game.buy_furniture("sofa")
+            game.place_furniture_at(sofa, 4.0, 1.0)
+            x, y, _turn = fg.home_layout(game.state)["moebel"][sofa]
+            game.nudge_furniture(sofa, 1, 0)
+            self.assertEqual(fg.home_layout(game.state)["moebel"][sofa][:2], [x + 0.25, y])
+            with self.assertRaisesRegex(ValueError, "Tür"):     # Tueren bleiben gesperrt
+                game.place_furniture_at(sofa, 2.2, 5.0)
+            with self.assertRaisesRegex(ValueError, "stößt"):   # an der Matratze
+                game.place_furniture_at(sofa, 1.0, 1.0)
+
+    def _blocked_game(self, db):
+        game = _rich_game(db, 20000)
+        game.move_home("zweizimmer", rent=False)
+        bed = game.buy_furniture("bett_doppel")
+        first = game.buy_furniture("sofa")
+        second = game.buy_furniture("sofa")
+        game.place_furniture_at(bed, 14.5, 1.8)
+        game.place_furniture_at(first, 12.2, 1.8, 1)
+        return game, bed, second
+
+    def test_wegpruefung_warnt_aber_verbietet_nicht(self):
+        with TempDB() as db:
+            game, bed, second = self._blocked_game(db)
+            self.assertEqual(fg.path_check(game.state), [])
+            preview = fg.placement_preview(game.state, second, 14.2, 4.45, 0)
+            self.assertEqual(preview["problem"], "")
+            self.assertEqual([t["name"] for t in preview["gesperrt"]], ["Doppelbett"])
+            self.assertEqual(fg.preview_text(preview)[1], "gelb")
+            events = len(db.game_events())
+            game.place_furniture_at(second, 14.2, 4.45)          # trotzdem erlaubt
+            self.assertEqual(len(db.game_events()), events + 1)
+            blocked = fg.path_check(game.state)
+            self.assertEqual([t["name"] for t in blocked], ["Doppelbett"])
+            self.assertIn("Doppelbett", fg.path_warning(blocked))
+            shapes = fg.edit_overlay(game.state, blocked=blocked, grid=False)
+            self.assertTrue(shapes and all(s["k"] == "line" for s in shapes))
+            # wieder frei: Sofa einpacken
+            game.box_furniture(second)
+            self.assertEqual(fg.path_check(game.state), [])
+
+    def test_wegpruefung_stimmt_mit_dem_laufen_ueberein(self):
+        def bed_usable(game, bed):
+            content = fg.site_content(fg.SITE_HOME, game.state)
+            cells = fg._reachable(fg._walk_grid(content), content["gebaeude"]["flur"]["spieler"])
+            return any((fg.furniture_near(game.state, fg._center(cell)) or {}).get("stueck")
+                       == bed for cell in cells)
+
+        with TempDB() as db:
+            game, bed, second = self._blocked_game(db)
+            self.assertTrue(bed_usable(game, bed))
+            game.place_furniture_at(second, 14.2, 4.45)
+            self.assertFalse(bed_usable(game, bed))    # "Schlafen" ist wirklich weg
+
+    def test_start_einrichtungen_ohne_warnung(self):
+        state = fg.GameState([])
+        for flat in fg.GAME["wohnungen"]["wohnungen"]:
+            state.home_id = flat["id"]
+            state.layouts = {}
+            self.assertEqual(fg.path_check(state), [], flat["id"])
+
+    def test_rueckgaengig_haengt_nur_an(self):
+        with TempDB() as db:
+            game = _rich_game(db, 1000)
+            bed = game.buy_furniture("bett_einzel")
+            before = copy.deepcopy(fg.home_layout(game.state))
+            game.place_furniture_at(bed, 8.7, 0.3)
+            events = db.game_events()
+            game.restore_layout(before)
+            after = db.game_events()
+            self.assertEqual(after[:len(events)], events)        # nichts geloescht
+            self.assertEqual(after[-1][1], fg.EV_LAYOUT)
+            self.assertEqual(fg.home_layout(game.state), before)
+            self.assertIn(bed, dict(fg.boxed_furniture(game.state)))
+            # Auf dem anderen Geraet (gleiche Ereignisse) dieselbe Einrichtung
+            self.assertEqual(fg.home_layout(fg.GameState(db.game_events())), before)
+            # unveraendert -> kein neues Ereignis
+            game.restore_layout(before)
+            self.assertEqual(len(db.game_events()), len(after))
+
+    def test_alte_einrichtung_bleibt_wie_sie_ist(self):
+        # Einrichtung aus 0.53 mit Werten ausserhalb des Rasters (Start-Matratze
+        # bei 0,4 / 0,4) und gedrehtem Sofa - wird 1:1 gelesen
+        old = {"wohnung": "apartment", "boeden": {"wohnraum": ["parkett", "cyan"]},
+               "moebel": {"start-matratze": [0.4, 0.4, 0], "m1": [4.0, 0.25, 1]}}
+        events = [("2026-09-30T10:00:00", fg.EV_BUY,
+                   {"stueck": "m1", "moebel": "sofa", "geld": -450}),
+                  ("2026-09-30T10:01:00", fg.EV_LAYOUT, old)]
+        state = fg.GameState(events)
+        layout = fg.home_layout(state)
+        self.assertEqual(layout["moebel"], {"start-matratze": [0.4, 0.4, 0],
+                                            "m1": [4.0, 0.25, 1]})
+        self.assertEqual(layout["boeden"], old["boeden"])
+
+    def test_vorschau_schnell(self):
+        import time
+        with TempDB() as db:
+            game = _rich_game(db, 50000)
+            game.move_home("loft", rent=False)
+            sofa = game.buy_furniture("sofa")
+            fg.placement_preview(game.state, sofa, 5.0, 3.0, 0)   # Raster einmal aufbauen
+            start = time.time()
+            for step in range(20):
+                fg.placement_preview(game.state, sofa, 3.0 + step * 0.4, 3.0, 0)
+            self.assertLess((time.time() - start) / 20, 0.05)
+
+
 class KundeTest(unittest.TestCase):
     def test_alle_raeume_erreichbar(self):
         # Jeder Raum jedes Kundenorts ist vom Eingang aus zu betreten
@@ -6484,6 +6646,43 @@ class ServerfarmTest(unittest.TestCase):
                                                       "raid": level})
                     expected = core.raid_values(level, count, values["laufwerk"]["groesse"])
                     self.assertEqual(values["raid_werte"], expected, (level, count))
+
+    def test_raid0_braucht_bei_der_eingabe_zwei_platten(self):
+        # Ab 0.54: Rechner und Server bestuecken lassen RAID 0 mit 1 Platte nicht zu
+        self.assertIn("mindestens 2 Festplatten", core.raid_report("RAID 0", "1", "1000"))
+        self.assertIn("Nutzkapazität", core.raid_report("RAID 0", "2", "1000"))
+        self.assertIsNone(core.raid_input_values("RAID 0", 1, 1000))
+        self.assertEqual(core.raid_input_problem("RAID 0", 1),
+                         "RAID 0 braucht mindestens 2 Platten.")
+        # Die Rechenregel fuer gespeicherte Spielstaende bleibt unveraendert
+        self.assertEqual(core.RAID_RULES["RAID 0"][0], 1)
+        self.assertEqual(core.raid_values("RAID 0", 1, 1000)["netto"], 1000)
+        task = fg.farm_task("sf-bestueckung")
+        good = fg.fit_solution(task)
+        host = fg.fit_templates(task)[0]["id"]
+        one = copy.deepcopy(good)
+        one[host].update(raid="RAID 0", laufwerke=1)
+        view = fg.fit_view(task, one, host)
+        self.assertEqual(view["raid_text"], "RAID 0 braucht mindestens 2 Platten.")
+        self.assertFalse(view["raid_ok"])
+        self.assertTrue(any("RAID 0 mit 1 Laufwerk möglich" in line
+                            for line in fg.fit_problems(task, one)))
+
+    def test_alte_serverfarm_aufgabe_rechnet_gleich(self):
+        # Ein gespeichertes Ergebnis (auch mit RAID 0 aus 1 Platte) wird beim
+        # Abspielen nicht neu bewertet: Geld und Ergebnis stehen im Ereignis
+        task = fg.farm_task("sf-bestueckung")
+        good = fg.fit_solution(task)
+        host = fg.fit_templates(task)[0]["id"]
+        good[host].update(raid="RAID 0", laufwerke=1)
+        payload = {"aufgabe": "sf-bestueckung", "tag": 3, "phase": 1, "richtig": True,
+                   "fehler": 0, "geld": 1234, "antwort": good}
+        state = fg.GameState([])
+        state.farm = fg.new_farm(1)
+        money = state.money
+        state._apply_farm(fg.EV_FARM_TASK, payload, 3)
+        self.assertEqual(state.money, money + 1234)
+        self.assertTrue(state.farm["aufgaben"]["sf-bestueckung"]["richtig"])
 
     def test_bestueckung_richtig_und_falsch(self):
         task = fg.farm_task("sf-bestueckung")

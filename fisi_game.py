@@ -33,7 +33,8 @@ import uuid
 
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
-    TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_values, search_content, topic_totals,
+    TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_input_problem, raid_input_values,
+    raid_values, search_content, topic_totals,
     ACTIVE_RUN_KEY, LEGACY_RUN, plural,
 )
 import fisi_theme
@@ -5599,6 +5600,54 @@ class Game:
         layout = home_layout(self.state, self.content)
         layout["moebel"][piece] = [x, y, int(turn) % 4]
         self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+
+    def place_furniture_at(self, piece, cx, cy, turn=0):
+        """Stellt ein Moebelstueck mit der Mitte bei (cx, cy) auf und rueckt
+        es dabei an die Wand (ab 0.54, siehe dock_position)."""
+        item_id = self.state.furniture.get(piece)
+        if item_id is None:
+            raise ValueError("Dieses Möbelstück gehört dir nicht.")
+        x, y = dock_position(self.state, item_id, cx, cy, turn, self.content)
+        self._set_furniture(piece, x, y, turn)
+
+    def rotate_furniture(self, piece):
+        """Dreht ein aufgestelltes Moebelstueck um eine Vierteldrehung; an
+        der Wand bleibt es an der Wand (ab 0.54). Gibt die neue Drehung zurueck."""
+        item_id = self.state.furniture.get(piece)
+        placed = home_layout(self.state, self.content)["moebel"].get(piece)
+        if item_id is None or placed is None:
+            raise ValueError("Dieses Möbelstück steht nicht in der Wohnung.")
+        turn = (int(placed[2]) + 1) % 4
+        x, y = rotated_position(self.state, item_id, placed, turn, self.content)
+        self._set_furniture(piece, x, y, turn)
+        return turn
+
+    def nudge_furniture(self, piece, dx, dy):
+        """Schiebt ein aufgestelltes Moebelstueck um ein Rasterfeld (Handy)."""
+        placed = home_layout(self.state, self.content)["moebel"].get(piece)
+        if placed is None:
+            raise ValueError("Dieses Möbelstück steht nicht in der Wohnung.")
+        self._set_furniture(piece, round(snap(placed[0]) + dx * GRID, 2),
+                            round(snap(placed[1]) + dy * GRID, 2), placed[2])
+
+    def _set_furniture(self, piece, x, y, turn):
+        problem = placement_problem(self.state, piece, self.state.furniture.get(piece), x, y,
+                                    turn, content=self.content)
+        if problem:
+            raise ValueError(problem)
+        layout = home_layout(self.state, self.content)
+        layout["moebel"][piece] = [x, y, int(turn) % 4]
+        self._log(EV_LAYOUT, dict(layout, wohnung=self.state.home_id))
+
+    def restore_layout(self, layout):
+        """Rueckgaengig (ab 0.54): schreibt eine fruehere Einrichtung wieder
+        als neues Ereignis (nur angehaengt, nichts geloescht)."""
+        current = home_layout(self.state, self.content)
+        moebel = {key: list(value) for key, value in (layout.get("moebel") or {}).items()
+                  if key in self.state.furniture}
+        restored = {"moebel": moebel, "boeden": dict(layout.get("boeden") or {})}
+        if restored != current:
+            self._log(EV_LAYOUT, dict(restored, wohnung=self.state.home_id))
 
     def box_furniture(self, piece):
         """Packt ein Moebelstueck zurueck in den Karton."""
@@ -12924,12 +12973,15 @@ def placement_problem(state, piece, item_id, x, y, turn, layout=None, content=No
     return ""
 
 
-def home_building(state, content=None):
-    """Grundriss der Wohnung mit Boeden und Moebeln aus der Einrichtung."""
+def home_building(state, content=None, layout=None, boxed=None):
+    """Grundriss der Wohnung mit Boeden und Moebeln aus der Einrichtung.
+    layout/boxed (ab 0.54): eine angenommene Einrichtung fuer die Vorschau
+    beim Aufstellen (boxed: Liste der Stuecke im Karton)."""
     content = content or GAME
     flat = apartment(state.home_id, content)
-    layout = home_layout(state, content)
-    boxed = boxed_furniture(state, layout, content)
+    layout = layout or home_layout(state, content)
+    if boxed is None:
+        boxed = boxed_furniture(state, layout, content)
     signature = json.dumps([state.home_id, layout, len(boxed)], sort_keys=True)
     key = ("wohnung", id(content), signature)
     cached = _SITE_CACHE.get(key)
@@ -12962,6 +13014,268 @@ def home_building(state, content=None):
         _SITE_CACHE.clear()
     _SITE_CACHE[key] = (None, building)
     return building
+
+
+# ----------------------------------------------------------------------------
+#  Aufstellen mit Andocken, Vorschau und Wegpruefung (ab 0.54)
+# ----------------------------------------------------------------------------
+#
+# Bis 0.53 setzte ein Klick die MITTE des Moebels. Nahe an der Wand ragte es
+# dann rechnerisch durch die Wand und wurde abgelehnt - gefuehlt ging es nur
+# in der Raummitte. Jetzt rueckt dock_position das Moebel in den Raum, in den
+# geklickt wurde: an die Wand oder in die Ecke. Die Regeln selbst
+# (placement_problem) und das Ereignis einrichtung_gesetzt bleiben, wie sie
+# sind - alte Einrichtungen stehen weiter genau an ihrer Stelle.
+#
+# path_check prueft, ob die Figur von der Wohnungstuer aus noch jeden Raum
+# und jedes benutzbare Moebel (Bett, Schreibtisch) erreicht. Eine Sperrung
+# wird nur gemeldet, nicht verboten.
+
+def _area_at(building, x, y):
+    for area in _areas(building):
+        if area["x"] <= x < area["x"] + area["w"] and area["y"] <= y < area["y"] + area["h"]:
+            return area
+    return None
+
+
+def dock_position(state, item_id, cx, cy, turn, content=None):
+    """Ecke oben links fuer ein Moebel, dessen Mitte bei (cx, cy) liegen
+    soll: auf das Raster gelegt und so weit in den Raum geschoben, dass es
+    an der Wand anliegt statt durch sie hindurchzuragen."""
+    content = content or GAME
+    item = furniture_item(item_id, content)
+    w, h = furniture_size(item, turn)
+    x, y = snap(cx - w / 2.0), snap(cy - h / 2.0)
+    area = _area_at(apartment(state.home_id, content)["gebaeude"], cx, cy)
+    if area is not None:
+        if w <= area["w"]:
+            x = min(max(x, area["x"]), area["x"] + area["w"] - w)
+        if h <= area["h"]:
+            y = min(max(y, area["y"]), area["y"] + area["h"] - h)
+    return round(x, 2), round(y, 2)
+
+
+def rotated_position(state, item_id, placed, turn, content=None):
+    """Ecke oben links nach dem Drehen: um die Mitte gedreht, aber was vorher
+    an einer Wand lag, liegt danach wieder an derselben Wand (in der Ecke
+    bleibt es in der Ecke)."""
+    content = content or GAME
+    item = furniture_item(item_id, content)
+    old_w, old_h = furniture_size(item, placed[2])
+    cx, cy = placed[0] + old_w / 2.0, placed[1] + old_h / 2.0
+    x, y = dock_position(state, item_id, cx, cy, turn, content)
+    w, h = furniture_size(item, turn)
+    area = _area_at(apartment(state.home_id, content)["gebaeude"], cx, cy)
+    if area is not None:
+        right, bottom = area["x"] + area["w"], area["y"] + area["h"]
+        if abs(placed[0] - area["x"]) < 0.01:
+            x = area["x"]
+        elif abs(placed[0] + old_w - right) < 0.01 and w <= area["w"]:
+            x = right - w
+        if abs(placed[1] - area["y"]) < 0.01:
+            y = area["y"]
+        elif abs(placed[1] + old_h - bottom) < 0.01 and h <= area["h"]:
+            y = bottom - h
+    return round(x, 2), round(y, 2)
+
+
+def _reachable(free, start):
+    """Alle Zellen, die die Figur von start aus erreicht (wie walk_path)."""
+    begin = _nearest_free(start[0], start[1], free)
+    if begin is None:
+        return set()
+    seen = {begin}
+    queue = [begin]
+    for cell in queue:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                       (1, 1), (1, -1), (-1, 1), (-1, -1)):
+            nxt = (cell[0] + dx, cell[1] + dy)
+            if nxt in free and nxt not in seen:
+                if dx and dy and ((cell[0] + dx, cell[1]) not in free or
+                                  (cell[0], cell[1] + dy) not in free):
+                    continue
+                seen.add(nxt)
+                queue.append(nxt)
+    return seen
+
+
+def _without_rect(free, rect):
+    """Laufraster, wenn zusaetzlich rect (x, y, w, h) im Weg steht."""
+    blocked = set()
+    reach = int(BODY_RADIUS / WALK_STEP) + 1
+    col0, row0 = _cell(rect["x"], rect["y"])
+    col1, row1 = _cell(rect["x"] + rect["w"], rect["y"] + rect["h"])
+    for col in range(col0 - reach, col1 + reach + 1):
+        for row in range(row0 - reach, row1 + reach + 1):
+            cx, cy = _center((col, row))
+            dx = max(rect["x"] - cx, 0, cx - rect["x"] - rect["w"])
+            dy = max(rect["y"] - cy, 0, cy - rect["y"] - rect["h"])
+            if dx * dx + dy * dy < BODY_RADIUS * BODY_RADIUS:
+                blocked.add((col, row))
+    return free - blocked
+
+
+def _path_targets(state, layout, content):
+    """Ziele der Wegpruefung: jeder Raum und jedes benutzbare Moebel."""
+    building = apartment(state.home_id, content)["gebaeude"]
+    targets = [{"art": "raum", "name": area["name"], "x": area["x"], "y": area["y"],
+                "w": area["w"], "h": area["h"]} for area in building["raeume"]]
+    for item in placed_furniture(state, layout, content):
+        info = furniture_item(item["moebel"], content)
+        if info and info.get("aktion"):
+            targets.append({"art": "moebel", "name": info["name"], "stueck": item["stueck"],
+                            "x": item["x"], "y": item["y"], "w": item["w"], "h": item["h"]})
+    return targets
+
+
+def _unreachable(free, start, targets):
+    cells = _reachable(free, start)
+    result = []
+    for target in targets:
+        ok = False
+        for cell in cells:
+            cx, cy = _center(cell)
+            if target["art"] == "raum":
+                ok = target["x"] <= cx < target["x"] + target["w"] and \
+                    target["y"] <= cy < target["y"] + target["h"]
+            else:
+                dx = max(target["x"] - cx, 0, cx - target["x"] - target["w"])
+                dy = max(target["y"] - cy, 0, cy - target["y"] - target["h"])
+                ok = math.hypot(dx, dy) <= FURNITURE_REACH
+            if ok:
+                break
+        if not ok:
+            result.append(target)
+    return result
+
+
+def path_check(state, content=None):
+    """Ziele, die die Figur in der aktuellen Einrichtung nicht erreicht
+    (leere Liste = alles erreichbar). Eintraege: {"art", "name", "x", "y",
+    "w", "h"} - art "raum" oder "moebel"."""
+    content = content or GAME
+    site = home_content(state, content)
+    start = site["gebaeude"]["flur"]["spieler"]
+    return _unreachable(_walk_grid(site), start,
+                        _path_targets(state, home_layout(state, content), content))
+
+
+def path_warning(blocked):
+    """Warnzeile zur Wegpruefung (PC und Handy gleich), leer = alles frei.
+    Ohne Artikel, damit jeder Raum- und Moebelname passt."""
+    if not blocked:
+        return ""
+    names = []
+    for target in blocked:
+        if target["name"] not in names:
+            names.append(target["name"])
+    return "Achtung, Weg versperrt! Die Figur erreicht nicht mehr: %s." % (
+        ", ".join(names[:-1]) + " und " + names[-1] if len(names) > 1 else names[0])
+
+
+def preview_text(preview):
+    """(Text, Farbe) zur Vorschau: "gruen" passt, "gelb" versperrt einen Weg,
+    "rot" geht nicht - PC und Handy zeigen denselben Satz."""
+    if preview["problem"]:
+        return preview["problem"], "rot"
+    if preview["gesperrt"]:
+        return path_warning(preview["gesperrt"]) + " Aufstellen geht trotzdem.", "gelb"
+    return "Passt. Klicken oder loslassen zum Aufstellen.", "gruen"
+
+
+def placement_preview(state, piece, cx, cy, turn, content=None):
+    """Vorschau beim Aufstellen (PC beim Ziehen, Handy vor dem Tippen):
+    {"x", "y", "w", "h", "dreh", "problem" (Text, leer = passt),
+    "gesperrt" (Ziele wie bei path_check, die dann nicht mehr erreichbar
+    waeren)}. Speichert nichts."""
+    content = content or GAME
+    item_id = state.furniture.get(piece)
+    item = furniture_item(item_id, content)
+    w, h = furniture_size(item, turn)
+    x, y = dock_position(state, item_id, cx, cy, turn, content)
+    result = {"x": x, "y": y, "w": w, "h": h, "dreh": int(turn) % 4, "gesperrt": [],
+              "problem": placement_problem(state, piece, item_id, x, y, turn,
+                                           content=content)}
+    if result["problem"]:
+        return result
+    layout = home_layout(state, content)
+    others = {key: value for key, value in layout["moebel"].items() if key != piece}
+    rest = {"moebel": others, "boeden": layout["boeden"]}
+    boxed = [key for key in state.furniture if key not in others and key != piece]
+    building = home_building(state, content, rest, boxed)
+    free = _base_grid(building)
+    if item["typ"] not in WALK_FREE:
+        free = _without_rect(free, result)
+    rest["moebel"] = dict(others, **{piece: [x, y, int(turn) % 4]})
+    result["gesperrt"] = _unreachable(free, building["flur"]["spieler"],
+                                      _path_targets(state, rest, content))
+    return result
+
+
+def _dashed_rect(x, y, w, h, color, lw=0.07, dash=0.3):
+    """Gestrichelter Rahmen aus kurzen Linien (Tk und Flet zeichnen gleich)."""
+    shapes = []
+    for x1, y1, x2, y2 in ((x, y, x + w, y), (x + w, y, x + w, y + h),
+                           (x + w, y + h, x, y + h), (x, y + h, x, y)):
+        length = math.hypot(x2 - x1, y2 - y1)
+        steps = max(1, int(length / (2 * dash)))
+        for index in range(steps):
+            a = index / float(steps)
+            b = (index + 0.5) / float(steps)
+            shapes.append(_line(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a,
+                                x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, color, lw))
+    return shapes
+
+
+def edit_overlay(state, selected=None, preview=None, blocked=None, content=None, grid=True):
+    """Zusaetzliche Zeichenbefehle im Einrichten-Modus (ab 0.54, PC und Handy
+    gleich): Raster in jedem Raum (fein alle 0,5, kraeftiger je ganze
+    Einheit), Rahmen um das gewaehlte Stueck, die Vorschau an der neuen
+    Stelle (gruen = passt, gelb = versperrt einen Weg, rot = geht nicht) und
+    gelb gestrichelte Rahmen um Ziele, die die Figur nicht mehr erreicht."""
+    content = content or GAME
+    building = apartment(state.home_id, content)["gebaeude"]
+    shapes = []
+    fine, strong = mix(C["border"], C["text"], 0.05), mix(C["border"], C["text"], 0.22)
+    for area in _areas(building) if grid else []:
+        x0, y0, x1, y1 = area["x"], area["y"], area["x"] + area["w"], area["y"] + area["h"]
+        step = 1
+        while x0 + step * 0.5 < x1 - 0.01:
+            xx = x0 + step * 0.5
+            shapes.append(_line(xx, y0, xx, y1, strong if step % 2 == 0 else fine,
+                                0.022 if step % 2 == 0 else 0.012))
+            step += 1
+        step = 1
+        while y0 + step * 0.5 < y1 - 0.01:
+            yy = y0 + step * 0.5
+            shapes.append(_line(x0, yy, x1, yy, strong if step % 2 == 0 else fine,
+                                0.022 if step % 2 == 0 else 0.012))
+            step += 1
+    if preview is not None:
+        item = furniture_item(state.furniture.get(selected), content)
+        if item:
+            shapes += _deco({"typ": item["typ"], "x": preview["x"], "y": preview["y"],
+                             "w": preview["w"], "h": preview["h"], "dreh": preview["dreh"],
+                             "blick": item.get("blick", "s")})
+        color = C["red"] if preview["problem"] else \
+            C["yellow"] if preview["gesperrt"] else C["green"]
+        shapes.append(_rect(preview["x"] - 0.06, preview["y"] - 0.06, preview["w"] + 0.12,
+                            preview["h"] + 0.12, "", color, 0.09, 0.1))
+        blocked = preview["gesperrt"] if blocked is None else blocked
+    elif selected:
+        item = next((i for i in placed_furniture(state, content=content)
+                     if i["stueck"] == selected), None)
+        if item is not None:
+            shapes.append(_rect(item["x"] - 0.08, item["y"] - 0.08, item["w"] + 0.16,
+                                item["h"] + 0.16, "", C["accent"], 0.08, 0.1))
+    for target in blocked or []:
+        pad = 0.12 if target["art"] == "moebel" else 0.3
+        shapes += _dashed_rect(target["x"] + (pad if target["art"] == "raum" else -pad),
+                               target["y"] + (pad if target["art"] == "raum" else -pad),
+                               target["w"] + (-2 if target["art"] == "raum" else 2) * pad,
+                               target["h"] + (-2 if target["art"] == "raum" else 2) * pad,
+                               C["yellow"])
+    return shapes
 
 
 def home_content(state, content=None):
@@ -14237,7 +14551,8 @@ def fit_server(template, config, content=None):
             values["laufwerk"] = item
             values["laufwerke"] = count
             if config.get("raid") in RAID_LEVELS:
-                values["raid_werte"] = raid_values(config["raid"], count, item["groesse"])
+                values["raid_werte"] = raid_input_values(config["raid"], count,
+                                                            item["groesse"])
         elif kind == "ram":
             values["ram"] = item["groesse"] * count
             values["ram_anzahl"] = count
@@ -14279,7 +14594,8 @@ def fit_server_checks(template, values, content=None):
         if values["raid"] not in RAID_LEVELS:
             add("RAID-Level gewählt", False)
         else:
-            add("%s mit %d Laufwerken möglich" % (values["raid"], values["laufwerke"]),
+            add("%s mit %s möglich" % (values["raid"], plural(values["laufwerke"], "Laufwerk",
+                                                              "Laufwerken")),
                 raid is not None)
             if soll.get("raid"):
                 add("RAID-Level %s" % " oder ".join(soll["raid"]), values["raid"] in soll["raid"])
@@ -14402,7 +14718,7 @@ def _fit_cheapest(template, content):
             continue
         for count in fit_count_range(template, "laufwerk"):
             for level in soll.get("raid") or RAID_LEVELS:
-                raid = raid_values(level, count, drive["groesse"])
+                raid = raid_input_values(level, count, drive["groesse"])
                 if raid is None or raid["netto"] < soll.get("netto_min", 0) or \
                         raid["toleranz"] < soll.get("toleranz_min", 0):
                     continue
@@ -14497,8 +14813,10 @@ def fit_view(task, answer, current, content=None):
             "übersteht %d Plattenausfälle" % tolerance)
         raid_ok = True
     elif werte["raid"] and werte["laufwerk"]:
-        raid_text, raid_ok = "%s geht mit %d Laufwerken nicht." % (
-            werte["raid"], werte["laufwerke"]), False
+        raid_text = raid_input_problem(werte["raid"], werte["laufwerke"]) or \
+            "%s geht mit %s nicht." % (werte["raid"], plural(werte["laufwerke"], "Laufwerk",
+                                                             "Laufwerken"))
+        raid_ok = False
     else:
         raid_text, raid_ok = "Laufwerke und RAID-Level wählen.", None
     template = server["vorlage"]
