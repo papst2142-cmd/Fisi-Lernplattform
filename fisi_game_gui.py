@@ -2030,15 +2030,15 @@ class MaintenanceBoard(ctk.CTkFrame):
 _SIMPLE_TYPES = (type(None), bool, int, float, str, tuple, list, dict, set, frozenset)
 
 
-def _snapshot(obj):
+def _snapshot(obj, skip=()):
     """Alle einfachen Felder eines Objekts (keine Widgets, keine Spielobjekte)
     als vergleichbarer Wert. Mengen werden sortiert, damit die Reihenfolge
-    keine Rolle spielt."""
+    keine Rolle spielt. skip: Felder, die nicht dazugehoeren."""
     items = []
     for name, value in sorted(vars(obj).items()):
         # Tkinter-Verwaltung (_tclCommands, _w, _name ...) und die eigenen
         # Merkfelder gehoeren nicht zum Inhalt
-        if name.startswith("_"):
+        if name.startswith("_") or name in skip:
             continue
         if isinstance(value, (set, frozenset)):
             items.append((name, tuple(sorted(repr(item) for item in value))))
@@ -2053,6 +2053,10 @@ class ReusableView:
     und self.content."""
 
     keeps_scroll = True     # show_view setzt die Scroll-Position nicht zurueck
+    # Ab 0.54: Wo die Figur in Buero/Zuhause/Filiale steht (GameView.positions),
+    # zaehlt nur fuer die Grossansicht des jeweiligen Ortes. Sonst baute jeder
+    # Schritt der Figur Firma, Reise und Spiel beim naechsten Besuch neu auf.
+    uses_positions = False
 
     def _render_key(self):
         db = self.app.db
@@ -2061,10 +2065,14 @@ class ReusableView:
             return None
         game_view = self.app.views.built("game")
         game = game_view.game if game_view is not None else None
+        skip = ("positions",)
+        own = None
+        if self.uses_positions and game_view is not None:
+            own = repr(game_view.positions.get(self.site()))
         return (stamp, game.run if game is not None else None,
                 getattr(self.app, "slot_chosen", True),
-                _snapshot(self),
-                _snapshot(game_view) if game_view is not None and game_view is not self
+                _snapshot(self, skip) + (("figur", own),),
+                _snapshot(game_view, skip) if game_view is not None and game_view is not self
                 else None)
 
     def _unchanged(self):
@@ -3092,6 +3100,8 @@ class SiteView(ReusableView, ScrollArea):
     per Klick; unter dem Grundriss stehen Text und Knoepfe aus
     fisi_game.place_message - so verhalten sich PC und Handy gleich."""
 
+    uses_positions = True
+
     KEY = "buero"
     TITLE = "Büro"
     SUBTITLE = "Klicke auf eine Person oder einen Ort · Pfeiltasten gehen auch"
@@ -3199,6 +3209,9 @@ class SiteView(ReusableView, ScrollArea):
     def _arrived(self, position, person):
         self.game_view.positions[self.site()] = position
         self._show_info(position, person)
+        if getattr(self, "_rendered", None) is not None:
+            # Die Ansicht ist mit der Figur am neuen Platz aktuell (ab 0.54)
+            self._rendered = self._render_key()
 
     def _show_info(self, position, person):
         for child in self.info.winfo_children():
