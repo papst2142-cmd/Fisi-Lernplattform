@@ -2296,8 +2296,9 @@ def spare_fits(task, part_id, content=None):
     item = part(part_id, content)
     exchange = task.get("austausch") or {}
     if not item or item["typ"] != exchange.get("typ"):
-        return ["Das ist kein %s." % spare_kinds(content).get(exchange.get("typ"),
-                                                               "passendes Teil")]
+        kind = spare_kinds(content).get(exchange.get("typ"))
+        return ["Das ist kein Teil vom Typ „%s“." % kind if kind else
+                "Das ist kein passendes Teil."]
     labels = {key: (name, unit) for key, name, unit in
               spare_features(exchange["typ"], content)}
     problems = []
@@ -6836,7 +6837,8 @@ def firm_building(state, content=None):
         item.update({"name": look.get("name", "Leerstand"), "kurz": look.get("kurz", "Frei"),
                      "farbe": look.get("farbe", "#8B93A1"), "boden": look.get("boden", "beton"),
                      "deko": [], "leerstand": rule["id"],
-                     "text": look.get("text", "Hier kann ein %s entstehen.") % rule["name"]
+                     "text": look.get("text", "Hier ist Platz für den Sonderraum „%s“.")
+                     % rule["name"]
                      + " " + rule["vorteil"]})
     _SITE_CACHE[key] = (building, result)
     return result
@@ -7385,7 +7387,7 @@ def loan_offer_text(offer):
 def loan_confirm_text(offer, content=None):
     what = ("Einen Kredit über %s" % _whole_euro(offer["summe"]) if offer["paket"] == FREE_LOAN
             else "„%s“ über %s" % (offer["name"], _whole_euro(offer["summe"])))
-    return ("%s bei der %s aufnehmen?\n\nLaufzeit %s, Zins %s p. a. Jeden "
+    return ("%s aufnehmen?\n\nBank: %s, Laufzeit %s, Zins %s p. a. Jeden "
             "Feierabend werden automatisch %s abgebucht (Zins und Tilgung). Zurück zahlst du "
             "insgesamt %s, davon %s Zinsen.\n\nReicht das Konto beim Feierabend nicht, platzt "
             "die Rate: Mahnstufe, Gebühr und weniger Ansehen." % (
@@ -11368,8 +11370,8 @@ def journey(state, content=None):
         if kind == EV_PROFILE and not started:
             started = True
             add(tag, JOURNEY_CAREER, "start", "Erster Arbeitstag",
-                "%s fängt bei der %s an." % (data.get("name") or "Deine Figur",
-                                              content["gebaeude"]["firma"]))
+                "%s fängt bei %s an." % (data.get("name") or "Deine Figur",
+                                          content["gebaeude"]["firma"]))
         elif kind == EV_SOLVED and data.get("zwischenfall"):
             # Jeder Zwischenfall steht im Tagebuch, gemeistert oder nicht
             task = task_by_id(data.get("aufgabe"), content) or {}
@@ -11396,7 +11398,7 @@ def journey(state, content=None):
         elif kind == EV_FOUNDED and data.get("name"):
             if not any(entry["art"] == "gruendung" for entry in entries):
                 add(tag, JOURNEY_FIRM, "gruendung", "Firma gegründet: %s" % data["name"],
-                    "Abschied von der %s - ab jetzt bist du dein eigener Chef."
+                    "Abschied von %s - ab jetzt bist du dein eigener Chef."
                     % content["gebaeude"]["firma"])
         elif kind == EV_HIRED and data.get("id") and data["id"] not in hired:
             hired[data["id"]] = data.get("name", "")
@@ -15413,7 +15415,7 @@ def farm_place_text(state, content=None):
 
 def farm_unlocked_text(content=None):
     customer = farm_customer(content)
-    return "Neuer Großkunde: Die %s baut den alten Lokschuppen zum Rechenzentrum um und sucht " \
+    return "Neuer Großkunde: %s baut den alten Lokschuppen zum Rechenzentrum um und sucht " \
         "einen IT-Partner. Der Lokschuppen steht jetzt auf der Karte." % customer.get("name", "")
 
 

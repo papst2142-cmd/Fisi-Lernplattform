@@ -7294,6 +7294,145 @@ class Spiel053OberflaecheTest(unittest.TestCase):
         self.pump()
         self.assertIsNot(view._tab_body, first)
 
+    def test_firma_reiter_ab_dem_zweiten_besuch_gemerkt(self):
+        """Ab 0.54: Schon beim zweiten Besuch wird kein Reiter neu gebaut (bisher
+        setzte "Kredite" beim Bauen ein Feld und machte alle anderen ungueltig),
+        und zurueck aus einer anderen Ansicht bleibt die Firma stehen."""
+        app = self.app
+        app.show_view("game")
+        self.pump()
+        game = app.views["game"].game
+        if game.state.profile is None:
+            game.set_profile("Test", {})
+        if not game.state.firm:
+            game._log(fg.EV_FOUNDED, {"tag": game.state.day, "name": "Nico IT",
+                                      "geld": -1000})
+            game.reload()
+        if not app.slot_chosen:
+            app.views["game"]._enter_slot()
+        app.show_view("firma")
+        self.pump()
+        view = app.views["firma"]
+        tabs = [key for key, _name in fg.firm_tabs(game.state)]
+        self.assertGreater(len(tabs), 3)
+        bodies = {}
+        for tab in tabs:
+            view._tab_row.select(tab)
+            self.pump(2)
+            bodies[tab] = view._tab_body
+        before = dict(vars(view))
+        for tab in tabs:
+            view._tab_row.select(tab)
+            self.pump(2)
+            self.assertIs(view._tab_body, bodies[tab], tab)
+        self.assertEqual(view.loan_amount, before["loan_amount"])
+        view._tab_row.select("mitarbeiter")
+        self.pump(2)
+        app.show_view("game")
+        self.pump(2)
+        app.show_view("firma")
+        self.pump(2)
+        self.assertIs(view._tab_body, bodies["mitarbeiter"])
+        self.assertEqual(view._tab_row.value, "mitarbeiter")
+
+    def test_abschlussprojekt_reiterwechsel_von_ganz_unten(self):
+        """Fund 9 aus 0.53 (Leerseite) und ab 0.54 der Scrollbalken: Nach dem
+        Wechsel von ganz unten auf einen kurzen Reiter steht der Inhalt oben und
+        der Balken zeigt die neue Lage (Tk meldete teils noch die alte)."""
+        app = self.app
+        app.show_view("abschluss")
+        self.pump()
+        view = app.views["abschluss"]
+        view._on_tab("doku")
+        self.pump()
+        view.canvas.yview_moveto(1.0)
+        self.pump()
+        self.assertGreater(view.canvas.yview()[0], 0.0)
+        view._on_tab("zeitplan")
+        self.pump()
+        self.assertEqual(view.canvas.yview()[0], 0.0)
+        frame = view.tab_frames["zeitplan"]
+        self.assertLess(frame.winfo_rooty(),
+                        view.canvas.winfo_rooty() + view.canvas.winfo_height())
+        self.assertGreaterEqual(frame.winfo_rooty(), view.canvas.winfo_rooty() - 5)
+        self.assertEqual(tuple(round(v, 4) for v in view.scrollbar.get()),
+                         tuple(round(v, 4) for v in view.canvas.yview()))
+
+
+class NamenInSaetzenTest(unittest.TestCase):
+    """Ab 0.54: Frei waehlbare Namen (Firma, Filiale, Spieler, Mitarbeiter, Kunden,
+    Mitbewerber, Bank) stehen ohne Artikel und ohne angehaengtes Genitiv-s im Satz."""
+
+    NAMEN = ["Nico IT", "Müller & Söhne GmbH", "Data Systems", "Hans", "Lisa", "Kraus"]
+    ARTIKEL = r"\b(der|die|das|dem|den|des|beim|zum|zur|vom|im|ein|eine|einer|einem|kein)\s+"
+
+    def pruefe(self, text, name):
+        self.assertIn(name, text)
+        self.assertIsNone(re.search(self.ARTIKEL + re.escape(name), text, re.IGNORECASE),
+                          text)
+        self.assertNotIn(name + "s ", text)
+        self.assertNotIn(name + "’", text)
+
+    def inhalt(self, name):
+        content = copy.deepcopy(fg.GAME)
+        content["gebaeude"]["firma"] = name
+        content["balancing"]["kredite"]["bank"] = name
+        content["serverfarm"]["kunde"]["name"] = name
+        return content
+
+    def test_saetze_aus_dem_code(self):
+        for name in self.NAMEN:
+            with self.subTest(name=name):
+                content = self.inhalt(name)
+                offer = {"paket": fg.FREE_LOAN, "name": "", "summe": 5000, "laufzeit": 20,
+                         "zins": 0.05, "rate": 263, "gesamt": 5260, "zinsen_gesamt": 260}
+                self.pruefe(fg.loan_confirm_text(offer, content), name)
+                self.pruefe(fg.farm_unlocked_text(content), name)
+                self.pruefe(fg.founded_text(name), name)
+                self.pruefe(fg.branch_opened_text(name), name)
+                state = fg.GameState([
+                    ("a", fg.EV_PROFILE, {"name": name, "aussehen": {}}),
+                    ("b", fg.EV_FOUNDED, {"tag": 2, "name": name, "geld": -1000})], content)
+                texts = [entry["titel"] + " " + entry["text"]
+                         for entry in fg.journey(state, content)]
+                self.pruefe(texts[0], name)
+                self.assertTrue(any(name in text and "Abschied" in text for text in texts))
+                for text in texts:
+                    if name in text:
+                        self.pruefe(text, name)
+
+    def test_saetze_aus_den_inhalten(self):
+        firm = fg.firm_rules()
+        conflicts = firm["personal"]["konflikt"]
+        recall = firm["rivalitaet"]["rueckhol"]
+        moments = [rule["moment_text"] for rule in fg.GAME["erfolge"]["erfolge"]
+                   if rule.get("moment_text")]
+        for name in self.NAMEN:
+            other = "Kraus" if name != "Kraus" else "Lisa"
+            with self.subTest(name=name):
+                for text in conflicts["texte"] + [conflicts["summen"]]:
+                    for a, b in ((name, other), (other, name)):
+                        line = text.format(**fg._pair_names(a, b))
+                        if name in line:
+                            self.pruefe(line, name)
+                for text in recall["texte"] + recall["texte_bitweiche"]:
+                    line = text.format(firma=name, name=other, plus=10)
+                    if "{firma}" in text:
+                        self.pruefe(line, name)
+                    self.pruefe(text.format(firma="Data Systems", name=name, plus=10), name)
+                for text in moments:
+                    line = text.format(ziel="", tag=1, spieler=name, firma=name, filiale=name)
+                    if name in line:
+                        self.pruefe(line, name)
+
+    def test_falsches_ersatzteil(self):
+        task = _task("usv-akkutausch-nord")
+        other = next(item for item in fg.GAME["hardware"]["teile"]
+                     if item["typ"] != task["austausch"]["typ"])
+        problems = fg.spare_fits(task, other["id"])
+        self.assertEqual(problems, ["Das ist kein Teil vom Typ „%s“." %
+                                    fg.spare_kinds()[task["austausch"]["typ"]]])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

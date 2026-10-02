@@ -5334,6 +5334,15 @@ class FISIApp:
         # Abgleich folgt dann beim naechsten Start.
         if final_sync:
             self.sync.run_before_exit()
+        # Ab 0.54: noch geplante after-Zeitgeber (auch die von customtkinter,
+        # z. B. update und check_dpi_scaling) abbrechen. Beim echten Schliessen
+        # ueber mainloop laufen sie ohnehin nicht mehr; ein Skript, das danach
+        # noch root.update() aufruft, bekommt so kein "invalid command name".
+        try:
+            for job in self.root.tk.splitlist(self.root.tk.call("after", "info")):
+                self.root.after_cancel(job)
+        except tk.TclError:
+            pass
         self.root.destroy()
 
 

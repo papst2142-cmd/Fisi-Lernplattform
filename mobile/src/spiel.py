@@ -2066,7 +2066,8 @@ class GameScreen:
         founding = ui.GradientBar("Weg zum eigenen Unternehmen", C["green"], C["accent"])
         founding.set(state.founding_progress() * 100, "Ziel %s" % euro(goal["startkapital"]))
         founding.visible = not state.firm
-        job = "Geschäftsführung · %s" % state.firm["name"] if state.firm else state.rank
+        job = ("Geschäftsführung · %s" % state.firm["name"] if state.firm else
+               "%s · %s" % (state.rank, fg.GAME["gebaeude"]["firma"]))
         hint = "" if state.firm else fg.rank_hint(state)
         money = ("Kontostand: %s · Gehalt: %s/Tag" % (euro(state.money), euro(state.salary))
                  if not state.firm else "Kontostand: %s" % euro(state.money))
