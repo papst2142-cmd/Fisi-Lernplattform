@@ -7136,6 +7136,29 @@ class Spiel053OberflaecheTest(unittest.TestCase):
         self.assertIs(view._tab_body, bodies["mitarbeiter"])
         self.assertEqual(view._tab_row.value, "mitarbeiter")
 
+    def test_abschlussprojekt_reiterwechsel_von_ganz_unten(self):
+        """Fund 9 aus 0.53 (Leerseite) und ab 0.54 der Scrollbalken: Nach dem
+        Wechsel von ganz unten auf einen kurzen Reiter steht der Inhalt oben und
+        der Balken zeigt die neue Lage (Tk meldete teils noch die alte)."""
+        app = self.app
+        app.show_view("abschluss")
+        self.pump()
+        view = app.views["abschluss"]
+        view._on_tab("doku")
+        self.pump()
+        view.canvas.yview_moveto(1.0)
+        self.pump()
+        self.assertGreater(view.canvas.yview()[0], 0.0)
+        view._on_tab("zeitplan")
+        self.pump()
+        self.assertEqual(view.canvas.yview()[0], 0.0)
+        frame = view.tab_frames["zeitplan"]
+        self.assertLess(frame.winfo_rooty(),
+                        view.canvas.winfo_rooty() + view.canvas.winfo_height())
+        self.assertGreaterEqual(frame.winfo_rooty(), view.canvas.winfo_rooty() - 5)
+        self.assertEqual(tuple(round(v, 4) for v in view.scrollbar.get()),
+                         tuple(round(v, 4) for v in view.canvas.yview()))
+
 
 class NamenInSaetzenTest(unittest.TestCase):
     """Ab 0.54: Frei waehlbare Namen (Firma, Filiale, Spieler, Mitarbeiter, Kunden,

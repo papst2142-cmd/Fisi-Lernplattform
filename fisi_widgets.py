@@ -1670,6 +1670,14 @@ class ScrollArea(tk.Frame):
         self.bind("<Leave>", lambda e: self._bind_wheel(False))
 
     def _set_vscroll(self, first, last):
+        # Ab 0.54: Wird der Inhalt kuerzer (z. B. Reiterwechsel von einer langen
+        # auf eine kurze Seite), meldet Tk hier manchmal noch die alte Lage -
+        # der Balken zeigte dann eine Laenge, die es nicht mehr gibt. Deshalb
+        # die aktuelle Lage selbst abfragen.
+        try:
+            first, last = self.canvas.yview()
+        except tk.TclError:
+            pass
         self.scrollbar.set(first, last)
         if not self.hide_vbar:
             return
