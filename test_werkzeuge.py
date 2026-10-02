@@ -241,15 +241,29 @@ class TopicPracticeTest(unittest.TestCase):
         _source, short = fl.topic_practice(book, ["routing"], size=2)
         self.assertEqual(short, [red, yellow])
 
-    def test_bereich_mit_mehr_roten_gewinnt(self):
+    def test_gemischt_erst_quiz_dann_karten(self):
         cards = [c["q"] for c in KARTEIKARTEN if c.get("thema") == "routing"]
         book = _book({(SRC_CARD, cards[0]): [False], (SRC_CARD, cards[1]): [False]})
-        source, keys = fl.topic_practice(book, ["routing"])
-        self.assertEqual(source, SRC_CARD)
-        self.assertEqual(set(keys[:2]), {cards[0], cards[1]})
-        # Gleichstand: Pruefungstrainer
-        source, _keys = fl.topic_practice(StatusBook(results={}), ["routing"])
-        self.assertEqual(source, SRC_QUIZ)
+        parts = fl.topic_practice_parts(book, ["routing"])
+        self.assertEqual([source for source, _keys in parts], [SRC_QUIZ, SRC_CARD])
+        self.assertEqual(set(parts[1][1][:2]), {cards[0], cards[1]})   # Rotes zuerst
+        for _source, keys in parts:
+            self.assertEqual(len(keys), fl.PRACTICE_ROUND)
+        self.assertEqual(fl.topic_practice(book, ["routing"]), parts[0])
+
+    def test_gemischt_nur_vorhandene_bereiche(self):
+        self.assertEqual(fl.topic_practice_parts(StatusBook(results={}), []), [])
+        for topic in TOPIC_NAME:
+            parts = fl.topic_practice_parts(StatusBook(results={}), [topic])
+            sources = [source for source, _keys in parts]
+            self.assertEqual(sources, [s for s in (SRC_QUIZ, SRC_CARD) if s in sources])
+            self.assertTrue(all(keys for _source, keys in parts))
+
+    def test_rueckfrage_zweiter_teil(self):
+        self.assertEqual(fl.practice_next_text(SRC_CARD, 1),
+                         "Zum selben Thema gibt es noch 1 Karteikarte. Jetzt weiterüben?")
+        self.assertEqual(fl.practice_next_text(SRC_CARD, 10),
+                         "Zum selben Thema gibt es noch 10 Karteikarten. Jetzt weiterüben?")
 
     def test_ohne_fragen(self):
         self.assertEqual(fl.topic_practice(StatusBook(results={}), []), (None, []))
@@ -305,12 +319,18 @@ class NotebookSearchTest(unittest.TestCase):
         hits = notebook_search(self.entries, "Broadcast")
         self.assertTrue(any("broadcast" not in e["title"].casefold() for e in hits))
 
-    def test_thema_und_fachbereich(self):
+    def test_thema_ja_fachbereich_nein(self):
         by_topic = notebook_search(self.entries, TOPIC_NAME["routing"])
         self.assertTrue(by_topic)
         self.assertTrue(any(e["item"].get("thema") == "routing" for e in by_topic))
-        by_category = notebook_search(self.entries, "Datenbanken & SQL")
-        self.assertTrue(by_category)
+        # Der Fachbereichsname zaehlt nicht (ab 0.54): "raid" findet nur
+        # Fragen, in denen RAID vorkommt, nicht den ganzen Bereich
+        category = [e for e in self.entries if "RAID" in e["item"].get("cat", "")]
+        hits = notebook_search(self.entries, "raid")
+        self.assertTrue(hits)
+        self.assertLess(len(hits), len(category))
+        for entry in hits:
+            self.assertIn("raid", fl_text(entry))
 
     def test_keine_treffer(self):
         self.assertEqual(notebook_search(self.entries, "xyzzy-gibt-es-nicht"), [])

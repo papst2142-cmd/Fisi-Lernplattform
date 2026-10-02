@@ -56,11 +56,13 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
-    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NONE, TRAINER_KIND_NAME,
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
+    TRAINER_KIND_NAME,
     TRAINER_KINDS, TRAINER_LEVEL_NAME,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
-    reminder_due, reminder_text, save_learning_settings, topic_practice, trainer_round,
+    practice_next_text, reminder_due, reminder_text, save_learning_settings,
+    topic_practice_parts, trainer_round,
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
@@ -1608,6 +1610,7 @@ class QuizView(View):
         self.answered = False
         self.start_time = 0
         self.timer_job = None
+        self.follow_up = None    # "Jetzt ueben": zweiter Teil nach der Runde (ab 0.54)
 
         # Setup
         self.setup_card = Card(self.content, title="Test-Session",
@@ -1749,6 +1752,7 @@ class QuizView(View):
         self._begin()
 
     def start_quiz(self):
+        self.follow_up = None
         if not self.pool:
             messagebox.showinfo("Hinweis", "Für diese Auswahl gibt es keine Fragen.")
             return
@@ -1850,6 +1854,7 @@ class QuizView(View):
                                    "Bereits beantwortete Fragen bleiben in der "
                                    "Statistik erhalten."):
             return
+        self.follow_up = None
         self.stop_timer()
         self._reset_controls()
         self.lbl_question.configure(text="Session abgebrochen. Du kannst jederzeit "
@@ -1879,6 +1884,9 @@ class QuizView(View):
                  % (self.score, total, percentage, note,
                     elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
+        follow_up, self.follow_up = self.follow_up, None
+        if follow_up is not None:
+            self.after(300, follow_up)
 
     def _reset_controls(self):
         self.running = False
@@ -3482,13 +3490,22 @@ class NotebookView(View):
         quiz = self._practice_keys(SRC_QUIZ)
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
             self.status_pills.get()]
-        NeoButton(self.practice_bar,
-                  "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
-                  lambda: self.practice(SRC_CARD, cards), kind="primary").pack(side="left")
-        NeoButton(self.practice_bar,
-                  "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
-                  lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
-            side="left", padx=10)
+        # Ab 0.54: Knoepfe ohne Fragen ausblenden, ohne beide die ganze Leiste
+        if not cards and not quiz:
+            self.practice_bar.pack_forget()
+            return
+        if not self.practice_bar.winfo_manager():
+            self.practice_bar.pack(fill="x", pady=(14, 0), before=self.list_card)
+        if cards:
+            NeoButton(self.practice_bar,
+                      "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
+                      lambda: self.practice(SRC_CARD, cards), kind="primary").pack(
+                side="left", padx=(0, 10))
+        if quiz:
+            NeoButton(self.practice_bar,
+                      "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
+                      lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
+                side="left", padx=(0, 10))
         make_label(self.practice_bar, "Startet eine Übungsrunde nur mit den Fragen der "
                    "Liste (Quiz: höchstens 50).", font=F["small"], fg=C["muted"]).pack(
             side="left", padx=6)
@@ -5454,20 +5471,35 @@ class FISIApp:
         self.views[key].practice(plan.session(source))
 
     def practice_topic(self, name):
-        """"Jetzt ueben" neben einem schwachen Thema (ab 0.54): normale
-        Uebungsrunde mit den Fragen dieses Themas, Ungewusstes zuerst
-        (fisi_lernen.topic_practice)."""
-        source, keys = topic_practice(StatusBook(self.db), practice_topics(name),
-                                      rng=random.Random())
-        if not keys:
+        """"Jetzt ueben" neben einem schwachen Thema (ab 0.54): Quizfragen und
+        Karteikarten dieses Themas, Ungewusstes zuerst
+        (fisi_lernen.topic_practice_parts)."""
+        parts = topic_practice_parts(StatusBook(self.db), practice_topics(name),
+                                     rng=random.Random())
+        if not parts:
             messagebox.showinfo(PRACTICE_BUTTON, PRACTICE_NONE)
             return
+        self._practice_part(parts)
+
+    def _practice_part(self, parts):
+        """Gemischte Runde (ab 0.54): erst die Quizfragen, nach ihrem Ergebnis
+        auf Rueckfrage die Karteikarten zum selben Thema."""
+        source, keys = parts[0]
+        rest = parts[1:]
         if source == SRC_CARD:
             self.show_view("cards")
             self.views["cards"].practice(keys)
-        else:
-            self.show_view("quiz")
-            self.views["quiz"].practice(keys, keep_order=True)
+            return
+        self.show_view("quiz")
+        quiz = self.views["quiz"]
+        quiz.practice(keys, keep_order=True)
+        if rest and quiz.running:
+            def ask():
+                next_source, next_keys = rest[0]
+                if messagebox.askyesno(PRACTICE_NEXT_TITLE,
+                                       practice_next_text(next_source, len(next_keys))):
+                    self._practice_part(rest)
+            quiz.follow_up = ask
 
     def check_reminder(self):
         """Erinnerung ans Tagesziel (ab 0.51): als Hinweis, solange das
@@ -5577,6 +5609,20 @@ def _run_selftest(root, app, log_path):
                     app.practice_topic(name)
                     root.update()
                 quiz = app.views["quiz"]
+                # Gemischte Runde: nach den Quizfragen die Karteikarten
+                follow_up = quiz.follow_up
+                if follow_up is None:
+                    failures.append("Jetzt üben: keine Karteikarten nach dem Quiz")
+                else:
+                    ask = messagebox.askyesno
+                    messagebox.askyesno = lambda *_a, **_k: True
+                    try:
+                        follow_up()
+                    finally:
+                        messagebox.askyesno = ask
+                    root.update()
+                    if app.current != "cards" or not app.views["cards"].filtered:
+                        failures.append("Jetzt üben: Karteikarten nicht gestartet")
                 if quiz.running:
                     quiz.stop_timer()
                     quiz._reset_controls()

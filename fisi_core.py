@@ -1949,11 +1949,12 @@ def _entry_search_text(entry):
     text = _SEARCH_TEXT.get(key)
     if text is None:
         item = entry["item"]
-        category = item.get("cat", "")
         topic = item.get("thema")
-        parts = [entry["title"], model_answer(entry["source"], item), category,
-                 CATEGORY_SHORT.get(category, ""), TOPIC_NAME.get(topic, ""),
-                 TOPIC_SHORT.get(topic, ""), str(item.get("theme", ""))]
+        # Ohne Fachbereich (ab 0.54 nach Abnahme): der kommt ueber die Filter,
+        # sonst faende "raid" den ganzen Bereich "Systeme, RAID & Hardware"
+        parts = [entry["title"], model_answer(entry["source"], item),
+                 TOPIC_NAME.get(topic, ""), TOPIC_SHORT.get(topic, ""),
+                 str(item.get("theme", ""))]
         text = _SEARCH_TEXT[key] = search_key(" ".join(parts))
     return text
 

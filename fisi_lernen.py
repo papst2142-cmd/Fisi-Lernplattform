@@ -345,6 +345,7 @@ def daily_summary(series, target=None):
 PRACTICE_ROUND = 10     # wie die vorgegebene Fragenanzahl im Pruefungstrainer
 PRACTICE_BUTTON = "Jetzt üben"
 PRACTICE_NONE = "Zu diesem Thema gibt es keine Übungsfragen."
+PRACTICE_NEXT_TITLE = "Weiter üben"
 
 EXAM_THEME_TOPICS = {
     # AP2 (Szenario-Themen)
@@ -388,32 +389,41 @@ def _practice_rank(book, source, key):
     return 4 if status == Q_DONE else 3
 
 
-def topic_practice(book, topics, size=PRACTICE_ROUND, rng=None):
-    """Uebungsrunde zu den Themen topics: (quelle, schluessel) mit hoechstens
-    size Fragen, Ungewusstes (rot, dann gelb) zuerst. Gewaehlt wird der
-    Bereich mit mehr zu uebenden Fragen - bei Gleichstand der
-    Pruefungstrainer, ohne Quizfragen die Karteikarten. Ohne passende Fragen
-    (None, [])."""
+def topic_practice_parts(book, topics, size=PRACTICE_ROUND, rng=None):
+    """Gemischte Uebungsrunde zu den Themen topics (ab 0.54): Liste von
+    (quelle, schluessel) mit Quizfragen UND Karteikarten, je hoechstens size,
+    Ungewusstes (rot, dann gelb) zuerst. Zuerst der Pruefungstrainer (seine
+    Runde hat ein Ende mit Ergebnis), danach die Karteikarten. Bereiche ohne
+    passende Fragen fehlen; ohne jede passende Frage []."""
     wanted = set(topics)
     pools = {SRC_QUIZ: [q["q"] for q in QUIZ_QUESTIONS if q.get("thema") in wanted],
              SRC_CARD: [c["q"] for c in KARTEIKARTEN if c.get("thema") in wanted]}
-    ranked, weak = {}, {}
-    for source, keys in pools.items():
-        keys = list(keys)
+    parts = []
+    for source in (SRC_QUIZ, SRC_CARD):
+        keys = list(pools[source])
         if rng is not None:
             rng.shuffle(keys)
         ranks = {key: _practice_rank(book, source, key) for key in keys}
-        ranked[source] = sorted(keys, key=lambda key: ranks[key])
-        weak[source] = sum(1 for rank in ranks.values() if rank <= 1)
-    if not ranked[SRC_QUIZ] and not ranked[SRC_CARD]:
-        return None, []
-    if not ranked[SRC_QUIZ]:
-        source = SRC_CARD
-    elif not ranked[SRC_CARD]:
-        source = SRC_QUIZ
+        if keys:
+            parts.append((source, sorted(keys, key=lambda key: ranks[key])[:size]))
+    return parts
+
+
+def topic_practice(book, topics, size=PRACTICE_ROUND, rng=None):
+    """Erster Teil der gemischten Runde (topic_practice_parts) als (quelle,
+    schluessel). Ohne passende Fragen (None, [])."""
+    parts = topic_practice_parts(book, topics, size, rng)
+    return parts[0] if parts else (None, [])
+
+
+def practice_next_text(source, count):
+    """Rueckfrage nach dem ersten Teil von "Jetzt ueben": weiter mit dem
+    zweiten Bereich?"""
+    if source == SRC_CARD:
+        what = plural(count, "Karteikarte", "Karteikarten")
     else:
-        source = SRC_CARD if weak[SRC_CARD] > weak[SRC_QUIZ] else SRC_QUIZ
-    return source, ranked[source][:size]
+        what = plural(count, "Quizfrage", "Quizfragen")
+    return "Zum selben Thema gibt es noch %s. Jetzt weiterüben?" % what
 
 
 # ============================================================================

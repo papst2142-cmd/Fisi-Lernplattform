@@ -54,12 +54,12 @@ from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
-    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NONE, TRAINER_KIND_NAME,
-    TRAINER_KINDS, TRAINER_LEVEL_NAME,
+    GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
+    TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
     day_labels, due_text, goal_line_text, learning_settings, parse_time, practice_topics,
-    reminder_due, reminder_text, save_learning_settings, topic_practice, trainer_round,
-    trainer_summary,
+    practice_next_text, reminder_due, reminder_text, save_learning_settings,
+    topic_practice_parts, trainer_round, trainer_summary,
 )
 import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
@@ -777,6 +777,7 @@ class QuizScreen(Screen):
         self.running = False
         self.answered = False
         self.start_time = 0
+        self.follow_up = None    # "Jetzt ueben": zweiter Teil nach der Runde (ab 0.54)
 
         options = [("Alle", "Alle")] + [(c, CATEGORY_SHORT[c]) for c in CATEGORIES]
         self.cat_pills = ui.PillGroup(options, on_change=self._on_category)
@@ -887,6 +888,7 @@ class QuizScreen(Screen):
         self._begin()
 
     def start_quiz(self, _event=None):
+        self.follow_up = None
         if not self.pool:
             self.toast("Für diese Auswahl gibt es keine Fragen.")
             return
@@ -971,6 +973,7 @@ class QuizScreen(Screen):
             return
 
         def confirmed():
+            self.follow_up = None
             self._reset_controls()
             self.lbl_question.value = ("Session abgebrochen. Du kannst jederzeit eine "
                                        "neue starten.")
@@ -999,6 +1002,9 @@ class QuizScreen(Screen):
             "Dauer: %02d:%02d Minuten\n\n%s"
             % (self.score, total, percentage, note, elapsed // 60, elapsed % 60, hint))
         self.app.notify_progress()
+        follow_up, self.follow_up = self.follow_up, None
+        if follow_up is not None:
+            follow_up()
 
     def _reset_controls(self):
         self.running = False
@@ -2400,17 +2406,21 @@ class NotebookScreen(Screen):
         quiz = self._practice_keys(SRC_QUIZ)
         label = {Q_PRACTICE: "üben", Q_DONE: "wiederholen", Q_OPEN: "lernen"}[
             self.status_pills.get()]
-        self.practice_row.controls = [
-            ft.Row([ui.GradientButton("%s %s" % (plural(len(cards), "Karteikarte",
-                                                        "Karteikarten"), label),
-                                      lambda _e: self.practice(SRC_CARD, cards), expand=True)]),
-            ft.Row([ui.GradientButton("%s %s" % (plural(len(quiz), "Quizfrage",
-                                                        "Quizfragen"), label),
-                                      lambda _e: self.practice(SRC_QUIZ, quiz), kind="accent",
-                                      expand=True)]),
-            ui.text("Startet eine Übungsrunde nur mit den Fragen der Liste (Quiz: höchstens "
-                    "50).", size=12, color=C["muted"]),
-        ]
+        # Ab 0.54: Knoepfe ohne Fragen ausblenden, ohne beide auch den Hinweis
+        controls = []
+        if cards:
+            controls.append(ft.Row([ui.GradientButton(
+                "%s %s" % (plural(len(cards), "Karteikarte", "Karteikarten"), label),
+                lambda _e: self.practice(SRC_CARD, cards), expand=True)]))
+        if quiz:
+            controls.append(ft.Row([ui.GradientButton(
+                "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
+                lambda _e: self.practice(SRC_QUIZ, quiz), kind="accent", expand=True)]))
+        if controls:
+            controls.append(ui.text("Startet eine Übungsrunde nur mit den Fragen der Liste "
+                                    "(Quiz: höchstens 50).", size=12, color=C["muted"]))
+        self.practice_row.controls = controls
+        self.practice_row.visible = bool(controls)
 
     def _practice_keys(self, source):
         return [e["key"] for e in self.entries if e["source"] == source]
@@ -3884,19 +3894,31 @@ class FISIMobileApp:
 
     def practice_topic(self, name):
         """"Jetzt ueben" neben einem schwachen Thema (ab 0.54, wie am PC):
-        normale Uebungsrunde mit den Fragen dieses Themas, Ungewusstes zuerst
-        (fisi_lernen.topic_practice)."""
-        source, keys = topic_practice(StatusBook(self.db), practice_topics(name),
-                                      rng=random.Random())
-        if not keys:
+        Quizfragen und Karteikarten dieses Themas, Ungewusstes zuerst
+        (fisi_lernen.topic_practice_parts)."""
+        parts = topic_practice_parts(StatusBook(self.db), practice_topics(name),
+                                     rng=random.Random())
+        if not parts:
             self.toast(PRACTICE_NONE)
             return
+        self._practice_part(parts)
+
+    def _practice_part(self, parts):
+        """Gemischte Runde (ab 0.54, wie am PC): erst die Quizfragen, nach
+        ihrem Ergebnis auf Rueckfrage die Karteikarten zum selben Thema."""
+        source, keys = parts[0]
+        rest = parts[1:]
         key = "cards" if source == SRC_CARD else "quiz"
         screen = self.screens[key]
         if key == "cards":
             screen.practice(keys)
         else:
             screen.practice(keys, keep_order=True)
+            if rest and screen.running:
+                next_source, next_keys = rest[0]
+                screen.follow_up = lambda: self.confirm(
+                    PRACTICE_NEXT_TITLE, practice_next_text(next_source, len(next_keys)),
+                    lambda: self._practice_part(rest))
         views = self.page.views
         on_top = bool(views) and bool(views[-1].controls) and \
             views[-1].controls[0] is screen.root
@@ -4048,6 +4070,7 @@ def selftest():
     class FakeApp(FISIMobileApp):
         def __init__(self):
             self.page = FakePage()
+            self.body = ft.Container()
             self.db = DBManager()
             self.sync = SyncController(self)
             self.screens = {}
@@ -4117,6 +4140,20 @@ def selftest():
         # Ab 0.54: Jetzt ueben, Notizblock-Suche, Problem melden, Aufgaben pro Tag
         for name in fp.weak_topics(exam.result) + ["Subnetting & Routing", "gibt es nicht"]:
             app.practice_topic(name)
+        # Gemischte Runde: nach den Quizfragen die Karteikarten
+        app.practice_topic("Subnetting & Routing")
+        follow_up = quiz.follow_up
+        if follow_up is None:
+            failures.append("Jetzt üben: keine Karteikarten nach dem Quiz")
+        else:
+            confirm = app.confirm
+            app.confirm = lambda _title, _message, on_yes: on_yes()
+            try:
+                follow_up()
+            finally:
+                app.confirm = confirm
+            if not app.screens["cards"].filtered:
+                failures.append("Jetzt üben: Karteikarten nicht gestartet")
         quiz.mode_pills.select_value("uebung")
         notebook = app.screens["notebook"]
         for query in ("raid", "PRÜF", "xyzzy-nichts", ""):
