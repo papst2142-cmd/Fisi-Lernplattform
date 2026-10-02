@@ -4,6 +4,39 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.54
+
+Möbel frei aufstellen, Schwächen direkt üben und vier neue Werkzeuge.
+
+- **Möbel frei aufstellen (Zuhause):** Im Modus „Einrichten“ liegt ein
+  feines Raster über dem Grundriss. Am PC ziehst du Möbel mit der Maus, R
+  oder Rechtsklick dreht, Strg+Z oder „Rückgängig“ nimmt zurück. An Wand und
+  Ecke docken Stücke an. Eine Vorschau zeigt vorher, ob es passt: grün passt,
+  gelb versperrt einen Weg (nur Warnung), rot geht nicht (z. B. vor einer
+  Tür). Am Handy tippst du ein Möbelstück an, dann das Zielfeld, und
+  schiebst es mit vier Pfeilen. Deine bisherige Einrichtung bleibt, wo sie
+  ist.
+- **Wegprüfung:** Kommt die Figur nicht mehr an ein Möbelstück oder in einen
+  Raum, erscheint „Achtung, Weg versperrt!“. Aufstellen bleibt erlaubt.
+- **Jetzt üben:** In der Prüfungsauswertung und im Fortschritt steht neben
+  jedem schwachen Thema „Jetzt üben“. Erst kommen die Quizfragen zum Thema,
+  danach auf Wunsch die Karteikarten, das Ungewusste zuerst.
+- **Suche im Notizblock:** Stichwort eingeben, gesucht wird in Frage,
+  Antwort und Thema. Umlaute und Groß-/Kleinschreibung spielen keine Rolle.
+- **Aufgaben pro Tag:** Neues Diagramm im Fortschritt für 7 oder 30 Tage mit
+  Tagesziel-Linie.
+- **Problem melden:** Neue Karte in den Optionen. Sie zeigt Version, Gerät,
+  Datenordner und Fehlerprotokoll zum Kopieren oder Speichern.
+  Zugangsschlüssel und Passwörter stehen nie darin.
+- **RAID-Rechner und Serverfarm:** RAID 0 braucht bei der Eingabe
+  mindestens 2 Platten.
+- **Texte:** Firmen- und Personennamen stehen ohne Artikel im Satz („fängt
+  bei Nico IT an“).
+- **Schneller:** Firma, Reise und Spiel öffnen am PC ab dem zweiten Besuch
+  in unter 0,1 Sekunden.
+- **Kleinigkeiten:** Der Scrollbalken zeigt nach kürzer werdenden Seiten die
+  richtige Länge. Beim Schließen bleiben keine Zeitgeber mehr zurück.
+
 ## 0.53
 
 Prüfung und Fehlerbehebung: Diese Version bringt keine neuen Funktionen, sondern eine gründliche Prüfung von PC und Handy sowie aller Texte.
