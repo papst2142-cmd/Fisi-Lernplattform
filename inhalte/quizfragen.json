@@ -25311,7 +25311,8 @@
       "Kompakter Desktop-PC mit Monitor im Firmenwagen eingebaut"
     ],
     "a": "Robustes Convertible-Notebook mit Stift, Tastatur und LTE/5G-Modem",
-    "exp": "Berichte schreibt man besser mit Tastatur, Unterschriften mit Stift. Ein Convertible vereint beides, ein Mobilfunkmodem sorgt für Zugriff ohne fremdes WLAN, und eine robuste Bauweise übersteht den Einsatz auf Baustellen."
+    "exp": "Berichte schreibt man besser mit Tastatur, Unterschriften mit Stift. Ein Convertible vereint beides, ein Mobilfunkmodem sorgt für Zugriff ohne fremdes WLAN, und eine robuste Bauweise übersteht den Einsatz auf Baustellen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25327,7 +25328,8 @@
       "Ein Netzteil mit dem Umweltzeichen Blauer Engel für Kassen"
     ],
     "a": "Eine zertifizierte technische Sicherheitseinrichtung (TSE) nach Kassensicherungsverordnung",
-    "exp": "Elektronische Aufzeichnungssysteme wie Kassen müssen nach § 146a AO und der Kassensicherungsverordnung durch eine zertifizierte TSE gegen Manipulation geschützt sein. Bei der Auswahl muss das Kassensystem dies unterstützen."
+    "exp": "Elektronische Aufzeichnungssysteme wie Kassen müssen nach § 146a AO und der Kassensicherungsverordnung durch eine zertifizierte TSE gegen Manipulation geschützt sein. Bei der Auswahl muss das Kassensystem dies unterstützen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25344,7 +25346,8 @@
       "Persistente virtuelle Desktops, die jeder Teilnehmer dauerhaft behält"
     ],
     "a": "Nicht persistente virtuelle Desktops, die bei jeder Abmeldung verworfen werden",
-    "exp": "Nicht persistente Desktops starten immer aus derselben Vorlage, Änderungen der Teilnehmer verschwinden nach der Sitzung. Alternativ setzt man lokale PCs automatisch auf ein Image zurück."
+    "exp": "Nicht persistente Desktops starten immer aus derselben Vorlage, Änderungen der Teilnehmer verschwinden nach der Sitzung. Alternativ setzt man lokale PCs automatisch auf ein Image zurück.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25360,7 +25363,8 @@
       "Zwei identische Desktop-PCs mit getrennten Benutzerkonten"
     ],
     "a": "Business-Notebook mit Dockingstation im Büro",
-    "exp": "Ein Notebook mit Dockingstation dient im Büro mit großen Monitoren, Tastatur und Maus als vollwertiger Arbeitsplatz und kann mit nach Hause. So wird nur ein Gerät beschafft und gepflegt."
+    "exp": "Ein Notebook mit Dockingstation dient im Büro mit großen Monitoren, Tastatur und Maus als vollwertiger Arbeitsplatz und kann mit nach Hause. So wird nur ein Gerät beschafft und gepflegt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25376,7 +25380,8 @@
       "Das Chassis mit gemeinsamer Stromversorgung und Kühlung lohnt sich erst bei vielen Servern"
     ],
     "a": "Das Chassis mit gemeinsamer Stromversorgung und Kühlung lohnt sich erst bei vielen Servern",
-    "exp": "Blade-Systeme sparen Platz und Verkabelung, weil viele Server ein Chassis teilen. Für zwei Server sind die Kosten für Chassis, Module und Know-how zu hoch, ein Tower- oder Rack-Server ist wirtschaftlicher."
+    "exp": "Blade-Systeme sparen Platz und Verkabelung, weil viele Server ein Chassis teilen. Für zwei Server sind die Kosten für Chassis, Module und Know-how zu hoch, ein Tower- oder Rack-Server ist wirtschaftlicher.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25392,7 +25397,8 @@
       "Der Arbeitsspeicher (RAM), weil er sich kaum überbuchen lässt"
     ],
     "a": "Der Arbeitsspeicher (RAM), weil er sich kaum überbuchen lässt",
-    "exp": "Typische Server-VMs lasten die CPU nur zeitweise aus, vCPUs lassen sich daher gut überbuchen. Arbeitsspeicher wird dagegen dauerhaft belegt. Bei der Auswahl achtet man deshalb auf viel und gut ausbaubaren RAM, möglichst mit ECC."
+    "exp": "Typische Server-VMs lasten die CPU nur zeitweise aus, vCPUs lassen sich daher gut überbuchen. Arbeitsspeicher wird dagegen dauerhaft belegt. Bei der Auswahl achtet man deshalb auf viel und gut ausbaubaren RAM, möglichst mit ECC.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25408,7 +25414,8 @@
       "Bei Videokonferenzen über eine übliche Konferenzsoftware im Büro"
     ],
     "a": "Bei 3D-Konstruktion, Videoschnitt in hoher Auflösung oder KI-Berechnungen",
-    "exp": "Integrierte Grafik reicht für Office, Browser, Videokonferenzen und mehrere Monitore. Eine dedizierte GPU lohnt sich bei rechenintensiver Grafik, Rendering oder Berechnungen auf der GPU."
+    "exp": "Integrierte Grafik reicht für Office, Browser, Videokonferenzen und mehrere Monitore. Eine dedizierte GPU lohnt sich bei rechenintensiver Grafik, Rendering oder Berechnungen auf der GPU.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25425,7 +25432,8 @@
       "Thin Clients verbrauchen meist deutlich mehr Strom als klassische Büro-PCs"
     ],
     "a": "Fallen Netz oder VDI-Server aus, kann an keinem Arbeitsplatz gearbeitet werden",
-    "exp": "Die Rechenleistung liegt zentral, deshalb werden Server, Speicher und Netz zum gemeinsamen Ausfallpunkt. Das Konzept braucht daher Redundanz, z. B. mehrere Hosts und ausfallsichere Netzanbindung."
+    "exp": "Die Rechenleistung liegt zentral, deshalb werden Server, Speicher und Netz zum gemeinsamen Ausfallpunkt. Das Konzept braucht daher Redundanz, z. B. mehrere Hosts und ausfallsichere Netzanbindung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25441,7 +25449,8 @@
       "Ein Blade-Chassis mit zwei Blade-Servern und eigenem Speichernetz"
     ],
     "a": "Ein NAS mit zwei gespiegelten Festplatten und zusätzlicher externer Sicherung",
-    "exp": "Für reine Dateiablage in kleinen Teams reicht ein NAS mit RAID 1. Da RAID keine Datensicherung ist, wird der Inhalt zusätzlich auf ein externes Medium oder in die Cloud gesichert."
+    "exp": "Für reine Dateiablage in kleinen Teams reicht ein NAS mit RAID 1. Da RAID keine Datensicherung ist, wird der Inhalt zusätzlich auf ein externes Medium oder in die Cloud gesichert.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25457,7 +25466,8 @@
       "PC A, um 40,00 Euro"
     ],
     "a": "PC B, um 12,80 Euro",
-    "exp": "PC A: 45 W x 1.760 h x 5 = 396 kWh, also 118,80 Euro Strom, gesamt 738,80 Euro. PC B: 220 kWh, also 66,00 Euro, gesamt 726,00 Euro. Differenz 12,80 Euro zugunsten von B."
+    "exp": "PC A: 45 W x 1.760 h x 5 = 396 kWh, also 118,80 Euro Strom, gesamt 738,80 Euro. PC B: 220 kWh, also 66,00 Euro, gesamt 726,00 Euro. Differenz 12,80 Euro zugunsten von B.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25473,7 +25483,8 @@
       "Ab etwa 12.500 Seiten"
     ],
     "a": "Ab etwa 8.334 Seiten",
-    "exp": "Mehrpreis von A: 250,00 Euro. Ersparnis je Seite: 0,03 Euro. 250 / 0,03 = 8.333,3, also ist A ab der 8.334. Seite günstiger."
+    "exp": "Mehrpreis von A: 250,00 Euro. Ersparnis je Seite: 0,03 Euro. 250 / 0,03 = 8.333,3, also ist A ab der 8.334. Seite günstiger.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25489,7 +25500,8 @@
       "Leasing und Kauf kosten immer gleich viel, nur die Buchung ist verschieden"
     ],
     "a": "Leasing schont die Liquidität, ist über die Laufzeit aber meist teurer als ein Barkauf",
-    "exp": "Mit den Leasingraten zahlt der Kunde auch Zinsen und Marge des Leasinggebers. Vorteile sind planbare Raten, geringe Kapitalbindung und ein regelmäßiger Gerätetausch."
+    "exp": "Mit den Leasingraten zahlt der Kunde auch Zinsen und Marge des Leasinggebers. Vorteile sind planbare Raten, geringe Kapitalbindung und ein regelmäßiger Gerätetausch.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25505,7 +25517,8 @@
       "Ja, alle Onlineshops ab dem ersten Beschäftigten fallen darunter"
     ],
     "a": "Nein, Kleinstunternehmen sind bei Dienstleistungen ausgenommen",
-    "exp": "Kleinstunternehmen mit weniger als 10 Beschäftigten und höchstens 2 Mio. Euro Jahresumsatz oder Bilanzsumme sind bei Dienstleistungen ausgenommen. Barrierefreiheit ist trotzdem sinnvoll, weil sie mehr Kunden erreicht."
+    "exp": "Kleinstunternehmen mit weniger als 10 Beschäftigten und höchstens 2 Mio. Euro Jahresumsatz oder Bilanzsumme sind bei Dienstleistungen ausgenommen. Barrierefreiheit ist trotzdem sinnvoll, weil sie mehr Kunden erreicht.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25521,7 +25534,8 @@
       "Braillezeile und Screenreader mit vollständiger Sprachausgabe"
     ],
     "a": "Bildschirmlupe, größere Skalierung und ein kontrastreiches Farbschema",
-    "exp": "Bei Sehbehinderung mit Restsehvermögen helfen Vergrößerung und hoher Kontrast oft am meisten. Screenreader und Braillezeile sind vor allem für blinde Menschen gedacht, können aber ergänzen."
+    "exp": "Bei Sehbehinderung mit Restsehvermögen helfen Vergrößerung und hoher Kontrast oft am meisten. Screenreader und Braillezeile sind vor allem für blinde Menschen gedacht, können aber ergänzen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25537,7 +25551,8 @@
       "Ob sie per Spracheingabe und vollständig ohne Maus bedienbar ist"
     ],
     "a": "Ob sie per Spracheingabe und vollständig ohne Maus bedienbar ist",
-    "exp": "Motorisch eingeschränkte Menschen nutzen oft Spracheingabe, Sondertastaturen oder Schalter. Das funktioniert nur, wenn alle Funktionen ohne Maus erreichbar sind und die Software mit den Bedienhilfen des Betriebssystems zusammenarbeitet."
+    "exp": "Motorisch eingeschränkte Menschen nutzen oft Spracheingabe, Sondertastaturen oder Schalter. Das funktioniert nur, wenn alle Funktionen ohne Maus erreichbar sind und die Software mit den Bedienhilfen des Betriebssystems zusammenarbeitet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25553,7 +25568,8 @@
       "Alle Bilder ausblenden und prüfen, ob die Seite schneller geladen wird"
     ],
     "a": "Alle Funktionen nur mit Tab, Umschalt+Tab, Enter und Pfeiltasten durchgehen und auf sichtbaren Fokus achten",
-    "exp": "Wer keine Maus nutzen kann, muss jedes Bedienelement per Tastatur erreichen. Dabei muss immer erkennbar sein, wo der Fokus steht, und es darf keine Tastaturfalle geben."
+    "exp": "Wer keine Maus nutzen kann, muss jedes Bedienelement per Tastatur erreichen. Dabei muss immer erkennbar sein, wo der Fokus steht, und es darf keine Tastaturfalle geben.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25569,7 +25585,8 @@
       "2 : 1"
     ],
     "a": "4,5 : 1",
-    "exp": "Für normalen Text verlangt WCAG 2.x auf Stufe AA mindestens 4,5 : 1, für großen Text 3 : 1. Diese Werte gelten über EN 301 549 auch für BITV 2.0 und BFSG als Maßstab."
+    "exp": "Für normalen Text verlangt WCAG 2.x auf Stufe AA mindestens 4,5 : 1, für großen Text 3 : 1. Diese Werte gelten über EN 301 549 auch für BITV 2.0 und BFSG als Maßstab.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25585,7 +25602,8 @@
       "Ein Tisch mit Glasplatte, damit Kabel gut sichtbar verlegt sind"
     ],
     "a": "Ein höhenverstellbarer, unterfahrbarer Tisch ohne störende Querstreben",
-    "exp": "Der Tisch muss sich an die Sitzhöhe im Rollstuhl anpassen lassen und unten genug Beinfreiheit bieten. Monitor, Tastatur und Telefon werden danach in Reichweite angeordnet."
+    "exp": "Der Tisch muss sich an die Sitzhöhe im Rollstuhl anpassen lassen und unten genug Beinfreiheit bieten. Monitor, Tastatur und Telefon werden danach in Reichweite angeordnet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25601,7 +25619,8 @@
       "EU-Energielabel"
     ],
     "a": "TCO Certified",
-    "exp": "TCO Certified bewertet Nachhaltigkeit über den Lebenszyklus, darunter Ergonomie, Umweltkriterien und soziale Verantwortung in der Lieferkette. Energy Star und das EU-Energielabel betreffen vor allem den Energieverbrauch."
+    "exp": "TCO Certified bewertet Nachhaltigkeit über den Lebenszyklus, darunter Ergonomie, Umweltkriterien und soziale Verantwortung in der Lieferkette. Energy Star und das EU-Energielabel betreffen vor allem den Energieverbrauch.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -25617,7 +25636,8 @@
       "EPEAT"
     ],
     "a": "Blauer Engel",
-    "exp": "Der Blaue Engel ist das Umweltzeichen der Bundesregierung. Für Drucker bewertet er z. B. Energieverbrauch, Emissionen wie Feinstaub und Ozon sowie Rücknahme von Kartuschen."
+    "exp": "Der Blaue Engel ist das Umweltzeichen der Bundesregierung. Für Drucker bewertet er z. B. Energieverbrauch, Emissionen wie Feinstaub und Ozon sowie Rücknahme von Kartuschen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -25633,7 +25653,8 @@
       "Das System muss Bestellungen an das Lager weiterleiten"
     ],
     "a": "Das System muss in der Servicezeit zu 99,5 % verfügbar sein",
-    "exp": "Verfügbarkeit ist ein Qualitätsmerkmal und damit nicht-funktional. Die anderen Anforderungen beschreiben Funktionen des Systems."
+    "exp": "Verfügbarkeit ist ein Qualitätsmerkmal und damit nicht-funktional. Die anderen Anforderungen beschreiben Funktionen des Systems.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25649,7 +25670,8 @@
       "140 Benutzer"
     ],
     "a": "122 Benutzer",
-    "exp": "80 x 1,15^3 = 121,67, aufgerundet 122 Benutzer. Das Wachstum ist zusammengesetzt, deshalb nicht 80 + 3 x 12 = 116."
+    "exp": "80 x 1,15^3 = 121,67, aufgerundet 122 Benutzer. Das Wachstum ist zusammengesetzt, deshalb nicht 80 + 3 x 12 = 116.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25665,7 +25687,8 @@
       "Etwa 30,0 TB"
     ],
     "a": "Etwa 14,6 TB",
-    "exp": "6 TB x 1,25^4 = 14,65 TB. Für die Planung kommt noch Reserve hinzu, damit das Volumen nicht ganz voll läuft."
+    "exp": "6 TB x 1,25^4 = 14,65 TB. Für die Planung kommt noch Reserve hinzu, damit das Volumen nicht ganz voll läuft.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25681,7 +25704,8 @@
       "Betrieb als SaaS-Lösung, die nur über den Internetanschluss erreichbar ist"
     ],
     "a": "Betrieb on-premises im eigenen Netz, ergänzend Cloud nur für unkritische Dienste",
-    "exp": "Latenz und Verfügbarkeit des Anschlusses würden die Produktion gefährden. Eine hybride Lösung hält kritische Systeme lokal und nutzt die Cloud z. B. für E-Mail oder externe Sicherungskopien."
+    "exp": "Latenz und Verfügbarkeit des Anschlusses würden die Produktion gefährden. Eine hybride Lösung hält kritische Systeme lokal und nutzt die Cloud z. B. für E-Mail oder externe Sicherungskopien.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -25697,7 +25721,8 @@
       "Fernwartungssoftware mit festem Kennwort auf allen Servern dauerhaft aktivieren"
     ],
     "a": "VPN mit Mehrfaktor-Authentisierung zu einem Sprungserver, von dort RDP zu den Servern",
-    "exp": "Direkt aus dem Internet erreichbares RDP wird ständig angegriffen, ein anderer Port verschleiert nur. Mit VPN, MFA und einem zentralen Sprungserver (jump host) ist der Zugang geschützt und protokollierbar."
+    "exp": "Direkt aus dem Internet erreichbares RDP wird ständig angegriffen, ein anderer Port verschleiert nur. Mit VPN, MFA und einem zentralen Sprungserver (jump host) ist der Zugang geschützt und protokollierbar.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25713,7 +25738,8 @@
       "Jeder Benutzer erhält lokale Adminrechte, damit weniger Tickets entstehen"
     ],
     "a": "Getrennte Admin-Konten ohne E-Mail und Internetnutzung, Anmeldung mit Mehrfaktor-Authentisierung",
-    "exp": "Getrennte, persönliche Admin-Konten begrenzen den Schaden bei Phishing und machen Änderungen nachvollziehbar. Das entspricht dem Prinzip der minimalen Rechte (least privilege)."
+    "exp": "Getrennte, persönliche Admin-Konten begrenzen den Schaden bei Phishing und machen Änderungen nachvollziehbar. Das entspricht dem Prinzip der minimalen Rechte (least privilege).",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25729,7 +25755,8 @@
       "Ein Cluster verhindert die Nutzung von Snapshots"
     ],
     "a": "Das Speichersystem ist ein Single Point of Failure",
-    "exp": "Fällt der einzige Controller aus, stehen alle VMs trotz zweier Hosts. Für hohe Verfügbarkeit braucht auch der Speicher Redundanz, z. B. zwei Controller oder Replikation."
+    "exp": "Fällt der einzige Controller aus, stehen alle VMs trotz zweier Hosts. Für hohe Verfügbarkeit braucht auch der Speicher Redundanz, z. B. zwei Controller oder Replikation.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25745,7 +25772,8 @@
       "Alle Anwendungen als Prozesse unter demselben Benutzerkonto"
     ],
     "a": "Eigene virtuelle Maschinen je Kunde statt nur Container auf einem gemeinsamen Kernel",
-    "exp": "Container teilen sich den Kernel des Hosts. Eine Kernel-Schwachstelle kann daher die Trennung aufheben. VMs bieten eine stärkere Isolation durch den Hypervisor."
+    "exp": "Container teilen sich den Kernel des Hosts. Eine Kernel-Schwachstelle kann daher die Trennung aufheben. VMs bieten eine stärkere Isolation durch den Hypervisor.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25761,7 +25789,8 @@
       "drucken()"
     ],
     "a": "drucken()",
-    "exp": "Methoden beschreiben das Verhalten eines Objekts und werden mit Klammern aufgerufen. modell, tonerstand und standort sind Attribute, sie speichern den Zustand des Objekts."
+    "exp": "Methoden beschreiben das Verhalten eines Objekts und werden mit Klammern aufgerufen. modell, tonerstand und standort sind Attribute, sie speichern den Zustand des Objekts.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25777,7 +25806,8 @@
       "Man beschreibt jeden Schritt einzeln in der richtigen Reihenfolge"
     ],
     "a": "Man beschreibt das gewünschte Ergebnis, nicht den Lösungsweg",
-    "exp": "Bei deklarativen Sprachen wie SQL steht im Code, was herauskommen soll, z. B. alle Kunden aus Köln. Wie die Daten gesucht werden, entscheidet das Datenbanksystem. Imperative Sprachen wie C oder Python geben dagegen die einzelnen Schritte vor."
+    "exp": "Bei deklarativen Sprachen wie SQL steht im Code, was herauskommen soll, z. B. alle Kunden aus Köln. Wie die Daten gesucht werden, entscheidet das Datenbanksystem. Imperative Sprachen wie C oder Python geben dagegen die einzelnen Schritte vor.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25793,7 +25823,8 @@
       "Tabellen mit Schlüsseln, die über Abfragen verknüpft werden"
     ],
     "a": "Funktionen ohne Seiteneffekte, die mit unveränderlichen Daten arbeiten",
-    "exp": "Funktionale Programmierung setzt auf reine Funktionen: gleiche Eingabe ergibt immer gleiche Ausgabe, ohne globale Zustände zu verändern. Funktionen lassen sich wie Werte übergeben, z. B. an map oder filter. Beispiele sind Haskell oder F#, viele Sprachen wie Python bieten funktionale Elemente."
+    "exp": "Funktionale Programmierung setzt auf reine Funktionen: gleiche Eingabe ergibt immer gleiche Ausgabe, ohne globale Zustände zu verändern. Funktionen lassen sich wie Werte übergeben, z. B. an map oder filter. Beispiele sind Haskell oder F#, viele Sprachen wie Python bieten funktionale Elemente.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25809,7 +25840,8 @@
       "C"
     ],
     "a": "C",
-    "exp": "C ist eine prozedurale, kompilierte Sprache mit hardwarenaher Speicherverwaltung und wird deshalb für Embedded-Systeme und Betriebssysteme genutzt. Python, PowerShell und JavaScript laufen in einem Interpreter bzw. einer Laufzeitumgebung."
+    "exp": "C ist eine prozedurale, kompilierte Sprache mit hardwarenaher Speicherverwaltung und wird deshalb für Embedded-Systeme und Betriebssysteme genutzt. Python, PowerShell und JavaScript laufen in einem Interpreter bzw. einer Laufzeitumgebung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25825,7 +25857,8 @@
       "Sie läuft nur im Webbrowser und nie auf einem Server"
     ],
     "a": "Sie wird meist zur Laufzeit interpretiert und dient oft der Automatisierung",
-    "exp": "Skriptsprachen werden in der Regel von einem Interpreter ausgeführt, ohne getrennten Übersetzungsschritt. Sie eignen sich gut, um Befehle und Programme zu verbinden, z. B. für Administration. Auch Skriptsprachen sind Hochsprachen, die Grenze zu Python oder JavaScript ist fließend."
+    "exp": "Skriptsprachen werden in der Regel von einem Interpreter ausgeführt, ohne getrennten Übersetzungsschritt. Sie eignen sich gut, um Befehle und Programme zu verbinden, z. B. für Administration. Auch Skriptsprachen sind Hochsprachen, die Grenze zu Python oder JavaScript ist fließend.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25841,7 +25874,8 @@
       "Quelltext in C, den die .NET-Laufzeit erneut kompiliert"
     ],
     "a": "Zwischencode (CIL), den die .NET-Laufzeit per JIT in Maschinencode übersetzt",
-    "exp": "C# wird standardmäßig in die Common Intermediate Language (CIL) übersetzt. Die Common Language Runtime (CLR) übersetzt diesen Zwischencode beim Ausführen per Just-in-Time-Compiler. Das Prinzip ähnelt dem Java-Bytecode mit der JVM."
+    "exp": "C# wird standardmäßig in die Common Intermediate Language (CIL) übersetzt. Die Common Language Runtime (CLR) übersetzt diesen Zwischencode beim Ausführen per Just-in-Time-Compiler. Das Prinzip ähnelt dem Java-Bytecode mit der JVM.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25857,7 +25891,8 @@
       "Es sind verschiedene Sprachen, JavaScript läuft aber nur auf Windows"
     ],
     "a": "Es sind verschiedene Sprachen, JavaScript läuft vor allem im Browser und mit Node.js",
-    "exp": "Trotz ähnlichem Namen haben die Sprachen wenig gemeinsam. Java ist statisch typisiert und läuft in der JVM. JavaScript ist dynamisch typisiert, wird im Browser ausgeführt und mit Node.js auch auf Servern."
+    "exp": "Trotz ähnlichem Namen haben die Sprachen wenig gemeinsam. Java ist statisch typisiert und läuft in der JVM. JavaScript ist dynamisch typisiert, wird im Browser ausgeführt und mit Node.js auch auf Servern.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25873,7 +25908,8 @@
       "Das Programm startet und setzt das Gehalt ohne Meldung auf 5000"
     ],
     "a": "Der Compiler meldet einen Fehler, weil das Attribut außerhalb der Klasse nicht sichtbar ist",
-    "exp": "private schränkt die Sichtbarkeit auf die eigene Klasse ein. Java prüft das beim Übersetzen und bricht mit einem Fehler ab. Der Zugriff muss über eine öffentliche Methode wie setGehalt() erfolgen, die den Wert prüfen kann."
+    "exp": "private schränkt die Sichtbarkeit auf die eigene Klasse ein. Java prüft das beim Übersetzen und bricht mit einem Fehler ab. Der Zugriff muss über eine öffentliche Methode wie setGehalt() erfolgen, die den Wert prüfen kann.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25889,7 +25925,8 @@
       "Python: rein funktional, ohne Klassen und ohne Schleifen nutzbar"
     ],
     "a": "Python: interpretiert, dynamisch typisiert, prozedural und objektorientiert nutzbar",
-    "exp": "Python ist eine Multiparadigmensprache: Man kann prozedural mit Funktionen, objektorientiert mit Klassen und teilweise funktional arbeiten. Typen werden zur Laufzeit geprüft. Der Interpreter übersetzt intern in Bytecode und führt ihn aus."
+    "exp": "Python ist eine Multiparadigmensprache: Man kann prozedural mit Funktionen, objektorientiert mit Klassen und teilweise funktional arbeiten. Typen werden zur Laufzeit geprüft. Der Interpreter übersetzt intern in Bytecode und führt ihn aus.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -25905,7 +25942,8 @@
       "Server erbt von Geraet (Generalisierung)"
     ],
     "a": "Server erbt von Geraet (Generalisierung)",
-    "exp": "Der Pfeil mit leerem Dreieck zeigt immer zur Oberklasse und steht für Vererbung. Eine Komposition wird mit ausgefüllter Raute, eine Aggregation mit leerer Raute gezeichnet."
+    "exp": "Der Pfeil mit leerem Dreieck zeigt immer zur Oberklasse und steht für Vererbung. Eine Komposition wird mit ausgefüllter Raute, eine Aggregation mit leerer Raute gezeichnet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -25921,7 +25959,8 @@
       "Ein Kunde muss mindestens einen und darf beliebig viele Aufträge haben"
     ],
     "a": "Ein Kunde kann keinen, einen oder beliebig viele Aufträge haben",
-    "exp": "Die Multiplizität gibt an, wie viele Objekte an einer Beziehung beteiligt sind. 0..* heißt null bis beliebig viele, 1..* mindestens eines, 0..1 höchstens eines."
+    "exp": "Die Multiplizität gibt an, wie viele Objekte an einer Beziehung beteiligt sind. 0..* heißt null bis beliebig viele, 1..* mindestens eines, 0..1 höchstens eines.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25937,7 +25976,8 @@
       "Statuscode 301 Moved Permanently mit Verweis auf ein Formular"
     ],
     "a": "Statuscode 400 Bad Request mit einer Fehlermeldung, welches Feld fehlt",
-    "exp": "Fehler, die der Client verursacht, liegen im Bereich 4xx. 400 meldet eine ungültige Anfrage, eine verständliche Meldung hilft dem aufrufenden Team bei der Fehlersuche. 5xx steht für Fehler auf dem Server und wäre hier irreführend."
+    "exp": "Fehler, die der Client verursacht, liegen im Bereich 4xx. 400 meldet eine ungültige Anfrage, eine verständliche Meldung hilft dem aufrufenden Team bei der Fehlersuche. 5xx steht für Fehler auf dem Server und wäre hier irreführend.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25953,7 +25993,8 @@
       "\"ips\": [\"10.0.0.5\", \"10.0.0.6\"]"
     ],
     "a": "\"ips\": [\"10.0.0.5\", \"10.0.0.6\"]",
-    "exp": "In JSON stehen mehrere Werte in einem Array mit eckigen Klammern, Zeichenketten in doppelten Anführungszeichen. Schlüssel und Wert werden durch einen Doppelpunkt getrennt. Geschweifte Klammern umschließen Objekte aus Schlüssel-Wert-Paaren."
+    "exp": "In JSON stehen mehrere Werte in einem Array mit eckigen Klammern, Zeichenketten in doppelten Anführungszeichen. Schlüssel und Wert werden durch einen Doppelpunkt getrennt. Geschweifte Klammern umschließen Objekte aus Schlüssel-Wert-Paaren.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25969,7 +26010,8 @@
       "Ein Datensatz (Struktur oder Klasse) je Gerät, gesammelt in einer Liste"
     ],
     "a": "Ein Datensatz (Struktur oder Klasse) je Gerät, gesammelt in einer Liste",
-    "exp": "Zusammengehörige Werte gehören in einen Datensatz (record, struct oder Objekt). So bleibt jedes Gerät mit allen Angaben beisammen und kann als Ganzes sortiert, gefiltert oder gespeichert werden. Parallele Listen laufen beim Einfügen oder Löschen leicht auseinander."
+    "exp": "Zusammengehörige Werte gehören in einen Datensatz (record, struct oder Objekt). So bleibt jedes Gerät mit allen Angaben beisammen und kann als Ganzes sortiert, gefiltert oder gespeichert werden. Parallele Listen laufen beim Einfügen oder Löschen leicht auseinander.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -25986,7 +26028,8 @@
       "JavaScript"
     ],
     "a": "JavaScript",
-    "exp": "Webbrowser führen JavaScript aus, damit lassen sich Eingaben direkt auf der Seite prüfen. Die Prüfung muss zusätzlich auf dem Server erfolgen, weil Eingaben im Browser manipuliert werden können. PowerShell und Bash laufen nicht im Browser, SQL fragt Datenbanken ab."
+    "exp": "Webbrowser führen JavaScript aus, damit lassen sich Eingaben direkt auf der Seite prüfen. Die Prüfung muss zusätzlich auf dem Server erfolgen, weil Eingaben im Browser manipuliert werden können. PowerShell und Bash laufen nicht im Browser, SQL fragt Datenbanken ab.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26002,7 +26045,8 @@
       "18"
     ],
     "a": "17",
-    "exp": "Summiert werden nur die Werte größer als 2: 3 + 8 + 6 = 17. Die 1 fällt durch die Bedingung heraus. 18 wäre die Summe aller vier Zahlen."
+    "exp": "Summiert werden nur die Werte größer als 2: 3 + 8 + 6 = 17. Die 1 fällt durch die Bedingung heraus. 18 wäre die Summe aller vier Zahlen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26018,7 +26062,8 @@
       "3 21"
     ],
     "a": "3 21",
-    "exp": "Die Zuweisung fügt den Schlüssel https hinzu, das Dictionary hat danach 3 Einträge. get() liefert für einen fehlenden Schlüssel den angegebenen Standardwert 21 statt eines Fehlers. Nur der Zugriff mit ports[\"ftp\"] würde einen KeyError auslösen."
+    "exp": "Die Zuweisung fügt den Schlüssel https hinzu, das Dictionary hat danach 3 Einträge. get() liefert für einen fehlenden Schlüssel den angegebenen Standardwert 21 statt eines Fehlers. Nur der Zugriff mit ports[\"ftp\"] würde einen KeyError auslösen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26034,7 +26079,8 @@
       "3 6 9"
     ],
     "a": "1 4 7",
-    "exp": "range(start, stop, schritt) beginnt bei 1 und erhöht jeweils um 3. Die obere Grenze 10 ist nicht enthalten, deshalb endet die Folge bei 7."
+    "exp": "range(start, stop, schritt) beginnt bei 1 und erhöht jeweils um 3. Die obere Grenze 10 ist nicht enthalten, deshalb endet die Folge bei 7.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26050,7 +26096,8 @@
       "3 3.5"
     ],
     "a": "3 3.5",
-    "exp": "// ist in Python die ganzzahlige Division und rundet nach unten ab. / liefert in Python 3 immer eine Gleitkommazahl, auch bei ganzen Zahlen."
+    "exp": "// ist in Python die ganzzahlige Division und rundet nach unten ab. / liefert in Python 3 immer eine Gleitkommazahl, auch bei ganzen Zahlen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26066,7 +26113,8 @@
       "srv-db01"
     ],
     "a": "SRV-DB01",
-    "exp": "split(\";\") zerlegt die Zeile in die Liste [\"2026-10-04\", \"srv-db01\", \"ERROR\"]. Der Index beginnt bei 0, teile[1] ist also der Hostname. upper() wandelt ihn in Großbuchstaben um."
+    "exp": "split(\";\") zerlegt die Zeile in die Liste [\"2026-10-04\", \"srv-db01\", \"ERROR\"]. Der Index beginnt bei 0, teile[1] ist also der Hostname. upper() wandelt ihn in Großbuchstaben um.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26082,7 +26130,8 @@
       "12"
     ],
     "a": "43",
-    "exp": "Addiert werden die Zahlen 1 bis 10, also zusammen 55. continue überspringt die durch 4 teilbaren Werte 4 und 8. 55 - 12 = 43."
+    "exp": "Addiert werden die Zahlen 1 bis 10, also zusammen 55. continue überspringt die durch 4 teilbaren Werte 4 und 8. 55 - 12 = 43.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26098,7 +26147,8 @@
       "53 und 35"
     ],
     "a": "53 und 8",
-    "exp": "PowerShell richtet sich nach dem Typ des linken Operanden. Steht links eine Zeichenkette, wird 3 in Text umgewandelt und angehängt. Steht links eine Zahl, wird \"5\" in eine Zahl umgewandelt und addiert."
+    "exp": "PowerShell richtet sich nach dem Typ des linken Operanden. Steht links eine Zeichenkette, wird 3 in Text umgewandelt und angehängt. Steht links eine Zahl, wird \"5\" in eine Zahl umgewandelt und addiert.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26114,7 +26164,8 @@
       "15"
     ],
     "a": "3",
-    "exp": "1..5 erzeugt die Zahlen 1 bis 5 einschließlich. Where-Object lässt nur die ungeraden Werte 1, 3 und 5 durch, deren Anzahl ist 3. Die Summe dieser Werte wäre 9."
+    "exp": "1..5 erzeugt die Zahlen 1 bis 5 einschließlich. Where-Object lässt nur die ungeraden Werte 1, 3 und 5 durch, deren Anzahl ist 3. Die Summe dieser Werte wäre 9.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26130,7 +26181,8 @@
       "3 0"
     ],
     "a": "3 1",
-    "exp": "Die arithmetische Erweiterung $(( )) der Bash rechnet nur mit ganzen Zahlen. 7 / 2 ergibt 3, der Rest der Division (Modulo) ist 1. Für Kommazahlen braucht man Werkzeuge wie bc oder awk."
+    "exp": "Die arithmetische Erweiterung $(( )) der Bash rechnet nur mit ganzen Zahlen. 7 / 2 ergibt 3, der Rest der Division (Modulo) ist 1. Für Kommazahlen braucht man Werkzeuge wie bc oder awk.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26146,7 +26198,8 @@
       "groesser, weil die Bash Zahlen in Klammern automatisch erkennt"
     ],
     "a": "kleiner, weil > in [[ ]] Zeichenketten vergleicht und \"1\" vor \"9\" steht",
-    "exp": "Innerhalb von [[ ]] vergleicht > Zeichenketten lexikografisch, Zeichen für Zeichen. \"10\" beginnt mit 1 und gilt deshalb als kleiner als \"9\". Für Zahlenvergleiche nutzt man -gt oder (( v > 9 ))."
+    "exp": "Innerhalb von [[ ]] vergleicht > Zeichenketten lexikografisch, Zeichen für Zeichen. \"10\" beginnt mit 1 und gilt deshalb als kleiner als \"9\". Für Zahlenvergleiche nutzt man -gt oder (( v > 9 )).",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26162,7 +26215,8 @@
       "15 3 1 * *"
     ],
     "a": "15 3 1 * *",
-    "exp": "Die fünf Felder lauten Minute, Stunde, Tag des Monats, Monat, Wochentag. 15 3 1 * * heißt Minute 15, Stunde 3, Tag 1, jeder Monat, jeder Wochentag. 15 3 * * 1 liefe jeden Montag, 15 3 * 1 * jeden Tag im Januar."
+    "exp": "Die fünf Felder lauten Minute, Stunde, Tag des Monats, Monat, Wochentag. 15 3 1 * * heißt Minute 15, Stunde 3, Tag 1, jeder Monat, jeder Wochentag. 15 3 * * 1 liefe jeden Montag, 15 3 * 1 * jeden Tag im Januar.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26178,7 +26232,8 @@
       "Der Timer läuft auch dann, wenn der Dienst deaktiviert ist"
     ],
     "a": "Der verpasste Lauf wird nach dem nächsten Start nachgeholt",
-    "exp": "systemd merkt sich den Zeitpunkt des letzten Laufs. Mit Persistent=true startet die Unit beim nächsten Hochfahren sofort, wenn ein geplanter Termin verpasst wurde. Klassisches cron holt verpasste Läufe nicht nach, dafür gibt es anacron."
+    "exp": "systemd merkt sich den Zeitpunkt des letzten Laufs. Mit Persistent=true startet die Unit beim nächsten Hochfahren sofort, wenn ein geplanter Termin verpasst wurde. Klassisches cron holt verpasste Läufe nicht nach, dafür gibt es anacron.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26195,7 +26250,8 @@
       "Die Execution Policy gilt nur für Skripte, die per E-Mail ankommen"
     ],
     "a": "Die Execution Policy ist keine Sicherheitsgrenze und lässt sich z. B. mit -ExecutionPolicy Bypass umgehen",
-    "exp": "Die Ausführungsrichtlinie soll das versehentliche Starten von Skripten verhindern. Ein Benutzer kann eine Sitzung mit anderer Richtlinie starten oder Befehle direkt eingeben. Echte Beschränkungen bieten z. B. AppLocker oder App Control for Business."
+    "exp": "Die Ausführungsrichtlinie soll das versehentliche Starten von Skripten verhindern. Ein Benutzer kann eine Sitzung mit anderer Richtlinie starten oder Befehle direkt eingeben. Echte Beschränkungen bieten z. B. AppLocker oder App Control for Business.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26211,7 +26267,8 @@
       "Das Skript gibt jeden Befehl vor der Ausführung auf dem Bildschirm aus"
     ],
     "a": "Das Skript bricht ab, sobald ein Befehl mit einem Rückgabecode ungleich 0 endet",
-    "exp": "set -e (errexit) verhindert, dass ein Skript nach einem Fehler einfach weiterläuft und Folgeschäden anrichtet. Ausnahmen gelten z. B. für Befehle in if-Bedingungen. set -x gibt Befehle aus, set -u bricht bei nicht gesetzten Variablen ab."
+    "exp": "set -e (errexit) verhindert, dass ein Skript nach einem Fehler einfach weiterläuft und Folgeschäden anrichtet. Ausnahmen gelten z. B. für Befehle in if-Bedingungen. set -x gibt Befehle aus, set -u bricht bei nicht gesetzten Variablen ab.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26228,7 +26285,8 @@
       "Die Datei nutzt Semikolons als Trennzeichen, Import-Csv erwartet standardmäßig Kommas"
     ],
     "a": "Die Datei nutzt Semikolons als Trennzeichen, Import-Csv erwartet standardmäßig Kommas",
-    "exp": "Excel speichert CSV in deutscher Ländereinstellung mit Semikolon, weil das Komma als Dezimalzeichen dient. Mit Import-Csv -Delimiter \";\" oder -UseCulture werden die Spalten richtig getrennt. Danach lassen sich die Konten z. B. mit New-ADUser in einer Schleife anlegen."
+    "exp": "Excel speichert CSV in deutscher Ländereinstellung mit Semikolon, weil das Komma als Dezimalzeichen dient. Mit Import-Csv -Delimiter \";\" oder -UseCulture werden die Spalten richtig getrennt. Danach lassen sich die Konten z. B. mit New-ADUser in einer Schleife anlegen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26244,7 +26302,8 @@
       "0x2"
     ],
     "a": "0x2",
-    "exp": "Mit -File wird der Wert hinter exit als Rückgabecode von powershell.exe an die Aufgabenplanung weitergegeben. Das Ergebnis 0x2 zeigt so den Fehlerfall an. 0x0 steht für Erfolg, 0x41301 bedeutet, dass die Aufgabe noch läuft."
+    "exp": "Mit -File wird der Wert hinter exit als Rückgabecode von powershell.exe an die Aufgabenplanung weitergegeben. Das Ergebnis 0x2 zeigt so den Fehlerfall an. 0x0 steht für Erfolg, 0x41301 bedeutet, dass die Aufgabe noch läuft.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26260,7 +26319,8 @@
       "find /var/log/app -name \"*.log\" -size +30 -delete"
     ],
     "a": "find /var/log/app -name \"*.log\" -mtime +30 -delete",
-    "exp": "-mtime +30 trifft Dateien, deren letzte Änderung mehr als 30 Tage zurückliegt, -mtime -30 die jüngeren. rm kennt keine Altersangabe, -size +30 bezieht sich auf die Dateigröße. Vorher mit -print statt -delete testen."
+    "exp": "-mtime +30 trifft Dateien, deren letzte Änderung mehr als 30 Tage zurückliegt, -mtime -30 die jüngeren. rm kennt keine Altersangabe, -size +30 bezieht sich auf die Dateigröße. Vorher mit -print statt -delete testen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26276,7 +26336,8 @@
       "Remove-Item mit dem Parameter -Recurse aufrufen"
     ],
     "a": "Remove-Item mit dem Parameter -WhatIf aufrufen",
-    "exp": "-WhatIf zeigt an, welche Dateien entfernt würden, führt die Aktion aber nicht aus. -Force löscht auch versteckte und schreibgeschützte Dateien, -Recurse zusätzlich Unterordner. -Verbose gibt nur ausführlichere Meldungen aus und löscht trotzdem."
+    "exp": "-WhatIf zeigt an, welche Dateien entfernt würden, führt die Aktion aber nicht aus. -Force löscht auch versteckte und schreibgeschützte Dateien, -Recurse zusätzlich Unterordner. -Verbose gibt nur ausführlichere Meldungen aus und löscht trotzdem.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26292,7 +26353,8 @@
       "Die Option Mit höchsten Privilegien ausführen in der Aufgabe"
     ],
     "a": "Die Option Mit höchsten Privilegien ausführen in der Aufgabe",
-    "exp": "Durch die Benutzerkontensteuerung (UAC) läuft auch ein Administratorkonto zunächst mit eingeschränktem Token. Die Option Mit höchsten Privilegien ausführen (run with highest privileges) startet die Aufgabe mit vollem Administrator-Token, wie eine Konsole über Als Administrator ausführen."
+    "exp": "Durch die Benutzerkontensteuerung (UAC) läuft auch ein Administratorkonto zunächst mit eingeschränktem Token. Die Option Mit höchsten Privilegien ausführen (run with highest privileges) startet die Aufgabe mit vollem Administrator-Token, wie eine Konsole über Als Administrator ausführen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26309,7 +26371,8 @@
       "Nach dem Update ist LDAP dauerhaft abgeschaltet, ab 7.4.3 gibt es nur noch lokale Konten"
     ],
     "a": "Nach dem Update kann die LDAP-Anmeldung scheitern, bis 7.4.3 hilft vorübergehend ein Bind-Passwort ohne Sonderzeichen",
-    "exp": "„Known issue“ ist ein bekannter, noch nicht behobener Fehler, „workaround“ eine vorübergehende Umgehungslösung. Betroffen ist nur das Kennwort des Dienstkontos (bind password), mit dem die Firewall das Verzeichnis abfragt, nicht die Kennwörter der Benutzer."
+    "exp": "„Known issue“ ist ein bekannter, noch nicht behobener Fehler, „workaround“ eine vorübergehende Umgehungslösung. Betroffen ist nur das Kennwort des Dienstkontos (bind password), mit dem die Firewall das Verzeichnis abfragt, nicht die Kennwörter der Benutzer.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26326,7 +26389,8 @@
       "In Version 8 wird TLS 1.0 neu eingeführt und ab Version 9 zum Standard"
     ],
     "a": "TLS 1.0 läuft in Version 8 noch, ist aber abgekündigt und fehlt ab Version 9, die Scanner müssen vorher ersetzt werden",
-    "exp": "„Deprecated“ heißt veraltet oder abgekündigt: Eine Funktion ist noch vorhanden, wird aber nicht mehr empfohlen und in einer künftigen Version entfernt. Das gibt Zeit, Alternativen zu planen."
+    "exp": "„Deprecated“ heißt veraltet oder abgekündigt: Eine Funktion ist noch vorhanden, wird aber nicht mehr empfohlen und in einer künftigen Version entfernt. Das gibt Zeit, Alternativen zu planen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26343,7 +26407,8 @@
       "Die Angabe bedeutet 1,2 Stunden, das Komma ist ein Druckfehler im Datenblatt"
     ],
     "a": "Die MTBF ist ein statistischer Wert über viele Platten, keine Lebensdauer einer einzelnen Platte",
-    "exp": "Die MTBF (mittlere Betriebsdauer zwischen Ausfällen) wird aus großen Stückzahlen hochgerechnet. Bei 1,2 Millionen Stunden ergibt sich eine jährliche Ausfallrate von etwa 0,7 Prozent je Platte. Die Nutzungsdauer ist trotzdem durch Verschleiß und Garantie begrenzt, deshalb sind RAID und Backup nötig."
+    "exp": "Die MTBF (mittlere Betriebsdauer zwischen Ausfällen) wird aus großen Stückzahlen hochgerechnet. Bei 1,2 Millionen Stunden ergibt sich eine jährliche Ausfallrate von etwa 0,7 Prozent je Platte. Die Nutzungsdauer ist trotzdem durch Verschleiß und Garantie begrenzt, deshalb sind RAID und Backup nötig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26360,7 +26425,8 @@
       "Zwei Netzteile, von denen eines für den Betrieb reicht, ein defektes kann im laufenden Betrieb getauscht werden"
     ],
     "a": "Zwei Netzteile, von denen eines für den Betrieb reicht, ein defektes kann im laufenden Betrieb getauscht werden",
-    "exp": "„Redundant“ bedeutet, dass ein Bauteil doppelt vorhanden ist, „1+1“ heißt ein benötigtes plus ein Reservenetzteil. „Hot-swappable“ (im laufenden Betrieb austauschbar) erlaubt den Tausch ohne Herunterfahren. Für echte Ausfallsicherheit sollten die Netzteile an getrennten Stromkreisen hängen."
+    "exp": "„Redundant“ bedeutet, dass ein Bauteil doppelt vorhanden ist, „1+1“ heißt ein benötigtes plus ein Reservenetzteil. „Hot-swappable“ (im laufenden Betrieb austauschbar) erlaubt den Tausch ohne Herunterfahren. Für echte Ausfallsicherheit sollten die Netzteile an getrennten Stromkreisen hängen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26377,7 +26443,8 @@
       "Alle Werte werden addiert, die Firewall schafft also über 13 Gbit/s"
     ],
     "a": "Maßgeblich ist der Threat-protection-Wert, mit Schutzfunktionen schafft sie den Anschluss nicht ganz",
-    "exp": "„Throughput“ ist der Durchsatz. Hersteller geben mehrere Werte an, je nachdem, welche Funktionen aktiv sind. Mit Paketprüfung wie IPS und Virenschutz sinkt der Durchsatz deutlich, deshalb ist für diesen Kunden der Wert von 900 Mbit/s entscheidend."
+    "exp": "„Throughput“ ist der Durchsatz. Hersteller geben mehrere Werte an, je nachdem, welche Funktionen aktiv sind. Mit Paketprüfung wie IPS und Virenschutz sinkt der Durchsatz deutlich, deshalb ist für diesen Kunden der Wert von 900 Mbit/s entscheidend.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26394,7 +26461,8 @@
       "Wird das Gerät während des Updates ausgeschaltet oder neu gestartet, kann es danach unbrauchbar sein"
     ],
     "a": "Wird das Gerät während des Updates ausgeschaltet oder neu gestartet, kann es danach unbrauchbar sein",
-    "exp": "„Render inoperable“ bedeutet „funktionsunfähig machen“. Eine unterbrochene Firmware-Aktualisierung kann den Speicher mit der Gerätesoftware beschädigen. Deshalb plant man Updates mit stabiler Stromversorgung, idealerweise über eine USV, und einem Wartungsfenster."
+    "exp": "„Render inoperable“ bedeutet „funktionsunfähig machen“. Eine unterbrochene Firmware-Aktualisierung kann den Speicher mit der Gerätesoftware beschädigen. Deshalb plant man Updates mit stabiler Stromversorgung, idealerweise über eine USV, und einem Wartungsfenster.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26411,7 +26479,8 @@
       "Service an 5 Tagen je 9 Stunden, Reaktion innerhalb von 4 Stunden der Servicezeit, Lösung bis zum nächsten Geschäftstag"
     ],
     "a": "Service an 5 Tagen je 9 Stunden, Reaktion innerhalb von 4 Stunden der Servicezeit, Lösung bis zum nächsten Geschäftstag",
-    "exp": "„9x5“ bedeutet 9 Stunden an 5 Werktagen, „business hours“ sind Stunden innerhalb der Servicezeit, „next business day“ (NBD) ist der nächste Geschäftstag. Reaktionszeit (response time) und Lösungszeit (resolution time) sind verschiedene Kennzahlen eines SLA."
+    "exp": "„9x5“ bedeutet 9 Stunden an 5 Werktagen, „business hours“ sind Stunden innerhalb der Servicezeit, „next business day“ (NBD) ist der nächste Geschäftstag. Reaktionszeit (response time) und Lösungszeit (resolution time) sind verschiedene Kennzahlen eines SLA.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26428,7 +26497,8 @@
       "Die Garantie gilt nur, wenn der Monitor in der Originalverpackung bleibt"
     ],
     "a": "Es ist eine Einsendegarantie, das defekte Gerät muss zum Hersteller geschickt werden",
-    "exp": "„Return to base“ heißt, das Gerät wird zur Reparatur eingeschickt. Ein Vor-Ort-Service heißt meist „onsite service“, oft mit „next business day“. Für Arbeitsplatzgeräte kann eine Einsendegarantie reichen, wenn Ersatzgeräte vorrätig sind."
+    "exp": "„Return to base“ heißt, das Gerät wird zur Reparatur eingeschickt. Ein Vor-Ort-Service heißt meist „onsite service“, oft mit „next business day“. Für Arbeitsplatzgeräte kann eine Einsendegarantie reichen, wenn Ersatzgeräte vorrätig sind.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26445,7 +26515,8 @@
       "Die Platte ist falsch formatiert, sie muss nur neu partitioniert werden"
     ],
     "a": "Die Platte hat zu viele ersetzte Sektoren, Daten sichern und die Platte tauschen",
-    "exp": "SMART ist die Selbstüberwachung von Laufwerken. „Reallocated sector count“ zählt defekte Sektoren, die durch Reservesektoren ersetzt wurden, „threshold exceeded“ heißt „Schwellenwert überschritten“. Der Hersteller rät ausdrücklich, Daten zu sichern und das Laufwerk zu ersetzen."
+    "exp": "SMART ist die Selbstüberwachung von Laufwerken. „Reallocated sector count“ zählt defekte Sektoren, die durch Reservesektoren ersetzt wurden, „threshold exceeded“ heißt „Schwellenwert überschritten“. Der Hersteller rät ausdrücklich, Daten zu sichern und das Laufwerk zu ersetzen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26462,7 +26533,8 @@
       "Der Controller wird erst nach Eintrag in die Liste durch den Kunden selbst unterstützt"
     ],
     "a": "Der Controller ist nicht vom Hersteller geprüft und freigegeben, im Fehlerfall kann der Support die Hilfe ablehnen",
-    "exp": "Die Hardware-Kompatibilitätsliste (HCL) nennt Komponenten, die der Hersteller getestet hat und unterstützt. Nicht gelistete Hardware kann trotzdem laufen, aber ohne Treibergarantie und Support. Für produktive Systeme wählt man deshalb Komponenten von der Liste."
+    "exp": "Die Hardware-Kompatibilitätsliste (HCL) nennt Komponenten, die der Hersteller getestet hat und unterstützt. Nicht gelistete Hardware kann trotzdem laufen, aber ohne Treibergarantie und Support. Für produktive Systeme wählt man deshalb Komponenten von der Liste.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26478,7 +26550,8 @@
       "Panelforschung, weil dieselben Kunden regelmäßig befragt werden"
     ],
     "a": "Sekundärforschung (desk research), weil vorhandene Daten ausgewertet werden",
-    "exp": "Sekundärforschung nutzt bereits vorhandene Informationen und ist schnell und günstig. Bei der Primärforschung werden Daten neu erhoben, etwa durch Kundenbefragungen, Interviews oder Testkäufe. Sekundärdaten können veraltet sein, deshalb ist das Datum der Quelle wichtig."
+    "exp": "Sekundärforschung nutzt bereits vorhandene Informationen und ist schnell und günstig. Bei der Primärforschung werden Daten neu erhoben, etwa durch Kundenbefragungen, Interviews oder Testkäufe. Sekundärdaten können veraltet sein, deshalb ist das Datum der Quelle wichtig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26495,7 +26568,8 @@
       "Beide kosten genau 48,00 Euro im Monat, entscheidend ist nur der Service"
     ],
     "a": "B ist mit 48,00 Euro im Monat um 2,00 Euro günstiger als A mit 50,00 Euro",
-    "exp": "A: 2.000 GB x 0,025 Euro = 50,00 Euro. B: 2 x 19,00 Euro + 10,00 Euro = 48,00 Euro. Für einen fairen Vergleich müssen Preise auf dieselbe Einheit umgerechnet und alle Gebühren einbezogen werden."
+    "exp": "A: 2.000 GB x 0,025 Euro = 50,00 Euro. B: 2 x 19,00 Euro + 10,00 Euro = 48,00 Euro. Für einen fairen Vergleich müssen Preise auf dieselbe Einheit umgerechnet und alle Gebühren einbezogen werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26511,7 +26585,8 @@
       "Den Leistungsumfang des Mitbewerbers: enthaltene Leistungen, Servicezeiten, Mindestlaufzeit und zusätzliche Kosten"
     ],
     "a": "Den Leistungsumfang des Mitbewerbers: enthaltene Leistungen, Servicezeiten, Mindestlaufzeit und zusätzliche Kosten",
-    "exp": "„Ab“-Preise beziehen sich oft auf ein Minimalpaket. Ein Preisvergleich ist nur bei vergleichbarer Leistung aussagekräftig. Liefert das eigene Angebot mehr, etwa längere Servicezeiten oder Vor-Ort-Einsätze, kann man den Mehrwert herausstellen statt den Preis zu senken."
+    "exp": "„Ab“-Preise beziehen sich oft auf ein Minimalpaket. Ein Preisvergleich ist nur bei vergleichbarer Leistung aussagekräftig. Liefert das eigene Angebot mehr, etwa längere Servicezeiten oder Vor-Ort-Einsätze, kann man den Mehrwert herausstellen statt den Preis zu senken.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26528,7 +26603,8 @@
       "Die Unterschrift unter den Wartungsvertrag für das neue Netzwerk"
     ],
     "a": "Eine Ist-Aufnahme der vorhandenen Geräte, Verkabelung, Anwendungen und Probleme",
-    "exp": "Die Ist-Analyse zeigt, was vorhanden ist und wo die Schwachstellen liegen. Erst daraus und aus den Zielen des Kunden entsteht das Soll-Konzept. Wer ohne Ist-Aufnahme plant, übersieht leicht vorhandene Geräte, bauliche Grenzen oder versteckte Anforderungen."
+    "exp": "Die Ist-Analyse zeigt, was vorhanden ist und wo die Schwachstellen liegen. Erst daraus und aus den Zielen des Kunden entsteht das Soll-Konzept. Wer ohne Ist-Aufnahme plant, übersieht leicht vorhandene Geräte, bauliche Grenzen oder versteckte Anforderungen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26545,7 +26621,8 @@
       "Sie verarbeiten besonders geschützte Gesundheitsdaten und brauchen die Telematikinfrastruktur"
     ],
     "a": "Sie verarbeiten besonders geschützte Gesundheitsdaten und brauchen die Telematikinfrastruktur",
-    "exp": "Gesundheitsdaten gehören nach Art. 9 DSGVO zu den besonderen Kategorien personenbezogener Daten. Hinzu kommen branchenspezifische Anforderungen wie die Telematikinfrastruktur für das Gesundheitswesen. Ein Zielgruppenangebot greift solche Besonderheiten gezielt auf."
+    "exp": "Gesundheitsdaten gehören nach Art. 9 DSGVO zu den besonderen Kategorien personenbezogener Daten. Hinzu kommen branchenspezifische Anforderungen wie die Telematikinfrastruktur für das Gesundheitswesen. Ein Zielgruppenangebot greift solche Besonderheiten gezielt auf.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26561,7 +26638,8 @@
       "„Die Synchronisation repliziert Löschvorgänge per Delta-Sync, ein versioniertes Backup nach 3-2-1 ist RPO-konform.“"
     ],
     "a": "„Wenn eine Datei versehentlich gelöscht wird, löscht die Synchronisation sie überall. Das Backup ist eine getrennte Kopie, aus der wir sie zurückholen können.“",
-    "exp": "Adressatengerecht heißt, Fachbegriffe zu vermeiden oder zu erklären und ein Beispiel aus der Welt der Kundin zu wählen. Die Antwort nennt den Nutzen, statt die Technik zu beschreiben, und nimmt die Frage ernst."
+    "exp": "Adressatengerecht heißt, Fachbegriffe zu vermeiden oder zu erklären und ein Beispiel aus der Welt der Kundin zu wählen. Die Antwort nennt den Nutzen, statt die Technik zu beschreiben, und nimmt die Frage ernst.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26578,7 +26656,8 @@
       "Die Rechnung"
     ],
     "a": "Der Lieferschein",
-    "exp": "„Delivery note“ ist der Lieferschein. Die Rechnung heißt „invoice“, die Bestellung „purchase order“ und das Angebot „quotation“ oder „quote“. Beim Wareneingang vergleicht man Lieferschein, Bestellung und tatsächlich gelieferte Ware."
+    "exp": "„Delivery note“ ist der Lieferschein. Die Rechnung heißt „invoice“, die Bestellung „purchase order“ und das Angebot „quotation“ oder „quote“. Beim Wareneingang vergleicht man Lieferschein, Bestellung und tatsächlich gelieferte Ware.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26595,7 +26674,8 @@
       "Eine Mängelrüge, die sofort und ohne zusätzliche Kosten für den Kunden zu beheben ist"
     ],
     "a": "Ein Änderungsantrag, er wird nach Aufwand, Kosten und Terminfolgen bewertet und erst nach Freigabe umgesetzt",
-    "exp": "Ein Change Request ändert den vereinbarten Leistungsumfang (scope). Damit das Projekt steuerbar bleibt, wird jede Änderung dokumentiert, bewertet und vom Auftraggeber freigegeben. So entstehen keine unbezahlten Zusatzleistungen und Termine bleiben realistisch."
+    "exp": "Ein Change Request ändert den vereinbarten Leistungsumfang (scope). Damit das Projekt steuerbar bleibt, wird jede Änderung dokumentiert, bewertet und vom Auftraggeber freigegeben. So entstehen keine unbezahlten Zusatzleistungen und Termine bleiben realistisch.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26611,7 +26691,8 @@
       "Sie ist eine Suggestivfrage, die den Kunden zu einem Zusatzkauf drängen soll"
     ],
     "a": "Sie ist eine Kontrollfrage, die das Ergebnis zusammenfasst und eine Bestätigung des Kunden einholt",
-    "exp": "Die zusammenfassende Kontrollfrage stellt sicher, dass beide Seiten dasselbe verstanden haben. Sie ist geschlossen und lässt sich mit Ja oder Nein beantworten. Missverständnisse zu Termin oder Umfang werden so vor dem Einsatz geklärt."
+    "exp": "Die zusammenfassende Kontrollfrage stellt sicher, dass beide Seiten dasselbe verstanden haben. Sie ist geschlossen und lässt sich mit Ja oder Nein beantworten. Missverständnisse zu Termin oder Umfang werden so vor dem Einsatz geklärt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26627,7 +26708,8 @@
       "Ein SIEM-System zur zentralen Auswertung von Sicherheitsmeldungen"
     ],
     "a": "Ein CRM-System (Customer Relationship Management) zur Verwaltung der Kundenbeziehungen",
-    "exp": "Ein CRM bündelt Kontakte, Gesprächsnotizen, Angebote und Verkäufe je Kunde. Der Vertrieb kann so gezielt nachfassen, etwa vor Ablauf einer Garantie ein Angebot für eine Verlängerung senden. Für personenbezogene Daten gelten dabei die Regeln der DSGVO."
+    "exp": "Ein CRM bündelt Kontakte, Gesprächsnotizen, Angebote und Verkäufe je Kunde. Der Vertrieb kann so gezielt nachfassen, etwa vor Ablauf einer Garantie ein Angebot für eine Verlängerung senden. Für personenbezogene Daten gelten dabei die Regeln der DSGVO.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26643,7 +26725,8 @@
       "Indirekter Vertrieb über Absatzmittler"
     ],
     "a": "Indirekter Vertrieb über Absatzmittler",
-    "exp": "Beim indirekten Vertrieb schalten Hersteller Händler, Distributoren oder Systemhäuser (Reseller) zwischen sich und den Endkunden. Diese bringen Kundennähe und Beratung ein. Beim direkten Vertrieb verkauft der Hersteller selbst, etwa über eigenen Außendienst oder Onlineshop."
+    "exp": "Beim indirekten Vertrieb schalten Hersteller Händler, Distributoren oder Systemhäuser (Reseller) zwischen sich und den Endkunden. Diese bringen Kundennähe und Beratung ein. Beim direkten Vertrieb verkauft der Hersteller selbst, etwa über eigenen Außendienst oder Onlineshop.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26659,7 +26742,8 @@
       "Ein Kreisdiagramm je Quartal mit den Standorten als Anteile"
     ],
     "a": "Ein gruppiertes Säulendiagramm mit je einer Säule pro Standort in jedem Quartal",
-    "exp": "Gruppierte Säulen erlauben den direkten Vergleich der Standorte innerhalb eines Quartals und zeigen zugleich die Entwicklung. Kreisdiagramme eignen sich nur für Anteile an einem Ganzen und machen den Vergleich über mehrere Zeitpunkte schwer."
+    "exp": "Gruppierte Säulen erlauben den direkten Vergleich der Standorte innerhalb eines Quartals und zeigen zugleich die Entwicklung. Kreisdiagramme eignen sich nur für Anteile an einem Ganzen und machen den Vergleich über mehrere Zeitpunkte schwer.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26676,7 +26760,8 @@
       "Ein Gantt-Diagramm mit den Messungen als Balken auf der Zeitachse"
     ],
     "a": "Ein Streudiagramm (scatter plot) mit CPU-Last auf der x- und Antwortzeit auf der y-Achse",
-    "exp": "Ein Streudiagramm stellt zwei Merkmale jedes Messpunkts gegeneinander dar. Steigt die Punktwolke nach rechts an, deutet das auf einen Zusammenhang hin. Ein Zusammenhang beweist allerdings noch keine Ursache."
+    "exp": "Ein Streudiagramm stellt zwei Merkmale jedes Messpunkts gegeneinander dar. Steigt die Punktwolke nach rechts an, deutet das auf einen Zusammenhang hin. Ein Zusammenhang beweist allerdings noch keine Ursache.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26693,7 +26778,8 @@
       "Ein aufgezeichnetes Video, das die Teilnehmer vorab ansehen"
     ],
     "a": "Ein Whiteboard oder Flipchart mit Moderationskarten, analog oder als digitales Whiteboard",
-    "exp": "Für die gemeinsame Erarbeitung braucht man ein Medium, an dem alle mitschreiben, Karten umhängen und Gruppen bilden können. Folien und Handouts eignen sich zum Vermitteln fertiger Inhalte, nicht zum Sammeln. Ein Foto oder Export dokumentiert das Ergebnis."
+    "exp": "Für die gemeinsame Erarbeitung braucht man ein Medium, an dem alle mitschreiben, Karten umhängen und Gruppen bilden können. Folien und Handouts eignen sich zum Vermitteln fertiger Inhalte, nicht zum Sammeln. Ein Foto oder Export dokumentiert das Ergebnis.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26709,7 +26795,8 @@
       "Das Brainstorming"
     ],
     "a": "Die Vier-Stufen-Methode",
-    "exp": "Die Vier-Stufen-Methode stammt aus der Ausbildung: vorbereiten, vormachen und erklären, nachmachen und erklären lassen, üben. Sie eignet sich für klar umrissene Handgriffe am Arbeitsplatz. Bei der Leittextmethode erarbeiten sich Lernende Inhalte selbstständig anhand von Leitfragen."
+    "exp": "Die Vier-Stufen-Methode stammt aus der Ausbildung: vorbereiten, vormachen und erklären, nachmachen und erklären lassen, üben. Sie eignet sich für klar umrissene Handgriffe am Arbeitsplatz. Bei der Leittextmethode erarbeiten sich Lernende Inhalte selbstständig anhand von Leitfragen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26726,7 +26813,8 @@
       "Die Einführung verschieben, bis Budget für alle 400 Einzelschulungen da ist"
     ],
     "a": "Key-User-Konzept: Ausgewählte Mitarbeiter je Abteilung werden intensiv geschult und geben ihr Wissen weiter",
-    "exp": "Key User (Schlüsselanwender) kennen sowohl die Abläufe ihrer Abteilung als auch das neue System. Sie schulen Kollegen und sind erste Ansprechpartner bei Fragen, was den Support entlastet. Man spricht auch vom Train-the-Trainer-Ansatz."
+    "exp": "Key User (Schlüsselanwender) kennen sowohl die Abläufe ihrer Abteilung als auch das neue System. Sie schulen Kollegen und sind erste Ansprechpartner bei Fragen, was den Support entlastet. Man spricht auch vom Train-the-Trainer-Ansatz.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26743,7 +26831,8 @@
       "Schulungen im September sind arbeitsrechtlich nur mit Zustimmung der Kunden erlaubt"
     ],
     "a": "Bis zum Go-Live wird viel vergessen, Schulungen sollten möglichst kurz vor der Einführung stattfinden",
-    "exp": "Ohne Anwendung des Gelernten sinkt das Wissen schnell. Ideal ist eine Schulung kurz vor der Einführung mit einer Testumgebung, ergänzt durch Kurzanleitungen und Ansprechpartner in den ersten Tagen danach."
+    "exp": "Ohne Anwendung des Gelernten sinkt das Wissen schnell. Ideal ist eine Schulung kurz vor der Einführung mit einer Testumgebung, ergänzt durch Kurzanleitungen und Ansprechpartner in den ersten Tagen danach.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26759,7 +26848,8 @@
       "Kick-off-Meeting"
     ],
     "a": "Go/No-Go-Entscheidung",
-    "exp": "Bei der Go/No-Go-Entscheidung wird geprüft, ob alle Voraussetzungen erfüllt sind, etwa erfolgreiche Tests, Backup, verfügbares Personal und Freigabe des Kunden. Ist ein Kriterium nicht erfüllt, wird verschoben, statt ein Risiko einzugehen."
+    "exp": "Bei der Go/No-Go-Entscheidung wird geprüft, ob alle Voraussetzungen erfüllt sind, etwa erfolgreiche Tests, Backup, verfügbares Personal und Freigabe des Kunden. Ist ein Kriterium nicht erfüllt, wird verschoben, statt ein Risiko einzugehen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26776,7 +26866,8 @@
       "Abbruchkriterien, den spätesten Zeitpunkt für die Rückkehr zum alten System und die Schritte dafür"
     ],
     "a": "Abbruchkriterien, den spätesten Zeitpunkt für die Rückkehr zum alten System und die Schritte dafür",
-    "exp": "Ein Rollback (Rückfall auf den alten Zustand) muss vorher geplant und getestet sein. Der Plan nennt Abbruchkriterien, einen spätesten Zeitpunkt für die Entscheidung, Verantwortliche und die Schritte zur Rückkehr. Nach einem „point of no return“ ist ein Rückweg oft nicht mehr möglich."
+    "exp": "Ein Rollback (Rückfall auf den alten Zustand) muss vorher geplant und getestet sein. Der Plan nennt Abbruchkriterien, einen spätesten Zeitpunkt für die Entscheidung, Verantwortliche und die Schritte zur Rückkehr. Nach einem „point of no return“ ist ein Rückweg oft nicht mehr möglich.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26792,7 +26883,8 @@
       "Stufenweise Einführung (phased rollout)"
     ],
     "a": "Parallelbetrieb (parallel operation)",
-    "exp": "Beim Parallelbetrieb ist das Risiko gering, weil das alte System weiterläuft. Nachteil ist der doppelte Aufwand für Datenerfassung und Betrieb. Bei der Stichtagsumstellung wird zu einem Zeitpunkt komplett gewechselt, das ist schnell, aber riskant."
+    "exp": "Beim Parallelbetrieb ist das Risiko gering, weil das alte System weiterläuft. Nachteil ist der doppelte Aufwand für Datenerfassung und Betrieb. Bei der Stichtagsumstellung wird zu einem Zeitpunkt komplett gewechselt, das ist schnell, aber riskant.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -26808,7 +26900,8 @@
       "Mit zehn ausgedachten Testdatensätzen direkt im laufenden Produktivsystem"
     ],
     "a": "Mit einer Kopie der echten Daten in einer Testumgebung, mit Zeitmessung und Prüfung des Ergebnisses",
-    "exp": "Die Probemigration (test migration) zeigt realistische Laufzeiten, Datenfehler und Lücken im Mapping. Dafür braucht man eine Kopie mit echten Datenmengen und Sonderfällen, aber in einer getrennten Umgebung. Bei personenbezogenen Daten muss auch die Testumgebung angemessen geschützt sein."
+    "exp": "Die Probemigration (test migration) zeigt realistische Laufzeiten, Datenfehler und Lücken im Mapping. Dafür braucht man eine Kopie mit echten Datenmengen und Sonderfällen, aber in einer getrennten Umgebung. Bei personenbezogenen Daten muss auch die Testumgebung angemessen geschützt sein.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26825,7 +26918,8 @@
       "Am Stichtag alle 6 TB in einem Durchgang kopieren und auf eine schnelle Leitung hoffen"
     ],
     "a": "Die Daten vorab im laufenden Betrieb kopieren und am Stichtag nur noch die Änderungen übertragen",
-    "exp": "Bei einer Delta-Migration läuft die erste Vollkopie ohne Unterbrechung des Betriebs. Weitere Abgleiche verkleinern den Rest. Am Umstellungstag (cutover) wird der alte Server schreibgeschützt, der letzte kleine Abgleich läuft und die Anwender wechseln auf den neuen Server."
+    "exp": "Bei einer Delta-Migration läuft die erste Vollkopie ohne Unterbrechung des Betriebs. Weitere Abgleiche verkleinern den Rest. Am Umstellungstag (cutover) wird der alte Server schreibgeschützt, der letzte kleine Abgleich läuft und die Anwender wechseln auf den neuen Server.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -26842,7 +26936,8 @@
       "/COPYALL"
     ],
     "a": "/COPYALL",
-    "exp": "Ohne weitere Angabe kopiert robocopy nur Daten, Attribute und Zeitstempel (/COPY:DAT). /COPYALL entspricht /COPY:DATSOU und übernimmt zusätzlich Sicherheitseinstellungen, Besitzer und Überwachungsinformationen. /Z ermöglicht wiederaufnehmbares Kopieren, /MOVE löscht die Quelle, /PURGE löscht Überzähliges im Ziel."
+    "exp": "Ohne weitere Angabe kopiert robocopy nur Daten, Attribute und Zeitstempel (/COPY:DAT). /COPYALL entspricht /COPY:DATSOU und übernimmt zusätzlich Sicherheitseinstellungen, Besitzer und Überwachungsinformationen. /Z ermöglicht wiederaufnehmbares Kopieren, /MOVE löscht die Quelle, /PURGE löscht Überzähliges im Ziel.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26859,7 +26954,8 @@
       "Der Betriebsrat bestimmt mit, weil eine technische Einrichtung Verhalten oder Leistung überwachen kann"
     ],
     "a": "Der Betriebsrat bestimmt mit, weil eine technische Einrichtung Verhalten oder Leistung überwachen kann",
-    "exp": "Nach § 87 Abs. 1 Nr. 6 BetrVG bestimmt der Betriebsrat bei technischen Einrichtungen mit, die geeignet sind, Verhalten oder Leistung zu überwachen. Üblich ist eine Betriebsvereinbarung, die Protokollierung, Auswertung und Zugriffsrechte regelt. Ohne Zustimmung darf die Kontrolle nicht eingeführt werden."
+    "exp": "Nach § 87 Abs. 1 Nr. 6 BetrVG bestimmt der Betriebsrat bei technischen Einrichtungen mit, die geeignet sind, Verhalten oder Leistung zu überwachen. Üblich ist eine Betriebsvereinbarung, die Protokollierung, Auswertung und Zugriffsrechte regelt. Ohne Zustimmung darf die Kontrolle nicht eingeführt werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -26875,7 +26971,8 @@
       "Die Datei kommentarlos im Intranet ablegen und abwarten, ob jemand sie findet"
     ],
     "a": "Allen Beschäftigten bekannt geben, kurz erklären oder schulen und die Kenntnisnahme dokumentieren lassen",
-    "exp": "Regeln wirken nur, wenn die Betroffenen sie kennen und verstehen. Eine Bekanntgabe mit Erläuterung, etwa in einer kurzen Schulung, und eine dokumentierte Kenntnisnahme schaffen Klarheit. Die Richtlinie wird zudem regelmäßig überprüft und bei Änderungen erneut bekannt gegeben."
+    "exp": "Regeln wirken nur, wenn die Betroffenen sie kennen und verstehen. Eine Bekanntgabe mit Erläuterung, etwa in einer kurzen Schulung, und eine dokumentierte Kenntnisnahme schaffen Klarheit. Die Richtlinie wird zudem regelmäßig überprüft und bei Änderungen erneut bekannt gegeben.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26891,7 +26988,8 @@
       "57,5 Prozent"
     ],
     "a": "75 Prozent",
-    "exp": "Gesamt sind 46 + 14 + 12 + 8 = 80 Tickets. Die beiden häufigsten Kategorien haben 46 + 14 = 60 Tickets, also 60 / 80 = 75 Prozent. In der Pareto-Analyse würde man zuerst an diesen beiden Kategorien ansetzen."
+    "exp": "Gesamt sind 46 + 14 + 12 + 8 = 80 Tickets. Die beiden häufigsten Kategorien haben 46 + 14 = 60 Tickets, also 60 / 80 = 75 Prozent. In der Pareto-Analyse würde man zuerst an diesen beiden Kategorien ansetzen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26907,7 +27005,8 @@
       "Welche Ursache zuerst aufgetreten ist und welche Folgefehler sie ausgelöst hat"
     ],
     "a": "Welche wenigen Ursachen zuerst angegangen werden, weil sie den größten Teil der Störungen erklären",
-    "exp": "Das ist ein Pareto-Diagramm. Es trennt die wenigen wichtigen Ursachen von den vielen weniger wichtigen. So setzt man begrenzte Ressourcen dort ein, wo die Wirkung am größten ist."
+    "exp": "Das ist ein Pareto-Diagramm. Es trennt die wenigen wichtigen Ursachen von den vielen weniger wichtigen. So setzt man begrenzte Ressourcen dort ein, wo die Wirkung am größten ist.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26923,7 +27022,8 @@
       "Sobald ein verantwortlicher Mitarbeiter gefunden worden ist"
     ],
     "a": "Wenn eine Ursache erreicht ist, an der man wirksam ansetzen kann",
-    "exp": "Die Zahl fünf ist nur ein Richtwert. Man fragt so lange weiter, bis man eine beeinflussbare Grundursache gefunden hat, oft einen Prozess- oder Organisationsfehler. Die Suche nach einem Schuldigen ist nicht das Ziel."
+    "exp": "Die Zahl fünf ist nur ein Richtwert. Man fragt so lange weiter, bis man eine beeinflussbare Grundursache gefunden hat, oft einen Prozess- oder Organisationsfehler. Die Suche nach einem Schuldigen ist nicht das Ziel.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26939,7 +27039,8 @@
       "Service Level Management"
     ],
     "a": "Problem Management",
-    "exp": "Das Incident Management stellt den Betrieb so schnell wie möglich wieder her. Das Problem Management sucht die Ursache, dokumentiert bekannte Fehler und stößt die dauerhafte Lösung an, meist über einen Change."
+    "exp": "Das Incident Management stellt den Betrieb so schnell wie möglich wieder her. Das Problem Management sucht die Ursache, dokumentiert bekannte Fehler und stößt die dauerhafte Lösung an, meist über einen Change.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26955,7 +27056,8 @@
       "Eine Sofortmaßnahme, die den Kunden schützt, bis die Ursache gefunden ist"
     ],
     "a": "Eine Sofortmaßnahme, die den Kunden schützt, bis die Ursache gefunden ist",
-    "exp": "D3 steht für Sofortmaßnahmen (containment actions). Sie begrenzen den Schaden, beseitigen aber nicht die Ursache. Erst in D4 wird die Ursache ermittelt und in D5 bis D7 dauerhaft abgestellt."
+    "exp": "D3 steht für Sofortmaßnahmen (containment actions). Sie begrenzen den Schaden, beseitigen aber nicht die Ursache. Erst in D4 wird die Ursache ermittelt und in D5 bis D7 dauerhaft abgestellt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26971,7 +27073,8 @@
       "Den Testverantwortlichen austauschen und das Thema danach abschließen"
     ],
     "a": "Ursache analysieren, Maßnahme festlegen und schriftlich festhalten",
-    "exp": "Erkenntnisse aus Projekten (lessons learned) helfen nur, wenn sie zu konkreten Maßnahmen führen und schriftlich festgehalten werden. So können spätere Projekte darauf zugreifen und der Fehler wiederholt sich nicht."
+    "exp": "Erkenntnisse aus Projekten (lessons learned) helfen nur, wenn sie zu konkreten Maßnahmen führen und schriftlich festgehalten werden. So können spätere Projekte darauf zugreifen und der Fehler wiederholt sich nicht.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -26988,7 +27091,8 @@
       "Plus 4.800 Euro, das sind etwa 9,1 Prozent über dem Plan"
     ],
     "a": "Plus 4.800 Euro, das sind 10 Prozent über dem Plan",
-    "exp": "Absolut: 52.800 minus 48.000 = 4.800 Euro. Prozentual bezogen auf das Soll: 4.800 / 48.000 × 100 = 10 Prozent. Bezugsgröße ist beim Soll-Ist-Vergleich immer der Sollwert."
+    "exp": "Absolut: 52.800 minus 48.000 = 4.800 Euro. Prozentual bezogen auf das Soll: 4.800 / 48.000 × 100 = 10 Prozent. Bezugsgröße ist beim Soll-Ist-Vergleich immer der Sollwert.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27004,7 +27108,8 @@
       "Nein, erlaubt wären nur 0,5 Stunden Ausfall"
     ],
     "a": "Nein, die Ist-Verfügbarkeit liegt bei etwa 99,31 Prozent",
-    "exp": "Ein Monat mit 30 Tagen hat 720 Stunden. Ist: (720 minus 5) / 720 × 100 ≈ 99,31 Prozent. Erlaubt wären 0,5 Prozent von 720 Stunden = 3,6 Stunden Ausfall, das Soll wurde also verfehlt."
+    "exp": "Ein Monat mit 30 Tagen hat 720 Stunden. Ist: (720 minus 5) / 720 × 100 ≈ 99,31 Prozent. Erlaubt wären 0,5 Prozent von 720 Stunden = 3,6 Stunden Ausfall, das Soll wurde also verfehlt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27020,7 +27125,8 @@
       "Etwa minus 0,4 Prozent"
     ],
     "a": "Etwa minus 8,9 Prozent",
-    "exp": "Absolut beträgt die Abweichung 4,1 minus 4,5 = minus 0,4 Punkte. Relativ zum Soll: 0,4 / 4,5 × 100 ≈ 8,9 Prozent. Teilt man fälschlich durch den Ist-Wert, erhält man etwa 9,8 Prozent."
+    "exp": "Absolut beträgt die Abweichung 4,1 minus 4,5 = minus 0,4 Punkte. Relativ zum Soll: 0,4 / 4,5 × 100 ≈ 8,9 Prozent. Teilt man fälschlich durch den Ist-Wert, erhält man etwa 9,8 Prozent.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27036,7 +27142,8 @@
       "Outsourcing der Prozessverbesserung an eine externe Beratung"
     ],
     "a": "Kontinuierliche Verbesserung in kleinen Schritten durch alle",
-    "exp": "Der KVP (nach dem japanischen Kaizen) setzt auf stetige, kleine Verbesserungen statt großer Sprünge. Das Wissen der Mitarbeiter vor Ort wird genutzt. Jede umgesetzte Idee durchläuft im Kleinen wieder den PDCA-Zyklus."
+    "exp": "Der KVP (nach dem japanischen Kaizen) setzt auf stetige, kleine Verbesserungen statt großer Sprünge. Das Wissen der Mitarbeiter vor Ort wird genutzt. Jede umgesetzte Idee durchläuft im Kleinen wieder den PDCA-Zyklus.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27052,7 +27159,8 @@
       "27.000 Euro"
     ],
     "a": "24.000 Euro",
-    "exp": "Der Fertigstellungswert ist der Anteil der erledigten Arbeit am Gesamtbudget: 40 Prozent von 60.000 Euro = 24.000 Euro. Verglichen mit den Ist-Kosten (27.000 Euro) ist das Projekt 3.000 Euro zu teuer, verglichen mit dem Plan (30.000 Euro) liegt es 6.000 Euro hinter dem Zeitplan."
+    "exp": "Der Fertigstellungswert ist der Anteil der erledigten Arbeit am Gesamtbudget: 40 Prozent von 60.000 Euro = 24.000 Euro. Verglichen mit den Ist-Kosten (27.000 Euro) ist das Projekt 3.000 Euro zu teuer, verglichen mit dem Plan (30.000 Euro) liegt es 6.000 Euro hinter dem Zeitplan.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27068,7 +27176,8 @@
       "Sie legen fest, wie viel Rabatt der Kunde bei Abweichungen erhält"
     ],
     "a": "Sie legen fest, ab welcher Abweichung Maßnahmen ergriffen oder eskaliert werden müssen",
-    "exp": "Kleine Schwankungen sind normal und lösen nicht sofort Aktionen aus. Toleranzgrenzen (Schwellenwerte) machen sichtbar, wann eine Abweichung so groß ist, dass gehandelt werden muss. Die Ampeldarstellung hilft, das auf einen Blick zu erkennen."
+    "exp": "Kleine Schwankungen sind normal und lösen nicht sofort Aktionen aus. Toleranzgrenzen (Schwellenwerte) machen sichtbar, wann eine Abweichung so groß ist, dass gehandelt werden muss. Die Ampeldarstellung hilft, das auf einen Blick zu erkennen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27084,7 +27193,8 @@
       "Kundenzufriedenheit (customer satisfaction, CSAT)"
     ],
     "a": "Kundenzufriedenheit (customer satisfaction, CSAT)",
-    "exp": "Die Kundenzufriedenheit wird meist über kurze Befragungen mit einer Skala erhoben und als Durchschnitt oder Anteil zufriedener Antworten ausgewiesen. Sie ergänzt technische Kennzahlen, weil ein schnell geschlossenes Ticket nicht automatisch einen zufriedenen Kunden bedeutet."
+    "exp": "Die Kundenzufriedenheit wird meist über kurze Befragungen mit einer Skala erhoben und als Durchschnitt oder Anteil zufriedener Antworten ausgewiesen. Sie ergänzt technische Kennzahlen, weil ein schnell geschlossenes Ticket nicht automatisch einen zufriedenen Kunden bedeutet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27100,7 +27210,8 @@
       "11.730 Euro, das sind 115 Prozent der Kalkulation"
     ],
     "a": "1.530 Euro, das sind 15 Prozent über der Kalkulation",
-    "exp": "Mehrstunden: 138 minus 120 = 18 Stunden, 18 × 85 Euro = 1.530 Euro. Prozentual: 18 / 120 × 100 = 15 Prozent. Beim Festpreis trägt der Auftragnehmer diese Mehrkosten selbst, daher sollte die Ursache für die Nachkalkulation künftiger Angebote ermittelt werden."
+    "exp": "Mehrstunden: 138 minus 120 = 18 Stunden, 18 × 85 Euro = 1.530 Euro. Prozentual: 18 / 120 × 100 = 15 Prozent. Beim Festpreis trägt der Auftragnehmer diese Mehrkosten selbst, daher sollte die Ursache für die Nachkalkulation künftiger Angebote ermittelt werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27116,7 +27227,8 @@
       "Die Kultusministerkonferenz durch einen Beschluss"
     ],
     "a": "Der Bund durch eine Rechtsverordnung eines Ministeriums",
-    "exp": "Ausbildungsordnungen sind bundesweit geltende Rechtsverordnungen nach dem Berufsbildungsgesetz. Sie werden vom zuständigen Fachministerium im Einvernehmen mit dem Bildungsministerium erlassen, vorbereitet vom BIBB mit Sozialpartnern und Sachverständigen. So gelten in ganz Deutschland dieselben Mindeststandards."
+    "exp": "Ausbildungsordnungen sind bundesweit geltende Rechtsverordnungen nach dem Berufsbildungsgesetz. Sie werden vom zuständigen Fachministerium im Einvernehmen mit dem Bildungsministerium erlassen, vorbereitet vom BIBB mit Sozialpartnern und Sachverständigen. So gelten in ganz Deutschland dieselben Mindeststandards.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27132,7 +27244,8 @@
       "Ja, der Ausbildungsrahmenplan legt Mindestinhalte fest, der Betrieb darf darüber hinausgehen"
     ],
     "a": "Ja, der Ausbildungsrahmenplan legt Mindestinhalte fest, der Betrieb darf darüber hinausgehen",
-    "exp": "Die Ausbildungsordnung beschreibt die Mindestanforderungen. Zusätzliche Inhalte sind möglich, wenn sie zum Ausbildungsziel passen und die Pflichtinhalte nicht verdrängen."
+    "exp": "Die Ausbildungsordnung beschreibt die Mindestanforderungen. Zusätzliche Inhalte sind möglich, wenn sie zum Ausbildungsziel passen und die Pflichtinhalte nicht verdrängen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27148,7 +27261,8 @@
       "Ja, aber nur wenn die Berufsschule den Unterricht ebenfalls umstellt"
     ],
     "a": "Ja, aus betrieblichen Gründen, wenn alle Inhalte vermittelt werden",
-    "exp": "Ausbildungsordnungen enthalten in der Regel eine Flexibilitätsklausel. Danach darf von der Gliederung abgewichen werden, wenn betriebspraktische Besonderheiten es erfordern. Prüfungsrelevante Inhalte für Teil 1 sollten trotzdem rechtzeitig vermittelt werden."
+    "exp": "Ausbildungsordnungen enthalten in der Regel eine Flexibilitätsklausel. Danach darf von der Gliederung abgewichen werden, wenn betriebspraktische Besonderheiten es erfordern. Prüfungsrelevante Inhalte für Teil 1 sollten trotzdem rechtzeitig vermittelt werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27164,7 +27278,8 @@
       "Ob der Vertrag passt und Betrieb sowie Ausbilder geeignet sind"
     ],
     "a": "Ob der Vertrag passt und Betrieb sowie Ausbilder geeignet sind",
-    "exp": "Die IHK führt das Verzeichnis der Berufsausbildungsverhältnisse. Vor der Eintragung prüft sie, ob der Vertrag den gesetzlichen Vorgaben entspricht und die Eignung von Ausbildungsstätte und Ausbilder gegeben ist. Die Eintragung ist Voraussetzung für die Zulassung zur Abschlussprüfung."
+    "exp": "Die IHK führt das Verzeichnis der Berufsausbildungsverhältnisse. Vor der Eintragung prüft sie, ob der Vertrag den gesetzlichen Vorgaben entspricht und die Eignung von Ausbildungsstätte und Ausbilder gegeben ist. Die Eintragung ist Voraussetzung für die Zulassung zur Abschlussprüfung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27180,7 +27295,8 @@
       "Aus der Prüfungsordnung der IHK, die die Lernfelder als Prüfungsfächer festlegt"
     ],
     "a": "Aus dem KMK-Rahmenlehrplan, der den Unterricht in handlungsorientierte Lernfelder gliedert",
-    "exp": "Der Rahmenlehrplan der Kultusministerkonferenz beschreibt den berufsbezogenen Unterricht in Lernfeldern, die sich an beruflichen Handlungen orientieren. Er ist mit dem Ausbildungsrahmenplan abgestimmt, aber kein Teil der Ausbildungsordnung."
+    "exp": "Der Rahmenlehrplan der Kultusministerkonferenz beschreibt den berufsbezogenen Unterricht in Lernfeldern, die sich an beruflichen Handlungen orientieren. Er ist mit dem Ausbildungsrahmenplan abgestimmt, aber kein Teil der Ausbildungsordnung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27196,7 +27312,8 @@
       "Nichts, weil der Nachweis nur für die Berufsschule eine Rolle spielt"
     ],
     "a": "Die Zulassung zur Abschlussprüfung kann verweigert werden",
-    "exp": "Das ordnungsgemäße Führen des Ausbildungsnachweises gehört zu den Zulassungsvoraussetzungen der Abschlussprüfung. Er sollte daher laufend geführt und regelmäßig vom Ausbilder abgezeichnet werden."
+    "exp": "Das ordnungsgemäße Führen des Ausbildungsnachweises gehört zu den Zulassungsvoraussetzungen der Abschlussprüfung. Er sollte daher laufend geführt und regelmäßig vom Ausbilder abgezeichnet werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27212,7 +27329,8 @@
       "Fachkompetenz"
     ],
     "a": "Sozialkompetenz",
-    "exp": "Sozialkompetenz umfasst Kommunikation, Einfühlungsvermögen und Konfliktfähigkeit im Umgang mit anderen Menschen. Fachwissen allein hilft in einem solchen Gespräch wenig."
+    "exp": "Sozialkompetenz umfasst Kommunikation, Einfühlungsvermögen und Konfliktfähigkeit im Umgang mit anderen Menschen. Fachwissen allein hilft in einem solchen Gespräch wenig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27228,7 +27346,8 @@
       "Selbstkompetenz (Personalkompetenz)"
     ],
     "a": "Selbstkompetenz (Personalkompetenz)",
-    "exp": "Selbstkompetenz beschreibt die Fähigkeit, sich selbst zu steuern: Verantwortung übernehmen, sich motivieren, das eigene Handeln reflektieren und weiterlernen. Sie ist eine Grundlage für lebensbegleitendes Lernen."
+    "exp": "Selbstkompetenz beschreibt die Fähigkeit, sich selbst zu steuern: Verantwortung übernehmen, sich motivieren, das eigene Handeln reflektieren und weiterlernen. Sie ist eine Grundlage für lebensbegleitendes Lernen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27244,7 +27363,8 @@
       "Red Hat Certified System Administrator"
     ],
     "a": "CompTIA Network+",
-    "exp": "CompTIA ist ein Branchenverband und prüft herstellerunabhängiges Grundlagenwissen. Cisco, Microsoft und Red Hat zertifizieren dagegen Wissen zu ihren eigenen Produkten und Plattformen, auch wenn diese viele allgemeine Grundlagen enthalten."
+    "exp": "CompTIA ist ein Branchenverband und prüft herstellerunabhängiges Grundlagenwissen. Cisco, Microsoft und Red Hat zertifizieren dagegen Wissen zu ihren eigenen Produkten und Plattformen, auch wenn diese viele allgemeine Grundlagen enthalten.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27260,7 +27380,8 @@
       "Er hat Anspruch auf zehn Tage, weil Bayern die Tage doppelt anrechnet"
     ],
     "a": "Er hat keinen gesetzlichen Anspruch, weil Bayern kein Bildungsurlaubsgesetz hat",
-    "exp": "Bildungsurlaub ist Ländersache. Bayern hat als eines der letzten Länder keinen gesetzlichen Anspruch. Möglich bleibt eine freiwillige Freistellung durch den Arbeitgeber oder eine tarifliche Regelung."
+    "exp": "Bildungsurlaub ist Ländersache. Bayern hat als eines der letzten Länder keinen gesetzlichen Anspruch. Möglich bleibt eine freiwillige Freistellung durch den Arbeitgeber oder eine tarifliche Regelung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27276,7 +27397,8 @@
       "Mobile Learning"
     ],
     "a": "Blended Learning",
-    "exp": "Blended Learning (integriertes Lernen) verbindet die Flexibilität von E-Learning mit Präsenzphasen, in denen geübt, gefragt und praktisch gearbeitet wird. Gerade für praktische IT-Themen wie Netzwerkkonfiguration ist diese Mischung beliebt."
+    "exp": "Blended Learning (integriertes Lernen) verbindet die Flexibilität von E-Learning mit Präsenzphasen, in denen geübt, gefragt und praktisch gearbeitet wird. Gerade für praktische IT-Themen wie Netzwerkkonfiguration ist diese Mischung beliebt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27292,7 +27414,8 @@
       "Sie ist gesetzlich vorgeschrieben, sonst verliert er seinen Berufsabschluss"
     ],
     "a": "Sie erhält seine Beschäftigungsfähigkeit und eröffnet ihm bessere Aufgaben und Aufstiegschancen",
-    "exp": "Auch ein sicherer Arbeitsplatz verändert sich, wenn Systeme ausgetauscht oder Aufgaben automatisiert werden. Wer sich weiterbildet, kann neue Aufgaben übernehmen, bleibt auf dem Arbeitsmarkt gefragt und verbessert seine Chancen auf Aufstieg und höheres Gehalt."
+    "exp": "Auch ein sicherer Arbeitsplatz verändert sich, wenn Systeme ausgetauscht oder Aufgaben automatisiert werden. Wer sich weiterbildet, kann neue Aufgaben übernehmen, bleibt auf dem Arbeitsmarkt gefragt und verbessert seine Chancen auf Aufstieg und höheres Gehalt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27308,7 +27431,8 @@
       "Lernen am Arbeitsplatz (training on the job)"
     ],
     "a": "Lernen am Arbeitsplatz (training on the job)",
-    "exp": "Beim Lernen am Arbeitsplatz wird Wissen direkt bei echten Aufgaben erworben, oft durch Unterweisung oder Begleitung erfahrener Kollegen. Es ist praxisnah und günstig, hängt aber stark von der Zeit und Erklärfähigkeit des Kollegen ab."
+    "exp": "Beim Lernen am Arbeitsplatz wird Wissen direkt bei echten Aufgaben erworben, oft durch Unterweisung oder Begleitung erfahrener Kollegen. Es ist praxisnah und günstig, hängt aber stark von der Zeit und Erklärfähigkeit des Kollegen ab.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27324,7 +27448,8 @@
       "Wichtig, aber nicht dringend: fest einplanen und später selbst erledigen"
     ],
     "a": "Dringend, aber nicht wichtig: möglichst delegieren oder kurz erledigen",
-    "exp": "Die Eisenhower-Matrix teilt Aufgaben nach Wichtigkeit und Dringlichkeit ein. Dringende, aber unwichtige Aufgaben binden oft Zeit, ohne zu den eigenen Zielen beizutragen. Man delegiert sie, wo möglich, oder erledigt sie schnell, ohne Wichtiges zu verdrängen."
+    "exp": "Die Eisenhower-Matrix teilt Aufgaben nach Wichtigkeit und Dringlichkeit ein. Dringende, aber unwichtige Aufgaben binden oft Zeit, ohne zu den eigenen Zielen beizutragen. Man delegiert sie, wo möglich, oder erledigt sie schnell, ohne Wichtiges zu verdrängen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27340,7 +27465,8 @@
       "Ein Netzplan mit Vorgängen, Dauern und kritischem Pfad"
     ],
     "a": "Eine Mindmap mit dem Thema in der Mitte und Hauptästen für die Bereiche",
-    "exp": "Eine Mindmap ordnet Gedanken bildhaft um ein zentrales Thema. Sie eignet sich zum Sammeln und Strukturieren von Ideen, etwa Hardware, Daten, Benutzer, Ausfallzeiten und Tests. Netzplan und Balkendiagramm folgen später bei der Zeitplanung."
+    "exp": "Eine Mindmap ordnet Gedanken bildhaft um ein zentrales Thema. Sie eignet sich zum Sammeln und Strukturieren von Ideen, etwa Hardware, Daten, Benutzer, Ausfallzeiten und Tests. Netzplan und Balkendiagramm folgen später bei der Zeitplanung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27356,7 +27482,8 @@
       "Kommentare in sozialen Netzwerken und Videoplattformen"
     ],
     "a": "Sicherheitshinweise des Herstellers und Warnungen des BSI (CERT-Bund)",
-    "exp": "Für aktuelle Sicherheitslücken sind die Advisories des Herstellers und die Warnungen des BSI über CERT-Bund verlässliche Primärquellen. Sie nennen betroffene Versionen, Schweregrad und Gegenmaßnahmen. Soziale Medien können Hinweise liefern, müssen aber immer überprüft werden."
+    "exp": "Für aktuelle Sicherheitslücken sind die Advisories des Herstellers und die Warnungen des BSI über CERT-Bund verlässliche Primärquellen. Sie nennen betroffene Versionen, Schweregrad und Gegenmaßnahmen. Soziale Medien können Hinweise liefern, müssen aber immer überprüft werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27372,7 +27499,8 @@
       "Sie wandert ein Fach weiter, damit der Stoff vorankommt"
     ],
     "a": "Sie wandert zurück in das erste Fach und wird bald erneut abgefragt",
-    "exp": "Beim Leitner-System rücken richtig beantwortete Karten ein Fach weiter und werden seltener wiederholt. Falsch beantwortete Karten gehen zurück ins erste Fach. So setzt die Kartei verteiltes Wiederholen um und konzentriert die Zeit auf das, was noch nicht sitzt."
+    "exp": "Beim Leitner-System rücken richtig beantwortete Karten ein Fach weiter und werden seltener wiederholt. Falsch beantwortete Karten gehen zurück ins erste Fach. So setzt die Kartei verteiltes Wiederholen um und konzentriert die Zeit auf das, was noch nicht sitzt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27388,7 +27516,8 @@
       "Nur noch neue Themen lernen, die bisher gar nicht behandelt wurden"
     ],
     "a": "Alte Prüfungen unter Zeitdruck lösen und Fehler nacharbeiten",
-    "exp": "Probeprüfungen unter realen Bedingungen trainieren Zeiteinteilung und Aufgabentypen und zeigen die letzten Lücken. Die Fehleranalyse danach ist der wichtigste Teil. Neue Großthemen kurz vor der Prüfung bringen dagegen meist wenig."
+    "exp": "Probeprüfungen unter realen Bedingungen trainieren Zeiteinteilung und Aufgabentypen und zeigen die letzten Lücken. Die Fehleranalyse danach ist der wichtigste Teil. Neue Großthemen kurz vor der Prüfung bringen dagegen meist wenig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27404,7 +27533,8 @@
       "Sie lernen allein, ohne jemals Fragen an Ausbilder oder Kollegen zu stellen"
     ],
     "a": "Sie setzen Lernziele, wählen Methoden und prüfen Ihren Erfolg selbst",
-    "exp": "Selbstgesteuertes Lernen bedeutet, Verantwortung für den eigenen Lernprozess zu übernehmen: Ziele setzen, planen, passende Methoden und Informationsquellen wählen und den Erfolg kontrollieren. Hilfe holen gehört ausdrücklich dazu."
+    "exp": "Selbstgesteuertes Lernen bedeutet, Verantwortung für den eigenen Lernprozess zu übernehmen: Ziele setzen, planen, passende Methoden und Informationsquellen wählen und den Erfolg kontrollieren. Hilfe holen gehört ausdrücklich dazu.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27420,7 +27550,8 @@
       "Die Produktbewertungen in einem Onlineshop"
     ],
     "a": "Eine redaktionell betreute IT-Fachzeitschrift",
-    "exp": "Fachzeitschriften arbeiten mit einer Redaktion, prüfen Aussagen und vergleichen Produkte verschiedener Hersteller. Pressemitteilungen sind Werbung in eigener Sache, Foren und Shopbewertungen sind oft subjektiv und nicht überprüft."
+    "exp": "Fachzeitschriften arbeiten mit einer Redaktion, prüfen Aussagen und vergleichen Produkte verschiedener Hersteller. Pressemitteilungen sind Werbung in eigener Sache, Foren und Shopbewertungen sind oft subjektiv und nicht überprüft.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27436,7 +27567,8 @@
       "Geprüfter Berufsspezialist für IT"
     ],
     "a": "Bachelor Professional in IT",
-    "exp": "Der Bachelor Professional in IT ist die zweite Stufe der IT-Fortbildung und bereitet auf anspruchsvolle Fach- und Führungsaufgaben vor, etwa Projektleitung. Die Prüfung umfasst unter anderem Personalführung und ein IT-Projekt. Zugelassen wird man zum Beispiel mit einer abgeschlossenen IT-Ausbildung."
+    "exp": "Der Bachelor Professional in IT ist die zweite Stufe der IT-Fortbildung und bereitet auf anspruchsvolle Fach- und Führungsaufgaben vor, etwa Projektleitung. Die Prüfung umfasst unter anderem Personalführung und ein IT-Projekt. Zugelassen wird man zum Beispiel mit einer abgeschlossenen IT-Ausbildung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27452,7 +27584,8 @@
       "Dafür gibt es keinen Abschluss, die IHK-Fortbildung endet immer auf Niveau 5"
     ],
     "a": "Bisher die strategischen IT-Professionals, ein Master Professional in IT wird noch geprüft",
-    "exp": "Nach der bisherigen IT-Fortbildungsverordnung gab es auf der höchsten Ebene die strategischen Professionals mit den Abschlüssen Geprüfter Informatiker und Geprüfter Wirtschaftsinformatiker. Für die neue Ordnung von 2024 prüft das BIBB, ob und welche Profile als Master Professional in IT eingeführt werden."
+    "exp": "Nach der bisherigen IT-Fortbildungsverordnung gab es auf der höchsten Ebene die strategischen Professionals mit den Abschlüssen Geprüfter Informatiker und Geprüfter Wirtschaftsinformatiker. Für die neue Ordnung von 2024 prüft das BIBB, ob und welche Profile als Master Professional in IT eingeführt werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27468,7 +27601,8 @@
       "Nein, die Stufen müssen nicht zwingend nacheinander durchlaufen werden"
     ],
     "a": "Nein, die Stufen müssen nicht zwingend nacheinander durchlaufen werden",
-    "exp": "Der Geprüfte Berufsspezialist ist ein möglicher, aber kein vorgeschriebener Zwischenschritt. Für den Bachelor Professional in IT genügt nach IHK-Angaben zum Beispiel eine abgeschlossene IT-Ausbildung, der Berufsspezialist ist nur einer von mehreren Zulassungswegen."
+    "exp": "Der Geprüfte Berufsspezialist ist ein möglicher, aber kein vorgeschriebener Zwischenschritt. Für den Bachelor Professional in IT genügt nach IHK-Angaben zum Beispiel eine abgeschlossene IT-Ausbildung, der Berufsspezialist ist nur einer von mehreren Zulassungswegen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27484,7 +27618,8 @@
       "Der Berufsgenossenschaft seiner Branche"
     ],
     "a": "Einem Arbeitgeberverband, der mit der Gewerkschaft verhandelt",
-    "exp": "Tarifverträge schließen Gewerkschaften mit einzelnen Arbeitgebern oder mit Arbeitgeberverbänden. Durch den freiwilligen Beitritt zu einem tarifschließenden Arbeitgeberverband wird ein Unternehmen tarifgebunden. IHK, Branchenverbände und Berufsgenossenschaften sind keine Tarifparteien."
+    "exp": "Tarifverträge schließen Gewerkschaften mit einzelnen Arbeitgebern oder mit Arbeitgeberverbänden. Durch den freiwilligen Beitritt zu einem tarifschließenden Arbeitgeberverband wird ein Unternehmen tarifgebunden. IHK, Branchenverbände und Berufsgenossenschaften sind keine Tarifparteien.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27500,7 +27635,8 @@
       "IG Metall; der Beitritt ist ab der Probezeit für alle Pflicht"
     ],
     "a": "Ver.di; der Beitritt ist freiwillig, das sichert die Koalitionsfreiheit",
-    "exp": "Die Koalitionsfreiheit nach Art. 9 Abs. 3 GG erlaubt, Gewerkschaften zu gründen und ihnen beizutreten, schützt aber auch davor, beitreten zu müssen. In Dienstleistung und Telekommunikation ist vor allem ver.di aktiv, in der Metall- und Elektroindustrie, zu der auch viele Hardwarehersteller gehören, die IG Metall."
+    "exp": "Die Koalitionsfreiheit nach Art. 9 Abs. 3 GG erlaubt, Gewerkschaften zu gründen und ihnen beizutreten, schützt aber auch davor, beitreten zu müssen. In Dienstleistung und Telekommunikation ist vor allem ver.di aktiv, in der Metall- und Elektroindustrie, zu der auch viele Hardwarehersteller gehören, die IG Metall.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27516,7 +27652,8 @@
       "Den Beschäftigten Staubmasken zum Selbstschutz ausgeben"
     ],
     "a": "Ein Reinigungsverfahren ohne Staubaufwirbelung einsetzen, etwa einen Tonerstaubsauger",
-    "exp": "STOP steht für Substitution, technische, organisatorische und personenbezogene Maßnahmen in dieser Rangfolge. Zuerst wird geprüft, ob die Gefahr durch ein anderes Verfahren oder einen Ersatzstoff beseitigt werden kann. Persönliche Schutzausrüstung wie Masken ist nur das letzte Mittel."
+    "exp": "STOP steht für Substitution, technische, organisatorische und personenbezogene Maßnahmen in dieser Rangfolge. Zuerst wird geprüft, ob die Gefahr durch ein anderes Verfahren oder einen Ersatzstoff beseitigt werden kann. Persönliche Schutzausrüstung wie Masken ist nur das letzte Mittel.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27532,7 +27669,8 @@
       "Die Unterlagen nach Abschluss vernichten, weil sie veraltet sind"
     ],
     "a": "Die Wirksamkeit der Maßnahme überprüfen und die Beurteilung fortschreiben",
-    "exp": "Die Gefährdungsbeurteilung ist ein fortlaufender Prozess: ermitteln, beurteilen, Maßnahmen festlegen und umsetzen, Wirksamkeit prüfen, dokumentieren und bei Änderungen aktualisieren. Eine Genehmigung durch eine Behörde ist nicht vorgesehen, die Aufsicht kann sie aber einsehen."
+    "exp": "Die Gefährdungsbeurteilung ist ein fortlaufender Prozess: ermitteln, beurteilen, Maßnahmen festlegen und umsetzen, Wirksamkeit prüfen, dokumentieren und bei Änderungen aktualisieren. Eine Genehmigung durch eine Behörde ist nicht vorgesehen, die Aufsicht kann sie aber einsehen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27548,7 +27686,8 @@
       "Der Arbeitgeber legt die Frist per Gefährdungsbeurteilung fest, Richtwerte helfen dabei"
     ],
     "a": "Der Arbeitgeber legt die Frist per Gefährdungsbeurteilung fest, Richtwerte helfen dabei",
-    "exp": "Die Prüffristen ergeben sich aus der Gefährdungsbeurteilung des Arbeitgebers. Die DGUV gibt Richtwerte vor, für ortsveränderliche Geräte etwa 6 Monate, die bei niedriger Fehlerquote im Büro auf bis zu 2 Jahre verlängert werden können. Zusätzlich ist vor jeder Benutzung eine Sichtprüfung durch den Nutzer sinnvoll."
+    "exp": "Die Prüffristen ergeben sich aus der Gefährdungsbeurteilung des Arbeitgebers. Die DGUV gibt Richtwerte vor, für ortsveränderliche Geräte etwa 6 Monate, die bei niedriger Fehlerquote im Büro auf bis zu 2 Jahre verlängert werden können. Zusätzlich ist vor jeder Benutzung eine Sichtprüfung durch den Nutzer sinnvoll.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27564,7 +27703,8 @@
       "Elektrofachkraft, weil er eine IT-Berufsausbildung absolviert"
     ],
     "a": "Elektrotechnisch unterwiesene Person, die unter Leitung und Aufsicht einer Elektrofachkraft arbeitet",
-    "exp": "Eine elektrotechnisch unterwiesene Person (EuP) wurde von einer Elektrofachkraft über die ihr übertragenen Aufgaben und die Gefahren unterrichtet. Sie darf bestimmte Tätigkeiten, etwa Prüfungen mit geeigneten Messgeräten, nur unter Leitung und Aufsicht einer Elektrofachkraft ausführen. Elektrofachkraft ist nur, wer eine entsprechende fachliche Ausbildung, Kenntnisse und Erfahrung hat."
+    "exp": "Eine elektrotechnisch unterwiesene Person (EuP) wurde von einer Elektrofachkraft über die ihr übertragenen Aufgaben und die Gefahren unterrichtet. Sie darf bestimmte Tätigkeiten, etwa Prüfungen mit geeigneten Messgeräten, nur unter Leitung und Aufsicht einer Elektrofachkraft ausführen. Elektrofachkraft ist nur, wer eine entsprechende fachliche Ausbildung, Kenntnisse und Erfahrung hat.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27580,7 +27720,8 @@
       "Die Stehleiter zugeklappt an die Wand lehnen, das ist stabiler"
     ],
     "a": "Leiter vor Gebrauch auf Schäden prüfen und nicht auf die obersten Stufen steigen",
-    "exp": "Vor jeder Benutzung wird die Leiter einer Sichtprüfung unterzogen, zum Beispiel auf beschädigte Holme, Spreizsicherung und rutschfeste Füße. Bei Stehleitern ohne Plattform dürfen die obersten Stufen nicht bestiegen werden, man wählt also eine ausreichend hohe Leiter. Geräte mit Rollen oder Stühle sind als Aufstieg ungeeignet."
+    "exp": "Vor jeder Benutzung wird die Leiter einer Sichtprüfung unterzogen, zum Beispiel auf beschädigte Holme, Spreizsicherung und rutschfeste Füße. Bei Stehleitern ohne Plattform dürfen die obersten Stufen nicht bestiegen werden, man wählt also eine ausreichend hohe Leiter. Geräte mit Rollen oder Stühle sind als Aufstieg ungeeignet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27596,7 +27737,8 @@
       "Die laufende Arbeit noch schnell beenden und dann gehen"
     ],
     "a": "Sofort den Raum verlassen und die Tür schließen, die Arbeit nicht beenden",
-    "exp": "Gaslöschanlagen senken den Sauerstoffanteil oder verdrängen die Luft, bei CO2-Anlagen besteht akute Lebensgefahr. Die Vorwarnzeit dient ausschließlich dazu, den Raum zu verlassen. Danach darf er erst nach Freigabe und ausreichender Belüftung wieder betreten werden, wer in solchen Räumen arbeitet, muss vorher unterwiesen sein."
+    "exp": "Gaslöschanlagen senken den Sauerstoffanteil oder verdrängen die Luft, bei CO2-Anlagen besteht akute Lebensgefahr. Die Vorwarnzeit dient ausschließlich dazu, den Raum zu verlassen. Danach darf er erst nach Freigabe und ausreichender Belüftung wieder betreten werden, wer in solchen Räumen arbeitet, muss vorher unterwiesen sein.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27612,7 +27754,8 @@
       "Ein Foto für die Unfallanzeige machen und dann helfen"
     ],
     "a": "Den Stromkreis unterbrechen, etwa Stecker ziehen oder Sicherung abschalten",
-    "exp": "Bei Stromunfällen gilt Eigenschutz zuerst: Solange der Stromkreis geschlossen ist, kann der Helfer selbst einen Stromschlag erleiden. Erst nach dem Abschalten wird der Verletzte berührt, der Notruf abgesetzt und mit Erster Hilfe begonnen. Im Niederspannungsbereich reicht das Ziehen des Steckers oder Abschalten der Sicherung."
+    "exp": "Bei Stromunfällen gilt Eigenschutz zuerst: Solange der Stromkreis geschlossen ist, kann der Helfer selbst einen Stromschlag erleiden. Erst nach dem Abschalten wird der Verletzte berührt, der Notruf abgesetzt und mit Erster Hilfe begonnen. Im Niederspannungsbereich reicht das Ziehen des Steckers oder Abschalten der Sicherung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27628,7 +27771,8 @@
       "Den Unfall nur in der Personalakte vermerken, mehr ist nicht nötig"
     ],
     "a": "Innerhalb von drei Tagen eine Unfallanzeige an die Berufsgenossenschaft schicken",
-    "exp": "Der Unternehmer muss einen Arbeitsunfall dem Unfallversicherungsträger anzeigen, wenn ein Versicherter getötet oder so verletzt wird, dass er mehr als drei Tage arbeitsunfähig ist (§ 193 SGB VII). Die Frist beträgt drei Tage, nachdem der Unternehmer von dem Unfall erfahren hat. Der Betriebsrat ist zu beteiligen."
+    "exp": "Der Unternehmer muss einen Arbeitsunfall dem Unfallversicherungsträger anzeigen, wenn ein Versicherter getötet oder so verletzt wird, dass er mehr als drei Tage arbeitsunfähig ist (§ 193 SGB VII). Die Frist beträgt drei Tage, nachdem der Unternehmer von dem Unfall erfahren hat. Der Betriebsrat ist zu beteiligen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27644,7 +27788,8 @@
       "Versichert ist nur der Rückweg von der Kita nach Hause"
     ],
     "a": "Der Umweg zur Kinderbetreuung ist in der Regel mitversichert",
-    "exp": "Das SGB VII schützt beim Wegeunfall auch bestimmte Umwege, insbesondere um Kinder während der Arbeitszeit in fremde Obhut zu geben. Ein Abweg für einen privaten Einkauf ist dagegen nicht versichert. Im Zweifel entscheidet die Berufsgenossenschaft im Einzelfall."
+    "exp": "Das SGB VII schützt beim Wegeunfall auch bestimmte Umwege, insbesondere um Kinder während der Arbeitszeit in fremde Obhut zu geben. Ein Abweg für einen privaten Einkauf ist dagegen nicht versichert. Im Zweifel entscheidet die Berufsgenossenschaft im Einzelfall.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27660,7 +27805,8 @@
       "Zu einem beliebigen Facharzt, den der Arbeitgeber auswählt"
     ],
     "a": "Zu einem Durchgangsarzt, der von der Berufsgenossenschaft zugelassen ist",
-    "exp": "Durchgangsärzte (D-Ärzte) sind Unfallchirurgen oder Orthopäden, die von der gesetzlichen Unfallversicherung beteiligt sind. Sie entscheiden über die weitere Behandlung und rechnen mit der Berufsgenossenschaft ab, nicht mit der Krankenkasse. Bei leichten Verletzungen ohne Arbeitsunfähigkeit reicht der Hausarzt."
+    "exp": "Durchgangsärzte (D-Ärzte) sind Unfallchirurgen oder Orthopäden, die von der gesetzlichen Unfallversicherung beteiligt sind. Sie entscheiden über die weitere Behandlung und rechnen mit der Berufsgenossenschaft ab, nicht mit der Krankenkasse. Bei leichten Verletzungen ohne Arbeitsunfähigkeit reicht der Hausarzt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -27676,7 +27822,8 @@
       "Er ist für alle Brandklassen von A bis F gleich gut geeignet"
     ],
     "a": "Er löscht rückstandsfrei und beschädigt die Elektronik nicht durch Pulver",
-    "exp": "CO2 verdrängt den Sauerstoff und hinterlässt keine Rückstände, deshalb eignet es sich für Elektronik und Brandklasse B. Pulver würde Lüfter, Platinen und Kontakte verschmutzen. In kleinen Räumen besteht beim Einsatz Erstickungsgefahr, und am Löschtrichter drohen Kälteverbrennungen, deshalb danach sofort lüften."
+    "exp": "CO2 verdrängt den Sauerstoff und hinterlässt keine Rückstände, deshalb eignet es sich für Elektronik und Brandklasse B. Pulver würde Lüfter, Platinen und Kontakte verschmutzen. In kleinen Räumen besteht beim Einsatz Erstickungsgefahr, und am Löschtrichter drohen Kälteverbrennungen, deshalb danach sofort lüften.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27692,7 +27839,8 @@
       "Genau 1, unabhängig von der Zahl der Beschäftigten"
     ],
     "a": "Mindestens 3, also etwa 5 Prozent der Beschäftigten",
-    "exp": "Die Technische Regel für Arbeitsstätten ASR A2.2 nennt als Regel einen Anteil von 5 Prozent der Beschäftigten als Brandschutzhelfer, bei 60 Beschäftigten also 3. Bei erhöhter Brandgefahr oder vielen Personen mit eingeschränkter Mobilität kann ein höherer Anteil nötig sein. Brandschutzhelfer werden theoretisch und praktisch im Umgang mit Löschern ausgebildet."
+    "exp": "Die Technische Regel für Arbeitsstätten ASR A2.2 nennt als Regel einen Anteil von 5 Prozent der Beschäftigten als Brandschutzhelfer, bei 60 Beschäftigten also 3. Bei erhöhter Brandgefahr oder vielen Personen mit eingeschränkter Mobilität kann ein höherer Anteil nötig sein. Brandschutzhelfer werden theoretisch und praktisch im Umgang mit Löschern ausgebildet.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27708,7 +27856,8 @@
       "Alle Desktop-Hintergründe auf Schwarz umstellen"
     ],
     "a": "Geräte länger nutzen, statt sie nach drei Jahren pauschal zu ersetzen",
-    "exp": "Ein großer Teil der Umweltbelastung eines PCs entsteht bei Herstellung und Transport, nicht im Betrieb. Eine längere Nutzungsdauer, etwa durch Aufrüsten von RAM und SSD, verteilt diese Belastung auf mehr Jahre. Helligkeit oder Hintergrund sparen dagegen nur geringe Mengen Strom."
+    "exp": "Ein großer Teil der Umweltbelastung eines PCs entsteht bei Herstellung und Transport, nicht im Betrieb. Eine längere Nutzungsdauer, etwa durch Aufrüsten von RAM und SSD, verteilt diese Belastung auf mehr Jahre. Helligkeit oder Hintergrund sparen dagegen nur geringe Mengen Strom.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27724,7 +27873,8 @@
       "Elektrosmog, der Netzwerkkabel stört"
     ],
     "a": "Emissionen von Feinstaub und Ultrafeinpartikeln beim Drucken",
-    "exp": "Laserdrucker können beim Betrieb Feinstaub, Ultrafeinpartikel und flüchtige organische Verbindungen abgeben. Empfohlen wird, sie in gut gelüfteten, separaten Räumen aufzustellen und Geräte mit Umweltzeichen wie dem Blauen Engel zu wählen. Zusätzlich senken weniger Ausdrucke den Papier- und Tonerverbrauch."
+    "exp": "Laserdrucker können beim Betrieb Feinstaub, Ultrafeinpartikel und flüchtige organische Verbindungen abgeben. Empfohlen wird, sie in gut gelüfteten, separaten Räumen aufzustellen und Geräte mit Umweltzeichen wie dem Blauen Engel zu wählen. Zusätzlich senken weniger Ausdrucke den Papier- und Tonerverbrauch.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27740,7 +27890,8 @@
       "Ja, wenn sie vollständig entladen sind, ist es erlaubt"
     ],
     "a": "Nein, Altbatterien müssen getrennt gesammelt und zurückgegeben werden",
-    "exp": "Das Batterierecht verbietet die Entsorgung von Altbatterien im Hausmüll, darauf weist das Symbol der durchgestrichenen Mülltonne hin. Händler und Sammelstellen nehmen Altbatterien zurück. Bei Lithiumbatterien sollen die Pole abgeklebt werden, um Kurzschlüsse und Brände zu vermeiden."
+    "exp": "Das Batterierecht verbietet die Entsorgung von Altbatterien im Hausmüll, darauf weist das Symbol der durchgestrichenen Mülltonne hin. Händler und Sammelstellen nehmen Altbatterien zurück. Bei Lithiumbatterien sollen die Pole abgeklebt werden, um Kurzschlüsse und Brände zu vermeiden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27756,7 +27907,8 @@
       "Vermeidung, Wiederverwendung, Recycling, sonstige Verwertung, Beseitigung"
     ],
     "a": "Vermeidung, Wiederverwendung, Recycling, sonstige Verwertung, Beseitigung",
-    "exp": "Die fünfstufige Abfallhierarchie lautet: Vermeidung, Vorbereitung zur Wiederverwendung, Recycling, sonstige Verwertung (zum Beispiel energetisch) und Beseitigung. Für die IT heißt das: weniger und langlebiger beschaffen, Geräte weitergeben, dann stofflich verwerten. Die Beseitigung, etwa auf der Deponie, ist das letzte Mittel."
+    "exp": "Die fünfstufige Abfallhierarchie lautet: Vermeidung, Vorbereitung zur Wiederverwendung, Recycling, sonstige Verwertung (zum Beispiel energetisch) und Beseitigung. Für die IT heißt das: weniger und langlebiger beschaffen, Geräte weitergeben, dann stofflich verwerten. Die Beseitigung, etwa auf der Deponie, ist das letzte Mittel.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27772,7 +27924,8 @@
       "Nur gegen eine Entsorgungsgebühr, die der Händler frei festlegen darf"
     ],
     "a": "Ja, große Elektrohändler müssen kleine Altgeräte bis 25 cm auch ohne Kauf zurücknehmen",
-    "exp": "Nach dem ElektroG müssen Händler mit einer Verkaufsfläche für Elektrogeräte von mindestens 400 Quadratmetern kleine Altgeräte mit keiner äußeren Abmessung über 25 cm unentgeltlich zurücknehmen, auch ohne Neukauf, begrenzt auf drei Geräte je Geräteart. Größere Geräte nehmen sie beim Kauf eines gleichartigen Neugeräts zurück. Vor der Abgabe sollte der Kunde seine Daten löschen."
+    "exp": "Nach dem ElektroG müssen Händler mit einer Verkaufsfläche für Elektrogeräte von mindestens 400 Quadratmetern kleine Altgeräte mit keiner äußeren Abmessung über 25 cm unentgeltlich zurücknehmen, auch ohne Neukauf, begrenzt auf drei Geräte je Geräteart. Größere Geräte nehmen sie beim Kauf eines gleichartigen Neugeräts zurück. Vor der Abgabe sollte der Kunde seine Daten löschen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27788,7 +27941,8 @@
       "Eine Einwilligung jedes Kunden, dessen Daten auf den Geräten liegen"
     ],
     "a": "Einen Auftragsverarbeitungsvertrag und einen Nachweis der Löschung, etwa ein Löschzertifikat",
-    "exp": "Löscht ein Dienstleister im Auftrag personenbezogene Daten, ist er Auftragsverarbeiter nach Art. 28 DSGVO. Dafür braucht es einen Vertrag mit Weisungen und technischen und organisatorischen Maßnahmen. Ein Löschprotokoll je Seriennummer belegt, dass die Daten vor dem Weiterverkauf sicher entfernt wurden."
+    "exp": "Löscht ein Dienstleister im Auftrag personenbezogene Daten, ist er Auftragsverarbeiter nach Art. 28 DSGVO. Dafür braucht es einen Vertrag mit Weisungen und technischen und organisatorischen Maßnahmen. Ein Löschprotokoll je Seriennummer belegt, dass die Daten vor dem Weiterverkauf sicher entfernt wurden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27804,7 +27958,8 @@
       "Rückgabe an den Hersteller oder einen beauftragten Entsorgungsfachbetrieb"
     ],
     "a": "Rückgabe an den Hersteller oder einen beauftragten Entsorgungsfachbetrieb",
-    "exp": "Gewerblich genutzte Geräte (B2B) werden nach ElektroG in der Regel nicht über die kommunalen Sammelstellen für private Haushalte entsorgt. Hersteller müssen für solche Geräte eine Rückgabemöglichkeit schaffen, alternativ beauftragt man einen zertifizierten Entsorgungsfachbetrieb. Belege über die ordnungsgemäße Entsorgung werden aufbewahrt."
+    "exp": "Gewerblich genutzte Geräte (B2B) werden nach ElektroG in der Regel nicht über die kommunalen Sammelstellen für private Haushalte entsorgt. Hersteller müssen für solche Geräte eine Rückgabemöglichkeit schaffen, alternativ beauftragt man einen zertifizierten Entsorgungsfachbetrieb. Belege über die ordnungsgemäße Entsorgung werden aufbewahrt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -27820,7 +27975,8 @@
       "Mehr Papierkörbe direkt neben die Drucker stellen lassen"
     ],
     "a": "Druckaufträge erst am Gerät nach Anmeldung freigeben (Follow-me-Printing)",
-    "exp": "Beim Follow-me- oder Pull-Printing wird ein Auftrag erst gedruckt, wenn sich die Person am Drucker anmeldet. Nicht abgeholte Aufträge werden nach einiger Zeit verworfen, ohne Papier und Toner zu verbrauchen. Nebenbei liegen keine vertraulichen Ausdrucke mehr offen im Ausgabefach."
+    "exp": "Beim Follow-me- oder Pull-Printing wird ein Auftrag erst gedruckt, wenn sich die Person am Drucker anmeldet. Nicht abgeholte Aufträge werden nach einiger Zeit verworfen, ohne Papier und Toner zu verbrauchen. Nebenbei liegen keine vertraulichen Ausdrucke mehr offen im Ausgabefach.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27836,7 +27992,8 @@
       "Die sexuelle Identität"
     ],
     "a": "Ob jemand raucht",
-    "exp": "Das AGG schützt vor Benachteiligung aus Gründen der Rasse oder der ethnischen Herkunft, des Geschlechts, der Religion oder Weltanschauung, einer Behinderung, des Alters oder der sexuellen Identität. Rauchgewohnheiten gehören nicht dazu. Andere Gesetze können aber weitere Merkmale schützen, etwa die Gewerkschaftszugehörigkeit."
+    "exp": "Das AGG schützt vor Benachteiligung aus Gründen der Rasse oder der ethnischen Herkunft, des Geschlechts, der Religion oder Weltanschauung, einer Behinderung, des Alters oder der sexuellen Identität. Rauchgewohnheiten gehören nicht dazu. Andere Gesetze können aber weitere Merkmale schützen, etwa die Gewerkschaftszugehörigkeit.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27852,7 +28009,8 @@
       "Innerhalb von zwei Wochen mündlich beim Arbeitgeber"
     ],
     "a": "Innerhalb von zwei Monaten schriftlich, ab Zugang der Ablehnung",
-    "exp": "Ansprüche auf Schadensersatz oder Entschädigung nach dem AGG müssen innerhalb von zwei Monaten schriftlich geltend gemacht werden (§ 15 Abs. 4 AGG). Bei Bewerbungen beginnt die Frist mit dem Zugang der Ablehnung. Eine Klage muss danach innerhalb weiterer drei Monate erhoben werden."
+    "exp": "Ansprüche auf Schadensersatz oder Entschädigung nach dem AGG müssen innerhalb von zwei Monaten schriftlich geltend gemacht werden (§ 15 Abs. 4 AGG). Bei Bewerbungen beginnt die Frist mit dem Zugang der Ablehnung. Eine Klage muss danach innerhalb weiterer drei Monate erhoben werden.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27868,7 +28026,8 @@
       "Geeignete Maßnahmen zum Schutz der Beschäftigten ergreifen, etwa andere Einsatzplanung"
     ],
     "a": "Geeignete Maßnahmen zum Schutz der Beschäftigten ergreifen, etwa andere Einsatzplanung",
-    "exp": "Werden Beschäftigte bei der Arbeit durch Dritte wie Kunden benachteiligt oder belästigt, muss der Arbeitgeber im Einzelfall geeignete, erforderliche und angemessene Maßnahmen zu ihrem Schutz ergreifen. Das kann ein klärendes Gespräch, ein Wechsel des Technikers oder Einsätze nur noch zu zweit sein. Notfalls kommt die Beendigung der Geschäftsbeziehung in Betracht."
+    "exp": "Werden Beschäftigte bei der Arbeit durch Dritte wie Kunden benachteiligt oder belästigt, muss der Arbeitgeber im Einzelfall geeignete, erforderliche und angemessene Maßnahmen zu ihrem Schutz ergreifen. Das kann ein klärendes Gespräch, ein Wechsel des Technikers oder Einsätze nur noch zu zweit sein. Notfalls kommt die Beendigung der Geschäftsbeziehung in Betracht.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27884,7 +28043,8 @@
       "Sehr gute Deutschkenntnisse in Wort und Schrift"
     ],
     "a": "Sehr gute Deutschkenntnisse in Wort und Schrift",
-    "exp": "Anforderungen sind zulässig, wenn sie sich aus der Tätigkeit ergeben, und gute Sprachkenntnisse sind für eine Hotline eine sachliche Anforderung. Die Forderung nach einer Muttersprache knüpft dagegen an die Herkunft an und kann eine Benachteiligung wegen der ethnischen Herkunft sein. Alter und Geschlecht als Anforderung sind ohne besonderen Grund unzulässig."
+    "exp": "Anforderungen sind zulässig, wenn sie sich aus der Tätigkeit ergeben, und gute Sprachkenntnisse sind für eine Hotline eine sachliche Anforderung. Die Forderung nach einer Muttersprache knüpft dagegen an die Herkunft an und kann eine Benachteiligung wegen der ethnischen Herkunft sein. Alter und Geschlecht als Anforderung sind ohne besonderen Grund unzulässig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27900,7 +28060,8 @@
       "Den Chat stumm schalten und das Thema nie mehr erwähnen"
     ],
     "a": "Nicht mitlachen, das Verhalten ansprechen und Hilfe anbieten",
-    "exp": "Herabsetzende Witze über ein geschütztes Merkmal können eine Belästigung im Sinne des AGG sein und schaden dem Teamklima. Wer nicht mitmacht und das Verhalten sachlich anspricht, zeigt Wertschätzung. Bleibt es dabei, sollte man Vorgesetzte oder die Beschwerdestelle einbeziehen."
+    "exp": "Herabsetzende Witze über ein geschütztes Merkmal können eine Belästigung im Sinne des AGG sein und schaden dem Teamklima. Wer nicht mitmacht und das Verhalten sachlich anspricht, zeigt Wertschätzung. Bleibt es dabei, sollte man Vorgesetzte oder die Beschwerdestelle einbeziehen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27916,7 +28077,8 @@
       "Lauter sprechen und auf schriftliche Ergebnisse verzichten"
     ],
     "a": "Live-Untertitel aktivieren und wichtige Ergebnisse zusätzlich schriftlich festhalten",
-    "exp": "Barrierefreiheit in der digitalen Zusammenarbeit ist ein Teil von Inklusion. Viele Konferenzsysteme bieten Live-Untertitel, zusätzlich helfen Protokolle, klare Redereihenfolge und eingeschaltete Kameras für das Lippenlesen. Wer ausgeschlossen wird, verliert Informationen und Einfluss im Team."
+    "exp": "Barrierefreiheit in der digitalen Zusammenarbeit ist ein Teil von Inklusion. Viele Konferenzsysteme bieten Live-Untertitel, zusätzlich helfen Protokolle, klare Redereihenfolge und eingeschaltete Kameras für das Lippenlesen. Wer ausgeschlossen wird, verliert Informationen und Einfluss im Team.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -27932,7 +28094,8 @@
       "Erlaubt, solange er die Aufnahme nicht weitergibt"
     ],
     "a": "Das heimliche Aufnehmen des nicht öffentlich gesprochenen Wortes ist strafbar",
-    "exp": "Wer das nicht öffentlich gesprochene Wort eines anderen unbefugt aufnimmt, macht sich nach § 201 StGB strafbar. Das gilt auch für berufliche Gespräche und Online-Meetings. Aufzeichnungen sind nur mit Wissen und Einverständnis der Beteiligten zulässig."
+    "exp": "Wer das nicht öffentlich gesprochene Wort eines anderen unbefugt aufnimmt, macht sich nach § 201 StGB strafbar. Das gilt auch für berufliche Gespräche und Online-Meetings. Aufzeichnungen sind nur mit Wissen und Einverständnis der Beteiligten zulässig.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -27948,7 +28111,8 @@
       "Er darf posten, weil Screenshots nicht als Fotos gelten"
     ],
     "a": "Er braucht vorher die Einwilligung der erkennbaren Personen",
-    "exp": "Auch ein Screenshot ist ein Bildnis, das die erkennbaren Personen zeigt. Die eingeschaltete Kamera bedeutet nur, dass man in der Schulung gesehen werden will, nicht, dass das Bild veröffentlicht werden darf. Ohne Einwilligung verletzt die Veröffentlichung das Recht am eigenen Bild und den Datenschutz."
+    "exp": "Auch ein Screenshot ist ein Bildnis, das die erkennbaren Personen zeigt. Die eingeschaltete Kamera bedeutet nur, dass man in der Schulung gesehen werden will, nicht, dass das Bild veröffentlicht werden darf. Ohne Einwilligung verletzt die Veröffentlichung das Recht am eigenen Bild und den Datenschutz.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -27964,7 +28128,8 @@
       "Den Hintergrund weichzeichnen oder ein virtuelles Hintergrundbild nutzen"
     ],
     "a": "Den Hintergrund weichzeichnen oder ein virtuelles Hintergrundbild nutzen",
-    "exp": "Weichzeichner oder virtuelle Hintergründe verhindern, dass private Räume, Familienangehörige oder Dokumente sichtbar werden. Das schützt die Persönlichkeitsrechte der Mitarbeiterin und Dritter. Zusätzlich sollte man vor dem Einschalten der Kamera prüfen, was im Bild ist."
+    "exp": "Weichzeichner oder virtuelle Hintergründe verhindern, dass private Räume, Familienangehörige oder Dokumente sichtbar werden. Das schützt die Persönlichkeitsrechte der Mitarbeiterin und Dritter. Zusätzlich sollte man vor dem Einschalten der Kamera prüfen, was im Bild ist.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -27980,7 +28145,8 @@
       "Meeting-Chats werden nach dem Ende automatisch gelöscht"
     ],
     "a": "Meeting-Chats sind oft für alle sichtbar und werden gespeichert, daher nur sachlich schreiben",
-    "exp": "In vielen Konferenzsystemen landet der Meeting-Chat bei allen Teilnehmenden und bleibt auch nach der Besprechung abrufbar. Was einmal geschrieben ist, lässt sich nicht zurückholen. Nach den Regeln der Netiquette schreibt man im dienstlichen Chat immer so, als könnte jeder mitlesen."
+    "exp": "In vielen Konferenzsystemen landet der Meeting-Chat bei allen Teilnehmenden und bleibt auch nach der Besprechung abrufbar. Was einmal geschrieben ist, lässt sich nicht zurückholen. Nach den Regeln der Netiquette schreibt man im dienstlichen Chat immer so, als könnte jeder mitlesen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -27996,7 +28162,8 @@
       "Für die Zusammenarbeit einen eigenen Kanal oder ein eigenes Team nur mit den nötigen Inhalten nutzen"
     ],
     "a": "Für die Zusammenarbeit einen eigenen Kanal oder ein eigenes Team nur mit den nötigen Inhalten nutzen",
-    "exp": "Gäste sehen je nach Einstellung alle Standardkanäle und Dateien eines Teams. Nach dem Prinzip der minimalen Rechte (need to know) erhalten Externe nur Zugriff auf das, was sie für die Zusammenarbeit brauchen. Personalunterlagen gehören in einen Bereich, auf den nur Berechtigte zugreifen."
+    "exp": "Gäste sehen je nach Einstellung alle Standardkanäle und Dateien eines Teams. Nach dem Prinzip der minimalen Rechte (need to know) erhalten Externe nur Zugriff auf das, was sie für die Zusammenarbeit brauchen. Personalunterlagen gehören in einen Bereich, auf den nur Berechtigte zugreifen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -28012,7 +28179,8 @@
       "Allen Gästen Moderatorrechte geben, damit sie sich vorstellen"
     ],
     "a": "Teilnehmerliste und Kameras der Gäste für andere Teilnehmende ausblenden",
-    "exp": "In einem Webinar ist es nicht nötig, dass sich Teilnehmende gegenseitig sehen oder ihre Namen und Adressen erfahren. Viele Plattformen bieten einen Webinar- oder Zuschauermodus, in dem nur die Vortragenden sichtbar sind. Das entspricht dem Grundsatz der Datenminimierung."
+    "exp": "In einem Webinar ist es nicht nötig, dass sich Teilnehmende gegenseitig sehen oder ihre Namen und Adressen erfahren. Viele Plattformen bieten einen Webinar- oder Zuschauermodus, in dem nur die Vortragenden sichtbar sind. Das entspricht dem Grundsatz der Datenminimierung.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -28028,7 +28196,8 @@
       "Großbuchstaben sind im Chat technisch nicht lesbar"
     ],
     "a": "Großbuchstaben wirken wie Schreien und werden leicht als unhöflich empfunden",
-    "exp": "Netiquette beschreibt Regeln für den höflichen Umgang in digitaler Kommunikation. Dazu gehören normale Groß- und Kleinschreibung, aussagekräftige Betreffzeilen, „Antworten an alle“ nur, wenn alle betroffen sind, und ein sachlicher Ton. Missverständnisse entstehen schriftlich leichter, weil Mimik und Tonfall fehlen."
+    "exp": "Netiquette beschreibt Regeln für den höflichen Umgang in digitaler Kommunikation. Dazu gehören normale Groß- und Kleinschreibung, aussagekräftige Betreffzeilen, „Antworten an alle“ nur, wenn alle betroffen sind, und ein sachlicher Ton. Missverständnisse entstehen schriftlich leichter, weil Mimik und Tonfall fehlen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -28044,7 +28213,8 @@
       "Die Benutzerkennung des Smartphones im Klartext"
     ],
     "a": "GPS-Koordinaten und Aufnahmezeit in den Exif-Metadaten",
-    "exp": "Smartphones speichern in den Exif-Metadaten eines Fotos häufig den Aufnahmeort als GPS-Koordinaten, Datum, Uhrzeit und Gerätemodell. So kann der Standort eines Rechenzentrums verraten werden. Vor dem Teilen sollte man Ortsdaten deaktivieren oder Metadaten entfernen und prüfen, was im Bild sichtbar ist."
+    "exp": "Smartphones speichern in den Exif-Metadaten eines Fotos häufig den Aufnahmeort als GPS-Koordinaten, Datum, Uhrzeit und Gerätemodell. So kann der Standort eines Rechenzentrums verraten werden. Vor dem Teilen sollte man Ortsdaten deaktivieren oder Metadaten entfernen und prüfen, was im Bild sichtbar ist.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -28060,7 +28230,8 @@
       "Die E-Mail zusätzlich an den Datenschutzbeauftragten in CC senden"
     ],
     "a": "Den Verlauf vor dem Weiterleiten kürzen und nur die nötigen Informationen senden",
-    "exp": "Beim Weiterleiten wird oft der ganze Verlauf mit Anhängen mitgeschickt, darunter auch personenbezogene Daten, die der Empfänger nicht braucht. Nach dem Grundsatz der Datenminimierung gibt man nur weiter, was für den Zweck erforderlich ist. Ist es bereits passiert, wird der Vorfall intern gemeldet, damit geprüft werden kann, ob eine meldepflichtige Datenpanne vorliegt."
+    "exp": "Beim Weiterleiten wird oft der ganze Verlauf mit Anhängen mitgeschickt, darunter auch personenbezogene Daten, die der Empfänger nicht braucht. Nach dem Grundsatz der Datenminimierung gibt man nur weiter, was für den Zweck erforderlich ist. Ist es bereits passiert, wird der Vorfall intern gemeldet, damit geprüft werden kann, ob eine meldepflichtige Datenpanne vorliegt.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -28076,7 +28247,8 @@
       "Zulässig, weil das Programm kostenlos heruntergeladen werden konnte"
     ],
     "a": "Unzulässig, die gewerbliche Nutzung verletzt die Lizenzbedingungen und das Urheberrecht",
-    "exp": "Computerprogramme sind nach dem Urheberrechtsgesetz geschützt, und der Rechteinhaber legt in der Lizenz fest, wie sie genutzt werden dürfen. Kostenlos heißt nicht lizenzfrei: Eine nur privat erlaubte Nutzung im Unternehmen ist eine Lizenzverletzung. Der Betrieb muss eine kommerzielle Lizenz kaufen oder eine erlaubte Alternative wählen."
+    "exp": "Computerprogramme sind nach dem Urheberrechtsgesetz geschützt, und der Rechteinhaber legt in der Lizenz fest, wie sie genutzt werden dürfen. Kostenlos heißt nicht lizenzfrei: Eine nur privat erlaubte Nutzung im Unternehmen ist eine Lizenzverletzung. Der Betrieb muss eine kommerzielle Lizenz kaufen oder eine erlaubte Alternative wählen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -28092,7 +28264,8 @@
       "Das Kopieren von Text in Webformulare ist technisch unsicher"
     ],
     "a": "Personenbezogene Daten gehen ohne Rechtsgrundlage an einen externen Anbieter",
-    "exp": "Eingaben in öffentliche KI-Dienste werden beim Anbieter verarbeitet und unter Umständen gespeichert oder zum Training genutzt. Ohne Rechtsgrundlage und Vertrag zur Auftragsverarbeitung dürfen Kundendaten dort nicht eingegeben werden. Besser ist es, Daten vorher zu anonymisieren oder ein vom Betrieb freigegebenes Werkzeug zu nutzen."
+    "exp": "Eingaben in öffentliche KI-Dienste werden beim Anbieter verarbeitet und unter Umständen gespeichert oder zum Training genutzt. Ohne Rechtsgrundlage und Vertrag zur Auftragsverarbeitung dürfen Kundendaten dort nicht eingegeben werden. Besser ist es, Daten vorher zu anonymisieren oder ein vom Betrieb freigegebenes Werkzeug zu nutzen.",
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -28108,6 +28281,7 @@
       "Schwarze Balken werden beim Drucken immer ausgeblendet"
     ],
     "a": "Der Text liegt oft noch unter den Balken und lässt sich kopieren oder auslesen",
-    "exp": "Ein darübergelegtes Grafikelement verdeckt den Text nur optisch, die Zeichen bleiben im Dokument erhalten. Mit Kopieren und Einfügen oder durch Entfernen der Grafik werden sie wieder sichtbar. Sicher ist eine echte Schwärzungsfunktion, die den Inhalt entfernt, oder der Text wird vorher gelöscht beziehungsweise ersetzt."
+    "exp": "Ein darübergelegtes Grafikelement verdeckt den Text nur optisch, die Zeichen bleiben im Dokument erhalten. Mit Kopieren und Einfügen oder durch Entfernen der Grafik werden sie wieder sichtbar. Sicher ist eine echte Schwärzungsfunktion, die den Inhalt entfernt, oder der Text wird vorher gelöscht beziehungsweise ersetzt.",
+    "neu_ab": "0.55"
   }
 ]

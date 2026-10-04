@@ -955,10 +955,49 @@ def knowledge_from_answers(answers, coverage, params=None, keys=None):
     return result
 
 
+# Ab 0.55 (Bestandsschutz): Inhalte, die eine neuere Version angehaengt hat
+# (Feld NEW_SINCE_FIELD, z.B. "neu_ab": "0.55"), zaehlen fuer den
+# Wissensstand im Spiel erst mit, wenn sie schon bearbeitet wurden. So senkt
+# ein Update mit neuen Inhalten keinen Spielstand - die Abdeckung im
+# Fortschritt (fisi_rahmenplan) zaehlt sie dagegen immer.
+def game_items(db):
+    """Karten und Quizfragen, die der Wissensstand im Spiel zaehlt."""
+    from fisi_core import KARTEIKARTEN, NEW_SINCE_FIELD, QUIZ_QUESTIONS
+    touched = {}
+    for table, items in (("card_events", KARTEIKARTEN), ("quiz_answers", QUIZ_QUESTIONS)):
+        if any(item.get(NEW_SINCE_FIELD) for item in items):
+            rows = db._execute("SELECT DISTINCT question FROM %s" % table,
+                               fetch="all", default=[]) or []
+            touched[table] = {row[0] for row in rows}
+        else:
+            touched[table] = set()
+    return ([card for card in KARTEIKARTEN
+             if not card.get(NEW_SINCE_FIELD) or card["q"] in touched["card_events"]] +
+            [question for question in QUIZ_QUESTIONS
+             if not question.get(NEW_SINCE_FIELD) or question["q"] in touched["quiz_answers"]])
+
+
+def game_content_totals(db):
+    """Wie fisi_core.content_totals, nur ueber game_items."""
+    from fisi_core import CATEGORIES
+    totals = {cat: 0 for cat in CATEGORIES}
+    for item in game_items(db):
+        totals[item["cat"]] = totals.get(item["cat"], 0) + 1
+    return totals
+
+
+def game_topic_totals(db):
+    """Wie fisi_core.topic_totals, nur ueber game_items."""
+    totals = {topic: 0 for topic in TOPIC_ORDER}
+    for item in game_items(db):
+        if item.get("thema") in totals:
+            totals[item["thema"]] += 1
+    return totals
+
+
 def knowledge(db, params=None):
     """Wissensstand je Fachbereich aus der Lern-Datenbank. Wird nie
     gespeichert, sondern bei Bedarf neu berechnet."""
-    from fisi_core import content_totals
     params = params or GAME["balancing"]["wissen"]
     window = int(params["letzte_antworten"])
     answers = {}
@@ -973,7 +1012,7 @@ def knowledge(db, params=None):
             (name, name, window), fetch="all", default=[]) or []
         answers[key] = [bool(row[0]) for row in rows]
     coverage = {CAT_KEY[name]: value
-                for name, value in db.category_coverage(content_totals()).items()
+                for name, value in db.category_coverage(game_content_totals(db)).items()
                 if name in CAT_KEY}
     return knowledge_from_answers(answers, coverage, params)
 
@@ -993,7 +1032,7 @@ def topic_knowledge(db, params=None):
     nur auf die Antworten und Inhalte eines Themas bezogen."""
     params = params or topic_params()
     answers = db.topic_answers(int(params["letzte_antworten"]))
-    coverage = db.topic_coverage(topic_totals())
+    coverage = db.topic_coverage(game_topic_totals(db))
     return knowledge_from_answers(answers, coverage, params, keys=TOPIC_ORDER)
 
 

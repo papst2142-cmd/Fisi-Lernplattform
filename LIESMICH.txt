@@ -377,7 +377,10 @@ Als Fachbereich ("cat") stehen netzwerk, sicherheit, systeme, wirtschaft
 und datenbanken zur Wahl, als "thema" eine Kennung dieses Fachbereichs aus
 themen.json. Ab 0.55 kann ein Eintrag zusaetzlich "rahmenplan" mit der Kennung
 eines Punktes aus rahmenplan.json haben (z.B. "C2a"), sonst wird er ueber
-Thema und Stichworte zugeordnet. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
+Thema und Stichworte zugeordnet. Neu angehaengte Karten und Quizfragen
+tragen "neu_ab" mit der Version (z.B. "0.55"): Fuer den Wissensstand im
+Spiel zaehlen sie erst, wenn sie bearbeitet wurden, damit ein Update keinen
+Spielstand senkt. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
 als Liste von Zeilen geschrieben werden. Die Kennzahlen im Dashboard passen
 sich automatisch an.
 

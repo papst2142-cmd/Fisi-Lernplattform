@@ -162,7 +162,8 @@ class AbdeckungTest(TempDB, unittest.TestCase):
 
     def test_thema_wie_wissensstand(self):
         """Ein Lernthema in der Lernfeld-Ansicht hat denselben Wert wie der
-        Wissensstand je Thema (fisi_game.topic_knowledge)."""
+        Wissensstand je Thema - gerechnet ueber alle Inhalte, also ohne den
+        Bestandsschutz des Spiels (fisi_game.game_items)."""
         rng = random.Random(5)
         items = [q for q in QUIZ_QUESTIONS if q.get("thema") == "storage"][:30]
         cards = [c for c in KARTEIKARTEN if c.get("thema") == "storage"][:10]
@@ -172,7 +173,14 @@ class AbdeckungTest(TempDB, unittest.TestCase):
             self.answer(SRC_CARD, item, rng.random() < 0.7, "2026-10-02 09:%02d:00" % number)
         coverage = frp.Coverage(StatusBook(self.db), frp.rp_settings({}))
         value = coverage.group_value(frp.topic_items("storage"))
-        self.assertAlmostEqual(value, fg.topic_knowledge(self.db)["storage"], places=1)
+        params = fg.topic_params()
+        expected = fg.knowledge_from_answers(
+            self.db.topic_answers(int(params["letzte_antworten"])),
+            self.db.topic_coverage(core.topic_totals()), params,
+            keys=fg.TOPIC_ORDER)["storage"]
+        self.assertAlmostEqual(value, expected, places=1)
+        # Im Spiel zaehlen unbearbeitete neue Inhalte nicht mit
+        self.assertGreaterEqual(fg.topic_knowledge(self.db)["storage"], expected)
 
     def test_schalter_bde(self):
         book = StatusBook(self.db)
@@ -506,6 +514,37 @@ class UmhaengenTest(TempDB, unittest.TestCase):
 # ============================================================================
 
 AP1_NEW = "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe"
+
+
+class BestandsschutzTest(TempDB, unittest.TestCase):
+    """Neue Inhalte (neu_ab) senken den Wissensstand im Spiel nicht, bevor
+    sie bearbeitet wurden."""
+
+    def test_nur_neue_inhalte_markiert(self):
+        field = core.NEW_SINCE_FIELD
+        self.assertTrue(all(not card.get(field) for card in KARTEIKARTEN[:1400]))
+        self.assertTrue(all(card.get(field) == "0.55" for card in KARTEIKARTEN[1400:]))
+        fixed = core.load_content("quizfragen")
+        self.assertTrue(all(not item.get(field) for item in fixed[:1946]))
+        self.assertTrue(all(item.get(field) == "0.55" for item in fixed[1946:]))
+
+    def test_unbearbeitete_neue_inhalte_zaehlen_nicht(self):
+        field = core.NEW_SINCE_FIELD
+        old = collections.Counter(item["thema"] for item in KARTEIKARTEN + QUIZ_QUESTIONS
+                                  if not item.get(field))
+        totals = fg.game_topic_totals(self.db)
+        for topic, count in totals.items():
+            self.assertEqual(count, old.get(topic, 0), topic)
+        card = next(card for card in KARTEIKARTEN if card.get(field))
+        self.answer(SRC_CARD, card, True, "2026-10-04 10:00:00")
+        self.assertEqual(fg.game_topic_totals(self.db)[card["thema"]],
+                         old[card["thema"]] + 1)
+        self.assertEqual(sum(fg.game_content_totals(self.db).values()),
+                         sum(old.values()) + 1)
+        # Die Abdeckung im Fortschritt zaehlt alle Inhalte
+        self.assertEqual(sum(core.topic_totals().values()),
+                         sum(1 for item in KARTEIKARTEN + QUIZ_QUESTIONS
+                             if item.get("thema") in core.topic_totals()))
 
 
 class PruefungsthemenTest(unittest.TestCase):

@@ -18213,7 +18213,8 @@
       "Einstiegs-CPU, 4 GB RAM, Festplatte mit 5.400 U/min und integrierte Grafik",
       "Mittelklasse-CPU, 16 GB RAM, NVMe-SSD, integrierte Grafik, kompaktes Gehäuse",
       "Gaming-CPU, 32 GB RAM, NVMe-SSD und leistungsstarke Spiele-Grafikkarte"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18230,7 +18231,8 @@
       "Wenn das Netz oft ausfällt und die Arbeit dann lokal weiterlaufen muss",
       "Wenn jeder Mitarbeiter eigene Programme lokal installieren und offline arbeiten muss",
       "Wenn an den Plätzen aufwendige 3D-Modelle ohne zentrale Grafikleistung entstehen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18246,7 +18248,8 @@
       "Ein höheres Gehäuse, mehr Gehäuselüfter und eine farbige RGB-Beleuchtung",
       "Eine besonders kleine Bauform mit passiver Kühlung und geringem Verbrauch",
       "Ein vorinstalliertes Serverbetriebssystem und ein fest eingebautes RAID 5"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18262,7 +18265,8 @@
       "Geschützt gegen Untertauchen bis 6 m und 5 Stürze aus Tischhöhe",
       "Geschützt gegen Stöße mit 6 Joule und gegen Spritzwasser von oben",
       "Staubdicht (6) und geschützt gegen Strahlwasser aus beliebiger Richtung (5)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18278,7 +18282,8 @@
       "Ein Tower-Server",
       "Ein Blade-Chassis mit zwei Blade-Servern",
       "Ein Mini-PC mit Desktop-Betriebssystem"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18294,7 +18299,8 @@
       "Ein NAS ist für Dateiablage und Backup gebaut, für Verzeichnisdienst und Datenbank ist ein Server besser",
       "Ein NAS darf aus Lizenzgründen grundsätzlich keine Dateifreigaben anbieten",
       "Ein NAS ersetzt jeden Server, wenn mindestens vier Festplatten verbaut sind"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18310,7 +18316,8 @@
       "Das empfohlene monatliche Druckvolumen",
       "Die Druckgeschwindigkeit in Seiten pro Minute",
       "Die maximale Monatsleistung"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18326,7 +18333,8 @@
       "Die CPU mit 8 Kernen und höherem Takt, weil die Einzelkernleistung zählt",
       "Die CPU mit 16 Kernen, weil mehr Kerne jede Anwendung beschleunigen",
       "Die CPU mit 16 Kernen, weil die Anwendung dann 16 Kerne gleichzeitig nutzt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18342,7 +18350,8 @@
       "Weil ältere Prozessoren ihren Takt grundsätzlich doppelt angeben",
       "Weil höhere Taktfrequenzen die Lebensdauer des Prozessors verkürzen",
       "Weil die Taktfrequenz nur bei Grafikkarten eine Aussagekraft besitzt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18358,7 +18367,8 @@
       "Dass nur der höchste jemals erreichte Wert des Herstellers zählt",
       "Dass die Punktzahl ohne Netzteil im Akkubetrieb ermittelt wurde",
       "Ob der Benchmark der echten Arbeitslast ähnelt und unter gleichen Bedingungen gemessen wurde"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18374,7 +18384,8 @@
       "Die Bauhöhe in Millimetern und das Gewicht des Laufwerks",
       "Nur die höchste sequenzielle Lesegeschwindigkeit im Datenblatt",
       "Schreibfestigkeit (TBW oder DWPD) und Schutz bei Stromausfall (power loss protection)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18390,7 +18401,8 @@
       "Nur die Kosten für Zubehör wie Taschen, Mäuse und Netzteile",
       "Energie, Wartung und Support, Einrichtung und Schulung, Ausfallzeiten sowie Entsorgung oder Datenlöschung",
       "Nur die Abschreibung und der kalkulatorische Gewinn des Händlers"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18406,7 +18418,8 @@
       "Die Bring-in-Garantie, weil Garantieverlängerungen nie wirtschaftlich sind",
       "Die Bring-in-Garantie, weil Kassen technisch nicht ausfallen können",
       "Den Vor-Ort-Service, weil ein Kassenausfall den Umsatz direkt betrifft"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18422,7 +18435,8 @@
       "Seit dem 28.06.2025 müssen bestimmte Produkte und Dienstleistungen für Verbraucher barrierefrei sein, darunter der elektronische Geschäftsverkehr",
       "Seit dem 28.06.2025 gilt es nur für Webseiten von Bundesbehörden und Gerichten",
       "Seit dem 28.06.2025 müssen alle Firmen ihre internen Büroarbeitsplätze rollstuhlgerecht umbauen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18438,7 +18452,8 @@
       "Ja, die BITV 2.0 regelt die Barrierefreiheit der IT öffentlicher Stellen des Bundes",
       "Ja, die BITV 2.0 gilt aber nur für private Onlineshops mit Filialen",
       "Nein, für Behörden gilt allein die DSGVO, die auch Barrierefreiheit regelt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18454,7 +18469,8 @@
       "Eine Mindestenergieeffizienz für Software-Rechenzentren in der EU",
       "Ein bestimmtes Niveau der Informationssicherheit nach europäischer Norm",
       "Ein einheitliches Format für Softwarelizenzen in europäischen Behörden"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18470,7 +18486,8 @@
       "Ein zweiter Monitor mit hohem Kontrast und eine Webcam",
       "Eine Spracheingabe allein ohne jede Rückmeldung am Bildschirm",
       "Screenreader mit Sprachausgabe und eine Braillezeile"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18486,7 +18503,8 @@
       "Das Gerät erfüllt die Anforderungen an IT-Sicherheit für Behörden der EU",
       "Das Gerät ist im EPEAT-Register mit der höchsten Stufe für Umweltkriterien über den Lebenszyklus eingetragen",
       "Das Gerät hat die beste Bildqualität in einem Test der Fachpresse erreicht"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -18502,7 +18520,8 @@
       "Eine unabhängige Prüfstelle hat die Qualität des Geräts mit gut bewertet",
       "Das Gerät erfüllt besonders strenge Umweltkriterien und spart Strom",
       "Der Hersteller erklärt damit selbst, dass das Gerät die geltenden EU-Anforderungen erfüllt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18518,7 +18537,8 @@
       "Beide sind funktional, weil sie sich auf die Benutzer des Systems beziehen",
       "Die erste ist nicht-funktional, die zweite funktional, weil sie messbar ist",
       "Beide sind nicht-funktional, weil sie im Lastenheft des Kunden stehen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -18535,7 +18555,8 @@
       "Die Sicherheitsverantwortung liegt allein beim Hersteller der eingesetzten Software",
       "Die Sicherheit wird erst nach der Inbetriebnahme durch einen Penetrationstest geplant",
       "Sicherheitsanforderungen werden von Anfang an in Planung und Architektur berücksichtigt, nicht erst nachträglich ergänzt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -18551,7 +18572,8 @@
       "Für jedes Gerät eine eigene öffentliche IP-Adresse beim Provider beantragen",
       "Getrennte Netze (VLANs) je Gruppe und nur die nötigen Verbindungen über eine Firewall erlauben",
       "Alle Geräte in ein gemeinsames Netz legen und dafür starke WLAN-Passwörter setzen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18567,7 +18589,8 @@
       "Nichts, weil die Oberflächen ohnehin mit HTTPS verschlüsselt sind",
       "Ein eigenes Management-Netz, das nur von Admin-Systemen aus erreichbar ist",
       "Die Oberflächen zusätzlich aus dem Internet erreichbar machen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18584,7 +18607,8 @@
       "Eine Kopie, die offline oder unveränderbar (immutable) ist und nicht mit denselben Zugangsdaten gelöscht werden kann",
       "Ein RAID 1 im Server, das jede Änderung sofort auf zwei Platten spiegelt",
       "Eine tägliche Sicherung auf eine zweite Partition der Festplatte des Servers"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -18601,7 +18625,8 @@
       "Weil Hersteller ohne Schutzbedarfsfeststellung keine Hardware ausliefern dürfen",
       "Weil der Schutzbedarf bestimmt, wie viel Redundanz, Verschlüsselung und Absicherung nötig ist",
       "Weil der Schutzbedarf die Farbe und Bauform der Server im Rack vorgibt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18617,7 +18642,8 @@
       "Alle Dienste bleiben aktiv, dafür wird die Root-Anmeldung per Kennwort erlaubt",
       "Ein einheitliches gehärtetes Basis-Image nach anerkannter Vorgabe, verteilt und geprüft mit Konfigurationsmanagement",
       "Jeder Admin härtet seine Server nach eigener Erfahrung und dokumentiert nichts"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18633,7 +18659,8 @@
       "Multi-Cloud; geregelt wird nur die Wahl eines zweiten Cloudanbieters",
       "Hybridbetrieb; geregelt werden z. B. die Synchronisation der Identitäten und die Absicherung der Anmeldung",
       "Private Cloud; geregelt wird nur die Größe der Postfächer der Mitarbeiter"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18649,7 +18676,8 @@
       "Prozedural wird kompiliert, objektorientiert wird immer nur interpretiert",
       "Prozedural sind Daten und Funktionen getrennt, objektorientiert bündeln Objekte Daten und Methoden",
       "Prozedural nutzt Variablen, objektorientiert kommt ganz ohne Variablen aus"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18665,7 +18693,8 @@
       "Es sind Methoden, die Klasse speichert ihre Rückgabewerte",
       "Es sind Attribute, die Klasse fasst sie zu einer Liste zusammen",
       "Es sind Objekte (Instanzen), die Klasse ist ihr Bauplan"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18681,7 +18710,8 @@
       "Die Kapselung (encapsulation): saldo privat machen und nur über Methoden ändern",
       "Die Polymorphie: saldo in jeder Unterklasse neu und anders anlegen",
       "Die Instanziierung: saldo für jedes Objekt erst zur Laufzeit erzeugen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18697,7 +18727,8 @@
       "Die Attribute in beide Klassen kopieren und als statisch markieren",
       "Eine globale Variable anlegen, die beide Klassen gemeinsam nutzen",
       "Eine Oberklasse Geraet anlegen, von der Drucker und Server erben"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18713,7 +18744,8 @@
       "Instanziierung: die Methode erzeugt je nach Gerät ein neues Objekt",
       "Kapselung: die Methode verbirgt je nach Gerät andere private Attribute",
       "Polymorphie: derselbe Methodenaufruf verhält sich je nach Klasse des Objekts anders"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18729,7 +18761,8 @@
       "Der Getter, er liest beim Erzeugen die Werte aus der Datenbank aus",
       "Der Destruktor, er reserviert beim Erzeugen den Speicher für das Objekt",
       "Der Interpreter, er übersetzt beim Erzeugen die Klasse in Maschinencode"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18745,7 +18778,8 @@
       "Ein Compiler braucht eine Internetverbindung, ein Interpreter arbeitet nur lokal",
       "Ein Compiler führt den Quelltext zur Laufzeit aus, ein Interpreter übersetzt vorab",
       "Ein Compiler prüft nur die Syntax, ein Interpreter erzeugt die ausführbare Datei"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18761,7 +18795,8 @@
       "Java wird direkt in Maschinencode übersetzt, der auf allen CPUs gleich ist",
       "Java wird in Bytecode übersetzt, den die JVM auf jeder Plattform ausführt und per JIT optimiert",
       "Java nutzt unter Linux einen Emulator, der Windows-Programme nachbildet"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18777,7 +18812,8 @@
       "Java kennt keine Zeichenketten, Python speichert alles als Text",
       "Java ist dynamisch typisiert, Python statisch typisiert",
       "Java ist statisch typisiert, Python dynamisch typisiert"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18794,7 +18830,8 @@
       "Eingabe: CSV und PDF; Verarbeitung: Standorte; Ausgabe: Zählerstände je Monat",
       "Eingabe: CSV mit Zählerständen; Verarbeitung: Verbrauch je Standort; Ausgabe: PDF-Bericht",
       "Eingabe: PDF-Bericht; Verarbeitung: CSV mit Zählerständen; Ausgabe: Verbrauch"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18810,7 +18847,8 @@
       "Eine Warteschlange (Queue), die die Einträge der Reihe nach abarbeitet",
       "Ein Dictionary (Map) mit der MAC-Adresse als Schlüssel und dem Hostnamen als Wert",
       "Ein Stapel (Stack), bei dem der zuletzt eingefügte Eintrag oben liegt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -18826,7 +18864,8 @@
       "- heißt Attribut (speichert Daten), + heißt Methode (führt Code aus)",
       "- heißt privat (nur in der Klasse sichtbar), + heißt öffentlich (von außen aufrufbar)",
       "- heißt gelöscht (nicht mehr genutzt), + heißt neu (in dieser Version ergänzt)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18842,7 +18881,8 @@
       "Die Programmiersprache und die Entwicklungsumgebung des anbietenden Teams",
       "Den vollständigen Quelltext der Schnittstelle mit allen internen Funktionen",
       "Aufruf und Parameter mit Datentyp, Format der Rückgabe sowie Fehlerfälle mit Statuscodes"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18858,7 +18898,8 @@
       "Der Quelltext der Prüfung, damit die Fachabteilung ihn freigeben kann",
       "Die Angabe, mit welcher Bildschirmauflösung die Entwickler arbeiten",
       "Die Fehlerfälle und Grenzwerte, z. B. leere Eingabe, Enddatum vor Startdatum, zu wenig Resturlaub"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18875,7 +18916,8 @@
       "SQL, weil das Active Directory intern eine relationale Datenbank ist",
       "JavaScript, weil Windows-Verwaltungsaufgaben im Browser ablaufen",
       "PowerShell, weil es Module für AD und Exchange gibt und Cmdlets Objekte liefern"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18891,7 +18933,8 @@
       "C, weil kompilierte Programme ohne Neuübersetzung auf jedem System starten",
       "SQL, weil Logdateien intern immer als Datenbanktabellen gespeichert sind",
       "Python, weil es plattformübergreifend läuft und viele Bibliotheken mitbringt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18907,7 +18950,8 @@
       "foreach ($i in 1..3) { $i * 2 }",
       "for ($i = 1; $i -le 4; $i++) { $i * 2 }",
       "foreach ($i in 0..3) { $i * 2 }"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18923,7 +18967,8 @@
       "An der Einrückung: alle gleich weit eingerückten Zeilen bilden den Block",
       "An der Zeilennummer, die Python automatisch vergibt und prüft",
       "Am Semikolon am Ende jeder Zeile, das den Block fortsetzt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18939,7 +18984,8 @@
       "SQL, weil Logdateien unter Linux immer in einer Datenbank liegen",
       "PowerShell, weil sie auf jedem Linux-Minimalsystem vorinstalliert ist",
       "Bash, weil sie auf jedem Linux-Server vorhanden ist und Werkzeuge wie tar und rsync verbindet"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18955,7 +19001,8 @@
       "Alle drei prüfen, ob die Variable frei genau 10 Zeichen lang ist",
       "Alle drei prüfen, ob der Wert von frei kleiner als 10 ist",
       "Alle drei prüfen, ob der Wert von frei größer als 10 ist"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18972,7 +19019,8 @@
       "Es ist nicht signiert: es sollte mit einem Zertifikat unterschrieben werden",
       "Es ist nicht idempotent: es sollte erst prüfen und nur fehlende Teile anlegen",
       "Es ist nicht kompiliert: es sollte vorab in eine EXE-Datei übersetzt werden"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -18988,7 +19036,8 @@
       "Die Werte als Kommentar ins Skript schreiben, damit man sie leicht findet",
       "Einen param()-Block mit Parametern wie -Server und -Ziel, die beim Aufruf übergeben werden",
       "Die Werte in die Registry jedes Servers schreiben und das Skript signieren"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19005,7 +19054,8 @@
       "Das Passwort in einen Kommentar verschieben, damit es nicht ausgeführt wird",
       "Zugangsdaten aus dem Skript entfernen und aus einem Tresor (Secret Store) oder geschützten Speicher lesen",
       "Das Passwort im Skript mit Base64 kodieren und die Datei ins Repository legen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19021,7 +19071,8 @@
       "Auf $Error[0] und darauf, dass robocopy bei Erfolg immer den Wert 1 liefert",
       "Auf $LASTEXITCODE und darauf, dass robocopy erst ab Rückgabecode 8 einen Fehler meldet",
       "Auf $null und darauf, dass robocopy bei Fehlern keinerlei Ausgabe erzeugt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19037,7 +19088,8 @@
       "Nach jedem Schritt eine Pause einfügen, damit man die Ausgabe mitlesen kann",
       "Alle Fehlermeldungen unterdrücken, damit das Skript immer bis zum Ende läuft",
       "Jeden Schritt mit Zeitstempel in eine Logdatei schreiben und mit passendem Rückgabecode enden"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19054,7 +19106,8 @@
       "Konfigurationen sind versioniert, prüfbar und jederzeit gleich reproduzierbar",
       "Konfigurationen werden nur noch auf einem einzigen Admin-PC gespeichert",
       "Server benötigen danach keine Updates und keine Überwachung mehr"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19071,7 +19124,8 @@
       "Ab April 2026 dürfen die Switches nicht mehr betrieben werden, Ersatz liefert der Hersteller bis 2031",
       "Ab April 2026 erhält er keine Sicherheitsupdates mehr, kaufen kann er das Modell noch bis 2031",
       "Ab April 2026 gibt es nur noch kostenpflichtige Updates, ab 2031 werden die Geräte gesperrt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19088,7 +19142,8 @@
       "Zwei Geräte, jedes ist etwa 22,2 cm hoch (4 x 55,5 mm)",
       "Drei Geräte, jedes ist etwa 4 Zoll hoch (4 x 25,4 mm)",
       "Drei Geräte, jedes ist etwa 17,8 cm hoch (4 x 44,45 mm)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19105,7 +19160,8 @@
       "Immer volle fünf Jahre, die TBW-Angabe ist nur eine unverbindliche Empfehlung",
       "Bis 600 TB geschrieben sind, in jedem Fall aber mindestens fünf volle Jahre",
       "Bis zum Ablauf von fünf Jahren oder bis 600 TB geschrieben sind, je nachdem, was zuerst eintritt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19122,7 +19178,8 @@
       "Ja, ausgeschaltet gilt der Bereich „non-operating“, es darf aber keine Feuchtigkeit kondensieren",
       "Ja, aber nur, wenn das Gerät im Lager eingeschaltet bleibt und sich selbst wärmt",
       "Nein, „non-operating“ bezeichnet Temperaturen, bei denen das Gerät zerstört wird"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -19139,7 +19196,8 @@
       "Die Version ist nicht betroffen, weil „through“ hier „bis ausschließlich“ bedeutet",
       "Die Version ist betroffen, die Lücke ist aber nur mit gültigem Konto vor Ort ausnutzbar",
       "Die Version ist betroffen, die Lücke ist ohne Anmeldung aus der Ferne ausnutzbar, sofort auf 2.3.5 aktualisieren"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "netzwerk",
@@ -19156,7 +19214,8 @@
       "Die alten Konfigurationsdateien passen nicht zu 5.0 und müssen vorher mit dem Migrationswerkzeug umgewandelt werden",
       "Version 5.0 läuft nur auf älterer Hardware, das Migrationswerkzeug prüft den Server",
       "Nach dem Update kann man jederzeit ohne Datenverlust auf 4.x zurückwechseln"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19173,7 +19232,8 @@
       "Gemeint sind 15 W und 24,5 kg, weil das Komma eine Stelle verschiebt",
       "Nichts, im Englischen gilt dieselbe Schreibweise wie im Deutschen",
       "Gemeint sind 1,5 kW und 2,45 kg, weil der Punkt Tausender trennt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19190,7 +19250,8 @@
       "Der öffentliche Schlüssel des Servers hat sich geändert, es droht ein Angriff",
       "Das Kennwort des Kollegen ist abgelaufen und muss am Server neu gesetzt werden",
       "Der Server erlaubt nur Schlüsselanmeldung und hat keinen passenden Schlüssel des Kollegen akzeptiert"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19206,7 +19267,8 @@
       "Beides ist Marktsegmentierung, nur mit unterschiedlicher Zahl von Mitbewerbern",
       "Laufende Erfassung über einen Zeitraum ist Marktbeobachtung, die einmalige Stichtagsbetrachtung ist Marktanalyse",
       "Laufende Erfassung ist Marktprognose, die einmalige Stichtagsbetrachtung ist Benchmarking"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19223,7 +19285,8 @@
       "Rabatt, Skonto, Zahlungsziel, Versandkosten, Lieferzeit, Garantie und Service",
       "Nur Firmensitz, Rechtsform und Anzahl der Mitarbeiter der Mitbewerber",
       "Nur Herstellermarke, Prozessortyp und Farbe des Gehäuses"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19239,7 +19302,8 @@
       "Preisdifferenzierung, unterschiedliche Preise für gleiche Leistungen",
       "Benchmarking, der Vergleich mit dem Besten als Maßstab",
       "Marktsegmentierung, die Aufteilung des Marktes in Zielgruppen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19255,7 +19319,8 @@
       "Der Wunsch nach schnelleren Rechnern ist das Bedürfnis, mit Budget wird es zum Bedarf, die Bestellung ist die Nachfrage",
       "Alle drei Begriffe bedeuten dasselbe und werden in der Beratung gleich verwendet",
       "Der Wunsch ist die Nachfrage, das Budget ist das Bedürfnis, die Bestellung ist der Bedarf"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19272,7 +19337,8 @@
       "Nur die Software als Anforderung, Gewicht und Tastatur sind persönliche Vorlieben",
       "Alle drei Aussagen als gleichwertige Muss-Anforderungen, um den Kunden nicht zu verärgern",
       "Getrennt als Muss-Anforderungen (Software, Gewicht) und Kann- oder Wunschanforderung (Beleuchtung)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19289,7 +19355,8 @@
       "Es gibt keinen Unterschied, Preise und Rechte sind für alle Kunden gesetzlich gleich",
       "Privatkunden brauchen Bruttopreise und haben im Fernabsatz ein Widerrufsrecht, Firmenkunden reichen Nettopreise",
       "Beide Zielgruppen haben ein gesetzliches Widerrufsrecht von 30 Tagen bei jedem Kauf"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19306,7 +19373,8 @@
       "Eine Rechnung über 20 Notebooks mit Angabe der Garantiezeit und der Ratenzahlung",
       "Ein Angebot über 20 Notebooks mit Angabe der Lieferzeit und der Zahlungsbedingungen",
       "Eine Auftragsbestätigung mit Angabe der Lagermenge und der Mahnstufen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19322,7 +19390,8 @@
       "Die Preiskalkulation mit allen Einzelposten, Zuschlägen und der Gewinnspanne",
       "Begrüßung, Thema und Ziel, kurzer Überblick über den Ablauf und ein Bezug zum Anliegen der Zuhörer",
       "Die vollständige technische Konfiguration aller Backupjobs mit ihren Zeitplänen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19338,7 +19407,8 @@
       "Zuhören, Verständnis zeigen, den Fehler klären und eine konkrete Lösung mit Termin zusagen",
       "Sofort erklären, dass der Fehler nicht von Ihrem Einsatz stammen kann",
       "Das Gespräch beenden und die Kundin bitten, sich schriftlich zu beschweren"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19354,7 +19424,8 @@
       "Attention, Information, Delivery, Account: die Stufen der Kundenbindung",
       "Angebot, Inhalt, Dauer, Abschluss: die Bestandteile eines Kaufvertrags",
       "Attention, Interest, Desire, Action: Aufmerksamkeit, Interesse, Wunsch, Handlung"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19370,7 +19441,8 @@
       "Die y-Achse muss immer bei 100 enden, damit Prozentwerte sofort erkennbar sind",
       "Die Werte sind zu ähnlich, sie dürfen deshalb nur in einer Tabelle gezeigt werden",
       "Die abgeschnittene y-Achse übertreibt einen kleinen Unterschied optisch, die Achse sollte bei Säulen bei 0 beginnen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19387,7 +19459,8 @@
       "Der Mittelwert, weil der Median Ausreißer doppelt gewichtet",
       "Keiner von beiden, typische Zeiten zeigt nur die Summe aller Zeiten",
       "Der Median, weil wenige sehr lange Tickets den Mittelwert nach oben ziehen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19403,7 +19476,8 @@
       "Beide sind gleich betroffen, weil die Differenz jeweils 10 Störungen beträgt",
       "Nord ist stärker betroffen, weil 30 Störungen mehr sind als 20",
       "Die Daten sind nicht vergleichbar, weil die Standorte verschieden viele Mitarbeiter haben"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19419,7 +19493,8 @@
       "Möglichst allgemein: „Die Teilnehmer finden das Ticketsystem gut.“",
       "Aus Sicht des Trainers: „Ich erkläre alle Menüpunkte des Ticketsystems.“",
       "Beobachtbar und prüfbar: „Die Teilnehmer können selbstständig ein Ticket mit Priorität anlegen.“"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19435,7 +19510,8 @@
       "Ein Fließtext ohne Bilder, damit die Anleitung auch ohne Drucker lesbar bleibt",
       "Möglichst vollständig mit allen Einstellungen, Fachbegriffen und Hintergründen der Software",
       "Eine englische Herstellerdokumentation, weil Übersetzungen fehleranfällig sind"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19452,7 +19528,8 @@
       "Er belegt, wer wann worin eingewiesen wurde, das hilft bei späteren Fehlern, Rückfragen und als Teil der Abnahme",
       "Er ist gesetzlich für jede Softwareeinführung als Teil der Lohnabrechnung vorgeschrieben",
       "Er überträgt die Haftung für alle Softwarefehler auf die Mitarbeiter"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19468,7 +19545,8 @@
       "Nur die Liste der Fehler und Verzögerungen, die im Projekt aufgetreten sind",
       "Nur die Preise für Wartungsverträge und Erweiterungen nach der Gewährleistung",
       "Nur die Rechnung, den Lieferschein und die Seriennummern der gelieferten Hardware"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19485,7 +19563,8 @@
       "Rollback, die Rückkehr zum alten System nach der Inbetriebnahme",
       "Hypercare, eine Phase verstärkter Betreuung direkt nach der Inbetriebnahme",
       "Gewährleistung, die gesetzliche Haftung für Mängel über zwei Jahre"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -19501,7 +19580,8 @@
       "Lastenheft, es beschreibt die Anforderungen des Kunden an das neue CRM",
       "Datenschutz-Folgenabschätzung, sie ist vor jeder Übernahme von Kundendaten Pflicht",
       "Normalisierung, sie entfernt Redundanzen aus der alten Datenbank"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -19517,7 +19597,8 @@
       "Prüfen, ob der neue Server mehr freien Speicher hat als der alte",
       "Dateianzahl und Größe vergleichen, Prüfsummen bilden, Kopierprotokoll prüfen, Stichproben öffnen",
       "Die Dateien ein zweites Mal kopieren, dann sind Fehler ausgeschlossen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "datenbanken",
@@ -19534,7 +19615,8 @@
       "Die Datei ist in ISO-8859-1 gespeichert und wurde beim Import als ASCII gelesen",
       "Die CSV-Datei verwendet Semikolon statt Komma als Trennzeichen",
       "Die Datei ist in UTF-8 gespeichert, wurde beim Import aber als ISO-8859-1 bzw. Windows-1252 gelesen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19551,7 +19633,8 @@
       "Alle Daten unverändert übernehmen und die Bereinigung den Anwendern im neuen System überlassen",
       "Eine Datenbereinigung im Altsystem: Dubletten zusammenführen, Altdaten prüfen, Formate vereinheitlichen",
       "Nur die Dubletten im neuen System nachträglich per Hand löschen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -19568,7 +19651,8 @@
       "Die Gehälter, Arbeitszeiten und Urlaubspläne der Mitarbeiter in der IT-Abteilung",
       "Die Lieferantenliste mit Preisen und Lieferzeiten der eingesetzten Hardware",
       "Die IP-Adressen, Firewallregeln und Administratorkennwörter aller Server im Unternehmen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -19585,7 +19669,8 @@
       "Private E-Mails verbrauchen so viel Speicher, dass der Mailserver regelmäßig ausfällt",
       "Private Nutzung ist in Deutschland grundsätzlich gesetzlich verboten",
       "Der Betriebsrat darf private E-Mails der Beschäftigten jederzeit lesen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19601,7 +19686,8 @@
       "Ein Ishikawa-Diagramm mit den 6M als Hauptäste",
       "Ein Pareto-Diagramm mit den sechs häufigsten Fehlern",
       "Ein Gantt-Diagramm mit sechs parallelen Arbeitspaketen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19617,7 +19703,8 @@
       "Der Neustart verletzt die Gewährleistung des Serverherstellers",
       "Er behebt nur das Symptom, die Grundursache (root cause) bleibt",
       "Der Neustart ist unzulässig, weil kein Change beantragt wurde"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19633,7 +19720,8 @@
       "Flussdiagramm (flow chart) des Ablaufs",
       "Fehlersammelliste (Strichliste, check sheet)",
       "Korrelationsdiagramm (scatter diagram)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19650,7 +19738,8 @@
       "SLA-Report (Servicegüte)",
       "Abnahmeprotokoll (acceptance report)",
       "8D-Report (acht Disziplinen)"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19666,7 +19755,8 @@
       "Workaround, dokumentiert als bekannter Fehler (known error)",
       "Service Request, festgehalten im Servicekatalog",
       "Standard Change, festgehalten im Change-Kalender"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19682,7 +19772,8 @@
       "Beide Maßnahmen sind Vorbeugemaßnahmen, weil sie künftige Fehler vermeiden",
       "Skriptanpassung ist eine Korrekturmaßnahme, die Prüfung des CRM-Projekts eine Vorbeugemaßnahme",
       "Beide Maßnahmen sind Korrekturen, weil der Fehler schon eingetreten ist"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19698,7 +19789,8 @@
       "Herstellerangaben, Seriennummer, Kaufpreis und Restbuchwert des Druckers",
       "Problem, Ursache, Maßnahme, Verantwortliche, Datum und Wirksamkeitsnachweis",
       "Nur die Ticketnummer, weil das Ticketsystem den Rest automatisch speichert"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19714,7 +19806,8 @@
       "Der Zyklus endet, weil eine Maßnahme nur einmal getestet werden darf",
       "Das Ziel wird nachträglich so gesenkt, dass es als erreicht gilt",
       "Die Maßnahme wird trotzdem als Standard übernommen, weil sie schon bezahlt ist"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19730,7 +19823,8 @@
       "„Bis Jahresende werden alle Tickets aller Prioritäten innerhalb von fünf Minuten gelöst, ohne zusätzliches Personal.“",
       "„Der Support beantwortet ab sofort alle Tickets deutlich schneller als bisher und arbeitet kundenorientiert.“",
       "„Der Support soll möglichst bald schneller werden, die genaue Kennzahl legt jeder Mitarbeiter selbst fest.“"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19746,7 +19840,8 @@
       "Plus 1,2 Stunden, das sind 30 Prozent über dem Soll",
       "Plus 1,2 Stunden, das sind etwa 23 Prozent über dem Soll",
       "Plus 1,2 Stunden, das sind 130 Prozent über dem Soll"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19762,7 +19857,8 @@
       "Minus 7 Prozent, das sind etwa 9,3 Prozentpunkte weniger als das Soll",
       "Minus 7 Prozentpunkte, das sind etwa 10,3 Prozent weniger als das Soll",
       "Minus 9,3 Prozentpunkte, das sind 7 Prozent weniger als das Soll"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19778,7 +19874,8 @@
       "Den Ausfall als höhere Gewalt einstufen und keine Maßnahmen dokumentieren",
       "Den Sollwert im SLA ohne Rücksprache auf den erreichten Ist-Wert senken",
       "Ursachen analysieren, Gegenmaßnahmen festlegen und ihre Wirkung später erneut messen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19794,7 +19891,8 @@
       "Das Projekt hat 11 Prozent seines Budgets noch nicht ausgegeben",
       "Das Projekt ist zu 89 Prozent fertig und liegt im Zeitplan",
       "Das Projekt arbeitet 11 Prozent günstiger als geplant"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19810,7 +19908,8 @@
       "Zahl der Nutzer, Schulungstermin, Raum, Referent und Teilnehmerliste",
       "Kennzahl, Messmethode, Ausgangswert (baseline), Zielwert und Messzeitraum",
       "Lizenzkosten, Hersteller, Laufzeit, Kündigungsfrist und Supportvertrag"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19826,7 +19925,8 @@
       "Die Kennzahl wurde falsch berechnet und muss gestrichen werden",
       "Die Kunden melden mehr Fehler, weil der Support schneller reagiert",
       "Der Support ist effizienter geworden, die Beschwerden sind nur Zufall"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19842,7 +19942,8 @@
       "Es ist der Rahmenlehrplan, den die Berufsschule für jeden Betrieb einzeln festlegt",
       "Es ist die Prüfungsordnung der IHK mit allen Inhalten der Abschlussprüfung",
       "Es ist eine freiwillige Betriebsvereinbarung ohne Bezug zur Ausbildungsordnung"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19858,7 +19959,8 @@
       "Beide Pläne legt die IHK fest, damit sie zur Abschlussprüfung passen",
       "Den Ausbildungsrahmenplan legt der Betrieb fest, den Rahmenlehrplan die IHK",
       "Beide Pläne legt das jeweilige Bundesland in einem Landesgesetz fest"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19874,7 +19976,8 @@
       "Die sachliche Gliederung ist verbindlich, die zeitliche Gliederung nur eine Empfehlung der IHK",
       "Die sachliche Gliederung gilt für den Betrieb, die zeitliche Gliederung für die Berufsschule",
       "Die sachliche Gliederung legt fest, was vermittelt wird, die zeitliche Gliederung, wann und wie lange"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19890,7 +19993,8 @@
       "Den Ausbildungsvertrag sofort fristlos kündigen und den Betrieb wechseln",
       "Nichts unternehmen, weil der Inhalt nur in der Berufsschule geprüft wird",
       "Den Ausbilder ansprechen und bei Bedarf den Ausbildungsberater der IHK fragen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19906,7 +20010,8 @@
       "Er ersetzt die Abschlussprüfung, wenn er vollständig und fehlerfrei geführt ist",
       "Er ist freiwillig, wird nur handschriftlich geführt und dient allein der Notengebung",
       "Er belegt die Ausbildung, ist schriftlich oder elektronisch und zulassungsrelevant"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19922,7 +20027,8 @@
       "Die Berufsschule, deren Lehrkräfte die Betriebe regelmäßig kontrollieren",
       "Die Agentur für Arbeit, die die Ausbildungsvergütung genehmigt",
       "Die zuständige Stelle, für Fachinformatiker die IHK, mit ihren Ausbildungsberatern"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19938,7 +20044,8 @@
       "Ein Berufsabschluss verliert nach zehn Jahren rechtlich seine Gültigkeit",
       "Arbeitgeber dürfen ohne neue Zertifikate keine Gehälter mehr zahlen",
       "IT-Wissen veraltet schnell, weil sich Technik, Bedrohungen und Produkte ständig ändern"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19954,7 +20061,8 @@
       "Beide sind gleich, nur die Prüfungssprache unterscheidet sich",
       "Herstellerzertifikate sind staatlich anerkannte Berufsabschlüsse, IHK-Fortbildungen nur private Kurse",
       "Herstellerzertifikate sind produktbezogen und oft befristet, IHK-Fortbildungen staatlich geregelt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19970,7 +20078,8 @@
       "VLANs konfigurieren: Methodenkompetenz, Fehler eingrenzen: Fachkompetenz, Konflikte lösen: Selbstkompetenz, sich organisieren: Sozialkompetenz",
       "VLANs konfigurieren: Fachkompetenz, Fehler systematisch eingrenzen: Methodenkompetenz, im Team Konflikte lösen: Sozialkompetenz, sich selbst organisieren: Selbstkompetenz",
       "VLANs konfigurieren: Fachkompetenz, Fehler eingrenzen: Sozialkompetenz, Konflikte lösen: Methodenkompetenz, sich organisieren: Selbstkompetenz"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -19987,7 +20096,8 @@
       "Das Aufstiegs-BAföG nach dem Aufstiegsfortbildungsförderungsgesetz (AFBG)",
       "Das Arbeitslosengeld, das während jeder Weiterbildung weiterläuft",
       "Das Schüler-BAföG, das nur bis zum 25. Lebensjahr gezahlt wird"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20003,7 +20113,8 @@
       "Auf das Bundesurlaubsgesetz, das jedem zehn Tage Fortbildungsurlaub gewährt",
       "Auf das Aufstiegs-BAföG, das eine Freistellung durch den Arbeitgeber vorschreibt",
       "Auf das Niedersächsische Bildungsurlaubsgesetz mit meist fünf Tagen pro Jahr"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20019,7 +20130,8 @@
       "IHK-Abschluss: informell, Herstellerkurs: formal, Fachartikel lesen: nicht formal",
       "IHK-Abschluss: formal, Herstellerkurs: nicht formal, Fachartikel lesen: informell",
       "IHK-Abschluss: nicht formal, Herstellerkurs: informell, Fachartikel lesen: formal"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20035,7 +20147,8 @@
       "Weil das Gesetz es verlangt; er muss das Zertifikat bei der IHK neu eintragen lassen",
       "Weil Produkte sich schnell ändern; er muss es nach Herstellerregeln verlängern",
       "Weil der Arbeitgeber es vorschreibt; er muss nur den Vorgesetzten informieren"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20051,7 +20164,8 @@
       "Verteiltes Wiederholen (spaced repetition) über Wochen in wachsenden Abständen",
       "Den Stoff in derselben Zeit nur einmal langsam und gründlich durchlesen",
       "Den Stoff mehrfach abschreiben, damit sich das Schriftbild einprägt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20067,7 +20181,8 @@
       "Die Zusammenfassung als Audio aufnehmen und beim Pendeln anhören",
       "Aktives Abrufen (active recall): Aufgaben ohne Vorlage lösen",
       "Die Lösungen der Probeklausur auswendig lernen und erneut lesen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20083,7 +20198,8 @@
       "Man lernt so lange ohne Pause, bis eine ganze Aufgabe vollständig erledigt ist",
       "Man lernt nur morgens früh, weil das Gehirn dann am aufnahmefähigsten ist",
       "Man wechselt alle fünf Minuten das Lernthema, damit keine Langeweile entsteht"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20099,7 +20215,8 @@
       "Inhaltsverzeichnis lesen, Glossar lernen, Bilder ansehen, Fazit lesen, aufhören",
       "Überblick verschaffen, Fragen stellen, lesen, das Gelesene wiedergeben, wiederholen",
       "Schnell lesen, zusammenfassen, Mindmap zeichnen, Karteikarten schreiben, prüfen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20115,7 +20232,8 @@
       "Mit dem ersten Kapitel des Lehrbuchs beginnen und so weit kommen wie möglich",
       "Lücken erfassen, vom Prüfungstermin rückwärts planen, Wiederholungen und Puffer einplanen",
       "Alle Themen gleich lang planen, damit nichts bevorzugt wird, und keine Pausen vorsehen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20131,7 +20249,8 @@
       "Anzahl der Likes, Länge des Beitrags, Design der Webseite, Zahl der Werbebanner",
       "Ob der Beitrag auf Englisch ist, ob er Bilder enthält und wie alt das Forum ist",
       "Autor, Aktualität, Belege und Abgleich mit der Herstellerdokumentation"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20147,7 +20266,8 @@
       "Ein Dokument der IETF, das Internetprotokolle als Primärquelle beschreibt",
       "Ein Gesetz der EU, das Netzwerkbetreibern Mindeststandards vorschreibt",
       "Ein Forum der Hersteller, in dem Nutzer Fragen zu Protokollen stellen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20163,7 +20283,8 @@
       "Junior, Professional und Senior Professional",
       "Berufsspezialist, Bachelor und Master Professional",
       "IT-Assistent, IT-Techniker und IT-Ingenieur"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20179,7 +20300,8 @@
       "Ausbildung: Niveau 4, Bachelor Professional: Niveau 6 wie ein Hochschul-Bachelor",
       "Ausbildung: Niveau 5, Bachelor Professional: Niveau 5 wie der Berufsspezialist",
       "Ausbildung: Niveau 6, Bachelor Professional: Niveau 8 wie eine Promotion"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20195,7 +20317,8 @@
       "Geprüfter Berufsspezialist IKT mit dem Profil Informationssicherheit",
       "Bachelor Professional in IT mit dem Schwerpunkt Personalführung",
       "IT-Sicherheitsbeauftragter nach dem BSI-Gesetz mit Staatsprüfung"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20211,7 +20334,8 @@
       "Ja, jeder Berufsabschluss ersetzt automatisch das Abitur in ganz Deutschland",
       "Ja, beruflich Qualifizierte können je nach Landesrecht zugelassen werden",
       "Ja, aber nur an privaten Hochschulen und nur ohne Abschlussprüfung"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20227,7 +20351,8 @@
       "Nur Betriebe mit Auszubildenden müssen Beiträge an die IHK zahlen",
       "Die GmbH ist freiwillig beigetreten, um Tarifverträge abzuschließen",
       "Gewerbebetriebe sind kraft Gesetzes Pflichtmitglied der IHK"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20243,7 +20368,8 @@
       "Beides sind Gewerkschaften, die für IT-Fachkräfte streiken",
       "Beides sind Pflichtkammern, die Abschlussprüfungen abnehmen",
       "Beides sind Behörden, die den Arbeitsschutz im Betrieb überwachen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20260,7 +20386,8 @@
       "Der Arbeitgeber ist verantwortlich und muss das Ergebnis dokumentieren",
       "Die Berufsgenossenschaft erstellt sie und schickt sie dem Betrieb zu",
       "Erst ab 50 Beschäftigten ist eine Gefährdungsbeurteilung vorgeschrieben"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20276,7 +20403,8 @@
       "Ja, psychische Belastungen sind ausdrücklich Teil der Gefährdungsbeurteilung",
       "Nur wenn der Betriebsarzt vorher eine Erkrankung festgestellt hat",
       "Nein, dort werden nur körperliche Gefahren wie Strom und Lärm erfasst"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20292,7 +20420,8 @@
       "Sie regelt nur den Brandschutz und die Zahl der Feuerlöscher",
       "DGUV Vorschrift 1 enthält die allgemeinen Grundsätze der Prävention",
       "Sie regelt die Gestaltung von Bildschirmarbeitsplätzen im Detail"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20308,7 +20437,8 @@
       "Jeden Mitarbeiter verpflichten, eigenen Gehörschutz zu kaufen",
       "Gehörschutz zur Verfügung stellen und die Beschäftigten unterweisen",
       "Den Serverraum sofort stilllegen, bis der Pegel unter 60 dB(A) liegt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20324,7 +20454,8 @@
       "Zu zweit oder mit Serverlift heben, Schienen vorher montieren, Rücken gerade halten",
       "Allein heben, aber dabei schnell arbeiten, damit die Last kurz bleibt",
       "Den Server senkrecht hochkant anheben und von oben einschieben"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20340,7 +20471,8 @@
       "Nur den Firmennamen nennen, die Leitstelle findet den Rest selbst",
       "Unfallhergang ausführlich schildern und danach den Hausarzt anrufen",
       "Name, Geburtsdatum, Krankenkasse, dann sofort wieder auflegen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20356,7 +20488,8 @@
       "Erst ab 50 Beschäftigten muss ein Ersthelfer bestellt werden",
       "Ein Ersthelfer reicht immer, egal wie groß der Betrieb ist",
       "Jeder zweite Beschäftigte muss eine Ersthelferausbildung haben"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20372,7 +20505,8 @@
       "Ja, jede Erste-Hilfe-Leistung wird im Verbandbuch dokumentiert",
       "Ja, es muss noch am selben Tag der Polizei gemeldet werden",
       "Nein, nur Unfälle mit Krankenhausbesuch werden schriftlich erfasst"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20388,7 +20522,8 @@
       "Ja, aber nur, wenn er mit öffentlichen Verkehrsmitteln gefahren ist",
       "Ja, das ist ein Wegeunfall und durch die Berufsgenossenschaft versichert",
       "Nein, nur Unfälle im Ausbildungsbetrieb selbst sind versichert"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20404,7 +20539,8 @@
       "Weiterarbeiten lassen, wenn er sich gut fühlt, ist keine Gefahr",
       "Trotzdem ärztlich untersuchen lassen und den Vorfall dokumentieren",
       "Ihn nach Hause schicken und erst bei Beschwerden einen Arzt rufen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20420,7 +20556,8 @@
       "Sofortmaßnahmen, Notruf, Erste Hilfe, Rettungsdienst, Krankenhaus",
       "Rettungsdienst, Notruf, Sofortmaßnahmen, Krankenhaus, Erste Hilfe",
       "Notruf, Krankenhaus, Rettungsdienst, Erste Hilfe, Sofortmaßnahmen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20436,7 +20573,8 @@
       "A Gase, B Holz, C Speisefette, D Flüssigkeiten, F Metalle",
       "A Elektrogeräte, B Papier, C Metalle, D Gase, F Flüssigkeiten",
       "A feste Stoffe, B Flüssigkeiten, C Gase, D Metalle, F Speiseöle und -fette"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20452,7 +20590,8 @@
       "Fenster öffnen, damit der Rauch abzieht, und dann den Aufzug nehmen",
       "Sofort löschen, erst danach den Vorgesetzten per E-Mail informieren",
       "Wertsachen und Akten retten, anschließend die Feuerwehr verständigen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20468,7 +20607,8 @@
       "Nur die Verpackungen der Hardware, Strom gilt als klimaneutral",
       "Nur der Lärm der Lüfter, alles andere ist gesetzlich ausgeglichen",
       "Energieverbrauch und CO2, Abwärme, Elektroschrott und Rohstoffverbrauch"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20484,7 +20624,8 @@
       "Nur eine Kennzeichnung mit dem CE-Zeichen auf jedem Karton",
       "Eine Rücknahme aller Kartons persönlich beim Kunden vor Ort",
       "Registrierung im Verpackungsregister LUCID und Beteiligung an einem dualen System"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20500,7 +20641,8 @@
       "Die Geräte im Restmüll entsorgen, wenn die Akkus entfernt sind",
       "Die Geräte unverändert an Mitarbeiter verschenken, ohne zu löschen",
       "Die Geräte sofort schreddern, weil Recycling immer Vorrang hat"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20516,7 +20658,8 @@
       "Den Akku vollständig laden, damit er sich wieder stabilisiert",
       "Das Notebook zusammen mit dem Akku in den Restmüll geben",
       "Den Akku aufstechen, damit das Gas entweicht, und weiter nutzen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20532,7 +20675,8 @@
       "Festplatten und SSDs beide Klasse T für technische Datenträger",
       "Festplatten Klasse E, SSDs Klasse H, je nach Schnittstelle",
       "Magnetische Festplatten Klasse H, SSDs und andere elektronische Datenträger Klasse E"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "systeme",
@@ -20548,7 +20692,8 @@
       "Über ein Rücknahmeprogramm des Herstellers oder einen Recycler zur Wiederbefüllung",
       "In das Altpapier, weil der Toner aus Kohlenstoff besteht",
       "Zur Sammelstelle für Altbatterien, weil sie Elektronik enthalten"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20564,7 +20709,8 @@
       "Die Anzeige ist zulässig, solange keine Religion erwähnt wird",
       "Altersangaben streichen, die Anzeige muss nach dem AGG merkmalsneutral sein",
       "Die Anzeige ist zulässig, weil das Alter kein geschütztes Merkmal ist"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20580,7 +20726,8 @@
       "Sie kann sofort fristlos kündigen und Schadensersatz vom Kollegen verlangen",
       "Sie darf sich bei der zuständigen Stelle im Betrieb beschweren und darf dafür nicht benachteiligt werden",
       "Sie muss den Konflikt selbst lösen, der Arbeitgeber ist nicht zuständig"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20596,7 +20743,8 @@
       "Keine Benachteiligung, weil Teilzeit kein Merkmal im AGG ist",
       "Eine unmittelbare Benachteiligung wegen der Weltanschauung",
       "Eine mittelbare Benachteiligung wegen des Geschlechts"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20612,7 +20760,8 @@
       "Mit einem Einzelbüro, damit er nicht mit Kunden sprechen muss",
       "Mit einfacheren Aufgaben ohne Bildschirmarbeit für die Probezeit",
       "Mit einem Kollegen, der alle Bildschirmaufgaben für ihn erledigt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20628,7 +20777,8 @@
       "Abwarten, weil Mobbing nach der Probezeit von selbst aufhört",
       "Die Kollegen ebenso behandeln, damit sie die Wirkung merken",
       "Sofort kündigen, weil der Betrieb nicht eingreifen darf"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20644,7 +20794,8 @@
       "„Wenn das so weitergeht, melde ich das sofort beim Chef.“",
       "„Ich fühle mich unter Druck, wenn die Doku bei mir landet, und wünsche mir eine feste Aufteilung.“",
       "„Du drückst dich immer vor der Doku, das weiß hier jeder im Team.“"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20660,7 +20811,8 @@
       "Gruppendruck, dagegen hilft eine Abstimmung ohne Begründung",
       "Unbewusste Voreingenommenheit (unconscious bias), dagegen helfen feste Kriterien und gemischte Auswahlrunden",
       "Positive Diskriminierung, dagegen hilft ein Auswahlverfahren per Los"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20676,7 +20828,8 @@
       "Alle Teilnehmenden vorab informieren und eine Rechtsgrundlage, meist ihre Einwilligung, einholen",
       "Nur die Zustimmung der Projektleiterin, weil sie die Konferenz leitet",
       "Nichts, weil eine Videokonferenz automatisch öffentlich ist"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20692,7 +20845,8 @@
       "Den ganzen Bildschirm teilen, damit der Kunde alles nachvollziehen kann",
       "Die Datei vorab per Freigabelink für alle im Internet veröffentlichen",
       "Nur das eine Fenster teilen und vorher Benachrichtigungen ausschalten"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20708,7 +20862,8 @@
       "Nichts, weil Firmenveranstaltungen immer öffentlich sind",
       "Es genügt, wenn der Fotograf selbst der Veröffentlichung zustimmt",
       "Es genügt, die Gesichter nachträglich farblich aufzuhellen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20724,7 +20879,8 @@
       "Ja, das Grundgesetz verbietet jede E-Mail nach 18 Uhr ausdrücklich",
       "Ein eigenes Gesetz gibt es nicht, aber die Ruhezeit nach Arbeitszeitgesetz und betriebliche Regeln schützen",
       "Ja, die DSGVO verbietet Arbeitgebern Kontakt außerhalb der Arbeitszeit"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20740,7 +20896,8 @@
       "Alle Empfänger in das An-Feld setzen und um Antwort an alle bitten",
       "Alle Empfänger in CC setzen, damit jeder weiß, wer eingeladen ist",
       "Die Adressliste als Excel-Datei anhängen, damit Rückfragen leichter sind"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20756,7 +20913,8 @@
       "Mit eigenen bearbeiteten Fotos der anderen Azubis antworten",
       "Beweise per Screenshot sichern und sich dem Ausbilder anvertrauen",
       "Die Gruppe sofort verlassen und alle Nachrichten endgültig löschen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20772,7 +20930,8 @@
       "Kein Problem, solange die Datei als schreibgeschützt markiert ist",
       "Das Problem ist nur der Speicherplatz, besser ein USB-Stick nutzen",
       "Kein Problem, weil OneDrive-Links nach einer Stunde ablaufen"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20788,7 +20947,8 @@
       "Nein, der Betriebsrat ist nur bei Kündigungen und Einstellungen beteiligt",
       "Ja, aber nur, wenn das Tool mehr als 1.000 Euro im Jahr kostet",
       "Nein, Software zählt als Betriebsmittel und ist allein Sache des Arbeitgebers"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20804,7 +20964,8 @@
       "Fotos dürfen genutzt werden, wenn man sie leicht verkleinert",
       "Ohne Copyright-Hinweis ist jedes Foto im Internet frei nutzbar",
       "Fotos sind erst nach Eintragung beim Patentamt geschützt"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20820,7 +20981,8 @@
       "Kommentare, Änderungen und Autorendaten; vorher mit „Dokument prüfen“ entfernen",
       "Keine, weil Word versteckte Inhalte beim Speichern automatisch löscht",
       "Nur Wörterbuchdaten; man entfernt sie vor dem Versand mit dem Virenscanner"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20836,7 +20998,8 @@
       "Nach dem Leeren des Papierkorbs sind die Daten sicher entfernt",
       "Die Daten sind meist noch wiederherstellbar, weil nur der Verweis im Dateisystem entfernt wurde",
       "Ein Schnellformatieren überschreibt alle Daten zuverlässig"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "sicherheit",
@@ -20852,7 +21015,8 @@
       "Angreifer können die Angaben für gezielte Phishing- und Social-Engineering-Angriffe nutzen",
       "Kein Risiko, weil Karrierenetzwerke nur von Personalabteilungen gelesen werden",
       "Kein Risiko, solange er kein Passwort und keine IP-Adresse veröffentlicht"
-    ]
+    ],
+    "neu_ab": "0.55"
   },
   {
     "cat": "wirtschaft",
@@ -20868,6 +21032,7 @@
       "Nur ein Hinweis des Forums, weil Foren nicht haften",
       "Keine, weil im Internet die Meinungsfreiheit Vorrang hat",
       "Keine, solange er seinen Arbeitgeber nicht namentlich nennt"
-    ]
+    ],
+    "neu_ab": "0.55"
   }
 ]

@@ -1734,6 +1734,12 @@ def validate_content():
     return problems
 
 
+# Ab 0.55: Feld neu angehaengter Karten und Quizfragen mit der Version, z.B.
+# "neu_ab": "0.55". Das Spiel zaehlt sie erst, wenn sie bearbeitet wurden
+# (fisi_game.game_items), damit ein Update keinen Spielstand senkt.
+NEW_SINCE_FIELD = "neu_ab"
+
+
 def content_totals():
     """Anzahl verfuegbarer Inhalte je Fachbereich (Karten + Quizfragen)."""
     totals = {cat: 0 for cat in CATEGORIES}
