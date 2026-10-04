@@ -6702,5 +6702,1051 @@
       "",
       "3. Die Route zum Portal wird in beide VRFs übernommen (Route Leaking). Das Portal antwortet aber an 192.168.10.x und kann nicht unterscheiden, welche Firma gemeint ist, weil das Netz zweimal vorkommt. Lösung: Jede Mieter-VRF wird auf dem Weg zum Portal per 1:1-NAT auf einen eindeutigen Bereich umgesetzt, das Hostteil bleibt gleich. Der Rechner 192.168.10.37 des Paketdienstes erscheint als 10.99.2.37, derselbe Hostteil beim Kühllogistiker als 10.99.1.37. In der VRF des Portals gibt es nur Routen zu 10.99.1.0/24 und 10.99.2.0/24, nicht zwischen den Mietern. Eine Firewall zwischen Mietern und Portal erlaubt nur die nötigen Ports."
     ]
+  },
+  {
+    "title": "OU-Struktur und AGDLP für die Filialen einer Sanitätshaus-Kette",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3c",
+      "C3d",
+      "A8d"
+    ],
+    "text": [
+      "Eine Sanitätshaus-Kette hat eine Zentrale und 6 Filialen. In jeder Filiale arbeiten 12 Beschäftigte in Beratung, Orthopädietechnik und Verkauf. In der Zentrale arbeiten 4 Personen im Qualitätsmanagement (QM) und 8 Personen in der Abrechnung mit den Krankenkassen. Alle 84 Konten liegen bisher im Standardcontainer \"Users\" der Domäne sanivita.local.",
+      "Auf dem Dateiserver gibt es je Filiale einen Ordner \"Kundenakten_F1\" bis \"Kundenakten_F6\". Die Rechte wurden bisher jedem Benutzer einzeln gegeben:",
+      "  Mitarbeitende der eigenen Filiale: Ändern",
+      "  Abrechnung (Zentrale): Ändern auf allen 6 Ordnern",
+      "  QM (Zentrale): Lesen auf allen 6 Ordnern",
+      "Ihr Ausbilder möchte die Domäne aufräumen und die Rechte nach dem Prinzip AGDLP vergeben.",
+      "",
+      "1. Entwerfen Sie eine OU-Struktur für die Kette. Begründen Sie zwei Vorteile gegenüber dem Container \"Users\".",
+      "2. Berechnen Sie, wie viele Berechtigungseinträge (ACE) es heute auf den 6 Ordnern gibt. Planen Sie die Gruppen nach AGDLP und berechnen Sie die Zahl der ACE, der globalen und domänenlokalen Gruppen und der Gruppenmitgliedschaften. Wie viele Änderungen sind heute und nach AGDLP nötig, wenn eine neue Person in der Abrechnung anfängt?",
+      "3. Legen Sie mit PowerShell die Gruppen für die Abrechnung und für den Ordner der Filiale 1 an und verschachteln Sie sie. Eine Mitarbeiterin wechselt von Filiale 2 nach Filiale 5. Welche Schritte sind nötig und warum sieht sie die neuen Rechte erst nach einer neuen Anmeldung?"
+    ],
+    "solution": [
+      "1. Vorschlag: sanivita.local > OU \"Sanivita\" > OU \"Zentrale\" und OU \"Filialen\" > darunter je Filiale eine OU \"F1\" bis \"F6\". In jeder Standort-OU getrennte Unter-OUs \"Benutzer\", \"Computer\" und \"Gruppen\". Zusätzlich eine OU \"Server\" und eine OU \"Dienstkonten\". Vorteile: Gruppenrichtlinien (GPO) lassen sich nur mit OUs, Standorten und der Domäne verknüpfen, nicht mit dem Container \"Users\". So bekommen z. B. die Filial-PCs eigene Einstellungen. Außerdem kann man Verwaltungsrechte delegieren (delegation of control), etwa darf die Filialleitung in ihrer OU Kennwörter zurücksetzen. Die Struktur macht die Domäne übersichtlich.",
+      "",
+      "2. Heute: Je Ordner 12 Filialmitarbeitende + 8 Abrechnung + 4 QM = 24 ACE. Bei 6 Ordnern: 6 * 24 = 144 ACE. AGDLP heißt: Accounts kommen in globale Gruppen (nach Rolle), globale Gruppen kommen in domänenlokale Gruppen (nach Ressource und Recht), nur die domänenlokalen Gruppen bekommen die Rechte (Permissions). Globale Gruppen: GG_Filiale1 bis GG_Filiale6, GG_Abrechnung, GG_QM, also 6 + 2 = 8. Domänenlokale Gruppen: je Ordner DL_Kundenakten_Fx_Aendern und DL_Kundenakten_Fx_Lesen, also 6 * 2 = 12. ACE: je Ordner 2, also 12 statt 144. Mitgliedschaften: 84 Konten in globalen Gruppen (6 * 12 + 8 + 4 = 84). Verschachtelungen: je Ordner GG_Filialex und GG_Abrechnung in der Ändern-Gruppe und GG_QM in der Lesen-Gruppe, also 6 * 3 = 18. Neue Person in der Abrechnung: heute 6 neue ACE auf 6 Ordnern, nach AGDLP genau 1 Mitgliedschaft in GG_Abrechnung. Die Rechte bleiben unverändert, das senkt Fehler und ist leicht zu prüfen.",
+      "",
+      "3. New-ADGroup -Name \"GG_Abrechnung\" -GroupScope Global -GroupCategory Security -Path \"OU=Gruppen,OU=Zentrale,OU=Sanivita,DC=sanivita,DC=local\"",
+      "   New-ADGroup -Name \"DL_Kundenakten_F1_Aendern\" -GroupScope DomainLocal -GroupCategory Security -Path \"OU=Gruppen,OU=Zentrale,OU=Sanivita,DC=sanivita,DC=local\"",
+      "   Add-ADGroupMember -Identity \"DL_Kundenakten_F1_Aendern\" -Members \"GG_Filiale1\", \"GG_Abrechnung\"",
+      "   Danach bekommt DL_Kundenakten_F1_Aendern auf dem Ordner das NTFS-Recht Ändern. Wechsel der Mitarbeiterin (Mover-Prozess, Konto z. B. mmeyer): Remove-ADGroupMember -Identity \"GG_Filiale2\" -Members \"mmeyer\" -Confirm:$false, dann Add-ADGroupMember -Identity \"GG_Filiale5\" -Members \"mmeyer\". Das Konto mit Move-ADObject in die OU \"Benutzer\" von F5 verschieben, damit die GPO der neuen Filiale gilt. Attribute wie Büro und Vorgesetzte anpassen und den Wechsel im Ticket dokumentieren. Die alten Rechte zuerst entziehen, damit sie nicht Rechte aus beiden Filialen hat. Die Gruppenmitgliedschaften stehen im Kerberos-Ticket (Zugriffstoken), das bei der Anmeldung ausgestellt wird. Erst mit einer neuen Anmeldung (oder einem neuen Ticket) enthält das Token die neuen Gruppen."
+    ]
+  },
+  {
+    "title": "Widersprüchliche Gruppenrichtlinien in einer Kreishandwerkerschaft auflösen",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3d",
+      "C3c",
+      "C1d"
+    ],
+    "text": [
+      "Die Kreishandwerkerschaft betreut 40 Innungen. In der Geschäftsstelle melden die Mitarbeitenden, dass sich Bildschirme unterschiedlich schnell sperren. Der Empfang beschwert sich, dass USB-Sticks von Besuchern nicht lesbar sind. Sie finden folgende Einstellungen:",
+      "  Lokale Richtlinie auf allen PCs: Bildschirmsperre nach 30 Minuten",
+      "  Standort-GPO \"S-Hauptsitz\": Ruhezustand nach 60 Minuten",
+      "  Domänen-GPO \"D-Basis\": Bildschirmsperre nach 15 Minuten, Ruhezustand nach 120 Minuten",
+      "  Domänen-GPO \"D-Sicherheit\" (Erzwungen / Enforced): USB-Speicher gesperrt",
+      "  OU \"Geschaeftsstelle\", GPO \"OU-GS\": Bildschirmsperre nach 10 Minuten, USB-Speicher erlaubt",
+      "  Unter-OU \"Empfang\" (Vererbung deaktiviert / Block Inheritance), GPO \"OU-Empfang\": Bildschirmsperre nach 5 Minuten, Laufwerk P: verbinden (Benutzerkonfiguration)",
+      "Der PC GS-BUCH01 liegt in der OU \"Geschaeftsstelle\", der PC EMP01 in der OU \"Empfang\". Die Benutzerkonten liegen in einer eigenen OU \"Mitarbeitende\".",
+      "",
+      "1. Erklären Sie die Verarbeitungsreihenfolge LSDOU. Ermitteln Sie für GS-BUCH01 und EMP01 die wirksame Bildschirmsperre, den Ruhezustand und die USB-Einstellung.",
+      "2. Die Buchhaltung braucht USB-Sticks für die Bank. Wie lösen Sie das, ohne \"D-Sicherheit\" für alle aufzuweichen? Warum wird Laufwerk P: am Empfang nicht verbunden und wie beheben Sie das?",
+      "3. Sie ändern \"OU-GS\" um 10:20 Uhr. Wann gilt die Änderung spätestens auf einem laufenden PC, wenn das Standardintervall gilt? Mit welchen Befehlen erzwingen und prüfen Sie die Anwendung?"
+    ],
+    "solution": [
+      "1. LSDOU: Lokal, Standort (Site), Domäne, OU (von oben nach unten). Was später verarbeitet wird, überschreibt frühere Werte. Die OU-Richtlinie, die am nächsten am Objekt liegt, gewinnt also. Ausnahmen: \"Vererbung deaktivieren\" blockiert die GPOs von Standort, Domäne und übergeordneten OUs. Eine erzwungene GPO kann nicht blockiert und nicht überschrieben werden. GS-BUCH01: Sperre 10 Minuten (OU-GS schlägt D-Basis und lokal), Ruhezustand 120 Minuten (D-Basis schlägt S-Hauptsitz, OU-GS setzt keinen Wert), USB gesperrt (D-Sicherheit ist erzwungen und gewinnt gegen OU-GS). EMP01: Die Vererbung ist blockiert, also wirken nur die lokale Richtlinie, OU-Empfang und erzwungene GPOs. Sperre 5 Minuten, Ruhezustand nicht per GPO gesetzt (Standard des PCs), USB gesperrt durch D-Sicherheit. Darum lesen Besucher-Sticks am Empfang nicht.",
+      "",
+      "2. Eine Ausnahme gehört nicht in die OU-Ebene, weil die erzwungene GPO dort sowieso gewinnt. Lösung: Eine Gruppe GG_USB_Ausnahme mit den Computerkonten der Buchhaltung anlegen. In der Delegierung von D-Sicherheit bekommt diese Gruppe \"Gruppenrichtlinie übernehmen: Verweigern\" (Sicherheitsfilterung). Besser noch: eine eigene GPO mit Freigabe nur der Bank-Sticks über ihre Geräte-IDs. Die Ausnahme genehmigen lassen und dokumentieren. Laufwerk P: ist eine Benutzereinstellung. Sie wirkt nur, wenn das Benutzerkonto in der OU liegt, mit der die GPO verknüpft ist. Die Konten liegen in \"Mitarbeitende\", also greift sie nicht. Abhilfe: die Laufwerkszuordnung in einer GPO an der OU \"Mitarbeitende\" mit Zielgruppenadressierung (item-level targeting) auf die Empfangsgruppe, oder in OU-Empfang die Loopback-Verarbeitung im Modus \"Zusammenführen\" (merge) aktivieren. Dann gelten Benutzereinstellungen der Computer-OU für jeden, der sich an EMP01 anmeldet.",
+      "",
+      "3. Clients und Mitgliedsserver aktualisieren Richtlinien im Hintergrund alle 90 Minuten mit einer zufälligen Verzögerung von bis zu 30 Minuten, also spätestens nach 120 Minuten. Domänencontroller alle 5 Minuten. Die Änderung erreicht den Domänencontroller zuerst per Replikation. Ohne Replikationsverzögerung gilt sie spätestens um 10:20 + 2:00 = 12:20 Uhr. Erzwingen am PC: gpupdate /force. Aus der Ferne: Invoke-GPUpdate -Computer \"GS-BUCH01\" -Force (Firewallregeln für die Remoteverwaltung nötig). Prüfen: gpresult /r /scope computer zeigt die angewendeten und gefilterten GPOs, gpresult /h C:\\Temp\\gpbericht.html erstellt einen Bericht. In der Gruppenrichtlinienverwaltung hilft der Assistent \"Gruppenrichtlinienergebnisse\" (RSoP). Die Änderung im Änderungsprotokoll festhalten."
+    ]
+  },
+  {
+    "title": "Messdatenverzeichnis und sudo-Rechte auf dem Laborserver eines Bodenkunde-Instituts",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3c",
+      "C3a",
+      "A8d"
+    ],
+    "text": [
+      "Ein Institut für Bodenkunde betreibt einen Laborserver mit Ubuntu Server. Messgeräte legen Ergebnisse in /srv/messdaten ab. Drei Laborkräfte (akrause, bdemir, cvogel) sollen dort gemeinsam arbeiten. Der Dienst messerfassung.service holt die Daten von den Geräten. Die Haustechnik (Gruppe laborit) soll den Dienst neu starten und sein Protokoll lesen dürfen, aber keine anderen Rootrechte haben.",
+      "Ein Ausschnitt von ls -ld und ls -l zeigt den heutigen Stand:",
+      "  drwxr-xr-x  root   root     /srv/messdaten",
+      "  -rw-r-----  akrause akrause  /srv/messdaten/probe_0815.csv",
+      "",
+      "1. Legen Sie die Gruppe bodenlabor und das Konto für cvogel mit Heimatverzeichnis und Bash an. cvogel soll das Startkennwort bei der ersten Anmeldung ändern. Wie nehmen Sie bdemir zusätzlich in die Gruppe auf, ohne andere Gruppen zu verlieren?",
+      "2. Geben Sie die heutigen Rechte oktal an und erklären Sie, warum bdemir die Datei probe_0815.csv nicht lesen kann. Setzen Sie das Verzeichnis so, dass nur Gruppe und Besitzer zugreifen, neue Dateien automatisch der Gruppe bodenlabor gehören und niemand fremde Dateien löschen darf. Welche Rechte bekommen neue Dateien und Ordner bei einer umask von 0007?",
+      "3. Schreiben Sie die sudo-Regel für die Haustechnik. Wie legen Sie sie sicher an? Warum sollte die Regel nicht einfach journalctl ohne Einschränkung erlauben?"
+    ],
+    "solution": [
+      "1. sudo groupadd bodenlabor",
+      "   sudo useradd -m -s /bin/bash -c \"Carla Vogel, Labor\" -G bodenlabor cvogel",
+      "   sudo passwd cvogel (Startkennwort setzen) und sudo chage -d 0 cvogel (Kennwort gilt als abgelaufen, Änderung bei der ersten Anmeldung).",
+      "   Bestehendes Konto: sudo usermod -aG bodenlabor bdemir. Ohne -a würde -G die Zusatzgruppen ersetzen und bdemir andere Gruppen verlieren. Prüfen mit id bdemir. Die neue Gruppe wirkt erst nach neuer Anmeldung.",
+      "",
+      "2. drwxr-xr-x = 755 (rwx = 4+2+1 = 7, r-x = 4+1 = 5). -rw-r----- = 640. Die Datei gehört der Gruppe akrause, nicht bodenlabor. bdemir fällt unter \"andere\" und hat dort kein Recht (0). Einstellung:",
+      "   sudo chown root:bodenlabor /srv/messdaten und sudo chgrp -R bodenlabor /srv/messdaten (Besitzer der Dateien bleiben erhalten)",
+      "   sudo chmod 3770 /srv/messdaten",
+      "   sudo chmod -R g+rwX /srv/messdaten/*  (bestehende Dateien für die Gruppe freigeben, X setzt Ausführen nur bei Ordnern)",
+      "   3770 = Sticky Bit (1) + SetGID (2) = 3 und rwx für Besitzer und Gruppe, nichts für andere. Anzeige: drwxrws--T. SetGID sorgt dafür, dass neue Dateien die Gruppe bodenlabor erben. Das Sticky Bit erlaubt das Löschen nur dem Besitzer der Datei, dem Besitzer des Ordners und root. umask 0007: Dateien 666 - 007 = 660 (rw-rw----), Ordner 777 - 007 = 770 (rwxrwx---). Genau gerechnet wird bitweise: 666 UND NICHT 007. Die umask setzt man z. B. in der Unit des Dienstes (UMask=0007) oder für die Benutzer in /etc/login.defs bzw. im Profil.",
+      "",
+      "3. sudo visudo -f /etc/sudoers.d/laborit mit dem Inhalt:",
+      "   %laborit ALL=(root) /usr/bin/systemctl restart messerfassung.service, /usr/bin/journalctl -u messerfassung.service --no-pager",
+      "   visudo prüft die Syntax vor dem Speichern. Ein Fehler in einer sudoers-Datei kann sonst jede sudo-Nutzung blockieren. Rechte der Datei 440. Die Befehle stehen mit vollem Pfad und mit Argumenten, also ist nur genau dieser Aufruf erlaubt. journalctl ohne Einschränkung würde alle Protokolle zeigen und öffnet standardmäßig den Pager less. Aus less kann man mit !sh eine Shell starten, die dann als root läuft. Darum --no-pager angeben. Die Gruppe systemd-journal wäre keine Alternative, weil ihre Mitglieder das gesamte System-Journal lesen dürfen. Prinzip der minimalen Rechte (least privilege)."
+    ]
+  },
+  {
+    "title": "Effektive Zugriffsrechte auf dem Projektlaufwerk eines Büros für Tragwerksplanung",
+    "cat": "sicherheit",
+    "thema": "zugriff",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3c",
+      "A8d",
+      "A8e"
+    ],
+    "text": [
+      "Ein Ingenieurbüro für Tragwerksplanung speichert alle Projekte auf dem Windows-Dateiserver FS01 unter D:\\Projekte. Der Ordner ist als \\\\FS01\\Projekte freigegeben. Drei Mitarbeitende melden Probleme. Sie finden folgende Einstellungen:",
+      "  Freigabeberechtigungen: Jeder: Lesen, G_Planung: Ändern, G_Leitung: Vollzugriff",
+      "  NTFS D:\\Projekte (vererbt an Unterordner): G_Planung: Ändern, G_Buero: Lesen, G_Leitung: Vollzugriff",
+      "  NTFS D:\\Projekte\\Honorare (Vererbung deaktiviert): G_Leitung: Vollzugriff, G_Buchhaltung: Ändern",
+      "  NTFS D:\\Projekte\\Wettbewerbe: zusätzlich explizit G_Praktikum: Schreiben verweigern",
+      "Mitgliedschaften: Frau Albers (G_Planung, G_Buero), Herr Bauer (G_Buero, G_Buchhaltung), Herr Cetin (G_Planung, G_Praktikum).",
+      "",
+      "1. Ermitteln Sie die effektiven Rechte beim Zugriff über das Netzwerk: Frau Albers auf Wettbewerbe, Herr Bauer auf Honorare, Herr Cetin auf Wettbewerbe. Erklären Sie die Regeln, nach denen Sie rechnen.",
+      "2. Herr Bauer meldet sich per Remotedesktop direkt an FS01 an und öffnet D:\\Projekte\\Honorare. Welche Rechte hat er dort? Frau Albers soll Honorare gar nicht sehen. Wie erreichen Sie das, ohne Rechte zu ändern?",
+      "3. Ihr Ausbilder empfiehlt, die Freigabe einfacher zu gestalten und nur noch mit NTFS zu steuern. Beschreiben Sie das Vorgehen und geben Sie den icacls-Befehl an, mit dem G_Buchhaltung auf Honorare Ändern für den Ordner, Unterordner und Dateien bekommt."
+    ],
+    "solution": [
+      "1. Regeln: Innerhalb der Freigabe und innerhalb von NTFS addieren sich die Rechte aller Gruppen (das höchste zählt). Ein explizites Verweigern geht vor Zulassen. Beim Zugriff über das Netzwerk gilt von Freigabe und NTFS das restriktivere Ergebnis (Schnittmenge). Frau Albers: Freigabe Jeder Lesen + G_Planung Ändern = Ändern. NTFS G_Planung Ändern + G_Buero Lesen = Ändern. Effektiv: Ändern. Herr Bauer auf Honorare: Freigabe nur Jeder Lesen (G_Buero und G_Buchhaltung stehen nicht in der Freigabe) = Lesen. NTFS auf Honorare: G_Buchhaltung Ändern (G_Buero zählt dort nicht, weil die Vererbung deaktiviert ist) = Ändern. Effektiv: Lesen. Das erklärt, warum er keine Rechnungen speichern kann. Herr Cetin: Freigabe Ändern. NTFS G_Planung Ändern, aber Schreiben verweigert. Übrig bleiben Lesen, Ausführen, Ordner auflisten und Löschen. Effektiv: Lesen und Ausführen, dazu Löschen. \"Schreiben verweigern\" entfernt das Löschrecht aus Ändern nicht, er kann also Dateien weiterhin löschen. Besser ist eine eigene Gruppe mit nur Lesen statt eines Verweigerns.",
+      "",
+      "2. Bei lokaler Anmeldung (auch per RDP) wird die Freigabe nicht durchlaufen, es gelten nur die NTFS-Rechte. Herr Bauer hat dort Ändern. Darum sollen sich normale Benutzer nicht am Dateiserver anmelden dürfen. Unsichtbar machen: Zugriffsbasierte Aufzählung (access-based enumeration, ABE) an der Freigabe aktivieren. Dann sieht jeder nur Ordner, auf die er mindestens Lesen hat. Frau Albers hat auf Honorare kein NTFS-Recht, der Ordner verschwindet aus ihrer Ansicht.",
+      "",
+      "3. Freigabe: \"Authentifizierte Benutzer\" (bzw. eine Gruppe aller Mitarbeitenden): Ändern oder Vollzugriff, \"Jeder\" entfernen. Die eigentliche Steuerung erfolgt nur über NTFS und nach AGDLP mit domänenlokalen Gruppen. So gibt es nur eine Stelle, an der man rechnen und dokumentieren muss. Befehl: icacls \"D:\\Projekte\\Honorare\" /grant \"BUERO\\G_Buchhaltung:(OI)(CI)M\". (OI) Objektvererbung an Dateien, (CI) Containervererbung an Unterordner, M = Ändern. Prüfen mit icacls \"D:\\Projekte\\Honorare\" und Get-SmbShareAccess -Name \"Projekte\". Vor Änderungen die Rechte sichern: icacls \"D:\\Projekte\" /save C:\\Temp\\rechte_projekte.txt /t."
+    ]
+  },
+  {
+    "title": "Synchronisationsdienst für die Fahrgastzähler eines Busunternehmens startet nicht mehr",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3g",
+      "C3d",
+      "C1d"
+    ],
+    "text": [
+      "Ein Busunternehmen hat 140 Busse mit Fahrgastzählern. Jeder Zähler sendet alle 5 Minuten einen Datensatz von 2 KiB an den Linux-Server fgz-srv01. Dort schreibt der Dienst fgz-sync.service die Daten in eine Datenbank für die Verkehrsplanung. Am Montag um 08:13 Uhr meldet die Planung, dass seit dem frühen Morgen keine Daten ankommen.",
+      "Die Unit-Datei /etc/systemd/system/fgz-sync.service enthält unter anderem:",
+      "  [Unit]  StartLimitIntervalSec=30  StartLimitBurst=5",
+      "  [Service]  User=fgz  ExecStart=/opt/fgz/bin/fgz-sync --config /etc/fgz/sync.conf  Restart=on-failure  RestartSec=2",
+      "Auszug aus dem Journal (letzter Absturz):",
+      "  Okt 05 05:58:34 fgz-srv01 fgz-sync[2311]: PermissionError: [Errno 13] Permission denied: '/var/lib/fgz/puffer.db'",
+      "  Okt 05 05:58:34 fgz-srv01 systemd[1]: fgz-sync.service: Main process exited, code=exited, status=1/FAILURE",
+      "  Okt 05 05:58:36 fgz-srv01 systemd[1]: fgz-sync.service: Start request repeated too quickly.",
+      "  Okt 05 05:58:36 fgz-srv01 systemd[1]: fgz-sync.service: Failed with result 'start-limit-hit'.",
+      "Am Sonntagabend hat ein Kollege die Datei puffer.db als root aus der Sicherung zurückgespielt. Der Dienst wurde um 05:58:11 Uhr gestartet und stürzt jeweils 3 Sekunden nach dem Start ab.",
+      "",
+      "1. Mit welchen Befehlen gehen Sie bei der Analyse vor? Erklären Sie mit einer Zeitrechnung, warum Restart=on-failure nicht geholfen hat und wann systemd aufgegeben hat.",
+      "2. Beheben Sie die Ursache und bringen Sie den Dienst wieder in Betrieb. Wie verhindern Sie den Fehler beim nächsten Zurückspielen?",
+      "3. Die Zähler puffern ihre Daten 48 Stunden. Wie viele Datensätze und wie viel Datenvolumen müssen zwischen 05:58 und 08:13 Uhr nachgeladen werden? Wie sorgen Sie dafür, dass ein Ausfall künftig sofort bemerkt wird?"
+    ],
+    "solution": [
+      "1. systemctl status fgz-sync.service zeigt Zustand (failed), letzte Journalzeilen und den Grund. journalctl -u fgz-sync.service -b zeigt alle Meldungen des Dienstes seit dem Start des Systems, mit -p err nur Fehler, mit --since \"2026-10-04 20:00\" ab einem Zeitpunkt. Danach ls -l /var/lib/fgz/puffer.db: Die Datei gehört root und hat z. B. die Rechte 600, der Dienst läuft aber als fgz. Zeitrechnung: Start bei 0 s, Absturz nach 3 s, neuer Start 2 s später. Starts bei 0, 5, 10, 15 und 20 s. Der sechste Start wäre bei 25 s fällig. Dann gäbe es 6 Starts innerhalb von 30 s, erlaubt sind nur 5 (StartLimitBurst). systemd verweigert den Start mit 'start-limit-hit' um 05:58:11 + 25 s = 05:58:36 Uhr. Der Neustart hilft nur bei vorübergehenden Fehlern, nicht bei einer dauerhaften Ursache wie falschen Rechten.",
+      "",
+      "2. sudo chown fgz:fgz /var/lib/fgz/puffer.db und sudo chmod 600 /var/lib/fgz/puffer.db. Danach sudo systemctl reset-failed fgz-sync.service (setzt den Startzähler zurück) und sudo systemctl start fgz-sync.service. Prüfen mit systemctl status und journalctl -u fgz-sync.service -f, ob Daten verarbeitet werden. Vorbeugen: Beim Zurückspielen Besitzer und Rechte erhalten (z. B. rsync -a oder tar mit --same-owner) und danach mit ls -l prüfen. In der Unit StateDirectory=fgz eintragen. Dann legt systemd /var/lib/fgz an und setzt beim Start Besitzer und Gruppe auf den Dienstbenutzer, falls sie nicht passen. Nach Änderungen an der Unit: sudo systemctl daemon-reload. Die Rücksicherung gehört in das Betriebshandbuch mit Prüfschritt.",
+      "",
+      "3. Ausfallzeit 05:58 bis 08:13 Uhr = 135 Minuten = 27 Intervalle zu 5 Minuten. Datensätze: 140 * 27 = 3.780. Volumen: 3.780 * 2 KiB = 7.560 KiB = 7,38 MiB. Das ist klein und liegt weit innerhalb der 48 Stunden Puffer, es gehen keine Daten verloren. Überwachung: Das Monitoring prüft den Zustand des Dienstes (systemctl is-active fgz-sync.service) und das Alter des letzten Datensatzes, z. B. Warnung, wenn länger als 15 Minuten nichts ankam. In der Unit kann OnFailure=fgz-alarm.service eine Meldung an die Bereitschaft auslösen. Das StartLimit nicht einfach abschalten, sonst startet ein defekter Dienst endlos neu und füllt das Journal."
+    ]
+  },
+  {
+    "title": "Wartungsfenster für Serverupdates einer Wohnungsbaugenossenschaft planen",
+    "cat": "sicherheit",
+    "thema": "haertung",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3e",
+      "C3g",
+      "A8e"
+    ],
+    "text": [
+      "Eine Wohnungsbaugenossenschaft betreibt 14 virtuelle Windows-Server: DC01, DC02, FS01, FS02, PRT01, SQL01, APP01 (Mieterverwaltung, nutzt SQL01), APP02 (Handwerkerportal, nutzt SQL01), WEB01 (Mieterportal), RDS01, RDS02, WSUS01, BKP01 (Sicherung) und MAIL01. Die monatlichen Updates kommen über WSUS. Bisher hat jeder Server die Updates installiert und neu gestartet, wann er wollte. Letzten Monat fiel die Mieterverwaltung am Vormittag aus.",
+      "Künftig gilt ein Wartungsfenster am zweiten Samstag nach dem Patchday von 22:00 bis 02:00 Uhr. Pro Server rechnen Sie: Prüfpunkt (Snapshot) erstellen 3 Minuten, Updates installieren 25 Minuten, Neustart 8 Minuten, Funktionstest 6 Minuten. Wegen der Last auf Host und Speicher dürfen höchstens 4 Server gleichzeitig aktualisiert werden. DC01 und DC02 sowie RDS01 und RDS02 dürfen nie gleichzeitig ausfallen. SQL01 muss vor APP01 und APP02 fertig sein.",
+      "",
+      "1. Berechnen Sie die Dauer bei Aktualisierung nacheinander und in Wellen zu je 4 Servern. Erstellen Sie einen Wellenplan mit Uhrzeiten, der alle Bedingungen erfüllt. Wie viel Reserve bleibt?",
+      "2. Wie richten Sie WSUS und die Gruppenrichtlinien ein, damit Server nur im Fenster und nur getestete Updates installieren? Wie würden Sie die Clients mit Intune behandeln?",
+      "3. Nach dem Update startet APP02 die Anwendung nicht mehr. Beschreiben Sie den Rollback und wie viele solcher Rollbacks die Reserve erlaubt, wenn einer 19 Minuten dauert. Warum setzen Sie DC01 nicht einfach auf den Snapshot zurück?"
+    ],
+    "solution": [
+      "1. Pro Server: 3 + 25 + 8 + 6 = 42 Minuten. Nacheinander: 14 * 42 = 588 Minuten = 9 Stunden 48 Minuten, passt nicht in 240 Minuten. In Wellen: 14 / 4 = 3,5, also 4 Wellen * 42 = 168 Minuten. Wellenplan: Welle 1 (22:00 bis 22:42): WSUS01, DC02, RDS02, FS02. Welle 2 (22:42 bis 23:24): SQL01, DC01, PRT01, BKP01. Welle 3 (23:24 bis 00:06): APP01, APP02, RDS01, FS01. Welle 4 (00:06 bis 00:48): WEB01, MAIL01. Alle Paare liegen in verschiedenen Wellen, SQL01 ist vor den Anwendungsservern fertig. Die Sicherung darf in Welle 2 nicht laufen, Sicherungsjobs vorher verschieben. Reserve: 240 - 168 = 72 Minuten (00:48 bis 02:00 Uhr).",
+      "",
+      "2. WSUS: Computergruppen \"Server-Pilot\" (z. B. Testkopien von APP01 und SQL01) und \"Server-Produktion\" anlegen. Per GPO die clientseitige Zielzuordnung (client-side targeting) aktivieren, damit jeder Server in seine Gruppe kommt. Updates zuerst nur für die Pilotgruppe genehmigen, nach einer Woche ohne Fehler für Produktion. GPO \"Automatische Updates konfigurieren\": Option 3 \"Automatisch herunterladen und über Installation benachrichtigen\". Dann liegen die Updates bereit, installiert wird erst im Fenster durch die Administration oder ein geplantes Skript. Ersetzte Updates regelmäßig ablehnen und den WSUS-Bereinigungsassistenten laufen lassen. Clients mit Intune: Update-Ringe (Pilot, Breit) mit Rückstellung (deferral) und Stichtag (deadline), Neustart außerhalb der Nutzungszeit. Ergebnis in Compliance-Berichten prüfen.",
+      "",
+      "3. Vorgehen: Fehler im Ereignisprotokoll und in den Protokollen der Anwendung prüfen, Zeitgrenze setzen (z. B. 20 Minuten Fehlersuche). Ohne Lösung: VM auf den Prüfpunkt von 23:24 Uhr zurücksetzen, starten, Funktionstest. Alternativ nur das schuldige Update entfernen: wusa /uninstall /kb:<Nummer> /quiet /norestart. Kombinierte Pakete aus Servicing Stack und kumulativem Update lassen sich so nicht entfernen, dann DISM /Online /Get-Packages und DISM /Online /Remove-Package /PackageName:<Paketname>. Das Update in WSUS für APP02 zurückhalten, Hersteller informieren, im Change dokumentieren. Reserve: 72 / 19 = 3,8, also 3 Rollbacks nacheinander. Domänencontroller: Ein zurückgesetzter DC kennt Änderungen nicht mehr, die er nach dem Snapshot an DC02 repliziert hat (Kennwörter, Konten). Moderne Hypervisoren erkennen das über die VM-Generation-ID, trotzdem gilt: DC nicht per Snapshot zurücksetzen, sondern Update deinstallieren oder den DC neu hochstufen und aus DC02 replizieren lassen. Alle Snapshots nach einer Woche ohne Fehler löschen, weil sie wachsen und die Leistung senken."
+    ]
+  },
+  {
+    "title": "Volle Boot-Partition stoppt die Updates der Webserver eines Fahrradverleihs",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3e",
+      "C3g",
+      "C3a"
+    ],
+    "text": [
+      "Ein Fahrradverleih mit 9 Stationen betreibt sein Buchungsportal auf zwei Ubuntu-Webservern web01 und web02 hinter einem Lastverteiler (HAProxy). Beim nächtlichen Update auf web01 bricht apt mit \"No space left on device\" ab. update-initramfs konnte das neue initrd-Abbild nicht schreiben.",
+      "df -h /boot zeigt: Größe 469 MiB, belegt 460 MiB. Installiert sind 5 Kernelversionen. Je Version liegen im Verzeichnis /boot rund 92 MiB (vmlinuz 15 MiB, initrd 68 MiB, System.map 9 MiB). Der laufende Kernel ist die neueste der 5 Versionen.",
+      "Der Softwarehersteller der Buchungsanwendung gibt nur eine bestimmte Version von nodejs frei.",
+      "Jeder Webserver schafft bei der gewünschten Auslastung von höchstens 80 % CPU 380 Anfragen pro Sekunde. Zur Spitzenzeit am Samstagmittag kommen 520 Anfragen pro Sekunde, nachts um 3 Uhr etwa 70.",
+      "",
+      "1. Rechnen Sie nach, warum das Update scheitert. Wie räumen Sie /boot sicher auf und wie viel Platz ist danach frei, wenn Sie den laufenden und einen älteren Kernel behalten und der neue Kernel installiert ist?",
+      "2. Wie halten Sie nodejs auf der freigegebenen Version und welches Risiko entsteht dadurch? Wie richten Sie automatische Sicherheitsupdates so ein, dass alte Kernel nicht wieder liegen bleiben?",
+      "3. Der neue Kernel braucht einen Neustart. Beschreiben Sie einen Neustart ohne Ausfall des Portals und begründen Sie mit einer Rechnung, wann das möglich ist."
+    ],
+    "solution": [
+      "1. 5 * 92 = 460 MiB belegt, frei 469 - 460 = 9 MiB. Der neue Kernel braucht 92 MiB, also fehlen 83 MiB. Aufräumen: uname -r zeigt den laufenden Kernel, dpkg -l 'linux-image-*' | grep '^ii' die installierten. Dann sudo apt autoremove --purge. Es entfernt alte, nicht mehr benötigte Kernel und behält den laufenden und den vorherigen. Ist apt wegen des halben Updates blockiert, zuerst einen alten Kernel gezielt entfernen (sudo apt purge linux-image-<alte Version>-generic) und danach sudo apt -f install. Den laufenden Kernel nie löschen. Nach dem Aufräumen: 2 * 92 = 184 MiB, mit neuem Kernel 3 * 92 = 276 MiB. Frei: 469 - 276 = 193 MiB.",
+      "",
+      "2. sudo apt-mark hold nodejs verhindert, dass apt das Paket aktualisiert. apt-mark showhold zeigt gehaltene Pakete, apt-mark unhold hebt es auf. Risiko: Sicherheitslücken in nodejs werden nicht geschlossen. Darum die Sperre dokumentieren, befristen, Sicherheitsmeldungen beobachten und mit dem Hersteller die Freigabe neuer Versionen klären. Automatisch: Paket unattended-upgrades mit sudo dpkg-reconfigure -plow unattended-upgrades aktivieren. In /etc/apt/apt.conf.d/50unattended-upgrades: Unattended-Upgrade::Remove-Unused-Kernel-Packages \"true\"; und Unattended-Upgrade::Automatic-Reboot \"false\";, weil der Neustart wie in Aufgabe 3 gesteuert werden soll. Ob ein Neustart nötig ist, zeigt die Datei /var/run/reboot-required. /boot zusätzlich im Monitoring überwachen.",
+      "",
+      "3. Rollierender Neustart (rolling update): web01 im HAProxy auf drain setzen, z. B. echo \"set server portal/web01 state drain\" | sudo socat stdio /run/haproxy/admin.sock. Neue Verbindungen gehen nur noch an web02. Warten, bis keine Sitzungen mehr offen sind, dann aktualisieren und neu starten. Danach uname -r und die Funktion prüfen, mit \"state ready\" zurücknehmen. Dann web02 genauso. Rechnung: Nachts 70 / 380 = 18,4 % der Leistung eines Servers, ein Server reicht. Mittags 520 / 380 = 137 %, ein Server allein wäre überlastet. Der Neustart findet daher nachts statt, z. B. um 3 Uhr."
+    ]
+  },
+  {
+    "title": "Schwellwerte und Speicherprognose für den Archivserver eines Orgelbauers",
+    "cat": "sicherheit",
+    "thema": "haertung",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3g",
+      "C3h",
+      "A8e"
+    ],
+    "text": [
+      "Eine Orgelbauwerkstatt mit 28 Beschäftigten speichert Baupläne, Fotos und 3D-Scans von Orgelpfeifen auf dem Linux-Archivserver arch01. Das Datenvolumen /srv/archiv hat 4.000 GB. Vor einem Jahr lief das Volumen unbemerkt voll, weil die Warnung zu spät kam. Das Monitoring (Icinga) meldet heute erst ab 95 % Belegung eine Warnung und ab 98 % einen kritischen Zustand.",
+      "Belegung jeweils am Monatsersten: April 2.240 GB, Mai 2.300 GB, Juni 2.360 GB, Juli 2.420 GB, August 2.480 GB, September 2.540 GB, Oktober 2.600 GB.",
+      "Für zusätzliche Festplatten rechnen Sie mit 6 Wochen Lieferzeit und 2 Wochen für Einbau und Erweiterung, zusammen rund 2 Monate.",
+      "",
+      "1. Ermitteln Sie das monatliche Wachstum. Wann wären 80 %, 90 %, 95 % und 98 % Belegung erreicht? Zeigen Sie mit einer Rechnung, warum die heutigen Schwellwerte zu spät warnen, und schlagen Sie neue vor.",
+      "2. Ein Kollege rechnet stattdessen mit 2,3 % Wachstum pro Monat. Wann wären danach 80 % erreicht? Welche Annahme passt besser zu den Messwerten?",
+      "3. Formulieren Sie die Prüfung für das Volumen als Icinga-/Nagios-Plugin-Aufruf. Die CPU-Warnung von arch01 schaltet nachts ständig zwischen OK und Warnung hin und her. Wie verhindern Sie dieses Flattern? Nennen Sie zwei weitere Werte, die Sie auf einem Archivserver überwachen."
+    ],
+    "solution": [
+      "1. Wachstum: (2.600 - 2.240) / 6 = 60 GB pro Monat, jeden Monat gleich, also linear. 80 % = 3.200 GB: (3.200 - 2.600) / 60 = 10 Monate, also August 2027. 90 % = 3.600 GB: 1.000 / 60 = 16,7 Monate, also im Februar 2028. 95 % = 3.800 GB: 1.200 / 60 = 20 Monate (Juni 2028). 98 % = 3.920 GB: 1.320 / 60 = 22 Monate (August 2028). Bei 95 % sind noch 200 GB frei, das reicht 200 / 60 = 3,3 Monate. Bei 98 % sind nur 80 GB frei, das reicht 80 / 60 = 1,3 Monate, die Beschaffung braucht aber 2 Monate. Die Warnung käme zu spät. Vorschlag: Warnung ab 80 % (800 GB frei, 13,3 Monate Vorlauf, genug für Budget und Bestellung), kritisch ab 90 % (400 GB frei, 6,7 Monate). Besser als feste Prozente ist eine Prognose \"voll in weniger als 6 Monaten\", weil Prozentwerte bei großen und kleinen Volumen sehr unterschiedliche Restzeiten bedeuten.",
+      "",
+      "2. 2.600 * 1,023^n = 3.200, also n = ln(3.200 / 2.600) / ln(1,023) = 9,1 Monate. Nach 9 Monaten sind es 3.190 GB, nach 10 Monaten 3.264 GB. Der Wert wird im 10. Monat überschritten. Die Messwerte steigen aber jeden Monat um genau 60 GB, der prozentuale Zuwachs sinkt (60 / 2.240 = 2,7 %, 60 / 2.540 = 2,4 %). Das passt zu linearem Wachstum. Prozentuales (exponentielles) Wachstum würde später immer stärker steigen. Die Prognose regelmäßig mit neuen Messwerten prüfen.",
+      "",
+      "3. check_disk -w 20% -c 10% -p /srv/archiv. Das Plugin meldet Warnung, wenn weniger als 20 % frei sind (80 % belegt), und kritisch unter 10 % frei. Gegen Flattern: Der Wert muss über eine Zeit anhalten, z. B. CPU über 90 % in mehreren Prüfungen hintereinander (max_check_attempts) oder als Durchschnitt über 10 Minuten. Zusätzlich eine Hysterese: Warnung ab 90 %, Entwarnung erst unter 75 %. Nachts laufen Sicherung und Indexierung, die hohe CPU ist dort normal, dafür ein Zeitfenster mit anderem Schwellwert oder eine geplante Ausfallzeit (downtime). Weitere Werte: Zustand von RAID und Festplatten (SMART), Alter und Ergebnis der letzten Sicherung, Temperatur, Erreichbarkeit der Freigabe, Inode-Belegung."
+    ]
+  },
+  {
+    "title": "Lizenzbilanz einer Kreismusikschule vor der Vertragsverlängerung aufstellen",
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3f",
+      "A9a",
+      "C1b"
+    ],
+    "text": [
+      "Eine Kreismusikschule hat 39 fest angestellte Beschäftigte (Verwaltung und Lehrkräfte) und 95 Lehrkräfte auf Honorarbasis. Die Honorarkräfte melden sich nur an den 20 PCs in den Unterrichtsräumen an der Domäne an, um Noten zu drucken und den Stundenplan zu sehen. Die Festangestellten arbeiten an Büro-PCs und Notebooks. Im nächsten Monat kommen 3 neue Fachbereichsleitungen dazu.",
+      "Ihr Ausbilder bittet Sie vor der Verlängerung der Verträge um eine Lizenzbilanz. Ihre Inventur ergibt:",
+      "  Microsoft 365 Business Standard: 50 Lizenzen im Jahresvertrag, 46 zugewiesen, davon 7 an deaktivierte Konten ehemaliger Beschäftigter. Preis vereinfacht 11,70 Euro pro Lizenz und Monat.",
+      "  Windows Server: 50 Benutzer-CALs vorhanden. Geräte-CAL vereinfacht 38 Euro, Benutzer-CAL 44 Euro.",
+      "  Remotedesktopdienste: Die Notenverwaltung läuft als RemoteApp. 15 RDS-Benutzer-CALs vorhanden, in den letzten 90 Tagen haben sich 22 verschiedene Personen angemeldet. RDS-Benutzer-CAL vereinfacht 128 Euro.",
+      "  Grafiksoftware im Abonnement: 4 Lizenzen für benannte Benutzer. Ein Konto davon nutzen 3 Personen der Öffentlichkeitsarbeit gemeinsam.",
+      "",
+      "1. Stellen Sie für jedes Produkt Bestand und Bedarf gegenüber und ermitteln Sie Über- und Unterdeckung. Zeigen Sie für die Server-CALs zwei Wege und begründen Sie Ihre Wahl.",
+      "2. Berechnen Sie die jährliche Einsparung bei Microsoft 365, wenn Sie bei der Verlängerung auf den Bedarf reduzieren, und die einmaligen Kosten, um die Unterdeckungen zu beheben.",
+      "3. Warum fällt die Unterdeckung bei den RDS-CALs im Betrieb nicht auf? Beschreiben Sie, wie die Schule ihre Lizenzen künftig dauerhaft sauber hält und was bei einem Audit droht."
+    ],
+    "solution": [
+      "1. Microsoft 365: Bedarf 39 + 3 = 42, Bestand 50, Überdeckung 8. Die 7 Lizenzen der deaktivierten Konten sofort entziehen, die Konten nach der Aufbewahrungsfrist löschen. Server-CALs: Jeder, der sich an der Domäne anmeldet, greift auf den Server zu und braucht eine CAL. Weg A nur Benutzer-CALs: 39 + 95 = 134 Benutzer, Bestand 50, Unterdeckung 84. Weg B gemischt: Die 50 Benutzer-CALs decken die 39 Festangestellten (und die 3 Neuen, 42 von 50). Die 20 Unterrichts-PCs bekommen Geräte-CALs, damit sind alle Honorarkräfte an diesen PCs abgedeckt. Unterdeckung: 20 Geräte-CALs. Weg B ist richtig gewählt, weil viele Honorarkräfte wenige Geräte teilen. RDS: Bedarf 22, Bestand 15, Unterdeckung 7. Grafiksoftware: Benannte Lizenzen gelten für eine Person. 3 Personen an einem Konto ist ein Lizenzverstoß. Bedarf 4 - 1 + 3 = 6, Bestand 4, Unterdeckung 2.",
+      "",
+      "2. Microsoft 365: 8 Lizenzen * 11,70 Euro * 12 Monate = 1.123,20 Euro Einsparung pro Jahr. Neue Jahreskosten 42 * 11,70 * 12 = 5.896,80 Euro statt 50 * 11,70 * 12 = 7.020 Euro. Server-CALs Weg A: 84 * 44 = 3.696 Euro. Weg B: 20 * 38 = 760 Euro. RDS-CALs: 7 * 128 = 896 Euro. Einmalig (Weg B): 760 + 896 = 1.656 Euro. Dazu 2 Abonnements der Grafiksoftware zum Preis des Herstellers. Die Einsparung bei Microsoft 365 deckt die einmaligen Kosten zum großen Teil schon im ersten Jahr.",
+      "",
+      "3. Die RDS-Lizenzierung pro Benutzer wird technisch nicht erzwungen. Der Lizenzserver zählt zwar, verweigert aber keine Anmeldung. Die Unterdeckung zeigt erst ein Bericht oder ein Audit. Dauerhaft: Softwareinventar mit einem Werkzeug für Software Asset Management (SAM), Lizenznachweise (Rechnungen, Verträge) zentral ablegen, Lizenzzuweisung an den Eintritt und Austritt koppeln (Joiner-Mover-Leaver). Beim Austritt wird die Lizenz im selben Ticket entzogen. Lizenzen über Gruppen zuweisen, quartalsweise Soll und Ist abgleichen, Zuständigkeit festlegen, Berichte des RDS-Lizenzservers prüfen. Gemeinsame Konten verbieten. Bei einem Audit muss die Schule die Unterdeckung nachkaufen, oft zum Listenpreis, eventuell mit Aufschlag und Prüfkosten. Unlizenzierte Nutzung verletzt das Urheberrecht und kann zu Schadensersatz führen."
+    ]
+  },
+  {
+    "title": "Druckserver einer Steuerberatungsgesellschaft vor der Jahresabschluss-Saison stabilisieren",
+    "cat": "netzwerk",
+    "thema": "dienste",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3d",
+      "C3g",
+      "C1d"
+    ],
+    "text": [
+      "Eine Steuerberatungsgesellschaft mit 46 Beschäftigten druckt über den Windows-Druckserver PRT01. Im 2. Obergeschoss stehen drei baugleiche Laserdrucker mit je 40 Seiten pro Minute, jeder hat eine eigene Warteschlange. Zwei Probleme häufen sich:",
+      "  Seit einem Windows-Update bekommen Beschäftigte beim Verbinden eines Druckers die Meldung, dass für den Treiber Administratorrechte nötig sind. Ein Kollege schlägt vor, den Registrierungswert RestrictDriverInstallationToAdministrators auf 0 zu setzen.",
+      "  Mehrmals pro Woche hängt die Warteschlange eines Druckers. Ein Auftrag mit dem Status \"Fehler - Wird gelöscht\" bleibt stehen, alle folgenden Aufträge warten. Im Protokoll Microsoft-Windows-PrintService/Admin steht, dass der Spooler beim Verarbeiten dieses Treibers abgestürzt ist.",
+      "In der Abschluss-Saison drucken morgens zwischen 8 und 9 Uhr 30 Beschäftigte je 160 Seiten. Heute nutzen sie fast alle denselben Drucker.",
+      "",
+      "1. Wie lösen Sie eine hängende Warteschlange auf dem Server mit PowerShell? Was können Sie tun, damit ein fehlerhafter Treiber nicht den ganzen Spooler mitreißt?",
+      "2. Bewerten Sie den Vorschlag des Kollegen. Wie stellen Sie die Drucker und Treiber stattdessen bereit?",
+      "3. Berechnen Sie, wie lange der morgendliche Druck mit einem Drucker und mit einem Druckerpool aus allen drei Druckern dauert. Was ist bei einem Druckerpool zu beachten?"
+    ],
+    "solution": [
+      "1. Einzelne Aufträge: Get-PrintJob -ComputerName PRT01 -PrinterName \"OG2-Laser1\" zeigt die Aufträge, Get-PrintJob -ComputerName PRT01 -PrinterName \"OG2-Laser1\" | Remove-PrintJob löscht sie. Hängt der Auftrag trotzdem: Stop-Service -Name Spooler -Force, Remove-Item -Path \"C:\\Windows\\System32\\spool\\PRINTERS\\*\" -Force, Start-Service -Name Spooler. Dabei gehen alle wartenden Aufträge verloren, darum die Benutzer informieren. Ursache beheben: aktuellen Treiber des Herstellers installieren, möglichst ein Paket für Typ-4-Treiber oder einen getesteten Typ-3-Treiber. In der Druckverwaltung für den Treiber die Treiberisolation \"Isoliert\" einstellen. Dann läuft der Treiber in einem eigenen Prozess (PrintIsolationHost) und ein Absturz trifft nur diesen Prozess.",
+      "",
+      "2. Ablehnen. Die Einschränkung kam 2021 als Schutz gegen die Lücke PrintNightmare. Mit dem Wert 0 dürfen normale Benutzer Treiber von einem Server installieren. Ein Angreifer kann darüber Schadcode mit Systemrechten ausführen. Stattdessen: Treiber vorab auf den Clients installieren, z. B. per Softwareverteilung mit pnputil /add-driver \"C:\\Treiber\\x64\\*.inf\" /install und Add-PrinterDriver -Name \"<Treibername>\". Dann muss der Client beim Verbinden nichts installieren. Die Drucker per Gruppenrichtlinie verbinden: Gruppenrichtlinieneinstellungen (Benutzerkonfiguration > Einstellungen > Systemsteuerungseinstellungen > Drucker) mit Zielgruppenadressierung nach Sicherheitsgruppe oder Etage. Point-and-Print zusätzlich auf den Server PRT01 beschränken. Den Druckspooler auf Domänencontrollern und Servern ohne Druckaufgabe deaktivieren.",
+      "",
+      "3. Seiten: 30 * 160 = 4.800. Ein Drucker: 40 * 60 = 2.400 Seiten pro Stunde, Dauer 4.800 / 2.400 = 2 Stunden. Pool: 3 * 2.400 = 7.200 Seiten pro Stunde, Dauer 4.800 / 7.200 = 0,67 Stunden = 40 Minuten. Druckerpool: In den Eigenschaften einer Warteschlange \"Druckerpool aktivieren\" und die drei Anschlüsse (Ports) auswählen. Der Server schickt jeden Auftrag an den nächsten freien Drucker. Voraussetzungen: gleicher Treiber, also baugleiche oder kompatible Geräte, und die Drucker stehen nebeneinander, weil der Benutzer nicht weiß, wo sein Ausdruck liegt. Bei vertraulichen Mandantendaten ist sicheres Drucken mit PIN oder Karte (follow-me printing) sinnvoll. Fällt ein Drucker aus, muss er aus dem Pool genommen werden, sonst landen Aufträge in der Ablage eines defekten Geräts."
+    ]
+  },
+  {
+    "title": "Abgelaufenes LDAPS-Zertifikat stoppt die Zeiterfassung einer Kunststoff-Spritzgießerei",
+    "cat": "sicherheit",
+    "thema": "krypto",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3h",
+      "C3g",
+      "A8e"
+    ],
+    "text": [
+      "Eine Kunststoff-Spritzgießerei mit 210 Beschäftigten im Dreischichtbetrieb nutzt 12 Zeiterfassungsterminals. Die Zeiterfassungssoftware auf dem Server zeit01 übernimmt die Buchungen der Terminals und prüft dabei die Mitarbeitenden per LDAPS (Port 636) gegen den Domänencontroller dc01.ksg.local. Seit dem Morgen des 6. Oktober 2026 schlägt die Übernahme mit der Meldung \"certificate has expired\" fehl. Die Terminals speichern bis zu 6.000 Buchungen. Jede Person bucht im Schnitt 4-mal am Tag.",
+      "Sie prüfen mit:",
+      "  openssl s_client -connect dc01.ksg.local:636 -showcerts </dev/null | openssl x509 -noout -subject -issuer -dates",
+      "Ausgabe (gekürzt): subject=CN = dc01.ksg.local, issuer=CN = KSG-Issuing-CA, notBefore=Oct  6 05:12:40 2025 GMT, notAfter=Oct  6 05:12:40 2026 GMT",
+      "Das Zertifikat hatte ein Kollege vor einem Jahr mit einer Kopie der Vorlage \"Webserver\" von Hand angefordert. Eine automatische Registrierung gibt es nicht.",
+      "",
+      "1. Wie lange war das Zertifikat gültig und wann genau ist es nach deutscher Uhrzeit abgelaufen? Wie lange reicht der Speicher der Terminals ab dem Ablauf?",
+      "2. Beheben Sie die Störung dauerhaft. Das neue Zertifikat ist ein Jahr gültig, der Erneuerungszeitraum der Vorlage beträgt 6 Wochen. Ab wann versucht der Domänencontroller die Erneuerung, wenn das Zertifikat am 7. Oktober 2026 ausgestellt wird?",
+      "3. Schreiben Sie ein PowerShell-Skript, das auf allen Servern der Domäne die Zertifikate im Computerspeicher findet, die in den nächsten 45 Tagen ablaufen. Wie verhindern Sie solche Ausfälle grundsätzlich?"
+    ],
+    "solution": [
+      "1. Gültigkeit 6.10.2025 bis 6.10.2026 = 365 Tage. GMT entspricht UTC. Im Oktober gilt die Sommerzeit MESZ = UTC + 2, abgelaufen also am 6. Oktober 2026 um 07:12:40 Uhr. Buchungen pro Tag: 210 * 4 = 840. Speicher: 6.000 / 840 = 7,1 Tage. Die Terminals halten also bis etwa 13. Oktober durch. Es eilt, aber es gehen noch keine Buchungen verloren.",
+      "",
+      "2. Die Vorlage \"Kerberos-Authentifizierung\" (Kerberos Authentication) ist für Domänencontroller gedacht und wird für LDAPS genutzt. Auf der Zertifizierungsstelle veröffentlichen, in der Sicherheit der Vorlage den \"Domänencontrollern\" Registrieren und Automatisch registrieren erlauben. Per GPO für die Domänencontroller: Computerkonfiguration > Richtlinien > Windows-Einstellungen > Sicherheitseinstellungen > Richtlinien für öffentliche Schlüssel > \"Zertifikatdienstclient - Automatische Registrierung\" aktivieren, mit Erneuern abgelaufener und Aktualisieren geänderter Zertifikate. Auf dc01 mit gpupdate /force und certutil -pulse die Registrierung anstoßen. Das alte Zertifikat entfernen. Danach mit dem openssl-Befehl die neuen Daten prüfen und die Übernahme auf zeit01 testen. Erneuerung: Ablauf 7.10.2027, minus 6 Wochen = 42 Tage, also ab dem 26.08.2027.",
+      "",
+      "3. $server = Get-ADComputer -Filter 'OperatingSystem -like \"*Server*\"' | Select-Object -ExpandProperty Name",
+      "   Invoke-Command -ComputerName $server -ScriptBlock { Get-ChildItem -Path Cert:\\LocalMachine\\My | Where-Object { $_.NotAfter -lt (Get-Date).AddDays(45) } | Select-Object Subject, NotAfter, Thumbprint } | Sort-Object NotAfter | Format-Table PSComputerName, Subject, NotAfter",
+      "   Voraussetzung: PowerShell-Remoting (WinRM) ist auf den Servern aktiv. Grundsätzlich: Zertifikate nur über Vorlagen mit automatischer Registrierung ausstellen, ein Zertifikatsinventar mit Ablaufdatum und verantwortlicher Person führen (z. B. in der CMDB), das Skript wöchentlich als geplante Aufgabe laufen lassen und das Monitoring die Ablaufdaten der Dienste prüfen lassen (Warnung ab 30, kritisch ab 7 Tagen). Auch die Ablaufdaten der Zertifizierungsstellen selbst und der Sperrlisten überwachen."
+    ]
+  },
+  {
+    "title": "Zeitabweichung verhindert Anmeldungen am Telematikserver einer Spedition",
+    "cat": "netzwerk",
+    "thema": "dienste",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3d",
+      "C3g",
+      "C1d"
+    ],
+    "text": [
+      "Eine Spedition mit 70 Lkw betreibt zwei Domänencontroller als VMs auf Hyper-V. DC01 ist PDC-Emulator. Der Linux-Server tms01 (Telematik, Tourenplanung) ist über SSSD Mitglied der Domäne. Seit Montag können sich Disponenten nicht mehr per SSH mit ihrem Domänenkonto an tms01 anmelden. Im Journal steht \"Clock skew too great\". Die Windows-Anmeldungen funktionieren.",
+      "Ihre Prüfungen:",
+      "  DC01: w32tm /query /source liefert \"VM IC Time Synchronization Provider\". w32tm /stripchart /computer:ptbtime1.ptb.de /samples:3 /dataonly zeigt einen Versatz von etwa +370 Sekunden (DC01 geht nach).",
+      "  tms01: chronyc tracking zeigt eine Synchronisation mit Servern aus pool.ntp.org, Versatz nahezu 0.",
+      "  Der Hyper-V-Host ist nicht in der Domäne. Seine Uhr wurde vor 102 Tagen zuletzt von Hand gestellt. Die Hardwareuhr des Hosts weicht um 42 ppm (Millionstel) ab.",
+      "",
+      "1. Erklären Sie, warum nur die Anmeldung an tms01 scheitert. Berechnen Sie die tägliche Abweichung des Hosts, den Versatz nach 102 Tagen und nach wie vielen Tagen die Grenze von Kerberos überschritten wurde.",
+      "2. Richten Sie die Zeithierarchie der Domäne richtig ein. Geben Sie die Befehle für DC01 und für den Hyper-V-Host an.",
+      "3. Wie konfigurieren Sie tms01, damit es künftig zur Domäne passt? Wie prüfen Sie den Erfolg und was gehört in die Dokumentation?"
+    ],
+    "solution": [
+      "1. Kerberos erlaubt standardmäßig höchstens 5 Minuten (300 Sekunden) Unterschied zwischen Client und KDC. Die Windows-Clients holen ihre Zeit vom DC und gehen genauso falsch, untereinander passt es. tms01 hat die richtige Zeit aus dem Internet und liegt 370 Sekunden neben dem DC, also über der Grenze. Tägliche Abweichung: 42 / 1.000.000 * 86.400 s = 3,63 s. Nach 102 Tagen: 102 * 3,63 = 370 s = 6 Minuten 10 Sekunden. Grenze: 300 / 3,63 = 82,7, also ab dem 83. Tag. Ursache: DC01 übernimmt die falsche Zeit des Hosts über den Integrationsdienst.",
+      "",
+      "2. Hierarchie: Der PDC-Emulator holt die Zeit von verlässlichen externen Quellen, z. B. der PTB. Alle anderen DCs, Server und Clients folgen der Domänenhierarchie. Auf dem Host: Disable-VMIntegrationService -VMName \"DC01\" -Name \"Time Synchronization\" (ebenso für DC02). Alternativ nur im Gast den Anbieter VMICTimeProvider abschalten, dann stellt der Host die Uhr nur noch beim Start der VM. Den Host selbst per NTP mit den DCs oder der PTB synchronisieren. Auf DC01:",
+      "   w32tm /config /manualpeerlist:\"ptbtime1.ptb.de,0x8 ptbtime2.ptb.de,0x8\" /syncfromflags:manual /reliable:yes /update",
+      "   net stop w32time und net start w32time, dann w32tm /resync /rediscover",
+      "   Ausgehend UDP 123 in der Firewall für DC01 freigeben. Prüfen mit w32tm /query /status (Quelle ptbtime, Stratum) und erneut /stripchart. Auf DC02: w32tm /config /syncfromflags:domhier /update. Besser als ein Sprung von 6 Minuten im laufenden Betrieb ist ein kurzes Wartungsfenster, weil Protokolle und geplante Aufgaben einen Zeitsprung haben.",
+      "",
+      "3. In /etc/chrony/chrony.conf die pool-Zeile durch server dc01.spedition.local iburst und server dc02.spedition.local iburst ersetzen (Namen beispielhaft). Dann sudo systemctl restart chrony. Prüfen: chronyc sources -v zeigt die DCs, das Zeichen * markiert die gewählte Quelle. chronyc tracking zeigt den Versatz, timedatectl \"System clock synchronized: yes\". Danach eine SSH-Anmeldung mit Domänenkonto testen. Dokumentation: Zeithierarchie als Bild (PTB > DC01 > DC02, Server, Clients, Linux, Hosts), Konfiguration jedes Systems, Firewallfreigabe, Ausnahme beim Integrationsdienst und eine Überwachung des Versatzes, z. B. Warnung ab 60 Sekunden."
+    ]
+  },
+  {
+    "title": "Betriebshandbuch und Wiederanlaufplan für den Serverraum eines Kinderbuchverlags",
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3i",
+      "C3g",
+      "A8e"
+    ],
+    "text": [
+      "Ein Kinderbuchverlag mit 45 Beschäftigten hat einen kleinen Serverraum: ein NAS als gemeinsamer Speicher, zwei Virtualisierungshosts, die VMs DC01, FS01 (Dateien), SQL01 (Datenbank) und APP01 (Verlagssoftware, braucht SQL01). Der langjährige Administrator ist gegangen. Bei einem Stromausfall im letzten Monat lief die USV leer, alle Systeme fielen hart aus. Der Neustart dauerte 3 Stunden, weil niemand die richtige Reihenfolge kannte.",
+      "Messwerte: Die USV hält bei der heutigen Last von 1.500 W 22 Minuten. Das geordnete Herunterfahren dauert: VMs 6 Minuten, danach Hosts 3 Minuten, danach NAS 4 Minuten. Als Sicherheitsreserve sollen 3 Minuten Akkulaufzeit übrig bleiben.",
+      "Hochfahren: NAS 5 Minuten, Hosts 7 Minuten, DC01 4 Minuten, danach parallel SQL01 6 Minuten und FS01 3 Minuten, danach APP01 5 Minuten, abschließend Funktionstest 10 Minuten.",
+      "",
+      "1. Sie sollen ein Betriebshandbuch erstellen. Gliedern Sie es und grenzen Sie es vom Notfallhandbuch ab.",
+      "2. Nach wie vielen Minuten im Akkubetrieb muss das Herunterfahren spätestens beginnen? Durch einen dritten Host steigt die Last auf 1.900 W, die USV hält dann nur noch 16 Minuten. Was folgt daraus? Wie lange dauert der Wiederanlauf bis zur fertig getesteten Verlagssoftware und wann ist der Dateiserver verfügbar?",
+      "3. Wie stellen Sie sicher, dass das Handbuch im Ernstfall verfügbar und aktuell ist?"
+    ],
+    "solution": [
+      "1. Gliederung: 1 Allgemeines (Zweck, Geltungsbereich, Verantwortliche, Versionsstand). 2 Systemübersicht (Netzplan, Server, VMs, Dienste, Abhängigkeiten, IP-Adressen). 3 Zugänge (Verweis auf den Kennwortsafe, keine Kennwörter im Handbuch). 4 Regelbetrieb: Start- und Stoppreihenfolge, tägliche, wöchentliche und monatliche Aufgaben (Sicherung prüfen, Updates, Speicherplatz, Protokolle). 5 Datensicherung und Wiederherstellung. 6 Überwachung und Schwellwerte. 7 Bekannte Störungen mit Lösungen. 8 Verträge, Lizenzen, Ansprechpartner der Dienstleister, Eskalation. 9 Änderungsverlauf. Das Betriebshandbuch beschreibt den normalen Betrieb und Routinestörungen. Das Notfallhandbuch beschreibt Sofortmaßnahmen, Alarmierung, Notbetrieb und Wiederanlauf bei schweren Ausfällen (Notfallmanagement nach BSI-Standard 200-4). Beide verweisen aufeinander.",
+      "",
+      "2. Herunterfahren: 6 + 3 + 4 = 13 Minuten. Spätester Beginn: 22 - 13 - 3 = 6 Minuten nach Beginn des Akkubetriebs. In der USV-Software wird das als Auslöser eingetragen, Hosts und NAS bekommen das Signal über einen Netzwerkagenten. Mit 1.900 W: 16 - 13 - 3 = 0 Minuten. Das Herunterfahren müsste sofort beginnen, kurze Stromschwankungen würden jedes Mal alles abschalten. Folge: größere Akkus oder eine stärkere USV beschaffen oder die Abschaltzeit verkürzen. Wiederanlauf, kritischer Pfad: NAS 5 + Hosts 7 + DC01 4 + SQL01 6 + APP01 5 + Test 10 = 37 Minuten statt 3 Stunden. FS01 ist nach 5 + 7 + 4 + 3 = 19 Minuten verfügbar. Die Reihenfolge kommt als Checkliste mit Prüfschritten ins Handbuch, die Hosts können VMs auch automatisch in dieser Reihenfolge mit Verzögerung starten.",
+      "",
+      "3. Das Handbuch nicht nur auf dem Dateiserver ablegen, der im Ernstfall selbst ausfällt. Zusätzlich eine gedruckte Fassung im Serverraum und eine Kopie an einem zweiten Ort (z. B. verschlüsselt in einem Cloud-Speicher oder beim Dienstleister). Jede Seite trägt Version, Datum und Verantwortlichen. Änderungen an Systemen werden über das Änderungsverfahren (change management) erst abgeschlossen, wenn das Handbuch angepasst ist. Eine verantwortliche Person und eine Vertretung prüfen es mindestens jährlich. Ein Wiederanlauftest mit Messung der Zeiten zeigt, ob die Anleitung stimmt. Eine Person, die das System nicht kennt, sollte den Test nach Handbuch durchführen."
+    ]
+  },
+  {
+    "title": "Ständig gesperrtes Benutzerkonto nach dem Kennwortwechsel bei einer Bergbahn",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3g",
+      "C1d",
+      "A8e"
+    ],
+    "text": [
+      "Eine Bergbahn mit Kassen an Tal- und Bergstation nutzt Active Directory und einen eigenen Exchange-Server EX01. Die Kassenleiterin Frau Schulz (Konto jschulz) hat am Montag um 07:55 Uhr ihr Kennwort geändert. Seitdem ist ihr Konto immer wieder gesperrt.",
+      "Kontosperrungsrichtlinie: Schwellenwert 5 ungültige Anmeldeversuche, Zähler zurücksetzen nach 15 Minuten, Sperrdauer 30 Minuten.",
+      "Auf dem PDC-Emulator finden Sie Ereignisse 4740 (Konto gesperrt). Als Aufruferrechner (Caller Computer Name) steht meist EX01, einmal KASSE-TAL02. Auf EX01 zeigen Ereignisse 4625 im Abstand von 5 Minuten jeweils 2 Fehlversuche für jschulz mit dem Unterstatus 0xC000006A.",
+      "",
+      "1. Mit welchen PowerShell-Befehlen finden Sie gesperrte Konten, die Sperrereignisse und den Zustand des Kontos? Deuten Sie die Ergebnisse. Was ist die wahrscheinliche Ursache bei EX01 und bei KASSE-TAL02?",
+      "2. Das Diensthandy versucht ab 08:00 Uhr alle 5 Minuten zu synchronisieren. Berechnen Sie, wann das Konto zum ersten Mal gesperrt wird, wann wieder, und wie oft es bis 16:00 Uhr gesperrt wird. Gehen Sie vereinfacht davon aus, dass Versuche während der Sperre nicht zählen und nach der Sperre neu gezählt wird.",
+      "3. Beheben Sie die Störung. Ein Kollege schlägt vor, den Schwellenwert auf 50 zu erhöhen. Bewerten Sie das und nennen Sie bessere Maßnahmen."
+    ],
+    "solution": [
+      "1. Search-ADAccount -LockedOut zeigt alle gesperrten Konten. Der PDC-Emulator: (Get-ADDomain).PDCEmulator. Sperrereignisse: Get-WinEvent -ComputerName DC01 -FilterHashtable @{LogName='Security'; Id=4740; StartTime=(Get-Date).Date} | Format-List TimeCreated, Message. Konto: Get-ADUser -Identity jschulz -Properties LockedOut, BadLogonCount, LastBadPasswordAttempt, PasswordLastSet. Deutung: Der Aufruferrechner ist der Rechner, an dem die Anmeldung fehlschlug, nicht unbedingt das Endgerät. Bei EX01 kommen die Anmeldungen von außen über Exchange ActiveSync oder Outlook. Unterstatus 0xC000006A heißt falsches Kennwort. Der Abstand von 5 Minuten passt zu einem Smartphone, das mit dem alten Kennwort synchronisiert. Welches Gerät es ist, zeigen die IIS-Protokolle von EX01 (Benutzer, Geräte-ID, User-Agent) und die Geräteliste des Postfachs. KASSE-TAL02: Dort ist wahrscheinlich ein altes Kennwort in der Anmeldeinformationsverwaltung gespeichert (z. B. für ein verbundenes Laufwerk) oder eine Sitzung ist noch angemeldet.",
+      "",
+      "2. Je Versuch 2 Fehlanmeldungen: 08:00 Uhr 2, 08:05 Uhr 4, 08:10 Uhr 6. Der fünfte Fehlversuch fällt um 08:10 Uhr, das Konto ist gesperrt (alle drei Versuche liegen in 15 Minuten). Sperre bis 08:40 Uhr. Danach: 08:40 Uhr 2, 08:45 Uhr 4, 08:50 Uhr Sperre bis 09:20 Uhr. Ein Zyklus dauert 40 Minuten. Sperren um 08:10, 08:50, 09:30 Uhr und so weiter bis 15:30 Uhr. Anzahl: (15:30 - 08:10) / 40 Minuten = 440 / 40 = 11 Abstände, also 12 Sperren bis 16:00 Uhr. Frau Schulz kann zwischen den Sperren kaum arbeiten.",
+      "",
+      "3. Das Diensthandy finden und das neue Kennwort dort eintragen oder das Postfachkonto auf dem Handy neu einrichten. An KASSE-TAL02 gespeicherte Anmeldeinformationen löschen und Sitzungen abmelden. Danach Unlock-ADAccount -Identity jschulz und eine Stunde beobachten, ob neue 4740-Ereignisse kommen. Schwellenwert 50: Abzulehnen. Er verdeckt nur das Symptom und erleichtert das Raten von Kennwörtern (brute force). Besser: Beim Kennwortwechsel alle Geräte prüfen (Hinweis in der Anleitung und im Ticket), Geräte zentral über eine Mobilgeräteverwaltung (MDM) einrichten, moderne Authentifizierung mit MFA nutzen, Sperrereignisse überwachen und einen Alarm bei vielen Sperren eines Kontos auslösen. Die Lösung als bekannten Fehler im Betriebshandbuch dokumentieren."
+    ]
+  },
+  {
+    "title": "Speicherkontingente und DFS-Namespace für die Laufwerke eines Kreisjugendrings",
+    "cat": "systeme",
+    "thema": "storage",
+    "theme": "Systemadministration",
+    "rahmenplan": [
+      "C3b",
+      "C3c",
+      "C1b"
+    ],
+    "text": [
+      "Ein Kreisjugendring hat 35 hauptamtliche und 125 ehrenamtliche Konten. Alle Basisordner liegen auf dem Windows-Dateiserver FS01 im Volume E: mit 600 GB. Die Laufwerke sind heute als \\\\FS01\\Home$\\<Benutzername> eingetragen. Letzte Woche lief E: voll, weil ein Jugendleiter 38 GB Videos einer Ferienfreizeit in seinen Basisordner kopiert hat. Für Fotos und Videos der Freizeiten gibt es eigentlich die Freigabe \"Freizeiten\" auf Volume F:.",
+      "Geplant: Kontingente mit dem Ressourcen-Manager für Dateiserver (FSRM). Hauptamtliche 5 GB, Ehrenamtliche 2 GB, jeweils Warnung bei 85 %. Im nächsten Jahr soll FS01 durch einen neuen Server ersetzt werden.",
+      "",
+      "1. Wie viel Speicher sagen Sie mit dem geplanten Modell insgesamt zu und wie viel Prozent von E: sind das? Ab welcher Belegung kommt die Warnung? Volume F: hat 1.000 GB, davon sind 812 GB belegt. Wie hoch ist die Belegung, wenn die Videos dorthin verschoben werden? Erklären Sie den Unterschied zwischen hartem und weichem Kontingent.",
+      "2. Richten Sie die Kontingente mit PowerShell ein. Die Ordner werden in E:\\Home\\Haupt und E:\\Home\\Ehrenamt getrennt. Neue Benutzerordner sollen ihr Kontingent automatisch bekommen. Wie verhindern Sie zusätzlich, dass Videos in den Basisordnern landen?",
+      "3. Wie hilft ein DFS-Namespace beim geplanten Serverwechsel? Richten Sie ihn mit PowerShell ein und beschreiben Sie die Umstellung der Laufwerke."
+    ],
+    "solution": [
+      "1. Zugesagt: 35 * 5 + 125 * 2 = 175 + 250 = 425 GB, das sind 425 / 600 = 71 % von E:. Es bleiben 175 GB für Wachstum, neue Konten und Schattenkopien, E: ist also nicht überbucht. Hätte jedes Konto 5 GB, wären es 160 * 5 = 800 GB und damit mehr als das Volume. F: nach dem Verschieben: 812 + 38 = 850 GB = 85 %. Das passt, F: sollte aber ab jetzt in der Überwachung stehen. Warnung: 5 GB * 0,85 = 4,25 GB, 2 GB * 0,85 = 1,7 GB. Hartes Kontingent: Beim Erreichen der Grenze verweigert der Server weiteres Schreiben. Weiches Kontingent: Es wird nur gewarnt und protokolliert, Schreiben bleibt möglich, gut zur Beobachtung vor der Einführung. FSRM-Kontingente gelten für die Größe eines Ordners, NTFS-Kontingente dagegen pro Besitzer auf einem ganzen Volume.",
+      "",
+      "2. Install-WindowsFeature -Name FS-Resource-Manager -IncludeManagementTools",
+      "   $aktion = New-FsrmAction -Type Event -EventType Warning -Body \"Basisordner von [Source Io Owner] ist zu 85 % belegt.\"",
+      "   $schwelle = New-FsrmQuotaThreshold -Percentage 85 -Action $aktion",
+      "   New-FsrmQuotaTemplate -Name \"Home Haupt 5GB\" -Size 5GB -Threshold $schwelle",
+      "   New-FsrmQuotaTemplate -Name \"Home Ehrenamt 2GB\" -Size 2GB -Threshold $schwelle",
+      "   New-FsrmAutoQuota -Path \"E:\\Home\\Haupt\" -Template \"Home Haupt 5GB\"",
+      "   New-FsrmAutoQuota -Path \"E:\\Home\\Ehrenamt\" -Template \"Home Ehrenamt 2GB\"",
+      "   Das automatische Kontingent (auto quota) gilt für jeden vorhandenen und jeden neuen Unterordner. Videos: Eine Dateiprüfung (file screen) auf E:\\Home mit einer Dateigruppe für Videodateien (z. B. *.mp4, *.mov, *.avi) blockiert das Speichern. Erst eine Woche passiv (nur melden) laufen lassen und die Leitungen informieren, wo Videos hingehören. Die Dateiprüfung erkennt nur die Endung, nicht den Inhalt.",
+      "",
+      "3. Der Namespace trennt den Pfad, den die Benutzer sehen, vom echten Server. Die Laufwerke zeigen auf \\\\kjr.local\\Daten\\Home. Beim Serverwechsel ändert man nur das Ziel des DFS-Ordners, nicht die Anmeldeskripte, GPOs und Verknüpfungen. Einrichten (Rolle FS-DFS-Namespace auf FS01 installieren, Freigabe \\\\FS01\\Daten als Stamm anlegen):",
+      "   New-DfsnRoot -Path \"\\\\kjr.local\\Daten\" -TargetPath \"\\\\FS01\\Daten\" -Type DomainV2",
+      "   New-DfsnFolder -Path \"\\\\kjr.local\\Daten\\Home\" -TargetPath \"\\\\FS01\\Home$\"",
+      "   Umstellung: Im AD bei allen Konten den Basisordner auf \\\\kjr.local\\Daten\\Home\\Haupt\\<Benutzername> bzw. \\\\kjr.local\\Daten\\Home\\Ehrenamt\\<Benutzername> setzen (die Freigabe Home$ zeigt auf E:\\Home), z. B. mit Set-ADUser -HomeDirectory und -HomeDrive \"H:\", oder die Laufwerkszuordnung per GPO ändern. Beim Wechsel die Daten mit robocopy /MIR /COPYALL kopieren (Rechte bleiben erhalten), am Stichtag einen letzten Abgleich machen, dann das Ziel umstellen. Ein Namespace mit Stamm auf zwei Namespace-Servern verhindert, dass der Namespace selbst ausfällt. Die Kontingente müssen auf dem neuen Server neu eingerichtet werden."
+    ]
+  },
+  {
+    "title": "Saisonkräfte eines Freizeitbads per CSV im Active Directory anlegen",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3c"
+    ],
+    "text": [
+      "Ein Freizeitbad stellt jeden Sommer Saisonkräfte für Kasse, Bistro, Badeaufsicht und Technik ein. Die Personalabteilung liefert eine Datei saison.csv mit Semikolon als Trennzeichen. Ein Kollege hat ein PowerShell-Skript geschrieben, das die Konten im Active Directory anlegt:",
+      "  $startpw = Read-Host \"Startkennwort\" -AsSecureString",
+      "  $liste = Import-Csv -Path \"C:\\Skripte\\saison.csv\" -Delimiter \";\"",
+      "  foreach ($p in $liste) {",
+      "      $sam = ($p.Vorname.Substring(0,1) + $p.Nachname).ToLower()",
+      "      if ($sam.Length -gt 20) { $sam = $sam.Substring(0,20) }",
+      "      if (Get-ADUser -Filter \"SamAccountName -eq '$sam'\") {",
+      "          Write-Output \"Vorhanden: $sam\"",
+      "      } else {",
+      "          New-ADUser -Name \"$($p.Vorname) $($p.Nachname)\" -SamAccountName $sam -Path \"OU=Saison,DC=bad,DC=local\" -AccountPassword $startpw -Enabled $true",
+      "          Write-Output \"Angelegt: $sam\"",
+      "      }",
+      "  }",
+      "Inhalt von saison.csv (erste Zeile = Spaltennamen):",
+      "  Vorname;Nachname;Abteilung",
+      "  Jonas;Brückner;Kasse",
+      "  Lea;Schmidt;Bistro",
+      "  Lena;Schmidt;Aufsicht",
+      "  Jörg;Ölschläger-Brinkmann;Technik",
+      "  Maximilian;Weiß;Kasse",
+      "Im AD gibt es bereits das Konto lschmidt. Es gehört dem fest angestellten Haustechniker Lukas Schmidt.",
+      "",
+      "1. Bestimmen Sie die Ausgabe des Skripts Zeile für Zeile. Welche Saisonkräfte haben danach ein eigenes Konto? Nennen Sie zwei Probleme, die Sie an den erzeugten Anmeldenamen sehen.",
+      "2. Verbessern Sie das Skript: Umlaute und ß sollen ersetzt werden (ä -> ae, ö -> oe, ü -> ue, ß -> ss), und bei einem schon vergebenen Namen soll eine laufende Nummer ab 2 angehängt werden. Schreiben Sie die geänderten Zeilen in PowerShell oder Pseudocode. Welche Anmeldenamen entstehen jetzt?",
+      "3. Die Saison endet am 30.09.2027. Welche Parameter von New-ADUser ergänzen Sie, damit die Konten sicher starten und nach der Saison nicht weiter nutzbar sind? Wie testen Sie das Skript, bevor es im echten AD läuft?"
+    ],
+    "solution": [
+      "1. Ausgabe: \"Angelegt: jbrückner\", \"Vorhanden: lschmidt\", \"Vorhanden: lschmidt\", \"Angelegt: jölschläger-brinkman\", \"Angelegt: mweiß\". Rechenweg Zeile 4: \"j\" + \"Ölschläger-Brinkmann\" ergibt 21 Zeichen, also wird auf 20 Zeichen gekürzt, das letzte \"n\" fällt weg. Konten haben danach nur Jonas Brückner, Jörg Ölschläger-Brinkmann und Maximilian Weiß. Problem 1: Lea und Lena Schmidt bekommen kein Konto. Das Skript meldet nur \"Vorhanden\", obwohl das Konto einer anderen Person gehört. Schlimmer wäre, wenn jemand den beiden die Zugangsdaten von lschmidt gibt. Problem 2: Die Namen enthalten Umlaute und ß. Das AD erlaubt das zwar, aber E-Mail-Adressen, ältere Anwendungen, Kassensysteme und Tastaturen im Ausland machen damit oft Probleme. Außerdem ist der gekürzte Name \"jölschläger-brinkman\" schwer lesbar.",
+      "",
+      "2. Geänderte Zeilen (PowerShell):",
+      "  $basis = ($p.Vorname.Substring(0,1) + $p.Nachname).ToLower()",
+      "  $basis = $basis.Replace(\"ä\",\"ae\").Replace(\"ö\",\"oe\").Replace(\"ü\",\"ue\").Replace(\"ß\",\"ss\")",
+      "  if ($basis.Length -gt 18) { $basis = $basis.Substring(0,18) }",
+      "  $sam = $basis; $nr = 2",
+      "  while (Get-ADUser -Filter \"SamAccountName -eq '$sam'\") { $sam = $basis + $nr; $nr++ }",
+      "  New-ADUser ... ; Write-Output \"Angelegt: $sam\"",
+      "Das Ersetzen der Umlaute passiert nach ToLower, damit auch \"Ö\" erfasst wird. Gekürzt wird auf 18 Zeichen, damit eine Nummer noch in die 20 Zeichen passt. Ergebnis: jbrueckner, lschmidt2 (lschmidt ist belegt), lschmidt3 (lschmidt2 wurde gerade für Lea angelegt und wird von Get-ADUser gefunden), joelschlaeger-brin (aus 23 Zeichen auf 18 gekürzt), mweiss. Jede Saisonkraft hat nun ein eigenes Konto. Die Zuordnung Name zu Konto sollte das Skript in eine Protokolldatei schreiben, damit die Personalabteilung sie bekommt.",
+      "",
+      "3. Ergänzungen: -ChangePasswordAtLogon $true (die Person muss das Startkennwort sofort ändern), -AccountExpirationDate \"2027-10-01\" (das Konto läuft automatisch ab; der Wert ist der erste Tag, an dem es nicht mehr gilt, so bleibt der 30.09. voll nutzbar), -Description \"Saison 2027\" und -Department $p.Abteilung für die Übersicht, eventuell -Enabled erst zum Arbeitsbeginn. Das Startkennwort wird mit Read-Host -AsSecureString abgefragt und steht nicht im Skript. Gruppen vergibt man über Add-ADGroupMember je Abteilung nach dem Rollenkonzept. Test: zuerst mit -WhatIf laufen lassen (zeigt, was passieren würde, ohne etwas zu ändern), danach in einer Test-OU oder Testdomäne mit genau dieser CSV, inklusive Sonderfällen wie Umlaut, Doppelname und schon vergebenem Namen. Erst dann läuft es im echten AD."
+    ]
+  },
+  {
+    "title": "Logdateien der Ticketkassen eines Zoos mit find komprimieren und archivieren",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3e"
+    ],
+    "text": [
+      "Die Ticketkassen eines Zoos schreiben jeden Tag eine Logdatei kasse-JJJJ-MM-TT.log nach /var/log/kasse auf einem Linux-Server. Jede Datei ist etwa 180 MB groß und wird bis 23:59 Uhr beschrieben. Komprimiert mit gzip bleiben 12 % der Größe übrig. Die Logs müssen ein Jahr lang aufbewahrt werden. Ein Skript läuft jede Nacht um 01:30 Uhr:",
+      "  #!/bin/bash",
+      "  LOGDIR=/var/log/kasse",
+      "  ARCHIV=/srv/archiv/kasse",
+      "  find \"$LOGDIR\" -name \"*.log\" -mtime +7 -exec gzip {} \\;",
+      "  find \"$LOGDIR\" -name \"*.log.gz\" -mtime +30 -exec mv {} \"$ARCHIV\" \\;",
+      "  find \"$ARCHIV\" -name \"*.log.gz\" -mtime +365 -delete",
+      "/srv/archiv ist ein Netzlaufwerk (NFS) vom Archivserver. gzip und mv behalten den Änderungszeitpunkt (mtime) der Datei bei.",
+      "",
+      "1. Erklären Sie, wie find die Angabe -mtime +7 auswertet. Welche Logdatei wird beim Lauf am 20.03.2027 um 01:30 Uhr neu komprimiert, welche neu ins Archiv verschoben und welche im Archiv neu gelöscht?",
+      "2. Eines Nachts ist das NFS-Laufwerk nicht eingebunden, und das Verzeichnis /srv/archiv/kasse gibt es dann nicht. Was passiert in Zeile 2 des find-Teils? Verbessern Sie das Skript so, dass es in diesem Fall nichts verschiebt und einen Fehler meldet.",
+      "3. Berechnen Sie für den Zustand direkt nach dem Lauf am 20.03.2027, wie viele Dateien jeder Art lokal und im Archiv liegen und wie viel Speicher sie belegen (rechnen Sie auch die gerade beschriebene Datei vom 20.03. voll). Welches Standardwerkzeug von Linux erledigt solche Aufgaben ohne eigenes Skript?"
+    ],
+    "solution": [
+      "1. -mtime zählt das Alter in ganzen Tagen zu 24 Stunden, angefangene Tage werden abgeschnitten. +7 heißt: Alter größer als 7, also mindestens 8 volle Tage. Die Datei vom 11.03. wurde am 11.03. um 23:59 zuletzt geändert. Am 20.03. um 01:30 ist sie 8 Tage und 1 Stunde 31 Minuten alt, abgeschnitten 8, und 8 > 7. Sie wird neu komprimiert. Die Datei vom 12.03. ist 7 Tage und 1:31 Stunden alt, also 7, und wird noch nicht komprimiert. Ins Archiv: +30 heißt mindestens 31 volle Tage. kasse-2027-02-16.log.gz ist 31 Tage und 1:31 Stunden alt und wird verschoben, die Datei vom 17.02. (30 Tage) bleibt. Löschen: +365 heißt mindestens 366 volle Tage. Neu gelöscht wird kasse-2026-03-18.log.gz (366 Tage alt). Die Datei vom 19.03.2026 ist 365 Tage alt und bleibt. Damit ist die Aufbewahrung von einem Jahr eingehalten.",
+      "",
+      "2. Fehlt das Zielverzeichnis, führt find für jede Datei \"mv datei /srv/archiv/kasse\" aus. mv benennt die Datei dann in eine Datei namens /srv/archiv/kasse im lokalen Dateisystem um. Jede weitere Datei überschreibt die vorherige. Ergebnis: Alle Logs dieser Nacht bis auf die letzte sind verloren, und niemand merkt es. Verbesserung:",
+      "  mountpoint -q /srv/archiv || { logger -t kassenlog \"Archiv nicht eingebunden\"; exit 1; }",
+      "  find \"$LOGDIR\" -type f -name \"*.log.gz\" -mtime +30 -exec mv -n -t \"$ARCHIV/\" {} +",
+      "mountpoint prüft, ob das Laufwerk eingebunden ist, sonst bricht das Skript mit Rückgabecode 1 ab. Den Rückgabecode wertet die Überwachung aus oder schickt eine Mail. mv -t \"$ARCHIV/\" verlangt ein vorhandenes Verzeichnis und meldet sonst einen Fehler, -n überschreibt keine vorhandene Datei. -type f nimmt nur normale Dateien.",
+      "",
+      "3. Lokal unkomprimiert: Dateien mit Alter 0 bis 7 Tage, das sind die Tage 12.03. bis 19.03. (8 Dateien) plus die laufende Datei vom 20.03., zusammen 9 Dateien * 180 MB = 1.620 MB. Lokal komprimiert: Alter 8 bis 30 Tage, also 17.02. bis 11.03. = 12 + 11 = 23 Dateien zu je 180 * 0,12 = 21,6 MB = 496,8 MB. Lokal zusammen 2.116,8 MB, also rund 2,1 GB. Archiv: Alter 31 bis 365 Tage, also 19.03.2026 bis 16.02.2027 = 335 Dateien * 21,6 MB = 7.236 MB, rund 7,2 GB. Standardwerkzeug: logrotate. Dort legt man Rotation, Komprimierung (compress, delaycompress), Anzahl (rotate) und Aufbewahrung (maxage) je Logdatei in einer Konfigurationsdatei fest. Für die Archivierung auf einen anderen Server bleibt ein kleines Skript oder ein zentraler Logserver sinnvoll."
+    ]
+  },
+  {
+    "title": "Freien Speicher auf dem Dateiserver eines Planungsbüros für Haustechnik überwachen",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "C3g",
+      "A10c"
+    ],
+    "text": [
+      "Ein Planungsbüro für Heizung, Lüftung und Sanitär legt seine CAD-Pläne und Gebäudemodelle auf einem Windows-Dateiserver ab. Letzten Monat lief das Laufwerk D: voll, und mehrere Planer konnten nicht mehr speichern. Ihr Ausbilder hat ein PowerShell-Skript geschrieben, das die Aufgabenplanung alle 15 Minuten startet:",
+      "  $grenze = 15",
+      "  $laufwerke = Get-CimInstance -ClassName Win32_LogicalDisk -Filter \"DriveType=3\"",
+      "  foreach ($lw in $laufwerke) {",
+      "      $proz = [math]::Round($lw.FreeSpace / $lw.Size * 100, 1)",
+      "      $gb = [math]::Round($lw.FreeSpace / 1GB, 1)",
+      "      if ($proz -lt $grenze) {",
+      "          Send-MailMessage -SmtpServer \"mail.planbuero.example\" -From \"fs01@planbuero.example\" -To \"it@planbuero.example\" -Subject \"Speicherwarnung $($lw.DeviceID)\" -Body \"Nur noch $gb GB ($proz %) frei\"",
+      "      }",
+      "  }",
+      "Werte von Win32_LogicalDisk in Byte:",
+      "  C:  Size 128.849.018.880   FreeSpace 23.085.449.216",
+      "  D:  Size 2.147.483.648.000   FreeSpace 289.910.292.480",
+      "  E:  Size 4.294.967.296.000   FreeSpace 687.194.767.360",
+      "",
+      "1. Was bedeutet der Filter DriveType=3? Berechnen Sie $proz und $gb für alle drei Laufwerke. Welche Mail verschickt das Skript, und mit welchem Text? Warum zeigt die Mail für D: nicht 289,9 GB, obwohl FreeSpace über 289 Milliarden Byte beträgt?",
+      "2. Nennen Sie zwei Schwächen des Skripts im Betrieb und verbessern Sie es. Gehen Sie auf die Häufigkeit der Mails, auf einen festen Prozentwert bei unterschiedlich großen Laufwerken und auf Send-MailMessage ein.",
+      "3. Auf D: kommen an jedem Arbeitstag im Schnitt 4,5 GiB dazu. Nach wie vielen Arbeitstagen fällt der freie Platz unter 5 %? Wie groß muss D: sein, damit nach 220 weiteren Arbeitstagen noch 15 % frei sind? Nennen Sie zwei Maßnahmen neben der Vergrößerung."
+    ],
+    "solution": [
+      "1. DriveType=3 wählt lokale Festplatten aus (2 wäre ein Wechseldatenträger, 4 ein Netzlaufwerk, 5 ein optisches Laufwerk). PowerShell rechnet 1GB als 1.073.741.824 Byte (2 hoch 30, eigentlich GiB). C: 23.085.449.216 / 128.849.018.880 * 100 = 17,9 %, frei 23.085.449.216 / 1.073.741.824 = 21,5 GB von 120 GB. D: 289.910.292.480 / 2.147.483.648.000 * 100 = 13,5 %, frei 270 GB von 2.000 GB. E: 687.194.767.360 / 4.294.967.296.000 * 100 = 16 %, frei 640 GB von 4.000 GB. Nur D: liegt unter 15 %. Mail: Betreff \"Speicherwarnung D:\", Text \"Nur noch 270 GB (13.5 %) frei\". PowerShell setzt Zahlen in Zeichenketten immer mit Punkt ein, unabhängig von der Spracheinstellung. 289,9 GB wäre der dezimale Wert (1 GB = 10 hoch 9 Byte). Das Skript teilt durch 1GB, also durch 2 hoch 30, und erhält 270 GiB.",
+      "",
+      "2. Schwäche 1: Das Skript läuft alle 15 Minuten und schickt dann jedes Mal eine Mail, das sind 24 * 4 = 96 Mails am Tag. Die Warnung geht in der Flut unter. Besser: eine Merkerdatei je Laufwerk (z.B. C:\\Skripte\\warnung_D.txt). Eine Mail geht nur, wenn die Grenze neu unterschritten wird oder einmal am Tag als Erinnerung. Steigt der freie Platz wieder über die Grenze, wird der Merker gelöscht. Schwäche 2: Ein fester Prozentwert passt nicht zu allen Größen. 15 % von C: sind 18 GB, 15 % von E: sind 600 GB. Besser zwei Stufen mit Prozent und absolutem Wert, z.B. Warnung unter 15 % oder unter 50 GB, kritisch unter 5 %. Schwäche 3: Send-MailMessage gilt bei Microsoft als veraltet (obsolete), weil es keine sichere Verbindung zum Mailserver garantiert. Besser ist ein Eintrag ins Ereignisprotokoll (Write-EventLog bzw. New-WinEvent) und die Auswertung durch das vorhandene Monitoring (z.B. Zabbix, PRTG, Checkmk), das auch Verläufe und Prognosen zeigt. Außerdem fehlt Fehlerbehandlung: Ist der Mailserver nicht erreichbar, erfährt niemand davon.",
+      "",
+      "3. 5 % von 2.000 GiB sind 100 GiB. Bis dahin sind 270 - 100 = 170 GiB Platz, 170 / 4,5 = 37,8 Arbeitstage. Nach 37 Arbeitstagen sind noch 270 - 37 * 4,5 = 103,5 GiB frei, am 38. Arbeitstag fällt der Wert unter 5 %. Belegt sind heute 2.000 - 270 = 1.730 GiB. In 220 Arbeitstagen kommen 220 * 4,5 = 990 GiB dazu, belegt sind dann 2.720 GiB. Diese dürfen höchstens 85 % sein: 2.720 / 0,85 = 3.200 GiB. D: muss also auf mindestens 3.200 GiB wachsen, 1.200 GiB mehr als heute. Weitere Maßnahmen: abgeschlossene Projekte in ein Archiv verschieben, Kontingente (Quotas) mit dem Ressourcen-Manager für Dateiserver (FSRM) je Projektordner, Datendeduplizierung für die vielen ähnlichen Planstände, doppelte und temporäre Dateien (z.B. CAD-Sicherungsdateien) regelmäßig entfernen."
+    ]
+  },
+  {
+    "title": "Zeiterfassungsdienst eines Entsorgungsbetriebs per Skript überwachen und neu starten",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "C3h",
+      "A10c"
+    ],
+    "text": [
+      "Ein Entsorgungsbetrieb erfasst die Arbeitszeiten der Müllwagenfahrer über Terminals am Betriebshof. Die Terminals melden sich beim Dienst zeiterfassung auf einem Linux-Server. Fällt der Dienst aus, können Fahrer nicht ein- und ausstempeln. Ein Kollege hat ein Skript geschrieben, das alle 5 Minuten per cron läuft:",
+      "  #!/bin/bash",
+      "  DIENST=zeiterfassung",
+      "  ZAEHLER=/var/lib/dienstwacht/neustarts",
+      "  [ -f \"$ZAEHLER\" ] || echo 0 > \"$ZAEHLER\"",
+      "  n=$(cat \"$ZAEHLER\")",
+      "  if systemctl is-active --quiet \"$DIENST\"; then",
+      "      echo 0 > \"$ZAEHLER\"",
+      "      exit 0",
+      "  fi",
+      "  if [ \"$n\" -lt 3 ]; then",
+      "      systemctl restart \"$DIENST\"",
+      "      echo $((n + 1)) > \"$ZAEHLER\"",
+      "      logger -t dienstwacht \"Neustart $((n + 1)) von $DIENST\"",
+      "  else",
+      "      echo \"$DIENST startet nicht\" | mail -s \"ALARM $DIENST\" it@entsorgung.example",
+      "      exit 2",
+      "  fi",
+      "Ablauf an einem Montag: Um 06:03 Uhr stürzt der Dienst ab, weil die Datenbank gesperrt ist. Jeder Neustart scheitert, bis ein Administrator um 06:58 Uhr die Sperre löst und den Dienst von Hand startet. Das Skript läuft um 06:00, 06:05, 06:10 usw.",
+      "",
+      "1. Erklären Sie die Zeilen mit is-active --quiet und $((n + 1)). Führen Sie einen Schreibtischtest von 06:00 bis 07:00 Uhr durch: Was steht nach jedem Lauf in der Zählerdatei, welche Einträge landen im Systemprotokoll, wie viele Alarm-Mails gehen raus?",
+      "2. Finden Sie zwei Schwächen des Skripts und schlagen Sie Verbesserungen vor. Was passiert, wenn die Zählerdatei leer ist?",
+      "3. systemd kann Dienste selbst neu starten. Schreiben Sie die nötigen Einträge für die Unit-Datei: Neustart nur nach einem Fehler, 20 Sekunden Wartezeit, höchstens 3 Starts in 5 Minuten, danach Alarm über eine eigene Unit. Wie oft startet systemd den Dienst bei einem Dauerfehler höchstens neu, und wann ist das Skript trotzdem sinnvoll?"
+    ],
+    "solution": [
+      "1. systemctl is-active --quiet gibt nichts aus und liefert den Rückgabecode 0, wenn der Dienst läuft, sonst einen Wert ungleich 0. if wertet diesen Code aus. $((n + 1)) ist die Arithmetik der Bash und rechnet den Zähler plus 1. Schreibtischtest: 06:00 Dienst läuft, Zähler 0, Ende mit 0. 06:05 Dienst steht, n = 0 < 3, Neustart (scheitert), Zähler 1, Protokoll \"Neustart 1 von zeiterfassung\". 06:10 n = 1, Neustart, Zähler 2, \"Neustart 2 ...\". 06:15 n = 2, Neustart, Zähler 3, \"Neustart 3 ...\". 06:20 n = 3, nicht kleiner als 3, Alarm-Mail, Rückgabecode 2, Zähler bleibt 3. Genauso um 06:25, 06:30, 06:35, 06:40, 06:45, 06:50 und 06:55. 07:00 Dienst läuft wieder, Zähler 0. Ergebnis: 3 Neustarts im Protokoll und 8 Alarm-Mails (06:20 bis 06:55). Die Fahrer konnten von 06:03 bis 06:58 Uhr, also 55 Minuten, nicht stempeln.",
+      "",
+      "2. Schwäche 1: Die Alarm-Mail kommt erst 17 Minuten nach dem Ausfall (06:03 bis 06:20) und danach alle 5 Minuten erneut. Besser: schon beim ersten Ausfall eine Meldung schicken und die Alarm-Mail nur einmal senden (z.B. nur bei n = 3, danach Zähler auf 4 setzen). Schwäche 2: Ob systemctl restart geklappt hat, wird nicht geprüft und nicht protokolliert, und die Ursache (gesperrte Datenbank) erfährt niemand. Besser: Rückgabecode von systemctl restart auswerten und die letzten Zeilen aus journalctl -u zeiterfassung in die Mail schreiben. Weitere Punkte: Das Verzeichnis /var/lib/dienstwacht muss existieren, sonst scheitert schon die erste Zeile. Ist die Datei leer, steht in n nichts. Der Test [ \"\" -lt 3 ] meldet \"integer expression expected\" und gilt als falsch, also geht sofort eine Alarm-Mail raus, ohne Neustart. Abhilfe: n=$(cat \"$ZAEHLER\" 2>/dev/null); n=${n:-0}. Sinnvoll ist auch ein Eintrag ins zentrale Monitoring statt eigener Mails.",
+      "",
+      "3. Unit-Datei zeiterfassung.service:",
+      "  [Unit]",
+      "  StartLimitIntervalSec=300",
+      "  StartLimitBurst=3",
+      "  OnFailure=alarm@%n.service",
+      "  [Service]",
+      "  Restart=on-failure",
+      "  RestartSec=20s",
+      "Restart=on-failure startet nur nach einem Absturz oder einem Rückgabecode ungleich 0, nicht nach einem gewollten systemctl stop. StartLimitBurst=3 und StartLimitIntervalSec=300 erlauben höchstens 3 Starts in 300 Sekunden. Bei einem Dauerfehler gibt es also nach dem Absturz höchstens 3 Startversuche im Abstand von 20 Sekunden, danach bleibt die Unit im Zustand failed, und OnFailure startet die Alarm-Unit (z.B. eine Mail oder eine Meldung an das Monitoring). Nach systemctl daemon-reload gilt die Änderung. Ein eigenes Skript bleibt sinnvoll, wenn der Prozess zwar läuft, aber nicht mehr arbeitet (hängt). Dann prüft es die Funktion von außen, z.B. ob der Port der Terminals antwortet, und startet den Dienst neu."
+    ]
+  },
+  {
+    "title": "Sicherungsskript einer Tierarztpraxis löscht im Fehlerfall die guten Sicherungen",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "C3e",
+      "A10c"
+    ],
+    "text": [
+      "Eine Tierarztpraxis speichert Patientenakten, Röntgenbilder und die Praxissoftware unter /srv/praxisdaten auf einem Linux-Server. Jeden Abend um 22:00 Uhr startet cron dieses Sicherungsskript auf ein NAS:",
+      "  #!/bin/bash",
+      "  ZIEL=/mnt/nas/sicherung",
+      "  DATUM=$(date +%F)",
+      "  tar -czf \"$ZIEL/praxis_$DATUM.tar.gz\" /srv/praxisdaten",
+      "  ls -1t \"$ZIEL\"/praxis_*.tar.gz | tail -n +8 | xargs -r rm --",
+      "  echo \"Sicherung fertig\"",
+      "  exit 0",
+      "Die Rotationszeile wurde neu eingefügt. Vor dem Lauf am 10.05.2027 liegen auf dem NAS die Sicherungen praxis_2027-05-01.tar.gz bis praxis_2027-05-09.tar.gz. Die Daten umfassen 120 GB, eine Sicherung ist komprimiert 38 GB groß, tar mit gzip schafft etwa 60 MB/s (1 GB = 1.000 MB).",
+      "",
+      "1. Erklären Sie die Rotationszeile Schritt für Schritt. Welche Dateien liegen nach dem Lauf am 10.05.2027 auf dem NAS? Wie lange dauert eine Sicherung?",
+      "2. Ab dem 11.05. ist das NAS voll. tar bricht jeden Abend mit \"No space left on device\" ab und hinterlässt eine unvollständige Datei. Was passiert mit den Sicherungen, wenn das 7 Abende hintereinander so geht? Was meldet das Skript an cron und das Monitoring? Verbessern Sie das Skript.",
+      "3. Die Praxis möchte künftig 7 Tagessicherungen, 4 Wochensicherungen und 12 Monatssicherungen aufbewahren (Generationenprinzip). Wie viel Platz braucht das auf dem NAS mit 2 TB Nutzkapazität (Anteil in Prozent)? Was fehlt außerdem für eine gute Datensicherung?"
+    ],
+    "solution": [
+      "1. ls -1t listet die Sicherungen eine pro Zeile, die neueste zuerst (sortiert nach Änderungszeit). tail -n +8 gibt alles ab der 8. Zeile aus, also alle außer den 7 neuesten. xargs -r rm -- löscht diese Dateien, -r verhindert einen rm-Aufruf ohne Dateien, -- sorgt dafür, dass ein Dateiname nie als Option gilt. Am 10.05. gibt es nach tar 10 Dateien (01. bis 10.). Die Zeilen 8 bis 10 sind die Dateien vom 03., 02. und 01.05., sie werden gelöscht. Es bleiben praxis_2027-05-04 bis praxis_2027-05-10, also 7 Sicherungen. Dauer: 120 GB = 120.000 MB / 60 MB/s = 2.000 s = 33 min 20 s.",
+      "",
+      "2. Jeder fehlgeschlagene Lauf erzeugt eine neue, unvollständige Datei. Sie ist die neueste und zählt bei der Rotation mit. Dafür wird jeden Abend die älteste gute Sicherung gelöscht. Nach 7 Abenden (11. bis 17.05.) sind alle 7 aufbewahrten Dateien kaputt, und es gibt keine einzige brauchbare Sicherung mehr. Das Skript gibt trotzdem \"Sicherung fertig\" aus und endet mit 0. cron und das Monitoring sehen also Erfolg. Bei GNU tar bedeutet Rückgabecode 0 Erfolg, 1 \"einige Dateien haben sich während der Sicherung geändert\" und 2 einen schweren Fehler. Verbessertes Skript:",
+      "  #!/bin/bash",
+      "  set -o pipefail",
+      "  ZIEL=/mnt/nas/sicherung; DATEI=\"$ZIEL/praxis_$(date +%F).tar.gz\"",
+      "  mountpoint -q /mnt/nas || { logger -t sicherung \"NAS fehlt\"; exit 1; }",
+      "  tar -czf \"$DATEI\" /srv/praxisdaten; rc=$?",
+      "  if [ $rc -ge 2 ]; then rm -f \"$DATEI\"; logger -t sicherung \"tar Fehler $rc\"; exit 1; fi",
+      "  gzip -t \"$DATEI\" || { rm -f \"$DATEI\"; logger -t sicherung \"Archiv defekt\"; exit 1; }",
+      "  ls -1t \"$ZIEL\"/praxis_*.tar.gz | tail -n +8 | xargs -r rm --",
+      "  logger -t sicherung \"Sicherung OK (tar $rc)\"; exit 0",
+      "Die Rotation läuft nur noch nach einer geprüften Sicherung. Rückgabecode 1 von tar (geänderte Dateien) wird als Warnung protokolliert. Das Monitoring wertet den Rückgabecode des Skripts und das Alter der neuesten Sicherung aus.",
+      "",
+      "3. 7 + 4 + 12 = 23 Sicherungen * 38 GB = 874 GB. Das sind 874 / 2.000 = 43,7 % des NAS. Es bleibt Reserve für Wachstum der Daten. Was fehlt: Nach der 3-2-1-Regel eine weitere Kopie außer Haus oder offline (z.B. verschlüsselt in einer Cloud oder auf wechselnden Festplatten), weil das NAS im selben Gebäude steht und von Ransomware erreichbar ist. Regelmäßige Rücksicherungstests (eine Akte und ein Röntgenbild wirklich zurückholen). Verschlüsselung der Sicherung, weil Kundendaten enthalten sind. Für die Datenbank der Praxissoftware eine konsistente Sicherung (Datenbank vorher anhalten oder einen Dump erzeugen), sonst ist die Kopie im laufenden Betrieb unter Umständen unbrauchbar."
+    ]
+  },
+  {
+    "title": "Geräteliste einer Gemeindeverwaltung mit PowerShell auswerten",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "A4c"
+    ],
+    "text": [
+      "Eine Gemeindeverwaltung will 2027 alte PCs ersetzen und schwache Geräte aufrüsten. Aus der Inventarisierungssoftware exportiert sie die Datei geraete.csv (Auszug, Semikolon als Trennzeichen):",
+      "  Inventarnr;Typ;Standort;Kaufdatum;RAM_GB",
+      "  INV-101;PC;Rathaus;2019-03-14;8",
+      "  INV-102;PC;Rathaus;2020-11-02;16",
+      "  INV-103;Notebook;Rathaus;2018-06-20;8",
+      "  INV-104;PC;Rathaus;2022-09-15;32",
+      "  INV-105;PC;Bauhof;2018-02-05;4",
+      "  INV-106;PC;Bauhof;2017-10-10;12",
+      "  INV-107;PC;Bauhof;2019-07-01;8",
+      "  INV-108;Notebook;Bauhof;2023-04-18;16",
+      "  INV-109;PC;Bürgerbüro;2020-05-11;16",
+      "  INV-110;PC;Bürgerbüro;2022-02-21;16",
+      "  INV-111;PC;Bürgerbüro;2022-01-10;12",
+      "  INV-112;Notebook;Bürgerbüro;2024-09-03;32",
+      "Ein Auszubildender hat dieses Skript geschrieben:",
+      "  $geraete = Import-Csv -Path \"C:\\Inventar\\geraete.csv\" -Delimiter \";\"",
+      "  $stichtag = Get-Date \"2027-01-01\"",
+      "  $alt = $geraete | Where-Object { $_.Typ -eq \"PC\" -and (New-TimeSpan -Start ([datetime]$_.Kaufdatum) -End $stichtag).Days -gt 5 * 365 }",
+      "  $alt | Group-Object -Property Standort | Sort-Object -Property Count -Descending | Select-Object Name, Count",
+      "  $wenigRam = $geraete | Where-Object { $_.RAM_GB -lt 16 }",
+      "  \"Geräte mit weniger als 16 GB RAM: \" + $wenigRam.Count",
+      "",
+      "1. Erklären Sie $_ und die Bedingung im ersten Where-Object. Welche Geräte gelten als alt? Bestimmen Sie die Ausgabe von Group-Object nach dem Sortieren.",
+      "2. Die letzte Zeile meldet \"Geräte mit weniger als 16 GB RAM: 2\". Der Sachbearbeiter zählt in der Liste aber mehr. Wie viele sind es wirklich, und welche zählt das Skript? Erklären Sie den Fehler und korrigieren Sie die Zeile.",
+      "3. Ein neuer PC kostet 890 Euro. Was kostet der Ersatz aller alten PCs? Für 2027 sind 4.000 Euro eingeplant. Wie viele PCs lassen sich davon ersetzen, und welche wählen Sie nach welchem Kriterium aus? Was raten Sie für die Geräte mit wenig RAM, die nicht ersetzt werden?"
+    ],
+    "solution": [
+      "1. $_ (auch $PSItem) ist das Objekt, das gerade durch die Pipeline läuft, hier eine Zeile der CSV mit den Spalten als Eigenschaften. Die Bedingung prüft: Typ ist \"PC\" und die Zeitspanne vom Kaufdatum bis zum Stichtag ist größer als 5 * 365 = 1.825 Tage. [datetime] wandelt den Text im ISO-Format sicher in ein Datum um. Alt sind: INV-101 (2.850 Tage), INV-102 (2.251), INV-105 (3.252), INV-106 (3.370), INV-107 (2.741) und INV-109 (2.426). Nicht alt: INV-104 (1.569), INV-110 (1.775), INV-111 (1.817 Tage, knapp unter 1.825). Die Notebooks INV-103 und die anderen fallen wegen Typ heraus, obwohl INV-103 über 8 Jahre alt ist. Ausgabe: Bauhof 3, Rathaus 2, Bürgerbüro 1.",
+      "",
+      "2. Weniger als 16 GB haben INV-101 (8), INV-103 (8), INV-105 (4), INV-106 (12), INV-107 (8) und INV-111 (12), also 6 Geräte. Import-Csv liefert alle Werte als Text (String). Steht links von -lt ein String, vergleicht PowerShell als Text und wandelt die 16 rechts ebenfalls in Text um. Verglichen wird Zeichen für Zeichen: \"8\" ist nicht kleiner als \"16\", weil \"8\" nach \"1\" kommt. \"4\" ebenso. Nur \"12\" ist kleiner als \"16\" (\"2\" vor \"6\"). Gezählt werden also nur INV-106 und INV-111. Korrektur: $wenigRam = $geraete | Where-Object { [int]$_.RAM_GB -lt 16 }. Dann ist das Ergebnis 6. Allgemein: Werte aus CSV-Dateien vor Rechnungen und Vergleichen in den passenden Typ umwandeln.",
+      "",
+      "3. 6 alte PCs * 890 Euro = 5.340 Euro. Mit 4.000 Euro: 4.000 / 890 = 4,49, also 4 PCs für 3.560 Euro, Rest 440 Euro. Kriterium: zuerst die ältesten Geräte, weil dort Ausfälle, fehlende Updates und schwache Leistung am wahrscheinlichsten sind: INV-106 (2017), INV-105 (Februar 2018, zudem nur 4 GB), INV-101 (März 2019) und INV-107 (Juli 2019). Ebenso sinnvoll ist es, zu prüfen, ob die Geräte noch Sicherheitsupdates für das Betriebssystem bekommen. INV-102 und INV-109 folgen 2028. Für Geräte mit wenig RAM, die bleiben (z.B. INV-111 mit 12 GB), ist eine RAM-Aufrüstung auf 16 GB günstig, wenn das Mainboard es zulässt. Das Notebook INV-103 sollte in die Ersatzplanung aufgenommen werden. Das Skript sollte dafür auch Notebooks berücksichtigen (-in \"PC\",\"Notebook\")."
+    ]
+  },
+  {
+    "title": "Unbekannte Geräte im Verwaltungsnetz eines Hotels per Ping-Sweep finden",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3h"
+    ],
+    "text": [
+      "Im Verwaltungsnetz 10.20.30.0/24 eines Hotels sollen nur bekannte Geräte hängen. Die Datei soll.txt enthält die inventarisierten Adressen, je eine pro Zeile: 10.20.30.1 (Router), 10.20.30.5 (Server), 10.20.30.10, 10.20.30.11 und 10.20.30.12 (PCs der Rezeption), 10.20.30.20 (Drucker), 10.20.30.50 und 10.20.30.51 (Access Points). Ein Kollege hat auf einem Linux-PC dieses Skript geschrieben:",
+      "  #!/bin/bash",
+      "  NETZ=10.20.30",
+      "  for i in $(seq 1 254); do",
+      "      if ping -c 1 -W 1 \"$NETZ.$i\" > /dev/null 2>&1; then",
+      "          echo \"$NETZ.$i\" >> ist.txt",
+      "      fi",
+      "  done",
+      "  grep -vxFf soll.txt ist.txt",
+      "Beim ersten Lauf antworten 10.20.30.1, .5, .10, .12, .20, .37, .50, .51 und .200. Eine Antwort kommt nach etwa 2 ms, ohne Antwort wartet ping die volle Sekunde.",
+      "",
+      "1. Erklären Sie ping -c 1 -W 1, den Rückgabecode von ping und die Optionen von grep. Was gibt das Skript beim ersten Lauf aus? Mit welchem Befehl finden Sie das Gerät aus soll.txt, das nicht geantwortet hat?",
+      "2. Ein Kollege lässt -x weg. Welche Adresse verschwindet dann aus der Ausgabe und warum? Nennen Sie einen weiteren Fehler, der beim zweiten Lauf auftritt, und einen Grund, warum ein vorhandenes Gerät trotzdem nicht antwortet.",
+      "3. Wie lange dauert ein Lauf ungefähr? Wie lässt sich das beschleunigen? Bewerten Sie, ob ein Ping-Sweep allein reicht, um fremde Geräte zuverlässig zu erkennen, und nennen Sie bessere Maßnahmen."
+    ],
+    "solution": [
+      "1. -c 1 schickt genau ein Echo Request, -W 1 wartet höchstens 1 Sekunde auf die Antwort. ping liefert den Rückgabecode 0, wenn eine Antwort kam, 1 ohne Antwort und 2 bei einem anderen Fehler (z.B. Name nicht auflösbar). if wertet den Rückgabecode aus, die Ausgabe wird nach /dev/null verworfen. grep -f soll.txt nimmt jede Zeile aus soll.txt als Suchmuster, -F behandelt sie als festen Text (der Punkt ist dann kein Platzhalter), -x verlangt, dass die ganze Zeile passt, -v gibt die Zeilen aus ist.txt aus, die zu keinem Muster passen. Ausgabe: 10.20.30.37 und 10.20.30.200. Das sind die unbekannten Geräte. Umgekehrt zeigt grep -vxFf ist.txt soll.txt die Adresse 10.20.30.11, den PC, der nicht geantwortet hat.",
+      "",
+      "2. Ohne -x reicht es, wenn ein Muster irgendwo in der Zeile vorkommt. Das Muster 10.20.30.20 (Drucker) steckt in 10.20.30.200. Die unbekannte Adresse .200 wird deshalb ausgeblendet, nur 10.20.30.37 bleibt übrig. Ebenso würde 10.20.30.1 alle Adressen ab 10.20.30.1x und 10.20.30.1xx verdecken. Fehler beim zweiten Lauf: >> hängt an ist.txt an. Die alten Einträge bleiben, und ein Gerät, das inzwischen entfernt wurde, steht weiter in der Liste. Abhilfe: vor der Schleife : > ist.txt oder die Ergebnisse in eine Datei mit Datum schreiben. Ein vorhandenes Gerät antwortet nicht, wenn es ausgeschaltet ist oder seine Firewall ICMP Echo Requests blockiert. Die Windows-Firewall blockiert eingehende Pings standardmäßig, solange die Regel für Echoanforderungen (ICMPv4 eingehend) nicht aktiviert ist.",
+      "",
+      "3. 9 Adressen antworten in je 2 ms, 254 - 9 = 245 Adressen warten je 1 s. Dauer: 245 s + 9 * 0,002 s = 245,018 s, also gut 4 Minuten. Schneller: die Pings parallel starten (Befehl im Hintergrund mit & und am Ende wait, dann aber Ausgabe getrennt sammeln) oder ein Werkzeug wie fping -a -g 10.20.30.0/24 oder nmap -sn 10.20.30.0/24. Im eigenen Subnetz fragt nmap -sn per ARP ab und findet so auch Geräte, die ICMP blockieren. Bewertung: Ein Ping-Sweep ist nur eine Momentaufnahme. Ein Angreifer kann ICMP sperren oder sein Gerät nur zeitweise einschalten. Bessere Maßnahmen: Port-Sicherheit bzw. IEEE 802.1X an den Switchports, Auswertung der MAC-Adresstabellen und der DHCP-Vergaben, ein NAC-System, das unbekannte Geräte in ein Quarantäne-VLAN schiebt, und Alarme im Monitoring bei neuen MAC-Adressen."
+    ]
+  },
+  {
+    "title": "Ablaufende Kennwörter im ambulanten Pflegedienst per Skript melden",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3c"
+    ],
+    "text": [
+      "Die Pflegekräfte eines ambulanten Pflegedienstes melden sich nur selten an einem PC der Zentrale an. Läuft ihr Kennwort unterwegs ab, funktionieren Tablet-App und E-Mail nicht mehr. Die Domäne verlangt einen Kennwortwechsel nach 90 Tagen. Ein Report soll jeden Morgen um 06:00 Uhr die Konten zeigen, deren Kennwort in höchstens 14 Tagen abläuft:",
+      "  $maxAlter = 90",
+      "  $heute = Get-Date",
+      "  $benutzer = Get-ADUser -Filter 'Enabled -eq $true -and PasswordNeverExpires -eq $false' -Properties PasswordLastSet",
+      "  foreach ($b in $benutzer) {",
+      "      $ablauf = $b.PasswordLastSet.AddDays($maxAlter)",
+      "      $rest = ($ablauf - $heute).Days",
+      "      if ($rest -le 14) {",
+      "          Write-Output \"$($b.SamAccountName);$($ablauf.ToString('dd.MM.yyyy'));$rest\"",
+      "      }",
+      "  }",
+      "Lauf am Montag, 14.06.2027 um 06:00 Uhr. Get-ADUser liefert die Konten in dieser Reihenfolge (PasswordLastSet):",
+      "  mhoffmann 20.03.2027 08:12 | akaya 10.04.2027 14:30 | tberger 16.03.2027 05:00 | sjung 01.03.2027 09:00 | pnowak leer ($null, \"Kennwort bei nächster Anmeldung ändern\" ist gesetzt)",
+      "Das Konto svc_tablet hat \"Kennwort läuft nie ab\" gesetzt.",
+      "",
+      "1. Berechnen Sie für jedes Konto das Ablaufdatum und den Wert von $rest. Beachten Sie: .Days liefert nur die ganzen Tage einer Zeitspanne, der Rest wird abgeschnitten (auch bei negativen Werten Richtung 0). Welche Zeilen gibt das Skript aus?",
+      "2. Was passiert bei pnowak? Welche Zeile erscheint für pnowak, und warum ist sie falsch? Korrigieren Sie das Skript. Welche zwei Konten sollten Sie außerdem anders behandeln, und wie?",
+      "3. Das Skript läuft täglich. An welchem Tag erscheint mhoffmann zum ersten Mal im Report? Die Pflegedienstleitung bekommt über eine abweichende Kennwortrichtlinie (Fine-Grained Password Policy) 180 Tage. Warum rechnet das Skript für sie falsch, und welches AD-Attribut hilft? Wie bewerten Sie den 90-Tage-Wechsel insgesamt?"
+    ],
+    "solution": [
+      "1. mhoffmann: Ablauf 20.03. + 90 Tage = 18.06.2027 08:12. Zeitspanne bis dahin 4 Tage 2:12 Stunden, $rest = 4, Ausgabe. akaya: 10.04. + 90 = 09.07.2027 14:30, 25 Tage 8:30 Stunden, $rest = 25, keine Ausgabe. tberger: 16.03. + 90 = 14.06.2027 05:00, das war vor einer Stunde. Die Zeitspanne ist -1 Stunde, .Days schneidet Richtung 0 ab, also $rest = 0, Ausgabe (das Kennwort ist aber schon abgelaufen). sjung: 01.03. + 90 = 30.05.2027 09:00, Zeitspanne -14 Tage 21 Stunden, $rest = -14, Ausgabe, weil -14 kleiner als 14 ist. svc_tablet wird schon vom Filter ausgeschlossen. Ausgabe bis hier: \"mhoffmann;18.06.2027;4\", \"tberger;14.06.2027;0\", \"sjung;30.05.2027;-14\".",
+      "",
+      "2. PasswordLastSet ist bei pnowak $null. $null.AddDays(90) erzeugt den Fehler \"Sie können keine Methode für einen Ausdruck mit dem Wert NULL aufrufen.\" Die Zuweisung findet nicht statt, das Skript läuft weiter. $ablauf hat noch den Wert von sjung. Ausgabe: \"pnowak;30.05.2027;-14\". Das ist falsch: pnowak muss nur bei der nächsten Anmeldung ein neues Kennwort setzen. Korrektur: am Anfang der Schleife if ($null -eq $b.PasswordLastSet) { Write-Output \"$($b.SamAccountName);Wechsel bei nächster Anmeldung;-\"; continue }. Außerdem $ablauf und $rest am Schleifenanfang neu setzen. Anders behandeln: abgelaufene Konten (tberger, sjung) in einen eigenen Abschnitt \"bereits abgelaufen\" schreiben, mit if ($ablauf -lt $heute), denn sie brauchen sofort Hilfe, z.B. Zurücksetzen durch den Service Desk nach Identitätsprüfung. svc_tablet ist ein Dienstkonto mit \"Kennwort läuft nie ab\". Es sollte als gruppenverwaltetes Dienstkonto (gMSA) laufen oder mindestens ein sehr langes Kennwort haben, das dokumentiert gewechselt wird.",
+      "",
+      "3. mhoffmann erscheint, sobald $rest <= 14 ist, also sobald weniger als 15 volle Tage bis zum 18.06. 08:12 bleiben. Das ist ab dem 03.06. 08:12 der Fall. Der erste Lauf danach ist am 04.06.2027 um 06:00 Uhr mit $rest = 14 (14 Tage 2:12 Stunden). Am 03.06. um 06:00 sind es noch 15 Tage 2:12 Stunden. Abweichende Richtlinie: Das Skript nimmt fest 90 Tage an und meldet die Leitung zu früh. Besser liest man das berechnete Attribut msDS-UserPasswordExpiryTimeComputed aus (Get-ADUser -Properties msDS-UserPasswordExpiryTimeComputed, Umrechnung mit [datetime]::FromFileTime). Es berücksichtigt Domänenrichtlinie, Fine-Grained Password Policy und \"läuft nie ab\". Bewertung: Das BSI empfiehlt keinen regelmäßigen Wechsel ohne Anlass mehr, wenn die Kennwörter lang und sicher sind. Besser sind lange Passphrasen, Mehrfaktor-Authentifizierung für die Tablets und ein Wechsel nur bei Verdacht auf Kompromittierung. Wenn die Richtlinie bleibt, sollte der Report die Pflegekräfte direkt per SMS oder in der App erinnern, statt nur eine Liste für die IT zu erzeugen."
+    ]
+  },
+  {
+    "title": "Geplante Aufgaben auf dem Server einer Fitnessstudio-Kette mit cron prüfen",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3h"
+    ],
+    "text": [
+      "Eine Fitnessstudio-Kette mit vier Studios betreibt Kurs- und Zutrittssystem auf einem Linux-Server. Die Studios haben täglich, auch am Wochenende, von 06:00 bis 23:00 Uhr geöffnet. Die Crontab des Benutzers root enthält:",
+      "  30 2 * * 1-5     /opt/skripte/sicherung.sh",
+      "  */15 6-22 * * *  /opt/skripte/zugang_sync.sh",
+      "  0 3 1 * *        /opt/skripte/monatsbericht.sh",
+      "  0 4 * * 0        /opt/skripte/neustart_kurssystem.sh",
+      "  15 1 1,15 * 1    /opt/skripte/zertifikate.sh",
+      "Die Felder sind Minute, Stunde, Tag im Monat, Monat und Wochentag (0 und 7 = Sonntag, 1 = Montag).",
+      "",
+      "1. Beschreiben Sie in Worten, wann jede Zeile ausgeführt wird. Wie oft läuft zugang_sync.sh an einem Tag, und wann zum letzten Mal?",
+      "2. Ein Kollege wollte, dass zertifikate.sh am 1. und am 15. jedes Monats läuft, aber nur, wenn das ein Montag ist. An welchen Tagen läuft das Skript im Juni 2027 tatsächlich (der 01.06.2027 ist ein Dienstag)? Erklären Sie die Regel von cron und korrigieren Sie die Zeile so, dass das Skript schlicht am 1. und 15. läuft. Welche Schwäche hat außerdem die Zeile für sicherung.sh?",
+      "3. Schreiben Sie Crontab-Zeilen für: a) Kassenabschluss jeden Tag um 23:30 Uhr, b) Bereinigung der Logs am ersten Sonntag jedes Monats um 05:00 Uhr. Wohin geht die Ausgabe eines cron-Jobs, und wie protokollieren Sie sie sinnvoll? Nennen Sie eine Alternative zu cron unter systemd."
+    ],
+    "solution": [
+      "1. Zeile 1: montags bis freitags um 02:30 Uhr. Zeile 2: in den Stunden 6 bis 22 alle 15 Minuten, also zu den Minuten 0, 15, 30 und 45, an jedem Tag. Zeile 3: am 1. jedes Monats um 03:00 Uhr, 12 Läufe im Jahr. Zeile 4: jeden Sonntag um 04:00 Uhr. Zeile 5: um 01:15 Uhr am 1. und 15. des Monats und zusätzlich an jedem Montag (siehe 2.). zugang_sync.sh: 17 Stunden (6 bis 22) * 4 = 68 Läufe am Tag, der erste um 06:00, der letzte um 22:45 Uhr. Das passt zu den Öffnungszeiten, um 23:00 Uhr läuft es nicht mehr.",
+      "",
+      "2. Sind bei cron Tag im Monat und Wochentag beide eingeschränkt (also nicht *), reicht es, wenn eines der beiden Felder passt (ODER, nicht UND). Im Juni 2027 läuft zertifikate.sh deshalb am 1. und 15. (beides Dienstage) und an allen Montagen 7., 14., 21. und 28., also an 6 Tagen statt an keinem. Für den 1. und 15. lautet die Zeile: 15 1 1,15 * * /opt/skripte/zertifikate.sh. Schwäche der Sicherung: Sie läuft nur in den Nächten auf Montag bis Freitag. Die Daten von Freitag, Samstag und Sonntag werden erst am Montag um 02:30 Uhr gesichert. Bei einem Ausfall am Sonntagabend fehlen bis zu drei Tage mit Kursbuchungen und Zutritten. Da die Studios täglich offen haben, gehört dort * statt 1-5 hin: 30 2 * * * /opt/skripte/sicherung.sh.",
+      "",
+      "3. a) 30 23 * * * /opt/skripte/kassenabschluss.sh. b) cron kann \"erster Sonntag\" nicht direkt, denn 0 5 1-7 * 0 würde wegen der ODER-Regel an den Tagen 1 bis 7 und an jedem Sonntag laufen. Lösung: 0 5 1-7 * * [ \"$(date +\\%u)\" -eq 7 ] && /opt/skripte/logbereinigung.sh. Die Zeile läuft an den Tagen 1 bis 7, und das Skript startet nur, wenn date +%u den Wochentag 7 (Sonntag) liefert. In der Crontab muss % als \\% geschrieben werden, weil cron % sonst als Zeilenumbruch deutet. Ausgabe: cron schickt die Ausgabe per Mail an den Besitzer der Crontab (MAILTO), ohne Mailsystem geht sie verloren. Sinnvoll: Ausgabe umleiten, z.B. >> /var/log/skripte/sicherung.log 2>&1, oder mit logger ins Systemprotokoll schreiben und den Rückgabecode im Monitoring auswerten. Alternative: systemd-Timer (.timer-Unit mit OnCalendar=*-*-* 02:30:00 und Persistent=true). Persistent holt einen verpassten Lauf nach, wenn der Server zu dieser Zeit aus war, und die Ausgabe landet im Journal."
+    ]
+  },
+  {
+    "title": "Fehlgeschlagene SSH-Anmeldungen am Shopserver eines Online-Buchhandels auswerten",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "C3h",
+      "A10c"
+    ],
+    "text": [
+      "Der Shopserver eines Online-Buchhandels ist per SSH aus dem Internet erreichbar. Ihr Ausbilder bittet Sie, die fehlgeschlagenen Anmeldungen der letzten Nacht auszuwerten. Auszug aus /var/log/auth.log (nur die Zeilen mit Failed password, Spalten durch Leerzeichen getrennt):",
+      "  Mar  3 02:11:05 shop sshd[2101]: Failed password for root from 198.51.100.23 port 40112 ssh2",
+      "  ... dieselbe Zeile für root von 198.51.100.23 noch um 02:11:09, 02:11:13, 02:11:18, 02:11:22 und 02:11:27 (zusammen 6 Zeilen)",
+      "  Mar  3 02:30:00 shop sshd[2190]: Failed password for invalid user admin from 203.0.113.7 port 51234 ssh2",
+      "  ... von 203.0.113.7 außerdem um 02:34:30 (Benutzer test), 02:39:00 (admin), 02:43:30 (oracle) und 02:48:00 (admin), jeweils \"invalid user\"",
+      "  Mar  3 03:05:41 shop sshd[2304]: Failed password for invalid user support from 203.0.113.99 port 60311 ssh2",
+      "  Mar  3 03:05:47 shop sshd[2304]: Failed password for invalid user support from 203.0.113.99 port 60311 ssh2",
+      "  Mar  3 07:58:02 shop sshd[2412]: Failed password for kbauer from 192.0.2.10 port 50022 ssh2",
+      "Ein Kollege hat diese Befehlskette geschrieben:",
+      "  grep \"Failed password\" /var/log/auth.log | awk '{print $11}' | sort | uniq -c | sort -rn | head -3",
+      "",
+      "1. Erklären Sie jeden Teil der Befehlskette. Bestimmen Sie die Ausgabe für den Auszug. Warum ist sie nicht das, was der Kollege wollte?",
+      "2. Korrigieren Sie den awk-Teil so, dass immer die IP-Adresse ausgegeben wird, egal ob \"invalid user\" in der Zeile steht. Wie lautet die richtige Ausgabe? Erweitern Sie die Kette so, dass nur IP-Adressen mit mindestens 3 Fehlversuchen erscheinen.",
+      "3. Auf dem Server soll fail2ban laufen mit maxretry = 5, findtime = 600 Sekunden und bantime = 3600 Sekunden. Welche Adresse wird wann gesperrt und bis wann? Welche nicht, und warum ist das bedenklich? Welche Maßnahmen schützen den SSH-Zugang besser?"
+    ],
+    "solution": [
+      "1. grep filtert die Zeilen mit \"Failed password\". awk zerlegt jede Zeile an Leerzeichen in Felder (mehrere Leerzeichen zählen als ein Trenner) und gibt Feld 11 aus. sort sortiert, damit gleiche Werte untereinanderstehen. uniq -c fasst gleiche aufeinanderfolgende Zeilen zusammen und schreibt die Anzahl davor. sort -rn sortiert numerisch absteigend, head -3 zeigt die ersten drei Zeilen. Feldzählung bei root: 1 Mar, 2 3, 3 Uhrzeit, 4 shop, 5 sshd[2101]:, 6 Failed, 7 password, 8 for, 9 root, 10 from, 11 IP-Adresse. Bei \"invalid user\" kommen zwei Wörter dazu, Feld 11 ist dann der Benutzername. Ausgabe: \"6 198.51.100.23\", \"3 admin\", \"2 support\". Gewollt waren IP-Adressen. So fällt der Angreifer 203.0.113.7 gar nicht auf, weil seine Versuche auf admin, test und oracle verteilt sind.",
+      "",
+      "2. Die IP-Adresse steht immer an vierter Stelle von hinten (IP, port, Portnummer, ssh2). awk kennt NF als Anzahl der Felder: awk '{print $(NF-3)}'. Ausgabe: \"6 198.51.100.23\", \"5 203.0.113.7\", \"2 203.0.113.99\". 192.0.2.10 (vermutlich ein Tippfehler von kbauer, das lässt sich mit den Zeilen \"Accepted password\" bzw. \"Accepted publickey\" prüfen) hat nur 1 Versuch. Nur ab 3 Versuchen: ... | sort | uniq -c | awk '$1 >= 3' | sort -rn. Ergebnis: 198.51.100.23 mit 6 und 203.0.113.7 mit 5. Als Skript sollte die Auswertung jeden Morgen laufen und ihr Ergebnis an das Monitoring oder per Mail melden.",
+      "",
+      "3. fail2ban sperrt eine Adresse, sobald sie 5 Fehlversuche innerhalb von 600 Sekunden hat. 198.51.100.23: Der 5. Versuch um 02:11:22 liegt 17 Sekunden nach dem ersten, Sperre ab 02:11:22 bis 03:11:22. Ein 6. Versuch wie um 02:11:27 käme dann gar nicht mehr bis zum SSH-Dienst durch. 203.0.113.7: 5 Versuche, aber im Abstand von 4,5 Minuten. In 600 Sekunden liegen höchstens 3 Versuche (02:30:00 bis 02:39:00 sind 540 s), deshalb gibt es keine Sperre. Bedenklich: Ein langsamer Angreifer mit einem Versuch alle 4,5 Minuten probiert so 1.440 / 4,5 = 320 Kennwörter am Tag, ohne aufzufallen. Bessere Maßnahmen: Anmeldung nur mit SSH-Schlüssel (PasswordAuthentication no), keine Anmeldung als root (PermitRootLogin no), SSH nur über VPN oder nur von festen Adressen erlauben, fail2ban zusätzlich mit längerer findtime und steigender Sperrdauer (recidive-Jail)."
+    ]
+  },
+  {
+    "title": "Nächtliche Kopie der 3D-Fußscans eines Orthopädietechnik-Betriebs meldet nie einen Fehler",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A4c",
+      "A10c"
+    ],
+    "text": [
+      "Ein Orthopädietechnik-Betrieb scannt die Füße seiner Kunden in 3D, um Einlagen zu fertigen. Die Scans liegen auf dem Arbeitsplatzrechner der Werkstatt unter D:\\Scans und werden jede Nacht von der Aufgabenplanung auf das NAS kopiert:",
+      "  try {",
+      "      robocopy D:\\Scans \\\\nas01\\scans /MIR /R:2 /W:5 /NP /LOG:C:\\Logs\\scans.log",
+      "      Write-Output \"Kopie erfolgreich\"",
+      "  }",
+      "  catch {",
+      "      Write-Output \"Fehler: $($_.Exception.Message)\"",
+      "      exit 1",
+      "  }",
+      "Seit Wochen steht in der Aufgabenplanung als letztes Ergebnis 0x0. Bei einer Wiederherstellung fällt auf, dass 40 Scans der letzten Tage auf dem NAS fehlen. Im Log stehen Meldungen \"ERROR 32 ... The process cannot access the file because it is being used by another process\".",
+      "Rückgabecodes von robocopy (Bits, werden addiert): 1 = Dateien kopiert, 2 = zusätzliche Dateien im Ziel gefunden, 4 = abweichende Dateien gefunden, 8 = einige Dateien konnten nicht kopiert werden, 16 = schwerer Fehler, nichts kopiert.",
+      "",
+      "1. Warum wird der catch-Block nie ausgeführt? Wo steht der Rückgabecode eines externen Programms in PowerShell? Deuten Sie die Rückgabecodes 0, 1, 3, 9 und 16. Ab welchem Wert ist ein Lauf als Fehler zu werten?",
+      "2. Schreiben Sie das Skript so um, dass ein Fehler der Aufgabenplanung und dem Monitoring gemeldet wird. Eines Tages wird die Festplatte D: getauscht und ist zunächst leer. Was macht /MIR dann mit dem NAS? Ergänzen Sie eine Schutzprüfung. Wann fängt try/catch bei PowerShell-Cmdlets Fehler ab?",
+      "3. Wie lange wartet robocopy mit /R:2 /W:5 höchstens für die 40 gesperrten Dateien? Wie lange wäre es mit den Standardwerten /R:1000000 und /W:30 für eine einzige gesperrte Datei? Was schlagen Sie gegen die gesperrten Dateien vor?"
+    ],
+    "solution": [
+      "1. try/catch fängt nur Ausnahmen (terminierende Fehler) von PowerShell ab. robocopy ist ein externes Programm. Es meldet Probleme nur über seinen Rückgabecode und löst keine Ausnahme aus. Der Rückgabecode steht nach dem Aufruf in $LASTEXITCODE. Deshalb läuft das Skript immer bis \"Kopie erfolgreich\" und endet mit 0. Deutung: 0 = nichts zu tun, Quelle und Ziel sind gleich. 1 = Dateien wurden kopiert. 3 = 1 + 2, Dateien kopiert und zusätzliche Dateien im Ziel gefunden (mit /MIR gelöscht). 9 = 8 + 1, einige Dateien kopiert, einige konnten nicht kopiert werden. 16 = schwerer Fehler, z.B. Quelle oder Ziel nicht erreichbar, nichts kopiert. Ab 8 ist der Lauf ein Fehler, 0 bis 7 gelten als Erfolg. Die Nächte mit gesperrten Dateien lieferten 9 oder höher.",
+      "",
+      "2. Verbessertes Skript:",
+      "  $quelle = \"D:\\Scans\"",
+      "  $anzahl = (Get-ChildItem -Path $quelle -File -Recurse -ErrorAction Stop | Measure-Object).Count",
+      "  if ($anzahl -lt 1000) { Write-EventLog -LogName Application -Source \"ScanKopie\" -EventId 900 -EntryType Error -Message \"Quelle hat nur $anzahl Dateien, Abbruch\"; exit 2 }",
+      "  robocopy $quelle \\\\nas01\\scans /MIR /R:2 /W:5 /NP /LOG:C:\\Logs\\scans.log",
+      "  $rc = $LASTEXITCODE",
+      "  if ($rc -ge 8) { Write-EventLog -LogName Application -Source \"ScanKopie\" -EventId 901 -EntryType Error -Message \"robocopy Code $rc\"; exit 1 }",
+      "  Write-EventLog -LogName Application -Source \"ScanKopie\" -EventId 100 -EntryType Information -Message \"robocopy Code $rc\"; exit 0",
+      "Die Ereignisquelle wird einmalig mit New-EventLog angelegt. Die Aufgabenplanung startet powershell.exe -File skript.ps1, dann wird der exit-Code als letztes Ergebnis angezeigt, und das Monitoring kann die Ereignisse 900 und 901 auswerten. /MIR spiegelt die Quelle: Was in der Quelle fehlt, wird im Ziel gelöscht. Ist D:\\Scans leer, löscht robocopy alle Scans auf dem NAS. Darum prüft das Skript vorher, ob die Quelle plausibel viele Dateien hat (hier mindestens 1.000; der Wert hängt vom Bestand ab). Zusätzlich helfen Snapshots oder eine Versionierung auf dem NAS. try/catch fängt bei Cmdlets nur terminierende Fehler. Die meisten Cmdlet-Fehler sind nicht terminierend und werden nur ausgegeben. Mit -ErrorAction Stop am Cmdlet (oder $ErrorActionPreference = \"Stop\") werden sie terminierend und landen im catch-Block.",
+      "",
+      "3. Mit /R:2 /W:5 wiederholt robocopy jede gesperrte Datei 2-mal und wartet vorher je 5 Sekunden: 2 * 5 = 10 s je Datei, 40 * 10 s = 400 s = 6 min 40 s. Mit den Standardwerten: 1.000.000 * 30 s = 30.000.000 s je Datei, das sind 30.000.000 / 86.400 = rund 347 Tage. Der Job würde praktisch nie fertig. Deshalb setzt man /R und /W immer bewusst. Gegen gesperrte Dateien: die Kopie zu einer Zeit starten, in der die Scansoftware geschlossen ist (z.B. Software abends automatisch beenden), Dateien erst nach dem Speichern in einen Übergabeordner schreiben lassen, oder mit Volumeschattenkopie (VSS) bzw. einer Sicherungssoftware arbeiten, die geöffnete Dateien konsistent liest. Die fehlenden 40 Scans müssen sofort nachkopiert und geprüft werden."
+    ]
+  },
+  {
+    "title": "Einrichtungsskript für die Übungsraum-PCs einer Musikschule mehrfach ausführbar machen",
+    "cat": "systeme",
+    "thema": "linux",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "A4c"
+    ],
+    "text": [
+      "Eine Musikschule hat in ihren Übungsräumen Linux-PCs, auf denen Schüler Noten vom Notenserver öffnen. Damit neu installierte PCs von selbst eingerichtet werden, startet bei jedem Systemstart dieses Skript:",
+      "  #!/bin/bash",
+      "  set -e",
+      "  echo \"192.168.50.10 notenserver\" >> /etc/hosts",
+      "  useradd -m -s /bin/bash schueler",
+      "  mkdir /mnt/noten",
+      "  echo \"//notenserver/noten /mnt/noten cifs credentials=/etc/noten.cred,ro,_netdev 0 0\" >> /etc/fstab",
+      "  mount -a",
+      "Ein PC wurde eingerichtet (erster Lauf) und danach 19-mal neu gestartet. Dann zieht der Notenserver auf die Adresse 192.168.50.20 um. Der Hausmeister ändert im Skript die Adresse in der echo-Zeile. Danach wird der PC noch 5-mal neu gestartet.",
+      "",
+      "1. Was bewirkt set -e? Verfolgen Sie, was beim ersten und beim zweiten Lauf passiert (useradd meldet bei einem vorhandenen Benutzer den Rückgabecode 9). Wie viele Zeilen mit notenserver stehen am Ende in /etc/hosts, und wie viele Einträge für /mnt/noten in /etc/fstab?",
+      "2. Nach dem Umzug können die Schüler die Noten nicht öffnen, obwohl die neue Adresse in /etc/hosts steht. Erklären Sie das. Was bedeutet Idempotenz bei einem Skript? Schreiben Sie das Skript idempotent.",
+      "3. Die Musikschule hat 24 solche PCs. Ihr Ausbilder schlägt ein Konfigurationsmanagement-Werkzeug wie Ansible vor. Erklären Sie den Unterschied zwischen \"Befehle ausführen\" und \"Zielzustand beschreiben\" und nennen Sie zwei weitere Verbesserungen für die Namensauflösung und die Zugangsdaten."
+    ],
+    "solution": [
+      "1. set -e beendet das Skript, sobald ein Befehl mit einem Rückgabecode ungleich 0 endet. Erster Lauf: hosts-Zeile wird angehängt, Benutzer schueler angelegt, Verzeichnis erstellt, fstab-Zeile angehängt, Freigabe eingebunden. Zweiter Lauf: Die hosts-Zeile wird erneut angehängt (echo mit >> gelingt immer). useradd scheitert mit 9 (\"user 'schueler' already exists\"), set -e bricht ab. mkdir, fstab und mount kommen nicht mehr dran. So läuft jeder weitere Start. Ergebnis: 1 + 19 = 20 Zeilen mit 192.168.50.10 und danach 5 Zeilen mit 192.168.50.20, zusammen 25 Zeilen mit notenserver in /etc/hosts. In /etc/fstab steht genau 1 Eintrag, nur vom ersten Lauf.",
+      "",
+      "2. Die Namensauflösung über /etc/hosts nimmt die erste passende Zeile von oben. Das sind die alten Zeilen mit 192.168.50.10. Die neuen Zeilen stehen weiter unten und werden nie benutzt. Idempotent heißt: Das Skript kann beliebig oft laufen, und das Ergebnis ist immer derselbe Zielzustand. Ein zweiter Lauf ändert nichts mehr, wenn schon alles stimmt, und bricht auch nicht ab. Idempotente Fassung:",
+      "  #!/bin/bash",
+      "  set -e",
+      "  sed -i '/[[:space:]]notenserver$/d' /etc/hosts",
+      "  echo \"192.168.50.20 notenserver\" >> /etc/hosts",
+      "  id schueler > /dev/null 2>&1 || useradd -m -s /bin/bash schueler",
+      "  mkdir -p /mnt/noten",
+      "  grep -q \"[[:space:]]/mnt/noten[[:space:]]\" /etc/fstab || echo \"//notenserver/noten /mnt/noten cifs credentials=/etc/noten.cred,ro,_netdev 0 0\" >> /etc/fstab",
+      "  mountpoint -q /mnt/noten || mount /mnt/noten",
+      "sed entfernt alle alten Zeilen für notenserver, danach steht genau eine Zeile mit der aktuellen Adresse in der Datei. id prüft, ob der Benutzer existiert. mkdir -p meldet keinen Fehler, wenn das Verzeichnis schon da ist. grep -q prüft, ob der fstab-Eintrag fehlt. mountpoint -q bindet nur ein, wenn noch nicht eingebunden. Jeder Schritt prüft also zuerst den Zustand und handelt nur, wenn nötig.",
+      "",
+      "3. Ein Shellskript führt Befehle aus und muss jede Prüfung selbst enthalten. Bei Ansible beschreibt man den Zielzustand, z.B. Modul user mit name: schueler und state: present, lineinfile für die hosts-Zeile, file mit state: directory und mount mit state: mounted. Ansible prüft selbst, ob der Zustand schon erreicht ist, meldet je Aufgabe \"ok\" oder \"changed\" und richtet alle 24 PCs mit einem Lauf gleich ein. Eine Änderung wie die neue Serveradresse wird nur an einer Stelle gepflegt. Weitere Verbesserungen: Den Namen notenserver im DNS-Server (bzw. über den DHCP-Server mit Suchdomäne) pflegen statt in /etc/hosts jedes PCs, dann reicht beim Umzug eine Änderung. Die Datei /etc/noten.cred mit den Zugangsdaten gehört root und hat die Rechte 600, und das Konto für die Freigabe darf nur lesen."
+    ]
+  },
+  {
+    "title": "Klartextkennwort im Exportskript eines Tiefbauunternehmens ersetzen",
+    "cat": "systeme",
+    "thema": "windows",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A10c",
+      "C3c"
+    ],
+    "text": [
+      "Ein Tiefbauunternehmen holt jede Nacht die Betriebsstunden seiner Bagger und Walzen aus dem Portal des Maschinenherstellers und schreibt sie in eine Datei für die Nachkalkulation. Das Skript läuft als geplante Aufgabe auf dem Server app01 unter dem Domänenkonto svc_export und liegt auf der Freigabe \\\\fs01\\skripte, die alle Domänen-Benutzer lesen dürfen. Außerdem ist es in einem Git-Repository der IT gespeichert. Auszug:",
+      "  $benutzer = \"tiefbau-api\"",
+      "  $kennwort = \"Bagger2027!\"",
+      "  $sicher = ConvertTo-SecureString $kennwort -AsPlainText -Force",
+      "  $cred = New-Object System.Management.Automation.PSCredential($benutzer, $sicher)",
+      "  $daten = Invoke-RestMethod -Uri \"https://portal.maschinen.example/api/stunden\" -Credential $cred -Authentication Basic",
+      "  $daten | Export-Csv -Path \"\\\\fs01\\kalkulation\\stunden.csv\" -Delimiter \";\" -NoTypeInformation",
+      "Ein Kollege meint: \"Ist doch sicher, das Kennwort wird ja mit ConvertTo-SecureString verschlüsselt.\"",
+      "",
+      "1. Bewerten Sie die Aussage des Kollegen. Wer kann das Kennwort heute lesen? Welche Sofortmaßnahmen sind nötig, und warum reicht es nicht, die Zeile mit dem Kennwort aus dem Skript zu löschen?",
+      "2. Beschreiben Sie zwei sichere Wege, die Zugangsdaten abzulegen: a) mit Export-Clixml und Import-Clixml, b) mit einem Tresor (SecretManagement). Was muss bei a) beachtet werden, damit die geplante Aufgabe die Datei lesen kann? Welche Lösung gibt es für Zugriffe innerhalb der Domäne ganz ohne gespeichertes Kennwort?",
+      "3. Eine Kollegin legt für ein Linux-Skript die Zugangsdaten in /opt/export/.zugang ab. ls -l zeigt -rw-r--r-- root root. Geben Sie die Rechte in Oktalschreibweise an. Welche Rechte und welchen Befehl wählen Sie? Welche Rechte bekommt eine neue Datei bei umask 022 und bei umask 077 (Ausgangswert für Dateien 666)?"
+    ],
+    "solution": [
+      "1. Die Aussage ist falsch. ConvertTo-SecureString -AsPlainText macht aus dem Klartext nur ein SecureString-Objekt im Arbeitsspeicher. Das Kennwort steht trotzdem lesbar im Skript. Lesen können es alle Domänen-Benutzer über die Freigabe, alle mit Zugriff auf das Git-Repository und jeder, der eine Kopie oder Sicherung des Skripts hat. Sofortmaßnahmen: Kennwort für tiefbau-api beim Hersteller sofort ändern, Zugriffsprotokolle des Portals auf fremde Anmeldungen prüfen, Leserechte auf \\\\fs01\\skripte auf die IT beschränken. Das Löschen der Zeile reicht nicht, weil das Kennwort in der Git-Historie, in Sicherungen und eventuell in Kopien weiter vorhanden ist. Es gilt als bekannt und muss gewechselt werden.",
+      "",
+      "2. a) Einmalig auf app01 als svc_export anmelden (oder eine PowerShell als svc_export starten) und Get-Credential | Export-Clixml -Path C:\\Skripte\\portal.xml ausführen. Das Kennwort wird mit der Windows-Datenschutz-API (DPAPI) verschlüsselt. Nur genau dieses Benutzerkonto auf genau diesem Computer kann es wieder entschlüsseln. Im Skript: $cred = Import-Clixml -Path C:\\Skripte\\portal.xml. Wichtig: Die Datei muss vom Konto erzeugt werden, unter dem die Aufgabe läuft, und auf demselben Server. Erstellt sie ein Administrator mit seinem eigenen Konto, kann svc_export sie nicht lesen. Die Datei bekommt NTFS-Rechte nur für svc_export und Administratoren. b) Mit den Modulen Microsoft.PowerShell.SecretManagement und einem Tresor (SecretStore, Azure Key Vault, HashiCorp Vault o.ä.): Set-Secret -Name Portal -Secret $cred speichert, Get-Secret -Name Portal liest. Vorteile: zentrale Verwaltung, Zugriffsprotokoll, einfacher Kennwortwechsel. Innerhalb der Domäne (z.B. Zugriff auf \\\\fs01) braucht man gar kein gespeichertes Kennwort: Die Aufgabe läuft unter einem gruppenverwalteten Dienstkonto (gMSA). Dessen Kennwort verwaltet und wechselt das Active Directory automatisch, niemand kennt es.",
+      "",
+      "3. -rw-r--r-- ist rw- = 4 + 2 = 6 für den Besitzer, r-- = 4 für die Gruppe und r-- = 4 für alle anderen, also 644. Jeder Benutzer des Systems kann die Datei lesen. Richtig: nur der Besitzer darf lesen und schreiben, chmod 600 /opt/export/.zugang (rw-------). Besitzer sollte das Konto sein, unter dem das Skript läuft, nicht root, wenn das Skript nicht als root laufen muss (chown export:export). umask 022: 666 ohne die Bits 022 ergibt 644 (rw-r--r--). umask 077: 666 ohne 077 ergibt 600 (rw-------). Für ein Skript, das solche Dateien anlegt, setzt man deshalb am Anfang umask 077."
+    ]
+  },
+  {
+    "title": "Konten ausgeschiedener Zeitarbeitskräfte eines Personaldienstleisters automatisch sperren",
+    "cat": "systeme",
+    "thema": "programmierung",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A4d",
+      "A10c"
+    ],
+    "text": [
+      "Ein Personaldienstleister verleiht Fachkräfte an Kunden. Viele Einsätze dauern nur wenige Wochen. Jede Kraft hat ein Konto für Zeiterfassung und E-Mail. Die Personalabteilung exportiert jede Nacht die Datei austritte.csv mit den Spalten Personalnr, Konto und Austritt (letzter Arbeitstag, leer = unbefristet). Ein Skript soll jeden Morgen diese Regeln umsetzen:",
+      "  - Ist Austritt leer oder liegt heute nicht nach dem Austritt, passiert nichts.",
+      "  - Liegt heute nach dem Austritt und das Konto ist aktiv, wird es deaktiviert und in die OU \"Ausgeschieden\" verschoben.",
+      "  - Ist das Konto bereits deaktiviert und liegt der Austritt mehr als 90 Tage zurück, wird das Konto gelöscht.",
+      "  - Jede Aktion wird mit Datum, Konto und Aktion in eine Protokolldatei geschrieben.",
+      "Ein Lauf deaktiviert oder löscht ein Konto, aber nie beides am selben Tag.",
+      "",
+      "1. Formulieren Sie den Ablauf als Pseudocode oder als Struktogramm in Textform. Verwenden Sie eine Schleife über alle Zeilen und eine Variable tage für die Zahl der Tage seit dem Austritt.",
+      "2. Führen Sie einen Schreibtischtest für den Lauf am 30.09.2027 durch: kmeyer (Austritt 30.09.2027, aktiv), dfischer (29.09.2027, aktiv), olange (15.06.2027, deaktiviert), rsommer (02.07.2027, deaktiviert), bkrause (leer, aktiv), ttan (20.05.2027, noch aktiv), hneu (31.10.2027, aktiv). Geben Sie für jedes Konto tage und die Aktion an.",
+      "3. Eines Nachts ist der Export fehlerhaft und enthält bei allen 480 Kräften als Austritt den 01.01.2000. Was würde das Skript tun? Ergänzen Sie eine Schutzregel, die den Lauf abbricht, wenn mehr als 5 % der Konten deaktiviert werden sollen. Ab wie vielen Konten greift sie? Nennen Sie zwei weitere Sicherungen."
+    ],
+    "solution": [
+      "1. Pseudocode:",
+      "  heute <- AKTUELLES_DATUM()",
+      "  FÜR JEDE zeile IN LIES_CSV(\"austritte.csv\")",
+      "    WENN zeile.Austritt <> \"\" DANN",
+      "      tage <- heute - zeile.Austritt            // Anzahl Tage",
+      "      konto <- HOLE_KONTO(zeile.Konto)",
+      "      WENN tage > 0 DANN",
+      "        WENN konto.aktiv DANN",
+      "          DEAKTIVIERE(konto); VERSCHIEBE(konto, \"OU=Ausgeschieden\")",
+      "          PROTOKOLL(heute, konto, \"deaktiviert\")",
+      "        SONST WENN tage > 90 DANN",
+      "          LÖSCHE(konto); PROTOKOLL(heute, konto, \"gelöscht\")",
+      "        ENDE WENN",
+      "      ENDE WENN",
+      "    ENDE WENN",
+      "  ENDE FÜR",
+      "Im Struktogramm ist das eine Zählschleife bzw. Schleife über alle Zeilen mit drei geschachtelten Verzweigungen (Austritt vorhanden, tage > 0, aktiv). Der SONST-Zweig von \"aktiv\" enthält die Verzweigung tage > 90. Weil Löschen im SONST-Zweig steht, wird ein Konto nie am Tag seiner Deaktivierung gelöscht.",
+      "",
+      "2. kmeyer: tage = 0 (heute ist der letzte Arbeitstag), keine Aktion. dfischer: tage = 1, aktiv, wird deaktiviert und verschoben. olange: tage = 107 (15 Tage Juni + 31 + 31 + 30), deaktiviert, 107 > 90, wird gelöscht. rsommer: tage = 90 (29 + 31 + 30), deaktiviert, 90 ist nicht größer als 90, keine Aktion, gelöscht wird am nächsten Tag. bkrause: Austritt leer, keine Aktion. ttan: tage = 133, noch aktiv, wird heute nur deaktiviert und erst beim nächsten Lauf gelöscht. Hier wurde der Austritt offenbar lange nicht verarbeitet. Das gehört in einen Hinweis an die Personalabteilung. hneu: tage = -31 (Austritt in der Zukunft), keine Aktion. Protokoll: 2 Deaktivierungen (dfischer, ttan) und 1 Löschung (olange).",
+      "",
+      "3. Mit dem 01.01.2000 hätten alle Konten tage > 90. Alle aktiven Konten würden deaktiviert, alle 480 Kräfte könnten am Morgen nicht arbeiten. Alle bereits deaktivierten Konten würden sofort gelöscht, auch die, deren echter Austritt noch keine 90 Tage zurückliegt. Bleibt der Export fehlerhaft, würden am nächsten Tag auch die neu deaktivierten Konten gelöscht. Schutzregel: zuerst alle Zeilen auswerten und die geplanten Deaktivierungen zählen (anzahl). WENN anzahl > 0,05 * 480 DANN Lauf abbrechen, Alarm an IT und Personalabteilung, nichts ändern. 5 % von 480 sind 24. Die Regel greift also ab 25 geplanten Deaktivierungen. Weitere Sicherungen: Testmodus, der nur protokolliert, was passieren würde (in PowerShell -WhatIf). Plausibilitätsprüfung der CSV (Anzahl Zeilen, Datumsformat, Austritt nicht vor dem Eintritt). Löschen nicht sofort, sondern Konto nach 90 Tagen mit Archivierung von Postfach und Daten nach den Aufbewahrungsfristen. Rückgabecode und Protokoll an das Monitoring."
+    ]
+  },
+  {
+    "title": "Python-Skript prüft die Softwarestände der Kassen eines Apothekenverbunds falsch",
+    "cat": "systeme",
+    "thema": "programmierung",
+    "theme": "Automatisierung & Skripte",
+    "rahmenplan": [
+      "A4c",
+      "C3d"
+    ],
+    "text": [
+      "Ein Verbund von Apotheken betreibt sechs Kassen-PCs. Der Hersteller der Kassensoftware schreibt nach einer Sicherheitslücke mindestens Version 10.4.2 vor. Ein Auszubildender hat ein Python-Skript geschrieben, das die Stände prüft (die Versionen kommen später aus der Inventarisierung, hier fest eingetragen):",
+      "  mindest = \"10.4.2\"",
+      "  kassen = {\"KASSE-01\": \"10.4.2\", \"KASSE-02\": \"9.12.0\", \"KASSE-03\": \"10.10.1\",",
+      "            \"KASSE-04\": \"10.4.10\", \"KASSE-05\": \"10.3.9\", \"KASSE-06\": \"11.0.0\"}",
+      "  veraltet = 0",
+      "  for name, version in sorted(kassen.items()):",
+      "      if version < mindest:",
+      "          print(name, version, \"veraltet\")",
+      "          veraltet += 1",
+      "  print(veraltet, \"von\", len(kassen), \"Kassen veraltet\")",
+      "",
+      "1. Bestimmen Sie die Ausgabe des Skripts. Welche Kassen sind tatsächlich veraltet? Erklären Sie den Fehler anhand der Vergleiche \"9.12.0\" < \"10.4.2\" und \"10.4.10\" < \"10.4.2\".",
+      "2. Korrigieren Sie das Skript mit einer Funktion, die eine Version in ein Tupel aus Zahlen umwandelt. Wie lautet die Ausgabe jetzt? Wie viel Prozent der Kassen sind auf einem zulässigen Stand?",
+      "3. Das Skript soll jede Nacht laufen und vom Monitoring ausgewertet werden. Erweitern Sie es um einen Rückgabecode. Eine Kasse meldet die Version \"10.4.2-hotfix1\". Was passiert mit Ihrer Funktion aus 2., und wie fangen Sie das ab?"
+    ],
+    "solution": [
+      "1. Ausgabe: \"KASSE-03 10.10.1 veraltet\", \"KASSE-04 10.4.10 veraltet\", \"KASSE-05 10.3.9 veraltet\", \"3 von 6 Kassen veraltet\". Tatsächlich veraltet sind KASSE-02 (9.12.0) und KASSE-05 (10.3.9). Fehler: Die Versionen sind Zeichenketten und werden Zeichen für Zeichen verglichen (lexikografisch). \"9.12.0\" < \"10.4.2\": Schon das erste Zeichen entscheidet, \"9\" ist größer als \"1\", also ist der Vergleich falsch (False). Die veraltete KASSE-02 wird nicht gemeldet, das ist der gefährliche Fehler. \"10.4.10\" < \"10.4.2\": Die ersten fünf Zeichen \"10.4.\" sind gleich, dann \"1\" gegen \"2\", also True. Die aktuelle KASSE-04 wird fälschlich gemeldet. Ebenso KASSE-03 (\"10.1\" gegen \"10.4\").",
+      "",
+      "2. Korrektur:",
+      "  def als_tupel(v):",
+      "      return tuple(int(teil) for teil in v.split(\".\"))",
+      "  ...",
+      "      if als_tupel(version) < als_tupel(mindest):",
+      "Tupel werden Element für Element als Zahlen verglichen: (9, 12, 0) < (10, 4, 2) ist True, (10, 4, 10) < (10, 4, 2) ist False, weil 10 > 2. Ausgabe: \"KASSE-02 9.12.0 veraltet\", \"KASSE-05 10.3.9 veraltet\", \"2 von 6 Kassen veraltet\". Zulässig sind 4 von 6 Kassen, das sind 66,7 %.",
+      "",
+      "3. Am Anfang import sys, am Ende sys.exit(1 if veraltet > 0 else 0). Der Rückgabecode 0 heißt für das Monitoring \"alles in Ordnung\", 1 heißt \"Warnung\". Die Namen der veralteten Kassen gehen zusätzlich in eine Protokolldatei. \"10.4.2-hotfix1\" ergibt beim Zerlegen das Teil \"2-hotfix1\". int(\"2-hotfix1\") löst einen ValueError aus, und das Skript bricht mit einer Fehlermeldung ab, ohne die übrigen Kassen zu prüfen. Abfangen: try: v = als_tupel(version) except ValueError: print(name, version, \"unbekanntes Format\"); fehler += 1; continue. Dann endet das Skript z.B. mit Rückgabecode 2, damit jemand die Kasse von Hand prüft. Alternativ nur den Zahlenteil vor dem Bindestrich nehmen (version.split(\"-\")[0]) oder ein Modul für Versionsnummern verwenden (packaging.version). Für echte Updates gehört die Prüfung zum Patchmanagement: veraltete Kassen außerhalb der Öffnungszeiten aktualisieren."
+    ]
   }
 ]

@@ -5431,5 +5431,446 @@
       "",
       "3. Nach § 5 Arbeitsschutzgesetz muss der Arbeitgeber eine Gefährdungsbeurteilung für die Arbeitsplätze erstellen und dokumentieren, auch zu psychischen Belastungen, und die Beschäftigten unterweisen. Nach der Verordnung zur arbeitsmedizinischen Vorsorge muss er Vorsorge bei Bildschirmarbeit anbieten (Angebotsvorsorge) mit Untersuchung der Augen. Braucht jemand eine spezielle Bildschirmbrille, weil eine normale Brille nicht reicht, trägt der Arbeitgeber die Kosten. Außerdem Erste Hilfe, Brandschutz und Fluchtwege organisieren. Verkabelung: keine Kabel über Laufwege (Stolpergefahr), Kabelkanäle oder Kabelwannen unter dem Tisch nutzen, bei Sitz-Steh-Tischen Kabel mit genug Länge und Kabelkette verlegen, keine hintereinander gesteckten Mehrfachsteckdosen, nur geprüfte Geräte und Leitungen (regelmäßige Prüfung ortsveränderlicher Betriebsmittel)."
     ]
+  },
+  {
+    "title": "Beratungsplatz für eine Beraterin eines Lohnsteuerhilfevereins",
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A2b",
+      "A3a",
+      "A6a"
+    ],
+    "text": [
+      "Ein Lohnsteuerhilfeverein richtet für Frau Kessler einen neuen Beratungsplatz ein. Der Leiter der Beratungsstelle sagt am Telefon nur: \"Sie braucht einen guten PC, so wie die Kollegen.\" Im Gespräch mit Frau Kessler notieren Sie:",
+      "  - Mitglieder bringen Belege auf Papier mit. Je Beratung werden etwa 40 Seiten eingescannt, am Tag finden bis zu 6 Beratungen statt.",
+      "  - Das Steuerprogramm läuft nur unter Windows.",
+      "  - Dienstags und donnerstags arbeitet sie im Homeoffice und berät dort per Video.",
+      "  - Das Mitglied sitzt ihr gegenüber und soll die Berechnung mitverfolgen können.",
+      "  - Für Hardware stehen höchstens 1.800 Euro netto zur Verfügung.",
+      "Zwei Varianten stehen zur Wahl: A Desktop-PC, zwei Monitore und Dokumentenscanner für 1.350 Euro netto. B Notebook mit Dockingstation, zwei Monitoren und Dokumentenscanner für 1.740 Euro netto.",
+      "Nutzwertanalyse (Punkte 1 bis 10), Kriterium (Gewicht): A / B",
+      "  Eignung für das Homeoffice (35 %): 2 / 9",
+      "  Bildschirmfläche und Ergonomie (20 %): 9 / 8",
+      "  Preis (25 %): 9 / 6",
+      "  Datenschutz und Sicherheit (20 %): 7 / 8",
+      "",
+      "1. Warum reicht die Aussage des Leiters als Anforderung nicht aus? Formulieren Sie aus den Notizen sechs Anforderungen im Stil eines Lastenhefts, getrennt nach Muss- und Kann-Anforderungen. Wie viele Seiten werden am Tag gescannt, und wie lange wartet ein Mitglied je Beratung bei einem Scanner mit 25 Seiten pro Minute?",
+      "2. Prüfen Sie das Budget, berechnen Sie die Nutzwerte und geben Sie eine Empfehlung.",
+      "3. Der zweite Monitor soll zum Mitglied gedreht werden. Welche Gefahr für den Datenschutz entsteht dabei, und wie richten Sie den Platz ein, damit das Mitglied nur seine eigenen Daten sieht?"
+    ],
+    "solution": [
+      "1. \"Ein guter PC\" ist weder messbar noch prüfbar. Bei der Abnahme könnte niemand sagen, ob die Anforderung erfüllt ist. Außerdem würde die Lösung am Bedarf vorbeigehen, denn die Kollegen arbeiten vielleicht nicht im Homeoffice. Anforderungen beschreiben, was der Arbeitsplatz leisten muss, nicht welches Gerät gekauft wird. Muss: M1 Das Steuerprogramm läuft unter Windows 11 Pro. M2 Ein Dokumentenscanner mit automatischem Einzug scannt beidseitig mindestens 25 Seiten pro Minute. M3 Der Arbeitsplatz ist an zwei Tagen pro Woche im Homeoffice nutzbar, mit Kamera und Headset für Videoberatung. M4 Das Mitglied kann die Berechnung auf einem eigenen Bildschirm sehen, ohne andere Fenster zu sehen. M5 Die Hardware kostet höchstens 1.800 Euro netto. M6 Daten auf mobilen Geräten sind verschlüsselt. Kann: K1 Höhenverstellbare Monitore mit Monitorarm. K2 Scan direkt in die Mitgliedsakte des Steuerprogramms. Scanmenge: 6 x 40 = 240 Seiten am Tag. Wartezeit je Beratung: 40 / 25 = 1,6 Minuten, also gut 1,5 Minuten.",
+      "",
+      "2. Budget: A 1.350 Euro und B 1.740 Euro liegen beide unter 1.800 Euro, keine Variante scheidet aus. Nutzwerte: A: 2 x 0,35 + 9 x 0,20 + 9 x 0,25 + 7 x 0,20 = 0,70 + 1,80 + 2,25 + 1,40 = 6,15. B: 9 x 0,35 + 8 x 0,20 + 6 x 0,25 + 8 x 0,20 = 3,15 + 1,60 + 1,50 + 1,60 = 7,85. Empfehlung: Variante B. Sie kostet 390 Euro mehr, erfüllt aber die Muss-Anforderung Homeoffice. Bei Variante A bräuchte Frau Kessler zu Hause ein zweites Gerät oder einen Fernzugriff, was weitere Kosten verursacht.",
+      "",
+      "3. Wird der zweite Monitor nur gedreht und als erweiterter Desktop genutzt, sieht das Mitglied alles, was dort landet: E-Mails, Benachrichtigungen oder die Akte des vorherigen Mitglieds. Das wäre eine unzulässige Offenlegung personenbezogener Daten (Art. 5 und Art. 32 DSGVO). Lösung: Der Kundenmonitor zeigt nur das Fenster der aktuellen Berechnung, z.B. über eine Präsentations- oder Kundenansicht des Steuerprogramms. Benachrichtigungen werden während der Beratung unterdrückt (Nicht stören). Andere Akten werden vor dem Termin geschlossen. Der Hauptmonitor steht so, dass das Mitglied ihn nicht einsehen kann, sonst hilft eine Blickschutzfolie. Beim Verlassen des Platzes sperrt Frau Kessler den Bildschirm (Windows + L), zusätzlich sperrt er automatisch nach wenigen Minuten."
+    ]
+  },
+  {
+    "title": "CAD-Arbeitsplatz für die Arbeitsvorbereitung einer Zimmerei beschaffen",
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A3b",
+      "A1h",
+      "A7a"
+    ],
+    "text": [
+      "Eine Zimmerei plant Dachstühle mit einer 3D-Abbundsoftware. Der Arbeitsvorbereiter bekommt eine neue Workstation mit zwei Monitoren. Zwei Händler haben Angebote für dasselbe Paket abgegeben (alle Preise netto):",
+      "  Händler Nord: Listenpreis 2.890 Euro, 8 % Rabatt, 2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage netto, Fracht 49 Euro. Lieferzeit 3 Wochen. 3 Jahre Vor-Ort-Service am nächsten Arbeitstag. Grafikkarte vom Softwarehersteller zertifiziert.",
+      "  Händler Süd: Listenpreis 2.750 Euro, 5 % Rabatt, Zahlung 30 Tage netto ohne Skonto, Versand und Verpackung 35 Euro. Lieferzeit 5 Arbeitstage. 1 Jahr Garantie mit Einsenden des Geräts. Vor-Ort-Service für 3 Jahre kostet 120 Euro Aufpreis. Grafikkarte nicht zertifiziert.",
+      "Fracht und Versand werden weder rabattiert noch skontiert.",
+      "",
+      "1. Berechnen Sie für beide Händler den Bezugspreis (Einstandspreis). Vergleichen Sie danach mit gleichem Serviceumfang.",
+      "2. Nennen Sie qualitative Kriterien, die gegen den reinen Preisvergleich sprechen, und entscheiden Sie sich. Die Zimmerei bestellt bei Nord. Die Rechnung ist vom Montag, 16.11.2026. Bis wann muss sie zahlen, um Skonto zu nutzen, und wann ist die Rechnung spätestens fällig?",
+      "3. Was muss in der Bestellung stehen, und wann kommt der Kaufvertrag zustande? Was prüfen und dokumentieren Sie beim Wareneingang?"
+    ],
+    "solution": [
+      "1. Nord: Listenpreis 2.890,00 Euro - 8 % Rabatt (231,20 Euro) = Zieleinkaufspreis 2.658,80 Euro. - 2 % Skonto (53,18 Euro) = Bareinkaufspreis 2.605,62 Euro. + Fracht 49,00 Euro = Bezugspreis 2.654,62 Euro. Süd: Listenpreis 2.750,00 Euro - 5 % Rabatt (137,50 Euro) = Zieleinkaufspreis 2.612,50 Euro. Kein Skonto, Bareinkaufspreis 2.612,50 Euro. + Versand 35,00 Euro = Bezugspreis 2.647,50 Euro. Süd ist zunächst um 7,12 Euro günstiger. Mit gleichem Service (3 Jahre vor Ort) kostet Süd 2.647,50 + 120,00 = 2.767,50 Euro. Dann ist Nord um 112,88 Euro günstiger.",
+      "",
+      "2. Qualitative Kriterien: Lieferzeit (Süd liefert schneller), Zertifizierung der Grafikkarte durch den Softwarehersteller (sonst gibt es bei Darstellungsfehlern keinen Support), Serviceart und Reaktionszeit, Erfahrung des Händlers mit CAD-Systemen, Erreichbarkeit, Rückgabe- und Garantieabwicklung. Entscheidung: Nord. Bei gleichem Service ist es günstiger, und die zertifizierte Grafikkarte sichert den Support für die Abbundsoftware. Die 3 Wochen Lieferzeit müssen mit dem Arbeitsvorbereiter abgestimmt werden. Skontofrist: 16.11.2026 + 10 Tage = Donnerstag, 26.11.2026. Ohne Skonto spätestens 16.11.2026 + 30 Tage = Mittwoch, 16.12.2026. Der Zahlungstermin wird in der Buchhaltung vorgemerkt.",
+      "",
+      "3. Bestellung: Bezug auf das Angebot (Nummer und Datum), genaue Artikelbezeichnung und Menge, Preis und Rabatt, Zahlungsbedingungen mit Skonto, Lieferadresse und gewünschter Liefertermin, Serviceumfang, Ansprechpartner, Datum und Unterschrift bzw. Name. Der Kaufvertrag kommt durch zwei übereinstimmende Willenserklärungen zustande: Das verbindliche Angebot des Händlers ist der Antrag, die Bestellung ist die Annahme. Weicht die Bestellung vom Angebot ab oder kommt sie nach Ablauf der Bindefrist, gilt sie als neuer Antrag, und der Vertrag entsteht erst mit der Auftragsbestätigung. Wareneingang: Lieferschein mit Bestellung vergleichen (Art, Menge, Modell). Verpackung auf Schäden prüfen und Schäden sofort beim Zusteller vermerken lassen. Geräte auspacken, einschalten und Ausstattung prüfen. Seriennummern ins Inventarverzeichnis eintragen. Mängel unverzüglich schriftlich rügen. Lieferschein, Rechnung und Garantienachweis zur Dokumentation ablegen."
+    ]
+  },
+  {
+    "title": "Notebook für eine neue Notarfachangestellte sicher einrichten",
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A6b",
+      "A4a",
+      "A5a",
+      "A6a"
+    ],
+    "text": [
+      "In einem Notariat beginnt am Montag eine neue Notarfachangestellte. Sie richten ihr ein Notebook mit Windows 11 Pro, TPM 2.0 und einer SSD mit 512 GB ein. Nach Image und Fachsoftware sind 180 GB belegt. Das Notebook wird auch zu Beurkundungen außer Haus mitgenommen. Ihr Ausbilder sagt: \"Beim Notar gilt die Verschwiegenheitspflicht. Das Gerät muss so abgesichert sein, dass ein Verlust kein Problem wird.\"",
+      "Im Angebot an das Notariat sind für die Einrichtung 3 Stunden zu 78 Euro netto kalkuliert. Abgerechnet wird je angefangene Viertelstunde. Sie haben gebraucht: Grundkonfiguration 95 Minuten, Verschlüsselung und Tests 40 Minuten, Dokumentation 25 Minuten.",
+      "",
+      "1. Erstellen Sie eine Checkliste für die Grundkonfiguration in sinnvoller Reihenfolge (mindestens acht Punkte). Warum arbeitet die Angestellte mit einem Standardbenutzerkonto und nicht als Administratorin?",
+      "2. Sie verschlüsseln das Laufwerk mit BitLocker. Warum reicht TPM allein bei diesem Gerät nicht aus? Wie aktivieren Sie den Start mit PIN, und wo bewahren Sie den Wiederherstellungsschlüssel auf? Vereinfacht angenommen verschlüsselt BitLocker 300 MB pro Sekunde. Wie lange dauert die Verschlüsselung für den belegten Speicher und für das ganze Laufwerk? Welche Variante wählen Sie bei diesem neuen Gerät?",
+      "3. Formulieren Sie fünf Testfälle für das Testprotokoll mit erwartetem Ergebnis. Erstellen Sie den Stundennachweis und vergleichen Sie mit dem Angebot."
+    ],
+    "solution": [
+      "1. Checkliste: (1) Firmware (UEFI) und Windows auf den neuesten Stand bringen, Secure Boot und TPM prüfen. (2) Gerätenamen nach Namensschema vergeben und ins Inventar eintragen. (3) Gerät in die Domäne bzw. Geräteverwaltung aufnehmen, damit Richtlinien greifen. (4) Benutzerkonto als Standardbenutzer anlegen, Gruppen nach Aufgabe zuweisen, Erstanmeldung mit Passwortwechsel. (5) Laufwerk mit BitLocker verschlüsseln. (6) Virenschutz und Firewall aktiv, automatische Updates eingeschaltet. (7) Bildschirmsperre nach 5 Minuten, USB-Speicher nach Vorgabe einschränken. (8) Fachsoftware, Office und Drucker einrichten, Netzlaufwerke verbinden. (9) Tests durchführen, alles dokumentieren. Standardbenutzer: Schadsoftware, die unter dem Konto startet, hat nur deren Rechte und kann keine Systemdateien ändern oder Software installieren. Ein Bedienfehler richtet weniger Schaden an. Administrative Aufgaben erledigt die IT mit einem eigenen Administratorkonto (Prinzip der geringsten Rechte, least privilege).",
+      "",
+      "2. Mit TPM allein entschlüsselt das Gerät beim Start automatisch. Ein Dieb kann Windows bis zum Anmeldebildschirm starten und dort angreifen. Mit TPM und PIN bleibt das Laufwerk ohne PIN verschlossen. Aktivierung: In der Gruppenrichtlinie \"Zusätzliche Authentifizierung beim Start anfordern\" einschalten, dann als Administrator: manage-bde -protectors -add C: -TPMAndPIN. Der Wiederherstellungsschlüssel (48 Ziffern in 8 Blöcken zu 6 Ziffern) wird im Active Directory bzw. in der Geräteverwaltung gespeichert und zusätzlich ausgedruckt im Tresor des Notariats verwahrt, nie auf dem Gerät selbst. Dauer: belegter Speicher 180 GB = 180.000 MB / 300 MB/s = 600 s = 10 Minuten. Ganzes Laufwerk 512.000 MB / 300 MB/s = ca. 1.707 s = ca. 28,4 Minuten. Bei einem neuen, frisch eingerichteten Gerät reicht \"Nur belegten Speicherplatz verschlüsseln\", weil auf den freien Bereichen noch keine alten Daten liegen. Bei einem bereits genutzten Gerät wird das ganze Laufwerk verschlüsselt, da gelöschte Daten noch lesbar sein könnten.",
+      "",
+      "3. Testfälle: T1 Anmeldung mit dem neuen Konto, erwartet: Anmeldung klappt, Passwortwechsel wird verlangt. T2 Installation eines Programms als Standardbenutzer, erwartet: Abfrage nach Administratordaten, ohne diese keine Installation. T3 manage-bde -status C:, erwartet: Verschlüsselung 100 %, Schutzstatus \"Ein\", Schlüsselschutz TPM und PIN. T4 Neustart, erwartet: PIN-Abfrage vor dem Windows-Start. T5 Notebook 5 Minuten unbenutzt, erwartet: Bildschirm gesperrt. Weitere: Druck auf dem Etagendrucker, Zugriff auf Netzlaufwerk und Fachsoftware. Je Test werden Datum, Prüfer, tatsächliches Ergebnis und bestanden ja/nein eingetragen. Stundennachweis: 95 + 40 + 25 = 160 Minuten = 2 Stunden 40 Minuten. Abgerechnet je angefangene Viertelstunde: 160 / 15 = 10,67, also 11 Viertelstunden = 2,75 Stunden x 78 Euro = 214,50 Euro netto. Angebot: 3 x 78 = 234,00 Euro. Ist liegt 0,25 Stunden bzw. 19,50 Euro unter Soll. Die Notarin bestätigt den Nachweis mit Unterschrift."
+    ]
+  },
+  {
+    "title": "Erfassungsplatz im Reifekeller einer Käserei",
+    "cat": "systeme",
+    "thema": "hardware",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A3a",
+      "A2b",
+      "A1f",
+      "A5a"
+    ],
+    "text": [
+      "Eine Käserei will im Reifekeller die Pflege der Käselaibe (Wenden, Schmieren, Salzen) direkt am Regal erfassen statt auf Papier. Dazu soll ein PC-Arbeitsplatz mit Barcodescanner an der Kellertür entstehen. Der Betriebsleiter sagt: \"Da unten ist es kalt und nass, und wir putzen alles mit Wasser.\"",
+      "Zwei Lösungen sind im Gespräch (Preise netto):",
+      "  A Panel-PC aus Edelstahl, Schutzart IP65, Touchscreen für Handschuhe, 2.490 Euro, Leistungsaufnahme 28 W.",
+      "  B Büro-Mini-PC für 690 Euro (45 W) in einem Schutzschrank mit Schutzart IP54 und Heizung gegen Kondenswasser für 780 Euro (Heizung 40 W).",
+      "Betrieb vereinfacht angenommen 16 Stunden am Tag an 300 Tagen im Jahr, Strompreis 0,30 Euro je kWh, Nutzungsdauer 5 Jahre. Erfahrungsgemäß fällt in Variante B in 5 Jahren ein PC durch Feuchtigkeit aus. Austausch: neues Gerät 690 Euro und 2 Stunden Technikerzeit zu 75 Euro.",
+      "",
+      "1. Welche Fragen stellen Sie dem Betriebsleiter, um den Bedarf vollständig zu ermitteln? Leiten Sie daraus vier Anforderungen ab. Was bedeuten die Ziffern in IP65 und IP54?",
+      "2. Berechnen Sie für beide Varianten den Stromverbrauch und die Gesamtkosten über 5 Jahre, einmal ohne und einmal mit dem erwarteten Ausfall in Variante B. Welche Variante empfehlen Sie, und warum?",
+      "3. Formulieren Sie drei Testfälle für die Inbetriebnahme, die die besonderen Bedingungen im Keller prüfen."
+    ],
+    "solution": [
+      "1. Fragen: Welche Temperatur und Luftfeuchte herrschen im Keller? Wie und womit wird gereinigt (Wasserschlauch, Hochdruck, Reinigungs- und Desinfektionsmittel)? Tragen die Beschäftigten Handschuhe? Wie viele Personen erfassen, und braucht jede ein eigenes Konto? Welche Daten werden erfasst, und wohin sollen sie (Programm, Server)? Gibt es im Keller ein Netzwerkkabel oder WLAN-Empfang? Welche Hygienevorgaben gelten, z.B. zu Glas und splitternden Teilen? Anforderungen: Gehäuse mindestens IP65 und für die Reinigungsmittel geeignet. Bedienung mit Handschuhen möglich. Betrieb bei etwa 10 °C und hoher Luftfeuchte ohne Kondenswasser im Gerät. Kabelgebundene Netzwerkanbindung, da Kellerwände WLAN dämpfen. Erfassung eines Laibs in wenigen Sekunden per Barcode. IP-Code: Die erste Ziffer gibt den Schutz gegen Fremdkörper und Staub an, die zweite gegen Wasser. IP65: staubdicht (6), geschützt gegen Strahlwasser aus beliebiger Richtung (5). IP54: staubgeschützt (5), geschützt gegen Spritzwasser (4). Wird mit Hochdruck oder Dampf gereinigt, braucht man IP69K.",
+      "",
+      "2. A: 28 W x 16 h x 300 = 134.400 Wh = 134,4 kWh im Jahr, in 5 Jahren 672 kWh x 0,30 = 201,60 Euro. Gesamtkosten A: 2.490 + 201,60 = 2.691,60 Euro. B: 45 W + 40 W = 85 W x 16 h x 300 = 408 kWh im Jahr, in 5 Jahren 2.040 kWh x 0,30 = 612,00 Euro. Gesamtkosten B ohne Ausfall: 690 + 780 + 612 = 2.082,00 Euro, also 609,60 Euro günstiger als A. Ausfall: 690 + 2 x 75 = 840 Euro. B mit Ausfall: 2.082 + 840 = 2.922,00 Euro, jetzt ist A um 230,40 Euro günstiger. Empfehlung: A. Der Panel-PC ist für Nässe und Reinigung gebaut und braucht weniger Strom. Bei B muss der Schrank zum Bedienen geöffnet werden, dann hilft IP54 nicht mehr. Ein Ausfall stört außerdem die Erfassung. Die Entscheidung hängt aber an der Ausfallannahme und sollte so dokumentiert werden.",
+      "",
+      "3. T1 Bedienung mit den im Keller üblichen Handschuhen: fünf Laibe per Barcode erfassen, erwartet: jede Eingabe wird erkannt, keine Fehleingaben. T2 Reinigung wie im Alltag (Abwaschen mit Wasser und dem verwendeten Reinigungsmittel), danach Gerät bedienen, erwartet: keine Feuchtigkeit im Gerät, Touch und Scanner funktionieren. T3 Gerät eine Schicht lang im Keller betreiben, danach Daten im Programm im Büro prüfen, erwartet: alle Erfassungen sind vollständig und mit richtiger Uhrzeit angekommen, Netzwerkverbindung stabil. Ergebnisse kommen ins Testprotokoll, das der Betriebsleiter bei der Abnahme gegenzeichnet."
+    ]
+  },
+  {
+    "title": "Zwei-Monitor-Plätze und Einweisung in einem Reisebüro",
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A7d",
+      "A4a",
+      "A1c",
+      "A1g"
+    ],
+    "text": [
+      "Ein Reisebüro mit vier Expedientinnen bekommt neue Arbeitsplätze: je zwei 27-Zoll-Monitore im Format 16:9, ein Headset und eine neue Buchungsplattform im Browser. Die Tische sind fest 72 cm hoch und 160 cm breit. Ein Monitor ist mit Rahmen 61,5 cm breit. Der Monitorfuß lässt sich so verstellen, dass die Unterkante des Bildes 5 bis 15 cm über der Tischplatte liegt. Frau Demir hat im Sitzen eine Augenhöhe von 118 cm über dem Boden. Sie arbeitet etwa 80 % der Zeit in der Buchungsplattform, auf dem zweiten Monitor laufen E-Mail und Kalender.",
+      "Für die Einweisung gilt: Öffnungszeiten Montag bis Freitag 9:30 bis 18:00 Uhr, im Laden müssen immer mindestens zwei Expedientinnen sein. Eine Einweisung für zwei Personen dauert 75 Minuten. Techniker 70 Euro je Stunde, dazu 2 Stunden Vorbereitung einschließlich Kurzanleitung. Die Arbeitszeit der Expedientinnen wird vereinfacht mit 22 Euro je Stunde angesetzt.",
+      "",
+      "1. Berechnen Sie Bildhöhe und Bildbreite eines 27-Zoll-Monitors (1 Zoll = 2,54 cm). Wie hoch darf die Oberkante des Bildes über dem Tisch höchstens liegen, und lässt sich der Monitor für Frau Demir passend einstellen? Wie stellen Sie die beiden Monitore auf, und was beachten Sie bei Sehabstand und Fenster?",
+      "2. Erstellen Sie einen Einweisungsplan (Termine, Gruppen, Inhalte, Methode). Berechnen Sie die Kosten der Einweisung insgesamt und je Person.",
+      "3. Nennen Sie Gestaltungsregeln für eine Kurzanleitung und schreiben Sie fünf Schritte für \"Videoberatung mit Headset starten\". Wie prüfen Sie, ob die Einweisung gewirkt hat?"
+    ],
+    "solution": [
+      "1. Bei 16:9 ist die Diagonale Wurzel aus (16² + 9²) = ca. 18,36 Teile lang. Bildhöhe: 27 x 9 / 18,36 = ca. 13,24 Zoll x 2,54 = ca. 33,6 cm. Bildbreite: 27 x 16 / 18,36 = ca. 23,53 Zoll x 2,54 = ca. 59,8 cm. Die Oberkante des Bildes soll höchstens auf Augenhöhe liegen, besser leicht darunter: 118 - 72 = 46 cm über der Tischplatte. Die Unterkante liegt dann bei 46 - 33,6 = ca. 12,4 cm. Das liegt im Verstellbereich von 5 bis 15 cm, etwas niedriger ist ergonomisch noch besser. Aufstellung: Da Frau Demir überwiegend die Buchungsplattform nutzt, steht dieser Monitor direkt vor ihr, der zweite seitlich daneben und leicht zu ihr gedreht. Bei gleicher Nutzung stünden beide symmetrisch mit dem Stoß in der Mitte. Platz: 2 x 61,5 = 123 cm, das passt auf 160 cm. Sehabstand etwa eine Armlänge, mindestens 50 cm, bei 27 Zoll eher 70 bis 80 cm. Blickrichtung parallel zum Fenster, damit weder Spiegelungen noch Gegenlicht entstehen.",
+      "",
+      "2. Plan: Gruppe 1 (Frau Demir und eine Kollegin) Dienstag 8:00 bis 9:15 Uhr, Gruppe 2 Mittwoch 8:00 bis 9:15 Uhr. Vor der Öffnung um 9:30 Uhr gilt die Besetzungsregel noch nicht, deshalb stört die Einweisung den Betrieb nicht. Die Zeit gilt als Arbeitszeit. Alternativ nachmittags, solange zwei Kolleginnen im Laden sind. Inhalte: Anmeldung und Bildschirmsperre, Monitore und Stuhl einstellen, Fenster zwischen den Bildschirmen verschieben, Headset koppeln und testen, Buchung anlegen und Unterlagen drucken, Hilfe holen (Ticket, Hotline). Methode: Vier-Stufen-Methode (vorbereiten, vormachen und erklären, nachmachen lassen, selbstständig üben) direkt am eigenen Platz. Kosten: Techniker 2 x 1,25 h + 2 h = 4,5 h x 70 = 315 Euro. Expedientinnen 4 x 1,25 h x 22 = 110 Euro. Gesamt 425 Euro, je Person 425 / 4 = 106,25 Euro.",
+      "",
+      "3. Regeln: höchstens eine bis zwei Seiten, nummerierte Schritte, ein Schritt je Zeile, kurze Sätze, Bildschirmfotos mit Markierungen, Begriffe wie auf dem Bildschirm, am Ende \"Was tun, wenn ...\" und die Supportnummer. Beispiel: 1. Headset an den USB-Anschluss der Dockingstation stecken. 2. In der Videosoftware unter Einstellungen > Geräte das Headset als Mikrofon und Lautsprecher wählen. 3. Testanruf starten und eigene Stimme prüfen. 4. Im Kalender auf den Termin klicken und \"Teilnehmen\" wählen. 5. Kamera erst nach dem Blick auf den Hintergrund einschalten, nach dem Termin auflegen. Erfolgskontrolle: Am Ende der Einweisung führt jede Teilnehmerin die Schritte selbst vor. Nach zwei Wochen fragen Sie nach und werten Tickets und Rückfragen aus. Die Teilnahme wird mit Datum, Inhalt und Unterschrift dokumentiert."
+    ]
+  },
+  {
+    "title": "Office-Lizenzen für die Lernraum-PCs eines Nachhilfeinstituts",
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A4a",
+      "A3b",
+      "A1h",
+      "A7d"
+    ],
+    "text": [
+      "Ein Nachhilfeinstitut hat 10 PCs im Lernraum und 2 Büro-PCs. Der Inhaber hat vor Jahren eine privat gekaufte Office-Version für Heim und Studium gekauft und auf allen 12 PCs installiert. Jetzt sollen die Arbeitsplätze neu eingerichtet werden. Zur Wahl stehen (vereinfacht angenommen, netto):",
+      "  A Kauflizenz je Gerät mit Erlaubnis zur gewerblichen Nutzung, 280 Euro einmalig, keine neuen Funktionen.",
+      "  B Abonnement je Gerät, 8,50 Euro im Monat, immer die aktuelle Version.",
+      "  C LibreOffice (Open Source, Mozilla Public License), keine Lizenzkosten. Für die Umstellung müssen 6 Honorarlehrkräfte je 2 Stunden eingewiesen werden (Vergütung 25 Euro je Stunde). Der Trainer braucht 3 Stunden zu 80 Euro, das Anpassen der Arbeitsblattvorlagen dauert 4 Stunden zu 80 Euro.",
+      "Im Büro werden Rechnungen und Verträge mit Firmenkunden ausgetauscht, die Word-Formate mit Makros nutzen.",
+      "",
+      "1. Bewerten Sie die bisherige Installation rechtlich. Erklären Sie die Unterschiede zwischen Geräte- und Nutzerlizenz, zwischen Kauf und Abonnement und was \"Open Source\" für die Nutzung bedeutet.",
+      "2. Berechnen Sie die Kosten der drei Varianten über 3 Jahre für alle 12 PCs. Ab welchem Monat ist das Abonnement teurer als der Kauf?",
+      "3. Empfehlen Sie eine Lösung und berechnen Sie ihre Kosten über 3 Jahre. Was enthält die Einweisung der Lehrkräfte, und wie dokumentieren Sie die Lizenzen?"
+    ],
+    "solution": [
+      "1. Software ist urheberrechtlich geschützt. Jede Installation ist eine Vervielfältigung und braucht die Zustimmung des Rechteinhabers (§ 69c UrhG), meist in Form einer Lizenz. Eine Lizenz für Heim und Studium erlaubt weder 12 Installationen noch die gewerbliche Nutzung. Der Inhaber riskiert Unterlassung und Schadensersatz (§ 97 UrhG) und haftet auch für Kopien, die Beschäftigte anlegen. Die Kopien müssen entfernt werden. Gerätelizenz: gilt für ein bestimmtes Gerät, egal wer daran arbeitet, passend für Lernraum-PCs mit wechselnden Schülern. Nutzerlizenz: gilt für eine benannte Person, die damit oft mehrere Geräte nutzen darf. Kauf: einmal zahlen, die Version darf unbefristet genutzt werden, neue Funktionen gibt es nicht. Abonnement: laufende Zahlung, immer aktuell, endet die Zahlung, endet das Nutzungsrecht. Open Source: Der Quelltext ist offen, die Lizenz erlaubt Nutzung, Veränderung und Weitergabe ohne Lizenzgebühr. Die Lizenzbedingungen gelten trotzdem, z.B. bei Weitergabe veränderter Versionen.",
+      "",
+      "2. A: 12 x 280 = 3.360 Euro einmalig. B: 12 x 8,50 = 102 Euro im Monat, x 36 = 3.672 Euro. C: Lehrkräfte 6 x 2 x 25 = 300 Euro, Trainer 3 x 80 = 240 Euro, Vorlagen 4 x 80 = 320 Euro, zusammen 860 Euro. Gleichstand Abo und Kauf: 3.360 / 102 = ca. 32,9 Monate. Nach 32 Monaten hat das Abo 3.264 Euro gekostet, nach 33 Monaten 3.366 Euro. Ab dem 33. Monat ist das Abo teurer.",
+      "",
+      "3. Empfehlung: Mischlösung. Im Lernraum LibreOffice, im Büro 2 Kauflizenzen, weil dort Dateien mit Makros mit Firmenkunden ausgetauscht werden und LibreOffice diese nicht immer korrekt verarbeitet. Kosten: 2 x 280 + 860 = 1.420 Euro über 3 Jahre, also 1.940 Euro weniger als Variante A. Wollen Schüler Dateien an ihre Schulen schicken, speichern sie bei Bedarf im Word-Format. Einweisung: Unterschiede in Menüs und Symbolleisten, Arbeitsblattvorlagen öffnen, Speichern in den Formaten .odt und .docx sowie als PDF, typische Probleme beim Austausch (Schriftarten, Layout), Hilfe bei Problemen. Danach üben die Lehrkräfte mit einem echten Arbeitsblatt. Lizenzdokumentation: Lizenzverzeichnis mit Produkt, Version, Lizenzart, Anzahl, Gerät, Kaufdatum und Rechnungsnummer. Kaufbelege aufbewahren. Für LibreOffice Version und Lizenz (MPL) vermerken. So lassen sich Lizenzen bei einem Audit nachweisen und Unterlizenzierung vermeiden."
+    ]
+  },
+  {
+    "title": "Arbeitsplatz für einen blinden Sachbearbeiter im Bürgeramt",
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A2b",
+      "A3a",
+      "A4a",
+      "A7d"
+    ],
+    "text": [
+      "In der Stadtverwaltung wechselt Herr Yilmaz aus der Telefonzentrale in die Sachbearbeitung des Meldewesens. Er ist von Geburt an blind und arbeitet seit Jahren mit einem Screenreader und einer Braillezeile. Das Fachverfahren läuft im Browser, seine Tabellen haben Zeilen mit bis zu 110 Zeichen. Eine Kollegin will schon bestellen: \"Wir nehmen einfach eine Bildschirmlupe und einen großen Monitor, das hatten wir bei einer sehbehinderten Kollegin auch.\"",
+      "Angebote (netto): Braillezeile mit 40 Modulen 5.900 Euro, mit 80 Modulen 11.800 Euro. Kommerzieller Screenreader 1.450 Euro, alternativ der kostenlose Screenreader NVDA (Open Source). Schulung durch den Hilfsmittelanbieter 2 Tage zu je 980 Euro. Headset 120 Euro.",
+      "",
+      "1. Warum ist der Vorschlag der Kollegin falsch? Mit wem ermitteln Sie den Bedarf? Formulieren Sie vier Fragen an Herrn Yilmaz.",
+      "2. Ein Braillemodul zeigt ein Zeichen. Wie viele Abschnitte muss Herr Yilmaz bei einer 110 Zeichen langen Zeile mit 40 und mit 80 Modulen lesen? Berechnen Sie die Kosten für die Varianten \"40 Module mit kommerziellem Screenreader\", \"40 Module mit NVDA\" und \"80 Module mit NVDA\". Wonach entscheiden Sie?",
+      "3. Wie testen Sie, ob Herr Yilmaz mit dem Fachverfahren arbeiten kann? Wen weisen Sie ein, und wie gestalten Sie die Unterlagen für ihn?"
+    ],
+    "solution": [
+      "1. Eine Bildschirmlupe hilft nur Menschen mit Sehrest. Herr Yilmaz arbeitet nicht mit dem Bild, sondern mit Sprachausgabe und Braillezeile. Wer den Bedarf ohne ihn festlegt, plant an ihm vorbei. Beteiligte: Herr Yilmaz selbst als Experte für seine Hilfsmittel, die Schwerbehindertenvertretung (Beteiligungsrecht nach § 178 Abs. 2 SGB IX), die Fachabteilung, der Hersteller des Fachverfahrens und der technische Beratungsdienst des Integrationsamts, der auch über Zuschüsse berät. Schwerbehinderte Beschäftigte haben Anspruch auf eine behinderungsgerechte Ausstattung des Arbeitsplatzes (§ 164 Abs. 4 SGB IX). Fragen: \"Mit welchem Screenreader und welcher Braillezeile arbeiten Sie heute?\" \"Welche Aufgaben im Fachverfahren erledigen Sie am häufigsten?\" \"Lesen Sie lieber über die Braillezeile oder über die Sprachausgabe?\" \"Brauchen Sie die Sprachausgabe über ein Headset, damit Kollegen und Bürger nicht mithören?\"",
+      "",
+      "2. 40 Module: 110 / 40 = 2,75, also 3 Abschnitte. 80 Module: 110 / 80 = 1,375, also 2 Abschnitte. Schulung: 2 x 980 = 1.960 Euro. Variante 1: 5.900 + 1.450 + 1.960 + 120 = 9.430 Euro. Variante 2: 5.900 + 0 + 1.960 + 120 = 7.980 Euro. Variante 3: 11.800 + 0 + 1.960 + 120 = 13.880 Euro. Entscheidend ist nicht der Preis allein: Herr Yilmaz arbeitet am schnellsten mit dem System, das er kennt. Der Screenreader muss mit dem Fachverfahren und dem Browser zuverlässig zusammenarbeiten, das wird vorher getestet. Die längere Zeile spart bei vielen Tabellen Zeit. Der Zuschuss wird vor dem Kauf beim Integrationsamt beantragt.",
+      "",
+      "3. Test gemeinsam mit Herrn Yilmaz an echten Vorgängen, z.B. Anmeldung eines Wohnsitzes: Alles ist ohne Maus nur mit der Tastatur bedienbar, die Tab-Reihenfolge ist logisch, jedes Eingabefeld und jede Schaltfläche wird mit Namen vorgelesen, Fehlermeldungen werden angesagt, Tabellen haben Spaltenüberschriften, erzeugte Bescheide sind lesbare PDF-Dateien und keine Bilder. Mängel gehen mit Beschreibung an den Hersteller. Die Stadt muss nach dem Recht zur Barrierefreiheit (BITV 2.0 bzw. Landesrecht) auf barrierefreie Software achten. Einweisung: Herr Yilmaz braucht keine Einweisung in seinen Screenreader, sondern in das Fachverfahren mit Tastenkürzeln, am besten durch einen erfahrenen Kollegen. Die Kolleginnen und Kollegen erfahren, wie sie Dokumente barrierefrei weitergeben (Text statt eingescanntem Bild). Unterlagen: digitale Textdatei mit echten Überschriften und Listen, Tastenkürzel statt Beschreibungen wie \"oben rechts klicken\", keine Informationen nur in Bildern oder Farben."
+    ]
+  },
+  {
+    "title": "Abnahme und Stundennachweis für drei Arbeitsplätze einer Glaserei",
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A7e",
+      "A7a",
+      "A7f",
+      "A7d"
+    ],
+    "text": [
+      "Ihr Systemhaus richtet in einer Glaserei drei Arbeitsplätze ein: zwei Büro-PCs für Angebote und Buchhaltung und einen Werkstatt-PC mit Zuschnittprogramm, das die Schnittpläne an die Glasschneidemaschine sendet. Es handelt sich um einen Werkvertrag. Im Kostenanschlag stehen 10 Stunden zu 72 Euro und 2 Anfahrten zu 35 Euro, alles netto. Der Stundennachweis des Technikers:",
+      "  Mo 07:30 bis 12:15 Aufbau der drei PCs, Datenübernahme",
+      "  Mo 12:45 bis 15:00 Software und Drucker einrichten",
+      "  Di 08:00 bis 10:30 Werkstatt-PC, Anbindung an die Glasschneidemaschine",
+      "  Di 10:30 bis 11:30 Einweisung Büro und Werkstatt, danach Abnahmetermin",
+      "  Do 09:00 bis 10:15 Beseitigung von Mangel a, neuer Abnahmetermin",
+      "An jedem der drei Tage gab es eine Anfahrt. Beim Abnahmetermin am Dienstag stellt der Glasermeister fest: (a) Die Schnittpläne kommen nicht an der Maschine an. (b) Ein Monitorfuß im Büro hat einen Kratzer. (c) Die zugesagte Kurzanleitung zum Scannen fehlt.",
+      "",
+      "1. Bewerten Sie die drei Mängel. Darf der Glasermeister am Dienstag die Abnahme verweigern? Was steht im Abnahmeprotokoll (acceptance report) vom Donnerstag, und welche Folgen hat die Abnahme?",
+      "2. Werten Sie den Stundennachweis aus: Stunden je Tag und gesamt, abrechenbare Stunden und Anfahrten, Rechnungsbetrag netto, Umsatzsteuer 19 % und brutto. Vergleichen Sie mit dem Kostenanschlag in Euro und Prozent.",
+      "3. Welche Unterlagen übergeben Sie der Glaserei? Warum lassen Sie sich die Einweisung bestätigen?"
+    ],
+    "solution": [
+      "1. (a) ist ein wesentlicher Mangel: Die Hauptaufgabe des Werkstatt-PCs ist nicht erfüllt. (b) und (c) sind unwesentlich, sie behindern die Nutzung kaum. Am Dienstag darf der Glasermeister die Abnahme wegen (a) verweigern, wegen unwesentlicher Mängel allein dürfte er es nicht (§ 640 Abs. 1 BGB). Protokoll vom Donnerstag: Auftrag und Beteiligte, Datum, abgenommene Leistung (drei Arbeitsplätze mit Geräteliste und Seriennummern), Testergebnisse einschließlich erneutem Test der Maschinenanbindung, Erklärung \"Abnahme unter Vorbehalt\" für (b) und (c) mit Frist, z.B. Tausch des Monitorfußes und Nachlieferung der Kurzanleitung bis zu einem Datum, Unterschriften beider Seiten. Ohne Vorbehalt verliert der Kunde für bekannte Mängel Rechte (§ 640 Abs. 3 BGB). Folgen der Abnahme: Die Vergütung wird fällig, die Gefahr geht auf den Kunden über, die Verjährung der Mängelansprüche beginnt, und für später behauptete Mängel muss der Kunde beweisen, dass sie schon bei Abnahme bestanden.",
+      "",
+      "2. Montag: 07:30 bis 12:15 = 4,75 h, 12:45 bis 15:00 = 2,25 h, zusammen 7,0 h (die Pause zählt nicht). Dienstag: 2,5 h + 1,0 h = 3,5 h. Donnerstag: 1,25 h. Gesamt 11,75 h. Die Mängelbeseitigung am Donnerstag ist Nacherfüllung, deren Kosten trägt das Systemhaus (§ 635 Abs. 2 BGB). Abrechenbar: 11,75 - 1,25 = 10,5 h x 72 = 756,00 Euro und 2 Anfahrten x 35 = 70,00 Euro. Netto 826,00 Euro, Umsatzsteuer 19 % = 156,94 Euro, brutto 982,94 Euro. Kostenanschlag: 10 x 72 + 2 x 35 = 790,00 Euro. Abweichung: 826 - 790 = 36 Euro, 36 / 790 = ca. 4,6 %. Das ist keine wesentliche Überschreitung, sollte aber auf der Rechnung kurz begründet werden (Einweisung zusätzlich zur Einrichtung).",
+      "",
+      "3. Abnahmeprotokoll, Stundennachweis mit Unterschrift des Kunden, Geräteliste mit Seriennummern und Garantiedaten, Netzwerk- und Konfigurationsdokumentation (IP-Adressen, Freigaben, Anbindung der Maschine), Lizenznachweise, Zugangsdaten für Administratoren getrennt und sicher übergeben, Kurzanleitungen für die Beschäftigten, Ansprechpartner und Supportweg. Die Einweisung wird mit Datum, Inhalten, Teilnehmenden und Unterschrift bestätigt. So ist nachweisbar, dass die Leistung erbracht wurde. Bei späteren Bedienfehlern lässt sich klären, ob sie Teil der Einweisung waren, und der Kunde weiß, welche Unterlagen er bekommen hat."
+    ]
+  },
+  {
+    "title": "Zugang und Arbeitsplatz für eine neue Kollegin einer Wohnungsbaugenossenschaft",
+    "cat": "sicherheit",
+    "thema": "zugriff",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A6a",
+      "A6b",
+      "A5a",
+      "A7f"
+    ],
+    "text": [
+      "Bei einer Wohnungsbaugenossenschaft beginnt Frau Petersen in der Vermietung. Sie vergibt Wohnungen, erstellt Mietverträge, prüft, ob Bewerber Mitglied der Genossenschaft sind, und nimmt telefonische Schadensmeldungen von Mietern auf, aus denen sie Reparaturaufträge anlegt. Auf dem Dateiserver gibt es die Ordner Vermietung (Mietverträge, Selbstauskünfte von Bewerbern), Mitglieder (Mitgliederliste, Genossenschaftsanteile), Technik\\Aufträge (Reparaturaufträge), Buchhaltung, Personal und Vorlagen.",
+      "Für die Einrichtung ihres Arbeitsplatzes hatten Sie geplant (Soll) und gebraucht (Ist), in Minuten:",
+      "  Hardware aufbauen 30 / 25, Image und Updates 60 / 95, Konto und Gruppen 20 / 20, Software und Drucker 40 / 55, Funktionstest 20 / 20, Einweisung 30 / 30",
+      "Image und Updates dauerten länger, weil das Image ein halbes Jahr alt war. Bei der Software fehlte eine Lizenz für das Vermietungsprogramm, die erst beim Hersteller freigeschaltet werden musste. Die interne Stunde wird mit 60 Euro verrechnet.",
+      "",
+      "1. Legen Sie für jeden Ordner fest, welche Rechte Frau Petersen bekommt (kein Zugriff, Lesen, Ändern), und begründen Sie. Warum vergeben Sie die Rechte über Gruppen und nicht direkt an ihr Benutzerkonto?",
+      "2. Erstellen Sie eine Checkliste mit acht Punkten für Konto und Arbeitsplatz, die IT-Sicherheit und Datenschutz berücksichtigt.",
+      "3. Führen Sie den Soll-Ist-Vergleich durch: Abweichung je Position, gesamt in Minuten und Prozent, Kosten Soll und Ist. Welche Verbesserungen leiten Sie für die nächste Einrichtung ab?"
+    ],
+    "solution": [
+      "1. Vermietung: Ändern, das ist ihre Kernaufgabe. Mitglieder: Lesen, sie muss die Mitgliedschaft prüfen, aber keine Anteile ändern. Technik\\Aufträge: Ändern, sie legt Reparaturaufträge an. Der übrige Ordner Technik bleibt ohne Zugriff. Vorlagen: Lesen, damit Vorlagen nicht versehentlich verändert werden. Buchhaltung und Personal: kein Zugriff, sie braucht diese Daten nicht. Das ist das Prinzip der geringsten Rechte (need-to-know). Es setzt die Datenminimierung und Vertraulichkeit nach DSGVO um, denn Selbstauskünfte und Personaldaten sind besonders schutzwürdig. Gruppen: Rechte hängen an der Rolle, z.B. \"GG_Vermietung\". Frau Petersen wird nur in die Gruppe aufgenommen. Neue oder ausscheidende Beschäftigte lassen sich schnell und einheitlich berechtigen oder entfernen, und die Berechtigungen bleiben übersichtlich und prüfbar.",
+      "",
+      "2. (1) Konto erst nach schriftlichem Auftrag der Personalabteilung anlegen, Namensschema einhalten. (2) Startpasswort sicher übergeben, Wechsel bei der ersten Anmeldung erzwingen. (3) Mehrfaktor-Anmeldung für E-Mail und Fernzugriff einrichten. (4) Standardbenutzer ohne lokale Administratorrechte. (5) Gruppen nach Rolle zuweisen und Zugriffe testen, auch was nicht gehen darf. (6) Bildschirmsperre nach 5 Minuten, Updates und Virenschutz aktiv, Laufwerk verschlüsselt. (7) Drucken vertraulicher Unterlagen nur mit Freigabe am Drucker oder an einem Drucker im eigenen Büro. (8) Verpflichtung auf Vertraulichkeit und Kenntnisnahme der IT-Richtlinie unterschreiben lassen, alles im Einrichtungsprotokoll dokumentieren.",
+      "",
+      "3. Abweichungen (Ist - Soll): Hardware -5, Image +35, Konto 0, Software +15, Test 0, Einweisung 0. Soll gesamt 30 + 60 + 20 + 40 + 20 + 30 = 200 Minuten, Ist 25 + 95 + 20 + 55 + 20 + 30 = 245 Minuten. Abweichung +45 Minuten, 45 / 200 = 22,5 %. Kosten Soll: 200 / 60 x 60 = 200 Euro, Ist: 245 / 60 x 60 = 245 Euro, also 45 Euro mehr. Verbesserungen: Das Image wird jeden Monat aktualisiert oder Updates werden vor dem Termin eingespielt. Lizenzen werden bei der Bestellung der Hardware geprüft und vor dem Einrichtungstermin freigeschaltet. Die Checkliste bekommt dafür einen eigenen Punkt \"Lizenzen vorhanden\". Die Ursachen werden im Protokoll festgehalten, damit die nächste Planung genauer wird."
+    ]
+  },
+  {
+    "title": "Robustes Notebook für eine Revierförsterei auswählen",
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A3a",
+      "A3b",
+      "A2e",
+      "A1e"
+    ],
+    "text": [
+      "Ein Revierförster erfasst im Wald Holzpolter, arbeitet mit Karten in einer GIS-Software unter Windows und fotografiert Schäden. Er ist bei jedem Wetter unterwegs, oft 10 Stunden am Tag, und lädt im Dienstwagen. Muss-Kriterien: Windows 11 Pro, Schutzart mindestens IP54, Displayhelligkeit mindestens 1.000 cd/m², LTE eingebaut, Akkulaufzeit mindestens 8 Stunden.",
+      "Auszug aus den englischen Datenblättern (alle mit Windows 11 Pro und LTE):",
+      "  N1 rugged notebook 14\": IP65, MIL-STD-810H tested, sunlight-readable 1,200 nits, 2.9 kg, battery up to 14 h, 3.450 Euro",
+      "  N2 semi-rugged notebook 14\": IP54, 1,000 nits, 2.1 kg, battery up to 11 h, 2.380 Euro",
+      "  N3 business notebook 14\": no IP rating, 400 nits, 1.3 kg, battery up to 12 h, 1.290 Euro",
+      "  N4 rugged tablet 12\" with keyboard: IP65, MIL-STD-810H tested, 1,000 nits, glove mode touchscreen, hot-swappable battery, 1.4 kg, battery up to 9 h, 2.190 Euro",
+      "Nutzwertanalyse (Punkte 1 bis 10), Kriterium (Gewicht): N1 / N2 / N4",
+      "  Robustheit (30 %): 10 / 7 / 9",
+      "  Akkulaufzeit (25 %): 9 / 7 / 5",
+      "  Gewicht (20 %): 4 / 6 / 9",
+      "  Preis (25 %): 3 / 6 / 7",
+      "",
+      "1. Erklären Sie die englischen Angaben \"sunlight-readable 1,200 nits\", \"MIL-STD-810H tested\", \"glove mode touchscreen\" und \"hot-swappable battery\". Prüfen Sie die Muss-Kriterien. Warum ist N3 nicht in der Nutzwertanalyse?",
+      "2. Berechnen Sie die Nutzwerte und den Preis je Nutzwertpunkt. Welches Gerät liegt vorn?",
+      "3. Bewerten Sie das Ergebnis kritisch: Welche Angaben aus dem Datenblatt sind noch nicht berücksichtigt? Was schlagen Sie vor der Bestellung vor?"
+    ],
+    "solution": [
+      "1. \"Sunlight-readable 1,200 nits\": Das Display ist im Sonnenlicht ablesbar, Helligkeit 1.200 Nits, 1 Nit = 1 cd/m². \"MIL-STD-810H tested\": Das Gerät wurde nach Prüfverfahren einer US-Militärnorm getestet, z.B. auf Stürze, Vibration und Temperatur. Welche Tests bestanden wurden, muss man im Datenblatt nachlesen, es ist kein einheitliches Zertifikat. \"Glove mode touchscreen\": Der Touchscreen lässt sich mit Handschuhen bedienen. \"Hot-swappable battery\": Der Akku lässt sich im laufenden Betrieb tauschen. Muss-Kriterien: N1, N2 und N4 erfüllen alle (IP54 oder besser, mindestens 1.000 Nits, mindestens 8 Stunden Akku). N3 hat keine IP-Schutzart und nur 400 Nits. Ein Muss-Kriterium wirkt als K.-o.-Kriterium: Wer es nicht erfüllt, scheidet vor der Bewertung aus, egal wie günstig er ist.",
+      "",
+      "2. N1: 10 x 0,30 + 9 x 0,25 + 4 x 0,20 + 3 x 0,25 = 3,00 + 2,25 + 0,80 + 0,75 = 6,80. N2: 2,10 + 1,75 + 1,20 + 1,50 = 6,55. N4: 2,70 + 1,25 + 1,80 + 1,75 = 7,50. Preis je Nutzwertpunkt: N1 3.450 / 6,80 = ca. 507,35 Euro, N2 2.380 / 6,55 = ca. 363,36 Euro, N4 2.190 / 7,50 = 292,00 Euro. N4 liegt bei Nutzwert und Preis-Leistung vorn.",
+      "",
+      "3. Nicht berücksichtigt: Die Akkulaufzeit von N4 liegt mit bis zu 9 Stunden unter dem 10-Stunden-Tag, Herstellerangaben sind außerdem Bestwerte. Der tauschbare Akku löst das, kostet aber einen zweiten Akku extra. Das 12-Zoll-Display ist kleiner, was bei Karten im GIS stören kann. Die Bedienung mit Handschuhen floss in keine Punktzahl ein. Vorschlag: Teststellung von N4 und N1 für zwei Wochen im Revier, Laufzeit bei Kälte und Ablesbarkeit in der Sonne mit der echten GIS-Software prüfen. Zubehör mitplanen (Ersatzakku, Fahrzeughalterung, Ladegerät für 12 V). Garantie und Vor-Ort-Service vergleichen. Erst danach bestellen."
+    ]
+  },
+  {
+    "title": "Terminbuch und Kasse für das zweite Studio einer Kosmetikerin",
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A2b",
+      "A2c",
+      "A3b",
+      "A6a"
+    ],
+    "text": [
+      "Frau Aydin betreibt ein Kosmetikstudio und eröffnet ein zweites Studio. Bisher arbeitet sie mit einem Terminbuch aus Papier, einer offenen Ladenkasse und Karteikarten, auf denen Hauttyp und Allergien der Kundinnen stehen. Im ersten Gespräch sagt sie: \"Ich will etwas Einfaches für Termine und Kasse, das nicht viel kostet und einfach läuft.\"",
+      "Für ein Kassensystem (Tablet, Bondrucker, Kassenlade, zertifizierte TSE, Software für das erste Jahr) liegen zwei Angebote vor (netto):",
+      "  Fachhändler: Listenpreis 1.290 Euro, 10 % Rabatt, 3 % Skonto bei Zahlung innerhalb von 14 Tagen, Versand 19,90 Euro. Einrichtung vor Ort ist enthalten.",
+      "  Onlineshop: 1.150 Euro, kein Rabatt, kein Skonto, versandkostenfrei. Die Einrichtung übernimmt Ihr Systemhaus in 2 Stunden zu 65 Euro.",
+      "Versand wird nicht rabattiert oder skontiert.",
+      "",
+      "1. Wie führen Sie das Bedarfsgespräch? Nennen Sie drei Fragearten mit je einem Beispiel für Frau Aydin und erklären Sie aktives Zuhören. Wer schreibt das Lastenheft, wer das Pflichtenheft, und was steht jeweils darin?",
+      "2. Berechnen Sie für beide Angebote den Bezugspreis einschließlich Einrichtung. Wie viel spart Frau Aydin beim günstigeren Angebot?",
+      "3. Welche gesetzlichen Pflichten gelten für die elektronische Kasse? Was müssen Sie beim digitalen Terminbuch mit Allergien der Kundinnen beachten?"
+    ],
+    "solution": [
+      "1. Vorbereitung: Ziel klären, Notizen machen, ruhige Umgebung, Fachbegriffe erklären statt voraussetzen. Offene Frage (W-Frage) für Informationen: \"Wie läuft heute ein Termin von der Buchung bis zur Bezahlung ab?\" Geschlossene Frage (Ja/Nein) zur Bestätigung: \"Sollen Kundinnen auch online Termine buchen können?\" Alternativfrage zur Entscheidung: \"Möchten Sie beide Studios in einem gemeinsamen Kalender sehen oder getrennt?\" Suggestivfragen wie \"Sie wollen doch sicher auch Kartenzahlung?\" vermeiden. Aktives Zuhören: zugewandt zuhören, nicht unterbrechen, mit eigenen Worten zusammenfassen (\"Wenn ich Sie richtig verstehe, ist Ihnen wichtig, dass ...\"), nachfragen. So werden Wünsche wie \"einfach\" und \"nicht viel kosten\" konkret, z.B. Bedienung ohne Schulung und Budgetgrenze. Lastenheft: schreibt die Auftraggeberin, also Frau Aydin, gegebenenfalls mit Hilfe. Es beschreibt, was sie braucht und wofür. Pflichtenheft: schreibt der Auftragnehmer, also Ihr Systemhaus. Es beschreibt, wie und womit die Anforderungen umgesetzt werden.",
+      "",
+      "2. Fachhändler: 1.290,00 - 10 % (129,00) = 1.161,00 Euro. - 3 % Skonto (34,83) = 1.126,17 Euro. + Versand 19,90 = 1.146,07 Euro, Einrichtung inklusive. Onlineshop: 1.150,00 Euro + Einrichtung 2 x 65 = 130,00 Euro = 1.280,00 Euro. Der Fachhändler ist um 1.280,00 - 1.146,07 = 133,93 Euro günstiger, sofern Frau Aydin innerhalb von 14 Tagen zahlt. Ohne Skonto: 1.161,00 + 19,90 = 1.180,90 Euro, immer noch günstiger.",
+      "",
+      "3. Kasse: Elektronische Kassen müssen mit einer zertifizierten technischen Sicherheitseinrichtung (TSE) geschützt sein (§ 146a AO). Jeder Kundin muss ein Beleg angeboten werden (Belegausgabepflicht). Die Kasse muss dem Finanzamt über ELSTER gemeldet werden. Die Aufzeichnungen müssen unveränderbar gespeichert und für die gesetzlichen Fristen aufbewahrt werden. Terminbuch: Allergien und Hauterkrankungen sind Gesundheitsdaten, also besonders geschützte Daten nach Art. 9 DSGVO. Erfassen nur mit ausdrücklicher Einwilligung der Kundin und nur, was für die Behandlung nötig ist. Zugriff nur für Mitarbeiterinnen mit Passwort, Tablet mit PIN und Verschlüsselung. Bei einem Cloud-Terminbuch einen Vertrag zur Auftragsverarbeitung mit dem Anbieter schließen und auf Server in der EU achten. Löschfristen festlegen und Kundinnen informieren."
+    ]
+  },
+  {
+    "title": "Alten Büro-PC eines Malerbetriebs ersetzen und Daten übernehmen",
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A5a",
+      "A1f",
+      "A6a",
+      "A7a"
+    ],
+    "text": [
+      "Ein Malermeister nutzt im Büro einen 8 Jahre alten PC mit Windows 10. Darauf laufen eine Kalkulationssoftware mit lokaler Datenbank und ein E-Mail-Programm, das die Mails per POP3 abholt und in einer lokalen Postfachdatei speichert. Der Multifunktionsdrucker legt Scans in einem Ordner auf dem PC ab. Der neue Mini-PC mit Windows 11 Pro kostet 640 Euro netto.",
+      "Leistungsaufnahme im Betrieb: alter PC 85 W, neuer Mini-PC 18 W. Betrieb 9 Stunden an 220 Tagen im Jahr, Strompreis vereinfacht 0,32 Euro je kWh.",
+      "",
+      "1. Warum muss der PC ersetzt werden? Berechnen Sie die jährliche Stromersparnis in kWh und Euro. Nach wie vielen Jahren hätte sich der neue PC allein durch die Stromersparnis bezahlt gemacht? Was folgt daraus?",
+      "2. Planen Sie die Datenübernahme in sinnvoller Reihenfolge. Worauf achten Sie bei Kalkulationssoftware, E-Mail und Scanner besonders?",
+      "3. Formulieren Sie fünf Testfälle für die Übergabe. Was geschieht mit dem alten PC, und was dokumentieren Sie?"
+    ],
+    "solution": [
+      "1. Für Windows 10 endete der kostenlose Support am 14.10.2025. Ohne Sicherheitsupdates ist ein PC mit Kunden- und Rechnungsdaten nicht mehr ausreichend geschützt, das widerspricht Art. 32 DSGVO. Kostenpflichtige erweiterte Updates (ESU) wären nur eine Übergangslösung. Strom: alt 85 W x 9 h x 220 = 168.300 Wh = 168,3 kWh. Neu 18 W x 9 h x 220 = 35.640 Wh = 35,64 kWh. Ersparnis 168,3 - 35,64 = 132,66 kWh x 0,32 = ca. 42,45 Euro im Jahr. Amortisation allein durch Strom: 640 / 42,45 = ca. 15,1 Jahre. Der Austausch lohnt sich also nicht wegen des Stroms, sondern wegen der Sicherheit. Die Stromersparnis ist ein zusätzlicher Vorteil und schont die Umwelt.",
+      "",
+      "2. (1) Vollsicherung des alten PCs und Probe, ob sich die Sicherung lesen lässt. (2) Bestandsaufnahme: Programme, Lizenzschlüssel, Drucker- und Scannereinstellungen, E-Mail-Kontodaten. (3) Neuen PC grundkonfigurieren und aktualisieren. (4) Kalkulationssoftware: nach Anleitung des Herstellers installieren, Datenbank mit der Exportfunktion sichern und am neuen PC einlesen, Lizenz am alten PC deaktivieren und am neuen aktivieren. Die Datenbankdatei nicht einfach während des Betriebs kopieren. (5) E-Mail: Bei POP3 liegen die alten Mails nur auf dem PC. Die Postfachdatei muss übernommen und im neuen Programm eingebunden werden. Besser auf IMAP umstellen, dann liegen die Mails auf dem Server. (6) Dokumente und Scanordner kopieren, Scanziel am Drucker auf den neuen PC oder besser ein NAS ändern. (7) Gespeicherte Browser-Kennwörter in einen Passwortmanager übernehmen. (8) Alten PC noch einige Tage ausgeschaltet aufbewahren, falls etwas fehlt.",
+      "",
+      "3. T1 Kalkulationssoftware startet, ein altes Angebot lässt sich öffnen, die Summen stimmen mit dem Ausdruck überein. T2 Neues Angebot anlegen und als PDF speichern. T3 E-Mails der letzten Jahre sind vorhanden, eine Testmail wird gesendet und empfangen. T4 Scan am Drucker kommt im neuen Zielordner an. T5 Datensicherung des neuen PCs läuft und lässt sich zurückspielen. Alter PC: Datenträger nach Freigabe durch den Kunden sicher löschen oder vernichten lassen (z.B. nach DIN 66399), mit Löschprotokoll. Das Gerät wird über einen zertifizierten Entsorger oder die Rücknahme nach Elektro- und Elektronikgerätegesetz entsorgt. Dokumentation: Inventarliste (neuer PC mit Seriennummer, alter PC ausgebucht), übernommene Daten und Lizenzen, Testprotokoll, Löschnachweis, Übergabeprotokoll mit Unterschrift des Malermeisters."
+    ]
+  },
+  {
+    "title": "Digitalisierungsplatz für die Ortschroniken eines Heimatvereins",
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A7b",
+      "A3a",
+      "A7d",
+      "A7a"
+    ],
+    "text": [
+      "Ein Heimatverein lässt im Vereinshaus einen Arbeitsplatz einrichten, an dem drei ehrenamtliche Helfer 8.000 Seiten alter Ortschroniken und Gemeindeprotokolle (bis Format A3, 297 x 420 mm) scannen. Bestellt wurden ein PC mit 1-TB-SSD, zwei 27-Zoll-Monitore und ein A3-Flachbettscanner. Bei der Lieferung bringt der Fahrer zwei 24-Zoll-Monitore, und der Karton des Scanners ist an einer Ecke eingedrückt. Der Fahrer wartet auf Ihre Unterschrift.",
+      "Vorgabe des Vereins nach Empfehlung des Kreisarchivs: Archivkopie als unkomprimiertes TIFF mit 400 dpi und 24 Bit Farbtiefe, dazu eine JPEG-Nutzungskopie mit etwa 3 MB je Seite. Je Seite dauert der Scan 12 Sekunden, Auflegen, Ausrichten und Kontrolle weitere 30 Sekunden. Jeder Helfer kommt an zwei Vormittagen pro Woche für je 3 Stunden.",
+      "",
+      "1. Wie gehen Sie beim beschädigten Karton und bei den falschen Monitoren vor? Welche Rechte hat der Verein?",
+      "2. Berechnen Sie den Speicherbedarf einer A3-Seite (1 Zoll = 25,4 mm, Pixel abrunden) und für alle 8.000 Seiten einschließlich Nutzungskopien. Reicht die SSD als Speicherort? Wie viele Arbeitsstunden und wie viele Wochen braucht das Projekt?",
+      "3. Planen Sie die Einweisung der Helfer und nennen Sie fünf Inhalte der Kurzanleitung \"Seite scannen und ablegen\", darunter ein Dateinamensschema."
+    ],
+    "solution": [
+      "1. Scanner: Den Schaden vor der Unterschrift auf dem Lieferschein bzw. Frachtbrief vermerken lassen (\"Karton an einer Ecke eingedrückt, Annahme unter Vorbehalt\") und fotografieren. Danach sofort auspacken und testen. Ist das Gerät beschädigt, den Schaden unverzüglich beim Händler melden. Monitore: Lieferschein mit der Bestellung vergleichen. Eine andere als die bestellte Ware ist ein Sachmangel (§ 434 Abs. 5 BGB). Die Monitore annehmen oder zurückweisen und den Mangel unverzüglich schriftlich rügen. Der Verein kann Nacherfüllung verlangen, hier die Lieferung der 27-Zoll-Monitore (§ 439 BGB). Erst wenn diese scheitert, kommen Rücktritt, Minderung oder Schadensersatz in Frage. Alles wird im Wareneingangsprotokoll dokumentiert, und der Termin für die Einrichtung wird mit dem Verein neu abgestimmt.",
+      "",
+      "2. Pixel: 297 / 25,4 = 11,693 Zoll x 400 = 4.677 Pixel. 420 / 25,4 = 16,535 Zoll x 400 = 6.614 Pixel. 4.677 x 6.614 = 30.933.678 Pixel x 3 Byte (24 Bit) = 92.801.034 Byte = ca. 92,8 MB je Seite. 8.000 Seiten: ca. 742,4 GB. Nutzungskopien: 8.000 x 3 MB = 24 GB. Gesamt ca. 766,4 GB. Die SSD hätte gerade genug Platz, ist aber kein geeigneter Speicherort: Es gäbe nur eine einzige Kopie, ein Ausfall vernichtet die Arbeit von Wochen. Die Scans werden täglich auf ein NAS des Vereins übertragen und von dort nach der 3-2-1-Regel gesichert. Die SSD dient nur als Zwischenablage. Zeit: 12 + 30 = 42 Sekunden je Seite x 8.000 = 336.000 s = ca. 93,3 Stunden. Kapazität: 3 Helfer x 2 Vormittage x 3 h = 18 Stunden pro Woche. 93,3 / 18 = ca. 5,2, also 6 Wochen.",
+      "",
+      "3. Einweisung: Die Helfer kommen an unterschiedlichen Tagen. Deshalb gibt es eine gemeinsame Einweisung von 90 Minuten am ersten Tag und eine kurze Begleitung beim ersten eigenen Einsatz. Methode: vormachen, nachmachen, mit Probeseiten üben. Fragen gehen an einen festen Ansprechpartner im Verein. Kurzanleitung: (1) Anmelden mit dem eigenen Konto, Bildschirm beim Verlassen sperren. (2) Seite vorsichtig auflegen, Deckel schließen, ohne Druck auf den Buchrücken. (3) Scanprofil \"Archiv 400 dpi TIFF\" wählen, Vorschau auf Schärfe und Ausschnitt prüfen. (4) Dateiname nach Schema Bestand_Band_Seite mit führenden Nullen, z.B. OC_1932_B04_S0087.tif, damit die Sortierung stimmt. (5) Am Ende des Tages Liste der gescannten Seiten ausfüllen und prüfen, dass die Übertragung auf den Server gelaufen ist. Da die Protokolle personenbezogene Angaben enthalten können, werden die Helfer schriftlich zur Verschwiegenheit verpflichtet."
+    ]
+  },
+  {
+    "title": "PC-Paket für die Geschäftsstelle eines Turnvereins vergleichen",
+    "cat": "wirtschaft",
+    "thema": "kalkulation",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A3b",
+      "A1h",
+      "A2a"
+    ],
+    "text": [
+      "Ein Turnverein richtet in seiner Geschäftsstelle einen Arbeitsplatz für die Mitgliederverwaltung ein: PC, Monitor und Laserdrucker. Der Verein ist im ideellen Bereich tätig und kann vereinfacht angenommen keine Vorsteuer abziehen. Zwei Angebote liegen vor (netto, 19 % Umsatzsteuer kommen hinzu):",
+      "  Fachhändler im Ort: Listenpreis 1.640 Euro, 12 % Vereinsrabatt, 2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage. Lieferung und Aufstellung 60 Euro. Vor-Ort-Service im ersten Jahr.",
+      "  Onlineversand: Listenpreis 1.480 Euro, 5 % Rabatt, kein Skonto, Versand 14,90 Euro. Aufstellen und Einrichten müsste ein Ehrenamtlicher übernehmen, geschätzt 3 Stunden. Garantie per Einsenden.",
+      "Lieferung und Versand werden nicht rabattiert oder skontiert. Der Kassenwart meint: \"Skonto lohnt sich für uns nicht, wenn wir dafür das Konto überziehen müssen. Der Dispozins beträgt 12 %.\"",
+      "",
+      "1. Berechnen Sie für beide Angebote den Bezugspreis netto und brutto. Warum ist für den Verein der Bruttopreis entscheidend?",
+      "2. Rechnen Sie den Skonto in einen Jahreszins um (Faustformel und genauer). Hat der Kassenwart recht? Vergleichen Sie den Skonto in Euro (brutto) mit den Dispozinsen für 20 Tage auf den Bruttopreis des Fachhändlers.",
+      "3. Welche qualitativen Gründe sprechen für welches Angebot? Formulieren Sie eine kurze Empfehlung für den Vorstand. Wie prüfen Sie, ob die Preise marktüblich sind?"
+    ],
+    "solution": [
+      "1. Fachhändler: 1.640,00 - 12 % (196,80) = 1.443,20 Euro. - 2 % Skonto (28,86) = 1.414,34 Euro. + 60,00 = 1.474,34 Euro netto. Brutto: 1.474,34 x 1,19 = 1.754,46 Euro. Onlineversand: 1.480,00 - 5 % (74,00) = 1.406,00 Euro. + 14,90 = 1.420,90 Euro netto. Brutto: 1.420,90 x 1,19 = 1.690,87 Euro. Der Onlineversand ist netto um 53,44 Euro und brutto um 63,59 Euro günstiger. Ein Unternehmen mit Vorsteuerabzug bekommt die Umsatzsteuer vom Finanzamt zurück, für es zählt der Nettopreis. Der Verein kann das nicht, für ihn ist die Umsatzsteuer echter Aufwand.",
+      "",
+      "2. Der Skonto belohnt die Zahlung 20 Tage früher (30 - 10). Faustformel: 2 % x 360 / 20 = 36 % pro Jahr. Genauer, da nur 98 % gezahlt werden: 2 / 98 x 360 / 20 = ca. 36,7 %. Das liegt weit über 12 % Dispozins, der Kassenwart hat nicht recht. Skonto brutto: 28,86 x 1,19 = ca. 34,34 Euro. Dispozinsen: 1.754,46 x 12 % x 20 / 360 = ca. 11,70 Euro. Selbst mit Überziehung spart der Verein rund 22,64 Euro. Hat er genug Geld auf dem Konto, ist der Vorteil noch größer.",
+      "",
+      "3. Fachhändler: Aufstellung und Einrichtung inklusive, Vor-Ort-Service, fester Ansprechpartner, kurze Wege, Unterstützung eines örtlichen Betriebs, der den Verein vielleicht sponsert. Onlineversand: günstiger, aber Einrichtung durch Ehrenamtliche (3 Stunden Freizeit, Fehlerrisiko bei Datenschutz-Einstellungen für Mitgliederdaten), Garantie nur per Einsenden, dann ist die Geschäftsstelle ohne PC. Empfehlung: \"Wir empfehlen das Angebot des Fachhändlers. Es kostet brutto 63,59 Euro mehr, enthält aber Aufstellung und Vor-Ort-Service und entlastet die Ehrenamtlichen. Wir zahlen innerhalb von 10 Tagen und nutzen den Skonto.\" Marktüblichkeit: Preise der einzelnen Geräte über Preisvergleichsportale und Herstellerseiten prüfen, Ausstattung genau vergleichen (gleiche Modelle, gleiche Garantie), gegebenenfalls ein drittes Angebot einholen und Vereinskonditionen anderer Händler erfragen."
+    ]
+  },
+  {
+    "title": "IT-Arbeitsplatz für den Bauleiter im Baucontainer einrichten",
+    "cat": "systeme",
+    "thema": "hardware",
+    "theme": "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe",
+    "rahmenplan": [
+      "A2b",
+      "A6b",
+      "A7e",
+      "A3a"
+    ],
+    "text": [
+      "Ein Bauunternehmen baut 14 Monate lang eine Schule. Bauleiter Herr Krüger bekommt im Baucontainer einen Arbeitsplatz. Aus dem Gespräch: Er sieht Pläne im Format A1 am Bildschirm an, führt das Bautagebuch in einer App, macht etwa 30 Fotos am Tag (je 6 MB) und hat 6 Stunden Videokonferenzen pro Woche. Pläne werden mit etwa 2 GB im Monat heruntergeladen, Updates brauchen etwa 8 GB im Monat. Der Container ist nachts unbewacht, auf anderen Baustellen wurde schon eingebrochen. Im Winter wird er nachts nicht beheizt, und es ist staubig. Internet gibt es nur über einen Mobilfunkrouter. Tarife: 40 GB für 29 Euro oder 60 GB für 35 Euro im Monat.",
+      "Vereinfacht angenommen: 4 Wochen und 22 Arbeitstage im Monat, Videokonferenz 1 GB je Stunde, 1 GB = 1.000 MB.",
+      "",
+      "1. Formulieren Sie sechs Anforderungen im Lastenheft-Stil (Muss und Kann). Begründen Sie, warum Sie ein Notebook mit Dockingstation statt eines Desktop-PCs vorschlagen.",
+      "2. Berechnen Sie das monatliche Datenvolumen und wählen Sie einen Tarif (Reserve in GB und Prozent, Kosten über die Bauzeit). Welche Sicherheitsmaßnahmen richten Sie an Notebook und Router ein?",
+      "3. Bei der Übergabe zeigt der Router im Container nur einen von fünf Signalbalken, eine Testkonferenz bricht ab. Woran liegt das wahrscheinlich, und was schlagen Sie vor? Was halten Sie im Übergabeprotokoll fest?"
+    ],
+    "solution": [
+      "1. Muss: M1 Pläne im Format A1 sind lesbar, dazu ein Monitor mit mindestens 32 Zoll und hoher Auflösung. M2 Videokonferenzen mit Headset und Kamera. M3 Kein Datenverlust bei Diebstahl: Gerät verschlüsselt, Daten zentral gespeichert. M4 Betrieb bei Staub und Kälte ohne Ausfall. M5 Internet über Mobilfunk mit ausreichendem Datenvolumen. Kann: K1 A3-Drucker für Planausschnitte. K2 Robustes Notebook für Fotos direkt auf der Baustelle. Notebook mit Dock: Herr Krüger nimmt das Gerät abends mit, im Container bleibt nichts Wertvolles mit Daten zurück. Er kann auch im Büro und unterwegs arbeiten. Am Dock hat er großen Monitor, Tastatur und Maus. Ein kalter Container ist für ein Notebook, das morgens warm hereinkommt, außerdem weniger kritisch als für einen Desktop, der auskühlt und an dem sich beim Aufheizen Kondenswasser bilden kann.",
+      "",
+      "2. Video: 6 h x 4 Wochen x 1 GB = 24 GB. Fotos: 30 x 6 MB x 22 = 3.960 MB = 3,96 GB. Pläne 2 GB, Updates 8 GB. Summe: 24 + 3,96 + 2 + 8 = 37,96 GB. 40 GB: Reserve 2,04 GB, nur ca. 5,1 %, ein Monat mit mehr Konferenzen sprengt den Tarif. 60 GB: Reserve 22,04 GB, ca. 36,7 %. Kosten über 14 Monate: 40 GB 14 x 29 = 406 Euro, 60 GB 14 x 35 = 490 Euro, Mehrkosten 84 Euro. Empfehlung: 60 GB. Sicherheit Notebook: BitLocker mit PIN, Bildschirmsperre, Standardbenutzer, Updates, Virenschutz, Daten im Firmennetz oder in der Firmen-Cloud statt nur lokal, VPN in die Firma. Diebstahlschutz: Notebook nachts mitnehmen, tagsüber Kabelschloss. Router: voreingestelltes Admin-Passwort ändern, Firmware aktualisieren, WLAN mit WPA3 oder WPA2 und starkem Schlüssel, Fernverwaltung von außen aus, Gäste-WLAN für Subunternehmer getrennt oder gar nicht.",
+      "",
+      "3. Der Stahlcontainer schirmt Funkwellen stark ab, ähnlich einem Faradayschen Käfig. Ein Router im Inneren hat deshalb schlechten Empfang. Vorschlag: Außenantenne am Containerdach mit kurzem Kabel anschließen oder einen Außenrouter montieren, danach Signal und Testkonferenz erneut prüfen. Übergabeprotokoll: Datum, Beteiligte, übergebene Geräte mit Seriennummern, durchgeführte Tests und Ergebnisse, festgestellter Mangel \"Mobilfunkempfang im Container zu schwach, Videokonferenz bricht ab\" mit vereinbarter Abhilfe (Außenantenne) und Frist, Hinweis, dass die Abnahme dieses Punkts nach dem erneuten Test erfolgt, eingewiesene Personen, Unterschriften. Zugangsdaten für Router und Notebook werden getrennt und sicher übergeben."
+    ]
   }
 ]

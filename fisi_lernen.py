@@ -348,20 +348,30 @@ PRACTICE_NONE = "Zu diesem Thema gibt es keine Übungsfragen."
 PRACTICE_NEXT_TITLE = "Weiter üben"
 
 EXAM_THEME_TOPICS = {
-    # AP2 (Szenario-Themen)
-    "Subnetting & Routing": ["ipv4", "ipv6", "routing"],
-    "IT-Sicherheit": ["isms", "krypto", "zugriff", "angriffe", "netzsicherheit", "haertung"],
-    "Storage & RAID": ["storage", "notfall"],
-    "Netzwerkdesign": ["switching", "wlan", "verkabelung", "wan_vpn", "grundlagen"],
-    "Wirtschaft & Beratung": ["kalkulation", "beschaffung", "beratung", "service"],
+    # AP2 (Szenario-Themen); ab 0.55 um die Lernthemen ergaenzt, aus denen die
+    # Szenarien des Pruefungsthemas tatsaechlich stammen (Zuordnung_0.55)
+    "Subnetting & Routing": ["ipv4", "ipv6", "routing", "wan_vpn"],
+    "IT-Sicherheit": ["isms", "krypto", "zugriff", "angriffe", "netzsicherheit", "haertung",
+                      "notfall", "datenschutz"],
+    "Storage & RAID": ["storage", "notfall", "db_betrieb"],
+    "Netzwerkdesign": ["switching", "wlan", "verkabelung", "wan_vpn", "grundlagen",
+                       "dienste", "routing"],
+    "Wirtschaft & Beratung": ["kalkulation", "beschaffung", "beratung", "service", "recht"],
     "Virtualisierung": ["virtualisierung"],
-    "Projektmanagement": ["projekt"],
+    "Projektmanagement": ["projekt", "service"],
+    "Systemadministration": ["windows", "linux", "zugriff", "haertung", "it_betrieb"],
+    "Automatisierung & Skripte": ["programmierung", "windows", "linux"],
     # AP1
-    "Rechnertechnik & Zahlensysteme": ["hardware", "zahlen"],
-    "Rechnernetze Grundlagen": ["grundlagen", "ipv4", "dienste", "verkabelung"],
-    "Datenschutz & Sicherheit": ["datenschutz", "zugriff", "angriffe"],
-    "Projektplanung": ["projekt"],
-    "Wirtschafts- und Sozialkunde": ["recht", "arbeitswelt"],
+    "Rechnertechnik & Zahlensysteme": ["hardware", "zahlen", "programmierung", "it_betrieb",
+                                       "storage"],
+    "Rechnernetze Grundlagen": ["grundlagen", "ipv4", "dienste", "verkabelung", "wan_vpn",
+                                "wlan", "fehlersuche", "switching"],
+    "Datenschutz & Sicherheit": ["datenschutz", "zugriff", "angriffe", "notfall", "isms",
+                                 "krypto", "haertung", "netzsicherheit"],
+    "Projektplanung": ["projekt", "beschaffung", "kalkulation"],
+    "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe": [
+        "beschaffung", "beratung", "hardware", "it_betrieb", "kalkulation", "projekt"],
+    "Wirtschafts- und Sozialkunde": ["recht", "arbeitswelt", "kalkulation"],
     # WiSo (fisi_pruefung.evaluate)
     "Recht & Verträge": ["recht"],
     "Arbeitswelt": ["arbeitswelt"],
@@ -398,9 +408,15 @@ def topic_practice_parts(book, topics, size=PRACTICE_ROUND, rng=None):
     wanted = set(topics)
     pools = {SRC_QUIZ: [q["q"] for q in QUIZ_QUESTIONS if q.get("thema") in wanted],
              SRC_CARD: [c["q"] for c in KARTEIKARTEN if c.get("thema") in wanted]}
+    return key_practice_parts(book, pools, size, rng)
+
+
+def key_practice_parts(book, pools, size=PRACTICE_ROUND, rng=None):
+    """Wie topic_practice_parts, aber mit festen Inhalten (ab 0.55, z.B. die
+    eines Rahmenplan-Punktes): pools = {quelle: [schluessel]}."""
     parts = []
     for source in (SRC_QUIZ, SRC_CARD):
-        keys = list(pools[source])
+        keys = list(pools.get(source) or ())
         if rng is not None:
             rng.shuffle(keys)
         ranks = {key: _practice_rank(book, source, key) for key in keys}

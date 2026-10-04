@@ -19,6 +19,7 @@ import ipaddress
 import json
 import os
 import sys
+import re
 import random
 import sqlite3
 import datetime
@@ -86,6 +87,42 @@ def error_log_path():
     return os.path.join(os.path.dirname(resolve_db_path()), ERROR_LOG_NAME)
 
 
+# Ab 0.55 (O2): Benutzerpfade nie im Fehlerprotokoll oder Problembericht.
+# Bekannte Ordner werden durch ihren Platzhalter ersetzt (%APPDATA%,
+# %LOCALAPPDATA%, ~ fuer das Benutzerverzeichnis), alle uebrigen
+# Benutzernamen in Pfaden durch "…".
+PATH_ELLIPSIS = "…"
+_WINDOWS_USER_PATH = re.compile(
+    r"(?i)((?:\b[a-z]:)?\\(?:users|benutzer|documents and settings)\\|"
+    r"\b[a-z]:/(?:users|benutzer|documents and settings)/)([^\\/\r\n\"'<>|:;,]+)")
+_UNIX_USER_PATH = re.compile(r"(/home/|/Users/)([^/\s\"':;,]+)")
+
+
+def _path_variants(path):
+    path = path.rstrip("\\/")
+    variants = {path, path.replace("\\", "/"), path.replace("/", "\\")}
+    return [item for item in variants if len(item) > 3]
+
+
+def anonymize_paths(text, env=None, home=None):
+    """Ersetzt Benutzerpfade in text (Fehlerprotokoll, Problembericht)."""
+    env = os.environ if env is None else env
+    home = home if home is not None else os.path.expanduser("~")
+    known = []
+    for name in ("LOCALAPPDATA", "APPDATA"):
+        if env.get(name):
+            known += [(item, "%%%s%%" % name) for item in _path_variants(env[name])]
+    if home and home not in ("~", "/", "\\"):
+        known += [(item, "~") for item in _path_variants(home)]
+    known.sort(key=lambda pair: len(pair[0]), reverse=True)
+    for path, placeholder in known:
+        text = re.sub(re.escape(path) + r"(?=[\\/\s\"':;,)]|$)",
+                      lambda _match, value=placeholder: value, text, flags=re.I)
+    for pattern in (_WINDOWS_USER_PATH, _UNIX_USER_PATH):
+        text = pattern.sub(lambda match: match.group(1) + PATH_ELLIPSIS, text)
+    return text
+
+
 def write_error_log(text):
     """Haengt einen Fehler mit Zeitpunkt und Version an fehler.log an. Darf
     selbst nie scheitern (kein Schreibrecht, volles Laufwerk ...)."""
@@ -99,7 +136,8 @@ def write_error_log(text):
         stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(path, "a", encoding="utf-8") as handle:
             handle.write("=== %s | Version %s | %s ===\n%s\n" % (
-                stamp, _error_log_version or "?", sys.platform, text.rstrip()))
+                stamp, _error_log_version or "?", sys.platform,
+                anonymize_paths(text.rstrip())))
     except Exception:
         pass
 
@@ -200,6 +238,10 @@ AP1_THEMES = [
 THEME_BLOCK = {
     "Virtualisierung": "Storage & RAID",
     "Projektmanagement": "Wirtschaft & Beratung",
+    # ab 0.55
+    "Systemadministration": "Storage & RAID",
+    "Automatisierung & Skripte": "Storage & RAID",
+    "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe": "Projektplanung",
 }
 
 
@@ -832,15 +874,20 @@ class DBManager:
                     "spiel_bestenliste", "trainer_aufgaben", "pruefungen",
                     "abschlussprojekt")
 
-    def change_stamp(self):
+    # Tabellen, aus denen question_results den Lernstand liest (ab 0.55)
+    ANSWER_TABLES = ("card_events", "quiz_answers", "ap1_events", "scenario_events",
+                     "project_events")
+
+    def change_stamp(self, tables=None):
         """Ab 0.50: Stempel ueber alle Lern- und Spieltabellen (Anzahl und
         hoechste Nummer je Tabelle) in einer einzigen, billigen Abfrage.
         Ist er unveraendert, hat sich seit dem letzten Mal nichts getan, was
         eine Ansicht anders aussehen liesse - sie muss dann beim Wechsel
-        nicht neu aufgebaut werden. None, wenn die Abfrage scheitert."""
+        nicht neu aufgebaut werden. None, wenn die Abfrage scheitert.
+        tables (ab 0.55): nur diese Tabellen, z.B. ANSWER_TABLES."""
         sql = "SELECT " + ", ".join(
             "(SELECT COUNT(*) FROM %s), (SELECT MAX(rowid) FROM %s)" % (table, table)
-            for table in self.STAMP_TABLES)
+            for table in (tables or self.STAMP_TABLES))
         row = self._execute(sql, fetch="one", default=None)
         return tuple(row) if row else None
 
@@ -1669,13 +1716,17 @@ def validate_content():
             problems.append("AP2-Szenario Nr. %d: unbekanntes Thema '%s' (AP2_THEMES "
                             "oder THEME_BLOCK ergaenzen)" % (number, scenario.get("theme")))
     for number, scenario in enumerate(AP1_SZENARIEN, start=1):
-        if scenario.get("theme") not in AP1_THEMES:
+        if theme_block(scenario.get("theme")) not in AP1_THEMES:
             problems.append("AP1-Szenario Nr. %d: unbekanntes Thema '%s'"
                             % (number, scenario.get("theme")))
     for number, project in enumerate(PROJEKTARBEITEN, start=1):
         if len(project.get("aufgaben", [])) != len(project.get("hinweise", [])):
             problems.append("Testprojekt Nr. %d: je Aufgabe wird genau ein Hinweis "
                             "gebraucht" % number)
+
+    # Ausbildungsrahmenplan (ab 0.55)
+    from fisi_rahmenplan import validate_rahmenplan
+    problems.extend(validate_rahmenplan())
 
     # Inhalte des Lernspiels (inhalte/spiel/)
     from fisi_game import validate_game_content
@@ -1822,12 +1873,15 @@ class StatusBook:
     def matches(self, source, key, status):
         return status in (None, FILTER_ALL) or self.status(source, key)[0] == status
 
-    def preferred_order(self, source, keys, rng=None):
+    def preferred_order(self, source, keys, rng=None, fresh_order=None):
         """Reihenfolge fuers normale Weiterlernen: unbearbeitete Fragen
         zuerst, nach je NEW_PER_REPEAT davon eine Wiederholung zur Festigung.
         Wiederholt wird zuerst, was zu ueben ist (rot vor gelb), dann
         Angefangenes, zuletzt Abgeschlossenes. Mit rng werden die Gruppen
-        gemischt (Pruefungstrainer), sonst bleibt die Reihenfolge von keys."""
+        gemischt (Pruefungstrainer), sonst bleibt die Reihenfolge von keys.
+        fresh_order (ab 0.55, Gewichtung nach Rahmenplan) legt die
+        Reihenfolge der unbearbeiteten Fragen fest; die Wiederholungen
+        bleiben davon unberuehrt."""
         fresh, repeat = [], []
         for key in keys:
             if not self.touched(source, key):
@@ -1840,6 +1894,8 @@ class StatusBook:
         if rng is not None:
             rng.shuffle(fresh)
             rng.shuffle(repeat)
+        if fresh_order is not None:
+            fresh = fresh_order(fresh)
         repeat = [key for _rank, key in sorted(repeat, key=lambda item: item[0])]
         ordered = []
         while fresh or repeat:

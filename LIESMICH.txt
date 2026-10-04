@@ -23,22 +23,22 @@ abgerundete Kacheln, Farbverlaeufe):
                      Aktivitaet je Fachbereich, Lernkalender und der
                      Fortschritt je AP1- und AP2-Pruefungsthema.
 
-  Karteikarten       1.400 Karten in drei Lernmodi: Freitext, Multiple Choice
+  Karteikarten       1.565 Karten in drei Lernmodi: Freitext, Multiple Choice
                      und Aufdecken. Filterbar nach Fachbereich.
 
-  Pruefungstrainer   2.000 Fragen, davon 54 automatisch erzeugte
+  Pruefungstrainer   2.174 Fragen, davon 54 automatisch erzeugte
                      Subnetting-Aufgaben. Uebung: Test-Sessions mit frei
                      waehlbarer Laenge, Zeitmessung, Erklaerung zu jeder
                      Antwort und Bewertung nach IHK-Notenschluessel.
                      Pruefung: Klausursimulationen nach dem Aufbau von
                      AP1 und AP2.
 
-  AP1-Szenarien      250 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
+  AP1-Szenarien      265 Grundlagenaufgaben (1./2. Lehrjahr) mit eigenem,
                      automatisch mitwachsendem Loesungsfeld zum
                      schriftlichen Bearbeiten und anschliessender
                      Musterloesung.
 
-  AP2-Szenarien      300 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
+  AP2-Szenarien      330 praxisnahe Pruefungsaufgaben, ebenfalls mit eigenem
                      Loesungsfeld und Musterloesung.
 
   Testprojekt        50 vollstaendige Projekt-Szenarien zum Ueben der
@@ -63,11 +63,16 @@ abgerundete Kacheln, Farbverlaeufe):
                      kann, haengt vom echten Lernfortschritt ab.
 
   Fortschritt        Historie aller Test-Sessions und Klausursimulationen
-                     mit Diagramm.
+                     mit Diagramm. Die Rahmenplan-Abdeckung zeigt den
+                     Wissensstand je Punkt des Ausbildungsrahmenplans
+                     (Abschnitt, Position, Punkt) oder je Lernfeld, mit
+                     "Jetzt ueben" an jedem Punkt.
 
-  Optionen           Updates, Farben (dunkel oder hell), Tagesziel, Abgleich
-                     PC und Handy, Sicherung des Lernstands als Datei und
-                     Zuruecksetzen der Daten.
+  Optionen           Updates, Farben (dunkel oder hell), Tagesziel,
+                     Rahmenplan (weitere Fachrichtungen, Gewichtung der
+                     Uebungsauswahl, aktuelles Lernfeld, Pruefungstermine),
+                     Abgleich PC und Handy, Sicherung des Lernstands als
+                     Datei und Zuruecksetzen der Daten.
 
 Die fuenf Fachbereiche sind Netzwerk & Protokolle, IT-Sicherheit &
 Datenschutz, Systeme, RAID & Hardware, Wirtschaft & Prozesse sowie
@@ -294,6 +299,8 @@ Programmdateien (PC):
   fisi_sync.py          Abgleich des Lernstands zwischen PC und Handy
   fisi_sicherung.py     Sicherung und Wiederherstellung als Datei
   fisi_diagnose.py      Bericht fuer "Problem melden" (ohne Zugangsdaten)
+  fisi_rahmenplan.py    Ausbildungsrahmenplan: Zuordnung der Inhalte,
+                        Abdeckung und Gewichtung der Uebungsauswahl
 
 Weitere Dateien:
   fisi_symbole.otf      Symbolschrift der Oberflaeche (Lizenz in
@@ -315,6 +322,7 @@ Weitere Dateien:
                         release.yml startet das bei einer neuen Version
   test_spiel.py         Tests fuer Spiel, Inhalte und Hilfsfunktionen
   test_sicherung.py     Tests fuer Sicherung und Wiederherstellung
+  test_rahmenplan.py    Tests fuer Rahmenplan, Abdeckung und Gewichtung
   test_texte.py         Prueft Schreibweisen und Fragetexte der Inhalte
                         gegen pruefung/wortliste.txt
   test_grosse_datenmengen.py  Belastungstest der PC-Oberflaeche
@@ -341,6 +349,8 @@ sich mit jedem Texteditor erweitern (Datei als UTF-8 speichern):
   projektarbeiten.json   Testprojekte
   fachgespraech.json     Fragen zum Fachgespraech (Abschlussprojekt)
   themen.json            Themen je Fachbereich (Feld "thema")
+  rahmenplan.json        Ausbildungsrahmenplan (Punkte, Lernfelder)
+  rahmenplan_zuordnung.json  Welche Inhalte zu welchem Punkt gehoeren
   umbenennungen.json     Alte -> neue Fragetexte, damit der Lernstand
                          erhalten bleibt (siehe unten)
   spiel/                 Inhalte des Lernspiels
@@ -365,7 +375,9 @@ Neue Quizfrage (in quizfragen.json):
 
 Als Fachbereich ("cat") stehen netzwerk, sicherheit, systeme, wirtschaft
 und datenbanken zur Wahl, als "thema" eine Kennung dieses Fachbereichs aus
-themen.json. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
+themen.json. Ab 0.55 kann ein Eintrag zusaetzlich "rahmenplan" mit der Kennung
+eines Punktes aus rahmenplan.json haben (z.B. "C2a"), sonst wird er ueber
+Thema und Stichworte zugeordnet. Laengere Texte (z.B. "text" und "solution" bei Szenarien) koennen
 als Liste von Zeilen geschrieben werden. Die Kennzahlen im Dashboard passen
 sich automatisch an.
 
