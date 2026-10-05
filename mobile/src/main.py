@@ -3124,12 +3124,15 @@ class CustomColors(ft.Column):
         self.sliders, self.value_texts, self.semantics, self.swatches = {}, {}, {}, {}
         self.tracks, self._tracks = {}, {}   # ab 0.58: farbige Spuren
         self._last = 0.0
-        mode_name = dict(fisi_theme.MODES)[self.mode]
         active = self.mode in fisi_theme.custom_colors
+        # Ab 0.58 (N1): Zustandszeile folgt den Reglern (Vergleich mit dem
+        # Gespeicherten), aktualisiert in _redraw; TalkBack liest den Wechsel vor
+        self.state_line = ui.text(fisi_theme.custom_state_text(self.values, self.mode),
+                                  size=13, weight=ft.FontWeight.BOLD)
+        self.state_box = ft.Semantics(live_region=True, container=True, content=self.state_line)
         controls = [
             ui.label(fisi_theme.CUSTOM_TITLE),
-            ui.text((fisi_theme.CUSTOM_STATE_ON if active else fisi_theme.CUSTOM_STATE_OFF)
-                    % mode_name, size=13, weight=ft.FontWeight.BOLD),
+            self.state_box,
             ui.text(fisi_theme.CUSTOM_HINT, size=11, color=C["muted"]),
         ]
         if active:
@@ -3286,6 +3289,7 @@ class CustomColors(ft.Column):
             self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
             self._paint_tracks(part)   # ab 0.58, gleiche Bremse wie die Vorschau
         self.preview.content = custom_preview(palette, map_colors, categories, block)
+        self.state_line.value = fisi_theme.custom_state_text(self.values, self.mode)
         lines = fisi_theme.custom_warning(palette, map_colors)
         if lines:
             self.warning.value = "\n".join(lines)

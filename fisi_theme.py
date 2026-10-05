@@ -492,6 +492,7 @@ CUSTOM_HINT = ("Mit den Reglern stellst du die zwei Farben der Farbverläufe (Ak
                "Gilt nur für dieses Gerät und nur für die gewählte Darstellung.")
 CUSTOM_STATE_ON = "Eigene Farben aktiv (%s)"
 CUSTOM_STATE_OFF = "Startwerte aus der Farbwelt (%s)"
+CUSTOM_STATE_CHANGED = "Regler verändert, noch nicht gespeichert"   # ab 0.58 (N1, Variante B)
 CUSTOM_TILE_HINT = ("Ein Klick auf eine Grundfarbe oder einen Hintergrund setzt nur die "
                     "Regler auf diese Farbwelt. Gespeichert wird erst mit „Speichern“.")
 CUSTOM_PREVIEW = "Vorschau"
@@ -673,6 +674,28 @@ def values_palette(values, mode=None, world=None):
     if is_start(values, mode, world):
         return farbwelt_palette(mode, world)
     return custom_palette(values)
+
+
+def custom_state(values, mode=None):
+    """Ab 0.58 (N1, Variante B): Zustand der Regler im Vergleich zum
+    Gespeicherten: "aktiv" (eigene Farben gespeichert, Regler darauf),
+    "start" (nichts gespeichert, Regler auf den Startwerten der gespeicherten
+    Farbwelt) oder "veraendert" (Regler weichen vom Gespeicherten ab)."""
+    mode = current_mode if mode is None else mode
+    current = {part: tuple(triple) for part, triple in dict(values).items()}
+    saved = {part: tuple(triple) for part, triple in custom_values(mode).items()}
+    if current != saved:
+        return "veraendert"
+    return "aktiv" if mode in custom_colors else "start"
+
+
+def custom_state_text(values, mode=None):
+    """Ab 0.58: Text der Zustandszeile ueber den Reglern (PC und Handy gleich)."""
+    mode = current_mode if mode is None else mode
+    state = custom_state(values, mode)
+    if state == "veraendert":
+        return CUSTOM_STATE_CHANGED
+    return (CUSTOM_STATE_ON if state == "aktiv" else CUSTOM_STATE_OFF) % dict(MODES)[mode]
 
 
 def custom_to_save(mode, values, world=None):

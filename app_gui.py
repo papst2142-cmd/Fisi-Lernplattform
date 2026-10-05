@@ -4638,13 +4638,14 @@ class CustomColors(ctk.CTkFrame):
         self.sliders, self.value_labels, self.swatches = {}, {}, {}
         self._tracks = {}   # ab 0.58: Werte, mit denen die Spuren gezeichnet sind
         self._pending = None
-        mode_name = dict(fisi_theme.MODES)[self.mode]
         make_label(self, fisi_theme.CUSTOM_TITLE, font=F["label"], fg=C["muted"]).pack(
             anchor="w")
         active = self.mode in fisi_theme.custom_colors
-        make_label(self, (fisi_theme.CUSTOM_STATE_ON if active else fisi_theme.CUSTOM_STATE_OFF)
-                   % mode_name, font=F["small_bold"],
-                   fg=C["text"]).pack(anchor="w", pady=(6, 0))
+        # Ab 0.58 (N1): Zustandszeile folgt den Reglern (Vergleich mit dem
+        # Gespeicherten), aktualisiert in _redraw
+        self.state_line = make_label(self, fisi_theme.custom_state_text(self.values, self.mode),
+                                     font=F["small_bold"], fg=C["text"])
+        self.state_line.pack(anchor="w", pady=(6, 0))
         make_label(self, fisi_theme.CUSTOM_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
         if active:
@@ -4771,6 +4772,9 @@ class CustomColors(ctk.CTkFrame):
                     self.sliders[(part, channel[0])].set_hsl(self.values[part])
         draw_custom_preview(self.preview, palette, map_colors, categories, block,
                             self.PREVIEW_W, self.PREVIEW_H)
+        state = fisi_theme.custom_state_text(self.values, self.mode)
+        if self.state_line.cget("text") != state:
+            self.state_line.configure(text=state)
         lines = fisi_theme.custom_warning(palette, map_colors)
         if lines:
             self.warning.configure(text="⚠ " + "\n".join(lines), text_color=C["red"])
