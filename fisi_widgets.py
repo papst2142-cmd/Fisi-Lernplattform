@@ -1828,12 +1828,30 @@ def _tracked_after(self, ms, func=None, *args):
     return job
 
 
+def drop_deleted_commands(widget):
+    """Ab 0.55.1: Streicht aus der Befehlsliste eines Widgets (_tclCommands)
+    die Tcl-Befehle, die es nicht mehr gibt. tkinter loescht beim Abbau jeden
+    dort eingetragenen Befehl; fehlt einer schon (z. B. weil ein Zeitgeber
+    ueber ein anderes Widget abgebrochen wurde), bricht destroy() mit
+    "can't delete Tcl command" ab und das Fenster bleibt halb stehen.
+    Nur genau dieser Fall wird bereinigt - alle anderen Fehler beim Abbau
+    kommen weiter durch. Liefert die Anzahl der gestrichenen Befehle."""
+    names = getattr(widget, "_tclCommands", None)
+    if not names:
+        return 0
+    stale = [name for name in names if not widget.tk.call("info", "commands", name)]
+    for name in stale:
+        names.remove(name)
+    return len(stale)
+
+
 def _quiet_destroy(self):
     for job in self.__dict__.pop("_fisi_jobs", []):
         try:
             self.after_cancel(job)
         except (tk.TclError, ValueError):
             pass
+    drop_deleted_commands(self)
     _textbox_destroy(self)
 
 

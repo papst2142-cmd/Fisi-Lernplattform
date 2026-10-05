@@ -50,7 +50,8 @@ from fisi_core import (  # noqa: E402
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
 )
-from fisi_core import error_log_path, install_error_log, log_exception  # noqa: E402
+from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
+                       write_error_log)
 import fisi_game  # noqa: E402
 import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
@@ -93,7 +94,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.55"
+APP_VERSION = "0.55.1"
 
 
 def _resource_path(filename):
@@ -4742,11 +4743,14 @@ class SettingsView(View):
     def _show_report(self):
         """Bericht nur neu eintragen, wenn sich fehler.log oder die Datenbank
         geaendert hat - der Wechsel in die Optionen bleibt so schnell."""
-        try:
-            log = os.stat(error_log_path())
-            log_key = (log.st_size, log.st_mtime)
-        except OSError:
-            log_key = None
+        log_key = []
+        for path in (error_log_path(), fisi_update.update_log_path()):
+            try:
+                log = os.stat(path)
+                log_key.append((log.st_size, log.st_mtime))
+            except OSError:
+                log_key.append(None)
+        log_key = tuple(log_key)
         key = (log_key, self.db.change_stamp())
         if key == self._report_key or not self.report_box.winfo_exists():
             return
@@ -5263,8 +5267,8 @@ class UpdateDialog(ctk.CTkToplevel):
             return
         self.progress.set(1)
         self.lbl_status.configure(text="Update wird installiert ...")
-        self.app.updater.run_in_background(lambda: fisi_update.install(path),
-                                           self._installed)
+        self.app.updater.run_in_background(
+            lambda: fisi_update.install(path, version=self.info.version), self._installed)
 
     def _installed(self, result, error):
         if error:
@@ -5273,7 +5277,10 @@ class UpdateDialog(ctk.CTkToplevel):
         must_quit, message = result
         self.lbl_status.configure(text=message, text_color=C["green"])
         if must_quit:
-            # Programm schliessen, damit der Installer die Dateien ersetzen kann
+            # Programm schliessen, damit der Installer die Dateien ersetzen
+            # kann. Ab 0.55.1 wartet der Installer darauf (/WAITPID); die
+            # 1,5 s sind nur noch zum Lesen der Meldung.
+            self.app.update_exit = True
             self.after(1500, lambda: self.app.on_close(final_sync=False))
         else:
             self.btn_later.set_text("Schließen")
@@ -5389,6 +5396,8 @@ class FISIApp:
         self.container = None
         self._recoloring = False
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
+        self._closing = False      # on_close laeuft schon (ab 0.55.1)
+        self.update_exit = False   # Beenden fuer ein Update (ab 0.55.1)
         self._build_ui()
         self.show_view("dashboard")
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -5402,6 +5411,8 @@ class FISIApp:
         # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
         if not os.environ.get("FISI_SELFTEST"):
             root.after(1500, self.sync.auto_start)
+            # Ab 0.55.1: Ergebnis eines Updates melden, das vor dem Neustart lief
+            root.after(1000, self.check_finished_update)
             root.after(3000, self.updater.auto_check)
             # Erinnerung ans Tagesziel (ab 0.51), nach dem Abgleich
             root.after(8000, self.check_reminder)
@@ -5799,6 +5810,14 @@ class FISIApp:
         finally:
             self.root.after(5 * 60 * 1000, self.check_reminder)
 
+    def check_finished_update(self):
+        """Ab 0.55.1: Lief vor diesem Start ein Update? Ist die neue Version
+        nicht angekommen, sagt das Programm es deutlich (keine stille
+        Rueckkehr) und nennt das Protokoll."""
+        result = fisi_update.finish_pending_update(APP_VERSION)
+        if result and result[0] == "fehler":
+            messagebox.showwarning(fisi_update.FAILED_TITLE, result[1], parent=self.root)
+
     def refresh_after_sync(self):
         """Nach einem Abgleich mit neuen Eintraegen die Anzeige auffrischen."""
         self.notify_progress(refresh_view=False)
@@ -5825,6 +5844,21 @@ class FISIApp:
             quiz.exam._flush_answers()   # Antworten einer laufenden Pruefung (ab 0.51)
 
     def on_close(self, final_sync=True):
+        """Programm beenden (Fenster schliessen oder fuer ein Update).
+
+        Reihenfolge ab 0.55.1 fest:
+          1. Lernstand sichern: Uhren anhalten, offene Eingaben speichern
+             (Einstellungen werden schon beim Aendern gespeichert)
+          2. Fenster verstecken
+          3. Abgleich beim Beenden (nicht vor einem Update)
+          4. Notausgang scharf schalten: Ist der Prozess nach
+             EXIT_GRACE_SECONDS nicht beendet, endet er hart - gesichert ist
+             zu diesem Zeitpunkt schon alles. So bleibt nie ein unsichtbarer
+             Prozess zurueck, der dem Installer die Dateien sperrt.
+          5. Zeitgeber abbrechen, dann alle Fenster abbauen."""
+        if self._closing:
+            return    # zweiter Klick aufs X waehrend des Abgleichs
+        self._closing = True
         quiz = self.views.built("quiz")
         if quiz is not None:
             quiz.stop_timer()
@@ -5834,16 +5868,52 @@ class FISIApp:
         # Abgleich folgt dann beim naechsten Start.
         if final_sync:
             self.sync.run_before_exit()
+        arm_emergency_exit(self.update_exit)
         # Ab 0.54: noch geplante after-Zeitgeber (auch die von customtkinter,
         # z. B. update und check_dpi_scaling) abbrechen. Beim echten Schliessen
         # ueber mainloop laufen sie ohnehin nicht mehr; ein Skript, das danach
         # noch root.update() aufruft, bekommt so kein "invalid command name".
+        # Ab 0.55.1 nur "after cancel" in Tcl: root.after_cancel() loeschte
+        # zusaetzlich den Tcl-Befehl des Zeitgebers. Gehoerte der zu einem
+        # anderen Widget (z. B. die Scrollbalken-Pruefung jedes Textfelds),
+        # brach dessen destroy() danach mit "can't delete Tcl command" ab -
+        # das Fenster blieb halb stehen und der Prozess lief unsichtbar weiter.
         try:
             for job in self.root.tk.splitlist(self.root.tk.call("after", "info")):
-                self.root.after_cancel(job)
+                self.root.tk.call("after", "cancel", job)
         except tk.TclError:
             pass
-        self.root.destroy()
+        try:
+            self.root.destroy()
+        except Exception:
+            # Darf nicht mehr vorkommen; falls doch: protokollieren und die
+            # Ereignisschleife trotzdem verlassen, damit das Programm endet
+            log_exception(*sys.exc_info())
+            self.root.quit()
+
+
+# Ab 0.55.1: Spaetestens so viele Sekunden nach dem Abbau der Fenster ist der
+# Prozess beendet (Notausgang, siehe FISIApp.on_close).
+EXIT_GRACE_SECONDS = 8
+
+
+def arm_emergency_exit(for_update=False, seconds=None):
+    """Startet einen Hintergrund-Waechter: Laeuft der Prozess nach seconds
+    noch, wird das notiert (fehler.log, bei einem Update auch update.log) und
+    der Prozess hart beendet. Endet das Programm vorher normal, stirbt der
+    Waechter mit ihm (daemon)."""
+    seconds = EXIT_GRACE_SECONDS if seconds is None else seconds
+
+    def guard():
+        time.sleep(seconds)
+        text = ("Notausgang: Das Programm war %d s nach dem Schließen noch nicht "
+                "beendet und wurde hart beendet (Lernstand war schon gesichert)."
+                % seconds)
+        write_error_log(text)
+        if for_update:
+            fisi_update.write_update_log(text)
+        os._exit(0)
+    threading.Thread(target=guard, name="fisi-notausgang", daemon=True).start()
 
 
 def _run_selftest(root, app, log_path):
@@ -5975,6 +6045,8 @@ def main():
     selftest_log = os.environ.get("FISI_SELFTEST")
     failures = _run_selftest(root, app, selftest_log) if selftest_log else None
     root.mainloop()
+    if app.update_exit:
+        fisi_update.write_update_log("Programm sauber beendet.")
     if failures:
         sys.exit(1)
 

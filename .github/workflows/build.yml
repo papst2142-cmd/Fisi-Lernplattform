@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2025
             label: windows
           # Aelteres Ubuntu = aeltere glibc = laeuft auf mehr Linux-Systemen
           - os: ubuntu-22.04
@@ -108,7 +108,7 @@ jobs:
 
   android:
     name: android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -174,7 +174,7 @@ jobs:
     name: GitHub-Release
     needs: [build, android]
     if: inputs.tag != '' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -189,6 +189,27 @@ jobs:
         with:
           path: installer
           merge-multiple: true
+
+      # Ab 0.55.1: Hinweis auf die Release-Seite und SHA-256 jeder Datei im
+      # Release-Text - bewusst keine zusaetzliche Datei im Release, damit die
+      # Zahl der Dateien und die Erkennung durch das Update gleich bleiben.
+      - name: Pruefsummen (SHA-256) in den Release-Text
+        run: |
+          ls -l installer
+          echo "Dateien im Release: $(ls installer | wc -l)"
+          {
+            echo ""
+            echo "### Herunterladen"
+            echo ""
+            echo "Bitte nur die Dateien hier auf der Release-Seite verwenden. Die ZIP-Pakete auf den Seiten der Build-Läufe (Actions, Artifacts) sind nicht für Anwender gedacht und werden von Browsern teils blockiert."
+            echo ""
+            echo "### Prüfsummen (SHA-256)"
+            echo ""
+            for f in installer/*; do
+              echo "- \`$(basename "$f")\`: \`$(sha256sum "$f" | cut -d' ' -f1)\`"
+            done
+          } >> versionshinweise.md
+          cat versionshinweise.md
 
       - uses: softprops/action-gh-release@v3
         with:
