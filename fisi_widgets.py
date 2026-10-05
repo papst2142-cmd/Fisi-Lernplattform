@@ -527,6 +527,16 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         arm = size * 0.34
         canvas.create_line(x - arm, y, x + arm, y, **opts)
 
+    elif name == "help":          # Ab 0.56: Hilfe (Kreis mit Fragezeichen)
+        canvas.create_oval(left, top, right, bottom, fill="", **line_opts)
+        canvas.create_arc(x - size * 0.16, y - size * 0.3, x + size * 0.16,
+                          y + size * 0.02, start=-60, extent=240, style="arc",
+                          outline=color, width=width, **({"tags": tags} if tags else {}))
+        canvas.create_line(x, y + size * 0.02, x, y + size * 0.1, **opts)
+        dot = size * 0.06
+        canvas.create_oval(x - dot, y + size * 0.22 - dot, x + dot, y + size * 0.22 + dot,
+                           **fill_opts)
+
     else:                          # Rueckfallebene: schlichter Punkt
         radius = size * 0.28
         canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
@@ -561,6 +571,7 @@ SYMBOLS = {
     "work": 0xF02C7,
     "route": 0xF0377,
     "workspace_premium": 0xE7AF,
+    "help_outline": 0xF7E4,    # ab 0.56: Hilfe (help_outline_rounded)
 }
 _SYMBOL_FONTS = {}
 
@@ -804,6 +815,7 @@ class Card(ctk.CTkFrame):
     def __init__(self, parent, title=None, subtitle=None, accent=None,
                  pad=18, bg=None):
         self.bg = bg or C["card"]
+        self.pad = pad
         super().__init__(parent, fg_color=self.bg, corner_radius=16,
                          border_width=1, border_color=C["border"])
         self.head = None
@@ -854,6 +866,9 @@ class FoldCard(Card):
         self.key = key or title
         self.opened = self._open_state.get(self.key, opened)
         self._body_pack = self.body.pack_info()
+        # Ab 0.56 (Hilfe): zugeklappt bekommt der Kopf unten denselben Abstand
+        # wie oben - sonst schnitt die Kachel den unteren Rand ab
+        self._head_top = self.pad - 2   # wie in Card.__init__ (ungeskaliert)
         self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
                                   font=F["small_bold"], width=24, height=0)
         self.arrow.pack(side="right", padx=(10, 0))
@@ -877,9 +892,11 @@ class FoldCard(Card):
     def _apply(self):
         self.arrow.configure(text="▾  zuklappen" if self.opened else "▸  aufklappen")
         if self.opened:
+            self.head.pack(pady=(self._head_top, 0))
             self.body.pack(**self._body_pack)
         else:
             self.body.pack_forget()
+            self.head.pack(pady=(self._head_top, self._head_top))
 
     def toggle(self, _event=None):
         self.opened = not self.opened

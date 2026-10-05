@@ -71,6 +71,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_hilfe as fh  # noqa: E402
 import fisi_rahmenplan as frp  # noqa: E402
 from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
@@ -123,6 +124,8 @@ NAV_ITEMS = [
                                  ("zuhause", "home", "Zuhause"), ("firma", "case", "Firma"),
                                  ("reise", "journey", "Reise")]),
     ("progress", "chart", "Fortschritt", None),
+    # Ab 0.56: Hilfe fuer neue Nutzer (Texte in fisi_hilfe.py, wie am Handy)
+    ("help", "help", fh.HELP_TITLE, None),
     ("settings", "gear", "Optionen", None),
 ]
 
@@ -132,7 +135,7 @@ NAV_SYMBOLS = {
     "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
     "abschluss": "workspace_premium",
     "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
-    "progress": "insights", "settings": "settings",
+    "progress": "insights", "settings": "settings", "help": "help_outline",
     # Unterpunkte: Spiel
     "buero": "business", "kunde": "storefront", "zuhause": "home", "firma": "work",
     "reise": "route",
@@ -174,6 +177,7 @@ VIEW_TITLES = {
     "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
+    "help": ("SYSTEM", "HILFE"),
     "search": ("SUCHE", "ERGEBNISSE"),
 }
 
@@ -4361,9 +4365,22 @@ class BackgroundTile(ctk.CTkFrame):
 
 class SettingsView(View):
     def build(self):
+        # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am Handy)
+        tour = Card(self.content, title=fh.OPTIONS_TITLE, accent=C["green"],
+                    subtitle=fh.OPTIONS_SUBTITLE)
+        tour.pack(fill="x")
+        make_label(tour.body, fh.OPTIONS_TEXT, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        row = transparent_frame(tour.body)
+        row.pack(anchor="w", pady=(12, 0))
+        self.btn_tour = NeoButton(row, fh.BTN_TOUR, self.app.start_tour, kind="primary")
+        self.btn_tour.pack(side="left")
+        NeoButton(row, fh.BTN_HELP, lambda: self.app.show_view("help"),
+                  kind="ghost").pack(side="left", padx=10)
+
         updates = Card(self.content, title="Updates", accent=C["accent2"],
                        subtitle="installierte Version %s" % APP_VERSION)
-        updates.pack(fill="x")
+        updates.pack(fill="x", pady=(14, 0))
         row = transparent_frame(updates.body)
         row.pack(fill="x")
         self.btn_update = NeoButton(row, "Nach Updates suchen",
@@ -4698,6 +4715,15 @@ class SettingsView(View):
         else:
             frp.save_rp_settings(**{key: bool(self.rp_vars[key].get())})
 
+    def refresh_plan(self):
+        """Ab 0.56: Rahmenplan-Werte neu anzeigen (nach "Jetzt einrichten")."""
+        values = frp.load_rp_settings()
+        for key, var in self.rp_vars.items():
+            var.set(values[key])
+        for key, entry in self.rp_dates.items():
+            entry.set(frp.date_text(values[key]))
+        self.lbl_rp.pack_forget()
+
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(self.var_auto.get())
@@ -4957,7 +4983,9 @@ class SearchView(View):
         for child in self.results_box.winfo_children():
             child.destroy()
 
-        hits = search_content(query)
+        # Ab 0.56 zuerst die passenden Hilfe-Abschnitte
+        hits = [(fh.SEARCH_KIND, None, title, text)
+                for _id, title, text in fh.search_help(query)] + search_content(query)
         self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
@@ -4978,7 +5006,8 @@ class SearchView(View):
             bg=C["card"])
         row.pack(fill="x", pady=4)
 
-        head = ctk.CTkLabel(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
+        head = ctk.CTkLabel(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, ""))
+                            if category else kind,
                             text_color=C["muted"], font=F["tiny"], anchor="w",
                             height=0, cursor="hand2")
         head.pack(anchor="w")
@@ -4999,6 +5028,50 @@ class SearchView(View):
         for widget in (row, inner, head, title_label, detail_label, marker):
             widget.bind("<Enter>", lambda _e: row.configure(border_color=C["border_hi"]))
             widget.bind("<Leave>", lambda _e: row.configure(border_color=C["border"]))
+
+
+# ============================================================================
+#  HILFE (AB 0.56)
+# ============================================================================
+
+HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
+                "spiel": "accent2", "fortschritt": "purple", "sicherung": "accent2",
+                "update": "accent", "problem": "orange", "schutzprogramm": "red"}
+
+
+class HelpView(View):
+    """Kurze Hilfetexte als aufklappbare Kacheln (Texte in fisi_hilfe.py,
+    am Handy dieselben)."""
+
+    def build(self):
+        intro = Card(self.content, title=fh.HELP_TITLE, accent=C["green"],
+                     subtitle=fh.HELP_SUBTITLE)
+        intro.pack(fill="x")
+        make_label(intro.body, fh.HELP_INTRO, font=F["body"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        NeoButton(intro.body, fh.BTN_TOUR, self.app.start_tour,
+                  kind="ghost").pack(anchor="w", pady=(12, 0))
+        self.folds = {}
+        for section in fh.HELP_SECTIONS:
+            fold = FoldCard(self.content, title=section["titel"],
+                            accent=C[HELP_ACCENTS.get(section["id"], "accent")],
+                            key="hilfe_" + section["id"])
+            fold.pack(fill="x", pady=(14, 0))
+            make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
+                       wraplength=800, justify="left", anchor="w").pack(anchor="w")
+            self.folds[section["id"]] = fold
+
+    def open_section(self, section_id):
+        """Abschnitt aufklappen und in den sichtbaren Bereich holen (Suche)."""
+        fold = self.folds.get(section_id)
+        if fold is None:
+            return
+        if not fold.opened:
+            fold.toggle()
+        self.update_idletasks()
+        height = max(1, self.inner.winfo_height())
+        top = fold.winfo_y() + self.content.winfo_y()
+        self.canvas.yview_moveto(max(0.0, (top - px(10)) / float(height)))
 
 
 # ============================================================================
@@ -5191,6 +5264,258 @@ class BackupDialog(ctk.CTkToplevel):
     def _focus(self):
         self.lift()
         self.focus_force()
+
+
+class TourOverlay(tk.Frame):
+    """Erststart-Rundgang (ab 0.56): legt sich wie der Meilenstein-Moment
+    ueber das ganze Fenster. Seiten und Texte aus fisi_hilfe.py (wie am
+    Handy), letzter Schritt "Jetzt einrichten". Tastatur: Tab/Umschalt+Tab
+    wechselt zwischen den Bedienelementen, Eingabe bzw. Leertaste loest aus,
+    Esc ueberspringt. Nach "Ueberspringen" oder dem Speichern ist der Merker
+    "Rundgang gesehen" gesetzt (fh.mark_tour_seen)."""
+
+    def __init__(self, app, on_close=None):
+        root = app.root
+        super().__init__(root, bg=mix(C["bg"], "#000000", 0.45), cursor="")
+        self.app = app
+        self.root_window = root
+        self.on_close = on_close
+        self.index = 0
+        self.draft = fh.setup_values()
+        self.focusables = []
+        self.card = None
+        self.place(x=0, y=0, relwidth=1, relheight=1)
+        self.lift()
+        root.bind("<Escape>", lambda _e: self.skip())
+        try:
+            self.grab_set()      # Klicks gehen nicht an die Ansicht darunter
+        except tk.TclError:
+            pass                 # ohne sichtbares Fenster (Starttest)
+        self._show()
+
+    # -- Aufbau ------------------------------------------------------------
+
+    def _show(self):
+        if self.card is not None:
+            self.card.destroy()
+        self.focusables = []
+        page = fh.TOUR_PAGES[self.index]
+        last = self.index == len(fh.TOUR_PAGES) - 1
+        self.card = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=22,
+                                 border_width=2, border_color=C["accent"])
+        self.card.place(relx=0.5, rely=0.5, anchor="center")
+        body = transparent_frame(self.card)
+        body.pack(padx=px(30), pady=px(24))
+        head = transparent_frame(body)
+        head.pack(fill="x")
+        make_label(head, ("%s · %s" % (fh.TOUR_TITLE, fh.TOUR_STEP % (
+            self.index + 1, len(fh.TOUR_PAGES)))).upper(), font=F["label"],
+            fg=C["accent"]).pack(side="left")
+        dots = tk.Canvas(head, width=px(16) * len(fh.TOUR_PAGES), height=px(12),
+                         bg=C["card"], highlightthickness=0, bd=0)
+        for number in range(len(fh.TOUR_PAGES)):
+            x = px(16) * number + px(6)
+            color = C["accent"] if number == self.index else C["border_hi"]
+            dots.create_oval(x - px(4), px(2), x + px(4), px(10), fill=color, outline="")
+        dots.pack(side="right")
+        make_label(body, page["titel"], font=F["h1"], fg=C["text"],
+                   anchor="w").pack(anchor="w", pady=(px(10), 0))
+        make_label(body, page["text"], font=F["body"], fg=C["text_soft"],
+                   wraplength=px(560), justify="left", anchor="w").pack(
+            anchor="w", pady=(px(8), 0))
+        self.lbl_error = None
+        if last:
+            self._build_setup(body)
+
+        buttons = transparent_frame(body)
+        buttons.pack(fill="x", pady=(px(20), 0))
+        skip = NeoButton(buttons, fh.TOUR_SKIP, self.skip, kind="ghost",
+                         parent_bg=C["card"])
+        skip.pack(side="left")
+        main = NeoButton(buttons, fh.TOUR_FINISH if last else fh.TOUR_NEXT,
+                         self.finish if last else self.next_page, kind="primary",
+                         parent_bg=C["card"])
+        main.pack(side="right")
+        back = None
+        if self.index:
+            back = NeoButton(buttons, fh.TOUR_BACK, self.back_page, kind="ghost",
+                             parent_bg=C["card"])
+            back.pack(side="right", padx=(0, 10))
+        for button in ([main, back, skip] if back else [main, skip]):
+            self._focusable_button(button)
+        make_label(body, fh.TOUR_KEYS, font=F["tiny"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(12), 0))
+        self._bind_tab()
+        # Fokus: erstes Eingabefeld der Einrichtung, sonst "Weiter"
+        first = self.focusables[0]
+        try:
+            first.focus_set()
+        except tk.TclError:
+            pass
+
+    def _build_setup(self, body):
+        """Letzter Schritt "Jetzt einrichten": Name, Abschnitte, Termine."""
+        form = transparent_frame(body)
+        form.pack(fill="x", pady=(px(14), 0))
+        make_label(form, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w")
+        self.entry_name = EntryBox(form, width=30, value=self.draft["name"])
+        self.entry_name.pack(anchor="w", pady=(6, 0))
+        self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
+        make_label(form, fh.SETUP_PLAN.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(14), 0))
+        self.section_vars = {}
+        switches = []
+        for section in frp.OPTIONAL_SECTIONS:
+            var = self.section_vars[section] = tk.BooleanVar(
+                value=self.draft["abschnitte"][section])
+            switch = ctk.CTkSwitch(form, text=frp.SECTION_OPTION_TEXT[section], variable=var,
+                                   font=F["small"], text_color=C["text_dim"],
+                                   fg_color=C["card_alt"], progress_color=C["violet"],
+                                   button_color=C["text"], button_hover_color="#FFFFFF")
+            switch.pack(anchor="w", pady=(6, 0))
+            switches.append(switch)
+        make_label(form, fh.SETUP_PLAN_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=px(560), justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(6, 0))
+        make_label(form, fh.SETUP_DATES.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(14), 0))
+        row = transparent_frame(form)
+        row.pack(anchor="w", pady=(6, 0))
+        self.date_entries = {}
+        for column, (key, text) in enumerate((("rp_termin_ap1", frp.AP1_DATE_TEXT),
+                                              ("rp_termin_ap2", frp.AP2_DATE_TEXT))):
+            make_label(row, text, font=F["small"], fg=C["text_dim"]).pack(
+                side="left", padx=(28 if column else 0, 10))
+            entry = self.date_entries[key] = EntryBox(row, width=11,
+                                                      value=self.draft[key])
+            entry.pack(side="left")
+        make_label(form, fh.SETUP_DATES_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=px(560), justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(6, 0))
+        self.lbl_error = make_label(form, "", font=F["small"], fg=C["red"], anchor="w")
+        self.lbl_error.pack(anchor="w", pady=(6, 0))
+        # Reihenfolge fuer Tab: Name, Schalter, Termine (dann die Knoepfe)
+        for entry in [self.entry_name] + switches + list(self.date_entries.values()):
+            self._focusable_input(entry)
+
+    # -- Tastatur ----------------------------------------------------------
+
+    @staticmethod
+    def _focus_target(widget):
+        """Das Tk-Element, das bei customtkinter den Fokus bekommt: das innere
+        Eingabefeld (CTkEntry), die innere Beschriftung (NeoButton/CTkLabel)
+        bzw. der Text des Schalters (CTkSwitch)."""
+        for name in ("_entry", "_text_label", "_label"):
+            inner = getattr(widget, name, None)
+            if isinstance(inner, tk.Widget):
+                return inner
+        return widget
+
+    def _focus_ring(self, target):
+        """Sichtbarer Fokusrahmen in der Akzentfarbe (nur mit Fokus)."""
+        target.configure(takefocus=1, highlightthickness=2, highlightcolor=C["accent"],
+                         highlightbackground=C["card"])
+
+    def _focusable_button(self, button):
+        target = self._focus_target(button)
+        self._focus_ring(target)
+        for key in ("<Return>", "<KP_Enter>", "<space>"):
+            tk.Misc.bind(target, key, lambda _e, b=button: (b._on_click(), "break")[1])
+        self.focusables.append(button)
+
+    def _focusable_input(self, widget):
+        target = self._focus_target(widget)
+        if isinstance(widget, ctk.CTkSwitch):
+            self._focus_ring(target)
+            for key in ("<Return>", "<KP_Enter>", "<space>"):
+                tk.Misc.bind(target, key, lambda _e, w=widget: (w.toggle(), "break")[1])
+        else:
+            for key in ("<Return>", "<KP_Enter>"):
+                tk.Misc.bind(target, key, lambda _e: (self.finish(), "break")[1])
+        # Eingaben stehen vor den Knoepfen
+        self.focusables.insert(len([w for w in self.focusables
+                                    if not isinstance(w, NeoButton)]), widget)
+
+    def _bind_tab(self):
+        targets = [self._focus_target(widget) for widget in self.focusables]
+        for position, target in enumerate(targets):
+            forward = targets[(position + 1) % len(targets)]
+            backward = targets[position - 1]
+            tk.Misc.bind(target, "<Tab>", lambda _e, w=forward: (w.focus_set(), "break")[1])
+            for key in ("<Shift-Tab>", "<ISO_Left_Tab>"):
+                try:
+                    tk.Misc.bind(target, key,
+                                 lambda _e, w=backward: (w.focus_set(), "break")[1])
+                except tk.TclError:
+                    pass   # ISO_Left_Tab gibt es nicht auf jedem System
+
+    # -- Ablauf ------------------------------------------------------------
+
+    def _keep_draft(self):
+        if self.index == len(fh.TOUR_PAGES) - 1 and self.card is not None:
+            self.draft["name"] = self.entry_name.get()
+            self.draft["abschnitte"] = {key: bool(var.get())
+                                        for key, var in self.section_vars.items()}
+            for key, entry in self.date_entries.items():
+                self.draft[key] = entry.get()
+
+    def next_page(self):
+        if self.index + 1 < len(fh.TOUR_PAGES):
+            self._keep_draft()
+            self.index += 1
+            self._show()
+
+    def back_page(self):
+        if self.index:
+            self._keep_draft()
+            self.index -= 1
+            self._show()
+
+    def show_page(self, index):
+        """Seite direkt zeigen (Starttest, Bildschirmfotos)."""
+        self._keep_draft()
+        self.index = max(0, min(index, len(fh.TOUR_PAGES) - 1))
+        self._show()
+
+    def finish(self):
+        """Einrichtung speichern; bei einem ungueltigen Datum bleibt die Seite
+        offen und nennt den Fehler (nichts wird gespeichert)."""
+        if self.index != len(fh.TOUR_PAGES) - 1:
+            self.next_page()
+            return
+        self._keep_draft()
+        error = fh.save_setup(self.draft["name"], self.draft["abschnitte"],
+                              self.draft["rp_termin_ap1"], self.draft["rp_termin_ap2"])
+        if error:
+            self.lbl_error.configure(text=error)
+            for key, entry in self.date_entries.items():
+                if fh.check_date(self.draft[key])[1]:
+                    entry.configure(border_color=C["red"])
+                    break
+            return
+        settings_view = self.app.views.built("settings")
+        if settings_view is not None:
+            settings_view.refresh_plan()
+        self.close(seen=True)
+
+    def skip(self):
+        self.close(seen=True)
+
+    def close(self, seen=True):
+        if seen:
+            fh.mark_tour_seen()
+        try:
+            self.root_window.unbind("<Escape>")
+        except tk.TclError:
+            pass
+        try:
+            self.grab_release()
+        except tk.TclError:
+            pass
+        self.destroy()
+        if self.on_close is not None:
+            self.on_close()
 
 
 class UpdateDialog(ctk.CTkToplevel):
@@ -5436,6 +5761,8 @@ class FISIApp:
             root.after(3000, self.updater.auto_check)
             # Erinnerung ans Tagesziel (ab 0.51), nach dem Abgleich
             root.after(8000, self.check_reminder)
+            # Ab 0.56: Erststart-Rundgang, nur bei leerer Datenbank ohne Merker
+            root.after(600, self.maybe_start_tour)
 
     def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
@@ -5473,7 +5800,7 @@ class FISIApp:
             ("kunde", CustomerView), ("zuhause", HomeView),
             ("firma", FirmView), ("filiale", BranchView), ("serverfarm", FarmView),
             ("reise", JourneyView),
-            ("progress", ProgressView),
+            ("progress", ProgressView), ("help", HelpView),
             ("settings", SettingsView), ("search", SearchView)))
 
         self.current = None
@@ -5673,6 +6000,29 @@ class FISIApp:
                 text = game_view.game.active_label()
         self.header.set_slot(text)
 
+    def maybe_start_tour(self):
+        """Rundgang beim Start (ab 0.56) - nur fuer neue Nutzer (Bestandsschutz,
+        siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        try:
+            if fh.tour_due(self.db):
+                self.start_tour()
+        except Exception:
+            log_exception(*sys.exc_info())
+
+    def start_tour(self):
+        """Rundgang zeigen (beim ersten Start oder aus Optionen/Hilfe)."""
+        current = getattr(self, "tour", None)
+        if current is not None and current.winfo_exists():
+            current.lift()
+            return current
+        self.tour = TourOverlay(self)
+        return self.tour
+
+    def open_help(self, section_id=None):
+        self.show_view("help")
+        if section_id:
+            self.views["help"].open_section(section_id)
+
     def open_slot_picker(self):
         self.views["game"].open_picker()
 
@@ -5694,7 +6044,9 @@ class FISIApp:
         self.show_view("calc")
 
     def open_search_hit(self, kind, title):
-        if kind == "Karteikarte":
+        if kind == fh.SEARCH_KIND:
+            self.open_help(fh.HELP_BY_TITLE[title]["id"])
+        elif kind == "Karteikarte":
             self.show_view("cards")
             self.views["cards"].jump_to_question(title)
         elif kind == "Quizfrage":
@@ -6001,6 +6353,32 @@ def _run_selftest(root, app, log_path):
                 if "Programmversion: %s" % APP_VERSION not in \
                         settings_view.report_box.get("1.0", "end"):
                     failures.append("Problem melden: Bericht fehlt")
+                # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
+                # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
+                tour = app.start_tour()
+                for _page in fh.TOUR_PAGES[1:]:
+                    tour.next_page()
+                    root.update()
+                tour.back_page()
+                tour.show_page(len(fh.TOUR_PAGES) - 1)
+                tour.date_entries["rp_termin_ap1"].set("31.02.2027")
+                tour.finish()   # speichert nichts: das Datum ist ungueltig
+                if not tour.winfo_exists() or not tour.lbl_error.cget("text"):
+                    failures.append("Rundgang: ungültiges Datum nicht abgelehnt")
+                tour.close(seen=False)
+                root.update()
+                app.open_help("schutzprogramm")
+                root.update()
+                if not app.views["help"].folds["schutzprogramm"].opened:
+                    failures.append("Hilfe: Abschnitt nicht aufgeklappt")
+                app.do_search("Schutzprogramm")
+                root.update()
+                if not fh.search_help("Schutzprogramm"):
+                    failures.append("Hilfe: Suche findet nichts")
+                app.open_search_hit(fh.SEARCH_KIND, fh.HELP_SECTIONS[0]["titel"])
+                root.update()
+                app.show_view("settings")
+                root.update()
                 # Grundfarbe wechseln baut alle Ansichten neu auf
                 original = fisi_theme.current_preset
                 app.change_color("gruen_lime")

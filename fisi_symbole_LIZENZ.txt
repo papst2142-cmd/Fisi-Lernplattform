@@ -1,7 +1,7 @@
 fisi_symbole.otf
 ================
 
-Enthaelt 22 Symbole aus der Schrift "Material Icons" (gerundete Variante),
+Enthaelt 23 Symbole aus der Schrift "Material Icons" (gerundete Variante),
 dieselben, die die Handy-App ueber Flet/Flutter verwendet.
 
 Copyright 2019 Google LLC.
@@ -11,3 +11,9 @@ Quelle: https://github.com/google/material-design-icons
 
 Die Datei ist eine Teilmenge der Originalschrift (nur die benoetigten
 Zeichen), sonst unveraendert.
+
+Ab 0.56 zusaetzlich: help_outline_rounded (U+F7E4, Hilfe in der Seitenleiste,
+am Handy ft.Icons.HELP_OUTLINE_ROUNDED). Quelle: MaterialIcons-Regular.otf
+aus dem Paket flet_web (Flet 1.0.1), mit fontTools (subset + merge) an die
+bestehende Datei angehaengt. Die 22 bisherigen Zeichen sind unveraendert
+(pixelgleich geprueft).

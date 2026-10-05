@@ -32,6 +32,7 @@ if os.environ.get("FLET_APP_STORAGE_DATA") and not os.environ.get("FISI_DB_PATH"
 import flet as ft  # noqa: E402
 
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_hilfe as fh  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -3190,8 +3191,17 @@ class SettingsScreen(Screen):
             self.lbl_rp,
         ], accent=C["purple"], subtitle="nur für dieses Gerät")
 
+        # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am PC)
+        tour = ui.Card(fh.OPTIONS_TITLE, [
+            ui.text(fh.OPTIONS_TEXT, size=13, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fh.BTN_TOUR, lambda _e: self.app.start_tour(),
+                                      expand=True)]),
+            ft.Row([ui.GradientButton(fh.BTN_HELP, lambda _e: self.app.open_help(),
+                                      kind="ghost", expand=True)]),
+        ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
+
         return screen_list([
-            updates, colors, goal, plan, sync, backup, report,
+            tour, updates, colors, goal, plan, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Spiel", [
@@ -3601,7 +3611,9 @@ class SearchScreen(Screen):
         query = query.strip()
         if not query:
             return
-        hits = search_content(query)
+        # Ab 0.56 zuerst die passenden Hilfe-Abschnitte (wie am PC)
+        hits = [(fh.SEARCH_KIND, None, title, text)
+                for _id, title, text in fh.search_help(query)] + search_content(query)
         self.lbl_info.value = '%d Treffer für „%s“' % (len(hits), query)
         self.results.controls = []
         if not hits:
@@ -3614,8 +3626,8 @@ class SearchScreen(Screen):
                     ft.Container(width=4, height=48, border_radius=2,
                                  bgcolor=CATEGORY_COLOR.get(category, C["purple"])),
                     ft.Column([
-                        ui.text("%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
-                                size=11, color=C["muted"]),
+                        ui.text("%s · %s" % (kind, CATEGORY_SHORT.get(category, ""))
+                                if category else kind, size=11, color=C["muted"]),
                         ui.text(title, size=14, weight=ft.FontWeight.BOLD),
                         ui.text(snippet, size=12, color=C["text_dim"]),
                     ], spacing=2, tight=True, expand=True),
@@ -3628,6 +3640,177 @@ class SearchScreen(Screen):
                 "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,
                 color=C["muted"]))
         self.app.page.update()
+
+
+# ============================================================================
+#  HILFE (AB 0.56)
+# ============================================================================
+
+HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
+                "spiel": "accent2", "fortschritt": "purple", "sicherung": "accent2",
+                "update": "accent", "problem": "orange", "schutzprogramm": "red"}
+
+
+class HelpScreen(Screen):
+    """Kurze Hilfetexte als aufklappbare Karten (Texte in fisi_hilfe.py, am PC
+    dieselben)."""
+    crumbs = ("SYSTEM", "HILFE")
+
+    def build(self):
+        self.folds = {}
+        cards = [ui.Card(fh.HELP_TITLE, [
+            ui.text(fh.HELP_INTRO, size=13, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fh.BTN_TOUR, lambda _e: self.app.start_tour(),
+                                      kind="ghost", expand=True)]),
+        ], accent=C["green"], subtitle=fh.HELP_SUBTITLE)]
+        for section in fh.HELP_SECTIONS:
+            fold = ui.FoldCard(section["titel"], [
+                ui.text(section["text"], size=14, color=C["text_soft"], selectable=True)],
+                accent=C[HELP_ACCENTS.get(section["id"], "accent")],
+                key="hilfe_" + section["id"], open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
+            self.folds[section["id"]] = fold
+            cards.append(fold)
+        self.list = screen_list(cards)
+        return self.list
+
+    def open_section(self, section_id):
+        fold = self.folds.get(section_id)
+        if fold is not None and not fold.opened:
+            fold.opened = True
+            fold._open_state[fold.fold_key] = True
+            fold._apply()
+
+
+class TourDialog:
+    """Erststart-Rundgang am Handy (ab 0.56, wie am PC): Seiten und Texte aus
+    fisi_hilfe.py, letzter Schritt "Jetzt einrichten". Nach "Ueberspringen"
+    oder dem Speichern ist der Merker "Rundgang gesehen" gesetzt."""
+
+    def __init__(self, app):
+        self.app = app
+        self.index = 0
+        self.draft = fh.setup_values()
+        self.closed = False
+        self.fields = {}
+        self.lbl_error = None
+        self.dialog = ft.AlertDialog(
+            modal=True, bgcolor=C["card"], scrollable=True,
+            shape=ft.RoundedRectangleBorder(
+                radius=22, side=ft.BorderSide(width=2, color=C["accent"])),
+            inset_padding=ft.Padding.symmetric(horizontal=14, vertical=24),
+            content_padding=ft.Padding.only(left=20, right=20, top=22, bottom=6),
+            on_dismiss=self._dismissed)
+        self._fill()
+
+    def show(self):
+        self.app.page.show_dialog(self.dialog)
+
+    def _fill(self):
+        page = fh.TOUR_PAGES[self.index]
+        last = self.index == len(fh.TOUR_PAGES) - 1
+        dots = ft.Row([ft.Container(width=8, height=8, border_radius=4,
+                                    bgcolor=C["accent"] if number == self.index
+                                    else C["border_hi"])
+                       for number in range(len(fh.TOUR_PAGES))], spacing=6, tight=True)
+        controls = [
+            ft.Row([ui.text(("%s · %s" % (fh.TOUR_TITLE, fh.TOUR_STEP % (
+                self.index + 1, len(fh.TOUR_PAGES)))).upper(), size=11,
+                weight=ft.FontWeight.BOLD, color=C["accent"], expand=True), dots]),
+            ui.text(page["titel"], size=22, weight=ft.FontWeight.BOLD),
+            ui.text(page["text"], size=14, color=C["text_soft"]),
+        ]
+        self.fields = {}
+        self.lbl_error = None
+        if last:
+            controls += self._setup_controls()
+        main = ui.GradientButton(fh.TOUR_FINISH if last else fh.TOUR_NEXT,
+                                 self.finish if last else self.next_page, expand=True)
+        row = [ui.GradientButton(fh.TOUR_SKIP, self.skip, kind="ghost", expand=True)]
+        if self.index:
+            row.append(ui.GradientButton(fh.TOUR_BACK, self.back_page, kind="ghost",
+                                         expand=True))
+        controls += [ft.Container(height=4), ft.Row([main]), ft.Row(row, spacing=10)]
+        self.dialog.content = ft.Container(
+            content=ft.Column(controls, spacing=10, tight=True), width=330)
+        self.dialog.actions = []
+
+    def _setup_controls(self):
+        draft = self.draft
+        self.fields["name"] = ui.entry(draft["name"], hint=fh.SETUP_NAME_HINT)
+        switches = [SettingsScreen._switch(
+            frp.SECTION_OPTION_TEXT[section], draft["abschnitte"][section],
+            lambda e, k=section: draft["abschnitte"].__setitem__(k, bool(e.control.value)))
+            for section in frp.OPTIONAL_SECTIONS]
+        dates = []
+        for key, caption in (("rp_termin_ap1", frp.AP1_DATE_TEXT),
+                             ("rp_termin_ap2", frp.AP2_DATE_TEXT)):
+            field = self.fields[key] = ui.entry(draft[key], hint=frp.DATE_HINT,
+                                                keyboard=ft.KeyboardType.DATETIME)
+            dates.append(ft.Row([ui.text(caption, size=13, color=C["text_dim"], expand=True),
+                                 ft.Container(content=field, width=150)]))
+        self.lbl_error = ui.text(frp.DATE_INVALID, size=12, color=C["red"])
+        self.lbl_error.visible = False
+        return ([ui.label(fh.SETUP_NAME), self.fields["name"], ui.label(fh.SETUP_PLAN)]
+                + switches + [ui.text(fh.SETUP_PLAN_HINT, size=11, color=C["muted"]),
+                              ui.label(fh.SETUP_DATES)]
+                + dates + [ui.text(fh.SETUP_DATES_HINT, size=11, color=C["muted"]),
+                           self.lbl_error])
+
+    def _keep_draft(self):
+        if self.fields:
+            self.draft["name"] = self.fields["name"].value or ""
+            for key in ("rp_termin_ap1", "rp_termin_ap2"):
+                self.draft[key] = self.fields[key].value or ""
+
+    def _go(self, index):
+        self._keep_draft()
+        self.index = max(0, min(index, len(fh.TOUR_PAGES) - 1))
+        self._fill()
+        self.app.page.update()
+
+    def next_page(self, _event=None):
+        self._go(self.index + 1)
+
+    def back_page(self, _event=None):
+        self._go(self.index - 1)
+
+    def show_page(self, index):
+        """Seite direkt zeigen (Selbsttest, Bildschirmfotos)."""
+        self._go(index)
+
+    def finish(self, _event=None):
+        self._keep_draft()
+        error = fh.save_setup(self.draft["name"], self.draft["abschnitte"],
+                              self.draft["rp_termin_ap1"], self.draft["rp_termin_ap2"])
+        if error:
+            self.lbl_error.value = error
+            self.lbl_error.visible = True
+            self.app.page.update()
+            return
+        # Optionen mit den neuen Rahmenplan-Werten neu aufbauen
+        app = self.app
+        old = app.screens.get("settings")
+        app.screens["settings"] = SettingsScreen(app)
+        if old is not None and app.body.content is old.root:
+            app.body.content = app.screens["settings"].root
+        self.close()
+
+    def skip(self, _event=None):
+        self.close()
+
+    def close(self, seen=True):
+        if not self.closed:
+            self.closed = True
+            if seen:
+                fh.mark_tour_seen()
+        self.dialog.open = False
+        self.app.page.update()
+
+    def _dismissed(self, _event=None):
+        # Zurueck-Geste o. ae.: gilt wie "Ueberspringen"
+        if not self.closed:
+            self.closed = True
+            fh.mark_tour_seen()
 
 
 # ============================================================================
@@ -3718,7 +3901,7 @@ SCREEN_CLASSES = {
     "testproject": ProjectScreen, "abschluss": FinalProjectScreen,
     "notebook": NotebookScreen, "calc": CalcScreen,
     "progress": ProgressScreen,
-    "settings": SettingsScreen, "search": SearchScreen,
+    "settings": SettingsScreen, "search": SearchScreen, "help": HelpScreen,
 }
 
 
@@ -3864,7 +4047,11 @@ class FISIMobileApp:
         return ft.AppBar(
             leading=leading, leading_width=52 if root else None, title=title,
             bgcolor=C["bg"], elevation=0, color=C["text"],
-            actions=[ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
+            # Ab 0.56: Hilfe in der Kopfzeile (die untere Leiste hat schon 6 Punkte)
+            actions=[ft.IconButton(ft.Icons.HELP_OUTLINE_ROUNDED, icon_color=C["text_dim"],
+                                   tooltip=fh.HELP_TITLE,
+                                   on_click=lambda _e: self.open_help()),
+                     ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
                                    on_click=lambda _e: self.open("search")),
                      ft.Container(width=6)])
 
@@ -3923,8 +4110,41 @@ class FISIMobileApp:
         self.screens["cards"].set_category(category, topic)
         self.open("cards")
 
+    def open_help(self, section_id=None):
+        """Hilfe oeffnen (ab 0.56), auf Wunsch mit aufgeklapptem Abschnitt."""
+        screen = self.screens["help"]
+        views = self.page.views
+        on_top = bool(views) and bool(views[-1].controls) and \
+            views[-1].controls[0] is screen.root
+        if section_id:
+            screen.open_section(section_id)
+        if not on_top:
+            self.open("help")
+        else:
+            self.page.update()
+
+    def start_tour(self):
+        """Rundgang zeigen (ab 0.56): beim ersten Start oder aus Optionen/Hilfe."""
+        tour = getattr(self, "tour", None)
+        if tour is not None and tour.dialog.open:
+            return tour
+        self.tour = TourDialog(self)
+        self.tour.show()
+        return self.tour
+
+    def maybe_start_tour(self):
+        """Ab 0.56: Rundgang beim Start nur fuer neue Nutzer (Bestandsschutz,
+        siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        try:
+            if fh.tour_due(self.db):
+                self.start_tour()
+        except Exception:
+            traceback.print_exc()
+
     def open_search_hit(self, kind, title):
-        if kind == "Karteikarte":
+        if kind == fh.SEARCH_KIND:
+            self.open_help(fh.HELP_BY_TITLE[title]["id"])
+        elif kind == "Karteikarte":
             self.screens["cards"].jump_to_question(title)
             self.open("cards")
         elif kind == "Quizfrage":
@@ -4274,6 +4494,7 @@ def main(page: ft.Page):
     frp.warm_up()
     if os.environ.get("FISI_SELFTEST"):
         return
+    app.maybe_start_tour()
     app.sync.auto_start()
     app.auto_check(delay=app.AUTO_DELAY)
 
@@ -4598,6 +4819,27 @@ def selftest():
         game.picking = False
         game.slot_bar()
         app.screens["search"].search("raid")
+        # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
+        # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
+        tour = app.start_tour()
+        for _page in fh.TOUR_PAGES[1:]:
+            tour.next_page()
+        tour.back_page()
+        tour.show_page(len(fh.TOUR_PAGES) - 1)
+        tour.fields["rp_termin_ap1"].value = "31.02.2027"
+        tour.finish()   # speichert nichts: das Datum ist ungueltig
+        if not tour.lbl_error.visible:
+            failures.append("Rundgang: ungültiges Datum nicht abgelehnt")
+        tour.close(seen=False)
+        app.open_help("schutzprogramm")
+        if not app.screens["help"].folds["schutzprogramm"].opened:
+            failures.append("Hilfe: Abschnitt nicht aufgeklappt")
+        app.screens["search"].search("Schutzprogramm")
+        if not any(fh.SEARCH_KIND in str(getattr(control.content.controls[1].controls[0],
+                                                 "value", ""))
+                   for control in app.screens["search"].results.controls
+                   if isinstance(control, ft.Container)):
+            failures.append("Hilfe: Suche findet nichts")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
         app.screens["calc"].calc_screen()
