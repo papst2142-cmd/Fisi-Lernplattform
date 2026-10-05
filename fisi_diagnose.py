@@ -37,8 +37,9 @@ SUBTITLE = "Angaben für die Fehlersuche"
 HELP = ("Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. "
         "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
         "entfernt, deine Antworten und "
-        "Projekttexte stehen nicht darin. Kopiere den Bericht oder speichere ihn "
-        "als Datei und schicke ihn mit deiner Beschreibung des Problems.")
+        "Projekttexte stehen nicht darin. Speichere den Bericht als Datei (oder "
+        "kopiere ihn) und gib ihn mit deiner Beschreibung des Problems an die "
+        "Person weiter, von der du das Programm hast.")
 BTN_COPY = "Kopieren"
 BTN_SAVE = "Als Datei speichern"
 BTN_FOLDER = "Datenordner öffnen"

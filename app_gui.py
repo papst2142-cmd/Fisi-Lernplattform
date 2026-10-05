@@ -27,6 +27,7 @@ import time
 import traceback
 import webbrowser
 import tkinter as tk
+import _tkinter
 from tkinter import ttk, messagebox
 
 import customtkinter as ctk
@@ -57,6 +58,11 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    DELETE_SUBTITLE, DELETE_TITLE, HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
+    RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
+    RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
+    SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series, split_percent,
+    split_summary,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME,
     TRAINER_KINDS, TRAINER_LEVEL_NAME,
@@ -67,6 +73,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_hilfe as fh  # noqa: E402
 import fisi_rahmenplan as frp  # noqa: E402
 from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
@@ -80,11 +87,12 @@ from fisi_game_gui import (  # noqa: E402
     MilestoneMoment, OfficeView, close_badge_toasts, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
-    Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
+    Card, CalendarPanel, FoldCard, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
-    ScrollArea, ThemeTimeline, F,
+    ScrollArea, ShareBars, ThemeTimeline, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
+    apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
 )
 
 APP_TITLE = "FISI Lernplattform"
@@ -94,7 +102,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.55.1"
+APP_VERSION = "0.56"
 
 
 def _resource_path(filename):
@@ -119,6 +127,8 @@ NAV_ITEMS = [
                                  ("zuhause", "home", "Zuhause"), ("firma", "case", "Firma"),
                                  ("reise", "journey", "Reise")]),
     ("progress", "chart", "Fortschritt", None),
+    # Ab 0.56: Hilfe fuer neue Nutzer (Texte in fisi_hilfe.py, wie am Handy)
+    ("help", "help", fh.HELP_TITLE, None),
     ("settings", "gear", "Optionen", None),
 ]
 
@@ -128,7 +138,7 @@ NAV_SYMBOLS = {
     "ap1scenarios": "layers", "scenarios": "diamond", "testproject": "flag",
     "abschluss": "workspace_premium",
     "notebook": "edit_note", "calc": "calculate", "game": "sports_esports",
-    "progress": "insights", "settings": "settings",
+    "progress": "insights", "settings": "settings", "help": "help_outline",
     # Unterpunkte: Spiel
     "buero": "business", "kunde": "storefront", "zuhause": "home", "firma": "work",
     "reise": "route",
@@ -170,6 +180,7 @@ VIEW_TITLES = {
     "reise": ("SPIEL", "REISE"),
     "progress": ("AUSWERTUNG", "FORTSCHRITT"),
     "settings": ("SYSTEM", "OPTIONEN"),
+    "help": ("SYSTEM", "HILFE"),
     "search": ("SUCHE", "ERGEBNISSE"),
 }
 
@@ -189,14 +200,14 @@ class EntryBox(ctk.CTkEntry):
     def __init__(self, parent, width=18, value="", font=None):
         super().__init__(parent, width=width * 9 + 28, height=38,
                          corner_radius=10, border_width=1,
-                         fg_color=C["card_alt"], border_color=C["border"],
+                         fg_color=C["card_alt"], border_color=C["field_border"],
                          text_color=C["text_soft"], font=font or F["body"])
         # Aeltere Aufrufer greifen ueber .entry auf das Eingabefeld zu
         self.entry = self
         self._entry.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"], insertofftime=0)
         self.bind("<FocusIn>", lambda _e: self.configure(border_color=C["purple"]))
-        self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["border"]))
+        self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["field_border"]))
         if value:
             self.insert(0, value)
 
@@ -292,6 +303,11 @@ def clickable_row(parent, accent, bg=None):
 def bind_click(widgets, callback):
     for widget in widgets:
         widget.bind("<Button-1>", callback)
+    # Ab 0.56: die Zeile (erstes Element) ist per Tab erreichbar, Eingabe/
+    # Leertaste wirken wie ein Klick
+    widgets = list(widgets)
+    if widgets:
+        make_focusable(widgets[0], lambda: callback(None))
 
 
 def option_menu(parent, values, command=None, width=None):
@@ -571,6 +587,19 @@ class NavRow(ctk.CTkFrame):
             widget.bind("<Button-1>", self._on_click)
             widget.bind("<Enter>", lambda _e: self._hover(True))
             widget.bind("<Leave>", lambda _e: self._hover(False))
+        # Ab 0.56: Tastatur - Tab erreicht jeden Menuepunkt, Eingabe/Leertaste
+        # oeffnen ihn, Pfeil hoch/runter springen zum Nachbarpunkt
+        make_focusable(self, self._on_click)
+        tk.Misc.bind(self, "<Down>", lambda _e: self._arrow(True), "+")
+        tk.Misc.bind(self, "<Up>", lambda _e: self._arrow(False), "+")
+
+    def _arrow(self, forward):
+        """Ab 0.56: naechster/vorheriger Menuepunkt (nur innerhalb der Leiste)."""
+        command = "tk_focusNext" if forward else "tk_focusPrev"
+        target = str(self.tk.call(command, self._w))
+        if isinstance(self.nametowidget(target), NavRow):
+            focus_widget(self.nametowidget(target))
+        return "break"
 
     def _paint_chevron(self):
         if not self.chevron:
@@ -757,7 +786,7 @@ class Header(ctk.CTkFrame):
                   kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
-                                       border_width=1, border_color=C["border"])
+                                       border_width=1, border_color=C["field_border"])
         self.search_box.pack(side="right", padx=(0, 28), pady=14)
         IconCanvas(self.search_box, "search", size=16, icon_scale=0.75,
                    color=C["muted"], parent_bg=C["card"]).pack(side="left",
@@ -775,7 +804,7 @@ class Header(ctk.CTkFrame):
         self.search_entry.bind(
             "<FocusIn>", lambda _e: self.search_box.configure(border_color=C["purple"]))
         self.search_entry.bind(
-            "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["border"]))
+            "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["field_border"]))
 
     def _search(self):
         query = self.search_entry.get().strip()
@@ -801,7 +830,9 @@ class Header(ctk.CTkFrame):
 
 class View(ScrollArea):
     def __init__(self, parent, app):
-        super().__init__(parent, bg=C["bg"])
+        # Ab 0.56 mit fit_wrap: lange Texte brechen bei grosser Schrift bzw.
+        # schmalem Fenster innerhalb des sichtbaren Bereichs um
+        super().__init__(parent, bg=C["bg"], fit_wrap=True)
         self.app = app
         self.db = app.db
         self.content = transparent_frame(self.inner)
@@ -813,6 +844,18 @@ class View(ScrollArea):
 
     def on_show(self):
         pass
+
+    def prepare(self):
+        """Ab 0.56 (Vorladen, ViewPreloader): Ansichten mit Merkschluessel
+        (Fortschritt, Notizblock) schon verdeckt auffrischen - beim Anzeigen
+        erkennt on_show dann "unveraendert". True, wenn etwas zu tun war."""
+        if not hasattr(self, "_refresh_key"):
+            return False
+        key = self._refresh_key()
+        if key is not None and key == getattr(self, "_refreshed", None):
+            return False
+        self.on_show()
+        return True
 
 
 # ============================================================================
@@ -904,22 +947,16 @@ class DashboardView(View):
                                     C["orange"], parent_bg=C["card"])
         self.bar_scen.pack(fill="x", pady=8)
 
-        # --- Reihe 3: Heatmap und Fachbereiche ---------------------------
+        # --- Reihe 3: Fachbereiche ----------------------------------------
+        # Ab 0.56 ohne die Karte "Aktivitaet je Fachbereich" (Wunsch Nico); der
+        # Fortschritt je Fachbereich nimmt die ganze Breite ein. Die Aktivitaet
+        # je Thema steht weiter im Reinzoom eines Fachbereichs.
         row3 = self.row3 = transparent_frame(self.content)
         row3.pack(fill="x", pady=(14, 0))
-        row3.columnconfigure(0, weight=2, uniform="row3")
-        row3.columnconfigure(1, weight=3, uniform="row3")
-
-        heat_card = Card(row3, title="Aktivität je Fachbereich",
-                         subtitle="Auswahl zeigt die Themen", accent=C["accent2"])
-        heat_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
-        self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"],
-                               on_click=lambda index: self._toggle_zoom(CATEGORIES[index]))
-        self.heatmap.pack(fill="both", expand=True)
 
         fach_card = Card(row3, title="Fortschritt je Fachbereich",
                          subtitle="Auswahl zeigt die Themen", accent=C["green"])
-        fach_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        fach_card.pack(fill="x")
         holder = transparent_frame(fach_card.body)
         holder.pack(fill="x")
         self.fach_rings = {}
@@ -1055,7 +1092,7 @@ class DashboardView(View):
         streak = ("Lernserie: %s   ·   " % plural(self.db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
-            "Dein Lernstand",
+            fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             "%s%d von %d Inhalten bearbeitet   ·   "
             "Quiz-Erfolgsquote %d %%"
             % (streak, learned, self.total_content, round(rate)),
@@ -1099,13 +1136,6 @@ class DashboardView(View):
         self.chart.set_data(labels, [
             {"name": "Aufgaben pro Tag", "values": values, "color": C["accent"]},
         ])
-
-        # Heatmap
-        matrix = self.db.category_daily(self.DAYS)
-        rows = [(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
-                for cat in CATEGORIES]
-        self.heatmap.set_data(rows, self.DAYS, selected=CATEGORIES.index(self.zoom_category)
-                              if self.zoom_category else None)
 
         # Fachbereiche
         coverage = self.db.category_coverage(self.totals)
@@ -1316,6 +1346,9 @@ class CardsView(View):
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
         self.txt_answer = make_text(self.frame_free, height=5)
         self.txt_answer.pack(fill="x", pady=(8, 0))
+        # Ab 0.56: Strg+Eingabe prueft die Antwort direkt aus dem Textfeld
+        tk.Misc.bind(self.txt_answer._textbox, "<Control-Return>",
+                     lambda _e: (self.check_answer(), "break")[1])
 
         self.options = OptionList(self.input_area, bg=C["card"])
 
@@ -1652,7 +1685,8 @@ class QuizView(View):
         self.btn_start = NeoButton(row, "Session starten", self.start_quiz,
                                    kind="primary")
         self.btn_start.pack(side="left", padx=16)
-        self.lbl_pool = make_label(row, "", font=F["small"], fg=C["muted"])
+        self.lbl_pool = make_label(row, "", font=F["small"], fg=C["muted"],
+                                   wraplength=700, justify="left")  # ab 0.56: bricht bei Platzmangel um
         self.lbl_pool.pack(side="left")
 
         # Statusleiste
@@ -3562,6 +3596,9 @@ class NotebookView(View):
         IconButton(pager, "arrow_right", lambda: self.turn(1),
                    parent_bg=C["card"]).pack(side="right")
         self.refresh()
+        # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
+        # on_show direkt nach dem Aufbau alles ein zweites Mal
+        self._refreshed = self._refresh_key()
 
     def on_show(self):
         # Ab 0.50: steht der Notizblock noch genau so da (gleicher Datenbank-
@@ -4110,6 +4147,13 @@ class ProgressView(View):
         self.day_chart.pack(fill="both", expand=True, pady=(8, 0))
         self.lbl_days = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
         self.lbl_days.pack(anchor="w", pady=(6, 0))
+        # Ab 0.56: richtig/falsch je Tag in Prozent (gleicher Zeitraum)
+        make_label(day_card.body, SPLIT_CHART_TITLE.upper(), font=F["label"],
+                   fg=C["muted"]).pack(anchor="w", pady=(18, 0))
+        self.split_chart = ShareBars(day_card.body, height=190, parent_bg=C["card"])
+        self.split_chart.pack(fill="both", expand=True, pady=(6, 0))
+        self.lbl_split = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
+        self.lbl_split.pack(anchor="w", pady=(6, 0))
 
         # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan). Die Karte wird erst
         # nach dem ersten Zeichnen der Seite in diesen Platz gebaut (_fill_coverage)
@@ -4117,11 +4161,14 @@ class ProgressView(View):
         self.coverage_slot.pack(fill="x", pady=(14, 0))
         self.coverage_card = None
 
-        chart_card = Card(self.content, title="Ergebnisse im Zeitverlauf",
-                          subtitle="Erfolgsquote je Session")
+        # Ab 0.56: klar beschriftet, ohne Platzhalter-Punkt bei 0 %
+        chart_card = Card(self.content, title=RESULT_CHART_TITLE,
+                          subtitle=RESULT_CHART_SUBTITLE)
         chart_card.pack(fill="x", pady=(14, 0))
         self.chart = LineChart(chart_card.body, height=220, parent_bg=C["card"])
-        self.chart.pack(fill="both", expand=True)
+        self.lbl_chart_empty = make_label(chart_card.body, RESULT_CHART_EMPTY,
+                                          font=F["small"], fg=C["text_dim"],
+                                          wraplength=800, justify="left", anchor="w")
 
         table_card = Card(self.content, title="Historie der Prüfungssessions",
                           accent=C["purple"])
@@ -4164,8 +4211,8 @@ class ProgressView(View):
         controls.pack(fill="x", pady=(14, 0))
         NeoButton(controls, "Aktualisieren", self.refresh,
                   kind="ghost").pack(side="left")
-        NeoButton(controls, "Historie löschen", self.clear_history,
-                  kind="danger").pack(side="right")
+        # "Historie loeschen" steht ab 0.56 in den Optionen unter
+        # "Loeschen und zuruecksetzen"
 
     def _stat_card(self, parent, title, color, last=False):
         card = Card(parent, title=title, accent=color)
@@ -4214,18 +4261,21 @@ class ProgressView(View):
 
         # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
         self.activity = self.db.activity_days()
+        self.activity_split = self.db.activity_split_days()
         streak = learning_streak({day for day, count in self.activity.items() if count})
         self.stat_streak[0].configure(text="%d" % streak)
         self.stat_streak[1].configure(text="Tage in Folge")
 
-        ordered = list(reversed(results))[-20:]
-        labels = [row[0][5:10].replace("-", ".") for row in ordered]
-        values = [row[3] for row in ordered]
-        if not labels:
-            labels, values = ["heute"], [0]
-        self.chart.set_data(labels, [
-            {"name": "Erfolgsquote in %", "values": values, "color": C["accent2"]},
-        ], y_max=100)
+        labels, values = result_series(results)
+        if labels:
+            self.lbl_chart_empty.pack_forget()
+            self.chart.pack(fill="both", expand=True)
+            self.chart.set_data(labels, [
+                {"name": RESULT_CHART_SERIES, "values": values, "color": C["accent2"]},
+            ], y_max=100)
+        else:
+            self.chart.pack_forget()
+            self.lbl_chart_empty.pack(anchor="w")
 
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -4283,15 +4333,13 @@ class ProgressView(View):
               "color": C["accent"]}],
             goal=(target, goal_line_text(target), C["green"]) if target else None)
         self.lbl_days.configure(text=daily_summary(series, target))
-
-    def clear_history(self):
-        if messagebox.askyesno("Historie löschen",
-                               "Wirklich alle gespeicherten Testergebnisse und "
-                               "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
-                               "Dashboard bleiben erhalten."):
-            if self.db.clear_history():
-                self.refresh()
-                self.app.notify_progress()
+        split = daily_split_series(getattr(self, "activity_split", {}), self.day_pills.get())
+        labels = day_labels([(day, 0) for day, _r, _w in split])
+        self.split_chart.set_data(
+            [(label,) + split_percent(right, wrong)
+             for label, (_day, right, wrong) in zip(labels, split)],
+            names=(SPLIT_RIGHT, SPLIT_WRONG), empty=SPLIT_EMPTY_DAY)
+        self.lbl_split.configure(text=split_summary(split))
 
 
 # ============================================================================
@@ -4320,6 +4368,7 @@ class ColorTile(ctk.CTkFrame):
         name.pack(padx=10, pady=(6, 12))
         for widget in (self, strip, dots, name) + tuple(dots.winfo_children()):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
+        make_focusable(self, lambda: command(item["id"]))   # ab 0.56
 
 
 class BackgroundTile(ctk.CTkFrame):
@@ -4346,13 +4395,37 @@ class BackgroundTile(ctk.CTkFrame):
         name.pack(padx=10, pady=(0, 12))
         for widget in (self, card, dot, name):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
+        make_focusable(self, lambda: command(item["id"]))   # ab 0.56
 
 
 class SettingsView(View):
     def build(self):
+        # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am Handy)
+        tour = Card(self.content, title=fh.OPTIONS_TITLE, accent=C["green"],
+                    subtitle=fh.OPTIONS_SUBTITLE)
+        tour.pack(fill="x")
+        make_label(tour.body, fh.OPTIONS_TEXT, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        row = transparent_frame(tour.body)
+        row.pack(anchor="w", pady=(12, 0))
+        self.btn_tour = NeoButton(row, fh.BTN_TOUR, self.app.start_tour, kind="primary")
+        self.btn_tour.pack(side="left")
+        NeoButton(row, fh.BTN_HELP, lambda: self.app.show_view("help"),
+                  kind="ghost").pack(side="left", padx=10)
+        # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
+        make_label(tour.body, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(18, 0))
+        self.entry_name = EntryBox(tour.body, width=30, value=fh.load_name())
+        self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
+        self.entry_name.pack(anchor="w", pady=(6, 0))
+        self.entry_name.bind("<FocusOut>", lambda _e: self._save_name())
+        self.entry_name.bind("<Return>", lambda _e: self._save_name())
+        make_label(tour.body, fh.NAME_OPTION_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+
         updates = Card(self.content, title="Updates", accent=C["accent2"],
                        subtitle="installierte Version %s" % APP_VERSION)
-        updates.pack(fill="x")
+        updates.pack(fill="x", pady=(14, 0))
         row = transparent_frame(updates.body)
         row.pack(fill="x")
         self.btn_update = NeoButton(row, "Nach Updates suchen",
@@ -4369,8 +4442,21 @@ class SettingsView(View):
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
 
-        colors = Card(self.content, title="Farben", accent=C["accent"],
-                      subtitle="nur für dieses Gerät")
+        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar statt in einem
+        # Klappbereich, damit man sie auch mit schlechter Sicht schnell findet
+        fonts = Card(self.content, title=fisi_theme.FONT_TITLE, accent=C["accent"],
+                     subtitle=fisi_theme.FONT_SUBTITLE)
+        fonts.pack(fill="x", pady=(14, 0))
+        self.font_choice = fisi_game_gui.ChoiceRow(
+            fonts.body, fisi_theme.FONT_CHOICES, fisi_theme.current_font_size,
+            self.app.change_font_size)
+        self.font_choice.pack(anchor="w")
+        make_label(fonts.body, fisi_theme.FONT_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+
+        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        colors = FoldCard(self.content, title="Farben", accent=C["accent"],
+                          subtitle="nur für dieses Gerät", key="optionen_farben")
         colors.pack(fill="x", pady=(14, 0))
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
@@ -4514,7 +4600,7 @@ class SettingsView(View):
         make_label(sync.body,
                    "Auf PC und Handy dasselbe Repository und denselben "
                    "Zugangsschlüssel eintragen. Wie beides angelegt wird, steht "
-                   "in LIESMICH.txt unter „Abgleich PC und Handy“.",
+                   "in der „Hilfe“ unter „Abgleich einrichten“.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
         self.show_sync_status(None, None)
@@ -4579,18 +4665,6 @@ class SettingsView(View):
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
-        danger = Card(self.content, title="Daten zurücksetzen", accent=C["red"])
-        danger.pack(fill="x", pady=(14, 0))
-        make_label(danger.body,
-                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                   "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
-                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
-                   "Dieser Schritt lässt sich nicht rückgängig machen.",
-                   font=F["small"], fg=C["text_dim"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w")
-        NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
-                  kind="danger").pack(anchor="w", pady=(12, 0))
-
         game = Card(self.content, title="Spiel", accent=C["accent2"])
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = make_label(game.body, "", font=F["body_bold"],
@@ -4605,15 +4679,41 @@ class SettingsView(View):
         make_label(game.body, fisi_game.RENT_HELP
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w", pady=(0, 14))
-        self.lbl_reset = make_label(game.body, "", font=F["small"], fg=C["text_dim"],
-                                    wraplength=800, justify="left", anchor="w")
-        self.lbl_reset.pack(anchor="w")
-        NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
+                   justify="left", anchor="w").pack(anchor="w")
+
+        # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
+        # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
+        danger = FoldCard(self.content, title=DELETE_TITLE, accent=C["red"],
+                          subtitle=DELETE_SUBTITLE, key="optionen_loeschen")
+        danger.pack(fill="x", pady=(14, 0))
+        make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        make_label(danger.body,
+                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                   "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
+                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
+                   "Dieser Schritt lässt sich nicht rückgängig machen.",
+                   font=F["small"], fg=C["text_dim"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
                   kind="danger").pack(anchor="w", pady=(12, 0))
-        make_label(game.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
-                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(16, 0))
-        NeoButton(game.body, "Bestenliste löschen", self.reset_records,
+        make_label(danger.body, HISTORY_LABEL.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        make_label(danger.body, HISTORY_TEXT, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, HISTORY_BUTTON, self.clear_history,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
+        make_label(danger.body, "SPIELSTAND", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        self.lbl_reset = make_label(danger.body, "", font=F["small"], fg=C["text_dim"],
+                                    wraplength=800, justify="left", anchor="w")
+        self.lbl_reset.pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Spielstand zurücksetzen", self.reset_game,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
+        make_label(danger.body, "BESTENLISTE", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        make_label(danger.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Bestenliste löschen", self.reset_records,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
         about = Card(self.content, title="Über das Programm", accent=C["green"])
@@ -4678,6 +4778,26 @@ class SettingsView(View):
         else:
             frp.save_rp_settings(**{key: bool(self.rp_vars[key].get())})
 
+    def _save_name(self):
+        """Ab 0.56: Name aus den Optionen speichern (nur einstellungen.json)."""
+        name = fh.save_name(self.entry_name.get())
+        if self.entry_name.get() != name:
+            self.entry_name.set(name)
+        dashboard = self.app.views.built("dashboard")
+        if dashboard is not None:
+            dashboard.refresh()
+
+    def refresh_plan(self):
+        """Ab 0.56: Rahmenplan-Werte neu anzeigen (nach "Jetzt einrichten"),
+        dazu den Namen."""
+        self.entry_name.set(fh.load_name())
+        values = frp.load_rp_settings()
+        for key, var in self.rp_vars.items():
+            var.set(values[key])
+        for key, entry in self.rp_dates.items():
+            entry.set(frp.date_text(values[key]))
+        self.lbl_rp.pack_forget()
+
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
         settings["auto_check"] = bool(self.var_auto.get())
@@ -4734,6 +4854,13 @@ class SettingsView(View):
     def on_show(self):
         self._show_difficulty()
         self.after_idle(self._show_report)
+
+    def prepare(self):
+        """Ab 0.56 (Vorladen): Spielhinweise und Bericht schon verdeckt
+        eintragen (beim Anzeigen ist dann nichts mehr zu tun)."""
+        self._show_difficulty()
+        self._show_report()
+        return True
 
     # -- Problem melden (ab 0.54) ---------------------------------------------
 
@@ -4906,6 +5033,15 @@ class SettingsView(View):
         self.app.refresh_after_sync()
         self._show_difficulty()
 
+    def clear_history(self):
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        if messagebox.askyesno("Historie löschen",
+                               "Wirklich alle gespeicherten Testergebnisse und "
+                               "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
+                               "Dashboard bleiben erhalten."):
+            if self.db.clear_history():
+                self.app.notify_progress()
+
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
                                    "Wirklich ALLE Lerndaten unwiderruflich "
@@ -4937,7 +5073,9 @@ class SearchView(View):
         for child in self.results_box.winfo_children():
             child.destroy()
 
-        hits = search_content(query)
+        # Ab 0.56 zuerst die passenden Hilfe-Abschnitte
+        hits = [(fh.SEARCH_KIND, None, title, text)
+                for _id, title, text in fh.search_help(query)] + search_content(query)
         self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
@@ -4958,7 +5096,8 @@ class SearchView(View):
             bg=C["card"])
         row.pack(fill="x", pady=4)
 
-        head = ctk.CTkLabel(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
+        head = ctk.CTkLabel(inner, text="%s · %s" % (kind, CATEGORY_SHORT.get(category, ""))
+                            if category else kind,
                             text_color=C["muted"], font=F["tiny"], anchor="w",
                             height=0, cursor="hand2")
         head.pack(anchor="w")
@@ -4979,6 +5118,50 @@ class SearchView(View):
         for widget in (row, inner, head, title_label, detail_label, marker):
             widget.bind("<Enter>", lambda _e: row.configure(border_color=C["border_hi"]))
             widget.bind("<Leave>", lambda _e: row.configure(border_color=C["border"]))
+
+
+# ============================================================================
+#  HILFE (AB 0.56)
+# ============================================================================
+
+HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
+                "spiel": "accent2", "fortschritt": "purple", "sicherung": "accent2",
+                "update": "accent", "problem": "orange", "schutzprogramm": "red"}
+
+
+class HelpView(View):
+    """Kurze Hilfetexte als aufklappbare Kacheln (Texte in fisi_hilfe.py,
+    am Handy dieselben)."""
+
+    def build(self):
+        intro = Card(self.content, title=fh.HELP_TITLE, accent=C["green"],
+                     subtitle=fh.HELP_SUBTITLE)
+        intro.pack(fill="x")
+        make_label(intro.body, fh.HELP_INTRO, font=F["body"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        NeoButton(intro.body, fh.BTN_TOUR, self.app.start_tour,
+                  kind="ghost").pack(anchor="w", pady=(12, 0))
+        self.folds = {}
+        for section in fh.HELP_SECTIONS:
+            fold = FoldCard(self.content, title=section["titel"],
+                            accent=C[HELP_ACCENTS.get(section["id"], "accent")],
+                            key="hilfe_" + section["id"])
+            fold.pack(fill="x", pady=(14, 0))
+            make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
+                       wraplength=800, justify="left", anchor="w").pack(anchor="w")
+            self.folds[section["id"]] = fold
+
+    def open_section(self, section_id):
+        """Abschnitt aufklappen und in den sichtbaren Bereich holen (Suche)."""
+        fold = self.folds.get(section_id)
+        if fold is None:
+            return
+        if not fold.opened:
+            fold.toggle()
+        self.update_idletasks()
+        height = max(1, self.inner.winfo_height())
+        top = fold.winfo_y() + self.content.winfo_y()
+        self.canvas.yview_moveto(max(0.0, (top - px(10)) / float(height)))
 
 
 # ============================================================================
@@ -5171,6 +5354,261 @@ class BackupDialog(ctk.CTkToplevel):
     def _focus(self):
         self.lift()
         self.focus_force()
+
+
+class TourOverlay(tk.Frame):
+    """Erststart-Rundgang (ab 0.56): legt sich wie der Meilenstein-Moment
+    ueber das ganze Fenster. Seiten und Texte aus fisi_hilfe.py (wie am
+    Handy), letzter Schritt "Jetzt einrichten". Tastatur: Tab/Umschalt+Tab
+    wechselt zwischen den Bedienelementen, Eingabe bzw. Leertaste loest aus,
+    Esc ueberspringt. Nach "Ueberspringen" oder dem Speichern ist der Merker
+    "Rundgang gesehen" gesetzt (fh.mark_tour_seen)."""
+
+    def __init__(self, app, on_close=None):
+        root = app.root
+        super().__init__(root, bg=mix(C["bg"], "#000000", 0.45), cursor="")
+        self.app = app
+        self.root_window = root
+        self.on_close = on_close
+        self.index = 0
+        self.draft = fh.setup_values()
+        self.focusables = []
+        self.card = None
+        self.place(x=0, y=0, relwidth=1, relheight=1)
+        self.lift()
+        root.bind("<Escape>", lambda _e: self.skip())
+        try:
+            self.grab_set()      # Klicks gehen nicht an die Ansicht darunter
+        except tk.TclError:
+            pass                 # ohne sichtbares Fenster (Starttest)
+        self._show()
+
+    # -- Aufbau ------------------------------------------------------------
+
+    def _show(self):
+        if self.card is not None:
+            self.card.destroy()
+        self.focusables = []
+        page = fh.TOUR_PAGES[self.index]
+        last = self.index == len(fh.TOUR_PAGES) - 1
+        self.card = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=22,
+                                 border_width=2, border_color=C["accent"])
+        self.card.place(relx=0.5, rely=0.5, anchor="center")
+        body = transparent_frame(self.card)
+        body.pack(padx=px(30), pady=px(24))
+        head = transparent_frame(body)
+        head.pack(fill="x")
+        make_label(head, ("%s · %s" % (fh.TOUR_TITLE, fh.TOUR_STEP % (
+            self.index + 1, len(fh.TOUR_PAGES)))).upper(), font=F["label"],
+            fg=C["accent"]).pack(side="left")
+        dots = tk.Canvas(head, width=px(16) * len(fh.TOUR_PAGES), height=px(12),
+                         bg=C["card"], highlightthickness=0, bd=0)
+        for number in range(len(fh.TOUR_PAGES)):
+            x = px(16) * number + px(6)
+            color = C["accent"] if number == self.index else C["border_hi"]
+            dots.create_oval(x - px(4), px(2), x + px(4), px(10), fill=color, outline="")
+        dots.pack(side="right")
+        make_label(body, page["titel"], font=F["h1"], fg=C["text"],
+                   anchor="w").pack(anchor="w", pady=(px(10), 0))
+        make_label(body, page["text"], font=F["body"], fg=C["text_soft"],
+                   wraplength=px(560), justify="left", anchor="w").pack(
+            anchor="w", pady=(px(8), 0))
+        self.lbl_error = None
+        if last:
+            self._build_setup(body)
+
+        buttons = transparent_frame(body)
+        buttons.pack(fill="x", pady=(px(20), 0))
+        skip = NeoButton(buttons, fh.TOUR_SKIP, self.skip, kind="ghost",
+                         parent_bg=C["card"])
+        skip.pack(side="left")
+        main = NeoButton(buttons, fh.TOUR_FINISH if last else fh.TOUR_NEXT,
+                         self.finish if last else self.next_page, kind="primary",
+                         parent_bg=C["card"])
+        main.pack(side="right")
+        back = None
+        if self.index:
+            back = NeoButton(buttons, fh.TOUR_BACK, self.back_page, kind="ghost",
+                             parent_bg=C["card"])
+            back.pack(side="right", padx=(0, 10))
+        for button in ([main, back, skip] if back else [main, skip]):
+            self._focusable_button(button)
+        make_label(body, fh.TOUR_KEYS, font=F["tiny"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(12), 0))
+        self._bind_tab()
+        # Fokus: erstes Eingabefeld der Einrichtung, sonst "Weiter"
+        first = self.focusables[0]
+        try:
+            first.focus_set()
+        except tk.TclError:
+            pass
+
+    def _build_setup(self, body):
+        """Letzter Schritt "Jetzt einrichten": Name, Abschnitte, Termine."""
+        form = transparent_frame(body)
+        form.pack(fill="x", pady=(px(14), 0))
+        make_label(form, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w")
+        self.entry_name = EntryBox(form, width=30, value=self.draft["name"])
+        self.entry_name.pack(anchor="w", pady=(6, 0))
+        self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
+        make_label(form, fh.SETUP_PLAN.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(14), 0))
+        self.section_vars = {}
+        switches = []
+        for section in frp.OPTIONAL_SECTIONS:
+            var = self.section_vars[section] = tk.BooleanVar(
+                value=self.draft["abschnitte"][section])
+            switch = ctk.CTkSwitch(form, text=frp.SECTION_OPTION_TEXT[section], variable=var,
+                                   font=F["small"], text_color=C["text_dim"],
+                                   fg_color=C["card_alt"], progress_color=C["violet"],
+                                   button_color=C["text"], button_hover_color="#FFFFFF")
+            switch.pack(anchor="w", pady=(6, 0))
+            switches.append(switch)
+        make_label(form, fh.SETUP_PLAN_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=px(560), justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(6, 0))
+        make_label(form, fh.SETUP_DATES.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(px(14), 0))
+        row = transparent_frame(form)
+        row.pack(anchor="w", pady=(6, 0))
+        self.date_entries = {}
+        for column, (key, text) in enumerate((("rp_termin_ap1", frp.AP1_DATE_TEXT),
+                                              ("rp_termin_ap2", frp.AP2_DATE_TEXT))):
+            make_label(row, text, font=F["small"], fg=C["text_dim"]).pack(
+                side="left", padx=(28 if column else 0, 10))
+            entry = self.date_entries[key] = EntryBox(row, width=11,
+                                                      value=self.draft[key])
+            entry.pack(side="left")
+        make_label(form, fh.SETUP_DATES_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=px(560), justify="left", anchor="w").pack(anchor="w",
+                                                                        pady=(6, 0))
+        self.lbl_error = make_label(form, "", font=F["small"], fg=C["red"], anchor="w")
+        self.lbl_error.pack(anchor="w", pady=(6, 0))
+        # Reihenfolge fuer Tab: Name, Schalter, Termine (dann die Knoepfe)
+        for entry in [self.entry_name] + switches + list(self.date_entries.values()):
+            self._focusable_input(entry)
+
+    # -- Tastatur ----------------------------------------------------------
+
+    @staticmethod
+    def _focus_target(widget):
+        """Das Tk-Element, das bei customtkinter den Fokus bekommt: das innere
+        Eingabefeld (CTkEntry), die innere Beschriftung (NeoButton/CTkLabel)
+        bzw. der Text des Schalters (CTkSwitch)."""
+        for name in ("_entry", "_text_label", "_label"):
+            inner = getattr(widget, name, None)
+            if isinstance(inner, tk.Widget):
+                return inner
+        return widget
+
+    def _focus_ring(self, target):
+        """Sichtbarer Fokusrahmen in der Akzentfarbe (nur mit Fokus)."""
+        target.configure(takefocus=1, highlightthickness=2, highlightcolor=C["accent"],
+                         highlightbackground=C["card"])
+
+    def _focusable_button(self, button):
+        target = self._focus_target(button)
+        self._focus_ring(target)
+        for key in ("<Return>", "<KP_Enter>", "<space>"):
+            tk.Misc.bind(target, key, lambda _e, b=button: (b._on_click(), "break")[1])
+        self.focusables.append(button)
+
+    def _focusable_input(self, widget):
+        target = self._focus_target(widget)
+        if isinstance(widget, ctk.CTkSwitch):
+            self._focus_ring(target)
+            for key in ("<Return>", "<KP_Enter>", "<space>"):
+                tk.Misc.bind(target, key, lambda _e, w=widget: (w.toggle(), "break")[1])
+        else:
+            for key in ("<Return>", "<KP_Enter>"):
+                tk.Misc.bind(target, key, lambda _e: (self.finish(), "break")[1])
+        # Eingaben stehen vor den Knoepfen
+        self.focusables.insert(len([w for w in self.focusables
+                                    if not isinstance(w, NeoButton)]), widget)
+
+    def _bind_tab(self):
+        targets = [self._focus_target(widget) for widget in self.focusables]
+        for position, target in enumerate(targets):
+            forward = targets[(position + 1) % len(targets)]
+            backward = targets[position - 1]
+            tk.Misc.bind(target, "<Tab>", lambda _e, w=forward: (w.focus_set(), "break")[1])
+            for key in ("<Shift-Tab>", "<ISO_Left_Tab>"):
+                try:
+                    tk.Misc.bind(target, key,
+                                 lambda _e, w=backward: (w.focus_set(), "break")[1])
+                except tk.TclError:
+                    pass   # ISO_Left_Tab gibt es nicht auf jedem System
+
+    # -- Ablauf ------------------------------------------------------------
+
+    def _keep_draft(self):
+        if self.index == len(fh.TOUR_PAGES) - 1 and self.card is not None:
+            self.draft["name"] = self.entry_name.get()
+            self.draft["abschnitte"] = {key: bool(var.get())
+                                        for key, var in self.section_vars.items()}
+            for key, entry in self.date_entries.items():
+                self.draft[key] = entry.get()
+
+    def next_page(self):
+        if self.index + 1 < len(fh.TOUR_PAGES):
+            self._keep_draft()
+            self.index += 1
+            self._show()
+
+    def back_page(self):
+        if self.index:
+            self._keep_draft()
+            self.index -= 1
+            self._show()
+
+    def show_page(self, index):
+        """Seite direkt zeigen (Starttest, Bildschirmfotos)."""
+        self._keep_draft()
+        self.index = max(0, min(index, len(fh.TOUR_PAGES) - 1))
+        self._show()
+
+    def finish(self):
+        """Einrichtung speichern; bei einem ungueltigen Datum bleibt die Seite
+        offen und nennt den Fehler (nichts wird gespeichert)."""
+        if self.index != len(fh.TOUR_PAGES) - 1:
+            self.next_page()
+            return
+        self._keep_draft()
+        error = fh.save_setup(self.draft["name"], self.draft["abschnitte"],
+                              self.draft["rp_termin_ap1"], self.draft["rp_termin_ap2"])
+        if error:
+            self.lbl_error.configure(text=error)
+            for key, entry in self.date_entries.items():
+                if fh.check_date(self.draft[key])[1]:
+                    entry.configure(border_color=C["red"])
+                    break
+            return
+        settings_view = self.app.views.built("settings")
+        if settings_view is not None:
+            settings_view.refresh_plan()
+        dashboard = self.app.views.built("dashboard")
+        if dashboard is not None:   # Begruessung mit dem neuen Namen
+            dashboard.refresh()
+        self.close(seen=True)
+
+    def skip(self):
+        self.close(seen=True)
+
+    def close(self, seen=True):
+        if seen:
+            fh.mark_tour_seen()
+        try:
+            self.root_window.unbind("<Escape>")
+        except tk.TclError:
+            pass
+        try:
+            self.grab_release()
+        except tk.TclError:
+            pass
+        self.destroy()
+        if self.on_close is not None:
+            self.on_close()
 
 
 class UpdateDialog(ctk.CTkToplevel):
@@ -5380,6 +5818,215 @@ class LazyViews(dict):
         return len(self._classes)
 
 
+# Ab 0.56 (Plan Abschnitt 3): Grosse Ansichten werden nach dem Start im
+# Hintergrund vorbereitet, damit das erste Oeffnen nicht wartet. Reihenfolge
+# nach Dauer beim ersten Oeffnen (Messung 0.56, bericht.md). Ein Schritt ist
+# ("view", Ansicht) - Ansicht aufbauen und Inhalt zeichnen - oder
+# ("tab", Ansicht, Reiter) - einen Reiter von Firma bzw. Reise vorbauen.
+PRELOAD_VIEWS = ("progress", "cards", "quiz", "notebook", "game", "settings", "calc",
+                 "ap1scenarios", "scenarios", "testproject", "abschluss")
+# Spielansichten erst, wenn der Spielstand gewaehlt ist (vorher zeigen sie
+# nur die Auswahl)
+PRELOAD_GAME_VIEWS = ("firma", "reise", "zuhause", "buero", "kunde")
+PRELOAD_START_MS = 1500   # nach dem ersten Zeichnen des Dashboards
+PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
+PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste, bevor der naechste Schritt laeuft
+
+
+def preload_tasks(slot_chosen):
+    """Liste der Vorlade-Schritte (ohne Reiter, die kennt erst die Ansicht)."""
+    tasks = [("view", key) for key in PRELOAD_VIEWS]
+    if slot_chosen:
+        tasks += [("view", key) for key in PRELOAD_GAME_VIEWS]
+    return tasks
+
+
+class ViewPreloader:
+    """Ab 0.56: bereitet die Ansichten aus PRELOAD_VIEWS nacheinander vor.
+
+    Tk ist nicht threadfaehig - deshalb laeuft jeder Schritt im Hauptthread
+    als eigener Zeitgeber (root.after), dazwischen kommt die Ereignisschleife
+    dran. Ein Klick oder eine Taste hat Vorrang: Der naechste Schritt wartet,
+    bis PRELOAD_IDLE_MS lang nichts mehr kam, und eine Ansicht, die der
+    Nutzer schon selbst geoeffnet hat, wird uebersprungen. Die Zeitgeber
+    sind gewoehnliche after-Auftraege und werden beim Beenden mit allen
+    anderen abgebrochen (FISIApp.on_close); ein Schritt nach dem Schliessen
+    tut nichts."""
+
+    def __init__(self, app):
+        self.app = app
+        self.root = app.root
+        self.queue = []
+        self.job = None
+        self.done = False
+        self.steps_done = 0
+        self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
+        self.last_input = 0.0
+        for sequence in ("<ButtonPress>", "<KeyPress>"):
+            self.root.bind_all(sequence, self._input, add="+")
+
+    def _input(self, _event=None):
+        self.last_input = time.monotonic()
+
+    def start(self, delay=PRELOAD_START_MS):
+        """(Neu) beginnen - beim Start und nach dem Neuaufbau (Farbwechsel)."""
+        self.queue = preload_tasks(self.app.slot_chosen)
+        self.done = False
+        self._schedule(delay)
+
+    def add_game(self):
+        """Nach der Wahl des Spielstands die Spielansichten nachreichen."""
+        for task in preload_tasks(True):
+            if task[1] in PRELOAD_GAME_VIEWS and task not in self.queue:
+                self.queue.append(task)
+        self.done = False
+        self._schedule(PRELOAD_GAP_MS)
+
+    def _schedule(self, delay):
+        if self.job is not None or self.app._closing:
+            return
+        try:
+            self.job = self.root.after(delay, self._step)
+        except tk.TclError:
+            self.job = None   # Fenster schon abgebaut
+
+    def _step(self):
+        self.job = None
+        app = self.app
+        if app._closing:
+            return
+        quiet = time.monotonic() - self.last_input
+        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0:
+            self._schedule(max(PRELOAD_GAP_MS,
+                               int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
+            return
+        while self.queue:
+            task = self.queue.pop(0)
+            if self._run(task):
+                break   # pro Zeitgeber nur ein echter Schritt
+        if self.queue:
+            self._schedule(PRELOAD_GAP_MS)
+        else:
+            self.done = True
+
+    def _run(self, task):
+        """Einen Schritt ausfuehren. True, wenn dabei etwas aufgebaut wurde."""
+        app = self.app
+        key = task[1]
+        if key in GAME_SUBVIEWS and not app.slot_chosen:
+            return False
+        if key == app.current:
+            return False   # die sichtbare Ansicht gehoert dem Nutzer
+        views = app.views
+        try:
+            focus = self.root.focus_get()
+        except (KeyError, tk.TclError):
+            focus = None
+        started = time.perf_counter()
+        worked = False
+        app.preloading = True
+        try:
+            view = views.built(key)
+            if task[0] == "view":
+                if view is None:
+                    view = views[key]   # baut auf und legt nach unten (LazyViews)
+                    worked = True
+                prepare = getattr(view, "prepare", None)
+                if prepare is not None and prepare():
+                    worked = True
+                if worked:
+                    # Reiter erst nach der Ansicht (sie kennt ihre Reiter)
+                    tabs = getattr(view, "preload_tabs", None)
+                    if tabs is not None:
+                        position = self.queue.index(task) + 1 if task in self.queue else 0
+                        self.queue[position:position] = [("tab", key, tab) for tab in tabs()]
+            elif view is not None:
+                worked = bool(view.prepare_tab(task[2]))
+        except Exception:
+            # Vorladen darf nie stoeren: Fehler nur protokollieren, beim
+            # Oeffnen baut die Ansicht dann wie bisher selbst auf
+            log_exception(*sys.exc_info())
+            worked = True
+        finally:
+            app.preloading = False
+        try:
+            # Eine Ansicht, die beim Aufbau den Fokus nimmt (z.B. ein
+            # Eingabefeld), soll ihn dem Nutzer nicht wegnehmen
+            if focus is not None and focus.winfo_exists() and \
+                    self.root.focus_get() is not focus:
+                focus.focus_set()
+        except (KeyError, tk.TclError):
+            pass
+        if worked:
+            self.steps_done += 1
+            self.step_ms[task] = round((time.perf_counter() - started) * 1000)
+            # So lange dauert das Zeichnen ungefaehr auch spaeter, wenn sich
+            # etwas geaendert hat - Grundlage fuer die Ladeanzeige
+            app.cost_ms.setdefault(task, self.step_ms[task])
+        return worked
+
+
+def _needs_work(view):
+    """Ab 0.56: Muss eine schon aufgebaute Ansicht beim Anzeigen neu
+    zeichnen? (Ansichten mit Merkschluessel; die anderen frischen beim
+    Anzeigen nur Kleinigkeiten auf.)"""
+    try:
+        if hasattr(view, "_unchanged"):
+            return not view._unchanged()
+        if hasattr(view, "_refresh_key"):
+            key = view._refresh_key()
+            return key is None or key != getattr(view, "_refreshed", None)
+    except Exception:
+        return True
+    return False
+
+
+class LoadingHint:
+    """Ab 0.56: Ladeanzeige als Rueckfall. Dauert das Oeffnen einer Ansicht
+    (oder eines Reiters) voraussichtlich laenger als LOADING_THRESHOLD_MS,
+    liegt waehrend des Aufbaus "Wird geladen ..." ueber dem Inhaltsbereich.
+    Voraussichtlich: noch nicht vorbereitet und als gross bekannt, oder das
+    letzte Neuzeichnen dauerte so lange (gemessen bis zum Zeichnen)."""
+
+    def __init__(self, app, task, needed):
+        self.app = app
+        self.task = task
+        self.needed = needed
+        self.frame = None
+        self.started = None
+
+    def __enter__(self):
+        app = self.app
+        if not self.needed or app._loading is not None:
+            return self    # nichts zu tun bzw. schon eine Anzeige offen (verschachtelt)
+        self.started = time.perf_counter()
+        if app.expected_ms(self.task) > fisi_theme.LOADING_THRESHOLD_MS:
+            self.frame = app._show_loading()
+        app._loading = self
+        return self
+
+    def __exit__(self, *_exc):
+        app = self.app
+        if app._loading is not self:
+            return False
+        app._loading = None
+        try:
+            if self.frame is not None:
+                # Erst fertig zeichnen (unter der Anzeige), dann aufdecken
+                app.root.update_idletasks()
+                app._hide_loading(self.frame)
+                app.cost_ms[self.task] = (time.perf_counter() - self.started) * 1000
+            else:
+                started = self.started
+
+                def done():
+                    app.cost_ms[self.task] = (time.perf_counter() - started) * 1000
+                app.root.after_idle(done)
+        except tk.TclError:
+            pass   # Fenster inzwischen geschlossen
+        return False
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -5389,8 +6036,13 @@ class FISIApp:
         root.configure(fg_color=C["bg"])
         _apply_window_icon(root)
 
+        # Ab 0.56: Schriftgroesse (Optionen, je Geraet) vor dem Aufbau
+        apply_ui_scale(fisi_theme.font_factor())
         setup_fonts(root)
         self._setup_ttk_style()
+        # Ab 0.56: Tab-Steuerung und Fokusrahmen; verdeckte Ansichten auslassen
+        install_keyboard(root)
+        set_focus_filter(self._focus_allowed)
 
         self.db = DBManager(error_handler=self._db_error)
         self.container = None
@@ -5398,8 +6050,17 @@ class FISIApp:
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._closing = False      # on_close laeuft schon (ab 0.55.1)
         self.update_exit = False   # Beenden fuer ein Update (ab 0.55.1)
+        # Ab 0.56: Vorladen und Ladeanzeige (ViewPreloader, LoadingHint)
+        self.preloading = False    # ein Vorlade-Schritt laeuft gerade
+        self._loading = None       # offene Ladeanzeige (LoadingHint)
+        self._pumping = False      # Ladeanzeige wird gerade gezeichnet
+        self.cost_ms = {}          # Schritt -> zuletzt gemessene Dauer beim Oeffnen
         self._build_ui()
         self.show_view("dashboard")
+        # Erst wenn das Dashboard steht (der Zeitgeber laeuft nach dem ersten
+        # Zeichnen in mainloop), die grossen Ansichten nacheinander vorbereiten
+        self.preloader = ViewPreloader(self)
+        self.preloader.start()
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
 
@@ -5416,6 +6077,8 @@ class FISIApp:
             root.after(3000, self.updater.auto_check)
             # Erinnerung ans Tagesziel (ab 0.51), nach dem Abgleich
             root.after(8000, self.check_reminder)
+            # Ab 0.56: Erststart-Rundgang, nur bei leerer Datenbank ohne Merker
+            root.after(600, self.maybe_start_tour)
 
     def _build_ui(self, show=True):
         """Seitenleiste, Kopfzeile und alle Ansichten (auch zum Neuaufbau
@@ -5453,10 +6116,46 @@ class FISIApp:
             ("kunde", CustomerView), ("zuhause", HomeView),
             ("firma", FirmView), ("filiale", BranchView), ("serverfarm", FarmView),
             ("reise", JourneyView),
-            ("progress", ProgressView),
+            ("progress", ProgressView), ("help", HelpView),
             ("settings", SettingsView), ("search", SearchView)))
 
         self.current = None
+
+    def _focus_allowed(self, path):
+        """Ab 0.56: Tab springt nur in die sichtbare Ansicht (die anderen
+        liegen verdeckt darunter und waeren fuer Tk sonst erreichbar)."""
+        views = getattr(self, "views", None)
+        if views is None:
+            return True
+        for key in list(views.keys()):
+            view = views.built(key)
+            if view is None or key == self.current:
+                continue
+            if path.startswith(str(view) + "."):
+                return False
+        return True
+
+    def change_font_size(self, size_id):
+        """Ab 0.56: Schriftgroesse speichern und die Oberflaeche in der neuen
+        Groesse neu aufbauen (wie beim Farbwechsel, gilt sofort)."""
+        if self._recoloring or size_id == fisi_theme.current_font_size:
+            return
+        self._recoloring = True
+        started = time.monotonic()
+        overlay = self._show_busy(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
+        try:
+            fisi_theme.save_font_size(size_id)
+            apply_ui_scale(fisi_theme.font_factor())
+            setup_fonts(self.root)
+            self._setup_ttk_style()
+            self._recolor(None, None, overlay)
+        finally:
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                time.sleep(rest)
+            self._hide_busy(overlay)
+            self._recoloring = False
+            self.root.configure(cursor="")
 
     def change_color(self, preset_id=None, background_id=None, mode=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
@@ -5478,7 +6177,7 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
 
-    def _show_busy(self):
+    def _show_busy(self, title=None, text=None):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
         deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
         (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
@@ -5493,9 +6192,10 @@ class FISIApp:
                                           C["accent"], C["ring_bg"]), px(56), px(56))
         ring.create_image(px(28), px(28), image=ring._photo)
         ring.pack(pady=(px(26), px(10)))
-        make_label(card, fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+        make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
                    bg=C["card"]).pack(padx=px(40))
-        make_label(card, fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"], bg=C["card"],
+        make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"],
+                   bg=C["card"],
                    wraplength=px(440), justify="center").pack(padx=px(40),
                                                                pady=(px(6), px(26)))
         overlay.lift()
@@ -5559,6 +6259,10 @@ class FISIApp:
         self.root.update()
         old.destroy()
         self._cancel_orphaned_timers()
+        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        preloader = getattr(self, "preloader", None)
+        if preloader is not None:
+            preloader.start()
 
     def _cancel_orphaned_timers(self):
         """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
@@ -5619,6 +6323,23 @@ class FISIApp:
         # Spielstand waehlen (Auswahlbildschirm in der Spiel-Ansicht)
         if key in GAME_SUBVIEWS and not self.slot_chosen:
             key = "game"
+        if self._pumping:
+            return   # Klick waehrend die Ladeanzeige erscheint (ab 0.56)
+        if key not in self.views:
+            return
+        # Ab 0.56: Ladeanzeige, falls das Oeffnen voraussichtlich dauert
+        # Bei einer schon aufgebauten Ansicht nur dann nachsehen, ob sie neu
+        # zeichnen muss (kostet selbst etwas), wenn sie dabei bisher lange brauchte
+        built = self.views.built(key)
+        task = ("view", key)
+        needed = built is None or (
+            self.expected_ms(task) > fisi_theme.LOADING_THRESHOLD_MS and _needs_work(built))
+        with LoadingHint(self, task, needed):
+            if self._closing:
+                return
+            self._show_view(key)
+
+    def _show_view(self, key):
         view = self.views.get(key)
         if view is None:
             return
@@ -5644,6 +6365,59 @@ class FISIApp:
         self.update_slot_label()
         self.notify_progress(refresh_view=False)
 
+    def opening(self, task, needed):
+        """Ab 0.56: Ladeanzeige fuer andere Wechsel (Reiter von Firma und
+        Reise), siehe LoadingHint."""
+        return LoadingHint(self, task, needed)
+
+    def expected_ms(self, task):
+        """Voraussichtliche Dauer eines Schritts in ms: zuletzt gemessen,
+        sonst fuer bekannt grosse Ansichten und Reiter knapp ueber der
+        Schwelle der Ladeanzeige."""
+        if task in self.cost_ms:
+            return self.cost_ms[task]
+        if task[0] == "tab" or task in preload_tasks(True):
+            return fisi_theme.LOADING_THRESHOLD_MS + 1
+        return 0
+
+    def _show_loading(self):
+        """Ladeanzeige ueber dem Inhaltsbereich zeigen und sofort zeichnen.
+        Waehrenddessen faengt sie Klicks und Tasten ab (grab, wie beim
+        Farbwechsel); es laufen nur Fensterereignisse, keine Zeitgeber."""
+        hint = tk.Frame(self.root, bg=C["bg"], cursor="watch")
+        hint.place(in_=self.view_area, x=0, y=0, relwidth=1, relheight=1)
+        card = ctk.CTkFrame(hint, fg_color=C["card"], corner_radius=px(14),
+                            border_width=1, border_color=C["border_hi"])
+        card.place(relx=0.5, rely=0.4, anchor="center")
+        make_label(card, fisi_theme.LOADING_TEXT, font=F["body_bold"], fg=C["text_dim"],
+                   bg=C["card"]).pack(padx=px(34), pady=px(18))
+        hint.lift()
+        try:
+            hint.grab_set()
+        except tk.TclError:
+            pass   # ohne sichtbares Fenster gibt es keinen grab
+        self._pumping = True
+        try:
+            self.root.update_idletasks()
+            for _ in range(100):
+                if self._closing or not self.root.tk.dooneevent(
+                        _tkinter.WINDOW_EVENTS | _tkinter.DONT_WAIT):
+                    break
+            if not self._closing:
+                self.root.update_idletasks()
+        except tk.TclError:
+            pass   # waehrenddessen geschlossen (X am Fenster)
+        finally:
+            self._pumping = False
+        return hint
+
+    def _hide_loading(self, hint):
+        try:
+            hint.grab_release()
+            hint.destroy()
+        except tk.TclError:
+            pass
+
     def update_slot_label(self):
         """Platzanzeige im Kopf der Spielansichten (ab 0.48)."""
         text = ""
@@ -5652,6 +6426,29 @@ class FISIApp:
             if game_view is not None and not game_view.picking:
                 text = game_view.game.active_label()
         self.header.set_slot(text)
+
+    def maybe_start_tour(self):
+        """Rundgang beim Start (ab 0.56) - nur fuer neue Nutzer (Bestandsschutz,
+        siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        try:
+            if fh.tour_due(self.db):
+                self.start_tour()
+        except Exception:
+            log_exception(*sys.exc_info())
+
+    def start_tour(self):
+        """Rundgang zeigen (beim ersten Start oder aus Optionen/Hilfe)."""
+        current = getattr(self, "tour", None)
+        if current is not None and current.winfo_exists():
+            current.lift()
+            return current
+        self.tour = TourOverlay(self)
+        return self.tour
+
+    def open_help(self, section_id=None):
+        self.show_view("help")
+        if section_id:
+            self.views["help"].open_section(section_id)
 
     def open_slot_picker(self):
         self.views["game"].open_picker()
@@ -5674,7 +6471,9 @@ class FISIApp:
         self.show_view("calc")
 
     def open_search_hit(self, kind, title):
-        if kind == "Karteikarte":
+        if kind == fh.SEARCH_KIND:
+            self.open_help(fh.HELP_BY_TITLE[title]["id"])
+        elif kind == "Karteikarte":
             self.show_view("cards")
             self.views["cards"].jump_to_question(title)
         elif kind == "Quizfrage":
@@ -5981,6 +6780,32 @@ def _run_selftest(root, app, log_path):
                 if "Programmversion: %s" % APP_VERSION not in \
                         settings_view.report_box.get("1.0", "end"):
                     failures.append("Problem melden: Bericht fehlt")
+                # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
+                # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
+                tour = app.start_tour()
+                for _page in fh.TOUR_PAGES[1:]:
+                    tour.next_page()
+                    root.update()
+                tour.back_page()
+                tour.show_page(len(fh.TOUR_PAGES) - 1)
+                tour.date_entries["rp_termin_ap1"].set("31.02.2027")
+                tour.finish()   # speichert nichts: das Datum ist ungueltig
+                if not tour.winfo_exists() or not tour.lbl_error.cget("text"):
+                    failures.append("Rundgang: ungültiges Datum nicht abgelehnt")
+                tour.close(seen=False)
+                root.update()
+                app.open_help("schutzprogramm")
+                root.update()
+                if not app.views["help"].folds["schutzprogramm"].opened:
+                    failures.append("Hilfe: Abschnitt nicht aufgeklappt")
+                app.do_search("Schutzprogramm")
+                root.update()
+                if not fh.search_help("Schutzprogramm"):
+                    failures.append("Hilfe: Suche findet nichts")
+                app.open_search_hit(fh.SEARCH_KIND, fh.HELP_SECTIONS[0]["titel"])
+                root.update()
+                app.show_view("settings")
+                root.update()
                 # Grundfarbe wechseln baut alle Ansichten neu auf
                 original = fisi_theme.current_preset
                 app.change_color("gruen_lime")

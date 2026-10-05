@@ -32,6 +32,7 @@ if os.environ.get("FLET_APP_STORAGE_DATA") and not os.environ.get("FISI_DB_PATH"
 import flet as ft  # noqa: E402
 
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_hilfe as fh  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -53,7 +54,11 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
-    DAY_CHART_RANGES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
+    HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
+    RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
+    SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
+    split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
@@ -71,7 +76,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.55.1"
+APP_VERSION = "0.56"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -142,6 +147,11 @@ def rate_row(command):
 # ============================================================================
 #  BASIS
 # ============================================================================
+
+# Ab 0.56: Beschriftungen fuer Symbol-Knoepfe (TalkBack liest sie vor)
+PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+SEARCH_TEXT = "Suchen"
+
 
 class Screen:
     """Eine Seite der App. build() liefert den Inhalt, on_show() frischt ihn
@@ -245,7 +255,6 @@ class DashboardScreen(Screen):
         self.bar_quiz = ui.GradientBar("Quizfragen", C["purple"], C["accent2"])
         self.bar_ap1 = ui.GradientBar("AP1-Szenarien", C["blue"], C["accent"])
         self.bar_scen = ui.GradientBar("AP2-Szenarien", C["accent2"], C["orange"])
-        self.heatmap = ui.Heatmap()
 
         self.fach = {}
         fach_cells = []
@@ -323,8 +332,6 @@ class DashboardScreen(Screen):
             ui.Card("Abdeckung", [self.bar_cards, self.bar_quiz, self.bar_ap1,
                                   self.bar_scen], accent=C["purple"], subtitle="Material",
                     spacing=14),
-            ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["accent2"],
-                    subtitle="Auswahl zeigt die Themen"),
             ui.Card("Fortschritt je Fachbereich",
                     [ft.Row(fach_cells[:3]), ft.Row(fach_cells[3:])],
                     accent=C["green"], subtitle="Auswahl zeigt die Themen", spacing=16),
@@ -371,7 +378,7 @@ class DashboardScreen(Screen):
         streak = ("Lernserie: %s  ·  " % plural(db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
-            "Dein Lernstand",
+            fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             "%s%d von %d Inhalten  ·  Quiz %d %%"
             % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
@@ -401,12 +408,7 @@ class DashboardScreen(Screen):
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
                             [count for _day, count in daily], C["accent"])
-        matrix = db.category_daily(self.DAYS)
-        self.heatmap.set_data([(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
-                               for cat in CATEGORIES], self.DAYS,
-                              on_click=lambda index: self._toggle_zoom(CATEGORIES[index]),
-                              selected=CATEGORIES.index(self.zoom_category)
-                              if self.zoom_category else None)
+        # Ab 0.56 ohne "Aktivitaet je Fachbereich" (Wunsch Nico, wie am PC)
         self._refresh_zoom()
 
         coverage = db.category_coverage(self.totals)
@@ -488,22 +490,9 @@ class LearnScreen(Screen):
                 bgcolor=C["card"], border=ft.Border.all(1, C["border"]), border_radius=16,
                 padding=14, ink=True, on_click=lambda _e, k=key: self.app.open(k)))
 
-        chips = []
-        for category in CATEGORIES:
-            chips.append(ft.Container(
-                content=ft.Row([ui.dot(CATEGORY_COLOR[category], 10),
-                                ui.text(CATEGORY_SHORT[category], size=13,
-                                        weight=ft.FontWeight.BOLD)], spacing=8, tight=True),
-                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
-                border_radius=18, padding=ft.Padding.symmetric(horizontal=14, vertical=9),
-                ink=True, on_click=lambda _e, c=category: self.app.open_cards(c)))
-
-        return screen_list([
-            *tiles,
-            ui.Card("Karteikarten nach Fachbereich",
-                    [ft.Row(chips, wrap=True, spacing=8, run_spacing=8)],
-                    accent=C["accent"]),
-        ], spacing=12)
+        # Ab 0.56 ohne "Karteikarten nach Fachbereich" (Wunsch Nico): die
+        # Fachbereiche waehlt man in den Karteikarten oben (Alle, Netzwerk, ...)
+        return screen_list(tiles, spacing=12)
 
 
 # ============================================================================
@@ -1689,10 +1678,10 @@ class PagedListBox:
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         pager = ft.Row([
             ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(-1)),
+                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
             self.lbl_page,
             ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(1)),
+                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
                               spacing=10, tight=True)
@@ -2047,7 +2036,7 @@ class FinalProjectScreen(Screen):
             options=[], expand=True, on_select=self._choose_project,
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
-            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]))
+            color=C["text"], text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]))
         self.tab_pills = ui.PillGroup(fpj.TABS, on_change=self._on_tab)
         self.tab_area = ft.Column(spacing=14, tight=True)
         self._load_project()
@@ -2245,7 +2234,7 @@ class FinalProjectScreen(Screen):
             on_select=lambda e: self._set_category(e.control.value),
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], border_radius=12, color=C["text"],
-            text_style=ft.TextStyle(size=14, color=C["text"]))
+            text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]))
         rows.append(self._field("Fachbereich (für das Fachgespräch)", ft.Row([category])))
         lbl_progress = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         lbl_missing = ui.text("", size=12, color=C["muted"])
@@ -2481,10 +2470,10 @@ class NotebookScreen(Screen):
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         pager = ft.Row([
             ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(-1)),
+                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
             self.lbl_page,
             ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(1)),
+                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
@@ -2898,6 +2887,11 @@ class ProgressScreen(Screen):
         self.day_pills = ui.PillGroup(DAY_CHART_RANGES, on_change=lambda _v: self._paint_days())
         self.day_chart = ui.LineChart(height=180)
         self.lbl_days = ui.text("", size=12, color=C["text_dim"])
+        # Ab 0.56: richtig/falsch je Tag in Prozent (gleicher Zeitraum)
+        self.activity_split = {}
+        self.split_chart = ui.ShareBars(height=180)
+        self.lbl_split = ui.text("", size=12, color=C["text_dim"])
+        self.lbl_chart_empty = ui.text(RESULT_CHART_EMPTY, size=13, color=C["text_dim"])
         self.weak_box = ft.Column(spacing=6, tight=True)
         # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan, wie am PC)
         self.coverage_card = CoverageCard(self.app)
@@ -2907,18 +2901,21 @@ class ProgressScreen(Screen):
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
             ft.Row([stat("best", "Bestes", C["accent2"]),
                     stat("streak", "Lernserie", C["green"])], spacing=12),
-            ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days],
+            ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
+                                      ft.Container(height=6),
+                                      ui.label(SPLIT_CHART_TITLE), self.split_chart,
+                                      self.lbl_split],
                     accent=C["green"], subtitle=DAY_CHART_SUBTITLE),
             self.coverage_card,
-            ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
-                    subtitle="Erfolgsquote je Session"),
+            ui.Card(RESULT_CHART_TITLE, [self.chart, self.lbl_chart_empty],
+                    subtitle=RESULT_CHART_SUBTITLE),
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
             ui.Card("Prüfungen (Klausursimulation)", [self.exam_list, self.weak_box],
                     accent=C["green"]),
+            # "Historie loeschen" steht ab 0.56 in den Optionen unter
+            # "Loeschen und zuruecksetzen"
             ft.Row([ui.GradientButton("Aktualisieren", lambda _e: self.on_show(),
-                                      kind="ghost", expand=True),
-                    ui.GradientButton("Historie löschen", self.clear_history,
-                                      kind="danger", expand=True)], spacing=10),
+                                      kind="ghost", expand=True)], spacing=10),
         ])
 
     def on_show(self):
@@ -2933,14 +2930,17 @@ class ProgressScreen(Screen):
             self._stat("best", "-", "noch keine Session")
         # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
         self.activity = self.db.activity_days()
+        self.activity_split = self.db.activity_split_days()
         streak = learning_streak({day for day, count in self.activity.items() if count})
         self._stat("streak", str(streak), "Tage in Folge")
         self._paint_days()
 
-        ordered = list(reversed(results))[-20:]
-        labels = [row[0][8:10] + "." + row[0][5:7] for row in ordered] or ["heute"]
-        values = [row[3] for row in ordered] or [0]
-        self.chart.set_data(labels, values, C["accent2"], y_max=100)
+        # Ab 0.56 ohne Platzhalter-Punkt "heute" bei 0 %: ohne Session ein Hinweis
+        labels, values = result_series(results)
+        self.chart.visible = bool(labels)
+        self.lbl_chart_empty.visible = not labels
+        if labels:
+            self.chart.set_data(labels, values, C["accent2"], y_max=100)
 
         self.history.controls = []
         if not results:
@@ -3009,20 +3009,17 @@ class ProgressScreen(Screen):
                                 goal=(target, goal_line_text(target), C["green"])
                                 if target else None)
         self.lbl_days.value = daily_summary(series, target)
+        split = daily_split_series(self.activity_split, self.day_pills.get())
+        labels = day_labels([(day, 0) for day, _r, _w in split])
+        self.split_chart.set_data(
+            [(label,) + split_percent(right, wrong)
+             for label, (_day, right, wrong) in zip(labels, split)],
+            names=(SPLIT_RIGHT, SPLIT_WRONG), empty=SPLIT_EMPTY_DAY)
+        self.lbl_split.value = split_summary(split)
 
     def _stat(self, key, value, sub):
         self.stats[key][0].value = value
         self.stats[key][1].value = sub
-
-    def clear_history(self, _event=None):
-        def confirmed():
-            if self.db.clear_history():
-                self.on_show()
-                self.app.notify_progress()
-
-        self.app.confirm("Historie löschen",
-                         "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
-                         "löschen? Die Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
 
 
 # ============================================================================
@@ -3063,8 +3060,8 @@ class SettingsScreen(Screen):
             self._switch("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
                          "Verlassen der App)", settings["sync_auto"], self._toggle_sync_auto),
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
-                    "eintragen. Die Anleitung steht in LIESMICH.txt unter „Abgleich PC "
-                    "und Handy“.", size=11, color=C["muted"]),
+                    "eintragen. Wie beides angelegt wird, steht in der „Hilfe“ unter "
+                    "„Abgleich einrichten“.", size=11, color=C["muted"]),
         ], accent=C["accent"], subtitle="privates GitHub-Repository")
         self.show_sync_status(None, None)
 
@@ -3099,7 +3096,15 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
-        colors = ui.Card("Farben", [
+        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar wie am PC
+        fonts = ui.Card(fisi_theme.FONT_TITLE, [
+            ui.PillGroup(fisi_theme.FONT_CHOICES, initial=fisi_theme.FONT_IDS.index(
+                fisi_theme.current_font_size), on_change=self._change_font_size),
+            ui.text(fisi_theme.FONT_HINT, size=11, color=C["muted"]),
+        ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
+
+        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        colors = ui.FoldCard("Farben", [
             ui.label("Darstellung"),
             ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
                 fisi_theme.current_mode), on_change=self._change_mode),
@@ -3114,7 +3119,8 @@ class SettingsScreen(Screen):
                     "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
                     "dunkler, damit sie gut lesbar sind).",
                     size=11, color=C["muted"]),
-        ], accent=C["accent"], subtitle="nur für dieses Gerät")
+        ], accent=C["accent"], subtitle="nur für dieses Gerät", key="optionen_farben",
+            open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
         values = learning_settings()
@@ -3169,7 +3175,7 @@ class SettingsScreen(Screen):
             value=plan_values["rp_lernfeld"] or "aus", on_select=self._rp_field_changed,
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
-            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]), expand=True)
+            color=C["text"], text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]), expand=True)
         self.lbl_rp = ui.text(frp.DATE_INVALID, size=11, color=C["red"])
         self.lbl_rp.visible = False
         self.rp_dates = {key: ui.entry(frp.date_text(plan_values[key]), hint=frp.DATE_HINT,
@@ -3188,19 +3194,27 @@ class SettingsScreen(Screen):
             self.lbl_rp,
         ], accent=C["purple"], subtitle="nur für dieses Gerät")
 
+        # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am PC)
+        # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
+        self.entry_name = ui.entry(fh.load_name(), hint=fh.SETUP_NAME_HINT)
+        self.entry_name.on_blur = self._save_name
+        self.entry_name.on_submit = self._save_name
+        tour = ui.Card(fh.OPTIONS_TITLE, [
+            ui.text(fh.OPTIONS_TEXT, size=13, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fh.BTN_TOUR, lambda _e: self.app.start_tour(),
+                                      expand=True)]),
+            ft.Row([ui.GradientButton(fh.BTN_HELP, lambda _e: self.app.open_help(),
+                                      kind="ghost", expand=True)]),
+            ft.Container(height=6),
+            ui.label(fh.SETUP_NAME),
+            self.entry_name,
+            ui.text(fh.NAME_OPTION_HINT, size=11, color=C["muted"]),
+        ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
+
         return screen_list([
-            updates, colors, goal, plan, sync, backup, report,
+            tour, updates, fonts, colors, goal, plan, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
-            ui.Card("Daten zurücksetzen", [
-                ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                        "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
-                        "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
-                        "rückgängig machen.", size=13, color=C["text_dim"]),
-                ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
-                                          kind="danger")]),
-            ], accent=C["red"]),
             ui.Card("Spiel", [
                 self.lbl_difficulty,
                 ui.label("Wohnungen"),
@@ -3209,15 +3223,35 @@ class SettingsScreen(Screen):
                 ui.text(fisi_game.RENT_HELP
                         % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                         size=11, color=C["muted"]),
+            ], accent=C["accent2"]),
+            # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
+            # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
+            ui.FoldCard(DELETE_TITLE, [
+                ui.label("Lerndaten"),
+                ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                        "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
+                        "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
+                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
+                        "rückgängig machen.", size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
+                                          kind="danger")]),
                 ft.Container(height=6),
+                ui.label(HISTORY_LABEL),
+                ui.text(HISTORY_TEXT, size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton(HISTORY_BUTTON, self.clear_history,
+                                          kind="danger")]),
+                ft.Container(height=6),
+                ui.label("Spielstand"),
                 self.lbl_reset,
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
                 ft.Container(height=6),
+                ui.label("Bestenliste"),
                 ui.text(fisi_game.RECORDS_HELP, size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Bestenliste löschen", self.reset_records,
                                           kind="danger")]),
-            ], accent=C["accent2"]),
+            ], accent=C["red"], subtitle=DELETE_SUBTITLE, key="optionen_loeschen",
+                open_text=FOLD_OPEN, close_text=FOLD_CLOSE),
             ui.Card("Über das Programm", [ui.text(
                 "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
                 "Systemintegration mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "
@@ -3230,7 +3264,9 @@ class SettingsScreen(Screen):
     def _color_tile(self, item):
         """Kachel einer Grundfarbe (wie am PC): Verlauf, Akzentpunkte, Name."""
         active = item["id"] == fisi_theme.current_preset
-        return ft.Container(
+        # Ab 0.56: TalkBack - "Grundfarbe Cyan/Pink, ausgewaehlt"
+        return ft.Semantics(button=True, selected=active, container=True,
+                            label="Grundfarbe %s" % item["name"], content=ft.Container(
             content=ft.Column([
                 ft.Container(height=12, width=84, border_radius=6,
                              gradient=ui.gradient(item["primary"])),
@@ -3242,14 +3278,15 @@ class SettingsScreen(Screen):
             width=104, padding=10, border_radius=12, ink=True,
             bgcolor=C["card_hi"] if active else C["card_alt"],
             border=ft.Border.all(2, item["accent"] if active else C["border"]),
-            on_click=lambda _e, key=item["id"]: self._change_color(key))
+            on_click=lambda _e, key=item["id"]: self._change_color(key)))
 
     def _background_tile(self, item):
         """Kachel eines Hintergrunds (wie am PC): Flaeche mit kleiner Karte."""
         active = item["id"] == fisi_theme.current_background
         if fisi_theme.light:
             item = fisi_theme.light_background(item["id"])   # ab 0.49
-        return ft.Container(
+        return ft.Semantics(button=True, selected=active, container=True,
+                            label="Hintergrund %s" % item["name"], content=ft.Container(
             content=ft.Column([
                 ft.Container(content=ui.dot(C["accent"], 10), width=84, height=28,
                              bgcolor=item["card"], border_radius=8,
@@ -3261,7 +3298,7 @@ class SettingsScreen(Screen):
             ], spacing=8, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=104, padding=10, border_radius=12, ink=True, bgcolor=item["bg"],
             border=ft.Border.all(2, C["accent"] if active else item["border_hi"]),
-            on_click=lambda _e, key=item["id"]: self._change_background(key))
+            on_click=lambda _e, key=item["id"]: self._change_background(key)))
 
     def _change_color(self, preset_id):
         if preset_id != fisi_theme.current_preset:
@@ -3274,6 +3311,10 @@ class SettingsScreen(Screen):
     def _change_mode(self, mode):
         if mode != fisi_theme.current_mode:
             self.app.change_color(mode=mode)
+
+    def _change_font_size(self, size_id):
+        if size_id != fisi_theme.current_font_size:
+            self.app.change_color(font_size=size_id)
 
     @staticmethod
     def _switch(caption, value, handler):
@@ -3557,6 +3598,29 @@ class SettingsScreen(Screen):
         self.app.notify_progress()
         self.app.refresh_after_sync()
 
+    def _save_name(self, _event=None):
+        """Ab 0.56: Name aus den Optionen speichern (nur einstellungen.json)."""
+        name = fh.save_name(self.entry_name.value)
+        if (self.entry_name.value or "") != name:
+            self.entry_name.value = name
+            try:
+                self.entry_name.update()
+            except RuntimeError:   # noch nicht auf der Seite
+                pass
+        dashboard = self.app.screens.get("dashboard")
+        if dashboard is not None:
+            dashboard.refresh()
+
+    def clear_history(self, _event=None):
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        def confirmed():
+            if self.db.clear_history():
+                self.app.notify_progress()
+
+        self.app.confirm("Historie löschen",
+                         "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
+                         "löschen? Die Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
+
     def reset_all(self, _event=None):
         def confirmed():
             if self.db.reset_all():
@@ -3581,11 +3645,11 @@ class SearchScreen(Screen):
         self.lbl_info = ui.text("", size=13, color=C["text_dim"])
         self.results = ft.Column(spacing=8, tight=True)
         return screen_list([
-            ft.Row([self.field, ft.Container(
+            ft.Row([self.field, ft.Semantics(button=True, label=SEARCH_TEXT, content=ft.Container(
                 content=ft.Icon(ft.Icons.SEARCH_ROUNDED, color=C["on_accent"]),
                 width=48, height=48, border_radius=24, gradient=ui.gradient("primary"),
                 alignment=ft.Alignment.CENTER, ink=True,
-                on_click=lambda _e: self.search(self.field.value or ""))], spacing=10),
+                on_click=lambda _e: self.search(self.field.value or "")))], spacing=10),
             self.lbl_info, self.results,
         ])
 
@@ -3593,7 +3657,9 @@ class SearchScreen(Screen):
         query = query.strip()
         if not query:
             return
-        hits = search_content(query)
+        # Ab 0.56 zuerst die passenden Hilfe-Abschnitte (wie am PC)
+        hits = [(fh.SEARCH_KIND, None, title, text)
+                for _id, title, text in fh.search_help(query)] + search_content(query)
         self.lbl_info.value = '%d Treffer für „%s“' % (len(hits), query)
         self.results.controls = []
         if not hits:
@@ -3606,8 +3672,8 @@ class SearchScreen(Screen):
                     ft.Container(width=4, height=48, border_radius=2,
                                  bgcolor=CATEGORY_COLOR.get(category, C["purple"])),
                     ft.Column([
-                        ui.text("%s · %s" % (kind, CATEGORY_SHORT.get(category, "")),
-                                size=11, color=C["muted"]),
+                        ui.text("%s · %s" % (kind, CATEGORY_SHORT.get(category, ""))
+                                if category else kind, size=11, color=C["muted"]),
                         ui.text(title, size=14, weight=ft.FontWeight.BOLD),
                         ui.text(snippet, size=12, color=C["text_dim"]),
                     ], spacing=2, tight=True, expand=True),
@@ -3620,6 +3686,180 @@ class SearchScreen(Screen):
                 "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,
                 color=C["muted"]))
         self.app.page.update()
+
+
+# ============================================================================
+#  HILFE (AB 0.56)
+# ============================================================================
+
+HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
+                "spiel": "accent2", "fortschritt": "purple", "sicherung": "accent2",
+                "update": "accent", "problem": "orange", "schutzprogramm": "red"}
+
+
+class HelpScreen(Screen):
+    """Kurze Hilfetexte als aufklappbare Karten (Texte in fisi_hilfe.py, am PC
+    dieselben)."""
+    crumbs = ("SYSTEM", "HILFE")
+
+    def build(self):
+        self.folds = {}
+        cards = [ui.Card(fh.HELP_TITLE, [
+            ui.text(fh.HELP_INTRO, size=13, color=C["text_dim"]),
+            ft.Row([ui.GradientButton(fh.BTN_TOUR, lambda _e: self.app.start_tour(),
+                                      kind="ghost", expand=True)]),
+        ], accent=C["green"], subtitle=fh.HELP_SUBTITLE)]
+        for section in fh.HELP_SECTIONS:
+            fold = ui.FoldCard(section["titel"], [
+                ui.text(section["text"], size=14, color=C["text_soft"], selectable=True)],
+                accent=C[HELP_ACCENTS.get(section["id"], "accent")],
+                key="hilfe_" + section["id"], open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
+            self.folds[section["id"]] = fold
+            cards.append(fold)
+        self.list = screen_list(cards)
+        return self.list
+
+    def open_section(self, section_id):
+        fold = self.folds.get(section_id)
+        if fold is not None and not fold.opened:
+            fold.opened = True
+            fold._open_state[fold.fold_key] = True
+            fold._apply()
+
+
+class TourDialog:
+    """Erststart-Rundgang am Handy (ab 0.56, wie am PC): Seiten und Texte aus
+    fisi_hilfe.py, letzter Schritt "Jetzt einrichten". Nach "Ueberspringen"
+    oder dem Speichern ist der Merker "Rundgang gesehen" gesetzt."""
+
+    def __init__(self, app):
+        self.app = app
+        self.index = 0
+        self.draft = fh.setup_values()
+        self.closed = False
+        self.fields = {}
+        self.lbl_error = None
+        self.dialog = ft.AlertDialog(
+            modal=True, bgcolor=C["card"], scrollable=True,
+            shape=ft.RoundedRectangleBorder(
+                radius=22, side=ft.BorderSide(width=2, color=C["accent"])),
+            inset_padding=ft.Padding.symmetric(horizontal=14, vertical=24),
+            content_padding=ft.Padding.only(left=20, right=20, top=22, bottom=6),
+            on_dismiss=self._dismissed)
+        self._fill()
+
+    def show(self):
+        self.app.page.show_dialog(self.dialog)
+
+    def _fill(self):
+        page = fh.TOUR_PAGES[self.index]
+        last = self.index == len(fh.TOUR_PAGES) - 1
+        dots = ft.Row([ft.Container(width=8, height=8, border_radius=4,
+                                    bgcolor=C["accent"] if number == self.index
+                                    else C["border_hi"])
+                       for number in range(len(fh.TOUR_PAGES))], spacing=6, tight=True)
+        controls = [
+            ft.Row([ui.text(("%s · %s" % (fh.TOUR_TITLE, fh.TOUR_STEP % (
+                self.index + 1, len(fh.TOUR_PAGES)))).upper(), size=11,
+                weight=ft.FontWeight.BOLD, color=C["accent"], expand=True), dots]),
+            ui.text(page["titel"], size=22, weight=ft.FontWeight.BOLD),
+            ui.text(page["text"], size=14, color=C["text_soft"]),
+        ]
+        self.fields = {}
+        self.lbl_error = None
+        if last:
+            controls += self._setup_controls()
+        main = ui.GradientButton(fh.TOUR_FINISH if last else fh.TOUR_NEXT,
+                                 self.finish if last else self.next_page, expand=True)
+        row = [ui.GradientButton(fh.TOUR_SKIP, self.skip, kind="ghost", expand=True)]
+        if self.index:
+            row.append(ui.GradientButton(fh.TOUR_BACK, self.back_page, kind="ghost",
+                                         expand=True))
+        controls += [ft.Container(height=4), ft.Row([main]), ft.Row(row, spacing=10)]
+        self.dialog.content = ft.Container(
+            content=ft.Column(controls, spacing=10, tight=True), width=330)
+        self.dialog.actions = []
+
+    def _setup_controls(self):
+        draft = self.draft
+        self.fields["name"] = ui.entry(draft["name"], hint=fh.SETUP_NAME_HINT)
+        switches = [SettingsScreen._switch(
+            frp.SECTION_OPTION_TEXT[section], draft["abschnitte"][section],
+            lambda e, k=section: draft["abschnitte"].__setitem__(k, bool(e.control.value)))
+            for section in frp.OPTIONAL_SECTIONS]
+        dates = []
+        for key, caption in (("rp_termin_ap1", frp.AP1_DATE_TEXT),
+                             ("rp_termin_ap2", frp.AP2_DATE_TEXT)):
+            field = self.fields[key] = ui.entry(draft[key], hint=frp.DATE_HINT,
+                                                keyboard=ft.KeyboardType.DATETIME)
+            dates.append(ft.Row([ui.text(caption, size=13, color=C["text_dim"], expand=True),
+                                 ft.Container(content=field, width=150)]))
+        self.lbl_error = ui.text(frp.DATE_INVALID, size=12, color=C["red"])
+        self.lbl_error.visible = False
+        return ([ui.label(fh.SETUP_NAME), self.fields["name"], ui.label(fh.SETUP_PLAN)]
+                + switches + [ui.text(fh.SETUP_PLAN_HINT, size=11, color=C["muted"]),
+                              ui.label(fh.SETUP_DATES)]
+                + dates + [ui.text(fh.SETUP_DATES_HINT, size=11, color=C["muted"]),
+                           self.lbl_error])
+
+    def _keep_draft(self):
+        if self.fields:
+            self.draft["name"] = self.fields["name"].value or ""
+            for key in ("rp_termin_ap1", "rp_termin_ap2"):
+                self.draft[key] = self.fields[key].value or ""
+
+    def _go(self, index):
+        self._keep_draft()
+        self.index = max(0, min(index, len(fh.TOUR_PAGES) - 1))
+        self._fill()
+        self.app.page.update()
+
+    def next_page(self, _event=None):
+        self._go(self.index + 1)
+
+    def back_page(self, _event=None):
+        self._go(self.index - 1)
+
+    def show_page(self, index):
+        """Seite direkt zeigen (Selbsttest, Bildschirmfotos)."""
+        self._go(index)
+
+    def finish(self, _event=None):
+        self._keep_draft()
+        error = fh.save_setup(self.draft["name"], self.draft["abschnitte"],
+                              self.draft["rp_termin_ap1"], self.draft["rp_termin_ap2"])
+        if error:
+            self.lbl_error.value = error
+            self.lbl_error.visible = True
+            self.app.page.update()
+            return
+        # Optionen mit den neuen Rahmenplan-Werten neu aufbauen
+        app = self.app
+        old = app.screens.get("settings")
+        app.screens["settings"] = SettingsScreen(app)
+        if old is not None and app.body.content is old.root:
+            app.body.content = app.screens["settings"].root
+        dashboard = app.screens.get("dashboard")
+        if dashboard is not None:   # Begruessung mit dem neuen Namen
+            dashboard.refresh()
+        self.close()
+
+    def skip(self, _event=None):
+        self.close()
+
+    def close(self, seen=True):
+        if not self.closed:
+            self.closed = True
+            if seen:
+                fh.mark_tour_seen()
+        self.dialog.open = False
+        self.app.page.update()
+
+    def _dismissed(self, _event=None):
+        # Zurueck-Geste o. ae.: gilt wie "Ueberspringen"
+        if not self.closed:
+            self.closed = True
+            fh.mark_tour_seen()
 
 
 # ============================================================================
@@ -3710,7 +3950,7 @@ SCREEN_CLASSES = {
     "testproject": ProjectScreen, "abschluss": FinalProjectScreen,
     "notebook": NotebookScreen, "calc": CalcScreen,
     "progress": ProgressScreen,
-    "settings": SettingsScreen, "search": SearchScreen,
+    "settings": SettingsScreen, "search": SearchScreen, "help": HelpScreen,
 }
 
 
@@ -3742,7 +3982,9 @@ class FISIMobileApp:
                 on_surface=C["text"], error=C["red"]),
             navigation_bar_theme=ft.NavigationBarTheme(
                 bgcolor=C["sidebar"], indicator_color=C["card_hi"],
-                label_text_style=ft.TextStyle(size=11, color=C["text_dim"])))
+                # Ab 0.56: hoechstens 12, sonst bricht "Fortschritt" bei
+                # "Sehr gross" in der schmalen Leiste um
+                label_text_style=ft.TextStyle(size=min(12, ui.fs(11)), color=C["text_dim"])))
 
         self.screens = {key: cls(self) for key, cls in SCREEN_CLASSES.items()}
         self.tab = "dashboard"
@@ -3763,7 +4005,7 @@ class FISIMobileApp:
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
-    def change_color(self, preset_id=None, background_id=None, mode=None):
+    def change_color(self, preset_id=None, background_id=None, mode=None, font_size=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
         neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
         angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
@@ -3771,13 +4013,15 @@ class FISIMobileApp:
         if getattr(self, "_recoloring", False):
             return  # Ein Tippen waehrend des Umbaus wird ignoriert
         self._recoloring = True
-        overlay = self._busy_overlay()
+        # Ab 0.56 auch fuer die Schriftgroesse (eigene Meldung, gleicher Ablauf)
+        overlay = (self._busy_overlay(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
+                   if font_size else self._busy_overlay())
         self.page.overlay.append(overlay)
         self._lock_bars(True)
         self.page.update()
-        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode)
+        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode, font_size)
 
-    async def _recolor(self, preset_id, background_id, overlay, mode=None):
+    async def _recolor(self, preset_id, background_id, overlay, mode=None, font_size=None):
         started = time.monotonic()
         try:
             # Kurz warten, damit die Meldung sicher gezeichnet ist
@@ -3788,6 +4032,9 @@ class FISIMobileApp:
                 fisi_theme.save_background(background_id)
             if mode:
                 fisi_theme.save_mode(mode)
+            if font_size:
+                fisi_theme.save_font_size(font_size)
+                ui.set_font_factor(fisi_theme.font_factor())
             spiel.refresh_theme_tables()
             # Eine laufende Pruefungssession endet mit dem Neuaufbau - ihr
             # Zeitgeber soll nicht im Hintergrund weiterlaufen
@@ -3816,15 +4063,15 @@ class FISIMobileApp:
                     bar.disabled = locked
 
     @staticmethod
-    def _busy_overlay():
+    def _busy_overlay(title=fisi_theme.BUSY_TITLE, message=fisi_theme.BUSY_TEXT):
         """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
         card = ft.Container(
             content=ft.Column([
                 ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
                                 bgcolor=C["ring_bg"]),
-                ft.Text(fisi_theme.BUSY_TITLE, size=18, weight=ft.FontWeight.BOLD,
+                ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
                         color=C["text"], text_align=ft.TextAlign.CENTER),
-                ft.Text(fisi_theme.BUSY_TEXT, size=13, color=C["text_dim"],
+                ft.Text(message, size=13, color=C["text_dim"],
                         text_align=ft.TextAlign.CENTER),
             ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
@@ -3856,7 +4103,12 @@ class FISIMobileApp:
         return ft.AppBar(
             leading=leading, leading_width=52 if root else None, title=title,
             bgcolor=C["bg"], elevation=0, color=C["text"],
-            actions=[ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
+            # Ab 0.56: Hilfe in der Kopfzeile (die untere Leiste hat schon 6 Punkte)
+            actions=[ft.IconButton(ft.Icons.HELP_OUTLINE_ROUNDED, icon_color=C["text_dim"],
+                                   tooltip=fh.HELP_TITLE,
+                                   on_click=lambda _e: self.open_help()),
+                     ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
+                                   tooltip=SEARCH_TEXT,
                                    on_click=lambda _e: self.open("search")),
                      ft.Container(width=6)])
 
@@ -3915,8 +4167,41 @@ class FISIMobileApp:
         self.screens["cards"].set_category(category, topic)
         self.open("cards")
 
+    def open_help(self, section_id=None):
+        """Hilfe oeffnen (ab 0.56), auf Wunsch mit aufgeklapptem Abschnitt."""
+        screen = self.screens["help"]
+        views = self.page.views
+        on_top = bool(views) and bool(views[-1].controls) and \
+            views[-1].controls[0] is screen.root
+        if section_id:
+            screen.open_section(section_id)
+        if not on_top:
+            self.open("help")
+        else:
+            self.page.update()
+
+    def start_tour(self):
+        """Rundgang zeigen (ab 0.56): beim ersten Start oder aus Optionen/Hilfe."""
+        tour = getattr(self, "tour", None)
+        if tour is not None and tour.dialog.open:
+            return tour
+        self.tour = TourDialog(self)
+        self.tour.show()
+        return self.tour
+
+    def maybe_start_tour(self):
+        """Ab 0.56: Rundgang beim Start nur fuer neue Nutzer (Bestandsschutz,
+        siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        try:
+            if fh.tour_due(self.db):
+                self.start_tour()
+        except Exception:
+            traceback.print_exc()
+
     def open_search_hit(self, kind, title):
-        if kind == "Karteikarte":
+        if kind == fh.SEARCH_KIND:
+            self.open_help(fh.HELP_BY_TITLE[title]["id"])
+        elif kind == "Karteikarte":
             self.screens["cards"].jump_to_question(title)
             self.open("cards")
         elif kind == "Quizfrage":
@@ -4266,6 +4551,7 @@ def main(page: ft.Page):
     frp.warm_up()
     if os.environ.get("FISI_SELFTEST"):
         return
+    app.maybe_start_tour()
     app.sync.auto_start()
     app.auto_check(delay=app.AUTO_DELAY)
 
@@ -4590,6 +4876,27 @@ def selftest():
         game.picking = False
         game.slot_bar()
         app.screens["search"].search("raid")
+        # Ab 0.56: Rundgang durchblaettern (ohne zu speichern), ungueltiges
+        # Datum wird abgelehnt; Hilfe aufklappen und in der Suche finden
+        tour = app.start_tour()
+        for _page in fh.TOUR_PAGES[1:]:
+            tour.next_page()
+        tour.back_page()
+        tour.show_page(len(fh.TOUR_PAGES) - 1)
+        tour.fields["rp_termin_ap1"].value = "31.02.2027"
+        tour.finish()   # speichert nichts: das Datum ist ungueltig
+        if not tour.lbl_error.visible:
+            failures.append("Rundgang: ungültiges Datum nicht abgelehnt")
+        tour.close(seen=False)
+        app.open_help("schutzprogramm")
+        if not app.screens["help"].folds["schutzprogramm"].opened:
+            failures.append("Hilfe: Abschnitt nicht aufgeklappt")
+        app.screens["search"].search("Schutzprogramm")
+        if not any(fh.SEARCH_KIND in str(getattr(control.content.controls[1].controls[0],
+                                                 "value", ""))
+                   for control in app.screens["search"].results.controls
+                   if isinstance(control, ft.Container)):
+            failures.append("Hilfe: Suche findet nichts")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()
         app.screens["calc"].calc_screen()

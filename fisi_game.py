@@ -13826,7 +13826,7 @@ def map_palette():
     """Farben der Karte - aus dem Farbschema abgeleitet, damit sie zur
     gewaehlten Grundfarbe passen."""
     ground = mix(C["bg"], C["card"], 0.55)
-    return {
+    colors = {
         "boden": ground,
         "park": mix(ground, C["green"], 0.10),
         "wasser": mix(ground, C["blue"], 0.22),
@@ -13843,6 +13843,71 @@ def map_palette():
         "schrift": mix(C["muted"], ground, 0.25),
         "schild": C["sidebar"],
     }
+    if fisi_theme.light:
+        colors.update(_light_map_palette())
+    return colors
+
+
+# Ab 0.56: Mindestkontraste der Karte in der hellen Darstellung (WCAG-Formel,
+# geprueft in test_karte_kontrast.py). Schrift gegen ihren Grund, Flaechen und
+# Linien (Strassen, Fluss, Bahn, Gruen, Gebaeudekonturen) gegen den Kartengrund.
+MAP_LIGHT_TEXT = 4.6
+MAP_LIGHT_AREA = 3.1
+
+
+def _map_shade(color, grounds, minimum):
+    """Dunkelt eine Kartenfarbe (Farbton bleibt) ab, bis sie auf allen
+    grounds den Mindestkontrast erreicht - so passt es zu jedem Hintergrund."""
+    return fisi_theme.readable_on(color, list(grounds), minimum)
+
+
+def _light_map_palette():
+    """Ab 0.56: Kartenfarben der hellen Darstellung. Statt fast weissem Grund
+    mit blassen Pastelllinien ein kraeftigerer Lila-Grund, dunkle Strassen,
+    sattes Wasser und Gruen; alles aus dem Farbschema abgeleitet (Lila,
+    Tuerkis, Rosa bleiben). Die dunkle Darstellung bleibt unveraendert."""
+    ground = mix(C["bg"], C["border_hi"], 0.30)
+    # Gruenflaeche aus dem leuchtenden Gruen der Grundpalette (das im Hellen
+    # abgedunkelte C["green"] wuerde hier grau-tuerkis wirken)
+    park = mix(ground, fisi_theme._DARK_FIXED["green"], 0.38)
+    road = _map_shade(mix(ground, C["muted"], 0.72), [ground], MAP_LIGHT_AREA)
+    water = _map_shade(mix(C["blue"], C["cyan"], 0.25), [ground], MAP_LIGHT_AREA)
+    tree = _map_shade(mix(C["green"], ground, 0.05), [ground, park], MAP_LIGHT_AREA)
+    return {
+        "boden": ground,
+        "park": park,
+        "park_rand": _map_shade(mix(C["green"], ground, 0.15), [ground, park],
+                                MAP_LIGHT_AREA),
+        "wasser": water,
+        "wasser_hell": mix(water, "#FFFFFF", 0.45),
+        "strasse": road,
+        "strasse_mitte": mix(road, "#FFFFFF", 0.55),
+        "gleis": _map_shade(C["purple"], [ground], MAP_LIGHT_AREA),
+        "schwelle": _map_shade(mix(ground, C["purple"], 0.75), [ground], MAP_LIGHT_AREA),
+        "baum": tree,
+        "baum_hell": mix(tree, "#FFFFFF", 0.30),
+        "schatten": mix(ground, "#000000", 0.30),
+        "licht": mix(C["yellow"], "#FFFFFF", 0.30),
+        "fenster": mix(C["card_alt"], C["border_hi"], 0.70),
+        "schrift": _map_shade(mix(C["text_dim"], C["violet"], 0.20),
+                              [ground, C["card"]], MAP_LIGHT_TEXT),
+        "schild": C["card"],
+        "hinweis": _map_shade(C["yellow"], [ground], MAP_LIGHT_TEXT),
+    }
+
+
+def map_block_colors(tone):
+    """(Wand, Dach, Kontur) eines Gebaeudeblocks in der Farbe tone.
+    Ab 0.56: im Hellen kraeftigere Flaechen und eine Kontur mit
+    mindestens MAP_LIGHT_AREA gegen den Kartengrund und die Wand."""
+    if not fisi_theme.light:
+        wall = mix(C["card_alt"], tone, 0.12)
+        return wall, mix(C["card"], tone, 0.30), mix(wall, "#000000", 0.35)
+    wall = mix(C["card_alt"], tone, 0.30)
+    roof = mix(C["card"], tone, 0.45)
+    edge = _map_shade(mix(tone, "#000000", 0.25),
+                      [map_palette()["boden"], wall, roof], MAP_LIGHT_AREA)
+    return wall, roof, edge
 
 
 def map_role_color(role):
@@ -13907,8 +13972,10 @@ def landscape_shapes(content=None, labels=True):
             if item["typ"] != kind:
                 continue
             if kind == "park":
+                # Ab 0.56: im Hellen mit kraeftigem Rand (Kontrast zum Grund)
                 s.append(_rect(item["x"], item["y"], item["w"], item["h"], colors["park"],
-                               r=1.1))
+                               colors.get("park_rand", ""),
+                               0.06 if "park_rand" in colors else 0.0, r=1.1))
             elif kind == "fluss":
                 s += _polyline(item["punkte"], colors["wasser"], 0.65)
                 s += _dashes(item["punkte"], colors["wasser_hell"], 0.07, 0.25, 0.35)
@@ -13939,6 +14006,10 @@ def landscape_labels(content=None):
         if item["typ"] == "ortsname":
             s.append(_text(item["x"], item["y"], item["text"], "ortsname", colors["schrift"],
                            anchor="c"))
+            if fisi_theme.light:
+                # Ab 0.56: Grund hinter dem Namen, damit kreuzende Strassen die
+                # Schrift nicht schwaechen (Kontrast gilt dann gegen den Grund)
+                s[-1]["bg"] = colors["boden"]
         elif item["typ"] == "beschriftung":
             s.append(_text(item["x"], item["y"], item["text"], "person", colors["schrift"]))
     return s
@@ -13996,7 +14067,8 @@ def _lit(seed, index, share):
 
 
 def _part_fill(name, accent, colors):
-    return {"bahnsteig": mix(C["blue"], C["card"], 0.55),
+    # Ab 0.56: Bahnsteig im Hellen satter (sonst kaum vom Grund zu trennen)
+    return {"bahnsteig": mix(C["blue"], C["card"], 0.25 if fisi_theme.light else 0.55),
             "glas": mix(C["cyan"], C["card"], 0.62),
             "holz": WOOD_DARK, "technik": METAL,
             "akzent": accent}.get(name, name or accent)
@@ -14010,9 +14082,8 @@ def model_part_shapes(part, ox, oy, accent, colors, seed):
     if kind == "block":
         w, t, h = part["w"], part["t"], part["h"]
         tone = accent if part.get("farbe") in (None, "akzent") else part["farbe"]
-        wall = mix(C["card_alt"], tone, 0.12)
-        roof = mix(C["card"], tone, 0.30)
-        edge = mix(wall, "#000000", 0.35)
+        # Ab 0.56: Farben aus map_block_colors (im Hellen kraeftiger)
+        wall, roof, edge = map_block_colors(tone)
         # Schatten nach rechts oben (Licht von links)
         s.append(_poly([(x + w, y + t), (x + w + h * 0.35, y + t - h * 0.2),
                         (x + w + h * 0.35, y - h * 0.2 + 0.2), (x + w, y - h + 0.2)],
@@ -14030,7 +14101,7 @@ def model_part_shapes(part, ox, oy, accent, colors, seed):
                                    (part.get("lichtfarbe") or colors["licht"]) if lit
                                    else colors["fenster"]))
         top = y - h
-        roof_edge = mix(roof, "#000000", 0.3)
+        roof_edge = edge if fisi_theme.light else mix(roof, "#000000", 0.3)
         if part.get("dach") == "sattel":
             s.append(_poly([(x, top + t), (x, top + t * 0.5), (x + w, top + t * 0.5),
                             (x + w, top + t)], roof, roof_edge, 0.03))
@@ -14265,8 +14336,9 @@ def world_shapes(state, content=None, places=None):
         label["border"] = item["farbe"]
         shapes.append(label)
         if item["hinweis"]:
-            shapes.append(_text(cx, cy + 0.62, item["hinweis"], "person", C["yellow"],
-                                anchor="c"))
+            # Ab 0.56: im Hellen aus der Kartenpalette (lesbar auf dem kraeftigeren Grund)
+            shapes.append(_text(cx, cy + 0.62, item["hinweis"], "person",
+                                colors.get("hinweis", C["yellow"]), anchor="c"))
         x1, y1, x2, y2 = item["box"]
         if item["zahl"]:
             # Als Schild mit Hintergrund: waechst mit der Schrift (auch am Handy lesbar)

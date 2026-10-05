@@ -26,7 +26,7 @@ import tkinter.font as tkfont
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-from fisi_theme import C, GRADIENTS, lighten, mix
+from fisi_theme import C, GRADIENTS, curve_controls, lighten, mix
 
 # Wird beim Start durch setup_fonts() gefuellt.
 F = {}
@@ -89,6 +89,19 @@ def setup_fonts(root):
         "ring_small": (ui, 11),
     })
     return F
+
+
+def apply_ui_scale(factor):
+    """Ab 0.56: Schriftgroesse am PC. customtkinter vergroessert damit alle
+    Schriften, Knoepfe, Abstaende und Bilder gemeinsam (wie die Windows-
+    Skalierung) - so schneidet nichts ab. Vor dem Erzeugen des Fensters
+    ueber ctk.set_widget_scaling; spaeter (Wechsel in den Optionen) nur den
+    Wert setzen: Die Oberflaeche wird danach ohnehin neu aufgebaut, ein
+    Umrechnen der alten Widgets waere verlorene Zeit."""
+    if ctk.ScalingTracker.window_widgets_dict:
+        ctk.ScalingTracker.widget_scaling = max(0.4, float(factor))
+    else:
+        ctk.set_widget_scaling(factor)
 
 
 def px(value):
@@ -527,6 +540,16 @@ def draw_icon(canvas, name, x, y, size=16, color="#FFFFFF", width=2, tags=None):
         arm = size * 0.34
         canvas.create_line(x - arm, y, x + arm, y, **opts)
 
+    elif name == "help":          # Ab 0.56: Hilfe (Kreis mit Fragezeichen)
+        canvas.create_oval(left, top, right, bottom, fill="", **line_opts)
+        canvas.create_arc(x - size * 0.16, y - size * 0.3, x + size * 0.16,
+                          y + size * 0.02, start=-60, extent=240, style="arc",
+                          outline=color, width=width, **({"tags": tags} if tags else {}))
+        canvas.create_line(x, y + size * 0.02, x, y + size * 0.1, **opts)
+        dot = size * 0.06
+        canvas.create_oval(x - dot, y + size * 0.22 - dot, x + dot, y + size * 0.22 + dot,
+                           **fill_opts)
+
     else:                          # Rueckfallebene: schlichter Punkt
         radius = size * 0.28
         canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
@@ -561,6 +584,7 @@ SYMBOLS = {
     "work": 0xF02C7,
     "route": 0xF0377,
     "workspace_premium": 0xE7AF,
+    "help_outline": 0xF7E4,    # ab 0.56: Hilfe (help_outline_rounded)
 }
 _SYMBOL_FONTS = {}
 
@@ -661,6 +685,8 @@ class NeoButton(ctk.CTkLabel):
         self.bind("<Enter>", self._on_enter)
         self.bind("<Leave>", self._on_leave)
         self.bind("<Button-1>", self._on_click)
+        # Ab 0.56: per Tab erreichbar, Eingabe/Leertaste loesen aus
+        make_focusable(self, self._on_click)
         self._render()
 
     # -- Darstellung --------------------------------------------------------
@@ -719,6 +745,8 @@ class NeoButton(ctk.CTkLabel):
     def set_enabled(self, flag):
         self._enabled = bool(flag)
         self.configure(cursor="hand2" if flag else "arrow")
+        # Ab 0.56: gesperrte Knoepfe werden per Tab uebersprungen
+        set_takefocus(self, self._enabled)
         self._render()
 
     def set_active(self, flag):
@@ -753,7 +781,12 @@ class IconButton(tk.Canvas):
         self.bind("<Leave>", lambda e: self._set_hover(False))
         self.bind("<Button-1>", self._on_press)
         self.bind("<ButtonRelease-1>", lambda e: self._set_pressed(False))
+        make_focusable(self, self._on_key)   # ab 0.56
         self._draw()
+
+    def _on_key(self):
+        if self.command:
+            self.command()
 
     def _on_press(self, _event=None):
         self._set_pressed(True)
@@ -804,6 +837,7 @@ class Card(ctk.CTkFrame):
     def __init__(self, parent, title=None, subtitle=None, accent=None,
                  pad=18, bg=None):
         self.bg = bg or C["card"]
+        self.pad = pad
         super().__init__(parent, fg_color=self.bg, corner_radius=16,
                          border_width=1, border_color=C["border"])
         self.head = None
@@ -836,6 +870,63 @@ class Card(ctk.CTkFrame):
         """Aendert die Unterschrift der Kachel zur Laufzeit."""
         if self.subtitle_label is not None:
             self.subtitle_label.configure(text=text, text_color=color or C["muted"])
+
+
+class FoldCard(Card):
+    """Ab 0.56: Kachel, deren Inhalt sich auf- und zuklappen laesst (Optionen).
+
+    Der Kopf ist per Maus und per Tastatur bedienbar (Tab, dann Eingabe oder
+    Leertaste). Standard: zugeklappt. Der Zustand bleibt fuer die Laufzeit
+    des Programms erhalten (key), z.B. wenn die Seite nach einem
+    Farbwechsel neu gebaut wird."""
+
+    _open_state = {}
+
+    def __init__(self, parent, title, subtitle=None, accent=None, key=None,
+                 opened=False, **kwargs):
+        super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
+        self.key = key or title
+        self.opened = self._open_state.get(self.key, opened)
+        # Ab 0.56: die ungeskalierten Werte aus Card.__init__ merken. pack_info()
+        # liefert schon skalierte Abstaende, die CustomTkinter beim erneuten
+        # Aufklappen noch einmal skaliert haette (Windows-Skalierung ueber 100 %)
+        self._body_pack = dict(fill="both", expand=True, padx=self.pad, pady=(12, self.pad))
+        # Ab 0.56 (Hilfe): zugeklappt bekommt der Kopf unten denselben Abstand
+        # wie oben - sonst schnitt die Kachel den unteren Rand ab
+        self._head_top = self.pad - 2   # wie in Card.__init__ (ungeskaliert)
+        self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
+                                  font=F["small_bold"], width=24, height=0)
+        # ganz rechts, Unterschrift links daneben (vorher klebten beide
+        # aneinander: "aufklappennur fuer dieses Geraet")
+        self.arrow.pack(side="right", padx=(12, 0), before=self.subtitle_label)
+        self.head.configure(cursor="hand2")
+        for widget in (self.head, self.arrow, self.title_label, self.subtitle_label):
+            widget.configure(cursor="hand2")
+            widget.bind("<Button-1>", self.toggle)
+        # Tastatur: der Kopf nimmt den Fokus auf; sichtbar wird er ueber den
+        # gemeinsamen Fokusrahmen (ab 0.56, siehe focus_ring)
+        self.head.configure(border_width=2, border_color=self.bg, corner_radius=8)
+        # (CTkFrame.bind bindet an die innere Zeichenflaeche, den Fokus
+        # bekommt aber der Rahmen selbst - daher tk.Frame.bind)
+        tk.Frame.configure(self.head, takefocus=1)
+        tk.Frame.bind(self.head, "<Return>", self.toggle)
+        tk.Frame.bind(self.head, "<space>", self.toggle)
+        self._apply()
+
+    def _apply(self):
+        self.arrow.configure(text="▾  zuklappen" if self.opened else "▸  aufklappen")
+        if self.opened:
+            self.head.pack(pady=(self._head_top, 0))
+            self.body.pack(**self._body_pack)
+        else:
+            self.body.pack_forget()
+            self.head.pack(pady=(self._head_top, self._head_top))
+
+    def toggle(self, _event=None):
+        self.opened = not self.opened
+        self._open_state[self.key] = self.opened
+        self._apply()
+        return "break"
 
 
 # ============================================================================
@@ -1192,14 +1283,19 @@ class LineChart(tk.Canvas):
                     self.create_oval(x - dot, y - dot, x + dot, y + dot,
                                      fill=color, outline=self.bg, width=px(2))
 
-        # Ziellinie (ab 0.54) mit Beschriftung am rechten Rand
+        # Ziellinie (ab 0.54). Ab 0.56 steht die Beschriftung mit einem
+        # Linienstueck in der Legendenzeile rechts, damit sie keine Kurve und
+        # keinen Punkt im Diagramm verdeckt
         if self._goal and 0 < self._goal[0] <= peak:
             value, caption, color = self._goal
             y = top + plot_h - (plot_h * (value / peak))
             self.create_line(left, y, width - right, y, fill=color, width=max(1, px(1.5)),
                              dash=(6, 4))
-            self.create_text(width - right, y - px(8), text=caption, anchor="e",
+            self.create_text(width - right, top - px(10), text=caption, anchor="e",
                              fill=color, font=tk_font(F["tiny"]))
+            sample = width - right - text_width(caption, F["tiny"]) * _SCALE[0] - px(6)
+            self.create_line(sample - px(18), top - px(10), sample, top - px(10), fill=color,
+                             width=max(1, px(1.5)), dash=(6, 4))
 
         # Legende
         legend_x = left + px(4)
@@ -1231,25 +1327,108 @@ class LineChart(tk.Canvas):
         self.create_image(x1, y1, image=photo, anchor="nw")
 
 
+class ShareBars(tk.Canvas):
+    """Ab 0.56: gestapelte Balken in Prozent je Tag (richtig unten, falsch
+    oben). Nicht nur ueber die Farbe unterscheidbar: falsch ist schraffiert,
+    ueber jedem Balken steht der Anteil richtig in Prozent, Tage ohne
+    Aufgaben zeigen einen Strich."""
+
+    def __init__(self, parent, height=200, parent_bg=None):
+        self.bg = parent_bg or _bg_of(parent)
+        self._data = []
+        self._names = ("richtig", "falsch")
+        self._empty = "–"
+        self._size = None
+        super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
+                         highlightthickness=0, bd=0)
+        self.bind("<Configure>", self._resized)
+
+    def _resized(self, event):
+        if (event.width, event.height) != self._size:
+            self._size = (event.width, event.height)
+            self._draw()
+
+    def set_data(self, data, names=None, empty=None):
+        """data: [(Beschriftung, richtig %, falsch %)], Prozent None = keine
+        Aufgaben an dem Tag."""
+        self._data = data
+        if names:
+            self._names = names
+        if empty:
+            self._empty = empty
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        width, height = self.winfo_width(), self.winfo_height()
+        if width <= 1 or height <= 1 or not self._data:
+            return
+        left, right, top, bottom = px(42), px(14), px(40), px(30)
+        plot_w, plot_h = width - left - right, height - top - bottom
+        if plot_w <= 10 or plot_h <= 10:
+            return
+        for line in range(5):
+            y = top + plot_h - plot_h * line / 4
+            self.create_line(left, y, width - right, y, fill=C["border"],
+                             dash=(2, 4) if line else ())
+            self.create_text(left - px(8), y, text="%d %%" % (line * 25), anchor="e",
+                             fill=C["muted"], font=tk_font(F["tiny"]))
+        count = len(self._data)
+        slot = plot_w / count
+        bar = max(px(4), min(px(34), slot * 0.62))
+        stride = max(1, int(count / max(1, plot_w / px(55))))
+        right_color, wrong_color = C["green"], C["red"]
+        for index, (label, share, rest) in enumerate(self._data):
+            center = left + slot * (index + 0.5)
+            x1, x2 = center - bar / 2, center + bar / 2
+            base = top + plot_h
+            if share is None:
+                self.create_text(center, base - px(8), text=self._empty, fill=C["muted"],
+                                 font=tk_font(F["tiny"]))
+            else:
+                split = base - plot_h * share / 100.0
+                if share:
+                    self.create_rectangle(x1, split, x2, base, fill=right_color, outline="")
+                if rest:
+                    self.create_rectangle(x1, top, x2, split, fill=wrong_color,
+                                          outline=wrong_color, stipple="gray50")
+                if bar >= px(18) or count <= 14:
+                    self.create_text(center, top - px(8), text="%d" % share,
+                                     fill=C["text_dim"], font=tk_font(F["tiny"]))
+            if index % stride == 0 or index == count - 1:
+                self.create_text(center, height - bottom + px(15), text=label,
+                                 fill=C["muted"], font=tk_font(F["tiny"]))
+        # Legende: Kaestchen voll (richtig) und schraffiert (falsch)
+        x = left + px(4)
+        y = px(10)
+        for name, color, stipple in ((self._names[0], right_color, ""),
+                                     (self._names[1], wrong_color, "gray50")):
+            self.create_rectangle(x, y - px(5), x + px(12), y + px(5), fill=color,
+                                  outline=color, stipple=stipple)
+            self.create_text(x + px(18), y, text=name, anchor="w", fill=C["text_dim"],
+                             font=tk_font(F["tiny"]))
+            x += px(34) + text_width(name, F["tiny"]) * _SCALE[0]
+        self.create_text(x + px(6), y, text="Zahl über dem Balken: % richtig", anchor="w",
+                         fill=C["muted"], font=tk_font(F["tiny"]))
+
+
 def _smooth_curve(points, floor, ceiling, steps=12):
-    """Catmull-Rom-Kurve durch alle Punkte - anders als Tk-smooth laeuft sie
-    exakt durch die Messwerte, die Punkte liegen also auf der Linie."""
+    """Weiche Kurve exakt durch alle Messwerte (die Punkte liegen auf der
+    Linie). Ab 0.56 monoton (fisi_theme.curve_controls): zwischen zwei
+    Punkten bleibt sie zwischen deren Werten, schwingt also weder unter die
+    Nulllinie noch ueber einen Datenpunkt hinaus."""
     if len(points) < 3:
         return list(points)
     curve = []
-    padded = [points[0]] + list(points) + [points[-1]]
-    for i in range(1, len(padded) - 2):
-        p0, p1, p2, p3 = padded[i - 1], padded[i], padded[i + 1], padded[i + 2]
+    for (p1, p2), (c1, c2) in zip(zip(points, points[1:]), curve_controls(points)):
         for step in range(steps):
             t = step / float(steps)
-            t2, t3 = t * t, t * t * t
-            x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t
-                       + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2
-                       + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
-            y = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t
-                       + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2
-                       + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-            # Die Kurve darf nicht unter die Nulllinie oder ueber den Rand schwingen
+            u = 1.0 - t
+            x = (u * u * u * p1[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0]
+                 + t * t * t * p2[0])
+            y = (u * u * u * p1[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1]
+                 + t * t * t * p2[1])
+            # Sicherheitsnetz: nie unter die Nulllinie oder ueber den Rand
             curve.append((x, max(ceiling, min(floor, y))))
     curve.append(points[-1])
     return curve
@@ -1590,6 +1769,11 @@ class OptionList(ctk.CTkFrame):
             widget.bind("<Button-1>", lambda _e, value=text: self.select(value))
             widget.bind("<Enter>", lambda _e, r=row: self._hover(r, True))
             widget.bind("<Leave>", lambda _e, r=row: self._hover(r, False))
+        # Ab 0.56: Tastatur - Tab erreicht jede Antwort, Eingabe/Leertaste
+        # waehlen sie, Pfeil hoch/runter springen zur Nachbarantwort
+        make_focusable(frame, lambda value=text: self.select(value))
+        tk.Misc.bind(frame, "<Down>", lambda _e, r=row: self._step_focus(r, 1), "+")
+        tk.Misc.bind(frame, "<Up>", lambda _e, r=row: self._step_focus(r, -1), "+")
         self._rows.append(row)
         self._paint(row)
 
@@ -1607,6 +1791,13 @@ class OptionList(ctk.CTkFrame):
 
     def get(self):
         return self._selected
+
+    def _step_focus(self, row, delta):
+        """Ab 0.56: Fokus per Pfeiltaste auf die Nachbarantwort."""
+        index = self._rows.index(row) + delta
+        if 0 <= index < len(self._rows):
+            focus_widget(self._rows[index]["frame"])
+        return "break"
 
     def reveal(self, correct_value):
         """Markiert nach dem Einreichen richtige und falsche Auswahl."""
@@ -1644,7 +1835,8 @@ class OptionList(ctk.CTkFrame):
         row["frame"].configure(fg_color=bg, border_color=border,
                                border_width=2 if state in ("selected", "correct", "wrong") else 1)
         row["label"].configure(text_color=fg)
-        ring = border if state != "idle" else C["border_hi"]
+        # Ab 0.56: Kreis der freien Antworten mit 3:1 (vorher border_hi)
+        ring = border if state != "idle" else C["field_border"]
         image = circle_image(20, outline=ring, outline_width=2, dot=dot)
         row["marker"].configure(image=ctk_image(image, 20, 20))
 
@@ -1669,9 +1861,13 @@ class ScrollArea(tk.Frame):
     verschieben (bzw. mit gedrueckter Umschalttaste + Mausrad). Der untere
     Schieberegler erscheint nur, wenn er gebraucht wird."""
 
-    def __init__(self, parent, bg=None, hide_vbar=False):
+    def __init__(self, parent, bg=None, hide_vbar=False, fit_wrap=False):
         self.bg = bg or C["bg"]
         self.hide_vbar = hide_vbar   # senkrechter Balken nur bei Bedarf (ab 0.48)
+        # Ab 0.56: Zeilenumbruch langer Texte an die sichtbare Breite anpassen
+        self.fit_wrap = fit_wrap
+        self._wrap_width = None
+        self._wrap_pending = False
         super().__init__(parent, bg=self.bg)
         self.canvas = tk.Canvas(self, bg=self.bg, highlightthickness=0, bd=0,
                                 yscrollincrement=px(24), xscrollincrement=px(24))
@@ -1698,6 +1894,9 @@ class ScrollArea(tk.Frame):
 
         self.inner.bind("<Configure>", self._on_inner_configure)
         self.canvas.bind("<Configure>", self._on_canvas_configure)
+        if fit_wrap:
+            self.inner.bind("<Configure>", self._schedule_wrap, "+")
+            self.canvas.bind("<Configure>", self._schedule_wrap, "+")
         self.bind("<Enter>", lambda e: self._bind_wheel(True))
         self.bind("<Leave>", lambda e: self._bind_wheel(False))
 
@@ -1711,6 +1910,7 @@ class ScrollArea(tk.Frame):
         except tk.TclError:
             pass
         self.scrollbar.set(first, last)
+        refresh_focus_ring(self)   # ab 0.56: Fokusrahmen wandert mit
         if not self.hide_vbar:
             return
         if float(first) <= 0.0 and float(last) >= 1.0:
@@ -1720,6 +1920,7 @@ class ScrollArea(tk.Frame):
 
     def _set_hscroll(self, first, last):
         self.hscrollbar.set(first, last)
+        refresh_focus_ring(self)
         if float(first) <= 0.0 and float(last) >= 1.0:
             self.hscrollbar.grid_remove()
         else:
@@ -1798,6 +1999,72 @@ class ScrollArea(tk.Frame):
         self.canvas.yview_moveto(0.0)
         self.canvas.xview_moveto(0.0)
 
+    def _schedule_wrap(self, _event=None):
+        if not self._wrap_pending:
+            self._wrap_pending = True
+            self.after_idle(self._fit_wraplengths)
+
+    def _fit_wraplengths(self):
+        """Ab 0.56: Texte mit fester Umbruchbreite (wraplength, z. B. 900)
+        werden schmaler umbrochen, wenn sie sonst ueber den sichtbaren Bereich
+        hinausragen - wichtig bei grosser Schrift und schmalem Fenster. Die
+        urspruengliche Breite bleibt die Obergrenze (breites Fenster: wie
+        bisher). Antwortlisten (OptionList) regeln das selbst."""
+        self._wrap_pending = False
+        try:
+            width = self.canvas.winfo_width()
+            if width <= 1:
+                return
+            overflow = self.inner.winfo_reqwidth() > width + 2
+            if width == self._wrap_width and not overflow:
+                return
+            self._wrap_width = width
+            scale = _SCALE[0] or 1.0
+            left = self.inner.winfo_rootx()
+            stack = [self.inner]
+            while stack:
+                for child in stack.pop().winfo_children():
+                    if isinstance(child, (OptionList, NeoButton)):
+                        continue
+                    if isinstance(child, ctk.CTkLabel):
+                        base = child.__dict__.get("_fisi_wrap")
+                        if base is None:
+                            base = child.cget("wraplength") or 0
+                            child._fisi_wrap = base
+                        if base:
+                            # rechts etwa so viel Rand wie links (Karten-Innenabstand)
+                            room = (width - 2 * (child.winfo_rootx() - left)) / scale - 8
+                            # nie breiter als vorgesehen, nie schmaler als 220
+                            wrap = int(min(base, max(220, room)))
+                            if wrap != child.cget("wraplength"):
+                                child.configure(wraplength=wrap)
+                        continue
+                    stack.append(child)
+        except tk.TclError:
+            pass
+
+    def see(self, widget, margin=16):
+        """Ab 0.56: Scrollt so, dass widget ganz sichtbar ist (Tastatur)."""
+        try:
+            self.update_idletasks()
+            margin = px(margin)
+            for axis, root_pos, size, view_size, total, view, move in (
+                    ("y", widget.winfo_rooty() - self.inner.winfo_rooty(),
+                     widget.winfo_height(), self.canvas.winfo_height(),
+                     self.inner.winfo_height(), self.canvas.yview(), self.canvas.yview_moveto),
+                    ("x", widget.winfo_rootx() - self.inner.winfo_rootx(),
+                     widget.winfo_width(), self.canvas.winfo_width(),
+                     self.inner.winfo_width(), self.canvas.xview(), self.canvas.xview_moveto)):
+                total = max(1, total)
+                first = view[0] * total
+                if root_pos - margin < first:
+                    move(max(0.0, root_pos - margin) / total)
+                elif root_pos + size + margin > first + view_size:
+                    target = min(root_pos - margin, root_pos + size + margin - view_size)
+                    move(max(0.0, target) / total)
+        except tk.TclError:
+            pass
+
 
 # ============================================================================
 #  KLEINE HILFSBAUSTEINE
@@ -1864,7 +2131,7 @@ def make_text(parent, height=6, readonly=False, font=None):
     font = font or F["body"]
     widget = ctk.CTkTextbox(parent, height=_text_height(font, height), wrap="word",
                             fg_color=C["card_alt"], text_color=C["text_soft"],
-                            border_color=C["border"], border_width=1,
+                            border_color=C["field_border"], border_width=1,
                             corner_radius=12, font=font,
                             scrollbar_button_color=C["scrollbar"],
                             scrollbar_button_hover_color=C["scrollbar_hi"],
@@ -1874,6 +2141,18 @@ def make_text(parent, height=6, readonly=False, font=None):
                               selectforeground="#FFFFFF")
     if readonly:
         widget.configure(state="disabled")
+    # Ab 0.56: Tab springt wie in Eingabefeldern zum naechsten Bedienelement
+    # (Tk fuegt sonst ein Tabulatorzeichen ein - in Antworten nie gewollt und
+    # fuer Tastaturnutzer eine Falle); Strg+Tab wirkt genauso.
+    for sequence, forward in (("<Tab>", True), ("<Shift-Tab>", False),
+                              ("<ISO_Left_Tab>", False), ("<Control-Tab>", True),
+                              ("<Control-Shift-Tab>", False),
+                              ("<Control-ISO_Left_Tab>", False)):
+        try:
+            tk.Misc.bind(widget._textbox, sequence,
+                         lambda event, f=forward: _tab_key(event, f))
+        except tk.TclError:
+            pass   # Tastenname auf diesem System unbekannt
     return widget
 
 
@@ -1942,3 +2221,322 @@ class Divider(ctk.CTkFrame):
     def __init__(self, parent, bg=None):
         super().__init__(parent, fg_color=bg or C["border"], height=1,
                          corner_radius=0)
+
+
+# ============================================================================
+#  TASTATUR UND FOKUSRAHMEN (ab 0.56)
+# ============================================================================
+#
+# Tab / Umschalt+Tab springen wie bei Tk ueblich von Bedienelement zu
+# Bedienelement (Reihenfolge = Aufbau der Oberflaeche: Seitenleiste, Kopf,
+# Inhalt). Zusaetzlich:
+#   * verdeckte Ansichten werden uebersprungen (set_focus_filter)
+#   * das angesprungene Element wird in den sichtbaren Bereich gescrollt
+#   * ein deutlicher Fokusrahmen (C["focus"], mind. 3:1) liegt um das
+#     Element, solange per Tastatur gearbeitet wird (ein Mausklick blendet
+#     ihn aus, wie :focus-visible im Browser)
+# Eigene Bedienelemente (NeoButton, Zeilen, Kacheln) werden mit
+# make_focusable() erreichbar; Eingabe und Leertaste loesen sie aus.
+# Wichtig: CTk-Widgets leiten bind() an ihre innere Canvas weiter, den Fokus
+# bekommt aber der tk.Frame - deshalb hier immer tk.Misc.bind.
+
+ACTIVATE_KEYS = ("<Return>", "<KP_Enter>", "<space>")
+FOCUS_GAP = 2       # Abstand Rahmen - Bedienelement (logische Pixel)
+FOCUS_WIDTH = 3     # Strichstaerke des Rahmens (logische Pixel)
+
+_focus_filter = [None]     # callable(pfad) -> False: per Tab nicht anspringen
+_keyboard = [False]        # wird gerade per Tastatur gearbeitet?
+_rings = {}                # Pfad des Fensters -> FocusRing
+
+
+def set_takefocus(widget, flag):
+    """Setzt -takefocus direkt in Tk (CTk-Widgets kennen die Option nicht)."""
+    try:
+        widget.tk.call(widget._w, "configure", "-takefocus", 1 if flag else 0)
+    except tk.TclError:
+        pass
+
+
+def make_focusable(widget, activate=None, keys=ACTIVATE_KEYS):
+    """Macht ein Element per Tab erreichbar; keys loesen activate() aus."""
+    set_takefocus(widget, True)
+    if activate is None:
+        return widget
+
+    def pressed(_event=None):
+        activate()
+        return "break"
+    for key in keys:
+        tk.Misc.bind(widget, key, pressed, "+")
+    return widget
+
+
+def set_focus_filter(func):
+    """func(pfad) -> False, wenn das Element gerade verdeckt ist (z. B. in
+    einer anderen Ansicht als der sichtbaren)."""
+    _focus_filter[0] = func
+
+
+def _allowed(path):
+    func = _focus_filter[0]
+    if func is None:
+        return True
+    try:
+        return func(path)
+    except Exception:  # noqa: BLE001 - ein Filterfehler darf Tab nie blockieren
+        return True
+
+
+def next_focus(widget, forward=True):
+    """Pfad des naechsten (bzw. vorherigen) erreichbaren Elements oder None."""
+    command = "tk_focusNext" if forward else "tk_focusPrev"
+    start = current = str(widget)
+    for _step in range(5000):
+        try:
+            candidate = str(widget.tk.call(command, current))
+        except tk.TclError:
+            return None
+        if not candidate or candidate == start or candidate == current:
+            return None
+        if _allowed(candidate):
+            return candidate
+        current = candidate
+    return None
+
+
+def _scroll_areas(widget):
+    """Alle ScrollAreas, in denen widget liegt (innerste zuerst)."""
+    areas = []
+    node = widget
+    while node is not None:
+        if isinstance(node, ScrollArea):
+            areas.append(node)
+        node = getattr(node, "master", None)
+    return areas
+
+
+def focus_widget(widget, keyboard=True):
+    """Setzt den Fokus (per Tastatur), scrollt ihn ins Bild, zeigt den Rahmen."""
+    if keyboard:
+        _keyboard[0] = True
+    try:
+        # tk-Ebene: CTk-Widgets reichen focus_set() sonst an ein inneres
+        # Element weiter, das selbst keine Tasten kennt
+        widget.tk.call("focus", widget._w)
+    except tk.TclError:
+        return
+    for area in _scroll_areas(widget):
+        area.see(widget)
+    ring = _ring_for(widget)
+    if ring is not None:
+        ring.follow(widget)
+
+
+def _tab_key(event, forward):
+    widget = event.widget
+    if isinstance(widget, str):
+        return None    # Tk-internes Fenster (z. B. Menue): Tk-Standard
+    target = next_focus(widget, forward)
+    if target:
+        try:
+            focus_widget(widget.nametowidget(target))
+        except (KeyError, tk.TclError):
+            widget.tk.call("focus", target)
+    return "break"
+
+
+def _ring_target(widget):
+    """Rahmen um das sichtbare Element: bei Eingabefeldern von CTk um das
+    ganze abgerundete Feld statt um das innere Tk-Feld."""
+    master = getattr(widget, "master", None)
+    if master is not None and (getattr(master, "_entry", None) is widget
+                               or getattr(master, "_textbox", None) is widget):
+        return master
+    return widget
+
+
+def _ring_for(widget):
+    try:
+        top = widget.winfo_toplevel()
+    except (tk.TclError, AttributeError):
+        return None
+    ring = _rings.get(str(top))
+    if ring is None or not ring.alive():
+        ring = _rings[str(top)] = FocusRing(top)
+    return ring
+
+
+class FocusRing:
+    """Vier schmale Flaechen um das fokussierte Element - ein Rahmen, der
+    ueber allem liegt und in jeder Darstellung gleich gut sichtbar ist.
+    Er wird an den sichtbaren Bereich der umgebenden ScrollAreas
+    abgeschnitten und wandert beim Scrollen mit."""
+
+    def __init__(self, top):
+        self.top = top
+        self.widget = None
+        self._pending = False
+        self.bars = [tk.Frame(top, bg=C["focus"], bd=0, highlightthickness=0,
+                              takefocus=0) for _side in range(4)]
+
+    def alive(self):
+        try:
+            return all(bar.winfo_exists() for bar in self.bars)
+        except tk.TclError:
+            return False
+
+    def hide(self):
+        self.widget = None
+        for bar in self.bars:
+            try:
+                bar.place_forget()
+            except tk.TclError:
+                pass
+
+    def follow(self, widget):
+        """Rahmen an widget heften und (nach dem naechsten Zeichnen) setzen."""
+        self.widget = widget
+        self.schedule()
+
+    def schedule(self):
+        if self._pending:
+            return
+        self._pending = True
+        try:
+            self.top.after_idle(self._place)
+        except tk.TclError:
+            self._pending = False
+
+    def _place(self):
+        self._pending = False
+        widget = self.widget
+        if widget is None or not _keyboard[0]:
+            self.hide()
+            return
+        try:
+            if not widget.winfo_exists() or not widget.winfo_viewable() \
+                    or str(widget.tk.call("focus", "-lastfor", widget._w)) != str(widget):
+                self.hide()
+                return
+            target = _ring_target(widget)
+            gap, width = px(FOCUS_GAP), max(2, px(FOCUS_WIDTH))
+            ox, oy = self.top.winfo_rootx(), self.top.winfo_rooty()
+            x0 = target.winfo_rootx() - ox - gap - width
+            y0 = target.winfo_rooty() - oy - gap - width
+            x1 = x0 + target.winfo_width() + 2 * (gap + width)
+            y1 = y0 + target.winfo_height() + 2 * (gap + width)
+            clip = (0, 0, self.top.winfo_width(), self.top.winfo_height())
+            for area in _scroll_areas(widget):
+                ax, ay = area.canvas.winfo_rootx() - ox, area.canvas.winfo_rooty() - oy
+                clip = (max(clip[0], ax), max(clip[1], ay),
+                        min(clip[2], ax + area.canvas.winfo_width()),
+                        min(clip[3], ay + area.canvas.winfo_height()))
+        except tk.TclError:
+            self.hide()
+            return
+        cx0, cy0, cx1, cy1 = max(x0, clip[0]), max(y0, clip[1]), min(x1, clip[2]), min(y1, clip[3])
+        if cx1 - cx0 < width or cy1 - cy0 < width:
+            for bar in self.bars:
+                bar.place_forget()
+            return
+        sides = (
+            (y0 >= clip[1], dict(x=cx0, y=y0, width=cx1 - cx0, height=width)),
+            (y1 <= clip[3], dict(x=cx0, y=y1 - width, width=cx1 - cx0, height=width)),
+            (x0 >= clip[0], dict(x=x0, y=cy0, width=width, height=cy1 - cy0)),
+            (x1 <= clip[2], dict(x=x1 - width, y=cy0, width=width, height=cy1 - cy0)),
+        )
+        for bar, (visible, geometry) in zip(self.bars, sides):
+            if visible:
+                bar.configure(bg=C["focus"])
+                bar.place(**geometry)
+                bar.lift()
+            else:
+                bar.place_forget()
+
+    def shows(self):
+        """Ist der Rahmen gerade sichtbar? (fuer Tests)"""
+        return any(bar.winfo_manager() for bar in self.bars)
+
+
+def refresh_focus_ring(widget):
+    """Nach Scrollen o. ae.: Rahmen im Fenster von widget neu setzen."""
+    try:
+        ring = _rings.get(str(widget.winfo_toplevel()))
+    except (tk.TclError, AttributeError):
+        return
+    if ring is not None and ring.widget is not None:
+        ring.schedule()
+
+
+def _focus_in(event):
+    widget = event.widget
+    if isinstance(widget, str) or not _keyboard[0]:
+        return
+    ring = _ring_for(widget)
+    if ring is None:
+        return
+    if widget is widget.winfo_toplevel():
+        ring.hide()
+    else:
+        ring.follow(widget)
+
+
+def _focus_out(event):
+    widget = event.widget
+    if isinstance(widget, str):
+        return
+    ring = _rings.get(str(widget.winfo_toplevel())) if hasattr(widget, "winfo_toplevel") else None
+    if ring is not None and ring.widget is widget:
+        ring.schedule()
+
+
+def _mouse_down(event):
+    _keyboard[0] = False
+    widget = event.widget
+    if isinstance(widget, str):
+        return
+    try:
+        ring = _rings.get(str(widget.winfo_toplevel()))
+    except tk.TclError:
+        return
+    if ring is not None:
+        ring.hide()
+
+
+def keyboard_mode():
+    """Wird gerade per Tastatur gearbeitet? (fuer Tests)"""
+    return _keyboard[0]
+
+
+def focus_ring(widget):
+    """Der Fokusrahmen im Fenster von widget (fuer Tests)."""
+    return _rings.get(str(widget.winfo_toplevel()))
+
+
+def install_keyboard(root):
+    """Tab-Steuerung und Fokusrahmen fuer alle Fenster der Anwendung."""
+    # Tk bindet Tab ueber <<NextWindow>> (Umschalt+Tab: <<PrevWindow>>); beide
+    # Wege werden ersetzt, damit immer dieselbe Reihenfolge gilt
+    root.bind_all("<Tab>", lambda event: _tab_key(event, True))
+    root.bind_all("<<NextWindow>>", lambda event: _tab_key(event, True))
+    root.bind_all("<<PrevWindow>>", lambda event: _tab_key(event, False))
+    root.bind_all("<FocusIn>", _focus_in, "+")
+    root.bind_all("<FocusOut>", _focus_out, "+")
+    root.bind_all("<Button-1>", _mouse_down, "+")
+
+
+def _keyboard_init(cls, activate_name):
+    """Ab 0.56: Schalter, Haken und Aufklapplisten von customtkinter sind von
+    Haus aus nicht per Tastatur bedienbar. Nach dem Aufbau jedes solchen
+    Widgets: per Tab erreichbar, Eingabe/Leertaste schalten bzw. oeffnen."""
+    original = cls.__init__
+
+    def init(self, *args, **kwargs):
+        original(self, *args, **kwargs)
+        make_focusable(self, lambda: getattr(self, activate_name)())
+    cls.__init__ = init
+
+
+_keyboard_init(ctk.CTkSwitch, "toggle")
+_keyboard_init(ctk.CTkCheckBox, "toggle")
+_keyboard_init(ctk.CTkOptionMenu, "_open_dropdown_menu")

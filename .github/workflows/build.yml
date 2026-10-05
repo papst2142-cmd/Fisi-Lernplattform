@@ -17,6 +17,14 @@
 #    - von Hand im Reiter "Actions" -> "Installer bauen" -> "Run workflow".
 #      Die Installer liegen dann unten auf der Seite des Laufs unter
 #      "Artifacts" zum Herunterladen bereit.
+#      Mit einem Namen im Feld "vorab" (z.B. 0.56-test1) entsteht zusaetzlich
+#      eine Testversion als Vorab-Release (Pre-release) mit der Windows-.exe
+#      als Datei. Ein Pre-release liefert GitHub nie als "latest" aus, die
+#      Update-Funktion bietet es deshalb niemandem an.
+#
+#  Ab 0.56 laeuft vor jedem Release (und vor jeder Testversion) der
+#  automatische Update-Test (Job "update-test"): letzte normale Version aus
+#  dem Release installieren, neue Version als Update einspielen, pruefen.
 # ============================================================================
 
 name: Installer bauen
@@ -25,6 +33,12 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      vorab:
+        description: "Testversion als Vorab-Release anlegen (Name, z.B. 0.56-test1) - leer = nur bauen"
+        type: string
+        required: false
+        default: ""
   workflow_call:
     inputs:
       tag:
@@ -170,9 +184,136 @@ jobs:
           path: installer_output/*
           if-no-files-found: error
 
+  # Ab 0.56: Update von der letzten normalen Version auf die neue, wie aus dem
+  # Programm heraus. Ohne bestandenen Test kein Release und keine Testversion.
+  update-test:
+    name: Update-Test (Windows)
+    needs: build
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Alte Version bestimmen (letztes normales Release)
+        id: alt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ALT=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          NEU=$(python -c "import build; print(build.app_version())")
+          echo "alt=${ALT#v}" >> "$GITHUB_OUTPUT"
+          echo "neu=$NEU" >> "$GITHUB_OUTPUT"
+          echo "Update-Test: ${ALT#v} -> $NEU"
+
+      # Der Updater der alten Version startet den neuen Installer
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ steps.alt.outputs.alt }}
+          path: alt
+
+      - name: Abhaengigkeiten
+        run: python -m pip install certifi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer-windows
+          path: neu
+
+      - name: Update testen
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem "neu\*Setup*.exe")[0].FullName
+          .github\update-test\update_test.ps1 -AltVersion "${{ steps.alt.outputs.alt }}" -NeuVersion "${{ steps.alt.outputs.neu }}" -NeuSetup $setup
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: update-test-protokolle
+          path: update_test_protokolle/*
+
+  # Testversion fuer einzelne PCs (ab 0.56): Vorab-Release mit nur der .exe.
+  # Tag "vorab-<Name>" beginnt nicht mit v - startet also keinen Release-Lauf.
+  vorab:
+    name: Testversion (Vorab-Release)
+    needs: [build, update-test]
+    if: github.event_name == 'workflow_dispatch' && inputs.vorab != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer-windows
+          path: neu
+
+      - name: Datei und Text der Testversion
+        env:
+          VORAB: ${{ inputs.vorab }}
+        run: |
+          case "$VORAB" in *[!A-Za-z0-9._-]*|"") echo "Ungueltiger Name: $VORAB"; exit 1;; esac
+          mkdir -p vorab
+          cp neu/*Setup*.exe "vorab/FISI-Lernplattform-Setup-$VORAB.exe"
+          VERSION=$(python3 -c "import build; print(build.app_version())")
+          {
+            echo "**Testversion $VORAB - nur zum Prüfen, nicht für alle.**"
+            echo ""
+            echo "Gebaut aus dem Zweig \`${{ github.ref_name }}\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
+            echo ""
+            echo "Die Update-Funktion bietet diese Testversion nicht an (Vorab-Release). Installation von Hand: Datei herunterladen und starten. Der Lernstand bleibt erhalten."
+            echo ""
+            echo "### Prüfsumme (SHA-256)"
+            echo ""
+            for f in vorab/*; do
+              echo "- \`$(basename "$f")\`: \`$(sha256sum "$f" | cut -d' ' -f1)\`"
+            done
+          } > vorab.md
+          cat vorab.md
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: vorab-${{ inputs.vorab }}
+          target_commitish: ${{ github.sha }}
+          name: Testversion ${{ inputs.vorab }} (Vorab, nicht für alle)
+          body_path: vorab.md
+          prerelease: true
+          make_latest: false
+          files: vorab/*
+
+      - name: Nachweis - neueste Version bleibt das normale Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VORAB: ${{ inputs.vorab }}
+        run: |
+          LATEST=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          PRE=$(gh api repos/${{ github.repository }}/releases/tags/vorab-$VORAB --jq .prerelease)
+          python3 -m pip install --quiet certifi
+          ANGEBOT=$(python3 -c "import fisi_update as u; i = u.check_for_update('0.1', kind='windows'); print(i.version if i else '-')")
+          {
+            echo "## Testversion $VORAB"
+            echo ""
+            echo "| Prüfung | Ergebnis |"
+            echo "|---|---|"
+            echo "| /releases/latest liefert | $LATEST |"
+            echo "| vorab-$VORAB ist Pre-release | $PRE |"
+            echo "| Update-Funktion bietet an (ab Version 0.1) | $ANGEBOT |"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$LATEST" = "vorab-$VORAB" ] || [ "$PRE" != "true" ] || [ "$ANGEBOT" = "$VORAB" ]; then
+            echo "Testversion wuerde als neueste Version ausgeliefert!"
+            exit 1
+          fi
+
   release:
     name: GitHub-Release
-    needs: [build, android]
+    needs: [build, android, update-test]
     if: inputs.tag != '' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     permissions:

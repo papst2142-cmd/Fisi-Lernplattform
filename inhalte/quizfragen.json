@@ -27579,12 +27579,12 @@
     "q": "Ein Kollege mit Bachelor Professional in IT fragt nach dem nächsthöheren IHK-Abschluss auf DQR-Niveau 7 im IT-Bereich. Was ist richtig?",
     "options": [
       "Dafür gibt es den Geprüften Berufsspezialisten, der über dem Bachelor Professional steht",
-      "Bisher die strategischen IT-Professionals, ein Master Professional in IT wird noch geprüft",
+      "Früher die strategischen IT-Professionals, einen Master Professional in IT gibt es bisher nicht",
       "Dafür gibt es den Fachinformatiker, der nach dem Bachelor Professional folgt",
       "Dafür gibt es keinen Abschluss, die IHK-Fortbildung endet immer auf Niveau 5"
     ],
-    "a": "Bisher die strategischen IT-Professionals, ein Master Professional in IT wird noch geprüft",
-    "exp": "Nach der bisherigen IT-Fortbildungsverordnung gab es auf der höchsten Ebene die strategischen Professionals mit den Abschlüssen Geprüfter Informatiker und Geprüfter Wirtschaftsinformatiker. Für die neue Ordnung von 2024 prüft das BIBB, ob und welche Profile als Master Professional in IT eingeführt werden.",
+    "a": "Früher die strategischen IT-Professionals, einen Master Professional in IT gibt es bisher nicht",
+    "exp": "Nach der IT-Fortbildungsverordnung von 2002 gab es auf der höchsten Ebene die strategischen Professionals mit den Abschlüssen Geprüfter Informatiker und Geprüfter Wirtschaftsinformatiker. Diese Verordnung ist am 1. November 2024 außer Kraft getreten; bereits begonnene Prüfungsverfahren werden nach altem Recht bis zum 1. November 2027 abgeschlossen. Mit der Neuordnung 2024 wurden zunächst nur die ersten beiden Stufen eingeführt (Geprüfter Berufsspezialist, Bachelor Professional in IT); einen Master Professional in IT auf DQR-Niveau 7 gibt es bisher nicht.",
     "neu_ab": "0.55"
   },
   {
@@ -27805,7 +27805,7 @@
       "Zu einem beliebigen Facharzt, den der Arbeitgeber auswählt"
     ],
     "a": "Zu einem Durchgangsarzt, der von der Berufsgenossenschaft zugelassen ist",
-    "exp": "Durchgangsärzte (D-Ärzte) sind Unfallchirurgen oder Orthopäden, die von der gesetzlichen Unfallversicherung beteiligt sind. Sie entscheiden über die weitere Behandlung und rechnen mit der Berufsgenossenschaft ab, nicht mit der Krankenkasse. Bei leichten Verletzungen ohne Arbeitsunfähigkeit reicht der Hausarzt.",
+    "exp": "Durchgangsärzte (D-Ärzte) sind Unfallchirurgen oder Orthopäden, die von der gesetzlichen Unfallversicherung beteiligt sind. Sie entscheiden über die weitere Behandlung und rechnen mit der Berufsgenossenschaft ab, nicht mit der Krankenkasse. Ohne Arbeitsunfähigkeit über den Unfalltag hinaus, bei voraussichtlich höchstens einer Woche Behandlung und ohne Verordnung von Heil- oder Hilfsmitteln reicht der Hausarzt.",
     "neu_ab": "0.55"
   },
   {
@@ -27958,7 +27958,7 @@
       "Rückgabe an den Hersteller oder einen beauftragten Entsorgungsfachbetrieb"
     ],
     "a": "Rückgabe an den Hersteller oder einen beauftragten Entsorgungsfachbetrieb",
-    "exp": "Gewerblich genutzte Geräte (B2B) werden nach ElektroG in der Regel nicht über die kommunalen Sammelstellen für private Haushalte entsorgt. Hersteller müssen für solche Geräte eine Rückgabemöglichkeit schaffen, alternativ beauftragt man einen zertifizierten Entsorgungsfachbetrieb. Belege über die ordnungsgemäße Entsorgung werden aufbewahrt.",
+    "exp": "Für reine B2B-Geräte müssen die Hersteller nach § 19 ElektroG eine Rückgabemöglichkeit schaffen. Monitore, die auch in Privathaushalten genutzt werden können, gelten zwar als Altgeräte aus privaten Haushalten (§ 3 Nr. 5 ElektroG); ob die kommunale Sammelstelle 30 Geräte eines Betriebs auf einmal annimmt, regelt aber die Kommune. Üblich ist daher die Rückgabe an den Hersteller oder die Beauftragung eines zertifizierten Entsorgungsfachbetriebs. Belege über die ordnungsgemäße Entsorgung werden aufbewahrt.",
     "neu_ab": "0.55"
   },
   {

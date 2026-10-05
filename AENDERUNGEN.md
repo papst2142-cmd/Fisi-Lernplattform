@@ -4,6 +4,55 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.56
+
+Aufgeräumt, schneller, verständlicher: Auswertung nach richtig und falsch,
+Rundgang und Hilfe, größere Schrift und bessere Bedienung per Tastatur.
+
+- **Auswertung:** Neues Diagramm „Richtig und falsch pro Tag“ im
+  Fortschritt (Balken mit Prozent, falsch zusätzlich schraffiert). Das
+  Diagramm „Ergebnisse im Prüfungstrainer“ zeigt nur echte, abgeschlossene
+  Runden mit Datum; der leere Punkt bei 0 % ist weg, das Datum am PC steht
+  richtig herum.
+- **Aufgaben pro Tag:** Die Kurve schwingt nicht mehr unter 0 oder über die
+  Tageswerte hinaus. „Tagesziel“ steht jetzt oben rechts über dem
+  Diagramm und verdeckt nichts mehr.
+- **Aufgeräumt:** „Aktivität je Fachbereich“ (Start) und „Karteikarten nach
+  Fachbereich“ (Handy, Lernen) sind entfernt. In den Optionen sind „Farben“
+  und der neue Bereich „Löschen und zurücksetzen“ zuklappbar. „Historie
+  löschen“ steht jetzt dort statt im Fortschritt. Die Sicherheitsabfragen
+  sind unverändert.
+- **Rundgang und Hilfe:** Neue Nutzer bekommen beim ersten Start einen
+  kurzen Rundgang mit „Jetzt einrichten“ (Name, Rahmenplan, Prüfungstermine).
+  Wer schon gelernt hat, sieht ihn nicht von selbst, kann ihn aber in den
+  Optionen unter „Rundgang und Hilfe“ starten. Neue „Hilfe“ (PC: Menüpunkt
+  vor „Optionen“, Handy: Fragezeichen oben) mit Anleitung zum Abgleich,
+  Tastaturhilfe und Hinweisen bei Warnungen vom Schutzprogramm; die Suche
+  findet auch die Hilfe.
+- **Name:** Wer einen Namen einträgt (Rundgang oder Optionen), wird im
+  Dashboard bzw. auf Start mit „Hallo …“ begrüßt. Der Name bleibt auf dem
+  Gerät und kommt nicht in den Abgleich, die Sicherung oder „Problem melden“.
+- **Schriftgröße:** Normal, Groß und Sehr groß in den Optionen.
+- **Tastatur am PC:** Lernbereiche und Optionen lassen sich mit Tab,
+  Eingabe und Leertaste bedienen, mit gut sichtbarem Rahmen.
+- **Farben:** Löschen- und Erfolg-Knöpfe sind etwas dunkler, Ränder von
+  Eingabefeldern deutlicher; die Spielweltkarte ist im hellen Modus besser
+  lesbar.
+- **Schneller am PC:** Die großen Ansichten werden nach dem Start im
+  Hintergrund vorbereitet und öffnen danach deutlich schneller.
+- **Inhalte geprüft:** 71 bisher unsichere Inhalte nachgeprüft: 58 bestätigt,
+  12 berichtigt (u. a. Bildungsurlaub Niedersachsen, IT-Fortbildung 2024,
+  IP-Schutzart, Rügepflicht, PowerShell), einer bleibt offen. Dazu drei
+  Fehler behoben: AP1 „Drei Fachinformatiker gründen eine UG“ (Bedingung
+  in Aufgabe 3 ergänzt), Lernthema bei AP1 „PC-Kasse im Fahrradladen“ und
+  AP2 „IPTV in einer Seniorenresidenz“.
+- **Problem melden:** Der Bericht wird an die Person weitergegeben, von der
+  du das Programm hast.
+- **Update:** Jedes Release wird vor dem Veröffentlichen automatisch mit
+  einem Update von der Vorversion geprüft. Das Update-Fenster zeigt nur noch
+  die Neuerungen.
+- Lernstand, Spielstände, Spielwerte und der Abgleich bleiben unverändert.
+
 ## 0.55.1
 
 Fehlerbehebung: Das Update am PC bricht nicht mehr ab, das Programm schließt
