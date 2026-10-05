@@ -4505,7 +4505,7 @@ class CustomColors(ctk.CTkFrame):
             self._pending = self.after(self.DELAY_MS, self._redraw)
 
     def palette(self):
-        return fisi_theme.custom_palette(self.values)
+        return fisi_theme.values_palette(self.values, self.mode)
 
     def _redraw(self):
         self._pending = None

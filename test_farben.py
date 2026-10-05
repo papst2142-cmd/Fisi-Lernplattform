@@ -132,6 +132,46 @@ class BestandsschutzTest(unittest.TestCase):
                                      (mode, back, preset))
 
 
+class SanftTest(unittest.TestCase):
+    """Entscheidung Nico (05.10.2026, "Knopfverlauf, sanft"): Solange die
+    Regler auf dem Startwert stehen, bleibt alles exakt wie die Farbwelt."""
+
+    def tearDown(self):
+        _reset()
+
+    def test_startwert_ist_exakt_die_farbwelt(self):
+        for mode in th.MODE_IDS:
+            for preset in ("cyan_pink", "orange_gelb"):
+                th.apply_mode(mode)
+                th.apply_preset(preset)
+                th.apply_background("tannengruen")
+                before = (dict(th.C), dict(th.GRADIENTS), th.light)
+                start = th.custom_start(mode)
+                palette = th.values_palette(start, mode)
+                self.assertEqual((palette["colors"], palette["gradients"], palette["light"]),
+                                 before)
+                th.apply_custom(mode, start)
+                self.assertEqual((dict(th.C), dict(th.GRADIENTS), th.light), before)
+                th.apply_custom(mode, None)
+
+    def test_nach_dem_verschieben_gilt_die_regel(self):
+        start = th.custom_start(th.MODE_DARK)
+        moved = dict(start, akzent1=(start["akzent1"][0] + 1,) + start["akzent1"][1:])
+        palette = th.values_palette(moved, th.MODE_DARK)
+        self.assertEqual(palette, th.custom_palette(moved))
+        th.apply_custom(th.MODE_DARK, moved)
+        self.assertEqual(th.GRADIENTS["primary"][0], th.hsl_to_hex(*moved["akzent1"]))
+        self.assertNotEqual(th.C["accent"], "#22D3EE")
+
+    def test_farbwelt_palette_veraendert_nichts(self):
+        th.apply_custom(th.MODE_DARK, SONNENUNTERGANG)
+        before = (dict(th.C), dict(th.GRADIENTS), th.light, dict(th.custom_colors))
+        light = th.farbwelt_palette(th.MODE_LIGHT)
+        self.assertTrue(light["light"])
+        self.assertEqual((dict(th.C), dict(th.GRADIENTS), th.light, dict(th.custom_colors)),
+                         before)
+
+
 class AbleitungTest(unittest.TestCase):
 
     def tearDown(self):

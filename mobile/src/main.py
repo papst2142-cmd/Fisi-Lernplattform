@@ -3132,7 +3132,7 @@ class CustomColors(ft.Column):
             self._redraw()
 
     def _redraw(self):
-        palette = fisi_theme.custom_palette(self.values)
+        palette = fisi_theme.values_palette(self.values, self.mode)
         with fisi_theme.preview_colors(palette):
             map_colors = fisi_game.map_palette()
             categories = [C[key] for key in ("cyan", "pink", "purple", "green", "orange")]

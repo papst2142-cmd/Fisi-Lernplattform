@@ -394,7 +394,9 @@ def _apply_mode_colors():
     die Darstellung eigene Farben, kommen alle Werte aus custom_palette."""
     global light
     values = custom_colors.get(current_mode)
-    if values:
+    # Ab 0.57 ("sanft", Entscheidung Nico): Stehen die Regler auf dem
+    # Startwert, gilt die Farbwelt exakt, erst danach die Ableitungsregel
+    if values and values != custom_start(current_mode):
         palette = custom_palette(values)
         light = palette["light"]
         C.update(palette["colors"])
@@ -469,7 +471,9 @@ def _apply_control_colors(is_light, colors=None):
 # "hell": {...}}), nie im Abgleich. Fehlt der Eintrag fuer die aktuelle
 # Darstellung oder ist er ungueltig, gilt die gewaehlte Farbwelt unveraendert.
 #
-# Ableitungsregel (im Bericht 0.57 erklaert):
+# Stehen die Regler genau auf dem Startwert (der Farbwelt), gilt die Farbwelt
+# exakt (Entscheidung Nico 05.10.2026, "sanft"); erst nach dem Verschieben
+# gilt die Ableitungsregel (im Bericht 0.57 erklaert):
 # - Akzent 1 und 2 sind die beiden Farben des Knopfverlaufs ("primary").
 #   Zweiter Verlauf = beide 20 % dunkler, Banner = beide 40 % dunkler.
 #   Schriftakzente (Menue, Ringe, Links) = gleicher Farbton, so weit
@@ -635,6 +639,40 @@ def custom_palette(values):
                  "accent": (darken(first, 0.2), darken(second, 0.2)),
                  "hero": (darken(first, 0.4), darken(second, 0.4))}
     return {"light": is_light, "colors": colors, "gradients": gradients}
+
+
+def is_start(values, mode=None):
+    """True, wenn die Regler genau auf dem Startwert (der Farbwelt) stehen."""
+    return dict(values) == custom_start(mode)
+
+
+def farbwelt_palette(mode=None):
+    """Die Farben der gewaehlten Farbwelt einer Darstellung als Palette
+    (wie custom_palette), ohne eigene Farben und ohne etwas zu veraendern."""
+    global current_mode, light
+    mode = current_mode if mode is None else mode
+    saved = (dict(C), dict(GRADIENTS), light, current_mode, dict(custom_colors))
+    try:
+        custom_colors.clear()
+        current_mode = mode
+        _apply_mode_colors()
+        return {"light": light, "colors": dict(C), "gradients": dict(GRADIENTS)}
+    finally:
+        C.clear()
+        C.update(saved[0])
+        GRADIENTS.clear()
+        GRADIENTS.update(saved[1])
+        light, current_mode = saved[2], saved[3]
+        custom_colors.update(saved[4])
+        _refresh_tables()
+
+
+def values_palette(values, mode=None):
+    """Palette fuer Regler-Werte: am Startwert exakt die Farbwelt ("sanft"),
+    sonst die Ableitungsregel. Fuer Vorschau und Warnhinweis."""
+    if is_start(values, mode):
+        return farbwelt_palette(mode)
+    return custom_palette(values)
 
 
 class preview_colors:
