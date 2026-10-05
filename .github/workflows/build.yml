@@ -326,9 +326,12 @@ jobs:
       - name: Versionshinweise aus AENDERUNGEN.md
         run: python3 build.py --versionshinweise > versionshinweise.md
 
+      # Nur die Installer und die APK - nicht die Protokolle des Update-Tests
+      # (die landeten bei 0.56 sonst als 6 zusaetzliche Dateien im Release)
       - uses: actions/download-artifact@v8
         with:
           path: installer
+          pattern: installer-*
           merge-multiple: true
 
       # Ab 0.55.1: Hinweis auf die Release-Seite und SHA-256 jeder Datei im
