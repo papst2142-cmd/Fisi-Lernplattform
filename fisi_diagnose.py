@@ -7,7 +7,7 @@ FISI Lernplattform - Problem melden (ab 0.54)
 Baut einen Bericht fuer die Fehlersuche: Programmversion, Geraet, Datenordner,
 ein paar Systemwerte (Anzahl Eintraege, Groesse der Datenbank) und das
 Fehlerprotokoll fehler.log (fisi_core.install_error_log, nur gelesen,
-hoechstens die letzten ERROR_LOG_MAX Bytes). Ohne Oberflaeche, damit PC und
+hoechstens die letzten ERROR_LOG_MAX Bytes), ab 0.55.1 auch update.log. Ohne Oberflaeche, damit PC und
 Handy denselben Text zeigen, kopieren und speichern.
 
 Datenschutz wie bei der Sicherung (fisi_sicherung.py): Von den Einstellungen
@@ -190,6 +190,12 @@ def build_report(db=None, version="", geraet="", settings=None, log_path=None, n
     lines = report_lines(db, version, geraet, settings, now)
     log = read_log(log_path)
     lines += ["", "--- fehler.log ---", log or NO_LOG]
+    # ab 0.55.1: Protokoll des letzten Updates (nur am PC vorhanden; am Handy
+    # installiert Android das Update, dort gibt es die Datei nicht)
+    from fisi_update import read_update_log
+    update_log = read_update_log()
+    if update_log:
+        lines += ["", "--- update.log ---", update_log]
     # ab 0.55: Benutzerpfade durch %APPDATA%, ~ bzw. "…" ersetzt (auch in
     # Eintraegen, die eine aeltere Version in fehler.log geschrieben hat)
     return anonymize_paths(scrub("\n".join(lines), secrets_of(settings)))

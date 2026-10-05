@@ -14,8 +14,15 @@ Ablauf:
   path = download(info, fortschritt)     -> Pfad der heruntergeladenen Datei
   quit, text = install(path)             -> ist quit True, muss sich das
                                             Programm danach sofort beenden
+
+Ab 0.55.1 (Windows): Jeder Schritt steht in update.log im Datenordner. Der
+Installer bekommt die Prozessnummer des Programms (/WAITPID) und wartet,
+bis es wirklich beendet ist, bevor er eine Datei ersetzt (siehe [Code] in
+FISI-Lernplattform.iss). Beim naechsten Start prueft finish_pending_update(),
+ob die neue Version laeuft - sonst meldet das Programm den Fehlschlag.
 """
 
+import datetime
 import json
 import os
 import platform
@@ -28,7 +35,7 @@ import tempfile
 import urllib.error
 import urllib.request
 
-from fisi_core import resolve_db_path
+from fisi_core import anonymize_paths, resolve_db_path
 
 REPOSITORY = "papst2142-cmd/Fisi-Lernplattform"
 LATEST_URL = "https://api.github.com/repos/%s/releases/latest" % REPOSITORY
@@ -203,6 +210,7 @@ def download(info, progress=None, timeout=30):
     wird waehrenddessen aufgerufen. Liefert den Pfad der Datei."""
     if not info.asset_url:
         raise UpdateError("Für dieses System gibt es keinen passenden Installer.")
+    write_update_log("Download startet: Version %s, %s" % (info.version, info.asset_name))
     folder = os.path.join(tempfile.gettempdir(), "FISI-Lernplattform-Update")
     os.makedirs(folder, exist_ok=True)
     target = os.path.join(folder, info.asset_name)
@@ -220,11 +228,16 @@ def download(info, progress=None, timeout=30):
                 if progress:
                     progress(loaded, total)
     except (urllib.error.URLError, OSError) as error:
+        write_update_log("Download fehlgeschlagen: %s" % error)
         raise UpdateError("Der Download ist fehlgeschlagen: %s" % error)
     if info.asset_size and os.path.getsize(partial) != info.asset_size:
+        write_update_log("Download unvollständig: %d von %d Bytes"
+                         % (os.path.getsize(partial), info.asset_size))
         os.remove(partial)
         raise UpdateError("Der Download ist unvollständig. Bitte erneut versuchen.")
     os.replace(partial, target)
+    write_update_log("Download fertig: %s (%d Bytes, Größe geprüft)"
+                     % (info.asset_name, os.path.getsize(target)))
     return target
 
 
@@ -232,17 +245,49 @@ def download(info, progress=None, timeout=30):
 #  INSTALLATION
 # ============================================================================
 
-def install(path, kind=None):
+def windows_installer_args(path, pid=None, exe=None):
+    """Befehlszeile fuer den Inno-Setup-Installer (ab 0.55.1).
+
+    /WAITPID: Der Installer wartet, bis dieses Programm beendet ist, und
+    ersetzt erst dann Dateien (vorher startete er sofort und das Programm
+    schloss sich 1,5 s spaeter - blieb es haengen, waren die Dateien in
+    Benutzung und der Installer machte alles rueckgaengig).
+    /UPDATELOG: Der Installer schreibt seine Schritte in update.log.
+    /FISIEXE: Scheitert die Installation, startet der Installer die alte
+    Version wieder, damit sie den Fehlschlag meldet.
+    /LOG: ausfuehrliches Protokoll des Installers (update_installer.log).
+    Pfade mit Leerzeichen und Umlauten sind sicher: subprocess setzt jedes
+    Argument einzeln in Anfuehrungszeichen, Windows bekommt sie als Unicode."""
+    pid = os.getpid() if pid is None else pid
+    return [path, "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
+            "/WAITPID=%d" % pid,
+            "/UPDATELOG=%s" % update_log_path(),
+            "/FISIEXE=%s" % (exe or sys.executable),
+            "/LOG=%s" % installer_log_path()]
+
+
+def install(path, kind=None, version="", pid=None):
     """Startet die Installation. Liefert (beenden, Hinweistext): Ist beenden
     True, muss sich das Programm sofort schliessen, damit der Installer die
-    Dateien ersetzen kann und das Programm neu startet."""
+    Dateien ersetzen kann und das Programm neu startet. version: die Version,
+    die installiert wird (fuer update.log und die Pruefung beim naechsten
+    Start)."""
     kind = kind or install_kind()
     try:
         if kind == "windows":
-            # Der Installer laeuft sichtbar, aber ohne Rueckfragen, und
-            # startet das Programm danach wieder (siehe [Run] im .iss).
-            subprocess.Popen([path, "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
-                             close_fds=True)
+            # Der Installer laeuft sichtbar, aber ohne Rueckfragen, wartet auf
+            # das Ende dieses Programms und startet es danach wieder (siehe
+            # [Code] und [Run] im .iss).
+            args = windows_installer_args(path, pid)
+            write_update_log("Installer wird gestartet: %s" % subprocess.list2cmdline(args))
+            remember_pending_update(version)
+            try:
+                process = subprocess.Popen(args, close_fds=True)
+            except OSError:
+                forget_pending_update()
+                raise
+            write_update_log("Installer läuft (Prozess %d). Das Programm wird jetzt "
+                             "beendet, der Installer wartet darauf." % process.pid)
             return True, "Das Update wird installiert. Das Programm startet danach neu."
 
         if kind == "appimage":
@@ -269,9 +314,125 @@ def install(path, kind=None):
                            "Fenster auf „Programme“ ziehen (vorhandene Version "
                            "ersetzen).")
     except (OSError, KeyError) as error:
+        write_update_log("Installer ließ sich nicht starten: %s" % error)
         raise UpdateError("Die Installation konnte nicht gestartet werden: %s" % error)
     raise UpdateError("Automatische Updates sind nur in der installierten "
                       "Anwendung möglich.")
+
+
+# ============================================================================
+#  UPDATE-PROTOKOLL (ab 0.55.1)
+# ============================================================================
+#
+# update.log im Datenordner: jeder Schritt eines Updates mit Zeitpunkt -
+# Download, Pruefung, Start des Installers, Beenden des Programms, Ergebnis
+# (die Zeilen des Installers schreibt er selbst dazu). Nie Zugangsschluessel
+# oder Passwoerter; Benutzerpfade werden wie in fehler.log ersetzt. Die
+# Datei erscheint unter Optionen > Problem melden.
+
+UPDATE_LOG_NAME = "update.log"
+INSTALLER_LOG_NAME = "update_installer.log"
+UPDATE_LOG_MAX = 64 * 1024
+PENDING_KEY = "update_ausstehend"
+
+FAILED_TITLE = "Update nicht abgeschlossen"
+FAILED_TEXT = ("Das Update auf Version %(neu)s wurde nicht installiert. Installiert "
+               "ist weiterhin Version %(alt)s. Dein Lernstand ist davon nicht "
+               "betroffen.\n\n%(grund)s\n\nDas Protokoll liegt hier:\n%(pfad)s\n"
+               "Es steht auch unter Optionen › Problem melden.\n\n"
+               "Tipp: PC neu starten und das Update erneut versuchen. Klappt es "
+               "dann nicht, den Installer von der Download-Seite von Hand starten.")
+REASON_ROLLBACK = ("Der Installer konnte nicht alle Dateien ersetzen und hat alle "
+                   "Änderungen rückgängig gemacht.")
+REASON_UNKNOWN = "Der Installer hat die Installation nicht abgeschlossen."
+
+
+def _data_folder():
+    return os.path.dirname(resolve_db_path())
+
+
+def update_log_path():
+    return os.path.join(_data_folder(), UPDATE_LOG_NAME)
+
+
+def installer_log_path():
+    return os.path.join(_data_folder(), INSTALLER_LOG_NAME)
+
+
+def write_update_log(text):
+    """Haengt eine Zeile mit Zeitpunkt an update.log an. Darf nie scheitern."""
+    try:
+        path = update_log_path()
+        if os.path.exists(path) and os.path.getsize(path) > UPDATE_LOG_MAX:
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                rest = handle.read()[-UPDATE_LOG_MAX // 2:]
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(rest[rest.find("\n") + 1:])
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write("%s | Programm | %s\n" % (stamp, anonymize_paths(text)))
+    except Exception:
+        pass
+
+
+def read_update_log(limit=16 * 1024):
+    """Ende von update.log (fuer den Problembericht), "" ohne Datei."""
+    try:
+        with open(update_log_path(), "rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - limit))
+            text = handle.read().decode("utf-8", errors="replace")
+    except OSError:
+        return ""
+    if size > limit:
+        text = text[text.find("\n") + 1:]
+    return text.strip()
+
+
+def remember_pending_update(version):
+    """Merkt sich vor dem Start des Installers, welche Version kommen soll."""
+    settings = load_settings()
+    settings[PENDING_KEY] = {"version": version,
+                             "zeit": datetime.datetime.now().isoformat(timespec="seconds")}
+    save_settings(settings)
+
+
+def forget_pending_update():
+    settings = load_settings()
+    if settings.pop(PENDING_KEY, None) is not None:
+        save_settings(settings)
+
+
+def _installer_rolled_back():
+    """Steht im Protokoll des Installers, dass er zurueckgerollt hat?"""
+    try:
+        with open(installer_log_path(), encoding="utf-8", errors="replace") as handle:
+            text = handle.read()
+    except OSError:
+        return False
+    return "Rolling back changes" in text
+
+
+def finish_pending_update(current_version):
+    """Beim Start: War ein Update unterwegs? Liefert None (nichts zu tun),
+    ("ok", version) oder ("fehler", meldungstext). Die Markierung wird in
+    beiden Faellen entfernt, die Meldung erscheint also genau einmal."""
+    pending = load_settings().get(PENDING_KEY)
+    if not isinstance(pending, dict):
+        return None
+    target = str(pending.get("version") or "")
+    forget_pending_update()
+    if not target or not is_newer(target, current_version):
+        write_update_log("Update auf %s abgeschlossen, Programm läuft als %s."
+                         % (target or "?", current_version))
+        return "ok", current_version
+    write_update_log("Update auf %s NICHT abgeschlossen, installiert ist weiterhin %s."
+                     % (target, current_version))
+    return "fehler", FAILED_TEXT % {
+        "neu": target, "alt": current_version,
+        "grund": REASON_ROLLBACK if _installer_rolled_back() else REASON_UNKNOWN,
+        "pfad": update_log_path()}
 
 
 # ============================================================================
