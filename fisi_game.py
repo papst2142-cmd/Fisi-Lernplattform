@@ -905,8 +905,11 @@ def _validate_hardware_task(task, content):
         if not valid_carts(first, content):
             return ["die Bestellung davor ('%s') hat keine gueltige Loesung" % first["id"]]
         for cart in valid_carts(first, content):
-            ids = [offer["teil"] for offer in first["angebote"] if cart.get(offer["id"])]
-            extras.append([pid for pid in ids if part(pid, content)["typ"] in task["aus_lager"]])
+            stock = {}
+            for offer in first["angebote"]:
+                if cart.get(offer["id"]) and part(offer["teil"], content)["typ"] in task["aus_lager"]:
+                    stock[offer["teil"]] = stock.get(offer["teil"], 0) + cart[offer["id"]]
+            extras.append(list(stock) + stock_combos(stock, task["aus_lager"], content))
         problems += _stock_users_problems(first, content)
     for extra in extras:
         available = list(task.get("teile") or []) + [p for p in extra
@@ -1121,14 +1124,71 @@ BUILD_RULES = ("ram_min", "speicher_min", "grafikkarte", "budget")
 UNITS = {"groesse": "GB", "watt": "W", "leistung": "W", "ports": "Ports"}
 
 
+# Bedarfe, deren Groesse sich aus mehreren Teilen zusammensetzen laesst:
+# Arbeitsspeicher addiert sich (2 x 8 GB = 16 GB), solange die Module in die
+# Steckplaetze passen. Ein Kit bleibt dabei zusammen in einem PC.
+POOLED_NEEDS = {"ram": "groesse"}
+COMBO_MARK = "*"
+
+
+def combo_id(part_id, count):
+    """Id fuer mehrere gleiche Teile, die zusammen in einen Steckplatz kommen
+    (z.B. zwei einzelne RAM-Module): "ram_ddr4_1x8*2"."""
+    return part_id if count == 1 else "%s%s%d" % (part_id, COMBO_MARK, count)
+
+
+def split_combo(part_id):
+    """(Grund-Id, Anzahl) einer Id aus combo_id."""
+    base, mark, count = str(part_id).rpartition(COMBO_MARK)
+    if mark and base and count.isdigit() and int(count) >= 2:
+        return base, int(count)
+    return part_id, 1
+
+
+def _combo_part(item, count):
+    per_module = item["groesse"] // item["module"]
+    if item["module"] == 1:
+        detail = "%d × %d GB, Einzelmodule" % (count, per_module)
+    else:
+        detail = "%d Kits mit je %d × %d GB" % (count, item["module"], per_module)
+    return dict(item, id=combo_id(item["id"], count), preis=item["preis"] * count,
+                groesse=item["groesse"] * count, module=item["module"] * count,
+                name="%s %d GB (%s)" % (item["ram_typ"], item["groesse"] * count, detail))
+
+
 def part(part_id, content=None):
     """Bauteil (PC) oder Rack-Geraet - beides laesst sich bestellen und liegt
-    dann im Lager."""
+    dann im Lager. Mehrere gleiche RAM-Teile (combo_id) gelten als ein Teil."""
     hardware = (content or GAME)["hardware"]
+    base, count = split_combo(part_id)
     for item in hardware["teile"] + hardware.get("ersatzteile", []):
-        if item["id"] == part_id:
-            return item
-    return rack_device(part_id, content)
+        if item["id"] == base:
+            if count == 1:
+                return item
+            return _combo_part(item, count) if item["typ"] in POOLED_NEEDS else None
+    return rack_device(part_id, content) if count == 1 else None
+
+
+def max_ram_slots(content=None):
+    boards = [item["ram_slots"] for item in (content or GAME)["hardware"]["teile"]
+              if item["typ"] == "mainboard"]
+    return max(boards) if boards else 4
+
+
+def stock_combos(stock, allowed, content=None):
+    """Zusaetzliche Ids fuer die Werkbank: Liegen mehrere gleiche RAM-Teile im
+    Lager, lassen sie sich zusammen einsetzen (so viele, wie Steckplaetze hat
+    das groesste Mainboard)."""
+    result = []
+    for part_id, count in stock.items():
+        item = part(part_id, content)
+        if not item or item["typ"] not in allowed or item["typ"] not in POOLED_NEEDS:
+            continue
+        for number in range(2, int(count) + 1):
+            if number * item["module"] > max_ram_slots(content):
+                break
+            result.append(combo_id(part_id, number))
+    return result
 
 
 def dealer(dealer_id, content=None):
@@ -1245,6 +1305,8 @@ def _need_mismatch(item, need, content=None):
             return "passt nicht: %s %s statt %s" % (
                 label, _feature_value(item.get(key), unit), _feature_value(value, unit))
     for key, value in (need.get("min") or {}).items():
+        if POOLED_NEEDS.get(need["typ"]) == key:
+            continue   # zaehlt erst zusammen mit den anderen Teilen (order_problems)
         if item.get(key, 0) < value:
             unit = UNITS.get(key, "")
             return "zu klein: %s %s, gebraucht werden mindestens %s %s" % (
@@ -1259,6 +1321,64 @@ def offer_need(offer, task, content=None):
         if not _need_mismatch(item, need, content):
             return index
     return None
+
+
+def _need_slots(need, content=None):
+    """Wie viele Module passen in einen PC des Bedarfs? (kleinstes Mainboard)"""
+    boards = [part(other, content) for other in need.get("fuer") or []]
+    slots = [board["ram_slots"] for board in boards if board and board["typ"] == "mainboard"]
+    return min(slots) if slots else max_ram_slots(content)
+
+
+def pooled_cover(need, counts, content=None):
+    """Wie viele Einheiten eines Bedarfs (z.B. PCs mit mindestens 16 GB) lassen
+    sich aus den Teilen bilden? counts = [(bauteil, anzahl)]. Ein Teil (auch ein
+    Kit) steckt ganz in einem PC; mehrere Teile in einem PC duerfen zusammen
+    nicht mehr Module haben, als das Mainboard Steckplaetze hat."""
+    key = POOLED_NEEDS[need["typ"]]
+    goal = need["min"][key]
+    slots = _need_slots(need, content)
+    items = [item for item, _count in counts]
+    groups = []
+    for numbers in itertools.product(*[range(count + 1) for _item, count in counts]):
+        size = sum(item[key] * number for item, number in zip(items, numbers))
+        modules = sum(item.get("module", 1) * number for item, number in zip(items, numbers))
+        if size < goal or modules > slots:
+            continue
+        # Nur kleinste Gruppen: ohne irgendein Teil reicht es nicht mehr
+        if any(number and size - item[key] >= goal for item, number in zip(items, numbers)):
+            continue
+        groups.append(numbers)
+    memo = {}
+
+    def best(left):
+        if left not in memo:
+            result = 0
+            for group in groups:
+                if all(used <= have for used, have in zip(group, left)):
+                    rest = tuple(have - used for used, have in zip(group, left))
+                    result = max(result, 1 + best(rest))
+                    if result >= need["menge"]:
+                        break
+            memo[left] = result
+        return memo[left]
+    return best(tuple(count for _item, count in counts))
+
+
+def _pooled_problems(need, offers, content=None):
+    counts = {}
+    for offer, count in offers:
+        counts[offer["teil"]] = counts.get(offer["teil"], 0) + count
+    rows = [(part(part_id, content), count) for part_id, count in counts.items()]
+    covered = pooled_cover(need, rows, content)
+    if covered < need["menge"]:
+        return ["Bedarf nicht gedeckt: %s (%d von %d)." % (need["text"], covered, need["menge"])]
+    for index, (item, count) in enumerate(rows):
+        fewer = rows[:index] + ([(item, count - 1)] if count > 1 else []) + rows[index + 1:]
+        if pooled_cover(need, fewer, content) >= need["menge"]:
+            return ["Zu viel bestellt: %s. Einmal „%s“ weniger reicht auch."
+                    % (need["text"], item["name"])]
+    return []
 
 
 def cart_total(task, cart):
@@ -1280,6 +1400,7 @@ def order_problems(task, cart, content=None):
         return ["Der Warenkorb ist leer."]
     problems = []
     covered = [0] * len(task["bedarf"])
+    pooled = {}   # Bedarfe, deren Groesse sich addiert: index -> [(angebot, anzahl)]
     for offer in task["angebote"]:
         count = cart.get(offer["id"], 0)
         if not count:
@@ -1293,6 +1414,13 @@ def order_problems(task, cart, content=None):
                 item["name"], (reasons[0] if reasons else "wird nicht gebraucht")))
         else:
             covered[index] += count
+            if task["bedarf"][index]["typ"] in POOLED_NEEDS and \
+                    POOLED_NEEDS[task["bedarf"][index]["typ"]] in (task["bedarf"][index].get("min") or {}):
+                pooled.setdefault(index, []).append((offer, count))
+    for index, need in enumerate(task["bedarf"]):
+        if index in pooled:
+            problems += _pooled_problems(need, pooled[index], content)
+            covered[index] = need["menge"]
     for need, count in zip(task["bedarf"], covered):
         if count < need["menge"]:
             problems.append("Bedarf nicht gedeckt: %s (%d von %d)."
@@ -2753,8 +2881,17 @@ def valid_carts(task, content=None):
     ranges = []
     for offer in task["angebote"]:
         index = offer_need(offer, task, content)
-        ranges.append(range(1) if index is None else
-                      range(task["bedarf"][index]["menge"] + 1))
+        if index is None:
+            ranges.append(range(1))
+            continue
+        need = task["bedarf"][index]
+        key = POOLED_NEEDS.get(need["typ"])
+        most = need["menge"]
+        if key and key in (need.get("min") or {}):
+            # Kleine Teile addieren sich: so viele, wie es fuer alle Einheiten braucht
+            size = part(offer["teil"], content)[key]
+            most *= max(1, -(-need["min"][key] // max(1, size)))
+        ranges.append(range(most + 1))
     result = []
     for counts in itertools.product(*ranges):
         cart = {offer: count for offer, count in zip(offers, counts) if count}
@@ -3059,9 +3196,10 @@ def evaluate(task, answer, used_help, levels, day, balancing=None, available=Non
         stock = dict(stock or {})
         used = []
         for part_id in answer.values():
-            if part_id and part_id not in task.get("teile", []) and stock.get(part_id, 0) > 0:
-                stock[part_id] -= 1
-                used.append(part_id)
+            base, count = split_combo(part_id) if part_id else (part_id, 1)
+            if part_id and part_id not in task.get("teile", []) and stock.get(base, 0) >= count:
+                stock[base] -= count
+                used += [base] * count
         payload["verbaut"] = [answer[slot] for slot in task["slots"] if answer.get(slot)]
         payload["aus_lager"] = used
     return payload
@@ -4444,10 +4582,12 @@ class GameState:
         allowed = list(task.get("aus_lager") or [])
         if task.get("austausch"):
             allowed.append(task["austausch"]["typ"])
-        for part_id in self.stock():
+        stock = self.stock()
+        for part_id in stock:
             item = part(part_id, self.content)
             if item and item["typ"] in allowed and part_id not in parts:
                 parts.append(part_id)
+        parts += [pid for pid in stock_combos(stock, allowed, self.content) if pid not in parts]
         return parts
 
     # -- Tickets ------------------------------------------------------------

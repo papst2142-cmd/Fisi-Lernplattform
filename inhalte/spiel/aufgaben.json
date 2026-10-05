@@ -371,11 +371,11 @@
     "ab_tag": 4,
     "ticket": [
       "Frank aus dem Einkauf hat eine Anfrage der Talbahn-Leitstelle auf dem Tisch: Zwei Leitstellen-PCs werden neu aufgebaut, es fehlt der Arbeitsspeicher.",
-      "„Die Mainboards sind B760M mit DDR4. Je PC mindestens 16 GB, also zwei Kits. Budget 130 €, und Mehmet braucht die Ware spätestens in zwei Arbeitstagen. Die Angebote habe ich dir rausgesucht, du entscheidest.“"
+      "„Die Mainboards sind B760M mit DDR4. Je PC mindestens 16 GB, jedes Board hat vier Steckplätze. Budget 130 €, und Mehmet braucht die Ware spätestens in zwei Arbeitstagen. Die Angebote habe ich dir rausgesucht, du entscheidest.“"
     ],
     "frage": "Stelle den Warenkorb zusammen.",
     "bedarf": [
-      {"text": "RAM-Kit für einen Leitstellen-PC (mind. 16 GB)", "typ": "ram", "menge": 2,
+      {"text": "Arbeitsspeicher für einen Leitstellen-PC (mind. 16 GB)", "typ": "ram", "menge": 2,
        "fuer": ["mb_b760_matx"], "min": {"groesse": 16}}
     ],
     "angebote": [
@@ -390,13 +390,13 @@
     "hilfe": [
       "Prüfe jedes Angebot in drei Schritten:",
       "1. Passt es technisch? Das Mainboard braucht DDR4, DDR5 passt nicht in DDR4-Steckplätze.",
-      "2. Reicht es? Gefordert sind mindestens 16 GB je PC.",
+      "2. Reicht es? Gefordert sind mindestens 16 GB je PC. Einzelne Module zählen zusammen (2 × 8 GB = 16 GB), ein Kit bleibt aber als Satz in einem PC.",
       "3. Kommt es rechtzeitig und bleibt im Budget? Höchstens 2 Arbeitstage Lieferzeit, zusammen höchstens 130 €.",
       "Das billigste Angebot ist nicht automatisch das beste."
     ],
     "erklaerung": [
-      "Beim Angebotsvergleich zählen neben dem Preis auch Lieferzeit und technische Eignung. Der DDR5-Riegel ist schnell und billig, passt aber nicht ins DDR4-Mainboard. Kabelkönig ist beim passenden Kit am günstigsten, liefert aber zu spät, und das 32-GB-Kit sprengt zu zweit das Budget.",
-      "Übrig bleiben zwei Kits DDR4 16 GB von Bitlager24 für 110 €."
+      "Beim Angebotsvergleich zählen neben dem Preis auch Lieferzeit und technische Eignung. Der DDR5-Riegel ist schnell und billig, passt aber nicht ins DDR4-Mainboard. Kabelkönig ist beim 16-GB-Kit am günstigsten, liefert aber zu spät. Das 32-GB-Kit wird als Satz geprüft und verkauft und bleibt deshalb in einem PC, zwei davon sprengen das Budget.",
+      "Am günstigsten und schnellsten sind vier einzelne 8-GB-Module von Bitlager24: zwei je PC, zusammen 96 € und schon nach einem Arbeitstag da. Ebenfalls richtig sind zwei 16-GB-Kits von Bitlager24 (110 €) oder ein Kit plus zwei einzelne Module (103 €)."
     ],
     "suchbegriffe": ["DDR4", "Angebotsvergleich", "Lieferzeit"]
   },
@@ -424,7 +424,7 @@
               "ssd_sata_500", "nt_450", "geh_matx"],
     "vorgaben": {"ram_min": 16, "speicher_min": 1000},
     "hilfe": [
-      "Der Arbeitsspeicher ist schon da und gibt das Mainboard vor: Es muss DDR4 können.",
+      "Der Arbeitsspeicher ist schon da und gibt das Mainboard vor: Es muss DDR4 können. Liegen einzelne Module im Lager, setzt du zwei davon zusammen ein.",
       "Danach: CPU mit gleichem Sockel und eingebauter Grafik, SSD mit mindestens 1 TB, Gehäuse passend zum Formfaktor des Mainboards."
     ],
     "erklaerung": [
