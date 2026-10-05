@@ -816,6 +816,22 @@ class DBManager:
             ") GROUP BY tag", fetch="all", default=[]) or []
         return {day: count for day, count in rows}
 
+    def activity_split_days(self):
+        """{tag: (richtig, falsch)} (ab 0.56, Fortschritt "Richtig und falsch
+        pro Tag"): dieselben Aufgaben wie activity_days, getrennt nach der
+        gespeicherten Bewertung (Spalte correct). Liest nur vorhandene Daten."""
+        rows = self._execute(
+            "SELECT substr(timestamp, 1, 10) AS tag, SUM(correct = 1), SUM(correct = 0)"
+            " FROM ("
+            "  SELECT timestamp, correct FROM card_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp, correct FROM quiz_answers"
+            "  UNION ALL SELECT timestamp, correct FROM scenario_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp, correct FROM project_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp, correct FROM ap1_events WHERE correct IS NOT NULL"
+            "  UNION ALL SELECT timestamp, correct FROM trainer_aufgaben"
+            ") GROUP BY tag", fetch="all", default=[]) or []
+        return {day: (int(right or 0), int(wrong or 0)) for day, right, wrong in rows}
+
     def _run(self, run):
         """Durchgang fuer Lesen/Schreiben: ohne Angabe der aktive dieses
         Geraets. Liefert None fuer den alten Durchgang (Spalte lauf leer)."""

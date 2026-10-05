@@ -332,6 +332,83 @@ def daily_summary(series, target=None):
 
 
 # ============================================================================
+#  RICHTIG UND FALSCH PRO TAG, ERGEBNISSE IM PRUEFUNGSTRAINER (ab 0.56)
+# ============================================================================
+#
+# Richtig/falsch je Tag: dieselben bewerteten Aufgaben wie "Aufgaben pro Tag"
+# (DBManager.activity_split_days), als Anteil in Prozent. Eine Aufgabe zaehlt
+# so, wie sie gespeichert ist: Karteikarten und Szenarien mit der eigenen
+# Bewertung, Quiz und Trainer mit dem Ergebnis der Pruefung.
+#
+# "Ergebnisse im Zeitverlauf" (bis 0.55) zeigte die Erfolgsquote je
+# abgeschlossener Session im Pruefungstrainer (Tabelle test_results: eine
+# Zeile, wenn eine Runde bis zur Auswertung gespielt wurde). Ohne Session
+# zeichnete das Diagramm einen Platzhalter-Punkt "heute" bei 0 % - das war
+# kein Ergebnis. Ab 0.56 erscheint stattdessen ein Hinweis.
+
+SPLIT_CHART_TITLE = "Richtig und falsch pro Tag"
+SPLIT_RIGHT = "richtig"
+SPLIT_WRONG = "falsch"
+SPLIT_EMPTY_DAY = "–"
+
+RESULT_CHART_TITLE = "Ergebnisse im Prüfungstrainer"
+RESULT_CHART_SUBTITLE = "% richtig je abgeschlossener Session"
+RESULT_CHART_SERIES = "richtig in %"
+RESULT_CHART_EMPTY = ("Noch keine Ergebnisse. Hier erscheint nach jeder abgeschlossenen "
+                      "Session im Prüfungstrainer (Runde bis zur Auswertung gespielt), wie "
+                      "viel Prozent der Fragen du richtig beantwortet hast – mit Datum.")
+
+# Optionen: alle Loeschfunktionen in einem aufklappbaren Bereich
+DELETE_TITLE = "Löschen und zurücksetzen"
+DELETE_SUBTITLE = "Lerndaten, Spielstand, Bestenliste"
+FOLD_OPEN = "aufklappen"
+FOLD_CLOSE = "zuklappen"
+
+
+def daily_split_series(split, days, today=None):
+    """[(datum, richtig, falsch)] der letzten days Tage bis heute, aelteste
+    zuerst. split: {"JJJJ-MM-TT": (richtig, falsch)} wie activity_split_days."""
+    today = today or datetime.date.today()
+    start = today - datetime.timedelta(days=days - 1)
+    series = []
+    for offset in range(days):
+        day = start + datetime.timedelta(days=offset)
+        right, wrong = split.get(day.isoformat(), (0, 0))
+        series.append((day, int(right or 0), int(wrong or 0)))
+    return series
+
+
+def split_percent(right, wrong):
+    """(richtig %, falsch %) gerundet, Summe 100; (None, None) ohne Aufgaben."""
+    total = right + wrong
+    if not total:
+        return None, None
+    share = int(round(right * 100.0 / total))
+    return share, 100 - share
+
+
+def split_summary(series):
+    """Kurztext, z.B. "7 Tage: 83 % richtig, 17 % falsch (265 von 320)"."""
+    right = sum(r for _day, r, _w in series)
+    wrong = sum(w for _day, _r, w in series)
+    head = "%s: " % plural(len(series), "Tag", "Tage")
+    if not right + wrong:
+        return head + "noch keine bewerteten Aufgaben"
+    share, rest = split_percent(right, wrong)
+    return head + "%d %% richtig, %d %% falsch (%d von %d)" % (share, rest, right,
+                                                               right + wrong)
+
+
+def result_series(results):
+    """Werte fuer "Ergebnisse im Pruefungstrainer" aus DBManager.get_all_results
+    (neueste zuerst): ([Beschriftung TT.MM.], [Prozent]) der letzten 20,
+    aelteste zuerst. Ohne Session ([], [])."""
+    ordered = list(reversed(results))[-20:]
+    labels = ["%s.%s." % (row[0][8:10], row[0][5:7]) for row in ordered]
+    return labels, [row[3] for row in ordered]
+
+
+# ============================================================================
 #  SCHWAECHEN DIREKT UEBEN (ab 0.54)
 # ============================================================================
 #

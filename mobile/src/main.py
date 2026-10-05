@@ -53,7 +53,10 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
-    DAY_CHART_RANGES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
+    RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
+    SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
+    split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME, TRAINER_KINDS, TRAINER_LEVEL_NAME,
     TRAINER_LEVELS, TRAINER_ROUND, DailyGoal, ReviewPlan, daily_series, daily_summary,
@@ -245,7 +248,6 @@ class DashboardScreen(Screen):
         self.bar_quiz = ui.GradientBar("Quizfragen", C["purple"], C["accent2"])
         self.bar_ap1 = ui.GradientBar("AP1-Szenarien", C["blue"], C["accent"])
         self.bar_scen = ui.GradientBar("AP2-Szenarien", C["accent2"], C["orange"])
-        self.heatmap = ui.Heatmap()
 
         self.fach = {}
         fach_cells = []
@@ -323,8 +325,6 @@ class DashboardScreen(Screen):
             ui.Card("Abdeckung", [self.bar_cards, self.bar_quiz, self.bar_ap1,
                                   self.bar_scen], accent=C["purple"], subtitle="Material",
                     spacing=14),
-            ui.Card("Aktivität je Fachbereich", [self.heatmap], accent=C["accent2"],
-                    subtitle="Auswahl zeigt die Themen"),
             ui.Card("Fortschritt je Fachbereich",
                     [ft.Row(fach_cells[:3]), ft.Row(fach_cells[3:])],
                     accent=C["green"], subtitle="Auswahl zeigt die Themen", spacing=16),
@@ -401,12 +401,7 @@ class DashboardScreen(Screen):
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
                             [count for _day, count in daily], C["accent"])
-        matrix = db.category_daily(self.DAYS)
-        self.heatmap.set_data([(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
-                               for cat in CATEGORIES], self.DAYS,
-                              on_click=lambda index: self._toggle_zoom(CATEGORIES[index]),
-                              selected=CATEGORIES.index(self.zoom_category)
-                              if self.zoom_category else None)
+        # Ab 0.56 ohne "Aktivitaet je Fachbereich" (Wunsch Nico, wie am PC)
         self._refresh_zoom()
 
         coverage = db.category_coverage(self.totals)
@@ -488,22 +483,9 @@ class LearnScreen(Screen):
                 bgcolor=C["card"], border=ft.Border.all(1, C["border"]), border_radius=16,
                 padding=14, ink=True, on_click=lambda _e, k=key: self.app.open(k)))
 
-        chips = []
-        for category in CATEGORIES:
-            chips.append(ft.Container(
-                content=ft.Row([ui.dot(CATEGORY_COLOR[category], 10),
-                                ui.text(CATEGORY_SHORT[category], size=13,
-                                        weight=ft.FontWeight.BOLD)], spacing=8, tight=True),
-                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
-                border_radius=18, padding=ft.Padding.symmetric(horizontal=14, vertical=9),
-                ink=True, on_click=lambda _e, c=category: self.app.open_cards(c)))
-
-        return screen_list([
-            *tiles,
-            ui.Card("Karteikarten nach Fachbereich",
-                    [ft.Row(chips, wrap=True, spacing=8, run_spacing=8)],
-                    accent=C["accent"]),
-        ], spacing=12)
+        # Ab 0.56 ohne "Karteikarten nach Fachbereich" (Wunsch Nico): die
+        # Fachbereiche waehlt man in den Karteikarten oben (Alle, Netzwerk, ...)
+        return screen_list(tiles, spacing=12)
 
 
 # ============================================================================
@@ -2898,6 +2880,11 @@ class ProgressScreen(Screen):
         self.day_pills = ui.PillGroup(DAY_CHART_RANGES, on_change=lambda _v: self._paint_days())
         self.day_chart = ui.LineChart(height=180)
         self.lbl_days = ui.text("", size=12, color=C["text_dim"])
+        # Ab 0.56: richtig/falsch je Tag in Prozent (gleicher Zeitraum)
+        self.activity_split = {}
+        self.split_chart = ui.ShareBars(height=180)
+        self.lbl_split = ui.text("", size=12, color=C["text_dim"])
+        self.lbl_chart_empty = ui.text(RESULT_CHART_EMPTY, size=13, color=C["text_dim"])
         self.weak_box = ft.Column(spacing=6, tight=True)
         # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan, wie am PC)
         self.coverage_card = CoverageCard(self.app)
@@ -2907,11 +2894,14 @@ class ProgressScreen(Screen):
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
             ft.Row([stat("best", "Bestes", C["accent2"]),
                     stat("streak", "Lernserie", C["green"])], spacing=12),
-            ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days],
+            ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
+                                      ft.Container(height=6),
+                                      ui.label(SPLIT_CHART_TITLE), self.split_chart,
+                                      self.lbl_split],
                     accent=C["green"], subtitle=DAY_CHART_SUBTITLE),
             self.coverage_card,
-            ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
-                    subtitle="Erfolgsquote je Session"),
+            ui.Card(RESULT_CHART_TITLE, [self.chart, self.lbl_chart_empty],
+                    subtitle=RESULT_CHART_SUBTITLE),
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
             ui.Card("Prüfungen (Klausursimulation)", [self.exam_list, self.weak_box],
                     accent=C["green"]),
@@ -2933,14 +2923,17 @@ class ProgressScreen(Screen):
             self._stat("best", "-", "noch keine Session")
         # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
         self.activity = self.db.activity_days()
+        self.activity_split = self.db.activity_split_days()
         streak = learning_streak({day for day, count in self.activity.items() if count})
         self._stat("streak", str(streak), "Tage in Folge")
         self._paint_days()
 
-        ordered = list(reversed(results))[-20:]
-        labels = [row[0][8:10] + "." + row[0][5:7] for row in ordered] or ["heute"]
-        values = [row[3] for row in ordered] or [0]
-        self.chart.set_data(labels, values, C["accent2"], y_max=100)
+        # Ab 0.56 ohne Platzhalter-Punkt "heute" bei 0 %: ohne Session ein Hinweis
+        labels, values = result_series(results)
+        self.chart.visible = bool(labels)
+        self.lbl_chart_empty.visible = not labels
+        if labels:
+            self.chart.set_data(labels, values, C["accent2"], y_max=100)
 
         self.history.controls = []
         if not results:
@@ -3009,6 +3002,13 @@ class ProgressScreen(Screen):
                                 goal=(target, goal_line_text(target), C["green"])
                                 if target else None)
         self.lbl_days.value = daily_summary(series, target)
+        split = daily_split_series(self.activity_split, self.day_pills.get())
+        labels = day_labels([(day, 0) for day, _r, _w in split])
+        self.split_chart.set_data(
+            [(label,) + split_percent(right, wrong)
+             for label, (_day, right, wrong) in zip(labels, split)],
+            names=(SPLIT_RIGHT, SPLIT_WRONG), empty=SPLIT_EMPTY_DAY)
+        self.lbl_split.value = split_summary(split)
 
     def _stat(self, key, value, sub):
         self.stats[key][0].value = value
@@ -3099,7 +3099,8 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
-        colors = ui.Card("Farben", [
+        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        colors = ui.FoldCard("Farben", [
             ui.label("Darstellung"),
             ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
                 fisi_theme.current_mode), on_change=self._change_mode),
@@ -3114,7 +3115,8 @@ class SettingsScreen(Screen):
                     "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
                     "dunkler, damit sie gut lesbar sind).",
                     size=11, color=C["muted"]),
-        ], accent=C["accent"], subtitle="nur für dieses Gerät")
+        ], accent=C["accent"], subtitle="nur für dieses Gerät", key="optionen_farben",
+            open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
         values = learning_settings()
@@ -3192,15 +3194,6 @@ class SettingsScreen(Screen):
             updates, colors, goal, plan, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
-            ui.Card("Daten zurücksetzen", [
-                ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                        "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
-                        "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
-                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
-                        "rückgängig machen.", size=13, color=C["text_dim"]),
-                ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
-                                          kind="danger")]),
-            ], accent=C["red"]),
             ui.Card("Spiel", [
                 self.lbl_difficulty,
                 ui.label("Wohnungen"),
@@ -3209,15 +3202,30 @@ class SettingsScreen(Screen):
                 ui.text(fisi_game.RENT_HELP
                         % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                         size=11, color=C["muted"]),
+            ], accent=C["accent2"]),
+            # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
+            # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
+            ui.FoldCard(DELETE_TITLE, [
+                ui.label("Lerndaten"),
+                ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                        "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
+                        "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
+                        "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
+                        "rückgängig machen.", size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
+                                          kind="danger")]),
                 ft.Container(height=6),
+                ui.label("Spielstand"),
                 self.lbl_reset,
                 ft.Row([ui.GradientButton("Spielstand zurücksetzen", self.reset_game,
                                           kind="danger")]),
                 ft.Container(height=6),
+                ui.label("Bestenliste"),
                 ui.text(fisi_game.RECORDS_HELP, size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Bestenliste löschen", self.reset_records,
                                           kind="danger")]),
-            ], accent=C["accent2"]),
+            ], accent=C["red"], subtitle=DELETE_SUBTITLE, key="optionen_loeschen",
+                open_text=FOLD_OPEN, close_text=FOLD_CLOSE),
             ui.Card("Über das Programm", [ui.text(
                 "%s Version %s\n\nLernprogramm für die Umschulung zum Fachinformatiker "
                 "Systemintegration mit Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, "

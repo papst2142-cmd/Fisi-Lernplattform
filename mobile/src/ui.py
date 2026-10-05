@@ -83,6 +83,50 @@ class Card(ft.Container):
                 self.title_text.color = self.tick.bgcolor = color
 
 
+class FoldCard(Card):
+    """Ab 0.56: Karte zum Auf- und Zuklappen (Optionen), Standard zu. Der
+    Kopf ist eine Schaltflaeche mit Beschriftung fuer TalkBack. Der Zustand
+    bleibt fuer die Laufzeit der App erhalten (key)."""
+
+    _open_state = {}
+
+    def __init__(self, title, controls=None, accent=None, subtitle=None, key=None,
+                 opened=False, open_text="aufklappen", close_text="zuklappen", **kwargs):
+        arrow = ft.Icon(ft.Icons.EXPAND_MORE, color=C["muted"], size=20)
+        arrow_text = ft.Text("", size=11, color=C["muted"])
+        super().__init__(title, controls, accent=accent, subtitle=subtitle,
+                         action=ft.Row([arrow_text, arrow], spacing=2, tight=True),
+                         **kwargs)
+        self.arrow, self.arrow_text = arrow, arrow_text
+        self.fold_key = key or title
+        self.opened = self._open_state.get(self.fold_key, opened)
+        self._texts = (open_text, close_text)
+        header = self.content.controls[0]
+        self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
+                                          border_radius=8, padding=ft.Padding.symmetric(
+                                              vertical=6))
+        # TalkBack liest "Farben, Schaltfläche, aufklappen" statt der Einzelteile
+        self.header_semantics = ft.Semantics(content=self.header_button, button=True,
+                                             container=True)
+        self.content.controls[0] = self.header_semantics
+        self._fold_title = title
+        self._apply()
+
+    def _apply(self):
+        self.body.visible = self.opened
+        self.arrow.icon = ft.Icons.EXPAND_LESS if self.opened else ft.Icons.EXPAND_MORE
+        state = self._texts[1] if self.opened else self._texts[0]
+        self.arrow_text.value = state
+        self.header_semantics.label = "%s, %s" % (self._fold_title, state)
+        self.header_semantics.expanded = self.opened
+
+    def toggle(self, _event=None):
+        self.opened = not self.opened
+        self._open_state[self.fold_key] = self.opened
+        self._apply()
+        self.update()
+
+
 # ============================================================================
 #  KNOEPFE UND AUSWAHL
 # ============================================================================
@@ -655,6 +699,107 @@ class LineChart(cv.Canvas):
                                       alignment=ft.Alignment.CENTER_RIGHT if last and count > 1
                                       else ft.Alignment.CENTER))
         self.shapes = shapes
+
+
+class ShareBars(cv.Canvas):
+    """Ab 0.56 (wie am PC): gestapelte Balken in Prozent je Tag, richtig unten
+    (voll), falsch oben (schraffiert), Anteil richtig als Zahl ueber dem
+    Balken, Tage ohne Aufgaben mit Strich."""
+
+    def __init__(self, height=190):
+        self._data = []
+        self._names = ("richtig", "falsch")
+        self._empty = "–"
+        self._width = 300
+        super().__init__(height=height, expand=True, on_resize=self._resized,
+                         resize_interval=100)
+
+    def _resized(self, event):
+        self._width = event.width
+        self._draw()
+        self.update()
+
+    def set_data(self, data, names=None, empty=None):
+        self._data = list(data)
+        if names:
+            self._names = names
+        if empty:
+            self._empty = empty
+        self._draw()
+
+    def _draw(self):
+        width, height = self._width, self.height
+        left, right, top, bottom = 38, 8, 34, 22
+        plot_w = max(10, width - left - right)
+        plot_h = max(10, height - top - bottom)
+        axis_style = ft.TextStyle(size=10, color=C["muted"])
+        shapes = []
+        for line in range(5):
+            y = top + plot_h - plot_h * line / 4
+            shapes.append(cv.Line(left, y, left + plot_w, y,
+                                  ft.Paint(color=C["border"], stroke_width=1)))
+            shapes.append(cv.Text(left - 6, y, "%d %%" % (line * 25), style=axis_style,
+                                  alignment=ft.Alignment.CENTER_RIGHT))
+        count = max(1, len(self._data))
+        slot = plot_w / count
+        bar = max(3, min(26, slot * 0.62))
+        every = max(1, math.ceil(count / max(1, plot_w / 45)))
+        right_paint = ft.Paint(color=C["green"])
+        wrong_fill = ft.Paint(color=ft.Colors.with_opacity(0.35, C["red"]))
+        wrong_line = ft.Paint(color=C["red"], stroke_width=1.5)
+        for index, (label, share, rest) in enumerate(self._data):
+            center = left + slot * (index + 0.5)
+            x1 = center - bar / 2
+            base = top + plot_h
+            if share is None:
+                shapes.append(cv.Text(center, base - 8, self._empty, style=axis_style,
+                                      alignment=ft.Alignment.CENTER))
+            else:
+                split = base - plot_h * share / 100.0
+                if share:
+                    shapes.append(cv.Rect(x1, split, bar, base - split, paint=right_paint))
+                if rest:
+                    shapes.append(cv.Rect(x1, top, bar, split - top, paint=wrong_fill))
+                    shapes.extend(_hatch(x1, top, bar, split - top, wrong_line))
+                if count <= 14:
+                    shapes.append(cv.Text(center, top - 8, "%d" % share,
+                                          style=ft.TextStyle(size=10, color=C["text_dim"]),
+                                          alignment=ft.Alignment.CENTER))
+            if index % every == 0 or index == count - 1:
+                shapes.append(cv.Text(center, top + plot_h + 12, label, style=axis_style,
+                                      alignment=ft.Alignment.CENTER))
+        # Legende
+        x = left
+        for name, solid in ((self._names[0], True), (self._names[1], False)):
+            if solid:
+                shapes.append(cv.Rect(x, 4, 12, 10, paint=right_paint))
+            else:
+                shapes.append(cv.Rect(x, 4, 12, 10, paint=wrong_fill))
+                shapes.extend(_hatch(x, 4, 12, 10, wrong_line))
+            shapes.append(cv.Text(x + 17, 9, name, style=ft.TextStyle(
+                size=11, color=C["text_dim"]), alignment=ft.Alignment.CENTER_LEFT))
+            x += 30 + 7 * len(name)
+        self.shapes = shapes
+
+
+def _hatch(x, y, w, h, paint, gap=6):
+    """Schraege Linien in einem Rechteck (Schraffur fuer "falsch")."""
+    lines = []
+    offset = -h
+    while offset < w:
+        x1, y1 = x + offset, y + h
+        x2, y2 = x + offset + h, y
+        # auf das Rechteck zuschneiden
+        if x1 < x:
+            y1 -= x - x1
+            x1 = x
+        if x2 > x + w:
+            y2 += x2 - (x + w)
+            x2 = x + w
+        if x2 > x1:
+            lines.append(cv.Line(x1, y1, x2, y2, paint))
+        offset += gap
+    return lines
 
 
 def _nice_step(peak):

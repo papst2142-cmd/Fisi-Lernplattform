@@ -838,6 +838,52 @@ class Card(ctk.CTkFrame):
             self.subtitle_label.configure(text=text, text_color=color or C["muted"])
 
 
+class FoldCard(Card):
+    """Ab 0.56: Kachel, deren Inhalt sich auf- und zuklappen laesst (Optionen).
+
+    Der Kopf ist per Maus und per Tastatur bedienbar (Tab, dann Eingabe oder
+    Leertaste). Standard: zugeklappt. Der Zustand bleibt fuer die Laufzeit
+    des Programms erhalten (key), z.B. wenn die Seite nach einem
+    Farbwechsel neu gebaut wird."""
+
+    _open_state = {}
+
+    def __init__(self, parent, title, subtitle=None, accent=None, key=None,
+                 opened=False, **kwargs):
+        super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
+        self.key = key or title
+        self.opened = self._open_state.get(self.key, opened)
+        self._body_pack = self.body.pack_info()
+        self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
+                                  font=F["small_bold"], width=24, height=0)
+        self.arrow.pack(side="right", padx=(10, 0))
+        self.head.configure(cursor="hand2")
+        for widget in (self.head, self.arrow, self.title_label, self.subtitle_label):
+            widget.configure(cursor="hand2")
+            widget.bind("<Button-1>", self.toggle)
+        # Tastatur: der Kopf nimmt den Fokus auf und zeigt ihn mit einem Rahmen
+        self.head.configure(border_width=2, border_color=self.bg, corner_radius=8)
+        self.head.bind("<Return>", self.toggle)
+        self.head.bind("<space>", self.toggle)
+        self.head.bind("<FocusIn>", lambda _e: self.head.configure(border_color=C["accent"]))
+        self.head.bind("<FocusOut>", lambda _e: self.head.configure(border_color=self.bg))
+        tk.Frame.configure(self.head, takefocus=1)
+        self._apply()
+
+    def _apply(self):
+        self.arrow.configure(text="▾  zuklappen" if self.opened else "▸  aufklappen")
+        if self.opened:
+            self.body.pack(**self._body_pack)
+        else:
+            self.body.pack_forget()
+
+    def toggle(self, _event=None):
+        self.opened = not self.opened
+        self._open_state[self.key] = self.opened
+        self._apply()
+        return "break"
+
+
 # ============================================================================
 #  BANNER MIT FARBVERLAUF
 # ============================================================================
@@ -1229,6 +1275,91 @@ class LineChart(tk.Canvas):
         photo = tk_photo(image, width, height)
         self._photos.append(photo)
         self.create_image(x1, y1, image=photo, anchor="nw")
+
+
+class ShareBars(tk.Canvas):
+    """Ab 0.56: gestapelte Balken in Prozent je Tag (richtig unten, falsch
+    oben). Nicht nur ueber die Farbe unterscheidbar: falsch ist schraffiert,
+    ueber jedem Balken steht der Anteil richtig in Prozent, Tage ohne
+    Aufgaben zeigen einen Strich."""
+
+    def __init__(self, parent, height=200, parent_bg=None):
+        self.bg = parent_bg or _bg_of(parent)
+        self._data = []
+        self._names = ("richtig", "falsch")
+        self._empty = "–"
+        self._size = None
+        super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
+                         highlightthickness=0, bd=0)
+        self.bind("<Configure>", self._resized)
+
+    def _resized(self, event):
+        if (event.width, event.height) != self._size:
+            self._size = (event.width, event.height)
+            self._draw()
+
+    def set_data(self, data, names=None, empty=None):
+        """data: [(Beschriftung, richtig %, falsch %)], Prozent None = keine
+        Aufgaben an dem Tag."""
+        self._data = data
+        if names:
+            self._names = names
+        if empty:
+            self._empty = empty
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        width, height = self.winfo_width(), self.winfo_height()
+        if width <= 1 or height <= 1 or not self._data:
+            return
+        left, right, top, bottom = px(42), px(14), px(40), px(30)
+        plot_w, plot_h = width - left - right, height - top - bottom
+        if plot_w <= 10 or plot_h <= 10:
+            return
+        for line in range(5):
+            y = top + plot_h - plot_h * line / 4
+            self.create_line(left, y, width - right, y, fill=C["border"],
+                             dash=(2, 4) if line else ())
+            self.create_text(left - px(8), y, text="%d %%" % (line * 25), anchor="e",
+                             fill=C["muted"], font=tk_font(F["tiny"]))
+        count = len(self._data)
+        slot = plot_w / count
+        bar = max(px(4), min(px(34), slot * 0.62))
+        stride = max(1, int(count / max(1, plot_w / px(55))))
+        right_color, wrong_color = C["green"], C["red"]
+        for index, (label, share, rest) in enumerate(self._data):
+            center = left + slot * (index + 0.5)
+            x1, x2 = center - bar / 2, center + bar / 2
+            base = top + plot_h
+            if share is None:
+                self.create_text(center, base - px(8), text=self._empty, fill=C["muted"],
+                                 font=tk_font(F["tiny"]))
+            else:
+                split = base - plot_h * share / 100.0
+                if share:
+                    self.create_rectangle(x1, split, x2, base, fill=right_color, outline="")
+                if rest:
+                    self.create_rectangle(x1, top, x2, split, fill=wrong_color,
+                                          outline=wrong_color, stipple="gray50")
+                if bar >= px(18) or count <= 14:
+                    self.create_text(center, top - px(8), text="%d" % share,
+                                     fill=C["text_dim"], font=tk_font(F["tiny"]))
+            if index % stride == 0 or index == count - 1:
+                self.create_text(center, height - bottom + px(15), text=label,
+                                 fill=C["muted"], font=tk_font(F["tiny"]))
+        # Legende: Kaestchen voll (richtig) und schraffiert (falsch)
+        x = left + px(4)
+        y = px(10)
+        for name, color, stipple in ((self._names[0], right_color, ""),
+                                     (self._names[1], wrong_color, "gray50")):
+            self.create_rectangle(x, y - px(5), x + px(12), y + px(5), fill=color,
+                                  outline=color, stipple=stipple)
+            self.create_text(x + px(18), y, text=name, anchor="w", fill=C["text_dim"],
+                             font=tk_font(F["tiny"]))
+            x += px(34) + text_width(name, F["tiny"]) * _SCALE[0]
+        self.create_text(x + px(6), y, text="Zahl über dem Balken: % richtig", anchor="w",
+                         fill=C["muted"], font=tk_font(F["tiny"]))
 
 
 def _smooth_curve(points, floor, ceiling, steps=12):

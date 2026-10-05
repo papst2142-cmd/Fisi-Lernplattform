@@ -57,6 +57,10 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    DELETE_SUBTITLE, DELETE_TITLE, RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
+    RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
+    SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series, split_percent,
+    split_summary,
     GOAL_MAX, GOAL_MIN, GOAL_STEP, PRACTICE_BUTTON, PRACTICE_NEXT_TITLE, PRACTICE_NONE,
     TRAINER_KIND_NAME,
     TRAINER_KINDS, TRAINER_LEVEL_NAME,
@@ -80,9 +84,9 @@ from fisi_game_gui import (  # noqa: E402
     MilestoneMoment, OfficeView, close_badge_toasts, show_badge_toast,
 )
 from fisi_widgets import (  # noqa: E402
-    Card, CalendarPanel, GradientBar, GradientPanel, Heatmap, IconButton,
+    Card, CalendarPanel, FoldCard, GradientBar, GradientPanel, Heatmap, IconButton,
     IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
-    ScrollArea, ThemeTimeline, F,
+    ScrollArea, ShareBars, ThemeTimeline, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
 )
@@ -904,22 +908,16 @@ class DashboardView(View):
                                     C["orange"], parent_bg=C["card"])
         self.bar_scen.pack(fill="x", pady=8)
 
-        # --- Reihe 3: Heatmap und Fachbereiche ---------------------------
+        # --- Reihe 3: Fachbereiche ----------------------------------------
+        # Ab 0.56 ohne die Karte "Aktivitaet je Fachbereich" (Wunsch Nico); der
+        # Fortschritt je Fachbereich nimmt die ganze Breite ein. Die Aktivitaet
+        # je Thema steht weiter im Reinzoom eines Fachbereichs.
         row3 = self.row3 = transparent_frame(self.content)
         row3.pack(fill="x", pady=(14, 0))
-        row3.columnconfigure(0, weight=2, uniform="row3")
-        row3.columnconfigure(1, weight=3, uniform="row3")
-
-        heat_card = Card(row3, title="Aktivität je Fachbereich",
-                         subtitle="Auswahl zeigt die Themen", accent=C["accent2"])
-        heat_card.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
-        self.heatmap = Heatmap(heat_card.body, height=190, parent_bg=C["card"],
-                               on_click=lambda index: self._toggle_zoom(CATEGORIES[index]))
-        self.heatmap.pack(fill="both", expand=True)
 
         fach_card = Card(row3, title="Fortschritt je Fachbereich",
                          subtitle="Auswahl zeigt die Themen", accent=C["green"])
-        fach_card.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        fach_card.pack(fill="x")
         holder = transparent_frame(fach_card.body)
         holder.pack(fill="x")
         self.fach_rings = {}
@@ -1099,13 +1097,6 @@ class DashboardView(View):
         self.chart.set_data(labels, [
             {"name": "Aufgaben pro Tag", "values": values, "color": C["accent"]},
         ])
-
-        # Heatmap
-        matrix = self.db.category_daily(self.DAYS)
-        rows = [(CATEGORY_SHORT[cat], CATEGORY_COLOR[cat], matrix[cat])
-                for cat in CATEGORIES]
-        self.heatmap.set_data(rows, self.DAYS, selected=CATEGORIES.index(self.zoom_category)
-                              if self.zoom_category else None)
 
         # Fachbereiche
         coverage = self.db.category_coverage(self.totals)
@@ -4110,6 +4101,13 @@ class ProgressView(View):
         self.day_chart.pack(fill="both", expand=True, pady=(8, 0))
         self.lbl_days = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
         self.lbl_days.pack(anchor="w", pady=(6, 0))
+        # Ab 0.56: richtig/falsch je Tag in Prozent (gleicher Zeitraum)
+        make_label(day_card.body, SPLIT_CHART_TITLE.upper(), font=F["label"],
+                   fg=C["muted"]).pack(anchor="w", pady=(18, 0))
+        self.split_chart = ShareBars(day_card.body, height=190, parent_bg=C["card"])
+        self.split_chart.pack(fill="both", expand=True, pady=(6, 0))
+        self.lbl_split = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
+        self.lbl_split.pack(anchor="w", pady=(6, 0))
 
         # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan). Die Karte wird erst
         # nach dem ersten Zeichnen der Seite in diesen Platz gebaut (_fill_coverage)
@@ -4117,11 +4115,14 @@ class ProgressView(View):
         self.coverage_slot.pack(fill="x", pady=(14, 0))
         self.coverage_card = None
 
-        chart_card = Card(self.content, title="Ergebnisse im Zeitverlauf",
-                          subtitle="Erfolgsquote je Session")
+        # Ab 0.56: klar beschriftet, ohne Platzhalter-Punkt bei 0 %
+        chart_card = Card(self.content, title=RESULT_CHART_TITLE,
+                          subtitle=RESULT_CHART_SUBTITLE)
         chart_card.pack(fill="x", pady=(14, 0))
         self.chart = LineChart(chart_card.body, height=220, parent_bg=C["card"])
-        self.chart.pack(fill="both", expand=True)
+        self.lbl_chart_empty = make_label(chart_card.body, RESULT_CHART_EMPTY,
+                                          font=F["small"], fg=C["text_dim"],
+                                          wraplength=800, justify="left", anchor="w")
 
         table_card = Card(self.content, title="Historie der Prüfungssessions",
                           accent=C["purple"])
@@ -4214,18 +4215,21 @@ class ProgressView(View):
 
         # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
         self.activity = self.db.activity_days()
+        self.activity_split = self.db.activity_split_days()
         streak = learning_streak({day for day, count in self.activity.items() if count})
         self.stat_streak[0].configure(text="%d" % streak)
         self.stat_streak[1].configure(text="Tage in Folge")
 
-        ordered = list(reversed(results))[-20:]
-        labels = [row[0][5:10].replace("-", ".") for row in ordered]
-        values = [row[3] for row in ordered]
-        if not labels:
-            labels, values = ["heute"], [0]
-        self.chart.set_data(labels, [
-            {"name": "Erfolgsquote in %", "values": values, "color": C["accent2"]},
-        ], y_max=100)
+        labels, values = result_series(results)
+        if labels:
+            self.lbl_chart_empty.pack_forget()
+            self.chart.pack(fill="both", expand=True)
+            self.chart.set_data(labels, [
+                {"name": RESULT_CHART_SERIES, "values": values, "color": C["accent2"]},
+            ], y_max=100)
+        else:
+            self.chart.pack_forget()
+            self.lbl_chart_empty.pack(anchor="w")
 
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -4283,6 +4287,13 @@ class ProgressView(View):
               "color": C["accent"]}],
             goal=(target, goal_line_text(target), C["green"]) if target else None)
         self.lbl_days.configure(text=daily_summary(series, target))
+        split = daily_split_series(getattr(self, "activity_split", {}), self.day_pills.get())
+        labels = day_labels([(day, 0) for day, _r, _w in split])
+        self.split_chart.set_data(
+            [(label,) + split_percent(right, wrong)
+             for label, (_day, right, wrong) in zip(labels, split)],
+            names=(SPLIT_RIGHT, SPLIT_WRONG), empty=SPLIT_EMPTY_DAY)
+        self.lbl_split.configure(text=split_summary(split))
 
     def clear_history(self):
         if messagebox.askyesno("Historie löschen",
@@ -4369,8 +4380,9 @@ class SettingsView(View):
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
 
-        colors = Card(self.content, title="Farben", accent=C["accent"],
-                      subtitle="nur für dieses Gerät")
+        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        colors = FoldCard(self.content, title="Farben", accent=C["accent"],
+                          subtitle="nur für dieses Gerät", key="optionen_farben")
         colors.pack(fill="x", pady=(14, 0))
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
@@ -4579,18 +4591,6 @@ class SettingsView(View):
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
-        danger = Card(self.content, title="Daten zurücksetzen", accent=C["red"])
-        danger.pack(fill="x", pady=(14, 0))
-        make_label(danger.body,
-                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                   "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
-                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
-                   "Dieser Schritt lässt sich nicht rückgängig machen.",
-                   font=F["small"], fg=C["text_dim"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w")
-        NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
-                  kind="danger").pack(anchor="w", pady=(12, 0))
-
         game = Card(self.content, title="Spiel", accent=C["accent2"])
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = make_label(game.body, "", font=F["body_bold"],
@@ -4605,15 +4605,35 @@ class SettingsView(View):
         make_label(game.body, fisi_game.RENT_HELP
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w", pady=(0, 14))
-        self.lbl_reset = make_label(game.body, "", font=F["small"], fg=C["text_dim"],
-                                    wraplength=800, justify="left", anchor="w")
-        self.lbl_reset.pack(anchor="w")
-        NeoButton(game.body, "Spielstand zurücksetzen", self.reset_game,
+                   justify="left", anchor="w").pack(anchor="w")
+
+        # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
+        # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
+        danger = FoldCard(self.content, title=DELETE_TITLE, accent=C["red"],
+                          subtitle=DELETE_SUBTITLE, key="optionen_loeschen")
+        danger.pack(fill="x", pady=(14, 0))
+        make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
+        make_label(danger.body,
+                   "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
+                   "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
+                   "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
+                   "Dieser Schritt lässt sich nicht rückgängig machen.",
+                   font=F["small"], fg=C["text_dim"], wraplength=800,
+                   justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
                   kind="danger").pack(anchor="w", pady=(12, 0))
-        make_label(game.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
-                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(16, 0))
-        NeoButton(game.body, "Bestenliste löschen", self.reset_records,
+        make_label(danger.body, "SPIELSTAND", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        self.lbl_reset = make_label(danger.body, "", font=F["small"], fg=C["text_dim"],
+                                    wraplength=800, justify="left", anchor="w")
+        self.lbl_reset.pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Spielstand zurücksetzen", self.reset_game,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
+        make_label(danger.body, "BESTENLISTE", font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        make_label(danger.body, fisi_game.RECORDS_HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, "Bestenliste löschen", self.reset_records,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
         about = Card(self.content, title="Über das Programm", accent=C["green"])
