@@ -973,7 +973,7 @@ class Heatmap(ft.Column):
             shown = values[-days:]
             row = ft.Semantics(content=row, container=True, button=bool(on_click),
                                selected=chosen, exclude_semantics=True,
-                               label="%s: %d an %d von %d Tagen" % (
+                               label="%s: %d Aktivitäten an %d von %d Tagen" % (
                                    name, sum(shown), sum(1 for value in shown if value),
                                    len(shown)))
             self.controls.append(row)
