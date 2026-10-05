@@ -1,0 +1,30 @@
+# Nur fuer die Untersuchung zu Fix 0.55.1 (wird nicht gemergt)
+name: Untersuchung Update 0.55.1
+on:
+  push:
+    branches: [untersuchung-update-0551]
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Abhaengigkeiten
+        run: python -m pip install -r requirements.txt
+      - name: Installer 0.54 und 0.55 laden
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dl | Out-Null
+          foreach ($v in "0.54","0.55") {
+            Invoke-WebRequest "https://github.com/papst2142-cmd/Fisi-Lernplattform/releases/download/v$v/FISI-Lernplattform-Setup-$v.exe" -OutFile "dl\Setup-$v.exe"
+          }
+      - name: Szenarien
+        shell: pwsh
+        run: untersuchung\szenarien.ps1
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: protokolle
+          path: protokolle
