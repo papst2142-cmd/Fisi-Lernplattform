@@ -5565,6 +5565,9 @@ class ViewPreloader:
         if worked:
             self.steps_done += 1
             self.step_ms[task] = round((time.perf_counter() - started) * 1000)
+            # So lange dauert das Zeichnen ungefaehr auch spaeter, wenn sich
+            # etwas geaendert hat - Grundlage fuer die Ladeanzeige
+            app.cost_ms.setdefault(task, self.step_ms[task])
         return worked
 
 
@@ -5886,8 +5889,13 @@ class FISIApp:
         if key not in self.views:
             return
         # Ab 0.56: Ladeanzeige, falls das Oeffnen voraussichtlich dauert
+        # Bei einer schon aufgebauten Ansicht nur dann nachsehen, ob sie neu
+        # zeichnen muss (kostet selbst etwas), wenn sie dabei bisher lange brauchte
         built = self.views.built(key)
-        with LoadingHint(self, ("view", key), built is None or _needs_work(built)):
+        task = ("view", key)
+        needed = built is None or (
+            self.expected_ms(task) > fisi_theme.LOADING_THRESHOLD_MS and _needs_work(built))
+        with LoadingHint(self, task, needed):
             if self._closing:
                 return
             self._show_view(key)
