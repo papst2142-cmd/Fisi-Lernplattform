@@ -113,6 +113,11 @@ PRESET_IDS = [item["id"] for item in PRESETS]
 BUSY_TITLE = "Farben werden angewendet"
 BUSY_TEXT = "Bitte warten, die Oberfläche wird mit den neuen Farben aufgebaut …"
 BUSY_MIN_SECONDS = 0.6
+
+# Ab 0.56: kurze Ladeanzeige, wenn eine Ansicht beim Oeffnen trotz Vorladen
+# laenger braucht (PC und Handy gleiche Beschriftung)
+LOADING_TEXT = "Wird geladen …"
+LOADING_THRESHOLD_MS = 150
 current_preset = DEFAULT_PRESET
 
 # Lesbarkeit (WCAG-Kontrast, geprueft in test_spiel.FarbenTest): Texte und

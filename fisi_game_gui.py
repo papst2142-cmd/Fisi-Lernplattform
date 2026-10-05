@@ -9,6 +9,7 @@ fisi_game.py, hier wird nur angezeigt und bedient. Gebaut aus den Bausteinen
 von fisi_widgets.py und in der Farbwelt aus fisi_theme.py.
 """
 
+import contextlib
 import copy
 import random
 import tkinter as tk
@@ -2047,6 +2048,12 @@ def _snapshot(obj, skip=()):
     return tuple(items)
 
 
+def _opening(app, task, needed):
+    """Ab 0.56: Ladeanzeige der App (app_gui.LoadingHint), falls es sie gibt."""
+    opening = getattr(app, "opening", None)
+    return opening(task, needed) if opening is not None else contextlib.nullcontext()
+
+
 class ReusableView:
     """Mixin fuer Ansichten, die beim Anzeigen nicht neu gezeichnet werden
     muessen, solange sich nichts geaendert hat. Benutzt self.app, self.game
@@ -2092,6 +2099,22 @@ class ReusableView:
         """Beim naechsten Anzeigen sicher neu zeichnen."""
         self._rendered = None
 
+    def prepare(self):
+        """Ab 0.56 (Vorladen, app_gui.ViewPreloader): Inhalt einmal verdeckt
+        zeichnen, solange die Ansicht noch nie gezeigt wurde - ohne die
+        Nebenwirkungen von on_show (Abzeichen pruefen, Hinweise zeigen).
+        Beim Anzeigen erkennt on_show dann "unveraendert" und zeichnet nicht
+        neu. True, wenn gezeichnet wurde."""
+        if getattr(self, "_rendered", None) is not None or not self._can_prepare():
+            return False
+        self.app.views["game"].game.reload()
+        self.render()
+        self._mark_rendered()
+        return True
+
+    def _can_prepare(self):
+        return True
+
 
 def _has_input(widget):
     """Enthaelt der Rahmen ein Eingabefeld (Text koennte halb getippt sein)?"""
@@ -2123,6 +2146,7 @@ class TabCache:
         self._tab_body = None
         self._tab_row = None
         self._tab_base = None
+        self._parked = []           # vorgebaute Reiter (ab 0.56, prepare_tab)
 
     def _tab_build(self, build):
         outer = self.content
@@ -2139,9 +2163,78 @@ class TabCache:
     def _tabs_done(self):
         self._tab_base = _base_key(self._render_key())
 
+    # Ab 0.56: Felder, die ein Reiterwechsel zuruecksetzt (siehe _choose)
+    TAB_RESET = ()
+
+    def _tab_list(self):
+        return []
+
+    def preload_tabs(self):
+        """Ab 0.56: Reiter, die das Vorladen verdeckt vorbauen darf."""
+        if getattr(self, "_tab_row", None) is None:
+            return []
+        return [tab for tab, _name in self._tab_list() if tab != self.tab]
+
+    def tab_ready(self, tab):
+        """Steht der Reiter schon fertig gebaut bereit? (Ladeanzeige)"""
+        cached = getattr(self, "_tab_frames", {}).get(tab)
+        if cached is None or not cached[1].winfo_exists():
+            return False
+        key = self._render_key()
+        return key is not None and cached[0] == key and \
+            _base_key(key) == getattr(self, "_tab_base", None)
+
+    def prepare_tab(self, tab):
+        """Ab 0.56 (Vorladen): einen weiteren Reiter verdeckt vorbauen, so
+        wie ihn ein Klick auf den Reiter bauen wuerde. Danach blendet
+        _tab_switch ihn nur noch ein. Die Felder der Ansicht bleiben, wie sie
+        waren. True, wenn gebaut wurde."""
+        body = getattr(self, "_tab_body", None)
+        base = getattr(self, "_tab_base", None)
+        if body is None or base is None or tab == self.tab or not body.winfo_exists():
+            return False
+        cached = self._tab_frames.get(tab)
+        if cached is not None and cached[1].winfo_exists():
+            return False
+        if _base_key(self._render_key()) != base:
+            return False   # inzwischen veraendert - dann baut der Klick selbst
+        saved = {name: copy.copy(value) for name, value in vars(self).items()
+                 if not name.startswith("_") and isinstance(value, _SIMPLE_TYPES)}
+        self.tab = tab
+        for name in self.TAB_RESET:
+            setattr(self, name, None)
+        try:
+            self._tab_build(self._build_tab)
+        finally:
+            built = self._tab_body
+            for name, value in saved.items():
+                setattr(self, name, value)
+            self._tab_body = body
+            if built is not body:
+                # Verdeckt mit voller Breite liegen lassen (die Ansicht selbst
+                # liegt unter der sichtbaren): So rechnet Tk Groessen und
+                # Zeichnung schon jetzt aus. Vor dem Anzeigen wieder weg
+                # (_park_tabs), dann blendet _tab_switch ihn nur noch ein.
+                built.pack_forget()
+                built.place(x=0, y=0, relwidth=1)
+                built.lower()
+                self._parked.append(built)
+        return True
+
+    def _park_tabs(self):
+        """Ab 0.56: vorgebaute Reiter vor dem Anzeigen aus dem Weg nehmen."""
+        for frame in getattr(self, "_parked", ()):
+            try:
+                if frame.winfo_exists():
+                    frame.place_forget()
+            except tk.TclError:
+                pass
+        self._parked = []
+
     def _tab_switch(self, build):
         """Wechselt auf self.tab ohne kompletten Neuaufbau. False, wenn das
         nicht geht (dann baut der Aufrufer wie bisher alles neu)."""
+        self._park_tabs()
         body = getattr(self, "_tab_body", None)
         base = getattr(self, "_tab_base", None)
         if body is None or base is None or self._tab_row is None or not body.winfo_exists():
@@ -2210,6 +2303,15 @@ class GameView(ReusableView, ScrollArea):
     def refresh(self):
         self.on_show()
 
+    def prepare(self):
+        """Ab 0.56 (Vorladen): Der Konstruktor hat schon gezeichnet - nur
+        merken, damit das erste Anzeigen nicht noch einmal zeichnet."""
+        if getattr(self, "_rendered", None) is not None or not self.content.winfo_children():
+            return ReusableView.prepare(self)
+        self.game.reload()
+        self._mark_rendered()
+        return True
+
     def render(self, keep_scroll=False):
         for child in self.content.winfo_children():
             child.destroy()
@@ -2265,6 +2367,10 @@ class GameView(ReusableView, ScrollArea):
         self.app.notify_progress(refresh_view=False)
         self.render()
         self.app.update_slot_label()
+        # Ab 0.56: jetzt die Spielansichten im Hintergrund vorbereiten
+        preloader = getattr(self.app, "preloader", None)
+        if preloader is not None:
+            preloader.add_game()
 
     def _delete_slot(self, item):
         if not messagebox.askyesno("Spielstand löschen", fg.slot_delete_question(item)):
@@ -3128,10 +3234,19 @@ class SiteView(ReusableView, ScrollArea):
     def on_show(self):
         self.game_view.game.reload()
         if self._unchanged():
+            if getattr(self, "_focus_later", False):
+                # Ab 0.56: vorgeladen - den Grundriss erst jetzt fokussieren
+                self._focus_later = False
+                plan = self.plan
+                self.after(50, lambda: plan.winfo_exists() and plan.focus_set())
             return   # steht noch da - mit Scroll-Position und Figur am Platz
         self.render()
         self.to_top()
         self._mark_rendered()
+
+    def _can_prepare(self):
+        # Ab 0.56: einen einmaligen Hinweis nicht verdeckt "verbrauchen"
+        return not self.game_view.notices.get(self.site())
 
     def refresh(self):
         self.on_show()
@@ -3165,7 +3280,10 @@ class SiteView(ReusableView, ScrollArea):
         self._show_info(position, fg.person_near(*position, content=self.plan.content()))
         self._build_below(state)
         plan = self.plan
-        self.after(50, lambda: plan.winfo_exists() and plan.focus_set())
+        # Ab 0.56: beim Vorladen nicht den Fokus der sichtbaren Ansicht nehmen
+        self._focus_later = bool(getattr(self.app, "preloading", False))
+        if not self._focus_later:
+            self.after(50, lambda: plan.winfo_exists() and plan.focus_set())
 
     # Hooks fuer die Unterklassen
     def card_title(self):
@@ -3262,7 +3380,10 @@ class CustomerView(SiteView):
     def site(self):
         places = [place["id"] for place in fg.open_places(self.state)]
         if self.game_view.place not in places:
-            self.game_view.place = places[0]
+            # Ab 0.56 den Vorgabe-Ort nicht mehr ins Feld schreiben: Das
+            # zaehlte fuer alle Spielansichten als Aenderung (Firma, Reise
+            # und ihre Reiter wurden danach neu gebaut, auch beim Vorladen)
+            return places[0]
         return self.game_view.place
 
     def accent(self):
@@ -4288,6 +4409,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
         return self.app.views["game"].game
 
     def on_show(self):
+        self._park_tabs()
         self.game.reload()
         if self._unchanged():
             return   # steht noch da - mit Scroll-Position und Figur am Platz
@@ -4329,12 +4451,19 @@ class FirmView(TabCache, ReusableView, ScrollArea):
     def _build_tab(self):
         getattr(self, "_build_" + self.tab)(self.game.state)
 
+    TAB_RESET = ("training_for", "training_cat", "offer_for", "assign_for", "team_for")
+
+    def _tab_list(self):
+        return fg.firm_tabs(self.game.state)
+
     def _choose(self, tab):
         self.tab = tab
         self.training_for = self.training_cat = None
         self.offer_for = self.assign_for = self.team_for = None
-        if not self._tab_switch(self._build_tab):
-            self.render()
+        # Ab 0.56: Ladeanzeige, falls der Reiter erst gebaut werden muss
+        with _opening(self.app, ("tab", self.KEY, tab), not self.tab_ready(tab)):
+            if not self._tab_switch(self._build_tab):
+                self.render()
 
     def open_tab(self, tab):
         """Von aussen (Spieluebersicht) direkt einen Reiter oeffnen."""
@@ -5967,6 +6096,7 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
         return self.app.views["game"].game
 
     def on_show(self):
+        self._park_tabs()
         self.game.reload()
         # Wissen-Abzeichen haengen am Lernstand - beim Oeffnen nachsehen
         self.game.check_knowledge()
@@ -5978,8 +6108,13 @@ class JourneyView(TabCache, ReusableView, ScrollArea):
 
     def open_tab(self, tab):
         self.tab = tab
-        if not self._tab_switch(self._build_tab):
-            self.render()
+        # Ab 0.56: Ladeanzeige, falls der Reiter erst gebaut werden muss
+        with _opening(self.app, ("tab", "reise", tab), not self.tab_ready(tab)):
+            if not self._tab_switch(self._build_tab):
+                self.render()
+
+    def _tab_list(self):
+        return JOURNEY_TABS
 
     def refresh(self):
         self.on_show()
