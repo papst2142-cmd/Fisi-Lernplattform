@@ -211,7 +211,6 @@ def saved_background():
 def save_background(background_id):
     """Speichert den Hintergrund (nur lokal) und wendet ihn an."""
     import fisi_update
-    _drop_custom()
     item = apply_background(background_id)
     settings = fisi_update.load_settings()
     settings[BACKGROUND_KEY] = item["id"]
@@ -227,13 +226,6 @@ def tile_text():
     return LIGHT_TEXT["text"] if current_mode == MODE_LIGHT else _DARK_FIXED["text"]
 
 
-def _drop_custom():
-    """Ab 0.57: Wer eine Grundfarbe oder einen Hintergrund anklickt, waehlt die
-    Farbwelt - eigene Farben der aktuellen Darstellung entfallen dann."""
-    if current_mode in custom_colors:
-        save_custom(current_mode, None)
-
-
 def saved_preset():
     """Die gespeicherte Grundfarbe dieses Geraets."""
     import fisi_update
@@ -244,7 +236,6 @@ def saved_preset():
 def save_preset(preset_id):
     """Speichert die Grundfarbe (nur lokal) und wendet sie an."""
     import fisi_update
-    _drop_custom()
     item = apply_preset(preset_id)
     settings = fisi_update.load_settings()
     settings[SETTING_KEY] = item["id"]
@@ -501,8 +492,8 @@ CUSTOM_HINT = ("Mit den Reglern stellst du die zwei Farben der Farbverläufe (Ak
                "Gilt nur für dieses Gerät und nur für die gewählte Darstellung.")
 CUSTOM_STATE_ON = "Eigene Farben aktiv (%s)"
 CUSTOM_STATE_OFF = "Startwerte aus der Farbwelt (%s)"
-CUSTOM_TILE_HINT = ("Ein Klick auf eine Grundfarbe oder einen Hintergrund ersetzt die "
-                    "eigenen Farben.")
+CUSTOM_TILE_HINT = ("Ein Klick auf eine Grundfarbe oder einen Hintergrund setzt nur die "
+                    "Regler auf diese Farbwelt. Gespeichert wird erst mit „Speichern“.")
 CUSTOM_PREVIEW = "Vorschau"
 CUSTOM_PREVIEW_TITLE = "Überschrift"
 CUSTOM_PREVIEW_TEXT = "Fließtext einer Frage"
@@ -571,13 +562,16 @@ def valid_custom(value):
     return result
 
 
-def custom_start(mode=None):
+def custom_start(mode=None, world=None):
     """Startwerte der Regler: die gewaehlte Farbwelt der Darstellung (Knopf-
-    verlauf der Grundfarbe und Hauptflaeche des Hintergrunds)."""
+    verlauf der Grundfarbe und Hauptflaeche des Hintergrunds). Ab 0.57 (F3):
+    world = (Grundfarbe, Hintergrund) einer angeklickten, noch nicht
+    gespeicherten Farbwelt, sonst die gespeicherte."""
     mode = current_mode if mode is None else mode
-    accent = preset(current_preset)
-    back = (light_background(current_background) if mode == MODE_LIGHT
-            else background(current_background))
+    preset_id, background_id = world or (current_preset, current_background)
+    accent = preset(preset_id)
+    back = (light_background(background_id) if mode == MODE_LIGHT
+            else background(background_id))
     return {"akzent1": hex_to_hsl(accent["primary"][0]),
             "akzent2": hex_to_hsl(accent["primary"][1]),
             "hintergrund": hex_to_hsl(back["bg"])}
@@ -641,20 +635,25 @@ def custom_palette(values):
     return {"light": is_light, "colors": colors, "gradients": gradients}
 
 
-def is_start(values, mode=None):
+def is_start(values, mode=None, world=None):
     """True, wenn die Regler genau auf dem Startwert (der Farbwelt) stehen."""
-    return dict(values) == custom_start(mode)
+    return dict(values) == custom_start(mode, world)
 
 
-def farbwelt_palette(mode=None):
-    """Die Farben der gewaehlten Farbwelt einer Darstellung als Palette
-    (wie custom_palette), ohne eigene Farben und ohne etwas zu veraendern."""
-    global current_mode, light
+def farbwelt_palette(mode=None, world=None):
+    """Die Farben der gewaehlten (bzw. mit world angeklickten) Farbwelt einer
+    Darstellung als Palette (wie custom_palette), ohne eigene Farben und ohne
+    etwas zu veraendern."""
+    global current_mode, current_preset, current_background, light
     mode = current_mode if mode is None else mode
-    saved = (dict(C), dict(GRADIENTS), light, current_mode, dict(custom_colors))
+    saved = (dict(C), dict(GRADIENTS), light, current_mode, dict(custom_colors),
+             current_preset, current_background)
     try:
         custom_colors.clear()
         current_mode = mode
+        if world:
+            current_preset = preset(world[0])["id"]
+            current_background = background(world[1])["id"]
         _apply_mode_colors()
         return {"light": light, "colors": dict(C), "gradients": dict(GRADIENTS)}
     finally:
@@ -664,15 +663,32 @@ def farbwelt_palette(mode=None):
         GRADIENTS.update(saved[1])
         light, current_mode = saved[2], saved[3]
         custom_colors.update(saved[4])
+        current_preset, current_background = saved[5], saved[6]
         _refresh_tables()
 
 
-def values_palette(values, mode=None):
+def values_palette(values, mode=None, world=None):
     """Palette fuer Regler-Werte: am Startwert exakt die Farbwelt ("sanft"),
     sonst die Ableitungsregel. Fuer Vorschau und Warnhinweis."""
-    if is_start(values, mode):
-        return farbwelt_palette(mode)
+    if is_start(values, mode, world):
+        return farbwelt_palette(mode, world)
     return custom_palette(values)
+
+
+def custom_to_save(mode, values, world=None):
+    """Ab 0.57 (F3): Was "Speichern" ablegt. Stehen die Regler genau auf dem
+    Startwert der (angeklickten) Farbwelt, wird nur die Farbwelt gespeichert
+    (None = keine eigenen Farben), sonst die Reglerwerte."""
+    if values is None or is_start(values, mode, world):
+        return None
+    return valid_custom(values)
+
+
+def tile_sets_sliders(mode, values, world=None):
+    """Ab 0.57 (F3): True, wenn ein Klick auf eine Farbwelt-Kachel nur die
+    Regler setzen soll - weil eigene Farben gespeichert sind oder die Regler
+    schon bewegt wurden. Sonst waehlt die Kachel wie bisher die Farbwelt."""
+    return mode in custom_colors or world is not None or not is_start(values, mode)
 
 
 class preview_colors:
@@ -739,9 +755,9 @@ def custom_checks(palette, map_colors=None):
               ("Fokusrahmen", worst(colors["focus"]), AREA_TARGET)]
     for key, name in _CATEGORY_NAMES:
         checks.append((name + " als Schrift", worst(colors[key]), TEXT_TARGET))
-    # Karte wie in 0.56 nur in der hellen Darstellung gemessen (die dunkle
-    # Karte erreicht auch mit den Farbwelten keine 3:1, siehe Bericht 0.57)
-    if map_colors and palette["light"]:
+    # Karte ab 0.57 in beiden Darstellungen (die dunkle Karte ist seit 0.57
+    # wie die helle nachgeregelt)
+    if map_colors:
         ground = map_colors["boden"]
         checks.append(("Karte: Beschriftung", contrast(map_colors["schrift"], ground),
                        TEXT_TARGET))
@@ -767,6 +783,70 @@ def warning_lines(problems, limit=4):
              for name, value, target in problems[:limit]]
     if len(problems) > limit:
         lines.append(CUSTOM_WARN_MORE % (len(problems) - limit))
+    return lines
+
+
+# Ab 0.57 (Entscheidung Nico F4): Die fuenf Fachbereichsfarben muessen sich
+# untereinander unterscheiden lassen. Gemessen wird der Farbabstand Delta E
+# (CIE 1976, Lab-Farbraum) jedes Paares. Die Farbwelten liegen bei mindestens
+# 27,8 (Cyan/Gruen, hell auf Aubergine); unter 20 gibt es eine eigene Warnzeile.
+CATEGORY_DISTANCE = 20.0
+CUSTOM_CLASH = "Fachbereichsfarben schwer unterscheidbar: %s und %s (Farbabstand %s, nötig %s)"
+_CATEGORY_KEYS_ORDER = ("cyan", "pink", "purple", "green", "orange")
+
+
+def _lab(color):
+    """"#RRGGBB" -> (L, a, b) im CIE-Lab-Farbraum (Weisspunkt D65)."""
+    def linear(channel):
+        channel /= 255.0
+        return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+    red, green, blue = (linear(channel) for channel in hex_to_rgb(color))
+    x = (0.4124 * red + 0.3576 * green + 0.1805 * blue) / 0.95047
+    y = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    z = (0.0193 * red + 0.1192 * green + 0.9505 * blue) / 1.08883
+
+    def f(value):
+        return value ** (1.0 / 3.0) if value > 0.008856 else 7.787 * value + 16.0 / 116.0
+    return 116.0 * f(y) - 16.0, 500.0 * (f(x) - f(y)), 200.0 * (f(y) - f(z))
+
+
+def color_distance(color_a, color_b):
+    """Farbabstand Delta E (CIE 1976) zweier Farben."""
+    return sum((a - b) ** 2 for a, b in zip(_lab(color_a), _lab(color_b))) ** 0.5
+
+
+def category_clash(palette):
+    """Das am schwersten unterscheidbare Paar der Fachbereichsfarben unter
+    CATEGORY_DISTANCE als (Name 1, Name 2, Abstand), sonst None."""
+    colors = palette["colors"]
+    names = dict(_CATEGORY_NAMES)
+    worst = None
+    for index, first in enumerate(_CATEGORY_KEYS_ORDER):
+        for second in _CATEGORY_KEYS_ORDER[index + 1:]:
+            distance = color_distance(colors[first], colors[second])
+            if worst is None or distance < worst[2]:
+                worst = (names[first].replace("Fachbereich ", ""),
+                         names[second].replace("Fachbereich ", ""), distance)
+    return worst if worst[2] < CATEGORY_DISTANCE else None
+
+
+def _format_distance(value):
+    return ("%.1f" % (int(value * 10) / 10.0)).replace(".", ",")
+
+
+def custom_warning(palette, map_colors=None):
+    """Ab 0.57: Der ganze Warnhinweis als Liste von Zeilen (PC und Handy
+    gleich), leer, wenn alles reicht. Erst die Kontrastwerte, dann (F4) die
+    eigene Zeile fuer schwer unterscheidbare Fachbereichsfarben."""
+    lines = []
+    problems = custom_problems(palette, map_colors)
+    if problems:
+        lines.append(CUSTOM_WARN_TITLE)
+        lines += ["• " + line for line in warning_lines(problems)]
+    clash = category_clash(palette)
+    if clash:
+        lines.append(CUSTOM_CLASH % (clash[0], clash[1], _format_distance(clash[2]),
+                                     _format_distance(CATEGORY_DISTANCE)))
     return lines
 
 

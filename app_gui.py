@@ -4411,6 +4411,7 @@ class CustomColors(ctk.CTkFrame):
         self.on_save = on_save
         self.mode = fisi_theme.current_mode
         self.values = fisi_theme.custom_values(self.mode)
+        self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_labels, self.swatches = {}, {}, {}
         self._pending = None
         mode_name = dict(fisi_theme.MODES)[self.mode]
@@ -4505,7 +4506,30 @@ class CustomColors(ctk.CTkFrame):
             self._pending = self.after(self.DELAY_MS, self._redraw)
 
     def palette(self):
-        return fisi_theme.values_palette(self.values, self.mode)
+        return fisi_theme.values_palette(self.values, self.mode, self.world)
+
+    def takes_tile(self):
+        """Ab 0.57 (F3): Setzt ein Kachel-Klick nur die Regler?"""
+        return fisi_theme.tile_sets_sliders(self.mode, self.values, self.world)
+
+    def set_world(self, preset_id=None, background_id=None):
+        """Ab 0.57 (F3): Regler auf eine angeklickte Farbwelt stellen (nichts
+        wird gespeichert, erst mit "Speichern")."""
+        current = self.world or (fisi_theme.current_preset, fisi_theme.current_background)
+        world = (preset_id or current[0], background_id or current[1])
+        self.world = None if world == (fisi_theme.current_preset,
+                                       fisi_theme.current_background) else world
+        self._show_values(fisi_theme.custom_start(self.mode, self.world))
+
+    def _show_values(self, values):
+        self.values = values
+        for part in fisi_theme.CUSTOM_PART_IDS:
+            for channel in fisi_theme.CUSTOM_CHANNELS:
+                value = self.values[part]["hsl".index(channel[0])]
+                self.sliders[(part, channel[0])].set(value)
+                self.value_labels[(part, channel[0])].configure(
+                    text=fisi_theme.slider_text(channel, value))
+        self._redraw()
 
     def _redraw(self):
         self._pending = None
@@ -4518,31 +4542,23 @@ class CustomColors(ctk.CTkFrame):
             self.swatches[part].configure(bg=fisi_theme.hsl_to_hex(*self.values[part]))
         draw_custom_preview(self.preview, palette, map_colors, categories, block,
                             self.PREVIEW_W, self.PREVIEW_H)
-        problems = fisi_theme.custom_problems(palette, map_colors)
-        if problems:
-            text = "⚠ " + fisi_theme.CUSTOM_WARN_TITLE + "\n" + "\n".join(
-                "• " + line for line in fisi_theme.warning_lines(problems))
-            self.warning.configure(text=text, text_color=C["red"])
+        lines = fisi_theme.custom_warning(palette, map_colors)
+        if lines:
+            self.warning.configure(text="⚠ " + "\n".join(lines), text_color=C["red"])
         else:
             self.warning.configure(text="✓ " + fisi_theme.CUSTOM_OK, text_color=C["green"])
 
     def _save(self):
-        values = dict(self.values)
-        self.after(10, lambda: self.on_save(self.mode, values))
+        values, world = dict(self.values), self.world
+        self.after(10, lambda: self.on_save(self.mode, values, world))
 
     def _reset(self):
         if self.mode in fisi_theme.custom_colors:
             self.after(10, lambda: self.on_save(self.mode, None))
             return
         # Noch nichts gespeichert: nur die Regler auf die Farbwelt stellen
-        self.values = fisi_theme.custom_start(self.mode)
-        for part in fisi_theme.CUSTOM_PART_IDS:
-            for channel in fisi_theme.CUSTOM_CHANNELS:
-                value = self.values[part]["hsl".index(channel[0])]
-                self.sliders[(part, channel[0])].set(value)
-                self.value_labels[(part, channel[0])].configure(
-                    text=fisi_theme.slider_text(channel, value))
-        self._redraw()
+        self.world = None
+        self._show_values(fisi_theme.custom_start(self.mode))
 
 
 def draw_custom_preview(canvas, palette, map_colors, categories, block, width, height):
@@ -4948,11 +4964,18 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w")
 
     def _change_color(self, preset_id):
+        if self.custom_colors.takes_tile():
+            # Ab 0.57 (F3): nur die Regler auf diese Farbwelt stellen
+            self.custom_colors.set_world(preset_id=preset_id)
+            return
         if preset_id != fisi_theme.current_preset:
             # Nach dem aktuellen Klick neu aufbauen (die Kachel wird zerstoert)
             self.after(10, lambda: self.app.change_color(preset_id=preset_id))
 
     def _change_background(self, background_id):
+        if self.custom_colors.takes_tile():
+            self.custom_colors.set_world(background_id=background_id)
+            return
         if background_id != fisi_theme.current_background:
             self.after(10, lambda: self.app.change_color(background_id=background_id))
 
@@ -4960,9 +4983,15 @@ class SettingsView(View):
         if mode != fisi_theme.current_mode:
             self.after(10, lambda: self.app.change_color(mode=mode))
 
-    def _save_custom(self, mode, values):
-        """Ab 0.57: eigene Farben speichern (values None = zuruecksetzen)."""
-        self.app.change_color(custom=(mode, values))
+    def _save_custom(self, mode, values, world=None):
+        """Ab 0.57: eigene Farben speichern (values None = zuruecksetzen).
+        world: angeklickte Farbwelt (F3), wird mit gespeichert."""
+        preset_id, background_id = world or (None, None)
+        self.app.change_color(
+            preset_id=preset_id if preset_id != fisi_theme.current_preset else None,
+            background_id=background_id if background_id != fisi_theme.current_background
+            else None,
+            custom=(mode, fisi_theme.custom_to_save(mode, values, world)))
 
     def _save_goal(self, key):
         """Tagesziel-Einstellung speichern (ab 0.51)."""

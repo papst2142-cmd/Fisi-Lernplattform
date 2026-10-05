@@ -3039,6 +3039,7 @@ class CustomColors(ft.Column):
         self.on_save = on_save
         self.mode = fisi_theme.current_mode
         self.values = fisi_theme.custom_values(self.mode)
+        self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_texts, self.semantics, self.swatches = {}, {}, {}, {}
         self._last = 0.0
         mode_name = dict(fisi_theme.MODES)[self.mode]
@@ -3135,34 +3136,21 @@ class CustomColors(ft.Column):
             self._last = now
             self._redraw()
 
-    def _redraw(self):
-        palette = fisi_theme.values_palette(self.values, self.mode)
-        with fisi_theme.preview_colors(palette):
-            map_colors = fisi_game.map_palette()
-            categories = [C[key] for key in ("cyan", "pink", "purple", "green", "orange")]
-            block = fisi_game.map_block_colors(C["green"])
-        for part in fisi_theme.CUSTOM_PART_IDS:
-            self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
-        self.preview.content = custom_preview(palette, map_colors, categories, block)
-        problems = fisi_theme.custom_problems(palette, map_colors)
-        if problems:
-            self.warning.value = fisi_theme.CUSTOM_WARN_TITLE + "\n" + "\n".join(
-                "• " + line for line in fisi_theme.warning_lines(problems))
-            self.warning.color = self.warning_icon.color = C["red"]
-            self.warning_icon.icon = ft.Icons.WARNING_AMBER_ROUNDED
-        else:
-            self.warning.value = fisi_theme.CUSTOM_OK
-            self.warning.color = self.warning_icon.color = C["green"]
-            self.warning_icon.icon = ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED
+    def takes_tile(self):
+        """Ab 0.57 (F3): Setzt ein Kachel-Klick nur die Regler?"""
+        return fisi_theme.tile_sets_sliders(self.mode, self.values, self.world)
 
-    def _save(self, _event=None):
-        self.on_save(self.mode, dict(self.values))
+    def set_world(self, preset_id=None, background_id=None):
+        """Ab 0.57 (F3): Regler auf eine angeklickte Farbwelt stellen (nichts
+        wird gespeichert, erst mit "Speichern")."""
+        current = self.world or (fisi_theme.current_preset, fisi_theme.current_background)
+        world = (preset_id or current[0], background_id or current[1])
+        self.world = None if world == (fisi_theme.current_preset,
+                                       fisi_theme.current_background) else world
+        self._show_values(fisi_theme.custom_start(self.mode, self.world))
 
-    def _reset(self, _event=None):
-        if self.mode in fisi_theme.custom_colors:
-            self.on_save(self.mode, None)
-            return
-        self.values = fisi_theme.custom_start(self.mode)
+    def _show_values(self, values):
+        self.values = values
         for part in fisi_theme.CUSTOM_PART_IDS:
             for channel in fisi_theme.CUSTOM_CHANNELS:
                 value = self.values[part]["hsl".index(channel[0])]
@@ -3171,6 +3159,39 @@ class CustomColors(ft.Column):
                                                                                      value)
                 self._label_semantics(part, channel, value)
         self._redraw()
+
+    def palette(self):
+        return fisi_theme.values_palette(self.values, self.mode, self.world)
+
+    def _redraw(self):
+        palette = self.palette()
+        with fisi_theme.preview_colors(palette):
+            map_colors = fisi_game.map_palette()
+            categories = [C[key] for key in ("cyan", "pink", "purple", "green", "orange")]
+            block = fisi_game.map_block_colors(C["green"])
+        for part in fisi_theme.CUSTOM_PART_IDS:
+            self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
+        self.preview.content = custom_preview(palette, map_colors, categories, block)
+        lines = fisi_theme.custom_warning(palette, map_colors)
+        if lines:
+            self.warning.value = "\n".join(lines)
+            self.warning.color = self.warning_icon.color = C["red"]
+            self.warning_icon.icon = ft.Icons.WARNING_AMBER_ROUNDED
+        else:
+            self.warning.value = fisi_theme.CUSTOM_OK
+            self.warning.color = self.warning_icon.color = C["green"]
+            self.warning_icon.icon = ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED
+
+    def _save(self, _event=None):
+        self.on_save(self.mode, dict(self.values), self.world)
+
+    def _reset(self, _event=None):
+        if self.mode in fisi_theme.custom_colors:
+            self.on_save(self.mode, None)
+            return
+        # Noch nichts gespeichert: nur die Regler auf die Farbwelt stellen
+        self.world = None
+        self._show_values(fisi_theme.custom_start(self.mode))
 
 
 def custom_preview(palette, map_colors, categories, block):
@@ -3310,6 +3331,8 @@ class SettingsScreen(Screen):
         ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
 
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
+        self.custom_colors = CustomColors(self._save_custom)
         colors = ui.FoldCard("Farben", [
             ui.label("Darstellung"),
             ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
@@ -3325,8 +3348,7 @@ class SettingsScreen(Screen):
                     "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
                     "dunkler, damit sie gut lesbar sind).",
                     size=11, color=C["muted"]),
-            # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
-            CustomColors(self._save_custom),
+            self.custom_colors,
         ], accent=C["accent"], subtitle="nur für dieses Gerät", key="optionen_farben",
             open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
 
@@ -3509,10 +3531,17 @@ class SettingsScreen(Screen):
             on_click=lambda _e, key=item["id"]: self._change_background(key)))
 
     def _change_color(self, preset_id):
+        if self.custom_colors.takes_tile():
+            # Ab 0.57 (F3): nur die Regler auf diese Farbwelt stellen
+            self.custom_colors.set_world(preset_id=preset_id)
+            return
         if preset_id != fisi_theme.current_preset:
             self.app.change_color(preset_id=preset_id)
 
     def _change_background(self, background_id):
+        if self.custom_colors.takes_tile():
+            self.custom_colors.set_world(background_id=background_id)
+            return
         if background_id != fisi_theme.current_background:
             self.app.change_color(background_id=background_id)
 
@@ -3520,9 +3549,15 @@ class SettingsScreen(Screen):
         if mode != fisi_theme.current_mode:
             self.app.change_color(mode=mode)
 
-    def _save_custom(self, mode, values):
-        """Ab 0.57: eigene Farben speichern (values None = zuruecksetzen)."""
-        self.app.change_color(custom=(mode, values))
+    def _save_custom(self, mode, values, world=None):
+        """Ab 0.57: eigene Farben speichern (values None = zuruecksetzen).
+        world: angeklickte Farbwelt (F3), wird mit gespeichert."""
+        preset_id, background_id = world or (None, None)
+        self.app.change_color(
+            preset_id=preset_id if preset_id != fisi_theme.current_preset else None,
+            background_id=background_id if background_id != fisi_theme.current_background
+            else None,
+            custom=(mode, fisi_theme.custom_to_save(mode, values, world)))
 
     def _change_font_size(self, size_id):
         if size_id != fisi_theme.current_font_size:

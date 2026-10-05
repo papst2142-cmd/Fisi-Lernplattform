@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Kontrast der Weltkarte in der hellen Darstellung (ab 0.56).
+"""Kontrast der Weltkarte in der hellen (ab 0.56) und dunklen (ab 0.57)
+Darstellung.
 
 Prueft mit der WCAG-Kontrastformel (fisi_theme.contrast, relative Luminanz)
 fuer alle sechs Hintergruende und alle Grundfarben:
@@ -9,7 +10,9 @@ fuer alle sechs Hintergruende und alle Grundfarben:
   und Gebaeudekonturen mindestens 3:1 gegen den Kartengrund,
 - die tatsaechlich gezeichneten Formen (fisi_game.world_shapes) benutzen
   genau diese Farben,
-- die dunkle Darstellung ist unveraendert (Werte wie vor 0.56).
+- ab 0.57 (Entscheidung Nico F2) gelten dieselben Ziele in der dunklen
+  Darstellung; Grund, Gruenflaechen, Schatten, Licht, Fenster und Schilder
+  bleiben dort wie vor 0.57.
 
 Aufruf: python -m unittest test_karte_kontrast
 """
@@ -29,8 +32,9 @@ import fisi_game as fg  # noqa: E402
 TEXT_MIN = 4.5
 FLAECHE_MIN = 3.0
 
-# Kartenfarben der dunklen Darstellung (Hintergrund Violett) aus 0.55/520abf6 -
-# muessen unveraendert bleiben.
+# Kartenfarben der dunklen Darstellung (Hintergrund Violett) aus 0.55/520abf6.
+# Ab 0.57 bleiben davon Grund, Gruenflaechen, Schatten, Licht, Fenster und
+# Schild gleich; Linien und Schrift werden auf die Kontrastziele aufgehellt.
 DUNKEL_VIOLETT = {
     "boden": "#170D2B", "park": "#1A2136", "wasser": "#272E59", "wasser_hell": "#344A7E",
     "strasse": "#2B1949", "strasse_mitte": "#3D2465", "gleis": "#7A5ABC",
@@ -128,32 +132,82 @@ class KarteKontrastTest(unittest.TestCase):
         for edge in edges:
             self.assertGreaterEqual(th.contrast(edge, p["boden"]), FLAECHE_MIN, edge)
 
-    def test_dunkel_unveraendert(self):
+    def _dark(self, back, preset):
         th.apply_mode(th.MODE_DARK)
-        th.apply_background("violett")
-        th.apply_preset(th.DEFAULT_PRESET)
+        th.apply_background(back)
+        th.apply_preset(preset)
         self.assertFalse(th.light)
-        self.assertEqual(fg.map_palette(), DUNKEL_VIOLETT)
+
+    def test_dunkel_schrift_mindestens_4_5(self):
+        for back, preset in _modes():
+            self._dark(back, preset)
+            p = fg.map_palette()
+            ground = p["boden"]
+            where = (back, preset)
+            self.assertGreaterEqual(th.contrast(p["schrift"], ground), TEXT_MIN, where)
+            self.assertGreaterEqual(th.contrast(p["schrift"], th.C["card"]), TEXT_MIN, where)
+            self.assertGreaterEqual(th.contrast(p["hinweis"], ground), TEXT_MIN, where)
+            self.assertGreaterEqual(th.contrast(th.C["text"], p["schild"]), TEXT_MIN, where)
+
+    def test_dunkel_flaechen_und_linien_mindestens_3(self):
+        for back, preset in _modes():
+            self._dark(back, preset)
+            p = fg.map_palette()
+            ground = p["boden"]
+            for key in ("strasse", "wasser", "gleis", "schwelle", "park_rand", "baum"):
+                self.assertGreaterEqual(th.contrast(p[key], ground), FLAECHE_MIN,
+                                        (back, preset, key))
+            self.assertGreaterEqual(th.contrast(p["baum"], p["park"]), FLAECHE_MIN,
+                                    (back, preset, "baum/park"))
+            self.assertGreaterEqual(th.contrast(p["park_rand"], p["park"]), FLAECHE_MIN,
+                                    (back, preset, "park_rand/park"))
+            for tone in TONE:
+                wall, roof, edge = fg.map_block_colors(tone)
+                for surface in (ground, wall, roof):
+                    self.assertGreaterEqual(th.contrast(edge, surface), FLAECHE_MIN,
+                                            (back, preset, tone, surface))
+
+    def test_dunkel_gezeichnete_formen_nutzen_die_palette(self):
+        self._dark("violett", th.DEFAULT_PRESET)
+        p = fg.map_palette()
+        shapes = fg.world_shapes(None)
+        self.assertEqual(shapes[0]["fill"], p["boden"])
+        lines = {shape.get("color") for shape in shapes} | \
+            {shape.get("line") for shape in shapes}
+        for key in ("strasse", "wasser", "gleis", "schwelle", "park_rand"):
+            self.assertIn(p[key], lines, key)
+        names = [shape for shape in fg.landscape_labels() if shape["role"] == "ortsname"]
+        self.assertTrue(names)
+        for shape in names:
+            self.assertEqual((shape["color"], shape["bg"]), (p["schrift"], p["boden"]))
+        edges = {shape["line"] for shape in shapes
+                 if shape["k"] in ("rect", "poly") and shape.get("line")
+                 and shape["line"] != p["park_rand"]}
+        self.assertTrue(edges)
+        for edge in edges:
+            self.assertGreaterEqual(th.contrast(edge, p["boden"]), FLAECHE_MIN, edge)
+
+    def test_dunkel_grund_und_flaechen_wie_vorher(self):
+        """Grund, Gruenflaechen, Schatten, Licht, Fenster und Schilder der
+        dunklen Karte wie vor 0.57; die Linien behalten ihren Farbton."""
+        self._dark("violett", th.DEFAULT_PRESET)
+        p = fg.map_palette()
+        for key in ("boden", "park", "schatten", "licht", "fenster", "schild"):
+            self.assertEqual(p[key], DUNKEL_VIOLETT[key], key)
+        for key in ("strasse", "gleis", "schwelle", "baum"):
+            old_hue = th.hex_to_hsl(DUNKEL_VIOLETT[key])[0]
+            new_hue = th.hex_to_hsl(p[key])[0]
+            self.assertLessEqual(min(abs(old_hue - new_hue), 360 - abs(old_hue - new_hue)), 25,
+                                 key)
         for back in th.BACKGROUND_IDS:
             th.apply_background(back)
             p = fg.map_palette()
-            self.assertEqual(set(p), set(DUNKEL_VIOLETT), back)
             ground = th.mix(th.C["bg"], th.C["card"], 0.55)
             self.assertEqual(p["boden"], ground, back)
-            self.assertEqual(p["strasse"], th.mix(ground, th.C["border_hi"], 0.32), back)
-            self.assertEqual(p["schrift"], th.mix(th.C["muted"], ground, 0.25), back)
             for tone in TONE:
-                wall = th.mix(th.C["card_alt"], tone, 0.12)
-                self.assertEqual(fg.map_block_colors(tone),
-                                 (wall, th.mix(th.C["card"], tone, 0.30),
-                                  th.mix(wall, "#000000", 0.35)), (back, tone))
-            shapes = fg.world_shapes(None)
-            for shape in shapes:
-                if shape["k"] == "text" and shape["role"] == "ortsname":
-                    self.assertNotIn("bg", shape)
-                if shape.get("fill") == p["park"] and shape["k"] == "rect":
-                    self.assertEqual((shape["line"], shape["lw"]), ("", 0.0))
-
+                wall, roof, _edge = fg.map_block_colors(tone)
+                self.assertEqual((wall, roof), (th.mix(th.C["card_alt"], tone, 0.12),
+                                                th.mix(th.C["card"], tone, 0.30)), (back, tone))
 
 if __name__ == "__main__":
     unittest.main()

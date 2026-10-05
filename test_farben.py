@@ -41,8 +41,12 @@ import fisi_update  # noqa: E402
 SETTINGS = os.path.join(_TMP, "einstellungen.json")
 
 # Pruefsumme aller 72 Farbwelten (C, Verlaeufe, Kartenfarben, hell/dunkel,
-# Fachbereichsfarben), berechnet mit dem Stand 0.56 (main 4b8a59a)
-STAND_056 = "01ccf3a308692fa82b46f53392480221870f6ac4c3c0692150b96932542f38f3"
+# Fachbereichsfarben), berechnet mit dem Stand 0.56 (main 4b8a59a). Ab 0.57
+# (Entscheidung Nico F2) ist die dunkle Karte absichtlich nachgeregelt: von ihr
+# zaehlen nur die unveraenderten Werte DUNKEL_KARTE_GLEICH mit, alles andere
+# (Oberflaeche, Verlaeufe, helle Karte) muss Wert fuer Wert gleich bleiben.
+STAND_056 = "852fee5c3621e0cd869a25ec3dc48c27201b5fc78d2419c946f7447712a08784"
+DUNKEL_KARTE_GLEICH = ("boden", "park", "schatten", "licht", "fenster", "schild")
 
 # Test-Farbsaetze (wie im Bericht 0.57)
 SONNENUNTERGANG = {"akzent1": (20, 90, 42), "akzent2": (345, 80, 45),
@@ -88,6 +92,13 @@ def _map_of(palette):
         return fg.map_palette()
 
 
+def _map_ohne_nachregelung():
+    colors = fg.map_palette()
+    if th.light:
+        return colors
+    return {key: colors[key] for key in DUNKEL_KARTE_GLEICH}
+
+
 class BestandsschutzTest(unittest.TestCase):
     """Wer nichts einstellt, sieht keinen Unterschied."""
 
@@ -105,7 +116,7 @@ class BestandsschutzTest(unittest.TestCase):
                     snapshot["%s/%s/%s" % (mode, back, preset)] = {
                         "C": dict(th.C),
                         "G": {k: list(v) for k, v in th.GRADIENTS.items()},
-                        "map": fg.map_palette(), "light": th.light,
+                        "map": _map_ohne_nachregelung(), "light": th.light,
                         "cat": {str(k): v for k, v in th.CATEGORY_COLOR.items()}}
         text = json.dumps(json.loads(json.dumps(snapshot, sort_keys=True)), sort_keys=True)
         self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), STAND_056)
@@ -375,17 +386,42 @@ class SpeichernTest(unittest.TestCase):
         th.save_custom(th.MODE_LIGHT, None)
         self.assertNotIn(th.CUSTOM_KEY, self._stored())
 
-    def test_kachel_ersetzt_eigene_farben_der_darstellung(self):
+    def test_kachel_aendert_nichts_gespeichertes(self):
+        """Ab 0.57 (Entscheidung Nico F3): Eine Grundfarbe/ein Hintergrund
+        loescht keine eigenen Farben mehr."""
         th.save_custom(th.MODE_DARK, SONNENUNTERGANG)
         th.save_custom(th.MODE_LIGHT, MINT)
         th.save_preset("rot_pink")
-        self.assertEqual(th.saved_custom(), {"hell": MINT})
-        self.assertEqual(th.C["accent"], "#FB7185")
-        th.save_custom(th.MODE_DARK, GRAPHIT)
         th.save_background("schwarz")
-        self.assertEqual(th.saved_custom(), {"hell": MINT})
+        self.assertEqual(th.saved_custom(), {"dunkel": SONNENUNTERGANG, "hell": MINT})
+        self.assertEqual(th.C["bg"], th.hsl_to_hex(*SONNENUNTERGANG["hintergrund"]))
         th.save_preset(th.DEFAULT_PRESET)
         th.save_background(th.DEFAULT_BACKGROUND)
+
+    def test_speichern_mit_angeklickter_farbwelt(self):
+        world = ("orange_gelb", "tannengruen")
+        start = th.custom_start(th.MODE_DARK, world)
+        self.assertEqual(start["akzent1"], th.hex_to_hsl(th.preset("orange_gelb")["primary"][0]))
+        self.assertEqual(start["hintergrund"], th.hex_to_hsl(th.background("tannengruen")["bg"]))
+        # Regler genau auf der angeklickten Farbwelt: nur die Farbwelt speichern
+        self.assertIsNone(th.custom_to_save(th.MODE_DARK, start, world))
+        self.assertEqual(th.values_palette(start, th.MODE_DARK, world),
+                         th.farbwelt_palette(th.MODE_DARK, world))
+        # farbwelt_palette veraendert nichts
+        self.assertEqual((th.current_preset, th.current_background),
+                         (th.DEFAULT_PRESET, th.DEFAULT_BACKGROUND))
+        moved = dict(start, akzent1=(10, 90, 40))
+        self.assertEqual(th.custom_to_save(th.MODE_DARK, moved, world), moved)
+        self.assertIsNone(th.custom_to_save(th.MODE_DARK, None, world))
+
+    def test_wann_kachel_nur_regler_setzt(self):
+        start = th.custom_start(th.MODE_DARK)
+        self.assertFalse(th.tile_sets_sliders(th.MODE_DARK, start))
+        self.assertTrue(th.tile_sets_sliders(th.MODE_DARK, dict(start, akzent1=(1, 2, 3))))
+        self.assertTrue(th.tile_sets_sliders(th.MODE_DARK, start, ("rot_pink", "violett")))
+        th.save_custom(th.MODE_DARK, GRAPHIT)
+        self.assertTrue(th.tile_sets_sliders(th.MODE_DARK, GRAPHIT))
+        self.assertFalse(th.tile_sets_sliders(th.MODE_LIGHT, th.custom_start(th.MODE_LIGHT)))
 
     def test_andere_einstellungen_bleiben(self):
         fisi_update.save_settings({"auto_check": False, "nutzer_name": "Nico",
@@ -465,6 +501,97 @@ class KarteTest(unittest.TestCase):
         self.assertEqual(count, 6 * 12 * 3 * 3)
 
 
+    def test_dunkle_karte_mit_mindestkontrast(self):
+        """Ab 0.57 (F2): Raster ueber dunkle Hintergruende (Helligkeit bis 30 %,
+        jeder Farbton, drei Saettigungen) und alle Grundfarben als Akzente."""
+        count = 0
+        for preset in th.PRESETS:
+            first, second = (th.hex_to_hsl(color) for color in preset["primary"])
+            for hue in range(0, 360, 30):
+                for sat in (0, 50, 100):
+                    for light in (0, 10, 20, 30):
+                        values = {"akzent1": first, "akzent2": second,
+                                  "hintergrund": (hue, sat, light)}
+                        palette = th.custom_palette(values)
+                        if palette["light"]:
+                            continue    # sehr kraeftiges Gelb/Gruen kippt auf hell
+                        colors = _map_of(palette)
+                        ground = colors["boden"]
+                        where = (preset["id"], hue, sat, light)
+                        self.assertGreaterEqual(th.contrast(colors["schrift"], ground), 4.5,
+                                                where)
+                        for key in ("strasse", "wasser", "gleis", "schwelle", "baum",
+                                    "park_rand"):
+                            self.assertGreaterEqual(th.contrast(colors[key], ground), 3.0,
+                                                    (key,) + where)
+                        count += 1
+        self.assertGreater(count, 6 * 12 * 3 * 4 * 0.9)
+
+    def test_dunkle_karte_wird_geprueft(self):
+        """Ab 0.57 prueft die Warnung die Karte auch in der dunklen Darstellung."""
+        palette = th.custom_palette(SONNENUNTERGANG)
+        self.assertFalse(palette["light"])
+        names = [item[0] for item in th.custom_checks(palette, _map_of(palette))]
+        for name in ("Karte: Beschriftung", "Karte: Straßen", "Karte: Fluss"):
+            self.assertIn(name, names)
+        broken = dict(_map_of(palette), strasse=_map_of(palette)["boden"])
+        names = [item[0] for item in th.custom_problems(palette, broken)]
+        self.assertIn("Karte: Straßen", names)
+
+
+class FachbereicheTest(unittest.TestCase):
+    """Ab 0.57 (Entscheidung Nico F4): eigene Warnzeile, wenn sich die fuenf
+    Fachbereichsfarben kaum unterscheiden (Farbabstand Delta E unter 20)."""
+
+    def tearDown(self):
+        _reset()
+
+    def test_farbwelten_ohne_warnzeile(self):
+        lowest = 100.0
+        for mode in th.MODE_IDS:
+            for back in th.BACKGROUND_IDS:
+                for preset in th.PRESET_IDS:
+                    th.apply_mode(mode)
+                    th.apply_background(back)
+                    th.apply_preset(preset)
+                    palette = th.farbwelt_palette(mode)
+                    self.assertIsNone(th.category_clash(palette), (mode, back, preset))
+                    keys = ("cyan", "pink", "purple", "green", "orange")
+                    lowest = min([lowest] + [th.color_distance(th.C[a], th.C[b])
+                                             for a in keys for b in keys if a < b])
+        self.assertGreaterEqual(lowest, 27.8)
+
+    def test_lesbare_saetze_ohne_warnzeile(self):
+        for values in LESBAR:
+            self.assertIsNone(th.category_clash(th.custom_palette(values)), values)
+
+    def test_unlesbar_und_grau(self):
+        clash = th.category_clash(th.custom_palette(UNLESBAR))
+        self.assertEqual(clash[:2], ("Sicherheit (Pink)", "Systeme (Lila)"))
+        self.assertLess(clash[2], 2.0)
+        grau = {"akzent1": (262, 83, 58), "akzent2": (333, 71, 51),
+                "hintergrund": (0, 0, 60)}
+        clash = th.category_clash(th.custom_palette(grau))
+        self.assertEqual(clash[:2], ("Netzwerk (Cyan)", "Wirtschaft (Grün)"))
+        self.assertLess(clash[2], th.CATEGORY_DISTANCE)
+        # Dunkelgrau bleibt unterscheidbar
+        dunkelgrau = dict(grau, hintergrund=(0, 0, 40))
+        self.assertIsNone(th.category_clash(th.custom_palette(dunkelgrau)))
+
+    def test_warnzeile_zusaetzlich_zum_kontrast(self):
+        palette = th.custom_palette(UNLESBAR)
+        lines = th.custom_warning(palette, _map_of(palette))
+        self.assertEqual(lines[0], th.CUSTOM_WARN_TITLE)
+        self.assertEqual(lines[-1], "Fachbereichsfarben schwer unterscheidbar: Sicherheit (Pink) "
+                         "und Systeme (Lila) (Farbabstand 1,6, nötig 20,0)")
+        grau = th.custom_palette({"akzent1": (262, 83, 58), "akzent2": (333, 71, 51),
+                                  "hintergrund": (0, 0, 60)})
+        lines = th.custom_warning(grau, _map_of(grau))
+        self.assertTrue(lines[-1].startswith("Fachbereichsfarben schwer unterscheidbar"))
+        self.assertEqual(th.custom_warning(th.custom_palette(MINT),
+                                           _map_of(th.custom_palette(MINT))), [])
+
+
 class TexteTest(unittest.TestCase):
 
     def test_gleiche_texte_pc_und_handy(self):
@@ -474,8 +601,8 @@ class TexteTest(unittest.TestCase):
             mobile = handle.read()
         for name in ("CUSTOM_TITLE", "CUSTOM_HINT", "CUSTOM_STATE_ON", "CUSTOM_STATE_OFF",
                      "CUSTOM_TILE_HINT", "CUSTOM_PREVIEW", "CUSTOM_SAVE", "CUSTOM_RESET",
-                     "CUSTOM_OK", "CUSTOM_WARN_TITLE", "CUSTOM_PARTS", "CUSTOM_CHANNELS",
-                     "CUSTOM_PREVIEW_BUTTON", "CUSTOM_PREVIEW_MAP", "warning_lines",
+                     "CUSTOM_OK", "CUSTOM_PARTS", "CUSTOM_CHANNELS",
+                     "CUSTOM_PREVIEW_BUTTON", "CUSTOM_PREVIEW_MAP", "custom_warning",
                      "slider_text"):
             self.assertIn("fisi_theme." + name, pc, name)
             self.assertIn("fisi_theme." + name, mobile, name)
@@ -503,8 +630,8 @@ class ReglerPcTest(unittest.TestCase):
         cls.root.geometry("900x700+0+0")
         fw.setup_fonts(cls.root)
         cls.saved = []
-        cls.panel = app_gui.CustomColors(cls.root, lambda mode, values: cls.saved.append(
-            (mode, values)))
+        cls.panel = app_gui.CustomColors(cls.root, lambda mode, values, world=None:
+                                         cls.saved.append((mode, values)))
         cls.panel.pack()
         cls.settle()
 
@@ -552,6 +679,7 @@ class ReglerPcTest(unittest.TestCase):
         self.panel.values = dict(UNLESBAR)
         self.panel._redraw()
         self.assertIn("Knopfschrift auf Akzent 1: 1,0:1", self.panel.warning.cget("text"))
+        self.assertIn("Fachbereichsfarben schwer unterscheidbar", self.panel.warning.cget("text"))
         self.panel._save()
         self.root.after(60, self.root.quit)
         self.root.mainloop()
@@ -559,6 +687,13 @@ class ReglerPcTest(unittest.TestCase):
         self.panel.values = dict(MINT)
         self.panel._redraw()
         self.assertIn(th.CUSTOM_OK, self.panel.warning.cget("text"))
+
+    def test_kachel_setzt_nur_die_regler(self):
+        """F3: Kachel-Klick bei bewegten Reglern stellt die Regler auf die
+        Farbwelt, speichert nichts; Speichern gibt die Farbwelt mit."""
+        _kachel_pruefen(self, self.app_gui.SettingsView, self.panel,
+                        lambda key: int(round(self.panel.sliders[key].get())),
+                        after=lambda _ms, job: job())
 
 
 @unittest.skipUnless(_flet_ok(), "flet nicht installiert")
@@ -571,7 +706,8 @@ class ReglerHandyTest(unittest.TestCase):
         import main as handy
         cls.handy = handy
         cls.saved = []
-        cls.panel = handy.CustomColors(lambda mode, values: cls.saved.append((mode, values)))
+        cls.panel = handy.CustomColors(lambda mode, values, world=None:
+                                       cls.saved.append((mode, values)))
 
     @classmethod
     def tearDownClass(cls):
@@ -599,8 +735,56 @@ class ReglerHandyTest(unittest.TestCase):
         self.panel.values = dict(UNLESBAR)
         self.panel._redraw()
         self.assertIn("Knopfschrift auf Akzent 1: 1,0:1", self.panel.warning.value)
+        self.assertIn("Fachbereichsfarben schwer unterscheidbar", self.panel.warning.value)
         self.panel._save()
         self.assertEqual(self.saved[-1], (th.current_mode, UNLESBAR))
+
+    def test_kachel_setzt_nur_die_regler(self):
+        _kachel_pruefen(self, self.handy.SettingsScreen, self.panel,
+                        lambda key: self.panel.sliders[key].value)
+
+
+def _kachel_pruefen(test, view_class, panel, slider_value, after=None):
+    """Gemeinsamer Ablauf fuer PC und Handy (Entscheidung Nico F3)."""
+    from types import SimpleNamespace
+    calls = []
+    fake_app = SimpleNamespace(change_color=lambda **kw: calls.append(kw))
+    view = SimpleNamespace(custom_colors=panel, app=fake_app)
+    if after:
+        view.after = after
+    panel.world = None
+    panel._show_values(th.custom_start(panel.mode))
+    # Regler auf dem Startwert, nichts gespeichert: Kachel waehlt wie bisher
+    view_class._change_color(view, "rot_pink")
+    test.assertEqual(calls, [{"preset_id": "rot_pink"}])
+    calls.clear()
+    # Regler bewegt: Kachel setzt nur die Regler, speichert nichts
+    panel._show_values(dict(SONNENUNTERGANG))
+    before = open(SETTINGS).read() if os.path.exists(SETTINGS) else ""
+    view_class._change_color(view, "orange_gelb")
+    view_class._change_background(view, "tannengruen")
+    test.assertEqual(calls, [])
+    test.assertEqual(open(SETTINGS).read() if os.path.exists(SETTINGS) else "", before)
+    world = ("orange_gelb", "tannengruen")
+    test.assertEqual(panel.world, world)
+    start = th.custom_start(panel.mode, world)
+    test.assertEqual(panel.values, start)
+    test.assertEqual(slider_value(("akzent1", "h")), start["akzent1"][0])
+    test.assertEqual(slider_value(("hintergrund", "l")), start["hintergrund"][2])
+    test.assertEqual(panel.palette(), th.farbwelt_palette(panel.mode, world))
+    # Speichern: Farbwelt wird gespeichert, keine eigenen Farben (Startwert)
+    view_class._save_custom(view, panel.mode, dict(panel.values), panel.world)
+    test.assertEqual(calls, [{"preset_id": "orange_gelb", "background_id": "tannengruen",
+                              "custom": (panel.mode, None)}])
+    calls.clear()
+    # Bewegt und gespeichert: Farbwelt und Reglerwerte
+    moved = dict(start, akzent1=(10, 90, 40))
+    view_class._save_custom(view, panel.mode, moved, world)
+    test.assertEqual(calls[0]["custom"], (panel.mode, moved))
+    # Zuruecksetzen ohne Gespeichertes: Regler wieder auf die gespeicherte Farbwelt
+    panel._reset()
+    test.assertIsNone(panel.world)
+    test.assertEqual(panel.values, th.custom_start(panel.mode))
 
 
 def tearDownModule():
