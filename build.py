@@ -276,6 +276,23 @@ def check_content():
              len(fisi_core.PROJEKTARBEITEN)))
 
 
+# Zeitgrenze des Starttests in Sekunden. Ab 0.58 auf macOS Intel 240 s: Im
+# ersten Release-Lauf von 0.57 brauchte der Starttest auf dem GitHub-Runner
+# "macos-15-intel" ueber 120 s (lokal 41 s, ein Neustart des Jobs war gruen).
+# Die Intel-Runner sind die langsamsten; die doppelte Grenze laesst Luft fuer
+# solche Ausreisser, ein wirklich haengendes Programm faellt weiter auf.
+SELFTEST_TIMEOUT = 120
+SELFTEST_TIMEOUT_MACOS_INTEL = 240
+
+
+def selftest_timeout(system=None, machine=None):
+    system = sys.platform if system is None else system
+    machine = platform.machine() if machine is None else machine
+    if system == "darwin" and machine.lower() in ("x86_64", "amd64", "i386"):
+        return SELFTEST_TIMEOUT_MACOS_INTEL
+    return SELFTEST_TIMEOUT
+
+
 def smoke_test(app_path):
     """Startet die gebaute Anwendung einmal im Testmodus: Sie oeffnet jede
     Ansicht, fuehrt eine Suche aus und beendet sich wieder. So faellt ein
@@ -298,11 +315,13 @@ def smoke_test(app_path):
     env = dict(os.environ, FISI_SELFTEST=log_path,
                FISI_DB_PATH=os.path.join(work, "selftest.db"))
 
-    info("Starttest der gebauten Anwendung ...")
+    limit = selftest_timeout()
+    info("Starttest der gebauten Anwendung (Zeitgrenze %d s) ..." % limit)
     try:
-        result = subprocess.run(command, env=env, timeout=120)
+        result = subprocess.run(command, env=env, timeout=limit)
     except subprocess.TimeoutExpired:
-        fail("Starttest: Die Anwendung hat sich nicht innerhalb von 2 Minuten beendet.")
+        fail("Starttest: Die Anwendung hat sich nicht innerhalb von %d Sekunden beendet."
+             % limit)
     report = ""
     if os.path.exists(log_path):
         with open(log_path, encoding="utf-8") as handle:

@@ -13,6 +13,8 @@ Tests fuer die eigenen Farben mit Reglern (ab 0.57, Plan Abschnitt 1):
   * Spielweltkarte folgt den eigenen Farben, hell mit Mindestkontrast
   * gleiche Beschriftungen PC und Handy, Regler per Tastatur (PC) und mit
     TalkBack-Beschriftung (Handy)
+  * ab 0.58 (N1, Variante B): Zustandszeile ueber den Reglern mit drei
+    Zustaenden im Vergleich zum Gespeicherten (PC und Handy)
 
 Datenbank und Einstellungen liegen in einem Temp-Ordner (FISI_DB_PATH).
 Start:  python test_farben.py   (Teile mit Oberflaeche brauchen ein Display)
@@ -592,6 +594,67 @@ class FachbereicheTest(unittest.TestCase):
                                            _map_of(th.custom_palette(MINT))), [])
 
 
+class ZustandTest(unittest.TestCase):
+    """Ab 0.58 (Entscheidung Nico N1, Variante B): Zustandszeile vergleicht
+    die Regler immer mit dem Gespeicherten."""
+
+    def tearDown(self):
+        _reset()
+
+    def test_texte(self):
+        self.assertEqual(th.CUSTOM_STATE_CHANGED, "Regler verändert, noch nicht gespeichert")
+        start = th.custom_start(th.MODE_DARK)
+        self.assertEqual(th.custom_state_text(start, th.MODE_DARK),
+                         "Startwerte aus der Farbwelt (Dunkel)")
+        self.assertEqual(th.custom_state_text(th.custom_start(th.MODE_LIGHT), th.MODE_LIGHT),
+                         "Startwerte aus der Farbwelt (Hell)")
+        th.save_custom(th.MODE_DARK, GRAPHIT)
+        self.assertEqual(th.custom_state_text(GRAPHIT, th.MODE_DARK),
+                         "Eigene Farben aktiv (Dunkel)")
+        self.assertEqual(th.custom_state_text(dict(GRAPHIT, akzent1=(1, 2, 3)), th.MODE_DARK),
+                         th.CUSTOM_STATE_CHANGED)
+
+    def test_ohne_eigene_farben(self):
+        start = th.custom_start(th.MODE_DARK)
+        self.assertEqual(th.custom_state(start, th.MODE_DARK), "start")
+        moved = dict(start, akzent2=(start["akzent2"][0], start["akzent2"][1],
+                                     start["akzent2"][2] + 1))
+        self.assertEqual(th.custom_state(moved, th.MODE_DARK), "veraendert")
+        # Von Hand zurueck auf den Startwert (Listen wie aus JSON zaehlen gleich)
+        back = {part: list(triple) for part, triple in start.items()}
+        self.assertEqual(th.custom_state(back, th.MODE_DARK), "start")
+        # Kachel einer anderen Farbwelt: Regler weichen vom Gespeicherten ab
+        other = th.custom_start(th.MODE_DARK, ("orange_gelb", "tannengruen"))
+        self.assertEqual(th.custom_state(other, th.MODE_DARK), "veraendert")
+        # Gespeichert wird die Farbwelt: danach ist sie der Startwert
+        th.save_preset("orange_gelb")
+        th.save_background("tannengruen")
+        self.assertEqual(th.custom_state(other, th.MODE_DARK), "start")
+        self.assertEqual(th.custom_state(start, th.MODE_DARK), "veraendert")
+
+    def test_mit_eigenen_farben(self):
+        th.save_custom(th.MODE_DARK, SONNENUNTERGANG)
+        self.assertEqual(th.custom_state(SONNENUNTERGANG, th.MODE_DARK), "aktiv")
+        # Startwerte der Farbwelt sind jetzt eine Abweichung vom Gespeicherten
+        self.assertEqual(th.custom_state(th.custom_start(th.MODE_DARK), th.MODE_DARK),
+                         "veraendert")
+        moved = dict(SONNENUNTERGANG, hintergrund=(221, 40, 12))
+        self.assertEqual(th.custom_state(moved, th.MODE_DARK), "veraendert")
+        self.assertEqual(th.custom_state(dict(SONNENUNTERGANG), th.MODE_DARK), "aktiv")
+        # Je Darstellung getrennt
+        self.assertEqual(th.custom_state(th.custom_start(th.MODE_LIGHT), th.MODE_LIGHT), "start")
+        # Zuruecksetzen (gespeichert: keine eigenen Farben)
+        th.save_custom(th.MODE_DARK, None)
+        self.assertEqual(th.custom_state(th.custom_start(th.MODE_DARK), th.MODE_DARK), "start")
+        self.assertEqual(th.custom_state(SONNENUNTERGANG, th.MODE_DARK), "veraendert")
+
+    def test_aendert_nichts(self):
+        before = (dict(th.C), dict(th.custom_colors), th.current_preset, th.current_background)
+        th.custom_state_text(dict(UNLESBAR), th.MODE_LIGHT)
+        self.assertEqual((dict(th.C), dict(th.custom_colors), th.current_preset,
+                          th.current_background), before)
+
+
 class TexteTest(unittest.TestCase):
 
     def test_gleiche_texte_pc_und_handy(self):
@@ -599,7 +662,7 @@ class TexteTest(unittest.TestCase):
             pc = handle.read()
         with open(os.path.join(HERE, "mobile", "src", "main.py"), encoding="utf-8") as handle:
             mobile = handle.read()
-        for name in ("CUSTOM_TITLE", "CUSTOM_HINT", "CUSTOM_STATE_ON", "CUSTOM_STATE_OFF",
+        for name in ("CUSTOM_TITLE", "CUSTOM_HINT", "custom_state_text",
                      "CUSTOM_TILE_HINT", "CUSTOM_PREVIEW", "CUSTOM_SAVE", "CUSTOM_RESET",
                      "CUSTOM_OK", "CUSTOM_PARTS", "CUSTOM_CHANNELS",
                      "CUSTOM_PREVIEW_BUTTON", "CUSTOM_PREVIEW_MAP", "custom_warning",
@@ -695,6 +758,19 @@ class ReglerPcTest(unittest.TestCase):
                         lambda key: int(round(self.panel.sliders[key].get())),
                         after=lambda _ms, job: job())
 
+    def test_zustandszeile(self):
+        """Ab 0.58 (N1): Zeile folgt Schieben, Zurueckschieben, Kachel,
+        Zuruecksetzen und Speichern."""
+        def moved(part, channel, value):
+            self.panel._moved(part, channel, value)
+            self.root.after(self.panel.DELAY_MS + 40, self.root.quit)
+            self.root.mainloop()
+        _zustand_pruefen(self, self.panel, lambda: self.panel.state_line.cget("text"),
+                         moved, lambda: self.app_gui.CustomColors(self.root, lambda *a: None),
+                         lambda panel: panel.state_line.cget("text"),
+                         settle=lambda: (self.root.after(60, self.root.quit),
+                                         self.root.mainloop()))
+
 
 @unittest.skipUnless(_flet_ok(), "flet nicht installiert")
 class ReglerHandyTest(unittest.TestCase):
@@ -742,6 +818,65 @@ class ReglerHandyTest(unittest.TestCase):
     def test_kachel_setzt_nur_die_regler(self):
         _kachel_pruefen(self, self.handy.SettingsScreen, self.panel,
                         lambda key: self.panel.sliders[key].value)
+
+    def test_zustandszeile(self):
+        """Ab 0.58 (N1): wie am PC, dazu liest TalkBack den Wechsel vor."""
+        self.assertTrue(self.panel.state_box.live_region)
+        self.assertIs(self.panel.state_box.content, self.panel.state_line)
+        _zustand_pruefen(self, self.panel, lambda: self.panel.state_line.value,
+                         lambda part, channel, value: self.panel._moved(part, channel, value,
+                                                                         final=True),
+                         lambda: self.handy.CustomColors(lambda *a: None),
+                         lambda panel: panel.state_line.value)
+
+
+def _zustand_pruefen(test, panel, shown, move, build, shown_of, settle=None):
+    """Ab 0.58 (N1): gemeinsamer Ablauf fuer PC und Handy. move schiebt einen
+    Regler wie die Maus (mit der Bremse), build baut die Karte neu (wie nach
+    Speichern), shown liest die Zeile."""
+    _reset()
+    mode = th.current_mode
+    hue = th.CUSTOM_CHANNELS[0]
+    off = th.CUSTOM_STATE_OFF % dict(th.MODES)[mode]
+    on = th.CUSTOM_STATE_ON % dict(th.MODES)[mode]
+    panel.world = None
+    panel._show_values(th.custom_start(mode))
+    test.assertEqual(shown(), off)
+    # Schieben -> veraendert, zurueckschieben -> wieder Startwerte
+    start_hue = panel.values["akzent1"][0]
+    move("akzent1", hue, (start_hue + 5) % 360)
+    test.assertEqual(shown(), th.CUSTOM_STATE_CHANGED)
+    move("akzent1", hue, start_hue)
+    test.assertEqual(shown(), off)
+    # Kachel (Regler bewegt): setzt nur die Regler -> veraendert
+    move("akzent1", hue, (start_hue + 5) % 360)
+    panel.set_world(preset_id="orange_gelb")
+    test.assertEqual(shown(), th.CUSTOM_STATE_CHANGED)
+    # Zuruecksetzen ohne Gespeichertes -> Startwerte
+    panel._reset()
+    if settle:
+        settle()
+    test.assertEqual(shown(), off)
+    # Speichern eigener Farben: neu aufgebaute Karte zeigt "aktiv"
+    th.save_custom(mode, GRAPHIT)
+    fresh = build()
+    test.assertEqual(shown_of(fresh), on)
+    panel._show_values(dict(GRAPHIT))
+    test.assertEqual(shown(), on)
+    move("hintergrund", th.CUSTOM_CHANNELS[2], GRAPHIT["hintergrund"][2] + 3)
+    test.assertEqual(shown(), th.CUSTOM_STATE_CHANGED)
+    move("hintergrund", th.CUSTOM_CHANNELS[2], GRAPHIT["hintergrund"][2])
+    test.assertEqual(shown(), on)
+    # Kachel bei gespeicherten eigenen Farben -> veraendert
+    panel.set_world(background_id="schwarz")
+    test.assertEqual(shown(), th.CUSTOM_STATE_CHANGED)
+    # Zuruecksetzen mit eigenen Farben loescht sie (on_save(None)); neu aufgebaut
+    th.save_custom(mode, None)
+    fresh = build()
+    test.assertEqual(shown_of(fresh), off)
+    _reset()
+    panel.world = None
+    panel._show_values(th.custom_start(mode))
 
 
 def _kachel_pruefen(test, view_class, panel, slider_value, after=None):

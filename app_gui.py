@@ -50,6 +50,10 @@ from fisi_core import (  # noqa: E402
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
+    CALC_EXPLAIN_UPS, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
+    UPS_TASKS, UPS_UNITS, ups_calculate, ups_task_text,
+    UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
+    UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
 )
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -58,6 +62,7 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    LEARN_CHART_SERIES,
     DELETE_SUBTITLE, DELETE_TITLE, HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
     RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
@@ -88,8 +93,8 @@ from fisi_game_gui import (  # noqa: E402
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, FoldCard, GradientBar, GradientPanel, Heatmap, IconButton,
-    IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
-    ScrollArea, ShareBars, ThemeTimeline, F,
+    GradientSlider, IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
+    ScrollArea, ShareBars, ThemeTimeline, UpsDiagram, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
@@ -102,7 +107,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.57"
+APP_VERSION = "0.58"
 
 
 def _resource_path(filename):
@@ -877,8 +882,10 @@ class DashboardView(View):
         self.today_card = Card(self.content, title="Heute",
                                subtitle="Tagesziel und Wiederholung", accent=C["green"])
         self.today_card.pack(fill="x", pady=(16, 0))
-        today = transparent_frame(self.today_card.body)
+        today = self.today_frame = transparent_frame(self.today_card.body)
         today.pack(fill="x")
+        self.today_stacked = False   # ab 0.58: "Heute faellig" unter dem Tagesziel
+        self.goal_visible = True
         self.goal_box = transparent_frame(today)
         self.goal_ring = MiniRing(self.goal_box, size=74, thickness=7, parent_bg=C["card"])
         self.goal_ring.pack(side="left")
@@ -897,18 +904,21 @@ class DashboardView(View):
         self.btn_review.pack(side="left")
 
         # --- Reihe 1: Kennzahlen (fuenf gleich breite Kacheln) -----------
-        row1 = transparent_frame(self.content)
+        # Ab 0.58 je nach Breite in einer Reihe oder in zwei (3 + 2), siehe _fit
+        row1 = self.row1 = transparent_frame(self.content)
         row1.pack(fill="x", pady=(16, 0))
         for column in range(5):
             row1.columnconfigure(column, weight=1, uniform="row1")
+        self.row1_cards = []
+        self.row1_mode = "breit"
 
         self.ring_cards = self._ring_card(row1, 0, "Karteikarten")
         self.ring_quiz = self._ring_card(row1, 1, "Quizfragen")
         self.ring_ap1 = self._ring_card(row1, 2, "AP1-Szenarien")
         self.ring_scen = self._ring_card(row1, 3, "AP2-Szenarien")
 
-        quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
-                     accent=C["accent2"])
+        quote = self.quote_card = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
+                                       accent=C["accent2"])
         quote.grid(row=0, column=4, sticky="nsew")
         self.lbl_quote = make_label(quote.body, "0 %", font=F["display"],
                                     fg=C["accent"])
@@ -920,7 +930,7 @@ class DashboardView(View):
         self.lbl_quote_sub.pack(anchor="w", pady=(6, 0))
 
         # --- Reihe 2: Verlauf und Abdeckung ------------------------------
-        row2 = transparent_frame(self.content)
+        row2 = self.row2 = transparent_frame(self.content)
         row2.pack(fill="x", pady=(14, 0))
         row2.columnconfigure(0, weight=3, uniform="row2")
         row2.columnconfigure(1, weight=2, uniform="row2")
@@ -983,7 +993,7 @@ class DashboardView(View):
         self.zoom_card = None
 
         # --- Reihe 4: Aktivitaeten, Kalender -------------------------------
-        row4 = transparent_frame(self.content)
+        row4 = self.row4 = transparent_frame(self.content)
         row4.pack(fill="x", pady=(14, 0))
         row4.columnconfigure(0, weight=1, uniform="row4")
         row4.columnconfigure(1, weight=1, uniform="row4")
@@ -1001,7 +1011,7 @@ class DashboardView(View):
         self.calendar.set_provider(self.db.month_activity)
 
         # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
-        row5 = transparent_frame(self.content)
+        row5 = self.row5 = transparent_frame(self.content)
         row5.pack(fill="x", pady=(14, 0))
         row5.columnconfigure(0, weight=1, uniform="row5")
         row5.columnconfigure(1, weight=1, uniform="row5")
@@ -1021,12 +1031,135 @@ class DashboardView(View):
                                       parent_bg=C["card"])
         self.timeline.pack(fill="both", expand=True)
 
+        # Ab 0.58: Zweispaltige Reihen (Karte, Gewicht) fuer _fit
+        self.pair_rows = ((chart_card, 3, cover, 2), (act_card, 1, cal_card, 1),
+                          (ap1_theme_card, 1, theme_card, 1))
+        self._fit_pending = False
+        self.canvas.bind("<Configure>", self._schedule_fit, "+")
+        self.content.bind("<Configure>", self._schedule_fit, "+")
+
     def _ring_card(self, parent, column, title):
         card = Card(parent, title=title)
         card.grid(row=0, column=column, sticky="nsew", padx=(0, 14))
+        self.row1_cards.append(card)
         ring = RingStat(card.body, size=126, parent_bg=C["card"])
         ring.pack()
         return ring
+
+    # -- Ab 0.58: Breite anpassen (1360 px, grosse Schrift) ------------------
+    #
+    # Das Dashboard soll ohne seitlichen Schieberegler ins Fenster passen.
+    # Statt einer festen Mindestbreite richtet es sich nach der sichtbaren
+    # Breite: Reicht sie nicht, ruecken Unterschriften unter die Ueberschrift,
+    # "Heute faellig" unter das Tagesziel und die fuenf Kennzahlen in zwei
+    # Reihen (3 + 2). Bei 1920 px bleibt alles wie bisher.
+
+    FIT_GAP = 24   # Mindestabstand Tagesziel <-> "Heute faellig" (logische px)
+    CONTENT_PAD = 28   # Seitenrand der Ansicht (View.__init__, logische px)
+
+    def _schedule_fit(self, _event=None):
+        if not self._fit_pending:
+            self._fit_pending = True
+            self.after_idle(self._fit)
+
+    def available_width(self):
+        """Sichtbare Breite fuer den Inhalt (echte Pixel, ohne Seitenrand)."""
+        return self.canvas.winfo_width() - 2 * px(self.CONTENT_PAD)
+
+    def _fit(self):
+        self._fit_pending = False
+        try:
+            if self.canvas.winfo_width() <= 1:
+                return
+            avail = self.available_width()
+            changed = self._fit_today(avail)
+            changed |= self._fit_row1(avail)
+            for row in self.pair_rows:
+                changed |= self._fit_pair(avail, *row)
+        except tk.TclError:
+            return
+        if changed:
+            # Neue Mindestbreite an die Bildlaufflaeche melden
+            self.after_idle(self._schedule_fit)
+
+    def _fit_today(self, avail):
+        goal = self.goal_box.winfo_reqwidth() if self.goal_visible else 0
+        review = self.review_box.winfo_reqwidth()
+        need = goal + review + px(self.FIT_GAP) + self.today_card.frame_width()
+        changed = self.today_card.stack_subtitle(
+            self.today_card.head_width() > avail) if self.today_card.head else False
+        stacked = bool(goal) and need > avail
+        if stacked != self.today_stacked:
+            self.today_stacked = stacked
+            self._place_today()
+            changed = True
+        return changed
+
+    def _place_today(self):
+        """Tagesziel und "Heute faellig" nebeneinander oder untereinander."""
+        visible = self.goal_visible
+        self.goal_box.pack_forget()
+        self.review_box.pack_forget()
+        if visible:
+            self.goal_box.pack(side="top" if self.today_stacked else "left",
+                               anchor="w")
+        if self.today_stacked and visible:
+            self.review_box.pack(side="top", anchor="w", pady=(14, 0))
+        else:
+            self.review_box.pack(side="right")
+
+    def _fit_row1(self, avail):
+        gap = px(14)
+        ring_col = max(card.winfo_reqwidth() for card in self.row1_cards) + gap
+        quote = self.quote_card
+        body = max(child.winfo_reqwidth() for child in quote.body.winfo_children())
+        quote_narrow = max(body + quote.frame_width(),
+                           quote.head_width() - quote.subtitle_width(),
+                           quote.subtitle_width() + quote.frame_width())
+        if 5 * max(ring_col, quote.head_width(), body + quote.frame_width()) <= avail:
+            mode = "breit"
+        elif 5 * max(ring_col, quote_narrow) <= avail:
+            mode = "mittel"
+        else:
+            mode = "schmal"
+        if mode == self.row1_mode:
+            return False
+        self.row1_mode = mode
+        quote.stack_subtitle(mode == "mittel")
+        cards = self.row1_cards + [quote]
+        if mode == "schmal":
+            places = ((0, 0, 1), (0, 1, 1), (0, 2, 1), (1, 0, 1), (1, 1, 2))
+            columns = 3
+        else:
+            places = tuple((0, column, 1) for column in range(5))
+            columns = 5
+        for column in range(5):
+            self.row1.columnconfigure(column, weight=1 if column < columns else 0,
+                                      uniform="row1" if column < columns else "")
+        for index, (card, (row, column, span)) in enumerate(zip(cards, places)):
+            last = column + span == columns
+            card.grid(row=row, column=column, columnspan=span, sticky="nsew",
+                      padx=(0, 0 if last else 14), pady=(14 if row else 0, 0))
+        return True
+
+    def _fit_pair(self, avail, left, left_weight, right, right_weight):
+        """Zwei Kacheln nebeneinander (Gewichte wie im Raster): Passen die
+        Kopfzeilen nicht, rueckt die Unterschrift unter die Ueberschrift."""
+        total = left_weight + right_weight
+        stacked = left._sub_stacked or right._sub_stacked
+        widths = []
+        for card in (left, right):
+            width = card.head_width()
+            if card._sub_stacked:
+                width = max(width, card.winfo_reqwidth())
+            widths.append(width)
+        need = max(widths[0] / left_weight, widths[1] / right_weight) * total + px(14)
+        flag = need > avail
+        if flag == stacked:
+            return False
+        left.stack_subtitle(flag)
+        right.stack_subtitle(flag)
+        return True
 
     # -- Aktualisierung -----------------------------------------------------
 
@@ -1052,10 +1185,8 @@ class DashboardView(View):
         settings = learning_settings()
         goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
         show_goal, show_streak = settings["ziel_an"], settings["serie_an"]
-        if show_goal or show_streak:
-            self.goal_box.pack(side="left")
-        else:
-            self.goal_box.pack_forget()
+        self.goal_visible = show_goal or show_streak
+        self._place_today()
         if show_goal:
             self.goal_ring.pack(side="left")
             self.goal_ring.set(goal.fraction * 100,
@@ -1134,7 +1265,7 @@ class DashboardView(View):
         labels = [day.strftime("%d.%m") for day, _count in daily]
         values = [count for _day, count in daily]
         self.chart.set_data(labels, [
-            {"name": "Aufgaben pro Tag", "values": values, "color": C["accent"]},
+            {"name": LEARN_CHART_SERIES, "values": values, "color": C["accent"]},
         ])
 
         # Fachbereiche
@@ -1160,7 +1291,9 @@ class DashboardView(View):
         activities = self.db.recent_activities(7)
         if not activities:
             make_label(self.activity_box,
-                       "Noch keine Aktivitäten.\nStarte mit den Karteikarten "
+                       # ab 0.58 dreizeilig, damit es bei 1360 px auch bei
+                       # "Sehr groß" ohne seitlichen Schieberegler passt
+                       "Noch keine Aktivitäten.\nStarte mit den Karteikarten\n"
                        "oder dem Prüfungstrainer.",
                        font=F["small"], fg=C["muted"], justify="left").pack(anchor="w")
         else:
@@ -3963,7 +4096,8 @@ CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 class CalcView(View):
     def build(self):
-        self.info_visible = {"subnet": False, "raid": False, "screen": False}
+        self.info_visible = {"subnet": False, "raid": False, "screen": False,
+                             "ups": False}
         self.info_frames = {}
         self.info_buttons = {}
 
@@ -4055,9 +4189,98 @@ class CalcView(View):
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)
 
+        self._build_ups(layout)
+
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+    def _build_ups(self, layout):
+        """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
+        und Uebungsaufgaben. Formeln und Quellen in fisi_core."""
+        ups = Card(layout, title=UPS_TITLE, accent=C["orange"], subtitle=UPS_SUBTITLE)
+        ups.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        columns = transparent_frame(ups.body)
+        columns.pack(anchor="w", fill="x")
+        self.ups_entries = {}
+        groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
+                  (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
+                                       "minuten", "alterung")))
+        for column, (caption, keys) in enumerate(groups):
+            box = transparent_frame(columns)
+            box.grid(row=0, column=column, sticky="nw", padx=(0, 32) if column == 0 else 0)
+            make_label(box, caption, font=F["label"], fg=C["muted"]).grid(
+                row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
+            for row, key in enumerate(keys, start=1):
+                make_label(box, UPS_FIELD_CAPTIONS[key], font=F["small"],
+                           fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+                entry = EntryBox(box, width=8, value=UPS_FIELD_DEFAULTS[key])
+                entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+                entry.entry.bind("<Return>", lambda _e: self.calc_ups("empfehlung"))
+                self.ups_entries[key] = entry
+                if key == "last":
+                    self.ups_unit = PillGroup(box, UPS_UNITS, initial=0)
+                    self.ups_unit.grid(row=row, column=2, sticky="w")
+        buttons = transparent_frame(ups.body)
+        buttons.pack(anchor="w", pady=(14, 0))
+        for mode, caption in UPS_MODES:
+            NeoButton(buttons, caption, lambda m=mode: self.calc_ups(m),
+                      kind="accent" if mode == "empfehlung" else "primary").pack(
+                          side="left", padx=(0, 10))
+        make_label(ups.body, UPS_RULE_TEXT, font=F["small"], fg=C["text_dim"],
+                   anchor="w", justify="left", wraplength=900).pack(
+                       anchor="w", fill="x", pady=(12, 0))
+        self.ups_picture = UpsDiagram(ups.body, height=250, parent_bg=C["card"])
+        self.ups_picture.pack(fill="x", pady=(14, 0))
+        self.txt_ups = make_autogrow_text(ups.body, min_height=8, max_height=24,
+                                          font=F["mono_small"])
+        self.txt_ups.configure(state="disabled")
+        self.txt_ups.pack(fill="x", pady=(14, 0))
+        self._build_info_toggle(ups.body, "ups", CALC_EXPLAIN_UPS)
+
+        # Uebungsaufgaben mit Loesungsweg
+        make_label(ups.body, UPS_TASKS_TITLE.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(18, 0))
+        task_buttons = transparent_frame(ups.body)
+        task_buttons.pack(anchor="w", pady=(8, 0))
+        NeoButton(task_buttons, UPS_TASK_NEXT, self.next_ups_task, kind="ghost").pack(
+            side="left", padx=(0, 10))
+        self.btn_ups_solution = NeoButton(task_buttons, UPS_SOLUTION_SHOW,
+                                          self.toggle_ups_solution, kind="ghost")
+        self.btn_ups_solution.pack(side="left")
+        self.txt_ups_task = make_autogrow_text(ups.body, min_height=6, max_height=18,
+                                               font=F["mono_small"])
+        self.txt_ups_task.configure(state="disabled")
+        self.txt_ups_task.pack(fill="x", pady=(10, 0))
+        self.ups_task = 0
+        self.ups_solution = False
+        self._show_ups_task()
+        self.calc_ups("empfehlung", quiet=True)
+
+    def _show_ups_task(self):
+        set_text(self.txt_ups_task, ups_task_text(self.ups_task, self.ups_solution))
+        self.btn_ups_solution.set_text(UPS_SOLUTION_HIDE if self.ups_solution
+                                       else UPS_SOLUTION_SHOW)
+
+    def next_ups_task(self):
+        self.ups_task = (self.ups_task + 1) % len(UPS_TASKS)
+        self.ups_solution = False
+        self._show_ups_task()
+
+    def toggle_ups_solution(self):
+        self.ups_solution = not self.ups_solution
+        self._show_ups_task()
+
+    def calc_ups(self, mode, quiet=False):
+        fields = {key: entry.get() for key, entry in self.ups_entries.items()}
+        try:
+            result = ups_calculate(mode, fields, self.ups_unit.get())
+        except InputError as error:
+            if not quiet:
+                messagebox.showerror("Ungültige Eingabe", str(error))
+            return
+        set_text(self.txt_ups, result["text"])
+        self.ups_picture.set_picture(result["bild"])
 
     def _on_tab(self, value):
         if value == "trainer":
@@ -4413,14 +4636,16 @@ class CustomColors(ctk.CTkFrame):
         self.values = fisi_theme.custom_values(self.mode)
         self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_labels, self.swatches = {}, {}, {}
+        self._tracks = {}   # ab 0.58: Werte, mit denen die Spuren gezeichnet sind
         self._pending = None
-        mode_name = dict(fisi_theme.MODES)[self.mode]
         make_label(self, fisi_theme.CUSTOM_TITLE, font=F["label"], fg=C["muted"]).pack(
             anchor="w")
         active = self.mode in fisi_theme.custom_colors
-        make_label(self, (fisi_theme.CUSTOM_STATE_ON if active else fisi_theme.CUSTOM_STATE_OFF)
-                   % mode_name, font=F["small_bold"],
-                   fg=C["text"]).pack(anchor="w", pady=(6, 0))
+        # Ab 0.58 (N1): Zustandszeile folgt den Reglern (Vergleich mit dem
+        # Gespeicherten), aktualisiert in _redraw
+        self.state_line = make_label(self, fisi_theme.custom_state_text(self.values, self.mode),
+                                     font=F["small_bold"], fg=C["text"])
+        self.state_line.pack(anchor="w", pady=(6, 0))
         make_label(self, fisi_theme.CUSTOM_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(4, 0))
         if active:
@@ -4466,12 +4691,11 @@ class CustomColors(ctk.CTkFrame):
             make_label(line, label, font=F["small"], fg=C["text_dim"], width=90,
                        anchor="w").pack(side="left")
             value = self.values[part]["hsl".index(key)]
-            slider = ctk.CTkSlider(line, from_=low, to=high, number_of_steps=high - low,
-                                   width=220,
-                                   button_color=C["text"], button_hover_color=C["accent"],
-                                   progress_color=C["accent"], fg_color=C["field_border"],
-                                   command=lambda v, p=part, c=channel: self._moved(p, c, v))
+            # Ab 0.58 mit farbiger Spur (GradientSlider, Plan 3a)
+            slider = GradientSlider(line, key, low, high, width=220,
+                                    command=lambda v, p=part, c=channel: self._moved(p, c, v))
             slider.set(value)
+            slider.set_hsl(self.values[part])
             slider.pack(side="left", padx=(4, 8))
             self.sliders[(part, key)] = slider
             make_focusable(slider)
@@ -4540,8 +4764,17 @@ class CustomColors(ctk.CTkFrame):
             block = fisi_game.map_block_colors(C["green"])
         for part in fisi_theme.CUSTOM_PART_IDS:
             self.swatches[part].configure(bg=fisi_theme.hsl_to_hex(*self.values[part]))
+            # Ab 0.58: Spuren der Gruppe folgen den Werten (gleiche Bremse
+            # wie die Vorschau, DELAY_MS)
+            if self._tracks.get(part) != self.values[part]:
+                self._tracks[part] = self.values[part]
+                for channel in fisi_theme.CUSTOM_CHANNELS:
+                    self.sliders[(part, channel[0])].set_hsl(self.values[part])
         draw_custom_preview(self.preview, palette, map_colors, categories, block,
                             self.PREVIEW_W, self.PREVIEW_H)
+        state = fisi_theme.custom_state_text(self.values, self.mode)
+        if self.state_line.cget("text") != state:
+            self.state_line.configure(text=state)
         lines = fisi_theme.custom_warning(palette, map_colors)
         if lines:
             self.warning.configure(text="⚠ " + "\n".join(lines), text_color=C["red"])
@@ -4644,7 +4877,9 @@ class SettingsView(View):
         # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
         make_label(tour.body, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(18, 0))
-        self.entry_name = EntryBox(tour.body, width=30, value=fh.load_name())
+        # Ab 0.58 so breit, dass ein Name mit fh.NAME_MAX (40) Zeichen ganz
+        # zu sehen ist (vorher 30 -> nur der Anfang sichtbar)
+        self.entry_name = EntryBox(tour.body, width=fh.NAME_MAX + 6, value=fh.load_name())
         self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
         self.entry_name.pack(anchor="w", pady=(6, 0))
         self.entry_name.bind("<FocusOut>", lambda _e: self._save_name())
@@ -5869,7 +6104,7 @@ class UpdateDialog(ctk.CTkToplevel):
         self.info = info
         self._downloading = False
         self.title("Update verfügbar")
-        self.geometry("560x470")
+        self.geometry("560x500")   # ab 0.58 +30 px fuer die Hinweiszeile
         self.resizable(False, False)
         self.transient(app.root)
         # CTkToplevel setzt unter Windows kurz nach dem Oeffnen sein eigenes
@@ -5898,6 +6133,11 @@ class UpdateDialog(ctk.CTkToplevel):
                                      fg=C["text_dim"], anchor="w",
                                      justify="left", wraplength=480)
         self.lbl_status.pack(anchor="w", pady=(10, 0))
+
+        # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (nur Text, der
+        # Update-Ablauf bleibt unveraendert)
+        make_label(card.body, fh.UPDATE_PROTECTION_HINT, font=F["tiny"], fg=C["muted"],
+                   anchor="w", justify="left", wraplength=480).pack(anchor="w", pady=(8, 0))
 
         buttons = transparent_frame(card.body)
         buttons.pack(fill="x", pady=(12, 0))

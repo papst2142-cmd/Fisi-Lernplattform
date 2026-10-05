@@ -26,7 +26,8 @@ import tkinter.font as tkfont
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-from fisi_theme import C, GRADIENTS, curve_controls, lighten, mix
+import fisi_theme
+from fisi_theme import C, GRADIENTS, curve_controls, label_stride, lighten, mix, shown_labels
 
 # Wird beim Start durch setup_fonts() gefuellt.
 F = {}
@@ -843,6 +844,9 @@ class Card(ctk.CTkFrame):
         self.head = None
         self.title_label = None
         self.subtitle_label = None
+        self._sub_below = None       # ab 0.58: Unterschrift in eigener Zeile
+        self._sub_stacked = False
+        self._sub_text = (subtitle or "", None)
         if title:
             color = accent or C["accent"]
             self.head = ctk.CTkFrame(self, fg_color="transparent")
@@ -868,8 +872,64 @@ class Card(ctk.CTkFrame):
 
     def set_subtitle(self, text, color=None):
         """Aendert die Unterschrift der Kachel zur Laufzeit."""
-        if self.subtitle_label is not None:
-            self.subtitle_label.configure(text=text, text_color=color or C["muted"])
+        if self.subtitle_label is None:
+            return
+        self._sub_text = (text, color)
+        target = self._sub_below if self._sub_stacked else self.subtitle_label
+        target.configure(text=text, text_color=color or C["muted"])
+
+    # -- Ab 0.58: Unterschrift unter die Ueberschrift (schmale Fenster) ------
+    #
+    # Neben der Ueberschrift braucht die Unterschrift Platz in der Breite. Ist
+    # die Kachel dafuer zu schmal (Dashboard bei 1360 px oder grosser Schrift),
+    # rueckt sie in eine eigene Zeile darunter, statt dass die ganze Seite
+    # breiter wird und seitlich verschoben werden muss.
+
+    def head_width(self):
+        """Breite (echte Pixel), die Ueberschrift und Unterschrift nebeneinander
+        brauchen, samt Innenabstand der Kachel. 0 ohne Ueberschrift."""
+        if self.head is None:
+            return 0
+        width = sum(child.winfo_reqwidth() for child in self.head.winfo_children()
+                    if child is not self.subtitle_label)
+        width += px(9)                     # Abstand Strich -> Ueberschrift
+        width += self.subtitle_width()
+        if self.subtitle_width():
+            width += px(12)                # Luft zwischen den beiden Texten
+        return width + self.frame_width()
+
+    def subtitle_width(self):
+        if self.subtitle_label is None:
+            return 0
+        label = self._sub_below if self._sub_stacked else self.subtitle_label
+        return label.winfo_reqwidth() if label.cget("text") else 0
+
+    def frame_width(self):
+        """Innenabstand links und rechts (echte Pixel)."""
+        return 2 * px(self.pad) + 2
+
+    def stack_subtitle(self, flag):
+        """True: Unterschrift in eigener Zeile unter der Ueberschrift,
+        False: wie bisher rechts daneben. Gibt True zurueck, wenn sich etwas
+        geaendert hat."""
+        flag = bool(flag)
+        if self.subtitle_label is None or flag == self._sub_stacked:
+            return False
+        text, color = self._sub_text
+        color = color or C["muted"]
+        if self._sub_below is None:
+            self._sub_below = ctk.CTkLabel(self, text="", text_color=C["muted"],
+                                           font=F["tiny"], anchor="w", height=0)
+        if flag:
+            self.subtitle_label.configure(text="")
+            self._sub_below.configure(text=text, text_color=color)
+            self._sub_below.pack(fill="x", padx=(self.pad + 13, self.pad),
+                                 pady=(2, 0), before=self.body)
+        else:
+            self._sub_below.pack_forget()
+            self.subtitle_label.configure(text=text, text_color=color)
+        self._sub_stacked = flag
+        return True
 
 
 class FoldCard(Card):
@@ -933,6 +993,25 @@ class FoldCard(Card):
 #  BANNER MIT FARBVERLAUF
 # ============================================================================
 
+def _wrap_at_separator(text, font, limit, separator="   ·   "):
+    """Ab 0.58: Zu lange Zeilen wie "A   ·   B   ·   C" an den Trennpunkten
+    umbrechen (der Punkt faellt am Zeilenende weg). Passt die Zeile, bleibt
+    sie unveraendert."""
+    measure = tkfont.Font(font=font).measure
+    if separator not in text or measure(text) <= limit:
+        return text
+    lines, line = [], ""
+    for part in text.split(separator):
+        candidate = line + separator + part if line else part
+        if line and measure(candidate) > limit:
+            lines.append(line)
+            line = part
+        else:
+            line = candidate
+    lines.append(line)
+    return "\n".join(lines)
+
+
 class GradientPanel(tk.Canvas):
     """Breites Banner mit diagonalem Farbverlauf, Titel und Kennzahl."""
 
@@ -991,11 +1070,7 @@ class GradientPanel(tk.Canvas):
                              outline=color, width=max(1, px(2)))
         title, subtitle, big, big_sub = self._texts
         left = px(28)
-        self.create_text(left, height * 0.36, text=title, anchor="w",
-                         fill=C["on_accent"], font=tk_font(F["h1"]))
-        self.create_text(left, height * 0.66, text=subtitle, anchor="w",
-                         fill=mix(C["on_accent"], self.gradient[0], 0.25),
-                         font=tk_font(F["body"]))
+        limit = width - left - px(28)
         if big:
             right = width - px(34)
             self.create_text(right, height * 0.40, text=big, anchor="e",
@@ -1003,6 +1078,18 @@ class GradientPanel(tk.Canvas):
             self.create_text(right, height * 0.72, text=big_sub, anchor="e",
                              fill=mix(C["on_accent"], self.gradient[1], 0.25),
                              font=tk_font(F["small"]))
+            texts = [self.bbox(item) for item in self.find_all()[-2:]]
+            if all(texts):
+                # Ab 0.58: Links stehende Texte enden vor der grossen Zahl
+                # (schmales Fenster, grosse Schrift); sonst wird umbrochen
+                limit = min(bounds[0] for bounds in texts) - left - px(24)
+        limit = max(px(120), limit)
+        subtitle = _wrap_at_separator(subtitle, tk_font(F["body"]), limit)
+        self.create_text(left, height * 0.36, text=title, anchor="w", width=limit,
+                         fill=C["on_accent"], font=tk_font(F["h1"]))
+        self.create_text(left, height * 0.66, text=subtitle, anchor="w", width=limit,
+                         fill=mix(C["on_accent"], self.gradient[0], 0.25),
+                         font=tk_font(F["body"]))
 
 
 # ============================================================================
@@ -1240,9 +1327,11 @@ class LineChart(tk.Canvas):
         else:
             positions = [left + plot_w * i / (count - 1) for i in range(count)]
 
-        # x-Beschriftung ausduennen, damit nichts ueberlappt
-        stride = max(1, int(count / max(1, plot_w / px(55))))
-        shown = [index for index in range(count) if index % stride == 0 or index == count - 1]
+        # x-Beschriftung ausduennen, damit nichts ueberlappt (ab 0.58 vom
+        # rechten Ende aus und mit festen Schritten, siehe label_stride)
+        widest = max(text_width(str(label), F["tiny"]) for label in self._labels) * _SCALE[0]
+        slot = plot_w / max(1, count - 1)
+        shown = shown_labels(count, label_stride(count, slot, widest))
         if len(shown) > 1:
             # Die letzte Beschriftung endet am rechten Rand statt darueber; die
             # davor faellt weg, wenn sie sonst ueberlappen wuerde
@@ -1327,6 +1416,124 @@ class LineChart(tk.Canvas):
         self.create_image(x1, y1, image=photo, anchor="nw")
 
 
+class GradientSlider(tk.Canvas):
+    """Ab 0.58 (Plan 3a): Regler mit farbiger Spur fuer die eigenen Farben.
+
+    Ersetzt dort den CTkSlider (gleiche Bedienung: Klicken, Ziehen, set/get,
+    command mit dem neuen Wert; Tastatur und Fokusrahmen kommen wie bisher
+    von aussen). Die Spur wird Spalte fuer Spalte exakt aus der HSL-Formel
+    gerechnet (fisi_theme.track_color), also stufenlos. Der Knopf ist hell
+    oder dunkel, je nachdem, was sich an seiner Stelle besser abhebt, mit
+    einem Rand in der anderen Farbe."""
+
+    TRACK_H = 10     # Hoehe der Spur (logische px)
+    KNOB_R = 9       # Radius des Knopfes (logische px)
+
+    def __init__(self, parent, key, from_, to, width=220, height=22, command=None,
+                 bg=None):
+        self.bg = bg or _bg_of(parent)
+        self.key = key
+        self._from, self._to = from_, to
+        self._value = from_
+        self._hsl = (0, 0, 50)
+        self._command = command
+        self._photo = None
+        self._mask = None
+        super().__init__(parent, width=px(width), height=px(height), bg=self.bg,
+                         highlightthickness=0, bd=0, cursor="hand2")
+        self.bind("<Configure>", lambda _e: self._draw(track=True))
+        self.bind("<Button-1>", self._pointer)
+        self.bind("<B1-Motion>", self._pointer)
+
+    # -- Schnittstelle wie CTkSlider -----------------------------------------
+    def get(self):
+        return self._value
+
+    def set(self, value):
+        self._value = max(self._from, min(self._to, int(round(float(value)))))
+        self._draw(track=False)
+
+    def set_hsl(self, values):
+        """Aktuelle Reglerwerte (h, s, l) der Gruppe: Spur und Knopf neu."""
+        self._hsl = tuple(values)
+        self._draw(track=True)
+
+    # -- Zeichnen -------------------------------------------------------------
+    def _geometry(self):
+        width, height = self.winfo_width(), self.winfo_height()
+        if width <= 1:
+            width, height = int(self.cget("width")), int(self.cget("height"))
+        radius = px(self.KNOB_R)
+        return width, height, radius, max(1, width - 2 * radius)
+
+    def _x_of(self, value):
+        _width, _height, radius, span = self._geometry()
+        return radius + span * (value - self._from) / float(self._to - self._from)
+
+    def track_pixels(self):
+        """Spurfarben je Bildspalte (fuer Zeichnen und Test)."""
+        width, _height, radius, span = self._geometry()
+        colors = []
+        for column in range(width):
+            fraction = (column + 0.5 - radius) / float(span)
+            colors.append(fisi_theme.track_color(self._hsl, self.key, fraction))
+        return colors
+
+    def _draw(self, track=True):
+        width, height, radius, _span = self._geometry()
+        track_h = px(self.TRACK_H)
+        top = (height - track_h) // 2
+        if track or self._photo is None:
+            colors = [fisi_theme.hex_to_rgb(color) for color in self.track_pixels()]
+            strip = Image.new("RGB", (width, 1))
+            strip.putdata([tuple(int(v) for v in color) for color in colors])
+            strip = strip.resize((width, track_h), Image.NEAREST)
+            if self._mask is None or self._mask[0].size != (width, track_h):
+                self._mask = (self._rounded_mask(width, track_h, 0),
+                              self._rounded_mask(width, track_h, 1))
+            ground = tuple(value // 257 for value in self.winfo_rgb(self.bg))
+            edge = tuple(value // 257 for value in self.winfo_rgb(C["field_border"]))
+            image = Image.new("RGB", (width, track_h), ground)
+            # Duenner Rand, damit die Spur auch auf gleich dunklem/hellem
+            # Hintergrund als Spur zu erkennen ist
+            image.paste(Image.new("RGB", (width, track_h), edge), (0, 0), self._mask[0])
+            image.paste(strip, (0, 0), self._mask[1])
+            self._photo = ImageTk.PhotoImage(image)
+            self.delete("track")
+            self.create_image(0, top, image=self._photo, anchor="nw", tags="track")
+        self.delete("knob")
+        current = list(self._hsl)
+        current["hsl".index(self.key)] = self._value
+        fill, ring = fisi_theme.knob_colors(current, self.key)
+        x, y = self._x_of(self._value), height / 2.0
+        outer = radius - 0.5
+        inner = radius - max(2, px(2.5))
+        self.create_oval(x - outer, y - outer, x + outer, y + outer, fill=ring, outline="",
+                         tags="knob")
+        self.create_oval(x - inner, y - inner, x + inner, y + inner, fill=fill, outline="",
+                         tags="knob")
+
+    @staticmethod
+    def _rounded_mask(width, height, inset):
+        s = SUPERSAMPLE
+        big = Image.new("L", (width * s, height * s), 0)
+        pad = inset * s
+        ImageDraw.Draw(big).rounded_rectangle(
+            (pad, pad, width * s - 1 - pad, height * s - 1 - pad),
+            radius=max(1, (height * s - 2 * pad) // 2), fill=255)
+        return big.resize((width, height), Image.LANCZOS)
+
+    def _pointer(self, event):
+        _width, _height, radius, span = self._geometry()
+        fraction = max(0.0, min(1.0, (event.x - radius) / float(span)))
+        value = int(round(self._from + fraction * (self._to - self._from)))
+        if value != self._value:
+            self._value = value
+            self._draw(track=False)
+            if self._command is not None:
+                self._command(value)
+
+
 class ShareBars(tk.Canvas):
     """Ab 0.56: gestapelte Balken in Prozent je Tag (richtig unten, falsch
     oben). Nicht nur ueber die Farbe unterscheidbar: falsch ist schraffiert,
@@ -1376,7 +1583,8 @@ class ShareBars(tk.Canvas):
         count = len(self._data)
         slot = plot_w / count
         bar = max(px(4), min(px(34), slot * 0.62))
-        stride = max(1, int(count / max(1, plot_w / px(55))))
+        widest = max(text_width(str(item[0]), F["tiny"]) for item in self._data) * _SCALE[0]
+        shown = set(shown_labels(count, label_stride(count, slot, widest)))
         right_color, wrong_color = C["green"], C["red"]
         for index, (label, share, rest) in enumerate(self._data):
             center = left + slot * (index + 0.5)
@@ -1395,7 +1603,7 @@ class ShareBars(tk.Canvas):
                 if bar >= px(18) or count <= 14:
                     self.create_text(center, top - px(8), text="%d" % share,
                                      fill=C["text_dim"], font=tk_font(F["tiny"]))
-            if index % stride == 0 or index == count - 1:
+            if index in shown:
                 self.create_text(center, height - bottom + px(15), text=label,
                                  fill=C["muted"], font=tk_font(F["tiny"]))
         # Legende: Kaestchen voll (richtig) und schraffiert (falsch)
@@ -1410,6 +1618,135 @@ class ShareBars(tk.Canvas):
             x += px(34) + text_width(name, F["tiny"]) * _SCALE[0]
         self.create_text(x + px(6), y, text="Zahl über dem Balken: % richtig", anchor="w",
                          fill=C["muted"], font=tk_font(F["tiny"]))
+
+
+# ============================================================================
+#  USV-BILD (ab 0.58)
+# ============================================================================
+
+UPS_BAR_COLORS = {"ziel": "accent", "neu": "purple", "ok": "green", "knapp": "red"}
+
+
+def _round_rect(canvas, x1, y1, x2, y2, radius, **kwargs):
+    """Abgerundetes Rechteck als geglaettetes Polygon."""
+    r = min(radius, (x2 - x1) / 2, (y2 - y1) / 2)
+    points = (x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
+              x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1)
+    return canvas.create_polygon(points, smooth=True, **kwargs)
+
+
+class UpsDiagram(tk.Canvas):
+    """Ab 0.58: bildliche Darstellung des USV-Rechners. Oben Last -> USV ->
+    Akku als Kaesten, darunter die Laufzeit als Balken (gewuenscht, Akku
+    neu, Akku am Lebensende) mit gestrichelter Linie bei der gewuenschten
+    Laufzeit. Nicht nur ueber die Farbe lesbar: jeder Balken hat Namen und
+    Minuten, ein zu kurzer Balken ist schraffiert. Daten: ups_calculate()
+    ["bild"] aus fisi_core (am Handy dieselben Daten)."""
+
+    BOX_H = 100
+
+    def __init__(self, parent, height=250, parent_bg=None):
+        self.bg = parent_bg or _bg_of(parent)
+        self._picture = None
+        self._size = None
+        super().__init__(parent, height=px(height), width=px(300), bg=self.bg,
+                         highlightthickness=0, bd=0)
+        self.bind("<Configure>", self._resized)
+
+    def _resized(self, event):
+        if (event.width, event.height) != self._size:
+            self._size = (event.width, event.height)
+            self._draw()
+
+    def set_picture(self, picture):
+        self._picture = picture
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        width, height = self.winfo_width(), self.winfo_height()
+        picture = self._picture
+        if width <= 1 or height <= 1 or not picture:
+            return
+        arrow = px(34)
+        box_w = (width - 2 * arrow - 2) / 3.0
+        box_h = px(self.BOX_H)
+        boxes = (("LAST", picture["last"], picture["last_detail"], C["accent"]),
+                 ("USV", picture["usv"], picture["usv_detail"], C["purple"]),
+                 ("AKKU", picture["akku"], picture["akku_detail"], C["green"]))
+        for index, (title, value, detail, color) in enumerate(boxes):
+            x1 = 1 + index * (box_w + arrow)
+            x2 = x1 + box_w
+            _round_rect(self, x1, 1, x2, box_h, px(12), fill=C["card_alt"],
+                        outline=C["border"])
+            self.create_rectangle(x1 + px(12), 1, x2 - px(12), px(4), fill=color,
+                                  outline="")
+            pad = x1 + px(14)
+            self.create_text(pad, px(22), text=title, anchor="w", fill=C["muted"],
+                             font=tk_font(F["label"]))
+            self.create_text(pad, px(48), text=value, anchor="w", fill=C["text"],
+                             font=tk_font(F["h2"]), width=box_w - px(20))
+            self.create_text(pad, px(74), text=detail, anchor="w", fill=C["text_dim"],
+                             font=tk_font(F["tiny"]), width=box_w - px(20))
+            if index == 1 and picture.get("auslastung") is not None:
+                self._load_bar(pad, x2 - px(14), px(88), picture["auslastung"],
+                               picture["grenze"])
+            if index < 2:
+                self.create_line(x2 + px(6), box_h / 2, x2 + arrow - px(6), box_h / 2,
+                                 fill=C["muted"], width=px(2), arrow=tk.LAST,
+                                 arrowshape=(px(8), px(10), px(4)))
+        self._bars(picture["balken"], box_h + px(20), width)
+        verdict = picture.get("urteil")
+        if verdict:
+            good = verdict == "passend"
+            self.create_text(1, height - px(12), anchor="w",
+                             text="Empfehlung: USV %s" % verdict,
+                             fill=C["green"] if good else C["red"],
+                             font=tk_font(F["body_bold"]))
+
+    def _load_bar(self, x1, x2, y, share, limit):
+        """Auslastung der USV mit Markierung bei der 80-%-Grenze."""
+        thick = px(6)
+        self.create_rectangle(x1, y, x2, y + thick, fill=C["ring_bg"], outline="")
+        filled = x1 + (x2 - x1) * min(share, 100) / 100.0
+        good = share <= limit
+        self.create_rectangle(x1, y, filled, y + thick,
+                              fill=C["green"] if good else C["red"], outline="",
+                              stipple="" if good else "gray50")
+        mark = x1 + (x2 - x1) * limit / 100.0
+        self.create_line(mark, y - px(3), mark, y + thick + px(3), fill=C["text"],
+                         width=px(2))
+
+    def _bars(self, bars, top, width):
+        if not bars:
+            return
+        font = F["tiny"]
+        label_w = max(text_width(bar["label"], font) for bar in bars) * _SCALE[0] + px(12)
+        value_w = max(text_width(bar["text"], font) for bar in bars) * _SCALE[0] + px(12)
+        x1, x2 = 1 + label_w, width - value_w
+        if x2 - x1 < px(40):
+            return
+        row = px(30)
+        thick = px(14)
+        goal_x = None
+        for index, bar in enumerate(bars):
+            y = top + index * row
+            self.create_text(1, y + thick / 2, text=bar["label"], anchor="w",
+                             fill=C["text_dim"], font=tk_font(font))
+            self.create_rectangle(x1, y, x2, y + thick, fill=C["ring_bg"], outline="")
+            end = x1 + (x2 - x1) * bar["anteil"]
+            color = C[UPS_BAR_COLORS[bar["art"]]]
+            if end > x1:
+                self.create_rectangle(x1, y, end, y + thick, fill=color, outline=color,
+                                      stipple="gray50" if bar["art"] == "knapp" else "")
+            self.create_text(x2 + px(8), y + thick / 2, text=bar["text"], anchor="w",
+                             fill=C["text"], font=tk_font(font))
+            if bar["art"] == "ziel":
+                goal_x = end
+        if goal_x is not None:
+            bottom = top + (len(bars) - 1) * row + thick + px(4)
+            self.create_line(goal_x, top - px(4), goal_x, bottom, fill=C["text"],
+                             dash=(3, 3))
 
 
 def _smooth_curve(points, floor, ceiling, steps=12):

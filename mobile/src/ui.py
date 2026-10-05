@@ -30,7 +30,8 @@ MONO = "monospace"
 # Einstellung "Schriftgroesse" der App kommt hinzu: Jeder ft.Text bekommt beim
 # Anlegen seine Groesse mal dem Faktor (Normal 1,0 / Gross 1,15 / Sehr gross
 # 1,3). Feste Hoehen der Bausteine hier (Knoepfe, Pillen) wachsen mit.
-# Zeichnungen auf der Leinwand (Diagrammachsen, Spielkarte) bleiben gleich.
+# Zeichnungen auf der Leinwand (Spielkarte) bleiben gleich; Achsen und
+# Legenden der Diagramme wachsen ab 0.58 mit (fs, grow).
 
 FONT_FACTOR = [fisi_theme.font_factor()]
 
@@ -730,8 +731,8 @@ class LineChart(ft.Semantics):
         self.canvas = _LineCanvas(height)
         super().__init__(content=self.canvas, container=True, label="Diagramm ohne Werte")
 
-    def set_data(self, labels, values, color, y_max=None, goal=None):
-        self.canvas.set_data(labels, values, color, y_max, goal)
+    def set_data(self, labels, values, color, y_max=None, goal=None, name=None):
+        self.canvas.set_data(labels, values, color, y_max, goal, name)
         self.label = chart_summary(labels, values, goal)
 
 
@@ -745,6 +746,7 @@ class _LineCanvas(cv.Canvas):
         self._color = C["accent"]
         self._y_max = None
         self._goal = None
+        self._name = None
         self._width = 300
         super().__init__(height=height, expand=True, on_resize=self._resized,
                          resize_interval=100)
@@ -754,21 +756,24 @@ class _LineCanvas(cv.Canvas):
         self._draw()
         self.update()
 
-    def set_data(self, labels, values, color, y_max=None, goal=None):
+    def set_data(self, labels, values, color, y_max=None, goal=None, name=None):
         """goal (ab 0.54): (wert, text, farbe) zeichnet eine gestrichelte
-        Ziellinie (z.B. das Tagesziel), wie am PC."""
+        Ziellinie (z.B. das Tagesziel), wie am PC. name (ab 0.58): Legende
+        oben links wie am PC (z.B. "Aufgaben")."""
         self._labels = list(labels)
         self._series = list(values)
         self._color = color
         self._y_max = y_max
         self._goal = goal
+        self._name = name
         self._draw()
 
     def _draw(self):
         width, height = self._width, self.height
-        left, right, top, bottom = 30, 8, 10, 22
-        if self._goal:
-            top = 26   # Zeile fuer die Beschriftung der Ziellinie (ab 0.56)
+        # Ab 0.58 wachsen Achsenschrift, Legende und Raender mit der Schrift
+        left, right, top, bottom = grow(30), 8, 10, grow(22)
+        if self._goal or self._name:
+            top = grow(26)   # Zeile fuer Legende und Ziellinie (ab 0.56/0.58)
         plot_w = max(10, width - left - right)
         plot_h = max(10, height - top - bottom)
         values = self._series or [0]
@@ -778,7 +783,8 @@ class _LineCanvas(cv.Canvas):
 
         shapes = []
         grid_paint = ft.Paint(color=C["border"], stroke_width=1)
-        axis_style = ft.TextStyle(size=10, color=C["muted"])
+        axis_style = ft.TextStyle(size=fs(10), color=C["muted"])
+        legend_y = grow(9)
         tick = 0
         while tick <= peak + 0.001:
             y = top + plot_h - tick / peak * plot_h
@@ -814,20 +820,31 @@ class _LineCanvas(cv.Canvas):
                 color=color, stroke_width=1.5, stroke_dash_pattern=[6, 4])))
             # Ab 0.56 steht die Beschriftung mit einem Linienstueck oben rechts
             # ueber dem Diagramm, damit sie keine Kurve und keinen Punkt verdeckt
-            shapes.append(cv.Text(left + plot_w, 9, caption,
-                                  style=ft.TextStyle(size=10, color=color),
+            shapes.append(cv.Text(left + plot_w, legend_y, caption,
+                                  style=ft.TextStyle(size=fs(10), color=color),
                                   alignment=ft.Alignment.CENTER_RIGHT))
-            sample = left + plot_w - len(caption) * 6 - 8
-            shapes.append(cv.Line(sample - 18, 9, sample, 9, ft.Paint(
+            sample = left + plot_w - len(caption) * 6 * FONT_FACTOR[0] - 8
+            shapes.append(cv.Line(sample - 18, legend_y, sample, legend_y, ft.Paint(
                 color=color, stroke_width=1.5, stroke_dash_pattern=[6, 4])))
+        if self._name:
+            # Ab 0.58: Legende wie am PC (Punkt in der Linienfarbe und Name)
+            shapes.append(cv.Circle(left + 4, legend_y, 4, ft.Paint(color=self._color)))
+            shapes.append(cv.Text(left + 13, legend_y, self._name,
+                                  style=ft.TextStyle(size=fs(10), color=C["text_dim"]),
+                                  alignment=ft.Alignment.CENTER_LEFT))
 
-        # Beschriftung der x-Achse: hoechstens ca. alle 45 Pixel eine
-        every = max(1, math.ceil(count / max(1, plot_w / 45)))
+        # Beschriftung der x-Achse: ab 0.58 nach Textbreite ausgeduennt, vom
+        # rechten Ende aus gezaehlt (fisi_theme.label_stride, wie am PC)
+        widest = max([len(str(caption)) for caption in self._labels] or [1])
+        stride = fisi_theme.label_stride(count, plot_w / max(1, count - 1),
+                                         widest * 6 * FONT_FACTOR[0])
+        shown = set(fisi_theme.shown_labels(count, stride))
         for index, (x, caption) in enumerate(zip(xs, self._labels)):
             last = index == count - 1
-            if (index % every == 0 and (last or xs[-1] - x >= 40)) or last:
+            if index in shown:
                 # Die letzte Beschriftung endet am rechten Rand statt darueber
-                shapes.append(cv.Text(x + (4 if last and count > 1 else 0), top + plot_h + 12,
+                shapes.append(cv.Text(x + (4 if last and count > 1 else 0),
+                                      top + plot_h + grow(12),
                                       caption, style=axis_style,
                                       alignment=ft.Alignment.CENTER_RIGHT if last and count > 1
                                       else ft.Alignment.CENTER))
@@ -883,10 +900,11 @@ class _ShareCanvas(cv.Canvas):
 
     def _draw(self):
         width, height = self._width, self.height
-        left, right, top, bottom = 38, 8, 34, 22
+        # Ab 0.58 wachsen Achsenschrift, Legende und Raender mit der Schrift
+        left, right, top, bottom = grow(38), 8, grow(34), grow(22)
         plot_w = max(10, width - left - right)
         plot_h = max(10, height - top - bottom)
-        axis_style = ft.TextStyle(size=10, color=C["muted"])
+        axis_style = ft.TextStyle(size=fs(10), color=C["muted"])
         shapes = []
         for line in range(5):
             y = top + plot_h - plot_h * line / 4
@@ -897,7 +915,9 @@ class _ShareCanvas(cv.Canvas):
         count = max(1, len(self._data))
         slot = plot_w / count
         bar = max(3, min(26, slot * 0.62))
-        every = max(1, math.ceil(count / max(1, plot_w / 45)))
+        widest = max([len(str(item[0])) for item in self._data] or [1])
+        shown = set(fisi_theme.shown_labels(
+            count, fisi_theme.label_stride(count, slot, widest * 6 * FONT_FACTOR[0])))
         right_paint = ft.Paint(color=C["green"])
         wrong_fill = ft.Paint(color=ft.Colors.with_opacity(0.35, C["red"]))
         wrong_line = ft.Paint(color=C["red"], stroke_width=1.5)
@@ -916,23 +936,27 @@ class _ShareCanvas(cv.Canvas):
                     shapes.append(cv.Rect(x1, top, bar, split - top, paint=wrong_fill))
                     shapes.extend(_hatch(x1, top, bar, split - top, wrong_line))
                 if count <= 14:
-                    shapes.append(cv.Text(center, top - 8, "%d" % share,
-                                          style=ft.TextStyle(size=10, color=C["text_dim"]),
+                    shapes.append(cv.Text(center, top - grow(8), "%d" % share,
+                                          style=ft.TextStyle(size=fs(10), color=C["text_dim"]),
                                           alignment=ft.Alignment.CENTER))
-            if index % every == 0 or index == count - 1:
-                shapes.append(cv.Text(center, top + plot_h + 12, label, style=axis_style,
+            if index in shown:
+                # Ab 0.58: nicht ueber den rechten Rand hinaus (grosse Schrift)
+                half = len(str(label)) * 3 * FONT_FACTOR[0]
+                shapes.append(cv.Text(min(center, width - half - 2), top + plot_h + grow(12),
+                                      label, style=axis_style,
                                       alignment=ft.Alignment.CENTER))
         # Legende
         x = left
         for name, solid in ((self._names[0], True), (self._names[1], False)):
+            legend_y = grow(9)
             if solid:
-                shapes.append(cv.Rect(x, 4, 12, 10, paint=right_paint))
+                shapes.append(cv.Rect(x, legend_y - 5, 12, 10, paint=right_paint))
             else:
-                shapes.append(cv.Rect(x, 4, 12, 10, paint=wrong_fill))
-                shapes.extend(_hatch(x, 4, 12, 10, wrong_line))
-            shapes.append(cv.Text(x + 17, 9, name, style=ft.TextStyle(
-                size=11, color=C["text_dim"]), alignment=ft.Alignment.CENTER_LEFT))
-            x += 30 + 7 * len(name)
+                shapes.append(cv.Rect(x, legend_y - 5, 12, 10, paint=wrong_fill))
+                shapes.extend(_hatch(x, legend_y - 5, 12, 10, wrong_line))
+            shapes.append(cv.Text(x + 17, legend_y, name, style=ft.TextStyle(
+                size=fs(11), color=C["text_dim"]), alignment=ft.Alignment.CENTER_LEFT))
+            x += 30 + 7 * len(name) * FONT_FACTOR[0]
         self.shapes = shapes
 
 
@@ -965,6 +989,80 @@ def _nice_step(peak):
 
 def _fmt(value):
     return str(int(value)) if float(value).is_integer() else "%.1f" % value
+
+
+UPS_BAR_COLORS = {"ziel": "accent", "neu": "purple", "ok": "green", "knapp": "red"}
+
+
+class UpsPicture(ft.Semantics):
+    """Ab 0.58: Bild des USV-Rechners (wie am PC UpsDiagram): Last -> USV ->
+    Akku untereinander, darunter die Laufzeit als Balken. Daten:
+    fisi_core.ups_calculate()["bild"], Vorlesetext ups_picture_summary."""
+
+    def __init__(self):
+        self.column = ft.Column(spacing=6, tight=True)
+        super().__init__(content=self.column, container=True, label="")
+
+    def set_picture(self, picture, summary=""):
+        self.label = summary
+        boxes = (("LAST", picture["last"], picture["last_detail"], C["accent"], None),
+                 ("USV", picture["usv"], picture["usv_detail"], C["purple"],
+                  picture.get("auslastung")),
+                 ("AKKU", picture["akku"], picture["akku_detail"], C["green"], None))
+        controls = []
+        for index, (title, value, detail, color, share) in enumerate(boxes):
+            lines = [text(title, size=11, color=C["muted"], weight=ft.FontWeight.BOLD),
+                     text(value, size=18, weight=ft.FontWeight.BOLD),
+                     text(detail, size=12, color=C["text_dim"])]
+            if share is not None:
+                lines.append(self._load_bar(share, picture["grenze"]))
+            controls.append(ft.Container(
+                content=ft.Row([ft.Container(width=4, height=grow(52), bgcolor=color,
+                                             border_radius=2),
+                                ft.Column(lines, spacing=2, tight=True, expand=True)],
+                               spacing=12),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
+                border_radius=12, padding=12))
+            if index < 2:
+                controls.append(ft.Row([ft.Icon(ft.Icons.ARROW_DOWNWARD, size=grow(18),
+                                                color=C["muted"])],
+                                       alignment=ft.MainAxisAlignment.CENTER))
+        controls.append(ft.Container(height=4))
+        for bar in picture["balken"]:
+            color = C[UPS_BAR_COLORS[bar["art"]]]
+            controls.append(ft.Row([text(bar["label"], size=12, color=C["text_dim"],
+                                         expand=True),
+                                    text(bar["text"], size=12)]))
+            controls.append(self._bar(bar["anteil"], color))
+        if picture.get("urteil"):
+            good = picture["urteil"] == "passend"
+            controls.append(text("Empfehlung: USV %s" % picture["urteil"], size=15,
+                                 color=C["green"] if good else C["red"],
+                                 weight=ft.FontWeight.BOLD))
+        self.column.controls = controls
+
+    @staticmethod
+    def _bar(share, color, height=12):
+        filled = max(0, min(1000, int(round(share * 1000))))
+        parts = []
+        if filled:
+            parts.append(ft.Container(expand=filled, bgcolor=color))
+        if filled < 1000:
+            parts.append(ft.Container(expand=1000 - filled, bgcolor=C["ring_bg"]))
+        return ft.Container(content=ft.Row(parts, spacing=0), height=height,
+                            border_radius=height / 2,
+                            clip_behavior=ft.ClipBehavior.ANTI_ALIAS)
+
+    def _load_bar(self, share, limit):
+        """Auslastung mit Strich bei der Grenze (80 %)."""
+        good = share <= limit
+        bar = self._bar(min(share, 100) / 100.0, C["green"] if good else C["red"], 6)
+        mark = ft.Row([ft.Container(expand=int(limit)),
+                       ft.Container(width=2, height=12, bgcolor=C["text"]),
+                       ft.Container(expand=int(100 - limit))], spacing=0)
+        return ft.Container(content=ft.Stack([ft.Container(content=bar, top=3, left=0,
+                                                           right=0), mark], height=12),
+                            margin=ft.Margin.only(top=4))
 
 
 class Heatmap(ft.Column):

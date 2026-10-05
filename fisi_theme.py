@@ -492,6 +492,7 @@ CUSTOM_HINT = ("Mit den Reglern stellst du die zwei Farben der Farbverläufe (Ak
                "Gilt nur für dieses Gerät und nur für die gewählte Darstellung.")
 CUSTOM_STATE_ON = "Eigene Farben aktiv (%s)"
 CUSTOM_STATE_OFF = "Startwerte aus der Farbwelt (%s)"
+CUSTOM_STATE_CHANGED = "Regler verändert, noch nicht gespeichert"   # ab 0.58 (N1, Variante B)
 CUSTOM_TILE_HINT = ("Ein Klick auf eine Grundfarbe oder einen Hintergrund setzt nur die "
                     "Regler auf diese Farbwelt. Gespeichert wird erst mit „Speichern“.")
 CUSTOM_PREVIEW = "Vorschau"
@@ -673,6 +674,28 @@ def values_palette(values, mode=None, world=None):
     if is_start(values, mode, world):
         return farbwelt_palette(mode, world)
     return custom_palette(values)
+
+
+def custom_state(values, mode=None):
+    """Ab 0.58 (N1, Variante B): Zustand der Regler im Vergleich zum
+    Gespeicherten: "aktiv" (eigene Farben gespeichert, Regler darauf),
+    "start" (nichts gespeichert, Regler auf den Startwerten der gespeicherten
+    Farbwelt) oder "veraendert" (Regler weichen vom Gespeicherten ab)."""
+    mode = current_mode if mode is None else mode
+    current = {part: tuple(triple) for part, triple in dict(values).items()}
+    saved = {part: tuple(triple) for part, triple in custom_values(mode).items()}
+    if current != saved:
+        return "veraendert"
+    return "aktiv" if mode in custom_colors else "start"
+
+
+def custom_state_text(values, mode=None):
+    """Ab 0.58: Text der Zustandszeile ueber den Reglern (PC und Handy gleich)."""
+    mode = current_mode if mode is None else mode
+    state = custom_state(values, mode)
+    if state == "veraendert":
+        return CUSTOM_STATE_CHANGED
+    return (CUSTOM_STATE_ON if state == "aktiv" else CUSTOM_STATE_OFF) % dict(MODES)[mode]
 
 
 def custom_to_save(mode, values, world=None):
@@ -860,6 +883,81 @@ def slider_text(channel, value):
     return "%d%s" % (value, channel[4])
 
 
+# ---------------------------------------------------------------------------
+# Farbige Reglerspuren (ab 0.58, Plan 3a). Nur Optik: Die Spur zeigt, was ein
+# Schieben bewirkt. Farbton-Spur = alle Farbtoene in der aktuellen Saettigung
+# und Helligkeit, Saettigungs-Spur = grau bis voll, Helligkeits-Spur = dunkel
+# ueber die Farbe bis hell. PC und Handy rechnen hier.
+# ---------------------------------------------------------------------------
+
+KNOB_LIGHT = "#FFFFFF"      # Reglerknopf hell
+KNOB_DARK = "#1B1628"       # Reglerknopf dunkel (Schriftfarbe der hellen Darstellung)
+KNOB_MIN_CONTRAST = 3.0     # Knopf gegen die Spur an seiner Stelle (Plan 3a)
+_CHANNEL_INDEX = {"h": 0, "s": 1, "l": 2}
+
+
+def _channel(key):
+    for channel in CUSTOM_CHANNELS:
+        if channel[0] == key:
+            return channel
+    raise KeyError(key)
+
+
+def _safe_triple(values):
+    """(h, s, l) fuer die Spur; Unbrauchbares faellt auf (0, 0, 50) bzw. die
+    Grenzen zurueck, damit eine Spur nie das Zeichnen abbricht."""
+    result = []
+    for index, (key, _name, low, high) in enumerate(c[:4] for c in CUSTOM_CHANNELS):
+        try:
+            number = float(values[index])
+        except (TypeError, ValueError, IndexError, KeyError):
+            number = (0, 0, 50)[index]
+        if number != number:                       # NaN
+            number = (0, 0, 50)[index]
+        result.append(max(low, min(high, number)))
+    return tuple(result)
+
+
+def track_color(values, key, fraction):
+    """Farbe der Spur des Reglers key ("h", "s", "l") an der Stelle fraction
+    (0 = links, 1 = rechts) bei den Reglerwerten values = (h, s, l)."""
+    triple = list(_safe_triple(values))
+    _key, _name, low, high = _channel(key)[:4]
+    fraction = max(0.0, min(1.0, float(fraction)))
+    triple[_CHANNEL_INDEX[key]] = low + (high - low) * fraction
+    return hsl_to_hex(*triple)
+
+
+def track_colors(values, key, count):
+    """count gleichmaessig verteilte Spurfarben von links nach rechts."""
+    count = max(2, int(count))
+    return [track_color(values, key, index / (count - 1)) for index in range(count)]
+
+
+def track_fraction(values, key):
+    """Stelle des Knopfes (0..1) beim aktuellen Wert."""
+    _key, _name, low, high = _channel(key)[:4]
+    value = _safe_triple(values)[_CHANNEL_INDEX[key]]
+    return (value - low) / float(high - low)
+
+
+def knob_colors(values, key):
+    """(Fuellung, Rand) des Reglerknopfes: die Fuellung ist die von Hell und
+    Dunkel mit dem hoeheren Kontrast zur Spur an der Stelle des Knopfes, der
+    Rand die andere. So hebt sich der Knopf auf jeder Spur ab (mindestens
+    etwa 4,1:1, weil Hell zu Dunkel 17:1 hat)."""
+    under = track_color(values, key, track_fraction(values, key))
+    if contrast(KNOB_LIGHT, under) >= contrast(KNOB_DARK, under):
+        return KNOB_LIGHT, KNOB_DARK
+    return KNOB_DARK, KNOB_LIGHT
+
+
+def knob_contrast(values, key):
+    """Kontrast Knopffuellung zur Spur an der Stelle des Knopfes."""
+    under = track_color(values, key, track_fraction(values, key))
+    return contrast(knob_colors(values, key)[0], under)
+
+
 def saved_custom():
     """Gespeicherte eigene Farben {Darstellung: Werte}, ungueltiges entfaellt."""
     import fisi_update
@@ -1044,3 +1142,31 @@ def curve_controls(points):
         controls.append(((x1 + third, y1 + tangents[index] * third),
                          (x2 - third, y2 - tangents[index + 1] * third)))
     return controls
+
+
+# ============================================================================
+#  BESCHRIFTUNG DER ZEITACHSE (ab 0.58)
+# ============================================================================
+
+# Datumsbeschriftungen der Tagesdiagramme ausduennen. Zwischen zwei
+# Beschriftungen liegt mindestens LABEL_SPACING mal die Textbreite; gezaehlt
+# wird vom rechten Ende (heute steht immer da), die Schrittweite kommt aus
+# LABEL_STRIDES (jede 2., 3. ... Beschriftung). PC und Handy gleich.
+LABEL_SPACING = 1.8
+LABEL_STRIDES = (1, 2, 3, 5, 7, 10, 14, 15, 30)
+
+
+def label_stride(count, slot, label_width):
+    """Schrittweite fuer count Beschriftungen im Abstand slot (Pixel), wenn
+    eine Beschriftung label_width Pixel breit ist."""
+    if count <= 1 or slot <= 0:
+        return 1
+    for stride in LABEL_STRIDES:
+        if slot * stride >= label_width * LABEL_SPACING:
+            return stride
+    return max(1, count)
+
+
+def shown_labels(count, stride):
+    """Indizes der beschrifteten Punkte, vom letzten Punkt aus gezaehlt."""
+    return [index for index in range(count) if (count - 1 - index) % stride == 0]

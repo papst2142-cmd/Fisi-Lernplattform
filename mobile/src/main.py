@@ -38,6 +38,10 @@ import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
+    CALC_EXPLAIN_UPS, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
+    UPS_TASKS, UPS_UNITS, ups_calculate, ups_picture_summary, ups_task_text,
+    UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
+    UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
     REMINDER_TOAST_MS, TOAST_MS, count_word, learning_streak, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
@@ -56,6 +60,7 @@ import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
     HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
+    DAY_CHART_SERIES, LEARN_CHART_SERIES, RESULT_CHART_SERIES,
     RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
@@ -76,7 +81,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.57"
+APP_VERSION = "0.58"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -407,7 +412,8 @@ class DashboardScreen(Screen):
 
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
-                            [count for _day, count in daily], C["accent"])
+                            [count for _day, count in daily], C["accent"],
+                            name=LEARN_CHART_SERIES)
         # Ab 0.56 ohne "Aktivitaet je Fachbereich" (Wunsch Nico, wie am PC)
         self._refresh_zoom()
 
@@ -2813,11 +2819,82 @@ class CalcScreen(Screen):
             self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN),
         ], accent=C["green"], subtitle="Pixel, Farbtiefe, Datenrate")
         # Ab 0.51: Umschalter Rechner / Trainer
-        self.calc_box = ft.Column([subnet, raid, screen], spacing=14, tight=True)
+        self.calc_box = ft.Column([subnet, raid, screen, self._build_ups()], spacing=14,
+                                  tight=True)
         self.trainer = TrainerPanel(self.app)
         self.trainer.visible = False
         return screen_list([ui.PillGroup(CALC_TABS, on_change=self._on_tab),
                             self.calc_box, self.trainer])
+
+    def _build_ups(self):
+        """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner wie am PC."""
+        self.ups_entries = {}
+        self.ups_unit = ui.PillGroup(UPS_UNITS, initial=0)
+        rows = []
+        groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
+                  (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
+                                       "minuten", "alterung")))
+        for caption, keys in groups:
+            rows.append(ui.label(caption))
+            for key in keys:
+                field = ui.entry(UPS_FIELD_DEFAULTS[key], keyboard=ft.KeyboardType.NUMBER,
+                                 expand=True)
+                self.ups_entries[key] = field
+                rows.append(self._field(UPS_FIELD_CAPTIONS[key],
+                                        ft.Semantics(label=UPS_FIELD_CAPTIONS[key],
+                                                     content=field)))
+                if key == "last":
+                    rows.append(self.ups_unit)
+        buttons = ft.Row([ui.GradientButton(caption, lambda _e, m=mode: self.calc_ups(m),
+                                            kind="accent" if mode == "empfehlung"
+                                            else "primary")
+                          for mode, caption in UPS_MODES], wrap=True, spacing=10,
+                         run_spacing=10)
+        self.ups_picture = ui.UpsPicture()
+        self.out_ups = ui.read_box("", mono=True)
+        self.ups_task = 0
+        self.ups_solution = False
+        self.out_ups_task = ui.read_box("", mono=True)
+        self.btn_ups_solution = ui.GradientButton(UPS_SOLUTION_SHOW,
+                                                  self.toggle_ups_solution, kind="ghost",
+                                                  height=40)
+        self._show_ups_task()
+        self.calc_ups("empfehlung", quiet=True)
+        return ui.Card(UPS_TITLE, [
+            *rows, buttons,
+            ui.text(UPS_RULE_TEXT, size=12, color=C["text_dim"]),
+            self.ups_picture, self.out_ups, *self._explain(CALC_EXPLAIN_UPS),
+            ui.label(UPS_TASKS_TITLE),
+            ft.Row([ui.GradientButton(UPS_TASK_NEXT, self.next_ups_task, kind="ghost",
+                                      height=40), self.btn_ups_solution],
+                   wrap=True, spacing=10, run_spacing=10),
+            self.out_ups_task,
+        ], accent=C["orange"], subtitle=UPS_SUBTITLE)
+
+    def _show_ups_task(self):
+        self.out_ups_task.content.value = ups_task_text(self.ups_task, self.ups_solution)
+        self.btn_ups_solution.set_text(UPS_SOLUTION_HIDE if self.ups_solution
+                                       else UPS_SOLUTION_SHOW)
+
+    def next_ups_task(self, _event=None):
+        self.ups_task = (self.ups_task + 1) % len(UPS_TASKS)
+        self.ups_solution = False
+        self._show_ups_task()
+
+    def toggle_ups_solution(self, _event=None):
+        self.ups_solution = not self.ups_solution
+        self._show_ups_task()
+
+    def calc_ups(self, mode, quiet=False):
+        fields = {key: field.value or "" for key, field in self.ups_entries.items()}
+        try:
+            result = ups_calculate(mode, fields, self.ups_unit.get())
+        except InputError as error:
+            if not quiet:
+                self.toast(str(error), C["red"])
+            return
+        self.out_ups.content.value = result["text"]
+        self.ups_picture.set_picture(result["bild"], ups_picture_summary(result["bild"]))
 
     def _on_tab(self, value):
         self.trainer.visible = value == "trainer"
@@ -2940,7 +3017,8 @@ class ProgressScreen(Screen):
         self.chart.visible = bool(labels)
         self.lbl_chart_empty.visible = not labels
         if labels:
-            self.chart.set_data(labels, values, C["accent2"], y_max=100)
+            self.chart.set_data(labels, values, C["accent2"], y_max=100,
+                                name=RESULT_CHART_SERIES)
 
         self.history.controls = []
         if not results:
@@ -3007,7 +3085,7 @@ class ProgressScreen(Screen):
         self.day_chart.set_data(day_labels(series), [count for _day, count in series],
                                 C["accent"],
                                 goal=(target, goal_line_text(target), C["green"])
-                                if target else None)
+                                if target else None, name=DAY_CHART_SERIES)
         self.lbl_days.value = daily_summary(series, target)
         split = daily_split_series(self.activity_split, self.day_pills.get())
         labels = day_labels([(day, 0) for day, _r, _w in split])
@@ -3034,6 +3112,9 @@ class CustomColors(ft.Column):
     210 Grad"); Lautstaerketasten bzw. Wischen aendern ihn um 1."""
 
     DELAY = 0.04    # Vorschau hoechstens etwa 25-mal pro Sekunde neu
+    TRACK_PAD = 12  # ab 0.58: Abstand der Spur zum Rand (= Weg des Knopfes)
+    # Stuetzstellen der Spur: Farbton alle 6 Grad, sonst alle 5 Prozent
+    TRACK_STOPS = {"h": 61, "s": 21, "l": 21}
 
     def __init__(self, on_save):
         self.on_save = on_save
@@ -3041,13 +3122,17 @@ class CustomColors(ft.Column):
         self.values = fisi_theme.custom_values(self.mode)
         self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_texts, self.semantics, self.swatches = {}, {}, {}, {}
+        self.tracks, self._tracks = {}, {}   # ab 0.58: farbige Spuren
         self._last = 0.0
-        mode_name = dict(fisi_theme.MODES)[self.mode]
         active = self.mode in fisi_theme.custom_colors
+        # Ab 0.58 (N1): Zustandszeile folgt den Reglern (Vergleich mit dem
+        # Gespeicherten), aktualisiert in _redraw; TalkBack liest den Wechsel vor
+        self.state_line = ui.text(fisi_theme.custom_state_text(self.values, self.mode),
+                                  size=13, weight=ft.FontWeight.BOLD)
+        self.state_box = ft.Semantics(live_region=True, container=True, content=self.state_line)
         controls = [
             ui.label(fisi_theme.CUSTOM_TITLE),
-            ui.text((fisi_theme.CUSTOM_STATE_ON if active else fisi_theme.CUSTOM_STATE_OFF)
-                    % mode_name, size=13, weight=ft.FontWeight.BOLD),
+            self.state_box,
             ui.text(fisi_theme.CUSTOM_HINT, size=11, color=C["muted"]),
         ]
         if active:
@@ -3082,21 +3167,35 @@ class CustomColors(ft.Column):
         for channel in fisi_theme.CUSTOM_CHANNELS:
             key, caption, low, high = channel[:4]
             value = self.values[part]["hsl".index(key)]
+            # Ab 0.58 (Plan 3a): farbige Spur hinter einem Regler ohne eigene
+            # Spurfarben; der Knopf ist hell oder dunkel, je nachdem, was sich
+            # an seiner Stelle besser abhebt (fisi_theme.knob_colors)
             slider = ft.Slider(min=low, max=high, divisions=high - low, value=value,
-                               active_color=C["accent"], inactive_color=C["field_border"],
-                               thumb_color=C["text"], expand=True,
+                               active_color=ft.Colors.TRANSPARENT,
+                               inactive_color=ft.Colors.TRANSPARENT,
+                               thumb_color=fisi_theme.knob_colors(self.values[part], key)[0],
+                               padding=ft.Padding.symmetric(horizontal=self.TRACK_PAD),
+                               expand=True,
                                on_change=lambda e, p=part, c=channel: self._moved(
                                    p, c, e.control.value),
                                on_change_end=lambda e, p=part, c=channel: self._moved(
                                    p, c, e.control.value, final=True))
             self.sliders[(part, key)] = slider
+            track = ft.Container(height=10, border_radius=5,
+                                 border=ft.Border.all(1, C["field_border"]),
+                                 margin=ft.Margin.symmetric(horizontal=self.TRACK_PAD),
+                                 gradient=self._track_gradient(self.values[part], key))
+            self.tracks[(part, key)] = track
+            holder = ft.Stack([ft.Container(content=track, alignment=ft.Alignment.CENTER,
+                                            left=0, right=0, top=0, bottom=0),
+                               slider], expand=True, height=ui.grow(48))
             semantics = ft.Semantics(
                 slider=True, exclude_semantics=True,
                 label="%s, %s" % (name, caption),
                 value=fisi_theme.slider_text(channel, value).strip(),
                 on_increase=lambda _e, p=part, c=channel: self._nudge(p, c, 1),
                 on_decrease=lambda _e, p=part, c=channel: self._nudge(p, c, -1),
-                content=slider, expand=True)
+                content=holder, expand=True)
             self.semantics[(part, key)] = (semantics, name)
             self._label_semantics(part, channel, value)
             text = ui.text(fisi_theme.slider_text(channel, value), size=13, width=52,
@@ -3106,6 +3205,23 @@ class CustomColors(ft.Column):
                                 semantics, text], spacing=4,
                                vertical_alignment=ft.CrossAxisAlignment.CENTER))
         return ft.Column(rows, spacing=0, tight=True)
+
+    def _track_gradient(self, values, key):
+        """Ab 0.58: Verlauf der Spur aus fisi_theme.track_colors (wie am PC)."""
+        return ft.LinearGradient(begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT,
+                                 colors=fisi_theme.track_colors(values, key,
+                                                                self.TRACK_STOPS[key]))
+
+    def _paint_tracks(self, part):
+        """Spuren und Knoepfe einer Gruppe auf die aktuellen Werte bringen."""
+        if self._tracks.get(part) == self.values[part]:
+            return
+        self._tracks[part] = self.values[part]
+        for channel in fisi_theme.CUSTOM_CHANNELS:
+            key = channel[0]
+            self.tracks[(part, key)].gradient = self._track_gradient(self.values[part], key)
+            self.sliders[(part, key)].thumb_color = fisi_theme.knob_colors(
+                self.values[part], key)[0]
 
     def _label_semantics(self, part, channel, value):
         semantics, name = self.semantics[(part, channel[0])]
@@ -3171,7 +3287,9 @@ class CustomColors(ft.Column):
             block = fisi_game.map_block_colors(C["green"])
         for part in fisi_theme.CUSTOM_PART_IDS:
             self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
+            self._paint_tracks(part)   # ab 0.58, gleiche Bremse wie die Vorschau
         self.preview.content = custom_preview(palette, map_colors, categories, block)
+        self.state_line.value = fisi_theme.custom_state_text(self.values, self.mode)
         lines = fisi_theme.custom_warning(palette, map_colors)
         if lines:
             self.warning.value = "\n".join(lines)
@@ -4788,6 +4906,8 @@ class FISIMobileApp:
                 ft.Text("NEUERUNGEN", size=11, weight=ft.FontWeight.BOLD, color=C["muted"]),
                 ft.Text(notes, size=13, color=C["text_dim"]),
                 ft.Text(hint, size=12, color=C["accent"]),
+                # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (wie am PC)
+                ft.Text(fh.UPDATE_PROTECTION_HINT, size=11, color=C["muted"]),
             ], tight=True, spacing=8),
             actions=[ft.TextButton("Später", on_click=close),
                      ft.TextButton("Herunterladen", on_click=download)]))
