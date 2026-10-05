@@ -4,6 +4,30 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.57
+
+Eigene Farben mit Reglern und eine besser lesbare Spielkarte im dunklen Modus.
+
+- **Eigene Farben:** In den Optionen unter „Farben“ gibt es den neuen
+  Bereich „Eigene Farben“. Mit „Farbton“, „Sättigung“ und „Helligkeit“
+  stellst du „Akzent 1“ und „Akzent 2“ (den Farbverlauf der Knöpfe) und den
+  Hintergrund ein. Eine Vorschau zeigt sofort, wie es aussieht. Die Regler
+  starten bei deiner Farbwelt; sobald du einen bewegst, werden alle Farben
+  passend dazu neu berechnet. Hell und Dunkel haben getrennte Einstellungen,
+  „Auf Farbwelt zurücksetzen“ stellt die gewählte Farbwelt wieder her.
+- **Warnhinweise:** Ist etwas schlecht lesbar, nennt ein Hinweis den
+  gemessenen Kontrast. Lassen sich die Farben der Fachbereiche kaum
+  unterscheiden, erscheint eine eigene Warnzeile. Speichern geht trotzdem.
+- **Kacheln:** Sind eigene Farben gespeichert oder die Regler bewegt, setzt
+  ein Klick auf eine Grundfarbe oder einen Hintergrund nur die Regler.
+  Gespeichert wird erst mit „Speichern“.
+- **Hilfe:** Neuer Abschnitt „Eigene Farben“.
+- **Spielkarte:** Im dunklen Modus sind Straßen, Fluss, Bahn, Bäume,
+  Gebäudeumrisse und Beschriftungen besser lesbar (Kontrast wie bei der
+  hellen Karte). Die Stimmung der Karte bleibt.
+- **Hinweis:** Eigene Farben gelten nur auf diesem Gerät und kommen nicht
+  in den Abgleich.
+
 ## 0.56
 
 Aufgeräumt, schneller, verständlicher: Auswertung nach richtig und falsch,

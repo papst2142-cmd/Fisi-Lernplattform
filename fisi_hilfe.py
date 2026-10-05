@@ -318,6 +318,22 @@ HELP_SECTIONS = [
               "startet das Programm neu. Am Handy wird die neue Version im Browser "
               "heruntergeladen. Danach die Datei öffnen und „Installieren“ tippen. Dein "
               "Lernstand bleibt erhalten.")},
+    # Ab 0.57 (Entscheidung Nico F5): eigene Farben mit Reglern
+    {"id": "farben", "titel": "Eigene Farben",
+     "reiter": ["Optionen"],
+     "text": ("In den „Optionen“ unter „Farben“ steht unter „Grundfarbe“ und "
+              "„Hintergrund“ der Bereich „Eigene Farben“. Mit „Farbton“, „Sättigung“ "
+              "und „Helligkeit“ stellst du „Akzent 1“ und „Akzent 2“ (den Farbverlauf "
+              "der Knöpfe) und den Hintergrund ein. Die Vorschau zeigt sofort, wie es "
+              "aussieht. Die Regler starten bei deiner Farbwelt. Sobald du einen Regler "
+              "bewegst, werden alle Farben passend zu deinen Einstellungen neu "
+              "berechnet.\n\n"
+              "Ein Warnhinweis bedeutet: Etwas ist schlecht lesbar oder die "
+              "Fachbereichsfarben sind schwer zu unterscheiden. Er nennt den gemessenen "
+              "Wert. Speichern geht trotzdem.\n\n"
+              "„Speichern“ übernimmt die Farben. „Auf Farbwelt zurücksetzen“ stellt die "
+              "gewählte Farbwelt wieder her. Die eigenen Farben gelten nur auf diesem "
+              "Gerät und nur für die gewählte Darstellung (Hell oder Dunkel).")},
     {"id": "problem", "titel": "Problem melden",
      "reiter": ["Optionen"],
      "text": ("Wenn etwas nicht klappt: In den „Optionen“ unter „Problem melden“ steht ein "

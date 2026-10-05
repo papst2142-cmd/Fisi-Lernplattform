@@ -13845,10 +13845,13 @@ def map_palette():
     }
     if fisi_theme.light:
         colors.update(_light_map_palette())
+    else:
+        colors.update(_dark_map_palette(colors))
     return colors
 
 
-# Ab 0.56: Mindestkontraste der Karte in der hellen Darstellung (WCAG-Formel,
+# Ab 0.56: Mindestkontraste der Karte in der hellen Darstellung, ab 0.57 auch
+# in der dunklen (WCAG-Formel,
 # geprueft in test_karte_kontrast.py). Schrift gegen ihren Grund, Flaechen und
 # Linien (Strassen, Fluss, Bahn, Gruen, Gebaeudekonturen) gegen den Kartengrund.
 MAP_LIGHT_TEXT = 4.6
@@ -13896,13 +13899,57 @@ def _light_map_palette():
     }
 
 
+def _map_lift(color, grounds, minimum):
+    """Ab 0.57: Hellt eine Kartenfarbe der dunklen Darstellung schrittweise
+    auf (Helligkeit in HSL, Farbton und Saettigung bleiben), bis sie auf allen
+    grounds den Mindestkontrast erreicht."""
+    if all(fisi_theme.contrast(color, ground) >= minimum for ground in grounds):
+        return color
+    hue, saturation, lightness = fisi_theme.hex_to_hsl(color)
+    for step in range(lightness, 101):
+        shade = fisi_theme.hsl_to_hex(hue, saturation, step)
+        if all(fisi_theme.contrast(shade, ground) >= minimum for ground in grounds):
+            return shade
+    return fisi_theme.shade_until(color, "#FFFFFF", list(grounds), minimum)
+
+
+def _dark_map_palette(base):
+    """Ab 0.57: Kartenfarben der dunklen Darstellung mit denselben Zielen wie
+    die helle Karte aus 0.56 (Schrift 4,5:1, Strassen, Fluss, Bahn, Gruen und
+    Gebaeudekonturen 3:1 gegen den Kartengrund). Grund, Gruenflaechen, Schatten,
+    Licht und Fenster bleiben wie bisher; die Linien behalten ihren Farbton
+    (Lila, Tuerkis, Gruen) und werden nur so weit aufgehellt wie noetig."""
+    ground, park = base["boden"], base["park"]
+    # Strassen etwas ruhiger als die Bahn (Lila mit dem gedaempften Nebentext gemischt)
+    road = _map_lift(mix(base["strasse"], C["muted"], 0.35), [ground], MAP_LIGHT_AREA)
+    water = _map_lift(mix(ground, C["blue"], 0.55), [ground], MAP_LIGHT_AREA)
+    tree = _map_lift(base["baum"], [ground, park], MAP_LIGHT_AREA)
+    return {
+        "park_rand": _map_lift(mix(ground, C["green"], 0.30), [ground, park], MAP_LIGHT_AREA),
+        "wasser": water,
+        "wasser_hell": mix(water, "#FFFFFF", 0.35),
+        "strasse": road,
+        "strasse_mitte": mix(road, "#FFFFFF", 0.40),
+        "gleis": _map_lift(base["gleis"], [ground], MAP_LIGHT_AREA),
+        "schwelle": _map_lift(base["schwelle"], [ground], MAP_LIGHT_AREA),
+        "baum": tree,
+        "baum_hell": mix(tree, "#FFFFFF", 0.25),
+        "schrift": _map_lift(base["schrift"], [ground, C["card"]], MAP_LIGHT_TEXT),
+        "hinweis": _map_lift(C["yellow"], [ground], MAP_LIGHT_TEXT),
+    }
+
+
 def map_block_colors(tone):
     """(Wand, Dach, Kontur) eines Gebaeudeblocks in der Farbe tone.
     Ab 0.56: im Hellen kraeftigere Flaechen und eine Kontur mit
     mindestens MAP_LIGHT_AREA gegen den Kartengrund und die Wand."""
     if not fisi_theme.light:
+        # Ab 0.57: Kontur in der Farbe des Gebaeudes, aufgehellt bis 3:1
         wall = mix(C["card_alt"], tone, 0.12)
-        return wall, mix(C["card"], tone, 0.30), mix(wall, "#000000", 0.35)
+        roof = mix(C["card"], tone, 0.30)
+        edge = _map_lift(mix(wall, tone, 0.45), [map_palette()["boden"], wall, roof],
+                         MAP_LIGHT_AREA)
+        return wall, roof, edge
     wall = mix(C["card_alt"], tone, 0.30)
     roof = mix(C["card"], tone, 0.45)
     edge = _map_shade(mix(tone, "#000000", 0.25),
@@ -14006,10 +14053,10 @@ def landscape_labels(content=None):
         if item["typ"] == "ortsname":
             s.append(_text(item["x"], item["y"], item["text"], "ortsname", colors["schrift"],
                            anchor="c"))
-            if fisi_theme.light:
-                # Ab 0.56: Grund hinter dem Namen, damit kreuzende Strassen die
-                # Schrift nicht schwaechen (Kontrast gilt dann gegen den Grund)
-                s[-1]["bg"] = colors["boden"]
+            # Ab 0.56 (hell), ab 0.57 auch dunkel: Grund hinter dem Namen, damit
+            # kreuzende Strassen die Schrift nicht schwaechen (Kontrast gilt
+            # dann gegen den Grund)
+            s[-1]["bg"] = colors["boden"]
         elif item["typ"] == "beschriftung":
             s.append(_text(item["x"], item["y"], item["text"], "person", colors["schrift"]))
     return s
@@ -14101,7 +14148,7 @@ def model_part_shapes(part, ox, oy, accent, colors, seed):
                                    (part.get("lichtfarbe") or colors["licht"]) if lit
                                    else colors["fenster"]))
         top = y - h
-        roof_edge = edge if fisi_theme.light else mix(roof, "#000000", 0.3)
+        roof_edge = edge  # ab 0.57 auch im Dunklen die Kontur mit 3:1
         if part.get("dach") == "sattel":
             s.append(_poly([(x, top + t), (x, top + t * 0.5), (x + w, top + t * 0.5),
                             (x + w, top + t)], roof, roof_edge, 0.03))

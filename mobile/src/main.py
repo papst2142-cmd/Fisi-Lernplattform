@@ -76,7 +76,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.56"
+APP_VERSION = "0.57"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -3026,6 +3026,233 @@ class ProgressScreen(Screen):
 #  EINSTELLUNGEN
 # ============================================================================
 
+class CustomColors(ft.Column):
+    """Ab 0.57: Eigene Farben mit Reglern (wie am PC): Akzent 1, Akzent 2 und
+    Hintergrund mit Farbton, Saettigung und Helligkeit, Live-Vorschau,
+    Kontrast-Warnung, Speichern und Zuruecksetzen fuer die aktuelle
+    Darstellung. TalkBack liest jeden Regler mit Wert ("Akzent 1, Farbton,
+    210 Grad"); Lautstaerketasten bzw. Wischen aendern ihn um 1."""
+
+    DELAY = 0.04    # Vorschau hoechstens etwa 25-mal pro Sekunde neu
+
+    def __init__(self, on_save):
+        self.on_save = on_save
+        self.mode = fisi_theme.current_mode
+        self.values = fisi_theme.custom_values(self.mode)
+        self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
+        self.sliders, self.value_texts, self.semantics, self.swatches = {}, {}, {}, {}
+        self._last = 0.0
+        mode_name = dict(fisi_theme.MODES)[self.mode]
+        active = self.mode in fisi_theme.custom_colors
+        controls = [
+            ui.label(fisi_theme.CUSTOM_TITLE),
+            ui.text((fisi_theme.CUSTOM_STATE_ON if active else fisi_theme.CUSTOM_STATE_OFF)
+                    % mode_name, size=13, weight=ft.FontWeight.BOLD),
+            ui.text(fisi_theme.CUSTOM_HINT, size=11, color=C["muted"]),
+        ]
+        if active:
+            controls.append(ui.text(fisi_theme.CUSTOM_TILE_HINT, size=11, color=C["muted"]))
+        for part, name in fisi_theme.CUSTOM_PARTS:
+            controls.append(self._group(part, name))
+        self.preview = ft.Container(border_radius=12, clip_behavior=ft.ClipBehavior.HARD_EDGE)
+        self.preview_semantics = ft.Semantics(label=fisi_theme.CUSTOM_PREVIEW, container=True,
+                                              content=self.preview)
+        # Zeichen als Symbol statt Schriftzeichen (nicht jede Schrift hat ⚠ und ✓)
+        self.warning_icon = ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED, size=16)
+        self.warning = ft.Text("", size=13, expand=True)
+        self.warning_box = ft.Semantics(live_region=True, container=True, content=ft.Row(
+            [self.warning_icon, self.warning], spacing=6,
+            vertical_alignment=ft.CrossAxisAlignment.START))
+        controls += [ui.label(fisi_theme.CUSTOM_PREVIEW), self.preview_semantics,
+                     self.warning_box,
+                     ft.Row([ui.GradientButton(fisi_theme.CUSTOM_SAVE, self._save,
+                                               expand=True)]),
+                     ft.Row([ui.GradientButton(fisi_theme.CUSTOM_RESET, self._reset,
+                                               kind="ghost", expand=True)])]
+        super().__init__(controls, spacing=10, tight=True,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        self._redraw()
+
+    def _group(self, part, name):
+        swatch = ft.Container(width=22, height=22, border_radius=6,
+                              border=ft.Border.all(1, C["field_border"]))
+        self.swatches[part] = swatch
+        rows = [ft.Row([swatch, ui.text(name, size=13, weight=ft.FontWeight.BOLD)],
+                       spacing=8)]
+        for channel in fisi_theme.CUSTOM_CHANNELS:
+            key, caption, low, high = channel[:4]
+            value = self.values[part]["hsl".index(key)]
+            slider = ft.Slider(min=low, max=high, divisions=high - low, value=value,
+                               active_color=C["accent"], inactive_color=C["field_border"],
+                               thumb_color=C["text"], expand=True,
+                               on_change=lambda e, p=part, c=channel: self._moved(
+                                   p, c, e.control.value),
+                               on_change_end=lambda e, p=part, c=channel: self._moved(
+                                   p, c, e.control.value, final=True))
+            self.sliders[(part, key)] = slider
+            semantics = ft.Semantics(
+                slider=True, exclude_semantics=True,
+                label="%s, %s" % (name, caption),
+                value=fisi_theme.slider_text(channel, value).strip(),
+                on_increase=lambda _e, p=part, c=channel: self._nudge(p, c, 1),
+                on_decrease=lambda _e, p=part, c=channel: self._nudge(p, c, -1),
+                content=slider, expand=True)
+            self.semantics[(part, key)] = (semantics, name)
+            self._label_semantics(part, channel, value)
+            text = ui.text(fisi_theme.slider_text(channel, value), size=13, width=52,
+                           text_align=ft.TextAlign.RIGHT)
+            self.value_texts[(part, key)] = text
+            rows.append(ft.Row([ui.text(caption, size=12, color=C["text_dim"], width=82),
+                                semantics, text], spacing=4,
+                               vertical_alignment=ft.CrossAxisAlignment.CENTER))
+        return ft.Column(rows, spacing=0, tight=True)
+
+    def _label_semantics(self, part, channel, value):
+        semantics, name = self.semantics[(part, channel[0])]
+        semantics.label = fisi_theme.slider_label(name, channel, value)
+        semantics.value = "%d %s" % (value, channel[5])
+        low, high = channel[2], channel[3]
+        semantics.increased_value = "%d %s" % (min(high, value + 1), channel[5])
+        semantics.decreased_value = "%d %s" % (max(low, value - 1), channel[5])
+
+    def _nudge(self, part, channel, step):
+        value = self.values[part]["hsl".index(channel[0])] + step
+        if channel[0] == "h":
+            value %= 360
+        value = max(channel[2], min(channel[3], value))
+        self.sliders[(part, channel[0])].value = value
+        self._moved(part, channel, value, final=True)
+
+    def _moved(self, part, channel, value, final=False):
+        index = "hsl".index(channel[0])
+        triple = list(self.values[part])
+        triple[index] = int(round(value))
+        self.values[part] = tuple(triple)
+        self.value_texts[(part, channel[0])].value = fisi_theme.slider_text(channel,
+                                                                             triple[index])
+        self._label_semantics(part, channel, triple[index])
+        now = time.monotonic()
+        if final or now - self._last >= self.DELAY:
+            self._last = now
+            self._redraw()
+
+    def takes_tile(self):
+        """Ab 0.57 (F3): Setzt ein Kachel-Klick nur die Regler?"""
+        return fisi_theme.tile_sets_sliders(self.mode, self.values, self.world)
+
+    def set_world(self, preset_id=None, background_id=None):
+        """Ab 0.57 (F3): Regler auf eine angeklickte Farbwelt stellen (nichts
+        wird gespeichert, erst mit "Speichern")."""
+        current = self.world or (fisi_theme.current_preset, fisi_theme.current_background)
+        world = (preset_id or current[0], background_id or current[1])
+        self.world = None if world == (fisi_theme.current_preset,
+                                       fisi_theme.current_background) else world
+        self._show_values(fisi_theme.custom_start(self.mode, self.world))
+
+    def _show_values(self, values):
+        self.values = values
+        for part in fisi_theme.CUSTOM_PART_IDS:
+            for channel in fisi_theme.CUSTOM_CHANNELS:
+                value = self.values[part]["hsl".index(channel[0])]
+                self.sliders[(part, channel[0])].value = value
+                self.value_texts[(part, channel[0])].value = fisi_theme.slider_text(channel,
+                                                                                     value)
+                self._label_semantics(part, channel, value)
+        self._redraw()
+
+    def palette(self):
+        return fisi_theme.values_palette(self.values, self.mode, self.world)
+
+    def _redraw(self):
+        palette = self.palette()
+        with fisi_theme.preview_colors(palette):
+            map_colors = fisi_game.map_palette()
+            categories = [C[key] for key in ("cyan", "pink", "purple", "green", "orange")]
+            block = fisi_game.map_block_colors(C["green"])
+        for part in fisi_theme.CUSTOM_PART_IDS:
+            self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
+        self.preview.content = custom_preview(palette, map_colors, categories, block)
+        lines = fisi_theme.custom_warning(palette, map_colors)
+        if lines:
+            self.warning.value = "\n".join(lines)
+            self.warning.color = self.warning_icon.color = C["red"]
+            self.warning_icon.icon = ft.Icons.WARNING_AMBER_ROUNDED
+        else:
+            self.warning.value = fisi_theme.CUSTOM_OK
+            self.warning.color = self.warning_icon.color = C["green"]
+            self.warning_icon.icon = ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED
+
+    def _save(self, _event=None):
+        self.on_save(self.mode, dict(self.values), self.world)
+
+    def _reset(self, _event=None):
+        if self.mode in fisi_theme.custom_colors:
+            self.on_save(self.mode, None)
+            return
+        # Noch nichts gespeichert: nur die Regler auf die Farbwelt stellen
+        self.world = None
+        self._show_values(fisi_theme.custom_start(self.mode))
+
+
+def custom_preview(palette, map_colors, categories, block):
+    """Ab 0.57: Vorschau der eigenen Farben (wie am PC): Seitenleiste mit
+    aktivem Menuepunkt, Karte mit Ueberschrift, Fliesstext, Nebentext, Link,
+    Eingabefeld mit Fokusrahmen, Knopf im Verlauf, Fachbereichsfarben und ein
+    Kartenausschnitt der Spielwelt."""
+    colors, gradients = palette["colors"], palette["gradients"]
+    side = ft.Container(width=58, bgcolor=colors["sidebar"], padding=ft.Padding.only(
+        left=8, top=12), content=ft.Column([
+            ft.Row([ft.Container(width=3, height=16, bgcolor=colors["accent"]),
+                    ft.Text("Menü", size=12, weight=ft.FontWeight.BOLD,
+                            color=colors["accent"])], spacing=4),
+            ft.Text("Menü", size=12, color=colors["text_dim"]),
+            ft.Text("Menü", size=12, color=colors["text_dim"])], spacing=8))
+    card = ft.Container(
+        bgcolor=colors["card"], border=ft.Border.all(1, colors["border"]), border_radius=8,
+        padding=10, content=ft.Column([
+            ft.Text(fisi_theme.CUSTOM_PREVIEW_TITLE, size=15, weight=ft.FontWeight.BOLD,
+                    color=colors["text"]),
+            ft.Text(fisi_theme.CUSTOM_PREVIEW_TEXT, size=13, color=colors["text_soft"]),
+            ft.Row([ft.Text(fisi_theme.CUSTOM_PREVIEW_MUTED, size=13, color=colors["muted"]),
+                    ft.Text(fisi_theme.CUSTOM_PREVIEW_LINK, size=13,
+                            weight=ft.FontWeight.BOLD, color=colors["accent"])], spacing=16),
+            ft.Row([
+                ft.Container(width=86, height=26, border=ft.Border.all(2, colors["focus"]),
+                             border_radius=6, padding=2, content=ft.Container(
+                                 bgcolor=colors["card_alt"], border_radius=4,
+                                 border=ft.Border.all(1, colors["field_border"]))),
+                ft.Container(height=30, expand=True, border_radius=15,
+                             gradient=ui.gradient(gradients["primary"]),
+                             alignment=ft.Alignment.CENTER,
+                             content=ft.Text(fisi_theme.CUSTOM_PREVIEW_BUTTON, size=13,
+                                             weight=ft.FontWeight.BOLD,
+                                             color=colors["on_accent"]))], spacing=10),
+            ft.Row([ui.dot(color, 12) for color in categories], spacing=8),
+        ], spacing=6, tight=True))
+    wall, roof, edge = block
+    land = ft.Container(height=96, bgcolor=map_colors["boden"], border_radius=8,
+                        clip_behavior=ft.ClipBehavior.HARD_EDGE, content=ft.Stack([
+                            ft.Container(left=8, top=8, width=64, height=44,
+                                         bgcolor=map_colors["park"], border=ft.Border.all(
+                                             1, map_colors.get("park_rand",
+                                                               map_colors["park"]))),
+                            ft.Container(left=0, right=0, top=60, height=9,
+                                         bgcolor=map_colors["strasse"]),
+                            ft.Container(left=100, top=0, width=9, height=96,
+                                         bgcolor=map_colors["wasser"]),
+                            ft.Container(right=12, top=10, width=44, height=34, bgcolor=wall,
+                                         border=ft.Border.all(2, edge), content=ft.Container(
+                                             height=9, bgcolor=roof)),
+                            ft.Container(left=10, bottom=4, content=ft.Text(
+                                fisi_theme.CUSTOM_PREVIEW_MAP, size=12,
+                                weight=ft.FontWeight.BOLD, color=map_colors["schrift"])),
+                        ]))
+    return ft.Container(bgcolor=colors["bg"], content=ft.Row([
+        side, ft.Container(expand=True, padding=10, content=ft.Column(
+            [card, land], spacing=10, tight=True))], spacing=0,
+        vertical_alignment=ft.CrossAxisAlignment.START))
+
+
 class SettingsScreen(Screen):
     crumbs = ("SYSTEM", "OPTIONEN")
 
@@ -3104,6 +3331,8 @@ class SettingsScreen(Screen):
         ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
 
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
+        self.custom_colors = CustomColors(self._save_custom)
         colors = ui.FoldCard("Farben", [
             ui.label("Darstellung"),
             ui.PillGroup(fisi_theme.MODES, initial=fisi_theme.MODE_IDS.index(
@@ -3119,6 +3348,7 @@ class SettingsScreen(Screen):
                     "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
                     "dunkler, damit sie gut lesbar sind).",
                     size=11, color=C["muted"]),
+            self.custom_colors,
         ], accent=C["accent"], subtitle="nur für dieses Gerät", key="optionen_farben",
             open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
 
@@ -3283,7 +3513,7 @@ class SettingsScreen(Screen):
     def _background_tile(self, item):
         """Kachel eines Hintergrunds (wie am PC): Flaeche mit kleiner Karte."""
         active = item["id"] == fisi_theme.current_background
-        if fisi_theme.light:
+        if fisi_theme.current_mode == fisi_theme.MODE_LIGHT:   # ab 0.57 (vorher light)
             item = fisi_theme.light_background(item["id"])   # ab 0.49
         return ft.Semantics(button=True, selected=active, container=True,
                             label="Hintergrund %s" % item["name"], content=ft.Container(
@@ -3294,23 +3524,40 @@ class SettingsScreen(Screen):
                              padding=ft.Padding.only(left=10),
                              alignment=ft.Alignment.CENTER_LEFT),
                 ft.Text(item["name"], size=12, weight=ft.FontWeight.BOLD,
-                        color=C["text"] if active else item["text_dim"]),
+                        color=fisi_theme.tile_text() if active else item["text_dim"]),
             ], spacing=8, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=104, padding=10, border_radius=12, ink=True, bgcolor=item["bg"],
             border=ft.Border.all(2, C["accent"] if active else item["border_hi"]),
             on_click=lambda _e, key=item["id"]: self._change_background(key)))
 
     def _change_color(self, preset_id):
+        if self.custom_colors.takes_tile():
+            # Ab 0.57 (F3): nur die Regler auf diese Farbwelt stellen
+            self.custom_colors.set_world(preset_id=preset_id)
+            return
         if preset_id != fisi_theme.current_preset:
             self.app.change_color(preset_id=preset_id)
 
     def _change_background(self, background_id):
+        if self.custom_colors.takes_tile():
+            self.custom_colors.set_world(background_id=background_id)
+            return
         if background_id != fisi_theme.current_background:
             self.app.change_color(background_id=background_id)
 
     def _change_mode(self, mode):
         if mode != fisi_theme.current_mode:
             self.app.change_color(mode=mode)
+
+    def _save_custom(self, mode, values, world=None):
+        """Ab 0.57: eigene Farben speichern (values None = zuruecksetzen).
+        world: angeklickte Farbwelt (F3), wird mit gespeichert."""
+        preset_id, background_id = world or (None, None)
+        self.app.change_color(
+            preset_id=preset_id if preset_id != fisi_theme.current_preset else None,
+            background_id=background_id if background_id != fisi_theme.current_background
+            else None,
+            custom=(mode, fisi_theme.custom_to_save(mode, values, world)))
 
     def _change_font_size(self, size_id):
         if size_id != fisi_theme.current_font_size:
@@ -4005,7 +4252,8 @@ class FISIMobileApp:
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
-    def change_color(self, preset_id=None, background_id=None, mode=None, font_size=None):
+    def change_color(self, preset_id=None, background_id=None, mode=None, font_size=None,
+                     custom=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
         neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
         angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
@@ -4019,13 +4267,17 @@ class FISIMobileApp:
         self.page.overlay.append(overlay)
         self._lock_bars(True)
         self.page.update()
-        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode, font_size)
+        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode, font_size,
+                           custom)
 
-    async def _recolor(self, preset_id, background_id, overlay, mode=None, font_size=None):
+    async def _recolor(self, preset_id, background_id, overlay, mode=None, font_size=None,
+                       custom=None):
         started = time.monotonic()
         try:
             # Kurz warten, damit die Meldung sicher gezeichnet ist
             await asyncio.sleep(0.05)
+            if custom:
+                fisi_theme.save_custom(*custom)   # ab 0.57
             if preset_id:
                 fisi_theme.save_preset(preset_id)
             if background_id:
