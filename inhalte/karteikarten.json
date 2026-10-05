@@ -18653,7 +18653,7 @@
     ],
     "q": "Ein Kunde nutzt Microsoft 365 in der Cloud, behält aber seinen lokalen Fileserver und das lokale Active Directory. Wie nennt man dieses Betriebsmodell, und was muss das Konzept dafür regeln?",
     "a": "Hybridbetrieb; geregelt werden z. B. die Synchronisation der Identitäten und die Absicherung der Anmeldung",
-    "a_full": "Bei einer hybriden Lösung laufen Teile on-premises und Teile in der Cloud. Damit Benutzer nur ein Konto haben, werden Identitäten aus dem lokalen AD mit Microsoft Entra ID synchronisiert, etwa mit Entra Connect. Das Konzept muss festlegen, welche Konten synchronisiert werden, wie Mehrfaktor-Authentisierung erzwungen wird und wer bei Störungen welcher Seite zuständig ist.",
+    "a_full": "Bei einer hybriden Lösung laufen Teile on-premises und Teile in der Cloud. Damit Benutzer nur ein Konto haben, werden Identitäten aus dem lokalen AD mit Microsoft Entra ID synchronisiert, etwa mit Microsoft Entra Connect oder dem von Microsoft empfohlenen Nachfolger Microsoft Entra Cloud Sync. Das Konzept muss festlegen, welche Konten synchronisiert werden, wie Mehrfaktor-Authentisierung erzwungen wird und wer bei Störungen welcher Seite zuständig ist.",
     "options": [
       "Reiner On-Premises-Betrieb; geregelt wird nur die Kühlung des Serverraums",
       "Multi-Cloud; geregelt wird nur die Wahl eines zweiten Cloudanbieters",
@@ -20038,7 +20038,7 @@
     ],
     "q": "Ein Kollege meint: „Ich habe meine Ausbildung vor zwölf Jahren gemacht, das reicht.“ Mit welchem Argument begründen Sie, dass gerade in der IT lebensbegleitendes Lernen nötig ist?",
     "a": "IT-Wissen veraltet schnell, weil sich Technik, Bedrohungen und Produkte ständig ändern",
-    "a_full": "Man spricht von einer kurzen Halbwertszeit des IT-Fachwissens: Nach wenigen Jahren ist ein großer Teil des Detailwissens überholt. Neue Betriebssystemversionen, Cloud-Dienste, Sicherheitslücken und Vorschriften verlangen ständiges Nachlernen. Wer sich nicht weiterbildet, verliert an Beschäftigungsfähigkeit und kann Kunden nicht mehr sicher beraten.",
+    "a_full": "Produkte, Versionen und Bedrohungslagen ändern sich in der IT laufend, das Fachwissen muss deshalb ständig aktualisiert und erweitert werden. Die oft zitierte feste „Halbwertszeit des Wissens“ ist allerdings empirisch nicht belegt (BIBB). Neue Betriebssystemversionen, Cloud-Dienste, Sicherheitslücken und Vorschriften verlangen ständiges Nachlernen. Wer sich nicht weiterbildet, verliert an Beschäftigungsfähigkeit und kann Kunden nicht mehr sicher beraten.",
     "options": [
       "Die IHK schreibt allen Fachinformatikern jährliche Pflichtprüfungen vor",
       "Ein Berufsabschluss verliert nach zehn Jahren rechtlich seine Gültigkeit",
@@ -20106,13 +20106,13 @@
       "F1e"
     ],
     "q": "Ein Fachinformatiker aus Hannover möchte eine fünftägige, anerkannte Weiterbildung zu IT-Sicherheit besuchen, ohne dafür Erholungsurlaub zu nehmen. Worauf kann er sich stützen?",
-    "a": "Auf das Niedersächsische Bildungsurlaubsgesetz mit meist fünf Tagen pro Jahr",
-    "a_full": "Bildungsurlaub ist in Deutschland Ländersache. In Niedersachsen haben Arbeitnehmer nach dem Bildungsurlaubsgesetz Anspruch auf bezahlte Freistellung, in der Regel fünf Arbeitstage im Jahr, für anerkannte Bildungsveranstaltungen. Der Antrag muss rechtzeitig beim Arbeitgeber gestellt werden. Für Auszubildende gelten in Niedersachsen Einschränkungen.",
+    "a": "Auf das niedersächsische Landesrecht zum Bildungsurlaub (ab 2027 Bildungszeitgesetz) mit fünf Tagen pro Jahr",
+    "a_full": "Bildungsurlaub ist in Deutschland Ländersache. In Niedersachsen haben Arbeitnehmer nach dem Bildungsurlaubsgesetz Anspruch auf bezahlte Freistellung, in der Regel fünf Arbeitstage im Jahr, für anerkannte Bildungsveranstaltungen. Der Arbeitgeber muss in der Regel mindestens vier Wochen vorher schriftlich informiert werden. Auch Auszubildende haben den Anspruch; ihnen kann der Bildungsurlaub aber abgelehnt werden, wenn besondere betriebliche Ausbildungsmaßnahmen entgegenstehen. Ab 1. Januar 2027 ersetzt das Niedersächsische Bildungszeitgesetz (NBildZG) das Bildungsurlaubsgesetz: weiterhin fünf Arbeitstage pro Jahr, die Mitteilung an den Arbeitgeber dann aber mindestens acht Wochen vorher.",
     "options": [
       "Auf das Berufsbildungsgesetz, das Fortbildung nach der Ausbildung bezahlt freistellt",
       "Auf das Bundesurlaubsgesetz, das jedem zehn Tage Fortbildungsurlaub gewährt",
       "Auf das Aufstiegs-BAföG, das eine Freistellung durch den Arbeitgeber vorschreibt",
-      "Auf das Niedersächsische Bildungsurlaubsgesetz mit meist fünf Tagen pro Jahr"
+      "Auf das niedersächsische Landesrecht zum Bildungsurlaub (ab 2027 Bildungszeitgesetz) mit fünf Tagen pro Jahr"
     ],
     "neu_ab": "0.55"
   },
@@ -20310,11 +20310,11 @@
       "F1g"
     ],
     "q": "Ein Fachinformatiker Systemintegration will sich nach der Ausbildung bei der IHK zunächst auf IT-Sicherheit spezialisieren, ohne gleich eine Führungsfortbildung zu machen. Welcher Abschluss nach der neuen IT-Fortbildungsordnung passt?",
-    "a": "Geprüfter Berufsspezialist IKT mit dem Profil Informationssicherheit",
-    "a_full": "Mit der Neuordnung der IT-Fortbildung, die am 1. November 2024 in Kraft trat, gibt es auf der ersten Stufe den Geprüften Berufsspezialisten mit fünf Profilen: Softwareentwicklung, Systemintegration und Vernetzung, IT-Beratung, Datenanalyse und Informationssicherheit. Er vertieft das Fachwissen auf DQR-Niveau 5. Der Bachelor Professional in IT auf der zweiten Stufe zielt dagegen auf anspruchsvolle Fach- und Führungsaufgaben.",
+    "a": "Geprüfter Berufsspezialist für Informationssicherheit",
+    "a_full": "Mit der Neuordnung der IT-Fortbildung, die am 1. November 2024 in Kraft trat, gibt es auf der ersten Stufe Abschlüsse als Geprüfter Berufsspezialist in fünf Profilen: Softwareentwicklung, Systemintegration und Vernetzung, IT-Beratung, Datenanalyse und Informationssicherheit. Für Informationssicherheit gilt die eigene Prüfungsverordnung InSiFPrV vom 24.09.2024. Der Abschluss vertieft das Fachwissen auf DQR-Niveau 5. Der Bachelor Professional in IT auf der zweiten Stufe zielt dagegen auf anspruchsvolle Fach- und Führungsaufgaben.",
     "options": [
       "Geprüfter Strategischer IT-Professional mit dem Profil Unternehmensführung",
-      "Geprüfter Berufsspezialist IKT mit dem Profil Informationssicherheit",
+      "Geprüfter Berufsspezialist für Informationssicherheit",
       "Bachelor Professional in IT mit dem Schwerpunkt Personalführung",
       "IT-Sicherheitsbeauftragter nach dem BSI-Gesetz mit Staatsprüfung"
     ],
