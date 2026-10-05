@@ -1,0 +1,18 @@
+=== 2026-10-05 04:08:42 | Version 0.54 | win32 ===
+Traceback (most recent call last):
+  File "tkinter\__init__.py", line 1968, in __call__
+  File "app_gui.py", line 5572, in on_close
+  File "customtkinter\windows\ctk_tk.py", line 92, in destroy
+  File "tkinter\__init__.py", line 2389, in destroy
+  File "customtkinter\windows\ctk_toplevel.py", line 88, in destroy
+  File "tkinter\__init__.py", line 2668, in destroy
+  File "customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+  File "tkinter\__init__.py", line 2668, in destroy
+  File "customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+  File "tkinter\__init__.py", line 2668, in destroy
+  File "fisi_widgets.py", line 1828, in _quiet_destroy
+  File "customtkinter\windows\widgets\ctk_textbox.py", line 208, in destroy
+  File "customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+  File "tkinter\__init__.py", line 2672, in destroy
+  File "tkinter\__init__.py", line 689, in destroy
+_tkinter.TclError: can't delete Tcl command

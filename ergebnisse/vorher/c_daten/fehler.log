@@ -1,0 +1,43 @@
+=== 2026-10-05 04:09:32 | Version 0.55 | win32 ===
+Traceback (most recent call last):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 1968, in __call__
+    return self.func(*args)
+           ^^^^^^^^^^^^^^^^
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 862, in callit
+    func(*args)
+  File "D:\a\Fisi-Lernplattform\Fisi-Lernplattform\untersuchung\repro_close.py", line 20, in <lambda>
+    dlg.after(1500, lambda: self.on_close(final_sync=False))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\a\Fisi-Lernplattform\Fisi-Lernplattform\app_gui.py", line 5846, in on_close
+    self.root.destroy()
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\ctk_tk.py", line 92, in destroy
+    tkinter.Tk.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2389, in destroy
+    for c in list(self.children.values()): c.destroy()
+                                           ^^^^^^^^^^^
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\ctk_toplevel.py", line 88, in destroy
+    tkinter.Toplevel.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2668, in destroy
+    for c in list(self.children.values()): c.destroy()
+                                           ^^^^^^^^^^^
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+    tkinter.Frame.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2668, in destroy
+    for c in list(self.children.values()): c.destroy()
+                                           ^^^^^^^^^^^
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+    tkinter.Frame.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2668, in destroy
+    for c in list(self.children.values()): c.destroy()
+                                           ^^^^^^^^^^^
+  File "D:\a\Fisi-Lernplattform\Fisi-Lernplattform\fisi_widgets.py", line 1837, in _quiet_destroy
+    _textbox_destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\widgets\ctk_textbox.py", line 208, in destroy
+    super().destroy()
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\customtkinter\windows\widgets\core_widget_classes\ctk_base_class.py", line 98, in destroy
+    tkinter.Frame.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2672, in destroy
+    Misc.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 689, in destroy
+    self.tk.deletecommand(name)
+_tkinter.TclError: can't delete Tcl command

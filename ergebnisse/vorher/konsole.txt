@@ -1,0 +1,65 @@
+**********************
+PowerShell transcript start
+Start time: 20261005040815
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\eb0e0164-fc5f-4b86-b5e2-3bf91c81725c.ps1'
+Process ID: 6364
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+=== 1. Ausgangslage: 0.54 nach 'C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test' installieren
+    Rueckgabewert Installer: 0  (Dauer 6.6 s)
+    installierte Version: 0.54
+--- Prozessliste (0.54 laeuft (steht fuer den haengenden Prozess)):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+7696 10/5/2026 4:08:22 AM FISI Lernplattform 0.54
+=== 2. Szenario A: Update auf 0.55, waehrend 0.54 noch laeuft
+    Rueckgabewert Installer: 5  (Dauer 32.2 s)
+    installierte Version danach: 0.54
+--- Prozessliste (nach Szenario A):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+7696 10/5/2026 4:08:22 AM
+=== 3. Szenario B: Prozess beendet, Update auf 0.55
+--- Prozessliste (vor Szenario B):
+    (kein FISI-Lernplattform-Prozess)
+    Rueckgabewert Installer: 0  (Dauer 4.4 s)
+    installierte Version danach: 0.55
+--- Prozessliste (nach Szenario B (Installer startet das Programm neu)):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+4080 10/5/2026 4:09:21 AM FISI Lernplattform 0.55
+=== 4. Szenario C: Schliessen fuer das Update mit dem Code von 0.55 (Quellcode, Windows)
+_tkinter.TclError: can't delete Tcl command
+ERGEBNIS: mainloop laeuft nach 25 s noch -> Prozess bleibt haengen
+--- fehler.log (Szenario C):
+    tkinter.Frame.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 2672, in destroy
+    Misc.destroy(self)
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\tkinter\__init__.py", line 689, in destroy
+    self.tk.deletecommand(name)
+_tkinter.TclError: can't delete Tcl command
+=== Zusammenfassung: A=5 B=0
+=== Auszug Installer-Protokoll A (Fehler/Rollback):
+2026-10-05 04:09:12.883   Defaulting to Abort for suppressed message box (Abort/Retry/Ignore):
+2026-10-05 04:09:12.883   Rolling back changes.
+2026-10-05 04:09:12.889   Uninstallation process succeeded.
+2026-10-05 04:09:14.424   Log closed.
+**********************
+PowerShell transcript end
+End time: 20261005040953
+**********************
