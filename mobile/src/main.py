@@ -3056,8 +3056,12 @@ class CustomColors(ft.Column):
         self.preview = ft.Container(border_radius=12, clip_behavior=ft.ClipBehavior.HARD_EDGE)
         self.preview_semantics = ft.Semantics(label=fisi_theme.CUSTOM_PREVIEW, container=True,
                                               content=self.preview)
-        self.warning = ft.Text("", size=13)
-        self.warning_box = ft.Semantics(live_region=True, container=True, content=self.warning)
+        # Zeichen als Symbol statt Schriftzeichen (nicht jede Schrift hat ⚠ und ✓)
+        self.warning_icon = ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED, size=16)
+        self.warning = ft.Text("", size=13, expand=True)
+        self.warning_box = ft.Semantics(live_region=True, container=True, content=ft.Row(
+            [self.warning_icon, self.warning], spacing=6,
+            vertical_alignment=ft.CrossAxisAlignment.START))
         controls += [ui.label(fisi_theme.CUSTOM_PREVIEW), self.preview_semantics,
                      self.warning_box,
                      ft.Row([ui.GradientButton(fisi_theme.CUSTOM_SAVE, self._save,
@@ -3142,12 +3146,14 @@ class CustomColors(ft.Column):
         self.preview.content = custom_preview(palette, map_colors, categories, block)
         problems = fisi_theme.custom_problems(palette, map_colors)
         if problems:
-            self.warning.value = "⚠ " + fisi_theme.CUSTOM_WARN_TITLE + "\n" + "\n".join(
+            self.warning.value = fisi_theme.CUSTOM_WARN_TITLE + "\n" + "\n".join(
                 "• " + line for line in fisi_theme.warning_lines(problems))
-            self.warning.color = C["red"]
+            self.warning.color = self.warning_icon.color = C["red"]
+            self.warning_icon.icon = ft.Icons.WARNING_AMBER_ROUNDED
         else:
-            self.warning.value = "✓ " + fisi_theme.CUSTOM_OK
-            self.warning.color = C["green"]
+            self.warning.value = fisi_theme.CUSTOM_OK
+            self.warning.color = self.warning_icon.color = C["green"]
+            self.warning_icon.icon = ft.Icons.CHECK_CIRCLE_OUTLINE_ROUNDED
 
     def _save(self, _event=None):
         self.on_save(self.mode, dict(self.values))
