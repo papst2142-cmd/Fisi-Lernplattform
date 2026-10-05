@@ -211,11 +211,27 @@ def saved_background():
 def save_background(background_id):
     """Speichert den Hintergrund (nur lokal) und wendet ihn an."""
     import fisi_update
+    _drop_custom()
     item = apply_background(background_id)
     settings = fisi_update.load_settings()
     settings[BACKGROUND_KEY] = item["id"]
     fisi_update.save_settings(settings)
     return item
+
+
+def tile_text():
+    """Ab 0.57: Schrift des gewaehlten Namens auf einer Hintergrund-Kachel.
+    Die Kacheln zeigen immer die Farbwelt der Darstellung - die Schrift folgt
+    deshalb der Darstellung, nicht eigenen Farben (die hell/dunkel kippen
+    koennen). Ohne eigene Farben ist das genau C["text"]."""
+    return LIGHT_TEXT["text"] if current_mode == MODE_LIGHT else _DARK_FIXED["text"]
+
+
+def _drop_custom():
+    """Ab 0.57: Wer eine Grundfarbe oder einen Hintergrund anklickt, waehlt die
+    Farbwelt - eigene Farben der aktuellen Darstellung entfallen dann."""
+    if current_mode in custom_colors:
+        save_custom(current_mode, None)
 
 
 def saved_preset():
@@ -228,6 +244,7 @@ def saved_preset():
 def save_preset(preset_id):
     """Speichert die Grundfarbe (nur lokal) und wendet sie an."""
     import fisi_update
+    _drop_custom()
     item = apply_preset(preset_id)
     settings = fisi_update.load_settings()
     settings[SETTING_KEY] = item["id"]
@@ -373,8 +390,17 @@ def light_background(background_id):
 
 def _apply_mode_colors():
     """Setzt Flaechen, Texte und Schriftfarben passend zu Hintergrund,
-    Grundfarbe und Darstellung (alles in C, in place)."""
+    Grundfarbe und Darstellung (alles in C, in place). Ab 0.57: Gibt es fuer
+    die Darstellung eigene Farben, kommen alle Werte aus custom_palette."""
     global light
+    values = custom_colors.get(current_mode)
+    if values:
+        palette = custom_palette(values)
+        light = palette["light"]
+        C.update(palette["colors"])
+        GRADIENTS.update(palette["gradients"])
+        _refresh_tables()
+        return
     light = current_mode == MODE_LIGHT
     item = light_background(current_background) if light else background(current_background)
     for key in BACKGROUND_FIELDS:
@@ -383,6 +409,11 @@ def _apply_mode_colors():
         C[key] = value
     accent = preset(current_preset)
     C["accent"], C["accent2"] = accent["accent"], accent["accent2"]
+    # Ab 0.57: Verlaeufe immer aus der Grundfarbe (eigene Farben der anderen
+    # Darstellung koennen sie vorher ueberschrieben haben)
+    GRADIENTS["primary"] = accent["primary"]
+    GRADIENTS["accent"] = accent["verlauf"]
+    GRADIENTS["hero"] = accent["hero"]
     if light:
         C.update(LIGHT_TEXT)
         surfaces = [item[key] for key in LIGHT_SURFACES]
@@ -411,17 +442,348 @@ def shade_until(color, target, surfaces, minimum):
     return shade
 
 
-def _apply_control_colors(is_light):
+def _apply_control_colors(is_light, colors=None):
     """Ab 0.56: Farben fuer Bedienelemente.
     field_border: Rand von Eingabefeldern und Antwortkreisen (vorher "border"
     bzw. "border_hi" mit 1,1 bis 2,3:1). Aus border_hi im selben Farbton,
     gerade so weit aufgehellt (dunkel) bzw. abgedunkelt (hell), dass 3:1
-    erreicht werden. focus: Fokusrahmen am PC (Akzentfarbe, mind. 4,5:1)."""
-    surfaces = [C[key] for key in CONTROL_SURFACES]
-    C["field_border"] = shade_until(C["border_hi"], "#000000" if is_light else "#FFFFFF",
-                                    surfaces, CONTROL_CONTRAST)
-    C["focus"] = shade_until(C["accent"], "#000000" if is_light else "#FFFFFF",
-                             surfaces, CONTROL_CONTRAST)
+    erreicht werden. focus: Fokusrahmen am PC (Akzentfarbe, mind. 4,5:1).
+    Ab 0.57: colors waehlt das Woerterbuch (Vorgabe C, sonst eine Palette
+    der eigenen Farben)."""
+    colors = C if colors is None else colors
+    surfaces = [colors[key] for key in CONTROL_SURFACES]
+    colors["field_border"] = shade_until(colors["border_hi"],
+                                         "#000000" if is_light else "#FFFFFF",
+                                         surfaces, CONTROL_CONTRAST)
+    colors["focus"] = shade_until(colors["accent"], "#000000" if is_light else "#FFFFFF",
+                                  surfaces, CONTROL_CONTRAST)
+
+
+# ============================================================================
+#  EIGENE FARBEN (ab 0.57)
+# ============================================================================
+#
+# Drei Regler-Gruppen (Akzent 1, Akzent 2, Hintergrund) mit Farbton,
+# Saettigung und Helligkeit (HSL). Gespeichert lokal je Geraet und je
+# Darstellung in einstellungen.json ("eigene_farben": {"dunkel": {...},
+# "hell": {...}}), nie im Abgleich. Fehlt der Eintrag fuer die aktuelle
+# Darstellung oder ist er ungueltig, gilt die gewaehlte Farbwelt unveraendert.
+#
+# Ableitungsregel (im Bericht 0.57 erklaert):
+# - Akzent 1 und 2 sind die beiden Farben des Knopfverlaufs ("primary").
+#   Zweiter Verlauf = beide 20 % dunkler, Banner = beide 40 % dunkler.
+#   Schriftakzente (Menue, Ringe, Links) = gleicher Farbton, so weit
+#   aufgehellt (dunkel) bzw. abgedunkelt (hell), dass sie 4,5:1 erreichen.
+# - Der Hintergrund-Regler setzt Farbton, Saettigung und Helligkeit der
+#   Hauptflaeche. Seitenleiste, Karten, Rahmen und Ring folgen in festen
+#   Helligkeitsstufen (gemessen an den sechs vorgefertigten Hintergruenden).
+# - Ob die Schrift hell oder dunkel ist, entscheidet die Helligkeit des
+#   Hintergrunds (die Schrift mit dem hoeheren Kontrast gewinnt). Bei dunkler
+#   Schrift gilt alles wie in der hellen Darstellung (Stufen, abgedunkelte
+#   Fachbereichsfarben, Karte).
+
+CUSTOM_KEY = "eigene_farben"
+CUSTOM_PARTS = (("akzent1", "Akzent 1"), ("akzent2", "Akzent 2"),
+                ("hintergrund", "Hintergrund"))
+CUSTOM_PART_IDS = tuple(key for key, _name in CUSTOM_PARTS)
+# (Kennung, Beschriftung, kleinster Wert, groesster Wert, Einheit kurz, Einheit gesprochen)
+CUSTOM_CHANNELS = (("h", "Farbton", 0, 359, "°", "Grad"),
+                   ("s", "Sättigung", 0, 100, " %", "Prozent"),
+                   ("l", "Helligkeit", 0, 100, " %", "Prozent"))
+# Texte (PC und Handy gleich)
+CUSTOM_TITLE = "EIGENE FARBEN"
+CUSTOM_HINT = ("Mit den Reglern stellst du die zwei Farben der Farbverläufe (Akzent 1 und 2) "
+               "und den Hintergrund selbst ein. Alle anderen Farben werden daraus abgeleitet. "
+               "Gilt nur für dieses Gerät und nur für die gewählte Darstellung.")
+CUSTOM_STATE_ON = "Eigene Farben aktiv (%s)"
+CUSTOM_STATE_OFF = "Startwerte aus der Farbwelt (%s)"
+CUSTOM_TILE_HINT = ("Ein Klick auf eine Grundfarbe oder einen Hintergrund ersetzt die "
+                    "eigenen Farben.")
+CUSTOM_PREVIEW = "Vorschau"
+CUSTOM_PREVIEW_TITLE = "Überschrift"
+CUSTOM_PREVIEW_TEXT = "Fließtext einer Frage"
+CUSTOM_PREVIEW_MUTED = "Nebentext"
+CUSTOM_PREVIEW_LINK = "Link"
+CUSTOM_PREVIEW_BUTTON = "Knopf"
+CUSTOM_PREVIEW_MAP = "Karte"
+CUSTOM_SAVE = "Speichern"
+CUSTOM_RESET = "Auf Farbwelt zurücksetzen"
+CUSTOM_OK = "Alle Kontraste reichen aus."
+CUSTOM_WARN_TITLE = "Zu wenig Kontrast (Speichern ist trotzdem möglich):"
+CUSTOM_WARN_MORE = "… und %d weitere"
+custom_colors = {}          # Darstellung -> {"akzent1": (h, s, l), ...}
+
+# Helligkeitsstufen der Flaechen relativ zum Hintergrund: (Abstand, Saettigungsfaktor).
+# Gemessen an den sechs Hintergruenden (z. B. Violett dunkel: Hintergrund 9 %,
+# Karte 13 %, Rahmen hervorgehoben 37 %; hell: Hintergrund 96 %, Karte weiss).
+_DARK_STEPS = {"sidebar": (-3, 1.05), "card": (4, 0.9), "card_alt": (8, 0.9),
+               "card_hi": (14, 0.9), "border": (13, 0.85), "border_hi": (28, 0.83),
+               "ring_bg": (11, 0.88)}
+_LIGHT_STEPS = {"sidebar": (-3, 0.97), "card_alt": (0, 1.0), "card_hi": (-4, 1.0),
+                "border": (-8, 0.83), "border_hi": (-21, 0.8), "ring_bg": (-6, 0.9)}
+# Nebentexte: (Helligkeit, Saettigungsfaktor), danach bis 4,5:1 nachgeregelt
+_DARK_DIM = {"text_dim": (68, 0.53), "muted": (62, 0.46)}
+_LIGHT_DIM = {"text_dim": (38, 0.43), "muted": (44, 0.38)}
+
+
+def hsl_to_hex(hue, saturation, lightness):
+    """Farbton 0-359 Grad, Saettigung und Helligkeit 0-100 % -> "#RRGGBB"."""
+    import colorsys
+    red, green, blue = colorsys.hls_to_rgb((hue % 360) / 360.0,
+                                           max(0.0, min(100.0, lightness)) / 100.0,
+                                           max(0.0, min(100.0, saturation)) / 100.0)
+    return rgb_to_hex((red * 255, green * 255, blue * 255))
+
+
+def hex_to_hsl(color):
+    """"#RRGGBB" -> (Farbton, Saettigung, Helligkeit) als ganze Zahlen."""
+    import colorsys
+    red, green, blue = (value / 255.0 for value in hex_to_rgb(color))
+    hue, lightness, saturation = colorsys.rgb_to_hls(red, green, blue)
+    return (int(round(hue * 360)) % 360, int(round(saturation * 100)),
+            int(round(lightness * 100)))
+
+
+def _valid_channel(value, low, high):
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and value == value and low <= value <= high)
+
+
+def valid_custom(value):
+    """Prueft einen gespeicherten Satz eigener Farben. Liefert
+    {"akzent1": (h, s, l), ...} oder None, wenn irgendetwas fehlt, falsch
+    getippt oder ausserhalb der Grenzen ist (dann gilt die Farbwelt)."""
+    if not isinstance(value, dict):
+        return None
+    result = {}
+    for part in CUSTOM_PART_IDS:
+        triple = value.get(part)
+        if not isinstance(triple, (list, tuple)) or len(triple) != 3:
+            return None
+        for number, channel in zip(triple, CUSTOM_CHANNELS):
+            if not _valid_channel(number, channel[2], channel[3]):
+                return None
+        result[part] = tuple(int(round(number)) for number in triple)
+    return result
+
+
+def custom_start(mode=None):
+    """Startwerte der Regler: die gewaehlte Farbwelt der Darstellung (Knopf-
+    verlauf der Grundfarbe und Hauptflaeche des Hintergrunds)."""
+    mode = current_mode if mode is None else mode
+    accent = preset(current_preset)
+    back = (light_background(current_background) if mode == MODE_LIGHT
+            else background(current_background))
+    return {"akzent1": hex_to_hsl(accent["primary"][0]),
+            "akzent2": hex_to_hsl(accent["primary"][1]),
+            "hintergrund": hex_to_hsl(back["bg"])}
+
+
+def custom_values(mode=None):
+    """Die Reglerwerte der Darstellung: eigene Farben oder die Startwerte."""
+    mode = current_mode if mode is None else mode
+    return dict(custom_colors.get(mode) or custom_start(mode))
+
+
+def _step(hue, saturation, lightness, offset, factor):
+    return hsl_to_hex(hue, saturation * factor, max(0, min(100, lightness + offset)))
+
+
+def custom_palette(values):
+    """Alle Farben aus den drei Reglern (Ableitungsregel oben). Veraendert
+    nichts: liefert {"light": bool, "colors": {...}, "gradients": {...}}."""
+    hue, saturation, lightness = values["hintergrund"]
+    ground = hsl_to_hex(hue, saturation, lightness)
+    is_light = contrast(LIGHT_TEXT["text"], ground) > contrast(_DARK_FIXED["text"], ground)
+    colors = dict(_DARK_FIXED, on_accent="#FFFFFF")
+    colors["bg"] = ground
+    if is_light:
+        colors.update(LIGHT_TEXT)
+    # Die Stufen werden nur so weit gespreizt, dass die festen Schriftfarben
+    # (Text, im Dunklen auch Fachbereichs- und Bedeutungsfarben) auf allen
+    # Flaechen 4,5:1 behalten: Spreizung 100 %, 90 % ... bis 50 %.
+    fixed = ("text", "text_soft") + (() if is_light else _LIGHT_SHADED)
+    for spread in (1.0, 0.9, 0.8, 0.7, 0.6, 0.5):
+        if is_light:
+            for key, (offset, factor) in _LIGHT_STEPS.items():
+                colors[key] = _step(hue, saturation, lightness, offset * spread, factor)
+            # Karte: 90 % des Wegs zu Weiss (bei den Farbwelten reines Weiss)
+            colors["card"] = hsl_to_hex(hue, saturation,
+                                        lightness + (100 - lightness) * 0.9)
+        else:
+            for key, (offset, factor) in _DARK_STEPS.items():
+                colors[key] = _step(hue, saturation, lightness, offset * spread, factor)
+            colors["sidebar"] = hsl_to_hex(hue, min(100, saturation * 1.05), lightness * 0.66)
+        surfaces = [colors[key] for key in LIGHT_SURFACES]
+        if all(contrast(colors[key], surface) >= MIN_CONTRAST
+               for key in fixed for surface in surfaces):
+            break
+    target = "#000000" if is_light else "#FFFFFF"
+    for key, (level, factor) in (_LIGHT_DIM if is_light else _DARK_DIM).items():
+        colors[key] = shade_until(hsl_to_hex(hue, saturation * factor, level), target,
+                                  surfaces, MIN_CONTRAST)
+    if is_light:
+        for key in _LIGHT_SHADED:
+            colors[key] = readable_on(colors[key], surfaces)
+    first = hsl_to_hex(*values["akzent1"])
+    second = hsl_to_hex(*values["akzent2"])
+    for key, (h, s, l) in (("accent", values["akzent1"]), ("accent2", values["akzent2"])):
+        start = hsl_to_hex(h, s, min(l, 45) if is_light else max(l, 60))
+        colors[key] = shade_until(start, target, surfaces, MIN_CONTRAST)
+    _apply_control_colors(is_light, colors)
+    gradients = {"primary": (first, second),
+                 "accent": (darken(first, 0.2), darken(second, 0.2)),
+                 "hero": (darken(first, 0.4), darken(second, 0.4))}
+    return {"light": is_light, "colors": colors, "gradients": gradients}
+
+
+class preview_colors:
+    """Setzt eine Palette voruebergehend in C/GRADIENTS (fuer Vorschau und
+    Kontrastpruefung der Karte) und stellt danach alles wieder her:
+        with preview_colors(palette): ..."""
+
+    def __init__(self, palette):
+        self.palette = palette
+
+    def __enter__(self):
+        global light
+        self.saved = (dict(C), dict(GRADIENTS), light)
+        C.update(self.palette["colors"])
+        GRADIENTS.update(self.palette["gradients"])
+        light = self.palette["light"]
+        _refresh_tables()
+        return self.palette
+
+    def __exit__(self, *_exc):
+        global light
+        C.clear()
+        C.update(self.saved[0])
+        GRADIENTS.clear()
+        GRADIENTS.update(self.saved[1])
+        light = self.saved[2]
+        _refresh_tables()
+        return False
+
+
+# Kontrastziele wie in 0.56: Schrift 4,5:1, Linien/Flaechen/Fokusrahmen 3:1
+TEXT_TARGET = 4.5
+AREA_TARGET = 3.0
+_CATEGORY_NAMES = (("cyan", "Fachbereich Netzwerk (Cyan)"),
+                   ("pink", "Fachbereich Sicherheit (Pink)"),
+                   ("purple", "Fachbereich Systeme (Lila)"),
+                   ("green", "Fachbereich Wirtschaft (Grün)"),
+                   ("orange", "Fachbereich Datenbanken (Orange)"), ("blue", "Themenfarbe Blau"),
+                   ("red", "Fehler (Rot)"), ("yellow", "Warnung (Gelb)"))
+
+
+def custom_checks(palette, map_colors=None):
+    """Alle Kontrastpruefungen einer Palette: [(Element, Messwert, Ziel)].
+    Gemessen wird gegen die schwaechste Flaeche (Hintergrund, Seitenleiste,
+    Karten). map_colors: Kartenfarben (fisi_game.map_palette unter
+    preview_colors), sonst ohne Karte."""
+    colors, gradients = palette["colors"], palette["gradients"]
+    surfaces = [colors[key] for key in LIGHT_SURFACES]
+
+    def worst(color, grounds=None):
+        return min(contrast(color, ground) for ground in (grounds or surfaces))
+    checks = [("Überschriften", worst(colors["text"]), TEXT_TARGET),
+              ("Fließtext", worst(colors["text_soft"]), TEXT_TARGET),
+              ("Nebentext", min(worst(colors["text_dim"]), worst(colors["muted"])), TEXT_TARGET),
+              ("Knopfschrift auf Akzent 1", contrast(colors["on_accent"],
+                                                     gradients["primary"][0]), TEXT_TARGET),
+              ("Knopfschrift auf Akzent 2", contrast(colors["on_accent"],
+                                                     gradients["primary"][1]), TEXT_TARGET),
+              ("Bannerschrift", min(contrast("#FFFFFF", color) for color in gradients["hero"]),
+               TEXT_TARGET),
+              ("Akzent 1 als Schrift (Menü, Links)", worst(colors["accent"]), TEXT_TARGET),
+              ("Akzent 2 als Schrift", worst(colors["accent2"]), TEXT_TARGET),
+              ("Rahmen von Eingabefeldern", worst(colors["field_border"]), AREA_TARGET),
+              ("Fokusrahmen", worst(colors["focus"]), AREA_TARGET)]
+    for key, name in _CATEGORY_NAMES:
+        checks.append((name + " als Schrift", worst(colors[key]), TEXT_TARGET))
+    # Karte wie in 0.56 nur in der hellen Darstellung gemessen (die dunkle
+    # Karte erreicht auch mit den Farbwelten keine 3:1, siehe Bericht 0.57)
+    if map_colors and palette["light"]:
+        ground = map_colors["boden"]
+        checks.append(("Karte: Beschriftung", contrast(map_colors["schrift"], ground),
+                       TEXT_TARGET))
+        checks.append(("Karte: Straßen", contrast(map_colors["strasse"], ground), AREA_TARGET))
+        checks.append(("Karte: Fluss", contrast(map_colors["wasser"], ground), AREA_TARGET))
+    return checks
+
+
+def custom_problems(palette, map_colors=None):
+    """Nur die Pruefungen unter dem Ziel, schlechteste zuerst."""
+    problems = [item for item in custom_checks(palette, map_colors) if item[1] < item[2]]
+    return sorted(problems, key=lambda item: item[1] / item[2])
+
+
+def format_ratio(value):
+    """4.5 -> "4,5:1" (eine Nachkommastelle, abgerundet wie in den Berichten)."""
+    return ("%.1f:1" % (int(value * 10) / 10.0)).replace(".", ",")
+
+
+def warning_lines(problems, limit=4):
+    """Warnhinweis-Zeilen mit Messwert (PC und Handy gleich)."""
+    lines = ["%s: %s (nötig %s)" % (name, format_ratio(value), format_ratio(target))
+             for name, value, target in problems[:limit]]
+    if len(problems) > limit:
+        lines.append(CUSTOM_WARN_MORE % (len(problems) - limit))
+    return lines
+
+
+def slider_label(part_name, channel, value):
+    """Beschriftung fuer Screenreader/TalkBack: "Akzent 1, Farbton, 210 Grad"."""
+    return "%s, %s, %d %s" % (part_name, channel[1], value, channel[5])
+
+
+def slider_text(channel, value):
+    """Sichtbarer Wert neben dem Regler: "210°", "45 %"."""
+    return "%d%s" % (value, channel[4])
+
+
+def saved_custom():
+    """Gespeicherte eigene Farben {Darstellung: Werte}, ungueltiges entfaellt."""
+    import fisi_update
+    stored = fisi_update.load_settings().get(CUSTOM_KEY)
+    result = {}
+    if isinstance(stored, dict):
+        for mode in MODE_IDS:
+            values = valid_custom(stored.get(mode))
+            if values:
+                result[mode] = values
+    return result
+
+
+def apply_custom(mode, values):
+    """Setzt (values) bzw. entfernt (None) die eigenen Farben einer Darstellung."""
+    values = valid_custom(values) if values is not None else None
+    if values:
+        custom_colors[mode] = values
+    else:
+        custom_colors.pop(mode, None)
+    _apply_mode_colors()
+    return values
+
+
+def save_custom(mode, values):
+    """Speichert die eigenen Farben einer Darstellung (None = zuruecksetzen)
+    nur lokal und wendet sie an."""
+    import fisi_update
+    values = apply_custom(mode, values)
+    settings = fisi_update.load_settings()
+    stored = settings.get(CUSTOM_KEY)
+    stored = dict(stored) if isinstance(stored, dict) else {}
+    if values:
+        stored[mode] = {key: list(value) for key, value in values.items()}
+    else:
+        stored.pop(mode, None)
+    if stored:
+        settings[CUSTOM_KEY] = stored
+    else:
+        settings.pop(CUSTOM_KEY, None)
+    fisi_update.save_settings(settings)
+    return values
 
 
 # ============================================================================
@@ -518,11 +880,13 @@ def save_mode(mode):
 # Oberflaeche gebaut wird.
 try:
     current_mode = saved_mode()
+    custom_colors.update(saved_custom())     # ab 0.57
     apply_font_size(saved_font_size())
     apply_preset(saved_preset())
     apply_background(saved_background())
 except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start verhindern
     current_mode = DEFAULT_MODE
+    custom_colors.clear()
     apply_font_size(FONT_NORMAL)
     apply_preset(DEFAULT_PRESET)
     apply_background(DEFAULT_BACKGROUND)
