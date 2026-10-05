@@ -66,6 +66,8 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_rahmenplan as frp  # noqa: E402
+from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
@@ -91,7 +93,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.54"
+APP_VERSION = "0.55"
 
 
 def _resource_path(filename):
@@ -1393,7 +1395,8 @@ class CardsView(View):
                 and (topic == FILTER_ALL or card.get("thema") == topic)]
         keys = [card["q"] for card in base]
         if status == FILTER_ALL:
-            keys = self.book.preferred_order(SRC_CARD, keys)
+            keys = self.book.preferred_order(SRC_CARD, keys,
+                                               fresh_order=fresh_order(SRC_CARD))
         else:
             keys = [key for key in keys if self.book.status(SRC_CARD, key)[0] == status]
         self.filtered = [self.by_question[key] for key in keys]
@@ -1760,7 +1763,8 @@ class QuizView(View):
         if self.status_pills.get() == FILTER_ALL:
             # Unbearbeitete Fragen zuerst, dazwischen Wiederholungen
             keys = self.book.preferred_order(SRC_QUIZ, [q["q"] for q in self.pool],
-                                             rng=random.Random())
+                                             rng=random.Random(),
+                                             fresh_order=fresh_order(SRC_QUIZ))
             by_question = {q["q"]: q for q in self.pool}
             self.session = [by_question[key] for key in keys[:count]]
             random.shuffle(self.session)
@@ -2385,6 +2389,173 @@ def weak_topic_rows(parent, names, on_practice):
             side="left", padx=(10, 0))
         NeoButton(row, PRACTICE_BUTTON, lambda n=name: on_practice(n), kind="pill",
                   height=30, font=F["small_bold"]).pack(side="right", padx=10, pady=6)
+
+
+class CoverageCard(Card):
+    """Karte "Rahmenplan-Abdeckung" im Fortschritt (ab 0.55, fisi_rahmenplan).
+    Drei Ebenen zum Aufklappen (Abschnitt, Position, Punkt) bzw. in der
+    Ansicht Lernfeld (Jahr, Lernfeld, Lernthema). Zeilen werden erst beim
+    Aufklappen gebaut, damit der Fortschritt schnell bleibt."""
+
+    def __init__(self, parent, app):
+        super().__init__(parent, title=frp.COVERAGE_TITLE, accent=C["purple"],
+                         subtitle=frp.COVERAGE_SUBTITLE)
+        self.app = app
+        self.coverage = None
+        self.expanded = set()
+        top = transparent_frame(self.body)
+        top.pack(fill="x")
+        self.view_pills = PillGroup(top, frp.COVERAGE_VIEWS,
+                                    on_change=lambda _v: self.paint())
+        self.view_pills.pack(anchor="w")
+        self.filter_pills = PillGroup(top, frp.COVERAGE_FILTERS,
+                                      on_change=lambda _v: self.paint())
+        self.filter_pills.pack(anchor="w", pady=(8, 0))
+        self.lbl_hint = make_label(self.body, "", font=F["small"], fg=C["text_dim"],
+                                   wraplength=800, justify="left", anchor="w")
+        self.rows = transparent_frame(self.body)
+        self.rows.pack(fill="x", pady=(6, 0))
+
+    def set_coverage(self, coverage):
+        self.coverage = coverage
+        self.paint()
+
+    def paint(self):
+        for child in self.rows.winfo_children():
+            child.destroy()
+        if self.coverage is None:
+            return
+        plan = self.view_pills.get() == frp.VIEW_PLAN
+        if plan:
+            self.filter_pills.pack(anchor="w", pady=(8, 0))
+        else:
+            self.filter_pills.pack_forget()
+        if self.coverage.any_answers:
+            self.lbl_hint.pack_forget()
+        else:
+            self.lbl_hint.configure(text=frp.NO_ANSWERS)
+            self.lbl_hint.pack(anchor="w", pady=(10, 0), before=self.rows)
+        if plan:
+            tree = self.coverage.sections(self.filter_pills.get())
+            if not tree:
+                make_label(self.rows, frp.FILTER_EMPTY, font=F["small"], fg=C["muted"],
+                           anchor="w").pack(anchor="w", pady=(8, 0))
+            for section in tree:
+                self._branch(self.rows, "s:" + section["id"],
+                             frp.section_label(section["id"]), section["wert"], 0,
+                             lambda box, item=section: self._positions(box, item))
+        else:
+            for year in self.coverage.fields():
+                values = [(field["wert"], field["stunden"]) for field in year["felder"]]
+                value = frp._weighted_mean(values)
+                self._branch(self.rows, "j:%d" % year["jahr"], frp.year_label(year["jahr"]),
+                             value, 0, lambda box, item=year: self._fields(box, item))
+
+    def _positions(self, box, section):
+        for position in section["positionen"]:
+            self._branch(box, "p:" + position["id"],
+                         "%s %s" % (position["id"], position["titel"]), position["wert"], 1,
+                         lambda inner, item=position: self._points(inner, item))
+
+    def _points(self, box, position):
+        for point in position["punkte"]:
+            self._leaf(box, frp.point_label(point["id"]), point["wert"],
+                       point["anzahl"], lambda p=point["id"]: self.app.practice_point(p))
+
+    def _fields(self, box, year):
+        for field in year["felder"]:
+            label = frp.field_label(field)
+            note = frp.CURRENT_FIELD_TEXT if field["aktuell"] else None
+            self._branch(box, "f:" + field["id"], label, field["wert"], 1,
+                         lambda inner, item=field: self._topics(inner, item), note=note)
+
+    def _topics(self, box, field):
+        if not field["themen"]:
+            make_label(box, frp.NO_CONTENT, font=F["small"], fg=C["muted"],
+                       anchor="w").pack(anchor="w", padx=(44, 0), pady=(4, 0))
+        for topic in field["themen"]:
+            self._leaf(box, topic["titel"], topic["wert"], topic["anzahl"],
+                       lambda t=topic["id"]: self.app.practice_topic(t))
+
+    def _value_widgets(self, parent, value):
+        color = C[frp.LEVEL_COLOR_KEY[frp.level(value)]] if value is not None else C["muted"]
+        text = frp.percent_text(value) if value is not None else frp.NO_CONTENT
+        return color, text
+
+    def _branch(self, parent, key, label, value, depth, fill, note=None):
+        color, text = self._value_widgets(parent, value)
+        wrap = transparent_frame(parent)
+        wrap.pack(fill="x", pady=(6, 0), padx=(depth * 22, 0))
+        row, _marker, inner = clickable_row(wrap, color)
+        row.pack(fill="x")
+        chevron = IconCanvas(row, "chevron_down", size=16, icon_scale=0.62,
+                             parent_bg=C["card_alt"], cursor="hand2")
+        chevron.pack(side="right", padx=(0, 12))
+        head = transparent_frame(inner, cursor="hand2")
+        head.pack(fill="x")
+        title = make_label(head, label, font=F["small_bold"], fg=C["text"], anchor="w",
+                           justify="left", wraplength=620, cursor="hand2")
+        title.pack(side="left", fill="x", expand=True)
+        pct = make_label(head, text, font=F["small_bold"], fg=color, cursor="hand2")
+        pct.pack(side="right", padx=(10, 0))
+        clickable = [row, inner, head, title, pct, chevron]
+        if note:
+            hint = make_label(inner, note, font=F["tiny"], fg=C["accent"], anchor="w",
+                              cursor="hand2")
+            hint.pack(anchor="w")
+            clickable.append(hint)
+        if value is not None:
+            bar = ctk.CTkProgressBar(inner, height=6, width=40, corner_radius=3,
+                                     fg_color=C["card_hi"], progress_color=color)
+            bar.pack(fill="x", pady=(6, 0))
+            bar.set(value / 100.0)
+        children = transparent_frame(wrap)
+
+        def toggle(_event=None):
+            if key in self.expanded:
+                self.expanded.discard(key)
+                for child in children.winfo_children():
+                    child.destroy()
+                children.pack_forget()
+                chevron.paint(C["muted"], "chevron_down")
+            else:
+                self.expanded.add(key)
+                open_children()
+
+        def open_children():
+            children.pack(fill="x")
+            fill(children)
+            chevron.paint(C["muted"], "chevron_up")
+
+        bind_click(clickable, toggle)
+        if key in self.expanded:
+            open_children()
+
+    def _leaf(self, parent, label, value, count, on_practice):
+        color, text = self._value_widgets(parent, value)
+        row = ctk.CTkFrame(parent, fg_color=C["card"], corner_radius=10,
+                           border_width=1, border_color=C["border"])
+        row.pack(fill="x", pady=(6, 0), padx=(44, 0))
+        marker = ctk.CTkFrame(row, fg_color=color, width=4, height=12, corner_radius=2)
+        marker.pack(side="left", fill="y", padx=(10, 0), pady=9)
+        if value is not None:
+            NeoButton(row, PRACTICE_BUTTON, on_practice, kind="pill", height=30,
+                      font=F["small_bold"]).pack(side="right", padx=10, pady=6)
+        inner = transparent_frame(row)
+        inner.pack(side="left", fill="x", expand=True, padx=(10, 6), pady=8)
+        head = transparent_frame(inner)
+        head.pack(fill="x")
+        make_label(head, label, font=F["small"], fg=C["text_soft"], anchor="w",
+                   justify="left", wraplength=560).pack(side="left", fill="x", expand=True)
+        make_label(head, text, font=F["small_bold"], fg=color).pack(side="right",
+                                                                     padx=(10, 0))
+        if value is not None:
+            bar = ctk.CTkProgressBar(inner, height=6, width=40, corner_radius=3,
+                                     fg_color=C["card_hi"], progress_color=color)
+            bar.pack(fill="x", pady=(6, 0))
+            bar.set(value / 100.0)
+            make_label(inner, frp.count_text(count), font=F["tiny"], fg=C["muted"],
+                       anchor="w").pack(anchor="w", pady=(4, 0))
 
 
 def _points(value):
@@ -3939,6 +4110,12 @@ class ProgressView(View):
         self.lbl_days = make_label(day_card.body, "", font=F["small"], fg=C["text_dim"])
         self.lbl_days.pack(anchor="w", pady=(6, 0))
 
+        # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan). Die Karte wird erst
+        # nach dem ersten Zeichnen der Seite in diesen Platz gebaut (_fill_coverage)
+        self.coverage_slot = transparent_frame(self.content)
+        self.coverage_slot.pack(fill="x", pady=(14, 0))
+        self.coverage_card = None
+
         chart_card = Card(self.content, title="Ergebnisse im Zeitverlauf",
                           subtitle="Erfolgsquote je Session")
         chart_card.pack(fill="x", pady=(14, 0))
@@ -4013,7 +4190,9 @@ class ProgressView(View):
         if stamp is None:
             return None
         goal = learning_settings()
-        return (stamp, datetime.date.today(), goal["ziel_an"], goal["ziel_anzahl"])
+        plan = frp.load_rp_settings()
+        return (stamp, datetime.date.today(), goal["ziel_an"], goal["ziel_anzahl"],
+                tuple(sorted(plan.items())))
 
     def refresh(self):
         results = self.db.get_all_results()
@@ -4074,6 +4253,23 @@ class ProgressView(View):
                        anchor="w").pack(anchor="w", pady=(12, 0))
             weak_topic_rows(self.weak_box, weak, self.app.practice_topic)
         self._paint_days()
+        # Ab 0.55: nur neu berechnen, wenn sich Antworten oder Einstellungen
+        # geaendert haben - und erst nach dem Zeichnen der Seite, damit der
+        # Wechsel zum Fortschritt so schnell bleibt wie in 0.54
+        plan = frp.load_rp_settings()
+        key = frp.coverage_key(self.db, plan)
+        if key is None or key != getattr(self, "_coverage_key", None):
+            self._coverage_key = key
+            self.after(50, lambda: self._fill_coverage(plan))
+
+    def _fill_coverage(self, plan):
+        try:
+            if self.coverage_card is None:
+                self.coverage_card = CoverageCard(self.coverage_slot, self.app)
+                self.coverage_card.pack(fill="x")
+            self.coverage_card.set_coverage(frp.Coverage(StatusBook(self.db), plan))
+        except tk.TclError:   # Fenster inzwischen geschlossen
+            pass
 
     def _paint_days(self):
         """Diagramm "Aufgaben pro Tag" aus den schon geladenen Tageswerten."""
@@ -4236,6 +4432,50 @@ class SettingsView(View):
                    "erscheint als Hinweis, solange das Programm geöffnet ist.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+
+        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
+        plan = Card(self.content, title=frp.OPTIONS_TITLE, accent=C["purple"],
+                    subtitle="nur für dieses Gerät")
+        plan.pack(fill="x", pady=(14, 0))
+        make_label(plan.body, frp.OPTIONS_SUBTITLE, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(0, 10))
+        values = frp.load_rp_settings()
+        self.rp_vars = {}
+        switches = [(frp.SECTION_SETTING[section], frp.SECTION_OPTION_TEXT[section])
+                    for section in frp.OPTIONAL_SECTIONS]
+        switches.append(("rp_gewichtung", frp.WEIGHT_OPTION_TEXT))
+        for key, text in switches:
+            var = self.rp_vars[key] = tk.BooleanVar(value=values[key])
+            ctk.CTkSwitch(plan.body, text=text, variable=var,
+                          command=lambda k=key: self._save_rp(k),
+                          font=F["small"], text_color=C["text_dim"],
+                          fg_color=C["card_alt"], progress_color=C["violet"],
+                          button_color=C["text"], button_hover_color="#FFFFFF"
+                          ).pack(anchor="w", pady=(0, 10))
+        make_label(plan.body, frp.WEIGHT_OPTION_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(0, 12))
+        row = transparent_frame(plan.body)
+        row.pack(anchor="w")
+        make_label(row, frp.FIELD_OPTION_TEXT, font=F["small"],
+                   fg=C["text_dim"]).pack(side="left", padx=(0, 10))
+        self.rp_field_names = dict(frp.field_options())
+        self.rp_field_menu = option_menu(
+            row, [label for _value, label in frp.field_options()],
+            command=lambda _v: self._save_rp("rp_lernfeld"), width=110)
+        self.rp_field_menu.set(self.rp_field_names[values["rp_lernfeld"]])
+        self.rp_field_menu.pack(side="left")
+        self.rp_dates = {}
+        for key, text in (("rp_termin_ap1", frp.AP1_DATE_TEXT),
+                          ("rp_termin_ap2", frp.AP2_DATE_TEXT)):
+            make_label(row, text, font=F["small"],
+                       fg=C["text_dim"]).pack(side="left", padx=(28, 10))
+            entry = self.rp_dates[key] = EntryBox(row, width=11,
+                                                   value=frp.date_text(values[key]))
+            entry.pack(side="left")
+            entry.bind("<FocusOut>", lambda _e, k=key: self._save_rp(k))
+            entry.bind("<Return>", lambda _e, k=key: self._save_rp(k))
+        self.lbl_rp = make_label(plan.body, "", font=F["tiny"], fg=C["red"],
+                                 justify="left", anchor="w")
 
         sync = Card(self.content, title="Abgleich PC und Handy", accent=C["accent"],
                     subtitle="über ein privates GitHub-Repository")
@@ -4415,6 +4655,27 @@ class SettingsView(View):
             save_learning_settings(erinnerung_zeit=value)
         else:
             save_learning_settings(**{key: bool(self.goal_vars[key].get())})
+
+    def _save_rp(self, key):
+        """Rahmenplan-Einstellung speichern (ab 0.55)."""
+        if key == "rp_lernfeld":
+            label = self.rp_field_menu.get()
+            value = next((value for value, name in self.rp_field_names.items()
+                          if name == label), "")
+            frp.save_rp_settings(rp_lernfeld=value)
+        elif key in self.rp_dates:
+            entry = self.rp_dates[key]
+            text = entry.get().strip()
+            day = frp.parse_date(text)
+            if text and day is None:
+                self.lbl_rp.configure(text=frp.DATE_INVALID)
+                self.lbl_rp.pack(anchor="w", pady=(8, 0))
+                return
+            self.lbl_rp.pack_forget()
+            frp.save_rp_settings(**{key: day.isoformat() if day else ""})
+            entry.set(frp.date_text(day) if day else "")
+        else:
+            frp.save_rp_settings(**{key: bool(self.rp_vars[key].get())})
 
     def _toggle_auto(self):
         settings = fisi_update.load_settings()
@@ -5135,6 +5396,9 @@ class FISIApp:
 
         self.updater = UpdateController(self)
         self.sync = SyncController(self)
+        # Zuordnung Lerninhalt -> Rahmenplan-Punkt im Hintergrund vorberechnen
+        # (ab 0.55), damit Fortschritt beim ersten Oeffnen nicht wartet
+        root.after(1500, frp.warm_up)
         # Im automatischen Starttest (FISI_SELFTEST) nicht ins Netz gehen
         if not os.environ.get("FISI_SELFTEST"):
             root.after(1500, self.sync.auto_start)
@@ -5476,6 +5740,16 @@ class FISIApp:
         (fisi_lernen.topic_practice_parts)."""
         parts = topic_practice_parts(StatusBook(self.db), practice_topics(name),
                                      rng=random.Random())
+        if not parts:
+            messagebox.showinfo(PRACTICE_BUTTON, PRACTICE_NONE)
+            return
+        self._practice_part(parts)
+
+    def practice_point(self, point_id):
+        """"Jetzt ueben" zu einem Rahmenplan-Punkt (ab 0.55): wie bei einem
+        Thema, nur mit den Inhalten dieses Punktes."""
+        parts = frp.point_practice_parts(StatusBook(self.db), point_id,
+                                         rng=random.Random())
         if not parts:
             messagebox.showinfo(PRACTICE_BUTTON, PRACTICE_NONE)
             return

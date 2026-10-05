@@ -44,13 +44,16 @@ EXAMS = [
     {"art": AP1, "kurz": "AP1", "minuten": 90, "quelle": "ap1",
      "name": "AP1 · Einrichten eines IT-gestützten Arbeitsplatzes",
      "themen": [["Rechnertechnik & Zahlensysteme"], ["Rechnernetze Grundlagen"],
-                ["Datenschutz & Sicherheit"], ["Projektplanung"]]},
+                ["Datenschutz & Sicherheit"],
+                # ab 0.55: Arbeitsplatz einrichten (LF 2, § 9 Abs. 2) im selben Platz
+                ["Projektplanung", "Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe"]]},
     {"art": KONZEPTION, "kurz": "Konzeption", "minuten": 90, "quelle": "ap2",
      "name": "AP2 · Konzeption und Administration von IT-Systemen",
-     # vier verschiedene der fuenf Themen, zufaellig
-     "themen": "4aus5",
+     # vier verschiedene Themen aus dem Pool, zufaellig (ab 0.55 sieben
+     # Themen: Systemadministration und Automatisierung nach § 21)
+     "themen": "4ausPool",
      "pool": ["Storage & RAID", "Virtualisierung", "IT-Sicherheit", "Projektmanagement",
-              "Wirtschaft & Beratung"]},
+              "Wirtschaft & Beratung", "Systemadministration", "Automatisierung & Skripte"]},
     {"art": NETZWERKE, "kurz": "Netzwerke", "minuten": 90, "quelle": "ap2",
      "name": "AP2 · Analyse und Entwicklung von Netzwerken",
      "themen": [["Subnetting & Routing"], ["Subnetting & Routing"], ["Netzwerkdesign"],
@@ -209,7 +212,7 @@ def new_exam(art, history=(), seed=None, now=None):
             state["optionen"][question] = options
         return state
     themes = exam["themen"]
-    if themes == "4aus5":
+    if themes == "4ausPool":
         themes = [[theme] for theme in rng.sample(exam["pool"], 4)]
     tasks, taken = [], set()
     for choice in themes:

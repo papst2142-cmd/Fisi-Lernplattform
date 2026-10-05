@@ -62,6 +62,8 @@ from fisi_lernen import (  # noqa: E402
     topic_practice_parts, trainer_round, trainer_summary,
 )
 import fisi_projekt as fpj  # noqa: E402
+import fisi_rahmenplan as frp  # noqa: E402
+from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 import spiel  # noqa: E402
 import ui  # noqa: E402
@@ -69,7 +71,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.54"
+APP_VERSION = "0.55"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -614,7 +616,8 @@ class CardsScreen(Screen):
                 and (topic == FILTER_ALL or card.get("thema") == topic)]
         keys = [card["q"] for card in base]
         if status == FILTER_ALL:
-            keys = self.book.preferred_order(SRC_CARD, keys)
+            keys = self.book.preferred_order(SRC_CARD, keys,
+                                               fresh_order=fresh_order(SRC_CARD))
         else:
             keys = [key for key in keys if self.book.status(SRC_CARD, key)[0] == status]
         self.filtered = [self.by_question[key] for key in keys]
@@ -896,7 +899,8 @@ class QuizScreen(Screen):
         if self.status_pills.get() == FILTER_ALL:
             # Unbearbeitete Fragen zuerst, dazwischen Wiederholungen
             keys = self.book.preferred_order(SRC_QUIZ, [q["q"] for q in self.pool],
-                                             rng=random.Random())
+                                             rng=random.Random(),
+                                             fresh_order=fresh_order(SRC_QUIZ))
             by_question = {q["q"]: q for q in self.pool}
             self.session = [by_question[key] for key in keys[:count]]
             random.shuffle(self.session)
@@ -1089,6 +1093,153 @@ def weak_topic_rows(names, on_practice):
         ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
         bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=10,
         padding=ft.Padding.symmetric(horizontal=10, vertical=6)) for name in names]
+
+
+class CoverageCard(ui.Card):
+    """Karte "Rahmenplan-Abdeckung" im Fortschritt (ab 0.55, wie am PC):
+    drei Ebenen zum Aufklappen, Zeilen erst beim Aufklappen gebaut."""
+
+    def __init__(self, app):
+        self.app = app
+        self.coverage = None
+        self.expanded = set()
+        self.view_pills = ui.PillGroup(frp.COVERAGE_VIEWS, on_change=lambda _v: self.paint())
+        self.filter_pills = ui.PillGroup(frp.COVERAGE_FILTERS,
+                                         on_change=lambda _v: self.paint())
+        self.lbl_hint = ui.text("", size=13, color=C["text_dim"])
+        self.rows = ft.Column(spacing=8, tight=True)
+        super().__init__(frp.COVERAGE_TITLE, [self.view_pills, self.filter_pills,
+                                              self.lbl_hint, self.rows],
+                         accent=C["purple"], subtitle=frp.COVERAGE_SUBTITLE)
+
+    def set_coverage(self, coverage):
+        self.coverage = coverage
+        self.paint()
+
+    def paint(self):
+        self.rows.controls = []
+        if self.coverage is None:
+            return
+        plan = self.view_pills.get() == frp.VIEW_PLAN
+        self.filter_pills.visible = plan
+        self.lbl_hint.value = frp.NO_ANSWERS
+        self.lbl_hint.visible = not self.coverage.any_answers
+        if plan:
+            tree = self.coverage.sections(self.filter_pills.get())
+            if not tree:
+                self.rows.controls.append(ui.text(frp.FILTER_EMPTY, size=13,
+                                                  color=C["muted"]))
+            for section in tree:
+                self.rows.controls.append(self._branch(
+                    "s:" + section["id"], frp.section_label(section["id"]), section["wert"],
+                    0, lambda item=section: self._positions(item)))
+        else:
+            for year in self.coverage.fields():
+                value = frp._weighted_mean([(field["wert"], field["stunden"])
+                                            for field in year["felder"]])
+                self.rows.controls.append(self._branch(
+                    "j:%d" % year["jahr"], frp.year_label(year["jahr"]), value, 0,
+                    lambda item=year: self._fields(item)))
+
+    def _positions(self, section):
+        return [self._branch("p:" + position["id"],
+                             "%s %s" % (position["id"], position["titel"]), position["wert"],
+                             1, lambda item=position: self._points(item))
+                for position in section["positionen"]]
+
+    def _points(self, position):
+        return [self._leaf(frp.point_label(point["id"]), point["wert"], point["anzahl"],
+                           lambda _e, p=point["id"]: self.app.practice_point(p))
+                for point in position["punkte"]]
+
+    def _fields(self, year):
+        return [self._branch("f:" + field["id"], frp.field_label(field), field["wert"], 1,
+                             lambda item=field: self._topics(item),
+                             note=frp.CURRENT_FIELD_TEXT if field["aktuell"] else None)
+                for field in year["felder"]]
+
+    def _topics(self, field):
+        if not field["themen"]:
+            return [ft.Container(ui.text(frp.NO_CONTENT, size=13, color=C["muted"]),
+                                 padding=ft.Padding.only(left=24))]
+        return [self._leaf(topic["titel"], topic["wert"], topic["anzahl"],
+                           lambda _e, t=topic["id"]: self.app.practice_topic(t))
+                for topic in field["themen"]]
+
+    @staticmethod
+    def _color(value):
+        return C[frp.LEVEL_COLOR_KEY[frp.level(value)]] if value is not None else C["muted"]
+
+    @staticmethod
+    def _bar(value, color):
+        share = int(round(max(0.0, min(100.0, value)) * 10))
+        return ft.Container(
+            content=ft.Row([ft.Container(height=6, border_radius=3, bgcolor=color,
+                                         expand=share, visible=share > 0),
+                            ft.Container(height=6, expand=1000 - share,
+                                         visible=share < 1000)], spacing=0),
+            bgcolor=C["card_hi"], border_radius=3, height=6)
+
+    def _branch(self, key, caption, value, depth, fill, note=None):
+        color = self._color(value)
+        text = frp.percent_text(value) if value is not None else frp.NO_CONTENT
+        chevron = ft.Icon(ft.Icons.EXPAND_LESS if key in self.expanded
+                          else ft.Icons.EXPAND_MORE, size=20, color=C["muted"])
+        head = [ft.Row([ui.text(caption, size=13, weight=ft.FontWeight.BOLD, expand=True),
+                        ui.text(text, size=13, weight=ft.FontWeight.BOLD, color=color),
+                        chevron], spacing=8,
+                       vertical_alignment=ft.CrossAxisAlignment.CENTER)]
+        if note:
+            head.append(ui.text(note, size=11, color=C["accent"]))
+        if value is not None:
+            head.append(self._bar(value, color))
+        children = ft.Column(spacing=8, tight=True, visible=key in self.expanded)
+        if key in self.expanded:
+            children.controls = fill()
+
+        def toggle(_event):
+            if key in self.expanded:
+                self.expanded.discard(key)
+                children.controls = []
+                children.visible = False
+                chevron.name = ft.Icons.EXPAND_MORE
+            else:
+                self.expanded.add(key)
+                children.controls = fill()
+                children.visible = True
+                chevron.name = ft.Icons.EXPAND_LESS
+
+        row = ft.Container(
+            content=ft.Row([
+                ft.Container(width=4, height=28, border_radius=2, bgcolor=color),
+                ft.Column(head, spacing=6, tight=True, expand=True),
+            ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.START),
+            bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
+            padding=ft.Padding.symmetric(horizontal=10, vertical=10), ink=True,
+            on_click=toggle)
+        return ft.Container(content=ft.Column([row, children], spacing=8, tight=True),
+                            padding=ft.Padding.only(left=12 * depth))
+
+    def _leaf(self, caption, value, count, on_practice):
+        color = self._color(value)
+        text = frp.percent_text(value) if value is not None else frp.NO_CONTENT
+        body = [ft.Row([ui.text(caption, size=13, color=C["text_soft"], expand=True),
+                        ui.text(text, size=13, weight=ft.FontWeight.BOLD, color=color)],
+                       spacing=8)]
+        if value is not None:
+            body.append(self._bar(value, color))
+            body.append(ft.Row([
+                ui.text(frp.count_text(count), size=11, color=C["muted"], expand=True),
+                ui.GradientButton(PRACTICE_BUTTON, on_practice, kind="accent", height=34)],
+                vertical_alignment=ft.CrossAxisAlignment.CENTER))
+        return ft.Container(
+            content=ft.Row([
+                ft.Container(width=4, height=28, border_radius=2, bgcolor=color),
+                ft.Column(body, spacing=6, tight=True, expand=True),
+            ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.START),
+            bgcolor=C["card"], border=ft.Border.all(1, C["border"]), border_radius=10,
+            padding=ft.Padding.symmetric(horizontal=10, vertical=8),
+            margin=ft.Margin.only(left=24))
 
 
 class ExamPanel(ft.Column):
@@ -2748,6 +2899,9 @@ class ProgressScreen(Screen):
         self.day_chart = ui.LineChart(height=180)
         self.lbl_days = ui.text("", size=12, color=C["text_dim"])
         self.weak_box = ft.Column(spacing=6, tight=True)
+        # Ab 0.55: Rahmenplan-Abdeckung (fisi_rahmenplan, wie am PC)
+        self.coverage_card = CoverageCard(self.app)
+        self._coverage_key = None
         return screen_list([
             ft.Row([stat("tests", "Sessions", C["accent"]),
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
@@ -2755,6 +2909,7 @@ class ProgressScreen(Screen):
                     stat("streak", "Lernserie", C["green"])], spacing=12),
             ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days],
                     accent=C["green"], subtitle=DAY_CHART_SUBTITLE),
+            self.coverage_card,
             ui.Card("Ergebnisse im Zeitverlauf", [self.chart],
                     subtitle="Erfolgsquote je Session"),
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
@@ -2837,6 +2992,12 @@ class ProgressScreen(Screen):
         self.weak_box.controls = ([ui.text(title, size=13, color=C["red"],
                                            weight=ft.FontWeight.BOLD)] +
                                   weak_topic_rows(weak, self.app.practice_topic)) if weak else []
+        # Ab 0.55: nur neu berechnen, wenn sich Antworten oder Einstellungen geaendert haben
+        plan = frp.load_rp_settings()
+        key = frp.coverage_key(self.db, plan)
+        if key is None or key != self._coverage_key:
+            self.coverage_card.set_coverage(frp.Coverage(StatusBook(self.db), plan))
+            self._coverage_key = key
 
     def _paint_days(self):
         """Diagramm "Aufgaben pro Tag" aus den schon geladenen Tageswerten."""
@@ -2992,8 +3153,43 @@ class SettingsScreen(Screen):
                     size=11, color=C["muted"]),
         ], accent=C["green"], subtitle="nur für dieses Gerät")
 
+        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
+        plan_values = frp.load_rp_settings()
+        switches = [self._switch(frp.SECTION_OPTION_TEXT[section],
+                                 plan_values[frp.SECTION_SETTING[section]],
+                                 lambda e, k=frp.SECTION_SETTING[section]:
+                                 frp.save_rp_settings(**{k: bool(e.control.value)}))
+                    for section in frp.OPTIONAL_SECTIONS]
+        switches.append(self._switch(frp.WEIGHT_OPTION_TEXT, plan_values["rp_gewichtung"],
+                                     lambda e: frp.save_rp_settings(
+                                         rp_gewichtung=bool(e.control.value))))
+        self.rp_field = ft.Dropdown(
+            options=[ft.dropdown.Option(key=value or "aus", text=caption)
+                     for value, caption in frp.field_options()],
+            value=plan_values["rp_lernfeld"] or "aus", on_select=self._rp_field_changed,
+            bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
+            border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
+            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]), expand=True)
+        self.lbl_rp = ui.text(frp.DATE_INVALID, size=11, color=C["red"])
+        self.lbl_rp.visible = False
+        self.rp_dates = {key: ui.entry(frp.date_text(plan_values[key]), hint=frp.DATE_HINT,
+                                       keyboard=ft.KeyboardType.DATETIME,
+                                       on_change=lambda e, k=key: self._rp_date_changed(k, e))
+                         for key in ("rp_termin_ap1", "rp_termin_ap2")}
+        plan = ui.Card(frp.OPTIONS_TITLE, [
+            ui.text(frp.OPTIONS_SUBTITLE, size=13, color=C["text_dim"])] + switches + [
+            ui.text(frp.WEIGHT_OPTION_HINT, size=11, color=C["muted"]),
+            ui.text(frp.FIELD_OPTION_TEXT, size=13, color=C["text_dim"]),
+            ft.Row([self.rp_field]),
+            ft.Row([ui.text(frp.AP1_DATE_TEXT, size=13, color=C["text_dim"], expand=True),
+                    ft.Container(content=self.rp_dates["rp_termin_ap1"], width=150)]),
+            ft.Row([ui.text(frp.AP2_DATE_TEXT, size=13, color=C["text_dim"], expand=True),
+                    ft.Container(content=self.rp_dates["rp_termin_ap2"], width=150)]),
+            self.lbl_rp,
+        ], accent=C["purple"], subtitle="nur für dieses Gerät")
+
         return screen_list([
-            updates, colors, goal, sync, backup, report,
+            updates, colors, goal, plan, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Daten zurücksetzen", [
@@ -3095,6 +3291,19 @@ class SettingsScreen(Screen):
         value = parse_time(event.control.value or "")
         if value is not None:
             save_learning_settings(erinnerung_zeit=value)
+
+    @staticmethod
+    def _rp_field_changed(event):
+        value = event.control.value
+        frp.save_rp_settings(rp_lernfeld="" if value in (None, "aus") else value)
+
+    def _rp_date_changed(self, key, event):
+        """Termin speichern, sobald ein gueltiges Datum dasteht (ab 0.55)."""
+        text = (event.control.value or "").strip()
+        day = frp.parse_date(text)
+        self.lbl_rp.visible = bool(text) and day is None
+        if day is not None or not text:
+            frp.save_rp_settings(**{key: day.isoformat() if day else ""})
 
     def _toggle_auto(self, event):
         settings = fisi_update.load_settings()
@@ -3903,6 +4112,15 @@ class FISIMobileApp:
             return
         self._practice_part(parts)
 
+    def practice_point(self, point_id):
+        """"Jetzt ueben" zu einem Rahmenplan-Punkt (ab 0.55, wie am PC)."""
+        parts = frp.point_practice_parts(StatusBook(self.db), point_id,
+                                         rng=random.Random())
+        if not parts:
+            self.toast(PRACTICE_NONE)
+            return
+        self._practice_part(parts)
+
     def _practice_part(self, parts):
         """Gemischte Runde (ab 0.54, wie am PC): erst die Quizfragen, nach
         ihrem Ergebnis auf Rueckfrage die Karteikarten zum selben Thema."""
@@ -4044,6 +4262,8 @@ def main(page: ft.Page):
     install_error_log(APP_VERSION)
     app = FISIMobileApp(page)
     page.data = app
+    # Rahmenplan-Zuordnung im Hintergrund vorberechnen (ab 0.55)
+    frp.warm_up()
     if os.environ.get("FISI_SELFTEST"):
         return
     app.sync.auto_start()

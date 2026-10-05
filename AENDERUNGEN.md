@@ -4,6 +4,45 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.55
+
+Lernen nach dem Ausbildungsrahmenplan: Abdeckung sehen, gezielt üben und
+384 neue Inhalte.
+
+- **Rahmenplan-Abdeckung:** Neue Karte im Fortschritt direkt unter „Aufgaben
+  pro Tag“, auf PC und Handy gleich. Sie zeigt alle 144 Punkte des
+  Ausbildungsrahmenplans, aufklappbar nach Abschnitt, Position und Punkt, mit
+  Anzahl der Inhalte und „Jetzt üben“. Filter: Alle, AP1, Konzeption,
+  Netzwerke, Projekt, WiSo. Die Ampel (rot unter 50 %, orange bis 79 %, grün
+  ab 80 %) ist in Hell und Dunkel gut lesbar.
+- **Lernfeld-Ansicht:** Dieselbe Karte zeigt auf Wunsch Jahr, Lernfeld und
+  Lernthema. Dein aktuelles Lernfeld steht oben und ist markiert.
+- **Optionen „Rahmenplan“:** Abschnitte B, D und E einblenden, Übungsauswahl
+  gewichten, aktuelles Lernfeld sowie die Termine für AP1 und AP2. Die
+  Einstellungen gelten nur für das jeweilige Gerät.
+- **Gewichtung:** Neue, noch nie bearbeitete Aufgaben kommen nach Zeitrichtwert,
+  Lernfeld-Stunden und Nähe zur Prüfung an die Reihe. Wiederholungstermine
+  bleiben unverändert. Ist der Schalter aus, gilt die Reihenfolge von 0.54.
+- **384 neue Inhalte:** 165 Karteikarten, 174 Quizfragen, 15 AP1-Szenarien
+  und 30 AP2-Szenarien, alle angehängt. Dein Lernstand bleibt erhalten.
+- **Neues AP1-Thema:** „Arbeitsplatz einrichten: Bedarf, Beschaffung, Übergabe“.
+- **Zwei neue AP2-Themen:** „Systemadministration“ und „Automatisierung &
+  Skripte“.
+- **Datenbanken:** 17 ältere SQL-Karten und -Fragen gehören jetzt zum
+  Fachbereich „Datenbanken & SQL“. Deine Antworten dazu bleiben erhalten.
+- **Bestandsschutz im Spiel:** Neue Inhalte zählen für den Wissensstand im
+  Spiel erst, wenn du sie bearbeitet hast. So wird kein Auftrag durch das
+  Update wieder gesperrt. Die Rahmenplan-Abdeckung zählt alle Inhalte.
+- **Problem melden:** Benutzernamen in Ordnerpfaden werden im Bericht und im
+  Fehlerprotokoll unkenntlich gemacht.
+- **Spiel:** Bei „Arbeitsspeicher für die Leitstelle bestellen“ zählen
+  einzelne RAM-Module jetzt zusammen. Vier 8-GB-Module für zwei PCs sind
+  richtig, und beim Zusammenbau lassen sich zwei Module zusammen einsetzen.
+- **Seitenleiste am PC:** „Inhalte bearbeitet“ und die Zahl überlappen nicht
+  mehr. Bei großen Zahlen rutscht die Zahl in eine eigene Zeile.
+- **Wichtig:** Bring PC und Handy beide auf 0.55. Geräte mit 0.54 kennen die
+  neuen Inhalte noch nicht.
+
 ## 0.54
 
 Möbel frei aufstellen, Schwächen direkt üben und vier neue Werkzeuge.

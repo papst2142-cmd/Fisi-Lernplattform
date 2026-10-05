@@ -28,14 +28,15 @@ import platform
 import re
 import sys
 
-from fisi_core import (APP_NAME, ERROR_LOG_MAX, EVENT_TABLES, GAME_TABLES, error_log_path,
-                       plural)
+from fisi_core import (APP_NAME, ERROR_LOG_MAX, EVENT_TABLES, GAME_TABLES, anonymize_paths,
+                       error_log_path, plural)
 
 # Texte (PC und Handy gleich)
 TITLE = "Problem melden"
 SUBTITLE = "Angaben für die Fehlersuche"
 HELP = ("Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. "
-        "Zugangsschlüssel und Passwörter werden entfernt, deine Antworten und "
+        "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
+        "entfernt, deine Antworten und "
         "Projekttexte stehen nicht darin. Kopiere den Bericht oder speichere ihn "
         "als Datei und schicke ihn mit deiner Beschreibung des Problems.")
 BTN_COPY = "Kopieren"
@@ -189,4 +190,6 @@ def build_report(db=None, version="", geraet="", settings=None, log_path=None, n
     lines = report_lines(db, version, geraet, settings, now)
     log = read_log(log_path)
     lines += ["", "--- fehler.log ---", log or NO_LOG]
-    return scrub("\n".join(lines), secrets_of(settings))
+    # ab 0.55: Benutzerpfade durch %APPDATA%, ~ bzw. "…" ersetzt (auch in
+    # Eintraegen, die eine aeltere Version in fehler.log geschrieben hat)
+    return anonymize_paths(scrub("\n".join(lines), secrets_of(settings)))

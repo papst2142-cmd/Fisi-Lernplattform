@@ -9386,8 +9386,8 @@
     ]
   },
   {
-    "cat": "systeme",
-    "thema": "programmierung",
+    "cat": "datenbanken",
+    "thema": "modellierung",
     "q": "Was ist ein Primärschlüssel in einer relationalen Datenbank?",
     "a": "Ein Feld, das jeden Datensatz einer Tabelle eindeutig kennzeichnet",
     "a_full": "Der Primärschlüssel darf nicht leer sein und sich nicht wiederholen, typisch ist eine fortlaufende ID wie kunden_id. Andere Tabellen verweisen über Fremdschlüssel auf ihn. So lassen sich Datensätze verknüpfen, ohne Daten doppelt zu speichern.",
@@ -9399,8 +9399,8 @@
     ]
   },
   {
-    "cat": "systeme",
-    "thema": "programmierung",
+    "cat": "datenbanken",
+    "thema": "modellierung",
     "q": "Was ist das Ziel der Normalisierung einer Datenbank?",
     "a": "Redundanzen und daraus folgende Widersprüche (Anomalien) zu vermeiden",
     "a_full": "Bei der Normalisierung werden Daten schrittweise auf mehrere Tabellen verteilt. Die 1. Normalform verlangt atomare Werte, die 2. und 3. Normalform entfernen Abhängigkeiten, die zu doppelten Daten führen. Ändert sich z.B. eine Kundenadresse, muss sie dann nur an einer Stelle geändert werden.",
@@ -15704,8 +15704,8 @@
     ]
   },
   {
-    "cat": "systeme",
-    "thema": "programmierung",
+    "cat": "datenbanken",
+    "thema": "sql",
     "q": "Die Inventartabelle geraete hat die Spalten id, typ, standort und kaufdatum. Die Leitung möchte wissen, wie viele Geräte an jedem Standort stehen. Welche Abfrage passt?",
     "a": "SELECT standort, COUNT(*) FROM geraete GROUP BY standort;",
     "a_full": "GROUP BY fasst alle Zeilen mit demselben Standort zu einer Gruppe zusammen. COUNT(*) zählt die Zeilen jeder Gruppe. Jede Spalte in der Auswahl muss entweder gruppiert oder durch eine Aggregatfunktion ausgewertet sein.",
@@ -15717,8 +15717,8 @@
     ]
   },
   {
-    "cat": "systeme",
-    "thema": "programmierung",
+    "cat": "datenbanken",
+    "thema": "sql",
     "q": "Tabelle geraete (id, seriennr, mitarbeiter_id) und Tabelle mitarbeiter (id, name). Sie brauchen eine Liste Seriennummer mit Namen des Nutzers. Welche Abfrage liefert sie?",
     "a": "SELECT g.seriennr, m.name FROM geraete g JOIN mitarbeiter m ON g.mitarbeiter_id = m.id;",
     "a_full": "Der JOIN verbindet jede Zeile aus geraete mit der Zeile aus mitarbeiter, deren id zum Fremdschlüssel mitarbeiter_id passt. Die Kürzel g und m sparen Schreibarbeit. Geräte ohne Zuordnung fehlen bei diesem INNER JOIN, für sie bräuchte man einen LEFT JOIN.",
@@ -15730,8 +15730,8 @@
     ]
   },
   {
-    "cat": "systeme",
-    "thema": "programmierung",
+    "cat": "datenbanken",
+    "thema": "sql",
     "q": "Eine Logtabelle ereignisse hat die Spalten zeit, host, stufe und meldung. Sie wollen die 20 neuesten Einträge der Stufe ERROR vom Host srv-db01 sehen. Welche Abfrage passt?",
     "a": "SELECT * FROM ereignisse WHERE host = 'srv-db01' AND stufe = 'ERROR' ORDER BY zeit DESC LIMIT 20;",
     "a_full": "WHERE verknüpft beide Bedingungen mit AND, sodass nur passende Zeilen übrig bleiben. ORDER BY zeit DESC sortiert die neuesten zuerst, LIMIT 20 begrenzt die Ausgabe. In MS SQL Server schreibt man dafür SELECT TOP 20.",
@@ -18198,5 +18198,2841 @@
       "Konsistenz, Verfügbarkeit und Performance lassen sich beliebig verbinden",
       "Verteilte Datenbanken brauchen immer Caching, Archiv und Partitionen"
     ]
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Eine Versicherung beschafft 40 PCs für die Sachbearbeitung (Office, Browser, Fachanwendung im Netz). Welche Ausstattung ist angemessen?",
+    "a": "Mittelklasse-CPU, 16 GB RAM, NVMe-SSD, integrierte Grafik, kompaktes Gehäuse",
+    "a_full": "Bürosoftware braucht keine Höchstleistung, aber genug Arbeitsspeicher für viele offene Programme und eine schnelle SSD. Eine eigene Grafikkarte bringt hier keinen Nutzen und erhöht Preis und Stromverbrauch. Ein kompaktes Business-Gerät mit langer Ersatzteilversorgung ist wirtschaftlicher als ein Gaming- oder Workstation-PC.",
+    "options": [
+      "Workstation-CPU, 64 GB ECC-RAM, zwei SSDs im RAID und Profi-Grafikkarte",
+      "Einstiegs-CPU, 4 GB RAM, Festplatte mit 5.400 U/min und integrierte Grafik",
+      "Mittelklasse-CPU, 16 GB RAM, NVMe-SSD, integrierte Grafik, kompaktes Gehäuse",
+      "Gaming-CPU, 32 GB RAM, NVMe-SSD und leistungsstarke Spiele-Grafikkarte"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "virtualisierung",
+    "rahmenplan": [
+      "A3a",
+      "C1a"
+    ],
+    "q": "Ein Callcenter mit 60 gleichartigen Arbeitsplätzen nutzt nur ein Webportal und eine Telefonie-Software. Wann sind Thin Clients hier eine gute Wahl?",
+    "a": "Wenn die Anwendungen zentral auf einer VDI- oder RDS-Umgebung laufen und das Netz zuverlässig ist",
+    "a_full": "Thin Clients haben kaum lokale Rechenleistung und keine Nutzdaten auf dem Gerät. Die Anwendungen laufen zentral auf Servern (Terminalserver oder virtuelle Desktops). Das spart Strom, Verwaltungsaufwand und Ersatzteile, und gleiche Arbeitsplätze lassen sich zentral pflegen. Voraussetzung sind ausreichend dimensionierte Server und ein stabiles Netz, denn ohne Server kann am Thin Client niemand arbeiten.",
+    "options": [
+      "Wenn die Anwendungen zentral auf einer VDI- oder RDS-Umgebung laufen und das Netz zuverlässig ist",
+      "Wenn das Netz oft ausfällt und die Arbeit dann lokal weiterlaufen muss",
+      "Wenn jeder Mitarbeiter eigene Programme lokal installieren und offline arbeiten muss",
+      "Wenn an den Plätzen aufwendige 3D-Modelle ohne zentrale Grafikleistung entstehen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Ingenieurbüro fragt, was eine Workstation über die Grafikkarte hinaus von einem normalen Desktop-PC unterscheidet. Was nennen Sie?",
+    "a": "ECC-Speicher, viel ausbaubarer RAM, zertifizierte Komponenten und Treiber (ISV-Zertifizierung), längerer Support",
+    "a_full": "Workstations sind für Dauerlast und große Datenmengen gebaut. Sie unterstützen ECC-Arbeitsspeicher, der Speicherfehler erkennt und korrigiert, und bieten viele Speicherplätze. Hersteller von CAD- und Simulationssoftware zertifizieren bestimmte Modelle (ISV-Zertifizierung), sodass der Support bei Problemen gesichert ist. Dafür kosten sie deutlich mehr als ein Büro-PC.",
+    "options": [
+      "ECC-Speicher, viel ausbaubarer RAM, zertifizierte Komponenten und Treiber (ISV-Zertifizierung), längerer Support",
+      "Ein höheres Gehäuse, mehr Gehäuselüfter und eine farbige RGB-Beleuchtung",
+      "Eine besonders kleine Bauform mit passiver Kühlung und geringem Verbrauch",
+      "Ein vorinstalliertes Serverbetriebssystem und ein fest eingebautes RAID 5"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Für das Tiefkühllager eines Logistikers sollen mobile Datenerfassungsgeräte beschafft werden. Im Datenblatt steht IP65. Was sagt das aus?",
+    "a": "Staubdicht (6) und geschützt gegen Strahlwasser aus beliebiger Richtung (5)",
+    "a_full": "Die IP-Schutzart nach EN 60529 hat zwei Ziffern. Die erste beschreibt den Schutz gegen Fremdkörper und Staub (6 = staubdicht), die zweite den Schutz gegen Wasser (5 = Strahlwasser). Für Kälte, Stürze und Kondenswasser im Lager kommen weitere Angaben dazu, etwa der zulässige Temperaturbereich und Falltests. Robuste Geräte (rugged devices) kosten mehr, halten im rauen Einsatz aber deutlich länger.",
+    "options": [
+      "Zertifiziert für 65 Grad Celsius und für 6 Stunden Akkulaufzeit",
+      "Geschützt gegen Untertauchen bis 6 m und 5 Stürze aus Tischhöhe",
+      "Geschützt gegen Stöße mit 6 Joule und gegen Spritzwasser von oben",
+      "Staubdicht (6) und geschützt gegen Strahlwasser aus beliebiger Richtung (5)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Eine Steuerkanzlei mit zwölf Mitarbeitern braucht einen Server. Es gibt keinen Serverraum und kein Rack, das Gerät steht im Technikraum neben dem Büro. Welche Bauform passt?",
+    "a": "Ein Tower-Server",
+    "a_full": "Tower-Server stehen frei auf dem Boden, brauchen kein Rack und sind meist leiser als Rack-Server. Für kleine Firmen mit einem oder zwei Servern sind sie daher oft die wirtschaftlichste Lösung. Rack-Server lohnen sich, wenn mehrere Geräte zentral in einem 19-Zoll-Schrank stehen. Blade-Systeme mit gemeinsamem Chassis rechnen sich erst bei vielen Servern im Rechenzentrum.",
+    "options": [
+      "Ein 2-HE-Rack-Server ohne Rack auf dem Boden",
+      "Ein Tower-Server",
+      "Ein Blade-Chassis mit zwei Blade-Servern",
+      "Ein Mini-PC mit Desktop-Betriebssystem"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "storage",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Kunde mit 25 Mitarbeitern will nur ein NAS kaufen und darauf auch Benutzerkonten, Gruppenrichtlinien und die Warenwirtschaftsdatenbank betreiben. Was geben Sie zu bedenken?",
+    "a": "Ein NAS ist für Dateiablage und Backup gebaut, für Verzeichnisdienst und Datenbank ist ein Server besser",
+    "a_full": "Ein NAS stellt vor allem Freigaben per SMB oder NFS bereit und eignet sich gut als Datei- oder Sicherungsziel. Ein vollwertiges Active Directory mit Gruppenrichtlinien und eine Datenbank mit vielen gleichzeitigen Zugriffen brauchen Rechenleistung, RAM und eine vom Softwarehersteller unterstützte Plattform. Viele Warenwirtschaftshersteller geben nur bestimmte Serverbetriebssysteme frei.",
+    "options": [
+      "Ein NAS ist für alle Serverdienste gleich gut geeignet und immer günstiger",
+      "Ein NAS ist für Dateiablage und Backup gebaut, für Verzeichnisdienst und Datenbank ist ein Server besser",
+      "Ein NAS darf aus Lizenzgründen grundsätzlich keine Dateifreigaben anbieten",
+      "Ein NAS ersetzt jeden Server, wenn mindestens vier Festplatten verbaut sind"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Im Datenblatt eines Laserdruckers stehen „empfohlenes monatliches Druckvolumen 3.000 Seiten“ und „maximale Monatsleistung 50.000 Seiten“. Welcher Wert ist für die Auswahl entscheidend?",
+    "a": "Das empfohlene monatliche Druckvolumen",
+    "a_full": "Die maximale Monatsleistung (duty cycle) gibt an, was das Gerät im Ausnahmefall verkraftet, nicht im Dauerbetrieb. Für die Auswahl vergleicht man das tatsächliche Druckaufkommen mit dem empfohlenen Volumen. Liegt das Aufkommen dauerhaft darüber, verschleißt das Gerät schneller und die Kosten pro Seite steigen. Dann ist ein größeres Abteilungsgerät oder Multifunktionsgerät (MFP) sinnvoller.",
+    "options": [
+      "Die Größe des Papierfachs in Blatt",
+      "Das empfohlene monatliche Druckvolumen",
+      "Die Druckgeschwindigkeit in Seiten pro Minute",
+      "Die maximale Monatsleistung"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Eine ältere Fachanwendung nutzt nur einen einzigen Prozessorkern. Der Kunde schwankt zwischen einer CPU mit 8 Kernen und 5,0 GHz Turbo und einer mit 16 Kernen und 3,8 GHz. Was empfehlen Sie für diese Anwendung?",
+    "a": "Die CPU mit 8 Kernen und höherem Takt, weil die Einzelkernleistung zählt",
+    "a_full": "Ein Programm, das nur einen Thread nutzt, profitiert nicht von weiteren Kernen. Entscheidend ist dann die Leistung eines einzelnen Kerns (Single-Thread-Leistung), die von Takt und Architektur abhängt. Viele Kerne helfen bei parallelen Aufgaben wie Virtualisierung, Rendern oder Kompilieren. Bei gleicher Prozessorgeneration ist der höhere Takt hier ein guter Anhaltspunkt.",
+    "options": [
+      "Beide sind gleich schnell, weil nur die Größe des Caches eine Rolle spielt",
+      "Die CPU mit 8 Kernen und höherem Takt, weil die Einzelkernleistung zählt",
+      "Die CPU mit 16 Kernen, weil mehr Kerne jede Anwendung beschleunigen",
+      "Die CPU mit 16 Kernen, weil die Anwendung dann 16 Kerne gleichzeitig nutzt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Kollege vergleicht einen fünf Jahre alten Prozessor mit 3,6 GHz und einen aktuellen mit 3,2 GHz und hält den alten für schneller. Warum ist dieser Vergleich unzulässig?",
+    "a": "Weil die Arbeit pro Takt (IPC) je nach Architektur stark verschieden ist",
+    "a_full": "Die Taktfrequenz sagt nur, wie viele Takte pro Sekunde ablaufen. Wie viele Befehle pro Takt erledigt werden (Instructions per Cycle, IPC), hängt von der Architektur ab, etwa von Cache, Sprungvorhersage und Befehlssatzerweiterungen. Neuere Generationen schaffen oft deutlich mehr pro Takt. Für einen fairen Vergleich nutzt man Benchmarks mit ähnlicher Last wie im späteren Einsatz.",
+    "options": [
+      "Weil die Arbeit pro Takt (IPC) je nach Architektur stark verschieden ist",
+      "Weil ältere Prozessoren ihren Takt grundsätzlich doppelt angeben",
+      "Weil höhere Taktfrequenzen die Lebensdauer des Prozessors verkürzen",
+      "Weil die Taktfrequenz nur bei Grafikkarten eine Aussagekraft besitzt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Zwei Notebooks werden mit Benchmark-Punkten beworben. Worauf achten Sie, bevor Sie danach entscheiden?",
+    "a": "Ob der Benchmark der echten Arbeitslast ähnelt und unter gleichen Bedingungen gemessen wurde",
+    "a_full": "Synthetische Benchmarks messen oft nur einen Teil des Systems, etwa reine CPU- oder Grafikleistung. Werte hängen von Kühlung, Energieprofil, Treiberstand und Netzbetrieb ab und werden vom Hersteller gern unter Idealbedingungen ermittelt. Aussagekräftiger sind unabhängige Tests mit Anwendungsbenchmarks, die der geplanten Nutzung entsprechen, z. B. Office, Kompilieren oder Rendern.",
+    "options": [
+      "Dass die Punkte grundsätzlich mit der Anzahl der Kerne steigen",
+      "Dass nur der höchste jemals erreichte Wert des Herstellers zählt",
+      "Dass die Punktzahl ohne Netzteil im Akkubetrieb ermittelt wurde",
+      "Ob der Benchmark der echten Arbeitslast ähnelt und unter gleichen Bedingungen gemessen wurde"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "storage",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Für einen Datenbankserver mit vielen Schreibzugriffen vergleichen Sie eine Consumer-SSD und eine Enterprise-SSD gleicher Größe. Welche Angaben sind entscheidend?",
+    "a": "Schreibfestigkeit (TBW oder DWPD) und Schutz bei Stromausfall (power loss protection)",
+    "a_full": "Flashzellen vertragen nur eine begrenzte Zahl von Schreibvorgängen. Die Schreibfestigkeit wird als TBW (Terabytes written) oder DWPD (drive writes per day) angegeben und ist bei Enterprise-SSDs deutlich höher. Kondensatoren für den Stromausfallschutz sorgen dafür, dass Daten im Cache noch sicher geschrieben werden. Die maximale sequenzielle Lesegeschwindigkeit ist für Datenbanken weniger aussagekräftig als konstante IOPS unter Last.",
+    "options": [
+      "Farbe des Gehäuses und Anzahl der vorinstallierten Tools des Herstellers",
+      "Die Bauhöhe in Millimetern und das Gewicht des Laufwerks",
+      "Nur die höchste sequenzielle Lesegeschwindigkeit im Datenblatt",
+      "Schreibfestigkeit (TBW oder DWPD) und Schutz bei Stromausfall (power loss protection)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Die Geschäftsführung will Notebooks nur nach dem Kaufpreis auswählen. Welche Kosten gehören bei einer TCO-Betrachtung zusätzlich dazu?",
+    "a": "Energie, Wartung und Support, Einrichtung und Schulung, Ausfallzeiten sowie Entsorgung oder Datenlöschung",
+    "a_full": "Die Total Cost of Ownership umfasst alle Kosten über die gesamte Nutzungsdauer. Neben der Anschaffung zählen laufende Kosten wie Strom, Lizenzen, Service, Reparaturen und der Aufwand der IT-Abteilung. Auch Ausfallzeiten der Mitarbeiter und die sichere Außerbetriebnahme gehören dazu. Ein billigeres Gerät mit kurzer Garantie und hohem Supportaufwand kann so am Ende teurer sein.",
+    "options": [
+      "Nur Versandkosten, Verpackung und die Umsatzsteuer auf den Kaufpreis",
+      "Nur die Kosten für Zubehör wie Taschen, Mäuse und Netzteile",
+      "Energie, Wartung und Support, Einrichtung und Schulung, Ausfallzeiten sowie Entsorgung oder Datenlöschung",
+      "Nur die Abschreibung und der kalkulatorische Gewinn des Händlers"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Supermarkt beschafft neue Kassensysteme. Der Händler bietet „1 Jahr Bring-in-Garantie“ oder „3 Jahre Vor-Ort-Service am nächsten Arbeitstag“ an. Was empfehlen Sie?",
+    "a": "Den Vor-Ort-Service, weil ein Kassenausfall den Umsatz direkt betrifft",
+    "a_full": "Bei Bring-in-Garantie muss der Kunde das Gerät selbst einschicken und wartet oft Tage oder Wochen. Vor-Ort-Service am nächsten Arbeitstag (next business day, NBD) verkürzt die Ausfallzeit deutlich. Bei geschäftskritischen Geräten wie Kassen, Servern oder Produktionsrechnern ist der Aufpreis daher meist wirtschaftlich. Zusätzlich hilft ein Ersatzgerät vor Ort.",
+    "options": [
+      "Keinen Service, weil die gesetzliche Gewährleistung jede Ausfallzeit abdeckt",
+      "Die Bring-in-Garantie, weil Garantieverlängerungen nie wirtschaftlich sind",
+      "Die Bring-in-Garantie, weil Kassen technisch nicht ausfallen können",
+      "Den Vor-Ort-Service, weil ein Kassenausfall den Umsatz direkt betrifft"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Onlinehändler fragt, was das Barrierefreiheitsstärkungsgesetz (BFSG) für ihn bedeutet. Was antworten Sie im Kern?",
+    "a": "Seit dem 28.06.2025 müssen bestimmte Produkte und Dienstleistungen für Verbraucher barrierefrei sein, darunter der elektronische Geschäftsverkehr",
+    "a_full": "Das BFSG setzt den European Accessibility Act (Richtlinie (EU) 2019/882) in deutsches Recht um. Es gilt z. B. für Computer, Smartphones, Selbstbedienungsterminals sowie für Onlineshops, Bankdienstleistungen und E-Books, die sich an Verbraucher richten. Webshops müssen dann unter anderem wahrnehmbar und bedienbar sein, etwa mit Screenreader und Tastatur. Für Kleinstunternehmen, die Dienstleistungen anbieten, gibt es eine Ausnahme.",
+    "options": [
+      "Seit dem 28.06.2025 müssen alle Webseiten zusätzlich in Gebärdensprache vorliegen",
+      "Seit dem 28.06.2025 müssen bestimmte Produkte und Dienstleistungen für Verbraucher barrierefrei sein, darunter der elektronische Geschäftsverkehr",
+      "Seit dem 28.06.2025 gilt es nur für Webseiten von Bundesbehörden und Gerichten",
+      "Seit dem 28.06.2025 müssen alle Firmen ihre internen Büroarbeitsplätze rollstuhlgerecht umbauen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Sie richten in einem Bundesministerium eine Webanwendung ein. Ein Kollege sagt, dafür gelte nicht das BFSG, sondern die BITV 2.0. Hat er recht?",
+    "a": "Ja, die BITV 2.0 regelt die Barrierefreiheit der IT öffentlicher Stellen des Bundes",
+    "a_full": "Die Barrierefreie-Informationstechnik-Verordnung (BITV 2.0) beruht auf dem Behindertengleichstellungsgesetz und gilt für Webseiten, mobile Anwendungen und weitere IT öffentlicher Stellen des Bundes. Die Länder haben eigene Regelungen für ihre Behörden. Technisch verweist sie auf die harmonisierte Norm EN 301 549, die wiederum die WCAG einbezieht. Öffentliche Stellen müssen außerdem eine Erklärung zur Barrierefreiheit mit Feedbackmöglichkeit veröffentlichen.",
+    "options": [
+      "Nein, Behörden sind von allen Vorgaben zur Barrierefreiheit ausgenommen",
+      "Ja, die BITV 2.0 regelt die Barrierefreiheit der IT öffentlicher Stellen des Bundes",
+      "Ja, die BITV 2.0 gilt aber nur für private Onlineshops mit Filialen",
+      "Nein, für Behörden gilt allein die DSGVO, die auch Barrierefreiheit regelt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "In einer Ausschreibung steht: „Die Software muss die Anforderungen der EN 301 549 erfüllen.“ Was wird damit verlangt?",
+    "a": "Barrierefreiheit nach der europäischen Norm für IKT-Produkte und -Dienste",
+    "a_full": "Die EN 301 549 ist die europäische Norm mit Anforderungen an die Barrierefreiheit von Informations- und Kommunikationstechnik, z. B. Software, Webseiten, Dokumente und Hardware. Für Webinhalte übernimmt sie im Wesentlichen die Erfolgskriterien der WCAG auf Stufe AA. Öffentliche Auftraggeber nutzen sie als Prüfgrundlage, etwa für Screenreader-Tauglichkeit, Tastaturbedienung und Kontraste.",
+    "options": [
+      "Barrierefreiheit nach der europäischen Norm für IKT-Produkte und -Dienste",
+      "Eine Mindestenergieeffizienz für Software-Rechenzentren in der EU",
+      "Ein bestimmtes Niveau der Informationssicherheit nach europäischer Norm",
+      "Ein einheitliches Format für Softwarelizenzen in europäischen Behörden"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein blinder Mitarbeiter beginnt in der Buchhaltung. Welche Kombination aus Hilfsmitteln richten Sie typischerweise ein?",
+    "a": "Screenreader mit Sprachausgabe und eine Braillezeile",
+    "a_full": "Ein Screenreader liest Bildschirminhalte, Menüs und Fokus vor. Die Braillezeile gibt den Text zusätzlich in Punktschrift über bewegliche Stifte aus, was beim genauen Lesen von Zahlen und Tabellen hilft. Bedient wird überwiegend per Tastatur. Wichtig ist, vorab zu prüfen, ob die Fachanwendung mit dem Screenreader zusammenarbeitet, sonst nützen die Hilfsmittel wenig.",
+    "options": [
+      "Bildschirmlupe mit 200 % Vergrößerung und eine größere Maus",
+      "Ein zweiter Monitor mit hohem Kontrast und eine Webcam",
+      "Eine Spracheingabe allein ohne jede Rückmeldung am Bildschirm",
+      "Screenreader mit Sprachausgabe und eine Braillezeile"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Bei Monitoren im Angebot steht „EPEAT Gold“. Was bedeutet das?",
+    "a": "Das Gerät ist im EPEAT-Register mit der höchsten Stufe für Umweltkriterien über den Lebenszyklus eingetragen",
+    "a_full": "EPEAT ist ein Umweltbewertungssystem des Global Electronics Council für IT-Produkte. Bewertet werden u. a. Energieverbrauch, Materialien, Reparierbarkeit und Rücknahme. Die Stufen heißen Bronze, Silber und Gold, wobei Gold die meisten optionalen Kriterien erfüllt. Viele Ausschreibungen nennen EPEAT als Nachweis für umweltfreundliche Beschaffung.",
+    "options": [
+      "Das Gerät hat eine vergoldete Anschlussleiste für bessere Signalqualität",
+      "Das Gerät erfüllt die Anforderungen an IT-Sicherheit für Behörden der EU",
+      "Das Gerät ist im EPEAT-Register mit der höchsten Stufe für Umweltkriterien über den Lebenszyklus eingetragen",
+      "Das Gerät hat die beste Bildqualität in einem Test der Fachpresse erreicht"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A3a"
+    ],
+    "q": "Ein Kunde meint, das CE-Zeichen auf einem Netzwerkgerät sei ein Prüfsiegel für gute Qualität. Was stimmt?",
+    "a": "Der Hersteller erklärt damit selbst, dass das Gerät die geltenden EU-Anforderungen erfüllt",
+    "a_full": "Mit dem CE-Kennzeichen bestätigt der Hersteller oder Importeur, dass das Produkt die einschlägigen EU-Vorschriften einhält, etwa zur elektrischen Sicherheit und elektromagnetischen Verträglichkeit. Für die meisten IT-Geräte ist das eine Selbsterklärung ohne Prüfung durch eine unabhängige Stelle. Es ist Voraussetzung für den Verkauf im EU-Binnenmarkt, aber kein Qualitäts- oder Umweltsiegel.",
+    "options": [
+      "Das Gerät wurde ausschließlich innerhalb der Europäischen Union gefertigt",
+      "Eine unabhängige Prüfstelle hat die Qualität des Geräts mit gut bewertet",
+      "Das Gerät erfüllt besonders strenge Umweltkriterien und spart Strom",
+      "Der Hersteller erklärt damit selbst, dass das Gerät die geltenden EU-Anforderungen erfüllt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "virtualisierung",
+    "rahmenplan": [
+      "C1a"
+    ],
+    "q": "Ein Kunde wünscht für seine neue Serverumgebung: „Mitarbeiter können Urlaubsanträge online stellen“ und „Seiten laden in unter zwei Sekunden“. Wie ordnen Sie die beiden Anforderungen ein?",
+    "a": "Die erste ist funktional (was das System tut), die zweite nicht-funktional (wie gut es das tut)",
+    "a_full": "Funktionale Anforderungen beschreiben Funktionen und Abläufe, die das System bereitstellen soll. Nicht-funktionale Anforderungen (non-functional requirements) beschreiben Qualitätsmerkmale wie Leistung, Verfügbarkeit, Sicherheit, Bedienbarkeit oder Wartbarkeit. Gerade die nicht-funktionalen Anforderungen bestimmen die Dimensionierung von Servern, Speicher und Netz. Sie sollten messbar formuliert sein, damit man sie bei der Abnahme prüfen kann.",
+    "options": [
+      "Die erste ist funktional (was das System tut), die zweite nicht-funktional (wie gut es das tut)",
+      "Beide sind funktional, weil sie sich auf die Benutzer des Systems beziehen",
+      "Die erste ist nicht-funktional, die zweite funktional, weil sie messbar ist",
+      "Beide sind nicht-funktional, weil sie im Lastenheft des Kunden stehen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "isms",
+    "rahmenplan": [
+      "C1a",
+      "C3a"
+    ],
+    "q": "Ihr Ausbilder sagt im Konzeptgespräch: „Wir planen nach Security by Design.“ Was ist damit gemeint?",
+    "a": "Sicherheitsanforderungen werden von Anfang an in Planung und Architektur berücksichtigt, nicht erst nachträglich ergänzt",
+    "a_full": "Bei Security by Design fließen Schutzbedarf, Bedrohungen und Sicherheitsmaßnahmen schon in die ersten Entwürfe ein, z. B. Netzsegmentierung, Rechtekonzept, Verschlüsselung und Protokollierung. Nachträglich eingebaute Sicherheit ist meist teurer und lückenhafter. Security by Default ergänzt das: Auslieferung und Grundeinstellungen sind bereits sicher gewählt.",
+    "options": [
+      "Die Oberfläche des Systems wird so gestaltet, dass Angreifer sie nicht erkennen",
+      "Die Sicherheitsverantwortung liegt allein beim Hersteller der eingesetzten Software",
+      "Die Sicherheit wird erst nach der Inbetriebnahme durch einen Penetrationstest geplant",
+      "Sicherheitsanforderungen werden von Anfang an in Planung und Architektur berücksichtigt, nicht erst nachträglich ergänzt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "netzsicherheit",
+    "rahmenplan": [
+      "C1a"
+    ],
+    "q": "Sie konzipieren das Netz einer Arztpraxis mit Praxisverwaltung, Medizingeräten, Mitarbeiter-PCs und Patienten-WLAN. Wie berücksichtigen Sie Segmentierung?",
+    "a": "Getrennte Netze (VLANs) je Gruppe und nur die nötigen Verbindungen über eine Firewall erlauben",
+    "a_full": "Werden Clients, Server, Medizingeräte und Gäste in eigene Segmente getrennt, kann sich ein Angreifer oder Schadprogramm nicht ungehindert ausbreiten. Zwischen den Segmenten regelt eine Firewall, welche Verbindungen erlaubt sind (Prinzip: alles verboten, was nicht ausdrücklich erlaubt ist). Das Patienten-WLAN erhält nur Internetzugang. Medizingeräte mit alter Software sind so zusätzlich geschützt.",
+    "options": [
+      "Nur das Patienten-WLAN abtrennen und alle anderen Geräte gemeinsam vernetzen",
+      "Für jedes Gerät eine eigene öffentliche IP-Adresse beim Provider beantragen",
+      "Getrennte Netze (VLANs) je Gruppe und nur die nötigen Verbindungen über eine Firewall erlauben",
+      "Alle Geräte in ein gemeinsames Netz legen und dafür starke WLAN-Passwörter setzen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "virtualisierung",
+    "rahmenplan": [
+      "C1a"
+    ],
+    "q": "Im Konzept für einen Hypervisor-Cluster stehen die Verwaltungsoberflächen der Hosts und die Fernwartungskarten (z. B. iDRAC, iLO) im normalen Client-Netz. Was ändern Sie?",
+    "a": "Ein eigenes Management-Netz, das nur von Admin-Systemen aus erreichbar ist",
+    "a_full": "Wer die Verwaltung des Hypervisors oder die Fernwartungskarte übernimmt, kontrolliert alle virtuellen Maschinen. Diese Schnittstellen gehören deshalb in ein abgeschottetes Management-Netz. Zugriff erhalten nur Admins über gesicherte Arbeitsplätze oder einen Sprungserver (jump host), möglichst mit Mehrfaktor-Authentisierung. Firmware und Kennwörter der Fernwartung müssen gepflegt werden.",
+    "options": [
+      "Nur die Standardports der Oberflächen auf andere Ports umlegen",
+      "Nichts, weil die Oberflächen ohnehin mit HTTPS verschlüsselt sind",
+      "Ein eigenes Management-Netz, das nur von Admin-Systemen aus erreichbar ist",
+      "Die Oberflächen zusätzlich aus dem Internet erreichbar machen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "storage",
+    "rahmenplan": [
+      "C1a",
+      "C3f"
+    ],
+    "q": "Für einen Kunden planen Sie das Backupkonzept. Die Sicherung soll einen Ransomware-Angriff mit gestohlenen Admin-Kennwörtern überstehen. Was gehört unbedingt dazu?",
+    "a": "Eine Kopie, die offline oder unveränderbar (immutable) ist und nicht mit denselben Zugangsdaten gelöscht werden kann",
+    "a_full": "Angreifer suchen gezielt nach Sicherungen und löschen oder verschlüsseln sie vor dem eigentlichen Angriff. Eine vom Netz getrennte Kopie (z. B. Bänder) oder ein Speicher mit Löschsperre schützt davor. Das Backupsystem bekommt eigene Konten, die nicht in der normalen Domäne liegen. Regelmäßige Wiederherstellungstests zeigen, ob die Sicherung im Ernstfall wirklich funktioniert.",
+    "options": [
+      "Eine zweite Kopie auf einem NAS, das als Netzlaufwerk auf allen Servern hängt",
+      "Eine Kopie, die offline oder unveränderbar (immutable) ist und nicht mit denselben Zugangsdaten gelöscht werden kann",
+      "Ein RAID 1 im Server, das jede Änderung sofort auf zwei Platten spiegelt",
+      "Eine tägliche Sicherung auf eine zweite Partition der Festplatte des Servers"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "isms",
+    "rahmenplan": [
+      "C1a",
+      "C3a"
+    ],
+    "q": "Warum stellen Sie in einem Systemkonzept zuerst den Schutzbedarf der Anwendungen und Daten fest, bevor Sie Hardware auswählen?",
+    "a": "Weil der Schutzbedarf bestimmt, wie viel Redundanz, Verschlüsselung und Absicherung nötig ist",
+    "a_full": "Aus dem Schutzbedarf für Vertraulichkeit, Integrität und Verfügbarkeit ergibt sich, welche Maßnahmen angemessen sind. Eine Anwendung mit hohem Verfügbarkeitsbedarf braucht z. B. einen Cluster und redundanten Speicher, eine mit normalem Bedarf vielleicht nur ein gutes Backup. So vermeidet man, dass das Konzept zu schwach oder unnötig teuer wird.",
+    "options": [
+      "Weil der Schutzbedarf nur für die Wahl des Betriebssystems relevant ist",
+      "Weil Hersteller ohne Schutzbedarfsfeststellung keine Hardware ausliefern dürfen",
+      "Weil der Schutzbedarf bestimmt, wie viel Redundanz, Verschlüsselung und Absicherung nötig ist",
+      "Weil der Schutzbedarf die Farbe und Bauform der Server im Rack vorgibt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "linux",
+    "rahmenplan": [
+      "C1a"
+    ],
+    "q": "Für 20 neue Linux-Server soll im Konzept festgelegt werden, wie die Härtung sichergestellt wird. Welcher Ansatz ist sinnvoll?",
+    "a": "Ein einheitliches gehärtetes Basis-Image nach anerkannter Vorgabe, verteilt und geprüft mit Konfigurationsmanagement",
+    "a_full": "Statt jeden Server einzeln von Hand abzusichern, beschreibt man eine Grundkonfiguration (baseline), z. B. nach BSI IT-Grundschutz oder CIS Benchmarks. Unnötige Pakete und Dienste fehlen, SSH ist nur mit Schlüssel erlaubt, Updates laufen automatisch. Werkzeuge wie Ansible setzen die Vorgabe auf allen Servern gleich um und erkennen Abweichungen.",
+    "options": [
+      "Die Härtung wird erst nach dem ersten Sicherheitsvorfall auf den Servern geplant",
+      "Alle Dienste bleiben aktiv, dafür wird die Root-Anmeldung per Kennwort erlaubt",
+      "Ein einheitliches gehärtetes Basis-Image nach anerkannter Vorgabe, verteilt und geprüft mit Konfigurationsmanagement",
+      "Jeder Admin härtet seine Server nach eigener Erfahrung und dokumentiert nichts"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "windows",
+    "rahmenplan": [
+      "C1a"
+    ],
+    "q": "Ein Kunde nutzt Microsoft 365 in der Cloud, behält aber seinen lokalen Fileserver und das lokale Active Directory. Wie nennt man dieses Betriebsmodell, und was muss das Konzept dafür regeln?",
+    "a": "Hybridbetrieb; geregelt werden z. B. die Synchronisation der Identitäten und die Absicherung der Anmeldung",
+    "a_full": "Bei einer hybriden Lösung laufen Teile on-premises und Teile in der Cloud. Damit Benutzer nur ein Konto haben, werden Identitäten aus dem lokalen AD mit Microsoft Entra ID synchronisiert, etwa mit Entra Connect. Das Konzept muss festlegen, welche Konten synchronisiert werden, wie Mehrfaktor-Authentisierung erzwungen wird und wer bei Störungen welcher Seite zuständig ist.",
+    "options": [
+      "Reiner On-Premises-Betrieb; geregelt wird nur die Kühlung des Serverraums",
+      "Multi-Cloud; geregelt wird nur die Wahl eines zweiten Cloudanbieters",
+      "Hybridbetrieb; geregelt werden z. B. die Synchronisation der Identitäten und die Absicherung der Anmeldung",
+      "Private Cloud; geregelt wird nur die Größe der Postfächer der Mitarbeiter"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Ihr Ausbilder fragt Sie, worin sich prozedurale und objektorientierte Programmierung grundlegend unterscheiden. Was antworten Sie?",
+    "a": "Prozedural sind Daten und Funktionen getrennt, objektorientiert bündeln Objekte Daten und Methoden",
+    "a_full": "Ein prozedurales Programm, z. B. in C, besteht aus Funktionen (Prozeduren), die nacheinander aufgerufen werden und Daten als Parameter erhalten. In der objektorientierten Programmierung (OOP), z. B. in Java oder C#, fasst eine Klasse Daten (Attribute) und die zugehörigen Funktionen (Methoden) zusammen. Das erleichtert Wiederverwendung und Wartung größerer Programme.",
+    "options": [
+      "Prozedural kennt keine Schleifen, objektorientiert nutzt dafür Methoden",
+      "Prozedural wird kompiliert, objektorientiert wird immer nur interpretiert",
+      "Prozedural sind Daten und Funktionen getrennt, objektorientiert bündeln Objekte Daten und Methoden",
+      "Prozedural nutzt Variablen, objektorientiert kommt ganz ohne Variablen aus"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "In einem Inventarprogramm gibt es die Klasse Notebook. Daraus werden NB-014 und NB-015 erzeugt. Wie nennt man NB-014 und NB-015, und wie verhalten sie sich zur Klasse?",
+    "a": "Es sind Objekte (Instanzen), die Klasse ist ihr Bauplan",
+    "a_full": "Eine Klasse beschreibt, welche Attribute (z. B. seriennummer, standort) und Methoden (z. B. verleihen()) alle Objekte dieser Art haben. Ein Objekt ist eine konkrete Ausprägung (Instanz) mit eigenen Attributwerten. Aus einer Klasse lassen sich beliebig viele Objekte erzeugen.",
+    "options": [
+      "Es sind Unterklassen, die Klasse Notebook ist ihre Oberklasse",
+      "Es sind Methoden, die Klasse speichert ihre Rückgabewerte",
+      "Es sind Attribute, die Klasse fasst sie zu einer Liste zusammen",
+      "Es sind Objekte (Instanzen), die Klasse ist ihr Bauplan"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "In der Klasse Konto ist das Attribut saldo öffentlich. Ein Kollege setzt es an einer Stelle im Programm einfach auf einen negativen Wert. Welches OOP-Prinzip wurde nicht umgesetzt?",
+    "a": "Die Kapselung (encapsulation): saldo privat machen und nur über Methoden ändern",
+    "a_full": "Kapselung bedeutet, dass ein Objekt seinen inneren Zustand vor direktem Zugriff von außen schützt. Attribute werden privat deklariert und nur über öffentliche Methoden wie einzahlen() oder abheben() verändert. Diese Methoden können Regeln prüfen, z. B. dass kein unzulässiger Wert entsteht.",
+    "options": [
+      "Die Vererbung: saldo in eine Oberklasse verschieben und dort ändern",
+      "Die Kapselung (encapsulation): saldo privat machen und nur über Methoden ändern",
+      "Die Polymorphie: saldo in jeder Unterklasse neu und anders anlegen",
+      "Die Instanziierung: saldo für jedes Objekt erst zur Laufzeit erzeugen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Für eine Geräteverwaltung sollen die Klassen Drucker und Server die Attribute inventarnummer und standort nicht doppelt enthalten. Wie lösen Sie das objektorientiert?",
+    "a": "Eine Oberklasse Geraet anlegen, von der Drucker und Server erben",
+    "a_full": "Bei der Vererbung (inheritance) übernimmt eine Unterklasse alle Attribute und Methoden ihrer Oberklasse. Gemeinsames wie inventarnummer und standort steht einmal in Geraet. Drucker ergänzt z. B. tonerstand, Server z. B. anzahlKerne. Man sagt: Ein Drucker ist ein Gerät.",
+    "options": [
+      "Die Klasse Drucker in die Klasse Server als Methode einbauen",
+      "Die Attribute in beide Klassen kopieren und als statisch markieren",
+      "Eine globale Variable anlegen, die beide Klassen gemeinsam nutzen",
+      "Eine Oberklasse Geraet anlegen, von der Drucker und Server erben"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Ein Programm ruft für eine Liste von Geräten nacheinander g.statusMelden() auf. Ein Drucker meldet den Tonerstand, ein Server die CPU-Last. Wie heißt dieses OOP-Prinzip?",
+    "a": "Polymorphie: derselbe Methodenaufruf verhält sich je nach Klasse des Objekts anders",
+    "a_full": "Die Unterklassen überschreiben (override) die Methode statusMelden() der Oberklasse mit eigenem Verhalten. Der aufrufende Code muss nicht wissen, welche Art Gerät er gerade vor sich hat. Neue Gerätearten lassen sich ergänzen, ohne die Schleife zu ändern.",
+    "options": [
+      "Rekursion: die Methode ruft sich je nach Gerät selbst wieder auf",
+      "Instanziierung: die Methode erzeugt je nach Gerät ein neues Objekt",
+      "Kapselung: die Methode verbirgt je nach Gerät andere private Attribute",
+      "Polymorphie: derselbe Methodenaufruf verhält sich je nach Klasse des Objekts anders"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Ein Azubi erzeugt in Java mit new Ticket(4711, \"Drucker defekt\") ein neues Ticket. Welche besondere Methode wird dabei aufgerufen, und wozu dient sie?",
+    "a": "Der Konstruktor, er setzt beim Erzeugen die Anfangswerte der Attribute",
+    "a_full": "Ein Konstruktor (constructor) wird automatisch beim Erzeugen eines Objekts ausgeführt. In Java und C# trägt er den Namen der Klasse, in Python heißt er __init__. Er sorgt dafür, dass das Objekt von Anfang an in einem gültigen Zustand ist, z. B. mit Nummer und Beschreibung.",
+    "options": [
+      "Der Konstruktor, er setzt beim Erzeugen die Anfangswerte der Attribute",
+      "Der Getter, er liest beim Erzeugen die Werte aus der Datenbank aus",
+      "Der Destruktor, er reserviert beim Erzeugen den Speicher für das Objekt",
+      "Der Interpreter, er übersetzt beim Erzeugen die Klasse in Maschinencode"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Ein Kunde fragt, warum ein C-Programm nach dem Übersetzen direkt startet, ein Python-Skript aber immer den installierten Python-Interpreter braucht. Wie erklären Sie den Unterschied?",
+    "a": "Ein Compiler übersetzt vorab in Maschinencode, ein Interpreter führt den Quelltext zur Laufzeit aus",
+    "a_full": "Der Compiler übersetzt das C-Programm einmal vollständig in eine ausführbare Datei für eine Plattform. Python wird bei jedem Start vom Interpreter gelesen und ausgeführt (intern über Bytecode). Kompilierte Programme sind meist schneller, interpretierte Skripte sind leichter anzupassen und plattformunabhängiger.",
+    "options": [
+      "Ein Compiler übersetzt vorab in Maschinencode, ein Interpreter führt den Quelltext zur Laufzeit aus",
+      "Ein Compiler braucht eine Internetverbindung, ein Interpreter arbeitet nur lokal",
+      "Ein Compiler führt den Quelltext zur Laufzeit aus, ein Interpreter übersetzt vorab",
+      "Ein Compiler prüft nur die Syntax, ein Interpreter erzeugt die ausführbare Datei"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "Ein Java-Programm wurde unter Windows übersetzt und läuft ohne neue Übersetzung auch auf einem Linux-Server. Wie ist das möglich?",
+    "a": "Java wird in Bytecode übersetzt, den die JVM auf jeder Plattform ausführt und per JIT optimiert",
+    "a_full": "Der Java-Compiler erzeugt keinen Maschinencode, sondern plattformunabhängigen Bytecode (.class-Dateien). Die Java Virtual Machine (JVM) des jeweiligen Systems führt ihn aus. Ein Just-in-Time-Compiler (JIT) übersetzt häufig genutzte Teile zur Laufzeit in Maschinencode. C# arbeitet mit .NET ähnlich.",
+    "options": [
+      "Java wird als Quelltext ausgeliefert und auf dem Server neu kompiliert",
+      "Java wird direkt in Maschinencode übersetzt, der auf allen CPUs gleich ist",
+      "Java wird in Bytecode übersetzt, den die JVM auf jeder Plattform ausführt und per JIT optimiert",
+      "Java nutzt unter Linux einen Emulator, der Windows-Programme nachbildet"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A4b"
+    ],
+    "q": "In Java schreibt ein Azubi int anzahl = 5; und später anzahl = \"fünf\";. Das Programm lässt sich nicht übersetzen. In Python klappt dasselbe. Warum?",
+    "a": "Java ist statisch typisiert, Python dynamisch typisiert",
+    "a_full": "Bei statischer Typisierung steht der Datentyp einer Variablen beim Übersetzen fest, der Compiler meldet Typfehler vorab. Bei dynamischer Typisierung gehört der Typ zum Wert, eine Variable kann zur Laufzeit Werte verschiedener Typen aufnehmen. Statische Typisierung findet Fehler früher, dynamische ist flexibler und kürzer zu schreiben.",
+    "options": [
+      "Java ist interpretiert, Python ist vollständig vorab kompiliert",
+      "Java kennt keine Zeichenketten, Python speichert alles als Text",
+      "Java ist dynamisch typisiert, Python statisch typisiert",
+      "Java ist statisch typisiert, Python dynamisch typisiert"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10a",
+      "A4b"
+    ],
+    "q": "Eine Fachabteilung schreibt: Das Programm liest die monatlichen Zählerstände aus einer CSV-Datei, berechnet je Standort den Verbrauch und erstellt einen PDF-Bericht. Wie gliedern Sie das nach dem EVA-Prinzip?",
+    "a": "Eingabe: CSV mit Zählerständen; Verarbeitung: Verbrauch je Standort; Ausgabe: PDF-Bericht",
+    "a_full": "Das EVA-Prinzip (Eingabe, Verarbeitung, Ausgabe; input, process, output) zerlegt eine Anforderung in drei Teile. So wird sichtbar, welche Daten in welchem Format hereinkommen, welche Regeln gelten und was am Ende entsteht. Für jeden Teil lassen sich dann Datentypen, Fehlerfälle und Testfälle festlegen.",
+    "options": [
+      "Eingabe: Verbrauch je Standort; Verarbeitung: PDF-Bericht; Ausgabe: CSV-Datei",
+      "Eingabe: CSV und PDF; Verarbeitung: Standorte; Ausgabe: Zählerstände je Monat",
+      "Eingabe: CSV mit Zählerständen; Verarbeitung: Verbrauch je Standort; Ausgabe: PDF-Bericht",
+      "Eingabe: PDF-Bericht; Verarbeitung: CSV mit Zählerständen; Ausgabe: Verbrauch"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10a"
+    ],
+    "q": "Ein Skript soll zu 3.000 MAC-Adressen sehr oft schnell den zugehörigen Hostnamen finden. Ein Kollege speichert beides in zwei getrennten Listen. Welche Datenstruktur schlagen Sie vor?",
+    "a": "Ein Dictionary (Map) mit der MAC-Adresse als Schlüssel und dem Hostnamen als Wert",
+    "a_full": "Ein Dictionary (in PowerShell Hashtable, in Java Map) speichert Schlüssel-Wert-Paare. Der Zugriff über den Schlüssel erfolgt direkt, ohne die ganze Liste zu durchsuchen. Bei zwei parallelen Listen müsste man erst den Index suchen, und beide Listen können leicht auseinanderlaufen.",
+    "options": [
+      "Ein zweidimensionales Array, das bei jeder Suche neu sortiert wird",
+      "Eine Warteschlange (Queue), die die Einträge der Reihe nach abarbeitet",
+      "Ein Dictionary (Map) mit der MAC-Adresse als Schlüssel und dem Hostnamen als Wert",
+      "Ein Stapel (Stack), bei dem der zuletzt eingefügte Eintrag oben liegt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "datenbanken",
+    "thema": "modellierung",
+    "rahmenplan": [
+      "A10a"
+    ],
+    "q": "In einem UML-Klassendiagramm sehen Sie bei der Klasse Benutzer die Zeilen - passwortHash: String und + anmelden(pw: String): Boolean. Was bedeuten - und +?",
+    "a": "- heißt privat (nur in der Klasse sichtbar), + heißt öffentlich (von außen aufrufbar)",
+    "a_full": "Die Zeichen vor Attributen und Methoden geben die Sichtbarkeit an: + public, - private, # protected (auch für Unterklassen). Das Passwort-Hash-Attribut ist gekapselt, von außen ist nur die Methode anmelden() nutzbar. Hinter dem Doppelpunkt stehen Datentyp bzw. Rückgabetyp.",
+    "options": [
+      "- heißt optional (darf leer sein), + heißt Pflichtfeld (muss gefüllt sein)",
+      "- heißt Attribut (speichert Daten), + heißt Methode (führt Code aus)",
+      "- heißt privat (nur in der Klasse sichtbar), + heißt öffentlich (von außen aufrufbar)",
+      "- heißt gelöscht (nicht mehr genutzt), + heißt neu (in dieser Version ergänzt)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10a"
+    ],
+    "q": "Sie sollen eine Schnittstelle (API) für die Abfrage von Gerätedaten spezifizieren, die ein anderes Team nutzt. Was gehört mindestens in die Spezifikation?",
+    "a": "Aufruf und Parameter mit Datentyp, Format der Rückgabe sowie Fehlerfälle mit Statuscodes",
+    "a_full": "Eine Schnittstellenspezifikation ist ein Vertrag zwischen Anbieter und Nutzer. Sie legt fest, wie der Aufruf aussieht (z. B. GET /geraete/{id}), welche Parameter Pflicht sind, wie die Antwort aufgebaut ist (z. B. JSON-Felder) und was bei Fehlern zurückkommt. Bei REST-APIs wird das oft im Format OpenAPI beschrieben.",
+    "options": [
+      "Die Namen der Datenbanktabellen und die Passwörter des Datenbankservers",
+      "Die Programmiersprache und die Entwicklungsumgebung des anbietenden Teams",
+      "Den vollständigen Quelltext der Schnittstelle mit allen internen Funktionen",
+      "Aufruf und Parameter mit Datentyp, Format der Rückgabe sowie Fehlerfälle mit Statuscodes"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10a"
+    ],
+    "q": "Für ein Programm, das Urlaubsanträge prüft, liegt nur der Normalfall in der Spezifikation. Ihr Ausbilder sagt, die Spezifikation sei unvollständig. Was fehlt typischerweise?",
+    "a": "Die Fehlerfälle und Grenzwerte, z. B. leere Eingabe, Enddatum vor Startdatum, zu wenig Resturlaub",
+    "a_full": "Eine Spezifikation beschreibt nicht nur, was bei gültigen Eingaben passiert. Sie legt auch fest, wie das Programm auf ungültige oder fehlende Daten reagiert und welche Meldung es ausgibt. Aus Normalfall, Grenzfällen und Fehlerfällen leiten sich später die Testfälle ab.",
+    "options": [
+      "Eine Liste aller Mitarbeiter, die schon einmal Urlaub beantragt haben",
+      "Der Quelltext der Prüfung, damit die Fachabteilung ihn freigeben kann",
+      "Die Angabe, mit welcher Bildschirmauflösung die Entwickler arbeiten",
+      "Die Fehlerfälle und Grenzwerte, z. B. leere Eingabe, Enddatum vor Startdatum, zu wenig Resturlaub"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b",
+      "A4b"
+    ],
+    "q": "Ein Kunde mit reiner Windows-Umgebung will das Anlegen von AD-Benutzern, Postfächern und Gruppen automatisieren. Welche Sprache empfehlen Sie, und warum?",
+    "a": "PowerShell, weil es Module für AD und Exchange gibt und Cmdlets Objekte liefern",
+    "a_full": "PowerShell ist auf Windows vorinstalliert; das Modul ActiveDirectory steht nach Installation der RSAT-Tools bzw. auf Domänencontrollern zur Verfügung, für Exchange gibt es eigene Module. Cmdlets wie New-ADUser geben Objekte statt Text zurück, die sich in der Pipeline direkt weiterverarbeiten lassen. Für Linux-Server wäre dagegen meist Bash die erste Wahl.",
+    "options": [
+      "Bash, weil es auf Windows vorinstalliert ist und AD-Objekte als Text liefert",
+      "SQL, weil das Active Directory intern eine relationale Datenbank ist",
+      "JavaScript, weil Windows-Verwaltungsaufgaben im Browser ablaufen",
+      "PowerShell, weil es Module für AD und Exchange gibt und Cmdlets Objekte liefern"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b"
+    ],
+    "q": "Ein Werkzeug zum Auswerten von Logdateien soll gleichermaßen auf Windows-Clients, Linux-Servern und macOS laufen und später eine kleine Weboberfläche bekommen. Welche Sprache passt am besten?",
+    "a": "Python, weil es plattformübergreifend läuft und viele Bibliotheken mitbringt",
+    "a_full": "Python-Interpreter gibt es für alle gängigen Betriebssysteme, dasselbe Skript läuft dort meist ohne Änderung. Die Standardbibliothek deckt Dateien, reguläre Ausdrücke und CSV ab, Frameworks wie Flask liefern die Weboberfläche. Bash und PowerShell sind stärker an ihr System gebunden, auch wenn es PowerShell 7 für Linux gibt.",
+    "options": [
+      "Bash, weil es auf allen drei Systemen ohne Installation identisch vorhanden ist",
+      "C, weil kompilierte Programme ohne Neuübersetzung auf jedem System starten",
+      "SQL, weil Logdateien intern immer als Datenbanktabellen gespeichert sind",
+      "Python, weil es plattformübergreifend läuft und viele Bibliotheken mitbringt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b"
+    ],
+    "q": "Ein Kollege hat ein Python-Skript mit for i in range(1, 4): print(i * 2). Er möchte dasselbe in PowerShell. Welche Zeile liefert genau dieselbe Ausgabe?",
+    "a": "foreach ($i in 1..3) { $i * 2 }",
+    "a_full": "range(1, 4) erzeugt in Python die Zahlen 1, 2 und 3, die obere Grenze ist nicht enthalten. Der Bereichsoperator 1..3 in PowerShell schließt dagegen beide Grenzen ein. Beide Varianten geben 2, 4 und 6 aus. Wer 1..4 schreibt, erhält zusätzlich 8.",
+    "options": [
+      "foreach ($i in 1..4) { $i * 2 }",
+      "foreach ($i in 1..3) { $i * 2 }",
+      "for ($i = 1; $i -le 4; $i++) { $i * 2 }",
+      "foreach ($i in 0..3) { $i * 2 }"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b"
+    ],
+    "q": "Sie lesen ein unbekanntes Python-Skript. Eine Zeile mit if steht ohne geschweifte Klammern da, die folgenden Zeilen sind eingerückt. Woran erkennt Python, welche Zeilen zum if gehören?",
+    "a": "An der Einrückung: alle gleich weit eingerückten Zeilen bilden den Block",
+    "a_full": "In Python ist die Einrückung Teil der Syntax, der Block beginnt nach dem Doppelpunkt. PowerShell, C, Java und JavaScript nutzen dafür geschweifte Klammern, Bash Schlüsselwörter wie then und fi. Gemischte Tabs und Leerzeichen führen in Python deshalb leicht zu Fehlern.",
+    "options": [
+      "Am Schlüsselwort endif, das den Block nach unten abschließt",
+      "An der Einrückung: alle gleich weit eingerückten Zeilen bilden den Block",
+      "An der Zeilennummer, die Python automatisch vergibt und prüft",
+      "Am Semikolon am Ende jeder Zeile, das den Block fortsetzt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b"
+    ],
+    "q": "Ein Linux-Admin soll nachts auf zehn Servern Logdateien packen und auf ein NAS kopieren. Auf den Servern ist nur das Minimalsystem installiert. Welche Sprache ist naheliegend?",
+    "a": "Bash, weil sie auf jedem Linux-Server vorhanden ist und Werkzeuge wie tar und rsync verbindet",
+    "a_full": "Bash ist auf praktisch jedem Linux-System vorhanden und eignet sich, um vorhandene Befehle zu verketten. Für Packen und Kopieren reichen tar, gzip und rsync, ein Skript ruft sie nacheinander auf und prüft die Rückgabecodes. Für komplexe Datenverarbeitung wäre Python besser lesbar und wartbar.",
+    "options": [
+      "JavaScript, weil Node.js zum Linux-Kernel gehört und tar ersetzt",
+      "SQL, weil Logdateien unter Linux immer in einer Datenbank liegen",
+      "PowerShell, weil sie auf jedem Linux-Minimalsystem vorinstalliert ist",
+      "Bash, weil sie auf jedem Linux-Server vorhanden ist und Werkzeuge wie tar und rsync verbindet"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10b"
+    ],
+    "q": "In Bash steht if [ \"$frei\" -lt 10 ], in PowerShell if ($frei -lt 10), in Python if frei < 10. Was haben die drei Zeilen gemeinsam?",
+    "a": "Alle drei prüfen, ob der Wert von frei kleiner als 10 ist",
+    "a_full": "Die Logik ist dieselbe, nur die Schreibweise unterscheidet sich. Bash und PowerShell nutzen für Zahlenvergleiche Operatoren wie -lt, -gt und -eq, weil < und > dort für Umleitungen stehen. Python verwendet die mathematischen Zeichen <, > und ==.",
+    "options": [
+      "Alle drei schreiben den Wert von frei in eine Datei namens 10",
+      "Alle drei prüfen, ob die Variable frei genau 10 Zeichen lang ist",
+      "Alle drei prüfen, ob der Wert von frei kleiner als 10 ist",
+      "Alle drei prüfen, ob der Wert von frei größer als 10 ist"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10c",
+      "C3g"
+    ],
+    "q": "Ein Skript legt beim ersten Lauf den Ordner D:\\Berichte und eine Freigabe an. Beim zweiten Lauf bricht es mit Fehlern ab, weil beides schon existiert. Welche Eigenschaft fehlt dem Skript?",
+    "a": "Es ist nicht idempotent: es sollte erst prüfen und nur fehlende Teile anlegen",
+    "a_full": "Ein idempotentes Skript führt bei jedem Lauf zum selben Zielzustand, egal ob es einmal oder zehnmal läuft. Dafür prüft es vor jeder Änderung den Ist-Zustand, z. B. mit Test-Path oder Get-SmbShare in PowerShell oder mkdir -p in Bash. So kann es gefahrlos wiederholt und geplant ausgeführt werden.",
+    "options": [
+      "Es ist nicht rekursiv: es sollte sich nach jedem Fehler selbst neu starten",
+      "Es ist nicht signiert: es sollte mit einem Zertifikat unterschrieben werden",
+      "Es ist nicht idempotent: es sollte erst prüfen und nur fehlende Teile anlegen",
+      "Es ist nicht kompiliert: es sollte vorab in eine EXE-Datei übersetzt werden"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "windows",
+    "rahmenplan": [
+      "A10c"
+    ],
+    "q": "Ein Kollege hat in einem PowerShell-Skript den Servernamen und den Zielpfad fest eingetragen. Für jeden Standort kopiert er das Skript und ändert die Werte. Was schlagen Sie vor?",
+    "a": "Einen param()-Block mit Parametern wie -Server und -Ziel, die beim Aufruf übergeben werden",
+    "a_full": "Mit param([string]$Server, [string]$Ziel) am Skriptanfang wird ein Skript wiederverwendbar, z. B. .\\sicherung.ps1 -Server FS01 -Ziel E:\\Backup. Es gibt nur noch eine Fassung, die gepflegt werden muss. Mit [Parameter(Mandatory)] lassen sich Pflichtangaben erzwingen, Standardwerte sind ebenfalls möglich.",
+    "options": [
+      "Für jeden Standort eine eigene Funktion mit fest eingetragenen Werten anlegen",
+      "Die Werte als Kommentar ins Skript schreiben, damit man sie leicht findet",
+      "Einen param()-Block mit Parametern wie -Server und -Ziel, die beim Aufruf übergeben werden",
+      "Die Werte in die Registry jedes Servers schreiben und das Skript signieren"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10c",
+      "C3g"
+    ],
+    "q": "Ein Skript sichert nachts eine Datenbank. Das Passwort des Sicherungskontos steht im Klartext im Skript, das im Git-Repository des Teams liegt. Was ist die richtige Lösung?",
+    "a": "Zugangsdaten aus dem Skript entfernen und aus einem Tresor (Secret Store) oder geschützten Speicher lesen",
+    "a_full": "Zugangsdaten gehören nicht in Quelltext oder Versionsverwaltung, dort sind sie für alle mit Lesezugriff sichtbar und bleiben in der Historie. Unter Windows eignen sich die Anmeldeinformationsverwaltung (Credential Manager) oder das Modul SecretManagement, in Pipelines und Containern Secrets bzw. Umgebungsvariablen. Das bereits veröffentlichte Passwort muss zusätzlich geändert werden.",
+    "options": [
+      "Das Skript aus dem Repository löschen, das Passwort aber unverändert lassen",
+      "Das Passwort in einen Kommentar verschieben, damit es nicht ausgeführt wird",
+      "Zugangsdaten aus dem Skript entfernen und aus einem Tresor (Secret Store) oder geschützten Speicher lesen",
+      "Das Passwort im Skript mit Base64 kodieren und die Datei ins Repository legen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "windows",
+    "rahmenplan": [
+      "A10c"
+    ],
+    "q": "Ein PowerShell-Skript startet robocopy und wertet danach $? aus. Das Monitoring meldet trotz erfolgreicher Kopie gelegentlich Fehler. Worauf müssen Sie bei externen Programmen achten?",
+    "a": "Auf $LASTEXITCODE und darauf, dass robocopy erst ab Rückgabecode 8 einen Fehler meldet",
+    "a_full": "$LASTEXITCODE enthält den Rückgabecode (exit code) des zuletzt gestarteten externen Programms. Viele Programme melden mit 0 Erfolg, robocopy nutzt aber Bitwerte: 1 heißt Dateien kopiert, Werte bis 7 sind kein Fehler, ab 8 ist etwas schiefgegangen. Das Skript sollte also z. B. if ($LASTEXITCODE -ge 8) prüfen.",
+    "options": [
+      "Auf $PSItem und darauf, dass robocopy erst ab Rückgabecode 100 abbricht",
+      "Auf $Error[0] und darauf, dass robocopy bei Erfolg immer den Wert 1 liefert",
+      "Auf $LASTEXITCODE und darauf, dass robocopy erst ab Rückgabecode 8 einen Fehler meldet",
+      "Auf $null und darauf, dass robocopy bei Fehlern keinerlei Ausgabe erzeugt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10c"
+    ],
+    "q": "Ein nächtliches Bereinigungsskript läuft unbeaufsichtigt. Am Morgen fragt Ihr Ausbilder, was es gelöscht hat und ob Fehler auftraten. Niemand weiß es. Was hätte das Skript tun sollen?",
+    "a": "Jeden Schritt mit Zeitstempel in eine Logdatei schreiben und mit passendem Rückgabecode enden",
+    "a_full": "Unbeaufsichtigte Skripte brauchen ein Protokoll, das zeigt, was wann passiert ist, z. B. mit Add-Content bzw. echo >> oder Start-Transcript. Ein Rückgabecode ungleich 0 bei Fehlern erlaubt der Aufgabenplanung oder dem Monitoring, Alarm zu geben. Logdateien sollten selbst rotiert werden, damit sie nicht volllaufen.",
+    "options": [
+      "Alle Meldungen am Ende per Write-Host auf dem Bildschirm des Servers anzeigen",
+      "Nach jedem Schritt eine Pause einfügen, damit man die Ausgabe mitlesen kann",
+      "Alle Fehlermeldungen unterdrücken, damit das Skript immer bis zum Ende läuft",
+      "Jeden Schritt mit Zeitstempel in eine Logdatei schreiben und mit passendem Rückgabecode enden"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "programmierung",
+    "rahmenplan": [
+      "A10c",
+      "C3g"
+    ],
+    "q": "Ein Teamleiter will künftig neue Server nicht mehr von Hand einrichten, sondern ihre Konfiguration als Code in Git ablegen, z. B. mit Ansible. Welchen Vorteil hat dieses Infrastructure as Code (IaC)?",
+    "a": "Konfigurationen sind versioniert, prüfbar und jederzeit gleich reproduzierbar",
+    "a_full": "Bei IaC beschreibt man den gewünschten Zustand von Servern, Netzen oder Diensten in Dateien, z. B. als Ansible-Playbook in YAML. Änderungen laufen über Versionsverwaltung und Review, frühere Stände lassen sich wiederherstellen. Zehn Server werden so identisch eingerichtet, Konfigurationsabweichungen (configuration drift) fallen auf.",
+    "options": [
+      "Skripte laufen danach ohne Rechte und ohne Netzwerkverbindung",
+      "Konfigurationen sind versioniert, prüfbar und jederzeit gleich reproduzierbar",
+      "Konfigurationen werden nur noch auf einem einzigen Admin-PC gespeichert",
+      "Server benötigen danach keine Updates und keine Überwachung mehr"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A2e",
+      "A9b"
+    ],
+    "q": "Ein Hersteller schreibt zu einem Switch-Modell: „This product reaches End of Sale on 31 March 2026 and End of Life on 31 March 2031. Security updates will be provided until End of Life.“ Was bedeutet das für Ihren Kunden, der zwei dieser Switches betreibt?",
+    "a": "Ab April 2026 kann er das Modell nicht mehr kaufen, Sicherheitsupdates erhält er noch bis Ende März 2031",
+    "a_full": "End of Sale (Verkaufsende) heißt, dass das Produkt ab diesem Datum nicht mehr bestellt werden kann. End of Life (Ende der Lebensdauer) ist hier das Ende jeder Unterstützung durch den Hersteller. Die vorhandenen Switches dürfen also weiterlaufen, der Austausch sollte aber rechtzeitig vor 2031 geplant werden.",
+    "options": [
+      "Ab April 2026 kann er das Modell nicht mehr kaufen, Sicherheitsupdates erhält er noch bis Ende März 2031",
+      "Ab April 2026 dürfen die Switches nicht mehr betrieben werden, Ersatz liefert der Hersteller bis 2031",
+      "Ab April 2026 erhält er keine Sicherheitsupdates mehr, kaufen kann er das Modell noch bis 2031",
+      "Ab April 2026 gibt es nur noch kostenpflichtige Updates, ab 2031 werden die Geräte gesperrt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "A2e",
+      "A1d"
+    ],
+    "q": "In einem 42-HE-Serverschrank sind 30 Höheneinheiten belegt. Im englischen Datenblatt des neuen Storage steht: „Form factor: 4U rack-mount“. Wie viele dieser Geräte passen noch in den Schrank und wie hoch ist eines?",
+    "a": "Drei Geräte, jedes ist etwa 17,8 cm hoch (4 x 44,45 mm)",
+    "a_full": "Die Abkürzung U steht für rack unit, auf Deutsch Höheneinheit (HE). Eine HE misst 1,75 Zoll, also 44,45 mm. Frei sind 42 - 30 = 12 HE, das reicht für drei Geräte mit je 4 HE. In der Praxis prüft man zusätzlich Einbautiefe, Gewicht und Stromversorgung.",
+    "options": [
+      "Vier Geräte, jedes ist etwa 10,2 cm hoch (4 x 25,4 mm)",
+      "Zwei Geräte, jedes ist etwa 22,2 cm hoch (4 x 55,5 mm)",
+      "Drei Geräte, jedes ist etwa 4 Zoll hoch (4 x 25,4 mm)",
+      "Drei Geräte, jedes ist etwa 17,8 cm hoch (4 x 44,45 mm)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "storage",
+    "rahmenplan": [
+      "A2e",
+      "A9b"
+    ],
+    "q": "Im Datenblatt einer SSD steht: „Endurance: 600 TBW. Warranty: 5 years or until the TBW rating is reached, whichever comes first.“ Wie lange gilt die Garantie?",
+    "a": "Bis zum Ablauf von fünf Jahren oder bis 600 TB geschrieben sind, je nachdem, was zuerst eintritt",
+    "a_full": "„Whichever comes first“ bedeutet „je nachdem, was zuerst eintritt“. Die Garantie endet also entweder nach fünf Jahren oder vorher, sobald die Schreibmenge von 600 Terabyte erreicht ist. Bei stark schreibenden Anwendungen wie Datenbanken kann die Garantie deshalb deutlich vor fünf Jahren enden.",
+    "options": [
+      "Fünf Jahre lang ab dem Zeitpunkt, an dem 600 TB geschrieben wurden",
+      "Immer volle fünf Jahre, die TBW-Angabe ist nur eine unverbindliche Empfehlung",
+      "Bis 600 TB geschrieben sind, in jedem Fall aber mindestens fünf volle Jahre",
+      "Bis zum Ablauf von fünf Jahren oder bis 600 TB geschrieben sind, je nachdem, was zuerst eintritt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "A2e",
+      "A9b"
+    ],
+    "q": "Ein Kunde will Ersatzserver in einem ungeheizten Lager aufbewahren, in dem es im Winter bis -15 °C kalt wird. Im Datenblatt steht: „Operating temperature: 10 °C to 35 °C. Non-operating temperature: -40 °C to 65 °C. Humidity: 8 % to 90 %, non-condensing.“ Ist die Lagerung zulässig?",
+    "a": "Ja, ausgeschaltet gilt der Bereich „non-operating“, es darf aber keine Feuchtigkeit kondensieren",
+    "a_full": "„Operating“ beschreibt die Bedingungen im Betrieb, „non-operating“ die Lagerung und den Transport im ausgeschalteten Zustand. -15 °C liegen im zulässigen Lagerbereich. „Non-condensing“ heißt „nicht kondensierend“: Ein kaltes Gerät sollte vor dem Einschalten im warmen Serverraum erst akklimatisieren, damit sich kein Kondenswasser bildet.",
+    "options": [
+      "Nein, das Gerät darf nie unter 10 °C kommen, auch nicht ausgeschaltet",
+      "Ja, ausgeschaltet gilt der Bereich „non-operating“, es darf aber keine Feuchtigkeit kondensieren",
+      "Ja, aber nur, wenn das Gerät im Lager eingeschaltet bleibt und sich selbst wärmt",
+      "Nein, „non-operating“ bezeichnet Temperaturen, bei denen das Gerät zerstört wird"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "haertung",
+    "rahmenplan": [
+      "A2e",
+      "A8a"
+    ],
+    "q": "Ein Sicherheitshinweis lautet: „CVE-2026-1234, CVSS 9.8. Exploitable remotely without authentication. Affected versions: 2.0 through 2.3.4. Fixed in 2.3.5.“ Ihr Kunde nutzt Version 2.3.4. Wie bewerten Sie die Lage?",
+    "a": "Die Version ist betroffen, die Lücke ist ohne Anmeldung aus der Ferne ausnutzbar, sofort auf 2.3.5 aktualisieren",
+    "a_full": "„Through“ bedeutet in Versionsangaben „bis einschließlich“, Version 2.3.4 ist also betroffen. Ein CVSS-Wert von 9.8 liegt im kritischen Bereich. „Exploitable remotely without authentication“ heißt, ein Angreifer braucht weder Zugang zum Gebäude noch ein Konto. Deshalb hat das Update auf die korrigierte Version 2.3.5 hohe Priorität.",
+    "options": [
+      "Die Version ist betroffen, ein Update ist erst ab einem CVSS-Wert von 10 nötig",
+      "Die Version ist nicht betroffen, weil „through“ hier „bis ausschließlich“ bedeutet",
+      "Die Version ist betroffen, die Lücke ist aber nur mit gültigem Konto vor Ort ausnutzbar",
+      "Die Version ist betroffen, die Lücke ist ohne Anmeldung aus der Ferne ausnutzbar, sofort auf 2.3.5 aktualisieren"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "netzwerk",
+    "thema": "dienste",
+    "rahmenplan": [
+      "A2e",
+      "A6c"
+    ],
+    "q": "In den Release Notes einer Monitoring-Software steht: „Version 5.0 is not backward compatible with configuration files created in version 4.x. Use the migration tool before upgrading.“ Was bedeutet das für das geplante Update?",
+    "a": "Die alten Konfigurationsdateien passen nicht zu 5.0 und müssen vorher mit dem Migrationswerkzeug umgewandelt werden",
+    "a_full": "„Backward compatible“ heißt abwärtskompatibel, also dass Neues mit Altem weiter zusammenarbeitet. Hier ist das ausdrücklich nicht der Fall. Vor dem Upgrade (Aktualisierung auf eine neue Hauptversion) sollte man die Konfiguration sichern, das Migrationswerkzeug nutzen und das Ergebnis möglichst in einer Testumgebung prüfen.",
+    "options": [
+      "Die alten Konfigurationsdateien werden beim Update automatisch übernommen und angepasst",
+      "Die alten Konfigurationsdateien passen nicht zu 5.0 und müssen vorher mit dem Migrationswerkzeug umgewandelt werden",
+      "Version 5.0 läuft nur auf älterer Hardware, das Migrationswerkzeug prüft den Server",
+      "Nach dem Update kann man jederzeit ohne Datenverlust auf 4.x zurückwechseln"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "hardware",
+    "rahmenplan": [
+      "A2e",
+      "A9b"
+    ],
+    "q": "Ein Azubi liest im englischen Datenblatt einer USV: „Output power capacity: 1,500 W. Weight: 24.5 kg.“ Er notiert „1,5 W und 245 kg“. Was ist falsch?",
+    "a": "Im Englischen trennt das Komma Tausender, der Punkt Dezimalen: 1.500 W und 24,5 kg",
+    "a_full": "Englischsprachige Dokumente verwenden die umgekehrte Schreibweise: „1,500“ ist eintausendfünfhundert, „24.5“ ist vierundzwanzig Komma fünf. Wer das verwechselt, rechnet Leistung, Gewicht oder Preise um den Faktor 1.000 oder 10 falsch. Beim Übertragen in deutsche Unterlagen schreibt man deshalb 1.500 W und 24,5 kg.",
+    "options": [
+      "Im Englischen trennt das Komma Tausender, der Punkt Dezimalen: 1.500 W und 24,5 kg",
+      "Gemeint sind 15 W und 24,5 kg, weil das Komma eine Stelle verschiebt",
+      "Nichts, im Englischen gilt dieselbe Schreibweise wie im Deutschen",
+      "Gemeint sind 1,5 kW und 2,45 kg, weil der Punkt Tausender trennt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "linux",
+    "rahmenplan": [
+      "A2e",
+      "A6c"
+    ],
+    "q": "Ein Kollege versucht sich per SSH auf einem neuen Linux-Server anzumelden und erhält: „Permission denied (publickey).“ Was sagt diese Meldung aus?",
+    "a": "Der Server erlaubt nur Schlüsselanmeldung und hat keinen passenden Schlüssel des Kollegen akzeptiert",
+    "a_full": "„Permission denied“ heißt „Zugriff verweigert“. In Klammern stehen die Anmeldeverfahren, die der Server anbietet, hier nur „publickey“. Eine Kennwortanmeldung ist also abgeschaltet. Der Kollege muss seinen öffentlichen Schlüssel auf dem Server hinterlegen lassen oder den richtigen privaten Schlüssel verwenden.",
+    "options": [
+      "Der SSH-Dienst läuft nicht, der Server lehnt deshalb jede Verbindung ab",
+      "Der öffentliche Schlüssel des Servers hat sich geändert, es droht ein Angriff",
+      "Das Kennwort des Kollegen ist abgelaufen und muss am Server neu gesetzt werden",
+      "Der Server erlaubt nur Schlüsselanmeldung und hat keinen passenden Schlüssel des Kollegen akzeptiert"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2a"
+    ],
+    "q": "Ihr Ausbilder bittet Sie, die Preise der drei wichtigsten Mitbewerber für Managed-Backup ein Jahr lang jedes Quartal zu erfassen. Eine Kollegin hat dagegen einmalig zum Stichtag eine Übersicht erstellt. Wie nennt man die beiden Vorgehensweisen?",
+    "a": "Laufende Erfassung über einen Zeitraum ist Marktbeobachtung, die einmalige Stichtagsbetrachtung ist Marktanalyse",
+    "a_full": "Die Marktanalyse betrachtet den Markt zu einem bestimmten Zeitpunkt, etwa Größe, Anbieter und Preise. Die Marktbeobachtung verfolgt die Entwicklung über einen Zeitraum und zeigt so Trends, zum Beispiel sinkende Preise je Terabyte. Beide gehören zur Marktforschung, die Marktprognose versucht zusätzlich die künftige Entwicklung abzuschätzen.",
+    "options": [
+      "Laufende Erfassung ist Marktanalyse, die einmalige Stichtagsbetrachtung ist Marktbeobachtung",
+      "Beides ist Marktsegmentierung, nur mit unterschiedlicher Zahl von Mitbewerbern",
+      "Laufende Erfassung über einen Zeitraum ist Marktbeobachtung, die einmalige Stichtagsbetrachtung ist Marktanalyse",
+      "Laufende Erfassung ist Marktprognose, die einmalige Stichtagsbetrachtung ist Benchmarking"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beschaffung",
+    "rahmenplan": [
+      "A2a",
+      "A3a"
+    ],
+    "q": "Ihr Systemhaus will seine Preise für Arbeitsplatz-PCs mit drei Mitbewerbern vergleichen. Welche Konditionen muss die Vergleichstabelle neben dem reinen Stückpreis enthalten, damit der Vergleich fair ist?",
+    "a": "Rabatt, Skonto, Zahlungsziel, Versandkosten, Lieferzeit, Garantie und Service",
+    "a_full": "Ein niedriger Listenpreis kann durch Versandkosten, kurze Garantie oder fehlenden Vor-Ort-Service wieder teurer werden. Konditionen (terms and conditions) sind die Bedingungen, zu denen ein Anbieter liefert: Preisnachlässe, Zahlungsbedingungen, Lieferbedingungen und Leistungsumfang. Erst wenn diese vergleichbar gemacht sind, zeigt der Vergleich die tatsächliche Wettbewerbsposition.",
+    "options": [
+      "Nur die Werbebudgets und die Zahl der Social-Media-Beiträge",
+      "Rabatt, Skonto, Zahlungsziel, Versandkosten, Lieferzeit, Garantie und Service",
+      "Nur Firmensitz, Rechtsform und Anzahl der Mitarbeiter der Mitbewerber",
+      "Nur Herstellermarke, Prozessortyp und Farbe des Gehäuses"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2a"
+    ],
+    "q": "Ein Systemhaus vergleicht seine Abläufe im Service Desk gezielt mit einem besonders erfolgreichen Unternehmen aus einer anderen Branche, um von dessen Methoden zu lernen. Wie heißt dieses Vorgehen?",
+    "a": "Benchmarking, der Vergleich mit dem Besten als Maßstab",
+    "a_full": "Beim Benchmarking werden eigene Produkte, Prozesse oder Kennzahlen mit denen führender Unternehmen verglichen (best practice). Ziel ist nicht das Kopieren, sondern das Erkennen von Verbesserungsmöglichkeiten. Der Vergleichspartner muss nicht aus derselben Branche stammen, wenn der Prozess ähnlich ist.",
+    "options": [
+      "Outsourcing, die Auslagerung eines Prozesses an Dritte",
+      "Preisdifferenzierung, unterschiedliche Preise für gleiche Leistungen",
+      "Benchmarking, der Vergleich mit dem Besten als Maßstab",
+      "Marktsegmentierung, die Aufteilung des Marktes in Zielgruppen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2b"
+    ],
+    "q": "Eine Inhaberin einer Steuerkanzlei sagt: „Unsere Rechner sind zu langsam, ich wünsche mir neue.“ Sie hat 12.000 Euro dafür eingeplant und bestellt anschließend bei Ihnen. Ordnen Sie die Begriffe Bedürfnis, Bedarf und Nachfrage zu.",
+    "a": "Der Wunsch nach schnelleren Rechnern ist das Bedürfnis, mit Budget wird es zum Bedarf, die Bestellung ist die Nachfrage",
+    "a_full": "Ein Bedürfnis ist ein empfundener Mangel mit dem Wunsch, ihn zu beseitigen. Wird es durch Kaufkraft gedeckt, spricht man vom Bedarf. Tritt der Kunde damit am Markt auf, etwa durch Anfrage oder Bestellung, wird daraus Nachfrage. Für die Beratung heißt das: Erst wenn Budget und Kaufabsicht klar sind, lohnt ein ausgearbeitetes Angebot.",
+    "options": [
+      "Das Budget ist das Bedürfnis, der Wunsch ist der Bedarf, die Bestellung ist das Angebot",
+      "Der Wunsch nach schnelleren Rechnern ist das Bedürfnis, mit Budget wird es zum Bedarf, die Bestellung ist die Nachfrage",
+      "Alle drei Begriffe bedeuten dasselbe und werden in der Beratung gleich verwendet",
+      "Der Wunsch ist die Nachfrage, das Budget ist das Bedürfnis, die Bestellung ist der Bedarf"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2b",
+      "C1a"
+    ],
+    "q": "Bei der Bedarfsermittlung für neue Notebooks nennt ein Kunde: „Die Buchhaltungssoftware muss laufen“, „Eine beleuchtete Tastatur wäre schön“ und „Das Gewicht soll unter 1,5 kg liegen, das ist Pflicht.“ Wie halten Sie diese Aussagen fest?",
+    "a": "Getrennt als Muss-Anforderungen (Software, Gewicht) und Kann- oder Wunschanforderung (Beleuchtung)",
+    "a_full": "Muss-Kriterien sind Ausschlusskriterien: Ein Gerät, das sie nicht erfüllt, kommt nicht in Frage. Kann-Kriterien (nice to have) fließen nur in die Bewertung der verbleibenden Angebote ein, etwa in einer Nutzwertanalyse. Diese Trennung verhindert, dass ein Komfortmerkmal ein Gerät bevorzugt, das eine Pflichtanforderung verfehlt.",
+    "options": [
+      "Alle drei als Kann-Anforderungen, die endgültige Auswahl trifft der Techniker",
+      "Nur die Software als Anforderung, Gewicht und Tastatur sind persönliche Vorlieben",
+      "Alle drei Aussagen als gleichwertige Muss-Anforderungen, um den Kunden nicht zu verärgern",
+      "Getrennt als Muss-Anforderungen (Software, Gewicht) und Kann- oder Wunschanforderung (Beleuchtung)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2b",
+      "A3b"
+    ],
+    "q": "Ihr Systemhaus bietet dasselbe Notebook sowohl Privatkunden als auch Firmenkunden an. Worin müssen sich Preisangabe und Vertragsbedingungen für die beiden Zielgruppen unterscheiden?",
+    "a": "Privatkunden brauchen Bruttopreise und haben im Fernabsatz ein Widerrufsrecht, Firmenkunden reichen Nettopreise",
+    "a_full": "Nach der Preisangabenverordnung müssen gegenüber Verbrauchern Gesamtpreise einschließlich Umsatzsteuer angegeben werden. Verbraucher genießen zusätzlichen Schutz, etwa das 14-tägige Widerrufsrecht bei Fernabsatzverträgen. Gegenüber Unternehmern (business to business) sind Nettopreise üblich und viele Verbraucherschutzregeln gelten nicht.",
+    "options": [
+      "Firmenkunden muss der Bruttopreis genannt werden, Privatkunden erhalten Nettopreise ohne Umsatzsteuer",
+      "Es gibt keinen Unterschied, Preise und Rechte sind für alle Kunden gesetzlich gleich",
+      "Privatkunden brauchen Bruttopreise und haben im Fernabsatz ein Widerrufsrecht, Firmenkunden reichen Nettopreise",
+      "Beide Zielgruppen haben ein gesetzliches Widerrufsrecht von 30 Tagen bei jedem Kauf"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2c",
+      "A2e"
+    ],
+    "q": "Ein niederländischer Kunde schreibt: „Please send us a quote for 20 notebooks including lead time and payment terms.“ Was erwartet er von Ihnen?",
+    "a": "Ein Angebot über 20 Notebooks mit Angabe der Lieferzeit und der Zahlungsbedingungen",
+    "a_full": "Ein „quote“ oder „quotation“ ist ein Angebot, „lead time“ die Lieferzeit bzw. Vorlaufzeit bis zur Lieferung, „payment terms“ sind die Zahlungsbedingungen wie Zahlungsziel und Skonto. Weitere übliche Begriffe sind „purchase order“ für die Bestellung und „invoice“ für die Rechnung.",
+    "options": [
+      "Ein Datenblatt der Notebooks mit Angabe der Akkulaufzeit und der Zahlungsart",
+      "Eine Rechnung über 20 Notebooks mit Angabe der Garantiezeit und der Ratenzahlung",
+      "Ein Angebot über 20 Notebooks mit Angabe der Lieferzeit und der Zahlungsbedingungen",
+      "Eine Auftragsbestätigung mit Angabe der Lagermenge und der Mahnstufen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2c"
+    ],
+    "q": "Sie sollen der Geschäftsleitung eines Kunden in 15 Minuten ein neues Backupkonzept vorstellen. Was gehört in die Einleitung Ihrer Präsentation?",
+    "a": "Begrüßung, Thema und Ziel, kurzer Überblick über den Ablauf und ein Bezug zum Anliegen der Zuhörer",
+    "a_full": "Die Einleitung soll Aufmerksamkeit wecken und Orientierung geben: Wer spricht, worum geht es, was haben die Zuhörer davon und wie lange dauert es. Ein konkreter Aufhänger wie ein Ausfall beim Kunden im letzten Jahr holt die Zuhörer ab. Technische Details gehören in den Hauptteil, Zusammenfassung und Empfehlung in den Schluss.",
+    "options": [
+      "Eine offene Fragerunde, damit die Zuhörer das Thema der Präsentation selbst festlegen",
+      "Die Preiskalkulation mit allen Einzelposten, Zuschlägen und der Gewinnspanne",
+      "Begrüßung, Thema und Ziel, kurzer Überblick über den Ablauf und ein Bezug zum Anliegen der Zuhörer",
+      "Die vollständige technische Konfiguration aller Backupjobs mit ihren Zeitplänen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2c"
+    ],
+    "q": "Eine aufgebrachte Kundin ruft an, weil ihr Drucker nach Ihrem Einsatz gestern nicht mehr druckt. Sie wird laut. Wie gehen Sie im Reklamationsgespräch vor?",
+    "a": "Zuhören, Verständnis zeigen, den Fehler klären und eine konkrete Lösung mit Termin zusagen",
+    "a_full": "Bei einer Beschwerde (complaint) steht zuerst die Beziehungsebene im Vordergrund: Die Kundin muss sich ernst genommen fühlen, bevor sie sachlichen Argumenten zugänglich ist. Rechtfertigungen oder Schuldzuweisungen verschärfen den Konflikt. Danach klärt man mit gezielten Fragen den Fehler und sagt eine überprüfbare Lösung zu.",
+    "options": [
+      "Der Kundin technische Details erklären, bis sie ihren Bedienfehler einsieht",
+      "Zuhören, Verständnis zeigen, den Fehler klären und eine konkrete Lösung mit Termin zusagen",
+      "Sofort erklären, dass der Fehler nicht von Ihrem Einsatz stammen kann",
+      "Das Gespräch beenden und die Kundin bitten, sich schriftlich zu beschweren"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2d"
+    ],
+    "q": "Sie sollen für den Newsletter Ihres Systemhauses einen Text zum neuen Managed-Firewall-Angebot entwerfen. Ihr Ausbilder empfiehlt die AIDA-Formel. Wofür stehen die vier Buchstaben?",
+    "a": "Attention, Interest, Desire, Action: Aufmerksamkeit, Interesse, Wunsch, Handlung",
+    "a_full": "Die AIDA-Formel beschreibt die Stufen, die ein Werbetext beim Leser durchlaufen soll. Eine Überschrift wie „Wie sicher ist Ihr Netzwerk wirklich?“ weckt Aufmerksamkeit, Fakten und Nutzen erzeugen Interesse und Wunsch. Am Ende steht eine klare Handlungsaufforderung (call to action), etwa „Jetzt kostenlosen Sicherheitscheck vereinbaren“.",
+    "options": [
+      "Analyse, Information, Dokumentation, Abnahme: die Phasen eines Kundenprojekts",
+      "Attention, Information, Delivery, Account: die Stufen der Kundenbindung",
+      "Angebot, Inhalt, Dauer, Abschluss: die Bestandteile eines Kaufvertrags",
+      "Attention, Interest, Desire, Action: Aufmerksamkeit, Interesse, Wunsch, Handlung"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2h"
+    ],
+    "q": "Ein Kollege zeigt in einem Säulendiagramm die Störungen zweier Standorte: 105 und 98. Die y-Achse beginnt bei 95, die Säule von Standort A wirkt dadurch mehr als doppelt so hoch. Was ist das Problem?",
+    "a": "Die abgeschnittene y-Achse übertreibt einen kleinen Unterschied optisch, die Achse sollte bei Säulen bei 0 beginnen",
+    "a_full": "Bei Säulen- und Balkendiagrammen vergleicht das Auge die Längen. Beginnt die Achse nicht bei null, wirken kleine Unterschiede riesig, hier rund 7 Prozent als Verdopplung. Das kann Entscheider in die Irre führen. Ist ein Ausschnitt nötig, muss der Achsenbruch deutlich gekennzeichnet werden.",
+    "options": [
+      "Säulendiagramme dürfen nur Anteile zeigen, für Anzahlen braucht man ein Kreisdiagramm",
+      "Die y-Achse muss immer bei 100 enden, damit Prozentwerte sofort erkennbar sind",
+      "Die Werte sind zu ähnlich, sie dürfen deshalb nur in einer Tabelle gezeigt werden",
+      "Die abgeschnittene y-Achse übertreibt einen kleinen Unterschied optisch, die Achse sollte bei Säulen bei 0 beginnen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "A2h",
+      "A6e"
+    ],
+    "q": "Die mittlere Bearbeitungszeit der Tickets liegt laut Auswertung bei 9 Stunden, der Median bei 2 Stunden. Die Leitung fragt, welcher Wert die typische Bearbeitungszeit besser beschreibt. Was antworten Sie?",
+    "a": "Der Median, weil wenige sehr lange Tickets den Mittelwert nach oben ziehen",
+    "a_full": "Der Median ist der mittlere Wert der sortierten Daten: Die Hälfte der Tickets ist schneller als 2 Stunden erledigt. Der arithmetische Mittelwert reagiert stark auf Ausreißer, etwa einzelne Tickets, die wochenlang auf Ersatzteile warten. Bei schiefen Verteilungen ist es sinnvoll, beide Werte zu zeigen und die Ausreißer gesondert zu erklären.",
+    "options": [
+      "Der Mittelwert, weil der Median nur bei weniger als 100 Tickets gilt",
+      "Der Mittelwert, weil der Median Ausreißer doppelt gewichtet",
+      "Keiner von beiden, typische Zeiten zeigt nur die Summe aller Zeiten",
+      "Der Median, weil wenige sehr lange Tickets den Mittelwert nach oben ziehen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "beratung",
+    "rahmenplan": [
+      "A2h"
+    ],
+    "q": "Standort Nord hat im Quartal 30 Hardwarestörungen bei 300 PCs, Standort Süd 20 Störungen bei 100 PCs. Die Leitung will Nord zuerst modernisieren, weil dort mehr Störungen auftreten. Wie bewerten Sie die Daten?",
+    "a": "Süd ist stärker betroffen, bezogen auf die Gerätezahl sind es 20 Prozent gegenüber 10 Prozent in Nord",
+    "a_full": "Absolute Zahlen täuschen, wenn die Grundmengen verschieden groß sind. Eine Verhältniszahl, hier Störungen je PC (30 / 300 = 10 Prozent, 20 / 100 = 20 Prozent), macht Standorte vergleichbar. In der Präsentation sollte die Quote im Vordergrund stehen und die absolute Zahl ergänzend genannt werden.",
+    "options": [
+      "Süd ist stärker betroffen, bezogen auf die Gerätezahl sind es 20 Prozent gegenüber 10 Prozent in Nord",
+      "Beide sind gleich betroffen, weil die Differenz jeweils 10 Störungen beträgt",
+      "Nord ist stärker betroffen, weil 30 Störungen mehr sind als 20",
+      "Die Daten sind nicht vergleichbar, weil die Standorte verschieden viele Mitarbeiter haben"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A7d"
+    ],
+    "q": "Sie planen eine Schulung zum neuen Ticketsystem. Ihr Ausbilder bemängelt das Lernziel „Die Teilnehmer kennen das Ticketsystem.“ Wie formulieren Sie es besser?",
+    "a": "Beobachtbar und prüfbar: „Die Teilnehmer können selbstständig ein Ticket mit Priorität anlegen.“",
+    "a_full": "Ein gutes Lernziel beschreibt ein beobachtbares Verhalten mit einem aktiven Verb wie anlegen, zuordnen oder erklären. Verben wie „kennen“ oder „verstehen“ lassen sich nicht prüfen. Klare Lernziele helfen bei der Planung der Übungen und bei der Kontrolle des Lernerfolgs am Ende.",
+    "options": [
+      "Als Zeitangabe: „Die Teilnehmer sitzen drei Stunden am Ticketsystem.“",
+      "Möglichst allgemein: „Die Teilnehmer finden das Ticketsystem gut.“",
+      "Aus Sicht des Trainers: „Ich erkläre alle Menüpunkte des Ticketsystems.“",
+      "Beobachtbar und prüfbar: „Die Teilnehmer können selbstständig ein Ticket mit Priorität anlegen.“"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A7d"
+    ],
+    "q": "Für eine Arztpraxis sollen Sie eine Kurzanleitung (quick reference guide) zum Scannen von Befunden in die Praxissoftware erstellen. Welche Gestaltung ist richtig?",
+    "a": "Ein bis zwei Seiten, nummerierte Schritte mit Screenshots, einfache Sprache, Ansprechpartner",
+    "a_full": "Eine Kurzanleitung soll am Arbeitsplatz schnell helfen, nicht das Handbuch ersetzen. Jeder Schritt beginnt mit einer klaren Handlung, Screenshots zeigen, wo geklickt wird. Fachbegriffe werden vermieden oder erklärt. Ein Hinweis, wen man bei Fehlern anruft, gehört dazu.",
+    "options": [
+      "Ein bis zwei Seiten, nummerierte Schritte mit Screenshots, einfache Sprache, Ansprechpartner",
+      "Ein Fließtext ohne Bilder, damit die Anleitung auch ohne Drucker lesbar bleibt",
+      "Möglichst vollständig mit allen Einstellungen, Fachbegriffen und Hintergründen der Software",
+      "Eine englische Herstellerdokumentation, weil Übersetzungen fehleranfällig sind"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A7d",
+      "A2c"
+    ],
+    "q": "Nach der Einweisung von 15 Mitarbeitern in das neue Zeiterfassungssystem lassen Sie jeden auf einer Liste unterschreiben. Ein Kollege hält das für Bürokratie. Warum ist der Nachweis sinnvoll?",
+    "a": "Er belegt, wer wann worin eingewiesen wurde, das hilft bei späteren Fehlern, Rückfragen und als Teil der Abnahme",
+    "a_full": "Ein Einweisungs- oder Schulungsnachweis dokumentiert Teilnehmer, Datum, Inhalte und den Einweisenden. Bei Bedienfehlern oder Streit über vereinbarte Leistungen lässt sich so zeigen, dass die Einweisung erbracht wurde. Er zeigt zudem, wer noch nicht teilgenommen hat und nachgeschult werden muss.",
+    "options": [
+      "Er ersetzt die Abnahme, eine weitere Dokumentation ist dann nicht nötig",
+      "Er belegt, wer wann worin eingewiesen wurde, das hilft bei späteren Fehlern, Rückfragen und als Teil der Abnahme",
+      "Er ist gesetzlich für jede Softwareeinführung als Teil der Lohnabrechnung vorgeschrieben",
+      "Er überträgt die Haftung für alle Softwarefehler auf die Mitarbeiter"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "C1f"
+    ],
+    "q": "Sie bereiten die Übergabe eines neuen Dateiservers an einen Kunden vor. Was gehört in einen Übergabeplan (handover plan)?",
+    "a": "Ablauf und Termine, Verantwortliche, Tests und Abnahmekriterien, Rückfallplan, Dokumentation und Einweisung",
+    "a_full": "Der Übergabeplan legt fest, wann und wie das System in den Betrieb geht und wer was tut. Er nennt die Prüfungen für die Abnahme, die zu übergebenden Unterlagen wie Betriebshandbuch und Zugangsdaten sowie Schulungstermine. Ein Rückfallplan beschreibt, was bei Problemen passiert. Der Plan wird vorab mit dem Kunden abgestimmt.",
+    "options": [
+      "Ablauf und Termine, Verantwortliche, Tests und Abnahmekriterien, Rückfallplan, Dokumentation und Einweisung",
+      "Nur die Liste der Fehler und Verzögerungen, die im Projekt aufgetreten sind",
+      "Nur die Preise für Wartungsverträge und Erweiterungen nach der Gewährleistung",
+      "Nur die Rechnung, den Lieferschein und die Seriennummern der gelieferten Hardware"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "C1f",
+      "A7a"
+    ],
+    "q": "Nach dem Go-Live eines neuen Warenwirtschaftssystems vereinbart Ihr Systemhaus mit dem Kunden, dass zwei Wochen lang ein Techniker vor Ort ist und Störungen mit Vorrang behandelt werden. Wie nennt man diese Phase?",
+    "a": "Hypercare, eine Phase verstärkter Betreuung direkt nach der Inbetriebnahme",
+    "a_full": "Direkt nach der Einführung treten erfahrungsgemäß die meisten Fragen und Anlaufprobleme auf. In der Hypercare-Phase (intensive Nachbetreuung) stehen deshalb mehr Personal und kürzere Reaktionszeiten bereit. Danach geht das System in den Regelbetrieb mit den normalen Supportprozessen über.",
+    "options": [
+      "Proof of Concept, der erste Machbarkeitstest vor dem Projekt",
+      "Rollback, die Rückkehr zum alten System nach der Inbetriebnahme",
+      "Hypercare, eine Phase verstärkter Betreuung direkt nach der Inbetriebnahme",
+      "Gewährleistung, die gesetzliche Haftung für Mängel über zwei Jahre"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "datenbanken",
+    "thema": "db_betrieb",
+    "rahmenplan": [
+      "C1g"
+    ],
+    "q": "Für die Übernahme der Kundendaten in ein neues CRM legen Sie eine Tabelle an: alte Felder „Name1“, „Name2“, „PLZ_Ort“ werden den neuen Feldern „Firma“, „Ansprechpartner“, „PLZ“ und „Ort“ zugeordnet. Wie heißt dieses Dokument und warum ist es nötig?",
+    "a": "Feldzuordnung (Mapping), sie legt fest, welches alte Feld wie in welches neue Feld übernommen wird",
+    "a_full": "Alte und neue Systeme haben selten dieselbe Datenstruktur. Das Mapping beschreibt für jedes Feld Quelle, Ziel, Datentyp und nötige Umwandlungen, etwa das Aufteilen von „PLZ_Ort“ in zwei Felder. Es ist Grundlage für das Migrationsskript und für die spätere Prüfung, ob alle Daten richtig angekommen sind.",
+    "options": [
+      "Feldzuordnung (Mapping), sie legt fest, welches alte Feld wie in welches neue Feld übernommen wird",
+      "Lastenheft, es beschreibt die Anforderungen des Kunden an das neue CRM",
+      "Datenschutz-Folgenabschätzung, sie ist vor jeder Übernahme von Kundendaten Pflicht",
+      "Normalisierung, sie entfernt Redundanzen aus der alten Datenbank"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "storage",
+    "rahmenplan": [
+      "C1g"
+    ],
+    "q": "Nach der Übernahme von 48.000 Dateien vom alten auf den neuen Dateiserver will der Kunde wissen, ob wirklich alles vollständig und unverändert angekommen ist. Wie validieren Sie die Datenübernahme?",
+    "a": "Dateianzahl und Größe vergleichen, Prüfsummen bilden, Kopierprotokoll prüfen, Stichproben öffnen",
+    "a_full": "Validierung heißt, das Ergebnis gegen die Quelle zu prüfen. Zählungen zeigen fehlende Dateien, Prüfsummen (Hashwerte) zeigen veränderte Inhalte. Das Protokoll des Kopierwerkzeugs listet übersprungene oder gesperrte Dateien. Stichproben durch Anwender prüfen zusätzlich Berechtigungen und Lesbarkeit. Das Ergebnis wird für die Abnahme dokumentiert.",
+    "options": [
+      "Den Kunden fragen, ob ihm Dateien fehlen, und bei Bedarf nachkopieren",
+      "Prüfen, ob der neue Server mehr freien Speicher hat als der alte",
+      "Dateianzahl und Größe vergleichen, Prüfsummen bilden, Kopierprotokoll prüfen, Stichproben öffnen",
+      "Die Dateien ein zweites Mal kopieren, dann sind Fehler ausgeschlossen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "datenbanken",
+    "thema": "db_betrieb",
+    "rahmenplan": [
+      "C1g",
+      "A5c"
+    ],
+    "q": "Nach dem Import einer CSV-Datei mit Kundendaten stehen im neuen System Namen wie „MÃ¼ller“ und „GrÃ¶ÃŸe“. Was ist die wahrscheinliche Ursache?",
+    "a": "Die Datei ist in UTF-8 gespeichert, wurde beim Import aber als ISO-8859-1 bzw. Windows-1252 gelesen",
+    "a_full": "In UTF-8 belegen Umlaute zwei Byte, „ü“ etwa die Bytes C3 und BC. Liest ein Programm diese Bytes als ISO-8859-1, entstehen zwei Zeichen, nämlich „Ã¼“. Lösung: Beim Import die Kodierung UTF-8 angeben und im Mapping die Zeichenkodierung von Quelle und Ziel festhalten. Ein Probelauf mit Umlauten deckt den Fehler früh auf.",
+    "options": [
+      "Die Datenbank hat die Feldlänge zu kurz gewählt und Zeichen abgeschnitten",
+      "Die Datei ist in ISO-8859-1 gespeichert und wurde beim Import als ASCII gelesen",
+      "Die CSV-Datei verwendet Semikolon statt Komma als Trennzeichen",
+      "Die Datei ist in UTF-8 gespeichert, wurde beim Import aber als ISO-8859-1 bzw. Windows-1252 gelesen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "C1g",
+      "C1e"
+    ],
+    "q": "Vor der Übernahme des Kundenstamms in ein neues ERP fällt auf: 6 Prozent der Datensätze sind Dubletten, viele Kunden haben seit zehn Jahren nichts bestellt und Telefonnummern sind uneinheitlich erfasst. Was planen Sie vor der Migration?",
+    "a": "Eine Datenbereinigung im Altsystem: Dubletten zusammenführen, Altdaten prüfen, Formate vereinheitlichen",
+    "a_full": "Fehlerhafte Daten werden durch eine Migration nicht besser, sie werden nur ins neue System übertragen (garbage in, garbage out). Die Bereinigung (data cleansing) erfolgt vor der Übernahme und mit dem Fachbereich abgestimmt. Bei personenbezogenen Daten ist zu prüfen, ob noch ein Zweck oder eine Aufbewahrungspflicht besteht, sonst sind sie zu löschen.",
+    "options": [
+      "Den gesamten Kundenstamm neu erfassen lassen, statt Daten zu übernehmen",
+      "Alle Daten unverändert übernehmen und die Bereinigung den Anwendern im neuen System überlassen",
+      "Eine Datenbereinigung im Altsystem: Dubletten zusammenführen, Altdaten prüfen, Formate vereinheitlichen",
+      "Nur die Dubletten im neuen System nachträglich per Hand löschen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "isms",
+    "rahmenplan": [
+      "C3a",
+      "A10b"
+    ],
+    "q": "Ein mittelständisches Unternehmen will erstmals eine IT-Nutzungsrichtlinie (acceptable use policy) für alle Beschäftigten einführen. Welche Inhalte gehören typischerweise hinein?",
+    "a": "Regeln zu Zugangsdaten, E-Mail, Internet, Software und Privatnutzung, Meldepflichten und Kontrollen",
+    "a_full": "Die Richtlinie sagt den Beschäftigten verständlich, was im Umgang mit den IT-Systemen erlaubt ist und was nicht. Sie regelt etwa, ob private Nutzung erlaubt ist, wie Passwörter zu behandeln sind und dass keine eigene Software installiert werden darf. Wichtig sind auch Hinweise, wie Verdachtsfälle gemeldet werden und welche Protokollierung stattfindet.",
+    "options": [
+      "Regeln zu Zugangsdaten, E-Mail, Internet, Software und Privatnutzung, Meldepflichten und Kontrollen",
+      "Die Gehälter, Arbeitszeiten und Urlaubspläne der Mitarbeiter in der IT-Abteilung",
+      "Die Lieferantenliste mit Preisen und Lieferzeiten der eingesetzten Hardware",
+      "Die IP-Adressen, Firewallregeln und Administratorkennwörter aller Server im Unternehmen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "isms",
+    "rahmenplan": [
+      "C3a",
+      "A10b"
+    ],
+    "q": "Die Geschäftsführung will den Beschäftigten die private Nutzung des dienstlichen E-Mail-Postfachs erlauben. Der Datenschutzbeauftragte rät, das in der Richtlinie besser zu verbieten oder genau zu regeln. Warum?",
+    "a": "Bei erlaubter Privatnutzung ist der Zugriff des Arbeitgebers auf das Postfach rechtlich deutlich schwieriger",
+    "a_full": "Sind private Mails erlaubt, liegen im Postfach Daten, auf die der Arbeitgeber nicht ohne Weiteres zugreifen darf. Ob er dann sogar dem Fernmeldegeheimnis unterliegt, ist in Rechtsprechung und Literatur umstritten. Viele Unternehmen verbieten deshalb die private Nutzung oder erlauben sie nur gegen eine Einwilligung zu festgelegten Kontrollen.",
+    "options": [
+      "Bei erlaubter Privatnutzung ist der Zugriff des Arbeitgebers auf das Postfach rechtlich deutlich schwieriger",
+      "Private E-Mails verbrauchen so viel Speicher, dass der Mailserver regelmäßig ausfällt",
+      "Private Nutzung ist in Deutschland grundsätzlich gesetzlich verboten",
+      "Der Betriebsrat darf private E-Mails der Beschäftigten jederzeit lesen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Nach einem Rollout neuer Notebooks häufen sich Beschwerden über abbrechende WLAN-Verbindungen. Ihr Teamleiter will die möglichen Ursachen in einer Teambesprechung nach Kategorien wie Mensch, Maschine, Methode, Material, Messung und Mitwelt sammeln. Welches Werkzeug passt?",
+    "a": "Ein Ishikawa-Diagramm mit den 6M als Hauptäste",
+    "a_full": "Das Ishikawa-Diagramm (Ursache-Wirkungs-Diagramm, fishbone diagram) stellt das Problem als Fischkopf dar. Die Hauptgräten sind Ursachenkategorien, bei den 6M Mensch, Maschine, Methode, Material, Messung und Mitwelt. So werden Ursachen vollständig gesammelt, bevor man sie bewertet und gezielt überprüft.",
+    "options": [
+      "Eine Fehlersammelliste mit sechs Strichlisten pro Tag",
+      "Ein Ishikawa-Diagramm mit den 6M als Hauptäste",
+      "Ein Pareto-Diagramm mit den sechs häufigsten Fehlern",
+      "Ein Gantt-Diagramm mit sechs parallelen Arbeitspaketen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Ein Kunde meldet, dass sein Dateiserver jeden Montag langsam ist. Ein Kollege empfiehlt, den Server montags früh einfach neu zu starten. Warum ist das aus Sicht der Qualitätssicherung keine Lösung?",
+    "a": "Er behebt nur das Symptom, die Grundursache (root cause) bleibt",
+    "a_full": "Ein Symptom ist die sichtbare Wirkung, die Grundursache (root cause) ist der Auslöser dahinter, etwa ein Backup-Job, der bis Montag früh läuft. Wer nur das Symptom beseitigt, muss den Aufwand immer wieder treiben und der Fehler kehrt zurück. Eine dauerhafte Lösung setzt an der Ursache an und wird danach auf Wirksamkeit geprüft.",
+    "options": [
+      "Der Neustart ist eine Vorbeugemaßnahme und keine Korrektur",
+      "Der Neustart verletzt die Gewährleistung des Serverherstellers",
+      "Er behebt nur das Symptom, die Grundursache (root cause) bleibt",
+      "Der Neustart ist unzulässig, weil kein Change beantragt wurde"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Ein Service Desk will vier Wochen lang erfassen, welche Fehlerarten an den Kassensystemen eines Kunden auftreten und wie oft. Die Kollegen sollen dafür bei jedem Anruf nur einen Strich in eine vorbereitete Tabelle setzen. Wie heißt dieses Werkzeug?",
+    "a": "Fehlersammelliste (Strichliste, check sheet)",
+    "a_full": "Die Fehlersammelliste ist ein einfaches Qualitätswerkzeug zur Datenerfassung. Fehlerarten stehen in Zeilen, Zeiträume oder Orte in Spalten, jedes Auftreten wird mit einem Strich gezählt. Die Zahlen bilden die Grundlage für eine Pareto-Analyse und machen Häufungen sichtbar.",
+    "options": [
+      "Ursache-Wirkungs-Diagramm (fishbone)",
+      "Flussdiagramm (flow chart) des Ablaufs",
+      "Fehlersammelliste (Strichliste, check sheet)",
+      "Korrelationsdiagramm (scatter diagram)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b",
+      "A5c"
+    ],
+    "q": "Ein Hardwarelieferant soll eine wiederholte Reklamation defekter Netzteile strukturiert bearbeiten. Ihr Einkauf verlangt dafür einen Bericht, der von der Teambildung über Sofortmaßnahmen und Ursachenanalyse bis zur Wirksamkeitsprüfung reicht. Wie heißt dieses Berichtsformat?",
+    "a": "8D-Report (acht Disziplinen)",
+    "a_full": "Der 8D-Report gliedert die Problemlösung in acht Schritte: Team bilden, Problem beschreiben, Sofortmaßnahmen, Ursache ermitteln, Abstellmaßnahmen festlegen, umsetzen und auf Wirksamkeit prüfen, Wiederholung verhindern, Abschluss und Würdigung des Teams. Er ist vor allem in der Industrie bei Reklamationen gegenüber Lieferanten üblich. Der Kunde sieht so nachvollziehbar, dass nicht nur das Symptom behoben wurde.",
+    "options": [
+      "Lessons-Learned-Bericht (Projektende)",
+      "SLA-Report (Servicegüte)",
+      "Abnahmeprotokoll (acceptance report)",
+      "8D-Report (acht Disziplinen)"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Nach drei gleichartigen Ausfällen des Mailgateways ist die Ursache noch unklar. Der Service Desk hilft sich, indem er betroffene Postfächer auf einen zweiten Server umleitet. Wie nennt ITIL diesen Behelf und wo wird er festgehalten?",
+    "a": "Workaround, dokumentiert als bekannter Fehler (known error)",
+    "a_full": "Im Problem Management nach ITIL wird ein Problem untersucht, bis die Ursache feststeht. Ein Workaround mindert die Auswirkungen, ohne die Ursache zu beseitigen. Ist die Ursache oder ein Workaround bekannt, wird das Problem als bekannter Fehler (known error) dokumentiert, damit der Service Desk künftige Incidents schneller lösen kann.",
+    "options": [
+      "Major Incident, festgehalten im Notfallhandbuch",
+      "Workaround, dokumentiert als bekannter Fehler (known error)",
+      "Service Request, festgehalten im Servicekatalog",
+      "Standard Change, festgehalten im Change-Kalender"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Bei einer Datenmigration wurden falsche Zeichensätze übernommen. Sie korrigieren die betroffenen Datensätze und passen das Migrationsskript an. Zusätzlich prüft das Team, ob die geplante Migration des CRM-Systems dasselbe Risiko hat. Wie unterscheiden sich diese Maßnahmen?",
+    "a": "Skriptanpassung ist eine Korrekturmaßnahme, die Prüfung des CRM-Projekts eine Vorbeugemaßnahme",
+    "a_full": "Eine Korrekturmaßnahme (corrective action) beseitigt die Ursache eines aufgetretenen Fehlers, damit er nicht wieder auftritt. Eine Vorbeugemaßnahme (preventive action) richtet sich gegen einen möglichen Fehler, der noch nicht eingetreten ist. Das reine Korrigieren der Datensätze ist dagegen nur eine Fehlerbeseitigung (Korrektur).",
+    "options": [
+      "Skriptanpassung ist eine Sofortmaßnahme, die Prüfung eine Korrekturmaßnahme",
+      "Beide Maßnahmen sind Vorbeugemaßnahmen, weil sie künftige Fehler vermeiden",
+      "Skriptanpassung ist eine Korrekturmaßnahme, die Prüfung des CRM-Projekts eine Vorbeugemaßnahme",
+      "Beide Maßnahmen sind Korrekturen, weil der Fehler schon eingetreten ist"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5b"
+    ],
+    "q": "Ihr Team hat die Ursache für wiederkehrende Druckausfälle gefunden und behoben. Ihr Ausbilder bittet Sie, das Ergebnis zu dokumentieren. Welche Angaben gehören mindestens in die Dokumentation?",
+    "a": "Problem, Ursache, Maßnahme, Verantwortliche, Datum und Wirksamkeitsnachweis",
+    "a_full": "Eine gute Dokumentation macht die Ursachenanalyse nachvollziehbar und verhindert, dass dasselbe Problem später erneut untersucht wird. Sie nennt das Problem mit betroffenen Systemen, die gefundene Ursache und den Weg dorthin, die Maßnahme mit Verantwortlichen und Termin sowie den Nachweis, dass die Maßnahme gewirkt hat. Sie wird zentral abgelegt, etwa im Ticketsystem oder in einer Wissensdatenbank.",
+    "options": [
+      "Name des verursachenden Mitarbeiters, Ursache, Abmahnung und Datum",
+      "Herstellerangaben, Seriennummer, Kaufpreis und Restbuchwert des Druckers",
+      "Problem, Ursache, Maßnahme, Verantwortliche, Datum und Wirksamkeitsnachweis",
+      "Nur die Ticketnummer, weil das Ticketsystem den Rest automatisch speichert"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Ihr Team hat im PDCA-Zyklus eine neue Wissensdatenbank eingeführt, um die Bearbeitungszeit zu senken. In der Check-Phase zeigt sich, dass die Zeit kaum gesunken ist. Wie geht es weiter?",
+    "a": "Die Maßnahme wird nicht Standard, Gründe werden analysiert und ein neuer Zyklus geplant",
+    "a_full": "Der PDCA-Zyklus (Plan, Do, Check, Act) ist ein Regelkreis. Wird das Ziel in der Check-Phase verfehlt, wird die Maßnahme in der Act-Phase nicht standardisiert. Stattdessen sucht man nach Gründen, etwa fehlende Akzeptanz oder schlechte Suchfunktion, und plant einen neuen Durchlauf mit angepasster Maßnahme.",
+    "options": [
+      "Die Maßnahme wird nicht Standard, Gründe werden analysiert und ein neuer Zyklus geplant",
+      "Der Zyklus endet, weil eine Maßnahme nur einmal getestet werden darf",
+      "Das Ziel wird nachträglich so gesenkt, dass es als erreicht gilt",
+      "Die Maßnahme wird trotzdem als Standard übernommen, weil sie schon bezahlt ist"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Die Geschäftsführung gibt das Ziel aus: „Der Support soll schneller werden.“ Ihr Ausbilder bittet Sie, daraus ein SMART-Ziel zu machen. Welche Formulierung erfüllt alle Kriterien?",
+    "a": "„Bis 31. März sinkt die mittlere Lösungszeit für Tickets der Priorität 2 von 8 auf 6 Stunden, verantwortlich ist der Teamleiter Support.“",
+    "a_full": "SMART steht für spezifisch, messbar, attraktiv bzw. akzeptiert, realistisch und terminiert. Das Ziel nennt einen klaren Gegenstand (Priorität-2-Tickets), eine Kennzahl mit Ausgangs- und Zielwert, einen Termin und eine Verantwortung. Eine Senkung um 25 Prozent in einem Quartal gilt als ehrgeizig, aber erreichbar.",
+    "options": [
+      "„Bis 31. März sinkt die mittlere Lösungszeit für Tickets der Priorität 2 von 8 auf 6 Stunden, verantwortlich ist der Teamleiter Support.“",
+      "„Bis Jahresende werden alle Tickets aller Prioritäten innerhalb von fünf Minuten gelöst, ohne zusätzliches Personal.“",
+      "„Der Support beantwortet ab sofort alle Tickets deutlich schneller als bisher und arbeitet kundenorientiert.“",
+      "„Der Support soll möglichst bald schneller werden, die genaue Kennzahl legt jeder Mitarbeiter selbst fest.“"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Im SLA ist eine mittlere Wiederherstellungszeit (MTTR) von 4 Stunden als Soll vereinbart. Im letzten Quartal lag der Ist-Wert bei 5,2 Stunden. Wie groß ist die Abweichung absolut und prozentual?",
+    "a": "Plus 1,2 Stunden, das sind 30 Prozent über dem Soll",
+    "a_full": "Die absolute Abweichung ist Ist minus Soll: 5,2 h minus 4 h = 1,2 h. Die prozentuale Abweichung bezieht sich auf den Sollwert: 1,2 h / 4 h × 100 = 30 Prozent. Bei der MTTR ist ein höherer Wert schlechter, das Ziel ist also deutlich verfehlt.",
+    "options": [
+      "Minus 1,2 Stunden, das sind 30 Prozent unter dem Soll",
+      "Plus 1,2 Stunden, das sind 30 Prozent über dem Soll",
+      "Plus 1,2 Stunden, das sind etwa 23 Prozent über dem Soll",
+      "Plus 1,2 Stunden, das sind 130 Prozent über dem Soll"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Als Ziel für die Erstlösungsquote (First-Contact-Resolution) waren 75 Prozent vereinbart, erreicht wurden 68 Prozent. Im Bericht soll die Abweichung korrekt angegeben werden. Wie lautet sie?",
+    "a": "Minus 7 Prozentpunkte, das sind etwa 9,3 Prozent weniger als das Soll",
+    "a_full": "Wenn zwei Prozentwerte verglichen werden, ist die Differenz in Prozentpunkten anzugeben: 68 minus 75 = minus 7 Prozentpunkte. Die relative Abweichung bezieht sich auf das Soll: 7 / 75 × 100 ≈ 9,3 Prozent. Wer beides verwechselt, stellt die Abweichung im Bericht falsch dar.",
+    "options": [
+      "Minus 7 Prozentpunkte, das sind etwa 9,3 Prozent weniger als das Soll",
+      "Minus 7 Prozent, das sind etwa 9,3 Prozentpunkte weniger als das Soll",
+      "Minus 7 Prozentpunkte, das sind etwa 10,3 Prozent weniger als das Soll",
+      "Minus 9,3 Prozentpunkte, das sind 7 Prozent weniger als das Soll"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Der monatliche Soll-Ist-Vergleich zeigt, dass die Verfügbarkeit eines Kundenservers das vereinbarte Ziel deutlich verfehlt. Was ist das richtige Vorgehen?",
+    "a": "Ursachen analysieren, Gegenmaßnahmen festlegen und ihre Wirkung später erneut messen",
+    "a_full": "Ein Soll-Ist-Vergleich ist nur sinnvoll, wenn bei Abweichungen gehandelt wird. Zuerst wird ermittelt, warum das Ziel verfehlt wurde. Dann werden Korrekturmaßnahmen mit Verantwortlichen und Terminen beschlossen, der Kunde wird gemäß SLA informiert und im nächsten Zeitraum wird geprüft, ob die Maßnahmen wirken. Nur wenn das Ziel unrealistisch war, wird es begründet angepasst.",
+    "options": [
+      "Die Messung bis zum Quartalsende aussetzen, weil Monatswerte schwanken",
+      "Den Ausfall als höhere Gewalt einstufen und keine Maßnahmen dokumentieren",
+      "Den Sollwert im SLA ohne Rücksprache auf den erreichten Ist-Wert senken",
+      "Ursachen analysieren, Gegenmaßnahmen festlegen und ihre Wirkung später erneut messen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Im Statusbericht Ihres Projekts steht ein Kostenentwicklungsindex (CPI) von 0,89. Was sagt dieser Wert aus?",
+    "a": "Pro ausgegebenem Euro wurden nur etwa 89 Cent Leistung erbracht",
+    "a_full": "Der CPI (cost performance index) ist der Fertigstellungswert geteilt durch die Ist-Kosten (EV / AC). Ein Wert unter 1 bedeutet, dass die Arbeit mehr kostet als geplant. Ein Wert über 1 zeigt, dass das Projekt günstiger arbeitet als geplant.",
+    "options": [
+      "Pro ausgegebenem Euro wurden nur etwa 89 Cent Leistung erbracht",
+      "Das Projekt hat 11 Prozent seines Budgets noch nicht ausgegeben",
+      "Das Projekt ist zu 89 Prozent fertig und liegt im Zeitplan",
+      "Das Projekt arbeitet 11 Prozent günstiger als geplant"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Sie sollen den Erfolg einer neuen Self-Service-Passwortrücksetzung messen. Ihr Teamleiter fragt, was Sie vor der Einführung festlegen müssen. Was antworten Sie?",
+    "a": "Kennzahl, Messmethode, Ausgangswert (baseline), Zielwert und Messzeitraum",
+    "a_full": "Ohne Ausgangswert lässt sich später keine Veränderung nachweisen. Deshalb wird vorher definiert, was gemessen wird, etwa die Zahl der Passwort-Tickets pro Woche, woher die Daten kommen, welcher Wert vor der Maßnahme gilt und bis wann welcher Zielwert erreicht sein soll. Erst dann ist ein aussagekräftiger Soll-Ist-Vergleich möglich.",
+    "options": [
+      "Nur den Zielwert, der Ausgangswert ergibt sich später aus dem Ticketsystem",
+      "Zahl der Nutzer, Schulungstermin, Raum, Referent und Teilnehmerliste",
+      "Kennzahl, Messmethode, Ausgangswert (baseline), Zielwert und Messzeitraum",
+      "Lizenzkosten, Hersteller, Laufzeit, Kündigungsfrist und Supportvertrag"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "service",
+    "rahmenplan": [
+      "A5c"
+    ],
+    "q": "Nachdem die Erstlösungsquote zur Zielvorgabe gemacht wurde, steigt sie stark. Gleichzeitig nehmen erneut eröffnete Tickets und Beschwerden zu. Was ist vermutlich passiert und wie reagiert man?",
+    "a": "Tickets werden vorschnell geschlossen, die Kennzahl braucht Qualitätskennzahlen daneben",
+    "a_full": "Wird nur eine einzelne Kennzahl gesteuert, optimieren Mitarbeiter oft die Zahl statt das eigentliche Ziel. Eine hohe Erstlösungsquote ist nur gut, wenn die Probleme wirklich gelöst sind. Deshalb betrachtet man mehrere Kennzahlen gemeinsam, etwa Erstlösungsquote, Wiedereröffnungsquote und Kundenzufriedenheit.",
+    "options": [
+      "Tickets werden vorschnell geschlossen, die Kennzahl braucht Qualitätskennzahlen daneben",
+      "Die Kennzahl wurde falsch berechnet und muss gestrichen werden",
+      "Die Kunden melden mehr Fehler, weil der Support schneller reagiert",
+      "Der Support ist effizienter geworden, die Beschwerden sind nur Zufall"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "Ein neuer Auszubildender bekommt mit seinem Ausbildungsvertrag ein Dokument, in dem steht, in welcher Abteilung er wann welche Inhalte lernt. Er fragt, worauf dieses Dokument beruht. Was antworten Sie?",
+    "a": "Der betriebliche Ausbildungsplan, abgeleitet aus dem Ausbildungsrahmenplan",
+    "a_full": "Die Ausbildungsordnung für Fachinformatiker (FIAusbV) enthält als Anlage den Ausbildungsrahmenplan mit allen Mindestinhalten. Daraus erstellt der Ausbildungsbetrieb für jeden Auszubildenden einen betrieblichen Ausbildungsplan, der auf die eigenen Abteilungen und Abläufe zugeschnitten ist. Er ist Teil der Vertragsunterlagen und zeigt, wie und wann die Inhalte im Betrieb vermittelt werden.",
+    "options": [
+      "Der betriebliche Ausbildungsplan, abgeleitet aus dem Ausbildungsrahmenplan",
+      "Es ist der Rahmenlehrplan, den die Berufsschule für jeden Betrieb einzeln festlegt",
+      "Es ist die Prüfungsordnung der IHK mit allen Inhalten der Abschlussprüfung",
+      "Es ist eine freiwillige Betriebsvereinbarung ohne Bezug zur Ausbildungsordnung"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "In der Berufsschule arbeiten Sie nach Lernfeldern, im Betrieb nach dem Ausbildungsrahmenplan. Ein Mitschüler fragt, wer diese beiden Pläne jeweils festlegt. Was ist richtig?",
+    "a": "Den Ausbildungsrahmenplan legt der Bund fest, den Rahmenlehrplan die KMK",
+    "a_full": "Die duale Ausbildung hat zwei Lernorte mit zwei Regelwerken. Für den Betrieb gilt die Ausbildungsordnung als Rechtsverordnung des Bundes mit dem Ausbildungsrahmenplan. Für die Berufsschule beschließt die KMK den Rahmenlehrplan mit Lernfeldern, die Länder setzen ihn in eigene Lehrpläne um. Beide Pläne werden bei der Entwicklung inhaltlich aufeinander abgestimmt.",
+    "options": [
+      "Den Ausbildungsrahmenplan legt der Bund fest, den Rahmenlehrplan die KMK",
+      "Beide Pläne legt die IHK fest, damit sie zur Abschlussprüfung passen",
+      "Den Ausbildungsrahmenplan legt der Betrieb fest, den Rahmenlehrplan die IHK",
+      "Beide Pläne legt das jeweilige Bundesland in einem Landesgesetz fest"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "Ihre Ausbilderin erklärt, der Ausbildungsrahmenplan enthalte eine sachliche und eine zeitliche Gliederung. Was ist der Unterschied?",
+    "a": "Die sachliche Gliederung legt fest, was vermittelt wird, die zeitliche Gliederung, wann und wie lange",
+    "a_full": "Die sachliche Gliederung beschreibt die Fertigkeiten, Kenntnisse und Fähigkeiten, gegliedert nach Berufsbildpositionen. Die zeitliche Gliederung ordnet diese Inhalte Zeiträumen zu, bei Fachinformatikern vor allem vor und nach Teil 1 der Abschlussprüfung, mit Richtwerten in Wochen. Der betriebliche Ausbildungsplan überträgt beides auf die Situation im Betrieb.",
+    "options": [
+      "Die sachliche Gliederung nennt Prüfungsfragen, die zeitliche Gliederung Prüfungstermine",
+      "Die sachliche Gliederung ist verbindlich, die zeitliche Gliederung nur eine Empfehlung der IHK",
+      "Die sachliche Gliederung gilt für den Betrieb, die zeitliche Gliederung für die Berufsschule",
+      "Die sachliche Gliederung legt fest, was vermittelt wird, die zeitliche Gliederung, wann und wie lange"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "Beim Vergleich Ihres betrieblichen Ausbildungsplans mit dem Ausbildungsrahmenplan stellen Sie fest, dass ein Inhalt fehlt, weil Ihr Betrieb keine eigene Firewall-Infrastruktur betreibt. Wie gehen Sie vor?",
+    "a": "Den Ausbilder ansprechen und bei Bedarf den Ausbildungsberater der IHK fragen",
+    "a_full": "Alle Inhalte des Ausbildungsrahmenplans sind Mindestinhalte und müssen vermittelt werden. Kann der Betrieb einen Teil nicht selbst abdecken, kann er ihn zum Beispiel über eine überbetriebliche Maßnahme, einen Partnerbetrieb (Verbundausbildung) oder einen Lehrgang vermitteln lassen. Der Ausbildungsberater der IHK berät Auszubildende und Betriebe dabei.",
+    "options": [
+      "Den Inhalt einfach aus dem Ausbildungsnachweis weglassen, dann fällt es nicht auf",
+      "Den Ausbildungsvertrag sofort fristlos kündigen und den Betrieb wechseln",
+      "Nichts unternehmen, weil der Inhalt nur in der Berufsschule geprüft wird",
+      "Den Ausbilder ansprechen und bei Bedarf den Ausbildungsberater der IHK fragen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "Ein Auszubildender im ersten Jahr fragt, wozu er den Ausbildungsnachweis (Berichtsheft) überhaupt führen muss und in welcher Form das geht. Was erklären Sie?",
+    "a": "Er belegt die Ausbildung, ist schriftlich oder elektronisch und zulassungsrelevant",
+    "a_full": "Nach dem Berufsbildungsgesetz müssen Auszubildende einen Ausbildungsnachweis führen, die Form (schriftlich oder elektronisch) wird im Ausbildungsvertrag festgelegt. Der Ausbilder muss ihn regelmäßig durchsehen und das Führen während der Ausbildungszeit ermöglichen. Ohne ordnungsgemäß geführten Nachweis kann die Zulassung zur Abschlussprüfung verweigert werden. Zugleich hilft er beim Vergleich mit dem Ausbildungsplan.",
+    "options": [
+      "Er wird von der Berufsschule geführt und dem Betrieb einmal jährlich zugeschickt",
+      "Er ersetzt die Abschlussprüfung, wenn er vollständig und fehlerfrei geführt ist",
+      "Er ist freiwillig, wird nur handschriftlich geführt und dient allein der Notengebung",
+      "Er belegt die Ausbildung, ist schriftlich oder elektronisch und zulassungsrelevant"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1b"
+    ],
+    "q": "Ein Ausbildungsbetrieb setzt eine Auszubildende seit Monaten fast nur zum Ausliefern von Hardware ein. Sie fragt, wer außer dem Betrieb über die ordnungsgemäße Durchführung der Ausbildung wacht. Was antworten Sie?",
+    "a": "Die zuständige Stelle, für Fachinformatiker die IHK, mit ihren Ausbildungsberatern",
+    "a_full": "Die IHK ist als zuständige Stelle nach dem Berufsbildungsgesetz verpflichtet, die Durchführung der Berufsausbildung zu überwachen und Betriebe sowie Auszubildende zu beraten. Dafür setzt sie Ausbildungsberater ein. Diese können vermitteln, den Betrieb auf Mängel hinweisen und im Extremfall weitere Schritte einleiten, etwa wenn die Eignung der Ausbildungsstätte fehlt.",
+    "options": [
+      "Das Gewerbeaufsichtsamt, das jeden Ausbildungsplan genehmigen muss",
+      "Die Berufsschule, deren Lehrkräfte die Betriebe regelmäßig kontrollieren",
+      "Die Agentur für Arbeit, die die Ausbildungsvergütung genehmigt",
+      "Die zuständige Stelle, für Fachinformatiker die IHK, mit ihren Ausbildungsberatern"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Ein Kollege meint: „Ich habe meine Ausbildung vor zwölf Jahren gemacht, das reicht.“ Mit welchem Argument begründen Sie, dass gerade in der IT lebensbegleitendes Lernen nötig ist?",
+    "a": "IT-Wissen veraltet schnell, weil sich Technik, Bedrohungen und Produkte ständig ändern",
+    "a_full": "Man spricht von einer kurzen Halbwertszeit des IT-Fachwissens: Nach wenigen Jahren ist ein großer Teil des Detailwissens überholt. Neue Betriebssystemversionen, Cloud-Dienste, Sicherheitslücken und Vorschriften verlangen ständiges Nachlernen. Wer sich nicht weiterbildet, verliert an Beschäftigungsfähigkeit und kann Kunden nicht mehr sicher beraten.",
+    "options": [
+      "Die IHK schreibt allen Fachinformatikern jährliche Pflichtprüfungen vor",
+      "Ein Berufsabschluss verliert nach zehn Jahren rechtlich seine Gültigkeit",
+      "Arbeitgeber dürfen ohne neue Zertifikate keine Gehälter mehr zahlen",
+      "IT-Wissen veraltet schnell, weil sich Technik, Bedrohungen und Produkte ständig ändern"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Ein Fachinformatiker überlegt, ob er ein Herstellerzertifikat wie den Cisco CCNA erwerben oder eine IHK-Fortbildung zum Bachelor Professional in IT beginnen soll. Wie unterscheiden sich beide Wege grundsätzlich?",
+    "a": "Herstellerzertifikate sind produktbezogen und oft befristet, IHK-Fortbildungen staatlich geregelt",
+    "a_full": "Herstellerzertifikate (z. B. von Cisco, Microsoft oder Linux Professional Institute) prüfen Wissen zu bestimmten Produkten oder Technologien, sind international verbreitet und müssen oft nach einigen Jahren erneuert werden. IHK-Fortbildungen beruhen auf einer staatlichen Fortbildungsordnung, sind dauerhaft gültig und einem DQR-Niveau zugeordnet. Für die IHK-Fortbildung gibt es zudem Förderung wie das Aufstiegs-BAföG.",
+    "options": [
+      "IHK-Fortbildungen laufen nach drei Jahren ab, Herstellerzertifikate gelten lebenslang",
+      "Beide sind gleich, nur die Prüfungssprache unterscheidet sich",
+      "Herstellerzertifikate sind staatlich anerkannte Berufsabschlüsse, IHK-Fortbildungen nur private Kurse",
+      "Herstellerzertifikate sind produktbezogen und oft befristet, IHK-Fortbildungen staatlich geregelt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Bei einem Personalgespräch sollen Sie Ihre Stärken den vier Kompetenzbereichen zuordnen. Welche Zuordnung ist richtig?",
+    "a": "VLANs konfigurieren: Fachkompetenz, Fehler systematisch eingrenzen: Methodenkompetenz, im Team Konflikte lösen: Sozialkompetenz, sich selbst organisieren: Selbstkompetenz",
+    "a_full": "Fachkompetenz ist berufliches Fachwissen und Können. Methodenkompetenz meint das Wissen, wie man Aufgaben angeht, etwa Problemlösetechniken oder Lern- und Arbeitstechniken. Sozialkompetenz umfasst Kommunikation, Teamfähigkeit und Konfliktfähigkeit. Selbstkompetenz (Personalkompetenz) beschreibt Selbstständigkeit, Verantwortungsbewusstsein und Lernbereitschaft.",
+    "options": [
+      "VLANs konfigurieren: Selbstkompetenz, Fehler eingrenzen: Methodenkompetenz, Konflikte lösen: Fachkompetenz, sich organisieren: Sozialkompetenz",
+      "VLANs konfigurieren: Methodenkompetenz, Fehler eingrenzen: Fachkompetenz, Konflikte lösen: Selbstkompetenz, sich organisieren: Sozialkompetenz",
+      "VLANs konfigurieren: Fachkompetenz, Fehler systematisch eingrenzen: Methodenkompetenz, im Team Konflikte lösen: Sozialkompetenz, sich selbst organisieren: Selbstkompetenz",
+      "VLANs konfigurieren: Fachkompetenz, Fehler eingrenzen: Sozialkompetenz, Konflikte lösen: Methodenkompetenz, sich organisieren: Selbstkompetenz"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e",
+      "F1g"
+    ],
+    "q": "Eine Fachinformatikerin möchte sich auf die IHK-Prüfung zum Bachelor Professional in IT vorbereiten. Lehrgang und Prüfung kosten mehrere tausend Euro. Welche staatliche Förderung kommt in Frage?",
+    "a": "Das Aufstiegs-BAföG nach dem Aufstiegsfortbildungsförderungsgesetz (AFBG)",
+    "a_full": "Das Aufstiegs-BAföG fördert Vorbereitungen auf öffentlich-rechtlich geregelte Fortbildungsprüfungen, etwa Meister oder Bachelor Professional. Für Lehrgangs- und Prüfungsgebühren gibt es einen Zuschuss und ein zinsgünstiges Darlehen, von dem bei bestandener Prüfung ein Teil erlassen werden kann. Bei Vollzeitmaßnahmen ist auch ein Beitrag zum Lebensunterhalt möglich. Die Förderung ist unabhängig vom Alter.",
+    "options": [
+      "Die Berufsausbildungsbeihilfe, die nur für die erste Ausbildung gilt",
+      "Das Aufstiegs-BAföG nach dem Aufstiegsfortbildungsförderungsgesetz (AFBG)",
+      "Das Arbeitslosengeld, das während jeder Weiterbildung weiterläuft",
+      "Das Schüler-BAföG, das nur bis zum 25. Lebensjahr gezahlt wird"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Ein Fachinformatiker aus Hannover möchte eine fünftägige, anerkannte Weiterbildung zu IT-Sicherheit besuchen, ohne dafür Erholungsurlaub zu nehmen. Worauf kann er sich stützen?",
+    "a": "Auf das Niedersächsische Bildungsurlaubsgesetz mit meist fünf Tagen pro Jahr",
+    "a_full": "Bildungsurlaub ist in Deutschland Ländersache. In Niedersachsen haben Arbeitnehmer nach dem Bildungsurlaubsgesetz Anspruch auf bezahlte Freistellung, in der Regel fünf Arbeitstage im Jahr, für anerkannte Bildungsveranstaltungen. Der Antrag muss rechtzeitig beim Arbeitgeber gestellt werden. Für Auszubildende gelten in Niedersachsen Einschränkungen.",
+    "options": [
+      "Auf das Berufsbildungsgesetz, das Fortbildung nach der Ausbildung bezahlt freistellt",
+      "Auf das Bundesurlaubsgesetz, das jedem zehn Tage Fortbildungsurlaub gewährt",
+      "Auf das Aufstiegs-BAföG, das eine Freistellung durch den Arbeitgeber vorschreibt",
+      "Auf das Niedersächsische Bildungsurlaubsgesetz mit meist fünf Tagen pro Jahr"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Ihr Ausbilder unterscheidet bei der Weiterbildung zwischen formalem, nicht formalem und informellem Lernen. Wie ordnen Sie einen IHK-Abschluss, einen Herstellerkurs und das Lesen eines Fachartikels in der Mittagspause zu?",
+    "a": "IHK-Abschluss: formal, Herstellerkurs: nicht formal, Fachartikel lesen: informell",
+    "a_full": "Formales Lernen findet in geregelten Bildungsgängen statt und führt zu anerkannten Abschlüssen. Nicht formales Lernen ist organisiert, etwa Seminare oder Herstellerkurse, führt aber nicht zu einem staatlich anerkannten Abschluss. Informelles Lernen geschieht nebenbei im Alltag oder am Arbeitsplatz, zum Beispiel durch Lesen, Ausprobieren oder Fragen.",
+    "options": [
+      "IHK-Abschluss: formal, Herstellerkurs: formal, Fachartikel lesen: nicht formal",
+      "IHK-Abschluss: informell, Herstellerkurs: formal, Fachartikel lesen: nicht formal",
+      "IHK-Abschluss: formal, Herstellerkurs: nicht formal, Fachartikel lesen: informell",
+      "IHK-Abschluss: nicht formal, Herstellerkurs: informell, Fachartikel lesen: formal"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1e"
+    ],
+    "q": "Ein Administrator hat vor zwei Jahren ein Cloud-Zertifikat eines großen Herstellers erworben. Nun erhält er die Mitteilung, dass es bald abläuft. Warum befristen Hersteller ihre Zertifikate und was muss er tun?",
+    "a": "Weil Produkte sich schnell ändern; er muss es nach Herstellerregeln verlängern",
+    "a_full": "Viele Herstellerzertifikate gelten nur für einen begrenzten Zeitraum, weil Produkte und Versionen sich schnell weiterentwickeln. Zur Verlängerung verlangen die Hersteller je nach Programm eine erneute Prüfung, eine kürzere Verlängerungsprüfung oder Nachweise über Weiterbildung. Wer die Frist verpasst, muss das Zertifikat oft neu erwerben.",
+    "options": [
+      "Weil Prüfungsgebühren sonst steuerfrei wären; er muss die Gebühr erneut überweisen",
+      "Weil das Gesetz es verlangt; er muss das Zertifikat bei der IHK neu eintragen lassen",
+      "Weil Produkte sich schnell ändern; er muss es nach Herstellerregeln verlängern",
+      "Weil der Arbeitgeber es vorschreibt; er muss nur den Vorgesetzten informieren"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Ein Auszubildender lernt die Portnummern für die Prüfung, indem er sie am Abend vor der Prüfung drei Stunden lang am Stück wiederholt. Welche Lerntechnik wäre wirksamer und warum?",
+    "a": "Verteiltes Wiederholen (spaced repetition) über Wochen in wachsenden Abständen",
+    "a_full": "Beim massierten Lernen (cramming) ist der Stoff kurzfristig präsent, wird aber schnell wieder vergessen. Verteilt man Wiederholungen über Tage und Wochen und vergrößert die Abstände, wird das Wissen jedes Mal gefestigt, bevor es ganz vergessen ist. Karteikarten-Apps und das Leitner-System nutzen dieses Prinzip.",
+    "options": [
+      "Die Portnummern nur farbig markieren und am Prüfungsmorgen anschauen",
+      "Verteiltes Wiederholen (spaced repetition) über Wochen in wachsenden Abständen",
+      "Den Stoff in derselben Zeit nur einmal langsam und gründlich durchlesen",
+      "Den Stoff mehrfach abschreiben, damit sich das Schriftbild einprägt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Eine Auszubildende liest ihre Zusammenfassung zum Subnetting immer wieder durch und fühlt sich sicher. In der Probeklausur scheitert sie trotzdem. Welche Technik hilft ihr mehr?",
+    "a": "Aktives Abrufen (active recall): Aufgaben ohne Vorlage lösen",
+    "a_full": "Wiederholtes Lesen erzeugt ein Gefühl der Vertrautheit, ohne dass man den Stoff selbst abrufen kann. Beim aktiven Abrufen muss das Gehirn die Information selbst hervorholen, etwa mit Übungsaufgaben, Karteikarten oder dem Erklären ohne Notizen. Fehler zeigen dabei direkt, wo noch Lücken sind.",
+    "options": [
+      "Die Zusammenfassung noch ausführlicher schreiben und farbig gestalten",
+      "Die Zusammenfassung als Audio aufnehmen und beim Pendeln anhören",
+      "Aktives Abrufen (active recall): Aufgaben ohne Vorlage lösen",
+      "Die Lösungen der Probeklausur auswendig lernen und erneut lesen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Sie werden beim Lernen ständig durch Nachrichten auf dem Smartphone abgelenkt. Eine Kollegin empfiehlt die Pomodoro-Technik. Wie funktioniert sie?",
+    "a": "Man arbeitet etwa 25 Minuten konzentriert und macht dann eine kurze Pause",
+    "a_full": "Die Pomodoro-Technik teilt die Arbeit in feste, kurze Zeitblöcke mit voller Konzentration und ohne Ablenkung. Nach jedem Block folgt eine kurze Pause von etwa fünf Minuten, nach etwa vier Blöcken eine längere. Die festen Blöcke erleichtern den Einstieg und machen sichtbar, wie viel Zeit eine Aufgabe tatsächlich braucht.",
+    "options": [
+      "Man arbeitet etwa 25 Minuten konzentriert und macht dann eine kurze Pause",
+      "Man lernt so lange ohne Pause, bis eine ganze Aufgabe vollständig erledigt ist",
+      "Man lernt nur morgens früh, weil das Gehirn dann am aufnahmefähigsten ist",
+      "Man wechselt alle fünf Minuten das Lernthema, damit keine Langeweile entsteht"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Sie müssen ein umfangreiches Kapitel über IPv6 aus einem Fachbuch durcharbeiten. Ihr Berufsschullehrer empfiehlt die SQ3R-Methode. Welche Schritte umfasst sie?",
+    "a": "Überblick verschaffen, Fragen stellen, lesen, das Gelesene wiedergeben, wiederholen",
+    "a_full": "SQ3R steht für Survey, Question, Read, Recite und Review. Zuerst überfliegt man Gliederung und Überschriften, dann formuliert man Fragen an den Text. Beim Lesen sucht man Antworten, gibt sie anschließend in eigenen Worten wieder und wiederholt am Ende das Wichtigste. So wird aus passivem Lesen aktives Arbeiten mit dem Text.",
+    "options": [
+      "Abschreiben, markieren, auswendig lernen, abfragen lassen, Prüfung schreiben",
+      "Inhaltsverzeichnis lesen, Glossar lernen, Bilder ansehen, Fazit lesen, aufhören",
+      "Überblick verschaffen, Fragen stellen, lesen, das Gelesene wiedergeben, wiederholen",
+      "Schnell lesen, zusammenfassen, Mindmap zeichnen, Karteikarten schreiben, prüfen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "projekt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Bis zu Teil 2 der Abschlussprüfung sind es noch zwölf Wochen. Daneben laufen Betrieb, Berufsschule und Projektdokumentation. Wie gehen Sie beim Erstellen eines Lernplans vor?",
+    "a": "Lücken erfassen, vom Prüfungstermin rückwärts planen, Wiederholungen und Puffer einplanen",
+    "a_full": "Ein Lernplan beginnt mit einer Bestandsaufnahme: Welche Themen kommen dran, wo liegen meine Lücken? Dann verteilt man die Themen rückwärts vom Prüfungstermin auf die Wochen, plant realistische feste Lernzeiten, regelmäßige Wiederholungen und Probeprüfungen ein. Ein Puffer fängt Krankheit oder Projektstress auf. Der Plan wird regelmäßig mit dem tatsächlichen Fortschritt verglichen.",
+    "options": [
+      "Erst in den letzten zwei Wochen intensiv lernen, weil das Wissen dann frisch ist",
+      "Mit dem ersten Kapitel des Lehrbuchs beginnen und so weit kommen wie möglich",
+      "Lücken erfassen, vom Prüfungstermin rückwärts planen, Wiederholungen und Puffer einplanen",
+      "Alle Themen gleich lang planen, damit nichts bevorzugt wird, und keine Pausen vorsehen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "In einem Forum findet ein Auszubildender eine Anleitung, wie man eine Fehlermeldung des Mailservers durch Abschalten einer Sicherheitsfunktion beseitigt. Nach welchen Kriterien sollte er die Quelle bewerten?",
+    "a": "Autor, Aktualität, Belege und Abgleich mit der Herstellerdokumentation",
+    "a_full": "Foren liefern oft schnelle Tipps, aber auch veraltete oder gefährliche Lösungen. Seriöse Quellen erkennt man an nachvollziehbaren Autoren, Datum und Versionsangaben, Belegen und daran, dass sie mit der Herstellerdokumentation oder Empfehlungen des BSI übereinstimmen. Gerade das Abschalten von Sicherheitsfunktionen muss geprüft und zuerst in einer Testumgebung ausprobiert werden.",
+    "options": [
+      "Ob die Lösung kostenlos ist, ob sie schnell geht und ob viele Nutzer zustimmen",
+      "Anzahl der Likes, Länge des Beitrags, Design der Webseite, Zahl der Werbebanner",
+      "Ob der Beitrag auf Englisch ist, ob er Bilder enthält und wie alt das Forum ist",
+      "Autor, Aktualität, Belege und Abgleich mit der Herstellerdokumentation"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1f"
+    ],
+    "q": "Ein Kollege diskutiert, ob ein bestimmter DNS-Eintragstyp so funktioniert, wie er es in einem Blog gelesen hat. Sie verweisen auf das zugehörige RFC. Was ist ein RFC und warum ist es eine gute Quelle?",
+    "a": "Ein Dokument der IETF, das Internetprotokolle als Primärquelle beschreibt",
+    "a_full": "RFCs (Request for Comments) werden von der Internet Engineering Task Force veröffentlicht. Sie enthalten die Spezifikationen vieler Internetprotokolle wie TCP, DNS oder HTTP. Als Primärquelle zeigen sie, wie ein Protokoll tatsächlich definiert ist, sind aber oft technisch anspruchsvoll. Nicht jedes RFC ist ein Standard, manche sind nur informativ.",
+    "options": [
+      "Eine Zeitschrift des BSI, die monatlich neue Sicherheitslücken meldet",
+      "Ein Dokument der IETF, das Internetprotokolle als Primärquelle beschreibt",
+      "Ein Gesetz der EU, das Netzwerkbetreibern Mindeststandards vorschreibt",
+      "Ein Forum der Hersteller, in dem Nutzer Fragen zu Protokollen stellen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1g"
+    ],
+    "q": "Ein Fachinformatiker möchte wissen, welche Stufen der beruflichen Fortbildung das Berufsbildungsgesetz seit 2020 vorsieht. Was antworten Sie?",
+    "a": "Berufsspezialist, Bachelor und Master Professional",
+    "a_full": "Das Berufsbildungsgesetz kennt seit der Modernisierung 2020 drei Fortbildungsstufen mit einheitlichen Bezeichnungen. Die erste Stufe ist der Geprüfte Berufsspezialist, die zweite der Bachelor Professional, die dritte der Master Professional. Ob es in einem Bereich Abschlüsse auf allen drei Stufen gibt, hängt von der jeweiligen Fortbildungsordnung ab.",
+    "options": [
+      "Geselle, Meister und Technischer Betriebswirt",
+      "Junior, Professional und Senior Professional",
+      "Berufsspezialist, Bachelor und Master Professional",
+      "IT-Assistent, IT-Techniker und IT-Ingenieur"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1g"
+    ],
+    "q": "Im Deutschen Qualifikationsrahmen (DQR) wird Ihr Abschluss als Fachinformatiker einem Niveau zugeordnet. Welche Zuordnung ist richtig?",
+    "a": "Ausbildung: Niveau 4, Bachelor Professional: Niveau 6 wie ein Hochschul-Bachelor",
+    "a_full": "Der DQR ordnet Qualifikationen acht Niveaus zu, um sie vergleichbar zu machen. Dreijährige duale Ausbildungen wie der Fachinformatiker liegen auf Niveau 4, der Geprüfte Berufsspezialist auf Niveau 5, der Bachelor Professional auf Niveau 6 und der Master Professional auf Niveau 7. Gleiches Niveau bedeutet gleichwertig, aber nicht gleichartig: Ein Bachelor Professional ist kein akademischer Grad.",
+    "options": [
+      "Ausbildung: Niveau 2, Bachelor Professional: Niveau 4 wie das Abitur",
+      "Ausbildung: Niveau 4, Bachelor Professional: Niveau 6 wie ein Hochschul-Bachelor",
+      "Ausbildung: Niveau 5, Bachelor Professional: Niveau 5 wie der Berufsspezialist",
+      "Ausbildung: Niveau 6, Bachelor Professional: Niveau 8 wie eine Promotion"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1g"
+    ],
+    "q": "Ein Fachinformatiker Systemintegration will sich nach der Ausbildung bei der IHK zunächst auf IT-Sicherheit spezialisieren, ohne gleich eine Führungsfortbildung zu machen. Welcher Abschluss nach der neuen IT-Fortbildungsordnung passt?",
+    "a": "Geprüfter Berufsspezialist IKT mit dem Profil Informationssicherheit",
+    "a_full": "Mit der Neuordnung der IT-Fortbildung, die am 1. November 2024 in Kraft trat, gibt es auf der ersten Stufe den Geprüften Berufsspezialisten mit fünf Profilen: Softwareentwicklung, Systemintegration und Vernetzung, IT-Beratung, Datenanalyse und Informationssicherheit. Er vertieft das Fachwissen auf DQR-Niveau 5. Der Bachelor Professional in IT auf der zweiten Stufe zielt dagegen auf anspruchsvolle Fach- und Führungsaufgaben.",
+    "options": [
+      "Geprüfter Strategischer IT-Professional mit dem Profil Unternehmensführung",
+      "Geprüfter Berufsspezialist IKT mit dem Profil Informationssicherheit",
+      "Bachelor Professional in IT mit dem Schwerpunkt Personalführung",
+      "IT-Sicherheitsbeauftragter nach dem BSI-Gesetz mit Staatsprüfung"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F1g"
+    ],
+    "q": "Eine Fachinformatikerin ohne Abitur möchte nach einigen Berufsjahren berufsbegleitend Informatik studieren. Ist das möglich?",
+    "a": "Ja, beruflich Qualifizierte können je nach Landesrecht zugelassen werden",
+    "a_full": "Alle Bundesländer öffnen ihre Hochschulen für beruflich Qualifizierte. Wer eine Aufstiegsfortbildung wie den Bachelor Professional abgeschlossen hat, erhält meist eine allgemeine Hochschulzugangsberechtigung. Mit Ausbildung und mehrjähriger Berufserfahrung ist oft ein fachgebundener Zugang möglich, teils mit Eignungsprüfung. Berufsbegleitende Studiengänge und Fernhochschulen erlauben, dabei weiterzuarbeiten.",
+    "options": [
+      "Nein, ein Studium setzt in Deutschland ausnahmslos das Abitur voraus",
+      "Ja, jeder Berufsabschluss ersetzt automatisch das Abitur in ganz Deutschland",
+      "Ja, beruflich Qualifizierte können je nach Landesrecht zugelassen werden",
+      "Ja, aber nur an privaten Hochschulen und nur ohne Abschlussprüfung"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F2b"
+    ],
+    "q": "Ein neuer Azubi fragt, warum sein Ausbildungsbetrieb, eine IT-GmbH, Beiträge an die IHK zahlt, obwohl niemand dort Mitglied werden wollte. Was erklären Sie?",
+    "a": "Gewerbebetriebe sind kraft Gesetzes Pflichtmitglied der IHK",
+    "a_full": "Gewerbetreibende Unternehmen im Bezirk gehören nach dem IHK-Gesetz automatisch der Industrie- und Handelskammer an und zahlen Beiträge. Die IHK ist eine Körperschaft des öffentlichen Rechts. Sie vertritt das Gesamtinteresse der regionalen Wirtschaft und ist zuständige Stelle für die Berufsausbildung, zum Beispiel für Ausbildungsverträge und Abschlussprüfungen.",
+    "options": [
+      "Die IHK ist eine Gewerkschaft, der alle Arbeitgeber angehören",
+      "Nur Betriebe mit Auszubildenden müssen Beiträge an die IHK zahlen",
+      "Die GmbH ist freiwillig beigetreten, um Tarifverträge abzuschließen",
+      "Gewerbebetriebe sind kraft Gesetzes Pflichtmitglied der IHK"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F2b"
+    ],
+    "q": "Ihr Ausbildungsbetrieb ist Mitglied im Bitkom, Ihre Ausbilderin persönlich in der Gesellschaft für Informatik (GI). Was haben beide Organisationen gemeinsam und was unterscheidet sie von einer Gewerkschaft?",
+    "a": "Beides sind freiwillige Fach- bzw. Branchenverbände, die keine Tarifverträge schließen",
+    "a_full": "Der Bitkom ist ein Branchenverband der Digitalwirtschaft, in dem Unternehmen Mitglied sind und ihre Interessen gegenüber Politik und Öffentlichkeit vertreten. Die GI ist eine Fachgesellschaft für Informatik mit vor allem persönlichen Mitgliedern, die Fachaustausch und Weiterbildung fördert. Anders als Gewerkschaften und Arbeitgeberverbände sind sie keine Tarifparteien.",
+    "options": [
+      "Beides sind freiwillige Fach- bzw. Branchenverbände, die keine Tarifverträge schließen",
+      "Beides sind Gewerkschaften, die für IT-Fachkräfte streiken",
+      "Beides sind Pflichtkammern, die Abschlussprüfungen abnehmen",
+      "Beides sind Behörden, die den Arbeitsschutz im Betrieb überwachen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3a",
+      "F3b"
+    ],
+    "q": "Ihr Systemhaus zieht in neue Räume mit Werkstatt, Lager und Serverraum. Die Geschäftsführung fragt, wer die Gefährdungsbeurteilung erstellen muss und ob sie schriftlich sein muss. Was antworten Sie?",
+    "a": "Der Arbeitgeber ist verantwortlich und muss das Ergebnis dokumentieren",
+    "a_full": "Nach § 5 ArbSchG muss der Arbeitgeber die Gefährdungen ermitteln und beurteilen, die mit der Arbeit verbunden sind, und daraus Maßnahmen ableiten. Er kann Fachkraft für Arbeitssicherheit und Betriebsarzt beratend einbeziehen, die Verantwortung bleibt aber bei ihm. Ergebnis, Maßnahmen und Wirksamkeitskontrolle sind zu dokumentieren (§ 6 ArbSchG) und bei Änderungen fortzuschreiben.",
+    "options": [
+      "Jeder Beschäftigte erstellt sie selbst, eine Dokumentation ist freiwillig",
+      "Der Arbeitgeber ist verantwortlich und muss das Ergebnis dokumentieren",
+      "Die Berufsgenossenschaft erstellt sie und schickt sie dem Betrieb zu",
+      "Erst ab 50 Beschäftigten ist eine Gefährdungsbeurteilung vorgeschrieben"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3a"
+    ],
+    "q": "Im Servicedesk häufen sich Krankmeldungen. Die Kolleginnen berichten von ständigen Unterbrechungen, Zeitdruck und unfreundlichen Anrufern. Gehört das in die Gefährdungsbeurteilung?",
+    "a": "Ja, psychische Belastungen sind ausdrücklich Teil der Gefährdungsbeurteilung",
+    "a_full": "Das Arbeitsschutzgesetz nennt in § 5 ausdrücklich auch psychische Belastungen bei der Arbeit als mögliche Gefährdung. Typische Faktoren sind Arbeitsintensität, Unterbrechungen, Umgang mit schwierigen Kunden und fehlender Handlungsspielraum. Maßnahmen können zum Beispiel feste Pufferzeiten, klare Eskalationswege oder Schulungen im Umgang mit Beschwerden sein.",
+    "options": [
+      "Nein, psychische Belastungen sind reine Privatsache der Beschäftigten",
+      "Ja, psychische Belastungen sind ausdrücklich Teil der Gefährdungsbeurteilung",
+      "Nur wenn der Betriebsarzt vorher eine Erkrankung festgestellt hat",
+      "Nein, dort werden nur körperliche Gefahren wie Strom und Lärm erfasst"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3b"
+    ],
+    "q": "Ein Azubi soll im neuen Büro die Unfallverhütungsvorschriften heraussuchen. Er findet „DGUV Vorschrift 1“. Was regelt diese Vorschrift im Unterschied zur DGUV Vorschrift 3?",
+    "a": "DGUV Vorschrift 1 enthält die allgemeinen Grundsätze der Prävention",
+    "a_full": "Die DGUV Vorschrift 1 „Grundsätze der Prävention“ legt die grundlegenden Pflichten von Unternehmern und Versicherten fest, etwa Unterweisung, Erste Hilfe, Bestellung von Ersthelfern und Mitwirkungspflichten der Beschäftigten. Die DGUV Vorschrift 3 regelt dagegen speziell elektrische Anlagen und Betriebsmittel und deren Prüfung. Unfallverhütungsvorschriften werden von den Unfallversicherungsträgern erlassen und sind für Mitgliedsbetriebe verbindlich.",
+    "options": [
+      "Sie regelt nur die Prüffristen von elektrischen Geräten im Büro",
+      "Sie regelt nur den Brandschutz und die Zahl der Feuerlöscher",
+      "DGUV Vorschrift 1 enthält die allgemeinen Grundsätze der Prävention",
+      "Sie regelt die Gestaltung von Bildschirmarbeitsplätzen im Detail"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F3b"
+    ],
+    "q": "Im klimatisierten Serverraum Ihres Kunden ist es durch viele Lüfter sehr laut. Eine Messung ergibt einen Tages-Lärmexpositionspegel von 82 dB(A). Was muss der Arbeitgeber mindestens tun?",
+    "a": "Gehörschutz zur Verfügung stellen und die Beschäftigten unterweisen",
+    "a_full": "Nach der Lärm- und Vibrations-Arbeitsschutzverordnung liegt der untere Auslösewert bei 80 dB(A). Ab diesem Wert muss der Arbeitgeber geeigneten Gehörschutz bereitstellen, unterweisen und eine arbeitsmedizinische Vorsorge anbieten. Ab dem oberen Auslösewert von 85 dB(A) müssen Beschäftigte den Gehörschutz tragen und der Bereich ist zu kennzeichnen.",
+    "options": [
+      "Nichts, Pflichten entstehen erst ab einem Pegel von 100 dB(A)",
+      "Jeden Mitarbeiter verpflichten, eigenen Gehörschutz zu kaufen",
+      "Gehörschutz zur Verfügung stellen und die Beschäftigten unterweisen",
+      "Den Serverraum sofort stilllegen, bis der Pegel unter 60 dB(A) liegt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F3b"
+    ],
+    "q": "Sie sollen einen 30 kg schweren 2-HE-Server in ein Rack in Höhe von 1,60 m einbauen. Welches Vorgehen ist richtig?",
+    "a": "Zu zweit oder mit Serverlift heben, Schienen vorher montieren, Rücken gerade halten",
+    "a_full": "Schwere Lasten sollen nach Möglichkeit mit Hilfsmitteln wie einem Serverlift oder zu zweit bewegt werden, das verlangt auch die Lastenhandhabungsverordnung über die Gefährdungsbeurteilung. Beim Heben gilt: nah am Körper, aus den Beinen, ohne Verdrehen des Rumpfs. Gleitschienen werden vorher montiert, und schwere Geräte gehören möglichst nach unten ins Rack, damit es nicht kopflastig wird.",
+    "options": [
+      "Das Gerät auf einen Bürostuhl stellen und auf Höhe hochschieben",
+      "Zu zweit oder mit Serverlift heben, Schienen vorher montieren, Rücken gerade halten",
+      "Allein heben, aber dabei schnell arbeiten, damit die Last kurz bleibt",
+      "Den Server senkrecht hochkant anheben und von oben einschieben"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Ein Kollege ist im Lager von einer Leiter gestürzt und blutet am Kopf. Sie rufen 112 an. Welche Angaben machen Sie und wie beenden Sie das Gespräch?",
+    "a": "Wo, was, wie viele, welche Verletzungen, dann auf Rückfragen warten",
+    "a_full": "Der Notruf folgt den W-Fragen: Wo ist es passiert (genaue Adresse, Gebäude, Stockwerk)? Was ist passiert? Wie viele Verletzte gibt es? Welche Verletzungen oder Krankheitszeichen sind erkennbar? Am Ende legt nicht der Anrufer auf, sondern wartet auf Rückfragen der Leitstelle, denn diese steuert das Gespräch.",
+    "options": [
+      "Wo, was, wie viele, welche Verletzungen, dann auf Rückfragen warten",
+      "Nur den Firmennamen nennen, die Leitstelle findet den Rest selbst",
+      "Unfallhergang ausführlich schildern und danach den Hausarzt anrufen",
+      "Name, Geburtsdatum, Krankenkasse, dann sofort wieder auflegen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Ihr Systemhaus mit 18 Mitarbeitern im Büro fragt, wie viele Ersthelfer es braucht. Was gilt nach DGUV Vorschrift 1?",
+    "a": "Bei 2 bis 20 anwesenden Versicherten mindestens ein Ersthelfer",
+    "a_full": "Die DGUV Vorschrift 1 verlangt bei 2 bis 20 anwesenden Versicherten mindestens einen Ersthelfer. Bei mehr als 20 Versicherten sind es in Verwaltungs- und Handelsbetrieben 5 Prozent, in sonstigen Betrieben 10 Prozent. Ersthelfer werden in einem Erste-Hilfe-Lehrgang ausgebildet und in der Regel alle zwei Jahre fortgebildet, damit Urlaub und Krankheit abgedeckt sind, plant man sinnvollerweise mehr ein.",
+    "options": [
+      "Bei 2 bis 20 anwesenden Versicherten mindestens ein Ersthelfer",
+      "Erst ab 50 Beschäftigten muss ein Ersthelfer bestellt werden",
+      "Ein Ersthelfer reicht immer, egal wie groß der Betrieb ist",
+      "Jeder zweite Beschäftigte muss eine Ersthelferausbildung haben"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Eine Kollegin hat sich beim Öffnen eines PC-Gehäuses an einer scharfen Blechkante leicht in den Finger geschnitten und bekommt ein Pflaster. Muss das irgendwo festgehalten werden?",
+    "a": "Ja, jede Erste-Hilfe-Leistung wird im Verbandbuch dokumentiert",
+    "a_full": "Jede Erste-Hilfe-Leistung ist zu dokumentieren, üblich im Verbandbuch oder Meldeblock, auch elektronisch. Festgehalten werden unter anderem Zeit, Ort, Hergang, Art der Verletzung, Maßnahmen und Zeugen. Die Aufzeichnung dient als Nachweis, dass ein Arbeitsunfall vorlag, falls sich später Folgen wie eine Entzündung zeigen, und ist vertraulich aufzubewahren.",
+    "options": [
+      "Nein, kleine Verletzungen fallen nicht unter die Unfallversicherung",
+      "Ja, jede Erste-Hilfe-Leistung wird im Verbandbuch dokumentiert",
+      "Ja, es muss noch am selben Tag der Polizei gemeldet werden",
+      "Nein, nur Unfälle mit Krankenhausbesuch werden schriftlich erfasst"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Ein Auszubildender fährt morgens mit dem Fahrrad zur Berufsschule und stürzt auf dem direkten Weg. Ist er gesetzlich unfallversichert?",
+    "a": "Ja, das ist ein Wegeunfall und durch die Berufsgenossenschaft versichert",
+    "a_full": "Die gesetzliche Unfallversicherung schützt auch den unmittelbaren Weg zur und von der Arbeit und bei Azubis auch den Weg zur Berufsschule. Ein solcher Wegeunfall gilt als Versicherungsfall nach SGB VII. Unterbricht man den Weg für private Erledigungen wie einen Einkauf, besteht während dieser Unterbrechung in der Regel kein Schutz.",
+    "options": [
+      "Nein, der Schulweg ist nur über die private Haftpflicht versichert",
+      "Ja, aber nur, wenn er mit öffentlichen Verkehrsmitteln gefahren ist",
+      "Ja, das ist ein Wegeunfall und durch die Berufsgenossenschaft versichert",
+      "Nein, nur Unfälle im Ausbildungsbetrieb selbst sind versichert"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Beim Wechsel einer Steckdosenleiste unter dem Schreibtisch hat ein Kollege einen Stromschlag bekommen. Er fühlt sich wieder gut und will weiterarbeiten. Was raten Sie?",
+    "a": "Trotzdem ärztlich untersuchen lassen und den Vorfall dokumentieren",
+    "a_full": "Nach einem Stromunfall können Herzrhythmusstörungen auch noch Stunden später auftreten, deshalb soll der Betroffene immer einen Arzt aufsuchen, bei Arbeitsunfähigkeit einen Durchgangsarzt. Der Vorfall wird im Verbandbuch dokumentiert und die Ursache untersucht. Die defekte Leiste wird sofort außer Betrieb genommen und gekennzeichnet.",
+    "options": [
+      "Ein Glas Wasser geben und die Steckdosenleiste weiterverwenden",
+      "Weiterarbeiten lassen, wenn er sich gut fühlt, ist keine Gefahr",
+      "Trotzdem ärztlich untersuchen lassen und den Vorfall dokumentieren",
+      "Ihn nach Hause schicken und erst bei Beschwerden einen Arzt rufen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3c"
+    ],
+    "q": "Ihr Ausbilder erklärt die Rettungskette. In welcher Reihenfolge laufen die Glieder ab?",
+    "a": "Sofortmaßnahmen, Notruf, Erste Hilfe, Rettungsdienst, Krankenhaus",
+    "a_full": "Die Rettungskette beginnt mit lebensrettenden Sofortmaßnahmen und dem Absichern der Unfallstelle, gefolgt vom Notruf. Danach leisten Ersthelfer weitere Erste Hilfe, bis der Rettungsdienst übernimmt. Am Ende steht die Versorgung im Krankenhaus. Jedes Glied ist wichtig, denn die Kette ist nur so stark wie ihr schwächstes Glied.",
+    "options": [
+      "Erste Hilfe, Krankenhaus, Notruf, Sofortmaßnahmen, Rettungsdienst",
+      "Sofortmaßnahmen, Notruf, Erste Hilfe, Rettungsdienst, Krankenhaus",
+      "Rettungsdienst, Notruf, Sofortmaßnahmen, Krankenhaus, Erste Hilfe",
+      "Notruf, Krankenhaus, Rettungsdienst, Erste Hilfe, Sofortmaßnahmen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3d"
+    ],
+    "q": "Bei einer Brandschutzunterweisung sollen Sie die Brandklassen nennen. Welche Stoffe gehören zu den Klassen A, B, C, D und F?",
+    "a": "A feste Stoffe, B Flüssigkeiten, C Gase, D Metalle, F Speiseöle und -fette",
+    "a_full": "Brandklasse A umfasst feste, glutbildende Stoffe wie Papier, Holz und Kunststoffe. B steht für flüssige oder flüssig werdende Stoffe, C für Gase, D für brennbare Metalle wie Magnesium und F für Speiseöle und -fette, etwa in der Fritteuse. Auf jedem Feuerlöscher ist angegeben, für welche Brandklassen er geeignet ist.",
+    "options": [
+      "A Flüssigkeiten, B Metalle, C feste Stoffe, D Fette, F Gase",
+      "A Gase, B Holz, C Speisefette, D Flüssigkeiten, F Metalle",
+      "A Elektrogeräte, B Papier, C Metalle, D Gase, F Flüssigkeiten",
+      "A feste Stoffe, B Flüssigkeiten, C Gase, D Metalle, F Speiseöle und -fette"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F3d"
+    ],
+    "q": "Eine Kollegin entdeckt im Kopierraum einen Brand in einem Papierkorb. Welche Reihenfolge des Handelns gilt nach den üblichen Brandschutzregeln?",
+    "a": "Ruhe bewahren, Brand melden, in Sicherheit bringen, Löschversuch unternehmen",
+    "a_full": "Zuerst wird der Brand gemeldet, über Notruf 112 oder einen Druckknopfmelder, damit Hilfe auch dann kommt, wenn der Löschversuch scheitert. Danach werden gefährdete Personen gewarnt und in Sicherheit gebracht, Aufzüge werden nicht benutzt. Ein Löschversuch erfolgt nur, wenn er ohne Eigengefährdung möglich ist, und man trifft sich am Sammelplatz.",
+    "options": [
+      "Ruhe bewahren, Brand melden, in Sicherheit bringen, Löschversuch unternehmen",
+      "Fenster öffnen, damit der Rauch abzieht, und dann den Aufzug nehmen",
+      "Sofort löschen, erst danach den Vorgesetzten per E-Mail informieren",
+      "Wertsachen und Akten retten, anschließend die Feuerwehr verständigen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4a"
+    ],
+    "q": "Ihr Ausbilder bittet Sie, für einen Nachhaltigkeitsbericht die Umweltbelastungen zu sammeln, die der IT-Betrieb Ihres Unternehmens verursacht. Welche Bereiche nennen Sie?",
+    "a": "Energieverbrauch und CO2, Abwärme, Elektroschrott und Rohstoffverbrauch",
+    "a_full": "Rechenzentrum und Arbeitsplätze verbrauchen Strom, dessen Erzeugung je nach Strommix CO2 verursacht, und die Kühlung erzeugt zusätzlichen Verbrauch und Abwärme. Bei der Herstellung von Geräten werden Rohstoffe wie Metalle und seltene Erden verbraucht, am Ende entsteht Elektroschrott. Hinzu kommen Papier und Verbrauchsmaterial beim Drucken sowie Dienstreisen.",
+    "options": [
+      "Nur der Papierverbrauch, Elektronik belastet die Umwelt nicht",
+      "Nur die Verpackungen der Hardware, Strom gilt als klimaneutral",
+      "Nur der Lärm der Lüfter, alles andere ist gesetzlich ausgeglichen",
+      "Energieverbrauch und CO2, Abwärme, Elektroschrott und Rohstoffverbrauch"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4b"
+    ],
+    "q": "Ihr Systemhaus verschickt Notebooks in Kartons an Privatkunden. Der Chef fragt, was das Verpackungsgesetz von ihm verlangt. Was antworten Sie?",
+    "a": "Registrierung im Verpackungsregister LUCID und Beteiligung an einem dualen System",
+    "a_full": "Wer mit Ware befüllte Verpackungen erstmals in Verkehr bringt, die typischerweise beim privaten Endverbraucher anfallen, gilt als Hersteller im Sinne des Verpackungsgesetzes. Er muss sich bei der Zentralen Stelle Verpackungsregister (LUCID) registrieren und sich mit diesen Verpackungen an einem dualen System beteiligen. Das gilt auch für Versandkartons und Füllmaterial im Onlinehandel.",
+    "options": [
+      "Nichts, weil Kartons aus Papier nicht unter das Gesetz fallen",
+      "Nur eine Kennzeichnung mit dem CE-Zeichen auf jedem Karton",
+      "Eine Rücknahme aller Kartons persönlich beim Kunden vor Ort",
+      "Registrierung im Verpackungsregister LUCID und Beteiligung an einem dualen System"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4d"
+    ],
+    "q": "Ein Kunde will 40 ausgemusterte, aber funktionsfähige Notebooks einfach verschrotten lassen. Sie schlagen nach der Abfallhierarchie eine bessere Lösung vor. Welche?",
+    "a": "Daten zertifiziert löschen und die Geräte zur Wiederverwendung abgeben (Refurbishing)",
+    "a_full": "Das Kreislaufwirtschaftsgesetz legt eine Rangfolge fest: Vermeidung, Vorbereitung zur Wiederverwendung, Recycling, sonstige Verwertung und erst zuletzt Beseitigung. Funktionsfähige Geräte können über einen Refurbisher aufbereitet und weiterverkauft oder gespendet werden. Vorher müssen die Daten nachweisbar gelöscht werden, etwa mit Löschprotokoll des Dienstleisters.",
+    "options": [
+      "Daten zertifiziert löschen und die Geräte zur Wiederverwendung abgeben (Refurbishing)",
+      "Die Geräte im Restmüll entsorgen, wenn die Akkus entfernt sind",
+      "Die Geräte unverändert an Mitarbeiter verschenken, ohne zu löschen",
+      "Die Geräte sofort schreddern, weil Recycling immer Vorrang hat"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4d"
+    ],
+    "q": "Bei der Inventur finden Sie ein Notebook mit stark aufgeblähtem Lithium-Ionen-Akku. Wie gehen Sie damit um?",
+    "a": "Nicht mehr laden oder benutzen, Akku sicher lagern und getrennt zur Sammelstelle geben",
+    "a_full": "Ein aufgeblähter Lithium-Ionen-Akku ist beschädigt und kann sich entzünden oder durchgehen. Er wird nicht mehr geladen, nicht gewaltsam herausgehebelt und nicht durchstochen, sondern auf nicht brennbarer Unterlage gelagert. Akkus gehören nie in den Restmüll, sondern zu einer Rücknahme- oder Sammelstelle, die Pole werden vorher abgeklebt.",
+    "options": [
+      "Nicht mehr laden oder benutzen, Akku sicher lagern und getrennt zur Sammelstelle geben",
+      "Den Akku vollständig laden, damit er sich wieder stabilisiert",
+      "Das Notebook zusammen mit dem Akku in den Restmüll geben",
+      "Den Akku aufstechen, damit das Gas entweicht, und weiter nutzen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4d"
+    ],
+    "q": "Ein Kunde gibt alte Festplatten und SSDs an einen Entsorger. Sie sollen nach DIN 66399 die passende Materialklasse für die Vernichtung angeben. Welche gilt jeweils?",
+    "a": "Magnetische Festplatten Klasse H, SSDs und andere elektronische Datenträger Klasse E",
+    "a_full": "DIN 66399 unterscheidet Materialklassen nach Art des Datenträgers, zum Beispiel P für Papier, F für Filme, O für optische Datenträger, T für magnetische Datenträger wie Bänder, H für Festplatten mit magnetischem Datenträger und E für elektronische Datenträger wie SSDs und USB-Sticks. Zusammen mit Schutzklasse und Sicherheitsstufe ergibt sich daraus die geforderte Partikelgröße. Weil SSD-Chips sehr klein sind, müssen sie feiner zerkleinert werden als Festplattenscheiben.",
+    "options": [
+      "Festplatten Klasse P, SSDs Klasse O, weil beide Daten speichern",
+      "Festplatten und SSDs beide Klasse T für technische Datenträger",
+      "Festplatten Klasse E, SSDs Klasse H, je nach Schnittstelle",
+      "Magnetische Festplatten Klasse H, SSDs und andere elektronische Datenträger Klasse E"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "systeme",
+    "thema": "it_betrieb",
+    "rahmenplan": [
+      "F4d"
+    ],
+    "q": "In Ihrem Büro werden leere Tonerkartuschen bisher in den gelben Sack geworfen. Wie entsorgen Sie sie besser?",
+    "a": "Über ein Rücknahmeprogramm des Herstellers oder einen Recycler zur Wiederbefüllung",
+    "a_full": "Viele Hersteller und Händler bieten Rücknahmesysteme für leere Kartuschen an, die dann wiederaufbereitet oder stofflich verwertet werden. Wiederbefüllte Kartuschen sparen Rohstoffe und Abfall. Tonerstaub soll dabei nicht freigesetzt werden, deshalb gehören leere Kartuschen verschlossen in den Originalkarton oder einen Beutel.",
+    "options": [
+      "In den Restmüll, weil Kartuschen aus gemischten Stoffen bestehen",
+      "Über ein Rücknahmeprogramm des Herstellers oder einen Recycler zur Wiederbefüllung",
+      "In das Altpapier, weil der Toner aus Kohlenstoff besteht",
+      "Zur Sammelstelle für Altbatterien, weil sie Elektronik enthalten"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Ihr Teamleiter entwirft eine Stellenanzeige: „Wir suchen für unser junges, dynamisches Team einen Administrator, maximal 30 Jahre alt.“ Was raten Sie ihm?",
+    "a": "Altersangaben streichen, die Anzeige muss nach dem AGG merkmalsneutral sein",
+    "a_full": "Nach dem AGG darf eine Stelle nicht unter Verstoß gegen das Benachteiligungsverbot ausgeschrieben werden. Eine Altersgrenze oder die Formulierung „junges Team“ kann als Indiz für eine Benachteiligung wegen des Alters gelten. Abgelehnte Bewerber könnten dann eine Entschädigung verlangen, deshalb beschreibt man nur Aufgaben und fachliche Anforderungen.",
+    "options": [
+      "Nur das Geschlecht muss neutral sein, Altersgrenzen sind erlaubt",
+      "Die Anzeige ist zulässig, solange keine Religion erwähnt wird",
+      "Altersangaben streichen, die Anzeige muss nach dem AGG merkmalsneutral sein",
+      "Die Anzeige ist zulässig, weil das Alter kein geschütztes Merkmal ist"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Eine Auszubildende wird von einem Kollegen wiederholt wegen ihres Kopftuchs abfällig kommentiert. Welches Recht gibt ihr das AGG zuerst, und darf sie deswegen Nachteile erleiden?",
+    "a": "Sie darf sich bei der zuständigen Stelle im Betrieb beschweren und darf dafür nicht benachteiligt werden",
+    "a_full": "Das AGG gibt Beschäftigten ein Beschwerderecht bei der zuständigen Stelle des Betriebs, wenn sie sich wegen eines geschützten Merkmals benachteiligt oder belästigt fühlen, hier der Religion. Der Arbeitgeber muss die Beschwerde prüfen, das Ergebnis mitteilen und geeignete Maßnahmen gegen den Kollegen ergreifen, etwa Abmahnung oder Versetzung. Wegen der Beschwerde darf sie nicht benachteiligt werden (Maßregelungsverbot).",
+    "options": [
+      "Sie darf sich nur an die Polizei wenden, betriebliche Wege gibt es nicht",
+      "Sie kann sofort fristlos kündigen und Schadensersatz vom Kollegen verlangen",
+      "Sie darf sich bei der zuständigen Stelle im Betrieb beschweren und darf dafür nicht benachteiligt werden",
+      "Sie muss den Konflikt selbst lösen, der Arbeitgeber ist nicht zuständig"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Ein Betrieb lässt nur Vollzeitkräfte an Zertifizierungsschulungen teilnehmen. Fast alle Teilzeitkräfte sind Frauen. Eine Kollegin spricht von Benachteiligung. Welche Form könnte vorliegen?",
+    "a": "Eine mittelbare Benachteiligung wegen des Geschlechts",
+    "a_full": "Eine mittelbare Benachteiligung liegt vor, wenn eine scheinbar neutrale Regel Personen mit einem geschützten Merkmal besonders benachteiligt. Die Regel nennt das Geschlecht nicht, trifft aber überwiegend Frauen. Sie ist nur zulässig, wenn sie durch ein rechtmäßiges Ziel sachlich gerechtfertigt und angemessen ist.",
+    "options": [
+      "Eine Belästigung, weil die Regel schriftlich festgelegt ist",
+      "Keine Benachteiligung, weil Teilzeit kein Merkmal im AGG ist",
+      "Eine unmittelbare Benachteiligung wegen der Weltanschauung",
+      "Eine mittelbare Benachteiligung wegen des Geschlechts"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Ein neuer Kollege im Support ist stark sehbehindert. Wie kann der Betrieb seinen Arbeitsplatz im Sinne der Inklusion gestalten?",
+    "a": "Mit Hilfsmitteln wie Screenreader, Bildschirmlupe oder Braillezeile und barrierefreier Software",
+    "a_full": "Inklusion bedeutet, dass Menschen mit Behinderung gleichberechtigt teilhaben, indem die Umgebung angepasst wird. Technische Hilfen wie Vergrößerungssoftware, Screenreader und Braillezeile machen viele IT-Tätigkeiten möglich, wenn Anwendungen barrierefrei bedienbar sind. Kosten können je nach Fall von Integrationsamt oder Agentur für Arbeit gefördert werden, die Schwerbehindertenvertretung unterstützt dabei.",
+    "options": [
+      "Mit Hilfsmitteln wie Screenreader, Bildschirmlupe oder Braillezeile und barrierefreier Software",
+      "Mit einem Einzelbüro, damit er nicht mit Kunden sprechen muss",
+      "Mit einfacheren Aufgaben ohne Bildschirmarbeit für die Probezeit",
+      "Mit einem Kollegen, der alle Bildschirmaufgaben für ihn erledigt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Ein Azubi erzählt, dass Kollegen ihn seit Monaten von Absprachen ausschließen, über ihn lästern und Fehler absichtlich ihm anhängen. Was raten Sie ihm?",
+    "a": "Vorfälle mit Datum notieren und sich an Ausbilder, Vorgesetzte oder Betriebsrat wenden",
+    "a_full": "Mobbing ist systematisches, wiederholtes Anfeinden, Schikanieren oder Ausgrenzen über einen längeren Zeitraum. Ein eigenes Gesetz dagegen gibt es nicht, der Arbeitgeber hat aber eine Fürsorgepflicht und muss einschreiten. Ein Protokoll mit Datum, Beteiligten und Zeugen hilft bei Gesprächen mit Ausbilder, Betriebsrat, Jugend- und Auszubildendenvertretung oder bei der Beschwerde im Betrieb.",
+    "options": [
+      "Vorfälle mit Datum notieren und sich an Ausbilder, Vorgesetzte oder Betriebsrat wenden",
+      "Abwarten, weil Mobbing nach der Probezeit von selbst aufhört",
+      "Die Kollegen ebenso behandeln, damit sie die Wirkung merken",
+      "Sofort kündigen, weil der Betrieb nicht eingreifen darf"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Ein Kollege lässt seit Wochen Dokumentationsaufgaben bei Ihnen liegen. Sie wollen das im Gespräch ansprechen, ohne ihn anzugreifen. Welche Formulierung ist eine Ich-Botschaft?",
+    "a": "„Ich fühle mich unter Druck, wenn die Doku bei mir landet, und wünsche mir eine feste Aufteilung.“",
+    "a_full": "Eine Ich-Botschaft beschreibt die eigene Wahrnehmung, die Wirkung auf einen selbst und einen Wunsch, statt den anderen zu bewerten. Dadurch fühlt sich das Gegenüber weniger angegriffen und ist eher bereit, eine Lösung zu suchen. Du-Botschaften wie „Du drückst dich immer“ führen dagegen oft zu Rechtfertigung und Eskalation.",
+    "options": [
+      "„Man sollte seine Aufgaben auch erledigen, findest du nicht auch?“",
+      "„Wenn das so weitergeht, melde ich das sofort beim Chef.“",
+      "„Ich fühle mich unter Druck, wenn die Doku bei mir landet, und wünsche mir eine feste Aufteilung.“",
+      "„Du drückst dich immer vor der Doku, das weiß hier jeder im Team.“"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5a"
+    ],
+    "q": "Bei Vorstellungsgesprächen für Azubis fällt auf, dass das Team fast nur Bewerber auswählt, die ihm selbst ähneln. Wie nennt man dieses Phänomen und was hilft dagegen?",
+    "a": "Unbewusste Voreingenommenheit (unconscious bias), dagegen helfen feste Kriterien und gemischte Auswahlrunden",
+    "a_full": "Menschen bevorzugen unbewusst Personen, die ihnen in Herkunft, Alter oder Werdegang ähneln. Das schränkt die Vielfalt (Diversity) im Team ein, obwohl unterschiedliche Perspektiven oft zu besseren Lösungen führen. Strukturierte Interviews mit vorher festgelegten Bewertungskriterien und Auswahlgremien mit unterschiedlicher Zusammensetzung verringern den Effekt.",
+    "options": [
+      "Halo-Effekt, dagegen hilft ein längeres Probearbeiten jedes Bewerbers",
+      "Gruppendruck, dagegen hilft eine Abstimmung ohne Begründung",
+      "Unbewusste Voreingenommenheit (unconscious bias), dagegen helfen feste Kriterien und gemischte Auswahlrunden",
+      "Positive Diskriminierung, dagegen hilft ein Auswahlverfahren per Los"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Ihre Projektleiterin möchte den Workshop mit dem Kunden per Videokonferenz aufzeichnen, damit Abwesende ihn später ansehen können. Was ist vorher zu klären?",
+    "a": "Alle Teilnehmenden vorab informieren und eine Rechtsgrundlage, meist ihre Einwilligung, einholen",
+    "a_full": "Eine Aufzeichnung verarbeitet Bild, Stimme und Namen der Teilnehmenden, also personenbezogene Daten. Deshalb braucht sie eine Rechtsgrundlage, in der Praxis meist eine freiwillige Einwilligung, und alle müssen vorher wissen, wozu, wie lange und wo gespeichert wird. Wer nicht aufgezeichnet werden will, muss Kamera und Mikrofon ausschalten dürfen, ohne Nachteile zu haben.",
+    "options": [
+      "Nur ein Hinweis im Kalendereintrag, danach ist alles erlaubt",
+      "Alle Teilnehmenden vorab informieren und eine Rechtsgrundlage, meist ihre Einwilligung, einholen",
+      "Nur die Zustimmung der Projektleiterin, weil sie die Konferenz leitet",
+      "Nichts, weil eine Videokonferenz automatisch öffentlich ist"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Sie wollen in einer Teams-Besprechung mit einem Kunden eine Netzwerkdokumentation zeigen. Wie geben Sie Ihren Bildschirm verantwortungsvoll frei?",
+    "a": "Nur das eine Fenster teilen und vorher Benachrichtigungen ausschalten",
+    "a_full": "Wer den gesamten Bildschirm teilt, zeigt möglicherweise E-Mails, Chats, andere Kundendaten oder Kennwörter. Besser ist es, nur das benötigte Fenster oder die Anwendung freizugeben und Pop-ups und Benachrichtigungen während der Freigabe zu unterdrücken. Vertrauliche Inhalte in der Dokumentation, etwa Zugangsdaten, blendet man vorher aus.",
+    "options": [
+      "Dem Kunden die Fernsteuerung des eigenen Rechners dauerhaft geben",
+      "Den ganzen Bildschirm teilen, damit der Kunde alles nachvollziehen kann",
+      "Die Datei vorab per Freigabelink für alle im Internet veröffentlichen",
+      "Nur das eine Fenster teilen und vorher Benachrichtigungen ausschalten"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Die Marketingabteilung möchte Fotos vom Sommerfest, auf denen Kolleginnen und Kollegen gut erkennbar sind, auf dem Firmen-Instagram veröffentlichen. Was ist zu beachten?",
+    "a": "Die abgebildeten Personen müssen vorher einwilligen und können dies widerrufen",
+    "a_full": "Das Recht am eigenen Bild schützt davor, dass Bildnisse ohne Einwilligung verbreitet werden (§ 22 KUG), und Fotos erkennbarer Personen sind zudem personenbezogene Daten nach DSGVO. Für Beschäftigte gilt: Die Einwilligung soll schriftlich oder elektronisch dokumentiert und freiwillig sein. Wer widerruft, dessen Bild muss künftig entfernt werden.",
+    "options": [
+      "Die abgebildeten Personen müssen vorher einwilligen und können dies widerrufen",
+      "Nichts, weil Firmenveranstaltungen immer öffentlich sind",
+      "Es genügt, wenn der Fotograf selbst der Veröffentlichung zustimmt",
+      "Es genügt, die Gesichter nachträglich farblich aufzuhellen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Eine Kollegin fragt, ob es in Deutschland ein Gesetz gibt, das ihr ein „Recht auf Abschalten“ nach Feierabend garantiert. Was antworten Sie?",
+    "a": "Ein eigenes Gesetz gibt es nicht, aber die Ruhezeit nach Arbeitszeitgesetz und betriebliche Regeln schützen",
+    "a_full": "Ein allgemeines gesetzliches Recht auf Nichterreichbarkeit gibt es in Deutschland bisher nicht. Wer nach Feierabend dienstliche E-Mails bearbeitet, arbeitet aber, sodass Arbeitszeit- und Ruhezeitregeln des Arbeitszeitgesetzes gelten. Viele Unternehmen regeln Erreichbarkeit in Betriebsvereinbarungen, etwa Rufbereitschaft mit Vergütung oder gesperrte Mailserver am Wochenende.",
+    "options": [
+      "Nein, Beschäftigte müssen jederzeit ohne Ausnahme erreichbar sein",
+      "Ja, das Grundgesetz verbietet jede E-Mail nach 18 Uhr ausdrücklich",
+      "Ein eigenes Gesetz gibt es nicht, aber die Ruhezeit nach Arbeitszeitgesetz und betriebliche Regeln schützen",
+      "Ja, die DSGVO verbietet Arbeitgebern Kontakt außerhalb der Arbeitszeit"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Sie sollen eine Einladung zu einer Kundenschulung an 80 externe E-Mail-Adressen verschicken. Wie adressieren Sie die Nachricht richtig?",
+    "a": "Alle Empfänger in BCC setzen, damit niemand die Adressen der anderen sieht",
+    "a_full": "E-Mail-Adressen sind personenbezogene Daten, und eine offene Verteilerliste in An oder CC gibt sie allen Empfängern bekannt. Das kann eine Datenpanne sein und wirkt unprofessionell, weil Antworten an alle die Postfächer füllen. Für größere Aussendungen eignet sich ein Newsletter-System mit Abmeldemöglichkeit.",
+    "options": [
+      "Alle Empfänger in BCC setzen, damit niemand die Adressen der anderen sieht",
+      "Alle Empfänger in das An-Feld setzen und um Antwort an alle bitten",
+      "Alle Empfänger in CC setzen, damit jeder weiß, wer eingeladen ist",
+      "Die Adressliste als Excel-Datei anhängen, damit Rückfragen leichter sind"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Ein Azubi wird in einer privaten Chatgruppe von Mitazubis wiederholt verspottet, dort kursieren auch bearbeitete Fotos von ihm. Was raten Sie ihm zuerst?",
+    "a": "Beweise per Screenshot sichern und sich dem Ausbilder anvertrauen",
+    "a_full": "Cybermobbing ist Mobbing über digitale Medien, das sich schnell verbreitet und schwer zu löschen ist. Man reagiert nicht mit Gegenangriffen und löscht nichts, sondern sichert zuerst die Beweise. Beweise mit Datum und Absender helfen dem Betrieb und gegebenenfalls Polizei oder Anwalt. Weil Mitazubis beteiligt sind, betrifft es auch das Betriebsklima, deshalb kann und muss der Ausbildungsbetrieb eingreifen.",
+    "options": [
+      "Abwarten, weil private Chats den Ausbildungsbetrieb nichts angehen",
+      "Mit eigenen bearbeiteten Fotos der anderen Azubis antworten",
+      "Beweise per Screenshot sichern und sich dem Ausbilder anvertrauen",
+      "Die Gruppe sofort verlassen und alle Nachrichten endgültig löschen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Ein Kollege teilt eine Excel-Liste mit Kundendaten aus OneDrive mit der Einstellung „Jeder mit dem Link“. Was ist das Problem und wie wäre es richtig?",
+    "a": "Jeder, der den Link erhält, kann zugreifen; besser nur bestimmte Personen berechtigen",
+    "a_full": "Ein anonymer Freigabelink funktioniert ohne Anmeldung, wird er weitergeleitet oder versehentlich gepostet, haben Unbefugte Zugriff. Für personenbezogene Daten gibt man nur namentlich bestimmten Personen Zugriff, möglichst mit Ablaufdatum und nur Leserechten. Administratoren können anonyme Links in der Organisation auch ganz sperren.",
+    "options": [
+      "Jeder, der den Link erhält, kann zugreifen; besser nur bestimmte Personen berechtigen",
+      "Kein Problem, solange die Datei als schreibgeschützt markiert ist",
+      "Das Problem ist nur der Speicherplatz, besser ein USB-Stick nutzen",
+      "Kein Problem, weil OneDrive-Links nach einer Stunde ablaufen"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "arbeitswelt",
+    "rahmenplan": [
+      "F5b"
+    ],
+    "q": "Die Geschäftsführung will ein neues Kollaborationstool mit Chat, Anwesenheitsstatus und Aktivitätsberichten einführen. Der Betriebsrat verlangt ein Mitspracherecht. Zu Recht?",
+    "a": "Ja, technische Einrichtungen, die Verhalten oder Leistung überwachen können, sind mitbestimmungspflichtig",
+    "a_full": "Nach § 87 Abs. 1 Nr. 6 BetrVG hat der Betriebsrat mitzubestimmen bei der Einführung und Anwendung technischer Einrichtungen, die dazu geeignet sind, Verhalten oder Leistung der Arbeitnehmer zu überwachen. Es reicht, dass das Tool dazu geeignet ist, eine Überwachungsabsicht ist nicht nötig. Üblich ist eine Betriebsvereinbarung, die etwa Auswertungen von Statusdaten ausschließt.",
+    "options": [
+      "Ja, technische Einrichtungen, die Verhalten oder Leistung überwachen können, sind mitbestimmungspflichtig",
+      "Nein, der Betriebsrat ist nur bei Kündigungen und Einstellungen beteiligt",
+      "Ja, aber nur, wenn das Tool mehr als 1.000 Euro im Jahr kostet",
+      "Nein, Software zählt als Betriebsmittel und ist allein Sache des Arbeitgebers"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "recht",
+    "rahmenplan": [
+      "F5c"
+    ],
+    "q": "Für die Website eines Kunden möchte ein Kollege ein passendes Foto aus der Google-Bildersuche verwenden, weil kein Copyright-Hinweis zu sehen ist. Was sagen Sie ihm?",
+    "a": "Fotos sind auch ohne Hinweis urheberrechtlich geschützt, man braucht eine Lizenz",
+    "a_full": "Der urheberrechtliche Schutz entsteht automatisch mit der Erstellung, ein ©-Zeichen oder eine Anmeldung ist nicht nötig. Wer ein fremdes Foto ohne Erlaubnis veröffentlicht, riskiert Abmahnung, Unterlassung und Schadensersatz. Geeignet sind eigene Fotos, gekaufte Lizenzen aus Bilddatenbanken oder frei lizenzierte Bilder, deren Bedingungen wie Namensnennung man einhält.",
+    "options": [
+      "Fotos sind auch ohne Hinweis urheberrechtlich geschützt, man braucht eine Lizenz",
+      "Fotos dürfen genutzt werden, wenn man sie leicht verkleinert",
+      "Ohne Copyright-Hinweis ist jedes Foto im Internet frei nutzbar",
+      "Fotos sind erst nach Eintragung beim Patentamt geschützt"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5c"
+    ],
+    "q": "Sie schicken einem Kunden ein Angebot als Word-Datei. Ein Kollege warnt Sie vorher. Welche versteckten Inhalte könnten mitgeschickt werden und wie verhindern Sie das?",
+    "a": "Kommentare, Änderungen und Autorendaten; vorher mit „Dokument prüfen“ entfernen",
+    "a_full": "Office-Dokumente enthalten Metadaten wie Autor, Firma und Bearbeitungszeiten sowie oft noch Kommentare, nachverfolgte Änderungen oder ausgeblendete Tabellenblätter mit internen Kalkulationen. Die Funktion „Dokument prüfen“ in Office findet und entfernt solche Inhalte. Zusätzlich verschickt man Angebote als PDF, nachdem die Änderungen angenommen wurden.",
+    "options": [
+      "Nur eingebettete Schriftarten; man entfernt sie durch Komprimieren der Datei",
+      "Kommentare, Änderungen und Autorendaten; vorher mit „Dokument prüfen“ entfernen",
+      "Keine, weil Word versteckte Inhalte beim Speichern automatisch löscht",
+      "Nur Wörterbuchdaten; man entfernt sie vor dem Versand mit dem Virenscanner"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5c"
+    ],
+    "q": "Ein Kollege hat eine Datei mit Gehaltsdaten von einem USB-Stick gelöscht und den Papierkorb geleert. Danach will er den Stick an einen Praktikanten weitergeben. Was erklären Sie ihm?",
+    "a": "Die Daten sind meist noch wiederherstellbar, weil nur der Verweis im Dateisystem entfernt wurde",
+    "a_full": "Beim normalen Löschen markiert das Dateisystem den Speicherplatz nur als frei, die Daten bleiben bis zum Überschreiben erhalten. Mit Wiederherstellungsprogrammen lassen sie sich oft zurückholen. Vor einer Weitergabe wird der Datenträger mit einem geeigneten Verfahren sicher gelöscht, bei Flash-Speichern idealerweise mit Herstellerwerkzeugen oder Verschlüsselung, oder er wird vernichtet.",
+    "options": [
+      "Die Daten sind weg, sobald der Stick einmal abgezogen wurde",
+      "Nach dem Leeren des Papierkorbs sind die Daten sicher entfernt",
+      "Die Daten sind meist noch wiederherstellbar, weil nur der Verweis im Dateisystem entfernt wurde",
+      "Ein Schnellformatieren überschreibt alle Daten zuverlässig"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "sicherheit",
+    "thema": "datenschutz",
+    "rahmenplan": [
+      "F5c"
+    ],
+    "q": "Ein Administrator gibt in einem Karrierenetzwerk an, dass er bei Ihrem Kunden die Firewall und das VPN eines bestimmten Herstellers betreut, und postet Fotos von Firmenfeiern. Welches Risiko entsteht aus diesem digitalen Fußabdruck?",
+    "a": "Angreifer können die Angaben für gezielte Phishing- und Social-Engineering-Angriffe nutzen",
+    "a_full": "Der digitale Fußabdruck umfasst alle Spuren, die jemand online hinterlässt, aktiv durch eigene Beiträge und passiv etwa durch Markierungen anderer. Angreifer werten öffentlich zugängliche Informationen aus, um Ansprechpartner, eingesetzte Produkte und Schwachstellen zu erkennen. Wer beruflich Profile pflegt, sollte keine Details zur Infrastruktur nennen und Sichtbarkeitseinstellungen prüfen.",
+    "options": [
+      "Das einzige Risiko ist, dass Konkurrenten den Mitarbeiter abwerben",
+      "Angreifer können die Angaben für gezielte Phishing- und Social-Engineering-Angriffe nutzen",
+      "Kein Risiko, weil Karrierenetzwerke nur von Personalabteilungen gelesen werden",
+      "Kein Risiko, solange er kein Passwort und keine IP-Adresse veröffentlicht"
+    ],
+    "neu_ab": "0.55"
+  },
+  {
+    "cat": "wirtschaft",
+    "thema": "recht",
+    "rahmenplan": [
+      "F5c"
+    ],
+    "q": "Ein Kollege erzählt in einem öffentlichen Fachforum ausführlich von einer geheimen Preiskalkulation und einem noch nicht angekündigten Produkt seines Arbeitgebers. Welche Folgen können drohen?",
+    "a": "Er verletzt seine Verschwiegenheitspflicht und riskiert Abmahnung, Kündigung und Schadensersatz",
+    "a_full": "Beschäftigte haben aus dem Arbeitsvertrag eine Pflicht, Betriebs- und Geschäftsgeheimnisse nicht zu verraten. Das Geschäftsgeheimnisgesetz schützt Informationen, die geheim, wirtschaftlich wertvoll und durch angemessene Maßnahmen wie Vertraulichkeitsvereinbarungen oder Zugriffsbeschränkungen geschützt sind. Ein Verstoß kann arbeitsrechtliche Folgen haben und Ansprüche auf Unterlassung und Schadensersatz auslösen.",
+    "options": [
+      "Er verletzt seine Verschwiegenheitspflicht und riskiert Abmahnung, Kündigung und Schadensersatz",
+      "Nur ein Hinweis des Forums, weil Foren nicht haften",
+      "Keine, weil im Internet die Meinungsfreiheit Vorrang hat",
+      "Keine, solange er seinen Arbeitgeber nicht namentlich nennt"
+    ],
+    "neu_ab": "0.55"
   }
 ]

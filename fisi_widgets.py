@@ -1003,6 +1003,7 @@ class GradientBar(tk.Canvas):
         self._pct = 0.0
         self._note = ""
         self._photos = []
+        self._height = height
         super().__init__(parent, height=px(height), width=px(160), bg=self.bg,
                          highlightthickness=0, bd=0)
         self.bind("<Configure>", lambda e: self._draw())
@@ -1017,11 +1018,19 @@ class GradientBar(tk.Canvas):
         width = self.winfo_width()
         if width <= 1:
             return
+        # Passen Beschriftung und Zahl nicht nebeneinander (schmale Leiste,
+        # grosse Zahlen), kommt die Zahl in eine eigene Zeile darunter
+        extra = 0
+        if self._note and text_width(self.label, F["small"]) + 8 + \
+                text_width(self._note, F["small"]) > width / _SCALE[0]:
+            extra = int(math.ceil(line_height(F["small"])))
+        if int(float(self.cget("height"))) != px(self._height + extra):
+            self.configure(height=px(self._height + extra))
         self.create_text(0, px(9), text=self.label, anchor="w", fill=C["text_dim"],
                          font=tk_font(F["small"]))
-        self.create_text(width, px(9), text=self._note, anchor="e", fill=C["muted"],
+        self.create_text(width, px(9 + extra), text=self._note, anchor="e", fill=C["muted"],
                          font=tk_font(F["small"]))
-        top, bar_h = px(24), px(9)
+        top, bar_h = px(24 + extra), px(9)
         logical_w = width / _SCALE[0]
         track = rounded_gradient(logical_w, 9, 4.5, C["ring_bg"], C["ring_bg"])
         self._photos = [tk_photo(track, width, bar_h)]

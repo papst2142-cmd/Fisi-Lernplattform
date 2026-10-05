@@ -738,12 +738,18 @@ class BauteileTest(unittest.TestCase):
 
     def test_bestellung(self):
         task = _task("ram-leitstelle")
-        self.assertEqual(fg.valid_carts(task), [{"a3": 2}])
+        # Arbeitsspeicher addiert sich: vier einzelne 8-GB-Module = 2 x 16 GB
+        self.assertEqual(fg.valid_carts(task), [{"a4": 4}, {"a3": 1, "a4": 2}, {"a3": 2}])
         self.assertEqual(fg.check_answer(task, {"a3": 2}), (True, 0))
+        self.assertEqual(fg.check_answer(task, {"a4": 4}), (True, 0))
+        self.assertEqual(fg.find_solution(task), {"a4": 4})
         checks = [
             ({}, "leer"),
             ({"a1": 2}, "DDR5"),
-            ({"a4": 2}, "zu klein"),
+            ({"a4": 2}, "nicht gedeckt"),
+            ({"a4": 3}, "(1 von 2)"),
+            ({"a4": 5}, "Zu viel"),
+            ({"a5": 1}, "(1 von 2)"),                # ein Kit bleibt in einem PC
             ({"a2": 2}, "Zu spät"),
             ({"a3": 1, "a5": 1}, "Budget"),
             ({"a3": 3}, "Zu viel"),
@@ -821,6 +827,30 @@ class LagerTest(unittest.TestCase):
         state = fg.GameState(events)
         self.assertEqual(_ordered_stock(state), {"ram_ddr4_2x8": 1})
         self.assertEqual(state.warehouse()["bestand"][0], ("ram_ddr4_2x8", 1))
+
+    def test_einzelne_module_zusammen_einsetzen(self):
+        order = _task("ram-leitstelle")
+        events = _day_ends(3) + [_solved_event("e1", order, {"a4": 4}, 4)]
+        events += [("f1", fg.EV_DAY_END, {"tag": 4, "gehalt": 0})]
+        state = fg.GameState(events)                       # Arbeitstag 5
+        self.assertEqual(_ordered_stock(state), {"ram_ddr4_1x8": 4})
+        build = _task("leitstelle-pc")
+        available = state.available_parts(build)
+        self.assertIn("ram_ddr4_1x8*2", available)
+        self.assertNotIn("ram_ddr4_1x8*5", available)
+        pair = fg.part("ram_ddr4_1x8*2")
+        self.assertEqual((pair["groesse"], pair["module"], pair["preis"]), (16, 2, 48))
+        self.assertEqual(pair["name"], "DDR4 16 GB (2 × 8 GB, Einzelmodule)")
+        self.assertIsNone(fg.part("cpu_i5_13400*2"))
+        answer = fg.find_solution(build, available)
+        self.assertEqual(answer["ram"], "ram_ddr4_1x8*2")
+        single = dict(answer, ram="ram_ddr4_1x8")
+        self.assertTrue(any("Zu wenig Arbeitsspeicher" in text
+                            for text in fg.build_problems(build, single, available)))
+        events.append(_solved_event("g1", build, answer, 5, state))
+        state = fg.GameState(events)
+        # Zwei Module verbaut, zwei bleiben fuer den zweiten PC
+        self.assertEqual(_ordered_stock(state), {"ram_ddr4_1x8": 2})
 
     def test_ware_mit_empfaenger_geht_nicht_ins_lager(self):
         task = _task("notebook-chefin")
