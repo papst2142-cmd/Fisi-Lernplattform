@@ -1,0 +1,7 @@
+2026-10-05 04:40:19 | Programm | Installer wird gestartet: "C:\Users\…\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=7412 /UPDATELOG=%APPDATA%\FISI-Lernplattform\update.log "/FISIEXE=~\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe" /LOG=%APPDATA%\FISI-Lernplattform\update_installer.log
+2026-10-05 04:40:19 | Programm | Installer läuft (Prozess 5452). Das Programm wird jetzt beendet, der Installer wartet darauf.
+2026-10-05 04:40:20 | Installer 0.55 | gestartet, wartet auf das Ende des Programms (Prozess 7412)
+2026-10-05 04:40:22 | Installer 0.55 | Programm hat sich beendet
+2026-10-05 04:40:23 | Installer 0.55 | ersetzt die Programmdateien in C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:40:27 | Installer 0.55 | Installation erfolgreich, Version 0.55 ist installiert
+2026-10-05 04:40:29 | Programm | Update auf 0.56 NICHT abgeschlossen, installiert ist weiterhin 0.55.
