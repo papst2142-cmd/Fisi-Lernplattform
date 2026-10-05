@@ -170,6 +170,11 @@ def check_for_update(current_version, timeout=10, kind=None):
         raise UpdateError("Keine Verbindung zu GitHub. Bitte die "
                           "Internetverbindung prüfen.")
 
+    # GitHub liefert unter /releases/latest nie Vorab-Releases (Testversionen,
+    # ab 0.56). Sicherheitshalber wird ein solches Release trotzdem nie
+    # angeboten.
+    if release.get("prerelease") or release.get("draft"):
+        return None
     tag = release.get("tag_name", "")
     if not is_newer(tag, current_version):
         return None
@@ -184,13 +189,20 @@ def check_for_update(current_version, timeout=10, kind=None):
     )
 
 
+NOTES_END = "### Herunterladen"
+
+
 def plain_notes(markdown):
     """Macht den Release-Text (Markdown aus AENDERUNGEN.md) lesbar fuer ein
     einfaches Textfeld: Aufzaehlungspunkte, keine Sternchen, fliessender
-    Text statt harter Zeilenumbrueche."""
+    Text statt harter Zeilenumbrueche. Ab 0.56 endet der Text vor
+    "### Herunterladen" - darunter stehen nur der Hinweis zur Release-Seite
+    und die SHA-256-Liste, die im Update-Fenster zu lang sind."""
     items = []
     for line in (markdown or "").replace("\r\n", "\n").split("\n"):
         stripped = line.strip()
+        if stripped == NOTES_END:
+            break
         if not stripped:
             items.append("")
         elif stripped.startswith(("- ", "* ")):

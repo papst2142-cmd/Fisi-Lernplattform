@@ -140,6 +140,84 @@ class TempDataMixin:
             return handle.read()
 
 
+RELEASE_TEXT = """Neue Version.
+
+- **Tempo:** schneller.
+
+### Herunterladen
+
+Bitte nur die Dateien hier auf der Release-Seite verwenden.
+
+### Prüfsummen (SHA-256)
+
+- `FISI-Lernplattform-Setup-0.56.exe`: `abc123`
+"""
+
+
+class _FakeResponse:
+    def __init__(self, data):
+        import json
+        self._data = json.dumps(data).encode("utf-8")
+
+    def read(self):
+        return self._data
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+class ReleaseAuswahlTest(unittest.TestCase):
+    """Ab 0.56: Testversionen (Pre-release) werden nie angeboten, das
+    Update-Fenster zeigt den Text nur bis "### Herunterladen"."""
+
+    def _check(self, release):
+        original = fu._open
+        fu._open = lambda url, timeout: _FakeResponse(release)
+        try:
+            return fu.check_for_update("0.55.1", kind="windows")
+        finally:
+            fu._open = original
+
+    def _release(self, **extra):
+        release = {"tag_name": "v0.56", "body": RELEASE_TEXT,
+                   "html_url": "https://example.invalid/r",
+                   "assets": [{"name": "FISI-Lernplattform-Setup-0.56.exe",
+                               "browser_download_url": "https://example.invalid/s.exe",
+                               "size": 10}]}
+        release.update(extra)
+        return release
+
+    def test_normales_release_wird_angeboten(self):
+        info = self._check(self._release())
+        self.assertEqual(info.version, "0.56")
+        self.assertEqual(info.asset_name, "FISI-Lernplattform-Setup-0.56.exe")
+
+    def test_vorab_release_nie(self):
+        self.assertIsNone(self._check(self._release(prerelease=True)))
+        self.assertIsNone(self._check(self._release(draft=True)))
+
+    def test_vorab_tag_ist_keine_version(self):
+        # Testversionen heissen vorab-0.56-test1 - das ist keine Versionsnummer
+        self.assertIsNone(fu.parse_version("vorab-0.56-test1"))
+        self.assertIsNone(self._check(self._release(tag_name="vorab-0.56-test1")))
+
+    def test_nur_die_latest_adresse(self):
+        self.assertTrue(fu.LATEST_URL.endswith("/releases/latest"))
+
+    def test_text_endet_vor_herunterladen(self):
+        text = fu.plain_notes(RELEASE_TEXT)
+        self.assertIn("Tempo: schneller.", text)
+        self.assertNotIn("Herunterladen", text)
+        self.assertNotIn("SHA-256", text)
+        self.assertNotIn("abc123", text)
+
+    def test_text_ohne_abschnitt_unveraendert(self):
+        self.assertEqual(fu.plain_notes("Nur Text.\n\n- Punkt"), "Nur Text.\n• Punkt")
+
+
 class InstallerArgsTest(TempDataMixin, unittest.TestCase):
     def test_parameter_fuer_den_installer(self):
         setup = os.path.join(self.folder, "Fisi Lernplattform Test Ü", "Setup 0.56.exe")
