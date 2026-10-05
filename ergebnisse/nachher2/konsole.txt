@@ -1,0 +1,55 @@
+**********************
+PowerShell transcript start
+Start time: 20261005044557
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\afbc2da8-4921-483d-912e-36d475a0448f.ps1'
+Process ID: 3000
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+=== 0. Reparierte Version nach 'C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä' installieren (Leerzeichen + Umlaut)
+    Installer: C:\Users\RUNNER~1\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe
+    Rueckgabewert: 0
+    installierte Version: 0.55
+=== 7. Szenario N5: Update scheitert wirklich (Zieldatei ist ein Ordner, kann nicht ersetzt werden)
+    Programm wird geschlossen (wie Klick aufs X, WM_CLOSE) ...
+    Dauer bis Installer-Ende: 9.6 s
+BEFEHLSZEILE "C:\Users\RUNNER~1\AppData\Local\Temp\FISI Update �\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=3036 /UPDATELOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update.log "/FISIEXE=C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test �\FISI-Lernplattform.exe" /LOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+RUECKGABEWERT 5
+    installierte Version: 0.55
+--- Prozessliste (nach N5_fehlschlag):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+8620 10/5/2026 4:47:04 AM FISI Lernplattform 0.55
+--- update.log (N5_fehlschlag):
+2026-10-05 04:46:55 | Programm | Installer wird gestartet: "C:\Users\…\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=3036 /UPDATELOG=%APPDATA%\FISI-Lernplattform\update.log "/FISIEXE=~\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe" /LOG=%APPDATA%\FISI-Lernplattform\update_installer.log
+2026-10-05 04:46:55 | Programm | Installer läuft (Prozess 7148). Das Programm wird jetzt beendet, der Installer wartet darauf.
+2026-10-05 04:46:55 | Installer 0.55 | gestartet, wartet auf das Ende des Programms (Prozess 3036)
+2026-10-05 04:46:58 | Installer 0.55 | Programm hat sich beendet
+2026-10-05 04:46:58 | Installer 0.55 | ersetzt die Programmdateien in C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:47:04 | Installer 0.55 | Installation NICHT abgeschlossen, die bisherige Version bleibt unverändert. Details: C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+2026-10-05 04:47:04 | Installer 0.55 | startet die bisherige Version wieder
+2026-10-05 04:47:06 | Programm | Update auf 0.56 NICHT abgeschlossen, installiert ist weiterhin 0.55.
+    Fenstertitel: FISI Lernplattform 0.55  (gestartet 10/05/2026 04:47:04)
+--- Installer-Protokoll N5 (Auszug):
+2026-10-05 04:47:03.108   Defaulting to Abort for suppressed message box (Abort/Retry/Ignore):
+                          Fehler beim Umbenennen einer Datei im Ziel-Ordner:
+                          MoveFile schlug fehl; Code 183.
+2026-10-05 04:47:03.108   Rolling back changes.
+2026-10-05 04:47:03.112   Uninstallation process succeeded.
+    Datenordner: einstellungen.json, fisi_lernplattform.db, update_installer.log, update.log
+**********************
+PowerShell transcript end
+End time: 20261005044727
+**********************

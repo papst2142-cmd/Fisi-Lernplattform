@@ -1,0 +1,98 @@
+﻿2026-10-05 04:46:55.499   Log opened. (Time zone: UTC+00:00)
+2026-10-05 04:46:55.499   Setup version: Inno Setup version 6.7.1
+2026-10-05 04:46:55.499   Original Setup EXE: C:\Users\runneradmin\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe
+2026-10-05 04:46:55.499   Setup command line: /SL5="$61CC6,17270943,893952,C:\Users\runneradmin\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=3036 /UPDATELOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update.log "/FISIEXE=C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe" /LOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+2026-10-05 04:46:55.501   Windows version: 10.0.26100
+2026-10-05 04:46:55.501   Windows architecture: x64 (64-bit)
+2026-10-05 04:46:55.501   Machine types supported by system: x86 x64
+2026-10-05 04:46:55.501   User privileges: Administrative
+2026-10-05 04:46:55.507   Administrative install mode: No
+2026-10-05 04:46:55.507   Install mode root key: HKEY_CURRENT_USER
+2026-10-05 04:46:55.507   64-bit install mode: Yes
+2026-10-05 04:46:55.507   RedirectionGuard status for current process: Enabled in enforcing mode
+2026-10-05 04:46:55.509   Created protected temporary directory: C:\Users\RUNNER~1\AppData\Local\Temp\is-27Y5PG5FO3.tmp
+2026-10-05 04:46:55.511   -- DLL function import --
+2026-10-05 04:46:55.511   Function and DLL name: OpenProcess@kernel32.dll
+2026-10-05 04:46:55.511   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-10-05 04:46:55.511   Successfully imported the DLL function. Delay loaded? No
+2026-10-05 04:46:55.511   -- DLL function import --
+2026-10-05 04:46:55.511   Function and DLL name: WaitForSingleObject@kernel32.dll
+2026-10-05 04:46:55.511   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-10-05 04:46:55.511   Successfully imported the DLL function. Delay loaded? No
+2026-10-05 04:46:55.511   -- DLL function import --
+2026-10-05 04:46:55.511   Function and DLL name: TerminateProcess@kernel32.dll
+2026-10-05 04:46:55.511   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-10-05 04:46:55.511   Successfully imported the DLL function. Delay loaded? No
+2026-10-05 04:46:55.511   -- DLL function import --
+2026-10-05 04:46:55.511   Function and DLL name: CloseHandle@kernel32.dll
+2026-10-05 04:46:55.511   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-10-05 04:46:55.511   Successfully imported the DLL function. Delay loaded? No
+2026-10-05 04:46:55.511   gestartet, wartet auf das Ende des Programms (Prozess 3036)
+2026-10-05 04:46:58.224   Programm hat sich beendet
+2026-10-05 04:46:58.323   Found 54 files to register with RestartManager.
+2026-10-05 04:46:58.323   Calling RestartManager's RmGetList.
+2026-10-05 04:46:58.325   RmGetList finished successfully.
+2026-10-05 04:46:58.325   RestartManager found an application using one of our files: 彐̯슰̫怰̯愐̯懰̯拐̯掰̯撐̯数̯쎠̫쒐̫얀̫왰̫晐̯朰̯읠̫졐̫쥀̫栐̯棰̯槐̯檰̯殐̯汰̯浐̯渰̯漐̯濰̯烐̯熰̯犐̯獰̯瑐̯田̯瘐̯盰̯矐̯碰̯禐̯穰̯샰̳疰̲眐̲矀̲硰̲礠̲秐̲窀̲쀰̳솰̳笰̲
+2026-10-05 04:46:58.325   RestartManager found an application using one of our files: 
+2026-10-05 04:46:58.325   RestartManager found an application using one of our files: 
+2026-10-05 04:46:58.325   RestartManager found an application using one of our files: 
+2026-10-05 04:46:58.325   RestartManager found an application using one of our files: 
+2026-10-05 04:46:58.325   Can use RestartManager to avoid reboot? Yes (0)
+2026-10-05 04:46:58.818   ersetzt die Programmdateien in C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:46:58.821   Starting the installation process.
+2026-10-05 04:46:58.823   Shutting down applications using our files.
+2026-10-05 04:46:58.835   Directory for uninstall files: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:46:58.835   Will append to existing uninstall log: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\unins000.dat
+2026-10-05 04:46:58.839   -- File entry --
+2026-10-05 04:46:58.839   Dest filename: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\unins000.exe
+2026-10-05 04:46:58.839   Non-default bitness: 32-bit
+2026-10-05 04:46:58.841   Time stamp of our file: 2026-10-05 04:46:55.392
+2026-10-05 04:46:58.841   Dest file exists.
+2026-10-05 04:46:58.841   Time stamp of existing file: 2026-10-05 04:45:57.535
+2026-10-05 04:46:58.841   Version of our file: 51.1054.0.0
+2026-10-05 04:46:58.841   Version of existing file: 51.1054.0.0
+2026-10-05 04:46:58.841   Installing the file.
+2026-10-05 04:46:58.855   Leaving temporary file in place for now.
+2026-10-05 04:46:58.855   -- File entry --
+2026-10-05 04:46:58.855   Dest filename: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe
+2026-10-05 04:46:58.857   Time stamp of our file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:58.857   Dest file exists.
+2026-10-05 04:46:58.857   Time stamp of existing file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:58.857   Installing the file.
+2026-10-05 04:46:59.097   Successfully installed the file.
+2026-10-05 04:46:59.097   -- File entry --
+2026-10-05 04:46:59.097   Dest filename: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\_internal\api-ms-win-core-console-l1-1-0.dll
+2026-10-05 04:46:59.097   Time stamp of our file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:59.097   Dest file exists.
+2026-10-05 04:46:59.097   Time stamp of existing file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:59.097   Installing the file.
+2026-10-05 04:46:59.099   Successfully installed the file.
+2026-10-05 04:46:59.099   -- File entry --
+2026-10-05 04:46:59.099   Dest filename: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\_internal\api-ms-win-core-datetime-l1-1-0.dll
+2026-10-05 04:46:59.099   Time stamp of our file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:59.099   Dest file exists.
+2026-10-05 04:46:59.099   Time stamp of existing file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:59.099   Installing the file.
+2026-10-05 04:46:59.101   Successfully installed the file.
+2026-10-05 04:46:59.101   -- File entry --
+2026-10-05 04:46:59.101   Dest filename: C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\_internal\api-ms-win-core-debug-l1-1-0.dll
+2026-10-05 04:46:59.101   Time stamp of our file: 2026-10-05 04:45:16.000
+2026-10-05 04:46:59.101   Installing the file.
+2026-10-05 04:46:59.103   MoveFile: The existing file appears to be in use (183). Retrying.
+2026-10-05 04:47:00.104   MoveFile: The existing file appears to be in use (183). Retrying.
+2026-10-05 04:47:01.106   MoveFile: The existing file appears to be in use (183). Retrying.
+2026-10-05 04:47:02.107   MoveFile: The existing file appears to be in use (183). Retrying.
+2026-10-05 04:47:03.108   Defaulting to Abort for suppressed message box (Abort/Retry/Ignore):
+                          C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä\_internal\api-ms-win-core-debug-l1-1-0.dll
+                          
+                          Fehler beim Umbenennen einer Datei im Ziel-Ordner:
+                          MoveFile schlug fehl; Code 183.
+                          Cannot create a file when that file already exists.
+2026-10-05 04:47:03.108   User canceled the installation process.
+2026-10-05 04:47:03.108   Rolling back changes.
+2026-10-05 04:47:03.112   Starting the uninstallation process.
+2026-10-05 04:47:03.112   Uninstallation process succeeded.
+2026-10-05 04:47:04.621   Deinitializing Setup.
+2026-10-05 04:47:04.621   Installation NICHT abgeschlossen, die bisherige Version bleibt unverändert. Details: C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+2026-10-05 04:47:04.621   startet die bisherige Version wieder
+2026-10-05 04:47:04.651   Log closed.
