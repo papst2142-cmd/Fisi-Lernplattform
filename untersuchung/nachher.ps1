@@ -86,18 +86,30 @@ $app = Starte-App
 Update $app "0.55" "N2_programm_haengt"
 Alle-Beenden
 
-Write-Host "=== 4. Szenario N3: Update scheitert (Programmdatei von anderem Prozess gesperrt)"
+Write-Host "=== 4. Szenario N3: Update scheitert (Programmdatei von anderem Prozess offen gehalten)"
 $app = Starte-App
-$lock = Start-Process python -ArgumentList @("-c", "`"import time; f=open(r'$Ziel\FISI-Lernplattform.exe','rb'); time.sleep(150)`"") -PassThru -NoNewWindow
+# eigener, versteckter Prozess (nicht in dieser Konsole), ignoriert Strg+C
+$code = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); signal.signal(signal.SIGBREAK, signal.SIG_IGN); f = open(r'$Exe', 'rb'); time.sleep(150)"
+$lock = Start-Process python -ArgumentList @("-c", "`"$code`"") -WindowStyle Hidden -PassThru
 Start-Sleep 2
-Update $app "0.56" -Schliessen "N3_datei_in_benutzung"
-Bild "N3_meldung_nach_fehlschlag"
+Update $app "0.56" -Schliessen "N3_datei_offen"
+Bild "N3_nach_dem_update"
 Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    Fenstertitel: $($_.MainWindowTitle)" }
+Write-Host "    Sperr-Prozess laeuft noch: $(-not $lock.HasExited)"
 $lock | Stop-Process -Force -ErrorAction SilentlyContinue
 Alle-Beenden
-Write-Host "    Lernstand-Datenbank noch da: $(Test-Path "$Daten\fisi_lernplattform.db") $((Get-ChildItem $Daten -Filter *.db | Select-Object -ExpandProperty Name) -join ', ')"
 
-Write-Host "=== 5. Tests aus dem Quellcode unter Windows"
+Write-Host "=== 5. Szenario N4: Update scheitert (Programmdatei darf nicht ersetzt werden)"
+$app = Starte-App
+icacls "$Exe" /deny "${env:USERNAME}:(D)" | Out-Null
+Update $app "0.56" -Schliessen "N4_datei_gesperrt"
+Bild "N4_meldung_nach_fehlschlag"
+Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    Fenstertitel: $($_.MainWindowTitle)" }
+icacls "$Exe" /remove:d "${env:USERNAME}" | Out-Null
+Alle-Beenden
+Write-Host "    Datenordner: $((Get-ChildItem $Daten | Select-Object -ExpandProperty Name) -join ', ')"
+
+Write-Host "=== 6. Tests aus dem Quellcode unter Windows"
 Push-Location fix
 python test_update.py 2>&1 | Select-String "Ran |OK|FAIL|ERROR|skipped" | Write-Host
 python test_beenden.py 2>&1 | Select-String "Ran |OK|FAIL|ERROR|skipped|\.\.\." | Write-Host
