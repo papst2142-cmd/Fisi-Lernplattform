@@ -66,6 +66,7 @@ Start-Sleep 25
 Write-Host "    installierte Version: $(Version)"
 Alle-Beenden
 
+if (-not $env:NUR_FEHLER) {
 Write-Host "=== 1. Schliessen am X (WM_CLOSE): endet der Prozess, bleibt fehler.log leer?"
 Remove-Item "$Daten\fehler.log" -ErrorAction SilentlyContinue
 $app = Starte-App
@@ -109,11 +110,28 @@ icacls "$Exe" /remove:d "${env:USERNAME}" | Out-Null
 Alle-Beenden
 Write-Host "    Datenordner: $((Get-ChildItem $Daten | Select-Object -ExpandProperty Name) -join ', ')"
 
+}
+Write-Host "=== 7. Szenario N5: Update scheitert wirklich (Zieldatei ist ein Ordner, kann nicht ersetzt werden)"
+$app = Starte-App
+$bad = Join-Path $Ziel "_internal\api-ms-win-core-debug-l1-1-0.dll"
+Remove-Item $bad -Force
+New-Item -ItemType Directory -Force $bad | Out-Null
+New-Item -ItemType File -Force (Join-Path $bad "blockiert.txt") | Out-Null
+Update $app "0.56" -Schliessen "N5_fehlschlag"
+Bild "N5_meldung_nach_fehlschlag"
+Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    Fenstertitel: $($_.MainWindowTitle)  (gestartet $($_.StartTime))" }
+Write-Host "--- Installer-Protokoll N5 (Auszug):"
+Select-String -Path "$Out\N5_fehlschlag.installer.log" -Pattern "error|fehl|roll|abort|Abbr|succeeded|failed|code" | ForEach-Object { Write-Host $_.Line }
+Alle-Beenden
+Write-Host "    Datenordner: $((Get-ChildItem $Daten | Select-Object -ExpandProperty Name) -join ', ')"
+
+if (-not $env:NUR_FEHLER) {
 Write-Host "=== 6. Tests aus dem Quellcode unter Windows"
 Push-Location fix
 python test_update.py 2>&1 | Select-String "Ran |OK|FAIL|ERROR|skipped" | Write-Host
 python test_beenden.py 2>&1 | Select-String "Ran |OK|FAIL|ERROR|skipped|\.\.\." | Write-Host
 Pop-Location
 
+}
 Copy-Item "$Daten\fehler.log" "$Out\fehler_installiert.log" -ErrorAction SilentlyContinue
 Stop-Transcript | Out-Null
