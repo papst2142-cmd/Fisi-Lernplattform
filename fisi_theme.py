@@ -61,8 +61,11 @@ C = {
 GRADIENTS = {
     "primary": ("#7C3AED", "#DB2777"),   # Violett -> Magenta
     "accent":  ("#0E7490", "#4F46E5"),   # Tuerkis -> Indigo
-    "danger":  ("#DC2626", "#F97316"),   # Rot -> Orange
-    "success": ("#059669", "#22D3EE"),   # Gruen -> Tuerkis
+    # Ab 0.56 (Kontrastpruefung): weisse Schrift braucht 4,5:1 auf beiden
+    # Enden. Vorher Orange #F97316 (2,8:1), Gruen #059669 (3,8:1) und Tuerkis
+    # #22D3EE (1,8:1) - jeweils nur so weit abgedunkelt wie noetig.
+    "danger":  ("#DC2626", "#BF5811"),   # Rot -> Orange
+    "success": ("#05875F", "#158293"),   # Gruen -> Tuerkis
     "hero":    ("#4C1D95", "#9D174D"),   # Banner im Dashboard
 }
 
@@ -134,7 +137,8 @@ BACKGROUNDS = [
      "ring_bg": "#1A2848", "text_dim": "#94A3C6", "muted": "#8998BA"},
     {"id": "tannengruen", "name": "Tannengrün",
      "bg": "#0A1814", "sidebar": "#06100D", "card": "#10231D", "card_alt": "#152D26",
-     "card_hi": "#1C3A31", "border": "#1D3A31", "border_hi": "#2F5F50",
+     # Ab 0.56: card_hi minimal dunkler (#1C3A31), damit Rot darauf 4,5:1 erreicht
+     "card_hi": "#1C3931", "border": "#1D3A31", "border_hi": "#2F5F50",
      "ring_bg": "#183229", "text_dim": "#93BBAE", "muted": "#7EA498"},
     {"id": "aubergine", "name": "Aubergine",
      "bg": "#1A0A14", "sidebar": "#11060D", "card": "#26101D", "card_alt": "#311527",
@@ -381,7 +385,104 @@ def _apply_mode_colors():
             C[key] = readable_on(C[key], surfaces)
         for key in ("text_dim", "muted"):
             C[key] = readable_on(C[key], surfaces)
+    _apply_control_colors(light)
     _refresh_tables()
+
+
+# Ab 0.56: Mindestkontrast fuer Bedienelemente ohne Schrift (Rahmen von
+# Eingabefeldern, Antwortkreise, Fokusrahmen) gegenueber den Flaechen
+CONTROL_CONTRAST = 3.0
+CONTROL_SURFACES = ("bg", "sidebar", "card", "card_alt", "card_hi")
+
+
+def shade_until(color, target, surfaces, minimum):
+    """Mischt eine Farbe in kleinen Schritten zu target (weiss/schwarz), bis
+    sie auf allen Flaechen den Mindestkontrast erreicht (Farbton bleibt)."""
+    shade = color
+    for step in range(1, 401):
+        if all(contrast(shade, surface) >= minimum for surface in surfaces):
+            return shade
+        shade = mix(color, target, step * 0.0025)
+    return shade
+
+
+def _apply_control_colors(is_light):
+    """Ab 0.56: Farben fuer Bedienelemente.
+    field_border: Rand von Eingabefeldern und Antwortkreisen (vorher "border"
+    bzw. "border_hi" mit 1,1 bis 2,3:1). Aus border_hi im selben Farbton,
+    gerade so weit aufgehellt (dunkel) bzw. abgedunkelt (hell), dass 3:1
+    erreicht werden. focus: Fokusrahmen am PC (Akzentfarbe, mind. 4,5:1)."""
+    surfaces = [C[key] for key in CONTROL_SURFACES]
+    C["field_border"] = shade_until(C["border_hi"], "#000000" if is_light else "#FFFFFF",
+                                    surfaces, CONTROL_CONTRAST)
+    C["focus"] = shade_until(C["accent"], "#000000" if is_light else "#FFFFFF",
+                             surfaces, CONTROL_CONTRAST)
+
+
+# ============================================================================
+#  SCHRIFTGROESSE (ab 0.56)
+# ============================================================================
+#
+# Lokal je Geraet ("schriftgroesse", wird nicht abgeglichen). Am PC waechst
+# die ganze Oberflaeche mit (Skalierung von customtkinter: Schrift, Knoepfe,
+# Abstaende), damit nichts abgeschnitten wird. Am Handy werden die
+# Schriftgroessen vervielfacht; die Schriftgroesse des Systems (Android)
+# wirkt zusaetzlich (Flutter-Standard).
+
+FONT_KEY = "schriftgroesse"
+FONT_NORMAL = "normal"
+FONT_SIZES = [
+    {"id": "normal", "name": "Normal", "faktor": 1.0},
+    {"id": "gross", "name": "Groß", "faktor": 1.15},
+    {"id": "sehr_gross", "name": "Sehr groß", "faktor": 1.3},
+]
+FONT_IDS = [item["id"] for item in FONT_SIZES]
+FONT_CHOICES = [(item["id"], item["name"]) for item in FONT_SIZES]
+# Texte (PC und Handy gleich)
+FONT_TITLE = "Schriftgröße"
+FONT_SUBTITLE = "nur für dieses Gerät"
+FONT_HINT = ("Gilt sofort und nur für dieses Gerät. Am PC wächst die ganze Oberfläche mit "
+             "(Schrift, Knöpfe, Abstände); passt sie nicht mehr ins Fenster, lässt sie sich "
+             "seitlich verschieben. Am Handy kommt die Schriftgröße aus den "
+             "Systemeinstellungen noch hinzu.")
+BUSY_FONT_TITLE = "Schriftgröße wird angewendet"
+BUSY_FONT_TEXT = "Bitte warten, die Oberfläche wird in der neuen Größe aufgebaut …"
+current_font_size = FONT_NORMAL
+
+
+def font_size(size_id):
+    """Die Schriftgroesse zur Kennung (unbekannt -> Normal)."""
+    for item in FONT_SIZES:
+        if item["id"] == size_id:
+            return item
+    return FONT_SIZES[0]
+
+
+def font_factor(size_id=None):
+    """Vergroesserung (1.0 = Normal) der gewaehlten bzw. aktuellen Groesse."""
+    return font_size(current_font_size if size_id is None else size_id)["faktor"]
+
+
+def apply_font_size(size_id):
+    global current_font_size
+    current_font_size = font_size(size_id)["id"]
+    return current_font_size
+
+
+def saved_font_size():
+    import fisi_update
+    value = fisi_update.load_settings().get(FONT_KEY, FONT_NORMAL)
+    return value if value in FONT_IDS else FONT_NORMAL
+
+
+def save_font_size(size_id):
+    """Speichert die Schriftgroesse (nur lokal) und merkt sie sich."""
+    import fisi_update
+    value = apply_font_size(size_id)
+    settings = fisi_update.load_settings()
+    settings[FONT_KEY] = value
+    fisi_update.save_settings(settings)
+    return value
 
 
 def apply_mode(mode):
@@ -412,9 +513,11 @@ def save_mode(mode):
 # Oberflaeche gebaut wird.
 try:
     current_mode = saved_mode()
+    apply_font_size(saved_font_size())
     apply_preset(saved_preset())
     apply_background(saved_background())
 except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start verhindern
     current_mode = DEFAULT_MODE
+    apply_font_size(FONT_NORMAL)
     apply_preset(DEFAULT_PRESET)
     apply_background(DEFAULT_BACKGROUND)

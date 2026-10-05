@@ -1542,11 +1542,11 @@ class FormBoard(ctk.CTkFrame):
             wide = {"ip": 17, "praefix": 7, "zahl": 9, "prozent": 9, "geld": 12}[field["art"]]
             entry = ctk.CTkEntry(holder, width=wide * 9 + 28, height=36, corner_radius=10,
                                  border_width=1, fg_color=C["card_alt"],
-                                 border_color=C["border"], text_color=C["text_soft"],
+                                 border_color=C["field_border"], text_color=C["text_soft"],
                                  font=F["body"])
             entry._entry.configure(insertbackground=C["accent"], selectbackground=C["purple"])
             entry.bind("<FocusIn>", lambda _e, w=entry: w.configure(border_color=C["purple"]))
-            entry.bind("<FocusOut>", lambda _e, w=entry: w.configure(border_color=C["border"]))
+            entry.bind("<FocusOut>", lambda _e, w=entry: w.configure(border_color=C["field_border"]))
             entry.pack(side="left")
             self.entries[field["id"]] = entry
             if field["einheit"]:
@@ -2461,7 +2461,7 @@ class GameView(ReusableView, ScrollArea):
 
         make_label(form, "NAME", font=F["label"], fg=C["muted"]).pack(anchor="w")
         entry = ctk.CTkEntry(form, width=320, height=38, corner_radius=10, border_width=1,
-                             fg_color=C["card_alt"], border_color=C["border"],
+                             fg_color=C["card_alt"], border_color=C["field_border"],
                              text_color=C["text_soft"], font=F["body"],
                              placeholder_text="Wie heißt deine Figur?",
                              placeholder_text_color=C["muted"])
@@ -4393,7 +4393,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
             anchor="w", pady=(14, 0))
         entry = ctk.CTkEntry(card.body, width=360, height=38, corner_radius=10,
                              border_width=1, fg_color=C["card_alt"],
-                             border_color=C["border"], text_color=C["text_soft"],
+                             border_color=C["field_border"], text_color=C["text_soft"],
                              font=F["body"], placeholder_text="Wie heißt deine Firma?",
                              placeholder_text_color=C["muted"])
         entry.pack(anchor="w", pady=(6, 12))
@@ -5231,7 +5231,7 @@ class FirmView(TabCache, ReusableView, ScrollArea):
                 anchor="w", pady=(12, 0))
             entry = ctk.CTkEntry(card.body, width=360, height=38, corner_radius=10,
                                  border_width=1, fg_color=C["card_alt"],
-                                 border_color=C["border"], text_color=C["text_soft"],
+                                 border_color=C["field_border"], text_color=C["text_soft"],
                                  font=F["body"], placeholder_text="Wie heißt deine Filiale?",
                                  placeholder_text_color=C["muted"])
             entry.pack(anchor="w", pady=(6, 12))

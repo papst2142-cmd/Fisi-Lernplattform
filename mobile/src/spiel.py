@@ -699,11 +699,13 @@ class OrderBoard(ft.Column):
         self._paint()
 
     def _step_button(self, icon, offer_id, step):
-        return ft.Container(
+        # Ab 0.56 mit Beschriftung fuer TalkBack
+        return ft.Semantics(button=True, label="Weniger" if step < 0 else "Mehr",
+                            content=ft.Container(
             content=ft.Icon(icon, size=18, color=C["text"]), width=36, height=36,
             border_radius=18, bgcolor=C["card"], ink=True,
             border=ft.Border.all(1, C["border"]), alignment=ft.Alignment.CENTER,
-            on_click=lambda _e: self.change(offer_id, step))
+            on_click=lambda _e: self.change(offer_id, step)))
 
     def change(self, offer_id, step):
         if self.locked:
@@ -751,8 +753,8 @@ def dropdown(options, value, on_select, expand=True, width=None):
         options=[ft.dropdown.Option(key=key, text=text) for key, text in options],
         value=value, expand=expand, width=width, on_select=on_select,
         bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
-        border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
-        color=C["text"], text_style=ft.TextStyle(size=13, color=C["text"]),
+        border_color=C["field_border"], focused_border_color=C["purple"], border_radius=12,
+        color=C["text"], text_style=ft.TextStyle(size=ui.fs(13), color=C["text"]),
         content_padding=ft.Padding.symmetric(horizontal=12, vertical=6))
 
 
@@ -1313,10 +1315,10 @@ class TerminalBoard(ft.Column):
         if role in ("eingabe", "cursor"):
             return ft.Text(spans=[
                 ft.TextSpan(self.task["prompt"] + " ",
-                            ft.TextStyle(color=C["green"], font_family=ui.MONO, size=12)),
+                            ft.TextStyle(color=C["green"], font_family=ui.MONO, size=ui.fs(12))),
                 ft.TextSpan(value, ft.TextStyle(
                     color=C["accent"] if role == "cursor" else C["text"],
-                    font_family=ui.MONO, size=12))])
+                    font_family=ui.MONO, size=ui.fs(12)))])
         return ft.Text(value, size=12, font_family=ui.MONO, color=TERMINAL_COLOR[role])
 
     def _paint(self):
@@ -4413,12 +4415,15 @@ class GameScreen:
                 # Der Grundriss steht am Handy hochkant: rechts im Bild ist im
                 # Grundriss oben (y kleiner), unten im Bild ist rechts (x groesser)
                 arrows = []
-                for icon, dx, dy in ((ft.Icons.ARROW_BACK, 0, 1), (ft.Icons.ARROW_UPWARD, -1, 0),
-                                     (ft.Icons.ARROW_DOWNWARD, 1, 0),
-                                     (ft.Icons.ARROW_FORWARD, 0, -1)):
+                # Ab 0.56: Richtung im Hinweis (TalkBack las viermal "Schieben")
+                for icon, dx, dy, where in (
+                        (ft.Icons.ARROW_BACK, 0, 1, "nach links"),
+                        (ft.Icons.ARROW_UPWARD, -1, 0, "nach oben"),
+                        (ft.Icons.ARROW_DOWNWARD, 1, 0, "nach unten"),
+                        (ft.Icons.ARROW_FORWARD, 0, -1, "nach rechts")):
                     arrows.append(ft.IconButton(icon, icon_color=C["text"],
                                                 bgcolor=C["card_alt"], icon_size=20,
-                                                tooltip="Schieben",
+                                                tooltip="Schieben " + where,
                                                 on_click=lambda _e, a=dx, b=dy: self._nudge(a, b)))
                 mine += [ui.label("Schieben"), ft.Row(arrows, spacing=8)]
         mine.append(ui.label("Im Karton"))
