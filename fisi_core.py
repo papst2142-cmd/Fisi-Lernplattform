@@ -2730,8 +2730,8 @@ def ups_task_solution(index):
 
 def ups_strings_needed(need_wh, string_wh):
     """Anzahl paralleler Straenge (immer aufrunden)."""
-    count = int(need_wh // string_wh)
-    return count + (1 if need_wh - count * string_wh > 1e-9 else 0)
+    import math
+    return max(1, int(math.ceil(need_wh / float(string_wh) - 1e-6)))
 
 
 def ups_task_text(index, solution=False):

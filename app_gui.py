@@ -1291,7 +1291,9 @@ class DashboardView(View):
         activities = self.db.recent_activities(7)
         if not activities:
             make_label(self.activity_box,
-                       "Noch keine Aktivitäten.\nStarte mit den Karteikarten "
+                       # ab 0.58 dreizeilig, damit es bei 1360 px auch bei
+                       # "Sehr groß" ohne seitlichen Schieberegler passt
+                       "Noch keine Aktivitäten.\nStarte mit den Karteikarten\n"
                        "oder dem Prüfungstrainer.",
                        font=F["small"], fg=C["muted"], justify="left").pack(anchor="w")
         else:
