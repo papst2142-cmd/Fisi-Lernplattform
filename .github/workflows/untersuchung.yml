@@ -6,6 +6,9 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -23,8 +26,11 @@ jobs:
       - name: Szenarien
         shell: pwsh
         run: untersuchung\szenarien.ps1
-      - uses: actions/upload-artifact@v7
+      - name: Protokolle in den Zweig schreiben
         if: always()
-        with:
-          name: protokolle
-          path: protokolle
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p ergebnisse/vorher && cp -r protokolle/* ergebnisse/vorher/ || true
+          git add ergebnisse && git commit -m "Untersuchung: Protokolle (Lauf ${{ github.run_id }}) [skip ci]" && git push || true

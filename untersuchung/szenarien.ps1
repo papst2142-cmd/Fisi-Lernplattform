@@ -1,8 +1,9 @@
 # Untersuchung Fix 0.55.1: Update 0.54 -> 0.55 am echten Windows-Rechner
 $ErrorActionPreference = "Continue"
+New-Item -ItemType Directory -Force (Join-Path $PWD "protokolle") | Out-Null
+Start-Transcript -Path (Join-Path $PWD "protokolle\konsole.txt") -Force | Out-Null
 $Ziel = Join-Path $env:USERPROFILE "Desktop\Claude\Fisi Lernplattform Test"
 $Out = Join-Path $PWD "protokolle"
-New-Item -ItemType Directory -Force $Out | Out-Null
 $Daten = Join-Path $env:APPDATA "FISI-Lernplattform"
 
 function Version {
@@ -20,7 +21,10 @@ function Setup($exe, $log, [switch]$MitDir) {
   $args = @("/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/LOG=`"$log`"")
   if ($MitDir) { $args += "/DIR=`"$Ziel`"" }
   $t = Get-Date
-  $p = Start-Process $exe -ArgumentList $args -Wait -PassThru
+  # Nicht -Wait: PowerShell 7 wartet dabei auch auf das vom Installer neu
+  # gestartete Programm. Nur auf den Installer selbst warten.
+  $p = Start-Process $exe -ArgumentList $args -PassThru
+  if (-not $p.WaitForExit(300000)) { Write-Host "    Installer haengt nach 300 s - abgebrochen"; $p.Kill(); return "haengt" }
   Write-Host ("    Rueckgabewert Installer: {0}  (Dauer {1:n1} s)" -f $p.ExitCode, ((Get-Date) - $t).TotalSeconds)
   return $p.ExitCode
 }
@@ -59,3 +63,7 @@ Get-Content (Join-Path $Out "c_daten\fehler.log") -ErrorAction SilentlyContinue 
 Write-Host "=== Zusammenfassung: A=$codeA B=$codeB"
 Write-Host "=== Auszug Installer-Protokoll A (Fehler/Rollback):"
 Select-String -Path "$Out\A_update_mit_laufendem_prozess.log" -Pattern "error|fehler|roll|restart manager|in use|Benutzung|Exit|close|DeleteFile|Retry|Abort|succeeded" | ForEach-Object { Write-Host $_.Line }
+
+Get-Process FISI-Lernplattform -ErrorAction SilentlyContinue | Stop-Process -Force
+Copy-Item (Join-Path $Daten "fehler.log") "$Out\fehler_installiert.log" -ErrorAction SilentlyContinue
+Stop-Transcript | Out-Null
