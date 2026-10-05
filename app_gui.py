@@ -27,6 +27,7 @@ import time
 import traceback
 import webbrowser
 import tkinter as tk
+import _tkinter
 from tkinter import ttk, messagebox
 
 import customtkinter as ctk
@@ -817,6 +818,18 @@ class View(ScrollArea):
 
     def on_show(self):
         pass
+
+    def prepare(self):
+        """Ab 0.56 (Vorladen, ViewPreloader): Ansichten mit Merkschluessel
+        (Fortschritt, Notizblock) schon verdeckt auffrischen - beim Anzeigen
+        erkennt on_show dann "unveraendert". True, wenn etwas zu tun war."""
+        if not hasattr(self, "_refresh_key"):
+            return False
+        key = self._refresh_key()
+        if key is not None and key == getattr(self, "_refreshed", None):
+            return False
+        self.on_show()
+        return True
 
 
 # ============================================================================
@@ -3553,6 +3566,9 @@ class NotebookView(View):
         IconButton(pager, "arrow_right", lambda: self.turn(1),
                    parent_bg=C["card"]).pack(side="right")
         self.refresh()
+        # Ab 0.56: Stand merken - sonst rechnete und zeichnete das erste
+        # on_show direkt nach dem Aufbau alles ein zweites Mal
+        self._refreshed = self._refresh_key()
 
     def on_show(self):
         # Ab 0.50: steht der Notizblock noch genau so da (gleicher Datenbank-
@@ -4755,6 +4771,13 @@ class SettingsView(View):
         self._show_difficulty()
         self.after_idle(self._show_report)
 
+    def prepare(self):
+        """Ab 0.56 (Vorladen): Spielhinweise und Bericht schon verdeckt
+        eintragen (beim Anzeigen ist dann nichts mehr zu tun)."""
+        self._show_difficulty()
+        self._show_report()
+        return True
+
     # -- Problem melden (ab 0.54) ---------------------------------------------
 
     def _report_text(self):
@@ -5400,6 +5423,212 @@ class LazyViews(dict):
         return len(self._classes)
 
 
+# Ab 0.56 (Plan Abschnitt 3): Grosse Ansichten werden nach dem Start im
+# Hintergrund vorbereitet, damit das erste Oeffnen nicht wartet. Reihenfolge
+# nach Dauer beim ersten Oeffnen (Messung 0.56, bericht.md). Ein Schritt ist
+# ("view", Ansicht) - Ansicht aufbauen und Inhalt zeichnen - oder
+# ("tab", Ansicht, Reiter) - einen Reiter von Firma bzw. Reise vorbauen.
+PRELOAD_VIEWS = ("progress", "cards", "quiz", "notebook", "game", "settings", "calc",
+                 "ap1scenarios", "scenarios", "testproject", "abschluss")
+# Spielansichten erst, wenn der Spielstand gewaehlt ist (vorher zeigen sie
+# nur die Auswahl)
+PRELOAD_GAME_VIEWS = ("firma", "reise", "zuhause", "buero", "kunde")
+PRELOAD_START_MS = 1500   # nach dem ersten Zeichnen des Dashboards
+PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
+PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste, bevor der naechste Schritt laeuft
+
+
+def preload_tasks(slot_chosen):
+    """Liste der Vorlade-Schritte (ohne Reiter, die kennt erst die Ansicht)."""
+    tasks = [("view", key) for key in PRELOAD_VIEWS]
+    if slot_chosen:
+        tasks += [("view", key) for key in PRELOAD_GAME_VIEWS]
+    return tasks
+
+
+class ViewPreloader:
+    """Ab 0.56: bereitet die Ansichten aus PRELOAD_VIEWS nacheinander vor.
+
+    Tk ist nicht threadfaehig - deshalb laeuft jeder Schritt im Hauptthread
+    als eigener Zeitgeber (root.after), dazwischen kommt die Ereignisschleife
+    dran. Ein Klick oder eine Taste hat Vorrang: Der naechste Schritt wartet,
+    bis PRELOAD_IDLE_MS lang nichts mehr kam, und eine Ansicht, die der
+    Nutzer schon selbst geoeffnet hat, wird uebersprungen. Die Zeitgeber
+    sind gewoehnliche after-Auftraege und werden beim Beenden mit allen
+    anderen abgebrochen (FISIApp.on_close); ein Schritt nach dem Schliessen
+    tut nichts."""
+
+    def __init__(self, app):
+        self.app = app
+        self.root = app.root
+        self.queue = []
+        self.job = None
+        self.done = False
+        self.steps_done = 0
+        self.step_ms = {}           # Schritt -> Dauer in ms (Bericht/Test)
+        self.last_input = 0.0
+        for sequence in ("<ButtonPress>", "<KeyPress>"):
+            self.root.bind_all(sequence, self._input, add="+")
+
+    def _input(self, _event=None):
+        self.last_input = time.monotonic()
+
+    def start(self, delay=PRELOAD_START_MS):
+        """(Neu) beginnen - beim Start und nach dem Neuaufbau (Farbwechsel)."""
+        self.queue = preload_tasks(self.app.slot_chosen)
+        self.done = False
+        self._schedule(delay)
+
+    def add_game(self):
+        """Nach der Wahl des Spielstands die Spielansichten nachreichen."""
+        for task in preload_tasks(True):
+            if task[1] in PRELOAD_GAME_VIEWS and task not in self.queue:
+                self.queue.append(task)
+        self.done = False
+        self._schedule(PRELOAD_GAP_MS)
+
+    def _schedule(self, delay):
+        if self.job is not None or self.app._closing:
+            return
+        try:
+            self.job = self.root.after(delay, self._step)
+        except tk.TclError:
+            self.job = None   # Fenster schon abgebaut
+
+    def _step(self):
+        self.job = None
+        app = self.app
+        if app._closing:
+            return
+        quiet = time.monotonic() - self.last_input
+        if app._recoloring or app._loading is not None or quiet < PRELOAD_IDLE_MS / 1000.0:
+            self._schedule(max(PRELOAD_GAP_MS,
+                               int((PRELOAD_IDLE_MS / 1000.0 - quiet) * 1000)))
+            return
+        while self.queue:
+            task = self.queue.pop(0)
+            if self._run(task):
+                break   # pro Zeitgeber nur ein echter Schritt
+        if self.queue:
+            self._schedule(PRELOAD_GAP_MS)
+        else:
+            self.done = True
+
+    def _run(self, task):
+        """Einen Schritt ausfuehren. True, wenn dabei etwas aufgebaut wurde."""
+        app = self.app
+        key = task[1]
+        if key in GAME_SUBVIEWS and not app.slot_chosen:
+            return False
+        if key == app.current:
+            return False   # die sichtbare Ansicht gehoert dem Nutzer
+        views = app.views
+        try:
+            focus = self.root.focus_get()
+        except (KeyError, tk.TclError):
+            focus = None
+        started = time.perf_counter()
+        worked = False
+        app.preloading = True
+        try:
+            view = views.built(key)
+            if task[0] == "view":
+                if view is None:
+                    view = views[key]   # baut auf und legt nach unten (LazyViews)
+                    worked = True
+                prepare = getattr(view, "prepare", None)
+                if prepare is not None and prepare():
+                    worked = True
+                if worked:
+                    # Reiter erst nach der Ansicht (sie kennt ihre Reiter)
+                    tabs = getattr(view, "preload_tabs", None)
+                    if tabs is not None:
+                        position = self.queue.index(task) + 1 if task in self.queue else 0
+                        self.queue[position:position] = [("tab", key, tab) for tab in tabs()]
+            elif view is not None:
+                worked = bool(view.prepare_tab(task[2]))
+        except Exception:
+            # Vorladen darf nie stoeren: Fehler nur protokollieren, beim
+            # Oeffnen baut die Ansicht dann wie bisher selbst auf
+            log_exception(*sys.exc_info())
+            worked = True
+        finally:
+            app.preloading = False
+        try:
+            # Eine Ansicht, die beim Aufbau den Fokus nimmt (z.B. ein
+            # Eingabefeld), soll ihn dem Nutzer nicht wegnehmen
+            if focus is not None and focus.winfo_exists() and \
+                    self.root.focus_get() is not focus:
+                focus.focus_set()
+        except (KeyError, tk.TclError):
+            pass
+        if worked:
+            self.steps_done += 1
+            self.step_ms[task] = round((time.perf_counter() - started) * 1000)
+        return worked
+
+
+def _needs_work(view):
+    """Ab 0.56: Muss eine schon aufgebaute Ansicht beim Anzeigen neu
+    zeichnen? (Ansichten mit Merkschluessel; die anderen frischen beim
+    Anzeigen nur Kleinigkeiten auf.)"""
+    try:
+        if hasattr(view, "_unchanged"):
+            return not view._unchanged()
+        if hasattr(view, "_refresh_key"):
+            key = view._refresh_key()
+            return key is None or key != getattr(view, "_refreshed", None)
+    except Exception:
+        return True
+    return False
+
+
+class LoadingHint:
+    """Ab 0.56: Ladeanzeige als Rueckfall. Dauert das Oeffnen einer Ansicht
+    (oder eines Reiters) voraussichtlich laenger als LOADING_THRESHOLD_MS,
+    liegt waehrend des Aufbaus "Wird geladen ..." ueber dem Inhaltsbereich.
+    Voraussichtlich: noch nicht vorbereitet und als gross bekannt, oder das
+    letzte Neuzeichnen dauerte so lange (gemessen bis zum Zeichnen)."""
+
+    def __init__(self, app, task, needed):
+        self.app = app
+        self.task = task
+        self.needed = needed
+        self.frame = None
+        self.started = None
+
+    def __enter__(self):
+        app = self.app
+        if not self.needed or app._loading is not None:
+            return self    # nichts zu tun bzw. schon eine Anzeige offen (verschachtelt)
+        self.started = time.perf_counter()
+        if app.expected_ms(self.task) > fisi_theme.LOADING_THRESHOLD_MS:
+            self.frame = app._show_loading()
+        app._loading = self
+        return self
+
+    def __exit__(self, *_exc):
+        app = self.app
+        if app._loading is not self:
+            return False
+        app._loading = None
+        try:
+            if self.frame is not None:
+                # Erst fertig zeichnen (unter der Anzeige), dann aufdecken
+                app.root.update_idletasks()
+                app._hide_loading(self.frame)
+                app.cost_ms[self.task] = (time.perf_counter() - self.started) * 1000
+            else:
+                started = self.started
+
+                def done():
+                    app.cost_ms[self.task] = (time.perf_counter() - started) * 1000
+                app.root.after_idle(done)
+        except tk.TclError:
+            pass   # Fenster inzwischen geschlossen
+        return False
+
+
 class FISIApp:
     def __init__(self, root):
         self.root = root
@@ -5418,8 +5647,17 @@ class FISIApp:
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
         self._closing = False      # on_close laeuft schon (ab 0.55.1)
         self.update_exit = False   # Beenden fuer ein Update (ab 0.55.1)
+        # Ab 0.56: Vorladen und Ladeanzeige (ViewPreloader, LoadingHint)
+        self.preloading = False    # ein Vorlade-Schritt laeuft gerade
+        self._loading = None       # offene Ladeanzeige (LoadingHint)
+        self._pumping = False      # Ladeanzeige wird gerade gezeichnet
+        self.cost_ms = {}          # Schritt -> zuletzt gemessene Dauer beim Oeffnen
         self._build_ui()
         self.show_view("dashboard")
+        # Erst wenn das Dashboard steht (der Zeitgeber laeuft nach dem ersten
+        # Zeichnen in mainloop), die grossen Ansichten nacheinander vorbereiten
+        self.preloader = ViewPreloader(self)
+        self.preloader.start()
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind("<Control-f>", lambda _e: self.header.search_entry.focus_set())
 
@@ -5579,6 +5817,10 @@ class FISIApp:
         self.root.update()
         old.destroy()
         self._cancel_orphaned_timers()
+        # Ab 0.56: die neuen Ansichten wieder im Hintergrund vorbereiten
+        preloader = getattr(self, "preloader", None)
+        if preloader is not None:
+            preloader.start()
 
     def _cancel_orphaned_timers(self):
         """Nach dem Abbau der alten Oberflaeche stehen noch Zeitgeber (after)
@@ -5639,6 +5881,18 @@ class FISIApp:
         # Spielstand waehlen (Auswahlbildschirm in der Spiel-Ansicht)
         if key in GAME_SUBVIEWS and not self.slot_chosen:
             key = "game"
+        if self._pumping:
+            return   # Klick waehrend die Ladeanzeige erscheint (ab 0.56)
+        if key not in self.views:
+            return
+        # Ab 0.56: Ladeanzeige, falls das Oeffnen voraussichtlich dauert
+        built = self.views.built(key)
+        with LoadingHint(self, ("view", key), built is None or _needs_work(built)):
+            if self._closing:
+                return
+            self._show_view(key)
+
+    def _show_view(self, key):
         view = self.views.get(key)
         if view is None:
             return
@@ -5663,6 +5917,59 @@ class FISIApp:
             view.tkraise()
         self.update_slot_label()
         self.notify_progress(refresh_view=False)
+
+    def opening(self, task, needed):
+        """Ab 0.56: Ladeanzeige fuer andere Wechsel (Reiter von Firma und
+        Reise), siehe LoadingHint."""
+        return LoadingHint(self, task, needed)
+
+    def expected_ms(self, task):
+        """Voraussichtliche Dauer eines Schritts in ms: zuletzt gemessen,
+        sonst fuer bekannt grosse Ansichten und Reiter knapp ueber der
+        Schwelle der Ladeanzeige."""
+        if task in self.cost_ms:
+            return self.cost_ms[task]
+        if task[0] == "tab" or task in preload_tasks(True):
+            return fisi_theme.LOADING_THRESHOLD_MS + 1
+        return 0
+
+    def _show_loading(self):
+        """Ladeanzeige ueber dem Inhaltsbereich zeigen und sofort zeichnen.
+        Waehrenddessen faengt sie Klicks und Tasten ab (grab, wie beim
+        Farbwechsel); es laufen nur Fensterereignisse, keine Zeitgeber."""
+        hint = tk.Frame(self.root, bg=C["bg"], cursor="watch")
+        hint.place(in_=self.view_area, x=0, y=0, relwidth=1, relheight=1)
+        card = ctk.CTkFrame(hint, fg_color=C["card"], corner_radius=px(14),
+                            border_width=1, border_color=C["border_hi"])
+        card.place(relx=0.5, rely=0.4, anchor="center")
+        make_label(card, fisi_theme.LOADING_TEXT, font=F["body_bold"], fg=C["text_dim"],
+                   bg=C["card"]).pack(padx=px(34), pady=px(18))
+        hint.lift()
+        try:
+            hint.grab_set()
+        except tk.TclError:
+            pass   # ohne sichtbares Fenster gibt es keinen grab
+        self._pumping = True
+        try:
+            self.root.update_idletasks()
+            for _ in range(100):
+                if self._closing or not self.root.tk.dooneevent(
+                        _tkinter.WINDOW_EVENTS | _tkinter.DONT_WAIT):
+                    break
+            if not self._closing:
+                self.root.update_idletasks()
+        except tk.TclError:
+            pass   # waehrenddessen geschlossen (X am Fenster)
+        finally:
+            self._pumping = False
+        return hint
+
+    def _hide_loading(self, hint):
+        try:
+            hint.grab_release()
+            hint.destroy()
+        except tk.TclError:
+            pass
 
     def update_slot_label(self):
         """Platzanzeige im Kopf der Spielansichten (ab 0.48)."""
