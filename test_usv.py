@@ -211,6 +211,14 @@ class AufgabenTest(unittest.TestCase):
         self.assertIn("4,82 Ah", fc.ups_task_solution(4))
         self.assertIn("2 Stränge", fc.ups_task_solution(5))
 
+    def test_annahmen_wiederholen_nichts_aus_der_aufgabe(self):
+        # Nachtrag 0.58: Gegebenes steht nicht noch einmal unter "Annahmen"
+        import re
+        for task in fc.UPS_TASKS:
+            for number in re.findall(r"\d+(?:,\d+)?", task["annahmen"]):
+                self.assertNotIn(number, task["frage"], task["titel"])
+            self.assertNotIn("Annahme)", task["annahmen"])
+
     def test_reihum(self):
         self.assertTrue(fc.ups_task_text(len(fc.UPS_TASKS)).startswith("Aufgabe 1 von"))
 

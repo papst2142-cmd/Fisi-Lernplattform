@@ -2607,46 +2607,47 @@ def ups_calculate(mode, fields, unit="W"):
     return {"text": "\n".join(lines), "bild": picture, "passend": passend}
 
 
-# Uebungsaufgaben zum USV-Rechner: Werte typisch aus der Praxis (Annahmen,
-# gekennzeichnet), Loesung wird mit denselben Formeln gerechnet.
+# Uebungsaufgaben zum USV-Rechner: Werte typisch aus der Praxis, Loesung wird
+# mit denselben Formeln gerechnet. "annahmen" nennt nur, was die Aufgabe offen
+# laesst und der Loesungsweg voraussetzt (Nachtrag 0.58), sonst "keine.".
 UPS_TASKS = [
     {"titel": "Scheinleistung und Wirkleistung",
      "frage": "Ein Server hat laut Typenschild 800 VA bei einem Leistungsfaktor "
               "von 0,9. Wie groß ist die Wirkleistung in W? Welche Nennleistung "
               "in VA sollte die USV mindestens haben, wenn die Last höchstens "
               "80 % betragen soll?",
-     "annahmen": "Leistungsfaktor 0,9 (Annahme, sonst Typenschild).",
+     "annahmen": "keine.",
      "werte": {"s": 800, "pf": 0.9}},
     {"titel": "Akku-Kapazität (Beispiel EnerSys)",
      "frage": "Eine USV soll 450 W Last 8 Stunden lang versorgen. Der "
               "Wechselrichter hat bei dieser Last einen Wirkungsgrad von 84 %, "
               "der Akkustrang hat 48 V. Wie viel Ah braucht der Strang?",
-     "annahmen": "Ohne Alterungszuschlag, volle Nennkapazität nutzbar.",
+     "annahmen": "Kein Alterungszuschlag, volle Nennkapazität nutzbar.",
      "werte": {"w": 450, "eta": 84, "min": 480, "v": 48, "alt": 0}},
     {"titel": "Laufzeit eines vorhandenen Akkus",
      "frage": "Eine kleine USV hat 2 Blöcke zu je 12 V und 9 Ah in Reihe. Die "
               "Last beträgt 300 W, der Wirkungsgrad 85 %. Wie lange läuft sie "
               "mit neuem Akku und am Lebensende (80 % Kapazität)?",
-     "annahmen": "Wirkungsgrad 85 % (Annahme), volle Nennkapazität nutzbar.",
+     "annahmen": "Volle Nennkapazität nutzbar.",
      "werte": {"w": 300, "eta": 85, "v": 12, "ah": 9, "reihe": 2, "par": 1,
                "alt": 25}},
     {"titel": "Passt die USV?",
      "frage": "Angeschlossen sind 1200 VA bei einem Leistungsfaktor von 0,9. "
               "Die USV hat 1500 VA und 1000 W Nennleistung. Ist sie nach der "
               "80-%-Regel passend?",
-     "annahmen": "Leistungsfaktor 0,9 (Annahme). Nur die Leistung wird geprüft.",
+     "annahmen": "Nur die Leistung wird geprüft, nicht die Laufzeit.",
      "werte": {"s": 1200, "pf": 0.9, "nenn_va": 1500, "nenn_w": 1000}},
     {"titel": "Akku mit Alterungszuschlag",
      "frage": "Ein Switch-Schrank braucht 1000 W für 10 Minuten. Wirkungsgrad "
               "90 %, Strangspannung 48 V, Alterungszuschlag 25 %. Wie viel Wh "
               "und Ah braucht der Akku?",
-     "annahmen": "Wirkungsgrad 90 % (Annahme), volle Nennkapazität nutzbar.",
+     "annahmen": "Volle Nennkapazität nutzbar.",
      "werte": {"w": 1000, "eta": 90, "min": 10, "v": 48, "alt": 25}},
     {"titel": "Wie viele Stränge?",
      "frage": "500 W sollen 30 Minuten überbrückt werden. Wirkungsgrad 80 %, "
               "Alterungszuschlag 25 %. Ein Strang besteht aus 2 Blöcken zu je "
               "12 V und 12 Ah in Reihe. Wie viele Stränge braucht man parallel?",
-     "annahmen": "Wirkungsgrad 80 % (EnerSys-Richtwert ohne Herstellerwert).",
+     "annahmen": "Volle Nennkapazität nutzbar.",
      "werte": {"w": 500, "eta": 80, "min": 30, "alt": 25, "v": 12, "ah": 12,
                "reihe": 2}},
 ]
