@@ -91,8 +91,12 @@ class Card(ft.Container):
                  padding=16, spacing=10, expand=None, action=None):
         self.body = ft.Column(controls or [], spacing=spacing, tight=True,
                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
+        # Ab 0.56: Titel und Unterschrift teilen sich die Zeile (3:2), damit ein
+        # langer Untertitel - v.a. bei grosser Schrift - den Titel nicht mitten
+        # im Wort umbrechen laesst; die Unterschrift bricht dann selbst um
         self.subtitle_text = ft.Text(subtitle or "", size=11, color=C["muted"],
-                                     text_align=ft.TextAlign.RIGHT)
+                                     text_align=ft.TextAlign.RIGHT,
+                                     expand=2 if subtitle else None)
         self.title_text = None
         self.tick = None
         column = [self.body]
@@ -100,7 +104,7 @@ class Card(ft.Container):
             accent = accent or C["accent"]
             self.tick = ft.Container(width=4, height=14, border_radius=2, bgcolor=accent)
             self.title_text = ft.Text(title.upper(), size=11, weight=ft.FontWeight.BOLD,
-                                      color=accent, expand=True)
+                                      color=accent, expand=3)
             header = ft.Row([
                 self.tick, self.title_text,
                 self.subtitle_text,
@@ -114,6 +118,7 @@ class Card(ft.Container):
 
     def set_subtitle(self, value, color=None):
         self.subtitle_text.value = value
+        self.subtitle_text.expand = 2 if value else None
         self.subtitle_text.color = color or C["muted"]
 
     def set_title(self, value, color=None):
@@ -143,6 +148,17 @@ class FoldCard(Card):
         self.opened = self._open_state.get(self.fold_key, opened)
         self._texts = (open_text, close_text)
         header = self.content.controls[0]
+        # Titel und Unterschrift untereinander, rechts nur der Pfeil - sonst
+        # brach z.B. "Loeschen und zuruecksetzen" schon bei normaler Schrift
+        # mitten im Wort um
+        self.title_text.expand = None
+        self.subtitle_text.expand = None
+        self.subtitle_text.text_align = ft.TextAlign.LEFT
+        self.subtitle_text.visible = bool(subtitle)
+        header.controls = [self.tick,
+                           ft.Column([self.title_text, self.subtitle_text], spacing=2,
+                                     tight=True, expand=True),
+                           header.controls[-1]]
         self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
                                           border_radius=8, padding=ft.Padding.symmetric(
                                               vertical=6))

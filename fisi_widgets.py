@@ -893,22 +893,21 @@ class FoldCard(Card):
         self._head_top = self.pad - 2   # wie in Card.__init__ (ungeskaliert)
         self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
                                   font=F["small_bold"], width=24, height=0)
-        self.arrow.pack(side="right", padx=(10, 0))
+        # ganz rechts, Unterschrift links daneben (vorher klebten beide
+        # aneinander: "aufklappennur fuer dieses Geraet")
+        self.arrow.pack(side="right", padx=(12, 0), before=self.subtitle_label)
         self.head.configure(cursor="hand2")
         for widget in (self.head, self.arrow, self.title_label, self.subtitle_label):
             widget.configure(cursor="hand2")
             widget.bind("<Button-1>", self.toggle)
-        # Tastatur: der Kopf nimmt den Fokus auf und zeigt ihn mit einem Rahmen
+        # Tastatur: der Kopf nimmt den Fokus auf; sichtbar wird er ueber den
+        # gemeinsamen Fokusrahmen (ab 0.56, siehe focus_ring)
         self.head.configure(border_width=2, border_color=self.bg, corner_radius=8)
         # (CTkFrame.bind bindet an die innere Zeichenflaeche, den Fokus
         # bekommt aber der Rahmen selbst - daher tk.Frame.bind)
         tk.Frame.configure(self.head, takefocus=1)
         tk.Frame.bind(self.head, "<Return>", self.toggle)
         tk.Frame.bind(self.head, "<space>", self.toggle)
-        tk.Frame.bind(self.head, "<FocusIn>",
-                      lambda _e: self.head.configure(border_color=C["accent"]))
-        tk.Frame.bind(self.head, "<FocusOut>",
-                      lambda _e: self.head.configure(border_color=self.bg))
         self._apply()
 
     def _apply(self):
