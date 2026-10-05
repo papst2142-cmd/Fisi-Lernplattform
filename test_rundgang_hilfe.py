@@ -202,14 +202,35 @@ class SetupTest(TempFolder):
         self.assertNotIn("Zyxwvu", text)
         report = fisi_diagnose.build_report(self.db, "0.56", geraet="PC")
         self.assertNotIn("Zyxwvu", report)
+        # Ab 0.56 (Nachbesserung): auch nicht im Abgleich und nicht nach dem
+        # Aendern in den Optionen
+        import fisi_sync
+        fh.save_name("Zyxwvu Optionen")
+        self.assertEqual(before, _row_counts(self.db.db_path))
+        payload = json.dumps(fisi_sync.export_local(self.db), ensure_ascii=False)
+        self.assertNotIn("Zyxwvu", payload)
+        self.assertNotIn("Zyxwvu", fisi_diagnose.build_report(self.db, "0.56", geraet="PC"))
+
+    def test_name_in_den_optionen_und_begruessung(self):
+        """Ab 0.56: Feld in den Optionen (fh.save_name) und "Hallo <Name>"."""
+        save_settings({"darstellung": "hell"})
+        self.assertEqual(fh.greeting(), "")              # ohne Namen keine Begruessung
+        self.assertEqual(fh.save_name("  Alex   Muster "), "Alex Muster")
+        self.assertEqual(fh.load_name(), "Alex Muster")
+        self.assertEqual(fh.greeting(), "Hallo Alex Muster")
+        self.assertEqual(load_settings()["darstellung"], "hell")
+        self.assertEqual(fh.save_name("y" * 80), "y" * fh.NAME_MAX)
+        self.assertEqual(fh.save_name("   "), "")
+        self.assertEqual(fh.greeting(), "")
+        self.assertEqual(fh.greeting("Kim"), "Hallo Kim")
 
 
 # ============================================================================
 #  HILFE: TEXTE
 # ============================================================================
 
-TOPICS = ["lernen", "pruefung", "rechner", "spiel", "fortschritt", "sicherung", "update",
-          "problem"]
+TOPICS = ["lernen", "pruefung", "rechner", "spiel", "fortschritt", "sicherung", "abgleich",
+          "update", "problem", "tastatur"]
 
 # Navigation am Handy (mobile/src/main.py NAV und LearnScreen.ENTRIES), aus
 # dem Quelltext gelesen, damit der Test ohne flet laeuft
@@ -516,6 +537,19 @@ class PcTourTest(unittest.TestCase):
         settings = load_settings()
         self.assertEqual(settings[fh.NAME_KEY], "Alex")
         self.assertTrue(settings[fh.TOUR_SEEN_KEY])
+        # Ab 0.56: Name im Feld der Optionen und als Begruessung im Dashboard
+        self.assertEqual(settings_view.entry_name.get(), "Alex")
+        self.assertEqual(app.views["dashboard"].hero._texts[0], "Hallo Alex")
+        settings_view.entry_name.set("  Kim  ")
+        settings_view._save_name()
+        self.assertEqual(fh.load_name(), "Kim")
+        self.assertEqual(settings_view.entry_name.get(), "Kim")
+        self.assertEqual(app.views["dashboard"].hero._texts[0], "Hallo Kim")
+        settings_view.entry_name.set("")
+        settings_view._save_name()
+        self.assertEqual(app.views["dashboard"].hero._texts[0], "Dein Lernstand")
+        settings_view.entry_name.set("Alex")
+        settings_view._save_name()
         self.assertEqual(frp.load_rp_settings()["rp_termin_ap1"], "2027-10-01")
         # Optionen zeigen die neuen Werte
         self.assertTrue(settings_view.rp_vars["rp_abschnitt_d"].get())

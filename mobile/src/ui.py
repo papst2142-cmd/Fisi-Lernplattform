@@ -685,16 +685,13 @@ class GradientBar(ft.Column):
 # ============================================================================
 
 def _smooth(points, limits=None):
-    """Catmull-Rom-Kurve durch alle Punkte als Bezier-Segmente (wie am PC)."""
+    """Weiche Kurve durch alle Punkte als Bezier-Segmente (wie am PC). Ab 0.56
+    monoton (fisi_theme.curve_controls): kein Ueberschwingen ueber die
+    Datenpunkte hinaus und nie unter die Nulllinie."""
     elements = [cv.Path.MoveTo(*points[0])]
-    for index in range(len(points) - 1):
-        p0 = points[index - 1] if index else points[index]
-        p1, p2 = points[index], points[index + 1]
-        p3 = points[index + 2] if index + 2 < len(points) else p2
-        c1 = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)
-        c2 = (p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)
+    for p2, (c1, c2) in zip(points[1:], fisi_theme.curve_controls(points)):
         if limits:
-            # Kurve nicht unter die Nulllinie bzw. ueber den Rand schwingen lassen
+            # Sicherheitsnetz: nie unter die Nulllinie bzw. ueber den Rand
             c1 = (c1[0], min(max(c1[1], limits[0]), limits[1]))
             c2 = (c2[0], min(max(c2[1], limits[0]), limits[1]))
         elements.append(cv.Path.CubicTo(c1[0], c1[1], c2[0], c2[1], p2[0], p2[1]))
@@ -770,6 +767,8 @@ class _LineCanvas(cv.Canvas):
     def _draw(self):
         width, height = self._width, self.height
         left, right, top, bottom = 30, 8, 10, 22
+        if self._goal:
+            top = 26   # Zeile fuer die Beschriftung der Ziellinie (ab 0.56)
         plot_w = max(10, width - left - right)
         plot_h = max(10, height - top - bottom)
         values = self._series or [0]
@@ -813,9 +812,14 @@ class _LineCanvas(cv.Canvas):
             y = top + plot_h - value / peak * plot_h
             shapes.append(cv.Line(left, y, left + plot_w, y, ft.Paint(
                 color=color, stroke_width=1.5, stroke_dash_pattern=[6, 4])))
-            shapes.append(cv.Text(left + plot_w, y - 9, caption,
+            # Ab 0.56 steht die Beschriftung mit einem Linienstueck oben rechts
+            # ueber dem Diagramm, damit sie keine Kurve und keinen Punkt verdeckt
+            shapes.append(cv.Text(left + plot_w, 9, caption,
                                   style=ft.TextStyle(size=10, color=color),
                                   alignment=ft.Alignment.CENTER_RIGHT))
+            sample = left + plot_w - len(caption) * 6 - 8
+            shapes.append(cv.Line(sample - 18, 9, sample, 9, ft.Paint(
+                color=color, stroke_width=1.5, stroke_dash_pattern=[6, 4])))
 
         # Beschriftung der x-Achse: hoechstens ca. alle 45 Pixel eine
         every = max(1, math.ceil(count / max(1, plot_w / 45)))

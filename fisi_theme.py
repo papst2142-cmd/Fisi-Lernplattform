@@ -526,3 +526,39 @@ except Exception:  # noqa: BLE001 - kaputte Einstellungen duerfen nie den Start 
     apply_font_size(FONT_NORMAL)
     apply_preset(DEFAULT_PRESET)
     apply_background(DEFAULT_BACKGROUND)
+
+
+# ============================================================================
+#  KURVEN IN DIAGRAMMEN (ab 0.56)
+# ============================================================================
+
+def curve_controls(points):
+    """Kontrollpunkte einer weichen Kurve durch alle Punkte (Bildschirm-
+    koordinaten, x aufsteigend): [(c1, c2)] je Abschnitt fuer kubische
+    Bezier-Segmente von points[i] nach points[i + 1]. PC und Handy gleich.
+
+    Monotone Interpolation nach Fritsch und Carlson: Zwischen zwei Punkten
+    bleibt die Kurve immer zwischen deren Werten. Sie schwingt also nie unter
+    die Nulllinie und nie ueber einen Datenpunkt hinaus; an Hoch- und
+    Tiefpunkten und auf gleichen Werten laeuft sie waagerecht."""
+    count = len(points)
+    if count < 2:
+        return []
+    slopes = []
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        slopes.append((y2 - y1) / (x2 - x1) if x2 != x1 else 0.0)
+    tangents = [slopes[0]]
+    for before, after in zip(slopes, slopes[1:]):
+        if before * after <= 0:
+            tangents.append(0.0)
+        else:
+            # harmonisches Mittel: hoechstens doppelt so steil wie die flachere Seite
+            tangents.append(2.0 / (1.0 / before + 1.0 / after))
+    tangents.append(slopes[-1])
+    controls = []
+    for index in range(count - 1):
+        (x1, y1), (x2, y2) = points[index], points[index + 1]
+        third = (x2 - x1) / 3.0
+        controls.append(((x1 + third, y1 + tangents[index] * third),
+                         (x2 - third, y2 - tangents[index + 1] * third)))
+    return controls

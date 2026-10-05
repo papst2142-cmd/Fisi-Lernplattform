@@ -26,7 +26,7 @@ import tkinter.font as tkfont
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-from fisi_theme import C, GRADIENTS, lighten, mix
+from fisi_theme import C, GRADIENTS, curve_controls, lighten, mix
 
 # Wird beim Start durch setup_fonts() gefuellt.
 F = {}
@@ -887,7 +887,10 @@ class FoldCard(Card):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
         self.key = key or title
         self.opened = self._open_state.get(self.key, opened)
-        self._body_pack = self.body.pack_info()
+        # Ab 0.56: die ungeskalierten Werte aus Card.__init__ merken. pack_info()
+        # liefert schon skalierte Abstaende, die CustomTkinter beim erneuten
+        # Aufklappen noch einmal skaliert haette (Windows-Skalierung ueber 100 %)
+        self._body_pack = dict(fill="both", expand=True, padx=self.pad, pady=(12, self.pad))
         # Ab 0.56 (Hilfe): zugeklappt bekommt der Kopf unten denselben Abstand
         # wie oben - sonst schnitt die Kachel den unteren Rand ab
         self._head_top = self.pad - 2   # wie in Card.__init__ (ungeskaliert)
@@ -1280,14 +1283,19 @@ class LineChart(tk.Canvas):
                     self.create_oval(x - dot, y - dot, x + dot, y + dot,
                                      fill=color, outline=self.bg, width=px(2))
 
-        # Ziellinie (ab 0.54) mit Beschriftung am rechten Rand
+        # Ziellinie (ab 0.54). Ab 0.56 steht die Beschriftung mit einem
+        # Linienstueck in der Legendenzeile rechts, damit sie keine Kurve und
+        # keinen Punkt im Diagramm verdeckt
         if self._goal and 0 < self._goal[0] <= peak:
             value, caption, color = self._goal
             y = top + plot_h - (plot_h * (value / peak))
             self.create_line(left, y, width - right, y, fill=color, width=max(1, px(1.5)),
                              dash=(6, 4))
-            self.create_text(width - right, y - px(8), text=caption, anchor="e",
+            self.create_text(width - right, top - px(10), text=caption, anchor="e",
                              fill=color, font=tk_font(F["tiny"]))
+            sample = width - right - text_width(caption, F["tiny"]) * _SCALE[0] - px(6)
+            self.create_line(sample - px(18), top - px(10), sample, top - px(10), fill=color,
+                             width=max(1, px(1.5)), dash=(6, 4))
 
         # Legende
         legend_x = left + px(4)
@@ -1405,24 +1413,22 @@ class ShareBars(tk.Canvas):
 
 
 def _smooth_curve(points, floor, ceiling, steps=12):
-    """Catmull-Rom-Kurve durch alle Punkte - anders als Tk-smooth laeuft sie
-    exakt durch die Messwerte, die Punkte liegen also auf der Linie."""
+    """Weiche Kurve exakt durch alle Messwerte (die Punkte liegen auf der
+    Linie). Ab 0.56 monoton (fisi_theme.curve_controls): zwischen zwei
+    Punkten bleibt sie zwischen deren Werten, schwingt also weder unter die
+    Nulllinie noch ueber einen Datenpunkt hinaus."""
     if len(points) < 3:
         return list(points)
     curve = []
-    padded = [points[0]] + list(points) + [points[-1]]
-    for i in range(1, len(padded) - 2):
-        p0, p1, p2, p3 = padded[i - 1], padded[i], padded[i + 1], padded[i + 2]
+    for (p1, p2), (c1, c2) in zip(zip(points, points[1:]), curve_controls(points)):
         for step in range(steps):
             t = step / float(steps)
-            t2, t3 = t * t, t * t * t
-            x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t
-                       + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2
-                       + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
-            y = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t
-                       + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2
-                       + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-            # Die Kurve darf nicht unter die Nulllinie oder ueber den Rand schwingen
+            u = 1.0 - t
+            x = (u * u * u * p1[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0]
+                 + t * t * t * p2[0])
+            y = (u * u * u * p1[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1]
+                 + t * t * t * p2[1])
+            # Sicherheitsnetz: nie unter die Nulllinie oder ueber den Rand
             curve.append((x, max(ceiling, min(floor, y))))
     curve.append(points[-1])
     return curve

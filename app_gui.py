@@ -58,7 +58,8 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
-    DELETE_SUBTITLE, DELETE_TITLE, RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
+    DELETE_SUBTITLE, DELETE_TITLE, HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
+    RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
     RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
     SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series, split_percent,
     split_summary,
@@ -1091,7 +1092,7 @@ class DashboardView(View):
         streak = ("Lernserie: %s   ·   " % plural(self.db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
-            "Dein Lernstand",
+            fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             "%s%d von %d Inhalten bearbeitet   ·   "
             "Quiz-Erfolgsquote %d %%"
             % (streak, learned, self.total_content, round(rate)),
@@ -4210,8 +4211,8 @@ class ProgressView(View):
         controls.pack(fill="x", pady=(14, 0))
         NeoButton(controls, "Aktualisieren", self.refresh,
                   kind="ghost").pack(side="left")
-        NeoButton(controls, "Historie löschen", self.clear_history,
-                  kind="danger").pack(side="right")
+        # "Historie loeschen" steht ab 0.56 in den Optionen unter
+        # "Loeschen und zuruecksetzen"
 
     def _stat_card(self, parent, title, color, last=False):
         card = Card(parent, title=title, accent=color)
@@ -4340,15 +4341,6 @@ class ProgressView(View):
             names=(SPLIT_RIGHT, SPLIT_WRONG), empty=SPLIT_EMPTY_DAY)
         self.lbl_split.configure(text=split_summary(split))
 
-    def clear_history(self):
-        if messagebox.askyesno("Historie löschen",
-                               "Wirklich alle gespeicherten Testergebnisse und "
-                               "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
-                               "Dashboard bleiben erhalten."):
-            if self.db.clear_history():
-                self.refresh()
-                self.app.notify_progress()
-
 
 # ============================================================================
 #  EINSTELLUNGEN
@@ -4420,6 +4412,16 @@ class SettingsView(View):
         self.btn_tour.pack(side="left")
         NeoButton(row, fh.BTN_HELP, lambda: self.app.show_view("help"),
                   kind="ghost").pack(side="left", padx=10)
+        # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
+        make_label(tour.body, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(18, 0))
+        self.entry_name = EntryBox(tour.body, width=30, value=fh.load_name())
+        self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
+        self.entry_name.pack(anchor="w", pady=(6, 0))
+        self.entry_name.bind("<FocusOut>", lambda _e: self._save_name())
+        self.entry_name.bind("<Return>", lambda _e: self._save_name())
+        make_label(tour.body, fh.NAME_OPTION_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
 
         updates = Card(self.content, title="Updates", accent=C["accent2"],
                        subtitle="installierte Version %s" % APP_VERSION)
@@ -4598,7 +4600,7 @@ class SettingsView(View):
         make_label(sync.body,
                    "Auf PC und Handy dasselbe Repository und denselben "
                    "Zugangsschlüssel eintragen. Wie beides angelegt wird, steht "
-                   "in LIESMICH.txt unter „Abgleich PC und Handy“.",
+                   "in der „Hilfe“ unter „Abgleich einrichten“.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
         self.show_sync_status(None, None)
@@ -4694,6 +4696,12 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         NeoButton(danger.body, "Alle Lerndaten löschen", self.reset_all,
                   kind="danger").pack(anchor="w", pady=(12, 0))
+        make_label(danger.body, HISTORY_LABEL.upper(), font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(20, 0))
+        make_label(danger.body, HISTORY_TEXT, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
+        NeoButton(danger.body, HISTORY_BUTTON, self.clear_history,
+                  kind="danger").pack(anchor="w", pady=(12, 0))
         make_label(danger.body, "SPIELSTAND", font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(20, 0))
         self.lbl_reset = make_label(danger.body, "", font=F["small"], fg=C["text_dim"],
@@ -4770,8 +4778,19 @@ class SettingsView(View):
         else:
             frp.save_rp_settings(**{key: bool(self.rp_vars[key].get())})
 
+    def _save_name(self):
+        """Ab 0.56: Name aus den Optionen speichern (nur einstellungen.json)."""
+        name = fh.save_name(self.entry_name.get())
+        if self.entry_name.get() != name:
+            self.entry_name.set(name)
+        dashboard = self.app.views.built("dashboard")
+        if dashboard is not None:
+            dashboard.refresh()
+
     def refresh_plan(self):
-        """Ab 0.56: Rahmenplan-Werte neu anzeigen (nach "Jetzt einrichten")."""
+        """Ab 0.56: Rahmenplan-Werte neu anzeigen (nach "Jetzt einrichten"),
+        dazu den Namen."""
+        self.entry_name.set(fh.load_name())
         values = frp.load_rp_settings()
         for key, var in self.rp_vars.items():
             var.set(values[key])
@@ -5013,6 +5032,15 @@ class SettingsView(View):
         self.app.notify_progress()
         self.app.refresh_after_sync()
         self._show_difficulty()
+
+    def clear_history(self):
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        if messagebox.askyesno("Historie löschen",
+                               "Wirklich alle gespeicherten Testergebnisse und "
+                               "Prüfungen löschen?\n\nDie Lern-Ereignisse für das "
+                               "Dashboard bleiben erhalten."):
+            if self.db.clear_history():
+                self.app.notify_progress()
 
     def reset_all(self):
         if not messagebox.askyesno("Alles zurücksetzen",
@@ -5559,6 +5587,9 @@ class TourOverlay(tk.Frame):
         settings_view = self.app.views.built("settings")
         if settings_view is not None:
             settings_view.refresh_plan()
+        dashboard = self.app.views.built("dashboard")
+        if dashboard is not None:   # Begruessung mit dem neuen Namen
+            dashboard.refresh()
         self.close(seen=True)
 
     def skip(self):

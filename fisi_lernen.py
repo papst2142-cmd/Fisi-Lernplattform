@@ -360,7 +360,15 @@ RESULT_CHART_EMPTY = ("Noch keine Ergebnisse. Hier erscheint nach jeder abgeschl
 
 # Optionen: alle Loeschfunktionen in einem aufklappbaren Bereich
 DELETE_TITLE = "Löschen und zurücksetzen"
-DELETE_SUBTITLE = "Lerndaten, Spielstand, Bestenliste"
+DELETE_SUBTITLE = "Lerndaten, Historie, Spielstand, Bestenliste"
+# Ab 0.56 (Nachbesserung): "Historie loeschen" aus dem Fortschritt hierher
+# verschoben, die Sicherheitsabfrage ist unveraendert
+HISTORY_LABEL = "Historie"
+HISTORY_TEXT = ("Löscht alle gespeicherten Testergebnisse und Prüfungen, die im "
+                "„Fortschritt“ stehen. Die übrigen Lerndaten (Tagesziel, Lernserie, "
+                "Aufgaben pro Tag) bleiben erhalten. Dieser Schritt lässt sich nicht "
+                "rückgängig machen.")
+HISTORY_BUTTON = "Historie löschen"
 FOLD_OPEN = "aufklappen"
 FOLD_CLOSE = "zuklappen"
 

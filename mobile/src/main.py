@@ -55,6 +55,7 @@ from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
+    HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
@@ -377,7 +378,7 @@ class DashboardScreen(Screen):
         streak = ("Lernserie: %s  ·  " % plural(db.streak(), "Tag", "Tage")
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
-            "Dein Lernstand",
+            fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
             "%s%d von %d Inhalten  ·  Quiz %d %%"
             % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
@@ -2911,10 +2912,10 @@ class ProgressScreen(Screen):
             ui.Card("Historie der Prüfungssessions", [self.history], accent=C["purple"]),
             ui.Card("Prüfungen (Klausursimulation)", [self.exam_list, self.weak_box],
                     accent=C["green"]),
+            # "Historie loeschen" steht ab 0.56 in den Optionen unter
+            # "Loeschen und zuruecksetzen"
             ft.Row([ui.GradientButton("Aktualisieren", lambda _e: self.on_show(),
-                                      kind="ghost", expand=True),
-                    ui.GradientButton("Historie löschen", self.clear_history,
-                                      kind="danger", expand=True)], spacing=10),
+                                      kind="ghost", expand=True)], spacing=10),
         ])
 
     def on_show(self):
@@ -3020,16 +3021,6 @@ class ProgressScreen(Screen):
         self.stats[key][0].value = value
         self.stats[key][1].value = sub
 
-    def clear_history(self, _event=None):
-        def confirmed():
-            if self.db.clear_history():
-                self.on_show()
-                self.app.notify_progress()
-
-        self.app.confirm("Historie löschen",
-                         "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
-                         "löschen? Die Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
-
 
 # ============================================================================
 #  EINSTELLUNGEN
@@ -3069,8 +3060,8 @@ class SettingsScreen(Screen):
             self._switch("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
                          "Verlassen der App)", settings["sync_auto"], self._toggle_sync_auto),
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
-                    "eintragen. Die Anleitung steht in LIESMICH.txt unter „Abgleich PC "
-                    "und Handy“.", size=11, color=C["muted"]),
+                    "eintragen. Wie beides angelegt wird, steht in der „Hilfe“ unter "
+                    "„Abgleich einrichten“.", size=11, color=C["muted"]),
         ], accent=C["accent"], subtitle="privates GitHub-Repository")
         self.show_sync_status(None, None)
 
@@ -3204,12 +3195,20 @@ class SettingsScreen(Screen):
         ], accent=C["purple"], subtitle="nur für dieses Gerät")
 
         # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am PC)
+        # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
+        self.entry_name = ui.entry(fh.load_name(), hint=fh.SETUP_NAME_HINT)
+        self.entry_name.on_blur = self._save_name
+        self.entry_name.on_submit = self._save_name
         tour = ui.Card(fh.OPTIONS_TITLE, [
             ui.text(fh.OPTIONS_TEXT, size=13, color=C["text_dim"]),
             ft.Row([ui.GradientButton(fh.BTN_TOUR, lambda _e: self.app.start_tour(),
                                       expand=True)]),
             ft.Row([ui.GradientButton(fh.BTN_HELP, lambda _e: self.app.open_help(),
                                       kind="ghost", expand=True)]),
+            ft.Container(height=6),
+            ui.label(fh.SETUP_NAME),
+            self.entry_name,
+            ui.text(fh.NAME_OPTION_HINT, size=11, color=C["muted"]),
         ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
 
         return screen_list([
@@ -3235,6 +3234,11 @@ class SettingsScreen(Screen):
                         "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
                         "rückgängig machen.", size=13, color=C["text_dim"]),
                 ft.Row([ui.GradientButton("Alle Lerndaten löschen", self.reset_all,
+                                          kind="danger")]),
+                ft.Container(height=6),
+                ui.label(HISTORY_LABEL),
+                ui.text(HISTORY_TEXT, size=13, color=C["text_dim"]),
+                ft.Row([ui.GradientButton(HISTORY_BUTTON, self.clear_history,
                                           kind="danger")]),
                 ft.Container(height=6),
                 ui.label("Spielstand"),
@@ -3594,6 +3598,29 @@ class SettingsScreen(Screen):
         self.app.notify_progress()
         self.app.refresh_after_sync()
 
+    def _save_name(self, _event=None):
+        """Ab 0.56: Name aus den Optionen speichern (nur einstellungen.json)."""
+        name = fh.save_name(self.entry_name.value)
+        if (self.entry_name.value or "") != name:
+            self.entry_name.value = name
+            try:
+                self.entry_name.update()
+            except RuntimeError:   # noch nicht auf der Seite
+                pass
+        dashboard = self.app.screens.get("dashboard")
+        if dashboard is not None:
+            dashboard.refresh()
+
+    def clear_history(self, _event=None):
+        """Ab 0.56 hier statt im Fortschritt; Abfrage unveraendert."""
+        def confirmed():
+            if self.db.clear_history():
+                self.app.notify_progress()
+
+        self.app.confirm("Historie löschen",
+                         "Wirklich alle gespeicherten Testergebnisse und Prüfungen "
+                         "löschen? Die Lern-Ereignisse für das Dashboard bleiben erhalten.", confirmed)
+
     def reset_all(self, _event=None):
         def confirmed():
             if self.db.reset_all():
@@ -3812,6 +3839,9 @@ class TourDialog:
         app.screens["settings"] = SettingsScreen(app)
         if old is not None and app.body.content is old.root:
             app.body.content = app.screens["settings"].root
+        dashboard = app.screens.get("dashboard")
+        if dashboard is not None:   # Begruessung mit dem neuen Namen
+            dashboard.refresh()
         self.close()
 
     def skip(self, _event=None):

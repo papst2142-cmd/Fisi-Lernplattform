@@ -82,6 +82,23 @@ def clean_name(text):
     return " ".join(str(text or "").split())[:NAME_MAX]
 
 
+def save_name(text):
+    """Ab 0.56 (Feld in den Optionen): Name speichern, nur in
+    einstellungen.json. Rueckgabe: der bereinigte Name (leer = kein Name)."""
+    name = clean_name(text)
+    settings = load_settings()
+    if str(settings.get(NAME_KEY) or "") != name:
+        settings[NAME_KEY] = name
+        save_settings(settings)
+    return name
+
+
+def greeting(name=None):
+    """Begruessung auf dem Dashboard (am Handy: Start), "" ohne Namen."""
+    name = clean_name(load_name() if name is None else name)
+    return GREETING % name if name else ""
+
+
 def setup_values():
     """Startwerte der Seite "Jetzt einrichten" (aus den Einstellungen)."""
     values = frp.load_rp_settings()
@@ -178,6 +195,13 @@ SETUP_DATES_HINT = ("Format TT.MM.JJJJ, leer lassen geht auch. Mit Termin kommen
                     "sechs Monaten davor neue Aufgaben zu prüfungsrelevanten Themen etwas "
                     "früher dran, solange „Übungsauswahl nach Rahmenplan gewichten“ an ist.")
 
+# Ab 0.56 (Nachbesserung): Name in den Optionen und Begruessung im Kopf des
+# Dashboards (am Handy: Start) statt "Dein Lernstand"
+GREETING = "Hallo %s"
+NAME_OPTION_HINT = ("Nur auf diesem Gerät gespeichert, nicht im Abgleich und nicht in der "
+                    "Sicherung. Mit Namen steht oben im „Dashboard“ (am Handy: „Start“) "
+                    "„Hallo“ und dein Name.")
+
 # Karte in den Optionen (PC und Handy)
 OPTIONS_TITLE = "Rundgang und Hilfe"
 OPTIONS_SUBTITLE = "Einführung in %d Schritten" % len(TOUR_PAGES)
@@ -266,11 +290,25 @@ HELP_SECTIONS = [
               "Beispiel vor einem Gerätewechsel. Mit „Sicherung einspielen“ holst du ihn "
               "zurück, auch auf einem anderen Gerät. Dabei wählst du „Zusammenführen“ "
               "(nur Fehlendes ergänzen) oder „Alles ersetzen“.\n\n"
-              "Mit „Abgleich PC und Handy“ haben PC und Handy denselben Lernstand. Dafür "
-              "brauchst du ein privates GitHub-Repository und einen Zugangsschlüssel "
-              "(Token). Trage auf beiden Geräten dasselbe ein und wähle „Speichern und "
-              "abgleichen“. Die Anleitung steht in LIESMICH.txt unter „Abgleich PC und "
-              "Handy“. Achtung: Auch Löschen wird abgeglichen.")},
+              "Mit „Abgleich PC und Handy“ haben PC und Handy denselben Lernstand. Wie "
+              "du ihn einrichtest, steht im nächsten Thema.")},
+    # Ab 0.56 (Nachbesserung): Anleitung hier statt nur in LIESMICH.txt (die
+    # es am Handy nicht gibt)
+    {"id": "abgleich", "titel": "Abgleich einrichten",
+     "reiter": ["Optionen"],
+     "text": ("Für den Abgleich brauchst du ein kostenloses Konto bei github.com:\n"
+              "1. Lege dort ein neues, privates Repository an, zum Beispiel mit dem "
+              "Namen fisi-lernstand.\n"
+              "2. Erzeuge einen Zugangsschlüssel: Profilbild → Settings → Developer "
+              "settings → Personal access tokens → Fine-grained tokens → Generate new "
+              "token. Wähle nur dieses Repository und bei Contents das Recht Read and "
+              "write. Kopiere den Schlüssel (beginnt mit github_pat_), GitHub zeigt ihn "
+              "nur einmal.\n"
+              "3. In den „Optionen“ unter „Abgleich PC und Handy“ trägst du bei "
+              "„Repository (Benutzer/Name)“ zum Beispiel deinname/fisi-lernstand und "
+              "bei „Zugangsschlüssel (Token)“ den Schlüssel ein und wählst „Speichern und "
+              "abgleichen“. Auf dem anderen Gerät genauso.\n\n"
+              "Achtung: Auch Löschen wird abgeglichen.")},
     {"id": "update", "titel": "Update",
      "reiter": ["Optionen"],
      "text": ("In den „Optionen“ unter „Updates“ prüft „Nach Updates suchen“, ob es eine "
@@ -286,9 +324,22 @@ HELP_SECTIONS = [
               "Bericht mit Programmversion, Gerät, Datenordner und Fehlerprotokoll. "
               "Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden "
               "entfernt, deine Antworten und Projekttexte stehen nicht darin.\n\n"
-              "Mit „Kopieren“ oder „Als Datei speichern“ nimmst du den Bericht mit. "
-              "Schicke ihn zusammen mit einer kurzen Beschreibung: Was hast du gemacht, "
-              "was ist passiert, was hast du erwartet?")},
+              "Speichere den Bericht mit „Als Datei speichern“ (oder „Kopieren“) und gib "
+              "ihn an die Person weiter, von der du das Programm hast. Schreib kurz dazu: "
+              "Was hast du gemacht, was ist passiert, was hast du erwartet?")},
+    # Ab 0.56 (Nachbesserung): kurze Tastaturhilfe (nur PC)
+    {"id": "tastatur", "titel": "Bedienung mit der Tastatur (PC)",
+     "reiter": [],
+     "text": ("Am PC lassen sich die Lernbereiche und die Optionen ohne Maus "
+              "bedienen. Die Spielkarte und die Grundrisse im Spiel brauchen noch die "
+              "Maus.\n"
+              "• Tab springt zum nächsten Element, Umschalt+Tab zurück. Das gewählte "
+              "Element hat einen deutlichen Rahmen.\n"
+              "• Eingabe oder Leertaste drückt Knöpfe, schaltet Schalter um und klappt "
+              "Bereiche auf und zu.\n"
+              "• Esc überspringt den Rundgang.\n\n"
+              "Die Schrift vergrößerst du in den „Optionen“ unter „Schriftgröße“ mit "
+              "„Groß“ oder „Sehr groß“.")},
     {"id": "schutzprogramm", "titel": "Warnung vom Schutzprogramm",
      "reiter": [],
      "text": ("Manche Schutzprogramme und Browser warnen beim Herunterladen oder "
