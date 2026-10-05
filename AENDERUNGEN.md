@@ -4,6 +4,34 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.58
+
+Neuer USV-Rechner, farbige Regler bei den eigenen Farben und viele kleine
+Verbesserungen an Dashboard und Diagrammen.
+
+- **USV-Kapazität:** Neuer Rechner unter „Rechner“. Er rechnet aus Last,
+  Leistungsfaktor und Wirkungsgrad die nötige Akku-Kapazität, die Laufzeit
+  eines vorhandenen Akkus oder eine Empfehlung für die USV-Größe (80-%-Regel).
+  Ein Bild zeigt Last, Auslastung und Laufzeit, der Rechenweg lässt sich
+  aufklappen. Dazu sechs Übungsaufgaben mit Lösung.
+- **Farbige Reglerspuren:** Die Regler bei „Eigene Farben“ zeigen in ihrer
+  Spur, was ein Schieben bewirkt (alle Farbtöne, grau bis voll, dunkel bis
+  hell). Der Knopf bleibt auf jeder Stelle gut sichtbar.
+- **Zustandszeile der eigenen Farben:** Über den Reglern steht jetzt immer,
+  wie die Regler zum Gespeicherten stehen: „Startwerte aus der Farbwelt“,
+  „Eigene Farben aktiv“ oder „Regler verändert, noch nicht gespeichert“.
+- **Dashboard:** Passt jetzt auch bei 1360 Pixel Fensterbreite und großer
+  Schrift, ohne dass etwas abgeschnitten wird.
+- **Diagramme:** Am Handy wächst die Schrift der Diagramme mit der
+  Schriftgröße. Das Liniendiagramm hat am Handy eine Legende (zum Beispiel
+  „Aufgaben“). Bei vielen Tagen werden die Datumsangaben ausgedünnt, der
+  heutige Tag ist immer beschriftet.
+- **Namensfeld:** Das Feld für deinen Namen in den Optionen ist breiter.
+- **Hilfe:** Neuer Abschnitt „Update und Schutzprogramm“. Das Update-Fenster
+  weist mit einer Zeile darauf hin.
+- **Technik:** Der Start-Test beim Bauen hat auf macOS mit Intel-Prozessor
+  mehr Zeit (240 statt 120 Sekunden).
+
 ## 0.57
 
 Eigene Farben mit Reglern und eine besser lesbare Spielkarte im dunklen Modus.
