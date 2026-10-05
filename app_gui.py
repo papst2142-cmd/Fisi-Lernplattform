@@ -90,6 +90,7 @@ from fisi_widgets import (  # noqa: E402
     ScrollArea, ShareBars, ThemeTimeline, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
+    apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
 )
 
 APP_TITLE = "FISI Lernplattform"
@@ -197,14 +198,14 @@ class EntryBox(ctk.CTkEntry):
     def __init__(self, parent, width=18, value="", font=None):
         super().__init__(parent, width=width * 9 + 28, height=38,
                          corner_radius=10, border_width=1,
-                         fg_color=C["card_alt"], border_color=C["border"],
+                         fg_color=C["card_alt"], border_color=C["field_border"],
                          text_color=C["text_soft"], font=font or F["body"])
         # Aeltere Aufrufer greifen ueber .entry auf das Eingabefeld zu
         self.entry = self
         self._entry.configure(insertbackground=C["accent"],
                               selectbackground=C["purple"], insertofftime=0)
         self.bind("<FocusIn>", lambda _e: self.configure(border_color=C["purple"]))
-        self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["border"]))
+        self.bind("<FocusOut>", lambda _e: self.configure(border_color=C["field_border"]))
         if value:
             self.insert(0, value)
 
@@ -300,6 +301,11 @@ def clickable_row(parent, accent, bg=None):
 def bind_click(widgets, callback):
     for widget in widgets:
         widget.bind("<Button-1>", callback)
+    # Ab 0.56: die Zeile (erstes Element) ist per Tab erreichbar, Eingabe/
+    # Leertaste wirken wie ein Klick
+    widgets = list(widgets)
+    if widgets:
+        make_focusable(widgets[0], lambda: callback(None))
 
 
 def option_menu(parent, values, command=None, width=None):
@@ -579,6 +585,19 @@ class NavRow(ctk.CTkFrame):
             widget.bind("<Button-1>", self._on_click)
             widget.bind("<Enter>", lambda _e: self._hover(True))
             widget.bind("<Leave>", lambda _e: self._hover(False))
+        # Ab 0.56: Tastatur - Tab erreicht jeden Menuepunkt, Eingabe/Leertaste
+        # oeffnen ihn, Pfeil hoch/runter springen zum Nachbarpunkt
+        make_focusable(self, self._on_click)
+        tk.Misc.bind(self, "<Down>", lambda _e: self._arrow(True), "+")
+        tk.Misc.bind(self, "<Up>", lambda _e: self._arrow(False), "+")
+
+    def _arrow(self, forward):
+        """Ab 0.56: naechster/vorheriger Menuepunkt (nur innerhalb der Leiste)."""
+        command = "tk_focusNext" if forward else "tk_focusPrev"
+        target = str(self.tk.call(command, self._w))
+        if isinstance(self.nametowidget(target), NavRow):
+            focus_widget(self.nametowidget(target))
+        return "break"
 
     def _paint_chevron(self):
         if not self.chevron:
@@ -765,7 +784,7 @@ class Header(ctk.CTkFrame):
                   kind="ghost", height=26, font=F["small_bold"]).pack(side="left")
 
         self.search_box = ctk.CTkFrame(self, fg_color=C["card"], corner_radius=20,
-                                       border_width=1, border_color=C["border"])
+                                       border_width=1, border_color=C["field_border"])
         self.search_box.pack(side="right", padx=(0, 28), pady=14)
         IconCanvas(self.search_box, "search", size=16, icon_scale=0.75,
                    color=C["muted"], parent_bg=C["card"]).pack(side="left",
@@ -783,7 +802,7 @@ class Header(ctk.CTkFrame):
         self.search_entry.bind(
             "<FocusIn>", lambda _e: self.search_box.configure(border_color=C["purple"]))
         self.search_entry.bind(
-            "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["border"]))
+            "<FocusOut>", lambda _e: self.search_box.configure(border_color=C["field_border"]))
 
     def _search(self):
         query = self.search_entry.get().strip()
@@ -809,7 +828,9 @@ class Header(ctk.CTkFrame):
 
 class View(ScrollArea):
     def __init__(self, parent, app):
-        super().__init__(parent, bg=C["bg"])
+        # Ab 0.56 mit fit_wrap: lange Texte brechen bei grosser Schrift bzw.
+        # schmalem Fenster innerhalb des sichtbaren Bereichs um
+        super().__init__(parent, bg=C["bg"], fit_wrap=True)
         self.app = app
         self.db = app.db
         self.content = transparent_frame(self.inner)
@@ -1311,6 +1332,9 @@ class CardsView(View):
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
         self.txt_answer = make_text(self.frame_free, height=5)
         self.txt_answer.pack(fill="x", pady=(8, 0))
+        # Ab 0.56: Strg+Eingabe prueft die Antwort direkt aus dem Textfeld
+        tk.Misc.bind(self.txt_answer._textbox, "<Control-Return>",
+                     lambda _e: (self.check_answer(), "break")[1])
 
         self.options = OptionList(self.input_area, bg=C["card"])
 
@@ -1647,7 +1671,8 @@ class QuizView(View):
         self.btn_start = NeoButton(row, "Session starten", self.start_quiz,
                                    kind="primary")
         self.btn_start.pack(side="left", padx=16)
-        self.lbl_pool = make_label(row, "", font=F["small"], fg=C["muted"])
+        self.lbl_pool = make_label(row, "", font=F["small"], fg=C["muted"],
+                                   wraplength=700, justify="left")  # ab 0.56: bricht bei Platzmangel um
         self.lbl_pool.pack(side="left")
 
         # Statusleiste
@@ -4335,6 +4360,7 @@ class ColorTile(ctk.CTkFrame):
         name.pack(padx=10, pady=(6, 12))
         for widget in (self, strip, dots, name) + tuple(dots.winfo_children()):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
+        make_focusable(self, lambda: command(item["id"]))   # ab 0.56
 
 
 class BackgroundTile(ctk.CTkFrame):
@@ -4361,6 +4387,7 @@ class BackgroundTile(ctk.CTkFrame):
         name.pack(padx=10, pady=(0, 12))
         for widget in (self, card, dot, name):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
+        make_focusable(self, lambda: command(item["id"]))   # ab 0.56
 
 
 class SettingsView(View):
@@ -4396,6 +4423,18 @@ class SettingsView(View):
                       fg_color=C["card_alt"], progress_color=C["violet"],
                       button_color=C["text"], button_hover_color="#FFFFFF"
                       ).pack(anchor="w", pady=(14, 0))
+
+        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar statt in einem
+        # Klappbereich, damit man sie auch mit schlechter Sicht schnell findet
+        fonts = Card(self.content, title=fisi_theme.FONT_TITLE, accent=C["accent"],
+                     subtitle=fisi_theme.FONT_SUBTITLE)
+        fonts.pack(fill="x", pady=(14, 0))
+        self.font_choice = fisi_game_gui.ChoiceRow(
+            fonts.body, fisi_theme.FONT_CHOICES, fisi_theme.current_font_size,
+            self.app.change_font_size)
+        self.font_choice.pack(anchor="w")
+        make_label(fonts.body, fisi_theme.FONT_HINT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
         colors = FoldCard(self.content, title="Farben", accent=C["accent"],
@@ -5734,8 +5773,13 @@ class FISIApp:
         root.configure(fg_color=C["bg"])
         _apply_window_icon(root)
 
+        # Ab 0.56: Schriftgroesse (Optionen, je Geraet) vor dem Aufbau
+        apply_ui_scale(fisi_theme.font_factor())
         setup_fonts(root)
         self._setup_ttk_style()
+        # Ab 0.56: Tab-Steuerung und Fokusrahmen; verdeckte Ansichten auslassen
+        install_keyboard(root)
+        set_focus_filter(self._focus_allowed)
 
         self.db = DBManager(error_handler=self._db_error)
         self.container = None
@@ -5805,6 +5849,42 @@ class FISIApp:
 
         self.current = None
 
+    def _focus_allowed(self, path):
+        """Ab 0.56: Tab springt nur in die sichtbare Ansicht (die anderen
+        liegen verdeckt darunter und waeren fuer Tk sonst erreichbar)."""
+        views = getattr(self, "views", None)
+        if views is None:
+            return True
+        for key in list(views.keys()):
+            view = views.built(key)
+            if view is None or key == self.current:
+                continue
+            if path.startswith(str(view) + "."):
+                return False
+        return True
+
+    def change_font_size(self, size_id):
+        """Ab 0.56: Schriftgroesse speichern und die Oberflaeche in der neuen
+        Groesse neu aufbauen (wie beim Farbwechsel, gilt sofort)."""
+        if self._recoloring or size_id == fisi_theme.current_font_size:
+            return
+        self._recoloring = True
+        started = time.monotonic()
+        overlay = self._show_busy(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
+        try:
+            fisi_theme.save_font_size(size_id)
+            apply_ui_scale(fisi_theme.font_factor())
+            setup_fonts(self.root)
+            self._setup_ttk_style()
+            self._recolor(None, None, overlay)
+        finally:
+            rest = fisi_theme.BUSY_MIN_SECONDS - (time.monotonic() - started)
+            if rest > 0:
+                time.sleep(rest)
+            self._hide_busy(overlay)
+            self._recoloring = False
+            self.root.configure(cursor="")
+
     def change_color(self, preset_id=None, background_id=None, mode=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
         neu aufbauen - alle Ansichten werden mit den neuen Farben gezeichnet."""
@@ -5825,7 +5905,7 @@ class FISIApp:
             self._recoloring = False
             self.root.configure(cursor="")
 
-    def _show_busy(self):
+    def _show_busy(self, title=None, text=None):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
         deutlichen Meldung ab. Die Abdeckung faengt alle Klicks und Tasten ab
         (grab), damit kein Doppelklick einen Zwischenzustand erzeugt."""
@@ -5840,9 +5920,10 @@ class FISIApp:
                                           C["accent"], C["ring_bg"]), px(56), px(56))
         ring.create_image(px(28), px(28), image=ring._photo)
         ring.pack(pady=(px(26), px(10)))
-        make_label(card, fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
+        make_label(card, title or fisi_theme.BUSY_TITLE, font=F["h2"], fg=C["text"],
                    bg=C["card"]).pack(padx=px(40))
-        make_label(card, fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"], bg=C["card"],
+        make_label(card, text or fisi_theme.BUSY_TEXT, font=F["body"], fg=C["text_dim"],
+                   bg=C["card"],
                    wraplength=px(440), justify="center").pack(padx=px(40),
                                                                pady=(px(6), px(26)))
         overlay.lift()

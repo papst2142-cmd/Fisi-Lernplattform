@@ -147,6 +147,11 @@ def rate_row(command):
 #  BASIS
 # ============================================================================
 
+# Ab 0.56: Beschriftungen fuer Symbol-Knoepfe (TalkBack liest sie vor)
+PAGE_PREV, PAGE_NEXT = "Vorherige Seite", "Nächste Seite"
+SEARCH_TEXT = "Suchen"
+
+
 class Screen:
     """Eine Seite der App. build() liefert den Inhalt, on_show() frischt ihn
     beim Anzeigen auf."""
@@ -1672,10 +1677,10 @@ class PagedListBox:
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         pager = ft.Row([
             ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(-1)),
+                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
             self.lbl_page,
             ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(1)),
+                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         self.root = ft.Column(controls + [self.lbl_count, self.rows, pager],
                               spacing=10, tight=True)
@@ -2030,7 +2035,7 @@ class FinalProjectScreen(Screen):
             options=[], expand=True, on_select=self._choose_project,
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
-            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]))
+            color=C["text"], text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]))
         self.tab_pills = ui.PillGroup(fpj.TABS, on_change=self._on_tab)
         self.tab_area = ft.Column(spacing=14, tight=True)
         self._load_project()
@@ -2228,7 +2233,7 @@ class FinalProjectScreen(Screen):
             on_select=lambda e: self._set_category(e.control.value),
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], border_radius=12, color=C["text"],
-            text_style=ft.TextStyle(size=14, color=C["text"]))
+            text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]))
         rows.append(self._field("Fachbereich (für das Fachgespräch)", ft.Row([category])))
         lbl_progress = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         lbl_missing = ui.text("", size=12, color=C["muted"])
@@ -2464,10 +2469,10 @@ class NotebookScreen(Screen):
         self.lbl_page = ui.text("", size=13, color=C["text_dim"])
         pager = ft.Row([
             ft.IconButton(ft.Icons.CHEVRON_LEFT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(-1)),
+                          tooltip=PAGE_PREV, on_click=lambda _e: self.turn(-1)),
             self.lbl_page,
             ft.IconButton(ft.Icons.CHEVRON_RIGHT_ROUNDED, icon_color=C["accent"],
-                          on_click=lambda _e: self.turn(1)),
+                          tooltip=PAGE_NEXT, on_click=lambda _e: self.turn(1)),
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         root = screen_list([
             ui.Card("Lernstand je Bereich", [self.summary], accent=C["accent"],
@@ -3100,6 +3105,13 @@ class SettingsScreen(Screen):
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
         lines += ["%s: %d Inhalte" % (CATEGORY_SHORT[c], totals.get(c, 0)) for c in CATEGORIES]
 
+        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar wie am PC
+        fonts = ui.Card(fisi_theme.FONT_TITLE, [
+            ui.PillGroup(fisi_theme.FONT_CHOICES, initial=fisi_theme.FONT_IDS.index(
+                fisi_theme.current_font_size), on_change=self._change_font_size),
+            ui.text(fisi_theme.FONT_HINT, size=11, color=C["muted"]),
+        ], accent=C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
+
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
         colors = ui.FoldCard("Farben", [
             ui.label("Darstellung"),
@@ -3172,7 +3184,7 @@ class SettingsScreen(Screen):
             value=plan_values["rp_lernfeld"] or "aus", on_select=self._rp_field_changed,
             bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
             border_color=C["border"], focused_border_color=C["purple"], border_radius=12,
-            color=C["text"], text_style=ft.TextStyle(size=14, color=C["text"]), expand=True)
+            color=C["text"], text_style=ft.TextStyle(size=ui.fs(14), color=C["text"]), expand=True)
         self.lbl_rp = ui.text(frp.DATE_INVALID, size=11, color=C["red"])
         self.lbl_rp.visible = False
         self.rp_dates = {key: ui.entry(frp.date_text(plan_values[key]), hint=frp.DATE_HINT,
@@ -3201,7 +3213,7 @@ class SettingsScreen(Screen):
         ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
 
         return screen_list([
-            tour, updates, colors, goal, plan, sync, backup, report,
+            tour, updates, fonts, colors, goal, plan, sync, backup, report,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Spiel", [
@@ -3248,7 +3260,9 @@ class SettingsScreen(Screen):
     def _color_tile(self, item):
         """Kachel einer Grundfarbe (wie am PC): Verlauf, Akzentpunkte, Name."""
         active = item["id"] == fisi_theme.current_preset
-        return ft.Container(
+        # Ab 0.56: TalkBack - "Grundfarbe Cyan/Pink, ausgewaehlt"
+        return ft.Semantics(button=True, selected=active, container=True,
+                            label="Grundfarbe %s" % item["name"], content=ft.Container(
             content=ft.Column([
                 ft.Container(height=12, width=84, border_radius=6,
                              gradient=ui.gradient(item["primary"])),
@@ -3260,14 +3274,15 @@ class SettingsScreen(Screen):
             width=104, padding=10, border_radius=12, ink=True,
             bgcolor=C["card_hi"] if active else C["card_alt"],
             border=ft.Border.all(2, item["accent"] if active else C["border"]),
-            on_click=lambda _e, key=item["id"]: self._change_color(key))
+            on_click=lambda _e, key=item["id"]: self._change_color(key)))
 
     def _background_tile(self, item):
         """Kachel eines Hintergrunds (wie am PC): Flaeche mit kleiner Karte."""
         active = item["id"] == fisi_theme.current_background
         if fisi_theme.light:
             item = fisi_theme.light_background(item["id"])   # ab 0.49
-        return ft.Container(
+        return ft.Semantics(button=True, selected=active, container=True,
+                            label="Hintergrund %s" % item["name"], content=ft.Container(
             content=ft.Column([
                 ft.Container(content=ui.dot(C["accent"], 10), width=84, height=28,
                              bgcolor=item["card"], border_radius=8,
@@ -3279,7 +3294,7 @@ class SettingsScreen(Screen):
             ], spacing=8, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=104, padding=10, border_radius=12, ink=True, bgcolor=item["bg"],
             border=ft.Border.all(2, C["accent"] if active else item["border_hi"]),
-            on_click=lambda _e, key=item["id"]: self._change_background(key))
+            on_click=lambda _e, key=item["id"]: self._change_background(key)))
 
     def _change_color(self, preset_id):
         if preset_id != fisi_theme.current_preset:
@@ -3292,6 +3307,10 @@ class SettingsScreen(Screen):
     def _change_mode(self, mode):
         if mode != fisi_theme.current_mode:
             self.app.change_color(mode=mode)
+
+    def _change_font_size(self, size_id):
+        if size_id != fisi_theme.current_font_size:
+            self.app.change_color(font_size=size_id)
 
     @staticmethod
     def _switch(caption, value, handler):
@@ -3599,11 +3618,11 @@ class SearchScreen(Screen):
         self.lbl_info = ui.text("", size=13, color=C["text_dim"])
         self.results = ft.Column(spacing=8, tight=True)
         return screen_list([
-            ft.Row([self.field, ft.Container(
+            ft.Row([self.field, ft.Semantics(button=True, label=SEARCH_TEXT, content=ft.Container(
                 content=ft.Icon(ft.Icons.SEARCH_ROUNDED, color=C["on_accent"]),
                 width=48, height=48, border_radius=24, gradient=ui.gradient("primary"),
                 alignment=ft.Alignment.CENTER, ink=True,
-                on_click=lambda _e: self.search(self.field.value or ""))], spacing=10),
+                on_click=lambda _e: self.search(self.field.value or "")))], spacing=10),
             self.lbl_info, self.results,
         ])
 
@@ -3933,7 +3952,9 @@ class FISIMobileApp:
                 on_surface=C["text"], error=C["red"]),
             navigation_bar_theme=ft.NavigationBarTheme(
                 bgcolor=C["sidebar"], indicator_color=C["card_hi"],
-                label_text_style=ft.TextStyle(size=11, color=C["text_dim"])))
+                # Ab 0.56: hoechstens 12, sonst bricht "Fortschritt" bei
+                # "Sehr gross" in der schmalen Leiste um
+                label_text_style=ft.TextStyle(size=min(12, ui.fs(11)), color=C["text_dim"])))
 
         self.screens = {key: cls(self) for key, cls in SCREEN_CLASSES.items()}
         self.tab = "dashboard"
@@ -3954,7 +3975,7 @@ class FISIMobileApp:
             route="/", controls=[self.body], appbar=self._appbar(root=True),
             navigation_bar=self.nav, bgcolor=C["bg"], padding=0))
 
-    def change_color(self, preset_id=None, background_id=None, mode=None):
+    def change_color(self, preset_id=None, background_id=None, mode=None, font_size=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und alle Seiten
         neu aufbauen. Ab 0.48 deckt solange eine Meldung "Farben werden
         angewendet" alles ab und faengt jedes Tippen ab - so gibt es keine
@@ -3962,13 +3983,15 @@ class FISIMobileApp:
         if getattr(self, "_recoloring", False):
             return  # Ein Tippen waehrend des Umbaus wird ignoriert
         self._recoloring = True
-        overlay = self._busy_overlay()
+        # Ab 0.56 auch fuer die Schriftgroesse (eigene Meldung, gleicher Ablauf)
+        overlay = (self._busy_overlay(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
+                   if font_size else self._busy_overlay())
         self.page.overlay.append(overlay)
         self._lock_bars(True)
         self.page.update()
-        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode)
+        self.page.run_task(self._recolor, preset_id, background_id, overlay, mode, font_size)
 
-    async def _recolor(self, preset_id, background_id, overlay, mode=None):
+    async def _recolor(self, preset_id, background_id, overlay, mode=None, font_size=None):
         started = time.monotonic()
         try:
             # Kurz warten, damit die Meldung sicher gezeichnet ist
@@ -3979,6 +4002,9 @@ class FISIMobileApp:
                 fisi_theme.save_background(background_id)
             if mode:
                 fisi_theme.save_mode(mode)
+            if font_size:
+                fisi_theme.save_font_size(font_size)
+                ui.set_font_factor(fisi_theme.font_factor())
             spiel.refresh_theme_tables()
             # Eine laufende Pruefungssession endet mit dem Neuaufbau - ihr
             # Zeitgeber soll nicht im Hintergrund weiterlaufen
@@ -4007,15 +4033,15 @@ class FISIMobileApp:
                     bar.disabled = locked
 
     @staticmethod
-    def _busy_overlay():
+    def _busy_overlay(title=fisi_theme.BUSY_TITLE, message=fisi_theme.BUSY_TEXT):
         """Abdeckung mit der Meldung waehrend des Farbwechsels (wie am PC)."""
         card = ft.Container(
             content=ft.Column([
                 ft.ProgressRing(width=44, height=44, stroke_width=5, color=C["accent"],
                                 bgcolor=C["ring_bg"]),
-                ft.Text(fisi_theme.BUSY_TITLE, size=18, weight=ft.FontWeight.BOLD,
+                ft.Text(title, size=18, weight=ft.FontWeight.BOLD,
                         color=C["text"], text_align=ft.TextAlign.CENTER),
-                ft.Text(fisi_theme.BUSY_TEXT, size=13, color=C["text_dim"],
+                ft.Text(message, size=13, color=C["text_dim"],
                         text_align=ft.TextAlign.CENTER),
             ], spacing=12, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=300, padding=ft.Padding.symmetric(horizontal=24, vertical=26),
@@ -4052,6 +4078,7 @@ class FISIMobileApp:
                                    tooltip=fh.HELP_TITLE,
                                    on_click=lambda _e: self.open_help()),
                      ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
+                                   tooltip=SEARCH_TEXT,
                                    on_click=lambda _e: self.open("search")),
                      ft.Container(width=6)])
 

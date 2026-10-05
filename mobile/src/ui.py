@@ -15,9 +15,50 @@ import math
 import flet as ft
 import flet.canvas as cv
 
+import fisi_theme
 from fisi_theme import C, GRADIENTS, mix
 
 MONO = "monospace"
+
+
+# ============================================================================
+#  SCHRIFTGROESSE (ab 0.56)
+# ============================================================================
+#
+# Flet 1.0.1 setzt keinen eigenen Textmassstab: Texte folgen damit der
+# Schriftgroesse des Systems (Flutter-Standard MediaQuery.textScaler). Die
+# Einstellung "Schriftgroesse" der App kommt hinzu: Jeder ft.Text bekommt beim
+# Anlegen seine Groesse mal dem Faktor (Normal 1,0 / Gross 1,15 / Sehr gross
+# 1,3). Feste Hoehen der Bausteine hier (Knoepfe, Pillen) wachsen mit.
+# Zeichnungen auf der Leinwand (Diagrammachsen, Spielkarte) bleiben gleich.
+
+FONT_FACTOR = [fisi_theme.font_factor()]
+
+
+def fs(size):
+    """Schriftgroesse mal Faktor der Einstellung (fuer ft.TextStyle)."""
+    return round(size * FONT_FACTOR[0], 1) if size else size
+
+
+def grow(value):
+    """Feste Hoehe/Breite eines Bausteins mit Text, passend zur Schrift."""
+    return int(round(value * FONT_FACTOR[0]))
+
+
+def set_font_factor(factor):
+    FONT_FACTOR[0] = float(factor)
+
+
+_text_init = ft.Text.__init__
+
+
+def _scaled_text_init(self, *args, **kwargs):
+    _text_init(self, *args, **kwargs)
+    if FONT_FACTOR[0] != 1.0:
+        self.size = fs(self.size or 14)
+
+
+ft.Text.__init__ = _scaled_text_init
 
 
 # ============================================================================
@@ -151,7 +192,7 @@ class GradientButton(ft.Container):
         super().__init__(
             content=ft.Row(row, spacing=8, tight=True,
                            alignment=ft.MainAxisAlignment.CENTER),
-            height=height, border_radius=height // 2,
+            height=grow(height), border_radius=grow(height) // 2,
             padding=ft.Padding.symmetric(horizontal=20),
             alignment=ft.Alignment.CENTER, expand=expand,
             on_click=self._clicked, ink=True)
@@ -195,19 +236,24 @@ class PillGroup(ft.Stack):
         self.on_select = on_change
         self.current = initial
         self.pills = []
+        self.semantics = []
+        height = grow(36)
         for index, (_value, caption) in enumerate(options):
             pill = ft.Container(
                 content=ft.Text(caption, size=13, weight=ft.FontWeight.BOLD),
-                height=36, border_radius=18, alignment=ft.Alignment.CENTER,
+                height=height, border_radius=height // 2, alignment=ft.Alignment.CENTER,
                 padding=ft.Padding.symmetric(horizontal=16), ink=True,
                 on_click=lambda _e, i=index: self.select(i))
             self.pills.append(pill)
+            # Ab 0.56: TalkBack sagt "Schaltflaeche" und ob die Pille gewaehlt ist
+            self.semantics.append(ft.Semantics(content=pill, button=True, selected=False))
         # Geschaetzte Breiten (fett, 13 px: etwa 7,6 px je Zeichen)
-        self._widths = [32 + 7.6 * len(str(caption)) for _v, caption in options]
+        self._widths = [32 + 7.6 * FONT_FACTOR[0] * len(str(caption))
+                        for _v, caption in options]
         self._captions = [caption for _v, caption in options]
         self._estimate = sum(self._widths) + 8 * max(0, len(options) - 1)
         self._placed = False
-        self.row = ft.Row(self.pills, spacing=8, scroll=ft.ScrollMode.HIDDEN,
+        self.row = ft.Row(self.semantics, spacing=8, scroll=ft.ScrollMode.HIDDEN,
                           on_scroll=self._scrolled, scroll_interval=50)
         self.mask = ft.ShaderMask(
             content=self.row, blend_mode=ft.BlendMode.DST_IN,
@@ -218,10 +264,10 @@ class PillGroup(ft.Stack):
                                      stops=[0.0, 0.86, 1.0]))
         self.hint = ft.Container(
             content=ft.Icon(ft.Icons.CHEVRON_RIGHT, size=20, color=C["text_dim"]),
-            width=self.HINT_WIDTH, height=36, right=0, top=0,
+            width=self.HINT_WIDTH, height=height, right=0, top=0,
             alignment=ft.Alignment.CENTER_RIGHT, on_click=self._step,
             tooltip="Weitere Einträge")
-        super().__init__([self.mask, self.hint], height=36,
+        super().__init__([self.mask, self.hint], height=height,
                          on_size_change=self._sized, size_change_interval=100)
         self._more = None
         self._overflow(False)
@@ -278,6 +324,7 @@ class PillGroup(ft.Stack):
             pill.bgcolor = None if active else C["card_alt"]
             pill.border = None if active else ft.Border.all(1, C["border"])
             pill.content.color = C["on_accent"] if active else C["text_dim"]
+            self.semantics[index].selected = active
 
     def select(self, index, notify=True):
         self.current = index
@@ -319,11 +366,15 @@ class OptionList(ft.Column):
                 padding=ft.Padding.symmetric(horizontal=14, vertical=12),
                 border_radius=12, ink=True,
                 on_click=lambda _e, value=option: self.select(value))
+            # Ab 0.56: TalkBack liest Antwort und Zustand (gewaehlt, richtig,
+            # falsch) - die Farben allein sieht ein Screenreader nicht
+            semantics = ft.Semantics(content=row, button=True, container=True,
+                                     selected=False, label=option)
             entry = {"row": row, "marker": marker, "caption": caption,
-                     "text": option, "state": "idle"}
+                     "text": option, "state": "idle", "semantics": semantics}
             self._rows.append(entry)
             self._paint(entry)
-            self.controls.append(row)
+            self.controls.append(semantics)
 
     def clear(self):
         self.set_options([])
@@ -367,11 +418,21 @@ class OptionList(ft.Column):
         entry["row"].bgcolor = bg
         entry["row"].border = ft.Border.all(2 if strong else 1, border)
         entry["caption"].color = fg
-        ring = border if state != "idle" else C["border_hi"]
+        # Ab 0.56: Kreis der freien Antworten mit 3:1 (vorher border_hi)
+        ring = border if state != "idle" else C["field_border"]
         entry["marker"].border = ft.Border.all(2, ring)
+        semantics = entry.get("semantics")
+        if semantics is not None:
+            semantics.selected = state in ("selected", "wrong")
+            semantics.label = entry["text"] + OPTION_STATE_TEXT.get(state, "")
         entry["marker"].content = ft.Container(
             width=10, height=10, border_radius=5, bgcolor=dot) if dot else None
         entry["marker"].alignment = ft.Alignment.CENTER
+
+
+# Ab 0.56: Zustand einer Antwort fuer TalkBack
+OPTION_STATE_TEXT = {"selected": ", ausgewählt", "correct": ", richtige Antwort",
+                     "wrong": ", deine Antwort, falsch"}
 
 
 class Stepper(ft.Row):
@@ -392,11 +453,14 @@ class Stepper(ft.Row):
             self._button(ft.Icons.ADD, 1)], spacing=6, tight=True)
 
     def _button(self, icon, direction):
-        return ft.Container(
-            content=ft.Icon(icon, size=18, color=C["text"]), width=38, height=38,
-            border_radius=19, bgcolor=C["card_alt"], ink=True,
-            border=ft.Border.all(1, C["border"]), alignment=ft.Alignment.CENTER,
-            on_click=lambda _e: self.change(direction * self.step))
+        # Ab 0.56 mit Beschriftung fuer TalkBack (sonst nur "Schaltflaeche")
+        return ft.Semantics(
+            button=True, label="Weniger" if direction < 0 else "Mehr",
+            content=ft.Container(
+                content=ft.Icon(icon, size=18, color=C["text"]), width=38, height=38,
+                border_radius=19, bgcolor=C["card_alt"], ink=True,
+                border=ft.Border.all(1, C["border"]), alignment=ft.Alignment.CENTER,
+                on_click=lambda _e: self.change(direction * self.step)))
 
     def change(self, delta):
         self.value = max(self.minimum, min(self.maximum, self.value + delta))
@@ -420,10 +484,10 @@ def entry(value="", hint=None, password=False, multiline=False, min_lines=1,
         multiline=multiline, min_lines=min_lines,
         max_lines=max_lines, keyboard_type=keyboard, on_change=on_change,
         bgcolor=C["card_alt"], filled=True, fill_color=C["card_alt"],
-        border_color=C["border"], focused_border_color=C["purple"],
+        border_color=C["field_border"], focused_border_color=C["purple"],
         border_radius=12, color=C["text"], cursor_color=C["accent"],
         hint_style=ft.TextStyle(color=C["muted"]),
-        text_style=ft.TextStyle(font_family=MONO if mono else None, size=14),
+        text_style=ft.TextStyle(font_family=MONO if mono else None, size=fs(14)),
         content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
         expand=expand)
     if password:
@@ -533,7 +597,12 @@ class Ring(ft.Stack):
                               horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             width=size, height=size, alignment=ft.Alignment.CENTER,
             padding=thickness + 6)
-        super().__init__([self.canvas, center], width=size, height=size)
+        # Ab 0.56: TalkBack liest den Ring als ein Element ("12 von 1565
+        # Karten 1 Prozent") statt Zahl und Unterzeile einzeln
+        self.semantics = ft.Semantics(content=self.canvas, container=True, label="")
+        super().__init__([self.semantics, ft.Semantics(content=center,
+                                                       exclude_semantics=True)],
+                         width=size, height=size)
 
     def set(self, fraction, color_a, color_b=None, big="", small=""):
         fraction = max(0.0, min(1.0, fraction))
@@ -562,6 +631,10 @@ class Ring(ft.Stack):
         self.canvas.shapes = shapes
         self.big.value = big
         self.small.value = small
+        parts = [part for part in (big, small if self.small.visible else "") if part]
+        if parts and "%" not in big:
+            parts.append("%d Prozent" % round(fraction * 100))
+        self.semantics.label = " ".join(parts)
 
 
 class GradientBar(ft.Column):
@@ -612,7 +685,44 @@ def _smooth(points, limits=None):
     return elements
 
 
-class LineChart(cv.Canvas):
+def _chart_number(value):
+    return _fmt(round(value, 1)).replace(".", ",")
+
+
+def chart_summary(labels, values, goal=None):
+    """Ab 0.56: Diagramm als Text fuer TalkBack (alle Werte bis 14 Punkte,
+    sonst Spanne, hoechster und letzter Wert)."""
+    labels, values = list(labels), list(values)
+    if not values:
+        return "Diagramm ohne Werte"
+    if len(values) <= 14:
+        text = "Diagramm: " + ", ".join("%s %s" % (label, _chart_number(value))
+                                         for label, value in zip(labels, values))
+    else:
+        top = max(range(len(values)), key=lambda index: values[index])
+        text = ("Diagramm mit %d Werten von %s bis %s, höchster Wert %s (%s), letzter Wert %s"
+                % (len(values), labels[0] if labels else "", labels[-1] if labels else "",
+                   _chart_number(values[top]), labels[top] if top < len(labels) else "",
+                   _chart_number(values[-1])))
+    if goal:
+        text += ", %s %s" % (goal[1], _chart_number(goal[0]))
+    return text
+
+
+class LineChart(ft.Semantics):
+    """Ab 0.56: Liniendiagramm mit Beschriftung fuer TalkBack (die Zeichnung
+    selbst kann ein Screenreader nicht lesen). Zeichnung: _LineCanvas."""
+
+    def __init__(self, height=200):
+        self.canvas = _LineCanvas(height)
+        super().__init__(content=self.canvas, container=True, label="Diagramm ohne Werte")
+
+    def set_data(self, labels, values, color, y_max=None, goal=None):
+        self.canvas.set_data(labels, values, color, y_max, goal)
+        self.label = chart_summary(labels, values, goal)
+
+
+class _LineCanvas(cv.Canvas):
     """Liniendiagramm mit weicher Kurve und Verlaufsflaeche. Zeichnet sich bei
     jeder Groessenaenderung neu (Breite kommt vom Handy-Bildschirm)."""
 
@@ -704,7 +814,28 @@ class LineChart(cv.Canvas):
         self.shapes = shapes
 
 
-class ShareBars(cv.Canvas):
+class ShareBars(ft.Semantics):
+    """Ab 0.56: Anteile richtig/falsch je Tag mit Beschriftung fuer TalkBack.
+    Zeichnung: _ShareCanvas."""
+
+    def __init__(self, height=190):
+        self.canvas = _ShareCanvas(height)
+        super().__init__(content=self.canvas, container=True, label="Diagramm ohne Werte")
+
+    def set_data(self, data, names=None, empty=None):
+        self.canvas.set_data(data, names, empty)
+        right, wrong = self.canvas._names
+        parts = []
+        for label, share, rest in self.canvas._data:
+            if share is None:
+                parts.append("%s keine Aufgaben" % label)
+            else:
+                parts.append("%s %d Prozent %s, %d Prozent %s" % (label, share, right,
+                                                                  rest, wrong))
+        self.label = "Diagramm: " + "; ".join(parts) if parts else "Diagramm ohne Werte"
+
+
+class _ShareCanvas(cv.Canvas):
     """Ab 0.56 (wie am PC): gestapelte Balken in Prozent je Tag, richtig unten
     (voll), falsch oben (schraffiert), Anteil richtig als Zahl ueber dem
     Balken, Tage ohne Aufgaben mit Strich."""
@@ -838,6 +969,13 @@ class Heatmap(ft.Column):
             if on_click:
                 row = ft.Container(content=row, border_radius=6,
                                    on_click=lambda _e, i=index: on_click(i))
+            # Ab 0.56: Zeile fuer TalkBack als Text (Kaestchen sind nur Farbe)
+            shown = values[-days:]
+            row = ft.Semantics(content=row, container=True, button=bool(on_click),
+                               selected=chosen, exclude_semantics=True,
+                               label="%s: %d Aktivitäten an %d von %d Tagen" % (
+                                   name, sum(shown), sum(1 for value in shown if value),
+                                   len(shown)))
             self.controls.append(row)
         self.spacing = 8
         self.tight = True
@@ -870,6 +1008,7 @@ class CalendarPanel(ft.Column):
         # "Fortschritt je Fachbereich" (wie am PC)
         return ft.IconButton(
             icon=icon, icon_size=18, width=34, height=34,
+            tooltip="Vorheriger Monat" if delta < 0 else "Nächster Monat",   # ab 0.56
             style=ft.ButtonStyle(
                 icon_color={ft.ControlState.PRESSED: C["green"],
                             ft.ControlState.DEFAULT: C["accent"]},
@@ -904,6 +1043,11 @@ class CalendarPanel(ft.Column):
                     content=ft.Container(
                         content=ft.Text(str(day), size=12, weight=ft.FontWeight.BOLD
                                         if learned else None,
+                                        # ab 0.56: Lerntag nicht nur ueber die Farbe
+                                        semantics_label="%d. %s%s%s" % (
+                                            day, self.MONTHS[self.month - 1],
+                                            ", gelernt" if learned else "",
+                                            ", heute" if is_today else ""),
                                         color=C["sidebar"] if learned else
                                         (C["accent2"] if index > 4 else C["text_dim"])),
                         width=28, height=28, border_radius=14,
