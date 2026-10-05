@@ -4,6 +4,27 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.55.1
+
+Fehlerbehebung: Das Update am PC bricht nicht mehr ab, das Programm schließt
+sauber.
+
+- **Wichtig für den PC:** Wer 0.54 oder 0.55 installiert hat, installiert
+  diese Version einmal von Hand: PC neu starten, das Programm nicht öffnen,
+  `FISI-Lernplattform-Setup-0.55.1.exe` von dieser Release-Seite
+  doppelklicken. Danach laufen die Updates wieder von selbst. Am Handy
+  ändert sich nichts.
+- **Schließen:** Das Programm endet jetzt vollständig, auch wenn vorher
+  Karteikarten, Optionen, Rechner oder das Update-Fenster offen waren.
+  Vorher blieb es unsichtbar im Hintergrund und schrieb „can't delete Tcl
+  command“ in fehler.log.
+- **Update am PC:** Der Installer wartet, bis das Programm wirklich beendet
+  ist, und ersetzt erst dann die Dateien. Jeder Schritt steht in
+  `update.log` im Datenordner, auch unter Optionen › Problem melden.
+  Scheitert ein Update trotzdem, startet die bisherige Version wieder und
+  sagt, was passiert ist und wo das Protokoll liegt.
+- Lerninhalte, Spielstände und der Abgleich bleiben unverändert.
+
 ## 0.55
 
 Lernen nach dem Ausbildungsrahmenplan: Abdeckung sehen, gezielt üben und
