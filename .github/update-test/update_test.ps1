@@ -115,7 +115,7 @@ Prozesse | Stop-Process -Force -ErrorAction SilentlyContinue
 
 # Zusammenfassung fuer die Seite des Laufs und das Protokoll
 $ok = -not ($Ergebnisse | Where-Object { -not $_.Ok })
-$md = @("## Update-Test $AltVersion -> $NeuVersion: $(if ($ok) { 'bestanden' } else { 'FEHLGESCHLAGEN' })", "",
+$md = @("## Update-Test $AltVersion -> ${NeuVersion}: $(if ($ok) { 'bestanden' } else { 'FEHLGESCHLAGEN' })", "",
         "| Pruefung | Ergebnis | Angabe |", "|---|---|---|")
 foreach ($e in $Ergebnisse) { $md += "| $($e.Name) | $(if ($e.Ok) { 'OK' } else { '**FEHLER**' }) | $($e.Detail) |" }
 $md += ""
