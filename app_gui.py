@@ -5998,7 +5998,7 @@ class UpdateDialog(ctk.CTkToplevel):
         self.info = info
         self._downloading = False
         self.title("Update verfügbar")
-        self.geometry("560x470")
+        self.geometry("560x500")   # ab 0.58 +30 px fuer die Hinweiszeile
         self.resizable(False, False)
         self.transient(app.root)
         # CTkToplevel setzt unter Windows kurz nach dem Oeffnen sein eigenes
@@ -6027,6 +6027,11 @@ class UpdateDialog(ctk.CTkToplevel):
                                      fg=C["text_dim"], anchor="w",
                                      justify="left", wraplength=480)
         self.lbl_status.pack(anchor="w", pady=(10, 0))
+
+        # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (nur Text, der
+        # Update-Ablauf bleibt unveraendert)
+        make_label(card.body, fh.UPDATE_PROTECTION_HINT, font=F["tiny"], fg=C["muted"],
+                   anchor="w", justify="left", wraplength=480).pack(anchor="w", pady=(8, 0))
 
         buttons = transparent_frame(card.body)
         buttons.pack(fill="x", pady=(12, 0))

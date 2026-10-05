@@ -4791,6 +4791,8 @@ class FISIMobileApp:
                 ft.Text("NEUERUNGEN", size=11, weight=ft.FontWeight.BOLD, color=C["muted"]),
                 ft.Text(notes, size=13, color=C["text_dim"]),
                 ft.Text(hint, size=12, color=C["accent"]),
+                # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (wie am PC)
+                ft.Text(fh.UPDATE_PROTECTION_HINT, size=11, color=C["muted"]),
             ], tight=True, spacing=8),
             actions=[ft.TextButton("Später", on_click=close),
                      ft.TextButton("Herunterladen", on_click=download)]))

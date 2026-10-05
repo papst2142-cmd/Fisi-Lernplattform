@@ -187,6 +187,9 @@ TOUR_PAGES = [
 
 SETUP_NAME = "Dein Name"
 SETUP_NAME_HINT = "freiwillig"
+# Ab 0.58 (Plan 3.2): feste Zeile im Update-Fenster (PC und Handy gleich)
+UPDATE_PROTECTION_HINT = ("Meldet sich dein Schutzprogramm, ist das bei neuen Versionen "
+                          "normal. Mehr in der Hilfe unter Update und Schutzprogramm.")
 SETUP_PLAN = "Rahmenplan"
 SETUP_PLAN_HINT = ("Die Abschnitte B, D und E gehören zu anderen Fachrichtungen. Für "
                    "Systemintegration kannst du sie ausgeschaltet lassen.")
@@ -367,6 +370,24 @@ HELP_SECTIONS = [
               "nicht dauerhaft ab. Warnt dein Schutzprogramm auch bei der Datei von der "
               "Release-Seite, kannst du den Fehlalarm beim Hersteller des "
               "Schutzprogramms melden.")},
+    # Ab 0.58 (Plan 3.2): was Schutzprogramme bei einer neuen Version zeigen.
+    # Keine Produktnamen; Begriffe der fremden Meldungen ohne „…“, weil sie
+    # nicht in unserer Oberflaeche stehen (test_rundgang_hilfe.py).
+    {"id": "update_schutz", "titel": "Update und Schutzprogramm",
+     "reiter": ["Optionen"],
+     "text": ("Bei einer neuen Version kann sich dein Schutzprogramm melden. Das ist bei "
+              "neuen, noch wenig bekannten Versionen normal. So kann es aussehen:\n"
+              "• Es fragt, ob die Installation erlaubt ist. Erlaube sie.\n"
+              "• Beim ersten Start meldet es, dass das Programm unter Vorbehalt gestartet "
+              "wurde, nach etwa einer Minute vielleicht noch einmal. Mit Trotzdem "
+              "ausführen startet das Programm normal.\n"
+              "• Eine von Hand heruntergeladene Installationsdatei kann in der "
+              "Quarantäne landen, auch wenn sie in Ordnung ist (Fehlalarm).\n"
+              "• Am Handy fragt Android vor der Installation nach. Erlaube sie.\n\n"
+              "Das Update in den „Optionen“ unter „Updates“ lädt die Datei direkt von der "
+              "Release-Seite. Lädst du selbst, dann nur von " + RELEASE_PAGE_TEXT + ", und "
+              "vergleiche die Prüfsumme (SHA-256). Abschalten musst du dafür nichts. Bist "
+              "du unsicher, frag nach, bevor du etwas erlaubst.")},
 ]
 HELP_IDS = [section["id"] for section in HELP_SECTIONS]
 HELP_BY_ID = {section["id"]: section for section in HELP_SECTIONS}
