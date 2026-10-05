@@ -860,6 +860,81 @@ def slider_text(channel, value):
     return "%d%s" % (value, channel[4])
 
 
+# ---------------------------------------------------------------------------
+# Farbige Reglerspuren (ab 0.58, Plan 3a). Nur Optik: Die Spur zeigt, was ein
+# Schieben bewirkt. Farbton-Spur = alle Farbtoene in der aktuellen Saettigung
+# und Helligkeit, Saettigungs-Spur = grau bis voll, Helligkeits-Spur = dunkel
+# ueber die Farbe bis hell. PC und Handy rechnen hier.
+# ---------------------------------------------------------------------------
+
+KNOB_LIGHT = "#FFFFFF"      # Reglerknopf hell
+KNOB_DARK = "#1B1628"       # Reglerknopf dunkel (Schriftfarbe der hellen Darstellung)
+KNOB_MIN_CONTRAST = 3.0     # Knopf gegen die Spur an seiner Stelle (Plan 3a)
+_CHANNEL_INDEX = {"h": 0, "s": 1, "l": 2}
+
+
+def _channel(key):
+    for channel in CUSTOM_CHANNELS:
+        if channel[0] == key:
+            return channel
+    raise KeyError(key)
+
+
+def _safe_triple(values):
+    """(h, s, l) fuer die Spur; Unbrauchbares faellt auf (0, 0, 50) bzw. die
+    Grenzen zurueck, damit eine Spur nie das Zeichnen abbricht."""
+    result = []
+    for index, (key, _name, low, high) in enumerate(c[:4] for c in CUSTOM_CHANNELS):
+        try:
+            number = float(values[index])
+        except (TypeError, ValueError, IndexError, KeyError):
+            number = (0, 0, 50)[index]
+        if number != number:                       # NaN
+            number = (0, 0, 50)[index]
+        result.append(max(low, min(high, number)))
+    return tuple(result)
+
+
+def track_color(values, key, fraction):
+    """Farbe der Spur des Reglers key ("h", "s", "l") an der Stelle fraction
+    (0 = links, 1 = rechts) bei den Reglerwerten values = (h, s, l)."""
+    triple = list(_safe_triple(values))
+    _key, _name, low, high = _channel(key)[:4]
+    fraction = max(0.0, min(1.0, float(fraction)))
+    triple[_CHANNEL_INDEX[key]] = low + (high - low) * fraction
+    return hsl_to_hex(*triple)
+
+
+def track_colors(values, key, count):
+    """count gleichmaessig verteilte Spurfarben von links nach rechts."""
+    count = max(2, int(count))
+    return [track_color(values, key, index / (count - 1)) for index in range(count)]
+
+
+def track_fraction(values, key):
+    """Stelle des Knopfes (0..1) beim aktuellen Wert."""
+    _key, _name, low, high = _channel(key)[:4]
+    value = _safe_triple(values)[_CHANNEL_INDEX[key]]
+    return (value - low) / float(high - low)
+
+
+def knob_colors(values, key):
+    """(Fuellung, Rand) des Reglerknopfes: die Fuellung ist die von Hell und
+    Dunkel mit dem hoeheren Kontrast zur Spur an der Stelle des Knopfes, der
+    Rand die andere. So hebt sich der Knopf auf jeder Spur ab (mindestens
+    etwa 4,1:1, weil Hell zu Dunkel 17:1 hat)."""
+    under = track_color(values, key, track_fraction(values, key))
+    if contrast(KNOB_LIGHT, under) >= contrast(KNOB_DARK, under):
+        return KNOB_LIGHT, KNOB_DARK
+    return KNOB_DARK, KNOB_LIGHT
+
+
+def knob_contrast(values, key):
+    """Kontrast Knopffuellung zur Spur an der Stelle des Knopfes."""
+    under = track_color(values, key, track_fraction(values, key))
+    return contrast(knob_colors(values, key)[0], under)
+
+
 def saved_custom():
     """Gespeicherte eigene Farben {Darstellung: Werte}, ungueltiges entfaellt."""
     import fisi_update

@@ -3037,6 +3037,9 @@ class CustomColors(ft.Column):
     210 Grad"); Lautstaerketasten bzw. Wischen aendern ihn um 1."""
 
     DELAY = 0.04    # Vorschau hoechstens etwa 25-mal pro Sekunde neu
+    TRACK_PAD = 12  # ab 0.58: Abstand der Spur zum Rand (= Weg des Knopfes)
+    # Stuetzstellen der Spur: Farbton alle 6 Grad, sonst alle 5 Prozent
+    TRACK_STOPS = {"h": 61, "s": 21, "l": 21}
 
     def __init__(self, on_save):
         self.on_save = on_save
@@ -3044,6 +3047,7 @@ class CustomColors(ft.Column):
         self.values = fisi_theme.custom_values(self.mode)
         self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_texts, self.semantics, self.swatches = {}, {}, {}, {}
+        self.tracks, self._tracks = {}, {}   # ab 0.58: farbige Spuren
         self._last = 0.0
         mode_name = dict(fisi_theme.MODES)[self.mode]
         active = self.mode in fisi_theme.custom_colors
@@ -3085,21 +3089,35 @@ class CustomColors(ft.Column):
         for channel in fisi_theme.CUSTOM_CHANNELS:
             key, caption, low, high = channel[:4]
             value = self.values[part]["hsl".index(key)]
+            # Ab 0.58 (Plan 3a): farbige Spur hinter einem Regler ohne eigene
+            # Spurfarben; der Knopf ist hell oder dunkel, je nachdem, was sich
+            # an seiner Stelle besser abhebt (fisi_theme.knob_colors)
             slider = ft.Slider(min=low, max=high, divisions=high - low, value=value,
-                               active_color=C["accent"], inactive_color=C["field_border"],
-                               thumb_color=C["text"], expand=True,
+                               active_color=ft.Colors.TRANSPARENT,
+                               inactive_color=ft.Colors.TRANSPARENT,
+                               thumb_color=fisi_theme.knob_colors(self.values[part], key)[0],
+                               padding=ft.Padding.symmetric(horizontal=self.TRACK_PAD),
+                               expand=True,
                                on_change=lambda e, p=part, c=channel: self._moved(
                                    p, c, e.control.value),
                                on_change_end=lambda e, p=part, c=channel: self._moved(
                                    p, c, e.control.value, final=True))
             self.sliders[(part, key)] = slider
+            track = ft.Container(height=10, border_radius=5,
+                                 border=ft.Border.all(1, C["field_border"]),
+                                 margin=ft.Margin.symmetric(horizontal=self.TRACK_PAD),
+                                 gradient=self._track_gradient(self.values[part], key))
+            self.tracks[(part, key)] = track
+            holder = ft.Stack([ft.Container(content=track, alignment=ft.Alignment.CENTER,
+                                            left=0, right=0, top=0, bottom=0),
+                               slider], expand=True, height=ui.grow(48))
             semantics = ft.Semantics(
                 slider=True, exclude_semantics=True,
                 label="%s, %s" % (name, caption),
                 value=fisi_theme.slider_text(channel, value).strip(),
                 on_increase=lambda _e, p=part, c=channel: self._nudge(p, c, 1),
                 on_decrease=lambda _e, p=part, c=channel: self._nudge(p, c, -1),
-                content=slider, expand=True)
+                content=holder, expand=True)
             self.semantics[(part, key)] = (semantics, name)
             self._label_semantics(part, channel, value)
             text = ui.text(fisi_theme.slider_text(channel, value), size=13, width=52,
@@ -3109,6 +3127,23 @@ class CustomColors(ft.Column):
                                 semantics, text], spacing=4,
                                vertical_alignment=ft.CrossAxisAlignment.CENTER))
         return ft.Column(rows, spacing=0, tight=True)
+
+    def _track_gradient(self, values, key):
+        """Ab 0.58: Verlauf der Spur aus fisi_theme.track_colors (wie am PC)."""
+        return ft.LinearGradient(begin=ft.Alignment.CENTER_LEFT, end=ft.Alignment.CENTER_RIGHT,
+                                 colors=fisi_theme.track_colors(values, key,
+                                                                self.TRACK_STOPS[key]))
+
+    def _paint_tracks(self, part):
+        """Spuren und Knoepfe einer Gruppe auf die aktuellen Werte bringen."""
+        if self._tracks.get(part) == self.values[part]:
+            return
+        self._tracks[part] = self.values[part]
+        for channel in fisi_theme.CUSTOM_CHANNELS:
+            key = channel[0]
+            self.tracks[(part, key)].gradient = self._track_gradient(self.values[part], key)
+            self.sliders[(part, key)].thumb_color = fisi_theme.knob_colors(
+                self.values[part], key)[0]
 
     def _label_semantics(self, part, channel, value):
         semantics, name = self.semantics[(part, channel[0])]
@@ -3174,6 +3209,7 @@ class CustomColors(ft.Column):
             block = fisi_game.map_block_colors(C["green"])
         for part in fisi_theme.CUSTOM_PART_IDS:
             self.swatches[part].bgcolor = fisi_theme.hsl_to_hex(*self.values[part])
+            self._paint_tracks(part)   # ab 0.58, gleiche Bremse wie die Vorschau
         self.preview.content = custom_preview(palette, map_colors, categories, block)
         lines = fisi_theme.custom_warning(palette, map_colors)
         if lines:

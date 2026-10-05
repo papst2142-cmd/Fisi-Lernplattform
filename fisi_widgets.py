@@ -26,6 +26,7 @@ import tkinter.font as tkfont
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
+import fisi_theme
 from fisi_theme import C, GRADIENTS, curve_controls, label_stride, lighten, mix, shown_labels
 
 # Wird beim Start durch setup_fonts() gefuellt.
@@ -1413,6 +1414,124 @@ class LineChart(tk.Canvas):
         photo = tk_photo(image, width, height)
         self._photos.append(photo)
         self.create_image(x1, y1, image=photo, anchor="nw")
+
+
+class GradientSlider(tk.Canvas):
+    """Ab 0.58 (Plan 3a): Regler mit farbiger Spur fuer die eigenen Farben.
+
+    Ersetzt dort den CTkSlider (gleiche Bedienung: Klicken, Ziehen, set/get,
+    command mit dem neuen Wert; Tastatur und Fokusrahmen kommen wie bisher
+    von aussen). Die Spur wird Spalte fuer Spalte exakt aus der HSL-Formel
+    gerechnet (fisi_theme.track_color), also stufenlos. Der Knopf ist hell
+    oder dunkel, je nachdem, was sich an seiner Stelle besser abhebt, mit
+    einem Rand in der anderen Farbe."""
+
+    TRACK_H = 10     # Hoehe der Spur (logische px)
+    KNOB_R = 9       # Radius des Knopfes (logische px)
+
+    def __init__(self, parent, key, from_, to, width=220, height=22, command=None,
+                 bg=None):
+        self.bg = bg or _bg_of(parent)
+        self.key = key
+        self._from, self._to = from_, to
+        self._value = from_
+        self._hsl = (0, 0, 50)
+        self._command = command
+        self._photo = None
+        self._mask = None
+        super().__init__(parent, width=px(width), height=px(height), bg=self.bg,
+                         highlightthickness=0, bd=0, cursor="hand2")
+        self.bind("<Configure>", lambda _e: self._draw(track=True))
+        self.bind("<Button-1>", self._pointer)
+        self.bind("<B1-Motion>", self._pointer)
+
+    # -- Schnittstelle wie CTkSlider -----------------------------------------
+    def get(self):
+        return self._value
+
+    def set(self, value):
+        self._value = max(self._from, min(self._to, int(round(float(value)))))
+        self._draw(track=False)
+
+    def set_hsl(self, values):
+        """Aktuelle Reglerwerte (h, s, l) der Gruppe: Spur und Knopf neu."""
+        self._hsl = tuple(values)
+        self._draw(track=True)
+
+    # -- Zeichnen -------------------------------------------------------------
+    def _geometry(self):
+        width, height = self.winfo_width(), self.winfo_height()
+        if width <= 1:
+            width, height = int(self.cget("width")), int(self.cget("height"))
+        radius = px(self.KNOB_R)
+        return width, height, radius, max(1, width - 2 * radius)
+
+    def _x_of(self, value):
+        _width, _height, radius, span = self._geometry()
+        return radius + span * (value - self._from) / float(self._to - self._from)
+
+    def track_pixels(self):
+        """Spurfarben je Bildspalte (fuer Zeichnen und Test)."""
+        width, _height, radius, span = self._geometry()
+        colors = []
+        for column in range(width):
+            fraction = (column + 0.5 - radius) / float(span)
+            colors.append(fisi_theme.track_color(self._hsl, self.key, fraction))
+        return colors
+
+    def _draw(self, track=True):
+        width, height, radius, _span = self._geometry()
+        track_h = px(self.TRACK_H)
+        top = (height - track_h) // 2
+        if track or self._photo is None:
+            colors = [fisi_theme.hex_to_rgb(color) for color in self.track_pixels()]
+            strip = Image.new("RGB", (width, 1))
+            strip.putdata([tuple(int(v) for v in color) for color in colors])
+            strip = strip.resize((width, track_h), Image.NEAREST)
+            if self._mask is None or self._mask[0].size != (width, track_h):
+                self._mask = (self._rounded_mask(width, track_h, 0),
+                              self._rounded_mask(width, track_h, 1))
+            ground = tuple(value // 257 for value in self.winfo_rgb(self.bg))
+            edge = tuple(value // 257 for value in self.winfo_rgb(C["field_border"]))
+            image = Image.new("RGB", (width, track_h), ground)
+            # Duenner Rand, damit die Spur auch auf gleich dunklem/hellem
+            # Hintergrund als Spur zu erkennen ist
+            image.paste(Image.new("RGB", (width, track_h), edge), (0, 0), self._mask[0])
+            image.paste(strip, (0, 0), self._mask[1])
+            self._photo = ImageTk.PhotoImage(image)
+            self.delete("track")
+            self.create_image(0, top, image=self._photo, anchor="nw", tags="track")
+        self.delete("knob")
+        current = list(self._hsl)
+        current["hsl".index(self.key)] = self._value
+        fill, ring = fisi_theme.knob_colors(current, self.key)
+        x, y = self._x_of(self._value), height / 2.0
+        outer = radius - 0.5
+        inner = radius - max(2, px(2.5))
+        self.create_oval(x - outer, y - outer, x + outer, y + outer, fill=ring, outline="",
+                         tags="knob")
+        self.create_oval(x - inner, y - inner, x + inner, y + inner, fill=fill, outline="",
+                         tags="knob")
+
+    @staticmethod
+    def _rounded_mask(width, height, inset):
+        s = SUPERSAMPLE
+        big = Image.new("L", (width * s, height * s), 0)
+        pad = inset * s
+        ImageDraw.Draw(big).rounded_rectangle(
+            (pad, pad, width * s - 1 - pad, height * s - 1 - pad),
+            radius=max(1, (height * s - 2 * pad) // 2), fill=255)
+        return big.resize((width, height), Image.LANCZOS)
+
+    def _pointer(self, event):
+        _width, _height, radius, span = self._geometry()
+        fraction = max(0.0, min(1.0, (event.x - radius) / float(span)))
+        value = int(round(self._from + fraction * (self._to - self._from)))
+        if value != self._value:
+            self._value = value
+            self._draw(track=False)
+            if self._command is not None:
+                self._command(value)
 
 
 class ShareBars(tk.Canvas):

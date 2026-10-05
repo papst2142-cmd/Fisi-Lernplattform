@@ -89,7 +89,7 @@ from fisi_game_gui import (  # noqa: E402
 )
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, FoldCard, GradientBar, GradientPanel, Heatmap, IconButton,
-    IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
+    GradientSlider, IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
     ScrollArea, ShareBars, ThemeTimeline, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
@@ -4540,6 +4540,7 @@ class CustomColors(ctk.CTkFrame):
         self.values = fisi_theme.custom_values(self.mode)
         self.world = None   # ab 0.57 (F3): angeklickte, noch nicht gespeicherte Farbwelt
         self.sliders, self.value_labels, self.swatches = {}, {}, {}
+        self._tracks = {}   # ab 0.58: Werte, mit denen die Spuren gezeichnet sind
         self._pending = None
         mode_name = dict(fisi_theme.MODES)[self.mode]
         make_label(self, fisi_theme.CUSTOM_TITLE, font=F["label"], fg=C["muted"]).pack(
@@ -4593,12 +4594,11 @@ class CustomColors(ctk.CTkFrame):
             make_label(line, label, font=F["small"], fg=C["text_dim"], width=90,
                        anchor="w").pack(side="left")
             value = self.values[part]["hsl".index(key)]
-            slider = ctk.CTkSlider(line, from_=low, to=high, number_of_steps=high - low,
-                                   width=220,
-                                   button_color=C["text"], button_hover_color=C["accent"],
-                                   progress_color=C["accent"], fg_color=C["field_border"],
-                                   command=lambda v, p=part, c=channel: self._moved(p, c, v))
+            # Ab 0.58 mit farbiger Spur (GradientSlider, Plan 3a)
+            slider = GradientSlider(line, key, low, high, width=220,
+                                    command=lambda v, p=part, c=channel: self._moved(p, c, v))
             slider.set(value)
+            slider.set_hsl(self.values[part])
             slider.pack(side="left", padx=(4, 8))
             self.sliders[(part, key)] = slider
             make_focusable(slider)
@@ -4667,6 +4667,12 @@ class CustomColors(ctk.CTkFrame):
             block = fisi_game.map_block_colors(C["green"])
         for part in fisi_theme.CUSTOM_PART_IDS:
             self.swatches[part].configure(bg=fisi_theme.hsl_to_hex(*self.values[part]))
+            # Ab 0.58: Spuren der Gruppe folgen den Werten (gleiche Bremse
+            # wie die Vorschau, DELAY_MS)
+            if self._tracks.get(part) != self.values[part]:
+                self._tracks[part] = self.values[part]
+                for channel in fisi_theme.CUSTOM_CHANNELS:
+                    self.sliders[(part, channel[0])].set_hsl(self.values[part])
         draw_custom_preview(self.preview, palette, map_colors, categories, block,
                             self.PREVIEW_W, self.PREVIEW_H)
         lines = fisi_theme.custom_warning(palette, map_colors)
