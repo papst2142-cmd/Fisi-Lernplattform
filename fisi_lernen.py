@@ -295,6 +295,7 @@ DAY_CHART_TITLE = "Aufgaben pro Tag"
 DAY_CHART_SUBTITLE = "bewertete Aufgaben, Tagesziel als Linie"
 DAY_CHART_RANGES = [(7, "7 Tage"), (30, "30 Tage")]
 DAY_CHART_SERIES = "Aufgaben"
+LEARN_CHART_SERIES = "Aufgaben pro Tag"   # Legende "Lernverlauf" (Dashboard/Start, ab 0.58)
 WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
 
 

@@ -58,6 +58,7 @@ import fisi_projekt as fpj  # noqa: E402
 import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
+    LEARN_CHART_SERIES,
     DELETE_SUBTITLE, DELETE_TITLE, HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
     RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
@@ -877,8 +878,10 @@ class DashboardView(View):
         self.today_card = Card(self.content, title="Heute",
                                subtitle="Tagesziel und Wiederholung", accent=C["green"])
         self.today_card.pack(fill="x", pady=(16, 0))
-        today = transparent_frame(self.today_card.body)
+        today = self.today_frame = transparent_frame(self.today_card.body)
         today.pack(fill="x")
+        self.today_stacked = False   # ab 0.58: "Heute faellig" unter dem Tagesziel
+        self.goal_visible = True
         self.goal_box = transparent_frame(today)
         self.goal_ring = MiniRing(self.goal_box, size=74, thickness=7, parent_bg=C["card"])
         self.goal_ring.pack(side="left")
@@ -897,18 +900,21 @@ class DashboardView(View):
         self.btn_review.pack(side="left")
 
         # --- Reihe 1: Kennzahlen (fuenf gleich breite Kacheln) -----------
-        row1 = transparent_frame(self.content)
+        # Ab 0.58 je nach Breite in einer Reihe oder in zwei (3 + 2), siehe _fit
+        row1 = self.row1 = transparent_frame(self.content)
         row1.pack(fill="x", pady=(16, 0))
         for column in range(5):
             row1.columnconfigure(column, weight=1, uniform="row1")
+        self.row1_cards = []
+        self.row1_mode = "breit"
 
         self.ring_cards = self._ring_card(row1, 0, "Karteikarten")
         self.ring_quiz = self._ring_card(row1, 1, "Quizfragen")
         self.ring_ap1 = self._ring_card(row1, 2, "AP1-Szenarien")
         self.ring_scen = self._ring_card(row1, 3, "AP2-Szenarien")
 
-        quote = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
-                     accent=C["accent2"])
+        quote = self.quote_card = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
+                                       accent=C["accent2"])
         quote.grid(row=0, column=4, sticky="nsew")
         self.lbl_quote = make_label(quote.body, "0 %", font=F["display"],
                                     fg=C["accent"])
@@ -920,7 +926,7 @@ class DashboardView(View):
         self.lbl_quote_sub.pack(anchor="w", pady=(6, 0))
 
         # --- Reihe 2: Verlauf und Abdeckung ------------------------------
-        row2 = transparent_frame(self.content)
+        row2 = self.row2 = transparent_frame(self.content)
         row2.pack(fill="x", pady=(14, 0))
         row2.columnconfigure(0, weight=3, uniform="row2")
         row2.columnconfigure(1, weight=2, uniform="row2")
@@ -983,7 +989,7 @@ class DashboardView(View):
         self.zoom_card = None
 
         # --- Reihe 4: Aktivitaeten, Kalender -------------------------------
-        row4 = transparent_frame(self.content)
+        row4 = self.row4 = transparent_frame(self.content)
         row4.pack(fill="x", pady=(14, 0))
         row4.columnconfigure(0, weight=1, uniform="row4")
         row4.columnconfigure(1, weight=1, uniform="row4")
@@ -1001,7 +1007,7 @@ class DashboardView(View):
         self.calendar.set_provider(self.db.month_activity)
 
         # --- Reihe 5: AP1- und AP2-Themenfortschritt, direkt nebeneinander -
-        row5 = transparent_frame(self.content)
+        row5 = self.row5 = transparent_frame(self.content)
         row5.pack(fill="x", pady=(14, 0))
         row5.columnconfigure(0, weight=1, uniform="row5")
         row5.columnconfigure(1, weight=1, uniform="row5")
@@ -1021,12 +1027,135 @@ class DashboardView(View):
                                       parent_bg=C["card"])
         self.timeline.pack(fill="both", expand=True)
 
+        # Ab 0.58: Zweispaltige Reihen (Karte, Gewicht) fuer _fit
+        self.pair_rows = ((chart_card, 3, cover, 2), (act_card, 1, cal_card, 1),
+                          (ap1_theme_card, 1, theme_card, 1))
+        self._fit_pending = False
+        self.canvas.bind("<Configure>", self._schedule_fit, "+")
+        self.content.bind("<Configure>", self._schedule_fit, "+")
+
     def _ring_card(self, parent, column, title):
         card = Card(parent, title=title)
         card.grid(row=0, column=column, sticky="nsew", padx=(0, 14))
+        self.row1_cards.append(card)
         ring = RingStat(card.body, size=126, parent_bg=C["card"])
         ring.pack()
         return ring
+
+    # -- Ab 0.58: Breite anpassen (1360 px, grosse Schrift) ------------------
+    #
+    # Das Dashboard soll ohne seitlichen Schieberegler ins Fenster passen.
+    # Statt einer festen Mindestbreite richtet es sich nach der sichtbaren
+    # Breite: Reicht sie nicht, ruecken Unterschriften unter die Ueberschrift,
+    # "Heute faellig" unter das Tagesziel und die fuenf Kennzahlen in zwei
+    # Reihen (3 + 2). Bei 1920 px bleibt alles wie bisher.
+
+    FIT_GAP = 24   # Mindestabstand Tagesziel <-> "Heute faellig" (logische px)
+    CONTENT_PAD = 28   # Seitenrand der Ansicht (View.__init__, logische px)
+
+    def _schedule_fit(self, _event=None):
+        if not self._fit_pending:
+            self._fit_pending = True
+            self.after_idle(self._fit)
+
+    def available_width(self):
+        """Sichtbare Breite fuer den Inhalt (echte Pixel, ohne Seitenrand)."""
+        return self.canvas.winfo_width() - 2 * px(self.CONTENT_PAD)
+
+    def _fit(self):
+        self._fit_pending = False
+        try:
+            if self.canvas.winfo_width() <= 1:
+                return
+            avail = self.available_width()
+            changed = self._fit_today(avail)
+            changed |= self._fit_row1(avail)
+            for row in self.pair_rows:
+                changed |= self._fit_pair(avail, *row)
+        except tk.TclError:
+            return
+        if changed:
+            # Neue Mindestbreite an die Bildlaufflaeche melden
+            self.after_idle(self._schedule_fit)
+
+    def _fit_today(self, avail):
+        goal = self.goal_box.winfo_reqwidth() if self.goal_visible else 0
+        review = self.review_box.winfo_reqwidth()
+        need = goal + review + px(self.FIT_GAP) + self.today_card.frame_width()
+        changed = self.today_card.stack_subtitle(
+            self.today_card.head_width() > avail) if self.today_card.head else False
+        stacked = bool(goal) and need > avail
+        if stacked != self.today_stacked:
+            self.today_stacked = stacked
+            self._place_today()
+            changed = True
+        return changed
+
+    def _place_today(self):
+        """Tagesziel und "Heute faellig" nebeneinander oder untereinander."""
+        visible = self.goal_visible
+        self.goal_box.pack_forget()
+        self.review_box.pack_forget()
+        if visible:
+            self.goal_box.pack(side="top" if self.today_stacked else "left",
+                               anchor="w")
+        if self.today_stacked and visible:
+            self.review_box.pack(side="top", anchor="w", pady=(14, 0))
+        else:
+            self.review_box.pack(side="right")
+
+    def _fit_row1(self, avail):
+        gap = px(14)
+        ring_col = max(card.winfo_reqwidth() for card in self.row1_cards) + gap
+        quote = self.quote_card
+        body = max(child.winfo_reqwidth() for child in quote.body.winfo_children())
+        quote_narrow = max(body + quote.frame_width(),
+                           quote.head_width() - quote.subtitle_width(),
+                           quote.subtitle_width() + quote.frame_width())
+        if 5 * max(ring_col, quote.head_width(), body + quote.frame_width()) <= avail:
+            mode = "breit"
+        elif 5 * max(ring_col, quote_narrow) <= avail:
+            mode = "mittel"
+        else:
+            mode = "schmal"
+        if mode == self.row1_mode:
+            return False
+        self.row1_mode = mode
+        quote.stack_subtitle(mode == "mittel")
+        cards = self.row1_cards + [quote]
+        if mode == "schmal":
+            places = ((0, 0, 1), (0, 1, 1), (0, 2, 1), (1, 0, 1), (1, 1, 2))
+            columns = 3
+        else:
+            places = tuple((0, column, 1) for column in range(5))
+            columns = 5
+        for column in range(5):
+            self.row1.columnconfigure(column, weight=1 if column < columns else 0,
+                                      uniform="row1" if column < columns else "")
+        for index, (card, (row, column, span)) in enumerate(zip(cards, places)):
+            last = column + span == columns
+            card.grid(row=row, column=column, columnspan=span, sticky="nsew",
+                      padx=(0, 0 if last else 14), pady=(14 if row else 0, 0))
+        return True
+
+    def _fit_pair(self, avail, left, left_weight, right, right_weight):
+        """Zwei Kacheln nebeneinander (Gewichte wie im Raster): Passen die
+        Kopfzeilen nicht, rueckt die Unterschrift unter die Ueberschrift."""
+        total = left_weight + right_weight
+        stacked = left._sub_stacked or right._sub_stacked
+        widths = []
+        for card in (left, right):
+            width = card.head_width()
+            if card._sub_stacked:
+                width = max(width, card.winfo_reqwidth())
+            widths.append(width)
+        need = max(widths[0] / left_weight, widths[1] / right_weight) * total + px(14)
+        flag = need > avail
+        if flag == stacked:
+            return False
+        left.stack_subtitle(flag)
+        right.stack_subtitle(flag)
+        return True
 
     # -- Aktualisierung -----------------------------------------------------
 
@@ -1052,10 +1181,8 @@ class DashboardView(View):
         settings = learning_settings()
         goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
         show_goal, show_streak = settings["ziel_an"], settings["serie_an"]
-        if show_goal or show_streak:
-            self.goal_box.pack(side="left")
-        else:
-            self.goal_box.pack_forget()
+        self.goal_visible = show_goal or show_streak
+        self._place_today()
         if show_goal:
             self.goal_ring.pack(side="left")
             self.goal_ring.set(goal.fraction * 100,
@@ -1134,7 +1261,7 @@ class DashboardView(View):
         labels = [day.strftime("%d.%m") for day, _count in daily]
         values = [count for _day, count in daily]
         self.chart.set_data(labels, [
-            {"name": "Aufgaben pro Tag", "values": values, "color": C["accent"]},
+            {"name": LEARN_CHART_SERIES, "values": values, "color": C["accent"]},
         ])
 
         # Fachbereiche
@@ -4644,7 +4771,9 @@ class SettingsView(View):
         # Ab 0.56 (Nachbesserung): Name aendern (nur einstellungen.json)
         make_label(tour.body, fh.SETUP_NAME.upper(), font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(18, 0))
-        self.entry_name = EntryBox(tour.body, width=30, value=fh.load_name())
+        # Ab 0.58 so breit, dass ein Name mit fh.NAME_MAX (40) Zeichen ganz
+        # zu sehen ist (vorher 30 -> nur der Anfang sichtbar)
+        self.entry_name = EntryBox(tour.body, width=fh.NAME_MAX + 6, value=fh.load_name())
         self.entry_name.configure(placeholder_text=fh.SETUP_NAME_HINT)
         self.entry_name.pack(anchor="w", pady=(6, 0))
         self.entry_name.bind("<FocusOut>", lambda _e: self._save_name())

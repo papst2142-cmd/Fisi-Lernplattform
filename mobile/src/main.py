@@ -56,6 +56,7 @@ import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
     HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
+    DAY_CHART_SERIES, LEARN_CHART_SERIES, RESULT_CHART_SERIES,
     RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
@@ -407,7 +408,8 @@ class DashboardScreen(Screen):
 
         daily = db.daily_counts(self.DAYS)
         self.chart.set_data([day.strftime("%d.%m") for day, _n in daily],
-                            [count for _day, count in daily], C["accent"])
+                            [count for _day, count in daily], C["accent"],
+                            name=LEARN_CHART_SERIES)
         # Ab 0.56 ohne "Aktivitaet je Fachbereich" (Wunsch Nico, wie am PC)
         self._refresh_zoom()
 
@@ -2940,7 +2942,8 @@ class ProgressScreen(Screen):
         self.chart.visible = bool(labels)
         self.lbl_chart_empty.visible = not labels
         if labels:
-            self.chart.set_data(labels, values, C["accent2"], y_max=100)
+            self.chart.set_data(labels, values, C["accent2"], y_max=100,
+                                name=RESULT_CHART_SERIES)
 
         self.history.controls = []
         if not results:
@@ -3007,7 +3010,7 @@ class ProgressScreen(Screen):
         self.day_chart.set_data(day_labels(series), [count for _day, count in series],
                                 C["accent"],
                                 goal=(target, goal_line_text(target), C["green"])
-                                if target else None)
+                                if target else None, name=DAY_CHART_SERIES)
         self.lbl_days.value = daily_summary(series, target)
         split = daily_split_series(self.activity_split, self.day_pills.get())
         labels = day_labels([(day, 0) for day, _r, _w in split])

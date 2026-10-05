@@ -1044,3 +1044,31 @@ def curve_controls(points):
         controls.append(((x1 + third, y1 + tangents[index] * third),
                          (x2 - third, y2 - tangents[index + 1] * third)))
     return controls
+
+
+# ============================================================================
+#  BESCHRIFTUNG DER ZEITACHSE (ab 0.58)
+# ============================================================================
+
+# Datumsbeschriftungen der Tagesdiagramme ausduennen. Zwischen zwei
+# Beschriftungen liegt mindestens LABEL_SPACING mal die Textbreite; gezaehlt
+# wird vom rechten Ende (heute steht immer da), die Schrittweite kommt aus
+# LABEL_STRIDES (jede 2., 3. ... Beschriftung). PC und Handy gleich.
+LABEL_SPACING = 1.8
+LABEL_STRIDES = (1, 2, 3, 5, 7, 10, 14, 15, 30)
+
+
+def label_stride(count, slot, label_width):
+    """Schrittweite fuer count Beschriftungen im Abstand slot (Pixel), wenn
+    eine Beschriftung label_width Pixel breit ist."""
+    if count <= 1 or slot <= 0:
+        return 1
+    for stride in LABEL_STRIDES:
+        if slot * stride >= label_width * LABEL_SPACING:
+            return stride
+    return max(1, count)
+
+
+def shown_labels(count, stride):
+    """Indizes der beschrifteten Punkte, vom letzten Punkt aus gezaehlt."""
+    return [index for index in range(count) if (count - 1 - index) % stride == 0]

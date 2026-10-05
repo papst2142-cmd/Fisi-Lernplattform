@@ -26,7 +26,7 @@ import tkinter.font as tkfont
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
-from fisi_theme import C, GRADIENTS, curve_controls, lighten, mix
+from fisi_theme import C, GRADIENTS, curve_controls, label_stride, lighten, mix, shown_labels
 
 # Wird beim Start durch setup_fonts() gefuellt.
 F = {}
@@ -843,6 +843,9 @@ class Card(ctk.CTkFrame):
         self.head = None
         self.title_label = None
         self.subtitle_label = None
+        self._sub_below = None       # ab 0.58: Unterschrift in eigener Zeile
+        self._sub_stacked = False
+        self._sub_text = (subtitle or "", None)
         if title:
             color = accent or C["accent"]
             self.head = ctk.CTkFrame(self, fg_color="transparent")
@@ -868,8 +871,64 @@ class Card(ctk.CTkFrame):
 
     def set_subtitle(self, text, color=None):
         """Aendert die Unterschrift der Kachel zur Laufzeit."""
-        if self.subtitle_label is not None:
-            self.subtitle_label.configure(text=text, text_color=color or C["muted"])
+        if self.subtitle_label is None:
+            return
+        self._sub_text = (text, color)
+        target = self._sub_below if self._sub_stacked else self.subtitle_label
+        target.configure(text=text, text_color=color or C["muted"])
+
+    # -- Ab 0.58: Unterschrift unter die Ueberschrift (schmale Fenster) ------
+    #
+    # Neben der Ueberschrift braucht die Unterschrift Platz in der Breite. Ist
+    # die Kachel dafuer zu schmal (Dashboard bei 1360 px oder grosser Schrift),
+    # rueckt sie in eine eigene Zeile darunter, statt dass die ganze Seite
+    # breiter wird und seitlich verschoben werden muss.
+
+    def head_width(self):
+        """Breite (echte Pixel), die Ueberschrift und Unterschrift nebeneinander
+        brauchen, samt Innenabstand der Kachel. 0 ohne Ueberschrift."""
+        if self.head is None:
+            return 0
+        width = sum(child.winfo_reqwidth() for child in self.head.winfo_children()
+                    if child is not self.subtitle_label)
+        width += px(9)                     # Abstand Strich -> Ueberschrift
+        width += self.subtitle_width()
+        if self.subtitle_width():
+            width += px(12)                # Luft zwischen den beiden Texten
+        return width + self.frame_width()
+
+    def subtitle_width(self):
+        if self.subtitle_label is None:
+            return 0
+        label = self._sub_below if self._sub_stacked else self.subtitle_label
+        return label.winfo_reqwidth() if label.cget("text") else 0
+
+    def frame_width(self):
+        """Innenabstand links und rechts (echte Pixel)."""
+        return 2 * px(self.pad) + 2
+
+    def stack_subtitle(self, flag):
+        """True: Unterschrift in eigener Zeile unter der Ueberschrift,
+        False: wie bisher rechts daneben. Gibt True zurueck, wenn sich etwas
+        geaendert hat."""
+        flag = bool(flag)
+        if self.subtitle_label is None or flag == self._sub_stacked:
+            return False
+        text, color = self._sub_text
+        color = color or C["muted"]
+        if self._sub_below is None:
+            self._sub_below = ctk.CTkLabel(self, text="", text_color=C["muted"],
+                                           font=F["tiny"], anchor="w", height=0)
+        if flag:
+            self.subtitle_label.configure(text="")
+            self._sub_below.configure(text=text, text_color=color)
+            self._sub_below.pack(fill="x", padx=(self.pad + 13, self.pad),
+                                 pady=(2, 0), before=self.body)
+        else:
+            self._sub_below.pack_forget()
+            self.subtitle_label.configure(text=text, text_color=color)
+        self._sub_stacked = flag
+        return True
 
 
 class FoldCard(Card):
@@ -933,6 +992,25 @@ class FoldCard(Card):
 #  BANNER MIT FARBVERLAUF
 # ============================================================================
 
+def _wrap_at_separator(text, font, limit, separator="   ·   "):
+    """Ab 0.58: Zu lange Zeilen wie "A   ·   B   ·   C" an den Trennpunkten
+    umbrechen (der Punkt faellt am Zeilenende weg). Passt die Zeile, bleibt
+    sie unveraendert."""
+    measure = tkfont.Font(font=font).measure
+    if separator not in text or measure(text) <= limit:
+        return text
+    lines, line = [], ""
+    for part in text.split(separator):
+        candidate = line + separator + part if line else part
+        if line and measure(candidate) > limit:
+            lines.append(line)
+            line = part
+        else:
+            line = candidate
+    lines.append(line)
+    return "\n".join(lines)
+
+
 class GradientPanel(tk.Canvas):
     """Breites Banner mit diagonalem Farbverlauf, Titel und Kennzahl."""
 
@@ -991,11 +1069,7 @@ class GradientPanel(tk.Canvas):
                              outline=color, width=max(1, px(2)))
         title, subtitle, big, big_sub = self._texts
         left = px(28)
-        self.create_text(left, height * 0.36, text=title, anchor="w",
-                         fill=C["on_accent"], font=tk_font(F["h1"]))
-        self.create_text(left, height * 0.66, text=subtitle, anchor="w",
-                         fill=mix(C["on_accent"], self.gradient[0], 0.25),
-                         font=tk_font(F["body"]))
+        limit = width - left - px(28)
         if big:
             right = width - px(34)
             self.create_text(right, height * 0.40, text=big, anchor="e",
@@ -1003,6 +1077,18 @@ class GradientPanel(tk.Canvas):
             self.create_text(right, height * 0.72, text=big_sub, anchor="e",
                              fill=mix(C["on_accent"], self.gradient[1], 0.25),
                              font=tk_font(F["small"]))
+            texts = [self.bbox(item) for item in self.find_all()[-2:]]
+            if all(texts):
+                # Ab 0.58: Links stehende Texte enden vor der grossen Zahl
+                # (schmales Fenster, grosse Schrift); sonst wird umbrochen
+                limit = min(bounds[0] for bounds in texts) - left - px(24)
+        limit = max(px(120), limit)
+        subtitle = _wrap_at_separator(subtitle, tk_font(F["body"]), limit)
+        self.create_text(left, height * 0.36, text=title, anchor="w", width=limit,
+                         fill=C["on_accent"], font=tk_font(F["h1"]))
+        self.create_text(left, height * 0.66, text=subtitle, anchor="w", width=limit,
+                         fill=mix(C["on_accent"], self.gradient[0], 0.25),
+                         font=tk_font(F["body"]))
 
 
 # ============================================================================
@@ -1240,9 +1326,11 @@ class LineChart(tk.Canvas):
         else:
             positions = [left + plot_w * i / (count - 1) for i in range(count)]
 
-        # x-Beschriftung ausduennen, damit nichts ueberlappt
-        stride = max(1, int(count / max(1, plot_w / px(55))))
-        shown = [index for index in range(count) if index % stride == 0 or index == count - 1]
+        # x-Beschriftung ausduennen, damit nichts ueberlappt (ab 0.58 vom
+        # rechten Ende aus und mit festen Schritten, siehe label_stride)
+        widest = max(text_width(str(label), F["tiny"]) for label in self._labels) * _SCALE[0]
+        slot = plot_w / max(1, count - 1)
+        shown = shown_labels(count, label_stride(count, slot, widest))
         if len(shown) > 1:
             # Die letzte Beschriftung endet am rechten Rand statt darueber; die
             # davor faellt weg, wenn sie sonst ueberlappen wuerde
@@ -1376,7 +1464,8 @@ class ShareBars(tk.Canvas):
         count = len(self._data)
         slot = plot_w / count
         bar = max(px(4), min(px(34), slot * 0.62))
-        stride = max(1, int(count / max(1, plot_w / px(55))))
+        widest = max(text_width(str(item[0]), F["tiny"]) for item in self._data) * _SCALE[0]
+        shown = set(shown_labels(count, label_stride(count, slot, widest)))
         right_color, wrong_color = C["green"], C["red"]
         for index, (label, share, rest) in enumerate(self._data):
             center = left + slot * (index + 0.5)
@@ -1395,7 +1484,7 @@ class ShareBars(tk.Canvas):
                 if bar >= px(18) or count <= 14:
                     self.create_text(center, top - px(8), text="%d" % share,
                                      fill=C["text_dim"], font=tk_font(F["tiny"]))
-            if index % stride == 0 or index == count - 1:
+            if index in shown:
                 self.create_text(center, height - bottom + px(15), text=label,
                                  fill=C["muted"], font=tk_font(F["tiny"]))
         # Legende: Kaestchen voll (richtig) und schraffiert (falsch)
