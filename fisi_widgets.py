@@ -1620,6 +1620,135 @@ class ShareBars(tk.Canvas):
                          fill=C["muted"], font=tk_font(F["tiny"]))
 
 
+# ============================================================================
+#  USV-BILD (ab 0.58)
+# ============================================================================
+
+UPS_BAR_COLORS = {"ziel": "accent", "neu": "purple", "ok": "green", "knapp": "red"}
+
+
+def _round_rect(canvas, x1, y1, x2, y2, radius, **kwargs):
+    """Abgerundetes Rechteck als geglaettetes Polygon."""
+    r = min(radius, (x2 - x1) / 2, (y2 - y1) / 2)
+    points = (x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
+              x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1)
+    return canvas.create_polygon(points, smooth=True, **kwargs)
+
+
+class UpsDiagram(tk.Canvas):
+    """Ab 0.58: bildliche Darstellung des USV-Rechners. Oben Last -> USV ->
+    Akku als Kaesten, darunter die Laufzeit als Balken (gewuenscht, Akku
+    neu, Akku am Lebensende) mit gestrichelter Linie bei der gewuenschten
+    Laufzeit. Nicht nur ueber die Farbe lesbar: jeder Balken hat Namen und
+    Minuten, ein zu kurzer Balken ist schraffiert. Daten: ups_calculate()
+    ["bild"] aus fisi_core (am Handy dieselben Daten)."""
+
+    BOX_H = 100
+
+    def __init__(self, parent, height=250, parent_bg=None):
+        self.bg = parent_bg or _bg_of(parent)
+        self._picture = None
+        self._size = None
+        super().__init__(parent, height=px(height), width=px(300), bg=self.bg,
+                         highlightthickness=0, bd=0)
+        self.bind("<Configure>", self._resized)
+
+    def _resized(self, event):
+        if (event.width, event.height) != self._size:
+            self._size = (event.width, event.height)
+            self._draw()
+
+    def set_picture(self, picture):
+        self._picture = picture
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        width, height = self.winfo_width(), self.winfo_height()
+        picture = self._picture
+        if width <= 1 or height <= 1 or not picture:
+            return
+        arrow = px(34)
+        box_w = (width - 2 * arrow - 2) / 3.0
+        box_h = px(self.BOX_H)
+        boxes = (("LAST", picture["last"], picture["last_detail"], C["accent"]),
+                 ("USV", picture["usv"], picture["usv_detail"], C["purple"]),
+                 ("AKKU", picture["akku"], picture["akku_detail"], C["green"]))
+        for index, (title, value, detail, color) in enumerate(boxes):
+            x1 = 1 + index * (box_w + arrow)
+            x2 = x1 + box_w
+            _round_rect(self, x1, 1, x2, box_h, px(12), fill=C["card_alt"],
+                        outline=C["border"])
+            self.create_rectangle(x1 + px(12), 1, x2 - px(12), px(4), fill=color,
+                                  outline="")
+            pad = x1 + px(14)
+            self.create_text(pad, px(22), text=title, anchor="w", fill=C["muted"],
+                             font=tk_font(F["label"]))
+            self.create_text(pad, px(48), text=value, anchor="w", fill=C["text"],
+                             font=tk_font(F["h2"]), width=box_w - px(20))
+            self.create_text(pad, px(74), text=detail, anchor="w", fill=C["text_dim"],
+                             font=tk_font(F["tiny"]), width=box_w - px(20))
+            if index == 1 and picture.get("auslastung") is not None:
+                self._load_bar(pad, x2 - px(14), px(88), picture["auslastung"],
+                               picture["grenze"])
+            if index < 2:
+                self.create_line(x2 + px(6), box_h / 2, x2 + arrow - px(6), box_h / 2,
+                                 fill=C["muted"], width=px(2), arrow=tk.LAST,
+                                 arrowshape=(px(8), px(10), px(4)))
+        self._bars(picture["balken"], box_h + px(20), width)
+        verdict = picture.get("urteil")
+        if verdict:
+            good = verdict == "passend"
+            self.create_text(1, height - px(12), anchor="w",
+                             text="Empfehlung: USV %s" % verdict,
+                             fill=C["green"] if good else C["red"],
+                             font=tk_font(F["body_bold"]))
+
+    def _load_bar(self, x1, x2, y, share, limit):
+        """Auslastung der USV mit Markierung bei der 80-%-Grenze."""
+        thick = px(6)
+        self.create_rectangle(x1, y, x2, y + thick, fill=C["ring_bg"], outline="")
+        filled = x1 + (x2 - x1) * min(share, 100) / 100.0
+        good = share <= limit
+        self.create_rectangle(x1, y, filled, y + thick,
+                              fill=C["green"] if good else C["red"], outline="",
+                              stipple="" if good else "gray50")
+        mark = x1 + (x2 - x1) * limit / 100.0
+        self.create_line(mark, y - px(3), mark, y + thick + px(3), fill=C["text"],
+                         width=px(2))
+
+    def _bars(self, bars, top, width):
+        if not bars:
+            return
+        font = F["tiny"]
+        label_w = max(text_width(bar["label"], font) for bar in bars) * _SCALE[0] + px(12)
+        value_w = max(text_width(bar["text"], font) for bar in bars) * _SCALE[0] + px(12)
+        x1, x2 = 1 + label_w, width - value_w
+        if x2 - x1 < px(40):
+            return
+        row = px(30)
+        thick = px(14)
+        goal_x = None
+        for index, bar in enumerate(bars):
+            y = top + index * row
+            self.create_text(1, y + thick / 2, text=bar["label"], anchor="w",
+                             fill=C["text_dim"], font=tk_font(font))
+            self.create_rectangle(x1, y, x2, y + thick, fill=C["ring_bg"], outline="")
+            end = x1 + (x2 - x1) * bar["anteil"]
+            color = C[UPS_BAR_COLORS[bar["art"]]]
+            if end > x1:
+                self.create_rectangle(x1, y, end, y + thick, fill=color, outline=color,
+                                      stipple="gray50" if bar["art"] == "knapp" else "")
+            self.create_text(x2 + px(8), y + thick / 2, text=bar["text"], anchor="w",
+                             fill=C["text"], font=tk_font(font))
+            if bar["art"] == "ziel":
+                goal_x = end
+        if goal_x is not None:
+            bottom = top + (len(bars) - 1) * row + thick + px(4)
+            self.create_line(goal_x, top - px(4), goal_x, bottom, fill=C["text"],
+                             dash=(3, 3))
+
+
 def _smooth_curve(points, floor, ceiling, steps=12):
     """Weiche Kurve exakt durch alle Messwerte (die Punkte liegen auf der
     Linie). Ab 0.56 monoton (fisi_theme.curve_controls): zwischen zwei

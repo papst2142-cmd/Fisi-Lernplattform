@@ -2302,6 +2302,472 @@ def screen_report(width_text, height_text, depth, fps_text):
     return "\n".join(lines)
 
 
+# ----------------------------------------------------------------------------
+#  USV-Kapazitaetsrechner (ab 0.58, Plan 2)
+# ----------------------------------------------------------------------------
+# Formeln und Quellen (vollstaendig im Bericht 0.58):
+#   Wirkleistung P (W) = Scheinleistung S (VA) x Leistungsfaktor
+#       (de.wikipedia.org/wiki/Leistungsfaktor: Leistungsfaktor = P / S)
+#   Akku (Ah) = ((Last W / Wirkungsgrad) / Strangspannung V) x Stunden
+#       (EnerSys, "Runtime and right-sizing a UPS", Beispiel
+#        ((450 / 0,84) / 48) x 8 = 89,29 Ah; ohne Herstellerwert 0,80 annehmen)
+#   Laufzeit (h) = Akku-Energie (Wh) x Wirkungsgrad / Last W  (dieselbe Formel
+#       nach der Zeit umgestellt)
+#   Alterungszuschlag 25 % (Faktor 1,25): IEEE 485 nach Vertiv/Battcon 2000 -
+#       am Lebensende hat der Akku noch 80 % der Nennkapazitaet
+#   Empfehlung: Last hoechstens 80 % der USV-Nennleistung (Schneider Electric,
+#       FAQ000268376: "preferably around 80% of the UPS' maximum capacity")
+# Vereinfachungen (im Rechner sichtbar): volle Nennkapazitaet nutzbar,
+# kein Peukert-Effekt, keine Temperatur. Leistungsfaktor 0,9 ist nur ein
+# Beispielwert (Annahme) - richtig ist der Wert vom Typenschild/Datenblatt.
+
+UPS_TITLE = "USV-Kapazität"
+UPS_SUBTITLE = "Akku, Laufzeit, Empfehlung"
+UPS_GROUP_LOAD = "LAST UND USV"
+UPS_GROUP_BATTERY = "AKKU UND LAUFZEIT"
+UPS_TASKS_TITLE = "ÜBUNGSAUFGABEN"
+UPS_TASK_NEXT = "Nächste Aufgabe"
+UPS_SOLUTION_SHOW = "Lösung anzeigen"
+UPS_SOLUTION_HIDE = "Lösung ausblenden"
+UPS_UNITS = [("W", "W"), ("VA", "VA")]
+UPS_MODES = [("akku", "Akku berechnen"), ("laufzeit", "Laufzeit berechnen"),
+             ("empfehlung", "Empfehlung")]
+UPS_LOAD_LIMIT = 80        # Prozent der Nennleistung (Schneider Electric)
+UPS_PF_DEFAULT = 0.9       # Annahme, Beispielwert
+UPS_ETA_DEFAULT = 80       # Prozent (EnerSys: ohne Herstellerwert 0,80)
+UPS_AGING_DEFAULT = 25     # Prozent (IEEE 485: Faktor 1,25)
+
+# Vorbelegung der Felder (PC und Handy gleich)
+UPS_FIELDS = [
+    # Schluessel, Beschriftung, Vorgabe
+    ("last", "Last", "600"),
+    ("pf", "Leistungsfaktor (λ)", "0,9"),
+    ("eta", "Wirkungsgrad der USV (%)", "80"),
+    ("minuten", "Gewünschte Laufzeit (min)", "15"),
+    ("alterung", "Alterungszuschlag (%)", "25"),
+    ("block_v", "Spannung je Akku-Block (V)", "12"),
+    ("block_ah", "Kapazität je Akku-Block (Ah)", "12"),
+    ("reihe", "Blöcke in Reihe", "2"),
+    ("parallel", "Stränge parallel", "1"),
+    ("nenn_va", "USV-Nennleistung (VA)", "1500"),
+    ("nenn_w", "USV-Nennleistung (W, optional)", "900"),
+]
+UPS_FIELD_CAPTIONS = {key: caption for key, caption, _value in UPS_FIELDS}
+UPS_FIELD_DEFAULTS = {key: value for key, _caption, value in UPS_FIELDS}
+UPS_UNIT_CAPTION = "Einheit der Last"
+
+# Grenzen je Feld: (kleinster Wert, groesster Wert, ganze Zahl, 0 erlaubt)
+UPS_LIMITS = {
+    "last": (0, 1000000, False, False),
+    "pf": (0.1, 1, False, True),
+    "eta": (10, 100, False, True),
+    "minuten": (0, 1440, False, False),
+    "alterung": (0, 100, False, True),
+    "block_v": (0, 1000, False, False),
+    "block_ah": (0, 10000, False, False),
+    "reihe": (1, 100, True, True),
+    "parallel": (1, 20, True, True),
+    "nenn_va": (0, 1000000, False, False),
+    "nenn_w": (0, 1000000, False, False),
+}
+
+UPS_RULE_TEXT = (
+    "Regel für die Empfehlung: Die USV ist passend, wenn (1) die Last höchstens "
+    "%d %% ihrer Nennleistung in VA und in W ausmacht (20 %% Reserve, Empfehlung "
+    "von Schneider Electric) und (2) der Akku auch am Lebensende (nach dem "
+    "Alterungszuschlag) die gewünschte Laufzeit schafft. Sonst ist sie zu klein."
+    % UPS_LOAD_LIMIT)
+UPS_SIMPLE_TEXT = (
+    "Vereinfacht: Der Rechner nimmt die volle Nennkapazität des Akkus. Bei kurzen "
+    "Laufzeiten (hoher Strom), Kälte oder Hitze liefert ein Bleiakku deutlich "
+    "weniger. Für eine echte Planung die Laufzeittabelle des Herstellers nutzen. "
+    "Der Leistungsfaktor 0,9 ist nur ein Beispielwert, der echte Wert steht auf "
+    "dem Typenschild oder im Datenblatt.")
+
+
+def de_number(value, digits=2):
+    """Zahl in deutscher Schreibweise (1.234,56)."""
+    text = "{:,.{}f}".format(value, digits)
+    return text.replace(",", "#").replace(".", ",").replace("#", ".")
+
+
+def _de_short(value, digits=2):
+    """Wie de_number, aber ohne ueberfluessige Nullen (0,9 statt 0,90)."""
+    text = de_number(value, digits)
+    if "," in text:
+        text = text.rstrip("0").rstrip(",")
+    return text
+
+
+def ups_number(fields, key):
+    """Liest ein Feld des USV-Rechners (Komma oder Punkt) und prueft die
+    Grenzen. Fehler kommen als InputError mit der Feldbeschriftung."""
+    caption = UPS_FIELD_CAPTIONS[key]
+    low, high, integer, zero_ok = UPS_LIMITS[key]
+    raw = str(fields.get(key, "") or "").strip().replace(" ", "")
+    if not raw:
+        raise InputError("Bitte einen Wert eingeben: %s." % caption)
+    raw = raw.replace(".", "").replace(",", ".") if raw.count(".") and \
+        raw.count(",") else raw.replace(",", ".")
+    try:
+        value = float(raw)
+    except ValueError:
+        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
+    if value != value or value in (float("inf"), float("-inf")):
+        raise InputError("Bitte eine Zahl eingeben: %s." % caption)
+    if integer and value != int(value):
+        raise InputError("Bitte eine ganze Zahl eingeben: %s." % caption)
+    too_small = value < low if zero_ok else value <= low
+    if too_small or value > high:
+        if zero_ok:
+            raise InputError("%s muss zwischen %s und %s liegen."
+                             % (caption, _de_short(low), _de_short(high)))
+        raise InputError("%s muss größer als %s und höchstens %s sein."
+                         % (caption, _de_short(low), _de_short(high)))
+    return int(value) if integer else value
+
+
+def ups_load(load, unit, pf):
+    """Last in W und VA: P = S x Leistungsfaktor."""
+    if unit == "VA":
+        return load * pf, load
+    return load, load / pf
+
+
+def ups_battery_need(watt, eta_pct, minutes, aging_pct, string_volt):
+    """Berechnung A: noetige Akku-Energie und Kapazitaet je Strang."""
+    hours = minutes / 60.0
+    out_wh = watt * hours                      # Energie fuer die Last
+    battery_wh = out_wh / (eta_pct / 100.0)    # was der Akku liefern muss
+    need_wh = battery_wh * (1 + aging_pct / 100.0)
+    return {"stunden": hours, "last_wh": out_wh, "akku_wh": battery_wh,
+            "bedarf_wh": need_wh, "bedarf_ah": need_wh / string_volt}
+
+
+def ups_battery_energy(block_v, block_ah, series, parallel):
+    """Energie (Wh) eines Akkus aus Bloecken in Reihe und Straengen."""
+    return block_v * series * block_ah * parallel
+
+
+def ups_runtime(watt, eta_pct, battery_wh, aging_pct):
+    """Berechnung B: Laufzeit in Minuten, neu und am Lebensende."""
+    new = battery_wh * (eta_pct / 100.0) / watt * 60.0
+    return {"neu": new, "ende": new / (1 + aging_pct / 100.0)}
+
+
+def ups_end_share(aging_pct):
+    """Restkapazitaet am Lebensende in Prozent (1,25 -> 80 %)."""
+    return 100.0 / (1 + aging_pct / 100.0)
+
+
+def ups_check(watt, va, rated_va, rated_w, minutes_end, minutes):
+    """Empfehlung nach UPS_RULE_TEXT. Liefert (passend, Pruefzeilen)."""
+    checks = []
+    share_va = va / rated_va * 100
+    checks.append((share_va <= UPS_LOAD_LIMIT,
+                   "Auslastung Scheinleistung: %s VA von %s VA = %s %%"
+                   % (de_number(va, 0), de_number(rated_va, 0),
+                      de_number(share_va, 1))))
+    if rated_w:
+        share_w = watt / rated_w * 100
+        checks.append((share_w <= UPS_LOAD_LIMIT,
+                       "Auslastung Wirkleistung: %s W von %s W = %s %%"
+                       % (de_number(watt, 0), de_number(rated_w, 0),
+                          de_number(share_w, 1))))
+    checks.append((minutes_end >= minutes,
+                   "Laufzeit am Lebensende: %s min, gewünscht %s min"
+                   % (de_number(minutes_end, 1), _de_short(minutes))))
+    return all(ok for ok, _text in checks), checks
+
+
+def _ups_bars(minutes, runtime=None, aging_pct=0):
+    """Balken fuer das Bild: gewuenscht, Akku neu, Akku am Lebensende."""
+    bars = [{"label": "Gewünschte Laufzeit", "minuten": minutes, "art": "ziel"}]
+    if runtime is not None:
+        bars.append({"label": "Akku neu", "minuten": runtime["neu"], "art": "neu"})
+        bars.append({"label": "Akku am Lebensende (%s %%)"
+                     % de_number(ups_end_share(aging_pct), 0),
+                     "minuten": runtime["ende"],
+                     "art": "ok" if runtime["ende"] >= minutes else "knapp"})
+    top = max(bar["minuten"] for bar in bars) or 1
+    for bar in bars:
+        bar["anteil"] = bar["minuten"] / top
+        bar["text"] = "%s min" % de_number(bar["minuten"], 1)
+    return bars
+
+
+def ups_calculate(mode, fields, unit="W"):
+    """Rechnet eine der drei Aufgaben des USV-Rechners.
+
+    mode: "akku" (Berechnung A), "laufzeit" (Berechnung B) oder
+    "empfehlung". fields: Texte der Eingabefelder (Schluessel aus
+    UPS_FIELDS). Liefert {"text", "bild", "passend"}; "bild" beschreibt
+    die bildliche Darstellung (Kaesten Last -> USV -> Akku und Balken der
+    Laufzeit) fuer PC und Handy gleich. Ungueltige Eingaben -> InputError.
+    """
+    if mode not in dict(UPS_MODES):
+        raise InputError("Unbekannte Berechnung.")
+    load = ups_number(fields, "last")
+    pf = ups_number(fields, "pf")
+    eta = ups_number(fields, "eta")
+    minutes = ups_number(fields, "minuten")
+    aging = ups_number(fields, "alterung")
+    block_v = ups_number(fields, "block_v")
+    series = ups_number(fields, "reihe")
+    string_v = block_v * series
+    watt, va = ups_load(load, unit, pf)
+
+    lines = [
+        "Last                  : %s W / %s VA (Leistungsfaktor %s)"
+        % (de_number(watt, 0), de_number(va, 0), _de_short(pf)),
+        "Wirkungsgrad der USV  : %s %%" % _de_short(eta),
+        "Strangspannung        : %s x %s V = %s V"
+        % (series, _de_short(block_v), _de_short(string_v)),
+    ]
+    picture = {"last": "%s W" % de_number(watt, 0),
+               "last_detail": "%s VA, λ %s" % (de_number(va, 0), _de_short(pf)),
+               "usv": "η %s %%" % _de_short(eta), "usv_detail": "Wirkungsgrad",
+               "akku": "", "akku_detail": "", "auslastung": None,
+               "grenze": UPS_LOAD_LIMIT, "balken": [],
+               "urteil": None}
+    passend = None
+
+    if mode == "akku":
+        need = ups_battery_need(watt, eta, minutes, aging, string_v)
+        runtime = {"neu": minutes * (1 + aging / 100.0), "ende": minutes}
+        lines += [
+            "Gewünschte Laufzeit   : %s min = %s h"
+            % (_de_short(minutes), de_number(need["stunden"], 3)),
+            "",
+            "Energie für die Last  : %s Wh" % de_number(need["last_wh"]),
+            "Energie aus dem Akku  : %s Wh (geteilt durch Wirkungsgrad)"
+            % de_number(need["akku_wh"]),
+            "Mit Alterungszuschlag : %s Wh (+%s %%)"
+            % (de_number(need["bedarf_wh"]), _de_short(aging)),
+            "Benötigte Kapazität   : %s Ah bei %s V"
+            % (de_number(need["bedarf_ah"]), _de_short(string_v)),
+        ]
+        picture["akku"] = "%s Wh" % de_number(need["bedarf_wh"], 0)
+        picture["akku_detail"] = "%s Ah bei %s V" % (de_number(need["bedarf_ah"], 1),
+                                                    _de_short(string_v))
+        picture["balken"] = _ups_bars(minutes, runtime, aging)
+    else:
+        block_ah = ups_number(fields, "block_ah")
+        parallel = ups_number(fields, "parallel")
+        battery_wh = ups_battery_energy(block_v, block_ah, series, parallel)
+        runtime = ups_runtime(watt, eta, battery_wh, aging)
+        lines += [
+            "Akku                  : %s x %s V, %s Ah, %s"
+            % (series, _de_short(block_v), _de_short(block_ah),
+               plural(parallel, "Strang", "Stränge")),
+            "Akku-Energie          : %s V x %s Ah x %s = %s Wh"
+            % (_de_short(string_v), _de_short(block_ah), parallel,
+               de_number(battery_wh)),
+            "",
+            "Laufzeit (Akku neu)   : %s min" % de_number(runtime["neu"], 1),
+            "Laufzeit Lebensende   : %s min (%s %% Kapazität)"
+            % (de_number(runtime["ende"], 1), de_number(ups_end_share(aging), 0)),
+        ]
+        picture["akku"] = "%s Wh" % de_number(battery_wh, 0)
+        picture["akku_detail"] = "%s x %s V, %s Ah" % (series * parallel,
+                                                      _de_short(block_v),
+                                                      _de_short(block_ah))
+        picture["balken"] = _ups_bars(minutes, runtime, aging)
+
+        if mode == "empfehlung":
+            rated_va = ups_number(fields, "nenn_va")
+            rated_w = ups_number(fields, "nenn_w") if str(
+                fields.get("nenn_w", "") or "").strip() else None
+            passend, checks = ups_check(watt, va, rated_va, rated_w,
+                                        runtime["ende"], minutes)
+            share = max(va / rated_va, watt / rated_w if rated_w else 0) * 100
+            picture["auslastung"] = share
+            picture["usv_detail"] = "Auslastung %s %%" % de_number(share, 0)
+            picture["urteil"] = "passend" if passend else "zu klein"
+            lines += ["", "Empfehlung            : USV %s"
+                      % ("passend" if passend else "zu klein")]
+            lines += ["  %s  %s" % ("ok  " if ok else "NEIN", text)
+                      for ok, text in checks]
+            if rated_w is None:
+                lines.append("  Hinweis: ohne Nennleistung in W nur VA geprüft.")
+    lines += ["", UPS_SIMPLE_TEXT]
+    return {"text": "\n".join(lines), "bild": picture, "passend": passend}
+
+
+# Uebungsaufgaben zum USV-Rechner: Werte typisch aus der Praxis (Annahmen,
+# gekennzeichnet), Loesung wird mit denselben Formeln gerechnet.
+UPS_TASKS = [
+    {"titel": "Scheinleistung und Wirkleistung",
+     "frage": "Ein Server hat laut Typenschild 800 VA bei einem Leistungsfaktor "
+              "von 0,9. Wie groß ist die Wirkleistung in W? Welche Nennleistung "
+              "in VA sollte die USV mindestens haben, wenn die Last höchstens "
+              "80 % betragen soll?",
+     "annahmen": "Leistungsfaktor 0,9 (Annahme, sonst Typenschild).",
+     "werte": {"s": 800, "pf": 0.9}},
+    {"titel": "Akku-Kapazität (Beispiel EnerSys)",
+     "frage": "Eine USV soll 450 W Last 8 Stunden lang versorgen. Der "
+              "Wechselrichter hat bei dieser Last einen Wirkungsgrad von 84 %, "
+              "der Akkustrang hat 48 V. Wie viel Ah braucht der Strang?",
+     "annahmen": "Ohne Alterungszuschlag, volle Nennkapazität nutzbar.",
+     "werte": {"w": 450, "eta": 84, "min": 480, "v": 48, "alt": 0}},
+    {"titel": "Laufzeit eines vorhandenen Akkus",
+     "frage": "Eine kleine USV hat 2 Blöcke zu je 12 V und 9 Ah in Reihe. Die "
+              "Last beträgt 300 W, der Wirkungsgrad 85 %. Wie lange läuft sie "
+              "mit neuem Akku und am Lebensende (80 % Kapazität)?",
+     "annahmen": "Wirkungsgrad 85 % (Annahme), volle Nennkapazität nutzbar.",
+     "werte": {"w": 300, "eta": 85, "v": 12, "ah": 9, "reihe": 2, "par": 1,
+               "alt": 25}},
+    {"titel": "Passt die USV?",
+     "frage": "Angeschlossen sind 1200 VA bei einem Leistungsfaktor von 0,9. "
+              "Die USV hat 1500 VA und 1000 W Nennleistung. Ist sie nach der "
+              "80-%-Regel passend?",
+     "annahmen": "Leistungsfaktor 0,9 (Annahme). Nur die Leistung wird geprüft.",
+     "werte": {"s": 1200, "pf": 0.9, "nenn_va": 1500, "nenn_w": 1000}},
+    {"titel": "Akku mit Alterungszuschlag",
+     "frage": "Ein Switch-Schrank braucht 1000 W für 10 Minuten. Wirkungsgrad "
+              "90 %, Strangspannung 48 V, Alterungszuschlag 25 %. Wie viel Wh "
+              "und Ah braucht der Akku?",
+     "annahmen": "Wirkungsgrad 90 % (Annahme), volle Nennkapazität nutzbar.",
+     "werte": {"w": 1000, "eta": 90, "min": 10, "v": 48, "alt": 25}},
+    {"titel": "Wie viele Stränge?",
+     "frage": "500 W sollen 30 Minuten überbrückt werden. Wirkungsgrad 80 %, "
+              "Alterungszuschlag 25 %. Ein Strang besteht aus 2 Blöcken zu je "
+              "12 V und 12 Ah in Reihe. Wie viele Stränge braucht man parallel?",
+     "annahmen": "Wirkungsgrad 80 % (EnerSys-Richtwert ohne Herstellerwert).",
+     "werte": {"w": 500, "eta": 80, "min": 30, "alt": 25, "v": 12, "ah": 12,
+               "reihe": 2}},
+]
+
+
+def ups_task_solution(index):
+    """Loesungsweg einer Uebungsaufgabe (gerechnet, nicht abgeschrieben)."""
+    task = UPS_TASKS[index]
+    w = task["werte"]
+    if index == 0:
+        watt, _va = ups_load(w["s"], "VA", w["pf"])
+        need = w["s"] / (UPS_LOAD_LIMIT / 100.0)
+        return ("P = S x Leistungsfaktor = %s VA x %s = %s W\n"
+                "Nennleistung = Last / 0,8 = %s VA / 0,8 = %s VA\n"
+                "Antwort: %s W Wirkleistung, USV mit mindestens %s VA."
+                % (de_number(w["s"], 0), _de_short(w["pf"]), de_number(watt, 0),
+                   de_number(w["s"], 0), de_number(need, 0), de_number(watt, 0),
+                   de_number(need, 0)))
+    if index in (1, 4):
+        need = ups_battery_need(w["w"], w["eta"], w["min"], w["alt"], w["v"])
+        hours = _de_short(need["stunden"], 4)
+        steps = ["Zeit = %s min / 60 = %s h" % (_de_short(w["min"]), hours),
+                 "Energie Last = %s W x %s h = %s Wh"
+                 % (w["w"], hours, de_number(need["last_wh"])),
+                 "Energie Akku = %s Wh / %s = %s Wh"
+                 % (de_number(need["last_wh"]), _de_short(w["eta"] / 100.0),
+                    de_number(need["akku_wh"]))]
+        if w["alt"]:
+            steps.append("Mit Alterungszuschlag = %s Wh x %s = %s Wh"
+                         % (de_number(need["akku_wh"]),
+                            _de_short(1 + w["alt"] / 100.0),
+                            de_number(need["bedarf_wh"])))
+        steps.append("Kapazität = %s Wh / %s V = %s Ah"
+                     % (de_number(need["bedarf_wh"]), w["v"],
+                        de_number(need["bedarf_ah"])))
+        steps.append("Antwort: %s Wh, also %s Ah bei %s V."
+                     % (de_number(need["bedarf_wh"]), de_number(need["bedarf_ah"]),
+                        w["v"]))
+        return "\n".join(steps)
+    if index == 2:
+        energy = ups_battery_energy(w["v"], w["ah"], w["reihe"], w["par"])
+        runtime = ups_runtime(w["w"], w["eta"], energy, w["alt"])
+        return ("Akku-Energie = %s x %s V x %s Ah = %s Wh\n"
+                "Laufzeit = %s Wh x %s / %s W x 60 = %s min\n"
+                "Lebensende = %s min x 0,8 = %s min\n"
+                "Antwort: neu etwa %s min, am Lebensende etwa %s min."
+                % (w["reihe"], w["v"], w["ah"], de_number(energy, 0),
+                   de_number(energy, 0), _de_short(w["eta"] / 100.0), w["w"],
+                   de_number(runtime["neu"]), de_number(runtime["neu"]),
+                   de_number(runtime["ende"]), de_number(runtime["neu"], 1),
+                   de_number(runtime["ende"], 1)))
+    if index == 3:
+        watt, va = ups_load(w["s"], "VA", w["pf"])
+        share_va = va / w["nenn_va"] * 100
+        share_w = watt / w["nenn_w"] * 100
+        return ("P = %s VA x %s = %s W\n"
+                "Auslastung VA = %s / %s = %s %% (höchstens 80 %%: %s)\n"
+                "Auslastung W = %s / %s = %s %% (höchstens 80 %%: %s)\n"
+                "Antwort: Die USV ist zu klein, weil die Wirkleistung über "
+                "80 %% liegt (sogar über 100 %%)."
+                % (de_number(w["s"], 0), _de_short(w["pf"]), de_number(watt, 0),
+                   de_number(va, 0), de_number(w["nenn_va"], 0),
+                   de_number(share_va, 0), "ja" if share_va <= 80 else "nein",
+                   de_number(watt, 0), de_number(w["nenn_w"], 0),
+                   de_number(share_w, 0), "ja" if share_w <= 80 else "nein"))
+    # index 5: Anzahl Straenge
+    need = ups_battery_need(w["w"], w["eta"], w["min"], w["alt"], w["v"] * w["reihe"])
+    string_wh = ups_battery_energy(w["v"], w["ah"], w["reihe"], 1)
+    count = ups_strings_needed(need["bedarf_wh"], string_wh)
+    return ("Bedarf = %s W x %s h / %s x %s = %s Wh\n"
+            "Ein Strang = %s x %s V x %s Ah = %s Wh\n"
+            "Stränge = %s Wh / %s Wh = %s, aufgerundet %d\n"
+            "Antwort: %d Stränge parallel (%s Wh)."
+            % (w["w"], _de_short(need["stunden"]), _de_short(w["eta"] / 100.0),
+               _de_short(1 + w["alt"] / 100.0), de_number(need["bedarf_wh"]),
+               w["reihe"], w["v"], w["ah"], de_number(string_wh, 0),
+               de_number(need["bedarf_wh"]), de_number(string_wh, 0),
+               de_number(need["bedarf_wh"] / string_wh), count, count,
+               de_number(string_wh * count, 0)))
+
+
+def ups_strings_needed(need_wh, string_wh):
+    """Anzahl paralleler Straenge (immer aufrunden)."""
+    count = int(need_wh // string_wh)
+    return count + (1 if need_wh - count * string_wh > 1e-9 else 0)
+
+
+def ups_task_text(index, solution=False):
+    """Aufgabe (und auf Wunsch der Loesungsweg) als Text."""
+    task = UPS_TASKS[index % len(UPS_TASKS)]
+    text = "Aufgabe %d von %d: %s\n\n%s\n\nAnnahmen: %s" % (
+        index % len(UPS_TASKS) + 1, len(UPS_TASKS), task["titel"], task["frage"],
+        task["annahmen"])
+    if solution:
+        text += "\n\nLösungsweg:\n" + ups_task_solution(index % len(UPS_TASKS))
+    return text
+
+
+CALC_EXPLAIN_UPS = (
+    "RECHENWEG USV-KAPAZITÄT\n"
+    "Am Beispiel 600 W Last, Wirkungsgrad 80 %, 15 Minuten,\n"
+    "Akku 2 x 12 V in Reihe (24 V), Alterungszuschlag 25 %\n\n"
+    "SCHRITT 1: VA und W\n"
+    "   Wirkleistung P (W) = Scheinleistung S (VA) x Leistungsfaktor\n"
+    "   600 W / 0,9 = 667 VA (Leistungsfaktor 0,9 ist eine Annahme,\n"
+    "   der echte Wert steht auf dem Typenschild).\n\n"
+    "SCHRITT 2: Energie für die Last\n"
+    "   Energie (Wh) = Last (W) x Zeit (h) = 600 W x 0,25 h = 150 Wh\n\n"
+    "SCHRITT 3: Verluste der USV\n"
+    "   Der Akku muss mehr liefern, weil die USV Verluste hat:\n"
+    "   150 Wh / 0,8 = 187,5 Wh\n\n"
+    "SCHRITT 4: Alterungszuschlag\n"
+    "   Ein Bleiakku gilt mit 80 % Restkapazität als verbraucht. Damit\n"
+    "   er auch dann reicht, plant man 25 % mehr ein (Faktor 1,25):\n"
+    "   187,5 Wh x 1,25 = 234,38 Wh\n\n"
+    "SCHRITT 5: Kapazität in Ah\n"
+    "   Ah = Wh / Strangspannung = 234,38 Wh / 24 V = 9,77 Ah\n\n"
+    "LAUFZEIT (umgekehrt)\n"
+    "   Akku-Energie = 24 V x 12 Ah = 288 Wh\n"
+    "   Laufzeit = 288 Wh x 0,8 / 600 W x 60 = 23,04 min (neu)\n"
+    "   am Lebensende: 23,04 min x 0,8 = 18,43 min\n\n"
+    "EMPFEHLUNG\n"
+    "   Die Last soll höchstens 80 % der USV-Nennleistung betragen\n"
+    "   (in VA und in W). Beispiel USV 1500 VA / 900 W:\n"
+    "   667 / 1500 = 44 %, 600 / 900 = 67 % -> passend,\n"
+    "   18,43 min am Lebensende >= 15 min -> passend.\n\n"
+    "QUELLEN\n"
+    "   Leistungsfaktor = P / S: Wikipedia, Leistungsfaktor\n"
+    "   Ah-Formel und Wirkungsgrad 0,80: EnerSys, Runtime and\n"
+    "   right-sizing a UPS\n"
+    "   Faktor 1,25 und 80 %: IEEE 485 (Vertiv/Battcon 2000)\n"
+    "   80 % Auslastung: Schneider Electric, FAQ000268376"
+)
+
 # Rechenwege zum Aufklappen unter den Praxis-Rechnern
 CALC_EXPLAIN_SUBNET = (
     "RECHENWEG SUBNETTING\n"

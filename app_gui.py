@@ -50,6 +50,10 @@ from fisi_core import (  # noqa: E402
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
+    CALC_EXPLAIN_UPS, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
+    UPS_TASKS, UPS_UNITS, ups_calculate, ups_task_text,
+    UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
+    UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
 )
 from fisi_core import (error_log_path, install_error_log, log_exception,  # noqa: E402
                        write_error_log)
@@ -90,7 +94,7 @@ from fisi_game_gui import (  # noqa: E402
 from fisi_widgets import (  # noqa: E402
     Card, CalendarPanel, FoldCard, GradientBar, GradientPanel, Heatmap, IconButton,
     GradientSlider, IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
-    ScrollArea, ShareBars, ThemeTimeline, F,
+    ScrollArea, ShareBars, ThemeTimeline, UpsDiagram, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
     ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
@@ -4090,7 +4094,8 @@ CALC_TABS = [("rechner", "Rechner"), ("trainer", "Trainer")]
 
 class CalcView(View):
     def build(self):
-        self.info_visible = {"subnet": False, "raid": False, "screen": False}
+        self.info_visible = {"subnet": False, "raid": False, "screen": False,
+                             "ups": False}
         self.info_frames = {}
         self.info_buttons = {}
 
@@ -4182,9 +4187,98 @@ class CalcView(View):
         self.txt_screen.pack(fill="both", expand=True, pady=(14, 0))
         self._build_info_toggle(screen.body, "screen", CALC_EXPLAIN_SCREEN)
 
+        self._build_ups(layout)
+
         set_text(self.txt_subnet, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_raid, "Noch keine Berechnung durchgeführt.")
         set_text(self.txt_screen, "Noch keine Berechnung durchgeführt.")
+
+    def _build_ups(self, layout):
+        """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner mit Bild, Empfehlung
+        und Uebungsaufgaben. Formeln und Quellen in fisi_core."""
+        ups = Card(layout, title=UPS_TITLE, accent=C["orange"], subtitle=UPS_SUBTITLE)
+        ups.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        columns = transparent_frame(ups.body)
+        columns.pack(anchor="w", fill="x")
+        self.ups_entries = {}
+        groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
+                  (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
+                                       "minuten", "alterung")))
+        for column, (caption, keys) in enumerate(groups):
+            box = transparent_frame(columns)
+            box.grid(row=0, column=column, sticky="nw", padx=(0, 32) if column == 0 else 0)
+            make_label(box, caption, font=F["label"], fg=C["muted"]).grid(
+                row=0, column=0, columnspan=2, sticky="w", pady=(0, 4))
+            for row, key in enumerate(keys, start=1):
+                make_label(box, UPS_FIELD_CAPTIONS[key], font=F["small"],
+                           fg=C["text_dim"]).grid(row=row, column=0, sticky="w", pady=4)
+                entry = EntryBox(box, width=8, value=UPS_FIELD_DEFAULTS[key])
+                entry.grid(row=row, column=1, sticky="w", padx=12, pady=4)
+                entry.entry.bind("<Return>", lambda _e: self.calc_ups("empfehlung"))
+                self.ups_entries[key] = entry
+                if key == "last":
+                    self.ups_unit = PillGroup(box, UPS_UNITS, initial=0)
+                    self.ups_unit.grid(row=row, column=2, sticky="w")
+        buttons = transparent_frame(ups.body)
+        buttons.pack(anchor="w", pady=(14, 0))
+        for mode, caption in UPS_MODES:
+            NeoButton(buttons, caption, lambda m=mode: self.calc_ups(m),
+                      kind="accent" if mode == "empfehlung" else "primary").pack(
+                          side="left", padx=(0, 10))
+        make_label(ups.body, UPS_RULE_TEXT, font=F["small"], fg=C["text_dim"],
+                   anchor="w", justify="left", wraplength=900).pack(
+                       anchor="w", fill="x", pady=(12, 0))
+        self.ups_picture = UpsDiagram(ups.body, height=250, parent_bg=C["card"])
+        self.ups_picture.pack(fill="x", pady=(14, 0))
+        self.txt_ups = make_autogrow_text(ups.body, min_height=8, max_height=24,
+                                          font=F["mono_small"])
+        self.txt_ups.configure(state="disabled")
+        self.txt_ups.pack(fill="x", pady=(14, 0))
+        self._build_info_toggle(ups.body, "ups", CALC_EXPLAIN_UPS)
+
+        # Uebungsaufgaben mit Loesungsweg
+        make_label(ups.body, UPS_TASKS_TITLE, font=F["label"], fg=C["muted"]).pack(
+            anchor="w", pady=(18, 0))
+        task_buttons = transparent_frame(ups.body)
+        task_buttons.pack(anchor="w", pady=(8, 0))
+        NeoButton(task_buttons, UPS_TASK_NEXT, self.next_ups_task, kind="ghost").pack(
+            side="left", padx=(0, 10))
+        self.btn_ups_solution = NeoButton(task_buttons, UPS_SOLUTION_SHOW,
+                                          self.toggle_ups_solution, kind="ghost")
+        self.btn_ups_solution.pack(side="left")
+        self.txt_ups_task = make_autogrow_text(ups.body, min_height=6, max_height=18,
+                                               font=F["mono_small"])
+        self.txt_ups_task.configure(state="disabled")
+        self.txt_ups_task.pack(fill="x", pady=(10, 0))
+        self.ups_task = 0
+        self.ups_solution = False
+        self._show_ups_task()
+        self.calc_ups("empfehlung", quiet=True)
+
+    def _show_ups_task(self):
+        set_text(self.txt_ups_task, ups_task_text(self.ups_task, self.ups_solution))
+        self.btn_ups_solution.set_text(UPS_SOLUTION_HIDE if self.ups_solution
+                                       else UPS_SOLUTION_SHOW)
+
+    def next_ups_task(self):
+        self.ups_task = (self.ups_task + 1) % len(UPS_TASKS)
+        self.ups_solution = False
+        self._show_ups_task()
+
+    def toggle_ups_solution(self):
+        self.ups_solution = not self.ups_solution
+        self._show_ups_task()
+
+    def calc_ups(self, mode, quiet=False):
+        fields = {key: entry.get() for key, entry in self.ups_entries.items()}
+        try:
+            result = ups_calculate(mode, fields, self.ups_unit.get())
+        except InputError as error:
+            if not quiet:
+                messagebox.showerror("Ungültige Eingabe", str(error))
+            return
+        set_text(self.txt_ups, result["text"])
+        self.ups_picture.set_picture(result["bild"])
 
     def _on_tab(self, value):
         if value == "trainer":
