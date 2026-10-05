@@ -991,6 +991,80 @@ def _fmt(value):
     return str(int(value)) if float(value).is_integer() else "%.1f" % value
 
 
+UPS_BAR_COLORS = {"ziel": "accent", "neu": "purple", "ok": "green", "knapp": "red"}
+
+
+class UpsPicture(ft.Semantics):
+    """Ab 0.58: Bild des USV-Rechners (wie am PC UpsDiagram): Last -> USV ->
+    Akku untereinander, darunter die Laufzeit als Balken. Daten:
+    fisi_core.ups_calculate()["bild"], Vorlesetext ups_picture_summary."""
+
+    def __init__(self):
+        self.column = ft.Column(spacing=6, tight=True)
+        super().__init__(content=self.column, container=True, label="")
+
+    def set_picture(self, picture, summary=""):
+        self.label = summary
+        boxes = (("LAST", picture["last"], picture["last_detail"], C["accent"], None),
+                 ("USV", picture["usv"], picture["usv_detail"], C["purple"],
+                  picture.get("auslastung")),
+                 ("AKKU", picture["akku"], picture["akku_detail"], C["green"], None))
+        controls = []
+        for index, (title, value, detail, color, share) in enumerate(boxes):
+            lines = [text(title, size=11, color=C["muted"], weight=ft.FontWeight.BOLD),
+                     text(value, size=18, weight=ft.FontWeight.BOLD),
+                     text(detail, size=12, color=C["text_dim"])]
+            if share is not None:
+                lines.append(self._load_bar(share, picture["grenze"]))
+            controls.append(ft.Container(
+                content=ft.Row([ft.Container(width=4, height=grow(52), bgcolor=color,
+                                             border_radius=2),
+                                ft.Column(lines, spacing=2, tight=True, expand=True)],
+                               spacing=12),
+                bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]),
+                border_radius=12, padding=12))
+            if index < 2:
+                controls.append(ft.Row([ft.Icon(ft.Icons.ARROW_DOWNWARD, size=grow(18),
+                                                color=C["muted"])],
+                                       alignment=ft.MainAxisAlignment.CENTER))
+        controls.append(ft.Container(height=4))
+        for bar in picture["balken"]:
+            color = C[UPS_BAR_COLORS[bar["art"]]]
+            controls.append(ft.Row([text(bar["label"], size=12, color=C["text_dim"],
+                                         expand=True),
+                                    text(bar["text"], size=12)]))
+            controls.append(self._bar(bar["anteil"], color))
+        if picture.get("urteil"):
+            good = picture["urteil"] == "passend"
+            controls.append(text("Empfehlung: USV %s" % picture["urteil"], size=15,
+                                 color=C["green"] if good else C["red"],
+                                 weight=ft.FontWeight.BOLD))
+        self.column.controls = controls
+
+    @staticmethod
+    def _bar(share, color, height=12):
+        filled = max(0, min(1000, int(round(share * 1000))))
+        parts = []
+        if filled:
+            parts.append(ft.Container(expand=filled, bgcolor=color))
+        if filled < 1000:
+            parts.append(ft.Container(expand=1000 - filled, bgcolor=C["ring_bg"]))
+        return ft.Container(content=ft.Row(parts, spacing=0), height=height,
+                            border_radius=height / 2,
+                            clip_behavior=ft.ClipBehavior.ANTI_ALIAS)
+
+    def _load_bar(self, share, limit):
+        """Auslastung mit Strich bei der Grenze (80 %)."""
+        good = share <= limit
+        bar = self._bar(min(share, 100) / 100.0, C["green"] if good else C["red"], 6)
+        mark = ft.Row([ft.Container(expand=int(limit)),
+                       ft.Container(width=2, height=12, bgcolor=C["text"]),
+                       ft.Container(expand=int(100 - limit))], spacing=0)
+        return ft.Container(content=ft.Stack([ft.Container(content=bar, top=3, left=0,
+                                                           right=0), mark], height=12),
+                            margin=ft.Margin.only(top=4))
+
+
 class Heatmap(ft.Column):
     """Aktivitaet je Fachbereich (oder Thema) und Tag als Kaestchen-Raster.
     on_click(index) macht die Zeilen antippbar (Reinzoom in die Themen)."""

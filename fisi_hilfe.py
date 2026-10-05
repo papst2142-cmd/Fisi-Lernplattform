@@ -256,12 +256,18 @@ HELP_SECTIONS = [
               "Prüfung, mit Musterlösung. Im „Testprojekt“ übst du Kundenaufträge, im "
               "„Abschlussprojekt“ planst du dein eigenes IHK-Projekt vom Antrag bis zum "
               "Fachgespräch. Am Handy findest du alles unter „Lernen“.")},
-    {"id": "rechner", "titel": "Rechner (Subnetting, RAID)",
+    {"id": "rechner", "titel": "Rechner (Subnetting, RAID, USV)",
      "reiter": ["Rechner"],
-     "text": ("Unter „Rechner“ gibt es drei Rechner: „Subnetting / VLSM“ (IPv4 und IPv6), "
-              "„RAID-Kapazität“ und „Bildschirm-Datenvolumen“. Werte eintragen und "
-              "„Berechnen“ wählen. „Rechenweg anzeigen“ erklärt, wie man es von Hand "
-              "rechnet.\n\n"
+     "text": ("Unter „Rechner“ gibt es vier Rechner: „Subnetting / VLSM“ (IPv4 und IPv6), "
+              "„RAID-Kapazität“, „Bildschirm-Datenvolumen“ und ganz unten "
+              "„USV-Kapazität“. Werte eintragen und „Berechnen“ wählen. „Rechenweg "
+              "anzeigen“ erklärt, wie man es von Hand rechnet.\n\n"
+              "Der USV-Rechner rechnet mit „Akku berechnen“, wie groß der Akku für eine "
+              "gewünschte Laufzeit sein muss, und mit „Laufzeit berechnen“, wie lange "
+              "ein vorhandener Akku reicht. „Empfehlung“ sagt, ob die USV passt oder zu "
+              "klein ist, und zeigt die Regel dazu. Ein Bild zeigt Last, USV, Akku und "
+              "Laufzeit. Unter „Übungsaufgaben“ gibt es Aufgaben mit „Lösung anzeigen“ "
+              "und „Nächste Aufgabe“.\n\n"
               "Oben unter „Trainer“ rechnest du selbst: „IPv4-Subnetz“, „VLSM“, "
               "„Binär/Hex/Dezimal“ und „IPv6 kürzen“, jeweils „Leicht“, „Mittel“ oder "
               "„Schwer“. Trainer-Aufgaben zählen zum Tagesziel.")},

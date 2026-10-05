@@ -2325,7 +2325,7 @@ UPS_TITLE = "USV-Kapazität"
 UPS_SUBTITLE = "Akku, Laufzeit, Empfehlung"
 UPS_GROUP_LOAD = "LAST UND USV"
 UPS_GROUP_BATTERY = "AKKU UND LAUFZEIT"
-UPS_TASKS_TITLE = "ÜBUNGSAUFGABEN"
+UPS_TASKS_TITLE = "Übungsaufgaben"
 UPS_TASK_NEXT = "Nächste Aufgabe"
 UPS_SOLUTION_SHOW = "Lösung anzeigen"
 UPS_SOLUTION_HIDE = "Lösung ausblenden"
@@ -2493,7 +2493,20 @@ def _ups_bars(minutes, runtime=None, aging_pct=0):
     for bar in bars:
         bar["anteil"] = bar["minuten"] / top
         bar["text"] = "%s min" % de_number(bar["minuten"], 1)
+        if bar["art"] == "knapp":
+            bar["text"] += ", zu kurz"
     return bars
+
+
+def ups_picture_summary(picture):
+    """Vorlesetext des Bildes (TalkBack), gleiche Angaben wie das Bild."""
+    parts = ["Last %s, %s" % (picture["last"], picture["last_detail"]),
+             "USV %s, %s" % (picture["usv"], picture["usv_detail"]),
+             "Akku %s, %s" % (picture["akku"], picture["akku_detail"])]
+    parts += ["%s %s" % (bar["label"], bar["text"]) for bar in picture["balken"]]
+    if picture.get("urteil"):
+        parts.append("Empfehlung: USV %s" % picture["urteil"])
+    return "Bild: " + "; ".join(parts)
 
 
 def ups_calculate(mode, fields, unit="W"):

@@ -38,6 +38,10 @@ import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
 from fisi_core import (  # noqa: E402
     AP1_SZENARIEN, AP1_THEMES, AP2_THEMES, CALC_EXPLAIN_RAID, CALC_EXPLAIN_SCREEN,
+    CALC_EXPLAIN_UPS, UPS_FIELD_CAPTIONS, UPS_FIELD_DEFAULTS, UPS_MODES, UPS_RULE_TEXT,
+    UPS_TASKS, UPS_UNITS, ups_calculate, ups_picture_summary, ups_task_text,
+    UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
+    UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
     REMINDER_TOAST_MS, TOAST_MS, count_word, learning_streak, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
@@ -2815,11 +2819,82 @@ class CalcScreen(Screen):
             self.out_screen, *self._explain(CALC_EXPLAIN_SCREEN),
         ], accent=C["green"], subtitle="Pixel, Farbtiefe, Datenrate")
         # Ab 0.51: Umschalter Rechner / Trainer
-        self.calc_box = ft.Column([subnet, raid, screen], spacing=14, tight=True)
+        self.calc_box = ft.Column([subnet, raid, screen, self._build_ups()], spacing=14,
+                                  tight=True)
         self.trainer = TrainerPanel(self.app)
         self.trainer.visible = False
         return screen_list([ui.PillGroup(CALC_TABS, on_change=self._on_tab),
                             self.calc_box, self.trainer])
+
+    def _build_ups(self):
+        """Ab 0.58 (Plan 2): USV-Kapazitaetsrechner wie am PC."""
+        self.ups_entries = {}
+        self.ups_unit = ui.PillGroup(UPS_UNITS, initial=0)
+        rows = []
+        groups = ((UPS_GROUP_LOAD, ("last", "pf", "eta", "nenn_va", "nenn_w")),
+                  (UPS_GROUP_BATTERY, ("block_v", "block_ah", "reihe", "parallel",
+                                       "minuten", "alterung")))
+        for caption, keys in groups:
+            rows.append(ui.label(caption))
+            for key in keys:
+                field = ui.entry(UPS_FIELD_DEFAULTS[key], keyboard=ft.KeyboardType.NUMBER,
+                                 expand=True)
+                self.ups_entries[key] = field
+                rows.append(self._field(UPS_FIELD_CAPTIONS[key],
+                                        ft.Semantics(label=UPS_FIELD_CAPTIONS[key],
+                                                     content=field)))
+                if key == "last":
+                    rows.append(self.ups_unit)
+        buttons = ft.Row([ui.GradientButton(caption, lambda _e, m=mode: self.calc_ups(m),
+                                            kind="accent" if mode == "empfehlung"
+                                            else "primary")
+                          for mode, caption in UPS_MODES], wrap=True, spacing=10,
+                         run_spacing=10)
+        self.ups_picture = ui.UpsPicture()
+        self.out_ups = ui.read_box("", mono=True)
+        self.ups_task = 0
+        self.ups_solution = False
+        self.out_ups_task = ui.read_box("", mono=True)
+        self.btn_ups_solution = ui.GradientButton(UPS_SOLUTION_SHOW,
+                                                  self.toggle_ups_solution, kind="ghost",
+                                                  height=40)
+        self._show_ups_task()
+        self.calc_ups("empfehlung", quiet=True)
+        return ui.Card(UPS_TITLE, [
+            *rows, buttons,
+            ui.text(UPS_RULE_TEXT, size=12, color=C["text_dim"]),
+            self.ups_picture, self.out_ups, *self._explain(CALC_EXPLAIN_UPS),
+            ui.label(UPS_TASKS_TITLE),
+            ft.Row([ui.GradientButton(UPS_TASK_NEXT, self.next_ups_task, kind="ghost",
+                                      height=40), self.btn_ups_solution],
+                   wrap=True, spacing=10, run_spacing=10),
+            self.out_ups_task,
+        ], accent=C["orange"], subtitle=UPS_SUBTITLE)
+
+    def _show_ups_task(self):
+        self.out_ups_task.content.value = ups_task_text(self.ups_task, self.ups_solution)
+        self.btn_ups_solution.set_text(UPS_SOLUTION_HIDE if self.ups_solution
+                                       else UPS_SOLUTION_SHOW)
+
+    def next_ups_task(self, _event=None):
+        self.ups_task = (self.ups_task + 1) % len(UPS_TASKS)
+        self.ups_solution = False
+        self._show_ups_task()
+
+    def toggle_ups_solution(self, _event=None):
+        self.ups_solution = not self.ups_solution
+        self._show_ups_task()
+
+    def calc_ups(self, mode, quiet=False):
+        fields = {key: field.value or "" for key, field in self.ups_entries.items()}
+        try:
+            result = ups_calculate(mode, fields, self.ups_unit.get())
+        except InputError as error:
+            if not quiet:
+                self.toast(str(error), C["red"])
+            return
+        self.out_ups.content.value = result["text"]
+        self.ups_picture.set_picture(result["bild"], ups_picture_summary(result["bild"]))
 
     def _on_tab(self, value):
         self.trainer.visible = value == "trainer"

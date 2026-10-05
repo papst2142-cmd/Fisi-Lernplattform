@@ -4237,7 +4237,7 @@ class CalcView(View):
         self._build_info_toggle(ups.body, "ups", CALC_EXPLAIN_UPS)
 
         # Uebungsaufgaben mit Loesungsweg
-        make_label(ups.body, UPS_TASKS_TITLE, font=F["label"], fg=C["muted"]).pack(
+        make_label(ups.body, UPS_TASKS_TITLE.upper(), font=F["label"], fg=C["muted"]).pack(
             anchor="w", pady=(18, 0))
         task_buttons = transparent_frame(ups.body)
         task_buttons.pack(anchor="w", pady=(8, 0))
