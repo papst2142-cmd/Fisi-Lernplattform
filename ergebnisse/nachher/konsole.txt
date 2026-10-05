@@ -1,0 +1,83 @@
+**********************
+PowerShell transcript start
+Start time: 20261005041924
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\18e157a4-6a0c-4d88-8de3-94ab602b0fa2.ps1'
+Process ID: 2092
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+=== 0. Reparierte Version nach 'C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä' installieren (Leerzeichen + Umlaut)
+    Installer: C:\Users\RUNNER~1\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe
+    Rueckgabewert: 0
+    installierte Version: 0.55
+=== 1. Schliessen am X (WM_CLOSE): endet der Prozess, bleibt fehler.log leer?
+--- Prozessliste (laeuft):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+5544 10/5/2026 4:20:00 AM FISI Lernplattform 0.55
+    beendet: True  nach 0.1 s
+--- Prozessliste (nach dem Schliessen):
+    (kein FISI-Lernplattform-Prozess)
+    fehler.log vorhanden: False
+=== 2. Szenario N1: Update, Programm schliesst sich normal
+    Programm wird geschlossen (wie Klick aufs X, WM_CLOSE) ...
+    Dauer bis Installer-Ende: 7.6 s
+BEFEHLSZEILE "C:\Users\RUNNER~1\AppData\Local\Temp\FISI Update �\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=5012 /UPDATELOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update.log "/FISIEXE=C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test �\FISI-Lernplattform.exe" /LOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+RUECKGABEWERT 0
+    installierte Version: 0.55
+--- Prozessliste (nach N1_normal):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+6884 10/5/2026 4:20:58 AM FISI Lernplattform 0.55
+--- update.log (N1_normal):
+2026-10-05 04:20:50 | Programm | Installer wird gestartet: "C:\Users\…\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=5012 /UPDATELOG=%APPDATA%\FISI-Lernplattform\update.log "/FISIEXE=~\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe" /LOG=%APPDATA%\FISI-Lernplattform\update_installer.log
+2026-10-05 04:20:50 | Programm | Installer läuft (Prozess 6188). Das Programm wird jetzt beendet, der Installer wartet darauf.
+2026-10-05 04:20:51 | Installer 0.55 | gestartet, wartet auf das Ende des Programms (Prozess 5012)
+2026-10-05 04:20:53 | Installer 0.55 | Programm hat sich beendet
+2026-10-05 04:20:53 | Installer 0.55 | ersetzt die Programmdateien in C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:20:58 | Installer 0.55 | Installation erfolgreich, Version 0.55 ist installiert
+2026-10-05 04:20:59 | Programm | Update auf 0.55 abgeschlossen, Programm läuft als 0.55.
+=== 3. Szenario N2: Update, Programm haengt (schliesst sich nicht)
+    Dauer bis Installer-Ende: 33.6 s
+BEFEHLSZEILE "C:\Users\RUNNER~1\AppData\Local\Temp\FISI Update �\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=3860 /UPDATELOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update.log "/FISIEXE=C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test �\FISI-Lernplattform.exe" /LOG=C:\Users\runneradmin\AppData\Roaming\FISI-Lernplattform\update_installer.log
+RUECKGABEWERT 0
+    installierte Version: 0.55
+--- Prozessliste (nach N2_programm_haengt):
+
+  Id StartTime            Fenster
+  -- ---------            -------
+8648 10/5/2026 4:22:18 AM FISI Lernplattform 0.55
+--- update.log (N2_programm_haengt):
+2026-10-05 04:21:45 | Programm | Installer wird gestartet: "C:\Users\…\AppData\Local\Temp\FISI Update Ü\FISI-Lernplattform-Setup-0.55.exe" /SILENT /SUPPRESSMSGBOXES /NORESTART /WAITPID=3860 /UPDATELOG=%APPDATA%\FISI-Lernplattform\update.log "/FISIEXE=~\Desktop\Claude\Fisi Lernplattform Test Ä\FISI-Lernplattform.exe" /LOG=%APPDATA%\FISI-Lernplattform\update_installer.log
+2026-10-05 04:21:45 | Programm | Installer läuft (Prozess 8368). Das Programm wird jetzt beendet, der Installer wartet darauf.
+2026-10-05 04:21:45 | Installer 0.55 | gestartet, wartet auf das Ende des Programms (Prozess 3860)
+2026-10-05 04:22:15 | Installer 0.55 | Programm läuft nach 30 s noch und wird beendet (Lernstand ist schon gesichert)
+2026-10-05 04:22:15 | Installer 0.55 | Programm beendet
+2026-10-05 04:22:15 | Installer 0.55 | ersetzt die Programmdateien in C:\Users\runneradmin\Desktop\Claude\Fisi Lernplattform Test Ä
+2026-10-05 04:22:18 | Installer 0.55 | Installation erfolgreich, Version 0.55 ist installiert
+2026-10-05 04:22:20 | Programm | Update auf 0.55 abgeschlossen, Programm läuft als 0.55.
+=== 4. Szenario N3: Update scheitert (Programmdatei von anderem Prozess gesperrt)
+    Programm wird geschlossen (wie Klick aufs X, WM_CLOSE) ...
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+False
+**********************
+PowerShell transcript end
+End time: 20261005042315
+**********************
