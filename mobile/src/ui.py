@@ -124,7 +124,10 @@ class FoldCard(Card):
         self.opened = not self.opened
         self._open_state[self.fold_key] = self.opened
         self._apply()
-        self.update()
+        try:
+            self.update()
+        except RuntimeError:    # noch nicht auf der Seite (z.B. im Test)
+            pass
 
 
 # ============================================================================

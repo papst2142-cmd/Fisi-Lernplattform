@@ -4102,7 +4102,7 @@
   {
     "title": "Hausfernsehen per IPTV in einer Seniorenresidenz",
     "cat": "netzwerk",
-    "thema": "routing",
+    "thema": "switching",
     "theme": "Netzwerkdesign",
     "text": [
       "Eine Seniorenresidenz mit 4 Etagen und je 30 Wohnungen ersetzt die alte Antennenanlage durch IPTV. Eine Kopfstation empfängt 40 Sender und speist sie ins Hausnetz. Jeder Sender belegt 8 Mbit/s.",

@@ -863,11 +863,15 @@ class FoldCard(Card):
             widget.bind("<Button-1>", self.toggle)
         # Tastatur: der Kopf nimmt den Fokus auf und zeigt ihn mit einem Rahmen
         self.head.configure(border_width=2, border_color=self.bg, corner_radius=8)
-        self.head.bind("<Return>", self.toggle)
-        self.head.bind("<space>", self.toggle)
-        self.head.bind("<FocusIn>", lambda _e: self.head.configure(border_color=C["accent"]))
-        self.head.bind("<FocusOut>", lambda _e: self.head.configure(border_color=self.bg))
+        # (CTkFrame.bind bindet an die innere Zeichenflaeche, den Fokus
+        # bekommt aber der Rahmen selbst - daher tk.Frame.bind)
         tk.Frame.configure(self.head, takefocus=1)
+        tk.Frame.bind(self.head, "<Return>", self.toggle)
+        tk.Frame.bind(self.head, "<space>", self.toggle)
+        tk.Frame.bind(self.head, "<FocusIn>",
+                      lambda _e: self.head.configure(border_color=C["accent"]))
+        tk.Frame.bind(self.head, "<FocusOut>",
+                      lambda _e: self.head.configure(border_color=self.bg))
         self._apply()
 
     def _apply(self):

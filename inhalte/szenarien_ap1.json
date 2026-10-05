@@ -2687,7 +2687,7 @@
   {
     "title": "PC-Kasse mit Barcodescanner im Fahrradladen",
     "cat": "systeme",
-    "thema": "zahlen",
+    "thema": "hardware",
     "theme": "Rechnertechnik & Zahlensysteme",
     "text": [
       "Ein Fahrradladen ersetzt seine alte Registrierkasse durch ein PC-Kassensystem. Zum Arbeitsplatz gehören ein Kassen-PC mit Touchscreen, ein Bondrucker, eine Kassenschublade, ein Barcodescanner, ein Kundendisplay und das vorhandene Kartenterminal.",
@@ -4091,14 +4091,14 @@
       "",
       "1. Welche Schritte sind für die Gründung nötig? Darf Ben das Notebook einbringen? Wie müsste die Firma heißen?",
       "2. Wie viel muss im ersten Jahr in die gesetzliche Rücklage? Wie viel kann ausgeschüttet werden, und wie viel erhält jeder, wenn nach Geschäftsanteilen verteilt wird?",
-      "3. Wie viel Jahresüberschuss brauchen sie im zweiten Jahr mindestens, um das Stammkapital aus der Rücklage auf 25.000 Euro zu erhöhen? Was wäre bei einer GbR anders?"
+      "3. Wie im ersten Jahr wird neben der gesetzlichen Rücklage alles ausgeschüttet. Wie viel Jahresüberschuss brauchen sie im zweiten Jahr dann mindestens, um das Stammkapital aus der Rücklage auf 25.000 Euro zu erhöhen? Was wäre bei einer GbR anders?"
     ],
     "solution": [
       "1. Gesellschaftsvertrag notariell beurkunden. Bei höchstens drei Gesellschaftern und einem Geschäftsführer geht das mit dem günstigeren Musterprotokoll. Stammkapital einzahlen, bei der UG vollständig und in bar. Anmeldung zum Handelsregister über den Notar. Gewerbe anmelden, steuerliche Erfassung beim Finanzamt. Ben darf das Notebook nicht einbringen: Sacheinlagen sind bei der UG verboten (§ 5a Abs. 2 GmbHG). Er muss 900 Euro einzahlen. Die Firma muss den Zusatz \"Unternehmergesellschaft (haftungsbeschränkt)\" oder \"UG (haftungsbeschränkt)\" tragen, z.B. \"PraxisIT UG (haftungsbeschränkt)\".",
       "",
       "2. Ein Viertel des Jahresüberschusses muss in die gesetzliche Rücklage: 48.000 x 0,25 = 12.000 Euro. Ausschüttbar: 36.000 Euro. Anteile: Lea 1.500 / 3.000 = 50 %, Ben 30 %, Omar 20 %. Lea 18.000 Euro, Ben 10.800 Euro, Omar 7.200 Euro.",
       "",
-      "3. Für 25.000 Euro fehlen 25.000 - 3.000 = 22.000 Euro. Nach dem ersten Jahr sind 12.000 Euro in der Rücklage, es fehlen 10.000 Euro. Diese müssen ein Viertel des Überschusses sein: 10.000 / 0,25 = 40.000 Euro Jahresüberschuss. Dann kann das Stammkapital aus der Rücklage erhöht werden, danach gelten die Regeln der GmbH. GbR: Sie entsteht ohne Notar und ohne Mindestkapital. Dafür haften alle Gesellschafter unbeschränkt mit ihrem Privatvermögen, und zwar jeder für alle Schulden der Gesellschaft. Das wollen die drei vermeiden."
+      "3. Für 25.000 Euro fehlen 25.000 - 3.000 = 22.000 Euro. Nach dem ersten Jahr sind 12.000 Euro in der Rücklage, es fehlen 10.000 Euro. Da nur die gesetzliche Rücklage einbehalten wird, müssen diese ein Viertel des Überschusses sein: 10.000 / 0,25 = 40.000 Euro Jahresüberschuss. Dann kann das Stammkapital aus der Rücklage erhöht werden, danach gelten die Regeln der GmbH. GbR: Sie entsteht ohne Notar und ohne Mindestkapital. Dafür haften alle Gesellschafter unbeschränkt mit ihrem Privatvermögen, und zwar jeder für alle Schulden der Gesellschaft. Das wollen die drei vermeiden."
     ]
   },
   {
