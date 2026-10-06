@@ -347,6 +347,10 @@ jobs:
             echo ""
             echo "Bitte nur die Dateien hier auf der Release-Seite verwenden. Die ZIP-Pakete auf den Seiten der Build-Läufe (Actions, Artifacts) sind nicht für Anwender gedacht und werden von Browsern teils blockiert."
             echo ""
+            # Ab 0.59: Hinweis zum AppImage (steht unter "### Herunterladen",
+            # also nur auf der Release-Seite, nicht im Update-Fenster)
+            echo "**AppImage startet nicht?** Es braucht \`/dev/fuse\` und \`fusermount3\` oder \`fusermount\` (Paket \`fuse3\`, \`fuse2\` bzw. \`fuse\`, je nach System; libfuse2 ist nicht mehr nötig). Ohne Installation geht es mit \`--appimage-extract-and-run\`. Unter Debian/Ubuntu/Mint gibt es das .deb-Paket. Mehr dazu in LIESMICH.txt."
+            echo ""
             echo "### Prüfsummen (SHA-256)"
             echo ""
             for f in installer/*; do

@@ -4,6 +4,31 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.59
+
+Die Optionen sind übersichtlicher, dazu eine Desktop-Verknüpfung unter Linux.
+
+- **Optionen übersichtlich:** „Updates“ steht jetzt ganz oben. Beim Öffnen der
+  Optionen sind alle anderen Bereiche eingeklappt, nur „Problem melden“ ist
+  offen. Mehrere Bereiche können gleichzeitig offen sein.
+- **Deutlichere Kopfzeile:** Ein großer Pfeil links in der Farbe des Bereichs,
+  rechts „aufklappen“ bzw. „einklappen“. Die ganze Zeile ist anklickbar, am PC
+  auch mit Tab, Eingabe- oder Leertaste. Am Handy liest TalkBack zum Beispiel
+  „Farben, eingeklappt“ und sagt den Wechsel an.
+- **Hilfe:** Die Abschnitte der Hilfe haben dieselbe neue Kopfzeile.
+- **Vorlagen:** Die Farbvorlagen (Grundfarbe und Hintergrund) liegen im
+  einklappbaren Unterbereich „Vorlagen“ und haben kleinere Kacheln.
+- **Hintergründe in der hellen Darstellung:** Sie heißen dort so, wie sie
+  aussehen: Flieder, Hellblau, Mintgrün, Rosé, Hellgrau und Weiß. Deine
+  gewählte Farbe bleibt gleich, nur der Name ändert sich.
+- **Suche:** Die Suche (Strg+F) findet jetzt auch Bereiche der Optionen,
+  z. B. „Token“ oder „Weiß“. Ein Klick klappt den Bereich auf und springt hin.
+- **Linux: Desktop-Verknüpfung:** Beim ersten Start unter Linux (.deb und
+  AppImage) fragt das Programm, ob es eine Verknüpfung auf dem Desktop anlegen
+  soll. In den Optionen unter „Updates“ gibt es dafür auch einen Knopf.
+- **Hinweis zum AppImage:** Startet das AppImage nicht, steht in LIESMICH.txt
+  und auf der Release-Seite, was fehlt (FUSE) und wie es trotzdem geht.
+
 ## 0.58.1
 
 Das Programm bleibt schlank und reagiert flüssiger, dazu eine neue

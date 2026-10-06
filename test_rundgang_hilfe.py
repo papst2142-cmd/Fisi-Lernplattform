@@ -365,6 +365,10 @@ class SameTextsTest(unittest.TestCase):
         for name in self.NAMES:
             if name == "TOUR_KEYS":
                 continue
+            if name == "OPTIONS_TITLE":
+                # ab 0.59: Bereichstitel fuer beide aus fisi_optionen.py
+                self.assertIn("fh.OPTIONS_TITLE", _read(os.path.join(HERE, "fisi_optionen.py")))
+                continue
             self.assertIn(name, pc, "PC: " + name)
             self.assertIn(name, handy, "Handy: " + name)
         for path in (os.path.join(HERE, "app_gui.py"), MOBILE_MAIN):

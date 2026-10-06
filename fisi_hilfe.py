@@ -326,12 +326,18 @@ HELP_SECTIONS = [
               "Am PC führt „Jetzt aktualisieren“ durch Download und Installation, danach "
               "startet das Programm neu. Am Handy wird die neue Version im Browser "
               "heruntergeladen. Danach die Datei öffnen und „Installieren“ tippen. Dein "
-              "Lernstand bleibt erhalten.")},
+              "Lernstand bleibt erhalten.\n\n"
+              "Unter Linux legt „Desktop-Verknüpfung anlegen“ eine Verknüpfung auf dem "
+              "Desktop an oder erneuert sie, zum Beispiel nachdem du das AppImage "
+              "verschoben hast.")},
     # Ab 0.57 (Entscheidung Nico F5): eigene Farben mit Reglern
     {"id": "farben", "titel": "Eigene Farben",
      "reiter": ["Optionen"],
-     "text": ("In den „Optionen“ unter „Farben“ steht unter „Grundfarbe“ und "
-              "„Hintergrund“ der Bereich „Eigene Farben“. Mit „Farbton“, „Sättigung“ "
+     "text": ("In den „Optionen“ unter „Farben“ liegen die „Vorlagen“ mit „Grundfarbe“ "
+              "und „Hintergrund“ (zum Aufklappen). In der hellen Darstellung heißen die "
+              "Hintergründe nach ihrer hellen Fläche: „Flieder“, „Hellblau“, „Mintgrün“, "
+              "„Rosé“, „Hellgrau“ und „Weiß“.\n\n"
+              "Darunter steht der Bereich „Eigene Farben“. Mit „Farbton“, „Sättigung“ "
               "und „Helligkeit“ stellst du „Akzent 1“ und „Akzent 2“ (den Farbverlauf "
               "der Knöpfe) und den Hintergrund ein. Die Vorschau zeigt sofort, wie es "
               "aussieht. Die Regler starten bei deiner Farbwelt. Sobald du einen Regler "

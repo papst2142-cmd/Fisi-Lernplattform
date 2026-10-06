@@ -28,7 +28,8 @@ import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 import fisi_theme
-from fisi_theme import C, GRADIENTS, curve_controls, label_stride, lighten, mix, shown_labels
+from fisi_theme import (C, FOLD_CLOSE_TEXT, FOLD_OPEN_TEXT, GRADIENTS, curve_controls, fold_label,
+                        label_stride, lighten, mix, shown_labels)
 
 # Wird beim Start durch setup_fonts() gefuellt.
 F = {}
@@ -317,6 +318,26 @@ def circle_image(diameter, fill=None, outline=None, outline_width=2, dot=None):
     if dot:
         inset = size * 0.3
         draw.ellipse((inset, inset, size - 1 - inset, size - 1 - inset), fill=dot)
+    _IMAGE_CACHE[key] = image
+    return image
+
+
+def triangle_image(size, color, opened):
+    """Ab 0.59: Klapp-Pfeil als Dreieck (zu: nach rechts, offen: nach unten)."""
+    key = ("triangle", size, color, bool(opened))
+    cached = _IMAGE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    s = SUPERSAMPLE
+    full = int(size * s)
+    image = Image.new("RGBA", (full, full), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    a, b, m = full * 0.18, full * 0.82, full * 0.5
+    if opened:
+        points = [(a, full * 0.28), (b, full * 0.28), (m, full * 0.80)]
+    else:
+        points = [(full * 0.28, a), (full * 0.80, m), (full * 0.28, b)]
+    draw.polygon(points, fill=color)
     _IMAGE_CACHE[key] = image
     return image
 
@@ -1007,15 +1028,23 @@ class FoldCard(Card):
     Der Kopf ist per Maus und per Tastatur bedienbar (Tab, dann Eingabe oder
     Leertaste). Standard: zugeklappt. Der Zustand bleibt fuer die Laufzeit
     des Programms erhalten (key), z.B. wenn die Seite nach einem
-    Farbwechsel neu gebaut wird."""
+    Farbwechsel neu gebaut wird.
+
+    Ab 0.59 (Optionen, marker=True): grosser Pfeil links in der Akzentfarbe,
+    rechts gut lesbar "aufklappen"/"einklappen", Kopfzeile hebt sich beim
+    Darueberfahren ab. Die Optionen setzen den gemerkten Zustand beim
+    Oeffnen zurueck (reset_states)."""
 
     _open_state = {}
 
     def __init__(self, parent, title, subtitle=None, accent=None, key=None,
-                 opened=False, **kwargs):
+                 opened=False, marker=False, open_text=None, close_text=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
         self.key = key or title
+        self.fold_title = title
+        self.marker = marker
         self.opened = self._open_state.get(self.key, opened)
+        self._texts = (open_text or FOLD_OPEN_TEXT, close_text or FOLD_CLOSE_TEXT)
         # Ab 0.56: die ungeskalierten Werte aus Card.__init__ merken. pack_info()
         # liefert schon skalierte Abstaende, die CustomTkinter beim erneuten
         # Aufklappen noch einmal skaliert haette (Windows-Skalierung ueber 100 %)
@@ -1023,18 +1052,33 @@ class FoldCard(Card):
         # Ab 0.56 (Hilfe): zugeklappt bekommt der Kopf unten denselben Abstand
         # wie oben - sonst schnitt die Kachel den unteren Rand ab
         self._head_top = self.pad - 2   # wie in Card.__init__ (ungeskaliert)
-        self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
-                                  font=F["small_bold"], width=24, height=0)
+        self.pointer = None
+        if marker:
+            # Ab 0.59: Pfeil links (groesser, Akzentfarbe), Hinweis rechts
+            first = self.head.winfo_children()[0]
+            self._pointer_color = accent or C["accent"]
+            self.pointer = ctk.CTkLabel(self.head, text="", width=16, height=16)
+            self.pointer.pack(side="left", padx=(0, 8), before=first)
+            self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["text_dim"],
+                                      font=F["small_bold"], height=0)
+        else:
+            self.arrow = ctk.CTkLabel(self.head, text="", text_color=C["muted"],
+                                      font=F["small_bold"], width=24, height=0)
         # ganz rechts, Unterschrift links daneben (vorher klebten beide
         # aneinander: "aufklappennur fuer dieses Geraet")
         self.arrow.pack(side="right", padx=(12, 0), before=self.subtitle_label)
         self.head.configure(cursor="hand2")
-        for widget in (self.head, self.arrow, self.title_label, self.subtitle_label):
+        for widget in self.head.winfo_children() + [self.head]:
             widget.configure(cursor="hand2")
             widget.bind("<Button-1>", self.toggle)
         # Tastatur: der Kopf nimmt den Fokus auf; sichtbar wird er ueber den
         # gemeinsamen Fokusrahmen (ab 0.56, siehe focus_ring)
         self.head.configure(border_width=2, border_color=self.bg, corner_radius=8)
+        if marker:
+            # Ab 0.59: Kopfzeile hebt sich beim Darueberfahren ab
+            for widget in self.head.winfo_children() + [self.head]:
+                widget.bind("<Enter>", self._hover_in, "+")
+                widget.bind("<Leave>", self._hover_out, "+")
         # (CTkFrame.bind bindet an die innere Zeichenflaeche, den Fokus
         # bekommt aber der Rahmen selbst - daher tk.Frame.bind)
         tk.Frame.configure(self.head, takefocus=1)
@@ -1042,14 +1086,58 @@ class FoldCard(Card):
         tk.Frame.bind(self.head, "<space>", self.toggle)
         self._apply()
 
+    @classmethod
+    def reset_states(cls, prefix):
+        """Ab 0.59 (E4): gemerkte Zustaende mit diesem Schluessel-Anfang
+        vergessen (die Optionen starten dann wieder eingeklappt)."""
+        for key in [key for key in cls._open_state if key.startswith(prefix)]:
+            del cls._open_state[key]
+
+    def state_text(self):
+        return self._texts[1] if self.opened else self._texts[0]
+
+    def accessible_name(self):
+        """Ab 0.59: Beschriftung fuer Tastatur und Screenreader, z.B.
+        "Farben, eingeklappt" (gleich wie am Handy)."""
+        return fold_label(self.fold_title, self.opened)
+
+    def _hover_in(self, _event=None):
+        # Rand der ganzen Kachel in der Akzentfarbe (die Flaeche bleibt, so
+        # aendert sich kein Kontrast)
+        self.configure(border_color=self._pointer_color)
+
+    def _hover_out(self, _event=None):
+        def check():
+            try:
+                pointer = self.winfo_containing(*self.winfo_pointerxy())
+            except (tk.TclError, KeyError):
+                pointer = None
+            if pointer is not None and str(pointer).startswith(str(self.head)):
+                return
+            try:
+                self.configure(border_color=C["border"])
+            except tk.TclError:
+                pass
+        self.after_idle(check)
+
     def _apply(self):
-        self.arrow.configure(text="▾  zuklappen" if self.opened else "▸  aufklappen")
+        if self.marker:
+            self.pointer.configure(image=ctk_image(
+                triangle_image(16, self._pointer_color, self.opened), 16, 16))
+            self.arrow.configure(text=self.state_text())
+        else:
+            self.arrow.configure(text="▾  zuklappen" if self.opened else "▸  aufklappen")
         if self.opened:
             self.head.pack(pady=(self._head_top, 0))
             self.body.pack(**self._body_pack)
         else:
             self.body.pack_forget()
             self.head.pack(pady=(self._head_top, self._head_top))
+
+    def set_opened(self, flag):
+        """Ab 0.59: auf- oder zuklappen (ohne Wechsel, wenn schon so)."""
+        if bool(flag) != self.opened:
+            self.toggle()
 
     def toggle(self, _event=None):
         self.opened = not self.opened
@@ -2361,7 +2449,21 @@ class ScrollArea(tk.Frame):
             pass
 
     def _on_inner_configure(self, _event=None):
+        # Ab 0.59: Wird der Inhalt schmaler (z.B. Bereiche eingeklappt), passt
+        # sich die Breite wieder an - vorher blieb sie bis zur naechsten
+        # Fenstergroessenaenderung auf dem breitesten Stand stehen und schnitt
+        # rechts etwas ab.
+        width = max(self.canvas.winfo_width(), self.inner.winfo_reqwidth())
+        if int(float(self.canvas.itemcget(self._window, "width") or 0)) != width:
+            self.canvas.itemconfigure(self._window, width=width)
+            self.after_idle(self._sync_hscroll)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _refit_width(self):
+        try:
+            self._on_inner_configure()
+        except tk.TclError:
+            pass
 
     def _sync_hscroll(self):
         """Ab 0.53: Tk meldet die neue Breite nicht immer ueber xscrollcommand -
@@ -2453,6 +2555,7 @@ class ScrollArea(tk.Frame):
             self._wrap_width = width
             scale = _SCALE[0] or 1.0
             left = self.inner.winfo_rootx()
+            changed = False
             stack = [self.inner]
             while stack:
                 for child in stack.pop().winfo_children():
@@ -2470,8 +2573,16 @@ class ScrollArea(tk.Frame):
                             wrap = int(min(base, max(220, room)))
                             if wrap != child.cget("wraplength"):
                                 child.configure(wraplength=wrap)
+                                changed = True
                         continue
                     stack.append(child)
+            if changed:
+                # Ab 0.59: Schmalere Texte machen den Inhalt schmaler, ohne dass
+                # Tk das meldet - Breite einmal nachziehen (sonst bleibt rechts
+                # ein ueberstehender Rand mit seitlichem Balken). Kurz warten:
+                # Tk reicht die neue Breite erst in weiteren Leerlaufschritten
+                # an die umgebenden Rahmen weiter.
+                self.after(40, self._refit_width)
         except tk.TclError:
             pass
 

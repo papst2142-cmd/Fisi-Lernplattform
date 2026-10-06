@@ -80,6 +80,8 @@ from fisi_lernen import (  # noqa: E402
 import fisi_diagnose as fdg  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
+import fisi_optionen as fo  # noqa: E402
+import fisi_verknuepfung as fsc  # noqa: E402
 import fisi_rahmenplan as frp  # noqa: E402
 from fisi_rahmenplan import fresh_order  # noqa: E402
 import fisi_game_gui  # noqa: E402
@@ -108,7 +110,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.58.1"
+APP_VERSION = "0.59"
 
 
 def _resource_path(filename):
@@ -4572,24 +4574,25 @@ class ProgressView(View):
 
 class ColorTile(ctk.CTkFrame):
     """Kachel einer Grundfarbe in den Optionen: Verlauf der Buttons, die
-    beiden Akzentfarben und der Name. Die gewaehlte Kachel ist umrandet."""
+    beiden Akzentfarben und der Name. Die gewaehlte Kachel ist umrandet.
+    Ab 0.59 kleiner (Unterbereich "Vorlagen")."""
 
     def __init__(self, parent, item, active, command):
-        super().__init__(parent, fg_color=C["card_hi"] if active else C["card_alt"],
-                         corner_radius=12, border_width=2,
+        super().__init__(parent, fg_color=C["card_hi"] if active else C["card"],
+                         corner_radius=10, border_width=2,
                          border_color=item["accent"] if active else C["border"],
                          cursor="hand2")
-        bar = rounded_gradient(120, 14, 7, item["primary"][0], item["primary"][1])
-        strip = ctk.CTkLabel(self, text="", image=ctk_image(bar, 120, 14))
-        strip.pack(padx=12, pady=(12, 8))
+        bar = rounded_gradient(96, 10, 5, item["primary"][0], item["primary"][1])
+        strip = ctk.CTkLabel(self, text="", image=ctk_image(bar, 96, 10))
+        strip.pack(padx=10, pady=(10, 6))
         dots = transparent_frame(self)
         dots.pack()
         for color in (item["accent"], item["accent2"]):
-            ctk.CTkLabel(dots, text="", image=ctk_image(circle_image(12, fill=color), 12, 12)
+            ctk.CTkLabel(dots, text="", image=ctk_image(circle_image(10, fill=color), 10, 10)
                          ).pack(side="left", padx=3)
         name = make_label(self, item["name"], font=F["small_bold"],
                           fg=C["text"] if active else C["text_dim"])
-        name.pack(padx=10, pady=(6, 12))
+        name.pack(padx=8, pady=(4, 8))
         for widget in (self, strip, dots, name) + tuple(dots.winfo_children()):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
         make_focusable(self, lambda: command(item["id"]))   # ab 0.56
@@ -4597,26 +4600,28 @@ class ColorTile(ctk.CTkFrame):
 
 class BackgroundTile(ctk.CTkFrame):
     """Kachel eines Hintergrunds: Flaeche mit einer kleinen Karte darauf,
-    ein Punkt in der Grundfarbe und der Name. Gewaehlt = umrandet."""
+    ein Punkt in der Grundfarbe und der Name. Gewaehlt = umrandet.
+    Ab 0.59 kleiner; im Hell-Modus mit dem hellen Namen (8c)."""
 
     def __init__(self, parent, item, active, command):
         if fisi_theme.current_mode == fisi_theme.MODE_LIGHT:   # ab 0.57 (vorher light)
-            item = fisi_theme.light_background(item["id"])   # ab 0.49
-        super().__init__(parent, fg_color=item["bg"], corner_radius=12, border_width=2,
+            item = fisi_theme.light_background(item["id"])   # ab 0.49, Name ab 0.59
+        self.name = item["name"]
+        super().__init__(parent, fg_color=item["bg"], corner_radius=10, border_width=2,
                          border_color=C["accent"] if active else item["border_hi"],
                          cursor="hand2")
-        card = ctk.CTkFrame(self, fg_color=item["card"], corner_radius=8, border_width=1,
-                            border_color=item["border"], width=120, height=34)
-        card.pack(padx=12, pady=(12, 8))
+        card = ctk.CTkFrame(self, fg_color=item["card"], corner_radius=6, border_width=1,
+                            border_color=item["border"], width=96, height=24)
+        card.pack(padx=10, pady=(10, 6))
         card.pack_propagate(False)
         dot = ctk.CTkLabel(card, text="", image=ctk_image(circle_image(10, fill=C["accent"]),
                                                           10, 10), fg_color=item["card"],
                            width=10, height=10)
-        dot.place(x=12, rely=0.5, anchor="w")
+        dot.place(x=10, rely=0.5, anchor="w")
         name = ctk.CTkLabel(self, text=item["name"], font=F["small_bold"],
                             text_color=fisi_theme.tile_text() if active else item["text_dim"],
                             fg_color=item["bg"])
-        name.pack(padx=10, pady=(0, 12))
+        name.pack(padx=8, pady=(0, 8))
         for widget in (self, card, dot, name):
             widget.bind("<Button-1>", lambda _e: command(item["id"]))
         make_focusable(self, lambda: command(item["id"]))   # ab 0.56
@@ -4862,11 +4867,55 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
 
 
 class SettingsView(View):
+    def _area(self, area_id, accent, subtitle=None):
+        """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
+        fisi_optionen). Offen beim Oeffnen nur Updates und Problem melden
+        (E1), alle anderen sind Klappbereiche (E4: Zustand nicht gespeichert)."""
+        area = fo.AREA_BY_ID[area_id]
+        if fo.opened_at_start(area_id):
+            card = Card(self.content, title=area["titel"], accent=accent, subtitle=subtitle)
+        else:
+            card = FoldCard(self.content, title=area["titel"], accent=accent,
+                            subtitle=subtitle, key=fo.state_key(area_id), marker=True)
+            self.folds[area_id] = card
+        card.pack(fill="x", pady=(14, 0) if self.areas else 0)
+        self.areas[area_id] = card
+        return card
+
     def build(self):
+        self.areas, self.folds = {}, {}
+        # Ab 0.59 (E2): Updates ganz oben, ueber dem Rundgang
+        updates = self._area("updates", C["accent2"],
+                             subtitle="installierte Version %s" % APP_VERSION)
+        row = transparent_frame(updates.body)
+        row.pack(fill="x")
+        self.btn_update = NeoButton(row, "Nach Updates suchen",
+                                    self.check_updates, kind="primary")
+        self.btn_update.pack(side="left")
+        self.lbl_update = make_label(row, "", font=F["small"], fg=C["text_dim"],
+                                     justify="left", anchor="w", wraplength=560)
+        self.lbl_update.pack(side="left", padx=(16, 0))
+        self.var_auto = tk.BooleanVar(value=fisi_update.load_settings()["auto_check"])
+        ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
+                      variable=self.var_auto, command=self._toggle_auto,
+                      font=F["small"], text_color=C["text_dim"],
+                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      button_color=C["text"], button_hover_color="#FFFFFF"
+                      ).pack(anchor="w", pady=(14, 0))
+        # Ab 0.59 (8b): Desktop-Verknuepfung, nur unter Linux
+        self.lbl_shortcut = None
+        if fsc.supported():
+            row = transparent_frame(updates.body)
+            row.pack(fill="x", pady=(14, 0))
+            NeoButton(row, fsc.BTN_CREATE, self.create_shortcut,
+                      kind="ghost").pack(side="left")
+            self.lbl_shortcut = make_label(row, fsc.status_text(), font=F["small"],
+                                           fg=C["text_dim"], justify="left", anchor="w",
+                                           wraplength=520)
+            self.lbl_shortcut.pack(side="left", padx=(16, 0))
+
         # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am Handy)
-        tour = Card(self.content, title=fh.OPTIONS_TITLE, accent=C["green"],
-                    subtitle=fh.OPTIONS_SUBTITLE)
-        tour.pack(fill="x")
+        tour = self._area("rundgang", C["green"], subtitle=fh.OPTIONS_SUBTITLE)
         make_label(tour.body, fh.OPTIONS_TEXT, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         row = transparent_frame(tour.body)
@@ -4888,30 +4937,8 @@ class SettingsView(View):
         make_label(tour.body, fh.NAME_OPTION_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
 
-        updates = Card(self.content, title="Updates", accent=C["accent2"],
-                       subtitle="installierte Version %s" % APP_VERSION)
-        updates.pack(fill="x", pady=(14, 0))
-        row = transparent_frame(updates.body)
-        row.pack(fill="x")
-        self.btn_update = NeoButton(row, "Nach Updates suchen",
-                                    self.check_updates, kind="primary")
-        self.btn_update.pack(side="left")
-        self.lbl_update = make_label(row, "", font=F["small"], fg=C["text_dim"],
-                                     justify="left", anchor="w", wraplength=560)
-        self.lbl_update.pack(side="left", padx=(16, 0))
-        self.var_auto = tk.BooleanVar(value=fisi_update.load_settings()["auto_check"])
-        ctk.CTkSwitch(updates.body, text="Beim Start automatisch nach Updates suchen",
-                      variable=self.var_auto, command=self._toggle_auto,
-                      font=F["small"], text_color=C["text_dim"],
-                      fg_color=C["card_alt"], progress_color=C["violet"],
-                      button_color=C["text"], button_hover_color="#FFFFFF"
-                      ).pack(anchor="w", pady=(14, 0))
-
-        # Ab 0.56: Schriftgroesse (je Geraet), offen sichtbar statt in einem
-        # Klappbereich, damit man sie auch mit schlechter Sicht schnell findet
-        fonts = Card(self.content, title=fisi_theme.FONT_TITLE, accent=C["accent"],
-                     subtitle=fisi_theme.FONT_SUBTITLE)
-        fonts.pack(fill="x", pady=(14, 0))
+        # Ab 0.56: Schriftgroesse (je Geraet); ab 0.59 eingeklappt wie alle
+        fonts = self._area("schrift", C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
         self.font_choice = fisi_game_gui.ChoiceRow(
             fonts.body, fisi_theme.FONT_CHOICES, fisi_theme.current_font_size,
             self.app.change_font_size)
@@ -4920,40 +4947,46 @@ class SettingsView(View):
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
         # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
-        colors = FoldCard(self.content, title="Farben", accent=C["accent"],
-                          subtitle="nur für dieses Gerät", key="optionen_farben")
-        colors.pack(fill="x", pady=(14, 0))
+        colors = self._area("farben", C["accent"], subtitle="nur für dieses Gerät")
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
         fisi_game_gui.ChoiceRow(colors.body, fisi_theme.MODES, fisi_theme.current_mode,
                                 self._change_mode).pack(anchor="w", pady=(6, 14))
-        make_label(colors.body, "GRUNDFARBE", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        tiles = transparent_frame(colors.body)
-        tiles.pack(anchor="w", pady=(6, 14))
+        # Ab 0.59 (E7, E8): Kacheln Grundfarbe und Hintergrund als eingeklappter
+        # Unterbereich "Vorlagen", Kacheln kleiner
+        templates = FoldCard(colors.body, title=fo.TEMPLATES_TITLE, accent=C["accent"],
+                             key=fo.state_key(fo.TEMPLATES_ID), marker=True,
+                             bg=C["card_alt"], pad=14)
+        templates.pack(fill="x")
+        self.folds[fo.TEMPLATES_ID] = templates
+        make_label(templates.body, "GRUNDFARBE", font=F["label"], fg=C["muted"]).pack(
+            anchor="w")
+        tiles = transparent_frame(templates.body)
+        tiles.pack(anchor="w", pady=(6, 10))
+        # Ab 0.59: bei "Sehr gross" drei Kacheln je Zeile (sonst wird die
+        # Seite breiter als das Fenster und die Kopfzeile abgeschnitten)
+        columns = fo.tile_columns(fisi_theme.font_factor())
         for index, item in enumerate(fisi_theme.PRESETS):
             ColorTile(tiles, item, item["id"] == fisi_theme.current_preset,
-                      self._change_color).grid(row=0, column=index, padx=(0, 10))
-        make_label(colors.body, "HINTERGRUND", font=F["label"], fg=C["muted"]).pack(anchor="w")
-        tiles = transparent_frame(colors.body)
+                      self._change_color).grid(row=index // columns, column=index % columns,
+                                               padx=(0, 8), pady=(0, 8))
+        make_label(templates.body, "HINTERGRUND", font=F["label"], fg=C["muted"]).pack(
+            anchor="w")
+        tiles = transparent_frame(templates.body)
         tiles.pack(anchor="w", pady=(6, 0))
         for index, item in enumerate(fisi_theme.BACKGROUNDS):
             BackgroundTile(tiles, item, item["id"] == fisi_theme.current_background,
-                           self._change_background).grid(row=0, column=index, padx=(0, 10))
-        make_label(colors.body,
-                   "Die Grundfarbe ändert Buttons, Ringe, Balken und Banner, der Hintergrund "
-                   "die Flächen und Karten. Die Farben der Fachbereiche und von Erfolg, "
-                   "Fehler und Warnung bleiben gleich (in der hellen Darstellung etwas "
-                   "dunkler, damit sie gut lesbar sind).",
-                   font=F["tiny"], fg=C["muted"], wraplength=800,
-                   justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
+                           self._change_background).grid(row=index // columns,
+                                                         column=index % columns,
+                                                         padx=(0, 8), pady=(0, 8))
+        make_label(templates.body, fo.TEMPLATES_TEXT, font=F["tiny"], fg=C["muted"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(2, 0))
         # Ab 0.57: eigene Farben mit Reglern (je Darstellung)
         self.custom_colors = CustomColors(colors.body, self._save_custom)
         self.custom_colors.pack(anchor="w", fill="x", pady=(18, 0))
 
         # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
-        goal = Card(self.content, title="Tagesziel", accent=C["green"],
-                    subtitle="nur für dieses Gerät")
-        goal.pack(fill="x", pady=(14, 0))
+        goal = self._area("tagesziel", C["green"], subtitle="nur für dieses Gerät")
         values = learning_settings()
         self.goal_vars = {}
         for key, text in (("ziel_an", "Tagesziel anzeigen"),
@@ -4989,9 +5022,7 @@ class SettingsView(View):
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
         # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
-        plan = Card(self.content, title=frp.OPTIONS_TITLE, accent=C["purple"],
-                    subtitle="nur für dieses Gerät")
-        plan.pack(fill="x", pady=(14, 0))
+        plan = self._area("rahmenplan", C["purple"], subtitle="nur für dieses Gerät")
         make_label(plan.body, frp.OPTIONS_SUBTITLE, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(0, 10))
         values = frp.load_rp_settings()
@@ -5032,9 +5063,7 @@ class SettingsView(View):
         self.lbl_rp = make_label(plan.body, "", font=F["tiny"], fg=C["red"],
                                  justify="left", anchor="w")
 
-        sync = Card(self.content, title="Abgleich PC und Handy", accent=C["accent"],
-                    subtitle="über ein privates GitHub-Repository")
-        sync.pack(fill="x", pady=(14, 0))
+        sync = self._area("abgleich", C["accent"], subtitle="über ein privates GitHub-Repository")
         settings = fisi_sync.sync_settings()
         grid = transparent_frame(sync.body)
         grid.pack(fill="x")
@@ -5074,9 +5103,7 @@ class SettingsView(View):
         self.show_sync_status(None, None)
 
         # Sicherung als Datei (fisi_sicherung.py), Texte wie auf dem Handy
-        backup = Card(self.content, title=fsi.TITLE, accent=C["accent2"],
-                      subtitle=fsi.SUBTITLE)
-        backup.pack(fill="x", pady=(14, 0))
+        backup = self._area("sicherung", C["accent2"], subtitle=fsi.SUBTITLE)
         make_label(backup.body, fsi.HELP, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         row = transparent_frame(backup.body)
@@ -5085,8 +5112,7 @@ class SettingsView(View):
         NeoButton(row, fsi.BTN_RESTORE, self.restore_backup,
                   kind="ghost").pack(side="left", padx=10)
 
-        info = Card(self.content, title="Datenbank", accent=C["accent"])
-        info.pack(fill="x", pady=(14, 0))
+        info = self._area("datenbank", C["accent"])
         make_label(info.body, "Speicherort der Lernfortschritte:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
         path_box = make_text(info.body, height=2, font=F["mono_small"])
@@ -5102,9 +5128,7 @@ class SettingsView(View):
 
         # Ab 0.54: Problem melden (fisi_diagnose.py), Texte wie auf dem Handy.
         # Der Bericht wird erst nach dem Anzeigen der Seite eingetragen.
-        report = Card(self.content, title=fdg.TITLE, accent=C["orange"],
-                      subtitle=fdg.SUBTITLE)
-        report.pack(fill="x", pady=(14, 0))
+        report = self._area("problem", C["orange"], subtitle=fdg.SUBTITLE)
         make_label(report.body, fdg.HELP, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         self.report_box = make_text(report.body, height=10, font=F["mono_small"])
@@ -5120,9 +5144,7 @@ class SettingsView(View):
                   kind="ghost").pack(side="left")
 
         # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am Handy
-        perf = FoldCard(self.content, title=fle.TITLE, accent=C["orange"],
-                        subtitle=fle.SUBTITLE, key="optionen_leistung")
-        perf.pack(fill="x", pady=(14, 0))
+        perf = self._area("leistung", C["orange"], subtitle=fle.SUBTITLE)
         make_label(perf.body, fle.HELP, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         self.var_perf = tk.BooleanVar(value=self.app.perf.active)
@@ -5141,8 +5163,7 @@ class SettingsView(View):
         NeoButton(row, fle.BTN_DELETE, self.delete_perf_file, kind="ghost").pack(
             side="left", padx=10)
 
-        content = Card(self.content, title="Lerninhalte", accent=C["purple"])
-        content.pack(fill="x", pady=(14, 0))
+        content = self._area("lerninhalte", C["purple"])
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
                  "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
@@ -5155,12 +5176,11 @@ class SettingsView(View):
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
-        game = Card(self.content, title="Spiel", accent=C["accent2"])
+        game = self._area("spiel", C["accent2"])
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = make_label(game.body, "", font=F["body_bold"],
                                          fg=C["text_soft"], anchor="w")
         self.lbl_difficulty.pack(anchor="w", pady=(0, 10))
-        game.pack(fill="x", pady=(14, 0))
         make_label(game.body, "WOHNUNGEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
         ChoiceRow(game.body, fisi_game.RENT_CHOICES,
                   "miete" if fisi_game.rent_mode() else "einmal",
@@ -5173,9 +5193,7 @@ class SettingsView(View):
 
         # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
         # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
-        danger = FoldCard(self.content, title=DELETE_TITLE, accent=C["red"],
-                          subtitle=DELETE_SUBTITLE, key="optionen_loeschen")
-        danger.pack(fill="x", pady=(14, 0))
+        danger = self._area("loeschen", C["red"], subtitle=DELETE_SUBTITLE)
         make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
         make_label(danger.body,
                    "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
@@ -5206,8 +5224,7 @@ class SettingsView(View):
         NeoButton(danger.body, "Bestenliste löschen", self.reset_records,
                   kind="danger").pack(anchor="w", pady=(12, 0))
 
-        about = Card(self.content, title="Über das Programm", accent=C["green"])
-        about.pack(fill="x", pady=(14, 0))
+        about = self._area("ueber", C["green"])
         make_label(about.body,
                    "%s Version %s\n\n"
                    "Lernprogramm für die Umschulung zum Fachinformatiker "
@@ -5220,6 +5237,37 @@ class SettingsView(View):
                    % (APP_TITLE, APP_VERSION),
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
+
+    def reset_folds(self):
+        """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen (ausser
+        Updates und Problem melden, die keine Klappbereiche sind)."""
+        FoldCard.reset_states(fo.STATE_PREFIX)
+        for fold in self.folds.values():
+            fold.set_opened(False)
+        FoldCard.reset_states(fo.STATE_PREFIX)
+
+    def open_area(self, area_id, templates=False):
+        """Ab 0.59 (E5, Suche): Bereich (und ggf. "Vorlagen") aufklappen und in
+        den sichtbaren Bereich holen. Nichts wird danach wieder zugeklappt."""
+        card = self.areas.get(area_id)
+        if card is None:
+            return
+        target = card
+        if area_id in self.folds:
+            self.folds[area_id].set_opened(True)
+        if templates and fo.TEMPLATES_ID in self.folds:
+            self.folds[fo.TEMPLATES_ID].set_opened(True)
+            target = self.folds[fo.TEMPLATES_ID]
+        self.update_idletasks()
+        height = max(1, self.inner.winfo_height())
+        top = target.winfo_rooty() - self.inner.winfo_rooty()
+        self.canvas.yview_moveto(max(0.0, (top - px(10)) / float(height)))
+
+    def create_shortcut(self):
+        """Ab 0.59 (8b): Desktop-Verknuepfung anlegen bzw. erneuern (Linux)."""
+        message = fsc.create_and_report()
+        if self.lbl_shortcut is not None:
+            self.lbl_shortcut.configure(text=message)
 
     def _change_color(self, preset_id):
         if self.custom_colors.takes_tile():
@@ -5620,7 +5668,11 @@ class SearchView(View):
 
         # Ab 0.56 zuerst die passenden Hilfe-Abschnitte
         hits = [(fh.SEARCH_KIND, None, title, text)
-                for _id, title, text in fh.search_help(query)] + search_content(query)
+                for _id, title, text in fh.search_help(query)]
+        # Ab 0.59 (E5): Bereiche der Optionen
+        hits += [(fo.SEARCH_KIND, None, title, text)
+                 for _id, title, text, _templates in fo.search_options(query, pc=True)]
+        hits += search_content(query)
         self.lbl_info.configure(text='%d Treffer für „%s“' % (len(hits), query))
         if not hits:
             make_label(self.results_box,
@@ -5676,7 +5728,7 @@ HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
 
 class HelpView(View):
     """Kurze Hilfetexte als aufklappbare Kacheln (Texte in fisi_hilfe.py,
-    am Handy dieselben)."""
+    am Handy dieselben). Ab 0.59 mit derselben Kopfzeile wie die Optionen."""
 
     def build(self):
         intro = Card(self.content, title=fh.HELP_TITLE, accent=C["green"],
@@ -5690,7 +5742,7 @@ class HelpView(View):
         for section in fh.HELP_SECTIONS:
             fold = FoldCard(self.content, title=section["titel"],
                             accent=C[HELP_ACCENTS.get(section["id"], "accent")],
-                            key="hilfe_" + section["id"])
+                            key="hilfe_" + section["id"], marker=True)
             fold.pack(fill="x", pady=(14, 0))
             make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
                        wraplength=800, justify="left", anchor="w").pack(anchor="w")
@@ -6076,6 +6128,64 @@ class BackupDialog(ctk.CTkToplevel):
     def _focus(self):
         self.lift()
         self.focus_force()
+
+
+class ShortcutDialog(ctk.CTkToplevel):
+    """Ab 0.59 (8b): Rueckfrage beim ersten Start unter Linux: Desktop-
+    Verknuepfung anlegen? Ja / Nein (fragt beim naechsten Start wieder) /
+    Nicht mehr fragen."""
+
+    def __init__(self, app):
+        super().__init__(app.root, fg_color=C["bg"])
+        self.app = app
+        self.title(fsc.ASK_TITLE)
+        self.resizable(False, False)
+        self.transient(app.root)
+        self.after(250, lambda: _apply_window_icon(self))
+        card = Card(self, title=fsc.ASK_TITLE, accent=C["accent"])
+        card.pack(fill="both", expand=True, padx=18, pady=18)
+        self.lbl_text = make_label(card.body, fsc.ASK_TEXT, font=F["body"],
+                                   fg=C["text_soft"], justify="left", anchor="w",
+                                   wraplength=480)
+        self.lbl_text.pack(anchor="w")
+        self.buttons = transparent_frame(card.body)
+        self.buttons.pack(fill="x", pady=(16, 0))
+        NeoButton(self.buttons, fsc.BTN_YES, self.yes, kind="primary").pack(side="left")
+        NeoButton(self.buttons, fsc.BTN_NO, self.destroy, kind="ghost").pack(
+            side="left", padx=10)
+        NeoButton(self.buttons, fsc.BTN_NEVER, self.never, kind="ghost").pack(side="left")
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+        self._fit()
+        self.after(100, self._focus)
+
+    def _fit(self):
+        """Nachtrag 0.59: Fensterhoehe nach dem Inhalt statt fest 260 Pixel -
+        vorher stand zwischen Text und Knoepfen viel Leerraum (und bei grosser
+        Schrift reicht die Hoehe so trotzdem)."""
+        self.update_idletasks()
+        # geometry() rechnet in logischen Pixeln (CustomTkinter skaliert selbst)
+        scale = self._get_window_scaling() or 1.0
+        width = max(560, int(round(self.winfo_reqwidth() / scale)))
+        self.geometry("%dx%d" % (width, int(round(self.winfo_reqheight() / scale))))
+
+    def _focus(self):
+        self.lift()
+        self.focus_force()
+
+    def yes(self):
+        text = fsc.create_and_report()
+        settings_view = self.app.views.built("settings")
+        if settings_view is not None and settings_view.lbl_shortcut is not None:
+            settings_view.lbl_shortcut.configure(text=fsc.status_text())
+        for child in self.buttons.winfo_children():
+            child.destroy()
+        self.lbl_text.configure(text=text)
+        NeoButton(self.buttons, "OK", self.destroy, kind="primary").pack(side="left")
+        self._fit()
+
+    def never(self):
+        fsc.set_answer("nie")
+        self.destroy()
 
 
 class TourOverlay(tk.Frame):
@@ -7004,7 +7114,11 @@ class FISIApp:
             quiz.exam.hide()
         self.flush_inputs(revealed=False)
         self._build_ui(show=False)
-        self.show_view(current)
+        self._rebuilding = True   # ab 0.59: Klappbereiche der Optionen behalten
+        try:
+            self.show_view(current)
+        finally:
+            self._rebuilding = False
         self.container.place(x=0, y=0, relwidth=1, relheight=1)
         old.lift()
         if overlay is not None:
@@ -7105,9 +7219,16 @@ class FISIApp:
             self._show_view(key)
 
     def _show_view(self, key):
+        # Ab 0.59 (E4): Wer die Optionen von einer anderen Seite aus oeffnet,
+        # findet alle Bereiche eingeklappt. Beim Neuaufbau nach einem Farb-
+        # oder Schriftwechsel (_recolor) bleiben die offenen Bereiche offen.
+        entering = (key == "settings" and self.current != "settings"
+                    and not getattr(self, "_rebuilding", False))
         view = self.views.get(key)
         if view is None:
             return
+        if entering:
+            view.reset_folds()
         close_badge_toasts()   # ab 0.53: Hinweise gehoeren zur alten Ansicht
         # Ab 0.58.1: verdeckte Ansichten behalten ihre Groesse, die gezeigte
         # fuellt den Bereich (passt sich ggf. jetzt an die Fenstergroesse an)
@@ -7203,9 +7324,24 @@ class FISIApp:
     def maybe_start_tour(self):
         """Rundgang beim Start (ab 0.56) - nur fuer neue Nutzer (Bestandsschutz,
         siehe fisi_hilfe.tour_due). Aendert keine Lerndaten."""
+        tour = None
         try:
             if fh.tour_due(self.db):
-                self.start_tour()
+                tour = self.start_tour()
+        except Exception:
+            log_exception(*sys.exc_info())
+        # Ab 0.59 (8b): unter Linux einmal nach der Desktop-Verknuepfung
+        # fragen - nach dem Rundgang, sonst kurz nach dem Start
+        if tour is not None and tour.on_close is None:
+            tour.on_close = lambda: self.root.after(400, self.maybe_ask_shortcut)
+        else:
+            self.root.after(2500, self.maybe_ask_shortcut)
+
+    def maybe_ask_shortcut(self):
+        """Ab 0.59 (8b): Rueckfrage "Desktop-Verknuepfung anlegen?" (Linux)."""
+        try:
+            if fsc.should_ask():
+                ShortcutDialog(self)
         except Exception:
             log_exception(*sys.exc_info())
 
@@ -7231,6 +7367,7 @@ class FISIApp:
         self.show_view("cards")
 
     def do_search(self, query):
+        self.last_query = query   # ab 0.59: Optionen-Treffer oeffnen ggf. "Vorlagen"
         self.views["search"].search(query)
         self.show_view("search")
 
@@ -7246,6 +7383,12 @@ class FISIApp:
     def open_search_hit(self, kind, title):
         if kind == fh.SEARCH_KIND:
             self.open_help(fh.HELP_BY_TITLE[title]["id"])
+        elif kind == fo.SEARCH_KIND:
+            # Ab 0.59 (E5): Optionen oeffnen, Bereich aufklappen, hinspringen
+            area_id, templates = fo.hit_target(title, getattr(self, "last_query", ""))
+            if area_id:
+                self.show_view("settings")
+                self.views["settings"].open_area(area_id, templates)
         elif kind == "Karteikarte":
             self.show_view("cards")
             self.views["cards"].jump_to_question(title)

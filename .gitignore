@@ -35,5 +35,6 @@ mobile/src/fisi_diagnose.py
 mobile/src/fisi_rahmenplan.py
 mobile/src/fisi_hilfe.py
 mobile/src/fisi_leistung.py
+mobile/src/fisi_optionen.py
 mobile/src/inhalte/
 mobile/build/
