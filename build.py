@@ -56,7 +56,8 @@ DIST = os.path.join(ROOT, "dist")
 OUTPUT = os.path.join(ROOT, "installer_output")
 
 # Menueeintrag fuer .deb und AppImage. Ab 0.59.1 mit Umlauten (UTF-8 ohne BOM,
-# in Ubuntu 26.04 mit desktop-file-validate und lintian geprueft) und
+# in Ubuntu 26.04 mit desktop-file-validate und lintian geprueft; die
+# Paketbeschreibung in package_deb bleibt dagegen ASCII) und
 # SingleMainWindow=true: GNOME bietet im Dock kein "Neues Fenster" mehr an
 # (zweite Instanz verhindert fisi_einzelstart.py).
 DESKTOP_ENTRY = """[Desktop Entry]
@@ -428,6 +429,8 @@ def package_deb(version):
                   for folder, _dirs, names in os.walk(stage) for name in names
                   if not os.path.islink(os.path.join(folder, name))) // 1024
     os.makedirs(os.path.join(stage, "DEBIAN"))
+    # Description bleibt reines ASCII: Das App-Zentrum von Ubuntu 26.04 zeigte
+    # bei einer lokalen .deb Umlaute als "?" (Test 0.59.1), dpkg -s richtig.
     with open(os.path.join(stage, "DEBIAN", "control"), "w", encoding="utf-8") as handle:
         handle.write(
             "Package: %s\n"
@@ -438,8 +441,8 @@ def package_deb(version):
             "Installed-Size: %d\n"
             "Depends: %s\n"
             "Maintainer: FISI Lernplattform Projekt <333448595+papst2142-cmd@users.noreply.github.com>\n"
-            "Description: Lernprogramm für Fachinformatiker Systemintegration\n"
-            " Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
+            "Description: Lernprogramm fuer Fachinformatiker Systemintegration\n"
+            " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
             " Praxis-Rechner mit Lernfortschritt. Bringt alle Bibliotheken mit.\n"
             % (PACKAGE_NAME, version, architecture, size_kb, DEB_DEPENDS))
 

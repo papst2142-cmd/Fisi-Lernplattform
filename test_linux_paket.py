@@ -9,9 +9,10 @@ Tests fuer 0.59.1 (Linux):
     "Fisi-lernplattform" - genau der Wert in StartupWMClass (braucht ein
     Display, sonst uebersprungen).
   * Desktop-Verknuepfung (fisi_verknuepfung) mit derselben StartupWMClass.
-  * Nachtrag 0.59.1: Umlaute in Paketbeschreibung und Comment= (UTF-8 ohne
-    BOM, desktop-file-validate), SingleMainWindow=true im Menueeintrag; die
-    Desktop-Verknuepfung bleibt ASCII.
+  * Nachtrag 0.59.1: Paketbeschreibung rein ASCII (das App-Zentrum von
+    Ubuntu 26.04 zeigte Umlaute einer lokalen .deb als "?"), Comment= im
+    Menueeintrag mit Umlauten (UTF-8 ohne BOM, desktop-file-validate),
+    SingleMainWindow=true; die Desktop-Verknuepfung bleibt ASCII.
   * Release-Text: Der Linux-Absatz steht unter "### Herunterladen", das
     Update-Fenster zeigt ihn nicht (Schritt aus build.yml wird ausgefuehrt,
     nur wo bash vorhanden ist).
@@ -141,17 +142,18 @@ class DebPaketTest(unittest.TestCase):
         self.assertIn("\nStartupWMClass=%s\n" % EXPECTED_WM_CLASS, text)
         self.assertIn("\nExec=fisi-lernplattform\n", text)
 
-    def test_umlaute_in_paketbeschreibung(self):
+    def test_paketbeschreibung_rein_ascii(self):
+        # Kein Byte ueber 127: Das App-Zentrum (Ubuntu 26.04) zeigte Umlaute
+        # der Paketbeschreibung einer lokalen .deb als "?" (Test B 0.59.1),
+        # obwohl dpkg -s sie richtig anzeigte.
         self.assertEqual(self._field("Description").splitlines()[:2], [
-            "Lernprogramm f\u00fcr Fachinformatiker Systemintegration",
-            " Karteikarten, Pr\u00fcfungstrainer, AP1-/AP2-Szenarien, Testprojekte und"])
+            "Lernprogramm fuer Fachinformatiker Systemintegration",
+            " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und"])
         target = os.path.join(self.folder, "steuerung")
         subprocess.run(["dpkg-deb", "-e", self.deb, target], check=True)
         with open(os.path.join(target, "control"), "rb") as handle:
             raw = handle.read()
-        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"), "BOM in control")
-        self.assertIn("f\u00fcr Fachinformatiker".encode("utf-8"), raw)
-        raw.decode("utf-8")
+        self.assertTrue(all(byte < 128 for byte in raw), "Nicht-ASCII in control")
 
     def test_umlaute_im_menueeintrag(self):
         target = os.path.join(self.folder, "umlaute")
