@@ -79,8 +79,17 @@ async def announce(message):
             pass
 
 
-CARDS = [card for card in json.load(open(os.path.join(ROOT, "inhalte", "karteikarten.json"),
-                                          encoding="utf-8"))][:5]
+# Inhalte ueber fisi_core suchen wie am Handy: im gebauten Programm liegt
+# main.py in einem Temp-Ordner, ROOT zeigt dort nicht auf "inhalte"
+# (Lauf 10 der NVDA-Erkundung: FileNotFoundError)
+import fisi_core  # noqa: E402
+
+try:
+    with open(os.path.join(fisi_core.CONTENT_DIR, "karteikarten.json"), encoding="utf-8") as _f:
+        CARDS = json.load(_f)[:5]
+except Exception:
+    _fehler_merken(*sys.exc_info())
+    raise
 
 
 # ============================================================================
