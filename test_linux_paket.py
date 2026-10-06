@@ -9,6 +9,9 @@ Tests fuer 0.59.1 (Linux):
     "Fisi-lernplattform" - genau der Wert in StartupWMClass (braucht ein
     Display, sonst uebersprungen).
   * Desktop-Verknuepfung (fisi_verknuepfung) mit derselben StartupWMClass.
+  * Nachtrag 0.59.1: Umlaute in Paketbeschreibung und Comment= (UTF-8 ohne
+    BOM, desktop-file-validate), SingleMainWindow=true im Menueeintrag; die
+    Desktop-Verknuepfung bleibt ASCII.
   * Release-Text: Der Linux-Absatz steht unter "### Herunterladen", das
     Update-Fenster zeigt ihn nicht (Schritt aus build.yml wird ausgefuehrt,
     nur wo bash vorhanden ist).
@@ -58,6 +61,18 @@ class DesktopEintragTest(unittest.TestCase):
         self.assertIn("\nStartupWMClass=%s\n" % EXPECTED_WM_CLASS, text)
         self.assertIn(fsc.MARKER, text)
         self.assertEqual(text.count("StartupWMClass="), 1)
+
+    def test_menueeintrag_umlaute_und_einzelfenster(self):
+        text = build.DESKTOP_ENTRY.format(exec="fisi-lernplattform", wm_class=build.WM_CLASS)
+        self.assertIn("\nComment=Lernprogramm f\u00fcr die Umschulung zum Fachinformatiker "
+                      "Systemintegration\n", text)
+        self.assertIn("\nSingleMainWindow=true\n", text)
+        self.assertEqual(text.count("SingleMainWindow="), 1)
+
+    def test_verknuepfung_bleibt_ascii(self):
+        text = fsc.entry_text("/opt/fisi-lernplattform/FISI-Lernplattform", "fisi-lernplattform")
+        self.assertIn("Comment=Lernprogramm fuer die Umschulung", text)
+        self.assertNotIn("SingleMainWindow", text)
 
     def test_programm_nutzt_denselben_klassennamen(self):
         with open(os.path.join(HERE, "app_gui.py"), encoding="utf-8") as handle:
@@ -125,6 +140,29 @@ class DebPaketTest(unittest.TestCase):
             text = handle.read()
         self.assertIn("\nStartupWMClass=%s\n" % EXPECTED_WM_CLASS, text)
         self.assertIn("\nExec=fisi-lernplattform\n", text)
+
+    def test_umlaute_in_paketbeschreibung(self):
+        self.assertEqual(self._field("Description").splitlines()[:2], [
+            "Lernprogramm f\u00fcr Fachinformatiker Systemintegration",
+            " Karteikarten, Pr\u00fcfungstrainer, AP1-/AP2-Szenarien, Testprojekte und"])
+        target = os.path.join(self.folder, "steuerung")
+        subprocess.run(["dpkg-deb", "-e", self.deb, target], check=True)
+        with open(os.path.join(target, "control"), "rb") as handle:
+            raw = handle.read()
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"), "BOM in control")
+        self.assertIn("f\u00fcr Fachinformatiker".encode("utf-8"), raw)
+        raw.decode("utf-8")
+
+    def test_umlaute_im_menueeintrag(self):
+        target = os.path.join(self.folder, "umlaute")
+        subprocess.run(["dpkg-deb", "-x", self.deb, target], check=True)
+        desktop = os.path.join(target, "usr", "share", "applications", "fisi-lernplattform.desktop")
+        with open(desktop, "rb") as handle:
+            raw = handle.read()
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"), "BOM im Menueeintrag")
+        text = raw.decode("utf-8")
+        self.assertIn("\nComment=Lernprogramm f\u00fcr die Umschulung", text)
+        self.assertIn("\nSingleMainWindow=true\n", text)
 
     def test_menueeintrag_gueltig(self):
         tool = shutil.which("desktop-file-validate")
@@ -207,6 +245,56 @@ class ReleaseTextTest(unittest.TestCase):
     def test_hinweis_update_fenster_nur_bei_0591(self):
         self.assertNotIn("**Update-Fenster:**", self._release_text("0.60"))
         self.assertIn("fisi-lernplattform_0.60_amd64.deb", self._release_text("0.60"))
+
+
+@unittest.skipUnless(shutil.which("bash") and shutil.which("sha256sum") and shutil.which("stat"),
+                     "bash/sha256sum fehlt")
+class VorabTextTest(unittest.TestCase):
+    """Nachtrag 0.59.1: Schritt "Dateien und Text der Testversion (Linux und
+    Handy)" aus build.yml mit Platzhalter-Dateien ausfuehren."""
+
+    STEP = "Dateien und Text der Testversion (Linux und Handy)"
+
+    def _run(self, names, zweck="VM und TalkBack"):
+        script = ReleaseTextTest._script(self).replace("${{ github.ref_name }}", "version-0591")
+        folder = tempfile.mkdtemp(prefix="fisi_vorab_")
+        try:
+            os.makedirs(os.path.join(folder, "neu"))
+            for name in names:
+                with open(os.path.join(folder, "neu", name), "w") as handle:
+                    handle.write(name * 3)
+            with open(os.path.join(folder, "build.py"), "w", encoding="utf-8") as handle:
+                handle.write("def app_version():\n    return '0.59'\n")
+            env = dict(os.environ, VORAB="0.59.1-test1", ZWECK=zweck,
+                       GITHUB_SHA="0123456789abcdef")
+            result = subprocess.run(["bash", "-e", "-c", script], cwd=folder, env=env,
+                                    capture_output=True, text=True)
+            text = ""
+            if os.path.exists(os.path.join(folder, "vorab.md")):
+                with open(os.path.join(folder, "vorab.md"), encoding="utf-8") as handle:
+                    text = handle.read()
+            files = sorted(os.listdir(os.path.join(folder, "vorab"))) \
+                if os.path.isdir(os.path.join(folder, "vorab")) else []
+            return result.returncode, text, files
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+
+    def test_nur_deb_und_apk(self):
+        deb, apk = "fisi-lernplattform_0.59_amd64.deb", "FISI-Lernplattform-0.59-Android.apk"
+        code, text, files = self._run([deb, "FISI-Lernplattform-0.59-x86_64.AppImage", apk])
+        self.assertEqual(code, 0)
+        self.assertEqual(files, sorted([deb, apk]))
+        self.assertTrue(text.startswith("**Nur zum Testen, nicht ver\u00f6ffentlichen.**"))
+        self.assertIn("(Stand `0123456`)", text)
+        self.assertIn("Getestet wird: VM und TalkBack", text)
+        import hashlib
+        digest = hashlib.sha256((deb * 3).encode()).hexdigest()
+        self.assertIn("- `%s` \u00b7 %d Bytes \u00b7 `%s`" % (deb, len(deb) * 3, digest), text)
+        self.assertNotIn("AppImage", text)
+
+    def test_fehlende_apk_bricht_ab(self):
+        code, _text, _files = self._run(["fisi-lernplattform_0.59_amd64.deb"])
+        self.assertNotEqual(code, 0)
 
 
 if __name__ == "__main__":

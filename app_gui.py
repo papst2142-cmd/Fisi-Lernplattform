@@ -78,6 +78,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_einzelstart  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_optionen as fo  # noqa: E402
@@ -7898,6 +7899,12 @@ LINUX_CLASS_NAME = "fisi-lernplattform"
 def main():
     # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
     install_error_log(APP_VERSION)
+    # Ab 0.59.1: Sperre gegen Mehrfachstart (Linux, Windows). Laeuft das
+    # Programm schon, kommt dessen Fenster nach vorn und dieser Start endet
+    # still. Der Starttest beim Bauen ist ausgenommen.
+    single = (fisi_einzelstart.supported() and not os.environ.get("FISI_SELFTEST"))
+    if single and not fisi_einzelstart.claim():
+        return
     apply_appearance()
     if sys.platform.startswith("linux"):
         # Ab 0.59.1: eigene Fensterklasse, damit GNOME Fenster und
@@ -7914,6 +7921,10 @@ def main():
         show_error(*exc_info)
     root.report_callback_exception = report_error
     app = FISIApp(root)
+    if single:
+        fisi_einzelstart.listen(
+            root, closing=lambda: app._closing or app.update_exit,
+            bring_to_front=lambda: fisi_einzelstart.bring_to_front(root))
     selftest_log = os.environ.get("FISI_SELFTEST")
     failures = _run_selftest(root, app, selftest_log) if selftest_log else None
     root.mainloop()

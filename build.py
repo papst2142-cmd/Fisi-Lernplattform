@@ -55,16 +55,21 @@ PACKAGE_NAME = "fisi-lernplattform"
 DIST = os.path.join(ROOT, "dist")
 OUTPUT = os.path.join(ROOT, "installer_output")
 
+# Menueeintrag fuer .deb und AppImage. Ab 0.59.1 mit Umlauten (UTF-8 ohne BOM,
+# in Ubuntu 26.04 mit desktop-file-validate und lintian geprueft) und
+# SingleMainWindow=true: GNOME bietet im Dock kein "Neues Fenster" mehr an
+# (zweite Instanz verhindert fisi_einzelstart.py).
 DESKTOP_ENTRY = """[Desktop Entry]
 Type=Application
 Name=FISI Lernplattform
-Comment=Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+Comment=Lernprogramm für die Umschulung zum Fachinformatiker Systemintegration
 Exec={exec}
 Icon=fisi-lernplattform
 Terminal=false
 Categories=Education;
 Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
 StartupWMClass={wm_class}
+SingleMainWindow=true
 """
 
 # Ab 0.59.1: Fensterklasse unter Linux. app_gui erzeugt das Hauptfenster mit
@@ -433,8 +438,8 @@ def package_deb(version):
             "Installed-Size: %d\n"
             "Depends: %s\n"
             "Maintainer: FISI Lernplattform Projekt <333448595+papst2142-cmd@users.noreply.github.com>\n"
-            "Description: Lernprogramm fuer Fachinformatiker Systemintegration\n"
-            " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
+            "Description: Lernprogramm für Fachinformatiker Systemintegration\n"
+            " Karteikarten, Prüfungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
             " Praxis-Rechner mit Lernfortschritt. Bringt alle Bibliotheken mit.\n"
             % (PACKAGE_NAME, version, architecture, size_kb, DEB_DEPENDS))
 
