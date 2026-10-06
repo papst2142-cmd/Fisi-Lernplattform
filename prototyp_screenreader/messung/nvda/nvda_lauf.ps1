@@ -195,6 +195,48 @@ function Schritt([string]$nr, [string]$taste, [int]$warten = 1500) {
     Log $zeile
     if ($sp.Count -eq 0) { Log "      SPRICHT: (nichts)" } else { foreach ($s in $sp) { Log "      $s" } }
 }
+# Flutter haengt seinen Inhalt unter Windows nicht an den UIA-Baum des
+# Fensters (Baum zeigt nur FLUTTERVIEW), das fokussierte Element ist aber
+# erreichbar. Darum: vom Fokus aus nach oben bis zur Wurzel gehen und von
+# dort den rohen Baum (RawViewWalker) ausgeben
+function Baum-ab-Fokus([string]$datei) {
+    $rw = [System.Windows.Automation.TreeWalker]::RawViewWalker
+    try { $el = [System.Windows.Automation.AutomationElement]::FocusedElement } catch { Log "kein Fokus"; return }
+    $wurzel = $el; $stufen = 0
+    while ($stufen -lt 40) {
+        try { $p = $rw.GetParent($wurzel) } catch { $p = $null }
+        if (-not $p -or $p.Current.ControlType.ProgrammaticName -eq "ControlType.Window") { break }
+        $wurzel = $p; $stufen++
+    }
+    Log "Wurzel nach $stufen Stufen: $($wurzel.Current.ControlType.ProgrammaticName) '$($wurzel.Current.Name)'"
+    $script:Zeilen = @()
+    function Ab($e, $t) {
+        if ($t -gt 30) { return }
+        $k = $rw.GetFirstChild($e)
+        while ($k) {
+            $typ = $k.Current.ControlType.ProgrammaticName -replace "ControlType\.", ""
+            $n = $k.Current.Name -replace "`r?`n", " / "
+            if ($n.Length -gt 160) { $n = $n.Substring(0, 160) + "..." }
+            $z = @()
+            try { $z += "Klappzustand=" + $k.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Current.ExpandCollapseState } catch {}
+            try { $z += "Schalter=" + $k.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Current.ToggleState } catch {}
+            if ($k.Current.IsKeyboardFocusable) { $z += "Tab-Ziel" }
+            if ($k.Current.HasKeyboardFocus) { $z += "FOKUS" }
+            $script:Zeilen += ("{0}[{1}] '{2}' {{{3}}}" -f ("  " * $t), $typ, $n, ($z -join ", "))
+            Ab $k ($t + 1)
+            $k = $rw.GetNextSibling($k)
+        }
+    }
+    Ab $wurzel 0
+    $script:Zeilen | Set-Content -Path (Join-Path $Aus $datei) -Encoding UTF8
+    Log "Elemente unter der Wurzel: $($script:Zeilen.Count)"
+    $script:Zeilen | ForEach-Object { Log "   $_" }
+}
+function Fehlerdatei {
+    $fd = Join-Path $env:TEMP "fisi_prototyp_fehler.txt"
+    if (Test-Path $fd) { Log "== Fehlerdatei des Prototyps:"; Get-Content $fd -Encoding UTF8 | ForEach-Object { Log "   $_" } }
+    else { Log "== Keine Fehlerdatei des Prototyps ($fd)" }
+}
 function Starte-Fenster([string]$exe, [string]$titel, [string]$arbeitsordner) {
     $ab = Logstand
     $pr = if ($arbeitsordner) { Start-Process $exe -WorkingDirectory $arbeitsordner -PassThru } else { Start-Process $exe -PassThru }
@@ -224,6 +266,9 @@ if ($f.Handle -ne [IntPtr]::Zero) {
     Log "[1] Programmstart | Fokus (UIA): $(Fokus)"
     if ($sp.Count -eq 0) { Log "      SPRICHT: (nichts)" } else { foreach ($s in $sp) { Log "      $s" } }
 
+    Fehlerdatei
+    Log "== UIA-Baum ab Fokus (Prototyp, NVDA laeuft)"
+    Baum-ab-Fokus "uia_prototyp_ab_fokus.txt"
     Log "== UIA-Baum des Prototyps MIT laufendem NVDA"
     powershell -NoProfile -File $UIA_BAUM -Fenster $PROTO_TITEL -Warten 10 | Tee-Object -FilePath (Join-Path $Aus "uia_prototyp_mit_nvda.txt") | ForEach-Object { Write-Output "   $_" }
     [H]::Hole($f.Handle) | Out-Null
@@ -293,6 +338,10 @@ if ($Gegenprobe -and (Test-Path $Gegenprobe)) {
         $sp = Gesprochen-seit $g.Ab
         Log "[F1] Flutter-Programm gestartet | Fokus (UIA): $(Fokus)"
         if ($sp.Count -eq 0) { Log "      SPRICHT: (nichts)" } else { foreach ($s in $sp) { Log "      $s" } }
+        [H]::Hole($g.Handle) | Out-Null
+        Schritt "F1b" "Tab"
+        Log "== UIA-Baum ab Fokus (Flutter-Gegenprobe)"
+        Baum-ab-Fokus "uia_flutter_ab_fokus.txt"
         Log "== UIA-Baum Flutter-Gegenprobe MIT laufendem NVDA"
         powershell -NoProfile -File $UIA_BAUM -Fenster $GegenprobeTitel -Warten 10 | Tee-Object -FilePath (Join-Path $Aus "uia_flutter_gegenprobe_mit_nvda.txt") | ForEach-Object { Write-Output "   $_" }
         [H]::Hole($g.Handle) | Out-Null

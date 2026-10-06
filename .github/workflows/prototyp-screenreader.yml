@@ -110,6 +110,21 @@ jobs:
           & $fl.FullName build windows --release
           Get-ChildItem build/windows/x64/runner/Release
 
+      # Lauf 8 zeigte im gebauten Programm "Error running app": Prototyp
+      # einmal direkt mit Python starten, um die Fehlermeldung zu sehen
+      - name: Prototyp aus dem Quelltext starten (Fehlersuche)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $p = Start-Process python -ArgumentList "prototyp_screenreader/optionen_flet.py" -RedirectStandardOutput "$env:RUNNER_TEMP\q_out.txt" -RedirectStandardError "$env:RUNNER_TEMP\q_err.txt" -PassThru
+          Start-Sleep -Seconds 45
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Get-Process | Where-Object { $_.ProcessName -like "flet*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+          Write-Output "== Ausgabe"; Get-Content "$env:RUNNER_TEMP\q_out.txt" -ErrorAction SilentlyContinue
+          Write-Output "== Fehlerausgabe"; Get-Content "$env:RUNNER_TEMP\q_err.txt" -ErrorAction SilentlyContinue
+          $fd = Join-Path $env:TEMP "fisi_prototyp_fehler.txt"
+          if (Test-Path $fd) { Write-Output "== Fehlerdatei"; Get-Content $fd; Remove-Item $fd }
+
       - name: NVDA-Messung (Sprachausgabe als Text mitschreiben)
         continue-on-error: true
         timeout-minutes: 25

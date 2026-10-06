@@ -19,6 +19,23 @@ import json
 import os
 import sys
 import tempfile
+import traceback
+
+# Fehler beim Start in eine Datei schreiben (Prototyp, fuer die NVDA-Messung
+# auf dem GitHub-Rechner): %TEMP%\fisi_prototyp_fehler.txt
+FEHLERDATEI = os.path.join(tempfile.gettempdir(), "fisi_prototyp_fehler.txt")
+
+
+def _fehler_merken(typ, wert, tb):
+    try:
+        with open(FEHLERDATEI, "a", encoding="utf-8") as f:
+            f.write("".join(traceback.format_exception(typ, wert, tb)))
+    except OSError:
+        pass
+    sys.__excepthook__(typ, wert, tb)
+
+
+sys.excepthook = _fehler_merken
 
 # Eigene Daten des Nutzers nie anfassen: leerer Ordner statt Datenordner
 os.environ["FISI_DB_PATH"] = os.path.join(tempfile.mkdtemp(prefix="fisi_proto_"),
@@ -29,13 +46,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = HERE if os.path.exists(os.path.join(HERE, "fisi_core.py")) else os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
-import flet as ft  # noqa: E402
+try:
+    import flet as ft  # noqa: E402
 
-import fisi_diagnose as fdg  # noqa: E402
-import fisi_hilfe as fh  # noqa: E402
-import fisi_leistung as fle  # noqa: E402
-import fisi_theme  # noqa: E402
-from fisi_theme import C  # noqa: E402
+    import fisi_diagnose as fdg  # noqa: E402
+    import fisi_hilfe as fh  # noqa: E402
+    import fisi_leistung as fle  # noqa: E402
+    import fisi_theme  # noqa: E402
+    from fisi_theme import C  # noqa: E402
+except Exception:
+    _fehler_merken(*sys.exc_info())
+    raise
 
 APP_VERSION = "0.58.1"
 TITLE = "FISI Screenreader-Prototyp"
@@ -358,6 +379,14 @@ class Flashcard:
 # ============================================================================
 
 def main(page: ft.Page):
+    try:
+        _main(page)
+    except Exception:
+        _fehler_merken(*sys.exc_info())
+        raise
+
+
+def _main(page: ft.Page):
     page.title = TITLE
     page.bgcolor = C["bg"]
     page.theme_mode = ft.ThemeMode.DARK
@@ -395,4 +424,8 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    try:
+        ft.run(main)
+    except Exception:
+        _fehler_merken(*sys.exc_info())
+        raise
