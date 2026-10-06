@@ -1,0 +1,51 @@
+# ============================================================================
+#  Screenreader-Prototyp als Windows-Programm bauen (Plan 0.59, Abschnitt 8a)
+# ============================================================================
+#  Liegt NUR auf dem Zweig proto-screenreader und laeuft nur bei Pushes dorthin.
+#  Ergebnis ist ein ZIP unter "Artifacts" auf der Seite des Laufs - kein Tag,
+#  kein Release, kein Einfluss auf das Programm oder die Update-Funktion.
+# ============================================================================
+
+name: Screenreader-Prototyp bauen
+
+on:
+  push:
+    branches: [proto-screenreader]
+
+jobs:
+  windows:
+    name: Prototyp (Windows)
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Flet installieren
+        run: python -m pip install "flet[all]==1.0.1" certifi
+
+      - name: Bauordner vorbereiten
+        run: python prototyp_screenreader/bauordner.py
+
+      - name: Windows-Programm bauen
+        working-directory: prototyp_screenreader/bau
+        run: flet build windows --yes --no-rich-output --skip-flutter-doctor
+
+      - name: ZIP packen
+        shell: pwsh
+        run: |
+          $out = "prototyp_screenreader/bau/build/windows"
+          Get-ChildItem $out
+          New-Item -ItemType Directory -Force "FISI-Screenreader-Prototyp" | Out-Null
+          Copy-Item "$out/*" "FISI-Screenreader-Prototyp" -Recurse
+          foreach ($f in "NVDA-Testanleitung.md", "NVDA-Testanleitung.pdf") { if (Test-Path "prototyp_screenreader/$f") { Copy-Item "prototyp_screenreader/$f" "FISI-Screenreader-Prototyp/" } }
+          Compress-Archive -Path "FISI-Screenreader-Prototyp" -DestinationPath "FISI-Screenreader-Prototyp-Windows.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: FISI-Screenreader-Prototyp-Windows
+          path: FISI-Screenreader-Prototyp-Windows.zip
+          if-no-files-found: error

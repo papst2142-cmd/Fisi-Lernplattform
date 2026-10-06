@@ -1,0 +1,21 @@
+# Screenreader-Prototyp (nur Zweig proto-screenreader, kein Release).
+# Wird von bauordner.py nach prototyp_screenreader/bau/ kopiert.
+
+[project]
+name = "fisi-screenreader-prototyp"
+version = "0.0.1"
+description = "FISI Lernplattform - Screenreader-Prototyp (Test mit NVDA)"
+requires-python = ">=3.10"
+dependencies = [
+    "flet==1.0.1",
+    "certifi",
+]
+
+[tool.flet]
+product = "FISI Screenreader-Prototyp"
+org = "io.github.papst2142cmd"
+company = "FISI Lernplattform Projekt"
+
+[tool.flet.app]
+path = "src"
+module = "main"
