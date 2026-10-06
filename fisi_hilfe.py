@@ -352,6 +352,20 @@ HELP_SECTIONS = [
               "Speichere den Bericht mit „Als Datei speichern“ (oder „Kopieren“) und gib "
               "ihn an die Person weiter, von der du das Programm hast. Schreib kurz dazu: "
               "Was hast du gemacht, was ist passiert, was hast du erwartet?")},
+    # Ab 0.58.1: Leistungsmessung (fisi_leistung.py)
+    {"id": "leistung", "titel": "Leistungsmessung",
+     "reiter": ["Optionen"],
+     "text": ("In den „Optionen“ unter „Leistungsmessung“ schaltet „Messung aufzeichnen“ "
+              "die Messung ein und aus. Sie ist zu Beginn aus. Eingeschaltet schreibt "
+              "das Programm in eine Messdatei, wie lange Seitenwechsel, "
+              "Darstellungswechsel und Änderungen der Fenstergröße dauern und wie viel "
+              "Arbeitsspeicher es dabei braucht.\n\n"
+              "Die Messdatei „leistungsmessung.csv“ liegt im Datenordner auf diesem "
+              "Gerät. „Messdatei zeigen“ öffnet am PC den Datenordner, am Handy kannst "
+              "du die Datei speichern oder teilen. „Messdatei löschen“ entfernt sie. Es "
+              "wird nichts gesendet. Die Datei enthält keine Lerninhalte und keinen "
+              "Namen. Die Einstellung gilt nur für dieses Gerät und kommt nicht in den "
+              "Abgleich.")},
     # Ab 0.56 (Nachbesserung): kurze Tastaturhilfe (nur PC)
     {"id": "tastatur", "titel": "Bedienung mit der Tastatur (PC)",
      "reiter": [],

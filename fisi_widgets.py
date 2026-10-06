@@ -22,6 +22,7 @@ import os
 import sys
 import tkinter as tk
 import tkinter.font as tkfont
+from collections import OrderedDict
 
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
@@ -35,8 +36,74 @@ F = {}
 # Skalierungsfaktor der Oberflaeche (1.0 bei 100 % Windows-Skalierung)
 _SCALE = [1.0]
 
+def _image_bytes(value):
+    """Ungefaehrer Speicherbedarf eines Eintrags im Bild-Zwischenspeicher:
+    Pillow-Bild Breite x Hoehe x Kanaele, CTkImage nach seinem Quellbild
+    (es haelt das Bild fest), PhotoImage mit 4 Byte je Pixel."""
+    if isinstance(value, tuple):     # (Bild, PhotoImage) aus tk_photo
+        photo = value[1]
+        try:
+            return photo.width() * photo.height() * 4
+        except (tk.TclError, AttributeError):
+            return 0
+    if isinstance(value, ctk.CTkImage):
+        value = getattr(value, "_light_image", None)
+    size, mode = getattr(value, "size", None), getattr(value, "mode", None)
+    if not size or not mode:
+        return 0
+    return size[0] * size[1] * len(mode)
+
+
+class BoundedCache(OrderedDict):
+    """Ab 0.58.1: Zwischenspeicher mit Obergrenze in Byte. Was am laengsten
+    nicht gebraucht wurde, faellt zuerst heraus. Vorher wuchs der Speicher
+    ohne Grenze, weil Verlaeufe (Kopfbereich, Balken) fuer jede Breite beim
+    Ziehen des Fensters neu entstehen und liegen blieben. Ein Bild, das
+    gerade angezeigt wird, haelt sein Bedienelement selbst fest - es
+    verschwindet also nie vom Bildschirm, es wird hoechstens spaeter neu
+    berechnet."""
+
+    def __init__(self, limit):
+        super().__init__()
+        self.limit = limit
+        self.bytes = 0
+
+    def get(self, key, default=None):
+        if key not in self:
+            return default
+        self.move_to_end(key)
+        return OrderedDict.__getitem__(self, key)
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.bytes -= _image_bytes(OrderedDict.__getitem__(self, key))
+        OrderedDict.__setitem__(self, key, value)
+        self.move_to_end(key)
+        self.bytes += _image_bytes(value)
+        while self.bytes > self.limit and len(self) > 1:
+            _old_key, old = self.popitem(last=False)
+            self.bytes -= _image_bytes(old)
+
+    def __delitem__(self, key):
+        self.bytes -= _image_bytes(OrderedDict.__getitem__(self, key))
+        OrderedDict.__delitem__(self, key)
+
+    def clear(self):
+        OrderedDict.clear(self)
+        self.bytes = 0
+
+
+# Obergrenzen der Bild-Zwischenspeicher (ab 0.58.1, Messung in
+# plan_0.58.1): Nach dem Start mit allen vorgeladenen Ansichten liegen etwa
+# 48 MB Pillow-Bilder im Speicher, nach einem Wechsel Hell/Dunkel etwa 65 MB
+# (beide Darstellungen). 96 MB halten beide Darstellungen mit Reserve, damit
+# ein Wechsel nichts neu berechnen muss; erst Bilder fuer immer neue Breiten
+# beim Ziehen des Fensters fallen heraus.
+IMAGE_CACHE_LIMIT = 96 * 1024 * 1024
+PHOTO_CACHE_LIMIT = 48 * 1024 * 1024
+
 # Bereits erzeugte Verlaufsbilder, damit Hover-Effekte nichts neu rendern
-_IMAGE_CACHE = {}
+_IMAGE_CACHE = BoundedCache(IMAGE_CACHE_LIMIT)
 
 # Pillow zeichnet in dieser Vergroesserung und rechnet dann herunter - so
 # entstehen glatte Kanten ohne Treppeneffekt.
@@ -262,8 +329,9 @@ def ctk_image(image, width, height):
     return cached
 
 
-_PHOTO_CACHE = {}        # (id(bild), breite, hoehe) -> (bild, PhotoImage)
-_PHOTO_CACHE_MAX = 800
+# (id(bild), breite, hoehe) -> (bild, PhotoImage); ab 0.58.1 mit Obergrenze
+# in Byte statt "nach 800 Eintraegen alles leeren"
+_PHOTO_CACHE = BoundedCache(PHOTO_CACHE_LIMIT)
 
 
 def tk_photo(image, width, height):
@@ -278,8 +346,6 @@ def tk_photo(image, width, height):
     cached = _PHOTO_CACHE.get(key)
     if cached is not None and cached[0] is image:
         return cached[1]
-    if len(_PHOTO_CACHE) >= _PHOTO_CACHE_MAX:
-        _PHOTO_CACHE.clear()
     photo = ImageTk.PhotoImage(image.resize((width, height), Image.LANCZOS))
     _PHOTO_CACHE[key] = (image, photo)
     return photo
@@ -2190,6 +2256,16 @@ class OptionList(ctk.CTkFrame):
 #  SCROLLBARER BEREICH
 # ============================================================================
 
+def _wheel_to_area(root, event, shift):
+    """Mausrad an den Bereich unter der Maus (ScrollArea._bind_wheel)."""
+    area = getattr(root, "_fisi_wheel_area", None)
+    if area is None:
+        return None
+    if shift:
+        return area._on_wheel_shift(event)
+    return area._on_wheel(event)
+
+
 class ScrollArea(tk.Frame):
     """Senkrecht UND waagerecht scrollbarer Container fuer lange/breite
     Ansichten. Bei einem zu schmalen Fenster wird der Inhalt nicht mehr
@@ -2301,16 +2377,29 @@ class ScrollArea(tk.Frame):
         self.after_idle(self._sync_hscroll)
 
     def _bind_wheel(self, flag):
+        # Ab 0.58.1: Das Mausrad wird nur einmal je Hauptfenster gebunden und
+        # an den Bereich unter der Maus weitergereicht. Vorher legte jedes
+        # Hineinfahren mit der Maus per bind_all vier neue Tcl-Befehle an, die
+        # Tk nie wieder loeschte - sie hielten die Bereiche (auch die einer
+        # abgebauten Oberflaeche) fest. Verhalten wie zuvor: Mausrad wirkt
+        # auf den zuletzt betretenen Bereich, nach dem Verlassen auf keinen.
+        root = self._root()
         if flag:
-            self.canvas.bind_all("<MouseWheel>", self._on_wheel)
-            self.canvas.bind_all("<Shift-MouseWheel>", self._on_wheel_shift)
-            self.canvas.bind_all("<Button-4>", self._on_wheel)
-            self.canvas.bind_all("<Button-5>", self._on_wheel)
-        else:
-            self.canvas.unbind_all("<MouseWheel>")
-            self.canvas.unbind_all("<Shift-MouseWheel>")
-            self.canvas.unbind_all("<Button-4>")
-            self.canvas.unbind_all("<Button-5>")
+            root._fisi_wheel_area = self
+            if not getattr(root, "_fisi_wheel_bound", False):
+                root._fisi_wheel_bound = True
+                for sequence, shift in (("<MouseWheel>", False), ("<Shift-MouseWheel>", True),
+                                        ("<Button-4>", False), ("<Button-5>", False)):
+                    root.bind_all(sequence,
+                                  lambda event, r=root, s=shift: _wheel_to_area(r, event, s))
+        elif getattr(root, "_fisi_wheel_area", None) is self:
+            root._fisi_wheel_area = None
+
+    def destroy(self):
+        root = self._root()
+        if getattr(root, "_fisi_wheel_area", None) is self:
+            root._fisi_wheel_area = None
+        super().destroy()
 
     def _on_wheel(self, event):
         first, last = self.canvas.yview()
@@ -2461,6 +2550,33 @@ def _quiet_destroy(self):
 
 ctk.CTkTextbox.after = _tracked_after
 ctk.CTkTextbox.destroy = _quiet_destroy
+
+
+# Ab 0.58.1 (Messung plan_0.58.1): CTkLabel und CTkButton tragen sich beim
+# Erzeugen in die Rueckrufliste ihres CTkImage ein (add_configure_callback),
+# tragen sich beim Zerstoeren aber nicht wieder aus (customtkinter 5.2.2 und
+# 6.0.0). Weil ctk_image() Bilder zwischenspeichert und mehrfach verwendet,
+# hielt jedes Bild alle Knoepfe fest, die es je benutzt haben - und ueber
+# deren Eltern nach einem Darstellungswechsel die ganze alte Oberflaeche
+# (rund 12 MB je Wechsel). Gepruefte Versionen: CTK_IMAGE_FIX_VERSIONS;
+# test_leistung.py meldet eine andere Version.
+CTK_IMAGE_FIX_VERSIONS = ("5.2.2", "6.0.0")
+
+
+def _release_image(destroy):
+    def release(self):
+        image = getattr(self, "_image", None)
+        if isinstance(image, ctk.CTkImage):
+            try:
+                image.remove_configure_callback(self._update_image)
+            except (ValueError, AttributeError):
+                pass   # schon ausgetragen (z. B. neuere customtkinter-Version)
+        destroy(self)
+    return release
+
+
+ctk.CTkLabel.destroy = _release_image(ctk.CTkLabel.destroy)
+ctk.CTkButton.destroy = _release_image(ctk.CTkButton.destroy)
 
 
 def make_text(parent, height=6, readonly=False, font=None):
