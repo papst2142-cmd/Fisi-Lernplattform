@@ -54,3 +54,37 @@ jobs:
           name: FISI-Screenreader-Prototyp-Windows
           path: FISI-Screenreader-Prototyp-Windows.zip
           if-no-files-found: error
+
+      # Messung unter Windows: UI-Automation-Baum (das, was NVDA abfragt).
+      # Ersetzt keinen NVDA-Test, zeigt aber Namen, Rollen und Zustaende.
+      - name: UIA-Messung Prototyp
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem "prototyp_screenreader/bau/build/windows/*.exe")[0].FullName
+          $p = Start-Process $exe -PassThru
+          New-Item -ItemType Directory -Force uia | Out-Null
+          powershell -NoProfile -File prototyp_screenreader/messung/uia_baum.ps1 -Fenster "FISI Screenreader-Prototyp" -Klick "Farben, eingeklappt" | Tee-Object uia/uia_prototyp.txt
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+
+      - name: UIA-Messung CustomTkinter (Bausteine und echtes PC-Programm)
+        continue-on-error: true
+        shell: pwsh
+        env:
+          FISI_DB_PATH: ${{ runner.temp }}\fisi_mess\fisi_lernplattform.db
+        run: |
+          python -m pip install -r requirements.txt
+          New-Item -ItemType Directory -Force uia, "$env:RUNNER_TEMP\fisi_mess" | Out-Null
+          $t = Start-Process python -ArgumentList "prototyp_screenreader/messung/tk_test.py", "60000" -PassThru
+          powershell -NoProfile -File prototyp_screenreader/messung/uia_baum.ps1 -Fenster "FISI Tk-Test" | Tee-Object uia/uia_customtkinter_bausteine.txt
+          Stop-Process -Id $t.Id -Force -ErrorAction SilentlyContinue
+          $a = Start-Process python -ArgumentList "start.py" -PassThru
+          $titel = python -c "import build; print('FISI Lernplattform ' + build.app_version())"
+          powershell -NoProfile -File prototyp_screenreader/messung/uia_baum.ps1 -Fenster $titel -Warten 90 | Tee-Object uia/uia_pc_programm.txt
+          Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: uia-messung
+          path: uia/*
