@@ -220,7 +220,13 @@ class RecorderTest(unittest.TestCase):
             pc = handle.read()
         with open(os.path.join(HERE, "mobile", "src", "main.py"), encoding="utf-8") as handle:
             mobile = handle.read()
-        for name in ("TITLE", "SUBTITLE", "HELP", "SWITCH", "BTN_SHOW", "BTN_DELETE"):
+        # Ab 0.59 kommen die Bereichstitel fuer beide aus fisi_optionen.py
+        with open(os.path.join(HERE, "fisi_optionen.py"), encoding="utf-8") as handle:
+            shared = handle.read()
+        self.assertIn("fle.TITLE", shared)
+        self.assertIn("fo.AREA_BY_ID", pc)
+        self.assertIn("fo.AREA_BY_ID", mobile)
+        for name in ("SUBTITLE", "HELP", "SWITCH", "BTN_SHOW", "BTN_DELETE"):
             self.assertIn("fle." + name, pc, name)
             self.assertIn("fle." + name, mobile, name)
         import fisi_hilfe as fh

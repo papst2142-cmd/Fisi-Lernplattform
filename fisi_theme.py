@@ -344,6 +344,12 @@ LIGHT_BACKGROUNDS = {
                 "border_hi": "#B0B0BC", "ring_bg": "#E6E6EB", "text_dim": "#4A4A55",
                 "muted": "#585864"},
 }
+# Ab 0.59 (8c, Variante A): Anzeigenamen der Hintergruende im Hell-Modus. Im
+# Hellen liefert z.B. "Schwarz" eine weisse Flaeche - der Name folgt deshalb
+# der Darstellung. Nur die Beschriftung wechselt; interne Namen (id),
+# gespeicherte Auswahl und Farbwerte bleiben unveraendert.
+LIGHT_NAMES = {"violett": "Flieder", "nachtblau": "Hellblau", "tannengruen": "Mintgrün",
+               "aubergine": "Rosé", "anthrazit": "Hellgrau", "schwarz": "Weiß"}
 LIGHT_SURFACES = ("bg", "sidebar", "card", "card_alt", "card_hi")
 MIN_CONTRAST = 4.6
 
@@ -376,7 +382,17 @@ def light_background(background_id):
     """Die helle Fassung eines Hintergrunds (Werte wie BACKGROUNDS)."""
     item = background(background_id)
     return dict(LIGHT_BACKGROUNDS.get(item["id"], LIGHT_BACKGROUNDS["violett"]),
-                id=item["id"], name=item["name"])
+                id=item["id"], name=background_name(item["id"], MODE_LIGHT))
+
+
+def background_name(background_id, mode=None):
+    """Ab 0.59 (8c): angezeigter Name eines Hintergrunds in der Darstellung
+    mode (Standard: die aktuelle). Dunkel = bisheriger Name."""
+    mode = current_mode if mode is None else mode
+    item = background(background_id)
+    if mode == MODE_LIGHT:
+        return LIGHT_NAMES.get(item["id"], item["name"])
+    return item["name"]
 
 
 def _apply_mode_colors():
@@ -486,6 +502,28 @@ CUSTOM_CHANNELS = (("h", "Farbton", 0, 359, "°", "Grad"),
                    ("s", "Sättigung", 0, 100, " %", "Prozent"),
                    ("l", "Helligkeit", 0, 100, " %", "Prozent"))
 # Texte (PC und Handy gleich)
+# Ab 0.59: Woerter und Beschriftung der Klappbereiche (PC und Handy gleich)
+FOLD_OPEN_TEXT = "aufklappen"
+FOLD_CLOSE_TEXT = "einklappen"
+FOLD_STATE_CLOSED = "eingeklappt"
+FOLD_STATE_OPEN = "aufgeklappt"
+
+
+# Kopfzeile beim Darueberfahren: Flaeche leicht zur Schriftfarbe hin. 0,04
+# haelt Titel, Pfeil und Hinweis in allen 72 Farbwelten ueber 4,5:1
+# (test_optionen); 0,06 fiel auf der Vorlagen-Flaeche knapp darunter.
+FOLD_HOVER_MIX = 0.04
+
+
+def fold_hover(surface):
+    return mix(surface, C["text"], FOLD_HOVER_MIX)
+
+
+def fold_label(title, opened):
+    """"Farben, eingeklappt" bzw. "Farben, aufgeklappt" (Tastatur, TalkBack)."""
+    return "%s, %s" % (title, FOLD_STATE_OPEN if opened else FOLD_STATE_CLOSED)
+
+
 CUSTOM_TITLE = "EIGENE FARBEN"
 CUSTOM_HINT = ("Mit den Reglern stellst du die zwei Farben der Farbverläufe (Akzent 1 und 2) "
                "und den Hintergrund selbst ein. Alle anderen Farben werden daraus abgeleitet. "

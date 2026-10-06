@@ -133,18 +133,32 @@ class Card(ft.Container):
 class FoldCard(Card):
     """Ab 0.56: Karte zum Auf- und Zuklappen (Optionen), Standard zu. Der
     Kopf ist eine Schaltflaeche mit Beschriftung fuer TalkBack. Der Zustand
-    bleibt fuer die Laufzeit der App erhalten (key)."""
+    bleibt fuer die Laufzeit der App erhalten (key).
+
+    Ab 0.59 (Optionen, marker=True, wie am PC): Pfeil links in der
+    Akzentfarbe, rechts "aufklappen"/"einklappen", ganze Kopfzeile mindestens
+    48 dp hoch, TalkBack liest "Farben, eingeklappt" und sagt Wechsel an
+    (live_region). Die Optionen vergessen den Zustand beim Oeffnen
+    (reset_states)."""
 
     _open_state = {}
 
     def __init__(self, title, controls=None, accent=None, subtitle=None, key=None,
-                 opened=False, open_text="aufklappen", close_text="zuklappen", **kwargs):
+                 opened=False, open_text="aufklappen", close_text="zuklappen",
+                 marker=False, **kwargs):
+        if marker:
+            open_text, close_text = fisi_theme.FOLD_OPEN_TEXT, fisi_theme.FOLD_CLOSE_TEXT
         arrow = ft.Icon(ft.Icons.EXPAND_MORE, color=C["muted"], size=20)
         arrow_text = ft.Text("", size=11, color=C["muted"])
+        if marker:
+            arrow_text = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["text_dim"])
+            action = arrow_text
+        else:
+            action = ft.Row([arrow_text, arrow], spacing=2, tight=True)
         super().__init__(title, controls, accent=accent, subtitle=subtitle,
-                         action=ft.Row([arrow_text, arrow], spacing=2, tight=True),
-                         **kwargs)
+                         action=action, **kwargs)
         self.arrow, self.arrow_text = arrow, arrow_text
+        self.marker = marker
         self.fold_key = key or title
         self.opened = self._open_state.get(self.fold_key, opened)
         self._texts = (open_text, close_text)
@@ -156,27 +170,56 @@ class FoldCard(Card):
         self.subtitle_text.expand = None
         self.subtitle_text.text_align = ft.TextAlign.LEFT
         self.subtitle_text.visible = bool(subtitle)
-        header.controls = [self.tick,
-                           ft.Column([self.title_text, self.subtitle_text], spacing=2,
-                                     tight=True, expand=True),
-                           header.controls[-1]]
+        if marker:
+            # Ab 0.59: Pfeil links, groesser, in der Akzentfarbe
+            self.arrow = ft.Icon(ft.Icons.ARROW_RIGHT, color=accent or C["accent"], size=28)
+            header.controls = [self.arrow, self.tick,
+                               ft.Column([self.title_text, self.subtitle_text], spacing=2,
+                                         tight=True, expand=True),
+                               header.controls[-1]]
+            header.spacing = 6
+        else:
+            header.controls = [self.tick,
+                               ft.Column([self.title_text, self.subtitle_text], spacing=2,
+                                         tight=True, expand=True),
+                               header.controls[-1]]
+        # Ab 0.59 (marker): Touch-Ziel mindestens 48 dp - Pfeil 28 + 2 x 10
         self.header_button = ft.Container(content=header, on_click=self.toggle, ink=True,
                                           border_radius=8, padding=ft.Padding.symmetric(
-                                              vertical=6))
+                                              vertical=10 if marker else 6))
         # TalkBack liest "Farben, Schaltfläche, aufklappen" statt der Einzelteile
         self.header_semantics = ft.Semantics(content=self.header_button, button=True,
-                                             container=True)
+                                             container=True, live_region=True if marker
+                                             else None)
         self.content.controls[0] = self.header_semantics
         self._fold_title = title
         self._apply()
 
+    @classmethod
+    def reset_states(cls, prefix):
+        """Ab 0.59 (E4): gemerkte Zustaende mit diesem Schluessel-Anfang vergessen."""
+        for key in [key for key in cls._open_state if key.startswith(prefix)]:
+            del cls._open_state[key]
+
+    def accessible_name(self):
+        return self.header_semantics.label
+
     def _apply(self):
         self.body.visible = self.opened
-        self.arrow.icon = ft.Icons.EXPAND_LESS if self.opened else ft.Icons.EXPAND_MORE
         state = self._texts[1] if self.opened else self._texts[0]
         self.arrow_text.value = state
-        self.header_semantics.label = "%s, %s" % (self._fold_title, state)
+        if self.marker:
+            self.arrow.icon = ft.Icons.ARROW_DROP_DOWN if self.opened else ft.Icons.ARROW_RIGHT
+            self.header_semantics.label = fisi_theme.fold_label(self._fold_title, self.opened)
+        else:
+            self.arrow.icon = ft.Icons.EXPAND_LESS if self.opened else ft.Icons.EXPAND_MORE
+            self.header_semantics.label = "%s, %s" % (self._fold_title, state)
         self.header_semantics.expanded = self.opened
+
+    def set_opened(self, flag):
+        """Ab 0.59: auf- oder zuklappen (ohne Wechsel, wenn schon so)."""
+        if bool(flag) != self.opened:
+            self.toggle()
 
     def toggle(self, _event=None):
         self.opened = not self.opened

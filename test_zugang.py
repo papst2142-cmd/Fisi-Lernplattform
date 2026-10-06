@@ -128,7 +128,10 @@ class SchriftgroesseTest(unittest.TestCase):
             pc = handle.read()
         with open(os.path.join(HERE, "mobile", "src", "main.py"), encoding="utf-8") as handle:
             mobile = handle.read()
-        for name in ("FONT_TITLE", "FONT_SUBTITLE", "FONT_HINT", "FONT_CHOICES",
+        # Ab 0.59 kommt der Bereichstitel fuer beide aus fisi_optionen.py
+        with open(os.path.join(HERE, "fisi_optionen.py"), encoding="utf-8") as handle:
+            self.assertIn("fisi_theme.FONT_TITLE", handle.read())
+        for name in ("FONT_SUBTITLE", "FONT_HINT", "FONT_CHOICES",
                      "BUSY_FONT_TITLE", "BUSY_FONT_TEXT"):
             self.assertIn("fisi_theme." + name, pc, name)
             self.assertIn("fisi_theme." + name, mobile, name)
