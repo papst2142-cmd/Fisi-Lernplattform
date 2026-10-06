@@ -2565,7 +2565,8 @@ ctk.CTkTextbox.destroy = _quiet_destroy
 # hielt jedes Bild alle Knoepfe fest, die es je benutzt haben - und ueber
 # deren Eltern nach einem Darstellungswechsel die ganze alte Oberflaeche
 # (rund 12 MB je Wechsel). Gepruefte Versionen: CTK_IMAGE_FIX_VERSIONS;
-# test_leistung.py meldet eine andere Version.
+# test_leistung.py meldet eine andere Version (requirements.txt legt ab
+# 0.58.1 genau 6.0.0 fest).
 CTK_IMAGE_FIX_VERSIONS = ("5.2.2", "6.0.0")
 
 

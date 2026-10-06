@@ -66,11 +66,14 @@ FLUSH_SECONDS = 5              # sonst schreibt die Oberflaeche alle 5 s
 
 COLUMNS = ("zeit", "version", "geraet", "system", "ereignis", "von", "nach", "dauer_ms",
            "max_ms", "anzahl", "ereignisse", "speicher_mb", "privat_mb", "elemente",
-           "aufgaben")
+           "aufgaben", "customtkinter")
+# "customtkinter": installierte Version, nur in der Zeile "start" und nur am
+# PC (am Handy leer) - belegt, welche Version die Installation wirklich hat
 SEPARATOR = ";"
 
 # Ereignisse
 EVENT_START = "start"            # Messung laeuft (beim Start oder beim Einschalten)
+                                 # mit customtkinter-Version (PC)
 EVENT_PAGE = "seite"             # Seitenwechsel von -> nach
 EVENT_THEME = "darstellung"      # Darstellung, Farbe oder Schriftgroesse neu aufgebaut
 EVENT_RESIZE = "groesse"         # Groessenaenderung, zusammengefasst
@@ -180,11 +183,13 @@ class Recorder:
     """Sammelt Messzeilen im Speicher und schreibt sie gebuendelt.
 
     active wird beim Erzeugen aus den Einstellungen gelesen und mit
-    set_active() umgeschaltet; ist es aus, tut record() nichts."""
+    set_active() umgeschaltet; ist es aus, tut record() nichts. toolkit ist
+    die customtkinter-Version (PC) und steht in jeder Zeile "start"."""
 
-    def __init__(self, version, device, path=None):
+    def __init__(self, version, device, path=None, toolkit=""):
         self.version = version
         self.device = device
+        self.toolkit = toolkit
         self.path = path or file_path()
         self.system = system_text()
         self.buffer = []
@@ -211,7 +216,8 @@ class Recorder:
         values = (now, self.version, self.device, self.system, event, von, nach,
                   _number(dauer_ms), _number(max_ms), _number(anzahl),
                   _number(ereignisse), _number(memory), _number(private),
-                  _number(elemente), _number(aufgaben))
+                  _number(elemente), _number(aufgaben),
+                  self.toolkit if event == EVENT_START else "")
         self.buffer.append(SEPARATOR.join(_clean(value) for value in values))
         if len(self.buffer) >= FLUSH_LINES:
             self.flush()

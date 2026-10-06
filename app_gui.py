@@ -5746,7 +5746,7 @@ class PerfMonitor:
     def __init__(self, app):
         self.app = app
         self.root = app.root
-        self.rec = fle.Recorder(APP_VERSION, "PC")
+        self.rec = fle.Recorder(APP_VERSION, "PC", toolkit=ctk.__version__)
         self._flush_job = None
         self._bound = False
         self._resize = None

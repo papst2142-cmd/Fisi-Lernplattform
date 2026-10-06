@@ -133,6 +133,7 @@ class RecorderTest(unittest.TestCase):
         self.assertTrue(fields["system"])
         if os.path.exists("/proc/self/statm") or sys.platform == "win32":
             self.assertTrue(fields["speicher_mb"])
+        self.assertEqual(fields["customtkinter"], "")          # nur in "start"
         resize = dict(zip(fle.COLUMNS, rows[3].split(";")))
         self.assertEqual((resize["anzahl"], resize["ereignisse"], resize["max_ms"]),
                          ("14", "1200", "30,5"))
@@ -147,6 +148,16 @@ class RecorderTest(unittest.TestCase):
         rows = _rows(fle.file_path())
         self.assertEqual(rows[-1].split(";")[4], fle.EVENT_STOP)
         self.assertEqual(len(rows), 6)
+
+    def test_customtkinter_version_in_der_startzeile(self):
+        rec = fle.Recorder("0.58.1", "PC", toolkit="6.0.0")
+        rec.set_active(True)
+        rec.record(fle.EVENT_PAGE, von="a", nach="b")
+        rec.set_active(False)
+        rows = [dict(zip(fle.COLUMNS, row.split(";"))) for row in _rows(fle.file_path())[1:]]
+        self.assertEqual([(r["ereignis"], r["customtkinter"]) for r in rows],
+                         [(fle.EVENT_START, "6.0.0"), (fle.EVENT_PAGE, ""),
+                          (fle.EVENT_STOP, "")])
 
     def test_zeilen_werden_gebuendelt(self):
         rec = fle.Recorder("0.58.1", "PC")
@@ -248,9 +259,17 @@ class CacheTest(unittest.TestCase):
 
 class CtkVersionTest(unittest.TestCase):
     """Die Reparatur in fisi_widgets.py (_release_image) ist fuer bestimmte
-    customtkinter-Versionen geprueft. Eine andere Version (requirements.txt
-    erlaubt >=5.2,<7) muss erst nachgeprueft werden - dann hier und in
-    CTK_IMAGE_FIX_VERSIONS eintragen."""
+    customtkinter-Versionen geprueft. requirements.txt legt ab 0.58.1 genau
+    6.0.0 fest (Entscheidung F1). Eine andere Version muss erst nachgeprueft
+    werden - dann in requirements.txt und CTK_IMAGE_FIX_VERSIONS eintragen."""
+
+    def test_requirements_legen_die_version_fest(self):
+        import fisi_widgets as fw
+        with open(os.path.join(HERE, "requirements.txt"), encoding="utf-8") as handle:
+            pins = [line.strip() for line in handle if line.startswith("customtkinter")]
+        self.assertEqual(len(pins), 1)
+        self.assertTrue(pins[0].startswith("customtkinter=="), pins[0])
+        self.assertIn(pins[0].split("==")[1], fw.CTK_IMAGE_FIX_VERSIONS)
 
     def test_version_ist_geprueft(self):
         import customtkinter as ctk
@@ -290,7 +309,7 @@ class PcTest(unittest.TestCase):
         import customtkinter as ctk
         import app_gui
         import fisi_widgets
-        cls.app_gui, cls.fw = app_gui, fisi_widgets
+        cls.app_gui, cls.fw, cls.ctk = app_gui, fisi_widgets, ctk
         app_gui.UpdateController.auto_check = lambda self: None
         app_gui.SyncController.auto_start = lambda self: None
         cls.toasts = []
@@ -386,6 +405,7 @@ class PcTest(unittest.TestCase):
                 for row in _rows(fle.file_path())[1:]]
         events = [row["ereignis"] for row in rows]
         self.assertEqual(events[0], fle.EVENT_START)
+        self.assertEqual(rows[0]["customtkinter"], self.ctk.__version__)
         pages = [(row["von"], row["nach"]) for row in rows
                  if row["ereignis"] == fle.EVENT_PAGE]
         self.assertIn(("settings", "progress"), pages)
@@ -595,6 +615,7 @@ class HandyTest(unittest.TestCase):
                          [fle.EVENT_START, fle.EVENT_PAGE, fle.EVENT_THEME,
                           fle.EVENT_RESIZE, fle.EVENT_STOP])
         self.assertEqual(rows[0]["geraet"], "Handy")
+        self.assertEqual(rows[0]["customtkinter"], "")          # am Handy leer
         self.assertEqual((rows[3]["von"], rows[3]["nach"], rows[3]["anzahl"]),
                          ("400x900", "800x900", "3"))
 
