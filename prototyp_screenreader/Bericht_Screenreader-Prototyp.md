@@ -6,7 +6,7 @@ Stand: 06.10.2026. Zweig `proto-screenreader` (von `main` cb63c96). Kein Pull-Re
 
 | Frage | Antwort |
 |---|---|
-| Kann NVDA das heutige PC-Programm (CustomTkinter) lesen? | **Nein, praktisch nicht.** Gemessen unter Linux: Das Fenster taucht im Zugänglichkeitsbaum gar nicht auf, eine GTK-Gegenprobe im selben Lauf schon. Laut Quelltext bestehen CustomTkinter-Knöpfe aus einer Zeichenfläche plus Beschriftung ohne Rolle. Unter Windows wird NVDA voraussichtlich nur den Fenstertitel nennen (nicht gemessen). |
+| Kann NVDA das heutige PC-Programm (CustomTkinter) lesen? | **Nein.** Gemessen unter Windows (UI Automation, die Schnittstelle, die NVDA abfragt): Das echte Programm 0.58.1 besteht aus 3.353 Elementen, **keines hat einen Namen, keines ist ein Tab-Ziel**. Unter Linux fehlt das Fenster im Zugänglichkeitsbaum ganz. |
 | Kann Flet-Desktop das? | **Ja, weitgehend.** Gemessen unter Linux: Knöpfe, Schalter, Optionsfelder, Überschriften und die Klappköpfe („Farben, eingeklappt“) kommen mit Name und Rolle an, Tab, Enter und Leertaste funktionieren, eingeklappte Inhalte sind nicht per Tab erreichbar. Unter Windows (UI Automation) ist das laut Flutter-Quelltext ebenso angelegt; ein echter NVDA-Lauf fehlt noch. |
 | Empfehlung | Zuerst den **echten NVDA-Test** mit dem Prototyp machen lassen (Anleitung liegt bei). Den Weg über CustomTkinter **nicht** weiterverfolgen. Bei gutem Testergebnis einen **zugänglichen Lernmodus auf Flet-Desktop** (aus dem Handy-Code) als eigenes Roadmap-Thema prüfen. Die Entscheidung trifft Nico. |
 
@@ -14,9 +14,10 @@ Stand: 06.10.2026. Zweig `proto-screenreader` (von `main` cb63c96). Kein Pull-Re
 
 | Art | Inhalt |
 |---|---|
+| **Gemessen unter Windows** (GitHub-Rechner Windows Server 2025, UI Automation) | Echtes PC-Programm 0.58.1 und CustomTkinter-Bausteine: kein Element mit Namen. Der Flet-Prototyp startet und das Fenster ist da, sein Inhalt erschien dort aber auch nach 120 Sekunden nicht im Baum (nur die Fläche „FLUTTERVIEW“), obwohl die Screenreader-Kennung wie bei NVDA gesetzt war. Ursache offen: entweder liefert Flutter den Baum auf diesem Rechner ohne Bildschirm nicht, oder er reagiert nur auf echte Screenreader. **Genau das klärt der NVDA-Test.** Skript: `messung/uia_baum.ps1`. |
 | **Gemessen** (Cloud, Linux, virtuelle Anzeige, AT-SPI = Zugänglichkeitsschnittstelle unter Linux) | Baum von CustomTkinter (leer) gegen GTK (sichtbar); Tab-Reihenfolge in CustomTkinter; Baum und Tastaturablauf des Flet-Prototyps (Optionen und Karteikarte); Baum der unveränderten Handy-App als Desktop-Programm. Alle Ergebnisse und Skripte: `prototyp_screenreader/messung/`. |
 | **Nur im Quelltext geprüft** | Flutter unter Windows meldet „erweitert/reduziert“ als Zustand (accessibility_bridge.cc), schickt beim Umschalten aber **kein eigenes Ereignis** (accessibility_bridge_windows.cc: EXPANDED/COLLAPSED werden übergangen). Ansagen über `SemanticsService` gehen unter Windows als UIA-„Alert“ raus (flutter_windows_view.cc, AnnounceAlert). Ob Flutter „Live-Regionen“ unter Windows weitergibt, ist im Quelltext nicht erkennbar. Tk 9.1 (erschienen 30.09.2026) hat erstmals eine Screenreader-Schnittstelle, die für reine Zeichenflächen ausdrücklich nicht gilt. |
-| **Nicht geprüft** | Kein echter NVDA-Lauf (geht in der Cloud nicht). Kein Windows-Lauf des Prototyps durch Claude Code; der Windows-Bau läuft über GitHub Actions. Linux-Messwerte sind ein starker Hinweis, aber kein Beweis für Windows. |
+| **Nicht geprüft** | Kein echter NVDA-Lauf (geht in der Cloud nicht). Ob NVDA den Flet-Prototyp unter Windows wirklich liest, ist damit **offen**; die Linux-Messung ist ein starker Hinweis, aber kein Beweis. |
 
 ## 3. S1: CustomTkinter/Tk
 
@@ -28,6 +29,8 @@ Stand: 06.10.2026. Zweig `proto-screenreader` (von `main` cb63c96). Kein Pull-Re
 - Das Hauptprogramm hat eigene Tastaturbedienung nachgerüstet (`fisi_widgets.py`, `test_zugang.py`). Sehende Tastaturnutzer kommen also zurecht; ein Screenreader bekommt davon aber keine Namen und Rollen.
 - Unter Windows ist jedes Tk-Fenster ein echtes Windows-Fenster. NVDA wird deshalb den Fenstertitel nennen, Texte auf den Zeichenflächen aber nicht (Erwartung, nicht gemessen). Der Vergleichsschritt 5 in der Testanleitung prüft das.
 - **Tk 9.1** bringt seit dem 30.09.2026 einen Befehl `tk accessible`, mit dem man Rolle und Namen setzen kann. Laut Handbuch gilt das nicht für Zeichenflächen („a purely visual widget“) und Rahmen. Das Programm baut mit Python 3.12, das unter Windows Tk 8.6 mitbringt. Ob CustomTkinter 6.0.0 mit Tk 9 läuft, ist offen.
+
+**Messung 3 (Windows, UI Automation):** Im CustomTkinter-Testfenster 15 Elemente, im echten Programm 0.58.1 (Startseite) 3.353 Elemente. In beiden Fällen hat **kein einziges** Element einen Namen, und keines ist als Tab-Ziel gemeldet. NVDA kann dort also höchstens den Fenstertitel nennen.
 
 **Ergebnis S1:** Kein brauchbarer Weg. Deshalb gibt es keinen Vergleichsfall im bestehenden PC-Programm (Plan: „Wenn S1 etwas liefert“).
 
@@ -41,6 +44,8 @@ Stand: 06.10.2026. Zweig `proto-screenreader` (von `main` cb63c96). Kein Pull-Re
 - „Vorlagen“ mit Leertaste: zwölf Kacheln als Schaltflächen („Grundfarbe Cyan/Pink“ …). Wieder eingeklappt: Die Kacheln werden übersprungen.
 - Überschriften „Optionen“, „Updates“, „Problem melden“ haben die Rolle Überschrift.
 - Karteikarte: Nach „Antwort zeigen“ steht der Fokus auf „Gewusst“, nach der Bewertung wieder auf „Antwort zeigen“.
+
+**Windows-Messung:** Der gebaute Prototyp startet unter Windows, im UI-Automation-Baum blieb aber nur die Fläche „FLUTTERVIEW“ ohne Inhalt (siehe Abschnitt 2). Das ist ungeklärt und der wichtigste Punkt für den NVDA-Test.
 
 **Grenzen unter Linux:** Den Zustand „erweitert/reduziert“ meldet Flutter unter Linux gar nicht (deshalb steht der Zustand zusätzlich im Namen). Textfelder fehlten im Linux-Baum. Beides ist unter Windows anders angelegt und wird im NVDA-Test geprüft.
 
