@@ -1,0 +1,22 @@
+[application] 'com.appveyor.flet' {}
+  [frame] 'FISI Screenreader-Prototyp' {sensitive,showing}
+    [panel] '' {focusable,focused,sensitive,showing}
+      [filler] '' {}
+        [panel] '' {showing}
+          [panel] '' {showing}
+            [panel] '' {showing}
+              [panel] '' {showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Optionen' {focusable,sensitive,showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Karteikarte' {focusable,sensitive,showing}
+                [toggle button] 'Testschalter: zusätzliche Ansagen' {checked,focusable,sensitive,showing}
+                [panel] '' {showing}
+                  [panel] '' {showing}
+                    [panel] '' {showing}
+                      [header] 'Karteikarte' {sensitive,showing}
+                    [panel] 'Karte 1 von 5' {showing}
+                      [header] 'Was ist der Standard-Port für HTTPS?' {sensitive,showing}
+                      [panel] 'Antwort: TCP Port 443 (verschlüsselte Webübertragung per TLS/SSL).' {sensitive,showing}
+                      [push button] 'Gewusst' {focusable,focused,sensitive,showing}
+                      [push button] 'Nicht gewusst' {focusable,sensitive,showing}

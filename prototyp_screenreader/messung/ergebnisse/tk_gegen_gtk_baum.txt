@@ -1,0 +1,4 @@
+# AT-SPI-Baum: CustomTkinter-Fenster (tk_test.py) und GTK-Gegenprobe (gtk_test.py) gleichzeitig offen
+[application] 'gtk_test.py' {}
+  [frame] 'GTK-Gegenprobe' {sensitive,showing}
+    [push button] 'GTK-Knopf' {focusable,sensitive,showing}

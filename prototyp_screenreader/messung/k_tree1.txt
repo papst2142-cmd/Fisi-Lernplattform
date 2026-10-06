@@ -1,0 +1,20 @@
+[application] 'com.appveyor.flet' {}
+  [frame] 'FISI Screenreader-Prototyp' {sensitive,showing}
+    [panel] '' {focusable,focused,sensitive,showing}
+      [filler] '' {}
+        [panel] '' {showing}
+          [panel] '' {showing}
+            [panel] '' {showing}
+              [panel] '' {showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Optionen' {focusable,sensitive,showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Karteikarte' {focusable,focused,sensitive,showing}
+                [toggle button] 'Testschalter: zusätzliche Ansagen' {checked,focusable,sensitive,showing}
+                [panel] '' {showing}
+                  [panel] '' {showing}
+                    [panel] '' {showing}
+                      [header] 'Karteikarte' {sensitive,showing}
+                    [panel] 'Karte 1 von 5' {showing}
+                      [header] 'Was ist der Standard-Port für HTTPS?' {sensitive,showing}
+                      [push button] 'Antwort zeigen' {focusable,sensitive,showing}

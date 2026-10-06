@@ -12,6 +12,11 @@ on:
   push:
     branches: [proto-screenreader]
 
+# Neuer Push ersetzt einen noch laufenden Bau
+concurrency:
+  group: prototyp-screenreader
+  cancel-in-progress: true
+
 jobs:
   windows:
     name: Prototyp (Windows)

@@ -1,0 +1,32 @@
+== A: Tab-Reihenfolge Startzustand (alles zu ausser Updates/Problem melden)
+Tab  1: [push button] 'Optionen' []
+Tab  2: [push button] 'Karteikarte' []
+Tab  3: [toggle button] 'Testschalter: zusätzliche Ansagen' ['checked']
+Tab  4: [push button] 'Nach Updates suchen' []
+Tab  5: [toggle button] 'Beim Start automatisch nach Updates suchen' ['checked']
+Tab  6: [push button] 'Rundgang und Hilfe, eingeklappt' []
+Tab  7: [push button] 'Schriftgröße, eingeklappt' []
+Tab  8: [push button] 'Farben, eingeklappt' []
+Tab  9: [push button] 'Tagesziel, eingeklappt' []
+Tab 10: [push button] 'Kopieren' []
+Tab 11: [push button] 'Leistungsmessung, eingeklappt' []
+Tab 12: [push button] 'Optionen' []
+== B: Farben mit Enter aufklappen
+Fokus: [push button] 'Farben, eingeklappt' []
+nach Enter: [push button] 'Farben, ausgeklappt' []
+== C: weiter mit Tab in den offenen Bereich
+Tab: [radio button] 'Dunkel' ['checked']
+Tab: [push button] 'Vorlagen, eingeklappt' []
+Tab: [push button] 'Tagesziel, eingeklappt' []
+Tab: [push button] 'Kopieren' []
+Tab: [push button] 'Leistungsmessung, eingeklappt' []
+== D: Vorlagen mit Leertaste aufklappen
+Fokus: [push button] 'Vorlagen, eingeklappt' []
+nach Leertaste: [push button] 'Vorlagen, ausgeklappt' []
+Tab: [push button] 'Grundfarbe Cyan/Pink' []
+Tab: [push button] 'Grundfarbe Lila/Magenta' []
+Tab: [push button] 'Grundfarbe Blau/Türkis' []
+== E: Shift+Tab zurueck zu Vorlagen, Enter = einklappen
+Fokus: [push button] 'Vorlagen, ausgeklappt' []
+nach Enter: [push button] 'Vorlagen, eingeklappt' []
+naechstes Tab-Ziel nach Einklappen: [push button] 'Tagesziel, eingeklappt' []

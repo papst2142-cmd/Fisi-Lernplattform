@@ -1,0 +1,18 @@
+[application] 'com.appveyor.flet' {}
+  [frame] 'FISI Lernplattform 0.58.1' {sensitive,showing}
+    [panel] '' {focusable,focused,sensitive,showing}
+      [filler] '' {}
+        [panel] '' {showing}
+          [panel] '' {showing}
+            [panel] '' {showing}
+              [panel] '' {showing}
+                [panel] '' {showing}
+                  [panel] '' {showing}
+                    [panel] 'Alert' {showing}
+                      [panel] '' {showing}
+                        [panel] '' {showing}
+                          [panel] 'RUNDGANG · SCHRITT 1 VON 5' {showing}
+                          [panel] 'Willkommen' {showing}
+                          [panel] 'Die FISI Lernplattform hilft dir bei der Vorbereitung auf die Prüfungen zum Fachinformatiker Systemintegration (AP1 und AP2).\n\nLernen kannst du mit „Karteikarten“, im „Prüfungstrainer“ und mit den „AP1-Szenarien“ und „AP2-Szenarien“, die wie Prüfungsaufgaben aufgebaut sind. Am PC findest du alles links in der Seitenleiste, am Handy unter „Lernen“.' {showing}
+                          [panel] 'Weiter' {focusable,showing}
+                          [panel] 'Überspringen' {focusable,showing}

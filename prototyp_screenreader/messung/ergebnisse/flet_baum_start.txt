@@ -1,0 +1,41 @@
+[application] 'com.appveyor.flet' {}
+  [frame] 'FISI Screenreader-Prototyp' {sensitive,showing}
+    [panel] '' {focusable,focused,sensitive,showing}
+      [filler] '' {}
+        [panel] '' {showing}
+          [panel] '' {showing}
+            [panel] '' {showing}
+              [panel] '' {showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Optionen' {focusable,sensitive,showing}
+                [panel] '' {sensitive,showing}
+                  [push button] 'Karteikarte' {focusable,sensitive,showing}
+                [toggle button] 'Testschalter: zusätzliche Ansagen' {checked,focusable,sensitive,showing}
+                [panel] '' {showing}
+                  [panel] '' {showing}
+                    [panel] '' {showing}
+                      [header] 'Optionen' {sensitive,showing}
+                    [panel] '' {sensitive,showing}
+                    [panel] '' {showing}
+                      [header] 'Updates' {sensitive,showing}
+                      [panel] 'installierte Version 0.58.1' {sensitive,showing}
+                      [panel] '' {sensitive,showing}
+                        [push button] 'Nach Updates suchen' {focusable,sensitive,showing}
+                      [panel] '' {sensitive,showing}
+                        [toggle button] 'Beim Start automatisch nach Updates suchen' {checked,focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [push button] 'Rundgang und Hilfe, eingeklappt' {focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [push button] 'Schriftgröße, eingeklappt' {focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [push button] 'Farben, eingeklappt' {focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [push button] 'Tagesziel, eingeklappt' {focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [header] 'Problem melden' {sensitive,showing}
+                      [panel] 'Angaben für die Fehlersuche' {sensitive,showing}
+                      [panel] 'Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden entfernt, deine Antworten und Projekttexte stehen nicht darin. Speichere den Bericht als Datei (oder kopiere ihn) und gib ihn mit deiner Beschreibung des Problems an die Person weiter, von der du das Programm hast.' {sensitive,showing}
+                      [panel] '' {sensitive,showing}
+                        [push button] 'Kopieren' {focusable,sensitive,showing}
+                    [panel] '' {showing}
+                      [push button] 'Leistungsmessung, eingeklappt' {focusable,sensitive,showing}

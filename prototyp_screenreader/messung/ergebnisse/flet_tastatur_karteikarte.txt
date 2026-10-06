@@ -1,0 +1,6 @@
+Fokus: [push button] 'Karteikarte' []
+nach Enter: [push button] 'Karteikarte' []
+Tab: [toggle button] 'Testschalter: zusätzliche Ansagen' ['checked']
+Tab: [push button] 'Antwort zeigen' []
+nach Enter (Antwort zeigen): [push button] 'Gewusst' []
+nach Enter (Gewusst): [push button] 'Antwort zeigen' []
