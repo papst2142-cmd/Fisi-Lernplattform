@@ -2459,6 +2459,12 @@ class ScrollArea(tk.Frame):
             self.after_idle(self._sync_hscroll)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
+    def _refit_width(self):
+        try:
+            self._on_inner_configure()
+        except tk.TclError:
+            pass
+
     def _sync_hscroll(self):
         """Ab 0.53: Tk meldet die neue Breite nicht immer ueber xscrollcommand -
         dann blieb ein waagerechter Balken ohne Funktion stehen, obwohl alles
@@ -2549,6 +2555,7 @@ class ScrollArea(tk.Frame):
             self._wrap_width = width
             scale = _SCALE[0] or 1.0
             left = self.inner.winfo_rootx()
+            changed = False
             stack = [self.inner]
             while stack:
                 for child in stack.pop().winfo_children():
@@ -2566,8 +2573,16 @@ class ScrollArea(tk.Frame):
                             wrap = int(min(base, max(220, room)))
                             if wrap != child.cget("wraplength"):
                                 child.configure(wraplength=wrap)
+                                changed = True
                         continue
                     stack.append(child)
+            if changed:
+                # Ab 0.59: Schmalere Texte machen den Inhalt schmaler, ohne dass
+                # Tk das meldet - Breite einmal nachziehen (sonst bleibt rechts
+                # ein ueberstehender Rand mit seitlichem Balken). Kurz warten:
+                # Tk reicht die neue Breite erst in weiteren Leerlaufschritten
+                # an die umgebenden Rahmen weiter.
+                self.after(40, self._refit_width)
         except tk.TclError:
             pass
 

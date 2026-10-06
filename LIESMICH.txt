@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.58.1
+  FISI LERNPLATTFORM  -  Version 0.59
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
@@ -436,6 +436,22 @@ macOS meldet, die App koenne nicht geoeffnet werden
 AppImage-Datei
     Die Datei zuerst ausfuehrbar machen, z.B.:
       chmod +x FISI-Lernplattform-*.AppImage
+
+AppImage startet nicht (Linux, ab 0.59 beschrieben)
+    Meldung z.B. "No suitable fusermount binary found" oder "Cannot mount
+    AppImage, please check your FUSE setup". Das AppImage haengt sich beim
+    Start ueber FUSE ein. Dafuer braucht es die Geraetedatei /dev/fuse und
+    das Programm fusermount3 oder fusermount. Die frueher noetige
+    Bibliothek libfuse2 braucht es nicht mehr.
+      - Abhilfe: das Paket fuse3 (oder fuse2 bzw. fuse) ueber die
+        Paketverwaltung installieren, z.B. unter CachyOS/Arch:
+          sudo pacman -S fuse3
+        Der Paketname kann je nach System abweichen. Auf Bazzite ist
+        fuse3 nach unserem Wissen schon dabei (dort nicht getestet).
+      - Notloesung ohne Installation: das AppImage entpackt sich dann bei
+        jedem Start in einen temporaeren Ordner (langsamer beim Start):
+          ./FISI-Lernplattform-*.AppImage --appimage-extract-and-run
+      - Alternative unter Debian/Ubuntu/Mint: das .deb-Paket nehmen.
 
 "Datenbankfehler" beim Start
     Der Speicherort ist schreibgeschuetzt. Ueber FISI_DB_PATH einen

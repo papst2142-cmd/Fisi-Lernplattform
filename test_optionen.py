@@ -536,6 +536,21 @@ class OptionenPcTest(unittest.TestCase):
         self.app.change_color(background_id=th.DEFAULT_BACKGROUND)
         self.pump(20)
 
+    def test_l_hilfe_hat_dieselbe_kopfzeile(self):
+        """F2: Die Hilfe-Abschnitte haben die neue Kopfzeile (Inhalte gleich)."""
+        self.app.show_view("help")
+        self.pump()
+        view = self.app.views["help"]
+        self.assertEqual(sorted(view.folds), sorted(fh.HELP_IDS))
+        for key, fold in view.folds.items():
+            self.assertTrue(fold.marker, key)
+            self.assertEqual(fold.arrow.cget("text"),
+                             th.FOLD_CLOSE_TEXT if fold.opened else th.FOLD_OPEN_TEXT)
+            self.assertEqual(fold.accessible_name(),
+                             th.fold_label(fh.HELP_BY_ID[key]["titel"], fold.opened))
+            self.assertIn(fh.HELP_BY_ID[key]["text"],
+                          [label.cget("text") for label in _labels(fold.body)])
+
     def test_k_breite_passt_sich_nach_einklappen_an(self):
         """Nach dem Einklappen ist die Seite nicht breiter als das Fenster,
         wenn der Inhalt hineinpasst (rechts wird nichts abgeschnitten)."""
@@ -608,6 +623,15 @@ class OptionenHandyTest(unittest.TestCase):
     def screen(self):
         self.ui.FoldCard.reset_states(fo.STATE_PREFIX)
         return self.main.SCREEN_CLASSES["settings"](self.app)
+
+    def test_hilfe_hat_dieselbe_kopfzeile(self):
+        screen = self.main.SCREEN_CLASSES["help"](self.app)
+        screen.build()
+        self.assertEqual(sorted(screen.folds), sorted(fh.HELP_IDS))
+        for key, fold in screen.folds.items():
+            self.assertTrue(fold.marker, key)
+            self.assertEqual(fold.accessible_name(),
+                             th.fold_label(fh.HELP_BY_ID[key]["titel"], fold.opened))
 
     def test_alles_zu_ausser_updates_und_problem(self):
         screen = self.screen()

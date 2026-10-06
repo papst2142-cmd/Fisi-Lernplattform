@@ -110,7 +110,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.58.1"
+APP_VERSION = "0.59"
 
 
 def _resource_path(filename):
@@ -5728,7 +5728,7 @@ HELP_ACCENTS = {"lernen": "accent", "pruefung": "purple", "rechner": "green",
 
 class HelpView(View):
     """Kurze Hilfetexte als aufklappbare Kacheln (Texte in fisi_hilfe.py,
-    am Handy dieselben)."""
+    am Handy dieselben). Ab 0.59 mit derselben Kopfzeile wie die Optionen."""
 
     def build(self):
         intro = Card(self.content, title=fh.HELP_TITLE, accent=C["green"],
@@ -5742,7 +5742,7 @@ class HelpView(View):
         for section in fh.HELP_SECTIONS:
             fold = FoldCard(self.content, title=section["titel"],
                             accent=C[HELP_ACCENTS.get(section["id"], "accent")],
-                            key="hilfe_" + section["id"])
+                            key="hilfe_" + section["id"], marker=True)
             fold.pack(fill="x", pady=(14, 0))
             make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
                        wraplength=800, justify="left", anchor="w").pack(anchor="w")
@@ -6139,7 +6139,6 @@ class ShortcutDialog(ctk.CTkToplevel):
         super().__init__(app.root, fg_color=C["bg"])
         self.app = app
         self.title(fsc.ASK_TITLE)
-        self.geometry("560x260")
         self.resizable(False, False)
         self.transient(app.root)
         self.after(250, lambda: _apply_window_icon(self))
@@ -6150,13 +6149,24 @@ class ShortcutDialog(ctk.CTkToplevel):
                                    wraplength=480)
         self.lbl_text.pack(anchor="w")
         self.buttons = transparent_frame(card.body)
-        self.buttons.pack(fill="x", side="bottom", pady=(12, 0))
+        self.buttons.pack(fill="x", pady=(16, 0))
         NeoButton(self.buttons, fsc.BTN_YES, self.yes, kind="primary").pack(side="left")
         NeoButton(self.buttons, fsc.BTN_NO, self.destroy, kind="ghost").pack(
             side="left", padx=10)
         NeoButton(self.buttons, fsc.BTN_NEVER, self.never, kind="ghost").pack(side="left")
         self.protocol("WM_DELETE_WINDOW", self.destroy)
+        self._fit()
         self.after(100, self._focus)
+
+    def _fit(self):
+        """Nachtrag 0.59: Fensterhoehe nach dem Inhalt statt fest 260 Pixel -
+        vorher stand zwischen Text und Knoepfen viel Leerraum (und bei grosser
+        Schrift reicht die Hoehe so trotzdem)."""
+        self.update_idletasks()
+        # geometry() rechnet in logischen Pixeln (CustomTkinter skaliert selbst)
+        scale = self._get_window_scaling() or 1.0
+        width = max(560, int(round(self.winfo_reqwidth() / scale)))
+        self.geometry("%dx%d" % (width, int(round(self.winfo_reqheight() / scale))))
 
     def _focus(self):
         self.lift()
@@ -6171,6 +6181,7 @@ class ShortcutDialog(ctk.CTkToplevel):
             child.destroy()
         self.lbl_text.configure(text=text)
         NeoButton(self.buttons, "OK", self.destroy, kind="primary").pack(side="left")
+        self._fit()
 
     def never(self):
         fsc.set_answer("nie")

@@ -60,7 +60,7 @@ import fisi_theme  # noqa: E402
 from fisi_theme import C, CATEGORY_COLOR, THEME_COLOR, mix  # noqa: E402
 import fisi_game  # noqa: E402
 from fisi_lernen import (  # noqa: E402
-    DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE, FOLD_CLOSE, FOLD_OPEN,
+    DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE,
     HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     DAY_CHART_SERIES, LEARN_CHART_SERIES, RESULT_CHART_SERIES,
     RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
@@ -83,7 +83,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.58.1"
+APP_VERSION = "0.59"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -4167,7 +4167,7 @@ class HelpScreen(Screen):
             fold = ui.FoldCard(section["titel"], [
                 ui.text(section["text"], size=14, color=C["text_soft"], selectable=True)],
                 accent=C[HELP_ACCENTS.get(section["id"], "accent")],
-                key="hilfe_" + section["id"], open_text=FOLD_OPEN, close_text=FOLD_CLOSE)
+                key="hilfe_" + section["id"], marker=True)
             self.folds[section["id"]] = fold
             cards.append(fold)
         self.list = screen_list(cards)

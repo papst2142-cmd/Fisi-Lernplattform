@@ -47,7 +47,7 @@ MSG_RENEWED = "Verknüpfung erneuert: %s"
 MSG_NO_DESKTOP = ("Es wurde kein Desktop-Ordner gefunden. Die Verknüpfung wurde nicht "
                   "angelegt.")
 MSG_FAILED = "Die Verknüpfung konnte nicht angelegt werden: %s"
-MSG_UNSURE = (" Falls sie sich nicht per Doppelklick starten lässt: Rechtsklick und "
+MSG_UNSURE = ("\nFalls sie sich nicht per Doppelklick starten lässt: Rechtsklick und "
               "„Start erlauben“ wählen.")
 MSG_EXISTS = "Auf dem Desktop liegt eine Verknüpfung."
 MSG_NONE = "Noch keine Verknüpfung auf dem Desktop."
