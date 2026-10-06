@@ -271,11 +271,11 @@ class DashboardScreen(Screen):
             detail = ui.text("", size=11, color=C["muted"], text_align=ft.TextAlign.CENTER)
             name = ui.text(CATEGORY_SHORT[category], size=13, weight=ft.FontWeight.BOLD)
             self.fach[category] = (ring, detail, name)
-            fach_cells.append(ft.Container(
+            fach_cells.append(ui.as_button(ft.Container(
                 content=ft.Column([ring, name, detail], spacing=4, tight=True,
                                   horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 expand=True, border_radius=12,
-                on_click=lambda _e, cat=category: self._toggle_zoom(cat)))
+                on_click=lambda _e, cat=category: self._toggle_zoom(cat))))
 
         # Reinzoom: Themen eines Fachbereichs (ab 0.37), erscheint nach
         # Antippen eines Fachbereichs unter "Fortschritt je Fachbereich"
@@ -483,7 +483,7 @@ class LearnScreen(Screen):
     def build(self):
         tiles = []
         for key, icon, title, detail, colors in self.ENTRIES:
-            tiles.append(ft.Container(
+            tiles.append(ui.as_button(ft.Container(
                 content=ft.Row([
                     ft.Container(content=ft.Icon(icon, color=C["on_accent"], size=26),
                                  width=52, height=52, border_radius=16,
@@ -496,7 +496,7 @@ class LearnScreen(Screen):
                     ft.Icon(ft.Icons.CHEVRON_RIGHT, color=C["muted"]),
                 ], spacing=14),
                 bgcolor=C["card"], border=ft.Border.all(1, C["border"]), border_radius=16,
-                padding=14, ink=True, on_click=lambda _e, k=key: self.app.open(k)))
+                padding=14, ink=True, on_click=lambda _e, k=key: self.app.open(k))))
 
         # Ab 0.56 ohne "Karteikarten nach Fachbereich" (Wunsch Nico): die
         # Fachbereiche waehlt man in den Karteikarten oben (Alle, Netzwerk, ...)
@@ -545,9 +545,10 @@ class CardsScreen(Screen):
         self.lbl_feedback = ui.text("", size=15, weight=ft.FontWeight.BOLD)
         self.lbl_solution = ui.text("", size=14, color=C["text_dim"], selectable=True)
         self.rate_box = rate_row(self.rate)
+        self.box_feedback = ui.live(self.lbl_feedback)
         self.answer_card = ui.Card("Deine Antwort", [
             self.free_hint, self.txt_answer, self.options, self.reveal_hint,
-            self.lbl_feedback, self.lbl_solution, self.rate_box], accent=C["purple"])
+            self.box_feedback, self.lbl_solution, self.rate_box], accent=C["purple"])
 
         self.btn_check = ui.GradientButton("Antwort prüfen", self.check_answer, expand=True)
         self.lbl_counter = ui.text("", size=13, color=C["text_dim"], weight=ft.FontWeight.BOLD)
@@ -663,7 +664,7 @@ class CardsScreen(Screen):
         self.logged = False
         self.lbl_feedback.value = ""
         self.lbl_solution.value = ""
-        self.lbl_feedback.visible = self.lbl_solution.visible = False
+        self.box_feedback.visible = self.lbl_solution.visible = False
         self.rate_box.visible = False
         self.options.clear()
         for control in (self.free_hint, self.txt_answer, self.options, self.reveal_hint):
@@ -727,13 +728,13 @@ class CardsScreen(Screen):
             self.lbl_feedback.value = "Musterlösung"
             self.lbl_feedback.color = C["accent"]
             self.lbl_solution.value = card["a_full"]
-            self.lbl_feedback.visible = self.lbl_solution.visible = True
+            self.box_feedback.visible = self.lbl_solution.visible = True
             if not self.logged:
                 self.pending = card
                 self.rate_box.visible = True
             return
 
-        self.lbl_feedback.visible = self.lbl_solution.visible = True
+        self.box_feedback.visible = self.lbl_solution.visible = True
         if not self.logged:
             self.logged = True
             self._save(card, correct)
@@ -808,8 +809,9 @@ class QuizScreen(Screen):
         self.options = ui.OptionList()
         self.lbl_explain = ui.text("", size=14, color=C["text_dim"], selectable=True)
         self.lbl_explain.visible = False
+        self.box_explain = ui.live(self.lbl_explain)
         question = ui.Card("Prüfungsaufgabe", [self.lbl_question, self.options,
-                                               self.lbl_explain], accent=C["accent"])
+                                               self.box_explain], accent=C["accent"])
 
         self.btn_submit = ui.GradientButton("Antwort einreichen", self.submit_answer,
                                             expand=True)
@@ -930,7 +932,7 @@ class QuizScreen(Screen):
         question = self.session[self.index]
         self.lbl_question.value = "%d. %s" % (self.index + 1, question["q"])
         self.lbl_explain.value = ""
-        self.lbl_explain.visible = False
+        self.box_explain.visible = False
         shuffled = list(question["options"])
         random.shuffle(shuffled)
         self.options.set_options(shuffled)
@@ -961,7 +963,7 @@ class QuizScreen(Screen):
         self.answered = True
         prefix = "Richtig. " if correct else "Falsch. Richtig wäre: %s. " % question["a"]
         self.lbl_explain.value = prefix + question["exp"]
-        self.lbl_explain.visible = True
+        self.box_explain.visible = True
         self.lbl_explain.color = C["green"] if correct else C["text_dim"]
         self.lbl_score.value = "%d richtig" % self.score
         self.db.log_quiz_answer(question["cat"], question["q"], correct)
@@ -980,7 +982,7 @@ class QuizScreen(Screen):
                                        "neue starten.")
             self.options.clear()
             self.lbl_explain.value = ""
-            self.lbl_explain.visible = False
+            self.box_explain.visible = False
 
         self.app.confirm("Session abbrechen",
                          "Die laufende Session wirklich abbrechen? Bereits beantwortete "
@@ -994,7 +996,7 @@ class QuizScreen(Screen):
         saved = self.db.save_test_result(self.score, total, percentage, note, elapsed)
         self.options.clear()
         self.lbl_explain.value = ""
-        self.lbl_explain.visible = False
+        self.box_explain.visible = False
         self._reset_controls()
         hint = ("Das Ergebnis wurde gespeichert." if saved
                 else "Achtung: Das Ergebnis konnte nicht gespeichert werden.")
@@ -1027,7 +1029,7 @@ class QuizScreen(Screen):
                 self.options.set_options(list(question["options"]))
                 self.options.reveal(question["a"])
                 self.lbl_explain.value = question["exp"]
-                self.lbl_explain.visible = True
+                self.box_explain.visible = True
                 self.lbl_explain.color = C["text_dim"]
                 return
 
@@ -1214,7 +1216,8 @@ class CoverageCard(ui.Card):
             bgcolor=C["card_alt"], border=ft.Border.all(1, C["border"]), border_radius=12,
             padding=ft.Padding.symmetric(horizontal=10, vertical=10), ink=True,
             on_click=toggle)
-        return ft.Container(content=ft.Column([row, children], spacing=8, tight=True),
+        return ft.Container(content=ft.Column([ui.as_button(row), children], spacing=8,
+                                              tight=True),
                             padding=ft.Padding.only(left=12 * depth))
 
     def _leaf(self, caption, value, count, on_practice):
@@ -2692,7 +2695,7 @@ class TrainerPanel(ft.Column):
                 self.lbl_stats,
             ], accent=C["accent"], subtitle="Zufallsaufgaben mit Selbstkontrolle"),
             ui.Card("Aufgabe", [self.lbl_head, self.lbl_task, self.fields_box,
-                                self.lbl_feedback, self.steps,
+                                ui.live(self.lbl_feedback), self.steps,
                                 ft.Row([self.btn_check, self.lbl_counter],
                                        vertical_alignment=ft.CrossAxisAlignment.CENTER)],
                     accent=C["purple"], spacing=12),
@@ -3385,9 +3388,10 @@ class SettingsScreen(Screen):
         self.btn_update = ui.GradientButton("Nach Updates suchen", self.check_updates)
         self.lbl_update = ui.text("", size=13, color=C["text_dim"])
         self.lbl_update.visible = False
+        self.box_update = ui.live(self.lbl_update)
         auto = fisi_update.load_settings()["auto_check"]
         updates = self._area("updates", [
-            ft.Row([self.btn_update]), self.lbl_update,
+            ft.Row([self.btn_update]), self.box_update,
             self._switch("Beim Start automatisch nach Updates suchen", auto,
                          self._toggle_auto),
         ], accent=C["accent2"], subtitle="installierte Version %s" % APP_VERSION)
@@ -3404,7 +3408,7 @@ class SettingsScreen(Screen):
             self.entry_repo,
             ui.text("Zugangsschlüssel (Token)", size=13, color=C["text_dim"]),
             self.entry_token,
-            ft.Row([self.btn_sync]), self.lbl_sync,
+            ft.Row([self.btn_sync]), ui.live(self.lbl_sync),
             self._switch("Automatisch abgleichen (beim Start, nach dem Lernen und beim "
                          "Verlassen der App)", settings["sync_auto"], self._toggle_sync_auto),
             ui.text("Auf PC und Handy dasselbe Repository und denselben Zugangsschlüssel "
@@ -3799,7 +3803,7 @@ class SettingsScreen(Screen):
     def check_updates(self, _event=None):
         self.btn_update.set_enabled(False)
         self.lbl_update.value = "Suche nach Updates ..."
-        self.lbl_update.visible = True
+        self.box_update.visible = True
         self.lbl_update.color = C["text_dim"]
         self.app.check_updates(manual=True)
 
@@ -4121,7 +4125,7 @@ class SearchScreen(Screen):
                 "Keine Treffer. Versuche einen anderen Suchbegriff.", color=C["muted"]))
         for kind, category, title, detail in hits[:60]:
             snippet = detail if len(detail) <= 140 else detail[:138] + "…"
-            self.results.controls.append(ft.Container(
+            self.results.controls.append(ui.as_button(ft.Container(
                 content=ft.Row([
                     ft.Container(width=4, height=48, border_radius=2,
                                  bgcolor=CATEGORY_COLOR.get(category, C["purple"])),
@@ -4134,7 +4138,7 @@ class SearchScreen(Screen):
                 ], spacing=12),
                 bgcolor=C["card"], border=ft.Border.all(1, C["border"]), border_radius=12,
                 padding=12, ink=True,
-                on_click=lambda _e, k=kind, t=title: self.app.open_search_hit(k, t)))
+                on_click=lambda _e, k=kind, t=title: self.app.open_search_hit(k, t))))
         if len(hits) > 60:
             self.results.controls.append(ui.text(
                 "... weitere %d Treffer nicht angezeigt." % (len(hits) - 60), size=12,
@@ -5525,10 +5529,12 @@ def selftest():
         if not app.screens["help"].folds["schutzprogramm"].opened:
             failures.append("Hilfe: Abschnitt nicht aufgeklappt")
         app.screens["search"].search("Schutzprogramm")
+        # Ab 0.59.1: Treffer stecken in einer Schaltflaechen-Rolle (Semantics)
+        hits = [control.content if isinstance(control, ft.Semantics) else control
+                for control in app.screens["search"].results.controls]
         if not any(fh.SEARCH_KIND in str(getattr(control.content.controls[1].controls[0],
                                                  "value", ""))
-                   for control in app.screens["search"].results.controls
-                   if isinstance(control, ft.Container)):
+                   for control in hits if isinstance(control, ft.Container)):
             failures.append("Hilfe: Suche findet nichts")
         app.screens["calc"].calc_subnet()
         app.screens["calc"].calc_raid()

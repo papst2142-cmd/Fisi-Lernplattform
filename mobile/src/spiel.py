@@ -488,9 +488,10 @@ class MatchBoard(ft.Column):
             self.right_pills[right] = pill
         self.controls = [
             ui.label("1. Begriff antippen"),
-            *[row for row, _target in self.left_rows.values()],
+            *[ui.as_button(row) for row, _target in self.left_rows.values()],
             ui.label("2. Passendes Gegenstück antippen"),
-            ft.Row(list(self.right_pills.values()), wrap=True, spacing=8, run_spacing=8),
+            ft.Row([ui.as_button(pill) for pill in self.right_pills.values()],
+                   wrap=True, spacing=8, run_spacing=8),
         ]
         self._paint()
 
@@ -571,7 +572,7 @@ class SlotBoard(ft.Column):
         self.controls = ([ui.text("Vorgaben: " + rules, size=13, color=C["accent"],
                                   weight=ft.FontWeight.BOLD)] if rules else []) + [
             ui.label("Steckplatz antippen, dann das Bauteil"),
-            *self.slot_boxes.values()]
+            *[ui.as_button(box) for box in self.slot_boxes.values()]]
         self._paint()
 
     def pick_slot(self, slot):
@@ -601,7 +602,7 @@ class SlotBoard(ft.Column):
         if part_id in self.from_stock:
             head.append(ui.text("aus dem Lager", size=11, color=C["accent"],
                                 weight=ft.FontWeight.BOLD))
-        return ft.Container(
+        return ui.as_button(ft.Container(
             content=ft.Column([
                 ft.Row(head, spacing=8),
                 ui.text("%s · %s" % (fg.part_specs(item), euro(item["preis"])), size=12,
@@ -610,7 +611,8 @@ class SlotBoard(ft.Column):
             bgcolor=C["card_hi"] if chosen else C["card"],
             border=ft.Border.all(2 if chosen else 1, C["purple"] if chosen else C["border"]),
             border_radius=10, padding=ft.Padding.symmetric(horizontal=12, vertical=9),
-            ink=True, on_click=lambda _e, value=part_id: self.pick_part(value))
+            ink=True, on_click=lambda _e, value=part_id: self.pick_part(value)),
+            selected=chosen)
 
     def _paint(self):
         optional = self.task.get("optional") or []
@@ -777,11 +779,15 @@ class Fold(ft.Column):
             padding=ft.Padding.symmetric(horizontal=12, vertical=8), on_click=self.toggle)
         self.body = ft.Column(spacing=6, tight=True, visible=opened,
                               horizontal_alignment=ft.CrossAxisAlignment.STRETCH)
-        self.controls = [self.head, self.body]
+        # Ab 0.59.1 (H1): Kopf als Schaltflaeche mit Zustand auf/zu
+        self.head_semantics = ui.as_button(self.head)
+        self.head_semantics.expanded = opened
+        self.controls = [self.head_semantics, self.body]
 
     def toggle(self, _event=None):
         self.opened = not self.opened
         self.body.visible = self.opened
+        self.head_semantics.expanded = self.opened
         self.icon.icon = ft.Icons.EXPAND_LESS if self.opened else ft.Icons.EXPAND_MORE
 
     def set(self, controls, summary="", summary_color=None):
@@ -836,10 +842,11 @@ def cabinet_rows(task, answer, unit_h, on_tap=None, current=None, locked=False,
                                          color=RACK_LABEL_LIGHT if fisi_theme.light
                                          else C["muted"]), width=34,
                          height=height, alignment=ft.Alignment.CENTER_RIGHT),
-            ft.Container(content=content, height=height - 3, expand=True, bgcolor=fill,
-                         border=border, border_radius=5, ink=click is not None,
-                         padding=ft.Padding.symmetric(horizontal=8),
-                         alignment=ft.Alignment.CENTER_LEFT, on_click=click),
+            ui.as_button(ft.Container(content=content, height=height - 3, expand=True,
+                                      bgcolor=fill, border=border, border_radius=5,
+                                      ink=click is not None,
+                                      padding=ft.Padding.symmetric(horizontal=8),
+                                      alignment=ft.Alignment.CENTER_LEFT, on_click=click)),
         ], spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
     while unit >= 1:
@@ -962,7 +969,7 @@ class RackBoard(ft.Column):
             color = C["border"]
             if self.locked and bottom:
                 color = C["green"] if self.success else C["red"]
-            rows.append(ft.Container(
+            rows.append(ui.as_button(ft.Container(
                 content=ft.Row([
                     ft.Container(width=4, height=30, border_radius=2,
                                  bgcolor=fg.RACK_COLORS[item["typ"]]),
@@ -977,7 +984,7 @@ class RackBoard(ft.Column):
                     spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 bgcolor=C["card_alt"], border=ft.Border.all(1, color), border_radius=10,
                 ink=not self.locked, padding=ft.Padding.symmetric(horizontal=10, vertical=7),
-                on_click=lambda _e, value=index: self.pick_device(value)))
+                on_click=lambda _e, value=index: self.pick_device(value))))
         self.device_fold.set(rows, "%d von %d eingebaut" % (len(self.answer),
                                                             len(self.devices)))
         bars = fg.rack_bars(self.task, self.answer)
@@ -1213,8 +1220,8 @@ class FormBoard(ft.Column):
             self.choices[field["id"]] = {"value": "", "pills": pills}
             self._paint_choice(field["id"])
             return ft.Column([ui.text(field["label"], size=13, color=C["text_dim"]),
-                              ft.Row([pill for _o, pill in pills], spacing=8, wrap=True,
-                                     run_spacing=8), mark],
+                              ft.Row([ui.as_button(pill) for _o, pill in pills], spacing=8,
+                                     wrap=True, run_spacing=8), mark],
                              spacing=6, tight=True)
         whole = field["art"] in ("zahl", "praefix") and float(field["soll"]).is_integer()
         box = ui.entry(hint=field["einheit"] or None,
@@ -1347,14 +1354,14 @@ class TerminalBoard(ft.Column):
                 choices.append(ui.label("Befehl wählen"))
                 for index, command in enumerate(self.task["schritte"][step]["befehle"]):
                     tried = index in self.attempts[step]
-                    choices.append(ft.Container(
+                    choices.append(ui.as_button(ft.Container(
                         content=ft.Text(command["befehl"], size=13, font_family=ui.MONO,
                                         color=C["muted"] if tried else C["text_soft"]),
                         bgcolor=C["card"] if tried else C["card_alt"], border_radius=12,
                         border=ft.Border.all(1, C["border"]),
                         padding=ft.Padding.symmetric(horizontal=14, vertical=12),
                         ink=not tried,
-                        on_click=None if tried else (lambda _e, value=index: self.run(value))))
+                        on_click=None if tried else (lambda _e, value=index: self.run(value)))))
         self.choices.controls = choices
 
     def reveal(self, right):
@@ -1391,7 +1398,7 @@ class DiagnoseBoard(ft.Column):
                 padding=ft.Padding.symmetric(horizontal=14, vertical=11), ink=True,
                 on_click=lambda _e, value=item["id"]: self.check(value))
             self.check_rows[item["id"]] = (row, caption, mark)
-            controls.append(row)
+            controls.append(ui.as_button(row))
         self.notes = ft.Column(spacing=4, tight=True)
         self.counter = ui.text("", size=12, color=C["muted"])
         controls += [ui.label("Notizblock"), ft.Container(
@@ -1517,7 +1524,7 @@ class ExchangePanel(ft.Column):
                 padding=ft.Padding.symmetric(horizontal=12, vertical=9), ink=bool(count),
                 on_click=(lambda _e, pid=item["id"]: self.pick(pid)) if count else None)
             self.part_boxes[item["id"]] = box
-            controls.append(box)
+            controls.append(ui.as_button(box))
         controls += [ui.label("Ablauf"),
                      ui.text("Tippe die Schritte in der richtigen Reihenfolge an. Nicht "
                              "jeder Schritt gehört dazu.", size=12, color=C["text_dim"])]
@@ -1532,7 +1539,7 @@ class ExchangePanel(ft.Column):
                 padding=ft.Padding.symmetric(horizontal=12, vertical=11),
                 on_click=lambda _e, value=text: self.step(value))
             self.step_boxes[text] = (box, number)
-            controls.append(box)
+            controls.append(ui.as_button(box))
         controls.append(ft.Row([ui.GradientButton("Ablauf zurücksetzen", self.reset,
                                                   kind="ghost", height=38)]))
         self.controls = controls
@@ -1599,7 +1606,8 @@ class MaintenanceBoard(ft.Column):
             pills = {key: _pill(fg.RATING_TEXT[key],
                                 lambda _e, pid=item["id"], k=key: self.rate(pid, k))
                      for key in (fg.RATING_OK, fg.RATING_ISSUE)}
-            pill_row = ft.Row(list(pills.values()), spacing=8, visible=False)
+            pill_row = ft.Row([ui.as_button(pill) for pill in pills.values()], spacing=8,
+                              visible=False)
             box = ft.Container(
                 content=ft.Column([ft.Text(item["text"], size=14, color=C["text_soft"]),
                                    result, pill_row], spacing=6, tight=True),
@@ -1607,7 +1615,7 @@ class MaintenanceBoard(ft.Column):
                 padding=ft.Padding.symmetric(horizontal=14, vertical=11),
                 on_click=lambda _e, value=item["id"]: self.check(value))
             self.rows[item["id"]] = (box, result, pills, pill_row)
-            controls.append(box)
+            controls.append(ui.as_button(box))
         self.counter = ui.text("", size=12, color=C["muted"])
         self.closing = ui.OptionList()
         options = list(task["abschluss"])
@@ -2153,7 +2161,7 @@ class GameScreen:
             if item["zahl"]:
                 lines.append(ui.text("%d offen" % item["zahl"], size=12, color=C["pink"],
                                      weight=ft.FontWeight.BOLD))
-            rows.append(ft.Container(
+            rows.append(ui.as_button(ft.Container(
                 content=ft.Row([model_preview(item["id"], state, 76, 50),
                                 ft.Column(lines, spacing=2, tight=True, expand=True),
                                 ft.Icon(ft.Icons.CHEVRON_RIGHT, color=C["muted"], size=20)],
@@ -2161,7 +2169,7 @@ class GameScreen:
                                vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 bgcolor=C["card_alt"], border_radius=12, padding=10,
                 border=ft.Border.all(1, mix(item["farbe"], C["card"], 0.55)),
-                on_click=lambda _e, i=item: self.open_place(i)))
+                on_click=lambda _e, i=item: self.open_place(i))))
         return rows
 
     def _toggle_map_list(self, flag):
@@ -2309,7 +2317,7 @@ class GameScreen:
                  ui.text("%s · %s" % (person["name"], where), size=12, color=C["muted"])]
         if task.get("zwischenfall"):
             lines.insert(0, ui.label("Zwischenfall", C["red"]))
-        return ft.Container(
+        return ui.as_button(ft.Container(
             content=ft.Row([
                 ft.Container(width=4, height=40, border_radius=2,
                              bgcolor=PRIORITY_COLOR[task["prioritaet"]]),
@@ -2320,7 +2328,7 @@ class GameScreen:
             padding=ft.Padding.symmetric(horizontal=12, vertical=10),
             ink=status == fg.ST_OPEN,
             on_click=(lambda _e, t=task["id"]: self.open_ticket(t))
-            if status == fg.ST_OPEN else None)
+            if status == fg.ST_OPEN else None))
 
     def _select_room(self, room_id):
         self.room = None if room_id == self.room else room_id
@@ -2482,12 +2490,12 @@ class GameScreen:
         if links:
             result.append(ui.label("Passend dazu lernen", C["purple"]))
             for kind, _category, title, _detail in links:
-                result.append(ft.Container(
+                result.append(ui.as_button(ft.Container(
                     content=ui.text("%s · %s" % (kind, title), size=13,
                                     color=C["text_soft"]),
                     bgcolor=C["card_alt"], border_radius=10,
                     padding=ft.Padding.symmetric(horizontal=12, vertical=10), ink=True,
-                    on_click=lambda _e, k=kind, t=title: self._open_learn(k, t)))
+                    on_click=lambda _e, k=kind, t=title: self._open_learn(k, t))))
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
             RETURN_LABEL.get(self.from_site, "Zurück zur Übersicht"),
@@ -3414,7 +3422,7 @@ class GameScreen:
         for row in fg.skill_bars(item):
             color = CATEGORY_COLOR[fg.CAT_NAME[row["cat"]]]
             opened = self._cat_open(staff_id, row["cat"])
-            rows.append(ft.Container(
+            rows.append(ui.as_button(ft.Container(
                 content=ft.Row([
                     ft.Container(ft.Row([
                         ft.Icon(ft.Icons.EXPAND_MORE if opened else ft.Icons.CHEVRON_RIGHT,
@@ -3426,7 +3434,7 @@ class GameScreen:
                                          text_align=ft.TextAlign.RIGHT), width=30)],
                     spacing=6, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=ft.Padding.symmetric(vertical=3), ink=True,
-                on_click=lambda _e, key=row["cat"]: self._toggle_cat(staff_id, key)))
+                on_click=lambda _e, key=row["cat"]: self._toggle_cat(staff_id, key))))
             if not opened:
                 continue
             for topic in row["themen"]:
@@ -4853,12 +4861,12 @@ class GameScreen:
         if links:
             result.append(ui.label("Passend dazu lernen", C["purple"]))
             for learn_kind, _category, title, _detail in links:
-                result.append(ft.Container(
+                result.append(ui.as_button(ft.Container(
                     content=ui.text("%s · %s" % (learn_kind, title), size=13,
                                     color=C["text_soft"]),
                     bgcolor=C["card_alt"], border_radius=10,
                     padding=ft.Padding.symmetric(horizontal=12, vertical=10), ink=True,
-                    on_click=lambda _e, k=learn_kind, t=title: self._open_learn(k, t)))
+                    on_click=lambda _e, k=learn_kind, t=title: self._open_learn(k, t))))
         self.result_box.controls = result
         self.buttons.controls = [ft.Row([ui.GradientButton(
             "Zurück zur Serverfarm", self._farm_close, expand=True)])]
