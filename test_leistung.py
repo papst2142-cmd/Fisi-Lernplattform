@@ -16,8 +16,8 @@ Messfunktion:
 Reparaturen:
   * customtkinter-Version ist geprueft (CTK_IMAGE_FIX_VERSIONS) und
     CTkLabel/CTkButton tragen sich beim Zerstoeren aus ihrem CTkImage aus
-  * Darstellungswechsel: Python-Objekte, Tk-Schriften und Tk-Befehle
-    wachsen nicht mehr mit jedem Wechsel
+  * Darstellungswechsel: Python-Objekte, Tk-Schriften, Tk-Befehle und
+    Tk-Bilder wachsen nicht mehr mit jedem Wechsel
   * 20 Seitenwechsel: Bedienelemente und Zeitgeber bleiben gleich
   * Mausrad: Hineinfahren legt keine neuen Tk-Befehle mehr an
   * verdeckte Ansichten behalten ihre Groesse, die sichtbare fuellt den
@@ -452,7 +452,8 @@ class PcTest(unittest.TestCase):
             gc.collect()
             return {"objekte": len(gc.get_objects()),
                     "schriften": len(tk_.splitlist(tk_.call("font", "names"))),
-                    "befehle": len(tk_.splitlist(tk_.call("info", "commands")))}
+                    "befehle": len(tk_.splitlist(tk_.call("info", "commands"))),
+                    "bilder": len(tk_.splitlist(tk_.call("image", "names")))}
 
         self.show("settings")
         for mode in ("hell", "dunkel"):     # einmal beide Darstellungen aufbauen
@@ -465,6 +466,8 @@ class PcTest(unittest.TestCase):
         self.assertLess(last["objekte"], first["objekte"] * 1.02, (first, last))
         self.assertLessEqual(last["schriften"], first["schriften"] + 5, (first, last))
         self.assertLessEqual(last["befehle"], first["befehle"] + 50, (first, last))
+        # Vor 0.58.1: je Wechsel 3 Flaechenbilder der Liniendiagramme mehr
+        self.assertLessEqual(last["bilder"], first["bilder"] + 2, (first, last))
 
     def test_5_seitenwechsel_bleiben_gleich(self):
         keys = ("dashboard", "quiz", "flashcards", "progress", "settings", "help")

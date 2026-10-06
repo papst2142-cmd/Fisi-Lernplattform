@@ -39,13 +39,13 @@ _SCALE = [1.0]
 def _image_bytes(value):
     """Ungefaehrer Speicherbedarf eines Eintrags im Bild-Zwischenspeicher:
     Pillow-Bild Breite x Hoehe x Kanaele, CTkImage nach seinem Quellbild
-    (es haelt das Bild fest), PhotoImage mit 4 Byte je Pixel."""
+    (es haelt das Bild fest), PhotoImage mit 4 Byte je Pixel plus Quellbild."""
     if isinstance(value, tuple):     # (Bild, PhotoImage) aus tk_photo
-        photo = value[1]
+        photo = value[1]             # der Eintrag haelt beide fest
         try:
-            return photo.width() * photo.height() * 4
+            return photo.width() * photo.height() * 4 + _image_bytes(value[0])
         except (tk.TclError, AttributeError):
-            return 0
+            return _image_bytes(value[0])
     if isinstance(value, ctk.CTkImage):
         value = getattr(value, "_light_image", None)
     size, mode = getattr(value, "size", None), getattr(value, "mode", None)
@@ -94,12 +94,15 @@ class BoundedCache(OrderedDict):
 
 
 # Obergrenzen der Bild-Zwischenspeicher (ab 0.58.1, Messung in
-# plan_0.58.1): Nach dem Start mit allen vorgeladenen Ansichten liegen etwa
-# 48 MB Pillow-Bilder im Speicher, nach einem Wechsel Hell/Dunkel etwa 65 MB
-# (beide Darstellungen). 96 MB halten beide Darstellungen mit Reserve, damit
-# ein Wechsel nichts neu berechnen muss; erst Bilder fuer immer neue Breiten
-# beim Ziehen des Fensters fallen heraus.
-IMAGE_CACHE_LIMIT = 96 * 1024 * 1024
+# plan_0.58.1, 1360x880, Schrift normal): Nach dem Start mit allen
+# vorgeladenen Ansichten liegen 84 MB Bilder im Speicher (Pillow-Bilder und
+# CTkImage), nach einem Wechsel Hell/Dunkel 122 MB (beide Darstellungen).
+# 192 MB halten beide Darstellungen mit Reserve (groesseres Fenster,
+# groessere Schrift), damit ein Wechsel nichts neu berechnen muss; erst
+# Bilder fuer immer neue Breiten beim Ziehen des Fensters fallen heraus.
+# Mit 96 MB fielen bei jedem Wechsel rund 155 Bilder heraus und wurden neu
+# berechnet.
+IMAGE_CACHE_LIMIT = 192 * 1024 * 1024
 PHOTO_CACHE_LIMIT = 48 * 1024 * 1024
 
 # Bereits erzeugte Verlaufsbilder, damit Hover-Effekte nichts neu rendern
@@ -1477,7 +1480,10 @@ class LineChart(tk.Canvas):
         alpha = Image.composite(fade, Image.new("L", mask.size, 0), mask)
         image = Image.new("RGBA", mask.size, color)
         image.putalpha(alpha)
-        photo = tk_photo(image, width, height)
+        # Ab 0.58.1 nicht ueber tk_photo: das Bild entsteht bei jedem
+        # Zeichnen neu, ein Eintrag im Zwischenspeicher wuerde nie wieder
+        # getroffen und hielte nur Speicher fest (3 je Darstellungswechsel)
+        photo = ImageTk.PhotoImage(image.resize((width, height), Image.LANCZOS))
         self._photos.append(photo)
         self.create_image(x1, y1, image=photo, anchor="nw")
 
