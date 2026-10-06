@@ -236,6 +236,38 @@ function Fehlerdatei {
     $fd = Join-Path $env:TEMP "fisi_prototyp_fehler.txt"
     if (Test-Path $fd) { Log "== Fehlerdatei des Prototyps:"; Get-Content $fd -Encoding UTF8 | ForEach-Object { Log "   $_" } }
     else { Log "== Keine Fehlerdatei des Prototyps ($fd)" }
+    # Flet-Programme schreiben die Python-Ausgabe in eine console.log
+    foreach ($ort in $env:TEMP, $env:LOCALAPPDATA, $env:APPDATA, $env:USERPROFILE) {
+        Get-ChildItem $ort -Recurse -Depth 5 -Filter "console.log" -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-15) } | ForEach-Object {
+            Log "== $($_.FullName) (letzte 60 Zeilen)"
+            Get-Content $_.FullName -Tail 60 -Encoding UTF8 | ForEach-Object { Log "   $_" }
+        }
+    }
+}
+# Text der Flet-Fehlerseite: Knopf "Copy" ausloesen und Zwischenablage lesen
+function Fehlerseite-lesen {
+    try {
+        $f = [System.Windows.Automation.AutomationElement]::FocusedElement
+        $rw = [System.Windows.Automation.TreeWalker]::RawViewWalker
+        $script:Knopf = $null
+        function Suche($e, $t) {
+            if ($t -gt 30 -or $script:Knopf) { return }
+            $k = $rw.GetFirstChild($e)
+            while ($k -and -not $script:Knopf) {
+                if ($k.Current.Name -eq "Copy") { $script:Knopf = $k; return }
+                Suche $k ($t + 1)
+                $k = $rw.GetNextSibling($k)
+            }
+        }
+        Suche $f 0
+        $knopf = $script:Knopf
+        if (-not $knopf) { Log "Knopf Copy nicht gefunden"; return }
+        Set-Clipboard -Value "(leer)"
+        $knopf.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        Start-Sleep -Seconds 2
+        Log "== Text der Fehlerseite (ueber Copy):"
+        Get-Clipboard | ForEach-Object { Log "   $_" }
+    } catch { Log "Fehlerseite nicht lesbar: $_" }
 }
 function Starte-Fenster([string]$exe, [string]$titel, [string]$arbeitsordner) {
     $ab = Logstand
@@ -269,6 +301,7 @@ if ($f.Handle -ne [IntPtr]::Zero) {
     Fehlerdatei
     Log "== UIA-Baum ab Fokus (Prototyp, NVDA laeuft)"
     Baum-ab-Fokus "uia_prototyp_ab_fokus.txt"
+    if (Get-Content (Join-Path $Aus "uia_prototyp_ab_fokus.txt") | Select-String -SimpleMatch "Error running app") { Fehlerseite-lesen }
     Log "== UIA-Baum des Prototyps MIT laufendem NVDA"
     powershell -NoProfile -File $UIA_BAUM -Fenster $PROTO_TITEL -Warten 10 | Tee-Object -FilePath (Join-Path $Aus "uia_prototyp_mit_nvda.txt") | ForEach-Object { Write-Output "   $_" }
     [H]::Hole($f.Handle) | Out-Null
