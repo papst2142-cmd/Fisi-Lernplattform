@@ -200,7 +200,8 @@ class NamenTest(unittest.TestCase):
 
 class KontrastTest(unittest.TestCase):
     """Titel und Pfeil in der Akzentfarbe, Hinweis "aufklappen" in text_dim,
-    auf der Karte, der Vorlagen-Flaeche und beim Darueberfahren - in allen 72
+    auf der Karte und der Vorlagen-Flaeche (beim Darueberfahren wechselt nur
+    der Rand, nicht die Flaeche) - in allen 72
     Farbwelten, hell und dunkel. Text 4,5:1, Pfeil 3:1."""
 
     def tearDown(self):
@@ -216,7 +217,6 @@ class KontrastTest(unittest.TestCase):
                     th.apply_preset(preset)
                     worlds += 1
                     surfaces = [th.C["card"], th.C["card_alt"]]
-                    surfaces += [th.fold_hover(surface) for surface in surfaces]
                     for surface in surfaces:
                         where = (mode, back, preset, surface)
                         for accent in ACCENTS:
@@ -535,6 +535,23 @@ class OptionenPcTest(unittest.TestCase):
         self.assertFalse(view.folds["tagesziel"].opened)
         self.app.change_color(background_id=th.DEFAULT_BACKGROUND)
         self.pump(20)
+
+    def test_k_breite_passt_sich_nach_einklappen_an(self):
+        """Nach dem Einklappen ist die Seite nicht breiter als das Fenster,
+        wenn der Inhalt hineinpasst (rechts wird nichts abgeschnitten)."""
+        view = self.open_settings()
+
+        def window_width():
+            return int(float(view.canvas.itemcget(view._window, "width")))
+
+        self.assertEqual(window_width(),
+                         max(view.canvas.winfo_width(), view.inner.winfo_reqwidth()))
+        view.folds["farben"].toggle()
+        self.pump()
+        view.folds["farben"].toggle()
+        self.pump()
+        self.assertEqual(window_width(),
+                         max(view.canvas.winfo_width(), view.inner.winfo_reqwidth()))
 
 
 def _read(path):

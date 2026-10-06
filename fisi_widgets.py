@@ -1102,8 +1102,9 @@ class FoldCard(Card):
         return fold_label(self.fold_title, self.opened)
 
     def _hover_in(self, _event=None):
-        self.head.configure(fg_color=fisi_theme.fold_hover(self.bg),
-                            border_color=C["border_hi"])
+        # Rand der ganzen Kachel in der Akzentfarbe (die Flaeche bleibt, so
+        # aendert sich kein Kontrast)
+        self.configure(border_color=self._pointer_color)
 
     def _hover_out(self, _event=None):
         def check():
@@ -1114,7 +1115,7 @@ class FoldCard(Card):
             if pointer is not None and str(pointer).startswith(str(self.head)):
                 return
             try:
-                self.head.configure(fg_color="transparent", border_color=self.bg)
+                self.configure(border_color=C["border"])
             except tk.TclError:
                 pass
         self.after_idle(check)
@@ -2448,6 +2449,14 @@ class ScrollArea(tk.Frame):
             pass
 
     def _on_inner_configure(self, _event=None):
+        # Ab 0.59: Wird der Inhalt schmaler (z.B. Bereiche eingeklappt), passt
+        # sich die Breite wieder an - vorher blieb sie bis zur naechsten
+        # Fenstergroessenaenderung auf dem breitesten Stand stehen und schnitt
+        # rechts etwas ab.
+        width = max(self.canvas.winfo_width(), self.inner.winfo_reqwidth())
+        if int(float(self.canvas.itemcget(self._window, "width") or 0)) != width:
+            self.canvas.itemconfigure(self._window, width=width)
+            self.after_idle(self._sync_hscroll)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _sync_hscroll(self):

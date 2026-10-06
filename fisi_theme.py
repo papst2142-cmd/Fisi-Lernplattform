@@ -509,16 +509,6 @@ FOLD_STATE_CLOSED = "eingeklappt"
 FOLD_STATE_OPEN = "aufgeklappt"
 
 
-# Kopfzeile beim Darueberfahren: Flaeche leicht zur Schriftfarbe hin. 0,04
-# haelt Titel, Pfeil und Hinweis in allen 72 Farbwelten ueber 4,5:1
-# (test_optionen); 0,06 fiel auf der Vorlagen-Flaeche knapp darunter.
-FOLD_HOVER_MIX = 0.04
-
-
-def fold_hover(surface):
-    return mix(surface, C["text"], FOLD_HOVER_MIX)
-
-
 def fold_label(title, opened):
     """"Farben, eingeklappt" bzw. "Farben, aufgeklappt" (Tastatur, TalkBack)."""
     return "%s, %s" % (title, FOLD_STATE_OPEN if opened else FOLD_STATE_CLOSED)
