@@ -57,7 +57,10 @@ jobs:
 
       # Messung unter Windows: UI-Automation-Baum (das, was NVDA abfragt).
       # Ersetzt keinen NVDA-Test, zeigt aber Namen, Rollen und Zustaende.
+      # Erledigt (Ergebnisse in prototyp_screenreader/messung/ergebnisse und im
+      # Bericht); zum Wiederholen "if: false" entfernen
       - name: UIA-Messung Prototyp
+        if: false
         continue-on-error: true
         shell: pwsh
         run: |
@@ -74,6 +77,7 @@ jobs:
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
 
       - name: UIA-Messung CustomTkinter (Bausteine und echtes PC-Programm)
+        if: false
         continue-on-error: true
         shell: pwsh
         env:
@@ -89,8 +93,35 @@ jobs:
           powershell -NoProfile -File prototyp_screenreader/messung/uia_baum.ps1 -Fenster $titel -Warten 90 | Tee-Object uia/uia_pc_programm.txt
           Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
 
+      # Erkundung: NVDA automatisch pruefen (Auftrag 06.10.2026).
+      # Gegenprobe: reines Flutter-Programm (Zaehler-Vorlage) mit derselben
+      # Flutter-Version, die "flet build" eben heruntergeladen hat
+      - name: Gegenprobe reines Flutter-Programm bauen
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $fl = Get-ChildItem $env:USERPROFILE -Filter flutter.bat -Recurse -Depth 6 -ErrorAction SilentlyContinue | Where-Object { $_.Directory.Name -eq "bin" } | Select-Object -First 1
+          if (-not $fl) { Write-Output "flutter.bat nicht gefunden"; exit 0 }
+          Write-Output "Flutter: $($fl.FullName)"
+          & $fl.FullName --version
+          Set-Location $env:RUNNER_TEMP
+          & $fl.FullName create --project-name gegenprobe --platforms windows gegenprobe_flutter
+          Set-Location gegenprobe_flutter
+          & $fl.FullName build windows --release
+          Get-ChildItem build/windows/x64/runner/Release
+
+      - name: NVDA-Messung (Sprachausgabe als Text mitschreiben)
+        continue-on-error: true
+        timeout-minutes: 25
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem "prototyp_screenreader/bau/build/windows/*.exe")[0].FullName
+          $geg = Join-Path $env:RUNNER_TEMP "gegenprobe_flutter/build/windows/x64/runner/Release/gegenprobe.exe"
+          powershell -NoProfile -ExecutionPolicy Bypass -File prototyp_screenreader/messung/nvda/nvda_lauf.ps1 -Prototyp $exe -Gegenprobe $geg -Aus nvda_messung
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: uia-messung
-          path: uia/*
+          name: nvda-messung
+          path: nvda_messung/*
+          if-no-files-found: ignore
