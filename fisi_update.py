@@ -27,6 +27,7 @@ import json
 import os
 import platform
 import re
+import shlex
 import shutil
 import ssl
 import subprocess
@@ -314,8 +315,7 @@ def install(path, kind=None, version="", pid=None):
             result = subprocess.run(["pkexec", "apt-get", "install", "-y", path])
             if result.returncode != 0:
                 subprocess.Popen(["xdg-open", path])
-                return False, ("Die automatische Installation wurde abgebrochen. "
-                               "Das Paket wurde zum manuellen Installieren geöffnet.")
+                return False, deb_cancel_message(path)
             return False, ("Das Update ist installiert. Bitte das Programm "
                            "schließen und neu starten.")
 
@@ -330,6 +330,16 @@ def install(path, kind=None, version="", pid=None):
         raise UpdateError("Die Installation konnte nicht gestartet werden: %s" % error)
     raise UpdateError("Automatische Updates sind nur in der installierten "
                       "Anwendung möglich.")
+
+
+def deb_cancel_message(path):
+    """Meldung, wenn pkexec/apt beim .deb-Update nicht geklappt hat. Ab
+    0.59.1 mit einer Terminal-Zeile und dem echten Dateinamen, weil das App
+    Center bei installierter Version nur ein graues "Installiert" zeigt
+    (nur Text, der Ablauf bleibt gleich)."""
+    return ("Die automatische Installation wurde abgebrochen. "
+            "Das Paket wurde zum manuellen Installieren geöffnet. "
+            "Im Terminal geht es mit: sudo apt install %s" % shlex.quote(path))
 
 
 # ============================================================================

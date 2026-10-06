@@ -61,6 +61,7 @@ Icon={icon}
 Terminal=false
 Categories=Education;
 Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
+StartupWMClass=Fisi-lernplattform
 {marker}
 """
 

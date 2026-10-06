@@ -64,7 +64,25 @@ Icon=fisi-lernplattform
 Terminal=false
 Categories=Education;
 Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;
+StartupWMClass={wm_class}
 """
+
+# Ab 0.59.1: Fensterklasse unter Linux. app_gui erzeugt das Hauptfenster mit
+# className=PACKAGE_NAME, Tk schreibt den ersten Buchstaben der Klasse gross
+# (gemessen mit xprop: "fisi-lernplattform", "Fisi-lernplattform"). GNOME
+# verbindet ueber StartupWMClass Fenster und Menueeintrag (Dock-Symbol,
+# "An Dash anheften"). Der Klassenname bleibt auch bei einer zweiten
+# Instanz gleich, der Instanzname wird dann zu "fisi-lernplattform #2".
+WM_CLASS = PACKAGE_NAME[:1].upper() + PACKAGE_NAME[1:]
+
+# Ab 0.59.1: Symbol im .deb in mehreren Groessen (Icon Theme Specification:
+# mindestens 48x48), alle aus icon.png (512x512) verkleinert
+DEB_ICON_SIZES = (48, 64, 128, 256, 512)
+
+# Ab 0.59.1: Bibliotheken, die im schlanken Ubuntu fehlen koennen (im
+# Container fehlten libXft.so.2 und libXss.so.1; Paketnamen auf Ubuntu
+# 22.04 und 26.04 gleich)
+DEB_DEPENDS = "libxft2, libxss1"
 
 
 def info(text):
@@ -365,6 +383,23 @@ def _copy_tree(source, target):
     shutil.copytree(source, target, symlinks=True)
 
 
+def write_deb_icons(hicolor):
+    """Legt das Programmsymbol in allen Groessen aus DEB_ICON_SIZES unter
+    hicolor/<n>x<n>/apps/ ab (ab 0.59.1, vorher nur 512x512)."""
+    from PIL import Image
+    source = os.path.join(ROOT, "icon.png")
+    with Image.open(source) as image:
+        image = image.convert("RGBA")
+        for size in DEB_ICON_SIZES:
+            folder = os.path.join(hicolor, "%dx%d" % (size, size), "apps")
+            os.makedirs(folder)
+            target = os.path.join(folder, PACKAGE_NAME + ".png")
+            if image.size == (size, size):
+                shutil.copy(source, target)
+            else:
+                image.resize((size, size), Image.LANCZOS).save(target)
+
+
 def package_deb(version):
     """Installiert nach /opt/fisi-lernplattform, mit Startmenue-Eintrag und
     dem Befehl fisi-lernplattform."""
@@ -381,10 +416,8 @@ def package_deb(version):
     apps = os.path.join(stage, "usr", "share", "applications")
     os.makedirs(apps)
     with open(os.path.join(apps, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
-        handle.write(DESKTOP_ENTRY.format(exec=PACKAGE_NAME))
-    icons = os.path.join(stage, "usr", "share", "icons", "hicolor", "512x512", "apps")
-    os.makedirs(icons)
-    shutil.copy(os.path.join(ROOT, "icon.png"), os.path.join(icons, PACKAGE_NAME + ".png"))
+        handle.write(DESKTOP_ENTRY.format(exec=PACKAGE_NAME, wm_class=WM_CLASS))
+    write_deb_icons(os.path.join(stage, "usr", "share", "icons", "hicolor"))
 
     size_kb = sum(os.path.getsize(os.path.join(folder, name))
                   for folder, _dirs, names in os.walk(stage) for name in names
@@ -398,11 +431,12 @@ def package_deb(version):
             "Priority: optional\n"
             "Architecture: %s\n"
             "Installed-Size: %d\n"
+            "Depends: %s\n"
             "Maintainer: FISI Lernplattform Projekt <333448595+papst2142-cmd@users.noreply.github.com>\n"
             "Description: Lernprogramm fuer Fachinformatiker Systemintegration\n"
             " Karteikarten, Pruefungstrainer, AP1-/AP2-Szenarien, Testprojekte und\n"
             " Praxis-Rechner mit Lernfortschritt. Bringt alle Bibliotheken mit.\n"
-            % (PACKAGE_NAME, version, architecture, size_kb))
+            % (PACKAGE_NAME, version, architecture, size_kb, DEB_DEPENDS))
 
     target = os.path.join(OUTPUT, "%s_%s_%s.deb" % (PACKAGE_NAME, version, architecture))
     info("DEB-Paket wird erzeugt ...")
@@ -424,7 +458,7 @@ def package_appimage(version):
                      'exec "$HERE/usr/lib/%s/%s" "$@"\n' % (PACKAGE_NAME, APP_NAME))
     os.chmod(apprun, 0o755)
     with open(os.path.join(appdir, PACKAGE_NAME + ".desktop"), "w", encoding="utf-8") as handle:
-        handle.write(DESKTOP_ENTRY.format(exec=APP_NAME))
+        handle.write(DESKTOP_ENTRY.format(exec=APP_NAME, wm_class=WM_CLASS))
     shutil.copy(os.path.join(ROOT, "icon.png"), os.path.join(appdir, PACKAGE_NAME + ".png"))
 
     machine = platform.machine() or "x86_64"

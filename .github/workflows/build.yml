@@ -351,6 +351,19 @@ jobs:
             # also nur auf der Release-Seite, nicht im Update-Fenster)
             echo "**AppImage startet nicht?** Es braucht \`/dev/fuse\` und \`fusermount3\` oder \`fusermount\` (Paket \`fuse3\`, \`fuse2\` bzw. \`fuse\`, je nach System; libfuse2 ist nicht mehr nötig). Ohne Installation geht es mit \`--appimage-extract-and-run\`. Unter Debian/Ubuntu/Mint gibt es das .deb-Paket. Mehr dazu in LIESMICH.txt."
             echo ""
+            # Ab 0.59.1: Linux-Absatz zum .deb und Hinweis zum Update-Fenster
+            # (ebenfalls unter "### Herunterladen", nicht im Update-Fenster)
+            VERSION=$(python3 -c "import build; print(build.app_version())")
+            echo "**Linux (Debian, Ubuntu, Mint):** Installieren und aktualisieren geht mit einer Zeile im Terminal, im Ordner der heruntergeladenen Datei: \`sudo apt install ./fisi-lernplattform_${VERSION}_amd64.deb\`. Das App Center kann nur die erste Installation. Es zeigt bei jeder heruntergeladenen .deb-Datei die Warnung „möglicherweise unsicher“ und bei einer schon installierten Version nur ein graues „Installiert“. Entfernen: \`sudo apt remove fisi-lernplattform\`."
+            echo ""
+            echo "Wer früher selbst eine Startdatei \`fisi-lernplattform.desktop\` in \`~/.local/share/applications/\` angelegt hat (zum Beispiel mit einem frühen Installationsskript), verschiebt sie mit \`mv ~/.local/share/applications/fisi-lernplattform.desktop ~/fisi-lernplattform.desktop.alt\` und meldet sich danach einmal ab und wieder an. Wer so eine Datei nicht hat, muss nichts tun."
+            echo ""
+            # Nur bei 0.59.1: das neue Update-Fenster kommt aus der installierten
+            # Version, wirkt also erst beim Update von 0.59.1 auf die naechste
+            if [ "$VERSION" = "0.59.1" ]; then
+              echo "**Update-Fenster:** Das neue Fenster „Update verfügbar“ (passt sich der Schriftgröße und kleinen Bildschirmen an, lässt sich vergrößern) erscheint erst beim nächsten Update nach dieser Version. Beim Update auf diese Version zeigt das Programm noch sein altes Fenster."
+              echo ""
+            fi
             echo "### Prüfsummen (SHA-256)"
             echo ""
             for f in installer/*; do
