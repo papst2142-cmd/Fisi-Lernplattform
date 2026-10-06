@@ -38,8 +38,10 @@ function Zustand($el) {
     return ($teile -join ", ")
 }
 
+$script:Zaehler = @{ alle = 0; leer = 0; benannt = 0; tab = 0 }
+
 function Baum($el, $tiefe) {
-    if ($tiefe -gt 30) { return }
+    if ($tiefe -gt 40) { return }
     $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
     $kind = $walker.GetFirstChild($el)
     while ($kind) {
@@ -47,7 +49,13 @@ function Baum($el, $tiefe) {
         $name = $kind.Current.Name -replace "`r?`n", " / "
         if ($name.Length -gt 90) { $name = $name.Substring(0, 90) + "..." }
         $hilfe = $kind.Current.LocalizedControlType
-        Write-Output ("{0}[{1}] '{2}' ({3}) {{{4}}}" -f ("  " * $tiefe), $typ, $name, $hilfe, (Zustand $kind))
+        $z = Zustand $kind
+        $script:Zaehler.alle++
+        if ($name) { $script:Zaehler.benannt++ }
+        if ($kind.Current.IsKeyboardFocusable) { $script:Zaehler.tab++ }
+        # Leere Flaechen ohne Namen und Zustand nur zaehlen, nicht ausgeben
+        if (-not $name -and -not $z -and $typ -eq "Pane") { $script:Zaehler.leer++ }
+        else { Write-Output ("{0}[{1}] '{2}' ({3}) {{{4}}}" -f ("  " * $tiefe), $typ, $name, $hilfe, $z) }
         Baum $kind ($tiefe + 1)
         $kind = $walker.GetNextSibling($kind)
     }
@@ -63,6 +71,7 @@ if (-not $w) { Write-Output "FENSTER NICHT GEFUNDEN: $Fenster"; exit 0 }
 Start-Sleep -Seconds 3   # Flutter baut den Baum erst auf, wenn jemand fragt
 Write-Output "== Fenster '$Fenster'"
 Baum $w 0
+Write-Output ("== Zusammenfassung: {0} Elemente, davon {1} mit Namen, {2} Tab-Ziele, {3} leere Flaechen nicht ausgegeben" -f $script:Zaehler.alle, $script:Zaehler.benannt, $script:Zaehler.tab, $script:Zaehler.leer)
 
 if ($Klick) {
     $ziel = Finde-Name $w $Klick
@@ -74,5 +83,6 @@ if ($Klick) {
     } catch { Write-Output "== kein Invoke moeglich: $_" }
     Start-Sleep -Seconds 3
     Write-Output "== Baum nach dem Klick"
+    $script:Zaehler = @{ alle = 0; leer = 0; benannt = 0; tab = 0 }
     Baum $w 0
 }
