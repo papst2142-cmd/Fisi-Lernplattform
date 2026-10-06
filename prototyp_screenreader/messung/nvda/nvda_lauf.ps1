@@ -341,6 +341,33 @@ if ($f.Handle -ne [IntPtr]::Zero) {
     Schritt "26c" "Umschalt+Tab"
     Schritt "26d" "Umschalt+Tab"
     Schritt "26" "Enter" 2500
+    # 4.4: ohne zusaetzliche Ansagen (Testschalter aus) - sagt NVDA den
+    # neuen Klappzustand trotzdem?
+    Log "== 5. Abschnitt 4.4 (Testschalter aus)"
+    Schritt "31a" "Umschalt+Tab"
+    Schritt "31b" "Leertaste" 2000
+    Schritt "31c" "Tab"
+    Schritt "31d" "Tab"
+    Schritt "31e" "Tab"
+    Schritt "31" "Enter" 2500
+    Schritt "31f" "Enter" 2500
+    Schritt "32a" "Umschalt+Tab"
+    Schritt "32b" "Umschalt+Tab"
+    Schritt "32" "Enter" 2500
+    Schritt "32c" "Umschalt+Tab"
+    Schritt "32d" "Leertaste" 2000
+    # 4.5: Karteikarte
+    Log "== 5. Abschnitt 4.5 (Karteikarte)"
+    Schritt "33a" "Umschalt+Tab"
+    Schritt "33" "Enter" 2500
+    for ($i = 1; $i -le 6; $i++) {
+        Schritt "34.$i" "Tab"
+        if ((Fokus) -like "*'Antwort zeigen'*") { break }
+    }
+    Schritt "36" "Enter" 3000
+    Schritt "37" "Tab"
+    Schritt "38" "Umschalt+Tab"
+    Schritt "38b" "Enter" 2500
     Stop-Process -Id $f.Prozess.Id -Force -ErrorAction SilentlyContinue
 }
 Start-Sleep -Seconds 2

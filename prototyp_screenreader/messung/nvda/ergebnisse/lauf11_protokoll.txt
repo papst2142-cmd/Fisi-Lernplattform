@@ -1,0 +1,231 @@
+# Lauf 11 (Run 37442078537, Job 112197999928, Commit 4cf1f99), 06.10.2026 - Auszug Schritt NVDA-Messung, Zeitstempel entfernt
+== 1. NVDA holen
+Update-Auskunft von api.nvaccess.org (gleiche Quelle wie NVDAs eigene Update-Pruefung):
+   apiCompatTo: 2026.1.0
+   apiVersion: 2026.2.0
+   launcherHash: a5b01592f4e2355432848d3ad82f5bd214f25947
+   launcherUrl: https://download.nvaccess.org/releases/2026.2/nvda_2026.2.exe
+   version: 2026.2
+Datei:   https://download.nvaccess.org/releases/2026.2/nvda_2026.2.exe
+Groesse: 64530776 Bytes
+SHA1:    a5b01592f4e2355432848d3ad82f5bd214f25947  (Soll laut NV Access: a5b01592f4e2355432848d3ad82f5bd214f25947)
+SHA256:  f3f8d29974a88d687b3c4809be192219ec579c5bdabcda5aaf53635288bca824
+Signatur: Valid / CN=NV Access Limited, O=NV Access Limited, L=Camp Mountain, S=Queensland, C=AU
+Dateiversion: 2026.2
+== 2. Tragbare Kopie anlegen
+Starter beendet mit Code 0
+nvda.exe vorhanden: D:\a\_temp\nvda_portabel\nvda.exe
+== 3. NVDA starten (Sprachausgabe 'silence', Protokollstufe 12, Sprache Deutsch)
+Screenreader-Kennzeichen vor NVDA-Start: False
+NVDA laeuft (nvda -k, 0 = ja): 0
+Screenreader-Kennzeichen mit NVDA: True
+== 4. Prototyp starten
+Nach vorne geholt: True / Vordergrund: FISI Screenreader-Prototyp
+[1] Programmstart | Fokus (UIA): Pane 'FLUTTERVIEW'
+      SPRICHT: de | FISI Screenreader-Prototyp
+== Keine Fehlerdatei des Prototyps (C:\Users\RUNNER~1\AppData\Local\Temp\fisi_prototyp_fehler.txt)
+== C:\Users\runneradmin\AppData\Local\FISI Lernplattform Projekt\FISI Screenreader-Prototyp\console.log (letzte 60 Zeilen)
+== UIA-Baum ab Fokus (Prototyp, NVDA laeuft)
+Wurzel nach 0 Stufen: ControlType.Pane 'FLUTTERVIEW'
+Elemente unter der Wurzel: 35
+   [Custom] '' {}
+     [Custom] '' {}
+       [Custom] '' {}
+         [Custom] '' {}
+           [Button] 'Optionen' {}
+         [Custom] '' {}
+           [Button] 'Karteikarte' {}
+         [CheckBox] 'Testschalter: zusätzliche Ansagen' {Schalter=On}
+         [Custom] '' {}
+           [Custom] '' {}
+             [Custom] '' {}
+               [Custom] 'Optionen' {}
+             [Custom] '' {}
+               [Custom] 'Updates' {}
+               [Text] 'installierte Version 0.58.1' {}
+               [Custom] '' {}
+                 [Button] 'Nach Updates suchen' {}
+               [Custom] '' {}
+                 [CheckBox] 'Beim Start automatisch nach Updates suchen' {Schalter=On}
+             [Custom] '' {}
+               [Button] 'Rundgang und Hilfe, eingeklappt' {}
+             [Custom] '' {}
+               [Button] 'Schriftgröße, eingeklappt' {}
+             [Custom] '' {}
+               [Button] 'Farben, eingeklappt' {}
+             [Custom] '' {}
+               [Button] 'Tagesziel, eingeklappt' {}
+             [Custom] '' {}
+               [Custom] 'Problem melden' {}
+               [Text] 'Angaben für die Fehlersuche' {}
+               [Text] 'Zeigt Programmversion, Gerät, Datenordner und das Fehlerprotokoll. Zugangsschlüssel, Passwörter und dein Benutzername in Pfaden werden entfernt, deine Antworten...' {}
+               [Custom] '' {}
+                 [Button] 'Kopieren' {}
+             [Custom] '' {}
+               [Button] 'Leistungsmessung, eingeklappt' {}
+== UIA-Baum des Prototyps MIT laufendem NVDA
+   == Elemente im Baum nach 120 s Warten: 1
+   == Fenster 'FISI Screenreader-Prototyp'
+   [Pane] 'FLUTTERVIEW' (pane) {FOKUS}
+   == Zusammenfassung: 1 Elemente, davon 1 mit Namen, 0 Tab-Ziele, 0 leere Flaechen nicht ausgegeben
+== 5. Abschnitt 4.1 (Tab-Reihenfolge Optionen)
+[2] Taste: Tab | Fokus (UIA): Button 'Optionen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Optionen | Schalter
+[3] Taste: Tab | Fokus (UIA): Button 'Karteikarte' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Karteikarte | Schalter
+[4] Taste: Tab | Fokus (UIA): CheckBox 'Testschalter: zusätzliche Ansagen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Testschalter: zusätzliche Ansagen | Kontrollfeld | Nicht ausgewählt | aktiviert
+[5] Taste: Tab | Fokus (UIA): Button 'Nach Updates suchen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Nach Updates suchen | Schalter
+[6] Taste: Tab | Fokus (UIA): CheckBox 'Beim Start automatisch nach Updates suchen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Beim Start automatisch nach Updates suchen | Kontrollfeld | Nicht ausgewählt | aktiviert
+[7] Taste: Tab | Fokus (UIA): Button 'Rundgang und Hilfe, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Rundgang und Hilfe, eingeklappt | Schalter | eingeklappt
+[8] Taste: Tab | Fokus (UIA): Button 'Schriftgröße, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Schriftgröße, eingeklappt | Schalter | eingeklappt
+[9] Taste: Tab | Fokus (UIA): Button 'Farben, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben, eingeklappt | Schalter | eingeklappt
+[10] Taste: Tab | Fokus (UIA): Button 'Tagesziel, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Tagesziel, eingeklappt | Schalter | eingeklappt
+[11] Taste: Tab | Fokus (UIA): Button 'Kopieren' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Kopieren | Schalter
+[12] Taste: Tab | Fokus (UIA): Button 'Leistungsmessung, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Leistungsmessung, eingeklappt | Schalter | eingeklappt
+[13] Taste: Tab | Fokus (UIA): Button 'Optionen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | FISI Screenreader-Prototyp
+      SPRICHT: de | Optionen | Schalter
+[14] Taste: Umschalt+Tab | Fokus (UIA): Button 'Leistungsmessung, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Leistungsmessung, eingeklappt | Schalter | eingeklappt
+== 5. Abschnitt 4.2 (Auf- und Zuklappen)
+[15a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Kopieren' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | FISI Screenreader-Prototyp
+      SPRICHT: de | Kopieren | Schalter
+[15b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Tagesziel, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Tagesziel, eingeklappt | Schalter | eingeklappt
+[15c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Farben, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben, eingeklappt | Schalter | eingeklappt
+[15] Taste: Enter | Fokus (UIA): Button 'Farben, ausgeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben ausgeklappt | Benachrichtigung
+      SPRICHT: de | Farben, ausgeklappt
+      SPRICHT: de | ausgeklappt
+[16] Taste: NVDA+Tab | Fokus (UIA): Button 'Farben, ausgeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben, ausgeklappt | Schalter | hervorgehoben | ausgeklappt
+[17] Taste: Tab | Fokus (UIA): RadioButton 'Dunkel' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Darstellung | Gruppierung
+      SPRICHT: de | Dunkel | Auswahlschalter | aktiviert
+[18] Taste: Pfeil runter | Fokus (UIA): RadioButton 'Dunkel' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | German (nicht unterstützt) | D
+[19] Taste: Tab | Fokus (UIA): Button 'Vorlagen, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Vorlagen, eingeklappt | Schalter | eingeklappt
+[20] Taste: Leertaste | Fokus (UIA): Button 'Vorlagen, ausgeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Vorlagen ausgeklappt | Benachrichtigung
+      SPRICHT: de | Vorlagen, ausgeklappt
+      SPRICHT: de | ausgeklappt
+[21a] Taste: Tab | Fokus (UIA): Button 'Grundfarbe Cyan/Pink' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Gruppierung | Hintergrund
+      SPRICHT: de | Grundfarbe Cyan/Pink | Schalter | ausgewählt
+[21b] Taste: Tab | Fokus (UIA): Button 'Grundfarbe Lila/Magenta' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Grundfarbe Lila/Magenta | Schalter
+[21c] Taste: Tab | Fokus (UIA): Button 'Grundfarbe Blau/Türkis' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Grundfarbe Blau/Türkis | Schalter
+[22] Taste: Enter | Fokus (UIA): Button 'Grundfarbe Blau/Türkis' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Grundfarbe Blau/Türkis: setzt nur die Regler (Prototyp, nichts gespeichert). | Benachrichtigung
+[23a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Grundfarbe Lila/Magenta' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Grundfarbe Lila/Magenta | Schalter
+[23b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Grundfarbe Cyan/Pink' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Grundfarbe Cyan/Pink | Schalter | ausgewählt
+[23c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Vorlagen, ausgeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Vorlagen, ausgeklappt | Schalter | ausgeklappt
+[23] Taste: Enter | Fokus (UIA): Button 'Vorlagen, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Vorlagen eingeklappt | Benachrichtigung
+      SPRICHT: de | Vorlagen, eingeklappt
+      SPRICHT: de | eingeklappt
+[24] Taste: Tab | Fokus (UIA): Button 'Tagesziel, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Tagesziel, eingeklappt | Schalter | eingeklappt
+[25a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Vorlagen, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Vorlagen, eingeklappt | Schalter | eingeklappt
+[25b] Taste: Umschalt+Tab | Fokus (UIA): RadioButton 'Dunkel' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Darstellung | Gruppierung
+      SPRICHT: de | Dunkel | Auswahlschalter | aktiviert
+[25c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Farben, ausgeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben, ausgeklappt | Schalter | ausgeklappt
+[25] Taste: Enter | Fokus (UIA): Button 'Farben, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Farben eingeklappt | Benachrichtigung
+      SPRICHT: de | Farben, eingeklappt
+      SPRICHT: de | eingeklappt
+[26a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Schriftgröße, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Schriftgröße, eingeklappt | Schalter | eingeklappt
+[26b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Rundgang und Hilfe, eingeklappt' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Rundgang und Hilfe, eingeklappt | Schalter | eingeklappt
+[26c] Taste: Umschalt+Tab | Fokus (UIA): CheckBox 'Beim Start automatisch nach Updates suchen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Beim Start automatisch nach Updates suchen | Kontrollfeld | Nicht ausgewählt | aktiviert
+[26d] Taste: Umschalt+Tab | Fokus (UIA): Button 'Nach Updates suchen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Nach Updates suchen | Schalter
+[26] Taste: Enter | Fokus (UIA): Button 'Nach Updates suchen' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Prototyp: Es wird nicht wirklich gesucht. Installierte Version 0.58.1. | Benachrichtigung
+== 6a. Gegenprobe Editor (Notepad)
+[G1] Editor gestartet | Fokus (UIA): Document 'Text Editor' | Vordergrund: Untitled - Notepad
+      SPRICHT: de | Untitled - Notepad
+      SPRICHT: de | Text Editor | Eingabefeld | mehrzeilig | Leer
+[G2] Taste: Enter | Fokus (UIA): Document 'Text Editor' | Vordergrund: *Untitled - Notepad
+      SPRICHT: (nichts)
+== 6b. Gegenprobe reines Flutter-Programm (Zaehler-Vorlage)
+Nach vorne geholt: True / Vordergrund: gegenprobe
+[F1] Flutter-Programm gestartet | Fokus (UIA): Pane 'FLUTTERVIEW'
+      SPRICHT: de | C:\\ProgramData\\GitHub\\HostedComputeAgent\\hosted-compute-agent
+      SPRICHT: de | Default | Eingabeaufforderung | C:\\ProgramData\\GitHub\\HostedComputeAgent\\hosted-compute-agent
+      SPRICHT: de | gegenprobe
+[F1b] Taste: Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: de | Increment | Schalter
+== UIA-Baum ab Fokus (Flutter-Gegenprobe)
+Wurzel nach 5 Stufen: ControlType.Pane 'FLUTTERVIEW'
+Elemente unter der Wurzel: 0
+== UIA-Baum Flutter-Gegenprobe MIT laufendem NVDA
+   == Elemente im Baum nach 120 s Warten: 1
+   == Fenster 'gegenprobe'
+   [Pane] 'FLUTTERVIEW' (pane) {FOKUS}
+   == Zusammenfassung: 1 Elemente, davon 1 mit Namen, 0 Tab-Ziele, 0 leere Flaechen nicht ausgegeben
+[F2] Taste: Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: (nichts)
+[F3] Taste: Enter | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: (nichts)
+[F4] Taste: NVDA+Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: de | Increment | Schalter | hervorgehoben
+== NVDA-Protokoll: Fehler und Warnungen
+Zeilen im Protokoll: 544, davon 'Speaking': 67
+   INFO - __main__ (09:34:28.158) - MainThread (3464):
+   Starting NVDA version 2026.2 AMD64
+   INFO - core.main (09:34:28.189) - MainThread (3464):
+   Config dir: D:\a\_temp\nvda_konfig
+   INFO - config.ConfigManager._loadConfig (09:34:28.194) - MainThread (3464):
+   Loading config: D:\a\_temp\nvda_konfig\nvda.ini
+   INFO - core.main (09:34:29.338) - MainThread (3464):
+   Windows version: Windows 11 24H2 (10.0.26100.33438) server AMD64
+   INFO - core.main (09:34:29.338) - MainThread (3464):
+   Using Python version 3.13.13 (tags/v3.13.13:01104ce, Apr  7 2026, 19:25:48) [MSC v.1944 64 bit (AMD64)]
+   INFO - core.main (09:34:29.338) - MainThread (3464):
+   Using comtypes version 1.4.13
+   INFO - core.main (09:34:29.341) - MainThread (3464):
+   Using configobj version 5.1.0 with validate version 1.0.1
+   INFO - core.main (09:34:29.396) - MainThread (3464):
+   Add-ons are disabled. Restart NVDA to enable them.
+   INFO - _asyncioEventLoop.initialize (09:34:29.419) - MainThread (3464):
+   Initializing asyncio event loop
+   WARNING - nvwave.WavePlayer.open (09:34:29.519) - MainThread (3464):
+   Couldn't open specified or default audio device. There may be no audio devices.
+   WARNING - tones.initialize (09:34:29.519) - MainThread (3464):
+   Failed to initialize audio for tones
+   Traceback (most recent call last):
+     File "tones.pyc", line 24, in initialize
+     File "nvwave.pyc", line 253, in __init__
+   > WARNING - nvwave.WavePlayer.open (09:34:29.519) - MainThread (3464):
+  Couldn't open specified or default audio device. There may be no audio devices.
+   > WARNING - tones.initialize (09:34:29.519) - MainThread (3464):
+  Failed to initialize audio for tones
+  Traceback (most recent call last):
+    File "tones.pyc", line 24, in initialize
+   > ERROR - audio.soundSplit.initialize (09:34:29.520) - MainThread (3464):
+  Could not initialize audio session manager
+  Traceback (most recent call last):
+    File "audio\soundSplit.pyc", line 97, in initialize
+== Ende

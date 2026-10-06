@@ -1,0 +1,222 @@
+# Lauf 10 (Run 37440056524, Job 112191314671, Commit 43e45a3), 06.10.2026 - Auszug Schritt NVDA-Messung, Zeitstempel entfernt
+== 1. NVDA holen
+Update-Auskunft von api.nvaccess.org (gleiche Quelle wie NVDAs eigene Update-Pruefung):
+   apiCompatTo: 2026.1.0
+   apiVersion: 2026.2.0
+   launcherHash: a5b01592f4e2355432848d3ad82f5bd214f25947
+   launcherUrl: https://download.nvaccess.org/releases/2026.2/nvda_2026.2.exe
+   version: 2026.2
+Datei:   https://download.nvaccess.org/releases/2026.2/nvda_2026.2.exe
+Groesse: 64530776 Bytes
+SHA1:    a5b01592f4e2355432848d3ad82f5bd214f25947  (Soll laut NV Access: a5b01592f4e2355432848d3ad82f5bd214f25947)
+SHA256:  f3f8d29974a88d687b3c4809be192219ec579c5bdabcda5aaf53635288bca824
+Signatur: Valid / CN=NV Access Limited, O=NV Access Limited, L=Camp Mountain, S=Queensland, C=AU
+Dateiversion: 2026.2
+== 2. Tragbare Kopie anlegen
+Starter beendet mit Code 0
+nvda.exe vorhanden: D:\a\_temp\nvda_portabel\nvda.exe
+== 3. NVDA starten (Sprachausgabe 'silence', Protokollstufe 12, Sprache Deutsch)
+Screenreader-Kennzeichen vor NVDA-Start: False
+NVDA laeuft (nvda -k, 0 = ja): 0
+Screenreader-Kennzeichen mit NVDA: True
+== 4. Prototyp starten
+Nach vorne geholt: True / Vordergrund: FISI Screenreader-Prototyp
+[1] Programmstart | Fokus (UIA): Pane 'FLUTTERVIEW'
+      SPRICHT: de | FISI Screenreader-Prototyp
+== Keine Fehlerdatei des Prototyps (C:\Users\RUNNER~1\AppData\Local\Temp\fisi_prototyp_fehler.txt)
+== C:\Users\runneradmin\AppData\Local\FISI Lernplattform Projekt\FISI Screenreader-Prototyp\console.log (letzte 60 Zeilen)
+   Traceback (most recent call last):
+     File "<sp_script>", line 242, in <module>
+     File "<sp_script>", line 208, in _sp_run_module_as_main
+     File "C:\Users\RUNNER~1\AppData\Local\Temp\serious_python_temp416f1f5a\main.py", line 82, in <module>
+   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\a\\Fisi-Lernplattform\\Fisi-Lernplattform\\prototyp_screenreader\\bau\\build\\windows\\inhalte\\karteikarten.json'
+== UIA-Baum ab Fokus (Prototyp, NVDA laeuft)
+Wurzel nach 0 Stufen: ControlType.Pane 'FLUTTERVIEW'
+Elemente unter der Wurzel: 11
+   [Custom] '' {}
+     [Custom] '' {}
+       [Custom] '' {}
+         [Text] 'Error running app' {}
+         [Button] 'Copy' {}
+         [Custom] '' {}
+           [Text] '' {}
+     [Custom] 'Error running app' {}
+       [Button] 'Copy' {}
+       [Custom] '' {}
+         [Text] '' {}
+== Text der Fehlerseite (ueber Copy):
+   Traceback (most recent call last):
+     File "<sp_script>", line 242, in <module>
+     File "<sp_script>", line 208, in _sp_run_module_as_main
+     File "C:\Users\RUNNER~1\AppData\Local\Temp\serious_python_temp416f1f5a\main.py", line 82, in <module>
+   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\a\\Fisi-Lernplattform\\Fisi-Lernplattform\\prototyp_screenreader\\bau\\build\\windows\\inhalte\\karteikarten.json'
+   
+== UIA-Baum des Prototyps MIT laufendem NVDA
+   == Elemente im Baum nach 120 s Warten: 1
+   == Fenster 'FISI Screenreader-Prototyp'
+   [Pane] 'FLUTTERVIEW' (pane) {FOKUS}
+   == Zusammenfassung: 1 Elemente, davon 1 mit Namen, 0 Tab-Ziele, 0 leere Flaechen nicht ausgegeben
+== 5. Abschnitt 4.1 (Tab-Reihenfolge Optionen)
+[2] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[3] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[4] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[5] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[6] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[7] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[8] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[9] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[10] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[11] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[12] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[13] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[14] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+== 5. Abschnitt 4.2 (Auf- und Zuklappen)
+[15a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[15b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[15c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[15] Taste: Enter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+[16] Taste: NVDA+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter | hervorgehoben
+[17] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[18] Taste: Pfeil runter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | German (nicht unterstützt) | C
+[19] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[20] Taste: Leertaste | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+[21a] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[21b] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[21c] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[22] Taste: Enter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+[23a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[23b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[23c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[23] Taste: Enter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+[24] Taste: Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[25a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[25b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[25c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[25] Taste: Enter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+[26a] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[26b] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[26c] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Copy | Schalter
+[26d] Taste: Umschalt+Tab | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: de | Error running app | Gruppierung
+      SPRICHT: de | Copy | Schalter
+[26] Taste: Enter | Fokus (UIA): Button 'Copy' | Vordergrund: FISI Screenreader-Prototyp
+      SPRICHT: (nichts)
+== 6a. Gegenprobe Editor (Notepad)
+[G1] Editor gestartet | Fokus (UIA): Document 'Text Editor' | Vordergrund: Untitled - Notepad
+      SPRICHT: de | Untitled - Notepad
+      SPRICHT: de | Text Editor | Eingabefeld | mehrzeilig | Leer
+[G2] Taste: Enter | Fokus (UIA): Document 'Text Editor' | Vordergrund: *Untitled - Notepad
+      SPRICHT: (nichts)
+== 6b. Gegenprobe reines Flutter-Programm (Zaehler-Vorlage)
+Nach vorne geholt: True / Vordergrund: gegenprobe
+[F1] Flutter-Programm gestartet | Fokus (UIA): Pane 'FLUTTERVIEW'
+      SPRICHT: de | C:\\ProgramData\\GitHub\\HostedComputeAgent\\hosted-compute-agent
+      SPRICHT: de | Default | Eingabeaufforderung | C:\\ProgramData\\GitHub\\HostedComputeAgent\\hosted-compute-agent
+      SPRICHT: de | gegenprobe
+[F1b] Taste: Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: de | Increment | Schalter
+== UIA-Baum ab Fokus (Flutter-Gegenprobe)
+Wurzel nach 5 Stufen: ControlType.Pane 'FLUTTERVIEW'
+Elemente unter der Wurzel: 0
+== UIA-Baum Flutter-Gegenprobe MIT laufendem NVDA
+   == Elemente im Baum nach 120 s Warten: 1
+   == Fenster 'gegenprobe'
+   [Pane] 'FLUTTERVIEW' (pane) {FOKUS}
+   == Zusammenfassung: 1 Elemente, davon 1 mit Namen, 0 Tab-Ziele, 0 leere Flaechen nicht ausgegeben
+[F2] Taste: Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: (nichts)
+[F3] Taste: Enter | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: (nichts)
+[F4] Taste: NVDA+Tab | Fokus (UIA): Button 'Increment' | Vordergrund: gegenprobe
+      SPRICHT: de | Increment | Schalter | hervorgehoben
+== NVDA-Protokoll: Fehler und Warnungen
+Zeilen im Protokoll: 432, davon 'Speaking': 64
+   INFO - __main__ (09:11:08.899) - MainThread (6376):
+   Starting NVDA version 2026.2 AMD64
+   INFO - core.main (09:11:08.942) - MainThread (6376):
+   Config dir: D:\a\_temp\nvda_konfig
+   INFO - config.ConfigManager._loadConfig (09:11:08.947) - MainThread (6376):
+   Loading config: D:\a\_temp\nvda_konfig\nvda.ini
+   INFO - core.main (09:11:10.066) - MainThread (6376):
+   Windows version: Windows 11 24H2 (10.0.26100.33438) server AMD64
+   INFO - core.main (09:11:10.066) - MainThread (6376):
+   Using Python version 3.13.13 (tags/v3.13.13:01104ce, Apr  7 2026, 19:25:48) [MSC v.1944 64 bit (AMD64)]
+   INFO - core.main (09:11:10.066) - MainThread (6376):
+   Using comtypes version 1.4.13
+   INFO - core.main (09:11:10.069) - MainThread (6376):
+   Using configobj version 5.1.0 with validate version 1.0.1
+   INFO - core.main (09:11:10.117) - MainThread (6376):
+   Add-ons are disabled. Restart NVDA to enable them.
+   INFO - _asyncioEventLoop.initialize (09:11:10.143) - MainThread (6376):
+   Initializing asyncio event loop
+   WARNING - nvwave.WavePlayer.open (09:11:10.248) - MainThread (6376):
+   Couldn't open specified or default audio device. There may be no audio devices.
+   WARNING - tones.initialize (09:11:10.248) - MainThread (6376):
+   Failed to initialize audio for tones
+   Traceback (most recent call last):
+     File "tones.pyc", line 24, in initialize
+     File "nvwave.pyc", line 253, in __init__
+   > WARNING - nvwave.WavePlayer.open (09:11:10.248) - MainThread (6376):
+  Couldn't open specified or default audio device. There may be no audio devices.
+   > WARNING - tones.initialize (09:11:10.248) - MainThread (6376):
+  Failed to initialize audio for tones
+  Traceback (most recent call last):
+    File "tones.pyc", line 24, in initialize
+   > ERROR - audio.soundSplit.initialize (09:11:10.249) - MainThread (6376):
+  Could not initialize audio session manager
+  Traceback (most recent call last):
+    File "audio\soundSplit.pyc", line 97, in initialize
+== Ende
