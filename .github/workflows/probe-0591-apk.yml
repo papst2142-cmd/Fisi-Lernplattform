@@ -1,0 +1,32 @@
+# Probelauf 0.59.1 (nur lesen): Signatur und versionCode der APK aus Lauf
+# 37471567667 mit der Release-APK v0.59 vergleichen. Kein Release, kein Tag.
+name: Probe APK-Signatur 0.59.1
+on:
+  push:
+    branches: [probe-0591-apk-signatur]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  vergleich:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: installer-android
+          path: ci
+          run-id: 37471567667
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release-APK v0.59 laden
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download v0.59 --repo "$GITHUB_REPOSITORY" --pattern "*Android.apk" --dir rel
+      - name: Signatur und versionCode
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          for f in rel/*.apk ci/*.apk; do
+            echo "=== $f"
+            sha256sum "$f"
+            "$BT/apksigner" verify --print-certs -v "$f" | grep -E "Verified using|Number of signers|certificate (DN|SHA-256)"
+            "$BT/aapt" dump badging "$f" | head -n 1
+          done
