@@ -18,7 +18,8 @@ SRC = os.path.join(MOBILE, "src")
 SHARED_FILES = ["fisi_core.py", "fisi_theme.py", "fisi_update.py", "fisi_sync.py",
                 "fisi_game.py", "fisi_lernen.py", "fisi_pruefung.py", "fisi_projekt.py",
                 "fisi_pdf.py", "fisi_sicherung.py", "fisi_diagnose.py", "fisi_rahmenplan.py",
-                "fisi_hilfe.py"]   # ab 0.56: Rundgang und Hilfe
+                "fisi_hilfe.py",   # ab 0.56: Rundgang und Hilfe
+                "fisi_leistung.py"]   # ab 0.58.1: Leistungsmessung
 SHARED_DIRS = ["inhalte"]
 
 

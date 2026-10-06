@@ -717,6 +717,12 @@ class ReglerPcTest(unittest.TestCase):
     def test_pfeiltasten_aendern_den_wert(self):
         slider = self.panel.sliders[("akzent1", "h")]
         start = self.panel.values["akzent1"][0]
+        # Ab 0.58.1: Das Fenster braucht den Tastaturfokus des Systems. Ohne
+        # Fenstermanager (virtuelle Anzeige) bekommt ihn sonst nur das
+        # Fenster unter dem Mauszeiger - der Test hing damit von der
+        # Bildschirmgroesse ab (Mauszeiger in der Mitte, Fenster 900 px breit).
+        self.root.focus_force()
+        self.settle()
         self.fw.focus_widget(slider)
         self.settle()
         slider.event_generate("<Right>")

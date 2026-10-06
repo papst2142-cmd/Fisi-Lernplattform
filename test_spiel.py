@@ -6199,9 +6199,13 @@ class Pruefung051Test(_Einstellungen, unittest.TestCase):
         fp = self.fp
         self.assertEqual([e["minuten"] for e in fp.EXAMS], [90, 90, 90, 60])
         self.assertEqual(sum(fp.WEIGHTS.values()), 100)
+        # Ab 0.58.1 mit festem Zeitpunkt: der Startzeitpunkt steht im Zustand,
+        # zwei Aufrufe ueber eine Sekundengrenze hinweg waeren sonst ungleich
+        import datetime
+        now = datetime.datetime(2026, 10, 6, 10, 0, 0)
         for exam in fp.EXAMS:
-            state = fp.new_exam(exam["art"], [], seed=3)
-            self.assertEqual(state, fp.new_exam(exam["art"], [], seed=3))
+            state = fp.new_exam(exam["art"], [], seed=3, now=now)
+            self.assertEqual(state, fp.new_exam(exam["art"], [], seed=3, now=now))
             if exam["art"] == fp.WISO:
                 self.assertEqual(len(state["fragen"]), fp.WISO_COUNT)
                 self.assertEqual(len(set(state["fragen"])), fp.WISO_COUNT)

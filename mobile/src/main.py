@@ -33,6 +33,7 @@ import flet as ft  # noqa: E402
 
 import fisi_diagnose as fdg  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
+import fisi_leistung as fle  # noqa: E402
 import fisi_sicherung as fsi  # noqa: E402
 import fisi_sync  # noqa: E402
 import fisi_update  # noqa: E402
@@ -81,7 +82,7 @@ import ui  # noqa: E402
 APP_TITLE = "FISI Lernplattform"
 # Gleiche Version wie die PC-Version - gesetzt mit
 # "python build.py --setze-version <Version>" im Hauptordner.
-APP_VERSION = "0.58"
+APP_VERSION = "0.58.1"
 
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
@@ -3433,6 +3434,18 @@ class SettingsScreen(Screen):
                                       expand=True)]),
         ], accent=C["orange"], subtitle=fdg.SUBTITLE)
 
+        # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am PC
+        perf = getattr(self.app, "perf", None)
+        self.lbl_perf = ui.text("", size=13, color=C["muted"])
+        measure = ui.FoldCard(fle.TITLE, [
+            ui.text(fle.HELP, size=13, color=C["text_dim"]),
+            self._switch(fle.SWITCH, bool(perf and perf.active), self._toggle_perf),
+            self.lbl_perf,
+            ft.Row([ui.GradientButton(fle.BTN_SHOW, self.show_perf_file, expand=True)]),
+            ft.Row([ui.GradientButton(fle.BTN_DELETE, self.delete_perf_file, kind="ghost",
+                                      expand=True)]),
+        ], accent=C["orange"], subtitle=fle.SUBTITLE, key="optionen_leistung")
+
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
                  "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
@@ -3560,7 +3573,7 @@ class SettingsScreen(Screen):
         ], accent=C["green"], subtitle=fh.OPTIONS_SUBTITLE)
 
         return screen_list([
-            tour, updates, fonts, colors, goal, plan, sync, backup, report,
+            tour, updates, fonts, colors, goal, plan, sync, backup, report, measure,
             ui.Card("Lerninhalte", [ui.text("\n".join(lines), size=14, color=C["text_dim"])],
                     accent=C["purple"]),
             ui.Card("Spiel", [
@@ -3768,6 +3781,41 @@ class SettingsScreen(Screen):
     def on_show(self):
         self._show_difficulty()
         self._show_report()
+        self._show_perf_state()
+
+    # -- Leistungsmessung (ab 0.58.1) ------------------------------------------
+
+    def _toggle_perf(self, event):
+        perf = getattr(self.app, "perf", None)
+        if perf is not None:
+            perf.set_active(bool(event.control.value))
+        self._show_perf_state()
+        self.app.page.update()
+
+    def _show_perf_state(self):
+        perf = getattr(self.app, "perf", None)
+        self.lbl_perf.value = perf.rec.state_text() if perf is not None else ""
+
+    def show_perf_file(self, _event=None):
+        """Wie "Problem melden": ueber den Speichern-Dialog des Handys, sonst
+        "Teilen" (FISIMobileApp.save_file)."""
+        perf = getattr(self.app, "perf", None)
+        if perf is None or perf.rec.info() is None:
+            self.toast(fle.STATE_NONE)
+            return
+        try:
+            data = perf.rec.read_bytes()
+        except OSError as error:
+            self.toast(fle.MSG_SHOW_ERROR % error, C["red"])
+            return
+        self.app.page.run_task(self.app.save_file, fle.FILE_NAME, data, fle.FILE_TYPE)
+
+    def delete_perf_file(self, _event=None):
+        perf = getattr(self.app, "perf", None)
+        if perf is not None and perf.rec.delete():
+            self.toast(fle.MSG_DELETED)
+        self._show_perf_state()
+        self.app.page.update()
 
     # -- Problem melden (ab 0.54) ---------------------------------------------
 
@@ -4319,6 +4367,131 @@ SCREEN_CLASSES = {
 }
 
 
+def _theme_name():
+    """Ab 0.58.1 (Leistungsmessung): Darstellung, Farbwelt, Hintergrund,
+    Schriftgroesse und ob eigene Farben gelten - ohne Farbwerte."""
+    custom = " eigene" if fisi_theme.current_mode in fisi_theme.custom_colors else ""
+    return "%s %s %s schrift %s%s" % (fisi_theme.current_mode, fisi_theme.current_preset,
+                                      fisi_theme.current_background,
+                                      fisi_theme.current_font_size, custom)
+
+
+def count_controls(control, seen=None):
+    """Anzahl der Bedienelemente unter control (Flet-Baum: content, controls,
+    actions und die Leisten einer Seite)."""
+    total = 1
+    for name in ("content", "controls", "actions", "appbar", "navigation_bar",
+                 "destinations", "leading", "title"):
+        value = getattr(control, name, None)
+        if isinstance(value, ft.Control):
+            total += count_controls(value)
+        elif isinstance(value, (list, tuple)):
+            total += sum(count_controls(item) for item in value
+                         if isinstance(item, ft.Control))
+    return total
+
+
+class MobilePerf:
+    """Ab 0.58.1: Leistungsmessung am Handy (fisi_leistung, Optionen).
+
+    Ausgeschaltet haengt nichts am Programm (kein Ereignis, keine Aufgabe).
+    Eingeschaltet: Seitenwechsel und Neuaufbau (Darstellung, Farbe,
+    Schriftgroesse) mit Dauer bis die Seite an die Anzeige uebergeben ist,
+    Groessenaenderungen (z. B. Drehen) als Zusammenfassung, alle
+    FLUSH_SECONDS gebuendelt schreiben."""
+
+    RESIZE_END = 0.6   # Sekunden ohne neue Groesse = Aenderung zu Ende
+
+    def __init__(self, app):
+        self.app = app
+        self.rec = fle.Recorder(APP_VERSION, "Handy")
+        self._running = False
+        self._resize = None
+        if self.rec.active:
+            self._start()
+            self.rec.record(fle.EVENT_START, aufgaben=self.tasks())
+
+    @property
+    def active(self):
+        return self.rec.active
+
+    def set_active(self, flag):
+        if flag == self.rec.active:
+            return
+        if not flag:
+            self._finish_resize()
+            self.app.page.on_resize = None
+            self._running = False
+        self.rec.set_active(flag)
+        if flag:
+            self._start()
+
+    def elements(self):
+        try:
+            return sum(count_controls(view) for view in self.app.page.views)
+        except Exception:  # noqa: BLE001 - Messung darf nie stoeren
+            return None
+
+    @staticmethod
+    def tasks():
+        try:
+            return len(asyncio.all_tasks())
+        except RuntimeError:
+            return None   # ausserhalb der Ereignisschleife nicht ermittelbar
+
+    def _start(self):
+        self.app.page.on_resize = self._resized
+        if not self._running:
+            self._running = True
+            self.app.page.run_task(self._flush_loop)
+
+    async def _flush_loop(self):
+        while self._running and self.rec.active:
+            await asyncio.sleep(fle.FLUSH_SECONDS)
+            self.rec.flush()
+
+    def page(self, old, new, started):
+        if not self.rec.active or old == new:
+            return
+        self.rec.record(fle.EVENT_PAGE, von=old or "", nach=new,
+                        dauer_ms=(time.perf_counter() - started) * 1000,
+                        elemente=self.elements(), aufgaben=self.tasks())
+
+    def theme(self, old, new, started):
+        if not self.rec.active:
+            return
+        self.rec.record(fle.EVENT_THEME, von=old, nach=new,
+                        dauer_ms=(time.perf_counter() - started) * 1000,
+                        elemente=self.elements(), aufgaben=self.tasks())
+        self.rec.flush()
+
+    def _resized(self, event):
+        size = "%dx%d" % (round(getattr(event, "width", 0) or 0),
+                          round(getattr(event, "height", 0) or 0))
+        if self._resize is None:
+            self._resize = {"from": size, "to": size, "steps": 0, "last": 0.0}
+            self.app.page.run_task(self._resize_watch)
+        self._resize["to"] = size
+        self._resize["steps"] += 1
+        self._resize["last"] = time.monotonic()
+
+    async def _resize_watch(self):
+        while self._resize is not None:
+            await asyncio.sleep(self.RESIZE_END / 2)
+            if self._resize is not None and \
+                    time.monotonic() - self._resize["last"] >= self.RESIZE_END:
+                self._finish_resize()
+
+    def _finish_resize(self):
+        resize, self._resize = self._resize, None
+        if resize is None:
+            return
+        self.rec.record(fle.EVENT_RESIZE, von=resize["from"], nach=resize["to"],
+                        anzahl=resize["steps"], elemente=self.elements(),
+                        aufgaben=self.tasks())
+        self.rec.flush()
+
+
 class FISIMobileApp:
     def __init__(self, page):
         self.page = page
@@ -4330,6 +4503,8 @@ class FISIMobileApp:
         self.last_auto_check = 0
         self.dismissed_version = None
         self.slot_chosen = False   # Spielstand nach dem Start schon gewaehlt? (ab 0.48)
+        # Ab 0.58.1: Leistungsmessung (Optionen, standardmaessig aus)
+        self.perf = MobilePerf(self)
         self._build_ui()
         page.on_view_pop = self._view_popped
         page.on_app_lifecycle_state_change = self._lifecycle
@@ -4391,6 +4566,7 @@ class FISIMobileApp:
     async def _recolor(self, preset_id, background_id, overlay, mode=None, font_size=None,
                        custom=None):
         started = time.monotonic()
+        measured, before = time.perf_counter(), _theme_name()
         try:
             # Kurz warten, damit die Meldung sicher gezeichnet ist
             await asyncio.sleep(0.05)
@@ -4423,6 +4599,7 @@ class FISIMobileApp:
             self._lock_bars(False)
             self._recoloring = False
             self.page.update()
+        self.perf.theme(before, _theme_name(), measured)
 
     def _lock_bars(self, locked):
         """Kopfzeile und Navigationsleiste liegen nicht unter der Abdeckung -
@@ -4486,6 +4663,13 @@ class FISIMobileApp:
         self.show_tab(NAV[event.control.selected_index][0])
 
     def show_tab(self, key):
+        started, before = time.perf_counter(), getattr(self, "tab", None)
+        self._show_tab(key)
+        perf = getattr(self, "perf", None)
+        if perf is not None:
+            perf.page(before, key, started)
+
+    def _show_tab(self, key):
         self.close_toast()
         while len(self.page.views) > 1:
             self.page.views.pop()
@@ -4500,9 +4684,13 @@ class FISIMobileApp:
     def open(self, key):
         """Unterseite (z.B. Karteikarten, Suche) ueber der aktuellen Seite
         oeffnen - der Zurueck-Pfeil bzw. die Zurueck-Geste fuehrt zurueck."""
+        started = time.perf_counter()
         screen = self.screens[key]
         screen.on_show()
         self.push(screen.crumbs, screen.root)
+        perf = getattr(self, "perf", None)
+        if perf is not None:
+            perf.page(self.tab, key, started)
 
     def push(self, crumbs, content):
         self.close_toast()

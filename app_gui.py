@@ -78,6 +78,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_rahmenplan as frp  # noqa: E402
 from fisi_rahmenplan import fresh_order  # noqa: E402
@@ -107,7 +108,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.58"
+APP_VERSION = "0.58.1"
 
 
 def _resource_path(filename):
@@ -5118,6 +5119,28 @@ class SettingsView(View):
         NeoButton(row, fdg.BTN_FOLDER, self.open_data_folder,
                   kind="ghost").pack(side="left")
 
+        # Ab 0.58.1: Leistungsmessung (fisi_leistung.py), Texte wie am Handy
+        perf = FoldCard(self.content, title=fle.TITLE, accent=C["orange"],
+                        subtitle=fle.SUBTITLE, key="optionen_leistung")
+        perf.pack(fill="x", pady=(14, 0))
+        make_label(perf.body, fle.HELP, font=F["small"], fg=C["text_dim"],
+                   wraplength=800, justify="left", anchor="w").pack(anchor="w")
+        self.var_perf = tk.BooleanVar(value=self.app.perf.active)
+        ctk.CTkSwitch(perf.body, text=fle.SWITCH, variable=self.var_perf,
+                      command=self._toggle_perf,
+                      font=F["small"], text_color=C["text_dim"],
+                      fg_color=C["card_alt"], progress_color=C["violet"],
+                      button_color=C["text"], button_hover_color="#FFFFFF"
+                      ).pack(anchor="w", pady=(12, 0))
+        self.lbl_perf = make_label(perf.body, "", font=F["small"], fg=C["muted"],
+                                   justify="left", anchor="w")
+        self.lbl_perf.pack(anchor="w", pady=(10, 0))
+        row = transparent_frame(perf.body)
+        row.pack(anchor="w", pady=(12, 0))
+        NeoButton(row, fle.BTN_SHOW, self.show_perf_file, kind="primary").pack(side="left")
+        NeoButton(row, fle.BTN_DELETE, self.delete_perf_file, kind="ghost").pack(
+            side="left", padx=10)
+
         content = Card(self.content, title="Lerninhalte", accent=C["purple"])
         content.pack(fill="x", pady=(14, 0))
         totals = content_totals()
@@ -5338,12 +5361,50 @@ class SettingsView(View):
     def on_show(self):
         self._show_difficulty()
         self.after_idle(self._show_report)
+        self.after_idle(self._show_perf_state)
+
+    # -- Leistungsmessung (ab 0.58.1) ------------------------------------------
+
+    def _toggle_perf(self):
+        self.app.perf.set_active(self.var_perf.get())
+        self._show_perf_state()
+
+    def _show_perf_state(self):
+        try:
+            self.lbl_perf.configure(text=self.app.perf.rec.state_text())
+        except tk.TclError:
+            pass
+
+    def show_perf_file(self):
+        """Datenordner oeffnen, unter Windows mit markierter Messdatei."""
+        self.app.perf.rec.flush()
+        path = self.app.perf.rec.path
+        try:
+            if sys.platform == "win32":
+                import subprocess
+                if os.path.exists(path):
+                    subprocess.Popen(["explorer", "/select,", path])
+                else:
+                    os.startfile(os.path.dirname(path))
+            else:
+                import subprocess
+                subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open",
+                                  os.path.dirname(path)])
+        except (OSError, AttributeError) as error:
+            messagebox.showerror(fle.BTN_SHOW, fle.MSG_SHOW_ERROR % error)
+        self._show_perf_state()
+
+    def delete_perf_file(self):
+        if self.app.perf.rec.delete():
+            show_badge_toast(self.app.root, fle.MSG_DELETED)
+        self._show_perf_state()
 
     def prepare(self):
         """Ab 0.56 (Vorladen): Spielhinweise und Bericht schon verdeckt
         eintragen (beim Anzeigen ist dann nichts mehr zu tun)."""
         self._show_difficulty()
         self._show_report()
+        self._show_perf_state()
         return True
 
     # -- Problem melden (ab 0.54) ---------------------------------------------
@@ -5651,6 +5712,183 @@ class HelpView(View):
 # ============================================================================
 #  HAUPTANWENDUNG
 # ============================================================================
+
+def _theme_name():
+    """Ab 0.58.1 (Leistungsmessung): Darstellung, Farbwelt, Hintergrund und ob
+    eigene Farben gelten - ohne Farbwerte."""
+    custom = " eigene" if fisi_theme.current_mode in fisi_theme.custom_colors else ""
+    return "%s %s %s%s" % (fisi_theme.current_mode, fisi_theme.current_preset,
+                           fisi_theme.current_background, custom)
+
+
+def count_widgets(widget):
+    """Anzahl der Bedienelemente unter widget (einschliesslich widget)."""
+    total = 1
+    for child in widget.winfo_children():
+        total += count_widgets(child)
+    return total
+
+
+class PerfMonitor:
+    """Ab 0.58.1: Leistungsmessung am PC (fisi_leistung, Optionen).
+
+    Ist die Messung aus, haengt nichts am Programm: keine Bindung, kein
+    Zeitgeber, page()/theme() kehren sofort zurueck. Eingeschaltet:
+      * Seitenwechsel: Dauer bis die neue Seite gezeichnet ist (after_idle)
+      * Darstellungswechsel: Dauer des Neuaufbaus
+      * Fenstergroesse: je Zug mit der Maus eine Zeile - Schritte, alle
+        Groessen-Ereignisse im Programm, mittlere und laengste Dauer bis
+        alles neu gezeichnet ist
+      * alle FLUSH_SECONDS gebuendelt in die Datei schreiben"""
+
+    RESIZE_END_MS = 600   # so lange ohne neue Groesse = Zug zu Ende
+
+    def __init__(self, app):
+        self.app = app
+        self.root = app.root
+        self.rec = fle.Recorder(APP_VERSION, "PC", toolkit=ctk.__version__)
+        self._flush_job = None
+        self._bound = False
+        self._resize = None
+        self._size = None
+        if self.rec.active:
+            self._start()
+            self.rec.record(fle.EVENT_START, elemente=self.elements(),
+                            aufgaben=self.tasks())
+
+    @property
+    def active(self):
+        return self.rec.active
+
+    def set_active(self, flag):
+        if flag == self.rec.active:
+            return
+        if not flag:
+            self._stop()
+        self.rec.set_active(flag)
+        if flag:
+            self._start()
+
+    def elements(self):
+        return count_widgets(self.root)
+
+    def tasks(self):
+        tk_ = self.root.tk
+        return len(tk_.splitlist(tk_.call("after", "info")))
+
+    # -- Ein und aus --------------------------------------------------------
+
+    def _start(self):
+        if not self._bound:
+            self.root.bind("<Configure>", self._root_configure, add="+")
+            self.root.bind_all("<Configure>", self._any_configure, add="+")
+            self._bound = True
+        self._size = (self.root.winfo_width(), self.root.winfo_height())
+        self._schedule_flush()
+
+    def _stop(self):
+        if self._resize is not None:
+            self._finish_resize()
+        if self._flush_job is not None:
+            self.root.after_cancel(self._flush_job)
+            self._flush_job = None
+        if self._bound:
+            # Nur die eigenen Bindungen entfernen (Tk-Befehle mit loeschen)
+            for tag, handler in ((str(self.root), self._root_configure),
+                                 ("all", self._any_configure)):
+                script = self.root.tk.call("bind", tag, "<Configure>")
+                lines = [line for line in str(script).split("\n")
+                         if handler.__name__ not in line]
+                self.root.tk.call("bind", tag, "<Configure>", "\n".join(lines))
+            for name in list(getattr(self.root, "_tclCommands", None) or []):
+                if name.endswith(("_root_configure", "_any_configure")):
+                    self.root.deletecommand(name)
+            self._bound = False
+
+    def _schedule_flush(self):
+        self._flush_job = self.root.after(fle.FLUSH_SECONDS * 1000, self._flush)
+
+    def _flush(self):
+        self._flush_job = None
+        self.rec.flush()
+        if self.rec.active:
+            self._schedule_flush()
+
+    # -- Seiten und Darstellung ---------------------------------------------
+
+    def page(self, old, new, started):
+        if not self.rec.active or old == new:
+            return
+
+        def done():
+            elapsed = (time.perf_counter() - started) * 1000
+            self.rec.record(fle.EVENT_PAGE, von=old or "", nach=new, dauer_ms=elapsed,
+                            elemente=self.elements(), aufgaben=self.tasks())
+        self.root.after_idle(done)
+
+    def theme(self, old, new, started):
+        if not self.rec.active:
+            return
+        elapsed = (time.perf_counter() - started) * 1000
+        self.rec.record(fle.EVENT_THEME, von=old, nach=new, dauer_ms=elapsed,
+                        elemente=self.elements(), aufgaben=self.tasks())
+        self.rec.flush()
+
+    # -- Fenstergroesse -----------------------------------------------------
+
+    def _any_configure(self, _event):
+        if self._resize is not None:
+            self._resize["events"] += 1
+
+    def _root_configure(self, event):
+        if event.widget is not self.root:
+            return
+        size = (event.width, event.height)
+        if size == self._size:
+            return    # nur verschoben
+        if not self._size or self._size[0] <= 1:
+            self._size = size   # Fenster erscheint zum ersten Mal: kein Ziehen
+            return
+        now = time.perf_counter()
+        if self._resize is None:
+            self._resize = {"from": self._size, "steps": 0, "events": 0, "lags": [],
+                            "pending": None, "end": None}
+        resize = self._resize
+        self._size = size
+        resize["steps"] += 1
+        if resize["pending"] is None:
+            resize["pending"] = now
+            self.root.after_idle(self._resize_drawn)
+        if resize["end"] is not None:
+            self.root.after_cancel(resize["end"])
+        resize["end"] = self.root.after(self.RESIZE_END_MS, self._finish_resize)
+
+    def _resize_drawn(self):
+        resize = self._resize
+        if resize is None or resize["pending"] is None:
+            return
+        resize["lags"].append((time.perf_counter() - resize["pending"]) * 1000)
+        resize["pending"] = None
+
+    def _finish_resize(self):
+        resize, self._resize = self._resize, None
+        if resize is None:
+            return
+        if resize["end"] is not None:
+            try:
+                self.root.after_cancel(resize["end"])
+            except (tk.TclError, ValueError):
+                pass
+        lags = resize["lags"] or [0.0]
+        size_text = "%dx%d"
+        self.rec.record(fle.EVENT_RESIZE,
+                        von=size_text % resize["from"] if resize["from"] else "",
+                        nach=size_text % self._size,
+                        dauer_ms=sum(lags) / len(lags), max_ms=max(lags),
+                        anzahl=resize["steps"], ereignisse=resize["events"],
+                        elemente=self.elements(), aufgaben=self.tasks())
+        self.rec.flush()
+
 
 class UpdateController:
     """Sucht im Hintergrund nach Updates, ohne die Oberflaeche zu blockieren.
@@ -6261,6 +6499,26 @@ GAME_SUBVIEWS = ("buero", "kunde", "zuhause", "firma", "filiale", "serverfarm", 
 GAME_VIEWS = ("game",) + GAME_SUBVIEWS
 
 
+def fill_area(view):
+    """Ab 0.58.1: Die sichtbare Ansicht fuellt den Inhaltsbereich und waechst
+    mit dem Fenster."""
+    view.place_configure(x=0, y=0, relwidth=1, relheight=1, width=0, height=0)
+
+
+def hold_size(view, area):
+    """Ab 0.58.1 (Messung plan_0.58.1, Entscheidung E1): Eine verdeckte
+    Ansicht behaelt ihre letzte Groesse. Vorher lagen alle aufgebauten
+    Ansichten mit grid uebereinander und Tk rechnete beim Ziehen des Fensters
+    jede davon neu (87 % der Arbeit fuer nicht sichtbare Seiten). Jetzt
+    passt sich eine Ansicht erst an, wenn sie wieder gezeigt wird (fill_area) -
+    nach einer Groessenaenderung zeichnet sie dann einmal kurz neu."""
+    width, height = area.winfo_width(), area.winfo_height()
+    if width <= 1 or height <= 1:
+        fill_area(view)   # Bereich noch nicht gezeichnet: Groesse unbekannt
+        return
+    view.place_configure(x=0, y=0, relwidth=0, relheight=0, width=width, height=height)
+
+
 class LazyViews(dict):
     """Die Ansichten des Hauptfensters (ab 0.48): Jede wird erst beim ersten
     Zugriff aufgebaut (views["quiz"], views.get("quiz")). built() liefert eine
@@ -6276,7 +6534,9 @@ class LazyViews(dict):
     def __missing__(self, key):
         cls = self._classes[key]      # KeyError bei unbekannter Ansicht
         view = cls(self._parent, self._app)
-        view.grid(row=0, column=0, sticky="nsew")
+        # Ab 0.58.1 per place statt grid: eine verdeckte Ansicht behaelt ihre
+        # Groesse (siehe hold_size), nur die sichtbare waechst mit dem Fenster
+        hold_size(view, self._parent)
         # Ab 0.50: Eine nebenbei aufgebaute Ansicht (z.B. das Spiel, das die
         # Optionen fuer den Schwierigkeitsgrad brauchen) legt Tk zuoberst -
         # sie wuerde die gerade gezeigte Ansicht verdecken. Deshalb nach ganz
@@ -6544,6 +6804,8 @@ class FISIApp:
         self._loading = None       # offene Ladeanzeige (LoadingHint)
         self._pumping = False      # Ladeanzeige wird gerade gezeichnet
         self.cost_ms = {}          # Schritt -> zuletzt gemessene Dauer beim Oeffnen
+        # Ab 0.58.1: Leistungsmessung (Optionen, standardmaessig aus)
+        self.perf = PerfMonitor(self)
         self._build_ui()
         self.show_view("dashboard")
         # Erst wenn das Dashboard steht (der Zeitgeber laeuft nach dem ersten
@@ -6589,8 +6851,6 @@ class FISIApp:
 
         self.view_area = tk.Frame(main, bg=C["bg"])
         self.view_area.pack(fill="both", expand=True)
-        self.view_area.rowconfigure(0, weight=1)
-        self.view_area.columnconfigure(0, weight=1)
 
         # Ab 0.48 wird eine Ansicht erst beim ersten Oeffnen aufgebaut. Das
         # beschleunigt den Start und vor allem den Farbwechsel, bei dem sonst
@@ -6631,6 +6891,7 @@ class FISIApp:
             return
         self._recoloring = True
         started = time.monotonic()
+        measured, before = time.perf_counter(), fisi_theme.current_font_size
         overlay = self._show_busy(fisi_theme.BUSY_FONT_TITLE, fisi_theme.BUSY_FONT_TEXT)
         try:
             fisi_theme.save_font_size(size_id)
@@ -6645,6 +6906,7 @@ class FISIApp:
             self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
+        self.perf.theme("schrift " + str(before), "schrift " + str(size_id), measured)
 
     def change_color(self, preset_id=None, background_id=None, mode=None, custom=None):
         """Neue Grundfarbe bzw. neuen Hintergrund speichern und die Oberflaeche
@@ -6653,6 +6915,7 @@ class FISIApp:
             return  # Ein Klick waehrend des Umbaus wird ignoriert
         self._recoloring = True
         started = time.monotonic()
+        measured, before = time.perf_counter(), _theme_name()
         overlay = self._show_busy()
         try:
             self._recolor(preset_id, background_id, overlay, mode, custom)
@@ -6665,6 +6928,7 @@ class FISIApp:
             self._hide_busy(overlay)
             self._recoloring = False
             self.root.configure(cursor="")
+        self.perf.theme(before, _theme_name(), measured)
 
     def _show_busy(self, title=None, text=None):
         """Ab 0.48: deckt das Fenster waehrend des Farbwechsels mit einer
@@ -6814,6 +7078,12 @@ class FISIApp:
     # -- Navigation ---------------------------------------------------------
 
     def show_view(self, key):
+        started = time.perf_counter()
+        before = self.current
+        self._show_view_measured(key)
+        self.perf.page(before, self.current, started)
+
+    def _show_view_measured(self, key):
         # Ab 0.48: Beim ersten Oeffnen des Spiels nach dem Start erst den
         # Spielstand waehlen (Auswahlbildschirm in der Spiel-Ansicht)
         if key in GAME_SUBVIEWS and not self.slot_chosen:
@@ -6839,6 +7109,14 @@ class FISIApp:
         if view is None:
             return
         close_badge_toasts()   # ab 0.53: Hinweise gehoeren zur alten Ansicht
+        # Ab 0.58.1: verdeckte Ansichten behalten ihre Groesse, die gezeigte
+        # fuellt den Bereich (passt sich ggf. jetzt an die Fenstergroesse an)
+        for other in self.views.keys():
+            built = self.views.built(other)
+            if built is not None and built is not view and \
+                    built.place_info().get("relwidth") not in ("0", "0.0"):
+                hold_size(built, self.view_area)
+        fill_area(view)
         view.tkraise()
         # Ab 0.50: wiederverwendete Spielansichten behalten ihre Scroll-Position
         # (sie springen nur beim Neuzeichnen nach oben)
