@@ -39,6 +39,16 @@ on:
         type: string
         required: false
         default: ""
+      vorab_dateien:
+        description: "Dateien der Testversion: windows = nur die .exe (wie bisher), linux-handy = nur .deb und Android-APK (ab 0.59.1)"
+        type: choice
+        options: [windows, linux-handy]
+        default: windows
+      vorab_zweck:
+        description: "Eine Zeile fuer den Text der Testversion: was damit getestet wird (optional)"
+        type: string
+        required: false
+        default: ""
   workflow_call:
     inputs:
       tag:
@@ -240,10 +250,15 @@ jobs:
 
   # Testversion fuer einzelne PCs (ab 0.56): Vorab-Release mit nur der .exe.
   # Tag "vorab-<Name>" beginnt nicht mit v - startet also keinen Release-Lauf.
+  # Ab 0.59.1 mit "vorab_dateien: linux-handy" stattdessen nur .deb und APK.
+  # Die Windows-Voreinstellung haengt weiter nicht vom Android-Bau ab.
   vorab:
     name: Testversion (Vorab-Release)
-    needs: [build, update-test]
-    if: github.event_name == 'workflow_dispatch' && inputs.vorab != ''
+    needs: [build, android, update-test]
+    if: >-
+      !cancelled() && github.event_name == 'workflow_dispatch' && inputs.vorab != ''
+      && needs.build.result == 'success' && needs.update-test.result == 'success'
+      && (inputs.vorab_dateien != 'linux-handy' || needs.android.result == 'success')
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -251,11 +266,57 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: actions/download-artifact@v8
+        if: inputs.vorab_dateien != 'linux-handy'
         with:
           name: installer-windows
           path: neu
 
+      - uses: actions/download-artifact@v8
+        if: inputs.vorab_dateien == 'linux-handy'
+        with:
+          name: installer-linux
+          path: neu
+
+      - uses: actions/download-artifact@v8
+        if: inputs.vorab_dateien == 'linux-handy'
+        with:
+          name: installer-android
+          path: neu
+
+      - name: Dateien und Text der Testversion (Linux und Handy)
+        if: inputs.vorab_dateien == 'linux-handy'
+        env:
+          VORAB: ${{ inputs.vorab }}
+          ZWECK: ${{ inputs.vorab_zweck }}
+        run: |
+          case "$VORAB" in *[!A-Za-z0-9._-]*|"") echo "Ungueltiger Name: $VORAB"; exit 1;; esac
+          mkdir -p vorab
+          # nur die .deb und die APK - kein AppImage, keine anderen Dateien
+          cp neu/*.deb neu/*.apk vorab/
+          ls -l vorab
+          [ "$(ls vorab | wc -l)" = 2 ] || { echo "Erwartet genau 2 Dateien"; exit 1; }
+          VERSION=$(python3 -c "import build; print(build.app_version())")
+          {
+            echo "**Nur zum Testen, nicht veröffentlichen.** Testversion $VORAB, nicht für alle."
+            echo ""
+            echo "Gebaut aus dem Zweig \`${{ github.ref_name }}\` (Stand \`${GITHUB_SHA::7}\`). Intern trägt sie noch die Versionsnummer $VERSION; die neue Nummer wird erst bei der Freigabe gesetzt."
+            if [ -n "$ZWECK" ]; then
+              echo ""
+              echo "Getestet wird: $ZWECK"
+            fi
+            echo ""
+            echo "Die Update-Funktion bietet diese Testversion nicht an (Vorab-Release). Linux: \`sudo apt install --reinstall ./<Dateiname der .deb>\`. Handy: APK öffnen und über die vorhandene App installieren. Der Lernstand bleibt erhalten."
+            echo ""
+            echo "### Dateien (Name, Größe in Bytes, SHA-256)"
+            echo ""
+            for f in vorab/*; do
+              echo "- \`$(basename "$f")\` · $(stat -c %s "$f") Bytes · \`$(sha256sum "$f" | cut -d' ' -f1)\`"
+            done
+          } > vorab.md
+          cat vorab.md
+
       - name: Datei und Text der Testversion
+        if: inputs.vorab_dateien != 'linux-handy'
         env:
           VORAB: ${{ inputs.vorab }}
         run: |
@@ -296,7 +357,8 @@ jobs:
           LATEST=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
           PRE=$(gh api repos/${{ github.repository }}/releases/tags/vorab-$VORAB --jq .prerelease)
           python3 -m pip install --quiet certifi
-          ANGEBOT=$(python3 -c "import fisi_update as u; i = u.check_for_update('0.1', kind='windows'); print(i.version if i else '-')")
+          # ab 0.59.1 fuer alle drei Installationsarten der Testversionen
+          ANGEBOT=$(python3 -c "import fisi_update as u; print(' '.join((lambda i: i.version if i else '-')(u.check_for_update('0.1', kind=k)) for k in ('windows', 'deb', 'android')))")
           {
             echo "## Testversion $VORAB"
             echo ""
@@ -306,7 +368,7 @@ jobs:
             echo "| vorab-$VORAB ist Pre-release | $PRE |"
             echo "| Update-Funktion bietet an (ab Version 0.1) | $ANGEBOT |"
           } | tee -a "$GITHUB_STEP_SUMMARY"
-          if [ "$LATEST" = "vorab-$VORAB" ] || [ "$PRE" != "true" ] || [ "$ANGEBOT" = "$VORAB" ]; then
+          if [ "$LATEST" = "vorab-$VORAB" ] || [ "$PRE" != "true" ] || echo " $ANGEBOT " | grep -qF " $VORAB "; then
             echo "Testversion wuerde als neueste Version ausgeliefert!"
             exit 1
           fi
@@ -351,6 +413,19 @@ jobs:
             # also nur auf der Release-Seite, nicht im Update-Fenster)
             echo "**AppImage startet nicht?** Es braucht \`/dev/fuse\` und \`fusermount3\` oder \`fusermount\` (Paket \`fuse3\`, \`fuse2\` bzw. \`fuse\`, je nach System; libfuse2 ist nicht mehr nötig). Ohne Installation geht es mit \`--appimage-extract-and-run\`. Unter Debian/Ubuntu/Mint gibt es das .deb-Paket. Mehr dazu in LIESMICH.txt."
             echo ""
+            # Ab 0.59.1: Linux-Absatz zum .deb und Hinweis zum Update-Fenster
+            # (ebenfalls unter "### Herunterladen", nicht im Update-Fenster)
+            VERSION=$(python3 -c "import build; print(build.app_version())")
+            echo "**Linux (Debian, Ubuntu, Mint):** Installieren und aktualisieren geht mit einer Zeile im Terminal, im Ordner der heruntergeladenen Datei: \`sudo apt install ./fisi-lernplattform_${VERSION}_amd64.deb\`. Das App Center kann nur die erste Installation. Es zeigt bei jeder heruntergeladenen .deb-Datei die Warnung „möglicherweise unsicher“ und bei einer schon installierten Version nur ein graues „Installiert“. Entfernen: \`sudo apt remove fisi-lernplattform\`."
+            echo ""
+            echo "Wer früher selbst eine Startdatei \`fisi-lernplattform.desktop\` in \`~/.local/share/applications/\` angelegt hat (zum Beispiel mit einem frühen Installationsskript), verschiebt sie mit \`mv ~/.local/share/applications/fisi-lernplattform.desktop ~/fisi-lernplattform.desktop.alt\` und meldet sich danach einmal ab und wieder an. Wer so eine Datei nicht hat, muss nichts tun."
+            echo ""
+            # Nur bei 0.59.1: das neue Update-Fenster kommt aus der installierten
+            # Version, wirkt also erst beim Update von 0.59.1 auf die naechste
+            if [ "$VERSION" = "0.59.1" ]; then
+              echo "**Update-Fenster:** Das neue Fenster „Update verfügbar“ (passt sich der Schriftgröße und kleinen Bildschirmen an, lässt sich vergrößern) erscheint erst beim nächsten Update nach dieser Version. Beim Update auf diese Version zeigt das Programm noch sein altes Fenster."
+              echo ""
+            fi
             echo "### Prüfsummen (SHA-256)"
             echo ""
             for f in installer/*; do

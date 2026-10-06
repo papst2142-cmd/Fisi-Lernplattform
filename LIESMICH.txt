@@ -1,5 +1,5 @@
 ===========================================================================
-  FISI LERNPLATTFORM  -  Version 0.59
+  FISI LERNPLATTFORM  -  Version 0.59.1
   Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
 ===========================================================================
 
@@ -101,6 +101,20 @@ INSTALLER-ANLEITUNG.txt. Kurzfassung:
 
   Linux   :  Debian/Ubuntu/Mint: das .deb-Paket installieren mit
                sudo apt install ./fisi-lernplattform_<Version>_amd64.deb
+             (im Terminal, im Ordner der heruntergeladenen Datei). Mit
+             derselben Zeile wird auch eine neue Version eingespielt.
+             Das App Center (Doppelklick auf die Datei) kann nur die erste
+             Installation: Es warnt bei jeder heruntergeladenen .deb-Datei
+             "moeglicherweise unsicher" und zeigt bei einer schon
+             installierten Version nur ein graues "Installiert".
+             Entfernen mit:
+               sudo apt remove fisi-lernplattform
+             Wer frueher selbst eine Startdatei fisi-lernplattform.desktop
+             in ~/.local/share/applications/ angelegt hat (zum Beispiel mit
+             einem fruehen Installationsskript), verschiebt sie mit
+               mv ~/.local/share/applications/fisi-lernplattform.desktop ~/fisi-lernplattform.desktop.alt
+             und meldet sich danach einmal ab und wieder an. Wer so eine
+             Datei nicht hat, muss nichts tun.
              Alle anderen: die .AppImage-Datei ausfuehrbar machen
              (chmod +x) und per Doppelklick starten.
 

@@ -235,6 +235,37 @@ class FoldCard(Card):
 #  KNOEPFE UND AUSWAHL
 # ============================================================================
 
+def as_button(control, selected=None):
+    """Ab 0.59.1 (H1): Eine antippbare Flaeche (Container mit on_click)
+    meldet sich als Schaltflaeche statt als Flaeche. Den Namen liest TalkBack
+    aus den Texten der Flaeche (z.B. "Karteikarten, 1565 Karten ...").
+    selected=True/False fuer Kacheln mit Auswahlzustand. container=True haelt
+    Rolle, Name und Antippen in einem Element (gemessen). Aussehen und
+    Verhalten bleiben gleich; die Flaeche selbst wird nicht veraendert.
+    Ohne on_click (gesperrt, schon erledigt) bleibt sie ohne Rolle."""
+    if getattr(control, "on_click", None) is None:
+        return control
+    # "expand" gilt fuer das umschliessende Element, sonst aendert sich die
+    # Aufteilung in Zeilen und Spalten
+    expand, control.expand = control.expand, None
+    return ft.Semantics(button=True, container=True, selected=selected, expand=expand,
+                        content=control)
+
+
+
+def live(control):
+    """Ab 0.59.1 (H1): Meldung, die nach einem Tippen erscheint (z.B.
+    "Richtig beantwortet."). TalkBack liest sie vor, sobald sich der Text
+    aendert (Live-Region, wie Statuszeile und Warnung im Spiel). Keine
+    zusaetzliche Ansage, das Aussehen bleibt gleich. Ein- und ausgeblendet
+    wird danach das umschliessende Element (Semantics ohne sichtbaren Inhalt
+    zeigt sonst einen Fehlerhinweis)."""
+    wrapper = ft.Semantics(live_region=True, container=True, content=control,
+                           visible=control.visible)
+    control.visible = True
+    return wrapper
+
+
 class GradientButton(ft.Container):
     """Knopf mit Farbverlauf (primary/accent/danger/success) oder als
     dezenter Rahmen-Knopf (kind='ghost')."""
@@ -249,9 +280,12 @@ class GradientButton(ft.Container):
         if icon:
             row.insert(0, ft.Icon(icon, size=18,
                                   color=C["on_accent"] if kind != "ghost" else C["text"]))
+        # Ab 0.59.1 (H1): Rolle "Schaltflaeche" mit dem Knopftext als Namen
+        # (vorher meldete sich der Knopf nur als Flaeche). Die Rolle sitzt
+        # innen, damit Rolle, Name und Antippen ein Element bleiben.
         super().__init__(
-            content=ft.Row(row, spacing=8, tight=True,
-                           alignment=ft.MainAxisAlignment.CENTER),
+            content=ft.Semantics(button=True, content=ft.Row(
+                row, spacing=8, tight=True, alignment=ft.MainAxisAlignment.CENTER)),
             height=grow(height), border_radius=grow(height) // 2,
             padding=ft.Padding.symmetric(horizontal=20),
             alignment=ft.Alignment.CENTER, expand=expand,

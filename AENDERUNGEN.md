@@ -4,6 +4,42 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.59.1
+
+Besser unter Linux, ein Programmfenster statt zwei und ein mitwachsendes
+Update-Fenster.
+
+- **Linux: richtiges Symbol und Name im Dock:** Das laufende Programm zeigt im
+  Dock jetzt das Ring-Symbol und den Namen „FISI Lernplattform“ statt „Tk“
+  und eines Zahnrads. Angeheftet und laufend ist es ein einziges Symbol.
+- **Linux: schärfere Symbole:** Die .deb bringt das Symbol in fünf Größen
+  von 48 bis 512 Pixeln mit, im Menü und in der Suche wirkt es nicht mehr
+  verschwommen.
+- **Linux: fehlende Bibliotheken:** Die .deb holt die zwei Bibliotheken, die
+  das Programm unter Ubuntu zum Starten braucht, bei der Installation
+  automatisch mit dazu.
+- **Linux: Menüeintrag mit Umlauten:** Die Beschreibung im Menü heißt jetzt
+  „Lernprogramm für …“. Im Dock gibt es kein „Neues Fenster“ mehr.
+- **Nur noch ein Fenster:** Startest du das Programm ein zweites Mal (Linux
+  und Windows), öffnet sich kein zweites Fenster. Das laufende Fenster kommt
+  nach vorn, auch wenn es minimiert war. So können sich zwei Fenster nicht
+  gegenseitig Einstellungen oder Spielstand überschreiben.
+- **Update-Fenster wächst mit:** Bei den Schriftgrößen „Groß“ und „Sehr
+  groß“ wird das Update-Fenster größer, die Knöpfe sind immer sichtbar und
+  das Fenster lässt sich vergrößern. Bei „Normal“ bleibt es wie bisher.
+- **Linux: Update ohne Passwort abgebrochen:** Bricht man die Passwortabfrage
+  beim Update ab, nennt das Programm den genauen Befehl mit dem Dateinamen,
+  mit dem man die .deb im Terminal installiert.
+- **Handy mit Screenreader:** Knöpfe und Kacheln melden sich bei TalkBack als
+  „Schaltfläche“ mit ihrem Namen. Das Ergebnis nach „Antwort prüfen“, die
+  Update-Suche und der Abgleich werden vorgelesen.
+- **Installation unter Ubuntu:** Auf der Release-Seite und in LIESMICH.txt
+  steht, wie man die .deb mit einer Zeile im Terminal installiert und
+  aktualisiert (`sudo apt install ./…deb`). Dort steht auch, was zu tun ist,
+  wenn eine alte selbst angelegte Startdatei in
+  `~/.local/share/applications/` den Menüeintrag verdeckt: verschieben, dann
+  einmal ab- und wieder anmelden.
+
 ## 0.59
 
 Die Optionen sind übersichtlicher, dazu eine Desktop-Verknüpfung unter Linux.

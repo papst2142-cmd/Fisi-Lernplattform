@@ -78,6 +78,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_einzelstart  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
 import fisi_hilfe as fh  # noqa: E402
 import fisi_optionen as fo  # noqa: E402
@@ -99,7 +100,7 @@ from fisi_widgets import (  # noqa: E402
     GradientSlider, IconCanvas, LineChart, MiniRing, NeoButton, OptionList, RingStat,
     ScrollArea, ShareBars, ThemeTimeline, UpsDiagram, F,
     circle_image, ctk_image, make_autogrow_text, make_label, make_text, px,
-    ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo,
+    ring_image, rounded_gradient, set_text, setup_fonts, tk_font, tk_photo, _text_height,
     apply_ui_scale, focus_widget, install_keyboard, make_focusable, set_focus_filter,
 )
 
@@ -110,7 +111,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.59"
+APP_VERSION = "0.59.1"
 
 
 def _resource_path(filename):
@@ -6443,8 +6444,40 @@ class TourOverlay(tk.Frame):
             self.on_close()
 
 
+# Ab 0.59.1: Groesse des Update-Fensters. Bei "Normal" wie bisher 560x500,
+# bei groesserer Schrift breiter und so hoch wie der Inhalt, nie groesser als
+# der Bildschirm (Rand links/rechts je 16, oben/unten zusammen 80 fuer
+# Titelleiste, Taskleiste bzw. Dock). Alle Werte in logischen Pixeln.
+UPDATE_WINDOW_BASE = (560, 500)
+UPDATE_SCREEN_MARGIN_X = 16
+UPDATE_SCREEN_MARGIN_Y = 80
+UPDATE_MIN_WIDTH = 320
+
+
+def update_window_size(need_height, screen, factor=1.0, min_height=0,
+                       min_width=UPDATE_MIN_WIDTH):
+    """Breite, Hoehe und Mindestgroesse des Update-Fensters.
+
+    need_height: Hoehe, die der Inhalt bei der gewaehlten Breite braucht;
+    screen: (Breite, Hoehe) des Bildschirms; factor: Schriftgroesse
+    (1.0 / 1.15 / 1.3); min_height: Hoehe ohne Neuerungen-Feld (Kopf,
+    Hinweise, Knoepfe); min_width: Breite der Knopfzeile. Ergebnis ((Breite, Hoehe), (Mindestbreite,
+    Mindesthoehe)), beides nie groesser als der nutzbare Bildschirm."""
+    max_width = max(1, int(screen[0]) - 2 * UPDATE_SCREEN_MARGIN_X)
+    max_height = max(1, int(screen[1]) - UPDATE_SCREEN_MARGIN_Y)
+    width = min(int(round(UPDATE_WINDOW_BASE[0] * factor)), max_width)
+    height = min(max(UPDATE_WINDOW_BASE[1], int(round(need_height))), max_height)
+    minimum = (min(max(UPDATE_MIN_WIDTH, int(round(min_width))), width),
+               min(int(round(min_height)), height))
+    return (width, height), minimum
+
+
 class UpdateDialog(ctk.CTkToplevel):
     """Zeigt ein verfuegbares Update und fuehrt durch Download und Installation."""
+
+    # Abstand Fensterrand -> Text: Card aussen 18 + innen 18 (je Seite),
+    # dazu Rahmen und etwas Luft. 560 - 80 = 480 = bisherige Umbruchbreite.
+    _INSET = 80
 
     def __init__(self, app, info):
         super().__init__(app.root, fg_color=C["bg"])
@@ -6452,8 +6485,10 @@ class UpdateDialog(ctk.CTkToplevel):
         self.info = info
         self._downloading = False
         self.title("Update verfügbar")
-        self.geometry("560x500")   # ab 0.58 +30 px fuer die Hinweiszeile
-        self.resizable(False, False)
+        # Ab 0.59.1: Groesse aus dem Inhalt (vorher fest 560x500, bei
+        # "Sehr gross" fielen die Knoepfe heraus), vergroesserbar
+        self.geometry("%dx%d" % UPDATE_WINDOW_BASE)
+        self.resizable(True, True)
         self.transient(app.root)
         # CTkToplevel setzt unter Windows kurz nach dem Oeffnen sein eigenes
         # Symbol - deshalb das Programm-Icon etwas verzoegert setzen.
@@ -6462,33 +6497,40 @@ class UpdateDialog(ctk.CTkToplevel):
         card = Card(self, title="Neue Version", accent=C["accent2"],
                     subtitle="installiert: %s" % APP_VERSION)
         card.pack(fill="both", expand=True, padx=18, pady=18)
-        make_label(card.body, "FISI Lernplattform %s ist verfügbar" % info.version,
-                   font=F["h2"], anchor="w").pack(anchor="w")
+        self.card = card
+        body = card.body
+        self.lbl_title = make_label(body, "FISI Lernplattform %s ist verfügbar" % info.version,
+                                    font=F["h2"], anchor="w", justify="left")
+        self.lbl_title.pack(anchor="w", side="top")
 
-        make_label(card.body, "Neuerungen", font=F["label"], fg=C["muted"]
-                   ).pack(anchor="w", pady=(12, 4))
-        notes = make_text(card.body, height=6, font=F["small"])
-        notes.pack(fill="both", expand=True)
+        # Ab 0.59.1: Knoepfe und Hinweise von unten her einfuegen. Reicht
+        # der Platz nicht, schrumpft zuerst das Neuerungen-Feld (es hat eine
+        # Bildlaufleiste) - die Knoepfe bleiben immer ganz sichtbar.
+        buttons = transparent_frame(body)
+        buttons.pack(fill="x", pady=(12, 0), side="bottom")
+        self.lbl_hint = make_label(body, fh.UPDATE_PROTECTION_HINT, font=F["tiny"],
+                                   fg=C["muted"], anchor="w", justify="left",
+                                   wraplength=480)
+        # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (nur Text, der
+        # Update-Ablauf bleibt unveraendert)
+        self.lbl_hint.pack(anchor="w", pady=(8, 0), side="bottom")
+        self.lbl_status = make_label(body, "", font=F["small"],
+                                     fg=C["text_dim"], anchor="w",
+                                     justify="left", wraplength=480)
+        self.lbl_status.pack(anchor="w", pady=(10, 0), side="bottom")
+        self.progress = ctk.CTkProgressBar(body, height=10, corner_radius=5,
+                                           fg_color=C["ring_bg"],
+                                           progress_color=C["violet"])
+        self.progress.set(0)
+
+        make_label(body, "Neuerungen", font=F["label"], fg=C["muted"]
+                   ).pack(anchor="w", pady=(12, 4), side="top")
+        self.notes = notes = make_text(body, height=6, font=F["small"])
+        notes.pack(fill="both", expand=True, side="top")
         set_text(notes, fisi_update.plain_notes(info.notes)
                  or "Keine Beschreibung vorhanden.")
         notes.configure(state="disabled")
 
-        self.progress = ctk.CTkProgressBar(card.body, height=10, corner_radius=5,
-                                           fg_color=C["ring_bg"],
-                                           progress_color=C["violet"])
-        self.progress.set(0)
-        self.lbl_status = make_label(card.body, "", font=F["small"],
-                                     fg=C["text_dim"], anchor="w",
-                                     justify="left", wraplength=480)
-        self.lbl_status.pack(anchor="w", pady=(10, 0))
-
-        # Ab 0.58: feste Hinweiszeile zu Schutzprogrammen (nur Text, der
-        # Update-Ablauf bleibt unveraendert)
-        make_label(card.body, fh.UPDATE_PROTECTION_HINT, font=F["tiny"], fg=C["muted"],
-                   anchor="w", justify="left", wraplength=480).pack(anchor="w", pady=(8, 0))
-
-        buttons = transparent_frame(card.body)
-        buttons.pack(fill="x", pady=(12, 0))
         if info.installable:
             self.btn_main = NeoButton(buttons, "Jetzt aktualisieren",
                                       self.start_update, kind="primary")
@@ -6504,7 +6546,68 @@ class UpdateDialog(ctk.CTkToplevel):
         self.btn_later = NeoButton(buttons, "Später", self.destroy, kind="ghost")
         self.btn_later.pack(side="left", padx=10)
 
+        self._fit_to_screen()
+        body.bind("<Configure>", self._on_body_resize, add="+")
         self.after(100, self._focus)
+        self.after(300, self._keep_on_screen)
+
+    # -- Groesse (ab 0.59.1) -------------------------------------------------
+
+    def _scales(self):
+        window = self._get_window_scaling() or 1.0
+        widget = ctk.ScalingTracker.get_widget_scaling(self) or 1.0
+        return window, widget
+
+    def _set_wraplength(self, text_width):
+        """Umbruchbreite der Texte (logische Pixel im Sinne von CTk)."""
+        text_width = max(120, int(text_width))
+        for label in (self.lbl_title, self.lbl_status, self.lbl_hint):
+            label.configure(wraplength=text_width)
+
+    def _fit_to_screen(self):
+        window, widget = self._scales()
+        screen = (self.winfo_screenwidth() / window, self.winfo_screenheight() / window)
+        factor = fisi_theme.font_factor()
+        (width, _height), _minimum = update_window_size(0, screen, factor)
+        # Texte auf die geplante Breite umbrechen, dann den Bedarf messen
+        self._set_wraplength((width * window - self._INSET * widget) / widget)
+        self.geometry("%dx%d" % (width, UPDATE_WINDOW_BASE[1]))
+        self.update_idletasks()
+        outer = 2 * 18 * widget                       # Abstand der Card
+        need = (self.card.winfo_reqheight() + outer) / window
+        notes = self.notes.winfo_reqheight() / window
+        two_lines = _text_height(F["small"], 2) * widget / window
+        row = (self.btn_main.master.winfo_reqwidth() + self._INSET * widget) / window
+        size, minimum = update_window_size(need, screen, factor,
+                                           min_height=need - notes + two_lines,
+                                           min_width=row)
+        self.geometry("%dx%d" % size)
+        self.minsize(*minimum)
+        self._planned_size = size
+
+    def _on_body_resize(self, event):
+        _window, widget = self._scales()
+        width = int(event.width / widget) - 4
+        if abs(width - getattr(self, "_last_wrap", 0)) >= 4:
+            self._last_wrap = width
+            self._set_wraplength(width)
+
+    def _keep_on_screen(self):
+        """Liegt das Fenster teilweise ausserhalb des Bildschirms, wird es
+        hineingeschoben. Sonst bleibt die Lage, die das System gewaehlt hat."""
+        try:
+            if not self.winfo_exists():
+                return
+            x, y = self.winfo_rootx(), self.winfo_rooty()
+            width, height = self.winfo_width(), self.winfo_height()
+            screen_w, screen_h = self.winfo_screenwidth(), self.winfo_screenheight()
+            new_x = min(max(0, x), max(0, screen_w - width))
+            new_y = min(max(0, y), max(0, screen_h - height))
+            if (new_x, new_y) != (x, y):
+                window = self._get_window_scaling() or 1.0
+                self.geometry("+%d+%d" % (int(new_x / window), int(new_y / window)))
+        except tk.TclError:
+            pass
 
     def _focus(self):
         self.lift()
@@ -6513,7 +6616,7 @@ class UpdateDialog(ctk.CTkToplevel):
     def start_update(self):
         self.btn_main.set_enabled(False)
         self.btn_later.set_enabled(False)
-        self.progress.pack(fill="x", pady=(12, 0), before=self.lbl_status)
+        self.progress.pack(fill="x", pady=(12, 0), side="bottom", after=self.lbl_status)
         self.lbl_status.configure(text="Update wird heruntergeladen ...",
                                   text_color=C["text_dim"])
         state = {"loaded": 0, "total": self.info.asset_size or 1}
@@ -6598,10 +6701,29 @@ def _apply_window_icon(root):
         png_path = _resource_path("icon.png")
         if os.path.exists(png_path):
             icon_image = tk.PhotoImage(file=png_path)
-            root.iconphoto(True, icon_image)
-            root._icon_image_ref = icon_image  # Referenz halten, sonst Garbage Collection
+            images = [icon_image]
+            if sys.platform.startswith("linux"):
+                images += _linux_icon_sizes(png_path)
+            root.iconphoto(True, *images)
+            root._icon_image_ref = images  # Referenz halten, sonst Garbage Collection
     except tk.TclError:
         pass
+
+
+# Ab 0.59.1 (nur Linux): zusaetzlich kleinere Fenstersymbole, damit Dock und
+# Fensterleiste nicht selbst aus 512 px verkleinern muessen
+LINUX_ICON_SIZES = (256, 128, 64, 48)
+
+
+def _linux_icon_sizes(png_path):
+    try:
+        from PIL import ImageTk
+        with Image.open(png_path) as image:
+            image = image.convert("RGBA")
+            return [ImageTk.PhotoImage(image.resize((size, size), Image.LANCZOS))
+                    for size in LINUX_ICON_SIZES]
+    except (OSError, ValueError, tk.TclError):
+        return []
 
 
 # Ansichten des Spiels (ab 0.48 mit Platzanzeige im Kopf)
@@ -7771,11 +7893,27 @@ def apply_appearance():
     ctk.set_appearance_mode("light" if fisi_theme.light else "dark")
 
 
+LINUX_CLASS_NAME = "fisi-lernplattform"
+
+
 def main():
     # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
     install_error_log(APP_VERSION)
+    # Ab 0.59.1: Sperre gegen Mehrfachstart (Linux, Windows). Laeuft das
+    # Programm schon, kommt dessen Fenster nach vorn und dieser Start endet
+    # still. Der Starttest beim Bauen ist ausgenommen.
+    single = (fisi_einzelstart.supported() and not os.environ.get("FISI_SELFTEST"))
+    if single and not fisi_einzelstart.claim():
+        return
     apply_appearance()
-    root = ctk.CTk()
+    if sys.platform.startswith("linux"):
+        # Ab 0.59.1: eigene Fensterklasse, damit GNOME Fenster und
+        # Menueeintrag verbindet (WM_CLASS "fisi-lernplattform",
+        # "Fisi-lernplattform" statt "tk", "Tk"; passt zu StartupWMClass
+        # in build.py). Windows und macOS bleiben unveraendert.
+        root = ctk.CTk(className=LINUX_CLASS_NAME)
+    else:
+        root = ctk.CTk()
     show_error = root.report_callback_exception
 
     def report_error(*exc_info):
@@ -7783,6 +7921,10 @@ def main():
         show_error(*exc_info)
     root.report_callback_exception = report_error
     app = FISIApp(root)
+    if single:
+        fisi_einzelstart.listen(
+            root, closing=lambda: app._closing or app.update_exit,
+            bring_to_front=lambda: fisi_einzelstart.bring_to_front(root))
     selftest_log = os.environ.get("FISI_SELFTEST")
     failures = _run_selftest(root, app, selftest_log) if selftest_log else None
     root.mainloop()
