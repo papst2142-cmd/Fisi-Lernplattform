@@ -1,0 +1,21 @@
+# Probe 0.59.1 Nachtrag (nur dieser Zweig, nicht mergen): Sperre gegen
+# Mehrfachstart unter Windows. Kein Release, kein Tag.
+name: Probe Einzelstart Windows
+
+on:
+  push:
+    branches: [probe-0591-einzelstart-windows]
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: test_einzelstart.py
+        run: python test_einzelstart.py
+      - name: Echtes Programm zweimal starten
+        run: python probe/einzelstart_windows.py
