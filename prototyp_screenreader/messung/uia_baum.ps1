@@ -68,7 +68,9 @@ function Finde-Name($el, $name) {
 
 $w = Finde-Fenster
 if (-not $w) { Write-Output "FENSTER NICHT GEFUNDEN: $Fenster"; exit 0 }
-Start-Sleep -Seconds 3   # Flutter baut den Baum erst auf, wenn jemand fragt
+# Flutter baut den Baum erst auf, wenn jemand fragt: einmal anfragen, warten
+$null = $w.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+Start-Sleep -Seconds 5
 Write-Output "== Fenster '$Fenster'"
 Baum $w 0
 Write-Output ("== Zusammenfassung: {0} Elemente, davon {1} mit Namen, {2} Tab-Ziele, {3} leere Flaechen nicht ausgegeben" -f $script:Zaehler.alle, $script:Zaehler.benannt, $script:Zaehler.tab, $script:Zaehler.leer)

@@ -61,8 +61,14 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
+          # Wie NVDA: Windows mitteilen, dass ein Screenreader laeuft
+          # (SPI_SETSCREENREADER). Flutter baut seinen Zugaenglichkeitsbaum
+          # sonst nicht auf.
+          Add-Type -Namespace W -Name U -MemberDefinition '[DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint a, uint b, System.IntPtr c, uint d);'
+          [W.U]::SystemParametersInfo(0x0047, 1, [System.IntPtr]::Zero, 0x2)
           $exe = (Get-ChildItem "prototyp_screenreader/bau/build/windows/*.exe")[0].FullName
           $p = Start-Process $exe -PassThru
+          Start-Sleep -Seconds 15
           New-Item -ItemType Directory -Force uia | Out-Null
           powershell -NoProfile -File prototyp_screenreader/messung/uia_baum.ps1 -Fenster "FISI Screenreader-Prototyp" -Klick "Farben, eingeklappt" | Tee-Object uia/uia_prototyp.txt
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
