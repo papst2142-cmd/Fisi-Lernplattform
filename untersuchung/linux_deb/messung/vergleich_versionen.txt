@@ -1,0 +1,10 @@
+Version | SHA-256 des .deb | md5 der .desktop-Datei | Symbol(e)
+0.20 | 149ddcf4986307ae... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.30 | aedb3ec021855144... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.40 | eee4eedac5b091e3... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.50 | e16535c80d0d1711... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.55 | c5c79c6f4262f4f6... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.57 | cbf1b1f9a997aa77... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.58 | fbf2fc10ff9c9210... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.58.1 | 24cdce8e88c60a9a... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 
+0.59 | fdf779ac91a752b6... | d56239a028ee | icons/hicolor/512x512/apps/fisi-lernplattform.png  | Felder: 

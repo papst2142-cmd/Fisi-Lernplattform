@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FISI Lernplattform
+Comment=Lernprogramm fuer die Umschulung zum Fachinformatiker Systemintegration
+Exec=fisi-lernplattform
+Icon=fisi-lernplattform
+Terminal=false
+Categories=Education;
+Keywords=FISI;IHK;Lernen;Netzwerk;Subnetting;RAID;

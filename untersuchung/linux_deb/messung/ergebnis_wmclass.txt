@@ -1,0 +1,2 @@
+Titel: FISI Lernplattform 0.59
+WM_CLASS(STRING) = "tk", "Tk"

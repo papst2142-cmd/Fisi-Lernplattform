@@ -1,0 +1,174 @@
+
+########## Vorbereitung: desktop-file-utils hicolor-icon-theme libgtk-3-bin installieren
+rc=0
+
+########## dpkg-Trigger mit Interesse an applications/icons
+/usr/share/icons/hicolor hicolor-icon-theme/noawait
+/usr/share/applications desktop-file-utils/noawait
+-- desktop-file-utils:
+interest-noawait /usr/share/applications
+-- hicolor-icon-theme:
+interest-noawait /usr/share/icons/hicolor
+-- libgtk-3-bin:
+
+########## Versionsvergleich
+0.58.1 lt 0.59 : wahr
+0.58 lt 0.58.1 : wahr
+0.59 lt 0.59.1 : wahr
+0.59.1 lt 0.60 : wahr
+0.9 lt 0.10 : wahr
+0.59 lt 0.6 : FALSCH
+
+########## FALL apt: 0.58.1 installieren
+Get:1 /debs/fisi-lernplattform_0.58.1_amd64.deb fisi-lernplattform amd64 0.58.1 [31.8 MB]
+Selecting previously unselected package fisi-lernplattform.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 15043 files and directories currently installed.)
+Preparing to unpack .../fisi-lernplattform_0.58.1_amd64.deb ...
+Unpacking fisi-lernplattform (0.58.1) ...
+Setting up fisi-lernplattform (0.58.1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+rc=0
+Status: install ok installed
+Version: 0.58.1
+-rw-r--r-- 1 root root 273 Oct  6 05:13 /usr/share/applications/fisi-lernplattform.desktop
+0
+-rw-r--r-- 1 root root 128 Oct  6 11:14 /usr/share/icons/hicolor/icon-theme.cache
+
+########## FALL apt: 0.59 darueber
+The following packages will be upgraded:
+  fisi-lernplattform
+1 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+Need to get 0 B/31.9 MB of archives.
+After this operation, 19.5 kB of additional disk space will be used.
+Get:1 /debs/fisi-lernplattform_0.59_amd64.deb fisi-lernplattform amd64 0.59 [31.9 MB]
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 15550 files and directories currently installed.)
+Preparing to unpack .../fisi-lernplattform_0.59_amd64.deb ...
+Unpacking fisi-lernplattform (0.59) over (0.58.1) ...
+Setting up fisi-lernplattform (0.59) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+rc=0
+Status: install ok installed
+Version: 0.59
+Dateien im Paket: 516, Dateien unter /opt: 459 (vorher 459)
+Nicht vom Paket erfasste Dateien unter /opt:
+-rw-r--r-- 1 root root 128 11:14:48 /usr/share/icons/hicolor/icon-theme.cache
+
+########## FALL apt: gleiche Version nochmal (0.59 ueber 0.59)
+Reading state information...
+fisi-lernplattform is already the newest version (0.59).
+Solving dependencies...
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+
+########## FALL apt: aeltere Version ueber neuere (0.58.1 ueber 0.59)
+Reading state information...
+Solving dependencies...
+The following packages will be DOWNGRADED:
+  fisi-lernplattform
+0 upgraded, 0 newly installed, 1 downgraded, 0 to remove and 2 not upgraded.
+E: Packages were downgraded and -y was used without --allow-downgrades.
+rc=0
+Version: 0.59
+
+########## FALL apt: entfernen
+Removing fisi-lernplattform (0.59) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Reste: ls: cannot access '/opt/fisi-lernplattform': No such file or directory ls: cannot access '/usr/share/applications/fisi-lernplattform.desktop': No such file or directory ls: cannot access '/usr/bin/fisi-lernplattform': No such file or directory 
+
+########## FALL dpkg: 0.58.1 installieren
+Selecting previously unselected package fisi-lernplattform.
+(Reading database ... 15043 files and directories currently installed.)
+Preparing to unpack .../fisi-lernplattform_0.58.1_amd64.deb ...
+Unpacking fisi-lernplattform (0.58.1) ...
+Setting up fisi-lernplattform (0.58.1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+rc=0
+Status: install ok installed
+Version: 0.58.1
+-rw-r--r-- 1 root root 273 Oct  6 05:13 /usr/share/applications/fisi-lernplattform.desktop
+0
+-rw-r--r-- 1 root root 128 Oct  6 11:14 /usr/share/icons/hicolor/icon-theme.cache
+
+########## FALL dpkg: 0.59 darueber
+(Reading database ... 15550 files and directories currently installed.)
+Preparing to unpack .../fisi-lernplattform_0.59_amd64.deb ...
+Unpacking fisi-lernplattform (0.59) over (0.58.1) ...
+Setting up fisi-lernplattform (0.59) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+rc=0
+Status: install ok installed
+Version: 0.59
+Dateien im Paket: 516, Dateien unter /opt: 459 (vorher 459)
+Nicht vom Paket erfasste Dateien unter /opt:
+-rw-r--r-- 1 root root 128 11:14:54 /usr/share/icons/hicolor/icon-theme.cache
+
+########## FALL dpkg: gleiche Version nochmal (0.59 ueber 0.59)
+Unpacking fisi-lernplattform (0.59) over (0.59) ...
+Setting up fisi-lernplattform (0.59) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+
+########## FALL dpkg: aeltere Version ueber neuere (0.58.1 ueber 0.59)
+(Reading database ... 15550 files and directories currently installed.)
+Preparing to unpack .../fisi-lernplattform_0.58.1_amd64.deb ...
+Unpacking fisi-lernplattform (0.58.1) over (0.59) ...
+Setting up fisi-lernplattform (0.58.1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+rc=0
+Version: 0.58.1
+
+########## FALL dpkg: entfernen
+Removing fisi-lernplattform (0.58.1) ...
+Processing triggers for hicolor-icon-theme (0.18-2build1) ...
+Processing triggers for desktop-file-utils (0.28-1build1) ...
+Reste: ls: cannot access '/opt/fisi-lernplattform': No such file or directory ls: cannot access '/usr/share/applications/fisi-lernplattform.desktop': No such file or directory ls: cannot access '/usr/bin/fisi-lernplattform': No such file or directory 
+
+########## Menueeintrag pruefen (0.59 installiert)
+validate rc=0
+Exec aufgeloest: /usr/bin/fisi-lernplattform -> /opt/fisi-lernplattform/FISI-Lernplattform
+ausfuehrbar: ja
+/usr/share/icons/hicolor/512x512/apps/fisi-lernplattform.png
+/debs/ex/0.59/usr/share/icons/hicolor/512x512/apps/fisi-lernplattform.png
+/debs/ex/0.20/usr/share/icons/hicolor/512x512/apps/fisi-lernplattform.png
+/debs/ex/0.58.1/usr/share/icons/hicolor/512x512/apps/fisi-lernplattform.png
+gtk-update-icon-cache: File not found: /usr/share/icons/hicolor/icon-theme.cache/icon-theme.cache
+cache valid rc=1
+/t/test_install.sh: line 49: strings: command not found
+0
+
+########## Bibliotheken: ldd fehlende (minimaler Container ohne Desktop)
+	libXft.so.2 => not found
+	libXss.so.1 => not found
+
+########## Startversuch unter Xvfb (5 s)
+rc=124 (124 = lief bis Zeitlimit)
+
+########## fonts-ubuntu in 26.04: Schriftfamilien
+Ubuntu-B.ttf
+Ubuntu-BI.ttf
+Ubuntu-C.ttf
+Ubuntu-L.ttf
+Ubuntu-LI.ttf
+Ubuntu-M.ttf
+Ubuntu-MI.ttf
+Ubuntu-R.ttf
+Ubuntu-RI.ttf
+Ubuntu-Th.ttf
+UbuntuMono-B.ttf
+UbuntuMono-BI.ttf
+UbuntuMono-R.ttf
+UbuntuMono-RI.ttf
+  Depends: fontconfig
+  Depends: fonts-dejavu-core
+  Recommends: fonts-liberation
+  Recommends: fonts-noto-cjk
+  Recommends: fonts-noto-color-emoji
+  Recommends: fonts-noto-core
+  Recommends: fonts-ubuntu
+    fonts-ubuntu-classic
+  Recommends: gnome-font-viewer
