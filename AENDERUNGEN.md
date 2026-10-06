@@ -4,6 +4,26 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.58.1
+
+Das Programm bleibt schlank und reagiert flüssiger, dazu eine neue
+Leistungsmessung in den Optionen.
+
+- **Hell/Dunkel wechseln:** Nach einem Wechsel der Darstellung, der Farbwelt
+  oder der Schriftgröße bleibt die alte Oberfläche nicht mehr im Speicher.
+  Das Programm wächst dabei nicht mehr mit jedem Wechsel.
+- **Fenstergröße ändern:** Deutlich flüssiger. Nicht sichtbare Seiten rechnen
+  beim Ziehen nicht mehr mit, sie passen sich erst an, wenn du sie öffnest.
+- **Bild-Zwischenspeicher:** Hat jetzt eine Obergrenze und wächst auch bei
+  langem Ziehen am Fensterrand nicht mehr ohne Ende.
+- **Leistungsmessung:** Neue Karte in den Optionen (PC und Handy). Mit
+  „Messung aufzeichnen“ schreibt das Programm in eine Datei auf diesem Gerät,
+  wie lange Seitenwechsel, Darstellungswechsel und Änderungen der
+  Fenstergröße dauern und wie viel Arbeitsspeicher es braucht. Zu Beginn
+  ist die Messung aus. Die Datei bleibt auf dem Gerät, enthält keine
+  Lerndaten und keinen Namen und kommt nicht in den Abgleich. „Messdatei
+  zeigen“ und „Messdatei löschen“ stehen daneben, dazu ein Hilfe-Abschnitt.
+
 ## 0.58
 
 Neuer USV-Rechner, farbige Regler bei den eigenen Farben und viele kleine
