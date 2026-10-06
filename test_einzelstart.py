@@ -13,15 +13,15 @@ einem eigenen Datenordner (FISI_DB_PATH):
   * nach kill -9 des ersten Starts startet der naechste normal
   * Fehler beim Anlegen der Sperre verhindern den Start nie
   * main(): FISI_SELFTEST nimmt die Sperre aus, ein "da" beendet main still
-  * mit Display: minimiertes Fenster kommt beim zweiten Start nach vorn,
-    das echte Programm oeffnet beim zweiten Start kein zweites Fenster
+  * mit Display (Linux mit Fenstermanager, Windows): minimiertes Fenster
+    kommt beim zweiten Start zurueck; Linux: das echte Programm oeffnet beim
+    zweiten Start kein zweites Fenster
 
 Start:  python test_einzelstart.py   (Fenster-Tests brauchen ein Display)
 """
 
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -48,6 +48,8 @@ def _display_ok():
 
 
 HAS_DISPLAY = sys.platform.startswith("linux") and _display_ok()
+# Windows hat immer eine Anzeige (auch der CI-Rechner)
+HAS_WINDOW = (HAS_DISPLAY or sys.platform == "win32") and _display_ok()
 
 # Haelt die Sperre wie das echte Programm: claim() und dann je nach Modus
 # antworten (Start-Thread = "da"), "endet" antworten oder gar nicht.
@@ -165,10 +167,10 @@ class SperreTest(_Ordner):
         self.assertGreaterEqual(took, 1.5)
         self.assertIn("Mehrfachstart", self._log())
 
-    @unittest.skipUnless(hasattr(signal, "SIGKILL"), "kill -9 nur unter Linux")
     def test_start_nach_kill_9(self):
+        # kill() = SIGKILL unter Linux, TerminateProcess unter Windows
         holder = self._holder("da")
-        os.kill(holder.pid, signal.SIGKILL)
+        holder.kill()
         holder.wait()
         self.assertTrue(os.path.exists(os.path.join(self.folder, fe.LOCK_FILE)))
         code, out, _ = self._start()
@@ -289,7 +291,7 @@ WINDOW = textwrap.dedent("""
 """)
 
 
-@unittest.skipUnless(HAS_DISPLAY, "braucht Linux mit Display (z.B. xvfb-run)")
+@unittest.skipUnless(HAS_WINDOW, "braucht ein Display (Linux z.B. xvfb-run, Windows)")
 class FensterTest(_Ordner):
     def _states(self, proc, until, seconds=15, required=True):
         end = time.monotonic() + seconds
