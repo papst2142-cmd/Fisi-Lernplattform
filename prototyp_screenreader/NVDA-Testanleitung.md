@@ -36,6 +36,8 @@ Dauer: etwa 30 bis 45 Minuten.
 
 Bitte in der Spalte **Ergebnis** eintragen: **passt**, **passt nicht** oder **teilweise**, und bei Bedarf eine Anmerkung (was NVDA wirklich gesagt hat).
 
+**Stand 06.10.2026:** Die erwarteten Texte in 4.1 und 4.2 sind nicht mehr geschätzt, sondern wurden mit **NVDA 2026.2** auf einem Windows-Rechner bei GitHub automatisch mitgeschrieben (siehe `messung/nvda/Bericht_NVDA-Automatik.md`). Mit einer echten Stimme, anderer NVDA-Version oder anderen NVDA-Einstellungen können einzelne Wörter abweichen.
+
 ### 4.1 Seite Optionen mit der Tab-Taste durchgehen
 
 Nach dem Start mit **Tab** Schritt für Schritt vorwärts gehen.
@@ -45,16 +47,16 @@ Nach dem Start mit **Tab** Schritt für Schritt vorwärts gehen.
 | 1 | Programm ist gestartet | „FISI Screenreader-Prototyp“ (Fenstertitel) | | |
 | 2 | Tab | „Optionen, Schalter“ | | |
 | 3 | Tab | „Karteikarte, Schalter“ | | |
-| 4 | Tab | „Testschalter: zusätzliche Ansagen, Umschalter, gedrückt“ (oder „eingeschaltet“) | | |
+| 4 | Tab | „Testschalter: zusätzliche Ansagen, Kontrollfeld, nicht ausgewählt, aktiviert“ (gemessen; „aktiviert“ heißt hier: eingeschaltet) | | |
 | 5 | Tab | „Nach Updates suchen, Schalter“ | | |
-| 6 | Tab | „Beim Start automatisch nach Updates suchen, Umschalter, gedrückt“ (oder „eingeschaltet“) | | |
-| 7 | Tab | „Rundgang und Hilfe, eingeklappt, Schalter, reduziert“ | | |
-| 8 | Tab | „Schriftgröße, eingeklappt, Schalter, reduziert“ | | |
-| 9 | Tab | „Farben, eingeklappt, Schalter, reduziert“ | | |
-| 10 | Tab | „Tagesziel, eingeklappt, Schalter, reduziert“ | | |
+| 6 | Tab | „Beim Start automatisch nach Updates suchen, Kontrollfeld, nicht ausgewählt, aktiviert“ (gemessen) | | |
+| 7 | Tab | „Rundgang und Hilfe, eingeklappt, Schalter, eingeklappt“ | | |
+| 8 | Tab | „Schriftgröße, eingeklappt, Schalter, eingeklappt“ | | |
+| 9 | Tab | „Farben, eingeklappt, Schalter, eingeklappt“ | | |
+| 10 | Tab | „Tagesziel, eingeklappt, Schalter, eingeklappt“ | | |
 | 11 | Tab | „Kopieren, Schalter“ (gehört zu „Problem melden“) | | |
-| 12 | Tab | „Leistungsmessung, eingeklappt, Schalter, reduziert“ | | |
-| 13 | Tab | wieder „Optionen, Schalter“ (Runde beendet) | | |
+| 12 | Tab | „Leistungsmessung, eingeklappt, Schalter, eingeklappt“ | | |
+| 13 | Tab | „FISI Screenreader-Prototyp“, dann wieder „Optionen, Schalter“ (Runde beendet) | | |
 | 14 | Umschalt+Tab | geht einen Schritt zurück: „Leistungsmessung, eingeklappt …“ | | |
 
 **Wichtig:** Zwischen Schritt 7 und 12 dürfen **keine** Einstellungen aus den eingeklappten Bereichen kommen. Nur die Kopfzeilen der Bereiche.
@@ -63,17 +65,17 @@ Nach dem Start mit **Tab** Schritt für Schritt vorwärts gehen.
 
 | Nr. | Aktion | Erwarteter Vorlesetext (ungefähr) | Ergebnis | Anmerkung |
 |---|---|---|---|---|
-| 15 | Mit Tab zu „Farben, eingeklappt“ gehen, dann **Enter** | „Farben ausgeklappt“ und/oder „erweitert“ | | |
-| 16 | **NVDA+Tab** (aktuelles Element neu vorlesen) | „Farben, ausgeklappt, Schalter, erweitert“ | | |
-| 17 | Tab | „Darstellung“ und „Dunkel, Auswahlschalter, aktiviert, 1 von 2“ (oder ähnlich) | | |
-| 18 | **Pfeil nach unten** | „Hell, Auswahlschalter …“ (Auswahl wechselt, es wird nichts gespeichert) | | |
-| 19 | Tab | „Vorlagen, eingeklappt, Schalter, reduziert“ | | |
-| 20 | **Leertaste** | „Vorlagen ausgeklappt“ und/oder „erweitert“ | | |
-| 21 | Tab (mehrmals) | „Grundfarbe Cyan/Pink, Schalter, ausgewählt“, dann „Grundfarbe Lila/Magenta, Schalter“ usw., danach „Hintergrund Violett …“ | | |
+| 15 | Mit Tab zu „Farben, eingeklappt“ gehen, dann **Enter** | „Farben ausgeklappt, Benachrichtigung“, dann „Farben, ausgeklappt“ und „ausgeklappt“ (gemessen: Zustand wird dreimal genannt) | | |
+| 16 | **NVDA+Tab** (aktuelles Element neu vorlesen) | „Farben, ausgeklappt, Schalter, hervorgehoben, ausgeklappt“ | | |
+| 17 | Tab | „Darstellung, Gruppierung“ und „Dunkel, Auswahlschalter, aktiviert“ | | |
+| 18 | **Pfeil nach unten** | „Hell, Auswahlschalter …“ (Auswahl wechselt, es wird nichts gespeichert). **Gemessen: Auswahl wechselte nicht**, Fokus blieb auf „Dunkel“. Bitte prüfen, ob es bei dir auch so ist. | | |
+| 19 | Tab | „Vorlagen, eingeklappt, Schalter, eingeklappt“ | | |
+| 20 | **Leertaste** | „Vorlagen ausgeklappt, Benachrichtigung“, „Vorlagen, ausgeklappt“, „ausgeklappt“ | | |
+| 21 | Tab (mehrmals) | „Gruppierung, Hintergrund“ (gemessen, passt nicht ganz), „Grundfarbe Cyan/Pink, Schalter, ausgewählt“, dann „Grundfarbe Lila/Magenta, Schalter“ usw., danach „Hintergrund Violett …“ | | |
 | 22 | Auf einer Kachel **Enter** | Meldung „Grundfarbe … setzt nur die Regler (Prototyp, nichts gespeichert)“ | | |
-| 23 | Mit **Umschalt+Tab** zurück zu „Vorlagen, ausgeklappt“, dann **Enter** | „Vorlagen eingeklappt“ und/oder „reduziert“ | | |
+| 23 | Mit **Umschalt+Tab** zurück zu „Vorlagen, ausgeklappt“, dann **Enter** | „Vorlagen eingeklappt, Benachrichtigung“, „Vorlagen, eingeklappt“, „eingeklappt“ | | |
 | 24 | Tab | Die Kacheln werden übersprungen, als Nächstes kommt „Tagesziel, eingeklappt …“ | | |
-| 25 | Zurück zu „Farben, ausgeklappt“ und **Enter** | „Farben eingeklappt“ und/oder „reduziert“ | | |
+| 25 | Zurück zu „Farben, ausgeklappt“ und **Enter** | „Farben eingeklappt, Benachrichtigung“, „Farben, eingeklappt“, „eingeklappt“ | | |
 | 26 | Auf „Nach Updates suchen“ **Enter** | Meldung „Prototyp: Es wird nicht wirklich gesucht. Installierte Version 0.58.1.“ | | |
 
 ### 4.3 Lesemodus und Überschriften
