@@ -159,6 +159,10 @@ class BedingungTest(_Frisch):
         self.assertEqual(fe.start_text(aus), "Sitzung x11 | XMODIFIERS @im=ibus | "
                          "Eingabe-Umgehung nein (keine Wayland-Sitzung)")
         fe._reset_for_tests()
+        ohne = fe.apply({"XDG_SESSION_TYPE": "wayland", "XMODIFIERS": "@im=fcitx"}, "linux")
+        self.assertEqual(fe.start_text(ohne), "Sitzung wayland | XMODIFIERS @im=fcitx | "
+                         "Eingabe-Umgehung nein (kein IBus)")
+        fe._reset_for_tests()
         win = fe.apply({}, "win32")
         self.assertEqual(fe.start_text(win), "Eingabe-Umgehung nein (kein Linux)")
         fe._reset_for_tests()
@@ -183,7 +187,10 @@ class BedingungTest(_Frisch):
                                            check=True).stdout)
         self.assertFalse(second["aktiv"])
         self.assertEqual(second["vorher"], "@im=none")
-        self.assertEqual(second["grund"], "kein IBus")
+        self.assertEqual(second["grund"], "schon @im=none (geerbt oder von Hand)")
+        self.assertEqual(fe.start_text(second),
+                         "Sitzung wayland | XMODIFIERS @im=none | Eingabe-Umgehung "
+                         "nein (schon @im=none (geerbt oder von Hand))")
 
     def test_start_py_setzt_vor_dem_ersten_fenster(self):
         """start.py ruft apply() als Erstes auf (vor tkinter und fail())."""

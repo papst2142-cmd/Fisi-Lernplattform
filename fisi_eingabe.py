@@ -44,6 +44,9 @@ SWITCH = "FISI_XIM"          # =1: Umgehung aus
 IM_IBUS = "@im=ibus"
 IM_NONE = "@im=none"
 MESS_TASK = "eingabe-umgehung"   # Spalte "vorgang" der Startzeile der Messdatei
+# Grund, wenn XMODIFIERS schon @im=none ist - z. B. beim Neustart nach einem
+# Update, der die Umgebung des alten Prozesses erbt (Abnahme 0.59.3, A1)
+GRUND_SCHON_NONE = "schon @im=none (geerbt oder von Hand)"
 
 _result = None
 
@@ -56,7 +59,10 @@ def wanted(environ, platform):
                or bool(environ.get("WAYLAND_DISPLAY")))
     if not wayland:
         return False, "keine Wayland-Sitzung"
-    if IM_IBUS not in environ.get("XMODIFIERS", ""):
+    modifiers = environ.get("XMODIFIERS", "")
+    if IM_IBUS not in modifiers:
+        if IM_NONE in modifiers:
+            return False, GRUND_SCHON_NONE
         return False, "kein IBus"
     if environ.get(SWITCH, "").strip() == "1":
         return False, "%s=1" % SWITCH
