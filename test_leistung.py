@@ -454,11 +454,20 @@ class PcTest(unittest.TestCase):
         for key in ("progress", "dashboard", "settings"):
             self.show(key)
         self.pump(0.1)
-        # Fenstergroesse in Schritten aendern (wie Ziehen mit der Maus)
-        for width in range(1360, 1480, 20):
-            self.root.geometry("%dx900" % width)
-            self.pump(0.03)
-        self.pump(self.app_gui.PerfMonitor.RESIZE_END_MS / 1000 + 0.3)
+        # Fenstergroesse in Schritten aendern (wie Ziehen mit der Maus). Ab 0.60
+        # (CI): Auf dem langsamen Windows-Runner dauert ein Schritt laenger als
+        # die 600 ms Pause, nach der ein Zug als beendet gilt - daher die Pause
+        # fuer den Test verlaengern (das Zusammenfassen wird so trotzdem geprueft)
+        monitor = self.app_gui.PerfMonitor
+        saved = monitor.RESIZE_END_MS
+        monitor.RESIZE_END_MS = 5000
+        try:
+            for width in range(1360, 1480, 20):
+                self.root.geometry("%dx900" % width)
+                self.pump(0.03)
+            self.pump(monitor.RESIZE_END_MS / 1000 + 0.3)
+        finally:
+            monitor.RESIZE_END_MS = saved
         self.app.change_color(mode="hell")
         self.pump(0.3)
         self.app.perf.rec.flush()
