@@ -58,17 +58,22 @@ def holder(folder, mode):
     import fisi_einzelstart as fe
     if mode == "antwortet":
         fe.claim(folder, version="0.59.2")
+        handle = None
     else:
-        fe._try_lock(folder)
+        handle = fe._try_lock(folder)   # Griff behalten = Sperre bleibt
         fe.write_info(folder, "0.59.2")
     print("HALTER bereit", os.getpid(), flush=True)
-    time.sleep(20)
+    if mode == "spaet":
+        time.sleep(4)          # 4 s "blockiert", dann wie das Hauptfenster antworten
+        fe._start_answering(folder)
+    time.sleep(40)
+    del handle
 
 
 def part_e():
     import fisi_einzelstart as fe
     print("=== E1/E2 Sperre und laeuft.info")
-    for mode in ("antwortet", "stumm"):
+    for mode in ("antwortet", "stumm", "spaet"):
         folder = tempfile.mkdtemp()
         env = dict(os.environ, FISI_DB_PATH=os.path.join(folder, "fisi.db"))
         child = subprocess.Popen([sys.executable, __file__, "halter", folder, mode],
@@ -86,7 +91,7 @@ def part_e():
         result = subprocess.run(
             [sys.executable, "-c",
              "import sys; sys.path.insert(0, %r); import fisi_einzelstart as fe; "
-             "print(fe.claim(%r, answer_seconds=2, lock_seconds=3, version='0.59.2'))"
+             "print(fe.claim(%r, answer_seconds=2, lock_seconds=8, version='0.59.2'))"
              % (ROOT, folder)], capture_output=True, text=True, env=env)
         print("  Zweitstart: claim -> %s nach %.1f s %s" % (
             result.stdout.strip(), time.monotonic() - started, result.stderr.strip()[-300:]))

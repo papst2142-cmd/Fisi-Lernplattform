@@ -26,7 +26,16 @@ jobs:
         run: git worktree add ../v0591 v0.59.1
       - name: Tests der neuen und geaenderten Teile
         continue-on-error: true
-        run: python -m unittest -v test_haenger test_einzelstart test_leistung test_werkzeuge test_optionen 2>&1 | tail -80
+        run: |
+          # jede Datei einzeln (wie im Container), zum Vergleich auch 0.59.1
+          for f in test_haenger test_einzelstart test_leistung test_werkzeuge test_optionen; do
+            for v in neu alt; do
+              d=.; [ $v = alt ] && d=../v0591
+              [ -f $d/$f.py ] || continue
+              echo "=== $v $f"
+              (cd $d && python -m unittest $f 2>&1 | grep -E "^(FAIL|ERROR):|^Ran |^OK|^FAILED")
+            done
+          done
       - name: Probe A2, A3, E1, E2, Waechter, Problembericht
         continue-on-error: true
         run: python probe/probe_0592_bau.py
