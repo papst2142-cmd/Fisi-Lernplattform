@@ -334,6 +334,52 @@ class CtkVersionTest(unittest.TestCase):
                       "geprueft - test_leistung.py mit dieser Version laufen lassen "
                       "und CTK_IMAGE_FIX_VERSIONS ergaenzen" % ctk.__version__)
 
+    def test_b1_abmelden_fuer_diese_version_geprueft(self):
+        """Ab 0.60 (B1): detach_appearance greift in customtkinter-Interna;
+        die festgelegte Version muss dafuer geprueft sein."""
+        import customtkinter as ctk
+        import app_gui
+        self.assertIn(ctk.__version__, app_gui.CTK_DETACH_VERSIONS,
+                      "customtkinter %s ist fuer detach_appearance (0.60, B1) nicht "
+                      "geprueft - test_leistung.py laufen lassen und "
+                      "CTK_DETACH_VERSIONS ergaenzen" % ctk.__version__)
+
+    @unittest.skipUnless(HAS_DISPLAY, "kein Display fuer Tk")
+    def test_b1_nur_der_behaelter_wird_abgemeldet(self):
+        import customtkinter as ctk
+        import app_gui
+        from customtkinter.windows.widgets.appearance_mode import AppearanceModeTracker
+        root = ctk.CTk()
+        try:
+            old = ctk.CTkFrame(root)
+            inner = ctk.CTkFrame(old)
+            ctk.CTkLabel(inner, text="alt").pack()
+            ctk.CTkButton(old, text="alt").pack()
+            keep = ctk.CTkFrame(root)
+            ctk.CTkLabel(keep, text="neu").pack()
+            owners = lambda: [str(getattr(cb, "__self__", "")) for cb in
+                              AppearanceModeTracker.callback_list]
+            listed = AppearanceModeTracker.callback_list
+            before = len(owners())
+            # andere Version: nichts geschieht
+            saved = ctk.__version__
+            ctk.__version__ = "0.0.0"
+            try:
+                self.assertEqual(app_gui.detach_appearance(old), 0)
+            finally:
+                ctk.__version__ = saved
+            removed = app_gui.detach_appearance(old)
+            self.assertGreaterEqual(removed, 4)   # Rahmen, Rahmen, Label, Knopf
+            self.assertEqual(len(owners()), before - removed)
+            self.assertIs(AppearanceModeTracker.callback_list, listed)   # dieselbe Liste
+            self.assertFalse([o for o in owners() if o == str(old) or
+                              o.startswith(str(old) + ".")])
+            self.assertTrue([o for o in owners() if o.startswith(str(keep))])
+            old.destroy()   # Abbau danach geht ohne Fehler
+            root.update()
+        finally:
+            root.destroy()
+
     @unittest.skipUnless(HAS_DISPLAY, "kein Display fuer Tk")
     def test_label_und_knopf_tragen_sich_aus(self):
         import customtkinter as ctk

@@ -7399,6 +7399,9 @@ class FISIApp:
         if background_id:
             fisi_theme.save_background(background_id)
         if mode or fisi_theme.light != was_light:
+            # Ab 0.60 (B1): die alte Oberflaeche wird gleich abgebaut und
+            # nicht mehr umgefaerbt
+            detach_appearance(self.container)
             apply_appearance()
         if background_id or mode or custom or fisi_theme.light != was_light:
             self.root.configure(fg_color=C["bg"])
@@ -8084,6 +8087,40 @@ def apply_appearance():
     """Ab 0.49: Darstellung (Dunkel/Hell) auf customtkinter und die
     Fensterleiste uebertragen."""
     ctk.set_appearance_mode("light" if fisi_theme.light else "dark")
+
+
+# Ab 0.60 (B1): customtkinter-Versionen, fuer die detach_appearance geprueft ist
+CTK_DETACH_VERSIONS = ("6.0.0",)
+
+
+def detach_appearance(container):
+    """Ab 0.60 (B1, Tempo): Alle Elemente unter container aus der Liste
+    nehmen, die customtkinter beim Wechsel Hell/Dunkel umfaerbt. Gedacht fuer
+    die alte Oberflaeche, die gleich abgebaut wird - sie ist dabei verdeckt,
+    das Umfaerben kostete nur Zeit (ca. ein Viertel des Wechsels).
+
+    Greift in customtkinter-Interna (AppearanceModeTracker.callback_list,
+    geprueft: CTK_DETACH_VERSIONS). Bei einer anderen Version oder
+    fehlender Liste geschieht nichts (dann wird wie bisher umgefaerbt).
+    Liefert die Zahl der abgemeldeten Eintraege."""
+    if ctk.__version__ not in CTK_DETACH_VERSIONS:
+        return 0
+    try:
+        from customtkinter.windows.widgets.appearance_mode import AppearanceModeTracker
+        callbacks = AppearanceModeTracker.callback_list
+        prefix = str(container)
+    except Exception:  # noqa: BLE001 - im Zweifel wie bisher
+        return 0
+    keep = []
+    for callback in callbacks:
+        owner = getattr(callback, "__self__", None)
+        name = str(owner) if owner is not None else ""
+        if name == prefix or name.startswith(prefix + "."):
+            continue
+        keep.append(callback)
+    removed = len(callbacks) - len(keep)
+    callbacks[:] = keep   # dieselbe Liste, customtkinter haelt sie fest
+    return removed
 
 
 LINUX_CLASS_NAME = "fisi-lernplattform"
