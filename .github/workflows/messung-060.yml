@@ -1,0 +1,53 @@
+# Nur Messung fuer 0.60 (Zweig messung-060): Darstellungswechsel 0.59.3
+# gegen den Zweig version-060 auf dem Windows-Runner. Baut nichts,
+# veroeffentlicht nichts, wird nie gemergt.
+name: Messung 0.60 (nur Messung)
+
+on:
+  push:
+    branches: [messung-060]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install customtkinter==6.0.0 "pillow>=10" certifi psutil
+      - name: Fassungen 0.59.3 und version-060
+        run: |
+          git worktree add ../v0593 v0.59.3
+          git fetch origin version-060
+          git worktree add ../v060 origin/version-060
+          git -C ../v060 log --oneline -1
+      - name: Darstellungswechsel
+        continue-on-error: true
+        run: |
+          for r in 1 2 3; do
+            for f in 0 1; do
+              for v in 0593 060; do
+                echo "=== v$v Farben offen $f Runde $r"
+                MESS_FARBEN_OFFEN=$f MESS_WECHSEL=6 timeout 900 python messung_060/messung_wechsel.py ../v$v "$RUNNER_TEMP/m_${v}_f${f}_${r}.json" > "$RUNNER_TEMP/m_${v}_f${f}_${r}.txt" 2>&1 || echo "Rueckgabe $?"
+              done
+            done
+          done
+          cd "$RUNNER_TEMP" && python "$GITHUB_WORKSPACE/messung_060/tab.py" m_*.json
+          python - <<'PY'
+          import glob, json, os, statistics as st
+          os.chdir(os.environ["RUNNER_TEMP"])
+          for k in ("0593_f0", "060_f0", "0593_f1", "060_f1"):
+              g = []
+              for f in glob.glob("m_%s_*.json" % k):
+                  g += [x["gesamt_ms"] for x in json.load(open(f, encoding="utf-8"))["wechsel"]]
+              print("SUMME", k, len(g), round(st.median(g)) if g else None)
+          PY
