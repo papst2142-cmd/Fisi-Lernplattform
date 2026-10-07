@@ -245,6 +245,9 @@ class Recorder:
         self.active = enabled()
         # Ab 0.59.2: liefert den laufenden Vorgang (PC, fisi_haenger), sonst leer
         self.task_source = None
+        # Ab 0.59.3: fester Eintrag fuer "vorgang" in den Zeilen "start" (PC:
+        # "eingabe-umgehung", wenn fisi_eingabe aktiv ist; sonst leer)
+        self.start_task = ""
         self._header_checked = False
 
     def set_active(self, flag):
@@ -265,6 +268,8 @@ class Recorder:
             return
         memory, private = memory_mb() if speicher else (None, None)
         now = datetime.datetime.now().isoformat(timespec="milliseconds")
+        if vorgang is None and event == EVENT_START and self.start_task:
+            vorgang = self.start_task
         if vorgang is None:
             try:
                 vorgang = self.task_source() if self.task_source else ""

@@ -78,6 +78,7 @@ from fisi_lernen import (  # noqa: E402
     trainer_summary,
 )
 import fisi_diagnose as fdg  # noqa: E402
+import fisi_eingabe  # noqa: E402
 import fisi_einzelstart  # noqa: E402
 import fisi_haenger as fhg  # noqa: E402
 import fisi_leistung as fle  # noqa: E402
@@ -112,7 +113,7 @@ APP_TITLE = "FISI Lernplattform"
 # Mit jedem Update beginnt die Fixnummer wieder bei 0 (wird dann weggelassen).
 # Neue Version immer mit "python build.py --setze-version <Version>" setzen,
 # damit sie auch in LIESMICH.txt und im Inno-Setup-Skript gleich lautet.
-APP_VERSION = "0.59.2"
+APP_VERSION = "0.59.3"
 
 
 def _resource_path(filename):
@@ -5855,6 +5856,10 @@ class PerfMonitor:
         self.rec = fle.Recorder(APP_VERSION, "PC", toolkit=ctk.__version__)
         # Ab 0.59.2: Spalte "vorgang" (letzter Vorgang, fisi_haenger)
         self.rec.task_source = lambda: fhg.current()[1]
+        # Ab 0.59.3: Startzeile nennt die Eingabemethoden-Umgehung (nur wenn aktiv)
+        eingabe = fisi_eingabe.result()
+        if eingabe and eingabe.get("aktiv"):
+            self.rec.start_task = fisi_eingabe.MESS_TASK
         self._flush_job = None
         self._bound = False
         self._resize = None
@@ -6878,6 +6883,7 @@ PRELOAD_GAME_VIEWS = ("firma", "reise", "zuhause", "buero", "kunde")
 PRELOAD_START_MS = 1500   # nach dem ersten Zeichnen des Dashboards
 PRELOAD_GAP_MS = 60       # Pause zwischen zwei Schritten (Klicks kommen dazwischen dran)
 PRELOAD_IDLE_MS = 600     # so lange ohne Klick/Taste, bevor der naechste Schritt laeuft
+PRELOAD_WAIT_TASK = "vorladen:start"   # ab 0.59.3: Vorgang bis zum ersten Schritt
 
 
 def preload_tasks(slot_chosen):
@@ -6919,6 +6925,10 @@ class ViewPreloader:
         """(Neu) beginnen - beim Start und nach dem Neuaufbau (Farbwechsel)."""
         self.queue = preload_tasks(self.app.slot_chosen)
         self.done = False
+        # Ab 0.59.3 (K3, nur Diagnose): die Wartezeit bis zum ersten Schritt
+        # (dazu gehoert das erste Zeichnen) heisst schon "vorladen:start"
+        if fhg.current()[1] == fhg.IDLE:
+            fhg.vorgang(PRELOAD_WAIT_TASK)
         self._schedule(delay)
 
     def add_game(self):
@@ -6939,6 +6949,8 @@ class ViewPreloader:
 
     def _step(self):
         self.job = None
+        if fhg.current()[1] == PRELOAD_WAIT_TASK:
+            fhg.vorgang(fhg.IDLE)
         app = self.app
         if app._closing:
             return
@@ -6956,6 +6968,21 @@ class ViewPreloader:
         else:
             self.done = True
 
+    def _release_task(self, label, before):
+        """Ab 0.59.3 (K3, nur Diagnose): Tk berechnet Groessen und zeichnet
+        die gerade gebaute Ansicht erst in der naechsten Leerlauf-Runde. Der
+        Vorgang bleibt deshalb bis nach dieser Runde stehen (after_idle kommt
+        nach den schon wartenden Leerlauf-Auftraegen dran) - sonst liefe
+        diese Zeit als "bereit". Hat inzwischen ein anderer Vorgang
+        uebernommen, bleibt dessen Name stehen."""
+        def release():
+            if fhg.current()[1] == label:
+                fhg.vorgang(before)
+        try:
+            self.root.after_idle(release)
+        except tk.TclError:
+            release()
+
     def _run(self, task):
         """Einen Schritt ausfuehren. True, wenn dabei etwas aufgebaut wurde."""
         app = self.app
@@ -6972,7 +6999,8 @@ class ViewPreloader:
         started = time.perf_counter()
         worked = False
         app.preloading = True
-        task_before = fhg.vorgang("vorladen:%s" % key)   # ab 0.59.2
+        label = "vorladen:%s" % key
+        task_before = fhg.vorgang(label)   # ab 0.59.2
         try:
             view = views.built(key)
             if task[0] == "view":
@@ -6997,7 +7025,7 @@ class ViewPreloader:
             worked = True
         finally:
             app.preloading = False
-            fhg.vorgang(task_before)
+            self._release_task(label, task_before)
         try:
             # Eine Ansicht, die beim Aufbau den Fokus nimmt (z.B. ein
             # Eingabefeld), soll ihn dem Nutzer nicht wegnehmen
@@ -7995,6 +8023,10 @@ LINUX_CLASS_NAME = "fisi-lernplattform"
 
 
 def main():
+    # Ab 0.59.3: Eingabemethoden-Umgehung (Linux, Wayland, IBus) vor dem
+    # ersten Fenster. Beim Start ueber start.py lief sie schon; ein zweiter
+    # Aufruf aendert nichts (Start mit "python3 app_gui.py").
+    eingabe = fisi_eingabe.apply()
     # ab 0.53: unerwartete Fehler zusaetzlich in fehler.log im Datenordner
     install_error_log(APP_VERSION)
     # Ab 0.59.1: Sperre gegen Mehrfachstart (Linux, Windows). Laeuft das
@@ -8005,7 +8037,7 @@ def main():
         return
     # Ab 0.59.2: Haenger-Diagnose (haenger.log, Waechter, kill -USR1);
     # still aus, wenn der Datenordner nicht beschreibbar ist
-    fhg.setup(APP_VERSION)
+    fhg.setup(APP_VERSION, extra=fisi_eingabe.start_text(eingabe))
     apply_appearance()
     if sys.platform.startswith("linux"):
         # Ab 0.59.1: eigene Fensterklasse, damit GNOME Fenster und

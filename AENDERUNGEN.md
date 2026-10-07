@@ -4,6 +4,30 @@ Neueste Version oben. Jede Version bekommt vor dem Release einen eigenen
 Abschnitt `## <Version>` – dieser Text erscheint im GitHub-Release und im
 Update-Fenster des Programms.
 
+## 0.59.3
+
+Umgehung für das Einfrieren auf Linux (Wayland) mit IBus und korrigierter
+Diagnose-Befehl.
+
+- **Linux mit Wayland und IBus:** Das Programm konnte beim
+  Darstellungswechsel oder beim Öffnen der Suche dauerhaft einfrieren und
+  beim Schließen hängen bleiben. Es schaltet dort jetzt für sich die
+  IBus-Eingabe ab; Umlaute, ß, AltGr-Zeichen und tote Tasten gehen weiter.
+  Wer IBus im Programm braucht, startet es mit
+  `FISI_XIM=1 fisi-lernplattform`. Windows, macOS und andere
+  Linux-Sitzungen sind nicht betroffen.
+- **Bessere Diagnose:** Die erste Zeile in haenger.log zeigt jetzt die
+  Sitzungsart, die Eingabemethode (`XMODIFIERS`) und ob die Umgehung aktiv
+  ist.
+- **Korrigierter Befehl:** Der Befehl, mit dem das Programm unter Linux
+  seine aktuelle Stelle in haenger.log schreibt, heißt jetzt
+  `kill -USR1 $(pgrep -i -x -o fisi-lernplattf)`. Der bisherige Befehl fand
+  das Programm aus dem .deb-Paket nicht und konnte beim AppImage den
+  falschen Prozess treffen.
+- **Vorladen benannt:** Das Vorladen der Seiten nach dem Start wird in der
+  Diagnose früher als bekannter langer Vorgang benannt. Am Verhalten ändert
+  sich nichts.
+
 ## 0.59.2
 
 Aufgeräumte Optionen und bessere Hilfe, wenn das Programm hängt.
