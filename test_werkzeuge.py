@@ -57,7 +57,8 @@ class TempDataMixin:
 class DiagnoseTest(TempDataMixin, unittest.TestCase):
 
     def _write_log(self, text):
-        with open(error_log_path(), "w", encoding="utf-8") as handle:
+        # newline="": unter Windows sonst \r\n statt \n (ab 0.60 in der CI)
+        with open(error_log_path(), "w", encoding="utf-8", newline="") as handle:
             handle.write(text)
 
     def test_log_liegt_im_datenordner(self):
@@ -67,7 +68,9 @@ class DiagnoseTest(TempDataMixin, unittest.TestCase):
         text = fd.build_report(self.db, "0.54", "PC", settings={})
         self.assertIn("Programmversion: 0.54", text)
         self.assertIn("Gerät: PC · ", text)
-        self.assertIn("Datenordner: %s" % self.folder, text)
+        # Benutzerpfade stehen anonymisiert im Bericht (ab 0.55; unter Windows
+        # liegt der Testordner im Benutzerordner)
+        self.assertIn("Datenordner: %s" % fd.anonymize_paths(self.folder), text)
         self.assertIn("Datenbankgröße: ", text)
         self.assertIn("Ereignisse: 0 Lern-Einträge, 0 Spielereignisse", text)
         self.assertIn("Abgleich eingerichtet: nein", text)

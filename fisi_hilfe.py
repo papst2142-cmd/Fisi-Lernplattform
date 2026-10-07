@@ -163,9 +163,9 @@ TOUR_PAGES = [
               "sind. Am PC findest du alles links in der Seitenleiste, am Handy unter "
               "„Lernen“.")},
     {"id": "fortschritt", "titel": "Fortschritt und Rahmenplan",
-     "text": ("Unter „Fortschritt“ siehst du, was du schon kannst: deine Ergebnisse, die "
-              "Lernserie und die „Rahmenplan-Abdeckung“ für jeden Punkt des "
-              "Ausbildungsrahmenplans.\n\n"
+     "text": ("Unter „Fortschritt“ siehst du, was du schon kannst: deine Ergebnisse und "
+              "die „Rahmenplan-Abdeckung“ für jeden Punkt des Ausbildungsrahmenplans. "
+              "Deine Lernserie steht oben im Banner des „Dashboard“ (am Handy: „Start“).\n\n"
               "„Jetzt wiederholen“ im „Dashboard“ (am Handy: „Start“) holt fällige "
               "Karten und Fragen zurück, damit du nichts vergisst.")},
     {"id": "spiel", "titel": "Spiel",
@@ -282,8 +282,9 @@ HELP_SECTIONS = [
               "getrennte Durchgänge. Der Lernfortschritt gilt für alle gemeinsam.")},
     {"id": "fortschritt", "titel": "Fortschritt und Rahmenplan",
      "reiter": ["Fortschritt", "Optionen"],
-     "text": ("Unter „Fortschritt“ siehst du deine Lernserie, die Ergebnisse deiner "
-              "Prüfungen und wie viel du an den letzten Tagen gelernt hast. Die "
+     "text": ("Unter „Fortschritt“ siehst du die Ergebnisse deiner Prüfungen und wie "
+              "viel du an den letzten Tagen gelernt hast. Deine Lernserie steht oben im "
+              "Banner des „Dashboard“ (am Handy: „Start“). Die "
               "„Rahmenplan-Abdeckung“ zeigt für jeden Punkt des Ausbildungsrahmenplans, "
               "wie gut du ihn schon kannst. Mit „Jetzt üben“ übst du gezielt einen "
               "Punkt.\n\n"
@@ -390,7 +391,13 @@ HELP_SECTIONS = [
               "Das Programm schreibt dann in die Datei haenger.log, an welcher Stelle es "
               "gerade steht. Es wird dabei nicht beendet. Achtung: In Version 0.59.1 und "
               "älter beendet derselbe Befehl das Programm. In den „Optionen“ unter "
-              "„Diagnose und Werkzeuge“ kopiert „Befehl kopieren“ ihn für dich.")},
+              "„Diagnose und Werkzeuge“ kopiert „Befehl kopieren“ ihn für dich.\n\n"
+              # Ab 0.60 (E3): Eingabe-Umgehung auch unter X11
+              "Unter Linux mit IBus (Wayland, ab 0.60 auch X11) schaltet das Programm für "
+              "sich die IBus-Eingabe ab, sonst kann es einfrieren oder sehr langsam werden. "
+              "Umlaute, ß und AltGr gehen weiter. Wer IBus zum Schreiben braucht (z. B. "
+              "Chinesisch, Emoji), startet es im Terminal so:\n"
+              "FISI_XIM=1 fisi-lernplattform")},
     # Ab 0.56 (Nachbesserung): kurze Tastaturhilfe (nur PC)
     {"id": "tastatur", "titel": "Bedienung mit der Tastatur (PC)",
      "reiter": [],

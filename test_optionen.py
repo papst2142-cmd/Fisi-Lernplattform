@@ -332,6 +332,8 @@ class VerknuepfungTest(unittest.TestCase):
         finally:
             fsc.desktop_dir = original
 
+    @unittest.skipUnless(sys.platform.startswith("linux"),
+                         "xdg-user-dir gibt es nur unter Linux (Verknuepfung nur dort)")
     def test_pfad_aus_xdg_user_dir(self):
         bin_dir = os.path.join(self.home, "bin")
         os.makedirs(bin_dir)
@@ -438,9 +440,46 @@ class OptionenPcTest(unittest.TestCase):
                 self.assertIsInstance(card, self.fw.FoldCard, key)
                 self.assertFalse(card.opened, key)
                 self.assertFalse(card.body.winfo_ismapped(), key)
-        self.assertFalse(view.folds["vorlagen"].opened)
+        # Ab 0.60 (B3): "Vorlagen" entsteht erst mit dem Bereich "Farben"
+        if not view.built("farben"):
+            self.assertNotIn("vorlagen", view.folds)
+        else:
+            self.assertFalse(view.folds["vorlagen"].opened)
         # Updates steht auf der Seite vor dem Rundgang
         self.assertLess(view.areas["updates"].winfo_y(), view.areas["rundgang"].winfo_y())
+
+    def test_a2_bereiche_erst_beim_aufklappen_gebaut(self):
+        """Ab 0.60 (B3): Inhalt erst beim ersten Aufklappen (auch ueber die
+        Suche), danach bleibt er stehen; Updates ist sofort gebaut."""
+        self.fw.FoldCard.reset_states(fo.STATE_PREFIX)
+        fresh = self.app_gui.SettingsView(self.app.view_area, self.app)
+        try:
+            self.assertTrue(fresh.built("updates"))
+            for key in PC_IDS:
+                if key == "updates":
+                    continue
+                fold = fresh.folds[key]
+                self.assertFalse(fold.built, key)
+                self.assertEqual(fold.body.winfo_children(), [], key)
+            # gemerkte Abgleich-Meldung kommt beim Aufklappen an
+            fresh.show_sync_status(None, "Testfehler")
+            for key in PC_IDS:
+                if key == "updates":
+                    continue
+                fresh.open_area(key)
+                self.pump()
+                self.assertTrue(fresh.folds[key].built, key)
+                self.assertTrue(fresh.folds[key].body.winfo_children(), key)
+            self.assertEqual(fresh.lbl_sync.cget("text"), "Testfehler")
+            self.assertIn("vorlagen", fresh.folds)
+            self.assertIn("Programmversion", fresh.report_box.get("1.0", "end"))
+            # Zuklappen baut nichts ab, erneutes Aufklappen baut nicht doppelt
+            children = len(fresh.folds["farben"].body.winfo_children())
+            fresh.reset_folds()
+            fresh.open_area("farben")
+            self.assertEqual(len(fresh.folds["farben"].body.winfo_children()), children)
+        finally:
+            fresh.destroy()
 
     def test_b_mehrere_offen_und_beim_naechsten_oeffnen_wieder_zu(self):
         view = self.open_settings()
@@ -768,6 +807,7 @@ class OptionenHandyTest(unittest.TestCase):
         self.app.nav = SimpleNamespace(selected_index=0)
         self.app.crumb_main = SimpleNamespace(value="")
         self.app.crumb_sub = SimpleNamespace(value="")
+        self.app.lbl_version = SimpleNamespace(visible=True)   # ab 0.60 (K-C)
         self.app.tab = "dashboard"
         screen.folds["farben"].toggle()
         self.app.show_tab("settings")

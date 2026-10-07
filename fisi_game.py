@@ -34,7 +34,7 @@ import uuid
 from fisi_core import (
     CATEGORY_KEYS, CATEGORY_SHORT, CONTENT_DIR, PROJEKTARBEITEN, TOPIC_CAT, TOPIC_NAME,
     TOPIC_ORDER, TOPIC_SHORT, TOPICS, ipv4_values, raid_input_problem, raid_input_values,
-    raid_values, search_content, topic_totals,
+    KIND_QUIZ, raid_values, search_content, topic_totals,
     ACTIVE_RUN_KEY, LEGACY_RUN, plural,
 )
 import fisi_theme
@@ -1075,7 +1075,7 @@ def learn_links_for_term(term, limit=6):
     hits = _LEARN_CACHE.get(term)
     if hits is None:
         hits = _LEARN_CACHE[term] = [hit for hit in search_content(term)
-                                     if hit[0] in ("Karteikarte", "Quizfrage")]
+                                     if hit[0] in ("Karteikarte", KIND_QUIZ)]
     return hits[:limit]
 
 

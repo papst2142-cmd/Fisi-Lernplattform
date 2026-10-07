@@ -1033,13 +1033,19 @@ class FoldCard(Card):
     Ab 0.59 (Optionen, marker=True): grosser Pfeil links in der Akzentfarbe,
     rechts gut lesbar "aufklappen"/"einklappen", Kopfzeile hebt sich beim
     Darueberfahren ab. Die Optionen setzen den gemerkten Zustand beim
-    Oeffnen zurueck (reset_states)."""
+    Oeffnen zurueck (reset_states).
+
+    Ab 0.60 (B3, Tempo): Mit builder wird der Inhalt erst beim ersten
+    Aufklappen gebaut - builder(self) fuellt dann self.body. Einmal gebaut
+    bleibt er stehen (Zuklappen baut nichts ab)."""
 
     _open_state = {}
 
     def __init__(self, parent, title, subtitle=None, accent=None, key=None,
-                 opened=False, marker=False, open_text=None, close_text=None, **kwargs):
+                 opened=False, marker=False, open_text=None, close_text=None,
+                 builder=None, **kwargs):
         super().__init__(parent, title=title, subtitle=subtitle, accent=accent, **kwargs)
+        self._builder = builder
         self.key = key or title
         self.fold_title = title
         self.marker = marker
@@ -1120,7 +1126,21 @@ class FoldCard(Card):
                 pass
         self.after_idle(check)
 
+    @property
+    def built(self):
+        """Ab 0.60 (B3): Inhalt schon gebaut (ohne builder immer)."""
+        return self._builder is None
+
+    def ensure_built(self):
+        """Ab 0.60 (B3): Inhalt jetzt bauen, falls noch nicht geschehen
+        (auch eingeklappt, z.B. fuer den Selbsttest)."""
+        builder, self._builder = self._builder, None
+        if builder is not None:
+            builder(self)
+
     def _apply(self):
+        if self.opened:
+            self.ensure_built()
         if self.marker:
             self.pointer.configure(image=ctk_image(
                 triangle_image(16, self._pointer_color, self.opened), 16, 16))

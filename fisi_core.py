@@ -1359,7 +1359,7 @@ class DBManager:
             "              WHEN correct = 1 THEN 'richtig' ELSE 'falsch' END AS extra"
             "  FROM card_events"
             "  UNION ALL"
-            "  SELECT timestamp, 'Quizfrage', category,"
+            "  SELECT timestamp, 'Prüfungsfrage', category,"
             "         CASE WHEN correct = 1 THEN 'richtig' ELSE 'falsch' END"
             "  FROM quiz_answers"
             "  UNION ALL"
@@ -1814,9 +1814,12 @@ SRC_AP1 = "ap1"
 SRC_AP2 = "ap2"
 SRC_PROJECT = "projekt"
 SOURCES = [SRC_CARD, SRC_QUIZ, SRC_AP1, SRC_AP2, SRC_PROJECT]
-SOURCE_NAME = {SRC_CARD: "Karteikarte", SRC_QUIZ: "Quizfrage", SRC_AP1: "AP1-Szenario",
+# Ab 0.60 (K-B): Anzeigename einer Frage des Pruefungstrainers in Suche,
+# Aktivitaeten und Notizblock (vorher "Quizfrage"); nur Anzeige, nicht gespeichert
+KIND_QUIZ = "Prüfungsfrage"
+SOURCE_NAME = {SRC_CARD: "Karteikarte", SRC_QUIZ: KIND_QUIZ, SRC_AP1: "AP1-Szenario",
                SRC_AP2: "AP2-Szenario", SRC_PROJECT: "Testprojekt"}
-SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Quizfragen", SRC_AP1: "AP1-Szenarien",
+SOURCE_PLURAL = {SRC_CARD: "Karteikarten", SRC_QUIZ: "Prüfungsfragen", SRC_AP1: "AP1-Szenarien",
                  SRC_AP2: "AP2-Szenarien", SRC_PROJECT: "Testprojekte"}
 
 Q_OPEN = "offen"
@@ -2907,7 +2910,7 @@ def search_content(query):
             hits.append(("Karteikarte", card["cat"], card["q"], card["a_full"]))
     for question in QUIZ_QUESTIONS:
         if needle in question["q"].lower() or needle in question["exp"].lower():
-            hits.append(("Quizfrage", question["cat"], question["q"],
+            hits.append((KIND_QUIZ, question["cat"], question["q"],
                          question["exp"]))
     for scenario in SZENARIEN:
         haystack = scenario["title"] + scenario["text"] + scenario["solution"]

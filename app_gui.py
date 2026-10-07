@@ -46,7 +46,7 @@ from fisi_core import (  # noqa: E402
     SOURCE_NAME, SOURCE_PLURAL, SOURCES, SRC_AP1, SRC_AP2, SRC_CARD, SRC_PROJECT,
     SRC_QUIZ, StatusBook, model_answer, notebook_entries, notebook_search, notebook_summary,
     NOTEBOOK_NO_HITS, NOTEBOOK_SEARCH_HINT, position_statuses, status_label,
-    REMINDER_TOAST_MS, learning_streak, plural,
+    REMINDER_TOAST_MS, KIND_QUIZ, plural,
     ap1_theme_totals, content_totals, filter_positions, group_values, ihk_note,
     page_slice, raid_report, screen_report, search_content, subnet_report,
     theme_totals, validate_content,
@@ -63,6 +63,10 @@ import fisi_pruefung as fp  # noqa: E402
 from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DAY_CHART_SERIES, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
     LEARN_CHART_SERIES,
+    DASH_CARDS_SUB, DASH_LEARNED, DASH_QUIZ_SUB, DASH_QUOTE_EMPTY, DASH_QUOTE_SUBTITLE,
+    DASH_QUOTE_TITLE,
+    DASH_RATE, DASH_RING_AP1, DASH_RING_AP2, DASH_RING_CARDS, DASH_RING_QUIZ,
+    DASH_SCEN_SUB, DASH_SIDEBAR_BAR, DASH_TOTAL, dash_quote_text,
     DELETE_SUBTITLE, DELETE_TITLE, HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     RESULT_CHART_EMPTY, RESULT_CHART_SERIES,
     RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE, SPLIT_EMPTY_DAY,
@@ -735,10 +739,8 @@ class Sidebar(ctk.CTkFrame):
         status.pack(side="bottom", fill="x", padx=14)
         make_label(status, "LERNSTATUS", font=F["label"], fg=C["muted"],
                    anchor="w").pack(fill="x", padx=14, pady=(12, 0))
-        self.streak_label = make_label(status, "", font=F["small_bold"],
-                                       fg=C["text"], anchor="w")
-        self.streak_label.pack(fill="x", padx=14, pady=(6, 0))
-        self.status_bar = GradientBar(status, "Inhalte bearbeitet", C["accent"],
+        # Ab 0.60 (K-A): die Lernserie steht nur noch im Dashboard-Banner
+        self.status_bar = GradientBar(status, DASH_SIDEBAR_BAR, C["accent"],
                                       C["accent2"], parent_bg=C["card"])
         self.status_bar.pack(fill="x", padx=14, pady=(6, 10))
 
@@ -766,8 +768,7 @@ class Sidebar(ctk.CTkFrame):
         for name, row in self.rows.items():
             row.set_active(name == key)
 
-    def update_status(self, streak, learned, total):
-        self.streak_label.configure(text="Lernserie: %s" % plural(streak, "Tag", "Tage"))
+    def update_status(self, learned, total):
         self.status_bar.set(learned / max(1, total) * 100,
                             "%d / %d" % (learned, total))
 
@@ -884,7 +885,7 @@ class DashboardView(View):
         self.hero = GradientPanel(self.content, height=118)
         self.hero.pack(fill="x")
 
-        # --- Heute (ab 0.51): Tagesziel, Lernserie, Wiederholungen --------
+        # --- Heute (ab 0.51): Tagesziel, Wiederholungen (Lernserie ab 0.60 nur im Banner)
         self.today_card = Card(self.content, title="Heute",
                                subtitle="Tagesziel und Wiederholung", accent=C["green"])
         self.today_card.pack(fill="x", pady=(16, 0))
@@ -899,8 +900,6 @@ class DashboardView(View):
         goal_text.pack(side="left", padx=(12, 0))
         self.lbl_goal = make_label(goal_text, "", font=F["body_bold"], fg=C["text"])
         self.lbl_goal.pack(anchor="w")
-        self.lbl_streak = make_label(goal_text, "", font=F["small"], fg=C["text_soft"])
-        self.lbl_streak.pack(anchor="w", pady=(4, 0))
         self.review_box = transparent_frame(today)
         self.review_box.pack(side="right")
         self.lbl_due = make_label(self.review_box, "", font=F["body_bold"], fg=C["text"])
@@ -918,18 +917,19 @@ class DashboardView(View):
         self.row1_cards = []
         self.row1_mode = "breit"
 
-        self.ring_cards = self._ring_card(row1, 0, "Karteikarten")
-        self.ring_quiz = self._ring_card(row1, 1, "Quizfragen")
-        self.ring_ap1 = self._ring_card(row1, 2, "AP1-Szenarien")
-        self.ring_scen = self._ring_card(row1, 3, "AP2-Szenarien")
+        # Ab 0.60 (K-B): Beschriftungen wie am Handy aus fisi_lernen (DASH_*)
+        self.ring_cards = self._ring_card(row1, 0, DASH_RING_CARDS)
+        self.ring_quiz = self._ring_card(row1, 1, DASH_RING_QUIZ)
+        self.ring_ap1 = self._ring_card(row1, 2, DASH_RING_AP1)
+        self.ring_scen = self._ring_card(row1, 3, DASH_RING_AP2)
 
-        quote = self.quote_card = Card(row1, title="Erfolgsquote", subtitle="Quiz gesamt",
-                                       accent=C["accent2"])
+        quote = self.quote_card = Card(row1, title=DASH_QUOTE_TITLE,
+                                       subtitle=DASH_QUOTE_SUBTITLE, accent=C["accent2"])
         quote.grid(row=0, column=4, sticky="nsew")
         self.lbl_quote = make_label(quote.body, "0 %", font=F["display"],
                                     fg=C["accent"])
         self.lbl_quote.pack(anchor="w", pady=(10, 0))
-        self.lbl_quote_sub = make_label(quote.body, "noch keine Antworten",
+        self.lbl_quote_sub = make_label(quote.body, DASH_QUOTE_EMPTY,
                                         font=F["small"], fg=C["muted"],
                                         justify="left", wraplength=150,
                                         anchor="w")
@@ -950,16 +950,16 @@ class DashboardView(View):
         cover = Card(row2, title="Abdeckung", subtitle="Material",
                      accent=C["purple"])
         cover.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
-        self.bar_cards = GradientBar(cover.body, "Karteikarten", C["accent"],
+        self.bar_cards = GradientBar(cover.body, DASH_RING_CARDS, C["accent"],
                                      C["purple"], parent_bg=C["card"])
         self.bar_cards.pack(fill="x", pady=(4, 8))
-        self.bar_quiz = GradientBar(cover.body, "Quizfragen", C["purple"],
+        self.bar_quiz = GradientBar(cover.body, DASH_RING_QUIZ, C["purple"],
                                     C["accent2"], parent_bg=C["card"])
         self.bar_quiz.pack(fill="x", pady=8)
-        self.bar_ap1 = GradientBar(cover.body, "AP1-Szenarien", C["blue"],
+        self.bar_ap1 = GradientBar(cover.body, DASH_RING_AP1, C["blue"],
                                    C["accent"], parent_bg=C["card"])
         self.bar_ap1.pack(fill="x", pady=8)
-        self.bar_scen = GradientBar(cover.body, "AP2-Szenarien", C["accent2"],
+        self.bar_scen = GradientBar(cover.body, DASH_RING_AP2, C["accent2"],
                                     C["orange"], parent_bg=C["card"])
         self.bar_scen.pack(fill="x", pady=8)
 
@@ -1190,8 +1190,8 @@ class DashboardView(View):
         """Kachel "Heute" (ab 0.51)."""
         settings = learning_settings()
         goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
-        show_goal, show_streak = settings["ziel_an"], settings["serie_an"]
-        self.goal_visible = show_goal or show_streak
+        show_goal = settings["ziel_an"]
+        self.goal_visible = show_goal
         self._place_today()
         if show_goal:
             self.goal_ring.pack(side="left")
@@ -1202,11 +1202,6 @@ class DashboardView(View):
         else:
             self.goal_ring.pack_forget()
             self.lbl_goal.pack_forget()
-        if show_streak:
-            self.lbl_streak.configure(text=goal.streak_text())
-            self.lbl_streak.pack(anchor="w", pady=(4, 0))
-        else:
-            self.lbl_streak.pack_forget()
         plan = ReviewPlan.from_db(self.db)
         self.lbl_due.configure(text=due_text(plan))
         self.btn_review.set_enabled(plan.count() > 0)
@@ -1218,7 +1213,6 @@ class DashboardView(View):
         total_scen = len(SZENARIEN)
 
         learned_cards = self.db.distinct_cards_learned()
-        quiz_answered = self.db.count_quiz_answers()
         quiz_distinct = self.db.distinct_quiz_questions()
         ap1_done = self.db.distinct_ap1()
         scen_done = self.db.distinct_scenarios()
@@ -1230,32 +1224,28 @@ class DashboardView(View):
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
-            "%s%d von %d Inhalten bearbeitet   ·   "
-            "Quiz-Erfolgsquote %d %%"
+            ("%s" + DASH_LEARNED + "   ·   " + DASH_RATE)
             % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
-            "Gesamtfortschritt")
+            DASH_TOTAL)
 
+        # Ab 0.60 (K-B): die grosse Zahl im Ring "Pruefungstrainer" zaehlt
+        # verschiedene Fragen wie der Ring selbst (vorher alle Antworten)
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"],
                             C["purple"], str(learned_cards),
-                            "von %d Karten" % total_cards)
+                            DASH_CARDS_SUB % total_cards)
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"],
-                           C["accent2"], str(quiz_answered),
-                           "%d von %d Fragen" % (quiz_distinct, total_quiz))
+                           C["accent2"], str(quiz_distinct),
+                           DASH_QUIZ_SUB % total_quiz)
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"],
                           C["accent"], str(ap1_done),
-                          "von %d Szenarien" % total_ap1)
+                          DASH_SCEN_SUB % total_ap1)
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"],
                            C["orange"], str(scen_done),
-                           "von %d Szenarien" % total_scen)
+                           DASH_SCEN_SUB % total_scen)
 
         self.lbl_quote.configure(text="%d %%" % round(rate))
-        if answered:
-            self.lbl_quote_sub.configure(
-                text="%d von %s richtig beantwortet"
-                % (correct, plural(answered, "Frage", "Fragen")))
-        else:
-            self.lbl_quote_sub.configure(text="noch keine Antworten erfasst")
+        self.lbl_quote_sub.configure(text=dash_quote_text(correct, answered))
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
                            "%d / %d" % (learned_cards, total_cards))
@@ -1389,7 +1379,7 @@ class DashboardView(View):
         row = ctk.CTkFrame(self.activity_box, fg_color=C["card_alt"],
                            corner_radius=10)
         row.pack(fill="x", pady=3)
-        color = {"Karteikarte": C["accent"], "Quizfrage": C["purple"],
+        color = {"Karteikarte": C["accent"], KIND_QUIZ: C["purple"],
                  "AP1-Szenario": C["blue"], "AP2-Szenario": C["accent2"],
                  "Test-Session": C["green"]}.get(kind, C["muted"])
         ctk.CTkLabel(row, text="", width=9, height=9,
@@ -3851,11 +3841,11 @@ class NotebookView(View):
                 side="left", padx=(0, 10))
         if quiz:
             NeoButton(self.practice_bar,
-                      "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
+                      "%s %s" % (plural(len(quiz), "Prüfungsfrage", "Prüfungsfragen"), label),
                       lambda: self.practice(SRC_QUIZ, quiz), kind="accent").pack(
                 side="left", padx=(0, 10))
         make_label(self.practice_bar, "Startet eine Übungsrunde nur mit den Fragen der "
-                   "Liste (Quiz: höchstens 50).", font=F["small"], fg=C["muted"]).pack(
+                   "Liste (Prüfungstrainer: höchstens 50).", font=F["small"], fg=C["muted"]).pack(
             side="left", padx=6)
 
     def practice(self, source, keys, first=None):
@@ -4361,8 +4351,8 @@ class ProgressView(View):
         row.pack(fill="x")
         self.stat_tests = self._stat_card(row, "Test-Sessions", C["accent"])
         self.stat_avg = self._stat_card(row, "Durchschnitt", C["purple"])
-        self.stat_best = self._stat_card(row, "Bestes Ergebnis", C["accent2"])
-        self.stat_streak = self._stat_card(row, "Lernserie", C["green"], last=True)
+        # Ab 0.60 (K-A): drei Kacheln, die Lernserie steht nur im Dashboard-Banner
+        self.stat_best = self._stat_card(row, "Bestes Ergebnis", C["accent2"], last=True)
 
         # Ab 0.54: Aufgaben pro Tag (wie Tagesziel und Lernserie gezaehlt)
         self.activity = {}
@@ -4488,12 +4478,9 @@ class ProgressView(View):
             self.stat_best[0].configure(text="-")
             self.stat_best[1].configure(text="noch keine Session")
 
-        # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
+        # Ab 0.54 einmal laden: "Aufgaben pro Tag" (wie Tagesziel und Lernserie gezaehlt)
         self.activity = self.db.activity_days()
         self.activity_split = self.db.activity_split_days()
-        streak = learning_streak({day for day, count in self.activity.items() if count})
-        self.stat_streak[0].configure(text="%d" % streak)
-        self.stat_streak[1].configure(text="Tage in Folge")
 
         labels, values = result_series(results)
         if labels:
@@ -4870,24 +4857,34 @@ def draw_custom_preview(canvas, palette, map_colors, categories, block, width, h
 
 
 class SettingsView(View):
-    def _area(self, area_id, accent, subtitle=None):
+    def _area(self, area_id, accent, subtitle=None, builder=None):
         """Ab 0.59: Bereich der Optionen (Reihenfolge und Titel aus
         fisi_optionen). Offen beim Oeffnen nur Updates (E1; bis 0.59.1 auch
         Problem melden), alle anderen sind Klappbereiche (E4: Zustand nicht
-        gespeichert)."""
+        gespeichert). Ab 0.60 (B3): Den Inhalt der Klappbereiche baut
+        builder erst beim ersten Aufklappen (auch ueber die Suche)."""
         area = fo.AREA_BY_ID[area_id]
         if fo.opened_at_start(area_id):
             card = Card(self.content, title=area["titel"], accent=accent, subtitle=subtitle)
+            if builder is not None:
+                builder(card)
         else:
             card = FoldCard(self.content, title=area["titel"], accent=accent,
-                            subtitle=subtitle, key=fo.state_key(area_id), marker=True)
+                            subtitle=subtitle, key=fo.state_key(area_id), marker=True,
+                            builder=builder)
             self.folds[area_id] = card
         card.pack(fill="x", pady=(14, 0) if self.areas else 0)
         self.areas[area_id] = card
         return card
 
+    def built(self, area_id):
+        """Ab 0.60 (B3): Ist der Inhalt dieses Bereichs schon gebaut?"""
+        card = self.areas.get(area_id)
+        return card is not None and getattr(card, "built", True)
+
     def build(self):
         self.areas, self.folds = {}, {}
+        self._sync_status = (None, None)   # ab 0.60 (B3): bis "Abgleich" gebaut ist
         # Ab 0.59 (E2): Updates ganz oben, ueber dem Rundgang
         updates = self._area("updates", C["accent2"],
                              subtitle="installierte Version %s" % APP_VERSION)
@@ -4919,7 +4916,53 @@ class SettingsView(View):
             self.lbl_shortcut.pack(side="left", padx=(16, 0))
 
         # Ab 0.56: Rundgang wiederholen und Hilfe oeffnen (Texte wie am Handy)
-        tour = self._area("rundgang", C["green"], subtitle=fh.OPTIONS_SUBTITLE)
+        self._area("rundgang", C["green"], subtitle=fh.OPTIONS_SUBTITLE,
+                   builder=self._build_rundgang)
+
+        # Ab 0.56: Schriftgroesse (je Geraet); ab 0.59 eingeklappt wie alle
+        self._area("schrift", C["accent"], subtitle=fisi_theme.FONT_SUBTITLE,
+                   builder=self._build_schrift)
+
+        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
+        self._area("farben", C["accent"], subtitle="nur für dieses Gerät",
+                   builder=self._build_farben)
+
+        # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
+        self._area("tagesziel", C["green"], subtitle="nur für dieses Gerät",
+                   builder=self._build_tagesziel)
+
+        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
+        self._area("rahmenplan", C["purple"], subtitle="nur für dieses Gerät",
+                   builder=self._build_rahmenplan)
+
+        self._area("abgleich", C["accent"], subtitle="über ein privates GitHub-Repository",
+                   builder=self._build_abgleich)
+
+        # Sicherung als Datei (fisi_sicherung.py), Texte wie auf dem Handy
+        self._area("sicherung", C["accent2"], subtitle=fsi.SUBTITLE,
+                   builder=self._build_sicherung)
+
+        self._area("datenbank", C["accent"], builder=self._build_datenbank)
+
+        self._area("lerninhalte", C["purple"], builder=self._build_lerninhalte)
+
+        self._area("spiel", C["accent2"], builder=self._build_spiel)
+
+        # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
+        # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
+        self._area("loeschen", C["red"], subtitle=DELETE_SUBTITLE,
+                   builder=self._build_loeschen)
+
+        self._area("ueber", C["green"], builder=self._build_ueber)
+
+        # Ab 0.59.2 (U): alle Werkzeuge zum Melden und Messen im letzten
+        # Bereich "Diagnose und Werkzeuge" (eingeklappt), Zwischenueberschriften
+        # wie bei "Löschen". Inhalte unveraendert; ab 0.60 (B3) wie alle
+        # Klappbereiche erst beim ersten Aufklappen gebaut.
+        self._area(fo.DIAGNOSE_ID, C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE,
+                   builder=self._build_diagnose)
+
+    def _build_rundgang(self, tour):
         make_label(tour.body, fh.OPTIONS_TEXT, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         row = transparent_frame(tour.body)
@@ -4941,8 +4984,7 @@ class SettingsView(View):
         make_label(tour.body, fh.NAME_OPTION_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
 
-        # Ab 0.56: Schriftgroesse (je Geraet); ab 0.59 eingeklappt wie alle
-        fonts = self._area("schrift", C["accent"], subtitle=fisi_theme.FONT_SUBTITLE)
+    def _build_schrift(self, fonts):
         self.font_choice = fisi_game_gui.ChoiceRow(
             fonts.body, fisi_theme.FONT_CHOICES, fisi_theme.current_font_size,
             self.app.change_font_size)
@@ -4950,8 +4992,7 @@ class SettingsView(View):
         make_label(fonts.body, fisi_theme.FONT_HINT, font=F["tiny"], fg=C["muted"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
-        # Ab 0.56: Farben als aufklappbarer Bereich (standardmaessig zu)
-        colors = self._area("farben", C["accent"], subtitle="nur für dieses Gerät")
+    def _build_farben(self, colors):
         # Ab 0.49: Darstellung Dunkel / Hell
         make_label(colors.body, "DARSTELLUNG", font=F["label"], fg=C["muted"]).pack(anchor="w")
         fisi_game_gui.ChoiceRow(colors.body, fisi_theme.MODES, fisi_theme.current_mode,
@@ -4989,8 +5030,7 @@ class SettingsView(View):
         self.custom_colors = CustomColors(colors.body, self._save_custom)
         self.custom_colors.pack(anchor="w", fill="x", pady=(18, 0))
 
-        # Ab 0.51: Tagesziel, Lernserie, Erinnerung (je Geraet)
-        goal = self._area("tagesziel", C["green"], subtitle="nur für dieses Gerät")
+    def _build_tagesziel(self, goal):
         values = learning_settings()
         self.goal_vars = {}
         for key, text in (("ziel_an", "Tagesziel anzeigen"),
@@ -5025,8 +5065,7 @@ class SettingsView(View):
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(12, 0))
 
-        # Ab 0.55: Rahmenplan (Abdeckung im Fortschritt, Gewichtung neuer Aufgaben)
-        plan = self._area("rahmenplan", C["purple"], subtitle="nur für dieses Gerät")
+    def _build_rahmenplan(self, plan):
         make_label(plan.body, frp.OPTIONS_SUBTITLE, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(0, 10))
         values = frp.load_rp_settings()
@@ -5067,7 +5106,7 @@ class SettingsView(View):
         self.lbl_rp = make_label(plan.body, "", font=F["tiny"], fg=C["red"],
                                  justify="left", anchor="w")
 
-        sync = self._area("abgleich", C["accent"], subtitle="über ein privates GitHub-Repository")
+    def _build_abgleich(self, sync):
         settings = fisi_sync.sync_settings()
         grid = transparent_frame(sync.body)
         grid.pack(fill="x")
@@ -5104,10 +5143,9 @@ class SettingsView(View):
                    "in der „Hilfe“ unter „Abgleich einrichten“.",
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(10, 0))
-        self.show_sync_status(None, None)
+        self.show_sync_status(*self._sync_status)
 
-        # Sicherung als Datei (fisi_sicherung.py), Texte wie auf dem Handy
-        backup = self._area("sicherung", C["accent2"], subtitle=fsi.SUBTITLE)
+    def _build_sicherung(self, backup):
         make_label(backup.body, fsi.HELP, font=F["small"], fg=C["text_dim"],
                    wraplength=800, justify="left", anchor="w").pack(anchor="w")
         row = transparent_frame(backup.body)
@@ -5116,7 +5154,7 @@ class SettingsView(View):
         NeoButton(row, fsi.BTN_RESTORE, self.restore_backup,
                   kind="ghost").pack(side="left", padx=10)
 
-        info = self._area("datenbank", C["accent"])
+    def _build_datenbank(self, info):
         make_label(info.body, "Speicherort der Lernfortschritte:",
                    font=F["small"], fg=C["text_dim"]).pack(anchor="w")
         path_box = make_text(info.body, height=2, font=F["mono_small"])
@@ -5130,10 +5168,10 @@ class SettingsView(View):
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w", pady=(8, 0))
 
-        content = self._area("lerninhalte", C["purple"])
+    def _build_lerninhalte(self, content):
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
+                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
                  "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
                  "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
                  ""]
@@ -5143,7 +5181,7 @@ class SettingsView(View):
         make_label(content.body, "\n".join(lines), font=F["body"],
                    fg=C["text_dim"], justify="left", anchor="w").pack(anchor="w")
 
-        game = self._area("spiel", C["accent2"])
+    def _build_spiel(self, game):
         # Ab 0.47: Schwierigkeitsgrad des laufenden Spielstands (nur Anzeige)
         self.lbl_difficulty = make_label(game.body, "", font=F["body_bold"],
                                          fg=C["text_soft"], anchor="w")
@@ -5157,14 +5195,13 @@ class SettingsView(View):
                    % round(fisi_game.GAME["balancing"]["miete"]["kaution_anteil"] * 100),
                    font=F["tiny"], fg=C["muted"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
+        self._show_difficulty()   # ab 0.60 (B3): beim ersten Aufklappen eintragen
 
-        # Ab 0.56: alle Loeschfunktionen in einem aufklappbaren Bereich
-        # (standardmaessig zu). Die Sicherheitsabfragen sind unveraendert.
-        danger = self._area("loeschen", C["red"], subtitle=DELETE_SUBTITLE)
+    def _build_loeschen(self, danger):
         make_label(danger.body, "LERNDATEN", font=F["label"], fg=C["muted"]).pack(anchor="w")
         make_label(danger.body,
                    "Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                   "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete "
+                   "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete "
                    "Szenarien. Der Spielstand des Lernspiels bleibt erhalten. "
                    "Dieser Schritt lässt sich nicht rückgängig machen.",
                    font=F["small"], fg=C["text_dim"], wraplength=800,
@@ -5190,8 +5227,9 @@ class SettingsView(View):
                    wraplength=800, justify="left", anchor="w").pack(anchor="w", pady=(6, 0))
         NeoButton(danger.body, "Bestenliste löschen", self.reset_records,
                   kind="danger").pack(anchor="w", pady=(12, 0))
+        self._show_difficulty()   # ab 0.60 (B3): beim ersten Aufklappen eintragen
 
-        about = self._area("ueber", C["green"])
+    def _build_ueber(self, about):
         make_label(about.body,
                    "%s Version %s\n\n"
                    "Lernprogramm für die Umschulung zum Fachinformatiker "
@@ -5205,11 +5243,7 @@ class SettingsView(View):
                    font=F["body"], fg=C["text_dim"], wraplength=800,
                    justify="left", anchor="w").pack(anchor="w")
 
-        # Ab 0.59.2 (U): alle Werkzeuge zum Melden und Messen im letzten
-        # Bereich "Diagnose und Werkzeuge" (eingeklappt), Zwischenueberschriften
-        # wie bei "Löschen". Inhalte unveraendert, sie werden wie bisher
-        # mitgebaut.
-        tools = self._area(fo.DIAGNOSE_ID, C["orange"], subtitle=fo.DIAGNOSE_SUBTITLE)
+    def _build_diagnose(self, tools):
         self.diagnose_sections = {}
         sections = iter(fo.diagnose_sections(pc=True))
 
@@ -5275,7 +5309,10 @@ class SettingsView(View):
                        fg=C["text_dim"]).pack(side="left")
             NeoButton(row, fhg.BTN_COPY, self.copy_kill_command,
                       kind="ghost").pack(side="left", padx=(16, 0))
-
+        # Ab 0.60 (B3): beim ersten Aufklappen gleich eintragen
+        self._show_report()
+        self._show_perf_state()
+        self._show_hang_state()
 
     def reset_folds(self):
         """Ab 0.59 (E4): beim Oeffnen der Optionen alles einklappen (ausser
@@ -5383,8 +5420,11 @@ class SettingsView(View):
 
     def refresh_plan(self):
         """Ab 0.56: Rahmenplan-Werte neu anzeigen (nach "Jetzt einrichten"),
-        dazu den Namen."""
-        self.entry_name.set(fh.load_name())
+        dazu den Namen. Ab 0.60 (B3) nur, was schon gebaut ist."""
+        if self.built("rundgang"):
+            self.entry_name.set(fh.load_name())
+        if not self.built("rahmenplan"):
+            return
         values = frp.load_rp_settings()
         for key, var in self.rp_vars.items():
             var.set(values[key])
@@ -5412,7 +5452,11 @@ class SettingsView(View):
         self.app.sync.run()
 
     def show_sync_status(self, result, error):
-        """Wird nach jedem Abgleich aufgerufen (auch automatischen)."""
+        """Wird nach jedem Abgleich aufgerufen (auch automatischen). Ab 0.60
+        (B3): Ist "Abgleich" noch nicht gebaut, wird das Ergebnis gemerkt."""
+        if not self.built("abgleich"):
+            self._sync_status = (result, error)
+            return
         self.btn_sync.set_enabled(True)
         if error:
             self.lbl_sync.configure(text=error, text_color=C["red"])
@@ -5454,6 +5498,8 @@ class SettingsView(View):
     # -- Haenger-Diagnose (ab 0.59.2) ------------------------------------------
 
     def _show_hang_state(self):
+        if not self.built(fo.DIAGNOSE_ID):
+            return
         try:
             self.lbl_hang.configure(text=fhg.state_text())
         except tk.TclError:
@@ -5472,6 +5518,8 @@ class SettingsView(View):
         self._show_perf_state()
 
     def _show_perf_state(self):
+        if not self.built(fo.DIAGNOSE_ID):
+            return
         try:
             self.lbl_perf.configure(text=self.app.perf.rec.state_text())
         except tk.TclError:
@@ -5518,6 +5566,8 @@ class SettingsView(View):
     def _show_report(self):
         """Bericht nur neu eintragen, wenn sich fehler.log oder die Datenbank
         geaendert hat - der Wechsel in die Optionen bleibt so schnell."""
+        if not self.built(fo.DIAGNOSE_ID):
+            return
         log_key = []
         for path in (error_log_path(), fisi_update.update_log_path()):
             try:
@@ -5567,13 +5617,19 @@ class SettingsView(View):
             messagebox.showerror(fdg.BTN_FOLDER, fdg.MSG_FOLDER_ERROR % error)
 
     def _show_difficulty(self):
+        # Ab 0.60 (B3): nur fuer gebaute Bereiche (sonst auch kein reload)
+        spiel, loeschen = self.built("spiel"), self.built("loeschen")
+        if not (spiel or loeschen):
+            return
         try:
             game = self.app.views["game"].game
             game.reload()
         except (KeyError, AttributeError):
             return
-        self.lbl_difficulty.configure(text=fisi_game.slot_options_text(game))
-        self.lbl_reset.configure(text=fisi_game.reset_help(game))
+        if spiel:
+            self.lbl_difficulty.configure(text=fisi_game.slot_options_text(game))
+        if loeschen:
+            self.lbl_reset.configure(text=fisi_game.reset_help(game))
 
     def reset_game(self):
         game = self.app.views["game"].game
@@ -5671,12 +5727,13 @@ class SettingsView(View):
             game_view.game.reload()
             game_view.ticket = None
             game_view.room = None
-        values = learning_settings()
-        for key, var in self.goal_vars.items():
-            var.set(values[key])
-        self.goal_stepper.value = values["ziel_anzahl"]
-        self.goal_stepper.label.configure(text=str(values["ziel_anzahl"]))
-        self.entry_reminder.set(values["erinnerung_zeit"])
+        if self.built("tagesziel"):   # ab 0.60 (B3)
+            values = learning_settings()
+            for key, var in self.goal_vars.items():
+                var.set(values[key])
+            self.goal_stepper.value = values["ziel_anzahl"]
+            self.goal_stepper.label.configure(text=str(values["ziel_anzahl"]))
+            self.entry_reminder.set(values["erinnerung_zeit"])
         self.app.notify_progress()
         self.app.refresh_after_sync()
         self._show_difficulty()
@@ -5802,6 +5859,14 @@ class HelpView(View):
             make_label(fold.body, section["text"], font=F["body"], fg=C["text_soft"],
                        wraplength=800, justify="left", anchor="w").pack(anchor="w")
             self.folds[section["id"]] = fold
+
+    def reset_folds(self):
+        """Ab 0.60 (K-G, E11): beim Oeffnen der Hilfe alles einklappen, wie
+        bei den Optionen."""
+        FoldCard.reset_states("hilfe_")
+        for fold in self.folds.values():
+            fold.set_opened(False)
+        FoldCard.reset_states("hilfe_")
 
     def open_section(self, section_id):
         """Abschnitt aufklappen und in den sichtbaren Bereich holen (Suche)."""
@@ -7469,7 +7534,8 @@ class FISIApp:
         # Ab 0.59 (E4): Wer die Optionen von einer anderen Seite aus oeffnet,
         # findet alle Bereiche eingeklappt. Beim Neuaufbau nach einem Farb-
         # oder Schriftwechsel (_recolor) bleiben die offenen Bereiche offen.
-        entering = (key == "settings" and self.current != "settings"
+        # Ab 0.60 (K-G, E11): fuer die Hilfe gilt dasselbe.
+        entering = (key in ("settings", "help") and self.current != key
                     and not getattr(self, "_rebuilding", False))
         view = self.views.get(key)
         if view is None:
@@ -7639,7 +7705,7 @@ class FISIApp:
         elif kind == "Karteikarte":
             self.show_view("cards")
             self.views["cards"].jump_to_question(title)
-        elif kind == "Quizfrage":
+        elif kind == KIND_QUIZ:
             self.show_view("quiz")
             self.views["quiz"].jump_to_question(title)
         elif kind == "AP1-Szenario":
@@ -7685,7 +7751,7 @@ class FISIApp:
         totals = content_totals()
         total = sum(totals.values())
         learned = self.db.distinct_cards_learned() + self.db.distinct_quiz_questions()
-        self.sidebar.update_status(self.db.streak(), learned, total)
+        self.sidebar.update_status(learned, total)
         if refresh_view:
             # Etwas wurde gelernt oder geloescht - bald abgleichen
             if hasattr(self, "sync"):
@@ -7940,6 +8006,7 @@ def _run_selftest(root, app, log_path):
                 app.show_view("settings")
                 root.update()
                 settings_view = app.views["settings"]
+                settings_view.open_area(fo.DIAGNOSE_ID)   # ab 0.60 (B3): baut den Bereich
                 settings_view._show_report()
                 if "Programmversion: %s" % APP_VERSION not in \
                         settings_view.report_box.get("1.0", "end"):
@@ -8023,7 +8090,7 @@ LINUX_CLASS_NAME = "fisi-lernplattform"
 
 
 def main():
-    # Ab 0.59.3: Eingabemethoden-Umgehung (Linux, Wayland, IBus) vor dem
+    # Ab 0.59.3: Eingabemethoden-Umgehung (Linux, Wayland/ab 0.60 X11, IBus) vor dem
     # ersten Fenster. Beim Start ueber start.py lief sie schon; ein zweiter
     # Aufruf aendert nichts (Start mit "python3 app_gui.py").
     eingabe = fisi_eingabe.apply()

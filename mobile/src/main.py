@@ -45,7 +45,7 @@ from fisi_core import (  # noqa: E402
     UPS_TITLE, UPS_SUBTITLE, UPS_GROUP_LOAD, UPS_GROUP_BATTERY, UPS_TASKS_TITLE,
     UPS_TASK_NEXT, UPS_SOLUTION_SHOW, UPS_SOLUTION_HIDE,
     CALC_EXPLAIN_SUBNET, CATEGORIES, CATEGORY_SHORT, COLOR_DEPTHS, DBManager,
-    REMINDER_TOAST_MS, TOAST_MS, count_word, learning_streak, plural,
+    REMINDER_TOAST_MS, TOAST_MS, KIND_QUIZ, count_word, plural,
     FILTER_ALL, InputError, KARTEIKARTEN, PROJEKTARBEITEN, QUIZ_QUESTIONS,
     RAID_LEVELS, STATUS_FILTERS, SZENARIEN, TOPIC_NAME, TOPIC_SHORT, TOPICS,
     LEVEL_RED, LEVEL_YELLOW, Q_DONE, Q_OPEN, Q_PRACTICE, Q_STATUS_NAME, Q_STATUS_TABS,
@@ -63,6 +63,10 @@ from fisi_lernen import (  # noqa: E402
     DAY_CHART_RANGES, DELETE_SUBTITLE, DELETE_TITLE,
     HISTORY_BUTTON, HISTORY_LABEL, HISTORY_TEXT,
     DAY_CHART_SERIES, LEARN_CHART_SERIES, RESULT_CHART_SERIES,
+    DASH_CARDS_SUB, DASH_LEARNED, DASH_QUIZ_SUB, DASH_QUOTE_EMPTY, DASH_QUOTE_SUBTITLE,
+    DASH_QUOTE_TITLE,
+    DASH_RATE, DASH_RING_AP1, DASH_RING_AP2, DASH_RING_CARDS, DASH_RING_QUIZ,
+    DASH_SCEN_SUB, DASH_TOTAL, dash_quote_text,
     RESULT_CHART_EMPTY, RESULT_CHART_SUBTITLE, RESULT_CHART_TITLE, SPLIT_CHART_TITLE,
     SPLIT_EMPTY_DAY, SPLIT_RIGHT, SPLIT_WRONG, daily_split_series, result_series,
     split_percent, split_summary, DAY_CHART_SUBTITLE, DAY_CHART_TITLE,
@@ -85,9 +89,20 @@ APP_TITLE = "FISI Lernplattform"
 # "python build.py --setze-version <Version>" im Hauptordner.
 APP_VERSION = "0.59.3"
 
+# Ab 0.60 (K-C): Versionszeile in der Kopfzeile der Startseite
+VERSION_LINE = "Version %s"
+
+
+def named(label, control):
+    """Ab 0.60 (K-G): gibt einem Symbolknopf einen Namen fuer Bildschirmleser.
+    MergeSemantics macht daraus genau ein Element (Probe 0.59.1); eine
+    einfache Huelle wuerde in zwei Elemente zerfallen, eines ohne Namen."""
+    return ft.MergeSemantics(content=ft.Semantics(label=label, content=control))
+
+
 def kind_color(kind):
     """Farbe je Aktivitaetsart (Karteikarte und AP2 folgen der Grundfarbe)."""
-    return {"Karteikarte": C["accent"], "Quizfrage": C["purple"],
+    return {"Karteikarte": C["accent"], KIND_QUIZ: C["purple"],
             "AP1-Szenario": C["blue"], "AP2-Szenario": C["accent2"],
             "Testprojekt": C["orange"], "Test-Session": C["green"]}.get(kind, C["muted"])
 
@@ -255,13 +270,14 @@ class DashboardScreen(Screen):
                            expand=True, padding=14)
 
         self.lbl_quote = ui.text("0 %", size=34, color=C["accent"], weight=ft.FontWeight.BOLD)
-        self.lbl_quote_sub = ui.text("", size=13, color=C["muted"])
+        self.lbl_quote_sub = ui.text(DASH_QUOTE_EMPTY, size=13, color=C["muted"])
 
         self.chart = ui.LineChart(height=200)
-        self.bar_cards = ui.GradientBar("Karteikarten", C["accent"], C["purple"])
-        self.bar_quiz = ui.GradientBar("Quizfragen", C["purple"], C["accent2"])
-        self.bar_ap1 = ui.GradientBar("AP1-Szenarien", C["blue"], C["accent"])
-        self.bar_scen = ui.GradientBar("AP2-Szenarien", C["accent2"], C["orange"])
+        # Ab 0.60 (K-B): Beschriftungen wie am PC aus fisi_lernen (DASH_*)
+        self.bar_cards = ui.GradientBar(DASH_RING_CARDS, C["accent"], C["purple"])
+        self.bar_quiz = ui.GradientBar(DASH_RING_QUIZ, C["purple"], C["accent2"])
+        self.bar_ap1 = ui.GradientBar(DASH_RING_AP1, C["blue"], C["accent"])
+        self.bar_scen = ui.GradientBar(DASH_RING_AP2, C["accent2"], C["orange"])
 
         self.fach = {}
         fach_cells = []
@@ -284,13 +300,13 @@ class DashboardScreen(Screen):
         self.zoom_heatmap = ui.Heatmap()
         self.zoom_bars = {}
 
-        # Ab 0.51: Kachel "Heute" mit Tagesziel, Lernserie und Wiederholungen
+        # Ab 0.51: Kachel "Heute" mit Tagesziel und Wiederholungen (die Lernserie
+        # steht ab 0.60 nur noch im Banner, wie am PC)
         self.goal_ring = ui.Ring(size=74, thickness=7, big_size=14, small_size=1)
         self.goal_ring.small.visible = False
         self.lbl_goal = ui.text("", size=14, weight=ft.FontWeight.BOLD)
-        self.lbl_streak = ui.text("", size=13, color=C["text_soft"])
         self.goal_row = ft.Row([self.goal_ring, ft.Column(
-            [self.lbl_goal, self.lbl_streak], spacing=4, tight=True, expand=True)],
+            [self.lbl_goal], spacing=4, tight=True, expand=True)],
             spacing=14, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         self.lbl_due = ui.text("", size=14, weight=ft.FontWeight.BOLD)
         self.btn_review = ui.GradientButton("Jetzt wiederholen",
@@ -329,12 +345,12 @@ class DashboardScreen(Screen):
         return screen_list([
             self.hero,
             self.today_card,
-            ft.Row([ring_card("Karteikarten", self.ring_cards),
-                    ring_card("Quizfragen", self.ring_quiz)], spacing=12),
-            ft.Row([ring_card("AP1-Szenarien", self.ring_ap1),
-                    ring_card("AP2-Szenarien", self.ring_scen)], spacing=12),
-            ui.Card("Erfolgsquote", [self.lbl_quote, self.lbl_quote_sub],
-                    accent=C["accent2"], subtitle="Quiz gesamt"),
+            ft.Row([ring_card(DASH_RING_CARDS, self.ring_cards),
+                    ring_card(DASH_RING_QUIZ, self.ring_quiz)], spacing=12),
+            ft.Row([ring_card(DASH_RING_AP1, self.ring_ap1),
+                    ring_card(DASH_RING_AP2, self.ring_scen)], spacing=12),
+            ui.Card(DASH_QUOTE_TITLE, [self.lbl_quote, self.lbl_quote_sub],
+                    accent=C["accent2"], subtitle=DASH_QUOTE_SUBTITLE),
             ui.Card("Lernverlauf", [self.chart], subtitle="letzte %d Tage" % self.DAYS),
             ui.Card("Abdeckung", [self.bar_cards, self.bar_quiz, self.bar_ap1,
                                   self.bar_scen], accent=C["purple"], subtitle="Material",
@@ -359,13 +375,11 @@ class DashboardScreen(Screen):
     def _refresh_today(self):
         settings = learning_settings()
         goal = DailyGoal.from_db(self.db, settings["ziel_anzahl"])
-        self.goal_row.visible = settings["ziel_an"] or settings["serie_an"]
+        self.goal_row.visible = settings["ziel_an"]
         self.goal_ring.visible = self.lbl_goal.visible = settings["ziel_an"]
-        self.lbl_streak.visible = settings["serie_an"]
         self.goal_ring.set(goal.fraction, C["green"] if goal.reached else C["accent"],
                            big="%d%%" % round(goal.fraction * 100))
         self.lbl_goal.value = goal.text()
-        self.lbl_streak.value = goal.streak_text()
         plan = ReviewPlan.from_db(self.db)
         self.lbl_due.value = due_text(plan)
         self.btn_review.visible = plan.count() > 0
@@ -375,7 +389,6 @@ class DashboardScreen(Screen):
         total_cards, total_quiz = len(KARTEIKARTEN), len(QUIZ_QUESTIONS)
         total_ap1, total_scen = len(AP1_SZENARIEN), len(SZENARIEN)
         learned_cards = db.distinct_cards_learned()
-        quiz_answered = db.count_quiz_answers()
         quiz_distinct = db.distinct_quiz_questions()
         ap1_done, scen_done = db.distinct_ap1(), db.distinct_scenarios()
         rate, correct, answered = db.quiz_success_rate()
@@ -386,23 +399,22 @@ class DashboardScreen(Screen):
                   if learning_settings()["serie_an"] else "")
         self.hero.set_data(
             fh.greeting() or "Dein Lernstand",   # ab 0.56: "Hallo <Name>"
-            "%s%d von %d Inhalten  ·  Quiz %d %%"
+            ("%s" + DASH_LEARNED + "  ·  " + DASH_RATE)
             % (streak, learned, self.total_content, round(rate)),
             "%d %%" % round(learned / max(1, self.total_content) * 100),
-            "Gesamt")
+            DASH_TOTAL)
+        # Ab 0.60 (K-B): grosse Zahl "Pruefungstrainer" = verschiedene Fragen (wie am PC)
         self.ring_cards.set(learned_cards / max(1, total_cards), C["accent"], C["purple"],
-                            str(learned_cards), "von %d Karten" % total_cards)
+                            str(learned_cards), DASH_CARDS_SUB % total_cards)
         self.ring_quiz.set(quiz_distinct / max(1, total_quiz), C["purple"], C["accent2"],
-                           str(quiz_answered), "%d / %d Fragen" % (quiz_distinct, total_quiz))
+                           str(quiz_distinct), DASH_QUIZ_SUB % total_quiz)
         self.ring_ap1.set(ap1_done / max(1, total_ap1), C["blue"], C["accent"],
-                          str(ap1_done), "von %d" % total_ap1)
+                          str(ap1_done), DASH_SCEN_SUB % total_ap1)
         self.ring_scen.set(scen_done / max(1, total_scen), C["accent2"], C["orange"],
-                           str(scen_done), "von %d" % total_scen)
+                           str(scen_done), DASH_SCEN_SUB % total_scen)
 
         self.lbl_quote.value = "%d %%" % round(rate)
-        self.lbl_quote_sub.value = ("%d von %s richtig beantwortet"
-                                    % (correct, plural(answered, "Frage", "Fragen"))
-                                    if answered else "noch keine Antworten erfasst")
+        self.lbl_quote_sub.value = dash_quote_text(correct, answered)
 
         self.bar_cards.set(learned_cards / max(1, total_cards) * 100,
                            "%d / %d" % (learned_cards, total_cards))
@@ -2565,11 +2577,11 @@ class NotebookScreen(Screen):
                 lambda _e: self.practice(SRC_CARD, cards), expand=True)]))
         if quiz:
             controls.append(ft.Row([ui.GradientButton(
-                "%s %s" % (plural(len(quiz), "Quizfrage", "Quizfragen"), label),
+                "%s %s" % (plural(len(quiz), "Prüfungsfrage", "Prüfungsfragen"), label),
                 lambda _e: self.practice(SRC_QUIZ, quiz), kind="accent", expand=True)]))
         if controls:
             controls.append(ui.text("Startet eine Übungsrunde nur mit den Fragen der Liste "
-                                    "(Quiz: höchstens 50).", size=12, color=C["muted"]))
+                                    "(Prüfungstrainer: höchstens 50).", size=12, color=C["muted"]))
         self.practice_row.controls = controls
         self.practice_row.visible = bool(controls)
 
@@ -2979,10 +2991,12 @@ class ProgressScreen(Screen):
         self.coverage_card = CoverageCard(self.app)
         self._coverage_key = None
         return screen_list([
-            ft.Row([stat("tests", "Sessions", C["accent"]),
+            # Ab 0.60 (K-A): drei Kacheln, "Bestes Ergebnis" allein ueber die volle
+            # Breite; die Lernserie steht nur noch im Banner der Startseite.
+            # Namen wie am PC (vorher "Sessions" und "Bestes")
+            ft.Row([stat("tests", "Test-Sessions", C["accent"]),
                     stat("avg", "Durchschnitt", C["purple"])], spacing=12),
-            ft.Row([stat("best", "Bestes", C["accent2"]),
-                    stat("streak", "Lernserie", C["green"])], spacing=12),
+            ft.Row([stat("best", "Bestes Ergebnis", C["accent2"])], spacing=12),
             ui.Card(DAY_CHART_TITLE, [self.day_pills, self.day_chart, self.lbl_days,
                                       ft.Container(height=6),
                                       ui.label(SPLIT_CHART_TITLE), self.split_chart,
@@ -3010,11 +3024,9 @@ class ProgressScreen(Screen):
             self._stat("best", "%.1f %%" % best, ihk_note(best))
         else:
             self._stat("best", "-", "noch keine Session")
-        # Ab 0.54 einmal laden: Lernserie und "Aufgaben pro Tag" (gleiche Zaehlung)
+        # Ab 0.54 einmal laden: "Aufgaben pro Tag" (wie Tagesziel und Lernserie gezaehlt)
         self.activity = self.db.activity_days()
         self.activity_split = self.db.activity_split_days()
-        streak = learning_streak({day for day, count in self.activity.items() if count})
-        self._stat("streak", str(streak), "Tage in Folge")
         self._paint_days()
 
         # Ab 0.56 ohne Platzhalter-Punkt "heute" bei 0 %: ohne Session ein Hinweis
@@ -3460,7 +3472,7 @@ class SettingsScreen(Screen):
 
         totals = content_totals()
         lines = ["Karteikarten gesamt: %d" % len(KARTEIKARTEN),
-                 "Quizfragen gesamt: %d" % len(QUIZ_QUESTIONS),
+                 "Prüfungsfragen gesamt: %d" % len(QUIZ_QUESTIONS),
                  "AP1-Szenarien gesamt: %d" % len(AP1_SZENARIEN),
                  "AP2-Szenarien gesamt: %d" % len(SZENARIEN),
                  "Testprojekte gesamt: %d" % len(PROJEKTARBEITEN), ""]
@@ -3601,7 +3613,7 @@ class SettingsScreen(Screen):
         danger = self._area("loeschen", [
             ui.label("Lerndaten"),
             ui.text("Setzt sämtliche Lernfortschritte zurück: Testergebnisse, "
-                    "Karteikarten-Verlauf, Quiz-Antworten und bearbeitete Szenarien. "
+                    "Karteikarten-Verlauf, Antworten im Prüfungstrainer und bearbeitete Szenarien. "
                     "Der Spielstand des Lernspiels bleibt erhalten. Mit eingerichtetem "
                     "Abgleich gilt das Zurücksetzen auch auf dem PC. Dieser Schritt lässt sich nicht "
                     "rückgängig machen.", size=13, color=C["text_dim"]),
@@ -4185,6 +4197,14 @@ class HelpScreen(Screen):
         self.list = screen_list(cards)
         return self.list
 
+    def reset_folds(self):
+        """Ab 0.60 (K-G, E11): beim Oeffnen der Hilfe alles einklappen, wie
+        bei den Optionen (am PC gleich)."""
+        ui.FoldCard.reset_states("hilfe_")
+        for fold in self.folds.values():
+            fold.set_opened(False)
+        ui.FoldCard.reset_states("hilfe_")
+
     def open_section(self, section_id):
         fold = self.folds.get(section_id)
         if fold is not None and not fold.opened:
@@ -4584,6 +4604,10 @@ class FISIMobileApp:
 
         self.crumb_main = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["text"])
         self.crumb_sub = ft.Text("", size=12, weight=ft.FontWeight.BOLD, color=C["accent"])
+        # Ab 0.60 (K-C): kleine graue Versionszeile unter den Brotkrumen, nur auf
+        # der Startseite (am PC steht die Version unten in der Seitenleiste)
+        self.lbl_version = ft.Text(VERSION_LINE % APP_VERSION, size=11, color=C["muted"],
+                                   visible=True)
         self.body = ft.Container(expand=True)
         self.nav = ft.NavigationBar(
             destinations=[ft.NavigationBarDestination(
@@ -4690,8 +4714,9 @@ class FISIMobileApp:
                             ft.Text(crumbs[1], size=12, weight=ft.FontWeight.BOLD,
                                     color=C["accent"])], spacing=7)
         else:
-            title = ft.Row([self.crumb_main, ft.Text("/", size=12, color=C["muted"]),
-                            self.crumb_sub], spacing=7)
+            title = ft.Column([ft.Row([self.crumb_main, ft.Text("/", size=12, color=C["muted"]),
+                                       self.crumb_sub], spacing=7),
+                               self.lbl_version], spacing=1, tight=True)
         leading = None
         if root:
             logo = ui.Ring(size=30, thickness=4, big_size=1, small_size=1)
@@ -4704,12 +4729,13 @@ class FISIMobileApp:
             leading=leading, leading_width=52 if root else None, title=title,
             bgcolor=C["bg"], elevation=0, color=C["text"],
             # Ab 0.56: Hilfe in der Kopfzeile (die untere Leiste hat schon 6 Punkte)
-            actions=[ft.IconButton(ft.Icons.HELP_OUTLINE_ROUNDED, icon_color=C["text_dim"],
-                                   tooltip=fh.HELP_TITLE,
-                                   on_click=lambda _e: self.open_help()),
-                     ft.IconButton(ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
-                                   tooltip=SEARCH_TEXT,
-                                   on_click=lambda _e: self.open("search")),
+            # Ab 0.60 (K-G): mit Namen fuer Bildschirmleser (ein Element je Knopf)
+            actions=[named(fh.HELP_TITLE, ft.IconButton(
+                         ft.Icons.HELP_OUTLINE_ROUNDED, icon_color=C["text_dim"],
+                         tooltip=fh.HELP_TITLE, on_click=lambda _e: self.open_help())),
+                     named(SEARCH_TEXT, ft.IconButton(
+                         ft.Icons.SEARCH_ROUNDED, icon_color=C["text_dim"],
+                         tooltip=SEARCH_TEXT, on_click=lambda _e: self.open("search"))),
                      ft.Container(width=6)])
 
     def _nav_changed(self, event):
@@ -4737,6 +4763,7 @@ class FISIMobileApp:
         if entering:
             screen.reset_folds()
         self.crumb_main.value, self.crumb_sub.value = screen.crumbs
+        self.lbl_version.visible = key == "dashboard"
         screen.on_show()
         self.body.content = screen.root
         self.page.update()
@@ -4810,6 +4837,8 @@ class FISIMobileApp:
         views = self.page.views
         on_top = bool(views) and bool(views[-1].controls) and \
             views[-1].controls[0] is screen.root
+        if not on_top:
+            screen.reset_folds()   # ab 0.60 (K-G, E11)
         if section_id:
             screen.open_section(section_id)
         if not on_top:
@@ -4847,7 +4876,7 @@ class FISIMobileApp:
         elif kind == "Karteikarte":
             self.screens["cards"].jump_to_question(title)
             self.open("cards")
-        elif kind == "Quizfrage":
+        elif kind == KIND_QUIZ:
             self.screens["quiz"].jump_to_question(title)
             self.open("quiz")
         else:

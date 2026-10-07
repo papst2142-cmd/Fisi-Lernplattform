@@ -373,6 +373,10 @@ class PcTest(unittest.TestCase):
         cls.root = ctk.CTk()
         cls.root.report_callback_exception = lambda *exc: cls.errors.append(
             "".join(traceback.format_exception(*exc)))
+        # Ab 0.60 (K-D): Der Windows-Runner hat nur 1024x768 Bildpunkte; Tk
+        # begrenzt das Fenster dort sonst auf die Bildschirmgroesse und die
+        # Groessenwechsel unten haetten keine Wirkung
+        cls.root.maxsize(4000, 3000)
         cls.root.geometry("1360x880+0+0")
         cls.app = app_gui.FISIApp(cls.root)
         cls.pump(0.3)
