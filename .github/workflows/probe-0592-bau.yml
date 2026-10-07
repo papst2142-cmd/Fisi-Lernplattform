@@ -1,0 +1,43 @@
+# Probe 0.59.2 Bau (nur dieser Zweig, nie mergen): Windows-Pruefungen aus
+# Plan Abschnitt 6 Punkt 9 und 10. Baut nichts, veroeffentlicht nichts.
+name: Probe 0.59.2 Bau (Windows)
+
+on:
+  push:
+    branches: [probe-0592-bau]
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Pakete
+        run: python -m pip install -r requirements.txt psutil
+      - name: Fassung 0.59.1
+        run: git worktree add ../v0591 v0.59.1
+      - name: Tests der neuen und geaenderten Teile
+        continue-on-error: true
+        run: python -m unittest -v test_haenger test_einzelstart test_leistung test_werkzeuge test_optionen 2>&1 | tail -80
+      - name: Probe A2, A3, E1, E2, Waechter, Problembericht
+        continue-on-error: true
+        run: python probe/probe_0592_bau.py
+      - name: Aufwand Darstellungswechsel 0.59.1 gegen 0.59.2
+        continue-on-error: true
+        run: |
+          for r in 1 2 3; do
+            for v in alt neu; do
+              src=.; [ $v = alt ] && src=../v0591
+              MESS_WECHSEL=6 timeout 900 python probe/messung_wechsel.py $src "$RUNNER_TEMP/w_${v}_$r.json" > "$RUNNER_TEMP/w_${v}_$r.log" 2>&1 || echo "Rueckgabe $?"
+              echo "=== $v Runde $r"
+              python -c "import json,sys;d=json.load(open(sys.argv[1],encoding='utf-8'));print(d['version'],[w['gesamt_ms'] for w in d['wechsel']],'opt_bauen',[w.get('optionen_bauen_ms') for w in d['wechsel']],'fehler.log',repr((d.get('fehler.log') or '')[:300]))" "$RUNNER_TEMP/w_${v}_$r.json"
+            done
+          done
