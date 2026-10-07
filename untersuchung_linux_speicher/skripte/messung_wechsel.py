@@ -48,6 +48,14 @@ os.environ["XDG_DATA_HOME"] = os.path.join(folder, ".local", "share")
 sys.path.insert(0, SRC)
 os.chdir(SRC)
 
+if os.environ.get("MESS_STAPEL"):
+    # Diagnose wie in F9 vorgeschlagen: kill -USR1 <PID> schreibt die
+    # Python-Stapel aller Threads in diese Datei (auch wenn der Hauptfaden haengt)
+    import faulthandler
+    import signal
+    _stack_file = open(os.environ["MESS_STAPEL"], "a")
+    faulthandler.register(signal.SIGUSR1, file=_stack_file, all_threads=True)
+
 import customtkinter as ctk          # noqa: E402
 import app_gui                       # noqa: E402
 import fisi_theme                    # noqa: E402
@@ -224,13 +232,21 @@ def main():
     result = {"quelle": SRC, "warten": WAIT, "perf": PERF, "fehler": []}
     bench = Bench()
     app, root = bench.app, bench.root
+    lean = os.environ.get("MESS_OHNE_VORLADEN") == "1"
+    if lean:
+        # Gegenprobe Skalierung: nichts vorladen, keine Seitenrunde - beim
+        # Wechsel existieren nur Dashboard und Optionen
+        app.preloader.queue = []
+        app.preloader.done = True
+        app.preloader.start = lambda *args, **kwargs: None
+        app.preloader.add_game = lambda *args, **kwargs: None
     result["version"] = app_gui.APP_VERSION
     result["start_ms"] = round(bench.start_ms)
     result["rss_start"] = round(rss_mb(), 1)
     result["elemente_start"] = count_widgets(root)
     bench.sampler.reset()
     result["vorladen_ms"] = round(bench.preload_wait())
-    if os.environ.get("MESS_SPIEL", "1") == "1":
+    if os.environ.get("MESS_SPIEL", "1") == "1" and not lean:
         # Spielstand anlegen (wie bei Nico), dann werden die Spielansichten
         # mit ihren Reitern zusaetzlich vorgeladen
         bench.show("game")
@@ -243,7 +259,7 @@ def main():
     result["vorladen_schritte"] = {"%s:%s" % (t[0], "/".join(t[1:])): ms
                                    for t, ms in app.preloader.step_ms.items()}
     pages = {}
-    for key in ("dashboard", "cards", "quiz", "progress", "notebook", "calc",
+    for key in () if lean else ("dashboard", "cards", "quiz", "progress", "notebook", "calc",
                 "ap1scenarios", "scenarios", "testproject", "abschluss", "help", "settings"):
         pages[key] = round(bench.show(key), 1)
     result["seitenrunde_ms"] = pages
@@ -273,7 +289,7 @@ def main():
         row["opt_elemente"] = count_widgets(app.views["settings"])
         # Seiten dazwischen, dann Vorladen wie ein ruhender Nutzer abwarten
         visits = {}
-        for key in ("dashboard", "progress", "cards"):
+        for key in () if lean else ("dashboard", "progress", "cards"):
             visits[key] = round(bench.show(key), 1)
         row["besuche_ms"] = visits
         bench.sampler.reset()

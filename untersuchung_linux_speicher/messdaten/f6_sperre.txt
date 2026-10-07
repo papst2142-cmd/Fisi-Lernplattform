@@ -1,0 +1,75 @@
+{
+ "popen_standard": {
+  "fd": 3,
+  "fdinfo_flags": "02102002",
+  "inheritable": false,
+  "kind_pid": 1105,
+  "kind_fds": [
+   "0",
+   "1",
+   "2"
+  ],
+  "sperre_nach_ende_eltern": "frei"
+ },
+ "popen_close_fds_false": {
+  "fd": 3,
+  "fdinfo_flags": "02102002",
+  "inheritable": false,
+  "kind_pid": 1109,
+  "kind_fds": [
+   "0",
+   "1",
+   "2"
+  ],
+  "sperre_nach_ende_eltern": "frei"
+ },
+ "popen_start_new_session": {
+  "fd": 3,
+  "fdinfo_flags": "02102002",
+  "inheritable": false,
+  "kind_pid": 1113,
+  "kind_fds": [
+   "0",
+   "1",
+   "2"
+  ],
+  "sperre_nach_ende_eltern": "frei"
+ },
+ "fork_ohne_exec": {
+  "fd": 3,
+  "fdinfo_flags": "02102002",
+  "inheritable": false,
+  "kind_pid": 1117,
+  "kind_fds": [
+   "0",
+   "1",
+   "2",
+   "3"
+  ],
+  "sperre_nach_ende_eltern": "belegt"
+ },
+ "pass_fds_gegenprobe": {
+  "fd": 3,
+  "fdinfo_flags": "02102002",
+  "inheritable": false,
+  "kind_pid": 1121,
+  "kind_fds": [
+   "0",
+   "1",
+   "2",
+   "3"
+  ],
+  "sperre_nach_ende_eltern": "belegt"
+ }
+}
+=== Blockade 0 s
+A: nach vorn geholt
+B: claim() -> False nach 3.2 s (True = startet selbst, False = endet still)
+fehler.log: (keine)
+=== Blockade 4 s
+A: blockiert 4 s
+A: wieder frei
+B: claim() -> True nach 28.1 s (True = startet selbst, False = endet still)
+fehler.log: === 2026-10-07 05:22:02 | Version ? | linux ===
+Mehrfachstart: Das laufende Programm hat nicht geantwortet (Antwort: keine) und die Sperre war nach 25 s noch belegt. Start ohne Sperre.
+

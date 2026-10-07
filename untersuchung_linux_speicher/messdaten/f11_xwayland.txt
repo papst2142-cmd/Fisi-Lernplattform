@@ -1,0 +1,77 @@
+--- normal
+Messprozess 3996
+{"nr": 1, "gesamt_ms": 4185, "elemente_vorher": 4115, "abbau_alt_ms": 1003.5, "optionen_bauen_ms": 1364.2, "rss_spitze": 208.4, "rss_danach": 235.1}
+{"nr": 2, "gesamt_ms": 3943, "elemente_vorher": 3795, "abbau_alt_ms": 865.7, "optionen_bauen_ms": 1357.8, "rss_spitze": 236.5, "rss_danach": 245.9}
+{"nr": 3, "gesamt_ms": 4457, "elemente_vorher": 3795, "abbau_alt_ms": 888.7, "optionen_bauen_ms": 1465.6, "rss_spitze": 245.9, "rss_danach": 247.6}
+{"nr": 4, "gesamt_ms": 3563, "elemente_vorher": 3795, "abbau_alt_ms": 820.8, "optionen_bauen_ms": 1245.5, "rss_spitze": 247.6, "rss_danach": 247.6}
+{"nr": 5, "gesamt_ms": 4169, "elemente_vorher": 3795, "abbau_alt_ms": 956.7, "optionen_bauen_ms": 1499.6, "rss_spitze": 247.6, "rss_danach": 248.3}
+{"nr": 6, "gesamt_ms": 4008, "elemente_vorher": 3795, "abbau_alt_ms": 1016.9, "optionen_bauen_ms": 1392.6, "rss_spitze": 248.3, "rss_danach": 248.3}
+{"nr": 7, "gesamt_ms": 3878, "elemente_vorher": 3795, "abbau_alt_ms": 799.8, "optionen_bauen_ms": 1528.7, "rss_spitze": 248.3, "rss_danach": 248.3}
+{"nr": 8, "gesamt_ms": 3671, "elemente_vorher": 3795, "abbau_alt_ms": 850.0, "optionen_bauen_ms": 1341.6, "rss_spitze": 248.3, "rss_danach": 248.3}
+{"nr": 9, "gesamt_ms": 3916, "elemente_vorher": 3795, "abbau_alt_ms": 993.2, "optionen_bauen_ms": 1353.0, "rss_spitze": 248.3, "rss_danach": 248.3}
+{"nr": 10, "gesamt_ms": 3824, "elemente_vorher": 3795, "abbau_alt_ms": 838.8, "optionen_bauen_ms": 1316.9, "rss_spitze": 248.3, "rss_danach": 248.8}
+--- CPU 25 %
+Messprozess 5112
+=== KEINE neue Zeile seit 60 s - Zustand:
+  python3.12 R wchan=0
+  python3.12 S wchan=poll_schedule_timeout.constprop.0
+  python3.12 S wchan=hrtimer_nanosleep
+TID 5112:
+#0  0x00007f4f5a11b79d __poll
+#1  0x00007f4f594078ca
+#2  0x00007f4f59407ef0
+#3  0x00007f4f59408edd xcb_wait_for_reply64
+#4  0x00007f4f594bb62d _XReply
+#5  0x00007f4f594bbaa5 XSync
+#6  0x00007f4f597a12ca
+#7  0x00007f4f595f02f9 TclNRRunCallbacks
+#8  0x00007f4f59b73d09
+#9  0x000000000055099c
+#10 0x00000000005499b5 PyObject_Vectorcall
+#11 0x00000000005d710f _PyEval_EvalFrameDefault
+#12 0x000000000054caed
+#13 0x00000000005db2ee _PyEval_EvalFrameDefault
+#14 0x000000000054caed
+TID 5119:
+#0  0x00007f4f5a126fa7 __select
+#1  0x00007f4f596f7784
+#2  0x00007f4f5a09cb84 start_thread
+#3  0x00007f4f5a129ecc __clone3
+TID 5366:
+#0  0x00007f4f5a0ecbdf clock_nanosleep@GLIBC_2.2.5
+#1  0x000000000064dcaa
+#2  0x00000000005d7b2d _PyEval_EvalFrameDefault
+#3  0x000000000054cb52
+#4  0x00000000005db2ee _PyEval_EvalFrameDefault
+#5  0x000000000054cb52
+#6  0x00000000006f899c
+#7  0x00000000006b93bc
+#8  0x00007f4f5a09cb84 start_thread
+#9  0x00007f4f5a129ecc __clone3
+Xwayland antwortet anderen Programmen
+/home/claude/repo/untersuchung_linux_speicher/skripte/mit_grenze.sh: line 12:  5112 Killed                  "$@"
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 137, Hoechststand 210 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+FERTIG
+
+Messprozess 5753
+{"nr": 1, "gesamt_ms": 15094, "elemente_vorher": 4115, "abbau_alt_ms": 4915.5, "optionen_bauen_ms": 5405.9, "rss_spitze": 209.1, "rss_danach": 236.6}
+{"nr": 2, "gesamt_ms": 13316, "elemente_vorher": 3827, "abbau_alt_ms": 4201.1, "optionen_bauen_ms": 5089.5, "rss_spitze": 237.8, "rss_danach": 246.6}
+X connection to :0 broken (explicit kill or server shutdown).
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 1, Hoechststand 224 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+FERTIG
+
+=== Versuch 1
+Messprozess 7068
+{"nr": 1, "gesamt_ms": 13522, "elemente_vorher": 4148, "abbau_alt_ms": 4193.2, "optionen_bauen_ms": 4890.0, "rss_spitze": 209.4, "rss_danach": 235.3}
+{"nr": 2, "gesamt_ms": 13196, "elemente_vorher": 3795, "abbau_alt_ms": 3712.0, "optionen_bauen_ms": 4993.7, "rss_spitze": 237.4, "rss_danach": 246.3}
+{"nr": 3, "gesamt_ms": 13815, "elemente_vorher": 3828, "abbau_alt_ms": 4290.2, "optionen_bauen_ms": 5529.7, "rss_spitze": 246.3, "rss_danach": 247.3}
+{"nr": 4, "gesamt_ms": 13183, "elemente_vorher": 3795, "abbau_alt_ms": 4213.7, "optionen_bauen_ms": 5201.1, "rss_spitze": 247.3, "rss_danach": 247.4}
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 225 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== Versuch 2
+Messprozess 8761
+{"nr": 1, "gesamt_ms": 13818, "elemente_vorher": 4148, "abbau_alt_ms": 4289.8, "optionen_bauen_ms": 5001.4, "rss_spitze": 209.5, "rss_danach": 236.6}
+{"nr": 2, "gesamt_ms": 13093, "elemente_vorher": 3828, "abbau_alt_ms": 4379.9, "optionen_bauen_ms": 4610.0, "rss_spitze": 238.2, "rss_danach": 247.0}
+{"nr": 3, "gesamt_ms": 13287, "elemente_vorher": 3795, "abbau_alt_ms": 4608.5, "optionen_bauen_ms": 4915.0, "rss_spitze": 247.1, "rss_danach": 247.1}
+{"nr": 4, "gesamt_ms": 12817, "elemente_vorher": 3795, "abbau_alt_ms": 4205.6, "optionen_bauen_ms": 4666.0, "rss_spitze": 247.1, "rss_danach": 248.1}
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 226 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+FERTIG

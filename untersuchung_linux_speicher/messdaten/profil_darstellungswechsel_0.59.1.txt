@@ -1,0 +1,116 @@
+         2227331 function calls (2176333 primitive calls) in 4.852 seconds
+
+   Ordered by: cumulative time
+   List reduced from 815 to 60 due to restriction <60>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      2/1    0.000    0.000    4.765    4.765 /home/claude/mess/messung_wechsel.py:140(timed_switch)
+    23/18    0.000    0.000    4.739    0.263 /home/claude/mess/messung_wechsel.py:153(wrapper)
+        1    0.000    0.000    4.734    4.734 /home/claude/v0591/app_gui.py:7143(change_color)
+        1    0.000    0.000    4.674    4.674 /home/claude/v0591/app_gui.py:7204(_recolor)
+148797/120137    2.706    0.000    3.224    0.000 {method 'call' of '_tkinter.tkapp' objects}
+        1    0.000    0.000    1.887    1.887 /home/claude/v0591/app_gui.py:7316(show_view)
+        1    0.000    0.000    1.887    1.887 /home/claude/v0591/app_gui.py:7322(_show_view_measured)
+        1    0.000    0.000    1.625    1.625 /home/claude/v0591/app_gui.py:7343(_show_view)
+        2    0.000    0.000    1.600    0.800 /home/claude/v0591/app_gui.py:6766(__missing__)
+1935/1812    0.003    0.000    1.323    0.001 /usr/lib/python3.12/tkinter/__init__.py:1374(update_idletasks)
+        1    0.000    0.000    1.196    1.196 /home/claude/v0591/app_gui.py:6780(get)
+        1    0.000    0.000    1.196    1.196 /home/claude/v0591/app_gui.py:841(__init__)
+        1    0.002    0.002    1.190    1.190 /home/claude/v0591/app_gui.py:4886(build)
+        1    0.000    0.000    1.095    1.095 /home/claude/v0591/app_gui.py:7890(apply_appearance)
+        1    0.000    0.000    1.095    1.095 /usr/local/lib/python3.12/dist-packages/customtkinter/__init__.py:55(set_appearance_mode)
+        1    0.000    0.000    1.095    1.095 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/appearance_mode/appearance_mode_tracker.py:103(set_appearance_mode)
+        1    0.003    0.003    1.095    1.095 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/appearance_mode/appearance_mode_tracker.py:64(update_callbacks)
+   4425/3    0.028    0.000    1.067    0.356 /usr/lib/python3.12/tkinter/__init__.py:2653(destroy)
+   1652/3    0.004    0.000    1.067    0.356 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_widget_classes/ctk_base_class.py:94(destroy)
+     1650    0.008    0.000    1.053    0.001 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_widget_classes/ctk_base_class.py:220(_set_appearance_mode)
+       18    0.000    0.000    1.044    0.058 /home/claude/v0591/fisi_widgets.py:2506(destroy)
+  261/149    0.003    0.000    0.823    0.006 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_scrollbar.py:135(_draw)
+ 4195/361    0.010    0.000    0.811    0.002 /usr/lib/python3.12/tkinter/__init__.py:1962(__call__)
+     2712    0.012    0.000    0.810    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/draw_engine.py:97(draw_rounded_rect_with_border)
+     2741    0.026    0.000    0.801    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/draw_engine.py:187(__draw_rounded_rect_with_border_font_shapes)
+     1035    0.012    0.000    0.770    0.001 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_frame.py:94(_draw)
+   120/69    0.001    0.000    0.706    0.010 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_scrollbar.py:292(set)
+    39/10    0.000    0.000    0.672    0.067 /home/claude/v0591/fisi_widgets.py:2428(_set_hscroll)
+      232    0.441    0.002    0.653    0.003 {built-in method time.sleep}
+      853    0.002    0.000    0.617    0.001 /home/claude/v0591/fisi_widgets.py:2685(release)
+    31604    0.063    0.000    0.616    0.000 /usr/lib/python3.12/tkinter/__init__.py:1701(_configure)
+      853    0.003    0.000    0.611    0.001 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:164(destroy)
+    65/52    0.000    0.000    0.565    0.011 /usr/lib/python3.12/tkinter/__init__.py:859(callit)
+    17/10    0.000    0.000    0.514    0.051 /home/claude/v0591/fisi_widgets.py:2468(_sync_hscroll)
+    19755    0.064    0.000    0.508    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/ctk_canvas.py:83(coords)
+      313    0.021    0.000    0.486    0.002 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:25(__init__)
+        1    0.000    0.000    0.408    0.408 /home/claude/v0591/app_gui.py:5410(on_show)
+        1    0.000    0.000    0.407    0.407 /home/claude/v0591/app_gui.py:5515(_show_difficulty)
+        1    0.000    0.000    0.404    0.404 /home/claude/v0591/fisi_game_gui.py:2274(__init__)
+    23806    0.013    0.000    0.387    0.000 /usr/lib/python3.12/tkinter/__init__.py:2970(itemconfigure)
+      162    0.003    0.000    0.367    0.002 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_frame.py:17(__init__)
+      852    0.002    0.000    0.313    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:136(_set_appearance_mode)
+       15    0.000    0.000    0.294    0.020 /home/claude/v0591/app_gui.py:4871(_area)
+     1414    0.009    0.000    0.288    0.000 /usr/lib/python3.12/tkinter/__init__.py:2636(__init__)
+       14    0.001    0.000    0.288    0.021 /home/claude/v0591/fisi_widgets.py:1040(__init__)
+     2953    0.011    0.000    0.288    0.000 /usr/lib/python3.12/tkinter/__init__.py:2842(_create)
+     1612    0.017    0.000    0.288    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:176(_draw)
+        1    0.000    0.000    0.264    0.264 /home/claude/v0591/fisi_game_gui.py:2315(render)
+        1    0.000    0.000    0.264    0.264 /home/claude/v0591/fisi_game_gui.py:2544(_build_profile_editor)
+  236/234    0.071    0.000    0.253    0.001 /home/claude/mess/messung_wechsel.py:59(rss_mb)
+     7798    0.006    0.000    0.253    0.000 /usr/lib/python3.12/tkinter/__init__.py:1714(configure)
+     1656    0.004    0.000    0.251    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/ctk_canvas.py:73(create_aa_circle)
+       18    0.002    0.000    0.250    0.014 /home/claude/v0591/fisi_widgets.py:928(__init__)
+  498/412    0.002    0.000    0.245    0.001 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_widget_classes/ctk_base_class.py:182(_update_dimensions_event)
+       57    0.001    0.000    0.240    0.004 /home/claude/v0591/fisi_widgets.py:758(__init__)
+     5598    0.028    0.000    0.239    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/ctk_canvas.py:103(itemconfig)
+     1668    0.001    0.000    0.237    0.000 /usr/lib/python3.12/tkinter/__init__.py:2882(create_text)
+        1    0.000    0.000    0.236    0.236 /home/claude/v0591/app_gui.py:4639(__init__)
+      324    0.002    0.000    0.236    0.001 /usr/lib/python3.12/tkinter/__init__.py:3219(__init__)
+    37677    0.120    0.000    0.233    0.000 /usr/lib/python3.12/tkinter/__init__.py:1543(_options)
+
+
+         2227331 function calls (2176333 primitive calls) in 4.852 seconds
+
+   Ordered by: internal time
+   List reduced from 815 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+148797/120137    2.706    0.000    3.224    0.000 {method 'call' of '_tkinter.tkapp' objects}
+      232    0.441    0.002    0.653    0.003 {built-in method time.sleep}
+    37677    0.120    0.000    0.233    0.000 /usr/lib/python3.12/tkinter/__init__.py:1543(_options)
+  236/234    0.071    0.000    0.253    0.001 /home/claude/mess/messung_wechsel.py:59(rss_mb)
+   422173    0.067    0.000    0.067    0.000 {built-in method builtins.isinstance}
+    19755    0.064    0.000    0.508    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/ctk_canvas.py:83(coords)
+    31604    0.063    0.000    0.616    0.000 /usr/lib/python3.12/tkinter/__init__.py:1701(_configure)
+    69967    0.057    0.000    0.096    0.000 /usr/lib/python3.12/tkinter/__init__.py:102(_cnfmerge)
+        1    0.048    0.048    0.048    0.048 {built-in method gc.collect}
+    59180    0.045    0.000    0.045    0.000 {method 'getint' of '_tkinter.tkapp' objects}
+    17920    0.041    0.000    0.061    0.000 /usr/lib/python3.12/tkinter/__init__.py:1569(nametowidget)
+     4027    0.032    0.000    0.121    0.000 /usr/lib/python3.12/tkinter/__init__.py:1622(_substitute)
+    35682    0.030    0.000    0.034    0.000 /usr/lib/python3.12/tkinter/__init__.py:1510(_getints)
+   4425/3    0.028    0.000    1.067    0.356 /usr/lib/python3.12/tkinter/__init__.py:2653(destroy)
+     5598    0.028    0.000    0.239    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/ctk_canvas.py:103(itemconfig)
+    35599    0.027    0.000    0.134    0.000 /usr/lib/python3.12/tkinter/__init__.py:2904(find)
+     2741    0.026    0.000    0.801    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/core_rendering/draw_engine.py:187(__draw_rounded_rect_with_border_font_shapes)
+    91933    0.024    0.000    0.024    0.000 {built-in method _tkinter._flatten}
+    19755    0.023    0.000    0.125    0.000 /usr/lib/python3.12/tkinter/__init__.py:2835(coords)
+    20221    0.023    0.000    0.041    0.000 /usr/lib/python3.12/tkinter/__init__.py:62(_stringify)
+    98827    0.021    0.000    0.021    0.000 {method 'splitlist' of '_tkinter.tkapp' objects}
+      313    0.021    0.000    0.486    0.002 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:25(__init__)
+     6864    0.021    0.000    0.021    0.000 {method 'deletecommand' of '_tkinter.tkapp' objects}
+  254/253    0.021    0.000    0.025    0.000 {built-in method _io.open}
+    11570    0.020    0.000    0.093    0.000 /usr/lib/python3.12/tkinter/__init__.py:1102(winfo_children)
+     5994    0.019    0.000    0.034    0.000 /home/claude/v0591/fisi_theme.py:934(_safe_triple)
+     1612    0.017    0.000    0.288    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/ctk_label.py:176(_draw)
+      100    0.017    0.000    0.017    0.000 {method 'dooneevent' of '_tkinter.tkapp' objects}
+    44297    0.017    0.000    0.051    0.000 /usr/lib/python3.12/tkinter/__init__.py:1628(getint_event)
+    40446    0.015    0.000    0.015    0.000 {method 'search' of 're.Pattern' objects}
+    19755    0.015    0.000    0.059    0.000 /usr/lib/python3.12/tkinter/__init__.py:2946(gettags)
+    45444    0.014    0.000    0.014    0.000 {method 'update' of 'dict' objects}
+    35599    0.014    0.000    0.149    0.000 /usr/lib/python3.12/tkinter/__init__.py:2938(find_withtag)
+      727    0.014    0.000    0.038    0.000 /usr/lib/python3.12/tkinter/__init__.py:1689(_getconfigure)
+    56989    0.013    0.000    0.014    0.000 {built-in method builtins.min}
+     2681    0.013    0.000    0.023    0.000 /usr/local/lib/python3.12/dist-packages/customtkinter/windows/widgets/scaling/scaling_tracker.py:39(get_window_root_of_widget)
+    23806    0.013    0.000    0.387    0.000 /usr/lib/python3.12/tkinter/__init__.py:2970(itemconfigure)
+    76010    0.013    0.000    0.013    0.000 {method 'append' of 'list' objects}
+    25932    0.012    0.000    0.023    0.000 /home/claude/v0591/fisi_theme.py:272(<genexpr>)
+      506    0.012    0.000    0.012    0.000 {built-in method __new__ of type object at 0xa44b40}
+
+

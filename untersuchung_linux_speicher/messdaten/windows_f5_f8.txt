@@ -1,0 +1,52 @@
+Fassung: ../v0581 Python 3.12.10 64 Bit
+1) fisi_leistung.memory_mb() unveraendert: (None, None)
+2) GetCurrentProcess() ohne restype liefert: -1 0xffffffffffffffff
+3) wie im Programm (Handle als int): 0 GetLastError 6 WorkingSet MB 0.0
+4) mit restype/argtypes HANDLE: 1 WorkingSet MB 30.6, Private MB 22.9
+5) psutil zum Vergleich: rss MB 32.1, private MB 22.1
+Fassung: ../v0591 Python 3.12.10 64 Bit
+1) fisi_leistung.memory_mb() unveraendert: (None, None)
+2) GetCurrentProcess() ohne restype liefert: -1 0xffffffffffffffff
+3) wie im Programm (Handle als int): 0 GetLastError 6 WorkingSet MB 0.0
+4) mit restype/argtypes HANDLE: 1 WorkingSet MB 30.3, Private MB 21.8
+5) psutil zum Vergleich: rss MB 32.4, private MB 22.5
+=== F5 v0581 Wechsel 0: Prozess lief insgesamt 13.68 s
+   1.086 import fertig, Daten: D:\a\_temp/f5_0581_0 | Threads: MainThread
+   2.757 Fenster aufgebaut | Threads: MainThread
+  11.917 Vorladen fertig | Threads: MainThread
+  12.972 Elemente 3489, Schliessen beginnt (on_close) | Threads: MainThread
+  13.506 on_close fertig nach 534 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  13.506 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  13.507 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+=== F5 v0581 Wechsel 2: Prozess lief insgesamt 22.38 s
+   0.260 import fertig, Daten: D:\a\_temp/f5_0581_2 | Threads: MainThread
+   0.925 Fenster aufgebaut | Threads: MainThread
+   9.479 Vorladen fertig | Threads: MainThread
+  21.697 Elemente 3232, Schliessen beginnt (on_close) | Threads: MainThread
+  22.207 on_close fertig nach 510 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  22.207 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  22.208 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+=== F5 v0591 Wechsel 0: Prozess lief insgesamt 12.17 s
+   0.701 import fertig, Daten: D:\a\_temp/f5_0591_0 | Threads: MainThread
+   1.344 Fenster aufgebaut | Threads: MainThread
+  10.223 Vorladen fertig | Threads: MainThread
+  11.408 Elemente 3576, Schliessen beginnt (on_close) | Threads: MainThread
+  12.016 on_close fertig nach 608 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  12.016 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  12.016 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+=== F5 v0591 Wechsel 2: Prozess lief insgesamt 23.62 s
+   0.263 import fertig, Daten: D:\a\_temp/f5_0591_2 | Threads: MainThread
+   0.906 Fenster aufgebaut | Threads: MainThread
+   9.768 Vorladen fertig | Threads: MainThread
+  22.907 Elemente 3319, Schliessen beginnt (on_close) | Threads: MainThread
+  23.464 on_close fertig nach 556 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  23.464 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  23.464 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)

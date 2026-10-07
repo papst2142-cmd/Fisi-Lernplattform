@@ -1,0 +1,14 @@
+=== Anzeige :101, PID 3425, Threads vor dem Schliessen:
+  FISI-Lernplattf S wchan=0
+  FISI-Lernplattf S wchan=poll_schedule_timeout.constprop.0
+WM_DELETE_WINDOW an 1 Fenster geschickt
+=== Prozess endete 0.61 s nach dem Schliessen
+--- fehler.log:
+(keine)
+=== Anzeige :0, PID 3468, Threads vor dem Schliessen:
+  FISI-Lernplattf S wchan=futex_do_wait
+  FISI-Lernplattf S wchan=poll_schedule_timeout.constprop.0
+WM_DELETE_WINDOW an 1 Fenster geschickt
+=== Prozess endete 0.62 s nach dem Schliessen
+--- fehler.log:
+(keine)

@@ -1,0 +1,88 @@
+=== F5 v0581 Wechsel 0 CPU-Grenze 0 %: Gesamtlaufzeit 9.63 s
+   0.216 import fertig, Daten: /tmp/f5_F6OG | Threads: MainThread
+   1.001 Fenster aufgebaut | Threads: MainThread
+   8.483 Vorladen fertig | Threads: MainThread
+   9.032 Elemente 3492, Schliessen beginnt (on_close) | Threads: MainThread
+   9.375 on_close fertig nach 343 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+   9.375 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+   9.375 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 0 %: Rueckgabe 0, Hoechststand 193 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0581 Wechsel 2 CPU-Grenze 0 %: Gesamtlaufzeit 17.39 s
+   0.208 import fertig, Daten: /tmp/f5_zSXa | Threads: MainThread
+   0.836 Fenster aufgebaut | Threads: MainThread
+   7.990 Vorladen fertig | Threads: MainThread
+  16.818 Elemente 3232, Schliessen beginnt (on_close) | Threads: MainThread
+  17.128 on_close fertig nach 309 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  17.128 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  17.128 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 0 %: Rueckgabe 0, Hoechststand 239 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0591 Wechsel 0 CPU-Grenze 0 %: Gesamtlaufzeit 9.74 s
+   0.195 import fertig, Daten: /tmp/f5_l6MK | Threads: MainThread
+   0.906 Fenster aufgebaut | Threads: MainThread
+   8.567 Vorladen fertig | Threads: MainThread
+   9.174 Elemente 3579, Schliessen beginnt (on_close) | Threads: MainThread
+   9.497 on_close fertig nach 323 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+   9.498 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+   9.498 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 0 %: Rueckgabe 0, Hoechststand 199 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0591 Wechsel 2 CPU-Grenze 0 %: Gesamtlaufzeit 17.58 s
+   0.195 import fertig, Daten: /tmp/f5_t5yz | Threads: MainThread
+   0.837 Fenster aufgebaut | Threads: MainThread
+   7.763 Vorladen fertig | Threads: MainThread
+  17.013 Elemente 3319, Schliessen beginnt (on_close) | Threads: MainThread
+  17.329 on_close fertig nach 316 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  17.329 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  17.329 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 0 %: Rueckgabe 0, Hoechststand 242 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0581 Wechsel 0 CPU-Grenze 25 %: Gesamtlaufzeit 32.68 s
+   0.799 import fertig, Daten: /tmp/f5_vXBE | Threads: MainThread
+   3.299 Fenster aufgebaut | Threads: MainThread
+  28.689 Vorladen fertig | Threads: MainThread
+  30.224 Elemente 3492, Schliessen beginnt (on_close) | Threads: MainThread
+  31.707 on_close fertig nach 1483 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  31.707 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  31.707 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 194 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0581 Wechsel 2 CPU-Grenze 25 %: Gesamtlaufzeit 71.07 s
+   0.809 import fertig, Daten: /tmp/f5_nLt1 | Threads: MainThread
+   3.301 Fenster aufgebaut | Threads: MainThread
+  29.397 Vorladen fertig | Threads: MainThread
+  68.612 Elemente 3232, Schliessen beginnt (on_close) | Threads: MainThread
+  70.006 on_close fertig nach 1394 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  70.006 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  70.007 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 237 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0591 Wechsel 0 CPU-Grenze 25 %: Gesamtlaufzeit 33.78 s
+   0.899 import fertig, Daten: /tmp/f5_kP04 | Threads: MainThread
+   3.704 Fenster aufgebaut | Threads: MainThread
+  29.307 Vorladen fertig | Threads: MainThread
+  31.119 Elemente 3579, Schliessen beginnt (on_close) | Threads: MainThread
+  32.791 on_close fertig nach 1672 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  32.791 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  32.791 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 197 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 
+=== F5 v0591 Wechsel 2 CPU-Grenze 25 %: Gesamtlaufzeit 71.91 s
+   0.886 import fertig, Daten: /tmp/f5_Cp9j | Threads: MainThread
+   3.690 Fenster aufgebaut | Threads: MainThread
+  30.605 Vorladen fertig | Threads: MainThread
+  69.601 Elemente 3319, Schliessen beginnt (on_close) | Threads: MainThread
+  71.000 on_close fertig nach 1399 ms (Fenster abgebaut) | Threads: MainThread, fisi-notausgang(d)
+  71.000 mainloop beendet | Threads: MainThread, fisi-notausgang(d)
+  71.001 atexit (Interpreter beginnt Abbau) | Threads: MainThread, fisi-notausgang(d)
+--- fehler.log:
+(keine)
+Grenze Speicher 0 MB, CPU 25 %: Rueckgabe 0, Hoechststand 243 MB, Begrenzungstreffer 0, OOM: oom_kill_disable 0 oom_kill 0 

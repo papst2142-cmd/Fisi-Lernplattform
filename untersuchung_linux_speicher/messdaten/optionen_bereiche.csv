@@ -1,0 +1,19 @@
+Bereich;eingeklappt beim Oeffnen;Elemente;Median ms;Anteil
+updates;nein;23;19;3 %
+rundgang;ja;37;26;4 %
+schrift;ja;31;32;4 %
+farben;ja;306;248;35 %
+tagesziel;ja;49;37;5 %
+rahmenplan;ja;63;88;12 %
+abgleich;ja;45;32;4 %
+sicherung;ja;28;19;3 %
+datenbank;ja;31;57;8 %
+problem;nein;32;30;4 %
+leistung;ja;35;26;4 %
+lerninhalte;ja;21;15;2 %
+spiel;ja;34;30;4 %
+loeschen;ja;54;38;5 %
+ueber;ja;21;16;2 %
+ZUSAMMEN build();;;712;
+ZUSAMMEN anzeigen (on_show, Zeichnen);;;165;
+Elemente Optionsseite gesamt;;818

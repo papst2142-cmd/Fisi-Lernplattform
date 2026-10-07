@@ -1,0 +1,15 @@
+umgebung | version | messung | vorladen abgewartet | n | gesamt median (min-max) | umfaerben | optionen bauen | abbau alt | updates | rest | rss spitze max
+linux-xvfb | 0.58.1 | False | True | 6 | 3816 (3483-3997) | 913 | 1394 | 865 | 589 | 370 | 237
+linux-xvfb | 0.58.1 | True | False | 6 | 3547 (3372-3678) | 754 | 1364 | 803 | 1003 | 378 | 237
+linux-xvfb | 0.58.1 | True | True | 18 | 3579 (3334-4753) | 794 | 1403 | 850 | 599 | 386 | 262
+linux-xvfb | 0.59.1 | False | True | 6 | 3365 (3213-3722) | 705 | 1287 | 859 | 483 | 286 | 241
+linux-xvfb | 0.59.1 | True | False | 6 | 3404 (3256-3860) | 718 | 1296 | 846 | 1373 | 350 | 241
+linux-xvfb | 0.59.1 | True | True | 18 | 3597 (3357-4011) | 744 | 1386 | 877 | 585 | 359 | 241
+linux-xvfb-cpu25 | 0.58.1 | True | True | 3 | 15906 (15090-18189) | 3411 | 5901 | 4310 | 2763 | 1702 | 237
+linux-xvfb-cpu25 | 0.59.1 | True | True | 3 | 15701 (15204-16809) | 3287 | 6011 | 4120 | 2316 | 1575 | 240
+linux-xvfb-grenze1100 | 0.59.1 | True | True | 6 | 3417 (3330-4105) | 743 | 1345 | 874 | 579 | 362 | 241
+linux-xvfb-ohnevorladen | 0.59.1 | True | True | 6 | 1688 (1600-1916) | 149 | 1049 | 103 | 363 | 229 | 138
+windows | 0.58.1 | True | True | 12 | 3670 (3645-4072) | 1066 | 1462 | 569 | 744 | 436 | 236
+windows | 0.59.1 | True | True | 12 | 3930 (3814-4482) | 1089 | 1441 | 672 | 857 | 553 | 238
+xwayland | 0.59.1 | True | True | 10 | 3929 (3563-4457) | 992 | 1361 | 877 | 727 | 445 | 248
+xwayland-cpu25 | 0.59.1 | True | True | 8 | 13241 (12817-13818) | 2010 | 4954 | 4252 | 2030 | 1386 | 247
