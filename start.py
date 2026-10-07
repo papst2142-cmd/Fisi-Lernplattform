@@ -34,6 +34,15 @@ def fail(title, message):
 
 
 def main():
+    # Ab 0.59.3: Unter Linux mit Wayland und IBus vor dem ersten Fenster die
+    # X-Eingabemethode umgehen (fisi_eingabe.py) - sonst kann das Programm
+    # beim Darstellungswechsel einfrieren. Steht ganz vorn, damit es auch fuer
+    # das Fehlerfenster in fail() gilt.
+    try:
+        import fisi_eingabe
+        fisi_eingabe.apply()
+    except Exception:
+        pass
     if sys.version_info < MIN_PYTHON:
         fail("Python-Version zu alt",
              "Benoetigt wird mindestens Python %d.%d, gefunden wurde %d.%d.\n\n"

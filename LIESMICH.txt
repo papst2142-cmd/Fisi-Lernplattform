@@ -314,6 +314,8 @@ Programmdateien (PC):
   fisi_sicherung.py     Sicherung und Wiederherstellung als Datei
   fisi_diagnose.py      Bericht fuer "Problem melden" (ohne Zugangsdaten)
   fisi_haenger.py       Haenger-Diagnose am PC (haenger.log, ab 0.59.2)
+  fisi_eingabe.py       Umgehung der IBus-Eingabe unter Linux mit Wayland
+                        (ab 0.59.3)
   fisi_rahmenplan.py    Ausbildungsrahmenplan: Zuordnung der Inhalte,
                         Abdeckung und Gewichtung der Uebungsauswahl
 
@@ -473,11 +475,21 @@ Programm haengt (Linux, ab 0.59.2)
     automatisch in die Datei haenger.log im Datenordner, an welcher Stelle
     es steht. Unter Linux laesst sich das auch sofort ausloesen: ein
     Terminal oeffnen und eingeben
-      kill -USR1 $(pgrep -x FISI-Lernplattf | head -1)
+      kill -USR1 $(pgrep -i -x -o fisi-lernplattf)
     Das Programm wird dabei nicht beendet. ACHTUNG: Das gilt erst ab
     Version 0.59.2. In Version 0.59.1 und aelter beendet derselbe Befehl
     das Programm. Die Datei steht danach unter Optionen -> "Diagnose und
     Werkzeuge" im Bericht bei "Problem melden".
+
+Linux mit Wayland und IBus (ab 0.59.3)
+    Unter Linux mit Wayland und IBus schaltet das Programm ab 0.59.3 fuer
+    sich die IBus-Eingabe ab, weil es sonst beim Darstellungswechsel, beim
+    Oeffnen der Suche oder beim Schliessen einfrieren kann; Umlaute, ss,
+    AltGr-Zeichen und tote Tasten gehen weiter. Programme, die FISI selbst
+    oeffnet (Ordner, Browser), uebernehmen diese Einstellung, praktisch
+    ohne Folgen. Wer IBus im Programm braucht (z. B. fuer Chinesisch oder
+    Emoji), startet es mit
+      FISI_XIM=1 fisi-lernplattform
 
 "Datenbankfehler" beim Start
     Der Speicherort ist schreibgeschuetzt. Ueber FISI_DB_PATH einen

@@ -66,7 +66,7 @@ SIGNAL_HELP = ("Ab Version 0.59.2 unter Linux: Hängt das Programm, öffne ein T
                "haenger.log, an welcher Stelle es gerade steht, und wird dabei nicht "
                "beendet. Achtung: In Version 0.59.1 und älter beendet derselbe Befehl "
                "das Programm.")
-KILL_COMMAND = "kill -USR1 $(pgrep -x FISI-Lernplattf | head -1)"
+KILL_COMMAND = "kill -USR1 $(pgrep -i -x -o fisi-lernplattf)"
 BTN_COPY = "Befehl kopieren"
 MSG_COPIED = "Befehl in die Zwischenablage kopiert"
 STATE_NONE = "Keine Hänger aufgezeichnet."
@@ -153,10 +153,11 @@ def _write(text):
             pass
 
 
-def setup(version="", folder=None, closing=None, platform=None):
+def setup(version="", folder=None, closing=None, platform=None, extra=""):
     """Beim Start einmal aufrufen (nach install_error_log). Liefert True,
     wenn haenger.log offen ist. closing(): True, waehrend das Programm
-    schliesst (der Waechter schweigt dann)."""
+    schliesst (der Waechter schweigt dann). extra (ab 0.59.3): Zusatz fuer
+    die Startzeile (Sitzungsart, XMODIFIERS, Eingabe-Umgehung)."""
     global _log
     platform = platform or sys.platform
     _state["closing"] = closing
@@ -167,8 +168,11 @@ def setup(version="", folder=None, closing=None, platform=None):
             # Python oeffnet nicht vererbbar (O_CLOEXEC bzw. ohne
             # HANDLE_FLAG_INHERIT) - Hilfsprozesse bekommen die Datei nie
             _log = open(path, "a", encoding="utf-8", errors="replace")
-            _write("Start | Version %s | %s | pid %d" % (version or "?", platform,
-                                                          os.getpid()))
+            line = "Start | Version %s | %s | pid %d" % (version or "?", platform,
+                                                         os.getpid())
+            if extra:
+                line += " | " + extra
+            _write(line)
             if platform != "win32":
                 faulthandler.enable(file=_log, all_threads=True)
             if hasattr(faulthandler, "register") and platform != "win32":

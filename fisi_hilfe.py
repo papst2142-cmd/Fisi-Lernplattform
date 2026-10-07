@@ -386,7 +386,7 @@ HELP_SECTIONS = [
               "Es wird nichts gesendet.\n\n"
               "Ab Version 0.59.2 unter Linux: Hängt das Programm, öffne ein Terminal und "
               "gib diesen Befehl ein:\n"
-              "kill -USR1 $(pgrep -x FISI-Lernplattf | head -1)\n"
+              "kill -USR1 $(pgrep -i -x -o fisi-lernplattf)\n"
               "Das Programm schreibt dann in die Datei haenger.log, an welcher Stelle es "
               "gerade steht. Es wird dabei nicht beendet. Achtung: In Version 0.59.1 und "
               "älter beendet derselbe Befehl das Programm. In den „Optionen“ unter "
