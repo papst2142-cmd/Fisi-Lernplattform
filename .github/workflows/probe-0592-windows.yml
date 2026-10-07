@@ -1,0 +1,19 @@
+# Probe 0.59.2 Plan (nur dieser Zweig, nicht mergen): laeuft.info neben der
+# Windows-Sperre, faulthandler und Herzschlag unter Windows. Kein Release, kein Tag.
+name: Probe 0.59.2 Windows
+
+on:
+  push:
+    branches: [probe-0592-windows]
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: Probe
+        run: python probe/probe_0592_windows.py
