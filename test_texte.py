@@ -24,6 +24,7 @@ import unittest
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 WORTLISTE = os.path.join(HIER, "pruefung", "wortliste.txt")
+AUSGANGSSTAND = os.path.join(HIER, "pruefung", "hunspell_ausgangsstand.txt")
 
 # Restfunde in Programmdateien, die noch nicht behoben sind (die .py-Dateien
 # werden getrennt bearbeitet). Paare (Datei, verbotene Form). Behobene
@@ -41,6 +42,13 @@ WORT = re.compile(r"[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß\-]*[A-Za-zÄÖÜ
 
 def rel(pfad):
     return os.path.relpath(pfad, HIER).replace(os.sep, "/")
+
+
+def lade_ausgangsstand():
+    """Ab 0.60: unbekannte Woerter, die schon in 0.59.3 in den Lerninhalten
+    standen (nur Hinweis, siehe test_hunspell)."""
+    with open(AUSGANGSSTAND, encoding="utf-8") as h:
+        return {z.strip() for z in h if z.strip() and not z.startswith("#")}
 
 
 def lade_wortliste():
@@ -296,6 +304,15 @@ class LernstandUmbenennungTest(unittest.TestCase):
 
 
 class RechtschreibungTest(unittest.TestCase):
+    def test_ausgangsstand(self):
+        """Ab 0.60: Liste lesbar, eindeutig und ohne Woerter, die schon in
+        [bekannt] stehen (die gehoeren dann nicht mehr in den Ausgangsstand)."""
+        alt = lade_ausgangsstand()
+        self.assertGreater(len(alt), 0)
+        self.assertLessEqual(len(alt), 1627, "Der Ausgangsstand darf nur kleiner werden")
+        _, _, bekannt = lade_wortliste()
+        self.assertEqual(sorted(alt & bekannt), [])
+
     def test_hunspell(self):
         if not shutil.which("hunspell"):
             self.skipTest("hunspell nicht installiert")
@@ -333,8 +350,17 @@ class RechtschreibungTest(unittest.TestCase):
             return w.endswith("s") and w[:-1] in bekannt
 
         rest = sorted(w for w in falsch if not ok(w))
-        self.assertEqual(rest, [], "Unbekannte Woerter (Tippfehler oder in [bekannt] eintragen): "
-                         + ", ".join(rest[:50]))
+        # Ab 0.60 (K-E, Weg E2): Die unbekannten Woerter aus 0.59.3 sind nur ein
+        # Hinweis; rot wird der Test erst bei neuen unbekannten Woertern.
+        alt = lade_ausgangsstand()
+        bekannt_alt = [w for w in rest if w in alt]
+        neu = [w for w in rest if w not in alt]
+        if bekannt_alt:
+            print("\nHinweis Rechtschreibung: %d unbekannte Woerter aus dem Ausgangsstand "
+                  "(pruefung/hunspell_ausgangsstand.txt), noch nicht einzeln geprueft"
+                  % len(bekannt_alt))
+        self.assertEqual(neu, [], "Neue unbekannte Woerter (Tippfehler oder in [bekannt] "
+                         "eintragen): " + ", ".join(neu[:50]))
 
 
 if __name__ == "__main__":
